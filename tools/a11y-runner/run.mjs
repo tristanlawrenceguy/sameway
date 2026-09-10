@@ -22,7 +22,7 @@ const AAA_TAGS = ["wcag2aaa", "wcag21aaa", "wcag22aaa"];
 function page(componentCss, body) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Example</title>
 <style>${tokens}\n${base}\n${componentCss}</style></head>
-<body><main><h1>Example</h1>${body}</main></body></html>`;
+<body><main><h1>Example</h1><h2>Section</h2>${body}</main></body></html>`;
 }
 
 const browser = await chromium.launch();
@@ -38,7 +38,9 @@ for (const name of readdirSync(componentsDir).sort()) {
   const css = existsSync(join(dir, "style.css")) ? readFileSync(join(dir, "style.css"), "utf8") : "";
   const waiverFile = join(examplesDir, "a11y-waivers.json");
   const waivers = existsSync(waiverFile) ? JSON.parse(readFileSync(waiverFile, "utf8")) : {};
-  // Field-like components need a form context; wrap everything in one.
+  // Field-like components need a form context; wrap everything in one. The
+  // page shell above supplies h1 and h2 so components that default to level
+  // 3 sit in a valid outline, the same way they do inside a real page section.
   for (const file of readdirSync(examplesDir).filter((f) => f.endsWith(".html")).sort()) {
     const body = readFileSync(join(examplesDir, file), "utf8");
     await tab.setContent(page(css, `<form>${body}</form>`));
