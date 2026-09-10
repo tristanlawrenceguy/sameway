@@ -69,11 +69,13 @@ await title.focus();
 await page.keyboard.press("Enter");
 // Enter starts a navigation; wait for the detail URL rather than a load
 // state that the form page already satisfies.
-await page.waitForURL(/\/t\/note\/[a-z0-9]+$/, { timeout: 10000 }).catch(() => {});
-check(/\/t\/note\/[a-z0-9]+$/.test(page.url()), `new note: Enter in the title submits and lands on the detail page (${page.url()})`);
-check(await page.locator("h1").textContent() === "Typed by keyboard", "detail: h1 is the note title");
-const detailText = await page.locator("main").textContent();
-check(detailText.includes("published") && detailText.includes("yes"), "detail: status and pinned saved");
+const detailURL = /\/t\/note\/(?!new$)[a-z0-9]+$/;
+await page.waitForURL(detailURL, { timeout: 10000 }).catch(() => {});
+check(detailURL.test(page.url()), `new note: Enter in the title submits and lands on the detail page (${page.url()})`);
+const h1 = (await page.locator("h1").textContent()).trim();
+check(h1 === "Typed by keyboard", `detail: h1 should be the note title, got ${JSON.stringify(h1)}`);
+const detailText = (await page.locator("main").textContent()).replace(/\s+/g, " ");
+check(detailText.includes("published") && detailText.includes("yes"), `detail: status and pinned saved; page says ${JSON.stringify(detailText.slice(0, 300))}`);
 await shellChecks("detail");
 
 // Validation failure with values preserved and errors linked.
