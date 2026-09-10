@@ -40,10 +40,26 @@ await page.keyboard.press("Enter");
 check(await page.evaluate(() => document.activeElement.id) === "main", "home: skip link moves focus into main");
 check(await page.getByRole("region").count() >= 0 && await page.locator("section[aria-labelledby]").count() === 2, "home: conversation and canvas regions are labelled");
 
-// Chat with no model: the failure must land in the transcript.
+// Status live region and the busy enhancement: submitting flips the status
+// to "working" and marks the region before the page reloads.
+check(await page.locator("#chat-status[role=status][data-state=idle]").count() === 1, "home: status region starts idle");
 await page.getByRole("textbox", { name: /Your message/ }).fill("hello from playwright");
+const busy = page.evaluate(() => new Promise((resolve) => {
+  const form = document.querySelector("form[data-busy-target]");
+  form.addEventListener("submit", () => setTimeout(() => resolve({
+    busy: form.getAttribute("aria-busy"),
+    region: form.closest("[data-region]").getAttribute("data-state"),
+    status: document.getElementById("chat-status").getAttribute("data-state"),
+    text: document.getElementById("chat-status").textContent,
+  }), 0), { once: true });
+}));
 await page.getByRole("button", { name: "Send" }).click();
+const busyState = await busy;
+check(busyState.busy === "true" && busyState.region === "working" && busyState.status === "working" && /working/i.test(busyState.text), `chat: submit marks the form, region, and status as working (${JSON.stringify(busyState)})`);
 await page.waitForURL(/#msg-/);
+check(await page.locator("#chat-status[data-state=error]").count() === 1, "chat: status reports the failed request");
+check(await page.locator("[data-component=message][data-actor=human]").count() === 1, "chat: the person's message carries data-actor=human");
+check(await page.locator("[data-component=event][data-actor=human]").count() >= 1, "chat: the person's action appears in recent activity");
 check(page.url().includes("#msg-"), "chat: redirect targets the newest message");
 const errorMsg = page.locator("[data-component=message][data-role=error]");
 check(await errorMsg.count() === 1 && /no model configured/.test(await errorMsg.textContent()), "chat: missing model is recorded as a system message");

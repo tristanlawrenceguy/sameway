@@ -1,3 +1,4 @@
 .sw-list { margin: 0; padding-left: var(--sw-space-6); max-width: var(--sw-size-measure); }
-.sw-list li { margin: var(--sw-space-1) 0; }
-.sw-list li::marker { color: var(--sw-color-fg-muted); }
+.sw-list li { margin: var(--sw-space-1) 0; padding-left: var(--sw-space-1); }
+.sw-list li::marker { color: var(--sw-color-accent); font-weight: 700; }
+ol.sw-list li::marker { font-variant-numeric: tabular-nums; }

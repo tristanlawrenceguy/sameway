@@ -11,3 +11,6 @@ fields:
   content:
     type: text
     required: true
+  changes:
+    type: json
+    description: For assistant turns, the list of canvas changes made while answering, each {action, component, id, detail}.

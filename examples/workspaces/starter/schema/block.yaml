@@ -1,7 +1,7 @@
 # A component placed on the canvas of the home page by the assistant or by you.
 # The assistant's add_component tool creates these; `sameway block list` shows them.
 name: block
-description: A rendered component on the canvas, with its props.
+description: A rendered component on the canvas, with its props and who last changed it.
 internal: true
 title: component
 fields:
@@ -16,3 +16,13 @@ fields:
     type: int
     default: 0
     description: Sort order on the canvas, lowest first.
+  actor:
+    type: enum
+    values: [human, assistant]
+    default: assistant
+    description: Who last changed this block.
+  created_by:
+    type: enum
+    values: [human, assistant]
+    default: assistant
+    description: Who first added this block.

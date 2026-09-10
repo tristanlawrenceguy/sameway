@@ -1,32 +1,24 @@
 .sw-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: var(--sw-size-target);
-  min-width: var(--sw-size-target);
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--sw-space-2);
+  min-height: var(--sw-size-target); min-width: var(--sw-size-target);
   padding: var(--sw-space-2) var(--sw-space-4);
-  border: 2px solid transparent;
-  border-radius: var(--sw-radius-md);
-  font: inherit;
-  font-weight: 600;
-  line-height: 1.2;
-  cursor: pointer;
-  text-decoration: none;
+  border: 2px solid transparent; border-radius: var(--sw-radius-md);
+  font: inherit; font-weight: 600; line-height: 1.2; letter-spacing: 0.005em;
+  cursor: pointer; text-decoration: none;
+  transition: transform var(--sw-motion-fast) var(--sw-motion-ease),
+              box-shadow var(--sw-motion-fast) var(--sw-motion-ease),
+              background var(--sw-motion-fast) var(--sw-motion-ease);
 }
 .sw-button--primary {
-  background: var(--sw-color-accent);
-  color: var(--sw-color-accent-fg);
-  border-color: var(--sw-color-accent);
+  background: var(--sw-color-accent); color: var(--sw-color-accent-fg); border-color: var(--sw-color-accent);
+  box-shadow: var(--sw-shadow-1);
 }
 .sw-button--secondary {
-  background: var(--sw-color-bg);
-  color: var(--sw-color-fg);
-  border-color: var(--sw-color-border);
+  background: var(--sw-color-bg-raised); color: var(--sw-color-fg); border-color: var(--sw-color-border-strong);
 }
 .sw-button--danger {
-  background: var(--sw-color-bg);
-  color: var(--sw-color-danger);
-  border-color: var(--sw-color-danger);
+  background: var(--sw-color-bg-raised); color: var(--sw-color-danger); border-color: var(--sw-color-danger);
 }
-.sw-button:hover:not([disabled]) { text-decoration: underline; text-underline-offset: 0.2em; }
-.sw-button[disabled] { cursor: not-allowed; opacity: 0.6; }
+.sw-button:hover:not([disabled]):not([aria-disabled="true"]) { transform: translateY(-1px); box-shadow: var(--sw-shadow-2); text-decoration: underline; text-underline-offset: 0.2em; }
+.sw-button:active:not([disabled]) { transform: translateY(0); box-shadow: none; }
+.sw-button[disabled], .sw-button[aria-disabled="true"] { cursor: not-allowed; opacity: 0.6; box-shadow: none; }

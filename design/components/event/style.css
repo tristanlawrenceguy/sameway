@@ -1,0 +1,15 @@
+.sw-event {
+  display: flex; align-items: baseline; gap: var(--sw-space-2);
+  font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted);
+  padding: var(--sw-space-1) 0;
+}
+.sw-event__mark {
+  flex: none; width: 0.625rem; height: 0.625rem; border-radius: 50%;
+  background: var(--sw-actor, var(--sw-color-fg-muted));
+  box-shadow: 0 0 0 3px var(--sw-actor-soft, var(--sw-color-bg-muted));
+  position: relative; top: -0.05em;
+}
+.sw-event__text { flex: 1; }
+.sw-event__actor { font-weight: 700; color: var(--sw-actor, var(--sw-color-fg)); }
+.sw-event__target { font-weight: 600; color: var(--sw-color-fg); }
+.sw-event__time { flex: none; font-variant-numeric: tabular-nums; font-size: var(--sw-size-text-xs); }

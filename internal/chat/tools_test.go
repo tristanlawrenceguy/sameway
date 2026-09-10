@@ -148,7 +148,7 @@ func TestToolErrorsGuideTheModel(t *testing.T) {
 		req  int
 		want string
 	}{
-		{1, "unknown component \"carousel\". Available: alert, button"},
+		{1, "unknown component \"carousel\". Available: alert, badge, button"},
 		{2, "invalid props"},
 		{3, "unknown tool frobnicate"},
 		{4, "not valid JSON"},

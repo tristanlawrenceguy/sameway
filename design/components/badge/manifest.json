@@ -1,0 +1,36 @@
+{
+  "name": "badge",
+  "version": "1.0.0",
+  "description": "A small label that states who did something or what state it is in. Tone is spoken as text, never colour alone.",
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["label"],
+    "properties": {
+      "label": { "type": "string", "minLength": 1, "description": "Short text such as 'Added by assistant' or 'Draft'." },
+      "tone": { "type": "string", "enum": ["neutral", "human", "assistant", "system", "success", "warning", "danger", "info"], "default": "neutral", "description": "human, assistant, and system are provenance tones; the rest are states." },
+      "id": { "type": "string" }
+    }
+  },
+  "a11y": {
+    "role": "text",
+    "keyboard": [],
+    "states": [],
+    "wcag": { "target": "AAA", "notes": "7:1 text on the tinted background in both themes. Meaning is carried by the label text, so the tone is decoration for sighted readers and data for machines." }
+  },
+  "machine": {
+    "selector": "[data-component=\"badge\"]",
+    "identify": "Read data-tone for the category and data-actor when the badge states provenance (human, assistant, system). The text is the label.",
+    "operate": "Not interactive."
+  },
+  "examples": [
+    { "name": "default", "props": { "label": "Draft" }, "file": "examples/default.html" },
+    { "name": "human", "props": { "label": "Added by you", "tone": "human" }, "file": "examples/human.html" },
+    { "name": "assistant", "props": { "label": "Added by assistant", "tone": "assistant" }, "file": "examples/assistant.html" },
+    { "name": "system", "props": { "label": "System notice", "tone": "system" }, "file": "examples/system.html" },
+    { "name": "success", "props": { "label": "Published", "tone": "success" }, "file": "examples/success.html" },
+    { "name": "warning", "props": { "label": "Needs review", "tone": "warning" }, "file": "examples/warning.html" },
+    { "name": "danger", "props": { "label": "Failed", "tone": "danger" }, "file": "examples/danger.html" },
+    { "name": "info", "props": { "label": "Beta", "tone": "info", "id": "beta" }, "file": "examples/info.html" }
+  ]
+}

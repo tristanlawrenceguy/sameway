@@ -1,0 +1,24 @@
+# The activity log: every change to the canvas, by a person or the assistant.
+# Written by the system; read at /activity, /api/activity, and `sameway activity list`.
+name: activity
+description: One recorded action, with who did it and what it touched.
+internal: true
+title: action
+fields:
+  actor:
+    type: enum
+    values: [human, assistant, system]
+    required: true
+  action:
+    type: string
+    required: true
+    description: Past-tense verb such as added, updated, removed, cleared, failed.
+  target:
+    type: string
+    description: What was acted on, such as the component name.
+  target_id:
+    type: string
+    description: Record id of the thing acted on, when it still exists.
+  detail:
+    type: text
+    description: Human readable summary.

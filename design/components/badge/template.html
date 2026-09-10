@@ -1,0 +1,1 @@
+<span class="sw-badge sw-badge--{{.tone}}" data-component="badge" data-tone="{{.tone}}"{{if or (eq .tone "human") (eq .tone "assistant") (eq .tone "system")}} data-actor="{{.tone}}"{{end}}{{if .id}} id="{{.id}}"{{end}}>{{.label}}</span>

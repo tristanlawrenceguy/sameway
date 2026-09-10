@@ -42,6 +42,8 @@ type Component struct {
 	// Source is "builtin" or "workspace".
 	Source string
 	CSS    string
+	// JS is the optional enhance.js: progressive enhancement only.
+	JS string
 
 	fsys  fs.FS
 	dir   string
@@ -116,6 +118,9 @@ func load(fsys fs.FS, dir, source string) (*Component, error) {
 	if css, err := fs.ReadFile(fsys, path.Join(dir, "style.css")); err == nil {
 		c.CSS = string(css)
 	}
+	if js, err := fs.ReadFile(fsys, path.Join(dir, "enhance.js")); err == nil {
+		c.JS = string(js)
+	}
 	return c, nil
 }
 
@@ -180,6 +185,19 @@ func (c *Component) ReadFile(rel string) ([]byte, error) {
 
 // Dir is the component folder path inside its filesystem.
 func (c *Component) Dir() string { return c.dir }
+
+// JS concatenates every component's enhance.js in name order. Each file is
+// self-contained, so the bundle is just the files back to back.
+func (r *Registry) JS() string {
+	var b strings.Builder
+	for _, c := range r.Components() {
+		if c.JS == "" {
+			continue
+		}
+		fmt.Fprintf(&b, "/* component: %s */\n%s\n", c.Manifest.Name, c.JS)
+	}
+	return b.String()
+}
 
 // CSS concatenates tokens, base, and every component stylesheet in name order.
 func (r *Registry) CSS() string {

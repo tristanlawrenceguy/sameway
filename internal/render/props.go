@@ -9,6 +9,8 @@ import (
 	"strings"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
 )
 
 // Funcs are the template functions available to every component template.
@@ -72,10 +74,15 @@ func compileProps(name string, raw json.RawMessage) (*propSchema, error) {
 // filled in for every declared property, integers as int64, so templates can
 // use every prop without nil checks.
 func (p *propSchema) normalize(props map[string]any) (map[string]any, error) {
-	if props == nil {
-		props = map[string]any{}
+	// A nil prop means "not given": models send null, and Go code passes
+	// values it may not have. Drop them before validation.
+	given := map[string]any{}
+	for k, v := range props {
+		if v != nil {
+			given[k] = v
+		}
 	}
-	inst := roundTrip(props)
+	inst := roundTrip(given)
 	if err := p.schema.Validate(inst); err != nil {
 		return nil, formatValidation(err)
 	}
@@ -154,12 +161,13 @@ func formatValidation(err error) error {
 	if !errors.As(err, &ve) {
 		return err
 	}
+	printer := message.NewPrinter(language.English)
 	var lines []string
 	var walk func(e *jsonschema.ValidationError)
 	walk = func(e *jsonschema.ValidationError) {
 		if len(e.Causes) == 0 {
 			loc := "/" + strings.Join(e.InstanceLocation, "/")
-			lines = append(lines, fmt.Sprintf("%s: %v", loc, e.ErrorKind))
+			lines = append(lines, fmt.Sprintf("%s: %s", loc, e.ErrorKind.LocalizedString(printer)))
 			return
 		}
 		for _, c := range e.Causes {

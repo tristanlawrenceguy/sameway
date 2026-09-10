@@ -1,10 +1,10 @@
-.sw-table-wrap { overflow-x: auto; max-width: 100%; }
-.sw-table { border-collapse: collapse; width: 100%; }
-.sw-table caption { text-align: left; font-weight: 700; padding: var(--sw-space-2) 0; caption-side: top; }
+.sw-table-wrap { overflow-x: auto; max-width: 100%; border: 1px solid var(--sw-color-border); border-radius: var(--sw-radius-md); background: var(--sw-color-bg-raised); }
+.sw-table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+.sw-table caption { text-align: left; font-weight: 700; padding: var(--sw-space-3) var(--sw-space-3) var(--sw-space-2); caption-side: top; }
 .sw-table th, .sw-table td {
-  text-align: left;
-  padding: var(--sw-space-2) var(--sw-space-3);
-  border-bottom: 1px solid var(--sw-color-border);
-  vertical-align: top;
+  text-align: left; padding: var(--sw-space-2) var(--sw-space-3);
+  border-top: 1px solid var(--sw-color-border); vertical-align: top;
 }
-.sw-table th { background: var(--sw-color-bg-muted); }
+.sw-table th { background: var(--sw-color-bg-muted); font-size: var(--sw-size-text-sm); letter-spacing: 0.02em; text-transform: uppercase; color: var(--sw-color-fg-muted); }
+.sw-table tbody tr { transition: background var(--sw-motion-fast) var(--sw-motion-ease); }
+.sw-table tbody tr:hover { background: var(--sw-color-bg-muted); }

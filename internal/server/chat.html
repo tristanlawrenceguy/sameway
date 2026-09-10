@@ -1,27 +1,34 @@
 {{if .Notice}}{{.Notice}}
 {{end}}<div class="sw-split">
-<section class="sw-region" aria-labelledby="conversation-heading">
-<h2 id="conversation-heading">Conversation</h2>
-{{if .ModelName}}<p class="sw-text--muted">Connected to {{.ModelName}}.</p>
-{{end}}{{if .Messages}}<ol class="sw-stack sw-messages" aria-label="Messages">
-{{range .Messages}}<li>{{.}}</li>
+<section class="sw-region" id="conversation" data-region="conversation" data-state="idle" aria-labelledby="conversation-heading">
+<div class="sw-region__head"><h2 id="conversation-heading">Conversation</h2>{{.Status}}</div>
+{{if .ModelName}}<p class="sw-muted sw-small">Connected to {{.ModelName}}.</p>
+{{end}}{{if .Messages}}<ol class="sw-plain sw-stack sw-messages" aria-label="Messages">
+{{range .Messages}}<li style="view-transition-name: {{.ID}}; view-transition-class: sw-vt-item">{{.HTML}}</li>
 {{end}}</ol>
-{{else}}<p>No messages yet. Say hello, or ask for a component on the canvas.</p>
-{{end}}<form method="post" action="/chat" class="sw-stack" aria-labelledby="compose-heading">
+{{else}}<p class="sw-empty">No messages yet. Say hello, or ask for a component on the canvas.</p>
+{{end}}<form method="post" action="/chat" class="sw-stack sw-compose" aria-labelledby="compose-heading" data-busy-target="chat-status" data-busy-message="Assistant is working…">
 <h3 id="compose-heading" class="sw-visually-hidden">Compose</h3>
 {{.Compose}}
 <div class="sw-cluster">{{.Send}}</div>
 </form>
 {{if .Messages}}<form method="post" action="/chat/clear" class="sw-cluster">{{.Clear}}</form>
 {{end}}</section>
-<section class="sw-region" id="canvas" aria-labelledby="canvas-heading">
-<h2 id="canvas-heading">Canvas</h2>
-{{if .Blocks}}<ol class="sw-stack sw-canvas" aria-label="Canvas blocks">
-{{range .Blocks}}<li data-block-id="{{.ID}}" data-block-component="{{.Component}}">
+<section class="sw-region" id="canvas" data-region="canvas" aria-labelledby="canvas-heading">
+<div class="sw-region__head"><h2 id="canvas-heading">Canvas</h2><p class="sw-muted sw-small">{{len .Blocks}} block{{if ne (len .Blocks) 1}}s{{end}}</p></div>
+{{if .Blocks}}<ol class="sw-plain sw-stack sw-canvas" aria-label="Canvas blocks">
+{{range .Blocks}}<li class="sw-block" data-block-id="{{.ID}}" data-block-component="{{.Component}}" data-actor="{{.Actor}}"{{if .Changed}} data-changed="{{.Changed}}"{{end}} style="view-transition-name: block-{{.ID}}; view-transition-class: sw-vt-item">
 {{.HTML}}
-<form method="post" action="/canvas/{{.ID}}/delete" class="sw-cluster sw-canvas__actions">{{.Remove}}</form>
+<div class="sw-block__bar">{{.Badge}}{{if .Changed}}<span class="sw-visually-hidden">({{.Changed}} in the last turn)</span>{{end}}<span class="sw-block__spacer"></span>{{.Edit}}<form method="post" action="/canvas/{{.ID}}/delete">{{.Remove}}</form></div>
 </li>
 {{end}}</ol>
-{{else}}<p>Nothing here yet. Ask the assistant to add a component, for example "add a checklist for today".</p>
+{{else}}<p class="sw-empty">Nothing here yet. Ask the assistant to add a component, for example "add a checklist for today".</p>
 {{end}}</section>
 </div>
+{{if .Activity}}<section class="sw-region sw-activity" aria-labelledby="activity-heading">
+<div class="sw-region__head"><h2 id="activity-heading">Recent activity</h2><a class="sw-link" href="/activity">All activity</a></div>
+<ol class="sw-plain sw-stack--tight" aria-label="Recent activity">
+{{range .Activity}}<li>{{.}}</li>
+{{end}}</ol>
+</section>
+{{end}}

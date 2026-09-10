@@ -1,0 +1,33 @@
+{
+  "name": "status",
+  "version": "1.0.0",
+  "description": "Tells people and machines whether something is happening: idle, working, done, or error. A live region, so screen readers announce changes; data-state so agents can read them.",
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["message"],
+    "properties": {
+      "message": { "type": "string", "minLength": 1, "description": "What is happening, in plain words: 'Assistant is working'." },
+      "state": { "type": "string", "enum": ["idle", "working", "done", "error"], "default": "idle" },
+      "live": { "type": "string", "enum": ["polite", "assertive"], "default": "polite", "description": "assertive interrupts; use it only for errors." },
+      "id": { "type": "string", "description": "Required when a form's enhance script should update this status while a request is in flight." }
+    }
+  },
+  "a11y": {
+    "role": "status",
+    "keyboard": [],
+    "states": ["aria-live", "data-state"],
+    "wcag": { "target": "AAA", "notes": "Status messages are announced without moving focus (4.1.3). The working indicator pulses only when motion is allowed; the text alone carries the state. Nothing here times out or auto-dismisses." }
+  },
+  "machine": {
+    "selector": "[data-component=\"status\"]",
+    "identify": "Read data-state (idle, working, done, error) and the text content.",
+    "operate": "Not interactive. Poll data-state to know when a request has finished; a form with data-busy-target names the status it updates."
+  },
+  "examples": [
+    { "name": "default", "props": { "message": "Ready.", "id": "chat-status" }, "file": "examples/default.html" },
+    { "name": "working", "props": { "message": "Assistant is working…", "state": "working" }, "file": "examples/working.html" },
+    { "name": "done", "props": { "message": "Added a table to the canvas.", "state": "done" }, "file": "examples/done.html" },
+    { "name": "error", "props": { "message": "Could not reach the model.", "state": "error", "live": "assertive" }, "file": "examples/error.html" }
+  ]
+}

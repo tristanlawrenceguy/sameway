@@ -19,12 +19,13 @@ import (
 type Server struct {
 	app *app.App
 	css []byte
+	js  []byte
 	mux *http.ServeMux
 }
 
 // New builds the handler for an app.
 func New(a *app.App) *Server {
-	s := &Server{app: a, css: []byte(a.Registry.CSS()), mux: http.NewServeMux()}
+	s := &Server{app: a, css: []byte(a.Registry.CSS()), js: []byte(a.Registry.JS()), mux: http.NewServeMux()}
 	s.routes()
 	return s
 }
@@ -38,7 +39,10 @@ func (s *Server) routes() {
 	m.HandleFunc("POST /chat", s.chatSend)
 	m.HandleFunc("POST /chat/clear", s.chatClear)
 	m.HandleFunc("POST /canvas/{id}/delete", s.canvasDelete)
+	m.HandleFunc("GET /activity", s.activityPage)
+	m.HandleFunc("GET /design", s.designPage)
 	m.HandleFunc("GET /design/sameway.css", s.stylesheet)
+	m.HandleFunc("GET /design/sameway.js", s.script)
 
 	m.HandleFunc("GET /t/{type}", s.listPage)
 	m.HandleFunc("GET /t/{type}/new", s.newPage)
@@ -82,6 +86,8 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 		href := "/t/" + t.Name
 		p.Nav = append(p.Nav, s.navLink(href, plural(t.Name), strings.HasPrefix(r.URL.Path, href)))
 	}
+	p.Nav = append(p.Nav, s.navLink("/activity", "Activity", r.URL.Path == "/activity"))
+	p.Nav = append(p.Nav, s.navLink("/design", "Design", r.URL.Path == "/design"))
 	out, err := render.RenderPage(p)
 	if err != nil {
 		s.fail(w, err)

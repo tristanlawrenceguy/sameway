@@ -1,7 +1,7 @@
 {
   "name": "message",
-  "version": "1.0.0",
-  "description": "One turn in a conversation: who said it and what was said. Render inside a list so the conversation has structure.",
+  "version": "1.1.0",
+  "description": "One turn in a conversation: who said it, what was said, and for assistant turns the receipt of canvas changes it made. Render inside a list so the conversation has structure.",
   "props": {
     "type": "object",
     "additionalProperties": false,
@@ -11,23 +11,38 @@
       "content": { "type": "string", "minLength": 1, "description": "Plain text. Blank lines start a new paragraph." },
       "author": { "type": "string", "description": "Display name. Defaults to You, Assistant, or System by role." },
       "time": { "type": "string", "description": "Human readable time such as 14:05." },
+      "changes": {
+        "type": "array",
+        "description": "Canvas changes made during this turn, shown as a receipt under the text.",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["action"],
+          "properties": {
+            "action": { "type": "string", "description": "added, updated, removed, cleared, failed" },
+            "component": { "type": "string" },
+            "id": { "type": "string", "description": "Block id the change applied to, when it still exists." },
+            "detail": { "type": "string" }
+          }
+        }
+      },
       "id": { "type": "string", "description": "Anchor id so the page can link to the latest message." }
     }
   },
   "a11y": {
     "role": "article",
     "keyboard": [],
-    "states": [],
-    "wcag": { "target": "AAA", "notes": "Author is text, not colour or alignment alone (1.4.1). Each message is an article with its author as a heading so screen readers can move between turns." }
+    "states": ["data-actor", "data-role"],
+    "wcag": { "target": "AAA", "notes": "Author is text, not colour or alignment alone (1.4.1). Each message is an article with its author as the first line so screen readers can move between turns. The change receipt is a real list with a heading only screen readers hear." }
   },
   "machine": {
     "selector": "[data-component=\"message\"]",
-    "identify": "Read data-role for who spoke and the article text for the content.",
+    "identify": "Read data-role for who spoke (user, assistant, error) and data-actor for the provenance tone (human, assistant, system). The article text is the content; the .sw-message__changes list, if present, has one li per canvas change with data-action and data-target.",
     "operate": "Not interactive."
   },
   "examples": [
     { "name": "default", "props": { "role": "user", "content": "Add a grocery list with milk, eggs and bread.", "time": "14:05", "id": "msg-1" }, "file": "examples/default.html" },
-    { "name": "assistant", "props": { "role": "assistant", "content": "Done. I added a list component with three items.\n\nWant it as a table instead?" }, "file": "examples/assistant.html" },
+    { "name": "assistant", "props": { "role": "assistant", "content": "Done. I added a list with three items.\n\nWant it as a table instead?", "time": "14:05", "changes": [ { "action": "added", "component": "heading", "detail": "Shopping" }, { "action": "added", "component": "list" } ] }, "file": "examples/assistant.html" },
     { "name": "error", "props": { "role": "error", "content": "Could not reach the model at http://localhost:11434." }, "file": "examples/error.html" }
   ]
 }

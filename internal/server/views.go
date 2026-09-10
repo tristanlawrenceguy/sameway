@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -112,8 +113,22 @@ func (s *Server) updateForm(w http.ResponseWriter, r *http.Request) {
 	}
 	id := r.PathValue("id")
 	values := formValues(t, r)
-	if _, err := s.app.Store.Update(t.Name, id, values); err != nil {
+	if t.Name == chat.BlockType {
+		// A person editing a canvas block through the form: attribute it.
+		if _, ok := t.Field("actor"); ok {
+			values["actor"] = "human"
+		}
+	}
+	rec, err := s.app.Store.Update(t.Name, id, values)
+	if err != nil {
 		s.formError(w, r, t, "/t/"+t.Name+"/"+id, "Edit "+t.Name, values, err)
+		return
+	}
+	if t.Name == chat.BlockType {
+		name, _ := rec.Fields["component"].(string)
+		props, _ := rec.Fields["props"].(map[string]any)
+		chat.Record(s.app.Store, "human", chat.Change{Action: "updated", Component: name, ID: id, Detail: chat.Summarise(name, props)})
+		http.Redirect(w, r, "/#canvas", http.StatusSeeOther)
 		return
 	}
 	http.Redirect(w, r, "/t/"+t.Name+"/"+id, http.StatusSeeOther)

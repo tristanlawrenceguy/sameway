@@ -1,35 +1,65 @@
 # Sameway design system
 
-Accessible HTML patterns that humans and AI agents navigate the same way.
-This folder is published on its own as `@sameway/design` and is also embedded
-in the `sameway` binary.
+A design system for interfaces that people and AI agents use the same way.
+Accessible by construction, and not boring about it: a high-contrast palette
+with a point of view, motion that explains change, and a state language that
+tells everyone, human or machine, who did what and what is happening now.
 
-## What is in here
+Published on its own as `@sameway/design` and embedded in the `sameway`
+binary, which serves a living styleguide at `/design`.
 
-- `tokens/tokens.json` is the single source of design tokens. `tokens.css` is
-  generated from it with `go run ./tools/tokens` and must be checked in.
-- `base/base.css` is the reset, typography, focus ring, motion, and page skeleton.
+## Foundations
+
+| Read | For |
+|---|---|
+| [foundations/principles.md](foundations/principles.md) | The five rules every decision follows |
+| [foundations/color.md](foundations/color.md) | Palette, roles, actor tones, the 7:1 contract |
+| [foundations/typography.md](foundations/typography.md) | Scale, measure, numerals |
+| [foundations/motion.md](foundations/motion.md) | Durations, curves, view transitions, reduced motion |
+| [foundations/states.md](foundations/states.md) | Provenance, change markers, busy state, activity: text, colour, and attributes |
+
+## What is in this folder
+
+- `tokens/tokens.json` is the single source of tokens. `tokens.css` is
+  generated from it with `go run ./tools/tokens` and checked in. A Go test
+  fails the build if any text pairing drops below 7:1 in either theme.
+- `base/base.css` is the reset, type, focus ring, motion, state attributes,
+  and page shell.
 - `components/<name>/` is one component per folder:
-  - `manifest.json` describes props (JSON Schema), the accessibility contract,
-    the keyboard map, and how a machine identifies and operates it.
-  - `template.html` is a Go `html/template` that receives the validated props.
-  - `style.css` is the component's CSS. Only tokens, no raw colors.
-  - `examples/*.html` are the rendered examples. They are the standalone spec
-    and the golden output the template must match exactly.
-  - `README.md` explains when to use it.
+  - `manifest.json`: props (JSON Schema), accessibility contract, keyboard
+    map, and how a machine identifies and operates it.
+  - `template.html`: Go `html/template` that receives validated props.
+  - `style.css`: tokens only, no raw colours (a test checks).
+  - `enhance.js`: optional progressive enhancement. The component must work
+    without it.
+  - `examples/*.html`: rendered examples. They are the standalone spec and
+    the golden output the template must reproduce exactly.
+  - `README.md`: when to use it, when not to.
+
+## Components
+
+| Component | Purpose |
+|---|---|
+| heading, text, list, table, card | Content |
+| link, button | Actions |
+| text-field, textarea, select, checkbox | Input |
+| alert, status, badge | Feedback and state |
+| message, event | Conversation and activity |
 
 ## Using it without the binary
 
 Load `tokens/tokens.css`, `base/base.css`, and the `style.css` of the
-components you need, then copy the markup from `examples/`. Every example is
-self-contained and WCAG 2.2 AA clean, AAA where the manifest says so.
+components you need, then copy the markup from `examples/`. Add
+`data-actor`, `data-changed`, and `data-state` attributes as described in
+[states.md](foundations/states.md) and the base stylesheet does the rest.
 
 ## Rules for a new component
 
 Run `sameway component new <name>` to scaffold. A component is not done until:
 
-1. The manifest has a full props schema and an accessibility contract.
+1. The manifest has a full props schema, an accessibility contract, a
+   keyboard map if anything is focusable, and an example for every enum value.
 2. Every example renders from the template with zero diff (`make golden`).
-3. `make a11y` reports no AA violations for its examples.
-4. It uses tokens only, honours `prefers-reduced-motion`, and keeps every
-   interactive target at least 44 by 44 CSS pixels.
+3. `make a11y` reports no AA violations and no keyboard failures.
+4. It uses tokens only, reads `--sw-actor` for provenance colour, and keeps
+   every interactive target at least 44 by 44 CSS pixels.

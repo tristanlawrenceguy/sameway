@@ -3,26 +3,30 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
 <title>{{.Title}} · {{.Site}}</title>
 <link rel="stylesheet" href="/design/sameway.css">
 {{if .JSONURL}}<link rel="alternate" type="application/json" href="{{.JSONURL}}">
 {{end}}<link rel="describedby" href="/api/describe">
+<script src="/design/sameway.js" defer></script>
 </head>
 <body>
 <a class="sw-skip" href="#main">Skip to main content</a>
 {{if .Focus}}<a class="sw-skip" href="#{{.Focus}}">{{.FocusLabel}}</a>
 {{end}}<header class="sw-header">
-<a class="sw-header__brand" href="/">{{.Site}}</a>
+<div class="sw-header__inner">
+<a class="sw-header__brand" href="/"><span class="sw-header__mark" aria-hidden="true"></span>{{.Site}}</a>
 <nav class="sw-nav" aria-label="Main">
 <ul>{{range .Nav}}<li>{{.}}</li>{{end}}</ul>
 </nav>
+</div>
 </header>
 <main id="main" class="sw-main" tabindex="-1">
 <h1>{{.Title}}</h1>
 {{.Body}}
 </main>
 <footer class="sw-footer">
-<p>Built with Sameway. Agents: read <a href="/api/describe">/api/describe</a> for the schema and component contracts.</p>
+<p>Built with Sameway. Agents: read <a href="/api/describe">/api/describe</a> for the schema and component contracts, <a href="/design">/design</a> for the living styleguide.</p>
 </footer>
 </body>
 </html>

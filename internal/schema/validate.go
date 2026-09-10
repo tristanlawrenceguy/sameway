@@ -69,7 +69,8 @@ func zero(f Field) any {
 	case "list":
 		return []any{}
 	case "json":
-		return map[string]any{}
+		// Absent JSON is nil, not an empty object: the shape is the caller's.
+		return nil
 	default:
 		return ""
 	}
@@ -208,10 +209,17 @@ func coerceJSON(v any) (any, error) {
 		}
 		return parsed, nil
 	}
-	if _, err := json.Marshal(v); err != nil {
+	// Round-trip so Go values (structs, typed slices) become the plain JSON
+	// shapes every reader sees: maps, []any, float64.
+	raw, err := json.Marshal(v)
+	if err != nil {
 		return nil, fmt.Errorf("must be valid JSON")
 	}
-	return v, nil
+	var plain any
+	if err := json.Unmarshal(raw, &plain); err != nil {
+		return nil, fmt.Errorf("must be valid JSON")
+	}
+	return plain, nil
 }
 
 // JSONSchema renders the type as a JSON Schema object, used by describe,
