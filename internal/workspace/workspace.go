@@ -30,7 +30,13 @@ type Config struct {
 	Server struct {
 		Addr string `yaml:"addr"`
 	} `yaml:"server"`
-	LLM  llm.Config `yaml:"llm"`
+	LLM llm.Config `yaml:"llm"`
+	UI  struct {
+		// Controls is "auto" (per-item controls and provenance labels fade
+		// until hovered or focused) or "visible" (always shown). Either way
+		// they stay in the DOM, the tab order, and the accessibility tree.
+		Controls string `yaml:"controls"`
+	} `yaml:"ui"`
 	Chat struct {
 		// HistoryLimit caps how many past messages are sent to the model.
 		HistoryLimit int `yaml:"history_limit"`
@@ -91,6 +97,9 @@ func Load(dir string) (*Workspace, error) {
 	}
 	if w.Config.Chat.HistoryLimit == 0 {
 		w.Config.Chat.HistoryLimit = 40
+	}
+	if w.Config.UI.Controls != "visible" {
+		w.Config.UI.Controls = "auto"
 	}
 	return w, nil
 }

@@ -3,11 +3,8 @@
   min-height: var(--sw-size-target); min-width: var(--sw-size-target);
   padding: var(--sw-space-2) var(--sw-space-4);
   border: 2px solid transparent; border-radius: var(--sw-radius-md);
-  font: inherit; font-weight: 600; line-height: 1.2; letter-spacing: 0.005em;
+  font: inherit; font-weight: 600; line-height: 1.2;
   cursor: pointer; text-decoration: none;
-  transition: transform var(--sw-motion-fast) var(--sw-motion-ease),
-              box-shadow var(--sw-motion-fast) var(--sw-motion-ease),
-              background var(--sw-motion-fast) var(--sw-motion-ease);
 }
 .sw-button--primary {
   background: var(--sw-color-accent); color: var(--sw-color-accent-fg); border-color: var(--sw-color-accent);
@@ -18,7 +15,15 @@
 }
 .sw-button--danger {
   background: var(--sw-color-bg-raised); color: var(--sw-color-danger); border-color: var(--sw-color-danger);
+  --sw-press: var(--sw-color-danger-soft);
 }
-.sw-button:hover:not([disabled]):not([aria-disabled="true"]) { transform: translateY(-1px); box-shadow: var(--sw-shadow-2); text-decoration: underline; text-underline-offset: 0.2em; }
-.sw-button:active:not([disabled]) { transform: translateY(0); box-shadow: none; }
+/* Quiet: no chrome of its own, sized for a control bar. Contrast and target
+   size are unchanged; only the border and background are dropped. */
+.sw-button--quiet {
+  background: transparent; color: var(--sw-color-fg-muted);
+  border-color: transparent; padding: 0 var(--sw-space-3);
+  min-width: 0; font-weight: 600; font-size: var(--sw-size-text-sm);
+}
+.sw-button--quiet:hover:not([disabled]) { color: var(--sw-color-fg); background: var(--sw-color-bg-muted); }
+.sw-button:hover:not([disabled]):not([aria-disabled="true"]) { text-decoration: underline; text-underline-offset: 0.2em; }
 .sw-button[disabled], .sw-button[aria-disabled="true"] { cursor: not-allowed; opacity: 0.6; box-shadow: none; }

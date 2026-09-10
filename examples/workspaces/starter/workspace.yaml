@@ -20,6 +20,13 @@ llm:
   # model: claude-opus-5
   # api_key_env: ANTHROPIC_API_KEY
 
+ui:
+  # auto: per-item controls and provenance labels fade until you hover a
+  # block or tab into it. They stay in the accessibility tree either way,
+  # so screen readers and agents always have them.
+  # visible: keep them on screen all the time.
+  controls: auto
+
 chat:
   # How many past messages to send to the model each turn.
   history_limit: 40

@@ -1,0 +1,7 @@
+/* Styleguide page (/design) only. */
+
+.sw-swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: var(--sw-space-2); margin: var(--sw-space-4) 0; }
+.sw-swatch { display: grid; grid-template-columns: auto 1fr; gap: 0 var(--sw-space-3); align-items: center; padding: var(--sw-space-2); border: 1px solid var(--sw-color-border); border-radius: var(--sw-radius-md); background: var(--sw-color-bg-raised); }
+.sw-swatch__chip { grid-row: span 2; width: 2.5rem; height: 2.5rem; border-radius: var(--sw-radius-sm); border: 1px solid var(--sw-color-border); }
+.sw-example { margin-top: var(--sw-space-4); }
+.sw-example__render { padding: var(--sw-space-4); border: 1px dashed var(--sw-color-border); border-radius: var(--sw-radius-md); }

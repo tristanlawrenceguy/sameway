@@ -1,0 +1,32 @@
+/* Reset, type, and links. Depends on tokens.css. */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  font-family: var(--sw-font-sans);
+  font-size: 100%;
+  line-height: var(--sw-size-line);
+  -webkit-text-size-adjust: 100%;
+  font-feature-settings: "tnum" 1;
+  scroll-behavior: smooth;
+}
+body {
+  margin: 0;
+  background: var(--sw-color-bg);
+  color: var(--sw-color-fg);
+  font-size: var(--sw-size-text-md);
+  min-height: 100dvh;
+}
+h1, h2, h3, h4 { line-height: var(--sw-size-line-tight); letter-spacing: -0.015em; text-wrap: balance; }
+h1 { font-size: var(--sw-size-text-2xl); margin: 0 0 var(--sw-space-6); }
+p { margin: 0 0 var(--sw-space-3); }
+a { color: var(--sw-color-accent); text-underline-offset: 0.2em; }
+::selection { background: var(--sw-color-accent-soft); color: var(--sw-color-fg); }
+
+pre, code { font-family: var(--sw-font-mono); font-size: 0.95em; }
+pre { overflow-x: auto; padding: var(--sw-space-3); background: var(--sw-color-bg-muted); border-radius: var(--sw-radius-md); }
+
+.sw-visually-hidden {
+  position: absolute !important; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}

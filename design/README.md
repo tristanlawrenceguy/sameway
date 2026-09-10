@@ -17,14 +17,16 @@ binary, which serves a living styleguide at `/design`.
 | [foundations/typography.md](foundations/typography.md) | Scale, measure, numerals |
 | [foundations/motion.md](foundations/motion.md) | Durations, curves, view transitions, reduced motion |
 | [foundations/states.md](foundations/states.md) | Provenance, change markers, busy state, activity: text, colour, and attributes |
+| [foundations/quiet.md](foundations/quiet.md) | How chrome stays available to everyone while being visible only on demand |
 
 ## What is in this folder
 
 - `tokens/tokens.json` is the single source of tokens. `tokens.css` is
   generated from it with `go run ./tools/tokens` and checked in. A Go test
   fails the build if any text pairing drops below 7:1 in either theme.
-- `base/base.css` is the reset, type, focus ring, motion, state attributes,
-  and page shell.
+- `base/*.css` is the foundation, one concern per file, concatenated in
+  filename order: reset, feedback, motion, the quiet layer, page shell,
+  layout, styleguide.
 - `components/<name>/` is one component per folder:
   - `manifest.json`: props (JSON Schema), accessibility contract, keyboard
     map, and how a machine identifies and operates it.
@@ -42,16 +44,19 @@ binary, which serves a living styleguide at `/design`.
 |---|---|
 | heading, text, list, table, card | Content |
 | link, button | Actions |
+| chat, disclosure | Containers: a conversation region, and detail hidden behind a summary |
 | text-field, textarea, select, checkbox | Input |
 | alert, status, badge | Feedback and state |
 | message, event | Conversation and activity |
 
 ## Using it without the binary
 
-Load `tokens/tokens.css`, `base/base.css`, and the `style.css` of the
-components you need, then copy the markup from `examples/`. Add
-`data-actor`, `data-changed`, and `data-state` attributes as described in
-[states.md](foundations/states.md) and the base stylesheet does the rest.
+Load `tokens/tokens.css`, every file in `base/` in filename order, and the
+`style.css` of the components you need, then copy the markup from
+`examples/`. Add `data-actor`, `data-changed`, and `data-state` attributes as
+described in [states.md](foundations/states.md), and `sw-reveal` and
+`sw-quiet` as described in [quiet.md](foundations/quiet.md). The base
+stylesheet does the rest.
 
 ## Rules for a new component
 

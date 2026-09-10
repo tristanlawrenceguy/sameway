@@ -10,21 +10,39 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
-// recentActivity renders the newest n activity records as event components.
-// Workspaces without the activity type get an empty list.
-func (s *Server) recentActivity(n int) []template.HTML {
+// recentActivity renders the newest n actions inside a disclosure that is
+// closed by default, so the log is there when wanted and silent otherwise.
+// The full log is always on its own page, which is what a screen reader user
+// or an agent uses when they do not want to open this. Workspaces without
+// the activity type get nothing.
+func (s *Server) recentActivity(n int) template.HTML {
 	if _, ok := s.app.Types.Get(chat.ActivityType); !ok {
-		return nil
+		return ""
+	}
+	total, _ := s.app.Store.Count(chat.ActivityType)
+	if total == 0 {
+		return ""
 	}
 	recs, err := s.app.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: n})
 	if err != nil {
-		return nil
+		return ""
 	}
-	var out []template.HTML
+	var inner strings.Builder
+	inner.WriteString(`<ol class="sw-plain sw-stack--tight" aria-label="Recent activity">`)
 	for _, r := range recs {
-		out = append(out, s.event(r))
+		inner.WriteString("<li>" + string(s.event(r)) + "</li>")
 	}
-	return out
+	inner.WriteString(`</ol><p class="sw-small" style="margin:var(--sw-space-3) 0 0">`)
+	inner.WriteString(string(s.component("link", map[string]any{"href": "/activity", "label": "All activity"})))
+	inner.WriteString(`</p>`)
+
+	body, err := s.app.Registry.RenderSlot("disclosure",
+		map[string]any{"label": "Activity", "count": total, "id": "recent-activity"},
+		template.HTML(inner.String()))
+	if err != nil {
+		return ""
+	}
+	return template.HTML(`<h2 class="sw-visually-hidden">Activity</h2>` + string(body))
 }
 
 func (s *Server) event(r *store.Record) template.HTML {

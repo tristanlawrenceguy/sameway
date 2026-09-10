@@ -1,0 +1,42 @@
+/* Motion: every animation in the system is defined here, so it can all be
+   switched off in one place. Motion explains change; it never decorates. */
+
+@keyframes sw-enter { from { opacity: 0; transform: translateY(8px) scale(0.985); } to { opacity: 1; transform: none; } }
+@keyframes sw-exit  { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(-6px) scale(0.985); } }
+@keyframes sw-pulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+
+/* The change flash: a ring in the actor's colour sweeps outward once and a
+   tint fades away, so the eye lands on what just changed. */
+@keyframes sw-flash {
+  0%   { box-shadow: 0 0 0 0 var(--sw-actor, var(--sw-color-accent)); background-color: var(--sw-actor-soft, var(--sw-color-accent-soft)); }
+  35%  { box-shadow: 0 0 0 6px var(--sw-actor-soft, var(--sw-color-accent-soft)); }
+  100% { box-shadow: 0 0 0 14px transparent; background-color: transparent; }
+}
+
+/* Cross-document view transitions: full-page navigations morph what stayed
+   and animate what arrived or left. */
+@view-transition { navigation: auto; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: var(--sw-motion-base); }
+::view-transition-new(.sw-vt-item):only-child { animation: sw-enter var(--sw-motion-slow) var(--sw-motion-ease) both; }
+::view-transition-old(.sw-vt-item):only-child { animation: sw-exit var(--sw-motion-base) var(--sw-motion-ease) both; }
+::view-transition-group(.sw-vt-item) { animation-duration: var(--sw-motion-slow); animation-timing-function: var(--sw-motion-ease); }
+
+/* Change markers, set by the server for the duration of one page view. */
+[data-changed="added"], [data-changed="updated"] {
+  animation: sw-flash var(--sw-motion-slow) var(--sw-motion-ease-out) 1 both;
+  animation-delay: 120ms;
+  border-radius: var(--sw-radius-lg);
+}
+.sw-enter { animation: sw-enter var(--sw-motion-slow) var(--sw-motion-ease) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  @view-transition { navigation: none; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  /* Keep the meaning of a change without the movement. */
+  [data-changed="added"], [data-changed="updated"] { box-shadow: 0 0 0 3px var(--sw-actor, var(--sw-color-accent)); }
+}

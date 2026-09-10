@@ -160,11 +160,36 @@ func (r *Registry) Render(name string, props map[string]any) (template.HTML, err
 	return c.Render(props)
 }
 
+// RenderSlot renders a component by name with pre-rendered HTML inside it.
+func (r *Registry) RenderSlot(name string, props map[string]any, slot template.HTML) (template.HTML, error) {
+	c, ok := r.byName[name]
+	if !ok {
+		return "", fmt.Errorf("unknown component %q (known: %s)", name, strings.Join(r.Names(), ", "))
+	}
+	return c.RenderSlot(props, slot)
+}
+
 // Render validates and renders this component.
 func (c *Component) Render(props map[string]any) (template.HTML, error) {
+	return c.render(props, nil)
+}
+
+// RenderSlot renders the component with already-rendered HTML as its slot,
+// so server code can nest components (a list of events inside a disclosure,
+// say). Props coming from a model or a form can only ever put a plain
+// string in "slot", which the template escapes, so nesting is not a way in
+// for untrusted markup.
+func (c *Component) RenderSlot(props map[string]any, slot template.HTML) (template.HTML, error) {
+	return c.render(props, &slot)
+}
+
+func (c *Component) render(props map[string]any, slot *template.HTML) (template.HTML, error) {
 	clean, err := c.props.normalize(props)
 	if err != nil {
 		return "", fmt.Errorf("component %s: %w", c.Manifest.Name, err)
+	}
+	if slot != nil {
+		clean["slot"] = *slot
 	}
 	var buf bytes.Buffer
 	if err := c.tmpl.Execute(&buf, clean); err != nil {

@@ -137,6 +137,9 @@ func TestChatBuildsCanvasForPersonAndAgent(t *testing.T) {
 	}}
 	a.Chat.Provider, a.Chat.ProviderErr = model, nil
 
+	// Opening the canvas seeds its chat block, the way a person would start.
+	wantStatus(t, get(t, h, "/"), http.StatusOK)
+
 	rec := postJSON(t, h, http.MethodPost, "/api/chat", map[string]any{"message": "make a plan table"})
 	wantStatus(t, rec, http.StatusOK)
 	var reply struct {
@@ -158,8 +161,14 @@ func TestChatBuildsCanvasForPersonAndAgent(t *testing.T) {
 		}
 	}
 	decode(t, get(t, h, "/api/block"), &blocks)
-	if len(blocks.Records) != 1 || blocks.Records[0].Fields["component"] != "table" {
-		t.Fatalf("block API: %+v", blocks)
+	tableID := ""
+	for _, b := range blocks.Records {
+		if b.Fields["component"] == "table" {
+			tableID = b.ID
+		}
+	}
+	if tableID == "" {
+		t.Fatalf("block API has no table: %+v", blocks)
 	}
 
 	page := parse(t, get(t, h, "/"))
@@ -175,10 +184,10 @@ func TestChatBuildsCanvasForPersonAndAgent(t *testing.T) {
 		t.Errorf("expected user and assistant messages on the page, got %d", len(msgs))
 	}
 
-	del := postForm(t, h, "/canvas/"+blocks.Records[0].ID+"/delete", nil)
+	del := postForm(t, h, "/canvas/"+tableID+"/delete", nil)
 	wantStatus(t, del, http.StatusSeeOther)
-	if len(parse(t, get(t, h, "/")).WithAttr("data-block-component", "")) != 0 {
-		t.Errorf("block should be gone after a person removes it")
+	if len(parse(t, get(t, h, "/")).WithAttr("data-block-component", "table")) != 0 {
+		t.Errorf("the table block should be gone after a person removes it")
 	}
 
 	wantStatus(t, postForm(t, h, "/chat/clear", nil), http.StatusSeeOther)
@@ -191,7 +200,8 @@ func TestChatBuildsCanvasForPersonAndAgent(t *testing.T) {
 // model is reachable: the failure lands in the transcript, not a 500.
 func TestChatFormWithoutModelRecordsAnError(t *testing.T) {
 	_, h := newApp(t)
-	rec := postForm(t, h, "/chat", url.Values{"message": {"hello"}})
+	wantStatus(t, get(t, h, "/"), http.StatusOK)
+	rec := postForm(t, h, "/chat", url.Values{"message": {"hello"}, "from": {"/"}})
 	wantStatus(t, rec, http.StatusSeeOther)
 	if !strings.HasPrefix(rec.Header().Get("Location"), "/#msg-") {
 		t.Errorf("redirect should jump to the newest message, got %q", rec.Header().Get("Location"))

@@ -38,7 +38,8 @@ await page.keyboard.press("Tab");
 check(await page.evaluate(() => document.activeElement.textContent) === "Skip to main content", "home: first Tab lands on the skip link");
 await page.keyboard.press("Enter");
 check(await page.evaluate(() => document.activeElement.id) === "main", "home: skip link moves focus into main");
-check(await page.getByRole("region").count() >= 0 && await page.locator("section[aria-labelledby]").count() === 2, "home: conversation and canvas regions are labelled");
+check(await page.getByRole("region", { name: "Assistant" }).count() === 1, "home: the canvas carries a named chat region");
+check(await page.locator(".sw-canvas > li[data-block-id]").count() >= 1, "home: the canvas is a list of blocks");
 
 // Status live region and the busy enhancement: submitting flips the status
 // to "working" and marks the region before the page reloads.
@@ -107,6 +108,51 @@ check((await invalid.inputValue()).length === 201, "edit: submitted value is pre
 check(await page.getByRole("alert").count() >= 1, "edit: failed submit announces an alert");
 await axe("edit with errors");
 
+// ---- the quiet layer ----------------------------------------------------
+// Per-item controls are faded until hovered or focused, but must stay
+// present, focusable, named, and clickable for everyone.
+await page.goto(base + "/");
+const bar = page.locator(".sw-bar").first();
+if (await bar.count()) {
+  check(await bar.evaluate((el) => getComputedStyle(el).opacity) === "0", "quiet: control bars start faded");
+  check(await bar.isVisible(), "quiet: a faded control bar is still reported visible to automation");
+  const hidden = await bar.evaluate((el) => {
+    const bad = [];
+    el.querySelectorAll("*").forEach((n) => {
+      const cs = getComputedStyle(n);
+      if (cs.display === "none" || cs.visibility === "hidden") bad.push(n.tagName + ":style");
+      if (n.hasAttribute("aria-hidden") || n.hasAttribute("inert")) bad.push(n.tagName + ":aria");
+      if (n.tabIndex === -1 && n.matches("a,button")) bad.push(n.tagName + ":tabindex");
+    });
+    return bad;
+  });
+  check(hidden.length === 0, `quiet: nothing may be hidden from assistive technology (${hidden.join(", ")})`);
+
+  // Hover reveals it.
+  await bar.locator("..").hover();
+  await page.waitForTimeout(400);
+  check(await bar.evaluate((el) => getComputedStyle(el).opacity) === "1", "quiet: hovering the block reveals its controls");
+
+  // Keyboard focus reveals it too.
+  await page.mouse.move(0, 0);
+  await page.waitForTimeout(400);
+  await bar.locator("a,button").first().focus();
+  await page.waitForTimeout(400);
+  check(await bar.evaluate((el) => getComputedStyle(el).opacity) === "1", "quiet: focusing a control reveals it for keyboard users");
+
+  // An agent can operate it by role and name without hovering first.
+  const names = await bar.locator("a,button").evaluateAll((els) => els.map((e) => e.textContent.replace(/\s+/g, " ").trim()));
+  for (const n of names) check(/ /.test(n), `quiet: compact control "${n}" should carry its context in the accessible name`);
+}
+
+// The activity log is collapsed, and its full contents live on their own page.
+const disclosure = page.locator("details[data-component=disclosure]").first();
+if (await disclosure.count()) {
+  check(!(await disclosure.evaluate((el) => el.open)), "disclosure: the activity log starts closed");
+  await disclosure.locator("summary").click();
+  check(await disclosure.evaluate((el) => el.open), "disclosure: clicking the summary opens it");
+}
+
 // ---- agent --------------------------------------------------------------
 
 const describe = await (await fetch(base + "/api/describe")).json();
@@ -121,7 +167,7 @@ const created = await fetch(base + "/api/note", {
 check(created.status === 201, `agent: POST /api/note returns 201 (got ${created.status})`);
 const rec = await created.json();
 
-for (const path of ["/", "/t/note", "/t/note/new", `/t/note/${rec.id}`, `/t/note/${rec.id}/edit`]) {
+for (const path of ["/", "/chat", "/activity", "/t/note", "/t/note/new", `/t/note/${rec.id}`, `/t/note/${rec.id}/edit`]) {
   await page.goto(base + path);
   const names = await page.locator("[data-component]").evaluateAll((els) => els.map((e) => e.dataset.component));
   for (const n of new Set(names)) check(known.has(n), `${path}: renders component ${n} that /api/describe does not list`);

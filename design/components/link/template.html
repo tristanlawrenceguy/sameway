@@ -1,1 +1,1 @@
-<a class="sw-link" data-component="link" href="{{.href}}"{{if .id}} id="{{.id}}"{{end}}{{if .current}} aria-current="page"{{end}}>{{.label}}</a>
+<a class="sw-link sw-pressable" data-component="link" href="{{.href}}"{{if .id}} id="{{.id}}"{{end}}{{if .current}} aria-current="page"{{end}}>{{.label}}{{if .context}}<span class="sw-visually-hidden"> {{.context}}</span>{{end}}</a>

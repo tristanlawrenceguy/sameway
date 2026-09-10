@@ -14,21 +14,31 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
-//go:embed chat.html
-var chatSrc string
+//go:embed conversation.html
+var conversationSrc string
 
-var chatTmpl = template.Must(template.New("chat").Funcs(render.Funcs).Parse(chatSrc))
+var conversationTmpl = template.Must(template.New("conversation").Funcs(render.Funcs).Parse(conversationSrc))
 
-type chatView struct {
-	Notice    template.HTML
+// conversation is the rendered transcript and composer, plus the facts the
+// page around it needs. The same value fills a chat block on the canvas and
+// the standalone /chat page.
+type conversation struct {
+	Body     template.HTML
+	Notice   template.HTML
+	Activity template.HTML
+	LatestID string
+	LastTurn time.Time
+	Count    int
+}
+
+type conversationView struct {
 	Status    template.HTML
 	Messages  []chatMessage
-	Blocks    []canvasBlock
 	Compose   template.HTML
 	Send      template.HTML
 	Clear     template.HTML
 	ModelName string
-	Activity  []template.HTML
+	From      string
 }
 
 type chatMessage struct {
@@ -36,77 +46,75 @@ type chatMessage struct {
 	HTML template.HTML
 }
 
-type canvasBlock struct {
-	ID        string
-	Component string
-	Actor     string
-	Changed   string
-	HTML      template.HTML
-	Badge     template.HTML
-	Edit      template.HTML
-	Remove    template.HTML
-}
-
-// chatPage is the home page: the conversation and the canvas side by side,
-// with provenance on every block, change markers from the last turn, a
-// live status, and the recent activity log.
-func (s *Server) chatPage(w http.ResponseWriter, r *http.Request) {
-	view := chatView{}
-	if err := s.app.Chat.Available(); err != nil {
-		view.Notice = s.component("alert", map[string]any{"kind": "danger", "title": "Chat is not available", "message": err.Error()})
-	} else if s.app.Chat.Provider == nil {
+// conversation renders the transcript and composer once, for whichever
+// surface is showing it.
+func (s *Server) conversation(from string) (*conversation, error) {
+	out := &conversation{}
+	view := conversationView{From: from}
+	if s.app.Chat.Provider == nil {
 		problem := "No model is configured."
 		if s.app.Chat.ProviderErr != nil {
 			problem = s.app.Chat.ProviderErr.Error()
 		}
-		view.Notice = s.component("alert", map[string]any{"kind": "warning", "title": "No model connected", "message": problem + " Edit the llm section of workspace.yaml and restart sameway serve."})
+		out.Notice = s.component("alert", map[string]any{"kind": "warning", "title": "No model connected",
+			"message": problem + " Edit the llm section of workspace.yaml and restart sameway serve."})
 	} else {
 		view.ModelName = s.app.Chat.Provider.Name()
 	}
-	focus := ""
-	if s.app.Chat.Available() == nil {
-		msgs, err := s.app.Store.List(chat.MessageType, store.ListOptions{OrderBy: "created_at"})
-		if err != nil {
-			s.fail(w, err)
-			return
-		}
-		var lastTurn time.Time
-		for _, m := range msgs {
-			if m.Fields["role"] == "user" {
-				lastTurn = m.CreatedAt
-			}
-			id := "msg-" + m.ID
-			focus = id
-			view.Messages = append(view.Messages, chatMessage{ID: id, HTML: s.component("message", map[string]any{
-				"role": m.Fields["role"], "content": m.Fields["content"], "id": id,
-				"time": m.CreatedAt.Local().Format("15:04"), "changes": m.Fields["changes"],
-			})})
-		}
-		view.Status = s.status(msgs)
-		blocks, err := s.app.Store.List(chat.BlockType, store.ListOptions{OrderBy: "position"})
-		if err != nil {
-			s.fail(w, err)
-			return
-		}
-		for _, b := range blocks {
-			view.Blocks = append(view.Blocks, s.canvasBlock(b, lastTurn))
-		}
-		view.Activity = s.recentActivity(6)
+
+	msgs, err := s.app.Store.List(chat.MessageType, store.ListOptions{OrderBy: "created_at"})
+	if err != nil {
+		return nil, err
 	}
-	view.Compose = s.component("textarea", map[string]any{"label": "Your message", "name": "message", "rows": 3, "required": true, "hint": "Ask for content or a component. Send with the button."})
+	for _, m := range msgs {
+		if m.Fields["role"] == "user" {
+			out.LastTurn = m.CreatedAt
+		}
+		id := "msg-" + m.ID
+		out.LatestID = id
+		view.Messages = append(view.Messages, chatMessage{ID: id, HTML: s.component("message", map[string]any{
+			"role": m.Fields["role"], "content": m.Fields["content"], "id": id,
+			"time": m.CreatedAt.Local().Format("15:04"), "changes": m.Fields["changes"],
+		})})
+	}
+	out.Count = len(msgs)
+	view.Status = s.status(msgs)
+	view.Compose = s.component("textarea", map[string]any{"label": "Your message", "name": "message", "rows": 3, "required": true})
 	view.Send = s.component("button", map[string]any{"label": "Send", "type": "submit"})
-	view.Clear = s.component("button", map[string]any{"label": "Clear conversation", "type": "submit", "variant": "secondary"})
+	view.Clear = s.component("button", map[string]any{"label": "Clear", "context": "conversation", "type": "submit", "variant": "quiet"})
 
 	var body bytes.Buffer
-	if err := chatTmpl.Execute(&body, view); err != nil {
+	if err := conversationTmpl.Execute(&body, view); err != nil {
+		return nil, err
+	}
+	out.Body = template.HTML(body.String())
+	out.Activity = s.recentActivity(8)
+	return out, nil
+}
+
+// chatPage shows the conversation on its own page. It is always here, even
+// when the canvas has no chat block, so a layout choice can never take the
+// assistant away.
+func (s *Server) chatPage(w http.ResponseWriter, r *http.Request) {
+	if err := s.app.Chat.Available(); err != nil {
+		s.page(w, r, "Chat", s.component("alert", map[string]any{"kind": "danger", "title": "Chat is not available", "message": err.Error()}), pageOptions{})
+		return
+	}
+	convo, err := s.conversation("/chat")
+	if err != nil {
+		s.fail(w, err)
+		return
+	}
+	body, err := s.app.Registry.RenderSlot(chat.ComponentName, map[string]any{"layout": "bare"}, convo.Body)
+	if err != nil {
 		s.fail(w, err)
 		return
 	}
 	opts := pageOptions{JSONURL: "/api/message"}
-	if focus != "" {
-		opts.Focus, opts.FocusLabel = focus, "Skip to latest message"
+	if convo.LatestID != "" {
+		opts.Focus, opts.FocusLabel = convo.LatestID, "Skip to latest message"
 	}
-	s.page(w, r, "Chat", template.HTML(body.String()), opts)
+	s.page(w, r, "Chat", template.HTML(string(convo.Notice)+string(body)+string(convo.Activity)), opts)
 }
 
 // status summarises the last turn for the live region.
@@ -136,48 +144,15 @@ func (s *Server) status(msgs []*store.Record) template.HTML {
 	return s.component("status", props)
 }
 
-// canvasBlock renders one block with its provenance badge, change marker,
-// and the actions a person can take on it.
-func (s *Server) canvasBlock(b *store.Record, lastTurn time.Time) canvasBlock {
-	name, _ := b.Fields["component"].(string)
-	props, _ := b.Fields["props"].(map[string]any)
-	actor, _ := b.Fields["actor"].(string)
-	if actor == "" {
-		actor = "assistant"
-	}
-	createdBy, _ := b.Fields["created_by"].(string)
-	if createdBy == "" {
-		createdBy = actor
-	}
-	who := map[string]string{"human": "you", "assistant": "assistant"}
-	edited := actor != createdBy || b.UpdatedAt.Sub(b.CreatedAt) > time.Second
-	label := "Added by " + who[createdBy]
-	if edited {
-		label = "Added by " + who[createdBy] + ", edited by " + who[actor]
-	}
-	label += " · " + b.UpdatedAt.Local().Format("15:04")
-	changed := ""
-	if !lastTurn.IsZero() {
-		if !b.CreatedAt.Before(lastTurn) {
-			changed = "added"
-		} else if !b.UpdatedAt.Before(lastTurn) {
-			changed = "updated"
-		}
-	}
-	return canvasBlock{
-		ID: b.ID, Component: name, Actor: actor, Changed: changed,
-		HTML:   s.component(name, props),
-		Badge:  s.component("badge", map[string]any{"label": label, "tone": actor}),
-		Edit:   s.component("link", map[string]any{"href": "/t/block/" + b.ID + "/edit", "label": "Edit " + name}),
-		Remove: s.component("button", map[string]any{"label": "Remove " + name, "type": "submit", "variant": "secondary"}),
-	}
-}
-
-// chatSend handles the compose form, then redirects to the newest message.
+// chatSend handles the compose form, then returns to where it was sent from.
 func (s *Server) chatSend(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "bad form", http.StatusBadRequest)
 		return
+	}
+	back := "/"
+	if from := r.PostForm.Get("from"); from == "/chat" {
+		back = from
 	}
 	rec, err := s.app.Chat.Send(r.Context(), r.PostForm.Get("message"))
 	if rec == nil {
@@ -186,10 +161,10 @@ func (s *Server) chatSend(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Printf("chat: %v", err)
 		}
-		http.Redirect(w, r, "/", http.StatusSeeOther)
+		http.Redirect(w, r, back, http.StatusSeeOther)
 		return
 	}
-	http.Redirect(w, r, "/#msg-"+rec.ID, http.StatusSeeOther)
+	http.Redirect(w, r, back+"#msg-"+rec.ID, http.StatusSeeOther)
 }
 
 func (s *Server) chatClear(w http.ResponseWriter, r *http.Request) {
@@ -197,23 +172,10 @@ func (s *Server) chatClear(w http.ResponseWriter, r *http.Request) {
 		s.fail(w, err)
 		return
 	}
-	http.Redirect(w, r, "/", http.StatusSeeOther)
-}
-
-// canvasDelete is a person removing a block; it is logged as a human action.
-func (s *Server) canvasDelete(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
-	rec, err := s.app.Store.Get(chat.BlockType, id)
-	if err != nil {
-		s.fail(w, err)
-		return
+	r.ParseForm()
+	back := "/"
+	if from := r.PostForm.Get("from"); from == "/chat" {
+		back = from
 	}
-	if err := s.app.Store.Delete(chat.BlockType, id); err != nil {
-		s.fail(w, err)
-		return
-	}
-	name, _ := rec.Fields["component"].(string)
-	props, _ := rec.Fields["props"].(map[string]any)
-	chat.Record(s.app.Store, "human", chat.Change{Action: "removed", Component: name, ID: id, Detail: chat.Summarise(name, props)})
-	http.Redirect(w, r, "/#canvas", http.StatusSeeOther)
+	http.Redirect(w, r, back, http.StatusSeeOther)
 }

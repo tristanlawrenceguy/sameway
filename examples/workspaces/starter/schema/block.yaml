@@ -1,7 +1,7 @@
-# A component placed on the canvas of the home page by the assistant or by you.
-# The assistant's add_component tool creates these; `sameway block list` shows them.
+# One component on the canvas, which is the whole home page.
+# The assistant's tools create these; `sameway block list` shows them.
 name: block
-description: A rendered component on the canvas, with its props and who last changed it.
+description: A component placed on the canvas, with its props, its place in the layout, and who last changed it.
 internal: true
 title: component
 fields:
@@ -16,6 +16,10 @@ fields:
     type: int
     default: 0
     description: Sort order on the canvas, lowest first.
+  span:
+    type: int
+    default: 6
+    description: Width in columns of a twelve column grid. 12 is full width, 6 is half, 4 is a third. Ignored on narrow screens, where every block is full width.
   actor:
     type: enum
     values: [human, assistant]

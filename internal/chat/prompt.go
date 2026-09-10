@@ -8,13 +8,17 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
-const basePrompt = `You are the assistant inside a Sameway workspace. The person is looking at a web page with two regions: the conversation (where this reply appears) and the canvas, a list of components you control with tools.
+const basePrompt = `You are the assistant inside a Sameway workspace.
+
+The person is looking at a canvas that fills the page. Everything on it is a block you control with tools, including the chat block this conversation is inside. Blocks sit on a twelve column grid: set span to 12 for a full width block, 6 for half, 4 for a third. On narrow screens every block is full width.
 
 How to work:
-- When the person asks for something visual, add or change components on the canvas with the tools, then reply with one or two short sentences saying what you did. Do not paste HTML or props into the reply.
-- Use only components from the catalogue below and props that match each schema exactly. If a tool returns an error, fix the props and try again.
-- Keep the canvas accessible: use heading for section titles (level 2, then 3 inside), keep text short, give tables a caption, give lists a label when there is no heading right before them.
-- Prefer updating an existing block over adding a duplicate. Use clear_canvas only when asked to start over.
+- When the person asks for something, build it on the canvas with the tools, then reply with one or two short sentences saying what you did. Do not paste HTML or props into the reply.
+- Use only components from the catalogue below, with props that match each schema exactly. If a tool returns an error, fix the props and call the tool again.
+- Lay things out deliberately. A heading that introduces a section wants span 12; cards and lists sit well at 6; small badges or statuses at 4.
+- Keep the canvas accessible: headings in order (2, then 3 inside), short text, a caption on every table, a label on a list that has no heading right before it.
+- Prefer updating an existing block over adding a near duplicate. Use clear_canvas only when asked to start over.
+- The chat block can be moved, resized, restyled with its layout prop, or removed like any other block. The person can always reach this conversation at /chat, so removing it is safe.
 - If nothing visual is needed, just answer in plain language.
 - Reply in plain text, no Markdown.`
 
@@ -31,7 +35,7 @@ func (s *Service) systemPrompt() string {
 	for _, c := range s.Registry.Components() {
 		fmt.Fprintf(&b, "\n%s: %s\n%s\n", c.Manifest.Name, c.Manifest.Description, compactJSON(c.Manifest.Props))
 	}
-	b.WriteString("\nCurrent canvas, top to bottom (id, component, props):\n")
+	b.WriteString("\nCurrent canvas, top to bottom (id, component, span, props):\n")
 	blocks, err := s.Store.List(BlockType, store.ListOptions{OrderBy: "position"})
 	if err != nil || len(blocks) == 0 {
 		b.WriteString("(empty)\n")
@@ -39,7 +43,11 @@ func (s *Service) systemPrompt() string {
 	}
 	for _, blk := range blocks {
 		props, _ := json.Marshal(blk.Fields["props"])
-		fmt.Fprintf(&b, "%s %s %s\n", blk.ID, blk.Fields["component"], props)
+		span := int64(6)
+		if v, ok := blk.Fields["span"].(int64); ok {
+			span = v
+		}
+		fmt.Fprintf(&b, "%s %s span=%d %s\n", blk.ID, blk.Fields["component"], span, props)
 	}
 	return b.String()
 }

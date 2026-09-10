@@ -1,0 +1,15 @@
+.sw-chat { display: flex; flex-direction: column; min-width: 0; }
+.sw-chat--panel {
+  padding: var(--sw-space-4);
+  background: var(--sw-color-bg-raised);
+  border: 1px solid var(--sw-color-border);
+  border-radius: var(--sw-radius-lg);
+  box-shadow: var(--sw-shadow-1);
+}
+.sw-chat__title { margin: 0 0 var(--sw-space-4); font-size: var(--sw-size-text-lg); }
+.sw-chat--bare > .sw-chat__title { margin: 0; }
+.sw-chat__body { min-width: 0; }
+/* The transcript scrolls inside the region so the composer stays reachable
+   however tall the conversation grows. */
+.sw-chat__log { max-height: min(48vh, 32rem); overflow-y: auto; padding-right: var(--sw-space-2); }
+.sw-chat__log:focus-visible { outline-offset: 0; }

@@ -1,0 +1,33 @@
+/* Feedback: focus, press, and the actor roles that colour provenance.
+   Every interactive element gets an immediate, non-persistent response. */
+
+/* Focus: a double ring (ring + halo) that reads on any surface. */
+:focus-visible {
+  outline: var(--sw-focus-width) solid var(--sw-color-focus);
+  outline-offset: var(--sw-focus-offset);
+  box-shadow: 0 0 0 var(--sw-focus-offset) var(--sw-color-focus-halo);
+  border-radius: var(--sw-radius-sm);
+}
+:focus:not(:focus-visible) { outline: none; }
+
+/* Press: the ring snaps on immediately and fades out after release, so the
+   feedback outlives the click without any JavaScript. Anything that opts in
+   sets --sw-press to its own tone. */
+.sw-pressable {
+  --sw-press: var(--sw-color-accent-soft);
+  transition: box-shadow var(--sw-motion-slow) var(--sw-motion-ease-out),
+              transform var(--sw-motion-fast) var(--sw-motion-ease),
+              background var(--sw-motion-fast) var(--sw-motion-ease),
+              border-color var(--sw-motion-fast) var(--sw-motion-ease),
+              opacity var(--sw-motion-fast) var(--sw-motion-ease);
+}
+.sw-pressable:active:not([disabled]):not([aria-disabled="true"]) {
+  box-shadow: 0 0 0 0.4rem var(--sw-press);
+  transform: scale(0.97);
+  transition-duration: 0ms;
+}
+
+/* Actor roles: who did it. Components read --sw-actor. */
+[data-actor="human"]     { --sw-actor: var(--sw-color-human);     --sw-actor-soft: var(--sw-color-human-soft); }
+[data-actor="assistant"] { --sw-actor: var(--sw-color-assistant); --sw-actor-soft: var(--sw-color-assistant-soft); }
+[data-actor="system"]    { --sw-actor: var(--sw-color-system);    --sw-actor-soft: var(--sw-color-system-soft); }

@@ -82,6 +82,60 @@ func TestRoundTrip(t *testing.T) {
 	}
 }
 
+// TestFieldAddedLaterReadsAsItsDefault covers the migration path: a column
+// added to an existing table is NULL for old rows, and must read back as the
+// schema's default rather than as a null the schema does not admit.
+func TestFieldAddedLaterReadsAsItsDefault(t *testing.T) {
+	dir := t.TempDir()
+	db := filepath.Join(dir, "data.db")
+	before := "name: note\nfields:\n  title: {type: string, required: true}\n"
+	if err := os.WriteFile(filepath.Join(dir, "note.yaml"), []byte(before), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	set, err := schema.Load(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	st, err := store.Open(db, set)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rec, err := st.Create("note", map[string]any{"title": "Old"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	st.Close()
+
+	// The author adds fields with defaults and reopens the workspace.
+	after := before + "  span: {type: int, default: 6}\n  status: {type: enum, values: [draft, live], default: draft}\n  tags: {type: list, of: string}\n"
+	if err := os.WriteFile(filepath.Join(dir, "note.yaml"), []byte(after), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	set, err = schema.Load(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	st, err = store.Open(db, set)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer st.Close()
+
+	got, err := st.Get("note", rec.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Fields["span"] != int64(6) {
+		t.Errorf("span should read back as its default 6, got %#v", got.Fields["span"])
+	}
+	if got.Fields["status"] != "draft" {
+		t.Errorf("status should read back as its default, got %#v", got.Fields["status"])
+	}
+	if tags, ok := got.Fields["tags"].([]any); !ok || len(tags) != 0 {
+		t.Errorf("a list with no default should read back empty, got %#v", got.Fields["tags"])
+	}
+}
+
 func TestValidation(t *testing.T) {
 	st := open(t)
 	_, err := st.Create("note", map[string]any{"body": "no title", "status": "bogus", "nope": 1})

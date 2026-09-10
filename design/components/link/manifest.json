@@ -1,6 +1,6 @@
 {
   "name": "link",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Navigates to another page or location. For an action on the current page use button.",
   "props": {
     "type": "object",
@@ -9,6 +9,7 @@
     "properties": {
       "href": { "type": "string", "minLength": 1, "description": "Destination URL or path." },
       "label": { "type": "string", "minLength": 1, "description": "Visible text. Describe the destination, never 'click here'." },
+      "context": { "type": "string", "description": "Extra words added to the accessible name but not shown, so a compact label like 'Edit' still reads as 'Edit card'." },
       "current": { "type": "boolean", "default": false, "description": "True when the link points at the page being viewed." },
       "id": { "type": "string" }
     }
@@ -20,15 +21,16 @@
       { "key": "Tab", "does": "moves focus to and from the link" }
     ],
     "states": ["aria-current"],
-    "wcag": { "target": "AAA", "notes": "Link text is meaningful out of context (2.4.9). Underlined so colour is not the only cue (1.4.1). 7:1 contrast." }
+    "wcag": { "target": "AAA", "notes": "Link text is meaningful out of context (2.4.9), with context filling in the rest of the name when the visible label is compact. Underlined so colour is not the only cue (1.4.1). 7:1 contrast." }
   },
   "machine": {
     "selector": "[data-component=\"link\"]",
-    "identify": "The accessible name is the visible label text. The href attribute is the destination.",
+    "identify": "The accessible name is the visible label plus any context text. The href attribute is the destination.",
     "operate": "Click it, or focus it and press Enter. Read aria-current to know whether it is the current page."
   },
   "examples": [
     { "name": "default", "props": { "href": "/t/note", "label": "All notes" }, "file": "examples/default.html" },
-    { "name": "current", "props": { "href": "/", "label": "Chat", "current": true }, "file": "examples/current.html" }
+    { "name": "current", "props": { "href": "/", "label": "Chat", "current": true }, "file": "examples/current.html" },
+    { "name": "context", "props": { "href": "/t/block/abc/edit", "label": "Edit", "context": "card" }, "file": "examples/context.html" }
   ]
 }

@@ -58,7 +58,7 @@ func TestHomePageShell(t *testing.T) {
 func assertAllComponentsKnown(t *testing.T, doc *htmltest.Doc) {
 	t.Helper()
 	known := map[string]bool{}
-	for _, name := range []string{"alert", "badge", "button", "card", "checkbox", "event", "heading", "link", "list", "message", "select", "status", "table", "text", "text-field", "textarea"} {
+	for _, name := range []string{"alert", "badge", "button", "card", "chat", "checkbox", "disclosure", "event", "heading", "link", "list", "message", "select", "status", "table", "text", "text-field", "textarea"} {
 		known[name] = true
 	}
 	for _, n := range doc.WithAttr("data-component", "") {
@@ -154,7 +154,7 @@ func TestContentPagesLifecycle(t *testing.T) {
 func TestEveryPageHasOneH1AndLabelledControls(t *testing.T) {
 	a, h := newApp(t)
 	rec, _ := a.Store.Create("note", map[string]any{"title": "Seed"})
-	for _, path := range []string{"/", "/t/note", "/t/note/new", "/t/note/" + rec.ID, "/t/note/" + rec.ID + "/edit"} {
+	for _, path := range []string{"/", "/chat", "/activity", "/design", "/t/note", "/t/note/new", "/t/note/" + rec.ID, "/t/note/" + rec.ID + "/edit"} {
 		doc := parse(t, get(t, h, path))
 		if n := len(doc.Elements("h1")); n != 1 {
 			t.Errorf("%s: %d h1 elements", path, n)

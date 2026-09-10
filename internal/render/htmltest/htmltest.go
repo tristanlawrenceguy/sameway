@@ -99,7 +99,11 @@ func Focusable(n *html.Node) bool {
 		return false
 	}
 	switch n.Data {
-	case "button", "input", "select", "textarea":
+	case "input":
+		// A hidden input is not a control; it carries a form value.
+		t, _ := Attr(n, "type")
+		return t != "hidden"
+	case "button", "select", "textarea":
 		return true
 	case "a":
 		_, ok := Attr(n, "href")

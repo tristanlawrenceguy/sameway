@@ -1,0 +1,25 @@
+.sw-disclosure { border-top: 1px solid var(--sw-color-border); }
+.sw-disclosure__summary {
+  display: flex; align-items: center; gap: var(--sw-space-2);
+  min-height: var(--sw-size-target); padding: 0 var(--sw-space-2);
+  cursor: pointer; font-weight: 600; color: var(--sw-color-fg-muted);
+  border-radius: var(--sw-radius-md); list-style: none;
+}
+.sw-disclosure__summary::-webkit-details-marker { display: none; }
+/* Own marker, so the twisty is a shape we control and can rotate. */
+.sw-disclosure__summary::before {
+  content: ""; flex: none;
+  width: 0.5rem; height: 0.5rem;
+  border-right: 2px solid currentColor; border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg); margin-right: var(--sw-space-1);
+  transition: transform var(--sw-motion-base) var(--sw-motion-ease);
+}
+.sw-disclosure[open] > .sw-disclosure__summary::before { transform: rotate(45deg); }
+.sw-disclosure__summary:hover { color: var(--sw-color-fg); background: var(--sw-color-bg-muted); }
+.sw-disclosure__count {
+  font-variant-numeric: tabular-nums; font-size: var(--sw-size-text-xs); font-weight: 700;
+  padding: 0.05rem var(--sw-space-2); border-radius: var(--sw-radius-pill);
+  background: var(--sw-color-bg-muted); color: var(--sw-color-fg-muted);
+}
+.sw-disclosure__body { padding: var(--sw-space-2) var(--sw-space-2) var(--sw-space-4); }
+.sw-disclosure[open] > .sw-disclosure__body { animation: sw-enter var(--sw-motion-base) var(--sw-motion-ease) both; }

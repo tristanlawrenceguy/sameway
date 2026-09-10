@@ -58,6 +58,19 @@ func (t *Type) Normalize(in map[string]any) (map[string]any, error) {
 	return out, nil
 }
 
+// DefaultValue is what a field holds when nothing was stored for it: its
+// declared default, or the zero value for its type. Records written before
+// a field was added read back through this, so adding a field to a schema
+// needs no backfill and never surfaces a null the schema does not admit.
+func DefaultValue(f Field) any {
+	if f.Default != nil {
+		if v, err := coerce(f, f.Default); err == nil {
+			return v
+		}
+	}
+	return zero(f)
+}
+
 func zero(f Field) any {
 	switch f.Type {
 	case "int":

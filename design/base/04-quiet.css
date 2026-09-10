@@ -1,0 +1,51 @@
+/* The quiet layer.
+ *
+ * Chrome (per-item controls, provenance labels, an idle status) is present
+ * for everyone at all times: in the DOM, in the tab order, and in the
+ * accessibility tree. It is only visually faded, so the page reads as
+ * content rather than controls.
+ *
+ * It is never display:none or visibility:hidden and never aria-hidden.
+ * Those would take it away from screen reader users and from agents as
+ * well as from sighted users, which is the opposite of the goal. Opacity
+ * alone keeps it announced, focusable, hittable, and reported as visible
+ * by browser automation, while a person only sees it when they need it.
+ *
+ * It reveals when the enclosing .sw-reveal group is hovered, when anything
+ * inside that group takes focus, or when the element itself is focused.
+ * Layout never shifts, because the space is always reserved.
+ */
+
+.sw-quiet, .sw-status--idle {
+  opacity: var(--sw-quiet-opacity, 0);
+  transition: opacity var(--sw-motion-base) var(--sw-motion-ease);
+}
+
+.sw-reveal:hover, .sw-reveal:focus-within,
+.sw-quiet:focus-within, .sw-quiet:focus-visible { --sw-quiet-opacity: 1; }
+
+/* Always on where fading would strand someone:
+   - coarse pointers and touch screens, which have no hover
+   - people who asked for more contrast
+   - forced-colours modes, where opacity is unreliable
+   - workspaces set to ui.controls: visible */
+@media (hover: none), (pointer: coarse) { :root { --sw-quiet-opacity: 1; } }
+@media (prefers-contrast: more), (forced-colors: active) { :root { --sw-quiet-opacity: 1; } }
+:root[data-controls="visible"] { --sw-quiet-opacity: 1; }
+
+/* Per-item control bars. Absolutely placed so revealing them moves nothing;
+   the item reserves the room with padding. */
+.sw-bar {
+  position: absolute; right: var(--sw-space-2); bottom: var(--sw-space-2);
+  display: flex; align-items: center; gap: var(--sw-space-1);
+  padding: var(--sw-space-1);
+  border: 1px solid var(--sw-color-border);
+  border-radius: var(--sw-radius-pill);
+  background: color-mix(in srgb, var(--sw-color-bg-raised) 88%, transparent);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--sw-shadow-1);
+  max-width: calc(100% - var(--sw-space-4));
+  flex-wrap: wrap;
+}
+.sw-bar form { display: contents; }
+.sw-bar .sw-badge { background: transparent; }

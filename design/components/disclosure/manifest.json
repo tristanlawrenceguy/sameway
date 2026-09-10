@@ -1,0 +1,37 @@
+{
+  "name": "disclosure",
+  "version": "1.0.0",
+  "description": "Hides secondary detail behind a summary that says what is inside and how much. Closed by default, so a page can carry a log or a long aside without spending attention on it.",
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["label"],
+    "properties": {
+      "label": { "type": "string", "minLength": 1, "description": "What is inside, as a noun phrase: 'Activity', 'Raw props'." },
+      "count": { "type": "integer", "minimum": 0, "description": "How many items are inside, shown next to the label so the summary is informative while closed." },
+      "open": { "type": "boolean", "default": false, "description": "Start expanded. Default is closed." },
+      "slot": { "type": "string", "description": "Text content. Server code can instead pass pre-rendered components as the slot; props supplied by a model or a form are always escaped as text." },
+      "id": { "type": "string", "description": "Needed for the enhancement script to remember whether this disclosure was open." }
+    }
+  },
+  "a11y": {
+    "role": "group with a button (native details and summary)",
+    "keyboard": [
+      { "key": "Tab", "does": "moves focus to and from the summary" },
+      { "key": "Enter", "does": "opens or closes it" },
+      { "key": "Space", "does": "opens or closes it" }
+    ],
+    "states": ["open"],
+    "wcag": { "target": "AAA", "notes": "A native details element, so the expanded state is exposed everywhere without ARIA. The count is in the summary text, so a person knows whether opening it is worth it (2.4.6). Content of a closed disclosure is not in the accessibility tree, which is the point; anything that must always be reachable belongs on its own page as well." }
+  },
+  "machine": {
+    "selector": "[data-component=\"disclosure\"]",
+    "identify": "A details element. Read the open attribute for its state and the summary text for the label and count.",
+    "operate": "Click the summary, or focus it and press Enter, to expand. Content inside a closed disclosure is not readable until it is opened."
+  },
+  "examples": [
+    { "name": "default", "props": { "label": "Activity", "count": 12, "slot": "Nothing here yet.", "id": "activity" }, "file": "examples/default.html" },
+    { "name": "open", "props": { "label": "Raw props", "open": true, "slot": "{\"text\":\"Shopping\"}" }, "file": "examples/open.html" },
+    { "name": "plain", "props": { "label": "What this means" }, "file": "examples/plain.html" }
+  ]
+}

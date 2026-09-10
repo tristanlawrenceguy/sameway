@@ -35,7 +35,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) { s.mux.Serve
 
 func (s *Server) routes() {
 	m := s.mux
-	m.HandleFunc("GET /{$}", s.chatPage)
+	m.HandleFunc("GET /{$}", s.canvasPage)
+	m.HandleFunc("GET /chat", s.chatPage)
 	m.HandleFunc("POST /chat", s.chatSend)
 	m.HandleFunc("POST /chat/clear", s.chatClear)
 	m.HandleFunc("POST /canvas/{id}/delete", s.canvasDelete)
@@ -73,12 +74,14 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 	p := render.Page{
 		Site:       s.app.Workspace.Config.Name,
 		Title:      title,
+		Controls:   s.app.Workspace.Config.UI.Controls,
 		Body:       body,
 		JSONURL:    opts.JSONURL,
 		Focus:      opts.Focus,
 		FocusLabel: opts.FocusLabel,
 	}
-	p.Nav = append(p.Nav, s.navLink("/", "Chat", r.URL.Path == "/"))
+	p.Nav = append(p.Nav, s.navLink("/", "Canvas", r.URL.Path == "/"))
+	p.Nav = append(p.Nav, s.navLink("/chat", "Chat", r.URL.Path == "/chat"))
 	for _, t := range s.app.Types.Types {
 		if t.Internal {
 			continue

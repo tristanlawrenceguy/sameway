@@ -21,12 +21,13 @@ runner in tools/a11y-runner.
 |---|---|---|
 | `design/components/<name>/` | one component: manifest, template, css, examples, README | `design/README.md` |
 | `design/tokens/tokens.json` | design tokens; regenerate css with `go run ./tools/tokens` | |
+| `design/base/*.css` | foundation, one concern per file, loaded in filename order | `design/foundations/` |
 | `internal/schema/` | content type files to Go types, validation, JSON Schema | `schema.go` |
 | `internal/store/` | SQLite, one table per type | `store.go` |
 | `internal/render/` | component registry, props validation, page layout | `registry.go` |
 | `internal/llm/` | provider-neutral chat + tools; openai.go and anthropic.go | `llm.go` |
 | `internal/chat/` | the tool loop and the canvas tools | `chat.go` |
-| `internal/server/` | HTML pages and JSON API | `server.go` |
+| `internal/server/` | HTML pages and JSON API | `server.go`, `canvas.go` |
 | `internal/cli/` | the sameway command | `root.go` |
 | `examples/workspaces/starter/` | what `sameway init` copies | |
 
@@ -38,6 +39,8 @@ runner in tools/a11y-runner.
 | Agent reads the manifest and drives a browser | `machine.selector` resolves, ids unique, `aria-describedby` and `label[for]` targets exist, focusable elements have names, keyboard map present, every enum value has an example, CSS uses tokens only | `internal/render/contract_test.go` |
 | Model or person supplies hostile props | script, event-handler, `javascript:` and template payloads in every string prop stay inert | `internal/render/hostile_test.go` |
 | Workspace adds or overrides a component | `internal/render/override_test.go` | |
+| Chrome that is faded but still available | quiet layer stays in the DOM, tab order, and accessibility tree; compact labels keep full accessible names; the log is collapsed but never lost | `internal/server/quiet_test.go` |
+| Model lays out and restyles the canvas | span, position, chat as a removable block | `internal/chat/layout_test.go` |
 | Person uses the HTML pages | landmarks, skip links, one h1, forms, 422 with linked errors, chat transcript, canvas removal | `internal/server/pages_test.go`, `api_test.go` |
 | Agent uses the JSON API | describe completeness, CRUD, stable error shapes, chat builds the canvas | `internal/server/api_test.go` |
 | Agent uses the CLI | every command, `--json`, flags in any position, errors that say how to fix | `internal/cli/cli_test.go` |

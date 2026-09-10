@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"golang.org/x/net/html"
+
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/render/htmltest"
 )
@@ -20,14 +22,21 @@ func TestStateLanguageAfterATurn(t *testing.T) {
 		toolCall("add_component", map[string]any{"component": "list", "props": map[string]any{"items": []string{"milk"}}}),
 		{Text: "Added a heading and a list."},
 	}}, nil
+	// Opening the canvas seeds its chat block first.
+	wantStatus(t, get(t, h, "/"), http.StatusOK)
 	postForm(t, h, "/chat", url.Values{"message": {"make a shopping list"}})
 
 	page := parse(t, get(t, h, "/"))
 
 	// Provenance: blocks and messages say who did it.
-	blocks := page.WithAttr("data-block-id", "")
+	var blocks []*html.Node
+	for _, b := range page.WithAttr("data-block-id", "") {
+		if c, _ := htmltest.Attr(b, "data-block-component"); c != "chat" {
+			blocks = append(blocks, b)
+		}
+	}
 	if len(blocks) != 2 {
-		t.Fatalf("expected 2 blocks, got %d", len(blocks))
+		t.Fatalf("expected 2 content blocks, got %d", len(blocks))
 	}
 	for _, b := range blocks {
 		if actor, _ := htmltest.Attr(b, "data-actor"); actor != "assistant" {
@@ -74,8 +83,8 @@ func TestStateLanguageAfterATurn(t *testing.T) {
 	if len(forms) != 1 {
 		t.Errorf("compose form should point at the status region")
 	}
-	if len(page.WithAttr("data-region", "conversation")) != 1 {
-		t.Errorf("conversation region should be marked for agents")
+	if len(page.WithAttr("data-region", "chat")) != 1 {
+		t.Errorf("the chat region should be marked for agents with data-region")
 	}
 
 	// Activity: both actors appear in the log, on the page and in the API.
@@ -103,6 +112,7 @@ func TestStateLanguageAfterATurn(t *testing.T) {
 // block show up as human activity and human provenance.
 func TestHumanActionsAreAttributed(t *testing.T) {
 	a, h := newApp(t)
+	wantStatus(t, get(t, h, "/"), http.StatusOK)
 	rec, err := a.Store.Create("block", map[string]any{"component": "text", "props": map[string]any{"content": "hi"}})
 	if err != nil {
 		t.Fatal(err)
@@ -118,9 +128,8 @@ func TestHumanActionsAreAttributed(t *testing.T) {
 	if actor, _ := htmltest.Attr(blocks[0], "data-actor"); actor != "human" {
 		t.Errorf("edited block should be attributed to the person, got %q", actor)
 	}
-	badge := page.WithAttr("data-component", "badge")
-	if len(badge) == 0 || !strings.Contains(htmltest.Text(badge[0]), "edited by you") {
-		t.Errorf("badge should say edited by you: %v", badge)
+	if !strings.Contains(htmltest.Text(blocks[0]), "edited by you") {
+		t.Errorf("the block's badge should say edited by you")
 	}
 
 	wantStatus(t, postForm(t, h, "/canvas/"+rec.ID+"/delete", nil), http.StatusSeeOther)

@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
+	"sort"
+	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/design"
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
@@ -67,11 +69,11 @@ func NewRegistry(workspaceComponents string) (*render.Registry, error) {
 	if err != nil {
 		return nil, fmt.Errorf("design tokens missing; run `go run ./tools/tokens`: %w", err)
 	}
-	baseCSS, err := fs.ReadFile(design.FS, "base/base.css")
+	baseCSS, err := baseStyles()
 	if err != nil {
 		return nil, err
 	}
-	reg.SetBase(string(tokensCSS), string(baseCSS))
+	reg.SetBase(string(tokensCSS), baseCSS)
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		return nil, err
 	}
@@ -81,6 +83,32 @@ func NewRegistry(workspaceComponents string) (*render.Registry, error) {
 		}
 	}
 	return reg, nil
+}
+
+// baseStyles concatenates every stylesheet in design/base in filename
+// order. The files are numbered so the order is deterministic and each one
+// covers a single concern.
+func baseStyles() (string, error) {
+	entries, err := fs.ReadDir(design.FS, "base")
+	if err != nil {
+		return "", err
+	}
+	names := make([]string, 0, len(entries))
+	for _, e := range entries {
+		if strings.HasSuffix(e.Name(), ".css") {
+			names = append(names, e.Name())
+		}
+	}
+	sort.Strings(names)
+	var b strings.Builder
+	for _, n := range names {
+		src, err := fs.ReadFile(design.FS, "base/"+n)
+		if err != nil {
+			return "", err
+		}
+		fmt.Fprintf(&b, "\n/* base: %s */\n%s", n, src)
+	}
+	return b.String(), nil
 }
 
 // Close releases the store.

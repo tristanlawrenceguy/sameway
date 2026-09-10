@@ -82,7 +82,9 @@ func (s *Store) List(typeName string, opts ListOptions) ([]*Record, error) {
 	if opts.Desc || opts.OrderBy == "" {
 		dir = "DESC"
 	}
-	q := fmt.Sprintf("SELECT %s FROM %s ORDER BY %s %s, id ASC", selectList(t), quote(t.Name), quote(order), dir)
+	// rowid breaks ties, so records written in the same clock tick keep
+	// insertion order instead of falling back to a random id.
+	q := fmt.Sprintf("SELECT %s FROM %s ORDER BY %s %s, rowid %s", selectList(t), quote(t.Name), quote(order), dir, dir)
 	if opts.Limit > 0 {
 		q += fmt.Sprintf(" LIMIT %d", opts.Limit)
 	}
@@ -229,10 +231,12 @@ func encode(f schema.Field, v any) any {
 	}
 }
 
-// decode turns a SQLite value back into the canonical Go value.
+// decode turns a SQLite value back into the canonical Go value. A NULL
+// column means the field was added to the schema after this record was
+// written, so it reads back as the field's default.
 func decode(f schema.Field, v sql.NullString) any {
 	if !v.Valid {
-		return nil
+		return schema.DefaultValue(f)
 	}
 	switch f.Type {
 	case "int":

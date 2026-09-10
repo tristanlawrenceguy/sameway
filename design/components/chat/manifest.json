@@ -1,0 +1,33 @@
+{
+  "name": "chat",
+  "version": "1.0.0",
+  "description": "A conversation region: a named area holding a transcript and a composer. It is a component like any other, so it can be placed anywhere on a canvas, restyled, or removed.",
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [],
+    "properties": {
+      "label": { "type": "string", "default": "Assistant", "description": "Names the region, so landmark navigation can reach it." },
+      "layout": { "type": "string", "enum": ["panel", "bare"], "default": "panel", "description": "panel gives it a surface and a visible title; bare drops the chrome so it sits inside another surface, with the title kept for screen readers." },
+      "slot": { "type": "string", "description": "The transcript and composer. Server code passes rendered components; props from a model or a form are escaped as text." },
+      "id": { "type": "string" }
+    }
+  },
+  "a11y": {
+    "role": "region",
+    "keyboard": [
+      { "key": "Tab", "does": "moves through the transcript's links and the composer" }
+    ],
+    "states": [],
+    "wcag": { "target": "AAA", "notes": "A named region, so it is reachable by landmark navigation wherever it is placed (2.4.1). The title stays in the accessibility tree in bare layout, so removing the visual chrome never removes the name. The transcript is a list, so turn counts are announced." }
+  },
+  "machine": {
+    "selector": "[data-component=\"chat\"]",
+    "identify": "A section whose accessible name is the label. The transcript is the list inside it and the composer is its form.",
+    "operate": "Fill the textbox named by its label and activate the submit button. If this region has been removed from the canvas, the same conversation is always at /chat and POST /api/chat."
+  },
+  "examples": [
+    { "name": "default", "props": { "slot": "No messages yet." }, "file": "examples/default.html" },
+    { "name": "bare", "props": { "label": "Notes assistant", "layout": "bare", "slot": "No messages yet." }, "file": "examples/bare.html" }
+  ]
+}
