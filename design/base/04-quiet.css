@@ -33,19 +33,18 @@
 @media (prefers-contrast: more), (forced-colors: active) { :root { --sw-quiet-opacity: 1; } }
 :root[data-controls="visible"] { --sw-quiet-opacity: 1; }
 
-/* Per-item control bars. Absolutely placed so revealing them moves nothing;
-   the item reserves the room with padding. */
+/* Per-item control bars float over the top-right corner of their item. They
+   reserve no space, so a block at rest is exactly as tall as its content. */
 .sw-bar {
-  position: absolute; right: var(--sw-space-2); bottom: var(--sw-space-2);
+  position: absolute; right: var(--sw-space-2); top: var(--sw-space-2); z-index: 2;
   display: flex; align-items: center; gap: var(--sw-space-1);
   padding: var(--sw-space-1);
   border: 1px solid var(--sw-color-border);
   border-radius: var(--sw-radius-pill);
-  background: color-mix(in srgb, var(--sw-color-bg-raised) 88%, transparent);
+  background: color-mix(in srgb, var(--sw-color-bg-raised) 92%, transparent);
   backdrop-filter: blur(8px);
-  box-shadow: var(--sw-shadow-1);
+  box-shadow: var(--sw-shadow-2);
   max-width: calc(100% - var(--sw-space-4));
   flex-wrap: wrap;
 }
 .sw-bar form { display: contents; }
-.sw-bar .sw-badge { background: transparent; }

@@ -54,21 +54,27 @@ name, both need to tell them apart.
 
 ## What stays visible
 
-Permanent, tiny, and cheap: the actor rail down the left edge of each block,
-in the colour of whoever last touched it. Enough to scan a page and see who
-built what, without a word of chrome.
+Nothing. A block at rest is its content on a surface: no rail, no badge, no
+timestamp, and no reserved space for chrome.
 
-The readable version is one hover or one Tab away, and always in the
-accessibility tree: a badge naming who made it, with a second clause only
-when it is not obvious. "Assistant", or "Assistant, edited by you". Never a
-timestamp, and never the same actor named twice. Times belong in the
-activity log, where they can be compared.
+That is possible because provenance is a **moment**, not a property. When
+something changes, it glows in the colour of whoever changed it, for about a
+second and a half, and then the page is calm again. The fact is delivered
+when it becomes true, to the person who is watching, and then it stops
+taking up room. See [motion.md](motion.md).
 
-This is the one place where colour alone carries information visually by
-default. It is supplementary, never the only route: the same provenance is
-in the badge text, in the change receipt under the assistant's reply, and in
-the activity log. Someone who wants it on screen permanently sets
-`ui.controls: visible`.
+Nothing is lost when the glow fades:
+
+| Who needs it | Where it is |
+|---|---|
+| The person watching | the glow, in the actor's colour |
+| A screen reader user | a visually hidden line on each block: "Added by the assistant." |
+| An agent | `data-actor` on every block |
+| Anyone, later | the change receipt under the reply, and the activity log |
+
+A change marker never outlives the change. It reports the exchange the page
+is showing and nothing older, so a block edited once does not keep glowing
+on every load.
 
 ## Progressive disclosure
 

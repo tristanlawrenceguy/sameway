@@ -1,16 +1,22 @@
 /* Motion: every animation in the system is defined here, so it can all be
-   switched off in one place. Motion explains change; it never decorates. */
+   switched off in one place. Motion explains change; it never decorates.
+
+   The glow is the system's main signal for "this just changed, and this is
+   who changed it". It is the reason the resting interface carries no
+   provenance labels: the fact is delivered at the moment it is true, then
+   gets out of the way. */
 
 @keyframes sw-enter { from { opacity: 0; transform: translateY(8px) scale(0.985); } to { opacity: 1; transform: none; } }
 @keyframes sw-exit  { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(-6px) scale(0.985); } }
 @keyframes sw-pulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
 
-/* The change flash: a ring in the actor's colour sweeps outward once and a
-   tint fades away, so the eye lands on what just changed. */
-@keyframes sw-flash {
-  0%   { box-shadow: 0 0 0 0 var(--sw-actor, var(--sw-color-accent)); background-color: var(--sw-actor-soft, var(--sw-color-accent-soft)); }
-  35%  { box-shadow: 0 0 0 6px var(--sw-actor-soft, var(--sw-color-accent-soft)); }
-  100% { box-shadow: 0 0 0 14px transparent; background-color: transparent; }
+/* Blooms in the actor's colour, holds long enough to be found, then leaves
+   nothing behind. */
+@keyframes sw-glow {
+  0%   { box-shadow: 0 0 0 0 var(--sw-glow-strong), 0 0 0 0 transparent; }
+  18%  { box-shadow: 0 0 0 2px var(--sw-glow-strong), 0 0 28px 8px var(--sw-glow-soft); }
+  55%  { box-shadow: 0 0 0 2px var(--sw-glow-strong), 0 0 22px 6px var(--sw-glow-soft); }
+  100% { box-shadow: 0 0 0 0 transparent, 0 0 0 0 transparent; }
 }
 
 /* Cross-document view transitions: full-page navigations morph what stayed
@@ -22,10 +28,11 @@
 ::view-transition-group(.sw-vt-item) { animation-duration: var(--sw-motion-slow); animation-timing-function: var(--sw-motion-ease); }
 
 /* Change markers, set by the server for the duration of one page view. */
-[data-changed="added"], [data-changed="updated"] {
-  animation: sw-flash var(--sw-motion-slow) var(--sw-motion-ease-out) 1 both;
-  animation-delay: 120ms;
-  border-radius: var(--sw-radius-lg);
+[data-changed] {
+  --sw-glow-strong: color-mix(in srgb, var(--sw-actor, var(--sw-color-accent)) 70%, transparent);
+  --sw-glow-soft: color-mix(in srgb, var(--sw-actor, var(--sw-color-accent)) 38%, transparent);
+  animation: sw-glow var(--sw-motion-glow) var(--sw-motion-ease-out) 1 both;
+  animation-delay: 140ms;
 }
 .sw-enter { animation: sw-enter var(--sw-motion-slow) var(--sw-motion-ease) both; }
 
@@ -37,6 +44,7 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-  /* Keep the meaning of a change without the movement. */
-  [data-changed="added"], [data-changed="updated"] { box-shadow: 0 0 0 3px var(--sw-actor, var(--sw-color-accent)); }
+  /* No bloom, but the change must still be findable, so the ring stays for
+     the life of the page view instead of fading. */
+  [data-changed] { box-shadow: 0 0 0 3px var(--sw-actor, var(--sw-color-accent)); }
 }

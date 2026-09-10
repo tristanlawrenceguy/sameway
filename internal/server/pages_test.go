@@ -32,9 +32,25 @@ func TestHomePageShell(t *testing.T) {
 	if doc.ByID("main") == nil || len(doc.Elements("main")) != 1 {
 		t.Errorf("expected one <main id=main>")
 	}
-	for _, tag := range []string{"header", "nav", "footer"} {
+	for _, tag := range []string{"header", "footer"} {
 		if len(doc.Elements(tag)) != 1 {
 			t.Errorf("expected one <%s>", tag)
+		}
+	}
+	// Two navigation landmarks: the person's own content in the header, and
+	// everything about the workspace itself tucked into the footer.
+	navs := doc.Elements("nav")
+	var labels []string
+	for _, n := range navs {
+		l, _ := htmltest.Attr(n, "aria-label")
+		labels = append(labels, l)
+	}
+	if len(navs) != 2 || labels[0] != "Main" || labels[1] != "This workspace" {
+		t.Errorf("expected a Main nav then a This workspace nav, got %v", labels)
+	}
+	for _, secondary := range []string{"/chat", "/activity", "/design"} {
+		if len(doc.WithAttr("href", secondary)) == 0 {
+			t.Errorf("%s should still be reachable from the footer", secondary)
 		}
 	}
 	for _, s := range doc.Elements("section") {

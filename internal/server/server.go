@@ -80,8 +80,9 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 		Focus:      opts.Focus,
 		FocusLabel: opts.FocusLabel,
 	}
-	p.Nav = append(p.Nav, s.navLink("/", "Canvas", r.URL.Path == "/"))
-	p.Nav = append(p.Nav, s.navLink("/chat", "Chat", r.URL.Path == "/chat"))
+	// The header carries only the person's own content. The brand is the way
+	// back to the canvas, and everything about the workspace itself lives in
+	// the footer, where it is reachable without taking attention.
 	for _, t := range s.app.Types.Types {
 		if t.Internal {
 			continue
@@ -89,8 +90,11 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 		href := "/t/" + t.Name
 		p.Nav = append(p.Nav, s.navLink(href, plural(t.Name), strings.HasPrefix(r.URL.Path, href)))
 	}
-	p.Nav = append(p.Nav, s.navLink("/activity", "Activity", r.URL.Path == "/activity"))
-	p.Nav = append(p.Nav, s.navLink("/design", "Design", r.URL.Path == "/design"))
+	for _, l := range []struct{ href, label string }{
+		{"/chat", "Chat"}, {"/activity", "Activity"}, {"/design", "Design system"},
+	} {
+		p.More = append(p.More, s.navLink(l.href, l.label, r.URL.Path == l.href))
+	}
 	out, err := render.RenderPage(p)
 	if err != nil {
 		s.fail(w, err)

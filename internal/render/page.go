@@ -19,8 +19,11 @@ type Page struct {
 	// Controls is "auto" or "visible" and lands on the root element, where
 	// the quiet layer reads it. See design/foundations/quiet.md.
 	Controls string
-	// Nav holds rendered link components for the main navigation.
+	// Nav holds rendered link components for the main navigation: the
+	// person's own content, and nothing else.
 	Nav []template.HTML
+	// More holds secondary destinations, shown in the footer.
+	More []template.HTML
 	// JSONURL is the machine-readable twin of this page, if any.
 	JSONURL string
 	// Body is the already-rendered main content, placed after the h1.

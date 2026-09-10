@@ -16,17 +16,19 @@
 {{end}}<header class="sw-header">
 <div class="sw-header__inner">
 <a class="sw-header__brand" href="/"><span class="sw-header__mark" aria-hidden="true"></span>{{.Site}}</a>
-<nav class="sw-nav" aria-label="Main">
+{{if .Nav}}<nav class="sw-nav" aria-label="Main">
 <ul>{{range .Nav}}<li>{{.}}</li>{{end}}</ul>
 </nav>
-</div>
+{{end}}</div>
 </header>
 <main id="main" class="sw-main" tabindex="-1">
 <h1>{{.Title}}</h1>
 {{.Body}}
 </main>
 <footer class="sw-footer">
-<p>Built with Sameway. Agents: read <a href="/api/describe">/api/describe</a> for the schema and component contracts, <a href="/design">/design</a> for the living styleguide.</p>
+<nav class="sw-nav sw-nav--more" aria-label="This workspace">
+<ul>{{range .More}}<li>{{.}}</li>{{end}}<li><a class="sw-link" href="/api/describe">For agents</a></li></ul>
+</nav>
 </footer>
 </body>
 </html>

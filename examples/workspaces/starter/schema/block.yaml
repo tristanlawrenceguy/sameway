@@ -20,6 +20,16 @@ fields:
     type: int
     default: 6
     description: Width in columns of a twelve column grid. 12 is full width, 6 is half, 4 is a third. Ignored on narrow screens, where every block is full width.
+  frame:
+    type: enum
+    values: [card, bare]
+    default: card
+    description: card gives the block a surface; bare lets it sit flush on the page with no border or shadow.
+  tone:
+    type: enum
+    values: [none, accent, success, warning, danger, info]
+    default: none
+    description: Tints the block's surface. Body text keeps its contrast on every tint.
   actor:
     type: enum
     values: [human, assistant]

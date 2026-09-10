@@ -36,4 +36,8 @@
 .sw-nav .sw-link[aria-current="page"] { background: var(--sw-color-accent-soft); color: var(--sw-color-accent); font-weight: 700; text-decoration: none; }
 
 .sw-main { padding-block: var(--sw-space-8) var(--sw-space-16); min-height: 60vh; }
-.sw-footer { padding-block: var(--sw-space-6); color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); border-top: 1px solid var(--sw-color-border); }
+.sw-footer { padding-block: var(--sw-space-4); color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); border-top: 1px solid var(--sw-color-border); }
+.sw-nav--more ul { gap: var(--sw-space-3); }
+.sw-nav--more .sw-link { min-height: var(--sw-size-target); padding: 0 var(--sw-space-2); font-weight: 500; color: var(--sw-color-fg-muted); text-decoration: none; }
+.sw-nav--more .sw-link:hover { color: var(--sw-color-fg); text-decoration: underline; }
+.sw-nav--more .sw-link[aria-current="page"] { color: var(--sw-color-accent); background: none; }

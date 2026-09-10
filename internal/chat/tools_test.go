@@ -216,7 +216,7 @@ func TestSystemPromptCarriesCatalogueAndCanvas(t *testing.T) {
 			t.Errorf("first system prompt missing %q", want)
 		}
 	}
-	if !strings.Contains(second, "list span=6 {") || strings.Contains(second, "(empty)") {
+	if !strings.Contains(second, "list span=6 frame=card tone=none {") || strings.Contains(second, "(empty)") {
 		t.Errorf("second system prompt should list the new block: %s", second[len(second)-200:])
 	}
 	if len(m.seen[0].Tools) != 4 {

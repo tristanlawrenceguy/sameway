@@ -58,20 +58,25 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 // blockItem renders one canvas block: the component, its span, its
 // provenance rail, and its quiet control bar.
 func (s *Server) blockItem(blk *store.Record, convo *conversation) string {
-	v := s.canvasBlock(blk, convo.LastTurn)
+	v := s.canvasBlock(blk, convo)
 	body := v.HTML
 	if v.Component == chat.ComponentName {
 		body = s.chatBlock(blk, convo)
 	}
 	var b strings.Builder
-	fmt.Fprintf(&b, `<li class="sw-block sw-reveal" data-block-id="%s" data-block-component="%s" data-actor="%s"`, v.ID, v.Component, v.Actor)
+	fmt.Fprintf(&b, `<li class="sw-block sw-reveal" data-block-id="%s" data-block-component="%s" data-actor="%s" data-frame="%s" data-tone="%s"`,
+		v.ID, v.Component, v.Actor, v.Frame, v.Tone)
 	if v.Changed != "" {
 		fmt.Fprintf(&b, ` data-changed="%s"`, v.Changed)
 	}
 	fmt.Fprintf(&b, ` style="--sw-span: %d; view-transition-name: block-%s; view-transition-class: sw-vt-item">`, v.Span, v.ID)
+	// Provenance costs nothing on screen and is complete in the
+	// accessibility tree. Sighted people got it from the glow when it
+	// happened, and can get it again from the activity log.
+	fmt.Fprintf(&b, `<p class="sw-visually-hidden">%s</p>`, template.HTMLEscapeString(v.Provenance))
 	b.WriteString(string(body))
-	fmt.Fprintf(&b, `<div class="sw-bar sw-quiet">%s%s<form method="post" action="/canvas/%s/delete">%s</form></div></li>`,
-		v.Badge, v.Edit, v.ID, v.Remove)
+	fmt.Fprintf(&b, `<div class="sw-bar sw-quiet">%s<form method="post" action="/canvas/%s/delete">%s</form></div></li>`,
+		v.Edit, v.ID, v.Remove)
 	return b.String()
 }
 
@@ -100,7 +105,7 @@ func (s *Server) seedChat() {
 }
 
 // canvasBlock gathers everything the page needs about one block.
-func (s *Server) canvasBlock(b *store.Record, lastTurn time.Time) canvasBlock {
+func (s *Server) canvasBlock(b *store.Record, convo *conversation) canvasBlock {
 	name, _ := b.Fields["component"].(string)
 	props, _ := b.Fields["props"].(map[string]any)
 	actor, _ := b.Fields["actor"].(string)
@@ -115,45 +120,75 @@ func (s *Server) canvasBlock(b *store.Record, lastTurn time.Time) canvasBlock {
 	if v, ok := b.Fields["span"].(int64); ok && v >= 1 && v <= 12 {
 		span = int(v)
 	}
-	// Say only what is not obvious. Who made it is the whole fact when one
-	// actor did everything; the second clause appears only when the other
-	// one has been in since. Times live in the activity log.
-	who := map[string]string{"human": "You", "assistant": "Assistant"}
-	label := who[createdBy]
+	who := map[string]string{"human": "you", "assistant": "the assistant"}
+	provenance := "Added by " + who[createdBy] + "."
 	if actor != createdBy {
-		label += ", edited by " + strings.ToLower(who[actor])
+		provenance = "Added by " + who[createdBy] + ", edited by " + who[actor] + "."
 	}
 
+	// Glow only for what changed in the exchange just finished, or in the
+	// last few seconds, so a marker never outlives the change it reports.
 	changed := ""
-	if !lastTurn.IsZero() {
-		if !b.CreatedAt.Before(lastTurn) {
-			changed = "added"
-		} else if !b.UpdatedAt.Before(lastTurn) {
-			changed = "updated"
-		}
+	if inLastTurn(b.CreatedAt, convo) {
+		changed = "added"
+	} else if inLastTurn(b.UpdatedAt, convo) {
+		changed = "updated"
 	}
 	// Labels stay short on screen and carry the component name in the
 	// accessible name, so "Edit" reads as "Edit card" to a screen reader or
 	// an agent targeting by role and name.
 	return canvasBlock{
 		ID: b.ID, Component: name, Actor: actor, Changed: changed, Span: span,
-		HTML:   s.component(name, props),
-		Badge:  s.component("badge", map[string]any{"label": label, "tone": actor}),
-		Edit:   s.component("link", map[string]any{"href": "/t/block/" + b.ID + "/edit", "label": "Edit", "context": name}),
-		Remove: s.component("button", map[string]any{"label": "Remove", "context": name, "type": "submit", "variant": "quiet"}),
+		Frame: str(b.Fields["frame"], "card"), Tone: str(b.Fields["tone"], "none"),
+		Provenance: provenance,
+		HTML:       s.component(name, props),
+		Edit:       s.component("link", map[string]any{"href": "/t/block/" + b.ID + "/edit", "label": "Edit", "context": name}),
+		Remove:     s.component("button", map[string]any{"label": "Remove", "context": name, "type": "submit", "variant": "quiet"}),
 	}
 }
 
+// turnIsFresh bounds how long a finished exchange keeps announcing itself.
+// A slow model can take minutes to build a page, so the whole turn counts;
+// but come back tomorrow and the canvas is calm.
+const turnIsFresh = 2 * time.Minute
+
+// inLastTurn reports whether a moment is one the person is plausibly
+// watching: inside the exchange that just finished, or in the last few
+// seconds. A glow that outlives its change would be chrome again.
+func inLastTurn(ts time.Time, convo *conversation) bool {
+	if time.Since(ts) < 10*time.Second {
+		return true
+	}
+	if convo.LastTurn.IsZero() || convo.TurnEnd.Before(convo.LastTurn) {
+		return false
+	}
+	if time.Since(convo.TurnEnd) > turnIsFresh {
+		return false
+	}
+	return !ts.Before(convo.LastTurn) && !ts.After(convo.TurnEnd.Add(2*time.Second))
+}
+
+// str reads a string field, falling back when the workspace's schema does
+// not define it.
+func str(v any, fallback string) string {
+	if s, ok := v.(string); ok && s != "" {
+		return s
+	}
+	return fallback
+}
+
 type canvasBlock struct {
-	ID        string
-	Component string
-	Actor     string
-	Changed   string
-	Span      int
-	HTML      template.HTML
-	Badge     template.HTML
-	Edit      template.HTML
-	Remove    template.HTML
+	ID         string
+	Component  string
+	Actor      string
+	Changed    string
+	Span       int
+	Frame      string
+	Tone       string
+	Provenance string
+	HTML       template.HTML
+	Edit       template.HTML
+	Remove     template.HTML
 }
 
 // canvasDelete is a person removing a block; it is logged as a human action.

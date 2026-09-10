@@ -81,10 +81,24 @@ func TestQuietControlsStayAvailableToEveryone(t *testing.T) {
 		}
 	}
 
-	// Provenance is still readable, just not shouted.
-	badge := sub.WithAttr("data-component", "badge")
-	if len(badge) != 1 || strings.TrimSpace(htmltest.Text(badge[0])) != "Assistant" {
-		t.Errorf("the quiet bar should name who made the block, got %q", htmltest.Text(badge[0]))
+	// The resting page says nothing about provenance, on screen or in the
+	// control bar. It is still complete in the accessibility tree.
+	if len(sub.WithAttr("data-component", "badge")) != 0 {
+		t.Errorf("the control bar should carry actions only, no provenance label")
+	}
+	block := doc.WithAttr("data-block-id", id)[0]
+	hidden := (&htmltest.Doc{Root: block}).WithAttr("class", "sw-visually-hidden")
+	found := false
+	for _, n := range hidden {
+		if strings.Contains(htmltest.Text(n), "Added by the assistant") {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("a block should still state who made it in the accessibility tree")
+	}
+	if actor, _ := htmltest.Attr(block, "data-actor"); actor != "assistant" {
+		t.Errorf("and in data-actor for machines, got %q", actor)
 	}
 
 	// And a person can actually use them.

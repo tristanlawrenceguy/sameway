@@ -35,6 +35,7 @@
   --sw-motion-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --sw-motion-ease-out: cubic-bezier(0, 0, 0.2, 1);
   --sw-motion-fast: 120ms;
+  --sw-motion-glow: 1400ms;
   --sw-motion-slow: 420ms;
   --sw-radius-lg: 1rem;
   --sw-radius-md: 0.625rem;
@@ -66,7 +67,7 @@
   :root:not([data-theme="light"]) {
     --sw-color-accent: #b8bfff;
     --sw-color-accent-fg: #0f1117;
-    --sw-color-accent-soft: #252a52;
+    --sw-color-accent-soft: #222749;
     --sw-color-assistant: #6ee7bf;
     --sw-color-assistant-soft: #123c31;
     --sw-color-bg: #0f1117;
@@ -81,7 +82,7 @@
     --sw-color-focus: #ffb076;
     --sw-color-focus-halo: #0f1117;
     --sw-color-human: #b8bfff;
-    --sw-color-human-soft: #252a52;
+    --sw-color-human-soft: #222749;
     --sw-color-info: #9db4ff;
     --sw-color-info-soft: #1a2547;
     --sw-color-success: #7ee2a5;
@@ -98,7 +99,7 @@
 :root[data-theme="dark"] {
   --sw-color-accent: #b8bfff;
   --sw-color-accent-fg: #0f1117;
-  --sw-color-accent-soft: #252a52;
+  --sw-color-accent-soft: #222749;
   --sw-color-assistant: #6ee7bf;
   --sw-color-assistant-soft: #123c31;
   --sw-color-bg: #0f1117;
@@ -113,7 +114,7 @@
   --sw-color-focus: #ffb076;
   --sw-color-focus-halo: #0f1117;
   --sw-color-human: #b8bfff;
-  --sw-color-human-soft: #252a52;
+  --sw-color-human-soft: #222749;
   --sw-color-info: #9db4ff;
   --sw-color-info-soft: #1a2547;
   --sw-color-success: #7ee2a5;

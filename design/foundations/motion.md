@@ -9,7 +9,8 @@ something is different. It is never ambient.
 |---|---|---|
 | `motion-fast` | 120 ms | Hover, press, focus colour |
 | `motion-base` | 220 ms | Exits, page cross-fade |
-| `motion-slow` | 420 ms | Enters, morphs, the change flash |
+| `motion-slow` | 420 ms | Enters, morphs |
+| `motion-glow` | 1400 ms | The change glow |
 | `motion-ease` | `cubic-bezier(0.2, 0.8, 0.2, 1)` | Everything that moves |
 | `motion-ease-out` | `cubic-bezier(0, 0, 0.2, 1)` | Flashes that only fade |
 
@@ -29,12 +30,20 @@ the `sw-vt-item` class, which maps to:
 Browsers without the feature simply reload, and the change markers below
 still play, so nothing is lost.
 
-## Change markers
+## The glow
+
+The glow is the system's main provenance signal, and the reason the resting
+interface carries no "added by" labels at all.
 
 After a turn, the server marks blocks with `data-changed="added"` or
-`"updated"`. They flash once on load in the actor's colour (`sw-flash`),
-then rest. This is how a person sees at a glance what the assistant just
-did, and how an agent can query it.
+`"updated"`. Each blooms once in the colour of whoever changed it, holds
+long enough to be found, and fades to nothing over `motion-glow` (1400 ms).
+Human indigo, assistant teal.
+
+A marker reports the exchange the page is showing and nothing older, so a
+change never keeps announcing itself. Under reduced motion there is no
+bloom; a static ring in the same colour stays for that page view instead, so
+the change is still findable.
 
 ## Working state
 

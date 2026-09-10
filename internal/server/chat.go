@@ -27,7 +27,11 @@ type conversation struct {
 	Notice   template.HTML
 	Activity template.HTML
 	LatestID string
+	// LastTurn and TurnEnd bound the most recent exchange: from the person's
+	// message to the reply that closed it. Blocks touched inside that window
+	// are what the assistant just did.
 	LastTurn time.Time
+	TurnEnd  time.Time
 	Count    int
 }
 
@@ -70,6 +74,7 @@ func (s *Server) conversation(from string) (*conversation, error) {
 		if m.Fields["role"] == "user" {
 			out.LastTurn = m.CreatedAt
 		}
+		out.TurnEnd = m.CreatedAt
 		id := "msg-" + m.ID
 		out.LatestID = id
 		view.Messages = append(view.Messages, chatMessage{ID: id, HTML: s.component("message", map[string]any{

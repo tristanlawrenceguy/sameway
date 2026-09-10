@@ -10,12 +10,19 @@ import (
 
 const basePrompt = `You are the assistant inside a Sameway workspace.
 
-The person is looking at a canvas that fills the page. Everything on it is a block you control with tools, including the chat block this conversation is inside. Blocks sit on a twelve column grid: set span to 12 for a full width block, 6 for half, 4 for a third. On narrow screens every block is full width.
+The person is looking at a canvas that fills the page. Everything on it is a block you control with tools, including the chat block this conversation is inside.
+
+Each block has a shape and a look, set independently of its props:
+- span: width in columns of twelve. 12 is full width, 6 half, 4 a third. Narrow screens ignore it.
+- frame: card for a block with its own surface, bare to sit flush on the page with no border. Use bare for headings and short text so the page does not become a wall of boxes.
+- tone: none, accent, success, warning, danger, or info. Tints the surface. Use it sparingly, to mark one thing that matters.
+- position: sort order, lower first.
 
 How to work:
 - When the person asks for something, build it on the canvas with the tools, then reply with one or two short sentences saying what you did. Do not paste HTML or props into the reply.
 - Use only components from the catalogue below, with props that match each schema exactly. If a tool returns an error, fix the props and call the tool again.
-- Lay things out deliberately. A heading that introduces a section wants span 12; cards and lists sit well at 6; small badges or statuses at 4.
+- Lay things out deliberately. A heading that introduces a section wants span 12 and frame bare; cards and tables sit well at 6 or 7; small items at 4. Vary the widths so the page looks composed rather than stacked.
+- Keep the resting page calm. No decorative blocks, no labels restating what a component already shows. The person sees what changed from the glow when it changes, so you never need to add "added by" text.
 - Keep the canvas accessible: headings in order (2, then 3 inside), short text, a caption on every table, a label on a list that has no heading right before it.
 - Prefer updating an existing block over adding a near duplicate. Use clear_canvas only when asked to start over.
 - The chat block can be moved, resized, restyled with its layout prop, or removed like any other block. The person can always reach this conversation at /chat, so removing it is safe.
@@ -35,7 +42,7 @@ func (s *Service) systemPrompt() string {
 	for _, c := range s.Registry.Components() {
 		fmt.Fprintf(&b, "\n%s: %s\n%s\n", c.Manifest.Name, c.Manifest.Description, compactJSON(c.Manifest.Props))
 	}
-	b.WriteString("\nCurrent canvas, top to bottom (id, component, span, props):\n")
+	b.WriteString("\nCurrent canvas, top to bottom (id, component, span, frame, tone, props):\n")
 	blocks, err := s.Store.List(BlockType, store.ListOptions{OrderBy: "position"})
 	if err != nil || len(blocks) == 0 {
 		b.WriteString("(empty)\n")
@@ -47,7 +54,15 @@ func (s *Service) systemPrompt() string {
 		if v, ok := blk.Fields["span"].(int64); ok {
 			span = v
 		}
-		fmt.Fprintf(&b, "%s %s span=%d %s\n", blk.ID, blk.Fields["component"], span, props)
+		frame, _ := blk.Fields["frame"].(string)
+		if frame == "" {
+			frame = "card"
+		}
+		tone, _ := blk.Fields["tone"].(string)
+		if tone == "" {
+			tone = "none"
+		}
+		fmt.Fprintf(&b, "%s %s span=%d frame=%s tone=%s %s\n", blk.ID, blk.Fields["component"], span, frame, tone, props)
 	}
 	return b.String()
 }

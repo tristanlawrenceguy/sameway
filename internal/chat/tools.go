@@ -42,6 +42,8 @@ func (s *Service) tools() []llm.Tool {
 				"component": map[string]any{"type": "string", "description": "Component name from the catalogue."},
 				"props":     map[string]any{"type": "object", "description": "Props matching the component's schema."},
 				"span":      map[string]any{"type": "integer", "description": "Width in columns of twelve. 12 is full width, 6 half, 4 a third. Defaults to 6."},
+				"frame":     map[string]any{"type": "string", "enum": []string{"card", "bare"}, "description": "card gives the block a surface, bare sits flush on the page. Defaults to card."},
+				"tone":      map[string]any{"type": "string", "enum": []string{"none", "accent", "success", "warning", "danger", "info"}, "description": "Tints the block's surface. Defaults to none."},
 			}, "component", "props")},
 		{Name: "update_component", Description: "Change a block already on the canvas: its props, its width, or its place in the order. Props replace the old ones completely, so send them all.",
 			Schema: obj(map[string]any{
@@ -49,6 +51,8 @@ func (s *Service) tools() []llm.Tool {
 				"props":    map[string]any{"type": "object", "description": "The complete new props. Leave out to keep the current ones."},
 				"span":     map[string]any{"type": "integer", "description": "New width in columns of twelve."},
 				"position": map[string]any{"type": "integer", "description": "New sort order; lower comes first."},
+				"frame":    map[string]any{"type": "string", "enum": []string{"card", "bare"}},
+				"tone":     map[string]any{"type": "string", "enum": []string{"none", "accent", "success", "warning", "danger", "info"}},
 			}, "id")},
 		{Name: "remove_component", Description: "Remove one block from the canvas by id.",
 			Schema: obj(map[string]any{"id": map[string]any{"type": "string"}}, "id")},
@@ -77,6 +81,8 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 		Props     map[string]any `json:"props"`
 		Span      *int           `json:"span"`
 		Position  *int           `json:"position"`
+		Frame     string         `json:"frame"`
+		Tone      string         `json:"tone"`
 	}
 	if len(call.Args) > 0 {
 		if err := json.Unmarshal(call.Args, &args); err != nil {
@@ -85,9 +91,9 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 	}
 	switch call.Name {
 	case "add_component":
-		return s.addComponent(args.Component, args.Props, args.Span)
+		return s.addComponent(args.Component, args.Props, look{args.Span, args.Position, args.Frame, args.Tone})
 	case "update_component":
-		return s.updateComponent(args.ID, args.Props, args.Span, args.Position)
+		return s.updateComponent(args.ID, args.Props, look{args.Span, args.Position, args.Frame, args.Tone})
 	case "remove_component":
 		rec, err := s.Store.Get(BlockType, args.ID)
 		if err != nil {
@@ -124,7 +130,42 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 	return fail("unknown tool %s", call.Name)
 }
 
-func (s *Service) addComponent(name string, props map[string]any, span *int) toolResult {
+// look is how a block sits on the canvas: its width, its order, and how
+// much surface it brings. All optional, all independent of its props.
+type look struct {
+	Span, Position *int
+	Frame, Tone    string
+}
+
+// apply writes the layout fields that were given, and describes them.
+func (l look) apply(fields map[string]any) ([]string, error) {
+	var what []string
+	if l.Span != nil {
+		if *l.Span < 1 || *l.Span > 12 {
+			return nil, fmt.Errorf("span must be between 1 and 12, got %d", *l.Span)
+		}
+		fields["span"] = *l.Span
+		what = append(what, fmt.Sprintf("span %d", *l.Span))
+	}
+	if l.Position != nil {
+		fields["position"] = *l.Position
+		what = append(what, fmt.Sprintf("position %d", *l.Position))
+	}
+	if l.Frame != "" {
+		if l.Frame != "card" && l.Frame != "bare" {
+			return nil, fmt.Errorf("frame must be card or bare, got %q", l.Frame)
+		}
+		fields["frame"] = l.Frame
+		what = append(what, "frame "+l.Frame)
+	}
+	if l.Tone != "" {
+		fields["tone"] = l.Tone
+		what = append(what, "tone "+l.Tone)
+	}
+	return what, nil
+}
+
+func (s *Service) addComponent(name string, props map[string]any, l look) toolResult {
 	// Models often capitalise names ("List"); be forgiving about case and space.
 	name = strings.ToLower(strings.TrimSpace(name))
 	c, ok := s.Registry.Get(name)
@@ -151,11 +192,8 @@ func (s *Service) addComponent(name string, props map[string]any, span *int) too
 		}
 	}
 	fields := map[string]any{"component": name, "props": props, "position": position, "actor": "assistant", "created_by": "assistant"}
-	if span != nil {
-		if *span < 1 || *span > 12 {
-			return fail("span must be between 1 and 12, got %d", *span)
-		}
-		fields["span"] = *span
+	if _, err := l.apply(fields); err != nil {
+		return fail("%v", err)
 	}
 	rec, err := s.Store.Create(BlockType, s.fields(BlockType, fields))
 	if err != nil {
@@ -167,7 +205,7 @@ func (s *Service) addComponent(name string, props map[string]any, span *int) too
 	}
 }
 
-func (s *Service) updateComponent(id string, props map[string]any, span, position *int) toolResult {
+func (s *Service) updateComponent(id string, props map[string]any, l look) toolResult {
 	rec, err := s.Store.Get(BlockType, id)
 	if err != nil {
 		return fail("no block with id %s on the canvas", id)
@@ -188,19 +226,13 @@ func (s *Service) updateComponent(id string, props map[string]any, span, positio
 	} else {
 		props, _ = rec.Fields["props"].(map[string]any)
 	}
-	if span != nil {
-		if *span < 1 || *span > 12 {
-			return fail("span must be between 1 and 12, got %d", *span)
-		}
-		fields["span"] = *span
-		what = append(what, fmt.Sprintf("span %d", *span))
+	layout, err := l.apply(fields)
+	if err != nil {
+		return fail("%v", err)
 	}
-	if position != nil {
-		fields["position"] = *position
-		what = append(what, fmt.Sprintf("position %d", *position))
-	}
+	what = append(what, layout...)
 	if len(what) == 0 {
-		return fail("nothing to change: pass props, span, or position")
+		return fail("nothing to change: pass props, span, position, frame, or tone")
 	}
 	if _, err := s.Store.Update(BlockType, id, s.fields(BlockType, fields)); err != nil {
 		return fail("could not update block %s: %v", id, err)

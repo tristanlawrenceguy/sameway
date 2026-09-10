@@ -49,9 +49,9 @@ func TestStateLanguageAfterATurn(t *testing.T) {
 			t.Errorf("block needs a view-transition-name for animated navigation: %q", vt)
 		}
 	}
-	badges := page.WithAttr("data-component", "badge")
-	if len(badges) < 2 || strings.TrimSpace(htmltest.Text(badges[0])) != "Assistant" {
-		t.Errorf("each block should carry a provenance badge, got %d", len(badges))
+	// Provenance is in the accessibility tree and the attributes, not on screen.
+	if n := len(page.WithAttr("data-component", "badge")); n != 0 {
+		t.Errorf("the resting canvas should carry no provenance badges, got %d", n)
 	}
 	actors := map[string]int{}
 	for _, m := range page.WithAttr("data-component", "message") {
@@ -129,7 +129,7 @@ func TestHumanActionsAreAttributed(t *testing.T) {
 		t.Errorf("edited block should be attributed to the person, got %q", actor)
 	}
 	if !strings.Contains(htmltest.Text(blocks[0]), "edited by you") {
-		t.Errorf("the block's badge should say edited by you")
+		t.Errorf("the block should record that you edited it, for screen readers")
 	}
 
 	wantStatus(t, postForm(t, h, "/canvas/"+rec.ID+"/delete", nil), http.StatusSeeOther)
