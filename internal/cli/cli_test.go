@@ -28,7 +28,7 @@ func run(t *testing.T, dir string, args ...string) result {
 func initWorkspace(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
-	r := run(t, dir, "init", dir)
+	r := run(t, dir, "init", dir, "--no-detect")
 	if r.code != 0 {
 		t.Fatalf("init failed: %s", r.stderr)
 	}
@@ -58,11 +58,11 @@ func TestNoWorkspaceIsAClearError(t *testing.T) {
 
 func TestInitRefusesToOverwrite(t *testing.T) {
 	dir := initWorkspace(t)
-	if r := run(t, dir, "init", dir); r.code == 0 || !strings.Contains(r.stderr, "--force") {
+	if r := run(t, dir, "init", dir, "--no-detect"); r.code == 0 || !strings.Contains(r.stderr, "--force") {
 		t.Errorf("second init should fail and mention --force: %+v", r)
 	}
-	if r := run(t, dir, "init", dir, "--force"); r.code != 0 {
-		t.Errorf("init --force: %+v", r)
+	if r := run(t, dir, "init", dir, "--force", "--no-detect"); r.code != 0 || !strings.Contains(r.stdout, "Edit ") || strings.Contains(r.stdout, "No local model server") {
+		t.Errorf("init --force --no-detect: %+v", r)
 	}
 }
 

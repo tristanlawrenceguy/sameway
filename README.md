@@ -25,8 +25,10 @@ sameway init
 sameway serve
 ```
 
-Open http://127.0.0.1:8080/. To connect a model, edit the `llm` section of
-`workspace.yaml`:
+Open http://127.0.0.1:8080/. `sameway init` probes for a local model server
+(Ollama on 11434, LM Studio on 1234, llama.cpp on 8090 or 8080) and points
+the chat at the first model it finds. To change it, or to connect something
+else, edit the `llm` section of `workspace.yaml`:
 
 ```yaml
 llm:

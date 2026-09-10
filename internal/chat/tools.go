@@ -92,6 +92,8 @@ func (s *Service) runTool(call llm.ToolCall) (string, bool) {
 }
 
 func (s *Service) addComponent(name string, props map[string]any) (string, bool) {
+	// Models often capitalise names ("List"); be forgiving about case and space.
+	name = strings.ToLower(strings.TrimSpace(name))
 	c, ok := s.Registry.Get(name)
 	if !ok {
 		return fmt.Sprintf("unknown component %q. Available: %s", name, strings.Join(s.Registry.Names(), ", ")), true

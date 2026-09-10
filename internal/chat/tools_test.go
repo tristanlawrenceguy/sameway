@@ -100,6 +100,25 @@ func TestUpdateRemoveAndClear(t *testing.T) {
 	}
 }
 
+// TestComponentNamesAreCaseInsensitive covers what local models actually
+// send: "List" or " Table " instead of the catalogue name.
+func TestComponentNamesAreCaseInsensitive(t *testing.T) {
+	svc, m := withModel(t,
+		call("add_component", map[string]any{"component": "List", "props": map[string]any{"items": []string{"milk", "eggs"}}}),
+		call("add_component", map[string]any{"component": " TABLE ", "props": map[string]any{"caption": "c", "columns": []string{"a"}, "rows": [][]string{{"1"}}}}),
+	)
+	svc.Send(context.Background(), "add things")
+	for i := 1; i <= 2; i++ {
+		if res := lastToolResult(m.seen[i]); res.IsError {
+			t.Errorf("call %d should succeed despite casing: %s", i, res.Content)
+		}
+	}
+	blocks, _ := svc.Store.List(chat.BlockType, store.ListOptions{OrderBy: "position"})
+	if len(blocks) != 2 || blocks[0].Fields["component"] != "list" || blocks[1].Fields["component"] != "table" {
+		t.Errorf("stored names should be canonical: %+v", blocks)
+	}
+}
+
 func TestBlocksKeepInsertionOrder(t *testing.T) {
 	svc, _ := withModel(t,
 		call("add_component", map[string]any{"component": "heading", "props": map[string]any{"text": "First"}}),
