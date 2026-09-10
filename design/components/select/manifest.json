@@ -1,0 +1,39 @@
+{
+  "name": "select",
+  "version": "1.0.0",
+  "description": "Choose one option from a short fixed list. For free text use text-field.",
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["label", "name", "options"],
+    "properties": {
+      "label": { "type": "string", "minLength": 1 },
+      "name": { "type": "string", "minLength": 1 },
+      "id": { "type": "string" },
+      "options": { "type": "array", "minItems": 1, "items": { "type": "string" }, "description": "Option values, shown as-is." },
+      "value": { "type": "string", "default": "", "description": "The selected option." },
+      "hint": { "type": "string" },
+      "error": { "type": "string" },
+      "required": { "type": "boolean", "default": false }
+    }
+  },
+  "a11y": {
+    "role": "combobox (native select)",
+    "keyboard": [
+      { "key": "Tab", "does": "moves focus to and from the control" },
+      { "key": "Space or Alt+Down", "does": "opens the options" },
+      { "key": "Up / Down", "does": "moves between options" },
+      { "key": "Enter", "does": "chooses the highlighted option" }
+    ],
+    "states": ["aria-invalid", "aria-required"],
+    "wcag": { "target": "AAA", "notes": "A native select so every platform's assistive technology already supports it. No custom dropdown." }
+  },
+  "machine": {
+    "selector": "[data-component=\"select\"] select",
+    "identify": "The accessible name is the label text. Options are the option elements.",
+    "operate": "Set the select's value to one of the option values."
+  },
+  "examples": [
+    { "name": "default", "props": { "label": "Status", "name": "status", "options": ["draft", "published"], "value": "draft" }, "file": "examples/default.html" }
+  ]
+}

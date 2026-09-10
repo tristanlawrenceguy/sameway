@@ -1,0 +1,27 @@
+# Sameway workspace. Share this folder with git; data.db is ignored.
+name: My Sameway
+
+server:
+  addr: 127.0.0.1:8080
+
+# Which model the chat page talks to. Keys never go in this file: set the
+# environment variable named in api_key_env instead.
+llm:
+  # openai = any OpenAI-compatible server (Ollama, LM Studio, llama.cpp,
+  # OpenRouter, OpenAI). anthropic = the Claude API. none = chat disabled.
+  provider: openai
+  base_url: http://localhost:11434/v1
+  model: llama3.1
+  api_key_env: SAMEWAY_LLM_API_KEY
+  max_tokens: 4096
+
+  # Claude example:
+  # provider: anthropic
+  # model: claude-opus-5
+  # api_key_env: ANTHROPIC_API_KEY
+
+chat:
+  # How many past messages to send to the model each turn.
+  history_limit: 40
+  # Extra instructions added to the built-in system prompt.
+  system_prompt: ""

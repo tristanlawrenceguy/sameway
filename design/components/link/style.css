@@ -1,0 +1,8 @@
+.sw-link {
+  color: var(--sw-color-accent);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  text-decoration-thickness: 1px;
+}
+.sw-link:hover { text-decoration-thickness: 2px; }
+.sw-link[aria-current="page"] { font-weight: 700; text-decoration-thickness: 3px; }

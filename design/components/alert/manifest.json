@@ -1,0 +1,31 @@
+{
+  "name": "alert",
+  "version": "1.0.0",
+  "description": "A short message that needs attention: status, success, warning, or error. Not for long content.",
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["message"],
+    "properties": {
+      "message": { "type": "string", "minLength": 1 },
+      "kind": { "type": "string", "enum": ["info", "success", "warning", "danger"], "default": "info" },
+      "title": { "type": "string", "description": "Optional short title shown in bold before the message." },
+      "id": { "type": "string" }
+    }
+  },
+  "a11y": {
+    "role": "status for info and success, alert for warning and danger",
+    "keyboard": [],
+    "states": [],
+    "wcag": { "target": "AAA", "notes": "Kind is conveyed by a text prefix as well as colour (1.4.1). Warning and danger use role=alert so assistive tech announces them when inserted live." }
+  },
+  "machine": {
+    "selector": "[data-component=\"alert\"]",
+    "identify": "Read data-kind for the severity and the text content for the message.",
+    "operate": "Not interactive. Errors from the system are surfaced here; read them before retrying."
+  },
+  "examples": [
+    { "name": "default", "props": { "message": "Saved." }, "file": "examples/default.html" },
+    { "name": "danger", "props": { "kind": "danger", "title": "Could not reach the model", "message": "Connection refused at http://localhost:11434. Start Ollama or change llm.base_url in workspace.yaml." }, "file": "examples/danger.html" }
+  ]
+}

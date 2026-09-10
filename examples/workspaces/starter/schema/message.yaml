@@ -1,0 +1,13 @@
+# One turn of the chat on the home page. Used by the chat feature; keep it.
+name: message
+description: A message in the conversation between the person and the assistant.
+internal: true
+title: content
+fields:
+  role:
+    type: enum
+    values: [user, assistant, error]
+    required: true
+  content:
+    type: text
+    required: true

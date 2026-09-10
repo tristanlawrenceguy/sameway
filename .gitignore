@@ -1,0 +1,20 @@
+# Build output
+/bin/
+/dist/
+*.exe
+
+# Workspace runtime data (rebuilt from content/ by `sameway import`)
+data.db
+data.db-journal
+data.db-wal
+data.db-shm
+
+# Node (dev-only accessibility runner)
+node_modules/
+tools/a11y-runner/report/
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

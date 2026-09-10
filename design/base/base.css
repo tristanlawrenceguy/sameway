@@ -1,0 +1,89 @@
+/* Sameway base styles. Depends on tokens.css. No component styles live here. */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  font-family: var(--sw-font-sans);
+  font-size: 100%;
+  line-height: var(--sw-size-line);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--sw-color-bg);
+  color: var(--sw-color-fg);
+  font-size: var(--sw-size-text-md);
+}
+
+/* Focus: visible on every focusable element, 3:1 against any surface. */
+:focus-visible {
+  outline: var(--sw-focus-width) solid var(--sw-color-focus);
+  outline-offset: var(--sw-focus-offset);
+}
+:focus:not(:focus-visible) { outline: none; }
+
+/* Motion: nothing moves unless the person allows it. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root { --sw-color-border: var(--sw-color-fg); }
+}
+
+/* Page skeleton used by the server layout. */
+.sw-skip {
+  position: absolute;
+  left: var(--sw-space-2);
+  top: -100px;
+  padding: var(--sw-space-2) var(--sw-space-4);
+  background: var(--sw-color-accent);
+  color: var(--sw-color-accent-fg);
+  border-radius: var(--sw-radius-sm);
+  z-index: 10;
+}
+.sw-skip:focus { top: var(--sw-space-2); }
+
+.sw-header, .sw-main, .sw-footer {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: var(--sw-space-4);
+}
+.sw-header { border-bottom: 1px solid var(--sw-color-border); display: flex; flex-wrap: wrap; gap: var(--sw-space-4); align-items: center; }
+.sw-header__brand { font-weight: 700; text-decoration: none; color: inherit; font-size: var(--sw-size-text-lg); }
+.sw-nav ul { list-style: none; display: flex; flex-wrap: wrap; gap: var(--sw-space-4); margin: 0; padding: 0; }
+.sw-nav a { display: inline-flex; align-items: center; min-height: var(--sw-size-target); color: var(--sw-color-accent); }
+.sw-nav a[aria-current="page"] { font-weight: 700; text-decoration-thickness: 3px; }
+
+.sw-main { min-height: 60vh; }
+.sw-footer { color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); }
+
+/* Two-region layout for the chat showcase. Stacks on narrow screens. */
+.sw-split { display: grid; gap: var(--sw-space-8); grid-template-columns: 1fr; }
+@media (min-width: 60rem) { .sw-split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.sw-region { min-width: 0; }
+.sw-region > h2 { margin-top: 0; }
+
+.sw-stack > * + * { margin-top: var(--sw-space-4); }
+.sw-cluster { display: flex; flex-wrap: wrap; gap: var(--sw-space-2); align-items: center; }
+.sw-prose { max-width: var(--sw-size-measure); }
+.sw-visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Definition lists used by the generic detail view. */
+.sw-dl { display: grid; grid-template-columns: max-content 1fr; gap: var(--sw-space-2) var(--sw-space-6); margin: 0; }
+.sw-dl dt { font-weight: 600; color: var(--sw-color-fg-muted); }
+.sw-dl dd { margin: 0; overflow-wrap: anywhere; }
+
+pre, code { font-family: var(--sw-font-mono); font-size: 0.95em; }
+pre { overflow-x: auto; padding: var(--sw-space-3); background: var(--sw-color-bg-muted); border-radius: var(--sw-radius-sm); }

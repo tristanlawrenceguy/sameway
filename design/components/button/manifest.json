@@ -1,0 +1,40 @@
+{
+  "name": "button",
+  "version": "1.0.0",
+  "description": "Triggers an action on the current page, such as submitting a form. For navigation to another page use link.",
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["label"],
+    "properties": {
+      "label": { "type": "string", "minLength": 1, "description": "Visible text. Say what happens, for example 'Save note'." },
+      "type": { "type": "string", "enum": ["button", "submit", "reset"], "default": "button" },
+      "variant": { "type": "string", "enum": ["primary", "secondary", "danger"], "default": "primary" },
+      "name": { "type": "string", "description": "Form field name, sent with the form when type is submit." },
+      "value": { "type": "string", "description": "Form value sent when this button submits the form." },
+      "id": { "type": "string" },
+      "disabled": { "type": "boolean", "default": false }
+    }
+  },
+  "a11y": {
+    "role": "button",
+    "keyboard": [
+      { "key": "Enter", "does": "activates" },
+      { "key": "Space", "does": "activates" },
+      { "key": "Tab", "does": "moves focus to and from the button" }
+    ],
+    "states": ["disabled"],
+    "wcag": { "target": "AAA", "notes": "44px minimum target. 7:1 contrast on all variants. Focus ring 3px with 3:1 contrast. Disabled buttons are removed from the tab order, so keep destructive or important actions enabled and validate on submit instead." }
+  },
+  "machine": {
+    "selector": "[data-component=\"button\"]",
+    "identify": "The accessible name is the visible label text.",
+    "operate": "Click it, or focus it and press Enter or Space. A submit button inside a form submits that form."
+  },
+  "examples": [
+    { "name": "default", "props": { "label": "Save note" }, "file": "examples/default.html" },
+    { "name": "submit", "props": { "label": "Send", "type": "submit", "name": "action", "value": "send" }, "file": "examples/submit.html" },
+    { "name": "secondary", "props": { "label": "Cancel", "variant": "secondary" }, "file": "examples/secondary.html" },
+    { "name": "danger", "props": { "label": "Delete note", "variant": "danger", "type": "submit" }, "file": "examples/danger.html" }
+  ]
+}

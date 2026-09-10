@@ -1,0 +1,5 @@
+.sw-heading { line-height: 1.25; margin: var(--sw-space-6) 0 var(--sw-space-3); overflow-wrap: anywhere; }
+h1.sw-heading { font-size: var(--sw-size-text-2xl); }
+h2.sw-heading { font-size: var(--sw-size-text-xl); }
+h3.sw-heading { font-size: var(--sw-size-text-lg); }
+h4.sw-heading, h5.sw-heading, h6.sw-heading { font-size: var(--sw-size-text-md); }

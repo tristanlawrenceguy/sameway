@@ -1,0 +1,13 @@
+.sw-message {
+  padding: var(--sw-space-3) var(--sw-space-4);
+  border: 1px solid var(--sw-color-border);
+  border-radius: var(--sw-radius-md);
+  background: var(--sw-color-bg);
+  max-width: var(--sw-size-measure);
+}
+.sw-message--user { background: var(--sw-color-bg-muted); }
+.sw-message--error { border-color: var(--sw-color-danger); border-left-width: 6px; }
+.sw-message__meta { margin: 0 0 var(--sw-space-2); font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); }
+.sw-message__author { font-weight: 700; color: var(--sw-color-fg); }
+.sw-message__body p { margin: 0 0 var(--sw-space-3); overflow-wrap: anywhere; }
+.sw-message__body p:last-child { margin-bottom: 0; }

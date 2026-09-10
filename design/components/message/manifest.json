@@ -1,0 +1,33 @@
+{
+  "name": "message",
+  "version": "1.0.0",
+  "description": "One turn in a conversation: who said it and what was said. Render inside a list so the conversation has structure.",
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["role", "content"],
+    "properties": {
+      "role": { "type": "string", "enum": ["user", "assistant", "error"], "description": "error is a system notice, such as a failed model call." },
+      "content": { "type": "string", "minLength": 1, "description": "Plain text. Blank lines start a new paragraph." },
+      "author": { "type": "string", "description": "Display name. Defaults to You, Assistant, or System by role." },
+      "time": { "type": "string", "description": "Human readable time such as 14:05." },
+      "id": { "type": "string", "description": "Anchor id so the page can link to the latest message." }
+    }
+  },
+  "a11y": {
+    "role": "article",
+    "keyboard": [],
+    "states": [],
+    "wcag": { "target": "AAA", "notes": "Author is text, not colour or alignment alone (1.4.1). Each message is an article with its author as a heading so screen readers can move between turns." }
+  },
+  "machine": {
+    "selector": "[data-component=\"message\"]",
+    "identify": "Read data-role for who spoke and the article text for the content.",
+    "operate": "Not interactive."
+  },
+  "examples": [
+    { "name": "default", "props": { "role": "user", "content": "Add a grocery list with milk, eggs and bread.", "time": "14:05", "id": "msg-1" }, "file": "examples/default.html" },
+    { "name": "assistant", "props": { "role": "assistant", "content": "Done. I added a list component with three items.\n\nWant it as a table instead?" }, "file": "examples/assistant.html" },
+    { "name": "error", "props": { "role": "error", "content": "Could not reach the model at http://localhost:11434." }, "file": "examples/error.html" }
+  ]
+}

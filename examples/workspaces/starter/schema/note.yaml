@@ -1,0 +1,24 @@
+# An ordinary content type. Edit it, copy it, or delete it.
+# Every field here becomes a column, a form control, a CLI flag, and an API field.
+name: note
+description: A short piece of writing.
+title: title
+fields:
+  title:
+    type: string
+    required: true
+    maxLength: 200
+  body:
+    type: markdown
+    description: The note itself.
+  tags:
+    type: list
+    of: string
+    description: Keywords for finding the note.
+  status:
+    type: enum
+    values: [draft, published]
+    default: draft
+  pinned:
+    type: bool
+    default: false

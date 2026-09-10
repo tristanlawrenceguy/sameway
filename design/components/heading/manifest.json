@@ -1,0 +1,30 @@
+{
+  "name": "heading",
+  "version": "1.0.0",
+  "description": "A section heading. Levels must form an outline: one h1 per page, then h2 for sections, h3 inside them, never skipping down a level.",
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["text"],
+    "properties": {
+      "text": { "type": "string", "minLength": 1 },
+      "level": { "type": "integer", "minimum": 1, "maximum": 6, "default": 2, "description": "Pages already have an h1, so content added to a page starts at 2." },
+      "id": { "type": "string", "description": "Anchor id so links and skip targets can point here." }
+    }
+  },
+  "a11y": {
+    "role": "heading",
+    "keyboard": [],
+    "states": [],
+    "wcag": { "target": "AAA", "notes": "Headings are how screen reader users and agents build a page outline (2.4.10 section headings). Keep them short and descriptive." }
+  },
+  "machine": {
+    "selector": "[data-component=\"heading\"]",
+    "identify": "The element name is h1 to h6. Read aria-level from the tag number.",
+    "operate": "Not interactive. Use headings to locate sections; most screen readers jump between them with the H key."
+  },
+  "examples": [
+    { "name": "default", "props": { "text": "Today's plan" }, "file": "examples/default.html" },
+    { "name": "level3", "props": { "text": "Morning", "level": 3, "id": "morning" }, "file": "examples/level3.html" }
+  ]
+}

@@ -1,0 +1,69 @@
+/* Generated from design/tokens/tokens.json by `go run ./tools/tokens`. Do not edit. */
+:root {
+  color-scheme: light dark;
+  --sw-color-accent: #1d4ed8;
+  --sw-color-accent-fg: #ffffff;
+  --sw-color-bg: #ffffff;
+  --sw-color-bg-muted: #f3f4f6;
+  --sw-color-border: #6b7078;
+  --sw-color-danger: #991b1b;
+  --sw-color-fg: #1a1c20;
+  --sw-color-fg-muted: #4b5057;
+  --sw-color-focus: #c2410c;
+  --sw-color-info: #1e40af;
+  --sw-color-success: #166534;
+  --sw-color-warning: #854d0e;
+  --sw-focus-offset: 2px;
+  --sw-focus-width: 3px;
+  --sw-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+  --sw-font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --sw-radius-md: 0.5rem;
+  --sw-radius-sm: 0.25rem;
+  --sw-size-line: 1.6;
+  --sw-size-measure: 68ch;
+  --sw-size-target: 2.75rem;
+  --sw-size-text-2xl: 1.875rem;
+  --sw-size-text-lg: 1.25rem;
+  --sw-size-text-md: 1.0625rem;
+  --sw-size-text-sm: 0.9375rem;
+  --sw-size-text-xl: 1.5rem;
+  --sw-space-1: 0.25rem;
+  --sw-space-12: 3rem;
+  --sw-space-2: 0.5rem;
+  --sw-space-3: 0.75rem;
+  --sw-space-4: 1rem;
+  --sw-space-6: 1.5rem;
+  --sw-space-8: 2rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --sw-color-accent: #93b4ff;
+    --sw-color-accent-fg: #0b1a3a;
+    --sw-color-bg: #121417;
+    --sw-color-bg-muted: #1c1f24;
+    --sw-color-border: #8a919b;
+    --sw-color-danger: #fca5a5;
+    --sw-color-fg: #f2f3f5;
+    --sw-color-fg-muted: #b8bec7;
+    --sw-color-focus: #ffb27a;
+    --sw-color-info: #bfdbfe;
+    --sw-color-success: #86efac;
+    --sw-color-warning: #fde68a;
+  }
+}
+
+:root[data-theme="dark"] {
+  --sw-color-accent: #93b4ff;
+  --sw-color-accent-fg: #0b1a3a;
+  --sw-color-bg: #121417;
+  --sw-color-bg-muted: #1c1f24;
+  --sw-color-border: #8a919b;
+  --sw-color-danger: #fca5a5;
+  --sw-color-fg: #f2f3f5;
+  --sw-color-fg-muted: #b8bec7;
+  --sw-color-focus: #ffb27a;
+  --sw-color-info: #bfdbfe;
+  --sw-color-success: #86efac;
+  --sw-color-warning: #fde68a;
+}

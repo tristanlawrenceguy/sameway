@@ -1,0 +1,37 @@
+{
+  "name": "textarea",
+  "version": "1.0.0",
+  "description": "A multi-line text input with a visible label, optional hint, and inline error.",
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["label", "name"],
+    "properties": {
+      "label": { "type": "string", "minLength": 1 },
+      "name": { "type": "string", "minLength": 1 },
+      "id": { "type": "string" },
+      "value": { "type": "string", "default": "" },
+      "rows": { "type": "integer", "minimum": 2, "maximum": 40, "default": 4 },
+      "hint": { "type": "string" },
+      "error": { "type": "string" },
+      "required": { "type": "boolean", "default": false }
+    }
+  },
+  "a11y": {
+    "role": "textbox (multiline)",
+    "keyboard": [
+      { "key": "Tab", "does": "moves focus to and from the field" },
+      { "key": "Enter", "does": "inserts a new line; use the form's submit button to send" }
+    ],
+    "states": ["aria-invalid", "aria-required"],
+    "wcag": { "target": "AAA", "notes": "Same contract as text-field. Enter never submits, so people can compose without accidental sends." }
+  },
+  "machine": {
+    "selector": "[data-component=\"textarea\"] textarea",
+    "identify": "The accessible name is the label text.",
+    "operate": "Focus and type. Submit with the form's submit button, not Enter."
+  },
+  "examples": [
+    { "name": "default", "props": { "label": "Message", "name": "message", "rows": 3, "hint": "Ask for a change or a new component." }, "file": "examples/default.html" }
+  ]
+}

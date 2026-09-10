@@ -1,0 +1,27 @@
+{{if .Notice}}{{.Notice}}
+{{end}}<div class="sw-split">
+<section class="sw-region" aria-labelledby="conversation-heading">
+<h2 id="conversation-heading">Conversation</h2>
+{{if .ModelName}}<p class="sw-text--muted">Connected to {{.ModelName}}.</p>
+{{end}}{{if .Messages}}<ol class="sw-stack sw-messages" aria-label="Messages">
+{{range .Messages}}<li>{{.}}</li>
+{{end}}</ol>
+{{else}}<p>No messages yet. Say hello, or ask for a component on the canvas.</p>
+{{end}}<form method="post" action="/chat" class="sw-stack" aria-labelledby="compose-heading">
+<h3 id="compose-heading" class="sw-visually-hidden">Compose</h3>
+{{.Compose}}
+<div class="sw-cluster">{{.Send}}</div>
+</form>
+{{if .Messages}}<form method="post" action="/chat/clear" class="sw-cluster">{{.Clear}}</form>
+{{end}}</section>
+<section class="sw-region" id="canvas" aria-labelledby="canvas-heading">
+<h2 id="canvas-heading">Canvas</h2>
+{{if .Blocks}}<ol class="sw-stack sw-canvas" aria-label="Canvas blocks">
+{{range .Blocks}}<li data-block-id="{{.ID}}" data-block-component="{{.Component}}">
+{{.HTML}}
+<form method="post" action="/canvas/{{.ID}}/delete" class="sw-cluster sw-canvas__actions">{{.Remove}}</form>
+</li>
+{{end}}</ol>
+{{else}}<p>Nothing here yet. Ask the assistant to add a component, for example "add a checklist for today".</p>
+{{end}}</section>
+</div>

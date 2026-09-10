@@ -1,0 +1,2 @@
+/* Shares .sw-field classes with text-field. Only select-specific rules live here. */
+.sw-field__select { cursor: pointer; }

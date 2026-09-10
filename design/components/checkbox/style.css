@@ -1,0 +1,4 @@
+.sw-checkbox { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: var(--sw-space-2); min-height: var(--sw-size-target); }
+.sw-checkbox__input { width: 1.5rem; height: 1.5rem; margin: 0; accent-color: var(--sw-color-accent); cursor: pointer; }
+.sw-checkbox__label { cursor: pointer; min-height: var(--sw-size-target); display: flex; align-items: center; }
+.sw-checkbox__hint { grid-column: 2; margin: 0; color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); }

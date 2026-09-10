@@ -1,0 +1,30 @@
+{
+  "name": "text",
+  "version": "1.0.0",
+  "description": "One or more paragraphs of plain text. Blank lines in content start a new paragraph.",
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["content"],
+    "properties": {
+      "content": { "type": "string", "minLength": 1 },
+      "muted": { "type": "boolean", "default": false, "description": "Lower-emphasis text such as a note or caption. Still meets 7:1 contrast." },
+      "id": { "type": "string" }
+    }
+  },
+  "a11y": {
+    "role": "paragraph",
+    "keyboard": [],
+    "states": [],
+    "wcag": { "target": "AAA", "notes": "Line length capped at 68 characters and line height 1.6 (1.4.8 visual presentation). Plain language is the author's job; keep sentences short." }
+  },
+  "machine": {
+    "selector": "[data-component=\"text\"]",
+    "identify": "A div holding p elements. Read the text content.",
+    "operate": "Not interactive."
+  },
+  "examples": [
+    { "name": "default", "props": { "content": "Sameway renders the same accessible HTML for people and for agents." }, "file": "examples/default.html" },
+    { "name": "paragraphs", "props": { "content": "First paragraph.\n\nSecond paragraph, shown as its own p element.", "muted": true }, "file": "examples/paragraphs.html" }
+  ]
+}

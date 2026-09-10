@@ -1,0 +1,9 @@
+{
+  "name": "@sameway/design",
+  "version": "0.1.0",
+  "description": "Sameway design system: tokens, base CSS, and accessible HTML component patterns with machine-readable manifests.",
+  "license": "MIT",
+  "files": ["tokens", "base", "components", "README.md"],
+  "keywords": ["accessibility", "wcag", "design-system", "html", "agents"],
+  "repository": { "type": "git", "url": "https://github.com/sameway-dev/sameway", "directory": "design" }
+}

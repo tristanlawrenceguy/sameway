@@ -1,0 +1,1 @@
+{{if .ordered}}<ol class="sw-list" data-component="list"{{if .id}} id="{{.id}}"{{end}}{{if .label}} aria-label="{{.label}}"{{end}}>{{range .items}}<li>{{.}}</li>{{end}}</ol>{{else}}<ul class="sw-list" data-component="list"{{if .id}} id="{{.id}}"{{end}}{{if .label}} aria-label="{{.label}}"{{end}}>{{range .items}}<li>{{.}}</li>{{end}}</ul>{{end}}

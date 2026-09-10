@@ -1,0 +1,14 @@
+{
+  "name": "sameway-a11y-runner",
+  "private": true,
+  "description": "Dev-only: runs axe-core over every component example and fails on WCAG 2.2 AA violations.",
+  "type": "module",
+  "scripts": {
+    "postinstall": "playwright install chromium",
+    "test": "node run.mjs"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.2",
+    "playwright": "^1.50.0"
+  }
+}

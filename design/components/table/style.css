@@ -1,0 +1,10 @@
+.sw-table-wrap { overflow-x: auto; max-width: 100%; }
+.sw-table { border-collapse: collapse; width: 100%; }
+.sw-table caption { text-align: left; font-weight: 700; padding: var(--sw-space-2) 0; caption-side: top; }
+.sw-table th, .sw-table td {
+  text-align: left;
+  padding: var(--sw-space-2) var(--sw-space-3);
+  border-bottom: 1px solid var(--sw-color-border);
+  vertical-align: top;
+}
+.sw-table th { background: var(--sw-color-bg-muted); }

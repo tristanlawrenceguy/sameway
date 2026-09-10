@@ -1,0 +1,35 @@
+{
+  "name": "checkbox",
+  "version": "1.0.0",
+  "description": "A yes/no choice with a visible label.",
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["label", "name"],
+    "properties": {
+      "label": { "type": "string", "minLength": 1 },
+      "name": { "type": "string", "minLength": 1 },
+      "id": { "type": "string" },
+      "value": { "type": "string", "default": "true", "description": "Value sent when checked." },
+      "checked": { "type": "boolean", "default": false },
+      "hint": { "type": "string" }
+    }
+  },
+  "a11y": {
+    "role": "checkbox",
+    "keyboard": [
+      { "key": "Tab", "does": "moves focus to and from the checkbox" },
+      { "key": "Space", "does": "toggles it" }
+    ],
+    "states": ["checked"],
+    "wcag": { "target": "AAA", "notes": "Native input so the checked state is exposed everywhere. The label is clickable and the target is at least 44px tall." }
+  },
+  "machine": {
+    "selector": "[data-component=\"checkbox\"] input",
+    "identify": "The accessible name is the label text. Read the checked property.",
+    "operate": "Click the input or its label, or focus it and press Space."
+  },
+  "examples": [
+    { "name": "default", "props": { "label": "Published", "name": "published", "checked": true }, "file": "examples/default.html" }
+  ]
+}
