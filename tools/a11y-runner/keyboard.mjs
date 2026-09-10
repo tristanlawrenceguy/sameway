@@ -23,12 +23,17 @@ function fail(where, msg) {
   console.log(`FAIL ${where}: ${msg}`);
 }
 
-// Instrument the page: count clicks, block real navigation and submits.
+// Instrument the page: count clicks and submits, block real navigation.
+// Only link clicks are cancelled; cancelling a checkbox click would undo
+// the toggle the test is looking for.
 async function arm() {
   await page.evaluate(() => {
     window.__clicks = 0;
     window.__submits = 0;
-    document.addEventListener("click", (e) => { window.__clicks++; e.preventDefault(); });
+    document.addEventListener("click", (e) => {
+      window.__clicks++;
+      if (e.target.closest("a")) e.preventDefault();
+    });
     document.addEventListener("submit", (e) => { window.__submits++; e.preventDefault(); });
   });
 }
@@ -136,7 +141,9 @@ for (const name of readdirSync(componentsDir).sort()) {
   for (const file of readdirSync(examplesDir).filter((f) => f.endsWith(".html")).sort()) {
     const where = `${name}/${file}`;
     const body = readFileSync(join(examplesDir, file), "utf8");
-    await page.setContent(shell(css, `<form action="#" method="post">${body}</form>`));
+    // novalidate: examples such as an invalid email show the error state on
+    // purpose; here we test keyboard mechanics, not constraint validation.
+    await page.setContent(shell(css, `<form action="#" method="post" novalidate>${body}</form>`));
     await arm();
     const expected = await tabOrder(where);
     if (expected.length > 0) await operate(name, where);

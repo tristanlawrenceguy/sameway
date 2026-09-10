@@ -43,7 +43,7 @@ check(await page.getByRole("region").count() >= 0 && await page.locator("section
 // Chat with no model: the failure must land in the transcript.
 await page.getByRole("textbox", { name: /Your message/ }).fill("hello from playwright");
 await page.getByRole("button", { name: "Send" }).click();
-await page.waitForLoadState("load");
+await page.waitForURL(/#msg-/);
 check(page.url().includes("#msg-"), "chat: redirect targets the newest message");
 const errorMsg = page.locator("[data-component=message][data-role=error]");
 check(await errorMsg.count() === 1 && /no model configured/.test(await errorMsg.textContent()), "chat: missing model is recorded as a system message");
@@ -67,7 +67,9 @@ await page.getByRole("combobox", { name: "Status" }).selectOption("published");
 await page.getByRole("checkbox", { name: "Pinned" }).check();
 await title.focus();
 await page.keyboard.press("Enter");
-await page.waitForLoadState("load");
+// Enter starts a navigation; wait for the detail URL rather than a load
+// state that the form page already satisfies.
+await page.waitForURL(/\/t\/note\/[a-z0-9]+$/, { timeout: 10000 }).catch(() => {});
 check(/\/t\/note\/[a-z0-9]+$/.test(page.url()), `new note: Enter in the title submits and lands on the detail page (${page.url()})`);
 check(await page.locator("h1").textContent() === "Typed by keyboard", "detail: h1 is the note title");
 const detailText = await page.locator("main").textContent();
@@ -78,7 +80,7 @@ await shellChecks("detail");
 await page.getByRole("link", { name: "Edit note" }).click();
 await page.getByRole("textbox", { name: /Title/ }).fill("x".repeat(201));
 await page.getByRole("button", { name: "Save" }).click();
-await page.waitForLoadState("load");
+await page.getByRole("alert").first().waitFor({ timeout: 10000 }).catch(() => {});
 const invalid = page.getByRole("textbox", { name: /Title/ });
 check(await invalid.getAttribute("aria-invalid") === "true", "edit: over-long title marks the field invalid");
 const describedBy = await invalid.getAttribute("aria-describedby");
