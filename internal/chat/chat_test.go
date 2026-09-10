@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/sameway-dev/sameway/internal/app"
-	"github.com/sameway-dev/sameway/internal/chat"
-	"github.com/sameway-dev/sameway/internal/llm"
-	"github.com/sameway-dev/sameway/internal/schema"
-	"github.com/sameway-dev/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/app"
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
+	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 // fakeProvider scripts a model: first it calls add_component, then answers.

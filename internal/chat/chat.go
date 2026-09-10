@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sameway-dev/sameway/internal/llm"
-	"github.com/sameway-dev/sameway/internal/render"
-	"github.com/sameway-dev/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/render"
+	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 // MessageType is the content type that holds conversation turns.

@@ -1,4 +1,4 @@
-module github.com/sameway-dev/sameway
+module github.com/tristanlawrenceguy/sameway
 
 go 1.25.0
 

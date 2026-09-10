@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/sameway-dev/sameway/internal/schema"
-	"github.com/sameway-dev/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
+	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 const noteYAML = `

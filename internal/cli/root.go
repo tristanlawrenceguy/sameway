@@ -10,8 +10,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/sameway-dev/sameway/internal/app"
-	"github.com/sameway-dev/sameway/internal/workspace"
+	"github.com/tristanlawrenceguy/sameway/internal/app"
+	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
 // Version is set by the build.

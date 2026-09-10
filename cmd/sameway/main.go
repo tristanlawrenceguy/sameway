@@ -5,7 +5,7 @@ package main
 import (
 	"os"
 
-	"github.com/sameway-dev/sameway/internal/cli"
+	"github.com/tristanlawrenceguy/sameway/internal/cli"
 )
 
 func main() {

@@ -14,7 +14,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/sameway-dev/sameway/internal/tokens"
+	"github.com/tristanlawrenceguy/sameway/internal/tokens"
 )
 
 // MaxLines is the hard cap for any source file.

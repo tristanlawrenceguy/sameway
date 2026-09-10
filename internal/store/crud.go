@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sameway-dev/sameway/internal/schema"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
 
 // ErrNotFound is returned when a record id does not exist.

@@ -6,8 +6,8 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/sameway-dev/sameway/internal/schema"
-	"github.com/sameway-dev/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
+	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 // apiError is the JSON error shape. code is stable, message is for people,

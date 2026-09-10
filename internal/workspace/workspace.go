@@ -18,7 +18,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/sameway-dev/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/llm"
 )
 
 // ConfigFile is the marker file every workspace has.

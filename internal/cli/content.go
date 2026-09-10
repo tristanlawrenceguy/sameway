@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sameway-dev/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 // setFlags collects repeated --set key=value pairs.

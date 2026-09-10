@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sameway-dev/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 const basePrompt = `You are the assistant inside a Sameway workspace. The person is looking at a web page with two regions: the conversation (where this reply appears) and the canvas, a list of components you control with tools.

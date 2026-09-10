@@ -7,13 +7,13 @@ import (
 	"fmt"
 	"io/fs"
 
-	"github.com/sameway-dev/sameway/design"
-	"github.com/sameway-dev/sameway/internal/chat"
-	"github.com/sameway-dev/sameway/internal/llm"
-	"github.com/sameway-dev/sameway/internal/render"
-	"github.com/sameway-dev/sameway/internal/schema"
-	"github.com/sameway-dev/sameway/internal/store"
-	"github.com/sameway-dev/sameway/internal/workspace"
+	"github.com/tristanlawrenceguy/sameway/design"
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/render"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
+	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
 // App is a loaded workspace ready to serve.

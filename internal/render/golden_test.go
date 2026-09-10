@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/sameway-dev/sameway/design"
-	"github.com/sameway-dev/sameway/internal/render"
+	"github.com/tristanlawrenceguy/sameway/design"
+	"github.com/tristanlawrenceguy/sameway/internal/render"
 )
 
 // TestGolden renders every manifest example and compares it with the checked

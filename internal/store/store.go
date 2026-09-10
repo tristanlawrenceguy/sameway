@@ -15,7 +15,7 @@ import (
 
 	_ "modernc.org/sqlite"
 
-	"github.com/sameway-dev/sameway/internal/schema"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
 
 // Record is one stored item of a content type.

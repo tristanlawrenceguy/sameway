@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/sameway-dev/sameway/internal/tokens"
+	"github.com/tristanlawrenceguy/sameway/internal/tokens"
 )
 
 func main() {

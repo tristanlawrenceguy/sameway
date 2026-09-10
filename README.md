@@ -19,7 +19,7 @@ where the manifest says so.
 Requires Go 1.24 or newer. No database, no Node, no config beyond one file.
 
 ```bash
-go install github.com/sameway-dev/sameway/cmd/sameway@latest
+go install github.com/tristanlawrenceguy/sameway/cmd/sameway@latest
 mkdir my-workspace && cd my-workspace
 sameway init
 sameway serve

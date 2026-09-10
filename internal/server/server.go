@@ -10,9 +10,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/sameway-dev/sameway/internal/app"
-	"github.com/sameway-dev/sameway/internal/render"
-	"github.com/sameway-dev/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/app"
+	"github.com/tristanlawrenceguy/sameway/internal/render"
+	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 // Server serves one workspace.

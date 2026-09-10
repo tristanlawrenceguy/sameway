@@ -1,7 +1,7 @@
 # Architecture
 
-Name: **Sameway**. License: MIT. Module path: `github.com/sameway-dev/sameway`
-(the `sameway-dev` GitHub org was free when this was written; change the
+Name: **Sameway**. License: MIT. Module path: `github.com/tristanlawrenceguy/sameway`
+(the account is tristanlawrenceguy; change the
 module path in `go.mod` and the imports if the repo lands elsewhere).
 
 Status: milestone 1 is scaffolded and verified (see section 8). The starter

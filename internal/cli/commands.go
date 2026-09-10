@@ -10,9 +10,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/sameway-dev/sameway/examples"
-	"github.com/sameway-dev/sameway/internal/server"
-	"github.com/sameway-dev/sameway/internal/workspace"
+	"github.com/tristanlawrenceguy/sameway/examples"
+	"github.com/tristanlawrenceguy/sameway/internal/server"
+	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
 func (c *ctx) initCmd() error {
