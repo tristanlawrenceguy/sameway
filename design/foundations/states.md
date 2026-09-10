@@ -9,8 +9,8 @@ text, as colour, and as attributes.
 
 | Actor | Text | Colour | Attribute |
 |---|---|---|---|
-| A person | "You", "Added by you" | human indigo | `data-actor="human"` |
-| The assistant | "Assistant", "Added by assistant" | assistant teal | `data-actor="assistant"` |
+| A person | "You" | human indigo | `data-actor="human"` |
+| The assistant | "Assistant" | assistant teal | `data-actor="assistant"` |
 | The software | "System" | system amber | `data-actor="system"` |
 
 Where it appears:

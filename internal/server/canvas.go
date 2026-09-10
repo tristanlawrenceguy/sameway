@@ -115,12 +115,14 @@ func (s *Server) canvasBlock(b *store.Record, lastTurn time.Time) canvasBlock {
 	if v, ok := b.Fields["span"].(int64); ok && v >= 1 && v <= 12 {
 		span = int(v)
 	}
-	who := map[string]string{"human": "you", "assistant": "assistant"}
-	label := "Added by " + who[createdBy]
-	if actor != createdBy || b.UpdatedAt.Sub(b.CreatedAt) > time.Second {
-		label = "Added by " + who[createdBy] + ", edited by " + who[actor]
+	// Say only what is not obvious. Who made it is the whole fact when one
+	// actor did everything; the second clause appears only when the other
+	// one has been in since. Times live in the activity log.
+	who := map[string]string{"human": "You", "assistant": "Assistant"}
+	label := who[createdBy]
+	if actor != createdBy {
+		label += ", edited by " + strings.ToLower(who[actor])
 	}
-	label += " at " + b.UpdatedAt.Local().Format("15:04")
 
 	changed := ""
 	if !lastTurn.IsZero() {

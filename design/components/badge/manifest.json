@@ -7,7 +7,7 @@
     "additionalProperties": false,
     "required": ["label"],
     "properties": {
-      "label": { "type": "string", "minLength": 1, "description": "Short text such as 'Added by assistant' or 'Draft'." },
+      "label": { "type": "string", "minLength": 1, "description": "Short text such as 'Assistant' or 'Draft'. Say only what is not already obvious; a badge is not a place for timestamps." },
       "tone": { "type": "string", "enum": ["neutral", "human", "assistant", "system", "success", "warning", "danger", "info"], "default": "neutral", "description": "human, assistant, and system are provenance tones; the rest are states." },
       "id": { "type": "string" }
     }
@@ -25,8 +25,8 @@
   },
   "examples": [
     { "name": "default", "props": { "label": "Draft" }, "file": "examples/default.html" },
-    { "name": "human", "props": { "label": "Added by you", "tone": "human" }, "file": "examples/human.html" },
-    { "name": "assistant", "props": { "label": "Added by assistant", "tone": "assistant" }, "file": "examples/assistant.html" },
+    { "name": "human", "props": { "label": "You", "tone": "human" }, "file": "examples/human.html" },
+    { "name": "assistant", "props": { "label": "Assistant, edited by you", "tone": "assistant" }, "file": "examples/assistant.html" },
     { "name": "system", "props": { "label": "System notice", "tone": "system" }, "file": "examples/system.html" },
     { "name": "success", "props": { "label": "Published", "tone": "success" }, "file": "examples/success.html" },
     { "name": "warning", "props": { "label": "Needs review", "tone": "warning" }, "file": "examples/warning.html" },

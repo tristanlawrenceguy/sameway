@@ -83,8 +83,8 @@ func TestQuietControlsStayAvailableToEveryone(t *testing.T) {
 
 	// Provenance is still readable, just not shouted.
 	badge := sub.WithAttr("data-component", "badge")
-	if len(badge) != 1 || !strings.Contains(htmltest.Text(badge[0]), "Added by assistant") {
-		t.Errorf("the provenance label should still be in the quiet bar")
+	if len(badge) != 1 || strings.TrimSpace(htmltest.Text(badge[0])) != "Assistant" {
+		t.Errorf("the quiet bar should name who made the block, got %q", htmltest.Text(badge[0]))
 	}
 
 	// And a person can actually use them.

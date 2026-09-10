@@ -1,8 +1,9 @@
 # The quiet layer
 
 Accessible does not mean permanently labelled. An interface that shouts
-"Added by assistant at 20:24" on every block, with an Edit and a Remove
-button beside it, is noisy for everyone and no more usable for anyone.
+"Added by assistant, edited by assistant at 20:24" on every block, with an
+Edit and a Remove button beside it, is noisy for everyone and no more usable
+for anyone.
 
 So Sameway separates **being available** from **being visible**.
 
@@ -25,7 +26,7 @@ layer.
 <li class="sw-block sw-reveal">
   … the component …
   <div class="sw-bar sw-quiet">
-    <span class="sw-badge">Added by assistant at 20:24</span>
+    <span class="sw-badge">Assistant</span>
     <a class="sw-link">Edit<span class="sw-visually-hidden"> card</span></a>
     <button class="sw-button">Remove<span class="sw-visually-hidden"> card</span></button>
   </div>
@@ -55,8 +56,13 @@ name, both need to tell them apart.
 
 Permanent, tiny, and cheap: the actor rail down the left edge of each block,
 in the colour of whoever last touched it. Enough to scan a page and see who
-built what, without a word of chrome. The readable version of the same fact
-is one hover or one Tab away, and it is always in the accessibility tree.
+built what, without a word of chrome.
+
+The readable version is one hover or one Tab away, and always in the
+accessibility tree: a badge naming who made it, with a second clause only
+when it is not obvious. "Assistant", or "Assistant, edited by you". Never a
+timestamp, and never the same actor named twice. Times belong in the
+activity log, where they can be compared.
 
 This is the one place where colour alone carries information visually by
 default. It is supplementary, never the only route: the same provenance is

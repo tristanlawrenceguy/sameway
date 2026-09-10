@@ -98,6 +98,18 @@ func TestUpdateRemoveAndClear(t *testing.T) {
 	if n, _ := svc.Store.Count(chat.BlockType); n != 0 {
 		t.Errorf("clear_canvas left %d blocks", n)
 	}
+
+	// Starting over keeps the conversation the person is typing into.
+	svc.Provider = &scripted{steps: []*llm.Response{
+		call("add_component", map[string]any{"component": "chat", "props": map[string]any{}}),
+		call("add_component", map[string]any{"component": "text", "props": map[string]any{"content": "c"}}),
+		call("clear_canvas", nil),
+	}}
+	svc.Send(context.Background(), "chat, text, then clear")
+	left, _ := svc.Store.List(chat.BlockType, store.ListOptions{})
+	if len(left) != 1 || left[0].Fields["component"] != chat.ComponentName {
+		t.Errorf("clear_canvas should leave only the chat block, got %+v", left)
+	}
 }
 
 // TestComponentNamesAreCaseInsensitive covers what local models actually

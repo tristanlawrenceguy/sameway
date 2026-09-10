@@ -52,7 +52,7 @@ func (s *Service) tools() []llm.Tool {
 			}, "id")},
 		{Name: "remove_component", Description: "Remove one block from the canvas by id.",
 			Schema: obj(map[string]any{"id": map[string]any{"type": "string"}}, "id")},
-		{Name: "clear_canvas", Description: "Remove every block from the canvas. Only when the person asks to start over.",
+		{Name: "clear_canvas", Description: "Remove every block from the canvas except the chat, which stays so the person can keep talking. Only when the person asks to start over. To remove the chat too, call remove_component on it.",
 			Schema: obj(map[string]any{})},
 	}
 }
@@ -100,11 +100,26 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 		props, _ := rec.Fields["props"].(map[string]any)
 		return toolResult{text: "removed block " + args.ID, change: &Change{Action: "removed", Component: name, ID: args.ID, Detail: Summarise(name, props)}}
 	case "clear_canvas":
-		n, _ := s.Store.Count(BlockType)
-		if err := s.Store.DeleteAll(BlockType); err != nil {
-			return fail("could not clear the canvas: %v", err)
+		// Starting over means clearing the content, not deleting the
+		// conversation the person is typing into.
+		blocks, err := s.Store.List(BlockType, store.ListOptions{})
+		if err != nil {
+			return fail("could not read the canvas: %v", err)
 		}
-		return toolResult{text: "canvas cleared", change: &Change{Action: "cleared", Detail: fmt.Sprintf("%d blocks", n)}}
+		n := 0
+		for _, b := range blocks {
+			if b.Fields["component"] == ComponentName {
+				continue
+			}
+			if err := s.Store.Delete(BlockType, b.ID); err != nil {
+				return fail("could not clear the canvas: %v", err)
+			}
+			n++
+		}
+		if n == 0 {
+			return toolResult{text: "the canvas was already empty"}
+		}
+		return toolResult{text: fmt.Sprintf("cleared %d blocks; the chat stayed", n), change: &Change{Action: "cleared", Detail: fmt.Sprintf("%d blocks", n)}}
 	}
 	return fail("unknown tool %s", call.Name)
 }

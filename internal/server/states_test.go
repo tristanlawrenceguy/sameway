@@ -50,7 +50,7 @@ func TestStateLanguageAfterATurn(t *testing.T) {
 		}
 	}
 	badges := page.WithAttr("data-component", "badge")
-	if len(badges) < 2 || !strings.Contains(htmltest.Text(badges[0]), "Added by assistant") {
+	if len(badges) < 2 || strings.TrimSpace(htmltest.Text(badges[0])) != "Assistant" {
 		t.Errorf("each block should carry a provenance badge, got %d", len(badges))
 	}
 	actors := map[string]int{}
