@@ -8,10 +8,10 @@
     "required": ["title"],
     "properties": {
       "title": { "type": "string", "minLength": 1 },
-      "body": { "type": "string", "description": "Plain text. Blank lines start a new paragraph." },
-      "meta": { "type": "string", "description": "Small secondary line such as a date or status." },
-      "href": { "type": "string", "description": "When set, the title becomes a link to this URL." },
-      "level": { "type": "integer", "minimum": 2, "maximum": 6, "default": 3, "description": "Heading level of the title so cards fit the page outline." },
+      "body": { "type": "string", "format": "multiline", "description": "Plain text. Blank lines start a new paragraph." },
+      "meta": { "title": "Small print", "type": "string", "description": "Small secondary line such as a date or status." },
+      "href": { "title": "Link", "type": "string", "description": "When set, the title becomes a link to this URL." },
+      "level": { "title": "Heading level", "type": "integer", "minimum": 2, "maximum": 6, "default": 3, "description": "Heading level of the title so cards fit the page outline." },
       "id": { "type": "string" }
     }
   },

@@ -8,7 +8,7 @@
     "required": ["label"],
     "properties": {
       "label": { "type": "string", "minLength": 1, "description": "Visible text. Say what happens, for example 'Save note'." },
-      "context": { "type": "string", "description": "Extra words added to the accessible name but not shown, so a compact label like 'Remove' still reads as 'Remove card'." },
+      "context": { "title": "Extra words for screen readers", "type": "string", "description": "Extra words added to the accessible name but not shown, so a compact label like 'Remove' still reads as 'Remove card'." },
       "type": { "type": "string", "enum": ["button", "submit", "reset"], "default": "button" },
       "variant": { "type": "string", "enum": ["primary", "secondary", "danger", "quiet"], "default": "primary", "description": "quiet is a borderless button for per-item controls that live in the quiet layer." },
       "name": { "type": "string", "description": "Form field name, sent with the form when type is submit." },

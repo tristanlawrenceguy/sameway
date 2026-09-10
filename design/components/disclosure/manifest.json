@@ -10,7 +10,7 @@
       "label": { "type": "string", "minLength": 1, "description": "What is inside, as a noun phrase: 'Activity', 'Raw props'." },
       "count": { "type": "integer", "minimum": 0, "description": "How many items are inside, shown next to the label so the summary is informative while closed." },
       "open": { "type": "boolean", "default": false, "description": "Start expanded. Default is closed." },
-      "slot": { "type": "string", "description": "Text content. Server code can instead pass pre-rendered components as the slot; props supplied by a model or a form are always escaped as text." },
+      "slot": { "type": "string", "format": "multiline", "description": "Text content. Server code can instead pass pre-rendered components as the slot; props supplied by a model or a form are always escaped as text." },
       "id": { "type": "string", "description": "Needed for the enhancement script to remember whether this disclosure was open." }
     }
   },

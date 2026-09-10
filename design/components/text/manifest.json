@@ -7,8 +7,8 @@
     "additionalProperties": false,
     "required": ["content"],
     "properties": {
-      "content": { "type": "string", "minLength": 1 },
-      "muted": { "type": "boolean", "default": false, "description": "Lower-emphasis text such as a note or caption. Still meets 7:1 contrast." },
+      "content": { "type": "string", "format": "multiline", "minLength": 1 },
+      "muted": { "title": "Quieter text", "type": "boolean", "default": false, "description": "Lower-emphasis text such as a note or caption. Still meets 7:1 contrast." },
       "id": { "type": "string" }
     }
   },

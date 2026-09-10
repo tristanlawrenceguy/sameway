@@ -190,7 +190,13 @@ func coerceList(f Field, v any) (any, error) {
 				return nil, fmt.Errorf("must be a JSON array or comma separated values")
 			}
 		} else {
-			for _, part := range strings.Split(l, ",") {
+			// One per line when the person used lines, commas otherwise.
+			sep := ","
+			if strings.ContainsAny(l, "\r\n") {
+				sep = "\n"
+				l = strings.ReplaceAll(l, "\r\n", "\n")
+			}
+			for _, part := range strings.Split(l, sep) {
 				if p := strings.TrimSpace(part); p != "" {
 					items = append(items, p)
 				}
@@ -233,56 +239,4 @@ func coerceJSON(v any) (any, error) {
 		return nil, fmt.Errorf("must be valid JSON")
 	}
 	return plain, nil
-}
-
-// JSONSchema renders the type as a JSON Schema object, used by describe,
-// the API docs, and later the MCP tools.
-func (t *Type) JSONSchema() map[string]any {
-	props := map[string]any{}
-	var required []string
-	for _, f := range t.Fields {
-		p := map[string]any{}
-		switch f.Type {
-		case "string", "text", "markdown", "datetime":
-			p["type"] = "string"
-		case "enum":
-			p["type"] = "string"
-			p["enum"] = f.Values
-		case "int":
-			p["type"] = "integer"
-		case "float":
-			p["type"] = "number"
-		case "bool":
-			p["type"] = "boolean"
-		case "list":
-			p["type"] = "array"
-			p["items"] = map[string]any{"type": "string"}
-		case "json":
-			p["type"] = []string{"object", "array", "string", "number", "boolean", "null"}
-		}
-		if f.Description != "" {
-			p["description"] = f.Description
-		}
-		if f.Default != nil {
-			p["default"] = f.Default
-		}
-		if f.MaxLength > 0 {
-			p["maxLength"] = f.MaxLength
-		}
-		if f.Type == "datetime" {
-			p["format"] = "date-time"
-		}
-		props[f.Name] = p
-		if f.Required {
-			required = append(required, f.Name)
-		}
-	}
-	s := map[string]any{"type": "object", "properties": props, "additionalProperties": false}
-	if len(required) > 0 {
-		s["required"] = required
-	}
-	if t.Description != "" {
-		s["description"] = t.Description
-	}
-	return s
 }

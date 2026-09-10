@@ -75,8 +75,8 @@ func (s *Server) blockItem(blk *store.Record, convo *conversation) string {
 	// happened, and can get it again from the activity log.
 	fmt.Fprintf(&b, `<p class="sw-visually-hidden">%s</p>`, template.HTMLEscapeString(v.Provenance))
 	b.WriteString(string(body))
-	fmt.Fprintf(&b, `<div class="sw-bar sw-quiet">%s<form method="post" action="/canvas/%s/delete">%s</form></div></li>`,
-		v.Edit, v.ID, v.Remove)
+	fmt.Fprintf(&b, `<div class="sw-bar sw-quiet"><form method="post" action="/canvas/%s/delete">%s</form></div></li>`,
+		v.ID, v.Remove)
 	return b.String()
 }
 
@@ -134,15 +134,14 @@ func (s *Server) canvasBlock(b *store.Record, convo *conversation) canvasBlock {
 	} else if inLastTurn(b.UpdatedAt, convo) {
 		changed = "updated"
 	}
-	// Labels stay short on screen and carry the component name in the
-	// accessible name, so "Edit" reads as "Edit card" to a screen reader or
-	// an agent targeting by role and name.
+	// Removing is the one thing worth a control of its own. Anything else a
+	// person wants changed, they ask for, which is faster than any form and
+	// is the whole point of having an assistant on the page.
 	return canvasBlock{
 		ID: b.ID, Component: name, Actor: actor, Changed: changed, Span: span,
 		Frame: str(b.Fields["frame"], "card"), Tone: str(b.Fields["tone"], "none"),
 		Provenance: provenance,
 		HTML:       s.component(name, props),
-		Edit:       s.component("link", map[string]any{"href": "/t/block/" + b.ID + "/edit", "label": "Edit", "context": name}),
 		Remove:     s.component("button", map[string]any{"label": "Remove", "context": name, "type": "submit", "variant": "quiet"}),
 	}
 }
@@ -187,7 +186,6 @@ type canvasBlock struct {
 	Tone       string
 	Provenance string
 	HTML       template.HTML
-	Edit       template.HTML
 	Remove     template.HTML
 }
 

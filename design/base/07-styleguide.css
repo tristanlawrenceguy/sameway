@@ -5,3 +5,10 @@
 .sw-swatch__chip { grid-row: span 2; width: 2.5rem; height: 2.5rem; border-radius: var(--sw-radius-sm); border: 1px solid var(--sw-color-border); }
 .sw-example { margin-top: var(--sw-space-4); }
 .sw-example__render { padding: var(--sw-space-4); border: 1px dashed var(--sw-color-border); border-radius: var(--sw-radius-md); }
+
+/* Block editor (/canvas/{id}/edit) */
+.sw-editor { max-width: var(--sw-size-measure); }
+.sw-fieldset { border: 1px solid var(--sw-color-border); border-radius: var(--sw-radius-lg); padding: var(--sw-space-4); margin: 0; background: var(--sw-color-bg-raised); }
+.sw-fieldset legend { padding: 0 var(--sw-space-2); font-weight: 700; font-size: var(--sw-size-text-sm); text-transform: uppercase; letter-spacing: 0.04em; color: var(--sw-color-fg-muted); }
+.sw-editor__layout { display: grid; gap: var(--sw-space-4); grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); align-items: start; }
+.sw-editor__danger { margin-top: var(--sw-space-8); padding-top: var(--sw-space-4); border-top: 1px solid var(--sw-color-border); }

@@ -66,19 +66,17 @@ func TestQuietControlsStayAvailableToEveryone(t *testing.T) {
 		}
 	})
 
-	// The controls are the real thing: focusable, named, and wired up.
-	edit := findByName(t, sub, "a", "Edit card")
-	if href, _ := htmltest.Attr(edit, "href"); href != "/t/block/"+id+"/edit" {
-		t.Errorf("Edit link points at %q", href)
+	// Removing is the only control a person gets: everything else they ask
+	// the assistant for. The one control is the real thing, though.
+	if n := len(sub.Elements("a")) + len(sub.Elements("button")); n != 1 {
+		t.Errorf("a block should offer exactly one control, got %d", n)
 	}
 	remove := findByName(t, sub, "button", "Remove card")
 	if typ, _ := htmltest.Attr(remove, "type"); typ != "submit" {
 		t.Errorf("Remove should submit its form, got type %q", typ)
 	}
-	for _, n := range []*html.Node{edit, remove} {
-		if !htmltest.Focusable(n) {
-			t.Errorf("<%s> in the quiet layer is not focusable", n.Data)
-		}
+	if !htmltest.Focusable(remove) {
+		t.Errorf("the control in the quiet layer is not focusable")
 	}
 
 	// The resting page says nothing about provenance, on screen or in the

@@ -8,8 +8,8 @@
     "required": ["items"],
     "properties": {
       "items": { "type": "array", "minItems": 1, "items": { "type": "string" } },
-      "ordered": { "type": "boolean", "default": false },
-      "label": { "type": "string", "description": "Accessible name for the list when there is no heading right before it." },
+      "ordered": { "title": "Numbered", "type": "boolean", "default": false },
+      "label": { "title": "List name", "type": "string", "description": "Accessible name for the list when there is no heading right before it." },
       "id": { "type": "string" }
     }
   },

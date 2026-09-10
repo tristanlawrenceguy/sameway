@@ -189,7 +189,11 @@ func (s *Server) form(t *schema.Type, action string, values map[string]any, prob
 }
 
 func (s *Server) control(f schema.Field, value any, problem string) template.HTML {
-	base := map[string]any{"label": label(f.Name), "name": f.Name, "required": f.Required}
+	name := f.Label
+	if name == "" {
+		name = label(f.Name)
+	}
+	base := map[string]any{"label": name, "name": f.Name, "required": f.Required}
 	if f.Description != "" {
 		base["hint"] = f.Description
 	}
@@ -198,7 +202,7 @@ func (s *Server) control(f schema.Field, value any, problem string) template.HTM
 	}
 	switch f.Type {
 	case "bool":
-		return s.component("checkbox", map[string]any{"label": label(f.Name), "name": f.Name, "checked": value == true, "hint": f.Description})
+		return s.component("checkbox", map[string]any{"label": name, "name": f.Name, "checked": value == true, "hint": f.Description})
 	case "enum":
 		base["options"] = f.Values
 		base["value"] = display(f, value)
@@ -214,6 +218,11 @@ func (s *Server) control(f schema.Field, value any, problem string) template.HTM
 		return s.component("textarea", base)
 	case "list":
 		base["value"] = display(f, value)
+		if f.Multiline {
+			base["rows"] = 5
+			base["hint"] = strings.TrimSpace(f.Description + " One per line.")
+			return s.component("textarea", base)
+		}
 		base["hint"] = strings.TrimSpace(f.Description + " Separate items with commas.")
 		return s.component("text-field", base)
 	case "int", "float":
@@ -233,10 +242,16 @@ func display(f schema.Field, v any) string {
 	}
 	switch f.Type {
 	case "list":
+		if s, ok := v.(string); ok {
+			return s // a value the person just typed, coming back after an error
+		}
 		items, _ := v.([]any)
 		parts := make([]string, 0, len(items))
 		for _, it := range items {
 			parts = append(parts, fmt.Sprint(it))
+		}
+		if f.Multiline {
+			return strings.Join(parts, "\n")
 		}
 		return strings.Join(parts, ", ")
 	case "json":

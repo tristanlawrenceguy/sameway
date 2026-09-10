@@ -10,7 +10,7 @@
       "label": { "type": "string", "minLength": 1 },
       "name": { "type": "string", "minLength": 1 },
       "id": { "type": "string" },
-      "options": { "type": "array", "minItems": 1, "items": { "type": "string" }, "description": "Option values, shown as-is." },
+      "options": { "title": "Choices", "type": "array", "minItems": 1, "items": { "type": ["string", "object"] }, "description": "Either plain strings, shown as-is, or objects {value, label} when what is stored differs from what a person should read." },
       "value": { "type": "string", "default": "", "description": "The selected option." },
       "hint": { "type": "string" },
       "error": { "type": "string" },
@@ -30,10 +30,11 @@
   },
   "machine": {
     "selector": "[data-component=\"select\"] select",
-    "identify": "The accessible name is the label text. Options are the option elements.",
+    "identify": "The accessible name is the label text. Each option element carries the stored value and the text a person reads.",
     "operate": "Set the select's value to one of the option values."
   },
   "examples": [
-    { "name": "default", "props": { "label": "Status", "name": "status", "options": ["draft", "published"], "value": "draft" }, "file": "examples/default.html" }
+    { "name": "default", "props": { "label": "Status", "name": "status", "options": ["draft", "published"], "value": "draft" }, "file": "examples/default.html" },
+    { "name": "labelled", "props": { "label": "Width", "name": "span", "value": "6", "options": [{ "value": "12", "label": "Full width" }, { "value": "6", "label": "Half" }, { "value": "4", "label": "One third" }] }, "file": "examples/labelled.html" }
   ]
 }

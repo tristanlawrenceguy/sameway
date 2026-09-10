@@ -36,15 +36,28 @@
 /* Per-item control bars float over the top-right corner of their item. They
    reserve no space, so a block at rest is exactly as tall as its content. */
 .sw-bar {
-  position: absolute; right: var(--sw-space-2); top: var(--sw-space-2); z-index: 2;
+  position: absolute; right: var(--sw-space-2); top: var(--sw-space-2); z-index: 3;
   display: flex; align-items: center; gap: var(--sw-space-1);
-  padding: var(--sw-space-1);
-  border: 1px solid var(--sw-color-border);
-  border-radius: var(--sw-radius-pill);
-  background: color-mix(in srgb, var(--sw-color-bg-raised) 92%, transparent);
-  backdrop-filter: blur(8px);
+  padding: 0.1875rem;
+  /* Opaque, not translucent: the bar floats over a surface that is often
+     the same colour it is, and a see-through toolbar reads as text printed
+     on the content instead of a control. */
+  background: var(--sw-color-bg-raised);
+  border: 1px solid var(--sw-color-border-strong);
+  border-radius: var(--sw-radius-md);
   box-shadow: var(--sw-shadow-2);
   max-width: calc(100% - var(--sw-space-4));
-  flex-wrap: wrap;
 }
 .sw-bar form { display: contents; }
+/* Compact inside the bar, without dropping below the 44px target. */
+.sw-bar .sw-button, .sw-bar .sw-link {
+  padding: 0 var(--sw-space-3); border-radius: var(--sw-radius-sm);
+  font-size: var(--sw-size-text-sm); text-decoration: none; white-space: nowrap;
+}
+.sw-bar .sw-link { display: inline-flex; align-items: center; min-height: var(--sw-size-target); color: var(--sw-color-fg-muted); }
+.sw-bar .sw-link:hover, .sw-bar .sw-button--quiet:hover { background: var(--sw-color-bg-muted); color: var(--sw-color-fg); text-decoration: none; }
+
+/* Inline editing: fields appear where the text was, so nothing moves and
+   nobody leaves the page. Added by 08-edit.js, which only runs where it can. */
+.sw-inline-form { margin-bottom: var(--sw-space-3); }
+.sw-inline-field + .sw-inline-field { margin-top: var(--sw-space-3); }

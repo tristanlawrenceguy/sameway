@@ -76,6 +76,27 @@ A change marker never outlives the change. It reports the exchange the page
 is showing and nothing older, so a block edited once does not keep glowing
 on every load.
 
+## Editing
+
+There is no edit page and no settings form. A person changes the words where
+the words are: the Edit control in the quiet bar swaps the block's text for
+real, labelled form fields in place, and Save posts them.
+
+That control is added by `base/08-edit.js`, never rendered by the server, so
+it cannot exist in a browser that could not honour it. Where it is missing,
+the way to change something is to ask the assistant, which is the way to
+change everything else anyway.
+
+A component declares what is editable by marking the element that carries
+each prop:
+
+```html
+<h3 class="sw-card__title" data-prop="title">Groceries</h3>
+```
+
+Only text a component actually shows is markable. Layout, tone, ids, and
+ordering have no controls at all, because they are the assistant's to set.
+
 ## Progressive disclosure
 
 Detail that most people do not need most of the time goes in a

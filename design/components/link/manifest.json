@@ -7,10 +7,10 @@
     "additionalProperties": false,
     "required": ["href", "label"],
     "properties": {
-      "href": { "type": "string", "minLength": 1, "description": "Destination URL or path." },
+      "href": { "title": "Link", "type": "string", "minLength": 1, "description": "Destination URL or path." },
       "label": { "type": "string", "minLength": 1, "description": "Visible text. Describe the destination, never 'click here'." },
-      "context": { "type": "string", "description": "Extra words added to the accessible name but not shown, so a compact label like 'Edit' still reads as 'Edit card'." },
-      "current": { "type": "boolean", "default": false, "description": "True when the link points at the page being viewed." },
+      "context": { "title": "Extra words for screen readers", "type": "string", "description": "Extra words added to the accessible name but not shown, so a compact label like 'Edit' still reads as 'Edit card'." },
+      "current": { "title": "This is the current page", "type": "boolean", "default": false, "description": "True when the link points at the page being viewed." },
       "id": { "type": "string" }
     }
   },

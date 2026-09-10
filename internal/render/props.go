@@ -25,10 +25,29 @@ var Funcs = template.FuncMap{
 		}
 		return out
 	},
+	// optValue and optLabel let a select take either plain strings or
+	// {value, label} objects, so what is stored can differ from what a
+	// person reads without every caller needing two shapes.
+	"optValue": func(v any) string { return optionPart(v, "value") },
+	"optLabel": func(v any) string { return optionPart(v, "label") },
 	// lines splits text on single newlines.
 	"lines": func(s string) []string {
 		return strings.Split(strings.ReplaceAll(s, "\r\n", "\n"), "\n")
 	},
+}
+
+// optionPart reads one half of a select option, whichever shape it came in.
+func optionPart(v any, part string) string {
+	if m, ok := v.(map[string]any); ok {
+		if s, ok := m[part].(string); ok && s != "" {
+			return s
+		}
+		if s, ok := m["value"].(string); ok {
+			return s
+		}
+		return ""
+	}
+	return fmt.Sprint(v)
 }
 
 // propSchema is a compiled JSON Schema plus the parsed property list used to

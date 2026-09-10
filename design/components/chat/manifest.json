@@ -8,8 +8,8 @@
     "required": [],
     "properties": {
       "label": { "type": "string", "default": "Assistant", "description": "Names the region, so landmark navigation can reach it." },
-      "layout": { "type": "string", "enum": ["panel", "bare"], "default": "panel", "description": "panel gives it a surface and a visible title; bare drops the chrome so it sits inside another surface, with the title kept for screen readers." },
-      "slot": { "type": "string", "description": "The transcript and composer. Server code passes rendered components; props from a model or a form are escaped as text." },
+      "layout": { "title": "Look", "type": "string", "enum": ["panel", "bare"], "default": "panel", "description": "panel gives it a surface and a visible title; bare drops the chrome so it sits inside another surface, with the title kept for screen readers." },
+      "slot": { "type": "string", "format": "multiline", "description": "The transcript and composer. Server code passes rendered components; props from a model or a form are escaped as text." },
       "id": { "type": "string" }
     }
   },

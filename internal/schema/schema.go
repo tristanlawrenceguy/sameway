@@ -23,7 +23,10 @@ var nameRe = regexp.MustCompile(`^[a-z][a-z0-9_]{0,63}$`)
 
 // Field describes one field of a content type.
 type Field struct {
-	Name        string   `yaml:"-" json:"name"`
+	Name string `yaml:"-" json:"name"`
+	// Label is what a form calls this field, when the field name alone
+	// would read as jargon. Falls back to the name.
+	Label       string   `yaml:"label,omitempty" json:"label,omitempty"`
 	Type        string   `yaml:"type" json:"type"`
 	Description string   `yaml:"description,omitempty" json:"description,omitempty"`
 	Required    bool     `yaml:"required,omitempty" json:"required,omitempty"`
@@ -31,6 +34,9 @@ type Field struct {
 	Values      []string `yaml:"values,omitempty" json:"values,omitempty"`
 	Of          string   `yaml:"of,omitempty" json:"of,omitempty"`
 	MaxLength   int      `yaml:"maxLength,omitempty" json:"maxLength,omitempty"`
+	// Multiline asks forms to give this field room: a textarea rather than
+	// one line, and one item per line for a list.
+	Multiline bool `yaml:"multiline,omitempty" json:"multiline,omitempty"`
 }
 
 // Type is one content type.

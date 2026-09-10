@@ -8,7 +8,7 @@
     "required": ["role", "content"],
     "properties": {
       "role": { "type": "string", "enum": ["user", "assistant", "error"], "description": "error is a system notice, such as a failed model call." },
-      "content": { "type": "string", "minLength": 1, "description": "Plain text. Blank lines start a new paragraph." },
+      "content": { "type": "string", "format": "multiline", "minLength": 1, "description": "Plain text. Blank lines start a new paragraph." },
       "author": { "type": "string", "description": "Display name. Defaults to You, Assistant, or System by role." },
       "time": { "type": "string", "description": "Human readable time such as 14:05." },
       "changes": {

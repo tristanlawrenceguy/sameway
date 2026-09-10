@@ -56,6 +56,7 @@ type Registry struct {
 	byName map[string]*Component
 	tokens string
 	base   string
+	baseJS string
 }
 
 // New returns an empty registry.
@@ -63,6 +64,10 @@ func New() *Registry { return &Registry{byName: map[string]*Component{}} }
 
 // SetBase records the token and base CSS that precede component CSS.
 func (r *Registry) SetBase(tokensCSS, baseCSS string) { r.tokens, r.base = tokensCSS, baseCSS }
+
+// SetBaseJS records behaviour that belongs to the system rather than to any
+// one component, and runs before the components' own scripts.
+func (r *Registry) SetBaseJS(js string) { r.baseJS = js }
 
 // LoadFS loads every component folder directly under root in fsys.
 func (r *Registry) LoadFS(fsys fs.FS, root, source string) error {
@@ -215,6 +220,9 @@ func (c *Component) Dir() string { return c.dir }
 // self-contained, so the bundle is just the files back to back.
 func (r *Registry) JS() string {
 	var b strings.Builder
+	if r.baseJS != "" {
+		fmt.Fprintf(&b, "/* base */\n%s\n", r.baseJS)
+	}
 	for _, c := range r.Components() {
 		if c.JS == "" {
 			continue

@@ -74,6 +74,11 @@ func NewRegistry(workspaceComponents string) (*render.Registry, error) {
 		return nil, err
 	}
 	reg.SetBase(string(tokensCSS), baseCSS)
+	baseJS, err := baseScripts()
+	if err != nil {
+		return nil, err
+	}
+	reg.SetBaseJS(baseJS)
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		return nil, err
 	}
@@ -89,13 +94,17 @@ func NewRegistry(workspaceComponents string) (*render.Registry, error) {
 // order. The files are numbered so the order is deterministic and each one
 // covers a single concern.
 func baseStyles() (string, error) {
+	return concatBase(".css")
+}
+
+func concatBase(ext string) (string, error) {
 	entries, err := fs.ReadDir(design.FS, "base")
 	if err != nil {
 		return "", err
 	}
 	names := make([]string, 0, len(entries))
 	for _, e := range entries {
-		if strings.HasSuffix(e.Name(), ".css") {
+		if strings.HasSuffix(e.Name(), ext) {
 			names = append(names, e.Name())
 		}
 	}
@@ -109,6 +118,12 @@ func baseStyles() (string, error) {
 		fmt.Fprintf(&b, "\n/* base: %s */\n%s", n, src)
 	}
 	return b.String(), nil
+}
+
+// baseScripts concatenates every script in design/base, the same way its
+// stylesheets are concatenated.
+func baseScripts() (string, error) {
+	return concatBase(".js")
 }
 
 // Close releases the store.

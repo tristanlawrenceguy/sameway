@@ -10,8 +10,8 @@
       "label": { "type": "string", "minLength": 1 },
       "name": { "type": "string", "minLength": 1 },
       "id": { "type": "string" },
-      "value": { "type": "string", "default": "" },
-      "rows": { "type": "integer", "minimum": 2, "maximum": 40, "default": 4 },
+      "value": { "type": "string", "format": "multiline", "default": "" },
+      "rows": { "title": "Height in lines", "type": "integer", "minimum": 2, "maximum": 40, "default": 4 },
       "hint": { "type": "string" },
       "error": { "type": "string" },
       "required": { "type": "boolean", "default": false }

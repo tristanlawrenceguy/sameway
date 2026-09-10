@@ -9,7 +9,7 @@
     "properties": {
       "message": { "type": "string", "minLength": 1, "description": "What is happening, in plain words: 'Assistant is working'." },
       "state": { "type": "string", "enum": ["idle", "working", "done", "error"], "default": "idle" },
-      "live": { "type": "string", "enum": ["polite", "assertive"], "default": "polite", "description": "assertive interrupts; use it only for errors." },
+      "live": { "title": "Announce urgently", "type": "string", "enum": ["polite", "assertive"], "default": "polite", "description": "assertive interrupts; use it only for errors." },
       "id": { "type": "string", "description": "Required when a form's enhance script should update this status while a request is in flight." }
     }
   },
