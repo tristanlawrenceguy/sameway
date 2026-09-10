@@ -9,8 +9,8 @@ jobs:
   go:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
       - name: Format
@@ -19,16 +19,17 @@ jobs:
         run: go vet ./...
       - name: Repo check (file sizes, component folders, tokens)
         run: go run ./tools/check
-      - name: Test (includes golden component output)
+      - name: Test (contracts, golden output, HTTP, CLI, chat tools)
         run: go test ./...
       - name: Build
         run: go build -o bin/sameway ./cmd/sameway
 
-  a11y:
+  components:
+    name: components in a browser (axe + keyboard)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
       - name: Install runner
@@ -36,4 +37,38 @@ jobs:
         run: npm install
       - name: axe-core over every component example
         working-directory: tools/a11y-runner
-        run: npm test
+        run: npm run test:axe
+      - name: Keyboard operation of every component example
+        working-directory: tools/a11y-runner
+        run: npm run test:keyboard
+
+  pages:
+    name: live pages (person and agent paths)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Build and start a workspace with no model
+        run: |
+          go build -o bin/sameway ./cmd/sameway
+          ./bin/sameway init /tmp/ws
+          printf 'name: CI\nllm:\n  provider: none\n' > /tmp/ws/workspace.yaml
+          ./bin/sameway --workspace /tmp/ws serve --addr 127.0.0.1:8080 > /tmp/serve.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:8080/api/describe > /dev/null && break; sleep 1; done
+          curl -sf http://127.0.0.1:8080/api/describe > /dev/null || (cat /tmp/serve.log; exit 1)
+      - name: Install runner
+        working-directory: tools/a11y-runner
+        run: npm install
+      - name: Drive the pages as a person and as an agent
+        working-directory: tools/a11y-runner
+        run: npm run test:pages
+        env:
+          SAMEWAY_URL: http://127.0.0.1:8080
+      - name: Server log
+        if: failure()
+        run: cat /tmp/serve.log

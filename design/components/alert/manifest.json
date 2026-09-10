@@ -26,6 +26,8 @@
   },
   "examples": [
     { "name": "default", "props": { "message": "Saved." }, "file": "examples/default.html" },
-    { "name": "danger", "props": { "kind": "danger", "title": "Could not reach the model", "message": "Connection refused at http://localhost:11434. Start Ollama or change llm.base_url in workspace.yaml." }, "file": "examples/danger.html" }
+    { "name": "danger", "props": { "kind": "danger", "title": "Could not reach the model", "message": "Connection refused at http://localhost:11434. Start Ollama or change llm.base_url in workspace.yaml." }, "file": "examples/danger.html" },
+    { "name": "success", "props": { "kind": "success", "message": "Note published." }, "file": "examples/success.html" },
+    { "name": "warning", "props": { "kind": "warning", "title": "No model connected", "message": "Edit the llm section of workspace.yaml and restart.", "id": "model-warning" }, "file": "examples/warning.html" }
   ]
 }

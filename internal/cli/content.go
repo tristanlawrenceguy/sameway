@@ -37,15 +37,8 @@ func (c *ctx) contentCmd(typeName string) error {
 	data := fs.String("data", "", "JSON object of fields")
 	order := fs.String("order", "", "field to order by")
 	limit := fs.Int("limit", 0, "max records")
-	positional := []string{}
-	// Accept flags after positionals: `update <id> --set ...`.
-	for _, arg := range rest {
-		if strings.HasPrefix(arg, "-") {
-			break
-		}
-		positional = append(positional, arg)
-	}
-	if err := fs.Parse(rest[len(positional):]); err != nil {
+	positional, err := parseMixed(fs, rest)
+	if err != nil {
 		return err
 	}
 	switch verb {

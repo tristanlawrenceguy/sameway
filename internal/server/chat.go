@@ -4,6 +4,7 @@ import (
 	"bytes"
 	_ "embed"
 	"html/template"
+	"log"
 	"net/http"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
@@ -99,9 +100,10 @@ func (s *Server) chatSend(w http.ResponseWriter, r *http.Request) {
 	}
 	rec, err := s.app.Chat.Send(r.Context(), r.PostForm.Get("message"))
 	if rec == nil {
+		// Nothing was recorded (empty message, or chat unavailable). The page
+		// already explains the latter, so just show it again.
 		if err != nil {
-			s.fail(w, err)
-			return
+			log.Printf("chat: %v", err)
 		}
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return

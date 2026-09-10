@@ -30,6 +30,24 @@ runner in tools/a11y-runner.
 | `internal/cli/` | the sameway command | `root.go` |
 | `examples/workspaces/starter/` | what `sameway init` copies | |
 
+## What the tests cover, by the way a component gets used
+
+| Way of using it | Test | Run |
+|---|---|---|
+| Render from props (server pages, chat tools) | golden output per example, wrong-type rejection | `go test ./internal/render/` |
+| Agent reads the manifest and drives a browser | `machine.selector` resolves, ids unique, `aria-describedby` and `label[for]` targets exist, focusable elements have names, keyboard map present, every enum value has an example, CSS uses tokens only | `internal/render/contract_test.go` |
+| Model or person supplies hostile props | script, event-handler, `javascript:` and template payloads in every string prop stay inert | `internal/render/hostile_test.go` |
+| Workspace adds or overrides a component | `internal/render/override_test.go` | |
+| Person uses the HTML pages | landmarks, skip links, one h1, forms, 422 with linked errors, chat transcript, canvas removal | `internal/server/pages_test.go`, `api_test.go` |
+| Agent uses the JSON API | describe completeness, CRUD, stable error shapes, chat builds the canvas | `internal/server/api_test.go` |
+| Agent uses the CLI | every command, `--json`, flags in any position, errors that say how to fix | `internal/cli/cli_test.go` |
+| Model uses the canvas tools | add, update, remove, clear, ordering, validation errors, prompt contents, history | `internal/chat/*_test.go` |
+| Person uses a keyboard in a real browser | Tab order, focus ring, Enter/Space/ArrowDown per component | `tools/a11y-runner/keyboard.mjs` (CI) |
+| Person and agent on live pages | keyboard-only flows, axe on every page, role-and-name targeting, describe matches what renders | `tools/a11y-runner/pages.mjs` (CI) |
+
+When you add a component, the contract and enum-coverage tests tell you what
+is missing. When you add a way to use the system, add a row here and a test.
+
 ## Rules the tooling enforces
 
 - **300 lines per file.** `tools/check` fails above it. Read the whole file

@@ -34,6 +34,10 @@
   },
   "examples": [
     { "name": "default", "props": { "label": "Title", "name": "title", "required": true, "hint": "Shown in lists." }, "file": "examples/default.html" },
-    { "name": "error", "props": { "label": "Email", "name": "email", "type": "email", "value": "not-an-email", "error": "Enter an email address like name@example.com.", "autocomplete": "email" }, "file": "examples/error.html" }
+    { "name": "error", "props": { "label": "Email", "name": "email", "type": "email", "value": "not-an-email", "error": "Enter an email address like name@example.com.", "autocomplete": "email" }, "file": "examples/error.html" },
+    { "name": "search", "props": { "label": "Search notes", "name": "q", "type": "search" }, "file": "examples/search.html" },
+    { "name": "number", "props": { "label": "Quantity", "name": "qty", "type": "number", "value": "2", "hint": "Whole numbers only." }, "file": "examples/number.html" },
+    { "name": "url", "props": { "label": "Website", "name": "website", "type": "url", "autocomplete": "url" }, "file": "examples/url.html" },
+    { "name": "password", "props": { "label": "Passphrase", "name": "passphrase", "type": "password", "required": true, "autocomplete": "current-password", "id": "pass" }, "file": "examples/password.html" }
   ]
 }

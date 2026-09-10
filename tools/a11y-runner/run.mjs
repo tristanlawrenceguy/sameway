@@ -9,21 +9,10 @@ import { chromium } from "playwright";
 import AxeBuilder from "@axe-core/playwright";
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { shell, AA_TAGS, AAA_TAGS } from "./shell.mjs";
 
 const root = resolve(process.cwd(), "..", "..");
-const designDir = join(root, "design");
-const tokens = readFileSync(join(designDir, "tokens", "tokens.css"), "utf8");
-const base = readFileSync(join(designDir, "base", "base.css"), "utf8");
-const componentsDir = join(designDir, "components");
-
-const AA_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa", "best-practice"];
-const AAA_TAGS = ["wcag2aaa", "wcag21aaa", "wcag22aaa"];
-
-function page(componentCss, body) {
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Example</title>
-<style>${tokens}\n${base}\n${componentCss}</style></head>
-<body><main><h1>Example</h1><h2>Section</h2>${body}</main></body></html>`;
-}
+const componentsDir = join(root, "design", "components");
 
 const browser = await chromium.launch();
 const ctx = await browser.newContext();
@@ -43,7 +32,7 @@ for (const name of readdirSync(componentsDir).sort()) {
   // 3 sit in a valid outline, the same way they do inside a real page section.
   for (const file of readdirSync(examplesDir).filter((f) => f.endsWith(".html")).sort()) {
     const body = readFileSync(join(examplesDir, file), "utf8");
-    await tab.setContent(page(css, `<form>${body}</form>`));
+    await tab.setContent(shell(css, `<form>${body}</form>`));
     const aa = await new AxeBuilder({ page: tab }).withTags(AA_TAGS).analyze();
     for (const v of aa.violations) {
       failures++;

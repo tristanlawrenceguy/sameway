@@ -18,10 +18,14 @@ import (
 func (c *ctx) initCmd() error {
 	fs := flag.NewFlagSet("init", flag.ContinueOnError)
 	force := fs.Bool("force", false, "overwrite an existing workspace's config and schema")
-	if err := fs.Parse(c.args); err != nil {
+	positional, err := parseMixed(fs, c.args)
+	if err != nil {
 		return err
 	}
-	dir := fs.Arg(0)
+	dir := ""
+	if len(positional) > 0 {
+		dir = positional[0]
+	}
 	if dir == "" {
 		dir = c.Dir
 		if dir == "" {

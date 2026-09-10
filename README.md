@@ -110,9 +110,15 @@ sameway <type> list|get|create|update|delete [--json]
 ```bash
 make check     # gofmt, go vet, repo lint (300-line file cap), tests
 make golden    # regenerate component example files from templates
-make a11y      # axe-core over every component example (needs Node, dev only)
+make a11y      # axe-core + keyboard tests over every component example (Node, dev only)
 make run       # serve the example starter workspace
+make pages     # drive a running server as a person and as an agent (Node, dev only)
 ```
+
+Tests are organised by the way a component gets used: rendered from props,
+read by an agent through its manifest, fed hostile input, used through the
+pages, the API, the CLI, the chat tools, and a real keyboard in a real
+browser. The table in [AGENTS.md](AGENTS.md) maps each to its test file.
 
 Read [ARCHITECTURE.md](ARCHITECTURE.md) for the design and
 [AGENTS.md](AGENTS.md) if you are an AI contributor. MIT licensed.

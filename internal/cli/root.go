@@ -118,6 +118,20 @@ func splitGlobal(fs *flag.FlagSet, args []string) (string, []string) {
 	return sub, append(append(globals, "--"), subArgs...)
 }
 
+// parseMixed lets a subcommand take positional arguments before its flags,
+// which is how people type commands (`init mydir --force`). It returns the
+// leading positionals and parses the rest into fs.
+func parseMixed(fs *flag.FlagSet, args []string) ([]string, error) {
+	var positional []string
+	for _, arg := range args {
+		if strings.HasPrefix(arg, "-") {
+			break
+		}
+		positional = append(positional, arg)
+	}
+	return positional, fs.Parse(args[len(positional):])
+}
+
 type ctx struct {
 	Env
 	JSON         bool

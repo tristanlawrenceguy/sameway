@@ -1,11 +1,14 @@
 {
   "name": "sameway-a11y-runner",
   "private": true,
-  "description": "Dev-only: runs axe-core over every component example and fails on WCAG 2.2 AA violations.",
+  "description": "Dev-only browser tests: axe-core and keyboard operation for every component example, and live-page tests against a running server.",
   "type": "module",
   "scripts": {
     "postinstall": "playwright install chromium",
-    "test": "node run.mjs"
+    "test": "node run.mjs && node keyboard.mjs",
+    "test:axe": "node run.mjs",
+    "test:keyboard": "node keyboard.mjs",
+    "test:pages": "node pages.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.2",
