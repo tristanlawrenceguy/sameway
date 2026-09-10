@@ -36,14 +36,32 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 	if convo.Notice != "" {
 		b.WriteString(string(convo.Notice))
 	}
+	var main, side []*store.Record
+	for _, blk := range blocks {
+		if str(blk.Fields["region"], "main") == "side" {
+			side = append(side, blk)
+		} else {
+			main = append(main, blk)
+		}
+	}
+	// A workspace with nothing but the conversation shows just that, in the
+	// middle of the page, the way every other assistant opens. Everything
+	// else arrives because someone asked for it.
+	solo := len(side) == 0 && len(main) == 1 && main[0].Fields["component"] == chat.ComponentName
+
 	if len(blocks) == 0 {
 		b.WriteString(`<p class="sw-empty">This canvas is empty. The conversation is at <a href="/chat">/chat</a>, and anything you ask for there appears here.</p>`)
 	} else {
+		fmt.Fprintf(&b, `<div class="sw-page" data-layout="%s">`, layoutName(solo, len(side) > 0))
 		b.WriteString(`<ol class="sw-plain sw-canvas" aria-label="Canvas">`)
-		for _, blk := range blocks {
+		for _, blk := range main {
 			b.WriteString(s.blockItem(blk, convo))
 		}
 		b.WriteString(`</ol>`)
+		if len(side) > 0 {
+			b.WriteString(s.sidePane(side, convo))
+		}
+		b.WriteString(`</div>`)
 	}
 	if convo.Activity != "" {
 		b.WriteString(`<div class="sw-activity">` + string(convo.Activity) + `</div>`)
@@ -52,7 +70,37 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 	if convo.LatestID != "" {
 		opts.Focus, opts.FocusLabel = convo.LatestID, "Skip to latest message"
 	}
+	opts.QuietTitle = solo
 	s.page(w, r, "Canvas", template.HTML(b.String()), opts)
+}
+
+func layoutName(solo, hasSide bool) string {
+	switch {
+	case solo:
+		return "solo"
+	case hasSide:
+		return "split"
+	}
+	return "wide"
+}
+
+// sidePane holds what a person glances at rather than works in. It collapses
+// to a strip and remembers whether it was open, because a pane that reopens
+// itself on every page load is a pane nobody closes twice.
+func (s *Server) sidePane(blocks []*store.Record, convo *conversation) string {
+	var inner strings.Builder
+	inner.WriteString(`<ol class="sw-plain sw-canvas sw-canvas--side" aria-label="Side pane blocks">`)
+	for _, blk := range blocks {
+		inner.WriteString(s.blockItem(blk, convo))
+	}
+	inner.WriteString(`</ol>`)
+	body, err := s.app.Registry.RenderSlot("disclosure",
+		map[string]any{"label": "Side pane", "open": true, "id": "side-pane"},
+		template.HTML(inner.String()))
+	if err != nil {
+		return ""
+	}
+	return `<aside class="sw-aside" aria-label="Side pane">` + string(body) + `</aside>`
 }
 
 // blockItem renders one canvas block: the component, its span, its

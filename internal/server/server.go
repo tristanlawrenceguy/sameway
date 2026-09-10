@@ -39,6 +39,8 @@ func (s *Server) routes() {
 	m.HandleFunc("GET /chat", s.chatPage)
 	m.HandleFunc("POST /chat", s.chatSend)
 	m.HandleFunc("POST /chat/clear", s.chatClear)
+	m.HandleFunc("POST /proposal/{id}/accept", s.proposalAccept)
+	m.HandleFunc("POST /proposal/{id}/dismiss", s.proposalDismiss)
 	m.HandleFunc("POST /canvas/{id}/props", s.blockProps)
 	m.HandleFunc("POST /canvas/{id}/delete", s.canvasDelete)
 	m.HandleFunc("GET /activity", s.activityPage)
@@ -80,6 +82,7 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 		JSONURL:    opts.JSONURL,
 		Focus:      opts.Focus,
 		FocusLabel: opts.FocusLabel,
+		QuietTitle: opts.QuietTitle,
 	}
 	// The header carries only the person's own content. The brand is the way
 	// back to the canvas, and everything about the workspace itself lives in
@@ -109,6 +112,9 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 }
 
 type pageOptions struct {
+	// QuietTitle keeps the page heading in the outline but off the screen,
+	// for a page whose whole content is one thing and says so itself.
+	QuietTitle bool
 	JSONURL    string
 	Focus      string
 	FocusLabel string

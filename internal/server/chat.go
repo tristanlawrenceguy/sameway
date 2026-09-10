@@ -43,6 +43,7 @@ type conversationView struct {
 	Clear     template.HTML
 	ModelName string
 	From      string
+	Proposals []template.HTML
 }
 
 type chatMessage struct {
@@ -84,6 +85,7 @@ func (s *Server) conversation(from string) (*conversation, error) {
 	}
 	out.Count = len(msgs)
 	view.Status = s.status(msgs)
+	view.Proposals = s.proposals()
 	view.Compose = s.component("textarea", map[string]any{"label": "Your message", "name": "message", "rows": 3, "required": true})
 	view.Send = s.component("button", map[string]any{"label": "Send", "type": "submit"})
 	view.Clear = s.component("button", map[string]any{"label": "Clear", "context": "conversation", "type": "submit", "variant": "quiet"})

@@ -1,0 +1,37 @@
+{
+  "name": "proposal",
+  "version": "1.0.0",
+  "description": "A change the assistant is asking permission for, with the two answers next to the question. Use it when a change removes something, or when the assistant is guessing.",
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["summary", "accept", "dismiss"],
+    "properties": {
+      "summary": { "type": "string", "format": "multiline", "minLength": 1, "description": "The question in plain words. Say what would change and why it is being asked." },
+      "detail": { "type": "string", "description": "One extra line naming exactly what would change, so nobody says yes to a surprise." },
+      "accept": { "type": "string", "minLength": 1, "description": "URL the yes answer posts to." },
+      "dismiss": { "type": "string", "minLength": 1, "description": "URL the no answer posts to." },
+      "acceptLabel": { "type": "string", "default": "Yes, do it", "description": "Say what happens, not 'OK'." },
+      "dismissLabel": { "type": "string", "default": "No, leave it" },
+      "id": { "type": "string" }
+    }
+  },
+  "a11y": {
+    "role": "group",
+    "keyboard": [
+      { "key": "Tab", "does": "moves to each answer" },
+      { "key": "Enter", "does": "gives that answer" }
+    ],
+    "states": [],
+    "wcag": { "target": "AAA", "notes": "A named group holding the question and both answers, so the question is announced with the buttons rather than separately (1.3.1). Nothing is preselected and nothing happens on a timer, so the change is only ever made on purpose (3.2.5). Both answers say what they do." }
+  },
+  "machine": {
+    "selector": "[data-component=\"proposal\"]",
+    "identify": "A group whose accessible name is the question. Read data-proposal for its id.",
+    "operate": "Activate one of the two buttons. Nothing changes until you do."
+  },
+  "examples": [
+    { "name": "default", "props": { "summary": "Remove the API setup link?", "detail": "You signed in with a subscription, so the key setup step is no longer needed.", "accept": "/proposal/abc/accept", "dismiss": "/proposal/abc/dismiss", "acceptLabel": "Yes, remove it", "id": "p-abc" }, "file": "examples/default.html" },
+    { "name": "plain", "props": { "summary": "Move the calendar into the side pane?", "accept": "/proposal/def/accept", "dismiss": "/proposal/def/dismiss" }, "file": "examples/plain.html" }
+  ]
+}

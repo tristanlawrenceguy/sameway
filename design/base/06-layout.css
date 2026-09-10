@@ -60,3 +60,19 @@ ol.sw-plain, ul.sw-plain { list-style: none; margin: 0; padding: 0; }
 .sw-dl { display: grid; grid-template-columns: max-content 1fr; gap: var(--sw-space-2) var(--sw-space-6); margin: 0; }
 .sw-dl dt { font-weight: 600; color: var(--sw-color-fg-muted); }
 .sw-dl dd { margin: 0; overflow-wrap: anywhere; }
+
+/* Page layouts. solo is a workspace with nothing but its conversation:
+   centred, the way every assistant opens. split adds the side pane. */
+.sw-page[data-layout="solo"] { display: grid; justify-items: center; padding-block: var(--sw-space-8); }
+.sw-page[data-layout="solo"] .sw-canvas { width: min(100%, 46rem); }
+.sw-page[data-layout="solo"] .sw-chat__log { max-height: min(56vh, 34rem); }
+.sw-page[data-layout="split"] { display: grid; gap: var(--sw-space-6); align-items: start; }
+@media (min-width: 64rem) {
+  .sw-page[data-layout="split"] { grid-template-columns: minmax(0, 1fr) auto; }
+  .sw-aside { width: 22rem; }
+  /* Collapsed, the pane gives its width back to the page. */
+  .sw-aside:has(.sw-disclosure:not([open])) { width: auto; }
+}
+.sw-aside .sw-disclosure { border-top: 0; }
+.sw-aside .sw-disclosure__body { padding-inline: 0; }
+.sw-canvas--side { grid-template-columns: 1fr; }

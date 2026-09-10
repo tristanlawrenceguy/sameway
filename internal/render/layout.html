@@ -22,7 +22,7 @@
 {{end}}</div>
 </header>
 <main id="main" class="sw-main" tabindex="-1">
-<h1>{{.Title}}</h1>
+<h1{{if .QuietTitle}} class="sw-visually-hidden"{{end}}>{{.Title}}</h1>
 {{.Body}}
 </main>
 <footer class="sw-footer">

@@ -74,7 +74,7 @@ func TestHomePageShell(t *testing.T) {
 func assertAllComponentsKnown(t *testing.T, doc *htmltest.Doc) {
 	t.Helper()
 	known := map[string]bool{}
-	for _, name := range []string{"alert", "badge", "button", "card", "chat", "checkbox", "disclosure", "event", "heading", "link", "list", "message", "select", "status", "table", "text", "text-field", "textarea"} {
+	for _, name := range []string{"alert", "badge", "button", "card", "chat", "checkbox", "disclosure", "event", "heading", "link", "list", "message", "proposal", "select", "status", "table", "text", "text-field", "textarea"} {
 		known[name] = true
 	}
 	for _, n := range doc.WithAttr("data-component", "") {

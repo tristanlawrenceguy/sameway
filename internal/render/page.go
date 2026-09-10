@@ -32,6 +32,8 @@ type Page struct {
 	// message, so keyboard users can jump straight to what changed.
 	Focus      string
 	FocusLabel string
+	// QuietTitle hides the h1 visually while keeping it in the outline.
+	QuietTitle bool
 }
 
 // RenderPage wraps a body in the site layout.

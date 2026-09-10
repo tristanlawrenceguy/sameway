@@ -1,0 +1,21 @@
+# Something the assistant wants to do, waiting for you to say yes.
+# It proposes rather than acts when a change takes something away, or when
+# it is guessing. Accepting runs it through the same tools it would have
+# used itself. Internal; shown in the conversation.
+name: proposal
+description: A change the assistant suggested and has not made.
+internal: true
+title: summary
+fields:
+  summary:
+    type: text
+    required: true
+    description: The question, in plain words, ending in a question mark.
+  action:
+    type: json
+    required: true
+    description: The tool call to run on accept, in the shape that tool takes.
+  state:
+    type: enum
+    values: [pending, accepted, dismissed]
+    default: pending

@@ -84,7 +84,7 @@ func TestDescribeJSON(t *testing.T) {
 	if err := json.Unmarshal([]byte(r.stdout), &d); err != nil {
 		t.Fatalf("describe --json is not JSON: %v\n%s", err, r.stdout)
 	}
-	if len(d.Types) != 4 || len(d.Components) < 16 || d.LLM.Ready || d.LLM.Problem == "" {
+	if len(d.Types) != 5 || len(d.Components) < 19 || d.LLM.Ready || d.LLM.Problem == "" {
 		t.Errorf("describe content: %+v", d)
 	}
 	human := run(t, dir, "describe")

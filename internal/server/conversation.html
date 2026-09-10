@@ -3,6 +3,9 @@
 {{range .Messages}}<li style="view-transition-name: {{.ID}}; view-transition-class: sw-vt-item">{{.HTML}}</li>
 {{end}}</ol>
 {{else}}<p class="sw-empty">Ask for anything. What you ask for appears on the canvas.</p>
+{{end}}{{if .Proposals}}<div class="sw-stack sw-proposals">
+{{range .Proposals}}{{.}}
+{{end}}</div>
 {{end}}<form method="post" action="/chat" class="sw-stack sw-compose" aria-labelledby="compose-heading" data-busy-target="chat-status" data-busy-message="Assistant is working">
 <h3 id="compose-heading" class="sw-visually-hidden">Compose</h3>
 <input type="hidden" name="from" value="{{.From}}">

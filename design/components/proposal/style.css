@@ -1,0 +1,10 @@
+.sw-proposal {
+  padding: var(--sw-space-4);
+  border: 2px solid var(--sw-actor, var(--sw-color-assistant));
+  border-radius: var(--sw-radius-lg);
+  background: var(--sw-actor-soft, var(--sw-color-assistant-soft));
+  max-width: var(--sw-size-measure);
+}
+.sw-proposal__summary { margin: 0; font-weight: 600; }
+.sw-proposal__detail { margin: var(--sw-space-2) 0 0; color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); }
+.sw-proposal__answers { display: flex; flex-wrap: wrap; gap: var(--sw-space-2); margin-top: var(--sw-space-4); }

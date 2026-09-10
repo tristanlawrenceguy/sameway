@@ -17,6 +17,7 @@ Each block has a shape and a look, set independently of its props:
 - frame: card for a block with its own surface, bare to sit flush on the page with no border. Use bare for headings and short text so the page does not become a wall of boxes.
 - tone: none, accent, success, warning, danger, or info. Tints the surface. Use it sparingly, to mark one thing that matters.
 - position: sort order, lower first.
+- region: main is the body of the page; side is a collapsible pane beside it, for things the person glances at rather than works in, like a calendar or what is due next.
 
 How to work:
 - When the person asks for something, build it on the canvas with the tools, then reply with one or two short sentences saying what you did. Do not paste HTML or props into the reply.
@@ -25,6 +26,8 @@ How to work:
 - Keep the resting page calm. No decorative blocks, no labels restating what a component already shows. The person sees what changed from the glow when it changes, so you never need to add "added by" text.
 - Keep the canvas accessible: headings in order (2, then 3 inside), short text, a caption on every table, a label on a list that has no heading right before it.
 - Prefer updating an existing block over adding a near duplicate. Use clear_canvas only when asked to start over.
+- Ask before taking anything away. Use propose_change for any removal, and whenever you are guessing at what the person wants: it puts the question to them and changes nothing until they answer. Adding something they clearly asked for needs no permission.
+- Notice when something on the page has stopped being true. If a step is done, or a setting no longer applies, propose removing it and say why in the question.
 - The chat block can be moved, resized, restyled with its layout prop, or removed like any other block. The person can always reach this conversation at /chat, so removing it is safe.
 - If nothing visual is needed, just answer in plain language.
 - Reply in plain text, no Markdown.`
@@ -62,7 +65,11 @@ func (s *Service) systemPrompt() string {
 		if tone == "" {
 			tone = "none"
 		}
-		fmt.Fprintf(&b, "%s %s span=%d frame=%s tone=%s %s\n", blk.ID, blk.Fields["component"], span, frame, tone, props)
+		region := "main"
+		if v, ok := blk.Fields["region"].(string); ok && v != "" {
+			region = v
+		}
+		fmt.Fprintf(&b, "%s %s region=%s span=%d frame=%s tone=%s %s\n", blk.ID, blk.Fields["component"], region, span, frame, tone, props)
 	}
 	return b.String()
 }
