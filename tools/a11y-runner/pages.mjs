@@ -178,7 +178,8 @@ for (const path of ["/", "/chat", "/activity", "/t/note", "/t/note/new", `/t/not
   }
   // Every focusable control has an accessible name an agent can target by role.
   const unnamed = await page.evaluate(() => {
-    const sel = 'a[href], button, input, select, textarea';
+    // A hidden input carries a form value; it is not a control.
+    const sel = 'a[href], button, input:not([type=hidden]), select, textarea, summary';
     return [...document.querySelectorAll(sel)].filter((el) => {
       const labelled = el.labels && el.labels.length > 0;
       return !(labelled || el.getAttribute("aria-label") || el.getAttribute("aria-labelledby") || el.textContent.trim());

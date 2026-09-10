@@ -39,7 +39,8 @@ async function arm() {
 }
 
 const focusables = () => page.evaluate(() => {
-  const sel = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  // summary is focusable; a hidden input is a form value, not a control.
+  const sel = 'a[href], button:not([disabled]), summary, input:not([disabled]):not([type=hidden]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
   return [...document.querySelectorAll(sel)].filter((el) => !el.closest(".shell")).map((el) => el.tagName.toLowerCase() + (el.id ? "#" + el.id : ""));
 });
 
@@ -122,6 +123,14 @@ async function operate(name, where) {
       await sel.focus();
       await page.keyboard.press("ArrowDown");
       if (await sel.inputValue() === before) fail(where, "ArrowDown should move to the next option");
+      break;
+    }
+    case "disclosure": {
+      const d = page.locator("details[data-component=disclosure]");
+      const before = await d.evaluate((el) => el.open);
+      await page.locator("summary").focus();
+      await page.keyboard.press("Enter");
+      if (await d.evaluate((el) => el.open) === before) fail(where, "Enter on the summary should open or close it");
       break;
     }
     case "table": {
