@@ -119,6 +119,36 @@ func TestComponentNamesAreCaseInsensitive(t *testing.T) {
 	}
 }
 
+// TestToolSchemasAreStrictJSON guards what local servers choke on: llama.cpp
+// builds a grammar from each tool schema and rejects null or missing pieces.
+func TestToolSchemasAreStrictJSON(t *testing.T) {
+	svc, m := withModel(t)
+	svc.Send(context.Background(), "hi")
+	for _, tool := range m.seen[0].Tools {
+		raw, err := json.Marshal(tool.Schema)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if strings.Contains(string(raw), "null") {
+			t.Errorf("tool %s schema contains null: %s", tool.Name, raw)
+		}
+		var s struct {
+			Type       string         `json:"type"`
+			Properties map[string]any `json:"properties"`
+			Required   []string       `json:"required"`
+		}
+		json.Unmarshal(raw, &s)
+		if s.Type != "object" || s.Properties == nil {
+			t.Errorf("tool %s schema must be an object with properties: %s", tool.Name, raw)
+		}
+		for _, r := range s.Required {
+			if _, ok := s.Properties[r]; !ok {
+				t.Errorf("tool %s requires %q which is not a property", tool.Name, r)
+			}
+		}
+	}
+}
+
 func TestBlocksKeepInsertionOrder(t *testing.T) {
 	svc, _ := withModel(t,
 		call("add_component", map[string]any{"component": "heading", "props": map[string]any{"text": "First"}}),

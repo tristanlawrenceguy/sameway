@@ -15,8 +15,14 @@ const BlockType = "block"
 // Tools the model can call. Every tool operates on block records, so the
 // canvas is ordinary content that the CLI and API can also read and edit.
 func (s *Service) tools() []llm.Tool {
+	// Strict servers (llama.cpp builds a grammar from this) reject
+	// "required": null, so the key is only present when there is a list.
 	obj := func(props map[string]any, required ...string) map[string]any {
-		return map[string]any{"type": "object", "properties": props, "required": required, "additionalProperties": false}
+		s := map[string]any{"type": "object", "properties": props, "additionalProperties": false}
+		if len(required) > 0 {
+			s["required"] = required
+		}
+		return s
 	}
 	return []llm.Tool{
 		{Name: "add_component", Description: "Add a component to the canvas the person is looking at. Props must match the component's props schema from the catalogue. Returns the new block id.",
