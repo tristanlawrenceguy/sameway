@@ -10,7 +10,8 @@
       "message": { "type": "string", "format": "multiline", "minLength": 1 },
       "kind": { "type": "string", "enum": ["info", "success", "warning", "danger"], "default": "info" },
       "title": { "type": "string", "description": "Optional short title shown in bold before the message." },
-      "id": { "type": "string" }
+      "id": { "type": "string" },
+      "icon": { "type": "string", "description": "Optional visual indicator shown before the kind label." }
     }
   },
   "a11y": {
@@ -28,6 +29,8 @@
     { "name": "default", "props": { "message": "Saved." }, "file": "examples/default.html" },
     { "name": "danger", "props": { "kind": "danger", "title": "Could not reach the model", "message": "Connection refused at http://localhost:11434. Start Ollama or change llm.base_url in workspace.yaml." }, "file": "examples/danger.html" },
     { "name": "success", "props": { "kind": "success", "message": "Note published." }, "file": "examples/success.html" },
-    { "name": "warning", "props": { "kind": "warning", "title": "No model connected", "message": "Edit the llm section of workspace.yaml and restart.", "id": "model-warning" }, "file": "examples/warning.html" }
+    { "name": "warning", "props": { "kind": "warning", "title": "No model connected", "message": "Edit the llm section of workspace.yaml and restart.", "id": "model-warning" }, "file": "examples/warning.html" },
+    { "name": "with-icon", "props": { "kind": "danger", "icon": "\u26a0", "title": "No model connected", "message": "Edit the llm section of workspace.yaml and restart." }, "file": "examples/with-icon.html" },
+    { "name": "info-with-icon", "props": { "kind": "info", "icon": "\u2139", "message": "A note with an icon." }, "file": "examples/info-with-icon.html" }
   ]
 }
