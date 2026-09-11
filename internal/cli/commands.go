@@ -28,6 +28,13 @@ func (c *ctx) initCmd() error {
 	if len(positional) > 0 {
 		dir = positional[0]
 	}
+	// A folder given outright wins, then the global --workspace that every
+	// other command takes, then where you are standing. Without the middle
+	// one, `sameway --workspace elsewhere init` quietly built the workspace
+	// in the current folder instead.
+	if dir == "" {
+		dir = c.workspaceDir
+	}
 	if dir == "" {
 		dir = c.Dir
 		if dir == "" {

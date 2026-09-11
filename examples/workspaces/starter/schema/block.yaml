@@ -22,9 +22,9 @@ fields:
     description: Width in columns of a twelve column grid. 12 is full width, 6 is half, 4 is a third. Ignored on narrow screens, where every block is full width.
   region:
     type: enum
-    values: [main, side]
+    values: [main, left, right]
     default: main
-    description: main is the body of the page; side is the collapsible pane beside it, for things you glance at rather than work in.
+    description: main is the body of the page. left and right are full height panes beside it, each collapsible; left is where chat history and navigation usually go, right is for things you glance at like a calendar or what is due next.
   frame:
     type: enum
     values: [card, bare]

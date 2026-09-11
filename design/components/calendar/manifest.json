@@ -1,0 +1,74 @@
+{
+  "name": "calendar",
+  "version": "2.0.0",
+  "description": "A month and what is on in it, at whatever size it has been given: a marker with a count, a short agenda, a month grid, or a full page with an action beside every event. To ask someone for a date use datepicker.",
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["month"],
+    "properties": {
+      "month": { "type": "string", "minLength": 7, "maxLength": 7, "description": "The month to show, as YYYY-MM, for example 2026-09." },
+      "detail": {
+        "type": "string",
+        "enum": ["glance", "brief", "full", "page"],
+        "default": "full",
+        "title": "How much to show",
+        "description": "glance is a marker with how many things are coming, for a corner or a narrow pane. brief is the next few, as a list. full is the month grid. page is the month with an action beside every event, for when the calendar has the screen to itself. Expanding a block asks for page."
+      },
+      "caption": { "type": "string", "description": "Names the calendar. Defaults to the month and year." },
+      "events": {
+        "type": "array",
+        "description": "What is on, each on one day. Days with nothing are left empty.",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["date", "label"],
+          "properties": {
+            "date": { "type": "string", "description": "The day, as YYYY-MM-DD." },
+            "label": { "type": "string", "description": "Short: what it is, not a description." },
+            "time": { "type": "string", "description": "Optional time, shown before the label." },
+            "actions": {
+              "type": "array",
+              "description": "Components placed inside this event, shown at page detail. Each is {component, props}: a button or a link, nothing that would trap someone inside a calendar cell.",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["component", "props"],
+                "properties": {
+                  "component": { "type": "string", "enum": ["button", "link", "badge"] },
+                  "props": { "type": "object" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "today": { "type": "string", "description": "A day to mark as today, as YYYY-MM-DD. Marked with text as well as colour." },
+      "upcoming": { "type": "integer", "minimum": 1, "maximum": 20, "default": 5, "title": "How many to list", "description": "How many events glance counts and brief lists, from today onwards." },
+      "start": { "type": "string", "enum": ["monday", "sunday"], "default": "monday", "title": "Week starts on" },
+      "id": { "type": "string" }
+    }
+  },
+  "a11y": {
+    "role": "table at full and page detail, list at brief, status at glance",
+    "keyboard": [
+      { "key": "Tab", "does": "focuses the scroll region when the month is wider than the space, and reaches each event's actions at page detail" },
+      { "key": "Enter", "does": "activates an event's action" }
+    ],
+    "states": ["aria-current"],
+    "wcag": { "target": "AAA", "notes": "Every size is a real structure rather than a styled version of the same one: a status with a count, a list, or a table whose days are announced with their weekday column header (1.3.1). Day cells name their full date, so a day read out of context still says which day it is. Today is marked with the word today as well as a colour (1.4.1) and with aria-current. At glance the count is spoken in full, so a number in a circle is never the only way to know what it means." },
+    "notes": "At full detail in a narrow container each event becomes a marker rather than a label: which days are busy is what a month that size can honestly answer, and the labels stay in the accessibility tree."
+  },
+  "machine": {
+    "selector": "[data-component=\"calendar\"]",
+    "identify": "Read data-detail for which size is being shown and data-month for the month. At full and page detail each day cell carries data-date; at any detail each event carries data-event and data-date.",
+    "operate": "The calendar itself is not interactive. At page detail each event may carry its own buttons and links, which are operated like any other."
+  },
+  "examples": [
+    { "name": "glance", "props": { "month": "2026-09", "detail": "glance", "today": "2026-09-11", "events": [ { "date": "2026-09-11", "time": "14:00", "label": "Design review" }, { "date": "2026-09-14", "label": "Standup" }, { "date": "2026-09-16", "time": "11:00", "label": "One to one with Sam" } ] }, "file": "examples/glance.html" },
+    { "name": "brief", "props": { "month": "2026-09", "detail": "brief", "today": "2026-09-11", "upcoming": 3, "events": [ { "date": "2026-09-11", "time": "14:00", "label": "Design review" }, { "date": "2026-09-14", "label": "Standup" }, { "date": "2026-09-16", "time": "11:00", "label": "One to one with Sam" } ] }, "file": "examples/brief.html" },
+    { "name": "default", "props": { "month": "2026-09", "today": "2026-09-11", "events": [ { "date": "2026-09-11", "time": "14:00", "label": "Design review" }, { "date": "2026-09-14", "label": "Standup" }, { "date": "2026-09-28", "label": "Retro" } ] }, "file": "examples/default.html" },
+    { "name": "page", "props": { "month": "2026-09", "detail": "page", "today": "2026-09-11", "events": [ { "date": "2026-09-11", "time": "14:00", "label": "Design review", "actions": [ { "component": "button", "props": { "label": "Join", "context": "the design review", "variant": "quiet" } }, { "component": "link", "props": { "href": "/t/note", "label": "Notes", "context": "for the design review" } } ] }, { "date": "2026-09-14", "label": "Standup", "actions": [ { "component": "badge", "props": { "label": "Daily", "tone": "info" } } ] } ] }, "file": "examples/page.html" },
+    { "name": "empty", "props": { "month": "2026-02", "start": "sunday", "caption": "February, nothing booked" }, "file": "examples/empty.html" }
+  ]
+}

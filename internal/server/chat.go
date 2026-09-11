@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
@@ -33,6 +34,10 @@ type conversation struct {
 	LastTurn time.Time
 	TurnEnd  time.Time
 	Count    int
+	// FocusID is the block the page is already showing in full, when it is
+	// showing one. Its own Expand link then says it is the current page
+	// rather than offering to go where you already are.
+	FocusID string
 }
 
 type conversationView struct {
@@ -124,6 +129,20 @@ func (s *Server) chatPage(w http.ResponseWriter, r *http.Request) {
 	s.page(w, r, "Chat", template.HTML(string(convo.Notice)+string(body)+string(convo.Activity)), opts)
 }
 
+// backTo is where a conversation form returns to: the surface it was sent
+// from, when that is one of ours, and the canvas otherwise. Only the paths
+// that actually show a conversation are accepted, so the field cannot be
+// used to bounce someone somewhere else.
+func backTo(from string) string {
+	if from == "/chat" {
+		return from
+	}
+	if id, ok := strings.CutPrefix(from, "/canvas/"); ok && id != "" && !strings.ContainsAny(id, "/?#") {
+		return from
+	}
+	return "/"
+}
+
 // status summarises the last turn for the live region.
 func (s *Server) status(msgs []*store.Record) template.HTML {
 	props := map[string]any{"id": "chat-status", "message": "Ready.", "state": "idle"}
@@ -157,10 +176,7 @@ func (s *Server) chatSend(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "bad form", http.StatusBadRequest)
 		return
 	}
-	back := "/"
-	if from := r.PostForm.Get("from"); from == "/chat" {
-		back = from
-	}
+	back := backTo(r.PostForm.Get("from"))
 	rec, err := s.app.Chat.Send(r.Context(), r.PostForm.Get("message"))
 	if rec == nil {
 		// Nothing was recorded (empty message, or chat unavailable). The page
@@ -180,9 +196,5 @@ func (s *Server) chatClear(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	r.ParseForm()
-	back := "/"
-	if from := r.PostForm.Get("from"); from == "/chat" {
-		back = from
-	}
-	http.Redirect(w, r, back, http.StatusSeeOther)
+	http.Redirect(w, r, backTo(r.PostForm.Get("from")), http.StatusSeeOther)
 }

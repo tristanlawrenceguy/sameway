@@ -30,6 +30,15 @@ var Funcs = template.FuncMap{
 	// person reads without every caller needing two shapes.
 	"optValue": func(v any) string { return optionPart(v, "value") },
 	"optLabel": func(v any) string { return optionPart(v, "label") },
+	// Calendar shape, computed here because a template cannot do date maths
+	// and a month view must not need JavaScript. See calendar.go.
+	"monthWeeks":   monthWeeks,
+	"monthName":    monthName,
+	"weekdayNames": weekdayNames,
+	"eventsOn":     eventsOn,
+	"upcoming":     upcoming,
+	"shortDate":    shortDate,
+	"longDate":     longDate,
 	// lines splits text on single newlines.
 	"lines": func(s string) []string {
 		return strings.Split(strings.ReplaceAll(s, "\r\n", "\n"), "\n")

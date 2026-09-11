@@ -37,6 +37,7 @@ func (s *Server) routes() {
 	m := s.mux
 	m.HandleFunc("GET /{$}", s.canvasPage)
 	m.HandleFunc("GET /chat", s.chatPage)
+	m.HandleFunc("GET /canvas/{id}", s.focusPage)
 	m.HandleFunc("POST /chat", s.chatSend)
 	m.HandleFunc("POST /chat/clear", s.chatClear)
 	m.HandleFunc("POST /proposal/{id}/accept", s.proposalAccept)
@@ -83,6 +84,8 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 		Focus:      opts.Focus,
 		FocusLabel: opts.FocusLabel,
 		QuietTitle: opts.QuietTitle,
+		Left:       opts.Left,
+		Right:      opts.Right,
 	}
 	// The header carries only the person's own content. The brand is the way
 	// back to the canvas, and everything about the workspace itself lives in
@@ -115,6 +118,8 @@ type pageOptions struct {
 	// QuietTitle keeps the page heading in the outline but off the screen,
 	// for a page whose whole content is one thing and says so itself.
 	QuietTitle bool
+	Left       template.HTML
+	Right      template.HTML
 	JSONURL    string
 	Focus      string
 	FocusLabel string

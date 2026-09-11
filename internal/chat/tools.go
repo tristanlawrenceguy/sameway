@@ -44,7 +44,7 @@ func (s *Service) tools() []llm.Tool {
 				"span":      map[string]any{"type": "integer", "description": "Width in columns of twelve. 12 is full width, 6 half, 4 a third. Defaults to 6."},
 				"frame":     map[string]any{"type": "string", "enum": []string{"card", "bare"}, "description": "card gives the block a surface, bare sits flush on the page. Defaults to card."},
 				"tone":      map[string]any{"type": "string", "enum": []string{"none", "accent", "success", "warning", "danger", "info"}, "description": "Tints the block's surface. Defaults to none."},
-				"region":    map[string]any{"type": "string", "enum": []string{"main", "side"}, "description": "main is the body of the page; side is the collapsible pane beside it, for things the person glances at. Defaults to main."},
+				"region":    map[string]any{"type": "string", "enum": []string{"main", "left", "right"}, "description": "main is the body of the page. left and right are full height panes beside it: left for history and navigation, right for what the person glances at. Defaults to main."},
 			}, "component", "props")},
 		{Name: "update_component", Description: "Change a block already on the canvas: its props, its width, or its place in the order. Props replace the old ones completely, so send them all.",
 			Schema: obj(map[string]any{
@@ -54,7 +54,7 @@ func (s *Service) tools() []llm.Tool {
 				"position": map[string]any{"type": "integer", "description": "New sort order; lower comes first."},
 				"frame":    map[string]any{"type": "string", "enum": []string{"card", "bare"}},
 				"tone":     map[string]any{"type": "string", "enum": []string{"none", "accent", "success", "warning", "danger", "info"}},
-				"region":   map[string]any{"type": "string", "enum": []string{"main", "side"}},
+				"region":   map[string]any{"type": "string", "enum": []string{"main", "left", "right"}},
 			}, "id")},
 		{Name: "remove_component", Description: "Remove one block from the canvas by id.",
 			Schema: obj(map[string]any{"id": map[string]any{"type": "string"}}, "id")},
@@ -68,7 +68,7 @@ func (s *Service) tools() []llm.Tool {
 				"span":      map[string]any{"type": "integer"},
 				"frame":     map[string]any{"type": "string", "enum": []string{"card", "bare"}},
 				"tone":      map[string]any{"type": "string", "enum": []string{"none", "accent", "success", "warning", "danger", "info"}},
-				"region":    map[string]any{"type": "string", "enum": []string{"main", "side"}},
+				"region":    map[string]any{"type": "string", "enum": []string{"main", "left", "right"}},
 				"position":  map[string]any{"type": "integer"},
 			}, "summary", "tool")},
 		{Name: "clear_canvas", Description: "Remove every block from the canvas except the chat, which stays so the person can keep talking. Only when the person asks to start over. To remove the chat too, call remove_component on it.",
@@ -186,8 +186,8 @@ func (l look) apply(fields map[string]any) ([]string, error) {
 		what = append(what, "tone "+l.Tone)
 	}
 	if l.Region != "" {
-		if l.Region != "main" && l.Region != "side" {
-			return nil, fmt.Errorf("region must be main or side, got %q", l.Region)
+		if l.Region != "main" && l.Region != "left" && l.Region != "right" {
+			return nil, fmt.Errorf("region must be main, left, or right, got %q", l.Region)
 		}
 		fields["region"] = l.Region
 		what = append(what, "region "+l.Region)

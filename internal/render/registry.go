@@ -45,9 +45,11 @@ type Component struct {
 	// JS is the optional enhance.js: progressive enhancement only.
 	JS string
 
-	fsys  fs.FS
-	dir   string
-	tmpl  *template.Template
+	fsys fs.FS
+	dir  string
+	// tmpl is the template parsed once per nesting depth, so a component
+	// placed inside another still knows how deep it is. See compose.go.
+	tmpl  []*template.Template
 	props *propSchema
 }
 
@@ -79,7 +81,7 @@ func (r *Registry) LoadFS(fsys fs.FS, root, source string) error {
 		if !e.IsDir() {
 			continue
 		}
-		c, err := load(fsys, path.Join(root, e.Name()), source)
+		c, err := r.load(fsys, path.Join(root, e.Name()), source)
 		if err != nil {
 			return err
 		}
@@ -97,7 +99,7 @@ func (r *Registry) LoadDir(dir, source string) error {
 	return r.LoadFS(os.DirFS(dir), ".", source)
 }
 
-func load(fsys fs.FS, dir, source string) (*Component, error) {
+func (r *Registry) load(fsys fs.FS, dir, source string) (*Component, error) {
 	raw, err := fs.ReadFile(fsys, path.Join(dir, "manifest.json"))
 	if err != nil {
 		return nil, fmt.Errorf("component %s: %w", dir, err)
@@ -116,9 +118,13 @@ func load(fsys fs.FS, dir, source string) (*Component, error) {
 	if err != nil {
 		return nil, fmt.Errorf("component %s: %w", dir, err)
 	}
-	c.tmpl, err = template.New(c.Manifest.Name).Funcs(Funcs).Option("missingkey=zero").Parse(strings.TrimRight(string(src), "\n"))
-	if err != nil {
-		return nil, fmt.Errorf("component %s: template.html: %w", dir, err)
+	body := strings.TrimRight(string(src), "\n")
+	for depth := 0; depth < maxNesting; depth++ {
+		t, err := template.New(c.Manifest.Name).Funcs(r.funcsAt(depth)).Option("missingkey=zero").Parse(body)
+		if err != nil {
+			return nil, fmt.Errorf("component %s: template.html: %w", dir, err)
+		}
+		c.tmpl = append(c.tmpl, t)
 	}
 	if css, err := fs.ReadFile(fsys, path.Join(dir, "style.css")); err == nil {
 		c.CSS = string(css)
@@ -189,6 +195,11 @@ func (c *Component) RenderSlot(props map[string]any, slot template.HTML) (templa
 }
 
 func (c *Component) render(props map[string]any, slot *template.HTML) (template.HTML, error) {
+	return c.renderAt(props, slot, 0)
+}
+
+// renderAt renders the component knowing how deeply it is nested.
+func (c *Component) renderAt(props map[string]any, slot *template.HTML, depth int) (template.HTML, error) {
 	clean, err := c.props.normalize(props)
 	if err != nil {
 		return "", fmt.Errorf("component %s: %w", c.Manifest.Name, err)
@@ -196,8 +207,11 @@ func (c *Component) render(props map[string]any, slot *template.HTML) (template.
 	if slot != nil {
 		clean["slot"] = *slot
 	}
+	if depth >= len(c.tmpl) {
+		depth = len(c.tmpl) - 1
+	}
 	var buf bytes.Buffer
-	if err := c.tmpl.Execute(&buf, clean); err != nil {
+	if err := c.tmpl[depth].Execute(&buf, clean); err != nil {
 		return "", fmt.Errorf("component %s: %w", c.Manifest.Name, err)
 	}
 	return template.HTML(buf.String()), nil
@@ -211,6 +225,13 @@ func (c *Component) Validate(props map[string]any) (map[string]any, error) {
 // ReadFile reads a file relative to the component folder, such as an example.
 func (c *Component) ReadFile(rel string) ([]byte, error) {
 	return fs.ReadFile(c.fsys, path.Join(c.dir, rel))
+}
+
+// HasProp reports whether the component's manifest declares a prop. The
+// server uses it to ask whether a component has a fuller form to show.
+func (c *Component) HasProp(name string) bool {
+	_, ok := c.props.properties[name]
+	return ok
 }
 
 // Dir is the component folder path inside its filesystem.

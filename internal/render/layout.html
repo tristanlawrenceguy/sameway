@@ -10,7 +10,7 @@
 {{end}}<link rel="describedby" href="/api/describe">
 <script src="/design/sameway.js" defer></script>
 </head>
-<body>
+<body{{if .Shell}} data-shell="{{.Shell}}"{{end}}>
 <a class="sw-skip" href="#main">Skip to main content</a>
 {{if .Focus}}<a class="sw-skip" href="#{{.Focus}}">{{.FocusLabel}}</a>
 {{end}}<header class="sw-header">
@@ -21,10 +21,14 @@
 </nav>
 {{end}}</div>
 </header>
-<main id="main" class="sw-main" tabindex="-1">
+<div class="sw-shell">
+{{if .Left}}<aside class="sw-pane sw-pane--left" aria-label="Left pane">{{.Left}}</aside>
+{{end}}<main id="main" class="sw-main" tabindex="-1">
 <h1{{if .QuietTitle}} class="sw-visually-hidden"{{end}}>{{.Title}}</h1>
 {{.Body}}
 </main>
+{{if .Right}}<aside class="sw-pane sw-pane--right" aria-label="Right pane">{{.Right}}</aside>
+{{end}}</div>
 <footer class="sw-footer">
 <nav class="sw-nav sw-nav--more" aria-label="This workspace">
 <ul>{{range .More}}<li>{{.}}</li>{{end}}<li><a class="sw-link" href="/api/describe">For agents</a></li></ul>

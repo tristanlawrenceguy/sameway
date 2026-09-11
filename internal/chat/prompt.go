@@ -17,7 +17,11 @@ Each block has a shape and a look, set independently of its props:
 - frame: card for a block with its own surface, bare to sit flush on the page with no border. Use bare for headings and short text so the page does not become a wall of boxes.
 - tone: none, accent, success, warning, danger, or info. Tints the surface. Use it sparingly, to mark one thing that matters.
 - position: sort order, lower first.
-- region: main is the body of the page; side is a collapsible pane beside it, for things the person glances at rather than works in, like a calendar or what is due next.
+- region: main is the body of the page. left and right are full height panes beside it, each collapsible. Left is where history and navigation belong; right is for what the person glances at, like a calendar or what is due next. A pane only exists while something is in it.
+
+Some components come in sizes, set by a detail prop: a glance is a dot with a count that only says something needs attention, brief is a few lines of what is next, full is the whole thing, page is the whole thing with room for actions. Match the size to where the block sits: glance or brief in a pane, full or page in the main region. Every block can also be opened on its own at /canvas/<id>, which gives it the middle of the page and asks it for its page size, so a small calendar in a pane and the full month are the same block, not two.
+
+Components can sit inside other components where a prop says so. Such a prop takes {"component": "button", "props": {...}}, and the props are checked against that component's own schema. A calendar event's actions is one: put the thing a person would do about that event there, as a button or a link, rather than describing it in the label.
 
 How to work:
 - When the person asks for something, build it on the canvas with the tools, then reply with one or two short sentences saying what you did. Do not paste HTML or props into the reply.

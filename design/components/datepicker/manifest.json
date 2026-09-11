@@ -1,0 +1,42 @@
+{
+  "name": "datepicker",
+  "version": "1.0.0",
+  "description": "Asks someone for a date. A native date input, so every platform's own picker, keyboard handling, and screen reader support come for free. To show a month rather than ask for a day, use calendar.",
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["label", "name"],
+    "properties": {
+      "label": { "type": "string", "minLength": 1, "description": "What the date is for: 'Due date', not 'Date'." },
+      "name": { "type": "string", "minLength": 1, "description": "Form field name. Also the default id." },
+      "value": { "type": "string", "default": "", "description": "The date already chosen, as YYYY-MM-DD." },
+      "min": { "type": "string", "title": "Earliest allowed", "description": "As YYYY-MM-DD. The browser refuses earlier dates." },
+      "max": { "type": "string", "title": "Latest allowed", "description": "As YYYY-MM-DD." },
+      "hint": { "type": "string", "description": "Help text under the label. Say the format if it matters." },
+      "error": { "type": "string", "description": "Validation message. Sets aria-invalid and is linked with aria-describedby." },
+      "required": { "type": "boolean", "default": false },
+      "id": { "type": "string" }
+    }
+  },
+  "a11y": {
+    "role": "textbox with a date picker",
+    "keyboard": [
+      { "key": "Tab", "does": "moves focus to and from the field, and between its day, month and year parts" },
+      { "key": "Up / Down", "does": "changes the part under the cursor" },
+      { "key": "Space or Enter", "does": "opens the platform's calendar picker" },
+      { "key": "Escape", "does": "closes the picker without choosing" }
+    ],
+    "states": ["aria-invalid", "aria-required"],
+    "wcag": { "target": "AAA", "notes": "A native date input rather than a built calendar widget, so the keyboard model, the picker, and the announcements are the platform's own and work in every assistive technology without our code. The date can always be typed, so nobody has to use the picker. Label always visible; min and max are enforced by the browser and stated in the hint when they matter." }
+  },
+  "machine": {
+    "selector": "[data-component=\"datepicker\"] input",
+    "identify": "The accessible name is the label text. The value is an ISO date, YYYY-MM-DD.",
+    "operate": "Set the input's value to an ISO date. No need to open the picker."
+  },
+  "examples": [
+    { "name": "default", "props": { "label": "Due date", "name": "due" }, "file": "examples/default.html" },
+    { "name": "chosen", "props": { "label": "Start", "name": "start", "value": "2026-09-11", "min": "2026-09-01", "hint": "Nothing earlier than the first of the month." }, "file": "examples/chosen.html" },
+    { "name": "error", "props": { "label": "Deadline", "name": "deadline", "value": "2026-01-04", "required": true, "error": "Pick a date in the future.", "id": "deadline" }, "file": "examples/error.html" }
+  ]
+}

@@ -22,8 +22,8 @@ func TestRestingCanvasIsQuiet(t *testing.T) {
 		t.Fatalf("expected one quiet control bar, got %d", len(bars))
 	}
 	sub := &htmltest.Doc{Root: bars[0]}
-	if n := len(sub.Elements("a")) + len(sub.Elements("button")); n != 1 {
-		t.Errorf("the control bar should hold Remove and nothing else, got %d controls", n)
+	if n := len(sub.Elements("a")) + len(sub.Elements("button")); n != 2 {
+		t.Errorf("the control bar should hold Expand and Remove and nothing else, got %d controls", n)
 	}
 	// Provenance is still on the block for machines and screen readers.
 	for _, n := range doc.WithAttr("data-block-id", "") {

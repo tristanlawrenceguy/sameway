@@ -165,10 +165,10 @@ front of a shared instance without changing this layout.
 
 ### 5.1 The chat showcase
 
-The home page is a conversation next to a canvas. The model (any
-OpenAI-compatible server such as Ollama, or Claude through the official SDK)
-gets four tools: `add_component`, `update_component`, `remove_component`,
-`clear_canvas`. Each one writes an ordinary `block` record, so the canvas is
+The home page is a canvas that fills the screen, and the conversation is one
+block on it like any other. The model (any OpenAI-compatible server such as
+Ollama, or Claude through the official SDK) gets five tools: `add_component`,
+`update_component`, `remove_component`, `propose_change`, and `clear_canvas`. Each one writes an ordinary `block` record, so the canvas is
 content like any other: `sameway block list`, `GET /api/block`, and the page
 all show the same thing. The system prompt carries the component catalogue
 (every manifest's props schema) and the current canvas, and is rebuilt after
@@ -180,6 +180,26 @@ with an explanation if they are removed.
 
 The page is full-page navigation only: the form posts, the server runs the
 tool loop, and redirects to the newest message. No JavaScript is required.
+
+### 5.2 One block, many sizes
+
+A block is placed in a region (`main`, or a full-height `left`/`right` pane)
+with a span in columns of twelve. Components that have a `detail` prop also
+come in sizes, from a count that only says something needs attention to a
+full page with an action on every item, and every size is the same block: the
+markup differs, the record does not.
+
+Any block also opens on its own at `/canvas/<id>`, which gives it the middle
+of the page and asks it for its largest size. Nothing is moved or copied to
+do it, the panes stay where they are, and the block's own control says it is
+the current page. That makes one URL per block, which a person can bookmark
+and an agent can request directly.
+
+Components compose: a prop may carry `{"component": ..., "props": {...}}`,
+validated against that component's own manifest and rendered by its own
+template, so a button inside a calendar event is a real button. The host
+manifest lists which components may sit there. Nesting is bounded at three
+levels; past that the page says so rather than recursing.
 
 ## 6. Conventions that keep AI as the main contributor
 

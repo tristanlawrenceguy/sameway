@@ -48,6 +48,33 @@ binary, which serves a living styleguide at `/design`.
 | text-field, textarea, select, checkbox | Input |
 | alert, status, badge | Feedback and state |
 | message, event | Conversation and activity |
+| calendar, datepicker | Dates: a month at four sizes, and one day picked |
+
+### Sizes
+
+A component that has a `detail` prop comes in sizes, and the same block is
+every one of them:
+
+| detail | What it is | Where it sits |
+|---|---|---|
+| `glance` | A count, and the words behind it for anyone not reading the number | A strip, a pane, beside a heading |
+| `brief` | The few lines that answer "what is next" | A pane |
+| `full` | The whole thing | The body of the page |
+| `page` | The whole thing with room for actions | The body of the page, or on its own at `/canvas/<id>` |
+
+Sizes are not a visual trick. Each one renders different markup, and each
+says the same thing to a screen reader that it says on screen: the glance is
+a number with a real sentence beside it, not a bare digit.
+
+### Components inside components
+
+A prop may carry another component, as `{"component": "button", "props":
+{...}}`, and the template places it with `{{child .action}}` or `{{children
+.actions}}`. The nested component is validated against its own manifest and
+rendered by its own template, so it is the real thing, with the same keyboard
+behaviour and the same contrast. The host manifest says which components are
+allowed where, so nothing can put a form inside a calendar cell. Nesting
+stops at three levels deep, with a note on the page rather than a hang.
 
 ## Using it without the binary
 

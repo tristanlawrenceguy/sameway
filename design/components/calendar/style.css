@@ -1,0 +1,72 @@
+/* A calendar is four things depending on how much room it has: a marker
+   with a count, a short agenda, a month grid, or a month with an action
+   beside every event. Each is a different structure, not a smaller one. */
+
+/* glance: attention, and nothing else. */
+.sw-calendar--glance {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 1.5rem; height: 1.5rem; padding: 0 0.4rem;
+  border-radius: var(--sw-radius-pill);
+  background: var(--sw-color-accent); color: var(--sw-color-accent-fg);
+  font-size: var(--sw-size-text-xs); font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* brief: what is next, as a list. */
+.sw-calendar__agenda { display: grid; gap: var(--sw-space-2); }
+.sw-calendar__agenda li { display: flex; flex-wrap: wrap; gap: 0 var(--sw-space-2); font-size: var(--sw-size-text-sm); }
+.sw-calendar__when { color: var(--sw-color-fg-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.sw-calendar__when time { font-weight: 600; }
+.sw-calendar__what { font-weight: 500; }
+
+/* full and page: the month grid. It asks for a comfortable width, tightens
+   to fit a pane, and only below that does the wrapper scroll sideways. */
+.sw-calendar--full, .sw-calendar--page { container-type: inline-size; }
+.sw-calendar .sw-table { table-layout: fixed; font-variant-numeric: tabular-nums; min-width: 26rem; }
+.sw-calendar th { text-align: center; font-size: var(--sw-size-text-xs); padding: var(--sw-space-2) var(--sw-space-1); }
+.sw-calendar__day, .sw-calendar__pad {
+  vertical-align: top; height: 4.5rem; padding: var(--sw-space-1) var(--sw-space-2);
+  border-left: 1px solid var(--sw-color-border);
+}
+.sw-calendar__pad { background: var(--sw-color-bg-muted); }
+.sw-calendar__number { font-size: var(--sw-size-text-sm); font-weight: 600; color: var(--sw-color-fg-muted); }
+.sw-calendar__day--today { background: var(--sw-color-accent-soft); }
+.sw-calendar__day--today .sw-calendar__number { color: var(--sw-color-accent); }
+.sw-calendar__today {
+  display: inline-block; margin-left: var(--sw-space-1);
+  font-size: var(--sw-size-text-xs); font-weight: 700; color: var(--sw-color-accent);
+}
+.sw-calendar__events { list-style: none; margin: var(--sw-space-1) 0 0; padding: 0; font-size: var(--sw-size-text-xs); }
+.sw-calendar__events li {
+  margin-top: 0.125rem; padding: 0.05rem var(--sw-space-1);
+  border-radius: var(--sw-radius-sm);
+  background: var(--sw-color-bg-muted); color: var(--sw-color-fg);
+  overflow-wrap: break-word; hyphens: auto;
+}
+.sw-calendar__event time { font-weight: 600; color: var(--sw-color-fg-muted); }
+
+/* page: room for every event to carry its own actions. */
+.sw-calendar--page .sw-table { min-width: 44rem; }
+.sw-calendar--page .sw-calendar__day, .sw-calendar--page .sw-calendar__pad { height: 8rem; }
+.sw-calendar--page .sw-calendar__events { font-size: var(--sw-size-text-sm); }
+.sw-calendar--page .sw-calendar__events li { padding: var(--sw-space-1) var(--sw-space-2); }
+.sw-calendar__actions { display: flex; flex-wrap: wrap; gap: var(--sw-space-1); margin-top: var(--sw-space-1); }
+.sw-calendar__actions .sw-button { min-height: 2rem; padding: 0 var(--sw-space-2); font-size: var(--sw-size-text-xs); }
+
+/* In a pane there is no room for what is on, only for which days are busy.
+   The labels stay in the accessibility tree and come back the moment the
+   calendar has room, so nothing is lost, it is only not drawn. */
+@container (max-width: 27rem) {
+  .sw-calendar .sw-table { min-width: 19rem; }
+  .sw-calendar__day, .sw-calendar__pad { height: 3.25rem; padding: var(--sw-space-1) 0.25rem; }
+  .sw-calendar__today { margin-left: 0; }
+  .sw-calendar__events { display: flex; flex-wrap: wrap; gap: 0.2rem; margin-top: 0.3rem; }
+  .sw-calendar__events li {
+    width: 0.45rem; height: 0.45rem; padding: 0; margin: 0;
+    border-radius: 50%; background: var(--sw-color-accent);
+  }
+  .sw-calendar__event, .sw-calendar__actions {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip-path: inset(50%); white-space: nowrap;
+  }
+}

@@ -36,32 +36,22 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 	if convo.Notice != "" {
 		b.WriteString(string(convo.Notice))
 	}
-	var main, side []*store.Record
-	for _, blk := range blocks {
-		if str(blk.Fields["region"], "main") == "side" {
-			side = append(side, blk)
-		} else {
-			main = append(main, blk)
-		}
-	}
+	main, left, right := split(blocks)
 	// A workspace with nothing but the conversation shows just that, in the
 	// middle of the page, the way every other assistant opens. Everything
 	// else arrives because someone asked for it.
-	solo := len(side) == 0 && len(main) == 1 && main[0].Fields["component"] == chat.ComponentName
+	solo := len(left) == 0 && len(right) == 0 && len(main) == 1 &&
+		main[0].Fields["component"] == chat.ComponentName
 
 	if len(blocks) == 0 {
 		b.WriteString(`<p class="sw-empty">This canvas is empty. The conversation is at <a href="/chat">/chat</a>, and anything you ask for there appears here.</p>`)
 	} else {
-		fmt.Fprintf(&b, `<div class="sw-page" data-layout="%s">`, layoutName(solo, len(side) > 0))
+		fmt.Fprintf(&b, `<div class="sw-page" data-layout="%s">`, layoutName(solo))
 		b.WriteString(`<ol class="sw-plain sw-canvas" aria-label="Canvas">`)
 		for _, blk := range main {
 			b.WriteString(s.blockItem(blk, convo))
 		}
-		b.WriteString(`</ol>`)
-		if len(side) > 0 {
-			b.WriteString(s.sidePane(side, convo))
-		}
-		b.WriteString(`</div>`)
+		b.WriteString(`</ol></div>`)
 	}
 	if convo.Activity != "" {
 		b.WriteString(`<div class="sw-activity">` + string(convo.Activity) + `</div>`)
@@ -71,36 +61,62 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 		opts.Focus, opts.FocusLabel = convo.LatestID, "Skip to latest message"
 	}
 	opts.QuietTitle = solo
+	opts.Left = s.pane("left", "History", left, convo)
+	opts.Right = s.pane("right", "Alongside", right, convo)
 	s.page(w, r, "Canvas", template.HTML(b.String()), opts)
 }
 
-func layoutName(solo, hasSide bool) string {
-	switch {
-	case solo:
+// canvasBlocks reads the canvas in display order, or nothing if it cannot.
+func (s *Server) canvasBlocks() []*store.Record {
+	blocks, err := s.app.Store.List(chat.BlockType, store.ListOptions{OrderBy: "position"})
+	if err != nil {
+		return nil
+	}
+	return blocks
+}
+
+// split sorts blocks into the three regions of the page.
+func split(blocks []*store.Record) (main, left, right []*store.Record) {
+	for _, blk := range blocks {
+		switch str(blk.Fields["region"], "main") {
+		case "left":
+			left = append(left, blk)
+		case "right", "side": // side was the earlier name for right
+			right = append(right, blk)
+		default:
+			main = append(main, blk)
+		}
+	}
+	return main, left, right
+}
+
+func layoutName(solo bool) string {
+	if solo {
 		return "solo"
-	case hasSide:
-		return "split"
 	}
 	return "wide"
 }
 
-// sidePane holds what a person glances at rather than works in. It collapses
-// to a strip and remembers whether it was open, because a pane that reopens
-// itself on every page load is a pane nobody closes twice.
-func (s *Server) sidePane(blocks []*store.Record, convo *conversation) string {
+// pane renders one of the two full height columns. It collapses to a strip
+// and remembers whether it was open, because a pane that reopens itself on
+// every page load is a pane nobody closes twice.
+func (s *Server) pane(side, label string, blocks []*store.Record, convo *conversation) template.HTML {
+	if len(blocks) == 0 {
+		return ""
+	}
 	var inner strings.Builder
-	inner.WriteString(`<ol class="sw-plain sw-canvas sw-canvas--side" aria-label="Side pane blocks">`)
+	fmt.Fprintf(&inner, `<ol class="sw-plain sw-canvas sw-canvas--pane" aria-label="%s pane blocks">`, label)
 	for _, blk := range blocks {
 		inner.WriteString(s.blockItem(blk, convo))
 	}
 	inner.WriteString(`</ol>`)
 	body, err := s.app.Registry.RenderSlot("disclosure",
-		map[string]any{"label": "Side pane", "open": true, "id": "side-pane"},
+		map[string]any{"label": label, "open": true, "id": side + "-pane"},
 		template.HTML(inner.String()))
 	if err != nil {
 		return ""
 	}
-	return `<aside class="sw-aside" aria-label="Side pane">` + string(body) + `</aside>`
+	return body
 }
 
 // blockItem renders one canvas block: the component, its span, its
@@ -123,8 +139,8 @@ func (s *Server) blockItem(blk *store.Record, convo *conversation) string {
 	// happened, and can get it again from the activity log.
 	fmt.Fprintf(&b, `<p class="sw-visually-hidden">%s</p>`, template.HTMLEscapeString(v.Provenance))
 	b.WriteString(string(body))
-	fmt.Fprintf(&b, `<div class="sw-bar sw-quiet"><form method="post" action="/canvas/%s/delete">%s</form></div></li>`,
-		v.ID, v.Remove)
+	fmt.Fprintf(&b, `<div class="sw-bar sw-quiet">%s<form method="post" action="/canvas/%s/delete">%s</form></div></li>`,
+		v.Expand, v.ID, v.Remove)
 	return b.String()
 }
 
@@ -190,7 +206,11 @@ func (s *Server) canvasBlock(b *store.Record, convo *conversation) canvasBlock {
 		Frame: str(b.Fields["frame"], "card"), Tone: str(b.Fields["tone"], "none"),
 		Provenance: provenance,
 		HTML:       s.component(name, props),
-		Remove:     s.component("button", map[string]any{"label": "Remove", "context": name, "type": "submit", "variant": "quiet"}),
+		Expand: s.component("link", map[string]any{
+			"href": "/canvas/" + b.ID, "label": "Expand", "context": name,
+			"current": convo != nil && convo.FocusID == b.ID,
+		}),
+		Remove: s.component("button", map[string]any{"label": "Remove", "context": name, "type": "submit", "variant": "quiet"}),
 	}
 }
 
@@ -234,6 +254,7 @@ type canvasBlock struct {
 	Tone       string
 	Provenance string
 	HTML       template.HTML
+	Expand     template.HTML
 	Remove     template.HTML
 }
 

@@ -66,10 +66,18 @@ func TestQuietControlsStayAvailableToEveryone(t *testing.T) {
 		}
 	})
 
-	// Removing is the only control a person gets: everything else they ask
-	// the assistant for. The one control is the real thing, though.
-	if n := len(sub.Elements("a")) + len(sub.Elements("button")); n != 1 {
-		t.Errorf("a block should offer exactly one control, got %d", n)
+	// Two controls, and no more: give this block the whole page, or take it
+	// off the page. Everything else a person asks the assistant for. Both
+	// are the real thing, not a picture of one.
+	if n := len(sub.Elements("a")) + len(sub.Elements("button")); n != 2 {
+		t.Errorf("a block should offer exactly two controls, got %d", n)
+	}
+	expand := findByName(t, sub, "a", "Expand card")
+	if href, _ := htmltest.Attr(expand, "href"); href != "/canvas/"+id {
+		t.Errorf("Expand should lead to the block's own page, got %q", href)
+	}
+	if !htmltest.Focusable(expand) {
+		t.Errorf("Expand in the quiet layer is not focusable")
 	}
 	remove := findByName(t, sub, "button", "Remove card")
 	if typ, _ := htmltest.Attr(remove, "type"); typ != "submit" {

@@ -1,0 +1,55 @@
+/* The application shell.
+ *
+ * A page with panes is full height: the header and footer stay put, each
+ * pane scrolls on its own, and only the middle column moves under the
+ * content. A page without panes is an ordinary document that scrolls as a
+ * whole, because a document should. */
+
+.sw-shell { display: block; }
+
+body[data-shell="app"] {
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+}
+body[data-shell="app"] .sw-header { position: static; }
+/* The document width is set by a centred max width and automatic margins.
+   In the shell the column already sets the width, and leaving the margins
+   automatic would make the middle of the page shrink to its content. */
+body[data-shell="app"] .sw-main { width: auto; margin-inline: 0; padding-inline: var(--sw-space-6); }
+
+.sw-pane { min-width: 0; }
+.sw-pane .sw-disclosure { border-top: 0; }
+.sw-pane .sw-disclosure__body { padding: var(--sw-space-3) 0 var(--sw-space-6); }
+.sw-canvas--pane { grid-template-columns: 1fr; }
+
+/* Below the breakpoint the panes are just more page: they stack above and
+   below the main region and everything scrolls together, because a column
+   the width of a phone is not a pane. */
+@media (min-width: 64rem) {
+  /* Named columns, because a pane only exists while something is in it.
+     Without them, a page with one pane put the main region in the column
+     meant for the other, and the middle of the page shrank to its content. */
+  body[data-shell="app"] .sw-shell {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "left main right";
+    min-height: 0;
+    overflow: hidden;
+  }
+  body[data-shell="app"] .sw-pane--left { grid-area: left; }
+  body[data-shell="app"] .sw-main { grid-area: main; }
+  body[data-shell="app"] .sw-pane--right { grid-area: right; }
+  body[data-shell="app"] .sw-main,
+  body[data-shell="app"] .sw-pane { overflow-y: auto; min-height: 0; }
+  body[data-shell="app"] .sw-pane {
+    width: clamp(17rem, 22vw, 25rem);
+    padding-inline: var(--sw-space-4);
+    background: var(--sw-color-bg-muted);
+  }
+  body[data-shell="app"] .sw-pane--left { border-right: 1px solid var(--sw-color-border); }
+  body[data-shell="app"] .sw-pane--right { border-left: 1px solid var(--sw-color-border); }
+  /* Collapsed, a pane keeps only its own toggle and gives the width back. */
+  body[data-shell="app"] .sw-pane:has(.sw-disclosure:not([open])) { width: auto; }
+}
