@@ -10,14 +10,15 @@
       "message": { "type": "string", "format": "multiline", "minLength": 1 },
       "kind": { "type": "string", "enum": ["info", "success", "warning", "danger"], "default": "info" },
       "title": { "type": "string", "description": "Optional short title shown in bold before the message." },
-      "id": { "type": "string" }
+      "id": { "type": "string" },
+      "icon": { "type": "string", "description": "Optional decorative icon label for screen readers (CSS shape renders visually)." }
     }
   },
   "a11y": {
     "role": "status for info and success, alert for warning and danger",
     "keyboard": [],
     "states": [],
-    "wcag": { "target": "AAA", "notes": "Kind is conveyed by a text prefix as well as colour (1.4.1). Warning and danger use role=alert so assistive tech announces them when inserted live." }
+    "wcag": { "target": "AAA", "notes": "Kind is conveyed by a text prefix as well as colour (1.4.1). Warning and danger use role=alert so assistive tech announces them when inserted live. The optional icon is decorative and marked aria-hidden." }
   },
   "machine": {
     "selector": "[data-component=\"alert\"]",
