@@ -21,6 +21,7 @@ const usage = `sameway - accessible content and components for people and agents
 
 Usage:
   sameway init [dir] [--force]          create a workspace from the starter preset
+  sameway open [--addr host:port]       run the workspace and open it in a browser
   sameway serve [--addr host:port]      run the web server for this workspace
   sameway describe [--json]             show content types, components, and routes
   sameway check                         validate the workspace schema and components
@@ -70,6 +71,8 @@ func Run(args []string, env Env) int {
 	switch sub {
 	case "init":
 		err = c.initCmd()
+	case "open":
+		err = c.openCmd()
 	case "serve":
 		err = c.serveCmd()
 	case "describe":

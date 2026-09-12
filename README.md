@@ -22,10 +22,18 @@ Requires Go 1.24 or newer. No database, no Node, no config beyond one file.
 go install github.com/tristanlawrenceguy/sameway/cmd/sameway@latest
 mkdir my-workspace && cd my-workspace
 sameway init
-sameway serve
+sameway open
 ```
 
-Open http://127.0.0.1:8080/. `sameway init` probes for a local model server
+`sameway open` starts the workspace and opens it in your browser. `sameway
+serve` does the same without the browser, for a machine with nobody sitting at
+it. If you have cloned this repository rather than installed the binary, the
+same thing is a double-click: **open-sameway.cmd** on Windows,
+**open-sameway.sh** elsewhere. Both take the same arguments as the command, so
+`open-sameway.cmd --workspace "D:\work\my-workspace"` opens a workspace
+that lives somewhere else.
+
+Either way it is http://127.0.0.1:8080/. `sameway init` probes for a local model server
 (Ollama on 11434, LM Studio on 1234, llama.cpp on 8090 or 8080) and points
 the chat at the first model it finds. To change it, or to connect something
 else, edit the `llm` section of `workspace.yaml`:
