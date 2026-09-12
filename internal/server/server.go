@@ -164,5 +164,14 @@ func plural(name string) string {
 	if strings.HasSuffix(label, "s") {
 		return label
 	}
+	if len(label) >= 2 && label[len(label)-1] == 'y' {
+		lastRune := rune(label[len(label)-2])
+		switch lastRune {
+		case 'a', 'e', 'i', 'o', 'u':
+			return label + "s"
+		default:
+			return label[:len(label)-1] + "ies"
+		}
+	}
 	return label + "s"
 }
