@@ -170,7 +170,7 @@ func TestContentPagesLifecycle(t *testing.T) {
 func TestEveryPageHasOneH1AndLabelledControls(t *testing.T) {
 	a, h := newApp(t)
 	rec, _ := a.Store.Create("note", map[string]any{"title": "Seed"})
-	for _, path := range []string{"/", "/chat", "/activity", "/design", "/t/note", "/t/note/new", "/t/note/" + rec.ID, "/t/note/" + rec.ID + "/edit"} {
+	for _, path := range []string{"/", "/chat", "/activity", "/design", "/t/note", "/t/note/new", "/t/note/" + rec.ID, "/t/note/" + rec.ID + "/edit", "/t/note/" + rec.ID + "/confirm-delete"} {
 		doc := parse(t, get(t, h, path))
 		if n := len(doc.Elements("h1")); n != 1 {
 			t.Errorf("%s: %d h1 elements", path, n)

@@ -62,7 +62,10 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(&b, "<dt>Created</dt><dd>%s</dd><dt>Updated</dt><dd>%s</dd></dl>", rec.CreatedAt.Local().Format("2006-01-02 15:04"), rec.UpdatedAt.Local().Format("2006-01-02 15:04"))
 	b.WriteString(`<div class="sw-cluster" style="margin-top:var(--sw-space-6)">`)
 	b.WriteString(string(s.component("link", map[string]any{"href": "/t/" + t.Name + "/" + rec.ID + "/edit", "label": "Edit " + t.Name})))
-	fmt.Fprintf(&b, `<form method="post" action="/t/%s/%s/delete">%s</form>`, t.Name, rec.ID, s.component("button", map[string]any{"label": "Delete " + t.Name, "type": "submit", "variant": "danger"}))
+	b.WriteString(string(s.component("link", map[string]any{
+		"href":  "/t/" + t.Name + "/" + rec.ID + "/confirm-delete",
+		"label": "Delete " + t.Name,
+	})))
 	b.WriteString(`</div>`)
 	s.page(w, r, titleOf(t, rec), template.HTML(b.String()), pageOptions{JSONURL: "/api/" + t.Name + "/" + rec.ID})
 }
