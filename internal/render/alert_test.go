@@ -143,8 +143,8 @@ func TestAlertIconSpanWithProp(t *testing.T) {
 	if hasAriaHidden {
 		t.Error("icon span must not have aria-hidden=\"true\"")
 	}
-	if !hasAriaLabel {
-		t.Error("icon span must have aria-label=\"danger\"")
+	if hasAriaLabel {
+		t.Error("icon span must not have aria-label; the unicode character is announced by AT and the kind span provides the label text (redundant aria-label creates double-announcing)")
 	}
 
 	text := htmltest.Text(iconNode)
@@ -191,7 +191,8 @@ func TestAlertIconSpanWithProp(t *testing.T) {
 }
 
 // TestAlertInfoKindAriaLabel renders the alert with kind=info and icon ℹ,
-// then asserts the icon span carries aria-label="info". Acceptance item 2b.
+// then asserts the icon span does NOT carry aria-label="info" — redundant
+// announcing would confuse screen readers. Acceptance item 5.
 func TestAlertInfoKindAriaLabel(t *testing.T) {
 	reg := render.New()
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
@@ -232,8 +233,8 @@ func TestAlertInfoKindAriaLabel(t *testing.T) {
 			hasAriaLabel = true
 		}
 	}
-	if !hasAriaLabel {
-		t.Error("icon span must have aria-label=\"info\" for kind=info")
+	if hasAriaLabel {
+		t.Error("icon span must not have aria-label; the unicode character is announced by AT and the kind span provides the label text (redundant aria-label creates double-announcing)")
 	}
 
 	text := htmltest.Text(iconNode)
