@@ -131,16 +131,20 @@ func TestAlertIconSpanWithProp(t *testing.T) {
 	}
 
 	hasAriaHidden := false
+	hasAriaLabel := false
 	for _, a := range iconNode.Attr {
 		if a.Key == "aria-hidden" && a.Val == "true" {
 			hasAriaHidden = true
 		}
-		if a.Key == "aria-label" {
-			t.Errorf("icon span must not have aria-label, found %q", a.Val)
+		if a.Key == "aria-label" && a.Val == "danger" {
+			hasAriaLabel = true
 		}
 	}
 	if hasAriaHidden {
 		t.Error("icon span must not have aria-hidden=\"true\"")
+	}
+	if !hasAriaLabel {
+		t.Error("icon span must have aria-label=\"danger\"")
 	}
 
 	text := htmltest.Text(iconNode)
@@ -183,6 +187,58 @@ func TestAlertIconSpanWithProp(t *testing.T) {
 	}
 	if order.icon > 0 && order.icon >= order.kind {
 		t.Errorf("icon span (pos %d) must appear before kind span (pos %d)", order.icon, order.kind)
+	}
+}
+
+// TestAlertInfoKindAriaLabel renders the alert with kind=info and icon ℹ,
+// then asserts the icon span carries aria-label="info". Acceptance item 2b.
+func TestAlertInfoKindAriaLabel(t *testing.T) {
+	reg := render.New()
+	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := reg.Render("alert", map[string]any{
+		"kind":    "info",
+		"icon":    "\u2139", // ℹ
+		"message": "A note with an icon.",
+	})
+	if err != nil {
+		t.Fatalf("render: %v", err)
+	}
+
+	doc, err := htmltest.Parse(string(got))
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+
+	var iconNode *html.Node
+	doc.Walk(func(n *html.Node) {
+		if n.Data == "span" {
+			for _, a := range n.Attr {
+				if a.Key == "class" && strings.Contains(a.Val, "sw-alert__icon") {
+					iconNode = n
+				}
+			}
+		}
+	})
+	if iconNode == nil {
+		t.Fatalf("output lacks <span class=\"sw-alert__icon\">;\ngot:\n%s", got)
+	}
+
+	hasAriaLabel := false
+	for _, a := range iconNode.Attr {
+		if a.Key == "aria-label" && a.Val == "info" {
+			hasAriaLabel = true
+		}
+	}
+	if !hasAriaLabel {
+		t.Error("icon span must have aria-label=\"info\" for kind=info")
+	}
+
+	text := htmltest.Text(iconNode)
+	if text != "\u2139" {
+		t.Errorf("icon span text is %q; want \"ℹ\"", text)
 	}
 }
 
