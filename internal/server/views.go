@@ -39,7 +39,7 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 		}
 		b.WriteString("</ol>")
 	}
-	s.page(w, r, plural(t.Name), template.HTML(b.String()), pageOptions{JSONURL: "/api/" + t.Name})
+	s.page(w, r, strings.ToUpper(plural(t.Name)[:1])+plural(t.Name)[1:], template.HTML(b.String()), pageOptions{JSONURL: "/api/" + t.Name})
 }
 
 // detailPage shows one record as a definition list with edit and delete.
