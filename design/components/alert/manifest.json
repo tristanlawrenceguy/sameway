@@ -18,7 +18,7 @@
     "role": "status for info and success, alert for warning and danger",
     "keyboard": [],
     "states": [],
-    "wcag": { "target": "AAA", "notes": "Kind is conveyed by a text prefix as well as colour (1.4.1). Warning and danger use role=alert so assistive tech announces them when inserted live." }
+    "wcag": { "target": "AAA", "notes": "Kind is conveyed by a text prefix as well as colour (1.4.1). An optional icon prop provides an additional non-colour mechanism for non-colour distinction. Warning and danger use role=alert so assistive tech announces them when inserted live." }
   },
   "machine": {
     "selector": "[data-component=\"alert\"]",
