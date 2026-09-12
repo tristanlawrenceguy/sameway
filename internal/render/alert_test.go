@@ -139,8 +139,8 @@ func TestAlertIconSpanWithProp(t *testing.T) {
 			t.Errorf("icon span must not have aria-label, found %q", a.Val)
 		}
 	}
-	if !hasAriaHidden {
-		t.Error("icon span missing aria-hidden=\"true\"")
+	if hasAriaHidden {
+		t.Error("icon span must not have aria-hidden=\"true\"")
 	}
 
 	text := htmltest.Text(iconNode)
