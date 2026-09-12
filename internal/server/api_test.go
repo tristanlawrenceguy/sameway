@@ -180,6 +180,11 @@ func TestChatBuildsCanvasForPersonAndAgent(t *testing.T) {
 		t.Errorf("table content missing from the page")
 	}
 	msgs := page.WithAttr("data-component", "message")
+	for i, m := range msgs {
+		if r, ok := htmltest.Attr(m, "data-role"); ok {
+			t.Logf("msg %d: role=%q content=%q", i+1, r, htmltest.Text(m))
+		}
+	}
 	if len(msgs) != 2 {
 		t.Errorf("expected user and assistant messages on the page, got %d", len(msgs))
 	}
