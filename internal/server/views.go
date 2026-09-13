@@ -39,7 +39,7 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 		}
 		b.WriteString("</ol>")
 	}
-	s.page(w, r, plural(t.Name), template.HTML(b.String()), pageOptions{JSONURL: "/api/" + t.Name})
+	s.page(w, r, capitalize(plural(t.Name)), template.HTML(b.String()), pageOptions{JSONURL: "/api/" + t.Name})
 }
 
 // detailPage shows one record as a definition list with edit and delete.
@@ -279,6 +279,14 @@ func titleOf(t *schema.Type, rec *store.Record) string {
 		}
 	}
 	return t.Name + " " + rec.ID
+}
+
+func capitalize(s string) string {
+	if s == "" {
+		return s
+	}
+	r := []rune(s)
+	return strings.ToUpper(string(r[0])) + s[1:]
 }
 
 func label(field string) string {
