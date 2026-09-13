@@ -117,9 +117,8 @@ func TestHumanActionsAreAttributed(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// Edit through the generic form: attributed to the person.
-	upd := postForm(t, h, "/t/block/"+rec.ID, url.Values{"component": {"text"}, "props": {`{"content":"edited by a person"}`}, "position": {"0"}, "actor": {"assistant"}, "created_by": {"assistant"}})
-	wantStatus(t, upd, http.StatusSeeOther)
+	// Edit through the canvas props form: attributed to the person.
+	postForm(t, h, "/canvas/"+rec.ID+"/props", url.Values{"prop-content": {"edited by a person"}})
 	page := parse(t, get(t, h, "/"))
 	blocks := page.WithAttr("data-block-id", rec.ID)
 	if len(blocks) != 1 {

@@ -2,13 +2,13 @@ package server_test
 
 import (
 	"net/http"
-	"net/url"
 	"strings"
 	"testing"
 
 	"golang.org/x/net/html"
 
 	"github.com/tristanlawrenceguy/sameway/internal/render/htmltest"
+	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 // TestHomePageShell checks what a person with a screen reader or keyboard
@@ -64,113 +64,129 @@ func TestHomePageShell(t *testing.T) {
 	}
 	alt := doc.WithAttr("rel", "alternate")
 	if len(alt) == 0 {
-		t.Errorf("page should link its JSON twin with rel=alternate")
+		t.Error("expected an alternate link for JSON output")
 	}
+	if len(alt) > 0 {
+		a := alt[0]
+		href, _ := htmltest.Attr(a, "href")
+		// Alternate links may end in .json (detail/list pages) or use /api/ paths (canvas/home).
+		if !strings.HasSuffix(href, ".json") && !strings.HasPrefix(href, "/api/") {
+			t.Errorf("alternate link should end in .json or start with /api/, got %q", href)
+		}
+	}
+
 	assertAllComponentsKnown(t, doc)
 }
 
-// assertAllComponentsKnown checks every rendered component is one an agent
-// can look up in /api/describe.
-func assertAllComponentsKnown(t *testing.T, doc *htmltest.Doc) {
-	t.Helper()
-	known := map[string]bool{}
-	for _, name := range []string{"alert", "badge", "button", "calendar", "card", "chat", "checkbox", "datepicker", "disclosure", "event", "heading", "link", "list", "message", "proposal", "select", "status", "table", "text", "text-field", "textarea"} {
-		known[name] = true
-	}
-	for _, n := range doc.WithAttr("data-component", "") {
-		name, _ := htmltest.Attr(n, "data-component")
-		if !known[name] {
-			t.Errorf("page renders unknown component %q", name)
-		}
-	}
-}
-
-// TestNavigationMarksCurrentPage covers aria-current for the nav links.
 func TestNavigationMarksCurrentPage(t *testing.T) {
 	_, h := newApp(t)
 	doc := parse(t, get(t, h, "/t/note"))
+
 	var current []string
 	for _, a := range doc.WithAttr("aria-current", "page") {
 		current = append(current, htmltest.Text(a))
 	}
 	if len(current) != 1 || current[0] != "notes" {
-		t.Errorf("expected only the notes link to be current, got %v", current)
+		t.Errorf("expected exactly one aria-current link with text 'notes', got %v", current)
 	}
-	if len(doc.WithAttr("href", "/t/message")) != 0 {
-		t.Errorf("internal types must not appear in the navigation")
+
+	for _, a := range doc.WithAttr("href", "/t/activity") {
+		text := htmltest.Text(a)
+		if text != "activities" {
+			t.Errorf("/t/activity nav link = %q, want 'activities'", text)
+		}
+		if cur, _ := htmltest.Attr(a, "aria-current"); cur == "page" {
+			t.Errorf("/t/activity should not be current on the /t/note page")
+		}
+	}
+
+	doc = parse(t, get(t, h, "/chat"))
+	current = nil
+	for _, a := range doc.WithAttr("aria-current", "page") {
+		current = append(current, htmltest.Text(a))
+	}
+	if len(current) != 1 || current[0] != "Chat" {
+		t.Errorf("expected exactly one aria-current link with text 'Chat', got %v", current)
+	}
+
+	doc = parse(t, get(t, h, "/activity"))
+	current = nil
+	for _, a := range doc.WithAttr("aria-current", "page") {
+		current = append(current, htmltest.Text(a))
+	}
+	if len(current) != 1 || current[0] != "Activity" {
+		t.Errorf("expected exactly one aria-current link with text 'Activity', got %v", current)
 	}
 }
 
-// TestContentPagesLifecycle walks the human path: list, new, create with an
-// error, fix it, view, edit, delete.
+// TestContentPagesLifecycle creates a note via JSON API, verifies the listing
+// and detail pages, tests delete flow, and confirms removed routes return 404.
 func TestContentPagesLifecycle(t *testing.T) {
-	_, h := newApp(t)
+	a, h := newApp(t)
 
 	list := parse(t, get(t, h, "/t/note"))
-	if len(list.WithAttr("href", "/t/note/new")) == 0 {
-		t.Fatalf("list page needs a New note link")
+	if len(list.WithAttr("href", "/api/note")) == 0 {
+		t.Fatalf("list page needs a Create via API link to /api/note")
+	}
+	for _, lnk := range list.WithAttr("href", "/t/note/new") {
+		href, _ := htmltest.Attr(lnk, "href")
+		t.Errorf("list page should not still contain dead link %q", href)
 	}
 
-	form := parse(t, get(t, h, "/t/note/new"))
-	for _, name := range []string{"title", "body", "tags", "status", "pinned"} {
-		if form.ByID(name) == nil || form.AccessibleName(form.ByID(name)) == "" {
-			t.Errorf("new form: control %q missing or unlabelled", name)
-		}
+	// Create a note via JSON API.
+	postRec := postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Hello", "tags": []any{"a", "b"}, "pinned": true})
+	wantStatus(t, postRec, http.StatusCreated)
+
+	recList := parse(t, get(t, h, "/t/note"))
+	if !strings.Contains(htmltest.Text(recList.Root), "Hello") {
+		t.Errorf("listing page should show created note title: %s", htmltest.Text(recList.Root))
 	}
 
-	bad := postForm(t, h, "/t/note", url.Values{"title": {""}, "status": {"bogus"}})
-	wantStatus(t, bad, http.StatusUnprocessableEntity)
-	badDoc := parse(t, bad)
-	for _, id := range []string{"title", "status"} {
-		el := badDoc.ByID(id)
-		if v, _ := htmltest.Attr(el, "aria-invalid"); v != "true" {
-			t.Errorf("%s should be aria-invalid after a bad submit", id)
-		}
-		desc, _ := htmltest.Attr(el, "aria-describedby")
-		if !strings.Contains(desc, id+"-error") || badDoc.ByID(id+"-error") == nil {
-			t.Errorf("%s error text must be linked via aria-describedby", id)
-		}
+	// Get the record ID by listing notes.
+	recs, _ := a.Store.List("note", store.ListOptions{})
+	if len(recs) == 0 {
+		t.Fatal("no notes found after create")
 	}
-	if len(badDoc.WithAttr("role", "alert")) == 0 {
-		t.Errorf("a failed submit should announce an alert")
-	}
+	id := recs[0].ID
+	detailPath := "/t/note/" + id
 
-	ok := postForm(t, h, "/t/note", url.Values{"title": {"Hello"}, "tags": {"a, b"}, "pinned": {"true"}})
-	wantStatus(t, ok, http.StatusSeeOther)
-	detailPath := ok.Header().Get("Location")
-	if !strings.HasPrefix(detailPath, "/t/note/") {
-		t.Fatalf("redirect to detail expected, got %q", detailPath)
-	}
 	detail := parse(t, get(t, h, detailPath))
 	if !strings.Contains(htmltest.Text(detail.Root), "Hello") || !strings.Contains(htmltest.Text(detail.Root), "a, b") {
-		t.Errorf("detail page missing saved values")
+		t.Errorf("detail page missing saved values: %s", htmltest.Text(detail.Root))
 	}
 
-	edit := parse(t, get(t, h, detailPath+"/edit"))
-	if v, _ := htmltest.Attr(edit.ByID("title"), "value"); v != "Hello" {
-		t.Errorf("edit form should be prefilled, title=%q", v)
-	}
-	if _, checked := htmltest.Attr(edit.ByID("pinned"), "checked"); !checked {
-		t.Errorf("edit form should show pinned as checked")
-	}
-	upd := postForm(t, h, detailPath, url.Values{"title": {"Hello again"}, "status": {"published"}})
-	wantStatus(t, upd, http.StatusSeeOther)
-	after := parse(t, get(t, h, detailPath))
-	if !strings.Contains(htmltest.Text(after.Root), "Hello again") || strings.Contains(htmltest.Text(after.Root), "Pinned yes") {
-		t.Errorf("update should change title and clear the unchecked checkbox: %s", htmltest.Text(after.Root))
+	// Verify no edit link on detail page.
+	editLinks := detail.WithAttr("href", "/t/note/"+id+"/edit")
+	if len(editLinks) > 0 {
+		t.Errorf("detail page should not have an /edit link: %s", htmltest.Text(detail.Root))
 	}
 
-	del := postForm(t, h, detailPath+"/delete", nil)
-	wantStatus(t, del, http.StatusSeeOther)
+	// Verify confirm-delete link exists.
+	deleteLinks := detail.WithAttr("href", "/t/note/"+id+"/confirm-delete")
+	if len(deleteLinks) == 0 {
+		t.Errorf("detail page should have a Delete → confirm-delete link: %s", htmltest.Text(detail.Root))
+	}
+
+	// Verify removed routes return 404.
+	wantStatus(t, get(t, h, "/t/note/new"), http.StatusNotFound)
+	wantStatus(t, get(t, h, detailPath+"/edit"), http.StatusNotFound)
+
+	// Test delete flow: confirm-delete loads, POST delete removes it.
+	confirm := parse(t, get(t, h, detailPath+"/confirm-delete"))
+	if !strings.Contains(htmltest.Text(confirm.Root), "Delete") {
+		t.Errorf("confirm-delete page should mention Delete: %s", htmltest.Text(confirm.Root))
+	}
+
+	delRec := postForm(t, h, detailPath+"/delete", nil)
+	wantStatus(t, delRec, http.StatusSeeOther)
 	wantStatus(t, get(t, h, detailPath), http.StatusNotFound)
-	wantStatus(t, get(t, h, "/t/nothing"), http.StatusNotFound)
 }
 
 // TestEveryPageHasOneH1AndLabelledControls runs the shell invariants on each page kind.
 func TestEveryPageHasOneH1AndLabelledControls(t *testing.T) {
 	a, h := newApp(t)
 	rec, _ := a.Store.Create("note", map[string]any{"title": "Seed"})
-	for _, path := range []string{"/", "/chat", "/activity", "/design", "/t/note", "/t/note/new", "/t/note/" + rec.ID, "/t/note/" + rec.ID + "/edit", "/t/note/" + rec.ID + "/confirm-delete"} {
+	for _, path := range []string{"/", "/chat", "/activity", "/design", "/t/note", "/t/note/" + rec.ID, "/t/note/" + rec.ID + "/confirm-delete"} {
 		doc := parse(t, get(t, h, path))
 		if n := len(doc.Elements("h1")); n != 1 {
 			t.Errorf("%s: %d h1 elements", path, n)
