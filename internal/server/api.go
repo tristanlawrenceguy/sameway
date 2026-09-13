@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -99,7 +100,45 @@ func (s *Server) apiUpdate(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	rec, err := s.app.Store.Update(r.PathValue("type"), r.PathValue("id"), fields)
+	tname := r.PathValue("type")
+
+	// Block updates need activity logging and provenance fields.
+	if tname == "block" {
+		rec, err := s.app.Store.Get(chat.BlockType, r.PathValue("id"))
+		if err != nil {
+			writeError(w, err)
+			return
+		}
+		name, _ := rec.Fields["component"].(string)
+		actor, _ := fields["actor"].(string)
+		if actor == "" {
+			actor = "human"
+		}
+		updateFields := s.app.Chat.BlockFields(map[string]any{
+			"props":    fields["props"],
+			"actor":    actor,
+			"span":     fields["span"],
+			"position": fields["position"],
+			"frame":    fields["frame"],
+			"tone":     fields["tone"],
+			"region":   fields["region"],
+		})
+		rec2, err := s.app.Store.Update(chat.BlockType, r.PathValue("id"), updateFields)
+		if err != nil {
+			writeError(w, err)
+			return
+		}
+		props, _ := fields["props"].(map[string]any)
+		detail := ""
+		if props != nil {
+			detail = chat.Summarise(name, props)
+		}
+		chat.Record(s.app.Store, actor, chat.Change{Action: "updated", Component: name, ID: rec.ID, Detail: detail})
+		writeJSON(w, http.StatusOK, rec2)
+		return
+	}
+
+	rec, err := s.app.Store.Update(tname, r.PathValue("id"), fields)
 	if err != nil {
 		writeError(w, err)
 		return
