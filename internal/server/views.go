@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -26,9 +25,6 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var b strings.Builder
-	b.WriteString(`<div class="sw-cluster">`)
-	b.WriteString(string(s.component("link", map[string]any{"href": "/t/" + t.Name + "/new", "label": "New " + t.Name})))
-	b.WriteString(`</div>`)
 	if len(recs) == 0 {
 		fmt.Fprintf(&b, `<p>No %s yet.</p>`, template.HTMLEscapeString(plural(t.Name)))
 	} else {
@@ -61,80 +57,12 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Fprintf(&b, "<dt>Created</dt><dd>%s</dd><dt>Updated</dt><dd>%s</dd></dl>", rec.CreatedAt.Local().Format("2006-01-02 15:04"), rec.UpdatedAt.Local().Format("2006-01-02 15:04"))
 	b.WriteString(`<div class="sw-cluster" style="margin-top:var(--sw-space-6)">`)
-	b.WriteString(string(s.component("link", map[string]any{"href": "/t/" + t.Name + "/" + rec.ID + "/edit", "label": "Edit " + t.Name})))
 	b.WriteString(string(s.component("link", map[string]any{
 		"href":  "/t/" + t.Name + "/" + rec.ID + "/confirm-delete",
 		"label": "Delete " + t.Name,
 	})))
 	b.WriteString(`</div>`)
 	s.page(w, r, titleOf(t, rec), template.HTML(b.String()), pageOptions{JSONURL: "/api/" + t.Name + "/" + rec.ID})
-}
-
-func (s *Server) newPage(w http.ResponseWriter, r *http.Request) {
-	t, ok := s.app.Types.Get(r.PathValue("type"))
-	if !ok {
-		http.NotFound(w, r)
-		return
-	}
-	s.page(w, r, "New "+t.Name, s.form(t, "/t/"+t.Name, nil, nil), pageOptions{})
-}
-
-func (s *Server) editPage(w http.ResponseWriter, r *http.Request) {
-	t, ok := s.app.Types.Get(r.PathValue("type"))
-	if !ok {
-		http.NotFound(w, r)
-		return
-	}
-	rec, err := s.app.Store.Get(t.Name, r.PathValue("id"))
-	if err != nil {
-		s.fail(w, err)
-		return
-	}
-	s.page(w, r, "Edit "+titleOf(t, rec), s.form(t, "/t/"+t.Name+"/"+rec.ID, rec.Fields, nil), pageOptions{})
-}
-
-func (s *Server) createForm(w http.ResponseWriter, r *http.Request) {
-	t, ok := s.app.Types.Get(r.PathValue("type"))
-	if !ok {
-		http.NotFound(w, r)
-		return
-	}
-	values := formValues(t, r)
-	rec, err := s.app.Store.Create(t.Name, values)
-	if err != nil {
-		s.formError(w, r, t, "/t/"+t.Name, "New "+t.Name, values, err)
-		return
-	}
-	http.Redirect(w, r, "/t/"+t.Name+"/"+rec.ID, http.StatusSeeOther)
-}
-
-func (s *Server) updateForm(w http.ResponseWriter, r *http.Request) {
-	t, ok := s.app.Types.Get(r.PathValue("type"))
-	if !ok {
-		http.NotFound(w, r)
-		return
-	}
-	id := r.PathValue("id")
-	values := formValues(t, r)
-	if t.Name == chat.BlockType {
-		// A person editing a canvas block through the form: attribute it.
-		if _, ok := t.Field("actor"); ok {
-			values["actor"] = "human"
-		}
-	}
-	rec, err := s.app.Store.Update(t.Name, id, values)
-	if err != nil {
-		s.formError(w, r, t, "/t/"+t.Name+"/"+id, "Edit "+t.Name, values, err)
-		return
-	}
-	if t.Name == chat.BlockType {
-		name, _ := rec.Fields["component"].(string)
-		props, _ := rec.Fields["props"].(map[string]any)
-		chat.Record(s.app.Store, "human", chat.Change{Action: "updated", Component: name, ID: id, Detail: chat.Summarise(name, props)})
-		http.Redirect(w, r, "/#canvas", http.StatusSeeOther)
-		return
-	}
-	http.Redirect(w, r, "/t/"+t.Name+"/"+id, http.StatusSeeOther)
 }
 
 func (s *Server) deleteForm(w http.ResponseWriter, r *http.Request) {
