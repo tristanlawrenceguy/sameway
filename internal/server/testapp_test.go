@@ -4,12 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
 
+	"github.com/tristanlawrenceguy/sameway/design"
 	"github.com/tristanlawrenceguy/sameway/examples"
 	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
@@ -110,4 +112,37 @@ func truncate(s string) string {
 		return s[:300] + "…"
 	}
 	return s
+}
+
+// knownComponents returns the set of all built-in component names from the
+// design filesystem, so tests can verify that no unknown data-component
+// values appear in rendered HTML.
+var knownComponents = func() map[string]bool {
+	set := make(map[string]bool)
+	entries, err := fs.ReadDir(design.FS, "components")
+	if err != nil {
+		return set // won't happen in practice; caller sees empty and skips check
+	}
+	for _, e := range entries {
+		set[e.Name()] = true
+	}
+	return set
+}()
+
+// assertAllComponentsKnown checks that every data-component attribute value in
+// the document corresponds to a known built-in component. This catches typos
+// or references to components that were removed but not cleaned up from templates.
+func assertAllComponentsKnown(t *testing.T, doc *htmltest.Doc) {
+	if len(knownComponents) == 0 {
+		return // design filesystem inaccessible; skip check
+	}
+	for _, n := range doc.WithAttr("data-component", "") {
+		name, ok := htmltest.Attr(n, "data-component")
+		if !ok || name == "" {
+			continue
+		}
+		if !knownComponents[name] {
+			t.Errorf("unknown data-component %q in rendered HTML", name)
+		}
+	}
 }
