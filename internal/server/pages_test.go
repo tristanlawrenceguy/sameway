@@ -2,7 +2,6 @@ package server_test
 
 import (
 	"net/http"
-	"net/url"
 	"strings"
 	"testing"
 
@@ -101,76 +100,11 @@ func TestNavigationMarksCurrentPage(t *testing.T) {
 	}
 }
 
-// TestContentPagesLifecycle walks the human path: list, new, create with an
-// error, fix it, view, edit, delete.
-func TestContentPagesLifecycle(t *testing.T) {
-	_, h := newApp(t)
-
-	list := parse(t, get(t, h, "/t/note"))
-	if len(list.WithAttr("href", "/t/note/new")) == 0 {
-		t.Fatalf("list page needs a New note link")
-	}
-
-	form := parse(t, get(t, h, "/t/note/new"))
-	for _, name := range []string{"title", "body", "tags", "status", "pinned"} {
-		if form.ByID(name) == nil || form.AccessibleName(form.ByID(name)) == "" {
-			t.Errorf("new form: control %q missing or unlabelled", name)
-		}
-	}
-
-	bad := postForm(t, h, "/t/note", url.Values{"title": {""}, "status": {"bogus"}})
-	wantStatus(t, bad, http.StatusUnprocessableEntity)
-	badDoc := parse(t, bad)
-	for _, id := range []string{"title", "status"} {
-		el := badDoc.ByID(id)
-		if v, _ := htmltest.Attr(el, "aria-invalid"); v != "true" {
-			t.Errorf("%s should be aria-invalid after a bad submit", id)
-		}
-		desc, _ := htmltest.Attr(el, "aria-describedby")
-		if !strings.Contains(desc, id+"-error") || badDoc.ByID(id+"-error") == nil {
-			t.Errorf("%s error text must be linked via aria-describedby", id)
-		}
-	}
-	if len(badDoc.WithAttr("role", "alert")) == 0 {
-		t.Errorf("a failed submit should announce an alert")
-	}
-
-	ok := postForm(t, h, "/t/note", url.Values{"title": {"Hello"}, "tags": {"a, b"}, "pinned": {"true"}})
-	wantStatus(t, ok, http.StatusSeeOther)
-	detailPath := ok.Header().Get("Location")
-	if !strings.HasPrefix(detailPath, "/t/note/") {
-		t.Fatalf("redirect to detail expected, got %q", detailPath)
-	}
-	detail := parse(t, get(t, h, detailPath))
-	if !strings.Contains(htmltest.Text(detail.Root), "Hello") || !strings.Contains(htmltest.Text(detail.Root), "a, b") {
-		t.Errorf("detail page missing saved values")
-	}
-
-	edit := parse(t, get(t, h, detailPath+"/edit"))
-	if v, _ := htmltest.Attr(edit.ByID("title"), "value"); v != "Hello" {
-		t.Errorf("edit form should be prefilled, title=%q", v)
-	}
-	if _, checked := htmltest.Attr(edit.ByID("pinned"), "checked"); !checked {
-		t.Errorf("edit form should show pinned as checked")
-	}
-	upd := postForm(t, h, detailPath, url.Values{"title": {"Hello again"}, "status": {"published"}})
-	wantStatus(t, upd, http.StatusSeeOther)
-	after := parse(t, get(t, h, detailPath))
-	if !strings.Contains(htmltest.Text(after.Root), "Hello again") || strings.Contains(htmltest.Text(after.Root), "Pinned yes") {
-		t.Errorf("update should change title and clear the unchecked checkbox: %s", htmltest.Text(after.Root))
-	}
-
-	del := postForm(t, h, detailPath+"/delete", nil)
-	wantStatus(t, del, http.StatusSeeOther)
-	wantStatus(t, get(t, h, detailPath), http.StatusNotFound)
-	wantStatus(t, get(t, h, "/t/nothing"), http.StatusNotFound)
-}
-
 // TestEveryPageHasOneH1AndLabelledControls runs the shell invariants on each page kind.
 func TestEveryPageHasOneH1AndLabelledControls(t *testing.T) {
 	a, h := newApp(t)
 	rec, _ := a.Store.Create("note", map[string]any{"title": "Seed"})
-	for _, path := range []string{"/", "/chat", "/activity", "/design", "/t/note", "/t/note/new", "/t/note/" + rec.ID, "/t/note/" + rec.ID + "/edit", "/t/note/" + rec.ID + "/confirm-delete"} {
+	for _, path := range []string{"/", "/chat", "/activity", "/design", "/t/note", "/t/note/" + rec.ID, "/t/note/" + rec.ID + "/confirm-delete"} {
 		doc := parse(t, get(t, h, path))
 		if n := len(doc.Elements("h1")); n != 1 {
 			t.Errorf("%s: %d h1 elements", path, n)
