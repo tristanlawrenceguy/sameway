@@ -63,7 +63,7 @@ workspace file, because the workspace is meant to be shared.
 | For people | For agents |
 |---|---|
 | `/` chat page with a canvas the model edits | `POST /api/chat` with `{"message": "..."}` |
-| `/t/note` list, detail, new, edit pages for every content type | `GET/POST/PUT/DELETE /api/note` |
+| `/t/note` list, detail pages for every content type | `GET/POST/PUT/DELETE /api/note` |
 | Server-rendered HTML, works without JavaScript | `GET /api/describe` for every schema, manifest, and route |
 | Skip links, landmarks, one h1, visible focus, 44px targets | `data-component` on every rendered component |
 | `sameway note create --set title="Hello"` | `sameway note list --json` |

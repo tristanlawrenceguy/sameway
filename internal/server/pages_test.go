@@ -2,7 +2,6 @@ package server_test
 
 import (
 	"net/http"
-	"net/url"
 	"strings"
 	"testing"
 
@@ -101,63 +100,48 @@ func TestNavigationMarksCurrentPage(t *testing.T) {
 	}
 }
 
-// TestContentPagesLifecycle walks the human path: list, new, create with an
-// error, fix it, view, edit, delete.
+// TestContentPagesLifecycle walks the human path: list, create via API, view,
+// update via API, delete. Form-based CRUD has been removed; the JSON API is
+// the only way to create or modify content.
 func TestContentPagesLifecycle(t *testing.T) {
 	_, h := newApp(t)
 
 	list := parse(t, get(t, h, "/t/note"))
-	if len(list.WithAttr("href", "/t/note/new")) == 0 {
-		t.Fatalf("list page needs a New note link")
+	if len(list.WithAttr("href", "/t/note/new")) != 0 {
+		t.Fatalf("list page must not have a New note link after form removal")
 	}
 
-	form := parse(t, get(t, h, "/t/note/new"))
-	for _, name := range []string{"title", "body", "tags", "status", "pinned"} {
-		if form.ByID(name) == nil || form.AccessibleName(form.ByID(name)) == "" {
-			t.Errorf("new form: control %q missing or unlabelled", name)
-		}
+	// Create via the JSON API (form-based creation is gone).
+	create := postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Hello", "tags": []string{"a", "b"}, "pinned": true})
+	wantStatus(t, create, http.StatusCreated)
+
+	// List page now shows the record.
+	list2 := parse(t, get(t, h, "/t/note"))
+	if len(list2.Elements("li")) == 0 {
+		t.Fatal("list should show the created note")
 	}
 
-	bad := postForm(t, h, "/t/note", url.Values{"title": {""}, "status": {"bogus"}})
-	wantStatus(t, bad, http.StatusUnprocessableEntity)
-	badDoc := parse(t, bad)
-	for _, id := range []string{"title", "status"} {
-		el := badDoc.ByID(id)
-		if v, _ := htmltest.Attr(el, "aria-invalid"); v != "true" {
-			t.Errorf("%s should be aria-invalid after a bad submit", id)
-		}
-		desc, _ := htmltest.Attr(el, "aria-describedby")
-		if !strings.Contains(desc, id+"-error") || badDoc.ByID(id+"-error") == nil {
-			t.Errorf("%s error text must be linked via aria-describedby", id)
-		}
-	}
-	if len(badDoc.WithAttr("role", "alert")) == 0 {
-		t.Errorf("a failed submit should announce an alert")
-	}
+	// Get via API to find the ID.
+	var created struct{ ID string }
+	decode(t, create, &created)
+	detailPath := "/t/note/" + created.ID
 
-	ok := postForm(t, h, "/t/note", url.Values{"title": {"Hello"}, "tags": {"a, b"}, "pinned": {"true"}})
-	wantStatus(t, ok, http.StatusSeeOther)
-	detailPath := ok.Header().Get("Location")
-	if !strings.HasPrefix(detailPath, "/t/note/") {
-		t.Fatalf("redirect to detail expected, got %q", detailPath)
-	}
 	detail := parse(t, get(t, h, detailPath))
 	if !strings.Contains(htmltest.Text(detail.Root), "Hello") || !strings.Contains(htmltest.Text(detail.Root), "a, b") {
-		t.Errorf("detail page missing saved values")
+		t.Errorf("detail page missing saved values: %s", htmltest.Text(detail.Root))
 	}
 
-	edit := parse(t, get(t, h, detailPath+"/edit"))
-	if v, _ := htmltest.Attr(edit.ByID("title"), "value"); v != "Hello" {
-		t.Errorf("edit form should be prefilled, title=%q", v)
+	// No edit link should exist.
+	if strings.Contains(htmltest.Text(detail.Root), "/edit") || len(detail.WithAttr("href", detailPath+"/edit")) != 0 {
+		t.Error("detail page must not have an edit link")
 	}
-	if _, checked := htmltest.Attr(edit.ByID("pinned"), "checked"); !checked {
-		t.Errorf("edit form should show pinned as checked")
-	}
-	upd := postForm(t, h, detailPath, url.Values{"title": {"Hello again"}, "status": {"published"}})
-	wantStatus(t, upd, http.StatusSeeOther)
+
+	// Update via the JSON API (form-based editing is gone).
+	upd := postJSON(t, h, http.MethodPut, "/api/note/"+created.ID, map[string]any{"title": "Hello again", "status": "published"})
+	wantStatus(t, upd, http.StatusOK)
 	after := parse(t, get(t, h, detailPath))
-	if !strings.Contains(htmltest.Text(after.Root), "Hello again") || strings.Contains(htmltest.Text(after.Root), "Pinned yes") {
-		t.Errorf("update should change title and clear the unchecked checkbox: %s", htmltest.Text(after.Root))
+	if !strings.Contains(htmltest.Text(after.Root), "Hello again") {
+		t.Errorf("update should change title: %s", htmltest.Text(after.Root))
 	}
 
 	del := postForm(t, h, detailPath+"/delete", nil)
@@ -170,7 +154,7 @@ func TestContentPagesLifecycle(t *testing.T) {
 func TestEveryPageHasOneH1AndLabelledControls(t *testing.T) {
 	a, h := newApp(t)
 	rec, _ := a.Store.Create("note", map[string]any{"title": "Seed"})
-	for _, path := range []string{"/", "/chat", "/activity", "/design", "/t/note", "/t/note/new", "/t/note/" + rec.ID, "/t/note/" + rec.ID + "/edit", "/t/note/" + rec.ID + "/confirm-delete"} {
+	for _, path := range []string{"/", "/chat", "/activity", "/design", "/t/note", "/t/note/" + rec.ID, "/t/note/" + rec.ID + "/confirm-delete"} {
 		doc := parse(t, get(t, h, path))
 		if n := len(doc.Elements("h1")); n != 1 {
 			t.Errorf("%s: %d h1 elements", path, n)

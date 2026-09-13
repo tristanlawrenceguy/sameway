@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -25,6 +27,7 @@ func newApp(t *testing.T) (*app.App, http.Handler) {
 	if err := workspace.Init(dir, examples.FS, examples.StarterRoot, false); err != nil {
 		t.Fatal(err)
 	}
+	os.Remove(filepath.Join(dir, "data.db"))
 	a, err := app.Load(dir, false)
 	if err != nil {
 		t.Fatal(err)
