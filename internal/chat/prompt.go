@@ -47,7 +47,11 @@ func (s *Service) systemPrompt() string {
 	}
 	b.WriteString("\n\nComponent catalogue (name: description, then props schema):\n")
 	for _, c := range s.Registry.Components() {
-		fmt.Fprintf(&b, "\n%s: %s\n%s\n", c.Manifest.Name, c.Manifest.Description, compactJSON(c.Manifest.Props))
+		fmt.Fprintf(&b, "\n%s: %s\n%s", c.Manifest.Name, c.Manifest.Description, compactJSON(c.Manifest.Props))
+		if notes := a11yNotes(c.Manifest.A11y); notes != "" {
+			fmt.Fprintf(&b, "\nA11y: %s", notes)
+		}
+		b.WriteByte('\n')
 	}
 	b.WriteString("\nCurrent canvas, top to bottom (id, component, span, frame, tone, props):\n")
 	blocks, err := s.Store.List(BlockType, store.ListOptions{OrderBy: "position"})
@@ -88,4 +92,20 @@ func compactJSON(raw json.RawMessage) string {
 		return string(raw)
 	}
 	return string(out)
+}
+
+func a11yNotes(raw json.RawMessage) string {
+	var a11y struct {
+		WCAG struct {
+			Target string `json:"target"`
+			Notes  string `json:"notes"`
+		} `json:"wcag"`
+	}
+	if len(raw) == 0 {
+		return ""
+	}
+	if err := json.Unmarshal(raw, &a11y); err != nil {
+		return ""
+	}
+	return a11y.WCAG.Notes
 }
