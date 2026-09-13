@@ -198,3 +198,67 @@ func TestStylesheetRoute(t *testing.T) {
 		}
 	}
 }
+
+// TestListingPageHeadingsAreCapitalized checks that every listing page shows
+// a title-cased h1 — "Notes", "Activities", "Messages" — not lowercase.
+func TestListingPageHeadingsAreCapitalized(t *testing.T) {
+	_, h := newApp(t)
+	for _, path := range []string{"/t/note", "/t/activity"} {
+		rec := get(t, h, path)
+		wantStatus(t, rec, http.StatusOK)
+		doc := parse(t, rec)
+
+		h1s := doc.Elements("h1")
+		if len(h1s) != 1 {
+			t.Fatalf("%s: expected one h1, got %d", path, len(h1s))
+		}
+		text := htmltest.Text(h1s[0])
+
+		switch path {
+		case "/t/note":
+			if text != "Notes" {
+				t.Errorf("/t/note h1 = %q, want %q", text, "Notes")
+			}
+		case "/t/activity":
+			if text != "Activities" {
+				t.Errorf("/t/activity h1 = %q, want %q", text, "Activities")
+			}
+		}
+	}
+}
+
+// TestNavLinksStayLowercase ensures that only the page heading is capitalized;
+// nav link labels remain lowercase as they call plural() directly.
+func TestNavLinksStayLowercase(t *testing.T) {
+	_, h := newApp(t)
+	doc := parse(t, get(t, h, "/t/note"))
+
+	var current []string
+	for _, a := range doc.WithAttr("aria-current", "page") {
+		current = append(current, htmltest.Text(a))
+	}
+	if len(current) != 1 || current[0] != "notes" {
+		t.Errorf("nav link text should be lowercase \"notes\", got %v", current)
+	}
+
+	// The other nav links (non-current) must also be lowercase.
+	for _, a := range doc.WithAttr("href", "/t/activity") {
+		text := htmltest.Text(a)
+		if text != "activities" {
+			t.Errorf("/t/activity nav link = %q, want \"activities\"", text)
+		}
+	}
+}
+
+// TestEmptyStateBodyStaysLowercase verifies that the empty-state paragraph
+// (body copy, not a heading) remains lowercase — e.g. "No notes yet."
+func TestEmptyStateBodyStaysLowercase(t *testing.T) {
+	_, h := newApp(t)
+	rec := get(t, h, "/t/note")
+	wantStatus(t, rec, http.StatusOK)
+
+	body := rec.Body.String()
+	if !strings.Contains(body, `<p>No notes yet.</p>`) {
+		t.Errorf("empty-state body should say \"No notes yet.\" (lowercase)\nbody: %s", truncate(rec.Body.String()))
+	}
+}
