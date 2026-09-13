@@ -93,7 +93,7 @@ func (s *Store) List(typeName string, opts ListOptions) ([]*Record, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	var out []*Record
+	out := make([]*Record, 0)
 	for rows.Next() {
 		rec, err := scan(t, rows)
 		if err != nil {
