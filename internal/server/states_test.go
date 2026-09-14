@@ -112,14 +112,25 @@ func TestStateLanguageAfterATurn(t *testing.T) {
 // block show up as human activity and human provenance.
 func TestHumanActionsAreAttributed(t *testing.T) {
 	a, h := newApp(t)
-	wantStatus(t, get(t, h, "/"), http.StatusOK)
-	rec, err := a.Store.Create("block", map[string]any{"component": "text", "props": map[string]any{"content": "hi"}})
-	if err != nil {
-		t.Fatal(err)
-	}
-	// Edit through the generic form: attributed to the person.
-	upd := postForm(t, h, "/t/block/"+rec.ID, url.Values{"component": {"text"}, "props": {`{"content":"edited by a person"}`}, "position": {"0"}, "actor": {"assistant"}, "created_by": {"assistant"}})
-	wantStatus(t, upd, http.StatusSeeOther)
+
+	// Seed the canvas with a block via chat so it gets proper provenance.
+	a.Chat.Provider, a.Chat.ProviderErr = &scripted{steps: []*llm.Response{
+		toolCall("add_component", map[string]any{"component": "text", "props": map[string]any{"content": "hi"}}),
+		{Text: "Added a block."},
+	}}, nil
+
+	// Opening the page seeds the chat block; then posting a message triggers
+	// the assistant turn, which adds the text block with content "hi".
+	get(t, h, "/")
+	postForm(t, h, "/chat", url.Values{"message": {"add a text block"}})
+
+	rec := canvasBlockByContent(t, h, "hi")
+
+	// Edit through the inline props endpoint (the person's path): attributed to human.
+	postForm(t, h, "/canvas/"+rec.ID+"/props", url.Values{
+		"prop-content": {"edited by a person"},
+	})
+
 	page := parse(t, get(t, h, "/"))
 	blocks := page.WithAttr("data-block-id", rec.ID)
 	if len(blocks) != 1 {
@@ -133,6 +144,7 @@ func TestHumanActionsAreAttributed(t *testing.T) {
 	}
 
 	wantStatus(t, postForm(t, h, "/canvas/"+rec.ID+"/delete", nil), http.StatusSeeOther)
+
 	var log struct {
 		Records []struct{ Fields map[string]any }
 	}
@@ -145,6 +157,26 @@ func TestHumanActionsAreAttributed(t *testing.T) {
 	if !strings.Contains(joined, "human:removed") || !strings.Contains(joined, "human:updated") {
 		t.Errorf("expected human removed and updated in the log, got %v", actions)
 	}
+}
+
+// canvasBlockByContent finds a canvas block whose props contain the given content.
+func canvasBlockByContent(t *testing.T, h http.Handler, content string) struct{ ID string } {
+	rec := get(t, h, "/api/block")
+	var bl struct {
+		Records []struct {
+			ID     string         `json:"id"`
+			Fields map[string]any `json:"fields"`
+		}
+	}
+	decode(t, rec, &bl)
+	for _, b := range bl.Records {
+		props, _ := b.Fields["props"].(map[string]any)
+		if props != nil && props["content"] == content {
+			return struct{ ID string }{ID: b.ID}
+		}
+	}
+	t.Fatalf("block with content %q not found", content)
+	return struct{ ID string }{}
 }
 
 func TestDesignPageRendersEveryComponent(t *testing.T) {
