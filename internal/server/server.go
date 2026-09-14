@@ -50,11 +50,7 @@ func (s *Server) routes() {
 	m.HandleFunc("GET /design/sameway.js", s.script)
 
 	m.HandleFunc("GET /t/{type}", s.listPage)
-	m.HandleFunc("GET /t/{type}/new", s.newPage)
-	m.HandleFunc("POST /t/{type}", s.createForm)
 	m.HandleFunc("GET /t/{type}/{id}", s.detailPage)
-	m.HandleFunc("GET /t/{type}/{id}/edit", s.editPage)
-	m.HandleFunc("POST /t/{type}/{id}", s.updateForm)
 	m.HandleFunc("GET /t/{type}/{id}/confirm-delete", s.confirmDeletePage)
 	m.HandleFunc("POST /t/{type}/{id}/delete", s.deleteForm)
 
@@ -66,6 +62,9 @@ func (s *Server) routes() {
 	m.HandleFunc("PUT /api/{type}/{id}", s.apiUpdate)
 	m.HandleFunc("PATCH /api/{type}/{id}", s.apiUpdate)
 	m.HandleFunc("DELETE /api/{type}/{id}", s.apiDelete)
+
+	// Catch-all: any unmatched route gets a proper 404 page.
+	m.HandleFunc("/{rest...}", s.notFound)
 }
 
 func (s *Server) stylesheet(w http.ResponseWriter, r *http.Request) {
@@ -150,6 +149,16 @@ func (s *Server) component(name string, props map[string]any) template.HTML {
 }
 
 // fail reports an unexpected error as a page.
+// notFound renders a 404 page with one h1.
+func (s *Server) notFound(w http.ResponseWriter, r *http.Request) {
+	body := s.component("alert", map[string]any{
+		"kind":    "danger",
+		"title":   "Page not found",
+		"message": fmt.Sprintf("No content at %s.", template.HTMLEscapeString(r.URL.Path)),
+	})
+	s.page(w, r, "Not found", body, pageOptions{Status: http.StatusNotFound})
+}
+
 func (s *Server) fail(w http.ResponseWriter, err error) {
 	log.Printf("error: %v", err)
 	status := http.StatusInternalServerError
