@@ -2,13 +2,11 @@ package server
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -27,7 +25,7 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	}
 	var b strings.Builder
 	b.WriteString(`<div class="sw-cluster">`)
-	b.WriteString(string(s.component("link", map[string]any{"href": "/t/" + t.Name + "/new", "label": "New " + t.Name})))
+	b.WriteString(string(s.component("link", map[string]any{"href": "/api/" + t.Name, "label": "Create via API"})))
 	b.WriteString(`</div>`)
 	if len(recs) == 0 {
 		fmt.Fprintf(&b, `<p>No %s yet.</p>`, template.HTMLEscapeString(plural(t.Name)))
@@ -42,7 +40,7 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	s.page(w, r, capitalize(plural(t.Name)), template.HTML(b.String()), pageOptions{JSONURL: "/api/" + t.Name})
 }
 
-// detailPage shows one record as a definition list with edit and delete.
+// detailPage shows one record as a definition list with delete only.
 func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	t, ok := s.app.Types.Get(r.PathValue("type"))
 	if !ok {
@@ -61,80 +59,12 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Fprintf(&b, "<dt>Created</dt><dd>%s</dd><dt>Updated</dt><dd>%s</dd></dl>", rec.CreatedAt.Local().Format("2006-01-02 15:04"), rec.UpdatedAt.Local().Format("2006-01-02 15:04"))
 	b.WriteString(`<div class="sw-cluster" style="margin-top:var(--sw-space-6)">`)
-	b.WriteString(string(s.component("link", map[string]any{"href": "/t/" + t.Name + "/" + rec.ID + "/edit", "label": "Edit " + t.Name})))
 	b.WriteString(string(s.component("link", map[string]any{
 		"href":  "/t/" + t.Name + "/" + rec.ID + "/confirm-delete",
 		"label": "Delete " + t.Name,
 	})))
 	b.WriteString(`</div>`)
 	s.page(w, r, titleOf(t, rec), template.HTML(b.String()), pageOptions{JSONURL: "/api/" + t.Name + "/" + rec.ID})
-}
-
-func (s *Server) newPage(w http.ResponseWriter, r *http.Request) {
-	t, ok := s.app.Types.Get(r.PathValue("type"))
-	if !ok {
-		http.NotFound(w, r)
-		return
-	}
-	s.page(w, r, "New "+t.Name, s.form(t, "/t/"+t.Name, nil, nil), pageOptions{})
-}
-
-func (s *Server) editPage(w http.ResponseWriter, r *http.Request) {
-	t, ok := s.app.Types.Get(r.PathValue("type"))
-	if !ok {
-		http.NotFound(w, r)
-		return
-	}
-	rec, err := s.app.Store.Get(t.Name, r.PathValue("id"))
-	if err != nil {
-		s.fail(w, err)
-		return
-	}
-	s.page(w, r, "Edit "+titleOf(t, rec), s.form(t, "/t/"+t.Name+"/"+rec.ID, rec.Fields, nil), pageOptions{})
-}
-
-func (s *Server) createForm(w http.ResponseWriter, r *http.Request) {
-	t, ok := s.app.Types.Get(r.PathValue("type"))
-	if !ok {
-		http.NotFound(w, r)
-		return
-	}
-	values := formValues(t, r)
-	rec, err := s.app.Store.Create(t.Name, values)
-	if err != nil {
-		s.formError(w, r, t, "/t/"+t.Name, "New "+t.Name, values, err)
-		return
-	}
-	http.Redirect(w, r, "/t/"+t.Name+"/"+rec.ID, http.StatusSeeOther)
-}
-
-func (s *Server) updateForm(w http.ResponseWriter, r *http.Request) {
-	t, ok := s.app.Types.Get(r.PathValue("type"))
-	if !ok {
-		http.NotFound(w, r)
-		return
-	}
-	id := r.PathValue("id")
-	values := formValues(t, r)
-	if t.Name == chat.BlockType {
-		// A person editing a canvas block through the form: attribute it.
-		if _, ok := t.Field("actor"); ok {
-			values["actor"] = "human"
-		}
-	}
-	rec, err := s.app.Store.Update(t.Name, id, values)
-	if err != nil {
-		s.formError(w, r, t, "/t/"+t.Name+"/"+id, "Edit "+t.Name, values, err)
-		return
-	}
-	if t.Name == chat.BlockType {
-		name, _ := rec.Fields["component"].(string)
-		props, _ := rec.Fields["props"].(map[string]any)
-		chat.Record(s.app.Store, "human", chat.Change{Action: "updated", Component: name, ID: id, Detail: chat.Summarise(name, props)})
-		http.Redirect(w, r, "/#canvas", http.StatusSeeOther)
-		return
-	}
-	http.Redirect(w, r, "/t/"+t.Name+"/"+id, http.StatusSeeOther)
 }
 
 func (s *Server) deleteForm(w http.ResponseWriter, r *http.Request) {
@@ -148,94 +78,6 @@ func (s *Server) deleteForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.Redirect(w, r, "/t/"+t.Name, http.StatusSeeOther)
-}
-
-// formError re-renders the form with the submitted values and per-field errors.
-func (s *Server) formError(w http.ResponseWriter, r *http.Request, t *schema.Type, action, title string, values map[string]any, err error) {
-	var ve *schema.ValidationError
-	if !errors.As(err, &ve) {
-		s.fail(w, err)
-		return
-	}
-	s.page(w, r, title, s.form(t, action, values, ve.Problems), pageOptions{Status: http.StatusUnprocessableEntity})
-}
-
-// formValues reads every field of a type from the posted form. Absent
-// checkboxes become false so an edit can clear them.
-func formValues(t *schema.Type, r *http.Request) map[string]any {
-	r.ParseForm()
-	out := map[string]any{}
-	for _, f := range t.Fields {
-		if f.Type == "bool" {
-			out[f.Name] = r.PostForm.Get(f.Name) != ""
-			continue
-		}
-		if v := strings.TrimSpace(r.PostForm.Get(f.Name)); v != "" {
-			out[f.Name] = v
-		}
-	}
-	return out
-}
-
-// form builds a form from the type's fields using the design system controls.
-func (s *Server) form(t *schema.Type, action string, values map[string]any, problems map[string]string) template.HTML {
-	var b strings.Builder
-	fmt.Fprintf(&b, `<form method="post" action="%s" class="sw-stack">`, template.HTMLEscapeString(action))
-	if len(problems) > 0 {
-		b.WriteString(string(s.component("alert", map[string]any{"kind": "danger", "title": "Please fix the fields below", "message": fmt.Sprintf("%d field(s) need attention.", len(problems))})))
-	}
-	for _, f := range t.Fields {
-		b.WriteString(string(s.control(f, values[f.Name], problems[f.Name])))
-	}
-	b.WriteString(`<div class="sw-cluster">` + string(s.component("button", map[string]any{"label": "Save", "type": "submit"})) + `</div></form>`)
-	return template.HTML(b.String())
-}
-
-func (s *Server) control(f schema.Field, value any, problem string) template.HTML {
-	name := f.Label
-	if name == "" {
-		name = label(f.Name)
-	}
-	base := map[string]any{"label": name, "name": f.Name, "required": f.Required}
-	if f.Description != "" {
-		base["hint"] = f.Description
-	}
-	if problem != "" {
-		base["error"] = problem
-	}
-	switch f.Type {
-	case "bool":
-		return s.component("checkbox", map[string]any{"label": name, "name": f.Name, "checked": value == true, "hint": f.Description})
-	case "enum":
-		base["options"] = f.Values
-		base["value"] = display(f, value)
-		return s.component("select", base)
-	case "text", "markdown":
-		base["value"] = display(f, value)
-		base["rows"] = 8
-		return s.component("textarea", base)
-	case "json":
-		base["value"] = display(f, value)
-		base["rows"] = 6
-		base["hint"] = strings.TrimSpace(f.Description + " Enter JSON.")
-		return s.component("textarea", base)
-	case "list":
-		base["value"] = display(f, value)
-		if f.Multiline {
-			base["rows"] = 5
-			base["hint"] = strings.TrimSpace(f.Description + " One per line.")
-			return s.component("textarea", base)
-		}
-		base["hint"] = strings.TrimSpace(f.Description + " Separate items with commas.")
-		return s.component("text-field", base)
-	case "int", "float":
-		base["value"] = display(f, value)
-		base["type"] = "number"
-		return s.component("text-field", base)
-	default:
-		base["value"] = display(f, value)
-		return s.component("text-field", base)
-	}
 }
 
 // display renders a stored value as the text a form or page shows.
