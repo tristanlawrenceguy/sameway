@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 
+	"golang.org/x/net/html"
+
 	"github.com/tristanlawrenceguy/sameway/examples"
 	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
@@ -110,4 +112,26 @@ func truncate(s string) string {
 		return s[:300] + "…"
 	}
 	return s
+}
+
+// assertAllComponentsKnown checks that every element with a data-component
+// attribute in the document is one of the known components from the registry.
+func assertAllComponentsKnown(t *testing.T, doc *htmltest.Doc) {
+	t.Helper()
+	known := map[string]bool{
+		"alert": true, "badge": true, "blockquote": true, "button": true,
+		"calendar": true, "card": true, "chat": true, "checkbox": true,
+		"context": true, "datepicker": true, "disclosure": true, "event": true,
+		"heading": true, "image": true, "link": true, "list": true,
+		"message": true, "nav": true, "paragraph": true, "pill": true,
+		"progress": true, "proposal": true, "select": true, "status": true,
+		"table": true, "textarea": true, "text": true, "text-field": true,
+	}
+	doc.Walk(func(n *html.Node) {
+		for _, a := range n.Attr {
+			if a.Key == "data-component" && a.Val != "" && !known[a.Val] {
+				t.Errorf("unknown component %q on page", a.Val)
+			}
+		}
+	})
 }

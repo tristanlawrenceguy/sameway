@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -99,7 +100,18 @@ func (s *Server) apiUpdate(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	rec, err := s.app.Store.Update(r.PathValue("type"), r.PathValue("id"), fields)
+	tname := r.PathValue("type")
+	id := r.PathValue("id")
+	if tname == "block" {
+		fields["actor"] = "human"
+		rec2, err := s.app.Store.Get(tname, id)
+		if err == nil {
+			name, _ := rec2.Fields["component"].(string)
+			props, _ := rec2.Fields["props"].(map[string]any)
+			chat.Record(s.app.Store, "human", chat.Change{Action: "updated", Component: name, ID: id, Detail: chat.Summarise(name, props)})
+		}
+	}
+	rec, err := s.app.Store.Update(tname, id, fields)
 	if err != nil {
 		writeError(w, err)
 		return
