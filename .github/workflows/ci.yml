@@ -34,7 +34,7 @@ jobs:
           node-version: 22
       - name: Install runner
         working-directory: tools/a11y-runner
-        run: npm install
+        run: npm ci
       - name: axe-core over every component example
         working-directory: tools/a11y-runner
         run: npm run test:axe
@@ -63,7 +63,7 @@ jobs:
           curl -sf http://127.0.0.1:8080/api/describe > /dev/null || (cat /tmp/serve.log; exit 1)
       - name: Install runner
         working-directory: tools/a11y-runner
-        run: npm install
+        run: npm ci
       - name: Drive the pages as a person and as an agent
         working-directory: tools/a11y-runner
         run: npm run test:pages
