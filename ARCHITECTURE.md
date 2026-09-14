@@ -99,7 +99,7 @@ From one schema file the system generates:
 - CLI: `sameway note create|get|list|update|delete`, all with `--json`
 - MCP tools: `note_create`, `note_get`, `note_list`, `note_update`, `note_delete`
 - JSON API: `/api/note`, `/api/note/{id}`
-- HTML views: `/note`, `/note/{id}`, `/note/new`, built from the named components
+- HTML views: `/note`, `/note/{id}`, built from the named components
 - `describe` output so an agent can learn the type without reading rows
 
 Nothing is hand-written per surface. Adding a surface means adding a generator.
