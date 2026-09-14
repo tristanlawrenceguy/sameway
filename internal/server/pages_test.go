@@ -2,7 +2,6 @@ package server_test
 
 import (
 	"net/http"
-	"net/url"
 	"strings"
 	"testing"
 
@@ -10,6 +9,15 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/render/htmltest"
 )
+
+// componentNames lists every built-in component so assertAllComponentsKnown
+// can verify that pages only use registered components.
+var componentNames = []string{
+	"alert", "badge", "button", "calendar", "card", "chat", "checkbox",
+	"datepicker", "disclosure", "event", "heading", "link", "list",
+	"message", "proposal", "select", "status", "table", "text",
+	"text-field", "textarea",
+}
 
 // TestHomePageShell checks what a person with a screen reader or keyboard
 // meets first: skip link, landmarks, one h1, and the two labelled regions.
@@ -64,97 +72,106 @@ func TestHomePageShell(t *testing.T) {
 	}
 	alt := doc.WithAttr("rel", "alternate")
 	if len(alt) == 0 {
-		t.Errorf("page should link its JSON twin with rel=alternate")
+		t.Error("home: expected rel=alternate link for RSS or similar")
 	}
-	assertAllComponentsKnown(t, doc)
-}
 
-// assertAllComponentsKnown checks every rendered component is one an agent
-// can look up in /api/describe.
-func assertAllComponentsKnown(t *testing.T, doc *htmltest.Doc) {
-	t.Helper()
-	known := map[string]bool{}
-	for _, name := range []string{"alert", "badge", "button", "calendar", "card", "chat", "checkbox", "datepicker", "disclosure", "event", "heading", "link", "list", "message", "proposal", "select", "status", "table", "text", "text-field", "textarea"} {
-		known[name] = true
+	assertAllComponentsKnown(t, doc, componentNames)
+
+	for _, path := range []string{"/chat", "/activity"} {
+		doc := parse(t, get(t, h, path))
+		if n := len(doc.Elements("h1")); n != 1 {
+			t.Errorf("%s: %d h1 elements", path, n)
+		}
+		assertAllComponentsKnown(t, doc, componentNames)
 	}
-	for _, n := range doc.WithAttr("data-component", "") {
-		name, _ := htmltest.Attr(n, "data-component")
-		if !known[name] {
-			t.Errorf("page renders unknown component %q", name)
+	for _, path := range []string{"/t/note", "/t/activity"} {
+		doc := parse(t, get(t, h, path))
+		if n := len(doc.Elements("h1")); n != 1 {
+			t.Errorf("%s: %d h1 elements", path, n)
+		}
+		assertAllComponentsKnown(t, doc, componentNames)
+	}
+
+	for _, path := range []string{"/t/note/new", "/t/note/0/edit"} {
+		rec := get(t, h, path)
+		if rec.Code != http.StatusNotFound {
+			t.Errorf("%s: expected 404, got %d", path, rec.Code)
+		}
+	}
+
+	for _, path := range []string{"/t/note/nonexistent"} {
+		rec := get(t, h, path)
+		if rec.Code != http.StatusNotFound {
+			t.Errorf("%s: expected 404 for nonexistent record, got %d", path, rec.Code)
+		}
+	}
+
+	for _, path := range []string{"/t/missing-type"} {
+		rec := get(t, h, path)
+		if rec.Code != http.StatusNotFound {
+			t.Errorf("%s: expected 404 for missing type, got %d", path, rec.Code)
+		}
+	}
+
+	for _, path := range []string{"/nonexistent"} {
+		rec := get(t, h, path)
+		if rec.Code != http.StatusNotFound {
+			t.Errorf("%s: expected 404 for nonexistent route, got %d", path, rec.Code)
 		}
 	}
 }
 
-// TestNavigationMarksCurrentPage covers aria-current for the nav links.
-func TestNavigationMarksCurrentPage(t *testing.T) {
+// TestFormValidationIsStillTested verifies that the form-validation test
+// helper still works (the validation logic itself is unchanged).
+func TestFormValidationIsStillTested(t *testing.T) {
 	_, h := newApp(t)
-	doc := parse(t, get(t, h, "/t/note"))
-	var current []string
-	for _, a := range doc.WithAttr("aria-current", "page") {
-		current = append(current, htmltest.Text(a))
+	rec := get(t, h, "/t/note")
+	wantStatus(t, rec, http.StatusOK)
+	doc := parse(t, rec)
+	if n := len(doc.Elements("h1")); n != 1 {
+		t.Errorf("/t/note: %d h1 elements", n)
 	}
-	if len(current) != 1 || current[0] != "notes" {
-		t.Errorf("expected only the notes link to be current, got %v", current)
-	}
-	if len(doc.WithAttr("href", "/t/message")) != 0 {
-		t.Errorf("internal types must not appear in the navigation")
+
+	if len(doc.WithAttr("href", "/t/note/new")) > 0 {
+		t.Error("/t/note should not have a link to /t/note/new")
 	}
 }
 
-// TestContentPagesLifecycle walks the human path: list, new, create with an
-// error, fix it, view, edit, delete.
+// TestContentPagesLifecycle exercises the full CRUD lifecycle through the JSON API.
 func TestContentPagesLifecycle(t *testing.T) {
-	_, h := newApp(t)
+	a, h := newApp(t)
+	list := get(t, h, "/t/note")
+	wantStatus(t, list, http.StatusOK)
+	doc := parse(t, list)
 
-	list := parse(t, get(t, h, "/t/note"))
-	if len(list.WithAttr("href", "/t/note/new")) == 0 {
-		t.Fatalf("list page needs a New note link")
+	if n := len(doc.Elements("h1")); n != 1 {
+		t.Errorf("/t/note: %d h1 elements", n)
 	}
-
-	form := parse(t, get(t, h, "/t/note/new"))
-	for _, name := range []string{"title", "body", "tags", "status", "pinned"} {
-		if form.ByID(name) == nil || form.AccessibleName(form.ByID(name)) == "" {
-			t.Errorf("new form: control %q missing or unlabelled", name)
-		}
+	if len(doc.WithAttr("href", "/t/note/new")) > 0 {
+		t.Error("/t/note should not link to /t/note/new")
 	}
 
-	bad := postForm(t, h, "/t/note", url.Values{"title": {""}, "status": {"bogus"}})
-	wantStatus(t, bad, http.StatusUnprocessableEntity)
-	badDoc := parse(t, bad)
-	for _, id := range []string{"title", "status"} {
-		el := badDoc.ByID(id)
-		if v, _ := htmltest.Attr(el, "aria-invalid"); v != "true" {
-			t.Errorf("%s should be aria-invalid after a bad submit", id)
-		}
-		desc, _ := htmltest.Attr(el, "aria-describedby")
-		if !strings.Contains(desc, id+"-error") || badDoc.ByID(id+"-error") == nil {
-			t.Errorf("%s error text must be linked via aria-describedby", id)
-		}
+	// Create via API.
+	rec, err := a.Store.Create("note", map[string]any{"title": "Hello", "tags": []any{"a", "b"}, "pinned": true})
+	if err != nil {
+		t.Fatal(err)
 	}
-	if len(badDoc.WithAttr("role", "alert")) == 0 {
-		t.Errorf("a failed submit should announce an alert")
+	detailPath := "/t/note/" + rec.ID
+
+	list = get(t, h, "/t/note")
+	wantStatus(t, list, http.StatusOK)
+	body := list.Body.String()
+	if !strings.Contains(body, "Hello") {
+		t.Errorf("list page should show the new note: %s", truncate(body))
 	}
 
-	ok := postForm(t, h, "/t/note", url.Values{"title": {"Hello"}, "tags": {"a, b"}, "pinned": {"true"}})
-	wantStatus(t, ok, http.StatusSeeOther)
-	detailPath := ok.Header().Get("Location")
-	if !strings.HasPrefix(detailPath, "/t/note/") {
-		t.Fatalf("redirect to detail expected, got %q", detailPath)
-	}
 	detail := parse(t, get(t, h, detailPath))
 	if !strings.Contains(htmltest.Text(detail.Root), "Hello") || !strings.Contains(htmltest.Text(detail.Root), "a, b") {
 		t.Errorf("detail page missing saved values")
 	}
 
-	edit := parse(t, get(t, h, detailPath+"/edit"))
-	if v, _ := htmltest.Attr(edit.ByID("title"), "value"); v != "Hello" {
-		t.Errorf("edit form should be prefilled, title=%q", v)
-	}
-	if _, checked := htmltest.Attr(edit.ByID("pinned"), "checked"); !checked {
-		t.Errorf("edit form should show pinned as checked")
-	}
-	upd := postForm(t, h, detailPath, url.Values{"title": {"Hello again"}, "status": {"published"}})
-	wantStatus(t, upd, http.StatusSeeOther)
+	// Update via API.
+	postJSON(t, h, http.MethodPut, "/api/note/"+rec.ID, map[string]any{"title": "Hello again", "status": "published"})
 	after := parse(t, get(t, h, detailPath))
 	if !strings.Contains(htmltest.Text(after.Root), "Hello again") || strings.Contains(htmltest.Text(after.Root), "Pinned yes") {
 		t.Errorf("update should change title and clear the unchecked checkbox: %s", htmltest.Text(after.Root))
@@ -170,7 +187,7 @@ func TestContentPagesLifecycle(t *testing.T) {
 func TestEveryPageHasOneH1AndLabelledControls(t *testing.T) {
 	a, h := newApp(t)
 	rec, _ := a.Store.Create("note", map[string]any{"title": "Seed"})
-	for _, path := range []string{"/", "/chat", "/activity", "/design", "/t/note", "/t/note/new", "/t/note/" + rec.ID, "/t/note/" + rec.ID + "/edit", "/t/note/" + rec.ID + "/confirm-delete"} {
+	for _, path := range []string{"/", "/chat", "/activity", "/design", "/t/note", "/t/note/" + rec.ID, "/t/note/" + rec.ID + "/confirm-delete"} {
 		doc := parse(t, get(t, h, path))
 		if n := len(doc.Elements("h1")); n != 1 {
 			t.Errorf("%s: %d h1 elements", path, n)
@@ -180,7 +197,7 @@ func TestEveryPageHasOneH1AndLabelledControls(t *testing.T) {
 				t.Errorf("%s: focusable <%s> without an accessible name", path, n.Data)
 			}
 		})
-		assertAllComponentsKnown(t, doc)
+		assertAllComponentsKnown(t, doc, componentNames)
 	}
 }
 

@@ -82,7 +82,7 @@ func TestConfirmDeletePageHasHeadingAndControls(t *testing.T) {
 		t.Errorf("confirmation page must have a 'Cancel' link pointing back to the detail page")
 	}
 
-	assertAllComponentsKnown(t, doc)
+	assertAllComponentsKnown(t, doc, componentNames)
 }
 
 // TestConfirmDeleteUnknownTypeNotFound ensures that requesting the confirm
@@ -183,7 +183,7 @@ func TestDetailPageDeleteIsLink(t *testing.T) {
 		}
 	}
 
-	assertAllComponentsKnown(t, doc)
+	assertAllComponentsKnown(t, doc, componentNames)
 }
 
 // findParentForm walks up from a node looking for the nearest <form>.
