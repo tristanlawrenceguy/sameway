@@ -50,10 +50,8 @@ func (s *Server) routes() {
 	m.HandleFunc("GET /design/sameway.js", s.script)
 
 	m.HandleFunc("GET /t/{type}", s.listPage)
-	m.HandleFunc("GET /t/{type}/new", s.newPage)
 	m.HandleFunc("POST /t/{type}", s.createForm)
 	m.HandleFunc("GET /t/{type}/{id}", s.detailPage)
-	m.HandleFunc("GET /t/{type}/{id}/edit", s.editPage)
 	m.HandleFunc("POST /t/{type}/{id}", s.updateForm)
 	m.HandleFunc("GET /t/{type}/{id}/confirm-delete", s.confirmDeletePage)
 	m.HandleFunc("POST /t/{type}/{id}/delete", s.deleteForm)
