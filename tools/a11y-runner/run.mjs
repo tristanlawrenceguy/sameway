@@ -14,6 +14,59 @@ import { shell, AA_TAGS, AAA_TAGS } from "./shell.mjs";
 const root = resolve(process.cwd(), "..", "..");
 const componentsDir = join(root, "design", "components");
 
+// Field names for per-violation diagnostic JSON output.
+const DIAG_SELECTOR = "selector";
+const DIAG_FG = "fg";
+const DIAG_BG = "bg";
+const DIAG_CONTRAST = "contrast";
+
+// diagnosticNodes extracts per-node diagnostics from axe-core violation nodes.
+// Returns [{ selector, fg, bg, contrast }] for each node so agents can see
+// exactly which element failed and why (backlog 0197).
+async function diagnosticNodes(page, nodes) {
+  return Promise.all(
+    nodes.map(async (node) => {
+      const sel = node.target.length > 0 ? node.target[0] : "?";
+      const diag = await page.evaluate((s) => {
+        const el = document.querySelector(s);
+        if (!el) return null;
+        const cs = getComputedStyle(el);
+        const fg = cs.color;
+        const bg = cs.backgroundColor;
+        // WCAG relative luminance + contrast ratio
+        function hexToRgb(h) {
+          const m = h.match(/\d+/g);
+          if (!m || m.length < 3) return null;
+          return [parseInt(m[0]), parseInt(m[1]), parseInt(m[2])];
+        }
+        function srgb(c) {
+          const v = c / 255;
+          return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+        }
+        function lum(rgb) {
+          if (!rgb) return 0;
+          return 0.2126 * srgb(rgb[0]) + 0.7152 * srgb(rgb[1]) + 0.0722 * srgb(rgb[2]);
+        }
+        const fgRgb = hexToRgb(fg);
+        const bgRgb = hexToRgb(bg);
+        if (!fgRgb || !bgRgb) return { fg: "?", bg: "?", contrast: 0 };
+        const l1 = lum(fgRgb), l2 = lum(bgRgb);
+        const ratio = (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+        return { fg, bg, contrast: Math.round(ratio * 100) / 100 };
+      }, sel);
+      const fgHex = diag ? diag.fg : "?";
+      const bgHex = diag ? diag.bg : "?";
+      const ratio = diag && diag.contrast != null ? diag.contrast : 0;
+      const obj = {};
+      obj[DIAG_SELECTOR] = sel;
+      obj[DIAG_FG] = fgHex;
+      obj[DIAG_BG] = bgHex;
+      obj[DIAG_CONTRAST] = ratio;
+      return obj;
+    })
+  );
+}
+
 const browser = await chromium.launch();
 const ctx = await browser.newContext();
 const tab = await ctx.newPage();
@@ -36,6 +89,10 @@ for (const name of readdirSync(componentsDir).sort()) {
     const aa = await new AxeBuilder({ page: tab }).withTags(AA_TAGS).analyze();
     for (const v of aa.violations) {
       failures++;
+      const diags = await diagnosticNodes(tab, v.nodes);
+      for (const d of diags) {
+        console.log(`  ${JSON.stringify(d)}`);
+      }
       console.log(`FAIL ${name}/${file}: ${v.id} - ${v.help} (${v.nodes.length} node(s))`);
     }
     const aaa = await new AxeBuilder({ page: tab }).withTags(AAA_TAGS).analyze();
@@ -45,6 +102,10 @@ for (const name of readdirSync(componentsDir).sort()) {
         continue;
       }
       warnings++;
+      const diags = await diagnosticNodes(tab, v.nodes);
+      for (const d of diags) {
+        console.log(`  ${JSON.stringify(d)}`);
+      }
       console.log(`WARN ${name}/${file}: ${v.id} - ${v.help} (AAA)`);
     }
   }
