@@ -3,6 +3,7 @@
   display: flex; align-items: center; gap: var(--sw-space-2);
   min-height: var(--sw-size-target); padding: 0 var(--sw-space-2);
   cursor: pointer; font-weight: 600; color: var(--sw-color-fg-muted);
+  background: var(--sw-color-bg);
   border-radius: var(--sw-radius-md); list-style: none;
 }
 .sw-disclosure__summary::-webkit-details-marker { display: none; }
