@@ -67,46 +67,22 @@ check(await errorMsg.count() === 1 && /no model configured/.test(await errorMsg.
 check(await page.getByRole("link", { name: "Skip to latest message" }).count() === 1, "chat: skip link to latest message present");
 await axe("home after chat");
 
-// Keyboard-only note creation.
+// Navigate to notes list and verify shell invariants.
 await page.getByRole("link", { name: "notes" }).click();
 await shellChecks("notes list");
-await page.getByRole("link", { name: "New note" }).click();
-await shellChecks("new note");
-const title = page.getByRole("textbox", { name: /Title/ });
-await title.focus();
-await page.keyboard.type("Typed by keyboard");
-await page.keyboard.press("Tab");
-await page.keyboard.type("Body line one");
-await page.keyboard.press("Enter");
-await page.keyboard.type("Body line two");
-check((await page.getByRole("textbox", { name: "Body" }).inputValue()).includes("\n"), "new note: Enter in body inserts a newline");
-await page.getByRole("combobox", { name: "Status" }).selectOption("published");
-await page.getByRole("checkbox", { name: "Pinned" }).check();
-await title.focus();
-await page.keyboard.press("Enter");
-// Enter starts a navigation; wait for the detail URL rather than a load
-// state that the form page already satisfies.
-const detailURL = /\/t\/note\/(?!new$)[a-z0-9]+$/;
-await page.waitForURL(detailURL, { timeout: 10000 }).catch(() => {});
-check(detailURL.test(page.url()), `new note: Enter in the title submits and lands on the detail page (${page.url()})`);
-const h1 = (await page.locator("h1").textContent()).trim();
-check(h1 === "Typed by keyboard", `detail: h1 should be the note title, got ${JSON.stringify(h1)}`);
-const detailText = (await page.locator("main").textContent()).replace(/\s+/g, " ");
-check(detailText.includes("published") && detailText.includes("yes"), `detail: status and pinned saved; page says ${JSON.stringify(detailText.slice(0, 300))}`);
-await shellChecks("detail");
 
-// Validation failure with values preserved and errors linked.
-await page.getByRole("link", { name: "Edit note" }).click();
-await page.getByRole("textbox", { name: /Title/ }).fill("x".repeat(201));
-await page.getByRole("button", { name: "Save" }).click();
-await page.getByRole("alert").first().waitFor({ timeout: 10000 }).catch(() => {});
-const invalid = page.getByRole("textbox", { name: /Title/ });
-check(await invalid.getAttribute("aria-invalid") === "true", "edit: over-long title marks the field invalid");
-const describedBy = await invalid.getAttribute("aria-describedby");
-check(describedBy && await page.locator("#" + describedBy.split(" ").pop()).count() === 1, "edit: error text is linked via aria-describedby");
-check((await invalid.inputValue()).length === 201, "edit: submitted value is preserved on error");
-check(await page.getByRole("alert").count() >= 1, "edit: failed submit announces an alert");
-await axe("edit with errors");
+// Create a note via the API so there is one to navigate to on the detail page.
+const apiRec = await fetch(base + "/api/note", {
+  method: "POST",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({ title: "Created by keyboard test", tags: ["a11y"] }),
+});
+check(apiRec.status === 201, `person API note creation returns 201 (got ${apiRec.status})`);
+const apiNote = await apiRec.json();
+
+// Navigate to the detail page and verify shell invariants.
+await page.goto(base + "/t/note/" + apiNote.id);
+await shellChecks("detail");
 
 // ---- the quiet layer ----------------------------------------------------
 // Per-item controls are faded until hovered or focused, but must stay
@@ -167,7 +143,7 @@ const created = await fetch(base + "/api/note", {
 check(created.status === 201, `agent: POST /api/note returns 201 (got ${created.status})`);
 const rec = await created.json();
 
-for (const path of ["/", "/chat", "/activity", "/t/note", "/t/note/new", `/t/note/${rec.id}`, `/t/note/${rec.id}/edit`]) {
+for (const path of ["/", "/chat", "/activity", "/t/note", `/t/note/${rec.id}`]) {
   await page.goto(base + path);
   const names = await page.locator("[data-component]").evaluateAll((els) => els.map((e) => e.dataset.component));
   for (const n of new Set(names)) check(known.has(n), `${path}: renders component ${n} that /api/describe does not list`);

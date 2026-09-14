@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 
+	"golang.org/x/net/html"
+
 	"github.com/tristanlawrenceguy/sameway/examples"
 	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
@@ -110,4 +112,19 @@ func truncate(s string) string {
 		return s[:300] + "…"
 	}
 	return s
+}
+
+// assertAllComponentsKnown walks the parsed HTML and fails if any element uses a
+// data-component value that is not registered in the app's component registry.
+func assertAllComponentsKnown(t *testing.T, doc *htmltest.Doc, names []string) {
+	t.Helper()
+	known := make(map[string]bool, len(names))
+	for _, n := range names {
+		known[n] = true
+	}
+	doc.Walk(func(n *html.Node) {
+		if c, ok := htmltest.Attr(n, "data-component"); ok && !known[c] {
+			t.Errorf("%s: data-component=%q is not a registered component (known: %v)", n.Data, c, names)
+		}
+	})
 }

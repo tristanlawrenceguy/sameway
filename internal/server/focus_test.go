@@ -70,7 +70,7 @@ func TestBlockCanBePoppedOut(t *testing.T) {
 	if len(doc.WithAttr("href", "/")) == 0 {
 		t.Errorf("the expanded view needs a way back to the canvas")
 	}
-	assertAllComponentsKnown(t, doc)
+	assertAllComponentsKnown(t, doc, componentNames)
 }
 
 // TestExpandingAsksAComponentForItsFullestForm: the block was added at a
