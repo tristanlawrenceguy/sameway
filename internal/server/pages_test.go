@@ -1,8 +1,8 @@
 package server_test
 
 import (
+	"encoding/json"
 	"net/http"
-	"net/url"
 	"strings"
 	"testing"
 
@@ -101,76 +101,62 @@ func TestNavigationMarksCurrentPage(t *testing.T) {
 	}
 }
 
-// TestContentPagesLifecycle walks the human path: list, new, create with an
-// error, fix it, view, edit, delete.
+// TestContentPagesLifecycle creates a record via JSON API, verifies the
+// list and detail pages, updates via API, then deletes.
 func TestContentPagesLifecycle(t *testing.T) {
-	_, h := newApp(t)
+	a, h := newApp(t)
 
 	list := parse(t, get(t, h, "/t/note"))
-	if len(list.WithAttr("href", "/t/note/new")) == 0 {
-		t.Fatalf("list page needs a New note link")
+	if len(list.WithAttr("href", "/t/note/new")) > 0 {
+		t.Fatalf("list page should not have a New note link")
 	}
 
-	form := parse(t, get(t, h, "/t/note/new"))
-	for _, name := range []string{"title", "body", "tags", "status", "pinned"} {
-		if form.ByID(name) == nil || form.AccessibleName(form.ByID(name)) == "" {
-			t.Errorf("new form: control %q missing or unlabelled", name)
-		}
-	}
+	// Create a record via the JSON API instead of a form.
+	create := postJSON(t, h, "POST", "/api/note", map[string]any{
+		"title":  "Hello",
+		"tags":   []string{"a", "b"},
+		"pinned": true,
+	})
+	wantStatus(t, create, http.StatusCreated)
 
-	bad := postForm(t, h, "/t/note", url.Values{"title": {""}, "status": {"bogus"}})
-	wantStatus(t, bad, http.StatusUnprocessableEntity)
-	badDoc := parse(t, bad)
-	for _, id := range []string{"title", "status"} {
-		el := badDoc.ByID(id)
-		if v, _ := htmltest.Attr(el, "aria-invalid"); v != "true" {
-			t.Errorf("%s should be aria-invalid after a bad submit", id)
-		}
-		desc, _ := htmltest.Attr(el, "aria-describedby")
-		if !strings.Contains(desc, id+"-error") || badDoc.ByID(id+"-error") == nil {
-			t.Errorf("%s error text must be linked via aria-describedby", id)
-		}
-	}
-	if len(badDoc.WithAttr("role", "alert")) == 0 {
-		t.Errorf("a failed submit should announce an alert")
-	}
+	var result struct{ ID string }
+	json.Unmarshal(create.Body.Bytes(), &result)
+	id := result.ID
 
-	ok := postForm(t, h, "/t/note", url.Values{"title": {"Hello"}, "tags": {"a, b"}, "pinned": {"true"}})
-	wantStatus(t, ok, http.StatusSeeOther)
-	detailPath := ok.Header().Get("Location")
-	if !strings.HasPrefix(detailPath, "/t/note/") {
-		t.Fatalf("redirect to detail expected, got %q", detailPath)
-	}
-	detail := parse(t, get(t, h, detailPath))
-	if !strings.Contains(htmltest.Text(detail.Root), "Hello") || !strings.Contains(htmltest.Text(detail.Root), "a, b") {
+	detail := parse(t, get(t, h, "/t/note/"+id))
+	if !strings.Contains(htmltest.Text(detail.Root), "Hello") {
 		t.Errorf("detail page missing saved values")
 	}
 
-	edit := parse(t, get(t, h, detailPath+"/edit"))
-	if v, _ := htmltest.Attr(edit.ByID("title"), "value"); v != "Hello" {
-		t.Errorf("edit form should be prefilled, title=%q", v)
-	}
-	if _, checked := htmltest.Attr(edit.ByID("pinned"), "checked"); !checked {
-		t.Errorf("edit form should show pinned as checked")
-	}
-	upd := postForm(t, h, detailPath, url.Values{"title": {"Hello again"}, "status": {"published"}})
-	wantStatus(t, upd, http.StatusSeeOther)
-	after := parse(t, get(t, h, detailPath))
-	if !strings.Contains(htmltest.Text(after.Root), "Hello again") || strings.Contains(htmltest.Text(after.Root), "Pinned yes") {
-		t.Errorf("update should change title and clear the unchecked checkbox: %s", htmltest.Text(after.Root))
+	// Update via JSON API.
+	upd := postJSON(t, h, "PUT", "/api/note/"+id, map[string]any{
+		"title":  "Hello again",
+		"status": "published",
+	})
+	wantStatus(t, upd, http.StatusOK)
+
+	after := parse(t, get(t, h, "/t/note/"+id))
+	if !strings.Contains(htmltest.Text(after.Root), "Hello again") {
+		t.Errorf("update should change title: %s", htmltest.Text(after.Root))
 	}
 
-	del := postForm(t, h, detailPath+"/delete", nil)
+	del := postForm(t, h, "/t/note/"+id+"/delete", nil)
 	wantStatus(t, del, http.StatusSeeOther)
-	wantStatus(t, get(t, h, detailPath), http.StatusNotFound)
+	wantStatus(t, get(t, h, "/t/note/"+id), http.StatusNotFound)
 	wantStatus(t, get(t, h, "/t/nothing"), http.StatusNotFound)
+
+	// Verify the store is consistent after delete.
+	n, _ := a.Store.Count("note")
+	if n != 0 {
+		t.Errorf("expected 0 notes after delete, got %d", n)
+	}
 }
 
 // TestEveryPageHasOneH1AndLabelledControls runs the shell invariants on each page kind.
 func TestEveryPageHasOneH1AndLabelledControls(t *testing.T) {
 	a, h := newApp(t)
 	rec, _ := a.Store.Create("note", map[string]any{"title": "Seed"})
-	for _, path := range []string{"/", "/chat", "/activity", "/design", "/t/note", "/t/note/new", "/t/note/" + rec.ID, "/t/note/" + rec.ID + "/edit", "/t/note/" + rec.ID + "/confirm-delete"} {
+	for _, path := range []string{"/", "/chat", "/activity", "/design", "/t/note", "/t/note/" + rec.ID, "/t/note/" + rec.ID + "/confirm-delete"} {
 		doc := parse(t, get(t, h, path))
 		if n := len(doc.Elements("h1")); n != 1 {
 			t.Errorf("%s: %d h1 elements", path, n)

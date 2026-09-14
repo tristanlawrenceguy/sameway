@@ -183,7 +183,6 @@ func (a *App) Describe() Description {
 			"chat":          "POST /api/chat with {\"message\": \"...\"}",
 			"html_list":     "GET /t/{type}",
 			"html_detail":   "GET /t/{type}/{id}",
-			"html_new":      "GET /t/{type}/new",
 			"css":           "GET /design/sameway.css",
 			"canvas_blocks": "GET /api/block",
 		},
