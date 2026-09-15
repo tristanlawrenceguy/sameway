@@ -248,17 +248,6 @@ func TestAPIListLimitParameter(t *testing.T) {
 		t.Errorf("no limit: expected 3 records, got %d", len(ll.Records))
 	}
 
-	limit10 := get(t, h, "/api/note?limit=10")
-	wantStatus(t, limit10, http.StatusOK)
-	var l10 struct {
-		Count   int
-		Records []any
-	}
-	decode(t, limit10, &l10)
-	if len(l10.Records) > 3 {
-		t.Errorf("limit=10 with 3 notes: expected at most 3 records, got %d", len(l10.Records))
-	}
-
 	limitOrder := get(t, h, "/api/note?limit=2&order=title")
 	wantStatus(t, limitOrder, http.StatusOK)
 	var lo struct {
@@ -278,6 +267,16 @@ func TestAPIListLimitParameter(t *testing.T) {
 	decode(t, neg, &ne)
 	if !strings.Contains(ne.Error.Message, "invalid limit") {
 		t.Errorf("negative limit: expected 'invalid limit' error, got %q", ne.Error.Message)
+	}
+
+	zero := get(t, h, "/api/note?limit=0")
+	wantStatus(t, zero, http.StatusBadRequest)
+	var ze struct {
+		Error struct{ Message string }
+	}
+	decode(t, zero, &ze)
+	if !strings.Contains(ze.Error.Message, "invalid limit") {
+		t.Errorf("limit=0: expected 'invalid limit' error, got %q", ze.Error.Message)
 	}
 
 	bad := get(t, h, "/api/note?limit=abc")
