@@ -9,7 +9,7 @@ import (
 // an explicit color token, so body content text always has a known contrast
 // ratio against its background regardless of what the summary or page sets as
 // the inherited foreground colour. Without this, axe-core cannot reliably
-// compute contrast for body text and may flag the element (backlog 0211).
+// compute contrast for body text and may flag the element. Follow-up to backlog 0161.
 func TestDisclosureBodyHasExplicitColor(t *testing.T) {
 	reg := builtins(t)
 	c, ok := reg.Get("disclosure")
