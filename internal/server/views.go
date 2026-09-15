@@ -52,7 +52,11 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	var b strings.Builder
 	b.WriteString(`<dl class="sw-dl">`)
 	for _, f := range t.Fields {
-		fmt.Fprintf(&b, "<dt>%s</dt><dd>%s</dd>", template.HTMLEscapeString(label(f.Name)), template.HTMLEscapeString(display(f, rec.Fields[f.Name])))
+		val := display(f, rec.Fields[f.Name])
+		if val == "" {
+			continue
+		}
+		fmt.Fprintf(&b, "<dt>%s</dt><dd>%s</dd>", template.HTMLEscapeString(label(f.Name)), template.HTMLEscapeString(val))
 	}
 	fmt.Fprintf(&b, "<dt>Created</dt><dd>%s</dd><dt>Updated</dt><dd>%s</dd></dl>", rec.CreatedAt.Local().Format("2006-01-02 15:04"), rec.UpdatedAt.Local().Format("2006-01-02 15:04"))
 	b.WriteString(`<div class="sw-cluster" style="margin-top:var(--sw-space-6)">`)
