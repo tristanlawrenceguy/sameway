@@ -3,6 +3,7 @@ package chat
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -27,7 +28,7 @@ Components can sit inside other components where a prop says so. Such a prop tak
 How to work:
 - When the person asks for something, build it on the canvas with the tools, then reply with one or two short sentences saying what you did. Do not paste HTML or props into the reply.
 - Use only components from the catalogue below, with props that match each schema exactly. If a tool returns an error, fix the props and call the tool again.
-- Lay things out deliberately. A heading that introduces a section wants span 12 and frame bare; cards and tables sit well at 6 or 7; small items at 4. Vary the widths so the page looks composed rather than stacked.
+- Lay things out deliberately. Blocks flow left to right into rows of twelve columns; a block that does not fit starts the next row, and a row is as tall as its tallest block. Make the spans in a row add up to twelve (4+8, 6+6, 4+4+4, 3+9, 12) or the rest of the row stays empty. Put tall things, like the chat or a full calendar, in a pane or beside other tall things: a short card beside a tall block leaves a hole. A heading that introduces a section wants span 12 and frame bare; cards and tables sit well at 6 or 8; small items at 4. The rows the canvas makes right now are listed after the blocks.
 - Keep the resting page calm. No decorative blocks, no labels restating what a component already shows. The person sees what changed from the glow when it changes, so you never need to add "added by" text.
 - Keep the canvas accessible: headings in order (2, then 3 inside), short text, a caption on every table, a label on a list that has no heading right before it.
 - Prefer updating an existing block over adding a near duplicate. Use clear_canvas only when asked to start over.
@@ -63,25 +64,69 @@ func (s *Service) systemPrompt() string {
 	}
 	for _, blk := range blocks {
 		props, _ := json.Marshal(blk.Fields["props"])
-		span := int64(6)
-		if v, ok := blk.Fields["span"].(int64); ok {
-			span = v
-		}
-		frame, _ := blk.Fields["frame"].(string)
-		if frame == "" {
-			frame = "card"
-		}
-		tone, _ := blk.Fields["tone"].(string)
-		if tone == "" {
-			tone = "none"
-		}
-		region := "main"
-		if v, ok := blk.Fields["region"].(string); ok && v != "" {
-			region = v
-		}
-		fmt.Fprintf(&b, "%s %s region=%s span=%d frame=%s tone=%s %s\n", blk.ID, blk.Fields["component"], region, span, frame, tone, props)
+		l := lookOf(blk)
+		fmt.Fprintf(&b, "%s %s region=%s span=%d frame=%s tone=%s %s\n", blk.ID, blk.Fields["component"], l.region, l.span, l.frame, l.tone, props)
 	}
+	b.WriteString("Rows in the main region, by span, left to right: " + rows(blocks) + "\n")
 	return b.String()
+}
+
+// blockLook is how a block sits, with the defaults the page would use.
+type blockLook struct {
+	region, frame, tone string
+	span                int64
+}
+
+func lookOf(blk *store.Record) blockLook {
+	l := blockLook{region: "main", frame: "card", tone: "none", span: 6}
+	if v, ok := blk.Fields["span"].(int64); ok && v >= 1 && v <= 12 {
+		l.span = v
+	}
+	if v, ok := blk.Fields["frame"].(string); ok && v != "" {
+		l.frame = v
+	}
+	if v, ok := blk.Fields["tone"].(string); ok && v != "" {
+		l.tone = v
+	}
+	if v, ok := blk.Fields["region"].(string); ok && v != "" {
+		l.region = v
+	}
+	return l
+}
+
+// rows says how the main region's blocks fall into rows of twelve, the way
+// the grid lays them out: a block that does not fit starts the next row.
+// The model sees the holes it has made instead of guessing at them.
+func rows(blocks []*store.Record) string {
+	var out, row []string
+	used := int64(0)
+	flush := func() {
+		if len(row) == 0 {
+			return
+		}
+		s := strings.Join(row, "+")
+		if used < 12 {
+			s += fmt.Sprintf(" (%d empty)", 12-used)
+		}
+		out = append(out, s)
+		row, used = nil, 0
+	}
+	for _, blk := range blocks {
+		l := lookOf(blk)
+		if l.region != "main" {
+			continue
+		}
+		if used+l.span > 12 {
+			flush()
+		}
+		row = append(row, strconv.FormatInt(l.span, 10))
+		used += l.span
+	}
+	flush()
+	if len(out) == 0 {
+		return "(none)"
+	}
+	return strings.Join(out, " | ")
 }
 
 func compactJSON(raw json.RawMessage) string {

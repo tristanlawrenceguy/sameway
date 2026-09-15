@@ -60,10 +60,28 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 	if convo.LatestID != "" {
 		opts.Focus, opts.FocusLabel = convo.LatestID, "Skip to latest message"
 	}
-	opts.QuietTitle = solo
-	opts.Left = s.pane("left", "History", left, convo)
-	opts.Right = s.pane("right", "Alongside", right, convo)
+	// The canvas is an application whether or not it has panes, so it keeps
+	// the whole width and the same shape as panes come and go. Once it holds
+	// anything, what is on it is the title; "Canvas" stays in the outline.
+	opts.Shell = "app"
+	opts.QuietTitle = len(blocks) > 0
+	opts.Left = s.pane("left", paneLabel("Left pane", left), left, convo)
+	opts.Right = s.pane("right", paneLabel("Right pane", right), right, convo)
 	s.page(w, r, "Canvas", template.HTML(b.String()), opts)
+}
+
+// paneLabel names a pane by what is in it, because a label that says
+// History over a calendar is a label that lies. One block lends its own
+// summary; more than one, or one with nothing to say, gets the side.
+func paneLabel(side string, blocks []*store.Record) string {
+	if len(blocks) == 1 {
+		name, _ := blocks[0].Fields["component"].(string)
+		props, _ := blocks[0].Fields["props"].(map[string]any)
+		if summary := chat.Summarise(name, props); summary != "" {
+			return summary
+		}
+	}
+	return side
 }
 
 // canvasBlocks reads the canvas in display order, or nothing if it cannot.
@@ -105,7 +123,7 @@ func (s *Server) pane(side, label string, blocks []*store.Record, convo *convers
 		return ""
 	}
 	var inner strings.Builder
-	fmt.Fprintf(&inner, `<ol class="sw-plain sw-canvas sw-canvas--pane" aria-label="%s pane blocks">`, label)
+	fmt.Fprintf(&inner, `<ol class="sw-plain sw-canvas sw-canvas--pane" aria-label="Blocks in the %s pane">`, side)
 	for _, blk := range blocks {
 		inner.WriteString(s.blockItem(blk, convo))
 	}
