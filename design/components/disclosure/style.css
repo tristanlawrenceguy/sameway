@@ -11,7 +11,7 @@
 .sw-disclosure__summary::before {
   content: ""; flex: none;
   width: 0.5rem; height: 0.5rem;
-  border-right: 2px solid currentColor; border-bottom: 2px solid currentColor;
+  border-right: 2px solid var(--sw-color-fg-muted); border-bottom: 2px solid var(--sw-color-fg-muted);
   transform: rotate(-45deg); margin-right: var(--sw-space-1);
   transition: transform var(--sw-motion-base) var(--sw-motion-ease);
 }
