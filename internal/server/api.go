@@ -3,8 +3,10 @@ package server
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -58,7 +60,25 @@ func (s *Server) apiDescribe(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) apiList(w http.ResponseWriter, r *http.Request) {
-	recs, err := s.app.Store.List(r.PathValue("type"), store.ListOptions{OrderBy: r.URL.Query().Get("order"), Desc: r.URL.Query().Get("dir") == "desc"})
+	limitStr := r.URL.Query().Get("limit")
+	var limit int
+	if limitStr != "" {
+		var err error
+		limit, err = strconv.Atoi(limitStr)
+		if err != nil || limit < 0 {
+			msg := "invalid limit parameter"
+			if err != nil {
+				msg = fmt.Sprintf("invalid limit parameter: %v", err)
+			}
+			writeError(w, errors.New(msg))
+			return
+		}
+	}
+	recs, err := s.app.Store.List(r.PathValue("type"), store.ListOptions{
+		OrderBy: r.URL.Query().Get("order"),
+		Desc:    r.URL.Query().Get("dir") == "desc",
+		Limit:   limit,
+	})
 	if err != nil {
 		writeError(w, err)
 		return
