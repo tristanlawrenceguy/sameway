@@ -86,6 +86,10 @@ for (const name of readdirSync(componentsDir).sort()) {
   for (const file of readdirSync(examplesDir).filter((f) => f.endsWith(".html")).sort()) {
     const body = readFileSync(join(examplesDir, file), "utf8");
     await tab.setContent(shell(css, `<form>${body}</form>`));
+    // Give the renderer a chance to apply CSS before axe-core reads computed styles.
+    // Without this, setContent can race with style application on reused pages,
+    // causing non-deterministic color-contrast failures (backlog 0161).
+    await new Promise((resolve) => setTimeout(resolve, 250));
     const aa = await new AxeBuilder({ page: tab }).withTags(AA_TAGS).analyze();
     for (const v of aa.violations) {
       failures++;
