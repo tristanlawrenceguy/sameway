@@ -22,7 +22,7 @@ func (s *Server) confirmDeletePage(w http.ResponseWriter, r *http.Request) {
 
 	var b strings.Builder
 	b.WriteString(string(s.component("alert", map[string]any{
-		"kind":    "danger",
+		"kind":    "warning",
 		"title":   fmt.Sprintf("Delete %s?", t.Name),
 		"message": "This cannot be undone.",
 	})))
