@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/design"
+	"github.com/tristanlawrenceguy/sameway/examples"
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
@@ -38,6 +39,13 @@ func Load(dir string, memoryDB bool) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
+	// The system owns its internal types. A workspace created before a
+	// field existed still gets that field, so the tools always work.
+	builtin, err := schema.LoadFS(examples.FS, examples.StarterRoot+"/schema")
+	if err != nil {
+		return nil, err
+	}
+	types.Complete(builtin)
 	dbPath := ws.DBPath()
 	if memoryDB {
 		dbPath = ":memory:"

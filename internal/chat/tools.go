@@ -222,15 +222,22 @@ func (s *Service) addComponent(name string, props map[string]any, l look) toolRe
 		}
 	}
 	fields := map[string]any{"component": name, "props": props, "position": position, "actor": "assistant", "created_by": "assistant"}
-	if _, err := l.apply(fields); err != nil {
+	layout, err := l.apply(fields)
+	if err != nil {
 		return fail("%v", err)
 	}
 	rec, err := s.Store.Create(BlockType, s.fields(BlockType, fields))
 	if err != nil {
 		return fail("could not save the block: %v", err)
 	}
+	// Say where it went, so the model confirms what really happened
+	// rather than what it asked for.
+	where := fmt.Sprintf("added %s as block %s at position %d", name, rec.ID, position)
+	if len(layout) > 0 {
+		where += " with " + strings.Join(layout, ", ")
+	}
 	return toolResult{
-		text:   fmt.Sprintf("added %s as block %s at position %d", name, rec.ID, position),
+		text:   where,
 		change: &Change{Action: "added", Component: name, ID: rec.ID, Detail: Summarise(name, props)},
 	}
 }

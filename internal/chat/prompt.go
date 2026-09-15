@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -41,6 +42,11 @@ How to work:
 func (s *Service) systemPrompt() string {
 	var b strings.Builder
 	b.WriteString(basePrompt)
+	now := time.Now
+	if s.Now != nil {
+		now = s.Now
+	}
+	fmt.Fprintf(&b, "\n\nToday is %s.", now().Format("Monday 2 January 2006"))
 	if s.ExtraPrompt != "" {
 		b.WriteString("\n\nWorkspace instructions:\n")
 		b.WriteString(s.ExtraPrompt)

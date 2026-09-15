@@ -119,3 +119,35 @@ func TestChatIsABlockLikeAnyOther(t *testing.T) {
 		t.Errorf("the chat block should be removable, %d left", n)
 	}
 }
+
+// TestModelPlacesBlocksInPanes covers region: the model puts a block in a
+// side pane, the tool result says so, and the block stays there until it
+// is moved.
+func TestModelPlacesBlocksInPanes(t *testing.T) {
+	svc := newFullService(t)
+	m := &scripted{steps: []*llm.Response{
+		call("add_component", map[string]any{"component": "calendar", "props": map[string]any{"month": "2026-09", "detail": "brief"}, "region": "left", "span": 12}),
+	}}
+	svc.Provider = m
+	if _, err := svc.Send(context.Background(), "put a calendar in the left side pane"); err != nil {
+		t.Fatal(err)
+	}
+	if res := lastToolResult(m.seen[1]); res.IsError || !strings.Contains(res.Content, "region left") {
+		t.Fatalf("the result should confirm where the block went: %+v", res)
+	}
+	blocks, _ := svc.Store.List(chat.BlockType, store.ListOptions{})
+	if len(blocks) != 1 || blocks[0].Fields["region"] != "left" {
+		t.Fatalf("block should be stored in the left pane, got %+v", blocks)
+	}
+	if !strings.Contains(m.seen[1].System, "calendar region=left") {
+		t.Errorf("the next prompt should show the block in its pane")
+	}
+
+	id := blocks[0].ID
+	m = &scripted{steps: []*llm.Response{call("update_component", map[string]any{"id": id, "region": "right"})}}
+	svc.Provider = m
+	svc.Send(context.Background(), "move it to the right")
+	if rec, _ := svc.Store.Get(chat.BlockType, id); rec.Fields["region"] != "right" {
+		t.Errorf("a region-only update should move the block, got %v", rec.Fields["region"])
+	}
+}
