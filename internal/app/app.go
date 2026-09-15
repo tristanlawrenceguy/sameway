@@ -193,6 +193,7 @@ func (a *App) Describe() Description {
 			"html_detail":   "GET /t/{type}/{id}",
 			"css":           "GET /design/sameway.css",
 			"canvas_blocks": "GET /api/block",
+			"message":       "GET /api/message",
 		},
 	}
 	if a.Chat.ProviderErr != nil {
