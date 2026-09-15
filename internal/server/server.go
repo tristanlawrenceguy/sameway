@@ -81,6 +81,7 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 		Focus:      opts.Focus,
 		FocusLabel: opts.FocusLabel,
 		QuietTitle: opts.QuietTitle,
+		Shell:      opts.Shell,
 		Left:       opts.Left,
 		Right:      opts.Right,
 	}
@@ -115,6 +116,10 @@ type pageOptions struct {
 	// QuietTitle keeps the page heading in the outline but off the screen,
 	// for a page whose whole content is one thing and says so itself.
 	QuietTitle bool
+	// Shell is "app" for a page that is an application rather than a
+	// document: full width, header and footer fixed, the middle scrolls.
+	// Panes imply it; the canvas asks for it even without them.
+	Shell      string
 	Left       template.HTML
 	Right      template.HTML
 	JSONURL    string

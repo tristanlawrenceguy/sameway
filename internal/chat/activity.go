@@ -3,6 +3,7 @@ package chat
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -59,6 +60,15 @@ func Summarise(component string, props map[string]any) string {
 		return pick("title", "message")
 	case "button", "link", "badge", "text-field", "textarea", "select", "checkbox":
 		return pick("label")
+	case "calendar":
+		if caption := pick("caption"); caption != "" {
+			return caption
+		}
+		if month, err := time.Parse("2006-01", pick("month")); err == nil {
+			return month.Format("January 2006")
+		}
+	case ComponentName:
+		return "Conversation"
 	}
 	return ""
 }

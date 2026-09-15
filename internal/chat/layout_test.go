@@ -151,3 +151,36 @@ func TestModelPlacesBlocksInPanes(t *testing.T) {
 		t.Errorf("a region-only update should move the block, got %v", rec.Fields["region"])
 	}
 }
+
+// TestPromptListsRows: the model is told how its spans fall into rows of
+// twelve, holes included, so it can see a bad layout instead of guessing.
+func TestPromptListsRows(t *testing.T) {
+	svc := newFullService(t)
+	m := &scripted{steps: []*llm.Response{
+		call("add_component", map[string]any{"component": "heading", "props": map[string]any{"text": "Week"}, "span": 12}),
+		call("add_component", map[string]any{"component": "card", "props": map[string]any{"title": "Monday"}, "span": 4}),
+		call("add_component", map[string]any{"component": "card", "props": map[string]any{"title": "Tuesday"}, "span": 6}),
+		call("add_component", map[string]any{"component": "calendar", "props": map[string]any{"month": "2026-09"}, "region": "right"}),
+	}}
+	svc.Provider = m
+	if _, err := svc.Send(context.Background(), "lay out my week"); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(m.seen[0].System, "(empty)") || strings.Contains(m.seen[0].System, "Rows in") {
+		t.Errorf("an empty canvas says so and lists no rows")
+	}
+	want := "left to right: 12 | 4+6 (2 empty)\n"
+	if !strings.Contains(m.seen[3].System, want) {
+		t.Errorf("rows should show the hole: want %q in %q", want, tail(m.seen[3].System))
+	}
+	if !strings.Contains(m.seen[4].System, want) {
+		t.Errorf("a block in a pane is not in a main row: %q", tail(m.seen[4].System))
+	}
+}
+
+func tail(s string) string {
+	if len(s) > 160 {
+		return s[len(s)-160:]
+	}
+	return s
+}
