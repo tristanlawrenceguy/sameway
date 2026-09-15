@@ -65,7 +65,7 @@ func (s *Server) apiList(w http.ResponseWriter, r *http.Request) {
 	if limitStr != "" {
 		var err error
 		limit, err = strconv.Atoi(limitStr)
-		if err != nil || limit < 0 {
+		if err != nil || limit <= 0 {
 			msg := "invalid limit parameter"
 			if err != nil {
 				msg = fmt.Sprintf("invalid limit parameter: %v", err)

@@ -15,7 +15,7 @@ import (
 var ErrNotFound = errors.New("not found")
 
 // ListOptions controls List. OrderBy must be a field name, "created_at", or
-// "updated_at". Limit 0 means no limit.
+// "updated_at". Limit is applied only when positive; callers must not pass zero.
 type ListOptions struct {
 	OrderBy string
 	Desc    bool
