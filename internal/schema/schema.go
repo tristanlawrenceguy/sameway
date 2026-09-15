@@ -10,7 +10,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"sort"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -62,31 +61,7 @@ type Set struct {
 
 // Load reads every *.yaml file in dir. A missing dir yields an empty set.
 func Load(dir string) (*Set, error) {
-	set := &Set{byName: map[string]*Type{}}
-	entries, err := os.ReadDir(dir)
-	if os.IsNotExist(err) {
-		return set, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	for _, e := range entries {
-		if e.IsDir() || !strings.HasSuffix(e.Name(), ".yaml") {
-			continue
-		}
-		path := filepath.Join(dir, e.Name())
-		t, err := LoadFile(path)
-		if err != nil {
-			return nil, err
-		}
-		if _, dup := set.byName[t.Name]; dup {
-			return nil, fmt.Errorf("%s: content type %q is defined twice", path, t.Name)
-		}
-		set.byName[t.Name] = t
-		set.Types = append(set.Types, t)
-	}
-	sort.Slice(set.Types, func(i, j int) bool { return set.Types[i].Name < set.Types[j].Name })
-	return set, nil
+	return load(os.DirFS(dir), ".", func(name string) string { return filepath.Join(dir, name) })
 }
 
 // LoadFile parses and validates one content type file.

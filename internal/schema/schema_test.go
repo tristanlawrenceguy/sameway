@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"testing/fstest"
 
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
@@ -166,5 +167,53 @@ func TestLoadDirectory(t *testing.T) {
 	empty, err := schema.Load(dir + "/missing")
 	if err != nil || len(empty.Types) != 0 {
 		t.Errorf("missing dir should give an empty set: %v", err)
+	}
+}
+
+// A workspace keeps the copy of an internal type it was created with. When
+// a later release adds a field to that type, Complete gives the workspace's
+// copy that field too, without touching what the workspace wrote itself.
+func TestCompleteAddsBuiltinFieldsToInternalTypes(t *testing.T) {
+	dir := t.TempDir()
+	old := "name: block\ninternal: true\nfields:\n  component: {type: string, required: true, description: mine}\n  position: {type: int}\n"
+	mine := "name: note\nfields:\n  title: {type: string}\n"
+	os.WriteFile(filepath.Join(dir, "block.yaml"), []byte(old), 0o644)
+	os.WriteFile(filepath.Join(dir, "note.yaml"), []byte(mine), 0o644)
+	ws, err := schema.Load(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	builtin, err := schema.LoadFS(fstest.MapFS{
+		"schema/block.yaml": {Data: []byte("name: block\ninternal: true\nfields:\n  component: {type: string, required: true, description: theirs}\n  region: {type: enum, values: [main, left, right], default: main}\n")},
+		"schema/note.yaml":  {Data: []byte("name: note\nfields:\n  title: {type: string}\n  body: {type: text}\n")},
+	}, "schema")
+	if err != nil {
+		t.Fatal(err)
+	}
+	ws.Complete(builtin)
+
+	blk, _ := ws.Get("block")
+	var names []string
+	for _, f := range blk.Fields {
+		names = append(names, f.Name)
+	}
+	if strings.Join(names, ",") != "component,position,region" {
+		t.Errorf("missing fields should be appended after the workspace's own: %v", names)
+	}
+	if region, ok := blk.Field("region"); !ok || region.Default != "main" || len(region.Values) != 3 {
+		t.Errorf("region should arrive with its definition, got %+v", region)
+	}
+	if f, _ := blk.Field("component"); f.Description != "mine" {
+		t.Errorf("a field the workspace defines must stay as written, got %q", f.Description)
+	}
+	if note, _ := ws.Get("note"); len(note.Fields) != 1 {
+		t.Errorf("a type the person owns must not be completed, got %d fields", len(note.Fields))
+	}
+}
+
+func TestLoadFSMissingDirIsEmpty(t *testing.T) {
+	set, err := schema.LoadFS(fstest.MapFS{}, "schema")
+	if err != nil || len(set.Types) != 0 {
+		t.Fatalf("missing dir should be an empty set, got %v %v", set.Types, err)
 	}
 }

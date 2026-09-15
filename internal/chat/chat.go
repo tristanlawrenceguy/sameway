@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
@@ -27,6 +28,9 @@ type Service struct {
 	ProviderErr  error
 	HistoryLimit int
 	ExtraPrompt  string
+	// Now tells the model what day it is, so a calendar for "this month"
+	// is this month. Defaults to time.Now; tests pin it.
+	Now func() time.Time
 }
 
 // Available reports whether the workspace has the content types the chat
@@ -98,8 +102,12 @@ func (s *Service) Send(ctx context.Context, text string) (*store.Record, error) 
 	return s.fail(fmt.Errorf("stopped after %d tool rounds without a final answer", maxToolRounds))
 }
 
-// fields drops keys the workspace's schema does not define, so a workspace
-// created before a field existed keeps working after an upgrade.
+// fields drops keys the workspace's schema does not define, so a record
+// written by newer code still saves into an older workspace. Internal
+// types are completed from the built-in preset when the app loads
+// (schema.Set.Complete), so a layout field the tools offer is never lost
+// this way; what remains is a safety net for a field a workspace has
+// deliberately removed.
 func (s *Service) fields(typeName string, in map[string]any) map[string]any {
 	t, ok := s.Store.Types().Get(typeName)
 	if !ok {

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
@@ -209,9 +210,10 @@ func TestToolErrorsGuideTheModel(t *testing.T) {
 func TestSystemPromptCarriesCatalogueAndCanvas(t *testing.T) {
 	svc, m := withModel(t, call("add_component", map[string]any{"component": "list", "props": map[string]any{"items": []string{"a"}}}))
 	svc.ExtraPrompt = "Always answer in Dutch."
+	svc.Now = func() time.Time { return time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC) }
 	svc.Send(context.Background(), "hi")
 	first, second := m.seen[0].System, m.seen[1].System
-	for _, want := range []string{"Component catalogue", "button: ", `"additionalProperties":false`, "Always answer in Dutch.", "(empty)"} {
+	for _, want := range []string{"Component catalogue", "button: ", `"additionalProperties":false`, "Always answer in Dutch.", "(empty)", "Today is Tuesday 15 September 2026."} {
 		if !strings.Contains(first, want) {
 			t.Errorf("first system prompt missing %q", want)
 		}
