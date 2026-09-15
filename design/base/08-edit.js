@@ -62,7 +62,9 @@
     var form = document.createElement("form");
     form.className = "sw-inline-form sw-stack";
     form.method = "post";
-    form.action = "/canvas/" + id + "/props";
+    var action = block.getAttribute("data-edit-action");
+    if (!action) { action = "/canvas/"+id+"/props"; }
+    form.action = action;
     form.setAttribute("aria-label", "Edit this block");
 
     var first = null;
