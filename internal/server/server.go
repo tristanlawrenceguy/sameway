@@ -53,6 +53,8 @@ func (s *Server) routes() {
 	m.HandleFunc("GET /t/{type}/{id}", s.detailPage)
 	m.HandleFunc("GET /t/{type}/{id}/confirm-delete", s.confirmDeletePage)
 	m.HandleFunc("POST /t/{type}/{id}/delete", s.deleteForm)
+	// Inline edit: POST form data (prop-<name>) to update content type records.
+	m.HandleFunc("POST /t/{type}/{id}/props", s.recordProps)
 
 	m.HandleFunc("GET /api/describe", s.apiDescribe)
 	m.HandleFunc("POST /api/chat", s.apiChat)
