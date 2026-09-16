@@ -74,6 +74,7 @@ func Load(dir string, memoryDB bool) (*App, error) {
 		ExtraPrompt:  ws.Config.Chat.SystemPrompt,
 	}
 	a.Chat.Provider, a.Chat.ProviderErr = llm.New(ws.Config.LLM)
+	a.Chat.SetPace = ws.SetPace
 	return a, nil
 }
 

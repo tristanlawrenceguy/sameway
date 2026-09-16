@@ -113,3 +113,22 @@
 @media (prefers-reduced-motion: reduce) {
   [data-changed="updated"][data-arrival], [data-changed="updated"][data-arrival] > * { animation-delay: 0s !important; }
 }
+
+/* Pace: how changes arrive, set on the root by the workspace. A person
+   sets it by asking the assistant. quick keeps the stages in a third of the
+   time; still shows everything at once, the way reduced motion does. */
+:root[data-pace="quick"] { --sw-motion-arrive: 900ms; --sw-motion-between: 1000ms; --sw-motion-glow: 900ms; }
+:root[data-pace="still"] [data-changed][data-arrival],
+:root[data-pace="still"] [data-changed="added"][data-arrival] > *,
+:root[data-pace="still"] [data-changed="updated"][data-arrival] > * { animation-delay: 0s !important; animation-duration: 0.01ms !important; }
+:root[data-pace="still"] [data-changed="added"][data-arrival]::before { display: none; }
+:root[data-pace="still"] [data-changed] { box-shadow: 0 0 0 3px var(--sw-actor, var(--sw-color-accent)); }
+
+/* Forced colours (Windows high contrast) drop box shadows and custom
+   colours: the change marker becomes a system-coloured outline, and the
+   cover that shows where a block will be draws in the same colours. */
+@media (forced-colors: active) {
+  [data-changed] { outline: 3px solid Highlight; outline-offset: 2px; }
+  [data-changed="added"][data-arrival]::before { background: Canvas; outline-color: Highlight; forced-color-adjust: none; }
+  [data-changed="updated"][data-arrival] { outline-color: Highlight; }
+}

@@ -79,6 +79,8 @@ func (s *Service) Tools() []llm.Tool {
 		{Name: "clear_canvas", Description: "Remove every block from the canvas except the chat, which stays so the person can keep talking. Only when the person asks to start over. To remove the chat too, call remove_component on it.",
 			Schema: obj(map[string]any{})},
 		undoTool,
+		{Name: "set_pace", Description: "How changes arrive on the page, when the person asks for it slower, faster or without motion: calm (the default: where, then what, then the words, one change at a time with a pause between), quick (the same in a third of the time) or still (everything at once). Set it and say so; it is reversible, so never ask first.",
+			Schema: obj(map[string]any{"pace": map[string]any{"type": "string", "enum": []string{"calm", "quick", "still"}}}, "pace")},
 	}, append(s.recordTools(), s.canvasTools()...)...)
 }
 
@@ -113,6 +115,7 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 		Fields    map[string]any `json:"fields"`
 		Query     string         `json:"query"`
 		Limit     int            `json:"limit"`
+		Pace      string         `json:"pace"`
 	}
 	if len(call.Args) > 0 {
 		if err := json.Unmarshal(call.Args, &args); err != nil {
@@ -143,6 +146,14 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 		return s.removeBlock(args.ID)
 	case "undo_change":
 		return s.Undo(args.ID)
+	case "set_pace":
+		if s.SetPace == nil {
+			return fail("this workspace has no settings file to keep a pace in")
+		}
+		if err := s.SetPace(args.Pace); err != nil {
+			return fail("%v", err)
+		}
+		return toolResult{text: "changes now arrive " + args.Pace, change: &Change{Action: "set", Component: "pace", Detail: args.Pace}}
 	case "clear_canvas":
 		// Starting over means clearing the content, not deleting the
 		// conversation the person is typing into.
