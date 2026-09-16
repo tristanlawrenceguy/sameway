@@ -62,7 +62,7 @@ func (s *Service) propose(summary string, action map[string]any) toolResult {
 // proposable are the tools a proposal may carry. Asking to ask, or asking to
 // clear everything, is not a question worth deferring.
 var proposable = map[string]bool{
-	"add_component": true, "update_component": true, "remove_component": true,
+	"add_component": true, "update_component": true, "remove_component": true, "remove_canvas": true,
 }
 
 func proposableNames() []string {

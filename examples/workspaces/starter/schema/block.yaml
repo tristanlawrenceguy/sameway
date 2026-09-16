@@ -20,6 +20,10 @@ fields:
     type: int
     default: 6
     description: Width in columns of a twelve column grid. 12 is full width, 6 is half, 4 is a third. Ignored on narrow screens, where every block is full width.
+  canvas:
+    type: string
+    default: ""
+    description: Which tab this block is on, as a canvas id. Empty is Home, the first canvas.
   region:
     type: enum
     values: [main, left, right]

@@ -69,6 +69,7 @@ workspace file, because the workspace is meant to be shared.
 | `sameway note create --set title="Hello"` | `sameway note list --json` |
 | Any block opens on its own page at `/canvas/<id>` | One URL per block, at its largest size |
 | Ask the assistant for a note and find it on `/t/note` | `sameway mcp`: an MCP host gets the assistant's own tools, plus reading |
+| Ask for a second tab and get a second canvas at `/c/<id>` | `POST /api/canvas`, or `create_canvas` over chat and MCP |
 
 ## The one contract
 

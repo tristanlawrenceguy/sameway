@@ -1,0 +1,17 @@
+# A canvas is one tab of blocks. The workspace always has a first canvas,
+# Home, which needs no record; each record here is one more tab beside it.
+# The assistant's tools create these; `sameway canvas list` shows them.
+name: canvas
+description: One tab of the canvas, with its own blocks, beside Home.
+internal: true
+title: name
+fields:
+  name:
+    type: string
+    required: true
+    maxLength: 60
+    description: What the tab is called, in a person's words.
+  position:
+    type: int
+    default: 0
+    description: Sort order of the tabs after Home, lowest first.

@@ -143,7 +143,9 @@ func (s *Server) apiChat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	text, _ := body["message"].(string)
-	rec, err := s.app.Chat.Send(r.Context(), text)
+	// canvas is the tab to build on: a canvas id, or absent for Home.
+	canvas, _ := body["canvas"].(string)
+	rec, err := s.app.Chat.SendOn(r.Context(), canvas, text)
 	if rec == nil {
 		writeError(w, err)
 		return

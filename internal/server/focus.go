@@ -45,7 +45,7 @@ func (s *Server) focusPage(w http.ResponseWriter, r *http.Request) {
 
 	var b strings.Builder
 	b.WriteString(`<div class="sw-focus">`)
-	b.WriteString(string(s.component("link", map[string]any{"href": "/", "label": "Back to the canvas"})))
+	b.WriteString(string(s.component("link", map[string]any{"href": chat.CanvasPath(canvasOf(rec.Fields)), "label": "Back to the canvas"})))
 	b.WriteString(`<div class="sw-focus__body">` + string(body) + `</div></div>`)
 
 	_, left, right := split(s.canvasBlocks())
