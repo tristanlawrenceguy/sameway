@@ -1,8 +1,10 @@
 package server_test
 
 import (
+	"golang.org/x/net/html"
 	"net/http"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
@@ -46,12 +48,19 @@ func TestBlockCanBePoppedOut(t *testing.T) {
 	h, id := canvasWithACalendar(t)
 	canvas := parse(t, get(t, h, "/"))
 
-	links := canvas.WithAttr("href", "/canvas/"+id)
+	// The receipt under the reply and the activity log may lead to the
+	// block's page too; the block itself offers exactly one Expand control.
+	// A bare "Expand" is uselessly ambiguous when a page has several blocks,
+	// so the accessible name has to say what is being expanded.
+	var links []*html.Node
+	for _, l := range canvas.WithAttr("href", "/canvas/"+id) {
+		if strings.HasPrefix(canvas.AccessibleName(l), "Expand") {
+			links = append(links, l)
+		}
+	}
 	if len(links) != 1 {
 		t.Fatalf("expected one way to expand the block, got %d", len(links))
 	}
-	// A bare "Expand" is uselessly ambiguous when a page has several blocks,
-	// so the accessible name has to say what is being expanded.
 	if name := canvas.AccessibleName(links[0]); name != "Expand calendar" {
 		t.Errorf("expand link reads as %q", name)
 	}

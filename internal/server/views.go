@@ -50,6 +50,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var b strings.Builder
+	b.WriteString(string(crumbs("/t/"+t.Name, capitalize(plural(t.Name)), titleOf(t, rec))))
 	fmt.Fprintf(&b, `<div class="sw-dl-block" data-block-id="%s" data-edit-action="/t/%s/%s/props">`, rec.ID, t.Name, rec.ID)
 	b.WriteString(`<dl class="sw-dl">`)
 	for _, f := range t.Fields {
@@ -118,13 +119,32 @@ func display(f schema.Field, v any) string {
 	return fmt.Sprint(v)
 }
 
+// titleOf names a record: its title field, else the first string field
+// with something in it, else its type and id. A blank title used to fall
+// straight to the id, so a list of activities read as a column of "said".
 func titleOf(t *schema.Type, rec *store.Record) string {
 	if t.Title != "" {
 		if s, ok := rec.Fields[t.Title].(string); ok && s != "" {
 			return s
 		}
 	}
+	for _, f := range t.Fields {
+		if f.Type != "string" && f.Type != "text" && f.Type != "enum" {
+			continue
+		}
+		if s, ok := rec.Fields[f.Name].(string); ok && strings.TrimSpace(s) != "" {
+			return truncateTitle(s)
+		}
+	}
 	return t.Name + " " + rec.ID
+}
+
+// crumbs is the way back from a detail page: the listing it belongs to,
+// then the record itself. A person who read one item and wants the next
+// one should not have to find the footer or the browser's back button.
+func crumbs(listHref, listLabel, here string) template.HTML {
+	return template.HTML(fmt.Sprintf(`<nav class="sw-crumbs" aria-label="You are here"><ol class="sw-plain sw-crumbs__list"><li><a class="sw-link" href="%s">%s</a></li><li aria-current="page">%s</li></ol></nav>`,
+		template.HTMLEscapeString(listHref), template.HTMLEscapeString(listLabel), template.HTMLEscapeString(here)))
 }
 
 func capitalize(s string) string {

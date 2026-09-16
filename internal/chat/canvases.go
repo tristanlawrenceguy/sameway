@@ -107,7 +107,7 @@ func (s *Service) createCanvas(name string) toolResult {
 	}
 	return toolResult{
 		text:   fmt.Sprintf("added canvas %s: %q, at %s. Blocks go on it with canvas: %q on add_component.", rec.ID, name, CanvasPath(rec.ID), rec.ID),
-		change: &Change{Action: "added", Component: CanvasType, ID: rec.ID, Detail: name},
+		change: &Change{Action: "added", Component: CanvasType, ID: rec.ID, Detail: name, Href: CanvasPath(rec.ID)},
 	}
 }
 

@@ -1,7 +1,7 @@
 {
   "name": "event",
-  "version": "1.0.0",
-  "description": "One line of activity: who did what to which thing, and when. Used for change receipts under a reply and for the activity log.",
+  "version": "1.1.0",
+  "description": "One line of activity: who did what to which thing, and when. Used for change receipts under a reply and for the activity log. Given the thing's page, the entry leads to it.",
   "props": {
     "type": "object",
     "additionalProperties": false,
@@ -12,22 +12,23 @@
       "target": { "type": "string", "description": "What was acted on, such as 'table' or 'list Groceries'." },
       "detail": { "type": "string", "description": "Optional extra text shown after the target." },
       "time": { "type": "string", "description": "Human readable time such as 14:05." },
+      "href": { "type": "string", "description": "The page of the thing acted on, so the entry leads to it. Left out when the thing is gone." },
       "id": { "type": "string" }
     }
   },
   "a11y": {
     "role": "listitem content",
-    "keyboard": [],
+    "keyboard": [ { "key": "Tab", "does": "reaches the link to the thing acted on, when it still exists" } ],
     "states": [],
-    "wcag": { "target": "AAA", "notes": "The actor is spelled out ('You', 'Assistant', 'System'), so provenance never depends on colour. Render events inside a list so counts and positions are announced." }
+    "wcag": { "target": "AAA", "notes": "The actor is spelled out ('You', 'Assistant', 'System'), so provenance never depends on colour. The link text is the target and its detail, so it says where it goes (2.4.4). Render events inside a list so counts and positions are announced." }
   },
   "machine": {
     "selector": "[data-component=\"event\"]",
-    "identify": "Read data-actor, data-action, and data-target; the text is the sentence.",
-    "operate": "Not interactive."
+    "identify": "Read data-actor, data-action, and data-target; the text is the sentence. A link inside it, when present, is the page of the thing acted on.",
+    "operate": "Activate the link to open the thing acted on; an entry without one is about something that no longer exists."
   },
   "examples": [
-    { "name": "default", "props": { "actor": "assistant", "action": "added", "target": "table", "detail": "Shopping list", "time": "20:24" }, "file": "examples/default.html" },
+    { "name": "default", "props": { "actor": "assistant", "action": "added", "target": "table", "detail": "Shopping list", "time": "20:24", "href": "/canvas/b7" }, "file": "examples/default.html" },
     { "name": "human", "props": { "actor": "human", "action": "removed", "target": "list" }, "file": "examples/human.html" },
     { "name": "system", "props": { "actor": "system", "action": "failed", "detail": "Could not reach the model.", "id": "evt-1" }, "file": "examples/system.html" }
   ]

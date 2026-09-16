@@ -22,7 +22,8 @@
             "action": { "type": "string", "description": "added, updated, removed, cleared, failed" },
             "component": { "type": "string" },
             "id": { "type": "string", "description": "Block id the change applied to, when it still exists." },
-            "detail": { "type": "string" }
+            "detail": { "type": "string" },
+            "href": { "type": "string", "description": "The page of the thing changed, so the receipt leads to it. Left out when the thing is gone." }
           }
         }
       },
@@ -31,7 +32,7 @@
   },
   "a11y": {
     "role": "article",
-    "keyboard": [],
+    "keyboard": [ { "key": "Tab", "does": "reaches each change in the receipt that still exists, as a link to its page" } ],
     "states": ["data-actor", "data-role"],
     "wcag": { "target": "AAA", "notes": "Author is text, not colour or alignment alone (1.4.1). Each message is an article with its author as the first line so screen readers can move between turns. The change receipt is a real list with a heading only screen readers hear." }
   },
@@ -42,7 +43,7 @@
   },
   "examples": [
     { "name": "default", "props": { "role": "user", "content": "Add a grocery list with milk, eggs and bread.", "time": "14:05", "id": "msg-1" }, "file": "examples/default.html" },
-    { "name": "assistant", "props": { "role": "assistant", "content": "Done. I added a list with three items.\n\nWant it as a table instead?", "time": "14:05", "changes": [ { "action": "added", "component": "heading", "detail": "Shopping" }, { "action": "added", "component": "list" } ] }, "file": "examples/assistant.html" },
+    { "name": "assistant", "props": { "role": "assistant", "content": "Done. I added a list with three items.\n\nWant it as a table instead?", "time": "14:05", "changes": [ { "action": "added", "component": "heading", "detail": "Shopping", "href": "/canvas/h1" }, { "action": "added", "component": "list" } ] }, "file": "examples/assistant.html" },
     { "name": "error", "props": { "role": "error", "content": "Could not reach the model at http://localhost:11434." }, "file": "examples/error.html" }
   ]
 }

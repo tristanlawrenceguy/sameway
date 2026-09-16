@@ -108,7 +108,7 @@ func (s *Service) createRecord(typeName string, fields map[string]any) toolResul
 	title := recordTitle(t, rec)
 	return toolResult{
 		text:   fmt.Sprintf("created %s %s: %q. The person can open it at /t/%s/%s.", t.Name, rec.ID, title, t.Name, rec.ID),
-		change: &Change{Action: "created", Component: t.Name, ID: rec.ID, Detail: title},
+		change: &Change{Action: "created", Component: t.Name, ID: rec.ID, Detail: title, Href: "/t/" + t.Name + "/" + rec.ID},
 	}
 }
 
@@ -130,7 +130,7 @@ func (s *Service) updateRecord(typeName, id string, fields map[string]any) toolR
 	title := recordTitle(t, rec)
 	return toolResult{
 		text:   fmt.Sprintf("updated %s %s: %q, at /t/%s/%s.", t.Name, rec.ID, title, t.Name, rec.ID),
-		change: &Change{Action: "updated", Component: t.Name, ID: rec.ID, Detail: title},
+		change: &Change{Action: "updated", Component: t.Name, ID: rec.ID, Detail: title, Href: "/t/" + t.Name + "/" + rec.ID},
 	}
 }
 

@@ -3,8 +3,11 @@
 name: activity
 description: One recorded action, with who did it and what it touched.
 internal: true
-title: action
+title: summary
 fields:
+  summary:
+    type: string
+    description: The whole event as one sentence, such as "Assistant added card Shopping". What lists and headings show.
   actor:
     type: enum
     values: [human, assistant, system]
