@@ -58,8 +58,12 @@ func (s *Service) systemPrompt() string {
 		fmt.Fprintf(&b, "\n%s: %s\n%s\n", c.Manifest.Name, c.Manifest.Description, compactJSON(c.Manifest.Props))
 	}
 	b.WriteString(s.contentCatalogue())
+	b.WriteString(s.canvasDigest(s.current))
 	b.WriteString("\nCurrent canvas, top to bottom (id, component, span, frame, tone, props):\n")
 	blocks, err := s.Store.List(BlockType, store.ListOptions{OrderBy: "position"})
+	if err == nil {
+		blocks = OnCanvas(blocks, s.current)
+	}
 	if err != nil || len(blocks) == 0 {
 		b.WriteString("(empty)\n")
 		return b.String()

@@ -47,6 +47,7 @@ func (s *Service) Tools() []llm.Tool {
 				"frame":     map[string]any{"type": "string", "enum": []string{"card", "bare"}, "description": "card gives the block a surface, bare sits flush on the page. Defaults to card."},
 				"tone":      map[string]any{"type": "string", "enum": []string{"none", "accent", "success", "warning", "danger", "info"}, "description": "Tints the block's surface. Defaults to none."},
 				"region":    map[string]any{"type": "string", "enum": []string{"main", "left", "right"}, "description": "main is the body of the page. left and right are full height panes beside it: left for history and navigation, right for what the person glances at. Defaults to main."},
+				"canvas":    map[string]any{"type": "string", "description": "Which tab the block goes on, as a canvas id from the list of tabs; empty string is Home. Defaults to the tab the person is looking at."},
 			}, "component", "props")},
 		{Name: "update_component", Description: "Change a block already on the canvas: its props, its width, or its place in the order. Props replace the old ones completely, so send them all.",
 			Schema: obj(map[string]any{
@@ -57,13 +58,14 @@ func (s *Service) Tools() []llm.Tool {
 				"frame":    map[string]any{"type": "string", "enum": []string{"card", "bare"}},
 				"tone":     map[string]any{"type": "string", "enum": []string{"none", "accent", "success", "warning", "danger", "info"}},
 				"region":   map[string]any{"type": "string", "enum": []string{"main", "left", "right"}},
+				"canvas":   map[string]any{"type": "string", "description": "Move the block to another tab: a canvas id, or empty string for Home."},
 			}, "id")},
 		{Name: "remove_component", Description: "Remove one block from the canvas by id.",
 			Schema: obj(map[string]any{"id": map[string]any{"type": "string"}}, "id")},
 		{Name: "propose_change", Description: "Ask before making a change instead of making it. Use this whenever a change takes something away, and whenever you are guessing at what the person wants. Nothing happens until they answer. Carries one add_component, update_component, or remove_component call.",
 			Schema: obj(map[string]any{
 				"summary":   map[string]any{"type": "string", "description": "The question, in plain words, ending in a question mark. Say what would change and why you are asking."},
-				"tool":      map[string]any{"type": "string", "enum": []string{"add_component", "update_component", "remove_component"}, "description": "The change to make if they say yes."},
+				"tool":      map[string]any{"type": "string", "enum": []string{"add_component", "update_component", "remove_component", "remove_canvas"}, "description": "The change to make if they say yes."},
 				"id":        map[string]any{"type": "string", "description": "Block id, for update or remove."},
 				"component": map[string]any{"type": "string", "description": "Component name, for add."},
 				"props":     map[string]any{"type": "object"},
@@ -71,11 +73,12 @@ func (s *Service) Tools() []llm.Tool {
 				"frame":     map[string]any{"type": "string", "enum": []string{"card", "bare"}},
 				"tone":      map[string]any{"type": "string", "enum": []string{"none", "accent", "success", "warning", "danger", "info"}},
 				"region":    map[string]any{"type": "string", "enum": []string{"main", "left", "right"}},
+				"canvas":    map[string]any{"type": "string"},
 				"position":  map[string]any{"type": "integer"},
 			}, "summary", "tool")},
 		{Name: "clear_canvas", Description: "Remove every block from the canvas except the chat, which stays so the person can keep talking. Only when the person asks to start over. To remove the chat too, call remove_component on it.",
 			Schema: obj(map[string]any{})},
-	}, s.recordTools()...)
+	}, append(s.recordTools(), s.canvasTools()...)...)
 }
 
 // toolResult is what one tool call produced: text for the model, an error
@@ -101,6 +104,8 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 		Frame     string         `json:"frame"`
 		Tone      string         `json:"tone"`
 		Region    string         `json:"region"`
+		Canvas    *string        `json:"canvas"`
+		Name      string         `json:"name"`
 		Summary   string         `json:"summary"`
 		Tool      string         `json:"tool"`
 		Type      string         `json:"type"`
@@ -119,6 +124,10 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 		json.Unmarshal(call.Args, &action)
 		delete(action, "summary")
 		return s.propose(args.Summary, action)
+	case "create_canvas":
+		return s.createCanvas(args.Name)
+	case "remove_canvas":
+		return s.removeCanvas(args.ID)
 	case "create_record":
 		return s.createRecord(args.Type, args.Fields)
 	case "update_record":
@@ -126,9 +135,9 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 	case "find_records":
 		return s.findRecords(args.Type, args.Query, args.Limit)
 	case "add_component":
-		return s.addComponent(args.Component, args.Props, look{args.Span, args.Position, args.Frame, args.Tone, args.Region})
+		return s.addComponent(args.Component, args.Props, look{Span: args.Span, Position: args.Position, Frame: args.Frame, Tone: args.Tone, Region: args.Region, Canvas: deref(args.Canvas), SetCanvas: args.Canvas != nil})
 	case "update_component":
-		return s.updateComponent(args.ID, args.Props, look{args.Span, args.Position, args.Frame, args.Tone, args.Region})
+		return s.updateComponent(args.ID, args.Props, look{Span: args.Span, Position: args.Position, Frame: args.Frame, Tone: args.Tone, Region: args.Region, Canvas: deref(args.Canvas), SetCanvas: args.Canvas != nil})
 	case "remove_component":
 		rec, err := s.Store.Get(BlockType, args.ID)
 		if err != nil {
@@ -152,6 +161,10 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 			if b.Fields["component"] == ComponentName {
 				continue
 			}
+			// Only the tab the person is looking at: the others keep theirs.
+			if on, _ := b.Fields["canvas"].(string); on != s.current {
+				continue
+			}
 			if err := s.Store.Delete(BlockType, b.ID); err != nil {
 				return fail("could not clear the canvas: %v", err)
 			}
@@ -163,48 +176,6 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 		return toolResult{text: fmt.Sprintf("cleared %d blocks; the chat stayed", n), change: &Change{Action: "cleared", Detail: fmt.Sprintf("%d blocks", n)}}
 	}
 	return fail("unknown tool %s", call.Name)
-}
-
-// look is how a block sits on the canvas: its width, its order, and how
-// much surface it brings. All optional, all independent of its props.
-type look struct {
-	Span, Position      *int
-	Frame, Tone, Region string
-}
-
-// apply writes the layout fields that were given, and describes them.
-func (l look) apply(fields map[string]any) ([]string, error) {
-	var what []string
-	if l.Span != nil {
-		if *l.Span < 1 || *l.Span > 12 {
-			return nil, fmt.Errorf("span must be between 1 and 12, got %d", *l.Span)
-		}
-		fields["span"] = *l.Span
-		what = append(what, fmt.Sprintf("span %d", *l.Span))
-	}
-	if l.Position != nil {
-		fields["position"] = *l.Position
-		what = append(what, fmt.Sprintf("position %d", *l.Position))
-	}
-	if l.Frame != "" {
-		if l.Frame != "card" && l.Frame != "bare" {
-			return nil, fmt.Errorf("frame must be card or bare, got %q", l.Frame)
-		}
-		fields["frame"] = l.Frame
-		what = append(what, "frame "+l.Frame)
-	}
-	if l.Tone != "" {
-		fields["tone"] = l.Tone
-		what = append(what, "tone "+l.Tone)
-	}
-	if l.Region != "" {
-		if l.Region != "main" && l.Region != "left" && l.Region != "right" {
-			return nil, fmt.Errorf("region must be main, left, or right, got %q", l.Region)
-		}
-		fields["region"] = l.Region
-		what = append(what, "region "+l.Region)
-	}
-	return what, nil
 }
 
 func (s *Service) addComponent(name string, props map[string]any, l look) toolResult {
@@ -233,7 +204,11 @@ func (s *Service) addComponent(name string, props map[string]any, l look) toolRe
 			position = int(p) + 1
 		}
 	}
-	fields := map[string]any{"component": name, "props": props, "position": position, "actor": "assistant", "created_by": "assistant"}
+	// On the tab the person is looking at, unless the call says otherwise.
+	fields := map[string]any{"component": name, "props": props, "position": position, "actor": "assistant", "created_by": "assistant", "canvas": s.current}
+	if l.SetCanvas && !s.HasCanvas(l.Canvas) {
+		return fail("no canvas with id %q; the tabs and their ids are listed in the prompt, and \"\" is Home", l.Canvas)
+	}
 	layout, err := l.apply(fields)
 	if err != nil {
 		return fail("%v", err)
@@ -274,6 +249,9 @@ func (s *Service) updateComponent(id string, props map[string]any, l look) toolR
 		what = append(what, "props")
 	} else {
 		props, _ = rec.Fields["props"].(map[string]any)
+	}
+	if l.SetCanvas && !s.HasCanvas(l.Canvas) {
+		return fail("no canvas with id %q; the tabs and their ids are listed in the prompt, and \"\" is Home", l.Canvas)
 	}
 	layout, err := l.apply(fields)
 	if err != nil {

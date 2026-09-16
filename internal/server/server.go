@@ -36,6 +36,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) { s.mux.Serve
 func (s *Server) routes() {
 	m := s.mux
 	m.HandleFunc("GET /{$}", s.canvasPage)
+	m.HandleFunc("GET /c/{canvas}", s.canvasPage)
 	m.HandleFunc("GET /chat", s.chatPage)
 	m.HandleFunc("GET /canvas/{id}", s.focusPage)
 	m.HandleFunc("POST /chat", s.chatSend)

@@ -70,6 +70,12 @@ func (s *Set) Complete(builtin *Set) {
 		}
 		t, ok := s.byName[b.Name]
 		if !ok {
+			// A whole internal type the workspace predates, such as the
+			// canvas tabs: the system owns it, so the workspace gets it.
+			added := *b
+			added.Fields = append([]Field(nil), b.Fields...)
+			s.byName[added.Name] = &added
+			s.Types = append(s.Types, &added)
 			continue
 		}
 		for _, f := range b.Fields {
@@ -78,4 +84,5 @@ func (s *Set) Complete(builtin *Set) {
 			}
 		}
 	}
+	sort.Slice(s.Types, func(i, j int) bool { return s.Types[i].Name < s.Types[j].Name })
 }

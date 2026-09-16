@@ -31,6 +31,10 @@ type Service struct {
 	// Now tells the model what day it is, so a calendar for "this month"
 	// is this month. Defaults to time.Now; tests pin it.
 	Now func() time.Time
+
+	// current is the tab the person is looking at while a turn runs: "" is
+	// Home. New blocks land there, and the prompt describes that tab.
+	current string
 }
 
 // Available reports whether the workspace has the content types the chat
@@ -44,14 +48,25 @@ func (s *Service) Available() error {
 	return nil
 }
 
-// Send records the person's message, runs the model with tools until it
-// produces a final answer, records that answer with the list of canvas
-// changes it made, and returns it. Failures are recorded as an error
-// message in the conversation and also returned.
+// Send is SendOn for a person looking at Home.
 func (s *Service) Send(ctx context.Context, text string) (*store.Record, error) {
+	return s.SendOn(ctx, "", text)
+}
+
+// SendOn records the person's message, runs the model with tools until it
+// produces a final answer, records that answer with the list of canvas
+// changes it made, and returns it. canvas is the tab the person is looking
+// at, "" for Home: new blocks go there and the prompt describes it.
+// Failures are recorded as an error message in the conversation and also
+// returned.
+func (s *Service) SendOn(ctx context.Context, canvas, text string) (*store.Record, error) {
 	if err := s.Available(); err != nil {
 		return nil, err
 	}
+	if !s.HasCanvas(canvas) {
+		return nil, fmt.Errorf("there is no canvas %q", canvas)
+	}
+	s.current = canvas
 	text = strings.TrimSpace(text)
 	if text == "" {
 		return nil, errors.New("message is empty")

@@ -184,6 +184,15 @@ with an explanation if they are removed.
 The page is full-page navigation only: the form posts, the server runs the
 tool loop, and redirects to the newest message. No JavaScript is required.
 
+Tabs are canvases. Home is the first, at `/`, and needs no record; every
+`canvas` record is one more tab at `/c/<id>`, with blocks of its own (a
+block's `canvas` field says which tab it is on, empty for Home). The tab bar
+is a list of links, shown only once there is a second tab, and switching is a
+page navigation like everything else. A new tab opens on its own chat. The
+assistant is told which tab the person is looking at, builds there unless a
+call names another, and makes or removes tabs with `create_canvas` and
+`remove_canvas`, the latter only through a proposal.
+
 The same tools are a Model Context Protocol server: `sameway mcp` speaks
 newline-delimited JSON-RPC on stdin and stdout, which is how Claude Code,
 Claude Desktop and the other MCP hosts start one. `tools/list` is the chat

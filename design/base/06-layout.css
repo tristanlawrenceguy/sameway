@@ -61,6 +61,20 @@ ol.sw-plain, ul.sw-plain { list-style: none; margin: 0; padding: 0; }
 .sw-dl dt { font-weight: 600; color: var(--sw-color-fg-muted); }
 .sw-dl dd { margin: 0; overflow-wrap: anywhere; }
 
+/* Tabs are canvases: a row of links to them, the current one underlined in
+   the accent, shown only once there is a second tab. Switching is a page
+   navigation, so this needs no script. */
+.sw-tabs { margin-bottom: var(--sw-space-6); border-bottom: 1px solid var(--sw-color-border); }
+.sw-tabs__list { display: flex; flex-wrap: wrap; gap: var(--sw-space-1); }
+.sw-tabs .sw-link {
+  display: inline-flex; align-items: center; min-height: var(--sw-size-target);
+  padding: 0 var(--sw-space-3); margin-bottom: -1px;
+  border-bottom: 3px solid transparent; border-radius: var(--sw-radius-md) var(--sw-radius-md) 0 0;
+  text-decoration: none; color: var(--sw-color-fg-muted); font-weight: 500;
+}
+.sw-tabs .sw-link:hover { background: var(--sw-color-bg-muted); color: var(--sw-color-fg); }
+.sw-tabs .sw-link[aria-current="page"] { color: var(--sw-color-fg); border-bottom-color: var(--sw-color-accent); font-weight: 700; }
+
 /* solo is a workspace with nothing but its conversation: centred, the way
    every assistant opens. */
 .sw-page[data-layout="solo"] { display: grid; justify-items: center; padding-block: var(--sw-space-8); }

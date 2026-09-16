@@ -20,13 +20,20 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 		s.page(w, r, "Canvas", s.component("alert", map[string]any{"kind": "danger", "title": "This workspace is incomplete", "message": err.Error()}), pageOptions{})
 		return
 	}
-	s.seedChat()
+	// Which tab: Home at /, or a canvas record at /c/<id>.
+	canvas := r.PathValue("canvas")
+	if !s.app.Chat.HasCanvas(canvas) {
+		http.NotFound(w, r)
+		return
+	}
+	s.seedChat(canvas)
 	blocks, err := s.app.Store.List(chat.BlockType, store.ListOptions{OrderBy: "position"})
 	if err != nil {
 		s.fail(w, err)
 		return
 	}
-	convo, err := s.conversation("/")
+	blocks = chat.OnCanvas(blocks, canvas)
+	convo, err := s.conversation(chat.CanvasPath(canvas))
 	if err != nil {
 		s.fail(w, err)
 		return
@@ -36,6 +43,7 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 	if convo.Notice != "" {
 		b.WriteString(string(convo.Notice))
 	}
+	b.WriteString(string(s.tabBar(canvas)))
 	main, left, right := split(blocks)
 	// A workspace with nothing but the conversation shows just that, in the
 	// middle of the page, the way every other assistant opens. Everything
@@ -140,17 +148,6 @@ func (s *Server) chatBlock(blk *store.Record, convo *conversation) template.HTML
 		return s.component("alert", map[string]any{"kind": "danger", "message": "Could not render the conversation: " + err.Error()})
 	}
 	return out
-}
-
-// seedChat puts a conversation on an empty canvas, so a new workspace has
-// somewhere to talk and a cleared canvas recovers one.
-func (s *Server) seedChat() {
-	if n, err := s.app.Store.Count(chat.BlockType); err != nil || n > 0 {
-		return
-	}
-	s.app.Store.Create(chat.BlockType, s.app.Chat.BlockFields(map[string]any{
-		"component": chat.ComponentName, "props": map[string]any{}, "position": 0, "span": 12,
-	}))
 }
 
 // canvasBlock gathers everything the page needs about one block.

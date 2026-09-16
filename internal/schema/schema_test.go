@@ -184,8 +184,9 @@ func TestCompleteAddsBuiltinFieldsToInternalTypes(t *testing.T) {
 		t.Fatal(err)
 	}
 	builtin, err := schema.LoadFS(fstest.MapFS{
-		"schema/block.yaml": {Data: []byte("name: block\ninternal: true\nfields:\n  component: {type: string, required: true, description: theirs}\n  region: {type: enum, values: [main, left, right], default: main}\n")},
-		"schema/note.yaml":  {Data: []byte("name: note\nfields:\n  title: {type: string}\n  body: {type: text}\n")},
+		"schema/block.yaml":  {Data: []byte("name: block\ninternal: true\nfields:\n  component: {type: string, required: true, description: theirs}\n  region: {type: enum, values: [main, left, right], default: main}\n")},
+		"schema/canvas.yaml": {Data: []byte("name: canvas\ninternal: true\nfields:\n  name: {type: string, required: true}\n")},
+		"schema/note.yaml":   {Data: []byte("name: note\nfields:\n  title: {type: string}\n  body: {type: text}\n")},
 	}, "schema")
 	if err != nil {
 		t.Fatal(err)
@@ -208,6 +209,14 @@ func TestCompleteAddsBuiltinFieldsToInternalTypes(t *testing.T) {
 	}
 	if note, _ := ws.Get("note"); len(note.Fields) != 1 {
 		t.Errorf("a type the person owns must not be completed, got %d fields", len(note.Fields))
+	}
+	// A whole internal type the workspace predates arrives too, so the tabs
+	// exist in a workspace made before there were tabs.
+	if canvas, ok := ws.Get("canvas"); !ok || !canvas.Internal || len(canvas.Fields) != 1 {
+		t.Errorf("a missing internal type should be added from the built-in set, got %+v", canvas)
+	}
+	if names := strings.Join(ws.Names(), ","); names != "block,canvas,note" {
+		t.Errorf("types stay sorted after completion, got %s", names)
 	}
 }
 

@@ -137,8 +137,10 @@ func backTo(from string) string {
 	if from == "/chat" {
 		return from
 	}
-	if id, ok := strings.CutPrefix(from, "/canvas/"); ok && id != "" && !strings.ContainsAny(id, "/?#") {
-		return from
+	for _, prefix := range []string{"/canvas/", "/c/"} {
+		if id, ok := strings.CutPrefix(from, prefix); ok && id != "" && !strings.ContainsAny(id, "/?#") {
+			return from
+		}
 	}
 	return "/"
 }
@@ -177,7 +179,12 @@ func (s *Server) chatSend(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	back := backTo(r.PostForm.Get("from"))
-	rec, err := s.app.Chat.Send(r.Context(), r.PostForm.Get("message"))
+	// The tab the person typed on is the one the assistant builds on.
+	canvas := strings.TrimPrefix(strings.TrimPrefix(back, "/c/"), "/")
+	if !strings.HasPrefix(back, "/c/") {
+		canvas = ""
+	}
+	rec, err := s.app.Chat.SendOn(r.Context(), canvas, r.PostForm.Get("message"))
 	if rec == nil {
 		// Nothing was recorded (empty message, or chat unavailable). The page
 		// already explains the latter, so just show it again.
