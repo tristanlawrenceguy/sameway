@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/design"
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -101,4 +102,21 @@ func (s *Server) script(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/javascript; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Write(s.js)
+}
+
+// baseFile serves an individual file from design/base/.
+func (s *Server) baseFile(w http.ResponseWriter, r *http.Request) {
+	file := r.PathValue("file")
+	if !strings.HasSuffix(file, ".js") {
+		http.NotFound(w, r)
+		return
+	}
+	data, err := design.FS.ReadFile("base/" + file)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	w.Header().Set("Content-Type", "text/javascript; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Write(data)
 }

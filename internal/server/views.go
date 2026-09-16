@@ -68,7 +68,10 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 		"label": "Delete " + t.Name,
 	})))
 	b.WriteString(`</div>`)
-	s.page(w, r, titleOf(t, rec), template.HTML(b.String()), pageOptions{JSONURL: "/api/" + t.Name + "/" + rec.ID})
+	s.page(w, r, titleOf(t, rec), template.HTML(b.String()), pageOptions{
+		JSONURL:      "/api/" + t.Name + "/" + rec.ID,
+		ExtraScripts: detailPageExtraScripts,
+	})
 }
 
 func (s *Server) deleteForm(w http.ResponseWriter, r *http.Request) {

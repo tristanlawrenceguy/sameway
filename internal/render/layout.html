@@ -9,7 +9,8 @@
 {{if .JSONURL}}<link rel="alternate" type="application/json" href="{{.JSONURL}}">
 {{end}}<link rel="describedby" href="/api/describe">
 <script src="/design/sameway.js" defer></script>
-</head>
+{{range .ExtraScripts}}{{.}}
+{{end}}</head>
 <body{{if .Shell}} data-shell="{{.Shell}}"{{end}}>
 <a class="sw-skip" href="#main">Skip to main content</a>
 {{if .Focus}}<a class="sw-skip" href="#{{.Focus}}">{{.FocusLabel}}</a>
