@@ -24,7 +24,7 @@ func (s *Server) confirmDeletePage(w http.ResponseWriter, r *http.Request) {
 	b.WriteString(string(s.component("alert", map[string]any{
 		"kind":    "warning",
 		"title":   fmt.Sprintf("Delete %s?", t.Name),
-		"message": "This cannot be undone.",
+		"message": "It goes from the list; you can put it back from the activity log.",
 	})))
 	fmt.Fprintf(&b, `<form method="post" action="/t/%s/%s/delete">%s</form>`,
 		t.Name, rec.ID, s.component("button", map[string]any{
