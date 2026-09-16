@@ -110,7 +110,7 @@ func (s *Server) hrefFor(r *store.Record) string {
 // activityPage lists every recorded action, newest first, grouped by day.
 func (s *Server) activityPage(w http.ResponseWriter, r *http.Request) {
 	if _, ok := s.app.Types.Get(chat.ActivityType); !ok {
-		s.page(w, r, "Activity", s.component("alert", map[string]any{"kind": "info", "message": "This workspace has no activity type. Run `sameway init --force` to add schema/activity.yaml."}), pageOptions{})
+		s.page(w, r, "Activity", s.component("alert", map[string]any{"kind": "info", "message": "This workspace keeps no log yet. Run sameway init --force to add one."}), pageOptions{})
 		return
 	}
 	recs, err := s.app.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 500})

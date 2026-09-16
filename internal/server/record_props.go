@@ -92,8 +92,8 @@ func (s *Server) renderDetailError(w http.ResponseWriter, r *http.Request, t *sc
 
 	b.WriteString(string(s.component("alert", map[string]any{
 		"kind":    "warning",
-		"title":   "Validation error",
-		"message": "Please fix the issues below.",
+		"title":   "That did not save",
+		"message": "Fix the fields below and try again.",
 	})))
 
 	if ve, ok := verr.(*schema.ValidationError); ok {
