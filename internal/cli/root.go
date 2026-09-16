@@ -26,6 +26,7 @@ Usage:
   sameway describe [--json]             show content types, components, and routes
   sameway check                         validate the workspace schema and components
   sameway chat <message>                talk to the assistant from the terminal
+  sameway mcp                           serve the workspace to an MCP client over stdio
   sameway component new <name>          scaffold a component folder in the workspace
   sameway <type> list [--json]          list records of a content type
   sameway <type> get <id> [--json]
@@ -42,7 +43,9 @@ Global flags:
 // Env carries the streams and working directory so tests can drive the CLI.
 type Env struct {
 	Stdout, Stderr io.Writer
-	Dir            string
+	// Stdin is what `sameway mcp` reads its client from.
+	Stdin io.Reader
+	Dir   string
 }
 
 // Run executes args and returns the exit code.
@@ -81,6 +84,8 @@ func Run(args []string, env Env) int {
 		err = c.checkCmd()
 	case "chat":
 		err = c.chatCmd()
+	case "mcp":
+		err = c.mcpCmd()
 	case "component":
 		err = c.componentCmd()
 	default:

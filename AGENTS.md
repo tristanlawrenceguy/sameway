@@ -26,7 +26,8 @@ runner in tools/a11y-runner.
 | `internal/store/` | SQLite, one table per type | `store.go` |
 | `internal/render/` | component registry, props validation, page layout | `registry.go` |
 | `internal/llm/` | provider-neutral chat + tools; openai.go and anthropic.go | `llm.go` |
-| `internal/chat/` | the tool loop and the canvas tools | `chat.go` |
+| `internal/chat/` | the tool loop, the canvas tools, and the record tools generated from the schema | `chat.go` |
+| `internal/mcp/` | the Model Context Protocol server: the chat tools plus reading, over stdio | `server.go` |
 | `internal/server/` | HTML pages and JSON API | `server.go`, `canvas.go` |
 | `internal/cli/` | the sameway command | `root.go` |
 | `examples/workspaces/starter/` | what `sameway init` copies | |
@@ -46,6 +47,7 @@ runner in tools/a11y-runner.
 | Agent uses the CLI | every command, `--json`, flags in any position, errors that say how to fix | `internal/cli/cli_test.go` |
 | Model uses the canvas tools | add, update, remove, clear, ordering, validation errors, prompt contents, history | `internal/chat/*_test.go` |
 | Model makes and changes content records | create, update and find for every schema type, schema errors, activity log, no record tools without content types | `internal/chat/records_test.go` |
+| Agent drives the workspace over MCP | handshake, tools/list carries the chat tools plus describe and get_record, tools/call changes land in the store and the activity log, protocol and schema errors are answered | `internal/mcp/server_test.go` |
 | Person uses a keyboard in a real browser | Tab order, focus ring, Enter/Space/ArrowDown per component | `tools/a11y-runner/keyboard.mjs` (CI) |
 | Person and agent on live pages | keyboard-only flows, axe on every page, role-and-name targeting, describe matches what renders | `tools/a11y-runner/pages.mjs` (CI) |
 

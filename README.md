@@ -68,6 +68,7 @@ workspace file, because the workspace is meant to be shared.
 | Skip links, landmarks, one h1, visible focus, 44px targets | `data-component` on every rendered component |
 | `sameway note create --set title="Hello"` | `sameway note list --json` |
 | Any block opens on its own page at `/canvas/<id>` | One URL per block, at its largest size |
+| Ask the assistant for a note and find it on `/t/note` | `sameway mcp`: an MCP host gets the assistant's own tools, plus reading |
 
 ## The one contract
 
@@ -112,6 +113,7 @@ sameway serve                      run the web server
 sameway describe [--json]          content types, components, routes, model status
 sameway check                      validate schema and components
 sameway chat "add a table of ..."  talk to the assistant from the terminal
+sameway mcp                        serve the workspace to an MCP client over stdio
 sameway component new <name>       scaffold a component folder
 sameway <type> list|get|create|update|delete [--json]
 ```
