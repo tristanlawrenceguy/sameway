@@ -16,7 +16,8 @@ import (
 // The full log is always on its own page, which is what a screen reader user
 // or an agent uses when they do not want to open this. Workspaces without
 // the activity type get nothing.
-func (s *Server) recentActivity(n int) template.HTML {
+// from is the page the list is on, so an Undo returns to it.
+func (s *Server) recentActivity(n int, from string) template.HTML {
 	if _, ok := s.app.Types.Get(chat.ActivityType); !ok {
 		return ""
 	}
@@ -31,7 +32,7 @@ func (s *Server) recentActivity(n int) template.HTML {
 	var inner strings.Builder
 	inner.WriteString(`<ol class="sw-plain sw-stack--tight" aria-label="Recent activity">`)
 	for _, r := range recs {
-		inner.WriteString("<li>" + string(s.event(r)) + "</li>")
+		inner.WriteString("<li>" + string(s.event(r, from)) + "</li>")
 	}
 	inner.WriteString(`</ol><p class="sw-small" style="margin:var(--sw-space-3) 0 0">`)
 	inner.WriteString(string(s.component("link", map[string]any{"href": "/activity", "label": "All activity"})))
@@ -46,7 +47,9 @@ func (s *Server) recentActivity(n int) template.HTML {
 	return template.HTML(`<h2 class="sw-visually-hidden">Activity</h2>` + string(body))
 }
 
-func (s *Server) event(r *store.Record) template.HTML {
+// event renders one entry. One that can still be undone carries the way
+// to undo it: a form posting to the entry, back to the page from.
+func (s *Server) event(r *store.Record, from string) template.HTML {
 	props := map[string]any{
 		"actor":  r.Fields["actor"],
 		"action": r.Fields["action"],
@@ -61,6 +64,17 @@ func (s *Server) event(r *store.Record) template.HTML {
 	}
 	if href := s.hrefFor(r); href != "" {
 		props["href"] = href
+	}
+	// An undo reads as one: "You undid: Assistant added card Plan".
+	if undoes, _ := r.Fields["undoes"].(string); undoes != "" {
+		summary, _ := r.Fields["summary"].(string)
+		if _, after, ok := strings.Cut(summary, " undid: "); ok {
+			props["action"], props["detail"] = "undid:", after
+			delete(props, "target")
+		}
+	}
+	if s.app.Chat.Undoable(r) {
+		props["undo"], props["from"] = "/activity/"+r.ID+"/undo", from
 	}
 	return s.component("event", props)
 }
@@ -120,7 +134,7 @@ func (s *Server) activityPage(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(&b, `<h2 class="sw-small sw-muted" style="margin-top:var(--sw-space-8)">%s</h2><ol class="sw-plain sw-stack--tight sw-panel" aria-label="Activity on %s">`, template.HTMLEscapeString(d), template.HTMLEscapeString(d))
 			day, open = d, true
 		}
-		b.WriteString("<li>" + string(s.event(rec)) + "</li>")
+		b.WriteString("<li>" + string(s.event(rec, "/activity")) + "</li>")
 	}
 	if open {
 		b.WriteString("</ol>")

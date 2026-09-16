@@ -57,7 +57,13 @@ func TestTabsAreCanvases(t *testing.T) {
 	if on["Home things"] != "" || on["Beds to dig"] != garden || on["Seeds"] != "" {
 		t.Errorf("blocks should land on the tab the person is on, or the one named: %v", on)
 	}
-	if sys := m.seen[2].System; !strings.Contains(sys, "Beds to dig") || strings.Contains(sys, "Home things") {
+	// The listing, not the whole prompt: the recent changes above it may
+	// name blocks on any tab.
+	sys := m.seen[2].System
+	if at := strings.Index(sys, "Current canvas"); at > 0 {
+		sys = sys[at:]
+	}
+	if !strings.Contains(sys, "Beds to dig") || strings.Contains(sys, "Home things") {
 		t.Errorf("the canvas listing should be the current tab's only:\n%s", tail(sys))
 	}
 	if res := lastToolResult(m.seen[2]); res.IsError || !strings.Contains(res.Content, "canvas Home") {

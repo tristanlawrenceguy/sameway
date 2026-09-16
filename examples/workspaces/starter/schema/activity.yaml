@@ -25,3 +25,9 @@ fields:
   detail:
     type: text
     description: Human readable summary.
+  before:
+    type: json
+    description: What the thing was before this change, kept so the change can be undone. Absent when nothing existed before.
+  undoes:
+    type: string
+    description: The id of the entry this one reversed, when this entry is an undo.

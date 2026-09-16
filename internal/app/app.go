@@ -203,6 +203,7 @@ func (a *App) Describe() Description {
 			"mcp":           "sameway mcp (Model Context Protocol over stdio: the tools listed here, plus describe and get_record)",
 			"html_list":     "GET /t/{type}",
 			"html_detail":   "GET /t/{type}/{id}",
+			"undo":          "POST /activity/{id}/undo with from=<path to return to>: reverses one activity entry for a person; agents call the undo_change tool. An entry that can be undone carries before, the thing as it was",
 			"html_props":    "POST /t/{type}/{id}/props, form-encoded with each field named prop-<field>: the inline editor's route, which answers with the page rather than JSON",
 			"canvas_props":  "POST /canvas/{block-id}/props, the same form for a block on the canvas",
 			"css":           "GET /design/sameway.css",

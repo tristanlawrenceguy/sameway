@@ -261,6 +261,6 @@ func (s *Server) canvasDelete(w http.ResponseWriter, r *http.Request) {
 	}
 	name, _ := rec.Fields["component"].(string)
 	props, _ := rec.Fields["props"].(map[string]any)
-	chat.Record(s.app.Store, "human", chat.Change{Action: "removed", Component: name, ID: id, Detail: chat.Summarise(name, props)})
+	chat.Record(s.app.Store, "human", chat.Change{Action: "removed", Component: name, ID: id, Detail: chat.Summarise(name, props), Before: rec.Fields})
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

@@ -120,7 +120,8 @@ func (s *Service) updateRecord(typeName, id string, fields map[string]any) toolR
 	if len(fields) == 0 {
 		return fail("nothing to change: pass the fields to change and their new values")
 	}
-	if _, err := s.Store.Get(t.Name, id); err != nil {
+	was, err := s.Store.Get(t.Name, id)
+	if err != nil {
 		return fail("no %s with id %s. Use find_records to get the id", t.Name, id)
 	}
 	rec, err := s.Store.Update(t.Name, id, fields)
@@ -130,7 +131,7 @@ func (s *Service) updateRecord(typeName, id string, fields map[string]any) toolR
 	title := recordTitle(t, rec)
 	return toolResult{
 		text:   fmt.Sprintf("updated %s %s: %q, at /t/%s/%s.", t.Name, rec.ID, title, t.Name, rec.ID),
-		change: &Change{Action: "updated", Component: t.Name, ID: rec.ID, Detail: title, Href: "/t/" + t.Name + "/" + rec.ID},
+		change: &Change{Action: "updated", Component: t.Name, ID: rec.ID, Detail: title, Href: "/t/" + t.Name + "/" + rec.ID, Before: was.Fields},
 	}
 }
 
@@ -181,4 +182,24 @@ func (s *Service) contentCatalogue() string {
 		fmt.Fprintf(&b, "\n%s: %s\n%s\n", t.Name, t.Description, raw)
 	}
 	return b.String()
+}
+
+// deleteRecord is not a tool: a record goes when a person deletes it, or
+// when its creation is undone. Either way the log keeps what it was.
+func (s *Service) deleteRecord(typeName, id string) toolResult {
+	t, err := s.contentType(typeName)
+	if err != nil {
+		return fail("%v", err)
+	}
+	rec, err := s.Store.Get(t.Name, id)
+	if err != nil {
+		return fail("no %s with id %s", t.Name, id)
+	}
+	if err := s.Store.Delete(t.Name, id); err != nil {
+		return fail("could not delete %s %s: %v", t.Name, id, err)
+	}
+	return toolResult{
+		text:   fmt.Sprintf("deleted %s %s", t.Name, id),
+		change: &Change{Action: "deleted", Component: t.Name, ID: id, Detail: recordTitle(t, rec), Before: rec.Fields},
+	}
 }

@@ -32,8 +32,30 @@ func (s *Store) Create(typeName string, fields map[string]any) (*Record, error) 
 	if err != nil {
 		return nil, err
 	}
+	return s.insert(t, NewID(), clean)
+}
+
+// Restore puts back a record that was deleted, under the id it had, so
+// everything that pointed at it points at it again. It is how an undo
+// works, and it refuses an id that is in use.
+func (s *Store) Restore(typeName, id string, fields map[string]any) (*Record, error) {
+	t, err := s.typ(typeName)
+	if err != nil {
+		return nil, err
+	}
+	clean, err := t.Normalize(fields)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := s.Get(t.Name, id); err == nil {
+		return nil, fmt.Errorf("%s %s already exists", t.Name, id)
+	}
+	return s.insert(t, id, clean)
+}
+
+func (s *Store) insert(t *schema.Type, id string, clean map[string]any) (*Record, error) {
 	now := time.Now().UTC()
-	rec := &Record{ID: NewID(), Type: t.Name, CreatedAt: now, UpdatedAt: now, Fields: clean}
+	rec := &Record{ID: id, Type: t.Name, CreatedAt: now, UpdatedAt: now, Fields: clean}
 	cols := []string{"id", "created_at", "updated_at"}
 	args := []any{rec.ID, now.Format(time.RFC3339Nano), now.Format(time.RFC3339Nano)}
 	for _, f := range t.Fields {

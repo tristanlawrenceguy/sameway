@@ -76,7 +76,7 @@ func (s *Server) conversation(from string) (*conversation, error) {
 	if err != nil {
 		return nil, err
 	}
-	for _, m := range msgs {
+	for i, m := range msgs {
 		if m.Fields["role"] == "user" {
 			out.LastTurn = m.CreatedAt
 		}
@@ -84,8 +84,8 @@ func (s *Server) conversation(from string) (*conversation, error) {
 		id := "msg-" + m.ID
 		out.LatestID = id
 		view.Messages = append(view.Messages, chatMessage{ID: id, HTML: s.component("message", map[string]any{
-			"role": m.Fields["role"], "content": m.Fields["content"], "id": id,
-			"time": m.CreatedAt.Local().Format("15:04"), "changes": m.Fields["changes"],
+			"role": m.Fields["role"], "content": m.Fields["content"], "id": id, "from": from,
+			"time": m.CreatedAt.Local().Format("15:04"), "changes": s.undoable(m.Fields["changes"], i == len(msgs)-1),
 		})})
 	}
 	out.Count = len(msgs)
@@ -100,7 +100,7 @@ func (s *Server) conversation(from string) (*conversation, error) {
 		return nil, err
 	}
 	out.Body = template.HTML(body.String())
-	out.Activity = s.recentActivity(8)
+	out.Activity = s.recentActivity(8, from)
 	return out, nil
 }
 

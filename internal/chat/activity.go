@@ -23,23 +23,51 @@ type Change struct {
 	// lead to it: a block's own page, a record's page, a tab. Empty when
 	// the thing is gone.
 	Href string `json:"href,omitempty"`
+	// Activity is the log entry this change was written to, so a receipt
+	// can offer to undo it.
+	Activity string `json:"activity,omitempty"`
+	// Undoes is the entry this change reversed, when it is an undo.
+	Undoes string `json:"undoes,omitempty"`
+	// Before is the thing as it was before the change, kept in the log so
+	// the change can be undone. It is not part of a receipt.
+	Before map[string]any `json:"-"`
+	// Undone is the sentence of the entry this change reversed, for the
+	// sentence of this one.
+	Undone string `json:"-"`
 }
 
-// Record writes one activity entry. Missing activity type is not an error:
-// older workspaces simply have no log. The summary is the whole event as
-// one sentence, because that is what a list of events has to show.
-func Record(st *store.Store, actor string, c Change) {
-	if _, ok := st.Types().Get(ActivityType); !ok {
-		return
+// Record writes one activity entry and returns its id. A missing activity
+// type is not an error: older workspaces simply have no log, and a log
+// without a before field is a log that cannot be undone. The summary is
+// the whole event as one sentence, because that is what a list of events
+// has to show.
+func Record(st *store.Store, actor string, c Change) string {
+	t, ok := st.Types().Get(ActivityType)
+	if !ok {
+		return ""
 	}
-	st.Create(ActivityType, map[string]any{
+	fields := map[string]any{
 		"summary":   summarise(actor, c),
 		"actor":     actor,
 		"action":    c.Action,
 		"target":    c.Component,
 		"target_id": c.ID,
 		"detail":    c.Detail,
-	})
+		"undoes":    c.Undoes,
+	}
+	if c.Before != nil {
+		fields["before"] = c.Before
+	}
+	for k := range fields {
+		if _, has := t.Field(k); !has {
+			delete(fields, k)
+		}
+	}
+	rec, err := st.Create(ActivityType, fields)
+	if err != nil {
+		return ""
+	}
+	return rec.ID
 }
 
 // summarise says what happened in a person's words: "Assistant added card
@@ -48,6 +76,9 @@ func summarise(actor string, c Change) string {
 	who := map[string]string{"human": "You", "assistant": "Assistant", "system": "System"}[actor]
 	if who == "" {
 		who = actor
+	}
+	if c.Undone != "" {
+		return who + " undid: " + c.Undone
 	}
 	parts := []string{who, c.Action}
 	if c.Component != "" {
