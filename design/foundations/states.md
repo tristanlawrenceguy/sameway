@@ -32,6 +32,10 @@ Where it appears:
 - Blocks touched in the last turn get `data-changed="added"` or
   `"updated"`. They flash once in the actor's colour, and a visually hidden
   note ("added in the last turn") is read by screen readers.
+- Those blocks also get `data-arrival="1"`, `"2"`, ... in the order they
+  changed, and arrive on the page in that order, one after another, each in
+  three stages (see motion.md, Arrival). The conversation block never
+  arrives; it is the person's own tool.
 - Everything, by anyone, lands in the **activity** content type:
   `/activity`, `/api/activity`, `sameway activity list`.
 
@@ -58,6 +62,7 @@ Query by attribute, act by role and name:
 ```
 [data-component=status][data-state]        is anything in flight, how did it end
 [data-block-id][data-changed]              what changed in the last turn
+[data-block-id][data-arrival]              its place in the order changes arrive
 [data-block-id][data-actor=human]          blocks a person has touched
 [data-component=message][data-role=error]  failures, in the transcript
 .sw-message__changes li[data-action]       the receipt for a reply
