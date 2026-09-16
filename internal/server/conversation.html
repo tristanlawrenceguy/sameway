@@ -1,5 +1,5 @@
 <div class="sw-region__head">{{.Status}}</div>
-{{if .Messages}}<ol class="sw-plain sw-stack sw-chat__log" aria-label="Messages" tabindex="0">
+{{if .Messages}}<ol class="sw-plain sw-stack sw-chat__log" aria-label="Messages" tabindex="-1">
 {{range .Messages}}<li style="view-transition-name: {{.ID}}; view-transition-class: sw-vt-item">{{.HTML}}</li>
 {{end}}</ol>
 {{else}}<p class="sw-empty">Ask for anything. What you ask for appears on the canvas.</p>
