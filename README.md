@@ -64,7 +64,7 @@ workspace file, because the workspace is meant to be shared.
 |---|---|
 | `/` chat page with a canvas the model edits | `POST /api/chat` with `{"message": "..."}` |
 | `/t/note` list and detail pages for every content type | `GET/POST/PUT/DELETE /api/note` |
-| Server-rendered HTML, works without JavaScript | `GET /api/describe` for every schema, manifest, and route |
+| Server-rendered HTML, works without JavaScript | `GET /api/describe` for every schema, manifest, tool and route, or `/api/describe/types/note` for one part |
 | Skip links, landmarks, one h1, visible focus, 44px targets | `data-component` on every rendered component |
 | `sameway note create --set title="Hello"` | `sameway note list --json` |
 | Any block opens on its own page at `/canvas/<id>` | One URL per block, at its largest size |

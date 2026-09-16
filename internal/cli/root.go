@@ -23,7 +23,7 @@ Usage:
   sameway init [dir] [--force]          create a workspace from the starter preset
   sameway open [--addr host:port]       run the workspace and open it in a browser
   sameway serve [--addr host:port]      run the web server for this workspace
-  sameway describe [--json]             show content types, components, and routes
+  sameway describe [--json] [part [name]]  show content types, components, tools and routes, or one part
   sameway check                         validate the workspace schema and components
   sameway chat <message>                talk to the assistant from the terminal
   sameway mcp                           serve the workspace to an MCP client over stdio

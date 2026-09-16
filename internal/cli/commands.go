@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -113,6 +114,21 @@ func (c *ctx) describeCmd() error {
 	}
 	defer a.Close()
 	d := a.Describe()
+	if len(c.args) > 0 {
+		// A part is read for its content, and that is JSON whether or not
+		// --json was given: sameway describe types note.
+		name := ""
+		if len(c.args) > 1 {
+			name = c.args[1]
+		}
+		v, err := d.Part(c.args[0], name)
+		if err != nil {
+			return err
+		}
+		enc := json.NewEncoder(c.Stdout)
+		enc.SetIndent("", "  ")
+		return enc.Encode(v)
+	}
 	c.print(d, func() {
 		fmt.Fprintf(c.Stdout, "Workspace: %s (%s)\n", d.Workspace, a.Workspace.Dir)
 		fmt.Fprintf(c.Stdout, "Model:     %s %s ready=%v\n", d.LLM.Provider, d.LLM.Model, d.LLM.Ready)

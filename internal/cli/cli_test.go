@@ -219,3 +219,16 @@ func TestCheckReportsBrokenExamples(t *testing.T) {
 		t.Errorf("check should name the broken example: %+v", r)
 	}
 }
+
+// One part of the description is read from the command line the same way an
+// agent reads it over HTTP, and is JSON either way.
+func TestDescribeOnePart(t *testing.T) {
+	dir := initWorkspace(t)
+	r := run(t, dir, "describe", "types", "note")
+	if r.code != 0 || !strings.Contains(r.stdout, `"body"`) || strings.Contains(r.stdout, `"components"`) {
+		t.Errorf("describe types note should print the note type alone: %+v", r)
+	}
+	if r := run(t, dir, "describe", "nope"); r.code == 0 || !strings.Contains(r.stderr, "types, components, tools, routes, llm") {
+		t.Errorf("an unknown part should name the parts: %+v", r)
+	}
+}
