@@ -95,10 +95,17 @@ func (s *Server) deleteForm(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	if err := s.app.Store.Delete(t.Name, r.PathValue("id")); err != nil {
+	rec, err := s.app.Store.Get(t.Name, r.PathValue("id"))
+	if err != nil {
 		s.fail(w, err)
 		return
 	}
+	if err := s.app.Store.Delete(t.Name, rec.ID); err != nil {
+		s.fail(w, err)
+		return
+	}
+	// Logged with what it was, so the deletion can be undone.
+	chat.Record(s.app.Store, "human", chat.Change{Action: "deleted", Component: t.Name, ID: rec.ID, Detail: titleOf(t, rec), Before: rec.Fields})
 	http.Redirect(w, r, "/t/"+t.Name, http.StatusSeeOther)
 }
 

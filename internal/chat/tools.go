@@ -78,6 +78,7 @@ func (s *Service) Tools() []llm.Tool {
 			}, "summary", "tool")},
 		{Name: "clear_canvas", Description: "Remove every block from the canvas except the chat, which stays so the person can keep talking. Only when the person asks to start over. To remove the chat too, call remove_component on it.",
 			Schema: obj(map[string]any{})},
+		undoTool,
 	}, append(s.recordTools(), s.canvasTools()...)...)
 }
 
@@ -139,16 +140,9 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 	case "update_component":
 		return s.updateComponent(args.ID, args.Props, look{Span: args.Span, Position: args.Position, Frame: args.Frame, Tone: args.Tone, Region: args.Region, Canvas: deref(args.Canvas), SetCanvas: args.Canvas != nil})
 	case "remove_component":
-		rec, err := s.Store.Get(BlockType, args.ID)
-		if err != nil {
-			return fail("could not remove block %s: %v", args.ID, err)
-		}
-		if err := s.Store.Delete(BlockType, args.ID); err != nil {
-			return fail("could not remove block %s: %v", args.ID, err)
-		}
-		name, _ := rec.Fields["component"].(string)
-		props, _ := rec.Fields["props"].(map[string]any)
-		return toolResult{text: "removed block " + args.ID, change: &Change{Action: "removed", Component: name, ID: args.ID, Detail: Summarise(name, props)}}
+		return s.removeBlock(args.ID)
+	case "undo_change":
+		return s.Undo(args.ID)
 	case "clear_canvas":
 		// Starting over means clearing the content, not deleting the
 		// conversation the person is typing into.
@@ -156,7 +150,7 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 		if err != nil {
 			return fail("could not read the canvas: %v", err)
 		}
-		n := 0
+		var gone []*store.Record
 		for _, b := range blocks {
 			if b.Fields["component"] == ComponentName {
 				continue
@@ -168,12 +162,13 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 			if err := s.Store.Delete(BlockType, b.ID); err != nil {
 				return fail("could not clear the canvas: %v", err)
 			}
-			n++
+			gone = append(gone, b)
 		}
-		if n == 0 {
+		if len(gone) == 0 {
 			return toolResult{text: "the canvas was already empty"}
 		}
-		return toolResult{text: fmt.Sprintf("cleared %d blocks; the chat stayed", n), change: &Change{Action: "cleared", Detail: fmt.Sprintf("%d blocks", n)}}
+		// What was cleared goes in the log, so it can be put back whole.
+		return toolResult{text: fmt.Sprintf("cleared %d blocks; the chat stayed", len(gone)), change: &Change{Action: "cleared", Detail: fmt.Sprintf("%d blocks", len(gone)), Before: map[string]any{"blocks": keep(gone)}}}
 	}
 	return fail("unknown tool %s", call.Name)
 }
@@ -264,5 +259,5 @@ func (s *Service) updateComponent(id string, props map[string]any, l look) toolR
 	if _, err := s.Store.Update(BlockType, id, s.fields(BlockType, fields)); err != nil {
 		return fail("could not update block %s: %v", id, err)
 	}
-	return toolResult{text: "updated " + strings.Join(what, " and ") + " on block " + id, change: &Change{Action: "updated", Component: name, ID: id, Detail: Summarise(name, props), Href: "/canvas/" + id}}
+	return toolResult{text: "updated " + strings.Join(what, " and ") + " on block " + id, change: &Change{Action: "updated", Component: name, ID: id, Detail: Summarise(name, props), Href: "/canvas/" + id, Before: rec.Fields}}
 }

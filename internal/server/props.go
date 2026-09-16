@@ -67,7 +67,7 @@ func (s *Server) blockProps(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	chat.Record(s.app.Store, "human", chat.Change{
-		Action: "updated", Component: name, ID: rec.ID, Detail: chat.Summarise(name, clean),
+		Action: "updated", Component: name, ID: rec.ID, Detail: chat.Summarise(name, clean), Before: rec.Fields,
 	})
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

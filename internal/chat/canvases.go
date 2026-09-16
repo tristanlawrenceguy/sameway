@@ -121,18 +121,24 @@ func (s *Service) removeCanvas(id string) toolResult {
 	}
 	name, _ := rec.Fields["name"].(string)
 	blocks, _ := s.Store.List(BlockType, store.ListOptions{})
-	n := 0
+	var gone []*store.Record
 	for _, b := range OnCanvas(blocks, id) {
 		if s.Store.Delete(BlockType, b.ID) == nil {
-			n++
+			gone = append(gone, b)
 		}
 	}
 	if err := s.Store.Delete(CanvasType, id); err != nil {
 		return fail("could not remove the canvas: %v", err)
 	}
+	// The tab and its blocks go into the log together, so undoing this
+	// puts the whole tab back.
+	before := map[string]any{"blocks": keep(gone)}
+	for k, v := range rec.Fields {
+		before[k] = v
+	}
 	return toolResult{
-		text:   fmt.Sprintf("removed canvas %s (%q) and the %d blocks on it", id, name, n),
-		change: &Change{Action: "removed", Component: CanvasType, ID: id, Detail: name},
+		text:   fmt.Sprintf("removed canvas %s (%q) and the %d blocks on it", id, name, len(gone)),
+		change: &Change{Action: "removed", Component: CanvasType, ID: id, Detail: name, Before: before},
 	}
 }
 

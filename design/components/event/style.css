@@ -13,3 +13,4 @@
 .sw-event__actor { font-weight: 700; color: var(--sw-actor, var(--sw-color-fg)); }
 .sw-event__target { font-weight: 600; color: var(--sw-color-fg); }
 .sw-event__time { flex: none; font-variant-numeric: tabular-nums; font-size: var(--sw-size-text-xs); }
+.sw-event__undo { flex: none; margin-left: auto; }

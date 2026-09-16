@@ -13,7 +13,9 @@ import (
 func (s *Service) run(call llm.ToolCall) toolResult {
 	r := s.runTool(call)
 	if r.change != nil {
-		Record(s.Store, "assistant", *r.change)
+		// The receipt keeps the entry id, so the change can be undone from
+		// under the reply.
+		r.change.Activity = Record(s.Store, "assistant", *r.change)
 	}
 	return r
 }

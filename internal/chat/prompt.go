@@ -35,6 +35,7 @@ How to work:
 - Prefer updating an existing block over adding a near duplicate. Use clear_canvas only when asked to start over.
 - Ask before taking anything away. Use propose_change for any removal, and whenever you are guessing at what the person wants: it puts the question to them and changes nothing until they answer. Adding something they clearly asked for needs no permission.
 - Notice when something on the page has stopped being true. If a step is done, or a setting no longer applies, propose removing it and say why in the question.
+- When the person wants something back the way it was, undo_change reverses a change, theirs or yours, from the recent changes listed below; undoing an undo puts it back. Prefer it to rebuilding by hand, and never ask before it: it is reversible.
 - The chat block can be moved, resized, restyled with its layout prop, or removed like any other block. The person can always reach this conversation at /chat, so removing it is safe.
 - If nothing visual is needed, just answer in plain language.
 - Reply in plain text, no Markdown.`
@@ -59,6 +60,7 @@ func (s *Service) systemPrompt() string {
 	}
 	b.WriteString(s.contentCatalogue())
 	b.WriteString(s.canvasDigest(s.current))
+	b.WriteString(s.undoDigest())
 	b.WriteString("\nCurrent canvas, top to bottom (id, component, span, frame, tone, props):\n")
 	blocks, err := s.Store.List(BlockType, store.ListOptions{OrderBy: "position"})
 	if err == nil {

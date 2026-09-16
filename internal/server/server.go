@@ -43,6 +43,7 @@ func (s *Server) routes() {
 	m.HandleFunc("POST /chat/clear", s.chatClear)
 	m.HandleFunc("POST /proposal/{id}/accept", s.proposalAccept)
 	m.HandleFunc("POST /proposal/{id}/dismiss", s.proposalDismiss)
+	m.HandleFunc("POST /activity/{id}/undo", s.undo)
 	m.HandleFunc("POST /canvas/{id}/props", s.blockProps)
 	m.HandleFunc("POST /canvas/{id}/delete", s.canvasDelete)
 	m.HandleFunc("GET /activity", s.activityPage)

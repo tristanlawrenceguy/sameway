@@ -1,6 +1,6 @@
 {
   "name": "message",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "One turn in a conversation: who said it, what was said, and for assistant turns the receipt of canvas changes it made. Render inside a list so the conversation has structure.",
   "props": {
     "type": "object",
@@ -11,6 +11,7 @@
       "content": { "type": "string", "format": "multiline", "minLength": 1, "description": "Plain text. Blank lines start a new paragraph." },
       "author": { "type": "string", "description": "Display name. Defaults to You, Assistant, or System by role." },
       "time": { "type": "string", "description": "Human readable time such as 14:05." },
+      "from": { "type": "string", "description": "The page the message is shown on, so an Undo in the receipt returns there." },
       "changes": {
         "type": "array",
         "description": "Canvas changes made during this turn, shown as a receipt under the text.",
@@ -23,7 +24,8 @@
             "component": { "type": "string" },
             "id": { "type": "string", "description": "Block id the change applied to, when it still exists." },
             "detail": { "type": "string" },
-            "href": { "type": "string", "description": "The page of the thing changed, so the receipt leads to it. Left out when the thing is gone." }
+            "href": { "type": "string", "description": "The page of the thing changed, so the receipt leads to it. Left out when the thing is gone." },
+            "activity": { "type": "string", "description": "The activity entry of this change, given only while it can still be undone; the receipt then offers Undo." }
           }
         }
       },
@@ -43,7 +45,7 @@
   },
   "examples": [
     { "name": "default", "props": { "role": "user", "content": "Add a grocery list with milk, eggs and bread.", "time": "14:05", "id": "msg-1" }, "file": "examples/default.html" },
-    { "name": "assistant", "props": { "role": "assistant", "content": "Done. I added a list with three items.\n\nWant it as a table instead?", "time": "14:05", "changes": [ { "action": "added", "component": "heading", "detail": "Shopping", "href": "/canvas/h1" }, { "action": "added", "component": "list" } ] }, "file": "examples/assistant.html" },
+    { "name": "assistant", "props": { "role": "assistant", "content": "Done. I added a list with three items.\n\nWant it as a table instead?", "time": "14:05", "changes": [ { "action": "added", "component": "heading", "detail": "Shopping", "href": "/canvas/h1", "activity": "a1" }, { "action": "added", "component": "list" } ] }, "file": "examples/assistant.html" },
     { "name": "error", "props": { "role": "error", "content": "Could not reach the model at http://localhost:11434." }, "file": "examples/error.html" }
   ]
 }
