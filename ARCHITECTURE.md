@@ -184,6 +184,14 @@ with an explanation if they are removed.
 The page is full-page navigation only: the form posts, the server runs the
 tool loop, and redirects to the newest message. No JavaScript is required.
 
+The same tools are a Model Context Protocol server: `sameway mcp` speaks
+newline-delimited JSON-RPC on stdin and stdout, which is how Claude Code,
+Claude Desktop and the other MCP hosts start one. `tools/list` is the chat
+service's list plus `describe` and `get_record`; `tools/call` runs each tool
+through the chat service, so an agent in an MCP host meets the same schema
+checks and writes to the same activity log as the assistant, and a tool added
+to the chat is on MCP the same moment.
+
 ### 5.2 One block, many sizes
 
 A block is placed in a region (`main`, or a full-height `left`/`right` pane)

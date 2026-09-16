@@ -199,6 +199,7 @@ func (a *App) Describe() Description {
 			"update":        "PUT /api/{type}/{id} with a JSON object of fields to change",
 			"delete":        "DELETE /api/{type}/{id}",
 			"chat":          "POST /api/chat with {\"message\": \"...\"}",
+			"mcp":           "sameway mcp (Model Context Protocol over stdio: the tools listed here, plus describe and get_record)",
 			"html_list":     "GET /t/{type}",
 			"html_detail":   "GET /t/{type}/{id}",
 			"css":           "GET /design/sameway.css",

@@ -12,6 +12,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/examples"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/mcp"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
@@ -137,6 +138,24 @@ func (c *ctx) describeCmd() error {
 		fmt.Fprintln(c.Stdout, "\nRun with --json for schemas and manifests.")
 	})
 	return nil
+}
+
+// mcpCmd serves the workspace to one Model Context Protocol client on stdin
+// and stdout, which is how MCP hosts start a server. Nothing else may be
+// printed on stdout while it runs; anything for a person goes to stderr.
+func (c *ctx) mcpCmd() error {
+	a, err := c.load()
+	if err != nil {
+		return err
+	}
+	defer a.Close()
+	in := c.Stdin
+	if in == nil {
+		in = os.Stdin
+	}
+	fmt.Fprintf(c.Stderr, "sameway mcp: serving %q from %s\n", a.Workspace.Config.Name, a.Workspace.Dir)
+	srv := &mcp.Server{App: a, Version: Version, In: in, Out: c.Stdout}
+	return srv.Serve(context.Background())
 }
 
 func (c *ctx) checkCmd() error {

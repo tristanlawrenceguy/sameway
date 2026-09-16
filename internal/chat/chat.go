@@ -88,11 +88,10 @@ func (s *Service) Send(ctx context.Context, text string) (*store.Record, error) 
 		req.Messages = append(req.Messages, llm.Message{Role: llm.RoleAssistant, Content: resp.Text, ToolCalls: resp.ToolCalls})
 		results := llm.Message{Role: llm.RoleTool}
 		for _, call := range resp.ToolCalls {
-			r := s.runTool(call)
+			r := s.run(call)
 			results.ToolResults = append(results.ToolResults, llm.ToolResult{CallID: call.ID, Content: r.text, IsError: r.isErr})
 			if r.change != nil {
 				changes = append(changes, *r.change)
-				Record(s.Store, "assistant", *r.change)
 			}
 		}
 		req.Messages = append(req.Messages, results)
