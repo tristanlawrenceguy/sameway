@@ -35,24 +35,6 @@ func (s *Store) Create(typeName string, fields map[string]any) (*Record, error) 
 	return s.insert(t, NewID(), clean)
 }
 
-// Restore puts back a record that was deleted, under the id it had, so
-// everything that pointed at it points at it again. It is how an undo
-// works, and it refuses an id that is in use.
-func (s *Store) Restore(typeName, id string, fields map[string]any) (*Record, error) {
-	t, err := s.typ(typeName)
-	if err != nil {
-		return nil, err
-	}
-	clean, err := t.Normalize(fields)
-	if err != nil {
-		return nil, err
-	}
-	if _, err := s.Get(t.Name, id); err == nil {
-		return nil, fmt.Errorf("%s %s already exists", t.Name, id)
-	}
-	return s.insert(t, id, clean)
-}
-
 func (s *Store) insert(t *schema.Type, id string, clean map[string]any) (*Record, error) {
 	now := time.Now().UTC()
 	rec := &Record{ID: id, Type: t.Name, CreatedAt: now, UpdatedAt: now, Fields: clean}
@@ -67,6 +49,7 @@ func (s *Store) insert(t *schema.Type, id string, clean map[string]any) (*Record
 	if _, err := s.db.Exec(stmt, args...); err != nil {
 		return nil, fmt.Errorf("insert %s: %w", t.Name, err)
 	}
+	s.wrote(rec)
 	return rec, nil
 }
 
@@ -161,6 +144,7 @@ func (s *Store) Update(typeName, id string, fields map[string]any) (*Record, err
 	}
 	current.Fields = clean
 	current.UpdatedAt = now
+	s.wrote(current)
 	return current, nil
 }
 
@@ -176,6 +160,9 @@ func (s *Store) Delete(typeName, id string) error {
 	}
 	if n, _ := res.RowsAffected(); n == 0 {
 		return ErrNotFound
+	}
+	if s.AfterWrite != nil {
+		s.AfterWrite(t.Name, id, nil)
 	}
 	return nil
 }

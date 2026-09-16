@@ -99,7 +99,7 @@ my-workspace/
   workspace.yaml   name, server address, model, chat settings
   schema/          content types
   components/      your own components, same layout as built-ins
-  content/         exported records (milestone 3)
+  content/         every record as Markdown with front matter, kept current
   data.db          live SQLite store, ignored by git
 ```
 
@@ -113,6 +113,7 @@ sameway init [dir]                 create a workspace from the starter preset
 sameway serve                      run the web server
 sameway describe [--json]          content types, components, routes, model status
 sameway check                      validate schema and components
+sameway export | import            content/ from the database, or back into it
 sameway chat "add a table of ..."  talk to the assistant from the terminal
 sameway mcp                        serve the workspace to an MCP client over stdio
 sameway component new <name>       scaffold a component folder
