@@ -1,0 +1,14 @@
+{
+  "name": "reading",
+  "description": "A reading list with what is being read now.",
+  "use": {
+    "when": "the person keeps a list of things to read, watch or listen to, and wants the current one in view.",
+    "not": "a single recommendation, which is a card, or notes on a book, which are a record.",
+    "with": "a note record for thoughts on each, linked from the card."
+  },
+  "blocks": [
+    { "key": "title", "component": "heading", "props": { "text": "Reading", "level": 2 }, "span": 12, "frame": "bare" },
+    { "key": "list", "component": "list", "props": { "items": ["The next book", "The one after"], "label": "To read", "ordered": true }, "span": 8 },
+    { "key": "now", "component": "card", "props": { "title": "Now reading", "body": "What it is and where you are in it.", "meta": "Started this week" }, "span": 4 }
+  ]
+}

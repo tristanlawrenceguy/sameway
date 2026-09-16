@@ -17,6 +17,9 @@ func (s *Service) run(call llm.ToolCall) toolResult {
 		// under the reply.
 		r.change.Activity = Record(s.Store, "assistant", *r.change)
 	}
+	for i := range r.changes {
+		r.changes[i].Activity = Record(s.Store, "assistant", r.changes[i])
+	}
 	return r
 }
 

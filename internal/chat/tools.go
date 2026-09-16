@@ -79,6 +79,7 @@ func (s *Service) Tools() []llm.Tool {
 		{Name: "clear_canvas", Description: "Remove every block from the canvas except the chat, which stays so the person can keep talking. Only when the person asks to start over. To remove the chat too, call remove_component on it.",
 			Schema: obj(map[string]any{})},
 		undoTool,
+		s.arrangementTool(),
 		{Name: "set_pace", Description: "How changes arrive on the page, when the person asks for it slower, faster or without motion: calm (the default: where, then what, then the words, one change at a time with a pause between), quick (the same in a third of the time) or still (everything at once). Set it and say so; it is reversible, so never ask first.",
 			Schema: obj(map[string]any{"pace": map[string]any{"type": "string", "enum": []string{"calm", "quick", "still"}}}, "pace")},
 	}, append(s.recordTools(), s.canvasTools()...)...)
@@ -90,6 +91,9 @@ type toolResult struct {
 	text   string
 	isErr  bool
 	change *Change
+	// changes is for a tool that makes several, such as an arrangement:
+	// each is logged and shown on its own.
+	changes []Change
 }
 
 func fail(format string, args ...any) toolResult {
@@ -116,6 +120,7 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 		Query     string         `json:"query"`
 		Limit     int            `json:"limit"`
 		Pace      string         `json:"pace"`
+		Fills     map[string]any `json:"fills"`
 	}
 	if len(call.Args) > 0 {
 		if err := json.Unmarshal(call.Args, &args); err != nil {
@@ -146,6 +151,8 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 		return s.removeBlock(args.ID)
 	case "undo_change":
 		return s.Undo(args.ID)
+	case "add_arrangement":
+		return s.addArrangement(args.Name, args.Fills)
 	case "set_pace":
 		if s.SetPace == nil {
 			return fail("this workspace has no settings file to keep a pace in")

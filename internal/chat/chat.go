@@ -111,6 +111,7 @@ func (s *Service) SendOn(ctx context.Context, canvas, text string) (*store.Recor
 			if r.change != nil {
 				changes = append(changes, *r.change)
 			}
+			changes = append(changes, r.changes...)
 		}
 		req.Messages = append(req.Messages, results)
 		// The canvas changed, so refresh the system prompt for the next round.

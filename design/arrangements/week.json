@@ -1,0 +1,15 @@
+{
+  "name": "week",
+  "description": "A week planned: what is on, what is to do, and room for notes.",
+  "use": {
+    "when": "the person wants to plan or see their week: appointments, things to do, a few notes.",
+    "not": "a single event, which is a calendar block, or a plain list of tasks with no dates, which is a list.",
+    "with": "events as records, so each is on its own page too."
+  },
+  "blocks": [
+    { "key": "title", "component": "heading", "props": { "text": "This week", "level": 2 }, "span": 12, "frame": "bare" },
+    { "key": "calendar", "component": "calendar", "props": { "month": "2026-09", "detail": "brief", "caption": "This week" }, "region": "right" },
+    { "key": "todo", "component": "list", "props": { "items": ["Book the dentist", "Call the plumber", "Send the invoice"], "label": "To do" }, "span": 8 },
+    { "key": "notes", "component": "text", "props": { "content": "Notes for the week go here.", "muted": true }, "span": 4, "frame": "bare" }
+  ]
+}

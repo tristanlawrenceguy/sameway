@@ -7,7 +7,7 @@ import (
 )
 
 // Parts names the sections of a Description that can be read on their own.
-var Parts = []string{"types", "components", "tools", "routes", "llm"}
+var Parts = []string{"types", "components", "arrangements", "tools", "routes", "llm"}
 
 // Part is one section of the description, or one named item in a section,
 // so an agent reads what it needs without the whole document: the fields of
@@ -53,6 +53,16 @@ func (d Description) Part(part, name string) (any, error) {
 			items = append(items, c.Name)
 			if c.Name == name {
 				found = c
+			}
+		}
+	case "arrangements":
+		if name == "" {
+			return d.Arrangements, nil
+		}
+		for _, a := range d.Arrangements {
+			items = append(items, a.Name)
+			if a.Name == name {
+				found = a
 			}
 		}
 	case "tools":

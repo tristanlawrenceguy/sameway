@@ -22,6 +22,9 @@ func builtins(t *testing.T) *render.Registry {
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		t.Fatal(err)
 	}
+	if err := reg.LoadArrangementsFS(design.FS, "arrangements", "builtin"); err != nil {
+		t.Fatal(err)
+	}
 	return reg
 }
 

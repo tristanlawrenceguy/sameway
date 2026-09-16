@@ -5,14 +5,15 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/tristanlawrenceguy/sameway/internal/content"
 	"io/fs"
+	"path/filepath"
 	"sort"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/design"
 	"github.com/tristanlawrenceguy/sameway/examples"
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/content"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
@@ -98,8 +99,15 @@ func NewRegistry(workspaceComponents string) (*render.Registry, error) {
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		return nil, err
 	}
+	if err := reg.LoadArrangementsFS(design.FS, "arrangements", "builtin"); err != nil {
+		return nil, err
+	}
 	if workspaceComponents != "" {
 		if err := reg.LoadDir(workspaceComponents, "workspace"); err != nil {
+			return nil, err
+		}
+		// A workspace may keep arrangements of its own beside its components.
+		if err := reg.LoadArrangementsDir(filepath.Join(filepath.Dir(workspaceComponents), "arrangements"), "workspace"); err != nil {
 			return nil, err
 		}
 	}
@@ -152,6 +160,8 @@ type Description struct {
 	LLM        DescribedLLM         `json:"llm"`
 	Types      []DescribedType      `json:"types"`
 	Components []DescribedComponent `json:"components"`
+	// Arrangements are whole pages of thought the assistant can apply.
+	Arrangements []*render.Arrangement `json:"arrangements"`
 	// Tools is what the chat assistant can do, straight from the tool loop,
 	// so an agent reads the same list the model is given.
 	Tools  []DescribedTool   `json:"tools"`
@@ -186,12 +196,14 @@ type DescribedType struct {
 
 // DescribedComponent is one component's full manifest plus its source.
 type DescribedComponent struct {
-	Name        string          `json:"name"`
-	Source      string          `json:"source"`
-	Description string          `json:"description"`
-	Props       json.RawMessage `json:"props"`
-	A11y        json.RawMessage `json:"a11y,omitempty"`
-	Machine     json.RawMessage `json:"machine,omitempty"`
+	Name        string `json:"name"`
+	Source      string `json:"source"`
+	Description string `json:"description"`
+	// Use is the thought behind the component: when it serves a person.
+	Use     *render.Use     `json:"use,omitempty"`
+	Props   json.RawMessage `json:"props"`
+	A11y    json.RawMessage `json:"a11y,omitempty"`
+	Machine json.RawMessage `json:"machine,omitempty"`
 }
 
 // Describe builds the description from live state.
@@ -200,7 +212,7 @@ func (a *App) Describe() Description {
 		Workspace: a.Workspace.Config.Name,
 		LLM:       DescribedLLM{Provider: a.Workspace.Config.LLM.Provider, Model: a.Workspace.Config.LLM.Model, Ready: a.Chat.Provider != nil},
 		Routes: map[string]string{
-			"describe":      "GET /api/describe; one part: GET /api/describe/{types|components|tools|routes|llm}; one item: GET /api/describe/types/{name}, likewise components and tools",
+			"describe":      "GET /api/describe; one part: GET /api/describe/{types|components|arrangements|tools|routes|llm}; one item: GET /api/describe/types/{name}, likewise components and tools",
 			"list":          "GET /api/{type}",
 			"create":        "POST /api/{type} with a JSON object of fields",
 			"get":           "GET /api/{type}/{id}",
@@ -229,8 +241,9 @@ func (a *App) Describe() Description {
 		d.Types = append(d.Types, DescribedType{Name: t.Name, Description: t.Description, Internal: t.Internal, Title: t.Title, Fields: t.Fields, Schema: t.JSONSchema(), Count: n})
 	}
 	for _, c := range a.Registry.Components() {
-		d.Components = append(d.Components, DescribedComponent{Name: c.Manifest.Name, Source: c.Source, Description: c.Manifest.Description, Props: c.Manifest.Props, A11y: c.Manifest.A11y, Machine: c.Manifest.Machine})
+		d.Components = append(d.Components, DescribedComponent{Name: c.Manifest.Name, Source: c.Source, Description: c.Manifest.Description, Use: c.Manifest.Use, Props: c.Manifest.Props, A11y: c.Manifest.A11y, Machine: c.Manifest.Machine})
 	}
+	d.Arrangements = a.Registry.Arrangements()
 	for _, t := range a.Chat.Tools() {
 		d.Tools = append(d.Tools, DescribedTool{Name: t.Name, Description: t.Description, Schema: t.Schema})
 	}
