@@ -22,6 +22,9 @@ const maxToolRounds = 8
 
 // Service holds the dependencies for one workspace's chat.
 type Service struct {
+	// SetPace records how changes arrive, when the workspace can: calm,
+	// quick or still. Set by the app; nil when there is no workspace file.
+	SetPace      func(pace string) error
 	Store        *store.Store
 	Registry     *render.Registry
 	Provider     llm.Provider

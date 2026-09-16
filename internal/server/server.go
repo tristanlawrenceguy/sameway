@@ -87,6 +87,7 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 		Site:         s.app.Workspace.Config.Name,
 		Title:        title,
 		Controls:     s.app.Workspace.Config.UI.Controls,
+		Pace:         s.app.Workspace.Config.UI.Pace,
 		Body:         body,
 		JSONURL:      opts.JSONURL,
 		Focus:        opts.Focus,

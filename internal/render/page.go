@@ -19,6 +19,9 @@ type Page struct {
 	// Controls is "auto" or "visible" and lands on the root element, where
 	// the quiet layer reads it. See design/foundations/quiet.md.
 	Controls string
+	// Pace is how changes arrive, from the workspace: calm, quick or still.
+	// It lands on the root element, where the motion rules read it.
+	Pace string
 	// Nav holds rendered link components for the main navigation: the
 	// person's own content, and nothing else.
 	Nav []template.HTML

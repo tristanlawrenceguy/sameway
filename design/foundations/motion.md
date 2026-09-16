@@ -57,6 +57,25 @@ animate shows the finished page. Screen reader users are not made to wait:
 the status region announces the turn's changes at once, and the content is
 in the accessibility tree from the first moment.
 
+## Pace, and showing everything at once
+
+Someone who has already caught up should not have to wait. Any key or
+click on the page ends the sequence and shows everything at once, and while
+it runs a Show all button says so (`base/10-arrival.js`, an enhancement that
+adds its own control and removes it when there is nothing left to show).
+That keeps a sequence longer than five seconds within WCAG 2.2.2, which asks
+for a way to stop content that updates on its own.
+
+The pace itself belongs to the workspace, not a settings page: a person
+tells the assistant "slower", "faster" or "no motion", and `set_pace` writes
+`ui.pace` in `workspace.yaml`, which lands on the root as `data-pace`. calm
+is the default; quick keeps the stages in a third of the time; still shows
+everything at once, the way reduced motion does.
+
+Under forced colours (Windows high contrast), box shadows and custom
+colours are dropped by the browser, so the change marker becomes a
+system-coloured outline and the arrival cover draws in system colours.
+
 ## The glow
 
 The glow is the system's main provenance signal, and the reason the resting
