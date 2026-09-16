@@ -38,6 +38,10 @@ type conversation struct {
 	// showing one. Its own Expand link then says it is the current page
 	// rather than offering to go where you already are.
 	FocusID string
+	// Arrival is the order in which the blocks changed in the last turn
+	// arrive on the page, by block id, so several changes are shown one
+	// after another in the order they were made.
+	Arrival map[string]int
 }
 
 type conversationView struct {

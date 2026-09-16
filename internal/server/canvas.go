@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 
@@ -38,6 +39,7 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 		s.fail(w, err)
 		return
 	}
+	convo.Arrival = arrivals(blocks, convo)
 
 	var b strings.Builder
 	if convo.Notice != "" {
@@ -122,6 +124,9 @@ func (s *Server) blockItem(blk *store.Record, convo *conversation) string {
 		v.ID, v.Component, v.Actor, v.Frame, v.Tone)
 	if v.Changed != "" {
 		fmt.Fprintf(&b, ` data-changed="%s"`, v.Changed)
+	}
+	if n := convo.Arrival[v.ID]; n > 0 {
+		fmt.Fprintf(&b, ` data-arrival="%d"`, n)
 	}
 	if v.EditAction != "" {
 		fmt.Fprintf(&b, ` data-edit-action="%s"`, v.EditAction)
@@ -263,4 +268,33 @@ func (s *Server) canvasDelete(w http.ResponseWriter, r *http.Request) {
 	props, _ := rec.Fields["props"].(map[string]any)
 	chat.Record(s.app.Store, "human", chat.Change{Action: "removed", Component: name, ID: id, Detail: chat.Summarise(name, props), Before: rec.Fields})
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+// arrivals orders the blocks that changed in the last turn by when they
+// changed, so the page can show them one after another as they were made:
+// where each will be, then what it is, then what it says. The conversation
+// is the person's own tool and never arrives; it is simply there.
+func arrivals(blocks []*store.Record, convo *conversation) map[string]int {
+	type change struct {
+		id string
+		at time.Time
+	}
+	var changes []change
+	for _, b := range blocks {
+		if b.Fields["component"] == chat.ComponentName {
+			continue
+		}
+		switch {
+		case inLastTurn(b.CreatedAt, convo):
+			changes = append(changes, change{b.ID, b.CreatedAt})
+		case inLastTurn(b.UpdatedAt, convo):
+			changes = append(changes, change{b.ID, b.UpdatedAt})
+		}
+	}
+	sort.Slice(changes, func(i, j int) bool { return changes[i].at.Before(changes[j].at) })
+	order := map[string]int{}
+	for i, c := range changes {
+		order[c.id] = i + 1
+	}
+	return order
 }

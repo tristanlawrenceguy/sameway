@@ -48,3 +48,46 @@
      the life of the page view instead of fading. */
   [data-changed] { box-shadow: 0 0 0 3px var(--sw-actor, var(--sw-color-accent)); }
 }
+
+/* Arrival: a person is eased into new information. A block added in the
+   last turn shows first where it will be (a dashed outline in the actor's
+   colour over an empty slot), then what it is (the frame is uncovered),
+   then what it says (the content fades in), and only then glows. Several
+   changes arrive one after another, in the order they were made, with a
+   pause between, so there is time to take each one in. The server sets
+   data-arrival to the order; the stages are CSS only, so nothing depends
+   on a script, and a browser that cannot animate shows the finished page. */
+/* While a block waits its turn the cover has no outline, so the slot is
+   plain page: nothing is there until it is that block's turn to arrive. */
+@keyframes sw-arrive-place {
+  0% { opacity: 1; outline-color: transparent; }
+  2%, 38% { opacity: 1; outline-color: var(--sw-actor, var(--sw-color-accent)); }
+  55%, 100% { opacity: 0; outline-color: transparent; }
+}
+@keyframes sw-arrive-content { 0%, 72% { opacity: 0; visibility: hidden; } 100% { opacity: 1; visibility: visible; } }
+
+[data-arrival] { --sw-arrival-delay: calc((var(--sw-arrival, 1) - 1) * var(--sw-motion-between)); }
+[data-arrival="1"] { --sw-arrival: 1; } [data-arrival="2"] { --sw-arrival: 2; } [data-arrival="3"] { --sw-arrival: 3; }
+[data-arrival="4"] { --sw-arrival: 4; } [data-arrival="5"] { --sw-arrival: 5; } [data-arrival="6"] { --sw-arrival: 6; }
+[data-arrival="7"] { --sw-arrival: 7; } [data-arrival="8"] { --sw-arrival: 8; } [data-arrival="9"] { --sw-arrival: 9; }
+
+/* The glow waits its turn, after the block has fully arrived. */
+[data-changed][data-arrival] { animation-delay: var(--sw-arrival-delay); }
+[data-changed="added"][data-arrival] { position: relative; animation-delay: calc(var(--sw-arrival-delay) + var(--sw-motion-arrive)); }
+[data-changed="added"][data-arrival]::before {
+  content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  border-radius: inherit; background: var(--sw-color-bg);
+  outline: 2px dashed var(--sw-actor, var(--sw-color-accent)); outline-offset: -2px;
+  animation: sw-arrive-place var(--sw-motion-arrive) var(--sw-motion-ease) both;
+  animation-delay: var(--sw-arrival-delay);
+}
+[data-changed="added"][data-arrival] > :not(.sw-visually-hidden) {
+  animation: sw-arrive-content var(--sw-motion-arrive) var(--sw-motion-ease) both;
+  animation-delay: var(--sw-arrival-delay);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* No stages and no waiting: everything is there at once, with the ring. */
+  [data-changed][data-arrival], [data-changed="added"][data-arrival] > * { animation-delay: 0s !important; }
+  [data-changed="added"][data-arrival]::before { display: none; }
+}

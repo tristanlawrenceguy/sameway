@@ -31,7 +31,9 @@
   --sw-focus-width: 3px;
   --sw-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
   --sw-font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --sw-motion-arrive: 2600ms;
   --sw-motion-base: 220ms;
+  --sw-motion-between: 3000ms;
   --sw-motion-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --sw-motion-ease-out: cubic-bezier(0, 0, 0.2, 1);
   --sw-motion-fast: 120ms;
