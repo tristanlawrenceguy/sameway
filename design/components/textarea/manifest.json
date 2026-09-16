@@ -2,6 +2,7 @@
   "name": "textarea",
   "version": "1.0.0",
   "description": "A multi-line text input with a visible label, optional hint, and inline error.",
+  "use": { "when": "several lines of free text.", "not": "one line, which is a text-field.", "with": "a form." },
   "props": {
     "type": "object",
     "additionalProperties": false,

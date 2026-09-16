@@ -2,6 +2,7 @@
   "name": "checkbox",
   "version": "1.0.0",
   "description": "A yes/no choice with a visible label.",
+  "use": { "when": "a yes or no the person decides.", "not": "showing a state, which is a badge.", "with": "text-field and select, in a form the assistant built because a form was the better thing." },
   "props": {
     "type": "object",
     "additionalProperties": false,

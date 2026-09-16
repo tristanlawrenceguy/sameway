@@ -1,5 +1,11 @@
 # Principles
 
+Why any of this exists: to understand what really works for people and
+write it down in a form a machine can build from, so that an AI can
+effortlessly make something with a lot of thought behind it. Each principle
+below, each manifest's "use when", each motion rule, is that thought written
+once, for the assistant and every other reader alike.
+
 1. **Same way for everyone.** A screen reader, a keyboard, a pointer, and an
    agent driving a browser all navigate by the same landmarks, roles, names,
    and attributes. Nothing is built twice.

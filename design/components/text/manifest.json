@@ -2,6 +2,7 @@
   "name": "text",
   "version": "1.0.0",
   "description": "One or more paragraphs of plain text. Blank lines in content start a new paragraph.",
+  "use": { "when": "sentences: an explanation, an introduction, the words of a note; frame bare.", "not": "a title, which is a heading, or short items, which are a list.", "with": "a heading before it when it starts a section." },
   "props": {
     "type": "object",
     "additionalProperties": false,
