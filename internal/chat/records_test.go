@@ -100,7 +100,7 @@ func TestPromptAndToolsFollowTheSchema(t *testing.T) {
 	svc.Provider = m
 	svc.Send(context.Background(), "hi")
 	system := m.seen[0].System
-	for _, want := range []string{"Content types", "note: A short piece of writing.", `"title"`, "create_record", "a card on the canvas is not a note"} {
+	for _, want := range []string{"Content types", "note: A short piece of writing.", `"title"`, "create_record", "a card on the canvas is not a note", "add a record block"} {
 		if !strings.Contains(system, want) {
 			t.Errorf("the prompt should carry %q", want)
 		}

@@ -48,6 +48,7 @@ runner in tools/a11y-runner.
 | Model uses the canvas tools | add, update, remove, clear, ordering, validation errors, prompt contents, history | `internal/chat/*_test.go` |
 | Model makes and changes content records | create, update and find for every schema type, schema errors, activity log, no record tools without content types | `internal/chat/records_test.go` |
 | Agent drives the workspace over MCP | handshake, tools/list carries the chat tools plus describe and get_record, tools/call changes land in the store and the activity log, protocol and schema errors are answered | `internal/mcp/server_test.go` |
+| A record is shown on the canvas as itself | a record block renders the record's words with edit markers, edits post to the record and return to the canvas, the expanded block is the record at page size, a gone record says so | `internal/server/record_block_test.go` |
 | Person uses a keyboard in a real browser | Tab order, focus ring, Enter/Space/ArrowDown per component | `tools/a11y-runner/keyboard.mjs` (CI) |
 | Person and agent on live pages | keyboard-only flows, axe on every page, role-and-name targeting, describe matches what renders | `tools/a11y-runner/pages.mjs` (CI) |
 

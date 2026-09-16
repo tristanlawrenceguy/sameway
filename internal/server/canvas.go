@@ -70,20 +70,6 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 	s.page(w, r, "Canvas", template.HTML(b.String()), opts)
 }
 
-// paneLabel names a pane by what is in it, because a label that says
-// History over a calendar is a label that lies. One block lends its own
-// summary; more than one, or one with nothing to say, gets the side.
-func paneLabel(side string, blocks []*store.Record) string {
-	if len(blocks) == 1 {
-		name, _ := blocks[0].Fields["component"].(string)
-		props, _ := blocks[0].Fields["props"].(map[string]any)
-		if summary := chat.Summarise(name, props); summary != "" {
-			return summary
-		}
-	}
-	return side
-}
-
 // canvasBlocks reads the canvas in display order, or nothing if it cannot.
 func (s *Server) canvasBlocks() []*store.Record {
 	blocks, err := s.app.Store.List(chat.BlockType, store.ListOptions{OrderBy: "position"})
@@ -115,28 +101,6 @@ func layoutName(solo bool) string {
 	return "wide"
 }
 
-// pane renders one of the two full height columns. It collapses to a strip
-// and remembers whether it was open, because a pane that reopens itself on
-// every page load is a pane nobody closes twice.
-func (s *Server) pane(side, label string, blocks []*store.Record, convo *conversation) template.HTML {
-	if len(blocks) == 0 {
-		return ""
-	}
-	var inner strings.Builder
-	fmt.Fprintf(&inner, `<ol class="sw-plain sw-canvas sw-canvas--pane" aria-label="Blocks in the %s pane">`, side)
-	for _, blk := range blocks {
-		inner.WriteString(s.blockItem(blk, convo))
-	}
-	inner.WriteString(`</ol>`)
-	body, err := s.app.Registry.RenderSlot("disclosure",
-		map[string]any{"label": label, "open": true, "id": side + "-pane"},
-		template.HTML(inner.String()))
-	if err != nil {
-		return ""
-	}
-	return body
-}
-
 // blockItem renders one canvas block: the component, its span, its
 // provenance rail, and its quiet control bar.
 func (s *Server) blockItem(blk *store.Record, convo *conversation) string {
@@ -150,6 +114,9 @@ func (s *Server) blockItem(blk *store.Record, convo *conversation) string {
 		v.ID, v.Component, v.Actor, v.Frame, v.Tone)
 	if v.Changed != "" {
 		fmt.Fprintf(&b, ` data-changed="%s"`, v.Changed)
+	}
+	if v.EditAction != "" {
+		fmt.Fprintf(&b, ` data-edit-action="%s"`, v.EditAction)
 	}
 	fmt.Fprintf(&b, ` style="--sw-span: %d; view-transition-name: block-%s; view-transition-class: sw-vt-item">`, v.Span, v.ID)
 	// Provenance costs nothing on screen and is complete in the
@@ -219,11 +186,15 @@ func (s *Server) canvasBlock(b *store.Record, convo *conversation) canvasBlock {
 	// Removing is the one thing worth a control of its own. Anything else a
 	// person wants changed, they ask for, which is faster than any form and
 	// is the whole point of having an assistant on the page.
+	editAction := ""
+	if name == recordComponent {
+		props, editAction = s.resolveRecord(props)
+	}
 	return canvasBlock{
 		ID: b.ID, Component: name, Actor: actor, Changed: changed, Span: span,
 		Frame: str(b.Fields["frame"], "card"), Tone: str(b.Fields["tone"], "none"),
-		Provenance: provenance,
-		HTML:       s.component(name, props),
+		Provenance: provenance, EditAction: editAction,
+		HTML: s.component(name, props),
 		Expand: s.component("link", map[string]any{
 			"href": "/canvas/" + b.ID, "label": "Expand", "context": name,
 			"current": convo != nil && convo.FocusID == b.ID,
@@ -274,6 +245,9 @@ type canvasBlock struct {
 	HTML       template.HTML
 	Expand     template.HTML
 	Remove     template.HTML
+	// EditAction is where the inline editor posts for this block when it is
+	// not the block's own props: a record block edits the record.
+	EditAction string
 }
 
 // canvasDelete is a person removing a block; it is logged as a human action.

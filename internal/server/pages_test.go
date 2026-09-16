@@ -7,17 +7,24 @@ import (
 
 	"golang.org/x/net/html"
 
+	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/render/htmltest"
 )
 
-// componentNames lists every built-in component so assertAllComponentsKnown
-// can verify that pages only use registered components.
-var componentNames = []string{
-	"alert", "badge", "button", "calendar", "card", "chat", "checkbox",
-	"datepicker", "disclosure", "event", "heading", "link", "list",
-	"message", "proposal", "select", "status", "table", "text",
-	"text-field", "textarea",
-}
+// componentNames is every built-in component, read from the registry so a
+// component added to design/components is known here the same moment and
+// nobody keeps a second list by hand.
+var componentNames = func() []string {
+	reg, err := app.NewRegistry("")
+	if err != nil {
+		panic(err)
+	}
+	var names []string
+	for _, c := range reg.Components() {
+		names = append(names, c.Manifest.Name)
+	}
+	return names
+}()
 
 // TestHomePageShell checks what a person with a screen reader or keyboard
 // meets first: skip link, landmarks, one h1, and the two labelled regions.

@@ -4,16 +4,29 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	store "github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
+// returnTo is where a person goes after an edit: the page they edited from,
+// when the browser says which page that was and it is one of ours, else the
+// record's own page. A record edited on the canvas returns to the canvas; on
+// its detail page, to the detail page.
+func returnTo(r *http.Request, fallback string) string {
+	ref, err := url.Parse(r.Referer())
+	if err != nil || ref.Host != r.Host || !strings.HasPrefix(ref.Path, "/") {
+		return fallback
+	}
+	return ref.RequestURI()
+}
+
 // recordProps receives an inline edit form for a content type record. Fields
 // arrive as prop-<name> values in the POST body. On success it updates the
-// record and redirects back to the detail page; on validation failure it
-// re-renders the detail page with 422 and error messages.
+// record and redirects back to the page the edit came from; on validation
+// failure it re-renders the detail page with 422 and error messages.
 func (s *Server) recordProps(w http.ResponseWriter, r *http.Request) {
 	t, ok := s.app.Types.Get(r.PathValue("type"))
 	if !ok {
@@ -43,7 +56,7 @@ func (s *Server) recordProps(w http.ResponseWriter, r *http.Request) {
 
 	// No fields provided — no-op redirect.
 	if len(fields) == 0 {
-		http.Redirect(w, r, "/t/"+t.Name+"/"+rec.ID, http.StatusSeeOther)
+		http.Redirect(w, r, returnTo(r, "/t/"+t.Name+"/"+rec.ID), http.StatusSeeOther)
 		return
 	}
 
@@ -68,7 +81,7 @@ func (s *Server) recordProps(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/t/"+t.Name+"/"+rec.ID, http.StatusSeeOther)
+	http.Redirect(w, r, returnTo(r, "/t/"+t.Name+"/"+rec.ID), http.StatusSeeOther)
 }
 
 // renderDetailError re-renders the detail page with validation errors as a 422,

@@ -60,6 +60,8 @@ func Summarise(component string, props map[string]any) string {
 		return pick("title", "message")
 	case "button", "link", "badge", "text-field", "textarea", "select", "checkbox":
 		return pick("label")
+	case "record":
+		return strings.TrimSpace(pick("type") + " " + pick("record"))
 	case "calendar":
 		if caption := pick("caption"); caption != "" {
 			return caption
