@@ -177,5 +177,10 @@ func (s *Service) Clear() error {
 		return err
 	}
 	Record(s.Store, "human", Change{Action: "cleared", Component: "conversation"})
+	// The questions the assistant asked were part of the conversation; a
+	// cleared one has no questions still waiting under it.
+	for _, p := range s.Proposals() {
+		s.Store.Update(ProposalType, p.ID, map[string]any{"state": "dismissed"})
+	}
 	return s.Store.DeleteAll(MessageType)
 }
