@@ -274,3 +274,15 @@ func TestContentIsThePortableForm(t *testing.T) {
 		t.Fatalf("export should rewrite the folder: %+v", r)
 	}
 }
+
+// A page reads the same from the command line as over the API.
+func TestLookFromTheCommandLine(t *testing.T) {
+	dir := initWorkspace(t)
+	r := run(t, dir, "look", "/t/note")
+	if r.code != 0 || !strings.Contains(r.stdout, `"headings"`) || !strings.Contains(r.stdout, `"problems": []`) {
+		t.Errorf("look should print the outline as JSON: %+v", r)
+	}
+	if r := run(t, dir, "look"); r.code == 0 || !strings.Contains(r.stderr, "usage") {
+		t.Errorf("look without a path should say how to use it: %+v", r)
+	}
+}

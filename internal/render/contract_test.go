@@ -1,6 +1,7 @@
 package render_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"regexp"
@@ -10,6 +11,7 @@ import (
 	"golang.org/x/net/html"
 
 	"github.com/tristanlawrenceguy/sameway/design"
+	"github.com/tristanlawrenceguy/sameway/internal/look"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 	"github.com/tristanlawrenceguy/sameway/internal/render/htmltest"
 )
@@ -91,45 +93,13 @@ func TestStructureContract(t *testing.T) {
 		if len(doc.WithAttr("data-component", c.Manifest.Name)) == 0 {
 			t.Errorf("%s: no element with data-component=%q", where, c.Manifest.Name)
 		}
-		seen := map[string]bool{}
-		for _, n := range doc.WithAttr("id", "") {
-			id, _ := htmltest.Attr(n, "id")
-			if seen[id] {
-				t.Errorf("%s: duplicate id %q", where, id)
-			}
-			seen[id] = true
-		}
-		for _, key := range []string{"aria-describedby", "aria-labelledby"} {
-			for _, n := range doc.WithAttr(key, "") {
-				refs, _ := htmltest.Attr(n, key)
-				for _, id := range strings.Fields(refs) {
-					if doc.ByID(id) == nil {
-						t.Errorf("%s: %s points at missing id %q", where, key, id)
-					}
-				}
-			}
-		}
-		for _, l := range doc.Elements("label") {
-			target, _ := htmltest.Attr(l, "for")
-			if doc.ByID(target) == nil {
-				t.Errorf("%s: label for=%q has no target", where, target)
-			}
-		}
-		for _, tag := range []string{"input", "select", "textarea"} {
-			for _, n := range doc.Elements(tag) {
-				if doc.AccessibleName(n) == "" {
-					t.Errorf("%s: <%s> has no label", where, tag)
-				}
-			}
-		}
-		for _, n := range doc.Elements("table") {
-			if doc.AccessibleName(n) == "" {
-				t.Errorf("%s: table has no caption", where)
-			}
-		}
-		for _, n := range doc.Elements("img") {
-			if _, ok := htmltest.Attr(n, "alt"); !ok {
-				t.Errorf("%s: img without alt", where)
+		// The rules are the look package's, so what an agent is told about
+		// a page and what the tests hold a component to are one list.
+		if o, err := look.Fragment(serialise(doc)); err != nil {
+			t.Errorf("%s: %v", where, err)
+		} else {
+			for _, p := range o.Problems {
+				t.Errorf("%s: %s", where, p)
 			}
 		}
 	})
@@ -229,4 +199,12 @@ func TestCSSUsesTokensOnly(t *testing.T) {
 			t.Errorf("%s: style.css removes the focus outline", c.Manifest.Name)
 		}
 	}
+}
+
+// serialise writes a parsed document back out, so the look rules read the
+// same markup the example holds.
+func serialise(doc *htmltest.Doc) string {
+	var b bytes.Buffer
+	html.Render(&b, doc.Root)
+	return b.String()
 }

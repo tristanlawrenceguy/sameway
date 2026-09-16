@@ -70,6 +70,7 @@ workspace file, because the workspace is meant to be shared.
 | Any block opens on its own page at `/canvas/<id>` | One URL per block, at its largest size |
 | Ask the assistant for a note and find it on `/t/note` | `sameway mcp`: an MCP host gets the assistant's own tools, plus reading |
 | Ask for a second tab and get a second canvas at `/c/<id>` | `POST /api/canvas`, or `create_canvas` over chat and MCP |
+| Every page is server-rendered HTML a screen reader can read | `GET /api/look?path=/t/note`: that page as a screen reader gets it, with its structural problems; also `look` over MCP and `sameway look` |
 
 ## The one contract
 
