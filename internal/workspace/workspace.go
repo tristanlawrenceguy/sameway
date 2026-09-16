@@ -5,7 +5,7 @@
 //	workspace.yaml   name, server, llm, chat settings
 //	schema/          one YAML file per content type
 //	components/      local components that add to or override built-ins
-//	content/         exported records (Markdown with front matter)
+//	content/         every record as Markdown with front matter, kept current
 //	data.db          live SQLite store, ignored by git
 package workspace
 
@@ -110,7 +110,7 @@ func (w *Workspace) SchemaDir() string { return filepath.Join(w.Dir, "schema") }
 // ComponentsDir is where local components live.
 func (w *Workspace) ComponentsDir() string { return filepath.Join(w.Dir, "components") }
 
-// ContentDir is where exported records live.
+// ContentDir is where the portable form of every record lives.
 func (w *Workspace) ContentDir() string { return filepath.Join(w.Dir, "content") }
 
 // DBPath is the SQLite file.

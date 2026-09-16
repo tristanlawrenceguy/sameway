@@ -5,6 +5,7 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/tristanlawrenceguy/sameway/internal/content"
 	"io/fs"
 	"sort"
 	"strings"
@@ -25,7 +26,9 @@ type App struct {
 	Types     *schema.Set
 	Store     *store.Store
 	Registry  *render.Registry
-	Chat      *chat.Service
+	// Mirror keeps content/ as the portable form of every record.
+	Mirror content.Mirror
+	Chat   *chat.Service
 }
 
 // Load opens the workspace at dir. Pass memoryDB to use an in-memory store
@@ -60,6 +63,10 @@ func Load(dir string, memoryDB bool) (*App, error) {
 		return nil, err
 	}
 	a := &App{Workspace: ws, Types: types, Store: st, Registry: reg}
+	// The conversation, its questions and the log are history, not content;
+	// everything else is written to content/ as it changes.
+	a.Mirror = content.Mirror{Dir: ws.ContentDir(), Types: types, Skip: []string{chat.MessageType, chat.ProposalType, chat.ActivityType}}
+	st.AfterWrite = a.Mirror.Changed
 	a.Chat = &chat.Service{
 		Store:        st,
 		Registry:     reg,
@@ -204,6 +211,7 @@ func (a *App) Describe() Description {
 			"html_list":     "GET /t/{type}",
 			"html_detail":   "GET /t/{type}/{id}",
 			"undo":          "POST /activity/{id}/undo with from=<path to return to>: reverses one activity entry for a person; agents call the undo_change tool. An entry that can be undone carries before, the thing as it was",
+			"content":       "content/<type>/<id>.md in the workspace is every record as Markdown with front matter, written as it changes; share the folder with git. sameway import reads it back after a pull, sameway export rewrites it",
 			"html_props":    "POST /t/{type}/{id}/props, form-encoded with each field named prop-<field>: the inline editor's route, which answers with the page rather than JSON",
 			"canvas_props":  "POST /canvas/{block-id}/props, the same form for a block on the canvas",
 			"css":           "GET /design/sameway.css",

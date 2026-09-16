@@ -232,3 +232,45 @@ func TestDescribeOnePart(t *testing.T) {
 		t.Errorf("an unknown part should name the parts: %+v", r)
 	}
 }
+
+// The content folder is the portable form: written as records change, read
+// back with import after a pull, rewritten whole with export.
+func TestContentIsThePortableForm(t *testing.T) {
+	dir := initWorkspace(t)
+	r := run(t, dir, "note", "create", "--set", "title=Hello", "--set", "body=Every Sunday.", "--json")
+	if r.code != 0 {
+		t.Fatalf("%+v", r)
+	}
+	var rec struct{ ID string }
+	if err := json.Unmarshal([]byte(r.stdout), &rec); err != nil || rec.ID == "" {
+		t.Fatalf("create --json should print the record: %v %s", err, r.stdout)
+	}
+	path := filepath.Join(dir, "content", "note", rec.ID+".md")
+	data, err := os.ReadFile(path)
+	if err != nil || !strings.Contains(string(data), "title: Hello") || !strings.Contains(string(data), "Every Sunday.") {
+		t.Fatalf("creating a note should write %s: %v\n%s", path, err, data)
+	}
+
+	// Someone edited the file (or a pull brought it): import takes it in.
+	os.WriteFile(path, []byte(strings.Replace(string(data), "title: Hello", "title: Hello again", 1)), 0o644)
+	if r := run(t, dir, "import"); r.code != 0 || !strings.Contains(r.stdout, "updated 1") {
+		t.Fatalf("import should report the update: %+v", r)
+	}
+	if r := run(t, dir, "note", "get", rec.ID); !strings.Contains(r.stdout, "Hello again") {
+		t.Errorf("import should change the record: %s", r.stdout)
+	}
+	if r := run(t, dir, "activity", "list"); !strings.Contains(r.stdout, "You updated note Hello again") {
+		t.Errorf("an import is logged like any change: %s", r.stdout)
+	}
+
+	// The file goes, the record goes; export puts the folder back in step.
+	os.Remove(path)
+	if r := run(t, dir, "import", "--json"); r.code != 0 || !strings.Contains(r.stdout, `"deleted": 1`) {
+		t.Fatalf("import should delete the record whose file is gone: %+v", r)
+	}
+	run(t, dir, "note", "create", "--set", "title=Second")
+	os.RemoveAll(filepath.Join(dir, "content", "note"))
+	if r := run(t, dir, "export", "--json"); r.code != 0 || !strings.Contains(r.stdout, `"written": 1`) {
+		t.Fatalf("export should rewrite the folder: %+v", r)
+	}
+}

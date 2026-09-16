@@ -25,6 +25,8 @@ Usage:
   sameway serve [--addr host:port]      run the web server for this workspace
   sameway describe [--json] [part [name]]  show content types, components, tools and routes, or one part
   sameway check                         validate the workspace schema and components
+  sameway export                        rewrite content/ from the database (it is kept current as things change)
+  sameway import                        read content/ back into the database, after a git pull
   sameway chat <message>                talk to the assistant from the terminal
   sameway mcp                           serve the workspace to an MCP client over stdio
   sameway component new <name>          scaffold a component folder in the workspace
@@ -82,6 +84,10 @@ func Run(args []string, env Env) int {
 		err = c.describeCmd()
 	case "check":
 		err = c.checkCmd()
+	case "export":
+		err = c.exportCmd()
+	case "import":
+		err = c.importCmd()
 	case "chat":
 		err = c.chatCmd()
 	case "mcp":

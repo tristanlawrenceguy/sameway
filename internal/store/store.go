@@ -31,6 +31,10 @@ type Record struct {
 type Store struct {
 	db    *sql.DB
 	types *schema.Set
+	// AfterWrite is told about every record written or deleted, with the
+	// record as it now is, or nil when it is gone. The content mirror hangs
+	// here, so the files are never a step behind the database.
+	AfterWrite func(typeName, id string, rec *Record)
 }
 
 // Open opens (or creates) the database at path and migrates it to match types.
