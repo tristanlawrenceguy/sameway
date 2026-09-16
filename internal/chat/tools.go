@@ -225,7 +225,7 @@ func (s *Service) addComponent(name string, props map[string]any, l look) toolRe
 	}
 	return toolResult{
 		text:   where,
-		change: &Change{Action: "added", Component: name, ID: rec.ID, Detail: Summarise(name, props)},
+		change: &Change{Action: "added", Component: name, ID: rec.ID, Detail: Summarise(name, props), Href: "/canvas/" + rec.ID},
 	}
 }
 
@@ -264,5 +264,5 @@ func (s *Service) updateComponent(id string, props map[string]any, l look) toolR
 	if _, err := s.Store.Update(BlockType, id, s.fields(BlockType, fields)); err != nil {
 		return fail("could not update block %s: %v", id, err)
 	}
-	return toolResult{text: "updated " + strings.Join(what, " and ") + " on block " + id, change: &Change{Action: "updated", Component: name, ID: id, Detail: Summarise(name, props)}}
+	return toolResult{text: "updated " + strings.Join(what, " and ") + " on block " + id, change: &Change{Action: "updated", Component: name, ID: id, Detail: Summarise(name, props), Href: "/canvas/" + id}}
 }

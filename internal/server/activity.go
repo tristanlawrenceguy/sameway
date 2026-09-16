@@ -59,7 +59,38 @@ func (s *Server) event(r *store.Record) template.HTML {
 	if d, _ := r.Fields["detail"].(string); d != "" {
 		props["detail"] = d
 	}
+	if href := s.hrefFor(r); href != "" {
+		props["href"] = href
+	}
 	return s.component("event", props)
+}
+
+// hrefFor is the page of the thing an activity entry is about, when it
+// still exists: a record's page, a block's own page, or a tab. Worked out
+// when the entry is shown, not when it was written, so an entry about
+// something since removed leads nowhere instead of to a 404.
+func (s *Server) hrefFor(r *store.Record) string {
+	target, _ := r.Fields["target"].(string)
+	id, _ := r.Fields["target_id"].(string)
+	if target == "" || id == "" {
+		return ""
+	}
+	if target == chat.CanvasType {
+		if _, err := s.app.Store.Get(chat.CanvasType, id); err == nil {
+			return chat.CanvasPath(id)
+		}
+		return ""
+	}
+	if _, ok := s.app.Types.Get(target); ok {
+		if _, err := s.app.Store.Get(target, id); err == nil {
+			return "/t/" + target + "/" + id
+		}
+		return ""
+	}
+	if _, err := s.app.Store.Get(chat.BlockType, id); err == nil {
+		return "/canvas/" + id
+	}
+	return ""
 }
 
 // activityPage lists every recorded action, newest first, grouped by day.
