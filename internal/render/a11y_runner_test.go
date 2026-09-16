@@ -100,3 +100,58 @@ func findRepoRootForTest() string {
 		cwd = parent
 	}
 }
+
+// TestPagesMjsNoRemovedRoutes verifies that tools/a11y-runner/pages.mjs does
+// not reference the HTML form-based create/edit routes removed during the
+// inline-edit migration (backlog 0149). The server no longer serves /t/note/new
+// or /t/note/{id}/edit — they return 404 — so pages.mjs must not visit them.
+func TestPagesMjsNoRemovedRoutes(t *testing.T) {
+	repoRoot := findRepoRootForTest()
+	pathsPath := filepath.Join(repoRoot, "tools", "a11y-runner", "pages.mjs")
+
+	src, err := os.ReadFile(pathsPath)
+	if err != nil {
+		t.Fatalf("read pages.mjs: %v", err)
+	}
+	code := string(src)
+
+	// Acceptance 1: no reference to /t/note/new.
+	if strings.Contains(code, "/t/note/new") || strings.Contains(code, "`/t/${type}/new`") {
+		t.Error("pages.mjs: still references /t/note/new — this route was removed during the inline-edit migration and returns 404")
+	}
+
+	// Acceptance 1b: no reference to any type's new route (e.g. /t/article/new).
+	if strings.Contains(code, "/new`") || strings.Contains(code, "'/new'") {
+		t.Error("pages.mjs: references a */new route pattern; the form-based create pages were removed")
+	}
+
+	// Acceptance 1c: no reference to edit routes (e.g. /t/note/{id}/edit).
+	if strings.Contains(code, "/edit`") || strings.Contains(code, "'/edit'") {
+		t.Error("pages.mjs: references a */edit route; the form-based edit pages were removed during inline-edit migration")
+	}
+
+	// Acceptance 2: all page.goto() targets must be valid existing routes.
+	// Extract every string or template literal argument to page.goto().
+	// Valid routes are known surfaces from the server router:
+	//   /, /chat, /activity, /t/{type}, /t/{type}/{id}
+	// We check that no goto() call targets anything outside this set.
+	if strings.Contains(code, "page.goto(") {
+		// The file must use only known route patterns in page.goto calls.
+		// Check for any goto that constructs a URL from a variable path
+		// (e.g. base + "/t/" + type + "/new") which would be fragile.
+		if strings.Contains(code, "type + \"/new\"") || strings.Contains(code, `type+"/new"`) {
+			t.Error("pages.mjs: constructs /t/{type}/new via variable concatenation — route removed")
+		}
+		if strings.Contains(code, "type + \"/edit\"") || strings.Contains(code, `type+"/edit"`) {
+			t.Error("pages.mjs: constructs /t/{type}/{id}/edit via variable concatenation — route removed")
+		}
+	}
+
+	// Acceptance 2b: the file should visit at least the core surfaces.
+	if !strings.Contains(code, `"/chat"`) && !strings.Contains(code, "'/chat'") {
+		t.Error("pages.mjs: does not visit /chat; this is a core surface that must be tested")
+	}
+	if !strings.Contains(code, `"/activity"`) && !strings.Contains(code, "'/activity'") {
+		t.Error("pages.mjs: does not visit /activity; this is a core surface that must be tested")
+	}
+}
