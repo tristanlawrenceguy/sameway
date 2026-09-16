@@ -50,16 +50,19 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var b strings.Builder
+	fmt.Fprintf(&b, `<div class="sw-dl-block" data-block-id="%s" data-edit-action="/t/%s/%s/props">`, rec.ID, t.Name, rec.ID)
 	b.WriteString(`<dl class="sw-dl">`)
 	for _, f := range t.Fields {
 		val := display(f, rec.Fields[f.Name])
 		if val == "" {
 			continue
 		}
-		fmt.Fprintf(&b, "<dt>%s</dt><dd>%s</dd>", template.HTMLEscapeString(label(f.Name)), template.HTMLEscapeString(val))
+		fmt.Fprintf(&b, `<dt>%s</dt><dd data-prop="%s">%s</dd>`, template.HTMLEscapeString(label(f.Name)), f.Name, template.HTMLEscapeString(val))
 	}
 	fmt.Fprintf(&b, "<dt>Created</dt><dd>%s</dd><dt>Updated</dt><dd>%s</dd></dl>", rec.CreatedAt.Local().Format("2006-01-02 15:04"), rec.UpdatedAt.Local().Format("2006-01-02 15:04"))
+	b.WriteString(`</div>`)
 	b.WriteString(`<div class="sw-cluster" style="margin-top:var(--sw-space-6)">`)
+	b.WriteString(fmt.Sprintf(`<button type="button" data-inline-edit>Edit %s</button>`, t.Name))
 	b.WriteString(string(s.component("link", map[string]any{
 		"href":  "/t/" + t.Name + "/" + rec.ID + "/confirm-delete",
 		"label": "Delete " + t.Name,
