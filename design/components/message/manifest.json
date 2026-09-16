@@ -1,6 +1,6 @@
 {
   "name": "message",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "One turn in a conversation: who said it, what was said, and for assistant turns the receipt of canvas changes it made. Render inside a list so the conversation has structure.",
   "use": { "when": "one turn of a conversation.", "not": "anything outside the conversation.", "with": "a list of turns." },
   "props": {
@@ -30,6 +30,20 @@
           }
         }
       },
+      "links": {
+        "optional": true,
+        "type": "array",
+        "description": "Links to content created during this turn, shown under the text as inline citations.",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["href"],
+          "properties": {
+            "href": { "type": "string", "description": "URL the link points to." },
+            "label": { "type": "string", "description": "Accessible label for the link." }
+          }
+        }
+      },
       "id": { "type": "string", "description": "Anchor id so the page can link to the latest message." }
     }
   },
@@ -47,6 +61,7 @@
   "examples": [
     { "name": "default", "props": { "role": "user", "content": "Add a grocery list with milk, eggs and bread.", "time": "14:05", "id": "msg-1" }, "file": "examples/default.html" },
     { "name": "assistant", "props": { "role": "assistant", "content": "Done. I added a list with three items.\n\nWant it as a table instead?", "time": "14:05", "changes": [ { "action": "added", "component": "heading", "detail": "Shopping", "href": "/canvas/h1", "activity": "a1" }, { "action": "added", "component": "list" } ] }, "file": "examples/assistant.html" },
-    { "name": "error", "props": { "role": "error", "content": "Could not reach the model at http://localhost:11434." }, "file": "examples/error.html" }
+    { "name": "error", "props": { "role": "error", "content": "Could not reach the model at http://localhost:11434." }, "file": "examples/error.html" },
+    { "name": "with links", "props": { "role": "assistant", "content": "I added two items.", "time": "14:05", "changes": [{"action": "added", "component": "note"}], "links": [{"href": "/t/note/abc", "label": "a note"}, {"href": "/canvas/h1", "label": "heading"}] }, "file": "examples/with_links.html" }
   ]
 }
