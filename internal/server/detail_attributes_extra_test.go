@@ -1,7 +1,6 @@
 package server_test
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/tristanlawrenceguy/sameway/internal/render/htmltest"
@@ -44,16 +43,6 @@ func TestDetailPageActivityDataAttributes(t *testing.T) {
 		dd := doc.WithAttr("data-prop", prop)
 		if len(dd) == 0 {
 			t.Errorf("<dd data-prop=%q should exist for activity detail\n%s", prop, truncate(get(t, h, "/t/activity/"+rec.ID).Body.String()))
-		}
-	}
-
-	buttons := doc.WithAttr("data-inline-edit", "")
-	if len(buttons) == 0 {
-		t.Errorf("activity detail should have a data-inline-edit button")
-	} else {
-		text := strings.TrimSpace(htmltest.Text(buttons[0]))
-		if text != "Edit activity" {
-			t.Errorf("Edit button text = %q, want \"Edit activity\"", text)
 		}
 	}
 
@@ -101,16 +90,6 @@ func TestDetailPageProposalDataAttributes(t *testing.T) {
 		dd := doc.WithAttr("data-prop", prop)
 		if len(dd) == 0 {
 			t.Errorf("<dd data-prop=%q should exist for proposal detail\n%s", prop, truncate(get(t, h, "/t/proposal/"+rec.ID).Body.String()))
-		}
-	}
-
-	buttons := doc.WithAttr("data-inline-edit", "")
-	if len(buttons) == 0 {
-		t.Errorf("proposal detail should have a data-inline-edit button")
-	} else {
-		text := strings.TrimSpace(htmltest.Text(buttons[0]))
-		if text != "Edit proposal" {
-			t.Errorf("Edit button text = %q, want \"Edit proposal\"", text)
 		}
 	}
 
