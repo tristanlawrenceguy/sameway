@@ -1,0 +1,14 @@
+.sw-record { max-width: var(--sw-size-measure); }
+.sw-record__title { margin: 0; font-size: var(--sw-size-text-lg); line-height: var(--sw-size-line-tight); }
+.sw-record--brief .sw-record__title { font-size: var(--sw-size-text-base); }
+.sw-record__body { margin-top: var(--sw-space-3); }
+.sw-record__body p { margin: 0 0 var(--sw-space-3); }
+.sw-record__body p:last-child { margin-bottom: 0; }
+.sw-record__fields {
+  display: grid; grid-template-columns: max-content 1fr; gap: var(--sw-space-1) var(--sw-space-4);
+  margin: var(--sw-space-4) 0 0; font-size: var(--sw-size-text-sm);
+}
+.sw-record__fields dt { color: var(--sw-color-fg-muted); font-weight: 600; }
+.sw-record__fields dd { margin: 0; overflow-wrap: anywhere; }
+.sw-record__open { margin: var(--sw-space-4) 0 0; }
+.sw-record__missing { margin: 0; color: var(--sw-color-fg-muted); }

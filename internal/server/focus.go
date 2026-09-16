@@ -36,6 +36,11 @@ func (s *Server) focusPage(w http.ResponseWriter, r *http.Request) {
 	convo.FocusID = rec.ID
 
 	props, _ := rec.Fields["props"].(map[string]any)
+	if comp.Manifest.Name == recordComponent {
+		// The record's own words, so the page is named after them and the
+		// expanded block shows them.
+		props, _ = s.resolveRecord(props)
+	}
 	body := s.expanded(comp.Manifest.Name, props, convo)
 
 	var b strings.Builder
