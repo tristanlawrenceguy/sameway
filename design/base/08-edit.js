@@ -86,9 +86,18 @@
     // The fields stand in for the whole rendered block, not just the words
     // inside it, so an empty component shell is not left behind.
     var covered = [];
+
+    // Hide the read-only definition list so only the form is visible.
+    var dl = block.querySelector("dl.sw-dl");
+    if (dl) {
+      dl.hidden = true;
+      dl.style.display = "none";
+      covered.push(dl);
+    }
+
     for (var c = form.nextElementSibling; c; c = c.nextElementSibling) {
       if (c.classList.contains("sw-bar") || c.classList.contains("sw-visually-hidden")) continue;
-      c.hidden = true;
+      c.style.display = "none";
       covered.push(c);
     }
 
@@ -104,7 +113,13 @@
   }
 
   function cancel(block, form, covered) {
-    for (var i = 0; i < covered.length; i++) covered[i].hidden = false;
+    for (var i = 0; i < covered.length; i++) {
+      covered[i].style.display = "";
+      covered[i].hidden = false;
+    }
+    // Explicitly restore the definition list as well.
+    var dl = block.querySelector("dl.sw-dl");
+    if (dl) dl.hidden = false;
     form.remove();
     var btn = block.querySelector("[data-edit]");
     if (btn) btn.focus();
