@@ -84,8 +84,11 @@ func TestDescribeJSON(t *testing.T) {
 	if err := json.Unmarshal([]byte(r.stdout), &d); err != nil {
 		t.Fatalf("describe --json is not JSON: %v\n%s", err, r.stdout)
 	}
-	if len(d.Types) != 5 || len(d.Components) < 19 || d.LLM.Ready || d.LLM.Problem == "" {
-		t.Errorf("describe content: %+v", d)
+	// One type per schema file in the workspace, so a type added to the
+	// starter is expected here the same moment rather than counted by hand.
+	schemas, _ := filepath.Glob(filepath.Join(dir, "schema", "*.yaml"))
+	if len(d.Types) != len(schemas) || len(d.Components) < 19 || d.LLM.Ready || d.LLM.Problem == "" {
+		t.Errorf("describe content (want %d types): %+v", len(schemas), d)
 	}
 	human := run(t, dir, "describe")
 	if !strings.Contains(human.stdout, "Content types:") || !strings.Contains(human.stdout, "note") {
