@@ -48,6 +48,7 @@ func (s *Server) routes() {
 	m.HandleFunc("GET /design", s.designPage)
 	m.HandleFunc("GET /design/sameway.css", s.stylesheet)
 	m.HandleFunc("GET /design/sameway.js", s.script)
+	m.HandleFunc("GET /design/base/{file}", s.baseFile)
 
 	m.HandleFunc("GET /t/{type}", s.listPage)
 	m.HandleFunc("GET /t/{type}/{id}", s.detailPage)
@@ -75,17 +76,18 @@ func (s *Server) stylesheet(w http.ResponseWriter, r *http.Request) {
 // page renders a body inside the site layout with the shared navigation.
 func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body template.HTML, opts pageOptions) {
 	p := render.Page{
-		Site:       s.app.Workspace.Config.Name,
-		Title:      title,
-		Controls:   s.app.Workspace.Config.UI.Controls,
-		Body:       body,
-		JSONURL:    opts.JSONURL,
-		Focus:      opts.Focus,
-		FocusLabel: opts.FocusLabel,
-		QuietTitle: opts.QuietTitle,
-		Shell:      opts.Shell,
-		Left:       opts.Left,
-		Right:      opts.Right,
+		Site:         s.app.Workspace.Config.Name,
+		Title:        title,
+		Controls:     s.app.Workspace.Config.UI.Controls,
+		Body:         body,
+		JSONURL:      opts.JSONURL,
+		Focus:        opts.Focus,
+		FocusLabel:   opts.FocusLabel,
+		QuietTitle:   opts.QuietTitle,
+		Shell:        opts.Shell,
+		Left:         opts.Left,
+		Right:        opts.Right,
+		ExtraScripts: opts.ExtraScripts,
 	}
 	// The header carries only the person's own content. The brand is the way
 	// back to the canvas, and everything about the workspace itself lives in
@@ -114,6 +116,12 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 	w.Write(out)
 }
 
+// detailPageExtraScripts are additional <script> tags rendered in the head on
+// content-type record detail pages, enabling inline editing via 08-edit.js.
+var detailPageExtraScripts = []template.HTML{
+	`<script defer src="/design/base/08-edit.js"></script>`,
+}
+
 type pageOptions struct {
 	// QuietTitle keeps the page heading in the outline but off the screen,
 	// for a page whose whole content is one thing and says so itself.
@@ -121,13 +129,14 @@ type pageOptions struct {
 	// Shell is "app" for a page that is an application rather than a
 	// document: full width, header and footer fixed, the middle scrolls.
 	// Panes imply it; the canvas asks for it even without them.
-	Shell      string
-	Left       template.HTML
-	Right      template.HTML
-	JSONURL    string
-	Focus      string
-	FocusLabel string
-	Status     int
+	Shell        string
+	Left         template.HTML
+	Right        template.HTML
+	JSONURL      string
+	Focus        string
+	FocusLabel   string
+	Status       int
+	ExtraScripts []template.HTML
 }
 
 func (s *Server) navLink(href, label string, current bool) template.HTML {

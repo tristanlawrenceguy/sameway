@@ -42,6 +42,9 @@ type Page struct {
 	// Shell is "app" for a full height layout whose middle column scrolls,
 	// and empty for an ordinary document that scrolls as a whole.
 	Shell string
+	// ExtraScripts are additional <script> tags rendered in the head after
+	// sameway.js. Used by detail pages to load per-page scripts like 08-edit.js.
+	ExtraScripts []template.HTML
 }
 
 // RenderPage wraps a body in the site layout.
