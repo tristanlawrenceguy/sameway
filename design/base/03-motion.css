@@ -91,3 +91,25 @@
   [data-changed][data-arrival], [data-changed="added"][data-arrival] > * { animation-delay: 0s !important; }
   [data-changed="added"][data-arrival]::before { display: none; }
 }
+
+/* An edit is eased in too, in two stages rather than three: the block is
+   already there, so first the place is marked (an outline in the actor's
+   colour draws attention to what is about to change), then the content
+   crosses over (the old words dim and the new ones settle), and then it
+   glows. Edits take their turn in the same sequence as additions. */
+@keyframes sw-edit-mark { 0% { outline-color: transparent; } 4%, 45% { outline-color: var(--sw-actor, var(--sw-color-accent)); } 70%, 100% { outline-color: transparent; } }
+@keyframes sw-edit-content { 0%, 35% { opacity: 1; } 55% { opacity: 0.15; } 100% { opacity: 1; } }
+
+[data-changed="updated"][data-arrival] {
+  outline: 2px solid transparent; outline-offset: 2px;
+  animation: sw-edit-mark var(--sw-motion-arrive) var(--sw-motion-ease) both,
+    sw-glow var(--sw-motion-glow) var(--sw-motion-ease-out) 1 both;
+  animation-delay: var(--sw-arrival-delay), calc(var(--sw-arrival-delay) + var(--sw-motion-arrive));
+}
+[data-changed="updated"][data-arrival] > :not(.sw-visually-hidden) {
+  animation: sw-edit-content var(--sw-motion-arrive) var(--sw-motion-ease) both;
+  animation-delay: var(--sw-arrival-delay);
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-changed="updated"][data-arrival], [data-changed="updated"][data-arrival] > * { animation-delay: 0s !important; }
+}
