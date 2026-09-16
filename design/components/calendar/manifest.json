@@ -2,6 +2,7 @@
   "name": "calendar",
   "version": "2.0.0",
   "description": "A month and what is on in it, at whatever size it has been given: a marker with a count, a short agenda, a month grid, or a full page with an action beside every event. To ask someone for a date use datepicker.",
+  "use": { "when": "a person wants to see when things happen or what is coming, sized to where it sits: glance or brief in a pane, full or page in the main region.", "not": "a single date, which is a datepicker, or a list of tasks, which is a list.", "with": "events as records, so the same event is on its own page." },
   "props": {
     "type": "object",
     "additionalProperties": false,

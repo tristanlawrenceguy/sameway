@@ -2,6 +2,7 @@
   "name": "alert",
   "version": "1.0.0",
   "description": "A short message that needs attention: status, success, warning, or error. Not for long content.",
+  "use": { "when": "something needs attention now: a failure, a warning before an action, or a result the person waited for.", "not": "content that stays on the page, a heading, or anything a person did not need to be interrupted for.", "with": "a status region for what changes over time; text for anything longer than two sentences." },
   "props": {
     "type": "object",
     "additionalProperties": false,

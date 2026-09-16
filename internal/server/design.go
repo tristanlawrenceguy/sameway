@@ -96,6 +96,16 @@ func (s *Server) designComponents(b *strings.Builder) {
 		fmt.Fprintf(b, `<section class="sw-panel sw-stack" id="component-%s" aria-labelledby="component-%s-h"><h3 id="component-%s-h">%s <span class="sw-muted sw-small">(%s)</span></h3><p class="sw-prose">%s</p><p class="sw-small sw-muted"><strong>Role</strong> %s · <strong>WCAG</strong> %s. %s</p>`,
 			c.Manifest.Name, c.Manifest.Name, c.Manifest.Name, template.HTMLEscapeString(c.Manifest.Name), c.Source,
 			template.HTMLEscapeString(c.Manifest.Description), template.HTMLEscapeString(a11y.Role), template.HTMLEscapeString(a11y.WCAG.Target), template.HTMLEscapeString(a11y.WCAG.Notes))
+		if u := c.Manifest.Use; u != nil {
+			fmt.Fprintf(b, `<p class="sw-prose sw-small"><strong>Use when</strong> %s`, template.HTMLEscapeString(u.When))
+			if u.Not != "" {
+				fmt.Fprintf(b, ` <strong>Not when</strong> %s`, template.HTMLEscapeString(u.Not))
+			}
+			if u.With != "" {
+				fmt.Fprintf(b, ` <strong>With</strong> %s`, template.HTMLEscapeString(u.With))
+			}
+			b.WriteString(`</p>`)
+		}
 		for _, ex := range c.Manifest.Examples {
 			props, _ := json.Marshal(ex.Props)
 			fmt.Fprintf(b, `<div class="sw-example"><p class="sw-small sw-muted">%s <code>%s</code></p><div class="sw-example__render">%s</div></div>`,

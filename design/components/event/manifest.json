@@ -2,6 +2,7 @@
   "name": "event",
   "version": "1.2.0",
   "description": "One line of activity: who did what to which thing, and when. Used for change receipts under a reply and for the activity log. Given the thing's page, the entry leads to it.",
+  "use": { "when": "one thing that happened, in a receipt or a log.", "not": "a heading or a card.", "with": "a list, so counts and positions are announced." },
   "props": {
     "type": "object",
     "additionalProperties": false,

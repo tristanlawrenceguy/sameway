@@ -20,13 +20,26 @@ import (
 
 // Manifest is the machine-readable contract of a component.
 type Manifest struct {
-	Name        string          `json:"name"`
-	Version     string          `json:"version"`
-	Description string          `json:"description"`
-	Props       json.RawMessage `json:"props"`
-	A11y        json.RawMessage `json:"a11y"`
-	Machine     json.RawMessage `json:"machine"`
-	Examples    []Example       `json:"examples"`
+	Name        string `json:"name"`
+	Version     string `json:"version"`
+	Description string `json:"description"`
+	// Use is the thought behind the component, written once for the model
+	// and every reader: when a person is served by it, when they are not,
+	// and what it sits with. The prompt carries it, so what works for
+	// people is what the assistant builds from, not something it guesses.
+	Use      *Use            `json:"use,omitempty"`
+	Props    json.RawMessage `json:"props"`
+	A11y     json.RawMessage `json:"a11y"`
+	Machine  json.RawMessage `json:"machine"`
+	Examples []Example       `json:"examples"`
+}
+
+// Use says when a component serves a person, when it does not, and what
+// it belongs with.
+type Use struct {
+	When string `json:"when"`
+	Not  string `json:"not,omitempty"`
+	With string `json:"with,omitempty"`
 }
 
 // Example is one named set of props with its golden output file.

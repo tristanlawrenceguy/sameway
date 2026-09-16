@@ -2,6 +2,7 @@
   "name": "table",
   "version": "1.0.0",
   "description": "Tabular data with a caption, column headers, and rows of text cells. Use list for a single column.",
+  "use": { "when": "several items with the same few facts about each, to compare.", "not": "one column, which is a list, or prose.", "with": "a caption that says what the rows are." },
   "props": {
     "type": "object",
     "additionalProperties": false,

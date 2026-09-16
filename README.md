@@ -90,7 +90,7 @@ That file gives you the SQLite table, validation, `sameway note ...` commands,
 
 **A component** is one folder in `design/components/` (or in your workspace's
 `components/`), with a manifest that carries the props schema, the
-accessibility contract, the keyboard map, and how a machine finds and operates
+accessibility contract, the keyboard map, the thought behind it (use when, not when, what it sits with), and how a machine finds and operates
 it. See [design/README.md](design/README.md).
 
 ## Workspace folder

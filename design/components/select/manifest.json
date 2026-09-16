@@ -2,6 +2,7 @@
   "name": "select",
   "version": "1.0.0",
   "description": "Choose one option from a short fixed list. For free text use text-field.",
+  "use": { "when": "one choice from a short fixed list.", "not": "free text, which is a text-field, or many options, which want a list of links.", "with": "a form." },
   "props": {
     "type": "object",
     "additionalProperties": false,

@@ -2,6 +2,7 @@
   "name": "list",
   "version": "1.0.0",
   "description": "A bulleted or numbered list of short text items. Use ordered for steps or rankings.",
+  "use": { "when": "short items, in order or not: steps, groceries, names.", "not": "paragraphs, which are text, or data with columns, which is a table.", "with": "a heading or a label right before it." },
   "props": {
     "type": "object",
     "additionalProperties": false,

@@ -57,9 +57,22 @@ func (s *Service) systemPrompt() string {
 		b.WriteString("\n\nWorkspace instructions:\n")
 		b.WriteString(s.ExtraPrompt)
 	}
-	b.WriteString("\n\nComponent catalogue (name: description, then props schema):\n")
+	b.WriteString("\n\nComponent catalogue (name: description, when it serves a person and when it does not, then props schema):\n")
 	for _, c := range s.Registry.Components() {
-		fmt.Fprintf(&b, "\n%s: %s\n%s\n", c.Manifest.Name, c.Manifest.Description, compactJSON(c.Manifest.Props))
+		fmt.Fprintf(&b, "\n%s: %s\n", c.Manifest.Name, c.Manifest.Description)
+		// The thought behind the component travels with it, so the model
+		// builds from what works for people rather than guessing at it.
+		if u := c.Manifest.Use; u != nil {
+			fmt.Fprintf(&b, "  Use when: %s", u.When)
+			if u.Not != "" {
+				fmt.Fprintf(&b, " Not when: %s", u.Not)
+			}
+			if u.With != "" {
+				fmt.Fprintf(&b, " With: %s", u.With)
+			}
+			b.WriteString("\n")
+		}
+		fmt.Fprintf(&b, "%s\n", compactJSON(c.Manifest.Props))
 	}
 	b.WriteString(s.contentCatalogue())
 	b.WriteString(s.canvasDigest(s.current))

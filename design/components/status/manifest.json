@@ -2,6 +2,7 @@
   "name": "status",
   "version": "1.0.0",
   "description": "Tells people and machines whether something is happening: idle, working, done, or error. A live region, so screen readers announce changes; data-state so agents can read them.",
+  "use": { "when": "something is happening or has just finished and people should know without looking.", "not": "content, or anything a person reads rather than waits for.", "with": "the chat composer, which uses it." },
   "props": {
     "type": "object",
     "additionalProperties": false,
