@@ -44,6 +44,12 @@ in the order they were made, with a pause between, so there is time to take
 each one in: `motion-arrive` (2600 ms) for one block, `motion-between`
 (3000 ms) from one start to the next.
 
+An edited block is eased in too, in two stages rather than three, because
+it is already there: an outline in the actor's colour marks the place that
+is about to change, then the content crosses over (the old words dim, the
+new ones settle), and then it glows. Edits take their turn in the same
+sequence as additions.
+
 The server sets `data-arrival` to each changed block's place in that order
 (the conversation block never arrives; it is the person's own tool). The
 stages are CSS only: no script is involved, and a browser that cannot
