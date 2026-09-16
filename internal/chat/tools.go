@@ -24,9 +24,11 @@ func (s *Service) BlockFields(in map[string]any) map[string]any {
 	return s.fields(BlockType, in)
 }
 
-// Tools the model can call. Every tool operates on block records, so the
-// canvas is ordinary content that the CLI and API can also read and edit.
-func (s *Service) tools() []llm.Tool {
+// Tools is what the model can call: the canvas tools, which write ordinary
+// block records, and the record tools generated from the workspace's schema.
+// It is the one list; /api/describe and the CLI publish it from here, so a
+// tool added or changed shows up on every surface at once.
+func (s *Service) Tools() []llm.Tool {
 	// Strict servers (llama.cpp builds a grammar from this) reject
 	// "required": null, so the key is only present when there is a list.
 	obj := func(props map[string]any, required ...string) map[string]any {
@@ -36,7 +38,7 @@ func (s *Service) tools() []llm.Tool {
 		}
 		return s
 	}
-	return []llm.Tool{
+	return append([]llm.Tool{
 		{Name: "add_component", Description: "Add a component to the canvas the person is looking at. Props must match the component's props schema from the catalogue. Returns the new block id.",
 			Schema: obj(map[string]any{
 				"component": map[string]any{"type": "string", "description": "Component name from the catalogue."},
@@ -73,7 +75,7 @@ func (s *Service) tools() []llm.Tool {
 			}, "summary", "tool")},
 		{Name: "clear_canvas", Description: "Remove every block from the canvas except the chat, which stays so the person can keep talking. Only when the person asks to start over. To remove the chat too, call remove_component on it.",
 			Schema: obj(map[string]any{})},
-	}
+	}, s.recordTools()...)
 }
 
 // toolResult is what one tool call produced: text for the model, an error
@@ -101,6 +103,10 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 		Region    string         `json:"region"`
 		Summary   string         `json:"summary"`
 		Tool      string         `json:"tool"`
+		Type      string         `json:"type"`
+		Fields    map[string]any `json:"fields"`
+		Query     string         `json:"query"`
+		Limit     int            `json:"limit"`
 	}
 	if len(call.Args) > 0 {
 		if err := json.Unmarshal(call.Args, &args); err != nil {
@@ -113,6 +119,12 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 		json.Unmarshal(call.Args, &action)
 		delete(action, "summary")
 		return s.propose(args.Summary, action)
+	case "create_record":
+		return s.createRecord(args.Type, args.Fields)
+	case "update_record":
+		return s.updateRecord(args.Type, args.ID, args.Fields)
+	case "find_records":
+		return s.findRecords(args.Type, args.Query, args.Limit)
 	case "add_component":
 		return s.addComponent(args.Component, args.Props, look{args.Span, args.Position, args.Frame, args.Tone, args.Region})
 	case "update_component":

@@ -167,8 +167,11 @@ front of a shared instance without changing this layout.
 
 The home page is a canvas that fills the screen, and the conversation is one
 block on it like any other. The model (any OpenAI-compatible server such as
-Ollama, or Claude through the official SDK) gets five tools: `add_component`,
-`update_component`, `remove_component`, `propose_change`, and `clear_canvas`. Each one writes an ordinary `block` record, so the canvas is
+Ollama, or Claude through the official SDK) gets two kinds of tool: canvas tools
+that place and change components, and record tools generated from the
+workspace's schema, so a person who asks for a note gets a note on `/t/note`,
+not a card. The list lives in one place, the chat service, and `/api/describe`
+and `sameway describe` publish it from there. Each canvas tool writes an ordinary `block` record, so the canvas is
 content like any other: `sameway block list`, `GET /api/block`, and the page
 all show the same thing. The system prompt carries the component catalogue
 (every manifest's props schema) and the current canvas, and is rebuilt after

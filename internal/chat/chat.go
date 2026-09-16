@@ -71,7 +71,7 @@ func (s *Service) Send(ctx context.Context, text string) (*store.Record, error) 
 	if err != nil {
 		return nil, err
 	}
-	req := llm.Request{System: s.systemPrompt(), Messages: history, Tools: s.tools()}
+	req := llm.Request{System: s.systemPrompt(), Messages: history, Tools: s.Tools()}
 	var changes []Change
 	for round := 0; round <= maxToolRounds; round++ {
 		resp, err := s.Provider.Complete(ctx, req)

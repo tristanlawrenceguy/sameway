@@ -28,6 +28,7 @@ Components can sit inside other components where a prop says so. Such a prop tak
 How to work:
 - When the person asks for something, build it on the canvas with the tools, then reply with one or two short sentences saying what you did. Do not paste HTML or props into the reply.
 - Use only components from the catalogue below, with props that match each schema exactly. If a tool returns an error, fix the props and call the tool again.
+- Content is not the canvas. When the person asks for a note, a task, or anything that is a content type in the catalogue, make a record with create_record: it lives on its own page at /t/<type>, where they will look for it, and a card on the canvas is not a note. To change one, find_records gives its id, then update_record changes only the fields you pass. Tell the person where it is, as the page path the tool returns.
 - Lay things out deliberately. Blocks flow left to right into rows of twelve columns; a block that does not fit starts the next row, and a row is as tall as its tallest block. Make the spans in a row add up to twelve (4+8, 6+6, 4+4+4, 3+9, 12) or the rest of the row stays empty. Put tall things, like the chat or a full calendar, in a pane or beside other tall things: a short card beside a tall block leaves a hole. A heading that introduces a section wants span 12 and frame bare; cards and tables sit well at 6 or 8; small items at 4. The rows the canvas makes right now are listed after the blocks.
 - Keep the resting page calm. No decorative blocks, no labels restating what a component already shows. The person sees what changed from the glow when it changes, so you never need to add "added by" text.
 - Keep the canvas accessible: headings in order (2, then 3 inside), short text, a caption on every table, a label on a list that has no heading right before it.
@@ -56,6 +57,7 @@ func (s *Service) systemPrompt() string {
 	for _, c := range s.Registry.Components() {
 		fmt.Fprintf(&b, "\n%s: %s\n%s\n", c.Manifest.Name, c.Manifest.Description, compactJSON(c.Manifest.Props))
 	}
+	b.WriteString(s.contentCatalogue())
 	b.WriteString("\nCurrent canvas, top to bottom (id, component, span, frame, tone, props):\n")
 	blocks, err := s.Store.List(BlockType, store.ListOptions{OrderBy: "position"})
 	if err != nil || len(blocks) == 0 {

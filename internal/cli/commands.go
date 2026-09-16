@@ -130,6 +130,10 @@ func (c *ctx) describeCmd() error {
 		for _, comp := range d.Components {
 			fmt.Fprintf(c.Stdout, "  %-12s (%s) %s\n", comp.Name, comp.Source, comp.Description)
 		}
+		fmt.Fprintln(c.Stdout, "\nAssistant tools:")
+		for _, tool := range d.Tools {
+			fmt.Fprintf(c.Stdout, "  %-16s %s\n", tool.Name, tool.Description)
+		}
 		fmt.Fprintln(c.Stdout, "\nRun with --json for schemas and manifests.")
 	})
 	return nil
