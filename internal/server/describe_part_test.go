@@ -53,7 +53,7 @@ func TestDescribeIsReadByPart(t *testing.T) {
 		Error struct{ Code, Message string }
 	}
 	decode(t, rec, &problem)
-	if problem.Error.Code != "not_found" || !strings.Contains(problem.Error.Message, "types, components, tools, routes, llm") {
+	if problem.Error.Code != "not_found" || !strings.Contains(problem.Error.Message, "types, components, arrangements, tools, routes, llm") {
 		t.Errorf("an unknown part should name the parts, got %+v", problem)
 	}
 	decode(t, get(t, h, "/api/describe/types/nope"), &problem)
@@ -70,5 +70,41 @@ func TestDescribeIsReadByPart(t *testing.T) {
 	decode(t, rec, &problem)
 	if !strings.Contains(problem.Error.Message, "/api/describe/routes") {
 		t.Errorf("an unknown /api path should say where the routes are, got %+v", problem)
+	}
+}
+
+// Arrangements are published like components, with their use notes, and
+// the assistant's tool for them is on the list an agent reads.
+func TestArrangementsAreDescribed(t *testing.T) {
+	_, h := newApp(t)
+	var week struct {
+		Name   string
+		Use    struct{ When, Not string }
+		Blocks []struct{ Key, Component, Region string }
+	}
+	decode(t, get(t, h, "/api/describe/arrangements/week"), &week)
+	if week.Name != "week" || week.Use.When == "" || len(week.Blocks) != 4 || week.Blocks[1].Region != "right" {
+		t.Errorf("the week arrangement should be described whole, got %+v", week)
+	}
+	var comp struct {
+		Use struct{ When string }
+	}
+	decode(t, get(t, h, "/api/describe/components/card"), &comp)
+	if comp.Use.When == "" {
+		t.Error("a component's use note should be published")
+	}
+	var d struct {
+		Tools []struct{ Name string }
+	}
+	decode(t, get(t, h, "/api/describe"), &d)
+	found := false
+	for _, tool := range d.Tools {
+		found = found || tool.Name == "add_arrangement"
+	}
+	if !found {
+		t.Error("add_arrangement should be among the tools")
+	}
+	if page := get(t, h, "/design").Body.String(); !strings.Contains(page, `id="arrangement-week"`) {
+		t.Error("the styleguide should show the arrangements")
 	}
 }

@@ -69,9 +69,11 @@ type Component struct {
 // Registry holds every loaded component by name.
 type Registry struct {
 	byName map[string]*Component
-	tokens string
-	base   string
-	baseJS string
+	// arrangements are whole pages of thought, by name; see arrangement.go.
+	arrangements map[string]*Arrangement
+	tokens       string
+	base         string
+	baseJS       string
 }
 
 // New returns an empty registry.

@@ -27,6 +27,7 @@ func (s *Server) designPage(w http.ResponseWriter, r *http.Request) {
 	s.designMotion(&b)
 	s.designStates(&b)
 	s.designComponents(&b)
+	s.designArrangements(&b)
 	s.page(w, r, "Design system", template.HTML(b.String()), pageOptions{JSONURL: "/api/describe"})
 }
 
@@ -112,5 +113,33 @@ func (s *Server) designComponents(b *strings.Builder) {
 				template.HTMLEscapeString(ex.Name), template.HTMLEscapeString(string(props)), s.component(c.Manifest.Name, ex.Props))
 		}
 		b.WriteString(`</section>`)
+	}
+}
+
+// designArrangements shows the pages of thought the assistant can apply.
+func (s *Server) designArrangements(b *strings.Builder) {
+	arrangements := s.app.Registry.Arrangements()
+	if len(arrangements) == 0 {
+		return
+	}
+	b.WriteString(`<h2 id="arrangements">Arrangements</h2><p class="sw-prose">A whole page for a job, thought through once: which blocks, where each sits, how wide. The assistant applies one in a single call and fills in the words.</p>`)
+	for _, a := range arrangements {
+		fmt.Fprintf(b, `<section class="sw-panel sw-stack" id="arrangement-%s" aria-labelledby="arrangement-%s-h"><h3 id="arrangement-%s-h">%s <span class="sw-muted sw-small">(%s)</span></h3><p class="sw-prose">%s</p>`,
+			a.Name, a.Name, a.Name, template.HTMLEscapeString(a.Name), a.Source, template.HTMLEscapeString(a.Description))
+		if a.Use != nil {
+			fmt.Fprintf(b, `<p class="sw-prose sw-small"><strong>Use when</strong> %s <strong>Not when</strong> %s</p>`, template.HTMLEscapeString(a.Use.When), template.HTMLEscapeString(a.Use.Not))
+		}
+		b.WriteString(`<ol class="sw-plain sw-stack--tight" aria-label="Blocks, top to bottom">`)
+		for _, blk := range a.Blocks {
+			region, span := blk.Region, blk.Span
+			if region == "" {
+				region = "main"
+			}
+			if span == 0 {
+				span = 6
+			}
+			fmt.Fprintf(b, `<li class="sw-small">%s: <strong>%s</strong>, %s, span %d</li>`, template.HTMLEscapeString(blk.Key), template.HTMLEscapeString(blk.Component), template.HTMLEscapeString(region), span)
+		}
+		b.WriteString(`</ol></section>`)
 	}
 }

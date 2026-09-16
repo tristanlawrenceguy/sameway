@@ -74,6 +74,7 @@ func (s *Service) systemPrompt() string {
 		}
 		fmt.Fprintf(&b, "%s\n", compactJSON(c.Manifest.Props))
 	}
+	b.WriteString(s.arrangementCatalogue())
 	b.WriteString(s.contentCatalogue())
 	b.WriteString(s.canvasDigest(s.current))
 	b.WriteString(s.undoDigest())

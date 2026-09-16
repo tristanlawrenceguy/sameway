@@ -228,7 +228,7 @@ func TestDescribeOnePart(t *testing.T) {
 	if r.code != 0 || !strings.Contains(r.stdout, `"body"`) || strings.Contains(r.stdout, `"components"`) {
 		t.Errorf("describe types note should print the note type alone: %+v", r)
 	}
-	if r := run(t, dir, "describe", "nope"); r.code == 0 || !strings.Contains(r.stderr, "types, components, tools, routes, llm") {
+	if r := run(t, dir, "describe", "nope"); r.code == 0 || !strings.Contains(r.stderr, "types, components, arrangements, tools, routes, llm") {
 		t.Errorf("an unknown part should name the parts: %+v", r)
 	}
 }

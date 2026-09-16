@@ -13,6 +13,7 @@ binary, which serves a living styleguide at `/design`.
 | Read | For |
 |---|---|
 | [foundations/principles.md](foundations/principles.md) | The five rules every decision follows |
+| [arrangements/](arrangements/) | Whole pages of thought: which blocks a job wants, where each sits, how wide; the assistant applies one in a call |
 | [foundations/color.md](foundations/color.md) | Palette, roles, actor tones, the 7:1 contract |
 | [foundations/typography.md](foundations/typography.md) | Scale, measure, numerals |
 | [foundations/motion.md](foundations/motion.md) | Durations, curves, view transitions, reduced motion |

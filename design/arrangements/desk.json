@@ -1,0 +1,14 @@
+{
+  "name": "desk",
+  "description": "A place to write, with ideas kept to one side.",
+  "use": {
+    "when": "the person wants to write something longer than a note and keep the ideas for it beside the words.",
+    "not": "a short note, which is a note record, or a to-do list, which is the week arrangement.",
+    "with": "a note record once the writing is worth keeping on its own page."
+  },
+  "blocks": [
+    { "key": "title", "component": "heading", "props": { "text": "Writing", "level": 2 }, "span": 12, "frame": "bare" },
+    { "key": "draft", "component": "text", "props": { "content": "Start here." }, "span": 8, "frame": "bare" },
+    { "key": "ideas", "component": "list", "props": { "items": ["An idea to come back to"], "label": "Ideas" }, "span": 4 }
+  ]
+}

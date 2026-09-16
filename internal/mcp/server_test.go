@@ -167,7 +167,7 @@ func TestDescribeOverMCPIsReadByPart(t *testing.T) {
 	if body, isErr := text(t, replies[0]); isErr || !strings.Contains(body, `"body"`) || strings.Contains(body, `"components"`) {
 		t.Errorf("describe types note should be the note type alone, got err=%v %.200s", isErr, body)
 	}
-	if body, isErr := text(t, replies[1]); !isErr || !strings.Contains(body, "types, components, tools, routes, llm") {
+	if body, isErr := text(t, replies[1]); !isErr || !strings.Contains(body, "types, components, arrangements, tools, routes, llm") {
 		t.Errorf("an unknown part should be an error naming the parts, got err=%v %s", isErr, body)
 	}
 }

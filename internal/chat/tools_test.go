@@ -225,7 +225,7 @@ func TestSystemPromptCarriesCatalogueAndCanvas(t *testing.T) {
 	for _, tool := range m.seen[0].Tools {
 		names = append(names, tool.Name)
 	}
-	if strings.Join(names, ",") != "add_component,update_component,remove_component,propose_change,clear_canvas,undo_change,set_pace" {
+	if strings.Join(names, ",") != "add_component,update_component,remove_component,propose_change,clear_canvas,undo_change,add_arrangement,set_pace" {
 		t.Errorf("tools offered: %v", names)
 	}
 }
