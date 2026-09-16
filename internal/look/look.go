@@ -6,7 +6,6 @@
 package look
 
 import (
-	"fmt"
 	"strings"
 
 	"golang.org/x/net/html"
