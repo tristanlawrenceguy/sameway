@@ -171,3 +171,17 @@ func TestDescribeOverMCPIsReadByPart(t *testing.T) {
 		t.Errorf("an unknown part should be an error naming the parts, got err=%v %s", isErr, body)
 	}
 }
+
+// The look tool reads a page through the same handler the API serves.
+func TestAnAgentLooksAtAPageOverMCP(t *testing.T) {
+	_, replies := drive(t,
+		`{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"look","arguments":{"path":"/t/note"}}}`,
+		`{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"look","arguments":{"component":"card","props":{"title":"Plan"}}}}`,
+	)
+	if body, isErr := text(t, replies[0]); isErr || !strings.Contains(body, `"headings"`) || !strings.Contains(body, `"problems": []`) {
+		t.Errorf("look at a page should give its outline with no problems, got err=%v %.300s", isErr, body)
+	}
+	if body, isErr := text(t, replies[1]); isErr || !strings.Contains(body, `data-component=\"card\"`) {
+		t.Errorf("look at a component should render it from props, got err=%v %.300s", isErr, body)
+	}
+}

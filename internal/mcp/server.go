@@ -15,6 +15,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"sync"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
@@ -31,6 +32,9 @@ type Server struct {
 	Out     io.Writer
 
 	mu sync.Mutex
+	// http is the web server over the same app, for tools that read a
+	// page the way the API does.
+	http http.Handler
 }
 
 type request struct {

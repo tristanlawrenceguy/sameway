@@ -204,6 +204,7 @@ func (a *App) Describe() Description {
 			"create":        "POST /api/{type} with a JSON object of fields",
 			"get":           "GET /api/{type}/{id}",
 			"update":        "PUT or PATCH /api/{type}/{id} with a JSON object of the fields to change; a field the type does not have is refused",
+			"look":          "GET /api/look?path=/t/note: the page as a screen reader gets it (title, landmarks, headings, controls with where they lead, live regions, components) and its structural problems; POST /api/look with {\"path\", \"method\", \"form\"} does what a person does and reads where they land, or with {\"component\", \"props\"} reads one component rendered from props",
 			"errors":        "every answer under /api is JSON, errors too: {\"error\": {\"code\", \"message\", \"fields\"}} with code bad_request, invalid (422, fields says which) or not_found",
 			"delete":        "DELETE /api/{type}/{id}",
 			"chat":          "POST /api/chat with {\"message\": \"...\"}",

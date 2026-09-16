@@ -1,10 +1,14 @@
 package mcp
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/tristanlawrenceguy/sameway/internal/app"
+	"github.com/tristanlawrenceguy/sameway/internal/server"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 )
 
@@ -26,6 +30,18 @@ func (s *Server) tools() []tool {
 				"properties": map[string]any{
 					"part": map[string]any{"type": "string", "enum": app.Parts, "description": "One section of the description, or omit for all of it."},
 					"name": map[string]any{"type": "string", "description": "One item in that section: a type, component or tool name, or a route key."},
+				},
+				"additionalProperties": false,
+			}},
+		{Name: "look", Description: "A page as a screen reader gets it, without a browser: title, landmarks, headings, controls with where they lead, live regions, the components on it, and its structural problems. Give path for a page; method and form to do what a person does and read where they land; or component and props to read one component rendered from props.",
+			InputSchema: map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"path":      map[string]any{"type": "string", "description": "A page on this server, such as /t/note or /activity."},
+					"method":    map[string]any{"type": "string", "enum": []string{"GET", "POST"}, "description": "POST to submit form as a person would; defaults to GET, or POST when form is given."},
+					"form":      map[string]any{"type": "object", "description": "Form fields to submit, by name."},
+					"component": map[string]any{"type": "string", "description": "A component from describe, to read on its own instead of a page."},
+					"props":     map[string]any{"type": "object", "description": "Props for that component."},
 				},
 				"additionalProperties": false,
 			}},
@@ -70,6 +86,13 @@ func (s *Server) call(ctx context.Context, name string, args json.RawMessage) (s
 			return err.Error(), true
 		}
 		return string(raw), false
+	case "look":
+		// The same handler the HTTP API has, so a page reads the same either way.
+		req := httptest.NewRequest(http.MethodPost, "/api/look", bytes.NewReader(args))
+		req.Header.Set("Content-Type", "application/json")
+		rec := httptest.NewRecorder()
+		s.web().ServeHTTP(rec, req)
+		return rec.Body.String(), rec.Code >= 400
 	case "get_record":
 		var a struct {
 			Type string `json:"type"`
@@ -94,4 +117,13 @@ func (s *Server) call(ctx context.Context, name string, args json.RawMessage) (s
 		return string(raw), false
 	}
 	return s.App.Chat.Call(name, args)
+}
+
+// web is the HTTP server over the same app, for the tools that read a page
+// the way the API does. Built once, on first use.
+func (s *Server) web() http.Handler {
+	if s.http == nil {
+		s.http = server.New(s.App)
+	}
+	return s.http
 }
