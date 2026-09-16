@@ -141,8 +141,25 @@
     bar.insertBefore(btn, bar.firstChild);
   }
 
+  // Intercept Enter in the chat composer so pressing it submits instead of
+  // inserting a newline. Shift+Enter is allowed through for newlines.
+  function composeKeyHandler() {
+    var textarea = document.querySelector("form.sw-compose textarea");
+    if (!textarea) return;
+    if (textarea._composeHandled) return;
+    textarea._composeHandled = true;
+    var form = textarea.closest("form.sw-compose");
+    textarea.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        form.submit();
+      }
+    });
+  }
+
   function init() {
     document.querySelectorAll("[data-block-id]").forEach(arm);
+    composeKeyHandler();
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();
