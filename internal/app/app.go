@@ -144,7 +144,17 @@ type Description struct {
 	LLM        DescribedLLM         `json:"llm"`
 	Types      []DescribedType      `json:"types"`
 	Components []DescribedComponent `json:"components"`
-	Routes     map[string]string    `json:"routes"`
+	// Tools is what the chat assistant can do, straight from the tool loop,
+	// so an agent reads the same list the model is given.
+	Tools  []DescribedTool   `json:"tools"`
+	Routes map[string]string `json:"routes"`
+}
+
+// DescribedTool is one tool the assistant can call, with its argument schema.
+type DescribedTool struct {
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	Schema      map[string]any `json:"schema"`
 }
 
 // DescribedLLM says which model the chat uses without exposing keys.
@@ -205,6 +215,9 @@ func (a *App) Describe() Description {
 	}
 	for _, c := range a.Registry.Components() {
 		d.Components = append(d.Components, DescribedComponent{Name: c.Manifest.Name, Source: c.Source, Description: c.Manifest.Description, Props: c.Manifest.Props, A11y: c.Manifest.A11y, Machine: c.Manifest.Machine})
+	}
+	for _, t := range a.Chat.Tools() {
+		d.Tools = append(d.Tools, DescribedTool{Name: t.Name, Description: t.Description, Schema: t.Schema})
 	}
 	return d
 }
