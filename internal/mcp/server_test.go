@@ -153,3 +153,21 @@ func TestMCPErrorsAreAnsweredNotDropped(t *testing.T) {
 		t.Errorf("an unknown tool is a tool error: %q", msg)
 	}
 }
+
+// The describe tool is cut by part the same way /api/describe is, so an
+// MCP client reads the fields of one type without the whole document.
+func TestDescribeOverMCPIsReadByPart(t *testing.T) {
+	_, replies := drive(t,
+		`{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"describe","arguments":{"part":"types","name":"note"}}}`,
+		`{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"describe","arguments":{"part":"nope"}}}`,
+	)
+	if len(replies) != 2 {
+		t.Fatalf("two requests, got %d replies", len(replies))
+	}
+	if body, isErr := text(t, replies[0]); isErr || !strings.Contains(body, `"body"`) || strings.Contains(body, `"components"`) {
+		t.Errorf("describe types note should be the note type alone, got err=%v %.200s", isErr, body)
+	}
+	if body, isErr := text(t, replies[1]); !isErr || !strings.Contains(body, "types, components, tools, routes, llm") {
+		t.Errorf("an unknown part should be an error naming the parts, got err=%v %s", isErr, body)
+	}
+}

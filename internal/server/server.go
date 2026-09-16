@@ -59,6 +59,8 @@ func (s *Server) routes() {
 	m.HandleFunc("POST /t/{type}/{id}/props", s.recordProps)
 
 	m.HandleFunc("GET /api/describe", s.apiDescribe)
+	m.HandleFunc("GET /api/describe/{part}", s.apiDescribePart)
+	m.HandleFunc("GET /api/describe/{part}/{name}", s.apiDescribePart)
 	m.HandleFunc("POST /api/chat", s.apiChat)
 	m.HandleFunc("GET /api/{type}", s.apiList)
 	m.HandleFunc("POST /api/{type}", s.apiCreate)
@@ -66,6 +68,8 @@ func (s *Server) routes() {
 	m.HandleFunc("PUT /api/{type}/{id}", s.apiUpdate)
 	m.HandleFunc("PATCH /api/{type}/{id}", s.apiUpdate)
 	m.HandleFunc("DELETE /api/{type}/{id}", s.apiDelete)
+	// Anything else under /api is answered in JSON too.
+	m.HandleFunc("/api/", s.apiNotFound)
 }
 
 func (s *Server) stylesheet(w http.ResponseWriter, r *http.Request) {

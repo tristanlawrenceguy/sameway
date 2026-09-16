@@ -152,3 +152,23 @@ func (s *Server) apiChat(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"reply": rec, "ok": err == nil})
 }
+
+// apiDescribePart serves one section of the description, or one item in it,
+// cut by the same Part every other surface uses.
+func (s *Server) apiDescribePart(w http.ResponseWriter, r *http.Request) {
+	v, err := s.app.Describe().Part(r.PathValue("part"), r.PathValue("name"))
+	if err != nil {
+		writeJSON(w, http.StatusNotFound, map[string]any{"error": apiError{Code: "not_found", Message: err.Error()}})
+		return
+	}
+	writeJSON(w, http.StatusOK, v)
+}
+
+// apiNotFound answers any path under /api that nothing serves in the shape
+// every other error there has, so an agent that typed a route wrong reads
+// JSON like always rather than a plain-text page.
+func (s *Server) apiNotFound(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusNotFound, map[string]any{"error": apiError{
+		Code: "not_found", Message: r.Method + " " + r.URL.Path + " is not a route; GET /api/describe/routes lists them",
+	}})
+}
