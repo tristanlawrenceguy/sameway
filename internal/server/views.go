@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -29,7 +30,18 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	} else {
 		fmt.Fprintf(&b, `<ol class="sw-stack" aria-label="%s">`, template.HTMLEscapeString(plural(t.Name)))
 		for _, rec := range recs {
-			props := map[string]any{"title": titleOf(t, rec), "href": "/t/" + t.Name + "/" + rec.ID, "level": 2, "meta": "Updated " + rec.UpdatedAt.Local().Format("2006-01-02 15:04")}
+			meta := "Updated " + rec.UpdatedAt.Local().Format("2006-01-02 15:04")
+			// A type's first enum field is its state (pending, published,
+			// dismissed), which is what a person scanning a list wants to see.
+			for _, f := range t.Fields {
+				if f.Type == "enum" {
+					if v, ok := rec.Fields[f.Name].(string); ok && v != "" {
+						meta = capitalize(v) + " · " + meta
+					}
+					break
+				}
+			}
+			props := map[string]any{"title": titleOf(t, rec), "href": "/t/" + t.Name + "/" + rec.ID, "level": 2, "meta": meta}
 			b.WriteString("<li>" + string(s.component("card", props)) + "</li>")
 		}
 		b.WriteString("</ol>")
@@ -51,6 +63,11 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	}
 	var b strings.Builder
 	b.WriteString(string(crumbs("/t/"+t.Name, capitalize(plural(t.Name)), titleOf(t, rec))))
+	// A question still waiting is answered here as well as under the
+	// conversation: the page of a proposal is where the two answers belong.
+	if t.Name == chat.ProposalType && rec.Fields["state"] == "pending" {
+		b.WriteString(string(s.proposalCard(rec, "/t/"+t.Name+"/"+rec.ID)))
+	}
 	fmt.Fprintf(&b, `<div class="sw-dl-block" data-block-id="%s" data-edit-action="/t/%s/%s/props">`, rec.ID, t.Name, rec.ID)
 	b.WriteString(`<dl class="sw-dl">`)
 	for _, f := range t.Fields {

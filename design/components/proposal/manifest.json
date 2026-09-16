@@ -13,6 +13,7 @@
       "dismiss": { "type": "string", "minLength": 1, "description": "URL the no answer posts to." },
       "acceptLabel": { "type": "string", "default": "Yes, do it", "description": "Say what happens, not 'OK'." },
       "dismissLabel": { "type": "string", "default": "No, leave it" },
+      "from": { "type": "string", "description": "The page the person is answering from, posted with the answer so they come back to it." },
       "id": { "type": "string" }
     }
   },

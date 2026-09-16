@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 // Proposals are the assistant asking rather than acting. They sit at the end
@@ -13,25 +14,35 @@ import (
 // happens until one of the two answers is given.
 
 // proposals renders every question still waiting for an answer.
-func (s *Server) proposals() []template.HTML {
+func (s *Server) proposals(from string) []template.HTML {
 	var out []template.HTML
 	for _, p := range s.app.Chat.Proposals() {
-		summary, _ := p.Fields["summary"].(string)
-		props := map[string]any{
-			"summary": summary,
-			"accept":  "/proposal/" + p.ID + "/accept",
-			"dismiss": "/proposal/" + p.ID + "/dismiss",
-			"id":      "proposal-" + p.ID,
-		}
-		if detail := proposalDetail(p.Fields["action"]); detail != "" {
-			props["detail"] = detail
-		}
-		if label := acceptLabel(p.Fields["action"]); label != "" {
-			props["acceptLabel"] = label
-		}
-		out = append(out, s.component("proposal", props))
+		out = append(out, s.proposalCard(p, from))
 	}
 	return out
+}
+
+// proposalCard is one question with its two answers, wherever it is shown:
+// under the conversation, or on the proposal's own page. from is the page
+// the person is on, so answering brings them back to it.
+func (s *Server) proposalCard(p *store.Record, from string) template.HTML {
+	summary, _ := p.Fields["summary"].(string)
+	props := map[string]any{
+		"summary": summary,
+		"accept":  "/proposal/" + p.ID + "/accept",
+		"dismiss": "/proposal/" + p.ID + "/dismiss",
+		"id":      "proposal-" + p.ID,
+	}
+	if from != "" {
+		props["from"] = from
+	}
+	if detail := proposalDetail(p.Fields["action"]); detail != "" {
+		props["detail"] = detail
+	}
+	if label := acceptLabel(p.Fields["action"]); label != "" {
+		props["acceptLabel"] = label
+	}
+	return s.component("proposal", props)
 }
 
 // proposalDetail says exactly what would change, so nobody agrees to a
