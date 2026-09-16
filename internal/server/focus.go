@@ -71,15 +71,21 @@ func (s *Server) expanded(name string, props map[string]any, convo *conversation
 		}
 	}
 	comp, ok := s.app.Registry.Get(name)
-	if ok && comp.HasProp("detail") {
-		full := map[string]any{}
-		for k, v := range props {
-			full[k] = v
-		}
+	if !ok {
+		return s.component(name, props)
+	}
+	full := map[string]any{}
+	for k, v := range props {
+		full[k] = v
+	}
+	if comp.HasProp("detail") {
 		full["detail"] = "page"
-		if out, err := comp.Render(full); err == nil {
-			return out
-		}
+	}
+	if comp.HasProp("level") {
+		full["level"] = int64(2)
+	}
+	if out, err := comp.Render(full); err == nil {
+		return out
 	}
 	return s.component(name, props)
 }
