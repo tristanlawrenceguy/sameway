@@ -46,6 +46,9 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 		}
 		b.WriteString("</ol>")
 	}
+	// What just happened to these records is here too, so a deletion can be
+	// taken back where the person lands.
+	b.WriteString(string(s.recentActivity(5, "/t/"+t.Name)))
 	s.page(w, r, capitalize(plural(t.Name)), template.HTML(b.String()), pageOptions{JSONURL: "/api/" + t.Name})
 }
 
@@ -78,10 +81,11 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(&b, `<dt>%s</dt><dd data-prop="%s">%s</dd>`, template.HTMLEscapeString(label(f.Name)), f.Name, template.HTMLEscapeString(val))
 	}
 	fmt.Fprintf(&b, "<dt>Created</dt><dd>%s</dd><dt>Updated</dt><dd>%s</dd></dl>", rec.CreatedAt.Local().Format("2006-01-02 15:04"), rec.UpdatedAt.Local().Format("2006-01-02 15:04"))
-	b.WriteString(`<div class="sw-bar sw-quiet">` + string(s.component("link", map[string]any{
-		"href":  "/t/" + t.Name + "/" + rec.ID + "/confirm-delete",
-		"label": "Delete " + t.Name,
-	})) + `</div>`)
+	// Deleting is one step, because it can be taken back: the record goes
+	// with everything it had into the activity log, and the listing the
+	// person lands on offers to put it back. No page asks "are you sure".
+	fmt.Fprintf(&b, `<div class="sw-bar sw-quiet"><form method="post" action="/t/%s/%s/delete">%s</form></div>`,
+		t.Name, rec.ID, s.component("button", map[string]any{"label": "Delete " + t.Name, "type": "submit", "variant": "quiet"}))
 	b.WriteString(`</div>`)
 	s.page(w, r, titleOf(t, rec), template.HTML(b.String()), pageOptions{
 		JSONURL:      "/api/" + t.Name + "/" + rec.ID,

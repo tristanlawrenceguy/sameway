@@ -54,7 +54,7 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 		main[0].Fields["component"] == chat.ComponentName
 
 	if len(blocks) == 0 {
-		b.WriteString(`<p class="sw-empty">This canvas is empty. The conversation is at <a href="/chat">/chat</a>, and anything you ask for there appears here.</p>`)
+		b.WriteString(`<p class="sw-empty">Nothing here yet. Ask for something in the <a href="/chat">chat</a> and it appears here.</p>`)
 	} else {
 		fmt.Fprintf(&b, `<div class="sw-page" data-layout="%s">`, layoutName(solo))
 		b.WriteString(`<ol class="sw-plain sw-canvas" aria-label="Canvas">`)

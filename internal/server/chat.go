@@ -71,7 +71,7 @@ func (s *Server) conversation(from string) (*conversation, error) {
 			problem = s.app.Chat.ProviderErr.Error()
 		}
 		out.Notice = s.component("alert", map[string]any{"kind": "warning", "title": "No model connected",
-			"message": problem + " Edit the llm section of workspace.yaml and restart sameway serve."})
+			"message": problem + " To connect one, edit the llm part of workspace.yaml and start sameway again."})
 	} else {
 		view.ModelName = s.app.Chat.Provider.Name()
 	}
