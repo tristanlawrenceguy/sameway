@@ -71,7 +71,7 @@ func (s *Server) recordProps(w http.ResponseWriter, r *http.Request) {
 
 	clean, err := t.Normalize(merged)
 	if err != nil {
-		s.renderDetailError(w, r, t, rec, err)
+		s.renderDetailError(w, r, t, rec, err, fields)
 		return
 	}
 
@@ -87,7 +87,7 @@ func (s *Server) recordProps(w http.ResponseWriter, r *http.Request) {
 // renderDetailError re-renders the detail page with validation errors as a 422,
 // showing each field's problem alongside the current record values so the person
 // can see what they are editing and try again.
-func (s *Server) renderDetailError(w http.ResponseWriter, r *http.Request, t *schema.Type, rec *store.Record, verr error) {
+func (s *Server) renderDetailError(w http.ResponseWriter, r *http.Request, t *schema.Type, rec *store.Record, verr error, submittedFields map[string]any) {
 	var b strings.Builder
 
 	b.WriteString(string(s.component("alert", map[string]any{
@@ -107,7 +107,13 @@ func (s *Server) renderDetailError(w http.ResponseWriter, r *http.Request, t *sc
 	// what they are editing and try again.
 	b.WriteString(`<dl class="sw-dl">`)
 	for _, f := range t.Fields {
-		val := display(f, rec.Fields[f.Name])
+		var raw any
+		if s, ok := submittedFields[f.Name]; ok {
+			raw = s
+		} else {
+			raw = rec.Fields[f.Name]
+		}
+		val := display(f, raw)
 		if val == "" {
 			continue
 		}
