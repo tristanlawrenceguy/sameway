@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -77,7 +78,10 @@ func Load(dir string, memoryDB bool) (*App, error) {
 		HistoryLimit: ws.Config.Chat.HistoryLimit,
 		ExtraPrompt:  ws.Config.Chat.SystemPrompt,
 	}
-	a.Chat.Provider, a.Chat.ProviderErr = llm.New(ws.Config.LLM)
+	llmCfg := ws.Config.LLM
+	llmCfg.Workspace = ws.Dir
+	llmCfg.Executable, _ = os.Executable()
+	a.Chat.Provider, a.Chat.ProviderErr = llm.New(llmCfg)
 	a.Chat.SetPace = ws.SetPace
 	a.Chat.AddField, a.Chat.AddType = a.AddField, a.AddType
 	chat.Workdir = ws.Dir

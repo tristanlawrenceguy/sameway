@@ -20,6 +20,11 @@ llm:
   # model: claude-opus-5
   # api_key_env: ANTHROPIC_API_KEY
 
+  # No API key: a program you are signed in to, which runs the tools
+  # itself over this workspace's MCP server. claude-code is known;
+  # any other takes command: with {prompt}, {system} and {mcp}.
+  # provider: claude-code
+
 ui:
   # auto: per-item controls and provenance labels fade until you hover a
   # block or tab into it. They stay in the accessibility tree either way,
