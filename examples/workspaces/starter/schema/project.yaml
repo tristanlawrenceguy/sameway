@@ -1,0 +1,18 @@
+# Something with more than one task in it. Provided with every workspace, so
+# a task has somewhere to belong; a project's page lists its tasks by itself.
+name: project
+description: A piece of work with tasks in it.
+title: title
+provided: true
+fields:
+  title:
+    type: string
+    required: true
+    maxLength: 200
+  status:
+    type: enum
+    values: [active, done]
+    default: active
+  notes:
+    type: markdown
+    description: What it is for and where it stands.

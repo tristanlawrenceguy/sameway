@@ -15,6 +15,10 @@ fields:
   due:
     type: datetime
     description: When it is due; a day is enough.
+  project:
+    type: ref
+    to: project
+    description: The project it belongs to, if any.
   notes:
     type: markdown
     description: Anything worth remembering about it.

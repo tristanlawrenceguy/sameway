@@ -32,6 +32,9 @@ func (s *Store) Create(typeName string, fields map[string]any) (*Record, error) 
 	if err != nil {
 		return nil, err
 	}
+	if err := s.checkRefs(t, clean); err != nil {
+		return nil, err
+	}
 	return s.insert(t, NewID(), clean)
 }
 
@@ -128,6 +131,9 @@ func (s *Store) Update(typeName, id string, fields map[string]any) (*Record, err
 	}
 	clean, err := t.Normalize(merged)
 	if err != nil {
+		return nil, err
+	}
+	if err := s.checkRefs(t, clean); err != nil {
 		return nil, err
 	}
 	now := time.Now().UTC()

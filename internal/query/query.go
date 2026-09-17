@@ -81,9 +81,28 @@ func Filter(st *store.Store, t *schema.Type, where []string, order string, limit
 	if err != nil {
 		return nil, err
 	}
+	// A ref is matched by the id it holds or by the title of what it
+	// points at, read once per target.
+	titles := map[string]string{}
+	lookup := func(to, id string) string {
+		key := to + "/" + id
+		if title, ok := titles[key]; ok {
+			return title
+		}
+		title := ""
+		if target, err := st.Get(to, id); err == nil {
+			if tt, ok := st.Types().Get(to); ok {
+				if v, ok := target.Fields[tt.Title].(string); ok {
+					title = v
+				}
+			}
+		}
+		titles[key] = title
+		return title
+	}
 	var out []*store.Record
 	for _, rec := range recs {
-		if Match(t, rec, conds, now) {
+		if matchWith(t, rec, conds, now, lookup) {
 			out = append(out, rec)
 		}
 	}
@@ -96,19 +115,36 @@ func Filter(st *store.Store, t *schema.Type, where []string, order string, limit
 	return out, nil
 }
 
-// Match says whether a record meets every condition.
+// Match says whether a record meets every condition. A ref field matches
+// on the id it holds; Filter also matches it on the target's title.
 func Match(t *schema.Type, rec *store.Record, conds []Cond, now time.Time) bool {
+	return matchWith(t, rec, conds, now, nil)
+}
+
+func matchWith(t *schema.Type, rec *store.Record, conds []Cond, now time.Time, lookup func(to, id string) string) bool {
 	for _, c := range conds {
-		if !matchOne(t, rec, c, now) {
+		if !matchOne(t, rec, c, now, lookup) {
 			return false
 		}
 	}
 	return true
 }
 
-func matchOne(t *schema.Type, rec *store.Record, c Cond, now time.Time) bool {
+func matchOne(t *schema.Type, rec *store.Record, c Cond, now time.Time, lookup func(to, id string) string) bool {
 	kind := kindOf(t, c.Field)
 	v := valueOf(rec, c.Field)
+	if kind == "ref" && c.Value != "" {
+		id, _ := v.(string)
+		if id == c.Value {
+			return c.Op == "=" || c.Op == "~"
+		}
+		if lookup != nil && id != "" {
+			if f, ok := t.Field(c.Field); ok {
+				return compare("string", lookup(f.To, id), c.Op, c.Value, now)
+			}
+		}
+		return c.Op == "!="
+	}
 	if c.Value == "" {
 		switch c.Op {
 		case "=":

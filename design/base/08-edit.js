@@ -27,7 +27,7 @@
   function field(el, blockId) {
     // Structured text is edited as it is shown, by 11-prose-edit.js, when
     // that is here; otherwise as the Markdown it was written in.
-    if (el.hasAttribute("data-source") && window.swProseField) return window.swProseField(el, blockId);
+    if (el.classList.contains("sw-prose") && el.hasAttribute("data-source") && window.swProseField) return window.swProseField(el, blockId);
     var name = el.getAttribute("data-prop");
     var id = "edit-" + blockId + "-" + name;
     var wrap = document.createElement("div");

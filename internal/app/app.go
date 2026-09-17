@@ -50,6 +50,9 @@ func Load(dir string, memoryDB bool) (*App, error) {
 		return nil, err
 	}
 	types.Complete(builtin)
+	if err := types.CheckRefs(); err != nil {
+		return nil, err
+	}
 	dbPath := ws.DBPath()
 	if memoryDB {
 		dbPath = ":memory:"

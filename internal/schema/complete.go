@@ -86,3 +86,20 @@ func (s *Set) Complete(builtin *Set) {
 	}
 	sort.Slice(s.Types, func(i, j int) bool { return s.Types[i].Name < s.Types[j].Name })
 }
+
+// CheckRefs says which ref field points at a type the workspace does not
+// have, once the provided types are in. A ref to nothing is a schema
+// mistake worth stopping on, with the type named.
+func (s *Set) CheckRefs() error {
+	for _, t := range s.Types {
+		for _, f := range t.Fields {
+			if f.Type != "ref" {
+				continue
+			}
+			if _, ok := s.byName[f.To]; !ok {
+				return fmt.Errorf("type %s: field %s points at %q, which is not a content type here (the workspace has %s)", t.Name, f.Name, f.To, strings.Join(s.Names(), ", "))
+			}
+		}
+	}
+	return nil
+}

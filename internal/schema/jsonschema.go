@@ -29,6 +29,9 @@ func (t *Type) JSONSchema() map[string]any {
 			p["items"] = map[string]any{"type": "string"}
 		case "json":
 			p["type"] = []string{"object", "array", "string", "number", "boolean", "null"}
+		case "ref":
+			p["type"] = "string"
+			p["description"] = "The id of a " + f.To + " (find_records on " + f.To + " gives it), or empty for none."
 		}
 		if f.Description != "" {
 			p["description"] = f.Description

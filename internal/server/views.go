@@ -111,6 +111,11 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(&b, `<dt>%s</dt><dd class="sw-prose" data-prop="%s" data-source="%s" data-prose-level="3">%s</dd>`, template.HTMLEscapeString(label(f.Name)), f.Name, template.HTMLEscapeString(val), prose.Render(val, 3))
 			continue
 		}
+		// A ref shows the record it points at, as the way there.
+		if f.Type == "ref" {
+			fmt.Fprintf(&b, `<dt>%s</dt>%s`, template.HTMLEscapeString(label(f.Name)), s.refCell(f, val))
+			continue
+		}
 		fmt.Fprintf(&b, `<dt>%s</dt><dd data-prop="%s">%s</dd>`, template.HTMLEscapeString(label(f.Name)), f.Name, template.HTMLEscapeString(val))
 	}
 	fmt.Fprintf(&b, "<dt>Created</dt><dd>%s</dd><dt>Updated</dt><dd>%s</dd></dl>", rec.CreatedAt.Local().Format("2006-01-02 15:04"), rec.UpdatedAt.Local().Format("2006-01-02 15:04"))
@@ -125,6 +130,8 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(&b, `<div class="sw-bar sw-quiet"><form method="post" action="/t/%s/%s/delete">%s</form></div>`,
 		t.Name, rec.ID, s.component("button", map[string]any{"label": "Delete " + t.Name, "type": "submit", "variant": "quiet"}))
 	b.WriteString(`</div>`)
+	// What points at this record, listed here by itself.
+	b.WriteString(s.backlinks(t, rec))
 	s.page(w, r, titleOf(t, rec), template.HTML(b.String()), pageOptions{
 		JSONURL:      "/api/" + t.Name + "/" + rec.ID,
 		ExtraScripts: detailPageExtraScripts,
