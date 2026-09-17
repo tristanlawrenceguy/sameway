@@ -45,7 +45,7 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	// Files come in through a form, because one field and one button is
 	// the better thing here; it can also be placed anywhere as a block.
 	if t.Name == FileType {
-		b.WriteString(string(s.component("upload", map[string]any{"from": "/t/" + FileType})))
+		b.WriteString(string(s.component("upload", map[string]any{"from": "/t/" + FileType, "id": "upload"})))
 	}
 	if len(recs) == 0 {
 		fmt.Fprintf(&b, `<p>No %s yet.</p>`, template.HTMLEscapeString(plural(t.Name)))
