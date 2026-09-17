@@ -214,7 +214,7 @@ func (a *App) Describe() Description {
 		LLM:       DescribedLLM{Provider: a.Workspace.Config.LLM.Provider, Model: a.Workspace.Config.LLM.Model, Ready: a.Chat.Provider != nil},
 		Routes: map[string]string{
 			"describe":      "GET /api/describe; one part: GET /api/describe/{types|components|arrangements|tools|routes|llm}; one item: GET /api/describe/types/{name}, likewise components and tools",
-			"list":          "GET /api/{type}",
+			"list":          "GET /api/{type}; ?where=<condition> (repeatable) and ?order=<field|-field> take the same query a collection block does: status=draft, due<=+7d, title~garden, tags=health, notes= (empty); dates today, tomorrow, +7d, -1w, 2026-10-01. The list page /t/{type} takes the same ?where= and ?order=",
 			"create":        "POST /api/{type} with a JSON object of fields",
 			"get":           "GET /api/{type}/{id}",
 			"update":        "PUT or PATCH /api/{type}/{id} with a JSON object of the fields to change; a field the type does not have is refused",

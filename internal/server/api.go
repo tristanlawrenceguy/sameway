@@ -7,7 +7,10 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
+	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -74,11 +77,24 @@ func (s *Server) apiList(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	recs, err := s.app.Store.List(r.PathValue("type"), store.ListOptions{
-		OrderBy: r.URL.Query().Get("order"),
-		Desc:    r.URL.Query().Get("dir") == "desc",
-		Limit:   limit,
-	})
+	// ?where= (repeatable) and ?order= take the same query a collection
+	// block does: field=value, due<today, -due; see the collection component.
+	var recs []*store.Record
+	var err error
+	if where := r.URL.Query()["where"]; len(where) > 0 || strings.HasPrefix(r.URL.Query().Get("order"), "-") {
+		t, ok := s.app.Types.Get(r.PathValue("type"))
+		if !ok {
+			writeError(w, fmt.Errorf("no content type %q", r.PathValue("type")))
+			return
+		}
+		recs, err = query.Filter(s.app.Store, t, where, r.URL.Query().Get("order"), limit, time.Now())
+	} else {
+		recs, err = s.app.Store.List(r.PathValue("type"), store.ListOptions{
+			OrderBy: r.URL.Query().Get("order"),
+			Desc:    r.URL.Query().Get("dir") == "desc",
+			Limit:   limit,
+		})
+	}
 	if err != nil {
 		writeError(w, err)
 		return

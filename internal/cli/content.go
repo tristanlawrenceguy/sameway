@@ -6,7 +6,9 @@ import (
 	"flag"
 	"fmt"
 	"strings"
+	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -35,7 +37,9 @@ func (c *ctx) contentCmd(typeName string) error {
 	var sets setFlags
 	fs.Var(&sets, "set", "field=value (repeatable)")
 	data := fs.String("data", "", "JSON object of fields")
-	order := fs.String("order", "", "field to order by")
+	var wheres setFlags
+	fs.Var(&wheres, "where", "condition (repeatable): status=draft, due<+7d, title~garden")
+	order := fs.String("order", "", "field to order by, or -field for the largest or newest first")
 	limit := fs.Int("limit", 0, "max records")
 	positional, err := parseMixed(fs, rest)
 	if err != nil {
@@ -43,7 +47,12 @@ func (c *ctx) contentCmd(typeName string) error {
 	}
 	switch verb {
 	case "list":
-		recs, err := a.Store.List(t.Name, store.ListOptions{OrderBy: *order, Limit: *limit})
+		var recs []*store.Record
+		if len(wheres) > 0 || strings.HasPrefix(*order, "-") {
+			recs, err = query.Filter(a.Store, t, wheres, *order, *limit, time.Now())
+		} else {
+			recs, err = a.Store.List(t.Name, store.ListOptions{OrderBy: *order, Limit: *limit})
+		}
 		if err != nil {
 			return err
 		}

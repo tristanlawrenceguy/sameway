@@ -41,6 +41,9 @@ func (s *Server) focusPage(w http.ResponseWriter, r *http.Request) {
 		// expanded block shows them.
 		props, _ = s.resolveRecord(props)
 	}
+	if comp.Manifest.Name == collectionComponent {
+		props = s.resolveCollection(props)
+	}
 	body := s.expanded(comp.Manifest.Name, props, convo)
 
 	var b strings.Builder
