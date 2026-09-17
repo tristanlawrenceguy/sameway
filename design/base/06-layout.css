@@ -98,7 +98,9 @@ ol.sw-plain, ul.sw-plain { list-style: none; margin: 0; padding: 0; }
 
 /* Strips: blocks in the header or footer bar sit in a row, bare, and
    never take the page. */
-.sw-strip { display: flex; align-items: center; gap: var(--sw-space-3); min-width: 0; flex: 1 1 auto; }
+/* The header ignores pointer events so its bar never blocks the page
+   below; what sits in the bar must take them back. */
+.sw-strip { display: flex; align-items: center; gap: var(--sw-space-3); min-width: 0; flex: 1 1 auto; pointer-events: auto; }
 .sw-canvas--strip { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sw-space-3); width: 100%; }
 .sw-canvas--strip > .sw-block { flex: 0 1 auto; padding: var(--sw-space-1); background: none; border-color: transparent; box-shadow: none; }
 .sw-canvas--strip > .sw-block > .sw-bar { position: static; }

@@ -157,7 +157,9 @@ func (s *Server) canvasBlock(b *store.Record, convo *conversation) canvasBlock {
 	// Glow only for what changed in the exchange just finished, or in the
 	// last few seconds, so a marker never outlives the change it reports.
 	changed := ""
-	if inLastTurn(b.CreatedAt, convo) {
+	// What the workspace put there to begin with is not a change.
+	if b.Fields["created_by"] == "system" {
+	} else if inLastTurn(b.CreatedAt, convo) {
 		changed = "added"
 	} else if inLastTurn(b.UpdatedAt, convo) {
 		changed = "updated"
