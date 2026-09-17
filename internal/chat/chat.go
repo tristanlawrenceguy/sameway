@@ -105,6 +105,7 @@ func (s *Service) SendFile(ctx context.Context, canvas, text, fileID string) (*s
 	}
 	req := llm.Request{System: s.systemPrompt(), Messages: history, Tools: s.Tools()}
 	var changes []Change
+	corrected := false
 	for round := 0; round <= maxToolRounds; round++ {
 		resp, err := s.Provider.Complete(ctx, req)
 		if err != nil {
@@ -114,6 +115,16 @@ func (s *Service) SendFile(ctx context.Context, canvas, text, fileID string) (*s
 			reply := strings.TrimSpace(resp.Text)
 			if reply == "" {
 				reply = "(The model returned an empty reply.)"
+			}
+			// A reply that names a page which does not exist made nothing:
+			// the model answered in words where a tool was needed. It is
+			// told so once, with the page it named, and asked again.
+			if missing := s.claimedMissing(reply); missing != "" && !corrected {
+				corrected = true
+				req.Messages = append(req.Messages,
+					llm.Message{Role: llm.RoleAssistant, Content: reply},
+					llm.Message{Role: llm.RoleUser, Content: "There is no page at " + missing + ": nothing was made. Make it with the tools, then say where it is."})
+				continue
 			}
 			return s.Store.Create(MessageType, s.fields(MessageType, map[string]any{"role": "assistant", "content": reply, "changes": changes}))
 		}
