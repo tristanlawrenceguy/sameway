@@ -141,7 +141,7 @@ func TestExternalConvertersAnswerWithMarkdown(t *testing.T) {
 		t.Errorf("a URL converter's JSON should yield its markdown, got %q %v", md, err)
 	}
 
-	cmd := "echo # From a command {file}"
+	cmd := "echo \"# From a command {file}\""
 	md, err = convert.External(context.Background(), cmd, "scan.pdf", path)
 	if err != nil || !strings.Contains(md, "# From a command") || !strings.Contains(md, "scan.pdf") {
 		t.Errorf("a command converter's output is the markdown, got %q %v", md, err)
