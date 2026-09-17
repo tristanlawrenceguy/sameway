@@ -25,6 +25,7 @@ Usage:
   sameway serve [--addr host:port]      run the web server for this workspace
   sameway describe [--json] [part [name]]  show content types, components, tools and routes, or one part
   sameway check                         validate the workspace schema and components
+  sameway search <words>                find anything by the words in it, records and canvas blocks alike
   sameway look <path>                   a page as a screen reader gets it, with its problems, as JSON
   sameway export                        rewrite content/ from the database (it is kept current as things change)
   sameway import                        read content/ back into the database, after a git pull
@@ -87,6 +88,8 @@ func Run(args []string, env Env) int {
 		err = c.checkCmd()
 	case "look":
 		err = c.lookCmd()
+	case "search":
+		err = c.searchCmd()
 	case "export":
 		err = c.exportCmd()
 	case "import":

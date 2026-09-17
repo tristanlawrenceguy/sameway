@@ -48,6 +48,7 @@ func (s *Server) routes() {
 	m.HandleFunc("POST /canvas/{id}/props", s.blockProps)
 	m.HandleFunc("POST /canvas/{id}/delete", s.canvasDelete)
 	m.HandleFunc("GET /activity", s.activityPage)
+	m.HandleFunc("GET /search", s.searchPage)
 	m.HandleFunc("GET /design", s.designPage)
 	m.HandleFunc("GET /design/sameway.css", s.stylesheet)
 	m.HandleFunc("GET /design/sameway.js", s.script)
@@ -60,6 +61,7 @@ func (s *Server) routes() {
 	m.HandleFunc("POST /t/{type}/{id}/props", s.recordProps)
 
 	m.HandleFunc("GET /api/describe", s.apiDescribe)
+	m.HandleFunc("GET /api/search", s.apiSearch)
 	m.HandleFunc("GET /api/describe/{part}", s.apiDescribePart)
 	m.HandleFunc("GET /api/describe/{part}/{name}", s.apiDescribePart)
 	m.HandleFunc("GET /api/look", s.apiLook)
@@ -110,7 +112,7 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 		p.Nav = append(p.Nav, s.navLink(href, plural(t.Name), strings.HasPrefix(r.URL.Path, href)))
 	}
 	for _, l := range []struct{ href, label string }{
-		{"/chat", "Chat"}, {"/activity", "Activity"}, {"/design", "Design system"},
+		{"/chat", "Chat"}, {"/search", "Search"}, {"/activity", "Activity"}, {"/design", "Design system"},
 	} {
 		p.More = append(p.More, s.navLink(l.href, l.label, r.URL.Path == l.href))
 	}
