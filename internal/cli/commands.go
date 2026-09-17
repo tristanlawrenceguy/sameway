@@ -104,6 +104,8 @@ func (c *ctx) serveCmd() error {
 	if a.Chat.Provider == nil && a.Chat.ProviderErr != nil {
 		fmt.Fprintf(c.Stdout, "  chat    disabled: %v\n", a.Chat.ProviderErr)
 	}
+	// Actions with a schedule run while the server does.
+	a.Chat.StartSchedule(context.Background())
 	return http.ListenAndServe(*addr, server.New(a))
 }
 
