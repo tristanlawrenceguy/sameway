@@ -12,6 +12,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -25,7 +26,11 @@ const maxToolRounds = 8
 type Service struct {
 	// SetPace records how changes arrive, when the workspace can: calm,
 	// quick or still. Set by the app; nil when there is no workspace file.
-	SetPace      func(pace string) error
+	SetPace func(pace string) error
+	// AddField and AddType change the workspace's schema while it runs, set
+	// by the app; nil when the workspace cannot be changed from here.
+	AddField     func(typeName string, f schema.Field) (*schema.Type, error)
+	AddType      func(t *schema.Type) (*schema.Type, error)
 	Store        *store.Store
 	Registry     *render.Registry
 	Provider     llm.Provider

@@ -43,10 +43,21 @@ func (s *Server) resolveCollection(props map[string]any) map[string]any {
 		return out
 	}
 	full := props["detail"] == "full"
+	show := strs(props["show"])
+	columns := []any{}
+	for _, name := range show {
+		if _, ok := t.Field(name); ok {
+			columns = append(columns, label(name))
+		}
+	}
+	out["columns"] = columns
+	out["titleLabel"] = label(t.Title)
 	items := make([]any, 0, len(recs))
 	for _, rec := range recs {
 		item := map[string]any{"title": titleOf(t, rec), "href": "/t/" + t.Name + "/" + rec.ID}
-		if meta := metaOf(t, rec); meta != "" {
+		if len(show) > 0 {
+			item["fields"] = s.fieldsOf(t, rec, show)
+		} else if meta := metaOf(t, rec); meta != "" {
 			item["meta"] = meta
 		}
 		if full {
@@ -140,4 +151,27 @@ func orderWords(order string) string {
 		return ", " + strings.TrimPrefix(order, "-") + " largest or newest first"
 	}
 	return ", by " + order
+}
+
+// fieldsOf is the chosen fields of a record as label and value, a ref by
+// the title it points at, in the order asked for.
+func (s *Server) fieldsOf(t *schema.Type, rec *store.Record, names []string) []any {
+	out := make([]any, 0, len(names))
+	for _, name := range names {
+		f, ok := t.Field(name)
+		if !ok {
+			continue
+		}
+		v := display(*f, rec.Fields[name])
+		if f.Type == "ref" {
+			v = s.refTitle(*f, v)
+		}
+		if f.Type == "datetime" && v != "" {
+			if ts, err := time.Parse(time.RFC3339, v); err == nil {
+				v = ts.Local().Format("2006-01-02")
+			}
+		}
+		out = append(out, map[string]any{"label": label(name), "value": v})
+	}
+	return out
 }

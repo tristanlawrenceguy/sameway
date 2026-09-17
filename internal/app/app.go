@@ -79,6 +79,7 @@ func Load(dir string, memoryDB bool) (*App, error) {
 	}
 	a.Chat.Provider, a.Chat.ProviderErr = llm.New(ws.Config.LLM)
 	a.Chat.SetPace = ws.SetPace
+	a.Chat.AddField, a.Chat.AddType = a.AddField, a.AddType
 	chat.Workdir = ws.Dir
 	return a, nil
 }
@@ -235,6 +236,7 @@ func (a *App) Describe() Description {
 			"undo":          "POST /activity/{id}/undo with from=<path to return to>: reverses one activity entry for a person; agents call the undo_change tool. An entry that can be undone carries before, the thing as it was",
 			"content":       "content/<type>/<id>.md in the workspace is every record as Markdown with front matter, written as it changes; share the folder with git. sameway import reads it back after a pull, sameway export rewrites it",
 			"html_props":    "POST /t/{type}/{id}/props, form-encoded with each field named prop-<field>: the inline editor's route, which answers with the page rather than JSON. A field named html-<field> is the rich editor's HTML, turned into Markdown on the way in, with level-<field> the heading level it was shown at",
+			"types":         "POST /api/types with {name, description, title, fields: [{name, type, description, values, to, required, default}]} makes a content type while the workspace runs: its schema file, its table, its pages; POST /api/types/{type}/fields with one field adds a property to a type. The assistant has the same as add_type and add_field",
 			"prose":         "POST /api/prose with {\"markdown\": \"...\", \"level\": 3} gives {\"html\"}: the page's rendering of that Markdown; with {\"html\": \"...\", \"level\": 3} gives {\"markdown\"}: the same words back as Markdown, headings at the level the source had",
 			"canvas_props":  "POST /canvas/{block-id}/props, the same form for a block on the canvas",
 			"css":           "GET /design/sameway.css",

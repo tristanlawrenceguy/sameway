@@ -44,6 +44,9 @@ func (s *Server) focusPage(w http.ResponseWriter, r *http.Request) {
 	if comp.Manifest.Name == collectionComponent {
 		props = s.resolveCollection(props)
 	}
+	if comp.Manifest.Name == calendarComponent {
+		props = s.resolveCalendar(props)
+	}
 	body := s.expanded(comp.Manifest.Name, props, convo)
 
 	var b strings.Builder
