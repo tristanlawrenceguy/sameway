@@ -45,7 +45,12 @@ func (s *Server) focusPage(w http.ResponseWriter, r *http.Request) {
 		props = s.resolveCollection(props)
 	}
 	if comp.Manifest.Name == calendarComponent {
-		props = s.resolveCalendar(props)
+		// The block's own page takes ?month= so the months either side are
+		// a link away, and the calendar comes back to this page for them.
+		if m := r.URL.Query().Get("month"); m != "" {
+			props = withMonth(props, m)
+		}
+		props = s.resolveCalendar(props, rec.ID)
 	}
 	if comp.Manifest.Name == chartComponent {
 		props = s.resolveChart(props)
