@@ -1,0 +1,108 @@
+{
+  "name": "mark",
+  "version": "1.0.0",
+  "description": "One press that sets one field on one record: done, pinned, read. A form with a single button, so it works without JavaScript and comes back to the page it was pressed on.",
+  "icon": "✓",
+  "use": {
+    "when": "a person wants to change a record's state where they see it: tick a task in a list, pin a note on its page.",
+    "not": "changing several fields at once, which is the inline editor; or anything that is not the person's own content.",
+    "with": "a collection, a record block, a calendar event, or a record's own page."
+  },
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "type",
+      "record",
+      "field",
+      "value",
+      "label"
+    ],
+    "properties": {
+      "type": {
+        "type": "string",
+        "minLength": 1,
+        "description": "The content type of the record."
+      },
+      "record": {
+        "type": "string",
+        "minLength": 1,
+        "description": "The record's id."
+      },
+      "field": {
+        "type": "string",
+        "minLength": 1,
+        "description": "The field the press sets."
+      },
+      "value": {
+        "type": "string",
+        "description": "What the field becomes: true or false for a yes-or-no field, a value for an enum."
+      },
+      "label": {
+        "type": "string",
+        "minLength": 1,
+        "description": "What the button says: Mark as done."
+      },
+      "context": {
+        "type": "string",
+        "description": "Which record, for screen readers: the record's title. Read after the label."
+      },
+      "id": {
+        "type": "string"
+      }
+    }
+  },
+  "a11y": {
+    "role": "form",
+    "keyboard": [
+      {
+        "key": "Tab",
+        "does": "reaches the button"
+      },
+      {
+        "key": "Enter",
+        "does": "presses it"
+      },
+      {
+        "key": "Space",
+        "does": "presses it"
+      }
+    ],
+    "states": [],
+    "wcag": {
+      "target": "AAA",
+      "notes": "A real form and a real button, so it works without JavaScript and is announced as what it is (4.1.2). The button's name carries the record's title when context is given, so a list of ten Mark as done buttons is ten different names (2.4.6). The page comes back where the press happened, with the change glowing like any other."
+    }
+  },
+  "machine": {
+    "selector": "[data-component=\"mark\"]",
+    "identify": "Read data-record-type, data-record-id and data-field for what the press sets, and the hidden input's value for what it becomes.",
+    "operate": "Submit the form, or POST prop-<field>=<value> to /t/<type>/<id>/props yourself; the API at /api/<type>/<id> takes the same change as JSON."
+  },
+  "examples": [
+    {
+      "name": "default",
+      "props": {
+        "type": "task",
+        "record": "k3n2p9",
+        "field": "done",
+        "value": "true",
+        "label": "Mark as done",
+        "context": "Order compost"
+      },
+      "file": "examples/default.html"
+    },
+    {
+      "name": "undo",
+      "props": {
+        "type": "task",
+        "record": "k3n2p9",
+        "field": "done",
+        "value": "false",
+        "label": "Mark as not done",
+        "context": "Order compost"
+      },
+      "file": "examples/undo.html"
+    }
+  ]
+}

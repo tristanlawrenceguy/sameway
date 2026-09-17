@@ -65,6 +65,9 @@ func (s *Server) resolveCalendar(props map[string]any) map[string]any {
 		if meta := s.showFields(t, rec, strs(props["show"])); meta != "" {
 			ev["meta"] = meta
 		}
+		if actions := markActions(t, rec); actions != nil {
+			ev["actions"] = actions
+		}
 		events = append(events, ev)
 	}
 	out["events"] = events

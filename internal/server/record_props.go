@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	store "github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -77,6 +78,9 @@ func (s *Server) recordProps(w http.ResponseWriter, r *http.Request) {
 		s.fail(w, err)
 		return
 	}
+	// A change a person made by hand is a change like any other: in the
+	// log with what it was, so it glows where it shows and can be undone.
+	chat.Record(s.app.Store, "human", chat.Change{Action: "updated", Component: t.Name, ID: rec.ID, Detail: titleOf(t, rec), Href: "/t/" + t.Name + "/" + rec.ID, Before: rec.Fields})
 
 	http.Redirect(w, r, returnTo(r, "/t/"+t.Name+"/"+rec.ID), http.StatusSeeOther)
 }

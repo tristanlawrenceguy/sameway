@@ -12,3 +12,4 @@
 .sw-record__fields dd { margin: 0; overflow-wrap: anywhere; }
 .sw-record__open { margin: var(--sw-space-4) 0 0; }
 .sw-record__missing { margin: 0; color: var(--sw-color-fg-muted); }
+.sw-record__actions { margin: var(--sw-space-3) 0 0; }

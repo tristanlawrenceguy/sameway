@@ -1,64 +1,36 @@
 {
   "name": "record",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "A content record shown on the canvas as the record it is: the note on the notes page and the note on the canvas are one thing, edited in either place. Give it the type and the record's id; the server fills in the words from the record when it renders the page.",
   "icon": "✎",
-  "use": { "when": "a note, task or event belongs on the canvas as itself, edited in either place.", "not": "copying a record's words into a card.", "with": "the record's own page at /t/<type>." },
+  "use": {"when": "a note, task or event belongs on the canvas as itself, edited in either place.", "not": "copying a record's words into a card.", "with": "the record's own page at /t/<type>."},
   "props": {
     "type": "object",
     "additionalProperties": false,
     "required": ["type", "record"],
     "properties": {
-      "type": { "type": "string", "minLength": 1, "description": "The content type, such as note." },
-      "record": { "type": "string", "minLength": 1, "description": "The record's id, from find_records or a page URL /t/<type>/<id>." },
-      "detail": {
-        "type": "string",
-        "enum": ["brief", "full", "page"],
-        "default": "full",
-        "title": "How much to show",
-        "description": "brief is the title alone, for a pane or a list of many. full is the title, the text and the other fields. page adds the way to the record's own page. Expanding a block asks for page."
-      },
-      "level": { "title": "Heading level", "type": "integer", "minimum": 2, "maximum": 4, "default": 3, "description": "Heading level of the title so the block fits the page outline." },
-      "title": { "type": "string", "description": "Filled in by the server from the record. Leave out." },
-      "titleProp": { "type": "string", "description": "Filled in by the server: the field the title comes from. Leave out." },
-      "text": { "type": "string", "format": "multiline", "description": "Filled in by the server: the record's main text. Leave out." },
-      "textProp": { "type": "string", "description": "Filled in by the server: the field the text comes from. Leave out." },
-      "fields": {
-        "type": "array",
-        "description": "Filled in by the server: the record's other fields with something in them. Leave out.",
-        "items": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["label", "value"],
-          "properties": {
-            "label": { "type": "string" },
-            "value": { "type": "string" }
-          }
-        }
-      },
-      "structured": { "type": "boolean", "default": false, "description": "Filled in by the server when the text is structured (Markdown): it is shown with its headings under the title and edited as it is shown. Leave out." },
-      "missing": { "type": "boolean", "default": false, "description": "Filled in by the server when the record no longer exists. Leave out." },
-      "id": { "type": "string" }
+      "type": {"type": "string", "minLength": 1, "description": "The content type, such as note."},
+      "record": {"type": "string", "minLength": 1, "description": "The record's id, from find_records or a page URL /t/<type>/<id>."},
+      "detail": {"type": "string", "enum": ["brief", "full", "page"], "default": "full", "title": "How much to show", "description": "brief is the title alone, for a pane or a list of many. full is the title, the text and the other fields. page adds the way to the record's own page. Expanding a block asks for page."},
+      "level": {"title": "Heading level", "type": "integer", "minimum": 2, "maximum": 4, "default": 3, "description": "Heading level of the title so the block fits the page outline."},
+      "title": {"type": "string", "description": "Filled in by the server from the record. Leave out."},
+      "titleProp": {"type": "string", "description": "Filled in by the server: the field the title comes from. Leave out."},
+      "text": {"type": "string", "format": "multiline", "description": "Filled in by the server: the record's main text. Leave out."},
+      "textProp": {"type": "string", "description": "Filled in by the server: the field the text comes from. Leave out."},
+      "fields": {"type": "array", "description": "Filled in by the server: the record's other fields with something in them. Leave out.", "items": {"type": "object", "additionalProperties": false, "required": ["label", "value"], "properties": {"label": {"type": "string"}, "value": {"type": "string"}}}},
+      "structured": {"type": "boolean", "default": false, "description": "Filled in by the server when the text is structured (Markdown): it is shown with its headings under the title and edited as it is shown. Leave out."},
+      "missing": {"type": "boolean", "default": false, "description": "Filled in by the server when the record no longer exists. Leave out."},
+      "id": {"type": "string"},
+      "actions": {"type": "array", "description": "Filled in by the server: the one press this record offers, such as Mark as done, as {component, props}. Leave out.", "items": {"type": "object", "additionalProperties": false, "required": ["component", "props"], "properties": {"component": {"type": "string", "enum": ["mark", "button", "link"]}, "props": {"type": "object"}}}}
     }
   },
-  "a11y": {
-    "role": "article",
-    "keyboard": [
-      { "key": "Tab", "does": "reaches the link to the record's own page at page detail; the text is edited in place through the block's own Edit control" }
-    ],
-    "states": [],
-    "wcag": { "target": "AAA", "notes": "The title is a real heading at the level the page outline needs (1.3.1). The other fields are a definition list, so each value is announced with its name. A record that no longer exists says so in words rather than rendering nothing (3.3.1). Editing reuses the inline editor, whose controls are native and labelled." }
-  },
-  "machine": {
-    "selector": "[data-component=\"record\"]",
-    "identify": "Read data-record-type and data-record-id for which record this is, and data-detail for the size shown. The heading is the record's title; each dd in the definition list is one field, named by its dt.",
-    "operate": "Change the record through the block's Edit control, which posts to /t/<type>/<id>/props, or through the API at /api/<type>/<id>. At page detail the link opens the record's own page."
-  },
+  "a11y": {"role": "article", "keyboard": [{"key": "Tab", "does": "reaches the record's press such as Mark as done, then the link to its own page at page detail; the text is edited in place through the block's own Edit control"}], "states": [], "wcag": {"target": "AAA", "notes": "The title is a real heading at the level the page outline needs (1.3.1). The other fields are a definition list, so each value is announced with its name. A record that no longer exists says so in words rather than rendering nothing (3.3.1). Editing reuses the inline editor, whose controls are native and labelled."}},
+  "machine": {"selector": "[data-component=\"record\"]", "identify": "Read data-record-type and data-record-id for which record this is, and data-detail for the size shown. The heading is the record's title; each dd in the definition list is one field, named by its dt.", "operate": "Change the record through the block's Edit control, which posts to /t/<type>/<id>/props, or through the API at /api/<type>/<id>. At page detail the link opens the record's own page."},
   "examples": [
-    { "name": "brief", "props": { "type": "note", "record": "k3n2p9", "detail": "brief", "title": "Call the dentist", "titleProp": "title" }, "file": "examples/brief.html" },
-    { "name": "full", "props": { "type": "note", "record": "k3n2p9", "title": "Call the dentist", "titleProp": "title", "text": "Ask about Thursday.\n\nMention the crown.", "textProp": "body", "fields": [ { "label": "Tags", "value": "health" }, { "label": "Status", "value": "draft" } ] }, "file": "examples/full.html" },
-    { "name": "page", "props": { "type": "note", "record": "k3n2p9", "detail": "page", "level": 2, "title": "Call the dentist", "titleProp": "title", "text": "Ask about Thursday.", "textProp": "body", "fields": [ { "label": "Status", "value": "draft" } ] }, "file": "examples/page.html" },
+    {"name": "brief", "props": {"type": "note", "record": "k3n2p9", "detail": "brief", "title": "Call the dentist", "titleProp": "title"}, "file": "examples/brief.html"},
+    {"name": "full", "props": {"type": "note", "record": "k3n2p9", "title": "Call the dentist", "titleProp": "title", "text": "Ask about Thursday.\n\nMention the crown.", "textProp": "body", "fields": [{"label": "Tags", "value": "health"}, {"label": "Status", "value": "draft"}]}, "file": "examples/full.html"},
+    {"name": "page", "props": {"type": "note", "record": "k3n2p9", "detail": "page", "level": 2, "title": "Call the dentist", "titleProp": "title", "text": "Ask about Thursday.", "textProp": "body", "fields": [{"label": "Status", "value": "draft"}]}, "file": "examples/page.html"},
     {"name": "structured", "props": {"type": "note", "record": "k3n2p9", "title": "Garden plan", "titleProp": "title", "text": "# Beds\n\nThree of them.\n\n- Dig the pond\n- Order compost", "textProp": "body", "structured": true}, "file": "examples/structured.html"},
-    { "name": "gone", "props": { "type": "note", "record": "k3n2p9", "missing": true }, "file": "examples/gone.html" }
+    {"name": "gone", "props": {"type": "note", "record": "k3n2p9", "missing": true}, "file": "examples/gone.html"}
   ]
 }
