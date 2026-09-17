@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -105,6 +106,7 @@ func (s *Service) SendFile(ctx context.Context, canvas, text, fileID string) (*s
 	}
 	req := llm.Request{System: s.systemPrompt(), Messages: history, Tools: s.Tools()}
 	var changes []Change
+	var tools []map[string]any
 	corrected := false
 	for round := 0; round <= maxToolRounds; round++ {
 		resp, err := s.Provider.Complete(ctx, req)
@@ -129,19 +131,21 @@ func (s *Service) SendFile(ctx context.Context, canvas, text, fileID string) (*s
 				}
 				if len(missing) > 0 {
 					corrected = true
+					log.Printf("chat: the reply named %s, which does not exist; asking the model to make it", strings.Join(missing, ", "))
 					req.Messages = append(req.Messages,
 						llm.Message{Role: llm.RoleAssistant, Content: reply},
 						llm.Message{Role: llm.RoleUser, Content: "There is no page at " + strings.Join(missing, ", ") + ": nothing was made. Make it with the tools, then say where it is."})
 					continue
 				}
 			}
-			return s.Store.Create(MessageType, s.fields(MessageType, map[string]any{"role": "assistant", "content": reply, "changes": changes}))
+			return s.Store.Create(MessageType, s.fields(MessageType, map[string]any{"role": "assistant", "content": reply, "changes": changes, "tools": tools}))
 		}
 		req.Messages = append(req.Messages, llm.Message{Role: llm.RoleAssistant, Content: resp.Text, ToolCalls: resp.ToolCalls})
 		results := llm.Message{Role: llm.RoleTool}
 		for _, call := range resp.ToolCalls {
 			r := s.run(call)
 			results.ToolResults = append(results.ToolResults, llm.ToolResult{CallID: call.ID, Content: r.text, IsError: r.isErr})
+			tools = append(tools, used(call, r))
 			if r.change != nil {
 				changes = append(changes, *r.change)
 			}
@@ -193,6 +197,8 @@ func (s *Service) history() ([]llm.Message, error) {
 			}
 			out = append(out, llm.Message{Role: llm.RoleUser, Content: content})
 		case "assistant":
+			// The tools this reply used come first, as the turn they were.
+			out = append(out, replay(recs[i].Fields["tools"])...)
 			out = append(out, llm.Message{Role: llm.RoleAssistant, Content: content})
 		}
 	}
