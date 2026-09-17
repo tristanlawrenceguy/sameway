@@ -2,7 +2,7 @@
 # Ask the assistant to make one, then put it on a button, or press Run on
 # its page.
 name: action
-description: A button that does something. A webhook calls a URL of yours (an alarm, a weather service); an arrangement lays out a page; a message says something to the assistant for you.
+description: A button that does something, pressed by you, by the assistant, or on a schedule. A webhook calls a URL of yours (an alarm, a weather service); an arrangement lays out a page; a message says something to the assistant for you.
 title: title
 provided: true
 fields:
@@ -38,3 +38,18 @@ fields:
   block:
     type: string
     description: The canvas block that shows this action's answer, kept by the system.
+  every:
+    type: enum
+    values: [never, hour, day, week]
+    default: never
+    description: Run on its own this often. day and week run at the time in at; week on the day in on.
+  at:
+    type: string
+    description: For every day or week, the time to run, as HH:MM on this machine's clock.
+  on:
+    type: enum
+    values: [monday, tuesday, wednesday, thursday, friday, saturday, sunday]
+    description: For every week, which day.
+  last_run:
+    type: string
+    description: When it last ran on its own, kept by the system.
