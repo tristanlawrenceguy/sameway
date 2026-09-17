@@ -45,6 +45,9 @@ func (s *Server) resolveRecord(props map[string]any) (map[string]any, string) {
 		}
 		if _, have := out["text"]; !have && isText(f) {
 			out["text"], out["textProp"] = val, f.Name
+			// Structured text shows its structure here as it does on the
+			// record's page, and is edited the same way.
+			out["structured"] = f.Type == "markdown"
 			continue
 		}
 		fields = append(fields, map[string]any{"label": label(f.Name), "value": val})
