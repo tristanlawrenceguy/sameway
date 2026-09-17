@@ -1,8 +1,13 @@
 # Typography
 
-System font stack, so nothing loads from a network and every platform's
-best text rendering is used. `font-feature-settings` turns on tabular
-numerals (`tnum`) so times, counts, and table columns line up.
+System font stacks, so nothing loads from a network and every platform's
+best text rendering is used. Body text is the platform's sans. What a page,
+a region, or a record is called (h1, h2, card and record titles, the
+brand) is set in the platform's serif (`--sw-font-serif`: Iowan Old Style,
+Palatino Linotype, Georgia), so a title reads as a title before its size is
+noticed and a page has the warmth of something written rather than
+generated. `font-feature-settings` turns on tabular numerals (`tnum`) so
+times, counts, and table columns line up.
 
 | Token | Size | Use |
 |---|---|---|

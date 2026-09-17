@@ -69,6 +69,11 @@ func chartShape(series any, kind string) ChartShape {
 		top = 1
 	}
 	step := niceStep(top / 4)
+	// A count of things is never one and a half; whole values get whole
+	// gridlines, fewer of them if need be.
+	if step < 1 && wholeValues(points) {
+		step = 1
+	}
 	top = math.Ceil(top/step) * step
 	plotW := chartW - chartLeft - chartRight
 	plotH := chartH - chartTop - chartBot
@@ -209,3 +214,12 @@ func niceStep(v float64) float64 {
 }
 
 func round(v float64) float64 { return math.Round(v*10) / 10 }
+
+func wholeValues(points []ChartPoint) bool {
+	for _, p := range points {
+		if p.Value != math.Trunc(p.Value) {
+			return false
+		}
+	}
+	return true
+}

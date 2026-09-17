@@ -6,7 +6,7 @@
   --sw-color-accent-soft: #e9e7ff;
   --sw-color-assistant: #075a44;
   --sw-color-assistant-soft: #dff5ec;
-  --sw-color-bg: #fdfcfa;
+  --sw-color-bg: #faf8f4;
   --sw-color-bg-muted: #f3f1ec;
   --sw-color-bg-raised: #ffffff;
   --sw-color-border: #c9c6bd;
@@ -31,6 +31,7 @@
   --sw-focus-width: 3px;
   --sw-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
   --sw-font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --sw-font-serif: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Palatino, Charter, Georgia, serif;
   --sw-motion-arrive: 2600ms;
   --sw-motion-base: 220ms;
   --sw-motion-between: 3000ms;

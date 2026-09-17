@@ -122,7 +122,7 @@ func (s *Server) renderDetailError(w http.ResponseWriter, r *http.Request, t *sc
 		fmt.Fprintf(&b, `<dt>%s</dt><dd data-prop="%s"%s>%s</dd>`,
 			template.HTMLEscapeString(label(f.Name)), f.Name, whenAttrs(f, rec.Fields[f.Name]), template.HTMLEscapeString(val))
 	}
-	fmt.Fprintf(&b, "<dt>Created</dt><dd>%s</dd><dt>Updated</dt><dd>%s</dd></dl>", rec.CreatedAt.Local().Format("2006-01-02 15:04"), rec.UpdatedAt.Local().Format("2006-01-02 15:04"))
+	b.WriteString("</dl>" + whenMade(rec))
 	b.WriteString(`<div class="sw-bar sw-quiet"></div>`)
 	b.WriteString(`</div>`)
 
