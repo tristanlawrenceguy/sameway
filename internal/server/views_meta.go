@@ -17,7 +17,7 @@ import (
 // lede is the line under a record's title: its facts as chips, then when
 // it was made.
 func (s *Server) lede(t *schema.Type, rec *store.Record) template.HTML {
-	return template.HTML(`<p class="sw-lede">` + s.facts(t, rec, true) + `</p>`)
+	return template.HTML(`<p class="sw-lede">` + s.facts(t, rec, true, false) + `</p>`)
 }
 
 // howMany says how many there are, under a listing's title.
@@ -29,18 +29,21 @@ func howMany(n int, typeName string) template.HTML {
 	return template.HTML(fmt.Sprintf(`<p class="sw-lede">%d %s</p>`, n, template.HTMLEscapeString(what)))
 }
 
-// facts is what a person wants to know about a record at a glance, as
-// chips whose colour says the same thing the words do: done in green,
-// a state in blue, a day that has passed in amber. When there is
-// nothing of the kind, when it last changed. made adds when it was made.
-func (s *Server) facts(t *schema.Type, rec *store.Record, made bool) string {
+// facts is what a person wants to know about a record at a glance: done
+// as a green chip (unless a box beside it already shows that), its state
+// as a blue chip, the day that matters in the quiet ink, or in amber with
+// the word "was" when it has passed and the thing is not done. When there
+// is nothing of the kind, when it last changed. made adds when it was made.
+func (s *Server) facts(t *schema.Type, rec *store.Record, made, boxed bool) string {
 	var parts []string
 	done := false
 	for _, f := range t.Fields {
 		if f.Type == "bool" {
 			if v, _ := rec.Fields[f.Name].(bool); v {
 				done = true
-				parts = append(parts, string(s.component("badge", map[string]any{"label": capitalize(label(f.Name)), "tone": "success"})))
+				if !boxed {
+					parts = append(parts, string(s.component("badge", map[string]any{"label": capitalize(label(f.Name)), "tone": "success"})))
+				}
 			}
 			break
 		}
@@ -59,11 +62,11 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, made bool) string {
 			if v, ok := rec.Fields[f.Name].(string); ok && v != "" {
 				dated = true
 				ts, _ := time.Parse(time.RFC3339, v)
-				text, tone := label(f.Name)+" "+when.Text(v), "neutral"
+				text, class := label(f.Name)+" "+when.Text(v), "sw-when"
 				if !done && ts.Before(time.Now()) && !strings.HasSuffix(v, "T00:00:00Z") || !done && strings.HasSuffix(v, "T00:00:00Z") && ts.AddDate(0, 0, 1).Before(time.Now()) {
-					text, tone = "Was "+strings.ToLower(label(f.Name))+" "+when.Text(v), "warning"
+					text, class = "Was "+strings.ToLower(label(f.Name))+" "+when.Text(v), "sw-when sw-when--past"
 				}
-				parts = append(parts, string(s.component("badge", map[string]any{"label": text, "tone": tone})))
+				parts = append(parts, `<span class="`+class+`">`+template.HTMLEscapeString(text)+`</span>`)
 				break
 			}
 		}

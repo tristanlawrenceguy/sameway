@@ -1,5 +1,5 @@
 .sw-record { max-width: var(--sw-size-measure); }
-.sw-record__title { margin: 0; font-family: var(--sw-font-serif); font-size: var(--sw-size-text-lg); line-height: var(--sw-size-line-tight); }
+.sw-record__title { margin: 0; font-size: var(--sw-size-text-lg); line-height: var(--sw-size-line-tight); }
 .sw-record--brief .sw-record__title { font-size: var(--sw-size-text-md); }
 .sw-record__body { margin-top: var(--sw-space-3); }
 .sw-record__body p { margin: 0 0 var(--sw-space-3); }

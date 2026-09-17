@@ -17,7 +17,7 @@ ol.sw-plain, ul.sw-plain { list-style: none; margin: 0; padding: 0; }
 }
 .sw-empty {
   padding: var(--sw-space-8) var(--sw-space-4); text-align: center; color: var(--sw-color-fg-muted);
-  background: var(--sw-color-accent-soft); border-radius: var(--sw-radius-lg);
+  background: var(--sw-color-bg-muted); border-radius: var(--sw-radius-lg);
 }
 
 /* The canvas is the page: a twelve column grid on wide screens, one column
@@ -36,7 +36,7 @@ ol.sw-plain, ul.sw-plain { list-style: none; margin: 0; padding: 0; }
   padding: var(--sw-space-6);
   border-radius: var(--sw-radius-lg);
   background: var(--sw-color-bg-raised);
-  border: 1px solid color-mix(in srgb, var(--sw-color-border) 60%, transparent);
+  border: 1px solid var(--sw-color-border);
   box-shadow: var(--sw-shadow-1);
   transition: box-shadow var(--sw-motion-base) var(--sw-motion-ease);
 }
@@ -56,27 +56,37 @@ ol.sw-plain, ul.sw-plain { list-style: none; margin: 0; padding: 0; }
    the way entirely. */
 .sw-block:has(> .sw-chat--panel) { padding: 0; border: 0; background: none; box-shadow: none; }
 
-/* A record's page reads as a document: its text first, at the reading
-   measure, then its other fields as quiet rows, then when it was made. */
+/* A record's page is one thing, so it floats: its text first, at the
+   reading measure, then its other fields as quiet rows. */
+.sw-dl-block {
+  position: relative; max-width: calc(var(--sw-size-measure) + 4rem);
+  padding: var(--sw-space-6) var(--sw-space-8);
+  background: var(--sw-color-bg-raised); border: 1px solid var(--sw-color-border);
+  border-radius: var(--sw-radius-lg); box-shadow: var(--sw-shadow-2);
+}
 .sw-detail__body { margin: 0 0 var(--sw-space-6); }
 .sw-dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0 var(--sw-space-8); margin: 0; max-width: var(--sw-size-measure); }
-.sw-dl dt, .sw-dl dd { padding: var(--sw-space-3) 0; border-top: 1px solid color-mix(in srgb, var(--sw-color-border) 60%, transparent); }
+.sw-dl dt, .sw-dl dd { padding: var(--sw-space-3) 0; border-top: 1px solid var(--sw-color-border); }
 .sw-dl dt { font-weight: 500; font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); padding-top: calc(var(--sw-space-3) + 0.1em); }
 .sw-dl dd { margin: 0; overflow-wrap: anywhere; }
 .sw-dl > :nth-child(-n + 2) { border-top: 0; }
-.sw-dl-block .sw-dl { margin-bottom: var(--sw-space-4); }
+.sw-dl-block .sw-dl { margin-bottom: var(--sw-space-2); }
 .sw-detail__when { margin: 0 0 var(--sw-space-4); }
 
-/* A listing is rows, not boxes: one hairline between records, the title
-   as the link, the record's facts as chips under it. */
+/* A listing is rows with air, not boxes: a checkbox at the front when the
+   record has one, the title as the link, the day at the right in the quiet
+   ink. Done rows are struck through. */
 .sw-rows { max-width: var(--sw-size-measure); }
-.sw-rows > li + li { border-top: 1px solid color-mix(in srgb, var(--sw-color-border) 60%, transparent); }
-.sw-row { padding: var(--sw-space-6) var(--sw-space-3); border-radius: var(--sw-radius-md); transition: background var(--sw-motion-fast) var(--sw-motion-ease); }
-.sw-row:hover { background: color-mix(in srgb, var(--sw-color-bg-raised) 70%, transparent); }
-.sw-row__title { margin: 0; font-size: var(--sw-size-text-xl); line-height: var(--sw-size-line-tight); }
-.sw-row__link { color: var(--sw-color-fg); text-decoration-color: color-mix(in srgb, var(--sw-color-accent) 45%, transparent); text-decoration-thickness: 2px; text-underline-offset: 0.18em; }
-.sw-row__link:hover { color: var(--sw-color-accent); text-decoration-color: currentColor; }
-.sw-row__meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sw-space-2); margin: var(--sw-space-2) 0 0; color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); }
+.sw-row { display: flex; align-items: center; gap: var(--sw-space-3); min-height: 2.75rem; padding: var(--sw-space-1) var(--sw-space-2); border-radius: var(--sw-radius-md); transition: background var(--sw-motion-fast) var(--sw-motion-ease); }
+.sw-row:hover { background: var(--sw-color-bg-muted); }
+.sw-row .sw-mark { min-height: 0; }
+.sw-row__title { margin: 0; flex: 1 1 auto; min-width: 0; font-size: var(--sw-size-text-md); font-weight: 500; letter-spacing: 0; line-height: 1.4; }
+.sw-row__link { color: var(--sw-color-fg); text-decoration: none; }
+.sw-row__link:hover { text-decoration: underline; text-underline-offset: 0.18em; }
+.sw-row--done .sw-row__link { color: var(--sw-color-fg-muted); text-decoration: line-through; }
+.sw-row--done .sw-row__link:hover { text-decoration: line-through underline; }
+.sw-row__meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--sw-space-2); margin: 0 0 0 auto; color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); white-space: nowrap; }
+.sw-when--past { color: var(--sw-color-warning); font-weight: 600; }
 
 /* Crumbs are the way back from a detail page: the listing, then the item. */
 .sw-crumbs { margin-bottom: var(--sw-space-4); font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); }

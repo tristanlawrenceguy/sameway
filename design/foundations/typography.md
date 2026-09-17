@@ -1,24 +1,22 @@
 # Typography
 
-System font stacks, so nothing loads from a network and every platform's
-best text rendering is used. Body text is the platform's sans. What a page,
-a region, or a record is called (h1, h2, card and record titles, the
-brand) is set in the platform's serif (`--sw-font-serif`: Iowan Old Style,
-Palatino Linotype, Georgia), so a title reads as a title before its size is
-noticed and a page has the warmth of something written rather than
-generated. `font-feature-settings` turns on tabular numerals (`tnum`) so
-times, counts, and table columns line up.
+One typeface: the platform's sans, so nothing loads from a network and
+every platform's best text rendering is used. Titles are the same face,
+bold and a little tighter; hierarchy comes from size, weight and the
+strength of the ink, never from a second face. `font-feature-settings`
+turns on tabular numerals (`tnum`) so times, counts, and table columns
+line up.
 
 | Token | Size | Use |
 |---|---|---|
-| `text-2xl` | fluid 2rem to 2.75rem | Page title (h1) |
-| `text-xl` | fluid 1.5rem to 1.9rem | Region headings (h2) |
-| `text-lg` | fluid 1.2rem to 1.35rem | Card titles, brand |
-| `text-md` | 1.0625rem | Body. Slightly above 16px on purpose. |
-| `text-sm` | 0.9375rem | Hints, meta, status |
-| `text-xs` | 0.8125rem | Badges, timestamps. Never for body text. |
+| `text-2xl` | fluid 1.75rem to 2rem | Page title (h1) |
+| `text-xl` | 1.375rem | Region headings (h2) |
+| `text-lg` | 1.125rem | Group headers, card titles, brand |
+| `text-md` | 1rem | Body, and the title of a row |
+| `text-sm` | 0.875rem | Hints, meta, the day at the right of a row |
+| `text-xs` | 0.8125rem | Chips, timestamps. Never for body text. |
 
-Line height is 1.6 for reading and 1.2 for headings. Headings use
+Line height is 1.5 for reading and 1.2 for headings. Headings use
 `text-wrap: balance` and slight negative tracking. The reading measure is
 capped at 68 characters (`--sw-size-measure`) on prose, cards, and messages.
 

@@ -51,12 +51,7 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	if len(recs) == 0 {
 		fmt.Fprintf(&b, `<p>No %s yet.</p>`, template.HTMLEscapeString(plural(t.Name)))
 	} else {
-		fmt.Fprintf(&b, `<ol class="sw-plain sw-rows" aria-label="%s">`, template.HTMLEscapeString(plural(t.Name)))
-		for _, rec := range recs {
-			fmt.Fprintf(&b, `<li class="sw-row"><h2 class="sw-row__title"><a class="sw-row__link" href="/t/%s/%s">%s</a></h2><p class="sw-row__meta">%s</p></li>`,
-				t.Name, rec.ID, template.HTMLEscapeString(titleOf(t, rec)), s.facts(t, rec, false))
-		}
-		b.WriteString("</ol>")
+		b.WriteString(s.rows(t, recs, time.Now()))
 	}
 	// What just happened to these records is here too, so a deletion can be
 	// taken back where the person lands.
