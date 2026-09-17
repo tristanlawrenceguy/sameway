@@ -65,6 +65,10 @@ func (s *Server) resolveCollection(props map[string]any) map[string]any {
 				item["text"] = text
 			}
 		}
+		if actions := markActions(t, rec); actions != nil {
+			item["actions"] = actions
+			out["pressable"] = true
+		}
 		items = append(items, item)
 	}
 	out["items"] = items

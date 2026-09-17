@@ -136,6 +136,15 @@ func (d *Doc) AccessibleName(n *html.Node) string {
 			}
 		}
 	}
+	// A label wrapping its control names it too, with no id needed: the
+	// way a checkbox in a list of many is labelled.
+	if n.Data == "input" || n.Data == "select" || n.Data == "textarea" {
+		for p := n.Parent; p != nil; p = p.Parent {
+			if p.Type == html.ElementNode && p.Data == "label" {
+				return strings.TrimSpace(Text(p))
+			}
+		}
+	}
 	if n.Data == "table" {
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if c.Data == "caption" {

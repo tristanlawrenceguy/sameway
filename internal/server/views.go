@@ -127,8 +127,14 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(&b, `<form method="post" action="/act/%s"><input type="hidden" name="from" value="/t/%s/%s">%s</form>`, rec.ID, t.Name, rec.ID,
 			s.component("button", map[string]any{"label": "Run", "context": titleOf(t, rec), "type": "submit", "variant": "primary"}))
 	}
-	fmt.Fprintf(&b, `<div class="sw-bar sw-quiet"><form method="post" action="/t/%s/%s/delete">%s</form></div>`,
-		t.Name, rec.ID, s.component("button", map[string]any{"label": "Delete " + t.Name, "type": "submit", "variant": "quiet"}))
+	// The record's one press, beside Delete: done, pinned, whatever its
+	// yes-or-no field is.
+	press := ""
+	if props, ok := markOf(t, rec); ok {
+		press = string(s.component("mark", props))
+	}
+	fmt.Fprintf(&b, `<div class="sw-bar sw-quiet">%s<form method="post" action="/t/%s/%s/delete">%s</form></div>`,
+		press, t.Name, rec.ID, s.component("button", map[string]any{"label": "Delete " + t.Name, "type": "submit", "variant": "quiet"}))
 	b.WriteString(`</div>`)
 	// What points at this record, listed here by itself.
 	b.WriteString(s.backlinks(t, rec))

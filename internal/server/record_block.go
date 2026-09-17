@@ -58,6 +58,9 @@ func (s *Server) resolveRecord(props map[string]any) (map[string]any, string) {
 	if len(fields) > 0 {
 		out["fields"] = fields
 	}
+	if actions := markActions(t, rec); actions != nil {
+		out["actions"] = actions
+	}
 	return out, "/t/" + t.Name + "/" + rec.ID + "/props"
 }
 
