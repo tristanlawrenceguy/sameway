@@ -64,6 +64,10 @@
     "states": ["data-actor", "data-role"],
     "wcag": { "target": "AAA", "notes": "Author is text, not colour or alignment alone (1.4.1). Each message is an article with its author as the first line so screen readers can move between turns. The change receipt is a real list with a heading only screen readers hear." }
   },
+  "template": {
+    "functions": ["paragraphs", "linkify"],
+    "notes": "The linkify function converts internal paths (/t/note/..., /t/file/...) and external URLs (http://, https://) into clickable anchor tags in message content paragraphs."
+  },
   "machine": {
     "selector": "[data-component=\"message\"]",
     "identify": "Read data-role for who spoke (user, assistant, error) and data-actor for the provenance tone (human, assistant, system). The article text is the content; the .sw-message__changes list, if present, has one li per canvas change with data-action and data-target.",
