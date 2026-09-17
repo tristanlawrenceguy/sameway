@@ -99,6 +99,8 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 		Shell:        opts.Shell,
 		Left:         opts.Left,
 		Right:        opts.Right,
+		Header:       opts.Header,
+		Footer:       opts.Footer,
 		ExtraScripts: opts.ExtraScripts,
 	}
 	// The header carries only the person's own content. The brand is the way
@@ -112,7 +114,7 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 		p.Nav = append(p.Nav, s.navLink(href, plural(t.Name), strings.HasPrefix(r.URL.Path, href)))
 	}
 	for _, l := range []struct{ href, label string }{
-		{"/chat", "Chat"}, {"/search", "Search"}, {"/activity", "Activity"}, {"/design", "Design system"},
+		{"/chat", "Chat"}, {"/activity", "Activity"}, {"/design", "Design system"},
 	} {
 		p.More = append(p.More, s.navLink(l.href, l.label, r.URL.Path == l.href))
 	}
@@ -144,6 +146,8 @@ type pageOptions struct {
 	Shell        string
 	Left         template.HTML
 	Right        template.HTML
+	Header       template.HTML
+	Footer       template.HTML
 	JSONURL      string
 	Focus        string
 	FocusLabel   string

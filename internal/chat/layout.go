@@ -5,8 +5,8 @@ import "fmt"
 // look is how a block sits on the canvas: its width, its order, and how
 // much surface it brings. All optional, all independent of its props.
 type look struct {
-	Span, Position      *int
-	Frame, Tone, Region string
+	Span, Position            *int
+	Frame, Tone, Region, Size string
 	// Canvas is the tab the block sits on, as a canvas id; "" is Home. Only
 	// applied when the caller says so, since "" also means "not given".
 	Canvas    string
@@ -39,11 +39,22 @@ func (l look) apply(fields map[string]any) ([]string, error) {
 		what = append(what, "tone "+l.Tone)
 	}
 	if l.Region != "" {
-		if l.Region != "main" && l.Region != "left" && l.Region != "right" {
-			return nil, fmt.Errorf("region must be main, left, or right, got %q", l.Region)
+		switch l.Region {
+		case "main", "left", "right", "header", "footer":
+		default:
+			return nil, fmt.Errorf("region must be main, left, right, header, or footer, got %q", l.Region)
 		}
 		fields["region"] = l.Region
 		what = append(what, "region "+l.Region)
+	}
+	if l.Size != "" {
+		switch l.Size {
+		case "full", "compact", "icon":
+		default:
+			return nil, fmt.Errorf("size must be full, compact, or icon, got %q", l.Size)
+		}
+		fields["size"] = l.Size
+		what = append(what, "size "+l.Size)
 	}
 	if l.SetCanvas {
 		fields["canvas"] = l.Canvas

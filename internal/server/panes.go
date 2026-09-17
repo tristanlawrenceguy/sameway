@@ -44,3 +44,18 @@ func (s *Server) pane(side, label string, blocks []*store.Record, convo *convers
 	}
 	return body
 }
+
+// strip renders the blocks in the header or footer bar: a row, not a
+// column, and no disclosure, because a bar is not something to fold.
+func (s *Server) strip(bar string, blocks []*store.Record, convo *conversation) template.HTML {
+	if len(blocks) == 0 {
+		return ""
+	}
+	var b strings.Builder
+	fmt.Fprintf(&b, `<ol class="sw-plain sw-canvas sw-canvas--strip" aria-label="Blocks in the %s">`, bar)
+	for _, blk := range blocks {
+		b.WriteString(s.blockItem(blk, convo))
+	}
+	b.WriteString(`</ol>`)
+	return template.HTML(b.String())
+}

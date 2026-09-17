@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
-	"sort"
 	"strings"
 	"time"
 
@@ -46,7 +45,8 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 		b.WriteString(string(convo.Notice))
 	}
 	b.WriteString(string(s.tabBar(canvas)))
-	main, left, right := split(blocks)
+	reg := split(blocks)
+	main, left, right := reg.main, reg.left, reg.right
 	// A workspace with nothing but the conversation shows just that, in the
 	// middle of the page, the way every other assistant opens. Everything
 	// else arrives because someone asked for it.
@@ -77,38 +77,9 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 	opts.QuietTitle = len(blocks) > 0
 	opts.Left = s.pane("left", paneLabel("Left pane", left), left, convo)
 	opts.Right = s.pane("right", paneLabel("Right pane", right), right, convo)
+	opts.Header = s.strip("header", reg.header, convo)
+	opts.Footer = s.strip("footer", reg.footer, convo)
 	s.page(w, r, "Canvas", template.HTML(b.String()), opts)
-}
-
-// canvasBlocks reads the canvas in display order, or nothing if it cannot.
-func (s *Server) canvasBlocks() []*store.Record {
-	blocks, err := s.app.Store.List(chat.BlockType, store.ListOptions{OrderBy: "position"})
-	if err != nil {
-		return nil
-	}
-	return blocks
-}
-
-// split sorts blocks into the three regions of the page.
-func split(blocks []*store.Record) (main, left, right []*store.Record) {
-	for _, blk := range blocks {
-		switch str(blk.Fields["region"], "main") {
-		case "left":
-			left = append(left, blk)
-		case "right", "side": // side was the earlier name for right
-			right = append(right, blk)
-		default:
-			main = append(main, blk)
-		}
-	}
-	return main, left, right
-}
-
-func layoutName(solo bool) string {
-	if solo {
-		return "solo"
-	}
-	return "wide"
 }
 
 // blockItem renders one canvas block: the component, its span, its
@@ -120,8 +91,8 @@ func (s *Server) blockItem(blk *store.Record, convo *conversation) string {
 		body = s.chatBlock(blk, convo)
 	}
 	var b strings.Builder
-	fmt.Fprintf(&b, `<li class="sw-block sw-reveal" data-block-id="%s" data-block-component="%s" data-actor="%s" data-frame="%s" data-tone="%s"`,
-		v.ID, v.Component, v.Actor, v.Frame, v.Tone)
+	fmt.Fprintf(&b, `<li class="sw-block sw-reveal" data-block-id="%s" data-block-component="%s" data-actor="%s" data-frame="%s" data-tone="%s" data-size="%s"`,
+		v.ID, v.Component, v.Actor, v.Frame, v.Tone, v.Size)
 	if v.Changed != "" {
 		fmt.Fprintf(&b, ` data-changed="%s"`, v.Changed)
 	}
@@ -132,6 +103,12 @@ func (s *Server) blockItem(blk *store.Record, convo *conversation) string {
 		fmt.Fprintf(&b, ` data-edit-action="%s"`, v.EditAction)
 	}
 	fmt.Fprintf(&b, ` style="--sw-span: %d; view-transition-name: block-%s; view-transition-class: sw-vt-item">`, v.Span, v.ID)
+	// At icon size the block is a glyph with its name, opening the whole
+	// thing on its own page: everything is still reachable, in less room.
+	if v.Size == "icon" {
+		fmt.Fprintf(&b, `<a class="sw-block__icon" href="/canvas/%s" aria-label="%s"><span aria-hidden="true">%s</span></a></li>`, v.ID, template.HTMLEscapeString(v.Label), template.HTMLEscapeString(v.Icon))
+		return b.String()
+	}
 	// Provenance costs nothing on screen and is complete in the
 	// accessibility tree. Sighted people got it from the glow when it
 	// happened, and can get it again from the activity log.
@@ -171,7 +148,7 @@ func (s *Server) canvasBlock(b *store.Record, convo *conversation) canvasBlock {
 	if v, ok := b.Fields["span"].(int64); ok && v >= 1 && v <= 12 {
 		span = int(v)
 	}
-	who := map[string]string{"human": "you", "assistant": "the assistant"}
+	who := map[string]string{"human": "you", "assistant": "the assistant", "system": "the workspace"}
 	provenance := "Added by " + who[createdBy] + "."
 	if actor != createdBy {
 		provenance = "Added by " + who[createdBy] + ", edited by " + who[actor] + "."
@@ -180,7 +157,9 @@ func (s *Server) canvasBlock(b *store.Record, convo *conversation) canvasBlock {
 	// Glow only for what changed in the exchange just finished, or in the
 	// last few seconds, so a marker never outlives the change it reports.
 	changed := ""
-	if inLastTurn(b.CreatedAt, convo) {
+	// What the workspace put there to begin with is not a change.
+	if b.Fields["created_by"] == "system" {
+	} else if inLastTurn(b.CreatedAt, convo) {
 		changed = "added"
 	} else if inLastTurn(b.UpdatedAt, convo) {
 		changed = "updated"
@@ -192,9 +171,18 @@ func (s *Server) canvasBlock(b *store.Record, convo *conversation) canvasBlock {
 	if name == recordComponent {
 		props, editAction = s.resolveRecord(props)
 	}
+	label := chat.Summarise(name, props)
+	if label == "" {
+		label = name
+	}
+	icon := name[:1]
+	if c, ok := s.app.Registry.Get(name); ok && c.Manifest.Icon != "" {
+		icon = c.Manifest.Icon
+	}
 	return canvasBlock{
 		ID: b.ID, Component: name, Actor: actor, Changed: changed, Span: span,
 		Frame: str(b.Fields["frame"], "card"), Tone: str(b.Fields["tone"], "none"),
+		Size: str(b.Fields["size"], "full"), Label: label, Icon: icon,
 		Provenance: provenance, EditAction: editAction,
 		HTML: s.component(name, props),
 		Expand: s.component("link", map[string]any{
@@ -236,17 +224,20 @@ func str(v any, fallback string) string {
 }
 
 type canvasBlock struct {
-	ID         string
-	Component  string
-	Actor      string
-	Changed    string
-	Span       int
-	Frame      string
-	Tone       string
-	Provenance string
-	HTML       template.HTML
-	Expand     template.HTML
-	Remove     template.HTML
+	ID        string
+	Component string
+	Actor     string
+	Changed   string
+	Span      int
+	Frame     string
+	Tone      string
+	// Size is full, compact or icon; Label and Icon are what an icon-sized
+	// block shows: the glyph, and the name assistive technology gets.
+	Size, Label, Icon string
+	Provenance        string
+	HTML              template.HTML
+	Expand            template.HTML
+	Remove            template.HTML
 	// EditAction is where the inline editor posts for this block when it is
 	// not the block's own props: a record block edits the record.
 	EditAction string
@@ -268,33 +259,4 @@ func (s *Server) canvasDelete(w http.ResponseWriter, r *http.Request) {
 	props, _ := rec.Fields["props"].(map[string]any)
 	chat.Record(s.app.Store, "human", chat.Change{Action: "removed", Component: name, ID: id, Detail: chat.Summarise(name, props), Before: rec.Fields})
 	http.Redirect(w, r, "/", http.StatusSeeOther)
-}
-
-// arrivals orders the blocks that changed in the last turn by when they
-// changed, so the page can show them one after another as they were made:
-// where each will be, then what it is, then what it says. The conversation
-// is the person's own tool and never arrives; it is simply there.
-func arrivals(blocks []*store.Record, convo *conversation) map[string]int {
-	type change struct {
-		id string
-		at time.Time
-	}
-	var changes []change
-	for _, b := range blocks {
-		if b.Fields["component"] == chat.ComponentName {
-			continue
-		}
-		switch {
-		case inLastTurn(b.CreatedAt, convo):
-			changes = append(changes, change{b.ID, b.CreatedAt})
-		case inLastTurn(b.UpdatedAt, convo):
-			changes = append(changes, change{b.ID, b.UpdatedAt})
-		}
-	}
-	sort.Slice(changes, func(i, j int) bool { return changes[i].at.Before(changes[j].at) })
-	order := map[string]int{}
-	for i, c := range changes {
-		order[c.id] = i + 1
-	}
-	return order
 }

@@ -2,6 +2,7 @@
   "name": "chat",
   "version": "1.0.0",
   "description": "A conversation region: a named area holding a transcript and a composer. It is a component like any other, so it can be placed anywhere on a canvas, restyled, or removed.",
+  "icon": "…",
   "use": { "when": "the conversation belongs on the canvas beside the person's content; it is always at /chat as well.", "not": "twice on a page.", "with": "a pane, when the person wants it beside what they are working on." },
   "props": {
     "type": "object",

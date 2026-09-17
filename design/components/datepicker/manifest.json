@@ -2,6 +2,7 @@
   "name": "datepicker",
   "version": "1.0.0",
   "description": "Asks someone for a date. A native date input, so every platform's own picker, keyboard handling, and screen reader support come for free. To show a month rather than ask for a day, use calendar.",
+  "icon": "▤",
   "use": { "when": "a person types or picks one date.", "not": "showing a month, which is a calendar.", "with": "a form." },
   "props": {
     "type": "object",

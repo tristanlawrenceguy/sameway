@@ -2,6 +2,7 @@
   "name": "proposal",
   "version": "1.0.0",
   "description": "A change the assistant is asking permission for, with the two answers next to the question. Use it when a change removes something, or when the assistant is guessing.",
+  "icon": "?",
   "use": { "when": "a change takes something away, or the assistant is guessing at what the person wants.", "not": "what the person clearly asked for, or anything reversible such as undo or pace.", "with": "nothing else; it sits under the conversation." },
   "props": {
     "type": "object",

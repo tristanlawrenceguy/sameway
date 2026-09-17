@@ -2,6 +2,7 @@
   "name": "disclosure",
   "version": "1.0.0",
   "description": "Hides secondary detail behind a summary that says what is inside and how much. Closed by default, so a page can carry a log or a long aside without spending attention on it.",
+  "icon": "▸",
   "use": { "when": "detail most people do not need most of the time: a log, an aside, the long version.", "not": "hiding the main thing, or a control a person needs.", "with": "lists of events." },
   "props": {
     "type": "object",

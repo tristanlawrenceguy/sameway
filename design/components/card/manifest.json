@@ -2,6 +2,7 @@
   "name": "card",
   "version": "1.0.0",
   "description": "A titled block of content, optionally linking somewhere. Good for one item in a collection or a summary panel.",
+  "icon": "▭",
   "use": { "when": "one item among several, or a summary a person scans and may open.", "not": "the only thing on the page, which wants text under a heading, or a record with its own page, which wants the record component.", "with": "a heading above a row of cards; span 4 or 6." },
   "props": {
     "type": "object",

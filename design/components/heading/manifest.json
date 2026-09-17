@@ -2,6 +2,7 @@
   "name": "heading",
   "version": "1.0.0",
   "description": "A section heading. Levels must form an outline: one h1 per page, then h2 for sections, h3 inside them, never skipping down a level.",
+  "icon": "H",
   "use": { "when": "a section starts; span 12, frame bare.", "not": "emphasis, or a label a component already shows.", "with": "the outline: h2 for sections, h3 inside them." },
   "props": {
     "type": "object",

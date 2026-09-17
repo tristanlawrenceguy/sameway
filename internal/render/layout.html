@@ -20,6 +20,7 @@
 {{if .Nav}}<nav class="sw-nav" aria-label="Main">
 <ul>{{range .Nav}}<li>{{.}}</li>{{end}}</ul>
 </nav>
+{{end}}{{if .Header}}<div class="sw-strip sw-strip--header">{{.Header}}</div>
 {{end}}</div>
 </header>
 <div class="sw-shell">
@@ -31,7 +32,8 @@
 {{if .Right}}<aside class="sw-pane sw-pane--right" aria-label="Right pane">{{.Right}}</aside>
 {{end}}</div>
 <footer class="sw-footer">
-<nav class="sw-nav sw-nav--more" aria-label="This workspace">
+{{if .Footer}}<div class="sw-strip sw-strip--footer">{{.Footer}}</div>
+{{end}}<nav class="sw-nav sw-nav--more" aria-label="This workspace">
 <ul>{{range .More}}<li>{{.}}</li>{{end}}<li><a class="sw-link" href="/api/describe">For agents</a></li></ul>
 </nav>
 </footer>

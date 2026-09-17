@@ -2,6 +2,7 @@
   "name": "badge",
   "version": "1.0.0",
   "description": "A small label that states who did something or what state it is in. Tone is spoken as text, never colour alone.",
+  "icon": "•",
   "use": { "when": "one word says a state, or who did something, beside the thing it describes.", "not": "as a button, a link, or decoration.", "with": "card and event, where the state belongs to an item." },
   "props": {
     "type": "object",
