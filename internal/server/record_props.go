@@ -45,13 +45,10 @@ func (s *Server) recordProps(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fields := map[string]any{}
-	for key, values := range r.PostForm {
-		prop, found := strings.CutPrefix(key, "prop-")
-		if !found || len(values) == 0 {
-			continue
-		}
-		fields[prop] = strings.ReplaceAll(values[0], "\r\n", "\n")
+	fields, err := editedFields(r.PostForm)
+	if err != nil {
+		s.renderDetailError(w, r, t, rec, err, fields)
+		return
 	}
 
 	// No fields provided — no-op redirect.

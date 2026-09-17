@@ -13,12 +13,14 @@ import (
 	"github.com/JohannesKaufmann/html-to-markdown/v2/converter"
 	"github.com/JohannesKaufmann/html-to-markdown/v2/plugin/base"
 	"github.com/JohannesKaufmann/html-to-markdown/v2/plugin/commonmark"
+	"github.com/JohannesKaufmann/html-to-markdown/v2/plugin/strikethrough"
 	tableplugin "github.com/JohannesKaufmann/html-to-markdown/v2/plugin/table"
 	"github.com/ledongthuc/pdf"
 )
 
-// htmlToMarkdown keeps tables as tables, which the plain converter drops.
-var htmlToMarkdown = converter.NewConverter(converter.WithPlugins(base.NewBasePlugin(), commonmark.NewCommonmarkPlugin(), tableplugin.NewTablePlugin()))
+// htmlToMarkdown keeps tables and strikethrough, which the plain converter
+// drops; the page renders both.
+var htmlToMarkdown = converter.NewConverter(converter.WithPlugins(base.NewBasePlugin(), commonmark.NewCommonmarkPlugin(), tableplugin.NewTablePlugin(), strikethrough.NewStrikethroughPlugin()))
 
 func plain(data []byte) (string, error) {
 	return string(bytes.ReplaceAll(data, []byte("\r\n"), []byte("\n"))), nil
@@ -84,6 +86,12 @@ func table(rows [][]string) string {
 
 func htmlText(data []byte) (string, error) {
 	return htmlToMarkdown.ConvertString(string(data))
+}
+
+// HTMLToMarkdown turns HTML into Markdown: what a person edited on the
+// page, or a web page they added, becomes the same words as everything else.
+func HTMLToMarkdown(html string) (string, error) {
+	return htmlToMarkdown.ConvertString(html)
 }
 
 // epub is a zip of web pages; the OPF spine says what order they read in.

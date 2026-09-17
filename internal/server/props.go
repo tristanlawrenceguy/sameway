@@ -2,7 +2,6 @@ package server
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 )
@@ -37,16 +36,16 @@ func (s *Server) blockProps(w http.ResponseWriter, r *http.Request) {
 			props[k] = v
 		}
 	}
-	changed := false
-	for key, values := range r.PostForm {
-		prop, found := strings.CutPrefix(key, "prop-")
-		if !found || len(values) == 0 {
-			continue
-		}
-		props[prop] = strings.ReplaceAll(values[0], "\r\n", "\n")
-		changed = true
+	edited, err := editedFields(r.PostForm)
+	if err != nil {
+		s.app.Store.Create(chat.MessageType, map[string]any{"role": "error", "content": "That edit did not save. " + err.Error()})
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
 	}
-	if !changed {
+	for k, v := range edited {
+		props[k] = v
+	}
+	if len(edited) == 0 {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}

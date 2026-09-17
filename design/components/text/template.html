@@ -1,1 +1,1 @@
-<div class="sw-text sw-prose{{if .muted}} sw-text--muted{{end}}" data-component="text" data-prop="content" data-source="{{.content}}"{{if .id}} id="{{.id}}"{{end}}>{{markdown .content .level}}</div>
+<div class="sw-text sw-prose{{if .muted}} sw-text--muted{{end}}" data-component="text" data-prop="content" data-source="{{.content}}" data-prose-level="{{if .level}}{{.level}}{{else}}2{{end}}"{{if .id}} id="{{.id}}"{{end}}>{{markdown .content .level}}</div>
