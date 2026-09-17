@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // A collection block is the records that match, kept current: the same
@@ -41,7 +43,7 @@ func TestACollectionIsTheRecordsThatMatch(t *testing.T) {
 	if strings.Index(page, "Order compost") > strings.Index(page, "Plant garlic") {
 		t.Error("the tasks come in due order")
 	}
-	if !strings.Contains(page, "Due "+time.Now().AddDate(0, 0, 2).Local().Format("2006-01-02")) {
+	if !strings.Contains(page, "Due "+when.Text(day(2))) {
 		t.Error("each task shows the day it is due")
 	}
 
@@ -95,7 +97,7 @@ func TestACollectionCanBeATableOrCards(t *testing.T) {
 	page := get(t, h, "/").Body.String()
 	for _, want := range []string{
 		`<th scope="col">Title</th><th scope="col">Due</th><th scope="col">Project</th><th scope="col">Done</th>`,
-		`<th scope="row"><a class="sw-link" href="/t/task/`, `<td>2026-10-02</td><td>Garden</td><td>no</td>`,
+		`<th scope="row"><a class="sw-link" href="/t/task/`, `<td>Fri 2 Oct 2026</td><td>Garden</td><td>no</td>`,
 		`sw-collection__cards`, `<dt>Status</dt><dd>active</dd>`, `href="/t/project/` + garden.ID + `">Garden</a>`,
 	} {
 		if !strings.Contains(page, want) {

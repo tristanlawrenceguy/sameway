@@ -13,6 +13,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // listPage shows every record of a type as cards.
@@ -116,7 +117,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(&b, `<dt>%s</dt>%s`, template.HTMLEscapeString(label(f.Name)), s.refCell(f, val))
 			continue
 		}
-		fmt.Fprintf(&b, `<dt>%s</dt><dd data-prop="%s">%s</dd>`, template.HTMLEscapeString(label(f.Name)), f.Name, template.HTMLEscapeString(val))
+		fmt.Fprintf(&b, `<dt>%s</dt><dd data-prop="%s"%s>%s</dd>`, template.HTMLEscapeString(label(f.Name)), f.Name, whenAttrs(f, rec.Fields[f.Name]), template.HTMLEscapeString(val))
 	}
 	fmt.Fprintf(&b, "<dt>Created</dt><dd>%s</dd><dt>Updated</dt><dd>%s</dd></dl>", rec.CreatedAt.Local().Format("2006-01-02 15:04"), rec.UpdatedAt.Local().Format("2006-01-02 15:04"))
 	// Deleting is one step, because it can be taken back: the record goes
@@ -194,6 +195,8 @@ func display(f schema.Field, v any) string {
 			return "yes"
 		}
 		return "no"
+	case "datetime":
+		return when.Text(fmt.Sprint(v))
 	}
 	return fmt.Sprint(v)
 }
@@ -237,4 +240,13 @@ func capitalize(s string) string {
 func label(field string) string {
 	s := strings.ReplaceAll(field, "_", " ")
 	return strings.ToUpper(s[:1]) + s[1:]
+}
+
+// whenAttrs marks a date on a page for the editor and for a machine: the
+// kind, and the stored value under the words a person reads.
+func whenAttrs(f schema.Field, v any) string {
+	if f.Type != "datetime" || v == nil || v == "" {
+		return ""
+	}
+	return fmt.Sprintf(` data-kind="datetime" data-source="%s"`, template.HTMLEscapeString(fmt.Sprint(v)))
 }

@@ -10,3 +10,9 @@ are ISO (`YYYY-MM-DD`) whatever the browser shows the person, so an agent
 sets and reads the same string a person sees.
 
 To show a month and what is on in it, use `calendar` instead.
+
+When a record's date is edited on its page, the words come first: a text
+field that reads "19 Sep", "next Friday" or "tomorrow 2pm", with this
+picker beside it for anyone who would rather look at a month. People know
+the day they mean and type it faster than they find it; the picker is for
+the day they do not.
