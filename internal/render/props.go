@@ -9,6 +9,8 @@ import (
 	"strings"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
+
+	"github.com/tristanlawrenceguy/sameway/internal/prose"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 )
@@ -28,6 +30,12 @@ var Funcs = template.FuncMap{
 	// optValue and optLabel let a select take either plain strings or
 	// {value, label} objects, so what is stored can differ from what a
 	// person reads without every caller needing two shapes.
+	// markdown renders structured text: headings from the given level, lists,
+	// emphasis, links, code, captioned tables. See internal/prose.
+	"markdown": func(s string, base any) template.HTML { return prose.Render(s, num(base)) },
+	// add is for a heading level one below another: the prose inside a
+	// card starts a level under the card's own title.
+	"add":      func(a, b any) int { return num(a) + num(b) },
 	"optValue": func(v any) string { return optionPart(v, "value") },
 	"optLabel": func(v any) string { return optionPart(v, "label") },
 	// Calendar shape, computed here because a template cannot do date maths
@@ -204,4 +212,17 @@ func formatValidation(err error) error {
 	}
 	walk(ve)
 	return fmt.Errorf("invalid props: %s", strings.Join(lines, "; "))
+}
+
+// num reads a number however JSON or Go handed it over.
+func num(v any) int {
+	switch x := v.(type) {
+	case int:
+		return x
+	case int64:
+		return int(x)
+	case float64:
+		return int(x)
+	}
+	return 0
 }

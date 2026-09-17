@@ -1,22 +1,23 @@
 {
   "name": "text",
   "version": "1.0.0",
-  "description": "One or more paragraphs of plain text. Blank lines in content start a new paragraph.",
+  "description": "Text with structure: paragraphs, headings, lists, emphasis, links, code and captioned tables, written as Markdown. Blank lines start a new paragraph.",
   "icon": "¶",
-  "use": { "when": "sentences: an explanation, an introduction, the words of a note; frame bare.", "not": "a title, which is a heading, or short items, which are a list.", "with": "a heading before it when it starts a section." },
+  "use": { "when": "sentences, and anything longer: an explanation, an introduction, a note with its own headings and lists; frame bare.", "not": "a title, which is a heading, or short items, which are a list.", "with": "a heading before it when it starts a section." },
   "props": {
     "type": "object",
     "additionalProperties": false,
     "required": ["content"],
     "properties": {
-      "content": { "type": "string", "format": "multiline", "minLength": 1 },
+      "content": { "type": "string", "format": "multiline", "minLength": 1, "description": "Markdown: paragraphs, headings with #, lists with - or 1., *emphasis*, [links](/t/note), code, and tables. A line starting Table: just above a table is its caption." },
+      "level": { "title": "Heading level of a # line", "type": "integer", "minimum": 2, "maximum": 6, "default": 2, "description": "What a # heading in the content becomes, so the text fits the page outline: 2 on the canvas, 3 or 4 inside something that already has a heading." },
       "muted": { "title": "Quieter text", "type": "boolean", "default": false, "description": "Lower-emphasis text such as a note or caption. Still meets 7:1 contrast." },
       "id": { "type": "string" }
     }
   },
   "a11y": {
-    "role": "paragraph",
-    "keyboard": [],
+    "role": "paragraph, with headings, lists, links, code and tables when the content has them",
+    "keyboard": [ { "key": "Tab", "does": "reaches each link in the text, in order" } ],
     "states": [],
     "wcag": { "target": "AAA", "notes": "Line length capped at 68 characters and line height 1.6 (1.4.8 visual presentation). Plain language is the author's job; keep sentences short." }
   },
@@ -27,6 +28,7 @@
   },
   "examples": [
     { "name": "default", "props": { "content": "Sameway renders the same accessible HTML for people and for agents." }, "file": "examples/default.html" },
+    { "name": "structured", "props": { "content": "# The plan\n\nThree things, in order:\n\n1. Water the *garden*\n2. Call the plumber\n3. Read the [notes](/t/note)\n\nTable: What each costs\n\n| Thing | Cost |\n|---|---|\n| Plumber | 80 |\n| Seeds | 6 |" }, "file": "examples/structured.html" },
     { "name": "paragraphs", "props": { "content": "First paragraph.\n\nSecond paragraph, shown as its own p element.", "muted": true }, "file": "examples/paragraphs.html" }
   ]
 }
