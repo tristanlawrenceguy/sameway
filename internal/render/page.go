@@ -29,6 +29,10 @@ type Page struct {
 	More []template.HTML
 	// JSONURL is the machine-readable twin of this page, if any.
 	JSONURL string
+	// Kicker sits above the title (the way here, as crumbs) and Lede under
+	// it (the few facts worth knowing before reading), both rendered.
+	Kicker template.HTML
+	Lede   template.HTML
 	// Body is the already-rendered main content, placed after the h1.
 	Body template.HTML
 	// Left and Right are full height panes beside the main region. Their

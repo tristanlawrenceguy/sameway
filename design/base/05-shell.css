@@ -11,10 +11,15 @@
 .sw-header {
     position: sticky; top: 0; z-index: 5;
     padding: var(--sw-space-3) var(--sw-space-4);
-    background: color-mix(in srgb, var(--sw-color-bg) 88%, transparent);
+    background: color-mix(in srgb, var(--sw-color-accent-soft) 70%, transparent);
     backdrop-filter: saturate(1.4) blur(10px);
-    border-bottom: 1px solid var(--sw-color-border);
     pointer-events: none;
+}
+/* The two colours of the place, the person's and the assistant's, drawn
+   as one line under the masthead. */
+.sw-header::after {
+    content: ""; position: absolute; inset: auto 0 0 0; height: 2px;
+    background: linear-gradient(90deg, var(--sw-color-human), var(--sw-color-assistant));
 }
 .sw-header__inner, .sw-main, .sw-footer { width: min(100% - 2rem, 90rem); margin-inline: auto; }
 .sw-header__inner { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sw-space-6); }
@@ -39,8 +44,14 @@
 .sw-nav .sw-link[aria-current="page"] { background: var(--sw-color-accent-soft); color: var(--sw-color-accent); font-weight: 700; text-decoration: none; }
 
 .sw-main { padding-block: var(--sw-space-16) var(--sw-space-16); min-height: 60vh; }
-.sw-footer { padding-block: var(--sw-space-4); color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); border-top: 1px solid color-mix(in srgb, var(--sw-color-border) 60%, transparent); }
+/* The page head: the way here, the title, the few facts under it. */
+.sw-page-head { margin-bottom: var(--sw-space-8); }
+.sw-page-head .sw-crumbs { margin-bottom: var(--sw-space-1); }
+.sw-lede { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sw-space-2); margin: 0; color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); }
+.sw-footer { padding-block: var(--sw-space-8); color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); border-top: 1px solid color-mix(in srgb, var(--sw-color-border) 60%, transparent); }
 .sw-nav--more ul { gap: var(--sw-space-3); }
 .sw-nav--more .sw-link { min-height: var(--sw-size-target); padding: 0 var(--sw-space-2); font-weight: 500; color: var(--sw-color-fg-muted); text-decoration: none; }
 .sw-nav--more .sw-link:hover { color: var(--sw-color-fg); text-decoration: underline; }
 .sw-nav--more .sw-link[aria-current="page"] { color: var(--sw-color-accent); background: none; }
+/* What sits in the header bar keeps to the right, on the brand's line. */
+.sw-strip--header { justify-content: flex-end; align-self: center; }

@@ -53,16 +53,15 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	} else {
 		fmt.Fprintf(&b, `<ol class="sw-plain sw-rows" aria-label="%s">`, template.HTMLEscapeString(plural(t.Name)))
 		for _, rec := range recs {
-			meta := listMeta(t, rec)
-			props := map[string]any{"title": titleOf(t, rec), "href": "/t/" + t.Name + "/" + rec.ID, "level": 2, "meta": meta}
-			b.WriteString("<li>" + string(s.component("card", props)) + "</li>")
+			fmt.Fprintf(&b, `<li class="sw-row"><h2 class="sw-row__title"><a class="sw-row__link" href="/t/%s/%s">%s</a></h2><p class="sw-row__meta">%s</p></li>`,
+				t.Name, rec.ID, template.HTMLEscapeString(titleOf(t, rec)), s.facts(t, rec, false))
 		}
 		b.WriteString("</ol>")
 	}
 	// What just happened to these records is here too, so a deletion can be
 	// taken back where the person lands.
 	b.WriteString(string(s.recentActivity(5, "/t/"+t.Name)))
-	s.page(w, r, capitalize(plural(t.Name)), template.HTML(b.String()), pageOptions{JSONURL: "/api/" + t.Name})
+	s.page(w, r, capitalize(plural(t.Name)), template.HTML(b.String()), pageOptions{JSONURL: "/api/" + t.Name, Lede: howMany(len(recs), t.Name)})
 }
 
 // detailPage shows one record as a definition list with delete.
@@ -78,7 +77,6 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var b strings.Builder
-	b.WriteString(string(crumbs("/t/"+t.Name, capitalize(plural(t.Name)), titleOf(t, rec))))
 	// A question still waiting is answered here as well as under the
 	// conversation: the page of a proposal is where the two answers belong.
 	if t.Name == chat.ProposalType && rec.Fields["state"] == "pending" {
@@ -120,7 +118,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 		}
 		fmt.Fprintf(&b, `<dt>%s</dt><dd data-prop="%s"%s>%s</dd>`, template.HTMLEscapeString(label(f.Name)), f.Name, whenAttrs(f, rec.Fields[f.Name]), template.HTMLEscapeString(val))
 	}
-	b.WriteString("</dl>" + whenMade(rec))
+	b.WriteString("</dl>")
 	// Deleting is one step, because it can be taken back: the record goes
 	// with everything it had into the activity log, and the listing the
 	// person lands on offers to put it back. No page asks "are you sure".
@@ -141,6 +139,8 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	// What points at this record, listed here by itself.
 	b.WriteString(s.backlinks(t, rec))
 	s.page(w, r, titleOf(t, rec), template.HTML(b.String()), pageOptions{
+		Kicker:       crumbs("/t/"+t.Name, capitalize(plural(t.Name)), titleOf(t, rec)),
+		Lede:         s.lede(t, rec),
 		JSONURL:      "/api/" + t.Name + "/" + rec.ID,
 		ExtraScripts: detailPageExtraScripts,
 	})

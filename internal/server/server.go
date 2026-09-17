@@ -103,6 +103,8 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 		Focus:        opts.Focus,
 		FocusLabel:   opts.FocusLabel,
 		QuietTitle:   opts.QuietTitle,
+		Kicker:       opts.Kicker,
+		Lede:         opts.Lede,
 		Shell:        opts.Shell,
 		Left:         opts.Left,
 		Right:        opts.Right,
@@ -151,6 +153,8 @@ type pageOptions struct {
 	// document: full width, header and footer fixed, the middle scrolls.
 	// Panes imply it; the canvas asks for it even without them.
 	Shell        string
+	Kicker       template.HTML
+	Lede         template.HTML
 	Left         template.HTML
 	Right        template.HTML
 	Header       template.HTML
