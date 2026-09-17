@@ -45,8 +45,12 @@ func (s *Server) rows(t *schema.Type, recs []*store.Record, now time.Time) strin
 		if len(list) == 0 {
 			continue
 		}
-		fmt.Fprintf(&b, `<h2 class="sw-group">%s <span class="sw-group__count">%d</span></h2><ol class="sw-plain sw-rows" aria-label="%s, %s">`,
-			name, len(list), template.HTMLEscapeString(plural(t.Name)), strings.ToLower(name))
+		span := ""
+		if name == "This week" {
+			span = fmt.Sprintf(`<span class="sw-group__range">%s – %s</span>`, now.Format("2 Jan"), now.AddDate(0, 0, 6).Format("2 Jan"))
+		}
+		fmt.Fprintf(&b, `<h2 class="sw-group">%s <span class="sw-group__count">%d</span>%s</h2><ol class="sw-plain sw-rows" aria-label="%s, %s">`,
+			name, len(list), span, template.HTMLEscapeString(plural(t.Name)), strings.ToLower(name))
 		for _, rec := range list {
 			b.WriteString(s.row(t, rec, 3))
 		}
@@ -66,7 +70,7 @@ func (s *Server) row(t *schema.Type, rec *store.Record, level int) string {
 		}
 	}
 	return fmt.Sprintf(`<li class="%s">%s<h%d class="sw-row__title"><a class="sw-row__link" href="/t/%s/%s">%s</a></h%d><p class="sw-row__meta">%s</p></li>`,
-		class, box, level, t.Name, rec.ID, template.HTMLEscapeString(titleOf(t, rec)), level, s.facts(t, rec, false, box != ""))
+		class, box, level, t.Name, rec.ID, template.HTMLEscapeString(titleOf(t, rec)), level, s.facts(t, rec, factOpts{Boxed: box != ""}))
 }
 
 // whenGroup says where a record sits in time: done first, because a done

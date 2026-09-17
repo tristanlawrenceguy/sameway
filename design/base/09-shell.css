@@ -21,10 +21,11 @@
   body[data-shell="app"] {
     height: 100dvh;
     display: grid;
-    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-columns: 15rem minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
     overflow: hidden;
   }
-  body[data-shell="app"] .sw-header { position: static; }
+  body[data-shell="app"] .sw-header { position: static; height: auto; }
   /* The document width is a centred max width with automatic margins. In
      the shell the columns set the width, so the cap and the margins go,
      and the header, the main region, and the footer share one left edge. */
@@ -32,7 +33,7 @@
   body[data-shell="app"] .sw-main,
   body[data-shell="app"] .sw-footer { width: auto; margin-inline: 0; }
   body[data-shell="app"] .sw-main,
-  body[data-shell="app"] .sw-footer { padding-inline: var(--sw-space-4); }
+  body[data-shell="app"] .sw-footer { padding-inline: var(--sw-space-4); max-width: none; }
 
   /* Named columns, because a pane only exists while something is in it.
      Without them, a page with one pane put the main region in the column

@@ -135,3 +135,34 @@ func atoi(s string) int {
 	n, _ := strconv.Atoi(s)
 	return n
 }
+
+// Short is a stored value the way a list says it at the right of a row:
+// Today, Tomorrow, the weekday within the week, else the day and month,
+// with the year only when it is another year, and the time when there is
+// one. Anything that is not a stored value comes back as it is.
+func Short(v string, now time.Time) string {
+	ts, err := time.Parse(time.RFC3339, v)
+	if err != nil {
+		return v
+	}
+	day, clock := ts.UTC(), ""
+	if !strings.HasSuffix(v, "T00:00:00Z") {
+		day, clock = ts.Local(), " "+ts.Local().Format("15:04")
+	}
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	d := time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, now.Location())
+	diff := int(d.Sub(today).Hours() / 24)
+	switch {
+	case diff == 0:
+		return "Today" + clock
+	case diff == 1:
+		return "Tomorrow" + clock
+	case diff > 1 && diff < 7:
+		return d.Format("Monday") + clock
+	case diff < 0 && diff > -7:
+		return d.Format("Mon 2 Jan") + clock
+	case d.Year() == now.Year():
+		return d.Format("2 Jan") + clock
+	}
+	return d.Format("2 Jan 2006") + clock
+}

@@ -22,9 +22,9 @@ type Page struct {
 	// Pace is how changes arrive, from the workspace: calm, quick or still.
 	// It lands on the root element, where the motion rules read it.
 	Pace string
-	// Nav holds rendered link components for the main navigation: the
-	// person's own content, and nothing else.
-	Nav []template.HTML
+	// Nav holds the main navigation: the person's own content, and nothing
+	// else, each list with the colour of its dot.
+	Nav []NavItem
 	// More holds secondary destinations, shown in the footer.
 	More []template.HTML
 	// JSONURL is the machine-readable twin of this page, if any.
@@ -71,4 +71,11 @@ func RenderPage(p Page) ([]byte, error) {
 		return nil, err
 	}
 	return buf.Bytes(), nil
+}
+
+// NavItem is one list in the sidebar: the rendered link, and which of the
+// six list colours its dot takes (0 for none).
+type NavItem struct {
+	HTML template.HTML
+	Dot  int
 }

@@ -120,7 +120,7 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 			continue
 		}
 		href := "/t/" + t.Name
-		p.Nav = append(p.Nav, s.navLink(href, plural(t.Name), strings.HasPrefix(r.URL.Path, href)))
+		p.Nav = append(p.Nav, render.NavItem{HTML: s.navLink(href, plural(t.Name), strings.HasPrefix(r.URL.Path, href)), Dot: len(p.Nav)%6 + 1})
 	}
 	for _, l := range []struct{ href, label string }{
 		{"/chat", "Chat"}, {"/activity", "Activity"}, {"/design", "Design system"},
