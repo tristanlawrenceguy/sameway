@@ -49,6 +49,10 @@ type Type struct {
 	// Internal types are used by the system (chat messages, canvas blocks)
 	// and are hidden from the main navigation.
 	Internal bool `yaml:"internal,omitempty" json:"internal,omitempty"`
+	// Provided types come with the system for people to use, such as
+	// actions: a workspace that predates one gets it, like an internal type,
+	// but it is shown and edited like any other.
+	Provided bool `yaml:"provided,omitempty" json:"provided,omitempty"`
 	// File is the YAML path the type was loaded from, for error messages.
 	File string `yaml:"-" json:"-"`
 }

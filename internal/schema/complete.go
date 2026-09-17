@@ -65,7 +65,7 @@ func load(fsys fs.FS, dir string, pathOf func(name string) string) (*Set, error)
 // internal type altogether is left without it.
 func (s *Set) Complete(builtin *Set) {
 	for _, b := range builtin.Types {
-		if !b.Internal {
+		if !b.Internal && !b.Provided {
 			continue
 		}
 		t, ok := s.byName[b.Name]

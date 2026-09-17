@@ -1,6 +1,7 @@
 package chat
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -79,6 +80,7 @@ func (s *Service) Tools() []llm.Tool {
 		{Name: "clear_canvas", Description: "Remove every block from the canvas except the chat, which stays so the person can keep talking. Only when the person asks to start over. To remove the chat too, call remove_component on it.",
 			Schema: obj(map[string]any{})},
 		undoTool,
+		actionTool,
 		s.arrangementTool(),
 		{Name: "set_pace", Description: "How changes arrive on the page, when the person asks for it slower, faster or without motion: calm (the default: where, then what, then the words, one change at a time with a pause between), quick (the same in a third of the time) or still (everything at once). Set it and say so; it is reversible, so never ask first.",
 			Schema: obj(map[string]any{"pace": map[string]any{"type": "string", "enum": []string{"calm", "quick", "still"}}}, "pace")},
@@ -153,6 +155,8 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 		return s.Undo(args.ID)
 	case "add_arrangement":
 		return s.addArrangement(args.Name, args.Fills)
+	case "run_action":
+		return s.Run(context.Background(), args.ID, s.current)
 	case "set_pace":
 		if s.SetPace == nil {
 			return fail("this workspace has no settings file to keep a pace in")

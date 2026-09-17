@@ -84,6 +84,11 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	// Deleting is one step, because it can be taken back: the record goes
 	// with everything it had into the activity log, and the listing the
 	// person lands on offers to put it back. No page asks "are you sure".
+	// An action is a button; its own page has that button.
+	if t.Name == chat.ActionType {
+		fmt.Fprintf(&b, `<form method="post" action="/act/%s"><input type="hidden" name="from" value="/t/%s/%s">%s</form>`, rec.ID, t.Name, rec.ID,
+			s.component("button", map[string]any{"label": "Run", "context": titleOf(t, rec), "type": "submit", "variant": "primary"}))
+	}
 	fmt.Fprintf(&b, `<div class="sw-bar sw-quiet"><form method="post" action="/t/%s/%s/delete">%s</form></div>`,
 		t.Name, rec.ID, s.component("button", map[string]any{"label": "Delete " + t.Name, "type": "submit", "variant": "quiet"}))
 	b.WriteString(`</div>`)

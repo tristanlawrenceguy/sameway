@@ -37,7 +37,8 @@ func TestRestingCanvasIsQuiet(t *testing.T) {
 		t.Fatalf("expected one main nav")
 	}
 	links := (&htmltest.Doc{Root: main[0]}).Elements("a")
-	if len(links) != 1 || htmltest.Text(links[0]) != "notes" {
+	// Notes and actions: both are things the person made.
+	if len(links) != 2 || htmltest.Text(links[0]) != "actions" || htmltest.Text(links[1]) != "notes" {
 		t.Errorf("the header should carry only content types, got %d links", len(links))
 	}
 }

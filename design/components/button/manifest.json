@@ -15,7 +15,9 @@
       "name": { "type": "string", "description": "Form field name, sent with the form when type is submit." },
       "value": { "type": "string", "description": "Form value sent when this button submits the form." },
       "id": { "type": "string" },
-      "disabled": { "type": "boolean", "default": false }
+      "disabled": { "type": "boolean", "default": false },
+      "action": { "type": "string", "description": "The id of an action record to run when pressed. The button is rendered inside its own form posting to /act/<id>, so do not put it inside another form." },
+      "from": { "type": "string", "description": "With action, the page to return to afterwards." }
     }
   },
   "a11y": {
@@ -31,7 +33,7 @@
   "machine": {
     "selector": "[data-component=\"button\"]",
     "identify": "The accessible name is the visible label plus any context text, for example 'Remove card'. Target by role and name.",
-    "operate": "Click it, or focus it and press Enter or Space. A submit button inside a form submits that form. A button inside a quiet control bar is faded until hovered or focused, but it is always present, focusable, and clickable."
+    "operate": "Click it, or focus it and press Enter or Space. A submit button inside a form submits that form. A button whose form posts to /act/<id> runs one of the person's actions. A button inside a quiet control bar is faded until hovered or focused, but it is always present, focusable, and clickable."
   },
   "examples": [
     { "name": "default", "props": { "label": "Save note" }, "file": "examples/default.html" },
@@ -40,6 +42,7 @@
     { "name": "danger", "props": { "label": "Delete note", "variant": "danger", "type": "submit" }, "file": "examples/danger.html" },
     { "name": "quiet", "props": { "label": "Remove", "context": "card", "variant": "quiet", "type": "submit" }, "file": "examples/quiet.html" },
     { "name": "reset", "props": { "label": "Clear form", "type": "reset", "variant": "secondary" }, "file": "examples/reset.html" },
-    { "name": "disabled", "props": { "label": "Sending", "disabled": true, "id": "send" }, "file": "examples/disabled.html" }
+    { "name": "disabled", "props": { "label": "Sending", "disabled": true, "id": "send" }, "file": "examples/disabled.html" },
+    { "name": "action", "props": { "label": "Turn on the alarm", "action": "a1" }, "file": "examples/action.html" }
   ]
 }
