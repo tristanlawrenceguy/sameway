@@ -32,8 +32,10 @@ type Change struct {
 	// the change can be undone. It is not part of a receipt.
 	Before map[string]any `json:"-"`
 	// Undone is the sentence of the entry this change reversed, for the
-	// sentence of this one.
+	// sentence of this one; Redid says that entry was itself an undo, so
+	// this one puts the original back rather than undoing it again.
 	Undone string `json:"-"`
+	Redid  bool   `json:"-"`
 }
 
 // Record writes one activity entry and returns its id. A missing activity
@@ -78,6 +80,9 @@ func summarise(actor string, c Change) string {
 		who = actor
 	}
 	if c.Undone != "" {
+		if c.Redid {
+			return who + " put back: " + c.Undone
+		}
 		return who + " undid: " + c.Undone
 	}
 	parts := []string{who, c.Action}
