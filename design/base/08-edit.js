@@ -45,7 +45,7 @@
       input.value = el.innerText.replace(/\n{3,}/g, "\n\n").trim();
     } else {
       input.type = "text";
-      input.value = el.textContent.trim();
+      input.value = el.hasAttribute("data-source") ? el.getAttribute("data-source") : el.textContent.trim();
     }
     wrap.appendChild(lab);
     wrap.appendChild(input);
