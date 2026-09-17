@@ -1,8 +1,8 @@
 .sw-badge {
   display: inline-flex; align-items: center; gap: var(--sw-space-1);
-  padding: 0.2rem var(--sw-space-3);
+  padding: 0.125rem var(--sw-space-2);
   border-radius: var(--sw-radius-pill);
-  font-size: var(--sw-size-text-sm); font-weight: 600; line-height: 1.5;
+  font-size: var(--sw-size-text-xs); font-weight: 600; line-height: 1.5;
   letter-spacing: 0.01em; white-space: nowrap;
   background: var(--sw-color-bg-muted); color: var(--sw-color-fg-muted);
 }
