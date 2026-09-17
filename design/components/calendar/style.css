@@ -70,3 +70,5 @@
     clip-path: inset(50%); white-space: nowrap;
   }
 }
+.sw-calendar__months { display: flex; justify-content: space-between; gap: var(--sw-space-3); padding: var(--sw-space-2) var(--sw-space-3); font-size: var(--sw-size-text-sm); }
+.sw-calendar__all { margin: 0; padding: 0 var(--sw-space-3) var(--sw-space-2); font-size: var(--sw-size-text-sm); }
