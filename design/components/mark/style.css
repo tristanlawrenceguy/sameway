@@ -1,6 +1,6 @@
 .sw-mark { display: inline-flex; align-items: center; gap: var(--sw-space-2); margin: 0; min-height: var(--sw-size-target); }
 .sw-mark__label { display: inline-flex; align-items: center; gap: var(--sw-space-2); font-size: var(--sw-size-text-sm); cursor: pointer; }
-.sw-mark__input { width: 1.25rem; height: 1.25rem; margin: 0; accent-color: var(--sw-color-accent); cursor: pointer; }
+.sw-mark__input { width: 1.5rem; height: 1.5rem; margin: 0; accent-color: var(--sw-color-accent); cursor: pointer; }
 .sw-mark__input:focus-visible { outline: var(--sw-focus-width) solid var(--sw-color-focus); outline-offset: var(--sw-focus-offset); }
 .sw-mark__save { font-size: var(--sw-size-text-sm); }
 /* With scripts, a change saves itself and the button is not needed. */
