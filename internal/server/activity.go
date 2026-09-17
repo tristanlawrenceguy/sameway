@@ -68,9 +68,12 @@ func (s *Server) event(r *store.Record, from string) template.HTML {
 	// An undo reads as one: "You undid: Assistant added card Plan".
 	if undoes, _ := r.Fields["undoes"].(string); undoes != "" {
 		summary, _ := r.Fields["summary"].(string)
-		if _, after, ok := strings.Cut(summary, " undid: "); ok {
-			props["action"], props["detail"] = "undid:", after
-			delete(props, "target")
+		for _, verb := range []string{" undid: ", " put back: "} {
+			if _, after, ok := strings.Cut(summary, verb); ok {
+				props["action"], props["detail"] = strings.TrimSpace(verb), after
+				delete(props, "target")
+				break
+			}
 		}
 	}
 	if s.app.Chat.Undoable(r) {

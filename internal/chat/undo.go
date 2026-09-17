@@ -48,6 +48,14 @@ func (s *Service) Undo(id string) toolResult {
 		return fail("could not undo %q: %v", summary, err)
 	}
 	c.Undoes, c.Undone = a.ID, summary
+	// Undoing an undo puts the original back: the sentence names the
+	// original, not a chain of undids.
+	if undoes, _ := a.Fields["undoes"].(string); undoes != "" {
+		if _, original, ok := strings.Cut(summary, ": "); ok {
+			c.Undone, c.Redid = original, true
+			return toolResult{text: "put back: " + original, change: &c}
+		}
+	}
 	return toolResult{text: "undone: " + summary, change: &c}
 }
 

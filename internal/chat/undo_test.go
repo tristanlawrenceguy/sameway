@@ -45,6 +45,9 @@ func TestUndoRunsTheLogBackwards(t *testing.T) {
 		t.Errorf("the undo should say what it undid, got %q", got)
 	}
 	must("undo_change", map[string]any{})
+	if got := newest(); got != "Assistant put back: Assistant added heading Shopping" {
+		t.Errorf("undoing an undo says what came back, not a chain of undids, got %q", got)
+	}
 	if b := blocks(); len(b) != 1 || b[0].ID != id || b[0].Fields["props"].(map[string]any)["text"] != "Shopping" {
 		t.Fatalf("undoing the undo should put the same block back, got %v", b)
 	}
