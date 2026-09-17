@@ -125,6 +125,8 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 		Type      string         `json:"type"`
 		Fields    map[string]any `json:"fields"`
 		Query     string         `json:"query"`
+		Where     []string       `json:"where"`
+		Order     string         `json:"order"`
 		Limit     int            `json:"limit"`
 		Pace      string         `json:"pace"`
 		Fills     map[string]any `json:"fills"`
@@ -149,7 +151,7 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 	case "update_record":
 		return s.updateRecord(args.Type, args.ID, args.Fields)
 	case "find_records":
-		return s.findRecords(args.Type, args.Query, args.Limit)
+		return s.findRecords(args.Type, args.Query, args.Where, args.Order, args.Limit)
 	case "get_record":
 		return s.getRecord(args.Type, args.ID)
 	case "add_component":

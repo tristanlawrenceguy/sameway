@@ -6,9 +6,11 @@ import (
 	"html/template"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/prose"
+	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -20,12 +22,26 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	recs, err := s.app.Store.List(t.Name, store.ListOptions{})
+	var b strings.Builder
+	// The same query a collection block takes, in the address: ?where=…&order=…
+	where, order := r.URL.Query()["where"], r.URL.Query().Get("order")
+	var recs []*store.Record
+	var err error
+	if len(where) > 0 || order != "" {
+		recs, err = query.Filter(s.app.Store, t, where, order, 0, time.Now())
+		if err != nil {
+			fmt.Fprintf(&b, `<p class="sw-muted">%s</p><p>%s</p>`, template.HTMLEscapeString(err.Error()), s.component("link", map[string]any{"href": "/t/" + t.Name, "label": "See all " + plural(t.Name)}))
+			s.page(w, r, plural(t.Name), template.HTML(b.String()), pageOptions{Status: http.StatusBadRequest})
+			return
+		}
+		fmt.Fprintf(&b, `<p class="sw-muted">%d matching %s%s. %s</p>`, len(recs), template.HTMLEscapeString(strings.Join(where, ", ")), template.HTMLEscapeString(orderWords(order)), s.component("link", map[string]any{"href": "/t/" + t.Name, "label": "See all " + plural(t.Name)}))
+	} else {
+		recs, err = s.app.Store.List(t.Name, store.ListOptions{})
+	}
 	if err != nil {
 		s.fail(w, err)
 		return
 	}
-	var b strings.Builder
 	// Files come in through a form, because one field and one button is
 	// the better thing here; it can also be placed anywhere as a block.
 	if t.Name == FileType {

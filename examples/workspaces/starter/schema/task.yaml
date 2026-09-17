@@ -1,0 +1,24 @@
+# Something to do, with a day it is due. Provided with every workspace, so
+# a collection of what is due this week has something to show.
+name: task
+description: Something to do, with the day it is due and whether it is done.
+title: title
+provided: true
+fields:
+  title:
+    type: string
+    required: true
+    maxLength: 200
+  done:
+    type: bool
+    default: false
+  due:
+    type: datetime
+    description: When it is due; a day is enough.
+  notes:
+    type: markdown
+    description: Anything worth remembering about it.
+  tags:
+    type: list
+    of: string
+    description: Keywords for finding the task.

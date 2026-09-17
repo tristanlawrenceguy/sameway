@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -66,10 +68,12 @@ func (s *Service) recordTools() []llm.Tool {
 				"id":     map[string]any{"type": "string", "description": "The record's id, from find_records or from a page URL /t/<type>/<id>."},
 				"fields": map[string]any{"type": "object", "description": "The fields to change and their new values."},
 			}, "type", "id", "fields")},
-		{Name: "find_records", Description: "List records of a type, newest first, to get their ids: all of them, or those whose title contains the query.",
+		{Name: "find_records", Description: "List records of a type to get their ids: all of them, those whose title contains the query, or those matching where. The same where and order a collection block takes.",
 			Schema: obj(map[string]any{
 				"type":  typeArg,
-				"query": map[string]any{"type": "string", "description": "Text the title should contain. Leave empty for the newest records."},
+				"query": map[string]any{"type": "string", "description": "Text the title should contain. Leave empty for every record."},
+				"where": map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Conditions that must all hold. " + query.Grammar},
+				"order": map[string]any{"type": "string", "description": "A field, or -field for the largest or newest first. Newest first when left out."},
 				"limit": map[string]any{"type": "integer", "description": "How many to list. Defaults to 10."},
 			}, "type")},
 		{Name: "get_record", Description: "Read one record with every field, by id: a note's body, a file's text. Use it before answering from what a record says.",
@@ -158,7 +162,7 @@ func (s *Service) updateRecord(typeName, id string, fields map[string]any) toolR
 	}
 }
 
-func (s *Service) findRecords(typeName, query string, limit int) toolResult {
+func (s *Service) findRecords(typeName, words string, where []string, order string, limit int) toolResult {
 	t, err := s.contentType(typeName)
 	if err != nil {
 		return fail("%v", err)
@@ -166,15 +170,15 @@ func (s *Service) findRecords(typeName, query string, limit int) toolResult {
 	if limit <= 0 {
 		limit = 10
 	}
-	recs, err := s.Store.List(t.Name, store.ListOptions{OrderBy: "created_at", Desc: true})
+	recs, err := query.Filter(s.Store, t, where, order, 0, time.Now())
 	if err != nil {
-		return fail("could not read %s records: %v", t.Name, err)
+		return fail("%v", err)
 	}
-	query = strings.ToLower(strings.TrimSpace(query))
+	words = strings.ToLower(strings.TrimSpace(words))
 	var lines []string
 	for _, rec := range recs {
 		title := recordTitle(t, rec)
-		if query != "" && !strings.Contains(strings.ToLower(title), query) {
+		if words != "" && !strings.Contains(strings.ToLower(title), words) {
 			continue
 		}
 		lines = append(lines, fmt.Sprintf("%s\t%s", rec.ID, title))
@@ -183,10 +187,10 @@ func (s *Service) findRecords(typeName, query string, limit int) toolResult {
 		}
 	}
 	if len(lines) == 0 {
-		if query == "" {
+		if words == "" && len(where) == 0 {
 			return toolResult{text: fmt.Sprintf("there are no %s records yet", t.Name)}
 		}
-		return toolResult{text: fmt.Sprintf("no %s has %q in its title", t.Name, query)}
+		return toolResult{text: fmt.Sprintf("no %s matches %s", t.Name, strings.TrimSpace(strings.Join(append(where, words), " ")))}
 	}
 	return toolResult{text: fmt.Sprintf("%s records, newest first (id, title):\n%s", t.Name, strings.Join(lines, "\n"))}
 }
