@@ -9,7 +9,7 @@
 .sw-collection__empty, .sw-collection__problem { margin: 0; color: var(--sw-color-fg-muted); }
 .sw-collection__all { margin: var(--sw-space-3) 0 0; font-size: var(--sw-size-text-sm); }
 .sw-collection__cards { display: grid; gap: var(--sw-space-3); grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); }
-.sw-collection__card .sw-card__title { margin: 0 0 var(--sw-space-2); font-size: var(--sw-size-text-base); }
+.sw-collection__card .sw-card__title { margin: 0 0 var(--sw-space-2); font-size: var(--sw-size-text-md); }
 .sw-collection__fields { display: grid; grid-template-columns: max-content 1fr; gap: var(--sw-space-1) var(--sw-space-3); margin: 0; font-size: var(--sw-size-text-sm); }
 .sw-collection__fields dt { color: var(--sw-color-fg-muted); font-weight: 600; }
 .sw-collection__fields dd { margin: 0; overflow-wrap: anywhere; }

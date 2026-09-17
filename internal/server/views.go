@@ -51,19 +51,9 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	if len(recs) == 0 {
 		fmt.Fprintf(&b, `<p>No %s yet.</p>`, template.HTMLEscapeString(plural(t.Name)))
 	} else {
-		fmt.Fprintf(&b, `<ol class="sw-stack" aria-label="%s">`, template.HTMLEscapeString(plural(t.Name)))
+		fmt.Fprintf(&b, `<ol class="sw-plain sw-rows" aria-label="%s">`, template.HTMLEscapeString(plural(t.Name)))
 		for _, rec := range recs {
-			meta := "Updated " + rec.UpdatedAt.Local().Format("2006-01-02 15:04")
-			// A type's first enum field is its state (pending, published,
-			// dismissed), which is what a person scanning a list wants to see.
-			for _, f := range t.Fields {
-				if f.Type == "enum" {
-					if v, ok := rec.Fields[f.Name].(string); ok && v != "" {
-						meta = capitalize(v) + " · " + meta
-					}
-					break
-				}
-			}
+			meta := listMeta(t, rec)
 			props := map[string]any{"title": titleOf(t, rec), "href": "/t/" + t.Name + "/" + rec.ID, "level": 2, "meta": meta}
 			b.WriteString("<li>" + string(s.component("card", props)) + "</li>")
 		}
@@ -100,14 +90,25 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 		b.WriteString(s.fileExtras(rec))
 	}
 	fmt.Fprintf(&b, `<div class="sw-dl-block" data-block-id="%s" data-edit-action="/t/%s/%s/props">`, rec.ID, t.Name, rec.ID)
+	// The record's text comes first and reads as a document, under the
+	// title and before its other fields; structured text keeps what was
+	// written on the element so the inline editor edits the source.
+	textField := ""
+	for _, f := range t.Fields {
+		if f.Type == "markdown" {
+			if val := display(f, rec.Fields[f.Name]); val != "" {
+				textField = f.Name
+				fmt.Fprintf(&b, `<div class="sw-prose sw-detail__body" data-prop="%s" data-source="%s" data-prose-level="2">%s</div>`, f.Name, template.HTMLEscapeString(val), prose.Render(val, 2))
+			}
+			break
+		}
+	}
 	b.WriteString(`<dl class="sw-dl">`)
 	for _, f := range t.Fields {
 		val := display(f, rec.Fields[f.Name])
-		if val == "" {
+		if val == "" || f.Name == textField {
 			continue
 		}
-		// Structured text shows its structure, and keeps what was written on
-		// the element so the inline editor edits the source, not the result.
 		if f.Type == "markdown" {
 			fmt.Fprintf(&b, `<dt>%s</dt><dd class="sw-prose" data-prop="%s" data-source="%s" data-prose-level="3">%s</dd>`, template.HTMLEscapeString(label(f.Name)), f.Name, template.HTMLEscapeString(val), prose.Render(val, 3))
 			continue
@@ -119,7 +120,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 		}
 		fmt.Fprintf(&b, `<dt>%s</dt><dd data-prop="%s"%s>%s</dd>`, template.HTMLEscapeString(label(f.Name)), f.Name, whenAttrs(f, rec.Fields[f.Name]), template.HTMLEscapeString(val))
 	}
-	fmt.Fprintf(&b, "<dt>Created</dt><dd>%s</dd><dt>Updated</dt><dd>%s</dd></dl>", rec.CreatedAt.Local().Format("2006-01-02 15:04"), rec.UpdatedAt.Local().Format("2006-01-02 15:04"))
+	b.WriteString("</dl>" + whenMade(rec))
 	// Deleting is one step, because it can be taken back: the record goes
 	// with everything it had into the activity log, and the listing the
 	// person lands on offers to put it back. No page asks "are you sure".

@@ -2,7 +2,7 @@
 .sw-chat--panel {
   padding: var(--sw-space-4);
   background: var(--sw-color-bg-raised);
-  border: 1px solid var(--sw-color-border);
+  border: 1px solid color-mix(in srgb, var(--sw-color-border) 60%, transparent);
   border-radius: var(--sw-radius-lg);
   box-shadow: var(--sw-shadow-1);
 }
@@ -13,3 +13,11 @@
    however tall the conversation grows. */
 .sw-chat__log { max-height: min(48vh, 32rem); overflow-y: auto; padding-right: var(--sw-space-2); }
 .sw-chat__log:focus-visible { outline-offset: 0; }
+/* The composer's file control is the platform's own; its button is drawn
+   like the other quiet buttons so the row reads as one thing. */
+.sw-compose__file::file-selector-button {
+  font: inherit; font-weight: 600; font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted);
+  min-height: var(--sw-size-target); padding: 0 var(--sw-space-3); margin-right: var(--sw-space-2);
+  background: transparent; border: 2px solid transparent; border-radius: var(--sw-radius-md); cursor: pointer;
+}
+.sw-compose__file::file-selector-button:hover { color: var(--sw-color-fg); background: var(--sw-color-bg-muted); }

@@ -16,7 +16,7 @@ func TestEditedProseComesBackAsMarkdown(t *testing.T) {
 		t.Fatal(err)
 	}
 	page := get(t, h, "/t/note/"+rec.ID).Body.String()
-	if !strings.Contains(page, `data-prose-level="3"`) || !strings.Contains(page, `data-source="# Beds`) {
+	if !strings.Contains(page, `data-prose-level="2"`) || !strings.Contains(page, `data-source="# Beds`) {
 		t.Errorf("the page says what level the source was shown at, and keeps the source: %.600s", page)
 	}
 
