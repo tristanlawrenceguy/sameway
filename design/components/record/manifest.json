@@ -36,6 +36,7 @@
           }
         }
       },
+      "structured": { "type": "boolean", "default": false, "description": "Filled in by the server when the text is structured (Markdown): it is shown with its headings under the title and edited as it is shown. Leave out." },
       "missing": { "type": "boolean", "default": false, "description": "Filled in by the server when the record no longer exists. Leave out." },
       "id": { "type": "string" }
     }
@@ -57,6 +58,7 @@
     { "name": "brief", "props": { "type": "note", "record": "k3n2p9", "detail": "brief", "title": "Call the dentist", "titleProp": "title" }, "file": "examples/brief.html" },
     { "name": "full", "props": { "type": "note", "record": "k3n2p9", "title": "Call the dentist", "titleProp": "title", "text": "Ask about Thursday.\n\nMention the crown.", "textProp": "body", "fields": [ { "label": "Tags", "value": "health" }, { "label": "Status", "value": "draft" } ] }, "file": "examples/full.html" },
     { "name": "page", "props": { "type": "note", "record": "k3n2p9", "detail": "page", "level": 2, "title": "Call the dentist", "titleProp": "title", "text": "Ask about Thursday.", "textProp": "body", "fields": [ { "label": "Status", "value": "draft" } ] }, "file": "examples/page.html" },
+    {"name": "structured", "props": {"type": "note", "record": "k3n2p9", "title": "Garden plan", "titleProp": "title", "text": "# Beds\n\nThree of them.\n\n- Dig the pond\n- Order compost", "textProp": "body", "structured": true}, "file": "examples/structured.html"},
     { "name": "gone", "props": { "type": "note", "record": "k3n2p9", "missing": true }, "file": "examples/gone.html" }
   ]
 }
