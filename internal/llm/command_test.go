@@ -3,6 +3,7 @@ package llm_test
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"testing"
@@ -37,7 +38,8 @@ func TestHelperCLI(t *testing.T) {
 		}
 	}
 	raw, _ := os.ReadFile(mcp)
-	fmt.Printf("{\"result\": %q}", "echo: "+prompt+" | system: "+system+" | mcp: "+string(raw))
+	stdin, _ := io.ReadAll(os.Stdin)
+	fmt.Printf("{\"result\": %q}", "echo: "+prompt+" | system: "+system+" | stdin: "+string(stdin)+" | mcp: "+string(raw))
 	os.Exit(0)
 }
 
@@ -68,6 +70,18 @@ func TestACommandProviderRunsTheSignedInProgram(t *testing.T) {
 	}
 	if !c.ToolsOutside() {
 		t.Error("a command provider runs its tools outside")
+	}
+
+	// Without the placeholders, the system prompt and the conversation go
+	// on stdin, which is what claude -p reads and what a command line on
+	// Windows cannot carry.
+	c.Template = os.Args[0] + " -test.run=TestHelperCLI -- --mcp-config {mcp} --output-format json"
+	resp, err = c.Complete(context.Background(), llm.Request{System: "Be brief.", Messages: []llm.Message{{Role: llm.RoleUser, Content: "make a note"}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(resp.Text, "echo:  | system:  | stdin: Be brief.\n\n---\n\nmake a note") {
+		t.Errorf("stdin should carry the system prompt and the conversation: %s", resp.Text)
 	}
 
 	// The preset fills the template in, and a missing template is an error.

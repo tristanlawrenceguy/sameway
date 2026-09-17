@@ -21,10 +21,13 @@ import (
 // The tools run inside that program, so the receipt under the reply is
 // read from the activity log rather than from tool calls seen here.
 type Command struct {
-	// Template is the command line, with {prompt}, {system}, {mcp} and
-	// {model} standing for the prompt, the system prompt, the path of an
-	// MCP configuration pointing at this workspace, and the model name.
-	// Each placeholder is one argument, whatever it holds.
+	// Template is the command line, with {mcp} and {model} standing for
+	// the path of an MCP configuration pointing at this workspace and the
+	// model name, and {prompt} and {system} for the conversation and the
+	// system prompt when a program wants them as arguments. Without those
+	// two, both go to the program on stdin, which is what claude -p reads
+	// and what a command line on Windows, capped at a few thousand
+	// characters, cannot carry.
 	Template string
 	// Field is the JSON field holding the reply in what the program
 	// prints, such as result; empty takes the whole output as the reply.
@@ -39,7 +42,7 @@ type Command struct {
 // Presets are the programs known well enough to fill the template in.
 var Presets = map[string]Command{
 	"claude-code": {Label: "Claude Code", Field: "result",
-		Template: "claude -p {prompt} --append-system-prompt {system} --mcp-config {mcp} --allowedTools mcp__sameway__* --output-format json"},
+		Template: "claude -p --mcp-config {mcp} --allowedTools mcp__sameway__* --output-format json"},
 }
 
 func (c *Command) Name() string {
@@ -77,6 +80,7 @@ func (c *Command) Complete(ctx context.Context, req Request) (*Response, error) 
 	if info, err := os.Stat(c.Workspace); err == nil && info.IsDir() {
 		cmd.Dir = c.Workspace
 	}
+	cmd.Stdin = strings.NewReader(onStdin(c.Template, req))
 	var out, errs bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &out, &errs
 	if err := cmd.Run(); err != nil {
@@ -112,6 +116,21 @@ func (c *Command) mcpConfig() (string, error) {
 	}
 	f.Close()
 	return filepath.Clean(f.Name()), nil
+}
+
+// onStdin is what the program reads on its standard input: the system
+// prompt and the conversation, each unless the template takes it as an
+// argument, so the whole thing arrives however long it is.
+func onStdin(template string, req Request) string {
+	var b strings.Builder
+	if !strings.Contains(template, "{system}") && req.System != "" {
+		b.WriteString(req.System)
+		b.WriteString("\n\n---\n\n")
+	}
+	if !strings.Contains(template, "{prompt}") {
+		b.WriteString(transcript(req))
+	}
+	return b.String()
 }
 
 // transcript is the conversation as one prompt: what was said before,
