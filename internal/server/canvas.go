@@ -177,6 +177,9 @@ func (s *Server) canvasBlock(b *store.Record, convo *conversation) canvasBlock {
 	if name == calendarComponent {
 		props = s.resolveCalendar(props)
 	}
+	if name == chartComponent {
+		props = s.resolveChart(props)
+	}
 	label := chat.Summarise(name, props)
 	if label == "" {
 		label = name
