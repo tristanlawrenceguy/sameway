@@ -87,10 +87,14 @@ func (s *Server) conversation(from string) (*conversation, error) {
 		out.TurnEnd = m.CreatedAt
 		id := "msg-" + m.ID
 		out.LatestID = id
-		view.Messages = append(view.Messages, chatMessage{ID: id, HTML: s.component("message", map[string]any{
+		props := map[string]any{
 			"role": m.Fields["role"], "content": m.Fields["content"], "id": id, "from": from,
 			"time": m.CreatedAt.Local().Format("15:04"), "changes": s.undoable(m.Fields["changes"], i == len(msgs)-1),
-		})})
+		}
+		if fileID, _ := m.Fields["file"].(string); fileID != "" {
+			props["attachment"] = s.attachment(fileID)
+		}
+		view.Messages = append(view.Messages, chatMessage{ID: id, HTML: s.component("message", props)})
 	}
 	out.Count = len(msgs)
 	view.Status = s.status(msgs)
@@ -106,6 +110,20 @@ func (s *Server) conversation(from string) (*conversation, error) {
 	out.Body = template.HTML(body.String())
 	out.Activity = s.recentActivity(8, from)
 	return out, nil
+}
+
+// attachment is how a message shows the file that came with it: its title
+// as a link to its page, or just a word when the file has since gone.
+func (s *Server) attachment(fileID string) map[string]any {
+	rec, err := s.app.Store.Get(FileType, fileID)
+	if err != nil {
+		return map[string]any{"title": "a file that is no longer here"}
+	}
+	title, _ := rec.Fields["title"].(string)
+	if title == "" {
+		title = "a file"
+	}
+	return map[string]any{"title": title, "href": "/t/" + FileType + "/" + rec.ID}
 }
 
 // chatPage shows the conversation on its own page. It is always here, even
@@ -178,6 +196,20 @@ func (s *Server) status(msgs []*store.Record) template.HTML {
 
 // chatSend handles the compose form, then returns to where it was sent from.
 func (s *Server) chatSend(w http.ResponseWriter, r *http.Request) {
+	// A file sent with the message is filed first, as its own record, and
+	// goes to the model with the words. The composer is multipart for that;
+	// a plain form still works for anything that posts without a file.
+	fileID := ""
+	if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/") {
+		file, err := s.storeUpload(r)
+		if err != nil && err != http.ErrMissingFile {
+			s.fail(w, err)
+			return
+		}
+		if file != nil {
+			fileID = file.ID
+		}
+	}
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "bad form", http.StatusBadRequest)
 		return
@@ -188,7 +220,7 @@ func (s *Server) chatSend(w http.ResponseWriter, r *http.Request) {
 	if !strings.HasPrefix(back, "/c/") {
 		canvas = ""
 	}
-	rec, err := s.app.Chat.SendOn(r.Context(), canvas, r.PostForm.Get("message"))
+	rec, err := s.app.Chat.SendFile(r.Context(), canvas, r.PostForm.Get("message"), fileID)
 	if rec == nil {
 		// Nothing was recorded (empty message, or chat unavailable). The page
 		// already explains the latter, so just show it again.

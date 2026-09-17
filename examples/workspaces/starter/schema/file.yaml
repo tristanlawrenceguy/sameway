@@ -1,0 +1,38 @@
+# A file a person added: the original is kept, and its contents become text
+# the page renders with structure, search finds, and the assistant reads.
+name: file
+description: A file you added. The original is kept; its contents are read into text as Markdown, so a document, a spreadsheet, a web page or a PDF becomes something with headings and tables on the page, found by its words. An image keeps the description you give it.
+title: title
+provided: true
+fields:
+  title:
+    type: string
+    required: true
+    maxLength: 200
+    description: What to call it; the file name until you say otherwise.
+  name:
+    type: string
+    description: The file name it arrived with, kept by the system.
+  kind:
+    type: string
+    description: What sort of file it is, such as document, spreadsheet, pdf or image; kept by the system.
+  size:
+    type: int
+    description: Bytes, kept by the system.
+  path:
+    type: string
+    description: Where the original is stored under the workspace's files folder, kept by the system.
+  text:
+    type: markdown
+    description: The contents as Markdown, read from the file. Edit it if the reading got something wrong.
+  description:
+    type: text
+    description: What the file is, or for an image what it shows, in your words. An image needs one for anyone who cannot see it.
+  status:
+    type: enum
+    values: [ready, converting, failed]
+    default: ready
+    description: converting while an external converter works on it; failed says why in the note.
+  note:
+    type: text
+    description: What the reading or the converter said, kept by the system.

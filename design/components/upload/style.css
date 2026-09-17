@@ -1,0 +1,5 @@
+.sw-upload { display: flex; align-items: center; gap: var(--sw-space-2); flex-wrap: wrap; }
+.sw-upload__label { font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); }
+.sw-upload__field { min-height: 2.75rem; max-width: 100%; font: inherit; color: var(--sw-color-fg); }
+.sw-upload__field:focus-visible { outline: var(--sw-focus-width) solid var(--sw-color-focus); outline-offset: var(--sw-focus-offset); }
+.sw-canvas--strip .sw-upload__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

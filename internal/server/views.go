@@ -26,6 +26,11 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var b strings.Builder
+	// Files come in through a form, because one field and one button is
+	// the better thing here; it can also be placed anywhere as a block.
+	if t.Name == FileType {
+		b.WriteString(string(s.component("upload", map[string]any{"from": "/t/" + FileType})))
+	}
 	if len(recs) == 0 {
 		fmt.Fprintf(&b, `<p>No %s yet.</p>`, template.HTMLEscapeString(plural(t.Name)))
 	} else {
@@ -71,6 +76,11 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	// conversation: the page of a proposal is where the two answers belong.
 	if t.Name == chat.ProposalType && rec.Fields["state"] == "pending" {
 		b.WriteString(string(s.proposalCard(rec, "/t/"+t.Name+"/"+rec.ID)))
+	}
+	// A file's page shows the picture when it is one, and the way to the
+	// original, above the fields read from it.
+	if t.Name == FileType {
+		b.WriteString(s.fileExtras(rec))
 	}
 	fmt.Fprintf(&b, `<div class="sw-dl-block" data-block-id="%s" data-edit-action="/t/%s/%s/props">`, rec.ID, t.Name, rec.ID)
 	b.WriteString(`<dl class="sw-dl">`)

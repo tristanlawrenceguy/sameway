@@ -1,0 +1,35 @@
+{
+  "name": "upload",
+  "version": "1.0.0",
+  "description": "Adds a file. One field and one button, because a form is the better thing here; the file becomes a record whose contents are read into text the page renders with structure and search finds.",
+  "icon": "⇧",
+  "use": { "when": "a person wants to bring a document, a spreadsheet, a web page, a PDF or a picture into the workspace.", "not": "writing something new, which is a note, or a link to something that stays elsewhere, which is a link.", "with": "the files page, where it lives by default, or the header at compact size when a person adds files often." },
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [],
+    "properties": {
+      "label": { "type": "string", "default": "Add a file", "description": "The button text." },
+      "action": { "type": "string", "default": "/t/file/upload", "description": "Where the file goes." },
+      "from": { "type": "string", "description": "The page to return to afterwards; the file's own page when left out." },
+      "id": { "type": "string", "default": "upload", "description": "Id of the field, so the label reaches it." }
+    }
+  },
+  "a11y": {
+    "role": "form with a labelled file field and a submit button",
+    "keyboard": [
+      { "key": "Tab", "does": "moves to the field, then the button" },
+      { "key": "Enter or Space", "does": "on the field, opens the file chooser; on the button, adds the file" }
+    ],
+    "states": [],
+    "wcag": { "target": "AAA", "notes": "A visible label (3.3.2) and a real multipart form, so it works without a script. The native file field keeps every platform's own chooser and screen reader support." }
+  },
+  "machine": {
+    "selector": "[data-component=\"upload\"]",
+    "identify": "A form with enctype multipart/form-data; the file field is named file, and title is optional.",
+    "operate": "POST the form with a file, or POST /t/file/upload directly; the record appears at /t/file and in /api/file."
+  },
+  "examples": [
+    { "name": "default", "props": { "label": "Add a file" }, "file": "examples/default.html" }
+  ]
+}
