@@ -76,6 +76,7 @@ func Load(dir string, memoryDB bool) (*App, error) {
 	}
 	a.Chat.Provider, a.Chat.ProviderErr = llm.New(ws.Config.LLM)
 	a.Chat.SetPace = ws.SetPace
+	chat.Workdir = ws.Dir
 	return a, nil
 }
 
@@ -224,7 +225,8 @@ func (a *App) Describe() Description {
 			"mcp":           "sameway mcp (Model Context Protocol over stdio: the tools listed here, plus describe and get_record)",
 			"html_list":     "GET /t/{type}",
 			"html_detail":   "GET /t/{type}/{id}",
-			"act":           "POST /act/{id} with from=<path to return to> runs one of the person's actions (a record of type action: a webhook, an arrangement, or a message to the assistant); POST /api/act/{id} runs it for an agent and answers with the result. A button block with action set to the id is the same press on the canvas",
+			"act":           "POST /act/{id} with from=<path to return to> runs one of the person's actions (a record of type action: a webhook, a command on this machine accepted once by the person, an arrangement, or a message to the assistant); POST /api/act/{id} runs it for an agent and answers with the result, or with waiting_for when the person's acceptance is needed first. A button block with action set to the id is the same press on the canvas",
+			"hook":          "POST /hook/{word} runs the action whose trigger field is that word, from anywhere, and answers with the result: how something outside presses a button here. Actions also run on their own with every, at and on",
 			"search":        "GET /api/search?q=words: every record of every content type and every block whose words match, with a snippet and its page; the same search a person has at /search and the assistant has as the search tool",
 			"undo":          "POST /activity/{id}/undo with from=<path to return to>: reverses one activity entry for a person; agents call the undo_change tool. An entry that can be undone carries before, the thing as it was",
 			"content":       "content/<type>/<id>.md in the workspace is every record as Markdown with front matter, written as it changes; share the folder with git. sameway import reads it back after a pull, sameway export rewrites it",
