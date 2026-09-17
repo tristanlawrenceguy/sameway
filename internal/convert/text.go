@@ -10,9 +10,15 @@ import (
 	"path"
 	"strings"
 
-	htmltomarkdown "github.com/JohannesKaufmann/html-to-markdown/v2"
+	"github.com/JohannesKaufmann/html-to-markdown/v2/converter"
+	"github.com/JohannesKaufmann/html-to-markdown/v2/plugin/base"
+	"github.com/JohannesKaufmann/html-to-markdown/v2/plugin/commonmark"
+	tableplugin "github.com/JohannesKaufmann/html-to-markdown/v2/plugin/table"
 	"github.com/ledongthuc/pdf"
 )
+
+// htmlToMarkdown keeps tables as tables, which the plain converter drops.
+var htmlToMarkdown = converter.NewConverter(converter.WithPlugins(base.NewBasePlugin(), commonmark.NewCommonmarkPlugin(), tableplugin.NewTablePlugin()))
 
 func plain(data []byte) (string, error) {
 	return string(bytes.ReplaceAll(data, []byte("\r\n"), []byte("\n"))), nil
@@ -77,7 +83,7 @@ func table(rows [][]string) string {
 }
 
 func htmlText(data []byte) (string, error) {
-	return htmltomarkdown.ConvertString(string(data))
+	return htmlToMarkdown.ConvertString(string(data))
 }
 
 // epub is a zip of web pages; the OPF spine says what order they read in.
@@ -114,8 +120,9 @@ func epub(data []byte) (string, error) {
 		opfPath := container.Rootfiles[0].Path
 		var opf struct {
 			Items []struct {
-				ID   string `xml:"id,attr"`
-				Href string `xml:"href,attr"`
+				ID         string `xml:"id,attr"`
+				Href       string `xml:"href,attr"`
+				Properties string `xml:"properties,attr"`
 			} `xml:"manifest>item"`
 			Spine []struct {
 				IDRef string `xml:"idref,attr"`
@@ -124,6 +131,10 @@ func epub(data []byte) (string, error) {
 		xml.Unmarshal(read(opfPath), &opf)
 		hrefs := map[string]string{}
 		for _, it := range opf.Items {
+			// The table of contents is navigation, not the book.
+			if strings.Contains(it.Properties, "nav") {
+				continue
+			}
 			hrefs[it.ID] = it.Href
 		}
 		for _, s := range opf.Spine {
@@ -142,7 +153,7 @@ func epub(data []byte) (string, error) {
 	var parts []string
 	for _, name := range order {
 		if page := read(name); page != nil {
-			if md, err := htmltomarkdown.ConvertString(string(page)); err == nil && strings.TrimSpace(md) != "" {
+			if md, err := htmlToMarkdown.ConvertString(string(page)); err == nil && strings.TrimSpace(md) != "" {
 				parts = append(parts, strings.TrimSpace(md))
 			}
 		}

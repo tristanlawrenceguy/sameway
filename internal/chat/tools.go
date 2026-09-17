@@ -150,6 +150,8 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 		return s.updateRecord(args.Type, args.ID, args.Fields)
 	case "find_records":
 		return s.findRecords(args.Type, args.Query, args.Limit)
+	case "get_record":
+		return s.getRecord(args.Type, args.ID)
 	case "add_component":
 		return s.addComponent(args.Component, args.Props, look{Span: args.Span, Position: args.Position, Frame: args.Frame, Tone: args.Tone, Region: args.Region, Size: args.Size, Canvas: deref(args.Canvas), SetCanvas: args.Canvas != nil})
 	case "update_component":

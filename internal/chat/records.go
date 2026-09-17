@@ -72,7 +72,30 @@ func (s *Service) recordTools() []llm.Tool {
 				"query": map[string]any{"type": "string", "description": "Text the title should contain. Leave empty for the newest records."},
 				"limit": map[string]any{"type": "integer", "description": "How many to list. Defaults to 10."},
 			}, "type")},
+		{Name: "get_record", Description: "Read one record with every field, by id: a note's body, a file's text. Use it before answering from what a record says.",
+			Schema: obj(map[string]any{
+				"type": typeArg,
+				"id":   map[string]any{"type": "string", "description": "The record's id, from find_records or from a page URL /t/<type>/<id>."},
+			}, "type", "id")},
 	}
+}
+
+// getRecord gives the model a record's fields, so it can answer from what
+// a note or a file says rather than from its title alone.
+func (s *Service) getRecord(typeName, id string) toolResult {
+	t, err := s.contentType(typeName)
+	if err != nil {
+		return fail("%v", err)
+	}
+	rec, err := s.Store.Get(t.Name, id)
+	if err != nil {
+		return fail("no %s with id %s. Use find_records to get an id", t.Name, id)
+	}
+	raw, err := json.MarshalIndent(map[string]any{"id": rec.ID, "type": t.Name, "page": "/t/" + t.Name + "/" + rec.ID, "fields": rec.Fields}, "", "  ")
+	if err != nil {
+		return fail("%v", err)
+	}
+	return toolResult{text: string(raw)}
 }
 
 func (s *Service) contentType(name string) (*schema.Type, error) {

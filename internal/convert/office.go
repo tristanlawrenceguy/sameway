@@ -56,8 +56,20 @@ func docx(data []byte) (string, error) {
 		return "", err
 	}
 	var b strings.Builder
+	inList := false
 	for _, blk := range doc.Body.Blocks {
-		b.WriteString(blk.markdown())
+		md := blk.markdown()
+		if md == "" {
+			continue
+		}
+		// A list ends with a blank line, so what follows is not swallowed
+		// into its last item.
+		item := strings.HasSuffix(md, "\n") && !strings.HasSuffix(md, "\n\n")
+		if inList && !item {
+			b.WriteString("\n")
+		}
+		inList = item
+		b.WriteString(md)
 	}
 	return b.String(), nil
 }
@@ -149,6 +161,14 @@ func (w wordBlock) markdown() string {
 			indent, _ := strconv.Atoi(w.Numbered.Level.Val)
 			return strings.Repeat("  ", indent) + "- " + t + "\n"
 		}
+		// Word's own list styles (List Bullet, List Number, List Paragraph)
+		// carry the numbering on the style rather than the paragraph.
+		if style := strings.ToLower(w.Style.Val); strings.HasPrefix(style, "list") {
+			if strings.Contains(style, "number") {
+				return "1. " + t + "\n"
+			}
+			return "- " + t + "\n"
+		}
 		return t + "\n\n"
 	}
 	return ""
@@ -205,6 +225,17 @@ func pptx(data []byte) (string, error) {
 					} `xml:"r"`
 				} `xml:"txBody>p"`
 			} `xml:"cSld>spTree>sp"`
+			Tables []struct {
+				Rows []struct {
+					Cells []struct {
+						Paragraphs []struct {
+							Runs []struct {
+								Text string `xml:"t"`
+							} `xml:"r"`
+						} `xml:"txBody>p"`
+					} `xml:"tc"`
+				} `xml:"graphic>graphicData>tbl>tr"`
+			} `xml:"cSld>spTree>graphicFrame"`
 		}
 		if err := xml.Unmarshal(parts[name], &slide); err != nil {
 			continue
@@ -228,6 +259,26 @@ func pptx(data []byte) (string, error) {
 				} else {
 					lines = append(lines, "- "+text)
 				}
+			}
+		}
+		for _, tbl := range slide.Tables {
+			var rows [][]string
+			for _, r := range tbl.Rows {
+				var cells []string
+				for _, c := range r.Cells {
+					var t strings.Builder
+					for _, p := range c.Paragraphs {
+						for _, r := range p.Runs {
+							t.WriteString(r.Text)
+						}
+						t.WriteString(" ")
+					}
+					cells = append(cells, strings.TrimSpace(t.String()))
+				}
+				rows = append(rows, cells)
+			}
+			if len(rows) > 0 {
+				lines = append(lines, "\n"+table(rows))
 			}
 		}
 		if !titled {
