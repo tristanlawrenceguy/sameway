@@ -41,6 +41,8 @@ func TestFilesBecomeStructuredText(t *testing.T) {
 <w:p><w:r><w:t>Three things, </w:t></w:r><w:r><w:t>in order.</w:t></w:r></w:p>
 <w:p><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="1"/></w:numPr></w:pPr><w:r><w:t>Water the garden</w:t></w:r></w:p>
 <w:p><w:pPr><w:numPr><w:ilvl w:val="1"/><w:numId w:val="1"/></w:numPr></w:pPr><w:r><w:t>Front beds first</w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="ListBullet"/></w:pPr><w:r><w:t>Styled bullet</w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="ListNumber"/></w:pPr><w:r><w:t>Styled number</w:t></w:r></w:p>
 <w:tbl><w:tr><w:tc><w:p><w:r><w:t>Thing</w:t></w:r></w:p></w:tc><w:tc><w:p><w:r><w:t>Cost</w:t></w:r></w:p></w:tc></w:tr>
 <w:tr><w:tc><w:p><w:r><w:t>Seeds</w:t></w:r></w:p></w:tc><w:tc><w:p><w:r><w:t>6</w:t></w:r></w:p></w:tc></w:tr></w:tbl>
 </w:body></w:document>`})
@@ -48,7 +50,7 @@ func TestFilesBecomeStructuredText(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"# The plan", "Three things, in order.", "- Water the garden", "  - Front beds first", "| Thing | Cost |", "| Seeds | 6 |"} {
+	for _, want := range []string{"# The plan", "Three things, in order.", "- Water the garden", "  - Front beds first", "- Styled bullet", "1. Styled number\n\n| Thing | Cost |", "| Seeds | 6 |"} {
 		if !strings.Contains(r.Markdown, want) {
 			t.Errorf("docx: missing %q in:\n%s", want, r.Markdown)
 		}
@@ -74,7 +76,7 @@ func TestFilesBecomeStructuredText(t *testing.T) {
 	}
 
 	pptx := zipOf(t, map[string]string{
-		"ppt/slides/slide2.xml": `<p:sld xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><p:cSld><p:spTree><p:sp><p:nvSpPr><p:nvPr><p:ph type="title"/></p:nvPr></p:nvSpPr><p:txBody><a:p><a:r><a:t>Second</a:t></a:r></a:p></p:txBody></p:sp></p:spTree></p:cSld></p:sld>`,
+		"ppt/slides/slide2.xml": `<p:sld xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><p:cSld><p:spTree><p:sp><p:nvSpPr><p:nvPr><p:ph type="title"/></p:nvPr></p:nvSpPr><p:txBody><a:p><a:r><a:t>Second</a:t></a:r></a:p></p:txBody></p:sp><p:graphicFrame><a:graphic><a:graphicData><a:tbl><a:tr><a:tc><a:txBody><a:p><a:r><a:t>Item</a:t></a:r></a:p></a:txBody></a:tc><a:tc><a:txBody><a:p><a:r><a:t>Cost</a:t></a:r></a:p></a:txBody></a:tc></a:tr><a:tr><a:tc><a:txBody><a:p><a:r><a:t>Liner</a:t></a:r></a:p></a:txBody></a:tc><a:tc><a:txBody><a:p><a:r><a:t>80</a:t></a:r></a:p></a:txBody></a:tc></a:tr></a:tbl></a:graphicData></a:graphic></p:graphicFrame></p:spTree></p:cSld></p:sld>`,
 		"ppt/slides/slide1.xml": `<p:sld xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><p:cSld><p:spTree><p:sp><p:nvSpPr><p:nvPr><p:ph type="title"/></p:nvPr></p:nvSpPr><p:txBody><a:p><a:r><a:t>Welcome</a:t></a:r></a:p></p:txBody></p:sp><p:sp><p:nvSpPr><p:nvPr><p:ph type="body"/></p:nvPr></p:nvSpPr><p:txBody><a:p><a:r><a:t>First point</a:t></a:r></a:p><a:p><a:r><a:t>Second point</a:t></a:r></a:p></p:txBody></p:sp></p:spTree></p:cSld></p:sld>`,
 	})
 	r, err = convert.Read("talk.pptx", pptx)
@@ -84,10 +86,14 @@ func TestFilesBecomeStructuredText(t *testing.T) {
 	if !strings.HasPrefix(r.Markdown, "## Welcome") || !strings.Contains(r.Markdown, "- First point") || strings.Index(r.Markdown, "## Second") < strings.Index(r.Markdown, "## Welcome") {
 		t.Errorf("pptx: slides in order with titles as headings, got:\n%s", r.Markdown)
 	}
+	if !strings.Contains(r.Markdown, "| Item | Cost |") || !strings.Contains(r.Markdown, "| Liner | 80 |") {
+		t.Errorf("pptx: a table on a slide stays a table, got:\n%s", r.Markdown)
+	}
 
 	epub := zipOf(t, map[string]string{
 		"META-INF/container.xml": `<container><rootfiles><rootfile full-path="OEBPS/content.opf"/></rootfiles></container>`,
-		"OEBPS/content.opf":      `<package><manifest><item id="b" href="b.xhtml"/><item id="a" href="a.xhtml"/></manifest><spine><itemref idref="a"/><itemref idref="b"/></spine></package>`,
+		"OEBPS/content.opf":      `<package><manifest><item id="nav" href="nav.xhtml" properties="nav"/><item id="b" href="b.xhtml"/><item id="a" href="a.xhtml"/></manifest><spine><itemref idref="nav"/><itemref idref="a"/><itemref idref="b"/></spine></package>`,
+		"OEBPS/nav.xhtml":        `<html><body><nav><ol><li><a href="a.xhtml">Contents entry</a></li></ol></nav></body></html>`,
 		"OEBPS/a.xhtml":          `<html><body><h1>Chapter one</h1><p>It begins.</p></body></html>`,
 		"OEBPS/b.xhtml":          `<html><body><h1>Chapter two</h1><p>It goes on.</p></body></html>`,
 	})
@@ -95,16 +101,16 @@ func TestFilesBecomeStructuredText(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(r.Markdown, "# Chapter one") || strings.Index(r.Markdown, "Chapter two") < strings.Index(r.Markdown, "Chapter one") {
-		t.Errorf("epub: chapters in spine order, got:\n%s", r.Markdown)
+	if !strings.Contains(r.Markdown, "# Chapter one") || strings.Index(r.Markdown, "Chapter two") < strings.Index(r.Markdown, "Chapter one") || strings.Contains(r.Markdown, "Contents entry") {
+		t.Errorf("epub: chapters in spine order without the table of contents, got:\n%s", r.Markdown)
 	}
 
 	r, _ = convert.Read("list.csv", []byte("Thing,Cost\nMilk,2\nEggs,3\n"))
 	if !strings.Contains(r.Markdown, "| Thing | Cost |") || !strings.Contains(r.Markdown, "| Eggs | 3 |") {
 		t.Errorf("csv: a table, got:\n%s", r.Markdown)
 	}
-	r, _ = convert.Read("page.html", []byte(`<h2>Hello</h2><p>A <a href="/t/note">link</a>.</p><ul><li>one</li></ul>`))
-	if !strings.Contains(r.Markdown, "## Hello") || !strings.Contains(r.Markdown, "[link](/t/note)") || !strings.Contains(r.Markdown, "- one") {
+	r, _ = convert.Read("page.html", []byte(`<h2>Hello</h2><p>A <a href="/t/note">link</a>.</p><ul><li>one</li></ul><table><tr><th>Item</th><th>Cost</th></tr><tr><td>Liner</td><td>80</td></tr></table>`))
+	if !strings.Contains(r.Markdown, "## Hello") || !strings.Contains(r.Markdown, "[link](/t/note)") || !strings.Contains(r.Markdown, "- one") || !strings.Contains(r.Markdown, "| Liner | 80") {
 		t.Errorf("html: markdown with structure, got:\n%s", r.Markdown)
 	}
 	r, _ = convert.Read("photo.jpg", []byte{0xff, 0xd8})

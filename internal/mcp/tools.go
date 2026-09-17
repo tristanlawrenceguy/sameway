@@ -4,12 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 )
 
 // tool is what MCP calls a tool: the same shape the chat service already
@@ -43,16 +41,6 @@ func (s *Server) tools() []tool {
 					"component": map[string]any{"type": "string", "description": "A component from describe, to read on its own instead of a page."},
 					"props":     map[string]any{"type": "object", "description": "Props for that component."},
 				},
-				"additionalProperties": false,
-			}},
-		{Name: "get_record", Description: "One record of a content type, with every field, by id.",
-			InputSchema: map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"type": map[string]any{"type": "string", "enum": s.App.Types.Names(), "description": "A content type from describe."},
-					"id":   map[string]any{"type": "string", "description": "The record's id, from find_records or a page URL /t/<type>/<id>."},
-				},
-				"required":             []string{"type", "id"},
 				"additionalProperties": false,
 			}},
 	}
@@ -93,29 +81,8 @@ func (s *Server) call(ctx context.Context, name string, args json.RawMessage) (s
 		rec := httptest.NewRecorder()
 		s.web().ServeHTTP(rec, req)
 		return rec.Body.String(), rec.Code >= 400
-	case "get_record":
-		var a struct {
-			Type string `json:"type"`
-			ID   string `json:"id"`
-		}
-		if len(args) > 0 {
-			if err := json.Unmarshal(args, &a); err != nil {
-				return "arguments were not valid JSON: " + err.Error(), true
-			}
-		}
-		if a.Type == "" || a.ID == "" {
-			return "get_record needs type and id", true
-		}
-		rec, err := s.App.Store.Get(strings.ToLower(a.Type), a.ID)
-		if err != nil {
-			return fmt.Sprintf("no %s with id %s: %v. Use find_records to get an id", a.Type, a.ID, err), true
-		}
-		raw, err := json.MarshalIndent(rec, "", "  ")
-		if err != nil {
-			return err.Error(), true
-		}
-		return string(raw), false
 	}
+	// get_record, find_records and the rest are the assistant's own tools.
 	return s.App.Chat.Call(name, args)
 }
 

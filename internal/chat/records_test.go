@@ -51,12 +51,21 @@ func TestModelMakesAndChangesRecords(t *testing.T) {
 	// Changing one field leaves the rest alone.
 	m = &scripted{steps: []*llm.Response{
 		call("update_record", map[string]any{"type": "note", "id": id, "fields": map[string]any{"status": "published"}}),
+		call("get_record", map[string]any{"type": "note", "id": id}),
+		call("get_record", map[string]any{"type": "note", "id": "nope"}),
 	}}
 	svc.Provider = m
 	svc.Send(context.Background(), "publish it")
 	rec, _ := svc.Store.Get("note", id)
 	if rec.Fields["status"] != "published" || rec.Fields["title"] != "Call the dentist" {
 		t.Errorf("update should change only what was passed, got %+v", rec.Fields)
+	}
+	// Reading gives the words, not just the title; a wrong id says what to do.
+	if got := lastToolResult(m.seen[2]); got.IsError || !strings.Contains(got.Content, "Ask about Thursday.") || !strings.Contains(got.Content, "/t/note/"+id) {
+		t.Errorf("get_record should give every field and the page: %+v", got)
+	}
+	if got := lastToolResult(m.seen[3]); !got.IsError || !strings.Contains(got.Content, "find_records") {
+		t.Errorf("a missing record is an error that says what to do: %+v", got)
 	}
 }
 
@@ -110,7 +119,7 @@ func TestPromptAndToolsFollowTheSchema(t *testing.T) {
 		names = append(names, tool.Name)
 	}
 	joined := strings.Join(names, ",")
-	for _, want := range []string{"create_record", "update_record", "find_records"} {
+	for _, want := range []string{"create_record", "update_record", "find_records", "get_record"} {
 		if !strings.Contains(joined, want) {
 			t.Errorf("tools offered should include %s: %v", want, names)
 		}
