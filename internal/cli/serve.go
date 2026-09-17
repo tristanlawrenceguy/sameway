@@ -1,0 +1,18 @@
+package cli
+
+import (
+	"net/http"
+
+	"github.com/tristanlawrenceguy/sameway/internal/app"
+	"github.com/tristanlawrenceguy/sameway/internal/mcp"
+	"github.com/tristanlawrenceguy/sameway/internal/server"
+)
+
+// Handler is the whole server: the pages and the API, and MCP over HTTP at
+// /mcp for a client elsewhere, behind the workspace's token.
+func Handler(a *app.App, token string) http.Handler {
+	mux := http.NewServeMux()
+	mux.Handle("/mcp", mcp.Bearer(token, &mcp.Server{App: a, Version: Version}))
+	mux.Handle("/", server.New(a))
+	return mux
+}

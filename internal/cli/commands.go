@@ -14,7 +14,6 @@ import (
 	"github.com/tristanlawrenceguy/sameway/examples"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/mcp"
-	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
@@ -106,7 +105,11 @@ func (c *ctx) serveCmd() error {
 	}
 	// Actions with a schedule run while the server does.
 	a.Chat.StartSchedule(context.Background())
-	return http.ListenAndServe(*addr, server.New(a))
+	token := os.Getenv(a.Workspace.Config.MCP.TokenEnv)
+	if token != "" {
+		fmt.Fprintf(c.Stdout, "  mcp     http://%s/mcp with Authorization: Bearer <%s>\n", *addr, a.Workspace.Config.MCP.TokenEnv)
+	}
+	return http.ListenAndServe(*addr, Handler(a, token))
 }
 
 func (c *ctx) describeCmd() error {

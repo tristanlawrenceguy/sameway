@@ -32,7 +32,13 @@ type Config struct {
 		Addr string `yaml:"addr"`
 	} `yaml:"server"`
 	LLM llm.Config `yaml:"llm"`
-	UI  struct {
+	// MCP over HTTP at /mcp, for clients elsewhere: ChatGPT's connectors,
+	// Claude's custom connectors, a hosted agent. TokenEnv names the
+	// environment variable holding the bearer token; unset means off.
+	MCP struct {
+		TokenEnv string `yaml:"token_env"`
+	} `yaml:"mcp"`
+	UI struct {
 		// Controls is "auto" (per-item controls and provenance labels fade
 		// until hovered or focused) or "visible" (always shown). Either way
 		// they stay in the DOM, the tab order, and the accessibility tree.
@@ -113,6 +119,9 @@ func Load(dir string) (*Workspace, error) {
 	}
 	if w.Config.Server.Addr == "" {
 		w.Config.Server.Addr = "127.0.0.1:8080"
+	}
+	if w.Config.MCP.TokenEnv == "" {
+		w.Config.MCP.TokenEnv = "SAMEWAY_MCP_TOKEN"
 	}
 	if w.Config.Chat.HistoryLimit == 0 {
 		w.Config.Chat.HistoryLimit = 40

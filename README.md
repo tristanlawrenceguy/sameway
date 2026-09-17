@@ -75,6 +75,7 @@ workspace file, because the workspace is meant to be shared.
 | Edit structured text as it is shown: headings, lists and links from a toolbar, the Markdown one button away | The same props route takes `html-<field>` and turns it into Markdown; `POST /api/prose` converts either way |
 | Ask for what is due this week and get it on the canvas as a list, a table or cards, with the properties you name beside each; `/t/task?where=done=false&where=due<=+7d&order=due` is the same list as a page | A `collection` block, `GET /api/task?where=…&order=…`, `find_records` with `where`, and `sameway task list --where …` all take the same query: `field=value`, `title~garden`, `due<today`, `notes=` (empty), dates like `today`, `+7d`, `2026-10-01` |
 | A task belongs to a project; the project's page lists its tasks by itself, and a task's page links to its project | A field of `type: ref` with `to: project` holds the id; the store refuses an id that is not there; `project=<id>` or `project~garden` in any query |
+| Hook up the AI you already use: `sameway connect claude-code` (or cursor, windsurf, vscode, codex, claude-desktop) writes its MCP configuration in one line | The same server over HTTP at `/mcp` behind a token for ChatGPT's connectors, Claude's custom connectors or a hosted agent; every workspace carries an `AGENTS.md` that tells any agent opened in the folder how it all fits |
 | Tick a task done where you see it: in a list, on the calendar, on a project's page, on its own page, one press, no JavaScript needed, undoable | A `mark` component the server puts on every record with a yes-or-no field; it posts `prop-<field>` to the record's props route, which now logs the change like any other |
 | Ask for the tasks on a calendar and get this month with each task on its day, as a link, kept current | A `calendar` block with `type: task` (and `where`, `date`, `show`) is filled from records when the page renders; `month` and `today` are filled in too |
 | Ask for a due date on notes, or for a new kind of thing such as contacts, and the shape changes at once, for everyone | `add_field` and `add_type` over chat and MCP, `POST /api/types` and `POST /api/types/<type>/fields` for agents: the schema file, the table and every page change while the workspace runs |
@@ -127,9 +128,30 @@ sameway check                      validate schema and components
 sameway export | import            content/ from the database, or back into it
 sameway chat "add a table of ..."  talk to the assistant from the terminal
 sameway mcp                        serve the workspace to an MCP client over stdio
+sameway connect <tool> [--write]   the MCP configuration for claude-code, claude-desktop, cursor, windsurf, vscode or codex; chatgpt for a client elsewhere
 sameway component new <name>       scaffold a component folder
 sameway <type> list|get|create|update|delete [--json]
 ```
+
+## Hooking up an AI
+
+Two different hook-ups. **As the model behind the chat**, `workspace.yaml`
+names a provider: `anthropic` for Claude, or `openai` with a `base_url` for
+OpenAI and anything that speaks its API (Ollama, LM Studio, llama.cpp,
+OpenRouter). **As a tool the AI uses**, any MCP client gets the assistant's
+whole tool set plus reading:
+
+```bash
+sameway connect claude-code --write     # also claude-desktop, cursor, windsurf, vscode, codex
+```
+
+That writes the tool's own configuration file (or prints it without
+`--write`). A client elsewhere, such as ChatGPT's connectors or Claude's
+custom connectors, reaches the same server at `POST /mcp` once
+`SAMEWAY_MCP_TOKEN` is set and `sameway serve` is reachable over HTTPS;
+`sameway connect chatgpt` prints the steps. Every workspace carries an
+`AGENTS.md` written by `sameway init`, so an agent opened in the folder
+reads how the pages, the API, the command line and MCP fit together.
 
 ## Developing
 
