@@ -14,6 +14,24 @@
   ];
   // Commands whose button shows whether the words at the caret already have it.
   var STATEFUL = { bold: 1, italic: 1, strikeThrough: 1, insertUnorderedList: 1, insertOrderedList: 1 };
+  // Shortcuts, the ones most editors share; Ctrl+B, Ctrl+I and Ctrl+Z are
+  // the browser's own. Shown on each button so nobody has to guess.
+  var KEYS = {
+    heading: "Ctrl+Alt+1", subheading: "Ctrl+Alt+2", paragraph: "Ctrl+Alt+0",
+    bold: "Ctrl+B", italic: "Ctrl+I", strikeThrough: "Ctrl+Shift+X", code: "Ctrl+E",
+    insertUnorderedList: "Ctrl+Shift+8", insertOrderedList: "Ctrl+Shift+7", indent: "Tab", outdent: "Shift+Tab",
+    quote: "Ctrl+Shift+9", codeblock: "Ctrl+Alt+C", link: "Ctrl+K"
+  };
+
+  // pressed says which command a key press asks for, if any.
+  function pressed(e) {
+    if (!(e.ctrlKey || e.metaKey)) return null;
+    var k = e.key.length === 1 ? e.key.toUpperCase() : e.key;
+    var combo = "Ctrl+" + (e.altKey ? "Alt+" : "") + (e.shiftKey ? "Shift+" : "") + k;
+    if (e.shiftKey && e.code && e.code.indexOf("Digit") === 0) combo = "Ctrl+Shift+" + e.code.charAt(5);
+    for (var cmd in KEYS) if (KEYS[cmd] === combo) return cmd;
+    return null;
+  }
 
   function escape(s) {
     return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -111,6 +129,7 @@
       b.type = "button";
       b.className = "sw-button sw-button--quiet sw-pressable";
       b.textContent = t[0];
+      if (KEYS[t[1]]) { b.title = t[0] + " (" + KEYS[t[1]] + ")"; b.setAttribute("aria-keyshortcuts", KEYS[t[1]]); }
       b.tabIndex = i === 0 ? 0 : -1;
       if (STATEFUL[t[1]]) b.setAttribute("aria-pressed", "false");
       // A press must not take the selection away from the words it is about.
@@ -138,9 +157,14 @@
       next.tabIndex = 0;
       next.focus();
     });
-    // Ctrl+K makes a link, as in most editors; Ctrl+B and Ctrl+I are the browser's own.
+    // The shortcuts above; Tab in a list nests it, and in a table moves on.
     editor.addEventListener("keydown", function (e) {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); run(editor, "link", level); reflect(); }
+      var cmd = pressed(e);
+      if (!cmd && e.key === "Tab" && !inside("TD") && !inside("TH") && inside("LI")) cmd = e.shiftKey ? "outdent" : "indent";
+      if (!cmd || cmd === "bold" || cmd === "italic") return;
+      e.preventDefault();
+      run(editor, cmd, level);
+      reflect();
     });
     tableKeys(editor);
     return bar;

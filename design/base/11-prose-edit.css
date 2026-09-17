@@ -6,6 +6,8 @@
 .sw-prose-editor > :last-child { margin-bottom: 0; }
 .sw-prose-tools { margin-bottom: var(--sw-space-2); gap: var(--sw-space-1); }
 .sw-prose-field textarea { margin-top: 0; }
+/* The view that is not in use is really gone; the field class would otherwise keep it displayed. */
+.sw-prose-field [hidden] { display: none; }
 .sw-prose-switch { margin-top: var(--sw-space-1); }
 .sw-prose-tools [aria-pressed="true"] { background: var(--sw-color-accent-soft); color: var(--sw-color-accent); }
 .sw-prose-editor table { border-collapse: collapse; }

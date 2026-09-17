@@ -37,11 +37,11 @@ func TestEditedProseComesBackAsMarkdown(t *testing.T) {
 	}
 
 	// Everything the toolbar can make comes back as the Markdown for it.
-	form = url.Values{"level-body": {"3"}, "html-body": {`<p>Was <s>wrong</s>, use <code>go test</code>.</p><pre>make check</pre><p><img src="/files/f1" alt="The pond"></p><table><thead><tr><th>Item</th><th>Cost</th></tr></thead><tbody><tr><td>Liner</td><td>80</td></tr></tbody></table><hr><p>Done.</p>`}}
+	form = url.Values{"level-body": {"3"}, "html-body": {`<p>Was <s>wrong</s> and <strike>out</strike>, use <code>go test</code>.</p><pre>make check</pre><p><img src="/files/f1" alt="The pond"></p><table><thead><tr><th>Item</th><th>Cost</th></tr></thead><tbody><tr><td>Liner</td><td>80</td></tr></tbody></table><hr><p>Done.</p>`}}
 	wantStatus(t, postForm(t, h, "/t/note/"+rec.ID+"/props", form), http.StatusSeeOther)
 	updated, _ = a.Store.Get("note", rec.ID)
 	body, _ = updated.Fields["body"].(string)
-	for _, want := range []string{"~~wrong~~", "`go test`", "```\nmake check\n```", "![The pond](/files/f1)", "| Liner", "80", "---", "Done."} {
+	for _, want := range []string{"~~wrong~~", "~~out~~", "`go test`", "```\nmake check\n```", "![The pond](/files/f1)", "| Liner", "80", "---", "Done."} {
 		if !strings.Contains(body, want) {
 			t.Errorf("the edit should be Markdown with %q, got:\n%s", want, body)
 		}

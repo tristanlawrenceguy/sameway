@@ -45,6 +45,7 @@
     editor.setAttribute("role", "textbox");
     editor.setAttribute("aria-multiline", "true");
     editor.setAttribute("aria-labelledby", lab.id);
+    editor.setAttribute("aria-label", label(name));
     editor.innerHTML = el.innerHTML;
 
     var html = document.createElement("input");
