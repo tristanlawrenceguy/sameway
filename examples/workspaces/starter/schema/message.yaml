@@ -14,3 +14,6 @@ fields:
   changes:
     type: json
     description: For assistant turns, the list of canvas changes made while answering, each {action, component, id, detail}.
+  file:
+    type: string
+    description: For user turns, the id of the file record that came with the message; its text goes to the model with the words.

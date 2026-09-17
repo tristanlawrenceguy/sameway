@@ -1,6 +1,6 @@
 {
   "name": "message",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "One turn in a conversation: who said it, what was said, and for assistant turns the receipt of canvas changes it made. Render inside a list so the conversation has structure.",
   "icon": "…",
   "use": { "when": "one turn of a conversation.", "not": "anything outside the conversation.", "with": "a list of turns." },
@@ -45,12 +45,22 @@
           }
         }
       },
+      "attachment": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["title"],
+        "description": "The file that came with the message, shown under the text as a link to its page.",
+        "properties": {
+          "title": { "type": "string", "minLength": 1 },
+          "href": { "type": "string", "description": "The file's page. Left out when the file is gone." }
+        }
+      },
       "id": { "type": "string", "description": "Anchor id so the page can link to the latest message." }
     }
   },
   "a11y": {
     "role": "article",
-    "keyboard": [ { "key": "Tab", "does": "reaches each change in the receipt that still exists, as a link to its page" } ],
+    "keyboard": [ { "key": "Tab", "does": "reaches the attached file, when there is one, then each change in the receipt that still exists, as a link to its page" } ],
     "states": ["data-actor", "data-role"],
     "wcag": { "target": "AAA", "notes": "Author is text, not colour or alignment alone (1.4.1). Each message is an article with its author as the first line so screen readers can move between turns. The change receipt is a real list with a heading only screen readers hear." }
   },
@@ -63,6 +73,7 @@
     { "name": "default", "props": { "role": "user", "content": "Add a grocery list with milk, eggs and bread.", "time": "14:05", "id": "msg-1" }, "file": "examples/default.html" },
     { "name": "assistant", "props": { "role": "assistant", "content": "Done. I added a list with three items.\n\nWant it as a table instead?", "time": "14:05", "changes": [ { "action": "added", "component": "heading", "detail": "Shopping", "href": "/canvas/h1", "activity": "a1" }, { "action": "added", "component": "list" } ] }, "file": "examples/assistant.html" },
     { "name": "error", "props": { "role": "error", "content": "Could not reach the model at http://localhost:11434." }, "file": "examples/error.html" },
-    { "name": "with links", "props": { "role": "assistant", "content": "I added two items.", "time": "14:05", "changes": [{"action": "added", "component": "note"}], "links": [{"href": "/t/note/abc", "label": "a note"}, {"href": "/canvas/h1", "label": "heading"}] }, "file": "examples/with_links.html" }
+    { "name": "with links", "props": { "role": "assistant", "content": "I added two items.", "time": "14:05", "changes": [{"action": "added", "component": "note"}], "links": [{"href": "/t/note/abc", "label": "a note"}, {"href": "/canvas/h1", "label": "heading"}] }, "file": "examples/with_links.html" },
+    { "name": "with attachment", "props": { "role": "user", "content": "What does this say?", "time": "14:06", "attachment": { "title": "Lease agreement", "href": "/t/file/f1" } }, "file": "examples/with_attachment.html" }
   ]
 }

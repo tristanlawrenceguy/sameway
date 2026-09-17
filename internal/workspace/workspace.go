@@ -49,7 +49,20 @@ type Config struct {
 		// SystemPrompt is prepended to the built-in instructions.
 		SystemPrompt string `yaml:"system_prompt"`
 	} `yaml:"chat"`
+	Files struct {
+		// Convert names an external converter per file extension, for the
+		// formats the built-in readers cannot do justice to: a URL such as
+		// docling's server, or a command line with {file} where the path
+		// goes. Either answers with Markdown. For example:
+		//   convert:
+		//     pdf: http://127.0.0.1:5001/v1/convert/file
+		//     docx: pandoc {file} -t gfm
+		Convert map[string]string `yaml:"convert"`
+	} `yaml:"files"`
 }
+
+// FilesDir is where the originals of added files are kept.
+func (w *Workspace) FilesDir() string { return filepath.Join(w.Dir, "files") }
 
 // Workspace is a loaded workspace.
 type Workspace struct {

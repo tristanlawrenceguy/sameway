@@ -31,6 +31,7 @@
   padding: 0.125rem var(--sw-space-2); border-radius: var(--sw-radius-pill);
   background: var(--sw-actor-soft, var(--sw-color-bg-muted)); color: var(--sw-actor, var(--sw-color-fg-muted));
 }
+.sw-message__attachment { margin: var(--sw-space-2) 0 0; color: var(--sw-color-fg-muted); }
 .sw-message__links {
     list-style: none; margin: var(--sw-space-2) 0 0; padding: 0;
     display: flex; flex-wrap: wrap; gap: var(--sw-space-1); font-size: var(--sw-size-text-xs);

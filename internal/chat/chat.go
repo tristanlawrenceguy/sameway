@@ -63,6 +63,13 @@ func (s *Service) Send(ctx context.Context, text string) (*store.Record, error) 
 // Failures are recorded as an error message in the conversation and also
 // returned.
 func (s *Service) SendOn(ctx context.Context, canvas, text string) (*store.Record, error) {
+	return s.SendFile(ctx, canvas, text, "")
+}
+
+// SendFile is SendOn with a file attached: the message carries the file's
+// id, the model gets the file's text with the message, and the person
+// sees which file went with what they said.
+func (s *Service) SendFile(ctx context.Context, canvas, text, fileID string) (*store.Record, error) {
 	if err := s.Available(); err != nil {
 		return nil, err
 	}
@@ -71,10 +78,17 @@ func (s *Service) SendOn(ctx context.Context, canvas, text string) (*store.Recor
 	}
 	s.current = canvas
 	text = strings.TrimSpace(text)
+	if text == "" && fileID != "" {
+		text = "Here is a file."
+	}
 	if text == "" {
 		return nil, errors.New("message is empty")
 	}
-	if _, err := s.Store.Create(MessageType, map[string]any{"role": "user", "content": text}); err != nil {
+	fields := map[string]any{"role": "user", "content": text}
+	if fileID != "" {
+		fields["file"] = fileID
+	}
+	if _, err := s.Store.Create(MessageType, s.fields(MessageType, fields)); err != nil {
 		return nil, err
 	}
 	Record(s.Store, "human", Change{Action: "said", Detail: truncate(text, 80)})
@@ -153,6 +167,10 @@ func (s *Service) history() ([]llm.Message, error) {
 		content, _ := recs[i].Fields["content"].(string)
 		switch role {
 		case "user":
+			// A file that came with the message comes with it to the model too.
+			if fileID, _ := recs[i].Fields["file"].(string); fileID != "" {
+				content += s.attachment(fileID)
+			}
 			out = append(out, llm.Message{Role: llm.RoleUser, Content: content})
 		case "assistant":
 			out = append(out, llm.Message{Role: llm.RoleAssistant, Content: content})

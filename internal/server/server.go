@@ -59,6 +59,9 @@ func (s *Server) routes() {
 	m.HandleFunc("POST /t/{type}/{id}/delete", s.deleteForm)
 	// Inline edit: POST form data (prop-<name>) to update content type records.
 	m.HandleFunc("POST /t/{type}/{id}/props", s.recordProps)
+	// Files: added through a form, kept as originals, read into text.
+	m.HandleFunc("POST /t/file/upload", s.upload)
+	m.HandleFunc("GET /files/{id}", s.serveFile)
 
 	m.HandleFunc("GET /api/describe", s.apiDescribe)
 	m.HandleFunc("GET /api/search", s.apiSearch)
