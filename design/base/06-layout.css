@@ -95,3 +95,26 @@ ol.sw-plain, ul.sw-plain { list-style: none; margin: 0; padding: 0; }
 .sw-focus > .sw-link { justify-self: start; }
 .sw-focus__body { min-width: 0; }
 .sw-focus__body > .sw-chat--panel { height: min(78vh, 48rem); }
+
+/* Strips: blocks in the header or footer bar sit in a row, bare, and
+   never take the page. */
+.sw-strip { display: flex; align-items: center; gap: var(--sw-space-3); min-width: 0; flex: 1 1 auto; }
+.sw-canvas--strip { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sw-space-3); width: 100%; }
+.sw-canvas--strip > .sw-block { flex: 0 1 auto; padding: var(--sw-space-1); background: none; border-color: transparent; box-shadow: none; }
+.sw-canvas--strip > .sw-block > .sw-bar { position: static; }
+
+/* Sizes: full is the whole thing; compact is the same in less room; icon
+   is a glyph with the block's name, opening the whole thing on its own
+   page. Default is full, so a page starts bigger and shrinks as a person
+   learns it. */
+.sw-block[data-size="compact"] { padding: var(--sw-space-2); font-size: var(--sw-size-text-sm); }
+.sw-block[data-size="compact"] h2, .sw-block[data-size="compact"] h3 { font-size: var(--sw-size-text-md); }
+.sw-block[data-size="icon"] { padding: 0; flex: 0 0 auto; --sw-span: 1; }
+.sw-block__icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 2.75rem; min-height: 2.75rem; border-radius: var(--sw-radius-pill);
+  color: var(--sw-color-fg); background: var(--sw-color-bg-raised); border: 1px solid var(--sw-color-border);
+  text-decoration: none; font-size: var(--sw-size-text-lg);
+}
+.sw-block__icon:hover { background: var(--sw-color-bg-muted); }
+.sw-block__icon:focus-visible { outline: var(--sw-focus-width) solid var(--sw-color-focus); outline-offset: var(--sw-focus-offset); }

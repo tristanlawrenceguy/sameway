@@ -125,6 +125,11 @@ func Summarise(component string, props map[string]any) string {
 		}
 	case ComponentName:
 		return "Conversation"
+	case "search":
+		if label := pick("label"); label != "" {
+			return label
+		}
+		return "Search"
 	}
 	return ""
 }

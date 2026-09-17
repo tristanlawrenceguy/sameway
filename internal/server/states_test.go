@@ -31,7 +31,7 @@ func TestStateLanguageAfterATurn(t *testing.T) {
 	// Provenance: blocks and messages say who did it.
 	var blocks []*html.Node
 	for _, b := range page.WithAttr("data-block-id", "") {
-		if c, _ := htmltest.Attr(b, "data-block-component"); c != "chat" {
+		if c, _ := htmltest.Attr(b, "data-block-component"); c != "chat" && c != "search" {
 			blocks = append(blocks, b)
 		}
 	}

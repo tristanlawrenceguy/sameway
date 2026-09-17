@@ -27,7 +27,10 @@ type Manifest struct {
 	// and every reader: when a person is served by it, when they are not,
 	// and what it sits with. The prompt carries it, so what works for
 	// people is what the assistant builds from, not something it guesses.
-	Use      *Use            `json:"use,omitempty"`
+	Use *Use `json:"use,omitempty"`
+	// Icon is one glyph that stands for the component when a block is shown
+	// at icon size; the name travels with it for assistive technology.
+	Icon     string          `json:"icon,omitempty"`
 	Props    json.RawMessage `json:"props"`
 	A11y     json.RawMessage `json:"a11y"`
 	Machine  json.RawMessage `json:"machine"`

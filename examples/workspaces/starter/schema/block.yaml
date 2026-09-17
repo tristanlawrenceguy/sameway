@@ -26,9 +26,14 @@ fields:
     description: Which tab this block is on, as a canvas id. Empty is Home, the first canvas.
   region:
     type: enum
-    values: [main, left, right]
+    values: [main, left, right, header, footer]
     default: main
-    description: main is the body of the page. left and right are full height panes beside it, each collapsible; left is where chat history and navigation usually go, right is for things you glance at like a calendar or what is due next.
+    description: main is the body of the page. left and right are full height panes beside it, each collapsible; left is where chat history and navigation usually go, right is for things you glance at like a calendar or what is due next. header is the bar at the top beside the name, for what a person reaches for on every page, such as search; footer is the bar at the bottom.
+  size:
+    type: enum
+    values: [full, compact, icon]
+    default: full
+    description: full is the whole thing. compact is the same with less room, for fitting more on a page. icon is a glyph with the block's name for screen readers, which opens the full thing on its own page; for people who know what it is.
   frame:
     type: enum
     values: [card, bare]
@@ -41,11 +46,11 @@ fields:
     description: Tints the block's surface. Body text keeps its contrast on every tint.
   actor:
     type: enum
-    values: [human, assistant]
+    values: [human, assistant, system]
     default: assistant
     description: Who last changed this block.
   created_by:
     type: enum
-    values: [human, assistant]
+    values: [human, assistant, system]
     default: assistant
     description: Who first added this block.

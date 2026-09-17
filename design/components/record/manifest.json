@@ -2,6 +2,7 @@
   "name": "record",
   "version": "1.0.0",
   "description": "A content record shown on the canvas as the record it is: the note on the notes page and the note on the canvas are one thing, edited in either place. Give it the type and the record's id; the server fills in the words from the record when it renders the page.",
+  "icon": "✎",
   "use": { "when": "a note, task or event belongs on the canvas as itself, edited in either place.", "not": "copying a record's words into a card.", "with": "the record's own page at /t/<type>." },
   "props": {
     "type": "object",

@@ -36,6 +36,10 @@ type Page struct {
 	// middle scrolls.
 	Left  template.HTML
 	Right template.HTML
+	// Header and Footer are blocks placed in the bars at the top and the
+	// bottom: what a person reaches for on every page, such as search.
+	Header template.HTML
+	Footer template.HTML
 	// Focus is an element id to name in the skip link, such as the newest
 	// message, so keyboard users can jump straight to what changed.
 	Focus      string

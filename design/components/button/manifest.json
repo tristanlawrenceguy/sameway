@@ -2,6 +2,7 @@
   "name": "button",
   "version": "1.1.0",
   "description": "Triggers an action on the current page, such as submitting a form. For navigation to another page use link.",
+  "icon": "▶",
   "use": { "when": "an action on this page: send, save, remove, undo.", "not": "going somewhere, which is a link, or decorating.", "with": "a form, so it works without a script." },
   "props": {
     "type": "object",

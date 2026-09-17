@@ -48,7 +48,8 @@ func (s *Server) focusPage(w http.ResponseWriter, r *http.Request) {
 	b.WriteString(string(s.component("link", map[string]any{"href": chat.CanvasPath(canvasOf(rec.Fields)), "label": "Back to the canvas"})))
 	b.WriteString(`<div class="sw-focus__body">` + string(body) + `</div></div>`)
 
-	_, left, right := split(s.canvasBlocks())
+	reg := split(s.canvasBlocks())
+	left, right := reg.left, reg.right
 	name, own := title(comp.Manifest.Name, props)
 	s.page(w, r, name, template.HTML(b.String()), pageOptions{
 		// When the block already says what it is (a calendar's caption, a

@@ -47,7 +47,8 @@ func (s *Service) Tools() []llm.Tool {
 				"span":      map[string]any{"type": "integer", "description": "Width in columns of twelve. 12 is full width, 6 half, 4 a third. Defaults to 6."},
 				"frame":     map[string]any{"type": "string", "enum": []string{"card", "bare"}, "description": "card gives the block a surface, bare sits flush on the page. Defaults to card."},
 				"tone":      map[string]any{"type": "string", "enum": []string{"none", "accent", "success", "warning", "danger", "info"}, "description": "Tints the block's surface. Defaults to none."},
-				"region":    map[string]any{"type": "string", "enum": []string{"main", "left", "right"}, "description": "main is the body of the page. left and right are full height panes beside it: left for history and navigation, right for what the person glances at. Defaults to main."},
+				"region":    map[string]any{"type": "string", "enum": []string{"main", "left", "right", "header", "footer"}, "description": "main is the body of the page. left and right are full height panes beside it: left for history and navigation, right for what the person glances at. header is the bar at the top, for what they reach for on every page; footer the bar at the bottom. Defaults to main."},
+				"size":      map[string]any{"type": "string", "enum": []string{"full", "compact", "icon"}, "description": "full is the whole thing (the default). compact fits more on a page. icon is a glyph with its name for screen readers that opens the full thing; for people who know what it is."},
 				"canvas":    map[string]any{"type": "string", "description": "Which tab the block goes on, as a canvas id from the list of tabs; empty string is Home. Defaults to the tab the person is looking at."},
 			}, "component", "props")},
 		{Name: "update_component", Description: "Change a block already on the canvas: its props, its width, or its place in the order. Props replace the old ones completely, so send them all.",
@@ -58,7 +59,8 @@ func (s *Service) Tools() []llm.Tool {
 				"position": map[string]any{"type": "integer", "description": "New sort order; lower comes first."},
 				"frame":    map[string]any{"type": "string", "enum": []string{"card", "bare"}},
 				"tone":     map[string]any{"type": "string", "enum": []string{"none", "accent", "success", "warning", "danger", "info"}},
-				"region":   map[string]any{"type": "string", "enum": []string{"main", "left", "right"}},
+				"region":   map[string]any{"type": "string", "enum": []string{"main", "left", "right", "header", "footer"}},
+				"size":     map[string]any{"type": "string", "enum": []string{"full", "compact", "icon"}},
 				"canvas":   map[string]any{"type": "string", "description": "Move the block to another tab: a canvas id, or empty string for Home."},
 			}, "id")},
 		{Name: "remove_component", Description: "Remove one block from the canvas by id.",
@@ -73,7 +75,8 @@ func (s *Service) Tools() []llm.Tool {
 				"span":      map[string]any{"type": "integer"},
 				"frame":     map[string]any{"type": "string", "enum": []string{"card", "bare"}},
 				"tone":      map[string]any{"type": "string", "enum": []string{"none", "accent", "success", "warning", "danger", "info"}},
-				"region":    map[string]any{"type": "string", "enum": []string{"main", "left", "right"}},
+				"region":    map[string]any{"type": "string", "enum": []string{"main", "left", "right", "header", "footer"}},
+				"size":      map[string]any{"type": "string", "enum": []string{"full", "compact", "icon"}},
 				"canvas":    map[string]any{"type": "string"},
 				"position":  map[string]any{"type": "integer"},
 			}, "summary", "tool")},
@@ -114,6 +117,7 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 		Frame     string         `json:"frame"`
 		Tone      string         `json:"tone"`
 		Region    string         `json:"region"`
+		Size      string         `json:"size"`
 		Canvas    *string        `json:"canvas"`
 		Name      string         `json:"name"`
 		Summary   string         `json:"summary"`
@@ -147,9 +151,9 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 	case "find_records":
 		return s.findRecords(args.Type, args.Query, args.Limit)
 	case "add_component":
-		return s.addComponent(args.Component, args.Props, look{Span: args.Span, Position: args.Position, Frame: args.Frame, Tone: args.Tone, Region: args.Region, Canvas: deref(args.Canvas), SetCanvas: args.Canvas != nil})
+		return s.addComponent(args.Component, args.Props, look{Span: args.Span, Position: args.Position, Frame: args.Frame, Tone: args.Tone, Region: args.Region, Size: args.Size, Canvas: deref(args.Canvas), SetCanvas: args.Canvas != nil})
 	case "update_component":
-		return s.updateComponent(args.ID, args.Props, look{Span: args.Span, Position: args.Position, Frame: args.Frame, Tone: args.Tone, Region: args.Region, Canvas: deref(args.Canvas), SetCanvas: args.Canvas != nil})
+		return s.updateComponent(args.ID, args.Props, look{Span: args.Span, Position: args.Position, Frame: args.Frame, Tone: args.Tone, Region: args.Region, Size: args.Size, Canvas: deref(args.Canvas), SetCanvas: args.Canvas != nil})
 	case "remove_component":
 		return s.removeBlock(args.ID)
 	case "undo_change":

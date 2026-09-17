@@ -30,8 +30,8 @@ func TestOneSearchOverEverything(t *testing.T) {
 	if empty := get(t, h, "/search?q=zebra").Body.String(); !strings.Contains(empty, "Nothing has zebra in it") {
 		t.Error("no hits should say so in plain words")
 	}
-	if footer := get(t, h, "/").Body.String(); !strings.Contains(footer, `href="/search"`) {
-		t.Error("search should be reachable from every page")
+	if home := get(t, h, "/").Body.String(); !strings.Contains(home, `data-component="search"`) {
+		t.Error("search should be reachable from the canvas, as the block in the header")
 	}
 
 	var out struct {

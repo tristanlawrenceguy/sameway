@@ -2,6 +2,7 @@
   "name": "text-field",
   "version": "1.0.0",
   "description": "A single-line text input with a visible label, optional hint, and inline error. For several lines use textarea.",
+  "icon": "▭",
   "use": { "when": "one line of free text.", "not": "several lines, which is a textarea, or a choice, which is a select.", "with": "a form." },
   "props": {
     "type": "object",

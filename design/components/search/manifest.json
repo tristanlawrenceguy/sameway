@@ -1,0 +1,36 @@
+{
+  "name": "search",
+  "version": "1.0.0",
+  "description": "One search over everything a person has: every record of every content type and every block on the canvas. A form with one field and one button, because that is the better thing here; it is a GET, so a search is a link that can be kept.",
+  "icon": "⌕",
+  "use": { "when": "the person wants to find something by the words in it, from wherever they are; it belongs in the header, where they reach for it on every page.", "not": "filtering one list, which is the listing page, or asking the assistant, which is the chat.", "with": "the header at compact or icon size once the person knows it is there." },
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [],
+    "properties": {
+      "label": { "type": "string", "default": "Search", "description": "The visible label and the button text." },
+      "value": { "type": "string", "default": "", "description": "Words already typed, when showing results for them." },
+      "action": { "type": "string", "default": "/search", "description": "Where the search goes; the search page by default." },
+      "id": { "type": "string", "default": "search", "description": "Id of the field, so the label reaches it." }
+    }
+  },
+  "a11y": {
+    "role": "search (a landmark) holding a labelled search field and a submit button",
+    "keyboard": [
+      { "key": "Tab", "does": "moves to the field, then the button" },
+      { "key": "Enter", "does": "in the field, searches" }
+    ],
+    "states": [],
+    "wcag": { "target": "AAA", "notes": "A visible label (3.3.2), a search landmark (1.3.1, 2.4.1), and a real form so it works without a script. The field is type=search, so assistive technology says what it is." }
+  },
+  "machine": {
+    "selector": "[data-component=\"search\"]",
+    "identify": "A form with role=search. The field is named q; the action is where results appear.",
+    "operate": "Type words into the field named q and submit, or GET the action with ?q=words; the same results are at /api/search?q=words."
+  },
+  "examples": [
+    { "name": "default", "props": { "label": "Search" }, "file": "examples/default.html" },
+    { "name": "results", "props": { "value": "plumber", "label": "Search" }, "file": "examples/results.html" }
+  ]
+}
