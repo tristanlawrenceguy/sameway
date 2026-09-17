@@ -1,7 +1,7 @@
 {
   "name": "mark",
   "version": "1.0.0",
-  "description": "One press that sets one field on one record: done, pinned, read. A form with a single button, so it works without JavaScript and comes back to the page it was pressed on.",
+  "description": "A checkbox that sets one yes-or-no field on one record: done, pinned, read. It says the fact (checked or not) and saves on change; without scripts a Save button beside it does the same. A form, so it works everywhere and comes back to the page it was on.",
   "icon": "✓",
   "use": {
     "when": "a person wants to change a record's state where they see it: tick a task in a list, pin a note on its page.",
@@ -15,7 +15,6 @@
       "type",
       "record",
       "field",
-      "value",
       "label"
     ],
     "properties": {
@@ -34,14 +33,10 @@
         "minLength": 1,
         "description": "The field the press sets."
       },
-      "value": {
-        "type": "string",
-        "description": "What the field becomes: true or false for a yes-or-no field, a value for an enum."
-      },
       "label": {
         "type": "string",
         "minLength": 1,
-        "description": "What the button says: Mark as done."
+        "description": "What the field is called, as the person reads it: Done, Pinned."
       },
       "context": {
         "type": "string",
@@ -49,35 +44,38 @@
       },
       "id": {
         "type": "string"
+      },
+      "checked": {
+        "type": "boolean",
+        "default": false,
+        "description": "Whether the field is true now."
       }
     }
   },
   "a11y": {
-    "role": "form",
+    "role": "checkbox",
     "keyboard": [
       {
         "key": "Tab",
-        "does": "reaches the button"
-      },
-      {
-        "key": "Enter",
-        "does": "presses it"
+        "does": "reaches the checkbox, and the Save button when scripts are off"
       },
       {
         "key": "Space",
-        "does": "presses it"
+        "does": "changes it, which saves when scripts run"
       }
     ],
-    "states": [],
+    "states": [
+      "checked"
+    ],
     "wcag": {
       "target": "AAA",
-      "notes": "A real form and a real button, so it works without JavaScript and is announced as what it is (4.1.2). The button's name carries the record's title when context is given, so a list of ten Mark as done buttons is ten different names (2.4.6). The page comes back where the press happened, with the change glowing like any other."
+      "notes": "A native checkbox inside its label, so the state is announced as a fact (checked or not) with the field's name and, when context is given, the record's title (1.3.1, 4.1.2), and a list of ten is ten different names (2.4.6). A checkbox that saves on change would surprise someone who cannot see the page settle, so the page comes back with the record glowing where it shows; without scripts a Save button does the same in one more step. A switch would say the same with less support; a button would say an action rather than the fact."
     }
   },
   "machine": {
     "selector": "[data-component=\"mark\"]",
-    "identify": "Read data-record-type, data-record-id and data-field for what the press sets, and the hidden input's value for what it becomes.",
-    "operate": "Submit the form, or POST prop-<field>=<value> to /t/<type>/<id>/props yourself; the API at /api/<type>/<id> takes the same change as JSON."
+    "identify": "Read data-record-type, data-record-id and data-field for which field of which record; the checkbox's checked state is the value now.",
+    "operate": "Submit the form with the checkbox as you want it, or POST prop-<field>=true|false to /t/<type>/<id>/props yourself; the API at /api/<type>/<id> takes the same change as JSON."
   },
   "examples": [
     {
@@ -86,23 +84,22 @@
         "type": "task",
         "record": "k3n2p9",
         "field": "done",
-        "value": "true",
-        "label": "Mark as done",
+        "label": "Done",
         "context": "Order compost"
       },
       "file": "examples/default.html"
     },
     {
-      "name": "undo",
+      "name": "checked",
       "props": {
         "type": "task",
         "record": "k3n2p9",
         "field": "done",
-        "value": "false",
-        "label": "Mark as not done",
+        "label": "Done",
+        "checked": true,
         "context": "Order compost"
       },
-      "file": "examples/undo.html"
+      "file": "examples/checked.html"
     }
   ]
 }
