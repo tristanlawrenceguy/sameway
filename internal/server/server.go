@@ -67,6 +67,7 @@ func (s *Server) routes() {
 	m.HandleFunc("GET /api/look", s.apiLook)
 	m.HandleFunc("POST /api/look", s.apiLook)
 	m.HandleFunc("POST /api/act/{id}", s.apiAct)
+	m.HandleFunc("POST /hook/{token}", s.hook)
 	m.HandleFunc("POST /api/chat", s.apiChat)
 	m.HandleFunc("GET /api/{type}", s.apiList)
 	m.HandleFunc("POST /api/{type}", s.apiCreate)

@@ -23,7 +23,7 @@ var HTTPClient = &http.Client{Timeout: 10 * time.Second}
 
 var actionTool = llm.Tool{
 	Name:        "run_action",
-	Description: "Run one of the person's actions now, by id: a webhook they set up (an alarm, a weather update) or an arrangement. Actions of kind message are for the person to press, not for you. The result goes in the activity log; a webhook with show set puts its answer on the canvas.",
+	Description: "Run one of the person's actions now, by id: a webhook they set up (an alarm, a weather update), a command on their machine (the first run asks them once, on a card), or an arrangement. Actions of kind message are for the person to press, not for you. The result goes in the activity log; a webhook or command with show set puts its answer on the canvas.",
 	Schema: map[string]any{"type": "object", "properties": map[string]any{
 		"id": map[string]any{"type": "string", "description": "The action's id, from the actions listed in the prompt or find_records."},
 	}, "required": []string{"id"}, "additionalProperties": false},
@@ -46,6 +46,8 @@ func (s *Service) Run(ctx context.Context, id, canvas string) toolResult {
 			r.changes = append(r.changes, Change{Action: "ran", Component: ActionType, ID: id, Detail: title, Href: "/t/" + ActionType + "/" + id})
 		}
 		return r
+	case "command":
+		return s.command(ctx, rec, title)
 	case "message":
 		text, _ := rec.Fields["message"].(string)
 		if text == "" {
@@ -159,17 +161,21 @@ func (s *Service) actionsDigest() string {
 }
 
 // RunAs runs an action for a person or an agent and records what it did
-// under their name, returning what the action answered.
-func (s *Service) RunAs(ctx context.Context, actor, id, canvas string) (string, error) {
+// under their name, returning what the action answered. When the action
+// needs accepting first, proposal is the question now waiting for them.
+func (s *Service) RunAs(ctx context.Context, actor, id, canvas string) (text, proposal string, err error) {
 	r := s.Run(ctx, id, canvas)
 	for i := range r.changes {
 		Record(s.Store, actor, r.changes[i])
 	}
 	if r.change != nil {
+		if r.change.Action == "proposed" {
+			proposal = r.change.ID
+		}
 		Record(s.Store, actor, *r.change)
 	}
 	if r.isErr {
-		return r.text, errors.New(r.text)
+		return r.text, proposal, errors.New(r.text)
 	}
-	return r.text, nil
+	return r.text, proposal, nil
 }

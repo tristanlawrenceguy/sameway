@@ -76,7 +76,7 @@ func TestAWebhookActionCallsOutAndShowsItsAnswer(t *testing.T) {
 	if _, isErr := svc.Call("run_action", json.RawMessage(`{"id":"nope"}`)); !isErr {
 		t.Error("an unknown action should be refused")
 	}
-	if _, err := svc.RunAs(context.Background(), "human", weather.ID, ""); err != nil {
+	if _, _, err := svc.RunAs(context.Background(), "human", weather.ID, ""); err != nil {
 		t.Errorf("a person can run it too: %v", err)
 	}
 }

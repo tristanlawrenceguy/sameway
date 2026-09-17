@@ -164,6 +164,8 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 		return s.search(args.Query)
 	case "run_action":
 		return s.Run(context.Background(), args.ID, s.current)
+	case "accept_action":
+		return s.acceptAction(context.Background(), args.ID)
 	case "set_pace":
 		if s.SetPace == nil {
 			return fail("this workspace has no settings file to keep a pace in")

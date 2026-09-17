@@ -63,6 +63,8 @@ func proposalDetail(action any) string {
 		return "This would remove that block from the page."
 	case "update_component":
 		return "This would change that block."
+	case "accept_action":
+		return "This runs on your machine, as you, now and every time the button is pressed from now on. Change the command and it asks again."
 	}
 	return ""
 }
@@ -79,6 +81,8 @@ func acceptLabel(action any) string {
 		return "Yes, remove it"
 	case "update_component":
 		return "Yes, change it"
+	case "accept_action":
+		return "Yes, run it"
 	}
 	return ""
 }

@@ -2,7 +2,7 @@
 # Ask the assistant to make one, then put it on a button, or press Run on
 # its page.
 name: action
-description: A button that does something, pressed by you, by the assistant, or on a schedule. A webhook calls a URL of yours (an alarm, a weather service); an arrangement lays out a page; a message says something to the assistant for you.
+description: A button that does something, pressed by you, by the assistant, on a schedule, or from outside. A webhook calls a URL of yours (an alarm, a weather service); a command runs a command line on this machine as you, once you have accepted it; an arrangement lays out a page; a message says something to the assistant for you.
 title: title
 provided: true
 fields:
@@ -13,7 +13,7 @@ fields:
     description: What the button says, such as Turn on the alarm.
   kind:
     type: enum
-    values: [webhook, arrangement, message]
+    values: [webhook, command, arrangement, message]
     default: webhook
   url:
     type: string
@@ -25,10 +25,19 @@ fields:
   body:
     type: text
     description: For a webhook, what to send. JSON is sent as JSON, anything else as text.
+  command:
+    type: text
+    description: For a command action, the command line to run on this machine, as you. The first press asks you once, showing this line; after you accept, the button just runs it. Change the line and it asks again.
+  folder:
+    type: string
+    description: For a command action, where to run it. Defaults to the workspace folder.
+  accepted:
+    type: string
+    description: The command line you accepted, kept by the system. A command runs only while it matches this.
   show:
     type: bool
     default: false
-    description: For a webhook, put the answer on the canvas as a text block, kept up to date on every run.
+    description: For a webhook or a command, put the answer on the canvas as a text block, kept up to date on every run.
   arrangement:
     type: string
     description: For an arrangement action, its name from the catalogue.
@@ -50,6 +59,9 @@ fields:
     type: enum
     values: [monday, tuesday, wednesday, thursday, friday, saturday, sunday]
     description: For every week, which day.
+  trigger:
+    type: string
+    description: A long secret word. When set, anything outside can run this action by sending POST /hook/<word> to this server.
   last_run:
     type: string
     description: When it last ran on its own, kept by the system.

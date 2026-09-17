@@ -63,6 +63,9 @@ func (s *Service) propose(summary string, action map[string]any) toolResult {
 // clear everything, is not a question worth deferring.
 var proposable = map[string]bool{
 	"add_component": true, "update_component": true, "remove_component": true, "remove_canvas": true,
+	// accept_action is what a person's Yes does to a command action: it is
+	// accepted for good, then run.
+	"accept_action": true,
 }
 
 func proposableNames() []string {
@@ -112,6 +115,11 @@ func (s *Service) Accept(id string) error {
 	Record(s.Store, "human", Change{Action: "agreed to", Detail: truncate(summary, 80)})
 	if result.change != nil {
 		Record(s.Store, "assistant", *result.change)
+	}
+	// A tool that made several changes, such as a command that also put
+	// its answer on the canvas, is logged as the person's: they said yes.
+	for i := range result.changes {
+		Record(s.Store, "human", result.changes[i])
 	}
 	return nil
 }
