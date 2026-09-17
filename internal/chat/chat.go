@@ -97,7 +97,7 @@ func (s *Service) SendFile(ctx context.Context, canvas, text, fileID string) (*s
 	if _, err := s.Store.Create(MessageType, s.fields(MessageType, fields)); err != nil {
 		return nil, err
 	}
-	Record(s.Store, "human", Change{Action: "said", Detail: truncate(text, 80)})
+	said := Record(s.Store, "human", Change{Action: "said", Detail: truncate(text, 80)})
 	if s.Provider == nil {
 		err := s.ProviderErr
 		if err == nil {
@@ -142,6 +142,11 @@ func (s *Service) SendFile(ctx context.Context, canvas, text, fileID string) (*s
 						llm.Message{Role: llm.RoleUser, Content: "There is no page at " + strings.Join(missing, ", ") + ": nothing was made. Make it with the tools, then say where it is."})
 					continue
 				}
+			}
+			if s.runsToolsOutside() {
+				// The tools ran in the program the person is signed in to;
+				// the log knows what they did.
+				changes = s.changesAfter(said)
 			}
 			return s.Store.Create(MessageType, s.fields(MessageType, map[string]any{"role": "assistant", "content": reply, "changes": changes, "tools": tools}))
 		}
