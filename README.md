@@ -72,6 +72,7 @@ workspace file, because the workspace is meant to be shared.
 | Ask for a second tab and get a second canvas at `/c/<id>` | `POST /api/canvas`, or `create_canvas` over chat and MCP |
 | Every page is server-rendered HTML a screen reader can read | `GET /api/look?path=/t/note`: that page as a screen reader gets it, with its structural problems; also `look` over MCP and `sameway look` |
 | Add a file on `/t/file`, or attach one to a message: its contents become Markdown on its page, and the assistant reads them | `POST /t/file/upload` (multipart), `GET /files/<id>` for the original; a `files.convert` line in workspace.yaml names a converter per extension, a URL like docling-serve or a command with `{file}` |
+| Edit structured text as it is shown: headings, lists and links from a toolbar, the Markdown one button away | The same props route takes `html-<field>` and turns it into Markdown; `POST /api/prose` converts either way |
 
 ## The one contract
 

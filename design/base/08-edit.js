@@ -25,6 +25,9 @@
   // field builds the control for one marked element, carrying the text that
   // is there now.
   function field(el, blockId) {
+    // Structured text is edited as it is shown, by 11-prose-edit.js, when
+    // that is here; otherwise as the Markdown it was written in.
+    if (el.hasAttribute("data-source") && window.swProseField) return window.swProseField(el, blockId);
     var name = el.getAttribute("data-prop");
     var id = "edit-" + blockId + "-" + name;
     var wrap = document.createElement("div");
@@ -35,14 +38,16 @@
     lab.setAttribute("for", id);
     lab.textContent = label(name);
 
-    var multiline = MULTILINE[el.tagName] === 1 || el.textContent.indexOf("\n") >= 0;
+    var source = el.hasAttribute("data-source") ? el.getAttribute("data-source") : null;
+    var multiline = MULTILINE[el.tagName] === 1 || el.textContent.indexOf("\n") >= 0 || (source !== null && source.indexOf("\n") >= 0);
     var input = document.createElement(multiline ? "textarea" : "input");
     input.className = multiline ? "sw-field__textarea" : "sw-field__input";
     input.id = id;
     input.name = "prop-" + name;
     if (multiline) {
-      input.rows = Math.min(10, Math.max(3, el.textContent.split("\n").length + 1));
-      input.value = el.innerText.replace(/\n{3,}/g, "\n\n").trim();
+      var text = source !== null ? source : el.innerText.replace(/\n{3,}/g, "\n\n").trim();
+      input.rows = Math.min(10, Math.max(3, text.split("\n").length + 1));
+      input.value = text;
     } else {
       input.type = "text";
       input.value = el.hasAttribute("data-source") ? el.getAttribute("data-source") : el.textContent.trim();

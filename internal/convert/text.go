@@ -86,6 +86,12 @@ func htmlText(data []byte) (string, error) {
 	return htmlToMarkdown.ConvertString(string(data))
 }
 
+// HTMLToMarkdown turns HTML into Markdown: what a person edited on the
+// page, or a web page they added, becomes the same words as everything else.
+func HTMLToMarkdown(html string) (string, error) {
+	return htmlToMarkdown.ConvertString(html)
+}
+
 // epub is a zip of web pages; the OPF spine says what order they read in.
 func epub(data []byte) (string, error) {
 	z, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))

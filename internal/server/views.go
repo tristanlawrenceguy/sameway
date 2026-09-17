@@ -92,7 +92,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 		// Structured text shows its structure, and keeps what was written on
 		// the element so the inline editor edits the source, not the result.
 		if f.Type == "markdown" {
-			fmt.Fprintf(&b, `<dt>%s</dt><dd class="sw-prose" data-prop="%s" data-source="%s">%s</dd>`, template.HTMLEscapeString(label(f.Name)), f.Name, template.HTMLEscapeString(val), prose.Render(val, 3))
+			fmt.Fprintf(&b, `<dt>%s</dt><dd class="sw-prose" data-prop="%s" data-source="%s" data-prose-level="3">%s</dd>`, template.HTMLEscapeString(label(f.Name)), f.Name, template.HTMLEscapeString(val), prose.Render(val, 3))
 			continue
 		}
 		fmt.Fprintf(&b, `<dt>%s</dt><dd data-prop="%s">%s</dd>`, template.HTMLEscapeString(label(f.Name)), f.Name, template.HTMLEscapeString(val))
