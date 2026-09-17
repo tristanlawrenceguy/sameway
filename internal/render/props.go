@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
-
 	"github.com/tristanlawrenceguy/sameway/internal/prose"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
@@ -51,6 +50,11 @@ var Funcs = template.FuncMap{
 	"lines": func(s string) []string {
 		return strings.Split(strings.ReplaceAll(s, "\r\n", "\n"), "\n")
 	},
+	// linkify wraps internal paths like /t/note/abc and external URLs
+	// (http:// or https://) in <a class="sw-link" href="…">…</a> tags so that
+	// assistant chat replies can be navigated with one click.  javascript:
+	// payloads are rejected; everything else passes through as escaped text.
+	"linkify": linkify,
 }
 
 // optionPart reads one half of a select option, whichever shape it came in.
