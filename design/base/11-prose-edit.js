@@ -9,34 +9,12 @@
 // The raw Markdown stays one button away until the editor does everything
 // a person needs; then that button can go. 08-edit.js hands any element
 // with data-source to swProseField, and without this file it falls back
-// to a textarea of the source.
+// to a textarea of the source. The toolbar itself is 12-prose-tools.js.
 (function () {
   "use strict";
 
-  var TOOLS = [
-    ["Heading", "heading"], ["Subheading", "subheading"], ["Text", "paragraph"],
-    ["Bold", "bold"], ["Italic", "italic"], ["List", "insertUnorderedList"],
-    ["Numbered", "insertOrderedList"], ["Quote", "quote"], ["Link", "link"]
-  ];
-
   function label(name) {
     return name.charAt(0).toUpperCase() + name.slice(1).replace(/[_-]/g, " ");
-  }
-
-  // run applies one formatting command to the selection in the editor.
-  function run(editor, cmd, level) {
-    editor.focus();
-    switch (cmd) {
-      case "heading": document.execCommand("formatBlock", false, "H" + level); break;
-      case "subheading": document.execCommand("formatBlock", false, "H" + Math.min(6, level + 1)); break;
-      case "paragraph": document.execCommand("formatBlock", false, "P"); break;
-      case "quote": document.execCommand("formatBlock", false, "BLOCKQUOTE"); break;
-      case "link":
-        var href = window.prompt("Link to: a page here, like /t/note, or an address");
-        if (href) document.execCommand("createLink", false, href);
-        break;
-      default: document.execCommand(cmd, false, null);
-    }
   }
 
   // convert asks the server for the other form of the same words.
@@ -44,38 +22,6 @@
     fetch("/api/prose", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
       .then(function (r) { return r.json(); })
       .then(done);
-  }
-
-  // toolbar is a row of buttons the arrow keys move between, as a toolbar
-  // should, so Tab passes over it in one step.
-  function toolbar(editor, level) {
-    var bar = document.createElement("div");
-    bar.className = "sw-cluster sw-prose-tools";
-    bar.setAttribute("role", "toolbar");
-    bar.setAttribute("aria-label", "Formatting");
-    TOOLS.forEach(function (t, i) {
-      var b = document.createElement("button");
-      b.type = "button";
-      b.className = "sw-button sw-button--quiet sw-pressable";
-      b.textContent = t[0];
-      b.tabIndex = i === 0 ? 0 : -1;
-      // A press must not take the selection away from the words it is about.
-      b.addEventListener("mousedown", function (e) { e.preventDefault(); });
-      b.addEventListener("click", function () { run(editor, t[1], level); });
-      bar.appendChild(b);
-    });
-    bar.addEventListener("keydown", function (e) {
-      if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
-      var items = bar.querySelectorAll("button");
-      var at = Array.prototype.indexOf.call(items, document.activeElement);
-      if (at < 0) return;
-      e.preventDefault();
-      var next = items[(at + (e.key === "ArrowRight" ? 1 : items.length - 1)) % items.length];
-      items[at].tabIndex = -1;
-      next.tabIndex = 0;
-      next.focus();
-    });
-    return bar;
   }
 
   // swProseField builds the editor for one rendered field: the prose
@@ -118,7 +64,7 @@
     source.setAttribute("aria-labelledby", lab.id);
     source.value = el.getAttribute("data-source") || "";
 
-    var bar = toolbar(editor, level);
+    var bar = window.swProseToolbar ? window.swProseToolbar(editor, level) : document.createElement("div");
     var toggle = document.createElement("button");
     toggle.type = "button";
     toggle.className = "sw-button sw-button--quiet sw-pressable";
@@ -131,6 +77,7 @@
           editor.hidden = bar.hidden = true;
           html.disabled = true;
           source.hidden = source.disabled = false;
+          toggle.hidden = false;
           toggle.textContent = "Rich text";
           toggle.setAttribute("aria-pressed", "true");
           source.focus();
@@ -147,12 +94,15 @@
         });
       }
     });
-    bar.appendChild(toggle);
+    var switcher = document.createElement("div");
+    switcher.className = "sw-cluster sw-prose-switch";
+    switcher.appendChild(toggle);
 
     wrap.appendChild(lab);
     wrap.appendChild(bar);
     wrap.appendChild(editor);
     wrap.appendChild(source);
+    wrap.appendChild(switcher);
     wrap.appendChild(html);
     wrap.appendChild(lvl);
     return { wrap: wrap, input: editor };

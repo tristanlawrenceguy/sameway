@@ -6,3 +6,7 @@
 .sw-prose-editor > :last-child { margin-bottom: 0; }
 .sw-prose-tools { margin-bottom: var(--sw-space-2); gap: var(--sw-space-1); }
 .sw-prose-field textarea { margin-top: 0; }
+.sw-prose-switch { margin-top: var(--sw-space-1); }
+.sw-prose-tools [aria-pressed="true"] { background: var(--sw-color-accent-soft); color: var(--sw-color-accent); }
+.sw-prose-editor table { border-collapse: collapse; }
+.sw-prose-editor th, .sw-prose-editor td { border: 1px solid var(--sw-color-border); padding: var(--sw-space-1) var(--sw-space-2); min-width: calc(var(--sw-size-target) * 1.5); }
