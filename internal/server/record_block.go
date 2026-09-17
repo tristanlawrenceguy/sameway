@@ -43,6 +43,9 @@ func (s *Server) resolveRecord(props map[string]any) (map[string]any, string) {
 		if val == "" {
 			continue
 		}
+		if f.Type == "ref" {
+			val = s.refTitle(f, val)
+		}
 		if _, have := out["text"]; !have && isText(f) {
 			out["text"], out["textProp"] = val, f.Name
 			// Structured text shows its structure here as it does on the

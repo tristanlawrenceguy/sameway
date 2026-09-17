@@ -140,3 +140,6 @@ ol.sw-plain, ul.sw-plain { list-style: none; margin: 0; padding: 0; }
 .sw-prose th, .sw-prose td { text-align: left; padding: var(--sw-space-1) var(--sw-space-2); border-bottom: 1px solid var(--sw-color-border); }
 .sw-prose hr { border: 0; border-top: 1px solid var(--sw-color-border); margin: var(--sw-space-4) 0; }
 .sw-prose > :last-child { margin-bottom: 0; }
+
+/* What points at a record, listed under its fields on its own page. */
+.sw-backlinks { margin-top: var(--sw-space-5); }

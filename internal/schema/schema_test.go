@@ -226,3 +226,30 @@ func TestLoadFSMissingDirIsEmpty(t *testing.T) {
 		t.Fatalf("missing dir should be an empty set, got %v %v", set.Types, err)
 	}
 }
+
+// A ref field names the type it points at, and a workspace whose refs
+// point at a type it does not have is told so before it starts.
+func TestARefNamesWhatItPointsAt(t *testing.T) {
+	if _, err := schema.Parse([]byte("name: task\nfields:\n  title: {type: string}\n  project: {type: ref}\n")); err == nil || !strings.Contains(err.Error(), "needs to") {
+		t.Errorf("a ref without to is refused: %v", err)
+	}
+	typ := parse(t, "name: task\nfields:\n  title: {type: string}\n  project: {type: ref, to: project}\n")
+	props := typ.JSONSchema()["properties"].(map[string]any)
+	if desc, _ := props["project"].(map[string]any)["description"].(string); !strings.Contains(desc, "id of a project") {
+		t.Errorf("the schema says what a ref holds: %v", props["project"])
+	}
+	dir := t.TempDir()
+	os.WriteFile(filepath.Join(dir, "task.yaml"), []byte("name: task\nfields:\n  title: {type: string}\n  project: {type: ref, to: project}\n"), 0o644)
+	set, err := schema.Load(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := set.CheckRefs(); err == nil || !strings.Contains(err.Error(), `points at "project"`) {
+		t.Errorf("a ref to a missing type is named: %v", err)
+	}
+	os.WriteFile(filepath.Join(dir, "project.yaml"), []byte("name: project\nfields:\n  title: {type: string}\n"), 0o644)
+	set, _ = schema.Load(dir)
+	if err := set.CheckRefs(); err != nil {
+		t.Errorf("with the type there, refs are fine: %v", err)
+	}
+}

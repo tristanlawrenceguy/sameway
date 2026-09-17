@@ -16,7 +16,7 @@ import (
 )
 
 // FieldTypes lists every supported field type, in documentation order.
-var FieldTypes = []string{"string", "text", "markdown", "int", "float", "bool", "enum", "list", "json", "datetime"}
+var FieldTypes = []string{"string", "text", "markdown", "int", "float", "bool", "enum", "list", "json", "datetime", "ref"}
 
 var nameRe = regexp.MustCompile(`^[a-z][a-z0-9_]{0,63}$`)
 
@@ -32,7 +32,10 @@ type Field struct {
 	Default     any      `yaml:"default,omitempty" json:"default,omitempty"`
 	Values      []string `yaml:"values,omitempty" json:"values,omitempty"`
 	Of          string   `yaml:"of,omitempty" json:"of,omitempty"`
-	MaxLength   int      `yaml:"maxLength,omitempty" json:"maxLength,omitempty"`
+	// To is the content type a ref field points at: the field holds one
+	// record's id, and the page shows that record's title as a link.
+	To        string `yaml:"to,omitempty" json:"to,omitempty"`
+	MaxLength int    `yaml:"maxLength,omitempty" json:"maxLength,omitempty"`
 	// Multiline asks forms to give this field room: a textarea rather than
 	// one line, and one item per line for a list.
 	Multiline bool `yaml:"multiline,omitempty" json:"multiline,omitempty"`
@@ -130,6 +133,9 @@ func (t *Type) validate() error {
 		}
 		if f.Type == "list" && f.Of == "" {
 			f.Of = "string"
+		}
+		if f.Type == "ref" && f.To == "" {
+			return fmt.Errorf("type %s: ref field %s needs to: the type it points at", t.Name, f.Name)
 		}
 	}
 	if t.Title == "" {

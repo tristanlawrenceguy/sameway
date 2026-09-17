@@ -93,3 +93,47 @@ func TestAWrongConditionSaysWhatItCouldBe(t *testing.T) {
 		t.Errorf("an unknown order field is refused: %v", err)
 	}
 }
+
+// A ref is picked by the id it holds or by the title of what it points at.
+func TestARefMatchesByIdOrByTitle(t *testing.T) {
+	dir := t.TempDir()
+	os.WriteFile(filepath.Join(dir, "project.yaml"), []byte("name: project\ntitle: title\nfields:\n  title: {type: string, required: true}\n"), 0o644)
+	os.WriteFile(filepath.Join(dir, "task.yaml"), []byte("name: task\ntitle: title\nfields:\n  title: {type: string, required: true}\n  project: {type: ref, to: project}\n"), 0o644)
+	types, err := schema.Load(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	st, err := store.Open(":memory:", types)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer st.Close()
+	garden, _ := st.Create("project", map[string]any{"title": "Garden"})
+	house, _ := st.Create("project", map[string]any{"title": "House"})
+	st.Create("task", map[string]any{"title": "Dig the pond", "project": garden.ID})
+	st.Create("task", map[string]any{"title": "Paint the hall", "project": house.ID})
+	st.Create("task", map[string]any{"title": "Call the dentist"})
+	typ, _ := types.Get("task")
+	for _, c := range []struct {
+		where []string
+		want  string
+	}{
+		{[]string{"project=" + garden.ID}, "Dig the pond"},
+		{[]string{"project~gard"}, "Dig the pond"},
+		{[]string{"project=House"}, "Paint the hall"},
+		{[]string{"project="}, "Call the dentist"},
+		{[]string{"project!=" + garden.ID}, "Call the dentist|Paint the hall"},
+	} {
+		recs, err := query.Filter(st, typ, c.where, "title", 0, time.Now())
+		if err != nil {
+			t.Fatal(err)
+		}
+		var got []string
+		for _, r := range recs {
+			got = append(got, r.Fields["title"].(string))
+		}
+		if strings.Join(got, "|") != c.want {
+			t.Errorf("%v: got %q, want %q", c.where, strings.Join(got, "|"), c.want)
+		}
+	}
+}

@@ -156,6 +156,12 @@ func coerce(f Field, v any) (any, error) {
 			}
 		}
 		return nil, fmt.Errorf("must be true or false")
+	case "ref":
+		s, ok := v.(string)
+		if !ok {
+			return nil, fmt.Errorf("must be the id of a %s", f.To)
+		}
+		return strings.TrimSpace(s), nil
 	case "datetime":
 		s, ok := v.(string)
 		if !ok {
