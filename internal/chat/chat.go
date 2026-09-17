@@ -116,15 +116,24 @@ func (s *Service) SendFile(ctx context.Context, canvas, text, fileID string) (*s
 			if reply == "" {
 				reply = "(The model returned an empty reply.)"
 			}
-			// A reply that names a page which does not exist made nothing:
+			// A reply that names pages which do not exist made nothing:
 			// the model answered in words where a tool was needed. It is
-			// told so once, with the page it named, and asked again.
-			if missing := s.claimedMissing(reply); missing != "" && !corrected {
-				corrected = true
-				req.Messages = append(req.Messages,
-					llm.Message{Role: llm.RoleAssistant, Content: reply},
-					llm.Message{Role: llm.RoleUser, Content: "There is no page at " + missing + ": nothing was made. Make it with the tools, then say where it is."})
-				continue
+			// told so once, with each page it named, and asked again.
+			if !corrected {
+				claims, _ := VerifyClaims(ctx, s.Store, reply)
+				var missing []string
+				for _, c := range claims {
+					if !c.Exists {
+						missing = append(missing, c.URL)
+					}
+				}
+				if len(missing) > 0 {
+					corrected = true
+					req.Messages = append(req.Messages,
+						llm.Message{Role: llm.RoleAssistant, Content: reply},
+						llm.Message{Role: llm.RoleUser, Content: "There is no page at " + strings.Join(missing, ", ") + ": nothing was made. Make it with the tools, then say where it is."})
+					continue
+				}
 			}
 			return s.Store.Create(MessageType, s.fields(MessageType, map[string]any{"role": "assistant", "content": reply, "changes": changes}))
 		}
