@@ -1,8 +1,8 @@
 .sw-button {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--sw-space-2);
   min-height: var(--sw-size-target); min-width: var(--sw-size-target);
-  padding: var(--sw-space-2) var(--sw-space-4);
-  border: 2px solid transparent; border-radius: var(--sw-radius-md);
+  padding: var(--sw-space-2) var(--sw-space-6);
+  border: 2px solid transparent; border-radius: var(--sw-radius-pill);
   font: inherit; font-weight: 600; line-height: 1.2;
   cursor: pointer; text-decoration: none;
 }

@@ -13,7 +13,11 @@ html {
 }
 body {
   margin: 0;
+  /* Paper, with a wash of the person's colour at the top: the page is
+     theirs before anything is on it. */
   background: var(--sw-color-bg);
+  background-image: linear-gradient(to bottom, var(--sw-color-accent-soft), var(--sw-color-bg) 26rem);
+  background-repeat: no-repeat;
   color: var(--sw-color-fg);
   font-size: var(--sw-size-text-md);
   min-height: 100dvh;
@@ -23,7 +27,7 @@ h1, h2, h3, h4 { line-height: var(--sw-size-line-tight); letter-spacing: -0.015e
    a title before its size is noticed, and the body stays in the sans that
    every platform renders best at reading size. */
 h1, h2 { font-family: var(--sw-font-serif); font-weight: 700; letter-spacing: -0.01em; }
-h1 { font-size: var(--sw-size-text-2xl); margin: 0 0 var(--sw-space-6); }
+h1 { font-size: var(--sw-size-text-2xl); margin: 0 0 var(--sw-space-3); }
 p { margin: 0 0 var(--sw-space-3); }
 a { color: var(--sw-color-accent); text-underline-offset: 0.2em; }
 ::selection { background: var(--sw-color-accent-soft); color: var(--sw-color-fg); }

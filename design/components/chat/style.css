@@ -1,6 +1,6 @@
 .sw-chat { display: flex; flex-direction: column; min-width: 0; }
 .sw-chat--panel {
-  padding: var(--sw-space-4);
+  padding: var(--sw-space-6);
   background: var(--sw-color-bg-raised);
   border: 1px solid color-mix(in srgb, var(--sw-color-border) 60%, transparent);
   border-radius: var(--sw-radius-lg);

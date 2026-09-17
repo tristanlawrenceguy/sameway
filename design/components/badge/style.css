@@ -1,8 +1,8 @@
 .sw-badge {
   display: inline-flex; align-items: center; gap: var(--sw-space-1);
-  padding: 0.125rem var(--sw-space-2);
+  padding: 0.2rem var(--sw-space-3);
   border-radius: var(--sw-radius-pill);
-  font-size: var(--sw-size-text-xs); font-weight: 600; line-height: 1.5;
+  font-size: var(--sw-size-text-sm); font-weight: 600; line-height: 1.5;
   letter-spacing: 0.01em; white-space: nowrap;
   background: var(--sw-color-bg-muted); color: var(--sw-color-fg-muted);
 }
@@ -12,3 +12,6 @@
 .sw-badge--warning { background: var(--sw-color-warning-soft); color: var(--sw-color-warning); }
 .sw-badge--danger  { background: var(--sw-color-danger-soft);  color: var(--sw-color-danger); }
 .sw-badge--info    { background: var(--sw-color-info-soft);    color: var(--sw-color-info); }
+/* A fact with no state to it, such as a day, carries no dot: the dot says
+   "this is a state" and a date is not one. */
+.sw-badge--neutral::before { content: none; }
