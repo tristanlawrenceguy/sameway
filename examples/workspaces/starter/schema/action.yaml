@@ -1,0 +1,40 @@
+# An action: a button that does something, inside Sameway or outside it.
+# Ask the assistant to make one, then put it on a button, or press Run on
+# its page.
+name: action
+description: A button that does something. A webhook calls a URL of yours (an alarm, a weather service); an arrangement lays out a page; a message says something to the assistant for you.
+title: title
+provided: true
+fields:
+  title:
+    type: string
+    required: true
+    maxLength: 80
+    description: What the button says, such as Turn on the alarm.
+  kind:
+    type: enum
+    values: [webhook, arrangement, message]
+    default: webhook
+  url:
+    type: string
+    description: For a webhook, the address to call, starting with http:// or https://.
+  method:
+    type: enum
+    values: [POST, GET]
+    default: POST
+  body:
+    type: text
+    description: For a webhook, what to send. JSON is sent as JSON, anything else as text.
+  show:
+    type: bool
+    default: false
+    description: For a webhook, put the answer on the canvas as a text block, kept up to date on every run.
+  arrangement:
+    type: string
+    description: For an arrangement action, its name from the catalogue.
+  message:
+    type: text
+    description: For a message action, what to say to the assistant.
+  block:
+    type: string
+    description: The canvas block that shows this action's answer, kept by the system.

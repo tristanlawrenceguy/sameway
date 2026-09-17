@@ -224,6 +224,7 @@ func (a *App) Describe() Description {
 			"mcp":           "sameway mcp (Model Context Protocol over stdio: the tools listed here, plus describe and get_record)",
 			"html_list":     "GET /t/{type}",
 			"html_detail":   "GET /t/{type}/{id}",
+			"act":           "POST /act/{id} with from=<path to return to> runs one of the person's actions (a record of type action: a webhook, an arrangement, or a message to the assistant); POST /api/act/{id} runs it for an agent and answers with the result. A button block with action set to the id is the same press on the canvas",
 			"undo":          "POST /activity/{id}/undo with from=<path to return to>: reverses one activity entry for a person; agents call the undo_change tool. An entry that can be undone carries before, the thing as it was",
 			"content":       "content/<type>/<id>.md in the workspace is every record as Markdown with front matter, written as it changes; share the folder with git. sameway import reads it back after a pull, sameway export rewrites it",
 			"html_props":    "POST /t/{type}/{id}/props, form-encoded with each field named prop-<field>: the inline editor's route, which answers with the page rather than JSON",

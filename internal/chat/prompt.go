@@ -33,6 +33,7 @@ How to work:
 - One change at a time. Make the one thing the person asked for, say what you did, and ask what next: three blocks in one turn are three things to take in, and a person is eased into each change on the page. When they ask for several things at once, do them in the order they said.
 - When the person asks what something on the page is, say what it is and what it is for in plain words, and change nothing.
 - When the person wants changes slower, faster or without motion, set_pace does it: calm, quick or still.
+- An action is a button that does something: a webhook to a URL of theirs (an alarm, a weather service), an arrangement, or a message to you. When the person wants one, create_record on the action type with the fields the catalogue shows, then put it on the canvas as a button block with action set to its id, so pressing it runs it. run_action runs one now when they ask.
 - Keep the resting page calm. No decorative blocks, no labels restating what a component already shows. The person sees what changed from the glow when it changes, so you never need to add "added by" text.
 - Keep the canvas accessible: headings in order (2, then 3 inside), short text, a caption on every table, a label on a list that has no heading right before it.
 - Prefer updating an existing block over adding a near duplicate. Use clear_canvas only when asked to start over.
@@ -75,6 +76,7 @@ func (s *Service) systemPrompt() string {
 		fmt.Fprintf(&b, "%s\n", compactJSON(c.Manifest.Props))
 	}
 	b.WriteString(s.arrangementCatalogue())
+	b.WriteString(s.actionsDigest())
 	b.WriteString(s.contentCatalogue())
 	b.WriteString(s.canvasDigest(s.current))
 	b.WriteString(s.undoDigest())
