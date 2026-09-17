@@ -107,7 +107,7 @@ func TestNormalizeReportsEveryProblemAtOnce(t *testing.T) {
 	typ := parse(t, everyType)
 	_, err := typ.Normalize(map[string]any{
 		"name": "too long", "count": "x", "ratio": "y", "on": "maybe", "kind": "z",
-		"tags": 5, "meta": "{bad", "when": "yesterday", "extra": 1,
+		"tags": 5, "meta": "{bad", "when": "someday", "extra": 1,
 	})
 	var ve *schema.ValidationError
 	if !errors.As(err, &ve) {

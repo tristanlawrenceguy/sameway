@@ -9,6 +9,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // The record's own times are fields too, for ordering and for "changed
@@ -100,39 +101,5 @@ func text(v any) string {
 // a distance from now. day says whether it names a whole day rather than
 // an instant, so "due=tomorrow" means any time tomorrow.
 func parseDate(s string, now time.Time) (t time.Time, day bool, ok bool) {
-	s = strings.ToLower(strings.TrimSpace(s))
-	start := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-	switch s {
-	case "now":
-		return now, false, true
-	case "today":
-		return start, true, true
-	case "tomorrow":
-		return start.AddDate(0, 0, 1), true, true
-	case "yesterday":
-		return start.AddDate(0, 0, -1), true, true
-	}
-	if len(s) >= 3 && (s[0] == '+' || s[0] == '-') {
-		n, err := strconv.Atoi(s[1 : len(s)-1])
-		if err == nil {
-			if s[0] == '-' {
-				n = -n
-			}
-			switch s[len(s)-1] {
-			case 'd':
-				return now.AddDate(0, 0, n), false, true
-			case 'w':
-				return now.AddDate(0, 0, 7*n), false, true
-			case 'h':
-				return now.Add(time.Duration(n) * time.Hour), false, true
-			}
-		}
-	}
-	if t, err := time.ParseInLocation("2006-01-02", s, now.Location()); err == nil {
-		return t, true, true
-	}
-	if t, err := time.Parse(time.RFC3339, strings.ToUpper(s)); err == nil {
-		return t, false, true
-	}
-	return time.Time{}, false, false
+	return when.Parse(s, now)
 }

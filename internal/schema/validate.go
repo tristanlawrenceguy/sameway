@@ -3,6 +3,7 @@ package schema
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/tristanlawrenceguy/sameway/internal/when"
 	"strconv"
 	"strings"
 	"time"
@@ -163,15 +164,18 @@ func coerce(f Field, v any) (any, error) {
 		}
 		return strings.TrimSpace(s), nil
 	case "datetime":
+		// Written the way a person says it or the way a machine does;
+		// kept as a machine reads it. A day alone is midnight UTC on that
+		// date, the same day everywhere.
 		s, ok := v.(string)
 		if !ok {
-			return nil, fmt.Errorf("must be an RFC 3339 time")
+			return nil, fmt.Errorf("must be a day or a moment")
 		}
-		ts, err := time.Parse(time.RFC3339, s)
-		if err != nil {
-			return nil, fmt.Errorf("must be an RFC 3339 time like 2026-09-10T12:00:00Z")
+		ts, day, ok := when.Parse(s, time.Now())
+		if !ok {
+			return nil, fmt.Errorf("could not read %q as a day or a moment; try 19 Sep, next Friday, tomorrow 2pm, or 2026-09-19", s)
 		}
-		return ts.UTC().Format(time.RFC3339), nil
+		return when.Store(ts, day), nil
 	case "list":
 		return coerceList(f, v)
 	case "json":

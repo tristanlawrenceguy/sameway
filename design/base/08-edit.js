@@ -30,6 +30,7 @@
     if (el.classList.contains("sw-prose") && el.hasAttribute("data-source") && window.swProseField) return window.swProseField(el, blockId);
     var name = el.getAttribute("data-prop");
     var id = "edit-" + blockId + "-" + name;
+    if (el.getAttribute("data-kind") === "datetime") return dateField(el, id, name);
     var wrap = document.createElement("div");
     wrap.className = "sw-field sw-inline-field";
 
@@ -54,6 +55,54 @@
     }
     wrap.appendChild(lab);
     wrap.appendChild(input);
+    return { wrap: wrap, input: input };
+  }
+
+  var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+  // A day or a moment is written the way a person says it and read by the
+  // server: 19 Sep, next Friday, tomorrow 2pm. People know the day they
+  // mean and type it faster than they find it; the platform's own picker
+  // stands beside the words for anyone who would rather look at a month,
+  // and picking a day writes it into the words, keeping any time typed.
+  function dateField(el, id, name) {
+    var wrap = document.createElement("div");
+    wrap.className = "sw-field sw-inline-field sw-when";
+    var lab = document.createElement("label");
+    lab.className = "sw-field__label";
+    lab.setAttribute("for", id);
+    lab.textContent = label(name);
+    var hint = document.createElement("p");
+    hint.className = "sw-field__hint";
+    hint.id = id + "-hint";
+    hint.textContent = "A day, like 19 Sep or next Friday, with a time if there is one, like 2pm.";
+    var input = document.createElement("input");
+    input.className = "sw-field__input";
+    input.id = id;
+    input.name = "prop-" + name;
+    input.type = "text";
+    input.value = el.textContent.trim();
+    input.setAttribute("aria-describedby", hint.id);
+    var pick = document.createElement("input");
+    pick.className = "sw-field__input sw-datepicker sw-when__pick";
+    pick.type = "date";
+    pick.setAttribute("aria-label", "Pick the day for " + label(name).toLowerCase());
+    var source = el.getAttribute("data-source") || "";
+    if (/^\d{4}-\d{2}-\d{2}/.test(source)) pick.value = source.slice(0, 10);
+    pick.addEventListener("change", function () {
+      if (!pick.value) return;
+      var p = pick.value.split("-");
+      var day = Number(p[2]) + " " + MONTHS[Number(p[1]) - 1] + " " + p[0];
+      var time = (input.value.match(/\d{1,2}(:\d{2})?\s*(am|pm)\b|\d{1,2}:\d{2}/i) || [""])[0];
+      input.value = time ? day + " " + time : day;
+    });
+    var row = document.createElement("div");
+    row.className = "sw-when__row";
+    row.appendChild(input);
+    row.appendChild(pick);
+    wrap.appendChild(lab);
+    wrap.appendChild(hint);
+    wrap.appendChild(row);
     return { wrap: wrap, input: input };
   }
 

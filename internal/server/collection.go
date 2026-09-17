@@ -8,6 +8,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // collectionComponent is the block that shows the records matching a
@@ -98,9 +99,7 @@ func metaOf(t *schema.Type, rec *store.Record) string {
 	for _, f := range t.Fields {
 		if f.Type == "datetime" {
 			if v, ok := rec.Fields[f.Name].(string); ok && v != "" {
-				if ts, err := time.Parse(time.RFC3339, v); err == nil {
-					return label(f.Name) + " " + ts.Local().Format("2006-01-02")
-				}
+				return label(f.Name) + " " + when.Text(v)
 			}
 		}
 	}
@@ -169,11 +168,6 @@ func (s *Server) fieldsOf(t *schema.Type, rec *store.Record, names []string) []a
 		v := display(*f, rec.Fields[name])
 		if f.Type == "ref" {
 			v = s.refTitle(*f, v)
-		}
-		if f.Type == "datetime" && v != "" {
-			if ts, err := time.Parse(time.RFC3339, v); err == nil {
-				v = ts.Local().Format("2006-01-02")
-			}
 		}
 		out = append(out, map[string]any{"label": label(name), "value": v})
 	}

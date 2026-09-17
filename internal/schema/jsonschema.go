@@ -1,5 +1,7 @@
 package schema
 
+import "strings"
+
 // JSON Schema is how a content type describes itself to anything outside
 // this package: the describe endpoint, the API docs, and the tools a model
 // calls. It is generated from the same field list the store and the forms
@@ -44,6 +46,7 @@ func (t *Type) JSONSchema() map[string]any {
 		}
 		if f.Type == "datetime" {
 			p["format"] = "date-time"
+			p["description"] = strings.TrimSpace(f.Description + " A day as 2026-09-19 or a moment as RFC 3339; words are read too: tomorrow, next Friday, 19 Sep 2pm.")
 		}
 		props[f.Name] = p
 		if f.Required {
