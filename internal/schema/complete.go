@@ -83,6 +83,13 @@ func (s *Set) Complete(builtin *Set) {
 				t.Fields = append(t.Fields, f)
 			}
 		}
+		// What names a record of an internal type is the system's to say
+		// too: a workspace copy of the activity log from before the
+		// summary field named records by their verb, so every heading on
+		// the activity page read "said" long after the field existed.
+		if b.Internal && b.Title != "" {
+			t.Title = b.Title
+		}
 	}
 	sort.Slice(s.Types, func(i, j int) bool { return s.Types[i].Name < s.Types[j].Name })
 }

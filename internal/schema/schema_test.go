@@ -177,16 +177,19 @@ func TestCompleteAddsBuiltinFieldsToInternalTypes(t *testing.T) {
 	dir := t.TempDir()
 	old := "name: block\ninternal: true\nfields:\n  component: {type: string, required: true, description: mine}\n  position: {type: int}\n"
 	mine := "name: note\nfields:\n  title: {type: string}\n"
+	stale := "name: activity\ninternal: true\ntitle: action\nfields:\n  action: {type: string, required: true}\n"
 	os.WriteFile(filepath.Join(dir, "block.yaml"), []byte(old), 0o644)
 	os.WriteFile(filepath.Join(dir, "note.yaml"), []byte(mine), 0o644)
+	os.WriteFile(filepath.Join(dir, "activity.yaml"), []byte(stale), 0o644)
 	ws, err := schema.Load(dir)
 	if err != nil {
 		t.Fatal(err)
 	}
 	builtin, err := schema.LoadFS(fstest.MapFS{
-		"schema/block.yaml":  {Data: []byte("name: block\ninternal: true\nfields:\n  component: {type: string, required: true, description: theirs}\n  region: {type: enum, values: [main, left, right], default: main}\n")},
-		"schema/canvas.yaml": {Data: []byte("name: canvas\ninternal: true\nfields:\n  name: {type: string, required: true}\n")},
-		"schema/note.yaml":   {Data: []byte("name: note\nfields:\n  title: {type: string}\n  body: {type: text}\n")},
+		"schema/block.yaml":    {Data: []byte("name: block\ninternal: true\nfields:\n  component: {type: string, required: true, description: theirs}\n  region: {type: enum, values: [main, left, right], default: main}\n")},
+		"schema/canvas.yaml":   {Data: []byte("name: canvas\ninternal: true\nfields:\n  name: {type: string, required: true}\n")},
+		"schema/note.yaml":     {Data: []byte("name: note\nfields:\n  title: {type: string}\n  body: {type: text}\n")},
+		"schema/activity.yaml": {Data: []byte("name: activity\ninternal: true\ntitle: summary\nfields:\n  summary: {type: string}\n  action: {type: string, required: true}\n")},
 	}, "schema")
 	if err != nil {
 		t.Fatal(err)
@@ -207,6 +210,14 @@ func TestCompleteAddsBuiltinFieldsToInternalTypes(t *testing.T) {
 	if f, _ := blk.Field("component"); f.Description != "mine" {
 		t.Errorf("a field the workspace defines must stay as written, got %q", f.Description)
 	}
+	// What names a record is the system's to say for an internal type: an
+	// activity log copied before the summary field named events by their
+	// verb, so every heading on the activity page read "said".
+	if act, _ := ws.Get("activity"); act.Title != "summary" {
+		t.Errorf("an internal type takes the built-in title, got %q", act.Title)
+	} else if _, ok := act.Field("summary"); !ok {
+		t.Error("the field the title names arrives with it")
+	}
 	if note, _ := ws.Get("note"); len(note.Fields) != 1 {
 		t.Errorf("a type the person owns must not be completed, got %d fields", len(note.Fields))
 	}
@@ -215,7 +226,7 @@ func TestCompleteAddsBuiltinFieldsToInternalTypes(t *testing.T) {
 	if canvas, ok := ws.Get("canvas"); !ok || !canvas.Internal || len(canvas.Fields) != 1 {
 		t.Errorf("a missing internal type should be added from the built-in set, got %+v", canvas)
 	}
-	if names := strings.Join(ws.Names(), ","); names != "block,canvas,note" {
+	if names := strings.Join(ws.Names(), ","); names != "activity,block,canvas,note" {
 		t.Errorf("types stay sorted after completion, got %s", names)
 	}
 }
