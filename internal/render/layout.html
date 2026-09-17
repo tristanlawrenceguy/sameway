@@ -18,10 +18,13 @@
 <div class="sw-header__inner">
 <a class="sw-header__brand" href="/"><span class="sw-header__mark" aria-hidden="true"></span>{{.Site}}</a>
 {{if .Nav}}<nav class="sw-nav" aria-label="Main">
-<ul>{{range .Nav}}<li>{{.}}</li>{{end}}</ul>
+<ul>{{range .Nav}}<li{{if .Dot}} data-dot="{{.Dot}}"{{end}}>{{.HTML}}</li>{{end}}</ul>
 </nav>
 {{end}}{{if .Header}}<div class="sw-strip sw-strip--header">{{.Header}}</div>
-{{end}}</div>
+{{end}}<nav class="sw-nav sw-nav--more" aria-label="This workspace">
+<ul>{{range .More}}<li>{{.}}</li>{{end}}</ul>
+</nav>
+</div>
 </header>
 <div class="sw-shell">
 {{if .Left}}<aside class="sw-pane sw-pane--left" aria-label="Left pane">{{.Left}}</aside>
@@ -34,9 +37,8 @@
 {{end}}</div>
 <footer class="sw-footer">
 {{if .Footer}}<div class="sw-strip sw-strip--footer">{{.Footer}}</div>
-{{end}}<nav class="sw-nav sw-nav--more" aria-label="This workspace">
-<ul>{{range .More}}<li>{{.}}</li>{{end}}<li><a class="sw-link" href="/api/describe">For agents</a></li></ul>
-</nav>
+{{end}}<p class="sw-footer__agents"><a class="sw-link" href="/api/describe">For agents</a></p>
 </footer>
+
 </body>
 </html>

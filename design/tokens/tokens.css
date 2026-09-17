@@ -21,6 +21,12 @@
   --sw-color-human-soft: #ecf2fd;
   --sw-color-info: #2440ba;
   --sw-color-info-soft: #e8edff;
+  --sw-color-list-1: #2b7de9;
+  --sw-color-list-2: #3f9d5c;
+  --sw-color-list-3: #d99a00;
+  --sw-color-list-4: #d63a4a;
+  --sw-color-list-5: #8e5bd6;
+  --sw-color-list-6: #0f8f8f;
   --sw-color-success: #0f5a31;
   --sw-color-success-soft: #dcf3e4;
   --sw-color-system: #703e00;
@@ -87,6 +93,12 @@
     --sw-color-human-soft: #222749;
     --sw-color-info: #9db4ff;
     --sw-color-info-soft: #1a2547;
+    --sw-color-list-1: #6ea8ff;
+    --sw-color-list-2: #7fd19a;
+    --sw-color-list-3: #f2c94c;
+    --sw-color-list-4: #ff8a95;
+    --sw-color-list-5: #c3a1ff;
+    --sw-color-list-6: #5fd0d0;
     --sw-color-success: #7ee2a5;
     --sw-color-success-soft: #153a26;
     --sw-color-system: #f5c26b;
@@ -119,6 +131,12 @@
   --sw-color-human-soft: #222749;
   --sw-color-info: #9db4ff;
   --sw-color-info-soft: #1a2547;
+  --sw-color-list-1: #6ea8ff;
+  --sw-color-list-2: #7fd19a;
+  --sw-color-list-3: #f2c94c;
+  --sw-color-list-4: #ff8a95;
+  --sw-color-list-5: #c3a1ff;
+  --sw-color-list-6: #5fd0d0;
   --sw-color-success: #7ee2a5;
   --sw-color-success-soft: #153a26;
   --sw-color-system: #f5c26b;

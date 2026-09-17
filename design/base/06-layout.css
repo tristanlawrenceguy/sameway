@@ -86,7 +86,8 @@ ol.sw-plain, ul.sw-plain { list-style: none; margin: 0; padding: 0; }
 .sw-row--done .sw-row__link { color: var(--sw-color-fg-muted); text-decoration: line-through; }
 .sw-row--done .sw-row__link:hover { text-decoration: line-through underline; }
 .sw-row__meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--sw-space-2); margin: 0 0 0 auto; color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); white-space: nowrap; }
-.sw-when--past { color: var(--sw-color-warning); font-weight: 600; }
+.sw-when--past, .sw-when--today { color: var(--sw-color-warning); font-weight: 600; }
+.sw-row__note { color: var(--sw-color-fg-muted); font-weight: 400; font-size: var(--sw-size-text-sm); margin-left: var(--sw-space-2); }
 
 /* Crumbs are the way back from a detail page: the listing, then the item. */
 .sw-crumbs { margin-bottom: var(--sw-space-4); font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); }

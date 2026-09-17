@@ -31,6 +31,18 @@ well: green is done, blue is a state a thing is in, amber is a day that has
 passed or a notice from the software, red is an error. A chip is small and
 pale with darker text of the same hue.
 
+**A sidebar of lists.** On a wide screen the workspace's lists sit on the
+left on the quiet grey, each with a dot in its own colour, the current one
+on a darker tint; the rest of the workspace (chat, activity, the design
+system) is below them, smaller. The page is the rest of the width, its
+content on a reading measure with air on every side.
+
+**The day, the short way.** At the right of a row a day is "Today",
+"Tomorrow", "Saturday", "29 Sep", with the time when there is one, in the
+quiet ink; today and a day that has passed are amber, with the word. Under
+a title the same day is a blue chip in full. What a thing belongs to is
+grey words beside its title in a row and a grey chip under a title.
+
 **Rows and checkboxes.** A record with a yes-or-no field shows it as a
 checkbox at the front of its row, ticked in the blue, the title beside it
 as the link, the day it is due at the right in the quiet ink. A listing of
