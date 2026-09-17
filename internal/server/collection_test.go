@@ -77,3 +77,29 @@ func TestACollectionIsTheRecordsThatMatch(t *testing.T) {
 	}
 	_ = a
 }
+
+// The same matches can be a table with a column per chosen field, or
+// cards with the fields under each title; a ref shows the title it
+// points at and a date its day.
+func TestACollectionCanBeATableOrCards(t *testing.T) {
+	_, h := newApp(t)
+	var garden struct{ ID string }
+	decode(t, postJSON(t, h, http.MethodPost, "/api/project", map[string]any{"title": "Garden"}), &garden)
+	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/task", map[string]any{"title": "Order compost", "due": "2026-10-02T00:00:00Z", "project": garden.ID}), http.StatusCreated)
+	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/block", map[string]any{
+		"component": "collection", "props": map[string]any{"type": "task", "as": "table", "show": []string{"due", "project", "done"}, "label": "Open tasks"},
+	}), http.StatusCreated)
+	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/block", map[string]any{
+		"component": "collection", "props": map[string]any{"type": "project", "as": "cards", "show": []string{"status"}, "label": "Projects"},
+	}), http.StatusCreated)
+	page := get(t, h, "/").Body.String()
+	for _, want := range []string{
+		`<th scope="col">Title</th><th scope="col">Due</th><th scope="col">Project</th><th scope="col">Done</th>`,
+		`<th scope="row"><a class="sw-link" href="/t/task/`, `<td>2026-10-02</td><td>Garden</td><td>no</td>`,
+		`sw-collection__cards`, `<dt>Status</dt><dd>active</dd>`, `href="/t/project/` + garden.ID + `">Garden</a>`,
+	} {
+		if !strings.Contains(page, want) {
+			t.Errorf("the canvas should carry %s", want)
+		}
+	}
+}

@@ -88,48 +88,40 @@ func (s *Service) Tools() []llm.Tool {
 		s.arrangementTool(),
 		{Name: "set_pace", Description: "How changes arrive on the page, when the person asks for it slower, faster or without motion: calm (the default: where, then what, then the words, one change at a time with a pause between), quick (the same in a third of the time) or still (everything at once). Set it and say so; it is reversible, so never ask first.",
 			Schema: obj(map[string]any{"pace": map[string]any{"type": "string", "enum": []string{"calm", "quick", "still"}}}, "pace")},
-	}, append(s.recordTools(), s.canvasTools()...)...)
-}
-
-// toolResult is what one tool call produced: text for the model, an error
-// flag, and the change to record if any.
-type toolResult struct {
-	text   string
-	isErr  bool
-	change *Change
-	// changes is for a tool that makes several, such as an arrangement:
-	// each is logged and shown on its own.
-	changes []Change
-}
-
-func fail(format string, args ...any) toolResult {
-	return toolResult{text: fmt.Sprintf(format, args...), isErr: true}
+	}, append(append(s.recordTools(), s.canvasTools()...), shapeTools()...)...)
 }
 
 // runTool executes one tool call.
 func (s *Service) runTool(call llm.ToolCall) toolResult {
 	var args struct {
-		Component string         `json:"component"`
-		ID        string         `json:"id"`
-		Props     map[string]any `json:"props"`
-		Span      *int           `json:"span"`
-		Position  *int           `json:"position"`
-		Frame     string         `json:"frame"`
-		Tone      string         `json:"tone"`
-		Region    string         `json:"region"`
-		Size      string         `json:"size"`
-		Canvas    *string        `json:"canvas"`
-		Name      string         `json:"name"`
-		Summary   string         `json:"summary"`
-		Tool      string         `json:"tool"`
-		Type      string         `json:"type"`
-		Fields    map[string]any `json:"fields"`
-		Query     string         `json:"query"`
-		Where     []string       `json:"where"`
-		Order     string         `json:"order"`
-		Limit     int            `json:"limit"`
-		Pace      string         `json:"pace"`
-		Fills     map[string]any `json:"fills"`
+		Component   string         `json:"component"`
+		ID          string         `json:"id"`
+		Props       map[string]any `json:"props"`
+		Span        *int           `json:"span"`
+		Position    *int           `json:"position"`
+		Frame       string         `json:"frame"`
+		Tone        string         `json:"tone"`
+		Region      string         `json:"region"`
+		Size        string         `json:"size"`
+		Canvas      *string        `json:"canvas"`
+		Name        string         `json:"name"`
+		Summary     string         `json:"summary"`
+		Tool        string         `json:"tool"`
+		Type        string         `json:"type"`
+		Fields      map[string]any `json:"fields"`
+		Query       string         `json:"query"`
+		Where       []string       `json:"where"`
+		Order       string         `json:"order"`
+		Limit       int            `json:"limit"`
+		Pace        string         `json:"pace"`
+		Kind        string         `json:"kind"`
+		Description string         `json:"description"`
+		Values      []string       `json:"values"`
+		To          string         `json:"to"`
+		Required    bool           `json:"required"`
+		Default     any            `json:"default"`
+		Properties  []fieldDef     `json:"properties"`
+		Fills       map[string]any `json:"fills"`
 	}
 	if len(call.Args) > 0 {
 		if err := json.Unmarshal(call.Args, &args); err != nil {
@@ -154,6 +146,10 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 		return s.findRecords(args.Type, args.Query, args.Where, args.Order, args.Limit)
 	case "get_record":
 		return s.getRecord(args.Type, args.ID)
+	case "add_field":
+		return s.addField(args.Type, fieldDef{Name: args.Name, Kind: args.Kind, Description: args.Description, Values: args.Values, To: args.To, Required: args.Required, Default: args.Default})
+	case "add_type":
+		return s.addType(args.Name, args.Description, args.Properties)
 	case "add_component":
 		return s.addComponent(args.Component, args.Props, look{Span: args.Span, Position: args.Position, Frame: args.Frame, Tone: args.Tone, Region: args.Region, Size: args.Size, Canvas: deref(args.Canvas), SetCanvas: args.Canvas != nil})
 	case "update_component":

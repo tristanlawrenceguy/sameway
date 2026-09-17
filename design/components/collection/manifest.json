@@ -1,199 +1,40 @@
 {
   "name": "collection",
-  "version": "1.0.0",
-  "description": "The records that match a query, as a live list: the tasks due this week, the notes tagged garden, the drafts. The same few words pick them here, on the list page, in the assistant's find_records and on the command line.",
+  "version": "1.1.0",
+  "description": "The records that match a query, as a live list, table or cards: the tasks due this week, the notes tagged garden, the drafts, with the fields a person wants beside each. The same few words pick them here, on the list page, in the assistant's find_records and on the command line.",
   "icon": "≡",
-  "use": {
-    "when": "a person wants to see what matches, kept current as records change: what is due, what is open, what is tagged.",
-    "not": "one record on its own, which is a record block; or a search for words, which is the search block.",
-    "with": "a heading in label, and a record block or the list page for the full thing."
-  },
+  "use": {"when": "a person wants to see what matches, kept current as records change: what is due, what is open, what is tagged.", "not": "one record on its own, which is a record block; or a search for words, which is the search block.", "with": "a heading in label, and a record block or the list page for the full thing."},
   "props": {
     "type": "object",
     "additionalProperties": false,
-    "required": [
-      "type"
-    ],
+    "required": ["type"],
     "properties": {
-      "type": {
-        "type": "string",
-        "minLength": 1,
-        "description": "The content type, such as task."
-      },
-      "where": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        },
-        "description": "Conditions, all of which must hold. Each is field, operator, value with no spaces: status=draft, done=false, due<today, due<=+7d, title~garden (contains), tags=health (has), notes= for an empty field, due!= for a set one. Dates: 2026-10-01, today, tomorrow, yesterday, now, +7d, -1w. Leave out for every record."
-      },
-      "order": {
-        "type": "string",
-        "description": "A field to order by, or -field for the largest or newest first; created_at and updated_at work too. Newest first when left out."
-      },
-      "limit": {
-        "type": "integer",
-        "minimum": 1,
-        "maximum": 100,
-        "default": 20,
-        "description": "How many to show at most."
-      },
-      "detail": {
-        "type": "string",
-        "enum": [
-          "brief",
-          "full"
-        ],
-        "default": "brief",
-        "description": "brief is each title as a link with its state; full adds the text."
-      },
-      "label": {
-        "type": "string",
-        "description": "The heading over the list, saying what it is: Due this week."
-      },
-      "level": {
-        "type": "integer",
-        "minimum": 2,
-        "maximum": 4,
-        "default": 3,
-        "description": "Heading level of the label so the block fits the page outline."
-      },
-      "items": {
-        "type": "array",
-        "description": "Filled in by the server: the matching records. Leave out.",
-        "items": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "title",
-            "href"
-          ],
-          "properties": {
-            "title": {
-              "type": "string"
-            },
-            "href": {
-              "type": "string"
-            },
-            "meta": {
-              "type": "string"
-            },
-            "text": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "summary": {
-        "type": "string",
-        "description": "Filled in by the server: the conditions in words, shown when nothing matches. Leave out."
-      },
-      "all": {
-        "type": "string",
-        "description": "Filled in by the server: the list page with the same query. Leave out."
-      },
-      "problem": {
-        "type": "string",
-        "description": "Filled in by the server when a condition is wrong, saying what the type has instead. Leave out."
-      },
-      "id": {
-        "type": "string"
-      }
+      "type": {"type": "string", "minLength": 1, "description": "The content type, such as task."},
+      "where": {"type": "array", "items": {"type": "string"}, "description": "Conditions, all of which must hold. Each is field, operator, value with no spaces: status=draft, done=false, due<today, due<=+7d, title~garden (contains), tags=health (has), notes= for an empty field, due!= for a set one. Dates: 2026-10-01, today, tomorrow, yesterday, now, +7d, -1w. Leave out for every record."},
+      "order": {"type": "string", "description": "A field to order by, or -field for the largest or newest first; created_at and updated_at work too. Newest first when left out."},
+      "limit": {"type": "integer", "minimum": 1, "maximum": 100, "default": 20, "description": "How many to show at most."},
+      "detail": {"type": "string", "enum": ["brief", "full"], "default": "brief", "description": "brief is each title as a link with its state; full adds the text."},
+      "label": {"type": "string", "description": "The heading over the list, saying what it is: Due this week."},
+      "level": {"type": "integer", "minimum": 2, "maximum": 4, "default": 3, "description": "Heading level of the label so the block fits the page outline."},
+      "items": {"type": "array", "description": "Filled in by the server: the matching records. Leave out.", "items": {"type": "object", "additionalProperties": false, "required": ["title", "href"], "properties": {"title": {"type": "string"}, "href": {"type": "string"}, "meta": {"type": "string"}, "text": {"type": "string"}, "fields": {"type": "array", "description": "Filled in by the server from show.", "items": {"type": "object", "additionalProperties": false, "required": ["label", "value"], "properties": {"label": {"type": "string"}, "value": {"type": "string"}}}}}}},
+      "summary": {"type": "string", "description": "Filled in by the server: the conditions in words, shown when nothing matches. Leave out."},
+      "all": {"type": "string", "description": "Filled in by the server: the list page with the same query. Leave out."},
+      "problem": {"type": "string", "description": "Filled in by the server when a condition is wrong, saying what the type has instead. Leave out."},
+      "id": {"type": "string"},
+      "as": {"type": "string", "enum": ["list", "table", "cards"], "default": "list", "description": "How the matches are shown: list is each title as a link with the chosen fields beside it; table has a column per chosen field; cards are one card each with the fields under the title."},
+      "show": {"type": "array", "items": {"type": "string"}, "description": "Fields to show for each record, by name: due, status, project. A ref shows the title it points at. Leave out for the title and its state alone."},
+      "columns": {"type": "array", "items": {"type": "string"}, "description": "Filled in by the server from show: the column headings of a table. Leave out."},
+      "titleLabel": {"type": "string", "description": "Filled in by the server: what the title column is called. Leave out."}
     }
   },
-  "a11y": {
-    "role": "region",
-    "keyboard": [
-      {
-        "key": "Tab",
-        "does": "reaches each record's link, then the link to the list page with the same query"
-      }
-    ],
-    "states": [],
-    "wcag": {
-      "target": "AAA",
-      "notes": "The label is a real heading at the level the outline needs (1.3.1) and names the list for screen readers. Each item is a link with the record's title as its text (2.4.4). An empty result says so in words with the conditions, and a wrong condition says what the type has (3.3.1), rather than rendering nothing."
-    }
-  },
-  "machine": {
-    "selector": "[data-component=\"collection\"]",
-    "identify": "Read data-record-type for the type and data-where for the conditions. Each li is one matching record; its a href is the record's page.",
-    "operate": "Change what is shown by updating the block's where, order, limit and detail props. The link with class sw-collection__all opens the list page with the same query, where ?where= and ?order= carry it."
-  },
+  "a11y": {"role": "region", "keyboard": [{"key": "Tab", "does": "reaches each record's link, then the link to the list page with the same query"}], "states": [], "wcag": {"target": "AAA", "notes": "The label is a real heading at the level the outline needs (1.3.1) and names the list for screen readers. Each item is a link with the record's title as its text (2.4.4). An empty result says so in words with the conditions, and a wrong condition says what the type has (3.3.1), rather than rendering nothing. As a table, the title column is a row header and every column has a heading, so each cell is announced with both (1.3.1). As cards, each card's fields are a definition list."}},
+  "machine": {"selector": "[data-component=\"collection\"]", "identify": "Read data-record-type for the type and data-where for the conditions. As a list, each li is one matching record; as a table, each tbody row; as cards, each li holds an article. The first link in each is the record's page.", "operate": "Change what is shown by updating the block's where, order, limit and detail props. The link with class sw-collection__all opens the list page with the same query, where ?where= and ?order= carry it."},
   "examples": [
-    {
-      "name": "default",
-      "props": {
-        "type": "task",
-        "where": [
-          "done=false",
-          "due<=+7d"
-        ],
-        "order": "due",
-        "label": "Due this week",
-        "items": [
-          {
-            "title": "Order compost",
-            "href": "/t/task/k3n2p9",
-            "meta": "Due 2026-09-19"
-          },
-          {
-            "title": "Dig the pond",
-            "href": "/t/task/m8q4r1",
-            "meta": "Due 2026-09-21"
-          }
-        ],
-        "all": "/t/task?where=done%3Dfalse&where=due%3C%3D%2B7d&order=due"
-      },
-      "file": "examples/default.html"
-    },
-    {
-      "name": "full",
-      "props": {
-        "type": "note",
-        "where": [
-          "tags=garden"
-        ],
-        "detail": "full",
-        "label": "Garden notes",
-        "level": 2,
-        "items": [
-          {
-            "title": "Beds",
-            "href": "/t/note/a1",
-            "meta": "Draft",
-            "text": "Three of them, raised.\n\nCompost in October."
-          }
-        ],
-        "all": "/t/note?where=tags%3Dgarden"
-      },
-      "file": "examples/full.html"
-    },
-    {
-      "name": "empty",
-      "props": {
-        "type": "task",
-        "where": [
-          "done=false",
-          "due<today"
-        ],
-        "label": "Overdue",
-        "summary": "done=false, due<today",
-        "all": "/t/task?where=done%3Dfalse&where=due%3Ctoday"
-      },
-      "file": "examples/empty.html"
-    },
-    {
-      "name": "problem",
-      "props": {
-        "type": "task",
-        "where": [
-          "owner=me"
-        ],
-        "label": "Mine",
-        "problem": "task has no field \"owner\"; it has title, done, due, notes, tags, created_at, updated_at"
-      },
-      "file": "examples/problem.html"
-    }
+    {"name": "default", "props": {"type": "task", "where": ["done=false", "due<=+7d"], "order": "due", "label": "Due this week", "items": [{"title": "Order compost", "href": "/t/task/k3n2p9", "meta": "Due 2026-09-19"}, {"title": "Dig the pond", "href": "/t/task/m8q4r1", "meta": "Due 2026-09-21"}], "all": "/t/task?where=done%3Dfalse&where=due%3C%3D%2B7d&order=due"}, "file": "examples/default.html"},
+    {"name": "full", "props": {"type": "note", "where": ["tags=garden"], "detail": "full", "label": "Garden notes", "level": 2, "items": [{"title": "Beds", "href": "/t/note/a1", "meta": "Draft", "text": "Three of them, raised.\n\nCompost in October."}], "all": "/t/note?where=tags%3Dgarden"}, "file": "examples/full.html"},
+    {"name": "empty", "props": {"type": "task", "where": ["done=false", "due<today"], "label": "Overdue", "summary": "done=false, due<today", "all": "/t/task?where=done%3Dfalse&where=due%3Ctoday"}, "file": "examples/empty.html"},
+    {"name": "problem", "props": {"type": "task", "where": ["owner=me"], "label": "Mine", "problem": "task has no field \"owner\"; it has title, done, due, notes, tags, created_at, updated_at"}, "file": "examples/problem.html"},
+    {"name": "table", "props": {"type": "task", "where": ["done=false"], "as": "table", "show": ["due", "project"], "label": "Open tasks", "columns": ["Due", "Project"], "titleLabel": "Title", "items": [{"title": "Order compost", "href": "/t/task/k3n2p9", "fields": [{"label": "Due", "value": "2026-09-19"}, {"label": "Project", "value": "Garden"}]}, {"title": "Plant garlic", "href": "/t/task/m8q4r1", "fields": [{"label": "Due", "value": "2026-09-22"}, {"label": "Project", "value": "Garden"}]}], "all": "/t/task?where=done%3Dfalse"}, "file": "examples/table.html"},
+    {"name": "cards", "props": {"type": "project", "as": "cards", "show": ["status"], "label": "Projects", "items": [{"title": "Garden", "href": "/t/project/a1", "fields": [{"label": "Status", "value": "active"}], "text": "The back garden this autumn."}, {"title": "House", "href": "/t/project/a2", "fields": [{"label": "Status", "value": "done"}]}], "all": "/t/project"}, "file": "examples/cards.html"}
   ]
 }

@@ -50,7 +50,7 @@ func Open(path string, types *schema.Set) (*Store, error) {
 	}
 	db.SetMaxOpenConns(1)
 	s := &Store{db: db, types: types}
-	if err := s.migrate(); err != nil {
+	if err := s.Migrate(); err != nil {
 		db.Close()
 		return nil, err
 	}
@@ -63,7 +63,10 @@ func (s *Store) Close() error { return s.db.Close() }
 // Types returns the schema set this store was opened with.
 func (s *Store) Types() *schema.Set { return s.types }
 
-func (s *Store) migrate() error {
+// Migrate makes every table match the schema: a new type gets its table, a
+// new field its column. Open runs it, and so does adding a field or a type
+// while the workspace is running.
+func (s *Store) Migrate() error {
 	for _, t := range s.types.Types {
 		cols := []string{"id TEXT PRIMARY KEY", "created_at TEXT NOT NULL", "updated_at TEXT NOT NULL"}
 		for _, f := range t.Fields {
