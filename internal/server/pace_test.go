@@ -25,7 +25,7 @@ func TestPaceIsSetByAskingAndReadByThePage(t *testing.T) {
 	}
 
 	a.Chat.Provider, a.Chat.ProviderErr = &scripted{steps: []*llm.Response{
-		toolCall("set_pace", map[string]any{"pace": "quick"}),
+		toolCall("set_setting", map[string]any{"key": "ui.pace", "value": "quick"}),
 		{Text: "Faster from now on."},
 	}}, nil
 	postForm(t, h, "/chat", url.Values{"message": {"a bit faster please"}, "from": {"/"}})
@@ -35,7 +35,7 @@ func TestPaceIsSetByAskingAndReadByThePage(t *testing.T) {
 	if a.Workspace.Config.UI.Pace != "quick" {
 		t.Errorf("the workspace should remember the pace, got %q", a.Workspace.Config.UI.Pace)
 	}
-	if !logged(t, h, "Assistant set pace quick") {
+	if !logged(t, h, "Assistant set ui.pace quick") {
 		t.Error("setting the pace is a change like any other, in the log")
 	}
 }

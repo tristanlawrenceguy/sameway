@@ -82,7 +82,19 @@ func Load(dir string, memoryDB bool) (*App, error) {
 	llmCfg.Workspace = ws.Dir
 	llmCfg.Executable, _ = os.Executable()
 	a.Chat.Provider, a.Chat.ProviderErr = llm.New(llmCfg)
-	a.Chat.SetPace = ws.SetPace
+	a.Chat.SetSetting = func(key, value string) error {
+		if err := ws.Set(key, value); err != nil {
+			return err
+		}
+		// A new model setting is a new model: the next message goes to it.
+		if strings.HasPrefix(key, "llm.") {
+			cfg := ws.Config.LLM
+			cfg.Workspace = ws.Dir
+			cfg.Executable, _ = os.Executable()
+			a.Chat.Provider, a.Chat.ProviderErr = llm.New(cfg)
+		}
+		return nil
+	}
 	a.Chat.AddField, a.Chat.AddType = a.AddField, a.AddType
 	chat.Workdir = ws.Dir
 	return a, nil

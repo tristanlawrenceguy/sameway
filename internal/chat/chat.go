@@ -24,9 +24,9 @@ const maxToolRounds = 8
 
 // Service holds the dependencies for one workspace's chat.
 type Service struct {
-	// SetPace records how changes arrive, when the workspace can: calm,
-	// quick or still. Set by the app; nil when there is no workspace file.
-	SetPace func(pace string) error
+	// SetSetting changes one line of workspace.yaml, when there is one:
+	// the pace, which lists show, the model, the name. Set by the app.
+	SetSetting func(key, value string) error
 	// AddField and AddType change the workspace's schema while it runs, set
 	// by the app; nil when the workspace cannot be changed from here.
 	AddField     func(typeName string, f schema.Field) (*schema.Type, error)

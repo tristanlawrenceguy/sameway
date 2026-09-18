@@ -8,6 +8,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
 // BlockType is the content type that holds canvas items.
@@ -86,8 +87,8 @@ func (s *Service) Tools() []llm.Tool {
 		searchTool,
 		actionTool,
 		s.arrangementTool(),
-		{Name: "set_pace", Description: "How changes arrive on the page, when the person asks for it slower, faster or without motion: calm (the default: where, then what, then the words, one change at a time with a pause between), quick (the same in a third of the time) or still (everything at once). Set it and say so; it is reversible, so never ask first.",
-			Schema: obj(map[string]any{"pace": map[string]any{"type": "string", "enum": []string{"calm", "quick", "still"}}}, "pace")},
+		{Name: "set_setting", Description: "Change one setting of this workspace when the person asks for it, and say so; each is reversible, so never ask first. The settings: " + workspace.SettingsDoc() + ". A setting that holds a key or a token takes the NAME of the environment variable that holds it, never the key.",
+			Schema: obj(map[string]any{"key": map[string]any{"type": "string", "enum": workspace.SettingKeys()}, "value": map[string]any{"type": "string"}}, "key", "value")},
 	}, append(append(s.recordTools(), s.canvasTools()...), shapeTools()...)...)
 }
 
@@ -113,7 +114,8 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 		Where       []string       `json:"where"`
 		Order       string         `json:"order"`
 		Limit       int            `json:"limit"`
-		Pace        string         `json:"pace"`
+		Key         string         `json:"key"`
+		Value       string         `json:"value"`
 		Kind        string         `json:"kind"`
 		Description string         `json:"description"`
 		Values      []string       `json:"values"`
@@ -166,14 +168,18 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 		return s.Run(context.Background(), args.ID, s.current)
 	case "accept_action":
 		return s.acceptAction(context.Background(), args.ID)
-	case "set_pace":
-		if s.SetPace == nil {
-			return fail("this workspace has no settings file to keep a pace in")
+	case "set_setting":
+		if s.SetSetting == nil {
+			return fail("this workspace has no settings file")
 		}
-		if err := s.SetPace(args.Pace); err != nil {
+		if err := s.SetSetting(args.Key, args.Value); err != nil {
 			return fail("%v", err)
 		}
-		return toolResult{text: "changes now arrive " + args.Pace, change: &Change{Action: "set", Component: "pace", Detail: args.Pace}}
+		note := ""
+		if args.Key == "server.addr" {
+			note = ", from the next start"
+		}
+		return toolResult{text: args.Key + " is now " + args.Value + note, change: &Change{Action: "set", Component: args.Key, Detail: args.Value}}
 	case "clear_canvas":
 		// Starting over means clearing the content, not deleting the
 		// conversation the person is typing into.
