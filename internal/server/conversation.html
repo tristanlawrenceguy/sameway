@@ -1,4 +1,3 @@
-<div class="sw-region__head">{{.Status}}</div>
 {{if .Messages}}<ol class="sw-plain sw-stack sw-chat__log" aria-label="Messages" tabindex="-1">
 {{range .Messages}}<li style="view-transition-name: {{.ID}}; view-transition-class: sw-vt-item">{{.HTML}}</li>
 {{end}}</ol>
@@ -10,6 +9,6 @@
 <h3 id="compose-heading" class="sw-visually-hidden">Compose</h3>
 <input type="hidden" name="from" value="{{.From}}">
 {{.Compose}}
-<div class="sw-cluster"><label class="sw-compose__attach sw-small sw-muted" for="attach">Attach a file</label> <input type="file" id="attach" name="file" class="sw-compose__file sw-small">{{.Send}}</div>
+<div class="sw-cluster"><label class="sw-compose__attach sw-small sw-muted" for="attach">Attach a file</label> <input type="file" id="attach" name="file" class="sw-compose__file sw-small">{{.Send}}{{.Status}}</div>
 </form>
 <div class="sw-cluster sw-quiet">{{if .ModelName}}<span class="sw-muted sw-small">{{.ModelName}}</span>{{end}}{{if .Messages}}<form method="post" action="/chat/clear"><input type="hidden" name="from" value="{{.From}}">{{.Clear}}</form>{{end}}</div>
