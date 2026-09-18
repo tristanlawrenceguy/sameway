@@ -51,15 +51,14 @@ func (s *Server) designColour(b *strings.Builder) {
 }
 
 func (s *Server) designType(b *strings.Builder) {
-	b.WriteString(`<h2 id="type">Type</h2><p class="sw-prose">System font stack, fluid sizes above the body size, line height 1.6 for reading and 1.2 for headings, tabular numerals everywhere. Measure is capped at 68 characters.</p>`)
-	for _, size := range []string{"2xl", "xl", "lg", "md", "sm", "xs"} {
-		fmt.Fprintf(b, `<p style="font-size: var(--sw-size-text-%s); margin: 0 0 var(--sw-space-2)">The quick brown fox <code class="sw-small">--sw-size-text-%s</code></p>`, size, size)
+	b.WriteString(`<h2 id="type">Type</h2><p class="sw-prose">A single type scale keeps hierarchy readable at any size. The heading component renders it so the page outline matches what the assistant plans.</p>`)
+	for _, level := range []int{2, 3, 4, 5, 6} {
+		fmt.Fprintf(b, "<div class=\"sw-example\"><h4 class=\"sw-small\">heading \u2014 level %d</h4><p class=\"sw-small sw-muted\"><code>{\"text\": \"Type scale example\", \"level\": %d}</code></p><div class=\"sw-example__render\">%s</div></div>", level, level, s.component("heading", map[string]any{"text": "Type scale example", "level": level}))
 	}
 }
 
 func (s *Server) designMotion(b *strings.Builder) {
-	b.WriteString(`<h2 id="motion">Motion</h2><p class="sw-prose">Three durations (120, 220, 420 ms) and one curve. Pages use cross-document view transitions, so adding, editing, and removing blocks animates across full-page navigations without JavaScript. Blocks changed in the last turn flash once on load. Everything stops under <code>prefers-reduced-motion</code>; the change marker becomes a static ring.</p>`)
-	b.WriteString(`<div class="sw-cluster"><div class="sw-panel sw-enter" style="width: 14rem">Enters with <code>.sw-enter</code></div><div class="sw-panel" data-changed="added" data-actor="assistant" style="width: 14rem">Flashes with <code>data-changed</code></div></div>`)
+	b.WriteString(`<h2 id="motion">Motion</h2><p class="sw-prose">A single fade-and-slide animation gives feedback without distraction. Everything stops under <code>prefers-reduced-motion</code>; the change marker becomes a static ring.</p>`)
 }
 
 func (s *Server) designStates(b *strings.Builder) {
@@ -109,8 +108,8 @@ func (s *Server) designComponents(b *strings.Builder) {
 		}
 		for _, ex := range c.Manifest.Examples {
 			props, _ := json.Marshal(ex.Props)
-			fmt.Fprintf(b, `<div class="sw-example"><p class="sw-small sw-muted">%s <code>%s</code></p><div class="sw-example__render">%s</div></div>`,
-				template.HTMLEscapeString(ex.Name), template.HTMLEscapeString(string(props)), s.component(c.Manifest.Name, ex.Props))
+			fmt.Fprintf(b, "<div class=\"sw-example\"><h4 class=\"sw-small\">%s \u2014 %s</h4><p class=\"sw-small sw-muted\"><code>%s</code></p><div class=\"sw-example__render\">%s</div></div>",
+				template.HTMLEscapeString(c.Manifest.Name), template.HTMLEscapeString(ex.Name), template.HTMLEscapeString(string(props)), s.component(c.Manifest.Name, ex.Props))
 		}
 		b.WriteString(`</section>`)
 	}
