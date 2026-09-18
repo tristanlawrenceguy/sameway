@@ -16,6 +16,10 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
+// Canvas card controls on / include the note title instead of "card":
+// edit controls read as "Edit {{.Title}}", expand as "Expand {{.Title}}",
+// and remove as "Remove {{.Title}}" via canvasBlock's context prop.
+
 // listPage shows every record of a type as cards.
 func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	t, ok := s.app.Types.Get(r.PathValue("type"))

@@ -91,8 +91,8 @@ func (s *Server) blockItem(blk *store.Record, convo *conversation) string {
 		body = s.chatBlock(blk, convo)
 	}
 	var b strings.Builder
-	fmt.Fprintf(&b, `<li class="sw-block sw-reveal" data-block-id="%s" data-block-component="%s" data-actor="%s" data-frame="%s" data-tone="%s" data-size="%s"`,
-		v.ID, v.Component, v.Actor, v.Frame, v.Tone, v.Size)
+	fmt.Fprintf(&b, `<li class="sw-block sw-reveal" data-block-id="%s" data-block-component="%s" data-actor="%s" data-frame="%s" data-tone="%s" data-size="%s" data-block-label="%s"`,
+		v.ID, v.Component, v.Actor, v.Frame, v.Tone, v.Size, template.HTMLEscapeString(v.Label))
 	if v.Changed != "" {
 		fmt.Fprintf(&b, ` data-changed="%s"`, v.Changed)
 	}
@@ -204,10 +204,10 @@ func (s *Server) canvasBlock(b *store.Record, convo *conversation) canvasBlock {
 		Provenance: provenance, EditAction: editAction,
 		HTML: s.component(name, props),
 		Expand: s.component("link", map[string]any{
-			"href": "/canvas/" + b.ID, "label": "Expand", "context": name,
+			"href": "/canvas/" + b.ID, "label": "Expand", "context": label,
 			"current": convo != nil && convo.FocusID == b.ID,
 		}),
-		Remove: s.component("button", map[string]any{"label": "Remove", "context": name, "type": "submit", "variant": "quiet"}),
+		Remove: s.component("button", map[string]any{"label": "Remove", "context": label, "type": "submit", "variant": "quiet"}),
 	}
 }
 

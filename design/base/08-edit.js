@@ -186,11 +186,13 @@
     var bar = block.querySelector(".sw-bar");
     if (!bar || bar.querySelector("[data-edit]")) return;
     var name = block.getAttribute("data-block-component") || "block";
+    var label = block.getAttribute("data-block-label");
+    if (!label) { label = name; }
     var btn = document.createElement("button");
     btn.type = "button";
     btn.className = "sw-button sw-button--quiet sw-pressable";
     btn.setAttribute("data-edit", "");
-    btn.innerHTML = 'Edit<span class="sw-visually-hidden"> ' + name + "</span>";
+    btn.innerHTML = 'Edit<span class="sw-visually-hidden"> ' + label + "</span>";
     btn.addEventListener("click", function () { edit(block); });
     bar.insertBefore(btn, bar.firstChild);
   }

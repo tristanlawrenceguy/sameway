@@ -61,7 +61,7 @@ func TestBlockCanBePoppedOut(t *testing.T) {
 	if len(links) != 1 {
 		t.Fatalf("expected one way to expand the block, got %d", len(links))
 	}
-	if name := canvas.AccessibleName(links[0]); name != "Expand calendar" {
+	if name := canvas.AccessibleName(links[0]); name != "Expand September 2026" {
 		t.Errorf("expand link reads as %q", name)
 	}
 
