@@ -131,7 +131,12 @@ reload. The log follows the turn only while the person is reading its
 end: someone who has scrolled up or is selecting text is left where they
 are. A message sent while the assistant is working waits and goes when
 the turn is done. The turn itself runs to its end even if the page that
-asked for it goes away, so a closed tab never leaves a change half made. When several land at once they come
+asked for it goes away, so a closed tab never leaves a change half made;
+a Stop control beside the status ends it on purpose, and the reply then
+says it was stopped, with what was done kept. There is no limit on how
+many tools a turn may use: it ends early only when it is plainly getting
+nowhere (the same call again, or tools failing three rounds running),
+and then in words, not an error. When several land at once they come
 one at a time with a breath between (`motion-between` scaled to the
 pace: none under `still` or reduced motion), so there is time to take
 each in; a single change is not delayed. Without scripts the form posts

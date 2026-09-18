@@ -37,9 +37,15 @@ func call(name string, args map[string]any) *llm.Response {
 	return &llm.Response{ToolCalls: []llm.ToolCall{{ID: "c", Name: name, Args: raw}}}
 }
 
+// lastToolResult is the newest tool result in a request: the last
+// message may be words instead, when the turn is being asked to wrap up.
 func lastToolResult(req llm.Request) llm.ToolResult {
-	last := req.Messages[len(req.Messages)-1]
-	return last.ToolResults[len(last.ToolResults)-1]
+	for i := len(req.Messages) - 1; i >= 0; i-- {
+		if n := len(req.Messages[i].ToolResults); n > 0 {
+			return req.Messages[i].ToolResults[n-1]
+		}
+	}
+	return llm.ToolResult{}
 }
 
 func withModel(t *testing.T, steps ...*llm.Response) (*chat.Service, *scripted) {
