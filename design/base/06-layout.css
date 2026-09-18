@@ -65,6 +65,10 @@ ol.sw-plain, ul.sw-plain { list-style: none; margin: 0; padding: 0; }
   border-radius: var(--sw-radius-lg); box-shadow: var(--sw-shadow-2);
 }
 .sw-detail__body { margin: 0 0 var(--sw-space-6); }
+/* On a record's own page its two controls, Edit and Delete, are not
+   chrome to fade: a person came here for this one thing. They stay
+   visible where the quiet bar puts them. */
+.sw-dl-block > .sw-bar.sw-quiet { --sw-quiet-opacity: 1; }
 .sw-dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0 var(--sw-space-8); margin: 0; max-width: var(--sw-size-measure); }
 .sw-dl dt, .sw-dl dd { padding: var(--sw-space-3) 0; border-top: 1px solid var(--sw-color-border); }
 .sw-dl dt { font-weight: 500; font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); padding-top: calc(var(--sw-space-3) + 0.1em); }
