@@ -97,8 +97,20 @@
       // What a reload would have brought: the recent activity, the skip
       // link to the newest message, and the address naming it.
       var activity = document.querySelector(".sw-activity");
+      if (!activity && d.activity) {
+        // A page that had nothing to report yet has no place for it.
+        activity = el('<div class="sw-activity"></div>');
+        var page = document.querySelector(".sw-main .sw-page") || document.querySelector(".sw-main .sw-empty");
+        if (page) page.after(activity); else if (document.querySelector(".sw-main")) document.querySelector(".sw-main").appendChild(activity);
+      }
       if (activity && d.activity) activity.innerHTML = d.activity;
       if (d.id) {
+        var skips = document.querySelectorAll('a.sw-skip[href^="#msg-"]');
+        if (!skips.length) {
+          // The first message on a page brings the way to the newest one.
+          var first = document.querySelector("a.sw-skip");
+          if (first) first.after(el('<a class="sw-skip" href="#msg-' + d.id + '">Skip to latest message</a>'));
+        }
         document.querySelectorAll('a.sw-skip[href^="#msg-"]').forEach(function (a) { a.setAttribute("href", "#msg-" + d.id); });
         if (window.history && history.replaceState) history.replaceState(null, "", "#msg-" + d.id);
         var el = document.getElementById("msg-" + d.id);
