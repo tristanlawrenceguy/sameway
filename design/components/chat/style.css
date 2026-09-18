@@ -1,17 +1,39 @@
 .sw-chat { display: flex; flex-direction: column; min-width: 0; }
-.sw-chat--panel {
-  padding: var(--sw-space-6);
-  background: var(--sw-color-bg-raised);
-  border: 1px solid var(--sw-color-border);
-  border-radius: var(--sw-radius-lg);
-  box-shadow: var(--sw-shadow-1);
-}
-.sw-chat__title { margin: 0 0 var(--sw-space-4); font-size: var(--sw-size-text-lg); }
+/* The chat is its own thing on the page: air around it, no box. The
+   messages carry their own shape. */
+.sw-chat--panel { padding: var(--sw-space-4) var(--sw-space-2); }
+.sw-chat__title { margin: 0 0 var(--sw-space-2); font-size: var(--sw-size-text-lg); }
 .sw-chat--bare > .sw-chat__title { margin: 0; }
 .sw-chat__body { min-width: 0; }
+/* The tools: which chat, where it sits, and a window of its own. */
+.sw-chat__tools { margin-bottom: var(--sw-space-3); align-items: center; }
+.sw-chat__current { font-weight: 700; color: var(--sw-color-fg); max-width: 20rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sw-chat__menu { position: relative; }
+.sw-chat__menu > summary { list-style: none; display: inline-flex; align-items: center; gap: var(--sw-space-1); }
+.sw-chat__menu > summary::-webkit-details-marker { display: none; }
+.sw-chat__menu > summary::after { content: "▾"; font-size: var(--sw-size-text-xs); color: var(--sw-color-fg-muted); }
+.sw-chat__panel {
+  position: absolute; z-index: 20; top: calc(100% + var(--sw-space-1)); left: 0;
+  min-width: 18rem; max-width: min(28rem, 90vw); padding: var(--sw-space-3);
+  background: var(--sw-color-bg-raised); border: 1px solid var(--sw-color-border); border-radius: var(--sw-radius-lg); box-shadow: var(--sw-shadow-2);
+  display: grid; gap: var(--sw-space-2);
+}
+.sw-chat__panel > p { margin: var(--sw-space-2) 0 0; }
+.sw-chat__list { display: grid; gap: var(--sw-space-1); max-height: 20rem; overflow-y: auto; }
+.sw-chat__list li { display: flex; align-items: center; gap: var(--sw-space-2); }
+.sw-chat__list li > form:first-child { flex: 1; min-width: 0; }
+.sw-chat__open {
+  width: 100%; text-align: left; font: inherit; color: var(--sw-color-fg); background: none; border: 0; cursor: pointer;
+  padding: var(--sw-space-2); border-radius: var(--sw-radius-md); display: flex; justify-content: space-between; gap: var(--sw-space-2);
+}
+.sw-chat__open:hover { background: var(--sw-color-bg-muted); }
+.sw-chat__open:focus-visible { outline: var(--sw-focus-width) solid var(--sw-color-focus); outline-offset: var(--sw-focus-offset); }
+.sw-chat__list li[aria-current="true"] .sw-chat__open { background: var(--sw-color-accent-soft); color: var(--sw-color-accent); }
+.sw-chat__panel [aria-current="true"] { background: var(--sw-color-accent-soft); color: var(--sw-color-accent); }
 /* The transcript scrolls inside the region so the composer stays reachable
-   however tall the conversation grows. */
-.sw-chat__log { scroll-behavior: smooth; max-height: min(48vh, 32rem); overflow-y: auto; padding-right: var(--sw-space-2); }
+   however tall the conversation grows. The person can drag it taller or
+   shorter by its corner. */
+.sw-chat__log { scroll-behavior: smooth; max-height: min(60vh, 40rem); min-height: 6rem; overflow-y: auto; resize: vertical; padding-right: var(--sw-space-2); }
 .sw-chat__log:focus-visible { outline-offset: 0; }
 /* The composer's file control is the platform's own; its button is drawn
    like the other quiet buttons so the row reads as one thing. */

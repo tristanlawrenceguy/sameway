@@ -1,8 +1,10 @@
+/* A message is words with a dot for who said them: no box, no line. The
+   person's words sit on a wash of their blue; the assistant's sit on the
+   page. */
 .sw-message {
   position: relative;
   padding: var(--sw-space-3) var(--sw-space-4);
-  border: 1px solid var(--sw-color-border); border-radius: var(--sw-radius-lg);
-  background: var(--sw-color-bg-raised); box-shadow: var(--sw-shadow-1);
+  border-radius: var(--sw-radius-lg);
   max-width: var(--sw-size-measure);
   overflow: hidden;
 }
@@ -14,9 +16,9 @@
   background: var(--sw-actor, var(--sw-color-border-strong));
   box-shadow: 0 0 0 3px var(--sw-actor-soft, var(--sw-color-bg-muted));
 }
-.sw-message--user { background: var(--sw-color-human-soft); border-color: transparent; box-shadow: none; }
-.sw-message--error { border-color: var(--sw-color-danger); }
-.sw-message--error .sw-message__author::before { background: var(--sw-color-danger); box-shadow: 0 0 0 3px var(--sw-color-danger-soft); }
+.sw-message--user { background: var(--sw-color-human-soft); }
+.sw-message--error { background: var(--sw-color-danger-soft); }
+.sw-message--error .sw-message__author::before { background: var(--sw-color-danger); box-shadow: 0 0 0 3px var(--sw-color-bg-raised); }
 .sw-message__meta { margin: 0 0 var(--sw-space-2); font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); display: flex; gap: var(--sw-space-2); align-items: baseline; }
 .sw-message__author { font-weight: 700; color: var(--sw-actor, var(--sw-color-fg)); }
 .sw-message--error .sw-message__author { color: var(--sw-color-danger); }
@@ -25,7 +27,6 @@
 .sw-message__body p:last-child { margin-bottom: 0; }
 .sw-message__changes {
   list-style: none; margin: var(--sw-space-3) 0 0; padding: var(--sw-space-2) 0 0;
-  border-top: 1px dashed var(--sw-color-border);
   display: flex; flex-wrap: wrap; gap: var(--sw-space-2);
   font-size: var(--sw-size-text-xs);
 }

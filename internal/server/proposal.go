@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -99,9 +98,7 @@ func (s *Server) proposalDismiss(w http.ResponseWriter, r *http.Request) {
 // looking, rather than on an error page they did not ask for.
 func (s *Server) answer(w http.ResponseWriter, r *http.Request, apply func(string) error) {
 	if err := apply(r.PathValue("id")); err != nil {
-		s.app.Store.Create(chat.MessageType, map[string]any{
-			"role": "error", "content": "That did not go through. " + err.Error(),
-		})
+		s.app.Chat.Notice("That did not go through. " + err.Error())
 	}
 	r.ParseForm()
 	back := "/"
