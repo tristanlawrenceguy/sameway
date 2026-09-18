@@ -83,7 +83,7 @@
     var live = liveMessage(log);
     var land = lander();
     var text = "";
-    var settled = false;
+    var settled = false, heard = false;
     function step(label) {
       live.steps.querySelectorAll('[data-state="running"]').forEach(function (s) { s.setAttribute("data-state", "done"); });
       live.steps.appendChild(el('<li class="sw-live__step" data-state="running"><span class="sw-live__dot" aria-hidden="true"></span>' + label.replace(/[&<>]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]; }) + '</li>'));
@@ -113,8 +113,8 @@
         }
         document.querySelectorAll('a.sw-skip[href^="#msg-"]').forEach(function (a) { a.setAttribute("href", "#msg-" + d.id); });
         if (window.history && history.replaceState) history.replaceState(null, "", "#msg-" + d.id);
-        var el = document.getElementById("msg-" + d.id);
-        if (el && el.scrollIntoView) el.scrollIntoView({ block: "nearest" });
+        var newest = document.getElementById("msg-" + d.id);
+        if (newest && newest.scrollIntoView) newest.scrollIntoView({ block: "nearest" });
       }
       form.removeAttribute("aria-busy");
       form.querySelectorAll("button[type=submit]").forEach(function (b) { b.removeAttribute("aria-disabled"); });
@@ -129,6 +129,7 @@
     }
     function handle(msg) {
       var d = msg.data;
+      heard = true;
       switch (msg.event) {
         case "said": if (d.html) live.li.before(el("<li>" + d.html + "</li>")); break;
         case "delta": text += d.text || ""; live.text.textContent = text; break;
@@ -154,14 +155,22 @@
             buffer += decoder.decode(r.value, { stream: true });
             var frames = buffer.split("\n\n");
             buffer = frames.pop();
-            frames.forEach(function (f) { if (f.trim()) handle(parse(f)); });
+            frames.forEach(function (f) {
+              if (!f.trim()) return;
+              // A slip in showing one event must not lose the rest.
+              try { handle(parse(f)); } catch (err) { if (window.console) console.error("live turn:", err); }
+            });
             return pump();
           });
         }
         return pump();
       })
-      .catch(function () {
-        // The ordinary way, whole: the page comes back with the turn done.
+      .catch(function (err) {
+        if (window.console) console.error("live turn:", err);
+        // Once the server has heard the message the turn is under way and
+        // must not be sent twice: show what arrived and stop. Before that,
+        // the ordinary way, whole: the page comes back with the turn done.
+        if (heard) { if (!settled) settle({}); return; }
         live.li.remove();
         form._sending = false;
         form.setAttribute("data-live", "off");
