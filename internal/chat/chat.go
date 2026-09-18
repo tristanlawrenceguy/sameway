@@ -19,8 +19,10 @@ import (
 // MessageType is the content type that holds conversation turns.
 const MessageType = "message"
 
-// maxToolRounds bounds how many tool-call rounds one turn may take.
-const maxToolRounds = 8
+// maxToolRounds bounds how many tool-call rounds one turn may take. A
+// model that makes one call per round needs a round for each item of a
+// list; when the bound is reached the turn ends in words, not an error.
+const maxToolRounds = 12
 
 // Service holds the dependencies for one workspace's chat.
 type Service struct {
@@ -180,7 +182,19 @@ func (s *Service) sendTurn(ctx context.Context, canvas, text, fileID string, on 
 		// The canvas changed, so refresh the system prompt for the next round.
 		req.System = s.systemPrompt()
 	}
-	return s.fail(fmt.Errorf("stopped after %d tool rounds without a final answer", maxToolRounds))
+	// Enough tools for one turn. The model is asked to stop and say where
+	// things stand, so the person hears what was done and what was not
+	// rather than an error; what it changed is kept either way.
+	req.Tools = nil
+	req.Messages = append(req.Messages, llm.Message{Role: llm.RoleUser, Content: fmt.Sprintf("That is %d rounds of tools, the most one turn may use. Stop here and say, in a few words, what you did and what is still to do.", maxToolRounds)})
+	resp, err := s.complete(ctx, req, on)
+	if err != nil || strings.TrimSpace(resp.Text) == "" {
+		return s.fail(fmt.Errorf("stopped after %d tool rounds without a final answer", maxToolRounds))
+	}
+	if s.runsToolsOutside() {
+		changes = s.changesAfter(said)
+	}
+	return s.Store.Create(MessageType, s.fields(MessageType, map[string]any{"role": "assistant", "content": strings.TrimSpace(resp.Text), "changes": changes, "tools": tools}))
 }
 
 // fields drops keys the workspace's schema does not define, so a record

@@ -23,7 +23,8 @@ func (s *scripted) Name() string { return "scripted" }
 
 func (s *scripted) Complete(_ context.Context, req llm.Request) (*llm.Response, error) {
 	s.seen = append(s.seen, req)
-	if len(s.steps) == 0 {
+	// Offered no tools, a model can only answer in words.
+	if len(s.steps) == 0 || req.Tools == nil {
 		return &llm.Response{Text: "done"}, nil
 	}
 	next := s.steps[0]
