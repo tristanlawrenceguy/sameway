@@ -9,7 +9,7 @@
     "additionalProperties": false,
     "required": [],
     "properties": {
-      "label": { "type": "string", "default": "Add a file", "description": "The button text." },
+      "label": { "type": "string", "default": "Upload", "description": "The button text." },
       "action": { "type": "string", "default": "/t/file/upload", "description": "Where the file goes." },
       "from": { "type": "string", "description": "The page to return to afterwards; the file's own page when left out." },
       "id": { "type": "string", "default": "upload", "description": "Id of the field, so the label reaches it." }
@@ -30,6 +30,6 @@
     "operate": "POST the form with a file, or POST /t/file/upload directly; the record appears at /t/file and in /api/file."
   },
   "examples": [
-    { "name": "default", "props": { "label": "Add a file" }, "file": "examples/default.html" }
+    { "name": "default", "props": { "label": "Upload" }, "file": "examples/default.html" }
   ]
 }
