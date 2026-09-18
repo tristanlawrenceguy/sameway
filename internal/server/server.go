@@ -30,6 +30,8 @@ type Server struct {
 func New(a *app.App) *Server {
 	s := &Server{app: a, css: []byte(a.Registry.CSS()), js: []byte(a.Registry.JS()), mux: http.NewServeMux()}
 	s.routes()
+	// Wrap the mux so unmatched routes get our HTML 404 page.
+	s.mux = s.wrapNotFound(s.mux)
 	return s
 }
 
@@ -62,6 +64,7 @@ func (s *Server) routes() {
 	m.HandleFunc("POST /workspaces/new", s.workspacesNew)
 	m.HandleFunc("POST /workspaces/copy", s.workspacesCopy)
 	m.HandleFunc("POST /workspaces/delete", s.workspacesDelete)
+
 	m.HandleFunc("GET /search", s.searchPage)
 	m.HandleFunc("GET /design", s.designPage)
 	m.HandleFunc("GET /design/sameway.css", s.stylesheet)
@@ -71,9 +74,7 @@ func (s *Server) routes() {
 	m.HandleFunc("GET /t/{type}", s.listPage)
 	m.HandleFunc("GET /t/{type}/{id}", s.detailPage)
 	m.HandleFunc("POST /t/{type}/{id}/delete", s.deleteForm)
-	// Inline edit: POST form data (prop-<name>) to update content type records.
 	m.HandleFunc("POST /t/{type}/{id}/props", s.recordProps)
-	// Files: added through a form, kept as originals, read into text.
 	m.HandleFunc("POST /t/file/upload", s.upload)
 	m.HandleFunc("GET /files/{id}", s.serveFile)
 
@@ -95,7 +96,6 @@ func (s *Server) routes() {
 	m.HandleFunc("PUT /api/{type}/{id}", s.apiUpdate)
 	m.HandleFunc("PATCH /api/{type}/{id}", s.apiUpdate)
 	m.HandleFunc("DELETE /api/{type}/{id}", s.apiDelete)
-	// Anything else under /api is answered in JSON too.
 	m.HandleFunc("/api/", s.apiNotFound)
 }
 
@@ -127,9 +127,6 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 		Footer:       opts.Footer,
 		ExtraScripts: opts.ExtraScripts,
 	}
-	// The header carries only the person's own content. The brand is the way
-	// back to the canvas, and everything about the workspace itself lives in
-	// the footer, where it is reachable without taking attention.
 	for _, t := range s.app.Types.Types {
 		if t.Internal || !s.listed(t) {
 			continue
@@ -141,10 +138,10 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 	if s.app.Workspace.Config.UI.Developer == "shown" {
 		more = append(more, struct{ href, label string }{"/design", "Design system"})
 	}
-	p.Developer = s.app.Workspace.Config.UI.Developer == "shown"
 	for _, l := range more {
 		p.More = append(p.More, s.navLink(l.href, l.label, r.URL.Path == l.href))
 	}
+	p.Developer = s.app.Workspace.Config.UI.Developer == "shown"
 	out, err := render.RenderPage(p)
 	if err != nil {
 		s.fail(w, err)
@@ -157,6 +154,15 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 	w.Write(out)
 }
 
+// notFoundPage renders a full HTML 404 page with heading, title, and
+// navigation so that anyone landing on an unknown path still gets the same
+// accessible layout as every other page.
+func (s *Server) notFoundPage(w http.ResponseWriter, r *http.Request) {
+	body := template.HTML(`<p>The page you are looking for does not exist.</p>
+` + s.navLink("/", "Home", false))
+	s.page(w, r, "404 · Page not found", body, pageOptions{Status: http.StatusNotFound})
+}
+
 // detailPageExtraScripts are additional <script> tags rendered in the head on
 // content-type record detail pages, enabling inline editing via 08-edit.js.
 var detailPageExtraScripts = []template.HTML{
@@ -164,12 +170,7 @@ var detailPageExtraScripts = []template.HTML{
 }
 
 type pageOptions struct {
-	// QuietTitle keeps the page heading in the outline but off the screen,
-	// for a page whose whole content is one thing and says so itself.
-	QuietTitle bool
-	// Shell is "app" for a page that is an application rather than a
-	// document: full width, header and footer fixed, the middle scrolls.
-	// Panes imply it; the canvas asks for it even without them.
+	QuietTitle   bool
 	Shell        string
 	Kicker       template.HTML
 	Lede         template.HTML
