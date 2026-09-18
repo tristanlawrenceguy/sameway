@@ -11,6 +11,32 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
+// headingSummary returns the activity summary if present, otherwise builds a
+// fallback from actor + action + target + detail so blank-summary records get
+// readable heading text like "You said hello" instead of an empty h3.
+func (s *Server) headingSummary(r *store.Record) string {
+	if s2, _ := r.Fields["summary"].(string); s2 != "" {
+		return template.HTMLEscapeString(s2)
+	}
+	actor, _ := r.Fields["actor"].(string)
+	action, _ := r.Fields["action"].(string)
+	target, _ := r.Fields["target"].(string)
+	detail, _ := r.Fields["detail"].(string)
+
+	who := map[string]string{"human": "You", "assistant": "Assistant", "system": "System"}[actor]
+	if who == "" {
+		who = actor
+	}
+	parts := []string{who, action}
+	if target != "" {
+		parts = append(parts, target)
+	}
+	if detail != "" {
+		parts = append(parts, detail)
+	}
+	return strings.Join(parts, " ")
+}
+
 // recentActivity renders the newest n actions inside a disclosure that is
 // closed by default, so the log is there when wanted and silent otherwise.
 // The full log is always on its own page, which is what a screen reader user
@@ -32,10 +58,7 @@ func (s *Server) recentActivity(n int, from string) template.HTML {
 	var inner strings.Builder
 	inner.WriteString(`<ol class="sw-plain sw-stack--tight" aria-label="Recent activity">`)
 	for _, r := range recs {
-		summary := ""
-		if s2, _ := r.Fields["summary"].(string); s2 != "" {
-			summary = template.HTMLEscapeString(s2)
-		}
+		summary := s.headingSummary(r)
 		inner.WriteString(`<li><h3 class="sw-event__heading">` + summary + `</h3>` + string(s.event(r, from)) + `</li>`)
 	}
 	inner.WriteString(`</ol><p class="sw-small" style="margin:var(--sw-space-3) 0 0">`)
@@ -141,10 +164,7 @@ func (s *Server) activityPage(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(&b, `<h2 class="sw-small sw-muted" style="margin-top:var(--sw-space-8)">%s</h2><ol class="sw-plain sw-stack--tight sw-panel" aria-label="Activity on %s">`, template.HTMLEscapeString(d), template.HTMLEscapeString(d))
 			day, open = d, true
 		}
-		summary := ""
-		if s2, _ := rec.Fields["summary"].(string); s2 != "" {
-			summary = template.HTMLEscapeString(s2)
-		}
+		summary := s.headingSummary(rec)
 		b.WriteString(`<li><h3 class="sw-event__heading">` + summary + `</h3>` + string(s.event(rec, "/activity")) + `</li>`)
 	}
 	if open {
