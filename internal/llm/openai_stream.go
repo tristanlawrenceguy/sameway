@@ -12,11 +12,20 @@ import (
 	"time"
 )
 
-// Streamer is a provider that can say its reply as it comes. delta gets
-// each piece of text in order; the whole reply comes back as usual, tool
-// calls included, so a turn runs the same way whether it streamed or not.
+// Streamer is a provider that can say its reply as it comes. on gets each
+// piece in order; the whole reply comes back as usual, tool calls
+// included, so a turn runs the same way whether it streamed or not.
 type Streamer interface {
-	Stream(ctx context.Context, req Request, delta func(text string)) (*Response, error)
+	Stream(ctx context.Context, req Request, on func(Delta)) (*Response, error)
+}
+
+// Delta is one piece of a streamed reply: some of its text, or the name of
+// a tool the model has begun to call. The name is known well before the
+// arguments have all arrived, so a page can show the step while the model
+// is still writing what it wants; the call itself comes with the Response.
+type Delta struct {
+	Text string
+	Call string
 }
 
 // oaChunk is one server-sent piece of a streamed completion.
@@ -43,7 +52,7 @@ type oaChunk struct {
 // Stream asks for the completion as server-sent events and hands each
 // piece of text on as it arrives. Tool calls come in pieces too, by index,
 // and are put back together here.
-func (o *OpenAI) Stream(ctx context.Context, req Request, delta func(string)) (*Response, error) {
+func (o *OpenAI) Stream(ctx context.Context, req Request, on func(Delta)) (*Response, error) {
 	body := o.body(req)
 	body.Stream = true
 	payload, err := json.Marshal(body)
@@ -109,8 +118,8 @@ func (o *OpenAI) Stream(ctx context.Context, req Request, delta func(string)) (*
 		c := chunk.Choices[0]
 		if c.Delta.Content != "" {
 			text.WriteString(c.Delta.Content)
-			if delta != nil {
-				delta(c.Delta.Content)
+			if on != nil {
+				on(Delta{Text: c.Delta.Content})
 			}
 		}
 		for _, tc := range c.Delta.ToolCalls {
@@ -124,7 +133,11 @@ func (o *OpenAI) Stream(ctx context.Context, req Request, delta func(string)) (*
 				call.ID = tc.ID
 			}
 			if tc.Function.Name != "" {
+				named := call.Name != ""
 				call.Name += tc.Function.Name
+				if !named && on != nil {
+					on(Delta{Call: call.Name})
+				}
 			}
 			args[tc.Index].WriteString(tc.Function.Arguments)
 		}

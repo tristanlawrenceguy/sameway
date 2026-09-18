@@ -24,9 +24,13 @@ type Event struct {
 	Kind string
 	Text string
 	// Tool is the call's name and Label the call in words: "Adding a
-	// calendar". For a change, the change itself.
+	// calendar". Early marks a call the model has only begun: its name is
+	// known, its arguments are still coming, so the label is broad. The
+	// same call comes again, in full, when it runs. For a change, the
+	// change itself.
 	Tool   string
 	Label  string
+	Early  bool
 	Change *Change
 	// ID is the record made: the person's message for said, the reply for
 	// done, the error message for error.
@@ -58,7 +62,14 @@ func (s *Service) SendLive(ctx context.Context, canvas, text, fileID string, on 
 // listening and the model can, so the words show as they come.
 func (s *Service) complete(ctx context.Context, req llm.Request, on func(Event)) (*llm.Response, error) {
 	if st, ok := s.Provider.(llm.Streamer); ok && on != nil {
-		return st.Stream(ctx, req, func(piece string) { on(Event{Kind: "delta", Text: piece}) })
+		return st.Stream(ctx, req, func(d llm.Delta) {
+			if d.Text != "" {
+				on(Event{Kind: "delta", Text: d.Text})
+			}
+			if d.Call != "" {
+				on(Event{Kind: "tool", Tool: d.Call, Label: describe(llm.ToolCall{Name: d.Call}), Early: true})
+			}
+		})
 	}
 	resp, err := s.Provider.Complete(ctx, req)
 	if err == nil && on != nil && strings.TrimSpace(resp.Text) != "" {

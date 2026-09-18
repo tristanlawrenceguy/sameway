@@ -10,10 +10,13 @@
 (function () {
   "use strict";
   function upgrade(form) {
-    var status = document.getElementById(form.getAttribute("data-busy-target"));
-    if (!status) return;
+    if (!document.getElementById(form.getAttribute("data-busy-target"))) return;
     form.addEventListener("submit", function (event) {
       if (form.getAttribute("aria-busy") === "true") { event.preventDefault(); return; }
+      // Looked up now, not when the page loaded: a turn shown as it
+      // happens puts a fresh status in place of the old one.
+      var status = document.getElementById(form.getAttribute("data-busy-target"));
+      if (!status) return;
       form.setAttribute("aria-busy", "true");
       var region = form.closest("[data-region]");
       if (region) region.setAttribute("data-state", "working");

@@ -34,9 +34,16 @@ func TestOpenAIStreamsWordsAndReassemblesToolCalls(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	var pieces []string
+	var pieces, calls []string
 	p := &OpenAI{BaseURL: srv.URL, Model: "m"}
-	resp, err := p.Stream(context.Background(), Request{Messages: []Message{{Role: RoleUser, Content: "add a card"}}}, func(s string) { pieces = append(pieces, s) })
+	resp, err := p.Stream(context.Background(), Request{Messages: []Message{{Role: RoleUser, Content: "add a card"}}}, func(d Delta) {
+		if d.Text != "" {
+			pieces = append(pieces, d.Text)
+		}
+		if d.Call != "" {
+			calls = append(calls, d.Call)
+		}
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,6 +52,9 @@ func TestOpenAIStreamsWordsAndReassemblesToolCalls(t *testing.T) {
 	}
 	if len(resp.ToolCalls) != 1 || resp.ToolCalls[0].Name != "add_component" || string(resp.ToolCalls[0].Args) != `{"component":"card"}` || resp.ToolCalls[0].ID != "call_1" {
 		t.Errorf("a tool call split across chunks is whole again, got %+v", resp.ToolCalls)
+	}
+	if strings.Join(calls, "|") != "add_component" {
+		t.Errorf("a tool call is named once, as soon as its name is known, got %q", calls)
 	}
 	if resp.StopReason != "tool_calls" {
 		t.Errorf("the stop reason comes through, got %q", resp.StopReason)

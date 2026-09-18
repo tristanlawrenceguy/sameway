@@ -120,11 +120,18 @@ Meaning is preserved; only movement is removed.
 A turn takes as long as the model and its tools take, and a person should
 never be left looking at a page that does nothing. With scripts the
 composer posts the same form to `/chat/stream` and the page shows the
-turn as it goes: the person's message as recorded, the reply's words as
-the model says them, each tool as it starts (in words: "Adding a
-calendar") and ticked as it lands, and each block the assistant made or
-changed arriving on the canvas the moment it exists, with the same
-arrival stages as after a reload. When several land at once they come
+turn as it goes: the person's message as recorded (and the box cleared
+for the next one), a dot that says the model is thinking until anything
+arrives, the reply's words as the model says them, each tool the moment
+the model names it ("Adding a block", while the arguments are still
+being written) filled in as it runs ("Adding a calendar") and ticked as
+it lands, and each block the assistant made or changed arriving on the
+canvas the moment it exists, with the same arrival stages as after a
+reload. The log follows the turn only while the person is reading its
+end: someone who has scrolled up or is selecting text is left where they
+are. A message sent while the assistant is working waits and goes when
+the turn is done. The turn itself runs to its end even if the page that
+asked for it goes away, so a closed tab never leaves a change half made. When several land at once they come
 one at a time with a breath between (`motion-between` scaled to the
 pace: none under `still` or reduced motion), so there is time to take
 each in; a single change is not delayed. Without scripts the form posts

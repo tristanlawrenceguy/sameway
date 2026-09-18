@@ -2,11 +2,13 @@
 //
 // The composer is a form and works as one: post, wait, page. With scripts
 // the same form posts to /chat/stream and reads the turn as it goes: the
-// person's message appears as recorded, the reply's words come as the
-// model says them, each tool shows as it starts and ticks as it lands, and
-// each block the assistant makes or changes arrives on the canvas the
-// moment it exists, one at a time with a breath between when several come
-// at once, so there is time to take each in. If anything about the stream
+// person's message appears as recorded and the box clears for the next
+// one, the reply's words come as the model says them, each tool shows the
+// moment the model names it and fills in as it runs, and each block the
+// assistant makes or changes arrives on the canvas the moment it exists,
+// one at a time with a breath between when several come at once, so there
+// is time to take each in. A message sent while the assistant is working
+// waits and goes when the turn is done. If anything about the stream
 // fails, the form is sent the ordinary way and the page comes back whole.
 (function () {
   "use strict";
@@ -19,6 +21,9 @@
     var t = document.createElement("template");
     t.innerHTML = html.trim();
     return t.content.firstElementChild;
+  }
+  function escape(s) {
+    return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; });
   }
 
   // The log the messages live in, made when the conversation was empty.
@@ -37,7 +42,29 @@
       '<p class="sw-message__meta"><span class="sw-message__author">Assistant</span></p>' +
       '<div class="sw-message__body"><p class="sw-live__text"></p><ol class="sw-plain sw-live__steps" aria-label="What the assistant is doing"></ol></div></article></li>');
     log.appendChild(li);
-    return { li: li, text: li.querySelector(".sw-live__text"), steps: li.querySelector(".sw-live__steps") };
+    // The words grow in one text node, so a selection elsewhere in the
+    // log survives each piece that arrives.
+    var words = document.createTextNode("");
+    li.querySelector(".sw-live__text").appendChild(words);
+    return { li: li, words: words, steps: li.querySelector(".sw-live__steps") };
+  }
+
+  // The log follows the turn only while the person is reading its end.
+  // Someone who has scrolled up, or is selecting text, is left where they
+  // are: text that moves under the pointer cannot be selected.
+  function follower(log) {
+    var stick = true, pressed = false;
+    function nearEnd() { return log.scrollHeight - log.scrollTop - log.clientHeight < 48; }
+    log.addEventListener("scroll", function () { stick = nearEnd(); });
+    log.addEventListener("pointerdown", function () { pressed = true; });
+    document.addEventListener("pointerup", function () { pressed = false; });
+    document.addEventListener("pointercancel", function () { pressed = false; });
+    return function () {
+      if (pressed) return;
+      var sel = window.getSelection && getSelection();
+      if (sel && !sel.isCollapsed && sel.anchorNode && log.contains(sel.anchorNode)) return;
+      if (stick) log.scrollTop = log.scrollHeight;
+    };
   }
 
   // Blocks land one at a time, with a breath between when several come
@@ -78,19 +105,50 @@
     return { event: event, data: body };
   }
 
+  function statusText(form, message) {
+    var status = document.getElementById(form.getAttribute("data-busy-target"));
+    var text = status && status.querySelector(".sw-status__text");
+    if (text) text.textContent = message;
+  }
+
   function send(form) {
     var log = logFor(form);
     var live = liveMessage(log);
     var land = lander();
-    var text = "";
+    var follow = follower(log);
+    var ta = form.querySelector("textarea");
+    var asked = ta ? ta.value : "";
     var settled = false, heard = false;
-    function step(label) {
-      live.steps.querySelectorAll('[data-state="running"]').forEach(function (s) { s.setAttribute("data-state", "done"); });
-      live.steps.appendChild(el('<li class="sw-live__step" data-state="running"><span class="sw-live__dot" aria-hidden="true"></span>' + label.replace(/[&<>]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]; }) + '</li>'));
+    // The steps: what the assistant is doing, one dot each. A step is
+    // early while the model is still saying what it wants; the same tool
+    // fills the step in when it runs. Until anything arrives, a dot says
+    // the model is thinking.
+    function running() { return live.steps.querySelectorAll('[data-state="running"]:not([data-early])'); }
+    function finish() { running().forEach(function (s) { s.setAttribute("data-state", "done"); }); }
+    function thinking(on) {
+      var have = live.steps.querySelector("[data-thinking]");
+      if (on && !have) live.steps.appendChild(el('<li class="sw-live__step" data-state="running" data-thinking><span class="sw-live__dot" aria-hidden="true"></span>Thinking</li>'));
+      if (!on && have) have.remove();
+    }
+    function step(d) {
+      thinking(false);
+      var label = d.label || d.tool || "Working";
+      if (!d.early) {
+        finish();
+        var early = d.tool && live.steps.querySelector('[data-early][data-tool="' + escape(d.tool) + '"]');
+        if (early) {
+          early.removeAttribute("data-early");
+          early.lastChild.nodeValue = label;
+          return;
+        }
+      }
+      live.steps.appendChild(el('<li class="sw-live__step" data-state="running"' + (d.early ? " data-early" : "") + (d.tool ? ' data-tool="' + escape(d.tool) + '"' : "") +
+        '><span class="sw-live__dot" aria-hidden="true"></span>' + escape(label) + "</li>"));
     }
     function settle(d) {
       settled = true;
       form._sending = false;
+      live.li.classList.remove("sw-live");
       if (d.html) live.li.innerHTML = d.html; else live.li.remove();
       var status = document.getElementById("chat-status");
       if (status && d.status) status.outerHTML = d.status;
@@ -121,28 +179,38 @@
       var region = form.closest("[data-region]");
       if (region) region.setAttribute("data-state", "idle");
       document.title = document.title.replace(/^⏳ /, "");
-      var ta = form.querySelector("textarea");
-      if (ta && !d.text) ta.value = "";
-      var file = form.querySelector('input[type="file"]');
-      if (file) file.value = "";
-      log.scrollTop = log.scrollHeight;
+      // A turn that failed gives the words back, so they can be sent again.
+      if (ta && d.text && ta.value === "") ta.value = asked;
+      follow();
+      // A message written while the assistant was working goes now.
+      if (form._queued) {
+        form._queued = false;
+        if (ta && ta.value.trim() && !d.text) setTimeout(function () { if (form.requestSubmit) form.requestSubmit(); else form.submit(); }, 0);
+      }
     }
     function handle(msg) {
       var d = msg.data;
       heard = true;
       switch (msg.event) {
-        case "said": if (d.html) live.li.before(el("<li>" + d.html + "</li>")); break;
-        case "delta": text += d.text || ""; live.text.textContent = text; break;
-        case "text": text = d.text || ""; live.text.textContent = text; break;
-        case "tool": step(d.label || d.tool || "Working"); break;
+        case "said":
+          if (d.html) live.li.before(el("<li>" + d.html + "</li>"));
+          // The message is recorded; the box is ready for the next one.
+          if (ta) ta.value = "";
+          var file = form.querySelector('input[type="file"]');
+          if (file) file.value = "";
+          thinking(true);
+          break;
+        case "delta": thinking(false); live.words.data += d.text || ""; break;
+        case "text": thinking(false); live.words.data = d.text || ""; break;
+        case "tool": step(d); break;
         case "change":
-          live.steps.querySelectorAll('[data-state="running"]').forEach(function (s) { s.setAttribute("data-state", "done"); });
+          finish();
           if (d.block) land(d);
           break;
         case "done": settle(d); break;
         case "error": settle(d); break;
       }
-      log.scrollTop = log.scrollHeight;
+      follow();
     }
     var data = new FormData(form);
     fetch(form.action.replace(/\/chat$/, "/chat/stream"), { method: "POST", body: data, headers: { Accept: "text/event-stream" }, credentials: "same-origin" })
@@ -184,9 +252,14 @@
     form._live = true;
     form.addEventListener("submit", function (e) {
       if (form.getAttribute("data-live") === "off") return;
-      if (form._sending) return;
-      form._sending = true;
       e.preventDefault();
+      if (form._sending) {
+        // Sent while the assistant is working: it waits its turn.
+        form._queued = true;
+        statusText(form, "Assistant is working; your next message goes when it is done");
+        return;
+      }
+      form._sending = true;
       // The status enhancement hears this same submit and shows the busy
       // state, but only if the form is not busy yet when it looks: mark it
       // a tick later, for a page without that enhancement.

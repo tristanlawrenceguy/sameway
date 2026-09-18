@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -63,14 +64,18 @@ func (s *Server) chatStream(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "event: %s\ndata: %s\n\n", event, body)
 		flusher.Flush()
 	}
-	rec, err := s.app.Chat.SendLive(r.Context(), canvas, text, fileID, func(e chat.Event) {
+	// The turn runs to its end even when the page that asked for it goes
+	// away: a tab closed mid-turn must not leave a change half made and an
+	// error in the log where the reply should be.
+	ctx := context.WithoutCancel(r.Context())
+	rec, err := s.app.Chat.SendLive(ctx, canvas, text, fileID, func(e chat.Event) {
 		switch e.Kind {
 		case "said":
 			send("said", map[string]any{"id": e.ID, "html": s.messageHTML(e.ID, back, false)})
 		case "delta", "text":
 			send(e.Kind, map[string]any{"text": e.Text})
 		case "tool":
-			send("tool", map[string]any{"tool": e.Tool, "label": e.Label})
+			send("tool", map[string]any{"tool": e.Tool, "label": e.Label, "early": e.Early})
 		case "change":
 			data := map[string]any{"action": e.Change.Action, "component": e.Change.Component, "id": e.Change.ID, "detail": e.Change.Detail}
 			if blk, region, html := s.liveBlock(e.Change, started); html != "" {
