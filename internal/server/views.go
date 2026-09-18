@@ -127,6 +127,8 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(&b, `<div class="sw-bar sw-quiet"><form method="post" action="/t/%s/%s/delete">%s</form></div>`,
 		t.Name, rec.ID, s.component("button", map[string]any{"label": "Delete " + t.Name, "type": "submit", "variant": "quiet"}))
 	b.WriteString(`</div>`)
+	// Recent activity on this page, so a deletion can be taken back where the person lands.
+	b.WriteString(string(s.recentActivity(5, "/t/"+t.Name+"/"+rec.ID)))
 	// What points at this record, listed here by itself.
 	b.WriteString(s.backlinks(t, rec))
 	s.page(w, r, titleOf(t, rec), template.HTML(b.String()), pageOptions{

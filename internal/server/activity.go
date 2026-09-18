@@ -32,7 +32,11 @@ func (s *Server) recentActivity(n int, from string) template.HTML {
 	var inner strings.Builder
 	inner.WriteString(`<ol class="sw-plain sw-stack--tight" aria-label="Recent activity">`)
 	for _, r := range recs {
-		inner.WriteString("<li>" + string(s.event(r, from)) + "</li>")
+		summary := ""
+		if s2, _ := r.Fields["summary"].(string); s2 != "" {
+			summary = template.HTMLEscapeString(s2)
+		}
+		inner.WriteString(`<li><h3 class="sw-event__heading">` + summary + `</h3>` + string(s.event(r, from)) + `</li>`)
 	}
 	inner.WriteString(`</ol><p class="sw-small" style="margin:var(--sw-space-3) 0 0">`)
 	inner.WriteString(string(s.component("link", map[string]any{"href": "/activity", "label": "All activity"})))
