@@ -34,7 +34,8 @@ pale with darker text of the same hue.
 **The dot.** A list's colour is a dot, and the same dot goes wherever the
 list does: before its name in the sidebar, before the title of its page,
 before the way back on one of its records' pages, before a search result
-from it, before the caption of a block drawn from it. Who did a thing is
+from it, before the caption of a block drawn from it, and at the front of
+every row that has no box of its own. Who did a thing is
 a dot too, in the actor's colour with a soft halo, before their name on a
 message and an activity entry. Today on a calendar is its number in a
 filled circle of the blue. A dot is never the only telling: the name,

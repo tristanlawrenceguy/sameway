@@ -51,7 +51,7 @@ func (s *Server) backlinks(t *schema.Type, rec *store.Record) string {
 				"type": u.Name, "where": []string{f.Name + "=" + rec.ID}, "order": "-updated_at", "limit": 50,
 				"label": capitalize(plural(u.Name)), "level": 2, "id": "backlinks-" + u.Name + "-" + f.Name,
 			})
-			b.WriteString(`<div class="sw-backlinks">` + string(s.component(collectionComponent, props)) + `</div>`)
+			b.WriteString(fmt.Sprintf(`<div class="sw-backlinks" data-dot="%d">`, s.dotOf(u.Name)) + string(s.component(collectionComponent, props)) + `</div>`)
 		}
 	}
 	return b.String()
