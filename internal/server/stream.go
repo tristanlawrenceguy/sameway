@@ -78,9 +78,9 @@ func (s *Server) chatStream(w http.ResponseWriter, r *http.Request) {
 			}
 			send("change", data)
 		case "done":
-			send("done", map[string]any{"id": e.ID, "html": s.messageHTML(e.ID, back, true), "status": string(s.statusFor(e.ID))})
+			send("done", map[string]any{"id": e.ID, "html": s.messageHTML(e.ID, back, true), "status": string(s.statusFor(e.ID)), "activity": string(s.recentActivity(8, back))})
 		case "error":
-			send("error", map[string]any{"id": e.ID, "text": e.Text, "html": s.messageHTML(e.ID, back, true), "status": string(s.statusFor(e.ID))})
+			send("error", map[string]any{"id": e.ID, "text": e.Text, "html": s.messageHTML(e.ID, back, true), "status": string(s.statusFor(e.ID)), "activity": string(s.recentActivity(8, back))})
 		}
 	})
 	if rec == nil && err != nil {

@@ -94,6 +94,16 @@
       if (d.html) live.li.innerHTML = d.html; else live.li.remove();
       var status = document.getElementById("chat-status");
       if (status && d.status) status.outerHTML = d.status;
+      // What a reload would have brought: the recent activity, the skip
+      // link to the newest message, and the address naming it.
+      var activity = document.querySelector(".sw-activity");
+      if (activity && d.activity) activity.innerHTML = d.activity;
+      if (d.id) {
+        document.querySelectorAll('a.sw-skip[href^="#msg-"]').forEach(function (a) { a.setAttribute("href", "#msg-" + d.id); });
+        if (window.history && history.replaceState) history.replaceState(null, "", "#msg-" + d.id);
+        var el = document.getElementById("msg-" + d.id);
+        if (el && el.scrollIntoView) el.scrollIntoView({ block: "nearest" });
+      }
       form.removeAttribute("aria-busy");
       form.querySelectorAll("button[type=submit]").forEach(function (b) { b.removeAttribute("aria-disabled"); });
       var region = form.closest("[data-region]");
