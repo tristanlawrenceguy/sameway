@@ -3,3 +3,11 @@
 .sw-upload__field { min-height: 2.75rem; max-width: 100%; font: inherit; color: var(--sw-color-fg); }
 .sw-upload__field:focus-visible { outline: var(--sw-focus-width) solid var(--sw-color-focus); outline-offset: var(--sw-focus-offset); }
 .sw-canvas--strip .sw-upload__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* The platform's own file control; its button is drawn as one of ours
+   so it reads in both themes rather than in the platform's colours. */
+.sw-upload__field::file-selector-button {
+  font: inherit; font-weight: 600; font-size: var(--sw-size-text-sm); color: var(--sw-color-fg);
+  min-height: 2.25rem; padding: 0 var(--sw-space-3); margin-right: var(--sw-space-2);
+  background: var(--sw-color-bg-raised); border: 2px solid var(--sw-color-border-strong); border-radius: var(--sw-radius-md); cursor: pointer;
+}
+.sw-upload__field::file-selector-button:hover { background: var(--sw-color-bg-muted); }
