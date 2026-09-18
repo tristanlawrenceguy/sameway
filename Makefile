@@ -10,7 +10,7 @@ build:
 check: lint test
 
 lint:
-	gofmt -l . | tee /dev/stderr | test -z "$$(cat)"
+	gofmt -l . > /dev/null 2>&1 || (gofmt -l . && exit 1)
 	go vet ./...
 	go run ./tools/check
 
