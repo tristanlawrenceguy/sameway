@@ -195,19 +195,21 @@
     bar.insertBefore(btn, bar.firstChild);
   }
 
-  // Intercept Enter in the chat composer so pressing it submits instead of
-  // inserting a newline. Shift+Enter is allowed through for newlines.
+  // Enter in the chat composer sends, the way the Send button does: through
+  // the form's own submit, so the required check, the busy state and the
+  // double-send guard all see it. Shift+Enter starts a new line.
   function composeKeyHandler() {
-    var textarea = document.querySelector("form.sw-compose textarea");
-    if (!textarea) return;
-    if (textarea._composeHandled) return;
-    textarea._composeHandled = true;
-    var form = textarea.closest("form.sw-compose");
-    textarea.addEventListener("keydown", function (e) {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        form.submit();
-      }
+    document.querySelectorAll("form.sw-compose textarea").forEach(function (textarea) {
+      if (textarea._composeHandled) return;
+      textarea._composeHandled = true;
+      var form = textarea.closest("form.sw-compose");
+      textarea.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
+          e.preventDefault();
+          if (form.requestSubmit) form.requestSubmit();
+          else form.submit();
+        }
+      });
     });
   }
 
