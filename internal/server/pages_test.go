@@ -29,7 +29,8 @@ var componentNames = func() []string {
 // TestHomePageShell checks what a person with a screen reader or keyboard
 // meets first: skip link, landmarks, one h1, and the two labelled regions.
 func TestHomePageShell(t *testing.T) {
-	_, h := newApp(t)
+	a, h := newApp(t)
+	a.Workspace.Config.UI.Developer = "shown" // this test walks the builder links too
 	rec := get(t, h, "/")
 	wantStatus(t, rec, http.StatusOK)
 	doc := parse(t, rec)

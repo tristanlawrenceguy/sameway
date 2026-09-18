@@ -12,6 +12,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -117,15 +118,18 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 	// back to the canvas, and everything about the workspace itself lives in
 	// the footer, where it is reachable without taking attention.
 	for _, t := range s.app.Types.Types {
-		if t.Internal {
+		if t.Internal || !s.listed(t) {
 			continue
 		}
 		href := "/t/" + t.Name
 		p.Nav = append(p.Nav, render.NavItem{HTML: s.navLink(href, plural(t.Name), strings.HasPrefix(r.URL.Path, href)), Dot: s.dotOf(t.Name)})
 	}
-	for _, l := range []struct{ href, label string }{
-		{"/chat", "Chat"}, {"/activity", "Activity"}, {"/design", "Design system"},
-	} {
+	more := []struct{ href, label string }{{"/chat", "Chat"}, {"/activity", "Activity"}}
+	if s.app.Workspace.Config.UI.Developer == "shown" {
+		more = append(more, struct{ href, label string }{"/design", "Design system"})
+	}
+	p.Developer = s.app.Workspace.Config.UI.Developer == "shown"
+	for _, l := range more {
 		p.More = append(p.More, s.navLink(l.href, l.label, r.URL.Path == l.href))
 	}
 	out, err := render.RenderPage(p)
@@ -215,4 +219,17 @@ func plural(name string) string {
 		}
 	}
 	return label + "s"
+}
+
+// listed says whether a list belongs in the sidebar: one with something in
+// it, or one the person made themselves, which they will want to see even
+// before its first record. An empty list the system provides, such as
+// files in a workspace with no files, is not in the way. ui.lists: all
+// shows every one.
+func (s *Server) listed(t *schema.Type) bool {
+	if s.app.Workspace.Config.UI.Lists == "all" || !t.Provided {
+		return true
+	}
+	n, err := s.app.Store.Count(t.Name)
+	return err != nil || n > 0
 }

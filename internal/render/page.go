@@ -36,6 +36,10 @@ type Page struct {
 	// Dot is the colour of the list this page is about (1 to 6), drawn
 	// before the title; 0 for none.
 	Dot int
+	// Developer shows the links meant for whoever builds on the workspace
+	// (the guide for agents); off, the page still says where the guide is
+	// in its head, so an agent finds it without a link a person must see.
+	Developer bool
 	// Body is the already-rendered main content, placed after the h1.
 	Body template.HTML
 	// Left and Right are full height panes beside the main region. Their
