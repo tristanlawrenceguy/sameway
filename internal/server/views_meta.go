@@ -152,3 +152,21 @@ func whenMade(rec *store.Record) string {
 	}
 	return `<span class="sw-detail__when sw-muted sw-small">Created ` + made + ` · Updated ` + changed + `</span>`
 }
+
+// dotOf is the colour a list wears everywhere it appears: the sidebar,
+// a page title, the crumbs, a block drawn from it, a search result. The
+// person's own types take the six list colours in order; an internal
+// type has none.
+func (s *Server) dotOf(typeName string) int {
+	n := 0
+	for _, t := range s.app.Types.Types {
+		if t.Internal {
+			continue
+		}
+		n++
+		if t.Name == typeName {
+			return (n-1)%6 + 1
+		}
+	}
+	return 0
+}

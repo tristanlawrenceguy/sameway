@@ -96,6 +96,13 @@ func (s *Server) blockItem(blk *store.Record, convo *conversation) string {
 	if v.Changed != "" {
 		fmt.Fprintf(&b, ` data-changed="%s"`, v.Changed)
 	}
+	if props, _ := blk.Fields["props"].(map[string]any); props != nil {
+		if typeName, _ := props["type"].(string); typeName != "" {
+			if dot := s.dotOf(typeName); dot > 0 {
+				fmt.Fprintf(&b, ` data-dot="%d"`, dot)
+			}
+		}
+	}
 	if n := convo.Arrival[v.ID]; n > 0 {
 		fmt.Fprintf(&b, ` data-arrival="%d"`, n)
 	}

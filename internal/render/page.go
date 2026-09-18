@@ -33,6 +33,9 @@ type Page struct {
 	// it (the few facts worth knowing before reading), both rendered.
 	Kicker template.HTML
 	Lede   template.HTML
+	// Dot is the colour of the list this page is about (1 to 6), drawn
+	// before the title; 0 for none.
+	Dot int
 	// Body is the already-rendered main content, placed after the h1.
 	Body template.HTML
 	// Left and Right are full height panes beside the main region. Their

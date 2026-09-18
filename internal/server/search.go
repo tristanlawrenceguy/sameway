@@ -34,7 +34,7 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 				if h.Snippet != "" {
 					props["body"] = h.Snippet
 				}
-				b.WriteString("<li>" + string(s.component("card", props)) + "</li>")
+				fmt.Fprintf(&b, `<li class="sw-dotted" data-dot="%d">%s</li>`, s.dotOf(h.Type), s.component("card", props))
 			}
 			b.WriteString("</ol>")
 		}

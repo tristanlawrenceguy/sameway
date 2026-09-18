@@ -56,7 +56,7 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	// What just happened to these records is here too, so a deletion can be
 	// taken back where the person lands.
 	b.WriteString(string(s.recentActivity(5, "/t/"+t.Name)))
-	s.page(w, r, capitalize(plural(t.Name)), template.HTML(b.String()), pageOptions{JSONURL: "/api/" + t.Name, Lede: howMany(t, recs)})
+	s.page(w, r, capitalize(plural(t.Name)), template.HTML(b.String()), pageOptions{JSONURL: "/api/" + t.Name, Lede: howMany(t, recs), Dot: s.dotOf(t.Name)})
 }
 
 // detailPage shows one record as a definition list with delete.
@@ -130,7 +130,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	// What points at this record, listed here by itself.
 	b.WriteString(s.backlinks(t, rec))
 	s.page(w, r, titleOf(t, rec), template.HTML(b.String()), pageOptions{
-		Kicker:       crumbs("/t/"+t.Name, capitalize(plural(t.Name)), titleOf(t, rec)),
+		Kicker:       crumbs("/t/"+t.Name, capitalize(plural(t.Name)), titleOf(t, rec), s.dotOf(t.Name)),
 		Lede:         s.lede(t, rec),
 		JSONURL:      "/api/" + t.Name + "/" + rec.ID,
 		ExtraScripts: detailPageExtraScripts,
@@ -216,9 +216,13 @@ func titleOf(t *schema.Type, rec *store.Record) string {
 // crumbs is the way back from a detail page: the listing it belongs to,
 // then the record itself. A person who read one item and wants the next
 // one should not have to find the footer or the browser's back button.
-func crumbs(listHref, listLabel, here string) template.HTML {
-	return template.HTML(fmt.Sprintf(`<nav class="sw-crumbs" aria-label="You are here"><ol class="sw-plain sw-crumbs__list"><li><a class="sw-link" href="%s">%s</a></li><li aria-current="page">%s</li></ol></nav>`,
-		template.HTMLEscapeString(listHref), template.HTMLEscapeString(listLabel), template.HTMLEscapeString(here)))
+func crumbs(listHref, listLabel, here string, dot int) template.HTML {
+	mark := ""
+	if dot > 0 {
+		mark = fmt.Sprintf(` class="sw-dotted" data-dot="%d"`, dot)
+	}
+	return template.HTML(fmt.Sprintf(`<nav class="sw-crumbs" aria-label="You are here"><ol class="sw-plain sw-crumbs__list"><li%s><a class="sw-link" href="%s">%s</a></li><li aria-current="page">%s</li></ol></nav>`,
+		mark, template.HTMLEscapeString(listHref), template.HTMLEscapeString(listLabel), template.HTMLEscapeString(here)))
 }
 
 func capitalize(s string) string {
