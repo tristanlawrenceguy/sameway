@@ -28,7 +28,7 @@ func (s *Server) rows(t *schema.Type, recs []*store.Record, now time.Time) strin
 	}
 	var b strings.Builder
 	if dated == "" {
-		fmt.Fprintf(&b, `<ol class="sw-plain sw-rows" aria-label="%s">`, template.HTMLEscapeString(plural(t.Name)))
+		fmt.Fprintf(&b, `<ol class="sw-plain sw-rows" data-dot="%d" aria-label="%s">`, s.dotOf(t.Name), template.HTMLEscapeString(plural(t.Name)))
 		for _, rec := range recs {
 			b.WriteString(s.row(t, rec, 2))
 		}
@@ -49,8 +49,8 @@ func (s *Server) rows(t *schema.Type, recs []*store.Record, now time.Time) strin
 		if name == "This week" {
 			span = fmt.Sprintf(`<span class="sw-group__range">%s – %s</span>`, now.Format("2 Jan"), now.AddDate(0, 0, 6).Format("2 Jan"))
 		}
-		fmt.Fprintf(&b, `<h2 class="sw-group">%s <span class="sw-group__count">%d</span>%s</h2><ol class="sw-plain sw-rows" aria-label="%s, %s">`,
-			name, len(list), span, template.HTMLEscapeString(plural(t.Name)), strings.ToLower(name))
+		fmt.Fprintf(&b, `<h2 class="sw-group">%s <span class="sw-group__count">%d</span>%s</h2><ol class="sw-plain sw-rows" data-dot="%d" aria-label="%s, %s">`,
+			name, len(list), span, s.dotOf(t.Name), template.HTMLEscapeString(plural(t.Name)), strings.ToLower(name))
 		for _, rec := range list {
 			b.WriteString(s.row(t, rec, 3))
 		}
