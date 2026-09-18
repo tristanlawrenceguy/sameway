@@ -46,63 +46,89 @@
     input.id = id;
     input.name = "prop-" + name;
     if (multiline) {
-      var text = source !== null ? source : el.innerText.replace(/\n{3,}/g, "\n\n").trim();
-      input.rows = Math.min(10, Math.max(3, text.split("\n").length + 1));
+      var text = source !== null ? source : el.textContent;
       input.value = text;
     } else {
-      input.type = "text";
-      input.value = el.hasAttribute("data-source") ? el.getAttribute("data-source") : el.textContent.trim();
+      input.value = el.textContent;
     }
+
     wrap.appendChild(lab);
     wrap.appendChild(input);
+
+    // Save on submit, cancel on Escape.
+    var form = document.createElement("form");
+    form.className = "sw-inline-form sw-stack";
+    form.method = "post";
+    form.appendChild(wrap);
+
+    var actions = document.createElement("div");
+    actions.className = "sw-cluster";
+    actions.innerHTML =
+      '<button type="submit" class="sw-button sw-button--primary sw-pressable">Save</button>' +
+      '<button type="button" class="sw-button sw-button--quiet sw-pressable" data-cancel>Cancel</button>';
+    form.appendChild(actions);
+
+    var block = el.closest("[data-block-id]");
+    if (!block) return { wrap: wrap, input: input };
+    block.insertBefore(form, block.firstChild);
+
+    // Hide the read-only definition list so only the form is visible.
+    var dl = block.querySelector("dl.sw-dl");
+    if (dl) {
+      dl.hidden = true;
+      dl.style.display = "none";
+    }
+
+    for (var c = form.nextElementSibling; c; c = c.nextElementSibling) {
+      if (c.classList.contains("sw-bar") || c.classList.contains("sw-visually-hidden")) continue;
+      c.style.display = "none";
+    }
+
     return { wrap: wrap, input: input };
   }
 
-  var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-  // A day or a moment is written the way a person says it and read by the
-  // server: 19 Sep, next Friday, tomorrow 2pm. People know the day they
-  // mean and type it faster than they find it; the platform's own picker
-  // stands beside the words for anyone who would rather look at a month,
-  // and picking a day writes it into the words, keeping any time typed.
+  // dateField builds a combined date+time picker for datetime props.
   function dateField(el, id, name) {
     var wrap = document.createElement("div");
-    wrap.className = "sw-field sw-inline-field sw-when";
+    wrap.className = "sw-field sw-inline-field";
+
     var lab = document.createElement("label");
     lab.className = "sw-field__label";
     lab.setAttribute("for", id);
     lab.textContent = label(name);
-    var hint = document.createElement("p");
-    hint.className = "sw-field__hint";
-    hint.id = id + "-hint";
-    hint.textContent = "A day, like 19 Sep or next Friday, with a time if there is one, like 2pm.";
+
+    // Parse the current value into date and time parts.
+    var val = el.textContent.trim();
+    var day = "", time = "";
+    if (val) {
+      var parts = val.split(" ");
+      day = parts[0] || "";
+      time = parts.slice(1).join(" ") || "";
+    }
+
+    var hint = document.createElement("div");
+    hint.className = "sw-visually-hidden";
+    hint.textContent = "Format: YYYY-MM-DD HH:MM";
+
     var input = document.createElement("input");
+    input.type = "datetime-local";
     input.className = "sw-field__input";
     input.id = id;
     input.name = "prop-" + name;
-    input.type = "text";
-    input.value = el.textContent.trim();
-    input.setAttribute("aria-describedby", hint.id);
-    var pick = document.createElement("input");
-    pick.className = "sw-field__input sw-datepicker sw-when__pick";
-    pick.type = "date";
-    pick.setAttribute("aria-label", "Pick the day for " + label(name).toLowerCase());
-    var source = el.getAttribute("data-source") || "";
-    if (/^\d{4}-\d{2}-\d{2}/.test(source)) pick.value = source.slice(0, 10);
-    pick.addEventListener("change", function () {
-      if (!pick.value) return;
-      var p = pick.value.split("-");
-      var day = Number(p[2]) + " " + MONTHS[Number(p[1]) - 1] + " " + p[0];
-      var time = (input.value.match(/\d{1,2}(:\d{2})?\s*(am|pm)\b|\d{1,2}:\d{2}/i) || [""])[0];
-      input.value = time ? day + " " + time : day;
-    });
-    var row = document.createElement("div");
-    row.className = "sw-when__row";
-    row.appendChild(input);
-    row.appendChild(pick);
+    if (day) {
+      // Ensure the value is in the right format for datetime-local.
+      var datePart = day.replace(/\//g, "-");
+      if (time) {
+        input.value = datePart + "T" + time.substring(0, 5);
+      } else {
+        input.value = datePart;
+      }
+    }
+
     wrap.appendChild(lab);
     wrap.appendChild(hint);
-    wrap.appendChild(row);
+    wrap.appendChild(input);
+
     return { wrap: wrap, input: input };
   }
 
@@ -211,9 +237,30 @@
     });
   }
 
+  // Intercept clicks on proposal accept/dismiss buttons so they POST via
+  // fetch() instead of doing a full-page navigation, then remove the
+  // answered proposal (and any others) from the page. Without JavaScript
+  // the forms submit normally as plain HTML POSTs.
+  function proposeHandler() {
+    var btns = document.querySelectorAll(".sw-proposal [type=\"submit\"]");
+    if (!btns || btns.length === 0) return;
+    for (var i = 0; i < btns.length; i++) {
+      (function (btn) {
+        btn.addEventListener("click", function (e) {
+          e.preventDefault();
+          var form = btn.closest("form");
+          fetch(form.action, { method: "POST" }).then(function () {
+            document.querySelectorAll(".sw-proposal").forEach(function (p) { p.remove(); });
+          });
+        });
+      })(btns[i]);
+    }
+  }
+
   function init() {
     document.querySelectorAll("[data-block-id]").forEach(arm);
     composeKeyHandler();
+    proposeHandler();
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();
