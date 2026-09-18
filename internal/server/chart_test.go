@@ -36,7 +36,7 @@ func TestAChartCountsRecords(t *testing.T) {
 		`<figcaption class="sw-chart__caption" id="done-by-month-caption">How many tasks by Due</figcaption>`,
 		`<th scope="row">2026-08</th><td>2</td></tr><tr><th scope="row">2026-09</th><td>1</td>`,
 		`role="img" aria-labelledby="done-by-month-caption"`, `<rect class="sw-chart__bar"`,
-		`<th scope="row">Garden</th><td>2</td>`, `<th scope="row">(none)</th><td>2</td>`, `<summary class="sw-pressable">Numbers</summary>`,
+		`<th scope="row">Garden</th><td>2</td>`, `<th scope="row">(none)</th><td>2</td>`, `<summary class="sw-pressable">Tasks by project</summary>`,
 		`task has no field &#34;owner&#34; to group by`,
 	} {
 		if !strings.Contains(page, want) {
