@@ -137,7 +137,11 @@ func (s *Server) activityPage(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(&b, `<h2 class="sw-small sw-muted" style="margin-top:var(--sw-space-8)">%s</h2><ol class="sw-plain sw-stack--tight sw-panel" aria-label="Activity on %s">`, template.HTMLEscapeString(d), template.HTMLEscapeString(d))
 			day, open = d, true
 		}
-		b.WriteString("<li>" + string(s.event(rec, "/activity")) + "</li>")
+		summary := ""
+		if s2, _ := rec.Fields["summary"].(string); s2 != "" {
+			summary = template.HTMLEscapeString(s2)
+		}
+		b.WriteString(`<li><h3 class="sw-event__heading">` + summary + `</h3>` + string(s.event(rec, "/activity")) + `</li>`)
 	}
 	if open {
 		b.WriteString("</ol>")
