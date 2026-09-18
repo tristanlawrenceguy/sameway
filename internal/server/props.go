@@ -38,7 +38,7 @@ func (s *Server) blockProps(w http.ResponseWriter, r *http.Request) {
 	}
 	edited, err := editedFields(r.PostForm)
 	if err != nil {
-		s.app.Store.Create(chat.MessageType, map[string]any{"role": "error", "content": "That edit did not save. " + err.Error()})
+		s.app.Chat.Notice("That edit did not save. " + err.Error())
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
@@ -54,9 +54,7 @@ func (s *Server) blockProps(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// The person is looking at the canvas, so the complaint belongs
 		// there, in the conversation, where every other problem is reported.
-		s.app.Store.Create(chat.MessageType, map[string]any{
-			"role": "error", "content": "That edit did not save. " + err.Error(),
-		})
+		s.app.Chat.Notice("That edit did not save. " + err.Error())
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}

@@ -33,7 +33,9 @@ type Service struct {
 	Provider     llm.Provider
 	ProviderErr  error
 	HistoryLimit int
-	ExtraPrompt  string
+	// convo is the chat that is open, once known; see Current.
+	convo       string
+	ExtraPrompt string
 	// Now tells the model what day it is, so a calendar for "this month"
 	// is this month. Defaults to time.Now; tests pin it.
 	Now func() time.Time
@@ -91,7 +93,7 @@ func (s *Service) sendTurn(ctx context.Context, canvas, text, fileID string, on 
 	if fileID != "" {
 		fields["file"] = fileID
 	}
-	mine, err := s.Store.Create(MessageType, s.fields(MessageType, fields))
+	mine, err := s.message(fields)
 	if err != nil {
 		return nil, err
 	}
@@ -213,12 +215,15 @@ func (s *Service) fields(typeName string, in map[string]any) map[string]any {
 // history returns the recent user and assistant turns as model messages.
 // Error notices are shown to the person but not sent to the model.
 func (s *Service) history() ([]llm.Message, error) {
-	recs, err := s.Store.List(MessageType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: s.HistoryLimit})
+	recs, err := s.Messages()
 	if err != nil {
 		return nil, err
 	}
+	if s.HistoryLimit > 0 && len(recs) > s.HistoryLimit {
+		recs = recs[len(recs)-s.HistoryLimit:]
+	}
 	var out []llm.Message
-	for i := len(recs) - 1; i >= 0; i-- {
+	for i := range recs {
 		role, _ := recs[i].Fields["role"].(string)
 		content, _ := recs[i].Fields["content"].(string)
 		switch role {
@@ -244,23 +249,9 @@ func (s *Service) history() ([]llm.Message, error) {
 // fail stores an error notice in the conversation and returns it with the error.
 func (s *Service) fail(err error) (*store.Record, error) {
 	Record(s.Store, "system", Change{Action: "failed", Detail: truncate(err.Error(), 200)})
-	rec, storeErr := s.Store.Create(MessageType, map[string]any{"role": "error", "content": err.Error()})
+	rec, storeErr := s.message(map[string]any{"role": "error", "content": err.Error()})
 	if storeErr != nil {
 		return nil, storeErr
 	}
 	return rec, err
-}
-
-// Clear deletes the conversation. The canvas is left alone.
-func (s *Service) Clear() error {
-	if err := s.Available(); err != nil {
-		return err
-	}
-	Record(s.Store, "human", Change{Action: "cleared", Component: "conversation"})
-	// The questions the assistant asked were part of the conversation; a
-	// cleared one has no questions still waiting under it.
-	for _, p := range s.Proposals() {
-		s.Store.Update(ProposalType, p.ID, map[string]any{"state": "dismissed"})
-	}
-	return s.Store.DeleteAll(MessageType)
 }

@@ -17,6 +17,9 @@ fields:
   file:
     type: string
     description: For user turns, the id of the file record that came with the message; its text goes to the model with the words.
+  conversation:
+    type: string
+    description: The chat this message is in, as a conversation id. Empty means the first chat, from before there were several.
   tools:
     type: json
     description: For assistant turns, the tool calls made while answering, each {id, name, args, result, error}, replayed to the model as tool use so it keeps using tools.

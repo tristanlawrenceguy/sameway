@@ -1,7 +1,7 @@
 {
   "name": "chat",
   "version": "1.0.0",
-  "description": "A conversation region: a named area holding a transcript and a composer. It is a component like any other, so it can be placed anywhere on a canvas, restyled, or removed.",
+  "description": "A conversation region: a named area holding a transcript and a composer. A person can keep several chats and move between them from the menu at the top, place the region in a pane or the middle, or pop it out into a window of its own. It is a component like any other, so it can be placed anywhere on a canvas, restyled, or removed.",
   "icon": "…",
   "use": { "when": "the conversation belongs on the canvas beside the person's content; it is always at /chat as well.", "not": "twice on a page.", "with": "a pane, when the person wants it beside what they are working on." },
   "props": {
@@ -25,8 +25,8 @@
   },
   "machine": {
     "selector": "[data-component=\"chat\"]",
-    "identify": "A section whose accessible name is the label. The transcript is the list inside it and the composer is its form.",
-    "operate": "Fill the textbox named by its label and activate the submit button. If this region has been removed from the canvas, the same conversation is always at /chat and POST /api/chat."
+    "identify": "A section whose accessible name is the label. The transcript is the list inside it and the composer is its form. The menu at the top names the current chat and lists the others.",
+    "operate": "Fill the textbox named by its label and activate the submit button. New chat starts another chat; each chat in the list opens with its own button, and Delete removes it. Place moves the region to a pane or the middle and sets its width. If this region has been removed from the canvas, the same conversation is always at /chat and POST /api/chat."
   },
   "examples": [
     { "name": "default", "props": { "slot": "No messages yet." }, "file": "examples/default.html" },

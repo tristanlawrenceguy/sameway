@@ -1,0 +1,13 @@
+# One chat: a run of messages with its own history. Used by the chat
+# feature; keep it. A person can have several and switch between them.
+name: conversation
+description: A chat between the person and the assistant, with its own history. The one opened most recently is the one the chat shows.
+internal: true
+title: title
+fields:
+  title:
+    type: string
+    description: Named after the first thing the person said in it; empty until then.
+  opened:
+    type: string
+    description: When it was last opened or written to, as a moment in UTC to the nanosecond, so two chats opened in the same second still have an order; the latest is the current chat.

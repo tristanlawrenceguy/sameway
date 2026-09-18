@@ -25,6 +25,7 @@ var conversationTmpl = template.Must(template.New("conversation").Funcs(render.F
 // page around it needs. The same value fills a chat block on the canvas and
 // the standalone /chat page.
 type conversation struct {
+	From     string
 	Body     template.HTML
 	Notice   template.HTML
 	Activity template.HTML
@@ -51,9 +52,13 @@ type conversationView struct {
 	Compose   template.HTML
 	Send      template.HTML
 	Clear     template.HTML
+	NewChat   template.HTML
 	ModelName string
 	From      string
 	Proposals []template.HTML
+	// Title names the current chat; Chats lists every chat for the menu.
+	Title string
+	Chats []chatItem
 }
 
 type chatMessage struct {
@@ -64,8 +69,9 @@ type chatMessage struct {
 // conversation renders the transcript and composer once, for whichever
 // surface is showing it.
 func (s *Server) conversation(from string) (*conversation, error) {
-	out := &conversation{}
+	out := &conversation{From: from}
 	view := conversationView{From: from}
+	view.Chats, view.Title = s.chats()
 	if s.app.Chat.Provider == nil {
 		problem := "No model is configured."
 		if s.app.Chat.ProviderErr != nil {
@@ -77,7 +83,7 @@ func (s *Server) conversation(from string) (*conversation, error) {
 		view.ModelName = s.app.Chat.Provider.Name()
 	}
 
-	msgs, err := s.app.Store.List(chat.MessageType, store.ListOptions{OrderBy: "created_at"})
+	msgs, err := s.app.Chat.Messages()
 	if err != nil {
 		return nil, err
 	}
@@ -103,6 +109,7 @@ func (s *Server) conversation(from string) (*conversation, error) {
 	view.Compose = s.component("textarea", map[string]any{"label": "Your message", "name": "message", "rows": 3, "required": true, "hint": "Ask for anything, or ask what something on the page is. Enter sends; Shift+Enter starts a new line."})
 	view.Send = s.component("button", map[string]any{"label": "Send", "type": "submit"})
 	view.Clear = s.component("button", map[string]any{"label": "Clear", "context": "conversation", "type": "submit", "variant": "quiet"})
+	view.NewChat = s.component("button", map[string]any{"label": "New chat", "type": "submit", "variant": "secondary"})
 
 	var body bytes.Buffer
 	if err := conversationTmpl.Execute(&body, view); err != nil {

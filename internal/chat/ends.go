@@ -92,5 +92,5 @@ func (s *Service) reply(said, text string, changes []Change, tools []map[string]
 	if s.runsToolsOutside() {
 		changes = s.changesAfter(said)
 	}
-	return s.Store.Create(MessageType, s.fields(MessageType, map[string]any{"role": "assistant", "content": text, "changes": changes, "tools": tools}))
+	return s.message(map[string]any{"role": "assistant", "content": text, "changes": changes, "tools": tools})
 }

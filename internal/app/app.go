@@ -70,7 +70,7 @@ func Load(dir string, memoryDB bool) (*App, error) {
 	a := &App{Workspace: ws, Types: types, Store: st, Registry: reg}
 	// The conversation, its questions and the log are history, not content;
 	// everything else is written to content/ as it changes.
-	a.Mirror = content.Mirror{Dir: ws.ContentDir(), Types: types, Skip: []string{chat.MessageType, chat.ProposalType, chat.ActivityType}}
+	a.Mirror = content.Mirror{Dir: ws.ContentDir(), Types: types, Skip: []string{chat.MessageType, chat.ConversationType, chat.ProposalType, chat.ActivityType}}
 	st.AfterWrite = a.Mirror.Changed
 	a.Chat = &chat.Service{
 		Store:        st,

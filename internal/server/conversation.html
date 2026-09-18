@@ -1,3 +1,14 @@
+<div class="sw-chat__tools sw-cluster">
+<details class="sw-chat__menu"><summary class="sw-button sw-button--quiet sw-pressable sw-chat__current">{{.Title}}</summary>
+<div class="sw-chat__panel">
+<form method="post" action="/chat/new"><input type="hidden" name="from" value="{{.From}}">{{.NewChat}}</form>
+{{if .Chats}}<ul class="sw-plain sw-chat__list" aria-label="Chats">
+{{range .Chats}}<li{{if .Current}} aria-current="true"{{end}}><form method="post" action="/chat/open"><input type="hidden" name="from" value="{{$.From}}"><input type="hidden" name="id" value="{{.ID}}"><button type="submit" class="sw-chat__open sw-pressable">{{.Title}} <span class="sw-muted sw-small">{{.When}}</span></button></form><form method="post" action="/chat/delete"><input type="hidden" name="from" value="{{$.From}}"><input type="hidden" name="id" value="{{.ID}}"><button type="submit" class="sw-button sw-button--quiet sw-pressable" aria-label="Delete chat {{.Title}}">Delete</button></form></li>
+{{end}}</ul>{{end}}
+</div></details>
+<span class="sw-chat__place"></span>
+{{if ne .From "/chat"}}<a class="sw-button sw-button--quiet sw-pressable" href="/chat" target="sameway-chat" data-popout>Pop out</a>{{end}}
+</div>
 {{if .Messages}}<ol class="sw-plain sw-stack sw-chat__log" aria-label="Messages" tabindex="-1">
 {{range .Messages}}<li style="view-transition-name: {{.ID}}; view-transition-class: sw-vt-item">{{.HTML}}</li>
 {{end}}</ol>
