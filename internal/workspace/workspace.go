@@ -48,6 +48,17 @@ type Config struct {
 		// (the same in a third of the time) or "still" (everything at once,
 		// as under reduced motion). A person sets it by asking the assistant.
 		Pace string `yaml:"pace"`
+		// Lists is which lists the sidebar shows: "filled" (the default: a
+		// list with something in it, or one the person made themselves,
+		// so an empty built-in list such as files is not in the way) or
+		// "all".
+		Lists string `yaml:"lists"`
+		// Developer is "hidden" (the default) or "shown": the design
+		// system and the guide for agents are for whoever builds on the
+		// workspace, not for the person using it, so their links stay out
+		// of the way unless asked for. The pages themselves are always
+		// there.
+		Developer string `yaml:"developer"`
 	} `yaml:"ui"`
 	Chat struct {
 		// HistoryLimit caps how many past messages are sent to the model.
@@ -131,6 +142,12 @@ func Load(dir string) (*Workspace, error) {
 	}
 	if !ValidPace(w.Config.UI.Pace) {
 		w.Config.UI.Pace = "calm"
+	}
+	if w.Config.UI.Lists != "all" {
+		w.Config.UI.Lists = "filled"
+	}
+	if w.Config.UI.Developer != "shown" {
+		w.Config.UI.Developer = "hidden"
 	}
 	return w, nil
 }

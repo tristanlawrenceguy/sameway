@@ -31,6 +31,13 @@ ui:
   # so screen readers and agents always have them.
   # visible: keep them on screen all the time.
   controls: auto
+  # filled: the sidebar lists what has something in it, and any list you
+  # made yourself. all: every list, empty or not.
+  lists: filled
+  # hidden: the design system page and the guide for agents keep out of
+  # the way (they are still there, at /design and /api/describe).
+  # shown: their links are in the sidebar and the footer.
+  developer: hidden
 
 chat:
   # How many past messages to send to the model each turn.

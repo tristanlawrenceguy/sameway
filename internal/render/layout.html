@@ -37,8 +37,8 @@
 {{end}}</div>
 <footer class="sw-footer">
 {{if .Footer}}<div class="sw-strip sw-strip--footer">{{.Footer}}</div>
-{{end}}<p class="sw-footer__agents"><a class="sw-link" href="/api/describe">For agents</a></p>
-</footer>
+{{end}}{{if .Developer}}<p class="sw-footer__agents"><a class="sw-link" href="/api/describe">For agents</a></p>
+{{end}}</footer>
 
 </body>
 </html>
