@@ -114,3 +114,19 @@ Meaning is preserved; only movement is removed.
   change in, which is part of accessibility, not decoration.
 - Do not add JavaScript to animate. If CSS cannot express it, it is not
   worth animating.
+
+## The turn as it happens
+
+A turn takes as long as the model and its tools take, and a person should
+never be left looking at a page that does nothing. With scripts the
+composer posts the same form to `/chat/stream` and the page shows the
+turn as it goes: the person's message as recorded, the reply's words as
+the model says them, each tool as it starts (in words: "Adding a
+calendar") and ticked as it lands, and each block the assistant made or
+changed arriving on the canvas the moment it exists, with the same
+arrival stages as after a reload. When several land at once they come
+one at a time with a breath between (`motion-between` scaled to the
+pace: none under `still` or reduced motion), so there is time to take
+each in; a single change is not delayed. Without scripts the form posts
+to `/chat` and the page comes back whole, as before. See
+`design/base/14-live.js` and `internal/server/stream.go`.
