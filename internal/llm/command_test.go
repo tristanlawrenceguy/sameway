@@ -26,7 +26,7 @@ func TestHelperCLI(t *testing.T) {
 			break
 		}
 	}
-	var prompt, mcp, system string
+	var prompt, mcp, system, model string
 	for i := 0; i+1 < len(args); i++ {
 		switch args[i] {
 		case "-p":
@@ -35,11 +35,13 @@ func TestHelperCLI(t *testing.T) {
 			mcp = args[i+1]
 		case "--append-system-prompt":
 			system = args[i+1]
+		case "--model":
+			model = args[i+1]
 		}
 	}
 	raw, _ := os.ReadFile(mcp)
 	stdin, _ := io.ReadAll(os.Stdin)
-	fmt.Printf("{\"result\": %q}", "echo: "+prompt+" | system: "+system+" | stdin: "+string(stdin)+" | mcp: "+string(raw))
+	fmt.Printf("{\"result\": %q}", "echo: "+prompt+" | system: "+system+" | model: "+model+" | stdin: "+string(stdin)+" | mcp: "+string(raw))
 	os.Exit(0)
 }
 
@@ -48,8 +50,9 @@ func TestHelperCLI(t *testing.T) {
 // tools, and takes the reply from the JSON field named.
 func TestACommandProviderRunsTheSignedInProgram(t *testing.T) {
 	c := &llm.Command{
-		Template:   os.Args[0] + " -test.run=TestHelperCLI -- -p {prompt} --append-system-prompt {system} --mcp-config {mcp} --output-format json",
+		Template:   os.Args[0] + " -test.run=TestHelperCLI -- -p {prompt} --model {model} --append-system-prompt {system} --mcp-config {mcp} --output-format json",
 		Field:      "result",
+		Model:      "haiku",
 		Workspace:  t.TempDir(),
 		Executable: "/bin/sameway",
 	}
@@ -63,7 +66,7 @@ func TestACommandProviderRunsTheSignedInProgram(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"echo: Person: make a note", "You: Done.", "You used create_record", "Now the person says:\nand a task", "system: Be brief.", "\"command\":\"/bin/sameway\"", "\"--workspace\",", "\"mcp\"]"} {
+	for _, want := range []string{"echo: Person: make a note", "You: Done.", "You used create_record", "Now the person says:\nand a task", "system: Be brief.", "model: haiku", "\"command\":\"/bin/sameway\"", "\"--workspace\",", "\"mcp\"]"} {
 		if !strings.Contains(resp.Text, want) {
 			t.Errorf("the program should get the conversation, the system prompt and the MCP config; missing %q in:\n%s", want, resp.Text)
 		}
@@ -74,14 +77,16 @@ func TestACommandProviderRunsTheSignedInProgram(t *testing.T) {
 
 	// Without the placeholders, the system prompt and the conversation go
 	// on stdin, which is what claude -p reads and what a command line on
-	// Windows cannot carry.
-	c.Template = os.Args[0] + " -test.run=TestHelperCLI -- --mcp-config {mcp} --output-format json"
+	// Windows cannot carry. With no model named, the flag goes too and the
+	// program uses its own default.
+	c.Template = os.Args[0] + " -test.run=TestHelperCLI -- --model {model} --mcp-config {mcp} --output-format json"
+	c.Model = ""
 	resp, err = c.Complete(context.Background(), llm.Request{System: "Be brief.", Messages: []llm.Message{{Role: llm.RoleUser, Content: "make a note"}}})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(resp.Text, "echo:  | system:  | stdin: Be brief.\n\n---\n\nmake a note") {
-		t.Errorf("stdin should carry the system prompt and the conversation: %s", resp.Text)
+	if !strings.Contains(resp.Text, "echo:  | system:  | model:  | stdin: Be brief.\n\n---\n\nmake a note") {
+		t.Errorf("stdin should carry the system prompt and the conversation, and no model flag: %s", resp.Text)
 	}
 
 	// The preset fills the template in, and a missing template is an error.

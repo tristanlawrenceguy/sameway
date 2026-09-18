@@ -1,6 +1,11 @@
 package chat
 
-import "github.com/tristanlawrenceguy/sameway/internal/store"
+import (
+	"context"
+	"time"
+
+	"github.com/tristanlawrenceguy/sameway/internal/store"
+)
 
 // A provider that runs the tools itself, over MCP in another process,
 // says so; the receipt under its reply then comes from the activity log,
@@ -45,4 +50,41 @@ func (s *Service) changesAfter(saidID string) []Change {
 		out = append([]Change{c}, out...)
 	}
 	return out
+}
+
+// watch tells on each change as it lands in the log while the tools of a
+// turn run in another program, so a page can show that turn as it
+// happens too: each change as a step, then the change itself. The
+// function returned ends the watch and tells whatever landed last.
+func (s *Service) watch(ctx context.Context, saidID string, on func(Event)) (stop func()) {
+	seen := map[string]bool{}
+	tell := func() {
+		for _, c := range s.changesAfter(saidID) {
+			if seen[c.Activity] {
+				continue
+			}
+			seen[c.Activity] = true
+			c := c
+			on(Event{Kind: "tool", Tool: c.Action, Label: describeChange(c)})
+			on(Event{Kind: "change", Change: &c})
+		}
+	}
+	done, finished := make(chan struct{}), make(chan struct{})
+	go func() {
+		defer close(finished)
+		tick := time.NewTicker(300 * time.Millisecond)
+		defer tick.Stop()
+		for {
+			select {
+			case <-done:
+				tell()
+				return
+			case <-ctx.Done():
+				return
+			case <-tick.C:
+				tell()
+			}
+		}
+	}()
+	return func() { close(done); <-finished }
 }

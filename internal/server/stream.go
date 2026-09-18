@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
@@ -59,8 +60,13 @@ func (s *Server) chatStream(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("X-Accel-Buffering", "no")
 	w.WriteHeader(http.StatusOK)
 	started := time.Now()
+	// Events come from the turn and, when the tools run elsewhere, from
+	// the watch on the log: one writer at a time.
+	var mu sync.Mutex
 	send := func(event string, data map[string]any) {
 		body, _ := json.Marshal(data)
+		mu.Lock()
+		defer mu.Unlock()
 		fmt.Fprintf(w, "event: %s\ndata: %s\n\n", event, body)
 		flusher.Flush()
 	}

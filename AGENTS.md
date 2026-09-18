@@ -10,6 +10,7 @@ go test ./...                 # includes golden output for every component
 go vet ./... && gofmt -l .    # both must be clean
 go build -o bin/sameway ./cmd/sameway
 ./bin/sameway --workspace examples/workspaces/starter describe --json
+SAMEWAY_CLAUDE_CODE_MODEL=haiku go test ./internal/server -run ClaudeCode   # one real turn through Claude Code
 ```
 
 `make check` runs all of it. CI runs the same plus the Node accessibility
