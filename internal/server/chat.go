@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"context"
 	_ "embed"
 	"fmt"
 	"html/template"
@@ -220,7 +221,9 @@ func (s *Server) chatSend(w http.ResponseWriter, r *http.Request) {
 	if !strings.HasPrefix(back, "/c/") {
 		canvas = ""
 	}
-	rec, err := s.app.Chat.SendFile(r.Context(), canvas, r.PostForm.Get("message"), fileID)
+	// The turn finishes even if the person leaves the page meanwhile; see
+	// chatStream.
+	rec, err := s.app.Chat.SendFile(context.WithoutCancel(r.Context()), canvas, r.PostForm.Get("message"), fileID)
 	if rec == nil {
 		// Nothing was recorded (empty message, or chat unavailable). The page
 		// already explains the latter, so just show it again.
