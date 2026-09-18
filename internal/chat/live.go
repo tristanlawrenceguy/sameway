@@ -87,15 +87,7 @@ func describe(call llm.ToolCall) string {
 		Key       string `json:"key"`
 	}
 	json.Unmarshal(call.Args, &args)
-	a := func(noun string) string {
-		if noun == "" {
-			return ""
-		}
-		if strings.ContainsAny(noun[:1], "aeiou") {
-			return " an " + noun
-		}
-		return " a " + noun
-	}
+	a := an
 	switch call.Name {
 	case "add_component":
 		return "Adding" + or(a(args.Component), " a block")
@@ -131,6 +123,27 @@ func describe(call llm.ToolCall) string {
 		return "Undoing a change"
 	}
 	return strings.ToUpper(call.Name[:1]) + strings.ReplaceAll(call.Name[1:], "_", " ")
+}
+
+// an is " a card" or " an image": a noun with its article, or nothing.
+func an(noun string) string {
+	if noun == "" {
+		return ""
+	}
+	if strings.ContainsAny(noun[:1], "aeiou") {
+		return " an " + noun
+	}
+	return " a " + noun
+}
+
+// describeChange says a change that landed in the log, in a few words:
+// "Added a card".
+func describeChange(c Change) string {
+	verb := c.Action
+	if verb == "" {
+		verb = "changed"
+	}
+	return strings.ToUpper(verb[:1]) + verb[1:] + or(an(c.Component), " a block")
 }
 
 func or(s, fallback string) string {

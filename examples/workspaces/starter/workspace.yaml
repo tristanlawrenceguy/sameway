@@ -24,6 +24,7 @@ llm:
   # itself over this workspace's MCP server. claude-code is known;
   # any other takes command: with {prompt}, {system} and {mcp}.
   # provider: claude-code
+  # model: haiku        # or sonnet, opus; leave out for the default model
 
 ui:
   # auto: per-item controls and provenance labels fade until you hover a

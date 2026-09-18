@@ -43,3 +43,22 @@ func TestAReplyFromOutsideToolsCarriesTheReceiptFromTheLog(t *testing.T) {
 		t.Errorf("the change leads to the note and can be undone: %v", c)
 	}
 }
+
+// While the tools run in another program, the changes they make are told
+// as they land in the log, each as a step and a change, before the turn
+// is done, so a page can show that turn as it happens too.
+func TestChangesMadeOutsideAreToldAsTheyLand(t *testing.T) {
+	svc := newFullService(t)
+	svc.Provider = &outside{svc: svc}
+	var events []string
+	_, err := svc.SendLive(context.Background(), "", "make a note", "", func(e chat.Event) {
+		events = append(events, e.Kind+":"+e.Label)
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := strings.Join(events, " ")
+	if !strings.Contains(got, "tool:Created a note change: ") || !strings.HasSuffix(got, "done:") {
+		t.Errorf("the change is told as a step and a change before done, got %v", events)
+	}
+}

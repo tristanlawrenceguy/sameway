@@ -42,7 +42,7 @@ type Command struct {
 // Presets are the programs known well enough to fill the template in.
 var Presets = map[string]Command{
 	"claude-code": {Label: "Claude Code", Field: "result",
-		Template: "claude -p --mcp-config {mcp} --allowedTools mcp__sameway__* --output-format json"},
+		Template: "claude -p --model {model} --mcp-config {mcp} --allowedTools mcp__sameway__* --output-format json"},
 }
 
 func (c *Command) Name() string {
@@ -195,7 +195,12 @@ func fill(args []string, values map[string]string) []string {
 	out := make([]string, 0, len(args))
 	for _, a := range args {
 		if v, ok := values[a]; ok {
+			// No model named: the program's own default, so the flag
+			// before the placeholder goes too.
 			if a == "{model}" && v == "" {
+				if n := len(out); n > 0 && strings.HasPrefix(out[n-1], "-") {
+					out = out[:n-1]
+				}
 				continue
 			}
 			out = append(out, v)
