@@ -72,12 +72,14 @@ func (s *Server) chatStream(w http.ResponseWriter, r *http.Request) {
 	}
 	// The turn runs to its end even when the page that asked for it goes
 	// away: a tab closed mid-turn must not leave a change half made and an
-	// error in the log where the reply should be.
-	ctx := context.WithoutCancel(r.Context())
+	// error in the log where the reply should be. The person can stop it,
+	// though, from the page, by the id the first event carries.
+	turn, ctx, over := s.turns.start(context.WithoutCancel(r.Context()))
+	defer over()
 	rec, err := s.app.Chat.SendLive(ctx, canvas, text, fileID, func(e chat.Event) {
 		switch e.Kind {
 		case "said":
-			send("said", map[string]any{"id": e.ID, "html": s.messageHTML(e.ID, back, false)})
+			send("said", map[string]any{"id": e.ID, "turn": turn, "html": s.messageHTML(e.ID, back, false)})
 		case "delta", "text":
 			send(e.Kind, map[string]any{"text": e.Text})
 		case "tool":
@@ -98,6 +100,53 @@ func (s *Server) chatStream(w http.ResponseWriter, r *http.Request) {
 		log.Printf("chat: %v", err)
 		send("error", map[string]any{"text": err.Error()})
 	}
+}
+
+// turns are the live turns under way, each with the way to stop it.
+type turns struct {
+	mu     sync.Mutex
+	n      int
+	cancel map[string]context.CancelFunc
+}
+
+// start begins a turn: its id, the context it runs under, and what to
+// call when it is over.
+func (t *turns) start(parent context.Context) (id string, ctx context.Context, over func()) {
+	ctx, cancel := context.WithCancel(parent)
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if t.cancel == nil {
+		t.cancel = map[string]context.CancelFunc{}
+	}
+	t.n++
+	id = fmt.Sprintf("turn-%d", t.n)
+	t.cancel[id] = cancel
+	return id, ctx, func() {
+		cancel()
+		t.mu.Lock()
+		delete(t.cancel, id)
+		t.mu.Unlock()
+	}
+}
+
+// stop ends the turn named, or every turn under way when none is.
+func (t *turns) stop(id string) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	for k, cancel := range t.cancel {
+		if id == "" || k == id {
+			cancel()
+		}
+	}
+}
+
+// chatStop is the Stop control: the turn ends where it is, its reply
+// says so, and what it did stays. The stream that runs the turn tells
+// the page the rest.
+func (s *Server) chatStop(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	s.turns.stop(r.PostForm.Get("turn"))
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // liveBlock is a changed block rendered as it now is, or nothing when the

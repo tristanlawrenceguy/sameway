@@ -19,11 +19,6 @@ import (
 // MessageType is the content type that holds conversation turns.
 const MessageType = "message"
 
-// maxToolRounds bounds how many tool-call rounds one turn may take. A
-// model that makes one call per round needs a round for each item of a
-// list; when the bound is reached the turn ends in words, not an error.
-const maxToolRounds = 12
-
 // Service holds the dependencies for one workspace's chat.
 type Service struct {
 	// SetSetting changes one line of workspace.yaml, when there is one:
@@ -124,9 +119,14 @@ func (s *Service) sendTurn(ctx context.Context, canvas, text, fileID string, on 
 	var changes []Change
 	var tools []map[string]any
 	corrected := false
-	for round := 0; round <= maxToolRounds; round++ {
+	var p progress
+	for {
 		resp, err := s.complete(ctx, req, on)
 		if err != nil {
+			if ctx.Err() != nil {
+				// The person stopped the turn; what it did stays.
+				return s.reply(said, stoppedText, changes, tools)
+			}
 			return s.fail(err)
 		}
 		if len(resp.ToolCalls) == 0 {
@@ -154,12 +154,10 @@ func (s *Service) sendTurn(ctx context.Context, canvas, text, fileID string, on 
 					continue
 				}
 			}
-			if s.runsToolsOutside() {
-				// The tools ran in the program the person is signed in to;
-				// the log knows what they did.
-				changes = s.changesAfter(said)
-			}
-			return s.Store.Create(MessageType, s.fields(MessageType, map[string]any{"role": "assistant", "content": reply, "changes": changes, "tools": tools}))
+			return s.reply(said, reply, changes, tools)
+		}
+		if why := p.check(resp.ToolCalls); why != "" {
+			return s.wrapUp(ctx, req, why, said, changes, tools, on)
 		}
 		req.Messages = append(req.Messages, llm.Message{Role: llm.RoleAssistant, Content: resp.Text, ToolCalls: resp.ToolCalls})
 		results := llm.Message{Role: llm.RoleTool}
@@ -186,20 +184,10 @@ func (s *Service) sendTurn(ctx context.Context, canvas, text, fileID string, on 
 		req.Messages = append(req.Messages, results)
 		// The canvas changed, so refresh the system prompt for the next round.
 		req.System = s.systemPrompt()
+		if why := p.round(results.ToolResults); why != "" {
+			return s.wrapUp(ctx, req, why, said, changes, tools, on)
+		}
 	}
-	// Enough tools for one turn. The model is asked to stop and say where
-	// things stand, so the person hears what was done and what was not
-	// rather than an error; what it changed is kept either way.
-	req.Tools = nil
-	req.Messages = append(req.Messages, llm.Message{Role: llm.RoleUser, Content: fmt.Sprintf("That is %d rounds of tools, the most one turn may use. Stop here and say, in a few words, what you did and what is still to do.", maxToolRounds)})
-	resp, err := s.complete(ctx, req, on)
-	if err != nil || strings.TrimSpace(resp.Text) == "" {
-		return s.fail(fmt.Errorf("stopped after %d tool rounds without a final answer", maxToolRounds))
-	}
-	if s.runsToolsOutside() {
-		changes = s.changesAfter(said)
-	}
-	return s.Store.Create(MessageType, s.fields(MessageType, map[string]any{"role": "assistant", "content": strings.TrimSpace(resp.Text), "changes": changes, "tools": tools}))
 }
 
 // fields drops keys the workspace's schema does not define, so a record

@@ -111,6 +111,21 @@
     if (text) text.textContent = message;
   }
 
+  // Stop, beside the status while the turn runs: the turn ends where it
+  // is, the reply says so, and what it did stays.
+  function stopControl(form, turn) {
+    var status = document.getElementById(form.getAttribute("data-busy-target"));
+    if (!status || !turn) return null;
+    var btn = el('<button type="button" class="sw-button sw-button--quiet sw-pressable sw-live__stop">Stop</button>');
+    btn.addEventListener("click", function () {
+      btn.setAttribute("aria-disabled", "true");
+      btn.textContent = "Stopping…";
+      fetch(form.action.replace(/\/chat$/, "/chat/stop"), { method: "POST", body: new URLSearchParams({ turn: turn }), credentials: "same-origin" });
+    });
+    status.after(btn);
+    return btn;
+  }
+
   function send(form) {
     var log = logFor(form);
     var live = liveMessage(log);
@@ -118,7 +133,7 @@
     var follow = follower(log);
     var ta = form.querySelector("textarea");
     var asked = ta ? ta.value : "";
-    var settled = false, heard = false;
+    var settled = false, heard = false, stop = null;
     // The steps: what the assistant is doing, one dot each. A step is
     // early while the model is still saying what it wants; the same tool
     // fills the step in when it runs. Until anything arrives, a dot says
@@ -148,6 +163,7 @@
     function settle(d) {
       settled = true;
       form._sending = false;
+      if (stop) stop.remove();
       live.li.classList.remove("sw-live");
       if (d.html) live.li.innerHTML = d.html; else live.li.remove();
       var status = document.getElementById("chat-status");
@@ -199,6 +215,7 @@
           var file = form.querySelector('input[type="file"]');
           if (file) file.value = "";
           thinking(true);
+          stop = stopControl(form, d.turn);
           break;
         case "delta": thinking(false); live.words.data += d.text || ""; break;
         case "text": thinking(false); live.words.data = d.text || ""; break;

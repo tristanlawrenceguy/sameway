@@ -18,10 +18,11 @@ import (
 
 // Server serves one workspace.
 type Server struct {
-	app *app.App
-	css []byte
-	js  []byte
-	mux *http.ServeMux
+	app   *app.App
+	css   []byte
+	js    []byte
+	mux   *http.ServeMux
+	turns turns
 }
 
 // New builds the handler for an app.
@@ -42,6 +43,7 @@ func (s *Server) routes() {
 	m.HandleFunc("GET /canvas/{id}", s.focusPage)
 	m.HandleFunc("POST /chat", s.chatSend)
 	m.HandleFunc("POST /chat/stream", s.chatStream)
+	m.HandleFunc("POST /chat/stop", s.chatStop)
 	m.HandleFunc("POST /chat/clear", s.chatClear)
 	m.HandleFunc("POST /proposal/{id}/accept", s.proposalAccept)
 	m.HandleFunc("POST /proposal/{id}/dismiss", s.proposalDismiss)
