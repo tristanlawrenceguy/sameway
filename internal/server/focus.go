@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"html/template"
 	"net/http"
 	"strings"
@@ -60,7 +61,15 @@ func (s *Server) focusPage(w http.ResponseWriter, r *http.Request) {
 	var b strings.Builder
 	b.WriteString(`<div class="sw-focus">`)
 	b.WriteString(string(s.component("link", map[string]any{"href": chat.CanvasPath(canvasOf(rec.Fields)), "label": "Back to the canvas"})))
-	b.WriteString(`<div class="sw-focus__body">` + string(body) + `</div></div>`)
+	// The block's own page wears its list's colour, as the block does on
+	// the canvas.
+	dot := ""
+	if typeName, _ := props["type"].(string); typeName != "" {
+		if n := s.dotOf(typeName); n > 0 {
+			dot = fmt.Sprintf(` data-dot="%d"`, n)
+		}
+	}
+	b.WriteString(`<div class="sw-focus__body"` + dot + `>` + string(body) + `</div></div>`)
 
 	reg := split(s.canvasBlocks())
 	left, right := reg.left, reg.right
