@@ -31,7 +31,11 @@
 .sw-calendar__pad { background: var(--sw-color-bg-muted); }
 .sw-calendar__number { font-size: var(--sw-size-text-sm); font-weight: 600; color: var(--sw-color-fg-muted); }
 .sw-calendar__day--today { background: var(--sw-color-accent-soft); }
-.sw-calendar__day--today .sw-calendar__number { color: var(--sw-color-accent); }
+.sw-calendar__day--today .sw-calendar__number {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 1.5rem; height: 1.5rem; padding: 0 0.3rem; border-radius: var(--sw-radius-pill);
+  background: var(--sw-color-accent); color: var(--sw-color-accent-fg);
+}
 .sw-calendar__today {
   display: inline-block; margin-left: var(--sw-space-1);
   font-size: var(--sw-size-text-xs); font-weight: 700; color: var(--sw-color-accent);

@@ -31,6 +31,15 @@ well: green is done, blue is a state a thing is in, amber is a day that has
 passed or a notice from the software, red is an error. A chip is small and
 pale with darker text of the same hue.
 
+**The dot.** A list's colour is a dot, and the same dot goes wherever the
+list does: before its name in the sidebar, before the title of its page,
+before the way back on one of its records' pages, before a search result
+from it, before the caption of a block drawn from it. Who did a thing is
+a dot too, in the actor's colour with a soft halo, before their name on a
+message and an activity entry. Today on a calendar is its number in a
+filled circle of the blue. A dot is never the only telling: the name,
+the word, the date are there beside it.
+
 **A sidebar of lists.** On a wide screen the workspace's lists sit on the
 left on the quiet grey, each with a dot in its own colour, the current one
 on a darker tint; the rest of the workspace (chat, activity, the design

@@ -42,14 +42,31 @@
 }
 .sw-nav .sw-link:hover { background: color-mix(in srgb, var(--sw-color-fg) 8%, transparent); }
 .sw-nav .sw-link[aria-current="page"] { background: color-mix(in srgb, var(--sw-color-fg) 10%, transparent); color: var(--sw-color-fg); font-weight: 600; text-decoration: none; }
-/* Each list has a dot in its own colour, the same one everywhere it appears. */
-.sw-nav li[data-dot] .sw-link::before { content: ""; flex: none; width: 0.75rem; height: 0.75rem; border-radius: 50%; background: var(--sw-dot, var(--sw-color-border-strong)); }
-.sw-nav li[data-dot="1"] { --sw-dot: var(--sw-color-list-1); }
-.sw-nav li[data-dot="2"] { --sw-dot: var(--sw-color-list-2); }
-.sw-nav li[data-dot="3"] { --sw-dot: var(--sw-color-list-3); }
-.sw-nav li[data-dot="4"] { --sw-dot: var(--sw-color-list-4); }
-.sw-nav li[data-dot="5"] { --sw-dot: var(--sw-color-list-5); }
-.sw-nav li[data-dot="6"] { --sw-dot: var(--sw-color-list-6); }
+/* Each list has a dot in its own colour, the same one everywhere it
+   appears: the sidebar, a page title, the way back on a record's page, a
+   search result, a block drawn from that list. data-dot says which. */
+[data-dot="1"] { --sw-dot: var(--sw-color-list-1); }
+[data-dot="2"] { --sw-dot: var(--sw-color-list-2); }
+[data-dot="3"] { --sw-dot: var(--sw-color-list-3); }
+[data-dot="4"] { --sw-dot: var(--sw-color-list-4); }
+[data-dot="5"] { --sw-dot: var(--sw-color-list-5); }
+[data-dot="6"] { --sw-dot: var(--sw-color-list-6); }
+.sw-nav li[data-dot] .sw-link::before,
+h1.sw-dotted::before,
+.sw-crumbs li.sw-dotted::before,
+li.sw-dotted .sw-card__title::before,
+.sw-block[data-dot] .sw-collection__title::before,
+.sw-block[data-dot] .sw-calendar caption::before,
+.sw-block[data-dot] .sw-chart__caption::before,
+.sw-block[data-dot] .sw-record__title::before {
+  content: ""; display: inline-block; flex: none; vertical-align: 0.05em;
+  width: 0.75rem; height: 0.75rem; border-radius: 50%; margin-right: var(--sw-space-2);
+  background: var(--sw-dot, var(--sw-color-border-strong));
+}
+.sw-nav li[data-dot] .sw-link::before { margin-right: 0; }
+h1.sw-dotted::before { width: 1.125rem; height: 1.125rem; margin-right: var(--sw-space-3); vertical-align: 0.02em; }
+.sw-crumbs li.sw-dotted { display: inline-flex; align-items: center; }
+.sw-crumbs li.sw-dotted::before { width: 0.625rem; height: 0.625rem; }
 /* The rest of the workspace: quieter, after the lists. */
 .sw-nav--more .sw-link { min-height: 2.25rem; padding: 0 var(--sw-space-3); font-weight: 500; color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); }
 .sw-nav--more .sw-link:hover { color: var(--sw-color-fg); }

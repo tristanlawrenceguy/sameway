@@ -105,6 +105,7 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 		QuietTitle:   opts.QuietTitle,
 		Kicker:       opts.Kicker,
 		Lede:         opts.Lede,
+		Dot:          opts.Dot,
 		Shell:        opts.Shell,
 		Left:         opts.Left,
 		Right:        opts.Right,
@@ -120,7 +121,7 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 			continue
 		}
 		href := "/t/" + t.Name
-		p.Nav = append(p.Nav, render.NavItem{HTML: s.navLink(href, plural(t.Name), strings.HasPrefix(r.URL.Path, href)), Dot: len(p.Nav)%6 + 1})
+		p.Nav = append(p.Nav, render.NavItem{HTML: s.navLink(href, plural(t.Name), strings.HasPrefix(r.URL.Path, href)), Dot: s.dotOf(t.Name)})
 	}
 	for _, l := range []struct{ href, label string }{
 		{"/chat", "Chat"}, {"/activity", "Activity"}, {"/design", "Design system"},
@@ -155,6 +156,7 @@ type pageOptions struct {
 	Shell        string
 	Kicker       template.HTML
 	Lede         template.HTML
+	Dot          int
 	Left         template.HTML
 	Right        template.HTML
 	Header       template.HTML
