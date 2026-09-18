@@ -11,7 +11,7 @@
 .sw-chat__body { min-width: 0; }
 /* The transcript scrolls inside the region so the composer stays reachable
    however tall the conversation grows. */
-.sw-chat__log { max-height: min(48vh, 32rem); overflow-y: auto; padding-right: var(--sw-space-2); }
+.sw-chat__log { scroll-behavior: smooth; max-height: min(48vh, 32rem); overflow-y: auto; padding-right: var(--sw-space-2); }
 .sw-chat__log:focus-visible { outline-offset: 0; }
 /* The composer's file control is the platform's own; its button is drawn
    like the other quiet buttons so the row reads as one thing. */
