@@ -21,3 +21,13 @@
   background: var(--sw-color-bg-raised); border: 2px solid var(--sw-color-border-strong); border-radius: var(--sw-radius-md); cursor: pointer;
 }
 .sw-compose__file::file-selector-button:hover { background: var(--sw-color-bg-muted); }
+/* The turn as it happens: the reply's words as they come, and under them
+   what the assistant is doing, each step with a dot that pulses while it
+   runs and settles when it has landed. */
+.sw-live__text:empty { display: none; }
+.sw-live__steps { margin: var(--sw-space-2) 0 0; font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); display: grid; gap: var(--sw-space-1); }
+.sw-live__step { display: flex; align-items: center; gap: var(--sw-space-2); }
+.sw-live__dot { flex: none; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--sw-color-assistant); }
+.sw-live__step[data-state="running"] .sw-live__dot { animation: sw-pulse 1.2s var(--sw-motion-ease) infinite; }
+.sw-live__step[data-state="done"] .sw-live__dot { background: var(--sw-color-success); }
+@media (prefers-reduced-motion: reduce) { .sw-live__step[data-state="running"] .sw-live__dot { animation: none; } }

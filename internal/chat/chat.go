@@ -75,7 +75,7 @@ func (s *Service) SendOn(ctx context.Context, canvas, text string) (*store.Recor
 // SendFile is SendOn with a file attached: the message carries the file's
 // id, the model gets the file's text with the message, and the person
 // sees which file went with what they said.
-func (s *Service) SendFile(ctx context.Context, canvas, text, fileID string) (*store.Record, error) {
+func (s *Service) sendTurn(ctx context.Context, canvas, text, fileID string, on func(Event)) (*store.Record, error) {
 	if err := s.Available(); err != nil {
 		return nil, err
 	}
@@ -94,8 +94,12 @@ func (s *Service) SendFile(ctx context.Context, canvas, text, fileID string) (*s
 	if fileID != "" {
 		fields["file"] = fileID
 	}
-	if _, err := s.Store.Create(MessageType, s.fields(MessageType, fields)); err != nil {
+	mine, err := s.Store.Create(MessageType, s.fields(MessageType, fields))
+	if err != nil {
 		return nil, err
+	}
+	if on != nil {
+		on(Event{Kind: "said", ID: mine.ID})
 	}
 	said := Record(s.Store, "human", Change{Action: "said", Detail: truncate(text, 80)})
 	if s.Provider == nil {
@@ -114,7 +118,7 @@ func (s *Service) SendFile(ctx context.Context, canvas, text, fileID string) (*s
 	var tools []map[string]any
 	corrected := false
 	for round := 0; round <= maxToolRounds; round++ {
-		resp, err := s.Provider.Complete(ctx, req)
+		resp, err := s.complete(ctx, req, on)
 		if err != nil {
 			return s.fail(err)
 		}
@@ -153,6 +157,9 @@ func (s *Service) SendFile(ctx context.Context, canvas, text, fileID string) (*s
 		req.Messages = append(req.Messages, llm.Message{Role: llm.RoleAssistant, Content: resp.Text, ToolCalls: resp.ToolCalls})
 		results := llm.Message{Role: llm.RoleTool}
 		for _, call := range resp.ToolCalls {
+			if on != nil {
+				on(Event{Kind: "tool", Tool: call.Name, Label: describe(call)})
+			}
 			r := s.run(call)
 			results.ToolResults = append(results.ToolResults, llm.ToolResult{CallID: call.ID, Content: r.text, IsError: r.isErr})
 			tools = append(tools, used(call, r))
@@ -160,6 +167,14 @@ func (s *Service) SendFile(ctx context.Context, canvas, text, fileID string) (*s
 				changes = append(changes, *r.change)
 			}
 			changes = append(changes, r.changes...)
+			if on != nil {
+				if r.change != nil {
+					on(Event{Kind: "change", Change: r.change})
+				}
+				for i := range r.changes {
+					on(Event{Kind: "change", Change: &r.changes[i]})
+				}
+			}
 		}
 		req.Messages = append(req.Messages, results)
 		// The canvas changed, so refresh the system prompt for the next round.
