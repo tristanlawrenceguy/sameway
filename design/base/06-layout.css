@@ -175,3 +175,9 @@ ol.sw-plain, ul.sw-plain { list-style: none; margin: 0; padding: 0; }
 
 /* What points at a record, listed under its fields on its own page. */
 .sw-backlinks { margin-top: var(--sw-space-6); }
+
+/* A workspace among the others: its name over its folder, and the way to
+   it at the end of the row. */
+.sw-ws { display: flex; align-items: center; gap: var(--sw-space-4); }
+.sw-ws__who { flex: 1; min-width: 0; display: grid; gap: var(--sw-space-1); }
+.sw-ws__who .sw-small { overflow-wrap: anywhere; }

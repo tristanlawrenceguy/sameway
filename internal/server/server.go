@@ -23,6 +23,7 @@ type Server struct {
 	js    []byte
 	mux   *http.ServeMux
 	turns turns
+	fleet *Fleet
 }
 
 // New builds the handler for an app.
@@ -56,6 +57,11 @@ func (s *Server) routes() {
 	m.HandleFunc("POST /canvas/{id}/props", s.blockProps)
 	m.HandleFunc("POST /canvas/{id}/delete", s.canvasDelete)
 	m.HandleFunc("GET /activity", s.activityPage)
+	m.HandleFunc("GET /workspaces", s.workspacesPage)
+	m.HandleFunc("POST /workspaces/start", s.workspacesStart)
+	m.HandleFunc("POST /workspaces/new", s.workspacesNew)
+	m.HandleFunc("POST /workspaces/copy", s.workspacesCopy)
+	m.HandleFunc("POST /workspaces/delete", s.workspacesDelete)
 	m.HandleFunc("GET /search", s.searchPage)
 	m.HandleFunc("GET /design", s.designPage)
 	m.HandleFunc("GET /design/sameway.css", s.stylesheet)
@@ -131,7 +137,7 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 		href := "/t/" + t.Name
 		p.Nav = append(p.Nav, render.NavItem{HTML: s.navLink(href, plural(t.Name), strings.HasPrefix(r.URL.Path, href)), Dot: s.dotOf(t.Name)})
 	}
-	more := []struct{ href, label string }{{"/chat", "Chat"}, {"/activity", "Activity"}}
+	more := []struct{ href, label string }{{"/chat", "Chat"}, {"/activity", "Activity"}, {"/workspaces", "Workspaces"}}
 	if s.app.Workspace.Config.UI.Developer == "shown" {
 		more = append(more, struct{ href, label string }{"/design", "Design system"})
 	}

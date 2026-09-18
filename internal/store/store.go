@@ -60,6 +60,13 @@ func Open(path string, types *schema.Set) (*Store, error) {
 // Close releases the database.
 func (s *Store) Close() error { return s.db.Close() }
 
+// Backup writes a whole, consistent copy of the database to path, while
+// this one stays open: how a workspace is copied.
+func (s *Store) Backup(path string) error {
+	_, err := s.db.Exec("VACUUM INTO ?", path)
+	return err
+}
+
 // Types returns the schema set this store was opened with.
 func (s *Store) Types() *schema.Set { return s.types }
 

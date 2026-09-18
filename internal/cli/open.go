@@ -1,15 +1,20 @@
 package cli
 
 import (
+	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"os/exec"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/server"
+	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
 // openCmd is serve with the last step done for you: it starts the workspace
@@ -54,7 +59,35 @@ func (c *ctx) openCmd() error {
 		}
 	}
 	fmt.Fprintln(c.Stdout, "\nPress Ctrl-C to stop.")
-	return http.Serve(listener, server.New(a))
+	// This workspace is now one this machine knows, at this address, so
+	// any other workspace can offer to open it. The page can start other
+	// workspaces as servers of their own, and stop this one.
+	workspace.Remember(a.Workspace.Dir, listener.Addr().String())
+	var srv *http.Server
+	srv = &http.Server{Handler: server.New(a).WithFleet(&server.Fleet{
+		Launch: launchWorkspace,
+		Exit: func() {
+			go func() {
+				time.Sleep(500 * time.Millisecond)
+				srv.Shutdown(context.Background())
+			}()
+		},
+	})}
+	if err := srv.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		return err
+	}
+	return nil
+}
+
+// launchWorkspace starts this same program on another workspace, as a
+// server of its own that outlives this one.
+func launchWorkspace(dir, addr string) error {
+	exe, err := os.Executable()
+	if err != nil {
+		return err
+	}
+	cmd := exec.Command(exe, "open", "--workspace", dir, "--no-browser", "--addr", addr)
+	return cmd.Start()
 }
 
 // openInBrowser hands a URL to whatever the operating system uses for one.

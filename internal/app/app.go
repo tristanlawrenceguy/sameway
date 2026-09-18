@@ -178,6 +178,7 @@ func (a *App) Close() error { return a.Store.Close() }
 // printed by `sameway describe --json`.
 type Description struct {
 	Workspace  string               `json:"workspace"`
+	Dir        string               `json:"dir"`
 	LLM        DescribedLLM         `json:"llm"`
 	Types      []DescribedType      `json:"types"`
 	Components []DescribedComponent `json:"components"`
@@ -231,6 +232,7 @@ type DescribedComponent struct {
 func (a *App) Describe() Description {
 	d := Description{
 		Workspace: a.Workspace.Config.Name,
+		Dir:       a.Workspace.Dir,
 		LLM:       DescribedLLM{Provider: a.Workspace.Config.LLM.Provider, Model: a.Workspace.Config.LLM.Model, Ready: a.Chat.Provider != nil},
 		Routes: map[string]string{
 			"describe":      "GET /api/describe; one part: GET /api/describe/{types|components|arrangements|tools|routes|llm}; one item: GET /api/describe/types/{name}, likewise components and tools",
