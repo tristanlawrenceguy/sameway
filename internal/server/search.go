@@ -25,16 +25,33 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 		hits := search.Find(s.app.Store, s.app.Types, q)
 		title = fmt.Sprintf("Search: %s", q)
 		if len(hits) == 0 {
-			fmt.Fprintf(&b, `<p class="sw-empty" role="status">Nothing has %s in it.</p>`, template.HTMLEscapeString(q))
+			fmt.Fprintf(&b, `<h2>No results</h2><p class="sw-empty" role="status">Nothing has %s in it. Try searching with different words.</p>`, template.HTMLEscapeString(q))
 		} else {
 			fmt.Fprintf(&b, `<p class="sw-muted sw-small" role="status">%s</p>`, template.HTMLEscapeString(count(len(hits))))
+			fmt.Fprintf(&b, `<h2>Results</h2>`)
 			fmt.Fprintf(&b, `<ol class="sw-stack" aria-label="Results for %s">`, template.HTMLEscapeString(q))
 			for _, h := range hits {
-				props := map[string]any{"title": h.Title, "href": h.Href, "level": 2, "meta": h.Type}
-				if h.Snippet != "" {
-					props["body"] = h.Snippet
+				titleEsc := template.HTMLEscapeString(h.Title)
+				typeEsc := template.HTMLEscapeString(h.Type)
+				snippetEsc := template.HTMLEscapeString(h.Snippet)
+
+				bodyHTML := ""
+				if snippetEsc != "" {
+					bodyHTML = fmt.Sprintf(`<div class="sw-card__body" data-prop="body"><p>%s</p></div>`, snippetEsc)
 				}
-				fmt.Fprintf(&b, `<li class="sw-dotted" data-dot="%d">%s</li>`, s.dotOf(h.Type), s.component("card", props))
+
+				linkHTML := fmt.Sprintf(
+					`<article class="sw-card" data-component="card">`+
+						`<h2 class="sw-card__title" data-prop="title">`+
+						`<a href="%s">%s<span class="sw-visually-hidden"> — %s</span></a>`+
+						`</h2>`+
+						`<p class="sw-card__meta">%s</p>`+
+						`%s`+
+						`</article>`,
+					template.HTMLEscapeString(h.Href), titleEsc, typeEsc, typeEsc, bodyHTML,
+				)
+
+				fmt.Fprintf(&b, `<li class="sw-dotted" data-dot="%d">%s</li>`, s.dotOf(h.Type), linkHTML)
 			}
 			b.WriteString("</ol>")
 		}
