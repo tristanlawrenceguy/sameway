@@ -181,3 +181,9 @@ ol.sw-plain, ul.sw-plain { list-style: none; margin: 0; padding: 0; }
 .sw-ws { display: flex; align-items: center; gap: var(--sw-space-4); }
 .sw-ws__who { flex: 1; min-width: 0; display: grid; gap: var(--sw-space-1); }
 .sw-ws__who .sw-small { overflow-wrap: anywhere; }
+
+/* An edit left unfinished: a quiet line at the top of the block, with the
+   way to go on with it or to let it go. */
+.sw-draft { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sw-space-1) var(--sw-space-2); margin: 0 0 var(--sw-space-3); padding: var(--sw-space-1) var(--sw-space-2); border-radius: var(--sw-radius-md); background: var(--sw-color-accent-soft); color: var(--sw-color-fg); }
+.sw-draft__word { font-weight: 600; margin-right: var(--sw-space-1); }
+.sw-draft .sw-button { min-height: 2rem; padding: 0 var(--sw-space-2); font-size: var(--sw-size-text-xs); }
