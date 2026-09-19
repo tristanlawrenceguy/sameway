@@ -15,3 +15,9 @@
 .sw-collection__fields dd { margin: 0; overflow-wrap: anywhere; }
 .sw-collection__actions { display: inline-flex; gap: var(--sw-space-1); }
 .sw-collection__card .sw-collection__actions { margin: var(--sw-space-2) 0 0; }
+/* A row is one target, the whole of it; anything pressable in it sits above. */
+.sw-collection__item { position: relative; min-height: var(--sw-size-target); padding: var(--sw-space-1) var(--sw-space-2); margin: 0 calc(-1 * var(--sw-space-2)); border-radius: var(--sw-radius-md); }
+.sw-collection__item:hover { background: var(--sw-color-bg-muted); }
+.sw-collection__item .sw-mark, .sw-collection__item form, .sw-collection__item .sw-button { position: relative; z-index: 1; }
+.sw-collection th a.sw-link { display: block; margin: calc(-1 * var(--sw-space-2)) calc(-1 * var(--sw-space-3)); padding: var(--sw-space-2) var(--sw-space-3); }
+.sw-collection__all .sw-link--button { margin-left: 0; }

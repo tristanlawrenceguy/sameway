@@ -181,6 +181,6 @@ func (s *Server) fileExtras(rec *store.Record) string {
 	if status, _ := rec.Fields["status"].(string); status == "converting" {
 		b.WriteString(string(s.component("status", map[string]any{"id": "file-status", "message": "Reading the file. Its text appears here when the converter answers.", "state": "working"})))
 	}
-	fmt.Fprintf(&b, `<p>%s</p>`, s.component("link", map[string]any{"href": "/files/" + rec.ID, "label": "Open the original"}))
+	fmt.Fprintf(&b, `<p>%s</p>`, s.component("link", map[string]any{"href": "/files/" + rec.ID, "label": "Open the original", "look": "button"}))
 	return b.String()
 }

@@ -62,7 +62,7 @@ func (s *Server) recentActivity(n int, from string) template.HTML {
 		inner.WriteString(`<li><h3 class="sw-event__heading">` + summary + `</h3>` + string(s.event(r, from)) + `</li>`)
 	}
 	inner.WriteString(`</ol><p class="sw-small" style="margin:var(--sw-space-3) 0 0">`)
-	inner.WriteString(string(s.component("link", map[string]any{"href": "/activity", "label": "All activity"})))
+	inner.WriteString(string(s.component("link", map[string]any{"href": "/activity", "label": "All activity", "look": "button"})))
 	inner.WriteString(`</p>`)
 
 	body, err := s.app.Registry.RenderSlot("disclosure",

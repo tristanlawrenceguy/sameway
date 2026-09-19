@@ -14,12 +14,14 @@
 .sw-clock__ringing:empty { display: none; }
 .sw-clock__ringing { display: grid; gap: var(--sw-space-2); }
 .sw-clock__ring {
+  position: relative;
   display: flex; align-items: center; flex-wrap: wrap; gap: var(--sw-space-2) var(--sw-space-3);
   padding: var(--sw-space-3) var(--sw-space-4); border-radius: var(--sw-radius-lg);
   background: var(--sw-color-accent-soft); color: var(--sw-color-fg);
   box-shadow: inset 4px 0 0 var(--sw-color-accent);
 }
 .sw-clock__ring .sw-clock__what { flex: 1; min-width: 8rem; font-weight: 600; }
+.sw-clock__ring form { position: relative; z-index: 1; }
 .sw-clock__bell { flex: none; width: 0.625rem; height: 0.625rem; border-radius: 50%; background: var(--sw-color-accent); box-shadow: 0 0 0 3px var(--sw-color-bg-raised); }
 .sw-clock__ring .sw-clock__bell { animation: sw-pulse 1.2s var(--sw-motion-ease) infinite; }
 @media (prefers-reduced-motion: reduce) { .sw-clock__ring .sw-clock__bell { animation: none; } }
@@ -40,7 +42,7 @@
    the list's colour for what the calendar has today. */
 .sw-clock__head { margin: 0 0 calc(-1 * var(--sw-space-2)); font-size: var(--sw-size-text-xs); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--sw-color-fg-muted); }
 .sw-clock__next { display: grid; }
-.sw-clock__item { display: flex; align-items: center; gap: var(--sw-space-3); min-width: 0; min-height: 2.25rem; padding: var(--sw-space-1) 0; border-top: 1px solid var(--sw-color-border); }
+.sw-clock__item { position: relative; display: flex; align-items: center; gap: var(--sw-space-3); min-width: 0; min-height: 2.25rem; padding: var(--sw-space-1) 0; border-top: 1px solid var(--sw-color-border); }
 .sw-clock__item:first-child { border-top: 0; }
 .sw-clock__item::before { content: ""; flex: none; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--sw-color-accent); }
 .sw-clock__item[data-kind="timer"]::before { background: var(--sw-color-success); }
@@ -49,7 +51,7 @@
 .sw-clock__item .sw-clock__what { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
 .sw-clock__item .sw-link { color: inherit; text-decoration: none; }
 .sw-clock__item .sw-link:hover { text-decoration: underline; text-underline-offset: 0.15em; }
-.sw-clock__item form { margin-left: auto; }
+.sw-clock__item form { margin-left: auto; position: relative; z-index: 1; }
 .sw-clock__item form .sw-button { min-height: 2rem; padding: 0 var(--sw-space-2); font-size: var(--sw-size-text-xs); }
 .sw-clock__empty { margin: 0; }
 .sw-clock__notify { justify-self: start; }

@@ -64,7 +64,7 @@ func (s *Server) focusPage(w http.ResponseWriter, r *http.Request) {
 
 	var b strings.Builder
 	b.WriteString(`<div class="sw-focus">`)
-	b.WriteString(string(s.component("link", map[string]any{"href": chat.CanvasPath(canvasOf(rec.Fields)), "label": "Back to the canvas"})))
+	b.WriteString(string(s.component("link", map[string]any{"href": chat.CanvasPath(canvasOf(rec.Fields)), "label": "Back to the canvas", "look": "button"})))
 	// The block's own page wears its list's colour, as the block does on
 	// the canvas.
 	dot := ""

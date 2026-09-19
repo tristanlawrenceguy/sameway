@@ -61,7 +61,7 @@ func TestACalendarMovesBetweenMonths(t *testing.T) {
 		`<nav class="sw-calendar__months" aria-label="Other months">`,
 		`href="/canvas/` + block.ID + `?month=2026-08" rel="prev">&larr; August 2026</a>`,
 		`href="/canvas/` + block.ID + `?month=2026-10" rel="next">October 2026 &rarr;</a>`,
-		`<a class="sw-link" href="/t/task?order=due">See the list</a>`,
+		`<a class="sw-link sw-link--button" href="/t/task?order=due">See the list</a>`,
 	} {
 		if !strings.Contains(page, want) {
 			t.Errorf("the block page should carry %s", want)
