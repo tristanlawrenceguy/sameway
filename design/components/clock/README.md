@@ -5,8 +5,8 @@ The time now, with alarms and timers, and what is coming.
 A reminder is a record of the `reminder` type, which every workspace has:
 a title, a moment it rings at, whether it is an alarm or a timer, and its
 state (set, rang, done). The clock's two short forms make one: Start
-timer takes minutes from now, Set alarm takes a time of day and what it
-is for. The assistant makes them the same way, with `create_record`.
+timer takes minutes from now, Set alarm takes a time of day the way a person says it (7:30, 7pm,
+tomorrow 6am) and what it is for. The assistant makes them the same way, with `create_record`.
 
 When a reminder's time comes the server marks it rang and tells every
 open page over `/clock/stream`; the clock shows it in an alert region,

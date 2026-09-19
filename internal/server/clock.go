@@ -134,13 +134,14 @@ func (s *Server) clockSet(w http.ResponseWriter, r *http.Request) {
 			fields["title"] = "1 minute timer"
 		}
 	} else {
-		clock, err := time.ParseInLocation("15:04", r.PostForm.Get("at"), time.Local)
-		if err != nil {
-			s.app.Chat.Notice("An alarm needs a time of day, such as 07:30.")
+		// The time the way a person says it: 7:30, 7pm, tomorrow 6am. A
+		// time already past today is tomorrow.
+		at, dayOnly, ok := when.Parse(r.PostForm.Get("at"), now)
+		if !ok || dayOnly {
+			s.app.Chat.Notice("An alarm needs a time of day, such as 7:30 or 7pm.")
 			http.Redirect(w, r, backFrom(r), http.StatusSeeOther)
 			return
 		}
-		at := time.Date(now.Year(), now.Month(), now.Day(), clock.Hour(), clock.Minute(), 0, 0, time.Local)
 		if !at.After(now) {
 			at = at.AddDate(0, 0, 1)
 		}

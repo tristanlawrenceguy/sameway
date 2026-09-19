@@ -33,7 +33,7 @@
   "machine": {
     "selector": "[data-component=\"clock\"]",
     "identify": "data-now is the moment shown. Ringing reminders are inside .sw-clock__ringing, each with data-id. Coming up is the list labelled Coming up, each item with data-kind.",
-    "operate": "To set a timer, fill Minutes and activate Start timer; to set an alarm, fill Time and What for and activate Set alarm. Each makes a reminder record, which is also at /t/reminder. Dismiss and five more minutes are the forms on a ringing reminder."
+    "operate": "To set a timer, fill Minutes and activate Start timer; to set an alarm, fill Time (7:30, 7pm, tomorrow 6am) and What for and activate Set alarm. Each makes a reminder record, which is also at /t/reminder. Dismiss and five more minutes are the forms on a ringing reminder."
   },
   "examples": [
     { "name": "default", "props": { "now": "2026-09-19T14:05:00+01:00", "time": "14:05", "date": "Saturday 19 September", "upcoming": [{ "id": "r1", "title": "Tea", "when": "14:20", "kind": "timer", "href": "/t/reminder/r1" }, { "id": "r2", "title": "Call the vet", "when": "Monday 09:00", "kind": "alarm", "href": "/t/reminder/r2" }], "today": [{ "time": "16:00", "label": "Water the tomatoes", "href": "/t/task/t1" }] }, "file": "examples/default.html" },
