@@ -1,5 +1,5 @@
 <div class="sw-chat__tools sw-cluster">
-<details class="sw-chat__menu"><summary class="sw-button sw-button--quiet sw-pressable sw-chat__current">{{.Title}}</summary>
+<details class="sw-chat__menu"><summary class="sw-button sw-button--quiet sw-pressable sw-chat__current"><span class="sw-chat__name">{{.Title}}</span></summary>
 <div class="sw-chat__panel">
 <form method="post" action="/chat/new"><input type="hidden" name="from" value="{{.From}}">{{.NewChat}}</form>
 {{if .Chats}}<ul class="sw-plain sw-chat__list" aria-label="Chats">
