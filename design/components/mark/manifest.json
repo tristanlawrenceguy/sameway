@@ -16,7 +16,8 @@
       "context": {"type": "string", "description": "Which record, for screen readers: the record's title. Read after the label."},
       "id": {"type": "string"},
       "checked": {"type": "boolean", "default": false, "description": "Whether the field is true now."},
-      "quiet": {"type": "boolean", "default": false, "description": "Show only the box; the label and context are still its name. For a row whose title beside it already says what the box is."}
+      "quiet": {"type": "boolean", "default": false, "description": "Show only the box; the label and context are still its name. For a row whose title beside it already says what the box is."},
+      "ariaLabel": {"type": "string", "description": "Full accessible name including state for screen readers; overrides the implicit label-based name."}
     }
   },
   "a11y": {"role": "checkbox", "keyboard": [{"key": "Tab", "does": "reaches the checkbox, and the Save button when scripts are off"}, {"key": "Space", "does": "changes it, which saves when scripts run"}], "states": ["checked"], "wcag": {"target": "AAA", "notes": "A native checkbox inside its label, so the state is announced as a fact (checked or not) with the field's name and, when context is given, the record's title (1.3.1, 4.1.2), and a list of ten is ten different names (2.4.6). A checkbox that saves on change would surprise someone who cannot see the page settle, so the page comes back with the record glowing where it shows; without scripts a Save button does the same in one more step. A switch would say the same with less support; a button would say an action rather than the fact."}},
