@@ -67,7 +67,9 @@ func (s *Server) routes() {
 	m.HandleFunc("POST /workspaces/start", s.workspacesStart)
 	m.HandleFunc("GET /workspaces/new", s.workspacesNewPage)
 	m.HandleFunc("POST /workspaces/new", s.workspacesNew)
+	m.HandleFunc("GET /workspaces/copy", s.workspacesCopyPage)
 	m.HandleFunc("POST /workspaces/copy", s.workspacesCopy)
+	m.HandleFunc("GET /workspaces/delete", s.workspacesDeletePage)
 	m.HandleFunc("POST /workspaces/delete", s.workspacesDelete)
 
 	m.HandleFunc("GET /search", s.searchPage)

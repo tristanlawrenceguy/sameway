@@ -198,6 +198,27 @@ func (s *Server) workspacesNewPage(w http.ResponseWriter, r *http.Request) {
 	s.page(w, r, "New workspace", template.HTML(b.String()), pageOptions{})
 }
 
+func (s *Server) workspacesCopyPage(w http.ResponseWriter, r *http.Request) {
+	var b strings.Builder
+	b.WriteString(`<section class="sw-stack" aria-labelledby="ws-copy"><h2 id="ws-copy">Copy this workspace</h2><p class="sw-muted">Everything here, as a second workspace beside this one.</p><form method="post" action="/workspaces/copy" class="sw-stack">`)
+	b.WriteString(string(s.component("text-field", map[string]any{"label": "Name for the copy", "name": "name", "required": true, "id": "copy-name", "value": s.app.Workspace.Config.Name + " copy"})))
+	b.WriteString(string(s.component("button", map[string]any{"label": "Copy and open", "type": "submit", "variant": "secondary"})))
+	b.WriteString(`</form></section>`)
+
+	s.page(w, r, "Copy workspace", template.HTML(b.String()), pageOptions{})
+}
+
+func (s *Server) workspacesDeletePage(w http.ResponseWriter, r *http.Request) {
+	cur := s.app.Workspace
+	var b strings.Builder
+	b.WriteString(`<section class="sw-stack" aria-labelledby="ws-delete"><h2 id="ws-delete">Delete this workspace</h2><p class="sw-muted">The folder and everything in it go, and this server stops. Type the name to be sure.</p><form method="post" action="/workspaces/delete" class="sw-stack">`)
+	b.WriteString(string(s.component("text-field", map[string]any{"label": "Type " + cur.Config.Name + " to delete it", "name": "confirm", "required": true, "id": "delete-confirm"})))
+	b.WriteString(string(s.component("button", map[string]any{"label": "Delete this workspace", "type": "submit", "variant": "danger"})))
+	b.WriteString(`</form></section>`)
+
+	s.page(w, r, "Delete workspace", template.HTML(b.String()), pageOptions{})
+}
+
 func (s *Server) workspacesNew(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	s.makeAndOpen(w, r, s.blank, strings.TrimSpace(r.PostForm.Get("name")))
