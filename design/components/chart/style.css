@@ -1,19 +1,37 @@
+/* A chart is a few quiet bars or one line on a light grid, in the colour
+   of the list it counts, with the numbers written where they belong. It
+   should read from across the room and reward a closer look. */
 .sw-chart { margin: 0; max-width: 100%; }
-.sw-chart__caption { font-weight: 700; margin: 0 0 var(--sw-space-2); }
-.sw-chart__svg { display: block; width: 100%; height: auto; max-width: 40rem; font-size: 12px; }
-.sw-chart__grid { stroke: var(--sw-color-border); stroke-width: 1; }
-.sw-chart__tick, .sw-chart__x { fill: var(--sw-color-fg-muted); }
-.sw-chart__value { fill: var(--sw-color-fg); font-weight: 600; }
-.sw-chart__bar { fill: var(--sw-color-accent); }
-.sw-chart__line { stroke: var(--sw-color-accent); stroke-width: 3; stroke-linejoin: round; }
-.sw-chart__dot { fill: var(--sw-color-bg-raised); stroke: var(--sw-color-accent); stroke-width: 3; }
-.sw-chart__description { margin: var(--sw-space-2) 0 0; color: var(--sw-color-fg-muted); max-width: var(--sw-size-measure); }
-.sw-chart__numbers { margin-top: var(--sw-space-2); }
-.sw-chart__numbers summary { cursor: pointer; min-height: var(--sw-size-target); display: inline-flex; align-items: center; padding: 0 var(--sw-space-2); border-radius: var(--sw-radius-md); }
+.sw-chart__caption { font-weight: 700; margin: 0 0 var(--sw-space-3); }
+.sw-chart__svg { display: block; width: 100%; height: auto; max-width: 40rem; font-size: 12px; font-family: inherit; overflow: visible; }
+/* The grid is a whisper: dotted hairlines, with the baseline drawn solid. */
+.sw-chart__grid { stroke: var(--sw-color-border); stroke-width: 1; stroke-dasharray: 2 4; }
+.sw-chart__grid:first-of-type { stroke-dasharray: none; stroke: var(--sw-color-border-strong); }
+.sw-chart__tick { fill: var(--sw-color-fg-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.sw-chart__x { fill: var(--sw-color-fg-muted); font-size: 11px; }
+.sw-chart__value { fill: var(--sw-color-fg); font-weight: 600; font-size: 12px; font-variant-numeric: tabular-nums; }
+/* Bars take the colour of the list they count, and lift a little under
+   the pointer so the one being read stands out. */
+.sw-chart__bar { fill: var(--sw-dot, var(--sw-color-accent)); opacity: 0.9; transition: opacity var(--sw-motion-fast) var(--sw-motion-ease); }
+.sw-chart__bar:hover { opacity: 1; }
+.sw-chart__line { stroke: var(--sw-dot, var(--sw-color-accent)); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.sw-chart__dot { fill: var(--sw-color-bg-raised); stroke: var(--sw-dot, var(--sw-color-accent)); stroke-width: 2.5; }
+.sw-chart__description { margin: var(--sw-space-2) 0 0; color: var(--sw-color-fg-muted); max-width: var(--sw-size-measure); font-size: var(--sw-size-text-sm); }
+/* The numbers as a table, folded under a quiet link-like summary. */
+.sw-chart__numbers { margin-top: var(--sw-space-2); font-size: var(--sw-size-text-sm); }
+.sw-chart__numbers summary { cursor: pointer; min-height: var(--sw-size-target); display: inline-flex; align-items: center; gap: var(--sw-space-1); padding: 0 var(--sw-space-2); border-radius: var(--sw-radius-md); color: var(--sw-color-fg-muted); list-style: none; }
+.sw-chart__numbers summary::-webkit-details-marker { display: none; }
+.sw-chart__numbers summary::before { content: "▸"; font-size: var(--sw-size-text-xs); transition: transform var(--sw-motion-fast) var(--sw-motion-ease); }
+.sw-chart__numbers summary::after { content: "as a table"; font-weight: 400; }
+.sw-chart__numbers[open] summary::before { transform: rotate(90deg); }
+.sw-chart__numbers summary:hover { background: var(--sw-color-bg-muted); color: var(--sw-color-fg); }
+.sw-chart__numbers .sw-table-wrap { margin-top: var(--sw-space-2); max-width: 24rem; }
 .sw-chart__empty, .sw-chart__problem { margin: 0; color: var(--sw-color-fg-muted); }
+/* At a glance: one number and what it is. In brief: the number, its
+   trend, and a sparkline. */
 .sw-chart--glance { display: inline-flex; align-items: baseline; gap: var(--sw-space-2); }
-.sw-chart--glance .sw-chart__number { font-size: var(--sw-size-text-lg); font-weight: 700; font-variant-numeric: tabular-nums; }
+.sw-chart--glance .sw-chart__number { font-size: var(--sw-size-text-xl); font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
 .sw-chart--glance .sw-chart__label { color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); }
-.sw-chart--brief .sw-chart__number { font-size: var(--sw-size-text-lg); font-weight: 700; margin: 0; font-variant-numeric: tabular-nums; }
-.sw-chart--brief .sw-chart__trend { font-size: var(--sw-size-text-sm); font-weight: 400; color: var(--sw-color-fg-muted); }
-.sw-chart__spark { display: block; color: var(--sw-color-accent); margin-top: var(--sw-space-1); }
+.sw-chart--brief .sw-chart__number { font-size: var(--sw-size-text-2xl); font-weight: 700; margin: 0; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; line-height: 1.1; }
+.sw-chart--brief .sw-chart__trend { font-size: var(--sw-size-text-sm); font-weight: 400; color: var(--sw-color-fg-muted); letter-spacing: 0; }
+.sw-chart__spark { display: block; color: var(--sw-dot, var(--sw-color-accent)); margin-top: var(--sw-space-2); }

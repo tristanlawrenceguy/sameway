@@ -119,3 +119,13 @@ a.sw-calendar__number:focus-visible { outline: var(--sw-focus-width) solid var(-
 .sw-calendar__hour .sw-calendar__events li { padding: var(--sw-space-1) var(--sw-space-2); border-radius: var(--sw-radius-md); }
 .sw-calendar__hour .sw-calendar__event { white-space: normal; overflow: visible; }
 .sw-calendar__nothing { margin: 0; }
+/* In the day, an event is a small card with its list's colour along its
+   left edge; its mark sits small beside the words. */
+.sw-calendar__hour { grid-template-columns: 3rem 1fr; min-height: 2rem; border-top: 1px solid var(--sw-color-border); }
+.sw-calendar__hour:first-child { border-top: 0; }
+.sw-calendar__hour .sw-calendar__events li { background: color-mix(in srgb, var(--sw-dot, var(--sw-color-accent)) 10%, transparent); border-left: 3px solid var(--sw-dot, var(--sw-color-accent)); border-radius: var(--sw-radius-sm) var(--sw-radius-md) var(--sw-radius-md) var(--sw-radius-sm); padding: var(--sw-space-2) var(--sw-space-3); }
+.sw-calendar__hour .sw-calendar__event::before { display: none; }
+.sw-calendar--day .sw-calendar__actions { margin-top: var(--sw-space-1); }
+.sw-calendar--day .sw-calendar__actions .sw-mark { min-height: 0; font-size: var(--sw-size-text-xs); }
+.sw-calendar__allday li { background: color-mix(in srgb, var(--sw-dot, var(--sw-color-accent)) 14%, transparent); }
+.sw-calendar__dayhead .sw-calendar__months { font-size: var(--sw-size-text-sm); gap: var(--sw-space-3); }

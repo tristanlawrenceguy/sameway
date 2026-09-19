@@ -25,7 +25,7 @@
   }
 
   function init() {
-    var canvas = document.querySelector(".sw-canvas");
+    var canvas = document.querySelector(".sw-main .sw-canvas:not(.sw-canvas--strip)") || document.querySelector(".sw-canvas");
     if (!canvas || !document.querySelector("[data-arrival]")) return;
     var running = arriving();
     if (running.length === 0) return;
