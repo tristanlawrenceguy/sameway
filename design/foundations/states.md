@@ -68,3 +68,15 @@ Query by attribute, act by role and name:
 .sw-message__changes li[data-action]       the receipt for a reply
 GET /api/activity                          the full log, newest first
 ```
+
+## Drafts
+
+Words typed and not yet sent or saved are not lost by leaving the page.
+The chat composer keeps its draft per chat, and an inline edit keeps its
+fields, in the browser under the workspace's origin
+(`sameway:draft:...` in localStorage). A draft is restored when the same
+composer or edit is opened again: the composer fills itself, and a block
+with an unfinished edit says so at the top with Continue editing and
+Discard. A draft goes the moment the message is sent or the edit is
+saved, or cancelled on purpose. Nothing about a draft is sent to the
+server; see `design/base/16-drafts.js`.

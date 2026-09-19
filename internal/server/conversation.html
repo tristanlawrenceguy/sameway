@@ -16,7 +16,7 @@
 {{end}}{{if .Proposals}}<div class="sw-stack sw-proposals">
 {{range .Proposals}}{{.}}
 {{end}}</div>
-{{end}}<form method="post" action="/chat" enctype="multipart/form-data" class="sw-stack sw-compose" aria-labelledby="compose-heading" data-busy-target="chat-status" data-busy-message="Assistant is working">
+{{end}}<form method="post" action="/chat" enctype="multipart/form-data" class="sw-stack sw-compose" aria-labelledby="compose-heading" data-chat="{{.ChatID}}" data-busy-target="chat-status" data-busy-message="Assistant is working">
 <h3 id="compose-heading" class="sw-visually-hidden">Compose</h3>
 <input type="hidden" name="from" value="{{.From}}">
 {{.Compose}}

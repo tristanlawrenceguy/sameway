@@ -56,9 +56,11 @@ type conversationView struct {
 	ModelName string
 	From      string
 	Proposals []template.HTML
-	// Title names the current chat; Chats lists every chat for the menu.
-	Title string
-	Chats []chatItem
+	// Title names the current chat, ChatID is its id, and Chats lists
+	// every chat for the menu.
+	Title  string
+	ChatID string
+	Chats  []chatItem
 }
 
 type chatMessage struct {
@@ -72,6 +74,7 @@ func (s *Server) conversation(from string) (*conversation, error) {
 	out := &conversation{From: from}
 	view := conversationView{From: from}
 	view.Chats, view.Title = s.chats()
+	view.ChatID = s.app.Chat.Current()
 	if s.app.Chat.Provider == nil {
 		problem := "No model is configured."
 		if s.app.Chat.ProviderErr != nil {
