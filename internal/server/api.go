@@ -1,15 +1,20 @@
 package server
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/convert"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -178,6 +183,96 @@ func (s *Server) apiDescribePart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, v)
+}
+
+// apiFileUpload accepts a base64-encoded file from an agent. The JSON body
+// has optional title, optional filename, and optional content (base64 string).
+// Without content it creates a stub record; with content it decodes, writes to
+// disk, reads text for built-in formats, and returns 201 with the record.
+func (s *Server) apiFileUpload(w http.ResponseWriter, r *http.Request) {
+	fields, err := readBody(r)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	title, _ := fields["title"].(string)
+	filename, _ := fields["filename"].(string)
+	contentB64, hasContent := fields["content"]
+
+	// If content is provided it must be valid base64.
+	if hasContent {
+		raw, ok := contentB64.(string)
+		if !ok || raw == "" {
+			writeError(w, errors.New("content must be a non-empty base64 string"))
+			return
+		}
+		data, err := base64.StdEncoding.DecodeString(raw)
+		if err != nil {
+			writeError(w, fmt.Errorf("invalid base64 content: %w", err))
+			return
+		}
+		if len(data) > maxUpload {
+			writeError(w, errors.New("the file is too large: 64 MB is the most one can be"))
+			return
+		}
+
+		name := filename
+		if name == "" {
+			name = "upload"
+		} else {
+			name = filepath.Base(name)
+		}
+		if title == "" {
+			title = strings.TrimSuffix(name, filepath.Ext(name))
+		}
+		rec, err := s.app.Store.Create(FileType, map[string]any{
+			"title": title, "name": name, "kind": convert.Kind(name), "size": len(data), "status": "converting",
+		})
+		if err != nil {
+			writeError(w, err)
+			return
+		}
+		stored := rec.ID + strings.ToLower(filepath.Ext(name))
+		dir := s.app.Workspace.FilesDir()
+		if err := os.MkdirAll(dir, 0o755); err == nil {
+			err = os.WriteFile(filepath.Join(dir, stored), data, 0o644)
+		}
+		if err != nil {
+			s.app.Store.Delete(FileType, rec.ID)
+			writeError(w, fmt.Errorf("could not keep the file: %w", err))
+			return
+		}
+		s.app.Store.Update(FileType, rec.ID, map[string]any{"path": stored})
+		chat.Record(s.app.Store, "human", chat.Change{Action: "added", Component: FileType, ID: rec.ID, Detail: title, Href: "/t/" + FileType + "/" + rec.ID})
+
+		if converter := s.app.Workspace.Config.Files.Convert[convert.Ext(name)]; converter != "" {
+			go func() { s.convertLater(rec.ID, converter, name, filepath.Join(dir, stored)) }()
+		} else {
+			s.readNow(rec.ID, name, data)
+		}
+
+		w.Header().Set("Location", "/api/"+FileType+"/"+rec.ID)
+		writeJSON(w, http.StatusCreated, rec)
+		return
+	}
+
+	// No content: if a filename is present create a stub record; otherwise
+	// the request needs either content or at least a name to be useful.
+	if filename == "" {
+		writeError(w, errors.New("upload needs either content (base64) or a filename"))
+		return
+	}
+	name := filepath.Base(filename)
+	rec, err := s.app.Store.Create(FileType, map[string]any{
+		"title": title, "name": name, "kind": convert.Kind(name), "size": 0, "status": "ready",
+	})
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	w.Header().Set("Location", "/api/"+FileType+"/"+rec.ID)
+	writeJSON(w, http.StatusCreated, rec)
 }
 
 // apiNotFound answers any path under /api that nothing serves in the shape
