@@ -82,13 +82,15 @@
     });
   }
 
+  // The way to allow notifications, only where they are possible and not
+  // yet decided; a button that would do nothing is not shown.
   function askToNotify(clock) {
-    var btn = clock.querySelector(".sw-clock__notify");
-    if (!btn || !window.Notification || Notification.permission !== "default") return;
-    btn.hidden = false;
+    if (clock.getAttribute("data-detail") === "glance" || !window.Notification || Notification.permission !== "default") return;
+    var btn = el('<button type="button" class="sw-button sw-button--quiet sw-pressable sw-clock__notify">Allow notifications</button>');
     btn.addEventListener("click", function () {
-      Notification.requestPermission().then(function () { btn.hidden = true; });
+      Notification.requestPermission().then(function () { btn.remove(); });
     });
+    clock.appendChild(btn);
   }
 
   function init() {
