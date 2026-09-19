@@ -31,7 +31,11 @@ const maxUpload = 64 << 20
 func (s *Server) upload(w http.ResponseWriter, r *http.Request) {
 	rec, err := s.storeUpload(r)
 	if err != nil {
-		s.fail(w, err)
+		if errors.Is(err, http.ErrMissingFile) || strings.Contains(err.Error(), "please select a file") {
+			s.uploadError(w, r, err)
+		} else {
+			s.fail(w, err)
+		}
 		return
 	}
 	back := "/t/" + FileType + "/" + rec.ID
@@ -49,11 +53,14 @@ func (s *Server) storeUpload(r *http.Request) (*store.Record, error) {
 		return nil, errors.New("this workspace has no file type; run sameway init --force to add it")
 	}
 	if err := r.ParseMultipartForm(maxUpload); err != nil {
-		return nil, fmt.Errorf("the file is too large or the form is wrong: %w", err)
+		if strings.Contains(err.Error(), "multipart") || err == http.ErrNotMultipart {
+			return nil, fmt.Errorf("please select a file: %w", err)
+		}
+		return nil, fmt.Errorf("the file is too large: 64 MB is the most one can be")
 	}
 	part, header, err := r.FormFile("file")
 	if err != nil {
-		return nil, http.ErrMissingFile
+		return nil, err
 	}
 	defer part.Close()
 	data, err := io.ReadAll(io.LimitReader(part, maxUpload+1))
@@ -142,6 +149,22 @@ func (s *Server) serveFile(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Disposition", fmt.Sprintf(`inline; filename="%s"`, strings.ReplaceAll(name, `"`, "")))
 	http.ServeFile(w, r, filepath.Join(s.app.Workspace.FilesDir(), stored))
+}
+
+// uploadError renders an HTML error page on the files list with an accessible
+// alert banner (aria-live) so screen readers announce the validation failure.
+func (s *Server) uploadError(w http.ResponseWriter, r *http.Request, err error) {
+	var b strings.Builder
+	b.WriteString(string(s.component("alert", map[string]any{
+		"kind":    "danger",
+		"title":   "Could not upload",
+		"message": template.HTMLEscapeString(err.Error()),
+	})))
+	b.WriteString(string(s.component("upload", map[string]any{"id": "upload-error"})))
+	b.WriteString(`<script>(function(){var f=document.querySelector('.sw-upload__field');var err=document.getElementById("upload-error-error");f.addEventListener('invalid',function(e){err.textContent="Please select a file."},false);document.querySelector(".sw-upload").addEventListener('submit',function(e){if(!f.value){e.preventDefault();err.textContent="Please select a file.";f.reportValidity()}},{once:true});f.addEventListener('change',function(){err.textContent=""})})();</script>`)
+	// Re-render recent activity so the user can undo deletions.
+	b.WriteString(string(s.recentActivity(5, "/t/"+FileType)))
+	s.page(w, r, "Files", template.HTML(b.String()), pageOptions{JSONURL: "/api/file", Status: http.StatusBadRequest})
 }
 
 // fileExtras is what a file's own page shows beyond its fields: the
