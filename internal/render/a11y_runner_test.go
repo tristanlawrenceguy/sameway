@@ -154,4 +154,12 @@ func TestPagesMjsNoRemovedRoutes(t *testing.T) {
 	if !strings.Contains(code, `"/activity"`) && !strings.Contains(code, "'/activity'") {
 		t.Error("pages.mjs: does not visit /activity; this is a core surface that must be tested")
 	}
+
+	// Acceptance 2c (backlog 0149): the file should also visit /design and /search.
+	if !strings.Contains(code, `"/design"`) && !strings.Contains(code, "'/design'") {
+		t.Error("pages.mjs: does not visit /design; this is a core surface that must be tested (backlog 0149)")
+	}
+	if !strings.Contains(code, `"/search"`) && !strings.Contains(code, "'/search'") {
+		t.Error("pages.mjs: does not visit /search; this is a core surface that must be tested (backlog 0149)")
+	}
 }

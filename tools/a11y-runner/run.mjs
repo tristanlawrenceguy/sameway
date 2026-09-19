@@ -8,10 +8,13 @@
 import { chromium } from "playwright";
 import AxeBuilder from "@axe-core/playwright";
 import { readFileSync, readdirSync, existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { join, resolve } from "node:path";
+
+const __dirname = fileURLToPath(new URL(".", import.meta.url));
+const root = resolve(__dirname, "..", "..");
 import { shell, AA_TAGS, AAA_TAGS } from "./shell.mjs";
 
-const root = resolve(process.cwd(), "..", "..");
 const componentsDir = join(root, "design", "components");
 
 // Field names for per-violation diagnostic JSON output.
