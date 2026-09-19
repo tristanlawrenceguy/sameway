@@ -2,9 +2,11 @@
 // supplies the same tokens and base CSS the real server serves, plus an h1
 // and h2 so components that default to heading level 3 sit in a valid outline.
 import { readFileSync, readdirSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { join, resolve } from "node:path";
 
-const root = resolve(process.cwd(), "..", "..");
+const __dirname = fileURLToPath(new URL(".", import.meta.url));
+const root = resolve(__dirname, "..", "..");
 const designDir = join(root, "design");
 // axe-core rule tags: AA (plus best practices) fails a run, AAA only warns.
 export const AA_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa", "best-practice"];
