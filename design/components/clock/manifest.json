@@ -1,0 +1,44 @@
+{
+  "name": "clock",
+  "version": "1.0.0",
+  "description": "The time now, with alarms and timers: set one here, and it rings here when its time comes, with a sound and a notification if the browser allows, until it is dismissed or given five more minutes. Under the time is what is coming: the reminders set and whatever is on today from the calendar's types. A reminder is a record, so it also shows on the calendar and on its own page.",
+  "icon": "◷",
+  "use": { "when": "a person wants to know the time, be reminded at a time, or time something: in a corner, a header, or a pane.", "not": "a whole month, which is a calendar, or a date to choose, which is a datepicker.", "with": "a calendar, which shows the same reminders on their days." },
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [],
+    "properties": {
+      "label": { "type": "string", "default": "Clock", "description": "Names the region, so landmark navigation can reach it." },
+      "detail": { "title": "How much to show", "type": "string", "enum": ["glance", "full"], "default": "full", "description": "glance is the time and anything ringing, for a header or a corner. full adds the forms to set a timer or an alarm and what is coming up." },
+      "sound": { "title": "Ring out loud", "type": "boolean", "default": true, "description": "Whether a ringing reminder makes a sound as well as showing." },
+      "now": { "type": "string", "description": "The moment shown, as RFC 3339. Filled in by the server; the page keeps it ticking." },
+      "time": { "type": "string", "description": "The time shown, as HH:MM. Filled in by the server." },
+      "date": { "type": "string", "description": "The day shown in words. Filled in by the server." },
+      "ringing": { "type": "array", "description": "Reminders whose time has come and that nobody has dismissed. Filled in by the server.", "items": { "type": "object", "additionalProperties": false, "required": ["id", "title"], "properties": { "id": { "type": "string" }, "title": { "type": "string" }, "href": { "type": "string" } } } },
+      "upcoming": { "type": "array", "description": "Reminders still to ring, soonest first. Filled in by the server.", "items": { "type": "object", "additionalProperties": false, "required": ["id", "title", "when"], "properties": { "id": { "type": "string" }, "title": { "type": "string" }, "when": { "type": "string", "description": "When it rings, in words: 14:30, Tomorrow 07:00." }, "kind": { "type": "string" }, "href": { "type": "string" } } } },
+      "today": { "type": "array", "description": "What is on today from every type with a day, in time order. Filled in by the server.", "items": { "type": "object", "additionalProperties": false, "required": ["label"], "properties": { "time": { "type": "string" }, "label": { "type": "string" }, "href": { "type": "string" } } } },
+      "id": { "type": "string" }
+    }
+  },
+  "a11y": {
+    "role": "region",
+    "keyboard": [
+      { "key": "Tab", "does": "reaches the timer and alarm fields and buttons, each reminder's link, and Dismiss and five more minutes on one that is ringing" },
+      { "key": "Enter", "does": "sets the timer or alarm, or dismisses" }
+    ],
+    "states": ["aria-live"],
+    "wcag": { "target": "AAA", "notes": "A named region, so it is reachable by landmark navigation. A ringing reminder is announced at once: the list of ringing ones is an alert region, and each one names itself in words before any sound. Nothing dismisses itself; a reminder rings until a person dismisses it or asks for five more minutes (2.2.1). The sound can be turned off with the sound prop and is never the only signal. The time is a time element with a machine-readable moment, and the forms are plain forms that work without scripts; scripts only keep the time moving and bring a reminder that rings while the page is open." }
+  },
+  "machine": {
+    "selector": "[data-component=\"clock\"]",
+    "identify": "data-now is the moment shown. Ringing reminders are inside .sw-clock__ringing, each with data-id. Coming up is the list labelled Coming up, each item with data-kind.",
+    "operate": "To set a timer, fill Minutes and activate Start timer; to set an alarm, fill Time and What for and activate Set alarm. Each makes a reminder record, which is also at /t/reminder. Dismiss and five more minutes are the forms on a ringing reminder."
+  },
+  "examples": [
+    { "name": "default", "props": { "now": "2026-09-19T14:05:00+01:00", "time": "14:05", "date": "Saturday 19 September", "upcoming": [{ "id": "r1", "title": "Tea", "when": "14:20", "kind": "timer", "href": "/t/reminder/r1" }, { "id": "r2", "title": "Call the vet", "when": "Monday 09:00", "kind": "alarm", "href": "/t/reminder/r2" }], "today": [{ "time": "16:00", "label": "Water the tomatoes", "href": "/t/task/t1" }] }, "file": "examples/default.html" },
+    { "name": "ringing", "props": { "now": "2026-09-19T14:20:00+01:00", "time": "14:20", "date": "Saturday 19 September", "ringing": [{ "id": "r1", "title": "Tea", "href": "/t/reminder/r1" }], "upcoming": [] }, "file": "examples/ringing.html" },
+    { "name": "glance", "props": { "detail": "glance", "now": "2026-09-19T14:05:00+01:00", "time": "14:05", "date": "Saturday 19 September" }, "file": "examples/glance.html" },
+    { "name": "empty", "props": { "now": "2026-09-19T08:00:00+01:00", "time": "08:00", "date": "Saturday 19 September" }, "file": "examples/empty.html" }
+  ]
+}

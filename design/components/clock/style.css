@@ -1,0 +1,44 @@
+/* A clock is the time, large and quiet, and under it what is coming. A
+   reminder that rings takes the top with its own colour until someone
+   answers it. */
+.sw-clock { display: grid; gap: var(--sw-space-3); min-width: 0; }
+.sw-clock__face { margin: 0; display: flex; align-items: baseline; gap: var(--sw-space-3); flex-wrap: wrap; }
+.sw-clock__time { font-size: var(--sw-size-text-2xl, 2rem); font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: var(--sw-color-fg); }
+.sw-clock__date { color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); }
+.sw-clock--glance { gap: var(--sw-space-1); }
+.sw-clock--glance .sw-clock__time { font-size: var(--sw-size-text-lg); }
+.sw-clock--glance .sw-clock__date { display: none; }
+
+/* Ringing: an alert in the accent wash, with a bell that pulses while
+   motion is allowed. It stays until Dismiss or five more minutes. */
+.sw-clock__ringing:empty { display: none; }
+.sw-clock__ringing { display: grid; gap: var(--sw-space-2); }
+.sw-clock__ring {
+  display: flex; align-items: center; flex-wrap: wrap; gap: var(--sw-space-2) var(--sw-space-3);
+  padding: var(--sw-space-3) var(--sw-space-4); border-radius: var(--sw-radius-lg);
+  background: var(--sw-color-accent-soft); color: var(--sw-color-fg);
+}
+.sw-clock__ring .sw-clock__what { flex: 1; min-width: 8rem; font-weight: 600; }
+.sw-clock__bell { flex: none; width: 0.75rem; height: 0.75rem; border-radius: 50%; background: var(--sw-color-accent); box-shadow: 0 0 0 3px var(--sw-color-bg-raised); }
+.sw-clock__ring .sw-clock__bell { animation: sw-pulse 1.2s var(--sw-motion-ease) infinite; }
+@media (prefers-reduced-motion: reduce) { .sw-clock__ring .sw-clock__bell { animation: none; } }
+
+/* Setting: two short forms on one row, each an input and its button. */
+.sw-clock__set { display: flex; flex-wrap: wrap; gap: var(--sw-space-2) var(--sw-space-4); }
+.sw-clock__form { display: flex; align-items: center; gap: var(--sw-space-2); flex-wrap: wrap; }
+.sw-clock .sw-clock__form .sw-field__input { min-height: 2.5rem; width: auto; }
+.sw-clock .sw-clock__minutes { width: 5rem; }
+.sw-clock .sw-clock__at { width: 7.5rem; }
+.sw-clock .sw-clock__title { width: 10rem; flex: 1; min-width: 6rem; }
+
+/* Coming up: each a row with its time first, in the quiet ink, and a dot
+   for what kind of thing it is. */
+.sw-clock__next { display: grid; gap: var(--sw-space-1); }
+.sw-clock__item { display: flex; align-items: center; gap: var(--sw-space-2); min-width: 0; padding: var(--sw-space-1) 0; }
+.sw-clock__item::before { content: ""; flex: none; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--sw-color-accent); }
+.sw-clock__item[data-kind="timer"]::before { background: var(--sw-color-success); }
+.sw-clock__item[data-kind="event"]::before { background: var(--sw-dot, var(--sw-color-border-strong)); }
+.sw-clock__when { flex: none; min-width: 5rem; color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); font-variant-numeric: tabular-nums; }
+.sw-clock__item .sw-clock__what { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sw-clock__item form { margin-left: auto; }
+.sw-clock__empty { margin: 0; }

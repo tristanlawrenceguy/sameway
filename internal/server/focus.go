@@ -46,12 +46,16 @@ func (s *Server) focusPage(w http.ResponseWriter, r *http.Request) {
 		props = s.resolveCollection(props)
 	}
 	if comp.Manifest.Name == calendarComponent {
-		// The block's own page takes ?month= so the months either side are
-		// a link away, and the calendar comes back to this page for them.
-		if m := r.URL.Query().Get("month"); m != "" {
-			props = withMonth(props, m)
+		// The block's own page takes ?month= and ?day= so the months and
+		// days either side are a link away, and the calendar comes back to
+		// this page for them.
+		if m, d := r.URL.Query().Get("month"), r.URL.Query().Get("day"); m != "" || d != "" {
+			props = withMonth(props, m, d)
 		}
 		props = s.resolveCalendar(props, rec.ID)
+	}
+	if comp.Manifest.Name == clockComponent {
+		props = s.resolveClock(props)
 	}
 	if comp.Manifest.Name == chartComponent {
 		props = s.resolveChart(props)
