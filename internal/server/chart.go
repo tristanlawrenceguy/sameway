@@ -121,12 +121,14 @@ func (s *Server) bucket(t *schema.Type, f *schema.Field, kind string, rec *store
 			return ""
 		}
 		local := ts.Local()
+		// Labels a person reads under a bar: short, and in order when
+		// sorted, since the groups are sorted by label.
 		switch period {
 		case "day":
 			return local.Format("2006-01-02")
 		case "week":
 			monday := local.AddDate(0, 0, -((int(local.Weekday()) + 6) % 7))
-			return "Week of " + monday.Format("2006-01-02")
+			return monday.Format("2006-01-02")
 		}
 		return local.Format("2006-01")
 	}

@@ -5,6 +5,7 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // The shape of a chart, computed here because a template cannot do the
@@ -89,8 +90,8 @@ func chartShape(series any, kind string) ChartShape {
 		if p.Value < 0 {
 			h = 0
 		}
-		p.W = round(slot * 0.7)
-		p.X = round(chartLeft + float64(i)*slot + slot*0.15)
+		p.W = round(slot * 0.52)
+		p.X = round(chartLeft + float64(i)*slot + slot*0.24)
 		p.H = round(h)
 		p.Y = round(s.Baseline - h)
 		p.LabelY = p.Y - 6
@@ -222,4 +223,16 @@ func wholeValues(points []ChartPoint) bool {
 		}
 	}
 	return true
+}
+
+// chartLabel is a group label as it is read under a bar: a day as its
+// short date, a month as its name, anything else as it is.
+func chartLabel(label string) string {
+	if t, err := time.Parse("2006-01-02", label); err == nil {
+		return t.Format("2 Jan")
+	}
+	if t, err := time.Parse("2006-01", label); err == nil {
+		return t.Format("Jan 2006")
+	}
+	return label
 }

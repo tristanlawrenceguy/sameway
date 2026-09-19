@@ -44,6 +44,7 @@ var Funcs = template.FuncMap{
 	"weekdayNames": weekdayNames,
 	"eventsOn":     eventsOn,
 	"dayHours":     dayHours,
+	"chartLabel":   chartLabel,
 	"allDay":       allDay,
 	"upcoming":     upcoming,
 	"shortDate":    shortDate,
