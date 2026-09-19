@@ -141,3 +141,51 @@ func TestChatTakesAFileWithTheMessage(t *testing.T) {
 		t.Errorf("no file, no attachment: %v", msgs[2].Fields)
 	}
 }
+
+// POST to /t/file/upload with a non-multipart Content-Type returns an HTML
+// page (not plain text) with status 400 and an accessible error message.
+func TestUploadWithWrongContentTypeReturnsHTMLPage(t *testing.T) {
+	_, h := newApp(t)
+	rec := postForm(t, h, "/t/file/upload", url.Values{"from": {"/t/file"}})
+	wantStatus(t, rec, http.StatusBadRequest)
+	body := rec.Body.String()
+	if !strings.Contains(strings.ToLower(body), "<!doctype html>") {
+		t.Errorf("upload error should be an HTML page, not plain text; first 200 chars: %s", truncate(body))
+	}
+	ct := rec.Header().Get("Content-Type")
+	if ct != "" && !strings.HasPrefix(ct, "text/html") {
+		t.Errorf("response Content-Type header should be text/html for upload errors, got %q", ct)
+	}
+	if !strings.Contains(body, "Please select a file") {
+		t.Errorf("the HTML page should carry an error message about selecting a file; first 500 chars: %s", truncate(body))
+	}
+}
+
+// POST to /t/file/upload with multipart/form-data but no file part returns
+// an HTML page with status 400, an aria-live region and the alert component.
+func TestUploadWithNoFileShowsAccessibleError(t *testing.T) {
+	a, h := newApp(t)
+	body, ct := multipartFile(t, "", "", url.Values{"from": {"/t/file"}})
+	rec := do(t, h, http.MethodPost, "/t/file/upload", body, ct)
+	wantStatus(t, rec, http.StatusBadRequest)
+	bodyStr := rec.Body.String()
+	if !strings.Contains(strings.ToLower(bodyStr), "<!doctype html>") {
+		t.Errorf("upload without file should return an HTML page; first 200 chars: %s", truncate(bodyStr))
+	}
+	if !strings.Contains(bodyStr, `aria-live="assertive"`) {
+		t.Error(`the error page must include aria-live="assertive" for screen-reader announcements`)
+	}
+	if !strings.Contains(bodyStr, "data-component=\"alert\"") || !strings.Contains(bodyStr, "kind=\"danger\"") {
+		t.Error("the error page should render a danger alert component with the message")
+	}
+	if !strings.Contains(bodyStr, "Please select a file") {
+		t.Errorf("the error message should say to select a file; first 500 chars: %s", truncate(bodyStr))
+	}
+	if !strings.Contains(bodyStr, `data-component="upload"`) {
+		t.Error("the error page should re-render the upload form for a quick retry")
+	}
+	count, _ := a.Store.Count("file")
+	if count > 0 {
+		t.Errorf("no file record should exist after an empty upload; got %d records", count)
+	}
+}
