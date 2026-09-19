@@ -62,7 +62,7 @@ func TestDescribeIsCompleteForAgents(t *testing.T) {
 			t.Errorf("component %s is missing props/a11y/machine in describe", c.Name)
 		}
 	}
-	for _, key := range []string{"describe", "list", "create", "get", "update", "delete", "chat"} {
+	for _, key := range []string{"describe", "list", "create", "get", "update", "delete", "chat", "clear"} {
 		if d.Routes[key] == "" {
 			t.Errorf("routes missing %s", key)
 		}

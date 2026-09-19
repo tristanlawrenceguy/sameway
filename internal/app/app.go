@@ -244,6 +244,7 @@ func (a *App) Describe() Description {
 			"errors":           "every answer under /api is JSON, errors too: {\"error\": {\"code\", \"message\", \"fields\"}} with code bad_request, invalid (422, fields says which) or not_found",
 			"delete":           "DELETE /api/{type}/{id}",
 			"chat":             "POST /api/chat with {\"message\": \"...\"}",
+			"clear":            "POST /api/chat/clear: clears all messages from the current conversation, leaving the canvas and other chats untouched",
 			"mcp":              "sameway mcp (Model Context Protocol over stdio: the tools listed here, plus describe and get_record)",
 			"html_list":        "GET /t/{type}",
 			"html_detail":      "GET /t/{type}/{id}",

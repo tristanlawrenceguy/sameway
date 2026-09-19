@@ -275,6 +275,16 @@ func (s *Server) apiFileUpload(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, rec)
 }
 
+// apiChatClear clears all messages from the current chat session and returns
+// confirmation JSON. The canvas, other chats, and blocks are left alone.
+func (s *Server) apiChatClear(w http.ResponseWriter, r *http.Request) {
+	if err := s.app.Chat.Clear(); err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"status": "cleared"})
+}
+
 // apiNotFound answers any path under /api that nothing serves in the shape
 // every other error there has, so an agent that typed a route wrong reads
 // JSON like always rather than a plain-text page.
