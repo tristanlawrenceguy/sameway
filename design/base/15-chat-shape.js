@@ -17,10 +17,21 @@
     });
   }
 
+  // The log opens at its end, where the newest message is, unless the
+  // address names a message to land on.
+  function toEnd(log) {
+    if (/^#msg-/.test(location.hash)) return;
+    var behaviour = log.style.scrollBehavior;
+    log.style.scrollBehavior = "auto";
+    log.scrollTop = log.scrollHeight;
+    log.style.scrollBehavior = behaviour;
+  }
+
   function remember(log) {
     var saved = null;
     try { saved = localStorage.getItem(KEY); } catch (err) { saved = null; }
     if (saved && log.querySelector("li")) log.style.height = saved;
+    toEnd(log);
     if (!window.ResizeObserver) return;
     var first = true;
     new ResizeObserver(function () {

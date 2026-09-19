@@ -18,7 +18,7 @@ func TestAPersonMovesBetweenChats(t *testing.T) {
 	a.Chat.Provider, a.Chat.ProviderErr = &scripted{steps: []*llm.Response{{Text: "Planned."}, {Text: "Noted."}}}, nil
 	wantStatus(t, postForm(t, h, "/chat", url.Values{"message": {"plan the garden"}, "from": {"/chat"}}), http.StatusSeeOther)
 	page := get(t, h, "/chat").Body.String()
-	if !strings.Contains(page, `sw-chat__current">plan the garden<`) {
+	if !strings.Contains(page, `sw-chat__name">plan the garden<`) {
 		t.Errorf("the menu names the current chat after what was first said\n%s", page)
 	}
 	first := a.Chat.Current()

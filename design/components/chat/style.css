@@ -7,7 +7,8 @@
 .sw-chat__body { min-width: 0; }
 /* The tools: which chat, where it sits, and a window of its own. */
 .sw-chat__tools { margin-bottom: var(--sw-space-3); align-items: center; }
-.sw-chat__current { font-weight: 700; color: var(--sw-color-fg); max-width: 20rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sw-chat__current { font-weight: 700; color: var(--sw-color-fg); max-width: min(22rem, 60vw); }
+.sw-chat__name { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sw-chat__menu { position: relative; }
 .sw-chat__menu > summary { list-style: none; display: inline-flex; align-items: center; gap: var(--sw-space-1); }
 .sw-chat__menu > summary::-webkit-details-marker { display: none; }
