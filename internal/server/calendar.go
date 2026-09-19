@@ -33,12 +33,36 @@ func (s *Server) resolveCalendar(props map[string]any, blockID string) map[strin
 	if d, _ := out["today"].(string); d == "" {
 		out["today"] = now.Format("2006-01-02")
 	}
+	// One day instead of the month: its month is the one shown, and the
+	// days either side are a link away, as the months are.
+	day, _ := out["day"].(string)
+	shownDay, dayErr := time.Parse("2006-01-02", day)
+	if day != "" && dayErr != nil {
+		delete(out, "day")
+		day = ""
+	}
+	if day != "" {
+		out["month"] = shownDay.Format("2006-01")
+		month = out["month"].(string)
+	}
 	if blockID != "" {
-		shown, _ := time.Parse("2006-01", month)
-		prev, next := shown.AddDate(0, -1, 0), shown.AddDate(0, 1, 0)
-		out["nav"] = map[string]any{
-			"previous": map[string]any{"href": "/canvas/" + blockID + "?month=" + prev.Format("2006-01"), "label": prev.Format("January 2006")},
-			"next":     map[string]any{"href": "/canvas/" + blockID + "?month=" + next.Format("2006-01"), "label": next.Format("January 2006")},
+		base := "/canvas/" + blockID
+		out["dayBase"] = base + "?day="
+		if day != "" {
+			prev, next := shownDay.AddDate(0, 0, -1), shownDay.AddDate(0, 0, 1)
+			out["nav"] = map[string]any{
+				"previous": map[string]any{"href": base + "?day=" + prev.Format("2006-01-02"), "label": prev.Format("Mon 2 Jan")},
+				"next":     map[string]any{"href": base + "?day=" + next.Format("2006-01-02"), "label": next.Format("Mon 2 Jan")},
+				"month":    map[string]any{"href": base + "?month=" + month, "label": shownDay.Format("January")},
+			}
+		} else {
+			shown, _ := time.Parse("2006-01", month)
+			prev, next := shown.AddDate(0, -1, 0), shown.AddDate(0, 1, 0)
+			out["nav"] = map[string]any{
+				"previous": map[string]any{"href": base + "?month=" + prev.Format("2006-01"), "label": prev.Format("January 2006")},
+				"next":     map[string]any{"href": base + "?month=" + next.Format("2006-01"), "label": next.Format("January 2006")},
+				"today":    map[string]any{"href": base + "?day=" + now.Format("2006-01-02"), "label": "Today"},
+			}
 		}
 	}
 	typeName, _ := props["type"].(string)
@@ -131,12 +155,20 @@ func (s *Server) showFields(t *schema.Type, rec *store.Record, names []string) s
 }
 
 // withMonth is the block's props with another month shown, the rest as
-// they are; the stored block is not touched.
-func withMonth(props map[string]any, month string) map[string]any {
+// they are; the stored block is not touched. An empty day is the month
+// again.
+func withMonth(props map[string]any, month, day string) map[string]any {
 	out := map[string]any{}
 	for k, v := range props {
 		out[k] = v
 	}
-	out["month"] = month
+	if month != "" {
+		out["month"] = month
+	}
+	if day != "" {
+		out["day"] = day
+	} else {
+		delete(out, "day")
+	}
 	return out
 }

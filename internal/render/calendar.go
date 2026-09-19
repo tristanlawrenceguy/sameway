@@ -3,6 +3,7 @@ package render
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -171,4 +172,51 @@ func shortDate(date string) string {
 		return date
 	}
 	return t.Format("Mon 2 Jan")
+}
+
+// Hour is one hour of a day view: its label and what falls in it.
+type Hour struct {
+	Label  string
+	Events []map[string]any
+}
+
+// dayHours lays the timed events of a day out by the hour: from eight to
+// six at least, and wider when something falls earlier or later, so the
+// shape of the day is there even when little is on.
+func dayHours(events []map[string]any) []Hour {
+	first, last := 8, 18
+	byHour := map[int][]map[string]any{}
+	for _, e := range events {
+		t, _ := e["time"].(string)
+		if len(t) < 2 {
+			continue
+		}
+		h, err := strconv.Atoi(t[:2])
+		if err != nil || h < 0 || h > 23 {
+			continue
+		}
+		byHour[h] = append(byHour[h], e)
+		if h < first {
+			first = h
+		}
+		if h > last {
+			last = h
+		}
+	}
+	var out []Hour
+	for h := first; h <= last; h++ {
+		out = append(out, Hour{Label: fmt.Sprintf("%02d:00", h), Events: byHour[h]})
+	}
+	return out
+}
+
+// allDay is the events of a day with no time of day.
+func allDay(events []map[string]any) []map[string]any {
+	var out []map[string]any
+	for _, e := range events {
+		if t, _ := e["time"].(string); t == "" {
+			out = append(out, e)
+		}
+	}
+	return out
 }

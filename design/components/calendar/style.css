@@ -96,3 +96,26 @@
 }
 .sw-calendar__months { display: flex; justify-content: space-between; gap: var(--sw-space-3); padding: var(--sw-space-2) var(--sw-space-3); font-size: var(--sw-size-text-sm); }
 .sw-calendar__all { margin: 0; padding: 0 var(--sw-space-3) var(--sw-space-2); font-size: var(--sw-size-text-sm); }
+
+/* A day number is the way to that day, when the calendar has a page of
+   its own to show it on. */
+a.sw-calendar__number { text-decoration: none; }
+a.sw-calendar__number:hover { text-decoration: underline; text-underline-offset: 0.15em; }
+a.sw-calendar__number:focus-visible { outline: var(--sw-focus-width) solid var(--sw-color-focus); outline-offset: var(--sw-focus-offset); border-radius: var(--sw-radius-sm); }
+
+/* day: one day by the hour. All-day things first as chips, then the
+   hours as rows, each busy hour with its events; the empty hours stay,
+   quietly, so the shape of the day is there. */
+.sw-calendar--day { display: grid; gap: var(--sw-space-3); }
+.sw-calendar__dayhead { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--sw-space-2) var(--sw-space-4); }
+.sw-calendar__dayname { margin: 0; font-size: var(--sw-size-text-lg); }
+.sw-calendar__dayhead .sw-calendar__months { padding: 0; }
+.sw-calendar__allday { font-size: var(--sw-size-text-sm); display: flex; flex-wrap: wrap; gap: var(--sw-space-1); }
+.sw-calendar__allday li { padding: 0.125rem var(--sw-space-2) 0.125rem 0.375rem; }
+.sw-calendar__hours { display: grid; }
+.sw-calendar__hour { display: grid; grid-template-columns: 3.5rem 1fr; gap: var(--sw-space-2); min-height: 2.25rem; padding: var(--sw-space-1) 0; border-top: 1px solid var(--sw-color-border); }
+.sw-calendar__hourlabel { color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-xs); font-variant-numeric: tabular-nums; padding-top: 0.2rem; }
+.sw-calendar__hour .sw-calendar__events { margin: 0; font-size: var(--sw-size-text-sm); gap: var(--sw-space-1); }
+.sw-calendar__hour .sw-calendar__events li { padding: var(--sw-space-1) var(--sw-space-2); border-radius: var(--sw-radius-md); }
+.sw-calendar__hour .sw-calendar__event { white-space: normal; overflow: visible; }
+.sw-calendar__nothing { margin: 0; }

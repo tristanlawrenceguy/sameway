@@ -1,0 +1,29 @@
+# An alarm at a time, or a timer that ends at one. Provided with every
+# workspace: the clock sets and rings them, and the calendar shows them
+# on their day.
+name: reminder
+description: An alarm at a time, or a timer that ends at one. The clock rings it when the time comes; it shows on the calendar like anything else with a day.
+title: title
+provided: true
+fields:
+  title:
+    type: string
+    required: true
+    maxLength: 200
+  at:
+    type: datetime
+    required: true
+    description: When it rings, as a moment; a day alone rings at midnight.
+  kind:
+    type: enum
+    values: [alarm, timer]
+    default: alarm
+    description: An alarm is set for a time of day; a timer for a span from now.
+  state:
+    type: enum
+    values: [set, rang, done]
+    default: set
+    description: set until its time comes, rang until someone dismisses it, done after.
+  notes:
+    type: markdown
+    description: Anything worth remembering when it rings.
