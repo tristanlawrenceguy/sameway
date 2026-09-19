@@ -65,6 +65,7 @@ func (s *Server) routes() {
 	m.HandleFunc("GET /clock/stream", s.clockStream)
 	m.HandleFunc("GET /workspaces", s.workspacesPage)
 	m.HandleFunc("POST /workspaces/start", s.workspacesStart)
+	m.HandleFunc("GET /workspaces/new", s.workspacesNewPage)
 	m.HandleFunc("POST /workspaces/new", s.workspacesNew)
 	m.HandleFunc("POST /workspaces/copy", s.workspacesCopy)
 	m.HandleFunc("POST /workspaces/delete", s.workspacesDelete)

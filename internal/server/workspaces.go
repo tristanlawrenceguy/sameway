@@ -188,6 +188,16 @@ func (s *Server) workspacesStart(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, url, http.StatusSeeOther)
 }
 
+func (s *Server) workspacesNewPage(w http.ResponseWriter, r *http.Request) {
+	var b strings.Builder
+	b.WriteString(`<section class="sw-stack" aria-labelledby="ws-new"><h2 id="ws-new">New workspace</h2><p class="sw-muted">A blank workspace beside this one, with the same model, in a window of its own.</p><form method="post" action="/workspaces/new" class="sw-stack">`)
+	b.WriteString(string(s.component("text-field", map[string]any{"label": "Name", "name": "name", "required": true, "id": "new-name"})))
+	b.WriteString(string(s.component("button", map[string]any{"label": "Create and open", "type": "submit"})))
+	b.WriteString(`</form></section>`)
+
+	s.page(w, r, "New workspace", template.HTML(b.String()), pageOptions{})
+}
+
 func (s *Server) workspacesNew(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	s.makeAndOpen(w, r, s.blank, strings.TrimSpace(r.PostForm.Get("name")))
@@ -204,12 +214,12 @@ func (s *Server) makeAndOpen(w http.ResponseWriter, r *http.Request, make func(s
 		s.showWorkspaces(w, r, err.Error())
 		return
 	}
-	url, err := s.start(dir)
+	_, err = s.start(dir)
 	if err != nil {
 		s.showWorkspaces(w, r, "The workspace is at "+dir+", but could not be started from here: "+err.Error())
 		return
 	}
-	http.Redirect(w, r, url, http.StatusSeeOther)
+	http.Redirect(w, r, "/workspaces", http.StatusSeeOther)
 }
 
 // workspacesDelete removes this workspace once the person has typed its
