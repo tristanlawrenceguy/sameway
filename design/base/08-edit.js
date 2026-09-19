@@ -150,7 +150,7 @@
     }
 
     for (var c = form.nextElementSibling; c; c = c.nextElementSibling) {
-      if (c.classList.contains("sw-bar") || c.classList.contains("sw-visually-hidden")) continue;
+      if (c.classList.contains("sw-visually-hidden")) continue;
       c.style.display = "none";
       covered.push(c);
     }
