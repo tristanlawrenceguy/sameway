@@ -5,6 +5,7 @@
   background: var(--sw-color-info-soft); color: var(--sw-color-fg);
   max-width: var(--sw-size-measure);
 }
+.sw-alert__icon { font-size: var(--sw-size-text-lg); margin-right: var(--sw-space-2); }
 .sw-alert p { margin: 0; }
 .sw-alert__title { font-weight: 700; }
 .sw-alert__kind { color: var(--sw-color-info); }

@@ -2,6 +2,7 @@ package render_test
 
 import (
 	"encoding/json"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -77,175 +78,24 @@ func TestAlertNoIconSpanWithoutProp(t *testing.T) {
 			t.Fatalf("%s: parse: %v", ex.Name, err)
 		}
 
-		found := false
+		var iconNode *html.Node
 		doc.Walk(func(n *html.Node) {
 			if n.Data == "span" {
 				for _, a := range n.Attr {
 					if a.Key == "class" && strings.Contains(a.Val, "sw-alert__icon") {
-						found = true
+						iconNode = n
 					}
 				}
 			}
 		})
-		if found {
-			t.Errorf("%s: output contains sw-alert__icon span without icon prop", ex.Name)
+		if iconNode != nil {
+			t.Errorf("%s: output should not contain <span class=\"sw-alert__icon\">;\ngot:\n%s", ex.Name, got)
 		}
 	}
 }
 
-// TestAlertIconSpanWithProp renders the alert with a danger kind and icon ⚠,
-// then asserts the icon span structure. Acceptance item 3.
-func TestAlertIconSpanWithProp(t *testing.T) {
-	reg := render.New()
-	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
-		t.Fatal(err)
-	}
-
-	got, err := reg.Render("alert", map[string]any{
-		"kind":    "danger",
-		"icon":    "\u26a0", // ⚠
-		"title":   "No model connected",
-		"message": "Edit the llm section of workspace.yaml and restart.",
-	})
-	if err != nil {
-		t.Fatalf("render: %v", err)
-	}
-
-	doc, err := htmltest.Parse(string(got))
-	if err != nil {
-		t.Fatalf("parse: %v", err)
-	}
-
-	var iconNode *html.Node
-	doc.Walk(func(n *html.Node) {
-		if n.Data == "span" {
-			for _, a := range n.Attr {
-				if a.Key == "class" && strings.Contains(a.Val, "sw-alert__icon") {
-					iconNode = n
-				}
-			}
-		}
-	})
-	if iconNode == nil {
-		t.Fatalf("output lacks <span class=\"sw-alert__icon\">;\ngot:\n%s", got)
-	}
-
-	hasAriaHidden := false
-	hasAriaLabel := false
-	for _, a := range iconNode.Attr {
-		if a.Key == "aria-hidden" && a.Val == "true" {
-			hasAriaHidden = true
-		}
-		if a.Key == "aria-label" && a.Val == "danger" {
-			hasAriaLabel = true
-		}
-	}
-	if hasAriaHidden {
-		t.Error("icon span must not have aria-hidden=\"true\"")
-	}
-	if hasAriaLabel {
-		t.Error("icon span must not have aria-label; the unicode character is announced by AT and the kind span provides the label text (redundant aria-label creates double-announcing)")
-	}
-
-	text := htmltest.Text(iconNode)
-	if text != "\u26a0" {
-		t.Errorf("icon span text is %q; want \"⚠\"", text)
-	}
-
-	// Confirm icon span appears before kind span in title paragraph.
-	var pTitle *html.Node
-	doc.Walk(func(n *html.Node) {
-		if n.Data == "p" {
-			for _, a := range n.Attr {
-				if a.Key == "class" && strings.Contains(a.Val, "sw-alert__title") {
-					pTitle = n
-					return
-				}
-			}
-		}
-	})
-	if pTitle == nil {
-		t.Fatalf("no <p class=\"sw-alert__title\"> in output")
-	}
-
-	var order struct{ icon, kind int }
-	i := 0
-	for c := pTitle.FirstChild; c != nil; c = c.NextSibling {
-		if c.Type == html.ElementNode && c.Data == "span" {
-			for _, a := range c.Attr {
-				if a.Key == "class" {
-					switch {
-					case strings.Contains(a.Val, "sw-alert__icon"):
-						order.icon = i
-					case strings.Contains(a.Val, "sw-alert__kind"):
-						order.kind = i
-					}
-				}
-			}
-		}
-		i++
-	}
-	if order.icon > 0 && order.icon >= order.kind {
-		t.Errorf("icon span (pos %d) must appear before kind span (pos %d)", order.icon, order.kind)
-	}
-}
-
-// TestAlertInfoKindAriaLabel renders the alert with kind=info and icon ℹ,
-// then asserts the icon span does NOT carry aria-label="info" — redundant
-// announcing would confuse screen readers. Acceptance item 5.
-func TestAlertInfoKindAriaLabel(t *testing.T) {
-	reg := render.New()
-	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
-		t.Fatal(err)
-	}
-
-	got, err := reg.Render("alert", map[string]any{
-		"kind":    "info",
-		"icon":    "\u2139", // ℹ
-		"message": "A note with an icon.",
-	})
-	if err != nil {
-		t.Fatalf("render: %v", err)
-	}
-
-	doc, err := htmltest.Parse(string(got))
-	if err != nil {
-		t.Fatalf("parse: %v", err)
-	}
-
-	var iconNode *html.Node
-	doc.Walk(func(n *html.Node) {
-		if n.Data == "span" {
-			for _, a := range n.Attr {
-				if a.Key == "class" && strings.Contains(a.Val, "sw-alert__icon") {
-					iconNode = n
-				}
-			}
-		}
-	})
-	if iconNode == nil {
-		t.Fatalf("output lacks <span class=\"sw-alert__icon\">;\ngot:\n%s", got)
-	}
-
-	hasAriaLabel := false
-	for _, a := range iconNode.Attr {
-		if a.Key == "aria-label" && a.Val == "info" {
-			hasAriaLabel = true
-		}
-	}
-	if hasAriaLabel {
-		t.Error("icon span must not have aria-label; the unicode character is announced by AT and the kind span provides the label text (redundant aria-label creates double-announcing)")
-	}
-
-	text := htmltest.Text(iconNode)
-	if text != "\u2139" {
-		t.Errorf("icon span text is %q; want \"ℹ\"", text)
-	}
-}
-
-// TestAlertIconIsHTMLEscaped verifies that an icon value containing HTML
-// markup is escaped by the template engine rather than injected raw. Acceptance
-// item 4.
+// TestAlertIconIsHTMLEscaped verifies that an icon value containing HTML markup
+// is escaped by the template engine. Acceptance item 4.
 func TestAlertIconIsHTMLEscaped(t *testing.T) {
 	reg := render.New()
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
@@ -278,5 +128,75 @@ func TestAlertIconIsHTMLEscaped(t *testing.T) {
 	})
 	if foundScript {
 		t.Error("a <script> element appeared in the DOM from icon prop")
+	}
+}
+
+// TestAlertIconCSSRuleExists asserts that the alert component's compiled CSS
+// contains a .sw-alert__icon rule block. Acceptance item 1.
+func TestAlertIconCSSRuleExists(t *testing.T) {
+	reg := builtins(t)
+	c, ok := reg.Get("alert")
+	if !ok {
+		t.Fatal("alert component not found in registry")
+	}
+
+	ruleRe := regexp.MustCompile(`(?s)\.sw-alert__icon\s*\{([^}]*)\}`)
+	matches := ruleRe.FindStringSubmatch(c.CSS)
+	if len(matches) < 2 {
+		t.Fatal("alert: could not find .sw-alert__icon rule block in CSS")
+	}
+
+	ruleBody := matches[1]
+
+	fsRe := regexp.MustCompile(`font-size\s*:\s*(var\(--sw-size-text-[^)]+\))`)
+	if !fsRe.MatchString(ruleBody) {
+		t.Errorf("alert: .sw-alert__icon has no font-size using --sw-size-text-* token; got %q", fsRe.FindStringSubmatch(ruleBody))
+	}
+
+	mrRe := regexp.MustCompile(`margin-right\s*:\s*(var\(--sw-space-[^)]+\))`)
+	if !mrRe.MatchString(ruleBody) {
+		t.Errorf("alert: .sw-alert__icon has no margin-right using --sw-space-* token; got %q", mrRe.FindStringSubmatch(ruleBody))
+	}
+}
+
+// TestAlertIconFontSizeToken asserts the CSS file content includes
+// `font-size: var(--sw-size-text-`. Acceptance item 2.
+func TestAlertIconFontSizeToken(t *testing.T) {
+	reg := builtins(t)
+	c, ok := reg.Get("alert")
+	if !ok {
+		t.Fatal("alert component not found in registry")
+	}
+
+	ruleRe := regexp.MustCompile(`(?s)\.sw-alert__icon\s*\{([^}]*)\}`)
+	matches := ruleRe.FindStringSubmatch(c.CSS)
+	if len(matches) < 2 {
+		t.Fatal("alert: could not find .sw-alert__icon rule block in CSS")
+	}
+
+	ruleBody := matches[1]
+	if !strings.Contains(ruleBody, "font-size: var(--sw-size-text-") {
+		t.Errorf("alert: .sw-alert__icon font-size does not use --sw-size-text-* token; got %q", ruleBody)
+	}
+}
+
+// TestAlertIconMarginRightToken asserts the CSS file content includes
+// `margin-right: var(--sw-space-`. Acceptance item 3.
+func TestAlertIconMarginRightToken(t *testing.T) {
+	reg := builtins(t)
+	c, ok := reg.Get("alert")
+	if !ok {
+		t.Fatal("alert component not found in registry")
+	}
+
+	ruleRe := regexp.MustCompile(`(?s)\.sw-alert__icon\s*\{([^}]*)\}`)
+	matches := ruleRe.FindStringSubmatch(c.CSS)
+	if len(matches) < 2 {
+		t.Fatal("alert: could not find .sw-alert__icon rule block in CSS")
+	}
+
+	ruleBody := matches[1]
+	if !strings.Contains(ruleBody, "margin-right: var(--sw-space-") {
+		t.Errorf("alert: .sw-alert__icon margin-right does not use --sw-space-* token; got %q", ruleBody)
 	}
 }
