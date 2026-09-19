@@ -119,6 +119,8 @@ func describe(call llm.ToolCall) string {
 		return "Arranging the page"
 	case "clear_canvas":
 		return "Clearing the page"
+	case "clear_conversation":
+		return "Clearing the conversation"
 	case "undo_change":
 		return "Undoing a change"
 	}

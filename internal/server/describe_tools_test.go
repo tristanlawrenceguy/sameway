@@ -27,7 +27,7 @@ func TestDescribeListsTheAssistantTools(t *testing.T) {
 			t.Errorf("tool %s lacks a description or schema in describe", tool.Name)
 		}
 	}
-	for _, want := range []string{"add_component", "propose_change", "create_record", "update_record", "find_records"} {
+	for _, want := range []string{"add_component", "clear_conversation", "propose_change", "create_record", "update_record", "find_records"} {
 		if !tools[want] {
 			t.Errorf("describe missing tool %s", want)
 		}

@@ -4,32 +4,30 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
-// BlockType is the content type that holds canvas items.
+// BlockType is the content type for canvas blocks.
 const BlockType = "block"
 
-// ComponentName is the component that renders the conversation. It is a
-// block like any other, so it can be moved, restyled, or removed; the
-// server fills it with the live transcript when it renders the canvas.
+// ComponentName is the component that renders the conversation — a block
+// like any other, movable and restylable; the server fills it with the
+// live transcript when rendering the canvas.
 const ComponentName = "chat"
 
 // BlockFields drops keys the workspace's block schema does not define, so
-// server code can write provenance and layout fields without checking
-// whether an older workspace has them.
+// server code can write provenance and layout fields without checking.
 func (s *Service) BlockFields(in map[string]any) map[string]any {
 	return s.fields(BlockType, in)
 }
 
-// Tools is what the model can call: the canvas tools, which write ordinary
-// block records, and the record tools generated from the workspace's schema.
-// It is the one list; /api/describe and the CLI publish it from here, so a
-// tool added or changed shows up on every surface at once.
+// Tools is what the model can call: canvas tools, record tools from the
+// schema, and shape tools for content types. The one list; /api/describe
+// and the CLI publish it from here, so a tool added or changed shows up
+// on every surface at once.
 func (s *Service) Tools() []llm.Tool {
 	// Strict servers (llama.cpp builds a grammar from this) reject
 	// "required": null, so the key is only present when there is a list.
@@ -41,7 +39,7 @@ func (s *Service) Tools() []llm.Tool {
 		return s
 	}
 	return append([]llm.Tool{
-		{Name: "add_component", Description: "Add a component to the canvas the person is looking at. Props must match the component's props schema from the catalogue. Returns the new block id.",
+		{Name: "add_component", Description: "Add a component to the canvas the person is looking at. Props must match the component's schema. Returns the new block id.",
 			Schema: obj(map[string]any{
 				"component": map[string]any{"type": "string", "description": "Component name from the catalogue."},
 				"props":     map[string]any{"type": "object", "description": "Props matching the component's schema."},
@@ -89,7 +87,7 @@ func (s *Service) Tools() []llm.Tool {
 		s.arrangementTool(),
 		{Name: "set_setting", Description: "Change one setting of this workspace when the person asks for it, and say so; each is reversible, so never ask first. The settings: " + workspace.SettingsDoc() + ". A setting that holds a key or a token takes the NAME of the environment variable that holds it, never the key.",
 			Schema: obj(map[string]any{"key": map[string]any{"type": "string", "enum": workspace.SettingKeys()}, "value": map[string]any{"type": "string"}}, "key", "value")},
-	}, append(append(s.recordTools(), s.canvasTools()...), shapeTools()...)...)
+	}, append(append(s.recordTools(), s.canvasTools()...), append(shapeTools(), llm.Tool{Name: "clear_conversation", Description: "Clear all messages from the current conversation, leaving canvas and other chats untouched.", Schema: obj(map[string]any{})})...)...)
 }
 
 // runTool executes one tool call.
@@ -206,95 +204,11 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 		}
 		// What was cleared goes in the log, so it can be put back whole.
 		return toolResult{text: fmt.Sprintf("cleared %d blocks; the chat stayed", len(gone)), change: &Change{Action: "cleared", Detail: fmt.Sprintf("%d blocks", len(gone)), Before: map[string]any{"blocks": keep(gone)}}}
+	case "clear_conversation":
+		if err := s.Clear(); err != nil {
+			return fail("%v", err)
+		}
+		return toolResult{text: "cleared the conversation"}
 	}
 	return fail("unknown tool %s", call.Name)
-}
-
-func (s *Service) addComponent(name string, props map[string]any, l look) toolResult {
-	// Models often capitalise names ("List"); be forgiving about case and space.
-	name = strings.ToLower(strings.TrimSpace(name))
-	c, ok := s.Registry.Get(name)
-	if !ok {
-		return fail("unknown component %q. Available: %s", name, strings.Join(s.Registry.Names(), ", "))
-	}
-	if _, err := c.Validate(props); err != nil {
-		return fail("%v. Fix the props and call add_component again.", err)
-	}
-	// One conversation only: a second would duplicate every message id.
-	if name == ComponentName {
-		if existing, err := s.Store.List(BlockType, store.ListOptions{}); err == nil {
-			for _, b := range existing {
-				if b.Fields["component"] == ComponentName {
-					return fail("there is already a chat block on the canvas (id %s); move or restyle that one with update_component instead", b.ID)
-				}
-			}
-		}
-	}
-	position := 0
-	if existing, err := s.Store.List(BlockType, store.ListOptions{OrderBy: "position", Desc: true, Limit: 1}); err == nil && len(existing) > 0 {
-		if p, ok := existing[0].Fields["position"].(int64); ok {
-			position = int(p) + 1
-		}
-	}
-	// On the tab the person is looking at, unless the call says otherwise.
-	fields := map[string]any{"component": name, "props": props, "position": position, "actor": "assistant", "created_by": "assistant", "canvas": s.current}
-	if l.SetCanvas && !s.HasCanvas(l.Canvas) {
-		return fail("no canvas with id %q; the tabs and their ids are listed in the prompt, and \"\" is Home", l.Canvas)
-	}
-	layout, err := l.apply(fields)
-	if err != nil {
-		return fail("%v", err)
-	}
-	rec, err := s.Store.Create(BlockType, s.fields(BlockType, fields))
-	if err != nil {
-		return fail("could not save the block: %v", err)
-	}
-	// Say where it went, so the model confirms what really happened
-	// rather than what it asked for.
-	where := fmt.Sprintf("added %s as block %s at position %d", name, rec.ID, position)
-	if len(layout) > 0 {
-		where += " with " + strings.Join(layout, ", ")
-	}
-	return toolResult{
-		text:   where,
-		change: &Change{Action: "added", Component: name, ID: rec.ID, Detail: Summarise(name, props), Href: "/canvas/" + rec.ID},
-	}
-}
-
-func (s *Service) updateComponent(id string, props map[string]any, l look) toolResult {
-	rec, err := s.Store.Get(BlockType, id)
-	if err != nil {
-		return fail("no block with id %s on the canvas", id)
-	}
-	name, _ := rec.Fields["component"].(string)
-	c, ok := s.Registry.Get(name)
-	if !ok {
-		return fail("block %s uses unknown component %s", id, name)
-	}
-	fields := map[string]any{"actor": "assistant"}
-	var what []string
-	if props != nil {
-		if _, err := c.Validate(props); err != nil {
-			return fail("%v. Fix the props and call update_component again.", err)
-		}
-		fields["props"] = props
-		what = append(what, "props")
-	} else {
-		props, _ = rec.Fields["props"].(map[string]any)
-	}
-	if l.SetCanvas && !s.HasCanvas(l.Canvas) {
-		return fail("no canvas with id %q; the tabs and their ids are listed in the prompt, and \"\" is Home", l.Canvas)
-	}
-	layout, err := l.apply(fields)
-	if err != nil {
-		return fail("%v", err)
-	}
-	what = append(what, layout...)
-	if len(what) == 0 {
-		return fail("nothing to change: pass props, span, position, frame, tone, or region")
-	}
-	if _, err := s.Store.Update(BlockType, id, s.fields(BlockType, fields)); err != nil {
-		return fail("could not update block %s: %v", id, err)
-	}
-	return toolResult{text: "updated " + strings.Join(what, " and ") + " on block " + id, change: &Change{Action: "updated", Component: name, ID: id, Detail: Summarise(name, props), Href: "/canvas/" + id, Before: rec.Fields}}
 }
