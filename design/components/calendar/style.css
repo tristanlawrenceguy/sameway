@@ -129,3 +129,16 @@ a.sw-calendar__number:focus-visible { outline: var(--sw-focus-width) solid var(-
 .sw-calendar--day .sw-calendar__actions .sw-mark { min-height: 0; font-size: var(--sw-size-text-xs); }
 .sw-calendar__allday li { background: color-mix(in srgb, var(--sw-dot, var(--sw-color-accent)) 14%, transparent); }
 .sw-calendar__dayhead .sw-calendar__months { font-size: var(--sw-size-text-sm); gap: var(--sw-space-3); }
+
+/* Every chip and row is one target: the link inside reaches its edges,
+   and an action inside sits above that reach. The day number in the
+   month has room around it to press. */
+.sw-calendar__events li, .sw-calendar__agenda li { position: relative; }
+.sw-calendar__actions { position: relative; z-index: 1; }
+.sw-calendar__months { gap: var(--sw-space-2); padding-block: var(--sw-space-1); }
+.sw-calendar__months .sw-link--button { margin-left: 0; }
+.sw-calendar__all .sw-link--button { margin-left: 0; }
+a.sw-calendar__number { display: inline-flex; align-items: center; justify-content: center; min-width: 1.75rem; min-height: 1.75rem; margin: -0.25rem 0 -0.25rem -0.375rem; padding: 0 0.375rem; border-radius: var(--sw-radius-pill); }
+a.sw-calendar__number:hover { background: color-mix(in srgb, var(--sw-color-fg) 8%, transparent); }
+.sw-calendar__day--today a.sw-calendar__number { margin: -0.125rem 0 -0.125rem 0; }
+.sw-calendar__day--today a.sw-calendar__number:hover { background: var(--sw-color-accent); }

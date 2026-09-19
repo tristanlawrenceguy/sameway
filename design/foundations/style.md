@@ -64,3 +64,19 @@ round. Nothing is a sharp rectangle except a table.
 
 **Motion explains.** See [motion.md](motion.md). Nothing moves to look
 alive.
+
+## Targets
+
+Nothing a person presses is a small target, and a link is something a
+person presses. Three cases, and the link component knows them:
+
+- In a sentence a link stays text, and its hit area reaches half a line
+  above and below without moving anything.
+- In a row or a chip the whole row or chip is the target: the link fills
+  its container (`sw-link--fill`), and anything else pressable in the
+  container sits above its reach.
+- On its own a link takes the button look (`look: button`): the shape
+  and 44px size of a quiet button. The way back to a page, the list
+  behind a block, the months either side of a calendar are all this.
+
+Underlined text alone is never the whole target.
