@@ -107,9 +107,14 @@ func (s *Server) designComponents(b *strings.Builder) {
 			b.WriteString(`</p>`)
 		}
 		for _, ex := range c.Manifest.Examples {
-			props, _ := json.Marshal(ex.Props)
+			exProps := make(map[string]any, len(ex.Props)+1)
+			for k, v := range ex.Props {
+				exProps[k] = v
+			}
+			exProps["id"] = c.Manifest.Name + "-" + strings.ToLower(ex.Name)
+			propsJSON, _ := json.Marshal(ex.Props)
 			fmt.Fprintf(b, "<div class=\"sw-example\"><h4 class=\"sw-small\">%s \u2014 %s</h4><p class=\"sw-small sw-muted\"><code>%s</code></p><div class=\"sw-example__render\">%s</div></div>",
-				template.HTMLEscapeString(c.Manifest.Name), template.HTMLEscapeString(ex.Name), template.HTMLEscapeString(string(props)), s.component(c.Manifest.Name, ex.Props))
+				template.HTMLEscapeString(c.Manifest.Name), template.HTMLEscapeString(ex.Name), template.HTMLEscapeString(string(propsJSON)), s.component(c.Manifest.Name, exProps))
 		}
 		b.WriteString(`</section>`)
 	}
