@@ -159,7 +159,11 @@ func (s *Server) chatPage(w http.ResponseWriter, r *http.Request) {
 	if convo.LatestID != "" {
 		opts.Focus, opts.FocusLabel = convo.LatestID, "Skip to latest message"
 	}
-	s.page(w, r, "Chat", template.HTML(string(convo.Notice)+string(body)+string(convo.Activity)), opts)
+	activityHTML := string(convo.Activity)
+	if activityHTML != "" {
+		activityHTML = `<div class="sw-activity">` + activityHTML + `</div>`
+	}
+	s.page(w, r, "Chat", template.HTML(string(convo.Notice)+string(body)+activityHTML), opts)
 }
 
 // backTo is where a conversation form returns to: the surface it was sent
