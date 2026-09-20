@@ -186,7 +186,7 @@ func TestContentPagesLifecycle(t *testing.T) {
 	}
 
 	del := postForm(t, h, detailPath+"/delete", nil)
-	wantStatus(t, del, http.StatusSeeOther)
+	wantStatus(t, del, http.StatusOK)
 	wantStatus(t, get(t, h, detailPath), http.StatusNotFound)
 	wantStatus(t, get(t, h, "/t/nothing"), http.StatusNotFound)
 }
