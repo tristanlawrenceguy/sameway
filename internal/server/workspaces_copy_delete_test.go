@@ -2,6 +2,8 @@ package server_test
 
 import (
 	"net/http"
+	"net/url"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -224,5 +226,68 @@ func TestWorkspacesDeleteGETPageHasLayout(t *testing.T) {
 			labels = append(labels, l)
 		}
 		t.Errorf("delete page should have two <nav> landmarks; got %d: %v", len(navs), labels)
+	}
+}
+
+// TestWorkspacesDeleteWrongNameShowsWarning checks that POST /workspaces/delete
+// with a wrong confirm value shows an alert mentioning "delete" and does NOT
+// contain copy/start language ("could not be started", "this one stays").
+func TestWorkspacesDeleteWrongNameShowsWarning(t *testing.T) {
+	dir := t.TempDir()
+	if err := workspace.Init(dir, examples.FS, examples.StarterRoot, false); err != nil {
+		t.Fatal(err)
+	}
+	a, err := app.Load(dir, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { a.Close() })
+
+	h := server.New(a)
+	a.Workspace.Set("name", "TestWorkspace")
+
+	rec := postForm(t, h, "/workspaces/delete", url.Values{"confirm": {"wrong name"}})
+	wantStatus(t, rec, http.StatusOK)
+	body := rec.Body.String()
+
+	if !strings.Contains(body, "delete") {
+		t.Errorf("alert should mention 'delete' in wrong-name warning\n%s", truncate(body))
+	}
+	if strings.Contains(body, "could not be started") || strings.Contains(body, "this one stays") {
+		t.Error("wrong-name alert must NOT contain copy/start language\n" + body)
+	}
+}
+
+// TestWorkspacesDeleteNoFleetShowsDeletionError checks that POST /workspaces/delete
+// with the correct name but no fleet (so starting a replacement fails) shows an
+// error message specific to deletion, not copy/start language. Covers acceptance 1.
+func TestWorkspacesDeleteNoFleetShowsDeletionError(t *testing.T) {
+	known := filepath.Join(t.TempDir(), "workspaces.json")
+	t.Setenv("SAMEWAY_KNOWN", known)
+
+	dir := t.TempDir()
+	if err := workspace.Init(dir, examples.FS, examples.StarterRoot, false); err != nil {
+		t.Fatal(err)
+	}
+	a, err := app.Load(dir, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { a.Close() })
+
+	h := server.New(a)
+	a.Workspace.Set("name", "TestWorkspace")
+
+	rec := postForm(t, h, "/workspaces/delete", url.Values{"confirm": {"TestWorkspace"}})
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200 (error shown on page), got %d: %s", rec.Code, truncate(rec.Body.String()))
+	}
+	body := rec.Body.String()
+
+	if !strings.Contains(body, "delete") {
+		t.Errorf("response should mention 'delete' in the error alert\n%s", truncate(body))
+	}
+	if strings.Contains(body, "could not be started") || strings.Contains(body, "this one stays") {
+		t.Error("error must NOT contain copy/start language\n" + body)
 	}
 }
