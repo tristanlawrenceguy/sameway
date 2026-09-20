@@ -153,6 +153,7 @@ func (s *Server) activityPage(w http.ResponseWriter, r *http.Request) {
 	if len(recs) == 0 {
 		b.WriteString(`<p class="sw-empty">Nothing has happened yet.</p>`)
 	}
+	b.WriteString(`<h2>Activity</h2>`)
 	day := ""
 	open := false
 	for _, rec := range recs {
