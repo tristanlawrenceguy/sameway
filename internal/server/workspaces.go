@@ -263,13 +263,13 @@ func (s *Server) workspacesDelete(w http.ResponseWriter, r *http.Request) {
 	var err error
 	if next == "" {
 		if next, err = s.blank("New workspace"); err != nil {
-			s.showWorkspaces(w, r, "Nothing else to open afterwards, and a new workspace could not be made: "+err.Error())
+			s.showWorkspaces(w, r, "Could not make a replacement workspace for after the deletion: "+err.Error())
 			return
 		}
 	}
 	url, err := s.start(next)
 	if err != nil {
-		s.showWorkspaces(w, r, "The next workspace could not be started, so this one stays: "+err.Error())
+		s.showWorkspaces(w, r, "Could not start the replacement workspace after deleting this one: "+err.Error())
 		return
 	}
 	s.app.Close()
