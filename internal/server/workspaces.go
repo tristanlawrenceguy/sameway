@@ -243,14 +243,17 @@ func (s *Server) makeAndOpen(w http.ResponseWriter, r *http.Request, make func(s
 	http.Redirect(w, r, "/workspaces", http.StatusSeeOther)
 }
 
-// workspacesDelete removes this workspace once the person has typed its
-// name, sends them to another (started if need be, made if there is
-// none), and stops this server.
+// workspacesDelete removes this workspace, once confirmed, handing off to a
+// replacement that a fleet (sameway open) started or can start.
 func (s *Server) workspacesDelete(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	cur := s.app.Workspace
 	if strings.TrimSpace(r.PostForm.Get("confirm")) != cur.Config.Name {
 		s.showWorkspaces(w, r, "To delete this workspace, type its name exactly: "+cur.Config.Name)
+		return
+	}
+	if s.fleet == nil {
+		s.showWorkspaces(w, r, "This server was not opened by sameway open, so it has no way to hand off to another workspace; delete this one from sameway open instead.")
 		return
 	}
 	next := ""

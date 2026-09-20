@@ -147,3 +147,40 @@ func TestAWorkspaceOpensTheOthers(t *testing.T) {
 		}
 	}
 }
+
+// A server started plainly (sameway serve, no sameway open) has no fleet to
+// hand off to, so deleting its workspace must refuse rather than remove the
+// folder out from under itself with nowhere to go.
+func TestDeleteWithoutAFleetRefuses(t *testing.T) {
+	known := filepath.Join(t.TempDir(), "workspaces.json")
+	t.Setenv("SAMEWAY_KNOWN", known)
+	a, _ := newApp(t)
+	h := server.New(a)
+	a.Workspace.Set("name", "Solo")
+
+	// Another workspace already running elsewhere on the machine must not
+	// be enough on its own to let the deletion through.
+	other := filepath.Join(filepath.Dir(a.Workspace.Dir), "elsewhere")
+	if err := workspace.Init(other, examples.FS, examples.StarterRoot, false); err != nil {
+		t.Fatal(err)
+	}
+	ol, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	oa, err := app.Load(other, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { ol.Close(); oa.Close() })
+	go http.Serve(ol, server.New(oa))
+	workspace.Remember(other, ol.Addr().String())
+
+	res := postForm(t, h, "/workspaces/delete", url.Values{"confirm": {"Solo"}})
+	if res.Code != http.StatusOK || !strings.Contains(res.Body.String(), "sameway open") {
+		t.Errorf("delete without a fleet should refuse and say so, got %d\n%s", res.Code, truncate(res.Body.String()))
+	}
+	if _, err := os.Stat(a.Workspace.Dir); err != nil {
+		t.Error("the workspace is still there")
+	}
+}
