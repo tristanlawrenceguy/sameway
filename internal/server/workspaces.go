@@ -16,9 +16,8 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
-// The workspaces page and what it does: a new blank workspace, a copy of
-// this one, and deleting this one. How workspaces are found, started and
-// reached is in fleet.go.
+// The workspaces page: a new blank workspace, a copy of this one, and
+// deleting this one. How workspaces are found, started and reached is in fleet.go.
 
 // sibling is where a new workspace goes: beside this one, in a folder
 // named after it.
@@ -243,14 +242,17 @@ func (s *Server) makeAndOpen(w http.ResponseWriter, r *http.Request, make func(s
 	http.Redirect(w, r, "/workspaces", http.StatusSeeOther)
 }
 
-// workspacesDelete removes this workspace once the person has typed its
-// name, sends them to another (started if need be, made if there is
-// none), and stops this server.
+// workspacesDelete removes this workspace, once confirmed, handing off to a
+// replacement that a fleet (sameway open) started or can start.
 func (s *Server) workspacesDelete(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	cur := s.app.Workspace
 	if strings.TrimSpace(r.PostForm.Get("confirm")) != cur.Config.Name {
 		s.showWorkspaces(w, r, "To delete this workspace, type its name exactly: "+cur.Config.Name)
+		return
+	}
+	if s.fleet == nil {
+		s.showWorkspaces(w, r, "This server was not opened by sameway open, so it has no way to hand off to another workspace; delete this one from sameway open instead.")
 		return
 	}
 	next := ""
@@ -280,7 +282,18 @@ func (s *Server) workspacesDelete(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(200 * time.Millisecond)
 	}
 	workspace.Forget(cur.Dir)
-	http.Redirect(w, r, url, http.StatusSeeOther)
+
+	ws, _ := workspace.Load(next)
+	nextName := ""
+	if ws != nil {
+		nextName = ws.Config.Name
+	}
+	var b strings.Builder
+	b.WriteString(`<div class="sw-alert sw-alert--success" role="alert"><p class="sw-alert__title">Success:</p><p class="sw-alert__message">` + template.HTMLEscapeString(cur.Config.Name) + ` deleted.</p></div>`)
+	b.WriteString(fmt.Sprintf(`<p class="sw-muted">Opening <a href="%s">%s</a>…</p>`, template.HTMLEscapeString(url), template.HTMLEscapeString(nextName)))
+
+	w.Header().Set("Refresh", fmt.Sprintf("3; url=%s", template.HTMLEscapeString(url)))
+	s.page(w, r, "Workspace deleted", template.HTML(b.String()), pageOptions{})
 	if s.fleet != nil && s.fleet.Exit != nil {
 		s.fleet.Exit()
 	}
