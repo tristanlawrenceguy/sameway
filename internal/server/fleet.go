@@ -68,7 +68,9 @@ func running(k workspace.Known) (url string, ok bool) {
 	if k.Addr == "" {
 		return "", false
 	}
-	client := &http.Client{Timeout: 400 * time.Millisecond}
+	// A fresh connection every time: a pooled one could still lead to a
+	// server that has since gone from that address.
+	client := &http.Client{Timeout: 1500 * time.Millisecond, Transport: &http.Transport{DisableKeepAlives: true}}
 	resp, err := client.Get("http://" + k.Addr + "/api/describe/routes")
 	if err != nil {
 		return "", false

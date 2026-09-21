@@ -40,6 +40,26 @@ ui:
   # shown: their links are in the sidebar and the footer.
   developer: hidden
 
+# What a command action may run. A command action runs a program on this
+# machine as you, once you have accepted its line; only programs named
+# here run, directly, never through a shell. Name them comma separated:
+# curl, python, mosquitto_pub. Empty means command actions run nothing.
+actions:
+  allow: ""
+
+# Devices, over MQTT. Zigbee2MQTT, Tasmota, ESPHome and Home Assistant
+# all speak it or bridge to it. subscribe lists the topics whose messages
+# become device records (zigbee2mqtt/+ takes every Zigbee device); an
+# mqtt action publishes to a topic (zigbee2mqtt/kitchen_light/set). Set
+# username_env and password_env to the NAMES of environment variables
+# when the broker wants a login. Empty broker means no devices.
+mqtt:
+  broker: ""
+  client_id: sameway
+  username_env: ""
+  password_env: ""
+  subscribe: []
+
 # How a reminder reaches you when no page is open. desktop shows the
 # system's own notification on this machine. command runs for each ring
 # with {title}, {text} and {url} in its arguments: a push service such as

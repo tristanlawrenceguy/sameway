@@ -18,6 +18,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
+	"github.com/tristanlawrenceguy/sameway/internal/devices"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 )
 
@@ -65,6 +66,16 @@ type Config struct {
 		// SystemPrompt is prepended to the built-in instructions.
 		SystemPrompt string `yaml:"system_prompt"`
 	} `yaml:"chat"`
+	// Actions bounds what a command action may do: Allow names the
+	// programs it may run, comma separated (curl, python). Empty means
+	// command actions run nothing; webhooks and mqtt actions are not
+	// programs and are not bound by it.
+	Actions struct {
+		Allow string `yaml:"allow"`
+	} `yaml:"actions"`
+	// MQTT is the broker the workspace talks to for devices: what it
+	// subscribes to becomes device records, and mqtt actions publish.
+	MQTT devices.Config `yaml:"mqtt"`
 	// Notify is how a reminder reaches a person beyond an open page: a
 	// notification on this machine ("on", the default, or "off"), and a
 	// command run for each ring with {title}, {text} and {url} in its

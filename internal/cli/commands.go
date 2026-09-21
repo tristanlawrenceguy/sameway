@@ -39,6 +39,7 @@ func (c *ctx) serveCmd() error {
 	a.Chat.StartSchedule(ctx)
 	h := server.New(a)
 	h.StartRinging(ctx, notifier(a))
+	connectDevices(ctx, c.Stdout, a)
 	token := os.Getenv(a.Workspace.Config.MCP.TokenEnv)
 	if token != "" {
 		fmt.Fprintf(c.Stdout, "  mcp     http://%s/mcp with Authorization: Bearer <%s>\n", *addr, a.Workspace.Config.MCP.TokenEnv)

@@ -33,6 +33,12 @@ type Service struct {
 	Provider     llm.Provider
 	ProviderErr  error
 	HistoryLimit int
+	// Allow names the programs a command action may run, by name (curl,
+	// python). Empty means none; see command.go for the boundary.
+	Allow []string
+	// Publish sends to an MQTT topic, when the workspace has a broker;
+	// nil means it has none. See mqtt.go.
+	Publish func(topic, payload string) error
 	// convo is the chat that is open, once known; see Current.
 	convo       string
 	ExtraPrompt string

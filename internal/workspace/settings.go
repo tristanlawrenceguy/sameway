@@ -43,6 +43,11 @@ var Settings = []Setting{
 	{"chat.system_prompt", "string", nil, "words put before the built-in instructions to the model"},
 	{"notify.desktop", "enum", []string{"on", "off"}, "a notification on this machine when a reminder rings, whether or not a page is open"},
 	{"notify.command", "string", nil, "a command run when a reminder rings, with {title}, {text} and {url} in its arguments: a push service such as ntfy, an email, a text"},
+	{"actions.allow", "string", nil, "the programs a command action may run, by name, comma separated (curl, python); empty means command actions run nothing"},
+	{"mqtt.broker", "string", nil, "the MQTT broker for devices, such as tcp://192.168.1.10:1883; empty means none (takes effect at the next start)"},
+	{"mqtt.client_id", "string", nil, "how this workspace names itself to the broker"},
+	{"mqtt.username_env", "env", nil, "the NAME of the environment variable that holds the broker username"},
+	{"mqtt.password_env", "env", nil, "the NAME of the environment variable that holds the broker password"},
 }
 
 // SettingKeys lists what Set takes.

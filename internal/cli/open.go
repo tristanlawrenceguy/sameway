@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -15,6 +16,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
+	"github.com/tristanlawrenceguy/sameway/internal/devices"
 	"github.com/tristanlawrenceguy/sameway/internal/notify"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
@@ -77,10 +79,11 @@ func (c *ctx) openCmd() error {
 			srv.Shutdown(context.Background())
 		}()
 	}})
-	// Reminders ring and scheduled actions run for as long as the server
-	// does, with or without a page open.
+	// Reminders ring, scheduled actions run and the broker stays connected
+	// for as long as the server does, with or without a page open.
 	h.StartRinging(ctx, notifier(a))
 	a.Chat.StartSchedule(ctx)
+	connectDevices(ctx, c.Stdout, a)
 	if err := srv.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}
@@ -123,4 +126,21 @@ func openInBrowser(url string) error {
 	default:
 		return exec.Command("xdg-open", url).Start()
 	}
+}
+
+// connectDevices reaches the MQTT broker workspace.yaml names, if any:
+// subscribed topics become devices, and mqtt actions can publish.
+func connectDevices(ctx context.Context, out io.Writer, a *app.App) {
+	cfg := a.Workspace.Config.MQTT
+	if strings.TrimSpace(cfg.Broker) == "" {
+		return
+	}
+	bus, err := devices.Start(ctx, cfg, a.Store)
+	if err != nil {
+		fmt.Fprintf(out, "  mqtt    not connected: %v\n", err)
+		log.Printf("devices: %v", err)
+		return
+	}
+	a.Chat.Publish = bus.Publish
+	fmt.Fprintf(out, "  mqtt    %s, %d topic(s)\n", cfg.Broker, len(cfg.Subscribe))
 }

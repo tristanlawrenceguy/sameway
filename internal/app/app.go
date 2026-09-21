@@ -82,9 +82,13 @@ func Load(dir string, memoryDB bool) (*App, error) {
 	llmCfg.Workspace = ws.Dir
 	llmCfg.Executable, _ = os.Executable()
 	a.Chat.Provider, a.Chat.ProviderErr = llm.New(llmCfg)
+	a.Chat.Allow = allowList(ws.Config.Actions.Allow)
 	a.Chat.SetSetting = func(key, value string) error {
 		if err := ws.Set(key, value); err != nil {
 			return err
+		}
+		if key == "actions.allow" {
+			a.Chat.Allow = allowList(ws.Config.Actions.Allow)
 		}
 		// A new model setting is a new model: the next message goes to it.
 		if strings.HasPrefix(key, "llm.") {
@@ -282,4 +286,16 @@ func (a *App) Describe() Description {
 		d.Tools = append(d.Tools, DescribedTool{Name: t.Name, Description: t.Description, Schema: t.Schema})
 	}
 	return d
+}
+
+// allowList is the programs a command action may run, as workspace.yaml
+// names them: comma or space separated, blanks dropped.
+func allowList(v string) []string {
+	var out []string
+	for _, p := range strings.FieldsFunc(v, func(r rune) bool { return r == ',' || r == ' ' || r == ';' }) {
+		if p = strings.TrimSpace(p); p != "" {
+			out = append(out, p)
+		}
+	}
+	return out
 }
