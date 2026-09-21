@@ -74,7 +74,7 @@ func TestLayoutToolsRejectNonsense(t *testing.T) {
 	m2 := &scripted{steps: []*llm.Response{call("update_component", map[string]any{"id": blocks[0].ID})}}
 	svc.Provider = m2
 	svc.Send(context.Background(), "change nothing")
-	if res := lastToolResult(m2.seen[1]); !res.IsError || !strings.Contains(res.Content, "nothing to change") {
+	if res := lastToolResult(m2.seen[1]); !res.IsError || !strings.Contains(res.Content, "pass something to change") {
 		t.Errorf("an empty update should say what is missing: %+v", res)
 	}
 }
@@ -97,7 +97,7 @@ func TestChatIsABlockLikeAnyOther(t *testing.T) {
 	m := &scripted{steps: []*llm.Response{call("add_component", map[string]any{"component": "chat", "props": map[string]any{}})}}
 	svc.Provider = m
 	svc.Send(context.Background(), "another chat")
-	if res := lastToolResult(m.seen[1]); !res.IsError || !strings.Contains(res.Content, "already a chat block") {
+	if res := lastToolResult(m.seen[1]); !res.IsError || !strings.Contains(res.Content, "chat block already exists") {
 		t.Errorf("a second chat block should be refused: %+v", res)
 	}
 

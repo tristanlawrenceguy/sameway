@@ -127,7 +127,7 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 	}
 	if len(call.Args) > 0 {
 		if err := json.Unmarshal(call.Args, &args); err != nil {
-			return fail("arguments were not valid JSON: %v", err)
+			return fail("not a JSON object or array: %v", err)
 		}
 	}
 	switch call.Name {
@@ -218,14 +218,14 @@ func (s *Service) addComponent(name string, props map[string]any, l look) toolRe
 		return fail("unknown component %q. Available: %s", name, strings.Join(s.Registry.Names(), ", "))
 	}
 	if _, err := c.Validate(props); err != nil {
-		return fail("%v. Fix the props and call add_component again.", err)
+		return fail("%v — fix these and try again", err)
 	}
 	// One conversation only: a second would duplicate every message id.
 	if name == ComponentName {
 		if existing, err := s.Store.List(BlockType, store.ListOptions{}); err == nil {
 			for _, b := range existing {
 				if b.Fields["component"] == ComponentName {
-					return fail("there is already a chat block on the canvas (id %s); move or restyle that one with update_component instead", b.ID)
+					return fail("a chat block already exists here (id %s); use update_component to edit it", b.ID)
 				}
 			}
 		}
@@ -239,7 +239,7 @@ func (s *Service) addComponent(name string, props map[string]any, l look) toolRe
 	// On the tab the person is looking at, unless the call says otherwise.
 	fields := map[string]any{"component": name, "props": props, "position": position, "actor": "assistant", "created_by": "assistant", "canvas": s.current}
 	if l.SetCanvas && !s.HasCanvas(l.Canvas) {
-		return fail("no canvas with id %q; the tabs and their ids are listed in the prompt, and \"\" is Home", l.Canvas)
+		return fail("no tab with id %q — check the list of tabs in the prompt", l.Canvas)
 	}
 	layout, err := l.apply(fields)
 	if err != nil {
@@ -247,7 +247,7 @@ func (s *Service) addComponent(name string, props map[string]any, l look) toolRe
 	}
 	rec, err := s.Store.Create(BlockType, s.fields(BlockType, fields))
 	if err != nil {
-		return fail("could not save the block: %v", err)
+		return fail("save failed: %v", err)
 	}
 	// Say where it went, so the model confirms what really happened
 	// rather than what it asked for.
@@ -264,18 +264,18 @@ func (s *Service) addComponent(name string, props map[string]any, l look) toolRe
 func (s *Service) updateComponent(id string, props map[string]any, l look) toolResult {
 	rec, err := s.Store.Get(BlockType, id)
 	if err != nil {
-		return fail("no block with id %s on the canvas", id)
+		return fail("no block there")
 	}
 	name, _ := rec.Fields["component"].(string)
 	c, ok := s.Registry.Get(name)
 	if !ok {
-		return fail("block %s uses unknown component %s", id, name)
+		return fail("block %s uses an unknown component: check the catalogue", id)
 	}
 	fields := map[string]any{"actor": "assistant"}
 	var what []string
 	if props != nil {
 		if _, err := c.Validate(props); err != nil {
-			return fail("%v. Fix the props and call update_component again.", err)
+			return fail("%v — fix these and try again", err)
 		}
 		fields["props"] = props
 		what = append(what, "props")
@@ -283,7 +283,7 @@ func (s *Service) updateComponent(id string, props map[string]any, l look) toolR
 		props, _ = rec.Fields["props"].(map[string]any)
 	}
 	if l.SetCanvas && !s.HasCanvas(l.Canvas) {
-		return fail("no canvas with id %q; the tabs and their ids are listed in the prompt, and \"\" is Home", l.Canvas)
+		return fail("no tab with id %q — check the list of tabs in the prompt", l.Canvas)
 	}
 	layout, err := l.apply(fields)
 	if err != nil {
@@ -291,10 +291,10 @@ func (s *Service) updateComponent(id string, props map[string]any, l look) toolR
 	}
 	what = append(what, layout...)
 	if len(what) == 0 {
-		return fail("nothing to change: pass props, span, position, frame, tone, or region")
+		return fail("pass something to change: props, span, position, frame, tone, or region")
 	}
 	if _, err := s.Store.Update(BlockType, id, s.fields(BlockType, fields)); err != nil {
-		return fail("could not update block %s: %v", id, err)
+		return fail("update failed for block %s: %v", id, err)
 	}
 	return toolResult{text: "updated " + strings.Join(what, " and ") + " on block " + id, change: &Change{Action: "updated", Component: name, ID: id, Detail: Summarise(name, props), Href: "/canvas/" + id, Before: rec.Fields}}
 }

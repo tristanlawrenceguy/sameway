@@ -94,7 +94,7 @@ func TestACommandProviderRunsTheSignedInProgram(t *testing.T) {
 	if err != nil || p.Name() != "Claude Code" {
 		t.Errorf("the claude-code preset should be a provider called Claude Code: %v %v", p, err)
 	}
-	if _, err := llm.New(llm.Config{Provider: "command"}); err == nil || !strings.Contains(err.Error(), "llm.command") {
+	if _, err := llm.New(llm.Config{Provider: "command"}); err == nil || !strings.Contains(err.Error(), "command needs a program") {
 		t.Errorf("provider command needs a command line: %v", err)
 	}
 }

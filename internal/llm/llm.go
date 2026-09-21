@@ -141,7 +141,7 @@ func New(cfg Config) (Provider, error) {
 			c.Label = "command"
 		}
 		if strings.TrimSpace(c.Template) == "" {
-			return nil, errors.New("llm.command is required for provider command: the program to run, with {prompt} where the conversation goes")
+			return nil, errors.New("command needs a program to run with {prompt} as the conversation")
 		}
 		return &c, nil
 	}

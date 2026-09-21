@@ -208,7 +208,7 @@ func (s *Server) navLink(href, label string, current bool) template.HTML {
 func (s *Server) component(name string, props map[string]any) template.HTML {
 	h, err := s.app.Registry.Render(name, props)
 	if err != nil {
-		msg := fmt.Sprintf("Could not render %s: %v", name, err)
+		msg := fmt.Sprintf("failed to render %s: %v", name, err)
 		h, err = s.app.Registry.Render("alert", map[string]any{"kind": "danger", "message": msg})
 		if err != nil {
 			return template.HTML("<p>" + template.HTMLEscapeString(msg) + "</p>")

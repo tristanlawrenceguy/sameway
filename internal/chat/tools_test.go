@@ -199,9 +199,9 @@ func TestToolErrorsGuideTheModel(t *testing.T) {
 		want string
 	}{
 		{1, "unknown component \"carousel\". Available: alert, badge, button"},
-		{2, "invalid props"},
+		{2, "fix these and try again"},
 		{3, "unknown tool frobnicate"},
-		{4, "not valid JSON"},
+		{4, "not a JSON object or array"},
 	}
 	for _, c := range checks {
 		res := lastToolResult(m.seen[c.req])
