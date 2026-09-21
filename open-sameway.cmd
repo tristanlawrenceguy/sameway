@@ -1,10 +1,26 @@
 @echo off
-REM Opens this workspace in a browser. Double-click it, or run it from a
-REM terminal with arguments: open-sameway.cmd --workspace "C:\path\to\workspace"
+REM Opens a sameway workspace in your browser. Double-click this file, or run
+REM it from a terminal with the same arguments `sameway open` takes:
+REM   open-sameway.cmd --workspace "D:\work\my-workspace"
+REM   open-sameway.cmd --page /design
 REM
-REM With no arguments it uses the nearest workspace.yaml, or %SAMEWAY_WORKSPACE%,
-REM which is the same rule every other sameway command follows. If you have not
-REM made a workspace yet: sameway init my-workspace
+REM Without --workspace it uses %SAMEWAY_WORKSPACE%, or the folder you ran it
+REM from when that folder is a workspace. A fresh clone has neither, so a
+REM double-click opens examples\workspaces\starter instead of stopping on an
+REM error. Make one of your own with `sameway init my-workspace`.
+setlocal enabledelayedexpansion
+set "PICK="
+set "ARGS=x%*"
+if not defined SAMEWAY_WORKSPACE if "!ARGS:-workspace=!"=="!ARGS!" (
+  if exist "%CD%\workspace.yaml" (
+    set PICK=--workspace "%CD%"
+  ) else (
+    echo No workspace given, so this is the starter example.
+    echo For your own: sameway init my-workspace, then pass --workspace with it.
+    echo.
+    set PICK=--workspace "%~dp0examples\workspaces\starter"
+  )
+)
 cd /d "%~dp0"
 REM Windows Smart App Control sometimes refuses a freshly built program with
 REM "An Application Control policy has blocked this file". A build with a
@@ -25,7 +41,7 @@ if %TRY% geq 6 (
 echo Windows refused that build, so building another ^(try %TRY% of 6^)...
 goto build
 :run
-"%EXE%" open %*
+"%EXE%" open %PICK% %*
 set "CODE=%ERRORLEVEL%"
 del "%EXE%" >nul 2>&1
 if not "%CODE%"=="0" goto stopped
