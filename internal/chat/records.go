@@ -51,13 +51,6 @@ func (s *Service) recordTools() []llm.Tool {
 	if len(names) == 0 {
 		return nil
 	}
-	obj := func(props map[string]any, required ...string) map[string]any {
-		s := map[string]any{"type": "object", "properties": props, "additionalProperties": false}
-		if len(required) > 0 {
-			s["required"] = required
-		}
-		return s
-	}
 	typeArg := map[string]any{"type": "string", "enum": names, "description": "A content type from the catalogue."}
 	return []llm.Tool{
 		{Name: "import_records", Description: "Make records from a file the person added: a CSV with a header row, a vCard (.vcf) of contacts, or a mailbox (.mbox) of mail. Each column is matched to a field by name; a column for an email, phone or name links each row to its person, made when new. Use it when the person attaches such a file and wants its contents as records, rather than creating them one by one. Returns how many were made.",

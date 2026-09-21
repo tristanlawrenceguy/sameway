@@ -31,15 +31,6 @@ func (s *Service) BlockFields(in map[string]any) map[string]any {
 // It is the one list; /api/describe and the CLI publish it from here, so a
 // tool added or changed shows up on every surface at once.
 func (s *Service) Tools() []llm.Tool {
-	// Strict servers (llama.cpp builds a grammar from this) reject
-	// "required": null, so the key is only present when there is a list.
-	obj := func(props map[string]any, required ...string) map[string]any {
-		s := map[string]any{"type": "object", "properties": props, "additionalProperties": false}
-		if len(required) > 0 {
-			s["required"] = required
-		}
-		return s
-	}
 	return append([]llm.Tool{
 		{Name: "add_component", Description: "Add a component to the canvas the person is looking at. Props must match the component's props schema from the catalogue. Returns the new block id.",
 			Schema: obj(map[string]any{
