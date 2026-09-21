@@ -103,7 +103,7 @@ func (s *Service) createCanvas(name string) toolResult {
 	position := len(s.Canvases())
 	rec, err := s.Store.Create(CanvasType, map[string]any{"name": name, "position": position})
 	if err != nil {
-		return fail("could not add the canvas: %v", err)
+		return fail("add failed: %v", err)
 	}
 	return toolResult{
 		text:   fmt.Sprintf("added canvas %s: %q, at %s. Blocks go on it with canvas: %q on add_component.", rec.ID, name, CanvasPath(rec.ID), rec.ID),
@@ -117,7 +117,7 @@ func (s *Service) removeCanvas(id string) toolResult {
 	}
 	rec, err := s.Store.Get(CanvasType, id)
 	if err != nil {
-		return fail("no canvas with id %s; the tabs are listed in the prompt", id)
+		return fail("no tab there — check the list of tabs in the prompt")
 	}
 	name, _ := rec.Fields["name"].(string)
 	blocks, _ := s.Store.List(BlockType, store.ListOptions{})
@@ -128,7 +128,7 @@ func (s *Service) removeCanvas(id string) toolResult {
 		}
 	}
 	if err := s.Store.Delete(CanvasType, id); err != nil {
-		return fail("could not remove the canvas: %v", err)
+		return fail("remove failed: %v", err)
 	}
 	// The tab and its blocks go into the log together, so undoing this
 	// puts the whole tab back.

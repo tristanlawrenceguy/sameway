@@ -45,7 +45,7 @@ func TestADateIsWrittenAsPeopleSayIt(t *testing.T) {
 
 	res = postForm(t, h, "/t/task/"+task.ID+"/props", url.Values{"prop-due": {"sometime soon"}})
 	wantStatus(t, res, http.StatusUnprocessableEntity)
-	if body := res.Body.String(); !strings.Contains(body, "could not read &#34;sometime soon&#34;") || !strings.Contains(body, "next Friday") {
+	if body := res.Body.String(); !strings.Contains(body, "cannot read &#34;sometime soon&#34;") || !strings.Contains(body, "next Friday") {
 		t.Error("words nobody can read are refused with the ways that work")
 	}
 

@@ -39,7 +39,7 @@ func (s *Service) Proposals() []*store.Record {
 // propose records a question rather than making the change.
 func (s *Service) propose(summary string, action map[string]any) toolResult {
 	if _, ok := s.Store.Types().Get(ProposalType); !ok {
-		return fail("this workspace has no proposal type, so changes cannot be offered for approval; make the change directly or run `sameway init --force`")
+		return fail("proposals are not set up — run sameway init --force to enable them")
 	}
 	summary = strings.TrimSpace(summary)
 	if summary == "" {
@@ -47,11 +47,11 @@ func (s *Service) propose(summary string, action map[string]any) toolResult {
 	}
 	tool, _ := action["tool"].(string)
 	if !proposable[tool] {
-		return fail("proposals can only carry %s", strings.Join(proposableNames(), ", "))
+		return fail("%s cannot be proposed; it must happen directly", strings.Join(proposableNames(), ", "))
 	}
 	rec, err := s.Store.Create(ProposalType, map[string]any{"summary": summary, "action": action, "state": "pending"})
 	if err != nil {
-		return fail("could not save the proposal: %v", err)
+		return fail("save failed for the proposal: %v", err)
 	}
 	return toolResult{
 		text:   "asked the person: " + summary + " (proposal " + rec.ID + ", nothing has changed yet)",

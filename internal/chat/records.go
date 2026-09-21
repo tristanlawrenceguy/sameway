@@ -132,7 +132,7 @@ func (s *Service) createRecord(typeName string, fields map[string]any) toolResul
 	}
 	rec, err := s.Store.Create(t.Name, fields)
 	if err != nil {
-		return fail("%v. Fix the fields and call create_record again; the %s schema is in the catalogue.", err, t.Name)
+		return fail("%v — fix these and try again", err)
 	}
 	title := recordTitle(t, rec)
 	return toolResult{
@@ -147,15 +147,15 @@ func (s *Service) updateRecord(typeName, id string, fields map[string]any) toolR
 		return fail("%v", err)
 	}
 	if len(fields) == 0 {
-		return fail("nothing to change: pass the fields to change and their new values")
+		return fail("pass the fields you want to change and their new values")
 	}
 	was, err := s.Store.Get(t.Name, id)
 	if err != nil {
-		return fail("no %s with id %s. Use find_records to get the id", t.Name, id)
+		return fail("no %s there — use find_records to look it up", t.Name)
 	}
 	rec, err := s.Store.Update(t.Name, id, fields)
 	if err != nil {
-		return fail("%v. Fix the fields and call update_record again; the %s schema is in the catalogue.", err, t.Name)
+		return fail("%v — fix these and try again", err)
 	}
 	title := recordTitle(t, rec)
 	return toolResult{
@@ -222,10 +222,10 @@ func (s *Service) deleteRecord(typeName, id string) toolResult {
 	}
 	rec, err := s.Store.Get(t.Name, id)
 	if err != nil {
-		return fail("no %s with id %s", t.Name, id)
+		return fail("no %s there", t.Name)
 	}
 	if err := s.Store.Delete(t.Name, id); err != nil {
-		return fail("could not delete %s %s: %v", t.Name, id, err)
+		return fail("delete failed for %s %s: %v", t.Name, id, err)
 	}
 	return toolResult{
 		text:   fmt.Sprintf("deleted %s %s", t.Name, id),

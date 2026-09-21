@@ -98,7 +98,7 @@ func TestCanvasToolsRefuseWhatDoesNotExist(t *testing.T) {
 	}}
 	svc.Provider = m
 	svc.Send(context.Background(), "bad ones")
-	for i, want := range []string{"no canvas with id", "Home is the first canvas", "needs a name"} {
+	for i, want := range []string{"no tab with id", "Home is the first canvas", "needs a name"} {
 		if res := lastToolResult(m.seen[i+1]); !res.IsError || !strings.Contains(res.Content, want) {
 			t.Errorf("call %d: want an error mentioning %q, got %+v", i+1, want, res)
 		}

@@ -56,7 +56,7 @@ type Service struct {
 func (s *Service) Available() error {
 	for _, name := range []string{MessageType, BlockType} {
 		if _, ok := s.Store.Types().Get(name); !ok {
-			return fmt.Errorf("content type %q is missing from schema/; run `sameway init --force` to restore it", name)
+			return fmt.Errorf("the %s content type is missing — run sameway init --force", name)
 		}
 	}
 	return nil

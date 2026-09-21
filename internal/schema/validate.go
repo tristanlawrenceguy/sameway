@@ -19,7 +19,7 @@ func (e *ValidationError) Error() string {
 	for k, v := range e.Problems {
 		parts = append(parts, k+": "+v)
 	}
-	return "invalid record: " + strings.Join(parts, "; ")
+	return "could not save: " + strings.Join(parts, "; ")
 }
 
 // Normalize applies defaults, checks types and constraints, and returns a
@@ -39,7 +39,7 @@ func (t *Type) Normalize(in map[string]any) (map[string]any, error) {
 			if f.Default != nil {
 				v = f.Default
 			} else if f.Required {
-				problems[f.Name] = "is required"
+				problems[f.Name] = "is missing"
 				continue
 			} else {
 				out[f.Name] = zero(f)
@@ -97,16 +97,16 @@ func coerce(f Field, v any) (any, error) {
 	case "string", "text", "markdown":
 		s, ok := v.(string)
 		if !ok {
-			return nil, fmt.Errorf("must be text")
+			return nil, fmt.Errorf("must be a word or sentence")
 		}
 		if f.MaxLength > 0 && len([]rune(s)) > f.MaxLength {
-			return nil, fmt.Errorf("must be at most %d characters", f.MaxLength)
+			return nil, fmt.Errorf("too long — max %d characters", f.MaxLength)
 		}
 		return s, nil
 	case "enum":
 		s, ok := v.(string)
 		if !ok || !contains(f.Values, s) {
-			return nil, fmt.Errorf("must be one of %s", strings.Join(f.Values, ", "))
+			return nil, fmt.Errorf("pick one: %s", strings.Join(f.Values, ", "))
 		}
 		return s, nil
 	case "int":
@@ -156,7 +156,7 @@ func coerce(f Field, v any) (any, error) {
 				return false, nil
 			}
 		}
-		return nil, fmt.Errorf("must be true or false")
+		return nil, fmt.Errorf("must be yes or no")
 	case "ref":
 		s, ok := v.(string)
 		if !ok {
@@ -173,7 +173,7 @@ func coerce(f Field, v any) (any, error) {
 		}
 		ts, day, ok := when.Parse(s, time.Now())
 		if !ok {
-			return nil, fmt.Errorf("could not read %q as a day or a moment; try 19 Sep, next Friday, tomorrow 2pm, or 2026-09-19", s)
+			return nil, fmt.Errorf("cannot read %q as a date — try \"tomorrow\" or \"next Friday\"", s)
 		}
 		return when.Store(ts, day), nil
 	case "list":
@@ -197,7 +197,7 @@ func coerceList(f Field, v any) (any, error) {
 		// Forms and the CLI send comma separated values, or a JSON array.
 		if strings.HasPrefix(strings.TrimSpace(l), "[") {
 			if err := json.Unmarshal([]byte(l), &items); err != nil {
-				return nil, fmt.Errorf("must be a JSON array or comma separated values")
+				return nil, fmt.Errorf("not a list of items")
 			}
 		} else {
 			// One per line when the person used lines, commas otherwise.
@@ -234,7 +234,7 @@ func coerceJSON(v any) (any, error) {
 	if s, ok := v.(string); ok {
 		var parsed any
 		if err := json.Unmarshal([]byte(s), &parsed); err != nil {
-			return nil, fmt.Errorf("must be valid JSON")
+			return nil, fmt.Errorf("not a JSON object or array")
 		}
 		return parsed, nil
 	}
@@ -242,11 +242,11 @@ func coerceJSON(v any) (any, error) {
 	// shapes every reader sees: maps, []any, float64.
 	raw, err := json.Marshal(v)
 	if err != nil {
-		return nil, fmt.Errorf("must be valid JSON")
+		return nil, fmt.Errorf("not a JSON object or array")
 	}
 	var plain any
 	if err := json.Unmarshal(raw, &plain); err != nil {
-		return nil, fmt.Errorf("must be valid JSON")
+		return nil, fmt.Errorf("not a JSON object or array")
 	}
 	return plain, nil
 }

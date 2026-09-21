@@ -159,7 +159,7 @@ func TestErrorsSayHowToFix(t *testing.T) {
 		args []string
 		want string
 	}{
-		{[]string{"note", "create", "--set", "status=bogus"}, "must be one of draft, published"},
+		{[]string{"note", "create", "--set", "status=bogus"}, "pick one: draft, published"},
 		{[]string{"note", "create", "--set", "nope=1"}, "unknown field"},
 		{[]string{"note", "create"}, "--set field=value"},
 		{[]string{"note", "frobnicate"}, "use list, get, create, update, delete"},
