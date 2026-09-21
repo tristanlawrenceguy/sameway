@@ -95,6 +95,8 @@ func (s *Service) Tools() []llm.Tool {
 // runTool executes one tool call.
 func (s *Service) runTool(call llm.ToolCall) toolResult {
 	var args struct {
+		File        string         `json:"file"`
+		Mapping     map[string]any `json:"mapping"`
 		Component   string         `json:"component"`
 		ID          string         `json:"id"`
 		Props       map[string]any `json:"props"`
@@ -142,6 +144,8 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 		return s.removeCanvas(args.ID)
 	case "create_record":
 		return s.createRecord(args.Type, args.Fields)
+	case "import_records":
+		return s.importRecords(args.Type, args.File, args.Mapping)
 	case "update_record":
 		return s.updateRecord(args.Type, args.ID, args.Fields)
 	case "find_records":

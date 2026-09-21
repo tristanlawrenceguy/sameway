@@ -16,7 +16,7 @@ func TestPlural(t *testing.T) {
 		{"category", "categories"},
 		{"party", "parties"},
 		{"note", "notes"},
-		{"person", "persons"},
+		{"person", "people"},
 		{"message", "messages"},
 		{"bus", "bus"},
 		{"class", "class"},

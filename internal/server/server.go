@@ -81,6 +81,9 @@ func (s *Server) routes() {
 	m.HandleFunc("GET /design/base/{file}", s.baseFile)
 
 	m.HandleFunc("GET /t/{type}", s.listPage)
+	m.HandleFunc("GET /t/{type}/import", s.importPage)
+	m.HandleFunc("POST /t/{type}/import", s.importUpload)
+	m.HandleFunc("POST /t/{type}/import/{file}/run", s.importRun)
 	m.HandleFunc("GET /t/{type}/{id}", s.detailPage)
 	m.HandleFunc("POST /t/{type}/{id}/delete", s.deleteForm)
 	m.HandleFunc("POST /t/{type}/{id}/props", s.recordProps)
@@ -101,6 +104,7 @@ func (s *Server) routes() {
 	m.HandleFunc("POST /api/chat", s.apiChat)
 	m.HandleFunc("POST /api/chat/clear", s.apiChatClear)
 	m.HandleFunc("POST /api/file/upload", s.apiFileUpload)
+	m.HandleFunc("POST /api/import/{type}", s.apiImport)
 	m.HandleFunc("GET /api/{type}", s.apiList)
 	m.HandleFunc("POST /api/{type}", s.apiCreate)
 	m.HandleFunc("GET /api/{type}/{id}", s.apiGet)
@@ -231,6 +235,9 @@ func (s *Server) fail(w http.ResponseWriter, err error) {
 
 func plural(name string) string {
 	label := strings.ReplaceAll(name, "_", " ")
+	if label == "person" {
+		return "people"
+	}
 	if strings.HasSuffix(label, "s") {
 		return label
 	}

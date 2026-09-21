@@ -238,6 +238,7 @@ func (a *App) Describe() Description {
 			"describe":         "GET /api/describe; one part: GET /api/describe/{types|components|arrangements|tools|routes|llm}; one item: GET /api/describe/types/{name}, likewise components and tools",
 			"list":             "GET /api/{type}; ?where=<condition> (repeatable) and ?order=<field|-field> take the same query a collection block does: status=draft, due<=+7d, title~garden, tags=health, notes= (empty); dates today, tomorrow, +7d, -1w, 2026-10-01. The list page /t/{type} takes the same ?where= and ?order=",
 			"create":           "POST /api/{type} with a JSON object of fields",
+			"import":           "POST /api/import/{type} with {\"file\": <id of a file record>, \"mapping\": {column: field}} makes records from a CSV, a vCard or a mailbox the person added (upload first with POST /api/file/upload); the answer says how many were made, skipped and linked to people",
 			"get":              "GET /api/{type}/{id}",
 			"update":           "PUT or PATCH /api/{type}/{id} with a JSON object of the fields to change; a field the type does not have is refused",
 			"look":             "GET /api/look?path=/t/note: the page as a screen reader gets it (title, landmarks, headings, controls with where they lead, live regions, components) and its structural problems; POST /api/look with {\"path\", \"method\", \"form\"} does what a person does and reads where they land, or with {\"component\", \"props\"} reads one component rendered from props",
