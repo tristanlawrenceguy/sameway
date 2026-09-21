@@ -129,3 +129,48 @@ func TestValidationErrorPageHasEditBlockWrapper(t *testing.T) {
 	doc := parse(t, r)
 	assertAllComponentsKnown(t, doc, componentNames)
 }
+
+// TestValidationErrorPageShowsEmptyTitleField checks that when a validation error
+// occurs because the user cleared the Title field (empty string), the 422 error
+// page still renders <dd data-prop="title"> so that 08-edit.js can build an input
+// for it. This is the bug from backlog item 0397: after clearing the title and
+// saving, clicking "Edit block" showed no Title field because empty display values
+// were skipped in renderDetailError. Acceptance items 1–4.
+func TestValidationErrorPageShowsEmptyTitleField(t *testing.T) {
+	a, h := newApp(t)
+
+	rec, err := a.Store.Create("note", map[string]any{
+		"title":  "My Note",
+		"status": "draft",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Submit with an empty title — this triggers a required-field validation error.
+	form := url.Values{}
+	form.Set("prop-title", "")
+	r := postForm(t, h, "/t/note/"+rec.ID+"/props", form)
+	wantStatus(t, r, http.StatusUnprocessableEntity)
+
+	body := r.Body.String()
+
+	// The Title field must appear as a <dd data-prop="title"> even though its
+	// value is empty. Without this dd element 08-edit.js has nothing to find and
+	// cannot build the inline input for fixing the title. This covers acceptance
+	// item 3: "the form now shows all fields" when re-entering edit mode after a
+	// validation error on an empty title.
+	if !strings.Contains(body, `data-prop="title"`) {
+		t.Errorf("422 body should contain <dd data-prop=\"title\"> so the user can fix the empty title; body starts with %q", truncate(body))
+	}
+
+	// The other fields (status=pinned) that have non-empty display values must
+	// also be present — acceptance item 3 says "all fields" appear.
+	if !strings.Contains(body, `<dl class="sw-dl">`) {
+		t.Errorf("422 body should contain the definition list; body starts with %q", truncate(body))
+	}
+
+	// The page must still be valid HTML with known components only.
+	doc := parse(t, r)
+	assertAllComponentsKnown(t, doc, componentNames)
+}

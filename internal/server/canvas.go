@@ -178,6 +178,10 @@ func (s *Server) canvasBlock(b *store.Record, convo *conversation) canvasBlock {
 	// is the whole point of having an assistant on the page.
 	editAction := ""
 	if name == recordComponent {
+		// Record blocks on the canvas use data-prop attributes (e.g. title, body)
+		// that 08-edit.js reads to build <input name="prop-title"> for inline editing;
+		// validation errors in the props handler re-render with every submitted field
+		// so empty values still have a <dd> element 08-edit.js can find.
 		props, editAction = s.resolveRecord(props)
 	}
 	if name == collectionComponent {
