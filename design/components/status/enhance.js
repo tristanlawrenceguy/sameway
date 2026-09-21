@@ -10,7 +10,8 @@
 (function () {
   "use strict";
   function upgrade(form) {
-    if (!document.getElementById(form.getAttribute("data-busy-target"))) return;
+    if (form._busyArmed || !document.getElementById(form.getAttribute("data-busy-target"))) return;
+    form._busyArmed = true;
     form.addEventListener("submit", function (event) {
       if (form.getAttribute("aria-busy") === "true") { event.preventDefault(); return; }
       // Looked up now, not when the page loaded: a turn shown as it
@@ -31,6 +32,7 @@
   }
   function init() { document.querySelectorAll("form[data-busy-target]").forEach(upgrade); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
+  document.addEventListener("sw:refresh", init);
   // A page restored from the back/forward cache must not stay busy.
   window.addEventListener("pageshow", function (e) {
     if (!e.persisted) return;

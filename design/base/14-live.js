@@ -94,6 +94,12 @@
     return function (item) { queue.push(item); next(); };
   }
 
+  // The rest of the page follows the turn too: see 17-refresh.js, which
+  // fetches the page as it now is and moves what changed into place, with
+  // a transition. A block landing on the main canvas is shown at once,
+  // above; this brings the rest.
+  function refreshSoon(delay) { if (window.swRefresh) window.swRefresh(delay); }
+
   function parse(frame) {
     var event = "message", data = "";
     frame.split("\n").forEach(function (line) {
@@ -222,10 +228,12 @@
         case "tool": step(d); break;
         case "change":
           finish();
-          if (d.block) land(d);
+          if (d.block && d.html) land(d);
+          // Whatever else the change touched follows, once things settle.
+          refreshSoon();
           break;
-        case "done": settle(d); break;
-        case "error": settle(d); break;
+        case "done": settle(d); refreshSoon(0); break;
+        case "error": settle(d); refreshSoon(0); break;
       }
       follow();
     }

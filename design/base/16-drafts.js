@@ -97,4 +97,8 @@
     }).observe(document.body, { childList: true, subtree: true });
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
+  document.addEventListener("sw:refresh", function () {
+    document.querySelectorAll("form.sw-compose").forEach(compose);
+    document.querySelectorAll("[data-block-id]").forEach(offer);
+  });
 })();

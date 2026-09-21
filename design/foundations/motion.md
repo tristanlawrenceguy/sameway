@@ -131,7 +131,15 @@ reload. The log follows the turn only while the person is reading its
 end: someone who has scrolled up or is selecting text is left where they
 are. A message sent while the assistant is working waits and goes when
 the turn is done. The turn itself runs to its end even if the page that
-asked for it goes away, so a closed tab never leaves a change half made;
+asked for it goes away, so a closed tab never leaves a change half made.
+The rest of the page follows the turn as well: a record a collection or
+a calendar shows, a block in a pane, a list that appears in the sidebar.
+After each change and at the end, the page fetches itself as it now is
+and moves what changed into place inside a view transition, so a block
+that moved slides, a new one arrives and one that has gone leaves, with
+the same motion as between navigations; the chat and every unchanged
+block stay as they are, and the person keeps their scroll, focus and
+caret (`design/base/17-refresh.js`). A closed tab never leaves a change half made;
 a Stop control beside the status ends it on purpose, and the reply then
 says it was stopped, with what was done kept. There is no limit on how
 many tools a turn may use: it ends early only when it is plainly getting

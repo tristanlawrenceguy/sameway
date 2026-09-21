@@ -9,6 +9,8 @@
   function key(el) { return "sw-disclosure:" + location.pathname + ":" + el.id; }
   function init() {
     document.querySelectorAll("details[data-component=disclosure][id]").forEach(function (el) {
+      if (el._remembered) return;
+      el._remembered = true;
       try {
         if (localStorage.getItem(key(el)) === "open") el.open = true;
       } catch (e) { /* private mode or blocked storage: leave it closed */ }
@@ -19,4 +21,5 @@
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();
+  document.addEventListener("sw:refresh", init);
 })();

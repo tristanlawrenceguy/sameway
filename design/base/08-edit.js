@@ -223,6 +223,8 @@
     if (!btns || btns.length === 0) return;
     for (var i = 0; i < btns.length; i++) {
       (function (btn) {
+        if (btn._proposeArmed) return;
+        btn._proposeArmed = true;
         btn.addEventListener("click", function (e) {
           e.preventDefault();
           var form = btn.closest("form");
@@ -241,4 +243,7 @@
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();
+  // A page that refreshed part of itself during a live turn has new blocks
+  // to arm; the ones already armed say so and are left alone.
+  document.addEventListener("sw:refresh", init);
 })();
