@@ -99,8 +99,8 @@ func (s *Server) renderDetailError(w http.ResponseWriter, r *http.Request, t *sc
 
 	if ve, ok := verr.(*schema.ValidationError); ok {
 		for field, msg := range ve.Problems {
-			b.WriteString(fmt.Sprintf("<p><strong>%s</strong>: %s</p>",
-				template.HTMLEscapeString(field), template.HTMLEscapeString(msg)))
+			b.WriteString(fmt.Sprintf("<p>%s %s</p>",
+				template.HTMLEscapeString(label(field)), template.HTMLEscapeString(msg)))
 		}
 	}
 

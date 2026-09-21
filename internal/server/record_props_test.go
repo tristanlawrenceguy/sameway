@@ -136,8 +136,8 @@ func TestRecordPropsInvalidRequiredFieldReturns422(t *testing.T) {
 	wantStatus(t, r, http.StatusUnprocessableEntity)
 
 	body := r.Body.String()
-	if !strings.Contains(body, "title") {
-		t.Errorf("error response should mention field name 'title', got body starting with %q", truncate(body))
+	if !strings.Contains(body, "Title is required") {
+		t.Errorf("error response should show 'Title is required', got body starting with %q", truncate(body))
 	}
 }
 
@@ -248,7 +248,7 @@ func TestRecordPropsUnknownFieldReturns422(t *testing.T) {
 	wantStatus(t, r, http.StatusUnprocessableEntity)
 
 	body := r.Body.String()
-	if !strings.Contains(body, "bogus_field") {
-		t.Errorf("error response should mention unknown field 'bogus_field', got body starting with %q", truncate(body))
+	if !strings.Contains(body, "Bogus field") {
+		t.Errorf("error response should show 'Bogus field', got body starting with %q", truncate(body))
 	}
 }
