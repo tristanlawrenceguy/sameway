@@ -116,7 +116,9 @@ func (s *Server) renderDetailError(w http.ResponseWriter, r *http.Request, t *sc
 			raw = rec.Fields[f.Name]
 		}
 		val := display(f, raw)
-		if val == "" {
+		// On an error page we must render every field the user submitted so that
+		// 08-edit.js can build an input for it (even when the value is empty).
+		if _, ok := submittedFields[f.Name]; !ok && val == "" {
 			continue
 		}
 		fmt.Fprintf(&b, `<dt>%s</dt><dd data-prop="%s"%s>%s</dd>`,
