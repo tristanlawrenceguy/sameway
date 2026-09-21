@@ -1,0 +1,30 @@
+# Someone you deal with. Provided with every workspace, so contacts can
+# be imported from a vCard or a CSV and interactions can be with someone.
+name: person
+description: "Someone you deal with: how to reach them, where they work, and what to remember. Interactions and follow-ups hang off a person."
+title: name
+provided: true
+fields:
+  name:
+    type: string
+    required: true
+    maxLength: 200
+  email:
+    type: string
+    description: Their email address. An import matches people by it, so nobody is made twice.
+  phone:
+    type: string
+    description: Their phone number, as written.
+  organisation:
+    type: string
+    description: Where they work, or who they are with.
+  role:
+    type: string
+    description: What they do there.
+  notes:
+    type: markdown
+    description: Anything worth remembering about them.
+  tags:
+    type: list
+    of: string
+    description: "Keywords for finding them: client, supplier, family."

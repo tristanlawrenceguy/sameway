@@ -3,10 +3,13 @@ package chat
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/ingest"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
@@ -48,15 +51,14 @@ func (s *Service) recordTools() []llm.Tool {
 	if len(names) == 0 {
 		return nil
 	}
-	obj := func(props map[string]any, required ...string) map[string]any {
-		s := map[string]any{"type": "object", "properties": props, "additionalProperties": false}
-		if len(required) > 0 {
-			s["required"] = required
-		}
-		return s
-	}
 	typeArg := map[string]any{"type": "string", "enum": names, "description": "A content type from the catalogue."}
 	return []llm.Tool{
+		{Name: "import_records", Description: "Make records from a file the person added: a CSV with a header row, a vCard (.vcf) of contacts, or a mailbox (.mbox) of mail. Each column is matched to a field by name; a column for an email, phone or name links each row to its person, made when new. Use it when the person attaches such a file and wants its contents as records, rather than creating them one by one. Returns how many were made.",
+			Schema: obj(map[string]any{
+				"type":    typeArg,
+				"file":    map[string]any{"type": "string", "description": "The id of the file record, from the message it came with or from find_records on file."},
+				"mapping": map[string]any{"type": "object", "description": "Optional: which column feeds which field, as {column: field}. Leave out to match by name.", "additionalProperties": map[string]any{"type": "string"}},
+			}, "type", "file")},
 		{Name: "create_record", Description: "Make a record of a content type: a note, a task, whatever the workspace declares. It appears on its own page at /t/<type> and in the listing there. Fields must match the type's schema in the catalogue. Returns the new record's id and page.",
 			Schema: obj(map[string]any{
 				"type":   typeArg,
@@ -228,5 +230,46 @@ func (s *Service) deleteRecord(typeName, id string) toolResult {
 	return toolResult{
 		text:   fmt.Sprintf("deleted %s %s", t.Name, id),
 		change: &Change{Action: "deleted", Component: t.Name, ID: id, Detail: recordTitle(t, rec), Before: rec.Fields},
+	}
+}
+
+// importRecords makes records of a type from a kept file, through ingest,
+// and says how it went. The file is the original the person added.
+func (s *Service) importRecords(typeName, fileID string, mapping map[string]any) toolResult {
+	t, err := s.contentType(typeName)
+	if err != nil {
+		return fail("%v", err)
+	}
+	file, err := s.Store.Get(FileType, fileID)
+	if err != nil {
+		return fail("no file with id %s; the id is on the message the file came with, or find_records on file", fileID)
+	}
+	stored, _ := file.Fields["path"].(string)
+	name, _ := file.Fields["name"].(string)
+	if stored == "" || strings.ContainsAny(stored, `/\`) || Workdir == "" {
+		return fail("the file %s has no original kept to read", fileID)
+	}
+	data, err := os.ReadFile(filepath.Join(Workdir, "files", stored))
+	if err != nil {
+		return fail("could not read the file: %v", err)
+	}
+	tb, err := ingest.Read(name, data)
+	if err != nil {
+		return fail("%v", err)
+	}
+	m := ingest.Mapping{}
+	for col, f := range mapping {
+		if field, ok := f.(string); ok {
+			m[col] = field
+		}
+	}
+	if len(m) == 0 {
+		m = ingest.Guess(t, tb.Columns)
+	}
+	report := ingest.Import(s.Store, t, tb, m)
+	title := fmt.Sprintf("%d %s from %s", report.Made, plural(t.Name), name)
+	return toolResult{
+		text:   fmt.Sprintf("%s: %s. The person can see them at /t/%s.", t.Name, report.String(), t.Name),
+		change: &Change{Action: "imported", Component: t.Name, Detail: title, Href: "/t/" + t.Name},
 	}
 }

@@ -97,6 +97,8 @@ func describe(call llm.ToolCall) string {
 		return "Removing a block"
 	case "create_record":
 		return "Creating" + or(a(args.Type), " a record")
+	case "import_records":
+		return "Importing " + or(plural(args.Type), "records") + " from a file"
 	case "update_record":
 		return "Updating" + or(a(args.Type), " a record")
 	case "delete_record":
@@ -156,6 +158,9 @@ func or(s, fallback string) string {
 func plural(s string) string {
 	if s == "" {
 		return ""
+	}
+	if s == "person" {
+		return "people"
 	}
 	if strings.HasSuffix(s, "s") {
 		return s

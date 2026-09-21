@@ -40,7 +40,7 @@ func TestAFieldOrATypeCanBeAddedWhileRunning(t *testing.T) {
 	if _, err := a.AddField("note", schema.Field{Name: "due", Type: "datetime"}); err == nil || !strings.Contains(err.Error(), "already has") {
 		t.Errorf("adding a field twice is refused: %v", err)
 	}
-	if _, err := a.AddField("note", schema.Field{Name: "owner", Type: "ref", To: "person"}); err == nil || !strings.Contains(err.Error(), `"person"`) {
+	if _, err := a.AddField("note", schema.Field{Name: "owner", Type: "ref", To: "unicorn"}); err == nil || !strings.Contains(err.Error(), `"unicorn"`) {
 		t.Errorf("a ref to a type that is not there is refused: %v", err)
 	}
 	if _, err := a.AddField("note", schema.Field{Name: "Bad Name", Type: "string"}); err == nil {
