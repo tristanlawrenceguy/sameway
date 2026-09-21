@@ -2,7 +2,7 @@
 # Ask the assistant to make one, then put it on a button, or press Run on
 # its page.
 name: action
-description: A button that does something, pressed by you, by the assistant, on a schedule, or from outside. A webhook calls a URL of yours (an alarm, a weather service); a command runs a command line on this machine as you, once you have accepted it; an arrangement lays out a page; a message says something to the assistant for you.
+description: "A button that does something, pressed by you, by the assistant, on a schedule, or from outside. A webhook calls a URL of yours (an alarm, a weather service); an mqtt action publishes to a topic on your broker (a light, a plug, a hub); a command runs a program this workspace has allowed, on this machine as you, once you have accepted the line; an arrangement lays out a page; a message says something to the assistant for you."
 title: title
 provided: true
 fields:
@@ -13,7 +13,7 @@ fields:
     description: What the button says, such as Turn on the alarm.
   kind:
     type: enum
-    values: [webhook, command, arrangement, message]
+    values: [webhook, mqtt, command, arrangement, message]
     default: webhook
   url:
     type: string
@@ -25,9 +25,15 @@ fields:
   body:
     type: text
     description: For a webhook, what to send. JSON is sent as JSON, anything else as text.
+  topic:
+    type: string
+    description: "For an mqtt action, the topic to publish to: zigbee2mqtt/kitchen_light/set, or a device's set topic."
+  payload:
+    type: text
+    description: "For an mqtt action, what to publish: ON, or JSON such as {\"state\": \"ON\", \"brightness\": 200}."
   command:
     type: text
-    description: For a command action, the command line to run on this machine, as you. The first press asks you once, showing this line; after you accept, the button just runs it. Change the line and it asks again.
+    description: "For a command action, the program to run and its arguments, on this machine as you, such as: curl -s https://example.com/ping. Only a program named in actions.allow in workspace.yaml runs, and it runs directly, not through a shell: no pipes, no redirects, no second command. The first press asks you once, showing this line; after you accept, the button just runs it. Change the line and it asks again."
   folder:
     type: string
     description: For a command action, where to run it. Defaults to the workspace folder.

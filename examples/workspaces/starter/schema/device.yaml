@@ -1,0 +1,29 @@
+# A thing in the home that talks over MQTT: a light, a plug, a sensor. One
+# per topic the workspace subscribes to (mqtt.subscribe in workspace.yaml),
+# made by the system when its first message arrives and kept current.
+name: device
+description: "A device reached over MQTT: the topic it speaks on, its latest state as it said it, and when it was last heard. An mqtt action publishes to a topic to change it."
+title: name
+provided: true
+fields:
+  name:
+    type: string
+    required: true
+    maxLength: 120
+    description: What to call it; named for its topic until you say otherwise.
+  topic:
+    type: string
+    required: true
+    description: The MQTT topic its messages arrive on, kept by the system.
+  state:
+    type: text
+    description: The latest payload, as it came; JSON is kept readable. Kept by the system.
+  seen:
+    type: datetime
+    description: When the latest message arrived, kept by the system.
+  set:
+    type: string
+    description: "The topic to publish to for changing it, when it differs: zigbee2mqtt/kitchen_light/set for a Zigbee2MQTT device."
+  notes:
+    type: markdown
+    description: Where it is, what it does, anything worth remembering.

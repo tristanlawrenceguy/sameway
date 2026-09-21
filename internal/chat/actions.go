@@ -48,6 +48,8 @@ func (s *Service) Run(ctx context.Context, id, canvas string) toolResult {
 		return r
 	case "command":
 		return s.command(ctx, rec, title)
+	case "mqtt":
+		return s.mqttAction(ctx, rec, title)
 	case "message":
 		text, _ := rec.Fields["message"].(string)
 		if text == "" {

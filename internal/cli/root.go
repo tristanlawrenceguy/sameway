@@ -32,6 +32,7 @@ Usage:
   sameway chat <message>                talk to the assistant from the terminal
   sameway mcp                           serve the workspace to an MCP client over stdio
   sameway connect <tool> [--write]      the MCP configuration for claude-code, claude-desktop, cursor, windsurf, vscode, codex, or chatgpt for a client elsewhere
+  sameway discover [type] [--wait 3s]   what the local network announces: brokers, hubs, speakers, printers
   sameway component new <name>          scaffold a component folder in the workspace
   sameway <type> list [--json]          list records of a content type
   sameway <type> get <id> [--json]
@@ -99,6 +100,8 @@ func Run(args []string, env Env) int {
 		err = c.chatCmd()
 	case "connect":
 		err = c.connectCmd()
+	case "discover":
+		err = c.discoverCmd()
 	case "mcp":
 		err = c.mcpCmd()
 	case "component":

@@ -16,8 +16,10 @@ import (
 // press after that just runs. Something outside presses a button through
 // its trigger word, and an unaccepted command stays a question even then.
 func TestACommandButtonAsksOnceThenRuns(t *testing.T) {
-	_, h := newApp(t)
-	created := postJSON(t, h, http.MethodPost, "/api/action", map[string]any{"title": "Say hello", "kind": "command", "command": "echo hello there", "trigger": "long-secret-word"})
+	a, h := newApp(t)
+	// go is a program this workspace allows; the test machine has it.
+	a.Chat.Allow = []string{"go"}
+	created := postJSON(t, h, http.MethodPost, "/api/action", map[string]any{"title": "Say hello", "kind": "command", "command": "go version", "trigger": "long-secret-word"})
 	wantStatus(t, created, http.StatusCreated)
 	var action struct{ ID string }
 	decode(t, created, &action)
@@ -30,7 +32,7 @@ func TestACommandButtonAsksOnceThenRuns(t *testing.T) {
 		t.Fatalf("an unaccepted command should lead to its question, got %q", loc)
 	}
 	question := get(t, h, loc).Body.String()
-	if !strings.Contains(question, "echo hello there") || !strings.Contains(question, "Yes, run it") || !strings.Contains(question, "runs on your machine") {
+	if !strings.Contains(question, "go version") || !strings.Contains(question, "Yes, run it") || !strings.Contains(question, "runs on your machine") {
 		t.Fatalf("the question should show the command line and what Yes means: %.500s", question)
 	}
 	if logged(t, h, "You ran action Say hello (exit 0)") {
@@ -57,7 +59,7 @@ func TestACommandButtonAsksOnceThenRuns(t *testing.T) {
 	}
 	rec = postJSON(t, h, http.MethodPost, "/hook/long-secret-word", nil)
 	wantStatus(t, rec, http.StatusOK)
-	if !strings.Contains(rec.Body.String(), "hello there") || !logged(t, h, "System ran action Say hello (exit 0)") {
+	if !strings.Contains(rec.Body.String(), "go version") || !logged(t, h, "System ran action Say hello (exit 0)") {
 		t.Errorf("the trigger should run the accepted command and answer with what it printed, got %s", rec.Body.String())
 	}
 	wantStatus(t, postJSON(t, h, http.MethodPost, "/hook/wrong-word", nil), http.StatusNotFound)
