@@ -65,6 +65,17 @@ type Config struct {
 		// SystemPrompt is prepended to the built-in instructions.
 		SystemPrompt string `yaml:"system_prompt"`
 	} `yaml:"chat"`
+	// Notify is how a reminder reaches a person beyond an open page: a
+	// notification on this machine ("on", the default, or "off"), and a
+	// command run for each ring with {title}, {text} and {url} in its
+	// arguments, for a push service, an email or a text. For example:
+	//   notify:
+	//     desktop: on
+	//     command: curl -d "{title}" ntfy.sh/my-topic
+	Notify struct {
+		Desktop string `yaml:"desktop"`
+		Command string `yaml:"command"`
+	} `yaml:"notify"`
 	Files struct {
 		// Convert names an external converter per file extension, for the
 		// formats the built-in readers cannot do justice to: a URL such as

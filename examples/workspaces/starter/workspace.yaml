@@ -40,6 +40,15 @@ ui:
   # shown: their links are in the sidebar and the footer.
   developer: hidden
 
+# How a reminder reaches you when no page is open. desktop shows the
+# system's own notification on this machine. command runs for each ring
+# with {title}, {text} and {url} in its arguments: a push service such as
+# ntfy (curl -d "{title}" ntfy.sh/your-topic) reaches a phone; a mail or
+# messaging command reaches an inbox. Leave command empty for none.
+notify:
+  desktop: on
+  command: ""
+
 chat:
   # How many past messages to send to the model each turn.
   history_limit: 40

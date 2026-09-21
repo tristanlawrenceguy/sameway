@@ -24,6 +24,8 @@ type Server struct {
 	mux   *http.ServeMux
 	turns turns
 	fleet *Fleet
+	// notify tells a ring beyond the page; see ring.go.
+	notify func(title, text, url string)
 }
 
 // New builds the handler for an app.
