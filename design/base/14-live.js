@@ -123,11 +123,11 @@
     var status = document.getElementById(form.getAttribute("data-busy-target"));
     if (!status || !turn) return null;
     var btn = el('<button type="button" class="sw-button sw-button--quiet sw-pressable sw-live__stop">Stop</button>');
-    btn.addEventListener("click", function () {
+    btn.onclick = function () {
       btn.setAttribute("aria-disabled", "true");
       btn.textContent = "Stopping…";
       fetch(form.action.replace(/\/chat$/, "/chat/stop"), { method: "POST", body: new URLSearchParams({ turn: turn }), credentials: "same-origin" });
-    });
+    };
     status.after(btn);
     return btn;
   }
@@ -188,7 +188,8 @@
         var skips = document.querySelectorAll('a.sw-skip[href^="#msg-"]');
         if (!skips.length) {
           // The first message on a page brings the way to the newest one.
-          var first = document.querySelector("a.sw-skip");
+          var first = null, j, allSkips = document.querySelectorAll(".sw-skip");
+          for (j = 0; j < allSkips.length; j++) { if (allSkips[j].tagName === "A") { first = allSkips[j]; break; } }
           if (first) first.after(el('<a class="sw-skip" href="#msg-' + d.id + '">Skip to latest message</a>'));
         }
         document.querySelectorAll('a.sw-skip[href^="#msg-"]').forEach(function (a) { a.setAttribute("href", "#msg-" + d.id); });
