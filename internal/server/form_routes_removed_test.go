@@ -29,8 +29,8 @@ func TestListPageHasNewLinkOnEmpty(t *testing.T) {
 	rec := get(t, h, "/t/note")
 	wantStatus(t, rec, http.StatusOK)
 	doc := parse(t, rec)
-	if len(doc.WithAttr("href", "/t/note/new")) == 0 {
-		t.Errorf("empty listing page should contain a link to /t/note/new for creating content")
+	if len(doc.WithAttr("href", "/chat")) == 0 {
+		t.Errorf("empty listing page should contain a link to /chat for creating content")
 	}
 }
 
