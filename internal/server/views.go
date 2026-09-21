@@ -49,12 +49,14 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	}
 	// Files come in through a form, because one field and one button is
 	// the better thing here; it can also be placed anywhere as a block.
+	// Empty-state text: "Ask the assistant to add your first" — replaces old "/Add your first" at /t/note/new.
+	// The new link points to /chat (the working surface) instead of dead form routes.
 	if t.Name == FileType {
 		b.WriteString(string(s.component("upload", map[string]any{"from": "/t/" + FileType, "id": "upload"})))
 		b.WriteString(`<script>(function(){var f=document.querySelector('.sw-upload__field');var err=document.getElementById("upload-error");f.addEventListener('invalid',function(e){err.textContent="Please select a file."},false);document.querySelector(".sw-upload").addEventListener('submit',function(e){if(!f.value){e.preventDefault();err.textContent="Please select a file.";f.reportValidity()}},{once:true});f.addEventListener('change',function(){err.textContent=""})})();</script>`)
 	}
 	if len(recs) == 0 {
-		fmt.Fprintf(&b, `<p class="sw-empty">Add your first <a href="/t/%s/new">%s</a>.</p>`, template.HTMLEscapeString(t.Name), template.HTMLEscapeString(plural(t.Name)))
+		fmt.Fprintf(&b, `<p class="sw-empty">Ask the assistant to add your first <a href="/chat">%s</a>.</p>`, template.HTMLEscapeString(plural(t.Name)))
 	} else {
 		b.WriteString(s.rows(t, recs, time.Now()))
 	}

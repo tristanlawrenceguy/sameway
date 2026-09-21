@@ -45,12 +45,12 @@ func TestListPageEmptyStateIsActionable(t *testing.T) {
 	if !strings.Contains(body, `<p class="sw-empty">`) {
 		t.Errorf("empty list page should use the sw-empty class\n%s", truncate(body))
 	}
-	// It should tell the person what to do next — "Add your first" is one pattern.
+	// It should tell the person what to do next — "Ask the assistant" is the pattern.
 	if strings.Contains(body, `>No notes yet.<`) || (strings.Contains(body, `<p>No notes yet.</p>`)) {
 		t.Error("empty list page must not just say 'No notes yet.' — it should tell the person what to do next with a link")
 	}
-	if !strings.Contains(body, "/t/note/new") {
-		t.Errorf("empty list page should link to the new-resource form\n%s", truncate(body))
+	if !strings.Contains(body, "/chat") {
+		t.Errorf("empty list page should link to /chat\n%s", truncate(body))
 	}
 }
 
