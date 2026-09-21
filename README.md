@@ -31,7 +31,9 @@ it. If you have cloned this repository rather than installed the binary, the
 same thing is a double-click: **open-sameway.cmd** on Windows,
 **open-sameway.sh** elsewhere. Both take the same arguments as the command, so
 `open-sameway.cmd --workspace "D:\work\my-workspace"` opens a workspace
-that lives somewhere else.
+that lives somewhere else. Given no workspace they use `$SAMEWAY_WORKSPACE`, or
+the folder you ran them from when that folder is a workspace; a fresh clone has
+neither, so a double-click opens `examples/workspaces/starter` and says so.
 
 Either way it is http://127.0.0.1:8080/. `sameway init` probes for a local model server
 (Ollama on 11434, LM Studio on 1234, llama.cpp on 8090 or 8080) and points
