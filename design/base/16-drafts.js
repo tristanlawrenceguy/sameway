@@ -74,7 +74,7 @@
     var edit = block.querySelector("[data-edit]");
     if (!edit) return;
     var notice = el('<p class="sw-draft sw-small"><span class="sw-draft__word">You were editing this.</span> ' +
-      '<button type="button" class="sw-button sw-button--quiet sw-pressable" data-draft-continue>Continue editing</button> ' +
+      '<button type="button" class="sw-button sw-button--quiet sw-pressable" data-draft-continue>Edit</button> ' +
       '<button type="button" class="sw-button sw-button--quiet sw-pressable" data-draft-discard>Discard</button></p>');
     notice.querySelector("[data-draft-continue]").addEventListener("click", function () { notice.remove(); edit.click(); });
     notice.querySelector("[data-draft-discard]").addEventListener("click", function () { del(k); notice.remove(); });

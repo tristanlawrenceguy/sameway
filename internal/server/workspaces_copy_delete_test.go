@@ -36,8 +36,8 @@ func TestWorkspacesCopyGETPage(t *testing.T) {
 	if !strings.Contains(body, "required") {
 		t.Errorf("the name input should carry the required attribute\n%s", truncate(body))
 	}
-	if !strings.Contains(body, `type="submit"`) || !strings.Contains(body, "Copy and open") {
-		t.Errorf(`page should have a submit button ("Copy and open")\n%s`, truncate(body))
+	if !strings.Contains(body, `type="submit"`) || !strings.Contains(body, ">Copy<") {
+		t.Errorf(`page should have a submit button ("Copy")\n%s`, truncate(body))
 	}
 	if !strings.Contains(body, `action="/workspaces/copy"`) {
 		t.Errorf("the form should post to /workspaces/copy\n%s", truncate(body))
@@ -77,8 +77,8 @@ func TestWorkspacesDeleteGETPage(t *testing.T) {
 	if !strings.Contains(body, "required") {
 		t.Errorf("the confirm input should carry the required attribute\n%s", truncate(body))
 	}
-	if !strings.Contains(body, `type="submit"`) || !strings.Contains(body, "Delete this workspace") {
-		t.Errorf(`page should have a submit button ("Delete this workspace")\n%s`, truncate(body))
+	if !strings.Contains(body, `type="submit"`) || !strings.Contains(body, ">Delete<") {
+		t.Errorf(`page should have a submit button ("Delete")\n%s`, truncate(body))
 	}
 	if !strings.Contains(body, `action="/workspaces/delete"`) {
 		t.Errorf("the form should post to /workspaces/delete\n%s", truncate(body))

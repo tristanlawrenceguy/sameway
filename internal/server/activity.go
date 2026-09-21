@@ -151,7 +151,7 @@ func (s *Server) activityPage(w http.ResponseWriter, r *http.Request) {
 	var b strings.Builder
 	b.WriteString(`<p class="sw-muted sw-prose">Every change to the canvas, by you or the assistant, newest first. The same log is at <a href="/api/activity">/api/activity</a>.</p>`)
 	if len(recs) == 0 {
-		b.WriteString(`<p class="sw-empty">Nothing has happened yet.</p>`)
+		b.WriteString(`<p class="sw-empty">Send a message or add something to the canvas.</p>`)
 	}
 	b.WriteString(`<h2>Activity</h2>`)
 	day := ""

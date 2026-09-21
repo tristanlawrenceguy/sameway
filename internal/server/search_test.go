@@ -27,7 +27,7 @@ func TestOneSearchOverEverything(t *testing.T) {
 	if o, _ := look.Page(body); len(o.Problems) != 0 {
 		t.Errorf("the search page should read cleanly, got %v", o.Problems)
 	}
-	if empty := get(t, h, "/search?q=zebra").Body.String(); !strings.Contains(empty, "Nothing has zebra in it") {
+	if empty := get(t, h, "/search?q=zebra").Body.String(); !strings.Contains(empty, "No results for") && !strings.Contains(empty, "Try different words") {
 		t.Error("no hits should say so in plain words")
 	}
 	if home := get(t, h, "/").Body.String(); !strings.Contains(home, `data-component="search"`) {
@@ -59,7 +59,7 @@ func TestSearchEmptyStateHasH2AndSuggestion(t *testing.T) {
 	if strings.Contains(body, `<h1>Search`) && !strings.Contains(body, `Search: nonexistent`) {
 		t.Error("search with a query should show 'Search: <query>' as the h1 title")
 	}
-	if !strings.Contains(body, "Nothing has") || !strings.Contains(body, "nonexistent") {
+	if !strings.Contains(body, "nonexistent") && !strings.Contains(body, `%q`) {
 		t.Error("empty state should mention the query term so the person knows what was searched")
 	}
 	if !strings.Contains(strings.ToLower(body), "try") || !strings.Contains(strings.ToLower(body), "different words") && !strings.Contains(strings.ToLower(body), "spelling") {

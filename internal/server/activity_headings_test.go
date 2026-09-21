@@ -85,8 +85,8 @@ func TestActivityPageEmptyStateHasNoHeading(t *testing.T) {
 
 	body := get(t, h, "/activity").Body.String()
 
-	if !strings.Contains(body, "Nothing has happened yet.") {
-		t.Errorf("empty state should show 'Nothing has happened yet.'\n%s", truncate(body))
+	if !strings.Contains(body, `<p class="sw-empty">`) {
+		t.Errorf("empty state should use <p class=\"sw-empty\">\n%s", truncate(body))
 	}
 
 	// No <h3> elements at all when there are no activities.
@@ -95,8 +95,8 @@ func TestActivityPageEmptyStateHasNoHeading(t *testing.T) {
 		t.Errorf("empty activity page should have 0 <h3> elements, got %d\n%s", h3Count, truncate(body))
 	}
 
-	// The empty state is just a paragraph — no heading markup whatsoever.
-	if !strings.Contains(body, `<p class="sw-empty">`) {
-		t.Errorf("empty state should use <p class=\"sw-empty\">, got:\n%s", truncate(body))
+	// The empty state tells the person what creates activity.
+	if !strings.Contains(body, "Send a message") || !strings.Contains(body, "canvas") {
+		t.Errorf("empty state should tell the person what creates activity:\n%s", truncate(body))
 	}
 }

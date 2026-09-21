@@ -140,8 +140,8 @@ func TestFormValidationIsStillTested(t *testing.T) {
 		t.Errorf("/t/note: %d h1 elements", n)
 	}
 
-	if len(doc.WithAttr("href", "/t/note/new")) > 0 {
-		t.Error("/t/note should not have a link to /t/note/new")
+	if len(doc.WithAttr("href", "/t/note/new")) == 0 {
+		t.Error("/t/note empty state should link to /t/note/new")
 	}
 }
 
@@ -155,8 +155,8 @@ func TestContentPagesLifecycle(t *testing.T) {
 	if n := len(doc.Elements("h1")); n != 1 {
 		t.Errorf("/t/note: %d h1 elements", n)
 	}
-	if len(doc.WithAttr("href", "/t/note/new")) > 0 {
-		t.Error("/t/note should not link to /t/note/new")
+	if len(doc.WithAttr("href", "/t/note/new")) == 0 {
+		t.Error("/t/note empty state should link to /t/note/new")
 	}
 
 	// Create via API.
@@ -275,15 +275,18 @@ func TestNavLinksStayLowercase(t *testing.T) {
 	}
 }
 
-// TestEmptyStateBodyStaysLowercase verifies that the empty-state paragraph
-// (body copy, not a heading) remains lowercase — e.g. "No notes yet."
+// TestEmptyStateBodyIsActionable verifies that the empty-state paragraph is
+// actionable and uses <p class="sw-empty"> — e.g. "Add your first notes."
 func TestEmptyStateBodyStaysLowercase(t *testing.T) {
 	_, h := newApp(t)
 	rec := get(t, h, "/t/note")
 	wantStatus(t, rec, http.StatusOK)
 
 	body := rec.Body.String()
-	if !strings.Contains(body, `<p>No notes yet.</p>`) {
-		t.Errorf("empty-state body should say \"No notes yet.\" (lowercase)\nbody: %s", truncate(rec.Body.String()))
+	if !strings.Contains(body, `<p class="sw-empty">`) {
+		t.Errorf("empty-state body should use <p class=\"sw-empty\">\nbody: %s", truncate(rec.Body.String()))
+	}
+	if !strings.Contains(body, `/t/note/new`) {
+		t.Errorf("empty-state should link to /t/note/new\nbody: %s", truncate(rec.Body.String()))
 	}
 }

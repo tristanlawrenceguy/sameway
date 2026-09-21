@@ -142,7 +142,7 @@ func (s *Server) showWorkspaces(w http.ResponseWriter, r *http.Request, problem 
 			if o.Running {
 				fmt.Fprintf(&b, `<a class="sw-button sw-button--secondary sw-pressable" href="%s" target="_blank" rel="opener">Open<span class="sw-visually-hidden"> %s</span></a>`, template.HTMLEscapeString(o.URL), template.HTMLEscapeString(o.Name))
 			} else {
-				fmt.Fprintf(&b, `<form method="post" action="/workspaces/start"><input type="hidden" name="dir" value="%s"><button type="submit" class="sw-button sw-button--secondary sw-pressable">Start and open<span class="sw-visually-hidden"> %s</span></button></form>`, template.HTMLEscapeString(o.Dir), template.HTMLEscapeString(o.Name))
+				fmt.Fprintf(&b, `<form method="post" action="/workspaces/start"><input type="hidden" name="dir" value="%s"><button type="submit" class="sw-button sw-button--secondary sw-pressable">Start<span class="sw-visually-hidden"> %s</span></button></form>`, template.HTMLEscapeString(o.Dir), template.HTMLEscapeString(o.Name))
 			}
 			b.WriteString(`</li>`)
 		}
@@ -152,17 +152,17 @@ func (s *Server) showWorkspaces(w http.ResponseWriter, r *http.Request, problem 
 
 	b.WriteString(`<section class="sw-stack" aria-labelledby="ws-new"><h2 id="ws-new">New workspace</h2><p class="sw-muted">A blank workspace beside this one, with the same model, in a window of its own.</p><form method="post" action="/workspaces/new" class="sw-stack">`)
 	b.WriteString(string(s.component("text-field", map[string]any{"label": "Name", "name": "name", "required": true, "id": "new-name"})))
-	b.WriteString(string(s.component("button", map[string]any{"label": "Create and open", "type": "submit"})))
+	b.WriteString(string(s.component("button", map[string]any{"label": "Create", "type": "submit"})))
 	b.WriteString(`</form></section>`)
 
 	b.WriteString(`<section class="sw-stack" aria-labelledby="ws-copy"><h2 id="ws-copy">Copy this workspace</h2><p class="sw-muted">Everything here, as a second workspace beside this one.</p><form method="post" action="/workspaces/copy" class="sw-stack">`)
 	b.WriteString(string(s.component("text-field", map[string]any{"label": "Name for the copy", "name": "name", "required": true, "id": "copy-name", "value": cur.Config.Name + " copy"})))
-	b.WriteString(string(s.component("button", map[string]any{"label": "Copy and open", "type": "submit", "variant": "secondary"})))
+	b.WriteString(string(s.component("button", map[string]any{"label": "Copy", "type": "submit", "variant": "secondary"})))
 	b.WriteString(`</form></section>`)
 
 	b.WriteString(`<section class="sw-stack" aria-labelledby="ws-delete"><h2 id="ws-delete">Delete this workspace</h2><p class="sw-muted">The folder and everything in it go, and this server stops. Type the name to be sure.</p><form method="post" action="/workspaces/delete" class="sw-stack">`)
 	b.WriteString(string(s.component("text-field", map[string]any{"label": "Type " + cur.Config.Name + " to delete it", "name": "confirm", "required": true, "id": "delete-confirm"})))
-	b.WriteString(string(s.component("button", map[string]any{"label": "Delete this workspace", "type": "submit", "variant": "danger"})))
+	b.WriteString(string(s.component("button", map[string]any{"label": "Delete", "context": "workspace", "type": "submit", "variant": "danger"})))
 	b.WriteString(`</form></section>`)
 
 	s.page(w, r, "Workspaces", template.HTML(b.String()), pageOptions{Lede: "Each workspace runs on its own, so several can be open at once."})
@@ -191,7 +191,7 @@ func (s *Server) workspacesNewPage(w http.ResponseWriter, r *http.Request) {
 	var b strings.Builder
 	b.WriteString(`<section class="sw-stack" aria-labelledby="ws-new"><h2 id="ws-new">New workspace</h2><p class="sw-muted">A blank workspace beside this one, with the same model, in a window of its own.</p><form method="post" action="/workspaces/new" class="sw-stack">`)
 	b.WriteString(string(s.component("text-field", map[string]any{"label": "Name", "name": "name", "required": true, "id": "new-name"})))
-	b.WriteString(string(s.component("button", map[string]any{"label": "Create and open", "type": "submit"})))
+	b.WriteString(string(s.component("button", map[string]any{"label": "Create", "type": "submit"})))
 	b.WriteString(`</form></section>`)
 
 	s.page(w, r, "New workspace", template.HTML(b.String()), pageOptions{})
@@ -201,7 +201,7 @@ func (s *Server) workspacesCopyPage(w http.ResponseWriter, r *http.Request) {
 	var b strings.Builder
 	b.WriteString(`<section class="sw-stack" aria-labelledby="ws-copy"><h2 id="ws-copy">Copy this workspace</h2><p class="sw-muted">Everything here, as a second workspace beside this one.</p><form method="post" action="/workspaces/copy" class="sw-stack">`)
 	b.WriteString(string(s.component("text-field", map[string]any{"label": "Name for the copy", "name": "name", "required": true, "id": "copy-name", "value": s.app.Workspace.Config.Name + " copy"})))
-	b.WriteString(string(s.component("button", map[string]any{"label": "Copy and open", "type": "submit", "variant": "secondary"})))
+	b.WriteString(string(s.component("button", map[string]any{"label": "Copy", "type": "submit", "variant": "secondary"})))
 	b.WriteString(`</form></section>`)
 
 	s.page(w, r, "Copy workspace", template.HTML(b.String()), pageOptions{})
@@ -212,7 +212,7 @@ func (s *Server) workspacesDeletePage(w http.ResponseWriter, r *http.Request) {
 	var b strings.Builder
 	b.WriteString(`<section class="sw-stack" aria-labelledby="ws-delete"><h2 id="ws-delete">Delete this workspace</h2><p class="sw-muted">The folder and everything in it go, and this server stops. Type the name to be sure.</p><form method="post" action="/workspaces/delete" class="sw-stack">`)
 	b.WriteString(string(s.component("text-field", map[string]any{"label": "Type " + cur.Config.Name + " to delete it", "name": "confirm", "required": true, "id": "delete-confirm"})))
-	b.WriteString(string(s.component("button", map[string]any{"label": "Delete this workspace", "type": "submit", "variant": "danger"})))
+	b.WriteString(string(s.component("button", map[string]any{"label": "Delete", "context": "workspace", "type": "submit", "variant": "danger"})))
 	b.WriteString(`</form></section>`)
 
 	s.page(w, r, "Delete workspace", template.HTML(b.String()), pageOptions{})

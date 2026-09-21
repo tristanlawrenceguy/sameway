@@ -64,7 +64,7 @@ func TestAWorkspaceOpensTheOthers(t *testing.T) {
 	workspace.Remember(other, "")
 
 	page := get(t, h, "/workspaces").Body.String()
-	if !strings.Contains(page, "Home base") || !strings.Contains(page, ">Garden<") || !strings.Contains(page, "Start and open") {
+	if !strings.Contains(page, "Home base") || !strings.Contains(page, ">Garden<") || !strings.Contains(page, ">Start<") {
 		t.Errorf("the page shows this workspace and offers to start the other\n%s", page)
 	}
 
