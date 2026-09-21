@@ -22,15 +22,15 @@ func TestEditRouteReturns404(t *testing.T) {
 	wantStatus(t, resp, http.StatusNotFound)
 }
 
-// TestListPageHasNoNewLink asserts that the listing page does not contain
-// a link with href pattern /t/{type}/new.  Covers acceptance items 3 and 4.
-func TestListPageHasNoNewLink(t *testing.T) {
+// TestListPageHasNewLinkOnEmpty asserts that the empty listing page contains
+// an actionable link to create content.  Covers acceptance item for empty-state actionability.
+func TestListPageHasNewLinkOnEmpty(t *testing.T) {
 	_, h := newApp(t)
 	rec := get(t, h, "/t/note")
 	wantStatus(t, rec, http.StatusOK)
 	doc := parse(t, rec)
-	if len(doc.WithAttr("href", "/t/note/new")) != 0 {
-		t.Errorf("listing page should not contain a New note link with href /t/note/new")
+	if len(doc.WithAttr("href", "/t/note/new")) == 0 {
+		t.Errorf("empty listing page should contain a link to /t/note/new for creating content")
 	}
 }
 

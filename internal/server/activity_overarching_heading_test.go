@@ -52,7 +52,7 @@ func TestActivityPageOverarchingHeadingEmptyState(t *testing.T) {
 		t.Errorf("the empty /activity page should still contain an <h2>Activity</h2> heading\n%s", truncate(body))
 	}
 
-	if !strings.Contains(body, "Nothing has happened yet.") {
-		t.Errorf("empty state should show 'Nothing has happened yet.'\n%s", truncate(body))
+	if !strings.Contains(body, `<p class="sw-empty">`) || !strings.Contains(body, "Send a message") {
+		t.Errorf("empty state should use <p class=\"sw-empty\"> and tell the person what creates activity\n%s", truncate(body))
 	}
 }

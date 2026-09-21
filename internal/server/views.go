@@ -54,7 +54,7 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 		b.WriteString(`<script>(function(){var f=document.querySelector('.sw-upload__field');var err=document.getElementById("upload-error");f.addEventListener('invalid',function(e){err.textContent="Please select a file."},false);document.querySelector(".sw-upload").addEventListener('submit',function(e){if(!f.value){e.preventDefault();err.textContent="Please select a file.";f.reportValidity()}},{once:true});f.addEventListener('change',function(){err.textContent=""})})();</script>`)
 	}
 	if len(recs) == 0 {
-		fmt.Fprintf(&b, `<p>No %s yet.</p>`, template.HTMLEscapeString(plural(t.Name)))
+		fmt.Fprintf(&b, `<p class="sw-empty">Add your first <a href="/t/%s/new">%s</a>.</p>`, template.HTMLEscapeString(t.Name), template.HTMLEscapeString(plural(t.Name)))
 	} else {
 		b.WriteString(s.rows(t, recs, time.Now()))
 	}

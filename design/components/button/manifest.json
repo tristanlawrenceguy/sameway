@@ -40,7 +40,7 @@
     { "name": "default", "props": { "label": "Save note" }, "file": "examples/default.html" },
     { "name": "submit", "props": { "label": "Send", "type": "submit", "name": "action", "value": "send" }, "file": "examples/submit.html" },
     { "name": "secondary", "props": { "label": "Cancel", "variant": "secondary" }, "file": "examples/secondary.html" },
-    { "name": "danger", "props": { "label": "Delete note", "variant": "danger", "type": "submit" }, "file": "examples/danger.html" },
+    { "name": "danger", "props": { "label": "Delete", "context": "note", "variant": "danger", "type": "submit" }, "file": "examples/danger.html" },
     { "name": "quiet", "props": { "label": "Remove", "context": "card", "variant": "quiet", "type": "submit" }, "file": "examples/quiet.html" },
     { "name": "reset", "props": { "label": "Clear form", "type": "reset", "variant": "secondary" }, "file": "examples/reset.html" },
     { "name": "disabled", "props": { "label": "Sending", "disabled": true, "id": "send" }, "file": "examples/disabled.html" },
