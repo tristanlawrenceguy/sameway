@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/mcp"
+	"github.com/tristanlawrenceguy/sameway/internal/server"
 )
 
 func (c *ctx) serveCmd() error {
@@ -32,13 +33,17 @@ func (c *ctx) serveCmd() error {
 	if a.Chat.Provider == nil && a.Chat.ProviderErr != nil {
 		fmt.Fprintf(c.Stdout, "  chat    disabled: %v\n", a.Chat.ProviderErr)
 	}
-	// Actions with a schedule run while the server does.
-	a.Chat.StartSchedule(context.Background())
+	// Actions with a schedule run, and reminders ring, while the server does.
+	ctx, stop := context.WithCancel(context.Background())
+	defer stop()
+	a.Chat.StartSchedule(ctx)
+	h := server.New(a)
+	h.StartRinging(ctx, notifier(a))
 	token := os.Getenv(a.Workspace.Config.MCP.TokenEnv)
 	if token != "" {
 		fmt.Fprintf(c.Stdout, "  mcp     http://%s/mcp with Authorization: Bearer <%s>\n", *addr, a.Workspace.Config.MCP.TokenEnv)
 	}
-	return http.ListenAndServe(*addr, Handler(a, token))
+	return http.ListenAndServe(*addr, HandlerFor(a, token, h))
 }
 
 func (c *ctx) describeCmd() error {

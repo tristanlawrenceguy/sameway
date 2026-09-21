@@ -67,6 +67,18 @@ func TestTheClockSetsListsAndRings(t *testing.T) {
 	// A reminder whose time has come rings on the stream, once, and is
 	// marked rung; the page then shows it ringing until it is dismissed.
 	due, _ := a.Store.Create(server.ReminderType, map[string]any{"title": "Tea", "at": when.Store(time.Now().Add(-time.Minute), false)})
+	// The server rings on its own, whether or not a page is open, and
+	// tells beyond the page; the stream then tells any open page.
+	var told []string
+	srv := h.(*server.Server)
+	srv.OnRing(func(title, text, url string) { told = append(told, title+" "+url) })
+	if rang := srv.Ring(time.Now()); len(rang) != 1 || rang[0].ID != due.ID {
+		t.Fatalf("the due reminder rings once, got %v", rang)
+	}
+	time.Sleep(50 * time.Millisecond)
+	if len(told) != 1 || !strings.HasPrefix(told[0], "Tea ") || !strings.HasSuffix(told[0], "/t/reminder/"+due.ID) {
+		t.Errorf("the ring is told beyond the page with its title and where it leads, got %v", told)
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	sreq := httptest.NewRequest(http.MethodGet, "/clock/stream", nil).WithContext(ctx)

@@ -194,8 +194,10 @@ func backFrom(r *http.Request) string {
 	return "/"
 }
 
-// clockStream tells an open page about reminders as they ring: every
-// few seconds what is due is marked rung and sent, as server-sent events.
+// clockStream tells an open page about reminders as they ring, as
+// server-sent events: every few seconds, whatever has rung and this page
+// has not been told of yet. The ringing itself is the server's, in
+// ring.go, whether or not a page is open.
 func (s *Server) clockStream(w http.ResponseWriter, r *http.Request) {
 	flusher, ok := w.(http.Flusher)
 	if !ok {
@@ -210,8 +212,13 @@ func (s *Server) clockStream(w http.ResponseWriter, r *http.Request) {
 	flusher.Flush()
 	tick := time.NewTicker(5 * time.Second)
 	defer tick.Stop()
+	told := map[string]bool{}
 	for {
-		for _, rec := range s.ring(time.Now()) {
+		for _, rec := range s.ringing() {
+			if told[rec.ID] {
+				continue
+			}
+			told[rec.ID] = true
 			t, _ := s.app.Types.Get(ReminderType)
 			body, _ := json.Marshal(map[string]any{"id": rec.ID, "title": titleOf(t, rec), "href": "/t/" + ReminderType + "/" + rec.ID})
 			fmt.Fprintf(w, "event: ring\ndata: %s\n\n", body)
@@ -223,6 +230,19 @@ func (s *Server) clockStream(w http.ResponseWriter, r *http.Request) {
 		case <-tick.C:
 		}
 	}
+}
+
+// ringing is every reminder that has rung and not been dismissed.
+func (s *Server) ringing() []*store.Record {
+	t, ok := s.app.Types.Get(ReminderType)
+	if !ok {
+		return nil
+	}
+	recs, err := query.Filter(s.app.Store, t, []string{"state=rang"}, "at", 0, time.Now())
+	if err != nil {
+		return nil
+	}
+	return recs
 }
 
 // ring marks every reminder whose time has come as rung, once, and says

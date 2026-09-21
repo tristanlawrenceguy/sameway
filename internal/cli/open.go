@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -13,6 +14,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/app"
+	"github.com/tristanlawrenceguy/sameway/internal/notify"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
@@ -63,20 +66,37 @@ func (c *ctx) openCmd() error {
 	// any other workspace can offer to open it. The page can start other
 	// workspaces as servers of their own, and stop this one.
 	workspace.Remember(a.Workspace.Dir, listener.Addr().String())
+	ctx, stop := context.WithCancel(context.Background())
+	defer stop()
+	h := server.New(a)
 	var srv *http.Server
-	srv = &http.Server{Handler: server.New(a).WithFleet(&server.Fleet{
-		Launch: launchWorkspace,
-		Exit: func() {
-			go func() {
-				time.Sleep(500 * time.Millisecond)
-				srv.Shutdown(context.Background())
-			}()
-		},
-	})}
+	srv = &http.Server{Handler: h}
+	h.WithFleet(&server.Fleet{Launch: launchWorkspace, Exit: func() {
+		go func() {
+			time.Sleep(500 * time.Millisecond)
+			srv.Shutdown(context.Background())
+		}()
+	}})
+	// Reminders ring and scheduled actions run for as long as the server
+	// does, with or without a page open.
+	h.StartRinging(ctx, notifier(a))
+	a.Chat.StartSchedule(ctx)
 	if err := srv.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}
 	return nil
+}
+
+// notifier tells a ring beyond the page the way workspace.yaml says,
+// read each time so a setting changed by asking applies at once.
+func notifier(a *app.App) func(title, text, url string) {
+	return func(title, text, url string) {
+		cfg := a.Workspace.Config.Notify
+		n := notify.Notifier{Desktop: cfg.Desktop != "off", Command: cfg.Command}
+		if err := n.Send(title, text, url); err != nil {
+			log.Printf("notify: %v", err)
+		}
+	}
 }
 
 // launchWorkspace starts this same program on another workspace, as a
