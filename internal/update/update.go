@@ -18,7 +18,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"path"
 	"runtime"
 	"strings"
 	"time"
@@ -228,18 +227,42 @@ func AssetName(version string) string {
 // forThisMachine says whether a release file is the program for this
 // operating system and processor. A release may name the rest of the file
 // however it likes; the words for the system have to be in it, and it has
-// to be a program or an archive holding one.
+// to be the program or an archive holding one, not something published
+// beside it such as a checksum or a signature.
 func forThisMachine(name string) bool {
 	lower := strings.ToLower(name)
 	if !anyOf(lower, systems()) || !anyOf(lower, processors()) {
 		return false
 	}
-	switch {
-	case strings.HasSuffix(lower, ".tar.gz"), strings.HasSuffix(lower, ".tgz"),
-		strings.HasSuffix(lower, ".zip"), strings.HasSuffix(lower, ".exe"):
-		return true
+	for _, archive := range []string{".tar.gz", ".tgz", ".zip", ".exe"} {
+		if strings.HasSuffix(lower, archive) {
+			return true
+		}
 	}
-	return path.Ext(lower) == ""
+	// Otherwise it has to be the program itself, which carries no file
+	// type at all.
+	return fileType(lower) == ""
+}
+
+// fileType is the suffix that says what kind of file this is: a dot, then
+// letters and digits to the end of the name. The dots in a version are
+// not one, because the rest of the name follows them — which is why
+// sameway_0.4.0_linux_amd64 is a program and sameway_0.4.0_linux_amd64.sha256
+// is not. path.Ext cannot tell the two apart.
+func fileType(name string) string {
+	dot := strings.LastIndexByte(name, '.')
+	if dot < 0 {
+		return ""
+	}
+	suffix := name[dot+1:]
+	if suffix == "" || strings.IndexFunc(suffix, notTypeRune) >= 0 {
+		return ""
+	}
+	return suffix
+}
+
+func notTypeRune(r rune) bool {
+	return !('a' <= r && r <= 'z') && !('0' <= r && r <= '9')
 }
 
 // systems and processors are the names releases use for this machine.
