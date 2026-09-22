@@ -69,6 +69,16 @@ notify:
   desktop: on
   command: ""
 
+# How a new version of sameway itself arrives. auto: a release published
+# for this machine is downloaded, checked against the checksums published
+# with it, and put where this program is, with a line in the activity log
+# saying which version. manual: you are only told a new version is out,
+# and it waits until you ask — say "update" to the assistant, or run
+# `sameway update`. Either way the new version runs from the next start,
+# and a sameway built from source never replaces itself with a release.
+update:
+  mode: auto
+
 chat:
   # How many past messages to send to the model each turn.
   history_limit: 40

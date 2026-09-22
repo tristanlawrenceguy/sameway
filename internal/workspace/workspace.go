@@ -2,7 +2,7 @@
 //
 // A workspace is a plain, git-friendly directory:
 //
-//	workspace.yaml   name, server, llm, chat settings
+//	workspace.yaml   name, server, llm, chat, update settings
 //	schema/          one YAML file per content type
 //	components/      local components that add to or override built-ins
 //	content/         every record as Markdown with front matter, kept current
@@ -20,6 +20,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/devices"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/update"
 )
 
 // ConfigFile is the marker file every workspace has.
@@ -87,6 +88,14 @@ type Config struct {
 		Desktop string `yaml:"desktop"`
 		Command string `yaml:"command"`
 	} `yaml:"notify"`
+	// Update is how a new version of sameway arrives: "auto" (the
+	// default) installs a release on its own and says so in the activity
+	// log, "manual" only says one is there and waits to be asked. Either
+	// way a new version runs from the next start, and a build that cannot
+	// say which version it is never replaces itself.
+	Update struct {
+		Mode string `yaml:"mode"`
+	} `yaml:"update"`
 	Files struct {
 		// Convert names an external converter per file extension, for the
 		// formats the built-in readers cannot do justice to: a URL such as
@@ -169,6 +178,9 @@ func Load(dir string) (*Workspace, error) {
 	}
 	if w.Config.UI.Developer != "shown" {
 		w.Config.UI.Developer = "hidden"
+	}
+	if w.Config.Update.Mode != update.Manual {
+		w.Config.Update.Mode = update.Auto
 	}
 	return w, nil
 }

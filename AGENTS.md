@@ -32,6 +32,7 @@ runner in tools/a11y-runner.
 | `internal/mcp/` | the Model Context Protocol server: the chat tools plus reading, over stdio | `server.go` |
 | `internal/server/` | HTML pages and JSON API | `server.go`, `canvas.go` |
 | `internal/cli/` | the sameway command | `root.go` |
+| `internal/update/` | finding, checking and installing a release of sameway itself | `update.go` |
 | `examples/workspaces/starter/` | what `sameway init` copies | |
 
 ## What the tests cover, by the way a component gets used
@@ -47,6 +48,7 @@ runner in tools/a11y-runner.
 | Person uses the HTML pages | landmarks, skip links, one h1, forms, 422 with linked errors, chat transcript, canvas removal | `internal/server/pages_test.go`, `api_test.go` |
 | Agent uses the JSON API | describe completeness, CRUD, stable error shapes, chat builds the canvas | `internal/server/api_test.go` |
 | Agent uses the CLI | every command, `--json`, flags in any position, errors that say how to fix | `internal/cli/cli_test.go` |
+| sameway keeps itself current | a release is found and compared, a download is refused unless its sha256 is in `checksums.txt`, a zip or tar.gz is unpacked, the program is swapped with the old one moved aside, auto installs and manual only tells, a build that says `dev` does neither | `internal/update/*_test.go`, `internal/workspace/update_test.go`, `internal/chat/version_test.go` |
 | Model uses the canvas tools | add, update, remove, clear, ordering, validation errors, prompt contents, history | `internal/chat/*_test.go` |
 | Model makes and changes content records | create, update and find for every schema type, schema errors, activity log, no record tools without content types | `internal/chat/records_test.go` |
 | Agent drives the workspace over MCP | handshake, tools/list carries the chat tools plus describe and get_record, tools/call changes land in the store and the activity log, protocol and schema errors are answered | `internal/mcp/server_test.go` |

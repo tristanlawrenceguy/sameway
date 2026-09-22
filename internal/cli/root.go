@@ -11,11 +11,9 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
+	"github.com/tristanlawrenceguy/sameway/internal/update"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
-
-// Version is set by the build.
-var Version = "dev"
 
 const usage = `sameway - accessible content and components for people and agents
 
@@ -25,6 +23,7 @@ Usage:
   sameway serve [--addr host:port]      run the web server for this workspace
   sameway describe [--json] [part [name]]  show content types, components, tools and routes, or one part
   sameway check                         validate the workspace schema and components
+  sameway update [--check]              install a new version of sameway, or only say whether one is out
   sameway search <words>                find anything by the words in it, records and canvas blocks alike
   sameway look <path>                   a page as a screen reader gets it, with its problems, as JSON
   sameway export                        rewrite content/ from the database (it is kept current as things change)
@@ -68,7 +67,7 @@ func Run(args []string, env Env) int {
 		return 2
 	}
 	if *version {
-		fmt.Fprintln(env.Stdout, "sameway", Version)
+		fmt.Fprintln(env.Stdout, "sameway", update.Version)
 		return 0
 	}
 	if sub == "" || sub == "help" || sub == "-h" || sub == "--help" {
@@ -88,6 +87,8 @@ func Run(args []string, env Env) int {
 		err = c.describeCmd()
 	case "check":
 		err = c.checkCmd()
+	case "update":
+		err = c.updateCmd()
 	case "look":
 		err = c.lookCmd()
 	case "search":

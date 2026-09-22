@@ -8,7 +8,6 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
-	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
 // BlockType is the content type that holds canvas items.
@@ -77,9 +76,9 @@ func (s *Service) Tools() []llm.Tool {
 		undoTool,
 		searchTool,
 		actionTool,
+		updateTool,
 		s.arrangementTool(),
-		{Name: "set_setting", Description: "Change one setting of this workspace when the person asks for it, and say so; each is reversible, so never ask first. The settings: " + workspace.SettingsDoc() + ". A setting that holds a key or a token takes the NAME of the environment variable that holds it, never the key.",
-			Schema: obj(map[string]any{"key": map[string]any{"type": "string", "enum": workspace.SettingKeys()}, "value": map[string]any{"type": "string"}}, "key", "value")},
+		settingTool,
 	}, append(append(s.recordTools(), s.canvasTools()...), shapeTools()...)...)
 }
 
@@ -108,6 +107,7 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 		Order       string         `json:"order"`
 		Limit       int            `json:"limit"`
 		Key         string         `json:"key"`
+		Install     bool           `json:"install"`
 		Value       string         `json:"value"`
 		Kind        string         `json:"kind"`
 		Description string         `json:"description"`
@@ -163,18 +163,10 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 		return s.Run(context.Background(), args.ID, s.current)
 	case "accept_action":
 		return s.acceptAction(context.Background(), args.ID)
+	case "update_sameway":
+		return s.updateSameway(args.Install)
 	case "set_setting":
-		if s.SetSetting == nil {
-			return fail("this workspace has no settings file")
-		}
-		if err := s.SetSetting(args.Key, args.Value); err != nil {
-			return fail("%v", err)
-		}
-		note := ""
-		if args.Key == "server.addr" {
-			note = ", from the next start"
-		}
-		return toolResult{text: args.Key + " is now " + args.Value + note, change: &Change{Action: "set", Component: args.Key, Detail: args.Value}}
+		return s.setSetting(args.Key, args.Value)
 	case "clear_canvas":
 		// Starting over means clearing the content, not deleting the
 		// conversation the person is typing into.

@@ -14,6 +14,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/update"
 )
 
 // MessageType is the content type that holds conversation turns.
@@ -24,6 +25,10 @@ type Service struct {
 	// SetSetting changes one line of workspace.yaml, when there is one:
 	// the pace, which lists show, the model, the name. Set by the app.
 	SetSetting func(key, value string) error
+	// Update looks for a new version of the sameway program and installs
+	// it when told to, set by the app; nil when this build cannot update
+	// itself. See internal/update.
+	Update func(ctx context.Context, install bool) (update.Outcome, error)
 	// AddField and AddType change the workspace's schema while it runs, set
 	// by the app; nil when the workspace cannot be changed from here.
 	AddField     func(typeName string, f schema.Field) (*schema.Type, error)

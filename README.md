@@ -130,6 +130,7 @@ sameway init [dir]                 create a workspace from the starter preset
 sameway serve                      run the web server
 sameway describe [--json]          content types, components, routes, model status
 sameway check                      validate schema and components
+sameway update [--check]           install a new version of sameway, or only say whether one is out
 sameway export | import            content/ from the database, or back into it
 sameway chat "add a table of ..."  talk to the assistant from the terminal
 sameway mcp                        serve the workspace to an MCP client over stdio
@@ -137,6 +138,29 @@ sameway connect <tool> [--write]   the MCP configuration for claude-code, claude
 sameway component new <name>       scaffold a component folder
 sameway <type> list|get|create|update|delete [--json]
 ```
+
+## Keeping it current
+
+A sameway from a release keeps itself current. Once a day it looks for a
+newer release for this machine, checks the download against the sha256
+published with it, and puts it where the running program is; the new
+version runs the next time you start it, and the activity log says which
+version arrived. Nothing is installed that is not listed in the release's
+`checksums.txt`.
+
+If you would rather decide each time, say so and it will only tell you a
+new version is out:
+
+```
+you: only update when I ask
+```
+
+which is `update.mode: manual` in `workspace.yaml`. Then say `update` when
+you want it, or run `sameway update`; `sameway update --check` only looks.
+
+A sameway you built yourself says `dev` rather than a version, and never
+replaces itself with a release: it has no way to tell which is newer.
+`make build` on a tagged checkout stamps the version in.
 
 ## Hooking up an AI
 

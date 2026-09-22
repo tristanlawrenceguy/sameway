@@ -9,6 +9,8 @@ import (
 	"strings"
 
 	"gopkg.in/yaml.v3"
+
+	"github.com/tristanlawrenceguy/sameway/internal/update"
 )
 
 // A person changes a setting by asking: the assistant's set_setting tool
@@ -41,6 +43,7 @@ var Settings = []Setting{
 	{"ui.developer", "enum", []string{"hidden", "shown"}, "the design system and the guide for agents: hidden from the sidebar or shown"},
 	{"chat.history_limit", "int", nil, "how many past messages go to the model each turn"},
 	{"chat.system_prompt", "string", nil, "words put before the built-in instructions to the model"},
+	{"update.mode", "enum", update.Modes, "how a new version of sameway arrives: auto installs a release on its own and says so in the activity log, manual only says one is there and waits to be asked (either way it runs from the next start)"},
 	{"notify.desktop", "enum", []string{"on", "off"}, "a notification on this machine when a reminder rings, whether or not a page is open"},
 	{"notify.command", "string", nil, "a command run when a reminder rings, with {title}, {text} and {url} in its arguments: a push service such as ntfy, an email, a text"},
 	{"actions.allow", "string", nil, "the programs a command action may run, by name, comma separated (curl, python); empty means command actions run nothing"},
