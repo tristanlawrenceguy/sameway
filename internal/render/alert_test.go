@@ -2,6 +2,7 @@ package render_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"regexp"
 	"strings"
 	"testing"
@@ -51,8 +52,9 @@ func TestAlertIconPropDeclared(t *testing.T) {
 }
 
 // TestAlertNoIconSpanWithoutProp renders the alert without an icon prop and
-// asserts no sw-alert__icon span appears. Acceptance item 2 (golden test covers
-// byte-identical output; this checks structural absence).
+// asserts no sw-alert__icon span appears for success kind (which has neither a
+// text prefix nor a default icon). Info, warning, and danger kinds get default
+// icons so they do render .sw-alert__icon even without the prop.
 func TestAlertNoIconSpanWithoutProp(t *testing.T) {
 	reg := render.New()
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
@@ -88,8 +90,12 @@ func TestAlertNoIconSpanWithoutProp(t *testing.T) {
 				}
 			}
 		})
-		if iconNode != nil {
-			t.Errorf("%s: output should not contain <span class=\"sw-alert__icon\">;\ngot:\n%s", ex.Name, got)
+
+		propsKind := fmt.Sprintf("%v", ex.Props["kind"])
+		if propsKind == "success" {
+			if iconNode != nil {
+				t.Errorf("%s: success output should not contain <span class=\"sw-alert__icon\">;\ngot:\n%s", ex.Name, got)
+			}
 		}
 	}
 }
