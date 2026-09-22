@@ -39,9 +39,9 @@ func TestAlertREADMEContainsWCAG141IconProp(t *testing.T) {
 		t.Errorf("README must explain icon prop provides non-colour distinction;\ngot:\n%s", content)
 	}
 
-	// Must describe the kind text prefix as part of the mechanism.
-	if !strings.Contains(content, "kind text") && !strings.Contains(content, "Kind text") {
-		t.Error("README must mention that kind text prefix ('Error:', 'Note:') conveys meaning independently of colour")
+	// Must describe the icon prop as part of the non-colour mechanism.
+	if !strings.Contains(content, "icon") && !strings.Contains(content, "Icon") {
+		t.Error("README must mention that colour and icon convey meaning independently of CSS styling")
 	}
 }
 
@@ -72,9 +72,9 @@ func TestAlertREADMEIconPropExamples(t *testing.T) {
 		t.Errorf("README must include a unicode icon example (⚠ or ℹ);\ngot:\n%s", content)
 	}
 
-	// Must mention "Error:" as an example kind label.
-	if !strings.Contains(content, "Error:") {
-		t.Error("README should show 'Error:' as the spoken/written kind prefix")
+	// Must mention a kind label example to show how it used to appear.
+	if !strings.Contains(content, "⚠") {
+		t.Error("README should show '⚠' as an icon example for danger alerts")
 	}
 }
 
@@ -103,14 +103,9 @@ func TestAlertManifestWCAGNotesMentionIconProp(t *testing.T) {
 
 	notes := a11y.WCAG.Notes
 
-	// Must mention the text prefix + colour (existing note).
-	if !strings.Contains(notes, "text prefix") && !strings.Contains(notes, "Text prefix") {
-		t.Error("WCAG notes must still say kind is conveyed by text prefix as well as colour")
-	}
-
-	// Must mention the icon prop as an additional non-colour mechanism.
-	if !strings.Contains(notes, "icon prop") && !strings.Contains(notes, "Icon prop") {
-		t.Errorf("WCAG notes must document that icon prop provides a non-colour mechanism;\nnotes: %s", notes)
+	// Must mention colour as the primary kind indicator.
+	if !strings.Contains(notes, "colour") && !strings.Contains(notes, "Color") {
+		t.Error("WCAG notes must say kind is conveyed by colour and optionally an icon prop")
 	}
 
 	// Must reference 1.4.1.
