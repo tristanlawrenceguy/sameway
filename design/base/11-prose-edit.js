@@ -100,10 +100,10 @@
     switcher.appendChild(toggle);
 
     wrap.appendChild(lab);
-    wrap.appendChild(bar);
     wrap.appendChild(editor);
     wrap.appendChild(source);
     wrap.appendChild(switcher);
+    wrap.appendChild(bar);
     wrap.appendChild(html);
     wrap.appendChild(lvl);
     return { wrap: wrap, input: editor };

@@ -130,7 +130,7 @@
       b.className = "sw-button sw-button--quiet sw-pressable";
       b.textContent = t[0];
       if (KEYS[t[1]]) { b.title = t[0] + " (" + KEYS[t[1]] + ")"; b.setAttribute("aria-keyshortcuts", KEYS[t[1]]); }
-      b.tabIndex = i === 0 ? 0 : -1;
+      b.tabIndex = -1;
       if (STATEFUL[t[1]]) b.setAttribute("aria-pressed", "false");
       // A press must not take the selection away from the words it is about.
       b.addEventListener("mousedown", function (e) { e.preventDefault(); });
