@@ -1,0 +1,45 @@
+/* A tracker is a few things kept up, each a row: the name and its streak,
+   a bar for this period against the target, the numbers in words, the
+   last days as dots, and Log. A met period is the success green; the bar
+   fills in the list colour. */
+.sw-tracker--full { display: grid; gap: var(--sw-space-2); min-width: 0; }
+.sw-tracker__list { display: grid; gap: var(--sw-space-2); }
+.sw-tracker__habit {
+  display: grid; grid-template-columns: 1fr auto; grid-template-areas: "head log" "bar log" "numbers log" "days log";
+  column-gap: var(--sw-space-4); row-gap: var(--sw-space-1); align-items: center;
+  padding: var(--sw-space-3) var(--sw-space-2); border-top: 1px solid var(--sw-color-border);
+}
+.sw-tracker__habit:first-child { border-top: 0; }
+.sw-tracker__head { grid-area: head; position: relative; display: flex; align-items: baseline; gap: var(--sw-space-2); min-width: 0; }
+.sw-tracker__name { font-weight: 600; color: var(--sw-color-fg); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+a.sw-tracker__name:hover { text-decoration: underline; text-underline-offset: 0.15em; }
+/* The streak: a small flame-coloured count, only when there is one. */
+.sw-tracker__streak {
+  flex: none; display: inline-flex; align-items: center; gap: 0.2em;
+  padding: 0 0.5em; min-height: 1.375rem; border-radius: var(--sw-radius-pill);
+  background: var(--sw-color-warning-soft); color: var(--sw-color-warning); font-size: var(--sw-size-text-xs); font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.sw-tracker__streak::before { content: "▲"; font-size: 0.6em; }
+.sw-tracker__bar { grid-area: bar; height: 0.5rem; border-radius: var(--sw-radius-pill); background: var(--sw-color-bg-muted); overflow: hidden; }
+.sw-tracker__fill { display: block; height: 100%; border-radius: inherit; background: var(--sw-dot, var(--sw-color-accent)); transition: width var(--sw-motion-base) var(--sw-motion-ease); }
+.sw-tracker__habit[data-met="true"] .sw-tracker__fill { background: var(--sw-color-success); }
+.sw-tracker__numbers { grid-area: numbers; margin: 0; font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); display: flex; flex-wrap: wrap; gap: var(--sw-space-3); font-variant-numeric: tabular-nums; }
+.sw-tracker__habit[data-met="true"] .sw-tracker__progress { color: var(--sw-color-success); font-weight: 600; }
+/* The last days: a dot each, filled when met, this one last. */
+.sw-tracker__days { grid-area: days; display: flex; gap: 0.3rem; }
+.sw-tracker__day { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--sw-color-border); }
+.sw-tracker__day[data-met="true"] { background: var(--sw-color-success); }
+.sw-tracker__day:last-child { box-shadow: 0 0 0 2px var(--sw-color-bg-raised), 0 0 0 3px var(--sw-color-border-strong); }
+.sw-tracker__log { grid-area: log; display: flex; align-items: center; gap: var(--sw-space-2); }
+.sw-tracker .sw-tracker__amount { width: 4rem; min-height: 2.25rem; padding: 0 var(--sw-space-2); text-align: right; font-size: var(--sw-size-text-sm); }
+.sw-tracker__unit { font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); }
+.sw-tracker__log .sw-button { min-height: 2.25rem; padding: 0 var(--sw-space-3); font-size: var(--sw-size-text-sm); }
+.sw-tracker__empty { margin: 0; }
+/* At a glance: met of all, this period. */
+.sw-tracker--glance { display: inline-flex; align-items: baseline; gap: var(--sw-space-1); }
+.sw-tracker__count { font-size: var(--sw-size-text-lg); font-weight: 700; font-variant-numeric: tabular-nums; }
+.sw-tracker__of { font-size: var(--sw-size-text-sm); font-weight: 400; color: var(--sw-color-fg-muted); }
+.sw-tracker__label { font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); }
+@container (max-width: 27rem) {
+  .sw-tracker__habit { grid-template-columns: 1fr; grid-template-areas: "head" "bar" "numbers" "days" "log"; }
+}

@@ -193,6 +193,9 @@ func (s *Server) canvasBlock(b *store.Record, convo *conversation) canvasBlock {
 	if name == clockComponent {
 		props = s.resolveClock(props)
 	}
+	if name == trackerComponent {
+		props = s.resolveTracker(props)
+	}
 	if name == chartComponent {
 		props = s.resolveChart(props)
 	}

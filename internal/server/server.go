@@ -62,6 +62,7 @@ func (s *Server) routes() {
 	m.HandleFunc("POST /canvas/{id}/delete", s.canvasDelete)
 	m.HandleFunc("GET /activity", s.activityPage)
 	m.HandleFunc("POST /clock/set", s.clockSet)
+	m.HandleFunc("POST /habit/{id}/log", s.habitLog)
 	m.HandleFunc("POST /clock/{id}/done", s.clockDone)
 	m.HandleFunc("POST /clock/{id}/snooze", s.clockSnooze)
 	m.HandleFunc("GET /clock/stream", s.clockStream)

@@ -15,25 +15,25 @@ import (
 func TestTheShapeOfContentCanChangeWhileRunning(t *testing.T) {
 	a, h := newApp(t)
 	made := postJSON(t, h, http.MethodPost, "/api/types", map[string]any{
-		"name": "habit", "description": "Something done often.",
+		"name": "ritual", "description": "Something done often.",
 		"fields": []map[string]any{{"name": "name", "type": "string", "required": true}, {"name": "every", "type": "enum", "values": []string{"day", "week"}, "default": "day"}},
 	})
 	wantStatus(t, made, http.StatusCreated)
-	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/habit", map[string]any{"name": "Walk"}), http.StatusCreated)
-	if page := get(t, h, "/t/habit").Body.String(); !strings.Contains(page, "Walk") {
+	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/ritual", map[string]any{"name": "Walk"}), http.StatusCreated)
+	if page := get(t, h, "/t/ritual").Body.String(); !strings.Contains(page, "Walk") {
 		t.Error("the new type has its list page with the record on it")
 	}
-	if nav := get(t, h, "/").Body.String(); !strings.Contains(nav, `href="/t/habit"`) {
+	if nav := get(t, h, "/").Body.String(); !strings.Contains(nav, `href="/t/ritual"`) {
 		t.Error("the new type is in the header with the others")
 	}
-	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/types/habit/fields", map[string]any{"name": "streak", "type": "int", "default": 0}), http.StatusCreated)
-	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/habit", map[string]any{"name": "Read", "streak": 3}), http.StatusCreated)
-	bad := postJSON(t, h, http.MethodPost, "/api/types/habit/fields", map[string]any{"name": "streak", "type": "int"})
+	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/types/ritual/fields", map[string]any{"name": "streak", "type": "int", "default": 0}), http.StatusCreated)
+	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/ritual", map[string]any{"name": "Read", "streak": 3}), http.StatusCreated)
+	bad := postJSON(t, h, http.MethodPost, "/api/types/ritual/fields", map[string]any{"name": "streak", "type": "int"})
 	wantStatus(t, bad, http.StatusUnprocessableEntity)
 	if !strings.Contains(bad.Body.String(), "already has") {
 		t.Errorf("a repeated field says so: %s", bad.Body.String())
 	}
-	if !strings.Contains(get(t, h, "/api/activity").Body.String(), "streak on habit") {
+	if !strings.Contains(get(t, h, "/api/activity").Body.String(), "streak on ritual") {
 		t.Error("the change is in the activity log")
 	}
 

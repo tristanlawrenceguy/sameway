@@ -1,0 +1,229 @@
+package server
+
+import (
+	"fmt"
+	"html/template"
+	"math"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/track"
+	"github.com/tristanlawrenceguy/sameway/internal/when"
+)
+
+// Tracking: the tracker block, the Log press, and the habit's own page.
+// The arithmetic is in internal/track; this reads the habit and entry
+// records and puts the numbers where a person looks.
+
+const (
+	trackerComponent = "tracker"
+	HabitType        = "habit"
+	EntryType        = "entry"
+)
+
+// habitOf reads a habit record.
+func habitOf(rec *store.Record) track.Habit {
+	h := track.Habit{ID: rec.ID}
+	h.Name, _ = rec.Fields["name"].(string)
+	h.Unit, _ = rec.Fields["unit"].(string)
+	h.Cadence, _ = rec.Fields["cadence"].(string)
+	h.Target = number(rec.Fields["target"])
+	h.Goal = number(rec.Fields["goal"])
+	return h
+}
+
+func number(v any) float64 {
+	switch n := v.(type) {
+	case float64:
+		return n
+	case int:
+		return float64(n)
+	case int64:
+		return float64(n)
+	case string:
+		f, _ := strconv.ParseFloat(strings.TrimSpace(n), 64)
+		return f
+	}
+	return 0
+}
+
+// entriesOf reads the entries logged against a habit.
+func (s *Server) entriesOf(habitID string) []track.Entry {
+	recs, err := s.app.Store.List(EntryType, store.ListOptions{})
+	if err != nil {
+		return nil
+	}
+	var out []track.Entry
+	for _, rec := range recs {
+		if h, _ := rec.Fields["habit"].(string); h != habitID {
+			continue
+		}
+		v, _ := rec.Fields["at"].(string)
+		ts, err := time.Parse(time.RFC3339, v)
+		if err != nil {
+			continue
+		}
+		amount := number(rec.Fields["amount"])
+		if amount == 0 && rec.Fields["amount"] == nil {
+			amount = 1
+		}
+		out = append(out, track.Entry{At: ts, Amount: amount})
+	}
+	return out
+}
+
+// standing is a habit as the tracker shows it.
+func (s *Server) standing(rec *store.Record, now time.Time) map[string]any {
+	h := habitOf(rec)
+	n := 7
+	if h.Cadence == "week" {
+		n = 4
+	}
+	sum := track.Summarise(h, s.entriesOf(h.ID), now, n)
+	pct := 0
+	if sum.Target > 0 {
+		pct = int(math.Min(100, math.Round(sum.Now/sum.Target*100)))
+	}
+	item := map[string]any{
+		"id": h.ID, "name": h.Name, "href": "/t/" + HabitType + "/" + h.ID, "unit": h.Unit, "period": firstOf(h.Cadence, "day"),
+		"amount": sum.Now, "target": sum.Target, "progress": track.Progress(sum, h.Unit), "pct": pct, "met": sum.Met,
+		"streak": sum.Streak, "streakWords": track.StreakWords(sum.Streak, h.Cadence), "best": sum.Best,
+	}
+	if h.Goal > 0 {
+		goal := track.Amount(sum.Total, "") + " of " + track.Amount(h.Goal, h.Unit)
+		if by, _ := rec.Fields["by"].(string); by != "" {
+			if t, err := time.Parse(time.RFC3339, by); err == nil {
+				goal += " by " + t.Local().Format(dayFormat(t, now))
+			}
+		}
+		item["goal"] = goal
+	}
+	last := make([]any, 0, len(sum.Last))
+	for _, p := range sum.Last {
+		last = append(last, map[string]any{"date": p.Start.Format("2006-01-02"), "met": p.Met, "amount": p.Amount})
+	}
+	item["last"] = last
+	return item
+}
+
+func firstOf(values ...string) string {
+	for _, v := range values {
+		if strings.TrimSpace(v) != "" {
+			return v
+		}
+	}
+	return ""
+}
+
+// resolveTracker fills a tracker block from the habits, all that are not
+// archived, or those with one of the tags asked for.
+func (s *Server) resolveTracker(props map[string]any) map[string]any {
+	out := map[string]any{}
+	for k, v := range props {
+		out[k] = v
+	}
+	tags := strs(props["tags"])
+	habits := []any{}
+	if _, ok := s.app.Types.Get(HabitType); ok {
+		recs, _ := s.app.Store.List(HabitType, store.ListOptions{OrderBy: "created_at"})
+		now := time.Now()
+		for _, rec := range recs {
+			if archived, _ := rec.Fields["archived"].(bool); archived {
+				continue
+			}
+			if len(tags) > 0 && !hasTag(rec, tags) {
+				continue
+			}
+			habits = append(habits, s.standing(rec, now))
+		}
+	}
+	out["habits"] = habits
+	return out
+}
+
+func hasTag(rec *store.Record, tags []string) bool {
+	have, _ := rec.Fields["tags"].([]any)
+	for _, t := range have {
+		for _, want := range tags {
+			if s, _ := t.(string); strings.EqualFold(s, want) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// habitLog is the Log press: an entry now, for the amount given or one.
+func (s *Server) habitLog(w http.ResponseWriter, r *http.Request) {
+	rec, err := s.app.Store.Get(HabitType, r.PathValue("id"))
+	if err != nil {
+		s.fail(w, err)
+		return
+	}
+	r.ParseForm()
+	h := habitOf(rec)
+	amount := 1.0
+	if v := strings.TrimSpace(r.PostForm.Get("amount")); v != "" {
+		if amount, err = strconv.ParseFloat(strings.ReplaceAll(v, ",", "."), 64); err != nil || amount <= 0 {
+			s.app.Chat.Notice("An amount to log is a number above zero, such as 1 or 2.5.")
+			http.Redirect(w, r, backFrom(r), http.StatusSeeOther)
+			return
+		}
+	}
+	fields := map[string]any{"habit": h.ID, "at": when.Store(time.Now(), false), "amount": amount}
+	if note := strings.TrimSpace(r.PostForm.Get("note")); note != "" {
+		fields["note"] = note
+	}
+	entry, err := s.app.Store.Create(EntryType, fields)
+	if err != nil {
+		s.app.Chat.Notice("That did not log. " + err.Error())
+	} else {
+		chat.Record(s.app.Store, "human", chat.Change{Action: "logged", Component: HabitType, ID: h.ID, Detail: h.Name + ": " + track.Amount(amount, h.Unit), Href: "/t/" + HabitType + "/" + h.ID, Before: map[string]any{"entry": entry.ID}})
+	}
+	http.Redirect(w, r, backFrom(r), http.StatusSeeOther)
+}
+
+// habitSection is what a habit's own page adds: where it stands, its own
+// tracker row, and the last thirty days as a chart with the target drawn.
+func (s *Server) habitSection(rec *store.Record) template.HTML {
+	now := time.Now()
+	h := habitOf(rec)
+	item := s.standing(rec, now)
+	var b strings.Builder
+	b.WriteString(`<section class="sw-stack sw-habit" aria-labelledby="habit-standing"><h2 id="habit-standing">Keeping up</h2>`)
+	b.WriteString(string(s.component(trackerComponent, map[string]any{"label": h.Name, "habits": []any{item}})))
+	best, _ := item["best"].(int)
+	if best > 0 {
+		fmt.Fprintf(&b, `<p class="sw-muted sw-small">Best run: %s.</p>`, template.HTMLEscapeString(track.StreakWords(best, h.Cadence)))
+	}
+	n, caption := 30, "The last 30 days"
+	if h.Cadence == "week" {
+		n, caption = 12, "The last 12 weeks"
+	}
+	sum := track.Summarise(h, s.entriesOf(h.ID), now, n)
+	series := make([]any, 0, len(sum.Last))
+	for _, p := range sum.Last {
+		label := p.Start.Format("2006-01-02")
+		series = append(series, map[string]any{"label": label, "value": p.Amount})
+	}
+	props := map[string]any{"caption": caption, "series": series, "kind": "bar", "target": sum.Target}
+	if h.Unit != "" {
+		props["unit"] = h.Unit
+	}
+	b.WriteString(string(s.component("chart", props)))
+	b.WriteString(`</section>`)
+	return template.HTML(b.String())
+}
+
+// dayFormat writes a day as a person would: the year only when it is not
+// this one.
+func dayFormat(t, now time.Time) string {
+	if t.Year() == now.Year() {
+		return "2 Jan"
+	}
+	return "2 Jan 2006"
+}
