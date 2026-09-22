@@ -19,7 +19,7 @@
       "upcoming": {"type": "integer", "minimum": 1, "maximum": 20, "default": 5, "title": "How many to list", "description": "How many events glance counts and brief lists, from today onwards."},
       "start": {"type": "string", "enum": ["monday", "sunday"], "default": "monday", "title": "Week starts on"},
       "id": {"type": "string"},
-      "type": {"type": "string", "description": "A content type whose records are the events, such as task: each record with a date on it is shown on that day, as a link to its page. Leave out to give the events yourself."},
+      "type": {"type": "string", "description": "A content type whose records are the events, such as task: each record with a date on it is shown on that day, as a link to its page. all shows every listed type with a day together, each event saying what kind it is. Leave out to give the events yourself."},
       "date": {"type": "string", "description": "With type: the field that holds the day, such as due. Defaults to the type's first date field."},
       "where": {"type": "array", "items": {"type": "string"}, "description": "With type: conditions the records must meet, as a collection block takes them: done=false, project=<id>. Leave out for all of them."},
       "show": {"type": "array", "items": {"type": "string"}, "description": "With type: fields to show beside each event, such as project or status, by name. Leave out for the title alone."},

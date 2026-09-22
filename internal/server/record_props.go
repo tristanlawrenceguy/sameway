@@ -80,7 +80,7 @@ func (s *Server) recordProps(w http.ResponseWriter, r *http.Request) {
 	}
 	// A change a person made by hand is a change like any other: in the
 	// log with what it was, so it glows where it shows and can be undone.
-	chat.Record(s.app.Store, "human", chat.Change{Action: "updated", Component: t.Name, ID: rec.ID, Detail: titleOf(t, rec), Href: "/t/" + t.Name + "/" + rec.ID, Before: rec.Fields})
+	chat.Record(s.app.Store, "human", chat.Change{Action: "updated", Component: t.Name, ID: rec.ID, Detail: s.title(t, rec), Href: "/t/" + t.Name + "/" + rec.ID, Before: rec.Fields})
 
 	http.Redirect(w, r, returnTo(r, "/t/"+t.Name+"/"+rec.ID), http.StatusSeeOther)
 }
@@ -128,5 +128,5 @@ func (s *Server) renderDetailError(w http.ResponseWriter, r *http.Request, t *sc
 	b.WriteString(`<div class="sw-bar sw-quiet"></div>`)
 	b.WriteString(`</div>`)
 
-	s.page(w, r, titleOf(t, rec), template.HTML(b.String()), pageOptions{JSONURL: "/api/" + t.Name + "/" + rec.ID, Status: http.StatusUnprocessableEntity, ExtraScripts: detailPageExtraScripts})
+	s.page(w, r, s.title(t, rec), template.HTML(b.String()), pageOptions{JSONURL: "/api/" + t.Name + "/" + rec.ID, Status: http.StatusUnprocessableEntity, ExtraScripts: detailPageExtraScripts})
 }

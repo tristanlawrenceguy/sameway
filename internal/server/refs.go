@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"html/template"
 	"strings"
+	"time"
+
+	"github.com/tristanlawrenceguy/sameway/internal/query"
 
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -23,7 +26,7 @@ func (s *Server) refTitle(f schema.Field, id string) string {
 	if err != nil {
 		return "a " + f.To + " that is no longer here"
 	}
-	return titleOf(t, rec)
+	return s.title(t, rec)
 }
 
 // refCell is a ref on a record's page: the target's title as a link to
@@ -52,6 +55,13 @@ func (s *Server) backlinks(t *schema.Type, rec *store.Record) string {
 				"label": capitalize(plural(u.Name)), "level": 2, "id": "backlinks-" + u.Name + "-" + f.Name,
 			})
 			b.WriteString(fmt.Sprintf(`<div class="sw-backlinks" data-dot="%d">`, s.dotOf(u.Name)) + string(s.component(collectionComponent, props)) + `</div>`)
+		}
+	}
+	if rt, ok := s.app.Types.Get(ReminderType); ok && t.Name != ReminderType {
+		where := []string{"about=/t/" + t.Name + "/" + rec.ID}
+		if recs, err := query.Filter(s.app.Store, rt, where, "at", 0, time.Now()); err == nil && len(recs) > 0 {
+			props := s.resolveCollection(map[string]any{"type": ReminderType, "where": where, "order": "-at", "limit": 20, "label": "Reminders about this", "level": 2, "id": "backlinks-reminder-about"})
+			b.WriteString(fmt.Sprintf(`<div class="sw-backlinks" data-dot="%d">`, s.dotOf(ReminderType)) + string(s.component(collectionComponent, props)) + `</div>`)
 		}
 	}
 	return b.String()

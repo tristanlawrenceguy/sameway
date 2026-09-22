@@ -26,3 +26,11 @@ and the calendar's day view shows them by the hour.
 
 Sizes: `glance` is the time and anything ringing, for a header; `full`
 adds the forms and the list.
+
+A reminder can be about something. Every record's page has Remind me:
+a time, and the reminder is made with `about` set to that page. When
+it rings, the notification says the thing and leads to it, and the
+thing's page lists the reminders about it. A habit with a `remind` time
+nudges the same way: if it is not met by then, the clock rings a
+reminder about it once a day, saying where it stands (Water: 3 of 8
+glasses so far).

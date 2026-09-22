@@ -35,6 +35,10 @@ fields:
   tags:
     type: list
     of: string
+  remind:
+    type: string
+    maxLength: 20
+    description: "A time of day, such as 20:00 or 8pm: if the habit is not met by then, the clock rings a reminder about it, once a day."
   archived:
     type: bool
     default: false

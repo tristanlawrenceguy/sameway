@@ -71,6 +71,12 @@ type chatMessage struct {
 // conversation renders the transcript and composer once, for whichever
 // surface is showing it.
 func (s *Server) conversation(from string) (*conversation, error) {
+	return s.conversationAbout(from, "")
+}
+
+// conversationAbout is the conversation with something to say already in
+// the box: the thing a record's page sent the person here about.
+func (s *Server) conversationAbout(from, about string) (*conversation, error) {
 	out := &conversation{From: from}
 	view := conversationView{From: from}
 	view.Chats, view.Title = s.chats()
@@ -109,7 +115,11 @@ func (s *Server) conversation(from string) (*conversation, error) {
 	out.Count = len(msgs)
 	view.Status = s.status(msgs)
 	view.Proposals = s.proposals(from)
-	view.Compose = s.component("textarea", map[string]any{"label": "Your message", "name": "message", "rows": 3, "required": true, "hint": "Ask for anything, or ask what something on the page is. Enter sends; Shift+Enter starts a new line."})
+	compose := map[string]any{"label": "Your message", "name": "message", "rows": 3, "required": true, "hint": "Ask for anything, or ask what something on the page is. Enter sends; Shift+Enter starts a new line."}
+	if t, rec, ok := s.aboutOf(about); ok {
+		compose["value"] = "About " + s.title(t, rec) + " (" + about + "): "
+	}
+	view.Compose = s.component("textarea", compose)
 	view.Send = s.component("button", map[string]any{"label": "Send", "type": "submit"})
 	view.Clear = s.component("button", map[string]any{"label": "Clear", "context": "conversation", "type": "submit", "variant": "quiet"})
 	view.NewChat = s.component("button", map[string]any{"label": "New chat", "type": "submit", "variant": "secondary"})
@@ -145,7 +155,7 @@ func (s *Server) chatPage(w http.ResponseWriter, r *http.Request) {
 		s.page(w, r, "Chat", s.component("alert", map[string]any{"kind": "danger", "title": "Chat is not available", "message": err.Error()}), pageOptions{})
 		return
 	}
-	convo, err := s.conversation("/chat")
+	convo, err := s.conversationAbout("/chat", r.URL.Query().Get("about"))
 	if err != nil {
 		s.fail(w, err)
 		return

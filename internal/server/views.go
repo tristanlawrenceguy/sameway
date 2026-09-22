@@ -94,6 +94,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	if t.Name == FileType {
 		b.WriteString(s.fileExtras(rec))
 	}
+	b.WriteString(s.nextThings(t, rec))
 	fmt.Fprintf(&b, `<div class="sw-dl-block" data-block-id="%s" data-edit-action="/t/%s/%s/props">`, rec.ID, t.Name, rec.ID)
 	// The record's text comes first and reads as a document, under the
 	// title and before its other fields; structured text keeps what was
@@ -118,6 +119,11 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(&b, `<dt>%s</dt><dd class="sw-prose" data-prop="%s" data-source="%s" data-prose-level="3">%s</dd>`, template.HTMLEscapeString(label(f.Name)), f.Name, template.HTMLEscapeString(val), prose.Render(val, 3))
 			continue
 		}
+		// A reminder's about is the thing it is for, as the way there.
+		if t.Name == ReminderType && f.Name == "about" {
+			fmt.Fprintf(&b, `<dt>%s</dt>%s`, template.HTMLEscapeString(label(f.Name)), s.aboutCell(f, val))
+			continue
+		}
 		// A ref shows the record it points at, as the way there.
 		if f.Type == "ref" {
 			fmt.Fprintf(&b, `<dt>%s</dt>%s`, template.HTMLEscapeString(label(f.Name)), s.refCell(f, val))
@@ -136,7 +142,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	// An action is a button; its own page has that button.
 	if t.Name == chat.ActionType {
 		fmt.Fprintf(&b, `<form method="post" action="/act/%s"><input type="hidden" name="from" value="/t/%s/%s">%s</form>`, rec.ID, t.Name, rec.ID,
-			s.component("button", map[string]any{"label": "Run", "context": titleOf(t, rec), "type": "submit", "variant": "primary"}))
+			s.component("button", map[string]any{"label": "Run", "context": s.title(t, rec), "type": "submit", "variant": "primary"}))
 	}
 	// The record's one press, done or pinned or whatever its yes-or-no
 	// field is, sits under the title; Delete keeps to the quiet bar.
@@ -147,8 +153,8 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	b.WriteString(string(s.recentActivity(5, "/t/"+t.Name+"/"+rec.ID)))
 	// What points at this record, listed here by itself.
 	b.WriteString(s.backlinks(t, rec))
-	s.page(w, r, titleOf(t, rec), template.HTML(b.String()), pageOptions{
-		Kicker:       crumbs("/t/"+t.Name, capitalize(plural(t.Name)), titleOf(t, rec), s.dotOf(t.Name)),
+	s.page(w, r, s.title(t, rec), template.HTML(b.String()), pageOptions{
+		Kicker:       crumbs("/t/"+t.Name, capitalize(plural(t.Name)), s.title(t, rec), s.dotOf(t.Name)),
 		Lede:         s.lede(t, rec),
 		JSONURL:      "/api/" + t.Name + "/" + rec.ID,
 		ExtraScripts: detailPageExtraScripts,
@@ -166,7 +172,7 @@ func (s *Server) deleteForm(w http.ResponseWriter, r *http.Request) {
 		s.fail(w, err)
 		return
 	}
-	title := titleOf(t, rec)
+	title := s.title(t, rec)
 	if err := s.app.Store.Delete(t.Name, rec.ID); err != nil {
 		s.fail(w, err)
 		return

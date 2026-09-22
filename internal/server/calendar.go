@@ -69,6 +69,10 @@ func (s *Server) resolveCalendar(props map[string]any, blockID string) map[strin
 	if typeName == "" {
 		return out
 	}
+	if typeName == "all" {
+		out["events"] = s.everyEvent(now)
+		return out
+	}
 	t, ok := s.app.Types.Get(typeName)
 	if !ok {
 		out["events"] = []any{}
@@ -87,34 +91,43 @@ func (s *Server) resolveCalendar(props map[string]any, blockID string) map[strin
 	}
 	events := make([]any, 0, len(recs))
 	for _, rec := range recs {
-		v, _ := rec.Fields[field].(string)
-		ts, err := time.Parse(time.RFC3339, v)
-		if err != nil {
+		ev := s.eventOf(t, rec, field)
+		if ev == nil {
 			continue
-		}
-		// A day with no time is stored as midnight UTC; it is that day
-		// everywhere, with no time to show. Anything else is a moment,
-		// shown in local time.
-		day, clock := ts.UTC().Format("2006-01-02"), ""
-		if !strings.HasSuffix(v, "T00:00:00Z") {
-			local := ts.Local()
-			day, clock = local.Format("2006-01-02"), local.Format("15:04")
-		}
-		ev := map[string]any{"date": day, "label": titleOf(t, rec), "href": "/t/" + t.Name + "/" + rec.ID}
-		if clock != "" {
-			ev["time"] = clock
 		}
 		if meta := s.showFields(t, rec, strs(props["show"])); meta != "" {
 			ev["meta"] = meta
-		}
-		if actions := markActions(t, rec); actions != nil {
-			ev["actions"] = actions
 		}
 		events = append(events, ev)
 	}
 	out["events"] = events
 	out["all"] = listPath(t.Name, strs(props["where"]), field)
 	return out
+}
+
+// eventOf is one record on the calendar, or nil when its date will not
+// read. A day with no time is stored as midnight UTC; it is that day
+// everywhere, with no time to show. Anything else is a moment, shown in
+// local time.
+func (s *Server) eventOf(t *schema.Type, rec *store.Record, field string) map[string]any {
+	v, _ := rec.Fields[field].(string)
+	ts, err := time.Parse(time.RFC3339, v)
+	if err != nil {
+		return nil
+	}
+	day, clock := ts.UTC().Format("2006-01-02"), ""
+	if !strings.HasSuffix(v, "T00:00:00Z") {
+		local := ts.Local()
+		day, clock = local.Format("2006-01-02"), local.Format("15:04")
+	}
+	ev := map[string]any{"date": day, "label": s.title(t, rec), "href": "/t/" + t.Name + "/" + rec.ID}
+	if clock != "" {
+		ev["time"] = clock
+	}
+	if actions := markActions(t, rec); actions != nil {
+		ev["actions"] = actions
+	}
+	return ev
 }
 
 // dateField is the field the days come from: the one named, or the

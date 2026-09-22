@@ -46,8 +46,8 @@ func (s *Server) Ring(now time.Time) []*store.Record {
 	}
 	t, _ := s.app.Types.Get(ReminderType)
 	for _, rec := range rang {
-		title := titleOf(t, rec)
-		go s.notify(title, "It is time.", s.linkTo("/t/"+ReminderType+"/"+rec.ID))
+		text, url := s.ringWords(rec)
+		go s.notify(s.title(t, rec), text, s.linkTo(url))
 	}
 	return rang
 }
