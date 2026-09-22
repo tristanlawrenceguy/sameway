@@ -2,10 +2,20 @@
 
 BIN := sameway
 
+# The version this build says it is, which is what auto-update compares
+# against the latest release. Only a checkout sitting exactly on a tag
+# gets one: anything else is a build from source, and a build from source
+# never replaces itself with a release. See internal/update.
+VERSION ?= $(shell git describe --tags --exact-match 2>/dev/null | sed 's/^v//')
+ifeq ($(VERSION),)
+VERSION := dev
+endif
+LDFLAGS := -X github.com/tristanlawrenceguy/sameway/internal/update.Version=$(VERSION)
+
 .PHONY: build check test lint tokens golden a11y run clean
 
 build:
-	go build -o bin/$(BIN) ./cmd/sameway
+	go build -ldflags "$(LDFLAGS)" -o bin/$(BIN) ./cmd/sameway
 
 check: lint test
 

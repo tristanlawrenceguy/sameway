@@ -19,6 +19,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/update"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
@@ -100,6 +101,9 @@ func Load(dir string, memoryDB bool) (*App, error) {
 		return nil
 	}
 	a.Chat.AddField, a.Chat.AddType = a.AddField, a.AddType
+	// Keeping the program current is the program's own business, not the
+	// workspace's: the updater needs nothing from here.
+	a.Chat.Update = update.Updater{}.Run
 	chat.Workdir = ws.Dir
 	return a, nil
 }

@@ -13,6 +13,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/mcp"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
+	"github.com/tristanlawrenceguy/sameway/internal/update"
 )
 
 func (c *ctx) serveCmd() error {
@@ -40,6 +41,7 @@ func (c *ctx) serveCmd() error {
 	h := server.New(a)
 	h.StartRinging(ctx, notifier(a))
 	connectDevices(ctx, c.Stdout, a)
+	watchUpdates(ctx, c.Stdout, a)
 	token := os.Getenv(a.Workspace.Config.MCP.TokenEnv)
 	if token != "" {
 		fmt.Fprintf(c.Stdout, "  mcp     http://%s/mcp with Authorization: Bearer <%s>\n", *addr, a.Workspace.Config.MCP.TokenEnv)
@@ -110,7 +112,7 @@ func (c *ctx) mcpCmd() error {
 		in = os.Stdin
 	}
 	fmt.Fprintf(c.Stderr, "sameway mcp: serving %q from %s\n", a.Workspace.Config.Name, a.Workspace.Dir)
-	srv := &mcp.Server{App: a, Version: Version, In: in, Out: c.Stdout}
+	srv := &mcp.Server{App: a, Version: update.Version, In: in, Out: c.Stdout}
 	return srv.Serve(context.Background())
 }
 

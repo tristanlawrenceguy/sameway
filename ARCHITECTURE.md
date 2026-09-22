@@ -124,6 +124,7 @@ Nothing is hand-written per surface. Adding a surface means adding a generator.
     relate/                   # how one record connects to the others, from the schema
     server/                   # HTTP: HTML views, JSON API, describe endpoint
     mcp/                      # MCP server (stdio + HTTP) generated from schema + manifests
+    update/                   # find, verify and install a release of sameway itself
     cli/                      # commands generated from schema, plus scaffold/check/serve
     a11y/                     # shared helpers: landmarks, headings, live regions
   tools/
