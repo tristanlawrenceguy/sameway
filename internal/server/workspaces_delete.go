@@ -58,7 +58,7 @@ func (s *Server) workspacesDelete(w http.ResponseWriter, r *http.Request) {
 		nextName = ws.Config.Name
 	}
 	var b strings.Builder
-	b.WriteString(`<div class="sw-alert sw-alert--success" role="alert"><p class="sw-alert__title">Success:</p><p class="sw-alert__message">` + template.HTMLEscapeString(cur.Config.Name) + ` deleted.</p></div>`)
+	b.WriteString(`<div class="sw-alert sw-alert--success" role="alert"><p class="sw-alert__message">` + template.HTMLEscapeString(cur.Config.Name) + ` deleted.</p></div>`)
 	b.WriteString(fmt.Sprintf(`<p class="sw-muted">Opening <a href="%s">%s</a>…</p>`, template.HTMLEscapeString(url), template.HTMLEscapeString(nextName)))
 
 	w.Header().Set("Refresh", fmt.Sprintf("3; url=%s", template.HTMLEscapeString(url)))
