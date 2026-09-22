@@ -153,7 +153,6 @@ func (s *Server) activityPage(w http.ResponseWriter, r *http.Request) {
 	if len(recs) == 0 {
 		b.WriteString(`<p class="sw-empty">Send a message or add something to the canvas.</p>`)
 	}
-	b.WriteString(`<h2>Activity</h2>`)
 	day := ""
 	open := false
 	for _, rec := range recs {
