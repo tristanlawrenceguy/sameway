@@ -60,8 +60,6 @@
     source.className = "sw-field__textarea";
     source.name = "prop-" + name;
     source.rows = 8;
-    source.hidden = true;
-    source.disabled = true;
     source.setAttribute("aria-labelledby", lab.id);
     source.value = el.getAttribute("data-source") || "";
 
@@ -72,12 +70,12 @@
     toggle.textContent = "Markdown";
     toggle.setAttribute("aria-pressed", "false");
     toggle.addEventListener("click", function () {
-      if (source.disabled) {
+      if (source.hidden) {
         convert({ html: editor.innerHTML, level: level }, function (out) {
           source.value = out.markdown || source.value;
           editor.hidden = bar.hidden = true;
           html.disabled = true;
-          source.hidden = source.disabled = false;
+          source.hidden = false;
           toggle.hidden = false;
           toggle.textContent = "Rich text";
           toggle.setAttribute("aria-pressed", "true");
@@ -86,7 +84,7 @@
       } else {
         convert({ markdown: source.value, level: level }, function (out) {
           editor.innerHTML = out.html || editor.innerHTML;
-          source.hidden = source.disabled = true;
+          source.hidden = true;
           html.disabled = false;
           editor.hidden = bar.hidden = false;
           toggle.textContent = "Markdown";

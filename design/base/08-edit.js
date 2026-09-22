@@ -23,7 +23,7 @@
   }
 
   // field builds the control for one marked element, carrying the text that
-  // is there now.
+  // is there now (for example: Body on a note or task detail page).
   function field(el, blockId) {
     // Structured text is edited as it is shown, by 11-prose-edit.js, when
     // that is here; otherwise as the Markdown it was written in.
