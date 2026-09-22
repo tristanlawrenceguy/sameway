@@ -82,7 +82,7 @@ func (s *Server) recordProps(w http.ResponseWriter, r *http.Request) {
 	// log with what it was, so it glows where it shows and can be undone.
 	chat.Record(s.app.Store, "human", chat.Change{Action: "updated", Component: t.Name, ID: rec.ID, Detail: s.title(t, rec), Href: "/t/" + t.Name + "/" + rec.ID, Before: rec.Fields})
 
-	http.Redirect(w, r, returnTo(r, "/t/"+t.Name+"/"+rec.ID), http.StatusSeeOther)
+	http.Redirect(w, r, returnTo(r, "/t/"+t.Name+"/"+rec.ID)+"?saved", http.StatusSeeOther)
 }
 
 // renderDetailError re-renders the detail page with validation errors as a 422,

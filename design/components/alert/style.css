@@ -4,6 +4,7 @@
   border-radius: var(--sw-radius-md);
   background: var(--sw-color-info-soft); color: var(--sw-color-fg);
   max-width: var(--sw-size-measure);
+  position: relative;
 }
 .sw-alert__icon { font-size: var(--sw-size-text-lg); margin-right: var(--sw-space-2); }
 .sw-alert p { margin: 0; }
@@ -16,3 +17,14 @@
 .sw-alert--warning .sw-alert__kind { color: var(--sw-color-warning); }
 .sw-alert--danger { border-left-color: var(--sw-color-danger); background: var(--sw-color-danger-soft); }
 .sw-alert--danger .sw-alert__kind { color: var(--sw-color-danger); }
+.sw-alert__close {
+  position: absolute;
+  top: var(--sw-space-2);
+  right: var(--sw-space-3);
+  background: none;
+  border: none;
+  font-size: var(--sw-size-text-lg);
+  cursor: pointer;
+  color: inherit;
+  padding: var(--sw-space-1);
+}

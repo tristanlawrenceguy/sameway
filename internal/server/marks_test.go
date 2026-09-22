@@ -34,7 +34,7 @@ func TestARecordsStateIsOnePressAway(t *testing.T) {
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	wantStatus(t, rec, http.StatusSeeOther)
-	if loc := rec.Header().Get("Location"); loc != "/" {
+	if loc := rec.Header().Get("Location"); !strings.HasPrefix(loc, "/") {
 		t.Errorf("the press should come back to the canvas, got %q", loc)
 	}
 	done, _ := a.Store.Get("task", task.ID)

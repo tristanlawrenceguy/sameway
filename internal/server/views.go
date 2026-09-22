@@ -84,6 +84,14 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var b strings.Builder
+	if r.URL.Query().Has("saved") {
+		b.WriteString(string(s.component("alert", map[string]any{
+			"kind":    "success",
+			"title":   "Changes saved",
+			"message": "Your edits were applied.",
+			"dismiss": true,
+		})))
+	}
 	// A question still waiting is answered here as well as under the
 	// conversation: the page of a proposal is where the two answers belong.
 	if t.Name == chat.ProposalType && rec.Fields["state"] == "pending" {
