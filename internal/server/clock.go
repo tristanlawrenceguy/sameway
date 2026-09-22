@@ -45,7 +45,7 @@ func (s *Server) resolveClock(props map[string]any) map[string]any {
 	if t, ok := s.app.Types.Get(ReminderType); ok {
 		recs, _ := query.Filter(s.app.Store, t, nil, "at", 0, now)
 		for _, rec := range recs {
-			item := map[string]any{"id": rec.ID, "title": titleOf(t, rec), "href": "/t/" + ReminderType + "/" + rec.ID}
+			item := map[string]any{"id": rec.ID, "title": s.title(t, rec), "href": "/t/" + ReminderType + "/" + rec.ID}
 			switch rec.Fields["state"] {
 			case "rang":
 				ringing = append(ringing, item)
@@ -86,7 +86,7 @@ func (s *Server) onToday(now time.Time) []any {
 			if err != nil {
 				continue
 			}
-			item := map[string]any{"label": titleOf(t, rec), "href": "/t/" + t.Name + "/" + rec.ID}
+			item := map[string]any{"label": s.title(t, rec), "href": "/t/" + t.Name + "/" + rec.ID}
 			if strings.HasSuffix(v, "T00:00:00Z") {
 				if ts.UTC().Format("2006-01-02") != day {
 					continue
@@ -151,6 +151,15 @@ func (s *Server) clockSet(w http.ResponseWriter, r *http.Request) {
 			fields["title"] = "Alarm"
 		}
 	}
+	// A reminder set from a record's page is about it, and named for it.
+	if about := r.PostForm.Get("about"); about != "" {
+		if _, _, ok := s.aboutOf(about); ok {
+			fields["about"] = about
+			if title := strings.TrimSpace(r.PostForm.Get("title")); title != "" {
+				fields["title"] = title
+			}
+		}
+	}
 	rec, err := s.app.Store.Create(ReminderType, fields)
 	if err != nil {
 		s.app.Chat.Notice("That reminder did not save. " + err.Error())
@@ -181,7 +190,7 @@ func (s *Server) setReminder(w http.ResponseWriter, r *http.Request, fields map[
 		s.app.Chat.Notice("That did not go through. " + err.Error())
 	} else {
 		t, _ := s.app.Types.Get(ReminderType)
-		chat.Record(s.app.Store, "human", chat.Change{Action: action, Component: ReminderType, ID: rec.ID, Detail: titleOf(t, rec), Before: rec.Fields})
+		chat.Record(s.app.Store, "human", chat.Change{Action: action, Component: ReminderType, ID: rec.ID, Detail: s.title(t, rec), Before: rec.Fields})
 	}
 	http.Redirect(w, r, backFrom(r), http.StatusSeeOther)
 }
@@ -220,7 +229,7 @@ func (s *Server) clockStream(w http.ResponseWriter, r *http.Request) {
 			}
 			told[rec.ID] = true
 			t, _ := s.app.Types.Get(ReminderType)
-			body, _ := json.Marshal(map[string]any{"id": rec.ID, "title": titleOf(t, rec), "href": "/t/" + ReminderType + "/" + rec.ID})
+			body, _ := json.Marshal(map[string]any{"id": rec.ID, "title": s.title(t, rec), "href": "/t/" + ReminderType + "/" + rec.ID})
 			fmt.Fprintf(w, "event: ring\ndata: %s\n\n", body)
 			flusher.Flush()
 		}
@@ -256,7 +265,7 @@ func (s *Server) ring(now time.Time) []*store.Record {
 	if err != nil {
 		return nil
 	}
-	var rang []*store.Record
+	rang := s.nudges(now)
 	for _, rec := range recs {
 		at, _ := rec.Fields["at"].(string)
 		ts, err := time.Parse(time.RFC3339, at)
@@ -267,7 +276,7 @@ func (s *Server) ring(now time.Time) []*store.Record {
 			log.Printf("clock: %v", err)
 			continue
 		}
-		chat.Record(s.app.Store, "system", chat.Change{Action: "rang", Component: ReminderType, ID: rec.ID, Detail: titleOf(t, rec)})
+		chat.Record(s.app.Store, "system", chat.Change{Action: "rang", Component: ReminderType, ID: rec.ID, Detail: s.title(t, rec)})
 		rang = append(rang, rec)
 	}
 	return rang

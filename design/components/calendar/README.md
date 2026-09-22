@@ -16,3 +16,8 @@ moving it into the body of the page is all it takes to read them.
 
 The month grid is worked out on the server, so the component needs no
 JavaScript and reads correctly the moment the HTML arrives.
+
+With `type: all` the calendar shows everything with a day together,
+from every listed type: tasks due, reminders, entries logged, each
+event saying what kind it is. A record's page links to its day on the
+first calendar on the canvas, as See that day.

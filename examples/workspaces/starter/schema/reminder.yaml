@@ -27,3 +27,6 @@ fields:
   notes:
     type: markdown
     description: Anything worth remembering when it rings.
+  about:
+    type: string
+    description: "The page of what this is about, such as /t/task/abc123: it rings with that thing and leads to it, and that thing's page lists it."

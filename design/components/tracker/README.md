@@ -20,3 +20,9 @@ target drawn across it.
 
 Sizes: `glance` is how many are met this period; `full` is every
 habit. `tags` narrows to habits with one of those tags.
+
+A habit with a `remind` time (20:00, 8pm) nudges through the clock: if
+it is not met by then, a reminder about it rings once a day, saying
+where it stands, and leads to the habit. An entry is titled by its
+habit and amount (Water: 8 glasses), so it reads on the calendar and in
+a list.

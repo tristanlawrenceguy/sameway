@@ -32,7 +32,7 @@ func (s *Server) resolveRecord(props map[string]any) (map[string]any, string) {
 		out["missing"] = true
 		return out, ""
 	}
-	out["title"] = titleOf(t, rec)
+	out["title"] = s.title(t, rec)
 	out["titleProp"] = t.Title
 	var fields []any
 	for _, f := range t.Fields {

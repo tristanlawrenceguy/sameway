@@ -55,7 +55,7 @@ func (s *Server) resolveCollection(props map[string]any) map[string]any {
 	out["titleLabel"] = label(t.Title)
 	items := make([]any, 0, len(recs))
 	for _, rec := range recs {
-		item := map[string]any{"title": titleOf(t, rec), "href": "/t/" + t.Name + "/" + rec.ID}
+		item := map[string]any{"title": s.title(t, rec), "href": "/t/" + t.Name + "/" + rec.ID}
 		if len(show) > 0 {
 			item["fields"] = s.fieldsOf(t, rec, show)
 		} else if meta := metaOf(t, rec); meta != "" {
