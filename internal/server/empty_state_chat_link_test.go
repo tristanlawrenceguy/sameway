@@ -20,8 +20,8 @@ func TestEmptyStateLinksToChat(t *testing.T) {
 	wantStatus(t, rec, http.StatusOK)
 	body := rec.Body.String()
 
-	// The empty-state paragraph must link to /chat.
-	if !strings.Contains(body, `href="/chat"`) {
+	// The empty-state paragraph must link to /chat (possibly with query params).
+	if !strings.Contains(body, `<a href="/chat`) {
 		t.Errorf("empty-state should link to /chat (the working surface for creation)\n%s", truncate(body))
 	}
 
@@ -60,7 +60,7 @@ func TestEmptyStateLinksToChatForActions(t *testing.T) {
 	wantStatus(t, rec, http.StatusOK)
 	body := rec.Body.String()
 
-	if !strings.Contains(body, `href="/chat"`) {
+	if !strings.Contains(body, `<a href="/chat`) {
 		t.Errorf("empty-state for actions should link to /chat\n%s", truncate(body))
 	}
 
@@ -78,7 +78,7 @@ func TestEmptyStateLinksToChatForTasks(t *testing.T) {
 	wantStatus(t, rec, http.StatusOK)
 	body := rec.Body.String()
 
-	if !strings.Contains(body, `href="/chat"`) {
+	if !strings.Contains(body, `<a href="/chat`) {
 		t.Errorf("empty-state for tasks should link to /chat\n%s", truncate(body))
 	}
 
