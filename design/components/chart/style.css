@@ -38,4 +38,4 @@
 /* A target is a line across the plot in the warning tone, named at its
    right end, so the bars are read against it. */
 .sw-chart__target { stroke: var(--sw-color-warning); stroke-width: 1.5; stroke-dasharray: 6 4; }
-.sw-chart__targettext { fill: var(--sw-color-warning); font-size: 11px; font-weight: 600; paint-order: stroke; stroke: var(--sw-color-bg-raised, #fff); stroke-width: 3px; stroke-linejoin: round; }
+.sw-chart__targettext { fill: var(--sw-color-warning); font-size: 11px; font-weight: 600; paint-order: stroke; stroke: var(--sw-color-bg-raised); stroke-width: 3px; stroke-linejoin: round; }
