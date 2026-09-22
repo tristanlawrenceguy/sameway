@@ -23,6 +23,10 @@ type ChartPoint struct {
 	CX, CY     float64
 	// LabelY is where the value is written above a bar.
 	LabelY float64
+	// ShowValue and ShowLabel thin a dense chart: past fourteen points the
+	// values are left to the table, and only every few labels is written,
+	// the last always among them.
+	ShowValue, ShowLabel bool
 }
 
 // ChartTick is one gridline with its value.
@@ -42,6 +46,11 @@ type ChartShape struct {
 	// Baseline is the y of zero; Left is where the plot starts.
 	Baseline, Left, Right float64
 	Empty                 bool
+	// Target is a line across the chart at a value to reach, with
+	// HasTarget saying there is one; the scale makes room for it.
+	Target    float64
+	TargetY   float64
+	HasTarget bool
 }
 
 const (
@@ -50,9 +59,14 @@ const (
 )
 
 // chartShape lays out a series of {label, value} as bars or a line.
-func chartShape(series any, kind string) ChartShape {
+func chartShape(series any, kind string, target ...any) ChartShape {
 	points := chartPoints(series)
 	s := ChartShape{Kind: kind, Width: chartW, Height: chartH, Points: points, Left: chartLeft, Right: chartW - chartRight}
+	if len(target) > 0 {
+		if t := numberOf(target[0]); t > 0 {
+			s.Target, s.HasTarget = t, true
+		}
+	}
 	if kind != "line" {
 		s.Kind = "bar"
 	}
@@ -65,6 +79,9 @@ func chartShape(series any, kind string) ChartShape {
 		if p.Value > top {
 			top = p.Value
 		}
+	}
+	if s.HasTarget && s.Target > top {
+		top = s.Target
 	}
 	if top <= 0 {
 		top = 1
@@ -82,10 +99,17 @@ func chartShape(series any, kind string) ChartShape {
 	for v := 0.0; v <= top+step/1000; v += step {
 		s.Ticks = append(s.Ticks, ChartTick{Y: round(s.Baseline - v/top*plotH), Text: numberText(v)})
 	}
+	if s.HasTarget {
+		s.TargetY = round(s.Baseline - s.Target/top*plotH)
+	}
 	slot := plotW / float64(len(points))
+	dense := len(points) > 14
+	every := (len(points) + 7) / 8
 	var path []string
 	for i := range s.Points {
 		p := &s.Points[i]
+		p.ShowValue = !dense
+		p.ShowLabel = !dense || (len(points)-1-i)%every == 0
 		h := p.Value / top * plotH
 		if p.Value < 0 {
 			h = 0

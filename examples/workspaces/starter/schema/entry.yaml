@@ -1,0 +1,24 @@
+# One thing logged against a habit: when, and how much. Made by the Log
+# press on a tracker, by the assistant, or by an import. Provided with
+# every workspace.
+name: entry
+description: One thing logged against a habit, when, and how much; the tracker adds them up.
+title: note
+provided: true
+fields:
+  habit:
+    type: ref
+    to: habit
+    required: true
+  at:
+    type: datetime
+    required: true
+    description: When it was done; the moment of logging unless said otherwise.
+  amount:
+    type: float
+    default: 1
+    description: How much, in the habit's unit; 1 for a plain done.
+  note:
+    type: string
+    maxLength: 200
+    description: Anything about this one.

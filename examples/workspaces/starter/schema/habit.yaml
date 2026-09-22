@@ -1,0 +1,41 @@
+# Something to keep up: once a day, eight glasses, five kilometres a week.
+# Provided with every workspace, so tracking needs no schema of your own:
+# a tracker block shows each habit against its target, its streak and the
+# last days at a glance, with a press to log; the habit's own page has the
+# numbers and a chart.
+name: habit
+description: "Something to keep up: a thing to do each day or week, or an amount to reach. Entries logged against it give this period against the target, the streak, the best run, and progress on a longer goal."
+title: name
+provided: true
+fields:
+  name:
+    type: string
+    required: true
+    maxLength: 120
+  cadence:
+    type: enum
+    values: [day, week]
+    default: day
+    description: The period a target applies to.
+  target:
+    type: float
+    default: 1
+    description: "What a period needs to count as met: 1 for once, 8 for eight glasses, 5 for five kilometres."
+  unit:
+    type: string
+    description: "What is counted: glasses, km, minutes, pages. Empty when it is simply done or not."
+  goal:
+    type: float
+    description: A total to reach over time, in the unit, such as 100 km; empty for none.
+  by:
+    type: datetime
+    description: When to reach the goal by, if there is one.
+  notes:
+    type: markdown
+  tags:
+    type: list
+    of: string
+  archived:
+    type: bool
+    default: false
+    description: Kept but no longer tracked; a tracker leaves it out.

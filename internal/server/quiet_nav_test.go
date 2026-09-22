@@ -30,8 +30,8 @@ func TestASidebarShowsWhatHasSomethingInIt(t *testing.T) {
 	}
 
 	// A list the person made is theirs to see before anything is in it.
-	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/types", map[string]any{"name": "habit", "fields": []map[string]any{{"name": "name", "type": "string", "required": true}}}), http.StatusCreated)
-	if page := get(t, h, "/").Body.String(); !strings.Contains(page, `href="/t/habit"`) {
+	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/types", map[string]any{"name": "ritual", "fields": []map[string]any{{"name": "name", "type": "string", "required": true}}}), http.StatusCreated)
+	if page := get(t, h, "/").Body.String(); !strings.Contains(page, `href="/t/ritual"`) {
 		t.Error("a list the person made shows even when empty")
 	}
 

@@ -126,6 +126,10 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(&b, `<dt>%s</dt><dd data-prop="%s"%s>%s</dd>`, template.HTMLEscapeString(label(f.Name)), f.Name, whenAttrs(f, rec.Fields[f.Name]), template.HTMLEscapeString(val))
 	}
 	b.WriteString("</dl>")
+	// A habit's page is where it stands: its row, the best run, a chart.
+	if t.Name == HabitType {
+		b.WriteString(string(s.habitSection(rec)))
+	}
 	// Deleting is one step, because it can be taken back: the record goes
 	// with everything it had into the activity log, and the listing the
 	// person lands on offers to put it back. No page asks "are you sure".

@@ -57,6 +57,9 @@ func (s *Server) focusPage(w http.ResponseWriter, r *http.Request) {
 	if comp.Manifest.Name == clockComponent {
 		props = s.resolveClock(props)
 	}
+	if comp.Manifest.Name == trackerComponent {
+		props = s.resolveTracker(props)
+	}
 	if comp.Manifest.Name == chartComponent {
 		props = s.resolveChart(props)
 	}
