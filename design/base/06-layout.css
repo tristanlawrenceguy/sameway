@@ -173,8 +173,17 @@ ol.sw-plain, ul.sw-plain { list-style: none; margin: 0; padding: 0; }
 .sw-prose hr { border: 0; border-top: 1px solid var(--sw-color-border); margin: var(--sw-space-4) 0; }
 .sw-prose > :last-child { margin-bottom: 0; }
 
-/* What points at a record, listed under its fields on its own page. */
-.sw-backlinks { margin-top: var(--sw-space-6); }
+/* What a record is connected to, under its fields on its own page: one
+   line of counts, each a link that opens that connection in place. The
+   line is muted, not faded: it is the way on to the rest, not chrome. */
+.sw-related { margin-top: var(--sw-space-6); }
+.sw-related__list { display: flex; flex-wrap: wrap; gap: var(--sw-space-1) var(--sw-space-4); font-size: var(--sw-size-text-sm); }
+.sw-related__list a { color: var(--sw-color-fg-muted); }
+.sw-related__list a:hover { color: var(--sw-color-fg); }
+/* One opened in place. Hide sits in the quiet layer: the way back out is
+   there for everyone, and it is not what the page is about. */
+.sw-related__open { margin-top: var(--sw-space-6); }
+.sw-related__hide { margin: var(--sw-space-2) 0 0; }
 
 /* A workspace among the others: its name over its folder, and the way to
    it at the end of the row. */

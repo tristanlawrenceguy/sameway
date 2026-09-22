@@ -12,6 +12,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/ingest"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -78,7 +79,7 @@ func (s *Service) recordTools() []llm.Tool {
 				"order": map[string]any{"type": "string", "description": "A field, or -field for the largest or newest first. Newest first when left out."},
 				"limit": map[string]any{"type": "integer", "description": "How many to list. Defaults to 10."},
 			}, "type")},
-		{Name: "get_record", Description: "Read one record with every field, by id: a note's body, a file's text. Use it before answering from what a record says.",
+		{Name: "get_record", Description: "Read one record with every field, by id: a note's body, a file's text. Use it before answering from what a record says. It also returns related: everything the record is joined to — what points at it, what is set about it, what sits beside it under the same parent, what else falls on its day — each with a count and the where that lists them. Their page shows only the counts. When you have a reason to put one in front of the person, send them the page with that connection open: /t/<type>/<id>?show=<key>.",
 			Schema: obj(map[string]any{
 				"type": typeArg,
 				"id":   map[string]any{"type": "string", "description": "The record's id, from find_records or from a page URL /t/<type>/<id>."},
@@ -87,7 +88,12 @@ func (s *Service) recordTools() []llm.Tool {
 }
 
 // getRecord gives the model a record's fields, so it can answer from what
-// a note or a file says rather than from its title alone.
+// a note or a file says rather than from its title alone, and everything
+// the record is connected to. The person's page shows those connections
+// as a line of counts; the model is given them in full, with the where
+// that follows each one, because it cannot follow what it was not told
+// about, and because it is the one deciding whether the person has a
+// reason to see any of it.
 func (s *Service) getRecord(typeName, id string) toolResult {
 	t, err := s.contentType(typeName)
 	if err != nil {
@@ -97,7 +103,13 @@ func (s *Service) getRecord(typeName, id string) toolResult {
 	if err != nil {
 		return fail("no %s with id %s. Use find_records to get an id", t.Name, id)
 	}
-	raw, err := json.MarshalIndent(map[string]any{"id": rec.ID, "type": t.Name, "page": "/t/" + t.Name + "/" + rec.ID, "fields": rec.Fields}, "", "  ")
+	page := relate.Page(t.Name, rec.ID)
+	out := map[string]any{"id": rec.ID, "type": t.Name, "page": page, "fields": rec.Fields}
+	if links := relate.Of(s.Store, t, rec, time.Now()); len(links) > 0 {
+		out["related"] = links
+		out["open"] = page + "?show=<key>"
+	}
+	raw, err := json.MarshalIndent(out, "", "  ")
 	if err != nil {
 		return fail("%v", err)
 	}

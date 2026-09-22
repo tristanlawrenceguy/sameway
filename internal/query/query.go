@@ -19,6 +19,7 @@ import (
 const Grammar = "Each condition is field, operator, value with no spaces around the operator: " +
 	"status=draft, status!=done, title~garden (contains), due<today, due>=+7d, tags=health (has), " +
 	"body= (empty), due!= (set). Dates take 2026-10-01, today, tomorrow, yesterday, now, +7d, -1w, +3h. " +
+	"id!=abc123 leaves one record out, which is how a record lists the others like it. " +
 	"Order is a field name, or -field for the largest or newest first; created_at and updated_at work too."
 
 // Cond is one condition.

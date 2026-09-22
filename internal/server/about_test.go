@@ -54,9 +54,17 @@ func TestThingsKnowWhatTheyAreAbout(t *testing.T) {
 	if rec.Code != http.StatusSeeOther || len(reminders) != 1 || reminders[0].Fields["about"] != taskPath {
 		t.Fatalf("a reminder set from a page is about it, got %d and %v", rec.Code, reminders)
 	}
+	// The thing's page says the reminder is there and leaves it at that.
+	// The reminder itself is one link away, not on the page.
 	page = get(t, h, taskPath).Body.String()
-	if !strings.Contains(page, "Reminders about this") || !strings.Contains(page, `href="/t/reminder/`+reminders[0].ID+`"`) {
-		t.Errorf("the thing's page lists the reminders about it\n%s", page)
+	if !strings.Contains(page, `href="`+taskPath+`?show=about%3Areminder.about"`) || !strings.Contains(page, ">1 reminder about this</a>") {
+		t.Errorf("the thing's page counts the reminders about it\n%s", page)
+	}
+	if rel := page[strings.Index(page, ">Related</h2>"):]; strings.Contains(rel, `href="/t/reminder/`+reminders[0].ID+`"`) {
+		t.Error("the reminder itself is not among the connections until someone asks for it")
+	}
+	if open := get(t, h, taskPath+"?show=about:reminder.about").Body.String(); !strings.Contains(open, `href="/t/reminder/`+reminders[0].ID+`"`) {
+		t.Errorf("asking opens the reminders where the person already is\n%s", open)
 	}
 	if rp := get(t, h, "/t/reminder/"+reminders[0].ID).Body.String(); !strings.Contains(rp, `<dt>About</dt><dd data-prop="about" data-source="`+taskPath+`"><a class="sw-link" href="`+taskPath+`">Order compost</a></dd>`) {
 		t.Errorf("a reminder's page leads to what it is about\n%s", rp)

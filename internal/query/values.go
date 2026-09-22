@@ -12,9 +12,10 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
-// The record's own times are fields too, for ordering and for "changed
-// since".
-var own = map[string]string{"created_at": "datetime", "updated_at": "datetime"}
+// The record's own id and times are fields too, for ordering, for
+// "changed since", and for a list of the others: id!=<id> is how a
+// record leaves itself out of the records it is related to.
+var own = map[string]string{"id": "string", "created_at": "datetime", "updated_at": "datetime"}
 
 func known(t *schema.Type, field string) bool {
 	if _, ok := own[field]; ok {
@@ -29,7 +30,7 @@ func fieldNames(t *schema.Type) []string {
 	for _, f := range t.Fields {
 		out = append(out, f.Name)
 	}
-	return append(out, "created_at", "updated_at")
+	return append(out, "id", "created_at", "updated_at")
 }
 
 func kindOf(t *schema.Type, field string) string {
@@ -44,6 +45,8 @@ func kindOf(t *schema.Type, field string) string {
 
 func valueOf(rec *store.Record, field string) any {
 	switch field {
+	case "id":
+		return rec.ID
 	case "created_at":
 		return rec.CreatedAt.UTC().Format(time.RFC3339)
 	case "updated_at":

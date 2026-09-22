@@ -151,8 +151,9 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	b.WriteString(`</div>`)
 	// Recent activity on this page, so a deletion can be taken back where the person lands.
 	b.WriteString(string(s.recentActivity(5, "/t/"+t.Name+"/"+rec.ID)))
-	// What points at this record, listed here by itself.
-	b.WriteString(s.backlinks(t, rec))
+	// What this record is connected to, as a line of counts; the address
+	// says which of them are open. See related.go.
+	b.WriteString(s.related(t, rec, r.URL.Query()["show"]))
 	s.page(w, r, s.title(t, rec), template.HTML(b.String()), pageOptions{
 		Kicker:       crumbs("/t/"+t.Name, capitalize(plural(t.Name)), s.title(t, rec), s.dotOf(t.Name)),
 		Lede:         s.lede(t, rec),

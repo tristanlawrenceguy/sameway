@@ -22,6 +22,7 @@ travels through git.
 | Templates | Go `html/template` with a typed props struct per component | Stdlib, auto-escaping, no code generator. Props are validated against the component manifest in tests. |
 | Storage | SQLite (modernc.org/sqlite) as live store, Markdown/JSON files as portable form | Zero setup. Files make the workspace git-friendly and AI-readable. `export`/`import` keep them in sync; auto-export is a config flag. |
 | CMS scope | Structured content types only, no page builder | Keep the core small. Rendering is done by components; if a view does not exist, create a component. |
+| Connections | Worked out from the schema in `internal/relate`; a page shows the counts, an agent is given all of them | A connection is real in the data whether or not it is drawn. A page that opens every one of them is a page of other records with the one you came for at the top; an agent that is shown only some of them cannot follow the rest. Counts on the page, the whole graph in the API, and `?show=<key>` for the one there is a reason to open. |
 | Design system | Standalone package (tokens, CSS, HTML patterns, manifests) | Usable in any stack. The Go binary is one consumer. |
 | Accessibility bar | WCAG 2.2 AAA where feasible, AA as hard gate in CI | Every component ships with automated and keyboard tests. |
 | Users | Single user, local first | Auth is an optional module added later, not baked into day one. |
@@ -120,6 +121,7 @@ Nothing is hand-written per surface. Adding a surface means adding a generator.
     schema/                   # load + validate content type files
     store/                    # SQLite, migrations, generic CRUD keyed by schema
     render/                   # template loading, component registry, props validation
+    relate/                   # how one record connects to the others, from the schema
     server/                   # HTTP: HTML views, JSON API, describe endpoint
     mcp/                      # MCP server (stdio + HTTP) generated from schema + manifests
     cli/                      # commands generated from schema, plus scaffold/check/serve

@@ -27,11 +27,19 @@ func TestARefIsARecordPointingAtAnother(t *testing.T) {
 	if !strings.Contains(page, `<dt>Project</dt><dd data-prop="project" data-source="`+garden.ID+`"><a class="sw-link" href="/t/project/`+garden.ID+`">Garden</a></dd>`) {
 		t.Errorf("the task's page shows its project as a link: %.700s", page[strings.Index(page, "<dl"):])
 	}
+	// The project's page says how many tasks are in it and stops there: a
+	// page of other records with the one you came for at the top of it is
+	// not reading. The list is one link away, and it opens here.
 	project := get(t, h, "/t/project/"+garden.ID).Body.String()
-	if !strings.Contains(project, `data-component="collection"`) || !strings.Contains(project, ">Tasks</h2>") || !strings.Contains(project, "Dig the pond") || strings.Contains(project, "Paint the hall") {
-		t.Errorf("the project's page lists its own tasks: %.900s", project[strings.Index(project, "</dl>"):])
+	tail := project[strings.Index(project, "</dl>"):]
+	if !strings.Contains(tail, ">1 task</a>") || strings.Contains(tail, "Dig the pond") {
+		t.Errorf("the project's page counts its tasks without listing them: %.900s", tail)
 	}
-	if !strings.Contains(project, "/t/task?order=-updated_at&amp;where=project%3D"+garden.ID) {
+	open := get(t, h, "/t/project/"+garden.ID+"?show=points-here:task.project").Body.String()
+	if !strings.Contains(open, `data-component="collection"`) || !strings.Contains(open, "Dig the pond") || strings.Contains(open, "Paint the hall") {
+		t.Errorf("opening it lists the project's own tasks: %.900s", open[strings.Index(open, "</dl>"):])
+	}
+	if !strings.Contains(open, "/t/task?order=-updated_at&amp;where=project%3D"+garden.ID) {
 		t.Error("the list of tasks leads on to the list page with the same query")
 	}
 

@@ -110,15 +110,6 @@ func (s *Server) apiList(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"type": r.PathValue("type"), "count": len(recs), "records": recs})
 }
 
-func (s *Server) apiGet(w http.ResponseWriter, r *http.Request) {
-	rec, err := s.app.Store.Get(r.PathValue("type"), r.PathValue("id"))
-	if err != nil {
-		writeError(w, err)
-		return
-	}
-	writeJSON(w, http.StatusOK, rec)
-}
-
 func (s *Server) apiCreate(w http.ResponseWriter, r *http.Request) {
 	fields, err := readBody(r)
 	if err != nil {
