@@ -25,7 +25,7 @@ func TestEmptyStateAnchorLinksToChat(t *testing.T) {
 	if !strings.Contains(body, `<p class="sw-empty">`) {
 		t.Errorf("empty-state must use <p class=\"sw-empty\">\n%s", truncate(rec.Body.String()))
 	}
-	if !strings.Contains(body, `href="/chat"`) {
+	if !strings.Contains(body, `<a href="/chat`) {
 		t.Errorf("empty-state anchor must have href=\"/chat\" so clicking navigates there\n%s", truncate(body))
 	}
 
@@ -47,7 +47,7 @@ func TestEmptyStateAnchorNavigatesForAllTypes(t *testing.T) {
 			wantStatus(t, rec, http.StatusOK)
 			body := rec.Body.String()
 
-			if !strings.Contains(body, `href="/chat"`) {
+			if !strings.Contains(body, `<a href="/chat`) {
 				t.Errorf("empty-state for %s must have href=\"/chat\"\n%s", typ, truncate(body))
 			}
 
