@@ -12,7 +12,8 @@
       "kind": { "type": "string", "enum": ["info", "success", "warning", "danger"], "default": "info" },
       "title": { "type": "string", "description": "Optional short title shown in bold before the message." },
       "id": { "type": "string" },
-      "icon": { "type": "string", "description": "Optional visual indicator shown before the kind label." }
+      "icon": { "type": "string", "description": "Optional visual indicator shown before the kind label." },
+      "dismiss": { "type": "boolean", "description": "When true, renders a close button with data-dismiss attribute." }
     }
   },
   "a11y": {

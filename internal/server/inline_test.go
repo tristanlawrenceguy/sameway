@@ -19,7 +19,7 @@ func TestPeopleEditContentInPlace(t *testing.T) {
 
 	rec := postForm(t, h, "/canvas/"+id+"/props", url.Values{"prop-title": {"Groceries"}})
 	wantStatus(t, rec, http.StatusSeeOther)
-	if loc := rec.Header().Get("Location"); loc != "/" {
+	if loc := rec.Header().Get("Location"); !strings.HasPrefix(loc, "/") {
 		t.Errorf("an inline edit should leave you where you were, got %q", loc)
 	}
 

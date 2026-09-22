@@ -41,6 +41,14 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 	convo.Arrival = arrivals(blocks, convo)
 
 	var b strings.Builder
+	if r.URL.Query().Has("saved") {
+		b.WriteString(string(s.component("alert", map[string]any{
+			"kind":    "success",
+			"title":   "Changes saved",
+			"message": "Your edits were applied.",
+			"dismiss": true,
+		})))
+	}
 	if convo.Notice != "" {
 		b.WriteString(string(convo.Notice))
 	}

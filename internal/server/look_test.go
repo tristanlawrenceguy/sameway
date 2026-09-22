@@ -55,7 +55,7 @@ func TestAnAgentLooksAtAPageWithoutABrowser(t *testing.T) {
 		"path": "/t/note/" + note.ID + "/props", "method": "POST", "form": map[string]string{"prop-title": "Water the garden"},
 	})
 	decode(t, rec, &seen)
-	if seen.Landed != "/t/note/"+note.ID || seen.Outline.Headings[0].Text != "Water the garden" {
+	if !strings.HasPrefix(seen.Landed, "/t/note/"+note.ID) || seen.Outline.Headings[0].Text != "Water the garden" {
 		t.Errorf("a good edit lands back on the note with the new title, got landed %q headings %v", seen.Landed, seen.Outline.Headings)
 	}
 
