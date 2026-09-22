@@ -6,6 +6,11 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/render/htmltest"
 )
 
+// fieldsView asks a record's page for its whole field list. A page at
+// rest leaves out what its heading and chips already say, so the marks
+// the inline editor works from live on this view: see parts.go.
+const fieldsView = "?show=fields"
+
 // TestDetailPageHasDataBlockID checks that a note detail page wraps its
 // definition list in a div with data-block-id set to the record ID.
 func TestDetailPageHasDataBlockID(t *testing.T) {
@@ -64,12 +69,12 @@ func TestDetailPageDataPropOnEditableFields(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	doc := parse(t, get(t, h, "/t/note/"+rec.ID))
+	doc := parse(t, get(t, h, "/t/note/"+rec.ID+fieldsView))
 
 	for _, prop := range []string{"title", "body", "tags", "status", "pinned"} {
 		dd := doc.WithAttr("data-prop", prop)
 		if len(dd) == 0 {
-			t.Errorf("<dd data-prop=%q should exist for note detail page\n%s", prop, truncate(get(t, h, "/t/note/"+rec.ID).Body.String()))
+			t.Errorf("<dd data-prop=%q should exist for note detail page\n%s", prop, truncate(get(t, h, "/t/note/"+rec.ID+fieldsView).Body.String()))
 		}
 	}
 }

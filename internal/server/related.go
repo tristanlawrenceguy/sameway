@@ -32,47 +32,48 @@ import (
 // same one link for everyone. This is the other case from the quiet
 // layer, which is shown to everybody and only faded.
 
-// related is the connections section: the line of counts, then whichever
-// connections the address asked to open.
-func (s *Server) related(t *schema.Type, rec *store.Record, show []string) string {
-	links := relate.Of(s.app.Store, t, rec, time.Now())
-	if len(links) == 0 {
+// related is the connections that are open, from the address or from the
+// workspace, and nothing at all when none are: a record's page says what
+// the record is, not what else exists. What else exists is in
+// internal/relate, and the assistant is given all of it.
+func (s *Server) related(t *schema.Type, rec *store.Record, always, here []string) string {
+	if len(always) == 0 && len(here) == 0 {
 		return ""
 	}
+	links := relate.Of(s.app.Store, t, rec, time.Now())
 	page := "/t/" + t.Name + "/" + rec.ID
-	open := opened(links, show)
-	var row, lists strings.Builder
+	here = opened(links, here)
+	var lists strings.Builder
 	for _, l := range links {
-		if has(open, l.Key) {
-			lists.WriteString(s.openLink(l, page, open))
-			continue
+		switch {
+		case has(here, l.Key):
+			lists.WriteString(s.openLink(l, page, here, true))
+		case has(always, l.Key):
+			lists.WriteString(s.openLink(l, page, here, false))
 		}
-		fmt.Fprintf(&row, `<li><a class="sw-link" href="%s">%s</a></li>`,
-			template.HTMLEscapeString(showURL(page, append(append([]string{}, open...), l.Key))),
-			template.HTMLEscapeString(s.words(l)))
 	}
-	var b strings.Builder
-	b.WriteString(`<h2 class="sw-visually-hidden">Related</h2>`)
-	if row.Len() > 0 {
-		b.WriteString(`<nav class="sw-related" aria-label="Related"><ul class="sw-plain sw-related__list">` + row.String() + `</ul></nav>`)
+	if lists.Len() == 0 {
+		return ""
 	}
-	b.WriteString(lists.String())
-	return b.String()
+	return `<h2 class="sw-visually-hidden">Related</h2>` + lists.String()
 }
 
 // openLink is one connection opened in place: the records it names, as
-// the same collection a block would show, with the way to close it again
-// in the quiet layer beside its heading.
-func (s *Server) openLink(l relate.Link, page string, open []string) string {
+// the same collection a block would show. One the address opened carries
+// the way to close it again, in the quiet layer beside its heading. One
+// the workspace turned on carries none: it is on because somebody wanted
+// it there every time, and it goes the way it came, by asking.
+func (s *Server) openLink(l relate.Link, page string, here []string, closable bool) string {
 	props := s.resolveCollection(map[string]any{
 		"type": l.Type, "where": l.Where, "order": l.Order, "limit": 50,
 		"label": capitalize(s.words(l)), "level": 2, "id": "related-" + slugKey(l.Key),
 	})
-	hide := s.component("link", map[string]any{
-		"href": showURL(page, without(open, l.Key)), "label": "Hide", "context": s.words(l), "look": "button",
-	})
-	return fmt.Sprintf(`<div class="sw-related__open" data-related="%s" data-dot="%d">%s<p class="sw-quiet sw-related__hide">%s</p></div>`,
-		template.HTMLEscapeString(l.Key), s.dotOf(l.Type), s.component(collectionComponent, props), hide)
+	body := string(s.component(collectionComponent, props))
+	if closable {
+		body += s.fewer(page, l.Key, s.words(l), here)
+	}
+	return fmt.Sprintf(`<div class="sw-related__open" data-related="%s" data-dot="%d">%s</div>`,
+		template.HTMLEscapeString(l.Key), s.dotOf(l.Type), body)
 }
 
 // words is a connection in a person's words: how many, of what, and what

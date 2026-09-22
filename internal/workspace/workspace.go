@@ -60,6 +60,14 @@ type Config struct {
 		// of the way unless asked for. The pages themselves are always
 		// there.
 		Developer string `yaml:"developer"`
+		// Show names the parts of a page that are on every time, comma
+		// separated, when the default is off: fields, remind, or a
+		// connection key such as points-here:task.project. Empty, the
+		// default, is none of them, and each is still one link away in
+		// the address (?show=<key>). The assistant adds one with
+		// set_setting ui.show +<key> when it has a reason the person
+		// would want it there always, and takes it back with -<key>.
+		Show string `yaml:"show"`
 	} `yaml:"ui"`
 	Chat struct {
 		// HistoryLimit caps how many past messages are sent to the model.

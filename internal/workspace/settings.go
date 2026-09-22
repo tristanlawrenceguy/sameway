@@ -41,6 +41,7 @@ var Settings = []Setting{
 	{"ui.pace", "enum", Paces, "how changes arrive: calm, quick or still"},
 	{"ui.lists", "enum", []string{"filled", "all"}, "which lists the sidebar shows: filled (something in them, or made by the person) or all"},
 	{"ui.developer", "enum", []string{"hidden", "shown"}, "the design system and the guide for agents: hidden from the sidebar or shown"},
+	{"ui.show", "keys", nil, "the parts of a page that are on every time. All of them are off by default, and a page shows no trace of an off one, so this is how something earns a permanent place: fields (a record's whole field list, including the ones its heading and chips already say), remind (the field for setting a reminder about a record, on its page), ask (the way to the assistant with the record in the box), day (the way to the record's day on the calendar), or a connection key from get_record's related, such as points-here:task.project. +key adds one, -key takes it back, a list replaces them all, empty is none. Each is also one address away without this (?show=<key>), so turn one on only when you have a reason the person wants it every time, and say the reason"},
 	{"chat.history_limit", "int", nil, "how many past messages go to the model each turn"},
 	{"chat.system_prompt", "string", nil, "words put before the built-in instructions to the model"},
 	{"update.mode", "enum", update.Modes, "how a new version of sameway arrives: auto installs a release on its own and says so in the activity log, manual only says one is there and waits to be asked (either way it runs from the next start)"},
@@ -105,6 +106,12 @@ func (w *Workspace) Set(key, value string) error {
 		if !envName.MatchString(value) {
 			return fmt.Errorf("%s takes the name of an environment variable, such as OPENAI_API_KEY; a key or token itself is never written into workspace.yaml", key)
 		}
+	case "keys":
+		// A list one thing is added to or taken from, rather than resent
+		// whole: turning a part of a page on should not be able to turn
+		// another one off by forgetting it.
+		value = mergeKeys(w.Config.UI.Show, value)
+		scalar = yamlScalar(value)
 	default:
 		if value == "" {
 			return fmt.Errorf("%s needs a value", key)
@@ -130,6 +137,41 @@ func (w *Workspace) Set(key, value string) error {
 // SetPace records how changes arrive: the setting the assistant changed
 // first, kept by name.
 func (w *Workspace) SetPace(pace string) error { return w.Set("ui.pace", pace) }
+
+// mergeKeys reads a change to a list of keys against what is there:
+// +key adds one, -key takes one away, and anything else is the whole
+// list, so a person can still say exactly which parts are on.
+func mergeKeys(current, change string) string {
+	var keys []string
+	for _, k := range strings.Split(current, ",") {
+		if k = strings.TrimSpace(k); k != "" {
+			keys = append(keys, k)
+		}
+	}
+	one := strings.TrimSpace(strings.TrimLeft(change, "+-"))
+	switch {
+	case strings.HasPrefix(change, "+"):
+		if one != "" && !contains(keys, one) {
+			keys = append(keys, one)
+		}
+	case strings.HasPrefix(change, "-"):
+		var out []string
+		for _, k := range keys {
+			if k != one {
+				out = append(out, k)
+			}
+		}
+		keys = out
+	default:
+		keys = nil
+		for _, k := range strings.Split(change, ",") {
+			if k = strings.TrimSpace(k); k != "" && !contains(keys, k) {
+				keys = append(keys, k)
+			}
+		}
+	}
+	return strings.Join(keys, ", ")
+}
 
 // yamlScalar writes a string the way YAML needs it on one line: quoted
 // when it has to be, a block when it has lines of its own.

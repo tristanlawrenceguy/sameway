@@ -19,11 +19,11 @@ func TestDetailPageActivityDataAttributes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	doc := parse(t, get(t, h, "/t/activity/"+rec.ID))
+	doc := parse(t, get(t, h, "/t/activity/"+rec.ID+fieldsView))
 
 	blocks := doc.WithAttr("data-block-id", rec.ID)
 	if len(blocks) == 0 {
-		t.Errorf("activity detail should have a div with data-block-id=%q\n%s", rec.ID, truncate(get(t, h, "/t/activity/"+rec.ID).Body.String()))
+		t.Errorf("activity detail should have a div with data-block-id=%q\n%s", rec.ID, truncate(get(t, h, "/t/activity/"+rec.ID+fieldsView).Body.String()))
 	}
 
 	if len(blocks) == 0 {
@@ -31,7 +31,7 @@ func TestDetailPageActivityDataAttributes(t *testing.T) {
 	}
 	action, ok := htmltest.Attr(blocks[0], "data-edit-action")
 	if !ok {
-		t.Errorf("activity wrapping div should have data-edit-action\n%s", truncate(get(t, h, "/t/activity/"+rec.ID).Body.String()))
+		t.Errorf("activity wrapping div should have data-edit-action\n%s", truncate(get(t, h, "/t/activity/"+rec.ID+fieldsView).Body.String()))
 		return
 	}
 	want := "/t/activity/" + rec.ID + "/props"
@@ -42,14 +42,14 @@ func TestDetailPageActivityDataAttributes(t *testing.T) {
 	for _, prop := range []string{"actor", "action", "detail"} {
 		dd := doc.WithAttr("data-prop", prop)
 		if len(dd) == 0 {
-			t.Errorf("<dd data-prop=%q should exist for activity detail\n%s", prop, truncate(get(t, h, "/t/activity/"+rec.ID).Body.String()))
+			t.Errorf("<dd data-prop=%q should exist for activity detail\n%s", prop, truncate(get(t, h, "/t/activity/"+rec.ID+fieldsView).Body.String()))
 		}
 	}
 
 	for _, prop := range []string{"Created", "Updated"} {
 		dd := doc.WithAttr("data-prop", prop)
 		if len(dd) > 0 {
-			t.Errorf("<dd should not have data-prop=%q on activity\n%s", prop, truncate(get(t, h, "/t/activity/"+rec.ID).Body.String()))
+			t.Errorf("<dd should not have data-prop=%q on activity\n%s", prop, truncate(get(t, h, "/t/activity/"+rec.ID+fieldsView).Body.String()))
 		}
 	}
 }
@@ -66,11 +66,11 @@ func TestDetailPageProposalDataAttributes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	doc := parse(t, get(t, h, "/t/proposal/"+rec.ID))
+	doc := parse(t, get(t, h, "/t/proposal/"+rec.ID+fieldsView))
 
 	blocks := doc.WithAttr("data-block-id", rec.ID)
 	if len(blocks) == 0 {
-		t.Errorf("proposal detail should have a div with data-block-id=%q\n%s", rec.ID, truncate(get(t, h, "/t/proposal/"+rec.ID).Body.String()))
+		t.Errorf("proposal detail should have a div with data-block-id=%q\n%s", rec.ID, truncate(get(t, h, "/t/proposal/"+rec.ID+fieldsView).Body.String()))
 	}
 
 	if len(blocks) == 0 {
@@ -78,7 +78,7 @@ func TestDetailPageProposalDataAttributes(t *testing.T) {
 	}
 	action, ok := htmltest.Attr(blocks[0], "data-edit-action")
 	if !ok {
-		t.Errorf("proposal wrapping div should have data-edit-action\n%s", truncate(get(t, h, "/t/proposal/"+rec.ID).Body.String()))
+		t.Errorf("proposal wrapping div should have data-edit-action\n%s", truncate(get(t, h, "/t/proposal/"+rec.ID+fieldsView).Body.String()))
 		return
 	}
 	want := "/t/proposal/" + rec.ID + "/props"
@@ -89,14 +89,14 @@ func TestDetailPageProposalDataAttributes(t *testing.T) {
 	for _, prop := range []string{"summary", "action"} {
 		dd := doc.WithAttr("data-prop", prop)
 		if len(dd) == 0 {
-			t.Errorf("<dd data-prop=%q should exist for proposal detail\n%s", prop, truncate(get(t, h, "/t/proposal/"+rec.ID).Body.String()))
+			t.Errorf("<dd data-prop=%q should exist for proposal detail\n%s", prop, truncate(get(t, h, "/t/proposal/"+rec.ID+fieldsView).Body.String()))
 		}
 	}
 
 	for _, prop := range []string{"Created", "Updated"} {
 		dd := doc.WithAttr("data-prop", prop)
 		if len(dd) > 0 {
-			t.Errorf("<dd should not have data-prop=%q on proposal\n%s", prop, truncate(get(t, h, "/t/proposal/"+rec.ID).Body.String()))
+			t.Errorf("<dd should not have data-prop=%q on proposal\n%s", prop, truncate(get(t, h, "/t/proposal/"+rec.ID+fieldsView).Body.String()))
 		}
 	}
 }
@@ -110,11 +110,11 @@ func TestDetailPageStatusFieldHasDataProp(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	doc := parse(t, get(t, h, "/t/note/"+rec.ID))
+	doc := parse(t, get(t, h, "/t/note/"+rec.ID+fieldsView))
 
 	dd := doc.WithAttr("data-prop", "status")
 	if len(dd) == 0 {
-		t.Errorf("<dd data-prop=\"status\" should exist for note with default status\n%s", truncate(get(t, h, "/t/note/"+rec.ID).Body.String()))
+		t.Errorf("<dd data-prop=\"status\" should exist for note with default status\n%s", truncate(get(t, h, "/t/note/"+rec.ID+fieldsView).Body.String()))
 	}
 }
 

@@ -63,7 +63,7 @@ func TestQuestionsAreAnsweredWhereTheyAreMet(t *testing.T) {
 		t.Errorf("after answering, the person should be back on the page they answered from, got %q", loc)
 	}
 	own = get(t, h, "/t/proposal/"+pid).Body.String()
-	if strings.Contains(own, `action="/proposal/`+pid+`/dismiss"`) || !strings.Contains(own, "dismissed") {
+	if strings.Contains(own, `action="/proposal/`+pid+`/dismiss"`) || !strings.Contains(own, ">Dismissed<") {
 		t.Error("an answered proposal offers no answers and says how it was answered")
 	}
 	if list := get(t, h, "/t/proposal").Body.String(); !strings.Contains(list, ">Dismissed</span>") {

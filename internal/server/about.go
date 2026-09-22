@@ -70,28 +70,40 @@ func (s *Server) aboutCell(f schema.Field, val string) string {
 // under the title: a reminder about it, a word with the assistant about
 // it, and its day on the calendar when it has one and there is a
 // calendar to show it.
-func (s *Server) nextThings(t *schema.Type, rec *store.Record) string {
-	if t.Internal || t.Name == ReminderType {
+//
+// None of them are there unless somebody asked for them. A labelled
+// field and a button under every record, for the one time in twenty
+// anyone wants a reminder, is a form the other nineteen read past — and
+// a link to that form is a smaller version of the same thing, still
+// there every time, still about the page rather than what is on it. Each
+// is a part (remind, ask, day) that the address opens and the workspace
+// keeps: see parts.go. Meanwhile the assistant can set a reminder, and
+// is already the thing "ask the assistant" would have led to.
+func (s *Server) nextThings(t *schema.Type, rec *store.Record, on []string) string {
+	if t.Internal || t.Name == ReminderType || len(on) == 0 {
 		return ""
 	}
 	path := "/t/" + t.Name + "/" + rec.ID
 	title := s.title(t, rec)
 	var b strings.Builder
-	b.WriteString(`<div class="sw-next" role="group" aria-label="Do with this">`)
-	if _, ok := s.app.Types.Get(ReminderType); ok {
+	if _, ok := s.app.Types.Get(ReminderType); ok && has(on, RemindPart) {
 		fmt.Fprintf(&b, `<form method="post" action="/clock/set" class="sw-next__remind"><input type="hidden" name="about" value="%s"><input type="hidden" name="title" value="%s">%s%s</form>`,
 			template.HTMLEscapeString(path), template.HTMLEscapeString(title),
 			s.component("text-field", map[string]any{"label": "Remind me at", "name": "at", "id": "remind-at", "hint": "7pm, tomorrow 9am", "autocomplete": "off"}),
 			s.component("button", map[string]any{"label": "Remind me", "context": "about " + title, "type": "submit", "variant": "secondary"}))
 	}
-	b.WriteString(string(s.component("link", map[string]any{"href": "/chat?about=" + path, "label": "Ask the assistant", "look": "button"})))
-	if day := s.dayOf(t, rec); day != "" {
+	if has(on, AskPart) {
+		b.WriteString(string(s.component("link", map[string]any{"href": "/chat?about=" + path, "label": "Ask the assistant", "look": "button"})))
+	}
+	if day := s.dayOf(t, rec); day != "" && has(on, DayPart) {
 		if cal := s.firstBlock("calendar"); cal != nil {
 			b.WriteString(string(s.component("link", map[string]any{"href": "/canvas/" + cal.ID + "?day=" + day, "label": "See that day", "look": "button"})))
 		}
 	}
-	b.WriteString(`</div>`)
-	return b.String()
+	if b.Len() == 0 {
+		return ""
+	}
+	return `<div class="sw-next" role="group" aria-label="Do with this">` + b.String() + `</div>`
 }
 
 // dayOf is the day a record falls on, from its first date field.

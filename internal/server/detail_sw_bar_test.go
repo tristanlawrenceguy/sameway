@@ -127,7 +127,7 @@ func TestDetailPageSwBarStructure(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	body := get(t, h, "/t/note/"+rec.ID).Body.String()
+	body := get(t, h, "/t/note/"+rec.ID+fieldsView).Body.String()
 
 	blockOpen := strings.Index(body, `data-block-id="`+rec.ID+`"`)
 	if blockOpen < 0 {

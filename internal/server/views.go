@@ -105,7 +105,10 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	if t.Name == FileType {
 		b.WriteString(s.fileExtras(rec))
 	}
-	b.WriteString(s.nextThings(t, rec))
+	// What this view has been asked to show beyond the least it can say:
+	// see parts.go. Nothing here is on unless somebody asked for it.
+	always, here := s.shown(r)
+	b.WriteString(s.nextThings(t, rec, append(append([]string{}, always...), here...)))
 	fmt.Fprintf(&b, `<div class="sw-dl-block" data-block-id="%s" data-edit-action="/t/%s/%s/props">`, rec.ID, t.Name, rec.ID)
 	// The record's text comes first and reads as a document, under the
 	// title and before its other fields; structured text keeps what was
@@ -120,29 +123,43 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
-	b.WriteString(`<dl class="sw-dl">`)
+	// The list leaves out what the heading and the chips above it have
+	// already said, so the page says each thing once; ?show=fields brings
+	// the whole record back, and is the way to edit those fields in place.
+	head := map[string]bool{}
+	if !has(always, FieldsPart) && !has(here, FieldsPart) {
+		head = headFields(t, rec)
+	}
+	var dl strings.Builder
 	for _, f := range t.Fields {
 		val := display(f, rec.Fields[f.Name])
 		if val == "" || f.Name == textField {
 			continue
 		}
+		if head[f.Name] {
+			continue
+		}
 		if f.Type == "markdown" {
-			fmt.Fprintf(&b, `<dt>%s</dt><dd class="sw-prose" data-prop="%s" data-source="%s" data-prose-level="3">%s</dd>`, template.HTMLEscapeString(label(f.Name)), f.Name, template.HTMLEscapeString(val), prose.Render(val, 3))
+			fmt.Fprintf(&dl, `<dt>%s</dt><dd class="sw-prose" data-prop="%s" data-source="%s" data-prose-level="3">%s</dd>`, template.HTMLEscapeString(label(f.Name)), f.Name, template.HTMLEscapeString(val), prose.Render(val, 3))
 			continue
 		}
 		// A reminder's about is the thing it is for, as the way there.
 		if t.Name == ReminderType && f.Name == "about" {
-			fmt.Fprintf(&b, `<dt>%s</dt>%s`, template.HTMLEscapeString(label(f.Name)), s.aboutCell(f, val))
+			fmt.Fprintf(&dl, `<dt>%s</dt>%s`, template.HTMLEscapeString(label(f.Name)), s.aboutCell(f, val))
 			continue
 		}
 		// A ref shows the record it points at, as the way there.
 		if f.Type == "ref" {
-			fmt.Fprintf(&b, `<dt>%s</dt>%s`, template.HTMLEscapeString(label(f.Name)), s.refCell(f, val))
+			fmt.Fprintf(&dl, `<dt>%s</dt>%s`, template.HTMLEscapeString(label(f.Name)), s.refCell(f, val))
 			continue
 		}
-		fmt.Fprintf(&b, `<dt>%s</dt><dd data-prop="%s"%s>%s</dd>`, template.HTMLEscapeString(label(f.Name)), f.Name, whenAttrs(f, rec.Fields[f.Name]), template.HTMLEscapeString(val))
+		fmt.Fprintf(&dl, `<dt>%s</dt><dd data-prop="%s"%s>%s</dd>`, template.HTMLEscapeString(label(f.Name)), f.Name, whenAttrs(f, rec.Fields[f.Name]), template.HTMLEscapeString(val))
 	}
-	b.WriteString("</dl>")
+	if dl.Len() > 0 {
+		b.WriteString(`<dl class="sw-dl">` + dl.String() + "</dl>")
+	}
+	// The way back out, when the address is what opened the whole record.
+	b.WriteString(s.fewer("/t/"+t.Name+"/"+rec.ID, FieldsPart, "fields of "+s.title(t, rec), here))
 	// A habit's page is where it stands: its row, the best run, a chart.
 	if t.Name == HabitType {
 		b.WriteString(string(s.habitSection(rec)))
@@ -164,45 +181,13 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	b.WriteString(string(s.recentActivity(5, "/t/"+t.Name+"/"+rec.ID)))
 	// What this record is connected to, as a line of counts; the address
 	// says which of them are open. See related.go.
-	b.WriteString(s.related(t, rec, r.URL.Query()["show"]))
+	b.WriteString(s.related(t, rec, always, here))
 	s.page(w, r, s.title(t, rec), template.HTML(b.String()), pageOptions{
 		Kicker:       crumbs("/t/"+t.Name, capitalize(plural(t.Name)), s.title(t, rec), s.dotOf(t.Name)),
 		Lede:         s.lede(t, rec),
 		JSONURL:      "/api/" + t.Name + "/" + rec.ID,
 		ExtraScripts: detailPageExtraScripts,
 	})
-}
-
-func (s *Server) deleteForm(w http.ResponseWriter, r *http.Request) {
-	t, ok := s.app.Types.Get(r.PathValue("type"))
-	if !ok {
-		http.NotFound(w, r)
-		return
-	}
-	rec, err := s.app.Store.Get(t.Name, r.PathValue("id"))
-	if err != nil {
-		s.fail(w, err)
-		return
-	}
-	title := s.title(t, rec)
-	if err := s.app.Store.Delete(t.Name, rec.ID); err != nil {
-		s.fail(w, err)
-		return
-	}
-	// Logged with what it was, so the deletion can be undone.
-	chat.Record(s.app.Store, "human", chat.Change{Action: "deleted", Component: t.Name, ID: rec.ID, Detail: title, Before: rec.Fields})
-
-	// Render a confirmation page with an alert before redirecting back to
-	// the listing, so the person knows the delete actually worked.
-	var b strings.Builder
-	b.WriteString(string(s.component("alert", map[string]any{
-		"kind":    "success",
-		"title":   "Deleted",
-		"message": title + " deleted.",
-	})))
-	fmt.Fprintf(&b, `<p>%s</p>`, s.component("link", map[string]any{"href": "/t/" + t.Name, "label": "See all " + plural(t.Name), "look": "button"}))
-	b.WriteString(`<meta http-equiv="refresh" content="2;url=/t/` + t.Name + `">`)
-	s.page(w, r, title+" deleted", template.HTML(b.String()), pageOptions{})
 }
 
 // display renders a stored value as the text a form or page shows.

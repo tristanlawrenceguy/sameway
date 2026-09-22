@@ -15,7 +15,7 @@ func TestDetailPageSkipsEmptyFields(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	body := get(t, h, "/t/note/"+rec.ID).Body.String()
+	body := get(t, h, "/t/note/"+rec.ID+fieldsView).Body.String()
 
 	// Title appears; body is empty so it is skipped by the emptiness guard.
 	if !strings.Contains(body, "<dt>Title</dt>") {
@@ -46,7 +46,7 @@ func TestDetailPageShowsNonEmptyFields(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	body := get(t, h, "/t/note/"+rec.ID).Body.String()
+	body := get(t, h, "/t/note/"+rec.ID+fieldsView).Body.String()
 
 	if !strings.Contains(body, "<dt>Tags</dt>") || !strings.Contains(body, "a, b") {
 		t.Errorf("detail page should show tag values a, b\n%s", truncate(body))
@@ -69,7 +69,7 @@ func TestDetailPageSkipsEmptyFieldsActivity(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	body := get(t, h, "/t/activity/"+rec.ID).Body.String()
+	body := get(t, h, "/t/activity/"+rec.ID+fieldsView).Body.String()
 
 	if !strings.Contains(body, "<dt>Actor</dt>") || !strings.Contains(body, "<dt>Action</dt>") {
 		t.Errorf("detail page should show Actor and Action rows\n%s", truncate(body))
@@ -99,7 +99,7 @@ func TestDetailPageSkipsEmptyFieldsMessage(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	body := get(t, h, "/t/message/"+rec.ID).Body.String()
+	body := get(t, h, "/t/message/"+rec.ID+fieldsView).Body.String()
 
 	if !strings.Contains(body, "<dt>Role</dt>") || !strings.Contains(body, "<dt>Content</dt>") {
 		t.Errorf("detail page should show Role and Content rows\n%s", truncate(body))
@@ -127,7 +127,7 @@ func TestDetailPageNonEmptyStatusStillRenders(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	body := get(t, h, "/t/note/"+rec.ID).Body.String()
+	body := get(t, h, "/t/note/"+rec.ID+fieldsView).Body.String()
 
 	if !strings.Contains(body, "<dt>Status</dt>") || !strings.Contains(body, "Draft") {
 		t.Errorf("detail page should show Status with value 'draft'\n%s", truncate(body))

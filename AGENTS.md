@@ -27,6 +27,7 @@ runner in tools/a11y-runner.
 | `internal/store/` | SQLite, one table per type | `store.go` |
 | `internal/render/` | component registry, props validation, page layout | `registry.go` |
 | `internal/relate/` | how one record connects to the others, worked out from the schema | `relate.go` |
+| `internal/server/parts.go` | the parts of a page that are off until somebody asks: the keys, and who turned one on | `parts.go` |
 | `internal/llm/` | provider-neutral chat + tools; openai.go and anthropic.go | `llm.go` |
 | `internal/chat/` | the tool loop, the canvas tools, and the record tools generated from the schema | `chat.go` |
 | `internal/mcp/` | the Model Context Protocol server: the chat tools plus reading, over stdio | `server.go` |
@@ -54,7 +55,7 @@ runner in tools/a11y-runner.
 | Agent drives the workspace over MCP | handshake, tools/list carries the chat tools plus describe and get_record, tools/call changes land in the store and the activity log, protocol and schema errors are answered | `internal/mcp/server_test.go` |
 | A record is shown on the canvas as itself | a record block renders the record's words with edit markers, edits post to the record and return to the canvas, the expanded block is the record at page size, a gone record says so | `internal/server/record_block_test.go` |
 | Tabs are canvases | the tab bar appears with a second canvas and marks the current one, a tab shows only its blocks and opens on a chat, what is said on a tab is built there, an expanded block leads back to its tab | `internal/server/tabs_test.go` |
-| A record joins the rest | a page counts its connections and lists none of them, ?show= opens one where the person is, the query behind a count lists the same records, the API and get_record carry the whole graph | `internal/server/related_test.go` |
+| A page at rest says nothing about what else exists | no connections, no counts, no links, and no field the heading and chips already said; ?show=<key> opens one where the person is and closes again, ui.show +<key> keeps it on, the API and get_record carry the whole graph | `internal/server/related_test.go` |
 | Everything leads somewhere | a detail page carries the way back to its listing, activity entries and reply receipts link to what they changed while it exists, activity listings read as sentences | `internal/server/navigation_test.go` |
 | Questions are answered where they are met | answers carry the page they were given on and return there, a proposal's own page offers them while pending, clearing the conversation clears its questions, listings show state | `internal/server/proposals_test.go` |
 | Model makes and fills tabs | create_canvas, blocks land on the tab the person is on or the one named, the prompt lists the tabs and the current one's blocks, clear_canvas clears one tab, remove_canvas takes its blocks | `internal/chat/canvases_test.go` |

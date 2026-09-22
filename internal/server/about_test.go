@@ -33,11 +33,15 @@ func TestThingsKnowWhatTheyAreAbout(t *testing.T) {
 	cal, _ := a.Store.Create(chat.BlockType, a.Chat.BlockFields(map[string]any{"component": "calendar", "props": map[string]any{"type": "all"}}))
 	taskPath := "/t/task/" + task.ID
 
-	// The task's page: the next things to do with it.
-	page := get(t, h, taskPath).Body.String()
+	// The task's page at rest offers nothing to do with it: the ways on
+	// are there when they are asked for, and not before.
+	if page := get(t, h, taskPath).Body.String(); strings.Contains(page, `aria-label="Do with this"`) {
+		t.Errorf("a record's page at rest is the record, not a row of ways on\n%s", page)
+	}
+	page := get(t, h, taskPath+"?show=remind&show=ask&show=day").Body.String()
 	for _, want := range []string{`aria-label="Do with this"`, `name="about" value="` + taskPath + `"`, `href="/chat?about=` + taskPath + `"`, `href="/canvas/` + cal.ID + `?day=` + tomorrow.Format("2006-01-02") + `"`, `>See that day<`} {
 		if !strings.Contains(page, want) {
-			t.Errorf("a record's page offers a reminder, the assistant and its day, missing %q\n%s", want, page)
+			t.Errorf("asked for, the page offers a reminder, the assistant and its day, missing %q\n%s", want, page)
 		}
 	}
 	if chatPage := get(t, h, "/chat?about="+taskPath).Body.String(); !strings.Contains(chatPage, "About Order compost ("+taskPath+"): ") {
@@ -54,14 +58,13 @@ func TestThingsKnowWhatTheyAreAbout(t *testing.T) {
 	if rec.Code != http.StatusSeeOther || len(reminders) != 1 || reminders[0].Fields["about"] != taskPath {
 		t.Fatalf("a reminder set from a page is about it, got %d and %v", rec.Code, reminders)
 	}
-	// The thing's page says the reminder is there and leaves it at that.
-	// The reminder itself is one link away, not on the page.
+	// The thing's page says nothing about the reminder — not the reminder,
+	// not a count of them, not a link. Asking puts it there.
 	page = get(t, h, taskPath).Body.String()
-	if !strings.Contains(page, `href="`+taskPath+`?show=about%3Areminder.about"`) || !strings.Contains(page, ">1 reminder about this</a>") {
-		t.Errorf("the thing's page counts the reminders about it\n%s", page)
-	}
-	if rel := page[strings.Index(page, ">Related</h2>"):]; strings.Contains(rel, `href="/t/reminder/`+reminders[0].ID+`"`) {
-		t.Error("the reminder itself is not among the connections until someone asks for it")
+	for _, gone := range []string{"reminder about this", ">Related</h2>", "sw-related__open"} {
+		if strings.Contains(page, gone) {
+			t.Errorf("the page at rest says nothing about what is connected to it, found %q\n%s", gone, page)
+		}
 	}
 	if open := get(t, h, taskPath+"?show=about:reminder.about").Body.String(); !strings.Contains(open, `href="/t/reminder/`+reminders[0].ID+`"`) {
 		t.Errorf("asking opens the reminders where the person already is\n%s", open)

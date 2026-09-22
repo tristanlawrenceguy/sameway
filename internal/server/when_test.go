@@ -17,7 +17,7 @@ func TestADateIsWrittenAsPeopleSayIt(t *testing.T) {
 	a, h := newApp(t)
 	var task struct{ ID string }
 	decode(t, postJSON(t, h, http.MethodPost, "/api/task", map[string]any{"title": "Order compost", "due": "2026-09-19T00:00:00Z"}), &task)
-	page := get(t, h, "/t/task/"+task.ID).Body.String()
+	page := get(t, h, "/t/task/"+task.ID+fieldsView).Body.String()
 	if !strings.Contains(page, `<dd data-prop="due" data-kind="datetime" data-source="2026-09-19T00:00:00Z">Sat 19 Sep 2026</dd>`) {
 		t.Error("the page shows the day as a person reads it, with the stored value under it")
 	}
@@ -32,7 +32,7 @@ func TestADateIsWrittenAsPeopleSayIt(t *testing.T) {
 	if rec.Fields["due"] != when.Store(ts, day) || day {
 		t.Errorf("next friday 2pm is stored as a moment a machine reads, got %v", rec.Fields["due"])
 	}
-	if page := get(t, h, "/t/task/"+task.ID).Body.String(); !strings.Contains(page, ">"+when.Text(when.Store(ts, day))+"</dd>") {
+	if page := get(t, h, "/t/task/"+task.ID+fieldsView).Body.String(); !strings.Contains(page, ">"+when.Text(when.Store(ts, day))+"</dd>") {
 		t.Error("the page shows the moment as a person reads it")
 	}
 

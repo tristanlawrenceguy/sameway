@@ -30,7 +30,8 @@ func TestRecordPropsWorksForProposal(t *testing.T) {
 
 	follow := parse(t, get(t, h, r.Header().Get("Location")))
 	bodyText := htmltest.Text(follow.Root)
-	if !strings.Contains(bodyText, "accepted") {
+	// The state is a chip under the title, in the words a person reads.
+	if !strings.Contains(bodyText, "Accepted") {
 		t.Errorf("detail page should show updated state 'accepted', got %q", truncate(bodyText))
 	}
 
@@ -66,7 +67,7 @@ func TestRecordPropsPreservesExistingFields(t *testing.T) {
 	if !strings.Contains(bodyText, "Some body text") {
 		t.Errorf("detail page missing preserved body 'Some body text' in %q", truncate(bodyText))
 	}
-	if !strings.Contains(bodyText, "draft") {
+	if !strings.Contains(bodyText, "Draft") {
 		t.Errorf("detail page missing preserved status 'draft' in %q", truncate(bodyText))
 	}
 
