@@ -18,7 +18,24 @@ func Parse(src string) (*Doc, error) {
 	if err != nil {
 		return nil, err
 	}
+	inert(n)
 	return &Doc{Root: n}, nil
+}
+
+// inert empties every template, as a browser holds its content apart
+// from the page: nothing in one is shown, focusable or in the
+// accessibility tree, so nothing reading the page as a person gets it
+// should find it there either.
+func inert(n *html.Node) {
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		if c.Type == html.ElementNode && c.Data == "template" {
+			for c.FirstChild != nil {
+				c.RemoveChild(c.FirstChild)
+			}
+			continue
+		}
+		inert(c)
+	}
 }
 
 // Attr returns an attribute value and whether it is present.

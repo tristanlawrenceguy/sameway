@@ -50,6 +50,12 @@ func (s *Server) recordProps(w http.ResponseWriter, r *http.Request) {
 		s.refused(w, r, t, err, detail)
 		return
 	}
+	for _, f := range t.Fields {
+		if _, sent := fields[f.Name]; sent && f.ReadOnly {
+			s.refused(w, r, t, &schema.ValidationError{Problems: map[string]string{f.Name: "is kept by Sameway and cannot be changed by hand"}}, detail)
+			return
+		}
+	}
 
 	// No fields provided — nothing to say.
 	if len(fields) == 0 {

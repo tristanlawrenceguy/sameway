@@ -30,6 +30,7 @@
     if (el.classList.contains("sw-prose") && el.hasAttribute("data-source") && window.swProseField) return window.swProseField(el, blockId);
     var name = el.getAttribute("data-prop");
     var id = "edit-" + blockId + "-" + name;
+    if (el.getAttribute("data-kind") === "bool" && window.swCheckField) return window.swCheckField(el, id, name);
     if (el.getAttribute("data-kind") === "datetime") return dateField(el, id, name);
     if (el.hasAttribute("data-options")) return choiceField(el, id, name);
     var wrap = document.createElement("div");
@@ -38,7 +39,7 @@
     var lab = document.createElement("label");
     lab.className = "sw-field__label";
     lab.setAttribute("for", id);
-    lab.textContent = label(name);
+    lab.textContent = el.getAttribute("data-label") || label(name);
 
     var source = el.hasAttribute("data-source") ? el.getAttribute("data-source") : null;
     var multiline = MULTILINE[el.tagName] === 1 || el.textContent.indexOf("\n") >= 0 || (source !== null && source.indexOf("\n") >= 0);
@@ -69,7 +70,7 @@
     var lab = document.createElement("label");
     lab.className = "sw-field__label";
     lab.setAttribute("for", id);
-    lab.textContent = label(name);
+    lab.textContent = el.getAttribute("data-label") || label(name);
     var select = document.createElement("select");
     select.className = "sw-field__select";
     select.id = id;
@@ -102,7 +103,7 @@
     var lab = document.createElement("label");
     lab.className = "sw-field__label";
     lab.setAttribute("for", id);
-    lab.textContent = label(name);
+    lab.textContent = el.getAttribute("data-label") || label(name);
     var hint = document.createElement("p");
     hint.className = "sw-field__hint";
     hint.id = id + "-hint";
@@ -117,7 +118,7 @@
     var pick = document.createElement("input");
     pick.className = "sw-field__input sw-datepicker sw-when__pick";
     pick.type = "date";
-    pick.setAttribute("aria-label", "Pick the day for " + label(name).toLowerCase());
+    pick.setAttribute("aria-label", "Pick the day for " + (el.getAttribute("data-label") || label(name)).toLowerCase());
     var source = el.getAttribute("data-source") || "";
     if (/^\d{4}-\d{2}-\d{2}/.test(source)) pick.value = source.slice(0, 10);
     pick.addEventListener("change", function () {
@@ -140,7 +141,7 @@
   // edit replaces the marked elements of one block with a small form.
   function edit(block) {
     if (block.querySelector(".sw-inline-form")) return;
-    var marked = block.querySelectorAll("[data-prop]");
+    var marked = (window.swEditFields && window.swEditFields(block)) || block.querySelectorAll("[data-prop]");
     if (!marked.length) return;
     var id = block.getAttribute("data-block-id");
 
@@ -213,7 +214,7 @@
   // Every block with editable text gets an Edit button, added here so it
   // never exists in a browser that cannot honour it.
   function arm(block) {
-    if (!block.querySelector("[data-prop]")) return;
+    if (!block.querySelector("[data-prop], template[data-edit-fields]")) return;
     var bar = block.querySelector(".sw-bar");
     if (!bar || bar.querySelector("[data-edit]")) return;
     var name = block.getAttribute("data-block-component") || "block";

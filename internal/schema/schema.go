@@ -39,6 +39,10 @@ type Field struct {
 	// Multiline asks forms to give this field room: a textarea rather than
 	// one line, and one item per line for a list.
 	Multiline bool `yaml:"multiline,omitempty" json:"multiline,omitempty"`
+	// ReadOnly is a field the system keeps, such as where a file is
+	// stored or whether a command was accepted: shown, never offered to
+	// a person to change by hand. The assistant and the API still set it.
+	ReadOnly bool `yaml:"readonly,omitempty" json:"readonly,omitempty"`
 }
 
 // Type is one content type.

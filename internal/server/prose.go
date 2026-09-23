@@ -25,6 +25,13 @@ func editedFields(form url.Values) (map[string]any, error) {
 			continue
 		}
 		if name, ok := strings.CutPrefix(key, "prop-"); ok {
+			// The rich editor, when it is what the person used, is what
+			// they wrote; the Markdown box behind it still holds the old
+			// words and goes with the form too. Which a map gives first
+			// is chance, so the rich text must win by rule, not by order.
+			if _, rich := form["html-"+name]; rich {
+				continue
+			}
 			out[name] = strings.ReplaceAll(values[0], "\r\n", "\n")
 			continue
 		}

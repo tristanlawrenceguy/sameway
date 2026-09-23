@@ -40,6 +40,7 @@ fields:
   accepted:
     type: string
     description: The command line you accepted, kept by the system. A command runs only while it matches this.
+    readonly: true
   show:
     type: bool
     default: false
@@ -71,3 +72,4 @@ fields:
   last_run:
     type: string
     description: When it last ran on its own, kept by the system.
+    readonly: true
