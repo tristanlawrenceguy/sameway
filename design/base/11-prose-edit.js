@@ -62,6 +62,7 @@
     source.rows = 8;
     source.setAttribute("aria-labelledby", lab.id);
     source.value = el.getAttribute("data-source") || "";
+    source.hidden = true;
 
     var bar = window.swProseToolbar ? window.swProseToolbar(editor, level) : document.createElement("div");
     var toggle = document.createElement("button");
