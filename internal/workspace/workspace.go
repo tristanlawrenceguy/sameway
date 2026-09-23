@@ -20,6 +20,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/devices"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/tailnet"
 	"github.com/tristanlawrenceguy/sameway/internal/update"
 )
 
@@ -85,6 +86,11 @@ type Config struct {
 	// MQTT is the broker the workspace talks to for devices: what it
 	// subscribes to becomes device records, and mqtt actions publish.
 	MQTT devices.Config `yaml:"mqtt"`
+	// Tailnet puts the workspace on the person's Tailscale network, so a
+	// phone signed in to it opens the workspace from anywhere:
+	//   tailnet:
+	//     name: home      # https://home.<tailnet>.ts.net
+	Tailnet tailnet.Config `yaml:"tailnet"`
 	// Notify is how a reminder reaches a person beyond an open page: a
 	// notification on this machine ("on", the default, or "off"), and a
 	// command run for each ring with {title}, {text} and {url} in its

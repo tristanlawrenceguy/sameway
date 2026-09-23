@@ -145,8 +145,11 @@ my-workspace/
 ```
 
 `sameway init` creates one. `sameway init --from <git url>` clones a preset.
-Multi-device is git or any folder sync. Later, an optional auth module can sit in
-front of a shared instance without changing this layout.
+Multi-device is git or any folder sync. A phone or another computer can also
+open a running workspace from anywhere over the person's Tailscale network
+(`tailnet:` in workspace.yaml; the node is embedded with tsnet, its keys kept
+under the user's config folder, never in the workspace). Later, an optional
+auth module can sit in front of a shared instance without changing this layout.
 
 ## 5. How agents use it
 
