@@ -96,9 +96,11 @@
       old.remove();
     });
     if (doc.title) document.title = (document.title.indexOf("⏳ ") === 0 ? "⏳ " : "") + doc.title.replace(/^⏳ /, "");
-    logs.forEach(function (l) { l.log.scrollTop = l.end ? l.log.scrollHeight : l.top; });
-    if (anchor && anchor.isConnected) window.scrollBy(0, anchor.getBoundingClientRect().top - anchorTop);
-    else window.scrollTo(0, y);
+    logs.forEach(function (l) { l.log.scrollTo({ top: l.end ? l.log.scrollHeight : l.top, behavior: "instant" }); });
+    // Instant: the page's smooth scrolling would otherwise animate the
+    // correction, and the page would be seen drifting back into place.
+    if (anchor && anchor.isConnected) window.scrollBy({ top: anchor.getBoundingClientRect().top - anchorTop, behavior: "instant" });
+    else window.scrollTo({ top: y, behavior: "instant" });
     if (focusId && document.activeElement && document.activeElement.id !== focusId) {
       var back = document.getElementById(focusId);
       if (back) {
