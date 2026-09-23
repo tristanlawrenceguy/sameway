@@ -6,7 +6,10 @@
   padding: var(--sw-space-3) var(--sw-space-4);
   border-radius: var(--sw-radius-lg);
   max-width: var(--sw-size-measure);
-  overflow: hidden;
+  /* Long words wrap rather than being cut off: a hidden overflow here
+     clipped the message when a person's text spacing made it longer. */
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 /* Who said it: a dot in the actor's colour before the author's name,
    never the colour alone. */
