@@ -111,7 +111,7 @@ func (s *Service) sendTurn(ctx context.Context, canvas, text, fileID string, on 
 	if on != nil {
 		on(Event{Kind: "said", ID: mine.ID})
 	}
-	said := Record(s.Store, "human", Change{Action: "said", Detail: truncate(text, 80)})
+	said := Record(s.Store, "human", Change{Action: "said", Detail: truncate(text, 80), Via: Via(ctx)})
 	if s.Provider == nil {
 		err := s.ProviderErr
 		if err == nil {

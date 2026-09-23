@@ -28,6 +28,9 @@ type Change struct {
 	Activity string `json:"activity,omitempty"`
 	// Undoes is the entry this change reversed, when it is an undo.
 	Undoes string `json:"undoes,omitempty"`
+	// Via is the device the change was made from when it was not this
+	// machine, such as a phone over the tailnet.
+	Via string `json:"via,omitempty"`
 	// Before is the thing as it was before the change, kept in the log so
 	// the change can be undone. It is not part of a receipt.
 	Before map[string]any `json:"-"`
@@ -56,6 +59,7 @@ func Record(st *store.Store, actor string, c Change) string {
 		"target_id": c.ID,
 		"detail":    c.Detail,
 		"undoes":    c.Undoes,
+		"via":       c.Via,
 	}
 	if c.Before != nil {
 		fields["before"] = c.Before
@@ -91,6 +95,9 @@ func summarise(actor string, c Change) string {
 	}
 	if c.Detail != "" {
 		parts = append(parts, c.Detail)
+	}
+	if c.Via != "" {
+		return strings.Join(parts, " ") + ", on " + c.Via
 	}
 	return strings.Join(parts, " ")
 }

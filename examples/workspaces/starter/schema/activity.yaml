@@ -31,3 +31,6 @@ fields:
   undoes:
     type: string
     description: The id of the entry this one reversed, when this entry is an undo.
+  via:
+    type: string
+    description: The device the change was made from when it was not the machine serving, such as a phone over the tailnet.

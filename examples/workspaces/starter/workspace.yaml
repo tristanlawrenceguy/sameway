@@ -74,7 +74,8 @@ notify:
 # machine here (home becomes https://home.<your-tailnet>.ts.net) and the
 # first start prints a link to sign in once. For a machine nobody signs in
 # on, set auth_key_env to the NAME of a variable holding an auth key.
-# Anyone your tailnet's access rules let in can open it. Empty name is off.
+# Only devices signed in to Tailscale as you get in, and what you change
+# from one says which in the activity log. Empty name is off.
 tailnet:
   name: ""
   auth_key_env: ""
