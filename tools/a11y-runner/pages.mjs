@@ -218,7 +218,11 @@ for (const path of everyPage) {
     await setMode(page, mode);
     await page.goto(base + path);
     await page.evaluate(() => { document.documentElement.dataset.controls = "visible"; });
-    for (const p of await axeProblems(page)) fail(`${label} ${mode}: ${p}`);
+    // The seeded canvas stacks every example of a component together, so
+    // several share a name by design; landmark-unique is best practice,
+    // not WCAG, and stays on for every other page.
+    const seeded = path.startsWith("/c/") || blockLabel[path];
+    for (const p of await axeProblems(page, seeded ? ["landmark-unique"] : [])) fail(`${label} ${mode}: ${p}`);
   }
   for (const p of await reflowProblems(page)) fail(`${label} reflow: ${p}`);
   for (const p of await spacingProblems(page)) fail(`${label} text spacing: ${p}`);

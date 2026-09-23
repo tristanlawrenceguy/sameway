@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/render"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -77,4 +78,18 @@ func arrivals(blocks []*store.Record, convo *conversation) map[string]int {
 		order[c.id] = i + 1
 	}
 	return order
+}
+
+// underPageTitle gives a block's heading level 2 unless the assistant chose
+// one: a block sits straight under the page's h1, and a component's own
+// default of 3 assumes a section above it that a canvas does not have.
+func underPageTitle(c *render.Component, props map[string]any) map[string]any {
+	if !c.HasProp("level") || props["level"] != nil {
+		return props
+	}
+	leveled := map[string]any{"level": int64(2)}
+	for k, v := range props {
+		leveled[k] = v
+	}
+	return leveled
 }

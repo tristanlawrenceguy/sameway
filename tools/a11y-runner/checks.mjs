@@ -18,10 +18,16 @@ export async function setMode(page, mode) {
   await page.emulateMedia(MODES[mode]);
 }
 
-// axe at AA in the page's current mode.
-export async function axeProblems(page) {
+// Waits two frames, so a change just made to the page (a new size, a style,
+// a focus) has been laid out before anything is measured.
+export async function settle(page) {
   await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
-  const res = await new AxeBuilder({ page }).withTags(AA_TAGS).analyze();
+}
+
+// axe at AA in the page's current mode, leaving out any rules named.
+export async function axeProblems(page, skip = []) {
+  await settle(page);
+  const res = await new AxeBuilder({ page }).withTags(AA_TAGS).disableRules(skip).analyze();
   return res.violations.map((v) => `axe ${v.id} - ${v.help} (${v.nodes.length} node(s): ${v.nodes.slice(0, 3).map((n) => n.target.join(" ")).join(", ")})`);
 }
 
@@ -31,6 +37,7 @@ export async function axeProblems(page) {
 export async function reflowProblems(page) {
   const size = page.viewportSize();
   await page.setViewportSize({ width: 320, height: 256 });
+  await settle(page);
   const found = await page.evaluate(() => {
     const doc = document.documentElement;
     if (doc.scrollWidth <= window.innerWidth + 1) return [];
@@ -52,6 +59,7 @@ const SPACING = "* { line-height: 1.5 !important; letter-spacing: 0.12em !import
 
 export async function spacingProblems(page) {
   const style = await page.addStyleTag({ content: SPACING });
+  await settle(page);
   const found = await page.evaluate(() => {
     const out = [];
     for (const el of document.body.querySelectorAll("*")) {
@@ -75,6 +83,7 @@ export async function spacingProblems(page) {
 // longer than the 0.01ms the base styles allow, and nothing waits to appear.
 export async function motionProblems(page) {
   await page.emulateMedia({ reducedMotion: "reduce" });
+  await settle(page);
   const found = await page.evaluate(() => {
     const secs = (list) => Math.max(...list.split(",").map((t) => (t.trim().endsWith("ms") ? parseFloat(t) / 1000 : parseFloat(t))));
     const out = [];
@@ -103,8 +112,8 @@ export async function obscuredFocusProblems(page, limit = 300) {
   const out = [];
   for (let i = 0; i < limit; i++) {
     await page.keyboard.press("Tab");
-    // Two frames, so styles that move a control on focus (a skip link) apply.
-    await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+    // Styles that move a control on focus (a skip link) apply first.
+    await settle(page);
     const r = await page.evaluate(() => {
       const el = document.activeElement;
       // Back at the start, or out of the page: the walk is done.

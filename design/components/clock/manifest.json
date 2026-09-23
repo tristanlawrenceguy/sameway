@@ -37,8 +37,8 @@
   },
   "examples": [
     { "name": "default", "props": { "now": "2026-09-19T14:05:00+01:00", "time": "14:05", "date": "Saturday 19 September", "upcoming": [{ "id": "r1", "title": "Tea", "when": "14:20", "kind": "timer", "href": "/t/reminder/r1" }, { "id": "r2", "title": "Call the vet", "when": "Monday 09:00", "kind": "alarm", "href": "/t/reminder/r2" }], "today": [{ "time": "16:00", "label": "Water the tomatoes", "href": "/t/task/t1" }] }, "file": "examples/default.html" },
-    { "name": "ringing", "props": { "now": "2026-09-19T14:20:00+01:00", "time": "14:20", "date": "Saturday 19 September", "ringing": [{ "id": "r1", "title": "Tea", "href": "/t/reminder/r1" }], "upcoming": [] }, "file": "examples/ringing.html" },
-    { "name": "glance", "props": { "detail": "glance", "now": "2026-09-19T14:05:00+01:00", "time": "14:05", "date": "Saturday 19 September" }, "file": "examples/glance.html" },
-    { "name": "empty", "props": { "now": "2026-09-19T08:00:00+01:00", "time": "08:00", "date": "Saturday 19 September" }, "file": "examples/empty.html" }
+    { "name": "ringing", "props": { "label": "Kitchen clock", "now": "2026-09-19T14:20:00+01:00", "time": "14:20", "date": "Saturday 19 September", "ringing": [{ "id": "r1", "title": "Tea", "href": "/t/reminder/r1" }], "upcoming": [] }, "file": "examples/ringing.html" },
+    { "name": "glance", "props": { "label": "Time", "detail": "glance", "now": "2026-09-19T14:05:00+01:00", "time": "14:05", "date": "Saturday 19 September" }, "file": "examples/glance.html" },
+    { "name": "empty", "props": { "label": "Timers and alarms", "now": "2026-09-19T08:00:00+01:00", "time": "08:00", "date": "Saturday 19 September" }, "file": "examples/empty.html" }
   ]
 }

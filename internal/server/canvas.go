@@ -1,6 +1,7 @@
 package server
 
 import (
+	"cmp"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -212,19 +213,8 @@ func (s *Server) canvasBlock(b *store.Record, convo *conversation) canvasBlock {
 		label = name
 	}
 	icon := name[:1]
-	c, ok := s.app.Registry.Get(name)
-	if ok && c.Manifest.Icon != "" {
-		icon = c.Manifest.Icon
-	}
-	// A block sits straight under the page's h1, so a heading it carries is
-	// an h2 unless the assistant chose otherwise; a component's own default
-	// of 3 assumes a section above it that a canvas does not have.
-	if ok && c.HasProp("level") && props["level"] == nil {
-		leveled := map[string]any{"level": int64(2)}
-		for k, v := range props {
-			leveled[k] = v
-		}
-		props = leveled
+	if c, ok := s.app.Registry.Get(name); ok {
+		icon, props = cmp.Or(c.Manifest.Icon, icon), underPageTitle(c, props)
 	}
 	return canvasBlock{
 		ID: b.ID, Component: name, Actor: actor, Changed: changed, Span: span,

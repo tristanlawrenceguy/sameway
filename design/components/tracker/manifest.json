@@ -47,6 +47,6 @@
     { "name": "glance", "props": { "detail": "glance", "label": "Today", "habits": [
       { "id": "h1", "name": "Stretch", "met": true, "period": "day" }, { "id": "h2", "name": "Water", "met": false, "period": "day" }
     ] }, "file": "examples/glance.html" },
-    { "name": "empty", "props": { "label": "Keeping up" }, "file": "examples/empty.html" }
+    { "name": "empty", "props": { "label": "Habits" }, "file": "examples/empty.html" }
   ]
 }
