@@ -31,6 +31,8 @@ func habitOf(rec *store.Record) track.Habit {
 	h.Name, _ = rec.Fields["name"].(string)
 	h.Unit, _ = rec.Fields["unit"].(string)
 	h.Cadence, _ = rec.Fields["cadence"].(string)
+	h.Aim, _ = rec.Fields["aim"].(string)
+	h.Combine, _ = rec.Fields["combine"].(string)
 	h.Target = number(rec.Fields["target"])
 	h.Goal = number(rec.Fields["goal"])
 	return h
@@ -67,6 +69,11 @@ func (s *Server) entriesOf(habitID string) []track.Entry {
 		if err != nil {
 			continue
 		}
+		if strings.HasSuffix(v, "T00:00:00Z") {
+			// A whole day is kept as midnight UTC on its date; it is that
+			// date here, wherever here is.
+			ts = time.Date(ts.Year(), ts.Month(), ts.Day(), 0, 0, 0, 0, time.Local)
+		}
 		amount := number(rec.Fields["amount"])
 		if amount == 0 && rec.Fields["amount"] == nil {
 			amount = 1
@@ -78,20 +85,16 @@ func (s *Server) entriesOf(habitID string) []track.Entry {
 
 // standing is a habit as the tracker shows it.
 func (s *Server) standing(rec *store.Record, now time.Time) map[string]any {
-	h := habitOf(rec)
-	n := 7
-	if h.Cadence == "week" {
-		n = 4
-	}
-	sum := track.Summarise(h, s.entriesOf(h.ID), now, n)
+	h := track.Normal(habitOf(rec))
+	sum := track.Summarise(h, s.entriesOf(h.ID), now, map[string]int{"day": 7, "week": 4, "month": 6, "year": 3}[h.Cadence])
 	pct := 0
 	if sum.Target > 0 {
 		pct = int(math.Min(100, math.Round(sum.Now/sum.Target*100)))
 	}
 	item := map[string]any{
-		"id": h.ID, "name": h.Name, "href": "/t/" + HabitType + "/" + h.ID, "unit": h.Unit, "period": firstOf(h.Cadence, "day"),
-		"amount": sum.Now, "target": sum.Target, "progress": track.Progress(sum, h.Unit), "pct": pct, "met": sum.Met,
-		"streak": sum.Streak, "streakWords": track.StreakWords(sum.Streak, h.Cadence), "best": sum.Best,
+		"id": h.ID, "name": h.Name, "href": "/t/" + HabitType + "/" + h.ID, "unit": h.Unit, "period": h.Cadence, "aim": h.Aim,
+		"amount": sum.Now, "target": sum.Target, "progress": track.Progress(h, sum), "pct": pct, "met": sum.Met,
+		"streak": sum.Streak, "streakWords": track.StreakWords(sum.Streak, h), "best": sum.Best,
 	}
 	if h.Goal > 0 {
 		goal := track.Amount(sum.Total, "") + " of " + track.Amount(h.Goal, h.Unit)
@@ -104,10 +107,31 @@ func (s *Server) standing(rec *store.Record, now time.Time) map[string]any {
 	}
 	last := make([]any, 0, len(sum.Last))
 	for _, p := range sum.Last {
-		last = append(last, map[string]any{"date": p.Start.Format("2006-01-02"), "met": p.Met, "amount": p.Amount})
+		last = append(last, map[string]any{"date": track.PeriodLabel(p.Start, h.Cadence), "met": p.Met, "amount": p.Amount, "words": periodWords(h, p), "logged": p.Logged})
 	}
 	item["last"] = last
 	return item
+}
+
+// periodWords is how a period went, for a reader of the dots: met or not
+// met, within or over a limit, or what was recorded.
+func periodWords(h track.Habit, p track.Period) string {
+	switch h.Aim {
+	case track.Record:
+		if !p.Logged {
+			return "nothing logged"
+		}
+		return track.Amount(p.Amount, h.Unit)
+	case track.Limit:
+		if p.Met {
+			return track.Amount(p.Amount, h.Unit) + ", within the limit"
+		}
+		if p.Amount > h.Target {
+			return track.Amount(p.Amount, h.Unit) + ", over the limit"
+		}
+		return "not tracked yet"
+	}
+	return ""
 }
 
 func firstOf(values ...string) string {
@@ -157,7 +181,8 @@ func hasTag(rec *store.Record, tags []string) bool {
 	return false
 }
 
-// habitLog is the Log press: an entry now, for the amount given or one.
+// habitLog is the Log press: an entry for the amount given or one, now,
+// or on the day given when it was done before.
 func (s *Server) habitLog(w http.ResponseWriter, r *http.Request) {
 	rec, err := s.app.Store.Get(HabitType, r.PathValue("id"))
 	if err != nil {
@@ -174,7 +199,20 @@ func (s *Server) habitLog(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	fields := map[string]any{"habit": h.ID, "at": when.Store(time.Now(), false), "amount": amount}
+	at := when.Store(time.Now(), false)
+	if v := strings.TrimSpace(r.PostForm.Get("on")); v != "" {
+		now := time.Now()
+		t, day, ok := when.Parse(v, now)
+		if !ok {
+			s.app.Chat.Notice("The day it was done reads as a date, such as " + now.AddDate(0, 0, -1).Format("2006-01-02") + " or yesterday.")
+			http.Redirect(w, r, backFrom(r), http.StatusSeeOther)
+			return
+		}
+		if !day || t.Format("2006-01-02") != now.Format("2006-01-02") {
+			at = when.Store(t, day)
+		}
+	}
+	fields := map[string]any{"habit": h.ID, "at": at, "amount": amount}
 	if note := strings.TrimSpace(r.PostForm.Get("note")); note != "" {
 		fields["note"] = note
 	}
@@ -182,35 +220,43 @@ func (s *Server) habitLog(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		s.app.Chat.Notice(err.Error())
 	} else {
-		chat.Record(s.app.Store, "human", chat.Change{Action: "logged", Component: HabitType, ID: h.ID, Detail: h.Name + ": " + track.Amount(amount, h.Unit), Href: "/t/" + HabitType + "/" + h.ID, Before: map[string]any{"entry": entry.ID}})
+		s.record(r, chat.Change{Action: "logged", Component: HabitType, ID: h.ID, Detail: h.Name + ": " + track.Amount(amount, h.Unit), Href: "/t/" + HabitType + "/" + h.ID, Before: map[string]any{"entry": entry.ID}})
 	}
 	http.Redirect(w, r, backFrom(r), http.StatusSeeOther)
 }
 
 // habitSection is what a habit's own page adds: where it stands, its own
-// tracker row, and the last thirty days as a chart with the target drawn.
+// tracker row with a day to log for, and the last periods as a chart with
+// the target (or the limit) drawn.
 func (s *Server) habitSection(rec *store.Record) template.HTML {
 	now := time.Now()
-	h := habitOf(rec)
+	h := track.Normal(habitOf(rec))
 	item := s.standing(rec, now)
+	item["dated"] = true
 	var b strings.Builder
 	b.WriteString(`<section class="sw-stack sw-habit" aria-labelledby="habit-standing"><h2 id="habit-standing">Keeping up</h2>`)
 	b.WriteString(string(s.component(trackerComponent, map[string]any{"label": h.Name, "habits": []any{item}})))
 	best, _ := item["best"].(int)
 	if best > 0 {
-		fmt.Fprintf(&b, `<p class="sw-muted sw-small">Best run: %s.</p>`, template.HTMLEscapeString(track.StreakWords(best, h.Cadence)))
+		fmt.Fprintf(&b, `<p class="sw-muted sw-small">Best run: %s.</p>`, template.HTMLEscapeString(track.StreakWords(best, h)))
 	}
-	n, caption := 30, "The last 30 days"
-	if h.Cadence == "week" {
-		n, caption = 12, "The last 12 weeks"
-	}
+	n := map[string]int{"day": 30, "week": 12, "month": 12, "year": 5}[h.Cadence]
 	sum := track.Summarise(h, s.entriesOf(h.ID), now, n)
 	series := make([]any, 0, len(sum.Last))
 	for _, p := range sum.Last {
-		label := p.Start.Format("2006-01-02")
-		series = append(series, map[string]any{"label": label, "value": p.Amount})
+		series = append(series, map[string]any{"label": track.PeriodLabel(p.Start, h.Cadence), "value": p.Amount})
 	}
-	props := map[string]any{"caption": caption, "series": series, "kind": "bar", "target": sum.Target}
+	kind := "bar"
+	if h.Combine != track.Sum {
+		kind = "line"
+	}
+	props := map[string]any{"caption": fmt.Sprintf("The last %d %ss", n, h.Cadence), "series": series, "kind": kind}
+	if h.Aim != track.Record {
+		props["target"] = sum.Target
+	}
+	if h.Aim == track.Limit {
+		props["targetLabel"] = "limit"
+	}
 	if h.Unit != "" {
 		props["unit"] = h.Unit
 	}

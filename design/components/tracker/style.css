@@ -23,14 +23,21 @@ a.sw-tracker__name:hover { text-decoration: underline; text-underline-offset: 0.
 .sw-tracker__bar { grid-area: bar; height: 0.5rem; border-radius: var(--sw-radius-pill); background: var(--sw-color-bg-muted); overflow: hidden; }
 .sw-tracker__fill { display: block; height: 100%; border-radius: inherit; background: var(--sw-dot, var(--sw-color-accent)); transition: width var(--sw-motion-base) var(--sw-motion-ease); }
 .sw-tracker__habit[data-met="true"] .sw-tracker__fill { background: var(--sw-color-success); }
+/* A limit gone over: the bar is full and turns the warning colour, and
+   the words say how far over. */
+.sw-tracker__habit[data-aim="limit"][data-met="false"] .sw-tracker__fill { background: var(--sw-color-warning); }
+.sw-tracker__habit[data-aim="limit"][data-met="false"] .sw-tracker__progress { color: var(--sw-color-warning); font-weight: 600; }
 .sw-tracker__numbers { grid-area: numbers; margin: 0; font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); display: flex; flex-wrap: wrap; gap: var(--sw-space-3); font-variant-numeric: tabular-nums; }
 .sw-tracker__habit[data-met="true"] .sw-tracker__progress { color: var(--sw-color-success); font-weight: 600; }
 /* The last days: a dot each, filled when met, this one last. */
 .sw-tracker__days { grid-area: days; display: flex; gap: 0.3rem; }
+/* A record has no target to meet: a dot is filled when something was logged. */
+.sw-tracker__habit[data-aim="record"] .sw-tracker__day[data-logged="true"] { background: var(--sw-color-accent); }
 .sw-tracker__day { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--sw-color-border); }
 .sw-tracker__day[data-met="true"] { background: var(--sw-color-success); }
 .sw-tracker__day:last-child { box-shadow: 0 0 0 2px var(--sw-color-bg-raised), 0 0 0 3px var(--sw-color-border-strong); }
 .sw-tracker__log { grid-area: log; display: flex; align-items: center; gap: var(--sw-space-2); }
+.sw-tracker .sw-tracker__on { width: 7rem; min-height: 2.25rem; padding: 0 var(--sw-space-2); font-size: var(--sw-size-text-sm); }
 .sw-tracker .sw-tracker__amount { width: 4rem; min-height: 2.25rem; padding: 0 var(--sw-space-2); text-align: right; font-size: var(--sw-size-text-sm); }
 .sw-tracker__unit { font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); }
 .sw-tracker__log .sw-button { min-height: 2.25rem; padding: 0 var(--sw-space-3); font-size: var(--sw-size-text-sm); }

@@ -69,6 +69,11 @@ func (s *Server) resolveCalendar(props map[string]any, blockID string) map[strin
 	if typeName == "" {
 		return out
 	}
+	if day != "" {
+		if add := s.logForDay(typeName, strs(props["where"]), shownDay); add != nil {
+			out["add"] = add
+		}
+	}
 	if typeName == "all" {
 		out["events"] = s.everyEvent(now)
 		return out

@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
@@ -21,6 +20,9 @@ import (
 // as it starts, each block as it lands, rendered here so the page can put
 // it where it belongs, and the reply as recorded. Nothing here exists for
 // a browser without scripts; /chat does the same work in one go.
+//
+// A page opened while a turn runs, because the person went elsewhere
+// after asking, carries the turn's id and follows it from /chat/live.
 
 // chatInput reads the composer's form, with the file it may carry.
 func (s *Server) chatInput(r *http.Request) (canvas, text, fileID, back string, err error) {
@@ -50,92 +52,122 @@ func (s *Server) chatStream(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	flusher, ok := w.(http.Flusher)
-	if !ok {
+	if _, ok := w.(http.Flusher); !ok {
 		http.Error(w, "streaming is not possible here", http.StatusNotImplemented)
 		return
-	}
-	w.Header().Set("Content-Type", "text/event-stream; charset=utf-8")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("X-Accel-Buffering", "no")
-	w.WriteHeader(http.StatusOK)
-	started := time.Now()
-	// Events come from the turn and, when the tools run elsewhere, from
-	// the watch on the log: one writer at a time.
-	var mu sync.Mutex
-	send := func(event string, data map[string]any) {
-		body, _ := json.Marshal(data)
-		mu.Lock()
-		defer mu.Unlock()
-		fmt.Fprintf(w, "event: %s\ndata: %s\n\n", event, body)
-		flusher.Flush()
 	}
 	// The turn runs to its end even when the page that asked for it goes
 	// away: a tab closed mid-turn must not leave a change half made and an
 	// error in the log where the reply should be. The person can stop it,
-	// though, from the page, by the id the first event carries.
-	turn, ctx, over := s.turns.start(context.WithoutCancel(r.Context()))
-	defer over()
-	rec, err := s.app.Chat.SendLive(ctx, canvas, text, fileID, func(e chat.Event) {
-		switch e.Kind {
-		case "said":
-			send("said", map[string]any{"id": e.ID, "turn": turn, "html": s.messageHTML(e.ID, back, false)})
-		case "delta", "text":
-			send(e.Kind, map[string]any{"text": e.Text})
-		case "tool":
-			send("tool", map[string]any{"tool": e.Tool, "label": e.Label, "early": e.Early})
-		case "change":
-			data := map[string]any{"action": e.Change.Action, "component": e.Change.Component, "id": e.Change.ID, "detail": e.Change.Detail}
-			if blk, region, html := s.liveBlock(e.Change, started); html != "" {
-				data["block"], data["region"], data["html"] = blk, region, html
-			}
-			send("change", data)
-		case "done":
-			send("done", map[string]any{"id": e.ID, "html": s.messageHTML(e.ID, back, true), "status": string(s.statusFor(e.ID)), "activity": string(s.recentActivity(8, back))})
-		case "error":
-			send("error", map[string]any{"id": e.ID, "text": e.Text, "html": s.messageHTML(e.ID, back, true), "status": string(s.statusFor(e.ID)), "activity": string(s.recentActivity(8, back))})
+	// though, from the page, by the id the first event carries, and any
+	// page opened meanwhile can follow it, from /chat/live.
+	t, ctx := s.turns.start(context.WithoutCancel(r.Context()))
+	go func() {
+		defer s.turns.end(t)
+		rec, err := s.app.Chat.SendLive(ctx, canvas, text, fileID, t.add)
+		if rec == nil && err != nil {
+			log.Printf("chat: %v", err)
+			t.add(chat.Event{Kind: "error", Text: err.Error()})
 		}
-	})
-	if rec == nil && err != nil {
-		log.Printf("chat: %v", err)
-		send("error", map[string]any{"text": err.Error()})
-	}
+		s.tellDone(t, rec, err, back)
+	}()
+	s.follow(w, r, t, back)
 }
 
-// turns are the live turns under way, each with the way to stop it.
-type turns struct {
-	mu     sync.Mutex
-	n      int
-	cancel map[string]context.CancelFunc
+// chatLive is a turn under way, told from its start to its end, for a
+// page opened while it runs: the one the person went to after asking, or
+// the one they came back to. No content when no turn is running.
+func (s *Server) chatLive(w http.ResponseWriter, r *http.Request) {
+	t := s.turns.find(r.URL.Query().Get("turn"))
+	if t == nil {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+	if _, ok := w.(http.Flusher); !ok {
+		http.Error(w, "streaming is not possible here", http.StatusNotImplemented)
+		return
+	}
+	s.follow(w, r, t, backTo(r.URL.Query().Get("from")))
 }
 
-// start begins a turn: its id, the context it runs under, and what to
-// call when it is over.
-func (t *turns) start(parent context.Context) (id string, ctx context.Context, over func()) {
-	ctx, cancel := context.WithCancel(parent)
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	if t.cancel == nil {
-		t.cancel = map[string]context.CancelFunc{}
+// tellDone tells the person a turn is over when no page heard it end:
+// the tab was closed, or every page on it went away. A page that is
+// following says so itself (19-live-join.js), so the news comes once.
+// It goes the way a ringing reminder does, through notify.
+func (s *Server) tellDone(t *liveTurn, rec *store.Record, err error, back string) {
+	if s.notify == nil || t.followed() {
+		return
 	}
-	t.n++
-	id = fmt.Sprintf("turn-%d", t.n)
-	t.cancel[id] = cancel
-	return id, ctx, func() {
-		cancel()
-		t.mu.Lock()
-		delete(t.cancel, id)
-		t.mu.Unlock()
+	title, text, path := "Assistant replied", "", back
+	if rec != nil {
+		text, _ = rec.Fields["content"].(string)
+		path = back + "#msg-" + rec.ID
+		if rec.Fields["role"] == "error" {
+			title = "The assistant could not finish"
+		}
+	} else if err != nil {
+		title, text = "The assistant could not finish", err.Error()
 	}
+	if r := []rune(strings.Join(strings.Fields(text), " ")); len(r) > 140 {
+		text = string(r[:139]) + "…"
+	}
+	go s.notify(title, text, s.linkTo(path))
 }
 
-// stop ends the turn named, or every turn under way when none is.
-func (t *turns) stop(id string) {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	for k, cancel := range t.cancel {
-		if id == "" || k == id {
-			cancel()
+// follow writes a turn's events as server-sent events, those so far and
+// then each as it comes, until the turn is over or the page goes away.
+// Each is rendered for the page that listens, so its controls come back
+// to that page.
+func (s *Server) follow(w http.ResponseWriter, r *http.Request, t *liveTurn, back string) {
+	flusher := w.(http.Flusher)
+	t.listen(1)
+	defer t.listen(-1)
+	w.Header().Set("Content-Type", "text/event-stream; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("X-Accel-Buffering", "no")
+	w.WriteHeader(http.StatusOK)
+	send := func(event string, data map[string]any) {
+		body, _ := json.Marshal(data)
+		fmt.Fprintf(w, "event: %s\ndata: %s\n\n", event, body)
+		flusher.Flush()
+	}
+	for i := 0; ; {
+		events, over, changed := t.since(i)
+		i += len(events)
+		for _, e := range events {
+			switch e.Kind {
+			case "said":
+				send("said", map[string]any{"id": e.ID, "turn": t.id, "html": s.messageHTML(e.ID, back, false)})
+			case "delta", "text":
+				send(e.Kind, map[string]any{"text": e.Text})
+			case "tool":
+				send("tool", map[string]any{"tool": e.Tool, "label": e.Label, "early": e.Early})
+			case "change":
+				data := map[string]any{"action": e.Change.Action, "component": e.Change.Component, "id": e.Change.ID, "detail": e.Change.Detail}
+				if blk, region, html := s.liveBlock(e.Change, t.started); html != "" {
+					data["block"], data["region"], data["html"] = blk, region, html
+				}
+				send("change", data)
+			case "done":
+				send("done", map[string]any{"id": e.ID, "html": s.messageHTML(e.ID, back, true), "status": string(s.statusFor(e.ID)), "activity": string(s.recentActivity(8, back))})
+			case "error":
+				data := map[string]any{"text": e.Text}
+				if e.ID != "" {
+					data["id"], data["html"], data["status"], data["activity"] = e.ID, s.messageHTML(e.ID, back, true), string(s.statusFor(e.ID)), string(s.recentActivity(8, back))
+				}
+				send("error", data)
+			}
+		}
+		if over && len(events) == 0 {
+			return
+		}
+		if len(events) > 0 {
+			continue
+		}
+		select {
+		case <-changed:
+		case <-r.Context().Done():
+			return
 		}
 	}
 }

@@ -88,7 +88,7 @@ func (s *Server) storeUpload(r *http.Request) (*store.Record, error) {
 		return nil, fmt.Errorf("could not keep the file: %w", err)
 	}
 	s.app.Store.Update(FileType, rec.ID, map[string]any{"path": stored})
-	chat.Record(s.app.Store, "human", chat.Change{Action: "added", Component: FileType, ID: rec.ID, Detail: title, Href: "/t/" + FileType + "/" + rec.ID})
+	s.record(r, chat.Change{Action: "added", Component: FileType, ID: rec.ID, Detail: title, Href: "/t/" + FileType + "/" + rec.ID})
 
 	if converter := s.app.Workspace.Config.Files.Convert[convert.Ext(name)]; converter != "" {
 		go s.convertLater(rec.ID, converter, name, filepath.Join(dir, stored))

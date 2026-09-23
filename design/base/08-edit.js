@@ -31,6 +31,7 @@
     var name = el.getAttribute("data-prop");
     var id = "edit-" + blockId + "-" + name;
     if (el.getAttribute("data-kind") === "datetime") return dateField(el, id, name);
+    if (el.hasAttribute("data-options")) return choiceField(el, id, name);
     var wrap = document.createElement("div");
     wrap.className = "sw-field sw-inline-field";
 
@@ -56,6 +57,35 @@
     wrap.appendChild(lab);
     wrap.appendChild(input);
     return { wrap: wrap, input: input };
+  }
+
+  // A field with a fixed set of values, such as the habit an entry is
+  // for, is chosen from a list by name: the server puts the values and
+  // their names on the element, and the one there now is chosen.
+  function choiceField(el, id, name) {
+    var wrap = document.createElement("div");
+    wrap.className = "sw-field sw-inline-field";
+    var lab = document.createElement("label");
+    lab.className = "sw-field__label";
+    lab.setAttribute("for", id);
+    lab.textContent = label(name);
+    var select = document.createElement("select");
+    select.className = "sw-field__select";
+    select.id = id;
+    select.name = "prop-" + name;
+    var current = el.hasAttribute("data-source") ? el.getAttribute("data-source") : el.textContent.trim();
+    var options = [];
+    try { options = JSON.parse(el.getAttribute("data-options")) || []; } catch (e) { options = []; }
+    for (var i = 0; i < options.length; i++) {
+      var opt = document.createElement("option");
+      opt.value = options[i].value;
+      opt.textContent = options[i].label;
+      if (options[i].value === current) opt.selected = true;
+      select.appendChild(opt);
+    }
+    wrap.appendChild(lab);
+    wrap.appendChild(select);
+    return { wrap: wrap, input: select };
   }
 
   var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];

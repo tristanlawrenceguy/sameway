@@ -24,7 +24,7 @@ func TestARefIsARecordPointingAtAnother(t *testing.T) {
 	}
 
 	page := get(t, h, "/t/task/"+task.ID).Body.String()
-	if !strings.Contains(page, `<dt>Project</dt><dd data-prop="project" data-source="`+garden.ID+`"><a class="sw-link" href="/t/project/`+garden.ID+`">Garden</a></dd>`) {
+	if !strings.Contains(page, `<dt>Project</dt><dd data-prop="project" data-source="`+garden.ID+`" data-options="`) || !strings.Contains(page, `"><a class="sw-link" href="/t/project/`+garden.ID+`">Garden</a></dd>`) {
 		t.Errorf("the task's page shows its project as a link: %.700s", page[strings.Index(page, "<dl"):])
 	}
 	// The project's page is the project. Not its tasks, and not a count of

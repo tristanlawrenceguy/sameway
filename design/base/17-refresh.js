@@ -15,6 +15,10 @@
   if (!window.fetch || !window.DOMParser) return;
   var pace = document.documentElement.getAttribute("data-pace");
   var still = pace === "still" || (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+  // On a narrow screen the whole page scrolls, under a browser bar that
+  // comes and goes, and blocks sliding across it read as a glitch rather
+  // than as motion; there the changes land without the transition.
+  var wide = window.matchMedia ? matchMedia("(min-width: 64rem)") : { matches: true };
 
   var timer = null, running = false, again = false;
 
@@ -32,7 +36,7 @@
       .then(function (r) { if (!r.ok) throw new Error("the page came back " + r.status); return r.text(); })
       .then(function (html) {
         var doc = new DOMParser().parseFromString(html, "text/html");
-        if (document.startViewTransition && !still) {
+        if (document.startViewTransition && !still && wide.matches) {
           return document.startViewTransition(function () { merge(doc); }).finished.catch(function () {});
         }
         merge(doc);
@@ -48,6 +52,18 @@
     return strip(a) === strip(b);
   }
 
+  // move puts a node that is in the page in place of one from the fresh
+  // page without taking it out first where the browser can (moveBefore),
+  // so a focused field keeps its focus, and a phone its keyboard, and a
+  // log keeps its scroll. Elsewhere it is an ordinary move, and merge puts
+  // the scroll back itself.
+  function move(have, spot) {
+    if (spot.parentNode.moveBefore) {
+      try { spot.parentNode.moveBefore(have, spot); spot.remove(); return; } catch (e) { /* not movable here */ }
+    }
+    spot.replaceWith(have);
+  }
+
   // merge puts the fresh page in place of the old, keeping the chat and
   // every unchanged block as the nodes they were, and the person where
   // they were: scroll, focus, and the caret in what they were typing.
@@ -56,19 +72,38 @@
     var focusId = focused && focused.id;
     var selStart = focused && focused.selectionStart, selEnd = focused && focused.selectionEnd;
     var y = window.scrollY;
+    // The chat is what the person is reading: the page keeps it where it
+    // was on the screen, whatever grew or went above it, and its log at
+    // the end when that is where they were.
+    var anchor = document.querySelector('[data-block-component="chat"]');
+    var anchorTop = anchor && anchor.getBoundingClientRect().top;
+    var logs = [];
+    document.querySelectorAll(".sw-chat__log").forEach(function (log) {
+      logs.push({ log: log, top: log.scrollTop, end: log.scrollHeight - log.scrollTop - log.clientHeight < 48 });
+    });
     ["header.sw-header", ".sw-shell"].forEach(function (sel) {
       var fresh = doc.querySelector(sel), old = document.querySelector(sel);
       if (!fresh || !old) return;
+      // The fresh page goes in beside the old one first, so a block kept
+      // from the old moves between two parts of the page.
+      fresh = document.importNode(fresh, true);
+      old.after(fresh);
       fresh.querySelectorAll("[data-block-id]").forEach(function (block) {
         var have = old.querySelector('[data-block-id="' + block.getAttribute("data-block-id") + '"]');
         if (!have) return;
-        if (block.getAttribute("data-block-component") === "chat" || sameBlock(have, block)) block.replaceWith(have);
+        if (block.getAttribute("data-block-component") === "chat" || sameBlock(have, block)) move(have, block);
       });
-      old.replaceWith(fresh);
+      old.remove();
     });
-    if (doc.title) document.title = (document.title.indexOf("⏳ ") === 0 ? "⏳ " : "") + doc.title.replace(/^⏳ /, "");
-    window.scrollTo(0, y);
-    if (focusId) {
+    // The tab's mark, working or done while away, stays with the tab.
+    var mark = (document.title.match(/^(⏳|✓) /) || [""])[0];
+    if (doc.title) document.title = mark + doc.title.replace(/^(⏳|✓) /, "");
+    logs.forEach(function (l) { l.log.scrollTo({ top: l.end ? l.log.scrollHeight : l.top, behavior: "instant" }); });
+    // Instant: the page's smooth scrolling would otherwise animate the
+    // correction, and the page would be seen drifting back into place.
+    if (anchor && anchor.isConnected) window.scrollBy({ top: anchor.getBoundingClientRect().top - anchorTop, behavior: "instant" });
+    else window.scrollTo({ top: y, behavior: "instant" });
+    if (focusId && document.activeElement && document.activeElement.id !== focusId) {
       var back = document.getElementById(focusId);
       if (back) {
         back.focus({ preventScroll: true });

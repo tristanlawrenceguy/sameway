@@ -235,7 +235,7 @@ func (s *Server) apiFileUpload(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		s.app.Store.Update(FileType, rec.ID, map[string]any{"path": stored})
-		chat.Record(s.app.Store, "human", chat.Change{Action: "added", Component: FileType, ID: rec.ID, Detail: title, Href: "/t/" + FileType + "/" + rec.ID})
+		s.record(r, chat.Change{Action: "added", Component: FileType, ID: rec.ID, Detail: title, Href: "/t/" + FileType + "/" + rec.ID})
 
 		if converter := s.app.Workspace.Config.Files.Convert[convert.Ext(name)]; converter != "" {
 			go func() { s.convertLater(rec.ID, converter, name, filepath.Join(dir, stored)) }()

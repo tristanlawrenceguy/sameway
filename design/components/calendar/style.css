@@ -118,6 +118,8 @@ a.sw-calendar__number:focus-visible { outline: var(--sw-focus-width) solid var(-
 .sw-calendar__hour .sw-calendar__events { margin: 0; font-size: var(--sw-size-text-sm); gap: var(--sw-space-1); }
 .sw-calendar__hour .sw-calendar__events li { padding: var(--sw-space-1) var(--sw-space-2); border-radius: var(--sw-radius-md); }
 .sw-calendar__nothing { margin: 0; }
+/* What can be done for the day shown, such as logging a habit for it. */
+.sw-calendar__add { margin-top: var(--sw-space-3); padding-top: var(--sw-space-3); border-top: 1px solid var(--sw-color-border); }
 /* In the day, an event is a small card with its list's colour along its
    left edge; its mark sits small beside the words. */
 .sw-calendar__hour { grid-template-columns: 3rem 1fr; min-height: 2rem; border-top: 1px solid var(--sw-color-border); }
