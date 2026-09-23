@@ -180,7 +180,7 @@ func (s *Server) habitLog(w http.ResponseWriter, r *http.Request) {
 	}
 	entry, err := s.app.Store.Create(EntryType, fields)
 	if err != nil {
-		s.app.Chat.Notice("That did not log. " + err.Error())
+		s.app.Chat.Notice(err.Error())
 	} else {
 		chat.Record(s.app.Store, "human", chat.Change{Action: "logged", Component: HabitType, ID: h.ID, Detail: h.Name + ": " + track.Amount(amount, h.Unit), Href: "/t/" + HabitType + "/" + h.ID, Before: map[string]any{"entry": entry.ID}})
 	}

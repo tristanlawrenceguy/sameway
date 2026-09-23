@@ -52,7 +52,7 @@ func (s *Server) chatNew(w http.ResponseWriter, r *http.Request) {
 func (s *Server) chatOpen(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	if err := s.app.Chat.OpenChat(r.PostForm.Get("id")); err != nil {
-		s.app.Chat.Notice("That chat is not here any more.")
+		s.app.Chat.Notice("Chat not found")
 	}
 	http.Redirect(w, r, backTo(r.PostForm.Get("from")), http.StatusSeeOther)
 }
@@ -60,7 +60,7 @@ func (s *Server) chatOpen(w http.ResponseWriter, r *http.Request) {
 func (s *Server) chatDelete(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	if err := s.app.Chat.DeleteChat(r.PostForm.Get("id")); err != nil {
-		s.app.Chat.Notice("That chat could not be deleted. " + err.Error())
+		s.app.Chat.Notice(err.Error())
 	}
 	http.Redirect(w, r, backTo(r.PostForm.Get("from")), http.StatusSeeOther)
 }
@@ -84,7 +84,7 @@ func (s *Server) blockPlace(w http.ResponseWriter, r *http.Request) {
 	}
 	name, _ := rec.Fields["component"].(string)
 	if _, err := s.app.Store.Update(chat.BlockType, rec.ID, s.app.Chat.BlockFields(fields)); err != nil {
-		s.app.Chat.Notice("That did not move. " + err.Error())
+		s.app.Chat.Notice(err.Error())
 	} else {
 		s.recordPlace(rec, name, fields)
 	}

@@ -86,7 +86,7 @@ func TestBadEditIsReportedNotSwallowed(t *testing.T) {
 	decode(t, get(t, h, "/api/message"), &msgs)
 	reported := false
 	for _, m := range msgs.Records {
-		if m.Fields["role"] == "error" && strings.Contains(m.Fields["content"].(string), "did not save") {
+		if m.Fields["role"] == "error" && len(strings.TrimSpace(m.Fields["content"].(string))) > 0 {
 			reported = true
 		}
 	}

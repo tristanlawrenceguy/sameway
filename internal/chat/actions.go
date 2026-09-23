@@ -95,7 +95,7 @@ func (s *Service) webhook(ctx context.Context, rec *store.Record, title string) 
 	}
 	resp, err := HTTPClient.Do(req)
 	if err != nil {
-		return fail("action %s did not go through: %v", title, err)
+		return fail("%s failed: %v", title, err)
 	}
 	defer resp.Body.Close()
 	raw, _ := io.ReadAll(io.LimitReader(resp.Body, 64<<10))

@@ -89,7 +89,7 @@ func (s *Server) importPreview(w http.ResponseWriter, r *http.Request, t *schema
 	m := ingest.Guess(t, tb.Columns)
 	var b strings.Builder
 	if problem != "" {
-		b.WriteString(string(s.component("alert", map[string]any{"kind": "warning", "title": "That did not go through", "message": problem})))
+		b.WriteString(string(s.component("alert", map[string]any{"kind": "warning", "message": problem})))
 	}
 	fmt.Fprintf(&b, `<p class="sw-muted">%d rows in %s. Each column below feeds the field it names; change any that landed wrong, or set it to nothing to leave it out. A column for an email, a phone or a name that feeds nothing still links each row to its person.</p>`, len(tb.Rows), template.HTMLEscapeString(name))
 	fmt.Fprintf(&b, `<form method="post" action="/t/%s/import/%s/run" class="sw-stack sw-import">`, t.Name, id)

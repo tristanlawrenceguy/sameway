@@ -93,7 +93,6 @@ func (s *Server) renderDetailError(w http.ResponseWriter, r *http.Request, t *sc
 
 	b.WriteString(string(s.component("alert", map[string]any{
 		"kind":    "warning",
-		"title":   "That did not save",
 		"message": "Fix the fields below and try again.",
 	})))
 
