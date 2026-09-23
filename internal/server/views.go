@@ -150,7 +150,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(&dl, `<dt>%s</dt>%s`, template.HTMLEscapeString(label(f.Name)), s.refCell(f, val))
 			continue
 		}
-		fmt.Fprintf(&dl, `<dt>%s</dt><dd data-prop="%s"%s>%s</dd>`, template.HTMLEscapeString(label(f.Name)), f.Name, whenAttrs(f, rec.Fields[f.Name]), template.HTMLEscapeString(val))
+		fmt.Fprintf(&dl, `<dt>%s</dt><dd data-prop="%s"%s%s>%s</dd>`, template.HTMLEscapeString(label(f.Name)), f.Name, whenAttrs(f, rec.Fields[f.Name]), s.choices(f, val), template.HTMLEscapeString(val))
 	}
 	if dl.Len() > 0 {
 		b.WriteString(`<dl class="sw-dl">` + dl.String() + "</dl>")
