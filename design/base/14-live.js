@@ -10,6 +10,7 @@
 // is time to take each in. A message sent while the assistant is working
 // waits and goes when the turn is done. If anything about the stream
 // fails, the form is sent the ordinary way and the page comes back whole.
+// Stopping a turn, and following one from another page: 19-live-join.js.
 (function () {
   "use strict";
   if (!window.fetch || !window.ReadableStream || !window.TextDecoder) return;
@@ -117,22 +118,9 @@
     if (text) text.textContent = message;
   }
 
-  // Stop, beside the status while the turn runs: the turn ends where it
-  // is, the reply says so, and what it did stays.
-  function stopControl(form, turn) {
-    var status = document.getElementById(form.getAttribute("data-busy-target"));
-    if (!status || !turn) return null;
-    var btn = el('<button type="button" class="sw-button sw-button--quiet sw-pressable sw-live__stop">Stop</button>');
-    btn.onclick = function () {
-      btn.setAttribute("aria-disabled", "true");
-      btn.textContent = "Stopping…";
-      fetch(form.action.replace(/\/chat$/, "/chat/stop"), { method: "POST", body: new URLSearchParams({ turn: turn }), credentials: "same-origin" });
-    };
-    status.after(btn);
-    return btn;
-  }
-
-  function send(form) {
+  // send runs a turn on the page: the one the form asks for, or, with a
+  // request for its events, one under way that the page is joining late.
+  function send(form, joining) {
     var log = logFor(form);
     var live = liveMessage(log);
     var land = lander();
@@ -203,7 +191,7 @@
       if (region) region.setAttribute("data-state", "idle");
       document.title = document.title.replace(/^⏳ /, "");
       // A turn that failed gives the words back, so they can be sent again.
-      if (ta && d.text && ta.value === "") ta.value = asked;
+      if (ta && d.text && ta.value === "" && !joining) ta.value = asked;
       follow();
       // A message written while the assistant was working goes now.
       if (form._queued) {
@@ -216,13 +204,16 @@
       heard = true;
       switch (msg.event) {
         case "said":
+          // A page joining late already shows the message, and the box
+          // may hold something new.
+          if (joining && document.getElementById("msg-" + d.id)) { thinking(true); stop = window.swStopControl(form, d.turn); break; }
           if (d.html) live.li.before(el("<li>" + d.html + "</li>"));
           // The message is recorded; the box is ready for the next one.
-          if (ta) ta.value = "";
+          if (ta && !joining) ta.value = "";
           var file = form.querySelector('input[type="file"]');
-          if (file) file.value = "";
+          if (file && !joining) file.value = "";
           thinking(true);
-          stop = stopControl(form, d.turn);
+          stop = window.swStopControl(form, d.turn);
           break;
         case "delta": thinking(false); live.words.data += d.text || ""; break;
         case "text": thinking(false); live.words.data = d.text || ""; break;
@@ -238,9 +229,11 @@
       }
       follow();
     }
-    var data = new FormData(form);
-    fetch(form.action.replace(/\/chat$/, "/chat/stream"), { method: "POST", body: data, headers: { Accept: "text/event-stream" }, credentials: "same-origin" })
+    (joining || fetch(form.action.replace(/\/chat$/, "/chat/stream"), { method: "POST", body: new FormData(form), headers: { Accept: "text/event-stream" }, credentials: "same-origin" }))
       .then(function (res) {
+        // The turn ended between the page and this: the page as it now is
+        // has the reply.
+        if (res.status === 204) { settle({}); refreshSoon(0); return; }
         if (!res.ok || !res.body) throw new Error("no stream");
         var reader = res.body.getReader(), decoder = new TextDecoder(), buffer = "";
         function pump() {
@@ -264,7 +257,7 @@
         // Once the server has heard the message the turn is under way and
         // must not be sent twice: show what arrived and stop. Before that,
         // the ordinary way, whole: the page comes back with the turn done.
-        if (heard) { if (!settled) settle({}); return; }
+        if (heard || joining) { if (!settled) settle({}); refreshSoon(0); return; }
         live.li.remove();
         form._sending = false;
         form.setAttribute("data-live", "off");
@@ -294,5 +287,8 @@
     });
   }
   function init() { document.querySelectorAll("form.sw-compose").forEach(arm); }
+  // A turn already under way, for 19-live-join.js: joining is the request
+  // for what it has done and does next.
+  window.swFollowTurn = send;
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
 })();

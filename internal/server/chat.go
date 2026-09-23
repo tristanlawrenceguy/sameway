@@ -61,6 +61,9 @@ type conversationView struct {
 	Title  string
 	ChatID string
 	Chats  []chatItem
+	// Turn is the turn under way when the page was made, if any: the
+	// page follows it from /chat/live.
+	Turn string
 }
 
 type chatMessage struct {
@@ -114,6 +117,12 @@ func (s *Server) conversationAbout(from, about, prompt string) (*conversation, e
 	}
 	out.Count = len(msgs)
 	view.Status = s.status(msgs)
+	// A turn still running, asked for from another page or before this
+	// one was loaded: the page says so and, with scripts, follows it.
+	if t := s.turns.find(""); t != nil {
+		view.Turn = t.id
+		view.Status = s.component("status", map[string]any{"id": "chat-status", "message": "Assistant is working", "state": "working"})
+	}
 	view.Proposals = s.proposals(from)
 	compose := map[string]any{"label": "Your message", "name": "message", "rows": 3, "required": true, "hint": "Ask for anything, or ask what something on the page is. Enter sends; Shift+Enter starts a new line."}
 	if prompt != "" {
