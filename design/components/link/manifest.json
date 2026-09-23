@@ -90,7 +90,7 @@
     {
       "name": "current",
       "props": {
-        "href": "/",
+        "href": "/chat",
         "label": "Chat",
         "current": true
       },

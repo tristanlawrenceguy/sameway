@@ -59,8 +59,10 @@ runner in tools/a11y-runner.
 | Everything leads somewhere | a detail page carries the way back to its listing, activity entries and reply receipts link to what they changed while it exists, activity listings read as sentences | `internal/server/navigation_test.go` |
 | Questions are answered where they are met | answers carry the page they were given on and return there, a proposal's own page offers them while pending, clearing the conversation clears its questions, listings show state | `internal/server/proposals_test.go` |
 | Model makes and fills tabs | create_canvas, blocks land on the tab the person is on or the one named, the prompt lists the tabs and the current one's blocks, clear_canvas clears one tab, remove_canvas takes its blocks | `internal/chat/canvases_test.go` |
-| Person uses a keyboard in a real browser | Tab order, focus ring, Enter/Space/ArrowDown per component | `tools/a11y-runner/keyboard.mjs` (CI) |
-| Person and agent on live pages | keyboard-only flows, axe on every page, role-and-name targeting, describe matches what renders | `tools/a11y-runner/pages.mjs` (CI) |
+| Person sees and hears a component in a real browser | axe AA and AAA in light and dark, role matches the manifest, 320px reflow, text spacing, 200% text, reduced motion, 3:1 field edges, 44px targets, no colour-only state, visible names in the accessible name, forced colours, errors tied to fields | `tools/a11y-runner/run.mjs` (CI) |
+| Person uses a keyboard in a real browser | Tab order, focus ring 2px and 3:1 in light, dark and forced colours, no trap, every control operated by its kind | `tools/a11y-runner/keyboard.mjs` (CI) |
+| Person and agent on live pages | keyboard-only flows, role-and-name targeting, describe matches what renders | `tools/a11y-runner/pages.mjs` (CI) |
+| Every page and the site as a whole | every component check on every page, focus hidden on a phone either way up, live regions that can announce, one place per link name, titles, the same navigation everywhere, forms sent empty say what is wrong | `tools/a11y-runner/site.mjs` (CI) |
 
 When you add a component, the contract and enum-coverage tests tell you what
 is missing. When you add a way to use the system, add a row here and a test.
@@ -82,6 +84,8 @@ is missing. When you add a way to use the system, add a row here and a test.
 - Every CLI command supports `--json`. Every error says how to fix it.
 - Accessibility is not optional: visible label, keyboard path, 44px target,
   7:1 contrast, no colour-only meaning. When unsure, use a native element.
+  The browser suites in tools/a11y-runner enforce all five; a component
+  that truly cannot meet one says why in `examples/a11y-waivers.json`.
 - Do not add a frontend framework or client-side rendering. Pages are
   server-rendered HTML; progressive enhancement only, and only in a
   component's own `enhance.js`.

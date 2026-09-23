@@ -31,6 +31,8 @@
 .sw-calendar__pad { background: var(--sw-color-bg-muted); }
 .sw-calendar__number { font-size: var(--sw-size-text-sm); font-weight: 600; color: var(--sw-color-fg-muted); }
 .sw-calendar__day--today { background: var(--sw-color-accent-soft); }
+/* On today's tint an event's chip is plain surface, so its words keep 7:1. */
+.sw-calendar__day--today .sw-calendar__events li { background: var(--sw-color-bg-raised); }
 .sw-calendar__day--today .sw-calendar__number {
   display: inline-flex; align-items: center; justify-content: center;
   min-width: 1.5rem; height: 1.5rem; padding: 0 0.3rem; border-radius: var(--sw-radius-pill);
@@ -44,7 +46,8 @@
    with the list's dot. The words wrap between words, never cut short, so
    the whole label shows at any text spacing (WCAG 1.4.12); a word breaks
    only when it cannot fit a line alone. The time, when there is one,
-   comes first in the quiet ink. */
+   comes first in bold; full ink, since the chip's tint leaves the quiet
+   ink short of 7:1 in dark mode. */
 .sw-calendar__events { list-style: none; margin: var(--sw-space-1) 0 0; padding: 0; font-size: var(--sw-size-text-xs); display: grid; gap: 0.125rem; }
 .sw-calendar__events li {
   margin: 0; min-width: 0; padding: 0.125rem var(--sw-space-2) 0.125rem 0.375rem;
@@ -56,7 +59,7 @@
   content: ""; display: inline-block; width: 0.375rem; height: 0.375rem; border-radius: 50%;
   margin-right: 0.3rem; vertical-align: 0.1em; background: var(--sw-dot, var(--sw-color-accent));
 }
-.sw-calendar__event time { font-weight: 600; color: var(--sw-color-fg-muted); font-variant-numeric: tabular-nums; }
+.sw-calendar__event time { font-weight: 600; color: var(--sw-color-fg); font-variant-numeric: tabular-nums; }
 .sw-calendar__event .sw-link { color: inherit; text-decoration: none; font-weight: 500; }
 .sw-calendar__event .sw-link:hover { text-decoration: underline; text-underline-offset: 0.15em; }
 .sw-calendar__meta { color: var(--sw-color-fg-muted); }
@@ -67,9 +70,9 @@
 .sw-calendar--page .sw-calendar__events { font-size: var(--sw-size-text-sm); gap: var(--sw-space-1); }
 /* With the room of a page a chip is a small card, the event's actions
    under its words. */
-.sw-calendar--page .sw-calendar__events li { padding: var(--sw-space-1) var(--sw-space-2); border-radius: var(--sw-radius-md); }
+.sw-calendar--page .sw-calendar__events li { min-height: var(--sw-size-target); padding: var(--sw-space-1) var(--sw-space-2); border-radius: var(--sw-radius-md); }
 .sw-calendar__actions { display: flex; flex-wrap: wrap; gap: var(--sw-space-1); margin-top: var(--sw-space-1); }
-.sw-calendar__actions .sw-button { min-height: 2rem; padding: 0 var(--sw-space-2); font-size: var(--sw-size-text-xs); }
+.sw-calendar__actions .sw-button { min-height: var(--sw-size-target); padding: 0 var(--sw-space-2); font-size: var(--sw-size-text-xs); }
 
 /* With less than a full column each, a day shows its events' words alone:
    the time is still there for a reader and comes back with the room. */
@@ -143,3 +146,7 @@ a.sw-calendar__number { display: inline-flex; align-items: center; justify-conte
 a.sw-calendar__number:hover { background: color-mix(in srgb, var(--sw-color-fg) 8%, transparent); }
 .sw-calendar__day--today a.sw-calendar__number { margin: -0.125rem 0 -0.125rem 0; }
 .sw-calendar__day--today a.sw-calendar__number:hover { background: var(--sw-color-accent); }
+/* On an event's tinted chip the accent ring loses contrast; the ink ring
+   keeps 3:1 against it. */
+.sw-calendar__events :focus-visible { outline-color: var(--sw-color-fg); }
+.sw-calendar__actions .sw-link { display: inline-flex; align-items: center; justify-content: center; min-height: var(--sw-size-target); min-width: var(--sw-size-target); }

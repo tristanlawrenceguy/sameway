@@ -3,7 +3,7 @@
 <div class="sw-chat__panel">
 <form method="post" action="/chat/new"><input type="hidden" name="from" value="{{.From}}">{{.NewChat}}</form>
 {{if .Chats}}<ul class="sw-plain sw-chat__list" aria-label="Chats">
-{{range .Chats}}<li{{if .Current}} aria-current="true"{{end}}><form method="post" action="/chat/open"><input type="hidden" name="from" value="{{$.From}}"><input type="hidden" name="id" value="{{.ID}}"><button type="submit" class="sw-chat__open sw-pressable">{{.Title}} <span class="sw-muted sw-small">{{.When}}</span></button></form><form method="post" action="/chat/delete"><input type="hidden" name="from" value="{{$.From}}"><input type="hidden" name="id" value="{{.ID}}"><button type="submit" class="sw-button sw-button--quiet sw-pressable" aria-label="Delete chat {{.Title}}"></button></form></li>
+{{range .Chats}}<li{{if .Current}} aria-current="true"{{end}}><form method="post" action="/chat/open"><input type="hidden" name="from" value="{{$.From}}"><input type="hidden" name="id" value="{{.ID}}"><button type="submit" class="sw-chat__open sw-pressable">{{.Title}} <span class="sw-muted sw-small">{{.When}}</span></button></form><form method="post" action="/chat/delete"><input type="hidden" name="from" value="{{$.From}}"><input type="hidden" name="id" value="{{.ID}}"><button type="submit" class="sw-button sw-button--quiet sw-pressable">Delete<span class="sw-visually-hidden"> chat {{.Title}}</span></button></form></li>
 {{end}}</ul>{{end}}
 </div></details>
 <span class="sw-chat__place"></span>

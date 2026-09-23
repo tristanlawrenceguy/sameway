@@ -12,3 +12,4 @@
 .sw-status--done { color: var(--sw-color-success); background: var(--sw-color-success-soft); }
 .sw-status--error { color: var(--sw-color-danger); background: var(--sw-color-danger-soft); }
 .sw-status--idle .sw-status__dot { opacity: 0.5; }
+@media (forced-colors: active) { .sw-status__dot { forced-color-adjust: none; background: CanvasText; } }

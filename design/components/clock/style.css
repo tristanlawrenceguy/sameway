@@ -11,7 +11,6 @@
 
 /* Ringing: an alert in the accent wash with a bell that pulses while
    motion is allowed. It stays until Dismiss or five more minutes. */
-.sw-clock__ringing:empty { display: none; }
 .sw-clock__ringing { display: grid; gap: var(--sw-space-2); }
 .sw-clock__ring {
   position: relative;
@@ -31,18 +30,18 @@
 .sw-clock__set { display: grid; gap: var(--sw-space-2); }
 .sw-clock__form { display: flex; align-items: center; gap: var(--sw-space-2); flex-wrap: wrap; }
 .sw-clock__lead { flex: none; min-width: 3.25rem; font-size: var(--sw-size-text-sm); font-weight: 600; color: var(--sw-color-fg-muted); }
-.sw-clock .sw-clock__form .sw-field__input { min-height: 2.25rem; width: auto; padding: 0 var(--sw-space-3); border-radius: var(--sw-radius-md); font-size: var(--sw-size-text-sm); }
+.sw-clock .sw-clock__form .sw-field__input { min-height: var(--sw-size-target); width: auto; padding: 0 var(--sw-space-3); border-radius: var(--sw-radius-md); font-size: var(--sw-size-text-sm); }
 .sw-clock .sw-clock__minutes { width: 4.5rem; text-align: center; }
 .sw-clock .sw-clock__at { width: 7rem; }
 .sw-clock .sw-clock__title { flex: 1 1 6rem; min-width: 6rem; }
-.sw-clock__form .sw-button { min-height: 2.25rem; padding: 0 var(--sw-space-3); font-size: var(--sw-size-text-sm); }
+.sw-clock__form .sw-button { min-height: var(--sw-size-target); padding: 0 var(--sw-space-3); font-size: var(--sw-size-text-sm); }
 
 /* Coming up: each a row with its time first, in the quiet ink, and a dot
    for what kind of thing it is: blue for an alarm, green for a timer,
    the list's colour for what the calendar has today. */
 .sw-clock__head { margin: 0 0 calc(-1 * var(--sw-space-2)); font-size: var(--sw-size-text-xs); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--sw-color-fg-muted); }
 .sw-clock__next { display: grid; }
-.sw-clock__item { position: relative; display: flex; align-items: center; gap: var(--sw-space-3); min-width: 0; min-height: 2.25rem; padding: var(--sw-space-1) 0; border-top: 1px solid var(--sw-color-border); }
+.sw-clock__item { position: relative; display: flex; align-items: center; gap: var(--sw-space-3); min-width: 0; min-height: var(--sw-size-target); padding: var(--sw-space-1) 0; border-top: 1px solid var(--sw-color-border); }
 .sw-clock__item:first-child { border-top: 0; }
 .sw-clock__item::before { content: ""; flex: none; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--sw-color-accent); }
 .sw-clock__item[data-kind="timer"]::before { background: var(--sw-color-success); }
@@ -52,6 +51,9 @@
 .sw-clock__item .sw-link { color: inherit; text-decoration: none; }
 .sw-clock__item .sw-link:hover { text-decoration: underline; text-underline-offset: 0.15em; }
 .sw-clock__item form { margin-left: auto; position: relative; z-index: 1; }
-.sw-clock__item form .sw-button { min-height: 2rem; padding: 0 var(--sw-space-2); font-size: var(--sw-size-text-xs); }
+.sw-clock__item form .sw-button { min-height: var(--sw-size-target); padding: 0 var(--sw-space-2); font-size: var(--sw-size-text-xs); }
 .sw-clock__empty { margin: 0; }
 .sw-clock__notify { justify-self: start; }
+/* Forced colours repaint backgrounds; the bell keeps its shape in the
+   person's text colour. */
+@media (forced-colors: active) { .sw-clock__bell { forced-color-adjust: none; background: CanvasText; box-shadow: none; } }

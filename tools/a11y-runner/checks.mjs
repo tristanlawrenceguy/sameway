@@ -24,10 +24,11 @@ export async function settle(page) {
   await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
 }
 
-// axe at AA in the page's current mode, leaving out any rules named.
-export async function axeProblems(page, skip = []) {
+// axe in the page's current mode, at AA unless other tags are given,
+// leaving out any rules named.
+export async function axeProblems(page, skip = [], tags = AA_TAGS) {
   await settle(page);
-  const res = await new AxeBuilder({ page }).withTags(AA_TAGS).disableRules(skip).analyze();
+  const res = await new AxeBuilder({ page }).withTags(tags).disableRules(skip).analyze();
   return res.violations.map((v) => `axe ${v.id} - ${v.help} (${v.nodes.length} node(s): ${v.nodes.slice(0, 3).map((n) => n.target.join(" ")).join(", ")})`);
 }
 
@@ -62,7 +63,7 @@ export async function reflowProblems(page) {
 
 // WCAG 1.4.12 Text Spacing: with the spacing the criterion names forced
 // on, no text is cut off by a box that hides its overflow.
-const SPACING = "* { line-height: 1.5 !important; letter-spacing: 0.12em !important; word-spacing: 0.16em !important; } p { margin-bottom: 2em !important; }";
+const SPACING = "* { line-height: 1.5 !important; letter-spacing: 0.12em !important; word-spacing: 0.16em !important; } p { margin-bottom: 2em !important; } *, *::before, *::after { transition: none !important; }";
 
 export async function spacingProblems(page) {
   const style = await page.addStyleTag({ content: SPACING });
@@ -111,7 +112,9 @@ export async function motionProblems(page) {
 // WCAG 2.4.11 Focus Not Obscured: walk the page with Tab and check each
 // focused control is not entirely covered by something else, such as a
 // sticky header. Five points across it are sampled; one showing is enough.
-export async function obscuredFocusProblems(page, limit = 300) {
+// onFocus, when given, is asked about each focused control on the way and
+// returns a problem or null.
+export async function obscuredFocusProblems(page, onFocus = null, limit = 300) {
   // Reduced motion makes the scroll to a focused control instant rather
   // than smooth, so it is in place when it is measured.
   await page.emulateMedia({ reducedMotion: "reduce" });
@@ -142,6 +145,8 @@ export async function obscuredFocusProblems(page, limit = 300) {
     });
     if (!r) break;
     if (!r.shown) out.push(`${r.name} is hidden behind something else when focused`);
+    const more = onFocus && (await onFocus(page));
+    if (more) out.push(more);
   }
   await page.emulateMedia({ reducedMotion: "no-preference" });
   return out;
