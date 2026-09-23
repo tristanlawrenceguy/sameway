@@ -2,7 +2,8 @@
 //
 // For each example: every focusable element is reachable with Tab in DOM
 // order with a visible focus ring, in the default, dark, and forced-colours
-// modes; Shift+Tab walks the same order back and Tab leaves the last one, so
+// modes, 2px thick and 3:1 against what it is drawn over (WCAG 2.4.13);
+// Shift+Tab walks the same order back and Tab leaves the last one, so
 // nothing traps focus. Then every control is operated the way the platform
 // promises for its kind (Enter follows a link, Enter and Space press a
 // button, Space toggles a checkbox, Enter and Space open a summary, Up
@@ -19,6 +20,7 @@ import { fileURLToPath } from "node:url";
 import { join, resolve } from "node:path";
 import { shell } from "./shell.mjs";
 import { setMode } from "./checks.mjs";
+import { focusAppearance } from "./visual.mjs";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const root = resolve(__dirname, "..", "..");
@@ -71,6 +73,10 @@ async function tabOrder(where, mode) {
     if (a.tag === "body") break;
     seen.push(a.tag);
     if (!a.ring) fail(where, `${a.tag} focused via keyboard without a visible focus ring (${mode})`);
+    // In forced colours the ring is the person's own colour; elsewhere it
+    // must be 2px and 3:1 against what it is drawn over (2.4.13).
+    const weak = mode === "forced" ? null : await focusAppearance(page);
+    if (weak) fail(where, `${weak} (${mode})`);
     if (seen.length === expected.length) break;
   }
   if (seen.join(",") !== expected.join(",")) fail(where, `tab order ${seen.join(",")} differs from DOM order ${expected.join(",")} (${mode})`);
@@ -192,7 +198,6 @@ for (const name of readdirSync(componentsDir).sort()) {
   const dir = join(componentsDir, name);
   const examplesDir = join(dir, "examples");
   if (!existsSync(examplesDir)) continue;
-  const css = existsSync(join(dir, "style.css")) ? readFileSync(join(dir, "style.css"), "utf8") : "";
   const manifest = JSON.parse(readFileSync(join(dir, "manifest.json"), "utf8"));
   const keys = (manifest.a11y && manifest.a11y.keyboard) || [];
   const tabDocumented = keys.some((k) => /\bTab\b/.test(k.key));
@@ -206,7 +211,7 @@ for (const name of readdirSync(componentsDir).sort()) {
     // purpose; here we test keyboard mechanics, not constraint validation.
     // An example with forms of its own is left unwrapped: a form inside a
     // form is dropped by the parser, and its end tag closes the outer one.
-    const html = shell(css, /<form[\s>]/.test(body) ? body : `<form action="#" method="post" novalidate>${body}</form>`);
+    const html = shell(/<form[\s>]/.test(body) ? body : `<form action="#" method="post" novalidate>${body}</form>`);
     let expected = [];
     for (const mode of ["dark", "forced", "light"]) {
       await setMode(page, mode);

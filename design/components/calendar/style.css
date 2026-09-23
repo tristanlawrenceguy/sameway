@@ -31,6 +31,8 @@
 .sw-calendar__pad { background: var(--sw-color-bg-muted); }
 .sw-calendar__number { font-size: var(--sw-size-text-sm); font-weight: 600; color: var(--sw-color-fg-muted); }
 .sw-calendar__day--today { background: var(--sw-color-accent-soft); }
+/* On today's tint an event's chip is plain surface, so its words keep 7:1. */
+.sw-calendar__day--today .sw-calendar__events li { background: var(--sw-color-bg-raised); }
 .sw-calendar__day--today .sw-calendar__number {
   display: inline-flex; align-items: center; justify-content: center;
   min-width: 1.5rem; height: 1.5rem; padding: 0 0.3rem; border-radius: var(--sw-radius-pill);
@@ -67,9 +69,9 @@
 .sw-calendar--page .sw-calendar__events { font-size: var(--sw-size-text-sm); gap: var(--sw-space-1); }
 /* With the room of a page a chip is a small card, the event's actions
    under its words. */
-.sw-calendar--page .sw-calendar__events li { padding: var(--sw-space-1) var(--sw-space-2); border-radius: var(--sw-radius-md); }
+.sw-calendar--page .sw-calendar__events li { min-height: var(--sw-size-target); padding: var(--sw-space-1) var(--sw-space-2); border-radius: var(--sw-radius-md); }
 .sw-calendar__actions { display: flex; flex-wrap: wrap; gap: var(--sw-space-1); margin-top: var(--sw-space-1); }
-.sw-calendar__actions .sw-button { min-height: 2rem; padding: 0 var(--sw-space-2); font-size: var(--sw-size-text-xs); }
+.sw-calendar__actions .sw-button { min-height: var(--sw-size-target); padding: 0 var(--sw-space-2); font-size: var(--sw-size-text-xs); }
 
 /* With less than a full column each, a day shows its events' words alone:
    the time is still there for a reader and comes back with the room. */
@@ -143,3 +145,6 @@ a.sw-calendar__number { display: inline-flex; align-items: center; justify-conte
 a.sw-calendar__number:hover { background: color-mix(in srgb, var(--sw-color-fg) 8%, transparent); }
 .sw-calendar__day--today a.sw-calendar__number { margin: -0.125rem 0 -0.125rem 0; }
 .sw-calendar__day--today a.sw-calendar__number:hover { background: var(--sw-color-accent); }
+/* On an event's tinted chip the accent ring loses contrast; the ink ring
+   keeps 3:1 against it. */
+.sw-calendar__events :focus-visible { outline-color: var(--sw-color-fg); }

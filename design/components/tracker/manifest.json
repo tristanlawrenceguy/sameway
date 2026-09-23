@@ -28,7 +28,7 @@
     }
   },
   "a11y": {
-    "role": "region",
+    "role": "region at full, status at glance",
     "keyboard": [
       { "key": "Tab", "does": "reaches each habit's name, the amount field when it has a unit, and Log" },
       { "key": "Enter", "does": "logs" }

@@ -1,11 +1,14 @@
 // Runs axe-core against every component example in design/components.
 //
-// AA violations (tags wcag2a, wcag2aa, wcag21a, wcag21aa, wcag22aa) fail the
-// run. AAA findings are printed as warnings unless the component has a
-// waiver in examples/a11y-waivers.json that names the rule and a reason.
-// Each example is also checked with axe in dark mode, for reflow at 320px,
-// for clipped text under WCAG text spacing, and for motion when reduced
-// motion is asked for (checks.mjs); any of those problems fails the run.
+// AA and AAA violations (axe tags wcag2a to wcag22aaa) fail the run unless
+// the component has a waiver in examples/a11y-waivers.json that names the
+// rule and a reason; AA rules cannot be waived. Each example is also
+// checked with axe in dark mode, for reflow at 320px, for clipped text
+// under WCAG text spacing and at 200% text, for motion when reduced motion
+// is asked for (checks.mjs), for field edges, 44px targets, colour-only
+// state, marks lost in forced colours and errors tied to their fields
+// (visual.mjs), and against the role its manifest declares.
+// Any problem fails the run.
 //
 // Usage: cd tools/a11y-runner && npm install && npm test
 import { chromium } from "playwright";
@@ -17,7 +20,19 @@ import { join, resolve } from "node:path";
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const root = resolve(__dirname, "..", "..");
 import { shell, AA_TAGS, AAA_TAGS } from "./shell.mjs";
-import { setMode, axeProblems, reflowProblems, spacingProblems, motionProblems } from "./checks.mjs";
+import { setMode, settle, axeProblems, reflowProblems, spacingProblems, motionProblems } from "./checks.mjs";
+import { visualProblems, forcedColourProblems, textZoomProblems, errorWiringProblems } from "./visual.mjs";
+
+// ARIA roles a manifest's a11y.role may name, and the ones worth holding
+// an example's outermost element to: landmarks, live regions and widgets.
+const ROLES = ["alert", "article", "button", "checkbox", "combobox", "figure", "form", "group", "heading", "img", "link", "list", "listitem", "navigation", "paragraph", "region", "search", "searchbox", "spinbutton", "status", "table", "textbox"];
+const PLAIN = new Set(["text", "generic", "paragraph", "listitem", "none"]);
+
+// The roles an example's accessibility tree holds, outermost first.
+async function rolesOf(page) {
+  const snap = await page.locator("#example").ariaSnapshot();
+  return snap.split("\n").map((l) => l.trim().replace(/^- /, "").split(/[\s:"]/)[0]).filter(Boolean);
+}
 
 const componentsDir = join(root, "design", "components");
 
@@ -78,21 +93,21 @@ const browser = await chromium.launch();
 const ctx = await browser.newContext();
 const tab = await ctx.newPage();
 let failures = 0;
-let warnings = 0;
+let waived = 0;
 
 for (const name of readdirSync(componentsDir).sort()) {
   const dir = join(componentsDir, name);
   const examplesDir = join(dir, "examples");
   if (!existsSync(examplesDir)) continue;
-  const css = existsSync(join(dir, "style.css")) ? readFileSync(join(dir, "style.css"), "utf8") : "";
   const waiverFile = join(examplesDir, "a11y-waivers.json");
   const waivers = existsSync(waiverFile) ? JSON.parse(readFileSync(waiverFile, "utf8")) : {};
+  const manifest = JSON.parse(readFileSync(join(dir, "manifest.json"), "utf8"));
   // Field-like components need a form context; wrap everything in one. The
   // page shell above supplies h1 and h2 so components that default to level
   // 3 sit in a valid outline, the same way they do inside a real page section.
   for (const file of readdirSync(examplesDir).filter((f) => f.endsWith(".html")).sort()) {
     const body = readFileSync(join(examplesDir, file), "utf8");
-    await tab.setContent(shell(css, `<form>${body}</form>`));
+    await tab.setContent(shell(`<form id="example">${body}</form>`));
     // Give the renderer a chance to apply CSS before axe-core reads computed styles.
     // Without this, setContent can race with style application on reused pages,
     // causing non-deterministic color-contrast failures (backlog 0161).
@@ -109,28 +124,46 @@ for (const name of readdirSync(componentsDir).sort()) {
     const aaa = await new AxeBuilder({ page: tab }).withTags(AAA_TAGS).analyze();
     for (const v of aaa.violations) {
       if (waivers[v.id]) {
+        waived++;
         console.log(`waived ${name}/${file}: ${v.id} - ${waivers[v.id]}`);
         continue;
       }
-      warnings++;
+      failures++;
       const diags = await diagnosticNodes(tab, v.nodes);
       for (const d of diags) {
         console.log(`  ${JSON.stringify(d)}`);
       }
-      console.log(`WARN ${name}/${file}: ${v.id} - ${v.help} (AAA)`);
+      console.log(`FAIL ${name}/${file}: ${v.id} - ${v.help} (AAA)`);
     }
-    // The same example in dark mode, and at the sizes, spacing and motion
-    // settings WCAG asks it to survive.
+    // What the manifest says a reader meets is what the tree holds.
     const other = [];
-    await setMode(tab, "dark");
-    await tab.setContent(shell(css, `<form>${body}</form>`));
-    await new Promise((resolve) => setTimeout(resolve, 250));
-    for (const p of await axeProblems(tab)) other.push(`dark: ${p}`);
+    const declared = ROLES.filter((r) => new RegExp(`\\b${r}s?\\b`).test(manifest.a11y.role));
+    const found = await rolesOf(tab);
+    // An example of plain text (a badge, an empty chart's words) holds no
+    // role worth naming.
+    const plainOnly = found.every((r) => PLAIN.has(r));
+    if (!plainOnly && !found.some((r) => declared.includes(r))) other.push(`manifest a11y.role "${manifest.a11y.role}" names none of the roles the example has (${found.slice(0, 5).join(", ")})`);
+    if (found[0] && !PLAIN.has(found[0]) && !declared.includes(found[0])) other.push(`the example is a ${found[0]}, which manifest a11y.role "${manifest.a11y.role}" does not say`);
+    // Light and dark: what axe does not measure.
+    const excused = waivers["target-size-44"] ? [name] : [];
+    for (const mode of ["light", "dark"]) {
+      await setMode(tab, mode);
+      await tab.setContent(shell(`<form id="example">${body}</form>`));
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      if (mode === "dark") for (const p of await axeProblems(tab, Object.keys(waivers).filter((k) => k !== "target-size-44"), [...AA_TAGS, ...AAA_TAGS])) other.push(`dark: ${p}`);
+      for (const p of await visualProblems(tab, excused)) other.push(`${mode}: ${p}`);
+    }
+    // The same example at the sizes, spacing, zoom and motion settings WCAG
+    // asks it to survive, and in forced colours.
     await setMode(tab, "light");
-    await tab.setContent(shell(css, `<form>${body}</form>`));
+    await tab.setContent(shell(`<form id="example">${body}</form>`));
+    await settle(tab);
     for (const p of await reflowProblems(tab)) other.push(`reflow: ${p}`);
     for (const p of await spacingProblems(tab)) other.push(`text spacing: ${p}`);
+    for (const p of await textZoomProblems(tab)) other.push(`text zoom: ${p}`);
     for (const p of await motionProblems(tab)) other.push(`reduced motion: ${p}`);
+    for (const p of await forcedColourProblems(tab)) other.push(`forced colours: ${p}`);
+    for (const p of await errorWiringProblems(tab)) other.push(`errors: ${p}`);
     for (const p of other) {
       failures++;
       console.log(`FAIL ${name}/${file}: ${p}`);
@@ -139,5 +172,5 @@ for (const name of readdirSync(componentsDir).sort()) {
 }
 
 await browser.close();
-console.log(`a11y: ${failures} AA violation(s), ${warnings} AAA warning(s)`);
+console.log(`a11y: ${failures} violation(s), ${waived} waived`);
 process.exit(failures > 0 ? 1 : 0);

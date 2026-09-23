@@ -3,7 +3,7 @@
 .sw-search__field {
   min-height: 2.75rem; min-width: 10rem; flex: 1 1 10rem;
   padding: var(--sw-space-2) var(--sw-space-3);
-  border: 1px solid var(--sw-color-border); border-radius: var(--sw-radius-md);
+  border: 1px solid var(--sw-color-border-strong); border-radius: var(--sw-radius-md);
   background: var(--sw-color-bg-raised); color: var(--sw-color-fg);
   font: inherit;
 }

@@ -21,7 +21,7 @@
     }
   },
   "a11y": {
-    "role": "textbox",
+    "role": "textbox (spinbutton for a number, searchbox for a search)",
     "keyboard": [
       { "key": "Tab", "does": "moves focus to and from the field" },
       { "key": "Enter", "does": "submits the enclosing form" }

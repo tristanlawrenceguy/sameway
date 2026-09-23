@@ -21,7 +21,7 @@
     }
   },
   "a11y": {
-    "role": "listitem content",
+    "role": "listitem content: text, with a link to what was acted on and an Undo button when there are",
     "keyboard": [ { "key": "Tab", "does": "reaches the link to the thing acted on, when it still exists, then the Undo button when the entry can be undone" }, { "key": "Enter", "does": "on Undo, reverses the entry and returns to the page" } ],
     "states": [],
     "wcag": { "target": "AAA", "notes": "The actor is spelled out ('You', 'Assistant', 'System'), so provenance never depends on colour. The link text is the target and its detail, so it says where it goes (2.4.4). Render events inside a list so counts and positions are announced." }

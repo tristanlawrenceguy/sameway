@@ -1,0 +1,3 @@
+{
+  "target-size-44": "In the month grid (full detail) an event is a chip in a day cell: a 44px chip each would leave room for about one event a day in seven columns. The same events are 44px targets in the brief list, at page detail, and on each record's page."
+}

@@ -10,7 +10,7 @@
   padding: var(--sw-space-3) var(--sw-space-2); border-top: 1px solid var(--sw-color-border);
 }
 .sw-tracker__habit:first-child { border-top: 0; }
-.sw-tracker__head { grid-area: head; position: relative; display: flex; align-items: baseline; gap: var(--sw-space-2); min-width: 0; }
+.sw-tracker__head { grid-area: head; position: relative; display: flex; align-items: center; gap: var(--sw-space-2); min-width: 0; min-height: var(--sw-size-target); }
 .sw-tracker__name { font-weight: 600; color: var(--sw-color-fg); text-decoration: none; overflow-wrap: anywhere; }
 a.sw-tracker__name:hover { text-decoration: underline; text-underline-offset: 0.15em; }
 /* The streak: a small flame-coloured count, only when there is one. */
@@ -33,14 +33,16 @@ a.sw-tracker__name:hover { text-decoration: underline; text-underline-offset: 0.
 .sw-tracker__days { grid-area: days; display: flex; gap: 0.3rem; }
 /* A record has no target to meet: a dot is filled when something was logged. */
 .sw-tracker__habit[data-aim="record"] .sw-tracker__day[data-logged="true"] { background: var(--sw-color-accent); }
-.sw-tracker__day { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--sw-color-border); }
-.sw-tracker__day[data-met="true"] { background: var(--sw-color-success); }
+/* A day kept is a filled dot, a day missed an empty ring: the shape says
+   it, not only the colour. */
+.sw-tracker__day { width: 0.5rem; height: 0.5rem; border-radius: 50%; border: 1.5px solid var(--sw-color-border-strong); }
+.sw-tracker__day[data-met="true"] { background: var(--sw-color-success); border-color: var(--sw-color-success); }
 .sw-tracker__day:last-child { box-shadow: 0 0 0 2px var(--sw-color-bg-raised), 0 0 0 3px var(--sw-color-border-strong); }
 .sw-tracker__log { grid-area: log; display: flex; flex-wrap: wrap; align-items: center; gap: var(--sw-space-2); }
-.sw-tracker .sw-tracker__on { width: 7rem; min-height: 2.25rem; padding: 0 var(--sw-space-2); font-size: var(--sw-size-text-sm); }
-.sw-tracker .sw-tracker__amount { width: 4rem; min-height: 2.25rem; padding: 0 var(--sw-space-2); text-align: right; font-size: var(--sw-size-text-sm); }
+.sw-tracker .sw-tracker__on { width: 7rem; min-height: var(--sw-size-target); padding: 0 var(--sw-space-2); font-size: var(--sw-size-text-sm); }
+.sw-tracker .sw-tracker__amount { width: 4rem; min-height: var(--sw-size-target); padding: 0 var(--sw-space-2); text-align: right; font-size: var(--sw-size-text-sm); }
 .sw-tracker__unit { font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); }
-.sw-tracker__log .sw-button { min-height: 2.25rem; padding: 0 var(--sw-space-3); font-size: var(--sw-size-text-sm); }
+.sw-tracker__log .sw-button { min-height: var(--sw-size-target); padding: 0 var(--sw-space-3); font-size: var(--sw-size-text-sm); }
 .sw-tracker__empty { margin: 0; }
 /* At a glance: met of all, this period. */
 .sw-tracker--glance { display: inline-flex; align-items: baseline; gap: var(--sw-space-1); }
@@ -50,4 +52,11 @@ a.sw-tracker__name:hover { text-decoration: underline; text-underline-offset: 0.
 /* Narrow (a pane, a phone): Log goes under the habit instead of beside it. */
 @container (max-width: 27rem) {
   .sw-tracker__habit { grid-template-columns: 1fr; grid-template-areas: "head" "bar" "numbers" "days" "log"; }
+}
+/* Forced colours repaint backgrounds: the bar keeps an edge, its fill and
+   the kept days keep their shape in the person's colours. */
+@media (forced-colors: active) {
+  .sw-tracker__bar { border: 1px solid CanvasText; }
+  .sw-tracker__fill { forced-color-adjust: none; background: Highlight; }
+  .sw-tracker__day[data-met="true"] { forced-color-adjust: none; background: CanvasText; border-color: CanvasText; }
 }

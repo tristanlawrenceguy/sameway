@@ -61,9 +61,9 @@ func TestA11yRunnerHasDiagnostics(t *testing.T) {
 		t.Error("run.mjs: violation summary no longer uses 'FAIL' prefix; acceptance criterion 1 requires it stay the same")
 	}
 
-	// AAA violations must still use WARN prefix (for non-waived).
-	if !strings.Contains(code, "WARN ") && !strings.Contains(code, "'WARN ") {
-		t.Error("run.mjs: warning summary no longer uses 'WARN' prefix; original format changed")
+	// AAA violations fail like AA ones unless waived, and say they are AAA.
+	if !strings.Contains(code, "(AAA)") {
+		t.Error("run.mjs: an unwaived AAA violation should be reported as a failure marked (AAA)")
 	}
 
 	// Waived AAA violations must NOT produce diagnostic output.

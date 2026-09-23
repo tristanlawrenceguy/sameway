@@ -51,6 +51,8 @@ var pairs = []pair{
 	{"fg", "info-soft", 7, "body text on an info-toned block"},
 	{"fg-muted", "accent-soft", 7, "secondary text on an accent-toned block"},
 	{"fg-muted", "info-soft", 7, "secondary text on an info-toned block"},
+	{"fg-muted", "assistant-soft", 7, "a receipt's quiet words and a question's detail on the assistant's tint"},
+	{"accent", "assistant-soft", 7, "a receipt's links on the assistant's tint"},
 	{"border-strong", "bg", 3, "control borders (1.4.11)"},
 	{"focus", "bg", 3, "focus ring on page"},
 	{"focus", "bg-muted", 3, "focus ring on muted surface"},
