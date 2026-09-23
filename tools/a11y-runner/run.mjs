@@ -3,6 +3,9 @@
 // AA violations (tags wcag2a, wcag2aa, wcag21a, wcag21aa, wcag22aa) fail the
 // run. AAA findings are printed as warnings unless the component has a
 // waiver in examples/a11y-waivers.json that names the rule and a reason.
+// Each example is also checked with axe in dark mode, for reflow at 320px,
+// for clipped text under WCAG text spacing, and for motion when reduced
+// motion is asked for (checks.mjs); any of those problems fails the run.
 //
 // Usage: cd tools/a11y-runner && npm install && npm test
 import { chromium } from "playwright";
@@ -14,6 +17,7 @@ import { join, resolve } from "node:path";
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const root = resolve(__dirname, "..", "..");
 import { shell, AA_TAGS, AAA_TAGS } from "./shell.mjs";
+import { setMode, axeProblems, reflowProblems, spacingProblems, motionProblems } from "./checks.mjs";
 
 const componentsDir = join(root, "design", "components");
 
@@ -114,6 +118,20 @@ for (const name of readdirSync(componentsDir).sort()) {
         console.log(`  ${JSON.stringify(d)}`);
       }
       console.log(`WARN ${name}/${file}: ${v.id} - ${v.help} (AAA)`);
+    }
+    // The same example in dark mode, and at the sizes, spacing and motion
+    // settings WCAG asks it to survive.
+    const other = [];
+    await setMode(tab, "dark");
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    for (const p of await axeProblems(tab)) other.push(`dark: ${p}`);
+    await setMode(tab, "light");
+    for (const p of await reflowProblems(tab)) other.push(`reflow: ${p}`);
+    for (const p of await spacingProblems(tab)) other.push(`text spacing: ${p}`);
+    for (const p of await motionProblems(tab)) other.push(`reduced motion: ${p}`);
+    for (const p of other) {
+      failures++;
+      console.log(`FAIL ${name}/${file}: ${p}`);
     }
   }
 }

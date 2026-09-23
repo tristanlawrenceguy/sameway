@@ -1,7 +1,7 @@
 {
   "name": "sameway-a11y-runner",
   "private": true,
-  "description": "Dev-only browser tests: axe-core and keyboard operation for every component example, and live-page tests against a running server.",
+  "description": "Dev-only browser tests: axe-core in light and dark, reflow, text spacing, reduced motion and keyboard operation for every component example, and the same over every live page of a running server.",
   "type": "module",
   "scripts": {
     "postinstall": "playwright install chromium",

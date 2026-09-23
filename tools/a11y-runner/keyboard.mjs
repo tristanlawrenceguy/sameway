@@ -1,18 +1,27 @@
 // Keyboard tests for every component example.
 //
 // For each example: every focusable element is reachable with Tab in DOM
-// order and shows a visible focus ring; then the component is operated the
-// way its manifest keyboard map promises (Enter/Space on buttons, Space on
-// checkboxes, Enter in a textarea inserts a newline, Enter in a text field
-// submits, ArrowDown changes a select, Enter follows a link).
+// order with a visible focus ring, in the default, dark, and forced-colours
+// modes; Shift+Tab walks the same order back and Tab leaves the last one, so
+// nothing traps focus. Then every control is operated the way the platform
+// promises for its kind (Enter follows a link, Enter and Space press a
+// button, Space toggles a checkbox, Enter and Space open a summary, Up
+// changes a date part, Down changes a select, Space opens a file chooser,
+// typing fills a field, Enter in a textarea is a new line), and Enter in a
+// field submits its form when the component's manifest says Enter does.
+// A component whose examples can be focused must say what Tab reaches in
+// its manifest keyboard map.
 //
 // Usage: cd tools/a11y-runner && npm install && node keyboard.mjs
 import { chromium } from "playwright";
 import { readFileSync, readdirSync, existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { join, resolve } from "node:path";
 import { shell } from "./shell.mjs";
+import { setMode } from "./checks.mjs";
 
-const root = resolve(process.cwd(), "..", "..");
+const __dirname = fileURLToPath(new URL(".", import.meta.url));
+const root = resolve(__dirname, "..", "..");
 const componentsDir = join(root, "design", "components");
 const browser = await chromium.launch();
 const page = await (await browser.newContext()).newPage();
@@ -38,11 +47,12 @@ async function arm() {
   });
 }
 
-const focusables = () => page.evaluate(() => {
-  // summary is focusable; a hidden input is a form value, not a control.
-  const sel = 'a[href], button:not([disabled]), summary, input:not([disabled]):not([type=hidden]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+// summary is focusable; a hidden input is a form value, not a control.
+const FOCUSABLE = 'a[href], button:not([disabled]), summary, input:not([disabled]):not([type=hidden]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+const focusables = () => page.evaluate((sel) => {
   return [...document.querySelectorAll(sel)].filter((el) => !el.closest(".shell")).map((el) => el.tagName.toLowerCase() + (el.id ? "#" + el.id : ""));
-});
+}, FOCUSABLE);
 
 const active = () => page.evaluate(() => {
   const el = document.activeElement;
@@ -51,93 +61,129 @@ const active = () => page.evaluate(() => {
   return { tag: el.tagName.toLowerCase() + (el.id ? "#" + el.id : ""), ring: cs.outlineStyle !== "none" && parseFloat(cs.outlineWidth) > 0 };
 });
 
-async function tabOrder(where) {
+async function tabOrder(where, mode) {
   const expected = await focusables();
   await page.evaluate(() => document.body.focus());
-  // Skip the shell's own focusables (heading links do not exist, so none).
   const seen = [];
   for (let i = 0; i < expected.length + 2; i++) {
     await page.keyboard.press("Tab");
     const a = await active();
     if (a.tag === "body") break;
     seen.push(a.tag);
-    if (!a.ring) fail(where, `${a.tag} focused via keyboard without a visible focus ring`);
+    if (!a.ring) fail(where, `${a.tag} focused via keyboard without a visible focus ring (${mode})`);
     if (seen.length === expected.length) break;
   }
-  if (seen.join(",") !== expected.join(",")) fail(where, `tab order ${seen.join(",")} differs from DOM order ${expected.join(",")}`);
+  if (seen.join(",") !== expected.join(",")) fail(where, `tab order ${seen.join(",")} differs from DOM order ${expected.join(",")} (${mode})`);
+  if (mode !== "light" || expected.length === 0) return expected;
+  // Tab from the last control leaves the example; nothing holds focus. A
+  // date field takes a Tab for each of its parts before it lets go.
+  let out;
+  for (let i = 0; i < 4; i++) {
+    await page.keyboard.press("Tab");
+    out = await active();
+    if (out.tag === "body") break;
+  }
+  if (out.tag !== "body") fail(where, `Tab from the last control stays on ${out.tag}: a keyboard trap`);
+  // Shift+Tab from the end walks the same order backwards.
+  const back = [];
+  for (let i = 0; i < expected.length; i++) {
+    await page.keyboard.press("Shift+Tab");
+    back.push((await active()).tag);
+  }
+  if (back.reverse().join(",") !== expected.join(",")) fail(where, `Shift+Tab order ${back.join(",")} is not the Tab order reversed`);
   return expected;
 }
 
-async function operate(name, where) {
-  const clicks = () => page.evaluate(() => window.__clicks);
-  const submits = () => page.evaluate(() => window.__submits);
-  switch (name) {
-    case "button": {
-      const btn = page.locator("button[data-component=button]:not([disabled])");
-      if (await btn.count() === 0) return; // disabled example
-      await btn.focus();
-      await page.keyboard.press("Enter");
-      await page.keyboard.press("Space");
-      if (await clicks() !== 2) fail(where, `Enter and Space should each activate the button, got ${await clicks()} clicks`);
-      const disabled = page.locator("button[data-component=button][disabled]");
-      if (await disabled.count() && (await focusables()).some((f) => f.startsWith("button"))) fail(where, "disabled button must leave the tab order");
-      break;
-    }
-    case "link": {
-      await page.locator("a[data-component=link]").focus();
-      await page.keyboard.press("Enter");
-      if (await clicks() !== 1) fail(where, "Enter should follow the link");
-      break;
-    }
-    case "checkbox": {
-      const box = page.locator("input[type=checkbox]");
-      const before = await box.isChecked();
-      await box.focus();
-      await page.keyboard.press("Space");
-      if (await box.isChecked() === before) fail(where, "Space should toggle the checkbox");
-      await page.locator("label").click();
-      if (await box.isChecked() !== before) fail(where, "clicking the label should toggle the checkbox");
-      break;
-    }
-    case "textarea": {
-      const ta = page.locator("textarea");
-      await ta.focus();
-      await page.keyboard.type("a");
-      await page.keyboard.press("Enter");
-      await page.keyboard.type("b");
-      if (!(await ta.inputValue()).includes("\n")) fail(where, "Enter in a textarea should insert a newline");
-      if (await submits() !== 0) fail(where, "Enter in a textarea must not submit the form");
-      break;
-    }
-    case "text-field": {
-      const input = page.locator("input");
-      await input.focus();
-      await page.keyboard.type("x");
-      await page.keyboard.press("Enter");
-      if (await submits() !== 1) fail(where, "Enter in a text field should submit its form");
-      break;
-    }
-    case "select": {
-      const sel = page.locator("select");
-      const before = await sel.inputValue();
-      await sel.focus();
-      await page.keyboard.press("ArrowDown");
-      if (await sel.inputValue() === before) fail(where, "ArrowDown should move to the next option");
-      break;
-    }
-    case "disclosure": {
-      const d = page.locator("details[data-component=disclosure]");
-      const before = await d.evaluate((el) => el.open);
-      await page.locator("summary").focus();
-      await page.keyboard.press("Enter");
-      if (await d.evaluate((el) => el.open) === before) fail(where, "Enter on the summary should open or close it");
-      break;
-    }
-    case "table": {
-      const wrap = page.locator(".sw-table-wrap");
-      await wrap.focus();
-      if ((await active()).tag !== "div") fail(where, "the table scroll region should be focusable");
-      break;
+// Operates every control in the example by the kind of element it is.
+async function operate(where, enterSubmits) {
+  const count = await page.evaluate((sel) => {
+    const els = [...document.querySelectorAll(sel)].filter((el) => !el.closest(".shell"));
+    els.forEach((el, i) => { el.dataset.kb = i; });
+    return els.length;
+  }, FOCUSABLE);
+  const counts = () => page.evaluate(() => ({ clicks: window.__clicks, submits: window.__submits }));
+  for (let i = 0; i < count; i++) {
+    const el = page.locator(`[data-kb="${i}"]`);
+    const kind = await el.evaluate((e) => {
+      const t = e.tagName.toLowerCase();
+      if (t === "input") return "input:" + (e.type || "text");
+      if (t === "a" || t === "summary" || t === "button" || t === "select" || t === "textarea") return t;
+      return "region";
+    });
+    const what = `${kind} ${i + 1} of ${count}`;
+    await el.focus();
+    const before = await counts();
+    switch (kind) {
+      case "a": {
+        await page.keyboard.press("Enter");
+        if ((await counts()).clicks !== before.clicks + 1) fail(where, `Enter should follow the link (${what})`);
+        break;
+      }
+      case "button": {
+        await page.keyboard.press("Enter");
+        await el.focus();
+        await page.keyboard.press("Space");
+        if ((await counts()).clicks !== before.clicks + 2) fail(where, `Enter and Space should each press the button (${what})`);
+        break;
+      }
+      case "summary": {
+        const open = () => el.evaluate((e) => e.parentElement.open);
+        const was = await open();
+        await page.keyboard.press("Enter");
+        if (await open() === was) fail(where, `Enter on the summary should open or close it (${what})`);
+        await page.keyboard.press("Space");
+        if (await open() !== was) fail(where, `Space on the summary should open or close it (${what})`);
+        break;
+      }
+      case "input:checkbox":
+      case "input:radio": {
+        const was = await el.isChecked();
+        await page.keyboard.press("Space");
+        if (await el.isChecked() === was && !(kind === "input:radio" && was)) fail(where, `Space should check the ${kind.slice(6)} (${what})`);
+        break;
+      }
+      case "input:file": {
+        const chooser = page.waitForEvent("filechooser", { timeout: 2000 }).then(() => true, () => false);
+        await page.keyboard.press("Space");
+        if (!(await chooser)) fail(where, `Space on the file field should open the file chooser (${what})`);
+        break;
+      }
+      case "input:date": {
+        const was = await el.inputValue();
+        if (!was) break; // an empty date has no part to step
+        await page.keyboard.press("ArrowUp");
+        if (await el.inputValue() === was) fail(where, `ArrowUp should change the date part under the cursor (${what})`);
+        break;
+      }
+      case "select": {
+        const last = await el.evaluate((s) => s.selectedIndex >= s.options.length - 1);
+        if (last) break;
+        const was = await el.inputValue();
+        await page.keyboard.press("ArrowDown");
+        if (await el.inputValue() === was) fail(where, `ArrowDown should move to the next option (${what})`);
+        break;
+      }
+      case "textarea": {
+        await page.keyboard.type("a");
+        await page.keyboard.press("Enter");
+        await page.keyboard.type("b");
+        if (!(await el.inputValue()).includes("a\nb")) fail(where, `Enter in a textarea should insert a newline (${what})`);
+        if ((await counts()).submits !== before.submits) fail(where, `Enter in a textarea must not submit the form (${what})`);
+        break;
+      }
+      case "region": break; // a focusable scroll region: reaching it is the promise
+      default: {
+        // Text-like fields: typing fills them; Enter submits when promised.
+        const typeable = await el.evaluate((e) => ["text", "search", "email", "url", "tel", "password", "number"].includes(e.type) && !e.readOnly);
+        if (!typeable) break;
+        const was = await el.inputValue();
+        await page.keyboard.type(kind === "input:number" ? "1" : "x");
+        if (await el.inputValue() === was) fail(where, `typing should change the field (${what})`);
+        if (enterSubmits) {
+          await page.keyboard.press("Enter");
+          if ((await counts()).submits !== before.submits + 1) fail(where, `Enter in the field should submit its form, as the manifest says (${what})`);
+        }
+      }
     }
   }
 }
@@ -147,15 +193,29 @@ for (const name of readdirSync(componentsDir).sort()) {
   const examplesDir = join(dir, "examples");
   if (!existsSync(examplesDir)) continue;
   const css = existsSync(join(dir, "style.css")) ? readFileSync(join(dir, "style.css"), "utf8") : "";
+  const manifest = JSON.parse(readFileSync(join(dir, "manifest.json"), "utf8"));
+  const keys = (manifest.a11y && manifest.a11y.keyboard) || [];
+  const tabDocumented = keys.some((k) => /\bTab\b/.test(k.key));
+  // Enter is promised to submit when the map names Enter and says it does
+  // something other than follow a link or open a picker.
+  const enterSubmits = keys.some((k) => /\bEnter\b/.test(k.key) && /submit|search|sets|logs/i.test(k.does));
   for (const file of readdirSync(examplesDir).filter((f) => f.endsWith(".html")).sort()) {
     const where = `${name}/${file}`;
     const body = readFileSync(join(examplesDir, file), "utf8");
     // novalidate: examples such as an invalid email show the error state on
     // purpose; here we test keyboard mechanics, not constraint validation.
-    await page.setContent(shell(css, `<form action="#" method="post" novalidate>${body}</form>`));
-    await arm();
-    const expected = await tabOrder(where);
-    if (expected.length > 0) await operate(name, where);
+    // An example with forms of its own is left unwrapped: a form inside a
+    // form is dropped by the parser, and its end tag closes the outer one.
+    const html = shell(css, /<form[\s>]/.test(body) ? body : `<form action="#" method="post" novalidate>${body}</form>`);
+    let expected = [];
+    for (const mode of ["dark", "forced", "light"]) {
+      await setMode(page, mode);
+      await page.setContent(html);
+      await arm();
+      expected = await tabOrder(where, mode);
+    }
+    if (expected.length > 0 && !tabDocumented) fail(where, "can be focused, but the manifest keyboard map does not say what Tab reaches");
+    if (expected.length > 0) await operate(where, enterSubmits);
   }
 }
 

@@ -11,7 +11,7 @@
 }
 .sw-tracker__habit:first-child { border-top: 0; }
 .sw-tracker__head { grid-area: head; position: relative; display: flex; align-items: baseline; gap: var(--sw-space-2); min-width: 0; }
-.sw-tracker__name { font-weight: 600; color: var(--sw-color-fg); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sw-tracker__name { font-weight: 600; color: var(--sw-color-fg); text-decoration: none; overflow-wrap: anywhere; }
 a.sw-tracker__name:hover { text-decoration: underline; text-underline-offset: 0.15em; }
 /* The streak: a small flame-coloured count, only when there is one. */
 .sw-tracker__streak {
