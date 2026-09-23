@@ -20,7 +20,7 @@ default) adds them up; `latest` is the last one logged, for a reading;
 with nothing logged has no reading rather than a reading of nought. An `entry` is one thing logged
 against it: when, and how much. The Log press on the tracker makes an
 entry, and on a habit's own page it also offers a day, for something
-done before today; so does the assistant with `create_record`; so does an import
+done before today (yesterday, 22 Sep, 2026-09-22; empty is now); so does the assistant with `create_record`; so does an import
 of a CSV of dates and amounts.
 
 The server reads the entries and fills the tracker in: this period
