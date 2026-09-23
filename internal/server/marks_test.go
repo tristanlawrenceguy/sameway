@@ -23,7 +23,7 @@ func TestARecordsStateIsOnePressAway(t *testing.T) {
 	if strings.Count(canvas, form) != 2 {
 		t.Errorf("the collection item and the record block each offer the checkbox, named with the record: %.600s", canvas[strings.Index(canvas, "Tasks"):])
 	}
-	if page := get(t, h, "/t/task/"+task.ID).Body.String(); !strings.Contains(page, form) {
+	if page := get(t, h, "/t/task/"+task.ID).Body.String(); !strings.Contains(page, `<form class="sw-mark" method="post" action="/t/task/`+task.ID+`/props" data-component="mark"`) {
 		t.Error("the record's own page offers the press beside Delete")
 	}
 

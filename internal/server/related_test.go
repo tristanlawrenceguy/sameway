@@ -55,9 +55,13 @@ func TestAPageAtRestSaysNothingAboutWhatElseExists(t *testing.T) {
 	if !strings.Contains(both, "Plant garlic") || !strings.Contains(both, "Buy a liner") {
 		t.Errorf("an address can open more than one connection\n%s", both)
 	}
-	// And the whole record, when somebody wants every field.
-	if fields := get(t, h, "/t/task/"+pond.ID+"?show=fields").Body.String(); !strings.Contains(fields, "<dt>Title</dt>") || !strings.Contains(fields, ">Fewer<") {
-		t.Errorf("show=fields is the whole record, and closes again\n%s", fields)
+	// And the whole record minus what the heading and chips already said.
+	fields := get(t, h, "/t/task/"+pond.ID+"?show=fields").Body.String()
+	if !strings.Contains(fields, "<dt>Project</dt>") || !strings.Contains(fields, ">Fewer<") {
+		t.Errorf("show=fields shows all non-chip fields and closes again\n%s", fields)
+	}
+	if strings.Contains(fields, "<dt>Title</dt>") || strings.Contains(fields, "<dt>Done</dt>") || strings.Contains(fields, "<dt>Due</dt>") {
+		t.Errorf("show=fields still leaves out what chips already said\n%s", fields)
 	}
 }
 

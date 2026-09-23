@@ -123,7 +123,7 @@ func TestDetailPageProposalHasSwBarInsideBlock(t *testing.T) {
 func TestDetailPageSwBarStructure(t *testing.T) {
 	a, h := newApp(t)
 
-	rec, err := a.Store.Create("note", map[string]any{"title": "Test note"})
+	rec, err := a.Store.Create("note", map[string]any{"title": "Test note", "tags": []any{"a"}})
 	if err != nil {
 		t.Fatal(err)
 	}
