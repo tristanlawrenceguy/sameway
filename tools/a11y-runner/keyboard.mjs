@@ -149,9 +149,16 @@ async function operate(where, enterSubmits) {
         break;
       }
       case "input:file": {
-        const chooser = page.waitForEvent("filechooser", { timeout: 2000 }).then(() => true, () => false);
-        await page.keyboard.press("Space");
-        if (!(await chooser)) fail(where, `Space on the file field should open the file chooser (${what})`);
+        // A loaded CI machine can be slow to report the chooser, so it gets
+        // two tries; a field that cannot open one fails both.
+        let opened = false;
+        for (let attempt = 0; attempt < 2 && !opened; attempt++) {
+          await el.focus();
+          const chooser = page.waitForEvent("filechooser", { timeout: 5000 }).then(() => true, () => false);
+          await page.keyboard.press("Space");
+          opened = await chooser;
+        }
+        if (!opened) fail(where, `Space on the file field should open the file chooser (${what})`);
         break;
       }
       case "input:date": {
