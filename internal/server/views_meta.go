@@ -15,10 +15,18 @@ import (
 // state, the day that matters to it, what it belongs to, when it was made.
 
 // lede is the line under a record's title: its box when it has one, its
-// facts as chips, then when it was made.
+// facts as chips, then when it was made. On detail pages the mark does not
+// carry context — the h1 already names the record and repeating it in aria-label
+// or visually-hidden text would be redundant for screen reader users.
 func (s *Server) lede(t *schema.Type, rec *store.Record) template.HTML {
 	box := ""
 	if props, ok := markOf(t, rec); ok {
+		// On detail pages the h1 already names the record; repeating it in
+		// aria-label or visually-hidden text would be redundant for screen
+		// reader users. Strip context and ariaLabel so the mark only says
+		// what isn't already obvious from the heading above.
+		delete(props, "context")
+		delete(props, "ariaLabel")
 		box = string(s.component("mark", props))
 	}
 	return template.HTML(`<p class="sw-lede">` + box + s.facts(t, rec, factOpts{Made: true, Boxed: box != "", Chips: true}) + `</p>`)

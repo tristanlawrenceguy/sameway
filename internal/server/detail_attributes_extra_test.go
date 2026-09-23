@@ -39,15 +39,21 @@ func TestDetailPageActivityDataAttributes(t *testing.T) {
 		t.Errorf("data-edit-action = %q, want %q", action, want)
 	}
 
-	for _, prop := range []string{"actor", "action", "detail"} {
+	for _, prop := range []string{"action", "detail"} {
 		dd := doc.WithAttr("data-prop", prop)
 		if len(dd) == 0 {
 			t.Errorf("<dd data-prop=%q should exist for activity detail\n%s", prop, truncate(get(t, h, "/t/activity/"+rec.ID+fieldsView).Body.String()))
 		}
 	}
 
+	// Actor (enum) is excluded from the dl because it appears as a chip.
+	dd := doc.WithAttr("data-prop", "actor")
+	if len(dd) > 0 {
+		t.Errorf("<dd should not have data-prop=\"actor\" on activity — actor is in chips\n%s", truncate(get(t, h, "/t/activity/"+rec.ID+fieldsView).Body.String()))
+	}
+
 	for _, prop := range []string{"Created", "Updated"} {
-		dd := doc.WithAttr("data-prop", prop)
+		dd = doc.WithAttr("data-prop", prop)
 		if len(dd) > 0 {
 			t.Errorf("<dd should not have data-prop=%q on activity\n%s", prop, truncate(get(t, h, "/t/activity/"+rec.ID+fieldsView).Body.String()))
 		}
@@ -86,16 +92,19 @@ func TestDetailPageProposalDataAttributes(t *testing.T) {
 		t.Errorf("data-edit-action = %q, want %q", action, want)
 	}
 
-	for _, prop := range []string{"summary", "action"} {
-		dd := doc.WithAttr("data-prop", prop)
-		if len(dd) == 0 {
+	for _, prop := range []string{"action"} {
+		if dd := doc.WithAttr("data-prop", prop); len(dd) == 0 {
 			t.Errorf("<dd data-prop=%q should exist for proposal detail\n%s", prop, truncate(get(t, h, "/t/proposal/"+rec.ID+fieldsView).Body.String()))
 		}
 	}
 
+	// Summary (title) is excluded from the dl because it's in the heading.
+	if dd := doc.WithAttr("data-prop", "summary"); len(dd) > 0 {
+		t.Errorf("<dd should not have data-prop=\"summary\" on proposal — summary is the h1\n%s", truncate(get(t, h, "/t/proposal/"+rec.ID+fieldsView).Body.String()))
+	}
+
 	for _, prop := range []string{"Created", "Updated"} {
-		dd := doc.WithAttr("data-prop", prop)
-		if len(dd) > 0 {
+		if dd := doc.WithAttr("data-prop", prop); len(dd) > 0 {
 			t.Errorf("<dd should not have data-prop=%q on proposal\n%s", prop, truncate(get(t, h, "/t/proposal/"+rec.ID+fieldsView).Body.String()))
 		}
 	}
@@ -103,18 +112,29 @@ func TestDetailPageProposalDataAttributes(t *testing.T) {
 
 // TestDetailPageStatusFieldHasDataProp checks that the status enum field on a
 // note gets data-prop="status" even though its default value is "draft".
+// Status (enum) is excluded from the dl because it appears as a chip, so we
+// check body instead — which should still have data-prop.
 func TestDetailPageStatusFieldHasDataProp(t *testing.T) {
 	a, h := newApp(t)
 
-	rec, err := a.Store.Create("note", map[string]any{"title": "Draft note"})
+	rec, err := a.Store.Create("note", map[string]any{
+		"title": "Draft note",
+		"body":  "Some draft body content.",
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
 	doc := parse(t, get(t, h, "/t/note/"+rec.ID+fieldsView))
 
-	dd := doc.WithAttr("data-prop", "status")
+	dd := doc.WithAttr("data-prop", "body")
 	if len(dd) == 0 {
-		t.Errorf("<dd data-prop=\"status\" should exist for note with default status\n%s", truncate(get(t, h, "/t/note/"+rec.ID+fieldsView).Body.String()))
+		t.Errorf("<dd data-prop=\"body\" should exist for note with body content\n%s", truncate(get(t, h, "/t/note/"+rec.ID+fieldsView).Body.String()))
+	}
+
+	// Status (enum) is excluded from the dl.
+	dd = doc.WithAttr("data-prop", "status")
+	if len(dd) > 0 {
+		t.Errorf("<dd should not have data-prop=\"status\" — status appears as a chip\n%s", truncate(get(t, h, "/t/note/"+rec.ID+fieldsView).Body.String()))
 	}
 }
 

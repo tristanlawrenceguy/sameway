@@ -54,8 +54,10 @@ func TestDetailPageHasDataEditAction(t *testing.T) {
 	}
 }
 
-// TestDetailPageDataPropOnEditableFields checks that each editable field's
-// <dd> element carries data-prop matching the field name.
+// TestDetailPageDataPropOnEditableFields checks that editable fields' <dd>
+// elements carry data-prop matching the field name. Title, bools, and enums
+// are excluded from the dl (they appear as chips/heading) so only body and
+// tags should have data-prop attributes on this view.
 func TestDetailPageDataPropOnEditableFields(t *testing.T) {
 	a, h := newApp(t)
 
@@ -71,10 +73,18 @@ func TestDetailPageDataPropOnEditableFields(t *testing.T) {
 	}
 	doc := parse(t, get(t, h, "/t/note/"+rec.ID+fieldsView))
 
-	for _, prop := range []string{"title", "body", "tags", "status", "pinned"} {
+	for _, prop := range []string{"body", "tags"} {
 		dd := doc.WithAttr("data-prop", prop)
 		if len(dd) == 0 {
 			t.Errorf("<dd data-prop=%q should exist for note detail page\n%s", prop, truncate(get(t, h, "/t/note/"+rec.ID+fieldsView).Body.String()))
+		}
+	}
+
+	// Title (heading), status (enum chip), pinned (bool mark) are excluded.
+	for _, prop := range []string{"title", "status", "pinned"} {
+		dd := doc.WithAttr("data-prop", prop)
+		if len(dd) > 0 {
+			t.Errorf("<dd should not have data-prop=%q — it's in chips/heading\n%s", prop, truncate(get(t, h, "/t/note/"+rec.ID+fieldsView).Body.String()))
 		}
 	}
 }
