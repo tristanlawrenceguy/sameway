@@ -37,7 +37,12 @@ func (s *Server) importPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var b strings.Builder
-	b.WriteString(`<p class="sw-muted">A CSV with a header row, a vCard (.vcf) of contacts, or a mailbox (.mbox) of mail. The file is kept with your files; its rows become ` + template.HTMLEscapeString(plural(t.Name)) + `, and you see how each column lands before anything is made.</p>`)
+	switch t.Name {
+	case "person":
+		b.WriteString(`<p class="sw-muted">A CSV with a header row, a vCard (.vcf) of contacts, or a mailbox (.mbox) of mail. The file is kept with your files; its rows become ` + template.HTMLEscapeString(plural(t.Name)) + `, and you see how each column lands before anything is made.</p>`)
+	default:
+		b.WriteString(`<p class="sw-muted">A CSV with a header row, a tab-separated file (.tsv), or plain text (.txt). The file is kept with your files; its rows become ` + template.HTMLEscapeString(plural(t.Name)) + `, and you see how each column lands before anything is made.</p>`)
+	}
 	fmt.Fprintf(&b, `<form method="post" action="/t/%s/import" enctype="multipart/form-data" class="sw-stack sw-import"><div class="sw-field"><label class="sw-field__label" for="import-file">File</label><input class="sw-field__input" id="import-file" type="file" name="file" accept=".csv,.tsv,.txt,.vcf,.vcard,.mbox,.eml" required></div>%s</form>`,
 		t.Name, s.component("button", map[string]any{"label": "Read the file", "type": "submit"}))
 	s.page(w, r, "Import "+plural(t.Name), template.HTML(b.String()), pageOptions{Kicker: crumbs("/t/"+t.Name, capitalize(plural(t.Name)), "Import", s.dotOf(t.Name)), Dot: s.dotOf(t.Name)})
