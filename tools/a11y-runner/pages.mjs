@@ -66,6 +66,13 @@ check(page.url().includes("#msg-"), "chat: redirect targets the newest message")
 const errorMsg = page.locator("[data-component=message][data-role=error]");
 check(await errorMsg.count() === 1 && /no model configured/.test(await errorMsg.textContent()), "chat: missing model is recorded as a system message");
 check(await page.getByRole("link", { name: "Skip to latest message" }).count() === 1, "chat: skip link to latest message present");
+// Pressing it takes focus to the newest message, not just to the top of the page.
+await page.getByRole("link", { name: "Skip to latest message" }).focus();
+await page.keyboard.press("Enter");
+check(await page.evaluate(() => {
+  const all = document.querySelectorAll("[data-component=message]");
+  return all.length > 0 && all[all.length - 1].contains(document.activeElement);
+}), "chat: the skip link moves focus to the newest message");
 await axe("home after chat");
 
 // Navigate to notes list and verify shell invariants.
@@ -76,7 +83,7 @@ await shellChecks("notes list");
 const apiRec = await fetch(base + "/api/note", {
   method: "POST",
   headers: { "content-type": "application/json" },
-  body: JSON.stringify({ title: "Created by keyboard test", tags: ["a11y"] }),
+  body: JSON.stringify({ title: "Created by keyboard test", body: "Written by the test.", tags: ["a11y"] }),
 });
 check(apiRec.status === 201, `person API note creation returns 201 (got ${apiRec.status})`);
 const apiNote = await apiRec.json();
@@ -84,6 +91,33 @@ const apiNote = await apiRec.json();
 // Navigate to the detail page and verify shell invariants.
 await page.goto(base + "/t/note/" + apiNote.id);
 await shellChecks("detail");
+
+// Editing a note by keyboard alone: Edit puts focus in the body, the body is
+// in the Tab order, and Save from the keyboard keeps what was typed.
+const focused = () => page.evaluate(() => {
+  const el = document.activeElement;
+  return (el.getAttribute("aria-label") || (el.labels && el.labels[0] && el.labels[0].textContent) || el.textContent || "").trim().replace(/\s+/g, " ");
+});
+await page.getByRole("button", { name: /^Edit/ }).first().focus();
+await page.keyboard.press("Enter");
+check(await focused() === "Body" && await page.evaluate(() => document.activeElement.isContentEditable || document.activeElement.tagName === "TEXTAREA"), `edit: Enter on Edit puts focus in the body field (got "${await focused()}")`);
+await page.keyboard.press("End");
+await page.keyboard.type(" Typed by keyboard.");
+await page.keyboard.press("Tab");
+await page.keyboard.press("Shift+Tab");
+check(await focused() === "Body", "edit: Shift+Tab comes back to the body field, so it is in the Tab order");
+let reachedSave = false;
+for (let i = 0; i < 6 && !reachedSave; i++) {
+  await page.keyboard.press("Tab");
+  reachedSave = (await focused()) === "Save";
+}
+check(reachedSave, "edit: Tab from the body reaches Save");
+if (reachedSave) {
+  await page.keyboard.press("Enter");
+  await page.waitForLoadState();
+  await page.goto(base + "/t/note/" + apiNote.id);
+  check((await page.locator("main").textContent()).includes("Typed by keyboard."), "edit: what was typed is saved");
+}
 
 // ---- the quiet layer ----------------------------------------------------
 // Per-item controls are faded until hovered or focused, but must stay

@@ -79,7 +79,7 @@ func (s *Server) apiLook(w http.ResponseWriter, r *http.Request) {
 			dec := json.NewDecoder(bytes.NewReader(raw))
 			dec.DisallowUnknownFields()
 			if err := dec.Decode(&ask); err != nil {
-				writeError(w, errors.New("body must be a JSON object of path, method, form, component, props, scripts, steps, only, kind and name: "+err.Error()))
+				writeError(w, errors.New("body must be a JSON object of path, method, form, component, props, scripts, steps, only, kind and name: "+jsonTrouble(err)))
 				return
 			}
 		}

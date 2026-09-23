@@ -58,7 +58,7 @@ func readBody(r *http.Request) (map[string]any, error) {
 		return map[string]any{}, nil
 	}
 	if err := json.Unmarshal(raw, &fields); err != nil {
-		return nil, errors.New("body must be a JSON object of fields: " + err.Error())
+		return nil, errors.New("body must be a JSON object of fields: " + jsonTrouble(err))
 	}
 	return fields, nil
 }

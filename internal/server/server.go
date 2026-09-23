@@ -238,23 +238,7 @@ func (s *Server) fail(w http.ResponseWriter, err error) {
 }
 
 func plural(name string) string {
-	label := strings.ReplaceAll(name, "_", " ")
-	if label == "person" {
-		return "people"
-	}
-	if strings.HasSuffix(label, "s") {
-		return label
-	}
-	if len(label) >= 2 && label[len(label)-1] == 'y' {
-		lastRune := rune(label[len(label)-2])
-		switch lastRune {
-		case 'a', 'e', 'i', 'o', 'u':
-			return label + "s"
-		default:
-			return label[:len(label)-1] + "ies"
-		}
-	}
-	return label + "s"
+	return schema.Plural(strings.ReplaceAll(name, "_", " "))
 }
 
 // listed says whether a list belongs in the sidebar: one with something in

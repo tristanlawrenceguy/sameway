@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -158,14 +159,5 @@ func or(s, fallback string) string {
 }
 
 func plural(s string) string {
-	if s == "" {
-		return ""
-	}
-	if s == "person" {
-		return "people"
-	}
-	if strings.HasSuffix(s, "s") {
-		return s
-	}
-	return s + "s"
+	return schema.Plural(s)
 }
