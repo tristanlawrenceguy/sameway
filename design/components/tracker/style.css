@@ -2,7 +2,7 @@
    a bar for this period against the target, the numbers in words, the
    last days as dots, and Log. A met period is the success green; the bar
    fills in the list colour. */
-.sw-tracker--full { display: grid; gap: var(--sw-space-2); min-width: 0; }
+.sw-tracker--full { display: grid; gap: var(--sw-space-2); min-width: 0; container-type: inline-size; }
 .sw-tracker__list { display: grid; gap: var(--sw-space-2); }
 .sw-tracker__habit {
   display: grid; grid-template-columns: 1fr auto; grid-template-areas: "head log" "bar log" "numbers log" "days log";
@@ -11,7 +11,7 @@
 }
 .sw-tracker__habit:first-child { border-top: 0; }
 .sw-tracker__head { grid-area: head; position: relative; display: flex; align-items: baseline; gap: var(--sw-space-2); min-width: 0; }
-.sw-tracker__name { font-weight: 600; color: var(--sw-color-fg); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sw-tracker__name { font-weight: 600; color: var(--sw-color-fg); text-decoration: none; overflow-wrap: anywhere; }
 a.sw-tracker__name:hover { text-decoration: underline; text-underline-offset: 0.15em; }
 /* The streak: a small flame-coloured count, only when there is one. */
 .sw-tracker__streak {
@@ -36,7 +36,7 @@ a.sw-tracker__name:hover { text-decoration: underline; text-underline-offset: 0.
 .sw-tracker__day { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--sw-color-border); }
 .sw-tracker__day[data-met="true"] { background: var(--sw-color-success); }
 .sw-tracker__day:last-child { box-shadow: 0 0 0 2px var(--sw-color-bg-raised), 0 0 0 3px var(--sw-color-border-strong); }
-.sw-tracker__log { grid-area: log; display: flex; align-items: center; gap: var(--sw-space-2); }
+.sw-tracker__log { grid-area: log; display: flex; flex-wrap: wrap; align-items: center; gap: var(--sw-space-2); }
 .sw-tracker .sw-tracker__on { width: 7rem; min-height: 2.25rem; padding: 0 var(--sw-space-2); font-size: var(--sw-size-text-sm); }
 .sw-tracker .sw-tracker__amount { width: 4rem; min-height: 2.25rem; padding: 0 var(--sw-space-2); text-align: right; font-size: var(--sw-size-text-sm); }
 .sw-tracker__unit { font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); }
@@ -47,6 +47,7 @@ a.sw-tracker__name:hover { text-decoration: underline; text-underline-offset: 0.
 .sw-tracker__count { font-size: var(--sw-size-text-lg); font-weight: 700; font-variant-numeric: tabular-nums; }
 .sw-tracker__of { font-size: var(--sw-size-text-sm); font-weight: 400; color: var(--sw-color-fg-muted); }
 .sw-tracker__label { font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); }
+/* Narrow (a pane, a phone): Log goes under the habit instead of beside it. */
 @container (max-width: 27rem) {
   .sw-tracker__habit { grid-template-columns: 1fr; grid-template-areas: "head" "bar" "numbers" "days" "log"; }
 }

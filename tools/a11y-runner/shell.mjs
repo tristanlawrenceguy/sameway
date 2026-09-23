@@ -1,6 +1,8 @@
 // Shared page shell for rendering a component example in isolation. It
 // supplies the same tokens and base CSS the real server serves, plus an h1
-// and h2 so components that default to heading level 3 sit in a valid outline.
+// and h2 so components that default to heading level 3 sit in a valid outline,
+// inside .sw-shell and main.sw-main so they get the column and gutter a real
+// page gives them.
 import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join, resolve } from "node:path";
@@ -24,5 +26,5 @@ export const base = readdirSync(join(designDir, "base"))
 export function shell(componentCss, body) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Example</title>
 <style>${tokens}\n${base}\n${componentCss}</style></head>
-<body><main><div class="shell"><h1>Example</h1><h2>Section</h2></div>${body}</main></body></html>`;
+<body><div class="sw-shell"><main class="sw-main"><div class="shell"><h1>Example</h1><h2>Section</h2></div>${body}</main></div></body></html>`;
 }

@@ -41,16 +41,17 @@
   font-size: var(--sw-size-text-xs); font-weight: 700; color: var(--sw-color-accent);
 }
 /* What is on a day: each event a chip in a pale wash of its list's colour,
-   with the list's dot, on one line that ends in an ellipsis rather than
-   breaking a word; the whole label is still there for a reader and on
-   hover. The time, when there is one, comes first in the quiet ink. */
+   with the list's dot. The words wrap between words, never cut short, so
+   the whole label shows at any text spacing (WCAG 1.4.12); a word breaks
+   only when it cannot fit a line alone. The time, when there is one,
+   comes first in the quiet ink. */
 .sw-calendar__events { list-style: none; margin: var(--sw-space-1) 0 0; padding: 0; font-size: var(--sw-size-text-xs); display: grid; gap: 0.125rem; }
 .sw-calendar__events li {
   margin: 0; min-width: 0; padding: 0.125rem var(--sw-space-2) 0.125rem 0.375rem;
   border-radius: var(--sw-radius-pill);
   background: color-mix(in srgb, var(--sw-dot, var(--sw-color-accent)) 14%, transparent); color: var(--sw-color-fg);
 }
-.sw-calendar__event { display: block; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sw-calendar__event { display: block; min-width: 0; overflow-wrap: break-word; }
 .sw-calendar__event::before {
   content: ""; display: inline-block; width: 0.375rem; height: 0.375rem; border-radius: 50%;
   margin-right: 0.3rem; vertical-align: 0.1em; background: var(--sw-dot, var(--sw-color-accent));
@@ -64,10 +65,9 @@
 .sw-calendar--page .sw-table { min-width: 44rem; }
 .sw-calendar--page .sw-calendar__day, .sw-calendar--page .sw-calendar__pad { min-height: 8rem; }
 .sw-calendar--page .sw-calendar__events { font-size: var(--sw-size-text-sm); gap: var(--sw-space-1); }
-/* With the room of a page a chip is a small card: the words wrap rather
-   than end in an ellipsis, and the event's actions sit under them. */
+/* With the room of a page a chip is a small card, the event's actions
+   under its words. */
 .sw-calendar--page .sw-calendar__events li { padding: var(--sw-space-1) var(--sw-space-2); border-radius: var(--sw-radius-md); }
-.sw-calendar--page .sw-calendar__event { white-space: normal; overflow: visible; }
 .sw-calendar__actions { display: flex; flex-wrap: wrap; gap: var(--sw-space-1); margin-top: var(--sw-space-1); }
 .sw-calendar__actions .sw-button { min-height: 2rem; padding: 0 var(--sw-space-2); font-size: var(--sw-size-text-xs); }
 
@@ -117,7 +117,6 @@ a.sw-calendar__number:focus-visible { outline: var(--sw-focus-width) solid var(-
 .sw-calendar__hourlabel { color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-xs); font-variant-numeric: tabular-nums; padding-top: 0.2rem; }
 .sw-calendar__hour .sw-calendar__events { margin: 0; font-size: var(--sw-size-text-sm); gap: var(--sw-space-1); }
 .sw-calendar__hour .sw-calendar__events li { padding: var(--sw-space-1) var(--sw-space-2); border-radius: var(--sw-radius-md); }
-.sw-calendar__hour .sw-calendar__event { white-space: normal; overflow: visible; }
 .sw-calendar__nothing { margin: 0; }
 /* What can be done for the day shown, such as logging a habit for it. */
 .sw-calendar__add { margin-top: var(--sw-space-3); padding-top: var(--sw-space-3); border-top: 1px solid var(--sw-color-border); }

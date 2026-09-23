@@ -140,3 +140,45 @@ func TestExpandingSomethingThatIsNotThere(t *testing.T) {
 	h, _ := canvasWithACalendar(t)
 	wantStatus(t, get(t, h, "/canvas/nope"), http.StatusNotFound)
 }
+
+// TestExpandedBlockIsNotAlsoInThePane: a block from the right pane, given
+// its own page, is shown once. Left in the pane as well, it would be two
+// landmarks with one name, and a heading-by-heading reader would meet it
+// twice.
+func TestExpandedBlockIsNotAlsoInThePane(t *testing.T) {
+	_, h := newApp(t)
+	var blk struct{ ID string }
+	decode(t, postJSON(t, h, "POST", "/api/block", map[string]any{
+		"component": "clock", "region": "right", "size": "compact",
+		"props": map[string]any{"label": "Kitchen clock"},
+	}), &blk)
+	doc := parse(t, get(t, h, "/canvas/"+blk.ID))
+	if n := len(doc.WithAttr("data-component", "clock")); n != 1 {
+		t.Fatalf("the clock's own page shows %d clocks, want 1", n)
+	}
+}
+
+// TestExpandedCollectionHeadingFollowsThePage: expanded, a collection's
+// label sits directly under the page's h1, as an h2, not an h3 that skips
+// a level.
+func TestExpandedCollectionHeadingFollowsThePage(t *testing.T) {
+	_, h := newApp(t)
+	var blk struct{ ID string }
+	decode(t, postJSON(t, h, "POST", "/api/block", map[string]any{
+		"component": "collection",
+		"props":     map[string]any{"type": "note", "label": "All the notes"},
+	}), &blk)
+	doc := parse(t, get(t, h, "/canvas/"+blk.ID))
+	for _, h3 := range doc.Elements("h3") {
+		if htmltest.Text(h3) == "All the notes" {
+			t.Fatal("the expanded collection's label is an h3 under the page's h1")
+		}
+	}
+	found := false
+	for _, h2 := range doc.Elements("h2") {
+		found = found || htmltest.Text(h2) == "All the notes"
+	}
+	if !found {
+		t.Fatalf("the expanded collection's label should be an h2\n%s", doc.Root.Data)
+	}
+}

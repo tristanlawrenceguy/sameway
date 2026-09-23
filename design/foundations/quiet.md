@@ -43,6 +43,12 @@ shifts, because the bar is positioned and the space is always reserved.
 - forced-colours modes, where opacity is unreliable
 - workspaces with `ui.controls: visible` in `workspace.yaml`
 
+Where it is always on, a block's bar takes its own row under the content
+instead of floating over the corner: a bar that never fades would cover
+the top of the content for good, and a tap meant for a title would land on
+Remove. Where it fades, focus inside a block's content does not reveal the
+bar, for the same reason; it shows when focus reaches it, one Tab later.
+
 ## Compact labels, complete names
 
 A control in a quiet bar shows one word. The rest of its name is real text

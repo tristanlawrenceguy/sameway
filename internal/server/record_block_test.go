@@ -23,7 +23,7 @@ func TestARecordBlockIsTheRecordOnTheCanvas(t *testing.T) {
 	page := get(t, h, "/").Body.String()
 	for _, want := range []string{
 		`data-component="record"`, `data-record-id="` + note.ID + `"`,
-		`data-prop="title">Call the dentist</h3>`, `data-prop="body" data-source="Ask about Thursday." data-prose-level="4"><p>Ask about Thursday.</p>`,
+		`data-prop="title">Call the dentist</h2>`, `data-prop="body" data-source="Ask about Thursday." data-prose-level="3"><p>Ask about Thursday.</p>`,
 		`<dt>Tags</dt><dd>health</dd>`,
 		`data-edit-action="/t/note/` + note.ID + `/props"`,
 	} {
@@ -37,7 +37,7 @@ func TestARecordBlockIsTheRecordOnTheCanvas(t *testing.T) {
 	var plan struct{ ID string }
 	decode(t, postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Garden plan", "body": "# Beds\n\n- Dig the pond"}), &plan)
 	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/block", map[string]any{"component": "record", "props": map[string]any{"type": "note", "record": plan.ID}}), http.StatusCreated)
-	if page := get(t, h, "/").Body.String(); !strings.Contains(page, "<h4>Beds</h4>") || !strings.Contains(page, "<li>Dig the pond</li>") || !strings.Contains(page, `data-source="# Beds`) {
+	if page := get(t, h, "/").Body.String(); !strings.Contains(page, "<h3>Beds</h3>") || !strings.Contains(page, "<li>Dig the pond</li>") || !strings.Contains(page, `data-source="# Beds`) {
 		t.Errorf("a note's structure should show on the canvas: %.600s", page[strings.Index(page, "Garden plan"):])
 	}
 

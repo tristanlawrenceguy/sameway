@@ -32,6 +32,6 @@
   },
   "examples": [
     { "name": "default", "props": { "label": "Search" }, "file": "examples/default.html" },
-    { "name": "results", "props": { "value": "plumber", "label": "Search" }, "file": "examples/results.html" }
+    { "name": "results", "props": { "value": "plumber", "label": "Search notes" }, "file": "examples/results.html" }
   ]
 }

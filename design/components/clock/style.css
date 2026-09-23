@@ -48,7 +48,7 @@
 .sw-clock__item[data-kind="timer"]::before { background: var(--sw-color-success); }
 .sw-clock__item[data-kind="event"]::before { background: var(--sw-dot, var(--sw-color-border-strong)); }
 .sw-clock__when { flex: none; min-width: 4.5rem; color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); font-variant-numeric: tabular-nums; }
-.sw-clock__item .sw-clock__what { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.sw-clock__item .sw-clock__what { flex: 1; min-width: 0; overflow-wrap: anywhere; font-weight: 500; }
 .sw-clock__item .sw-link { color: inherit; text-decoration: none; }
 .sw-clock__item .sw-link:hover { text-decoration: underline; text-underline-offset: 0.15em; }
 .sw-clock__item form { margin-left: auto; position: relative; z-index: 1; }

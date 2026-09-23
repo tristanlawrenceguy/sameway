@@ -9,8 +9,13 @@
 //           one the description lists.
 import { chromium } from "playwright";
 import AxeBuilder from "@axe-core/playwright";
+import { readFileSync, readdirSync, existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { join, resolve } from "node:path";
 import { AA_TAGS } from "./shell.mjs";
+import { setMode, axeProblems, reflowProblems, spacingProblems, motionProblems, obscuredFocusProblems } from "./checks.mjs";
 
+const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..", "..");
 const base = (process.env.SAMEWAY_URL || "http://127.0.0.1:8080").replace(/\/$/, "");
 const browser = await chromium.launch();
 const page = await (await browser.newContext()).newPage();
@@ -171,6 +176,69 @@ check(await page.locator("h1").textContent() === "Created by an agent", "agent r
 
 const removed = await fetch(`${base}/api/note/${rec.id}`, { method: "DELETE" });
 check(removed.status === 200, "agent: DELETE returns 200");
+
+// ---- every page, every mode ---------------------------------------------
+// A canvas holding every example of every component, the way the assistant
+// would place them: the first of each in the main region at full size, the
+// second in the right pane at compact size, the third as an icon. Then every
+// page a person can reach is checked in light, dark and forced colours, at
+// 320px wide, with WCAG text spacing, with reduced motion, by walking it
+// with Tab for focus hidden under sticky parts, and by /api/look.
+
+const post = (path, body) => fetch(base + path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+const canvas = await (await post("/api/canvas", { name: "Everything" })).json();
+const placings = [{ region: "main", size: "full", span: 12 }, { region: "right", size: "compact", span: 12 }, { region: "main", size: "icon", span: 4 }];
+const blocks = [];
+const componentsDir = join(root, "design", "components");
+for (const name of readdirSync(componentsDir).sort()) {
+  const file = join(componentsDir, name, "manifest.json");
+  if (!existsSync(file)) continue;
+  const examples = JSON.parse(readFileSync(file, "utf8")).examples || [];
+  for (const [i, ex] of examples.entries()) {
+    const res = await post("/api/block", { component: name, props: ex.props, canvas: canvas.id, position: blocks.length, ...(placings[i] || placings[0]) });
+    // An example the store refuses is the component's own contract test's
+    // business; here it is only left off the canvas.
+    if (res.status !== 201) { console.log(`skip ${name}/${ex.name}: ${res.status} ${(await res.text()).slice(0, 120)}`); continue; }
+    blocks.push({ id: (await res.json()).id, label: `${name}/${ex.name}` });
+  }
+}
+check(blocks.length > 0, "every page: examples placed on a canvas");
+
+const everyPage = ["/", "/chat", "/design", "/search", "/search?q=keyboard", "/activity", "/t/note", `/t/note/${apiNote.id}`, "/t/note/import",
+  "/workspaces", "/workspaces/new", "/workspaces/copy", "/workspaces/delete", "/t/nothing-here", `/c/${canvas.id}`,
+  ...blocks.map((b) => `/canvas/${b.id}`)];
+const blockLabel = Object.fromEntries(blocks.map((b) => [`/canvas/${b.id}`, b.label]));
+
+for (const path of everyPage) {
+  const label = blockLabel[path] ? `${path} (${blockLabel[path]})` : path;
+  // Each mode gets a fresh load: some styles lag a mode switched under a
+  // page that is already drawn. axe passes over anything at opacity 0, so
+  // the quiet layer's controls are shown the way hover or focus shows them.
+  for (const mode of ["dark", "light"]) {
+    await setMode(page, mode);
+    await page.goto(base + path);
+    await page.evaluate(() => { document.documentElement.dataset.controls = "visible"; });
+    // The seeded canvas stacks every example of a component together, so
+    // several share a name by design; landmark-unique is best practice,
+    // not WCAG, and stays on for every other page.
+    // The styleguide shows every example as it would sit on a page, own
+    // headings and all, between its h4 labels; heading-order is likewise
+    // best practice and is left out there alone.
+    const seeded = path.startsWith("/c/") || blockLabel[path];
+    const skip = seeded ? ["landmark-unique"] : path === "/design" ? ["heading-order"] : [];
+    for (const p of await axeProblems(page, skip)) fail(`${label} ${mode}: ${p}`);
+  }
+  for (const p of await reflowProblems(page)) fail(`${label} reflow: ${p}`);
+  for (const p of await spacingProblems(page)) fail(`${label} text spacing: ${p}`);
+  for (const p of await motionProblems(page)) fail(`${label} reduced motion: ${p}`);
+  for (const p of await obscuredFocusProblems(page)) fail(`${label} focus: ${p}`);
+  await page.setViewportSize({ width: 320, height: 640 });
+  for (const p of await obscuredFocusProblems(page)) fail(`${label} focus at 320px: ${p}`);
+  await page.setViewportSize({ width: 1280, height: 720 });
+  // What an agent is told about the page: /api/look lists any problems.
+  const look = await (await fetch(`${base}/api/look?path=${encodeURIComponent(path)}`)).json();
+  for (const p of look.problems || []) fail(`${label} look: ${typeof p === "string" ? p : JSON.stringify(p)}`);
+}
 
 await browser.close();
 console.log(`pages: ${failures} failure(s)`);
