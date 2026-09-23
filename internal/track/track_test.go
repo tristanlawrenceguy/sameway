@@ -27,12 +27,12 @@ func TestADailyStreak(t *testing.T) {
 	if len(s.Last) != 7 || !s.Last[6].Start.Equal(at("2026-09-22", 0)) || s.Last[5].Met != true || s.Last[4].Met != true || s.Last[3].Met != false {
 		t.Errorf("the last seven days, oldest first, today last: %+v", s.Last)
 	}
-	if Progress(s, "") != "not yet" {
-		t.Errorf("a once-a-day habit not done says so, got %q", Progress(s, ""))
+	if Progress(h, s) != "not yet" {
+		t.Errorf("a once-a-day habit not done says so, got %q", Progress(h, s))
 	}
 	s = Summarise(h, append(entries, Entry{now, 1}), now, 7)
-	if !s.Met || s.Streak != 3 || Progress(s, "") != "done" {
-		t.Errorf("done today: streak 3, got %+v %q", s, Progress(s, ""))
+	if !s.Met || s.Streak != 3 || Progress(h, s) != "done" {
+		t.Errorf("done today: streak 3, got %+v %q", s, Progress(h, s))
 	}
 }
 
@@ -53,10 +53,10 @@ func TestAMeasuredHabitWithATargetAndAGoal(t *testing.T) {
 	if s.Streak != 0 || s.Best != 1 {
 		t.Errorf("last week missed the target so the streak is 0 from it, the week before met it: %+v", s)
 	}
-	if Progress(s, "km") != "10 of 15 km" || Amount(2.5, "km") != "2.5 km" || Amount(8, "glasses") != "8 glasses" || Amount(3, "") != "3" {
-		t.Errorf("amounts read as a person would: %q %q", Progress(s, "km"), Amount(2.5, "km"))
+	if Progress(h, s) != "10 of 15 km" || Amount(2.5, "km") != "2.5 km" || Amount(8, "glasses") != "8 glasses" || Amount(3, "") != "3" {
+		t.Errorf("amounts read as a person would: %q %q", Progress(h, s), Amount(2.5, "km"))
 	}
-	if StreakWords(1, "week") != "1 week in a row" || StreakWords(3, "day") != "3 days in a row" {
+	if StreakWords(1, h) != "1 week in a row" || StreakWords(3, Habit{}) != "3 days in a row" {
 		t.Error("streak words")
 	}
 	if PeriodStart(at("2026-09-22", 12), "week") != at("2026-09-21", 0) {
