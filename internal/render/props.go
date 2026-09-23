@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"html/template"
 	"strings"
+	"unicode"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
 	"github.com/tristanlawrenceguy/sameway/internal/prose"
@@ -134,7 +135,7 @@ func (p *propSchema) normalize(props map[string]any) (map[string]any, error) {
 	}
 	inst := roundTrip(given)
 	if err := p.schema.Validate(inst); err != nil {
-		return nil, formatValidation(err)
+		return nil, formatValidation(p, err)
 	}
 	out := map[string]any{}
 	for k, v := range inst.(map[string]any) {
@@ -206,7 +207,7 @@ func zeroFor(typ string) any {
 }
 
 // formatValidation turns a validator error into one readable line per problem.
-func formatValidation(err error) error {
+func formatValidation(ps *propSchema, err error) error {
 	var ve *jsonschema.ValidationError
 	if !errors.As(err, &ve) {
 		return err
@@ -216,8 +217,7 @@ func formatValidation(err error) error {
 	var walk func(e *jsonschema.ValidationError)
 	walk = func(e *jsonschema.ValidationError) {
 		if len(e.Causes) == 0 {
-			loc := "/" + strings.Join(e.InstanceLocation, "/")
-			lines = append(lines, fmt.Sprintf("%s: %s", loc, e.ErrorKind.LocalizedString(printer)))
+			lines = append(lines, fmt.Sprintf("%s: %s", locationLabel(e.InstanceLocation, ps, e), e.ErrorKind.LocalizedString(printer)))
 			return
 		}
 		for _, c := range e.Causes {
@@ -226,6 +226,16 @@ func formatValidation(err error) error {
 	}
 	walk(ve)
 	return fmt.Errorf("invalid props: %s", strings.Join(lines, "; "))
+}
+
+// capitalize returns the string with its first letter uppercased.
+func capitalize(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+	runes := []rune(s)
+	runes[0] = unicode.ToUpper(runes[0])
+	return string(runes)
 }
 
 // num reads a number however JSON or Go handed it over.
