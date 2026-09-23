@@ -13,7 +13,7 @@ fields:
   at:
     type: datetime
     required: true
-    description: When it was done; the moment of logging unless said otherwise.
+    description: When it was done; the moment of logging unless said otherwise, and a day alone for something logged afterwards.
   amount:
     type: float
     default: 1
