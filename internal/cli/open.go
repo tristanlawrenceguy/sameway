@@ -19,6 +19,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/devices"
 	"github.com/tristanlawrenceguy/sameway/internal/notify"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
+	"github.com/tristanlawrenceguy/sameway/internal/tailnet"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
@@ -84,6 +85,7 @@ func (c *ctx) openCmd() error {
 	h.StartRinging(ctx, notifier(a))
 	a.Chat.StartSchedule(ctx)
 	connectDevices(ctx, c.Stdout, a)
+	joinTailnet(ctx, c.Stdout, a, h)
 	if err := srv.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}
@@ -125,6 +127,15 @@ func openInBrowser(url string) error {
 		return exec.Command("open", url).Start()
 	default:
 		return exec.Command("xdg-open", url).Start()
+	}
+}
+
+// joinTailnet serves h on the person's tailnet too, when workspace.yaml
+// names the machine there; what it has to say arrives as it happens.
+func joinTailnet(ctx context.Context, out io.Writer, a *app.App, h http.Handler) {
+	say := func(s string) { fmt.Fprintf(out, "  tailnet %s\n", s) }
+	if err := tailnet.Start(ctx, a.Workspace.Config.Tailnet, h, say); err != nil {
+		say(err.Error())
 	}
 }
 

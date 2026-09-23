@@ -69,6 +69,16 @@ notify:
   desktop: on
   command: ""
 
+# Open this workspace from your phone or another computer, anywhere, over
+# your own Tailscale network: nothing public, no port forwarding. Name the
+# machine here (home becomes https://home.<your-tailnet>.ts.net) and the
+# first start prints a link to sign in once. For a machine nobody signs in
+# on, set auth_key_env to the NAME of a variable holding an auth key.
+# Anyone your tailnet's access rules let in can open it. Empty name is off.
+tailnet:
+  name: ""
+  auth_key_env: ""
+
 # How a new version of sameway itself arrives. auto: a release published
 # for this machine is downloaded, checked against the checksums published
 # with it, and put where this program is, with a line in the activity log
