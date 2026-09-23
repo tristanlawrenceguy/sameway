@@ -43,8 +43,9 @@ func (s *Server) importPage(w http.ResponseWriter, r *http.Request) {
 	default:
 		b.WriteString(`<p class="sw-muted">A CSV with a header row, a tab-separated file (.tsv), or plain text (.txt). The file is kept with your files; its rows become ` + template.HTMLEscapeString(plural(t.Name)) + `, and you see how each column lands before anything is made.</p>`)
 	}
-	fmt.Fprintf(&b, `<form method="post" action="/t/%s/import" enctype="multipart/form-data" class="sw-stack sw-import"><div class="sw-field"><label class="sw-field__label" for="import-file">File</label><input class="sw-field__input" id="import-file" type="file" name="file" accept=".csv,.tsv,.txt,.vcf,.vcard,.mbox,.eml" required></div>%s</form>`,
+	fmt.Fprintf(&b, `<form method="post" action="/t/%s/import" enctype="multipart/form-data" class="sw-stack sw-import"><div class="sw-field"><label class="sw-field__label" for="import-file">File</label><input class="sw-field__input" id="import-file" type="file" name="file" accept=".csv,.tsv,.txt,.vcf,.vcard,.mbox,.eml" required aria-describedby="import-error"><span class="sw-visually-hidden" id="import-error" role="status" aria-live="assertive"></span></div>%s</form>`,
 		t.Name, s.component("button", map[string]any{"label": "Read the file", "type": "submit"}))
+	b.WriteString(`<script>(function(){var f=document.getElementById("import-file");var err=document.getElementById("import-error");f.addEventListener('invalid',function(e){err.textContent="Please select a file."},false);document.querySelector(".sw-import").addEventListener('submit',function(e){if(!f.value){e.preventDefault();err.textContent="Please select a file.";f.reportValidity()}},{once:true});f.addEventListener('change',function(){err.textContent=""})})();</script>`)
 	s.page(w, r, "Import "+plural(t.Name), template.HTML(b.String()), pageOptions{Kicker: crumbs("/t/"+t.Name, capitalize(plural(t.Name)), "Import", s.dotOf(t.Name)), Dot: s.dotOf(t.Name)})
 }
 
