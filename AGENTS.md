@@ -62,6 +62,7 @@ runner in tools/a11y-runner.
 | Person sees and hears a component in a real browser | axe AA and AAA in light and dark, role matches the manifest, 320px reflow, text spacing, 200% text, reduced motion, 3:1 field edges, 44px targets, no colour-only state, visible names in the accessible name, forced colours, errors tied to fields | `tools/a11y-runner/run.mjs` (CI) |
 | Person uses a keyboard in a real browser | Tab order, focus ring 2px and 3:1 in light, dark and forced colours, no trap, every control operated by its kind | `tools/a11y-runner/keyboard.mjs` (CI) |
 | Person and agent on live pages | keyboard-only flows, role-and-name targeting, describe matches what renders | `tools/a11y-runner/pages.mjs` (CI) |
+| Agent reads a page with its scripts run | `look` with scripts and steps drives the Chrome, Edge or Chromium on the machine: a script-built editor is read with its values, Tab is pressed for real from the top, a step that finds nothing lists what the page has, script errors are said; values, forms and only/kind/name without a browser | `internal/server/look_scripts_test.go` (skips with no browser) |
 | Every page and the site as a whole | every component check on every page, focus hidden on a phone either way up, live regions that can announce, one place per link name, titles, the same navigation everywhere, forms sent empty say what is wrong | `tools/a11y-runner/site.mjs` (CI) |
 
 When you add a component, the contract and enum-coverage tests tell you what

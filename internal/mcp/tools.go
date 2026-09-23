@@ -31,7 +31,7 @@ func (s *Server) tools() []tool {
 				},
 				"additionalProperties": false,
 			}},
-		{Name: "look", Description: "A page as a screen reader gets it, without a browser: title, landmarks, headings, controls with where they lead, live regions, the components on it, and its structural problems. Give path for a page; method and form to do what a person does and read where they land; or component and props to read one component rendered from props.",
+		{Name: "look", Description: "A page as a screen reader gets it: title, landmarks, headings, controls with where they lead, what they hold and which form they are in, live regions, the components on it, and its structural problems. Give path for a page; method and form to do what a person does and read where they land; or component and props to read one component rendered from props. With scripts, or steps, the page is read in a headless browser with its scripts run, after the steps: what a script builds is there, and the answer adds what each step reached, what has focus, the real Tab order, and every script error. only, kind and name narrow a long answer.",
 			InputSchema: map[string]any{
 				"type": "object",
 				"properties": map[string]any{
@@ -40,6 +40,18 @@ func (s *Server) tools() []tool {
 					"form":      map[string]any{"type": "object", "description": "Form fields to submit, by name."},
 					"component": map[string]any{"type": "string", "description": "A component from describe, to read on its own instead of a page."},
 					"props":     map[string]any{"type": "object", "description": "Props for that component."},
+					"scripts":   map[string]any{"type": "boolean", "description": "Read the page in a headless browser with its scripts run (Chrome, Edge or Chromium on this machine)."},
+					"steps": map[string]any{"type": "array", "description": "What a person does before the page is read, in order; implies scripts. Controls and fields are found by the name a screen reader says, exactly first, then as part of it.",
+						"items": map[string]any{"type": "object", "additionalProperties": false, "properties": map[string]any{
+							"press": map[string]any{"type": "string", "description": "Press the control with this name."},
+							"type":  map[string]any{"type": "string", "description": "Type these words, into the focused field or the one named by into."},
+							"into":  map[string]any{"type": "string", "description": "The field to type into, by name."},
+							"key":   map[string]any{"type": "string", "description": "Press a key: Tab, Enter, Escape, Space, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Home, End, Backspace or Delete, each with Shift+ before it if wanted."},
+							"wait":  map[string]any{"type": "integer", "description": "Wait this many milliseconds, up to 10000."},
+						}}},
+					"only": map[string]any{"type": "array", "items": map[string]any{"type": "string", "enum": []string{"landmarks", "headings", "controls", "live", "components"}}, "description": "Keep only these sections; problems always stay."},
+					"kind": map[string]any{"type": "string", "description": "Keep only controls of this kind: link, button, textbox, checkbox, radio, listbox, disclosure."},
+					"name": map[string]any{"type": "string", "description": "Keep only controls with these words in their name."},
 				},
 				"additionalProperties": false,
 			}},
