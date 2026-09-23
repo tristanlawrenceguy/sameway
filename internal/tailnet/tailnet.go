@@ -15,6 +15,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"tailscale.com/envknob"
 	"tailscale.com/tsnet"
@@ -33,7 +34,7 @@ type Config struct {
 
 // Start joins the tailnet in the background and serves h there, on HTTPS
 // when the tailnet has it turned on and on plain HTTP either way (the
-// tailnet itself is encrypted). Only the devices of the person who signed
+// tailnet itself is encrypted, though browsers want https for ts.net). Only the devices of the person who signed
 // it in get through, and mark tells each request which device it came
 // from. say is told the sign-in link, the addresses, and anything that
 // goes wrong; serving here never stops the workspace serving on this
@@ -97,13 +98,25 @@ func serve(ctx context.Context, srv *tsnet.Server, h http.Handler, mark func(con
 		return
 	}
 	go run(plain, h, say)
-	secure, err := srv.ListenTLS("tcp", ":443")
-	if err != nil {
-		say(fmt.Sprintf("http://%s/ (no https: %v)", host, err))
-		return
+	// Browsers insist on https for ts.net addresses, so without it the
+	// workspace cannot be opened. Turning it on is a switch in the
+	// tailnet's admin console; keep trying so it starts once flipped.
+	for said := false; ; said = true {
+		secure, err := srv.ListenTLS("tcp", ":443")
+		if err == nil {
+			say(fmt.Sprintf("https://%s/", host))
+			run(secure, h, say)
+			return
+		}
+		if !said {
+			say(fmt.Sprintf("https://%s/ needs HTTPS certificates turned on for your tailnet: https://login.tailscale.com/admin/dns (it starts here by itself once they are)", host))
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(30 * time.Second):
+		}
 	}
-	say(fmt.Sprintf("https://%s/", host))
-	run(secure, h, say)
 }
 
 func run(l net.Listener, h http.Handler, say func(string)) {
