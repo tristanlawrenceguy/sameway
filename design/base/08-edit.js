@@ -49,6 +49,7 @@
     if (multiline) {
       var text = source !== null ? source : el.innerText.replace(/\n{3,}/g, "\n\n").trim();
       input.rows = Math.min(10, Math.max(3, text.split("\n").length + 1));
+      input.setAttribute("tabindex", "0");
       input.value = text;
     } else {
       input.type = "text";
