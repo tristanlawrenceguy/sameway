@@ -107,6 +107,8 @@ func describe(call llm.ToolCall) string {
 		return "Looking through" + or(" "+plural(args.Type), " the records")
 	case "get_record":
 		return "Reading" + or(a(args.Type), " a record")
+	case "look_at_page":
+		return "Looking at the page"
 	case "search":
 		return "Searching for " + strings.TrimSpace(args.Query)
 	case "propose_change":

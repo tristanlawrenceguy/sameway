@@ -41,6 +41,10 @@ type Service struct {
 	// Allow names the programs a command action may run, by name (curl,
 	// python). Empty means none; see command.go for the boundary.
 	Allow []string
+	// Look reads a page of the workspace the way the person gets it, with
+	// its scripts run where a browser is at hand; set by the server, nil
+	// where there is none. See look.go.
+	Look func(ctx context.Context, ask map[string]any) (string, error)
 	// Publish sends to an MQTT topic, when the workspace has a broker;
 	// nil means it has none. See mqtt.go.
 	Publish func(topic, payload string) error

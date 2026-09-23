@@ -32,6 +32,7 @@ type Server struct {
 func New(a *app.App) *Server {
 	s := &Server{app: a, css: []byte(a.Registry.CSS()), js: []byte(a.Registry.JS()), mux: http.NewServeMux()}
 	s.routes()
+	a.Chat.Look = s.lookFor
 	// Wrap the mux so unmatched routes get our HTML 404 page.
 	s.mux = s.wrapNotFound(s.mux)
 	return s

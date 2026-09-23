@@ -79,7 +79,7 @@ func (s *Service) Tools() []llm.Tool {
 		updateTool,
 		s.arrangementTool(),
 		settingTool,
-	}, append(append(s.recordTools(), s.canvasTools()...), shapeTools()...)...)
+	}, append(append(append(s.recordTools(), s.canvasTools()...), shapeTools()...), s.lookTools()...)...)
 }
 
 // runTool executes one tool call.
@@ -129,6 +129,8 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 		json.Unmarshal(call.Args, &action)
 		delete(action, "summary")
 		return s.propose(args.Summary, action)
+	case "look_at_page":
+		return s.lookAtPage(call.Args)
 	case "create_canvas":
 		return s.createCanvas(args.Name)
 	case "remove_canvas":
