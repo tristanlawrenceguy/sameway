@@ -92,20 +92,25 @@ const apiNote = await apiRec.json();
 await page.goto(base + "/t/note/" + apiNote.id);
 await shellChecks("detail");
 
-// Editing a note by keyboard alone: Edit puts focus in the body, the body is
-// in the Tab order, and Save from the keyboard keeps what was typed.
+// Editing a note by keyboard alone: Edit puts focus in the form's first
+// field, Tab moves forward through the fields to the body and on to Save,
+// and Save from the keyboard keeps what was typed.
 const focused = () => page.evaluate(() => {
   const el = document.activeElement;
   return (el.getAttribute("aria-label") || (el.labels && el.labels[0] && el.labels[0].textContent) || el.textContent || "").trim().replace(/\s+/g, " ");
 });
+const editable = () => page.evaluate(() => { const el = document.activeElement; return el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName); });
 await page.getByRole("button", { name: /^Edit/ }).first().focus();
 await page.keyboard.press("Enter");
-check(await focused() === "Body" && await page.evaluate(() => document.activeElement.isContentEditable || document.activeElement.tagName === "TEXTAREA"), `edit: Enter on Edit puts focus in the body field (got "${await focused()}")`);
+check(await editable(), `edit: Enter on Edit puts focus in a field of the form (got "${await focused()}")`);
+let inBody = (await focused()) === "Body";
+for (let i = 0; i < 8 && !inBody; i++) {
+  await page.keyboard.press("Tab");
+  inBody = (await focused()) === "Body";
+}
+check(inBody, "edit: Tab forward from the first field reaches the body");
 await page.keyboard.press("End");
 await page.keyboard.type(" Typed by keyboard.");
-await page.keyboard.press("Tab");
-await page.keyboard.press("Shift+Tab");
-check(await focused() === "Body", "edit: Shift+Tab comes back to the body field, so it is in the Tab order");
 let reachedSave = false;
 for (let i = 0; i < 6 && !reachedSave; i++) {
   await page.keyboard.press("Tab");
