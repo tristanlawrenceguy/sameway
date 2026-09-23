@@ -33,10 +33,10 @@ type Config struct {
 }
 
 // Start joins the tailnet in the background and serves h there, on HTTPS
-// when the tailnet has it turned on and on plain HTTP either way (the
-// tailnet itself is encrypted, though browsers want https for ts.net). Only the devices of the person who signed
-// it in get through, and mark tells each request which device it came
-// from. say is told the sign-in link, the addresses, and anything that
+// once the tailnet has certificates turned on and on plain HTTP for
+// anything that is not a browser. Only the devices of the person who
+// signed it in get through, and mark tells each request which device it
+// came from. say is told the sign-in link, the addresses, and anything that
 // goes wrong; serving here never stops the workspace serving on this
 // machine. It ends when ctx does.
 func Start(ctx context.Context, cfg Config, h http.Handler, mark func(context.Context, string) context.Context, say func(string)) error {
