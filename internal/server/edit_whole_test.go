@@ -71,3 +71,25 @@ func TestRichTextWinsOverTheMarkdownBehindIt(t *testing.T) {
 		a.Store.Update("note", note.ID, map[string]any{"title": "Beds", "body": "Old words."})
 	}
 }
+
+// In a real browser, Edit on a task opens every field, and Tab reaches
+// each one, the date's picker included, then Save.
+func TestEveryFieldOfARecordIsReachedByTab(t *testing.T) {
+	needBrowser(t)
+	a, h := newApp(t)
+	a.Store.Create("project", map[string]any{"title": "Garden"})
+	task, _ := a.Store.Create("task", map[string]any{"title": "Repot the fern"})
+	rec := postJSON(t, h, http.MethodPost, "/api/look", map[string]any{"path": "/t/task/" + task.ID, "steps": []map[string]any{{"press": "Edit"}}})
+	wantStatus(t, rec, http.StatusOK)
+	var seen looked
+	decode(t, rec, &seen)
+	order := strings.Join(seen.Scripts.FocusOrder, " | ")
+	for _, want := range []string{"textbox: Title", "checkbox: Done", "textbox: Due", "listbox: Project", "textbox: Notes", "textbox: Tags", "button: Save"} {
+		if !strings.Contains(order, want) {
+			t.Errorf("Tab reaches %s; got %s", want, order)
+		}
+	}
+	if len(seen.Scripts.Errors) != 0 {
+		t.Errorf("nothing goes wrong on the page, got %v", seen.Scripts.Errors)
+	}
+}
