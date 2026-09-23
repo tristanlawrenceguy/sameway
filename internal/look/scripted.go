@@ -236,7 +236,7 @@ func (b *browser) focusOrder(ctx context.Context) ([]string, error) {
 		return nil, err
 	}
 	var order []string
-	seen := map[int]bool{}
+	seen, last := map[int]bool{}, 0
 	for i := 0; i < 250; i++ {
 		if err := b.key(ctx, "Tab"); err != nil {
 			return nil, err
@@ -254,10 +254,15 @@ func (b *browser) focusOrder(ctx context.Context) ([]string, error) {
 			}
 			continue
 		}
+		// A date or time field has stops inside it, one after another;
+		// only an earlier element coming round again is the end.
+		if at.ID == last {
+			continue
+		}
 		if seen[at.ID] {
 			break
 		}
-		seen[at.ID] = true
+		seen[at.ID], last = true, at.ID
 		order = append(order, at.Says)
 	}
 	return order, nil

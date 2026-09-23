@@ -13,15 +13,19 @@ fields:
   name:
     type: string
     description: The file name it arrived with, kept by the system.
+    readonly: true
   kind:
     type: string
     description: What sort of file it is, such as document, spreadsheet, pdf or image; kept by the system.
+    readonly: true
   size:
     type: int
     description: Bytes, kept by the system.
+    readonly: true
   path:
     type: string
     description: Where the original is stored under the workspace's files folder, kept by the system.
+    readonly: true
   text:
     type: markdown
     description: The contents as Markdown, read from the file. Edit it if the reading got something wrong.
@@ -33,6 +37,7 @@ fields:
     values: [ready, converting, failed]
     default: ready
     description: converting while an external converter works on it; failed says why in the note.
+    readonly: true
   note:
     type: text
     description: What the reading or the converter said, kept by the system.
