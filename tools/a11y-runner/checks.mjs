@@ -6,11 +6,12 @@ import { AA_TAGS } from "./shell.mjs";
 // The display settings a person can have, as Playwright media emulation.
 // axe runs in light and dark. Forced colours is checked for focus rings
 // only: there the person's own theme sets every colour, so contrast is not
-// the page's to meet.
+// the page's to meet. Motion is reduced while checking, so arrivals and
+// fades are finished and axe reads the colours a person ends up seeing.
 export const MODES = {
-  light: { colorScheme: "light", forcedColors: "none", reducedMotion: "no-preference" },
-  dark: { colorScheme: "dark", forcedColors: "none", reducedMotion: "no-preference" },
-  forced: { colorScheme: "light", forcedColors: "active", reducedMotion: "no-preference" },
+  light: { colorScheme: "light", forcedColors: "none", reducedMotion: "reduce" },
+  dark: { colorScheme: "dark", forcedColors: "none", reducedMotion: "reduce" },
+  forced: { colorScheme: "light", forcedColors: "active", reducedMotion: "reduce" },
 };
 
 export async function setMode(page, mode) {
@@ -19,6 +20,7 @@ export async function setMode(page, mode) {
 
 // axe at AA in the page's current mode.
 export async function axeProblems(page) {
+  await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
   const res = await new AxeBuilder({ page }).withTags(AA_TAGS).analyze();
   return res.violations.map((v) => `axe ${v.id} - ${v.help} (${v.nodes.length} node(s): ${v.nodes.slice(0, 3).map((n) => n.target.join(" ")).join(", ")})`);
 }
@@ -32,7 +34,8 @@ export async function reflowProblems(page) {
   const found = await page.evaluate(() => {
     const doc = document.documentElement;
     if (doc.scrollWidth <= window.innerWidth + 1) return [];
-    const scrolls = (el) => { for (let p = el.parentElement; p && p !== doc; p = p.parentElement) { if (/(auto|scroll|hidden|clip)/.test(getComputedStyle(p).overflowX)) return true; } return false; };
+    // Contained: inside a scroll region that itself fits the viewport.
+    const scrolls = (el) => { for (let p = el.parentElement; p && p !== doc; p = p.parentElement) { if (/(auto|scroll|hidden|clip)/.test(getComputedStyle(p).overflowX)) return p.getBoundingClientRect().right <= window.innerWidth + 1; } return false; };
     const wide = [...document.body.querySelectorAll("*")].filter((el) => el.getBoundingClientRect().right > window.innerWidth + 1 && !scrolls(el));
     // Report the outermost offenders; their children follow them out.
     const outer = wide.filter((el) => !wide.includes(el.parentElement));
@@ -100,6 +103,8 @@ export async function obscuredFocusProblems(page, limit = 300) {
   const out = [];
   for (let i = 0; i < limit; i++) {
     await page.keyboard.press("Tab");
+    // Two frames, so styles that move a control on focus (a skip link) apply.
+    await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
     const r = await page.evaluate(() => {
       const el = document.activeElement;
       // Back at the start, or out of the page: the walk is done.
