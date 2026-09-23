@@ -149,7 +149,7 @@ func (s *Server) ringWords(rec *store.Record) (text, url string) {
 	if t.Name == HabitType {
 		h := habitOf(target)
 		sum := track.Summarise(h, s.entriesOf(h.ID), time.Now(), 1)
-		text = h.Name + ": " + track.Progress(sum, h.Unit) + " so far"
+		text = h.Name + ": " + track.Progress(h, sum) + " so far"
 	}
 	return text, url
 }
@@ -173,7 +173,12 @@ func (s *Server) nudges(now time.Time) []*store.Record {
 		if !ok || dayOnly || at.After(now) || at.Before(track.PeriodStart(now, "day")) {
 			continue
 		}
-		h := habitOf(hrec)
+		h := track.Normal(habitOf(hrec))
+		if h.Aim != track.Reach {
+			// A reminder is for something still to do; a limit or a
+			// record has nothing to do by a time.
+			continue
+		}
 		sum := track.Summarise(h, s.entriesOf(h.ID), now, 1)
 		about := "/t/" + HabitType + "/" + h.ID
 		if sum.Met || s.remindedToday(rt, about, now) {
@@ -184,7 +189,7 @@ func (s *Server) nudges(now time.Time) []*store.Record {
 		if err != nil {
 			continue
 		}
-		chat.Record(s.app.Store, "system", chat.Change{Action: "rang", Component: ReminderType, ID: rec.ID, Detail: h.Name + ": " + track.Progress(sum, h.Unit) + " so far", Href: about})
+		chat.Record(s.app.Store, "system", chat.Change{Action: "rang", Component: ReminderType, ID: rec.ID, Detail: h.Name + ": " + track.Progress(h, sum) + " so far", Href: about})
 		rang = append(rang, rec)
 	}
 	return rang
