@@ -66,7 +66,9 @@
       });
       old.replaceWith(fresh);
     });
-    if (doc.title) document.title = (document.title.indexOf("⏳ ") === 0 ? "⏳ " : "") + doc.title.replace(/^⏳ /, "");
+    // The tab's mark, working or done while away, stays with the tab.
+    var mark = (document.title.match(/^(⏳|✓) /) || [""])[0];
+    if (doc.title) document.title = mark + doc.title.replace(/^(⏳|✓) /, "");
     window.scrollTo(0, y);
     if (focusId) {
       var back = document.getElementById(focusId);

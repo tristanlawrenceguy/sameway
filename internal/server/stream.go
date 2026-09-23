@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
@@ -70,6 +69,7 @@ func (s *Server) chatStream(w http.ResponseWriter, r *http.Request) {
 			log.Printf("chat: %v", err)
 			t.add(chat.Event{Kind: "error", Text: err.Error()})
 		}
+		s.tellDone(t, rec, err, back)
 	}()
 	s.follow(w, r, t, back)
 }
@@ -90,12 +90,38 @@ func (s *Server) chatLive(w http.ResponseWriter, r *http.Request) {
 	s.follow(w, r, t, backTo(r.URL.Query().Get("from")))
 }
 
+// tellDone tells the person a turn is over when no page heard it end:
+// the tab was closed, or every page on it went away. A page that is
+// following says so itself (19-live-join.js), so the news comes once.
+// It goes the way a ringing reminder does, through notify.
+func (s *Server) tellDone(t *liveTurn, rec *store.Record, err error, back string) {
+	if s.notify == nil || t.followed() {
+		return
+	}
+	title, text, path := "Assistant replied", "", back
+	if rec != nil {
+		text, _ = rec.Fields["content"].(string)
+		path = back + "#msg-" + rec.ID
+		if rec.Fields["role"] == "error" {
+			title = "The assistant could not finish"
+		}
+	} else if err != nil {
+		title, text = "The assistant could not finish", err.Error()
+	}
+	if r := []rune(strings.Join(strings.Fields(text), " ")); len(r) > 140 {
+		text = string(r[:139]) + "…"
+	}
+	go s.notify(title, text, s.linkTo(path))
+}
+
 // follow writes a turn's events as server-sent events, those so far and
 // then each as it comes, until the turn is over or the page goes away.
 // Each is rendered for the page that listens, so its controls come back
 // to that page.
 func (s *Server) follow(w http.ResponseWriter, r *http.Request, t *liveTurn, back string) {
 	flusher := w.(http.Flusher)
+	t.listen(1)
+	defer t.listen(-1)
 	w.Header().Set("Content-Type", "text/event-stream; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("X-Accel-Buffering", "no")
@@ -142,99 +168,6 @@ func (s *Server) follow(w http.ResponseWriter, r *http.Request, t *liveTurn, bac
 		case <-changed:
 		case <-r.Context().Done():
 			return
-		}
-	}
-}
-
-// A liveTurn is a turn under way: what it has done so far, kept so a page
-// that comes to it late hears all of it, and the way to stop it.
-type liveTurn struct {
-	id      string
-	started time.Time
-	cancel  context.CancelFunc
-
-	mu      sync.Mutex
-	events  []chat.Event
-	over    bool
-	changed chan struct{}
-}
-
-// add records what the turn just did and wakes whoever is following it.
-// Events come from the turn and, when the tools run elsewhere, from the
-// watch on the log: one at a time.
-func (t *liveTurn) add(e chat.Event) {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	t.events = append(t.events, e)
-	close(t.changed)
-	t.changed = make(chan struct{})
-}
-
-// since is what the turn has done from the i-th event on, whether it is
-// over, and what closes when there is more.
-func (t *liveTurn) since(i int) ([]chat.Event, bool, <-chan struct{}) {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	return t.events[i:], t.over, t.changed
-}
-
-// turns are the live turns under way.
-type turns struct {
-	mu   sync.Mutex
-	n    int
-	live map[string]*liveTurn
-}
-
-// start begins a turn and the context it runs under.
-func (ts *turns) start(parent context.Context) (*liveTurn, context.Context) {
-	ctx, cancel := context.WithCancel(parent)
-	ts.mu.Lock()
-	defer ts.mu.Unlock()
-	if ts.live == nil {
-		ts.live = map[string]*liveTurn{}
-	}
-	ts.n++
-	t := &liveTurn{id: fmt.Sprintf("turn-%d", ts.n), started: time.Now(), cancel: cancel, changed: make(chan struct{})}
-	ts.live[t.id] = t
-	return t, ctx
-}
-
-// end is a turn over: whoever follows it hears the rest and stops.
-func (ts *turns) end(t *liveTurn) {
-	t.cancel()
-	ts.mu.Lock()
-	delete(ts.live, t.id)
-	ts.mu.Unlock()
-	t.mu.Lock()
-	t.over = true
-	close(t.changed)
-	t.changed = make(chan struct{})
-	t.mu.Unlock()
-}
-
-// find is the turn named, or the latest under way when none is named.
-func (ts *turns) find(id string) *liveTurn {
-	ts.mu.Lock()
-	defer ts.mu.Unlock()
-	if id != "" {
-		return ts.live[id]
-	}
-	var latest *liveTurn
-	for _, t := range ts.live {
-		if latest == nil || t.started.After(latest.started) {
-			latest = t
-		}
-	}
-	return latest
-}
-
-// stop ends the turn named, or every turn under way when none is.
-func (ts *turns) stop(id string) {
-	ts.mu.Lock()
-	defer ts.mu.Unlock()
-	for k, t := range ts.live {
-		if id == "" || k == id {
-			t.cancel()
 		}
 	}
 }

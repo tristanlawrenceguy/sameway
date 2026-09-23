@@ -34,7 +34,8 @@ func (s *Server) StartRinging(ctx context.Context, notify func(title, text, url 
 	}()
 }
 
-// OnRing sets what a ring is told to, without starting the loop.
+// OnRing sets what a ring is told to, without starting the loop. A turn
+// that ends with no page to hear it is told the same way; see tellDone.
 func (s *Server) OnRing(notify func(title, text, url string)) { s.notify = notify }
 
 // Ring marks every reminder whose time has come as rung, once, and tells

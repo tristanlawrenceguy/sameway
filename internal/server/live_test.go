@@ -8,8 +8,10 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/server"
 )
 
 // gated is a model that answers when it is let go.
@@ -72,5 +74,63 @@ func TestATurnGoesOnWhenThePersonGoesElsewhere(t *testing.T) {
 	}
 	if rec := get(t, h, "/chat/live"); rec.Code != http.StatusNoContent {
 		t.Errorf("with no turn under way there is nothing to follow, got %d", rec.Code)
+	}
+}
+
+// ask posts a message to /chat/stream as a page would, under ctx, and
+// says when the stream is over.
+func ask(h http.Handler, ctx context.Context, message string) <-chan struct{} {
+	var body bytes.Buffer
+	mw := multipart.NewWriter(&body)
+	mw.WriteField("message", message)
+	mw.WriteField("from", "/")
+	mw.Close()
+	req := httptest.NewRequest(http.MethodPost, "/chat/stream", &body).WithContext(ctx)
+	req.Header.Set("Content-Type", mw.FormDataContentType())
+	over := make(chan struct{})
+	go func() { h.ServeHTTP(httptest.NewRecorder(), req); close(over) }()
+	return over
+}
+
+// A turn that ends with no page to hear it is told beyond the page, the
+// way a ringing reminder is: the reply's words and the way back to them.
+func TestATurnNobodyWatchedSaysItIsDone(t *testing.T) {
+	a, h := newApp(t)
+	told := make(chan string, 1)
+	h.(*server.Server).OnRing(func(title, text, url string) { told <- title + " | " + text + " | " + url })
+	model := &gated{started: make(chan struct{}), release: make(chan struct{})}
+	a.Chat.Provider, a.Chat.ProviderErr = model, nil
+
+	ctx, leave := context.WithCancel(context.Background())
+	gone := ask(h, ctx, "make me something")
+	<-model.started
+	leave()
+	<-gone
+	close(model.release)
+
+	got := <-told
+	if !strings.HasPrefix(got, "Assistant replied | Here it is, done while you were away. | ") || !strings.Contains(got, "/#msg-") {
+		t.Errorf("the person hears the turn is done, with the reply and the way back to it, got %q", got)
+	}
+}
+
+// A page that follows the turn to its end tells the person itself, so
+// the server says nothing: the news comes once.
+func TestATurnAPageWatchedIsNotToldTwice(t *testing.T) {
+	a, h := newApp(t)
+	told := make(chan string, 1)
+	h.(*server.Server).OnRing(func(title, text, url string) { told <- title })
+	model := &gated{started: make(chan struct{}), release: make(chan struct{})}
+	a.Chat.Provider, a.Chat.ProviderErr = model, nil
+
+	over := ask(h, context.Background(), "make me something")
+	<-model.started
+	close(model.release)
+	<-over
+
+	select {
+	case got := <-told:
+		t.Errorf("a page heard the turn end, so nothing more is sent, got %q", got)
+	case <-time.After(200 * time.Millisecond):
 	}
 }
