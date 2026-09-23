@@ -2,8 +2,8 @@
 // network, so a phone or another computer signed in to the same tailnet
 // opens it from anywhere: no port forwarding, nothing public. The node
 // runs inside this program (tsnet); nothing else needs installing on the
-// machine that serves. Who can reach it is whatever the tailnet's access
-// rules say.
+// machine that serves. Only the devices of the person who signed the node
+// in may open it.
 package tailnet
 
 import (
@@ -15,6 +15,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"tailscale.com/envknob"
 	"tailscale.com/tsnet"
@@ -32,11 +33,13 @@ type Config struct {
 }
 
 // Start joins the tailnet in the background and serves h there, on HTTPS
-// when the tailnet has it turned on and on plain HTTP either way (the
-// tailnet itself is encrypted). say is told the sign-in link, the
-// addresses, and anything that goes wrong; serving here never stops the
-// workspace serving on this machine. It ends when ctx does.
-func Start(ctx context.Context, cfg Config, h http.Handler, say func(string)) error {
+// once the tailnet has certificates turned on and on plain HTTP for
+// anything that is not a browser. Only the devices of the person who
+// signed it in get through, and mark tells each request which device it
+// came from. say is told the sign-in link, the addresses, and anything that
+// goes wrong; serving here never stops the workspace serving on this
+// machine. It ends when ctx does.
+func Start(ctx context.Context, cfg Config, h http.Handler, mark func(context.Context, string) context.Context, say func(string)) error {
 	name := strings.TrimSpace(cfg.Name)
 	if name == "" {
 		return nil
@@ -70,11 +73,11 @@ func Start(ctx context.Context, cfg Config, h http.Handler, say func(string)) er
 		<-ctx.Done()
 		srv.Close()
 	}()
-	go serve(ctx, srv, h, say)
+	go serve(ctx, srv, h, mark, say)
 	return nil
 }
 
-func serve(ctx context.Context, srv *tsnet.Server, h http.Handler, say func(string)) {
+func serve(ctx context.Context, srv *tsnet.Server, h http.Handler, mark func(context.Context, string) context.Context, say func(string)) {
 	st, err := srv.Up(ctx)
 	if err != nil {
 		if ctx.Err() == nil {
@@ -83,19 +86,37 @@ func serve(ctx context.Context, srv *tsnet.Server, h http.Handler, say func(stri
 		return
 	}
 	host := strings.TrimSuffix(st.Self.DNSName, ".")
+	lc, err := srv.LocalClient()
+	if err != nil {
+		say(fmt.Sprintf("not on the tailnet: %v", err))
+		return
+	}
+	h = owner(lc, st.Self, mark, h)
 	plain, err := srv.Listen("tcp", ":80")
 	if err != nil {
 		say(fmt.Sprintf("not on the tailnet: %v", err))
 		return
 	}
 	go run(plain, h, say)
-	secure, err := srv.ListenTLS("tcp", ":443")
-	if err != nil {
-		say(fmt.Sprintf("http://%s/ (no https: %v)", host, err))
-		return
+	// Browsers insist on https for ts.net addresses, so without it the
+	// workspace cannot be opened. Turning it on is a switch in the
+	// tailnet's admin console; keep trying so it starts once flipped.
+	for said := false; ; said = true {
+		secure, err := srv.ListenTLS("tcp", ":443")
+		if err == nil {
+			say(fmt.Sprintf("https://%s/", host))
+			run(secure, h, say)
+			return
+		}
+		if !said {
+			say(fmt.Sprintf("https://%s/ needs HTTPS certificates turned on for your tailnet: https://login.tailscale.com/admin/dns (it starts here by itself once they are)", host))
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(30 * time.Second):
+		}
 	}
-	say(fmt.Sprintf("https://%s/", host))
-	run(secure, h, say)
 }
 
 func run(l net.Listener, h http.Handler, say func(string)) {

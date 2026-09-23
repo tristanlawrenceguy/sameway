@@ -12,7 +12,7 @@ import (
 // and nothing is said.
 func TestNoNameMeansOff(t *testing.T) {
 	said := []string{}
-	err := tailnet.Start(context.Background(), tailnet.Config{Name: "  "}, http.NotFoundHandler(),
+	err := tailnet.Start(context.Background(), tailnet.Config{Name: "  "}, http.NotFoundHandler(), nil,
 		func(s string) { said = append(said, s) })
 	if err != nil {
 		t.Fatal(err)

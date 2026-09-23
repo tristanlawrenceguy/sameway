@@ -165,7 +165,7 @@ func (s *Server) clockSet(w http.ResponseWriter, r *http.Request) {
 		s.app.Chat.Notice(err.Error())
 	} else {
 		title, _ := fields["title"].(string)
-		chat.Record(s.app.Store, "human", chat.Change{Action: "created", Component: ReminderType, ID: rec.ID, Detail: title})
+		s.record(r, chat.Change{Action: "created", Component: ReminderType, ID: rec.ID, Detail: title})
 	}
 	http.Redirect(w, r, backFrom(r), http.StatusSeeOther)
 }
@@ -190,7 +190,7 @@ func (s *Server) setReminder(w http.ResponseWriter, r *http.Request, fields map[
 		s.app.Chat.Notice(err.Error())
 	} else {
 		t, _ := s.app.Types.Get(ReminderType)
-		chat.Record(s.app.Store, "human", chat.Change{Action: action, Component: ReminderType, ID: rec.ID, Detail: s.title(t, rec), Before: rec.Fields})
+		s.record(r, chat.Change{Action: action, Component: ReminderType, ID: rec.ID, Detail: s.title(t, rec), Before: rec.Fields})
 	}
 	http.Redirect(w, r, backFrom(r), http.StatusSeeOther)
 }

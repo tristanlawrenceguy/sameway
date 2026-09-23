@@ -80,7 +80,7 @@ func (s *Server) recordProps(w http.ResponseWriter, r *http.Request) {
 	}
 	// A change a person made by hand is a change like any other: in the
 	// log with what it was, so it glows where it shows and can be undone.
-	chat.Record(s.app.Store, "human", chat.Change{Action: "updated", Component: t.Name, ID: rec.ID, Detail: s.title(t, rec), Href: "/t/" + t.Name + "/" + rec.ID, Before: rec.Fields})
+	s.record(r, chat.Change{Action: "updated", Component: t.Name, ID: rec.ID, Detail: s.title(t, rec), Href: "/t/" + t.Name + "/" + rec.ID, Before: rec.Fields})
 
 	http.Redirect(w, r, returnTo(r, "/t/"+t.Name+"/"+rec.ID)+"?saved", http.StatusSeeOther)
 }

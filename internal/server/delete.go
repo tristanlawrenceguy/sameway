@@ -30,7 +30,7 @@ func (s *Server) deleteForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Logged with what it was, so the deletion can be undone.
-	chat.Record(s.app.Store, "human", chat.Change{Action: "deleted", Component: t.Name, ID: rec.ID, Detail: title, Before: rec.Fields})
+	s.record(r, chat.Change{Action: "deleted", Component: t.Name, ID: rec.ID, Detail: title, Before: rec.Fields})
 
 	// Render a confirmation page with an alert before redirecting back to
 	// the listing, so the person knows the delete actually worked.

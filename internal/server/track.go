@@ -220,7 +220,7 @@ func (s *Server) habitLog(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		s.app.Chat.Notice(err.Error())
 	} else {
-		chat.Record(s.app.Store, "human", chat.Change{Action: "logged", Component: HabitType, ID: h.ID, Detail: h.Name + ": " + track.Amount(amount, h.Unit), Href: "/t/" + HabitType + "/" + h.ID, Before: map[string]any{"entry": entry.ID}})
+		s.record(r, chat.Change{Action: "logged", Component: HabitType, ID: h.ID, Detail: h.Name + ": " + track.Amount(amount, h.Unit), Href: "/t/" + HabitType + "/" + h.ID, Before: map[string]any{"entry": entry.ID}})
 	}
 	http.Redirect(w, r, backFrom(r), http.StatusSeeOther)
 }
