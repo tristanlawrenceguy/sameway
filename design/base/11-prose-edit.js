@@ -46,6 +46,8 @@
     editor.setAttribute("aria-multiline", "true");
     editor.setAttribute("aria-labelledby", lab.id);
     editor.setAttribute("aria-label", label(name));
+    // tabindex="0" so keyboard Tab reaches the Body field.
+    editor.setAttribute("tabindex", "0");
     editor.innerHTML = el.innerHTML;
 
     var html = document.createElement("input");
