@@ -64,10 +64,10 @@ func TestTabsAreSeparateCanvases(t *testing.T) {
 		t.Errorf("after talking on a tab the person should stay on it, got %q", loc)
 	}
 	// The rendered card, not the transcript, which every tab's chat shares.
-	if page := get(t, h, "/c/"+garden.ID).Body.String(); !strings.Contains(page, ">Beds to dig</h3>") {
+	if page := get(t, h, "/c/"+garden.ID).Body.String(); !strings.Contains(page, ">Beds to dig</h2>") {
 		t.Error("the block should be on the Garden tab")
 	}
-	if page := get(t, h, "/").Body.String(); strings.Contains(page, ">Beds to dig</h3>") {
+	if page := get(t, h, "/").Body.String(); strings.Contains(page, ">Beds to dig</h2>") {
 		t.Error("and not on Home")
 	}
 

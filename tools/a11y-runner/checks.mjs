@@ -112,9 +112,13 @@ export async function obscuredFocusProblems(page, limit = 300) {
       el.__swFocused = true;
       const b = el.getBoundingClientRect();
       if (b.width === 0 && b.height === 0) return { shown: true };
+      // What is painted on top at a point, passing over anything faded to
+      // nothing (a quiet control at rest covers nothing a person can see).
+      const faded = (n) => { for (; n; n = n.parentElement) if (getComputedStyle(n).opacity === "0") return true; return false; };
+      const top = (x, y) => document.elementsFromPoint(x, y).find((n) => !faded(n));
       const pts = [[0.5, 0.5], [0.1, 0.1], [0.9, 0.1], [0.1, 0.9], [0.9, 0.9]];
       const shown = pts.some(([x, y]) => {
-        const hit = document.elementFromPoint(b.left + b.width * x, b.top + b.height * y);
+        const hit = top(b.left + b.width * x, b.top + b.height * y);
         return hit && (hit === el || el.contains(hit) || hit.contains(el) || (hit.control === el));
       });
       const name = (el.getAttribute("aria-label") || el.textContent || el.getAttribute("name") || "").trim().replace(/\s+/g, " ").slice(0, 40);

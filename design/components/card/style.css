@@ -8,7 +8,7 @@
 .sw-card:has(.sw-card__title a):hover { box-shadow: var(--sw-shadow-2); transform: translateY(-1px); }
 .sw-card__title { margin: 0; font-size: var(--sw-size-text-lg); line-height: var(--sw-size-line-tight); }
 .sw-card__title a { color: var(--sw-color-accent); text-decoration-thickness: 1px; text-underline-offset: 0.2em; }
-.sw-card__meta { margin: var(--sw-space-1) 0 0; color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); }
+.sw-card__meta { margin: var(--sw-space-1) 0 0; color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); overflow-wrap: anywhere; }
 .sw-card__body { margin-top: var(--sw-space-3); }
 .sw-card__body p { margin: 0 0 var(--sw-space-3); }
 .sw-card__body p:last-child { margin-bottom: 0; }

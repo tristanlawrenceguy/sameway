@@ -211,15 +211,15 @@ const blockLabel = Object.fromEntries(blocks.map((b) => [`/canvas/${b.id}`, b.la
 
 for (const path of everyPage) {
   const label = blockLabel[path] ? `${path} (${blockLabel[path]})` : path;
-  await page.goto(base + path);
-  // axe passes over anything at opacity 0, so the quiet layer's controls are
-  // shown the way hover or focus shows them before the page is scanned.
-  await page.evaluate(() => { document.documentElement.dataset.controls = "visible"; });
-  for (const mode of ["light", "dark"]) {
+  // Each mode gets a fresh load: some styles lag a mode switched under a
+  // page that is already drawn. axe passes over anything at opacity 0, so
+  // the quiet layer's controls are shown the way hover or focus shows them.
+  for (const mode of ["dark", "light"]) {
     await setMode(page, mode);
+    await page.goto(base + path);
+    await page.evaluate(() => { document.documentElement.dataset.controls = "visible"; });
     for (const p of await axeProblems(page)) fail(`${label} ${mode}: ${p}`);
   }
-  await setMode(page, "light");
   for (const p of await reflowProblems(page)) fail(`${label} reflow: ${p}`);
   for (const p of await spacingProblems(page)) fail(`${label} text spacing: ${p}`);
   for (const p of await motionProblems(page)) fail(`${label} reduced motion: ${p}`);

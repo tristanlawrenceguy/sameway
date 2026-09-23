@@ -123,9 +123,11 @@ for (const name of readdirSync(componentsDir).sort()) {
     // settings WCAG asks it to survive.
     const other = [];
     await setMode(tab, "dark");
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await tab.setContent(shell(css, `<form>${body}</form>`));
+    await new Promise((resolve) => setTimeout(resolve, 250));
     for (const p of await axeProblems(tab)) other.push(`dark: ${p}`);
     await setMode(tab, "light");
+    await tab.setContent(shell(css, `<form>${body}</form>`));
     for (const p of await reflowProblems(tab)) other.push(`reflow: ${p}`);
     for (const p of await spacingProblems(tab)) other.push(`text spacing: ${p}`);
     for (const p of await motionProblems(tab)) other.push(`reduced motion: ${p}`);

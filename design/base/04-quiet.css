@@ -12,7 +12,8 @@
  * by browser automation, while a person only sees it when they need it.
  *
  * It reveals when the enclosing .sw-reveal group is hovered, when anything
- * inside that group takes focus, or when the element itself is focused.
+ * inside that group takes focus (except in a canvas block, see below), or
+ * when the element itself is focused.
  * Layout never shifts, because the space is always reserved.
  */
 
@@ -21,7 +22,11 @@
   transition: opacity var(--sw-motion-base) var(--sw-motion-ease);
 }
 
-.sw-reveal:hover, .sw-reveal:focus-within,
+/* A block is the exception to focus inside the group: its bar floats over
+   the block's corner, so revealing it while focus is in the content would
+   lay it over the very control that has focus. The bar shows once focus
+   reaches it, which is the next Tab. */
+.sw-reveal:hover, .sw-reveal:not(.sw-block):focus-within,
 .sw-quiet:focus-within, .sw-quiet:focus-visible { --sw-quiet-opacity: 1; }
 
 /* Always on where fading would strand someone:
@@ -32,12 +37,19 @@
 @media (hover: none), (pointer: coarse) { :root { --sw-quiet-opacity: 1; } }
 @media (prefers-contrast: more), (forced-colors: active) { :root { --sw-quiet-opacity: 1; } }
 :root[data-controls="visible"] { --sw-quiet-opacity: 1; }
+/* Where the bar is always shown it cannot float: it would cover the top of
+   the block's content for good, and a tap meant for a title would land on
+   Remove. So there it takes its own row under the content. */
+@media (hover: none), (pointer: coarse), (prefers-contrast: more), (forced-colors: active) {
+  .sw-block > .sw-bar { position: static; width: fit-content; max-width: 100%; margin: var(--sw-space-3) 0 0 auto; }
+}
+:root[data-controls="visible"] .sw-block > .sw-bar { position: static; width: fit-content; max-width: 100%; margin: var(--sw-space-3) 0 0 auto; }
 
 /* Per-item control bars float over the top-right corner of their item. They
    reserve no space, so a block at rest is exactly as tall as its content. */
 .sw-bar {
   position: absolute; right: var(--sw-space-2); top: var(--sw-space-2); z-index: 3;
-  display: flex; align-items: center; gap: var(--sw-space-1);
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--sw-space-1);
   padding: 0.1875rem;
   /* Opaque, not translucent: the bar floats over a surface that is often
      the same colour it is, and a see-through toolbar reads as text printed

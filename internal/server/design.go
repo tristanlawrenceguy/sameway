@@ -52,8 +52,12 @@ func (s *Server) designColour(b *strings.Builder) {
 
 func (s *Server) designType(b *strings.Builder) {
 	b.WriteString(`<h2 id="type">Type</h2><p class="sw-prose">A single type scale keeps hierarchy readable at any size. The heading component renders it so the page outline matches what the assistant plans.</p>`)
+	// Each sample is a specimen of how a level looks, kept out of the outline:
+	// real h2 to h6 in a row would skip levels. The h4 above it and the code
+	// line say what it is.
+	b.WriteString(`<h3 id="type-levels">Heading levels</h3>`)
 	for _, level := range []int{2, 3, 4, 5, 6} {
-		fmt.Fprintf(b, "<div class=\"sw-example\"><h4 class=\"sw-small\">heading \u2014 level %d</h4><p class=\"sw-small sw-muted\"><code>{\"text\": \"Type scale example\", \"level\": %d}</code></p><div class=\"sw-example__render\">%s</div></div>", level, level, s.component("heading", map[string]any{"text": "Type scale example", "level": level}))
+		fmt.Fprintf(b, "<div class=\"sw-example\"><h4 class=\"sw-small\">heading \u2014 level %d</h4><p class=\"sw-small sw-muted\"><code>{\"text\": \"Type scale example\", \"level\": %d}</code></p><div class=\"sw-example__render\" aria-hidden=\"true\">%s</div></div>", level, level, s.component("heading", map[string]any{"text": "Type scale example", "level": level}))
 	}
 }
 

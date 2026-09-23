@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 // Popping a block out: the same block, given the whole middle of the page.
@@ -78,7 +79,15 @@ func (s *Server) focusPage(w http.ResponseWriter, r *http.Request) {
 	}
 	b.WriteString(`<div class="sw-focus__body"` + dot + `>` + string(body) + `</div></div>`)
 
-	reg := split(s.canvasBlocks())
+	// The block is the page now, so the panes leave it out: shown twice, it
+	// would be two landmarks with one name.
+	var others []*store.Record
+	for _, blk := range s.canvasBlocks() {
+		if blk.ID != rec.ID {
+			others = append(others, blk)
+		}
+	}
+	reg := split(others)
 	left, right := reg.left, reg.right
 	name, own := title(comp.Manifest.Name, props)
 	s.page(w, r, name, template.HTML(b.String()), pageOptions{
@@ -109,11 +118,22 @@ func (s *Server) expanded(name string, props map[string]any, convo *conversation
 	for k, v := range props {
 		full[k] = v
 	}
-	if comp.HasProp("detail") {
-		full["detail"] = "page"
-	}
 	if comp.HasProp("level") {
 		full["level"] = int64(2)
+	}
+	// The fullest detail the component has: page where it offers one, full
+	// where that is as far as it goes (a collection).
+	if comp.HasProp("detail") {
+		for _, d := range []string{"page", "full"} {
+			full["detail"] = d
+			if out, err := comp.Render(full); err == nil {
+				return out
+			}
+		}
+		delete(full, "detail")
+		if d, ok := props["detail"]; ok {
+			full["detail"] = d
+		}
 	}
 	if out, err := comp.Render(full); err == nil {
 		return out
