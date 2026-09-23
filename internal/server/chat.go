@@ -239,7 +239,7 @@ func (s *Server) chatSend(w http.ResponseWriter, r *http.Request) {
 	if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/") {
 		file, err := s.storeUpload(r)
 		if err != nil && err != http.ErrMissingFile {
-			s.fail(w, err)
+			s.failed(w, r, "Not sent", err, "/")
 			return
 		}
 		if file != nil {
@@ -273,7 +273,7 @@ func (s *Server) chatSend(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) chatClear(w http.ResponseWriter, r *http.Request) {
 	if err := s.app.Chat.Clear(); err != nil {
-		s.fail(w, err)
+		s.failed(w, r, "Not cleared", err, "/")
 		return
 	}
 	r.ParseForm()

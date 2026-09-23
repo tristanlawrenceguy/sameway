@@ -24,10 +24,9 @@ func TestDeletingIsOneStepAndReversible(t *testing.T) {
 	wantStatus(t, get(t, h, "/t/note/"+note.ID+"/confirm-delete"), http.StatusNotFound)
 
 	rec := postForm(t, h, "/t/note/"+note.ID+"/delete", url.Values{})
-	wantStatus(t, rec, http.StatusOK)
-	body := rec.Body.String()
-	if !strings.Contains(body, "deleted") {
-		t.Fatalf("the confirmation page should say deleted; body: %s", truncate(body))
+	body := after(t, h, rec).Body.String()
+	if !strings.Contains(body, "Water the plants is deleted.") {
+		t.Fatalf("the list the person lands on should say what was deleted; body: %s", truncate(body))
 	}
 	listing := get(t, h, "/t/note").Body.String()
 	undo := regexp.MustCompile(`action="(/activity/[^/"]+/undo)"`).FindStringSubmatch(listing)

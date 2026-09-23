@@ -2,7 +2,6 @@ package server
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 )
@@ -12,14 +11,11 @@ import (
 // log, where they are looking, rather than on an error page.
 func (s *Server) undo(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	back := "/"
-	if from := r.PostForm.Get("from"); strings.HasPrefix(from, "/") && !strings.HasPrefix(from, "//") {
-		back = from
-	}
 	if err := s.app.Chat.UndoAs("human", r.PathValue("id")); err != nil {
-		chat.Record(s.app.Store, "system", chat.Change{Action: "failed", Detail: "undo: " + err.Error()})
+		s.failed(w, r, "Not undone", err, "/")
+		return
 	}
-	http.Redirect(w, r, back, http.StatusSeeOther)
+	s.tell(w, r, outcome{Title: "Undone"}, "/")
 }
 
 // undoable is a receipt with Undo only where undo is a moment: under the

@@ -17,23 +17,26 @@ import (
 // them and the two answers.
 func (s *Server) act(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	back := "/"
-	if from := r.PostForm.Get("from"); strings.HasPrefix(from, "/") && !strings.HasPrefix(from, "//") {
-		back = from
-	}
+	back := backOf(r, "/")
 	// The tab the button was on is where a message action's reply lands.
 	canvas := strings.TrimPrefix(back, "/c/")
 	if !strings.HasPrefix(back, "/c/") {
 		canvas = ""
 	}
-	_, proposal, err := s.app.Chat.RunAs(r.Context(), "human", r.PathValue("id"), canvas)
+	text, proposal, err := s.app.Chat.RunAs(r.Context(), "human", r.PathValue("id"), canvas)
 	if err != nil {
-		chat.Record(s.app.Store, "system", chat.Change{Action: "failed", Detail: "action: " + err.Error()})
+		s.failed(w, r, "Did not run", err, "/")
+		return
 	}
 	if proposal != "" {
-		back = "/t/" + chat.ProposalType + "/" + proposal
+		http.Redirect(w, r, "/t/"+chat.ProposalType+"/"+proposal, http.StatusSeeOther)
+		return
 	}
-	http.Redirect(w, r, back, http.StatusSeeOther)
+	// What it came back with, in a sentence or two.
+	if r := []rune(strings.TrimSpace(text)); len(r) > 240 {
+		text = string(r[:239]) + "…"
+	}
+	s.tellAt(w, r, outcome{Title: "Done", Text: strings.TrimSpace(text)}, back)
 }
 
 // apiAct runs an action for an agent and answers with what came back, or

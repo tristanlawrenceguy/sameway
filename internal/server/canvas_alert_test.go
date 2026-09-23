@@ -14,7 +14,7 @@ func TestCanvasEditShowsSuccessAlert(t *testing.T) {
 
 	rec := postForm(t, h, "/canvas/"+id+"/props", url.Values{"prop-title": {"Groceries"}})
 
-	page := get(t, h, rec.Header().Get("Location"))
+	page := after(t, h, rec)
 	body := page.Body.String()
 
 	if !strings.Contains(body, "sw-alert") {

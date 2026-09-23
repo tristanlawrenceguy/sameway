@@ -25,7 +25,7 @@ func TestRecordPropsSaveNoSuccessPrefix(t *testing.T) {
 	r := postForm(t, h, "/t/note/"+rec.ID+"/props", form)
 	wantStatus(t, r, 303) // See Other redirect
 
-	follow := get(t, h, r.Header().Get("Location"))
+	follow := after(t, h, r)
 	body := follow.Body.String()
 
 	// The "Success:" prefix must NOT appear in the success alert.
@@ -49,7 +49,7 @@ func TestCanvasEditNoSuccessPrefix(t *testing.T) {
 
 	rec := postForm(t, h, "/canvas/"+id+"/props", url.Values{"prop-title": {"Groceries"}})
 
-	page := get(t, h, rec.Header().Get("Location"))
+	page := after(t, h, rec)
 	body := page.Body.String()
 
 	if strings.Contains(body, `>Success:</`) {

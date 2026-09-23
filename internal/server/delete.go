@@ -1,8 +1,6 @@
 package server
 
 import (
-	"fmt"
-	"html/template"
 	"net/http"
 	"strings"
 
@@ -19,28 +17,25 @@ func (s *Server) deleteForm(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	list := "/t/" + t.Name
 	rec, err := s.app.Store.Get(t.Name, r.PathValue("id"))
 	if err != nil {
-		s.fail(w, err)
+		s.failed(w, r, "Not deleted", err, list)
 		return
 	}
 	title := s.title(t, rec)
 	if err := s.app.Store.Delete(t.Name, rec.ID); err != nil {
-		s.fail(w, err)
+		s.failed(w, r, "Not deleted", err, list)
 		return
 	}
-	// Logged with what it was, so the deletion can be undone.
-	s.record(r, chat.Change{Action: "deleted", Component: t.Name, ID: rec.ID, Detail: title, Before: rec.Fields})
-
-	// Render a confirmation page with an alert before redirecting back to
-	// the listing, so the person knows the delete actually worked.
-	var b strings.Builder
-	b.WriteString(string(s.component("alert", map[string]any{
-		"kind":    "success",
-		"title":   "Deleted",
-		"message": title + " deleted.",
-	})))
-	fmt.Fprintf(&b, `<p>%s</p>`, s.component("link", map[string]any{"href": "/t/" + t.Name, "label": "See all " + plural(t.Name), "look": "button"}))
-	b.WriteString(`<meta http-equiv="refresh" content="2;url=/t/` + t.Name + `">`)
-	s.page(w, r, title+" deleted", template.HTML(b.String()), pageOptions{})
+	// Logged with what it was, so the deletion can be undone, from the
+	// message that says it happened.
+	undo := s.record(r, chat.Change{Action: "deleted", Component: t.Name, ID: rec.ID, Detail: title, Before: rec.Fields})
+	// Back where the person was, unless that was the record's own page,
+	// which is gone: then its list.
+	back := backOf(r, list)
+	if own := list + "/" + rec.ID; back == own || strings.HasPrefix(back, own+"/") || strings.HasPrefix(back, own+"?") {
+		back = list
+	}
+	s.tellAt(w, r, outcome{Title: "Deleted", Text: title + " is deleted.", Undo: undo}, back)
 }

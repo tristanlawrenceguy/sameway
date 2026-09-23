@@ -23,9 +23,7 @@ func TestRecordPropsValidationErrorFormatIsPlainSentence(t *testing.T) {
 	form := url.Values{}
 	form.Set("prop-title", "")
 	r := postForm(t, h, "/t/note/"+rec.ID+"/props", form)
-	wantStatus(t, r, 422)
-
-	body := r.Body.String()
+	body := after(t, h, r).Body.String()
 
 	// The new format should be a plain sentence: "Title is required".
 	if !strings.Contains(body, "Title is required") {
@@ -59,9 +57,7 @@ func TestRecordPropsValidationErrorUnknownFieldFormatIsPlainSentence(t *testing.
 	form := url.Values{}
 	form.Set("prop-bogus_field", "nope")
 	r := postForm(t, h, "/t/note/"+rec.ID+"/props", form)
-	wantStatus(t, r, 422)
-
-	body := r.Body.String()
+	body := after(t, h, r).Body.String()
 
 	// The new format should be a plain sentence with spaces: "Bogus field".
 	if !strings.Contains(body, "Bogus field") {
@@ -94,9 +90,7 @@ func TestRecordPropsValidationErrorEnumFormatIsPlainSentence(t *testing.T) {
 	form := url.Values{}
 	form.Set("prop-status", "not_a_valid_status")
 	r := postForm(t, h, "/t/note/"+rec.ID+"/props", form)
-	wantStatus(t, r, 422)
-
-	body := r.Body.String()
+	body := after(t, h, r).Body.String()
 
 	// The new format should be a plain sentence: "Status must be one of".
 	if !strings.Contains(body, "Status") {

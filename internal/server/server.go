@@ -143,6 +143,7 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 		Header:       opts.Header,
 		Footer:       opts.Footer,
 		ExtraScripts: opts.ExtraScripts,
+		Outcome:      s.told(w, r),
 	}
 	for _, t := range s.app.Types.Types {
 		if t.Internal || !s.listed(t) {

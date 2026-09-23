@@ -1,15 +1,13 @@
 package server
 
 import (
-	"fmt"
-	"html/template"
 	"net/http"
 	"net/url"
+	"sort"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
-	store "github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 // returnTo is where a person goes after an edit: the page they edited from,
@@ -35,26 +33,27 @@ func (s *Server) recordProps(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	detail := "/t/" + t.Name + "/" + r.PathValue("id")
 	rec, err := s.app.Store.Get(t.Name, r.PathValue("id"))
 	if err != nil {
-		s.fail(w, err)
+		s.failed(w, r, "Not saved", err, "/t/"+t.Name)
 		return
 	}
 
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, "bad form", http.StatusBadRequest)
+		s.failed(w, r, "Not saved", err, detail)
 		return
 	}
 
 	fields, err := editedFields(r.PostForm)
 	if err != nil {
-		s.renderDetailError(w, r, t, rec, err, fields)
+		s.refused(w, r, t, err, detail)
 		return
 	}
 
-	// No fields provided — no-op redirect.
+	// No fields provided — nothing to say.
 	if len(fields) == 0 {
-		http.Redirect(w, r, returnTo(r, "/t/"+t.Name+"/"+rec.ID), http.StatusSeeOther)
+		http.Redirect(w, r, returnTo(r, detail), http.StatusSeeOther)
 		return
 	}
 
@@ -69,63 +68,48 @@ func (s *Server) recordProps(w http.ResponseWriter, r *http.Request) {
 
 	clean, err := t.Normalize(merged)
 	if err != nil {
-		s.renderDetailError(w, r, t, rec, err, fields)
+		s.refused(w, r, t, err, detail)
 		return
 	}
 
 	_, err = s.app.Store.Update(t.Name, rec.ID, clean)
 	if err != nil {
-		s.fail(w, err)
+		s.failed(w, r, "Not saved", err, detail)
 		return
 	}
 	// A change a person made by hand is a change like any other: in the
 	// log with what it was, so it glows where it shows and can be undone.
-	s.record(r, chat.Change{Action: "updated", Component: t.Name, ID: rec.ID, Detail: s.title(t, rec), Href: "/t/" + t.Name + "/" + rec.ID, Before: rec.Fields})
-
-	http.Redirect(w, r, returnTo(r, "/t/"+t.Name+"/"+rec.ID)+"?saved", http.StatusSeeOther)
+	undo := s.record(r, chat.Change{Action: "updated", Component: t.Name, ID: rec.ID, Detail: s.title(t, rec), Href: detail, Before: rec.Fields})
+	s.tellAt(w, r, outcome{Title: "Changes saved", Undo: undo}, returnTo(r, detail))
 }
 
-// renderDetailError re-renders the detail page with validation errors as a 422,
-// showing each field's problem alongside the current record values so the person
-// can see what they are editing and try again.
-func (s *Server) renderDetailError(w http.ResponseWriter, r *http.Request, t *schema.Type, rec *store.Record, verr error, submittedFields map[string]any) {
-	var b strings.Builder
-
-	b.WriteString(string(s.component("alert", map[string]any{
-		"kind":    "warning",
-		"message": "Fix the fields below and try again.",
-	})))
-
-	if ve, ok := verr.(*schema.ValidationError); ok {
-		for field, msg := range ve.Problems {
-			b.WriteString(fmt.Sprintf("<p>%s %s</p>",
-				template.HTMLEscapeString(label(field)), template.HTMLEscapeString(msg)))
+// refused says why an edit was not taken, a sentence for each field in
+// the order the type lists them, on the page it was made from.
+func (s *Server) refused(w http.ResponseWriter, r *http.Request, t *schema.Type, err error, detail string) {
+	var said []string
+	if ve, ok := err.(*schema.ValidationError); ok {
+		seen := map[string]bool{}
+		for _, f := range t.Fields {
+			if msg, ok := ve.Problems[f.Name]; ok {
+				said = append(said, label(f.Name)+" "+msg+".")
+				seen[f.Name] = true
+			}
+		}
+		// A field the type does not have, named too.
+		var rest []string
+		for name := range ve.Problems {
+			if !seen[name] {
+				rest = append(rest, name)
+			}
+		}
+		sort.Strings(rest)
+		for _, name := range rest {
+			said = append(said, label(name)+" "+ve.Problems[name]+".")
 		}
 	}
-
-	// Render the definition list like detailPage does, so the person can see
-	// what they are editing and try again.
-	fmt.Fprintf(&b, `<div class="sw-dl-block" data-block-id="%s" data-edit-action="/t/%s/%s/props">`, rec.ID, t.Name, rec.ID)
-	b.WriteString(`<dl class="sw-dl">`)
-	for _, f := range t.Fields {
-		var raw any
-		if s, ok := submittedFields[f.Name]; ok {
-			raw = s
-		} else {
-			raw = rec.Fields[f.Name]
-		}
-		val := display(f, raw)
-		// On an error page we must render every field the user submitted so that
-		// 08-edit.js can build an input for it (even when the value is empty).
-		if _, ok := submittedFields[f.Name]; !ok && val == "" {
-			continue
-		}
-		fmt.Fprintf(&b, `<dt>%s</dt><dd data-prop="%s"%s>%s</dd>`,
-			template.HTMLEscapeString(label(f.Name)), f.Name, whenAttrs(f, rec.Fields[f.Name]), template.HTMLEscapeString(val))
+	text := strings.Join(said, " ")
+	if text == "" {
+		text = plainError(err)
 	}
-	b.WriteString("</dl>" + `<p class="sw-lede">` + whenMade(rec) + `</p>`)
-	b.WriteString(`<div class="sw-bar sw-quiet"></div>`)
-	b.WriteString(`</div>`)
-
-	s.page(w, r, s.title(t, rec), template.HTML(b.String()), pageOptions{JSONURL: "/api/" + t.Name + "/" + rec.ID, Status: http.StatusUnprocessableEntity, ExtraScripts: detailPageExtraScripts})
+	s.tellAt(w, r, outcome{Failed: true, Title: "Not saved", Text: text}, returnTo(r, detail))
 }

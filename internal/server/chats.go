@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -43,7 +44,7 @@ func (s *Server) chats() (items []chatItem, current string) {
 func (s *Server) chatNew(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	if _, err := s.app.Chat.NewChat(); err != nil {
-		s.fail(w, err)
+		s.failed(w, r, "No new chat", err, "/")
 		return
 	}
 	http.Redirect(w, r, backTo(r.PostForm.Get("from")), http.StatusSeeOther)
@@ -52,7 +53,8 @@ func (s *Server) chatNew(w http.ResponseWriter, r *http.Request) {
 func (s *Server) chatOpen(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	if err := s.app.Chat.OpenChat(r.PostForm.Get("id")); err != nil {
-		s.app.Chat.Notice("Chat not found")
+		s.failed(w, r, "Chat not opened", errors.New("that chat is not there any more"), "/")
+		return
 	}
 	http.Redirect(w, r, backTo(r.PostForm.Get("from")), http.StatusSeeOther)
 }
@@ -60,7 +62,8 @@ func (s *Server) chatOpen(w http.ResponseWriter, r *http.Request) {
 func (s *Server) chatDelete(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	if err := s.app.Chat.DeleteChat(r.PostForm.Get("id")); err != nil {
-		s.app.Chat.Notice(err.Error())
+		s.failed(w, r, "Chat not deleted", err, "/")
+		return
 	}
 	http.Redirect(w, r, backTo(r.PostForm.Get("from")), http.StatusSeeOther)
 }
@@ -71,7 +74,7 @@ func (s *Server) chatDelete(w http.ResponseWriter, r *http.Request) {
 func (s *Server) blockPlace(w http.ResponseWriter, r *http.Request) {
 	rec, err := s.app.Store.Get(chat.BlockType, r.PathValue("id"))
 	if err != nil {
-		s.fail(w, err)
+		s.failed(w, r, "Not moved", err, "/")
 		return
 	}
 	r.ParseForm()
@@ -84,10 +87,10 @@ func (s *Server) blockPlace(w http.ResponseWriter, r *http.Request) {
 	}
 	name, _ := rec.Fields["component"].(string)
 	if _, err := s.app.Store.Update(chat.BlockType, rec.ID, s.app.Chat.BlockFields(fields)); err != nil {
-		s.app.Chat.Notice(err.Error())
-	} else {
-		s.recordPlace(rec, name, fields)
+		s.failed(w, r, "Not moved", err, "/")
+		return
 	}
+	s.recordPlace(rec, name, fields)
 	http.Redirect(w, r, backTo(r.PostForm.Get("from")), http.StatusSeeOther)
 }
 
