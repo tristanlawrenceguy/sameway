@@ -5,6 +5,7 @@
 .sw-swatch__chip { grid-row: span 2; width: 2.5rem; height: 2.5rem; border-radius: var(--sw-radius-sm); border: 1px solid var(--sw-color-border); }
 .sw-swatch code { min-width: 0; overflow-wrap: anywhere; }
 .sw-example { margin-top: var(--sw-space-4); }
+.sw-example code { overflow-wrap: anywhere; }
 .sw-example__render { padding: var(--sw-space-4); border: 1px dashed var(--sw-color-border); border-radius: var(--sw-radius-md); }
 
 /* Block editor (/canvas/{id}/edit) */

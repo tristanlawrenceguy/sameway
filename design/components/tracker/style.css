@@ -2,7 +2,7 @@
    a bar for this period against the target, the numbers in words, the
    last days as dots, and Log. A met period is the success green; the bar
    fills in the list colour. */
-.sw-tracker--full { display: grid; gap: var(--sw-space-2); min-width: 0; }
+.sw-tracker--full { display: grid; gap: var(--sw-space-2); min-width: 0; container-type: inline-size; }
 .sw-tracker__list { display: grid; gap: var(--sw-space-2); }
 .sw-tracker__habit {
   display: grid; grid-template-columns: 1fr auto; grid-template-areas: "head log" "bar log" "numbers log" "days log";
@@ -40,6 +40,7 @@ a.sw-tracker__name:hover { text-decoration: underline; text-underline-offset: 0.
 .sw-tracker__count { font-size: var(--sw-size-text-lg); font-weight: 700; font-variant-numeric: tabular-nums; }
 .sw-tracker__of { font-size: var(--sw-size-text-sm); font-weight: 400; color: var(--sw-color-fg-muted); }
 .sw-tracker__label { font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); }
+/* Narrow (a pane, a phone): Log goes under the habit instead of beside it. */
 @container (max-width: 27rem) {
   .sw-tracker__habit { grid-template-columns: 1fr; grid-template-areas: "head" "bar" "numbers" "days" "log"; }
 }

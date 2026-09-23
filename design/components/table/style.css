@@ -1,4 +1,7 @@
-.sw-table-wrap { overflow-x: auto; max-width: 100%; border: 1px solid var(--sw-color-border); border-radius: var(--sw-radius-md); background: var(--sw-color-bg-raised); }
+/* position: relative makes the scroll region the box for anything
+   positioned inside it, such as visually hidden text, which would otherwise
+   escape the scroll and widen the page at 320px. */
+.sw-table-wrap { position: relative; overflow-x: auto; max-width: 100%; border: 1px solid var(--sw-color-border); border-radius: var(--sw-radius-md); background: var(--sw-color-bg-raised); }
 .sw-table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
 .sw-table caption { text-align: left; font-weight: 700; padding: var(--sw-space-3) var(--sw-space-3) var(--sw-space-2); caption-side: top; }
 .sw-table th, .sw-table td {

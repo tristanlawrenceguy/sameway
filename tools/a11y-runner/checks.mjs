@@ -41,8 +41,15 @@ export async function reflowProblems(page) {
   const found = await page.evaluate(() => {
     const doc = document.documentElement;
     if (doc.scrollWidth <= window.innerWidth + 1) return [];
-    // Contained: inside a scroll region that itself fits the viewport.
-    const scrolls = (el) => { for (let p = el.parentElement; p && p !== doc; p = p.parentElement) { if (/(auto|scroll|hidden|clip)/.test(getComputedStyle(p).overflowX)) return p.getBoundingClientRect().right <= window.innerWidth + 1; } return false; };
+    // Contained: inside a scroll region that itself fits the viewport. A
+    // positioned element is only clipped by one that holds its offset parent.
+    const scrolls = (el) => {
+      const box = /(absolute|fixed)/.test(getComputedStyle(el).position) ? el.offsetParent : el.parentElement;
+      for (let p = el.parentElement; p && p !== doc; p = p.parentElement) {
+        if (/(auto|scroll|hidden|clip)/.test(getComputedStyle(p).overflowX)) return (p === box || (box && p.contains(box))) && p.getBoundingClientRect().right <= window.innerWidth + 1;
+      }
+      return false;
+    };
     const wide = [...document.body.querySelectorAll("*")].filter((el) => el.getBoundingClientRect().right > window.innerWidth + 1 && !scrolls(el));
     // Report the outermost offenders; their children follow them out.
     const outer = wide.filter((el) => !wide.includes(el.parentElement));

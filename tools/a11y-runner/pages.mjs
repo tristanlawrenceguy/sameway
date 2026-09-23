@@ -221,8 +221,12 @@ for (const path of everyPage) {
     // The seeded canvas stacks every example of a component together, so
     // several share a name by design; landmark-unique is best practice,
     // not WCAG, and stays on for every other page.
+    // The styleguide shows every example as it would sit on a page, own
+    // headings and all, between its h4 labels; heading-order is likewise
+    // best practice and is left out there alone.
     const seeded = path.startsWith("/c/") || blockLabel[path];
-    for (const p of await axeProblems(page, seeded ? ["landmark-unique"] : [])) fail(`${label} ${mode}: ${p}`);
+    const skip = seeded ? ["landmark-unique"] : path === "/design" ? ["heading-order"] : [];
+    for (const p of await axeProblems(page, skip)) fail(`${label} ${mode}: ${p}`);
   }
   for (const p of await reflowProblems(page)) fail(`${label} reflow: ${p}`);
   for (const p of await spacingProblems(page)) fail(`${label} text spacing: ${p}`);

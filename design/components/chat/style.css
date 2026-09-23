@@ -20,6 +20,11 @@
   display: grid; gap: var(--sw-space-2);
 }
 .sw-chat__panel > p { margin: var(--sw-space-2) 0 0; }
+/* On a phone, or zoomed in, a panel floating from wherever the menu sits
+   would run off the side; it opens in place under the menu instead. */
+@media (max-width: 30rem) {
+  .sw-chat__panel { position: static; min-width: 0; margin-top: var(--sw-space-1); }
+}
 .sw-chat__list { display: grid; gap: var(--sw-space-1); max-height: 20rem; overflow-y: auto; }
 .sw-chat__list li { display: flex; align-items: center; gap: var(--sw-space-2); }
 .sw-chat__list li > form:first-child { flex: 1; min-width: 0; }
