@@ -90,7 +90,8 @@ const pageSays = (seeded, styleguide) => page.evaluate(([seeded, styleguide]) =>
   const twice = (els, key) => { const seen = new Map(); for (const e of els) { const k = key(e); if (k) seen.set(k, (seen.get(k) || 0) + 1); } return [...seen].filter(([, n]) => n > 1); };
   const text = (e) => (e.getAttribute("aria-label") || (e.labels && e.labels[0] && e.labels[0].textContent) || e.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
   for (const [k, n] of twice(document.querySelectorAll("h1, h2, h3, h4, h5, h6"), (e) => `${e.tagName.toLowerCase()} "${text(e)}"`)) out.push(`${n} headings are ${k} (2.4.6)`);
-  for (const [k, n] of twice(document.querySelectorAll("button, summary, input:not([type=hidden]), select, textarea"), (e) => text(e) && `${e.tagName.toLowerCase()}${e.type ? "[" + e.type + "]" : ""} "${text(e)}"`)) out.push(`${n} controls are ${k} (2.4.6)`);
+  // Only what is drawn counts: a control shown only without scripts is not met.
+  for (const [k, n] of twice(document.querySelectorAll("button, summary, input:not([type=hidden]), select, textarea"), (e) => e.getClientRects().length > 0 && text(e) && `${e.tagName.toLowerCase()}${e.type ? "[" + e.type + "]" : ""} "${text(e)}"`)) out.push(`${n} controls are ${k} (2.4.6)`);
   return out;
 }, [seeded, styleguide]);
 

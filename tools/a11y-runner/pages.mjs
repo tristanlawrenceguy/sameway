@@ -113,10 +113,12 @@ for (let i = 0; i < 6 && !reachedSave; i++) {
 }
 check(reachedSave, "edit: Tab from the body reaches Save");
 if (reachedSave) {
+  // The save goes by script without leaving the page; wait for it to land.
+  const saved = page.waitForResponse((r) => r.request().method() === "POST", { timeout: 10000 }).catch(() => null);
   await page.keyboard.press("Enter");
-  await page.waitForLoadState();
-  await page.goto(base + "/t/note/" + apiNote.id);
-  check((await page.locator("main").textContent()).includes("Typed by keyboard."), "edit: what was typed is saved");
+  await saved;
+  const stored = await (await fetch(`${base}/api/note/${apiNote.id}`)).json();
+  check(String(stored.fields.body).includes("Typed by keyboard."), `edit: what was typed is saved (stored ${JSON.stringify(stored.fields.body)})`);
 }
 
 // ---- the quiet layer ----------------------------------------------------
