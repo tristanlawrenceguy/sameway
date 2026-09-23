@@ -9,6 +9,7 @@
 
 .sw-skip {
     position: absolute; left: var(--sw-space-2); top: -100px; z-index: 10;
+    display: inline-flex; align-items: center; min-height: var(--sw-size-target);
     padding: var(--sw-space-2) var(--sw-space-4);
     background: var(--sw-color-accent); color: var(--sw-color-accent-fg);
     border-radius: var(--sw-radius-md); font-weight: 600;
@@ -82,7 +83,7 @@ h1.sw-dotted::before { width: 1.125rem; height: 1.125rem; margin-right: var(--sw
 .sw-crumbs li.sw-dotted { display: inline-flex; align-items: center; }
 .sw-crumbs li.sw-dotted::before { width: 0.625rem; height: 0.625rem; }
 /* The rest of the workspace: quieter, after the lists. */
-.sw-nav--more .sw-link { min-height: 2.25rem; padding: 0 var(--sw-space-3); font-weight: 500; color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); }
+.sw-nav--more .sw-link { min-height: var(--sw-size-target); padding: 0 var(--sw-space-3); font-weight: 500; color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); }
 .sw-nav--more .sw-link:hover { color: var(--sw-color-fg); }
 .sw-nav--more .sw-link[aria-current="page"] { color: var(--sw-color-fg); }
 
@@ -117,7 +118,6 @@ h1.sw-dotted::before { width: 1.125rem; height: 1.125rem; margin-right: var(--sw
   .sw-header__inner { width: auto; margin: 0; height: 100%; flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: var(--sw-space-6); }
   .sw-header__brand { padding-inline: var(--sw-space-3); }
   .sw-nav ul { flex-direction: column; flex-wrap: nowrap; overflow-x: visible; gap: 2px; }
-  .sw-nav .sw-link { min-height: 2.25rem; }
   .sw-nav--more { margin-top: auto; }
   .sw-strip--header { justify-content: flex-start; align-self: stretch; }
   .sw-shell { grid-column: 2; min-width: 0; }

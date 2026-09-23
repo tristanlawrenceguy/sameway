@@ -35,7 +35,7 @@ func TestAPersonMovesBetweenChats(t *testing.T) {
 	if !strings.Contains(page, "Planned.") || strings.Contains(page, "Noted.") {
 		t.Errorf("opening the first chat brings its messages back and not the other's\n%s", page)
 	}
-	if !strings.Contains(page, `aria-label="Delete chat and the kitchen"`) {
+	if !strings.Contains(page, `>Delete<span class="sw-visually-hidden"> chat and the kitchen</span></button>`) {
 		t.Error("every chat in the list can be deleted")
 	}
 

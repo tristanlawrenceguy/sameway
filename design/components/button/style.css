@@ -22,7 +22,7 @@
 .sw-button--quiet {
   background: transparent; color: var(--sw-color-fg-muted);
   border-color: transparent; padding: 0 var(--sw-space-3);
-  min-width: 0; font-weight: 600; font-size: var(--sw-size-text-sm);
+  font-weight: 600; font-size: var(--sw-size-text-sm);
 }
 .sw-button--quiet:hover:not([disabled]) { color: var(--sw-color-fg); background: var(--sw-color-bg-muted); }
 .sw-button:hover:not([disabled]):not([aria-disabled="true"]) { text-decoration: underline; text-underline-offset: 0.2em; }

@@ -11,7 +11,6 @@
 
 /* Ringing: an alert in the accent wash with a bell that pulses while
    motion is allowed. It stays until Dismiss or five more minutes. */
-.sw-clock__ringing:empty { display: none; }
 .sw-clock__ringing { display: grid; gap: var(--sw-space-2); }
 .sw-clock__ring {
   position: relative;

@@ -10,4 +10,4 @@
 .sw-search__field:focus-visible { outline: var(--sw-focus-width) solid var(--sw-color-focus); outline-offset: var(--sw-focus-offset); }
 /* In a bar, the label is the button: one word less on the resting page. */
 .sw-canvas--strip .sw-search__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-[data-size="compact"] .sw-search__field { min-width: 7rem; min-height: 2.25rem; }
+[data-size="compact"] .sw-search__field { min-width: 7rem; min-height: var(--sw-size-target); }

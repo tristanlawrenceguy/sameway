@@ -16,11 +16,11 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/render/htmltest"
 )
 
-// TestDeleteChatButtonHasNoVisibleLabel checks that the delete-chat button
-// in conversation.html does not carry redundant visible text alongside its
-// aria-label. The aria-label "Delete chat <title>" fully conveys the action,
-// so no visible label is needed (Acceptance 1).
-func TestDeleteChatButtonHasNoVisibleLabel(t *testing.T) {
+// TestDeleteChatButtonNamesItselfOnce checks that the delete-chat button
+// shows a word a person can see and say (WCAG 2.5.3), and takes its whole
+// name, "Delete chat <title>", from its content alone: no aria-label beside
+// it, so nothing is named twice and the visible word is part of the name.
+func TestDeleteChatButtonNamesItselfOnce(t *testing.T) {
 	a, h := newApp(t)
 	a.Chat.Provider, a.Chat.ProviderErr = &scripted{steps: []*llm.Response{{Text: "Planned."}, {Text: "Noted."}}}, nil
 
@@ -30,13 +30,11 @@ func TestDeleteChatButtonHasNoVisibleLabel(t *testing.T) {
 	wantStatus(t, postForm(t, h, "/chat", url.Values{"message": {"and the kitchen"}, "from": {"/chat"}}), http.StatusSeeOther)
 
 	page := get(t, h, "/chat").Body.String()
-	if !strings.Contains(page, `aria-label="Delete chat and the kitchen"`) {
-		t.Fatalf("the delete-chat button should have an aria-label; page:\n%s", truncate(page))
+	if !strings.Contains(page, `>Delete<span class="sw-visually-hidden"> chat and the kitchen</span></button>`) {
+		t.Fatalf("the delete-chat button should show Delete and say which chat in hidden text; page:\n%s", truncate(page))
 	}
-
-	// The redundancy: visible "Delete" text next to aria-label that also says "Delete".
-	if strings.Contains(page, `aria-label="Delete chat and the kitchen">Delete`) {
-		t.Error("the delete-chat button should not have both an aria-label and a redundant visible label — screen readers announce it twice (Acceptance 1)")
+	if strings.Contains(page, `aria-label="Delete chat`) {
+		t.Error("the delete-chat button should take its name from its content, not an aria-label beside it")
 	}
 }
 

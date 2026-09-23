@@ -115,6 +115,24 @@ export async function visualProblems(page, waived = []) {
       if (box.width < 43.5 || box.height < 43.5) out.push(`${__sw.name(el)} can be pressed over ${Math.round(box.width)}x${Math.round(box.height)}, under 44x44 (2.5.5)`);
     }
 
+    // A control shows what it does, and what it shows is in its name so a
+    // person can say it to speech control (2.5.3). An icon counts as showing.
+    // A glyph in an aria-hidden span is an icon, not words to say.
+    const words = (el) => {
+      let t = "";
+      const walk = (n) => { for (const c of n.childNodes) { if (c.nodeType === 3) t += c.textContent; else if (c.nodeType === 1 && c.getAttribute("aria-hidden") !== "true" && !__sw.hidden(c)) walk(c); } };
+      walk(el);
+      return t.replace(/\s+/g, " ").trim();
+    };
+    for (const el of document.querySelectorAll("a[href], button, summary")) {
+      if (!visible(el) || el.closest(".shell")) continue;
+      const shown = words(el);
+      const drawn = el.querySelector("img, svg, [aria-hidden=true]") || ["::before", "::after"].some((p) => { const c = getComputedStyle(el, p).content; return c !== "none" && c !== '""' && c !== "normal"; });
+      const label = el.getAttribute("aria-label");
+      if (!shown && !drawn) out.push(`${__sw.name(el)}${label ? ` "${label}"` : ""} shows nothing: its name is only for screen readers (2.5.3)`);
+      else if (label && shown && !label.toLowerCase().includes(shown.toLowerCase())) out.push(`${__sw.name(el)} shows "${shown}" but is named "${label}" (2.5.3)`);
+    }
+
     // Two elements alike but for a state must differ in more than colour,
     // or in the words they show.
     const colourish = (p) => /color|fill|stroke|shadow|background|^--|^caret/.test(p);
@@ -157,7 +175,8 @@ export async function forcedColourProblems(page) {
     for (const el of document.body.querySelectorAll("*")) {
       const b = el.getBoundingClientRect();
       if (b.width < 2 || b.height < 2 || __sw.hidden(el) || __sw.seen(el)) continue;
-      if (el.querySelector("img, svg, input, select, textarea, button, a")) continue;
+      // Decoration hidden from assistive technology carries no meaning to lose.
+      if (el.closest("[aria-hidden=true]") || el.querySelector("img, svg, input, select, textarea, button, a")) continue;
       const own = __sw.parse(getComputedStyle(el).backgroundColor);
       if (!own || own[3] === 0 || __sw.ratio(__sw.behind(el), __sw.behind(el.parentElement)) < 1.5) continue;
       el.dataset.swMark = n++;

@@ -1,12 +1,12 @@
 # Browser tests (dev only)
 
-Node is used only here, never at runtime. Three scripts, all headless Chromium:
+Node is used only here, never at runtime. All headless Chromium:
 
 | Script | What it proves | Needs |
 |---|---|---|
-| `npm run test:axe` | Every component example passes axe-core at WCAG 2.2 AA in light and dark mode, reflows at 320px wide without sideways scrolling, keeps all its text with WCAG text spacing forced on, and stops moving under reduced motion. AAA findings are printed as warnings. | nothing |
-| `npm run test:keyboard` | Every focusable element in every example is reachable by Tab in DOM order with a visible focus ring in light, dark and forced colours; Shift+Tab walks back and nothing traps focus; every control works by keyboard the way its kind promises (links, buttons, summaries, checkboxes, selects, date and file fields, text fields and textareas); and the manifest keyboard map says what Tab reaches. | nothing |
-| `npm run test:pages` | A running server can be driven by a keyboard-only person and by an agent using roles, accessible names, and `/api/describe`. Then every page, and a canvas holding every component example in each region and size, is checked with the same axe, reflow, spacing and motion checks, walked with Tab at desktop and 320px for focus hidden under sticky parts, and read through `/api/look` for problems. | `sameway serve` with `llm.provider: none`, URL in `SAMEWAY_URL` |
+| `npm run test:axe` (`run.mjs`) | Every component example passes axe-core at WCAG 2.2 AA and AAA in light and dark mode; its tree holds the role its manifest declares; it reflows at 320px, keeps all its text with WCAG text spacing and at 200% text, and stops moving under reduced motion; field edges are 3:1, targets reach 44x44, state is never colour alone, controls show a name that is in their accessible name, marks survive forced colours, and errors are tied to their fields. | nothing |
+| `npm run test:keyboard` (`keyboard.mjs`) | Every focusable element in every example is reachable by Tab in DOM order with a focus ring in light, dark and forced colours, 2px and 3:1 against what it is drawn over; Shift+Tab walks back and nothing traps focus; every control works by keyboard the way its kind promises; the manifest keyboard map says what Tab reaches. | nothing |
+| `npm run test:pages` (`pages.mjs`, then `site.mjs`) | A running server can be driven by a keyboard-only person and by an agent using roles, accessible names, and `/api/describe`. Then every page, and a canvas holding every component example in each region and size, gets the same checks, a Tab walk at desktop, at 320px and on a phone held sideways for focus hidden under sticky parts, live regions that can announce, one place per link name, and `/api/look`; and the site: every page titled after itself and no two alike, the main navigation the same everywhere, and every form with a required field saying what is wrong when sent empty. | `sameway serve` with `llm.provider: none`, URL in `SAMEWAY_URL` |
 
 ```bash
 cd tools/a11y-runner
@@ -15,15 +15,24 @@ npm test               # axe + keyboard
 SAMEWAY_URL=http://127.0.0.1:8080 npm run test:pages
 ```
 
-`shell.mjs` is the page wrapper the first two scripts render examples into.
-It carries the real tokens and base CSS, the page's column and gutter, and
-an h1 and h2 so components that default to heading level 3 sit in a valid
-outline. `checks.mjs` holds the in-page checks the suites share.
+`shell.mjs` is the page the component suites render an example into: the
+real tokens, base and component CSS, the page's column and gutter, and an h1
+and h2 so components that default to heading level 3 sit in a valid
+outline. `checks.mjs` holds the checks for modes, reflow, spacing, motion
+and hidden focus; `visual.mjs` the ones axe does not make (focus
+appearance, field edges, target size, colour-only state, visible names,
+forced colours, text zoom, error wiring).
 
-Forced colours is checked for focus rings only: there the person's own
-theme sets every colour, so contrast is not the page's to meet. On live
-pages the quiet layer is shown before axe runs, because axe passes over
-anything at opacity 0 and those controls are what hover and focus show.
+Forced colours is checked for focus rings and for marks drawn only in
+background colour, not for contrast: there the person's own theme sets
+every colour. On live pages the quiet layer is shown before axe runs,
+because axe passes over anything at opacity 0 and those controls are what
+hover and focus show. Checks run with reduced motion so transitions and
+arrivals are finished before anything is measured.
+
+## Waivers
 
 To waive an AAA rule for one component, add `examples/a11y-waivers.json`
-mapping the axe rule id to a reason. AA rules cannot be waived.
+mapping the axe rule id to a reason. `target-size-44` waives the 44px
+target for a component that cannot meet it, with the reason; it is the
+only non-axe key. AA rules cannot be waived.

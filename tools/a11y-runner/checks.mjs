@@ -112,7 +112,9 @@ export async function motionProblems(page) {
 // WCAG 2.4.11 Focus Not Obscured: walk the page with Tab and check each
 // focused control is not entirely covered by something else, such as a
 // sticky header. Five points across it are sampled; one showing is enough.
-export async function obscuredFocusProblems(page, limit = 300) {
+// onFocus, when given, is asked about each focused control on the way and
+// returns a problem or null.
+export async function obscuredFocusProblems(page, onFocus = null, limit = 300) {
   // Reduced motion makes the scroll to a focused control instant rather
   // than smooth, so it is in place when it is measured.
   await page.emulateMedia({ reducedMotion: "reduce" });
@@ -143,6 +145,8 @@ export async function obscuredFocusProblems(page, limit = 300) {
     });
     if (!r) break;
     if (!r.shown) out.push(`${r.name} is hidden behind something else when focused`);
+    const more = onFocus && (await onFocus(page));
+    if (more) out.push(more);
   }
   await page.emulateMedia({ reducedMotion: "no-preference" });
   return out;
