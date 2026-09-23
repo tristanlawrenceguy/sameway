@@ -21,3 +21,9 @@ With `type: all` the calendar shows everything with a day together,
 from every listed type: tasks due, reminders, entries logged, each
 event saying what kind it is. A record's page links to its day on the
 first calendar on the canvas, as See that day.
+
+A calendar of entries (`type: entry`, or `type: all`) offers in its day
+view what it takes to log for that day: each habit it shows, as it stood
+that day, with Log and the day filled in. With `where: ["habit=<id>"]`
+it is that habit alone. Each entry is a link to its own page, where it
+is edited or deleted.

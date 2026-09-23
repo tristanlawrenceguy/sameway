@@ -95,7 +95,9 @@
       });
       old.remove();
     });
-    if (doc.title) document.title = (document.title.indexOf("⏳ ") === 0 ? "⏳ " : "") + doc.title.replace(/^⏳ /, "");
+    // The tab's mark, working or done while away, stays with the tab.
+    var mark = (document.title.match(/^(⏳|✓) /) || [""])[0];
+    if (doc.title) document.title = mark + doc.title.replace(/^(⏳|✓) /, "");
     logs.forEach(function (l) { l.log.scrollTo({ top: l.end ? l.log.scrollHeight : l.top, behavior: "instant" }); });
     // Instant: the page's smooth scrolling would otherwise animate the
     // correction, and the page would be seen drifting back into place.
