@@ -19,7 +19,7 @@ func (e *ValidationError) Error() string {
 	for k, v := range e.Problems {
 		parts = append(parts, k+": "+v)
 	}
-	return "invalid record: " + strings.Join(parts, "; ")
+	return strings.Join(parts, "; ")
 }
 
 // Normalize applies defaults, checks types and constraints, and returns a

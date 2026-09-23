@@ -162,7 +162,7 @@ func (s *Server) clockSet(w http.ResponseWriter, r *http.Request) {
 	}
 	rec, err := s.app.Store.Create(ReminderType, fields)
 	if err != nil {
-		s.app.Chat.Notice("That reminder did not save. " + err.Error())
+		s.app.Chat.Notice(err.Error())
 	} else {
 		title, _ := fields["title"].(string)
 		chat.Record(s.app.Store, "human", chat.Change{Action: "created", Component: ReminderType, ID: rec.ID, Detail: title})
@@ -187,7 +187,7 @@ func (s *Server) setReminder(w http.ResponseWriter, r *http.Request, fields map[
 		return
 	}
 	if _, err := s.app.Store.Update(ReminderType, rec.ID, fields); err != nil {
-		s.app.Chat.Notice("That did not go through. " + err.Error())
+		s.app.Chat.Notice(err.Error())
 	} else {
 		t, _ := s.app.Types.Get(ReminderType)
 		chat.Record(s.app.Store, "human", chat.Change{Action: action, Component: ReminderType, ID: rec.ID, Detail: s.title(t, rec), Before: rec.Fields})

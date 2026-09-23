@@ -114,7 +114,7 @@ func (s *Server) showWorkspaces(w http.ResponseWriter, r *http.Request, problem 
 	cur := s.app.Workspace
 	var b strings.Builder
 	if problem != "" {
-		b.WriteString(string(s.component("alert", map[string]any{"kind": "warning", "title": "That did not go through", "message": problem})))
+		b.WriteString(string(s.component("alert", map[string]any{"kind": "warning", "message": problem})))
 	}
 	own := ""
 	for _, k := range workspace.KnownWorkspaces() {

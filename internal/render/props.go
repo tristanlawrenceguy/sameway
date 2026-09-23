@@ -225,7 +225,7 @@ func formatValidation(ps *propSchema, err error) error {
 		}
 	}
 	walk(ve)
-	return fmt.Errorf("invalid props: %s", strings.Join(lines, "; "))
+	return errors.New(strings.Join(lines, "; "))
 }
 
 // capitalize returns the string with its first letter uppercased.

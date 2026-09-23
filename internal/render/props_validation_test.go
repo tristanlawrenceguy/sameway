@@ -34,7 +34,7 @@ func TestValidationErrorsUseReadableFieldNames(t *testing.T) {
 			name:           "unknown prop key shows readable name",
 			component:      "button",
 			props:          map[string]any{"label": "x", "bogus": 1},
-			wantSubstrings: []string{"invalid props"},
+			wantSubstrings: []string{"Bogus"},
 		},
 		{
 			name:           "variant enum error shows capitalized prop name",
@@ -151,9 +151,9 @@ func TestValidationErrorsMultiField(t *testing.T) {
 		t.Errorf("multi-field error should not show raw '/' as field name: %q", errStr)
 	}
 
-	// Should contain "invalid props" prefix
-	if !strings.Contains(errStr, "invalid props") {
-		t.Errorf("error should start with 'invalid props': %q", errStr)
+	// Should contain both readable field names
+	if !strings.Contains(errStr, "Extra_words") {
+		t.Errorf("multi-field error should show 'Extra_words' readable name: %q", errStr)
 	}
 }
 
