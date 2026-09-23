@@ -36,7 +36,7 @@
     var lab = document.createElement("span");
     lab.className = "sw-field__label";
     lab.id = id + "-label";
-    lab.textContent = label(name);
+    lab.textContent = el.getAttribute("data-label") || label(name);
 
     var editor = document.createElement("div");
     editor.className = "sw-prose sw-field__textarea sw-prose-editor";

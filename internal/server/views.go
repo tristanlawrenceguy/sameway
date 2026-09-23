@@ -165,6 +165,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	// field is, sits under the title; Delete keeps to the quiet bar.
 	fmt.Fprintf(&b, `<div class="sw-bar sw-quiet"><form method="post" action="/t/%s/%s/delete">%s</form></div>`,
 		t.Name, rec.ID, s.component("button", map[string]any{"label": "Delete " + t.Name, "type": "submit", "variant": "quiet"}))
+	b.WriteString(s.editFields(t, rec))
 	b.WriteString(`</div>`)
 	// Recent activity on this page, so a deletion can be taken back where the person lands.
 	b.WriteString(string(s.recentActivity(5, "/t/"+t.Name+"/"+rec.ID)))
