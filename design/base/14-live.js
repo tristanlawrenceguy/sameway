@@ -193,6 +193,8 @@
       // A turn that failed gives the words back, so they can be sent again.
       if (ta && d.text && ta.value === "" && !joining) ta.value = asked;
       follow();
+      // The turn is over: 19-live-join.js tells a person who looked away.
+      document.dispatchEvent(new CustomEvent("sw:turn-done", { detail: d }));
       // A message written while the assistant was working goes now.
       if (form._queued) {
         form._queued = false;

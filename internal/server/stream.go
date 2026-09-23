@@ -70,6 +70,7 @@ func (s *Server) chatStream(w http.ResponseWriter, r *http.Request) {
 			log.Printf("chat: %v", err)
 			t.add(chat.Event{Kind: "error", Text: err.Error()})
 		}
+		s.tellDone(t, rec, err, back)
 	}()
 	s.follow(w, r, t, back)
 }
@@ -90,12 +91,38 @@ func (s *Server) chatLive(w http.ResponseWriter, r *http.Request) {
 	s.follow(w, r, t, backTo(r.URL.Query().Get("from")))
 }
 
+// tellDone tells the person a turn is over when no page heard it end:
+// the tab was closed, or every page on it went away. A page that is
+// following says so itself (19-live-join.js), so the news comes once.
+// It goes the way a ringing reminder does, through notify.
+func (s *Server) tellDone(t *liveTurn, rec *store.Record, err error, back string) {
+	if s.notify == nil || t.followed() {
+		return
+	}
+	title, text, path := "Assistant replied", "", back
+	if rec != nil {
+		text, _ = rec.Fields["content"].(string)
+		path = back + "#msg-" + rec.ID
+		if rec.Fields["role"] == "error" {
+			title = "The assistant could not finish"
+		}
+	} else if err != nil {
+		title, text = "The assistant could not finish", err.Error()
+	}
+	if r := []rune(strings.Join(strings.Fields(text), " ")); len(r) > 140 {
+		text = string(r[:139]) + "…"
+	}
+	go s.notify(title, text, s.linkTo(path))
+}
+
 // follow writes a turn's events as server-sent events, those so far and
 // then each as it comes, until the turn is over or the page goes away.
 // Each is rendered for the page that listens, so its controls come back
 // to that page.
 func (s *Server) follow(w http.ResponseWriter, r *http.Request, t *liveTurn, back string) {
 	flusher := w.(http.Flusher)
+	t.listen(1)
+	defer t.listen(-1)
 	w.Header().Set("Content-Type", "text/event-stream; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("X-Accel-Buffering", "no")
@@ -153,10 +180,25 @@ type liveTurn struct {
 	started time.Time
 	cancel  context.CancelFunc
 
-	mu      sync.Mutex
-	events  []chat.Event
-	over    bool
-	changed chan struct{}
+	mu        sync.Mutex
+	events    []chat.Event
+	over      bool
+	changed   chan struct{}
+	listeners int
+}
+
+// listen counts a page that follows the turn, coming (1) or going (-1).
+func (t *liveTurn) listen(n int) {
+	t.mu.Lock()
+	t.listeners += n
+	t.mu.Unlock()
+}
+
+// followed says whether any page is following the turn now.
+func (t *liveTurn) followed() bool {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return t.listeners > 0
 }
 
 // add records what the turn just did and wakes whoever is following it.
