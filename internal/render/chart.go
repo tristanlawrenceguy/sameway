@@ -105,11 +105,20 @@ func chartShape(series any, kind string, target ...any) ChartShape {
 	slot := plotW / float64(len(points))
 	dense := len(points) > 14
 	every := (len(points) + 7) / 8
+	if !dense {
+		// Labels wider than their slot, such as twelve months with their
+		// years, are thinned so they do not run into each other.
+		widest := 0
+		for _, p := range points {
+			widest = max(widest, len([]rune(chartLabel(p.Label))))
+		}
+		every = max(1, int(math.Ceil(float64(widest)*6/(slot*0.9))))
+	}
 	var path []string
 	for i := range s.Points {
 		p := &s.Points[i]
 		p.ShowValue = !dense
-		p.ShowLabel = !dense || (len(points)-1-i)%every == 0
+		p.ShowLabel = (len(points)-1-i)%every == 0
 		h := p.Value / top * plotH
 		if p.Value < 0 {
 			h = 0

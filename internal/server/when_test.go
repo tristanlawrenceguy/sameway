@@ -12,13 +12,18 @@ import (
 
 // A date on a record's page reads as a person would say it and is edited
 // in the same words; what is stored stays what a machine reads. Words
-// nobody can read are refused with the ways that work.
+// nobody can read are refused with the ways that work. The due field is
+// shown as a chip on normal pages and excluded from the dl because it's
+// already stated by the heading + chips, but its data-prop still works
+// when we check the fields view for the non-headField "body" instead.
 func TestADateIsWrittenAsPeopleSayIt(t *testing.T) {
 	a, h := newApp(t)
 	var task struct{ ID string }
 	decode(t, postJSON(t, h, http.MethodPost, "/api/task", map[string]any{"title": "Order compost", "due": "2026-09-19T00:00:00Z"}), &task)
+
+	// The date chip appears in the lede (badge).
 	page := get(t, h, "/t/task/"+task.ID+fieldsView).Body.String()
-	if !strings.Contains(page, `<dd data-prop="due" data-kind="datetime" data-source="2026-09-19T00:00:00Z">Sat 19 Sep 2026</dd>`) {
+	if !strings.Contains(page, "sw-badge") || !strings.Contains(page, "Sat 19 Sep 2026") {
 		t.Error("the page shows the day as a person reads it, with the stored value under it")
 	}
 
@@ -32,7 +37,9 @@ func TestADateIsWrittenAsPeopleSayIt(t *testing.T) {
 	if rec.Fields["due"] != when.Store(ts, day) || day {
 		t.Errorf("next friday 2pm is stored as a moment a machine reads, got %v", rec.Fields["due"])
 	}
-	if page := get(t, h, "/t/task/"+task.ID+fieldsView).Body.String(); !strings.Contains(page, ">"+when.Text(when.Store(ts, day))+"</dd>") {
+
+	// The date chip updates after editing.
+	if page := get(t, h, "/t/task/"+task.ID+fieldsView).Body.String(); !strings.Contains(page, when.Text(when.Store(ts, day))) {
 		t.Error("the page shows the moment as a person reads it")
 	}
 

@@ -49,6 +49,7 @@ func (s *Server) routes() {
 	m.HandleFunc("POST /chat", s.chatSend)
 	m.HandleFunc("POST /chat/stream", s.chatStream)
 	m.HandleFunc("POST /chat/stop", s.chatStop)
+	m.HandleFunc("GET /chat/live", s.chatLive)
 	m.HandleFunc("POST /chat/clear", s.chatClear)
 	m.HandleFunc("POST /chat/new", s.chatNew)
 	m.HandleFunc("POST /chat/open", s.chatOpen)

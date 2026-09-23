@@ -125,11 +125,8 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	}
 	// The list leaves out what the heading and the chips above it have
 	// already said, so the page says each thing once; ?show=fields brings
-	// the whole record back, and is the way to edit those fields in place.
-	head := map[string]bool{}
-	if !has(always, FieldsPart) && !has(here, FieldsPart) {
-		head = headFields(t, rec)
-	}
+	// the whole record back except for those already-in-chips fields.
+	head := headFields(t, rec)
 	var dl strings.Builder
 	for _, f := range t.Fields {
 		val := display(f, rec.Fields[f.Name])
@@ -153,7 +150,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(&dl, `<dt>%s</dt>%s`, template.HTMLEscapeString(label(f.Name)), s.refCell(f, val))
 			continue
 		}
-		fmt.Fprintf(&dl, `<dt>%s</dt><dd data-prop="%s"%s>%s</dd>`, template.HTMLEscapeString(label(f.Name)), f.Name, whenAttrs(f, rec.Fields[f.Name]), template.HTMLEscapeString(val))
+		fmt.Fprintf(&dl, `<dt>%s</dt><dd data-prop="%s"%s%s>%s</dd>`, template.HTMLEscapeString(label(f.Name)), f.Name, whenAttrs(f, rec.Fields[f.Name]), s.choices(f, val), template.HTMLEscapeString(val))
 	}
 	if dl.Len() > 0 {
 		b.WriteString(`<dl class="sw-dl">` + dl.String() + "</dl>")
@@ -183,7 +180,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	// says which of them are open. See related.go.
 	b.WriteString(s.related(t, rec, always, here))
 	s.page(w, r, s.title(t, rec), template.HTML(b.String()), pageOptions{
-		Kicker:       crumbs("/t/"+t.Name, capitalize(plural(t.Name)), s.title(t, rec), s.dotOf(t.Name)),
+		Kicker:       crumbs("/t/"+t.Name, capitalize(plural(t.Name)), "", s.dotOf(t.Name)),
 		Lede:         s.lede(t, rec),
 		JSONURL:      "/api/" + t.Name + "/" + rec.ID,
 		ExtraScripts: detailPageExtraScripts,
@@ -247,15 +244,22 @@ func titleOf(t *schema.Type, rec *store.Record) string {
 }
 
 // crumbs is the way back from a detail page: the listing it belongs to,
-// then the record itself. A person who read one item and wants the next
-// one should not have to find the footer or the browser's back button.
+// then the record itself (when here is non-empty). When here is empty,
+// only the listing link renders — useful on detail pages where the title
+// already appears as h1 and repeating it in crumbs would be redundant.
 func crumbs(listHref, listLabel, here string, dot int) template.HTML {
 	mark := ""
 	if dot > 0 {
 		mark = fmt.Sprintf(` class="sw-dotted" data-dot="%d"`, dot)
 	}
+	listLabelEscaped := template.HTMLEscapeString(listLabel)
+	listHrefEscaped := template.HTMLEscapeString(listHref)
+	if here == "" {
+		return template.HTML(fmt.Sprintf(`<nav class="sw-crumbs" aria-label="You are here"><ol class="sw-plain sw-crumbs__list"><li%s><a class="sw-link" href="%s">%s</a></li></ol></nav>`,
+			mark, listHrefEscaped, listLabelEscaped))
+	}
 	return template.HTML(fmt.Sprintf(`<nav class="sw-crumbs" aria-label="You are here"><ol class="sw-plain sw-crumbs__list"><li%s><a class="sw-link" href="%s">%s</a></li><li aria-current="page">%s</li></ol></nav>`,
-		mark, template.HTMLEscapeString(listHref), template.HTMLEscapeString(listLabel), template.HTMLEscapeString(here)))
+		mark, listHrefEscaped, listLabelEscaped, template.HTMLEscapeString(here)))
 }
 
 func capitalize(s string) string {

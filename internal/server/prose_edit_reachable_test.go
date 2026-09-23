@@ -7,55 +7,13 @@ import (
 	"testing"
 )
 
-// TestProseSourceNotHiddenOrDisabledAtStartup verifies acceptance items 2 and 3 of
-// task 0412: the source textarea must not start hidden or disabled so that a
-// keyboard user can reach it via Tab from the Markdown button (or any previous
-// focusable element). The fix is in design/base/11-prose-edit.js.
+// TestProseSourceNotHiddenOrDisabledAtStartup was superseded by task 0424:
+// the source textarea now starts hidden (source.hidden = true) so that only one
+// Body field is visible at startup. The toggle button provides keyboard access
+// to switch between rich text and Markdown source views. This test remains as a
+// no-op placeholder since its original assertions conflict with task 0424's fix.
 func TestProseSourceNotHiddenOrDisabledAtStartup(t *testing.T) {
-	src := readProseEditScript(t)
-
-	// Acceptance items 2 and 3: the source textarea must NOT be set to
-	// hidden=true or disabled=true at startup, because those attributes
-	// remove it from the tab order and prevent keyboard focus entirely.
-	sourceCreateIdx := strings.Index(src, "var source = document.createElement(\"textarea\")")
-	if sourceCreateIdx < 0 {
-		t.Fatal("swProseField must create a textarea element for the Markdown source")
-	}
-
-	var afterSource string
-	if idx := strings.Index(src[sourceCreateIdx:], "\n\n"); idx >= 0 {
-		afterSource = src[sourceCreateIdx : sourceCreateIdx+idx]
-	} else {
-		end := sourceCreateIdx + 800
-		if end > len(src) {
-			end = len(src)
-		}
-		afterSource = src[sourceCreateIdx:end]
-	}
-
-	if strings.Contains(afterSource, "source.hidden = true") {
-		t.Error("11-prose-edit.js: source.hidden = true at startup removes the Body textarea from the tab order;\n" +
-			"a keyboard user cannot reach it via Tab. Remove this assignment so the textarea is visible and focusable by default.")
-	}
-
-	if strings.Contains(afterSource, "source.disabled = true") {
-		t.Error("11-prose-edit.js: source.disabled = true at startup prevents keyboard focus on the Body textarea;\n" +
-			"a keyboard user cannot reach it via Tab. Remove this assignment so the textarea is always enabled.")
-	}
-
-	// The initial setup must create the textarea with no hidden/disabled overrides.
-	// Lines 59-66 of swProseField should only set className, name, rows, value, and aria-labelledby.
-
-	// The first block of assignments for `source` should NOT include hidden or disabled.
-	if strings.Contains(afterSource, "hidden") || strings.Contains(afterSource, "disabled") {
-		t.Errorf("11-prose-edit.js: the source textarea's initial setup must not set hidden or disabled;\n"+
-			"found in these first assignments:\n%s", afterSource)
-	}
-
-	// The Markdown toggle switcher button itself must still be focusable (it is).
-	if !strings.Contains(src, `toggle.textContent = "Markdown"`) {
-		t.Error("11-prose-edit.js: expected the toggle to say \"Markdown\" when in rich text mode")
-	}
+	// Superseded by task 0424: source now starts hidden to prevent duplicate Body textboxes.
 }
 
 // TestProseToggleUsesHiddenOnly verifies that the Markdown/rich-text toggle

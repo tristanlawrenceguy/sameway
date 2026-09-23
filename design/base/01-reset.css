@@ -22,7 +22,10 @@ h1, h2, h3, h4 { line-height: var(--sw-size-line-tight); letter-spacing: -0.02em
 h1 { font-size: var(--sw-size-text-2xl); margin: 0 0 var(--sw-space-2); }
 p { margin: 0 0 var(--sw-space-3); }
 a { color: var(--sw-color-accent); text-underline-offset: 0.2em; }
-::selection { background: var(--sw-color-accent-soft); color: var(--sw-color-fg); }
+/* Selection is the accent at full strength with the page colour on it, so
+   it shows on every surface, the soft ones included: a soft selection was
+   the same colour as a person's own chat message and could not be seen. */
+::selection { background: var(--sw-color-accent); color: var(--sw-color-bg); }
 
 pre, code { font-family: var(--sw-font-mono); font-size: 0.95em; }
 pre { overflow-x: auto; padding: var(--sw-space-3); background: var(--sw-color-bg-muted); border-radius: var(--sw-radius-md); }
