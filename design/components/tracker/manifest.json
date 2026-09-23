@@ -17,6 +17,7 @@
         "unit": { "type": "string" }, "period": { "type": "string", "description": "day, week, month or year." },
         "aim": { "type": "string", "enum": ["reach", "limit", "record"], "description": "reach is at least the target; limit is at most, and past it is over; record has no target and no bar." },
         "dated": { "type": "boolean", "description": "Log offers a day to log for, for something done before today, written as a person would: yesterday, 22 Sep, 2026-09-22. Empty is now. The habit's own page sets it." },
+        "on": { "type": "string", "description": "With dated: the day filled in, as YYYY-MM-DD, such as the day a calendar's day view shows." },
         "amount": { "type": "number", "description": "This period so far." }, "target": { "type": "number" },
         "progress": { "type": "string", "description": "In words: 3 of 8 glasses, done, not yet." }, "pct": { "type": "integer", "description": "This period against the target, 0 to 100." },
         "met": { "type": "boolean" }, "streak": { "type": "integer" }, "streakWords": { "type": "string" }, "best": { "type": "integer" },
