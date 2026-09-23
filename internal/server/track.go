@@ -186,7 +186,7 @@ func hasTag(rec *store.Record, tags []string) bool {
 func (s *Server) habitLog(w http.ResponseWriter, r *http.Request) {
 	rec, err := s.app.Store.Get(HabitType, r.PathValue("id"))
 	if err != nil {
-		s.fail(w, err)
+		s.failed(w, r, "Not logged", err, "/")
 		return
 	}
 	r.ParseForm()
@@ -194,8 +194,7 @@ func (s *Server) habitLog(w http.ResponseWriter, r *http.Request) {
 	amount := 1.0
 	if v := strings.TrimSpace(r.PostForm.Get("amount")); v != "" {
 		if amount, err = strconv.ParseFloat(strings.ReplaceAll(v, ",", "."), 64); err != nil || amount <= 0 {
-			s.app.Chat.Notice("An amount to log is a number above zero, such as 1 or 2.5.")
-			http.Redirect(w, r, backFrom(r), http.StatusSeeOther)
+			s.tell(w, r, outcome{Failed: true, Title: "Not logged", Text: "An amount to log is a number above zero, such as 1 or 2.5."}, "/")
 			return
 		}
 	}
@@ -204,8 +203,7 @@ func (s *Server) habitLog(w http.ResponseWriter, r *http.Request) {
 		now := time.Now()
 		t, day, ok := when.Parse(v, now)
 		if !ok {
-			s.app.Chat.Notice("The day it was done reads as a date, such as " + now.AddDate(0, 0, -1).Format("2006-01-02") + " or yesterday.")
-			http.Redirect(w, r, backFrom(r), http.StatusSeeOther)
+			s.tell(w, r, outcome{Failed: true, Title: "Not logged", Text: "The day it was done reads as a date, such as " + now.AddDate(0, 0, -1).Format("2006-01-02") + " or yesterday."}, "/")
 			return
 		}
 		if !day || t.Format("2006-01-02") != now.Format("2006-01-02") {
@@ -218,10 +216,10 @@ func (s *Server) habitLog(w http.ResponseWriter, r *http.Request) {
 	}
 	entry, err := s.app.Store.Create(EntryType, fields)
 	if err != nil {
-		s.app.Chat.Notice(err.Error())
-	} else {
-		s.record(r, chat.Change{Action: "logged", Component: HabitType, ID: h.ID, Detail: h.Name + ": " + track.Amount(amount, h.Unit), Href: "/t/" + HabitType + "/" + h.ID, Before: map[string]any{"entry": entry.ID}})
+		s.failed(w, r, "Not logged", err, "/")
+		return
 	}
+	s.record(r, chat.Change{Action: "logged", Component: HabitType, ID: h.ID, Detail: h.Name + ": " + track.Amount(amount, h.Unit), Href: "/t/" + HabitType + "/" + h.ID, Before: map[string]any{"entry": entry.ID}})
 	http.Redirect(w, r, backFrom(r), http.StatusSeeOther)
 }
 

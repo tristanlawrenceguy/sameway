@@ -75,7 +75,7 @@ func (s *Server) lookAt(w http.ResponseWriter, path, method string, form url.Val
 	// A person who posts a form is sent on; what they see is where they land.
 	if loc := rec.Header().Get("Location"); rec.Code >= 300 && rec.Code < 400 && loc != "" {
 		out.Landed = loc
-		rec = s.request(http.MethodGet, loc, nil)
+		rec = s.request(http.MethodGet, loc, nil, rec.Result().Cookies()...)
 	}
 	outline, err := look.Page(rec.Body.String())
 	if err != nil {
@@ -86,7 +86,7 @@ func (s *Server) lookAt(w http.ResponseWriter, path, method string, form url.Val
 	writeJSON(w, http.StatusOK, out)
 }
 
-func (s *Server) request(method, path string, form url.Values) *httptest.ResponseRecorder {
+func (s *Server) request(method, path string, form url.Values, cookies ...*http.Cookie) *httptest.ResponseRecorder {
 	var body io.Reader
 	if form != nil && method != http.MethodGet {
 		body = strings.NewReader(form.Encode())
@@ -94,6 +94,9 @@ func (s *Server) request(method, path string, form url.Values) *httptest.Respons
 	req := httptest.NewRequest(method, path, body)
 	if body != nil {
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	}
+	for _, c := range cookies {
+		req.AddCookie(c)
 	}
 	rec := httptest.NewRecorder()
 	s.mux.ServeHTTP(rec, req)

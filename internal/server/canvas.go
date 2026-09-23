@@ -42,14 +42,6 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 	convo.Arrival = arrivals(blocks, convo)
 
 	var b strings.Builder
-	if r.URL.Query().Has("saved") {
-		b.WriteString(string(s.component("alert", map[string]any{
-			"kind":    "success",
-			"title":   "Changes saved",
-			"message": "Your edits were applied.",
-			"dismiss": true,
-		})))
-	}
 	if convo.Notice != "" {
 		b.WriteString(string(convo.Notice))
 	}
@@ -285,15 +277,21 @@ func (s *Server) canvasDelete(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	rec, err := s.app.Store.Get(chat.BlockType, id)
 	if err != nil {
-		s.fail(w, err)
+		s.failed(w, r, "Not removed", err, "/")
 		return
 	}
 	if err := s.app.Store.Delete(chat.BlockType, id); err != nil {
-		s.fail(w, err)
+		s.failed(w, r, "Not removed", err, "/")
 		return
 	}
 	name, _ := rec.Fields["component"].(string)
 	props, _ := rec.Fields["props"].(map[string]any)
-	s.record(r, chat.Change{Action: "removed", Component: name, ID: id, Detail: chat.Summarise(name, props), Before: rec.Fields})
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	what := chat.Summarise(name, props)
+	undo := s.record(r, chat.Change{Action: "removed", Component: name, ID: id, Detail: what, Before: rec.Fields})
+	// Its own page is gone with it.
+	back := backOf(r, "/")
+	if strings.HasPrefix(back, "/canvas/"+id) {
+		back = "/"
+	}
+	s.tellAt(w, r, outcome{Title: "Removed", Text: capitalize(what) + " is removed.", Undo: undo}, back)
 }

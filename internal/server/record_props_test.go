@@ -88,9 +88,9 @@ func TestRecordPropsPartialUpdate(t *testing.T) {
 	}
 }
 
-// TestRecordPropsInvalidEnumReturns422 checks that POSTing an invalid enum
-// value returns HTTP 422 with error messages linked to the field. This is
-// acceptance item 3.
+// TestRecordPropsInvalidEnumReturns422 checks that an invalid enum value is
+// refused, and the page the person is back on names the field and the
+// values it takes. This is acceptance item 3.
 func TestRecordPropsInvalidEnumReturns422(t *testing.T) {
 	a, h := newApp(t)
 
@@ -104,17 +104,16 @@ func TestRecordPropsInvalidEnumReturns422(t *testing.T) {
 	form := url.Values{}
 	form.Set("prop-status", "not_a_valid_status")
 	r := postForm(t, h, "/t/note/"+rec.ID+"/props", form)
-	wantStatus(t, r, http.StatusUnprocessableEntity)
-
-	body := r.Body.String()
-	if !strings.Contains(body, "status") {
-		t.Errorf("error response should mention field name 'status', got body starting with %q", truncate(body))
+	page := after(t, h, r)
+	body := page.Body.String()
+	if !strings.Contains(body, "Status ") {
+		t.Errorf("the refusal should name the field, Status, got body starting with %q", truncate(body))
 	}
 	if !strings.Contains(body, "draft") && !strings.Contains(body, "published") {
 		t.Errorf("error response should mention valid values, got body starting with %q", truncate(body))
 	}
 
-	doc := parse(t, r)
+	doc := parse(t, page)
 	assertAllComponentsKnown(t, doc, componentNames)
 }
 
@@ -133,9 +132,8 @@ func TestRecordPropsInvalidRequiredFieldReturns422(t *testing.T) {
 	form := url.Values{}
 	form.Set("prop-title", "")
 	r := postForm(t, h, "/t/note/"+rec.ID+"/props", form)
-	wantStatus(t, r, http.StatusUnprocessableEntity)
-
-	body := r.Body.String()
+	page := after(t, h, r)
+	body := page.Body.String()
 	if !strings.Contains(body, "Title is required") {
 		t.Errorf("error response should show 'Title is required', got body starting with %q", truncate(body))
 	}
@@ -149,13 +147,15 @@ func TestRecordPropsUnknownTypeReturns404(t *testing.T) {
 	wantStatus(t, r, http.StatusNotFound)
 }
 
-// TestRecordPropsNonExistentRecordReturns404 checks that POSTing to a valid
-// type but non-existent record returns 404.
+// TestRecordPropsNonExistentRecordReturns404 checks that editing a record
+// that is gone says so on a page the person can go on from, not on a bare
+// error page.
 func TestRecordPropsNonExistentRecordReturns404(t *testing.T) {
 	_, h := newApp(t)
 	r := postForm(t, h, "/t/note/does-not-exist/props", url.Values{})
-	if r.Code != http.StatusNotFound && r.Code != http.StatusInternalServerError {
-		t.Errorf("expected 404 or 500 for non-existent record, got %d: %s", r.Code, truncate(r.Body.String()))
+	page, at := landed(t, h, r)
+	if at != "/t/note" || !strings.Contains(page.Body.String(), "It is not there any more") {
+		t.Errorf("a gone record is said on the list, got %q: %s", at, truncate(page.Body.String()))
 	}
 }
 
@@ -245,9 +245,8 @@ func TestRecordPropsUnknownFieldReturns422(t *testing.T) {
 	form := url.Values{}
 	form.Set("prop-bogus_field", "nope")
 	r := postForm(t, h, "/t/note/"+rec.ID+"/props", form)
-	wantStatus(t, r, http.StatusUnprocessableEntity)
-
-	body := r.Body.String()
+	page := after(t, h, r)
+	body := page.Body.String()
 	if !strings.Contains(body, "Bogus field") {
 		t.Errorf("error response should show 'Bogus field', got body starting with %q", truncate(body))
 	}

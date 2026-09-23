@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -58,7 +59,10 @@ func (s *Server) importUpload(w http.ResponseWriter, r *http.Request) {
 	}
 	rec, err := s.storeUpload(r)
 	if err != nil {
-		s.page(w, r, "Import "+plural(t.Name), s.component("alert", map[string]any{"kind": "warning", "title": "Nothing was read", "message": err.Error()}), pageOptions{Status: http.StatusBadRequest})
+		if errors.Is(err, http.ErrMissingFile) || strings.Contains(err.Error(), "please select a file") {
+			err = errors.New("choose a file first")
+		}
+		s.tellAt(w, r, outcome{Failed: true, Title: "Nothing was read", Text: plainError(err)}, "/t/"+t.Name+"/import")
 		return
 	}
 	http.Redirect(w, r, "/t/"+t.Name+"/import?file="+rec.ID, http.StatusSeeOther)
@@ -156,8 +160,7 @@ func (s *Server) importRun(w http.ResponseWriter, r *http.Request) {
 		s.importPreview(w, r, t, r.PathValue("file"), err.Error())
 		return
 	}
-	s.app.Chat.Notice(capitalize(plural(t.Name)) + " from the file: " + report.String() + ".")
-	http.Redirect(w, r, "/t/"+t.Name, http.StatusSeeOther)
+	s.tellAt(w, r, outcome{Title: "Imported", Text: capitalize(plural(t.Name)) + " from the file: " + report.String() + "."}, "/t/"+t.Name)
 }
 
 // importFile reads a kept file as a table and makes records of t from

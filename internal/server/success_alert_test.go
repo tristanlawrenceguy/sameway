@@ -25,7 +25,7 @@ func TestRecordPropsSaveShowsSuccessAlert(t *testing.T) {
 	r := postForm(t, h, "/t/note/"+rec.ID+"/props", form)
 	wantStatus(t, r, http.StatusSeeOther)
 
-	follow := get(t, h, r.Header().Get("Location"))
+	follow := after(t, h, r)
 	body := follow.Body.String()
 
 	if !strings.Contains(body, "sw-alert") {

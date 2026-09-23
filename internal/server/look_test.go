@@ -48,8 +48,12 @@ func TestAnAgentLooksAtAPageWithoutABrowser(t *testing.T) {
 	})
 	wantStatus(t, rec, http.StatusOK)
 	decode(t, rec, &seen)
-	if seen.Status != http.StatusUnprocessableEntity || seen.Landed != "" {
-		t.Errorf("an invalid edit is refused where the person is, got status %d landed %q", seen.Status, seen.Landed)
+	refused := false
+	for _, l := range seen.Outline.Live {
+		refused = refused || (l.Politeness == "assertive" && strings.Contains(l.Text, "Not saved"))
+	}
+	if !strings.HasPrefix(seen.Landed, "/t/note/"+note.ID) || !refused {
+		t.Errorf("an invalid edit is refused on the note, said as an alert, got landed %q live %v", seen.Landed, seen.Outline.Live)
 	}
 	rec = postJSON(t, h, http.MethodPost, "/api/look", map[string]any{
 		"path": "/t/note/" + note.ID + "/props", "method": "POST", "form": map[string]string{"prop-title": "Water the garden"},

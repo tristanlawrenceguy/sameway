@@ -3,174 +3,74 @@ package server_test
 import (
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"testing"
 )
 
-// TestValidationErrorPageShowsSubmittedValues checks that when a validation
-// error occurs on POST /t/note/{id}/props, the 422 response renders the user's
-// submitted value in the <dd> element instead of the original stored record value.
-// This covers acceptance item 1 and 2: field dd elements render from the submitted
-// values map rather than from rec.Fields, and the test name matches what is required.
+// A refused edit never costs the person what they typed. The server says
+// why on the page they edited from and names the edit it answers; the
+// page keeps the draft of that edit until it is said to be saved, and
+// opens the editor again, holding the draft, when it was refused.
+
+// refusedEdit posts a title too long to keep, from the note's own page.
+func refusedEdit(t *testing.T) (h http.Handler, id string, page string, at string) {
+	t.Helper()
+	a, h := newApp(t)
+	rec, err := a.Store.Create("note", map[string]any{"title": "Original title"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	form := url.Values{"prop-title": {strings.Repeat("x", 300)}}
+	r := withReferer(t, h, http.MethodPost, "/t/note/"+rec.ID+"/props", "/t/note/"+rec.ID, form.Encode(), "application/x-www-form-urlencoded")
+	p, at := landed(t, h, r)
+	return h, rec.ID, p.Body.String(), at
+}
+
+// TestValidationErrorPageShowsSubmittedValues: the person is back on the
+// page they edited, told why, as an alert, and nothing was stored.
 func TestValidationErrorPageShowsSubmittedValues(t *testing.T) {
-	a, h := newApp(t)
-
-	origTitle := "Original title"
-	rec, err := a.Store.Create("note", map[string]any{
-		"title": origTitle,
-	})
-	if err != nil {
-		t.Fatal(err)
+	h, id, body, at := refusedEdit(t)
+	if at != "/t/note/"+id {
+		t.Errorf("a refused edit returns to the page it was made on, not an internal address, got %q", at)
 	}
-
-	// Submit a title that exceeds maxLength (200), so validation fails.
-	longTitle := strings.Repeat("x", 300)
-
-	form := url.Values{}
-	form.Set("prop-title", longTitle)
-	r := postForm(t, h, "/t/note/"+rec.ID+"/props", form)
-	wantStatus(t, r, http.StatusUnprocessableEntity)
-
-	body := r.Body.String()
-
-	// The rejected value should appear in the response so the user can see it and adjust.
-	if !strings.Contains(body, longTitle) {
-		t.Errorf("422 body should contain the submitted title %q (length %d), but it does not; body starts with %q",
-			longTitle, len(longTitle), truncate(body))
+	if !strings.Contains(body, `data-outcome="failed"`) || !strings.Contains(body, `role="alert"`) || !strings.Contains(body, "Title ") {
+		t.Errorf("the page says, as an alert, which field was refused; body starts with %q", truncate(body))
 	}
-
-	// The original stored value must NOT appear — otherwise we are showing old data,
-	// which is exactly the bug reported in 0243.
-	if strings.Contains(body, "<dd>"+origTitle+"</dd>") {
-		t.Errorf("422 body should not contain the original title %q (the bug), got it in dd element", origTitle)
+	if !strings.Contains(get(t, h, "/api/note/"+id).Body.String(), "Original title") {
+		t.Error("a refused edit stores nothing")
 	}
-
-	// The page must still be valid HTML with known components only.
-	doc := parse(t, r)
-	assertAllComponentsKnown(t, doc, componentNames)
 }
 
-// TestValidationErrorPageHasEditBlockWrapper checks that the validation error
-// page rendered by POST /t/note/{id}/props (with invalid data) has the same
-// edit block wrapper as a normal detail page, so 08-edit.js can inject an Edit
-// button and pre-fill inline inputs with the rejected values. This covers
-// acceptance items 1–3: sw-dl-block div wrapping, data-prop on dd elements,
-// and the 08-edit script tag in the head.
+// TestValidationErrorPageHasEditBlockWrapper: the outcome names the edit
+// it answers exactly as the page's editable block does, which is how the
+// page finds the draft to give back.
 func TestValidationErrorPageHasEditBlockWrapper(t *testing.T) {
-	a, h := newApp(t)
-
-	origTitle := "Original title"
-	rec, err := a.Store.Create("note", map[string]any{
-		"title": origTitle,
-	})
-	if err != nil {
-		t.Fatal(err)
+	_, id, body, _ := refusedEdit(t)
+	action := "/t/note/" + id + "/props"
+	if !strings.Contains(body, `data-outcome-for="`+action+`"`) || !strings.Contains(body, `data-edit-action="`+action+`"`) {
+		t.Errorf("the outcome and the block both name %s; body starts with %q", action, truncate(body))
 	}
-
-	// Submit a title that exceeds maxLength (200), so validation fails.
-	longTitle := strings.Repeat("x", 300)
-
-	form := url.Values{}
-	form.Set("prop-title", longTitle)
-	r := postForm(t, h, "/t/note/"+rec.ID+"/props", form)
-	wantStatus(t, r, http.StatusUnprocessableEntity)
-
-	body := r.Body.String()
-
-	// 1. The error page contains the sw-dl-block wrapper with data-block-id and
-	//    data-edit-action attributes matching the note's ID and props path.
-	blockOpen := strings.Index(body, `data-block-id="`+rec.ID+`"`)
-	if blockOpen < 0 {
-		t.Errorf("422 body should contain sw-dl-block wrapper with data-block-id=%q; body starts with %q", rec.ID, truncate(body))
-	}
-
-	if blockOpen < 0 {
-		t.Fatalf("cannot check further without data-block-id; body starts with %q", truncate(body))
-	}
-
-	blockRest := body[blockOpen:]
-	lastDiv := strings.LastIndex(blockRest, "</div>")
-	if lastDiv < 0 {
-		t.Fatalf("cannot find closing </div> after data-block-id in error page; body starts with %q", truncate(body))
-	}
-	blockContent := blockRest[:lastDiv]
-
-	expectedAction := "/t/note/" + rec.ID + "/props"
-	if !strings.Contains(blockContent, `data-edit-action="`+expectedAction+`"`) {
-		t.Errorf("sw-dl-block should contain data-edit-action=%q; found %q", expectedAction, truncate(blockContent))
-	}
-
-	// 2. Each <dd> element in the error page has a data-prop attribute matching
-	//    its field name (e.g., <dd data-prop="title">). The dl must come before
-	//    the closing </div> of the block wrapper, and dd elements should have
-	//    data-prop attributes.
-	if !strings.Contains(blockContent, `<dl class="sw-dl">`) {
-		t.Errorf("sw-dl-block should contain a dl.sw-dl; body starts with %q", truncate(body))
-	}
-
-	// Check that dd elements have data-prop attributes. We look for the pattern
-	// seen in normal detail pages: <dd data-prop="title">
-	if !strings.Contains(blockContent, `data-prop="title"`) {
-		t.Errorf("sw-dl-block should contain a <dd> with data-prop=\"title\"; body starts with %q", truncate(body))
-	}
-
-	// The .sw-bar sw-quiet div is the anchor point 08-edit.js uses to inject its
-	// Edit button; without it, clicking "Edit block" on the error page does nothing.
-	if !strings.Contains(blockContent, `<div class="sw-bar sw-quiet">`) {
-		t.Errorf("sw-dl-block should contain a div.sw-bar.sw-quiet for the edit anchor; body starts with %q", truncate(body))
-	}
-
-	// 3. The error page includes the 08-edit.js script in the head.
 	if !strings.Contains(body, `<script defer src="/design/base/08-edit.js"></script>`) {
-		t.Errorf("422 body should include <script defer src=\"/design/base/08-edit.js\"></script>; body starts with %q", truncate(body))
+		t.Error("the page carries the editor, to open again")
 	}
-
-	// The page must still be valid HTML with known components only.
-	doc := parse(t, r)
-	assertAllComponentsKnown(t, doc, componentNames)
 }
 
-// TestValidationErrorPageShowsEmptyTitleField checks that when a validation error
-// occurs because the user cleared the Title field (empty string), the 422 error
-// page still renders <dd data-prop="title"> so that 08-edit.js can build an input
-// for it. This is the bug from backlog item 0397: after clearing the title and
-// saving, clicking "Edit block" showed no Title field because empty display values
-// were skipped in renderDetailError. Acceptance items 1–4.
+// TestValidationErrorPageShowsEmptyTitleField: the draft is not let go
+// when Save is pressed, only when the page says the edit was saved, and
+// a refused edit opens again.
 func TestValidationErrorPageShowsEmptyTitleField(t *testing.T) {
-	a, h := newApp(t)
-
-	rec, err := a.Store.Create("note", map[string]any{
-		"title":  "My Note",
-		"status": "draft",
-	})
+	src, err := os.ReadFile("../../design/base/16-drafts.js")
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	// Submit with an empty title — this triggers a required-field validation error.
-	form := url.Values{}
-	form.Set("prop-title", "")
-	r := postForm(t, h, "/t/note/"+rec.ID+"/props", form)
-	wantStatus(t, r, http.StatusUnprocessableEntity)
-
-	body := r.Body.String()
-
-	// The Title field must appear as a <dd data-prop="title"> even though its
-	// value is empty. Without this dd element 08-edit.js has nothing to find and
-	// cannot build the inline input for fixing the title. This covers acceptance
-	// item 3: "the form now shows all fields" when re-entering edit mode after a
-	// validation error on an empty title.
-	if !strings.Contains(body, `data-prop="title"`) {
-		t.Errorf("422 body should contain <dd data-prop=\"title\"> so the user can fix the empty title; body starts with %q", truncate(body))
+	js := string(src)
+	if !strings.Contains(js, `form.addEventListener("submit", function () { set(k, fields(form)); });`) {
+		t.Error("Save must not throw the draft away before the page says it was saved")
 	}
-
-	// The other fields (status=pinned) that have non-empty display values must
-	// also be present — acceptance item 3 says "all fields" appear.
-	if !strings.Contains(body, `<dl class="sw-dl">`) {
-		t.Errorf("422 body should contain the definition list; body starts with %q", truncate(body))
+	for _, want := range []string{`.sw-outcome[data-outcome-for]`, `getAttribute("data-outcome") === "done"`, `edit.click()`} {
+		if !strings.Contains(js, want) {
+			t.Errorf("16-drafts.js should settle drafts by the outcome: missing %s", want)
+		}
 	}
-
-	// The page must still be valid HTML with known components only.
-	doc := parse(t, r)
-	assertAllComponentsKnown(t, doc, componentNames)
 }
