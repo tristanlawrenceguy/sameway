@@ -3,7 +3,6 @@ package server
 import (
 	"html/template"
 	"net/http"
-	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -97,13 +96,10 @@ func (s *Server) proposalDismiss(w http.ResponseWriter, r *http.Request) {
 // answer applies one answer and reports any problem where the person is
 // looking, rather than on an error page they did not ask for.
 func (s *Server) answer(w http.ResponseWriter, r *http.Request, apply func(string) error) {
-	if err := apply(r.PathValue("id")); err != nil {
-		s.app.Chat.Notice(err.Error())
-	}
 	r.ParseForm()
-	back := "/"
-	if from := r.PostForm.Get("from"); strings.HasPrefix(from, "/") {
-		back = from
+	if err := apply(r.PathValue("id")); err != nil {
+		s.failed(w, r, "That did not work", err, "/")
+		return
 	}
-	http.Redirect(w, r, back, http.StatusSeeOther)
+	http.Redirect(w, r, backOf(r, "/"), http.StatusSeeOther)
 }

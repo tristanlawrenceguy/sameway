@@ -31,3 +31,9 @@
 [data-actor="human"]     { --sw-actor: var(--sw-color-human);     --sw-actor-soft: var(--sw-color-human-soft); }
 [data-actor="assistant"] { --sw-actor: var(--sw-color-assistant); --sw-actor-soft: var(--sw-color-assistant-soft); }
 [data-actor="system"]    { --sw-actor: var(--sw-color-system);    --sw-actor-soft: var(--sw-color-system-soft); }
+
+/* The outcome of the person's last action: one message, first under the
+   heading, with its Undo beside it when there is one (outcome.go). */
+.sw-outcome { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sw-space-2); margin-block-end: var(--sw-space-4); }
+.sw-outcome > .sw-alert { flex: 1 1 20rem; margin: 0; }
+.sw-outcome__undo { margin: 0; }

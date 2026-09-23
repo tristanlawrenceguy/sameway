@@ -42,6 +42,9 @@ type Page struct {
 	Developer bool
 	// Body is the already-rendered main content, placed after the h1.
 	Body template.HTML
+	// Outcome is what the person's last action came to, said once, first
+	// thing under the heading on whatever page they are back on.
+	Outcome template.HTML
 	// Left and Right are full height panes beside the main region. Their
 	// presence turns the page into an application shell, where only the
 	// middle scrolls.

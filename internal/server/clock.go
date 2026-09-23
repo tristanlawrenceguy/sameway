@@ -124,8 +124,7 @@ func (s *Server) clockSet(w http.ResponseWriter, r *http.Request) {
 	fields := map[string]any{"state": "set"}
 	if minutes, err := strconv.Atoi(r.PostForm.Get("minutes")); err == nil && r.PostForm.Get("at") == "" {
 		if minutes < 1 || minutes > 1440 {
-			s.app.Chat.Notice("A timer takes between 1 and 1440 minutes.")
-			http.Redirect(w, r, backFrom(r), http.StatusSeeOther)
+			s.tell(w, r, outcome{Failed: true, Title: "Timer not set", Text: "A timer takes between 1 and 1440 minutes."}, "/")
 			return
 		}
 		fields["kind"], fields["at"] = "timer", when.Store(now.Add(time.Duration(minutes)*time.Minute), false)
@@ -138,8 +137,7 @@ func (s *Server) clockSet(w http.ResponseWriter, r *http.Request) {
 		// time already past today is tomorrow.
 		at, dayOnly, ok := when.Parse(r.PostForm.Get("at"), now)
 		if !ok || dayOnly {
-			s.app.Chat.Notice("An alarm needs a time of day, such as 7:30 or 7pm.")
-			http.Redirect(w, r, backFrom(r), http.StatusSeeOther)
+			s.tell(w, r, outcome{Failed: true, Title: "Alarm not set", Text: "An alarm needs a time of day, such as 7:30 or 7pm."}, "/")
 			return
 		}
 		if !at.After(now) {
@@ -162,11 +160,11 @@ func (s *Server) clockSet(w http.ResponseWriter, r *http.Request) {
 	}
 	rec, err := s.app.Store.Create(ReminderType, fields)
 	if err != nil {
-		s.app.Chat.Notice(err.Error())
-	} else {
-		title, _ := fields["title"].(string)
-		s.record(r, chat.Change{Action: "created", Component: ReminderType, ID: rec.ID, Detail: title})
+		s.failed(w, r, "Not set", err, "/")
+		return
 	}
+	title, _ := fields["title"].(string)
+	s.record(r, chat.Change{Action: "created", Component: ReminderType, ID: rec.ID, Detail: title})
 	http.Redirect(w, r, backFrom(r), http.StatusSeeOther)
 }
 
@@ -183,15 +181,15 @@ func (s *Server) clockSnooze(w http.ResponseWriter, r *http.Request) {
 func (s *Server) setReminder(w http.ResponseWriter, r *http.Request, fields map[string]any, action string) {
 	rec, err := s.app.Store.Get(ReminderType, r.PathValue("id"))
 	if err != nil {
-		s.fail(w, err)
+		s.failed(w, r, "Reminder not changed", err, "/")
 		return
 	}
 	if _, err := s.app.Store.Update(ReminderType, rec.ID, fields); err != nil {
-		s.app.Chat.Notice(err.Error())
-	} else {
-		t, _ := s.app.Types.Get(ReminderType)
-		s.record(r, chat.Change{Action: action, Component: ReminderType, ID: rec.ID, Detail: s.title(t, rec), Before: rec.Fields})
+		s.failed(w, r, "Reminder not changed", err, "/")
+		return
 	}
+	t, _ := s.app.Types.Get(ReminderType)
+	s.record(r, chat.Change{Action: action, Component: ReminderType, ID: rec.ID, Detail: s.title(t, rec), Before: rec.Fields})
 	http.Redirect(w, r, backFrom(r), http.StatusSeeOther)
 }
 

@@ -31,7 +31,7 @@
 {{end}}<main id="main" class="sw-main" tabindex="-1">
 {{if .QuietTitle}}<h1 class="sw-visually-hidden">{{.Title}}</h1>
 {{else}}<div class="sw-page-head">{{.Kicker}}<h1{{if .Dot}} class="sw-dotted" data-dot="{{.Dot}}"{{end}}>{{.Title}}</h1>{{.Lede}}</div>
-{{end}}{{.Body}}
+{{end}}{{.Outcome}}{{.Body}}
 </main>
 {{if .Right}}<aside class="sw-pane sw-pane--right" aria-label="Right pane">{{.Right}}</aside>
 {{end}}</div>

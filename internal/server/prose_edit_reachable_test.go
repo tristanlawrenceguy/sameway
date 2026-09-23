@@ -59,3 +59,50 @@ func readProseEditScript(t *testing.T) string {
 	}
 	return string(data)
 }
+
+// TestInlineEditFormBodyTextareaReachable verifies acceptance items 1 and 3 of
+// task 0435: the Body textarea (contentEditable editor) in the inline edit form
+// must have tabindex="0" set explicitly so keyboard Tab navigation reaches it.
+func TestInlineEditFormBodyTextareaReachable(t *testing.T) {
+	// --- Acceptance item 1: contentEditable editor div has tabindex="0" ---
+
+	editorSrc := readProseEditScript(t)
+
+	if !strings.Contains(editorSrc, `editor.setAttribute("tabindex", "0")`) &&
+		!strings.Contains(editorSrc, `editor.setAttribute('tabindex', '0')`) {
+		t.Error("11-prose-edit.js: the contentEditable editor div must have tabindex=\"0\" set explicitly\n" +
+			"so keyboard Tab navigation reaches the Body field in the inline edit form.\n" +
+			"Add: editor.setAttribute(\"tabindex\", \"0\") after setting aria-label")
+	}
+
+	// --- Acceptance item 3: multiline textareas also have tabindex="0" ---
+
+	editSrc := readEditScript(t)
+
+	if !strings.Contains(editSrc, "input.setAttribute(\"tabindex\", \"0\")") &&
+		!strings.Contains(editSrc, `input.setAttribute('tabindex', '0')`) {
+		t.Error("08-edit.js: multiline textareas created by field() must have tabindex=\"0\" set explicitly\n" +
+			"so keyboard Tab navigation reaches non-markdown Body fields (action body, payload, etc.).\n" +
+			"Add: input.setAttribute(\"tabindex\", \"0\") inside the if (multiline) block")
+	}
+
+	// The textarea must get tabindex="0" only when multiline is true — single-line inputs should be left alone.
+	if !strings.Contains(editSrc, "if (multiline)") {
+		t.Error("08-edit.js: field() must check for multiline to create textareas; without it non-markdown fields are not editable")
+	}
+
+	// The tabindex attribute must be set inside the multiline branch (after the textarea is created).
+	multilineIdx := strings.Index(editSrc, "if (multiline)")
+	tabIndexSetIdx := -1
+	if idx := strings.Index(editSrc, `input.setAttribute("tabindex", "0")`); idx >= 0 {
+		tabIndexSetIdx = idx
+	} else if idx := strings.Index(editSrc, `input.setAttribute('tabindex', '0')`); idx >= 0 {
+		tabIndexSetIdx = idx
+	}
+	if multilineIdx >= 0 && tabIndexSetIdx >= 0 && tabIndexSetIdx < multilineIdx {
+		t.Errorf("the tabindex=\"0\" assignment must appear after the if (multiline) check\n"+
+			"so single-line inputs are not given a redundant tabindex.\n"+
+			"Current: tabindex set at line %d, if (multiline) starts at line %d",
+			strings.Count(editSrc[:tabIndexSetIdx], "\n")+1, strings.Count(editSrc[:multilineIdx], "\n")+1)
+	}
+}

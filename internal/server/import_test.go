@@ -45,13 +45,16 @@ func TestAPersonImportsPeopleFromAFile(t *testing.T) {
 	fileID := strings.TrimPrefix(rec.Header().Get("Location"), "/t/person/import?file=")
 
 	res := postForm(t, h, "/t/person/import/"+fileID+"/run", url.Values{"map-Full name": {"name"}, "map-E-mail": {"email"}, "map-Company": {""}})
-	wantStatus(t, res, http.StatusSeeOther)
+	list, at := landed(t, h, res)
 	people, _ := a.Store.List("person", store.ListOptions{})
 	if org, _ := people[0].Fields["organisation"].(string); len(people) != 2 || org != "" {
 		t.Errorf("two people, as the mapping said, without the column set to nothing: %v", people)
 	}
-	if page := get(t, h, "/chat").Body.String(); !strings.Contains(page, "imported 2") {
-		t.Error("the chat says what happened")
+	if at != "/t/person" || !strings.Contains(list.Body.String(), "imported 2") {
+		t.Errorf("the list the person lands on says what happened, got %q", at)
+	}
+	if strings.Contains(get(t, h, "/chat").Body.String(), "imported 2") {
+		t.Error("an import that went well is not an error in the chat")
 	}
 	if !strings.Contains(get(t, h, "/activity").Body.String(), "imported") {
 		t.Error("the import is in the activity log")

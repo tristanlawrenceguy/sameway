@@ -32,17 +32,19 @@ func (s *Server) upload(w http.ResponseWriter, r *http.Request) {
 	rec, err := s.storeUpload(r)
 	if err != nil {
 		if errors.Is(err, http.ErrMissingFile) || strings.Contains(err.Error(), "please select a file") {
-			s.uploadError(w, r, err)
-		} else {
-			s.fail(w, err)
+			err = errors.New("choose a file first")
 		}
+		s.failed(w, r, "Not added", err, "/t/"+FileType)
 		return
 	}
-	back := "/t/" + FileType + "/" + rec.ID
-	if from := r.FormValue("from"); strings.HasPrefix(from, "/") && !strings.HasPrefix(from, "//") {
-		back = from
+	own := "/t/" + FileType + "/" + rec.ID
+	title, _ := rec.Fields["title"].(string)
+	// The file's own page shows it; anywhere else, the message does.
+	if from := r.FormValue("from"); local(from) {
+		s.tellAt(w, r, outcome{Title: "Added", Text: title + " is in your files."}, from)
+		return
 	}
-	http.Redirect(w, r, back, http.StatusSeeOther)
+	http.Redirect(w, r, own, http.StatusSeeOther)
 }
 
 // storeUpload does the work of upload for any form with a file part: the

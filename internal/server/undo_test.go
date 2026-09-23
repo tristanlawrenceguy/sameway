@@ -78,7 +78,7 @@ func TestAPersonUndoesFromWhereTheyAre(t *testing.T) {
 	wantStatus(t, created, http.StatusCreated)
 	var note struct{ ID string }
 	decode(t, created, &note)
-	wantStatus(t, postForm(t, h, "/t/note/"+note.ID+"/delete", url.Values{}), http.StatusOK)
+	wantStatus(t, postForm(t, h, "/t/note/"+note.ID+"/delete", url.Values{}), http.StatusSeeOther)
 	act = get(t, h, "/activity").Body.String()
 	if !logged(t, h, "You deleted note Water the plants") {
 		t.Fatal("a deletion by the person should be in the log")

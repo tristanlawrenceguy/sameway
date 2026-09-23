@@ -33,7 +33,9 @@
 
   // An inline edit: the fields of the form 08-edit.js builds, saved as
   // they change, put back when the same edit is opened again, and dropped
-  // on Save or Cancel.
+  // on Cancel, or once the page says the save went through. Pressing Save
+  // is not enough: a save can be refused, and the words must be there to
+  // fix.
   function editKey(block) {
     return "edit:" + (block.getAttribute("data-edit-action") || "/canvas/" + block.getAttribute("data-block-id") + "/props");
   }
@@ -54,12 +56,17 @@
       Object.keys(saved).forEach(function (name) {
         var f = form.elements[name];
         if (f && "value" in f && f.value !== saved[name]) f.value = saved[name];
+        // Rich text is what the person sees and typed into, not the
+        // hidden field that carries it: put the words back there too.
+        var prose = f && f.closest && f.closest(".sw-prose-field");
+        var editor = prose && /^html-/.test(name) && prose.querySelector(".sw-prose-editor");
+        if (editor && saved[name]) editor.innerHTML = saved[name];
       });
     }
     var notice = block.querySelector(".sw-draft");
     if (notice) notice.remove();
     form.addEventListener("input", function () { set(k, fields(form)); });
-    form.addEventListener("submit", function () { del(k); });
+    form.addEventListener("submit", function () { set(k, fields(form)); });
     form.addEventListener("keydown", function (e) { if (e.key === "Escape") del(k); });
     var cancel = form.querySelector("[data-cancel]");
     if (cancel) cancel.addEventListener("click", function () { del(k); });
@@ -81,7 +88,26 @@
     block.insertBefore(notice, block.firstChild);
   }
 
+  // What the person's last action came to (outcome.go): an edit saved
+  // lets its draft go; an edit refused opens again, holding what they
+  // typed, under the message that says why.
+  function settle() {
+    document.querySelectorAll(".sw-outcome[data-outcome-for]").forEach(function (o) {
+      var k = "edit:" + o.getAttribute("data-outcome-for");
+      if (o.getAttribute("data-outcome") === "done") { del(k); return; }
+      if (!get(k)) return;
+      var blocks = document.querySelectorAll("[data-block-id]");
+      for (var i = 0; i < blocks.length; i++) {
+        if (editKey(blocks[i]) !== k) continue;
+        var edit = blocks[i].querySelector("[data-edit]");
+        if (edit) setTimeout(function () { edit.click(); }, 0);
+        return;
+      }
+    });
+  }
+
   function init() {
+    settle();
     document.querySelectorAll("form.sw-compose").forEach(compose);
     document.querySelectorAll("[data-block-id]").forEach(offer);
     document.querySelectorAll("form.sw-inline-form").forEach(watch);

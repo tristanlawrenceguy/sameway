@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
@@ -16,17 +17,17 @@ import (
 func (s *Server) blockProps(w http.ResponseWriter, r *http.Request) {
 	rec, err := s.app.Store.Get(chat.BlockType, r.PathValue("id"))
 	if err != nil {
-		s.fail(w, err)
+		s.failed(w, r, "Not saved", err, "/")
 		return
 	}
 	name, _ := rec.Fields["component"].(string)
 	comp, ok := s.app.Registry.Get(name)
 	if !ok {
-		s.fail(w, err)
+		s.failed(w, r, "Not saved", fmt.Errorf("this block is a %s, which this workspace no longer has", name), "/")
 		return
 	}
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, "bad form", http.StatusBadRequest)
+		s.failed(w, r, "Not saved", err, "/")
 		return
 	}
 
@@ -38,33 +39,30 @@ func (s *Server) blockProps(w http.ResponseWriter, r *http.Request) {
 	}
 	edited, err := editedFields(r.PostForm)
 	if err != nil {
-		s.app.Chat.Notice(err.Error())
-		http.Redirect(w, r, "/", http.StatusSeeOther)
+		s.failed(w, r, "Not saved", err, "/")
 		return
 	}
 	for k, v := range edited {
 		props[k] = v
 	}
 	if len(edited) == 0 {
-		http.Redirect(w, r, "/", http.StatusSeeOther)
+		http.Redirect(w, r, backOf(r, "/"), http.StatusSeeOther)
 		return
 	}
 
 	clean, err := comp.Validate(props)
 	if err != nil {
-		// The person is looking at the canvas, so the complaint belongs
-		// there, in the conversation, where every other problem is reported.
-		s.app.Chat.Notice(err.Error())
-		http.Redirect(w, r, "/", http.StatusSeeOther)
+		// Said where the person is; what they typed waits in the draft.
+		s.failed(w, r, "Not saved", err, "/")
 		return
 	}
 	if _, err := s.app.Store.Update(chat.BlockType, rec.ID,
 		s.app.Chat.BlockFields(map[string]any{"props": clean, "actor": "human"})); err != nil {
-		s.fail(w, err)
+		s.failed(w, r, "Not saved", err, "/")
 		return
 	}
-	s.record(r, chat.Change{
+	undo := s.record(r, chat.Change{
 		Action: "updated", Component: name, ID: rec.ID, Detail: chat.Summarise(name, clean), Before: rec.Fields,
 	})
-	http.Redirect(w, r, "/?saved", http.StatusSeeOther)
+	s.tell(w, r, outcome{Title: "Changes saved", Undo: undo}, "/")
 }
