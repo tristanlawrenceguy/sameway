@@ -48,8 +48,19 @@ type Control struct {
 	Action string `json:"action,omitempty"`
 	Method string `json:"method,omitempty"`
 	// Hidden says the control is in the document but not shown: it or an
-	// ancestor carries the hidden attribute.
+	// ancestor carries the hidden attribute, or, read with scripts run,
+	// is not drawn at all.
 	Hidden bool `json:"hidden,omitempty"`
+	// Disabled says it cannot be operated now.
+	Disabled bool `json:"disabled,omitempty"`
+	// Value is what a field holds: the text in a textbox, the chosen
+	// option of a listbox. Passwords and files never say.
+	Value string `json:"value,omitempty"`
+	// Checked says a checkbox or radio is on.
+	Checked bool `json:"checked,omitempty"`
+	// Form is which form on the page the control belongs to, counting
+	// from 1, so the fields and the button that sends them go together.
+	Form int `json:"form,omitempty"`
 }
 
 // Live is a region assistive technology announces when it changes.
@@ -75,11 +86,19 @@ func read(src string, page bool) (*Outline, error) {
 		o.Title = htmltest.Text(ts[0])
 	}
 	seenComponent := map[string]bool{}
+	forms := map[*html.Node]int{}
 	var walk func(n *html.Node, underHidden bool)
 	walk = func(n *html.Node, underHidden bool) {
 		if n.Type == html.ElementNode {
 			if _, ok := htmltest.Attr(n, "hidden"); ok {
 				underHidden = true
+			}
+			// Marked by a reading with scripts run: not drawn from here in.
+			if _, ok := htmltest.Attr(n, "data-look-unseen"); ok {
+				underHidden = true
+			}
+			if n.Data == "form" {
+				forms[n] = len(forms) + 1
 			}
 			if c, ok := htmltest.Attr(n, "data-component"); ok && !seenComponent[c] {
 				seenComponent[c] = true
@@ -91,7 +110,7 @@ func read(src string, page bool) (*Outline, error) {
 			if len(n.Data) == 2 && n.Data[0] == 'h' && n.Data[1] >= '1' && n.Data[1] <= '6' {
 				o.Headings = append(o.Headings, Heading{Level: int(n.Data[1] - '0'), Text: htmltest.Text(n)})
 			}
-			if c, ok := control(doc, n); ok {
+			if c, ok := control(doc, n, forms); ok {
 				c.Hidden = underHidden
 				o.Controls = append(o.Controls, c)
 			}
@@ -136,8 +155,9 @@ func landmark(doc *htmltest.Doc, n *html.Node) (Landmark, bool) {
 }
 
 // control names what a person can operate, with where it goes.
-func control(doc *htmltest.Doc, n *html.Node) (Control, bool) {
+func control(doc *htmltest.Doc, n *html.Node, forms map[*html.Node]int) (Control, bool) {
 	c := Control{Name: doc.AccessibleName(n)}
+	_, c.Disabled = htmltest.Attr(n, "disabled")
 	switch n.Data {
 	case "a":
 		href, ok := htmltest.Attr(n, "href")
@@ -159,21 +179,34 @@ func control(doc *htmltest.Doc, n *html.Node) (Control, bool) {
 			}
 		case "checkbox", "radio":
 			c.Kind = t
+			_, c.Checked = htmltest.Attr(n, "checked")
 		default:
 			c.Kind = "textbox"
+			if t != "password" && t != "file" {
+				c.Value, _ = htmltest.Attr(n, "value")
+			}
 		}
 	case "select":
 		c.Kind = "listbox"
+		c.Value = chosen(n)
 	case "textarea":
 		c.Kind = "textbox"
+		c.Value = textOf(n)
 	case "summary":
 		c.Kind = "disclosure"
 	default:
+		// A region a script made editable is a textbox too, and holds
+		// its words.
+		if ce, ok := htmltest.Attr(n, "contenteditable"); ok && (ce == "" || ce == "true" || ce == "plaintext-only") {
+			c.Kind, c.Value = "textbox", htmltest.Text(n)
+			break
+		}
 		return c, false
 	}
 	if c.Kind != "link" {
 		for p := n.Parent; p != nil; p = p.Parent {
 			if p.Type == html.ElementNode && p.Data == "form" {
+				c.Form = forms[p]
 				c.Action, _ = htmltest.Attr(p, "action")
 				c.Method, _ = htmltest.Attr(p, "method")
 				c.Method = strings.ToUpper(c.Method)
@@ -201,4 +234,44 @@ func live(n *html.Node) (Live, bool) {
 	}
 	id, _ := htmltest.Attr(n, "id")
 	return Live{ID: id, Politeness: politeness, Text: htmltest.Text(n)}, true
+}
+
+// chosen is the text of the option a listbox has chosen: the one marked
+// selected, or the first, as a browser shows it.
+func chosen(sel *html.Node) string {
+	first := ""
+	var found string
+	var walk func(n *html.Node) bool
+	walk = func(n *html.Node) bool {
+		if n.Type == html.ElementNode && n.Data == "option" {
+			if first == "" {
+				first = htmltest.Text(n)
+			}
+			if _, ok := htmltest.Attr(n, "selected"); ok {
+				found = htmltest.Text(n)
+				return true
+			}
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			if walk(c) {
+				return true
+			}
+		}
+		return false
+	}
+	if walk(sel) {
+		return found
+	}
+	return first
+}
+
+// textOf is a textarea's text as written, not collapsed as prose is.
+func textOf(n *html.Node) string {
+	var b strings.Builder
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		if c.Type == html.TextNode {
+			b.WriteString(c.Data)
+		}
+	}
+	return strings.TrimPrefix(b.String(), "\n")
 }
