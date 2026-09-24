@@ -157,11 +157,11 @@
     function settle(d) {
       settled = true;
       form._sending = false;
-      if (stop) stop.remove();
+      if (stop) { if (stop === document.activeElement && ta) ta.focus(); stop.remove(); }
       live.li.classList.remove("sw-live");
       if (d.html) live.li.innerHTML = d.html; else live.li.remove();
       var status = document.getElementById("chat-status");
-      if (status && d.status) status.outerHTML = d.status;
+      if (status && d.status && window.swSay) window.swSay(d.status, d.html, d.text); else if (status && d.status) status.outerHTML = d.status;
       // What a reload would have brought: the recent activity, the skip
       // link to the newest message, and the address naming it.
       var activity = document.querySelector(".sw-activity");

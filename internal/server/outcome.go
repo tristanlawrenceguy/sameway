@@ -120,7 +120,7 @@ func (s *Server) told(w http.ResponseWriter, r *http.Request) template.HTML {
 			`<input type="hidden" name="from" value="` + template.HTMLEscapeString(r.URL.RequestURI()) + `">` +
 			string(s.component("button", map[string]any{"label": "Undo", "context": strings.TrimSuffix(what, "."), "type": "submit", "variant": "secondary"})) + `</form>`
 	}
-	return template.HTML(`<div class="sw-outcome" data-outcome="` + state + `" data-outcome-for="` + template.HTMLEscapeString(o.For) + `">` + alert + `</div>`)
+	return template.HTML(`<div class="sw-outcome" id="outcome" tabindex="-1" data-outcome="` + state + `" data-outcome-for="` + template.HTMLEscapeString(o.For) + `">` + alert + `</div>`)
 }
 
 // backOf is the page a person acted from: the from the form carries, or
