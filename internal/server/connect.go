@@ -127,7 +127,7 @@ func (s *Server) connectCard(from string) template.HTML {
 	esc := template.HTMLEscapeString
 	hidden := `<input type="hidden" name="from" value="` + esc(from) + `">`
 	var b strings.Builder
-	b.WriteString(`<section class="sw-connect sw-stack" aria-label="Connect the assistant">`)
+	b.WriteString(`<div class="sw-connect sw-stack">`)
 	// Said as an alert, so it is heard when the page opens, not found later.
 	b.WriteString(string(s.component("alert", map[string]any{"kind": "info", "title": "Connect the assistant to an AI model",
 		"message": why + " The assistant needs an AI model to think with. Everything else in Sameway works without one."})))
@@ -147,7 +147,7 @@ func (s *Server) connectCard(from string) template.HTML {
 	}
 	b.WriteString(`<form method="post" action="/model/check">` + hidden)
 	b.WriteString(string(s.component("button", map[string]any{"label": "Check again", "type": "submit", "variant": "secondary"})))
-	b.WriteString(`</form></section>`)
+	b.WriteString(`</form></div>`)
 	return template.HTML(b.String())
 }
 
