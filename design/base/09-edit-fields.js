@@ -33,30 +33,4 @@
     }, 0);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", openNew); else openNew();
-
-  // swCheckField is a yes or no, as a checkbox with its name beside it.
-  // An unticked box sends nothing, so a hidden no stands behind it, the
-  // way the mark component does it; the box, first, wins when ticked.
-  window.swCheckField = function (el, id, name) {
-    var wrap = document.createElement("div");
-    wrap.className = "sw-field sw-inline-field sw-check";
-    var box = document.createElement("input");
-    box.type = "checkbox";
-    box.id = id;
-    box.name = "prop-" + name;
-    box.value = "true";
-    box.checked = el.getAttribute("data-source") === "true";
-    var no = document.createElement("input");
-    no.type = "hidden";
-    no.name = "prop-" + name;
-    no.value = "false";
-    var lab = document.createElement("label");
-    lab.className = "sw-field__label";
-    lab.setAttribute("for", id);
-    lab.textContent = el.getAttribute("data-label") || name;
-    wrap.appendChild(box);
-    wrap.appendChild(lab);
-    wrap.appendChild(no);
-    return { wrap: wrap, input: box };
-  };
 })();

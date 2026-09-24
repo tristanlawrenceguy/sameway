@@ -17,110 +17,111 @@
   "use strict";
 
   var MULTILINE = { P: 1, DIV: 1, BLOCKQUOTE: 1 };
+  var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
   function label(name) {
     return name.charAt(0).toUpperCase() + name.slice(1).replace(/[_-]/g, " ");
   }
 
-  // field builds the control for one marked element, carrying the text that
-  // is there now (for example: Body on a note or task detail page).
+  // control is a copy of one of the design system's own controls, which
+  // the page carries in a template it does not show (editfields.go), with
+  // this field's label, name and id put in. Every field the editor makes
+  // is the component itself: the same markup, classes and wiring a page
+  // gets when the server renders it.
+  function control(kind, el, id, name) {
+    var t = document.getElementById("sw-controls");
+    var held = t && t.content.querySelector('[data-control="' + kind + '"]');
+    if (!held) return null;
+    var wrap = held.firstElementChild.cloneNode(true);
+    wrap.classList.add("sw-inline-field");
+    var input = wrap.querySelector("input, select, textarea");
+    var lab = wrap.querySelector("label");
+    lab.textContent = el.getAttribute("data-label") || label(name);
+    lab.setAttribute("for", id);
+    input.id = id;
+    input.name = "prop-" + name;
+    var hint = wrap.querySelector("[id$='-hint']");
+    if (hint) {
+      hint.id = id + "-hint";
+      input.setAttribute("aria-describedby", hint.id);
+    }
+    return { wrap: wrap, input: input };
+  }
+
+  // field makes the control for one marked element, carrying what is
+  // there now (for example: Body on a note or task detail page). Which
+  // control it is comes from the mark: a yes or no, a day, a choice, a
+  // number, a paragraph or a line.
   function field(el, blockId) {
     // Structured text is edited as it is shown, by 11-prose-edit.js, when
     // that is here; otherwise as the Markdown it was written in.
     if (el.classList.contains("sw-prose") && el.hasAttribute("data-source") && window.swProseField) return window.swProseField(el, blockId);
     var name = el.getAttribute("data-prop");
     var id = "edit-" + blockId + "-" + name;
-    if (el.getAttribute("data-kind") === "bool" && window.swCheckField) return window.swCheckField(el, id, name);
-    if (el.getAttribute("data-kind") === "datetime") return dateField(el, id, name);
-    if (el.hasAttribute("data-options")) return choiceField(el, id, name);
-    var wrap = document.createElement("div");
-    wrap.className = "sw-field sw-inline-field";
-
-    var lab = document.createElement("label");
-    lab.className = "sw-field__label";
-    lab.setAttribute("for", id);
-    lab.textContent = el.getAttribute("data-label") || label(name);
-
+    var kind = el.getAttribute("data-kind");
     var source = el.hasAttribute("data-source") ? el.getAttribute("data-source") : null;
+    var built;
+    if (kind === "bool") {
+      built = control("checkbox", el, id, name);
+      built.input.checked = source === "true";
+      // An unticked box sends nothing, so a hidden no stands behind it, the
+      // way the mark component does it; the box, first, wins when ticked.
+      var no = document.createElement("input");
+      no.type = "hidden";
+      no.name = "prop-" + name;
+      no.value = "false";
+      built.wrap.appendChild(no);
+      return built;
+    }
+    if (kind === "datetime") return when(el, control("when", el, id, name), source);
+    if (el.hasAttribute("data-options")) {
+      built = control("select", el, id, name);
+      var options = [];
+      try { options = JSON.parse(el.getAttribute("data-options")) || []; } catch (e) { options = []; }
+      built.input.innerHTML = "";
+      for (var i = 0; i < options.length; i++) {
+        var opt = document.createElement("option");
+        opt.value = options[i].value;
+        opt.textContent = options[i].label;
+        opt.selected = options[i].value === (source !== null ? source : el.textContent.trim());
+        built.input.appendChild(opt);
+      }
+      return built;
+    }
+    if (kind === "number") {
+      built = control("number", el, id, name);
+      built.input.step = "any";
+      built.input.value = source || "";
+      return built;
+    }
     var multiline = MULTILINE[el.tagName] === 1 || el.textContent.indexOf("\n") >= 0 || (source !== null && source.indexOf("\n") >= 0);
-    var input = document.createElement(multiline ? "textarea" : "input");
-    input.className = multiline ? "sw-field__textarea" : "sw-field__input";
-    input.id = id;
-    input.name = "prop-" + name;
     if (multiline) {
+      built = control("textarea", el, id, name);
       var text = source !== null ? source : el.innerText.replace(/\n{3,}/g, "\n\n").trim();
-      input.rows = Math.min(10, Math.max(3, text.split("\n").length + 1));
-      input.setAttribute("tabindex", "0");
-      input.value = text;
-    } else {
-      input.type = "text";
-      input.value = el.hasAttribute("data-source") ? el.getAttribute("data-source") : el.textContent.trim();
+      built.input.rows = Math.min(10, Math.max(3, text.split("\n").length + 1));
+      built.input.setAttribute("tabindex", "0");
+      built.input.value = text;
+      return built;
     }
-    wrap.appendChild(lab);
-    wrap.appendChild(input);
-    return { wrap: wrap, input: input };
+    built = control("text", el, id, name);
+    built.input.value = source !== null ? source : el.textContent.trim();
+    return built;
   }
-
-  // A field with a fixed set of values, such as the habit an entry is
-  // for, is chosen from a list by name: the server puts the values and
-  // their names on the element, and the one there now is chosen.
-  function choiceField(el, id, name) {
-    var wrap = document.createElement("div");
-    wrap.className = "sw-field sw-inline-field";
-    var lab = document.createElement("label");
-    lab.className = "sw-field__label";
-    lab.setAttribute("for", id);
-    lab.textContent = el.getAttribute("data-label") || label(name);
-    var select = document.createElement("select");
-    select.className = "sw-field__select";
-    select.id = id;
-    select.name = "prop-" + name;
-    var current = el.hasAttribute("data-source") ? el.getAttribute("data-source") : el.textContent.trim();
-    var options = [];
-    try { options = JSON.parse(el.getAttribute("data-options")) || []; } catch (e) { options = []; }
-    for (var i = 0; i < options.length; i++) {
-      var opt = document.createElement("option");
-      opt.value = options[i].value;
-      opt.textContent = options[i].label;
-      if (options[i].value === current) opt.selected = true;
-      select.appendChild(opt);
-    }
-    wrap.appendChild(lab);
-    wrap.appendChild(select);
-    return { wrap: wrap, input: select };
-  }
-
-  var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
   // A day or a moment is written the way a person says it and read by the
   // server: 19 Sep, next Friday, tomorrow 2pm. People know the day they
   // mean and type it faster than they find it; the platform's own picker
   // stands beside the words for anyone who would rather look at a month,
   // and picking a day writes it into the words, keeping any time typed.
-  function dateField(el, id, name) {
-    var wrap = document.createElement("div");
-    wrap.className = "sw-field sw-inline-field sw-when";
-    var lab = document.createElement("label");
-    lab.className = "sw-field__label";
-    lab.setAttribute("for", id);
-    lab.textContent = el.getAttribute("data-label") || label(name);
-    var hint = document.createElement("p");
-    hint.className = "sw-field__hint";
-    hint.id = id + "-hint";
-    hint.textContent = "A day, like 19 Sep or next Friday, with a time if there is one, like 2pm.";
-    var input = document.createElement("input");
-    input.className = "sw-field__input";
-    input.id = id;
-    input.name = "prop-" + name;
-    input.type = "text";
+  function when(el, built, source) {
+    var input = built.input;
     input.value = el.textContent.trim();
-    input.setAttribute("aria-describedby", hint.id);
+    built.wrap.classList.add("sw-when");
     var pick = document.createElement("input");
     pick.className = "sw-field__input sw-datepicker sw-when__pick";
     pick.type = "date";
-    pick.setAttribute("aria-label", "Pick the day for " + (el.getAttribute("data-label") || label(name)).toLowerCase());
-    var source = el.getAttribute("data-source") || "";
-    if (/^\d{4}-\d{2}-\d{2}/.test(source)) pick.value = source.slice(0, 10);
+    pick.setAttribute("aria-label", "Pick the day for " + (el.getAttribute("data-label") || label(el.getAttribute("data-prop"))).toLowerCase());
+    if (/^\d{4}-\d{2}-\d{2}/.test(source || "")) pick.value = source.slice(0, 10);
     pick.addEventListener("change", function () {
       if (!pick.value) return;
       var p = pick.value.split("-");
@@ -130,12 +131,10 @@
     });
     var row = document.createElement("div");
     row.className = "sw-when__row";
+    input.parentNode.insertBefore(row, input);
     row.appendChild(input);
     row.appendChild(pick);
-    wrap.appendChild(lab);
-    wrap.appendChild(hint);
-    wrap.appendChild(row);
-    return { wrap: wrap, input: input };
+    return built;
   }
 
   // edit replaces the marked elements of one block with a small form.
@@ -229,49 +228,8 @@
     bar.insertBefore(btn, bar.firstChild);
   }
 
-  // Enter in the chat composer sends, the way the Send button does: through
-  // the form's own submit, so the required check, the busy state and the
-  // double-send guard all see it. Shift+Enter starts a new line.
-  function composeKeyHandler() {
-    document.querySelectorAll("form.sw-compose textarea").forEach(function (textarea) {
-      if (textarea._composeHandled) return;
-      textarea._composeHandled = true;
-      var form = textarea.closest("form.sw-compose");
-      textarea.addEventListener("keydown", function (e) {
-        if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
-          e.preventDefault();
-          if (form.requestSubmit) form.requestSubmit();
-          else form.submit();
-        }
-      });
-    });
-  }
-
-  // A proposal's two buttons are forms that work on their own; with
-  // scripts the answer is sent without leaving the page, and every
-  // pending proposal goes with it, so at most one is ever waiting.
-  function proposeHandler() {
-    var btns = document.querySelectorAll(".sw-proposal [type=\"submit\"]");
-    if (!btns || btns.length === 0) return;
-    for (var i = 0; i < btns.length; i++) {
-      (function (btn) {
-        if (btn._proposeArmed) return;
-        btn._proposeArmed = true;
-        btn.addEventListener("click", function (e) {
-          e.preventDefault();
-          var form = btn.closest("form");
-          fetch(form.action, { method: "POST" }).then(function () {
-            document.querySelectorAll(".sw-proposal").forEach(function (p) { p.remove(); });
-          });
-        });
-      })(btns[i]);
-    }
-  }
-
   function init() {
     document.querySelectorAll("[data-block-id]").forEach(arm);
-    composeKeyHandler();
-    proposeHandler();
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();

@@ -26,7 +26,9 @@ func TestAFieldWithChoicesOffersThemByName(t *testing.T) {
 		}
 	}
 	page = html.UnescapeString(get(t, h, "/t/habit/"+water.ID).Body.String())
-	if !strings.Contains(page, `data-prop="aim" data-options="[{"value":"reach","label":"reach"},{"value":"limit","label":"limit"},{"value":"record","label":"record"}]"`) {
-		t.Error("an enum offers its values")
+	// An enum offers its values by the names the schema gives them, and
+	// stores the value.
+	if !strings.Contains(page, `[{"value":"reach","label":"At least the target"},{"value":"limit","label":"At most the target"},{"value":"record","label":"Just keep a record"}]`) {
+		t.Error("an enum offers its values by name")
 	}
 }

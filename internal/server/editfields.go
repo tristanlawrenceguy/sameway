@@ -47,10 +47,7 @@ func (s *Server) editFields(t *schema.Type, rec *store.Record) string {
 func (s *Server) editField(f schema.Field, v any) string {
 	val := display(f, v)
 	esc := template.HTMLEscapeString
-	name, lab := esc(f.Name), ` data-label="`+esc(label(f.Name))+`"`
-	if f.Label != "" {
-		lab = ` data-label="` + esc(f.Label) + `"`
-	}
+	name, lab := esc(f.Name), ` data-label="`+esc(fieldLabel(f))+`"`
 	switch f.Type {
 	case "markdown":
 		return fmt.Sprintf(`<div class="sw-prose" data-prop="%s"%s data-source="%s" data-prose-level="2">%s</div>`, name, lab, esc(val), prose.Render(val, 2))
@@ -65,16 +62,16 @@ func (s *Server) editField(f schema.Field, v any) string {
 			raw = fmt.Sprint(v)
 		}
 		return fmt.Sprintf(`<span data-prop="%s"%s data-kind="datetime" data-source="%s">%s</span>`, name, lab, esc(raw), esc(val))
+	case "int", "float":
+		return fmt.Sprintf(`<span data-prop="%s"%s data-kind="number" data-source="%s"></span>`, name, lab, esc(val))
 	case "bool":
 		on, _ := v.(bool)
 		return fmt.Sprintf(`<span data-prop="%s"%s data-kind="bool" data-source="%t"></span>`, name, lab, on)
 	case "enum", "ref":
-		options := s.choices(f, val)
-		if f.Type == "ref" {
-			raw, _ := v.(string)
-			options = s.choices(f, raw)
-			val = raw
-		}
+		// A choice carries the value it stores; the options name it.
+		raw, _ := v.(string)
+		options := s.choices(f, raw)
+		val = raw
 		if options == "" {
 			// A ref past the most a list can hold is changed by asking.
 			return ""
@@ -87,4 +84,31 @@ func (s *Server) editField(f schema.Field, v any) string {
 	// The editor reads what is there from data-source; the page already
 	// says it where it shows, once.
 	return fmt.Sprintf(`<span data-prop="%s"%s data-source="%s"></span>`, name, lab, esc(val))
+}
+
+// editControls is one of each control the design system has for a field,
+// in a template the page does not show: the inline editor copies the one a
+// field needs and fills in its name, value and choices, so every field it
+// makes is the component itself, never markup of its own. Only on a page
+// where something can be edited.
+func (s *Server) editControls(parts ...template.HTML) template.HTML {
+	editable := false
+	for _, p := range parts {
+		editable = editable || strings.Contains(string(p), "data-prop=") || strings.Contains(string(p), "data-edit-fields")
+	}
+	if !editable {
+		return ""
+	}
+	control := func(kind, name string, props map[string]any) string {
+		props["label"], props["name"], props["id"] = "Field", "field", "sw-control-"+kind
+		return `<div data-control="` + kind + `">` + string(s.component(name, props)) + `</div>`
+	}
+	return template.HTML(`<template id="sw-controls">` +
+		control("text", "text-field", map[string]any{"type": "text"}) +
+		control("number", "text-field", map[string]any{"type": "number"}) +
+		control("when", "text-field", map[string]any{"type": "text", "hint": "A day, like 19 Sep or next Friday, with a time if there is one, like 2pm."}) +
+		control("textarea", "textarea", map[string]any{"rows": 3}) +
+		control("select", "select", map[string]any{"options": []any{map[string]any{"value": "", "label": ""}}}) +
+		control("checkbox", "checkbox", map[string]any{"value": "true"}) +
+		`</template>`)
 }

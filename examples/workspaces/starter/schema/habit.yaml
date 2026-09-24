@@ -17,6 +17,7 @@ fields:
   cadence:
     type: enum
     values: [day, week, month, year]
+    labels: {day: Each day, week: Each week, month: Each month, year: Each year}
     default: day
     description: The period a target applies to.
   target:
@@ -26,11 +27,13 @@ fields:
   aim:
     type: enum
     values: [reach, limit, record]
+    labels: {reach: At least the target, limit: At most the target, record: Just keep a record}
     default: reach
     description: "reach is at least the target; limit is at most, what goes past it is over (an allowance, a budget, screen time); record has no target, only the numbers (weight)."
   combine:
     type: enum
     values: [sum, latest, average]
+    labels: {sum: Add them up, latest: The latest one, average: The average}
     default: sum
     description: "How a period's entries make its amount: sum adds them up; latest is the last one logged (a reading such as weight); average is their mean (hours slept)."
   unit:

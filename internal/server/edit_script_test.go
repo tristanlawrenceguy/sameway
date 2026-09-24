@@ -57,15 +57,24 @@ func TestEditScriptDoesNotRemoveCanvasFallback(t *testing.T) {
 	}
 }
 
+// readEditScript is the page's script as the browser gets it: every file in
+// design/base, in order, as /design/sameway.js joins them, so a test holds
+// wherever in them a handler lives.
 func readEditScript(t *testing.T) string {
 	t.Helper()
-	root := findRepoRoot(t)
-	path := filepath.Join(root, "design", "base", "08-edit.js")
-	data, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatalf("cannot read 08-edit.js: %v", err)
+	files, err := filepath.Glob(filepath.Join(findRepoRoot(t), "design", "base", "*.js"))
+	if err != nil || len(files) == 0 {
+		t.Fatalf("cannot find the scripts in design/base: %v", err)
 	}
-	return string(data)
+	var all strings.Builder
+	for _, f := range files {
+		data, err := os.ReadFile(f)
+		if err != nil {
+			t.Fatalf("cannot read %s: %v", f, err)
+		}
+		all.Write(data)
+	}
+	return all.String()
 }
 
 func findRepoRoot(t *testing.T) string {

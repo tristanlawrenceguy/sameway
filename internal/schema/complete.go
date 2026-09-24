@@ -83,6 +83,20 @@ func (s *Set) Complete(builtin *Set) {
 				t.Fields = append(t.Fields, f)
 				continue
 			}
+			// Names for an enum's values reach a workspace made before they
+			// were written, for the values its copy has; its own names win.
+			if len(f.Labels) > 0 {
+				for i := range t.Fields {
+					if t.Fields[i].Name == f.Name && t.Fields[i].Type == "enum" && len(t.Fields[i].Labels) == 0 {
+						t.Fields[i].Labels = map[string]string{}
+						for _, v := range t.Fields[i].Values {
+							if l, ok := f.Labels[v]; ok {
+								t.Fields[i].Labels[v] = l
+							}
+						}
+					}
+				}
+			}
 			// A field the system keeps stays the system's, whatever an
 			// older copy of the type says.
 			if f.ReadOnly {

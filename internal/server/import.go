@@ -108,16 +108,18 @@ func (s *Server) importPreview(w http.ResponseWriter, r *http.Request, t *schema
 		fmt.Fprintf(&b, `<th scope="col">%s</th>`, template.HTMLEscapeString(col))
 	}
 	b.WriteString(`</tr><tr class="sw-import__map">`)
+	// Each column's choice is the select component, naming the fields
+	// the way the editor does, so a person picks "Due" rather than "due".
+	options := []any{map[string]any{"value": "", "label": "Nothing"}}
+	for _, f := range t.Fields {
+		options = append(options, map[string]any{"value": f.Name, "label": fieldLabel(f)})
+	}
 	for i, col := range tb.Columns {
-		fmt.Fprintf(&b, `<td><label class="sw-visually-hidden" for="map-%d">Field for %s</label><select class="sw-field__input sw-import__field" id="map-%d" name="map-%s"><option value="">nothing</option>`, i, template.HTMLEscapeString(col), i, template.HTMLEscapeString(col))
-		for _, f := range t.Fields {
-			sel := ""
-			if m[col] == f.Name {
-				sel = ` selected`
-			}
-			fmt.Fprintf(&b, `<option value="%s"%s>%s</option>`, f.Name, sel, template.HTMLEscapeString(f.Name))
-		}
-		b.WriteString(`</select></td>`)
+		b.WriteString(`<td>`)
+		b.WriteString(string(s.component("select", map[string]any{
+			"label": col + " goes into", "name": "map-" + col, "id": fmt.Sprintf("map-%d", i), "options": options, "value": m[col],
+		})))
+		b.WriteString(`</td>`)
 	}
 	b.WriteString(`</tr></thead><tbody>`)
 	for i, row := range tb.Rows {

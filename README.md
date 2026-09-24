@@ -96,8 +96,12 @@ fields:
   body:   { type: markdown }
   tags:   { type: list, of: string }
   status: { type: enum, values: [draft, published], default: draft }
+  aim:    { type: enum, values: [reach, limit], labels: { reach: At least the target, limit: At most the target } }
   project: { type: ref, to: project }
 ```
+
+An enum stores its values and shows people its `labels`; a value without a
+label is shown as itself, made readable (`in_progress` reads "In progress").
 
 That file gives you the SQLite table, validation, `sameway note ...` commands,
 `/api/note`, and `/t/note` pages. Add a file and restart, or ask the assistant

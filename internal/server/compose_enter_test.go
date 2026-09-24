@@ -5,14 +5,14 @@ import (
 	"testing"
 )
 
-// TestComposeKeyHandlerExists checks that 08-edit.js defines a composeKeyHandler
+// TestComposeKeyHandlerExists checks that the page script defines a composeKeyHandler
 // function, which is the entry point for the chat textarea Enter-to-send
-// enhancement. This covers acceptance item 4 (handler implemented in 08-edit.js).
+// enhancement. This covers acceptance item 4 (handler implemented in the page script).
 func TestComposeKeyHandlerExists(t *testing.T) {
 	script := readEditScript(t)
 
 	if !strings.Contains(script, "function composeKeyHandler") {
-		t.Error("08-edit.js: expected a function named composeKeyHandler to handle the chat textarea Enter key")
+		t.Error("the page script: expected a function named composeKeyHandler to handle the chat textarea Enter key")
 	}
 }
 
@@ -27,7 +27,7 @@ func TestComposeKeyHandlerUsesCorrectSelector(t *testing.T) {
 		!strings.Contains(script, "querySelector('form.sw-compose textarea')") &&
 		!strings.Contains(script, `querySelectorAll("form.sw-compose textarea")`) &&
 		!strings.Contains(script, "querySelectorAll('form.sw-compose textarea')") {
-		t.Error(`08-edit.js: expected composeKeyHandler to query for form.sw-compose textarea; the selector must be scoped to the chat compose form only`)
+		t.Error(`the page script: expected composeKeyHandler to query for form.sw-compose textarea; the selector must be scoped to the chat compose form only`)
 	}
 }
 
@@ -42,24 +42,24 @@ func TestComposeKeyHandlerInterceptsEnter(t *testing.T) {
 	if !strings.Contains(script, `e.key === "Enter"`) &&
 		!strings.Contains(script, "e.key == \"Enter\"") &&
 		!strings.Contains(script, "e.key === 'Enter'") {
-		t.Error(`08-edit.js: expected composeKeyHandler to check e.key === "Enter" for the chat textarea keydown listener`)
+		t.Error(`the page script: expected composeKeyHandler to check e.key === "Enter" for the chat textarea keydown listener`)
 	}
 
 	// The handler must call preventDefault when Enter is pressed without Shift.
 	if !strings.Contains(script, "e.preventDefault()") {
-		t.Error("08-edit.js: expected composeKeyHandler to call e.preventDefault() when Enter is pressed on the compose textarea")
+		t.Error("the page script: expected composeKeyHandler to call e.preventDefault() when Enter is pressed on the compose textarea")
 	}
 
 	// The handler must submit the form (not just prevent default).
 	if !strings.Contains(script, ".submit()") &&
 		!strings.Contains(script, "form.submit()") {
-		t.Error("08-edit.js: expected composeKeyHandler to call form.submit() when Enter is pressed without Shift on the compose textarea")
+		t.Error("the page script: expected composeKeyHandler to call form.submit() when Enter is pressed without Shift on the compose textarea")
 	}
 
 	// The handler must only act when Shift is NOT held — checking !e.shiftKey.
 	if !strings.Contains(script, "!e.shiftKey") &&
 		!strings.Contains(script, "e.shiftKey === false") {
-		t.Error("08-edit.js: expected composeKeyHandler to check !e.shiftKey so that only unmodified Enter submits (Shift+Enter inserts a newline)")
+		t.Error("the page script: expected composeKeyHandler to check !e.shiftKey so that only unmodified Enter submits (Shift+Enter inserts a newline)")
 	}
 }
 
@@ -70,7 +70,7 @@ func TestComposeKeyHandlerCalledFromInit(t *testing.T) {
 	script := readEditScript(t)
 
 	if !strings.Contains(script, "composeKeyHandler()") {
-		t.Error("08-edit.js: expected composeKeyHandler() to be called from init() so it runs on page load and when new content is added")
+		t.Error("the page script: expected composeKeyHandler() to be called from init() so it runs on page load and when new content is added")
 	}
 }
 
@@ -95,6 +95,6 @@ func TestComposeKeyHandlerGracefulDegradation(t *testing.T) {
 		strings.Contains(script, "return;")
 
 	if !hasGuard {
-		t.Error("08-edit.js: expected composeKeyHandler to return early if form.sw-compose textarea is not found (graceful degradation)")
+		t.Error("the page script: expected composeKeyHandler to return early if form.sw-compose textarea is not found (graceful degradation)")
 	}
 }

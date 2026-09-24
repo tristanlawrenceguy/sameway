@@ -212,6 +212,8 @@ func display(f schema.Field, v any) string {
 		return "no"
 	case "datetime":
 		return when.Text(fmt.Sprint(v))
+	case "enum":
+		return f.ValueLabel(fmt.Sprint(v))
 	}
 	return fmt.Sprint(v)
 }
@@ -276,6 +278,15 @@ func capitalize(s string) string {
 func label(field string) string {
 	s := strings.ReplaceAll(field, "_", " ")
 	return strings.ToUpper(s[:1]) + s[1:]
+}
+
+// fieldLabel is what a person calls a field: the schema's label, else its
+// name made readable.
+func fieldLabel(f schema.Field) string {
+	if f.Label != "" {
+		return f.Label
+	}
+	return label(f.Name)
 }
 
 // whenAttrs marks a date on a page for the editor and for a machine: the

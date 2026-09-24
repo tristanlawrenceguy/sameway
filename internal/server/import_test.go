@@ -42,6 +42,13 @@ func TestAPersonImportsPeopleFromAFile(t *testing.T) {
 	if !strings.Contains(preview, "2 rows in contacts.csv") || !strings.Contains(preview, `<option value="organisation" selected>`) || !strings.Contains(preview, "Sandra Lee") {
 		t.Errorf("the preview shows the rows with each column matched\n%s", preview)
 	}
+	// Each column is chosen with the design system's select, labelled by
+	// its column, offering fields by the names a person reads.
+	for _, want := range []string{`data-component="select"`, `>Company goes into<`, `<option value="">Nothing</option>`, `<option value="organisation" selected>Organisation</option>`} {
+		if !strings.Contains(preview, want) {
+			t.Errorf("the mapping should carry %s", want)
+		}
+	}
 	fileID := strings.TrimPrefix(rec.Header().Get("Location"), "/t/person/import?file=")
 
 	res := postForm(t, h, "/t/person/import/"+fileID+"/run", url.Values{"map-Full name": {"name"}, "map-E-mail": {"email"}, "map-Company": {""}})
