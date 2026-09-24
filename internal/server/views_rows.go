@@ -70,7 +70,7 @@ func (s *Server) row(t *schema.Type, rec *store.Record, level int) string {
 		}
 	}
 	return fmt.Sprintf(`<li class="%s">%s<h%d class="sw-row__title"><a class="sw-row__link" href="/t/%s/%s">%s</a></h%d><p class="sw-row__meta">%s</p></li>`,
-		class, box, level, t.Name, rec.ID, template.HTMLEscapeString(s.title(t, rec)), level, s.facts(t, rec, factOpts{Boxed: box != ""}))
+		class, box, level, t.Name, rec.ID, template.HTMLEscapeString(trimTitle(s.title(t, rec))), level, s.facts(t, rec, factOpts{Boxed: box != ""}))
 }
 
 // whenGroup says where a record sits in time: done first, because a done
