@@ -54,16 +54,15 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 	solo := len(left) == 0 && len(right) == 0 && len(main) == 1 &&
 		main[0].Fields["component"] == chat.ComponentName
 
-	if len(blocks) == 0 {
-		b.WriteString(`<p class="sw-empty">Ask the assistant to add something.</p>`)
-	} else {
-		fmt.Fprintf(&b, `<div class="sw-page" data-layout="%s">`, layoutName(solo))
-		b.WriteString(`<ol class="sw-plain sw-canvas" aria-label="Canvas">`)
-		for _, blk := range main {
-			b.WriteString(s.blockItem(blk, convo))
-		}
-		b.WriteString(`</ol></div>`)
+	if solo {
+		b.WriteString(`<h2>Nothing here yet</h2><p class="sw-empty">Ask the assistant to add one <a href="/chat?prompt=Create+something.">here</a>.</p>`)
 	}
+	fmt.Fprintf(&b, `<div class="sw-page" data-layout="%s">`, layoutName(solo))
+	b.WriteString(`<ol class="sw-plain sw-canvas" aria-label="Canvas">`)
+	for _, blk := range main {
+		b.WriteString(s.blockItem(blk, convo))
+	}
+	b.WriteString(`</ol></div>`)
 	if convo.Activity != "" {
 		b.WriteString(`<div class="sw-activity">` + string(convo.Activity) + `</div>`)
 	}

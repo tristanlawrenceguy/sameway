@@ -47,9 +47,10 @@ func (f *fleet) launch(dir, addr string) error {
 // this one can be deleted once its name is typed, which sends the person
 // on to another and stops this server.
 func TestAWorkspaceOpensTheOthers(t *testing.T) {
+	a, _ := newApp(t)
 	known := filepath.Join(t.TempDir(), "workspaces.json")
 	t.Setenv("SAMEWAY_KNOWN", known)
-	a, _ := newApp(t)
+	os.WriteFile(known, []byte("[]"), 0o644)
 	f := &fleet{t: t}
 	h := server.New(a).WithFleet(&server.Fleet{Launch: f.launch, Exit: func() { f.exited = true }})
 	workspace.Remember(a.Workspace.Dir, "")
@@ -155,9 +156,10 @@ func TestAWorkspaceOpensTheOthers(t *testing.T) {
 // hand off to, so deleting its workspace must refuse rather than remove the
 // folder out from under itself with nowhere to go.
 func TestDeleteWithoutAFleetRefuses(t *testing.T) {
+	a, _ := newApp(t)
 	known := filepath.Join(t.TempDir(), "workspaces.json")
 	t.Setenv("SAMEWAY_KNOWN", known)
-	a, _ := newApp(t)
+	os.WriteFile(known, []byte("[]"), 0o644)
 	h := server.New(a)
 	a.Workspace.Set("name", "Solo")
 

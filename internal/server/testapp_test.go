@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -24,6 +26,12 @@ import (
 func newApp(t *testing.T) (*app.App, http.Handler) {
 	t.Helper()
 	dir := t.TempDir()
+	// Always isolate the known-workspaces list so pre-existing workspaces on this
+	// machine do not pollute the "other workspaces" section. Tests that need a
+	// custom path set it AFTER calling newApp via t.Setenv (which overrides).
+	known := filepath.Join(t.TempDir(), "known.json")
+	os.WriteFile(known, []byte("[]"), 0o644)
+	t.Setenv("SAMEWAY_KNOWN", known)
 	if err := workspace.Init(dir, examples.FS, examples.StarterRoot, false); err != nil {
 		t.Fatal(err)
 	}
