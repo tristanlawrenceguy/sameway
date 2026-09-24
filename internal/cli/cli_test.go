@@ -61,7 +61,7 @@ func TestInitRefusesToOverwrite(t *testing.T) {
 	if r := run(t, dir, "init", dir, "--no-detect"); r.code == 0 || !strings.Contains(r.stderr, "--force") {
 		t.Errorf("second init should fail and mention --force: %+v", r)
 	}
-	if r := run(t, dir, "init", dir, "--force", "--no-detect"); r.code != 0 || !strings.Contains(r.stdout, "Edit ") || strings.Contains(r.stdout, "No local model server") {
+	if r := run(t, dir, "init", dir, "--force", "--no-detect"); r.code != 0 || !strings.Contains(r.stdout, "the chat shows what you can connect") || strings.Contains(r.stdout, "No AI model was found") {
 		t.Errorf("init --force --no-detect: %+v", r)
 	}
 }

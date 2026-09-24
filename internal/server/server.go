@@ -24,6 +24,9 @@ type Server struct {
 	mux   *http.ServeMux
 	turns turns
 	fleet *Fleet
+	// model is whether the assistant can reach its model, last looked;
+	// see connect.go.
+	model modelState
 	// notify tells a ring beyond the page; see ring.go.
 	notify func(title, text, url string)
 }
@@ -51,6 +54,9 @@ func (s *Server) routes() {
 	m.HandleFunc("POST /chat/stream", s.chatStream)
 	m.HandleFunc("POST /chat/stop", s.chatStop)
 	m.HandleFunc("GET /chat/live", s.chatLive)
+	m.HandleFunc("POST /model/use", s.modelUse)
+	m.HandleFunc("POST /t/{type}/add", s.addRecord)
+	m.HandleFunc("POST /model/check", s.modelCheck)
 	m.HandleFunc("POST /chat/clear", s.chatClear)
 	m.HandleFunc("POST /chat/new", s.chatNew)
 	m.HandleFunc("POST /chat/open", s.chatOpen)

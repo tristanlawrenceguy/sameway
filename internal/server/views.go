@@ -58,12 +58,13 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	}
 	if len(recs) == 0 {
 		prompt := "Create a " + t.Name + "."
-		fmt.Fprintf(&b, `<h2>No %s yet</h2><p class="sw-empty">Ask the assistant to add one <a href="/chat?prompt=%s">here</a>.</p>`, template.HTMLEscapeString(t.Name), template.HTMLEscapeString(url.PathEscape(prompt)))
+		fmt.Fprintf(&b, `<h2>No %s yet</h2><p class="sw-empty">Add one yourself, or <a href="/chat?prompt=%s">ask the assistant</a>.</p>`, template.HTMLEscapeString(t.Name), template.HTMLEscapeString(url.PathEscape(prompt)))
 	} else {
 		b.WriteString(s.rows(t, recs, time.Now()))
 	}
-	// Records can come from a file a person already has, and the page
-	// says so, once, quietly, below the list.
+	// A new one by hand, and records from a file a person already has,
+	// each said once, quietly, below the list.
+	b.WriteString(string(s.addButton(t)))
 	if s.importable(t) {
 		b.WriteString(`<p class="sw-quiet-row">` + string(s.component("link", map[string]any{"href": "/t/" + t.Name + "/import", "label": "Import", "context": plural(t.Name), "look": "button"})) + `</p>`)
 	}
