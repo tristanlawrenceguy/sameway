@@ -23,8 +23,8 @@ func TestListPageEmptyStateHasHeading(t *testing.T) {
 	wantStatus(t, rec, http.StatusOK)
 	body := rec.Body.String()
 
-	if !strings.Contains(body, `<h2>No note yet</h2>`) {
-		t.Errorf("empty notes listing should have an h2 heading 'No note yet'\n%s", truncate(body))
+	if !strings.Contains(body, `<h2 class="sw-empty__title">No notes yet</h2>`) {
+		t.Errorf("empty notes listing should have an h2 heading 'No notes yet'\n%s", truncate(body))
 	}
 }
 
@@ -39,14 +39,14 @@ func TestListPageEmptyStateHasActionPrompt(t *testing.T) {
 	wantStatus(t, rec, http.StatusOK)
 	body := rec.Body.String()
 
-	if !strings.Contains(body, `<p class="sw-empty">`) {
+	if !strings.Contains(body, `data-component="empty"`) {
 		t.Errorf("empty notes listing should use the sw-empty paragraph\n%s", truncate(body))
 	}
-	if !strings.Contains(body, `<a href="/chat?prompt=`) {
+	if !strings.Contains(body, `href="/chat?prompt=`) {
 		t.Error("empty-state must link to /chat with a prompt parameter")
 	}
 	// The heading and action must be two separate elements (heading + one line).
-	if strings.Contains(body, `<h2>No note yet</h2><p class="sw-empty">`) {
+	if strings.Contains(body, `<h2 class="sw-empty__title">No notes yet</h2><p class="sw-empty__message">`) {
 		return // correct structure found
 	}
 	t.Errorf("empty notes listing should have an h2 followed by a sw-empty paragraph\n%s", truncate(body))
@@ -60,13 +60,13 @@ func TestListPageEmptyStateForActions(t *testing.T) {
 	wantStatus(t, rec, http.StatusOK)
 	body := rec.Body.String()
 
-	if !strings.Contains(body, `<h2>No action yet</h2>`) {
-		t.Errorf("empty actions listing should have an h2 heading 'No action yet'\n%s", truncate(body))
+	if !strings.Contains(body, `<h2 class="sw-empty__title">No actions yet</h2>`) {
+		t.Errorf("empty actions listing should have an h2 heading 'No actions yet'\n%s", truncate(body))
 	}
-	if !strings.Contains(body, `<p class="sw-empty">`) {
+	if !strings.Contains(body, `data-component="empty"`) {
 		t.Error("empty actions listing should use the sw-empty paragraph")
 	}
-	if !strings.Contains(body, `<a href="/chat?prompt=`) {
+	if !strings.Contains(body, `href="/chat?prompt=`) {
 		t.Error("empty actions must link to /chat with a prompt parameter")
 	}
 }
@@ -79,10 +79,10 @@ func TestListPageEmptyStateForTasks(t *testing.T) {
 	wantStatus(t, rec, http.StatusOK)
 	body := rec.Body.String()
 
-	if !strings.Contains(body, `<h2>No task yet</h2>`) {
-		t.Errorf("empty tasks listing should have an h2 heading 'No task yet'\n%s", truncate(body))
+	if !strings.Contains(body, `<h2 class="sw-empty__title">No tasks yet</h2>`) {
+		t.Errorf("empty tasks listing should have an h2 heading 'No tasks yet'\n%s", truncate(body))
 	}
-	if !strings.Contains(body, `<a href="/chat?prompt=`) {
+	if !strings.Contains(body, `href="/chat?prompt=`) {
 		t.Error("empty tasks must link to /chat with a prompt parameter")
 	}
 }
@@ -98,7 +98,7 @@ func TestCanvasEmptyStateHasHeading(t *testing.T) {
 	wantStatus(t, rec, http.StatusOK)
 	body := rec.Body.String()
 
-	if !strings.Contains(body, `<h2>Nothing here yet</h2>`) {
+	if !strings.Contains(body, `<h2 class="sw-empty__title">Nothing here yet</h2>`) {
 		t.Errorf("empty canvas should have an h2 heading 'Nothing here yet'\n%s", truncate(body))
 	}
 }
@@ -112,10 +112,10 @@ func TestCanvasEmptyStateHasActionPrompt(t *testing.T) {
 	wantStatus(t, rec, http.StatusOK)
 	body := rec.Body.String()
 
-	if !strings.Contains(body, `<p class="sw-empty">`) {
+	if !strings.Contains(body, `data-component="empty"`) {
 		t.Error("empty canvas should use the sw-empty paragraph")
 	}
-	if !strings.Contains(body, `<a href="/chat?prompt=`) {
+	if !strings.Contains(body, `href="/chat?prompt=`) {
 		t.Error("empty canvas must link to /chat with a prompt parameter")
 	}
 }
@@ -131,15 +131,15 @@ func TestActivityEmptyStateHasNoHeading(t *testing.T) {
 	wantStatus(t, rec, http.StatusOK)
 	body := rec.Body.String()
 
-	if !strings.Contains(body, `<p class="sw-empty">`) {
+	if !strings.Contains(body, `data-component="empty"`) {
 		t.Errorf("empty activity page should use the sw-empty paragraph\n%s", truncate(body))
 	}
 	if strings.Contains(body, "<h2") {
 		t.Error("empty activity page must not introduce an h2 element — it already has an h1 from layout")
 	}
 	// The new text uses <strong> for "No activity yet" inside the paragraph.
-	if !strings.Contains(body, `<strong>No activity yet</strong>`) {
-		t.Errorf("empty activity page should say 'No activity yet' in bold\n%s", truncate(body))
+	if !strings.Contains(body, `No activity yet.`) {
+		t.Errorf("empty activity page should say 'No activity yet'\n%s", truncate(body))
 	}
 }
 
@@ -152,7 +152,7 @@ func TestSearchEmptyStateHasHeading(t *testing.T) {
 	wantStatus(t, rec, http.StatusOK)
 	body := rec.Body.String()
 
-	if !strings.Contains(body, `<h2>No results</h2>`) {
+	if !strings.Contains(body, `<h2 class="sw-empty__title">No results</h2>`) {
 		t.Errorf("empty search should have an h2 heading 'No results'\n%s", truncate(body))
 	}
 }
@@ -191,7 +191,7 @@ func TestWorkspacesEmptyStateHasHeading(t *testing.T) {
 	wantStatus(t, rec, http.StatusOK)
 	body := rec.Body.String()
 
-	if !strings.Contains(body, `<h2 id="ws-others">No workspaces yet</h2>`) {
+	if !strings.Contains(body, `<h2 class="sw-empty__title">No workspaces yet</h2>`) {
 		t.Errorf("empty other-workspaces should have an h2 heading 'No workspaces yet'\n%s", truncate(body))
 	}
 }
@@ -205,7 +205,7 @@ func TestWorkspacesEmptyStateHasActionPrompt(t *testing.T) {
 	wantStatus(t, rec, http.StatusOK)
 	body := rec.Body.String()
 
-	if !strings.Contains(body, `<p class="sw-empty">`) {
+	if !strings.Contains(body, `data-component="empty"`) {
 		t.Error("empty other-workspaces should use the sw-empty paragraph")
 	}
 	// The new text is "Create one below." — a single short sentence.
@@ -222,35 +222,35 @@ func TestEmptyStateHeadingIsShort(t *testing.T) {
 	rec := get(t, h, "/t/note")
 	wantStatus(t, rec, http.StatusOK)
 	body := rec.Body.String()
-	if !strings.Contains(body, `<h2>No note yet</h2>`) {
+	if !strings.Contains(body, `<h2 class="sw-empty__title">No notes yet</h2>`) {
 		t.Errorf("heading for notes should be 'No note yet' (≤4 words)\n%s", truncate(body))
 	}
 
 	rec = get(t, h, "/")
 	wantStatus(t, rec, http.StatusOK)
 	body = rec.Body.String()
-	if !strings.Contains(body, `<h2>Nothing here yet</h2>`) {
+	if !strings.Contains(body, `<h2 class="sw-empty__title">Nothing here yet</h2>`) {
 		t.Errorf("heading for canvas should be 'Nothing here yet' (≤4 words)\n%s", truncate(body))
 	}
 
 	rec = get(t, h, "/activity")
 	wantStatus(t, rec, http.StatusOK)
 	body = rec.Body.String()
-	if !strings.Contains(body, `<strong>No activity yet</strong>`) {
+	if !strings.Contains(body, `No activity yet.`) {
 		t.Errorf("heading for activity should be 'No activity yet' (≤4 words)\n%s", truncate(body))
 	}
 
 	rec = get(t, h, "/search?q=nonexistent")
 	wantStatus(t, rec, http.StatusOK)
 	body = rec.Body.String()
-	if !strings.Contains(body, `<h2>No results</h2>`) {
+	if !strings.Contains(body, `<h2 class="sw-empty__title">No results</h2>`) {
 		t.Errorf("heading for search should be 'No results' (≤4 words)\n%s", truncate(body))
 	}
 
 	rec = get(t, h, "/workspaces")
 	wantStatus(t, rec, http.StatusOK)
 	body = rec.Body.String()
-	if !strings.Contains(body, `<h2 id="ws-others">No workspaces yet</h2>`) {
+	if !strings.Contains(body, `<h2 class="sw-empty__title">No workspaces yet</h2>`) {
 		t.Errorf("heading for workspaces should be 'No workspaces yet' (≤4 words)\n%s", truncate(body))
 	}
 }
@@ -263,28 +263,28 @@ func TestEmptyStateActionPromptIsShort(t *testing.T) {
 	rec := get(t, h, "/t/note")
 	wantStatus(t, rec, http.StatusOK)
 	body := rec.Body.String()
-	if !strings.Contains(body, `<a href="/chat`) {
+	if !strings.Contains(body, `href="/chat`) {
 		t.Error("note empty-state must link to /chat")
 	}
 
 	rec = get(t, h, "/")
 	wantStatus(t, rec, http.StatusOK)
 	body = rec.Body.String()
-	if !strings.Contains(body, `<a href="/chat`) {
+	if !strings.Contains(body, `href="/chat`) {
 		t.Error("canvas empty-state must link to /chat")
 	}
 
 	rec = get(t, h, "/activity")
 	wantStatus(t, rec, http.StatusOK)
 	body = rec.Body.String()
-	if !strings.Contains(body, `<a href="/chat">here</a>`) {
-		t.Error("activity empty-state must link to /chat with text 'here'")
+	if !strings.Contains(body, `href="/chat">Send a message</a>`) {
+		t.Error("activity empty-state must link to /chat with text that says what it does (never 'here')")
 	}
 
 	rec = get(t, h, "/workspaces")
 	wantStatus(t, rec, http.StatusOK)
 	body = rec.Body.String()
-	if !strings.Contains(body, `<p class="sw-empty">`) {
+	if !strings.Contains(body, `data-component="empty"`) {
 		t.Error("workspaces empty-state must use sw-empty paragraph")
 	}
 }

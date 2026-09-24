@@ -58,7 +58,9 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	}
 	if len(recs) == 0 {
 		prompt := "Create a " + t.Name + "."
-		fmt.Fprintf(&b, `<h2>No %s yet</h2><p class="sw-empty">Add one yourself, or <a href="/chat?prompt=%s">ask the assistant</a>.</p>`, template.HTMLEscapeString(t.Name), template.HTMLEscapeString(url.PathEscape(prompt)))
+		b.WriteString(string(s.component("empty", map[string]any{
+			"title": "No " + plural(t.Name) + " yet", "message": "Add one yourself, or", "action": map[string]any{"href": "/chat?prompt=" + url.PathEscape(prompt), "label": "ask the assistant"},
+		})))
 	} else {
 		b.WriteString(s.rows(t, recs, time.Now()))
 	}
@@ -119,33 +121,16 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	// already said, so the page says each thing once; ?show=fields brings
 	// the whole record back except for those already-in-chips fields.
 	head := headFields(t, rec)
-	var dl strings.Builder
+	var items []any
 	for _, f := range t.Fields {
 		val := display(f, rec.Fields[f.Name])
-		if val == "" || f.Name == textField {
+		if val == "" || f.Name == textField || head[f.Name] {
 			continue
 		}
-		if head[f.Name] {
-			continue
-		}
-		if f.Type == "markdown" {
-			fmt.Fprintf(&dl, `<dt>%s</dt><dd class="sw-prose" data-prop="%s" data-source="%s" data-prose-level="3">%s</dd>`, template.HTMLEscapeString(label(f.Name)), f.Name, template.HTMLEscapeString(val), prose.Render(val, 3))
-			continue
-		}
-		// A reminder's about is the thing it is for, as the way there.
-		if t.Name == ReminderType && f.Name == "about" {
-			fmt.Fprintf(&dl, `<dt>%s</dt>%s`, template.HTMLEscapeString(label(f.Name)), s.aboutCell(f, val))
-			continue
-		}
-		// A ref shows the record it points at, as the way there.
-		if f.Type == "ref" {
-			fmt.Fprintf(&dl, `<dt>%s</dt>%s`, template.HTMLEscapeString(label(f.Name)), s.refCell(f, val))
-			continue
-		}
-		fmt.Fprintf(&dl, `<dt>%s</dt><dd data-prop="%s"%s%s>%s</dd>`, template.HTMLEscapeString(label(f.Name)), f.Name, whenAttrs(f, rec.Fields[f.Name]), s.choices(f, val), template.HTMLEscapeString(val))
+		items = append(items, s.fieldItem(t, f, rec.Fields[f.Name], val))
 	}
-	if dl.Len() > 0 {
-		b.WriteString(`<dl class="sw-dl">` + dl.String() + "</dl>")
+	if len(items) > 0 {
+		b.WriteString(string(s.component("fields", map[string]any{"items": items})))
 	}
 	// The way back out, when the address is what opened the whole record.
 	b.WriteString(s.fewer("/t/"+t.Name+"/"+rec.ID, FieldsPart, "fields of "+s.title(t, rec), here))
@@ -173,7 +158,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	// says which of them are open. See related.go.
 	b.WriteString(s.related(t, rec, always, here))
 	s.page(w, r, trimTitle(s.title(t, rec)), template.HTML(b.String()), pageOptions{
-		Kicker:       crumbs("/t/"+t.Name, capitalize(plural(t.Name)), "", s.dotOf(t.Name)),
+		Kicker:       s.crumbs("/t/"+t.Name, capitalize(plural(t.Name)), "", s.dotOf(t.Name)),
 		Lede:         s.lede(t, rec),
 		JSONURL:      "/api/" + t.Name + "/" + rec.ID,
 		ExtraScripts: detailPageExtraScripts,
@@ -242,19 +227,16 @@ func titleOf(t *schema.Type, rec *store.Record) string {
 // then the record itself (when here is non-empty). When here is empty,
 // only the listing link renders — useful on detail pages where the title
 // already appears as h1 and repeating it in crumbs would be redundant.
-func crumbs(listHref, listLabel, here string, dot int) template.HTML {
-	mark := ""
+func (s *Server) crumbs(listHref, listLabel, here string, dot int) template.HTML {
+	place := map[string]any{"href": listHref, "label": listLabel}
 	if dot > 0 {
-		mark = fmt.Sprintf(` class="sw-dotted" data-dot="%d"`, dot)
+		place["dot"] = dot
 	}
-	listLabelEscaped := template.HTMLEscapeString(listLabel)
-	listHrefEscaped := template.HTMLEscapeString(listHref)
-	if here == "" {
-		return template.HTML(fmt.Sprintf(`<nav class="sw-crumbs" aria-label="You are here"><ol class="sw-plain sw-crumbs__list"><li%s><a class="sw-link" href="%s">%s</a></li></ol></nav>`,
-			mark, listHrefEscaped, listLabelEscaped))
+	props := map[string]any{"items": []any{place}}
+	if here != "" {
+		props["current"] = here
 	}
-	return template.HTML(fmt.Sprintf(`<nav class="sw-crumbs" aria-label="You are here"><ol class="sw-plain sw-crumbs__list"><li%s><a class="sw-link" href="%s">%s</a></li><li aria-current="page">%s</li></ol></nav>`,
-		mark, listHrefEscaped, listLabelEscaped, template.HTMLEscapeString(here)))
+	return s.component("crumbs", props)
 }
 
 // trimTitle cuts a title to at most six words so no h1 heading exceeds the
@@ -289,11 +271,26 @@ func fieldLabel(f schema.Field) string {
 	return label(f.Name)
 }
 
-// whenAttrs marks a date on a page for the editor and for a machine: the
-// kind, and the stored value under the words a person reads.
-func whenAttrs(f schema.Field, v any) string {
-	if f.Type != "datetime" || v == nil || v == "" {
-		return ""
+// fieldItem is one field of a record as the fields component shows it:
+// structured text as it reads, a ref or a reminder's about as the way to
+// what it names, a choice by its name with the stored value kept for the
+// editor, a date in words with the moment kept under it.
+func (s *Server) fieldItem(t *schema.Type, f schema.Field, v any, val string) map[string]any {
+	switch {
+	case f.Type == "markdown":
+		return map[string]any{"label": fieldLabel(f), "markdown": val, "prop": f.Name}
+	case t.Name == ReminderType && f.Name == "about":
+		return s.aboutItem(f, val)
+	case f.Type == "ref":
+		return s.refItem(f, val)
 	}
-	return fmt.Sprintf(` data-kind="datetime" data-source="%s"`, template.HTMLEscapeString(fmt.Sprint(v)))
+	item := map[string]any{"label": fieldLabel(f), "value": val, "prop": f.Name}
+	switch f.Type {
+	case "datetime":
+		item["kind"], item["source"] = "datetime", fmt.Sprint(v)
+	case "enum":
+		item["source"] = fmt.Sprint(v)
+		item["options"] = s.choiceList(f, fmt.Sprint(v))
+	}
+	return item
 }

@@ -53,7 +53,8 @@ async function arm() {
 const FOCUSABLE = 'a[href], button:not([disabled]), summary, input:not([disabled]):not([type=hidden]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 const focusables = () => page.evaluate((sel) => {
-  return [...document.querySelectorAll(sel)].filter((el) => !el.closest(".shell")).map((el) => el.tagName.toLowerCase() + (el.id ? "#" + el.id : ""));
+  // Only what is drawn: a control hidden until a script shows it is not met.
+  return [...document.querySelectorAll(sel)].filter((el) => !el.closest(".shell") && el.getClientRects().length > 0).map((el) => el.tagName.toLowerCase() + (el.id ? "#" + el.id : ""));
 }, FOCUSABLE);
 
 const active = () => page.evaluate(() => {
@@ -103,7 +104,7 @@ async function tabOrder(where, mode) {
 // Operates every control in the example by the kind of element it is.
 async function operate(where, enterSubmits) {
   const count = await page.evaluate((sel) => {
-    const els = [...document.querySelectorAll(sel)].filter((el) => !el.closest(".shell"));
+    const els = [...document.querySelectorAll(sel)].filter((el) => !el.closest(".shell") && el.getClientRects().length > 0);
     els.forEach((el, i) => { el.dataset.kb = i; });
     return els.length;
   }, FOCUSABLE);

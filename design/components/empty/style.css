@@ -1,0 +1,8 @@
+/* Nothing here yet: a quiet panel, centred, that reads as a pause rather
+   than an error, with the way to fill it as its last words. */
+.sw-empty {
+  padding: var(--sw-space-8) var(--sw-space-4); text-align: center; color: var(--sw-color-fg-muted);
+  background: var(--sw-color-bg-muted); border-radius: var(--sw-radius-lg);
+}
+.sw-empty__title { margin: 0 0 var(--sw-space-2); font-size: var(--sw-size-text-lg); color: var(--sw-color-fg); }
+.sw-empty__message { margin: 0; }

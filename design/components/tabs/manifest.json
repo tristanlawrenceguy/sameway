@@ -1,0 +1,43 @@
+{
+  "name": "tabs",
+  "version": "1.0.0",
+  "description": "A row of places at the same level, such as the canvases, one of them the page a person is on. Each is a link: switching is going to a page, so it needs no script.",
+  "icon": "▭",
+  "use": { "when": "a few sibling pages a person moves between, such as canvases.", "not": "showing and hiding parts of one page, or the main navigation.", "with": "a bar only once there is a second place; one tab says nothing." },
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["label", "items"],
+    "properties": {
+      "label": { "type": "string", "minLength": 1, "description": "Names the navigation landmark, such as Canvases." },
+      "items": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["href", "label"],
+          "properties": {
+            "href": { "type": "string" },
+            "label": { "type": "string" },
+            "current": { "type": "boolean", "description": "The page a person is on." }
+          }
+        }
+      }
+    }
+  },
+  "a11y": {
+    "role": "navigation holding a list of links, the current one aria-current=page",
+    "keyboard": [{ "key": "Tab", "does": "reaches each tab in turn" }, { "key": "Enter", "does": "goes to that page" }],
+    "states": ["aria-current"],
+    "wcag": { "target": "AAA", "notes": "Links in a named navigation rather than an ARIA tablist: each goes to a page, which is what a link is for, and needs no arrow-key script (4.1.2). The current one is marked with aria-current and in weight and an underline, not colour alone (1.4.1). Each reaches a 44px target (2.5.5)." }
+  },
+  "machine": {
+    "selector": "[data-component=\"tabs\"]",
+    "identify": "Each link is a place; [aria-current=page] is the one open now.",
+    "operate": "Follow a link to go to that place."
+  },
+  "examples": [
+    { "name": "default", "props": { "label": "Canvases", "items": [{ "href": "/", "label": "Home", "current": true }, { "href": "/c/garden", "label": "Garden" }, { "href": "/c/money", "label": "Money" }] }, "file": "examples/default.html" }
+  ]
+}

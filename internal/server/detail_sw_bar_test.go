@@ -141,11 +141,11 @@ func TestDetailPageSwBarStructure(t *testing.T) {
 
 	blockContent := body[blockOpen : blockOpen+blockEnd]
 
-	dlIdx := strings.Index(blockContent, `<dl class="sw-dl">`)
+	dlIdx := strings.Index(blockContent, `<dl class="sw-fields"`)
 	barIdx := strings.Index(blockContent, `<div class="sw-bar sw-quiet">`)
 
 	if dlIdx < 0 {
-		t.Errorf("sw-dl-block should contain a dl.sw-dl\n%s", truncate(body))
+		t.Errorf("sw-dl-block should contain the fields component\n%s", truncate(body))
 	}
 	if barIdx < 0 {
 		t.Errorf("sw-dl-block should contain a div.sw-bar.sw-quiet\n%s", truncate(body))

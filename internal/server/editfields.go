@@ -106,7 +106,7 @@ func (s *Server) editControls(parts ...template.HTML) template.HTML {
 	return template.HTML(`<template id="sw-controls">` +
 		control("text", "text-field", map[string]any{"type": "text"}) +
 		control("number", "text-field", map[string]any{"type": "number"}) +
-		control("when", "text-field", map[string]any{"type": "text", "hint": "A day, like 19 Sep or next Friday, with a time if there is one, like 2pm."}) +
+		control("when", "when-field", map[string]any{}) +
 		control("textarea", "textarea", map[string]any{"rows": 3}) +
 		control("select", "select", map[string]any{"options": []any{map[string]any{"value": "", "label": ""}}}) +
 		control("checkbox", "checkbox", map[string]any{"value": "true"}) +

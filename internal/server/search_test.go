@@ -53,7 +53,7 @@ func TestSearchEmptyStateHasH2AndSuggestion(t *testing.T) {
 	wantStatus(t, page, http.StatusOK)
 	body := page.Body.String()
 
-	if !strings.Contains(body, "<h2>") {
+	if !strings.Contains(body, "<h2 ") && !strings.Contains(body, "<h2>") {
 		t.Error("empty search should have an h2 heading for the no-results state")
 	}
 	if strings.Contains(body, `<h1>Search`) && !strings.Contains(body, `Search: nonexistent`) {

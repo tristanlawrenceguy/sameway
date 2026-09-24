@@ -15,10 +15,6 @@ ol.sw-plain, ul.sw-plain { list-style: none; margin: 0; padding: 0; }
   background: var(--sw-color-bg-raised); border: 1px solid var(--sw-color-border);
   border-radius: var(--sw-radius-lg); box-shadow: var(--sw-shadow-1); padding: var(--sw-space-4);
 }
-.sw-empty {
-  padding: var(--sw-space-8) var(--sw-space-4); text-align: center; color: var(--sw-color-fg-muted);
-  background: var(--sw-color-bg-muted); border-radius: var(--sw-radius-lg);
-}
 
 /* The canvas is the page: a twelve column grid on wide screens, one column
    on narrow ones. Each block sets --sw-span for how many columns it takes. */
@@ -69,12 +65,7 @@ ol.sw-plain, ul.sw-plain { list-style: none; margin: 0; padding: 0; }
    chrome to fade: a person came here for this one thing. They stay
    visible where the quiet bar puts them. */
 .sw-dl-block > .sw-bar.sw-quiet { --sw-quiet-opacity: 1; }
-.sw-dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0 var(--sw-space-8); margin: 0; max-width: var(--sw-size-measure); }
-.sw-dl dt, .sw-dl dd { padding: var(--sw-space-3) 0; border-top: 1px solid var(--sw-color-border); }
-.sw-dl dt { font-weight: 500; font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); padding-top: calc(var(--sw-space-3) + 0.1em); }
-.sw-dl dd { margin: 0; overflow-wrap: anywhere; }
-.sw-dl > :nth-child(-n + 2) { border-top: 0; }
-.sw-dl-block .sw-dl { margin-bottom: var(--sw-space-2); }
+.sw-dl-block .sw-fields { margin-bottom: var(--sw-space-2); }
 .sw-detail__when { margin: 0 0 var(--sw-space-4); }
 
 /* A listing is rows with air, not boxes: a checkbox at the front when the
@@ -92,27 +83,6 @@ ol.sw-plain, ul.sw-plain { list-style: none; margin: 0; padding: 0; }
 .sw-row__meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--sw-space-2); margin: 0 0 0 auto; color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); white-space: nowrap; }
 .sw-when--past, .sw-when--today { color: var(--sw-color-warning); font-weight: 600; }
 .sw-row__note { color: var(--sw-color-fg-muted); font-weight: 400; font-size: var(--sw-size-text-sm); margin-left: var(--sw-space-2); }
-
-/* Crumbs are the way back from a detail page: the listing, then the item. */
-.sw-crumbs { margin-bottom: var(--sw-space-4); font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); }
-.sw-crumbs__list { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sw-space-2); }
-.sw-crumbs__list li + li::before { content: "\203A"; margin-right: var(--sw-space-2); color: var(--sw-color-fg-muted); }
-.sw-crumbs .sw-link { display: inline-flex; align-items: center; justify-content: center; min-height: var(--sw-size-target); min-width: var(--sw-size-target); }
-.sw-crumbs [aria-current="page"] { color: var(--sw-color-fg); }
-
-/* Tabs are canvases: a row of links to them, the current one underlined in
-   the accent, shown only once there is a second tab. Switching is a page
-   navigation, so this needs no script. */
-.sw-tabs { margin-bottom: var(--sw-space-6); border-bottom: 1px solid var(--sw-color-border); }
-.sw-tabs__list { display: flex; flex-wrap: wrap; gap: var(--sw-space-1); }
-.sw-tabs .sw-link {
-  display: inline-flex; align-items: center; min-height: var(--sw-size-target);
-  padding: 0 var(--sw-space-3); margin-bottom: -1px;
-  border-bottom: 3px solid transparent; border-radius: var(--sw-radius-md) var(--sw-radius-md) 0 0;
-  text-decoration: none; color: var(--sw-color-fg-muted); font-weight: 500;
-}
-.sw-tabs .sw-link:hover { background: var(--sw-color-bg-muted); color: var(--sw-color-fg); }
-.sw-tabs .sw-link[aria-current="page"] { color: var(--sw-color-fg); border-bottom-color: var(--sw-color-accent); font-weight: 700; }
 
 /* solo is a workspace with nothing but its conversation: centred, the way
    every assistant opens. */

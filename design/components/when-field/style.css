@@ -1,0 +1,8 @@
+/* The words take the room; the picker sits beside them, and under them
+   when there is no room. */
+.sw-when-field__row { display: flex; flex-wrap: wrap; gap: var(--sw-space-2); }
+.sw-when-field__row > .sw-field__input:first-child { flex: 1 1 14rem; }
+.sw-when-field__pick { flex: 0 0 auto; }
+/* Hidden until its script can make it write into the words: the field
+   styles would otherwise show it. */
+.sw-when-field__pick[hidden] { display: none; }

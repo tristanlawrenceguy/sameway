@@ -32,14 +32,18 @@ func (s *Server) refTitle(f schema.Field, id string) string {
 	return s.title(t, rec)
 }
 
-// refCell is a ref on a record's page: the target's title as a link to
-// its page, with the id kept on the element for the inline editor.
-func (s *Server) refCell(f schema.Field, id string) string {
-	title := s.refTitle(f, id)
-	if _, err := s.app.Store.Get(f.To, id); err != nil {
-		return fmt.Sprintf(`<dd data-prop="%s" data-source="%s"%s>%s</dd>`, f.Name, template.HTMLEscapeString(id), s.choices(f, id), template.HTMLEscapeString(title))
+// refItem is a ref on a record's page, as one of its fields: the target's
+// title as a link to its page, with the id and the other choices kept for
+// the inline editor.
+func (s *Server) refItem(f schema.Field, id string) map[string]any {
+	item := map[string]any{"label": fieldLabel(f), "value": s.refTitle(f, id), "prop": f.Name, "source": id}
+	if list := s.choiceList(f, id); len(list) > 0 {
+		item["options"] = list
 	}
-	return fmt.Sprintf(`<dd data-prop="%s" data-source="%s"%s><a class="sw-link" href="/t/%s/%s">%s</a></dd>`, f.Name, template.HTMLEscapeString(id), s.choices(f, id), f.To, id, template.HTMLEscapeString(title))
+	if _, err := s.app.Store.Get(f.To, id); err == nil {
+		item["href"] = "/t/" + f.To + "/" + id
+	}
+	return item
 }
 
 // maxChoices is how many records a ref offers to choose from when edited;
@@ -51,37 +55,46 @@ const maxChoices = 500
 // enum's values, or a ref's records by their titles, so nobody is asked
 // to type an id. Empty when there is no such set.
 func (s *Server) choices(f schema.Field, current string) string {
-	type choice struct {
-		Value string `json:"value"`
-		Label string `json:"label"`
-	}
-	var list []choice
-	switch f.Type {
-	case "enum":
-		for _, v := range f.Values {
-			list = append(list, choice{v, f.ValueLabel(v)})
-		}
-	case "ref":
-		t, ok := s.app.Types.Get(f.To)
-		if !ok {
-			return ""
-		}
-		recs, err := s.app.Store.List(f.To, store.ListOptions{OrderBy: "created_at", Limit: maxChoices + 1})
-		if err != nil || len(recs) > maxChoices {
-			return ""
-		}
-		found := false
-		for _, rec := range recs {
-			list = append(list, choice{rec.ID, s.title(t, rec)})
-			found = found || rec.ID == current
-		}
-		if current != "" && !found {
-			list = append(list, choice{current, s.refTitle(f, current)})
-		}
-	}
+	list := s.choiceList(f, current)
 	if len(list) == 0 {
 		return ""
 	}
 	b, _ := json.Marshal(list)
 	return fmt.Sprintf(` data-options="%s"`, template.HTMLEscapeString(string(b)))
+}
+
+// choiceList is the same choices as a list of {value, label}, for a
+// component to carry; empty when there are none to offer.
+func (s *Server) choiceList(f schema.Field, current string) []any {
+	// A struct rather than a map, so the value comes first when written.
+	type choice struct {
+		Value string `json:"value"`
+		Label string `json:"label"`
+	}
+	var list []any
+	add := func(value, label string) { list = append(list, choice{value, label}) }
+	switch f.Type {
+	case "enum":
+		for _, v := range f.Values {
+			add(v, f.ValueLabel(v))
+		}
+	case "ref":
+		t, ok := s.app.Types.Get(f.To)
+		if !ok {
+			return nil
+		}
+		recs, err := s.app.Store.List(f.To, store.ListOptions{OrderBy: "created_at", Limit: maxChoices + 1})
+		if err != nil || len(recs) > maxChoices {
+			return nil
+		}
+		found := false
+		for _, rec := range recs {
+			add(rec.ID, s.title(t, rec))
+			found = found || rec.ID == current
+		}
+		if current != "" && !found {
+			add(current, s.refTitle(f, current))
+		}
+	}
+	return list
 }

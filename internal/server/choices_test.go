@@ -1,7 +1,9 @@
 package server_test
 
 import (
+	"encoding/json"
 	"html"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -19,16 +21,47 @@ func TestAFieldWithChoicesOffersThemByName(t *testing.T) {
 	a.Store.Create(server.HabitType, map[string]any{"name": "Stretch"})
 	entry, _ := a.Store.Create(server.EntryType, map[string]any{"habit": water.ID, "at": when.Store(time.Now(), false), "amount": 2})
 
-	page := html.UnescapeString(get(t, h, "/t/entry/"+entry.ID).Body.String())
-	for _, want := range []string{`data-prop="habit" data-source="` + water.ID + `" data-options=`, `{"value":"` + water.ID + `","label":"Water"}`, `"label":"Stretch"}`} {
-		if !strings.Contains(page, want) {
-			t.Errorf("the habit is chosen by name, missing %q", want)
-		}
+	// Every place the page offers the habit to the editor, it offers each
+	// habit by its name, with the one there now as its value.
+	page := get(t, h, "/t/entry/"+entry.ID).Body.String()
+	habits := offered(t, page, "habit")
+	if habits[water.ID] != "Water" || !containsLabel(habits, "Stretch") || !strings.Contains(html.UnescapeString(page), `data-prop="habit" data-source="`+water.ID+`"`) {
+		t.Errorf("the habit is chosen by name: %v", habits)
 	}
-	page = html.UnescapeString(get(t, h, "/t/habit/"+water.ID).Body.String())
 	// An enum offers its values by the names the schema gives them, and
 	// stores the value.
-	if !strings.Contains(page, `[{"value":"reach","label":"At least the target"},{"value":"limit","label":"At most the target"},{"value":"record","label":"Just keep a record"}]`) {
-		t.Error("an enum offers its values by name")
+	aims := offered(t, get(t, h, "/t/habit/"+water.ID).Body.String(), "aim")
+	if aims["reach"] != "At least the target" || aims["limit"] != "At most the target" || aims["record"] != "Just keep a record" {
+		t.Errorf("an enum offers its values by name: %v", aims)
 	}
+}
+
+// offered reads every data-options a page carries for one field, as value
+// to label; the order of keys inside each option does not matter.
+func offered(t *testing.T, page, prop string) map[string]string {
+	t.Helper()
+	out := map[string]string{}
+	re := regexp.MustCompile(`data-prop="` + prop + `"[^>]*?data-options="([^"]*)"`)
+	for _, m := range re.FindAllStringSubmatch(page, -1) {
+		var list []struct{ Value, Label string }
+		if err := json.Unmarshal([]byte(html.UnescapeString(m[1])), &list); err != nil {
+			t.Fatalf("data-options for %s is not a list of choices: %v", prop, err)
+		}
+		for _, c := range list {
+			out[c.Value] = c.Label
+		}
+	}
+	if len(out) == 0 {
+		t.Fatalf("the page offers no choices for %s", prop)
+	}
+	return out
+}
+
+func containsLabel(m map[string]string, label string) bool {
+	for _, l := range m {
+		if l == label {
+			return true
+		}
+	}
+	return false
 }

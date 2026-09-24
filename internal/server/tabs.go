@@ -1,9 +1,7 @@
 package server
 
 import (
-	"fmt"
 	"html/template"
-	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 )
@@ -21,15 +19,11 @@ func (s *Server) tabBar(current string) template.HTML {
 	if len(canvases) < 2 {
 		return ""
 	}
-	var b strings.Builder
-	b.WriteString(`<nav class="sw-tabs" aria-label="Canvases"><ul class="sw-plain sw-tabs__list">`)
+	var items []any
 	for _, c := range canvases {
-		fmt.Fprintf(&b, `<li>%s</li>`, s.component("link", map[string]any{
-			"href": c.Path, "label": c.Name, "current": c.ID == current,
-		}))
+		items = append(items, map[string]any{"href": c.Path, "label": c.Name, "current": c.ID == current})
 	}
-	b.WriteString(`</ul></nav>`)
-	return template.HTML(b.String())
+	return s.component("tabs", map[string]any{"label": "Canvases", "items": items})
 }
 
 // seedChat puts a conversation on an empty canvas, so a new workspace and a

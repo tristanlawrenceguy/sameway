@@ -56,6 +56,8 @@ type conversationView struct {
 	ModelName string
 	From      string
 	Proposals []template.HTML
+	// Empty is what the chat says before its first message.
+	Empty template.HTML
 	// Title names the current chat, ChatID is its id, and Chats lists
 	// every chat for the menu.
 	Title  string
@@ -120,6 +122,7 @@ func (s *Server) conversationAbout(from, about, prompt string) (*conversation, e
 		view.Status = s.component("status", map[string]any{"id": "chat-status", "message": "Assistant is working", "state": "working"})
 	}
 	view.Proposals = s.proposals(from)
+	view.Empty = s.component("empty", map[string]any{"message": "Ask for anything."})
 	compose := map[string]any{"label": "Your message", "name": "message", "rows": 3, "required": true, "hint": "Ask for anything, or ask what something on the page is. Enter sends; Shift+Enter starts a new line."}
 	if prompt != "" {
 		compose["value"] = prompt

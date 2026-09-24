@@ -42,7 +42,7 @@ func TestListPageEmptyStateIsActionable(t *testing.T) {
 	body := rec.Body.String()
 
 	// The new empty state should use the sw-empty class and include a link to create.
-	if !strings.Contains(body, `<p class="sw-empty">`) {
+	if !strings.Contains(body, `data-component="empty"`) {
 		t.Errorf("empty list page should use the sw-empty class\n%s", truncate(body))
 	}
 	// It should tell the person what to do next — "Ask the assistant" is the pattern.

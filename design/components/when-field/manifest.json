@@ -1,0 +1,42 @@
+{
+  "name": "when-field",
+  "version": "1.0.0",
+  "description": "A day, or a day and a time, written the way a person says it: 19 Sep, next Friday, tomorrow 2pm. The platform's own date picker stands beside the words for anyone who would rather look at a month, and picking a day writes it into them.",
+  "icon": "◴",
+  "use": { "when": "asking for when something is, due or happens.", "not": "a day that must be picked from a month and never typed, which is the datepicker.", "with": "a hint, which is always shown, with an example of what can be typed." },
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["label", "name"],
+    "properties": {
+      "label": { "type": "string", "minLength": 1 },
+      "name": { "type": "string", "minLength": 1 },
+      "id": { "type": "string" },
+      "value": { "type": "string", "description": "The day as a person reads it, such as Fri 2 Oct 2026 14:00." },
+      "day": { "type": "string", "description": "The same day as YYYY-MM-DD, so the picker opens on it." },
+      "hint": { "type": "string", "default": "A day, like 19 Sep or next Friday, with a time if there is one, like 2pm." },
+      "error": { "type": "string" },
+      "required": { "type": "boolean", "default": false }
+    }
+  },
+  "a11y": {
+    "role": "textbox, with a date picker beside it once scripts run",
+    "keyboard": [
+      { "key": "Tab", "does": "moves from the words to the picker and on" },
+      { "key": "Up / Down", "does": "in the picker, changes the part under the cursor" },
+      { "key": "Space or Enter", "does": "in the picker, opens the platform's calendar" }
+    ],
+    "states": ["aria-invalid"],
+    "wcag": { "target": "AAA", "notes": "Typing a day is the fastest way for most people and the only way for some; the picker is there for the rest. The hint says what can be typed and is tied to the field (3.3.2); an error is tied to it too (3.3.1). The picker is hidden until scripts run, since without them it could not write into the words." }
+  },
+  "machine": {
+    "selector": "[data-component=\"when-field\"]",
+    "identify": "input.sw-field__input[type=text] holds the words that are sent; input[type=date] is the picker, which sends nothing itself.",
+    "operate": "Type a day into the text field, such as 2026-10-02 or next Friday 2pm; the server reads it."
+  },
+  "examples": [
+    { "name": "default", "props": { "label": "Due", "name": "due", "id": "due" }, "file": "examples/default.html" },
+    { "name": "filled", "props": { "label": "Starts", "name": "starts", "id": "starts", "value": "Fri 2 Oct 2026 14:00", "day": "2026-10-02" }, "file": "examples/filled.html" },
+    { "name": "error", "props": { "label": "Deadline", "name": "deadline", "id": "deadline", "value": "someday", "required": true, "error": "Say a day, like 19 Sep or next Friday." }, "file": "examples/error.html" }
+  ]
+}
