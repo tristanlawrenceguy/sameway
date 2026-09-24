@@ -279,6 +279,15 @@ func label(field string) string {
 	return strings.ToUpper(s[:1]) + s[1:]
 }
 
+// fieldLabel is what a person calls a field: the schema's label, else its
+// name made readable.
+func fieldLabel(f schema.Field) string {
+	if f.Label != "" {
+		return f.Label
+	}
+	return label(f.Name)
+}
+
 // whenAttrs marks a date on a page for the editor and for a machine: the
 // kind, and the stored value under the words a person reads.
 func whenAttrs(f schema.Field, v any) string {

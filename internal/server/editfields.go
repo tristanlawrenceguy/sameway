@@ -47,10 +47,7 @@ func (s *Server) editFields(t *schema.Type, rec *store.Record) string {
 func (s *Server) editField(f schema.Field, v any) string {
 	val := display(f, v)
 	esc := template.HTMLEscapeString
-	name, lab := esc(f.Name), ` data-label="`+esc(label(f.Name))+`"`
-	if f.Label != "" {
-		lab = ` data-label="` + esc(f.Label) + `"`
-	}
+	name, lab := esc(f.Name), ` data-label="`+esc(fieldLabel(f))+`"`
 	switch f.Type {
 	case "markdown":
 		return fmt.Sprintf(`<div class="sw-prose" data-prop="%s"%s data-source="%s" data-prose-level="2">%s</div>`, name, lab, esc(val), prose.Render(val, 2))

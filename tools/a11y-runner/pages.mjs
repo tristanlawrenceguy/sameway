@@ -122,8 +122,10 @@ check(reachedSave, "edit: Tab from the body reaches Save");
 if (reachedSave) {
   // The save goes by script without leaving the page; wait for it to land.
   const saved = page.waitForResponse((r) => r.request().method() === "POST", { timeout: 10000 }).catch(() => null);
+  const reloaded = page.waitForEvent("load", { timeout: 10000 }).catch(() => null);
   await page.keyboard.press("Enter");
   await saved;
+  await reloaded;
   const stored = await (await fetch(`${base}/api/note/${apiNote.id}`)).json();
   check(String(stored.fields.body).includes("Typed by keyboard."), `edit: what was typed is saved (stored ${JSON.stringify(stored.fields.body)})`);
 }
