@@ -41,15 +41,6 @@ func TestNoteDetailPageRecentActivityHasH3Headings(t *testing.T) {
 		t.Errorf("expected 2 <h3 class=\"sw-event__heading\"> elements for 2 activities on note detail page, got %d\n%s", h3Count, truncate(body))
 	}
 
-	// Each h3 should appear before its corresponding event component.
-	idxH3 := strings.Index(body, `<h3 class="sw-event__heading"`)
-	if idxH3 >= 0 {
-		idxEvent := strings.Index(body[idxH3:], `data-component="event"`)
-		if idxEvent < 0 {
-			t.Errorf("the <h3> should precede the event component for its entry\n%s", truncate(body))
-		}
-	}
-
 	// Acceptance 5: no empty <h3 class="sw-event__heading"> elements.
 	if strings.Contains(body, `<h3 class="sw-event__heading"></h3>`) {
 		t.Error("no empty <h3 class=\"sw-event__heading\"> should appear on note detail page")

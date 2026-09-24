@@ -85,10 +85,11 @@ func (s *Server) recentActivity(n int, from string) template.HTML {
 // to undo it: a form posting to the entry, back to the page from.
 func (s *Server) event(r *store.Record, from string) template.HTML {
 	props := map[string]any{
-		"actor":  r.Fields["actor"],
-		"action": r.Fields["action"],
-		"time":   r.CreatedAt.Local().Format("15:04"),
-		"id":     "activity-" + r.ID,
+		"actor":   r.Fields["actor"],
+		"action":  r.Fields["action"],
+		"time":    r.CreatedAt.Local().Format("15:04"),
+		"id":      "activity-" + r.ID,
+		"compact": true,
 	}
 	if t, _ := r.Fields["target"].(string); t != "" {
 		props["target"] = t

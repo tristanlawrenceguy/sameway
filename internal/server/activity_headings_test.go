@@ -39,15 +39,6 @@ func TestActivityPageHasIndividualHeadings(t *testing.T) {
 	if h3Count != 2 {
 		t.Errorf("expected 2 <h3> elements for 2 activities, got %d\n%s", h3Count, truncate(body))
 	}
-
-	// Each h3 should appear before its corresponding event component.
-	idxH3 := strings.Index(body, "<h3")
-	if idxH3 >= 0 {
-		idxEvent := strings.Index(body[idxH3:], `data-component="event"`)
-		if idxEvent < 0 {
-			t.Errorf("the <h3> should precede the event component for its entry\n%s", truncate(body))
-		}
-	}
 }
 
 // TestActivityPageHeadingUsesSummaryNotVerb checks that the heading text

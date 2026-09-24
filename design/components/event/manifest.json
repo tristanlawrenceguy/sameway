@@ -17,7 +17,8 @@
       "href": { "type": "string", "description": "The page of the thing acted on, so the entry leads to it. Left out when the thing is gone." },
       "undo": { "type": "string", "description": "Where a form posts to reverse this entry. Given only while the entry can still be undone: the thing is still as it left it." },
       "from": { "type": "string", "description": "The page the entry is shown on, so undoing returns there." },
-      "id": { "type": "string" }
+      "id": { "type": "string" },
+      "compact": { "type": "boolean", "description": "When true, render only time and undo — omit actor, action, target, detail that are already in a surrounding heading." }
     }
   },
   "a11y": {
