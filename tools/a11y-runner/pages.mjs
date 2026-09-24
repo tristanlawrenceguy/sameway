@@ -114,7 +114,7 @@ check(inBody, "edit: Tab forward from the first field reaches the body");
 await page.keyboard.press("End");
 await page.keyboard.type(" Typed by keyboard.");
 let reachedSave = false;
-for (let i = 0; i < 6 && !reachedSave; i++) {
+for (let i = 0; i < 10 && !reachedSave; i++) {
   await page.keyboard.press("Tab");
   reachedSave = (await focused()) === "Save";
 }

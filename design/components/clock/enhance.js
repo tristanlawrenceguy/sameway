@@ -51,9 +51,13 @@
     return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; });
   }
 
-  // A reminder rings in every clock on the page.
+  // A reminder shows in every clock on the page, and is said once, as its
+  // name, by the first: the list itself is not read out whole, so the
+  // title is heard once, not with each button after it.
   function ring(d) {
     var rang = false;
+    var said = document.querySelector(".sw-clock .sw-clock__said");
+    if (said) said.textContent = "Reminder: " + d.title;
     document.querySelectorAll(".sw-clock").forEach(function (clock) {
       var list = clock.querySelector(".sw-clock__ringing");
       if (!list || list.querySelector('[data-id="' + d.id + '"]')) return;
