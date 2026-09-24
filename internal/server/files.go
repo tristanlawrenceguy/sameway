@@ -31,7 +31,7 @@ const maxUpload = 64 << 20
 func (s *Server) upload(w http.ResponseWriter, r *http.Request) {
 	rec, err := s.storeUpload(r)
 	if err != nil {
-		if errors.Is(err, http.ErrMissingFile) || strings.Contains(err.Error(), "please select a file") {
+		if errors.Is(err, http.ErrMissingFile) || strings.Contains(err.Error(), "select a file") {
 			err = errors.New("choose a file first")
 		}
 		s.failed(w, r, "Not added", err, "/t/"+FileType)
@@ -56,7 +56,7 @@ func (s *Server) storeUpload(r *http.Request) (*store.Record, error) {
 	}
 	if err := r.ParseMultipartForm(maxUpload); err != nil {
 		if strings.Contains(err.Error(), "multipart") || err == http.ErrNotMultipart {
-			return nil, fmt.Errorf("please select a file: %w", err)
+			return nil, fmt.Errorf("select a file: %w", err)
 		}
 		return nil, fmt.Errorf("the file is too large: 64 MB is the most one can be")
 	}
@@ -163,7 +163,7 @@ func (s *Server) uploadError(w http.ResponseWriter, r *http.Request, err error) 
 		"message": template.HTMLEscapeString(err.Error()),
 	})))
 	b.WriteString(string(s.component("upload", map[string]any{"id": "upload-error"})))
-	b.WriteString(`<script>(function(){var f=document.querySelector('.sw-upload__field');var err=document.getElementById("upload-error-error");f.addEventListener('invalid',function(e){err.textContent="Please select a file."},false);document.querySelector(".sw-upload").addEventListener('submit',function(e){if(!f.value){e.preventDefault();err.textContent="Please select a file.";f.reportValidity()}},{once:true});f.addEventListener('change',function(){err.textContent=""})})();</script>`)
+	b.WriteString(`<script>(function(){var f=document.querySelector('.sw-upload__field');var err=document.getElementById("upload-error-error");f.addEventListener('invalid',function(e){err.textContent="select a file."},false);document.querySelector(".sw-upload").addEventListener('submit',function(e){if(!f.value){e.preventDefault();err.textContent="select a file.";f.reportValidity()}},{once:true});f.addEventListener('change',function(){err.textContent=""})})();</script>`)
 	// Re-render recent activity so the user can undo deletions.
 	b.WriteString(string(s.recentActivityAbout(5, "/t/"+FileType, func(target, _ string) bool { return target == FileType })))
 	s.page(w, r, "Files", template.HTML(b.String()), pageOptions{JSONURL: "/api/file", Status: http.StatusBadRequest})

@@ -7,7 +7,7 @@ import (
 
 // TestImportPageHasAccessibleErrorRegion checks that every import page
 // renders an accessible error region next to the file input, linked via
-// aria-describedby so a screen reader announces "Please select a file."
+// aria-describedby so a screen reader announces "select a file."
 // when the user submits without choosing anything.  Covers backlog 0433.
 func TestImportPageHasAccessibleErrorRegion(t *testing.T) {
 	_, h := newApp(t)
@@ -29,8 +29,8 @@ func TestImportPageHasAccessibleErrorRegion(t *testing.T) {
 		if !strings.Contains(body, `aria-live="assertive"`) {
 			t.Errorf("/t/%s/import: error region should have aria-live=\"assertive\"", typ)
 		}
-		if !strings.Contains(body, "Please select a file.") {
-			t.Errorf("/t/%s/import: inline script must include the text \"Please select a file.\"", typ)
+		if !strings.Contains(body, "select a file.") {
+			t.Errorf("/t/%s/import: inline script must include the text \"select a file.\"", typ)
 		}
 		if !strings.Contains(body, "reportValidity") {
 			t.Errorf("/t/%s/import: inline script must call reportValidity() for sighted users", typ)
