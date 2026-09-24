@@ -22,7 +22,9 @@
 .sw-clock__ring .sw-clock__what { flex: 1; min-width: 8rem; font-weight: 600; }
 .sw-clock__ring form { position: relative; z-index: 1; }
 .sw-clock__bell { flex: none; width: 0.625rem; height: 0.625rem; border-radius: 50%; background: var(--sw-color-accent); box-shadow: 0 0 0 3px var(--sw-color-bg-raised); }
-.sw-clock__ring .sw-clock__bell { animation: sw-pulse 1.2s var(--sw-motion-ease) infinite; }
+/* Four beats, then still: nothing moves on its own for more than about
+   five seconds (WCAG 2.2.2); the words beside it say the state. */
+.sw-clock__ring .sw-clock__bell { animation: sw-pulse 1.2s var(--sw-motion-ease) 4; }
 @media (prefers-reduced-motion: reduce) { .sw-clock__ring .sw-clock__bell { animation: none; } }
 
 /* Setting: two short rows, each led by what it sets, then a field and

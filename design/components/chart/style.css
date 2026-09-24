@@ -12,7 +12,7 @@
 .sw-chart__value { fill: var(--sw-color-fg); font-weight: 600; font-size: 12px; font-variant-numeric: tabular-nums; }
 /* Bars take the colour of the list they count, and lift a little under
    the pointer so the one being read stands out. */
-.sw-chart__bar { fill: var(--sw-dot, var(--sw-color-accent)); opacity: 0.9; transition: opacity var(--sw-motion-fast) var(--sw-motion-ease); }
+.sw-chart__bar { fill: var(--sw-dot, var(--sw-color-accent)); opacity: 1; transition: opacity var(--sw-motion-fast) var(--sw-motion-ease); }
 .sw-chart__bar:hover { opacity: 1; }
 .sw-chart__line { stroke: var(--sw-dot, var(--sw-color-accent)); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
 .sw-chart__dot { fill: var(--sw-color-bg-raised); stroke: var(--sw-dot, var(--sw-color-accent)); stroke-width: 2.5; }

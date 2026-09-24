@@ -22,3 +22,6 @@ fields:
   pinned:
     type: bool
     default: false
+  language:
+    type: string
+    description: The language the note is written in, as a code such as de or fr, when it is not the workspace's; screen readers read it in that voice.
