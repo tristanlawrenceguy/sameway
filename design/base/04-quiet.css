@@ -28,6 +28,9 @@
    reaches it, which is the next Tab. */
 .sw-reveal:hover, .sw-reveal:not(.sw-block):focus-within,
 .sw-quiet:focus-within, .sw-quiet:focus-visible { --sw-quiet-opacity: 1; }
+/* Escape puts away what the pointer revealed, until it leaves and comes
+   back (WCAG 1.4.13; 22-quiet.js). Focus inside still shows it. */
+.sw-reveal[data-quiet-away]:hover:not(:focus-within) { --sw-quiet-opacity: 0; }
 
 /* Always on where fading would strand someone:
    - coarse pointers and touch screens, which have no hover

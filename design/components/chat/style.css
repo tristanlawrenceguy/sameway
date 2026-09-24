@@ -59,6 +59,8 @@
 .sw-live__steps { margin: var(--sw-space-2) 0 0; font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); display: grid; gap: var(--sw-space-1); }
 .sw-live__step { display: flex; align-items: center; gap: var(--sw-space-2); }
 .sw-live__dot { flex: none; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--sw-color-assistant); }
-.sw-live__step[data-state="running"] .sw-live__dot { animation: sw-pulse 1.2s var(--sw-motion-ease) infinite; }
+/* Four beats, then still: nothing moves on its own for more than about
+   five seconds (WCAG 2.2.2); the words beside it say the state. */
+.sw-live__step[data-state="running"] .sw-live__dot { animation: sw-pulse 1.2s var(--sw-motion-ease) 4; }
 .sw-live__step[data-state="done"] .sw-live__dot { background: var(--sw-color-success); }
 @media (prefers-reduced-motion: reduce) { .sw-live__step[data-state="running"] .sw-live__dot { animation: none; } }
