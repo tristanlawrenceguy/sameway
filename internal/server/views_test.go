@@ -78,7 +78,7 @@ func TestDetailPageSkipsEmptyFieldsActivity(t *testing.T) {
 	if strings.Contains(body, "<dt>Actor</dt>") {
 		t.Error("detail page should not show <dt>Actor</dt> in the dl")
 	}
-	if !strings.Contains(body, "<dl class=\"sw-dl\">") || !strings.Contains(body, "<dt>Action</dt>") || !strings.Contains(body, "added") {
+	if !strings.Contains(body, "<dl class=\"sw-fields\"") || !strings.Contains(body, "<dt>Action</dt>") || !strings.Contains(body, "added") {
 		t.Errorf("detail page should show Action row\n%s", truncate(body))
 	}
 

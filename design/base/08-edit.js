@@ -17,7 +17,6 @@
   "use strict";
 
   var MULTILINE = { P: 1, DIV: 1, BLOCKQUOTE: 1 };
-  var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
   function label(name) {
     return name.charAt(0).toUpperCase() + name.slice(1).replace(/[_-]/g, " ");
@@ -73,7 +72,17 @@
       built.wrap.appendChild(no);
       return built;
     }
-    if (kind === "datetime") return when(el, control("when", el, id, name), source);
+    if (kind === "datetime") {
+      // The when-field component: words, and its picker, which its own
+      // enhance.js shows and wires.
+      built = control("when", el, id, name);
+      built.input.value = el.textContent.trim();
+      var pick = built.wrap.querySelector(".sw-when-field__pick");
+      pick.setAttribute("aria-label", "Pick a day for " + (el.getAttribute("data-label") || label(name)));
+      if (/^\d{4}-\d{2}-\d{2}/.test(source || "")) pick.value = source.slice(0, 10);
+      if (window.swWhenField) window.swWhenField(built.wrap);
+      return built;
+    }
     if (el.hasAttribute("data-options")) {
       built = control("select", el, id, name);
       var options = [];
@@ -105,35 +114,6 @@
     }
     built = control("text", el, id, name);
     built.input.value = source !== null ? source : el.textContent.trim();
-    return built;
-  }
-
-  // A day or a moment is written the way a person says it and read by the
-  // server: 19 Sep, next Friday, tomorrow 2pm. People know the day they
-  // mean and type it faster than they find it; the platform's own picker
-  // stands beside the words for anyone who would rather look at a month,
-  // and picking a day writes it into the words, keeping any time typed.
-  function when(el, built, source) {
-    var input = built.input;
-    input.value = el.textContent.trim();
-    built.wrap.classList.add("sw-when");
-    var pick = document.createElement("input");
-    pick.className = "sw-field__input sw-datepicker sw-when__pick";
-    pick.type = "date";
-    pick.setAttribute("aria-label", "Pick the day for " + (el.getAttribute("data-label") || label(el.getAttribute("data-prop"))).toLowerCase());
-    if (/^\d{4}-\d{2}-\d{2}/.test(source || "")) pick.value = source.slice(0, 10);
-    pick.addEventListener("change", function () {
-      if (!pick.value) return;
-      var p = pick.value.split("-");
-      var day = Number(p[2]) + " " + MONTHS[Number(p[1]) - 1] + " " + p[0];
-      var time = (input.value.match(/\d{1,2}(:\d{2})?\s*(am|pm)\b|\d{1,2}:\d{2}/i) || [""])[0];
-      input.value = time ? day + " " + time : day;
-    });
-    var row = document.createElement("div");
-    row.className = "sw-when__row";
-    input.parentNode.insertBefore(row, input);
-    row.appendChild(input);
-    row.appendChild(pick);
     return built;
   }
 
@@ -173,7 +153,7 @@
     var covered = [];
 
     // Hide the read-only definition list so only the form is visible.
-    var dl = block.querySelector("dl.sw-dl");
+    var dl = block.querySelector("dl.sw-fields");
     if (dl) {
       dl.hidden = true;
       dl.style.display = "none";
@@ -203,7 +183,7 @@
       covered[i].hidden = false;
     }
     // Explicitly restore the definition list as well.
-    var dl = block.querySelector("dl.sw-dl");
+    var dl = block.querySelector("dl.sw-fields");
     if (dl) dl.hidden = false;
     form.remove();
     var btn = block.querySelector("[data-edit]");

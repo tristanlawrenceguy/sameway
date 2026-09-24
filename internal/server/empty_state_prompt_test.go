@@ -21,7 +21,7 @@ func TestEmptyStateLinkIncludesPromptParam(t *testing.T) {
 	body := rec.Body.String()
 
 	// The empty-state link must include a prompt query parameter.
-	if !strings.Contains(body, `<a href="/chat?prompt=`) {
+	if !strings.Contains(body, `href="/chat?prompt=`) {
 		t.Errorf("empty-state link should include ?prompt= to pre-fill chat\n%s", truncate(body))
 	}
 
@@ -57,7 +57,7 @@ func TestEmptyStatePromptForAllTypes(t *testing.T) {
 			wantStatus(t, rec, http.StatusOK)
 			body := rec.Body.String()
 
-			if !strings.Contains(body, `<a href="/chat?prompt=`) {
+			if !strings.Contains(body, `href="/chat?prompt=`) {
 				t.Errorf("empty-state for %s should include ?prompt=\n%s", c.name, truncate(body))
 			}
 

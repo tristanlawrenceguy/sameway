@@ -1,0 +1,44 @@
+{
+  "name": "empty",
+  "version": "1.0.0",
+  "description": "What a place says when there is nothing in it yet: a sentence, a heading when it is the whole page's news, and the one thing to do next as a link.",
+  "icon": "○",
+  "use": { "when": "a list, a search, a canvas or a conversation has nothing to show.", "not": "an error, which is an alert, or a result that is simply short.", "with": "the action that fills it, named for what it does rather than \"here\"." },
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["message"],
+    "properties": {
+      "title": { "type": "string", "description": "A short heading, such as No notes yet. Leave out when the page's own heading already says it." },
+      "level": { "title": "Heading level", "type": "integer", "minimum": 2, "maximum": 4, "default": 2, "description": "Where the heading sits in the page outline." },
+      "message": { "type": "string", "minLength": 1, "description": "One sentence: what would be here, and how it gets here." },
+      "action": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["href", "label"],
+        "description": "The one thing to do next, as a link after the sentence.",
+        "properties": {
+          "href": { "type": "string" },
+          "label": { "type": "string", "description": "Says what the link does on its own, such as Ask the assistant; never here." }
+        }
+      },
+      "live": { "type": "boolean", "default": false, "description": "Announce it as a status, for an answer the person just asked for, such as a search with no results." }
+    }
+  },
+  "a11y": {
+    "role": "paragraph, under a heading when titled; status when live",
+    "keyboard": [{ "key": "Tab", "does": "reaches the action link when there is one" }, { "key": "Enter", "does": "follows it" }],
+    "states": [],
+    "wcag": { "target": "AAA", "notes": "The action says what it does on its own (2.4.9), never here. A search with nothing found is announced as a status (4.1.3) so a screen reader user knows the search ran." }
+  },
+  "machine": {
+    "selector": "[data-component=\"empty\"]",
+    "identify": "Its presence means the place holds nothing. The heading, when there is one, is .sw-empty__title; the sentence is .sw-empty__message.",
+    "operate": "Follow the action link, when there is one, to fill it."
+  },
+  "examples": [
+    { "name": "default", "props": { "message": "Ask for anything." }, "file": "examples/default.html" },
+    { "name": "titled", "props": { "title": "No notes yet", "message": "Add one yourself, or", "action": { "href": "/chat?prompt=Add+a+note", "label": "ask the assistant" } }, "file": "examples/titled.html" },
+    { "name": "live", "props": { "title": "No results", "level": 3, "message": "No matches for plumber. Try other words, or", "action": { "href": "/chat?prompt=plumber", "label": "ask the assistant" }, "live": true }, "file": "examples/live.html" }
+  ]
+}

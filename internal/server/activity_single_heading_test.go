@@ -70,8 +70,8 @@ func TestActivityPageEmptyStateSingleHeading(t *testing.T) {
 	}
 
 	// Empty-state paragraph must still be present.
-	if !strings.Contains(body, `<p class="sw-empty">`) || !strings.Contains(body, "Send a message") {
-		t.Errorf("empty state should use <p class=\"sw-empty\"> and tell the person what creates activity\n%s", truncate(body))
+	if !strings.Contains(body, `data-component="empty"`) || !strings.Contains(body, "Send a message") {
+		t.Errorf("empty state should use the empty component and tell the person what creates activity\n%s", truncate(body))
 	}
 
 	// No h2 headings at all when there are no activities.

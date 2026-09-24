@@ -283,8 +283,8 @@ func TestEmptyStateBodyStaysLowercase(t *testing.T) {
 	wantStatus(t, rec, http.StatusOK)
 
 	body := rec.Body.String()
-	if !strings.Contains(body, `<p class="sw-empty">`) {
-		t.Errorf("empty-state body should use <p class=\"sw-empty\">\nbody: %s", truncate(rec.Body.String()))
+	if !strings.Contains(body, `data-component="empty"`) {
+		t.Errorf("empty-state body should use the empty component\nbody: %s", truncate(rec.Body.String()))
 	}
 	if !strings.Contains(body, `/chat`) {
 		t.Errorf("empty-state should link to /chat\nbody: %s", truncate(rec.Body.String()))

@@ -6,19 +6,19 @@ import (
 )
 
 // TestEditScriptHidesDefinitionListOnActivate checks that the inline edit
-// script explicitly hides any <dl class="sw-dl"> element when editing starts,
+// script explicitly hides any <dl class="sw-fields"> element when editing starts,
 // so the read-only definition list does not appear alongside the form inputs.
 // This covers acceptance items 1 and 2 of task 0103: clicking Edit block must
 // hide the original display (the dl) while showing only the form.
 func TestEditScriptHidesDefinitionListOnActivate(t *testing.T) {
 	script := readEditScript(t)
 
-	// The edit() function must explicitly find and hide any <dl class="sw-dl">
+	// The edit() function must explicitly find and hide any <dl class="sw-fields">
 	// inside the block wrapper, so the static definition list is removed from
 	// view when editing begins. Acceptance item 1: clicking Edit hides the dl.
-	if !strings.Contains(script, `querySelector("dl.sw-dl")`) &&
-		!strings.Contains(script, "querySelector('dl.sw-dl')") {
-		t.Error(`08-edit.js edit(): expected querySelector("dl.sw-dl") to find and hide the read-only definition list when editing starts (acceptance 1)`)
+	if !strings.Contains(script, `querySelector("dl.sw-fields")`) &&
+		!strings.Contains(script, "querySelector('dl.sw-fields')") {
+		t.Error(`08-edit.js edit(): expected querySelector("dl.sw-fields") to find and hide the read-only definition list when editing starts (acceptance 1)`)
 	}
 
 	// The found <dl> must have its hidden property set to true. Acceptance item 2:
@@ -36,13 +36,13 @@ func TestEditScriptHidesDefinitionListOnActivate(t *testing.T) {
 }
 
 // TestEditScriptRestoresDefinitionListOnCancel checks that pressing Cancel or
-// pressing Escape explicitly restores visibility of the <dl class="sw-dl">, so
+// pressing Escape explicitly restores visibility of the <dl class="sw-fields">, so
 // the read-only display reappears after editing is abandoned. This covers
 // acceptance item 3: Cancel restores the original dl.
 func TestEditScriptRestoresDefinitionListOnCancel(t *testing.T) {
 	script := readEditScript(t)
 
-	// cancel() must set hidden = false on any <dl class="sw-dl"> it finds,
+	// cancel() must set hidden = false on any <dl class="sw-fields"> it finds,
 	// ensuring the definition list becomes visible again after Cancel.
 	if !strings.Contains(script, `dl.hidden = false`) &&
 		!strings.Contains(script, "dl.hidden=false") {

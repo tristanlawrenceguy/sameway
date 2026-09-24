@@ -55,7 +55,7 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 		main[0].Fields["component"] == chat.ComponentName
 
 	if solo {
-		b.WriteString(`<h2>Nothing here yet</h2><p class="sw-empty">Ask the assistant to add one <a href="/chat?prompt=Create+something.">here</a>.</p>`)
+		b.WriteString(string(s.component("empty", map[string]any{"title": "Nothing here yet", "message": "This page is empty.", "action": map[string]any{"href": "/chat?prompt=Create%20something.", "label": "Ask the assistant to add something"}})))
 	}
 	fmt.Fprintf(&b, `<div class="sw-page" data-layout="%s">`, layoutName(solo))
 	b.WriteString(`<ol class="sw-plain sw-canvas" aria-label="Canvas">`)

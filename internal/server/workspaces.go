@@ -132,7 +132,7 @@ func (s *Server) showWorkspaces(w http.ResponseWriter, r *http.Request, problem 
 
 	others := s.others()
 	if len(others) == 0 {
-		b.WriteString(`<section class="sw-stack" aria-labelledby="ws-others"><h2 id="ws-others">No workspaces yet</h2><p class="sw-empty">Create one below.</p></section>`)
+		b.WriteString(string(s.component("empty", map[string]any{"title": "No workspaces yet", "message": "Create one below."})))
 	} else {
 		b.WriteString(`<section class="sw-stack" aria-labelledby="ws-others"><h2 id="ws-others">Other workspaces</h2>`)
 		b.WriteString(`<ul class="sw-plain sw-rows">`)

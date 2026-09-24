@@ -58,12 +58,12 @@ func (s *Server) title(t *schema.Type, rec *store.Record) string {
 	return titleOf(t, rec)
 }
 
-// aboutCell is a reminder's about on its page: the thing, as the way there.
-func (s *Server) aboutCell(f schema.Field, val string) string {
+// aboutItem is a reminder's about on its page: the thing, as the way there.
+func (s *Server) aboutItem(f schema.Field, val string) map[string]any {
 	if t, rec, ok := s.aboutOf(val); ok {
-		return fmt.Sprintf(`<dd data-prop="%s" data-source="%s"><a class="sw-link" href="/t/%s/%s">%s</a></dd>`, f.Name, template.HTMLEscapeString(val), t.Name, rec.ID, template.HTMLEscapeString(s.title(t, rec)))
+		return map[string]any{"label": fieldLabel(f), "value": s.title(t, rec), "href": "/t/" + t.Name + "/" + rec.ID, "prop": f.Name, "source": val}
 	}
-	return fmt.Sprintf(`<dd data-prop="%s">%s</dd>`, f.Name, template.HTMLEscapeString(val))
+	return map[string]any{"label": fieldLabel(f), "value": val, "prop": f.Name}
 }
 
 // nextThings is what a record's page offers to do with it, in one row

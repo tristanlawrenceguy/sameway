@@ -145,7 +145,7 @@ const fields = await page.evaluate(() => [...document.querySelectorAll(".sw-inli
   label: (f.querySelector("label") || {}).textContent,
 })));
 check(fields.length > 3, `editor: a habit opens with its fields (${fields.length})`);
-for (const f of fields) check(["text-field", "textarea", "select", "checkbox", "prose"].includes(f.component), `editor: "${f.label}" is not a design-system control`);
+for (const f of fields) check(["text-field", "when-field", "textarea", "select", "checkbox", "prose"].includes(f.component), `editor: "${f.label}" is not a design-system control`);
 const aim = page.getByRole("combobox", { name: "Aim" });
 const offered = await aim.evaluate((s) => [...s.options].map((o) => o.textContent));
 check(offered.includes("At most the target") && !offered.includes("limit"), `editor: aim offers names, not stored words (${offered.join(", ")})`);

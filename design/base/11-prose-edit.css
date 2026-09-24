@@ -13,10 +13,6 @@
 .sw-prose-editor table { border-collapse: collapse; }
 .sw-prose-editor th, .sw-prose-editor td { border: 1px solid var(--sw-color-border); padding: var(--sw-space-1) var(--sw-space-2); min-width: calc(var(--sw-size-target) * 1.5); }
 
-/* A date is words with the platform's picker beside them. */
-.sw-when__row { display: flex; flex-wrap: wrap; gap: var(--sw-space-2); }
-.sw-when__row > .sw-field__input:first-child { flex: 1 1 14rem; }
-.sw-when__pick { flex: 0 0 auto; }
 
 /* A yes or no is a box with its name beside it, as tall as a target. */
 .sw-check { display: flex; flex-direction: row; align-items: center; gap: var(--sw-space-2); min-height: var(--sw-size-target); }

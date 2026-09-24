@@ -23,12 +23,12 @@ func TestSearchEmptyStateLinkPointsToChat(t *testing.T) {
 	wantStatus(t, rec, http.StatusOK)
 	body := rec.Body.String()
 
-	if !strings.Contains(body, `<a href="/chat?prompt=`) {
+	if !strings.Contains(body, `href="/chat?prompt=`) {
 		t.Errorf("empty search must link to /chat with a prompt parameter\n%s", truncate(body))
 	}
 
 	// It must NOT link back to an empty search — that is the bug.
-	if strings.Contains(body, `/search?q=&`) || strings.Contains(body, "/search?q=") && !strings.Contains(body, `<a href="/chat?prompt=`) {
+	if strings.Contains(body, `/search?q=&`) || strings.Contains(body, "/search?q=") && !strings.Contains(body, `href="/chat?prompt=`) {
 		t.Errorf("empty search must not link to /search?q= (dead end)\n%s", truncate(body))
 	}
 
@@ -53,7 +53,7 @@ func TestSearchEmptyStateTryIsLowercase(t *testing.T) {
 		t.Errorf("the word after the em-dash must be lowercase 'try', not 'Try'\n%s", truncate(body))
 	}
 	if !strings.Contains(body, "— try different words") {
-		t.Errorf("the empty-state text after the em-dash must read '— try different words here'\n%s", truncate(body))
+		t.Errorf("the empty-state text after the em-dash must read '— try different words'\n%s", truncate(body))
 	}
 }
 
@@ -75,7 +75,7 @@ func TestSearchEmptyStateStillShowsQuery(t *testing.T) {
 	}
 
 	// The heading must still be "No results".
-	if !strings.Contains(body, `<h2>No results</h2>`) {
+	if !strings.Contains(body, `<h2 class="sw-empty__title">No results</h2>`) {
 		t.Errorf("empty search must have an h2 'No results'\n%s", truncate(body))
 	}
 }

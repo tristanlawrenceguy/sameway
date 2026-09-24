@@ -1,0 +1,7 @@
+/* Names on the left, values on the right, a hairline between each pair;
+   one column on a narrow screen, where the names sit above their values. */
+.sw-fields { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0 var(--sw-space-8); margin: 0; max-width: var(--sw-size-measure); }
+.sw-fields dt, .sw-fields dd { padding: var(--sw-space-3) 0; border-top: 1px solid var(--sw-color-border); }
+.sw-fields dt { font-weight: 500; font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); padding-top: calc(var(--sw-space-3) + 0.1em); }
+.sw-fields dd { margin: 0; overflow-wrap: anywhere; }
+.sw-fields > :nth-child(-n + 2) { border-top: 0; }

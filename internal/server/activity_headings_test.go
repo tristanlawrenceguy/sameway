@@ -85,8 +85,8 @@ func TestActivityPageEmptyStateHasNoHeading(t *testing.T) {
 
 	body := get(t, h, "/activity").Body.String()
 
-	if !strings.Contains(body, `<p class="sw-empty">`) {
-		t.Errorf("empty state should use <p class=\"sw-empty\">\n%s", truncate(body))
+	if !strings.Contains(body, `data-component="empty"`) {
+		t.Errorf("empty state should use the empty component\n%s", truncate(body))
 	}
 
 	// No <h3> elements at all when there are no activities.

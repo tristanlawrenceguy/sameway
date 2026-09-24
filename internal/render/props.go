@@ -37,6 +37,9 @@ var Funcs = template.FuncMap{
 	// card starts a level under the card's own title.
 	"add":      func(a, b any) int { return num(a) + num(b) },
 	"optValue": func(v any) string { return optionPart(v, "value") },
+	// json writes a value for a script to read from an attribute, such as
+	// the choices the inline editor offers.
+	"json":     func(v any) string { b, _ := json.Marshal(v); return string(b) },
 	"optLabel": func(v any) string { return optionPart(v, "label") },
 	// Calendar shape, computed here because a template cannot do date maths
 	// and a month view must not need JavaScript. See calendar.go.

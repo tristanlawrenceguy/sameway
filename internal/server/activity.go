@@ -184,7 +184,9 @@ func (s *Server) activityPage(w http.ResponseWriter, r *http.Request) {
 	var b strings.Builder
 	b.WriteString(`<p class="sw-muted sw-prose">Every change to the canvas, by you or the assistant, newest first. The same log is at <a href="/api/activity">/api/activity</a>.</p>`)
 	if len(recs) == 0 {
-		b.WriteString(`<p class="sw-empty"><strong>No activity yet</strong> Send a message <a href="/chat">here</a>.</p>`)
+		b.WriteString(string(s.component("empty", map[string]any{
+			"message": "No activity yet. What you and the assistant change on the canvas shows up here.", "action": map[string]any{"href": "/chat", "label": "Send a message"},
+		})))
 	}
 	day := ""
 	open := false

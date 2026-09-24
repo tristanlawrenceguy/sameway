@@ -61,7 +61,7 @@ func TestActivityPageOverarchingHeadingEmptyState(t *testing.T) {
 		t.Errorf("the empty /activity page should NOT contain a duplicate <h2>Activity</h2>\n%s", truncate(body))
 	}
 
-	if !strings.Contains(body, `<p class="sw-empty">`) || !strings.Contains(body, "Send a message") {
-		t.Errorf("empty state should use <p class=\"sw-empty\"> and tell the person what creates activity\n%s", truncate(body))
+	if !strings.Contains(body, `data-component="empty"`) || !strings.Contains(body, "Send a message") {
+		t.Errorf("empty state should use the empty component and tell the person what creates activity\n%s", truncate(body))
 	}
 }
