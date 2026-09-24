@@ -4,12 +4,9 @@
 .sw-record__body { margin-top: var(--sw-space-3); }
 .sw-record__body p { margin: 0 0 var(--sw-space-3); }
 .sw-record__body p:last-child { margin-bottom: 0; }
-.sw-record__fields {
-  display: grid; grid-template-columns: max-content 1fr; gap: var(--sw-space-1) var(--sw-space-4);
-  margin: var(--sw-space-4) 0 0; font-size: var(--sw-size-text-sm);
-}
-.sw-record__fields dt { color: var(--sw-color-fg-muted); font-weight: 600; }
-.sw-record__fields dd { margin: 0; overflow-wrap: anywhere; }
+/* The record's facts are the fields component, compact; here they only
+   keep their distance from the words above and their wider gutter. */
+.sw-record .sw-fields { margin-top: var(--sw-space-4); column-gap: var(--sw-space-4); }
 .sw-record__open { margin: var(--sw-space-4) 0 0; }
 .sw-record__missing { margin: 0; color: var(--sw-color-fg-muted); }
 .sw-record__actions { margin: var(--sw-space-3) 0 0; }

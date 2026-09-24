@@ -5,3 +5,7 @@
 .sw-fields dt { font-weight: 500; font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); padding-top: calc(var(--sw-space-3) + 0.1em); }
 .sw-fields dd { margin: 0; overflow-wrap: anywhere; }
 .sw-fields > :nth-child(-n + 2) { border-top: 0; }
+/* Compact: inside a card or a row, small and close, with no hairlines. */
+.sw-fields--compact { gap: var(--sw-space-1) var(--sw-space-3); font-size: var(--sw-size-text-sm); }
+.sw-fields--compact dt, .sw-fields--compact dd { padding: 0; border-top: 0; }
+.sw-fields--compact dt { font-size: inherit; font-weight: 600; }
