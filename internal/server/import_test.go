@@ -19,7 +19,7 @@ import (
 // does the same through the API with a kept file.
 func TestAPersonImportsPeopleFromAFile(t *testing.T) {
 	a, h := newApp(t)
-	if !strings.Contains(get(t, h, "/t/person").Body.String(), "Import people from a file") {
+	if !strings.Contains(get(t, h, "/t/person").Body.String(), "Import") {
 		t.Error("the list page offers to import from a file")
 	}
 	if !strings.Contains(get(t, h, "/t/person/import").Body.String(), `name="file"`) {

@@ -65,7 +65,7 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	// Records can come from a file a person already has, and the page
 	// says so, once, quietly, below the list.
 	if s.importable(t) {
-		b.WriteString(`<p class="sw-quiet-row">` + string(s.component("link", map[string]any{"href": "/t/" + t.Name + "/import", "label": "Import " + plural(t.Name) + " from a file", "look": "button"})) + `</p>`)
+		b.WriteString(`<p class="sw-quiet-row">` + string(s.component("link", map[string]any{"href": "/t/" + t.Name + "/import", "label": "Import", "context": plural(t.Name), "look": "button"})) + `</p>`)
 	}
 	// What just happened to these records is here too, so a deletion can be
 	// taken back where the person lands.
