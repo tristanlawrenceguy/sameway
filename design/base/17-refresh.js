@@ -37,7 +37,16 @@
       .then(function (html) {
         var doc = new DOMParser().parseFromString(html, "text/html");
         if (document.startViewTransition && !still && wide.matches) {
-          return document.startViewTransition(function () { merge(doc); }).finished.catch(function () {});
+          // A transition waits for a frame to be drawn before it swaps the
+          // page, and a tab that is not drawing never gets one: every
+          // refresh after it would wait for ever. So the page is swapped
+          // once, by the transition or, if it has not in a moment, here.
+          var done = false;
+          var swap = function () { if (!done) { done = true; merge(doc); } };
+          var vt = document.startViewTransition(swap);
+          return Promise.race([vt.updateCallbackDone, new Promise(function (r) { setTimeout(r, 800); })])
+            .catch(function () {})
+            .then(function () { if (!done) { try { vt.skipTransition(); } catch (e) { /* gone */ } swap(); } });
         }
         merge(doc);
       })

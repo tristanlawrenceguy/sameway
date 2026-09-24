@@ -100,7 +100,13 @@
       for (var i = 0; i < blocks.length; i++) {
         if (editKey(blocks[i]) !== k) continue;
         var edit = blocks[i].querySelector("[data-edit]");
-        if (edit) setTimeout(function () { edit.click(); }, 0);
+        // The field the editor opens on is told why the edit was refused,
+        // so a screen reader reads the reason with it.
+        if (edit) setTimeout(function () {
+          edit.click();
+          var field = document.activeElement;
+          if (field && field.closest(".sw-inline-form")) field.setAttribute("aria-describedby", "outcome");
+        }, 0);
         return;
       }
     });

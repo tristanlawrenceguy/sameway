@@ -127,8 +127,8 @@ func (s *Server) connectCard(from string) template.HTML {
 	esc := template.HTMLEscapeString
 	hidden := `<input type="hidden" name="from" value="` + esc(from) + `">`
 	var b strings.Builder
-	b.WriteString(`<div class="sw-connect sw-stack">`)
-	// Said as an alert, so it is heard when the page opens, not found later.
+	b.WriteString(`<div class="sw-connect sw-stack"><h2 class="sw-visually-hidden">Connect the assistant</h2>`)
+	// A status message, and a heading to find it by from the page's outline.
 	b.WriteString(string(s.component("alert", map[string]any{"kind": "info", "title": "Connect the assistant to an AI model",
 		"message": why + " The assistant needs an AI model to think with. Everything else in Sameway works without one."})))
 	if len(choices) > 0 {

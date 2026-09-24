@@ -91,16 +91,19 @@
   }
 
   // In a table, Tab moves to the next cell, and past the last cell it adds
-  // a row, so a table grows without a button.
+  // a row, so a table grows without a button. Tab never keeps a person in
+  // the table: Shift+Tab from the first cell, and Tab from the last cell
+  // of a row still empty, go on as Tab does anywhere else.
   function tableKeys(editor) {
     editor.addEventListener("keydown", function (e) {
       if (e.key !== "Tab") return;
       var cell = inside("TD") || inside("TH");
       if (!cell) return;
-      e.preventDefault();
       var cells = cell.closest("table").querySelectorAll("th, td");
       var at = Array.prototype.indexOf.call(cells, cell) + (e.shiftKey ? -1 : 1);
       if (at < 0) return;
+      if (at >= cells.length && !cell.closest("tr").textContent.trim()) return;
+      e.preventDefault();
       if (at >= cells.length) {
         var row = cell.closest("tr").cloneNode(true);
         row.querySelectorAll("th, td").forEach(function (c) { c.innerHTML = "<br>"; });
@@ -130,7 +133,9 @@
       b.className = "sw-button sw-button--quiet sw-pressable";
       b.textContent = t[0];
       if (KEYS[t[1]]) { b.title = t[0] + " (" + KEYS[t[1]] + ")"; b.setAttribute("aria-keyshortcuts", KEYS[t[1]]); }
-      b.tabIndex = -1;
+      // One stop for the whole toolbar, after the words it formats: Tab
+      // reaches the first button, the arrow keys the rest.
+      b.tabIndex = i === 0 ? 0 : -1;
       if (STATEFUL[t[1]]) b.setAttribute("aria-pressed", "false");
       // A press must not take the selection away from the words it is about.
       b.addEventListener("mousedown", function (e) { e.preventDefault(); });

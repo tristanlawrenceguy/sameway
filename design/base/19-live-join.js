@@ -27,6 +27,30 @@
     return btn;
   };
 
+  // swSay tells the end of a turn through the status that is already on
+  // the page, by changing its words: a region put in whole, as the old
+  // code did, is not read out by screen readers, so a person who cannot
+  // see the reply arrive heard "Assistant is working" and then nothing.
+  // It says the status the server gave, with the reply's first words.
+  window.swSay = function (statusHTML, replyHTML, errorText) {
+    var status = document.getElementById("chat-status");
+    if (!status) return;
+    var t = document.createElement("template");
+    t.innerHTML = statusHTML.trim();
+    var fresh = t.content.firstElementChild;
+    if (!fresh) return;
+    status.className = fresh.className;
+    status.setAttribute("data-state", fresh.getAttribute("data-state") || "");
+    if (fresh.getAttribute("aria-live")) status.setAttribute("aria-live", fresh.getAttribute("aria-live"));
+    var words = (fresh.querySelector(".sw-status__text") || fresh).textContent.trim();
+    // The server's status already carries the reply's first words; a
+    // failure adds what went wrong.
+    var said = errorText || "";
+    if (said.length > 200) said = said.slice(0, 199) + "…";
+    var text = status.querySelector(".sw-status__text") || status;
+    text.textContent = said ? words + " " + said : words;
+  };
+
   function join(form) {
     var turn = form.getAttribute("data-turn");
     if (!turn || !window.swFollowTurn || form._sending) return;

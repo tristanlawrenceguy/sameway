@@ -3,6 +3,7 @@ package server
 import (
 	"html/template"
 	"net/http"
+	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -113,5 +114,26 @@ func (s *Server) answer(w http.ResponseWriter, r *http.Request, apply func(strin
 		s.failed(w, r, "That did not work", err, "/")
 		return
 	}
+	// One question is on show at a time, and answering it sets the others
+	// aside too, here as on the page, so none is left waiting unseen.
+	for _, p := range s.app.Chat.Proposals() {
+		s.app.Chat.Dismiss(p.ID)
+	}
 	http.Redirect(w, r, backOf(r, "/"), http.StatusSeeOther)
+}
+
+// proposalsHTML is the questions waiting, as the conversation shows them,
+// or nothing when there are none.
+func (s *Server) proposalsHTML(from string) string {
+	list := s.proposals(from)
+	if len(list) == 0 {
+		return ""
+	}
+	var b strings.Builder
+	b.WriteString(`<div class="sw-stack sw-proposals">`)
+	for _, p := range list {
+		b.WriteString(string(p))
+	}
+	b.WriteString(`</div>`)
+	return b.String()
 }

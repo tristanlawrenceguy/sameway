@@ -149,7 +149,7 @@ func (s *Server) follow(w http.ResponseWriter, r *http.Request, t *liveTurn, bac
 				}
 				send("change", data)
 			case "done":
-				send("done", map[string]any{"id": e.ID, "html": s.messageHTML(e.ID, back, true), "status": string(s.statusFor(e.ID)), "activity": string(s.recentActivity(8, back))})
+				send("done", map[string]any{"id": e.ID, "html": s.messageHTML(e.ID, back, true), "status": string(s.statusFor(e.ID)), "activity": string(s.recentActivity(8, back)), "proposals": s.proposalsHTML(back)})
 			case "error":
 				data := map[string]any{"text": e.Text}
 				if e.ID != "" {
