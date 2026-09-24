@@ -38,6 +38,15 @@ func (r *Registry) funcsAt(depth int) template.FuncMap {
 		}
 		return out
 	}
+	// fields renders a thing's facts as the fields component, compact, so a
+	// component that shows facts (a record, a collection's cards) shows
+	// them the one way.
+	funcs["fields"] = func(items any) template.HTML {
+		if list, ok := items.([]any); !ok || len(list) == 0 {
+			return ""
+		}
+		return r.child(map[string]any{"component": "fields", "props": map[string]any{"items": items, "compact": true}}, depth)
+	}
 	return funcs
 }
 

@@ -10,4 +10,9 @@ A value can be words, a link to what it names (`href`), or structured text
 reads) and the inline editor knows which field it is; without them it is only
 read.
 
+Set `compact` for facts inside a card, a row or a record block, where they
+are a detail rather than the page: smaller and closer, without hairlines.
+Components that show facts (record, collection) render this component
+through the `fields` template helper rather than a list of their own.
+
 Leave empty facts out rather than showing a name with nothing beside it.

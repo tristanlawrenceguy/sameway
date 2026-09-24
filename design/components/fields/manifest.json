@@ -9,6 +9,7 @@
     "additionalProperties": false,
     "required": ["items"],
     "properties": {
+      "compact": { "type": "boolean", "default": false, "description": "Small and close together, for facts inside a card or a row rather than a page of their own." },
       "items": {
         "type": "array",
         "minItems": 1,
@@ -45,6 +46,7 @@
   "examples": [
     { "name": "default", "props": { "items": [{ "label": "Status", "value": "Draft" }, { "label": "Due", "value": "Fri 2 Oct 2026" }] }, "file": "examples/default.html" },
     { "name": "linked", "props": { "items": [{ "label": "Project", "value": "Garden", "href": "/t/project/p1", "prop": "project", "source": "p1", "options": [{ "value": "p1", "label": "Garden" }, { "value": "p2", "label": "House" }] }, { "label": "Due", "value": "Fri 2 Oct 2026", "prop": "due", "source": "2026-10-02", "kind": "datetime" }] }, "file": "examples/linked.html" },
+    { "name": "compact", "props": { "compact": true, "items": [{ "label": "Status", "value": "Active" }, { "label": "Owner", "value": "Sam" }] }, "file": "examples/compact.html" },
     { "name": "text", "props": { "items": [{ "label": "Notes", "markdown": "Dig the **pond** first.\n\n- then the beds", "prop": "notes" }] }, "file": "examples/text.html" }
   ]
 }
