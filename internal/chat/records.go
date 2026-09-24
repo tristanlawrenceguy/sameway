@@ -142,6 +142,9 @@ func (s *Service) createRecord(typeName string, fields map[string]any) toolResul
 	if fields == nil {
 		fields = map[string]any{}
 	}
+	if r, kept := keptBySystem(t, fields); kept {
+		return r
+	}
 	rec, err := s.Store.Create(t.Name, fields)
 	if err != nil {
 		return fail("%v. Fix the fields and call create_record again; the %s schema is in the catalogue.", err, t.Name)
@@ -160,6 +163,9 @@ func (s *Service) updateRecord(typeName, id string, fields map[string]any) toolR
 	}
 	if len(fields) == 0 {
 		return fail("nothing to change: pass the fields to change and their new values")
+	}
+	if r, kept := keptBySystem(t, fields); kept {
+		return r
 	}
 	was, err := s.Store.Get(t.Name, id)
 	if err != nil {

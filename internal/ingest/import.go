@@ -124,7 +124,8 @@ func Import(st *store.Store, t *schema.Type, tb *Table, m Mapping) Report {
 		fields := map[string]any{}
 		for col, name := range m {
 			f, ok := t.Field(name)
-			if !ok || name == "" {
+			// A field Sameway keeps is never filled from a file.
+			if !ok || name == "" || f.ReadOnly {
 				continue
 			}
 			if v := strings.TrimSpace(row[col]); v != "" {

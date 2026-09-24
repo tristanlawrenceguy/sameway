@@ -134,6 +134,36 @@ func (w *Workspace) Set(key, value string) error {
 	return nil
 }
 
+// Get reads one setting as workspace.yaml has it now, or "" when the file
+// does not say.
+func (w *Workspace) Get(key string) string {
+	src, err := os.ReadFile(filepath.Join(w.Dir, ConfigFile))
+	if err != nil {
+		return ""
+	}
+	section, name := "", key
+	if i := strings.Index(key, "."); i > 0 {
+		section, name = key[:i], key[i+1:]
+	}
+	in := section == ""
+	for _, line := range strings.Split(strings.ReplaceAll(string(src), "\r\n", "\n"), "\n") {
+		trim := strings.TrimSpace(line)
+		top := line != "" && !strings.HasPrefix(line, " ") && !strings.HasPrefix(line, "\t") && !strings.HasPrefix(line, "#")
+		if section != "" && top {
+			in = strings.HasPrefix(line, section+":")
+			continue
+		}
+		if in && strings.HasPrefix(trim, name+":") {
+			v := strings.TrimSpace(strings.TrimPrefix(trim, name+":"))
+			if i := strings.Index(v, " #"); i >= 0 {
+				v = strings.TrimSpace(v[:i])
+			}
+			return strings.Trim(v, `"'`)
+		}
+	}
+	return ""
+}
+
 // SetPace records how changes arrive: the setting the assistant changed
 // first, kept by name.
 func (w *Workspace) SetPace(pace string) error { return w.Set("ui.pace", pace) }

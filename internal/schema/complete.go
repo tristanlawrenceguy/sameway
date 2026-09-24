@@ -81,6 +81,16 @@ func (s *Set) Complete(builtin *Set) {
 		for _, f := range b.Fields {
 			if _, has := t.Field(f.Name); !has {
 				t.Fields = append(t.Fields, f)
+				continue
+			}
+			// A field the system keeps stays the system's, whatever an
+			// older copy of the type says.
+			if f.ReadOnly {
+				for i := range t.Fields {
+					if t.Fields[i].Name == f.Name {
+						t.Fields[i].ReadOnly = true
+					}
+				}
 			}
 		}
 		// What names a record of an internal type is the system's to say

@@ -15,6 +15,15 @@ fields:
     type: json
     required: true
     description: The tool call to run on accept, in the shape that tool takes.
+  detail:
+    type: text
+    description: What would happen, in plain words, when Sameway put the question itself.
+  "yes":
+    type: string
+    description: What the Yes button says, when Sameway put the question itself.
+  "no":
+    type: string
+    description: What the No button says, when Sameway put the question itself.
   state:
     type: enum
     values: [pending, accepted, dismissed]

@@ -100,6 +100,7 @@ func Load(dir string, memoryDB bool) (*App, error) {
 		}
 		return nil
 	}
+	a.Chat.Setting = ws.Get
 	a.Chat.AddField, a.Chat.AddType = a.AddField, a.AddType
 	// Keeping the program current is the program's own business, not the
 	// workspace's: the updater needs nothing from here.

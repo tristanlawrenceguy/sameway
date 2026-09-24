@@ -40,6 +40,18 @@ func (s *Server) proposalCard(p *store.Record, from string) template.HTML {
 	if label := acceptLabel(p.Fields["action"]); label != "" {
 		props["acceptLabel"] = label
 	}
+	// A question Sameway put itself, because what it would do cannot be
+	// taken back, says so in its own words, with answers that say what
+	// each does.
+	if detail, _ := p.Fields["detail"].(string); detail != "" {
+		props["detail"] = detail
+	}
+	if yes, _ := p.Fields["yes"].(string); yes != "" {
+		props["acceptLabel"] = yes
+	}
+	if no, _ := p.Fields["no"].(string); no != "" {
+		props["dismissLabel"] = no
+	}
 	return s.component("proposal", props)
 }
 

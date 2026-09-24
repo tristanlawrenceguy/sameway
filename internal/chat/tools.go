@@ -162,12 +162,19 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 	case "search":
 		return s.search(args.Query)
 	case "run_action":
+		// What cannot be taken back is asked first; see consent.go.
+		if r, ask := s.askFirst("run_action", args.ID, "", ""); ask {
+			return r
+		}
 		return s.Run(context.Background(), args.ID, s.current)
 	case "accept_action":
 		return s.acceptAction(context.Background(), args.ID)
 	case "update_sameway":
 		return s.updateSameway(args.Install)
 	case "set_setting":
+		if r, ask := s.askFirst("set_setting", "", args.Key, args.Value); ask {
+			return r
+		}
 		return s.setSetting(args.Key, args.Value)
 	case "clear_canvas":
 		// Starting over means clearing the content, not deleting the

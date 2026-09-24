@@ -63,7 +63,7 @@ func TestACommandRunsOnlyOnceThePersonHasAcceptedIt(t *testing.T) {
 		t.Fatalf("an unaccepted command becomes a question, got err=%v %q", isErr, text)
 	}
 	pending := svc.Proposals()
-	if len(pending) != 1 || !strings.Contains(pending[0].Fields["summary"].(string), "hello there") {
+	if len(pending) != 1 || !strings.Contains(pending[0].Fields["detail"].(string), "hello there") {
 		t.Fatalf("the question should show the command line, got %v", pending)
 	}
 	if blocks, _ := svc.Store.List(chat.BlockType, store.ListOptions{}); len(blocks) != 0 {
@@ -83,9 +83,17 @@ func TestACommandRunsOnlyOnceThePersonHasAcceptedIt(t *testing.T) {
 		t.Errorf("the accepted line is kept on the action, got %v", rec.Fields["accepted"])
 	}
 
-	// From now on it just runs, for the assistant and for the person.
-	if text, isErr := svc.Call("run_action", raw); isErr || !strings.Contains(text, "exit code 0") {
-		t.Errorf("an accepted command runs, got err=%v %q", isErr, text)
+	// From now on the person's press just runs it; the assistant, which
+	// may be acting on words someone else wrote, asks each time.
+	if text, isErr := svc.Call("run_action", raw); isErr || !strings.Contains(text, "asked the person") {
+		t.Errorf("the assistant asks before running a program, got err=%v %q", isErr, text)
+	}
+	again := svc.Proposals()
+	if len(again) != 1 || again[0].Fields["summary"] != "Run a program on this computer?" {
+		t.Fatalf("the question is put in plain words, got %v", again)
+	}
+	if err := svc.Accept(again[0].ID); err != nil {
+		t.Fatal(err)
 	}
 	if _, proposal, err := svc.RunAs(context.Background(), "human", action.ID, ""); err != nil || proposal != "" {
 		t.Errorf("a person's press runs it without asking again: %v %q", err, proposal)
@@ -110,7 +118,7 @@ func TestACommandRunsOnlyOnceThePersonHasAcceptedIt(t *testing.T) {
 	os.Setenv("SAMEWAY_FAKE_EXIT", "3")
 	defer os.Unsetenv("SAMEWAY_FAKE_EXIT")
 	bad, _ := svc.Store.Create(chat.ActionType, map[string]any{"title": "Fail", "kind": "command", "command": echoLine("boom"), "accepted": echoLine("boom")})
-	if text, isErr := svc.Call("run_action", json.RawMessage(`{"id":"`+bad.ID+`"}`)); !isErr || !strings.Contains(text, "exit code 3") {
+	if text, isErr := press(svc, bad.ID); !isErr || !strings.Contains(text, "exit code 3") {
 		t.Errorf("a failing command reports its exit code as an error, got err=%v %q", isErr, text)
 	}
 }
@@ -125,8 +133,7 @@ func TestACommandStaysInsideTheBoundary(t *testing.T) {
 	// Not allowed: nothing runs, accepted or not, and the message says how
 	// to allow it.
 	action, _ := svc.Store.Create(chat.ActionType, map[string]any{"title": "Say hello", "kind": "command", "command": echoLine("hi"), "accepted": echoLine("hi")})
-	raw, _ := json.Marshal(map[string]any{"id": action.ID})
-	if text, isErr := svc.Call("run_action", raw); !isErr || !strings.Contains(text, "actions.allow") {
+	if text, isErr := press(svc, action.ID); !isErr || !strings.Contains(text, "actions.allow") {
 		t.Errorf("a program not on the allow list is refused with the way to allow it, got err=%v %q", isErr, text)
 	}
 	if len(svc.Proposals()) != 0 {
@@ -135,7 +142,7 @@ func TestACommandStaysInsideTheBoundary(t *testing.T) {
 
 	// Allowed by name, however the program is written.
 	svc.Allow = []string{strings.ToUpper(strings.TrimSuffix(filepath.Base(os.Args[0]), ".exe"))}
-	if text, isErr := svc.Call("run_action", raw); isErr || !strings.Contains(text, "exit code 0") {
+	if text, isErr := press(svc, action.ID); isErr || !strings.Contains(text, "exit code 0") {
 		t.Errorf("an allowed program runs, got err=%v %q", isErr, text)
 	}
 
@@ -143,7 +150,7 @@ func TestACommandStaysInsideTheBoundary(t *testing.T) {
 	// handed to the program.
 	shelly := echoLine(`one "two words" | rm -rf ; echo three && four`)
 	svc.Store.Update(chat.ActionType, action.ID, map[string]any{"command": shelly, "accepted": shelly})
-	text, isErr := svc.Call("run_action", raw)
+	text, isErr := press(svc, action.ID)
 	if isErr || !strings.Contains(text, "one two words | rm -rf ; echo three && four") {
 		t.Errorf("the line is arguments to the program and nothing more, got err=%v %q", isErr, text)
 	}
@@ -152,12 +159,18 @@ func TestACommandStaysInsideTheBoundary(t *testing.T) {
 	chat.Workdir = t.TempDir()
 	defer func() { chat.Workdir = "" }()
 	svc.Store.Update(chat.ActionType, action.ID, map[string]any{"folder": filepath.Dir(chat.Workdir)})
-	if text, isErr := svc.Call("run_action", raw); !isErr || !strings.Contains(text, "outside the workspace") {
+	if text, isErr := press(svc, action.ID); !isErr || !strings.Contains(text, "outside the workspace") {
 		t.Errorf("a folder outside the workspace is refused, got err=%v %q", isErr, text)
 	}
 	os.MkdirAll(filepath.Join(chat.Workdir, "sub"), 0o755)
 	svc.Store.Update(chat.ActionType, action.ID, map[string]any{"folder": "sub"})
-	if text, isErr := svc.Call("run_action", raw); isErr || !strings.Contains(text, "exit code 0") {
+	if text, isErr := press(svc, action.ID); isErr || !strings.Contains(text, "exit code 0") {
 		t.Errorf("a folder under the workspace is fine, got err=%v %q", isErr, text)
 	}
+}
+
+// press is the person pressing their own button.
+func press(svc *chat.Service, id string) (string, bool) {
+	text, _, err := svc.RunAs(context.Background(), "human", id, "")
+	return text, err != nil
 }
