@@ -52,12 +52,13 @@ func TestParsePreservesFieldOrderAndTitle(t *testing.T) {
 
 func TestParseRejectsBadDefinitions(t *testing.T) {
 	cases := map[string]string{
-		"name: Bad Name\nfields:\n  a: {type: string}":      "lowercase",
-		"name: ok\nfields: {}":                              "no fields",
-		"name: ok\nfields:\n  id: {type: string}":           "reserved",
-		"name: ok\nfields:\n  x: {type: blob}":              "unknown type",
-		"name: ok\nfields:\n  x: {type: enum}":              "needs values",
-		"name: ok\nfields:\n  created_at: {type: datetime}": "reserved",
+		"name: Bad Name\nfields:\n  a: {type: string}":                        "lowercase",
+		"name: ok\nfields: {}":                                                "no fields",
+		"name: ok\nfields:\n  id: {type: string}":                             "reserved",
+		"name: ok\nfields:\n  x: {type: blob}":                                "unknown type",
+		"name: ok\nfields:\n  x: {type: enum}":                                "needs values",
+		"name: ok\nfields:\n  created_at: {type: datetime}":                   "reserved",
+		"name: ok\nfields:\n  x: {type: enum, values: [a], labels: {b: Bee}}": "not one of its values",
 	}
 	for src, want := range cases {
 		_, err := schema.Parse([]byte(src))

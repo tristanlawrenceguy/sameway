@@ -35,6 +35,7 @@ fields:
   status:
     type: enum
     values: [ready, converting, failed]
+    labels: {ready: Ready, converting: Being read, failed: Could not be read}
     default: ready
     description: converting while an external converter works on it; failed says why in the note.
     readonly: true

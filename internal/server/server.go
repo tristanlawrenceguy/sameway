@@ -145,6 +145,7 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 		Footer:       opts.Footer,
 		ExtraScripts: opts.ExtraScripts,
 		Outcome:      s.told(w, r),
+		EditControls: s.editControls(body, opts.Left, opts.Right, opts.Header, opts.Footer),
 	}
 	for _, t := range s.app.Types.Types {
 		if t.Internal || !s.listed(t) {

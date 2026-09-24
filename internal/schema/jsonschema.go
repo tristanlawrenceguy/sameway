@@ -20,6 +20,9 @@ func (t *Type) JSONSchema() map[string]any {
 		case "enum":
 			p["type"] = "string"
 			p["enum"] = f.Values
+			if len(f.Labels) > 0 {
+				p["x-labels"] = f.Labels
+			}
 		case "int":
 			p["type"] = "integer"
 		case "float":

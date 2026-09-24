@@ -59,7 +59,7 @@ func (s *Server) choices(f schema.Field, current string) string {
 	switch f.Type {
 	case "enum":
 		for _, v := range f.Values {
-			list = append(list, choice{v, v})
+			list = append(list, choice{v, f.ValueLabel(v)})
 		}
 	case "ref":
 		t, ok := s.app.Types.Get(f.To)

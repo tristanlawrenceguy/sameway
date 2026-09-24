@@ -31,7 +31,11 @@ type Field struct {
 	Required    bool     `yaml:"required,omitempty" json:"required,omitempty"`
 	Default     any      `yaml:"default,omitempty" json:"default,omitempty"`
 	Values      []string `yaml:"values,omitempty" json:"values,omitempty"`
-	Of          string   `yaml:"of,omitempty" json:"of,omitempty"`
+	// Labels names an enum's values in a person's words, where the value
+	// itself is a word for the machine: reach is "At least the target".
+	// A value without one is shown as itself, made readable (ValueLabel).
+	Labels map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
+	Of     string            `yaml:"of,omitempty" json:"of,omitempty"`
 	// To is the content type a ref field points at: the field holds one
 	// record's id, and the page shows that record's title as a link.
 	To        string `yaml:"to,omitempty" json:"to,omitempty"`
@@ -134,6 +138,11 @@ func (t *Type) validate() error {
 		}
 		if f.Type == "enum" && len(f.Values) == 0 {
 			return fmt.Errorf("type %s: enum field %s needs values", t.Name, f.Name)
+		}
+		for v := range f.Labels {
+			if !contains(f.Values, v) {
+				return fmt.Errorf("type %s: field %s labels %q, which is not one of its values (%s)", t.Name, f.Name, v, strings.Join(f.Values, ", "))
+			}
 		}
 		if f.Type == "list" && f.Of == "" {
 			f.Of = "string"

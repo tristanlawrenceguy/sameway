@@ -10,7 +10,9 @@
 // Every page in every mode, and the site as a whole, is site.mjs.
 import { chromium } from "playwright";
 import AxeBuilder from "@axe-core/playwright";
-import { AA_TAGS } from "./shell.mjs";
+import { AA_TAGS, AAA_TAGS } from "./shell.mjs";
+import { axeProblems } from "./checks.mjs";
+import { visualProblems } from "./visual.mjs";
 
 const base = (process.env.SAMEWAY_URL || "http://127.0.0.1:8080").replace(/\/$/, "");
 const browser = await chromium.launch();
@@ -125,6 +127,29 @@ if (reachedSave) {
   const stored = await (await fetch(`${base}/api/note/${apiNote.id}`)).json();
   check(String(stored.fields.body).includes("Typed by keyboard."), `edit: what was typed is saved (stored ${JSON.stringify(stored.fields.body)})`);
 }
+
+// ---- the editor is the design system -------------------------------------
+// Editing a habit, which has every kind of field: each one the editor makes
+// is a design-system component, a choice offers names rather than the word
+// the machine stores, and the open form passes the same checks as a page.
+const habit = await (await fetch(base + "/api/habit", {
+  method: "POST", headers: { "content-type": "application/json" },
+  body: JSON.stringify({ name: "Water", target: 8, unit: "glasses", aim: "limit" }),
+})).json();
+await page.goto(base + "/t/habit/" + habit.id);
+await page.getByRole("button", { name: /^Edit/ }).first().click();
+const fields = await page.evaluate(() => [...document.querySelectorAll(".sw-inline-form .sw-inline-field")].map((f) => ({
+  component: f.dataset.component || (f.classList.contains("sw-prose-field") ? "prose" : ""),
+  label: (f.querySelector("label") || {}).textContent,
+})));
+check(fields.length > 3, `editor: a habit opens with its fields (${fields.length})`);
+for (const f of fields) check(["text-field", "textarea", "select", "checkbox", "prose"].includes(f.component), `editor: "${f.label}" is not a design-system control`);
+const aim = page.getByRole("combobox", { name: "Aim" });
+const offered = await aim.evaluate((s) => [...s.options].map((o) => o.textContent));
+check(offered.includes("At most the target") && !offered.includes("limit"), `editor: aim offers names, not stored words (${offered.join(", ")})`);
+check(await aim.inputValue() === "limit", "editor: the habit's own aim is the one chosen");
+for (const p of await axeProblems(page, [], [...AA_TAGS, ...AAA_TAGS])) fail(`editor: ${p}`);
+for (const p of await visualProblems(page)) fail(`editor: ${p}`);
 
 // ---- the quiet layer ----------------------------------------------------
 // Per-item controls are faded until hovered or focused, but must stay

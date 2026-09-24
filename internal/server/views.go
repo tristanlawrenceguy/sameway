@@ -211,6 +211,8 @@ func display(f schema.Field, v any) string {
 		return "no"
 	case "datetime":
 		return when.Text(fmt.Sprint(v))
+	case "enum":
+		return f.ValueLabel(fmt.Sprint(v))
 	}
 	return fmt.Sprint(v)
 }

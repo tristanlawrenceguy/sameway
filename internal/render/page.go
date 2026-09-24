@@ -42,6 +42,10 @@ type Page struct {
 	Developer bool
 	// Body is the already-rendered main content, placed after the h1.
 	Body template.HTML
+	// EditControls is one of each design-system control, in a template the
+	// page does not show, on pages where something can be edited in place:
+	// the inline editor copies these rather than making its own.
+	EditControls template.HTML
 	// Outcome is what the person's last action came to, said once, first
 	// thing under the heading on whatever page they are back on.
 	Outcome template.HTML
