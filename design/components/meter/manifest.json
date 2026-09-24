@@ -1,0 +1,37 @@
+{
+  "name": "meter",
+  "version": "1.0.0",
+  "description": "How far along a known range something is, as a thin bar with the amount in words: this period against a target, hours against a budget.",
+  "icon": "▭",
+  "use": { "when": "an amount against a known most or target, read at a glance: a habit this week, a budget spent, storage used.", "not": "work in progress with no known end, which is a status; or numbers over time, which is a chart.", "with": "the same amount in words next to it, and what it measures as its label." },
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["label", "value", "max"],
+    "properties": {
+      "label": { "type": "string", "minLength": 1, "description": "What it measures, such as Water this week." },
+      "value": { "type": "number", "description": "The amount so far." },
+      "min": { "type": "number", "default": 0 },
+      "max": { "type": "number", "exclusiveMinimum": 0, "description": "The target or the most; a value past it fills the bar." },
+      "text": { "type": "string", "description": "The amount in words, read instead of the bare number: 3 of 8 glasses, 2 hours over." },
+      "state": { "title": "How it stands", "type": "string", "enum": ["going", "met", "over"], "default": "going", "description": "going is on the way; met has reached the target; over has gone past a limit." },
+      "id": { "type": "string" }
+    }
+  },
+  "a11y": {
+    "role": "meter, named by its label, with its amount in words as aria-valuetext",
+    "keyboard": [],
+    "states": ["aria-valuenow", "aria-valuetext", "data-state"],
+    "wcag": { "target": "AAA", "notes": "A meter with its range and value (4.1.2), and the amount in words so a reader hears 3 of 8 glasses rather than 37.5 percent. Met and over are colours on the bar and should be words beside it too (1.4.1). The bar has an edge in forced colours." }
+  },
+  "machine": {
+    "selector": "[data-component=\"meter\"]",
+    "identify": "aria-valuenow against aria-valuemax is the amount against the target; data-state says met or over.",
+    "operate": "Nothing to operate; it only shows."
+  },
+  "examples": [
+    { "name": "default", "props": { "label": "Water today", "value": 3, "max": 8, "text": "3 of 8 glasses" }, "file": "examples/default.html" },
+    { "name": "met", "props": { "label": "Reading this week", "value": 5, "max": 5, "text": "5 of 5 days, done", "state": "met" }, "file": "examples/met.html" },
+    { "name": "over", "props": { "label": "Screen time today", "value": 5, "max": 3, "text": "5 of 3 hours, 2 over", "state": "over" }, "file": "examples/over.html" }
+  ]
+}

@@ -69,6 +69,11 @@ var Funcs = template.FuncMap{
 	// assistant chat replies can be navigated with one click.  javascript:
 	// payloads are rejected; everything else passes through as escaped text.
 	"linkify": linkify,
+	// For the meter and pagination components: see helpers.go.
+	"dict":    dict,
+	"percent": percent,
+	"atMost":  atMost,
+	"pages":   pagesOf,
 }
 
 // optionPart reads one half of a select option, whichever shape it came in.

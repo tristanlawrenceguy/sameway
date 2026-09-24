@@ -20,12 +20,9 @@ a.sw-tracker__name:hover { text-decoration: underline; text-underline-offset: 0.
   background: var(--sw-color-warning-soft); color: var(--sw-color-warning); font-size: var(--sw-size-text-xs); font-weight: 700; font-variant-numeric: tabular-nums;
 }
 .sw-tracker__streak::before { content: "▲"; font-size: 0.6em; }
-.sw-tracker__bar { grid-area: bar; height: 0.5rem; border-radius: var(--sw-radius-pill); background: var(--sw-color-bg-muted); overflow: hidden; }
-.sw-tracker__fill { display: block; height: 100%; border-radius: inherit; background: var(--sw-dot, var(--sw-color-accent)); transition: width var(--sw-motion-base) var(--sw-motion-ease); }
-.sw-tracker__habit[data-met="true"] .sw-tracker__fill { background: var(--sw-color-success); }
-/* A limit gone over: the bar is full and turns the warning colour, and
-   the words say how far over. */
-.sw-tracker__habit[data-aim="limit"][data-met="false"] .sw-tracker__fill { background: var(--sw-color-warning); }
+/* The bar is the meter component; a limit gone over turns it the warning
+   colour, and the words say how far over. */
+.sw-tracker__bar { grid-area: bar; }
 .sw-tracker__habit[data-aim="limit"][data-met="false"] .sw-tracker__progress { color: var(--sw-color-warning); font-weight: 600; }
 .sw-tracker__numbers { grid-area: numbers; margin: 0; font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); display: flex; flex-wrap: wrap; gap: var(--sw-space-3); font-variant-numeric: tabular-nums; }
 .sw-tracker__habit[data-met="true"] .sw-tracker__progress { color: var(--sw-color-success); font-weight: 600; }
@@ -56,7 +53,5 @@ a.sw-tracker__name:hover { text-decoration: underline; text-underline-offset: 0.
 /* Forced colours repaint backgrounds: the bar keeps an edge, its fill and
    the kept days keep their shape in the person's colours. */
 @media (forced-colors: active) {
-  .sw-tracker__bar { border: 1px solid CanvasText; }
-  .sw-tracker__fill { forced-color-adjust: none; background: Highlight; }
   .sw-tracker__day[data-met="true"] { forced-color-adjust: none; background: CanvasText; border-color: CanvasText; }
 }

@@ -21,6 +21,7 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 	b.WriteString(string(s.component("button", map[string]any{"label": "Search", "type": "submit"})))
 	b.WriteString(`</form>`)
 	title := "Search"
+	pg := paged{page: 1, pages: 1}
 	if q != "" {
 		hits := search.Find(s.app.Store, s.app.Types, q)
 		title = trimTitle(fmt.Sprintf("Search: %s", q))
@@ -33,7 +34,8 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(&b, `<p class="sw-muted sw-small" role="status">%s</p>`, template.HTMLEscapeString(count(len(hits))))
 			fmt.Fprintf(&b, `<h2>Results</h2>`)
 			fmt.Fprintf(&b, `<ol class="sw-stack" aria-label="Results for %s">`, template.HTMLEscapeString(q))
-			for _, h := range hits {
+			pg = pageOf(r, len(hits), searchPageSize)
+			for _, h := range hits[pg.lo:pg.hi] {
 				titleTrimmed := template.HTMLEscapeString(trimTitle(h.Title))
 				typeEsc := template.HTMLEscapeString(h.Type)
 				snippetEsc := template.HTMLEscapeString(h.Snippet)
@@ -57,9 +59,10 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 				fmt.Fprintf(&b, `<li class="sw-dotted" data-dot="%d">%s</li>`, s.dotOf(h.Type), linkHTML)
 			}
 			b.WriteString("</ol>")
+			b.WriteString(string(s.pageNav(r, pg, "Pages of results")))
 		}
 	}
-	s.page(w, r, title, template.HTML(b.String()), pageOptions{JSONURL: "/api/search?q=" + template.URLQueryEscaper(q)})
+	s.page(w, r, pg.title(title), template.HTML(b.String()), pageOptions{JSONURL: "/api/search?q=" + template.URLQueryEscaper(q)})
 }
 
 func count(n int) string {

@@ -56,13 +56,16 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 		b.WriteString(string(s.component("upload", map[string]any{"from": "/t/" + FileType, "id": "upload"})))
 		b.WriteString(`<script>(function(){var f=document.querySelector('.sw-upload__field');var err=document.getElementById("upload-error");f.addEventListener('invalid',function(e){err.textContent="select a file."},false);document.querySelector(".sw-upload").addEventListener('submit',function(e){if(!f.value){e.preventDefault();err.textContent="select a file.";f.reportValidity()}},{once:true});f.addEventListener('change',function(){err.textContent=""})})();</script>`)
 	}
+	pg := paged{page: 1, pages: 1}
 	if len(recs) == 0 {
 		prompt := "Create a " + t.Name + "."
 		b.WriteString(string(s.component("empty", map[string]any{
 			"title": "No " + plural(t.Name) + " yet", "message": "Add one yourself, or", "action": map[string]any{"href": "/chat?prompt=" + url.PathEscape(prompt), "label": "ask the assistant"},
 		})))
 	} else {
-		b.WriteString(s.rows(t, recs, time.Now()))
+		pg = pageOf(r, len(recs), listPageSize)
+		b.WriteString(s.rows(t, recs[pg.lo:pg.hi], time.Now()))
+		b.WriteString(string(s.pageNav(r, pg, "Pages of "+plural(t.Name))))
 	}
 	// A new one by hand, and records from a file a person already has,
 	// each said once, quietly, below the list.
@@ -73,7 +76,7 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	// What just happened to these records is here too, so a deletion can be
 	// taken back where the person lands.
 	b.WriteString(string(s.recentActivityAbout(5, "/t/"+t.Name, func(target, _ string) bool { return target == t.Name })))
-	s.page(w, r, capitalize(plural(t.Name)), template.HTML(b.String()), pageOptions{JSONURL: "/api/" + t.Name, Lede: howMany(t, recs), Dot: s.dotOf(t.Name)})
+	s.page(w, r, pg.title(capitalize(plural(t.Name))), template.HTML(b.String()), pageOptions{JSONURL: "/api/" + t.Name, Lede: howMany(t, recs), Dot: s.dotOf(t.Name)})
 }
 
 // detailPage shows one record as a definition list with delete.

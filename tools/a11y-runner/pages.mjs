@@ -139,6 +139,9 @@ const habit = await (await fetch(base + "/api/habit", {
   body: JSON.stringify({ name: "Water", target: 8, unit: "glasses", aim: "limit" }),
 })).json();
 await page.goto(base + "/t/habit/" + habit.id);
+// Its bar is the meter component, read in words, not as a bare number.
+const meter = page.getByRole("meter", { name: "Water this day" });
+check(await meter.count() === 1 && (await meter.getAttribute("aria-valuetext") || "").includes("glasses"), "habit: its bar is a meter that says the amount in words");
 await page.getByRole("button", { name: /^Edit/ }).first().click();
 const fields = await page.evaluate(() => [...document.querySelectorAll(".sw-inline-form .sw-inline-field")].map((f) => ({
   component: f.dataset.component || (f.classList.contains("sw-prose-field") ? "prose" : ""),
@@ -189,6 +192,20 @@ check(await picker.isVisible(), "editor: the day picker is shown once its script
 await picker.fill("2026-10-09");
 await picker.dispatchEvent("change");
 check((await due.locator("input[type=text]").inputValue()).startsWith("9 Oct 2026"), "editor: picking a day writes it into the words");
+
+// ---- a long list -----------------------------------------------------------
+// Past a page, a list is read a page at a time by plain links; each says which.
+await Promise.all(Array.from({ length: 55 }, (_, i) => fetch(base + "/api/note", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ title: "Paged " + i }) })));
+await page.goto(base + "/t/note");
+const pager = page.getByRole("navigation", { name: "Pages of notes" });
+check(await pager.count() === 1, "list: a long list offers its pages");
+if (await pager.count()) {
+  await pager.getByRole("link", { name: "Next page" }).focus();
+  await Promise.all([page.waitForURL(/page=2/), page.keyboard.press("Enter")]);
+  check(await page.getByRole("navigation", { name: "Pages of notes" }).getByRole("link", { name: "Page 2" }).getAttribute("aria-current") === "page", "list: Enter on Next goes to page 2, marked as the page shown");
+  check((await page.title()).includes("page 2 of"), "list: page 2 says so in its title");
+  for (const p of await axeProblems(page, [], [...AA_TAGS, ...AAA_TAGS])) fail(`list page 2: ${p}`);
+}
 
 // ---- the quiet layer ----------------------------------------------------
 // Per-item controls are faded until hovered or focused, but must stay

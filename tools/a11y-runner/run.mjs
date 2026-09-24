@@ -25,7 +25,7 @@ import { visualProblems, forcedColourProblems, textZoomProblems, errorWiringProb
 
 // ARIA roles a manifest's a11y.role may name, and the ones worth holding
 // an example's outermost element to: landmarks, live regions and widgets.
-const ROLES = ["alert", "article", "button", "checkbox", "combobox", "figure", "form", "group", "heading", "img", "link", "list", "listitem", "navigation", "paragraph", "region", "search", "searchbox", "spinbutton", "status", "table", "term", "definition", "textbox"];
+const ROLES = ["alert", "article", "button", "checkbox", "combobox", "figure", "form", "group", "heading", "img", "link", "list", "listitem", "meter", "navigation", "progressbar", "radio", "paragraph", "region", "search", "searchbox", "spinbutton", "status", "table", "term", "definition", "textbox"];
 const PLAIN = new Set(["text", "generic", "paragraph", "listitem", "none"]);
 
 // The roles an example's accessibility tree holds, outermost first.
