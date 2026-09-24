@@ -130,11 +130,11 @@ func (s *Server) showWorkspaces(w http.ResponseWriter, r *http.Request, problem 
 	b.WriteString(string(s.component("card", map[string]any{"title": cur.Config.Name, "meta": meta, "level": 3})))
 	b.WriteString(`</section>`)
 
-	b.WriteString(`<section class="sw-stack" aria-labelledby="ws-others"><h2 id="ws-others">Other workspaces</h2>`)
 	others := s.others()
 	if len(others) == 0 {
-		b.WriteString(`<p class="sw-empty">None yet. Every workspace opened on this machine appears here.</p>`)
+		b.WriteString(`<section class="sw-stack" aria-labelledby="ws-others"><h2 id="ws-others">No workspaces yet</h2><p class="sw-empty">Create one below.</p></section>`)
 	} else {
+		b.WriteString(`<section class="sw-stack" aria-labelledby="ws-others"><h2 id="ws-others">Other workspaces</h2>`)
 		b.WriteString(`<ul class="sw-plain sw-rows">`)
 		for _, o := range others {
 			fmt.Fprintf(&b, `<li class="sw-row sw-ws"><div class="sw-ws__who"><span class="sw-row__title">%s</span><span class="sw-muted sw-small">%s</span></div>`, template.HTMLEscapeString(o.Name), template.HTMLEscapeString(o.Dir))

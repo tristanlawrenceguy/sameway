@@ -41,8 +41,8 @@ func TestEmptyStateSaysAskTheAssistant(t *testing.T) {
 	wantStatus(t, rec, http.StatusOK)
 	body := rec.Body.String()
 
-	if !strings.Contains(body, "Ask the assistant to add your first") {
-		t.Errorf("empty-state should say 'Ask the assistant to add your first' — it directs people to the working surface\n%s", truncate(body))
+	if !strings.Contains(body, "Ask the assistant to add one") {
+		t.Errorf("empty-state should say 'Ask the assistant to add one' — it directs people to the working surface\n%s", truncate(body))
 	}
 
 	// The old phrasing must be gone.

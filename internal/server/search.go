@@ -25,7 +25,7 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 		hits := search.Find(s.app.Store, s.app.Types, q)
 		title = fmt.Sprintf("Search: %s", q)
 		if len(hits) == 0 {
-			fmt.Fprintf(&b, `<h2>No results</h2><p class="sw-empty" role="status">No results for %q. Try different words.</p>`, q)
+			fmt.Fprintf(&b, `<h2>No results</h2><p class="sw-empty" role="status">No matches for %q — Try different words <a href="/search?q=&prompt=something.">here</a>.</p>`, q)
 		} else {
 			fmt.Fprintf(&b, `<p class="sw-muted sw-small" role="status">%s</p>`, template.HTMLEscapeString(count(len(hits))))
 			fmt.Fprintf(&b, `<h2>Results</h2>`)

@@ -58,8 +58,7 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	}
 	if len(recs) == 0 {
 		prompt := "Create a " + t.Name + "."
-		linkText := fmt.Sprintf("Add %s", t.Name) // e.g. "Add note" for notes type
-		fmt.Fprintf(&b, `<p class="sw-empty">Ask the assistant to add your first <a href="/chat?prompt=%s">%s</a>.</p>`, template.HTMLEscapeString(url.PathEscape(prompt)), template.HTMLEscapeString(linkText))
+		fmt.Fprintf(&b, `<h2>No %s yet</h2><p class="sw-empty">Ask the assistant to add one <a href="/chat?prompt=%s">here</a>.</p>`, template.HTMLEscapeString(t.Name), template.HTMLEscapeString(url.PathEscape(prompt)))
 	} else {
 		b.WriteString(s.rows(t, recs, time.Now()))
 	}
