@@ -37,7 +37,7 @@ func TestUploadFormHasAccessibleErrorRegion(t *testing.T) {
 
 // TestUploadFormHasValidationScript checks that the files list page renders an
 // inline script after the upload form which intercepts submission when no file
-// is selected, places "Please select a file." into the aria-live region, and
+// is selected, sets "select a file." on the aria-live region, and
 // then calls reportValidity() so the browser still shows its native tooltip.
 // This covers acceptance item 2: the status element with id upload-error and
 // aria-live="assertive" receives the error text when validation fails.
@@ -63,8 +63,8 @@ func TestUploadFormHasValidationScript(t *testing.T) {
 	}
 
 	// The script must include the exact error message text.
-	if !strings.Contains(body, "Please select a file.") {
-		t.Error(`inline script must set the text "Please select a file." on the live region`)
+	if !strings.Contains(body, "select a file.") {
+		t.Error(`inline script must set the text "select a file." on the live region`)
 	}
 
 	// The script must call reportValidity() so sighted users still see the
