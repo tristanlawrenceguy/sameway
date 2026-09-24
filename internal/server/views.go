@@ -171,7 +171,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	// What this record is connected to, as a line of counts; the address
 	// says which of them are open. See related.go.
 	b.WriteString(s.related(t, rec, always, here))
-	s.page(w, r, s.title(t, rec), template.HTML(b.String()), pageOptions{
+	s.page(w, r, trimTitle(s.title(t, rec)), template.HTML(b.String()), pageOptions{
 		Kicker:       crumbs("/t/"+t.Name, capitalize(plural(t.Name)), "", s.dotOf(t.Name)),
 		Lede:         s.lede(t, rec),
 		JSONURL:      "/api/" + t.Name + "/" + rec.ID,
@@ -252,6 +252,16 @@ func crumbs(listHref, listLabel, here string, dot int) template.HTML {
 	}
 	return template.HTML(fmt.Sprintf(`<nav class="sw-crumbs" aria-label="You are here"><ol class="sw-plain sw-crumbs__list"><li%s><a class="sw-link" href="%s">%s</a></li><li aria-current="page">%s</li></ol></nav>`,
 		mark, listHrefEscaped, listLabelEscaped, template.HTMLEscapeString(here)))
+}
+
+// trimTitle cuts a title to at most six words so no h1 heading exceeds the
+// word limit. Titles already within the limit pass through unchanged.
+func trimTitle(s string) string {
+	fields := strings.Fields(s)
+	if len(fields) <= 6 {
+		return s
+	}
+	return strings.Join(fields[:6], " ")
 }
 
 func capitalize(s string) string {
