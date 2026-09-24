@@ -16,11 +16,9 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/devices"
 	"github.com/tristanlawrenceguy/sameway/internal/notify"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
-	"github.com/tristanlawrenceguy/sameway/internal/tailnet"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
@@ -129,15 +127,6 @@ func openInBrowser(url string) error {
 		return exec.Command("open", url).Start()
 	default:
 		return exec.Command("xdg-open", url).Start()
-	}
-}
-
-// joinTailnet serves h on the person's tailnet too, when workspace.yaml
-// names the machine there; what it has to say arrives as it happens.
-func joinTailnet(ctx context.Context, out io.Writer, a *app.App, h http.Handler) {
-	say := func(s string) { fmt.Fprintf(out, "  tailnet %s\n", s) }
-	if err := tailnet.Start(ctx, a.Workspace.Config.Tailnet, h, chat.WithVia, say); err != nil {
-		say(err.Error())
 	}
 }
 

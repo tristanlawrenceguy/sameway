@@ -39,6 +39,11 @@ type question struct{ ask, detail, yes, no string }
 // acted, each with the question it puts, from the value it would take and
 // the one it has now.
 var outward = map[string]func(now, next string, s *Service) question{
+	"tailnet.name": func(now, next string, _ *Service) question {
+		return question{"Open this workspace from your phone?",
+			fmt.Sprintf("The assistant wants to put this workspace on your Tailscale network as %s, so your phone and your other devices signed in to Tailscale as you can open it from anywhere. Nobody else can. It needs a free Tailscale account, and the Tailscale app on your phone. This computer contacts Tailscale to join.", next),
+			"Yes, turn it on", "No, only on this computer"}
+	},
 	"llm.base_url": func(now, next string, _ *Service) question {
 		return question{"Send your conversations to a different AI service?",
 			fmt.Sprintf("The assistant wants to change where its AI model runs, from %s to %s. From then on, everything you write here, with your notes and past messages, would be sent to %s. Only say yes if you set that service up yourself: what has been sent can't be taken back.", orNone(now), next, host(next)),
@@ -99,7 +104,8 @@ func (s *Service) askFirst(call string, id, key, value string) (toolResult, bool
 	switch call {
 	case "set_setting":
 		put, ok := outward[key]
-		if !ok {
+		// Taking the workspace off the tailnet sends nothing anywhere.
+		if !ok || (key == "tailnet.name" && strings.TrimSpace(value) == "") {
 			return toolResult{}, false
 		}
 		q := put(s.setting(key), strings.TrimSpace(value), s)

@@ -36,10 +36,9 @@ type Config struct {
 // once the tailnet has certificates turned on and on plain HTTP for
 // anything that is not a browser. Only the devices of the person who
 // signed it in get through, and mark tells each request which device it
-// came from. say is told the sign-in link, the addresses, and anything that
-// goes wrong; serving here never stops the workspace serving on this
-// machine. It ends when ctx does.
-func Start(ctx context.Context, cfg Config, h http.Handler, mark func(context.Context, string) context.Context, say func(string)) error {
+// came from. say is told each step (see Status); serving here never stops
+// the workspace serving on this machine. It ends when ctx does.
+func Start(ctx context.Context, cfg Config, h http.Handler, mark func(context.Context, string) context.Context, say func(Status)) error {
 	name := strings.TrimSpace(cfg.Name)
 	if name == "" {
 		return nil
@@ -59,7 +58,7 @@ func Start(ctx context.Context, cfg Config, h http.Handler, mark func(context.Co
 			line := fmt.Sprintf(format, a...)
 			if i := strings.Index(line, "go to: "); i >= 0 && line[i:] != link {
 				link = line[i:]
-				say("sign in to put this workspace on your tailnet: " + line[i+len("go to: "):])
+				say(Status{State: SignIn, Link: line[i+len("go to: "):]})
 			}
 		},
 	}
@@ -77,24 +76,24 @@ func Start(ctx context.Context, cfg Config, h http.Handler, mark func(context.Co
 	return nil
 }
 
-func serve(ctx context.Context, srv *tsnet.Server, h http.Handler, mark func(context.Context, string) context.Context, say func(string)) {
+func serve(ctx context.Context, srv *tsnet.Server, h http.Handler, mark func(context.Context, string) context.Context, say func(Status)) {
 	st, err := srv.Up(ctx)
 	if err != nil {
 		if ctx.Err() == nil {
-			say(fmt.Sprintf("not on the tailnet: %v", err))
+			say(Status{State: Failed, Err: err})
 		}
 		return
 	}
 	host := strings.TrimSuffix(st.Self.DNSName, ".")
 	lc, err := srv.LocalClient()
 	if err != nil {
-		say(fmt.Sprintf("not on the tailnet: %v", err))
+		say(Status{State: Failed, Err: err})
 		return
 	}
 	h = owner(lc, st.Self, mark, h)
 	plain, err := srv.Listen("tcp", ":80")
 	if err != nil {
-		say(fmt.Sprintf("not on the tailnet: %v", err))
+		say(Status{State: Failed, Err: err})
 		return
 	}
 	go run(plain, h, say)
@@ -104,12 +103,12 @@ func serve(ctx context.Context, srv *tsnet.Server, h http.Handler, mark func(con
 	for said := false; ; said = true {
 		secure, err := srv.ListenTLS("tcp", ":443")
 		if err == nil {
-			say(fmt.Sprintf("https://%s/", host))
+			say(Status{State: Ready, Link: "https://" + host + "/"})
 			run(secure, h, say)
 			return
 		}
 		if !said {
-			say(fmt.Sprintf("https://%s/ needs HTTPS certificates turned on for your tailnet: https://login.tailscale.com/admin/dns (it starts here by itself once they are)", host))
+			say(Status{State: NeedsHTTPS, Link: HTTPSSettings, Host: host})
 		}
 		select {
 		case <-ctx.Done():
@@ -119,9 +118,9 @@ func serve(ctx context.Context, srv *tsnet.Server, h http.Handler, mark func(con
 	}
 }
 
-func run(l net.Listener, h http.Handler, say func(string)) {
+func run(l net.Listener, h http.Handler, say func(Status)) {
 	if err := http.Serve(l, h); err != nil && !errors.Is(err, net.ErrClosed) {
-		say(fmt.Sprintf("tailnet stopped: %v", err))
+		say(Status{State: Failed, Err: err})
 	}
 }
 

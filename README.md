@@ -16,7 +16,28 @@ where the manifest says so.
 
 ## Quick start
 
-Requires Go 1.24 or newer. No database, no Node, no config beyond one file.
+No database, no Node, no config beyond one file.
+
+**Download** the program for your computer from the
+[latest release](https://github.com/tristanlawrenceguy/sameway/releases/latest):
+`windows_amd64.exe` for Windows, `darwin_arm64` for a Mac with Apple
+silicon, `darwin_amd64` for an Intel Mac, `linux_amd64` or `linux_arm64` for
+Linux. Rename it `sameway` (`sameway.exe` on Windows), put it in a folder of
+its own, and from a terminal in that folder:
+
+```bash
+sameway init my-workspace
+sameway open --workspace my-workspace
+```
+
+A release keeps itself current from then on (see [Keeping it current](#keeping-it-current)).
+
+The program is not signed yet, so the first run asks once. On Windows,
+*Windows protected your PC* → **More info** → **Run anyway**. On a Mac, run
+`chmod +x sameway && xattr -d com.apple.quarantine sameway` first. On Linux,
+`chmod +x sameway`.
+
+**Or with Go** 1.26.6 or newer:
 
 ```bash
 go install github.com/tristanlawrenceguy/sameway/cmd/sameway@latest
@@ -59,6 +80,24 @@ llm:
 
 Keys are read from the environment variable you name. They never go in the
 workspace file, because the workspace is meant to be shared.
+
+## On your phone
+
+Ask the assistant: *"I want this on my phone."* It asks first, then puts the
+workspace on your own [Tailscale](https://tailscale.com) network and tells you
+the rest in the chat, one step at a time:
+
+1. Sign in to Tailscale (a free account) from the link it gives you, once.
+2. Install the Tailscale app on your phone and sign in with the same account.
+3. Turn on HTTPS certificates for your tailnet, if the chat says so (one
+   button in Tailscale's DNS settings).
+4. Open the address it gives you, `https://<name>.<your-tailnet>.ts.net`.
+
+Nothing is public and nothing needs port forwarding. Only devices signed in to
+Tailscale as you get in, and what you change from one says which in the
+activity log. The computer running sameway has to be on. To stop, ask the
+assistant to take it off your phone. It is the `tailnet:` section of
+`workspace.yaml`, if you would rather set it there.
 
 ## What you get
 

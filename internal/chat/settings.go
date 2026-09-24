@@ -1,6 +1,8 @@
 package chat
 
 import (
+	"time"
+
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
@@ -31,6 +33,12 @@ func (s *Service) setSetting(key, value string) toolResult {
 	note := ""
 	if key == "server.addr" {
 		note = ", from the next start"
+	}
+	// Joining a tailnet takes a few seconds and then needs the person; the
+	// assistant hears the first step so it can tell them, and the chat has
+	// it too, for when the change was the person's Yes to a question.
+	if key == "tailnet.name" && s.Tailnet != nil {
+		note = ". " + s.Tailnet(20*time.Second)
 	}
 	return toolResult{text: key + " is now " + value + note, change: &Change{Action: "set", Component: key, Detail: value, Before: map[string]any{"value": was}}}
 }
