@@ -19,6 +19,9 @@ type Page struct {
 	// Controls is "auto" or "visible" and lands on the root element, where
 	// the quiet layer reads it. See design/foundations/quiet.md.
 	Controls string
+	// Text and Spacing are the person's reading comfort, from the
+	// workspace: larger words, wider spacing (21-comfort.css).
+	Text, Spacing string
 	// Pace is how changes arrive, from the workspace: calm, quick or still.
 	// It lands on the root element, where the motion rules read it.
 	Pace string

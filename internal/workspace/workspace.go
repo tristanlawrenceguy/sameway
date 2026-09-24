@@ -69,6 +69,20 @@ type Config struct {
 		// set_setting ui.show +<key> when it has a reason the person
 		// would want it there always, and takes it back with -<key>.
 		Show string `yaml:"show"`
+		// Text is how large the words are: "normal" (the default),
+		// "large" or "larger". Spacing is "normal" or "wide": more room
+		// between lines, words and paragraphs, for people who read more
+		// easily that way. Set by asking, or on the Help page.
+		Text    string `yaml:"text"`
+		Spacing string `yaml:"spacing"`
+		// Needs is what the person has said they need, in their words
+		// ("I use a screen reader", "keep things simple"): the assistant
+		// follows it in every reply and every page it makes.
+		Needs string `yaml:"needs"`
+		// Language is the workspace's language, as a code such as en,
+		// de or es: the pages say it, so screen readers read them in the
+		// right voice, and the assistant replies in it. English when empty.
+		Language string `yaml:"language"`
 	} `yaml:"ui"`
 	Chat struct {
 		// HistoryLimit caps how many past messages are sent to the model.

@@ -11,3 +11,6 @@
   background: var(--sw-color-bg-raised); border: 2px solid var(--sw-color-border-strong); border-radius: var(--sw-radius-md); cursor: pointer;
 }
 .sw-upload__field::file-selector-button:hover { background: var(--sw-color-bg-muted); }
+/* What a picture shows: a field of its own, as tall as a target. */
+.sw-upload__description { min-height: 2.75rem; flex: 1 1 14rem; font: inherit; color: var(--sw-color-fg); background: var(--sw-color-bg); border: 2px solid var(--sw-color-border-strong); border-radius: var(--sw-radius-md); padding: 0 var(--sw-space-2); }
+.sw-upload__hint { flex-basis: 100%; }

@@ -47,6 +47,14 @@ ol.sw-plain, ul.sw-plain { list-style: none; margin: 0; padding: 0; }
 .sw-block[data-tone="warning"] { background: var(--sw-color-warning-soft); border-color: transparent; }
 .sw-block[data-tone="danger"]  { background: var(--sw-color-danger-soft);  border-color: transparent; }
 .sw-block[data-tone="info"]    { background: var(--sw-color-info-soft);    border-color: transparent; }
+/* A tone is also an edge in its own colour, which stays in forced colours
+   when the tint does not; the block says its tone in words too. */
+.sw-block[data-tone="accent"]  { border-inline-start: 4px solid var(--sw-color-accent); }
+.sw-block[data-tone="success"] { border-inline-start: 4px solid var(--sw-color-success); }
+.sw-block[data-tone="warning"] { border-inline-start: 4px solid var(--sw-color-warning); }
+.sw-block[data-tone="danger"]  { border-inline-start: 4px solid var(--sw-color-danger); }
+.sw-block[data-tone="info"]    { border-inline-start: 4px solid var(--sw-color-info); }
+@media (forced-colors: active) { .sw-block:not([data-tone="none"]) { border-inline-start: 4px solid CanvasText; } }
 
 /* A block holding a chat brings its own surface, so the block gets out of
    the way entirely. */

@@ -95,3 +95,22 @@ func (f *failingAfter) Complete(_ context.Context, _ llm.Request) (*llm.Response
 	}
 	return nil, errors.New("the AI model at http://127.0.0.1:1/v1 isn't answering")
 }
+
+// What the person says they need, and the workspace's language, are in
+// every prompt; and the prompt asks for everyday words.
+func TestTheAssistantHearsNeedsAndLanguage(t *testing.T) {
+	svc := newFullService(t)
+	svc.Needs, svc.Language = "I use a screen reader; keep things simple", "de"
+	m := &scripted{}
+	svc.Provider = m
+	svc.SendOn(t.Context(), "", "hallo")
+	if len(m.seen) == 0 {
+		t.Fatal("the model was asked")
+	}
+	sys := m.seen[0].System
+	for _, want := range []string{"I use a screen reader; keep things simple", "language is de", "short, everyday words"} {
+		if !strings.Contains(sys, want) {
+			t.Errorf("the prompt says %q", want)
+		}
+	}
+}

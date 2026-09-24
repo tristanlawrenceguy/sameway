@@ -78,6 +78,8 @@ func Load(dir string, memoryDB bool) (*App, error) {
 		Registry:     reg,
 		HistoryLimit: ws.Config.Chat.HistoryLimit,
 		ExtraPrompt:  ws.Config.Chat.SystemPrompt,
+		Needs:        ws.Config.UI.Needs,
+		Language:     ws.Config.UI.Language,
 	}
 	llmCfg := ws.Config.LLM
 	llmCfg.Workspace = ws.Dir
@@ -88,6 +90,7 @@ func Load(dir string, memoryDB bool) (*App, error) {
 		if err := ws.Set(key, value); err != nil {
 			return err
 		}
+		a.Chat.Needs, a.Chat.Language = ws.Config.UI.Needs, ws.Config.UI.Language
 		if key == "actions.allow" {
 			a.Chat.Allow = allowList(ws.Config.Actions.Allow)
 		}

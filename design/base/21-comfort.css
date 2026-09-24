@@ -1,0 +1,7 @@
+/* Reading comfort the person chose (ui.text, ui.spacing): larger words,
+   and the room WCAG 1.4.12 asks a page to survive, as a setting rather
+   than a test. Sizes are in rem, so the root carries them everywhere. */
+html[data-text="large"] { font-size: 125%; }
+html[data-text="larger"] { font-size: 150%; }
+html[data-spacing="wide"] body { line-height: 1.8; letter-spacing: 0.12em; word-spacing: 0.16em; }
+html[data-spacing="wide"] p, html[data-spacing="wide"] li { margin-block-end: 1em; }

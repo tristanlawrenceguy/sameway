@@ -39,6 +39,10 @@ var Settings = []Setting{
 	{"mcp.token_env", "env", nil, "the NAME of the environment variable that holds the bearer token for /mcp"},
 	{"ui.controls", "enum", []string{"auto", "visible"}, "auto fades per-item controls until hovered; visible keeps them on screen"},
 	{"ui.pace", "enum", Paces, "how changes arrive: calm, quick or still"},
+	{"ui.text", "enum", []string{"normal", "large", "larger"}, "how large the words are: normal, large or larger"},
+	{"ui.spacing", "enum", []string{"normal", "wide"}, "room between lines, words and paragraphs: normal, or wide for people who read more easily with more room"},
+	{"ui.needs", "string", nil, "what the person has said they need, in their words (I use a screen reader; keep things simple; I am colour blind): you follow it in every reply and every page you make. Set it the moment they tell you, and add to it, keeping what was there"},
+	{"ui.language", "string", nil, "the workspace's language as a code (en, de, es, fr): the pages say it so screen readers use the right voice, and you reply in it"},
 	{"ui.lists", "enum", []string{"filled", "all"}, "which lists the sidebar shows: filled (something in them, or made by the person) or all"},
 	{"ui.developer", "enum", []string{"hidden", "shown"}, "the design system and the guide for agents: hidden from the sidebar or shown"},
 	{"ui.show", "keys", nil, "the parts of a page that are on every time. All of them are off by default, and a page shows no trace of an off one, so this is how something earns a permanent place: fields (a record's whole field list, including the ones its heading and chips already say), remind (the field for setting a reminder about a record, on its page), ask (the way to the assistant with the record in the box), day (the way to the record's day on the calendar), or a connection key from get_record's related, such as points-here:task.project. +key adds one, -key takes it back, a list replaces them all, empty is none. Each is also one address away without this (?show=<key>), so turn one on only when you have a reason the person wants it every time, and say the reason"},
@@ -96,7 +100,9 @@ func (w *Workspace) Set(key, value string) error {
 	scalar := value
 	switch st.Kind {
 	case "enum":
-		if !contains(st.Values, value) {
+		// Empty is the default, which is where a choice starts: undoing
+		// the first change to one puts it back there.
+		if value != "" && !contains(st.Values, value) {
 			return fmt.Errorf("%s must be one of %s, not %q", key, strings.Join(st.Values, ", "), value)
 		}
 	case "int":
@@ -140,7 +146,7 @@ func (w *Workspace) Set(key, value string) error {
 // reminder, no programs allowed, no broker. Undoing a change to one of
 // them puts it back to nothing.
 var canBeEmpty = map[string]bool{
-	"notify.command": true, "actions.allow": true, "chat.system_prompt": true,
+	"notify.command": true, "actions.allow": true, "chat.system_prompt": true, "ui.needs": true, "ui.language": true,
 	"mqtt.broker": true, "mqtt.client_id": true, "llm.base_url": true, "tailnet.name": true,
 }
 

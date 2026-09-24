@@ -29,7 +29,13 @@ func validExternalURL(s string) bool {
 
 // linkify converts recognized URLs and internal paths in a paragraph into
 // clickable anchor tags. Returns template.HTML so the result is not escaped.
-func linkify(s string) template.HTML {
+func linkify(s string) template.HTML { return linkifyNamed(s, nil) }
+
+// linkifyNamed is linkify with a way to name a page: a link to a record
+// reads as the record's name, "Water the plants", not as its address,
+// which a screen reader spells out and nobody can remember. A page it
+// cannot name keeps its address as its words.
+func linkifyNamed(s string, name func(path string) string) template.HTML {
 	// Collect all matches from both regexes, then sort by position.
 	var matches []linkMatch
 	for _, sub := range []*regexp.Regexp{internalPathRe, externalURLRe} {
@@ -69,7 +75,13 @@ func linkify(s string) template.HTML {
 		if m.start > lastEnd {
 			buf.WriteString(html.EscapeString(s[lastEnd:m.start]))
 		}
-		fmt.Fprintf(&buf, `<a class="sw-link" href="%s">%s</a>`, m.raw, m.raw)
+		words := html.EscapeString(m.raw)
+		if name != nil && strings.HasPrefix(m.raw, "/t/") {
+			if n := strings.TrimSpace(name(m.raw)); n != "" {
+				words = html.EscapeString(n)
+			}
+		}
+		fmt.Fprintf(&buf, `<a class="sw-link" href="%s">%s</a>`, m.raw, words)
 		lastEnd = m.end
 	}
 	if lastEnd < len(s) {

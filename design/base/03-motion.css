@@ -64,7 +64,9 @@
   2%, 38% { opacity: 1; outline-color: var(--sw-actor, var(--sw-color-accent)); }
   55%, 100% { opacity: 0; outline-color: transparent; }
 }
-@keyframes sw-arrive-content { 0%, 72% { opacity: 0; visibility: hidden; } 100% { opacity: 1; visibility: visible; } }
+/* Opacity only: visibility would take the block out of the accessibility
+   tree while it arrives, and a screen reader would not find it for seconds. */
+@keyframes sw-arrive-content { 0%, 72% { opacity: 0; } 100% { opacity: 1; } }
 
 [data-arrival] { --sw-arrival-delay: calc((var(--sw-arrival, 1) - 1) * var(--sw-motion-between)); }
 [data-arrival="1"] { --sw-arrival: 1; } [data-arrival="2"] { --sw-arrival: 2; } [data-arrival="3"] { --sw-arrival: 3; }

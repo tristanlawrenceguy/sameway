@@ -120,6 +120,10 @@ func (s *Server) blockItem(blk *store.Record, convo *conversation) string {
 	// accessibility tree. Sighted people got it from the glow when it
 	// happened, and can get it again from the activity log.
 	fmt.Fprintf(&b, `<p class="sw-visually-hidden">%s</p>`, template.HTMLEscapeString(v.Provenance))
+	// A tone means something, so it is said, not only tinted: WCAG 1.4.1.
+	if word := toneWords[v.Tone]; word != "" {
+		fmt.Fprintf(&b, `<p class="sw-visually-hidden">%s</p>`, word)
+	}
 	b.WriteString(string(body))
 	fmt.Fprintf(&b, `<div class="sw-bar sw-quiet">%s<form method="post" action="/canvas/%s/delete">%s</form></div></li>`,
 		v.Expand, v.ID, v.Remove)

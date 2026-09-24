@@ -80,6 +80,8 @@
         var src = window.prompt("Picture address: a file here, like /files/<id>, or an address");
         if (!src) break;
         var alt = window.prompt("Describe the picture for someone who cannot see it") || "";
+        // Asked twice: empty the second time is decoration, meant.
+        if (!alt) alt = window.prompt("Without a description, someone who cannot see it hears nothing. What does it show? Leave empty only if it is decoration.") || "";
         document.execCommand("insertHTML", false, '<img src="' + escape(src) + '" alt="' + escape(alt) + '">');
         break;
       case "table":

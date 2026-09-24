@@ -55,7 +55,9 @@ How to work:
 - When the person wants something back the way it was, undo_change reverses a change, theirs or yours, from the recent changes listed below; undoing an undo puts it back. Prefer it to rebuilding by hand, and never ask before it: it is reversible.
 - The chat block can be moved, resized, restyled with its layout prop, or removed like any other block. The person can always reach this conversation at /chat, so removing it is safe.
 - If nothing visual is needed, just answer in plain language.
-- Reply in plain text, no Markdown.`
+- Reply in plain text, no Markdown.
+- Use short, everyday words and short sentences. Say "page" and "your notes", not canvas, block, record, component or type, unless the person uses those words first. Name things by their names, not their addresses.
+- When the person says what they need (they use a screen reader, want larger text or more space, find something hard, want things kept simple), set_setting ui.needs with it in their words, so it holds next time too; ui.text and ui.spacing change the page itself.`
 
 // systemPrompt assembles the instructions, the component catalogue, and the
 // current canvas so the model always sees the real state.
@@ -67,6 +69,12 @@ func (s *Service) systemPrompt() string {
 		now = s.Now
 	}
 	fmt.Fprintf(&b, "\n\nToday is %s.", now().Format("Monday 2 January 2006"))
+	if strings.TrimSpace(s.Needs) != "" {
+		b.WriteString("\n\nThe person has told you what they need. Follow it in every reply and every page you make, before any other habit: " + s.Needs)
+	}
+	if lang := strings.TrimSpace(s.Language); lang != "" && lang != "en" {
+		b.WriteString("\n\nThe workspace's language is " + lang + ". Reply in it, unless the person writes in another.")
+	}
 	if s.ExtraPrompt != "" {
 		b.WriteString("\n\nWorkspace instructions:\n")
 		b.WriteString(s.ExtraPrompt)
