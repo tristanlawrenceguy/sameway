@@ -77,6 +77,9 @@ type Registry struct {
 	tokens       string
 	base         string
 	baseJS       string
+	// LinkTitle names the record at a page address, for links in words
+	// such as the assistant's replies; set by the server.
+	LinkTitle func(path string) string
 }
 
 // New returns an empty registry.

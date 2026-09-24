@@ -74,9 +74,12 @@ func (s *Server) storeUpload(r *http.Request) (*store.Record, error) {
 	if title == "" {
 		title = strings.TrimSuffix(name, filepath.Ext(name))
 	}
-	rec, err := s.app.Store.Create(FileType, map[string]any{
-		"title": title, "name": name, "kind": convert.Kind(name), "size": len(data), "status": "converting",
-	})
+	fields := map[string]any{"title": title, "name": name, "kind": convert.Kind(name), "size": len(data), "status": "converting"}
+	// What a picture shows, said by whoever added it, for whoever cannot see it.
+	if d := strings.TrimSpace(r.FormValue("description")); d != "" {
+		fields["description"] = d
+	}
+	rec, err := s.app.Store.Create(FileType, fields)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +179,12 @@ func (s *Server) fileExtras(rec *store.Record) string {
 	if kind, _ := rec.Fields["kind"].(string); kind == "image" {
 		alt, _ := rec.Fields["description"].(string)
 		if alt == "" {
-			alt, _ = rec.Fields["title"].(string)
+			// Its name alone, "IMG_4032", tells nobody what it shows: it
+			// says that it is a picture no one has described yet, and the
+			// page asks for a description.
+			title, _ := rec.Fields["title"].(string)
+			alt = "Picture: " + title + ", not described yet"
+			b.WriteString(`<p class="sw-muted">This picture has no description yet, so someone who cannot see it hears only its name. Press Edit to say what it shows.</p>`)
 		}
 		fmt.Fprintf(&b, `<p><img class="sw-file__image" src="/files/%s" alt="%s"></p>`, rec.ID, template.HTMLEscapeString(alt))
 	}

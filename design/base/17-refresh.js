@@ -76,9 +76,35 @@
   // merge puts the fresh page in place of the old, keeping the chat and
   // every unchanged block as the nodes they were, and the person where
   // they were: scroll, focus, and the caret in what they were typing.
+  // mark says how to find the focused control again in the fresh page when
+  // it has no id: the block it is in, its kind, and its name, link or form.
+  // Keyboard focus used to fall to the page whenever the assistant changed
+  // anything, and a person tabbing through the page started over.
+  function mark(el) {
+    if (!el || el === document.body || el.id) return null;
+    var block = el.closest("[data-block-id]");
+    var form = el.closest("form");
+    return {
+      block: block && block.getAttribute("data-block-id"), tag: el.tagName,
+      name: (el.getAttribute("aria-label") || el.textContent || "").replace(/\s+/g, " ").trim(),
+      href: el.getAttribute("href"), action: form && form.getAttribute("action")
+    };
+  }
+  function find(m) {
+    var scope = (m.block && document.querySelector('[data-block-id="' + m.block + '"]')) || document;
+    var all = scope.querySelectorAll(m.tag);
+    for (var i = 0; i < all.length; i++) {
+      var el = all[i], form = el.closest("form");
+      var name = (el.getAttribute("aria-label") || el.textContent || "").replace(/\s+/g, " ").trim();
+      if (name === m.name && el.getAttribute("href") === m.href && (form && form.getAttribute("action")) === m.action) return el;
+    }
+    return null;
+  }
+
   function merge(doc) {
     var focused = document.activeElement;
     var focusId = focused && focused.id;
+    var focusMark = mark(focused);
     var selStart = focused && focused.selectionStart, selEnd = focused && focused.selectionEnd;
     var y = window.scrollY;
     // The chat is what the person is reading: the page keeps it where it
@@ -112,6 +138,12 @@
     // correction, and the page would be seen drifting back into place.
     if (anchor && anchor.isConnected) window.scrollBy({ top: anchor.getBoundingClientRect().top - anchorTop, behavior: "instant" });
     else window.scrollTo({ top: y, behavior: "instant" });
+    // A control without an id is found again by what it is and where.
+    if (focusMark && !focused.isConnected) {
+      var again = find(focusMark);
+      if (again) again.focus({ preventScroll: true });
+      else if (document.getElementById("main")) document.getElementById("main").focus({ preventScroll: true });
+    }
     if (focusId && document.activeElement && document.activeElement.id !== focusId) {
       var back = document.getElementById(focusId);
       if (back) {

@@ -2,6 +2,7 @@ package look
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -64,8 +65,12 @@ func problems(doc *htmltest.Doc, o *Outline, page bool) []string {
 		}
 	}
 	for _, n := range doc.Elements("img") {
-		if _, ok := htmltest.Attr(n, "alt"); !ok {
+		alt, ok := htmltest.Attr(n, "alt")
+		if !ok {
 			out = append(out, "img without alt")
+		} else if fileNamed(alt) {
+			// A file's name says nothing of what a picture shows.
+			out = append(out, fmt.Sprintf("img whose alt is a file name: %q", alt))
 		}
 	}
 	for _, c := range o.Controls {
@@ -108,3 +113,17 @@ func problems(doc *htmltest.Doc, o *Outline, page bool) []string {
 	}
 	return out
 }
+
+// fileNamed says an alt is a file's name rather than words: a camera's
+// name for a picture, or one ending in an image file's extension.
+func fileNamed(alt string) bool {
+	a := strings.ToLower(strings.TrimSpace(alt))
+	for _, ext := range []string{".jpg", ".jpeg", ".png", ".gif", ".webp", ".heic", ".svg"} {
+		if strings.HasSuffix(a, ext) {
+			return true
+		}
+	}
+	return cameraName.MatchString(a)
+}
+
+var cameraName = regexp.MustCompile(`^(img|dsc|dscn|pxl|photo|image|screenshot)[_ -]?\d{2,}`)

@@ -35,6 +35,8 @@ type Server struct {
 func New(a *app.App) *Server {
 	s := &Server{app: a, css: []byte(a.Registry.CSS()), js: []byte(a.Registry.JS()), mux: http.NewServeMux()}
 	s.routes()
+	// A link to a record in a reply reads as the record's name.
+	a.Registry.LinkTitle = s.linkTitle
 	a.Chat.Look = s.lookFor
 	// Wrap the mux so unmatched routes get our HTML 404 page.
 	s.mux = s.wrapNotFound(s.mux)
@@ -49,6 +51,8 @@ func (s *Server) routes() {
 	m.HandleFunc("GET /{$}", s.canvasPage)
 	m.HandleFunc("GET /c/{canvas}", s.canvasPage)
 	m.HandleFunc("GET /chat", s.chatPage)
+	m.HandleFunc("GET /help", s.helpPage)
+	m.HandleFunc("POST /help/set", s.helpSet)
 	m.HandleFunc("GET /canvas/{id}", s.focusPage)
 	m.HandleFunc("POST /chat", s.chatSend)
 	m.HandleFunc("POST /chat/stream", s.chatStream)
@@ -137,6 +141,9 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 		Title:        title,
 		Controls:     s.app.Workspace.Config.UI.Controls,
 		Pace:         s.app.Workspace.Config.UI.Pace,
+		Lang:         s.app.Workspace.Config.UI.Language,
+		Text:         s.app.Workspace.Config.UI.Text,
+		Spacing:      s.app.Workspace.Config.UI.Spacing,
 		Body:         body,
 		JSONURL:      opts.JSONURL,
 		Focus:        opts.Focus,
@@ -161,7 +168,7 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 		href := "/t/" + t.Name
 		p.Nav = append(p.Nav, render.NavItem{HTML: s.navLink(href, plural(t.Name), strings.HasPrefix(r.URL.Path, href)), Dot: s.dotOf(t.Name)})
 	}
-	more := []struct{ href, label string }{{"/chat", "Chat"}, {"/activity", "Activity"}, {"/workspaces", "Workspaces"}}
+	more := []struct{ href, label string }{{"/chat", "Chat"}, {"/activity", "Activity"}, {"/workspaces", "Workspaces"}, {"/help", "Help"}}
 	if s.app.Workspace.Config.UI.Developer == "shown" {
 		more = append(more, struct{ href, label string }{"/design", "Design system"})
 	}
@@ -260,4 +267,21 @@ func (s *Server) listed(t *schema.Type) bool {
 	}
 	n, err := s.app.Store.Count(t.Name)
 	return err != nil || n > 0
+}
+
+// linkTitle is the name of the record at /t/<type>/<id>, or nothing.
+func (s *Server) linkTitle(path string) string {
+	parts := strings.Split(strings.TrimPrefix(path, "/t/"), "/")
+	if len(parts) != 2 {
+		return ""
+	}
+	t, ok := s.app.Types.Get(parts[0])
+	if !ok {
+		return ""
+	}
+	rec, err := s.app.Store.Get(t.Name, parts[1])
+	if err != nil {
+		return ""
+	}
+	return s.title(t, rec)
 }

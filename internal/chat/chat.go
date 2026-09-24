@@ -55,6 +55,9 @@ type Service struct {
 	// person's Tailscale network and says it in their words; nil where the
 	// workspace is not being served. See settings.go.
 	Tailnet func(wait time.Duration) string
+	// Needs is what the person has said they need, and Language the
+	// workspace's language; both go into every prompt. Set by the app.
+	Needs, Language string
 	// convo is the chat that is open, once known; see Current.
 	convo       string
 	ExtraPrompt string
