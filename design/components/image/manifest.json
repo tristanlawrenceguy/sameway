@@ -1,0 +1,35 @@
+{
+  "name": "image",
+  "version": "1.0.0",
+  "description": "A picture, sized to its column, with the words that stand in for it and an optional caption.",
+  "icon": "▣",
+  "use": { "when": "a photo, a scan or a drawing is part of what the page says: a file's own page, a note's picture.", "not": "an icon, which comes from the component that owns it; or a chart, which is a chart.", "with": "alt text that says what it shows that matters here." },
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["src", "alt"],
+    "properties": {
+      "src": { "type": "string", "minLength": 1 },
+      "alt": { "type": "string", "description": "What the picture shows that matters here, for someone who cannot see it. Empty only when it is decoration and the words around it say everything." },
+      "caption": { "type": "string", "description": "Seen by everyone, under the picture." },
+      "width": { "type": "integer", "minimum": 1, "description": "Its width in pixels, when known, so the page does not jump as it loads." },
+      "height": { "type": "integer", "minimum": 1 },
+      "id": { "type": "string" }
+    }
+  },
+  "a11y": {
+    "role": "img, named by its alt text; figure with its caption when it has one",
+    "keyboard": [],
+    "states": [],
+    "wcag": { "target": "AAA", "notes": "Alt text is required, so a picture is never left for a screen reader to read out its file name (1.1.1). Empty alt is a decision that it is decoration. A caption is a figcaption, tied to the picture. It never grows past its column (1.4.10)." }
+  },
+  "machine": {
+    "selector": "[data-component=\"image\"]",
+    "identify": "The img's alt says what it shows; figcaption, when present, is its caption.",
+    "operate": "Nothing to operate; it only shows."
+  },
+  "examples": [
+    { "name": "default", "props": { "src": "/files/fern.jpg", "alt": "The fern on the kitchen shelf, two new fronds uncurling", "width": 320, "height": 180 }, "file": "examples/default.html" },
+    { "name": "captioned", "props": { "src": "/files/fern.jpg", "alt": "The fern from above, its fronds spread wider than the pot", "caption": "The fern, in March", "width": 320, "height": 180 }, "file": "examples/captioned.html" }
+  ]
+}

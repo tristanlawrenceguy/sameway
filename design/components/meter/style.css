@@ -1,0 +1,12 @@
+/* A meter is a thin bar: how far along a known range something is. It fills
+   in the list colour, turns the success green when met and the warning
+   colour when over; the words beside it say the same. */
+.sw-meter { height: 0.5rem; border-radius: var(--sw-radius-pill); background: var(--sw-color-bg-muted); overflow: hidden; }
+.sw-meter__fill { display: block; height: 100%; border-radius: inherit; background: var(--sw-dot, var(--sw-color-accent)); transition: width var(--sw-motion-base) var(--sw-motion-ease); }
+.sw-meter[data-state="met"] .sw-meter__fill { background: var(--sw-color-success); }
+.sw-meter[data-state="over"] .sw-meter__fill { background: var(--sw-color-warning); }
+/* Forced colours repaint backgrounds: the bar keeps an edge and its fill. */
+@media (forced-colors: active) {
+  .sw-meter { border: 1px solid CanvasText; }
+  .sw-meter__fill { forced-color-adjust: none; background: Highlight; }
+}

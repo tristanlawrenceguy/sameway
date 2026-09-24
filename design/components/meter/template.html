@@ -1,0 +1,1 @@
+<div class="sw-meter" data-component="meter" data-state="{{.state}}" role="meter" aria-label="{{.label}}" aria-valuemin="{{.min}}" aria-valuemax="{{.max}}" aria-valuenow="{{atMost .value .max}}"{{if .text}} aria-valuetext="{{.text}}"{{end}}{{if .id}} id="{{.id}}"{{end}}><span class="sw-meter__fill" style="width: {{percent .value .max}}%"></span></div>

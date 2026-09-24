@@ -186,7 +186,7 @@ func (s *Server) fileExtras(rec *store.Record) string {
 			alt = "Picture: " + title + ", not described yet"
 			b.WriteString(`<p class="sw-muted">This picture has no description yet, so someone who cannot see it hears only its name. Press Edit to say what it shows.</p>`)
 		}
-		fmt.Fprintf(&b, `<p><img class="sw-file__image" src="/files/%s" alt="%s"></p>`, rec.ID, template.HTMLEscapeString(alt))
+		b.WriteString(string(s.component("image", map[string]any{"src": "/files/" + rec.ID, "alt": alt})))
 	}
 	if status, _ := rec.Fields["status"].(string); status == "converting" {
 		b.WriteString(string(s.component("status", map[string]any{"id": "file-status", "message": "Reading the file. Its text appears here when the converter answers.", "state": "working"})))

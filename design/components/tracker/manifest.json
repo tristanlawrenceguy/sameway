@@ -34,7 +34,7 @@
       { "key": "Enter", "does": "logs" }
     ],
     "states": ["aria-valuenow", "data-met"],
-    "wcag": { "target": "AAA", "notes": "A named region. Each bar is a progressbar with its value, its target and a name that says both in words, so the picture is never the only way to read it. The streak and each day dot carry their meaning in words for a reader. Log is a plain form that works without scripts. Colour marks a met day, and the word does too." }
+    "wcag": { "target": "AAA", "notes": "A named region. Each bar is the meter component: its value, its target, and the amount in words as its value text, so the picture is never the only way to read it. The streak and each day dot carry their meaning in words for a reader. Log is a plain form that works without scripts. Colour marks a met day, and the word does too." }
   },
   "machine": {
     "selector": "[data-component=\"tracker\"]",

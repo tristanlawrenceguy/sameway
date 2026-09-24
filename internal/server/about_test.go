@@ -118,7 +118,8 @@ func TestThingsKnowWhatTheyAreAbout(t *testing.T) {
 		t.Errorf("the unmet habit nudges with where it stands, the met one does not: %v %v", rang, told)
 	}
 	mu.Unlock()
-	if again := srv.Ring(now.Add(time.Hour)); len(again) != 0 {
+	// A minute on, not an hour: an hour could cross midnight into a new day.
+	if again := srv.Ring(now.Add(time.Minute)); len(again) != 0 {
 		t.Errorf("a habit nudges once a day, got %v", again)
 	}
 	if page := get(t, h, "/").Body.String(); !strings.Contains(page, `data-component="clock"`) && !strings.Contains(page, "Water") {

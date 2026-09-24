@@ -1,0 +1,5 @@
+/* A picture fits the column it is in and never makes the page scroll
+   sideways; its caption sits under it, quieter. */
+.sw-image { margin: 0; }
+.sw-image__img { display: block; max-width: 100%; height: auto; border-radius: var(--sw-radius-md); }
+.sw-image__caption { margin-top: var(--sw-space-2); font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); }
