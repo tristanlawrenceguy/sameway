@@ -54,14 +54,16 @@ const FOCUSABLE = 'a[href], button:not([disabled]), summary, input:not([disabled
 
 const focusables = () => page.evaluate((sel) => {
   // Only what is drawn: a control hidden until a script shows it is not met.
-  return [...document.querySelectorAll(sel)].filter((el) => !el.closest(".shell") && el.getClientRects().length > 0).map((el) => el.tagName.toLowerCase() + (el.id ? "#" + el.id : ""));
+  // A group of radios is one stop, whichever of them takes it.
+  const seen = new Set();
+  return [...document.querySelectorAll(sel)].filter((el) => !el.closest(".shell") && el.getClientRects().length > 0).map((el) => el.type === "radio" ? "radios:" + el.name : el.tagName.toLowerCase() + (el.id ? "#" + el.id : "")).filter((t) => !t.startsWith("radios:") || (!seen.has(t) && seen.add(t)));
 }, FOCUSABLE);
 
 const active = () => page.evaluate(() => {
   const el = document.activeElement;
   if (!el || el === document.body) return { tag: "body", ring: false };
   const cs = getComputedStyle(el);
-  return { tag: el.tagName.toLowerCase() + (el.id ? "#" + el.id : ""), ring: cs.outlineStyle !== "none" && parseFloat(cs.outlineWidth) > 0 };
+  return { tag: el.type === "radio" ? "radios:" + el.name : el.tagName.toLowerCase() + (el.id ? "#" + el.id : ""), ring: cs.outlineStyle !== "none" && parseFloat(cs.outlineWidth) > 0 };
 });
 
 async function tabOrder(where, mode) {

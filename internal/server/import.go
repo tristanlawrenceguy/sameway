@@ -117,7 +117,7 @@ func (s *Server) importPreview(w http.ResponseWriter, r *http.Request, t *schema
 	for i, col := range tb.Columns {
 		b.WriteString(`<td>`)
 		b.WriteString(string(s.component("select", map[string]any{
-			"label": col + " goes into", "name": "map-" + col, "id": fmt.Sprintf("map-%d", i), "options": options, "value": m[col],
+			"label": col + " goes into", "name": "map-" + col, "id": fmt.Sprintf("map-%d", i), "options": options, "value": m[col], "as": "dropdown",
 		})))
 		b.WriteString(`</td>`)
 	}

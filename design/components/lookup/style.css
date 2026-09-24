@@ -1,0 +1,2 @@
+/* A text field: the suggestions are the browser's own. */
+.sw-lookup .sw-field__input { width: 100%; }

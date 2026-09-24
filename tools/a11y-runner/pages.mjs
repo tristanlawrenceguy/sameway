@@ -146,12 +146,33 @@ const fields = await page.evaluate(() => [...document.querySelectorAll(".sw-inli
 })));
 check(fields.length > 3, `editor: a habit opens with its fields (${fields.length})`);
 for (const f of fields) check(["text-field", "when-field", "textarea", "select", "checkbox", "prose"].includes(f.component), `editor: "${f.label}" is not a design-system control`);
-const aim = page.getByRole("combobox", { name: "Aim" });
-const offered = await aim.evaluate((s) => [...s.options].map((o) => o.textContent));
+// Aim has three choices, so it is radios in a group named by the question.
+const aim = page.getByRole("group", { name: "Aim" });
+const offered = await aim.getByRole("radio").evaluateAll((els) => els.map((e) => e.labels[0].textContent));
 check(offered.includes("At most the target") && !offered.includes("limit"), `editor: aim offers names, not stored words (${offered.join(", ")})`);
-check(await aim.inputValue() === "limit", "editor: the habit's own aim is the one chosen");
+check(await aim.getByRole("radio", { name: "At most the target" }).isChecked(), "editor: the habit's own aim is the one chosen");
 for (const p of await axeProblems(page, [], [...AA_TAGS, ...AAA_TAGS])) fail(`editor: ${p}`);
 for (const p of await visualProblems(page)) fail(`editor: ${p}`);
+
+// Too long a title: the count says so as it is typed, and Save is refused
+// with an error summary whose link takes focus back to the field.
+const long = await (await fetch(base + "/api/note", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ title: "Short" }) })).json();
+await page.goto(base + "/t/note/" + long.id);
+await page.getByRole("button", { name: /^Edit/ }).first().click();
+const title = page.locator(".sw-inline-form [name=prop-title]");
+await title.fill("x".repeat(210));
+await title.dispatchEvent("input");
+check((await page.locator(".sw-inline-form .sw-field__count").first().textContent()).includes("10 characters too many"), "editor: the count says how many too many");
+const refused = page.waitForEvent("load", { timeout: 10000 }).catch(() => null);
+await page.locator(".sw-inline-form").getByRole("button", { name: "Save" }).click();
+await refused;
+const summary = page.locator("[data-component=error-summary]");
+check(await summary.count() === 1, "editor: a refused save is listed in an error summary");
+if (await summary.count()) {
+  await summary.getByRole("link").first().click();
+  check(await page.evaluate(() => document.activeElement.name === "prop-title"), "editor: the summary's link takes focus to the field");
+  check(await page.evaluate(() => document.activeElement.getAttribute("aria-invalid") === "true"), "editor: the field it names is marked invalid");
+}
 
 // A day is the when-field component: its picker appears once the script is
 // there to wire it, and picking a day writes it into the words.

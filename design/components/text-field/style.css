@@ -3,6 +3,9 @@
 .sw-field__required { font-weight: 400; color: var(--sw-color-fg-muted); }
 .sw-field__hint { margin: 0 0 var(--sw-space-2); color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); }
 .sw-field__error { margin: 0 0 var(--sw-space-2); color: var(--sw-color-danger); font-weight: 600; }
+/* How many characters are left, under a field that has a most (textarea too). */
+.sw-field__count { margin: var(--sw-space-1) 0 0; color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); }
+.sw-field__count--over { color: var(--sw-color-danger); font-weight: 600; }
 
 .sw-field__input, .sw-field__textarea, .sw-field__select {
   display: block; width: 100%; min-height: var(--sw-size-target);
