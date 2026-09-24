@@ -93,7 +93,7 @@ func TestChatPageRecentActivityEmptyStateHasNoHeading(t *testing.T) {
 	}
 
 	// The "no model configured" notice is still present.
-	if !strings.Contains(body, "No model") {
-		t.Errorf("empty /chat should show the \"No model\" notice\n%s", truncate(body))
+	if !strings.Contains(body, "Connect the assistant to an AI model") {
+		t.Errorf("empty /chat should say the assistant needs a model\n%s", truncate(body))
 	}
 }

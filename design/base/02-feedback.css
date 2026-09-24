@@ -37,3 +37,11 @@
 .sw-outcome { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sw-space-2); margin-block-end: var(--sw-space-4); }
 .sw-outcome > .sw-alert { flex: 1 1 20rem; margin: 0; }
 .sw-outcome__undo { margin: 0; }
+
+/* The assistant cannot reach a model yet: one panel, in the conversation,
+   saying why and what can be done here (connect.go). */
+.sw-connect { border: 1px solid var(--sw-color-assistant); border-radius: var(--sw-radius-lg); background: var(--sw-color-assistant-soft); padding: var(--sw-space-4); max-width: var(--sw-size-measure); }
+.sw-connect > .sw-alert { margin: 0; }
+.sw-connect__choices form { margin: 0; }
+.sw-connect__choices p { margin: var(--sw-space-1) 0 0; }
+.sw-add { margin: var(--sw-space-3) 0 0; }

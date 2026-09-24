@@ -19,6 +19,21 @@
     return Array.prototype.slice.call(t.content.children);
   };
 
+  // A record just made by hand arrives at #edit, open in its editor, its
+  // name ready to change; the address is put back, so a reload does not
+  // open it again.
+  function openNew() {
+    if (location.hash !== "#edit") return;
+    if (window.history && history.replaceState) history.replaceState(null, "", location.pathname + location.search);
+    setTimeout(function () {
+      var edit = document.querySelector("[data-block-id] [data-edit]");
+      if (edit) edit.click();
+      var name = document.querySelector(".sw-inline-form input[type=text]");
+      if (name && name.select) name.select();
+    }, 0);
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", openNew); else openNew();
+
   // swCheckField is a yes or no, as a checkbox with its name beside it.
   // An unticked box sends nothing, so a hidden no stands behind it, the
   // way the mark component does it; the box, first, wins when ticked.

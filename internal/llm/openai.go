@@ -77,7 +77,7 @@ func (o *OpenAI) Complete(ctx context.Context, req Request) (*Response, error) {
 	}
 	resp, err := client.Do(httpReq)
 	if err != nil {
-		return nil, fmt.Errorf("could not reach the model at %s: %w", o.BaseURL, err)
+		return nil, fmt.Errorf("the AI model at %s isn't answering; it may not be running (%w)", o.BaseURL, err)
 	}
 	defer resp.Body.Close()
 	raw, err := io.ReadAll(io.LimitReader(resp.Body, 32<<20))
