@@ -110,6 +110,28 @@ func Text(n *html.Node) string {
 	return strings.Join(strings.Fields(b.String()), " ")
 }
 
+// VisibleText returns the concatenated text of a node, skipping elements
+// with class sw-visually-hidden (or containing that substring).
+func VisibleText(n *html.Node) string {
+	var b strings.Builder
+	var walk func(n *html.Node)
+	walk = func(c *html.Node) {
+		if c.Type == html.TextNode {
+			b.WriteString(c.Data)
+			return
+		}
+		class, ok := Attr(c, "class")
+		if ok && strings.Contains(class, "sw-visually-hidden") {
+			return
+		}
+		for child := c.FirstChild; child != nil; child = child.NextSibling {
+			walk(child)
+		}
+	}
+	walk(n)
+	return strings.Join(strings.Fields(b.String()), " ")
+}
+
 // Focusable reports whether an element is in the keyboard tab order.
 func Focusable(n *html.Node) bool {
 	if _, disabled := Attr(n, "disabled"); disabled {

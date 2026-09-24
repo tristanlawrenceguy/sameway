@@ -31,7 +31,7 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(&b, `<h2>Results</h2>`)
 			fmt.Fprintf(&b, `<ol class="sw-stack" aria-label="Results for %s">`, template.HTMLEscapeString(q))
 			for _, h := range hits {
-				titleEsc := template.HTMLEscapeString(h.Title)
+				titleTrimmed := template.HTMLEscapeString(trimTitle(h.Title))
 				typeEsc := template.HTMLEscapeString(h.Type)
 				snippetEsc := template.HTMLEscapeString(h.Snippet)
 
@@ -48,7 +48,7 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 						`<p class="sw-card__meta">%s</p>`+
 						`%s`+
 						`</article>`,
-					template.HTMLEscapeString(h.Href), titleEsc, typeEsc, typeEsc, bodyHTML,
+					template.HTMLEscapeString(h.Href), titleTrimmed, typeEsc, typeEsc, bodyHTML,
 				)
 
 				fmt.Fprintf(&b, `<li class="sw-dotted" data-dot="%d">%s</li>`, s.dotOf(h.Type), linkHTML)
