@@ -148,7 +148,7 @@ func (s *Server) expanded(name string, props map[string]any, convo *conversation
 func title(name string, props map[string]any) (string, bool) {
 	for _, key := range []string{"caption", "title", "label", "text"} {
 		if v, ok := props[key].(string); ok && strings.TrimSpace(v) != "" {
-			return truncateTitle(v), true
+			return trimTitle(v), true
 		}
 	}
 	return strings.ToUpper(name[:1]) + name[1:], false
