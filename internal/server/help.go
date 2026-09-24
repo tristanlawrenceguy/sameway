@@ -48,9 +48,11 @@ func (s *Server) helpPage(w http.ResponseWriter, r *http.Request) {
 		for _, v := range c.values {
 			current := now == v[0] || (now == "" && v[0] == c.values[0][0])
 			b.WriteString(`<li><form method="post" action="/help/set"><input type="hidden" name="key" value="` + c.key + `"><input type="hidden" name="value" value="` + v[0] + `">`)
-			props := map[string]any{"label": v[1], "type": "submit", "variant": "secondary"}
+			// Each says which setting it is for, so two called Normal are
+			// told apart by a screen reader (WCAG 2.4.6).
+			props := map[string]any{"label": v[1], "type": "submit", "variant": "secondary", "context": ", " + strings.ToLower(c.heading)}
 			if current {
-				props["variant"], props["context"] = "primary", "(chosen)"
+				props["variant"], props["context"] = "primary", ", "+strings.ToLower(c.heading)+", chosen"
 			}
 			b.WriteString(string(s.component("button", props)) + `</form></li>`)
 		}
