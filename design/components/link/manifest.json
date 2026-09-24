@@ -109,7 +109,8 @@
       "name": "button",
       "props": {
         "href": "/",
-        "label": "Back to the canvas",
+        "label": "Back",
+        "context": "canvas",
         "look": "button"
       },
       "file": "examples/button.html"

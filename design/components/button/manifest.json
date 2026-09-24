@@ -44,6 +44,6 @@
     { "name": "quiet", "props": { "label": "Remove", "context": "card", "variant": "quiet", "type": "submit" }, "file": "examples/quiet.html" },
     { "name": "reset", "props": { "label": "Clear form", "type": "reset", "variant": "secondary" }, "file": "examples/reset.html" },
     { "name": "disabled", "props": { "label": "Sending", "disabled": true, "id": "send" }, "file": "examples/disabled.html" },
-    { "name": "action", "props": { "label": "Turn on the alarm", "action": "a1" }, "file": "examples/action.html" }
+    { "name": "action", "props": { "label": "Turn on", "action": "a1" }, "file": "examples/action.html" }
   ]
 }
