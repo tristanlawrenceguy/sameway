@@ -53,7 +53,9 @@ func (s *Service) command(ctx context.Context, rec *store.Record, title string) 
 		return fail("action %s: %v", title, err)
 	}
 	if accepted, _ := rec.Fields["accepted"].(string); accepted != line {
-		r := s.propose("Run this on your machine, as you, whenever this button is pressed? "+line,
+		r := s.ask(question{"Let your " + quoted(title) + " button run a program on this computer?",
+			"Pressing it would run " + line + " as you, with access to your files, every time, without asking again. What it does can't be undone from Sameway, so only say yes if you asked for this button.",
+			"Yes, let it run", "No, don't"},
 			map[string]any{"tool": "accept_action", "id": rec.ID})
 		if !r.isErr {
 			r.text = "the command has not been accepted yet, so nothing ran; " + r.text

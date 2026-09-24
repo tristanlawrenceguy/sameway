@@ -25,6 +25,9 @@ type Service struct {
 	// SetSetting changes one line of workspace.yaml, when there is one:
 	// the pace, which lists show, the model, the name. Set by the app.
 	SetSetting func(key, value string) error
+	// Setting reads one line of workspace.yaml as it is now, for the
+	// questions that say what would change from what; set by the app.
+	Setting func(key string) string
 	// Update looks for a new version of the sameway program and installs
 	// it when told to, set by the app; nil when this build cannot update
 	// itself. See internal/update.

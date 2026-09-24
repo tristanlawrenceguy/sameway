@@ -39,8 +39,7 @@ func TestAWebhookActionCallsOutAndShowsItsAnswer(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	raw, _ := json.Marshal(map[string]any{"id": weather.ID})
-	text, isErr := svc.Call("run_action", raw)
+	text, isErr := press(svc, weather.ID)
 	if isErr || !strings.Contains(text, "answered 200") || !strings.Contains(text, "18°C") {
 		t.Fatalf("running the action should report the answer, got err=%v %q", isErr, text)
 	}
@@ -51,7 +50,7 @@ func TestAWebhookActionCallsOutAndShowsItsAnswer(t *testing.T) {
 	if len(blocks) != 1 || blocks[0].Fields["props"].(map[string]any)["content"] != "18°C and clear" {
 		t.Fatalf("show should put the answer on the canvas, got %v", blocks)
 	}
-	svc.Call("run_action", raw)
+	press(svc, weather.ID)
 	blocks, _ = svc.Store.List(chat.BlockType, store.ListOptions{})
 	if len(blocks) != 1 || blocks[0].Fields["props"].(map[string]any)["content"] != "12°C and raining" {
 		t.Errorf("a second run should update the same block, got %v", blocks)

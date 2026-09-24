@@ -12,7 +12,7 @@ import (
 )
 
 // Pressing a command button before it is accepted takes the person to the
-// question, with the command line and "Yes, run it"; Yes runs it and every
+// question, with the command line and "Yes, let it run"; Yes runs it and every
 // press after that just runs. Something outside presses a button through
 // its trigger word, and an unaccepted command stays a question even then.
 func TestACommandButtonAsksOnceThenRuns(t *testing.T) {
@@ -32,7 +32,7 @@ func TestACommandButtonAsksOnceThenRuns(t *testing.T) {
 		t.Fatalf("an unaccepted command should lead to its question, got %q", loc)
 	}
 	question := get(t, h, loc).Body.String()
-	if !strings.Contains(question, "go version") || !strings.Contains(question, "Yes, run it") || !strings.Contains(question, "runs on your machine") {
+	if !strings.Contains(question, "go version") || !strings.Contains(question, "Yes, let it run") || !strings.Contains(question, "as you, with access to your files") {
 		t.Fatalf("the question should show the command line and what Yes means: %.500s", question)
 	}
 	if logged(t, h, "You ran action Say hello (exit 0)") {

@@ -66,6 +66,8 @@ var proposable = map[string]bool{
 	// accept_action is what a person's Yes does to a command action: it is
 	// accepted for good, then run.
 	"accept_action": true,
+	// What cannot be taken back is asked first, by the code: see consent.go.
+	"run_action": true, "set_setting": true,
 }
 
 func proposableNames() []string {
@@ -103,7 +105,7 @@ func (s *Service) Accept(id string) error {
 	if err != nil {
 		return err
 	}
-	result := s.runTool(llm.ToolCall{Name: tool, Args: args})
+	result := s.runAgreed(llm.ToolCall{Name: tool, Args: args})
 	if result.isErr {
 		return errors.New(result.text)
 	}
