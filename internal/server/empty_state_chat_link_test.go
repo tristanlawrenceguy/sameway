@@ -41,8 +41,9 @@ func TestEmptyStateSaysAskTheAssistant(t *testing.T) {
 	wantStatus(t, rec, http.StatusOK)
 	body := rec.Body.String()
 
-	if !strings.Contains(body, "Ask the assistant to add one") {
-		t.Errorf("empty-state should say 'Ask the assistant to add one' — it directs people to the working surface\n%s", truncate(body))
+	// Two ways that work: by hand, which needs no model, and by asking.
+	if !strings.Contains(body, "ask the assistant</a>") || !strings.Contains(body, `action="/t/note/add"`) {
+		t.Errorf("the empty list offers adding one by hand and asking the assistant\n%s", truncate(body))
 	}
 
 	// The old phrasing must be gone.

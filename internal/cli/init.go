@@ -75,9 +75,9 @@ func (c *ctx) initCmd() error {
 			return
 		}
 		if !*noDetect {
-			fmt.Fprintln(c.Stdout, "No local model server answered (tried Ollama, LM Studio, llama.cpp).")
+			fmt.Fprintln(c.Stdout, "No AI model was found on this computer yet (looked for Ollama, LM Studio, llama.cpp and Claude Code).")
 		}
-		fmt.Fprintf(c.Stdout, "\nNext:\n  1. Edit %s to point llm at your model.\n  2. Run: sameway serve --workspace \"%s\"\n", filepath.Join(abs, "workspace.yaml"), abs)
+		fmt.Fprintf(c.Stdout, "When you open the workspace, the chat shows what you can connect, and connects it in one press.\n\nNext: sameway open --workspace \"%s\"\n", abs)
 	})
 	return nil
 }
@@ -90,6 +90,9 @@ func pointConfigAtCommand(path, provider string) error {
 		return err
 	}
 	out := strings.Replace(string(src), "provider: openai\n", "provider: "+provider+"\n", 1)
+	if provider == "claude-code" {
+		out = strings.Replace(out, "model: llama3.1", "model: sonnet", 1)
+	}
 	return os.WriteFile(path, []byte(out), 0o644)
 }
 

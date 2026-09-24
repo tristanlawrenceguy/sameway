@@ -74,7 +74,7 @@ func (o *OpenAI) Stream(ctx context.Context, req Request, on func(Delta)) (*Resp
 	}
 	resp, err := client.Do(httpReq)
 	if err != nil {
-		return nil, fmt.Errorf("could not reach the model at %s: %w", o.BaseURL, err)
+		return nil, fmt.Errorf("the AI model at %s isn't answering; it may not be running (%w)", o.BaseURL, err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode >= 400 {

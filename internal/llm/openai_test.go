@@ -77,7 +77,7 @@ func TestOpenAIErrorsAreReadable(t *testing.T) {
 
 	srv.Close()
 	_, err = p.Complete(context.Background(), llm.Request{Messages: []llm.Message{{Role: llm.RoleUser, Content: "hi"}}})
-	if err == nil || !strings.Contains(err.Error(), "could not reach the model at") {
+	if err == nil || !strings.Contains(err.Error(), "isn't answering") {
 		t.Errorf("connection failure should name the base URL: %v", err)
 	}
 }

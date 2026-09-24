@@ -84,14 +84,10 @@ func (s *Server) conversationAbout(from, about, prompt string) (*conversation, e
 	view := conversationView{From: from}
 	view.Chats, view.Title = s.chats()
 	view.ChatID = s.app.Chat.Current()
-	if s.app.Chat.Provider == nil {
-		problem := "No model is configured."
-		if s.app.Chat.ProviderErr != nil {
-			problem = s.app.Chat.ProviderErr.Error()
-		}
-		out.Notice = s.component("alert", map[string]any{"kind": "warning", "title": "No model connected",
-			"message": problem + " To connect one, edit the llm part of workspace.yaml and start sameway again."})
-	} else {
+	// When the assistant cannot reach a model, the conversation says so
+	// and offers what is on this computer; see connect.go.
+	out.Notice = s.connectCard(from)
+	if s.app.Chat.Provider != nil {
 		view.ModelName = s.app.Chat.Provider.Name()
 	}
 
