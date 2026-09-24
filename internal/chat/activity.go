@@ -96,6 +96,9 @@ func summarise(actor string, c Change) string {
 	if c.Detail != "" {
 		parts = append(parts, c.Detail)
 	}
+	if strings.HasPrefix(c.Via, "through ") {
+		return strings.Join(parts, " ") + ", " + c.Via
+	}
 	if c.Via != "" {
 		return strings.Join(parts, " ") + ", on " + c.Via
 	}

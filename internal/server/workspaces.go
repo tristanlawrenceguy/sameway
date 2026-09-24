@@ -149,6 +149,7 @@ func (s *Server) showWorkspaces(w http.ResponseWriter, r *http.Request, problem 
 	}
 	b.WriteString(`</section>`)
 
+	b.WriteString(s.trashSection())
 	b.WriteString(`<section class="sw-stack" aria-labelledby="ws-new"><h2 id="ws-new">New workspace</h2><p class="sw-muted">A blank workspace beside this one, with the same model, in a window of its own.</p><form method="post" action="/workspaces/new" class="sw-stack">`)
 	b.WriteString(string(s.component("text-field", map[string]any{"label": "Name", "name": "name", "required": true, "id": "new-name"})))
 	b.WriteString(string(s.component("button", map[string]any{"label": "Create", "type": "submit"})))
@@ -159,7 +160,7 @@ func (s *Server) showWorkspaces(w http.ResponseWriter, r *http.Request, problem 
 	b.WriteString(string(s.component("button", map[string]any{"label": "Copy", "type": "submit", "variant": "secondary"})))
 	b.WriteString(`</form></section>`)
 
-	b.WriteString(`<section class="sw-stack" aria-labelledby="ws-delete"><h2 id="ws-delete">Delete this workspace</h2><p class="sw-muted">The folder and everything in it go, and this server stops. Type the name to be sure.</p><form method="post" action="/workspaces/delete" class="sw-stack">`)
+	b.WriteString(`<section class="sw-stack" aria-labelledby="ws-delete"><h2 id="ws-delete">Delete this workspace</h2><p class="sw-muted">The folder, with everything in it, moves to Sameway's trash, and this server stops. You can restore it from this page. Type the name to be sure.</p><form method="post" action="/workspaces/delete" class="sw-stack">`)
 	b.WriteString(string(s.component("text-field", map[string]any{"label": "Type " + cur.Config.Name + " to delete it", "name": "confirm", "required": true, "id": "delete-confirm"})))
 	b.WriteString(string(s.component("button", map[string]any{"label": "Delete", "context": "workspace", "type": "submit", "variant": "danger"})))
 	b.WriteString(`</form></section>`)
@@ -209,7 +210,7 @@ func (s *Server) workspacesCopyPage(w http.ResponseWriter, r *http.Request) {
 func (s *Server) workspacesDeletePage(w http.ResponseWriter, r *http.Request) {
 	cur := s.app.Workspace
 	var b strings.Builder
-	b.WriteString(`<section class="sw-stack" aria-labelledby="ws-delete"><h2 id="ws-delete">Delete this workspace</h2><p class="sw-muted">The folder and everything in it go, and this server stops. Type the name to be sure.</p><form method="post" action="/workspaces/delete" class="sw-stack">`)
+	b.WriteString(`<section class="sw-stack" aria-labelledby="ws-delete"><h2 id="ws-delete">Delete this workspace</h2><p class="sw-muted">The folder, with everything in it, moves to Sameway's trash, and this server stops. You can restore it from this page. Type the name to be sure.</p><form method="post" action="/workspaces/delete" class="sw-stack">`)
 	b.WriteString(string(s.component("text-field", map[string]any{"label": "Type " + cur.Config.Name + " to delete it", "name": "confirm", "required": true, "id": "delete-confirm"})))
 	b.WriteString(string(s.component("button", map[string]any{"label": "Delete", "context": "workspace", "type": "submit", "variant": "danger"})))
 	b.WriteString(`</form></section>`)

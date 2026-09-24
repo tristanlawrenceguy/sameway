@@ -1,0 +1,47 @@
+package chat
+
+import (
+	"github.com/tristanlawrenceguy/sameway/internal/store"
+)
+
+// A change made through the API or on the command line is a change like
+// any other: logged as the person's, with how it came and what the
+// record was before, so it can be taken back. It used to go unlogged, so
+// an agent told to tidy up could delete what nobody could restore.
+
+// Through names a way in that is not a page, for the log's sentence:
+// "You deleted note Plan, through the API".
+const (
+	ThroughAPI = "through the API"
+	ThroughCLI = "through the command line"
+)
+
+// RecordWrite logs a create, update or delete of rec made through a way
+// in. before is what the record was; nil for one just made.
+func RecordWrite(st *store.Store, through, action string, rec *store.Record, before map[string]any) string {
+	// What is logged is the person's content: notes, tasks, people, and
+	// the rest. The system's own types (the canvas's blocks, messages)
+	// change through the tools, which log them; written straight through
+	// the API, they are the caller's to keep.
+	if t, ok := st.Types().Get(rec.Type); !ok || t.Internal {
+		return ""
+	}
+	c := Change{Action: action, Component: rec.Type, ID: rec.ID, Before: before, Via: through}
+	if t, ok := st.Types().Get(rec.Type); ok {
+		c.Detail = recordTitle(t, rec)
+		if action != "deleted" {
+			c.Href = "/t/" + rec.Type + "/" + rec.ID
+		}
+	}
+	return Record(st, "human", c)
+}
+
+// Imported is the batch an import from a file made: records that were not
+// there before, so undoing it takes them away together.
+func Imported(typ string, ids []string) map[string]any {
+	items := make([]BatchItem, 0, len(ids))
+	for _, id := range ids {
+		items = append(items, BatchItem{Type: typ, ID: id})
+	}
+	return Batch(items)
+}

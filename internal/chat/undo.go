@@ -183,7 +183,7 @@ func (s *Service) inverse(a *store.Record) (func() (Change, error), error) {
 		}
 		return func() (Change, error) { return s.clearBlocks(blocks), nil }, nil
 	}
-	return nil, errors.New("that kind of entry cannot be undone")
+	return s.inverseMore(a)
 }
 
 // targetType is the content type an entry's target names: a tab, a record

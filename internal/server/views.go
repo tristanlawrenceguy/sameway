@@ -70,7 +70,7 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	}
 	// What just happened to these records is here too, so a deletion can be
 	// taken back where the person lands.
-	b.WriteString(string(s.recentActivity(5, "/t/"+t.Name)))
+	b.WriteString(string(s.recentActivityAbout(5, "/t/"+t.Name, func(target, _ string) bool { return target == t.Name })))
 	s.page(w, r, capitalize(plural(t.Name)), template.HTML(b.String()), pageOptions{JSONURL: "/api/" + t.Name, Lede: howMany(t, recs), Dot: s.dotOf(t.Name)})
 }
 
@@ -168,7 +168,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	b.WriteString(s.editFields(t, rec))
 	b.WriteString(`</div>`)
 	// Recent activity on this page, so a deletion can be taken back where the person lands.
-	b.WriteString(string(s.recentActivity(5, "/t/"+t.Name+"/"+rec.ID)))
+	b.WriteString(string(s.recentActivityAbout(5, "/t/"+t.Name+"/"+rec.ID, func(target, id string) bool { return target == t.Name && id == rec.ID })))
 	// What this record is connected to, as a line of counts; the address
 	// says which of them are open. See related.go.
 	b.WriteString(s.related(t, rec, always, here))

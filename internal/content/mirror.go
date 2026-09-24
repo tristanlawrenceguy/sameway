@@ -17,6 +17,8 @@ type Report struct {
 	Updated  int      `json:"updated,omitempty"`
 	Deleted  int      `json:"deleted,omitempty"`
 	Problems []string `json:"problems,omitempty"`
+	// Changes is what a dry run would do, one line each.
+	Changes []string `json:"changes,omitempty"`
 }
 
 // Logger is told about each record an import changed, with the record as
@@ -94,6 +96,15 @@ func (m Mirror) Import(st *store.Store, log Logger) (Report, error) {
 					continue
 				}
 			}
+			if m.DryRun {
+				if getErr == nil {
+					r.Updated++
+				} else {
+					r.Created++
+				}
+				r.Changes = append(r.Changes, fmt.Sprintf("%s %s/%s", map[bool]string{true: "change", false: "make"}[getErr == nil], t.Name, id))
+				continue
+			}
 			rec, err := st.Put(t.Name, id, fields, created, updated)
 			if err != nil {
 				r.Problems = append(r.Problems, fmt.Sprintf("%s/%s.md: %v", t.Name, id, err))
@@ -113,6 +124,11 @@ func (m Mirror) Import(st *store.Store, log Logger) (Report, error) {
 		}
 		for _, rec := range recs {
 			if inFiles[rec.ID] {
+				continue
+			}
+			if m.DryRun {
+				r.Deleted++
+				r.Changes = append(r.Changes, fmt.Sprintf("remove %s/%s", t.Name, rec.ID))
 				continue
 			}
 			if err := st.Delete(t.Name, rec.ID); err != nil {

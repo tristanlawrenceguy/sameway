@@ -10,13 +10,15 @@ import (
 // A calendar given a content type shows that type's records on their
 // days, as links to their pages, and never needs telling what day it is.
 func TestACalendarShowsRecordsOnTheirDays(t *testing.T) {
-	_, h := newApp(t)
+	a, h := newApp(t)
 	now := time.Now()
 	day := func(d int) string { return now.AddDate(0, 0, d).Format("2006-01-02") + "T00:00:00Z" }
-	var soon struct{ ID string }
-	decode(t, postJSON(t, h, http.MethodPost, "/api/task", map[string]any{"title": "Order compost", "due": now.Add(2 * time.Hour).UTC().Format(time.RFC3339)}), &soon)
-	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/task", map[string]any{"title": "Call the dentist", "due": day(1), "done": true}), http.StatusCreated)
-	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/task", map[string]any{"title": "Plant garlic"}), http.StatusCreated)
+	soon, err := a.Store.Create("task", map[string]any{"title": "Order compost", "due": now.Add(2 * time.Hour).UTC().Format(time.RFC3339)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	a.Store.Create("task", map[string]any{"title": "Call the dentist", "due": day(1), "done": true})
+	a.Store.Create("task", map[string]any{"title": "Plant garlic"})
 	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/block", map[string]any{
 		"component": "calendar", "props": map[string]any{"type": "task", "where": []string{"done=false"}, "caption": "Due"},
 	}), http.StatusCreated)

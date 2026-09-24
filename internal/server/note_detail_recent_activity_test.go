@@ -67,14 +67,14 @@ func TestNoteDetailPageRecentActivitySummaryFromHeadingText(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Seed an assistant activity with a summary like "Assistant added card Shopping".
-	chat.Record(a.Store, "assistant", chat.Change{Action: "added", Component: "card", ID: "blk1", Detail: "Shopping"})
+	// Seed an assistant activity about this note, with a whole summary.
+	chat.Record(a.Store, "assistant", chat.Change{Action: "updated", Component: "note", ID: noteRec.ID, Detail: "Shopping"})
 
 	body := get(t, h, "/t/note/"+noteRec.ID).Body.String()
 
 	// The summary should be in the heading.
-	if !strings.Contains(body, "<h3") || !strings.Contains(body, "Assistant added card Shopping") {
-		t.Errorf("the <h3> should contain the full summary 'Assistant added card Shopping'\n%s", truncate(body))
+	if !strings.Contains(body, "<h3") || !strings.Contains(body, "Assistant updated note Shopping") {
+		t.Errorf("the <h3> should contain the full summary 'Assistant updated note Shopping'\n%s", truncate(body))
 	}
 
 	// The heading must include both actor and action and target — not just "added".

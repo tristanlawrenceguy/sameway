@@ -103,7 +103,8 @@ func (w *Workspace) Set(key, value string) error {
 			return fmt.Errorf("%s must be a whole number above zero, not %q", key, value)
 		}
 	case "env":
-		if !envName.MatchString(value) {
+		// Empty is no variable at all, which is where a setting starts.
+		if value != "" && !envName.MatchString(value) {
 			return fmt.Errorf("%s takes the name of an environment variable, such as OPENAI_API_KEY; a key or token itself is never written into workspace.yaml", key)
 		}
 	case "keys":
@@ -113,7 +114,7 @@ func (w *Workspace) Set(key, value string) error {
 		value = mergeKeys(w.Config.UI.Show, value)
 		scalar = yamlScalar(value)
 	default:
-		if value == "" {
+		if value == "" && !canBeEmpty[key] {
 			return fmt.Errorf("%s needs a value", key)
 		}
 		scalar = yamlScalar(value)
@@ -132,6 +133,14 @@ func (w *Workspace) Set(key, value string) error {
 	}
 	w.Config = fresh.Config
 	return nil
+}
+
+// canBeEmpty are the settings where nothing is a value: no program on a
+// reminder, no programs allowed, no broker. Undoing a change to one of
+// them puts it back to nothing.
+var canBeEmpty = map[string]bool{
+	"notify.command": true, "actions.allow": true, "chat.system_prompt": true,
+	"mqtt.broker": true, "mqtt.client_id": true, "llm.base_url": true,
 }
 
 // Get reads one setting as workspace.yaml has it now, or "" when the file

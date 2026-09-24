@@ -51,16 +51,42 @@ func (s *Server) headingSummary(r *store.Record) string {
 // the activity type get nothing.
 // from is the page the list is on, so an Undo returns to it.
 func (s *Server) recentActivity(n int, from string) template.HTML {
+	return s.recentActivityAbout(n, from, nil)
+}
+
+// recentActivityAbout is the recent activity about one thing only: a
+// record's page shows what happened to that record, a list what happened
+// to its kind. A page is about what it is about, so it does not list
+// changes to everything else there is.
+func (s *Server) recentActivityAbout(n int, from string, about func(target, id string) bool) template.HTML {
 	if _, ok := s.app.Types.Get(chat.ActivityType); !ok {
 		return ""
 	}
-	total, _ := s.app.Store.Count(chat.ActivityType)
-	if total == 0 {
-		return ""
+	limit := n
+	if about != nil {
+		limit = 200
 	}
-	recs, err := s.app.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: n})
+	all, err := s.app.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: limit})
 	if err != nil {
 		return ""
+	}
+	var recs []*store.Record
+	for _, r := range all {
+		target, _ := r.Fields["target"].(string)
+		id, _ := r.Fields["target_id"].(string)
+		if about == nil || about(target, id) {
+			recs = append(recs, r)
+		}
+		if len(recs) == n {
+			break
+		}
+	}
+	if len(recs) == 0 {
+		return ""
+	}
+	total := len(recs)
+	if about == nil {
+		total, _ = s.app.Store.Count(chat.ActivityType)
 	}
 	var inner strings.Builder
 	inner.WriteString(`<ol class="sw-plain sw-stack--tight" aria-label="Recent activity">`)

@@ -110,43 +110,6 @@ func (s *Server) apiList(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"type": r.PathValue("type"), "count": len(recs), "records": recs})
 }
 
-func (s *Server) apiCreate(w http.ResponseWriter, r *http.Request) {
-	fields, err := readBody(r)
-	if err != nil {
-		writeError(w, err)
-		return
-	}
-	rec, err := s.app.Store.Create(r.PathValue("type"), fields)
-	if err != nil {
-		writeError(w, err)
-		return
-	}
-	w.Header().Set("Location", "/api/"+rec.Type+"/"+rec.ID)
-	writeJSON(w, http.StatusCreated, rec)
-}
-
-func (s *Server) apiUpdate(w http.ResponseWriter, r *http.Request) {
-	fields, err := readBody(r)
-	if err != nil {
-		writeError(w, err)
-		return
-	}
-	rec, err := s.app.Store.Update(r.PathValue("type"), r.PathValue("id"), fields)
-	if err != nil {
-		writeError(w, err)
-		return
-	}
-	writeJSON(w, http.StatusOK, rec)
-}
-
-func (s *Server) apiDelete(w http.ResponseWriter, r *http.Request) {
-	if err := s.app.Store.Delete(r.PathValue("type"), r.PathValue("id")); err != nil {
-		writeError(w, err)
-		return
-	}
-	writeJSON(w, http.StatusOK, map[string]any{"deleted": r.PathValue("id")})
-}
-
 // apiChat lets an agent talk to the assistant the same way a person does.
 func (s *Server) apiChat(w http.ResponseWriter, r *http.Request) {
 	body, err := readBody(r)

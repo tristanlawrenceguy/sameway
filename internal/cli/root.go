@@ -27,7 +27,9 @@ Usage:
   sameway search <words>                find anything by the words in it, records and canvas blocks alike
   sameway look <path>                   a page as a screen reader gets it, with its problems, as JSON
   sameway export                        rewrite content/ from the database (it is kept current as things change)
-  sameway import                        read content/ back into the database, after a git pull
+  sameway import [--dry-run]            read content/ back into the database, after a git pull; one Undo takes it back
+  sameway snapshots                     the daily copies of this workspace's data, newest first
+  sameway restore <path>                put a copy back, keeping the data from before (workspace stopped)
   sameway chat <message>                talk to the assistant from the terminal
   sameway mcp                           serve the workspace to an MCP client over stdio
   sameway connect <tool> [--write]      the MCP configuration for claude-code, claude-desktop, cursor, windsurf, vscode, codex, or chatgpt for a client elsewhere
@@ -97,6 +99,10 @@ func Run(args []string, env Env) int {
 		err = c.exportCmd()
 	case "import":
 		err = c.importCmd()
+	case "snapshots":
+		err = c.snapshotsCmd()
+	case "restore":
+		err = c.restoreCmd()
 	case "chat":
 		err = c.chatCmd()
 	case "connect":

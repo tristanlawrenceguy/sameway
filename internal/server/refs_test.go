@@ -11,12 +11,14 @@ import (
 // lists its tasks by itself, and a ref to nothing is refused with the
 // field named.
 func TestARefIsARecordPointingAtAnother(t *testing.T) {
-	_, h := newApp(t)
-	var garden struct{ ID string }
-	decode(t, postJSON(t, h, http.MethodPost, "/api/project", map[string]any{"title": "Garden", "notes": "The back garden this autumn."}), &garden)
-	var task struct{ ID string }
-	decode(t, postJSON(t, h, http.MethodPost, "/api/task", map[string]any{"title": "Dig the pond", "project": garden.ID}), &task)
-	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/task", map[string]any{"title": "Paint the hall"}), http.StatusCreated)
+	a, h := newApp(t)
+	// Seeded straight into the store: what is under test is the pages.
+	garden, _ := a.Store.Create("project", map[string]any{"title": "Garden", "notes": "The back garden this autumn."})
+	task, err := a.Store.Create("task", map[string]any{"title": "Dig the pond", "project": garden.ID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	a.Store.Create("task", map[string]any{"title": "Paint the hall"})
 
 	bad := postJSON(t, h, http.MethodPost, "/api/task", map[string]any{"title": "Nowhere", "project": "zzzzzzzzzzzzzzzz"})
 	if bad.Code < 400 || !strings.Contains(bad.Body.String(), "no project with id zzzzzzzzzzzzzzzz") {
