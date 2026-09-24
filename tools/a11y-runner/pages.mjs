@@ -153,6 +153,22 @@ check(await aim.inputValue() === "limit", "editor: the habit's own aim is the on
 for (const p of await axeProblems(page, [], [...AA_TAGS, ...AAA_TAGS])) fail(`editor: ${p}`);
 for (const p of await visualProblems(page)) fail(`editor: ${p}`);
 
+// A day is the when-field component: its picker appears once the script is
+// there to wire it, and picking a day writes it into the words.
+const task = await (await fetch(base + "/api/task", {
+  method: "POST", headers: { "content-type": "application/json" },
+  body: JSON.stringify({ title: "Plant garlic", due: "2026-10-02" }),
+})).json();
+await page.goto(base + "/t/task/" + task.id);
+await page.getByRole("button", { name: /^Edit/ }).first().click();
+const due = page.locator(".sw-inline-form [data-component=when-field]").filter({ hasText: "Due" });
+check(await due.count() === 1, "editor: a task's Due is the when-field component");
+const picker = due.locator(".sw-when-field__pick");
+check(await picker.isVisible(), "editor: the day picker is shown once its script runs");
+await picker.fill("2026-10-09");
+await picker.dispatchEvent("change");
+check((await due.locator("input[type=text]").inputValue()).startsWith("9 Oct 2026"), "editor: picking a day writes it into the words");
+
 // ---- the quiet layer ----------------------------------------------------
 // Per-item controls are faded until hovered or focused, but must stay
 // present, focusable, named, and clickable for everyone.

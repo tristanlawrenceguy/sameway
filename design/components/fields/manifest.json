@@ -32,7 +32,7 @@
     }
   },
   "a11y": {
-    "role": "list of names and values (a definition list)",
+    "role": "definition list: each term with its definition",
     "keyboard": [{ "key": "Tab", "does": "reaches each value that is a link" }, { "key": "Enter", "does": "follows it" }],
     "states": [],
     "wcag": { "target": "AAA", "notes": "A definition list (1.3.1), so a screen reader pairs each value with its name and says how many there are. The names are in words, never an icon alone. Long values wrap rather than overflow (1.4.10)." }
