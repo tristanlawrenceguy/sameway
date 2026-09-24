@@ -34,6 +34,15 @@ type outcome struct {
 	// Undo is the activity entry that takes it back, when it can be: the
 	// message carries the Undo, where the person is looking.
 	Undo string `json:"u,omitempty"`
+	// Problems are what stopped a form, each about one field: the message
+	// is then an error summary, each problem leading to its field.
+	Problems []problem `json:"p,omitempty"`
+}
+
+// A problem is one answer a form could not take.
+type problem struct {
+	Field string `json:"f"`
+	Text  string `json:"t"`
 }
 
 const outcomeCookie = "sw-outcome"
@@ -111,6 +120,13 @@ func (s *Server) told(w http.ResponseWriter, r *http.Request) template.HTML {
 		props["title"], props["message"] = "", o.Title
 	}
 	alert := string(s.component("alert", props))
+	if o.Failed && len(o.Problems) > 0 {
+		var items []any
+		for _, p := range o.Problems {
+			items = append(items, map[string]any{"text": p.Text, "field": p.Field})
+		}
+		alert = string(s.component("error-summary", map[string]any{"title": o.Title, "items": items}))
+	}
 	if o.Undo != "" {
 		what := o.Text
 		if what == "" {

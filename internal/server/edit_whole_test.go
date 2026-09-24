@@ -84,7 +84,9 @@ func TestEveryFieldOfARecordIsReachedByTab(t *testing.T) {
 	var seen looked
 	decode(t, rec, &seen)
 	order := strings.Join(seen.Scripts.FocusOrder, " | ")
-	for _, want := range []string{"textbox: Title", "checkbox: Done", "textbox: Due", "listbox: Project", "textbox: Notes", "textbox: Tags", "button: Save"} {
+	// Project has two choices here (None and Garden), so it is radios
+	// under its legend, and Tab stops on the first one when none is chosen.
+	for _, want := range []string{"textbox: Title", "checkbox: Done", "textbox: Due", "radio: None", "textbox: Notes", "textbox: Tags", "button: Save"} {
 		if !strings.Contains(order, want) {
 			t.Errorf("Tab reaches %s; got %s", want, order)
 		}

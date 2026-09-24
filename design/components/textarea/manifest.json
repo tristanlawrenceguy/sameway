@@ -15,6 +15,7 @@
       "value": { "type": "string", "format": "multiline", "default": "" },
       "rows": { "title": "Height in lines", "type": "integer", "minimum": 2, "maximum": 40, "default": 4 },
       "hint": { "type": "string" },
+      "maxlength": { "title": "Most characters", "type": "integer", "minimum": 1, "description": "The most it can hold. The field says so, and counts down as a person types, rather than stopping them mid-word." },
       "error": { "type": "string" },
       "required": { "type": "boolean", "default": false }
     }
@@ -34,6 +35,7 @@
     "operate": "Focus and type. Submit with the form's submit button, not Enter."
   },
   "examples": [
-    { "name": "default", "props": { "label": "Message", "name": "message", "rows": 3, "hint": "Ask for a change or a new component." }, "file": "examples/default.html" }
+    { "name": "default", "props": { "label": "Message", "name": "message", "rows": 3, "hint": "Ask for a change or a new component." }, "file": "examples/default.html" },
+    { "name": "counted", "props": { "label": "Title", "name": "title", "id": "title-counted", "maxlength": 80, "value": "Plant garlic" }, "file": "examples/counted.html" }
   ]
 }

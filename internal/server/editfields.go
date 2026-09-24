@@ -55,7 +55,7 @@ func (s *Server) editField(f schema.Field, v any) string {
 		if f.Type != "text" && !f.Multiline {
 			break
 		}
-		return fmt.Sprintf(`<div data-prop="%s"%s data-source="%s">%s</div>`, name, lab, esc(val), esc(val))
+		return fmt.Sprintf(`<div data-prop="%s"%s%s data-source="%s">%s</div>`, name, lab, most(f), esc(val), esc(val))
 	case "datetime":
 		raw := ""
 		if v != nil {
@@ -72,8 +72,11 @@ func (s *Server) editField(f schema.Field, v any) string {
 		raw, _ := v.(string)
 		options := s.choices(f, raw)
 		val = raw
+		if options == "" && f.Type == "ref" {
+			// A ref past the most a list can hold is looked up by name.
+			return fmt.Sprintf(`<span data-prop="%s"%s data-kind="lookup" data-to="%s" data-source="%s" data-title="%s"></span>`, name, lab, esc(f.To), esc(raw), esc(s.refTitle(f, raw)))
+		}
 		if options == "" {
-			// A ref past the most a list can hold is changed by asking.
 			return ""
 		}
 		if !f.Required {
@@ -82,8 +85,9 @@ func (s *Server) editField(f schema.Field, v any) string {
 		return fmt.Sprintf(`<span data-prop="%s"%s data-source="%s"%s>%s</span>`, name, lab, esc(val), options, esc(val))
 	}
 	// The editor reads what is there from data-source; the page already
-	// says it where it shows, once.
-	return fmt.Sprintf(`<span data-prop="%s"%s data-source="%s"></span>`, name, lab, esc(val))
+	// says it where it shows, once. A field with a most it can hold says
+	// so, and the editor counts down.
+	return fmt.Sprintf(`<span data-prop="%s"%s%s data-source="%s"></span>`, name, lab, most(f), esc(val))
 }
 
 // editControls is one of each control the design system has for a field,
@@ -108,7 +112,20 @@ func (s *Server) editControls(parts ...template.HTML) template.HTML {
 		control("number", "text-field", map[string]any{"type": "number"}) +
 		control("when", "when-field", map[string]any{}) +
 		control("textarea", "textarea", map[string]any{"rows": 3}) +
-		control("select", "select", map[string]any{"options": []any{map[string]any{"value": "", "label": ""}}}) +
+		control("text-counted", "text-field", map[string]any{"type": "text", "maxlength": 1}) +
+		control("textarea-counted", "textarea", map[string]any{"rows": 3, "maxlength": 1}) +
+		control("dropdown", "select", map[string]any{"as": "dropdown", "options": []any{map[string]any{"value": "", "label": ""}}}) +
+		control("radios", "select", map[string]any{"as": "radios", "options": []any{map[string]any{"value": "", "label": ""}}}) +
+		control("lookup", "lookup", map[string]any{"to": "record"}) +
 		control("checkbox", "checkbox", map[string]any{"value": "true"}) +
 		`</template>`)
+}
+
+// most marks a field with the most characters it can hold, for the editor
+// to count down; nothing for a field without one.
+func most(f schema.Field) string {
+	if f.MaxLength <= 0 {
+		return ""
+	}
+	return fmt.Sprintf(` data-max="%d"`, f.MaxLength)
 }

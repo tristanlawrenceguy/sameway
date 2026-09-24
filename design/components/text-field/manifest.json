@@ -15,6 +15,7 @@
       "value": { "type": "string", "default": "" },
       "type": { "type": "string", "enum": ["text", "email", "url", "search", "number", "password"], "default": "text" },
       "hint": { "type": "string", "description": "Help text shown under the label and linked with aria-describedby." },
+      "maxlength": { "title": "Most characters", "type": "integer", "minimum": 1, "description": "The most it can hold. The field says so, and counts down as a person types, rather than stopping them mid-word." },
       "error": { "type": "string", "description": "Validation message. Sets aria-invalid and is linked with aria-describedby." },
       "required": { "type": "boolean", "default": false },
       "autocomplete": { "type": "string", "description": "HTML autocomplete token such as name or email (1.3.5)." }
@@ -40,6 +41,7 @@
     { "name": "search", "props": { "label": "Search notes", "name": "q", "type": "search" }, "file": "examples/search.html" },
     { "name": "number", "props": { "label": "Quantity", "name": "qty", "type": "number", "value": "2", "hint": "Whole numbers only." }, "file": "examples/number.html" },
     { "name": "url", "props": { "label": "Website", "name": "website", "type": "url", "autocomplete": "url" }, "file": "examples/url.html" },
-    { "name": "password", "props": { "label": "Passphrase", "name": "passphrase", "type": "password", "required": true, "autocomplete": "current-password", "id": "pass" }, "file": "examples/password.html" }
+    { "name": "password", "props": { "label": "Passphrase", "name": "passphrase", "type": "password", "required": true, "autocomplete": "current-password", "id": "pass" }, "file": "examples/password.html" },
+    { "name": "counted", "props": { "label": "Title", "name": "title", "id": "title-counted", "maxlength": 80, "value": "Plant garlic" }, "file": "examples/counted.html" }
   ]
 }

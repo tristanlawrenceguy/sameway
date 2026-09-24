@@ -106,6 +106,8 @@
           edit.click();
           var field = document.activeElement;
           if (field && field.closest(".sw-inline-form")) field.setAttribute("aria-describedby", "outcome");
+          // Each field an error summary names is marked with its problem.
+          if (window.swErrorSummary) window.swErrorSummary();
         }, 0);
         return;
       }

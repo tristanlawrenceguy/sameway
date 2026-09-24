@@ -1,0 +1,41 @@
+{
+  "name": "lookup",
+  "version": "1.0.0",
+  "description": "Choose one record from many by typing part of its name: the matching records are offered as you type, and the one chosen is what is sent.",
+  "icon": "⌕",
+  "use": { "when": "a link to another record when there are too many to list, such as a person out of thousands.", "not": "a short fixed set, which is a select.", "with": "the record's name shown in the box, never its id." },
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["label", "name", "to"],
+    "properties": {
+      "label": { "type": "string", "minLength": 1 },
+      "name": { "type": "string", "minLength": 1, "description": "Sent with the chosen record's id." },
+      "id": { "type": "string" },
+      "to": { "type": "string", "minLength": 1, "description": "The content type the records are, such as person." },
+      "value": { "type": "string", "default": "", "description": "The chosen record's id." },
+      "title": { "type": "string", "default": "", "description": "The chosen record's name, shown in the box." },
+      "hint": { "type": "string", "default": "Type part of its name, then choose it from the list." },
+      "required": { "type": "boolean", "default": false }
+    }
+  },
+  "a11y": {
+    "role": "combobox (a text box with the matches as suggestions, from a native datalist)",
+    "keyboard": [
+      { "key": "Tab", "does": "moves focus to and from the box" },
+      { "key": "Down / Up", "does": "moves through the suggestions the browser shows" },
+      { "key": "Enter", "does": "chooses the highlighted suggestion" }
+    ],
+    "states": ["aria-required"],
+    "wcag": { "target": "AAA", "notes": "A text box with a native datalist, so the platform draws and announces the suggestions (4.1.2). The hint says how it works (3.3.2). The name, never the id, is what a person reads and types." }
+  },
+  "machine": {
+    "selector": "[data-component=\"lookup\"]",
+    "identify": "data-to is the record type; input[type=hidden] carries the chosen id, the text box the chosen name.",
+    "operate": "Set the hidden input to the id of a record of type data-to, or type a name and choose it from the suggestions."
+  },
+  "examples": [
+    { "name": "default", "props": { "label": "Person", "name": "person", "id": "person", "to": "person" }, "file": "examples/default.html" },
+    { "name": "chosen", "props": { "label": "Project", "name": "project", "id": "project", "to": "project", "value": "p1", "title": "Garden" }, "file": "examples/chosen.html" }
+  ]
+}

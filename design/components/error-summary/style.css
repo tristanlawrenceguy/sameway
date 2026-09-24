@@ -1,0 +1,10 @@
+/* The problems, at the top of the form, in the danger colour's frame; the
+   words stay in body ink so they keep their contrast. */
+.sw-error-summary {
+  padding: var(--sw-space-4); margin: 0 0 var(--sw-space-4);
+  border: 3px solid var(--sw-color-danger); border-radius: var(--sw-radius-md);
+  background: var(--sw-color-bg-raised);
+}
+.sw-error-summary__title { margin: 0 0 var(--sw-space-2); font-size: var(--sw-size-text-lg); }
+.sw-error-summary__list { display: grid; gap: var(--sw-space-1); }
+.sw-error-summary__list .sw-link { color: var(--sw-color-danger); font-weight: 600; }

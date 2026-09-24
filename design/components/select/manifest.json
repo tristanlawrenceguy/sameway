@@ -1,42 +1,47 @@
 {
   "name": "select",
-  "version": "1.0.0",
-  "description": "Choose one option from a short fixed list. For free text use text-field.",
+  "version": "2.0.0",
+  "description": "Choose one option from a fixed set. A few options are shown as radio buttons, all in view; more are a dropdown. One component either way, so what a person picks and what is stored are the same.",
   "icon": "▾",
-  "use": { "when": "one choice from a short fixed list.", "not": "free text, which is a text-field, or many options, which want a list of links.", "with": "a form." },
+  "use": { "when": "one choice from a fixed set: a status, a kind, a period.", "not": "free text, which is a text-field; several choices, which are checkboxes; a record out of hundreds, which is a lookup.", "with": "a form." },
   "props": {
     "type": "object",
     "additionalProperties": false,
     "required": ["label", "name", "options"],
     "properties": {
-      "label": { "type": "string", "minLength": 1 },
+      "label": { "type": "string", "minLength": 1, "description": "The question: the legend of the radios, or the dropdown's label." },
       "name": { "type": "string", "minLength": 1 },
       "id": { "type": "string" },
       "options": { "title": "Choices", "type": "array", "minItems": 1, "items": { "type": ["string", "object"] }, "description": "Either plain strings, shown as-is, or objects {value, label} when what is stored differs from what a person should read." },
-      "value": { "type": "string", "default": "", "description": "The selected option." },
+      "value": { "type": "string", "default": "", "description": "The chosen option." },
+      "as": { "title": "Shown as", "type": "string", "enum": ["auto", "radios", "dropdown"], "default": "auto", "description": "auto shows five or fewer options as radios, all in view, and more as a dropdown. radios or dropdown when the author knows better, such as a dropdown in a table cell." },
       "hint": { "type": "string" },
       "error": { "type": "string" },
       "required": { "type": "boolean", "default": false }
     }
   },
   "a11y": {
-    "role": "combobox (native select)",
+    "role": "group of radios under its question (a fieldset with a legend) for a few options; combobox (a native select) for more",
     "keyboard": [
-      { "key": "Tab", "does": "moves focus to and from the control" },
-      { "key": "Space or Alt+Down", "does": "opens the options" },
-      { "key": "Up / Down", "does": "moves between options" },
-      { "key": "Enter", "does": "chooses the highlighted option" }
+      { "key": "Tab", "does": "moves focus to the chosen radio, or to the dropdown, and on" },
+      { "key": "Up / Down or Left / Right", "does": "among radios, chooses the next or previous; in a dropdown, moves between options" },
+      { "key": "Space", "does": "chooses the focused radio, or opens the dropdown" },
+      { "key": "Enter", "does": "in an open dropdown, chooses the highlighted option" }
     ],
     "states": ["aria-invalid", "aria-required"],
-    "wcag": { "target": "AAA", "notes": "A native select so every platform's assistive technology already supports it. No custom dropdown." }
+    "wcag": { "target": "AAA", "notes": "Native radios and a native select, so every platform's assistive technology already supports them. Radios sit in a fieldset whose legend is the question, so each is read as an answer to it (1.3.1), and each label is part of its 44px target (2.5.5). No custom dropdown." }
   },
   "machine": {
-    "selector": "[data-component=\"select\"] select",
-    "identify": "The accessible name is the label text. Each option element carries the stored value and the text a person reads.",
-    "operate": "Set the select's value to one of the option values."
+    "selector": "[data-component=\"select\"]",
+    "identify": "data-as says radios or dropdown. Radios: input[type=radio], each with the stored value, labelled by the text a person reads; the legend is the question. Dropdown: a select whose options carry the value and the text.",
+    "operate": "Radios: check the input whose value is wanted. Dropdown: set the select's value to one of the option values."
   },
   "examples": [
     { "name": "default", "props": { "label": "Status", "name": "status", "options": ["draft", "published"], "value": "draft" }, "file": "examples/default.html" },
-    { "name": "labelled", "props": { "label": "Width", "name": "span", "value": "6", "options": [{ "value": "12", "label": "Full width" }, { "value": "6", "label": "Half" }, { "value": "4", "label": "One third" }] }, "file": "examples/labelled.html" }
+    { "name": "labelled", "props": { "label": "Width", "name": "span", "value": "6", "options": [{ "value": "12", "label": "Full width" }, { "value": "6", "label": "Half" }, { "value": "4", "label": "One third" }] }, "file": "examples/labelled.html" },
+    { "name": "many", "props": { "label": "Month", "name": "month", "value": "oct", "options": [{ "value": "jan", "label": "January" }, { "value": "feb", "label": "February" }, { "value": "mar", "label": "March" }, { "value": "apr", "label": "April" }, { "value": "may", "label": "May" }, { "value": "jun", "label": "June" }, { "value": "jul", "label": "July" }, { "value": "aug", "label": "August" }, { "value": "sep", "label": "September" }, { "value": "oct", "label": "October" }, { "value": "nov", "label": "November" }, { "value": "dec", "label": "December" }] }, "file": "examples/many.html" },
+    { "name": "dropdown", "props": { "label": "Priority", "name": "priority", "as": "dropdown", "options": ["low", "normal", "high"], "value": "normal" }, "file": "examples/dropdown.html" },
+    { "name": "radios", "props": { "label": "Aim", "name": "aim", "as": "radios", "value": "limit", "hint": "What the target means.", "required": true, "options": [{ "value": "reach", "label": "At least the target" }, { "value": "limit", "label": "At most the target" }, { "value": "record", "label": "Just keep a record" }] }, "file": "examples/radios.html" },
+    { "name": "error", "props": { "label": "Cadence", "name": "cadence", "error": "Choose how often it counts.", "options": [{ "value": "day", "label": "Each day" }, { "value": "week", "label": "Each week" }] }, "file": "examples/error.html" }
   ]
 }

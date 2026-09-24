@@ -93,11 +93,13 @@ func (s *Server) recordProps(w http.ResponseWriter, r *http.Request) {
 // the order the type lists them, on the page it was made from.
 func (s *Server) refused(w http.ResponseWriter, r *http.Request, t *schema.Type, err error, detail string) {
 	var said []string
+	var problems []problem
 	if ve, ok := err.(*schema.ValidationError); ok {
 		seen := map[string]bool{}
 		for _, f := range t.Fields {
 			if msg, ok := ve.Problems[f.Name]; ok {
-				said = append(said, label(f.Name)+" "+msg+".")
+				said = append(said, fieldLabel(f)+" "+msg+".")
+				problems = append(problems, problem{Field: f.Name, Text: fieldLabel(f) + " " + msg + "."})
 				seen[f.Name] = true
 			}
 		}
@@ -117,5 +119,5 @@ func (s *Server) refused(w http.ResponseWriter, r *http.Request, t *schema.Type,
 	if text == "" {
 		text = plainError(err)
 	}
-	s.tellAt(w, r, outcome{Failed: true, Title: "Not saved", Text: text}, returnTo(r, detail))
+	s.tellAt(w, r, outcome{Failed: true, Title: "Not saved", Text: text, Problems: problems}, returnTo(r, detail))
 }

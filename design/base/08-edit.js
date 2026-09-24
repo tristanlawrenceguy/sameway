@@ -83,18 +83,20 @@
       if (window.swWhenField) window.swWhenField(built.wrap);
       return built;
     }
-    if (el.hasAttribute("data-options")) {
-      built = control("select", el, id, name);
-      var options = [];
-      try { options = JSON.parse(el.getAttribute("data-options")) || []; } catch (e) { options = []; }
-      built.input.innerHTML = "";
-      for (var i = 0; i < options.length; i++) {
-        var opt = document.createElement("option");
-        opt.value = options[i].value;
-        opt.textContent = options[i].label;
-        opt.selected = options[i].value === (source !== null ? source : el.textContent.trim());
-        built.input.appendChild(opt);
-      }
+    if (el.hasAttribute("data-options")) return choose(el, id, name, source !== null ? source : el.textContent.trim());
+    if (kind === "lookup") {
+      // The lookup component: the box shows the name, a hidden field sends
+      // the id, and its enhance.js offers matches as a person types.
+      built = control("lookup", el, id, name);
+      var box = built.input, chosen = built.wrap.querySelector("input[type=hidden]");
+      box.removeAttribute("name");
+      chosen.name = "prop-" + name;
+      chosen.value = source || "";
+      box.value = el.getAttribute("data-title") || "";
+      built.wrap.setAttribute("data-to", el.getAttribute("data-to"));
+      built.wrap.querySelector("datalist").id = id + "-list";
+      box.setAttribute("list", id + "-list");
+      if (window.swLookup) window.swLookup(built.wrap);
       return built;
     }
     if (kind === "number") {
@@ -104,17 +106,74 @@
       return built;
     }
     var multiline = MULTILINE[el.tagName] === 1 || el.textContent.indexOf("\n") >= 0 || (source !== null && source.indexOf("\n") >= 0);
+    var max = el.getAttribute("data-max");
     if (multiline) {
-      built = control("textarea", el, id, name);
+      built = control(max ? "textarea-counted" : "textarea", el, id, name);
       var text = source !== null ? source : el.innerText.replace(/\n{3,}/g, "\n\n").trim();
       built.input.rows = Math.min(10, Math.max(3, text.split("\n").length + 1));
       built.input.setAttribute("tabindex", "0");
       built.input.value = text;
+      return counted(built, id, max);
+    }
+    built = control(max ? "text-counted" : "text", el, id, name);
+    built.input.value = source !== null ? source : el.textContent.trim();
+    return counted(built, id, max);
+  }
+
+  // counted gives a field with a most it can hold its count, which the
+  // text-field component's enhance.js keeps as a person types.
+  function counted(built, id, max) {
+    if (!max) return built;
+    var count = built.wrap.querySelector(".sw-field__count");
+    count.id = id + "-count";
+    count.textContent = "Up to " + max + " characters";
+    built.input.setAttribute("data-max", max);
+    var by = (built.input.getAttribute("aria-describedby") || "").split(" ").filter(function (x) { return x && !/-count$/.test(x); });
+    built.input.setAttribute("aria-describedby", by.concat(count.id).join(" "));
+    if (window.swCount) window.swCount(built.wrap);
+    return built;
+  }
+
+  // choose is one choice from a set, the select component either way: five
+  // or fewer as radios, all in view, in a fieldset whose legend is the
+  // field's name; more as a dropdown.
+  function choose(el, id, name, current) {
+    var options = [];
+    try { options = JSON.parse(el.getAttribute("data-options")) || []; } catch (e) { options = []; }
+    var built, i;
+    if (options.length > 5) {
+      built = control("dropdown", el, id, name);
+      built.input.innerHTML = "";
+      for (i = 0; i < options.length; i++) {
+        var opt = document.createElement("option");
+        opt.value = options[i].value;
+        opt.textContent = options[i].label;
+        opt.selected = options[i].value === current;
+        built.input.appendChild(opt);
+      }
       return built;
     }
-    built = control("text", el, id, name);
-    built.input.value = source !== null ? source : el.textContent.trim();
-    return built;
+    var held = document.getElementById("sw-controls").content.querySelector('[data-control="radios"]');
+    var wrap = held.firstElementChild.cloneNode(true);
+    wrap.classList.add("sw-inline-field");
+    wrap.querySelector("legend").textContent = el.getAttribute("data-label") || label(name);
+    var list = wrap.querySelector(".sw-choice__options");
+    var row = list.firstElementChild;
+    list.innerHTML = "";
+    var focus = null;
+    for (i = 0; i < options.length; i++) {
+      var r = row.cloneNode(true);
+      var input = r.querySelector("input");
+      input.id = i ? id + "-" + i : id;
+      input.name = "prop-" + name;
+      input.value = options[i].value;
+      input.checked = options[i].value === current;
+      r.querySelector("label").setAttribute("for", input.id);
+      r.querySelector("label").textContent = options[i].label;
+      list.appendChild(r);
+      if (!focus || input.checked) focus = input;
+    }
+    return { wrap: wrap, input: focus };
   }
 
   // edit replaces the marked elements of one block with a small form.
