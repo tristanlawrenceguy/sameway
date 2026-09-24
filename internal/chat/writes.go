@@ -19,26 +19,18 @@ const (
 // RecordWrite logs a create, update or delete of rec made through a way
 // in. before is what the record was; nil for one just made.
 func RecordWrite(st *store.Store, through, action string, rec *store.Record, before map[string]any) string {
+	// What is logged is the person's content: notes, tasks, people, and
+	// the rest. The system's own types (the canvas's blocks, messages)
+	// change through the tools, which log them; written straight through
+	// the API, they are the caller's to keep.
+	if t, ok := st.Types().Get(rec.Type); !ok || t.Internal {
+		return ""
+	}
 	c := Change{Action: action, Component: rec.Type, ID: rec.ID, Before: before, Via: through}
-	switch rec.Type {
-	case BlockType:
-		name, _ := rec.Fields["component"].(string)
-		props, _ := rec.Fields["props"].(map[string]any)
-		c.Component, c.Detail = name, Summarise(name, props)
-		if action == "created" {
-			c.Action = "added"
-		} else if action == "deleted" {
-			c.Action = "removed"
-		}
+	if t, ok := st.Types().Get(rec.Type); ok {
+		c.Detail = recordTitle(t, rec)
 		if action != "deleted" {
-			c.Href = "/canvas/" + rec.ID
-		}
-	default:
-		if t, ok := st.Types().Get(rec.Type); ok {
-			c.Detail = recordTitle(t, rec)
-			if !t.Internal && action != "deleted" {
-				c.Href = "/t/" + rec.Type + "/" + rec.ID
-			}
+			c.Href = "/t/" + rec.Type + "/" + rec.ID
 		}
 	}
 	return Record(st, "human", c)
