@@ -8,7 +8,8 @@
 // Then each page a person can reach is checked:
 //   - axe at AA and AAA, in light and dark, with the quiet layer shown
 //   - field edges, 44px targets, colour-only state, error wiring (visual.mjs)
-//   - live regions that can announce, and links with one name going one place
+//   - live regions that can announce, links with one name going one place,
+//     and no two headings or controls alike
 //   - reflow at 320px, text spacing, 200% text, reduced motion, forced colours
 //   - a Tab walk at desktop (with focus appearance), at 320px, and on a phone
 //     held sideways, for focus hidden under sticky parts
@@ -63,7 +64,7 @@ const blockLabel = Object.fromEntries(blocks.map((b) => [`/canvas/${b.id}`, b.la
 
 // Live regions that cannot announce, and links that share a name but not a
 // place (2.4.9): what the page says about itself to a screen reader.
-const pageSays = (seeded) => page.evaluate((seeded) => {
+const pageSays = (seeded, styleguide) => page.evaluate(([seeded, styleguide]) => {
   const out = [];
   for (const el of document.querySelectorAll("[aria-live], [role=status], [role=alert], [role=log]")) {
     const cs = getComputedStyle(el);
@@ -81,8 +82,18 @@ const pageSays = (seeded) => page.evaluate((seeded) => {
     places.get(name).add(url.pathname + url.search);
   }
   for (const [name, set] of places) if (set.size > 1) out.push(`links named "${name}" go to ${set.size} places: ${[...set].slice(0, 3).join(", ")} (2.4.9)`);
+  // Two headings alike, or two controls of one kind with one name, cannot be
+  // told apart by someone moving by headings or by controls (2.4.6). The
+  // styleguide shows one component's examples side by side, each under its
+  // own heading, so its controls repeat by design.
+  if (styleguide) return out;
+  const twice = (els, key) => { const seen = new Map(); for (const e of els) { const k = key(e); if (k) seen.set(k, (seen.get(k) || 0) + 1); } return [...seen].filter(([, n]) => n > 1); };
+  const text = (e) => (e.getAttribute("aria-label") || (e.labels && e.labels[0] && e.labels[0].textContent) || e.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+  for (const [k, n] of twice(document.querySelectorAll("h1, h2, h3, h4, h5, h6"), (e) => `${e.tagName.toLowerCase()} "${text(e)}"`)) out.push(`${n} headings are ${k} (2.4.6)`);
+  // Only what is drawn counts: a control shown only without scripts is not met.
+  for (const [k, n] of twice(document.querySelectorAll("button, summary, input:not([type=hidden]), select, textarea"), (e) => e.getClientRects().length > 0 && text(e) && `${e.tagName.toLowerCase()}${e.type ? "[" + e.type + "]" : ""} "${text(e)}"`)) out.push(`${n} controls are ${k} (2.4.6)`);
   return out;
-}, seeded);
+}, [seeded, styleguide]);
 
 const titles = new Map();
 let mainNav = null;
@@ -105,7 +116,7 @@ async function checkPage(path) {
     for (const p of await axeProblems(page, skip, [...AA_TAGS, ...AAA_TAGS])) fail(`${label} ${mode}: ${p}`);
     for (const p of await visualProblems(page, waivedTargets)) fail(`${label} ${mode}: ${p}`);
   }
-  for (const p of [...await errorWiringProblems(page), ...await pageSays(Boolean(seeded))]) fail(`${label}: ${p}`);
+  for (const p of [...await errorWiringProblems(page), ...await pageSays(Boolean(seeded), path === "/design")]) fail(`${label}: ${p}`);
 
   // The site as a whole: titled after itself, the same main navigation.
   const head = await page.evaluate(() => ({
