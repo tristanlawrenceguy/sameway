@@ -165,7 +165,7 @@ func (s *Server) uploadError(w http.ResponseWriter, r *http.Request, err error) 
 	b.WriteString(string(s.component("upload", map[string]any{"id": "upload-error"})))
 	b.WriteString(`<script>(function(){var f=document.querySelector('.sw-upload__field');var err=document.getElementById("upload-error-error");f.addEventListener('invalid',function(e){err.textContent="Please select a file."},false);document.querySelector(".sw-upload").addEventListener('submit',function(e){if(!f.value){e.preventDefault();err.textContent="Please select a file.";f.reportValidity()}},{once:true});f.addEventListener('change',function(){err.textContent=""})})();</script>`)
 	// Re-render recent activity so the user can undo deletions.
-	b.WriteString(string(s.recentActivity(5, "/t/"+FileType)))
+	b.WriteString(string(s.recentActivityAbout(5, "/t/"+FileType, func(target, _ string) bool { return target == FileType })))
 	s.page(w, r, "Files", template.HTML(b.String()), pageOptions{JSONURL: "/api/file", Status: http.StatusBadRequest})
 }
 

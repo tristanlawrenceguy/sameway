@@ -23,7 +23,9 @@ func TestACollectionIsTheRecordsThatMatch(t *testing.T) {
 		{"title": "Call the dentist", "due": day(3), "done": true},
 		{"title": "Read the seed catalogue", "due": day(30)},
 	} {
-		wantStatus(t, postJSON(t, h, http.MethodPost, "/api/task", task), http.StatusCreated)
+		if _, err := a.Store.Create("task", task); err != nil {
+			t.Fatal(err)
+		}
 	}
 	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/block", map[string]any{
 		"component": "collection", "props": map[string]any{"type": "task", "where": []string{"done=false", "due<=+7d", "due>=today"}, "order": "due", "label": "Due this week"},

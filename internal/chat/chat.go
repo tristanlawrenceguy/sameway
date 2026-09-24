@@ -147,7 +147,7 @@ func (s *Service) sendTurn(ctx context.Context, canvas, text, fileID string, on 
 				// The person stopped the turn; what it did stays.
 				return s.reply(said, stoppedText, changes, tools)
 			}
-			return s.fail(err)
+			return s.failAfter(said, err, changes, tools)
 		}
 		if len(resp.ToolCalls) == 0 {
 			reply := strings.TrimSpace(resp.Text)

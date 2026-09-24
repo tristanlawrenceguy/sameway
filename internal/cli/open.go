@@ -85,6 +85,7 @@ func (c *ctx) openCmd() error {
 	// for as long as the server does, with or without a page open.
 	h.StartRinging(ctx, notifier(a))
 	a.Chat.StartSchedule(ctx)
+	keepSnapshots(ctx, c.Stdout, a)
 	connectDevices(ctx, c.Stdout, a)
 	joinTailnet(ctx, c.Stdout, a, h)
 	if err := srv.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {

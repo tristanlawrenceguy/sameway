@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
-	"os"
 	"strings"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
@@ -44,11 +42,11 @@ func (s *Server) workspacesDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.app.Close()
-	for try := 0; try < 10; try++ {
-		if err = os.RemoveAll(cur.Dir); err == nil {
-			break
-		}
-		time.Sleep(200 * time.Millisecond)
+	// Into the trash, not gone: the Workspaces page can put it back.
+	trashed, err := workspace.Trash(cur.Dir, cur.Config.Name)
+	if err != nil {
+		s.showWorkspaces(w, r, err.Error())
+		return
 	}
 	workspace.Forget(cur.Dir)
 
@@ -58,7 +56,8 @@ func (s *Server) workspacesDelete(w http.ResponseWriter, r *http.Request) {
 		nextName = ws.Config.Name
 	}
 	var b strings.Builder
-	b.WriteString(`<div class="sw-alert sw-alert--success" role="alert"><p class="sw-alert__message">` + template.HTMLEscapeString(cur.Config.Name) + ` deleted.</p></div>`)
+	b.WriteString(string(s.component("alert", map[string]any{"kind": "success", "title": cur.Config.Name + " deleted",
+		"message": "It is in Sameway's trash with everything that was in its folder (" + trashed.Now + "). Restore it from Workspaces."})))
 	b.WriteString(fmt.Sprintf(`<p class="sw-muted">Opening <a href="%s">%s</a>…</p>`, template.HTMLEscapeString(url), template.HTMLEscapeString(nextName)))
 
 	w.Header().Set("Refresh", fmt.Sprintf("3; url=%s", template.HTMLEscapeString(url)))

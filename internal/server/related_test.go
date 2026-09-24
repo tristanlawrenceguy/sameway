@@ -69,11 +69,10 @@ func TestAPageAtRestSaysNothingAboutWhatElseExists(t *testing.T) {
 // the assistant is the way in, so it is given the whole graph, with the
 // query that follows each connection and the count on the other end.
 func TestTheAPICarriesEveryConnectionWhole(t *testing.T) {
-	_, h := newApp(t)
-	var garden, pond, garlic struct{ ID string }
-	decode(t, postJSON(t, h, http.MethodPost, "/api/project", map[string]any{"title": "Garden"}), &garden)
-	decode(t, postJSON(t, h, http.MethodPost, "/api/task", map[string]any{"title": "Dig the pond", "project": garden.ID}), &pond)
-	decode(t, postJSON(t, h, http.MethodPost, "/api/task", map[string]any{"title": "Plant garlic", "project": garden.ID}), &garlic)
+	a, h := newApp(t)
+	garden, _ := a.Store.Create("project", map[string]any{"title": "Garden"})
+	pond, _ := a.Store.Create("task", map[string]any{"title": "Dig the pond", "project": garden.ID})
+	garlic, _ := a.Store.Create("task", map[string]any{"title": "Plant garlic", "project": garden.ID})
 
 	var rec struct {
 		Related []struct {

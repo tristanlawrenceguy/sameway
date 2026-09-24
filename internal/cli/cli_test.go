@@ -259,8 +259,8 @@ func TestContentIsThePortableForm(t *testing.T) {
 	if r := run(t, dir, "note", "get", rec.ID); !strings.Contains(r.stdout, "Hello again") {
 		t.Errorf("import should change the record: %s", r.stdout)
 	}
-	if r := run(t, dir, "activity", "list"); !strings.Contains(r.stdout, "You updated note Hello again") {
-		t.Errorf("an import is logged like any change: %s", r.stdout)
+	if r := run(t, dir, "activity", "list"); !strings.Contains(r.stdout, "You synced content") || !strings.Contains(r.stdout, "1 changed") {
+		t.Errorf("an import is one entry in the log, undone in one go: %s", r.stdout)
 	}
 
 	// The file goes, the record goes; export puts the folder back in step.

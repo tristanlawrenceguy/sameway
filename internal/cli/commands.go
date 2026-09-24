@@ -40,6 +40,7 @@ func (c *ctx) serveCmd() error {
 	a.Chat.StartSchedule(ctx)
 	h := server.New(a)
 	h.StartRinging(ctx, notifier(a))
+	keepSnapshots(ctx, c.Stdout, a)
 	connectDevices(ctx, c.Stdout, a)
 	watchUpdates(ctx, c.Stdout, a)
 	token := os.Getenv(a.Workspace.Config.MCP.TokenEnv)

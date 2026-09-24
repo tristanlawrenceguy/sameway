@@ -29,6 +29,8 @@ type Mirror struct {
 	// Skip names the types that are history rather than content: the
 	// conversation, its questions, the activity log.
 	Skip []string
+	// DryRun makes Import say what it would change, and change nothing.
+	DryRun bool
 }
 
 // Mirrored says whether a type is written to the folder.

@@ -41,7 +41,7 @@ func TestTabsAreSeparateCanvases(t *testing.T) {
 	}
 
 	// The new tab opens on its own chat, and shows nothing from Home.
-	postJSON(t, h, http.MethodPost, "/api/block", map[string]any{"component": "heading", "props": map[string]any{"text": "Only on Home"}})
+	a.Store.Create("block", map[string]any{"component": "heading", "props": map[string]any{"text": "Only on Home"}})
 	rec := get(t, h, "/c/"+garden.ID)
 	wantStatus(t, rec, http.StatusOK)
 	tab := rec.Body.String()

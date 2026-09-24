@@ -77,7 +77,7 @@ func (s *Service) wrapUp(ctx context.Context, req llm.Request, why, said string,
 		return s.reply(said, stoppedText, changes, tools)
 	}
 	if err != nil || strings.TrimSpace(resp.Text) == "" {
-		return s.fail(fmt.Errorf("%s The model then had no final answer.", why))
+		return s.failAfter(said, fmt.Errorf("%s The model then had no final answer.", why), changes, tools)
 	}
 	return s.reply(said, strings.TrimSpace(resp.Text), changes, tools)
 }
@@ -93,4 +93,23 @@ func (s *Service) reply(said, text string, changes []Change, tools []map[string]
 		changes = s.changesAfter(said)
 	}
 	return s.message(map[string]any{"role": "assistant", "content": text, "changes": changes, "tools": tools})
+}
+
+// failAfter is a turn that went wrong after it had already changed
+// things. The failure is said, and so is what it did before, as the
+// receipt any reply carries, each change with its Undo: a failure must
+// not hide changes that happened.
+func (s *Service) failAfter(said string, err error, changes []Change, tools []map[string]any) (*store.Record, error) {
+	if s.runsToolsOutside() {
+		changes = s.changesAfter(said)
+	}
+	if len(changes) == 0 {
+		return s.fail(err)
+	}
+	Record(s.Store, "system", Change{Action: "failed", Detail: truncate(err.Error(), 200)})
+	rec, storeErr := s.message(map[string]any{"role": "error", "content": err.Error() + " What it had done before that is below, and each can be undone.", "changes": changes, "tools": tools})
+	if storeErr != nil {
+		return nil, storeErr
+	}
+	return rec, err
 }

@@ -48,8 +48,7 @@ func TestWorkspacesDeleteSuccessShowsConfirmation(t *testing.T) {
 	}
 
 	doc := parse(t, rec)
-	alerts := doc.WithAttr("role", "alert")
-	if len(alerts) == 0 {
-		t.Errorf("response should have an element with role=alert in the accessibility tree\n%s", truncate(body))
+	if len(doc.WithAttr("role", "status")) == 0 || !strings.Contains(body, "trash") {
+		t.Errorf("the deletion is announced as a status, saying where the workspace went\n%s", truncate(body))
 	}
 }
