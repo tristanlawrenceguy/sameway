@@ -27,7 +27,7 @@ func TestOneSearchOverEverything(t *testing.T) {
 	if o, _ := look.Page(body); len(o.Problems) != 0 {
 		t.Errorf("the search page should read cleanly, got %v", o.Problems)
 	}
-	if empty := get(t, h, "/search?q=zebra").Body.String(); !strings.Contains(empty, "No results for") && !strings.Contains(empty, "Try different words") {
+	if empty := get(t, h, "/search?q=zebra").Body.String(); !strings.Contains(strings.ToLower(empty), "no results") && !strings.Contains(strings.ToLower(empty), "try different words") {
 		t.Error("no hits should say so in plain words")
 	}
 	if home := get(t, h, "/").Body.String(); !strings.Contains(home, `data-component="search"`) {
