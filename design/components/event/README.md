@@ -11,3 +11,5 @@ form posts to, and `from`, the page to return to. The control is a real
 form, so it works without JavaScript and reaches assistive technology as a
 button named Undo. Leave `undo` out once the thing is no longer as the entry
 left it; the log, not the entry, decides that.
+
+When `compact` is true (set by activity.go), the actor/action/target/detail block is omitted so a surrounding heading carries the description — used on /activity and /chat to avoid announcing the same fact twice for screen readers.
