@@ -10,7 +10,10 @@
   // swWhenField arms every when-field in root; the inline editor calls it on
   // a form it has just built.
   window.swWhenField = function (root) {
-    (root || document).querySelectorAll("[data-component=when-field]").forEach(function (field) {
+    root = root || document;
+    var fields = Array.prototype.slice.call(root.querySelectorAll("[data-component=when-field]"));
+    if (root.matches && root.matches("[data-component=when-field]")) fields.unshift(root);
+    fields.forEach(function (field) {
       var pick = field.querySelector(".sw-when-field__pick");
       var words = field.querySelector("input[type=text]");
       if (!pick || !words || pick._armed) return;
