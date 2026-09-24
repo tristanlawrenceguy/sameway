@@ -51,6 +51,10 @@ type Service struct {
 	// Publish sends to an MQTT topic, when the workspace has a broker;
 	// nil means it has none. See mqtt.go.
 	Publish func(topic, payload string) error
+	// Tailnet waits up to the given time for the next step of joining the
+	// person's Tailscale network and says it in their words; nil where the
+	// workspace is not being served. See settings.go.
+	Tailnet func(wait time.Duration) string
 	// convo is the chat that is open, once known; see Current.
 	convo       string
 	ExtraPrompt string

@@ -70,12 +70,14 @@ notify:
   command: ""
 
 # Open this workspace from your phone or another computer, anywhere, over
-# your own Tailscale network: nothing public, no port forwarding. Name the
-# machine here (home becomes https://home.<your-tailnet>.ts.net) and the
-# first start prints a link to sign in once. For a machine nobody signs in
-# on, set auth_key_env to the NAME of a variable holding an auth key.
-# Only devices signed in to Tailscale as you get in, and what you change
-# from one says which in the activity log. Empty name is off.
+# your own Tailscale network. The easy way is to ask the assistant ("I want
+# this on my phone"): it asks first, then walks you through it in the chat.
+# By hand: name the machine here (home becomes
+# https://home.<your-tailnet>.ts.net) and it joins, printing a link to sign
+# in once. For a machine nobody signs in on, set auth_key_env to the NAME of
+# a variable holding an auth key. Nothing is public and nothing needs port
+# forwarding: only devices signed in to Tailscale as you get in, and what
+# you change from one says which in the activity log. Empty name is off.
 tailnet:
   name: ""
   auth_key_env: ""

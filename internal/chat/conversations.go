@@ -164,6 +164,13 @@ func (s *Service) Notice(text string) {
 	s.message(map[string]any{"role": "error", "content": text})
 }
 
+// Say puts a message from the assistant in the current chat outside a
+// turn: a step the person has to take that sameway learns of by itself,
+// such as signing in to Tailscale.
+func (s *Service) Say(text string) {
+	s.message(map[string]any{"role": "assistant", "content": text})
+}
+
 // Clear deletes every message in the current chat. The canvas, and the
 // other chats, are left alone.
 func (s *Service) Clear() error {
