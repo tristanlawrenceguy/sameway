@@ -1,8 +1,14 @@
-/* The words take the room; the picker sits beside them, and under them
-   when there is no room. */
-.sw-when-field__row { display: flex; flex-wrap: wrap; gap: var(--sw-space-2); }
-.sw-when-field__row > .sw-field__input:first-child { flex: 1 1 14rem; }
-.sw-when-field__pick { flex: 0 0 auto; }
+/* The words take the room; the picker is a button-sized calendar beside
+   them, one field to read rather than two. */
+.sw-when-field__row { display: flex; gap: var(--sw-space-2); align-items: stretch; }
+.sw-when-field__row > .sw-field__input:first-child { flex: 1 1 auto; min-width: 0; }
+/* The picker shows its calendar, not a second copy of the day: its own
+   text is hidden until it is focused, when it opens out to be typed in. */
+.sw-when-field .sw-when-field__pick {
+  flex: 0 0 auto; width: calc(var(--sw-size-target) + var(--sw-space-4)); padding-inline: var(--sw-space-2);
+  color: transparent; cursor: pointer;
+}
+.sw-when-field .sw-when-field__pick:focus { width: auto; color: var(--sw-color-fg); }
 /* Hidden until its script can make it write into the words: the field
    styles would otherwise show it. */
 .sw-when-field__pick[hidden] { display: none; }

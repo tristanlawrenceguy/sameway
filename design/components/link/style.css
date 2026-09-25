@@ -19,12 +19,13 @@
 .sw-nav .sw-link::after, .sw-tabs .sw-link::after, .sw-crumbs .sw-link::after, .sw-bar .sw-link::after,
 .sw-link--button::after, .sw-link--fill::after { content: none; }
 
-/* On its own: the shape and size of a quiet button. */
+/* On its own: the shape and size of a quiet button, in the link colour so
+   it reads as somewhere to go. */
 .sw-link--button {
   display: inline-flex; align-items: center; gap: var(--sw-space-1);
   min-height: var(--sw-size-target); padding: 0 var(--sw-space-3); margin-left: calc(-1 * var(--sw-space-3));
   border-radius: var(--sw-radius-md);
-  font-weight: 500; color: var(--sw-color-fg-muted); text-decoration: none;
+  font-weight: 600; color: var(--sw-color-accent); text-decoration: none;
   transition: background var(--sw-motion-fast) var(--sw-motion-ease), color var(--sw-motion-fast) var(--sw-motion-ease);
 }
 .sw-link--button:hover { background: var(--sw-color-bg-muted); color: var(--sw-color-fg); text-decoration: none; }

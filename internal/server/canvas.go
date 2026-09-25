@@ -54,9 +54,9 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 	solo := len(left) == 0 && len(right) == 0 && len(main) == 1 &&
 		main[0].Fields["component"] == chat.ComponentName
 
-	if solo {
-		b.WriteString(string(s.component("empty", map[string]any{"title": "Nothing here yet", "message": "This page is empty.", "action": map[string]any{"href": "/chat?prompt=Create%20something.", "label": "Ask the assistant to add something"}})))
-	}
+	// The conversation's own "Ask for anything" is the page's one empty
+	// state; a second panel above it saying the page is empty was one more
+	// thing to read before the box to type in.
 	fmt.Fprintf(&b, `<div class="sw-page" data-layout="%s">`, layoutName(solo))
 	b.WriteString(`<ol class="sw-plain sw-canvas" aria-label="Canvas">`)
 	for _, blk := range main {

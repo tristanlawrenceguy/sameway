@@ -8,6 +8,8 @@
   text-align: left; padding: var(--sw-space-2) var(--sw-space-3);
   border-top: 1px solid var(--sw-color-border); vertical-align: top;
 }
-.sw-table th { background: var(--sw-color-bg-muted); font-size: var(--sw-size-text-sm); letter-spacing: 0.02em; text-transform: uppercase; color: var(--sw-color-fg-muted); }
+.sw-table thead th { background: var(--sw-color-bg-muted); font-size: var(--sw-size-text-sm); letter-spacing: 0.02em; text-transform: uppercase; color: var(--sw-color-fg-muted); }
+/* A row header names its row: plain words in bold, not a column heading. */
+.sw-table tbody th { font-weight: 600; text-align: left; }
 .sw-table tbody tr { transition: background var(--sw-motion-fast) var(--sw-motion-ease); }
 .sw-table tbody tr:hover { background: var(--sw-color-bg-muted); }
