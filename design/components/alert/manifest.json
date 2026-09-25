@@ -18,7 +18,10 @@
   },
   "a11y": {
     "role": "status for info and success, alert for warning and danger",
-    "keyboard": [],
+    "keyboard": [
+      { "key": "Tab", "does": "Focuses the close button when present." },
+      { "key": "Enter or Space", "does": "Activates the close button, dismissing the alert." }
+    ],
     "states": [],
     "wcag": { "target": "AAA", "notes": "Kind is conveyed by colour and optionally an icon prop (1.4.1). Warning and danger use role=alert so assistive tech announces them when inserted live." }
   },
@@ -33,6 +36,7 @@
     { "name": "success", "props": { "kind": "success", "message": "Note published." }, "file": "examples/success.html" },
     { "name": "warning", "props": { "kind": "warning", "title": "No model connected", "message": "Edit the llm section of workspace.yaml and restart.", "id": "model-warning" }, "file": "examples/warning.html" },
     { "name": "with-icon", "props": { "kind": "danger", "icon": "\u26a0", "title": "No model connected", "message": "Edit the llm section of workspace.yaml and restart." }, "file": "examples/with-icon.html" },
-    { "name": "info-with-icon", "props": { "kind": "info", "icon": "\u2139", "message": "A note with an icon." }, "file": "examples/info-with-icon.html" }
+    { "name": "info-with-icon", "props": { "kind": "info", "icon": "\u2139", "message": "A note with an icon." }, "file": "examples/info-with-icon.html" },
+    { "name": "with-dismiss", "props": { "kind": "success", "message": "Changes made.", "dismiss": true }, "file": "examples/with-dismiss.html" }
   ]
 }

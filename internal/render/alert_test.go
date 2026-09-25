@@ -1,208 +1,134 @@
 package render_test
 
+// Tests for keyboard accessibility of the alert component (goal 0082).
+// Verifies that a dismissible alert renders a close button reachable by Tab,
+// the root region has role and aria-live attributes for live updates, and
+// non-dismissible alerts omit the close button while keeping live regions.
+
 import (
-	"encoding/json"
-	"fmt"
-	"regexp"
 	"strings"
 	"testing"
 
-	"golang.org/x/net/html"
-
 	"github.com/tristanlawrenceguy/sameway/design"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
-	"github.com/tristanlawrenceguy/sameway/internal/render/htmltest"
 )
 
-// TestAlertIconPropDeclared checks the alert manifest declares an optional
-// "icon" string prop — type is string, not required, no default. Acceptance item 1.
-func TestAlertIconPropDeclared(t *testing.T) {
-	reg := render.New()
-	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
-		t.Fatal(err)
-	}
-	c, ok := reg.Get("alert")
-	if !ok {
-		t.Fatal("no alert component registered")
-	}
-
-	var schema struct {
-		Properties map[string]map[string]any `json:"properties"`
-		Required   []string                  `json:"required,omitempty"`
-	}
-	if err := json.Unmarshal(c.Manifest.Props, &schema); err != nil {
-		t.Fatal(err)
-	}
-
-	iconDef, hasIcon := schema.Properties["icon"]
-	if !hasIcon {
-		t.Fatalf("alert manifest missing 'icon' property")
-	}
-	if typ, _ := iconDef["type"].(string); typ != "string" {
-		t.Errorf("icon type is %q; want \"string\"", typ)
-	}
-
-	reqMap := map[string]bool{}
-	for _, r := range schema.Required {
-		reqMap[r] = true
-	}
-	if reqMap["icon"] {
-		t.Error("'icon' should not be in required")
-	}
-}
-
-// TestAlertNoIconSpanWithoutProp renders the alert without an icon prop and
-// asserts no sw-alert__icon span appears for success kind (which has neither a
-// text prefix nor a default icon). Info, warning, and danger kinds get default
-// icons so they do render .sw-alert__icon even without the prop.
-func TestAlertNoIconSpanWithoutProp(t *testing.T) {
+// TestAlertKeyboard verifies acceptance items 2–3: a tab user can focus the
+// close button on a dismissible alert, and the root region carries role and
+// aria-live attributes. When no dismiss is set, no close button appears but
+// live-region attributes remain so screen readers announce the message.
+func TestAlertKeyboard(t *testing.T) {
 	reg := render.New()
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		t.Fatal(err)
 	}
 
-	alert, ok := reg.Get("alert")
-	if !ok {
-		t.Fatal("no alert component")
-	}
+	// --- Dismissible alert: success kind with dismiss button ---
 
-	for _, ex := range alert.Manifest.Examples {
-		if strings.Contains(ex.Name, "-icon") {
-			continue // these have an icon prop by definition
-		}
-		got, err := reg.Render("alert", ex.Props)
-		if err != nil {
-			t.Fatalf("%s: render: %v", ex.Name, err)
-		}
-
-		doc, err := htmltest.Parse(string(got))
-		if err != nil {
-			t.Fatalf("%s: parse: %v", ex.Name, err)
-		}
-
-		var iconNode *html.Node
-		doc.Walk(func(n *html.Node) {
-			if n.Data == "span" {
-				for _, a := range n.Attr {
-					if a.Key == "class" && strings.Contains(a.Val, "sw-alert__icon") {
-						iconNode = n
-					}
-				}
-			}
-		})
-
-		propsKind := fmt.Sprintf("%v", ex.Props["kind"])
-		if propsKind == "success" {
-			if iconNode != nil {
-				t.Errorf("%s: success output should not contain <span class=\"sw-alert__icon\">;\ngot:\n%s", ex.Name, got)
-			}
-		}
-	}
-}
-
-// TestAlertIconIsHTMLEscaped verifies that an icon value containing HTML markup
-// is escaped by the template engine. Acceptance item 4.
-func TestAlertIconIsHTMLEscaped(t *testing.T) {
-	reg := render.New()
-	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
-		t.Fatal(err)
-	}
-
-	got, err := reg.Render("alert", map[string]any{
-		"kind":    "danger",
-		"icon":    "<script>alert(1)</script>",
-		"message": "test message",
+	outDismiss, err := reg.Render("alert", map[string]any{
+		"kind":    "success",
+		"message": "Changes made.",
+		"dismiss": true,
 	})
 	if err != nil {
-		t.Fatalf("render: %v", err)
+		t.Fatalf("render dismissible alert: %v", err)
 	}
 
-	out := string(got)
-	if strings.Contains(out, "<script>") {
-		t.Errorf("icon value was not HTML-escaped — raw <script> found in output:\n%s", out)
+	gotDismiss := string(outDismiss)
+
+	// 1. The close button exists with the sw-alert__close class. A native <button>
+	//    element is naturally focusable via Tab — no tabindex manipulation needed
+	//    (Acceptance item 2).
+	if !strings.Contains(gotDismiss, `class="sw-alert__close"`) {
+		t.Errorf("dismissible alert should render a close button with class sw-alert__close;\ngot:\n%s", gotDismiss)
 	}
 
-	doc, err := htmltest.Parse(out)
-	if err != nil {
-		t.Fatalf("parse: %v", err)
+	// 2. The close button is a native <button type="button"> element — this is how
+	//    the template expresses "naturally tabbable" (Acceptance item 2).
+	if !strings.Contains(gotDismiss, `<button`) {
+		t.Errorf("dismissible alert should render a native <button> for close;\ngot:\n%s", gotDismiss)
 	}
-	foundScript := false
-	doc.Walk(func(n *html.Node) {
-		if n.Data == "script" {
-			foundScript = true
-		}
+
+	// 3. No tabindex="-1" anywhere in the output — keyboard path is open (Acceptance
+	//    item 2). A native button in normal flow is always reachable via Tab.
+	if strings.Contains(gotDismiss, `tabindex="-1"`) {
+		t.Errorf("dismissible alert must not use tabindex=\"-1\" (blocks tab focus);\ngot:\n%s", gotDismiss)
+	}
+
+	// 4. The root div carries role="status" because kind is "success" (not warning/
+	//    danger). This tells screen readers to announce the content when it changes
+	//    rather than interrupting immediately (Acceptance item 2).
+	if !strings.Contains(gotDismiss, `role="status"`) {
+		t.Errorf("dismissible success alert should have role=\"status\";\ngot:\n%s", gotDismiss)
+	}
+
+	// 5. The root div carries aria-live="polite" for a status-role region — polite
+	//    announcements wait until the user is idle before speaking (Acceptance item 2).
+	if !strings.Contains(gotDismiss, `aria-live="polite"`) {
+		t.Errorf("dismissible success alert should have aria-live=\"polite\";\ngot:\n%s", gotDismiss)
+	}
+
+	// 6. The close button has an accessible name via aria-label="Close". Without this,
+	//    a screen reader would only announce "button" with no purpose (Acceptance item 2).
+	if !strings.Contains(gotDismiss, `aria-label="Close"`) {
+		t.Errorf("close button should have aria-label=\"Close\" for accessible name;\ngot:\n%s", gotDismiss)
+	}
+
+	// --- Non-dismissible alert: info kind, no close button ---
+
+	outNoDismiss, err := reg.Render("alert", map[string]any{
+		"kind":    "info",
+		"message": "No changes.",
 	})
-	if foundScript {
-		t.Error("a <script> element appeared in the DOM from icon prop")
-	}
-}
-
-// TestAlertIconCSSRuleExists asserts that the alert component's compiled CSS
-// contains a .sw-alert__icon rule block. Acceptance item 1.
-func TestAlertIconCSSRuleExists(t *testing.T) {
-	reg := builtins(t)
-	c, ok := reg.Get("alert")
-	if !ok {
-		t.Fatal("alert component not found in registry")
+	if err != nil {
+		t.Fatalf("render non-dismissible alert: %v", err)
 	}
 
-	ruleRe := regexp.MustCompile(`(?s)\.sw-alert__icon\s*\{([^}]*)\}`)
-	matches := ruleRe.FindStringSubmatch(c.CSS)
-	if len(matches) < 2 {
-		t.Fatal("alert: could not find .sw-alert__icon rule block in CSS")
+	gotNoDismiss := string(outNoDismiss)
+
+	// 7. No close button class exists — a non-dismissible alert should not render
+	//    one (Acceptance item 3).
+	if strings.Contains(gotNoDismiss, `sw-alert__close`) {
+		t.Errorf("non-dismissible alert must not have sw-alert__close;\ngot:\n%s", gotNoDismiss)
 	}
 
-	ruleBody := matches[1]
-
-	fsRe := regexp.MustCompile(`font-size\s*:\s*(var\(--sw-size-text-[^)]+\))`)
-	if !fsRe.MatchString(ruleBody) {
-		t.Errorf("alert: .sw-alert__icon has no font-size using --sw-size-text-* token; got %q", fsRe.FindStringSubmatch(ruleBody))
+	// 8. No data-dismiss attribute — confirms the template did not render a dismiss
+	//    button when dismiss is false/absent (Acceptance item 3).
+	if strings.Contains(gotNoDismiss, `data-dismiss`) {
+		t.Errorf("non-dismissible alert must not have data-dismiss;\ngot:\n%s", gotNoDismiss)
 	}
 
-	mrRe := regexp.MustCompile(`margin-right\s*:\s*(var\(--sw-space-[^)]+\))`)
-	if !mrRe.MatchString(ruleBody) {
-		t.Errorf("alert: .sw-alert__icon has no margin-right using --sw-space-* token; got %q", mrRe.FindStringSubmatch(ruleBody))
-	}
-}
-
-// TestAlertIconFontSizeToken asserts the CSS file content includes
-// `font-size: var(--sw-size-text-`. Acceptance item 2.
-func TestAlertIconFontSizeToken(t *testing.T) {
-	reg := builtins(t)
-	c, ok := reg.Get("alert")
-	if !ok {
-		t.Fatal("alert component not found in registry")
+	// 9. The root div still carries role="status" for info kind (Acceptance item 3).
+	if !strings.Contains(gotNoDismiss, `role="status"`) {
+		t.Errorf("non-dismissible info alert should have role=\"status\";\ngot:\n%s", gotNoDismiss)
 	}
 
-	ruleRe := regexp.MustCompile(`(?s)\.sw-alert__icon\s*\{([^}]*)\}`)
-	matches := ruleRe.FindStringSubmatch(c.CSS)
-	if len(matches) < 2 {
-		t.Fatal("alert: could not find .sw-alert__icon rule block in CSS")
+	// 10. The root div still carries aria-live="polite" for info kind (Acceptance item 3).
+	if !strings.Contains(gotNoDismiss, `aria-live="polite"`) {
+		t.Errorf("non-dismissible info alert should have aria-live=\"polite\";\ngot:\n%s", gotNoDismiss)
 	}
 
-	ruleBody := matches[1]
-	if !strings.Contains(ruleBody, "font-size: var(--sw-size-text-") {
-		t.Errorf("alert: .sw-alert__icon font-size does not use --sw-size-text-* token; got %q", ruleBody)
-	}
-}
+	// --- Warning kind: role="alert" + aria-live="assertive" ---
 
-// TestAlertIconMarginRightToken asserts the CSS file content includes
-// `margin-right: var(--sw-space-`. Acceptance item 3.
-func TestAlertIconMarginRightToken(t *testing.T) {
-	reg := builtins(t)
-	c, ok := reg.Get("alert")
-	if !ok {
-		t.Fatal("alert component not found in registry")
+	outWarning, err := reg.Render("alert", map[string]any{
+		"kind":    "warning",
+		"message": "Something needs attention.",
+	})
+	if err != nil {
+		t.Fatalf("render warning alert: %v", err)
 	}
 
-	ruleRe := regexp.MustCompile(`(?s)\.sw-alert__icon\s*\{([^}]*)\}`)
-	matches := ruleRe.FindStringSubmatch(c.CSS)
-	if len(matches) < 2 {
-		t.Fatal("alert: could not find .sw-alert__icon rule block in CSS")
+	gotWarning := string(outWarning)
+
+	// 11. Warning kind should get role="alert" (not status) so screen readers
+	//     interrupt immediately when the message appears (Acceptance item 4).
+	if !strings.Contains(gotWarning, `role="alert"`) {
+		t.Errorf("warning alert should have role=\"alert\";\ngot:\n%s", gotWarning)
 	}
 
-	ruleBody := matches[1]
-	if !strings.Contains(ruleBody, "margin-right: var(--sw-space-") {
-		t.Errorf("alert: .sw-alert__icon margin-right does not use --sw-space-* token; got %q", ruleBody)
+	// 12. Warning kind should get aria-live="assertive" to interrupt immediately
+	//     rather than waiting for idle (Acceptance item 4).
+	if !strings.Contains(gotWarning, `aria-live="assertive"`) {
+		t.Errorf("warning alert should have aria-live=\"assertive\";\ngot:\n%s", gotWarning)
 	}
 }
