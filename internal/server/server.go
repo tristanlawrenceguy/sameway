@@ -109,6 +109,7 @@ func (s *Server) routes() {
 	m.HandleFunc("POST /t/{type}/import/{file}/run", s.importRun)
 	m.HandleFunc("GET /t/{type}/{id}", s.detailPage)
 	m.HandleFunc("POST /t/{type}/{id}/delete", s.deleteForm)
+	m.HandleFunc("POST /t/{type}/{id}/discard", s.discard)
 	m.HandleFunc("POST /t/{type}/{id}/props", s.recordProps)
 	m.HandleFunc("POST /t/file/upload", s.upload)
 	m.HandleFunc("GET /files/{id}", s.serveFile)

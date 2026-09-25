@@ -100,11 +100,16 @@
     switcher.className = "sw-cluster sw-prose-switch";
     switcher.appendChild(toggle);
 
+    // The toolbar and the switch to Markdown share one line under the
+    // words: the formatting at the left, the switch at the right.
+    var foot = document.createElement("div");
+    foot.className = "sw-prose-foot";
+    foot.appendChild(bar);
+    foot.appendChild(switcher);
     wrap.appendChild(lab);
     wrap.appendChild(editor);
     wrap.appendChild(source);
-    wrap.appendChild(switcher);
-    wrap.appendChild(bar);
+    wrap.appendChild(foot);
     wrap.appendChild(html);
     wrap.appendChild(lvl);
     return { wrap: wrap, input: editor };

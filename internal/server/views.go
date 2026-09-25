@@ -118,7 +118,12 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	// see parts.go. Nothing here is on unless somebody asked for it.
 	always, here := s.shown(r)
 	b.WriteString(s.nextThings(t, rec, append(append([]string{}, always...), here...)))
-	fmt.Fprintf(&b, `<div class="sw-dl-block" data-block-id="%s" data-edit-action="/t/%s/%s/props"%s>`, rec.ID, t.Name, rec.ID, langOf(rec))
+	// Just added and not yet saved: Cancel takes the adding back (add.go).
+	discard := ""
+	if added := r.URL.Query().Get("added"); added != "" && rec.UpdatedAt.Equal(rec.CreatedAt) {
+		discard = ` data-discard="/t/` + t.Name + `/` + rec.ID + `/discard?added=` + template.URLQueryEscaper(added) + `"`
+	}
+	fmt.Fprintf(&b, `<div class="sw-dl-block" data-block-id="%s" data-edit-action="/t/%s/%s/props"%s%s>`, rec.ID, t.Name, rec.ID, langOf(rec), discard)
 	// The record's text comes first and reads as a document, under the
 	// title and before its other fields; structured text keeps what was
 	// written on the element so the inline editor edits the source.
