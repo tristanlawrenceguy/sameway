@@ -234,9 +234,13 @@
     });
 
     if (first) first.focus();
+    // 09-edit-fields.js tidies the form: empty fields behind Add buttons.
+    document.dispatchEvent(new CustomEvent("sw:edit-open", { detail: { block: block, form: form } }));
   }
 
   function cancel(block, form, covered) {
+    // A record made a moment ago and never saved goes back to the list instead (09-edit-fields.js).
+    if (!document.dispatchEvent(new CustomEvent("sw:edit-cancel", { cancelable: true, detail: { block: block, form: form } }))) return;
     for (var i = 0; i < covered.length; i++) {
       covered[i].style.display = "";
       covered[i].hidden = false;

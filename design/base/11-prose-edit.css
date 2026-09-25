@@ -4,11 +4,26 @@
 .sw-prose-editor { min-height: calc(var(--sw-size-target) * 3); resize: vertical; overflow: auto; }
 .sw-prose-editor > :first-child { margin-top: 0; }
 .sw-prose-editor > :last-child { margin-bottom: 0; }
-.sw-prose-tools { margin-bottom: var(--sw-space-2); gap: var(--sw-space-1); }
+/* The toolbar is one strip under the words, in groups with a hairline
+   between them; its buttons are words on the strip, not boxes of their
+   own. The switch to Markdown keeps to the right of the same line. */
+.sw-prose-foot { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--sw-space-2); margin-top: var(--sw-space-1); }
+.sw-prose-tools {
+  display: flex; flex-wrap: wrap; align-items: center; flex: 1 1 0; min-width: 0;
+  padding: 0.125rem; border: 1px solid var(--sw-color-border); border-radius: var(--sw-radius-md); background: var(--sw-color-bg-muted);
+}
+.sw-prose-tools__group { display: flex; flex-wrap: wrap; align-items: center; }
+.sw-prose-tools__group + .sw-prose-tools__group, .sw-prose-tools > .sw-button { border-left: 1px solid var(--sw-color-border); padding-left: 0.125rem; margin-left: 0.125rem; }
+.sw-prose-tools__group[hidden] { display: none; }
+.sw-prose-tools .sw-button { border-color: transparent; padding: 0 var(--sw-space-2); min-width: var(--sw-size-target); font-size: var(--sw-size-text-sm); }
+.sw-prose-tools .sw-button:hover { background: var(--sw-color-bg-raised); color: var(--sw-color-fg); }
+.sw-prose-tools .sw-prose-tools__bold { font-weight: 800; }
+.sw-prose-tools .sw-prose-tools__italic { font-style: italic; }
+.sw-prose-tools .sw-prose-tools__strikeThrough, .sw-prose-tools .sw-prose-tools__strikeThrough:hover { text-decoration: line-through; }
+.sw-prose-foot .sw-prose-switch { margin: 0; margin-left: auto; }
 .sw-prose-field textarea { margin-top: 0; }
 /* The view that is not in use is really gone; the field class would otherwise keep it displayed. */
 .sw-prose-field [hidden] { display: none; }
-.sw-prose-switch { margin-top: var(--sw-space-1); }
 .sw-prose-tools [aria-pressed="true"] { background: var(--sw-color-accent-soft); color: var(--sw-color-accent); }
 .sw-prose-editor table { border-collapse: collapse; }
 .sw-prose-editor th, .sw-prose-editor td { border: 1px solid var(--sw-color-border); padding: var(--sw-space-1) var(--sw-space-2); min-width: calc(var(--sw-size-target) * 1.5); }

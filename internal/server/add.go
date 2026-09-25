@@ -3,6 +3,7 @@ package server
 import (
 	"html/template"
 	"net/http"
+	"net/url"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
@@ -43,9 +44,31 @@ func (s *Server) addRecord(w http.ResponseWriter, r *http.Request) {
 		s.failed(w, r, "Not added", err, list)
 		return
 	}
-	s.record(r, chat.Change{Action: "created", Component: t.Name, ID: rec.ID, Detail: "New " + t.Name, Href: list + "/" + rec.ID})
-	// #edit opens the editor on arrival (09-edit-fields.js).
-	http.Redirect(w, r, list+"/"+rec.ID+"#edit", http.StatusSeeOther)
+	act := s.record(r, chat.Change{Action: "created", Component: t.Name, ID: rec.ID, Detail: "New " + t.Name, Href: list + "/" + rec.ID})
+	// #edit opens the editor on arrival (09-edit-fields.js); added names the
+	// entry that made it, so Cancel before a first Save can take it back.
+	http.Redirect(w, r, list+"/"+rec.ID+"?added="+url.QueryEscape(act)+"#edit", http.StatusSeeOther)
+}
+
+// discard is Cancel on a record added a moment ago and never saved: the
+// person changed their mind, so the adding is taken back, the way Undo
+// would, and they return to the list with nothing new in it. A record that
+// has been saved since is left alone.
+func (s *Server) discard(w http.ResponseWriter, r *http.Request) {
+	t, rec := r.PathValue("type"), r.PathValue("id")
+	back := "/t/" + t + "/" + rec
+	got, err := s.app.Store.Get(t, rec)
+	entry, err2 := s.app.Store.Get(chat.ActivityType, r.FormValue("added"))
+	if err != nil || err2 != nil || !got.UpdatedAt.Equal(got.CreatedAt) ||
+		entry.Fields["action"] != "created" || entry.Fields["target_id"] != rec {
+		http.Redirect(w, r, back, http.StatusSeeOther)
+		return
+	}
+	if err := s.app.Chat.UndoAs("human", entry.ID); err != nil {
+		http.Redirect(w, r, back, http.StatusSeeOther)
+		return
+	}
+	http.Redirect(w, r, "/t/"+t, http.StatusSeeOther)
 }
 
 // titleField is the field a record of t is named by.

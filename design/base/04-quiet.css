@@ -79,3 +79,6 @@
    nobody leaves the page. Added by 08-edit.js, which only runs where it can. */
 .sw-inline-form { margin-bottom: var(--sw-space-3); }
 .sw-inline-field + .sw-inline-field { margin-top: var(--sw-space-3); }
+/* A field the record has nothing in waits behind its Add button. */
+.sw-inline-field[hidden] { display: none; }
+.sw-edit-more { align-items: center; gap: var(--sw-space-2); }

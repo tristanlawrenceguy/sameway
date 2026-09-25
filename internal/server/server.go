@@ -97,7 +97,6 @@ func (s *Server) routes() {
 	m.HandleFunc("GET /workspaces/delete", s.workspacesDeletePage)
 	m.HandleFunc("POST /workspaces/delete", s.workspacesDelete)
 	m.HandleFunc("POST /workspaces/restore", s.workspacesRestore)
-
 	m.HandleFunc("GET /search", s.searchPage)
 	m.HandleFunc("GET /design", s.designPage)
 	m.HandleFunc("GET /design/sameway.css", s.stylesheet)
@@ -110,6 +109,7 @@ func (s *Server) routes() {
 	m.HandleFunc("POST /t/{type}/import/{file}/run", s.importRun)
 	m.HandleFunc("GET /t/{type}/{id}", s.detailPage)
 	m.HandleFunc("POST /t/{type}/{id}/delete", s.deleteForm)
+	m.HandleFunc("POST /t/{type}/{id}/discard", s.discard)
 	m.HandleFunc("POST /t/{type}/{id}/props", s.recordProps)
 	m.HandleFunc("POST /t/file/upload", s.upload)
 	m.HandleFunc("GET /files/{id}", s.serveFile)

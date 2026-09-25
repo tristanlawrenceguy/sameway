@@ -72,21 +72,22 @@ func TestRichTextWinsOverTheMarkdownBehindIt(t *testing.T) {
 	}
 }
 
-// In a real browser, Edit on a task opens every field, and Tab reaches
-// each one, the date's picker included, then Save.
+// In a real browser, Edit on a task opens what it has, and Tab reaches
+// each field, then an Add button for each field it has nothing in yet,
+// then Save.
 func TestEveryFieldOfARecordIsReachedByTab(t *testing.T) {
 	needBrowser(t)
 	a, h := newApp(t)
 	a.Store.Create("project", map[string]any{"title": "Garden"})
-	task, _ := a.Store.Create("task", map[string]any{"title": "Repot the fern"})
+	task, _ := a.Store.Create("task", map[string]any{"title": "Repot the fern", "notes": "The big pot."})
 	rec := postJSON(t, h, http.MethodPost, "/api/look", map[string]any{"path": "/t/task/" + task.ID, "steps": []map[string]any{{"press": "Edit"}}})
 	wantStatus(t, rec, http.StatusOK)
 	var seen looked
 	decode(t, rec, &seen)
 	order := strings.Join(seen.Scripts.FocusOrder, " | ")
-	// Project has two choices here (None and Garden), so it is radios
-	// under its legend, and Tab stops on the first one when none is chosen.
-	for _, want := range []string{"textbox: Title", "checkbox: Done", "textbox: Due", "radio: None", "textbox: Notes", "textbox: Tags", "button: Save"} {
+	// Due, Project and Tags are empty, so each waits behind its button;
+	// a yes or no always holds one of the two, so Done is shown.
+	for _, want := range []string{"textbox: Title", "checkbox: Done", "textbox: Notes", "button: Due", "button: Project", "button: Tags", "button: Save"} {
 		if !strings.Contains(order, want) {
 			t.Errorf("Tab reaches %s; got %s", want, order)
 		}

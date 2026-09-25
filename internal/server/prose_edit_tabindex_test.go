@@ -17,10 +17,10 @@ func TestProseToolbarButtonsAreNonTabbable(t *testing.T) {
 		t.Fatal(err)
 	}
 	src := string(tools)
-	if !strings.Contains(src, "b.tabIndex = i === 0 ? 0 : -1") {
+	if !strings.Contains(src, "b.tabIndex = buttons.length ? -1 : 0") {
 		t.Error("the toolbar's first button is its one Tab stop")
 	}
-	if !strings.Contains(src, "next.tabIndex = 0") || !strings.Contains(src, "items[at].tabIndex = -1") {
+	if !strings.Contains(src, "next.tabIndex = 0") || !strings.Contains(src, "b.tabIndex = -1; });") {
 		t.Error("the arrow keys move the one stop between the buttons")
 	}
 	edit, err := os.ReadFile("../../design/base/11-prose-edit.js")
@@ -28,7 +28,7 @@ func TestProseToolbarButtonsAreNonTabbable(t *testing.T) {
 		t.Fatal(err)
 	}
 	field := string(edit)
-	if i, j := strings.Index(field, "wrap.appendChild(editor)"), strings.Index(field, "wrap.appendChild(bar)"); i < 0 || j < 0 || i > j {
+	if i, j := strings.Index(field, "wrap.appendChild(editor)"), strings.Index(field, "wrap.appendChild(foot)"); i < 0 || j < 0 || i > j {
 		t.Error("the toolbar comes after the words in the page, so Tab reaches Body first")
 	}
 }
