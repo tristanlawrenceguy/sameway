@@ -154,6 +154,7 @@ func (s *Store) Seed() error {
 		if !s.shared(t.Name) {
 			continue
 		}
+		s.StampSchema(t)
 		recs, err := s.List(t.Name, ListOptions{})
 		if err != nil {
 			return err
@@ -234,7 +235,11 @@ func (s *Store) Apply(stamps []Stamp) (int, error) {
 			s.db.Exec(`INSERT OR REPLACE INTO _seen (origin, clock) VALUES (?, ?)`, o, st.Clock)
 		}
 	}
+	s.adoptAll(touched)
 	for k := range touched {
+		if k[0] == SchemaType {
+			continue
+		}
 		if err := s.materialize(k[0], k[1]); err != nil {
 			return 0, err
 		}
