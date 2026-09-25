@@ -59,14 +59,18 @@ func (s *Server) rows(t *schema.Type, recs []*store.Record, now time.Time) strin
 	return b.String()
 }
 
-// row is one record: its box, its title, its facts.
+// row is one record: its box, its title, its facts. Only a primary toggle
+// (done/completed/complete/finished) gets a checkbox in the row; secondary
+// settings like pinned or show are shown as badges instead.
 func (s *Server) row(t *schema.Type, rec *store.Record, level int) string {
 	class, box := "sw-row", ""
-	if props, ok := markOf(t, rec); ok {
-		props["quiet"] = true
-		box = string(s.component("mark", props))
-		if on, _ := props["checked"].(bool); on {
-			class += " sw-row--done"
+	if doneField(t) != nil {
+		if props, ok := markOf(t, rec); ok {
+			props["quiet"] = true
+			box = string(s.component("mark", props))
+			if on, _ := props["checked"].(bool); on {
+				class += " sw-row--done"
+			}
 		}
 	}
 	// A title cut short for the row keeps its whole on the link, for a

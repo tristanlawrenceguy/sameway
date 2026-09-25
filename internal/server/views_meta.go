@@ -15,18 +15,15 @@ import (
 // state, the day that matters to it, what it belongs to, when it was made.
 
 // lede is the line under a record's title: its box when it has one, its
-// facts as chips, then when it was made. On detail pages the mark does not
-// carry context — the h1 already names the record and repeating it in aria-label
-// or visually-hidden text would be redundant for screen reader users.
+// facts as chips, then when it was made. On detail pages the mark carries
+// aria-label so screen readers hear the state from the checkbox alone; the
+// lede text starts directly with badges — no leading state word at all.
 func (s *Server) lede(t *schema.Type, rec *store.Record) template.HTML {
 	box := ""
 	if props, ok := markOf(t, rec); ok {
-		// On detail pages the h1 already names the record; repeating it in
-		// aria-label or visually-hidden text would be redundant for screen
-		// reader users. Strip context and ariaLabel so the mark only says
-		// what isn't already obvious from the heading above.
-		delete(props, "context")
-		delete(props, "ariaLabel")
+		// quiet=true + ariaLabel means the mark renders nothing visible or
+		// visually-hidden: only the checkbox with its aria-label carries it.
+		props["quiet"] = true
 		box = string(s.component("mark", props))
 	}
 	return template.HTML(`<p class="sw-lede">` + box + s.facts(t, rec, factOpts{Made: true, Boxed: box != "", Chips: true}) + `</p>`)
@@ -76,11 +73,15 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 			}
 		}
 	}
-	// A setting that is on, such as pinned, is said as a word.
-	for _, f := range t.Fields {
-		if f.Type == "bool" && (doneField(t) == nil || f.Name != doneField(t).Name) {
-			if on, _ := rec.Fields[f.Name].(bool); on {
-				parts = append(parts, string(s.component("badge", map[string]any{"label": capitalize(label(f.Name)), "tone": "neutral"})))
+	// A setting that is on, such as pinned or show, is said as a badge — but
+	// not when the mark checkbox already carries it (Boxed=true), since that
+	// would repeat the same fact twice.
+	if !o.Boxed || doneField(t) != nil {
+		for _, f := range t.Fields {
+			if f.Type == "bool" && (doneField(t) == nil || f.Name != doneField(t).Name) {
+				if on, _ := rec.Fields[f.Name].(bool); on {
+					parts = append(parts, string(s.component("badge", map[string]any{"label": capitalize(label(f.Name)), "tone": "neutral"})))
+				}
 			}
 		}
 	}
