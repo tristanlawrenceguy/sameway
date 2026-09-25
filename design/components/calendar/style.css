@@ -23,7 +23,7 @@
    to fit a pane, and only below that does the wrapper scroll sideways. */
 .sw-calendar--full, .sw-calendar--page { container-type: inline-size; }
 .sw-calendar .sw-table { table-layout: fixed; font-variant-numeric: tabular-nums; min-width: 26rem; }
-.sw-calendar th { text-align: center; font-size: var(--sw-size-text-xs); padding: var(--sw-space-2) var(--sw-space-1); }
+.sw-calendar th, .sw-calendar .sw-table thead th { text-align: center; font-size: var(--sw-size-text-xs); padding: var(--sw-space-2) var(--sw-space-1); }
 .sw-calendar__day, .sw-calendar__pad {
   vertical-align: top; height: auto; min-height: 4.75rem; padding: var(--sw-space-1) var(--sw-space-2);
   border-left: 1px solid var(--sw-color-border);
@@ -85,15 +85,16 @@
    calendar has room, so nothing is lost, it is only not drawn. */
 @container (max-width: 27rem) {
   .sw-calendar .sw-table { min-width: 0; }
-  /* A phone has room for M T W T F S S: the first letter is drawn, the
-     rest of the name is still there to read, and the header names the day. */
-  .sw-calendar thead th { padding-inline: 0; font-size: 0; letter-spacing: 0; }
-  .sw-calendar thead th::first-letter { font-size: var(--sw-size-text-xs); }
+  /* A phone has room for Mon Tue Wed in small letters, not in capitals
+     spaced out: no side padding, no spacing, no capitals. */
+  .sw-calendar .sw-table thead th { padding-inline: 0; letter-spacing: 0; text-transform: none; }
   .sw-calendar__day, .sw-calendar__pad { min-height: 3.25rem; padding: var(--sw-space-1) 0.25rem; }
   .sw-calendar__today { margin-left: 0; }
   .sw-calendar__events { display: flex; flex-wrap: wrap; gap: 0.2rem; margin-top: 0.3rem; }
-  .sw-calendar__events li {
-    width: 0.45rem; height: 0.45rem; padding: 0; margin: 0;
+  .sw-calendar__events li,
+  .sw-calendar--page .sw-calendar__events li,
+  .sw-calendar__day--today .sw-calendar__events li {
+    width: 0.45rem; height: 0.45rem; min-height: 0; padding: 0; margin: 0;
     border-radius: 50%; background: var(--sw-dot, var(--sw-color-accent));
   }
   .sw-calendar__event, .sw-calendar__actions {
