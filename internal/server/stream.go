@@ -61,10 +61,11 @@ func (s *Server) chatStream(w http.ResponseWriter, r *http.Request) {
 	// error in the log where the reply should be. The person can stop it,
 	// though, from the page, by the id the first event carries, and any
 	// page opened meanwhile can follow it, from /chat/live.
-	t, ctx := s.turns.start(context.WithoutCancel(r.Context()))
+	c := s.chatFor(r)
+	t, ctx := s.turns.start(context.WithoutCancel(r.Context()), c.Whose())
 	go func() {
 		defer s.turns.end(t)
-		rec, err := s.app.Chat.SendLive(ctx, canvas, text, fileID, t.add)
+		rec, err := c.SendLive(ctx, canvas, text, fileID, t.add)
 		if rec == nil && err != nil {
 			log.Printf("chat: %v", err)
 			t.add(chat.Event{Kind: "error", Text: err.Error()})
@@ -78,7 +79,7 @@ func (s *Server) chatStream(w http.ResponseWriter, r *http.Request) {
 // page opened while it runs: the one the person went to after asking, or
 // the one they came back to. No content when no turn is running.
 func (s *Server) chatLive(w http.ResponseWriter, r *http.Request) {
-	t := s.turns.find(r.URL.Query().Get("turn"))
+	t := s.turns.find(r.URL.Query().Get("turn"), s.chatFor(r).Whose())
 	if t == nil {
 		w.WriteHeader(http.StatusNoContent)
 		return
@@ -95,7 +96,8 @@ func (s *Server) chatLive(w http.ResponseWriter, r *http.Request) {
 // following says so itself (19-live-join.js), so the news comes once.
 // It goes the way a ringing reminder does, through notify.
 func (s *Server) tellDone(t *liveTurn, rec *store.Record, err error, back string) {
-	if s.notify == nil || t.followed() {
+	// Someone else's turn is theirs to hear about, not the owner's desktop.
+	if s.notify == nil || t.followed() || t.who != "" {
 		return
 	}
 	title, text, path := "Assistant replied", "", back
@@ -177,7 +179,7 @@ func (s *Server) follow(w http.ResponseWriter, r *http.Request, t *liveTurn, bac
 // the page the rest.
 func (s *Server) chatStop(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	s.turns.stop(r.PostForm.Get("turn"))
+	s.turns.stop(r.PostForm.Get("turn"), s.chatFor(r).Whose())
 	w.WriteHeader(http.StatusNoContent)
 }
 

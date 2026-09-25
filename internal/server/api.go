@@ -120,7 +120,7 @@ func (s *Server) apiChat(w http.ResponseWriter, r *http.Request) {
 	text, _ := body["message"].(string)
 	// canvas is the tab to build on: a canvas id, or absent for Home.
 	canvas, _ := body["canvas"].(string)
-	rec, err := s.app.Chat.SendOn(r.Context(), canvas, text)
+	rec, err := s.chatFor(r).SendOn(r.Context(), canvas, text)
 	if rec == nil {
 		writeError(w, err)
 		return
@@ -232,7 +232,7 @@ func (s *Server) apiFileUpload(w http.ResponseWriter, r *http.Request) {
 // apiChatClear clears all messages from the current chat session and returns
 // confirmation JSON. The canvas, other chats, and blocks are left alone.
 func (s *Server) apiChatClear(w http.ResponseWriter, r *http.Request) {
-	if err := s.app.Chat.Clear(); err != nil {
+	if err := s.chatFor(r).Clear(); err != nil {
 		writeError(w, err)
 		return
 	}

@@ -171,8 +171,14 @@ says what they may do, by matching that email to a `person` record.
 `access` is a field Sameway keeps: no page, API call or assistant tool
 writes it except through that question, so nobody raises their own level.
 What someone changes is logged under their name and device ("Bob removed
-card Shopping, on pixel-7"). The conversation is one shared chat for now,
-so only the owner sees and uses it; each person's own chat is next.
+card Shopping, on pixel-7"). Everyone who may edit has their own chats with
+the assistant (a conversation carries whose it is), and nobody sees or
+joins another's; the assistant is told whom it is talking to and offers
+them only what their access allows, so settings, updating, page-reading and
+undo stay the owner's, and what it asks them to agree to goes to the owner.
+Someone who may only look has no assistant. Someone knocking reaches the
+owner the way a reminder does, and letting them in says the one step left
+in Tailscale: sharing the machine with them.
 
 ## 5. How agents use it
 

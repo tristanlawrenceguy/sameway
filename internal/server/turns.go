@@ -17,7 +17,10 @@ import (
 type liveTurn struct {
 	id      string
 	started time.Time
-	cancel  context.CancelFunc
+	// who is whose turn it is: "" for the owner's, a login for someone
+	// they let in. Nobody sees, follows or stops another's.
+	who    string
+	cancel context.CancelFunc
 
 	mu        sync.Mutex
 	events    []chat.Event
@@ -67,7 +70,7 @@ type turns struct {
 }
 
 // start begins a turn and the context it runs under.
-func (ts *turns) start(parent context.Context) (*liveTurn, context.Context) {
+func (ts *turns) start(parent context.Context, who string) (*liveTurn, context.Context) {
 	ctx, cancel := context.WithCancel(parent)
 	ts.mu.Lock()
 	defer ts.mu.Unlock()
@@ -75,7 +78,7 @@ func (ts *turns) start(parent context.Context) (*liveTurn, context.Context) {
 		ts.live = map[string]*liveTurn{}
 	}
 	ts.n++
-	t := &liveTurn{id: fmt.Sprintf("turn-%d", ts.n), started: time.Now(), cancel: cancel, changed: make(chan struct{})}
+	t := &liveTurn{id: fmt.Sprintf("turn-%d", ts.n), started: time.Now(), who: who, cancel: cancel, changed: make(chan struct{})}
 	ts.live[t.id] = t
 	return t, ctx
 }
@@ -93,16 +96,20 @@ func (ts *turns) end(t *liveTurn) {
 	t.mu.Unlock()
 }
 
-// find is the turn named, or the latest under way when none is named.
-func (ts *turns) find(id string) *liveTurn {
+// find is the turn named, or the latest under way when none is named, of
+// the one who asks.
+func (ts *turns) find(id, who string) *liveTurn {
 	ts.mu.Lock()
 	defer ts.mu.Unlock()
 	if id != "" {
-		return ts.live[id]
+		if t := ts.live[id]; t != nil && t.who == who {
+			return t
+		}
+		return nil
 	}
 	var latest *liveTurn
 	for _, t := range ts.live {
-		if latest == nil || t.started.After(latest.started) {
+		if t.who == who && (latest == nil || t.started.After(latest.started)) {
 			latest = t
 		}
 	}
@@ -110,11 +117,11 @@ func (ts *turns) find(id string) *liveTurn {
 }
 
 // stop ends the turn named, or every turn under way when none is.
-func (ts *turns) stop(id string) {
+func (ts *turns) stop(id, who string) {
 	ts.mu.Lock()
 	defer ts.mu.Unlock()
 	for k, t := range ts.live {
-		if id == "" || k == id {
+		if t.who == who && (id == "" || k == id) {
 			t.cancel()
 		}
 	}

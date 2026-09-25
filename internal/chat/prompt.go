@@ -69,6 +69,7 @@ func (s *Service) systemPrompt() string {
 		now = s.Now
 	}
 	fmt.Fprintf(&b, "\n\nToday is %s.", now().Format("Monday 2 January 2006"))
+	b.WriteString(s.whoPrompt())
 	if strings.TrimSpace(s.Needs) != "" {
 		b.WriteString("\n\nThe person has told you what they need. Follow it in every reply and every page you make, before any other habit: " + s.Needs)
 	}

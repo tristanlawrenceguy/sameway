@@ -11,6 +11,9 @@ import (
 // server both go through here, so a check or a log entry is never done in
 // one place and forgotten in the other.
 func (s *Service) run(call llm.ToolCall) toolResult {
+	if r, no := s.refuseFor(call); no {
+		return r
+	}
 	r := s.runTool(call)
 	if r.change != nil {
 		// The receipt keeps the entry id, so the change can be undone from
