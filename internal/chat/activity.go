@@ -142,7 +142,8 @@ func Summarise(component string, props map[string]any) string {
 	case "button", "link", "badge", "text-field", "textarea", "select", "checkbox":
 		return pick("label")
 	case "record":
-		return strings.TrimSpace(pick("type") + " " + pick("record"))
+		recTitle := trimWords(pick("record"), 6)
+		return strings.TrimSpace(pick("type") + " " + recTitle)
 	case "calendar":
 		if caption := pick("caption"); caption != "" {
 			return caption
@@ -159,6 +160,15 @@ func Summarise(component string, props map[string]any) string {
 		return "Search"
 	}
 	return ""
+}
+
+// trimWords cuts s to at most n words, appending an ellipsis when trimmed.
+func trimWords(s string, n int) string {
+	fields := strings.Fields(strings.TrimSpace(s))
+	if len(fields) <= n {
+		return s
+	}
+	return strings.Join(fields[:n], " ") + "…"
 }
 
 func truncate(s string, n int) string {
