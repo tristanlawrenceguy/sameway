@@ -11,6 +11,7 @@
     "properties": {
       "message": { "type": "string", "minLength": 1, "description": "What is happening, in plain words: 'Assistant is working'." },
       "state": { "type": "string", "enum": ["idle", "working", "done", "error"], "default": "idle" },
+      "said": { "type": "string", "description": "Read out after the message but not drawn: the first words of a reply, so a person who cannot see it arrive hears what it says while the chip stays short." },
       "live": { "title": "Announce urgently", "type": "string", "enum": ["polite", "assertive"], "default": "polite", "description": "assertive interrupts; use it only for errors." },
       "id": { "type": "string", "description": "Required when a form's enhance script should update this status while a request is in flight." }
     }
@@ -30,6 +31,7 @@
     { "name": "default", "props": { "message": "Ready.", "id": "chat-status" }, "file": "examples/default.html" },
     { "name": "working", "props": { "message": "Assistant is working…", "state": "working" }, "file": "examples/working.html" },
     { "name": "done", "props": { "message": "Added a table to the canvas.", "state": "done" }, "file": "examples/done.html" },
+    { "name": "said", "props": { "message": "Assistant replied and made 1 change to the canvas.", "said": "The calendar is now on the canvas.", "state": "done", "id": "chat-status" }, "file": "examples/said.html" },
     { "name": "error", "props": { "message": "Could not reach the model.", "state": "error", "live": "assertive" }, "file": "examples/error.html" }
   ]
 }

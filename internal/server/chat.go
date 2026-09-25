@@ -230,9 +230,10 @@ func (s *Server) status(msgs []*store.Record) template.HTML {
 				props["message"] = fmt.Sprintf("Assistant replied and made %d changes to the canvas.", n)
 			}
 			// The reply's first words, so a person who cannot see it arrive
-			// hears what it says, not only that it came.
+			// hears what it says, not only that it came. They are read out,
+			// not drawn: on the chip they made a paragraph of a label.
 			if words, _ := last.Fields["content"].(string); strings.TrimSpace(words) != "" {
-				props["message"] = props["message"].(string) + " " + clipWords(words, 200)
+				props["said"] = clipWords(words, 200)
 			}
 		}
 	}

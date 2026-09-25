@@ -43,12 +43,20 @@
     status.setAttribute("data-state", fresh.getAttribute("data-state") || "");
     if (fresh.getAttribute("aria-live")) status.setAttribute("aria-live", fresh.getAttribute("aria-live"));
     var words = (fresh.querySelector(".sw-status__text") || fresh).textContent.trim();
-    // The server's status already carries the reply's first words; a
-    // failure adds what went wrong.
-    var said = errorText || "";
+    // The chip says what happened in a few words; the reply's first words,
+    // or what went wrong, are read out after it but not drawn.
+    var heard = fresh.querySelector(".sw-status__said");
+    var said = errorText || (heard ? heard.textContent.trim() : "");
     if (said.length > 200) said = said.slice(0, 199) + "…";
     var text = status.querySelector(".sw-status__text") || status;
-    text.textContent = said ? words + " " + said : words;
+    text.textContent = words;
+    var hidden = status.querySelector(".sw-status__said");
+    if (!hidden && said) {
+      hidden = document.createElement("span");
+      hidden.className = "sw-status__said sw-visually-hidden";
+      status.appendChild(hidden);
+    }
+    if (hidden) hidden.textContent = said ? " " + said : "";
   };
 
   function join(form) {
