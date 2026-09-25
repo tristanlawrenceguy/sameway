@@ -227,7 +227,8 @@ func numberText(v float64) string {
 	if v == math.Trunc(v) {
 		return strconv.FormatInt(int64(v), 10)
 	}
-	return strconv.FormatFloat(v, 'f', 2, 64)
+	// 295.5, not 295.50: a trailing nought says nothing.
+	return strings.TrimRight(strconv.FormatFloat(v, 'f', 2, 64), "0")
 }
 
 // niceStep is the distance between gridlines: 1, 2 or 5 times a power of
@@ -261,6 +262,9 @@ func wholeValues(points []ChartPoint) bool {
 // chartLabel is a group label as it is read under a bar: a day as its
 // short date, a month as its name, anything else as it is.
 func chartLabel(label string) string {
+	if day, ok := strings.CutPrefix(label, "Week of "); ok {
+		return "Week of " + chartLabel(day)
+	}
 	if t, err := time.Parse("2006-01-02", label); err == nil {
 		return t.Format("2 Jan")
 	}

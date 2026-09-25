@@ -37,7 +37,7 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 			pg = pageOf(r, len(hits), searchPageSize)
 			for _, h := range hits[pg.lo:pg.hi] {
 				titleTrimmed := template.HTMLEscapeString(trimTitle(h.Title))
-				typeEsc := template.HTMLEscapeString(h.Type)
+				typeEsc := template.HTMLEscapeString(capitalize(h.Type))
 				snippetEsc := template.HTMLEscapeString(h.Snippet)
 
 				bodyHTML := ""

@@ -19,11 +19,11 @@
 .sw-chart__description { margin: var(--sw-space-2) 0 0; color: var(--sw-color-fg-muted); max-width: var(--sw-size-measure); font-size: var(--sw-size-text-sm); }
 /* The numbers as a table, folded under a quiet link-like summary. */
 .sw-chart__numbers { margin-top: var(--sw-space-2); font-size: var(--sw-size-text-sm); }
-.sw-chart__numbers summary { cursor: pointer; min-height: var(--sw-size-target); display: inline-flex; align-items: center; gap: var(--sw-space-1); padding: 0 var(--sw-space-2); border-radius: var(--sw-radius-md); color: var(--sw-color-fg-muted); list-style: none; }
-.sw-chart__numbers summary::-webkit-details-marker { display: none; }
-.sw-chart__numbers summary::before { content: "▸"; font-size: var(--sw-size-text-xs); transition: transform var(--sw-motion-fast) var(--sw-motion-ease); }
+.sw-chart__numbers summary, .sw-chart__why summary { cursor: pointer; min-height: var(--sw-size-target); display: inline-flex; align-items: center; gap: var(--sw-space-1); padding: 0 var(--sw-space-2); border-radius: var(--sw-radius-md); color: var(--sw-color-fg-muted); list-style: none; }
+.sw-chart__numbers summary::-webkit-details-marker, .sw-chart__why summary::-webkit-details-marker { display: none; }
+.sw-chart__numbers summary::before, .sw-chart__why summary::before { content: "▸"; font-size: var(--sw-size-text-xs); transition: transform var(--sw-motion-fast) var(--sw-motion-ease); }
 .sw-chart__numbers summary::after { content: "as a table"; font-weight: 400; }
-.sw-chart__numbers[open] summary::before { transform: rotate(90deg); }
+.sw-chart__numbers[open] summary::before, .sw-chart__why[open] summary::before { transform: rotate(90deg); }
 .sw-chart__numbers summary:hover { background: var(--sw-color-bg-muted); color: var(--sw-color-fg); }
 .sw-chart__numbers .sw-table-wrap { margin-top: var(--sw-space-2); max-width: 24rem; }
 .sw-chart__empty, .sw-chart__problem { margin: 0; color: var(--sw-color-fg-muted); }
@@ -39,3 +39,6 @@
    right end, so the bars are read against it. */
 .sw-chart__target { stroke: var(--sw-color-warning); stroke-width: 1.5; stroke-dasharray: 6 4; }
 .sw-chart__targettext { fill: var(--sw-color-warning); font-size: 11px; font-weight: 600; paint-order: stroke; stroke: var(--sw-color-bg-raised); stroke-width: 3px; stroke-linejoin: round; }
+/* What is wrong, when the chart cannot be drawn: the detail for whoever fixes it. */
+.sw-chart__why { margin-top: var(--sw-space-1); }
+.sw-chart__why p { margin: var(--sw-space-1) 0 0; font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); }
