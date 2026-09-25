@@ -42,9 +42,9 @@ type Store struct {
 	// LocalRecord keeps single records of a shared type here too: the log
 	// entries that say what was said to the assistant, for one.
 	LocalRecord func(typeName string, fields map[string]any) bool
-	// OnSchema adds to this workspace what a content type from another
-	// computer has that this one lacks; see schema_state.go.
-	OnSchema func(t *schema.Type) error
+	// OnSchema makes this workspace's content type what the other
+	// computers have: added, changed or deleted; see schema_state.go.
+	OnSchema func(sc *Schema) error
 
 	origin string
 	clock  hlc

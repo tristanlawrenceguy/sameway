@@ -86,13 +86,13 @@ func headFields(t *schema.Type, rec *store.Record) map[string]bool {
 	if t.Title != "" {
 		out[t.Title] = true
 	}
-	for _, f := range t.Fields {
+	for _, f := range t.Shown() {
 		if f.Type == "bool" {
 			out[f.Name] = true
 			break
 		}
 	}
-	for _, f := range t.Fields {
+	for _, f := range t.Shown() {
 		if f.Type == "enum" {
 			out[f.Name] = true
 			break
@@ -100,7 +100,7 @@ func headFields(t *schema.Type, rec *store.Record) map[string]bool {
 	}
 	// The day chip takes the first date that has something in it, so this
 	// does too: an empty first date leaves the second one on the chip.
-	for _, f := range t.Fields {
+	for _, f := range t.Shown() {
 		if f.Type != "datetime" {
 			continue
 		}

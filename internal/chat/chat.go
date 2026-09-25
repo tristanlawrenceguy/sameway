@@ -35,6 +35,7 @@ type Service struct {
 	// AddField and AddType change the workspace's schema while it runs, set
 	// by the app; nil when the workspace cannot be changed from here.
 	AddField     func(typeName string, f schema.Field) (*schema.Type, error)
+	Reshape      Reshaper // changes a type after it is made; see reshape.go
 	AddType      func(t *schema.Type) (*schema.Type, error)
 	Store        *store.Store
 	Registry     *render.Registry

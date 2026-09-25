@@ -231,6 +231,8 @@ func (s *Service) runAgreed(call llm.ToolCall) toolResult {
 		var a letInArgs
 		json.Unmarshal(call.Args, &a)
 		return s.letIn(a)
+	case changeFieldTool.Name:
+		return s.reshapeCall(call.Args)
 	}
 	return s.runTool(call)
 }

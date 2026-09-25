@@ -57,7 +57,7 @@ func titleOf(t *schema.Type, rec *store.Record) string {
 			return s
 		}
 	}
-	for _, f := range t.Fields {
+	for _, f := range t.Shown() {
 		if f.Type != "string" && f.Type != "text" && f.Type != "enum" {
 			continue
 		}

@@ -96,14 +96,14 @@ func listPath(typeName string, where []string, order string) string {
 // metaOf is the one thing worth saying beside a title in a list: the day
 // it is due, or its state.
 func metaOf(t *schema.Type, rec *store.Record) string {
-	for _, f := range t.Fields {
+	for _, f := range t.Shown() {
 		if f.Type == "datetime" {
 			if v, ok := rec.Fields[f.Name].(string); ok && v != "" {
 				return label(f.Name) + " " + when.Text(v)
 			}
 		}
 	}
-	for _, f := range t.Fields {
+	for _, f := range t.Shown() {
 		if f.Type == "enum" {
 			if v, ok := rec.Fields[f.Name].(string); ok && v != "" {
 				return f.ValueLabel(v)
@@ -115,7 +115,7 @@ func metaOf(t *schema.Type, rec *store.Record) string {
 
 // textOf is the record's main text, for a full collection.
 func textOf(t *schema.Type, rec *store.Record) string {
-	for _, f := range t.Fields {
+	for _, f := range t.Shown() {
 		if f.Name != t.Title && isText(f) {
 			if v := display(f, rec.Fields[f.Name]); v != "" {
 				return v

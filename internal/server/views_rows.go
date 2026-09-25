@@ -20,7 +20,7 @@ var groupOrder = []string{"Overdue", "Today", "This week", "Later", "No date", "
 
 func (s *Server) rows(t *schema.Type, recs []*store.Record, now time.Time) string {
 	dated := ""
-	for _, f := range t.Fields {
+	for _, f := range t.Shown() {
 		if f.Type == "datetime" {
 			dated = f.Name
 			break

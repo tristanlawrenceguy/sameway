@@ -28,12 +28,18 @@ var letInTool = llm.Tool{
 	}, "email", "access"),
 }
 
-// accessTools offers let_in where there are people to let in.
+// accessTools are the tools offered only where the workspace can do what
+// they do: let_in where there are people to let in, change_field where the
+// schema can be changed from here.
 func (s *Service) accessTools() []llm.Tool {
-	if _, ok := s.Store.Types().Get(PersonType); !ok {
-		return nil
+	var out []llm.Tool
+	if _, ok := s.Store.Types().Get(PersonType); ok {
+		out = append(out, letInTool)
 	}
-	return []llm.Tool{letInTool}
+	if s.Reshape != nil {
+		out = append(out, changeFieldTool)
+	}
+	return out
 }
 
 type letInArgs struct {

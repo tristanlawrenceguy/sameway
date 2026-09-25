@@ -35,7 +35,7 @@ func (s *Server) resolveRecord(props map[string]any) (map[string]any, string) {
 	out["title"] = s.title(t, rec)
 	out["titleProp"] = t.Title
 	var fields []any
-	for _, f := range t.Fields {
+	for _, f := range t.Shown() {
 		if f.Name == t.Title {
 			continue
 		}
