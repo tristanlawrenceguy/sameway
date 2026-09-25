@@ -39,6 +39,7 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 				titleTrimmed := template.HTMLEscapeString(trimTitle(h.Title))
 				typeEsc := template.HTMLEscapeString(capitalize(h.Type))
 				snippetEsc := template.HTMLEscapeString(h.Snippet)
+				fullTitleEsc := template.HTMLEscapeString(h.Title)
 
 				bodyHTML := ""
 				if snippetEsc != "" {
@@ -48,12 +49,12 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 				linkHTML := fmt.Sprintf(
 					`<article class="sw-card" data-component="card">`+
 						`<h2 class="sw-card__title" data-prop="title">`+
-						`<a href="%s">%s<span class="sw-visually-hidden"> — %s</span></a>`+
+						`<a href="%s" title="%s">%s<span class="sw-visually-hidden"> — %s</span></a>`+
 						`</h2>`+
 						`<p class="sw-card__meta">%s</p>`+
 						`%s`+
 						`</article>`,
-					template.HTMLEscapeString(h.Href), titleTrimmed, typeEsc, typeEsc, bodyHTML,
+					template.HTMLEscapeString(h.Href), fullTitleEsc, titleTrimmed, typeEsc, typeEsc, bodyHTML,
 				)
 
 				fmt.Fprintf(&b, `<li class="sw-dotted" data-dot="%d">%s</li>`, s.dotOf(h.Type), linkHTML)

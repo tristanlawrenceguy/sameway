@@ -208,14 +208,25 @@ func (s *Server) crumbs(listHref, listLabel, here string, dot int) template.HTML
 	return s.component("crumbs", props)
 }
 
-// trimTitle cuts a title to at most six words so no h1 heading exceeds the
-// word limit. Titles already within the limit pass through unchanged.
+// maxTitleRunes is the character ceiling for a heading title. Six medium
+// words fit comfortably under 80 runes, so this catches runaway single-word
+// titles while leaving normal six-word titles alone.
+const maxTitleRunes = 75
+
+// trimTitle cuts a title to at most six words and at most maxTitleRunes
+// characters so no heading exceeds reasonable length. Titles already within
+// both limits pass through unchanged. An ellipsis is appended when trimmed.
 func trimTitle(s string) string {
 	fields := strings.Fields(s)
-	if len(fields) <= 6 {
+	if len(fields) <= 6 && len([]rune(s)) <= maxTitleRunes {
 		return s
 	}
-	return strings.Join(fields[:6], " ")
+	if len(fields) > 6 {
+		return strings.Join(fields[:6], " ") + "…"
+	}
+	// ≤ 6 words but too many characters: truncate at character boundary.
+	runes := []rune(s)
+	return string(runes[:maxTitleRunes-1]) + "…"
 }
 
 func capitalize(s string) string {
