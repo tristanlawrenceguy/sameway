@@ -11,6 +11,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // Hit is one thing found: what it is, where it is, and the words around
@@ -96,7 +97,19 @@ func texts(t *schema.Type, rec *store.Record) (title, body string) {
 		if v == nil {
 			continue
 		}
-		s := flatten(v)
+		// A date and a choice are found and shown as a person reads them,
+		// not as they are stored; yes or no says nothing on its own.
+		var s string
+		switch f.Type {
+		case "bool":
+			continue
+		case "datetime":
+			s = when.Text(flatten(v))
+		case "enum":
+			s = f.ValueLabel(flatten(v))
+		default:
+			s = flatten(v)
+		}
 		if s == "" {
 			continue
 		}

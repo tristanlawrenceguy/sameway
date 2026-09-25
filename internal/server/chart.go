@@ -100,6 +100,18 @@ func (s *Server) resolveChart(props map[string]any) map[string]any {
 		}
 		out["caption"] = what + " by " + label(by)
 	}
+	// The numbers table heads its columns with what they are.
+	out["groupLabel"] = capitalize(label(by))
+	if field != nil && field.Label != "" {
+		out["groupLabel"] = field.Label
+	}
+	if period != "" && kind == "datetime" {
+		out["groupLabel"] = capitalize(period)
+	}
+	out["valueLabel"] = capitalize(plural(t.Name))
+	if sum != "" {
+		out["valueLabel"] = capitalize(label(sum))
+	}
 	return out
 }
 
@@ -140,7 +152,7 @@ func (s *Server) bucket(t *schema.Type, f *schema.Field, kind string, rec *store
 		v = s.refTitle(*f, v)
 	}
 	if v == "" {
-		return "(none)"
+		return "None"
 	}
 	return v
 }
@@ -154,7 +166,7 @@ func sortKeys(keys []string, totals map[string]float64, kind string, f *schema.F
 	case kind == "enum" && f != nil:
 		rank := map[string]int{}
 		for i, v := range f.Values {
-			rank[v] = i
+			rank[f.ValueLabel(v)] = i // the groups are labels, as bucket reads them
 		}
 		sort.SliceStable(keys, func(i, j int) bool { return rank[keys[i]] < rank[keys[j]] })
 	default:
