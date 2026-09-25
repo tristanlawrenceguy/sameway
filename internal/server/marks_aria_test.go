@@ -58,41 +58,19 @@ func TestAMarkCheckboxAccessibleNameReflectsState(t *testing.T) {
 	}
 }
 
-// Pin checkboxes on /t/note lists include checked state in their accessible
-// names.  Acceptance items 1 and 3 of backlog 0333.
-func TestANotePinCheckboxAccessibleNameReflectsState(t *testing.T) {
+// A note's pin is a setting, not something done: its row has no box that
+// reads as done, and a pinned note says Pinned in words.
+func TestAPinnedNoteSaysSoWithoutACheckbox(t *testing.T) {
 	_, h := newApp(t)
-
-	// Create an unpinned note.
 	var note struct{ ID string }
 	decode(t, postJSON(t, h, http.MethodPost, "/api/note",
-		map[string]any{"title": "Buy tomatoes"}), &note)
-	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/block", map[string]any{
-		"component": "collection",
-		"props":     map[string]any{"type": "note", "label": "Notes"},
-	}), http.StatusCreated)
-
-	page := get(t, h, "/").Body.String()
-
-	// Unchecked: aria-label should be action-oriented.
-	if !strings.Contains(page, `aria-label="Pin Buy tomatoes"`) {
-		t.Errorf("unpinned note checkbox should have an action-oriented accessible name; page:\n%s", truncate(page))
+		map[string]any{"title": "Buy tomatoes", "pinned": true}), &note)
+	page := get(t, h, "/t/note").Body.String()
+	if strings.Contains(page, `type="checkbox"`) {
+		t.Errorf("a note's row should have no checkbox; page: %s", truncate(page))
 	}
-
-	// Pin the note by posting to its props endpoint.
-	req := httptest.NewRequest(http.MethodPost, "/t/note/"+note.ID+"/props",
-		strings.NewReader(`prop-pinned=true`))
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("Referer", "http://example.com/")
-	rec := httptest.NewRecorder()
-	h.ServeHTTP(rec, req)
-	wantStatus(t, rec, http.StatusSeeOther)
-
-	page = get(t, h, "/").Body.String()
-
-	// Checked: aria-label should be state-describing.
-	if !strings.Contains(page, `aria-label="Buy tomatoes — pinned"`) {
-		t.Errorf("pinned note checkbox should have a state-describing accessible name; page:\n%s", truncate(page))
+	if !strings.Contains(page, ">Pinned<") {
+		t.Errorf("a pinned note should say Pinned; page: %s", truncate(page))
 	}
 }
 
