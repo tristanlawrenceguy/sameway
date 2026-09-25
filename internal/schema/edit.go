@@ -77,7 +77,8 @@ func TypeYAML(t *Type) ([]byte, error) {
 		Name        string     `yaml:"name"`
 		Description string     `yaml:"description,omitempty"`
 		Title       string     `yaml:"title,omitempty"`
+		Hidden      bool       `yaml:"hidden,omitempty"`
 		Fields      *yaml.Node `yaml:"fields"`
-	}{t.Name, t.Description, t.Title, fields}
+	}{t.Name, t.Description, t.Title, t.Hidden, fields}
 	return yaml.Marshal(out)
 }

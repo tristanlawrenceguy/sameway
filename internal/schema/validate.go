@@ -38,7 +38,7 @@ func (t *Type) Normalize(in map[string]any) (map[string]any, error) {
 		if !present || v == nil || v == "" {
 			if f.Default != nil {
 				v = f.Default
-			} else if f.Required {
+			} else if f.Required && !f.Hidden { // nobody is offered a hidden field
 				problems[f.Name] = "is required"
 				continue
 			} else {

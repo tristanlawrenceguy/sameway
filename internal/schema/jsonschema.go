@@ -12,7 +12,9 @@ import "strings"
 func (t *Type) JSONSchema() map[string]any {
 	props := map[string]any{}
 	var required []string
-	for _, f := range t.Fields {
+	// A hidden field is still stored, and still accepted, but offered to
+	// nobody, the assistant included.
+	for _, f := range t.Shown() {
 		p := map[string]any{}
 		switch f.Type {
 		case "string", "text", "markdown", "datetime":

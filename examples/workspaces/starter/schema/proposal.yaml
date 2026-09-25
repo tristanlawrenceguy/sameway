@@ -24,6 +24,12 @@ fields:
   "no":
     type: string
     description: What the No button says, when Sameway put the question itself.
+  instead:
+    type: string
+    description: What a third answer says, when there is another way to do what was asked, such as hiding instead of deleting.
+  instead_action:
+    type: json
+    description: The tool call that third answer runs.
   state:
     type: enum
     values: [pending, accepted, dismissed]

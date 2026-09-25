@@ -123,7 +123,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	// title and before its other fields; structured text keeps what was
 	// written on the element so the inline editor edits the source.
 	textField := ""
-	for _, f := range t.Fields {
+	for _, f := range t.Shown() {
 		if f.Type == "markdown" {
 			if val := display(f, rec.Fields[f.Name]); val != "" {
 				textField = f.Name
@@ -143,7 +143,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 		b.WriteString(string(s.component("fields", map[string]any{"items": s.schemaFields(t)})))
 	} else {
 		var items []any
-		for _, f := range t.Fields {
+		for _, f := range t.Shown() {
 			val := display(f, rec.Fields[f.Name])
 			if val == "" || f.Name == textField || head[f.Name] {
 				continue
