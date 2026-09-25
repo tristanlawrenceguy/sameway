@@ -88,3 +88,17 @@ func (s *Service) whoPrompt() string {
 	name := s.who.Who()
 	return fmt.Sprintf("\n\nYou are talking with %s, whom the workspace's owner has let %s it from their own device. This is their own conversation; the owner does not see it. Settings, updating Sameway, reading pages in a browser and undoing are the owner's: if %s asks for one, say the owner can. What you ask them to agree to goes to the owner to answer.", name, s.who.Access, name)
 }
+
+// PersonColour is the colour someone's changes are shown in, 1 to 6, from
+// their login: the same person has the same colour on every computer.
+func PersonColour(login string) int {
+	login = strings.ToLower(strings.TrimSpace(login))
+	if login == "" {
+		return 0
+	}
+	h := uint32(2166136261)
+	for i := 0; i < len(login); i++ {
+		h = (h ^ uint32(login[i])) * 16777619
+	}
+	return int(h%6) + 1
+}

@@ -94,6 +94,7 @@ func serve(ctx context.Context, srv *tsnet.Server, h http.Handler, admit Admit, 
 	}
 	h = guard(lc, st.Self, admit, h)
 	client := srv.HTTPClient()
+	me := st.User[st.Self.UserID]
 	plain, err := srv.Listen("tcp", ":80")
 	if err != nil {
 		say(Status{State: Failed, Err: err})
@@ -106,12 +107,12 @@ func serve(ctx context.Context, srv *tsnet.Server, h http.Handler, admit Admit, 
 	for said := false; ; said = true {
 		secure, err := srv.ListenTLS("tcp", ":443")
 		if err == nil {
-			say(Status{State: Ready, Link: "https://" + host + "/", Client: client})
+			say(Status{State: Ready, Link: "https://" + host + "/", Client: client, OwnerLogin: me.LoginName, OwnerName: me.DisplayName})
 			run(secure, h, say)
 			return
 		}
 		if !said {
-			say(Status{State: NeedsHTTPS, Link: HTTPSSettings, Host: host, Client: client})
+			say(Status{State: NeedsHTTPS, Link: HTTPSSettings, Host: host, Client: client, OwnerLogin: me.LoginName, OwnerName: me.DisplayName})
 		}
 		select {
 		case <-ctx.Done():

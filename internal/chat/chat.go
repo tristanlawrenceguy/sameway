@@ -65,6 +65,10 @@ type Service struct {
 	// is this month. Defaults to time.Now; tests pin it.
 	Now func() time.Time
 
+	// Owner is who owns this computer's copy, by their Tailscale login and
+	// name, once the tailnet says; set by the command line. What they do
+	// is theirs by name on the other computers that host the workspace.
+	Owner Visitor
 	// who is the one this service speaks for, when it is not the owner;
 	// see people.go.
 	who Visitor

@@ -95,6 +95,10 @@ func (s *Server) blockItem(blk *store.Record, convo *conversation) string {
 		v.ID, v.Component, v.Actor, v.Frame, v.Tone, v.Size, template.HTMLEscapeString(v.Label))
 	if v.Changed != "" {
 		fmt.Fprintf(&b, ` data-changed="%s"`, v.Changed)
+		// Someone else's change glows in their colour.
+		if v.Person > 0 {
+			fmt.Fprintf(&b, ` data-person="%d"`, v.Person)
+		}
 	}
 	if props, _ := blk.Fields["props"].(map[string]any); props != nil {
 		if typeName, _ := props["type"].(string); typeName != "" {
@@ -128,21 +132,6 @@ func (s *Server) blockItem(blk *store.Record, convo *conversation) string {
 	fmt.Fprintf(&b, `<div class="sw-bar sw-quiet">%s<form method="post" action="/canvas/%s/delete">%s</form></div></li>`,
 		v.Expand, v.ID, v.Remove)
 	return b.String()
-}
-
-// chatBlock renders a chat component with the live conversation inside it.
-func (s *Server) chatBlock(blk *store.Record, convo *conversation) template.HTML {
-	props, _ := blk.Fields["props"].(map[string]any)
-	if props == nil {
-		props = map[string]any{}
-	}
-	// The chat is a block, so its menu can also place the block.
-	body := strings.Replace(string(convo.Body), `<span class="sw-chat__place"></span>`, string(s.placeMenu(blk, convo.From)), 1)
-	out, err := s.app.Registry.RenderSlot(chat.ComponentName, props, template.HTML(body))
-	if err != nil {
-		return s.component("alert", map[string]any{"kind": "danger", "message": "Could not render the conversation: " + err.Error()})
-	}
-	return out
 }
 
 // canvasBlock gathers everything the page needs about one block.
@@ -212,7 +201,7 @@ func (s *Server) canvasBlock(b *store.Record, convo *conversation) canvasBlock {
 		icon, props = cmp.Or(c.Manifest.Icon, icon), underPageTitle(c, props)
 	}
 	return canvasBlock{
-		ID: b.ID, Component: name, Actor: actor, Changed: changed, Span: span,
+		ID: b.ID, Component: name, Actor: actor, Changed: changed, Person: convo.People[b.ID], Span: span,
 		Frame: str(b.Fields["frame"], "card"), Tone: str(b.Fields["tone"], "none"),
 		Size: str(b.Fields["size"], "full"), Label: label, Icon: icon,
 		Provenance: provenance, EditAction: editAction,
@@ -260,6 +249,7 @@ type canvasBlock struct {
 	Component string
 	Actor     string
 	Changed   string
+	Person    int
 	Span      int
 	Frame     string
 	Tone      string

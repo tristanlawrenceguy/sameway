@@ -39,6 +39,12 @@ type Store struct {
 	// workspace is hosted in more than one place: chats, questions,
 	// programs to run. Everything else is kept the same; see state.go.
 	Local map[string]bool
+	// LocalRecord keeps single records of a shared type here too: the log
+	// entries that say what was said to the assistant, for one.
+	LocalRecord func(typeName string, fields map[string]any) bool
+	// OnSchema adds to this workspace what a content type from another
+	// computer has that this one lacks; see schema_state.go.
+	OnSchema func(t *schema.Type) error
 
 	origin string
 	clock  hlc

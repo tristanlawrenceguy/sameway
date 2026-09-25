@@ -38,6 +38,9 @@ type Status struct {
 	// it (NeedsHTTPS and Ready): how this workspace talks to the other
 	// computers that host it.
 	Client *http.Client
+	// OwnerLogin and OwnerName are who signed this node in, once it is on
+	// the tailnet: who "You" is in what this computer writes down.
+	OwnerLogin, OwnerName string
 }
 
 // String is the step as a line for the terminal the server runs in.
