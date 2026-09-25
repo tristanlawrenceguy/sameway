@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
 
 // Restore puts back a record that was deleted, under the id it had, so
@@ -36,6 +38,20 @@ func (s *Store) Put(typeName, id string, fields map[string]any, created, updated
 	if err != nil {
 		return nil, err
 	}
+	var before map[string]any
+	if was, err := s.Get(t.Name, id); err == nil {
+		before = was.Fields
+	}
+	rec, err := s.put(t, id, clean, created, updated)
+	if err == nil {
+		s.stamp(t, id, before, clean, created)
+	}
+	return rec, err
+}
+
+// put writes a record whole, and nothing else: what Put and a stamp from
+// another copy both come down to.
+func (s *Store) put(t *schema.Type, id string, clean map[string]any, created, updated time.Time) (*Record, error) {
 	rec := &Record{ID: id, Type: t.Name, CreatedAt: created.UTC(), UpdatedAt: updated.UTC(), Fields: clean}
 	cols := []string{"id", "created_at", "updated_at"}
 	args := []any{rec.ID, rec.CreatedAt.Format(time.RFC3339Nano), rec.UpdatedAt.Format(time.RFC3339Nano)}

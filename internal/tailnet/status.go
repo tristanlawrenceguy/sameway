@@ -1,6 +1,9 @@
 package tailnet
 
-import "fmt"
+import (
+	"fmt"
+	"net/http"
+)
 
 // A State is where joining the tailnet has got to.
 type State string
@@ -31,6 +34,10 @@ type Status struct {
 	Link  string
 	Host  string
 	Err   error
+	// Client reaches other machines on the tailnet, once the node is on
+	// it (NeedsHTTPS and Ready): how this workspace talks to the other
+	// computers that host it.
+	Client *http.Client
 }
 
 // String is the step as a line for the terminal the server runs in.

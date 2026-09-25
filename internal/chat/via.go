@@ -9,6 +9,10 @@ const (
 	Owner = "owner"
 	Edit  = "edit"
 	View  = "view"
+	// Host is someone whose own computer holds a copy of the workspace and
+	// keeps it in step: they may do what an editor may, and their copy can
+	// change anything, so it is the owner's gravest yes.
+	Host = "host"
 )
 
 // Visitor is who a request comes from when it is not the machine itself:

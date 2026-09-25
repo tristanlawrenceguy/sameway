@@ -39,6 +39,11 @@ type question struct{ ask, detail, yes, no string }
 // acted, each with the question it puts, from the value it would take and
 // the one it has now.
 var outward = map[string]func(now, next string, s *Service) question{
+	"tailnet.peers": func(now, next string, _ *Service) question {
+		return question{"Keep this workspace in step with other computers?",
+			fmt.Sprintf("The assistant wants this workspace to keep in step with %s (now: %s). Everything in it except the conversations with the assistant would be copied to them and kept the same both ways, and what they change comes here. Only say yes to computers you, or people you made hosts, run.", next, orNone(now)),
+			"Yes, keep in step", "No, keep it as it is"}
+	},
 	"tailnet.name": func(now, next string, _ *Service) question {
 		return question{"Open this workspace from your phone?",
 			fmt.Sprintf("The assistant wants to put this workspace on your Tailscale network as %s, so your phone and your other devices signed in to Tailscale as you can open it from anywhere. Nobody else can. It needs a free Tailscale account, and the Tailscale app on your phone. This computer contacts Tailscale to join.", next),
@@ -104,8 +109,9 @@ func (s *Service) askFirst(call string, id, key, value string) (toolResult, bool
 	switch call {
 	case "set_setting":
 		put, ok := outward[key]
-		// Taking the workspace off the tailnet sends nothing anywhere.
-		if !ok || (key == "tailnet.name" && strings.TrimSpace(value) == "") {
+		// Taking the workspace off the tailnet, or no longer keeping in
+		// step with anyone, sends nothing anywhere.
+		if !ok || ((key == "tailnet.name" || key == "tailnet.peers") && strings.TrimSpace(value) == "") {
 			return toolResult{}, false
 		}
 		q := put(s.setting(key), strings.TrimSpace(value), s)

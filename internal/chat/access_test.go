@@ -37,3 +37,13 @@ func TestLettingSomeoneInIsAskedAndTakingItBackIsNot(t *testing.T) {
 		t.Errorf("Bob should have no access now, has %v", got.Fields["access"])
 	}
 }
+
+// Hosting a copy is the owner's gravest yes, and the question says so.
+func TestLettingSomeoneHostSaysWhatThatMeans(t *testing.T) {
+	svc := newFullService(t)
+	use(t, svc, "let_in", map[string]any{"email": "hana@example.com", "name": "Hana", "access": "host"})
+	_, ask, detail, yes, _ := pending(t, svc)
+	if ask != "Let Hana (hana@example.com) host this workspace too?" || !strings.Contains(detail, "full copy") || !strings.Contains(detail, "trust") || yes != "Yes, let them host it" {
+		t.Errorf("the question says what hosting gives them: %q / %q / %q", ask, detail, yes)
+	}
+}

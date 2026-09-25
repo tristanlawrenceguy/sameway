@@ -56,6 +56,7 @@ var Settings = []Setting{
 	{"mqtt.client_id", "string", nil, "how this workspace names itself to the broker"},
 	{"mqtt.username_env", "env", nil, "the NAME of the environment variable that holds the broker username"},
 	{"mqtt.password_env", "env", nil, "the NAME of the environment variable that holds the broker password"},
+	{"tailnet.peers", "string", nil, "the other computers hosting this same workspace, by their machine name on the tailnet, comma separated (bob-home, my-laptop): this copy keeps in step with each, both ways. Each has to host a copy of this workspace and have this computer's owner or a host let in. Empty is none"},
 	{"tailnet.name", "string", nil, "the name of this computer on the person's Tailscale network, so their phone and other devices signed in to Tailscale as them open the workspace from anywhere at https://<name>.<tailnet>.ts.net; empty is off. It takes effect at once, and the steps to finish (signing in, turning on HTTPS) come back from this call and appear in the chat. Offer it when the person wants the workspace on their phone or away from this computer"},
 }
 
@@ -147,7 +148,7 @@ func (w *Workspace) Set(key, value string) error {
 // them puts it back to nothing.
 var canBeEmpty = map[string]bool{
 	"notify.command": true, "actions.allow": true, "chat.system_prompt": true, "ui.needs": true, "ui.language": true,
-	"mqtt.broker": true, "mqtt.client_id": true, "llm.base_url": true, "tailnet.name": true,
+	"mqtt.broker": true, "mqtt.client_id": true, "llm.base_url": true, "tailnet.name": true, "tailnet.peers": true,
 }
 
 // Get reads one setting as workspace.yaml has it now, or "" when the file

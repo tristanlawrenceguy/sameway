@@ -52,6 +52,7 @@ func (s *Store) insert(t *schema.Type, id string, clean map[string]any) (*Record
 	if _, err := s.db.Exec(stmt, args...); err != nil {
 		return nil, fmt.Errorf("insert %s: %w", t.Name, err)
 	}
+	s.stamp(t, id, nil, clean, now)
 	s.wrote(rec)
 	return rec, nil
 }
@@ -148,6 +149,7 @@ func (s *Store) Update(typeName, id string, fields map[string]any) (*Record, err
 	if _, err := s.db.Exec(stmt, args...); err != nil {
 		return nil, fmt.Errorf("update %s: %w", t.Name, err)
 	}
+	s.stamp(t, id, current.Fields, clean, time.Time{})
 	current.Fields = clean
 	current.UpdatedAt = now
 	s.wrote(current)
@@ -167,6 +169,7 @@ func (s *Store) Delete(typeName, id string) error {
 	if n, _ := res.RowsAffected(); n == 0 {
 		return ErrNotFound
 	}
+	s.stamp(t, id, nil, nil, time.Time{})
 	if s.AfterWrite != nil {
 		s.AfterWrite(t.Name, id, nil)
 	}
@@ -178,6 +181,10 @@ func (s *Store) DeleteAll(typeName string) error {
 	t, err := s.typ(typeName)
 	if err != nil {
 		return err
+	}
+	recs, _ := s.List(t.Name, ListOptions{})
+	for _, r := range recs {
+		s.stamp(t, r.ID, nil, nil, time.Time{})
 	}
 	_, err = s.db.Exec(fmt.Sprintf("DELETE FROM %s", quote(t.Name)))
 	return err
