@@ -63,6 +63,13 @@ func (s *Service) Conversations() []*store.Record {
 
 // NewChat starts a chat with nothing in it and opens it.
 func (s *Service) NewChat() (*store.Record, error) {
+	// A chat with nothing said in it yet is already new: pressing New chat
+	// again keeps it rather than leaving empty chats behind in the list.
+	if id := s.Current(); id != "" {
+		if msgs, err := s.MessagesIn(id); err == nil && len(msgs) == 0 {
+			return s.Store.Update(ConversationType, id, map[string]any{"opened": now()})
+		}
+	}
 	rec, err := s.Store.Create(ConversationType, map[string]any{"opened": now(), "person": s.whose()})
 	if err != nil {
 		return nil, err

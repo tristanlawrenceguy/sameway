@@ -105,3 +105,18 @@ func TestClearEmptiesOnlyTheCurrentChat(t *testing.T) {
 		t.Errorf("the other chat keeps its two messages, got %d", n)
 	}
 }
+
+// New chat on a chat with nothing said in it keeps that one, so pressing it
+// twice, or leaving without writing, does not fill the list with empties.
+func TestNewChatOnAnEmptyChatKeepsIt(t *testing.T) {
+	svc := newFullService(t)
+	first := svc.Current()
+	again, err := svc.NewChat()
+	if err != nil {
+		t.Fatal(err)
+	}
+	svc.NewChat()
+	if again.ID != first || len(svc.Conversations()) != 1 {
+		t.Errorf("an empty chat should be kept, got %d chats", len(svc.Conversations()))
+	}
+}
