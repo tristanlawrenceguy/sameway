@@ -75,6 +75,7 @@ func (s *Server) routes() {
 	m.HandleFunc("POST /canvas/{id}/place", s.blockPlace)
 	m.HandleFunc("POST /proposal/{id}/accept", s.proposalAccept)
 	m.HandleFunc("POST /proposal/{id}/dismiss", s.proposalDismiss)
+	m.HandleFunc("POST /proposal/{id}/instead", s.proposalInstead)
 	m.HandleFunc("POST /activity/{id}/undo", s.undo)
 	m.HandleFunc("POST /act/{id}", s.act)
 	m.HandleFunc("POST /canvas/{id}/props", s.blockProps)
@@ -96,7 +97,6 @@ func (s *Server) routes() {
 	m.HandleFunc("GET /workspaces/delete", s.workspacesDeletePage)
 	m.HandleFunc("POST /workspaces/delete", s.workspacesDelete)
 	m.HandleFunc("POST /workspaces/restore", s.workspacesRestore)
-
 	m.HandleFunc("GET /search", s.searchPage)
 	m.HandleFunc("GET /design", s.designPage)
 	m.HandleFunc("GET /design/sameway.css", s.stylesheet)
@@ -272,6 +272,9 @@ func plural(name string) string {
 // files in a workspace with no files, is not in the way. ui.lists: all
 // shows every one.
 func (s *Server) listed(t *schema.Type) bool {
+	if t.Hidden {
+		return false
+	}
 	if s.app.Workspace.Config.UI.Lists == "all" || !t.Provided {
 		return true
 	}

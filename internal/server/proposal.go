@@ -53,6 +53,11 @@ func (s *Server) proposalCard(p *store.Record, from string) template.HTML {
 	if no, _ := p.Fields["no"].(string); no != "" {
 		props["dismissLabel"] = no
 	}
+	// A third answer, when there is another way: hiding instead of
+	// deleting. It comes first, as the one that keeps everything.
+	if instead, _ := p.Fields["instead"].(string); instead != "" {
+		props["instead"], props["insteadLabel"] = "/proposal/"+p.ID+"/instead", instead
+	}
 	return s.component("proposal", props)
 }
 
@@ -104,6 +109,10 @@ func (s *Server) proposalAccept(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) proposalDismiss(w http.ResponseWriter, r *http.Request) {
 	s.answer(w, r, s.app.Chat.Dismiss)
+}
+
+func (s *Server) proposalInstead(w http.ResponseWriter, r *http.Request) {
+	s.answer(w, r, s.app.Chat.Instead)
 }
 
 // answer applies one answer and reports any problem where the person is

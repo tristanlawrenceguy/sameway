@@ -31,6 +31,15 @@
 [data-actor="human"]     { --sw-actor: var(--sw-color-human);     --sw-actor-soft: var(--sw-color-human-soft); }
 [data-actor="assistant"] { --sw-actor: var(--sw-color-assistant); --sw-actor-soft: var(--sw-color-assistant-soft); }
 [data-actor="system"]    { --sw-actor: var(--sw-color-system);    --sw-actor-soft: var(--sw-color-system-soft); }
+/* People: someone other than the reader, in their own colour, the same on
+   every computer that hosts the workspace. After the roles, so it wins. */
+[data-person="1"] { --sw-actor: var(--sw-color-list-1); }
+[data-person="2"] { --sw-actor: var(--sw-color-list-2); }
+[data-person="3"] { --sw-actor: var(--sw-color-list-3); }
+[data-person="4"] { --sw-actor: var(--sw-color-list-4); }
+[data-person="5"] { --sw-actor: var(--sw-color-list-5); }
+[data-person="6"] { --sw-actor: var(--sw-color-list-6); }
+[data-person] { --sw-actor-soft: color-mix(in srgb, var(--sw-actor) 14%, var(--sw-color-bg)); }
 
 /* The outcome of the person's last action: one message, first under the
    heading, with its Undo beside it when there is one (outcome.go). */

@@ -195,8 +195,16 @@ seconds over the tailnet, with the machines in `tailnet.peers`. Only the
 owner's computers and people with `access: host` may, because a copy can
 change anything. Chats, the assistant's questions, actions, devices, files
 and the log stay on the computer that made them. Open pages follow what
-arrives (`/events`, 20-follow.js). A type or field one copy's schema lacks
-waits in `_state` until it has it.
+arrives (`/events`, 20-follow.js). Content types travel too: each is stamped
+like a record (`_schema`), with every part that can change on its own as
+its own field: a field's definition, its label, whether it is hidden,
+whether it was deleted, and each choice of a pick-list, so choices added on
+two computers both stay and, for the rest, the latest wins. A copy makes
+its types what the others have through the same changes a person asks for
+(`change_field`: add a choice, relabel, hide or show, delete), written to
+`schema/`; records that arrive before
+their type wait in `_state` and are written when it comes. The system's
+own types come with the program and do not travel.
 
 ## 5. How agents use it
 

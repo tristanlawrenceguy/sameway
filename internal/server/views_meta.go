@@ -77,7 +77,7 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 	// not when the mark checkbox already carries it (Boxed=true), since that
 	// would repeat the same fact twice.
 	if !o.Boxed || doneField(t) != nil {
-		for _, f := range t.Fields {
+		for _, f := range t.Shown() {
 			if f.Type == "bool" && (doneField(t) == nil || f.Name != doneField(t).Name) {
 				if on, _ := rec.Fields[f.Name].(bool); on {
 					parts = append(parts, string(s.component("badge", map[string]any{"label": capitalize(label(f.Name)), "tone": "neutral"})))
@@ -85,7 +85,7 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 			}
 		}
 	}
-	for _, f := range t.Fields {
+	for _, f := range t.Shown() {
 		if f.Type == "enum" {
 			if v, ok := rec.Fields[f.Name].(string); ok && v != "" {
 				parts = append(parts, string(s.component("badge", map[string]any{"label": f.ValueLabel(v), "tone": "info"})))
@@ -100,7 +100,7 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 	} else if !o.Made && !hasDate(t) {
 		parts = append(parts, `<span class="sw-muted">Updated `+when.Short(rec.UpdatedAt.UTC().Format(time.RFC3339), time.Now())+`</span>`)
 	}
-	for _, f := range t.Fields {
+	for _, f := range t.Shown() {
 		if f.Type == "ref" {
 			if id, ok := rec.Fields[f.Name].(string); ok && id != "" {
 				if title := s.refTitle(f, id); title != "" {
@@ -123,7 +123,7 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 // dayFact is the record's first date: short at the right of a row, in full
 // as a chip under a title; amber with "was" when it has passed undone.
 func (s *Server) dayFact(t *schema.Type, rec *store.Record, done, chip bool) string {
-	for _, f := range t.Fields {
+	for _, f := range t.Shown() {
 		if f.Type != "datetime" {
 			continue
 		}
@@ -188,7 +188,7 @@ func (s *Server) dotOf(typeName string) int {
 
 // hasDate says whether a type has a day of its own, such as a task's due.
 func hasDate(t *schema.Type) bool {
-	for _, f := range t.Fields {
+	for _, f := range t.Shown() {
 		if f.Type == "datetime" {
 			return true
 		}

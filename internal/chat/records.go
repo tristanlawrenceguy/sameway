@@ -29,7 +29,7 @@ func (s *Service) contentTypes() []*schema.Type {
 	var out []*schema.Type
 	for _, t := range s.Store.Types().Types {
 		switch {
-		case t.Internal, t.Name == MessageType, t.Name == BlockType, t.Name == ActivityType:
+		case t.Internal, t.Hidden, t.Name == MessageType, t.Name == BlockType, t.Name == ActivityType:
 			continue
 		}
 		out = append(out, t)

@@ -36,6 +36,7 @@ type conversation struct {
 	LastTurn time.Time
 	TurnEnd  time.Time
 	Count    int
+	People   map[string]int // whose colour each block glows in, if not the owner's
 	// FocusID is the block the page is already showing in full, when it is
 	// showing one. Its own Expand link then says it is the current page
 	// rather than offering to go where you already are.
@@ -144,7 +145,7 @@ func (s *Server) conversationAbout(c *chat.Service, from, about, prompt string) 
 		return nil, err
 	}
 	out.Body = template.HTML(body.String())
-	out.Activity = s.recentActivity(8, from)
+	out.Activity, out.People = s.recentActivity(8, from), s.changedBy()
 	return out, nil
 }
 
@@ -229,9 +230,8 @@ func (s *Server) status(msgs []*store.Record) template.HTML {
 			default:
 				props["message"] = fmt.Sprintf("Assistant replied and made %d changes to the canvas.", n)
 			}
-			// The reply's first words, so a person who cannot see it arrive
-			// hears what it says, not only that it came. They are read out,
-			// not drawn: on the chip they made a paragraph of a label.
+			// The reply's first words, read out but not drawn, so a person who
+			// cannot see it arrive hears what it says; the chip stays short.
 			if words, _ := last.Fields["content"].(string); strings.TrimSpace(words) != "" {
 				props["said"] = clipWords(words, 200)
 			}

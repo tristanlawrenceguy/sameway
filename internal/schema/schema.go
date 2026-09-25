@@ -47,6 +47,10 @@ type Field struct {
 	// stored or whether a command was accepted: shown, never offered to
 	// a person to change by hand. The assistant and the API still set it.
 	ReadOnly bool `yaml:"readonly,omitempty" json:"readonly,omitempty"`
+	// Hidden is a field taken off the pages without losing what it holds:
+	// what a person asked for instead of deleting it. The assistant no
+	// longer fills it in; showing it again brings everything back.
+	Hidden bool `yaml:"hidden,omitempty" json:"hidden,omitempty"`
 }
 
 // Type is one content type.
@@ -64,6 +68,9 @@ type Type struct {
 	// actions: a workspace that predates one gets it, like an internal type,
 	// but it is shown and edited like any other.
 	Provided bool `yaml:"provided,omitempty" json:"provided,omitempty"`
+	// Hidden is a type taken off the pages and the assistant's hands,
+	// its records kept, until it is shown again.
+	Hidden bool `yaml:"hidden,omitempty" json:"hidden,omitempty"`
 	// File is the YAML path the type was loaded from, for error messages.
 	File string `yaml:"-" json:"-"`
 }
@@ -185,6 +192,17 @@ func (t *Type) Field(name string) (*Field, bool) {
 		}
 	}
 	return nil, false
+}
+
+// Shown are the fields a page shows: all but the hidden ones.
+func (t *Type) Shown() []Field {
+	out := make([]Field, 0, len(t.Fields))
+	for _, f := range t.Fields {
+		if !f.Hidden {
+			out = append(out, f)
+		}
+	}
+	return out
 }
 
 func contains(list []string, s string) bool {

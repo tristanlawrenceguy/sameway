@@ -14,7 +14,12 @@ func (s *Service) run(call llm.ToolCall) toolResult {
 	if r, no := s.refuseFor(call); no {
 		return r
 	}
-	r := s.runTool(call)
+	var r toolResult
+	if call.Name == changeFieldTool.Name {
+		r = s.reshapeCall(call.Args)
+	} else {
+		r = s.runTool(call)
+	}
 	if r.change != nil {
 		// The receipt keeps the entry id, so the change can be undone from
 		// under the reply.

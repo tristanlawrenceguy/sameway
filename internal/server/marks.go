@@ -26,7 +26,7 @@ func markOf(t *schema.Type, rec *store.Record) (map[string]any, bool) {
 	}
 	// For types without a done field, look for a first toggleable bool like
 	// pinned or show — these get checkboxes on detail pages but not in rows.
-	for _, f := range t.Fields {
+	for _, f := range t.Shown() {
 		if f.Type != "bool" {
 			continue
 		}
@@ -49,7 +49,7 @@ func markOf(t *schema.Type, rec *store.Record) (map[string]any, bool) {
 // the one worth a box at the front of its row. Pinned or archived is a
 // setting, not something finished, so it gets no box that reads as one.
 func doneField(t *schema.Type) *schema.Field {
-	for _, f := range t.Fields {
+	for _, f := range t.Shown() {
 		if f.Type != "bool" {
 			continue
 		}

@@ -35,6 +35,7 @@ type Service struct {
 	// AddField and AddType change the workspace's schema while it runs, set
 	// by the app; nil when the workspace cannot be changed from here.
 	AddField     func(typeName string, f schema.Field) (*schema.Type, error)
+	Reshape      Reshaper // changes a type after it is made; see reshape.go
 	AddType      func(t *schema.Type) (*schema.Type, error)
 	Store        *store.Store
 	Registry     *render.Registry
@@ -65,6 +66,10 @@ type Service struct {
 	// is this month. Defaults to time.Now; tests pin it.
 	Now func() time.Time
 
+	// Owner is who owns this computer's copy, by their Tailscale login and
+	// name, once the tailnet says; set by the command line. What they do
+	// is theirs by name on the other computers that host the workspace.
+	Owner Visitor
 	// who is the one this service speaks for, when it is not the owner;
 	// see people.go.
 	who Visitor

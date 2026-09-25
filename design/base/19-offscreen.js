@@ -105,6 +105,9 @@
       if (!n) return;
       var nearest = nearestOf(groups[w], w);
       s.setAttribute("data-actor", nearest.getAttribute("data-actor") || "assistant");
+      // Someone else's change points in their colour.
+      if (nearest.getAttribute("data-person")) s.setAttribute("data-person", nearest.getAttribute("data-person"));
+      else s.removeAttribute("data-person");
       s.textContent = (w === "up" ? "↑ " : "↓ ") + (n === 1 ? "Change " : n + " changes ") + (w === "up" ? "above" : "below");
     });
   }

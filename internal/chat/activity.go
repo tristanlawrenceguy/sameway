@@ -34,6 +34,10 @@ type Change struct {
 	// By is the person who made it when that was not the owner, by name,
 	// so the log says "Bob removed" rather than "You removed".
 	By string `json:"by,omitempty"`
+	// ByLogin is who made it by their Tailscale login, when known: the
+	// owner's too, so a change reads as theirs by name on the other
+	// computers that host the workspace.
+	ByLogin string `json:"-"`
 	// Before is the thing as it was before the change, kept in the log so
 	// the change can be undone. It is not part of a receipt.
 	Before map[string]any `json:"-"`
@@ -64,6 +68,7 @@ func Record(st *store.Store, actor string, c Change) string {
 		"undoes":    c.Undoes,
 		"via":       c.Via,
 		"by":        c.By,
+		"by_login":  c.ByLogin,
 	}
 	if c.Before != nil {
 		fields["before"] = c.Before
@@ -162,4 +167,21 @@ func truncate(s string, n int) string {
 		return s
 	}
 	return string([]rune(s)[:n-1]) + "…"
+}
+
+// LocalEntry says which log entries stay on the computer that wrote them
+// when others host the workspace too: what was said to the assistant, its
+// questions and their answers, and changes to what stays local itself.
+// Every other entry travels, so a change made elsewhere reads as whose it
+// was and glows in their colour here.
+func LocalEntry(local map[string]bool) func(typeName string, fields map[string]any) bool {
+	private := map[string]bool{"said": true, "proposed": true, "agreed to": true, "declined": true, "cleared": true, "failed": true}
+	return func(typeName string, fields map[string]any) bool {
+		if typeName != ActivityType {
+			return false
+		}
+		action, _ := fields["action"].(string)
+		target, _ := fields["target"].(string)
+		return private[action] || local[target] || target == "conversation"
+	}
 }

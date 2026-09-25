@@ -144,7 +144,7 @@ func dateField(t *schema.Type, named any) string {
 		}
 		return ""
 	}
-	for _, f := range t.Fields {
+	for _, f := range t.Shown() {
 		if f.Type == "datetime" {
 			return f.Name
 		}

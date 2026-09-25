@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/peers"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/tailnet"
@@ -87,6 +88,9 @@ func (n *tailnetNode) say(s tailnet.Status) {
 	n.mu.Lock()
 	if s.Client != nil {
 		n.client = s.Client
+	}
+	if s.OwnerLogin != "" {
+		n.a.Chat.Owner = chat.Visitor{Access: chat.Owner, Login: s.OwnerLogin, Name: s.OwnerName}
 	}
 	if s.State == tailnet.Off || s.State == tailnet.Failed {
 		n.client = nil

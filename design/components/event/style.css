@@ -11,6 +11,10 @@
 }
 .sw-event__text { flex: 1; }
 .sw-event__actor { font-weight: 700; color: var(--sw-actor, var(--sw-color-fg)); }
+/* A person's colour is for the mark only: the six are chosen to be told
+   apart as marks, not to be read as text, so their name keeps the text
+   colour and stays at full contrast. */
+.sw-event[data-person] .sw-event__actor { color: var(--sw-color-fg); }
 .sw-event__target { font-weight: 600; color: var(--sw-color-fg); }
 .sw-event__time { flex: none; font-variant-numeric: tabular-nums; font-size: var(--sw-size-text-xs); }
 .sw-event__undo { flex: none; margin-left: auto; }

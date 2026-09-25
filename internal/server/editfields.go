@@ -28,7 +28,7 @@ func (s *Server) editFields(t *schema.Type, rec *store.Record) string {
 		return ""
 	}
 	var b strings.Builder
-	for _, f := range t.Fields {
+	for _, f := range t.Shown() {
 		if f.ReadOnly || f.Type == "json" {
 			continue
 		}
