@@ -164,3 +164,26 @@ func TestLocalTypesStayAndOldRecordsAreSeeded(t *testing.T) {
 		t.Error("a record from before sharing reaches the other copy once seeded")
 	}
 }
+
+// Single records of a shared type can stay: a log entry saying what was
+// said to the assistant is never stamped, while the one saying a note was
+// deleted is.
+func TestSomeRecordsOfASharedTypeStay(t *testing.T) {
+	a, _ := twoCopies(t)
+	a.LocalRecord = func(typeName string, f map[string]any) bool { return typeName == "activity" && f["action"] == "said" }
+	a.Create("activity", map[string]any{"actor": "human", "action": "said", "detail": "private"})
+	a.Create("activity", map[string]any{"actor": "human", "action": "deleted", "target": "note"})
+	stamps, _ := a.Since(map[string]string{})
+	said, deleted := false, false
+	for _, st := range stamps {
+		if st.Field == "action" && string(st.Value) == `"said"` {
+			said = true
+		}
+		if st.Field == "action" && string(st.Value) == `"deleted"` {
+			deleted = true
+		}
+	}
+	if said || !deleted {
+		t.Errorf("said stays (%v), deleted travels (%v)", said, deleted)
+	}
+}

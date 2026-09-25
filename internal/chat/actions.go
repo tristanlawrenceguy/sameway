@@ -1,6 +1,7 @@
 package chat
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -168,7 +169,7 @@ func (s *Service) actionsDigest() string {
 func (s *Service) RunAs(ctx context.Context, actor, id, canvas string) (text, proposal string, err error) {
 	r := s.Run(ctx, id, canvas)
 	for i := range r.changes {
-		r.changes[i].Via, r.changes[i].By = Via(ctx), VisitorOf(ctx).Who()
+		r.changes[i].Via, r.changes[i].By, r.changes[i].ByLogin = Via(ctx), VisitorOf(ctx).Who(), cmp.Or(VisitorOf(ctx).Login, s.Owner.Login)
 		Record(s.Store, actor, r.changes[i])
 	}
 	if r.change != nil {

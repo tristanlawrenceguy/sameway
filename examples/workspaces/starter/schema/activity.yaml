@@ -37,3 +37,6 @@ fields:
   by:
     type: string
     description: Who made the change when it was not the workspace's owner, by name, for someone given access over Tailscale.
+  by_login:
+    type: string
+    description: Who made the change by their Tailscale login, when known, the owner included, so it reads as theirs on the other computers that host the workspace.

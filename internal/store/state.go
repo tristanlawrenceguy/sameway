@@ -106,10 +106,16 @@ func originOf(clock string) string {
 // shared says whether a type's records are kept the same on every host.
 func (s *Store) shared(typeName string) bool { return !s.Local[typeName] }
 
+// local says whether one record stays on this computer although its type
+// is shared, by LocalRecord.
+func (s *Store) local(typeName string, fields map[string]any) bool {
+	return s.LocalRecord != nil && fields != nil && s.LocalRecord(typeName, fields)
+}
+
 // stamp records a local write: the fields that changed from before to
 // after (all of them for a new record, only _deleted for a removal).
 func (s *Store) stamp(t *schema.Type, id string, before, after map[string]any, created time.Time) {
-	if !s.shared(t.Name) {
+	if !s.shared(t.Name) || s.local(t.Name, after) || s.local(t.Name, before) {
 		return
 	}
 	put := func(field string, v any) {

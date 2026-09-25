@@ -74,7 +74,8 @@ func Load(dir string, memoryDB bool) (*App, error) {
 	a.Mirror = content.Mirror{Dir: ws.ContentDir(), Types: types, Skip: []string{chat.MessageType, chat.ConversationType, chat.ProposalType, chat.ActivityType}}
 	st.AfterWrite = a.Mirror.Changed
 	// What stays on this computer when others host the workspace too.
-	st.Local = map[string]bool{"message": true, "conversation": true, "proposal": true, "action": true, "device": true, "file": true, "activity": true}
+	st.Local = map[string]bool{"message": true, "conversation": true, "proposal": true, "action": true, "device": true, "file": true}
+	st.LocalRecord = chat.LocalEntry(st.Local)
 	a.Chat = &chat.Service{
 		Store:        st,
 		Registry:     reg,
