@@ -53,6 +53,9 @@ func (s *Service) letInCall(raw json.RawMessage) toolResult {
 	}
 	switch a.Access {
 	case "none":
+		if !s.owner() {
+			return fail("only the workspace's owner can take someone's access away")
+		}
 		return s.letIn(a)
 	case View, Edit:
 		q := letInQuestion(a)
@@ -98,6 +101,7 @@ func (s *Service) letIn(a letInArgs) toolResult {
 		if err != nil {
 			return fail("could not add them: %v", err)
 		}
+		s.Say(s.shareWords(name, a.Email))
 		return toolResult{text: name + " can now " + verb(access), change: &Change{Action: "let in", Component: PersonType, ID: rec.ID, Detail: name + " to " + access}}
 	}
 	before := p.Fields["access"]
@@ -105,6 +109,10 @@ func (s *Service) letIn(a letInArgs) toolResult {
 		return fail("could not change their access: %v", err)
 	}
 	name, _ := p.Fields["name"].(string)
+	// Someone who had no access has not been shared this machine yet.
+	if access != "" && (before == nil || before == "") {
+		s.Say(s.shareWords(name, a.Email))
+	}
 	action, detail := "let in", name+" to "+access
 	if access == "" {
 		action, detail = "took access from", name
@@ -140,15 +148,15 @@ func (s *Service) PersonByEmail(email string) *store.Record {
 }
 
 // Knock asks the owner, once, whether someone who reached the workspace
-// over Tailscale without access may look. They are told to wait.
-func (s *Service) Knock(login, name, device string) {
+// over Tailscale without access may look, and says whether that was new.
+func (s *Service) Knock(login, name, device string) bool {
 	login = strings.ToLower(strings.TrimSpace(login))
 	if login == "" {
-		return
+		return false
 	}
 	for _, p := range s.Proposals() {
 		if act, _ := p.Fields["action"].(map[string]any); act != nil && act["tool"] == "let_in" && act["email"] == login {
-			return
+			return false
 		}
 	}
 	a := letInArgs{Email: login, Name: name, Access: View}
@@ -157,4 +165,16 @@ func (s *Service) Knock(login, name, device string) {
 		q.detail = fmt.Sprintf("They tried to open it just now, from %s. ", device) + q.detail
 	}
 	s.ask(q, map[string]any{"tool": "let_in", "email": a.Email, "name": a.Name, "access": a.Access})
+	return true
+}
+
+// shareWords tells the owner how the person they just let in reaches the
+// workspace: Tailscale has to let them reach this machine, which is the
+// owner's to do in Tailscale, not here.
+func (s *Service) shareWords(name, email string) string {
+	machine := strings.TrimSpace(s.setting("tailnet.name"))
+	if machine == "" {
+		return fmt.Sprintf("%s can come in once this workspace is on your Tailscale network: ask me to put it on your phone, and I will walk you through it.", name)
+	}
+	return fmt.Sprintf("One step is yours in Tailscale, if %s is not on your tailnet already: share this computer (%s) with %s from https://login.tailscale.com/admin/machines (its menu, then Share), and send them the link. Once they accept it, they open the same address you do.", name, machine, email)
 }

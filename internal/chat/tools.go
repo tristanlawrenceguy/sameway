@@ -29,7 +29,7 @@ func (s *Service) BlockFields(in map[string]any) map[string]any {
 // block records, and the record tools generated from the workspace's schema.
 // It is the one list; /api/describe and the CLI publish it from here, so a
 // tool added or changed shows up on every surface at once.
-func (s *Service) Tools() []llm.Tool {
+func (s *Service) allTools() []llm.Tool {
 	return append([]llm.Tool{
 		{Name: "add_component", Description: "Add a component to the canvas the person is looking at. Props must match the component's props schema from the catalogue. Returns the new block id.",
 			Schema: obj(map[string]any{

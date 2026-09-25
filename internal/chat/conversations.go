@@ -1,6 +1,7 @@
 package chat
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 	"sync"
@@ -25,7 +26,7 @@ func (s *Service) Current() string {
 	}
 	all := s.Conversations()
 	if len(all) == 0 {
-		rec, err := s.Store.Create(ConversationType, map[string]any{"opened": now()})
+		rec, err := s.Store.Create(ConversationType, map[string]any{"opened": now(), "person": s.whose()})
 		if err != nil {
 			return ""
 		}
@@ -36,11 +37,18 @@ func (s *Service) Current() string {
 	return s.convo
 }
 
-// Conversations lists every chat, the most recently opened first.
+// Conversations lists every chat of the one this service speaks for, the
+// most recently opened first.
 func (s *Service) Conversations() []*store.Record {
-	recs, err := s.Store.List(ConversationType, store.ListOptions{})
+	all, err := s.Store.List(ConversationType, store.ListOptions{})
 	if err != nil {
 		return nil
+	}
+	var recs []*store.Record
+	for _, c := range all {
+		if s.mine(c) {
+			recs = append(recs, c)
+		}
 	}
 	sort.SliceStable(recs, func(i, j int) bool {
 		a, _ := recs[i].Fields["opened"].(string)
@@ -55,7 +63,7 @@ func (s *Service) Conversations() []*store.Record {
 
 // NewChat starts a chat with nothing in it and opens it.
 func (s *Service) NewChat() (*store.Record, error) {
-	rec, err := s.Store.Create(ConversationType, map[string]any{"opened": now()})
+	rec, err := s.Store.Create(ConversationType, map[string]any{"opened": now(), "person": s.whose()})
 	if err != nil {
 		return nil, err
 	}
@@ -65,6 +73,9 @@ func (s *Service) NewChat() (*store.Record, error) {
 
 // OpenChat makes the chat named the current one.
 func (s *Service) OpenChat(id string) error {
+	if !s.theirs(id) {
+		return fmt.Errorf("there is no chat %q of yours", id)
+	}
 	if _, err := s.Store.Update(ConversationType, id, map[string]any{"opened": now()}); err != nil {
 		return err
 	}
@@ -75,6 +86,9 @@ func (s *Service) OpenChat(id string) error {
 // DeleteChat removes a chat and every message in it. When it was the
 // current one, the most recently opened of the rest takes its place.
 func (s *Service) DeleteChat(id string) error {
+	if !s.theirs(id) {
+		return fmt.Errorf("there is no chat %q of yours", id)
+	}
 	msgs, err := s.MessagesIn(id)
 	if err != nil {
 		return err
@@ -131,7 +145,8 @@ func (s *Service) MessagesIn(id string) ([]*store.Record, error) {
 	var out []*store.Record
 	for _, m := range recs {
 		in, _ := m.Fields["conversation"].(string)
-		if in == id || (in == "" && id == oldest) {
+		// Messages from before there were several chats are the owner's.
+		if in == id || (in == "" && id == oldest && s.owner()) {
 			out = append(out, m)
 		}
 	}
@@ -213,3 +228,9 @@ var (
 	stampMu   sync.Mutex
 	lastStamp time.Time
 )
+
+// theirs says whether a chat belongs to the one this service speaks for.
+func (s *Service) theirs(id string) bool {
+	c, err := s.Store.Get(ConversationType, id)
+	return err == nil && s.mine(c)
+}

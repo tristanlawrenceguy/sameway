@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
@@ -85,7 +86,7 @@ func TestWhatEachLevelMayDo(t *testing.T) {
 	if rec := as(t, h, editor, http.MethodPost, "/api/note", note, "application/json"); rec.Code != http.StatusCreated {
 		t.Errorf("an editor writes: %d %s", rec.Code, rec.Body.String())
 	}
-	for _, path := range []string{"/chat", "/workspaces", "/api/message", "/t/proposal"} {
+	for _, path := range []string{"/workspaces", "/api/message", "/t/proposal", "/activity"} {
 		if rec := as(t, h, editor, http.MethodGet, path, "", ""); rec.Code != http.StatusForbidden {
 			t.Errorf("%s is the owner's alone, an editor got %d", path, rec.Code)
 		}
@@ -106,8 +107,8 @@ func TestWhatEachLevelMayDo(t *testing.T) {
 	}
 }
 
-// What the owner said to the assistant stays theirs: a visitor sees the
-// canvas without the conversation.
+// What the owner said to the assistant stays theirs: someone who may only
+// look sees the canvas without the conversation.
 func TestAVisitorDoesNotSeeTheOwnersConversation(t *testing.T) {
 	a, h := newApp(t)
 	a.Chat.Say("the owner's private words")
@@ -118,8 +119,8 @@ func TestAVisitorDoesNotSeeTheOwnersConversation(t *testing.T) {
 	if strings.Contains(body, "private words") {
 		t.Error("a visitor should not see the owner's conversation")
 	}
-	if !strings.Contains(body, "for the workspace's owner") {
-		t.Error("a visitor should be told whose the assistant is")
+	if !strings.Contains(body, "for the people who can change it") {
+		t.Error("a visitor should be told whom the assistant is for")
 	}
 }
 
@@ -140,5 +141,47 @@ func TestTheLogSaysWhoElseMadeAChange(t *testing.T) {
 	}
 	if !found {
 		t.Error("the log should say Bob deleted it, on pixel-7")
+	}
+}
+
+// Bob, who may edit, has his own chat with the assistant, with nothing of
+// the owner's in it; someone who may only look has none.
+func TestAnEditorHasTheirOwnChat(t *testing.T) {
+	a, h := newApp(t)
+	a.Chat.Say("the owner's private words")
+	bob := chat.Visitor{Name: "Bob", Login: "bob@example.com", Access: chat.Edit}
+	rec := as(t, h, bob, http.MethodGet, "/chat", "", "")
+	if rec.Code != http.StatusOK || strings.Contains(rec.Body.String(), "private words") {
+		t.Errorf("Bob's chat opens, without the owner's words: %d", rec.Code)
+	}
+	if !strings.Contains(rec.Body.String(), `name="message"`) {
+		t.Error("Bob can write to the assistant")
+	}
+	vi := as(t, h, chat.Visitor{Name: "Vi", Login: "vi@example.com", Access: chat.View}, http.MethodGet, "/chat", "", "").Body.String()
+	if strings.Contains(vi, `name="message"`) || !strings.Contains(vi, "for the people who can change it") {
+		t.Error("someone who may only look has no assistant, and is told why")
+	}
+}
+
+// Someone asking to come in reaches the owner where they are, once.
+func TestAKnockRingsTheOwnerOnce(t *testing.T) {
+	_, h := newApp(t)
+	srv := h.(*server.Server)
+	rang := make(chan string, 4)
+	srv.OnRing(func(title, text, url string) { rang <- title + " / " + text })
+	srv.Admit(context.Background(), "carol@example.com", "Carol", "iphone", false)
+	srv.Admit(context.Background(), "carol@example.com", "Carol", "iphone", false)
+	select {
+	case got := <-rang:
+		if !strings.Contains(got, "Someone wants to open") || !strings.Contains(got, "Carol (carol@example.com) asked from iphone") {
+			t.Errorf("the ring says who asked and from what: %q", got)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("the owner should hear someone asked")
+	}
+	select {
+	case again := <-rang:
+		t.Errorf("the owner hears once, heard again: %q", again)
+	case <-time.After(200 * time.Millisecond):
 	}
 }

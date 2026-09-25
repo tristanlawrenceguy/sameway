@@ -65,6 +65,10 @@ type Service struct {
 	// is this month. Defaults to time.Now; tests pin it.
 	Now func() time.Time
 
+	// who is the one this service speaks for, when it is not the owner;
+	// see people.go.
+	who Visitor
+
 	// current is the tab the person is looking at while a turn runs: "" is
 	// Home. New blocks land there, and the prompt describes that tab.
 	current string

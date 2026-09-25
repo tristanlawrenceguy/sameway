@@ -28,10 +28,10 @@ type chatItem struct {
 }
 
 // chats lists every chat for the menu and names the current one.
-func (s *Server) chats() (items []chatItem, current string) {
-	id := s.app.Chat.Current()
-	for _, c := range s.app.Chat.Conversations() {
-		title := s.app.Chat.Title(c)
+func (s *Server) chats(svc *chat.Service) (items []chatItem, current string) {
+	id := svc.Current()
+	for _, c := range svc.Conversations() {
+		title := svc.Title(c)
 		item := chatItem{ID: c.ID, Title: title, When: c.CreatedAt.Local().Format("2 Jan"), Current: c.ID == id}
 		if item.Current {
 			current = title
@@ -43,7 +43,7 @@ func (s *Server) chats() (items []chatItem, current string) {
 
 func (s *Server) chatNew(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	if _, err := s.app.Chat.NewChat(); err != nil {
+	if _, err := s.chatFor(r).NewChat(); err != nil {
 		s.failed(w, r, "No new chat", err, "/")
 		return
 	}
@@ -52,7 +52,7 @@ func (s *Server) chatNew(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) chatOpen(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	if err := s.app.Chat.OpenChat(r.PostForm.Get("id")); err != nil {
+	if err := s.chatFor(r).OpenChat(r.PostForm.Get("id")); err != nil {
 		s.failed(w, r, "Chat not opened", errors.New("that chat is not there any more"), "/")
 		return
 	}
@@ -61,7 +61,7 @@ func (s *Server) chatOpen(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) chatDelete(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	if err := s.app.Chat.DeleteChat(r.PostForm.Get("id")); err != nil {
+	if err := s.chatFor(r).DeleteChat(r.PostForm.Get("id")); err != nil {
 		s.failed(w, r, "Chat not deleted", err, "/")
 		return
 	}

@@ -11,3 +11,6 @@ fields:
   opened:
     type: string
     description: When it was last opened or written to, as a moment in UTC to the nanosecond, so two chats opened in the same second still have an order; the latest is the current chat.
+  person:
+    type: string
+    description: Whose chat it is, by the Tailscale login of someone the owner let in; empty for the owner's own.

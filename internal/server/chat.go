@@ -76,24 +76,26 @@ type chatMessage struct {
 // conversation renders the transcript and composer once, for whichever
 // surface is showing it.
 func (s *Server) conversation(from string) (*conversation, error) {
-	return s.conversationAbout(from, "", "")
+	return s.conversationAbout(s.app.Chat, from, "", "")
 }
 
 // conversationAbout is the conversation with something to say already in
 // the box: the thing a record's page sent the person here about.
-func (s *Server) conversationAbout(from, about, prompt string) (*conversation, error) {
+func (s *Server) conversationAbout(c *chat.Service, from, about, prompt string) (*conversation, error) {
 	out := &conversation{From: from}
 	view := conversationView{From: from}
-	view.Chats, view.Title = s.chats()
-	view.ChatID = s.app.Chat.Current()
+	view.Chats, view.Title = s.chats(c)
+	view.ChatID = c.Current()
 	// When the assistant cannot reach a model, the conversation says so
 	// and offers what is on this computer; see connect.go.
-	out.Notice = s.connectCard(from)
+	if c.IsOwner() {
+		out.Notice = s.connectCard(from)
+	}
 	if s.app.Chat.Provider != nil {
 		view.ModelName = s.app.Chat.Provider.Name()
 	}
 
-	msgs, err := s.app.Chat.Messages()
+	msgs, err := c.Messages()
 	if err != nil {
 		return nil, err
 	}
@@ -117,11 +119,14 @@ func (s *Server) conversationAbout(from, about, prompt string) (*conversation, e
 	view.Status = s.status(msgs)
 	// A turn still running, asked for from another page or before this
 	// one was loaded: the page says so and, with scripts, follows it.
-	if t := s.turns.find(""); t != nil {
+	if t := s.turns.find("", c.Whose()); t != nil {
 		view.Turn = t.id
 		view.Status = s.component("status", map[string]any{"id": "chat-status", "message": "Assistant is working", "state": "working"})
 	}
-	view.Proposals = s.proposals(from)
+	// The assistant's questions are the owner's to answer.
+	if c.IsOwner() {
+		view.Proposals = s.proposals(from)
+	}
 	view.Empty = s.component("empty", map[string]any{"message": "Ask for anything."})
 	compose := map[string]any{"label": "Your message", "name": "message", "rows": 3, "required": true, "hint": "Ask for anything, or ask what something on the page is. Enter sends; Shift+Enter starts a new line."}
 	if prompt != "" {
@@ -165,7 +170,7 @@ func (s *Server) chatPage(w http.ResponseWriter, r *http.Request) {
 		s.page(w, r, "Chat", s.component("alert", map[string]any{"kind": "danger", "title": "Chat is not available", "message": err.Error()}), pageOptions{})
 		return
 	}
-	convo, err := s.conversationAbout("/chat", r.URL.Query().Get("about"), r.URL.Query().Get("prompt"))
+	convo, err := s.conversationAboutFor(r, "/chat", r.URL.Query().Get("about"), r.URL.Query().Get("prompt"))
 	if err != nil {
 		s.fail(w, err)
 		return
@@ -262,7 +267,7 @@ func (s *Server) chatSend(w http.ResponseWriter, r *http.Request) {
 	}
 	// The turn finishes even if the person leaves the page meanwhile; see
 	// chatStream.
-	rec, err := s.app.Chat.SendFile(context.WithoutCancel(r.Context()), canvas, r.PostForm.Get("message"), fileID)
+	rec, err := s.chatFor(r).SendFile(context.WithoutCancel(r.Context()), canvas, r.PostForm.Get("message"), fileID)
 	if rec == nil {
 		// Nothing was recorded (empty message, or chat unavailable). The page
 		// already explains the latter, so just show it again.
@@ -276,7 +281,7 @@ func (s *Server) chatSend(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) chatClear(w http.ResponseWriter, r *http.Request) {
-	if err := s.app.Chat.Clear(); err != nil {
+	if err := s.chatFor(r).Clear(); err != nil {
 		s.failed(w, r, "Not cleared", err, "/")
 		return
 	}

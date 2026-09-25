@@ -31,18 +31,26 @@ func (s *Server) Admit(ctx context.Context, login, name, device string, owner bo
 	case p != nil && (p.Fields["access"] == chat.View || p.Fields["access"] == chat.Edit):
 		v.Access, _ = p.Fields["access"].(string)
 	default:
-		s.app.Chat.Knock(login, name, device)
+		// The owner hears of it where they are, the way a reminder rings.
+		if s.app.Chat.Knock(login, name, device) && s.notify != nil {
+			who := login
+			if name != "" {
+				who = name + " (" + login + ")"
+			}
+			go s.notify("Someone wants to open "+s.app.Workspace.Config.Name, who+" asked from "+device+". Answer in the chat.", s.linkTo("/"))
+		}
 		return ctx, "You have asked to open " + s.app.Workspace.Config.Name + ". It opens here once its owner says yes: reload this page then.\n", false
 	}
 	return chat.WithVisitor(ctx, v), "", true
 }
 
 // ownerOnly are the parts of the workspace that are its owner's alone:
-// the conversation with the assistant and its questions (one shared chat,
-// until each person has their own), the other workspaces on the machine,
-// the model, the comfort settings, and a browser driven on the machine.
+// the assistant's questions, every chat's raw records and the log of what
+// was said, the other workspaces on the machine, the model, the comfort
+// settings, and a browser driven on the machine. Each person's own chat is
+// theirs (see chatFor).
 var ownerOnly = []string{
-	"/chat", "/api/chat", "/api/look", "/proposal", "/workspaces", "/model", "/help/set", "/activity",
+	"/api/look", "/proposal", "/workspaces", "/model", "/help/set", "/activity",
 	"/t/message", "/api/message", "/t/conversation", "/api/conversation",
 	"/t/proposal", "/api/proposal", "/t/activity", "/api/activity",
 }
@@ -74,15 +82,25 @@ func (s *Server) allowed(w http.ResponseWriter, r *http.Request) bool {
 	return false
 }
 
-// conversationFor is the conversation as the one asking may see it: the
-// owner's in full; for anyone else, a word that the assistant here is the
-// owner's for now, and nothing of what was said to it.
+// chatFor is the assistant as the one asking has it: their own chats and
+// turns, and the tools their access allows. See chat/people.go.
+func (s *Server) chatFor(r *http.Request) *chat.Service {
+	return s.app.Chat.For(chat.VisitorOf(r.Context()))
+}
+
+// conversationFor is the conversation of the one asking. Someone who may
+// only look has none: the assistant changes things, so it is for those
+// who may.
 func (s *Server) conversationFor(r *http.Request, from string) (*conversation, error) {
-	convo, err := s.conversation(from)
-	if err != nil || chat.VisitorOf(r.Context()).Owner() {
+	return s.conversationAboutFor(r, from, "", "")
+}
+
+func (s *Server) conversationAboutFor(r *http.Request, from, about, prompt string) (*conversation, error) {
+	convo, err := s.conversationAbout(s.chatFor(r), from, about, prompt)
+	if err != nil || chat.VisitorOf(r.Context()).Access != chat.View {
 		return convo, err
 	}
-	convo.Body = template.HTML(`<p class="sw-muted">The assistant here is for the workspace's owner, for now.</p>`)
+	convo.Body = template.HTML(`<p class="sw-muted">You can look around this workspace. The assistant is for the people who can change it.</p>`)
 	convo.Notice, convo.Activity, convo.LatestID = "", "", ""
 	return convo, nil
 }
