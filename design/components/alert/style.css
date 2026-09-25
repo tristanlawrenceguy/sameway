@@ -26,7 +26,7 @@
   font-size: var(--sw-size-text-lg);
   cursor: pointer;
   color: inherit;
-  padding: var(--sw-space-1);
+  padding: var(--sw-space-6);
 }
 /* With no title, the mark sits before the message on one line, rather
    than alone on a line of its own. */
