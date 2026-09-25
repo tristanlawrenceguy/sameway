@@ -105,6 +105,15 @@ func (s *Server) standing(rec *store.Record, now time.Time) map[string]any {
 		}
 		item["goal"] = goal
 	}
+	// A reading starts Log at the last one, so the same again is one press.
+	if h.Aim == track.Record {
+		for i := len(sum.Last) - 1; i >= 0; i-- {
+			if sum.Last[i].Logged {
+				item["log"] = strconv.FormatFloat(sum.Last[i].Amount, 'f', -1, 64)
+				break
+			}
+		}
+	}
 	last := make([]any, 0, len(sum.Last))
 	for _, p := range sum.Last {
 		last = append(last, map[string]any{"date": track.PeriodLabel(p.Start, h.Cadence), "met": p.Met, "amount": p.Amount, "words": periodWords(h, p), "logged": p.Logged})

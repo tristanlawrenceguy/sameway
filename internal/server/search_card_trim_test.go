@@ -100,8 +100,8 @@ func TestSearchCardH2LeavesShortTitleUntouched(t *testing.T) {
 			continue
 		}
 		text := strings.TrimSpace(htmltest.Text(node))
-		// The heading text is trimmed_title + " — note" (from the visually-hidden span).
-		wantFullText := wantTitle + " \u2014 note"
+		// The heading text is trimmed_title + " — Note" (from the visually-hidden span).
+		wantFullText := wantTitle + " \u2014 Note"
 		if text != wantFullText {
 			t.Errorf("short title should be unchanged in search card h2: got %q, want %q", text, wantFullText)
 		}
@@ -119,7 +119,7 @@ func TestSearchCardH2LeavesShortTitleUntouched(t *testing.T) {
 }
 
 // TestSearchCardVisuallyHiddenTypePreserved verifies that the visually-hidden
-// span (e.g. "— note") is preserved after trimming the visible heading text.
+// span (e.g. "— Note") is preserved after trimming the visible heading text.
 // (Acceptance 3.)
 func TestSearchCardVisuallyHiddenTypePreserved(t *testing.T) {
 	a, h := newApp(t)
@@ -154,7 +154,7 @@ func TestSearchCardVisuallyHiddenTypePreserved(t *testing.T) {
 				class, ok := htmltest.Attr(c, "class")
 				if ok && strings.Contains(class, "sw-visually-hidden") {
 					spinnerText := strings.TrimSpace(htmltest.Text(c))
-					if !strings.Contains(spinnerText, "— note") {
+					if !strings.Contains(spinnerText, "— Note") {
 						t.Errorf("visually-hidden span should contain '— note', got %q", spinnerText)
 					}
 				}

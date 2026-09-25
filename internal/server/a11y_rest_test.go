@@ -50,7 +50,7 @@ func TestAPictureIsDescribedNotNamedByItsFile(t *testing.T) {
 	if len(o.Problems) == 0 || !strings.Contains(o.Problems[0], "file name") {
 		t.Errorf("look flags a file name as a picture's description, got %v", o.Problems)
 	}
-	if up := get(t, h, "/t/file").Body.String(); !strings.Contains(up, "What it shows, for a picture") {
+	if up := get(t, h, "/t/file").Body.String(); !strings.Contains(up, "What the picture shows") {
 		t.Error("the upload asks what a picture shows")
 	}
 }

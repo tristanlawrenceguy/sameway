@@ -38,7 +38,7 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 			s.page(w, r, plural(t.Name), template.HTML(b.String()), pageOptions{Status: http.StatusBadRequest})
 			return
 		}
-		fmt.Fprintf(&b, `<p class="sw-muted">%d matching %s%s. %s</p>`, len(recs), template.HTMLEscapeString(strings.Join(where, ", ")), template.HTMLEscapeString(orderWords(order)), s.component("link", map[string]any{"href": "/t/" + t.Name, "label": "See all " + plural(t.Name), "look": "button"}))
+		fmt.Fprintf(&b, `<p class="sw-muted">%d matching %s%s. %s</p>`, len(recs), template.HTMLEscapeString(query.Words(t, where)), template.HTMLEscapeString(orderWords(t, order)), s.component("link", map[string]any{"href": "/t/" + t.Name, "label": "See all " + plural(t.Name), "look": "button"}))
 	} else {
 		recs, err = s.app.Store.List(t.Name, store.ListOptions{})
 	}
@@ -60,6 +60,20 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 		b.WriteString(string(s.component("empty", map[string]any{
 			"title": "No " + plural(t.Name) + " yet", "message": "Add one yourself, or", "action": map[string]any{"href": "/chat?prompt=" + url.PathEscape(prompt), "label": "ask the assistant"},
 		})))
+	} else if t.Name == HabitType && len(where) == 0 && order == "" {
+		// Habits are where each stands this period, and a press to log:
+		// the tracker, not rows of names. Archived ones follow, as rows.
+		b.WriteString(string(s.component(trackerComponent, s.resolveTracker(map[string]any{"label": "Keeping up"}))))
+		var archived []*store.Record
+		for _, rec := range recs {
+			if on, _ := rec.Fields["archived"].(bool); on {
+				archived = append(archived, rec)
+			}
+		}
+		if len(archived) > 0 {
+			b.WriteString(`<h2 class="sw-group">Archived <span class="sw-group__count">` + fmt.Sprint(len(archived)) + `</span></h2>`)
+			b.WriteString(s.rows(t, archived, time.Now()))
+		}
 	} else {
 		pg = pageOf(r, len(recs), listPageSize)
 		b.WriteString(s.rows(t, recs[pg.lo:pg.hi], time.Now()))

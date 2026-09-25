@@ -28,3 +28,8 @@
   color: inherit;
   padding: var(--sw-space-1);
 }
+/* With no title, the mark sits before the message on one line, rather
+   than alone on a line of its own. */
+.sw-alert:has(.sw-alert__title--bare) { display: flex; align-items: baseline; }
+.sw-alert__title--bare { margin: 0; }
+.sw-alert__title--bare:empty { display: none; }

@@ -12,6 +12,14 @@
    five seconds (WCAG 2.2.2); the words beside it say the state. */
 .sw-status--working .sw-status__dot { animation: sw-pulse 1.2s var(--sw-motion-ease) 4; }
 .sw-status--done { color: var(--sw-color-success); background: var(--sw-color-success-soft); }
+/* Working and done differ by shape, not only colour: an open ring that is
+   still going, a tick once it is finished. */
+.sw-status--working .sw-status__dot { background: transparent; border: 2px solid currentColor; border-right-color: transparent; }
+.sw-status--done .sw-status__dot { width: auto; height: auto; border-radius: 0; background: none; line-height: 1; }
+.sw-status--done .sw-status__dot::before { content: "✓"; font-weight: 700; }
 .sw-status--error { color: var(--sw-color-danger); background: var(--sw-color-danger-soft); }
 .sw-status--idle .sw-status__dot { opacity: 0.5; }
-@media (forced-colors: active) { .sw-status__dot { forced-color-adjust: none; background: CanvasText; } }
+@media (forced-colors: active) {
+  .sw-status__dot { forced-color-adjust: none; background: CanvasText; }
+  .sw-status--working .sw-status__dot, .sw-status--done .sw-status__dot { background: none; }
+}

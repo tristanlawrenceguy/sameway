@@ -10,6 +10,7 @@
     "required": ["items"],
     "properties": {
       "title": { "type": "string", "default": "There is a problem", "description": "What happened, such as Not saved." },
+      "id": { "type": "string", "default": "error-summary", "description": "Its id; each problem is this id and its number, which the field it names is described by. Change it only on a page with two." },
       "items": {
         "type": "array",
         "minItems": 1,

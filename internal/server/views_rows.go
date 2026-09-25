@@ -59,29 +59,37 @@ func (s *Server) rows(t *schema.Type, recs []*store.Record, now time.Time) strin
 	return b.String()
 }
 
-// row is one record: its box, its title, its facts.
+// row is one record: its box, its title, its facts. Only a primary toggle
+// (done/completed/complete/finished) gets a checkbox in the row; secondary
+// settings like pinned or show are shown as badges instead.
 func (s *Server) row(t *schema.Type, rec *store.Record, level int) string {
 	class, box := "sw-row", ""
-	if props, ok := markOf(t, rec); ok {
-		props["quiet"] = true
-		box = string(s.component("mark", props))
-		if on, _ := props["checked"].(bool); on {
-			class += " sw-row--done"
+	if doneField(t) != nil {
+		if props, ok := markOf(t, rec); ok {
+			props["quiet"] = true
+			box = string(s.component("mark", props))
+			if on, _ := props["checked"].(bool); on {
+				class += " sw-row--done"
+			}
 		}
 	}
-	return fmt.Sprintf(`<li class="%s">%s<h%d class="sw-row__title"><a class="sw-row__link" href="/t/%s/%s">%s</a></h%d><p class="sw-row__meta">%s</p></li>`,
-		class, box, level, t.Name, rec.ID, template.HTMLEscapeString(trimTitle(s.title(t, rec))), level, s.facts(t, rec, factOpts{Boxed: box != ""}))
+	// A title cut short for the row keeps its whole on the link, for a
+	// pointer that rests on it.
+	full := s.title(t, rec)
+	whole := ""
+	if short := trimTitle(full); short != full {
+		whole = ` title="` + template.HTMLEscapeString(full) + `"`
+	}
+	return fmt.Sprintf(`<li class="%s">%s<h%d class="sw-row__title"><a class="sw-row__link" href="/t/%s/%s"%s>%s</a></h%d><p class="sw-row__meta">%s</p></li>`,
+		class, box, level, t.Name, rec.ID, whole, template.HTMLEscapeString(trimTitle(full)), level, s.facts(t, rec, factOpts{Boxed: box != ""}))
 }
 
 // whenGroup says where a record sits in time: done first, because a done
 // thing is not overdue whatever its day was.
 func whenGroup(t *schema.Type, rec *store.Record, dated string, now time.Time) string {
-	for _, f := range t.Fields {
-		if f.Type == "bool" {
-			if on, _ := rec.Fields[f.Name].(bool); on {
-				return "Done"
-			}
-			break
+	if f := doneField(t); f != nil {
+		if on, _ := rec.Fields[f.Name].(bool); on {
+			return "Done"
 		}
 	}
 	v, _ := rec.Fields[dated].(string)

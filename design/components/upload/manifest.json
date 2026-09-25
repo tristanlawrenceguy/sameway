@@ -18,7 +18,7 @@
   "a11y": {
     "role": "form with a labelled file field and a submit button",
     "keyboard": [
-      { "key": "Tab", "does": "moves to the field, then the button" },
+      { "key": "Tab", "does": "moves to the field, then to what the picture shows once a picture is chosen, then the button" },
       { "key": "Enter or Space", "does": "on the field, opens the file chooser; on the button, adds the file" }
     ],
     "states": [],

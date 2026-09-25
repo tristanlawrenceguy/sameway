@@ -110,12 +110,21 @@ func (s *Server) designComponents(b *strings.Builder) {
 			}
 			b.WriteString(`</p>`)
 		}
+		// An example is given an id, so this page can link to it, only when
+		// the component takes one; one that does not would refuse it.
+		var schema struct {
+			Properties map[string]json.RawMessage `json:"properties"`
+		}
+		json.Unmarshal(c.Manifest.Props, &schema)
+		_, takesID := schema.Properties["id"]
 		for _, ex := range c.Manifest.Examples {
 			exProps := make(map[string]any, len(ex.Props)+1)
 			for k, v := range ex.Props {
 				exProps[k] = v
 			}
-			exProps["id"] = c.Manifest.Name + "-" + strings.ToLower(ex.Name)
+			if takesID {
+				exProps["id"] = c.Manifest.Name + "-" + strings.ToLower(ex.Name)
+			}
 			propsJSON, _ := json.Marshal(ex.Props)
 			fmt.Fprintf(b, "<div class=\"sw-example\"><h4 class=\"sw-small\">%s \u2014 %s</h4><p class=\"sw-small sw-muted\"><code>%s</code></p><div class=\"sw-example__render\">%s</div></div>",
 				template.HTMLEscapeString(c.Manifest.Name), template.HTMLEscapeString(ex.Name), template.HTMLEscapeString(string(propsJSON)), s.component(c.Manifest.Name, exProps))

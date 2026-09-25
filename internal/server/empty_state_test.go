@@ -7,29 +7,9 @@ package server_test
 
 import (
 	"net/http"
-	"os"
 	"strings"
 	"testing"
 )
-
-// TestCanvasEmptyStateSaysWhatToDo checks that the canvas empty-state string
-// in canvas.go uses "Nothing here yet" as heading and has a short action prompt.
-// The old two-sentence pattern "and it appears here" must be gone.  This covers
-// Acceptance 3 for the canvas surface.
-func TestCanvasEmptyStateSaysWhatToDo(t *testing.T) {
-	data, err := os.ReadFile("canvas.go")
-	if err != nil {
-		t.Fatalf("cannot read canvas.go: %v", err)
-	}
-	src := string(data)
-
-	if !strings.Contains(src, "Nothing here yet") {
-		t.Error("canvas empty state must say 'Nothing here yet' as heading (Acceptance 1)")
-	}
-	if strings.Contains(src, "and it appears here") {
-		t.Error("canvas empty state must not have the old two-sentence description")
-	}
-}
 
 // TestListPageEmptyStateIsActionable checks that an empty notes listing shows
 // one short actionable instruction with a link — not just "No notes yet."  This

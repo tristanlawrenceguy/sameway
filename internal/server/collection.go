@@ -73,7 +73,7 @@ func (s *Server) resolveCollection(props map[string]any) map[string]any {
 		items = append(items, item)
 	}
 	out["items"] = items
-	out["summary"] = strings.Join(where, ", ")
+	out["summary"] = query.Words(t, where)
 	out["all"] = listPath(t.Name, where, order)
 	return out
 }
@@ -106,7 +106,7 @@ func metaOf(t *schema.Type, rec *store.Record) string {
 	for _, f := range t.Fields {
 		if f.Type == "enum" {
 			if v, ok := rec.Fields[f.Name].(string); ok && v != "" {
-				return capitalize(v)
+				return f.ValueLabel(v)
 			}
 		}
 	}
@@ -146,14 +146,20 @@ func strs(v any) []string {
 }
 
 // orderWords says an order in words for a list page's line.
-func orderWords(order string) string {
+func orderWords(t *schema.Type, order string) string {
+	name := func(n string) string {
+		if f, ok := t.Field(n); ok {
+			return strings.ToLower(fieldLabel(*f))
+		}
+		return strings.ToLower(label(n))
+	}
 	switch {
 	case order == "":
 		return ""
 	case strings.HasPrefix(order, "-"):
-		return ", " + strings.TrimPrefix(order, "-") + " largest or newest first"
+		return ", " + name(strings.TrimPrefix(order, "-")) + " largest or newest first"
 	}
-	return ", by " + order
+	return ", by " + name(order)
 }
 
 // fieldsOf is the chosen fields of a record as label and value, a ref by
