@@ -18,14 +18,17 @@
   },
   "a11y": {
     "role": "status for info and success, alert for warning and danger",
-    "keyboard": [],
+    "keyboard": [
+      { "key": "Tab", "does": "Focuses the close button when dismiss is enabled" },
+      { "key": "Enter or Space", "does": "Activates the close button, dismissing the alert" }
+    ],
     "states": [],
     "wcag": { "target": "AAA", "notes": "Kind is conveyed by colour and optionally an icon prop (1.4.1). Warning and danger use role=alert so assistive tech announces them when inserted live." }
   },
   "machine": {
     "selector": "[data-component=\"alert\"]",
     "identify": "Read data-kind for the severity and the text content for the message.",
-    "operate": "Not interactive. Errors from the system are surfaced here; read them before retrying."
+    "operate": "Interactive when dismiss is enabled: a close button (×) appears in the top-right corner. Tab to it, press Enter or Space to dismiss the alert."
   },
   "examples": [
     { "name": "default", "props": { "message": "Saved." }, "file": "examples/default.html" },

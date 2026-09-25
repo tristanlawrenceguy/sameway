@@ -3,7 +3,6 @@ package render_test
 import (
 	"encoding/json"
 	"fmt"
-	"regexp"
 	"strings"
 	"testing"
 
@@ -137,72 +136,95 @@ func TestAlertIconIsHTMLEscaped(t *testing.T) {
 	}
 }
 
-// TestAlertIconCSSRuleExists asserts that the alert component's compiled CSS
-// contains a .sw-alert__icon rule block. Acceptance item 1.
-func TestAlertIconCSSRuleExists(t *testing.T) {
-	reg := builtins(t)
-	c, ok := reg.Get("alert")
-	if !ok {
-		t.Fatal("alert component not found in registry")
+// TestAlertKeyboard verifies keyboard accessibility and ARIA attributes of the
+// alert component. It renders two variants — with dismiss enabled
+// and without — then asserts on focusability, role, aria-live. Acceptance items
+// 2–4. Manifest documentation checks are in alert_doc_test.go.
+func TestAlertKeyboard(t *testing.T) {
+	reg := render.New()
+	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
+		t.Fatal(err)
 	}
 
-	ruleRe := regexp.MustCompile(`(?s)\.sw-alert__icon\s*\{([^}]*)\}`)
-	matches := ruleRe.FindStringSubmatch(c.CSS)
-	if len(matches) < 2 {
-		t.Fatal("alert: could not find .sw-alert__icon rule block in CSS")
+	// --- Render A: dismiss enabled (success kind → role="status") ---
+
+	got, err := reg.Render("alert", map[string]any{
+		"kind":    "success",
+		"message": "Changes saved",
+		"dismiss": true,
+	})
+	if err != nil {
+		t.Fatalf("render alert with dismiss: %v", err)
 	}
 
-	ruleBody := matches[1]
+	out := string(got)
 
-	fsRe := regexp.MustCompile(`font-size\s*:\s*(var\(--sw-size-text-[^)]+\))`)
-	if !fsRe.MatchString(ruleBody) {
-		t.Errorf("alert: .sw-alert__icon has no font-size using --sw-size-text-* token; got %q", fsRe.FindStringSubmatch(ruleBody))
+	// 1. The close button exists (Acceptance item 2).
+	if !strings.Contains(out, `sw-alert__close`) {
+		t.Errorf("alert with dismiss=true should render .sw-alert__close;\ngot:\n%s", out)
+		return
 	}
 
-	mrRe := regexp.MustCompile(`margin-right\s*:\s*(var\(--sw-space-[^)]+\))`)
-	if !mrRe.MatchString(ruleBody) {
-		t.Errorf("alert: .sw-alert__icon has no margin-right using --sw-space-* token; got %q", mrRe.FindStringSubmatch(ruleBody))
-	}
-}
-
-// TestAlertIconFontSizeToken asserts the CSS file content includes
-// `font-size: var(--sw-size-text-`. Acceptance item 2.
-func TestAlertIconFontSizeToken(t *testing.T) {
-	reg := builtins(t)
-	c, ok := reg.Get("alert")
-	if !ok {
-		t.Fatal("alert component not found in registry")
+	doc, err := htmltest.Parse(out)
+	if err != nil {
+		t.Fatalf("parse: %v", err)
 	}
 
-	ruleRe := regexp.MustCompile(`(?s)\.sw-alert__icon\s*\{([^}]*)\}`)
-	matches := ruleRe.FindStringSubmatch(c.CSS)
-	if len(matches) < 2 {
-		t.Fatal("alert: could not find .sw-alert__icon rule block in CSS")
+	// 2. The close button is focusable — native <button> without tabindex="-1"
+	//    is always in the tab order (Acceptance item 2).
+	closeBtns := doc.WithAttr("class", "sw-alert__close")
+	if len(closeBtns) == 0 {
+		t.Error("no element with class sw-alert__close found in parsed HTML")
+	} else {
+		btn := closeBtns[0]
+		if !htmltest.Focusable(btn) {
+			t.Errorf("close button is not focusable (Tab should reach it);\nnode: %#v", btn)
+		}
 	}
 
-	ruleBody := matches[1]
-	if !strings.Contains(ruleBody, "font-size: var(--sw-size-text-") {
-		t.Errorf("alert: .sw-alert__icon font-size does not use --sw-size-text-* token; got %q", ruleBody)
-	}
-}
-
-// TestAlertIconMarginRightToken asserts the CSS file content includes
-// `margin-right: var(--sw-space-`. Acceptance item 3.
-func TestAlertIconMarginRightToken(t *testing.T) {
-	reg := builtins(t)
-	c, ok := reg.Get("alert")
-	if !ok {
-		t.Fatal("alert component not found in registry")
+	if strings.Contains(out, `tabindex="-1"`) {
+		t.Errorf("alert with dismiss must not use tabindex=\"-1\" (blocks keyboard focus);\ngot:\n%s", out)
 	}
 
-	ruleRe := regexp.MustCompile(`(?s)\.sw-alert__icon\s*\{([^}]*)\}`)
-	matches := ruleRe.FindStringSubmatch(c.CSS)
-	if len(matches) < 2 {
-		t.Fatal("alert: could not find .sw-alert__icon rule block in CSS")
+	// 3. The root div has role="status" for success kind (Acceptance item 4).
+	rootEls := doc.WithAttr("data-component", "alert")
+	if len(rootEls) == 0 {
+		t.Error("no element with data-component=\"alert\" found in parsed HTML")
+	} else {
+		root := rootEls[0]
+		role, hasRole := htmltest.Attr(root, "role")
+		if !hasRole || role != "status" {
+			t.Errorf("alert success should have role=\"status\"; got %q (attr present: %v)", role, hasRole)
+		}
+
+		// 4. The root div has aria-live="polite" for screen-reader announcement
+		//    (Acceptance item 4).
+		ariaLive, hasAria := htmltest.Attr(root, "aria-live")
+		if !hasAria {
+			t.Error("alert root should have aria-live attribute (screen reader announcement);\ngot:\n" + out)
+		} else if ariaLive != "polite" {
+			t.Errorf("alert role=\"status\" should have aria-live=\"polite\"; got %q", ariaLive)
+		}
 	}
 
-	ruleBody := matches[1]
-	if !strings.Contains(ruleBody, "margin-right: var(--sw-space-") {
-		t.Errorf("alert: .sw-alert__icon margin-right does not use --sw-space-* token; got %q", ruleBody)
+	// --- Render B: dismiss not set (info kind, no close button) ---
+
+	got2, err := reg.Render("alert", map[string]any{
+		"kind":    "info",
+		"message": "No changes.",
+	})
+	if err != nil {
+		t.Fatalf("render alert without dismiss: %v", err)
+	}
+
+	out2 := string(got2)
+
+	// 5. No close button appears when dismiss is not set (Acceptance item 3).
+	if strings.Contains(out2, "sw-alert__close") {
+		t.Errorf("alert without dismiss must NOT render .sw-alert__close;\ngot:\n%s", out2)
+	}
+
+	if strings.Contains(out2, `data-dismiss`) {
+		t.Errorf("alert without dismiss must NOT have data-dismiss attribute;\ngot:\n%s", out2)
 	}
 }
