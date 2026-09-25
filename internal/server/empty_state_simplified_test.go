@@ -87,36 +87,16 @@ func TestListPageEmptyStateForTasks(t *testing.T) {
 	}
 }
 
-// TestCanvasEmptyStateHasHeading checks that the canvas home page empty state
-// shows "Nothing here yet" as its heading. Acceptance 1: every list page's
-// empty state heading starts with "No [type] yet" or equivalent. Covers
-// acceptance item 1 for the canvas surface.
-func TestCanvasEmptyStateHasHeading(t *testing.T) {
+// TestTheHomePageHasOneEmptyState: a home page with only the conversation
+// says so once, in the conversation, right above the box to type in.
+func TestTheHomePageHasOneEmptyState(t *testing.T) {
 	_, h := newApp(t)
-
-	rec := get(t, h, "/")
-	wantStatus(t, rec, http.StatusOK)
-	body := rec.Body.String()
-
-	if !strings.Contains(body, `<h2 class="sw-empty__title">Nothing here yet</h2>`) {
-		t.Errorf("empty canvas should have an h2 heading 'Nothing here yet'\n%s", truncate(body))
+	body := get(t, h, "/").Body.String()
+	if n := strings.Count(body, `data-component="empty"`); n != 1 {
+		t.Errorf("the home page should have one empty state, got %d: %s", n, truncate(body))
 	}
-}
-
-// TestCanvasEmptyStateHasActionPrompt checks that the canvas empty state has a
-// link to /chat and short action text. Acceptance 3-4 for the canvas surface.
-func TestCanvasEmptyStateHasActionPrompt(t *testing.T) {
-	_, h := newApp(t)
-
-	rec := get(t, h, "/")
-	wantStatus(t, rec, http.StatusOK)
-	body := rec.Body.String()
-
-	if !strings.Contains(body, `data-component="empty"`) {
-		t.Error("empty canvas should use the sw-empty paragraph")
-	}
-	if !strings.Contains(body, `href="/chat?prompt=`) {
-		t.Error("empty canvas must link to /chat with a prompt parameter")
+	if !strings.Contains(body, "Ask for anything.") {
+		t.Errorf("the conversation should say Ask for anything")
 	}
 }
 
@@ -224,13 +204,6 @@ func TestEmptyStateHeadingIsShort(t *testing.T) {
 	body := rec.Body.String()
 	if !strings.Contains(body, `<h2 class="sw-empty__title">No notes yet</h2>`) {
 		t.Errorf("heading for notes should be 'No note yet' (≤4 words)\n%s", truncate(body))
-	}
-
-	rec = get(t, h, "/")
-	wantStatus(t, rec, http.StatusOK)
-	body = rec.Body.String()
-	if !strings.Contains(body, `<h2 class="sw-empty__title">Nothing here yet</h2>`) {
-		t.Errorf("heading for canvas should be 'Nothing here yet' (≤4 words)\n%s", truncate(body))
 	}
 
 	rec = get(t, h, "/activity")

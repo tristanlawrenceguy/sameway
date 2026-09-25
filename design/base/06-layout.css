@@ -114,6 +114,11 @@ ol.sw-plain, ul.sw-plain { list-style: none; margin: 0; padding: 0; }
 .sw-canvas--strip { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sw-space-3); width: 100%; }
 .sw-canvas--strip > .sw-block { flex: 0 1 auto; padding: var(--sw-space-1); background: none; border-color: transparent; box-shadow: none; }
 .sw-canvas--strip > .sw-block > .sw-bar { position: static; }
+/* In a bar a block's own controls sit beside it on its line, not on a
+   line under it: at rest they are faded out, and a line of their own was
+   an empty band across a phone's header. */
+.sw-canvas--strip > .sw-block { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sw-space-1); }
+.sw-canvas--strip > .sw-block > :not(.sw-bar) { flex: 1 1 auto; min-width: 0; }
 
 /* Sizes: full is the whole thing; compact is the same in less room; icon
    is a glyph with the block's name, opening the whole thing on its own

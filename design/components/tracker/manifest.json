@@ -18,6 +18,7 @@
         "aim": { "type": "string", "enum": ["reach", "limit", "record"], "description": "reach is at least the target; limit is at most, and past it is over; record has no target and no bar." },
         "dated": { "type": "boolean", "description": "Log offers a day to log for, for something done before today, written as a person would: yesterday, 22 Sep, 2026-09-22. Empty is now. The habit's own page sets it." },
         "on": { "type": "string", "description": "With dated: the day filled in, as YYYY-MM-DD, such as the day a calendar's day view shows." },
+        "log": { "type": "string", "description": "For a record: the amount Log starts at, the last reading, so the same again is one press. Anything else starts empty, and Log with nothing typed logs one." },
         "amount": { "type": "number", "description": "This period so far." }, "target": { "type": "number" },
         "progress": { "type": "string", "description": "In words: 3 of 8 glasses, done, not yet." }, "pct": { "type": "integer", "description": "This period against the target, 0 to 100." },
         "met": { "type": "boolean" }, "streak": { "type": "integer" }, "streakWords": { "type": "string" }, "best": { "type": "integer" },
@@ -52,7 +53,7 @@
       { "id": "h5", "name": "Eating out", "href": "/t/habit/h5", "unit": "€", "period": "week", "aim": "limit", "amount": 64, "target": 50, "progress": "64 of 50 €, 14 over", "pct": 100, "met": false, "streak": 0, "streakWords": "", "best": 3, "last": [{ "date": "2026-09-14", "met": true, "words": "35 €, within the limit", "logged": true }, { "date": "2026-09-21", "met": false, "words": "64 €, over the limit", "logged": true }] }
     ] }, "file": "examples/limit.html" },
     { "name": "record", "props": { "label": "Measures", "habits": [
-      { "id": "h6", "name": "Weight", "href": "/t/habit/h6", "unit": "kg", "period": "day", "aim": "record", "amount": 72.8, "target": 0, "progress": "72.8 kg", "pct": 0, "met": false, "last": [{ "date": "2026-09-20", "met": false, "words": "73.1 kg", "logged": true }, { "date": "2026-09-21", "met": false, "words": "nothing logged" }, { "date": "2026-09-22", "met": false, "words": "72.8 kg", "logged": true }] }
+      { "id": "h6", "name": "Weight", "href": "/t/habit/h6", "unit": "kg", "period": "day", "aim": "record", "log": "72.8", "amount": 72.8, "target": 0, "progress": "72.8 kg", "pct": 0, "met": false, "last": [{ "date": "2026-09-20", "met": false, "words": "73.1 kg", "logged": true }, { "date": "2026-09-21", "met": false, "words": "nothing logged" }, { "date": "2026-09-22", "met": false, "words": "72.8 kg", "logged": true }] }
     ] }, "file": "examples/record.html" },
     { "name": "glance", "props": { "detail": "glance", "label": "Today", "habits": [
       { "id": "h1", "name": "Stretch", "met": true, "period": "day" }, { "id": "h2", "name": "Water", "met": false, "period": "day" }

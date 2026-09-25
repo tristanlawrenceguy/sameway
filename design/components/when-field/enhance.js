@@ -19,6 +19,11 @@
       if (!pick || !words || pick._armed) return;
       pick._armed = true;
       pick.hidden = false;
+      // The picker is drawn as a calendar button: a press anywhere on it
+      // opens the month, not only on its icon.
+      pick.addEventListener("click", function () {
+        try { pick.showPicker(); } catch (e) { /* the browser opens it its own way */ }
+      });
       pick.addEventListener("change", function () {
         if (!pick.value) return;
         var p = pick.value.split("-");
