@@ -72,7 +72,9 @@ const pageSays = (seeded, styleguide) => page.evaluate(([seeded, styleguide]) =>
   }
   // The seeded canvas holds several of one component on purpose, and they
   // share names; there only the live regions are checked.
-  if (seeded) return out;
+  // The styleguide shows each component's examples side by side, so two
+  // pagers or two trails of crumbs repeat their names by design too.
+  if (seeded || styleguide) return out;
   const places = new Map();
   for (const a of document.querySelectorAll("a[href]")) {
     const name = (a.getAttribute("aria-label") || a.textContent).replace(/\s+/g, " ").trim().toLowerCase();
@@ -83,10 +85,7 @@ const pageSays = (seeded, styleguide) => page.evaluate(([seeded, styleguide]) =>
   }
   for (const [name, set] of places) if (set.size > 1) out.push(`links named "${name}" go to ${set.size} places: ${[...set].slice(0, 3).join(", ")} (2.4.9)`);
   // Two headings alike, or two controls of one kind with one name, cannot be
-  // told apart by someone moving by headings or by controls (2.4.6). The
-  // styleguide shows one component's examples side by side, each under its
-  // own heading, so its controls repeat by design.
-  if (styleguide) return out;
+  // told apart by someone moving by headings or by controls (2.4.6).
   const twice = (els, key) => { const seen = new Map(); for (const e of els) { const k = key(e); if (k) seen.set(k, (seen.get(k) || 0) + 1); } return [...seen].filter(([, n]) => n > 1); };
   const text = (e) => (e.getAttribute("aria-label") || (e.labels && e.labels[0] && e.labels[0].textContent) || e.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
   for (const [k, n] of twice(document.querySelectorAll("h1, h2, h3, h4, h5, h6"), (e) => `${e.tagName.toLowerCase()} "${text(e)}"`)) out.push(`${n} headings are ${k} (2.4.6)`);
@@ -103,9 +102,9 @@ async function checkPage(path) {
   const seeded = path.startsWith("/c/") || blockLabel[path];
   // The seeded canvas stacks every example of a component together, so
   // several share a name by design; the styleguide shows examples as they
-  // would sit on a page, own headings and all. Both rules are best
-  // practice, not WCAG, and stay on everywhere else.
-  const skip = seeded ? ["landmark-unique"] : path === "/design" ? ["heading-order"] : [];
+  // would sit on a page, own headings and all, two of a landmark alike.
+  // These rules are best practice, not WCAG, and stay on everywhere else.
+  const skip = seeded ? ["landmark-unique"] : path === "/design" ? ["heading-order", "landmark-unique"] : [];
   // Each mode gets a fresh load: some styles lag a mode switched under a
   // page already drawn. axe passes over anything at opacity 0, so the quiet
   // layer's controls are shown the way hover or focus shows them.
