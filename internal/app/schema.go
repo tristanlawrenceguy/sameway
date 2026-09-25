@@ -57,6 +57,7 @@ func (a *App) AddField(typeName string, f schema.Field) (*schema.Type, error) {
 	if err := a.Store.Migrate(); err != nil {
 		return nil, err
 	}
+	a.Store.StampSchema(t)
 	return t, nil
 }
 
@@ -93,6 +94,7 @@ func (a *App) AddType(t *schema.Type) (*schema.Type, error) {
 	if err := a.Store.Migrate(); err != nil {
 		return nil, err
 	}
+	a.Store.StampSchema(parsed)
 	return parsed, nil
 }
 
