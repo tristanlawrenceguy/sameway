@@ -73,6 +73,9 @@ ol.sw-plain, ul.sw-plain { list-style: none; margin: 0; padding: 0; }
    chrome to fade: a person came here for this one thing. They stay
    visible where the quiet bar puts them. */
 .sw-dl-block > .sw-bar.sw-quiet { --sw-quiet-opacity: 1; }
+/* Always shown, so it cannot float over the text: it takes its own row,
+   at the right, as every always-shown bar does (04-quiet.css). */
+.sw-dl-block > .sw-bar { position: static; width: fit-content; max-width: 100%; margin: var(--sw-space-3) 0 0 auto; box-shadow: none; }
 .sw-dl-block .sw-fields { margin-bottom: var(--sw-space-2); }
 .sw-detail__when { margin: 0 0 var(--sw-space-4); }
 

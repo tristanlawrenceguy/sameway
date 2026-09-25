@@ -12,13 +12,15 @@ import (
 
 // A person who cannot see the reply arrive hears what it says: the chat's
 // status, which screen readers announce, carries the reply's first words.
+// They are read out but not drawn, so the chip stays a few words long.
 func TestTheStatusSaysWhatTheReplySays(t *testing.T) {
 	a, h := newApp(t)
 	a.Chat.Provider, a.Chat.ProviderErr = &scripted{steps: []*llm.Response{{Text: "Your garden list has three things on it."}}}, nil
 	postForm(t, h, "/chat", url.Values{"message": {"what is on my garden list?"}, "from": {"/chat"}})
 	page := get(t, h, "/chat").Body.String()
-	if !strings.Contains(page, "Assistant replied. Your garden list has three things on it.") {
-		t.Errorf("the status says the reply's words; body: %s", truncate(page))
+	want := `<span class="sw-status__text">Assistant replied.</span><span class="sw-status__said sw-visually-hidden"> Your garden list has three things on it.</span>`
+	if !strings.Contains(page, want) {
+		t.Errorf("the chip says Assistant replied, and the reply's words are read out but not drawn; body: %s", truncate(page))
 	}
 }
 

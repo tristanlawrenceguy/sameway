@@ -116,6 +116,9 @@
     var status = document.getElementById(form.getAttribute("data-busy-target"));
     var text = status && status.querySelector(".sw-status__text");
     if (text) text.textContent = message;
+    // The last reply's words, read out after the chip, go with it.
+    var said = status && status.querySelector(".sw-status__said");
+    if (said) said.textContent = "";
   }
 
   // send runs a turn on the page: the one the form asks for, or, with a

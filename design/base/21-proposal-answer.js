@@ -14,6 +14,8 @@
     var status = document.getElementById("chat-status");
     var text = status && (status.querySelector(".sw-status__text") || status);
     if (text) text.textContent = words;
+    var said = status && status.querySelector(".sw-status__said");
+    if (said) said.textContent = "";
   }
 
   function answer(btn) {

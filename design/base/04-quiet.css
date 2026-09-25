@@ -69,6 +69,9 @@
   padding: 0 var(--sw-space-3); border-radius: var(--sw-radius-sm);
   font-size: var(--sw-size-text-sm); text-decoration: none; white-space: nowrap;
 }
+/* The bar is the frame: a quiet button's own light border would draw a
+   box inside a box. */
+.sw-bar .sw-button--quiet { border-color: transparent; }
 .sw-bar .sw-link { display: inline-flex; align-items: center; min-height: var(--sw-size-target); color: var(--sw-color-fg-muted); }
 .sw-bar .sw-link:hover, .sw-bar .sw-button--quiet:hover { background: var(--sw-color-bg-muted); color: var(--sw-color-fg); text-decoration: none; }
 
