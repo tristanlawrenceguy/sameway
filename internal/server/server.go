@@ -296,5 +296,5 @@ func (s *Server) linkTitle(path string) string {
 	if err != nil {
 		return ""
 	}
-	return s.title(t, rec)
+	return trimTitle(s.title(t, rec))
 }
