@@ -129,7 +129,7 @@ func (s *Service) contentType(name string) (*schema.Type, error) {
 // recordTitle is what a record is called: its title field, or its id.
 func recordTitle(t *schema.Type, rec *store.Record) string {
 	if v, ok := rec.Fields[t.Title].(string); ok && strings.TrimSpace(v) != "" {
-		return truncate(v, 60)
+		return trimWords(v, 6)
 	}
 	return rec.ID
 }
