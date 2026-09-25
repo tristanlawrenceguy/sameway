@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/tailnet"
 )
 
@@ -19,16 +19,22 @@ import (
 // runs, so the assistant turning it on (or off) takes effect at once, with
 // no restart. Every step goes to the terminal; while the person is setting
 // it up, the steps also go to the chat, where they can follow the links.
-func joinTailnet(ctx context.Context, out io.Writer, a *app.App, h http.Handler) {
-	n := &tailnetNode{out: out, a: a, h: h, news: make(chan struct{})}
+func joinTailnet(ctx context.Context, out io.Writer, a *app.App, h http.Handler, srv *server.Server) {
+	// Who gets in, and as whom, is the workspace's to say: its owner's own
+	// devices, and the people it has let in.
+	admit := func(ctx context.Context, p tailnet.Peer) (context.Context, string, bool) {
+		return srv.Admit(ctx, p.Login, p.Name, p.Device, p.Owner)
+	}
+	n := &tailnetNode{out: out, a: a, h: h, admit: admit, news: make(chan struct{})}
 	a.Chat.Tailnet = n.wait
 	go n.follow(ctx)
 }
 
 type tailnetNode struct {
-	out io.Writer
-	a   *app.App
-	h   http.Handler
+	out   io.Writer
+	a     *app.App
+	h     http.Handler
+	admit tailnet.Admit
 
 	mu   sync.Mutex
 	last tailnet.Status
@@ -59,7 +65,7 @@ func (n *tailnetNode) follow(ctx context.Context) {
 			if want != "" {
 				node, cancel := context.WithCancel(ctx)
 				stop = cancel
-				if err := tailnet.Start(node, n.a.Workspace.Config.Tailnet, n.h, chat.WithVia, n.say); err != nil {
+				if err := tailnet.Start(node, n.a.Workspace.Config.Tailnet, n.h, n.admit, n.say); err != nil {
 					n.say(tailnet.Status{State: tailnet.Failed, Err: err})
 				}
 			}

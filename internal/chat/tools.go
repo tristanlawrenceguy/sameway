@@ -79,7 +79,7 @@ func (s *Service) Tools() []llm.Tool {
 		updateTool,
 		s.arrangementTool(),
 		settingTool,
-	}, append(append(append(s.recordTools(), s.canvasTools()...), shapeTools()...), s.lookTools()...)...)
+	}, append(append(append(append(s.recordTools(), s.canvasTools()...), shapeTools()...), s.lookTools()...), s.accessTools()...)...)
 }
 
 // runTool executes one tool call.
@@ -171,6 +171,8 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 		return s.acceptAction(context.Background(), args.ID)
 	case "update_sameway":
 		return s.updateSameway(args.Install)
+	case "let_in":
+		return s.letInCall(call.Args)
 	case "set_setting":
 		if r, ask := s.askFirst("set_setting", "", args.Key, args.Value); ask {
 			return r

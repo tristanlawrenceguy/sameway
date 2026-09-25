@@ -29,7 +29,7 @@ func (s *Server) focusPage(w http.ResponseWriter, r *http.Request) {
 		s.fail(w, err)
 		return
 	}
-	convo, err := s.conversation("/canvas/" + rec.ID)
+	convo, err := s.conversationFor(r, "/canvas/"+rec.ID)
 	if err != nil {
 		s.fail(w, err)
 		return

@@ -34,3 +34,6 @@ fields:
   via:
     type: string
     description: The device the change was made from when it was not the machine serving, such as a phone over the tailnet.
+  by:
+    type: string
+    description: Who made the change when it was not the workspace's owner, by name, for someone given access over Tailscale.

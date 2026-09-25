@@ -150,8 +150,29 @@ open a running workspace from anywhere over the person's Tailscale network
 (`tailnet:` in workspace.yaml; the node is embedded with tsnet, its keys kept
 under the user's config folder, never in the workspace). Only devices signed
 in as the node's owner get in, and changes made from one carry its name in
-the activity log (`via`). Later, an optional auth module can sit in front of
-a shared instance without changing this layout.
+the activity log (`via`).
+
+### People and access
+
+Other people reach a workspace the same way: over Tailscale, either on the
+same tailnet (a team's) or with the machine shared to them from the owner's.
+Tailscale says who each visitor is, by login, which is an email; sameway
+says what they may do, by matching that email to a `person` record.
+
+- **Owner**: whoever signed the node in, and anyone on the machine itself.
+  Everything, including settings, the Workspaces page, and answering the
+  assistant's questions.
+- **Edit** (`person.access: edit`): content, the canvas, actions.
+- **View** (`person.access: view`): reading only.
+- Anyone else is refused, and the owner is asked in the chat whether to
+  let them look. No forms: the owner can also tell the assistant ("let Bob
+  edit"), which asks first; taking access away is immediate and not asked.
+
+`access` is a field Sameway keeps: no page, API call or assistant tool
+writes it except through that question, so nobody raises their own level.
+What someone changes is logged under their name and device ("Bob removed
+card Shopping, on pixel-7"). The conversation is one shared chat for now,
+so only the owner sees and uses it; each person's own chat is next.
 
 ## 5. How agents use it
 

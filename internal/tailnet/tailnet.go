@@ -2,8 +2,7 @@
 // network, so a phone or another computer signed in to the same tailnet
 // opens it from anywhere: no port forwarding, nothing public. The node
 // runs inside this program (tsnet); nothing else needs installing on the
-// machine that serves. Only the devices of the person who signed the node
-// in may open it.
+// machine that serves. Who gets in is decided by the workspace; see Admit.
 package tailnet
 
 import (
@@ -34,11 +33,10 @@ type Config struct {
 
 // Start joins the tailnet in the background and serves h there, on HTTPS
 // once the tailnet has certificates turned on and on plain HTTP for
-// anything that is not a browser. Only the devices of the person who
-// signed it in get through, and mark tells each request which device it
-// came from. say is told each step (see Status); serving here never stops
+// anything that is not a browser. admit decides who gets in (nil: only
+// the person who signed it in) and marks each request with who they are. say is told each step (see Status); serving here never stops
 // the workspace serving on this machine. It ends when ctx does.
-func Start(ctx context.Context, cfg Config, h http.Handler, mark func(context.Context, string) context.Context, say func(Status)) error {
+func Start(ctx context.Context, cfg Config, h http.Handler, admit Admit, say func(Status)) error {
 	name := strings.TrimSpace(cfg.Name)
 	if name == "" {
 		return nil
@@ -72,11 +70,11 @@ func Start(ctx context.Context, cfg Config, h http.Handler, mark func(context.Co
 		<-ctx.Done()
 		srv.Close()
 	}()
-	go serve(ctx, srv, h, mark, say)
+	go serve(ctx, srv, h, admit, say)
 	return nil
 }
 
-func serve(ctx context.Context, srv *tsnet.Server, h http.Handler, mark func(context.Context, string) context.Context, say func(Status)) {
+func serve(ctx context.Context, srv *tsnet.Server, h http.Handler, admit Admit, say func(Status)) {
 	st, err := srv.Up(ctx)
 	if err != nil {
 		if ctx.Err() == nil {
@@ -90,7 +88,7 @@ func serve(ctx context.Context, srv *tsnet.Server, h http.Handler, mark func(con
 		say(Status{State: Failed, Err: err})
 		return
 	}
-	h = owner(lc, st.Self, mark, h)
+	h = guard(lc, st.Self, admit, h)
 	plain, err := srv.Listen("tcp", ":80")
 	if err != nil {
 		say(Status{State: Failed, Err: err})
