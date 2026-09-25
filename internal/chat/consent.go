@@ -221,6 +221,10 @@ func (s *Service) runAgreed(call llm.ToolCall) toolResult {
 		return s.Run(context.Background(), args.ID, s.current)
 	case "set_setting":
 		return s.setSetting(args.Key, args.Value)
+	case "let_in":
+		var a letInArgs
+		json.Unmarshal(call.Args, &a)
+		return s.letIn(a)
 	}
 	return s.runTool(call)
 }

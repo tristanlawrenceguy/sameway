@@ -67,7 +67,7 @@ var proposable = map[string]bool{
 	// accepted for good, then run.
 	"accept_action": true,
 	// What cannot be taken back is asked first, by the code: see consent.go.
-	"run_action": true, "set_setting": true,
+	"run_action": true, "set_setting": true, "let_in": true,
 }
 
 func proposableNames() []string {

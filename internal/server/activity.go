@@ -14,7 +14,8 @@ import (
 // record logs a change a person made through a page, with the device it
 // came from when that was not this machine.
 func (s *Server) record(r *http.Request, c chat.Change) string {
-	c.Via = chat.Via(r.Context())
+	v := chat.VisitorOf(r.Context())
+	c.Via, c.By = v.Device, v.Who()
 	return chat.Record(s.app.Store, "human", c)
 }
 

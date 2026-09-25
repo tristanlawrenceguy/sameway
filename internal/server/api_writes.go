@@ -19,6 +19,9 @@ func (s *Server) apiCreate(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
+	if s.keptFromVisitor(w, r, fields) {
+		return
+	}
 	rec, err := s.app.Store.Create(r.PathValue("type"), fields)
 	if err != nil {
 		writeError(w, err)
@@ -36,6 +39,9 @@ func (s *Server) apiUpdate(w http.ResponseWriter, r *http.Request) {
 	fields, err := readBody(r)
 	if err != nil {
 		writeError(w, err)
+		return
+	}
+	if s.keptFromVisitor(w, r, fields) {
 		return
 	}
 	was, err := s.app.Store.Get(r.PathValue("type"), r.PathValue("id"))

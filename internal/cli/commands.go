@@ -48,7 +48,7 @@ func (c *ctx) serveCmd() error {
 		fmt.Fprintf(c.Stdout, "  mcp     http://%s/mcp with Authorization: Bearer <%s>\n", *addr, a.Workspace.Config.MCP.TokenEnv)
 	}
 	all := HandlerFor(a, token, h)
-	joinTailnet(ctx, c.Stdout, a, all)
+	joinTailnet(ctx, c.Stdout, a, all, h)
 	return http.ListenAndServe(*addr, all)
 }
 

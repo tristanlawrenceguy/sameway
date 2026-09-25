@@ -85,7 +85,7 @@ func (c *ctx) openCmd() error {
 	a.Chat.StartSchedule(ctx)
 	keepSnapshots(ctx, c.Stdout, a)
 	connectDevices(ctx, c.Stdout, a)
-	joinTailnet(ctx, c.Stdout, a, h)
+	joinTailnet(ctx, c.Stdout, a, h, h)
 	if err := srv.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}

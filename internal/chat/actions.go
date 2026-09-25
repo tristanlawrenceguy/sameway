@@ -168,7 +168,7 @@ func (s *Service) actionsDigest() string {
 func (s *Service) RunAs(ctx context.Context, actor, id, canvas string) (text, proposal string, err error) {
 	r := s.Run(ctx, id, canvas)
 	for i := range r.changes {
-		r.changes[i].Via = Via(ctx)
+		r.changes[i].Via, r.changes[i].By = Via(ctx), VisitorOf(ctx).Who()
 		Record(s.Store, actor, r.changes[i])
 	}
 	if r.change != nil {

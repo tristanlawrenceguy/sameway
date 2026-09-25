@@ -28,3 +28,9 @@ fields:
     type: list
     of: string
     description: "Keywords for finding them: client, supplier, family."
+  access:
+    type: enum
+    values: [view, edit]
+    labels: {view: "Can look", edit: "Can edit"}
+    readonly: true
+    description: "What they may do in this workspace when they open it over Tailscale, signed in with the email above: view (read only) or edit (content, the canvas, actions). Empty is no access. Sameway keeps it: it changes only when the owner answers yes to letting someone in."

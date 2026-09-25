@@ -14,16 +14,16 @@ func TestOnlyTheOwnersDevicesGetIn(t *testing.T) {
 	mine := &tailcfg.Node{User: me}
 	theirs := &tailcfg.Node{User: them}
 	server := &tailcfg.Node{User: me, Tags: []string{"tag:server"}}
-	if !admit(me, false, mine) {
+	if !ownersDevice(me, false, mine) {
 		t.Error("the owner's own device should get in")
 	}
-	if admit(me, false, theirs) {
+	if ownersDevice(me, false, theirs) {
 		t.Error("another person's device should not get in")
 	}
-	if admit(me, false, server) {
+	if ownersDevice(me, false, server) {
 		t.Error("a tagged device is nobody's own and should not get in")
 	}
-	if !admit(me, true, theirs) {
+	if !ownersDevice(me, true, theirs) {
 		t.Error("a tagged node should leave who gets in to the tailnet's rules")
 	}
 }

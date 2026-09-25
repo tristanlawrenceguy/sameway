@@ -31,6 +31,9 @@ type Change struct {
 	// Via is the device the change was made from when it was not this
 	// machine, such as a phone over the tailnet.
 	Via string `json:"via,omitempty"`
+	// By is the person who made it when that was not the owner, by name,
+	// so the log says "Bob removed" rather than "You removed".
+	By string `json:"by,omitempty"`
 	// Before is the thing as it was before the change, kept in the log so
 	// the change can be undone. It is not part of a receipt.
 	Before map[string]any `json:"-"`
@@ -60,6 +63,7 @@ func Record(st *store.Store, actor string, c Change) string {
 		"detail":    c.Detail,
 		"undoes":    c.Undoes,
 		"via":       c.Via,
+		"by":        c.By,
 	}
 	if c.Before != nil {
 		fields["before"] = c.Before
@@ -82,6 +86,9 @@ func summarise(actor string, c Change) string {
 	who := map[string]string{"human": "You", "assistant": "Assistant", "system": "System"}[actor]
 	if who == "" {
 		who = actor
+	}
+	if actor == "human" && c.By != "" {
+		who = c.By
 	}
 	if c.Undone != "" {
 		if c.Redid {

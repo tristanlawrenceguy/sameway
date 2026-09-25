@@ -34,7 +34,7 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	blocks = chat.OnCanvas(blocks, canvas)
-	convo, err := s.conversation(chat.CanvasPath(canvas))
+	convo, err := s.conversationFor(r, chat.CanvasPath(canvas))
 	if err != nil {
 		s.fail(w, err)
 		return

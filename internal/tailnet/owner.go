@@ -10,33 +10,63 @@ import (
 	"tailscale.com/tailcfg"
 )
 
-// refused is what a device that is not the owner's is told.
+// refused is what a device is told when nobody decides otherwise.
 const refused = "This workspace opens only on devices signed in to Tailscale as the person who put it there.\n"
 
-// owner lets in the devices of the person who signed this node in, and
-// marks each request with the device's name so what it changes says where
-// it came from. A node signed in with a tagged auth key belongs to no
-// person, so who gets in is left to the tailnet's access rules.
-func owner(lc *local.Client, self *ipnstate.PeerStatus, mark func(context.Context, string) context.Context, h http.Handler) http.Handler {
+// Peer is who is at the other end of a request over the tailnet, as
+// Tailscale knows them: their login (an email), the name they go by, the
+// device, and whether they are the person who signed this node in.
+type Peer struct {
+	Login  string
+	Name   string
+	Device string
+	Owner  bool
+}
+
+// Admit decides whether a peer gets in. It answers the request's context
+// marked with who they are, or what to tell them when they do not. Nil
+// lets in the owner alone.
+type Admit func(ctx context.Context, p Peer) (context.Context, string, bool)
+
+// guard asks Tailscale who each request comes from and lets Admit decide.
+// A node signed in with a tagged auth key belongs to no person, so there
+// everyone the tailnet's access rules let through counts as its owner.
+func guard(lc *local.Client, self *ipnstate.PeerStatus, admit Admit, h http.Handler) http.Handler {
 	tagged := self.Tags != nil && self.Tags.Len() > 0
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		who, err := lc.WhoIs(r.Context(), r.RemoteAddr)
-		if err != nil || who.Node == nil || !admit(self.UserID, tagged, who.Node) {
+		if err != nil || who.Node == nil {
 			http.Error(w, refused, http.StatusForbidden)
 			return
 		}
-		if mark != nil {
-			r = r.WithContext(mark(r.Context(), deviceName(who.Node)))
+		p := Peer{Device: deviceName(who.Node), Owner: ownersDevice(self.UserID, tagged, who.Node)}
+		if who.UserProfile != nil && !who.Node.IsTagged() {
+			p.Login, p.Name = who.UserProfile.LoginName, who.UserProfile.DisplayName
 		}
-		h.ServeHTTP(w, r)
+		if admit == nil {
+			if !p.Owner {
+				http.Error(w, refused, http.StatusForbidden)
+				return
+			}
+			h.ServeHTTP(w, r)
+			return
+		}
+		ctx, say, ok := admit(r.Context(), p)
+		if !ok {
+			if say == "" {
+				say = refused
+			}
+			http.Error(w, say, http.StatusForbidden)
+			return
+		}
+		h.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
-// admit says whether a device on the tailnet may open the workspace: one
-// signed in as the same person as this node, or any the tailnet lets
-// through when this node belongs to no person. A tagged device is never
-// the person's own.
-func admit(me tailcfg.UserID, tagged bool, peer *tailcfg.Node) bool {
+// ownersDevice says whether a device is the owner's own: signed in as the same
+// person as this node, or any the tailnet lets through when this node
+// belongs to no person. A tagged device is never a person's.
+func ownersDevice(me tailcfg.UserID, tagged bool, peer *tailcfg.Node) bool {
 	if tagged {
 		return true
 	}
