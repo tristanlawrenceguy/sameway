@@ -123,3 +123,71 @@ func TestAlertManifestWCAGNotesMentionIconProp(t *testing.T) {
 		t.Errorf("a11y.wcag.target is %q; want \"AAA\"", a11y.WCAG.Target)
 	}
 }
+
+// TestAlertManifestOperateDocumentsDismiss verifies that machine.operate
+// mentions the close button / dismiss interaction. It must NOT say "Not
+// interactive". Acceptance item 5.
+func TestAlertManifestOperateDocumentsDismiss(t *testing.T) {
+	reg := render.New()
+	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
+		t.Fatal(err)
+	}
+	alert, ok := reg.Get("alert")
+	if !ok {
+		t.Fatal("no alert component registered")
+	}
+
+	var machine struct{ Operate string }
+	if err := json.Unmarshal(alert.Manifest.Machine, &machine); err != nil {
+		t.Fatalf("parse machine: %v", err)
+	}
+
+	if strings.Contains(machine.Operate, "Not interactive") {
+		t.Errorf("machine.operate must document the close button; got:\n%s\n", machine.Operate)
+		return
+	}
+
+	lower := strings.ToLower(machine.Operate)
+	if !strings.Contains(lower, "close") && !strings.Contains(lower, "dismiss") {
+		t.Errorf("machine.operate should mention \"close\" or \"dismiss\";\ngot:\n%s\n", machine.Operate)
+	}
+}
+
+// TestAlertManifestKeyboardDocumentsEnterSpace verifies that a11y.keyboard has
+// entries documenting Enter/Space activation of the close button. Acceptance
+// item 6.
+func TestAlertManifestKeyboardDocumentsEnterSpace(t *testing.T) {
+	reg := render.New()
+	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
+		t.Fatal(err)
+	}
+	alert, ok := reg.Get("alert")
+	if !ok {
+		t.Fatal("no alert component registered")
+	}
+
+	var a11y struct {
+		Keyboard []struct{ Key, Does string } `json:"keyboard"`
+	}
+	if err := json.Unmarshal(alert.Manifest.A11y, &a11y); err != nil {
+		t.Fatalf("parse a11y: %v", err)
+	}
+
+	if len(a11y.Keyboard) == 0 {
+		t.Error("a11y.keyboard must not be empty when alert has a close button")
+		return
+	}
+
+	hasEnterSpace := false
+	for _, k := range a11y.Keyboard {
+		lowerKey := strings.ToLower(k.Key)
+		if strings.Contains(lowerKey, "enter") || strings.Contains(lowerKey, "space") {
+			hasEnterSpace = true
+			break
+		}
+	}
+
+	if !hasEnterSpace {
+		t.Errorf("a11y.keyboard must document Enter/Space activation of the close button;\ngot:\n%+v", a11y.Keyboard)
+	}
+}
