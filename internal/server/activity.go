@@ -15,7 +15,10 @@ import (
 // came from when that was not this machine.
 func (s *Server) record(r *http.Request, c chat.Change) string {
 	v := chat.VisitorOf(r.Context())
-	c.Via, c.By = v.Device, v.Who()
+	c.Via, c.By, c.ByLogin = v.Device, v.Who(), v.Login
+	if c.ByLogin == "" && v.Owner() {
+		c.ByLogin = s.app.Chat.Owner.Login
+	}
 	return chat.Record(s.app.Store, "human", c)
 }
 
@@ -24,6 +27,11 @@ func (s *Server) record(r *http.Request, c chat.Change) string {
 // readable heading text like "You said hello" instead of an empty h3.
 func (s *Server) headingSummary(r *store.Record) string {
 	if s2, _ := r.Fields["summary"].(string); s2 != "" {
+		// Written as "You" on the computer where it was done; someone
+		// else's, here, reads as theirs.
+		if who, _ := s.whoDid(r); who != "" && strings.HasPrefix(s2, "You ") {
+			s2 = who + s2[3:]
+		}
 		return template.HTMLEscapeString(s2)
 	}
 	actor, _ := r.Fields["actor"].(string)
@@ -116,6 +124,9 @@ func (s *Server) event(r *store.Record, from string) template.HTML {
 		"action": r.Fields["action"],
 		"time":   r.CreatedAt.Local().Format("15:04"),
 		"id":     "activity-" + r.ID,
+	}
+	if who, person := s.whoDid(r); who != "" {
+		props["who"], props["person"] = who, person
 	}
 	if t, _ := r.Fields["target"].(string); t != "" {
 		props["target"] = t
