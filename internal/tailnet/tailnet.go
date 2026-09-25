@@ -25,6 +25,10 @@ type Config struct {
 	// Name is the machine name on the tailnet, which becomes the address:
 	// name: home is https://home.<tailnet>.ts.net. Empty means off.
 	Name string `yaml:"name"`
+	// Peers are the other computers hosting this same workspace, by their
+	// machine name on the tailnet, comma separated: this copy keeps in
+	// step with each. See internal/sync.
+	Peers string `yaml:"peers"`
 	// AuthKeyEnv names the environment variable holding a Tailscale auth
 	// key, for a machine nobody signs in on. Without one, the first start
 	// prints a link to sign in once; the node remembers it after that.
@@ -89,6 +93,7 @@ func serve(ctx context.Context, srv *tsnet.Server, h http.Handler, admit Admit, 
 		return
 	}
 	h = guard(lc, st.Self, admit, h)
+	client := srv.HTTPClient()
 	plain, err := srv.Listen("tcp", ":80")
 	if err != nil {
 		say(Status{State: Failed, Err: err})
@@ -101,12 +106,12 @@ func serve(ctx context.Context, srv *tsnet.Server, h http.Handler, admit Admit, 
 	for said := false; ; said = true {
 		secure, err := srv.ListenTLS("tcp", ":443")
 		if err == nil {
-			say(Status{State: Ready, Link: "https://" + host + "/"})
+			say(Status{State: Ready, Link: "https://" + host + "/", Client: client})
 			run(secure, h, say)
 			return
 		}
 		if !said {
-			say(Status{State: NeedsHTTPS, Link: HTTPSSettings, Host: host})
+			say(Status{State: NeedsHTTPS, Link: HTTPSSettings, Host: host, Client: client})
 		}
 		select {
 		case <-ctx.Done():

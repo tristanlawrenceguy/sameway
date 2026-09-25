@@ -35,6 +35,13 @@ type Store struct {
 	// record as it now is, or nil when it is gone. The content mirror hangs
 	// here, so the files are never a step behind the database.
 	AfterWrite func(typeName, id string, rec *Record)
+	// Local names the types whose records stay on this computer when the
+	// workspace is hosted in more than one place: chats, questions,
+	// programs to run. Everything else is kept the same; see state.go.
+	Local map[string]bool
+
+	origin string
+	clock  hlc
 }
 
 // Open opens (or creates) the database at path and migrates it to match types.
@@ -51,6 +58,10 @@ func Open(path string, types *schema.Set) (*Store, error) {
 	db.SetMaxOpenConns(1)
 	s := &Store{db: db, types: types}
 	if err := s.Migrate(); err != nil {
+		db.Close()
+		return nil, err
+	}
+	if err := s.migrateState(); err != nil {
 		db.Close()
 		return nil, err
 	}

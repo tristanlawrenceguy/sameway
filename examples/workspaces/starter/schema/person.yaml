@@ -30,7 +30,7 @@ fields:
     description: "Keywords for finding them: client, supplier, family."
   access:
     type: enum
-    values: [view, edit]
-    labels: {view: "Can look", edit: "Can edit"}
+    values: [view, edit, host]
+    labels: {view: "Can look", edit: "Can edit", host: "Hosts a copy"}
     readonly: true
-    description: "What they may do in this workspace when they open it over Tailscale, signed in with the email above: view (read only) or edit (content, the canvas, actions). Empty is no access. Sameway keeps it: it changes only when the owner answers yes to letting someone in."
+    description: "What they may do in this workspace when they open it over Tailscale, signed in with the email above: view (read only), edit (content, the canvas, actions), or host (edit, and their own computer keeps a copy of the workspace in step with this one). Empty is no access. Sameway keeps it: it changes only when the owner answers yes to letting someone in."

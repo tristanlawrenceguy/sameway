@@ -180,6 +180,24 @@ Someone who may only look has no assistant. Someone knocking reaches the
 owner the way a reminder does, and letting them in says the one step left
 in Tailscale: sharing the machine with them.
 
+### More than one host
+
+A workspace can be hosted by several computers at once, each with its own
+assistant, model and database, kept the same live. Each copy keeps, beside
+its tables, every shared field with the stamp of its latest write
+(`_state`): a hybrid logical clock that also names the computer. For each
+field the latest stamp wins, so copies that have seen the same stamps hold
+the same records whatever order they arrived in; different fields of one
+record merge, and a deletion is a field an undo can win over. Keeping two
+copies in step is each saying what it has seen from every computer and
+getting back what it has not (`internal/peers`, `POST /sync`), every few
+seconds over the tailnet, with the machines in `tailnet.peers`. Only the
+owner's computers and people with `access: host` may, because a copy can
+change anything. Chats, the assistant's questions, actions, devices, files
+and the log stay on the computer that made them. Open pages follow what
+arrives (`/events`, 20-follow.js). A type or field one copy's schema lacks
+waits in `_state` until it has it.
+
 ## 5. How agents use it
 
 - **CLI**: every command supports `--json`. `sameway describe` prints schema and

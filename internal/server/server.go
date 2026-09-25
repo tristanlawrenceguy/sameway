@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"sync/atomic"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
@@ -29,6 +30,8 @@ type Server struct {
 	model modelState
 	// notify tells a ring beyond the page; see ring.go.
 	notify func(title, text, url string)
+	// changes counts changes arrived from other computers; see sync.go.
+	changes atomic.Int64
 }
 
 // New builds the handler for an app.
@@ -82,6 +85,8 @@ func (s *Server) routes() {
 	m.HandleFunc("POST /clock/{id}/done", s.clockDone)
 	m.HandleFunc("POST /clock/{id}/snooze", s.clockSnooze)
 	m.HandleFunc("GET /clock/stream", s.clockStream)
+	m.HandleFunc("POST /sync", s.syncExchange)
+	m.HandleFunc("GET /events", s.events)
 	m.HandleFunc("GET /workspaces", s.workspacesPage)
 	m.HandleFunc("POST /workspaces/start", s.workspacesStart)
 	m.HandleFunc("GET /workspaces/new", s.workspacesNewPage)

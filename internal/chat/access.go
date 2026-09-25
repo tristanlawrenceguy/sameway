@@ -20,11 +20,11 @@ const PersonType = "person"
 
 var letInTool = llm.Tool{
 	Name:        "let_in",
-	Description: "Give someone access to this workspace from their own devices over Tailscale, or take it away, when the owner asks: \"let Bob edit\", \"Carol can look\", \"stop Bob\". They are matched by the email they sign in to Tailscale with, and reach the workspace once the owner shares this machine with them in Tailscale (or they are on the same tailnet). view reads only; edit changes content and the canvas and presses buttons; none takes access away. Giving access is put to the owner as a question for you, and nothing changes until they say yes; taking it away happens at once.",
+	Description: "Give someone access to this workspace from their own devices over Tailscale, or take it away, when the owner asks: \"let Bob edit\", \"Carol can look\", \"stop Bob\". They are matched by the email they sign in to Tailscale with, and reach the workspace once the owner shares this machine with them in Tailscale (or they are on the same tailnet). view reads only; edit changes content and the canvas and presses buttons; host is edit, and their own computer keeps a full copy of the workspace in step with this one (for when they host it too, with their own assistant); none takes access away. Giving access is put to the owner as a question for you, and nothing changes until they say yes; taking it away happens at once.",
 	Schema: obj(map[string]any{
 		"email":  map[string]any{"type": "string"},
 		"name":   map[string]any{"type": "string"},
-		"access": map[string]any{"type": "string", "enum": []string{View, Edit, "none"}},
+		"access": map[string]any{"type": "string", "enum": []string{View, Edit, Host, "none"}},
 	}, "email", "access"),
 }
 
@@ -57,7 +57,7 @@ func (s *Service) letInCall(raw json.RawMessage) toolResult {
 			return fail("only the workspace's owner can take someone's access away")
 		}
 		return s.letIn(a)
-	case View, Edit:
+	case View, Edit, Host:
 		q := letInQuestion(a)
 		return s.ask(q, map[string]any{"tool": "let_in", "email": a.Email, "name": a.Name, "access": a.Access})
 	}
@@ -71,9 +71,13 @@ func letInQuestion(a letInArgs) question {
 	}
 	can := "read everything here except your conversations with the assistant"
 	ask, yes := "Let "+who+" look at this workspace?", "Yes, let them look"
-	if a.Access == Edit {
+	switch a.Access {
+	case Edit:
 		can = "read and change what is here (notes, records, the canvas) and press its buttons, but not its settings or your conversations with the assistant"
 		ask, yes = "Let "+who+" edit this workspace?", "Yes, let them edit"
+	case Host:
+		can = "keep a full copy of it on their own computer, in step with this one, and change anything in it, including who else may come in. Your conversations with the assistant stay on this computer. Only say yes to someone you trust with all of it"
+		ask, yes = "Let "+who+" host this workspace too?", "Yes, let them host it"
 	}
 	return question{ask,
 		fmt.Sprintf("They would open it from their own devices, signed in to Tailscale as %s, and could %s. You can take it back at any time.", a.Email, can),
@@ -126,6 +130,8 @@ func verb(access string) string {
 		return "look at this workspace"
 	case Edit:
 		return "edit this workspace"
+	case Host:
+		return "host this workspace too"
 	}
 	return "no longer open this workspace"
 }

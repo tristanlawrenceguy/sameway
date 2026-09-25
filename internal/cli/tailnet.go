@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
+	"github.com/tristanlawrenceguy/sameway/internal/peers"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/tailnet"
 )
@@ -28,6 +29,7 @@ func joinTailnet(ctx context.Context, out io.Writer, a *app.App, h http.Handler,
 	n := &tailnetNode{out: out, a: a, h: h, admit: admit, news: make(chan struct{})}
 	a.Chat.Tailnet = n.wait
 	go n.follow(ctx)
+	go n.keepInStep(ctx, srv)
 }
 
 type tailnetNode struct {
@@ -36,9 +38,10 @@ type tailnetNode struct {
 	h     http.Handler
 	admit tailnet.Admit
 
-	mu   sync.Mutex
-	last tailnet.Status
-	news chan struct{} // closed when there is a new step, then replaced
+	mu     sync.Mutex
+	last   tailnet.Status
+	client *http.Client  // reaches the other computers, once on the tailnet
+	news   chan struct{} // closed when there is a new step, then replaced
 	// setup is true from the name changing while the server runs, or a
 	// step the person has to take, until the workspace is ready: the time
 	// the chat hears each step. A workspace that simply starts up on its
@@ -82,6 +85,12 @@ func (n *tailnetNode) follow(ctx context.Context) {
 func (n *tailnetNode) say(s tailnet.Status) {
 	fmt.Fprintf(n.out, "  tailnet %s\n", s)
 	n.mu.Lock()
+	if s.Client != nil {
+		n.client = s.Client
+	}
+	if s.State == tailnet.Off || s.State == tailnet.Failed {
+		n.client = nil
+	}
 	if s.State == tailnet.SignIn || s.State == tailnet.NeedsHTTPS {
 		n.setup = true
 	}
@@ -115,4 +124,52 @@ func (n *tailnetNode) wait(d time.Duration) string {
 		return "Joining Tailscale; the next step will appear in the chat."
 	}
 	return n.last.Words()
+}
+
+// keepInStep keeps this copy of the workspace the same as the copies on the
+// computers named in tailnet.peers, both ways, every few seconds, for as
+// long as the server runs. Pages open here follow what arrives. Records
+// from before there were peers are stamped once, so the first exchange
+// carries them.
+func (n *tailnetNode) keepInStep(ctx context.Context, srv *server.Server) {
+	seeded := false
+	said := map[string]string{}
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(3 * time.Second):
+		}
+		list := peers.Peers(n.a.Workspace.Config.Tailnet.Peers)
+		n.mu.Lock()
+		client := n.client
+		n.mu.Unlock()
+		if client == nil || len(list) == 0 {
+			continue
+		}
+		if !seeded {
+			if err := n.a.Store.Seed(); err != nil {
+				fmt.Fprintf(n.out, "  sync    %v\n", err)
+				continue
+			}
+			seeded = true
+		}
+		for _, p := range list {
+			step, cancel := context.WithTimeout(ctx, 20*time.Second)
+			changed, err := peers.With(step, client, n.a.Store, p)
+			cancel()
+			if changed > 0 {
+				srv.Changed()
+			}
+			// Each peer's state is said when it changes, not every round.
+			now := "in step"
+			if err != nil {
+				now = err.Error()
+			}
+			if said[p] != now {
+				said[p] = now
+				fmt.Fprintf(n.out, "  sync    %s: %s\n", p, now)
+			}
+		}
+	}
 }

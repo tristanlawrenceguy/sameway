@@ -28,7 +28,7 @@ func (s *Server) Admit(ctx context.Context, login, name, device string, owner bo
 	switch {
 	case owner:
 		v.Access = chat.Owner
-	case p != nil && (p.Fields["access"] == chat.View || p.Fields["access"] == chat.Edit):
+	case p != nil && (p.Fields["access"] == chat.View || p.Fields["access"] == chat.Edit || p.Fields["access"] == chat.Host):
 		v.Access, _ = p.Fields["access"].(string)
 	default:
 		// The owner hears of it where they are, the way a reminder rings.
@@ -72,7 +72,7 @@ func (s *Server) allowed(w http.ResponseWriter, r *http.Request) bool {
 	if strings.HasSuffix(r.URL.Path, "/import") || strings.Contains(r.URL.Path, "/import/") {
 		why = "This part of the workspace is its owner's alone."
 	}
-	if why == "" && v.Access != chat.Edit && r.Method != http.MethodGet && r.Method != http.MethodHead {
+	if why == "" && v.Access != chat.Edit && v.Access != chat.Host && r.Method != http.MethodGet && r.Method != http.MethodHead {
 		why = "You can look at this workspace but not change it. Its owner can let you edit."
 	}
 	if why == "" {
