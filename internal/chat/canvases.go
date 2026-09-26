@@ -86,7 +86,7 @@ func (s *Service) canvasTools() []llm.Tool {
 	return []llm.Tool{
 		{Name: "create_canvas", Description: "Add a tab: a new canvas beside Home with blocks of its own. Use it when the person asks for a separate page or tab, or when what they want does not belong with what is already on the canvas. Returns the canvas id, which add_component takes as canvas.",
 			Schema: obj(map[string]any{
-				"name": map[string]any{"type": "string", "description": "The tab's name, in the person's words: Work, Garden, Trip to Rome."},
+				"name": map[string]any{"type": "string", "description": "The tab's name, in the person's words, one or two of them: Work, Garden, Rome."},
 			}, "name")},
 		{Name: "remove_canvas", Description: "Remove a tab and every block on it. Ask first with propose_change; Home cannot be removed.",
 			Schema: obj(map[string]any{
@@ -99,6 +99,13 @@ func (s *Service) createCanvas(name string) toolResult {
 	name = strings.TrimSpace(name)
 	if name == "" {
 		return fail("a canvas needs a name: what the tab is called")
+	}
+	// Two tabs with one name are two links that say the same and go to
+	// different places.
+	for _, c := range s.Canvases() {
+		if strings.EqualFold(c.Name, name) {
+			return fail("there is already a tab called %q (canvas %q); use it, or give this one another name", c.Name, c.ID)
+		}
 	}
 	position := len(s.Canvases())
 	rec, err := s.Store.Create(CanvasType, map[string]any{"name": name, "position": position})

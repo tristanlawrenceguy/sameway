@@ -12,7 +12,7 @@
       "label": { "type": "string", "minLength": 1, "description": "Names the navigation landmark, such as Canvases." },
       "items": {
         "type": "array",
-        "minItems": 1,
+        "minItems": 2,
         "items": {
           "type": "object",
           "additionalProperties": false,

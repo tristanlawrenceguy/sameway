@@ -23,8 +23,11 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 	}
 	// Which tab: Home at /, or a canvas record at /c/<id>.
 	canvas := r.PathValue("canvas")
+	// A tab that is not there gets the site's own page saying so, with the
+	// way on, not a bare not-found line; one the assistant just removed is
+	// never reached, since the turn sends the person Home (chat.go).
 	if !s.app.Chat.HasCanvas(canvas) {
-		http.NotFound(w, r)
+		s.notFoundPage(w, r)
 		return
 	}
 	s.seedChat(canvas)
@@ -79,7 +82,7 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 	opts.Right = s.pane("right", paneLabel("Right pane", right), right, convo)
 	opts.Header = s.strip("header", reg.header, convo)
 	opts.Footer = s.strip("footer", reg.footer, convo)
-	s.page(w, r, "Canvas", template.HTML(b.String()), opts)
+	s.page(w, r, s.tabName(canvas), template.HTML(b.String()), opts)
 }
 
 // blockItem renders one canvas block: the component, its span, its
