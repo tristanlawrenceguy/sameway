@@ -99,7 +99,7 @@ func TestACollectionCanBeATableOrCards(t *testing.T) {
 	page := get(t, h, "/").Body.String()
 	for _, want := range []string{
 		`<th scope="col">Title</th><th scope="col">Due</th><th scope="col">Project</th><th scope="col">Done</th>`,
-		`<th scope="row"><a class="sw-link" href="/t/task/`, `<td>Fri 2 Oct 2026</td><td>Garden</td><td>no</td>`,
+		`<th scope="row"><a class="sw-link" href="/t/task/`, `<td>Fri 2 Oct 2026</td><td><a class="sw-link" href="/t/project/` + garden.ID + `">Garden</a></td><td>no</td>`,
 		`sw-collection__cards`, `<dt>Status</dt><dd>Active</dd>`, `href="/t/project/` + garden.ID + `">Garden</a>`,
 	} {
 		if !strings.Contains(page, want) {

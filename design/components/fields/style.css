@@ -1,11 +1,21 @@
-/* Names on the left, values on the right, a hairline between each pair;
-   one column on a narrow screen, where the names sit above their values. */
-.sw-fields { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0 var(--sw-space-8); margin: 0; max-width: var(--sw-size-measure); }
-.sw-fields dt, .sw-fields dd { padding: var(--sw-space-3) 0; border-top: 1px solid var(--sw-color-border); }
-.sw-fields dt { font-weight: 500; font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); padding-top: calc(var(--sw-space-3) + 0.1em); }
-.sw-fields dd { margin: 0; overflow-wrap: anywhere; }
-.sw-fields > :nth-child(-n + 2) { border-top: 0; }
+/* A row for each fact: its name, then its value, a hairline between rows.
+   The name and value sit side by side while the value keeps most of the
+   row, and the name goes above it as soon as it would not: in a narrow
+   card or on a phone, with no media query (the sidebar wrap). */
+.sw-fields { margin: 0; max-width: var(--sw-size-measure); }
+.sw-fields__row {
+  display: flex; flex-wrap: wrap; align-items: baseline; column-gap: var(--sw-space-8);
+  padding: var(--sw-space-3) 0; border-top: 1px solid var(--sw-color-border);
+}
+.sw-fields__row:first-child { border-top: 0; }
+.sw-fields dt { flex: 1 1 10rem; font-weight: 500; font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); }
+.sw-fields dd { flex: 999 1 0; min-width: 60%; margin: 0; overflow-wrap: anywhere; }
+/* A value's own line breaks are kept: a list's lines, a note's paragraphs. */
+.sw-fields dd:not(.sw-prose) { white-space: pre-line; }
+/* A link alone in its value reaches into its row's padding: a 44px target
+   without overlapping the next row. */
+.sw-fields:not(.sw-fields--compact) dd > .sw-link:only-child::after { inset: calc(-1 * var(--sw-space-3)) calc(-1 * var(--sw-space-2)); }
 /* Compact: inside a card or a row, small and close, with no hairlines. */
-.sw-fields--compact { gap: var(--sw-space-1) var(--sw-space-3); font-size: var(--sw-size-text-sm); }
-.sw-fields--compact dt, .sw-fields--compact dd { padding: 0; border-top: 0; }
-.sw-fields--compact dt { font-size: inherit; font-weight: 600; }
+.sw-fields--compact { font-size: var(--sw-size-text-sm); }
+.sw-fields--compact .sw-fields__row { column-gap: var(--sw-space-3); padding: var(--sw-space-1) 0 0; border-top: 0; }
+.sw-fields--compact dt { flex-basis: 6rem; font-size: inherit; font-weight: 600; }

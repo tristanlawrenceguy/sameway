@@ -134,7 +134,9 @@ func TestDetailPageSwBarStructure(t *testing.T) {
 		t.Fatalf("detail page missing data-block-id wrapper\n%s", truncate(body))
 	}
 
-	blockEnd := strings.Index(body[blockOpen:], "</div>")
+	// The block ends where its editor's template starts; its fields are
+	// rows of their own, so its first </div> is not its end.
+	blockEnd := strings.Index(body[blockOpen:], "<template")
 	if blockEnd < 0 {
 		t.Fatalf("cannot find end of sw-dl-block wrapper\n%s", truncate(body))
 	}
