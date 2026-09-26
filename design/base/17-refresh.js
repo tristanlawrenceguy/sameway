@@ -126,6 +126,15 @@
       // from the old moves between two parts of the page.
       fresh = document.importNode(fresh, true);
       old.after(fresh);
+      // A status keeps its node, taking the fresh words, so the change is
+      // heard: a region put in whole is not read out.
+      fresh.querySelectorAll('[data-component="status"][id]').forEach(function (st) {
+        var have = old.querySelector("#" + st.id);
+        if (!have || !window.swStatus) return;
+        var said = st.querySelector(".sw-status__said");
+        window.swStatus(have, st.getAttribute("data-state"), (st.querySelector(".sw-status__text") || st).textContent, said ? said.textContent.trim() : "");
+        st.replaceWith(have);
+      });
       fresh.querySelectorAll("[data-block-id]").forEach(function (block) {
         var have = old.querySelector('[data-block-id="' + block.getAttribute("data-block-id") + '"]');
         if (!have) return;

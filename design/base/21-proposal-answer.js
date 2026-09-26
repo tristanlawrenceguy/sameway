@@ -10,12 +10,10 @@
 (function () {
   "use strict";
 
-  function say(words) {
-    var status = document.getElementById("chat-status");
-    var text = status && (status.querySelector(".sw-status__text") || status);
-    if (text) text.textContent = words;
-    var said = status && status.querySelector(".sw-status__said");
-    if (said) said.textContent = "";
+  // Its state with its words: a failure is never shown with the tick of
+  // the last success, nor said into a status faded out at rest.
+  function say(words, state) {
+    if (window.swStatus) window.swStatus(document.getElementById("chat-status"), state || "done", words, "");
   }
 
   function answer(btn) {
@@ -28,7 +26,7 @@
         var doc = new DOMParser().parseFromString(r.html, "text/html");
         var outcome = doc.querySelector(".sw-outcome[data-outcome=failed]");
         if (!r.ok || outcome) {
-          say(outcome ? outcome.textContent.replace(/\s+/g, " ").replace("×", "").trim() : "That answer did not go through.");
+          say(outcome ? outcome.textContent.replace(/\s+/g, " ").replace("×", "").trim() : "That answer did not go through.", "error");
           return;
         }
         document.querySelectorAll(".sw-proposal").forEach(function (p) { p.remove(); });
@@ -37,7 +35,7 @@
         var box = document.querySelector("form.sw-compose textarea");
         if (box) box.focus();
       })
-      .catch(function () { say("That answer did not go through."); });
+      .catch(function () { say("That answer did not go through.", "error"); });
   }
 
   // A proposal's two buttons are forms that work on their own; with
