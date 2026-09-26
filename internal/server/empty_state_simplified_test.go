@@ -171,8 +171,10 @@ func TestWorkspacesEmptyStateHasHeading(t *testing.T) {
 	wantStatus(t, rec, http.StatusOK)
 	body := rec.Body.String()
 
-	if !strings.Contains(body, `<h2 class="sw-empty__title">No workspaces yet</h2>`) {
-		t.Errorf("empty other-workspaces should have an h2 heading 'No workspaces yet'\n%s", truncate(body))
+	// This one is a workspace, so the section is there and says only this
+	// one so far, with a link to where another is made, not "below".
+	if !strings.Contains(body, `<h2 id="ws-others">Other workspaces</h2>`) || !strings.Contains(body, "Only this one so far.") || !strings.Contains(body, `href="#new-name"`) || strings.Contains(body, "below") {
+		t.Errorf("empty other-workspaces should be under its heading, say only this one so far, and link to making one\n%s", truncate(body))
 	}
 }
 
@@ -188,7 +190,7 @@ func TestWorkspacesEmptyStateHasActionPrompt(t *testing.T) {
 	if !strings.Contains(body, `data-component="empty"`) {
 		t.Error("empty other-workspaces should use the sw-empty paragraph")
 	}
-	// The new text is "Create one below." — a single short sentence.
+	// The text is "Only this one so far." — a single short sentence.
 	if strings.Contains(body, `class="sw-empty">None yet. Every workspace opened on this machine appears here.`) {
 		t.Error("empty workspaces must not show the old two-sentence description")
 	}
@@ -216,15 +218,15 @@ func TestEmptyStateHeadingIsShort(t *testing.T) {
 	rec = get(t, h, "/search?q=nonexistent")
 	wantStatus(t, rec, http.StatusOK)
 	body = rec.Body.String()
-	if !strings.Contains(body, `<h2 class="sw-empty__title">No results</h2>`) {
-		t.Errorf("heading for search should be 'No results' (≤4 words)\n%s", truncate(body))
+	if !strings.Contains(body, `<h2 class="sw-empty__title">No results</h2>`) || !strings.Contains(body, `<title>No results for nonexistent`) {
+		t.Errorf("heading for search should be 'No results', and the window's title says it with the words\n%s", truncate(body))
 	}
 
 	rec = get(t, h, "/workspaces")
 	wantStatus(t, rec, http.StatusOK)
 	body = rec.Body.String()
-	if !strings.Contains(body, `<h2 class="sw-empty__title">No workspaces yet</h2>`) {
-		t.Errorf("heading for workspaces should be 'No workspaces yet' (≤4 words)\n%s", truncate(body))
+	if !strings.Contains(body, `<h2 id="ws-others">Other workspaces</h2>`) {
+		t.Errorf("heading for workspaces should be 'Other workspaces'\n%s", truncate(body))
 	}
 }
 

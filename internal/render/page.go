@@ -15,7 +15,9 @@ var layout = template.Must(template.New("layout").Funcs(Funcs).Parse(layoutSrc))
 type Page struct {
 	Site  string
 	Title string
-	Lang  string
+	// Said is the window's title when it says more than the heading.
+	Said string
+	Lang string
 	// Controls is "auto" or "visible" and lands on the root element, where
 	// the quiet layer reads it. See design/foundations/quiet.md.
 	Controls string

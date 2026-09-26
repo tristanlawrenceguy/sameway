@@ -150,6 +150,7 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 	p := render.Page{
 		Site:       s.app.Workspace.Config.Name,
 		Title:      title,
+		Said:       opts.Said,
 		Controls:   s.app.Workspace.Config.UI.Controls,
 		Pace:       s.app.Workspace.Config.UI.Pace,
 		Lang:       s.app.Workspace.Config.UI.Language,
@@ -214,7 +215,10 @@ var detailPageExtraScripts = []template.HTML{
 }
 
 type pageOptions struct {
-	QuietTitle   bool
+	QuietTitle bool
+	// Said is the window's title when it says more than the heading: the
+	// outcome of a search, heard first when the page arrives.
+	Said         string
 	Shell        string
 	Kicker       template.HTML
 	Lede         template.HTML
