@@ -9,7 +9,8 @@
 .sw-upload__hint { margin: 0; }
 /* A problem, in words above the field, with a bar at the edge: not colour alone. */
 .sw-upload__error { margin: 0; color: var(--sw-color-danger); font-weight: 600; }
-.sw-upload__error:empty { display: none; }
+/* Empty, it takes no room but stays, so what it says later is heard. */
+.sw-upload__error:empty { margin: 0; }
 .sw-upload__pick:has(.sw-upload__field[aria-invalid="true"]) { border-inline-start: var(--sw-focus-width) solid var(--sw-color-danger); padding-inline-start: var(--sw-space-3); }
 .sw-upload__field { min-height: var(--sw-size-target); max-width: 100%; font: inherit; color: var(--sw-color-fg); }
 .sw-upload__field:focus-visible { outline: var(--sw-focus-width) solid var(--sw-color-focus); outline-offset: var(--sw-focus-offset); }
