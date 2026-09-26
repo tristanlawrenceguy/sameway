@@ -88,7 +88,9 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 	for _, f := range t.Shown() {
 		if f.Type == "enum" {
 			if v, ok := rec.Fields[f.Name].(string); ok && v != "" {
-				parts = append(parts, string(s.component("badge", map[string]any{"label": f.ValueLabel(v), "tone": "info"})))
+				// "High", heard in a row of facts, says nothing without the
+				// field it is: the field is read after it, not shown.
+				parts = append(parts, string(s.component("badge", map[string]any{"label": f.ValueLabel(v), "tone": "info", "context": strings.ToLower(fieldLabel(f))})))
 			}
 			break
 		}
@@ -136,7 +138,9 @@ func (s *Server) dayFact(t *schema.Type, rec *store.Record, done, chip bool) str
 		dayOnly := strings.HasSuffix(v, "T00:00:00Z")
 		past := !done && (!dayOnly && ts.Before(now) || dayOnly && ts.AddDate(0, 0, 1).Before(now))
 		if chip {
-			text, tone := label(f.Name)+" "+when.Text(v), "human"
+			// A day is a fact, not something a person did: info, not the
+			// human tone, which says who did a thing.
+			text, tone := label(f.Name)+" "+when.Text(v), "info"
 			if past {
 				text, tone = "Was "+strings.ToLower(label(f.Name))+" "+when.Text(v), "warning"
 			}

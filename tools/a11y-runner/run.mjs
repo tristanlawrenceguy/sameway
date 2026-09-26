@@ -31,7 +31,9 @@ const PLAIN = new Set(["text", "generic", "paragraph", "listitem", "none"]);
 // The roles an example's accessibility tree holds, outermost first.
 async function rolesOf(page) {
   const snap = await page.locator("#example").ariaSnapshot();
-  return snap.split("\n").map((l) => l.trim().replace(/^- /, "").split(/[\s:"]/)[0]).filter(Boolean);
+  // A line whose name holds a colon ("Error: …") comes back quoted, as YAML
+  // would write it: the quote is not part of the role.
+  return snap.split("\n").map((l) => l.trim().replace(/^- /, "").replace(/^'/, "").split(/[\s:"]/)[0]).filter(Boolean);
 }
 
 const componentsDir = join(root, "design", "components");
