@@ -60,7 +60,7 @@
 [data-dot="6"] { --sw-dot: var(--sw-color-list-6); }
 .sw-nav li[data-dot] .sw-link::before,
 h1.sw-dotted::before,
-.sw-crumbs li.sw-dotted::before,
+.sw-crumbs li.sw-dotted .sw-link::before,
 li.sw-dotted .sw-card__title::before,
 [data-dot] .sw-collection__title::before,
 .sw-rows[data-dot] .sw-row:not(:has(.sw-mark))::before,
@@ -80,8 +80,9 @@ li.sw-dotted .sw-card__title::before,
 .sw-rows[data-dot] .sw-row:not(:has(.sw-mark))::before { margin-left: 0.375rem; margin-right: 0.375rem; }
 [data-dot] .sw-collection__item:not(:has(.sw-mark))::before { align-self: center; }
 h1.sw-dotted::before { width: 1.125rem; height: 1.125rem; margin-right: var(--sw-space-3); vertical-align: 0.02em; }
-.sw-crumbs li.sw-dotted { display: inline-flex; align-items: center; }
-.sw-crumbs li.sw-dotted::before { width: 0.625rem; height: 0.625rem; }
+/* In the way back the dot is on the link, part of what is pressed, and
+   leaves the place before it free for the chevron. */
+.sw-crumbs li.sw-dotted .sw-link::before { width: 0.625rem; height: 0.625rem; }
 /* The rest of the workspace: quieter, after the lists. */
 .sw-nav--more .sw-link { min-height: var(--sw-size-target); padding: 0 var(--sw-space-3); font-weight: 500; color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); }
 .sw-nav--more .sw-link:hover { color: var(--sw-color-fg); }
