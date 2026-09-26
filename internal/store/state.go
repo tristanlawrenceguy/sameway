@@ -293,6 +293,7 @@ func (s *Store) materialize(typeName, id string) error {
 		// field required here and not there) waits in _state.
 		return nil
 	}
-	_, err = s.put(t, id, clean, created, time.Now().UTC())
+	rec, err := s.put(t, id, clean, created, time.Now().UTC())
+	s.synced(t.Name, id, rec, err)
 	return err
 }

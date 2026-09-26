@@ -7,9 +7,9 @@
   margin: 0;
   font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted);
 }
-.sw-present__who { display: inline-flex; align-items: center; gap: var(--sw-space-1); color: var(--sw-color-fg); }
-.sw-present__dot {
+.sw-present__who, .sw-person { display: inline-flex; align-items: center; gap: var(--sw-space-1); color: var(--sw-color-fg); }
+.sw-present__dot, .sw-person__dot {
   flex: none; width: 0.625rem; height: 0.625rem; border-radius: 50%;
   background: var(--sw-actor, var(--sw-color-border-strong));
 }
-@media (forced-colors: active) { .sw-present__dot { background: CanvasText; } }
+@media (forced-colors: active) { .sw-present__dot, .sw-person__dot { background: CanvasText; } }

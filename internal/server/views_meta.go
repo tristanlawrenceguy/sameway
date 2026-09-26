@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"html/template"
 	"strings"
 	"time"
@@ -104,7 +105,10 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 		if f.Type == "ref" {
 			if id, ok := rec.Fields[f.Name].(string); ok && id != "" {
 				if title := s.refTitle(f, id); title != "" {
-					if o.Chips {
+					// Someone it is for: their name, with their colour.
+					if f.To == chat.PersonType {
+						parts = append(parts, s.personChip(fieldLabel(f), id, title))
+					} else if o.Chips {
 						parts = append(parts, string(s.component("badge", map[string]any{"label": title, "tone": "neutral"})))
 					} else {
 						parts = append(parts, `<span class="sw-row__note">`+template.HTMLEscapeString(title)+`</span>`)

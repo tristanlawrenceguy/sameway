@@ -45,6 +45,9 @@ type Store struct {
 	// OnSchema makes this workspace's content type what the other
 	// computers have: added, changed or deleted; see schema_state.go.
 	OnSchema func(sc *Schema) error
+	// AfterSync is told about a record written because of what another
+	// computer sent, after AfterWrite: news from someone else.
+	AfterSync func(typeName, id string, rec *Record)
 
 	origin string
 	clock  hlc
@@ -162,4 +165,23 @@ func NewID() string {
 		panic(err)
 	}
 	return strings.ToLower(base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(b[:]))
+}
+
+// Meta is a note this computer keeps about its copy of the workspace, not
+// shared: what it has already told its owner, for one.
+func (s *Store) Meta(key string) string {
+	var v string
+	s.db.QueryRow(`SELECT value FROM _meta WHERE key = ?`, key).Scan(&v)
+	return v
+}
+
+// SetMeta keeps a note; see Meta.
+func (s *Store) SetMeta(key, value string) {
+	s.db.Exec(`INSERT OR REPLACE INTO _meta (key, value) VALUES (?, ?)`, key, value)
+}
+
+func (s *Store) synced(typeName, id string, rec *Record, err error) {
+	if err == nil && s.AfterSync != nil {
+		s.AfterSync(typeName, id, rec)
+	}
 }
