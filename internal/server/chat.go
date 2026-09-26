@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -13,7 +12,6 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
-	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 //go:embed conversation.html
@@ -109,7 +107,7 @@ func (s *Server) conversationAbout(c *chat.Service, from, about, prompt string) 
 		out.LatestID = id
 		props := map[string]any{
 			"role": m.Fields["role"], "content": m.Fields["content"], "id": id, "from": from,
-			"time": m.CreatedAt.Local().Format("15:04"), "changes": s.undoable(m.Fields["changes"], i == len(msgs)-1),
+			"time": messageTime(m.CreatedAt), "changes": s.undoable(m.Fields["changes"], i == len(msgs)-1),
 		}
 		if fileID, _ := m.Fields["file"].(string); fileID != "" {
 			props["attachment"] = s.attachment(fileID)
@@ -128,8 +126,10 @@ func (s *Server) conversationAbout(c *chat.Service, from, about, prompt string) 
 	if c.IsOwner() {
 		view.Proposals = s.proposals(from)
 	}
-	view.Empty = s.component("empty", map[string]any{"message": "Ask for anything."})
-	compose := map[string]any{"label": "Your message", "name": "message", "rows": 3, "required": true, "hint": "Ask for anything, or ask what something on the page is. Enter sends; Shift+Enter starts a new line."}
+	view.Empty = s.component("empty", map[string]any{"message": "Ask for anything."}) + template.HTML(chatStarts(from))
+	// Enter sends only where its script says so (20-compose-enter.js), and
+	// not on a touch screen, which has no Shift+Enter for a new line.
+	compose := map[string]any{"label": "Your message", "name": "message", "rows": 3, "required": true, "hint": "Ask for anything, or ask what something on the page is."}
 	if prompt != "" {
 		compose["value"] = prompt
 	} else if t, rec, ok := s.aboutOf(about); ok {
@@ -208,38 +208,6 @@ func backTo(from string) string {
 	return "/"
 }
 
-// status summarises the last turn for the live region.
-func (s *Server) status(msgs []*store.Record) template.HTML {
-	props := map[string]any{"id": "chat-status", "message": "Ready.", "state": "idle"}
-	if len(msgs) > 0 {
-		last := msgs[len(msgs)-1]
-		switch last.Fields["role"] {
-		case "error":
-			props["state"], props["message"], props["live"] = "error", "The last request failed. See the message below.", "assertive"
-		case "assistant":
-			n := 0
-			if changes, ok := last.Fields["changes"].([]any); ok {
-				n = len(changes)
-			}
-			props["state"] = "done"
-			switch n {
-			case 0:
-				props["message"] = "Assistant replied."
-			case 1:
-				props["message"] = "Assistant replied and made 1 change to the canvas."
-			default:
-				props["message"] = fmt.Sprintf("Assistant replied and made %d changes to the canvas.", n)
-			}
-			// The reply's first words, read out but not drawn, so a person who
-			// cannot see it arrive hears what it says; the chip stays short.
-			if words, _ := last.Fields["content"].(string); strings.TrimSpace(words) != "" {
-				props["said"] = clipWords(words, 200)
-			}
-		}
-	}
-	return s.component("status", props)
-}
-
 // chatSend handles the compose form, then returns to where it was sent from.
 func (s *Server) chatSend(w http.ResponseWriter, r *http.Request) {
 	// A file sent with the message is filed first, as its own record, and
@@ -287,14 +255,5 @@ func (s *Server) chatClear(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	r.ParseForm()
-	http.Redirect(w, r, backTo(r.PostForm.Get("from")), http.StatusSeeOther)
-}
-
-// clipWords is text on one line, cut at about n characters.
-func clipWords(s string, n int) string {
-	s = strings.Join(strings.Fields(s), " ")
-	if r := []rune(s); len(r) > n {
-		return string(r[:n-1]) + "…"
-	}
-	return s
+	s.tellAt(w, r, outcome{Title: "Conversation cleared", Undo: s.lastAbout("conversation")}, backTo(r.PostForm.Get("from")))
 }
