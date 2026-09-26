@@ -6,6 +6,7 @@ package server_test
 
 import (
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 )
@@ -25,8 +26,9 @@ func TestUploadFormErrorHasNoPleasePrefix(t *testing.T) {
 	}
 
 	// The essential message must still be present.
-	if !strings.Contains(body, "select a file") {
-		t.Errorf("/t/file: inline script should say to select a file;\nbody: %s", truncate(body))
+	// The essential message is the upload component's own, without "Please".
+	if js, _ := os.ReadFile("../../design/components/upload/enhance.js"); !strings.Contains(string(js), "Select a file to add") {
+		t.Error("the upload script should say to select a file")
 	}
 }
 

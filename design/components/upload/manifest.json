@@ -12,7 +12,8 @@
       "label": { "type": "string", "default": "Upload", "description": "The button text." },
       "action": { "type": "string", "default": "/t/file/upload", "description": "Where the file goes." },
       "from": { "type": "string", "description": "The page to return to afterwards; the file's own page when left out." },
-      "id": { "type": "string", "default": "upload", "description": "Id of the field, so the label reaches it." }
+      "id": { "type": "string", "default": "upload", "description": "Id of the field, so the label reaches it." },
+      "hint": { "type": "string", "description": "What files it takes and how big, said before one is chosen. Left out, the kinds Sameway reads and the 64 MB limit."}
     }
   },
   "a11y": {
