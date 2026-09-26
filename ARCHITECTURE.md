@@ -206,6 +206,21 @@ its types what the others have through the same changes a person asks for
 their type wait in `_state` and are written when it comes. The system's
 own types come with the program and do not travel.
 
+### Working together
+
+- **Two versions at once.** Each stamp of a text field says what it was
+  written over. Two edits that were each written without seeing the other
+  keep the later everywhere and the other as a `clash`, which the record's
+  page offers back (use it, or keep the page's). Nothing is lost silently.
+- **Who else is here.** People with a page open, here or on another
+  computer that hosts the workspace (carried in each sync exchange), are
+  named in the header with where they are, only while someone else is.
+- **For someone.** A field pointing at a person (a task's `for`) shows as
+  theirs in their colour; one made out for a computer's owner elsewhere
+  rings them once, and their assistant knows what is for them.
+- **Since you were last here.** Back after half an hour, a person sees what
+  others changed meanwhile, each with its Undo, until they say they have.
+
 ## 5. How agents use it
 
 - **CLI**: every command supports `--json`. `sameway describe` prints schema and

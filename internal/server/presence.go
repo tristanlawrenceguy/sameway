@@ -142,8 +142,9 @@ func (s *Server) placeName(path string) string {
 			return title
 		}
 		parts := strings.Split(strings.TrimPrefix(path, "/t/"), "/")
-		if len(parts) == 1 {
-			return plural(parts[0])
+		if len(parts) == 1 && parts[0] != "" {
+			p := plural(parts[0])
+			return strings.ToUpper(p[:1]) + p[1:]
 		}
 	}
 	return ""
