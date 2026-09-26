@@ -4,4 +4,8 @@
 html[data-text="large"] { font-size: 125%; }
 html[data-text="larger"] { font-size: 150%; }
 html[data-spacing="wide"] body { line-height: 1.8; letter-spacing: 0.12em; word-spacing: 0.16em; }
-html[data-spacing="wide"] p, html[data-spacing="wide"] li { margin-block-end: 1em; }
+/* Paragraphs a line and a half apart at the wide line height (WCAG 1.4.8,
+   by this setting: G188), which is more than 1.4.12's twice the text size;
+   headings take the wide spacing too. */
+html[data-spacing="wide"] p, html[data-spacing="wide"] li { margin-block-end: 2.7em; }
+html[data-spacing="wide"] :is(h1, h2, h3, h4, h5, h6) { letter-spacing: 0.12em; word-spacing: 0.16em; line-height: 1.5; }

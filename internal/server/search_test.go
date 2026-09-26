@@ -18,7 +18,7 @@ func TestOneSearchOverEverything(t *testing.T) {
 	page := get(t, h, "/search?q=plumber")
 	wantStatus(t, page, http.StatusOK)
 	body := page.Body.String()
-	if !strings.Contains(body, "Call the plumber") || strings.Contains(body, "Garden") || !strings.Contains(body, "1 thing found") {
+	if !strings.Contains(body, `Call the <mark class="sw-search__hit">plumber</mark>`) || strings.Contains(body, "Garden") || !strings.Contains(body, "1 thing found") {
 		t.Errorf("the page should show the one hit and say so: %.400s", body)
 	}
 	if !strings.Contains(body, `role="search"`) || !strings.Contains(body, `value="plumber"`) {
@@ -78,8 +78,8 @@ func TestSearchResultLinksIncludeContentTypeInAccessibleName(t *testing.T) {
 	body := page.Body.String()
 
 	// The link for "Call the plumber" should include its content type.
-	if !strings.Contains(body, `Call the plumber`) {
-		t.Error("result link should contain the record title")
+	if !strings.Contains(body, `Call the <mark class="sw-search__hit">plumber</mark>`) {
+		t.Error("result link should contain the record title, the word searched for marked")
 	}
 	if !strings.Contains(body, `<span class="sw-visually-hidden">`) {
 		t.Error("result links should embed the content type in a visually hidden span so screen readers announce it as part of the accessible name")

@@ -41,7 +41,8 @@
     if (!fresh) return;
     status.className = fresh.className;
     status.setAttribute("data-state", fresh.getAttribute("data-state") || "");
-    if (fresh.getAttribute("aria-live")) status.setAttribute("aria-live", fresh.getAttribute("aria-live"));
+    status.setAttribute("aria-live", "polite");
+    clearTimeout(status._still);
     var words = (fresh.querySelector(".sw-status__text") || fresh).textContent.trim();
     // The chip says what happened in a few words; the reply's first words,
     // or what went wrong, are read out after it but not drawn.

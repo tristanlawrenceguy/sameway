@@ -33,7 +33,8 @@ var Skip = map[string]bool{"message": true, "activity": true, "proposal": true, 
 const Limit = 50
 
 // Find looks for every word of q in every record's text fields and every
-// canvas block's props. Every word must appear; case does not matter.
+// canvas block's props. Every word must appear; case and accents do not
+// matter, and a plural finds its one. At most Limit come back.
 func Find(st *store.Store, types *schema.Set, q string) []Hit {
 	return FindOf(st, types, q, "")
 }
@@ -41,7 +42,27 @@ func Find(st *store.Store, types *schema.Set, q string) []Hit {
 // FindOf is Find within one type, when only is named: picking a person
 // from thousands finds people, not the fifty notes that also match.
 func FindOf(st *store.Store, types *schema.Set, q, only string) []Hit {
-	words := strings.Fields(strings.ToLower(strings.TrimSpace(q)))
+	hits := find(st, types, q, only, false)
+	if len(hits) > Limit {
+		hits = hits[:Limit]
+	}
+	return hits
+}
+
+// FindAll is every hit, for the search page, which shows them a page at a
+// time and says how many there are.
+func FindAll(st *store.Store, types *schema.Set, q string) []Hit {
+	return find(st, types, q, "", false)
+}
+
+// FindSome is what has some of the words, when nothing has every one of
+// them: most words matched first.
+func FindSome(st *store.Store, types *schema.Set, q string) []Hit {
+	return find(st, types, q, "", true)
+}
+
+func find(st *store.Store, types *schema.Set, q, only string, some bool) []Hit {
+	words := Words(q)
 	if len(words) == 0 {
 		return nil
 	}
@@ -55,31 +76,33 @@ func FindOf(st *store.Store, types *schema.Set, q, only string) []Hit {
 			continue
 		}
 		for _, rec := range recs {
-			if h, ok := match(t, rec, words); ok {
+			if h, ok := match(t, rec, words, some); ok {
 				hits = append(hits, h)
 			}
 		}
 	}
 	sort.SliceStable(hits, func(i, j int) bool { return hits[i].score > hits[j].score })
-	if len(hits) > Limit {
-		hits = hits[:Limit]
-	}
 	return hits
 }
 
-func match(t *schema.Type, rec *store.Record, words []string) (Hit, bool) {
+func match(t *schema.Type, rec *store.Record, words []string, some bool) (Hit, bool) {
 	title, body := texts(t, rec)
-	lt, lb := strings.ToLower(title), strings.ToLower(body)
-	score := 0
+	lt, lb := fold(title), fold(body)
+	score, found := 0, 0
 	for _, w := range words {
 		switch {
 		case strings.Contains(lt, w):
-			score += 2
+			score, found = score+2, found+1
 		case strings.Contains(lb, w):
-			score++
+			score, found = score+1, found+1
 		default:
-			return Hit{}, false
+			if !some {
+				return Hit{}, false
+			}
 		}
+	}
+	if found == 0 {
+		return Hit{}, false
 	}
 	h := Hit{Type: t.Name, ID: rec.ID, Title: title, Snippet: snippet(body, words), score: score}
 	if t.Name == "block" {
@@ -168,12 +191,11 @@ func snippet(body string, words []string) string {
 	if body == "" {
 		return ""
 	}
+	// Found in the folded text, cut from the text as it is: folding can
+	// change a letter's length, so the places are mapped back, never reused.
 	at := -1
-	lower := strings.ToLower(body)
-	for _, w := range words {
-		if i := strings.Index(lower, w); i >= 0 && (at < 0 || i < at) {
-			at = i
-		}
+	if spans := Spans(body, words); len(spans) > 0 {
+		at = spans[0][0]
 	}
 	start := 0
 	if at > 40 {
