@@ -146,7 +146,8 @@ func Summarise(component string, props map[string]any) string {
 	case "button", "link", "badge", "text-field", "textarea", "select", "checkbox":
 		return pick("label")
 	case "record":
-		recTitle := trimWords(pick("record"), 6)
+		// Its title, once the page has read it; the id where it has not.
+		recTitle := trimWords(pick("title", "record"), 6)
 		return strings.TrimSpace(pick("type") + " " + recTitle)
 	case "calendar":
 		if caption := pick("caption"); caption != "" {

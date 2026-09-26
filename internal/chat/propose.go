@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -59,6 +60,21 @@ func (s *Service) propose(summary string, action map[string]any) toolResult {
 	}
 }
 
+// proposeByModel is propose_change: a question in the model's own words.
+// It asks only about the canvas. What cannot be taken back is asked by
+// Sameway, in words the code writes, when the tool itself is called: a
+// question carrying a setting or a command under a summary the model wrote
+// would be answered for something other than what it said.
+func (s *Service) proposeByModel(summary string, raw json.RawMessage) toolResult {
+	var action map[string]any
+	json.Unmarshal(raw, &action)
+	delete(action, "summary")
+	if tool, _ := action["tool"].(string); !modelProposable[tool] {
+		return fail("propose_change carries only add_component, update_component, remove_component or remove_canvas; for anything else call the tool itself, and Sameway asks the person first when it must")
+	}
+	return s.propose(summary, action)
+}
+
 // proposable are the tools a proposal may carry. Asking to ask, or asking to
 // clear everything, is not a question worth deferring.
 var proposable = map[string]bool{
@@ -69,6 +85,15 @@ var proposable = map[string]bool{
 	// What cannot be taken back is asked first, by the code: see consent.go.
 	"run_action": true, "set_setting": true, "let_in": true, "change_field": true,
 }
+
+// modelProposable are the calls the model may carry in a question of its
+// own wording: changes to the canvas, which are also undoable.
+var modelProposable = map[string]bool{"add_component": true, "update_component": true, "remove_component": true, "remove_canvas": true}
+
+// answering lets one answer at a time through, so a question answered Yes
+// and No at once, or sent twice, is answered once: the second finds it
+// answered, rather than running while the first still runs.
+var answering sync.Mutex
 
 func proposableNames() []string {
 	out := make([]string, 0, len(proposable))
@@ -89,6 +114,8 @@ func sortStrings(s []string) {
 
 // Accept runs a pending proposal and records who agreed to it.
 func (s *Service) Accept(id string) error {
+	answering.Lock()
+	defer answering.Unlock()
 	rec, err := s.Store.Get(ProposalType, id)
 	if err != nil {
 		return err
@@ -128,6 +155,8 @@ func (s *Service) Accept(id string) error {
 
 // Dismiss answers no. Nothing changes except the question going away.
 func (s *Service) Dismiss(id string) error {
+	answering.Lock()
+	defer answering.Unlock()
 	rec, err := s.Store.Get(ProposalType, id)
 	if err != nil {
 		return err

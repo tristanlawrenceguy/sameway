@@ -24,6 +24,9 @@ func (s *Server) proposals(from string) []template.HTML {
 // proposalCard is one question with its two answers, wherever it is shown:
 // under the conversation, or on the proposal's own page. from is the page
 // the person is on, so answering brings them back to it.
+// cannotUndo are the calls a question can carry that cannot be taken back.
+var cannotUndo = map[string]bool{"run_action": true, "accept_action": true, "set_setting": true, "let_in": true, "change_field": true}
+
 func (s *Server) proposalCard(p *store.Record, from string) template.HTML {
 	summary, _ := p.Fields["summary"].(string)
 	props := map[string]any{
@@ -52,6 +55,13 @@ func (s *Server) proposalCard(p *store.Record, from string) template.HTML {
 	}
 	if no, _ := p.Fields["no"].(string); no != "" {
 		props["dismissLabel"] = no
+	}
+	// What it would do cannot be taken back: the question says so, and its
+	// Yes looks like it.
+	if action, _ := p.Fields["action"].(map[string]any); action != nil {
+		if tool, _ := action["tool"].(string); cannotUndo[tool] {
+			props["risk"] = true
+		}
 	}
 	// A third answer, when there is another way: hiding instead of
 	// deleting. It comes first, as the one that keeps everything.
