@@ -25,7 +25,8 @@ func returnTo(r *http.Request, fallback string) string {
 // recordProps receives an inline edit form for a content type record. Fields
 // arrive as prop-<name> values in the POST body. On success it updates the
 // record and redirects back to the page the edit came from; on validation
-// failure it re-renders the detail page with 422 and error messages.
+// failure it goes back there too, with the problems as the outcome, each
+// leading to its field (refused).
 func (s *Server) recordProps(w http.ResponseWriter, r *http.Request) {
 	t, ok := s.app.Types.Get(r.PathValue("type"))
 	if !ok {
@@ -111,8 +112,11 @@ func (s *Server) refused(w http.ResponseWriter, r *http.Request, t *schema.Type,
 			}
 		}
 		sort.Strings(rest)
+		// Listed with the rest, as words with no field to lead to, so none
+		// is lost when the problems show as a list.
 		for _, name := range rest {
-			said = append(said, label(name)+" "+ve.Problems[name]+".")
+			said = append(said, capitalize(label(name))+" is not a field of a "+t.Name+".")
+			problems = append(problems, problem{Text: capitalize(label(name)) + " is not a field of a " + t.Name + "."})
 		}
 	}
 	text := strings.Join(said, " ")
