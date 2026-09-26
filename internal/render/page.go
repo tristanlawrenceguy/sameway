@@ -4,6 +4,7 @@ import (
 	"bytes"
 	_ "embed"
 	"html/template"
+	"strings"
 )
 
 //go:embed layout.html
@@ -100,4 +101,10 @@ func RenderPage(p Page) ([]byte, error) {
 type NavItem struct {
 	HTML template.HTML
 	Dot  int
+}
+
+// Failed is a page that says something went wrong: its window title starts
+// Error:, the first thing a screen reader says when it arrives.
+func (p Page) Failed() bool {
+	return strings.Contains(string(p.Outcome), `data-outcome="failed"`)
 }

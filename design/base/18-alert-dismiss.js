@@ -27,7 +27,8 @@
     if (!outcome) return;
     setTimeout(function () {
       if (document.querySelector(".sw-inline-form")) return;
-      outcome.focus();
+      // Problems with a form are heard as their list, each leading to its field.
+      (outcome.querySelector("[data-component=error-summary]") || outcome).focus();
     }, 50);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();

@@ -105,7 +105,8 @@
         if (edit) setTimeout(function () {
           edit.click();
           var field = document.activeElement;
-          if (field && field.closest(".sw-inline-form")) field.setAttribute("aria-describedby", "outcome");
+          // With a list of problems, each field is told its own instead.
+          if (field && field.closest(".sw-inline-form") && !o.querySelector("[data-component=error-summary]")) field.setAttribute("aria-describedby", "outcome");
           // Each field an error summary names is marked with its problem.
           if (window.swErrorSummary) window.swErrorSummary();
         }, 0);
