@@ -77,16 +77,21 @@ func (s *Server) Public(mcp http.Handler) http.Handler {
 		case strings.HasPrefix(r.URL.Path, "/design/"):
 			s.ServeHTTP(w, r)
 			return
-		}
-		if s.publicAllows(pub, r.URL.Path) {
-			s.ServeHTTP(w, r)
+		case strings.HasPrefix(r.URL.Path, "/files/") && s.publicFile(pub, strings.TrimPrefix(r.URL.Path, "/files/")):
+			s.ServeHTTP(w, r) // a picture on a published page
 			return
 		}
-		if r.URL.Path == "/" {
-			s.publicIndex(w, r, pub)
-			return
-		}
-		s.page(w, r, "Not published", template.HTML(`<p>This page is not published.</p>`), pageOptions{Status: http.StatusNotFound})
+		// Every page is sent as a reader has it; see public_clean.go.
+		s.cleaned(w, r, func(w http.ResponseWriter, r *http.Request) {
+			switch {
+			case s.publicAllows(pub, r.URL.Path):
+				s.ServeHTTP(w, r)
+			case r.URL.Path == "/":
+				s.publicIndex(w, r, pub)
+			default:
+				s.page(w, r, "Not published", template.HTML(`<p>This page is not published.</p>`), pageOptions{Status: http.StatusNotFound})
+			}
+		})
 	})
 }
 
