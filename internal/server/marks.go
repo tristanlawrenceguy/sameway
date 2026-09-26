@@ -1,8 +1,6 @@
 package server
 
 import (
-	"strings"
-
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -16,13 +14,7 @@ func markOf(t *schema.Type, rec *store.Record) (map[string]any, bool) {
 	// doneField handles the primary toggle: done/completed/complete/finished.
 	if f := doneField(t); f != nil {
 		on, _ := rec.Fields[f.Name].(bool)
-		props := map[string]any{"type": t.Name, "record": rec.ID, "field": f.Name, "label": capitalize(label(f.Name)), "checked": on, "context": titleOf(t, rec)}
-		if on {
-			props["ariaLabel"] = props["context"].(string) + " \u2014 " + strings.ToLower(f.Name)
-		} else {
-			props["ariaLabel"] = actionVerb(f.Name) + " " + props["context"].(string)
-		}
-		return props, true
+		return map[string]any{"type": t.Name, "record": rec.ID, "field": f.Name, "label": capitalize(label(f.Name)), "checked": on, "context": titleOf(t, rec)}, true
 	}
 	// For types without a done field, look for a first toggleable bool like
 	// pinned or show — these get checkboxes on detail pages but not in rows.
@@ -33,13 +25,7 @@ func markOf(t *schema.Type, rec *store.Record) (map[string]any, bool) {
 		switch f.Name {
 		case "pinned", "show":
 			on, _ := rec.Fields[f.Name].(bool)
-			props := map[string]any{"type": t.Name, "record": rec.ID, "field": f.Name, "label": capitalize(label(f.Name)), "checked": on, "context": titleOf(t, rec)}
-			if on {
-				props["ariaLabel"] = props["context"].(string) + " \u2014 " + strings.ToLower(f.Name)
-			} else {
-				props["ariaLabel"] = actionVerb(f.Name) + " " + props["context"].(string)
-			}
-			return props, true
+			return map[string]any{"type": t.Name, "record": rec.ID, "field": f.Name, "label": capitalize(label(f.Name)), "checked": on, "context": titleOf(t, rec)}, true
 		}
 	}
 	return nil, false
@@ -59,19 +45,6 @@ func doneField(t *schema.Type) *schema.Field {
 		}
 	}
 	return nil
-}
-
-// actionVerb returns the verb phrase for an unchecked checkbox based on its
-// field name: "done" → "Mark done", "pinned" → "Pin", any other bool → capitalize(field).
-func actionVerb(field string) string {
-	switch field {
-	case "done":
-		return "Mark done"
-	case "pinned":
-		return "Pin"
-	default:
-		return capitalize(strings.ReplaceAll(field, "_", " "))
-	}
 }
 
 // markActions is the mark as the actions list a component's item takes.

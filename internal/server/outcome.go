@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"html/template"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -34,6 +35,9 @@ type outcome struct {
 	// Undo is the activity entry that takes it back, when it can be: the
 	// message carries the Undo, where the person is looking.
 	Undo string `json:"u,omitempty"`
+	// Of is what the Undo takes back, when the text says more than that:
+	// "Undo Tea", not "Undo Tea rings at 19:00".
+	Of string `json:"w,omitempty"`
 	// Problems are what stopped a form, each about one field: the message
 	// is then an error summary, each problem leading to its field.
 	Problems []problem `json:"p,omitempty"`
@@ -58,6 +62,14 @@ func (s *Server) tell(w http.ResponseWriter, r *http.Request, o outcome, fallbac
 func (s *Server) tellAt(w http.ResponseWriter, r *http.Request, o outcome, to string) {
 	if o.For == "" && r.Method == http.MethodPost {
 		o.For = r.URL.Path
+	}
+	// A mark saved by its script stays on its page: the outcome comes back
+	// as the message itself, for the page to show where it is, and nothing
+	// is left in a cookie for the next page to say again (13-mark.js).
+	if r.Header.Get("X-Requested-With") == "sameway-mark" {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		io.WriteString(w, string(s.renderOutcome(o, to)))
+		return
 	}
 	raw, _ := json.Marshal(o)
 	http.SetCookie(w, &http.Cookie{Name: outcomeCookie, Value: base64.RawURLEncoding.EncodeToString(raw),
@@ -110,6 +122,12 @@ func (s *Server) told(w http.ResponseWriter, r *http.Request) template.HTML {
 	if err != nil || json.Unmarshal(raw, &o) != nil || o.Title == "" {
 		return ""
 	}
+	return s.renderOutcome(o, r.URL.RequestURI())
+}
+
+// renderOutcome is an outcome as the page shows it, its Undo returning to
+// from.
+func (s *Server) renderOutcome(o outcome, from string) template.HTML {
 	kind, state := "success", "done"
 	if o.Failed {
 		kind, state = "danger", "failed"
@@ -128,12 +146,15 @@ func (s *Server) told(w http.ResponseWriter, r *http.Request) template.HTML {
 		alert = string(s.component("error-summary", map[string]any{"title": o.Title, "items": items}))
 	}
 	if o.Undo != "" {
-		what := o.Text
+		what := o.Of
+		if what == "" {
+			what = o.Text
+		}
 		if what == "" {
 			what = o.Title
 		}
 		alert += `<form method="post" action="/activity/` + template.HTMLEscapeString(o.Undo) + `/undo" class="sw-outcome__undo">` +
-			`<input type="hidden" name="from" value="` + template.HTMLEscapeString(r.URL.RequestURI()) + `">` +
+			`<input type="hidden" name="from" value="` + template.HTMLEscapeString(from) + `">` +
 			string(s.component("button", map[string]any{"label": "Undo", "context": strings.TrimSuffix(what, "."), "type": "submit", "variant": "secondary"})) + `</form>`
 	}
 	return template.HTML(`<div class="sw-outcome" id="outcome" tabindex="-1" data-outcome="` + state + `" data-outcome-for="` + template.HTMLEscapeString(o.For) + `">` + alert + `</div>`)

@@ -20,7 +20,7 @@ func TestEverythingLeadsSomewhere(t *testing.T) {
 	var note struct{ ID string }
 	decode(t, postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Water the plants"}), &note)
 	detail := get(t, h, "/t/note/"+note.ID).Body.String()
-	if !strings.Contains(detail, `aria-label="You are here"`) || !strings.Contains(detail, `href="/t/note">Notes</a>`) {
+	if !strings.Contains(detail, `aria-label="Breadcrumb"`) || !strings.Contains(detail, `href="/t/note">Notes</a>`) {
 		t.Errorf("the detail page crumb should link to the listing\n%s", detail)
 	}
 

@@ -200,7 +200,7 @@ func TestDetailPageHasCrumbs(t *testing.T) {
 
 	page := get(t, h, "/t/note/"+rec.ID).Body.String()
 
-	if !strings.Contains(page, `aria-label="You are here"`) {
+	if !strings.Contains(page, `aria-label="Breadcrumb"`) {
 		t.Errorf("the detail page crumb should have an aria-label\n%s", truncate(page))
 	}
 
