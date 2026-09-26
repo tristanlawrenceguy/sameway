@@ -10,7 +10,7 @@
   // What is used less waits behind More, so the strip stays one line.
   var GROUPS = [
     [["Heading", "heading"], ["Subheading", "subheading"], ["Text", "paragraph"]],
-    [["B", "bold", "Bold"], ["I", "italic", "Italic"], ["S", "strikeThrough", "Strike"], ["Code", "code"]],
+    [["Bold", "bold"], ["Italic", "italic"], ["Strike", "strikeThrough"], ["Code", "code"]],
     [["List", "insertUnorderedList"], ["Numbered", "insertOrderedList"], ["Quote", "quote"]],
     [["Link", "link"]]
   ];
@@ -221,9 +221,10 @@
       var b = document.createElement("button");
       b.type = "button";
       b.className = "sw-button sw-button--quiet sw-pressable sw-prose-tools__" + t[1];
-      b.textContent = t[0];
-      var name = t[2] || t[0];
-      if (t[2]) b.setAttribute("aria-label", name);
+      // A familiar icon beside the word, and the word in the style it makes
+      // where it can show it: Bold in bold, Italic in italic (12-prose-icons.js).
+      window.swProseLabel(b, t[1], t[0]);
+      var name = t[0];
       if (KEYS[t[1]]) { b.title = name + " (" + KEYS[t[1]] + ")"; b.setAttribute("aria-keyshortcuts", KEYS[t[1]]); }
       b.tabIndex = buttons.length ? -1 : 0;
       if (STATEFUL[t[1]]) b.setAttribute("aria-pressed", "false");
@@ -246,7 +247,7 @@
     var more = document.createElement("button");
     more.type = "button";
     more.className = "sw-button sw-button--quiet sw-pressable";
-    more.textContent = "More";
+    window.swProseLabel(more, "more", "More");
     more.tabIndex = -1;
     more.setAttribute("aria-expanded", "false");
     more.setAttribute("aria-controls", extra.id);
@@ -262,7 +263,7 @@
     function reflect() {
       buttons.forEach(function (p) {
         if (STATEFUL[p[1]]) p[0].setAttribute("aria-pressed", document.queryCommandState(p[1]) ? "true" : "false");
-        if (p[1] === "link") p[0].textContent = inside("A") ? "Unlink" : "Link";
+        if (p[1] === "link") p[0].querySelector(".sw-prose-tools__word").textContent = inside("A") ? "Unlink" : "Link";
       });
     }
     document.addEventListener("selectionchange", function () { if (editor.contains(document.activeElement)) reflect(); });

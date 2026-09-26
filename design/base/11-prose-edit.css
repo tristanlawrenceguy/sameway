@@ -9,17 +9,24 @@
    own. The switch to Markdown keeps to the right of the same line. */
 .sw-prose-foot { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--sw-space-2); margin-top: var(--sw-space-1); }
 .sw-prose-tools {
-  display: flex; flex-wrap: wrap; align-items: center; flex: 1 1 0; min-width: 0;
+  display: flex; flex-wrap: wrap; align-items: center; flex: 1 1 22rem; min-width: 0;
   padding: 0.125rem; border: 1px solid var(--sw-color-border); border-radius: var(--sw-radius-md); background: var(--sw-color-bg-muted);
 }
-.sw-prose-tools__group { display: flex; flex-wrap: wrap; align-items: center; }
-.sw-prose-tools__group + .sw-prose-tools__group, .sw-prose-tools > .sw-button { border-left: 1px solid var(--sw-color-border); padding-left: 0.125rem; margin-left: 0.125rem; }
-.sw-prose-tools__group[hidden] { display: none; }
+/* The buttons wrap one by one, not a group at a time, so a narrow screen
+   gets full lines; a hairline still marks where a group begins. */
+.sw-prose-tools__group { display: contents; }
+.sw-prose-tools__group + .sw-prose-tools__group > :first-child, .sw-prose-tools > .sw-button { box-shadow: -1px 0 0 var(--sw-color-border); margin-left: 0.125rem; }
+.sw-prose-tools .sw-prose-tools__group[hidden] { display: none; }
 .sw-prose-tools .sw-button { border-color: transparent; padding: 0 var(--sw-space-2); min-width: var(--sw-size-target); font-size: var(--sw-size-text-sm); }
 .sw-prose-tools .sw-button:hover { background: var(--sw-color-bg-raised); color: var(--sw-color-fg); }
-.sw-prose-tools .sw-prose-tools__bold { font-weight: 800; }
-.sw-prose-tools .sw-prose-tools__italic { font-style: italic; }
-.sw-prose-tools .sw-prose-tools__strikeThrough, .sw-prose-tools .sw-prose-tools__strikeThrough:hover { text-decoration: line-through; }
+/* Each button is a familiar icon beside its word; the word shows the
+   style it makes where it can, so the button previews what it does. */
+.sw-prose-tools .sw-button { display: inline-flex; align-items: center; gap: 0.375em; }
+.sw-prose-tools__icon { flex: none; width: 1.15em; height: 1.15em; }
+.sw-prose-tools .sw-prose-tools__bold .sw-prose-tools__word { font-weight: 800; }
+.sw-prose-tools .sw-prose-tools__italic .sw-prose-tools__word { font-style: italic; }
+.sw-prose-tools .sw-prose-tools__strikeThrough .sw-prose-tools__word { text-decoration: line-through; }
+.sw-prose-tools .sw-prose-tools__code .sw-prose-tools__word { font-family: var(--sw-font-mono); }
 .sw-prose-foot .sw-prose-switch { margin: 0; margin-left: auto; }
 .sw-prose-field textarea { margin-top: 0; }
 /* The view that is not in use is really gone; the field class would otherwise keep it displayed. */

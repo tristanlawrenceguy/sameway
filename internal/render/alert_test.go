@@ -1,9 +1,7 @@
 package render_test
 
-// Tests for keyboard accessibility of the alert component (goal 0082).
-// Verifies that a dismissible alert renders a close button reachable by Tab,
-// the root region has role and aria-live attributes for live updates, and
-// non-dismissible alerts omit the close button while keeping live regions.
+// The alert: its kind said four ways, its title a heading, its close button
+// a whole target, and a live role only where one is announced.
 
 import (
 	"strings"
@@ -13,122 +11,76 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 )
 
-// TestAlertKeyboard verifies acceptance items 2–3: a tab user can focus the
-// close button on a dismissible alert, and the root region carries role and
-// aria-live attributes. When no dismiss is set, no close button appears but
-// live-region attributes remain so screen readers announce the message.
-func TestAlertKeyboard(t *testing.T) {
+func renderAlert(t *testing.T, props map[string]any) string {
+	t.Helper()
 	reg := render.New()
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		t.Fatal(err)
 	}
-
-	// --- Dismissible alert: success kind with dismiss button ---
-
-	outDismiss, err := reg.Render("alert", map[string]any{
-		"kind":    "success",
-		"message": "Changes made.",
-		"dismiss": true,
-	})
+	out, err := reg.Render("alert", props)
 	if err != nil {
-		t.Fatalf("render dismissible alert: %v", err)
+		t.Fatalf("render: %v", err)
 	}
+	return string(out)
+}
 
-	gotDismiss := string(outDismiss)
-
-	// 1. The close button exists with the sw-alert__close class. A native <button>
-	//    element is naturally focusable via Tab — no tabindex manipulation needed
-	//    (Acceptance item 2).
-	if !strings.Contains(gotDismiss, `class="sw-alert__close"`) {
-		t.Errorf("dismissible alert should render a close button with class sw-alert__close;\ngot:\n%s", gotDismiss)
+// TestAnAlertSaysItsKindInWords: a screen reader hears the kind as a word
+// first; the mark, a shape of its own per kind, is silent; nothing is added
+// to what is seen.
+func TestAnAlertSaysItsKindInWords(t *testing.T) {
+	for kind, want := range map[string][2]string{
+		"info": {"Information: ", "ℹ"}, "success": {"Success: ", "✓"}, "warning": {"Warning: ", "⚠"}, "danger": {"Error: ", "!"},
+	} {
+		out := renderAlert(t, map[string]any{"kind": kind, "message": "Something happened."})
+		if !strings.Contains(out, `<span class="sw-visually-hidden">`+want[0]+`</span>`) {
+			t.Errorf("%s: a screen reader should hear %q first:\n%s", kind, want[0], out)
+		}
+		if !strings.Contains(out, `<span class="sw-alert__icon" aria-hidden="true">`+want[1]+`</span>`) {
+			t.Errorf("%s: the mark should be %q and silent:\n%s", kind, want[1], out)
+		}
+		if strings.Contains(out, "sw-alert__kind") {
+			t.Errorf("%s: no visible kind label repeats the title", kind)
+		}
 	}
+}
 
-	// 2. The close button is a native <button type="button"> element — this is how
-	//    the template expresses "naturally tabbable" (Acceptance item 2).
-	if !strings.Contains(gotDismiss, `<button`) {
-		t.Errorf("dismissible alert should render a native <button> for close;\ngot:\n%s", gotDismiss)
+// TestAnAlertTitleIsAHeading: a person moving by headings finds it.
+func TestAnAlertTitleIsAHeading(t *testing.T) {
+	if out := renderAlert(t, map[string]any{"kind": "danger", "title": "Not saved", "message": "The title is needed."}); !strings.Contains(out, `<h2 class="sw-alert__title">`) {
+		t.Errorf("a title should be an h2:\n%s", out)
 	}
-
-	// 3. No tabindex="-1" anywhere in the output — keyboard path is open (Acceptance
-	//    item 2). A native button in normal flow is always reachable via Tab.
-	if strings.Contains(gotDismiss, `tabindex="-1"`) {
-		t.Errorf("dismissible alert must not use tabindex=\"-1\" (blocks tab focus);\ngot:\n%s", gotDismiss)
+	if out := renderAlert(t, map[string]any{"title": "Not saved", "message": "x", "level": 3}); !strings.Contains(out, `<h3 class="sw-alert__title">`) {
+		t.Errorf("level 3 should make an h3:\n%s", out)
 	}
+}
 
-	// 4. The root div carries role="status" because kind is "success" (not warning/
-	//    danger). This tells screen readers to announce the content when it changes
-	//    rather than interrupting immediately (Acceptance item 2).
-	if !strings.Contains(gotDismiss, `role="status"`) {
-		t.Errorf("dismissible success alert should have role=\"status\";\ngot:\n%s", gotDismiss)
+// TestOnlyALiveAlertTakesARole: a message present on load is not announced
+// whatever its role, so only one put on the page later, or an outcome,
+// takes one: alert for a warning or error, status otherwise.
+func TestOnlyALiveAlertTakesARole(t *testing.T) {
+	if out := renderAlert(t, map[string]any{"kind": "danger", "message": "x"}); strings.Contains(out, "role=") || strings.Contains(out, "aria-live") {
+		t.Errorf("an alert on the page at load should take no live role:\n%s", out)
 	}
-
-	// 5. The root div carries aria-live="polite" for a status-role region — polite
-	//    announcements wait until the user is idle before speaking (Acceptance item 2).
-	if !strings.Contains(gotDismiss, `aria-live="polite"`) {
-		t.Errorf("dismissible success alert should have aria-live=\"polite\";\ngot:\n%s", gotDismiss)
+	for kind, role := range map[string]string{"danger": "alert", "warning": "alert", "success": "status", "info": "status"} {
+		if out := renderAlert(t, map[string]any{"kind": kind, "message": "x", "live": true}); !strings.Contains(out, `role="`+role+`"`) {
+			t.Errorf("a live %s alert should be role=%s:\n%s", kind, role, out)
+		}
 	}
+}
 
-	// 6. The close button has an accessible name via aria-label="Close". Without this,
-	//    a screen reader would only announce "button" with no purpose (Acceptance item 2).
-	if !strings.Contains(gotDismiss, `aria-label="Close"`) {
-		t.Errorf("close button should have aria-label=\"Close\" for accessible name;\ngot:\n%s", gotDismiss)
+// TestAnAlertCloseButtonIsNamedAndReachable: a native button, named for what
+// it closes, never taken out of the Tab order.
+func TestAnAlertCloseButtonIsNamedAndReachable(t *testing.T) {
+	out := renderAlert(t, map[string]any{"kind": "success", "message": "Changes made.", "dismiss": true})
+	for _, want := range []string{`<button type="button" class="sw-alert__close" data-dismiss aria-label="Close message">`, "sw-alert--dismissible"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("a dismissible alert should carry %s:\n%s", want, out)
+		}
 	}
-
-	// --- Non-dismissible alert: info kind, no close button ---
-
-	outNoDismiss, err := reg.Render("alert", map[string]any{
-		"kind":    "info",
-		"message": "No changes.",
-	})
-	if err != nil {
-		t.Fatalf("render non-dismissible alert: %v", err)
+	if strings.Contains(out, `tabindex="-1"`) {
+		t.Errorf("the close button must stay in the Tab order")
 	}
-
-	gotNoDismiss := string(outNoDismiss)
-
-	// 7. No close button class exists — a non-dismissible alert should not render
-	//    one (Acceptance item 3).
-	if strings.Contains(gotNoDismiss, `sw-alert__close`) {
-		t.Errorf("non-dismissible alert must not have sw-alert__close;\ngot:\n%s", gotNoDismiss)
-	}
-
-	// 8. No data-dismiss attribute — confirms the template did not render a dismiss
-	//    button when dismiss is false/absent (Acceptance item 3).
-	if strings.Contains(gotNoDismiss, `data-dismiss`) {
-		t.Errorf("non-dismissible alert must not have data-dismiss;\ngot:\n%s", gotNoDismiss)
-	}
-
-	// 9. The root div still carries role="status" for info kind (Acceptance item 3).
-	if !strings.Contains(gotNoDismiss, `role="status"`) {
-		t.Errorf("non-dismissible info alert should have role=\"status\";\ngot:\n%s", gotNoDismiss)
-	}
-
-	// 10. The root div still carries aria-live="polite" for info kind (Acceptance item 3).
-	if !strings.Contains(gotNoDismiss, `aria-live="polite"`) {
-		t.Errorf("non-dismissible info alert should have aria-live=\"polite\";\ngot:\n%s", gotNoDismiss)
-	}
-
-	// --- Warning kind: role="alert" + aria-live="assertive" ---
-
-	outWarning, err := reg.Render("alert", map[string]any{
-		"kind":    "warning",
-		"message": "Something needs attention.",
-	})
-	if err != nil {
-		t.Fatalf("render warning alert: %v", err)
-	}
-
-	gotWarning := string(outWarning)
-
-	// 11. Warning kind should get role="alert" (not status) so screen readers
-	//     interrupt immediately when the message appears (Acceptance item 4).
-	if !strings.Contains(gotWarning, `role="alert"`) {
-		t.Errorf("warning alert should have role=\"alert\";\ngot:\n%s", gotWarning)
-	}
-
-	// 12. Warning kind should get aria-live="assertive" to interrupt immediately
-	//     rather than waiting for idle (Acceptance item 4).
-	if !strings.Contains(gotWarning, `aria-live="assertive"`) {
-		t.Errorf("warning alert should have aria-live=\"assertive\";\ngot:\n%s", gotWarning)
+	if out := renderAlert(t, map[string]any{"message": "x"}); strings.Contains(out, "sw-alert__close") {
+		t.Errorf("no close button unless asked for")
 	}
 }
