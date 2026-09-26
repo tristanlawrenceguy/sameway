@@ -246,6 +246,10 @@ func (s *Server) chatSend(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, back, http.StatusSeeOther)
 		return
 	}
+	// The turn may have removed the tab the person was on: they go Home.
+	if canvas != "" && !s.app.Chat.HasCanvas(canvas) {
+		back = "/"
+	}
 	http.Redirect(w, r, back+"#msg-"+rec.ID, http.StatusSeeOther)
 }
 
