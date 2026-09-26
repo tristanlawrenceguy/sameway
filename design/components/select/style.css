@@ -6,6 +6,9 @@
 .sw-choice { border: 0; padding: 0; margin: 0; min-width: 0; }
 .sw-choice > legend { padding: 0; }
 .sw-choice__options { display: grid; gap: var(--sw-space-1); }
-.sw-choice__option { display: flex; align-items: center; gap: var(--sw-space-2); }
-.sw-choice__input { width: 1.25rem; height: 1.25rem; margin: 0; flex: none; accent-color: var(--sw-color-accent); cursor: pointer; }
-.sw-choice__label { display: inline-flex; align-items: center; min-height: var(--sw-size-target); cursor: pointer; }
+.sw-choice__option { display: flex; align-items: center; gap: 0; }
+.sw-choice__input { width: var(--sw-size-box); height: var(--sw-size-box); margin: 0; flex: none; accent-color: var(--sw-color-accent); cursor: pointer; }
+.sw-choice__label { display: inline-flex; align-items: center; min-height: var(--sw-size-target); padding-inline-start: var(--sw-space-2); overflow-wrap: anywhere; cursor: pointer; }
+/* Answers with a problem: a bar at their edge as well as the words, as a
+   checkbox with a problem has, which holds in forced colours. */
+.sw-choice--error, .sw-field:has(> .sw-field__select[aria-invalid="true"]) { border-inline-start: var(--sw-focus-width) solid var(--sw-color-danger); padding-inline-start: var(--sw-space-3); }

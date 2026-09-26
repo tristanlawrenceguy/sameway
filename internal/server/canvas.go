@@ -174,10 +174,8 @@ func (s *Server) canvasBlock(b *store.Record, convo *conversation) canvasBlock {
 	// is the whole point of having an assistant on the page.
 	editAction := ""
 	if name == recordComponent {
-		// Record blocks on the canvas use data-prop attributes (e.g. title, body)
-		// that 08-edit.js reads to build <input name="prop-title"> for inline editing;
-		// validation errors in the props handler re-render with every submitted field
-		// so empty values still have a <dd> element 08-edit.js can find.
+		// A record block edits the record: its editor posts to the record's
+		// own props, and is given every field of it (recordEditFields).
 		props, editAction = s.resolveRecord(props)
 	}
 	if name == collectionComponent {
@@ -208,7 +206,7 @@ func (s *Server) canvasBlock(b *store.Record, convo *conversation) canvasBlock {
 		Frame: str(b.Fields["frame"], "card"), Tone: str(b.Fields["tone"], "none"),
 		Size: str(b.Fields["size"], "full"), Label: label, Icon: icon,
 		Provenance: provenance, EditAction: editAction,
-		HTML: s.component(name, props),
+		HTML: s.component(name, props) + s.recordEditFields(name, props),
 		Expand: s.component("link", map[string]any{
 			"href": "/canvas/" + b.ID, "label": "Expand", "context": label,
 			"current": convo != nil && convo.FocusID == b.ID,

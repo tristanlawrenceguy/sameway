@@ -132,6 +132,8 @@ func (s *Service) askDelete(a reshapeArgs) toolResult {
 // Instead answers a question with its other choice, such as hiding a field
 // rather than deleting it: that action runs, as the person's.
 func (s *Service) Instead(id string) error {
+	answering.Lock()
+	defer answering.Unlock()
 	rec, err := s.Store.Get(ProposalType, id)
 	if err != nil {
 		return err
