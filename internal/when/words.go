@@ -13,14 +13,23 @@ type reading struct {
 	now, start, base time.Time
 	haveDay          bool
 	hour, minute     int
+	// weekday is a day of the week written beside a date, to be checked
+	// against it: Fri 19 Sep when the 19th is a Saturday is two facts that
+	// disagree, and which one was meant is the person's to say.
+	weekday time.Weekday
+	// bad is a date or a time that does not exist, 31 Feb or 25:00: asked
+	// again, not rolled over into the next month or day.
+	bad bool
 }
 
 func words(s string, now time.Time) (time.Time, bool, bool) {
-	r := &reading{now: now, start: time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()), hour: -1}
-	w := strings.Fields(strings.NewReplacer(",", " ", ".", " ").Replace(s))
+	r := &reading{now: now, start: time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()), hour: -1, weekday: -1}
+	// A full stop after a word is an abbreviation, Sep. or Fri.; between
+	// numbers it is part of a date or a time, 19.9.2026 or 14.30.
+	w := strings.Fields(abbrevRe.ReplaceAllString(strings.ReplaceAll(s, ",", " "), "$1 "))
 	for i := 0; i < len(w); i++ {
 		n, ok := r.word(w, i)
-		if !ok {
+		if !ok || r.bad {
 			return time.Time{}, false, false
 		}
 		if n < 0 { // a moment was named outright: in 3 hours, now
@@ -33,6 +42,9 @@ func words(s string, now time.Time) (time.Time, bool, bool) {
 	}
 	if !r.haveDay {
 		r.base = r.start
+	}
+	if r.weekday >= 0 && r.base.Weekday() != r.weekday {
+		return time.Time{}, false, false
 	}
 	if r.hour < 0 {
 		return r.base, true, true
@@ -72,8 +84,8 @@ func (r *reading) word(w []string, i int) (int, bool) {
 	case s == "next" || s == "last":
 		return r.next(s == "last", next)
 	case weekdayOf(s) >= 0:
-		// A weekday before an explicit date, as in Fri 19 Sep, is only a
-		// reminder; the date wins.
+		// A weekday beside a date, as in Fri 19 Sep, must be that date's.
+		r.weekday = weekdayOf(s)
 		if !r.haveDay {
 			r.setDay(weekdayFrom(r.start, weekdayOf(s), false))
 		}
@@ -93,19 +105,30 @@ func (r *reading) word(w []string, i int) (int, bool) {
 // number reads a clock (2pm, 14:00, 2:30pm) or a numeric date (19/9,
 // 19/9/2026); a bare number is left to plain.
 func (r *reading) number(s, next string) (int, bool) {
+	if m := yearFirstRe.FindStringSubmatch(s); m != nil {
+		r.setReal(atoi(m[1]), atoi(m[2]), atoi(m[3]))
+		return 0, true
+	}
 	if m := numericRe.FindStringSubmatch(s); m != nil {
-		d, mo := atoi(m[1]), atoi(m[2])
-		if mo > 12 && d <= 12 {
+		d, sep, mo := atoi(m[1]), m[2], atoi(m[3])
+		// 9/19 is the month first, as some write it; with dots the day
+		// always comes first.
+		if sep != "." && mo > 12 && d <= 12 {
 			d, mo = mo, d
 		}
 		y := r.now.Year()
-		if m[3] != "" {
-			y = atoi(m[3])
+		if m[4] != "" {
+			y = atoi(m[4])
 			if y < 100 {
 				y += 2000
 			}
 		}
-		r.setDay(time.Date(y, time.Month(mo), d, 0, 0, 0, 0, r.now.Location()))
+		// 14.30 is not a date, and is how many write a time.
+		if !exists(y, mo, d) && sep == "." && m[4] == "" && len(m[3]) == 2 {
+			r.clock(atoi(m[1]), atoi(m[3]), "")
+			return 0, true
+		}
+		r.setReal(y, mo, d)
 		return 0, true
 	}
 	if m := clockRe.FindStringSubmatch(s); m != nil && (m[2] != "" || m[3] != "") {
@@ -137,7 +160,7 @@ func (r *reading) plain(s string, rest []string) (int, bool) {
 		if len(rest) > 1 && len(rest[1]) == 4 && isNumber(rest[1]) {
 			y, used = atoi(rest[1]), 2
 		}
-		r.setDay(time.Date(y, mo, n, 0, 0, 0, 0, r.now.Location()))
+		r.setReal(y, int(mo), n)
 		return used, true
 	}
 	if unit := strings.TrimSuffix(next, "s"); unit == "day" || unit == "week" || unit == "month" || unit == "year" || unit == "hour" || unit == "minute" {
@@ -164,11 +187,15 @@ func (r *reading) plain(s string, rest []string) (int, bool) {
 		return used, true
 	}
 	if !r.haveDay && n >= 1 && n <= 31 {
-		d := time.Date(r.now.Year(), r.now.Month(), n, 0, 0, 0, 0, r.now.Location())
-		if d.Before(r.start) {
-			d = d.AddDate(0, 1, 0)
+		// The next day of the month with that number: the 31st in
+		// September is 31 October, not 1 October.
+		for k := 0; k < 3; k++ {
+			if d, ok := realDay(r.now.Year(), int(r.now.Month())+k, n, r.now.Location()); ok && !d.Before(r.start) {
+				r.setDay(d)
+				return 0, true
+			}
 		}
-		r.setDay(d)
+		r.bad = true
 		return 0, true
 	}
 	if r.haveDay && n <= 23 {
@@ -221,13 +248,43 @@ func (r *reading) month(mo time.Month, rest []string) (int, bool) {
 			}
 		}
 	}
-	r.setDay(time.Date(y, mo, d, 0, 0, 0, 0, r.now.Location()))
+	r.setReal(y, int(mo), d)
 	return used, true
 }
 
 func (r *reading) setDay(d time.Time) { r.base, r.haveDay = d, true }
 
+// setReal sets the day when it exists, and marks the reading bad when it
+// does not.
+func (r *reading) setReal(y, mo, d int) {
+	if !exists(y, mo, d) {
+		r.bad = true
+		return
+	}
+	day, _ := realDay(y, mo, d, r.now.Location())
+	r.setDay(day)
+}
+
+// exists is whether a date written out in full is one.
+func exists(y, mo, d int) bool {
+	_, ok := realDay(y, mo, d, time.UTC)
+	return ok && mo >= 1 && mo <= 12
+}
+
+// realDay is the date, when there is one: time.Date would take 31 Feb as
+// 3 Mar, which is not what anyone wrote. A month past 12 wraps into the
+// next year, as months counted on from now do.
+func realDay(y, mo, d int, loc *time.Location) (time.Time, bool) {
+	t := time.Date(y, time.Month(mo), d, 0, 0, 0, 0, loc)
+	return t, d >= 1 && t.Day() == d
+}
+
 func (r *reading) clock(h, m int, half string) {
+	// 25:00, 13pm and 14:75 are not times.
+	if h > 23 || m > 59 || (half != "" && (h < 1 || h > 12)) {
+		r.bad = true
+		return
+	}
 	if half == "pm" && h < 12 {
 		h += 12
 	}

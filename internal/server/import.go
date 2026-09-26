@@ -47,7 +47,7 @@ func (s *Server) importPage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(&b, `<form method="post" action="/t/%s/import" enctype="multipart/form-data" class="sw-stack sw-import"><div class="sw-field"><label class="sw-field__label" for="import-file">File</label><input class="sw-field__input" id="import-file" type="file" name="file" accept=".csv,.tsv,.txt,.vcf,.vcard,.mbox,.eml" required aria-describedby="import-error"><span class="sw-visually-hidden" id="import-error" role="status" aria-live="assertive"></span></div>%s</form>`,
 		t.Name, s.component("button", map[string]any{"label": "Read the file", "type": "submit"}))
 	b.WriteString(`<script>(function(){var f=document.getElementById("import-file");var err=document.getElementById("import-error");f.addEventListener('invalid',function(e){err.textContent="select a file."},false);document.querySelector(".sw-import").addEventListener('submit',function(e){if(!f.value){e.preventDefault();err.textContent="select a file.";f.reportValidity()}},{once:true});f.addEventListener('change',function(){err.textContent=""})})();</script>`)
-	s.page(w, r, "Import "+plural(t.Name), template.HTML(b.String()), pageOptions{Kicker: s.crumbs("/t/"+t.Name, capitalize(plural(t.Name)), "Import", s.dotOf(t.Name)), Dot: s.dotOf(t.Name)})
+	s.page(w, r, "Import "+plural(t.Name), template.HTML(b.String()), pageOptions{Kicker: s.crumbs("/t/"+t.Name, capitalize(plural(t.Name)), "", s.dotOf(t.Name)), Dot: s.dotOf(t.Name)})
 }
 
 // importUpload keeps the file and goes to its preview.
@@ -139,7 +139,7 @@ func (s *Server) importPreview(w http.ResponseWriter, r *http.Request, t *schema
 	b.WriteString(`</tbody></table></div>`)
 	b.WriteString(string(s.component("button", map[string]any{"label": fmt.Sprintf("Import %d %s", len(tb.Rows), plural(t.Name)), "type": "submit"})))
 	b.WriteString(`</form>`)
-	s.page(w, r, "Import "+plural(t.Name), template.HTML(b.String()), pageOptions{Kicker: s.crumbs("/t/"+t.Name, capitalize(plural(t.Name)), "Import", s.dotOf(t.Name)), Dot: s.dotOf(t.Name)})
+	s.page(w, r, "Import "+plural(t.Name), template.HTML(b.String()), pageOptions{Kicker: s.crumbs("/t/"+t.Name, capitalize(plural(t.Name)), "", s.dotOf(t.Name)), Dot: s.dotOf(t.Name)})
 }
 
 // importRun makes the records as the form says and goes to the list,

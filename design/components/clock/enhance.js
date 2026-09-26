@@ -25,11 +25,28 @@
     setInterval(show, 5000);
   }
 
+  // One sound for the page, woken by the person's first press or key:
+  // a browser keeps sound made without one silent, and a reminder rings
+  // long after any press. Until then a ring still shows and notifies.
+  var audio = null;
+  function sound() {
+    if (!audio) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      try { audio = new AC(); } catch (e) { return null; }
+    }
+    if (audio.state === "suspended" && audio.resume) audio.resume().catch(function () {});
+    return audio;
+  }
+  ["pointerdown", "keydown"].forEach(function (kind) {
+    document.addEventListener(kind, function () { if (document.querySelector(".sw-clock")) sound(); }, { once: true, capture: true });
+  });
+
   // Three short notes, twice: enough to be heard, not enough to be a siren.
   function chime() {
-    if (!window.AudioContext && !window.webkitAudioContext) return;
+    var ctx = sound();
+    if (!ctx) return;
     try {
-      var ctx = new (window.AudioContext || window.webkitAudioContext)();
       [0, 0.2, 0.4, 1.2, 1.4, 1.6].forEach(function (at) {
         var o = ctx.createOscillator(), g = ctx.createGain();
         o.type = "sine"; o.frequency.value = 880;
@@ -57,11 +74,15 @@
   function ring(d) {
     var rang = false;
     var said = document.querySelector(".sw-clock .sw-clock__said");
-    if (said) said.textContent = "Reminder: " + d.title;
+    // What it is about, when it is about something: Water, 3 of 8 glasses
+    // so far. The fixed words said for a reminder about nothing are left.
+    var about = d.text && d.text !== "It is time." && d.text !== d.title ? d.text : "";
+    if (said) said.textContent = "Reminder: " + d.title + (about ? ". " + about : "");
     document.querySelectorAll(".sw-clock").forEach(function (clock) {
       var list = clock.querySelector(".sw-clock__ringing");
       if (!list || list.querySelector('[data-id="' + d.id + '"]')) return;
-      var what = d.href ? '<a class="sw-link" href="' + escape(d.href) + '">' + escape(d.title) + "</a>" : escape(d.title);
+      var what = (d.href ? '<a class="sw-link sw-link--fill" href="' + escape(d.href) + '">' + escape(d.title) + "</a>" : escape(d.title)) +
+        (about ? '<span class="sw-clock__about">' + escape(about) + "</span>" : "");
       list.appendChild(el('<div class="sw-clock__ring" data-id="' + escape(d.id) + '"><span class="sw-clock__bell" aria-hidden="true"></span><span class="sw-clock__what">' + what + "</span>" +
         '<form method="post" action="/clock/' + escape(d.id) + '/done"><button type="submit" class="sw-button sw-button--primary sw-pressable">Dismiss<span class="sw-visually-hidden"> ' + escape(d.title) + "</span></button></form>" +
         '<form method="post" action="/clock/' + escape(d.id) + '/snooze"><button type="submit" class="sw-button sw-button--quiet sw-pressable">5 more minutes<span class="sw-visually-hidden"> for ' + escape(d.title) + "</span></button></form></div>"));
@@ -72,7 +93,12 @@
     if (rang) chime();
     if (!/^⏰ /.test(document.title)) document.title = "⏰ " + document.title;
     if (window.Notification && Notification.permission === "granted") {
-      try { new Notification(d.title, { body: "It is time.", tag: "sameway-" + d.id }); } catch (e) { /* fine */ }
+      // It stays until answered where the browser allows, as the ring on
+      // the page does, and a press on it leads to what it is about.
+      try {
+        var n = new Notification(d.title, { body: d.text || "It is time.", tag: "sameway-" + d.id, requireInteraction: true });
+        n.onclick = function () { window.focus(); if (d.url) location.href = d.url; n.close(); };
+      } catch (e) { /* fine */ }
     }
   }
 
