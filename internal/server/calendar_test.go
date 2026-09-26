@@ -24,7 +24,7 @@ func TestACalendarShowsRecordsOnTheirDays(t *testing.T) {
 	}), http.StatusCreated)
 
 	page := get(t, h, "/").Body.String()
-	for _, want := range []string{`data-month="` + now.Format("2006-01") + `"`, `aria-current="date"`, `href="/t/task/` + soon.ID + `">Order compost</a>`, "<caption>Due</caption>"} {
+	for _, want := range []string{`data-month="` + now.Format("2006-01") + `"`, `aria-current="date"`, `href="/t/task/` + soon.ID + `">Order compost</a>`, "<caption>Due, " + now.Format("January 2006") + "</caption>"} {
 		if !strings.Contains(page, want) {
 			t.Errorf("the calendar should show this month, today, and the task as a link, missing %s", want)
 		}

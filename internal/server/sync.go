@@ -29,6 +29,8 @@ func (s *Server) syncExchange(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusInternalServerError, map[string]any{"error": err.Error()})
 		return
 	}
+	s.HearPresence(in.Present)
+	out.Present = s.PresentHere()
 	if n > 0 {
 		s.Changed()
 	}
@@ -54,7 +56,7 @@ func (s *Server) events(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprint(w, "event: hello\ndata: {}\n\n")
 	flusher.Flush()
-	last := s.changes.Load()
+	last, others := s.changes.Load(), s.presentFor(r)
 	tick := time.NewTicker(time.Second)
 	defer tick.Stop()
 	for {
@@ -63,8 +65,12 @@ func (s *Server) events(w http.ResponseWriter, r *http.Request) {
 			return
 		case <-tick.C:
 		}
-		if now := s.changes.Load(); now != last {
-			last = now
+		// An open page is someone here; who else is here changing is
+		// news to the page, like a change.
+		s.seen(r, refererPath(r))
+		now, who := s.changes.Load(), s.presentFor(r)
+		if now != last || who != others {
+			last, others = now, who
 			fmt.Fprint(w, "event: changed\ndata: {}\n\n")
 			flusher.Flush()
 		}

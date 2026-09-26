@@ -102,3 +102,37 @@ func PersonColour(login string) int {
 	}
 	return int(h%6) + 1
 }
+
+// forYouPrompt tells the model what is for the one it is talking to: the
+// records that point at them as a person, not yet done, so "what is for
+// me?" has an answer.
+func (s *Service) forYouPrompt() string {
+	login := s.Owner.Login
+	if !s.owner() {
+		login = s.who.Login
+	}
+	me := s.PersonByEmail(strings.ToLower(login))
+	if me == nil {
+		return ""
+	}
+	var lines []string
+	for _, t := range s.contentTypes() {
+		for _, f := range t.Fields {
+			if f.Type != "ref" || f.To != PersonType {
+				continue
+			}
+			recs, _ := s.Store.List(t.Name, store.ListOptions{OrderBy: "updated_at", Desc: true, Limit: 50})
+			for _, r := range recs {
+				if r.Fields[f.Name] != me.ID || r.Fields["done"] == true || len(lines) >= 10 {
+					continue
+				}
+				title, _ := r.Fields[t.Title].(string)
+				lines = append(lines, fmt.Sprintf("- %s: %s (/t/%s/%s)", t.Name, title, t.Name, r.ID))
+			}
+		}
+	}
+	if len(lines) == 0 {
+		return ""
+	}
+	return "\n\nFor the person you are talking to, not yet done:\n" + strings.Join(lines, "\n")
+}

@@ -118,6 +118,10 @@ func (s *Service) inverse(a *store.Record) (func() (Change, error), error) {
 	id, _ := a.Fields["target_id"].(string)
 	before, _ := a.Fields["before"].(map[string]any)
 	typ := s.targetType(target)
+	// A chat cleared or deleted is put back with its messages.
+	if target == "conversation" && (action == "cleared" || action == "deleted") {
+		return s.inverseChat(id, before)
+	}
 	switch action {
 	case "added", "created":
 		if typ == "" || id == "" {

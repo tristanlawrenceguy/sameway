@@ -26,7 +26,7 @@ func TestARecordCarriesEveryFieldAPersonMayEdit(t *testing.T) {
 	for _, m := range regexp.MustCompile(`data-prop="([a-z_]+)"`).FindAllStringSubmatch(tmpl[1], -1) {
 		order = append(order, m[1])
 	}
-	if strings.Join(order, " ") != "title done due project notes tags" {
+	if strings.Join(order, " ") != "title done due for project notes tags" {
 		t.Errorf("every field of a task, in its order, got %v", order)
 	}
 	for _, want := range []string{`data-prop="done" data-label="Done" data-kind="bool" data-source="false"`, `data-kind="datetime"`, project.ID, `&#34;label&#34;:&#34;None&#34;`, `data-source="Repot the fern"`} {

@@ -257,7 +257,13 @@ func (s *Server) habitSection(rec *store.Record) template.HTML {
 	if h.Combine != track.Sum {
 		kind = "line"
 	}
-	props := map[string]any{"caption": fmt.Sprintf("The last %d %ss", n, h.Cadence), "series": series, "kind": kind}
+	// The numbers table heads its columns with what they are: the period,
+	// and the unit or Amount.
+	value := "Amount"
+	if h.Unit != "" {
+		value = capitalize(h.Unit)
+	}
+	props := map[string]any{"caption": fmt.Sprintf("The last %d %ss", n, h.Cadence), "series": series, "kind": kind, "groupLabel": capitalize(h.Cadence), "valueLabel": value}
 	if h.Aim != track.Record {
 		props["target"] = sum.Target
 	}

@@ -43,7 +43,13 @@
    however tall the conversation grows. The person can drag it taller or
    shorter by its corner. */
 .sw-chat__log { scroll-behavior: smooth; max-height: min(60vh, 40rem); min-height: 6rem; overflow-y: auto; resize: vertical; padding-right: var(--sw-space-2); }
-.sw-chat__log:focus-visible { outline-offset: 0; }
+/* The transcript takes Tab, so a keyboard can scroll it: its ring drawn
+   inside, where the scroll box does not cut it off. */
+.sw-chat__log:focus-visible { outline: var(--sw-focus-width) solid var(--sw-color-focus); outline-offset: calc(-1 * var(--sw-focus-width)); }
+/* Things to ask, for a chat with nothing in it: one press puts the words
+   in the box, to read and send. */
+.sw-chat__starts { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sw-space-2); margin-top: var(--sw-space-3); }
+.sw-chat__starts .sw-chat__start { border: 1px solid var(--sw-color-border-strong); background: var(--sw-color-bg-raised); margin-left: 0; }
 /* The composer's file control is the platform's own; its button is drawn
    like the other quiet buttons so the row reads as one thing. */
 .sw-compose__file::file-selector-button {

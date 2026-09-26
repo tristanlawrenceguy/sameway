@@ -54,12 +54,16 @@ var Funcs = template.FuncMap{
 	"upcoming":     upcoming,
 	"shortDate":    shortDate,
 	"longDate":     longDate,
+	"dayParts":     dayParts,
+	"contains":     strings.Contains,
 	// Chart shape, for the same reason: arithmetic a template cannot do,
 	// for a picture that must not need JavaScript. See chart.go.
-	"chartShape": chartShape,
-	"sparkline":  sparkline,
-	"chartLast":  chartLast,
-	"chartTrend": chartTrend,
+	"chartShape":   chartShape,
+	"chartNarrow":  chartNarrow,
+	"chartSummary": chartSummary,
+	"sparkline":    sparkline,
+	"chartLast":    chartLast,
+	"chartTrend":   chartTrend,
 	// lines splits text on single newlines.
 	"lines": func(s string) []string {
 		return strings.Split(strings.ReplaceAll(s, "\r\n", "\n"), "\n")

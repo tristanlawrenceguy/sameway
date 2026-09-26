@@ -5,7 +5,6 @@ import (
 	"math"
 	"strconv"
 	"strings"
-	"time"
 )
 
 // The shape of a chart, computed here because a template cannot do the
@@ -35,7 +34,8 @@ type ChartTick struct {
 	Text string
 }
 
-// ChartShape is a whole chart laid out in a 600 by 260 box.
+// ChartShape is a whole chart laid out in a box 260 high: 600 wide, or 360
+// for a narrow place, where the same words are drawn larger for the room.
 type ChartShape struct {
 	Kind          string
 	Width, Height float64
@@ -43,9 +43,11 @@ type ChartShape struct {
 	Ticks         []ChartTick
 	// Path is the line through the points, for a line chart.
 	Path string
-	// Baseline is the y of zero; Left is where the plot starts.
-	Baseline, Left, Right float64
-	Empty                 bool
+	// Baseline is the y of zero, Bottom the foot of the plot, where the
+	// labels go (below zero when there are values under it); Left is where
+	// the plot starts.
+	Baseline, Bottom, Left, Right float64
+	Empty                         bool
 	// Target is a line across the chart at a value to reach, with
 	// HasTarget saying there is one; the scale makes room for it.
 	Target    float64
@@ -54,14 +56,29 @@ type ChartShape struct {
 }
 
 const (
-	chartW, chartH                            = 600.0, 260.0
-	chartLeft, chartRight, chartTop, chartBot = 56.0, 16.0, 28.0, 44.0
+	chartW, chartNarrowW, chartH   = 600.0, 360.0, 260.0
+	chartRight, chartTop, chartBot = 16.0, 28.0, 44.0
 )
 
-// chartShape lays out a series of {label, value} as bars or a line.
+// chartShape lays out a series of {label, value} as bars or a line, wide.
 func chartShape(series any, kind string, target ...any) ChartShape {
+	return chartShapeAt(chartW, series, kind, target...)
+}
+
+// chartNarrow is the same chart for a narrow place: fewer labels, values
+// written only when there are few, each drawn large enough to read.
+func chartNarrow(series any, kind string, target ...any) ChartShape {
+	return chartShapeAt(chartNarrowW, series, kind, target...)
+}
+
+func chartShapeAt(width float64, series any, kind string, target ...any) ChartShape {
+	narrow := width < chartW
+	left, charW, maxValues := 56.0, 6.0, 14
+	if narrow {
+		left, charW, maxValues = 40.0, 7.5, 7
+	}
 	points := chartPoints(series)
-	s := ChartShape{Kind: kind, Width: chartW, Height: chartH, Points: points, Left: chartLeft, Right: chartW - chartRight}
+	s := ChartShape{Kind: kind, Width: width, Height: chartH, Points: points, Left: left, Right: width - chartRight}
 	if len(target) > 0 {
 		if t := numberOf(target[0]); t > 0 {
 			s.Target, s.HasTarget = t, true
@@ -74,65 +91,71 @@ func chartShape(series any, kind string, target ...any) ChartShape {
 		s.Empty = true
 		return s
 	}
-	top := 0.0
+	// The scale runs from zero, or from the lowest value when it is below
+	// zero, to the highest or the target: a bar is always measured from
+	// zero, down for a value under it.
+	top, low := 0.0, 0.0
 	for _, p := range points {
-		if p.Value > top {
-			top = p.Value
-		}
+		top, low = math.Max(top, p.Value), math.Min(low, p.Value)
 	}
 	if s.HasTarget && s.Target > top {
 		top = s.Target
 	}
-	if top <= 0 {
+	if top <= 0 && low == 0 {
 		top = 1
 	}
-	step := niceStep(top / 4)
+	step := niceStep((top - low) / 4)
 	// A count of things is never one and a half; whole values get whole
 	// gridlines, fewer of them if need be.
 	if step < 1 && wholeValues(points) {
 		step = 1
 	}
 	top = math.Ceil(top/step) * step
-	plotW := chartW - chartLeft - chartRight
+	low = math.Floor(low/step) * step
+	span := top - low
+	plotW := width - left - chartRight
 	plotH := chartH - chartTop - chartBot
-	s.Baseline = chartTop + plotH
-	for v := 0.0; v <= top+step/1000; v += step {
-		s.Ticks = append(s.Ticks, ChartTick{Y: round(s.Baseline - v/top*plotH), Text: numberText(v)})
+	s.Bottom = chartTop + plotH
+	at := func(v float64) float64 { return round(s.Bottom - (v-low)/span*plotH) }
+	s.Baseline = at(0)
+	// The zero line first, so it is the one drawn solid.
+	s.Ticks = append(s.Ticks, ChartTick{Y: s.Baseline, Text: "0"})
+	for v := low; v <= top+step/1000; v += step {
+		if math.Abs(v) > step/1000 {
+			s.Ticks = append(s.Ticks, ChartTick{Y: at(v), Text: numberText(v)})
+		}
 	}
 	if s.HasTarget {
-		s.TargetY = round(s.Baseline - s.Target/top*plotH)
+		s.TargetY = at(s.Target)
 	}
 	slot := plotW / float64(len(points))
-	dense := len(points) > 14
-	every := (len(points) + 7) / 8
-	if !dense {
-		// Labels wider than their slot, such as twelve months with their
-		// years, are thinned so they do not run into each other.
-		widest := 0
-		for _, p := range points {
-			widest = max(widest, len([]rune(chartLabel(p.Label))))
-		}
-		every = max(1, int(math.Ceil(float64(widest)*6/(slot*0.9))))
+	dense := len(points) > maxValues
+	// Labels wider than their slot, such as twelve months with their years,
+	// are thinned so they do not run into each other; the last always shows.
+	widest := 0
+	for _, p := range points {
+		widest = max(widest, len([]rune(chartLabel(p.Label))))
 	}
+	every := max(1, int(math.Ceil(float64(widest)*charW/(slot*0.9))))
 	var path []string
 	for i := range s.Points {
 		p := &s.Points[i]
 		p.ShowValue = !dense
 		p.ShowLabel = (len(points)-1-i)%every == 0
-		h := p.Value / top * plotH
-		if p.Value < 0 {
-			h = 0
-		}
+		y := at(p.Value)
 		p.W = round(slot * 0.52)
-		p.X = round(chartLeft + float64(i)*slot + slot*0.24)
-		p.H = round(h)
-		p.Y = round(s.Baseline - h)
+		p.X = round(left + float64(i)*slot + slot*0.24)
+		p.Y, p.H = math.Min(y, s.Baseline), round(math.Abs(s.Baseline-y))
+		// A value is written above its bar, or below one that goes down.
 		p.LabelY = p.Y - 6
+		if p.Value < 0 {
+			p.LabelY = p.Y + p.H + 14
+		}
 		if p.LabelY < chartTop-8 {
 			p.LabelY = chartTop - 8
 		}
-		p.CX = round(chartLeft + (float64(i)+0.5)*slot)
-		p.CY = p.Y
+		p.CX = round(left + (float64(i)+0.5)*slot)
+		p.CY = y
 		path = append(path, fmt.Sprintf("%g,%g", p.CX, p.CY))
 	}
 	s.Path = strings.Join(path, " ")
@@ -146,19 +169,17 @@ func sparkline(series any) string {
 	if len(points) < 2 {
 		return ""
 	}
-	top := 0.0
+	top, low := 0.0, 0.0
 	for _, p := range points {
-		if p.Value > top {
-			top = p.Value
-		}
+		top, low = math.Max(top, p.Value), math.Min(low, p.Value)
 	}
-	if top <= 0 {
+	if top-low <= 0 {
 		top = 1
 	}
 	var out []string
 	for i, p := range points {
 		x := 4 + float64(i)*(232/float64(len(points)-1))
-		y := 44 - p.Value/top*40
+		y := 44 - (p.Value-low)/(top-low)*40
 		out = append(out, fmt.Sprintf("%g,%g", round(x), round(y)))
 	}
 	return strings.Join(out, " ")
@@ -173,21 +194,6 @@ func chartLast(series any) ChartPoint {
 		return ChartPoint{}
 	}
 	return points[len(points)-1]
-}
-
-func chartTrend(series any) string {
-	points := chartPoints(series)
-	if len(points) < 2 {
-		return ""
-	}
-	last, prev := points[len(points)-1].Value, points[len(points)-2].Value
-	switch {
-	case last > prev:
-		return "up from " + numberText(prev)
-	case last < prev:
-		return "down from " + numberText(prev)
-	}
-	return "the same as before"
 }
 
 // chartPoints reads the plain maps a component's props carry.
@@ -221,16 +227,6 @@ func numberOf(v any) float64 {
 	return 0
 }
 
-// numberText writes a value the way a person would: whole when it is
-// whole, else to two places.
-func numberText(v float64) string {
-	if v == math.Trunc(v) {
-		return strconv.FormatInt(int64(v), 10)
-	}
-	// 295.5, not 295.50: a trailing nought says nothing.
-	return strings.TrimRight(strconv.FormatFloat(v, 'f', 2, 64), "0")
-}
-
 // niceStep is the distance between gridlines: 1, 2 or 5 times a power of
 // ten, at least the size asked for, so the lines fall on numbers people
 // read and the top of the axis is a whole number of them.
@@ -257,19 +253,4 @@ func wholeValues(points []ChartPoint) bool {
 		}
 	}
 	return true
-}
-
-// chartLabel is a group label as it is read under a bar: a day as its
-// short date, a month as its name, anything else as it is.
-func chartLabel(label string) string {
-	if day, ok := strings.CutPrefix(label, "Week of "); ok {
-		return "Week of " + chartLabel(day)
-	}
-	if t, err := time.Parse("2006-01-02", label); err == nil {
-		return t.Format("2 Jan")
-	}
-	if t, err := time.Parse("2006-01", label); err == nil {
-		return t.Format("Jan 2006")
-	}
-	return label
 }
