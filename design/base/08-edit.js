@@ -104,7 +104,6 @@
     }
     if (kind === "number") {
       built = control("number", el, id, name);
-      built.input.step = "any";
       built.input.value = source || "";
       return built;
     }
