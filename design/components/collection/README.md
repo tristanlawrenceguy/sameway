@@ -30,3 +30,27 @@ and several are compared.
 `limit` is how many are shown, 20 unless given. When more match, the list
 says it shows the first of them, and its link, See all of them, leads to
 the list page with the same query, which has them all.
+
+## Why it works this way
+
+- **Its own name.** A list's heading id comes from its block, so two lists
+  of one type on a canvas are each named by their own heading
+  ([WCAG 4.1.2](https://www.w3.org/WAI/WCAG22/Understanding/name-role-value.html)).
+- **Fields named in sight.** A date beside a title could be any date, so
+  its field's name is shown, not only said to a screen reader
+  ([W3C COGA](https://www.w3.org/TR/coga-usable/)).
+- **A table a keyboard can scroll.** On a phone it is a named region that
+  takes focus
+  ([Adrian Roselli on responsive tables](https://adrianroselli.com/2020/11/under-engineered-responsive-tables.html),
+  [WCAG 2.1.1](https://www.w3.org/WAI/WCAG22/Understanding/keyboard.html)).
+- **Cards that act as cards**, pressed anywhere to open, as elsewhere.
+- **Says when it is cut short**, so records past the limit are not missed
+  without a word.
+- **Conditions read as a sentence**: "Nothing matches: not done and due
+  before today."
+  ([MoJ filter a list](https://design-patterns.service.justice.gov.uk/patterns/filter-a-list/),
+  [NN/g empty states](https://www.nngroup.com/articles/empty-state-interface-design/)).
+
+Not done, and why: field names only for screen readers (sighted people
+need them as much); a table squashed to fit a phone (its columns become
+unreadable, so it scrolls in a box instead).

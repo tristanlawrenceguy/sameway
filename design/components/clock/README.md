@@ -53,3 +53,29 @@ thing's page lists the reminders about it. A habit with a `remind` time
 nudges the same way: if it is not met by then, the clock rings a
 reminder about it once a day, saying where it stands (Water: 3 of 8
 glasses so far).
+
+## Why it works this way
+
+- **Says what it set.** A time typed in words can be read wrongly, and
+  saying it back is how the person catches that before the alarm fails to
+  ring ([W3C COGA](https://www.w3.org/TR/coga-usable/)).
+- **Labels in sight.** A placeholder is gone the moment a person types, so
+  each field has its label above it
+  ([NN/g on placeholders](https://www.nngroup.com/articles/form-design-placeholders/)).
+- **A whole keyboard for the alarm**, not a number pad, since 7pm and
+  tomorrow are words
+  ([MDN inputmode](https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/inputmode)).
+- **One list in time order**, whatever each thing is, with the time in its
+  own column, so what comes next is at the top and titles line up.
+- **A ring that sounds.** The page wakes its one sound on the first press
+  or key, because a browser keeps a page silent until then
+  ([Chrome autoplay policy](https://developer.chrome.com/blog/autoplay/)).
+- **A ring that waits.** It stays until Dismiss or 5 more minutes, and its
+  notification stays until answered where the browser allows, so a person
+  who looked away still sees it; each answer can be undone
+  ([MDN requireInteraction](https://developer.mozilla.org/en-US/docs/Web/API/Notification/requireInteraction),
+  [WCAG 2.2.1](https://www.w3.org/WAI/WCAG22/Understanding/timing-adjustable.html)).
+
+Not done, and why: a time picker of wheels or dials (typing it as it is
+said is faster, and it is said back); a ring that stops by itself (it is
+missed by anyone away from the screen).

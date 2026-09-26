@@ -48,3 +48,25 @@ its own form posting to `/act/<id>`, with `from` as the page to return to.
 Pressing it runs the action: a webhook to a URL the person set up, an
 arrangement, or a message to the assistant. It is a real form, so it works
 without a script, and it must not be placed inside another form.
+
+## Why it works this way
+
+- **Sent once.** The pressed button is busy until the next page arrives,
+  not for a set second, since a slow request would then go twice. It is let
+  go after 15 seconds for a reply that never leaves the page, and on Back
+  ([GOV.UK button](https://design-system.service.gov.uk/components/button/)).
+- **Busy, not disabled.** `aria-disabled` keeps the button in reach with
+  its name; a disabled one gives no reason and drops out of reach.
+- **A quiet button keeps an edge** on its own, so Cancel beside Save still
+  reads as something to press
+  ([NN/g on clickable elements](https://www.nngroup.com/articles/clickable-elements/)).
+- **On and off not by colour alone.** `pressed` gives `aria-pressed` and a
+  pressed-in look, with the label kept the same
+  ([Inclusive Components toggle buttons](https://inclusive-components.design/toggle-button/)).
+- **44px targets**, in bars too
+  ([WCAG 2.5.5](https://www.w3.org/WAI/WCAG22/Understanding/target-size-enhanced.html)).
+
+Not done, and why: a guard of one second (a slow request is sent again
+after it); disabling the button while it sends (it loses focus and its
+value goes missing from the form); guarding searches (they are harmless to
+repeat).
