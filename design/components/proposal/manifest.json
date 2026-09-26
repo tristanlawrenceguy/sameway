@@ -9,6 +9,7 @@
     "additionalProperties": false,
     "required": ["summary", "accept", "dismiss"],
     "properties": {
+      "risk": { "type": "boolean", "default": false, "description": "What it would do cannot be taken back: the question says so in words and its Yes is in the danger colour. Set by Sameway for the questions it asks itself." },
       "summary": { "type": "string", "format": "multiline", "minLength": 1, "description": "The question in plain words. Say what would change and why it is being asked." },
       "detail": { "type": "string", "description": "One extra line naming exactly what would change, so nobody says yes to a surprise." },
       "accept": { "type": "string", "minLength": 1, "description": "URL the yes answer posts to." },
@@ -38,6 +39,7 @@
   "examples": [
     { "name": "default", "props": { "summary": "Remove the API setup link?", "detail": "You signed in with a subscription, so the key setup step is no longer needed.", "accept": "/proposal/abc/accept", "dismiss": "/proposal/abc/dismiss", "acceptLabel": "Yes, remove it", "id": "p-abc" }, "file": "examples/default.html" },
     { "name": "plain", "props": { "summary": "Move the calendar into the side pane?", "accept": "/proposal/def/accept", "dismiss": "/proposal/def/dismiss" }, "file": "examples/plain.html" },
+    { "name": "risk", "props": { "summary": "Send the conversation to https://models.example/v1?", "detail": "Everything you and the assistant say would go to that address from now on.", "accept": "/proposal/ghi/accept", "dismiss": "/proposal/ghi/dismiss", "acceptLabel": "Yes, send it there", "dismissLabel": "No, keep it here", "risk": true, "id": "proposal-ghi" }, "file": "examples/risk.html" },
     { "name": "instead", "props": { "summary": "Delete mood from every note?", "detail": "3 of 12 have something in it; that would be cleared, and it can't be undone. Hiding it instead keeps what they hold.", "accept": "/proposal/ghi/accept", "dismiss": "/proposal/ghi/dismiss", "instead": "/proposal/ghi/instead", "insteadLabel": "Hide it instead", "acceptLabel": "Delete it", "dismissLabel": "Keep it" }, "file": "examples/instead.html" }
   ]
 }
