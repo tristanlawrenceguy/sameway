@@ -9,6 +9,6 @@
   "blocks": [
     { "key": "title", "component": "heading", "props": { "text": "Writing", "level": 2 }, "span": 12, "frame": "bare" },
     { "key": "draft", "component": "text", "props": { "content": "Start here." }, "span": 8, "frame": "bare" },
-    { "key": "ideas", "component": "list", "props": { "items": ["An idea to come back to"], "label": "Ideas" }, "span": 4 }
+    { "key": "ideas", "component": "list", "props": { "items": ["An idea to come back to"], "label": "Ideas", "level": 3 }, "span": 4 }
   ]
 }

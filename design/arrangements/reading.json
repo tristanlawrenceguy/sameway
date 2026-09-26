@@ -8,7 +8,7 @@
   },
   "blocks": [
     { "key": "title", "component": "heading", "props": { "text": "Reading", "level": 2 }, "span": 12, "frame": "bare" },
-    { "key": "list", "component": "list", "props": { "items": ["The next book", "The one after"], "label": "To read", "ordered": true }, "span": 8 },
+    { "key": "list", "component": "list", "props": { "items": ["The next book", "The one after"], "label": "To read", "level": 3, "ordered": true }, "span": 8 },
     { "key": "now", "component": "card", "props": { "title": "Now reading", "body": "What it is and where you are in it.", "meta": "Started this week" }, "span": 4 }
   ]
 }

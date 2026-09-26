@@ -9,7 +9,7 @@
   "blocks": [
     { "key": "title", "component": "heading", "props": { "text": "The trip", "level": 2 }, "span": 12, "frame": "bare" },
     { "key": "dates", "component": "calendar", "props": { "month": "2026-09", "detail": "full", "caption": "Trip dates" }, "span": 12 },
-    { "key": "pack", "component": "list", "props": { "items": ["Passport", "Charger", "Walking shoes"], "label": "To pack" }, "span": 6 },
-    { "key": "book", "component": "list", "props": { "items": ["Train", "Hotel", "Dinner on the first night"], "label": "To book" }, "span": 6 }
+    { "key": "pack", "component": "list", "props": { "items": ["Passport", "Charger", "Walking shoes"], "label": "To pack", "level": 3 }, "span": 6 },
+    { "key": "book", "component": "list", "props": { "items": ["Train", "Hotel", "Dinner on the first night"], "label": "To book", "level": 3 }, "span": 6 }
   ]
 }

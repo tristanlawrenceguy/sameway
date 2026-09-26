@@ -9,7 +9,7 @@
   "blocks": [
     { "key": "title", "component": "heading", "props": { "text": "This week", "level": 2 }, "span": 12, "frame": "bare" },
     { "key": "calendar", "component": "calendar", "props": { "month": "2026-09", "detail": "brief", "caption": "This week" }, "region": "right" },
-    { "key": "todo", "component": "list", "props": { "items": ["Book the dentist", "Call the plumber", "Send the invoice"], "label": "To do" }, "span": 8 },
+    { "key": "todo", "component": "list", "props": { "items": ["Book the dentist", "Call the plumber", "Send the invoice"], "label": "To do", "level": 3 }, "span": 8 },
     { "key": "notes", "component": "text", "props": { "content": "Notes for the week go here.", "muted": true }, "span": 4, "frame": "bare" }
   ]
 }
