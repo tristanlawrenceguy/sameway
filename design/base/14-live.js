@@ -35,6 +35,7 @@
     var empty = body.querySelector(".sw-empty");
     log = el('<ol class="sw-plain sw-stack sw-chat__log" aria-label="Messages" tabindex="0"></ol>');
     if (empty) empty.replaceWith(log); else body.insertBefore(log, form);
+    body.querySelectorAll(".sw-chat__starts").forEach(function (x) { x.remove(); }); // things to ask go with the empty
     return log;
   }
 

@@ -22,8 +22,7 @@ const fail = (msg) => { failures++; console.log(`FAIL ${msg}`); };
 const check = (ok, msg) => { if (!ok) fail(msg); };
 
 async function axe(label) {
-  const res = await new AxeBuilder({ page }).withTags(AA_TAGS).analyze();
-  for (const v of res.violations) fail(`${label}: axe ${v.id} - ${v.help} (${v.nodes.length} node(s))`);
+  for (const p of await axeProblems(page)) fail(`${label}: ${p}`);
 }
 
 async function shellChecks(label) {

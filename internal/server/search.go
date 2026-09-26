@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/search"
@@ -20,18 +21,23 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 	b.WriteString(string(s.component("text-field", map[string]any{"label": "Search", "name": "q", "value": q, "type": "search", "hint": "Any words in a note, an event, an action, or a block on the canvas."})))
 	b.WriteString(string(s.component("button", map[string]any{"label": "Search", "type": "submit"})))
 	b.WriteString(`</form>`)
-	title := "Search"
+	title, said := "Search", ""
 	pg := paged{page: 1, pages: 1}
 	if q != "" {
 		hits := search.Find(s.app.Store, s.app.Types, q)
 		title = trimTitle(fmt.Sprintf("Search: %s", q))
+		// The window title names the page and says what the search found,
+		// Search: plumber, no results. It is the first
+		// thing a screen reader says when the results page arrives, which a
+		// status region on a fresh page is not.
+		said = trimTitle(fmt.Sprintf("Search: %s, %s", q, strings.ToLower(results(len(hits)))))
 		if len(hits) == 0 {
 			b.WriteString(string(s.component("empty", map[string]any{
-				"title": "No results", "message": fmt.Sprintf("No matches for %q — try different words, or", q), "live": true,
-				"action": map[string]any{"href": "/chat?prompt=Create%20something.", "label": "ask the assistant"},
+				"title": "No results", "message": fmt.Sprintf("Nothing matches “%s”. Try different words, or", q),
+				"action": map[string]any{"href": "/chat?prompt=" + url.QueryEscape("Find "+q), "label": "ask the assistant"},
 			})))
 		} else {
-			fmt.Fprintf(&b, `<p class="sw-muted sw-small" role="status">%s</p>`, template.HTMLEscapeString(count(len(hits))))
+			fmt.Fprintf(&b, `<p class="sw-muted sw-small">%s</p>`, template.HTMLEscapeString(count(len(hits))))
 			fmt.Fprintf(&b, `<h2>Results</h2>`)
 			fmt.Fprintf(&b, `<ol class="sw-stack" aria-label="Results for %s">`, template.HTMLEscapeString(q))
 			pg = pageOf(r, len(hits), searchPageSize)
@@ -65,7 +71,7 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 			b.WriteString(string(s.pageNav(r, pg, "Pages of results")))
 		}
 	}
-	s.page(w, r, pg.title(title), template.HTML(b.String()), pageOptions{JSONURL: "/api/search?q=" + template.URLQueryEscaper(q)})
+	s.page(w, r, pg.title(title), template.HTML(b.String()), pageOptions{JSONURL: "/api/search?q=" + template.URLQueryEscaper(q), Said: said})
 }
 
 func count(n int) string {
@@ -73,6 +79,18 @@ func count(n int) string {
 		return "1 thing found"
 	}
 	return fmt.Sprintf("%d things found", n)
+}
+
+// results is how many a search found, as the window title ends: No
+// results, 1 result, 3 results.
+func results(n int) string {
+	switch n {
+	case 0:
+		return "No results"
+	case 1:
+		return "1 result"
+	}
+	return fmt.Sprintf("%d results", n)
 }
 
 // apiSearch is the same search for an agent.

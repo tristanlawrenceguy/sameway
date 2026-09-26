@@ -150,6 +150,7 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 	p := render.Page{
 		Site:       s.app.Workspace.Config.Name,
 		Title:      title,
+		Said:       opts.Said,
 		Controls:   s.app.Workspace.Config.UI.Controls,
 		Pace:       s.app.Workspace.Config.UI.Pace,
 		Lang:       s.app.Workspace.Config.UI.Language,
@@ -211,23 +212,6 @@ func (s *Server) notFoundPage(w http.ResponseWriter, r *http.Request) {
 // content-type record detail pages, enabling inline editing via 08-edit.js.
 var detailPageExtraScripts = []template.HTML{
 	`<script defer src="/design/base/08-edit.js"></script>`,
-}
-
-type pageOptions struct {
-	QuietTitle   bool
-	Shell        string
-	Kicker       template.HTML
-	Lede         template.HTML
-	Dot          int
-	Left         template.HTML
-	Right        template.HTML
-	Header       template.HTML
-	Footer       template.HTML
-	JSONURL      string
-	Focus        string
-	FocusLabel   string
-	Status       int
-	ExtraScripts []template.HTML
 }
 
 func (s *Server) navLink(href, label string, current bool) template.HTML {
