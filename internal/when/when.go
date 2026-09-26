@@ -168,3 +168,49 @@ func Short(v string, now time.Time) string {
 	}
 	return d.Format("2 Jan 2006") + clock
 }
+
+// setReal sets the day when it exists, and marks the reading bad when it
+// does not.
+func (r *reading) setReal(y, mo, d int) {
+	if !exists(y, mo, d) {
+		r.bad, r.why = true, "day"
+		return
+	}
+	day, _ := realDay(y, mo, d, r.now.Location())
+	r.setDay(day)
+}
+
+// exists is whether a date written out in full is one.
+func exists(y, mo, d int) bool {
+	_, ok := realDay(y, mo, d, time.UTC)
+	return ok && mo >= 1 && mo <= 12
+}
+
+// realDay is the date, when there is one: time.Date would take 31 Feb as
+// 3 Mar, which is not what anyone wrote. A month past 12 wraps into the
+// next year, as months counted on from now do.
+func realDay(y, mo, d int, loc *time.Location) (time.Time, bool) {
+	t := time.Date(y, time.Month(mo), d, 0, 0, 0, 0, loc)
+	return t, d >= 1 && t.Day() == d
+}
+
+// Why says why words are not read as a day or a moment, as what they must
+// be: a real day, a real time, one day and not two that disagree, or,
+// failing those, a day at all. Nothing when they are read.
+func Why(s string, now time.Time) string {
+	if _, _, ok := Parse(s, now); ok {
+		return ""
+	}
+	r := newReading(now)
+	r.read(strings.ToLower(strings.TrimSpace(s)))
+	said := strings.TrimSpace(s)
+	switch r.why {
+	case "day":
+		return "must be a real day: " + said + " is not one"
+	case "time":
+		return "must be a real time: " + said + " is not one"
+	case "weekday":
+		return "must be one day: " + r.base.Format("2 Jan 2006") + " is a " + r.base.Weekday().String() + ", not a " + r.weekday.String()
+	}
+	return "must be a day, like 19 Sep, next Friday or tomorrow 2pm"
+}
