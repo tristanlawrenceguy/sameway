@@ -1,5 +1,5 @@
 /* Shares the .sw-field classes with text-field; only the native picker
    button needs anything of its own. */
 .sw-datepicker { font-variant-numeric: tabular-nums; }
-.sw-datepicker::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.7; }
-.sw-datepicker::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+/* The icon at full strength: faded, it fell under 7:1. */
+.sw-datepicker::-webkit-calendar-picker-indicator { cursor: pointer; }
