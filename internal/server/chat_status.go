@@ -22,7 +22,7 @@ func (s *Server) status(msgs []*store.Record) template.HTML {
 		case "error":
 			// Where the failure is said does not depend on where the person
 			// looks: the reason is read out with it, as a reply's words are.
-			props["state"], props["message"], props["live"] = "error", "The last request failed.", "assertive"
+			props["state"], props["message"] = "error", "The last request failed."
 			if words, _ := last.Fields["content"].(string); strings.TrimSpace(words) != "" {
 				props["said"] = clipWords(words, 200)
 			}

@@ -4,7 +4,7 @@
   "description": "One search over everything a person has: every record of every content type and every block on the canvas. A form with one field and one button, because that is the better thing here; it is a GET, so a search is a link that can be kept.",
   "icon": "⌕",
   "use": { "when": "the person wants to find something by the words in it, from wherever they are; it belongs in the header, where they reach for it on every page.", "not": "filtering one list, which is the listing page, or asking the assistant, which is the chat.", "with": "header at compact or icon size once the person knows it is there." },
-  "empty": { "description": "When there are no matching results (search empty: nothing found), show an h2 heading and suggest trying different words.", "text": "Nothing has X in it. Try searching with different words." },
+  "empty": { "description": "When there are no matching results (search empty: nothing found), show an h2 heading and suggest trying different words.", "text": "Nothing matches “X”. Try different words, or ask the assistant." },
   "props": {
     "type": "object",
     "additionalProperties": false,

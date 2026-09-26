@@ -10,7 +10,7 @@
 .sw-field__input, .sw-field__textarea, .sw-field__select {
   display: block; width: 100%; min-height: var(--sw-size-target);
   padding: var(--sw-space-2) var(--sw-space-3);
-  font: inherit; color: var(--sw-color-fg);
+  font: inherit; letter-spacing: inherit; word-spacing: inherit; color: var(--sw-color-fg);
   background: var(--sw-color-bg-raised);
   border: 2px solid var(--sw-color-border-strong); border-radius: var(--sw-radius-md);
   transition: border-color var(--sw-motion-fast) var(--sw-motion-ease), box-shadow var(--sw-motion-fast) var(--sw-motion-ease);
