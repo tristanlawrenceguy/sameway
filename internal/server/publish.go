@@ -13,7 +13,8 @@ import (
 // Publishing is what anyone on the internet may read, with no login, at
 // the workspace's own address, through Tailscale Funnel: the tabs and the
 // content types the owner asked to publish (workspace.yaml publish:), and
-// nothing else. The internet reaches only Public, never the workspace
+// nothing else. People and AI services have it the same way, as Sameway
+// has everything: pages for the one, MCP for the other. The internet reaches only Public, never the workspace
 // itself: a request for anything not published is not found, nothing is
 // ever written, and the pages carry no controls, no conversation and no
 // log. On the tailnet, the same address is the whole workspace as before.
@@ -22,7 +23,6 @@ import (
 type Published struct {
 	Tabs  map[string]string // canvas id -> its title; "" is Home
 	Types map[string]bool
-	AI    bool
 }
 
 // Any says whether anything is published.
@@ -31,7 +31,7 @@ func (p Published) Any() bool { return len(p.Tabs) > 0 || len(p.Types) > 0 }
 // Published reads what is public from workspace.yaml, as it is now.
 func (s *Server) Published() Published {
 	cfg := s.app.Workspace.Config.Publish
-	out := Published{Tabs: map[string]string{}, Types: map[string]bool{}, AI: cfg.AI == "on"}
+	out := Published{Tabs: map[string]string{}, Types: map[string]bool{}}
 	for _, name := range splitList(cfg.Types) {
 		if t, ok := s.app.Types.Get(strings.ToLower(name)); ok && !t.Internal {
 			out.Types[t.Name] = true
@@ -66,7 +66,9 @@ func (s *Server) Public(mcp http.Handler) http.Handler {
 		r = r.WithContext(chat.WithVisitor(r.Context(), chat.Visitor{Access: chat.Public}))
 		pub := s.Published()
 		switch {
-		case r.URL.Path == "/mcp" && pub.AI && mcp != nil:
+		// What is published is published to people and to AI services
+		// the same way: pages for the one, MCP for the other.
+		case r.URL.Path == "/mcp" && pub.Any() && mcp != nil:
 			mcp.ServeHTTP(w, r)
 			return
 		case r.Method != http.MethodGet && r.Method != http.MethodHead:

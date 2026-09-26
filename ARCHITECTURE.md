@@ -224,12 +224,12 @@ own types come with the program and do not travel.
 ### Publishing
 
 What the owner explicitly asks to publish (`publish:` tabs and content
-types, and `ai: on` for AI services) is readable by anyone on the internet,
+types) is readable by anyone on the internet, people and AI services alike,
 with no login, at the workspace's own tailnet address, through Tailscale
 Funnel. Funnel's listener is Funnel's alone, so the internet only ever
 reaches `Server.Public`: published pages and records as read-only HTML
-with no controls, conversation or log, and, when allowed, MCP that reads
-the published types and nothing else. Everything else is not found, and
+with no controls, conversation or log, and MCP that reads the published
+types and nothing else: published to people is published to AI. Everything else is not found, and
 nothing is written. The tailnet still gets the whole workspace at the same
 address. Publishing is always a question; unpublishing is immediate.
 

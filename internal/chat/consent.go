@@ -41,18 +41,13 @@ type question struct{ ask, detail, yes, no string }
 var outward = map[string]func(now, next string, s *Service) question{
 	"publish.tabs": func(now, next string, _ *Service) question {
 		return question{"Publish " + next + " to the internet?",
-			fmt.Sprintf("Anyone with the link could read %s, as it is shown, from anywhere, with no login (now public: %s). Everything shown on it is included, even what comes from lists that are not public. Nothing else in the workspace is. You can unpublish at any time, at once.", next, orNone(now)),
+			fmt.Sprintf("Anyone with the link could read %s, as it is shown, from anywhere, with no login, and so could AI services, over MCP, the same way (now public: %s). Everything shown on it is included, even what comes from lists that are not public. Nothing else in the workspace is. You can unpublish at any time, at once.", next, orNone(now)),
 			"Yes, publish it", "No, keep it private"}
 	},
 	"publish.types": func(now, next string, _ *Service) question {
 		return question{"Publish every " + next + " to the internet?",
-			fmt.Sprintf("Anyone with the link could read every %s, as it is and as it changes, from anywhere, with no login (now public: %s). Nothing else in the workspace is. You can unpublish at any time, at once.", next, orNone(now)),
+			fmt.Sprintf("Anyone with the link could read every %s, as it is and as it changes, from anywhere, with no login, and so could AI services, over MCP, the same way (now public: %s). Nothing else in the workspace is. You can unpublish at any time, at once.", next, orNone(now)),
 			"Yes, publish them", "No, keep them private"}
-	},
-	"publish.ai": func(now, next string, _ *Service) question {
-		return question{"Let AI services read what you have published?",
-			"ChatGPT, Claude and other AI services on the internet could read what is published here, with no login, but nothing else and without changing anything.",
-			"Yes, let them read it", "No, only people"}
 	},
 	"tailnet.peers": func(now, next string, _ *Service) question {
 		return question{"Keep this workspace in step with other computers?",
