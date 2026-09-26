@@ -18,7 +18,15 @@
 
   function answer(btn) {
     var form = btn.closest("form");
-    var accepted = /\/accept$/.test(form.action);
+    var card = btn.closest(".sw-proposal");
+    // One answer: while it is sent, the others wait, still in reach.
+    if (card._answering) return;
+    card._answering = true;
+    var all = card.querySelectorAll("[type=submit]");
+    all.forEach(function (b) { b.setAttribute("aria-disabled", "true"); });
+    function again() { card._answering = false; all.forEach(function (b) { b.removeAttribute("aria-disabled"); }); }
+    var kind = form.action.split("/").pop();
+    say("Sending your answer…", "working");
     fetch(form.action, { method: "POST", body: new FormData(form), credentials: "same-origin" })
       .then(function (res) { return res.text().then(function (html) { return { ok: res.ok, html: html }; }); })
       .then(function (r) {
@@ -27,15 +35,16 @@
         var outcome = doc.querySelector(".sw-outcome[data-outcome=failed]");
         if (!r.ok || outcome) {
           say(outcome ? outcome.textContent.replace(/\s+/g, " ").replace("×", "").trim() : "That answer did not go through.", "error");
+          again();
           return;
         }
         document.querySelectorAll(".sw-proposal").forEach(function (p) { p.remove(); });
-        say(accepted ? "Done." : "Left as it was.");
+        say(kind === "dismiss" ? "Left as it was." : "Done: " + btn.textContent.trim() + ".");
         if (window.swRefresh) window.swRefresh(0);
         var box = document.querySelector("form.sw-compose textarea");
         if (box) box.focus();
       })
-      .catch(function () { say("That answer did not go through.", "error"); });
+      .catch(function () { say("That answer did not go through.", "error"); again(); });
   }
 
   // A proposal's two buttons are forms that work on their own; with

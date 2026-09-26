@@ -125,10 +125,7 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 	}
 	switch call.Name {
 	case "propose_change":
-		var action map[string]any
-		json.Unmarshal(call.Args, &action)
-		delete(action, "summary")
-		return s.propose(args.Summary, action)
+		return s.proposeByModel(args.Summary, call.Args)
 	case "look_at_page":
 		return s.lookAtPage(call.Args)
 	case "create_canvas":

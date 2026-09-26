@@ -19,6 +19,9 @@
       "textProp": {"type": "string", "description": "Filled in by the server: the field the text comes from. Leave out."},
       "fields": {"type": "array", "description": "Filled in by the server: the record's other fields with something in them. Leave out.", "items": {"type": "object", "additionalProperties": false, "required": ["label", "value"], "properties": {"label": {"type": "string"}, "value": {"type": "string"}}}},
       "structured": {"type": "boolean", "default": false, "description": "Filled in by the server when the text is structured (Markdown): it is shown with its headings under the title and edited as it is shown. Leave out."},
+      "kind": { "type": "string", "description": "Filled in by the server: the kind of record in words, Note, Task." },
+      "listHref": { "type": "string", "description": "Filled in by the server when the record is gone: its list." },
+      "listLabel": { "type": "string", "description": "Filled in by the server: See all notes." },
       "missing": {"type": "boolean", "default": false, "description": "Filled in by the server when the record no longer exists. Leave out."},
       "id": {"type": "string"},
       "actions": {"type": "array", "description": "Filled in by the server: the one press this record offers, such as Mark as done, as {component, props}. Leave out.", "items": {"type": "object", "additionalProperties": false, "required": ["component", "props"], "properties": {"component": {"type": "string", "enum": ["mark", "button", "link"]}, "props": {"type": "object"}}}}

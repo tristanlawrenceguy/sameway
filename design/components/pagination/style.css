@@ -1,13 +1,22 @@
 /* The way through a long list a page at a time: Previous, the pages by
-   number with gaps, Next. The page you are on is filled, not only coloured. */
+   number with gaps, Next. The page you are on is filled, not only
+   coloured; the others show they can be pressed when a pointer is over
+   them. On a phone Previous and Next share the top line and the numbers
+   have a line of their own, rather than wrapping wherever they fall. */
+.sw-pagination { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sw-space-1); }
 .sw-pagination__list { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sw-space-1); }
 .sw-pagination__page, .sw-pagination__step {
   display: inline-flex; align-items: center; justify-content: center;
   min-width: var(--sw-size-target); min-height: var(--sw-size-target); padding: 0 var(--sw-space-2);
   border-radius: var(--sw-radius-md); font-variant-numeric: tabular-nums;
 }
+.sw-pagination__page:not([aria-current]):hover, .sw-pagination__step:hover { background: var(--sw-color-bg-muted); }
 .sw-pagination__page[aria-current="page"] { background: var(--sw-color-accent); color: var(--sw-color-accent-fg); font-weight: 700; text-decoration: none; }
 .sw-pagination__gap { padding: 0 var(--sw-space-1); color: var(--sw-color-fg-muted); }
+@media (max-width: 30rem) {
+  .sw-pagination__list { order: 1; flex-basis: 100%; }
+  .sw-pagination__next { margin-inline-start: auto; }
+}
 @media (forced-colors: active) {
   .sw-pagination__page[aria-current="page"] { forced-color-adjust: none; background: Highlight; color: HighlightText; }
 }

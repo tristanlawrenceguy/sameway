@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"slices"
+	"sort"
+	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -46,9 +49,10 @@ func (s *Server) refItem(f schema.Field, id string) map[string]any {
 	return item
 }
 
-// maxChoices is how many records a ref offers to choose from when edited;
-// past it the field is edited by id, as before.
-const maxChoices = 500
+// maxChoices is how many records a ref offers as a list to choose from
+// when edited; past it a list is too long to read, and the field is a
+// lookup that finds them by name as a person types.
+const maxChoices = 15
 
 // choices is what a field with a fixed set of values can be changed to,
 // on the element for the inline editor, which offers them as a list: an
@@ -78,6 +82,11 @@ func (s *Server) choiceList(f schema.Field, current string) []any {
 		for _, v := range f.Values {
 			add(v, f.ValueLabel(v))
 		}
+		// A value no longer among the choices is shown, not silently
+		// replaced by the first when the record is saved.
+		if current != "" && !slices.Contains(f.Values, current) {
+			add(current, f.ValueLabel(current))
+		}
 	case "ref":
 		t, ok := s.app.Types.Get(f.To)
 		if !ok {
@@ -87,6 +96,10 @@ func (s *Server) choiceList(f schema.Field, current string) []any {
 		if err != nil || len(recs) > maxChoices {
 			return nil
 		}
+		// By the names a person reads, not the order they were made.
+		sort.SliceStable(recs, func(i, j int) bool {
+			return strings.ToLower(s.title(t, recs[i])) < strings.ToLower(s.title(t, recs[j]))
+		})
 		found := false
 		for _, rec := range recs {
 			add(rec.ID, s.title(t, rec))

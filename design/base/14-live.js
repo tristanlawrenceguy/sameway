@@ -41,7 +41,7 @@
 
   function liveMessage(log) {
     var li = el('<li class="sw-live"><article class="sw-message sw-message--assistant" data-component="message" data-role="assistant" data-actor="assistant" aria-busy="true">' +
-      '<p class="sw-message__meta"><span class="sw-message__author">Assistant</span></p>' +
+      '<h3 class="sw-message__meta"><span class="sw-message__author">Assistant</span></h3>' +
       '<div class="sw-message__body"><p class="sw-live__text"></p><ol class="sw-plain sw-live__steps" aria-label="What the assistant is doing"></ol></div></article></li>');
     log.appendChild(li);
     // The words grow in one text node, so a selection elsewhere in the

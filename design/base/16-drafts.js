@@ -67,7 +67,9 @@
     if (notice) notice.remove();
     form.addEventListener("input", function () { set(k, fields(form)); });
     form.addEventListener("submit", function () { set(k, fields(form)); });
-    form.addEventListener("keydown", function (e) { if (e.key === "Escape") del(k); });
+    // Escape keeps what was typed: the block says it was being edited and
+    // offers it again. Only Cancel, pressed on purpose, lets it go.
+    form.addEventListener("keydown", function (e) { if (e.key === "Escape") setTimeout(function () { offer(block); }, 0); });
     var cancel = form.querySelector("[data-cancel]");
     if (cancel) cancel.addEventListener("click", function () { del(k); });
   }
