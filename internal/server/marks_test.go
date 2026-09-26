@@ -19,7 +19,7 @@ func TestARecordsStateIsOnePressAway(t *testing.T) {
 	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/block", map[string]any{"component": "record", "props": map[string]any{"type": "task", "record": task.ID}}), http.StatusCreated)
 
 	canvas := get(t, h, "/").Body.String()
-	form := `<form class="sw-mark" method="post" action="/t/task/` + task.ID + `/props" data-component="mark" data-record-type="task" data-record-id="` + task.ID + `" data-field="done"><label class="sw-mark__label"><input class="sw-mark__input" type="checkbox" name="prop-done" value="true" aria-label="Mark done Order compost"> Done<span class="sw-visually-hidden"> Order compost</span></label><input type="hidden" name="prop-done" value="false">`
+	form := `<form class="sw-mark" method="post" action="/t/task/` + task.ID + `/props" data-component="mark" data-record-type="task" data-record-id="` + task.ID + `" data-field="done"><label class="sw-mark__label"><input class="sw-mark__input" type="checkbox" name="prop-done" value="true"> Done<span class="sw-visually-hidden"> Order compost</span></label><input type="hidden" name="prop-done" value="false">`
 	if strings.Count(canvas, form) != 2 {
 		t.Errorf("the collection item and the record block each offer the checkbox, named with the record: %.600s", canvas[strings.Index(canvas, "Tasks"):])
 	}
@@ -42,7 +42,7 @@ func TestARecordsStateIsOnePressAway(t *testing.T) {
 		t.Errorf("the task should be done, got %v", done.Fields["done"])
 	}
 	after := get(t, h, "/").Body.String()
-	if !strings.Contains(after, `name="prop-done" value="true" aria-label=`) || !strings.Contains(after, `checked> Done`) {
+	if !strings.Contains(after, `name="prop-done" value="true" checked> Done<span class="sw-visually-hidden"> Order compost</span>`) {
 		t.Error("the checkbox now shows the fact")
 	}
 	if !strings.Contains(after, `data-changed=`) {
