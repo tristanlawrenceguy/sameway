@@ -10,13 +10,13 @@
   padding: var(--sw-space-3) var(--sw-space-2); border-top: 1px solid var(--sw-color-border);
 }
 .sw-tracker__habit:first-child { border-top: 0; }
-.sw-tracker__head { grid-area: head; position: relative; display: flex; align-items: center; gap: var(--sw-space-2); min-width: 0; min-height: var(--sw-size-target); }
+.sw-tracker__head { grid-area: head; position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: var(--sw-space-1) var(--sw-space-2); min-width: 0; min-height: var(--sw-size-target); }
 .sw-tracker__name { font-weight: 600; color: var(--sw-color-fg); text-decoration: none; overflow-wrap: anywhere; }
 a.sw-tracker__name:hover { text-decoration: underline; text-underline-offset: 0.15em; }
 /* The run so far, in words where it can be read, only when there is one:
    not in the warning colour, which means over a limit. */
 .sw-tracker__streak {
-  flex: none; display: inline-flex; align-items: center;
+  flex: 0 1 auto; min-width: 0; overflow-wrap: anywhere; display: inline-flex; align-items: center;
   padding: 0 0.5em; min-height: 1.375rem; border-radius: var(--sw-radius-pill);
   background: var(--sw-color-bg-muted); color: var(--sw-color-fg); font-size: var(--sw-size-text-xs); font-weight: 600; font-variant-numeric: tabular-nums;
 }
