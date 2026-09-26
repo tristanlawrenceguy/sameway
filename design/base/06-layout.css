@@ -6,7 +6,7 @@
 .sw-stack > * + * { margin-top: var(--sw-space-4); }
 .sw-stack--tight > * + * { margin-top: var(--sw-space-2); }
 .sw-cluster { display: flex; flex-wrap: wrap; gap: var(--sw-space-2); align-items: center; }
-.sw-prose { max-width: var(--sw-size-measure); }
+.sw-prose { max-width: var(--sw-size-measure); overflow-wrap: break-word; }
 .sw-muted { color: var(--sw-color-fg-muted); }
 .sw-small { font-size: var(--sw-size-text-sm); }
 ol.sw-plain, ul.sw-plain { list-style: none; margin: 0; padding: 0; }

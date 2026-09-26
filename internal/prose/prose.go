@@ -53,14 +53,25 @@ type outline struct {
 func (o *outline) Transform(doc *ast.Document, reader text.Reader, _ parser.Context) {
 	src := reader.Source()
 	var remove []ast.Node
+	// The shallowest heading written goes at the base, whatever it was
+	// written as (## Plan is the section, not a subsection), and no heading
+	// goes more than one deeper than the one before it: an outline never
+	// skips a level.
+	top := 7
+	ast.Walk(doc, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
+		if h, ok := n.(*ast.Heading); ok && entering && h.Level < top {
+			top = h.Level
+		}
+		return ast.WalkContinue, nil
+	})
+	prev := o.base - 1
 	ast.Walk(doc, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
 		if !entering {
 			return ast.WalkContinue, nil
 		}
 		if h, ok := n.(*ast.Heading); ok {
-			if h.Level = h.Level + o.base - 1; h.Level > 6 {
-				h.Level = 6
-			}
+			h.Level = min(h.Level+o.base-top, prev+1, 6)
+			prev = h.Level
 		}
 		if n.Kind().String() == "Table" {
 			caption := ""
