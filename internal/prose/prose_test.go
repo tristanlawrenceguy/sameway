@@ -13,7 +13,7 @@ import (
 // raw survives and nothing can run.
 func TestMarkdownBecomesStructureThatFitsThePage(t *testing.T) {
 	out := string(prose.Render("# Plan\n\nSome *words* and a [link](/t/note).\n\n## Steps\n\n- one\n- two\n\nTable: What to buy\n\n| Item | Count |\n|---|---|\n| Milk | 2 |\n\n| A | B |\n|---|---|\n| 1 | 2 |\n\n```\ncode\n```\n", 2))
-	for _, want := range []string{"<h2>Plan</h2>", "<h3>Steps</h3>", "<em>words</em>", `<a href="/t/note">link</a>`, "<ul>", "<li>one</li>", "<table><caption>What to buy</caption>", `<table><caption class="sw-visually-hidden">Table</caption>`, "<pre><code>code"} {
+	for _, want := range []string{"<h2>Plan</h2>", "<h3>Steps</h3>", "<em>words</em>", `<a href="/t/note">link</a>`, "<ul>", "<li>one</li>", `<div class="sw-table-wrap" role="region" tabindex="0" aria-label="What to buy"><table class="sw-table"><caption>What to buy</caption>`, `<table class="sw-table"><caption class="sw-visually-hidden">Table</caption>`, "</table></div>", "<pre><code>code"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("missing %q in:\n%s", want, out)
 		}
