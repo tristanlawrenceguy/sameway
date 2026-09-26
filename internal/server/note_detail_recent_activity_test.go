@@ -1,6 +1,7 @@
 package server_test
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
@@ -8,8 +9,9 @@ import (
 )
 
 // TestNoteDetailPageRecentActivityHasH3Headings checks that the note detail page's
-// recent activity section wraps each entry in an <h3 class="sw-event__heading"> so a
-// screen reader user can jump between activities.
+// recent activity section makes each entry's sentence an
+// <h3 class="sw-event__text sw-event__heading"> so a screen reader user can
+// jump between activities.
 func TestNoteDetailPageRecentActivityHasH3Headings(t *testing.T) {
 	a, h := newApp(t)
 
@@ -25,34 +27,30 @@ func TestNoteDetailPageRecentActivityHasH3Headings(t *testing.T) {
 
 	body := get(t, h, "/t/note/"+noteRec.ID).Body.String()
 
-	// Acceptance 1: each entry is wrapped in its own <h3 class="sw-event__heading">.
-	if !strings.Contains(body, `<h3 class="sw-event__heading"`) {
-		t.Errorf("recent activity on note detail page should wrap entries in <h3 class=\"sw-event__heading\">\n%s", truncate(body))
+	// Acceptance 1: each entry's sentence is its own heading h3.
+	if !strings.Contains(body, eventHeading) {
+		t.Errorf("recent activity on note detail page should make entries <h3 class=\"sw-event__text sw-event__heading\">\n%s", truncate(body))
 	}
 
-	// Acceptance 2: the h3 text contains the full summary (e.g., "Assistant created note Test Note").
-	if !strings.Contains(body, "<h3") || !strings.Contains(body, "Assistant created note Test Note") {
+	// Acceptance 2: the h3 text is the full summary (e.g., "Assistant created note Test Note").
+	if !anyH3Says(body, "Assistant created note Test Note") {
 		t.Errorf("the <h3> should contain the full activity summary 'Assistant created note Test Note'\n%s", truncate(body))
 	}
 
 	// Two entries = two h3s.
-	h3Count := strings.Count(body, `<h3 class="sw-event__heading"`)
+	h3Count := strings.Count(body, eventHeading)
 	if h3Count != 2 {
-		t.Errorf("expected 2 <h3 class=\"sw-event__heading\"> elements for 2 activities on note detail page, got %d\n%s", h3Count, truncate(body))
+		t.Errorf("expected 2 <h3 class=\"sw-event__text sw-event__heading\"> elements for 2 activities on note detail page, got %d\n%s", h3Count, truncate(body))
 	}
 
-	// Each h3 should appear before its corresponding event component.
-	idxH3 := strings.Index(body, `<h3 class="sw-event__heading"`)
-	if idxH3 >= 0 {
-		idxEvent := strings.Index(body[idxH3:], `data-component="event"`)
-		if idxEvent < 0 {
-			t.Errorf("the <h3> should precede the event component for its entry\n%s", truncate(body))
-		}
+	// Each h3 is its event component's sentence, said once, inside it.
+	if strings.Count(body, `<li><div class="sw-event" data-component="event"`) != 2 {
+		t.Errorf("each entry should be an event component whose sentence is its <h3>\n%s", truncate(body))
 	}
 
-	// Acceptance 5: no empty <h3 class="sw-event__heading"> elements.
-	if strings.Contains(body, `<h3 class="sw-event__heading"></h3>`) {
-		t.Error("no empty <h3 class=\"sw-event__heading\"> should appear on note detail page")
+	// Acceptance 5: no empty h3 elements.
+	if slices.Contains(h3Said(body), "") {
+		t.Error("no empty <h3> should appear on note detail page")
 	}
 }
 
@@ -73,12 +71,12 @@ func TestNoteDetailPageRecentActivitySummaryFromHeadingText(t *testing.T) {
 	body := get(t, h, "/t/note/"+noteRec.ID).Body.String()
 
 	// The summary should be in the heading.
-	if !strings.Contains(body, "<h3") || !strings.Contains(body, "Assistant updated note Shopping") {
+	if !anyH3Says(body, "Assistant updated note Shopping") {
 		t.Errorf("the <h3> should contain the full summary 'Assistant updated note Shopping'\n%s", truncate(body))
 	}
 
-	// The heading must include both actor and action and target — not just "added".
-	if strings.Contains(body, "<h3>added</h3>") {
+	// The heading must include both actor and action and target — not just the verb.
+	if slices.Contains(h3Said(body), "updated") {
 		t.Error("the <h3> should contain the full summary, not just the verb")
 	}
 }
@@ -95,10 +93,10 @@ func TestNoteDetailPageRecentActivityEmptyStateHasNoHeading(t *testing.T) {
 	}
 	body := get(t, h, "/t/note/"+rec.ID).Body.String()
 
-	// No <h3 class="sw-event__heading"> elements when there are no activities.
-	h3Count := strings.Count(body, `<h3 class="sw-event__heading"`)
+	// No activity h3 elements when there are no activities.
+	h3Count := strings.Count(body, eventHeading)
 	if h3Count != 0 {
-		t.Errorf("empty note detail page should have 0 <h3 class=\"sw-event__heading\"> elements, got %d\n%s", h3Count, truncate(body))
+		t.Errorf("empty note detail page should have 0 activity <h3> elements, got %d\n%s", h3Count, truncate(body))
 	}
 
 	// The title of the note is still present.

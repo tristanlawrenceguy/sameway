@@ -21,7 +21,7 @@ func TestADeleteThroughTheAPICanBeUndone(t *testing.T) {
 	wantStatus(t, do(t, h, http.MethodDelete, "/api/note/"+note.ID, nil, ""), http.StatusOK)
 
 	log := get(t, h, "/activity").Body.String()
-	if !strings.Contains(log, "You deleted note Water the plants, through the API") {
+	if !strings.Contains(said(log), "You deleted note Water the plants, through the API") {
 		t.Fatalf("the delete is in the log, saying how it came: %s", truncate(log))
 	}
 	undo := regexp.MustCompile(`action="(/activity/[^/"]+/undo)"`).FindStringSubmatch(log)
