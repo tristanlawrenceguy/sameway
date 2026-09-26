@@ -146,10 +146,7 @@ ol.sw-plain, ul.sw-plain { list-style: none; margin: 0; padding: 0; }
 
 /* Prose: structured text keeps its shape at the type scale, with room to
    breathe and nothing louder than the page around it. */
-.sw-prose h2, .sw-prose h3, .sw-prose h4, .sw-prose h5, .sw-prose h6 { margin: var(--sw-space-4) 0 var(--sw-space-2); line-height: 1.25; }
-.sw-prose h2 { font-size: var(--sw-size-text-lg); }
-.sw-prose h3 { font-size: var(--sw-size-text-md); }
-.sw-prose h4, .sw-prose h5, .sw-prose h6 { font-size: var(--sw-size-text-md); }
+.sw-prose h2, .sw-prose h3, .sw-prose h4, .sw-prose h5, .sw-prose h6 { margin: var(--sw-space-4) 0 var(--sw-space-2); }
 .sw-prose p, .sw-prose ul, .sw-prose ol, .sw-prose pre, .sw-prose blockquote, .sw-prose table { margin: 0 0 var(--sw-space-3); }
 .sw-prose ul, .sw-prose ol { padding-left: var(--sw-space-6); }
 .sw-prose li + li { margin-top: var(--sw-space-1); }

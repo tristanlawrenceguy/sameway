@@ -18,7 +18,12 @@ body {
   font-size: var(--sw-size-text-md);
   min-height: 100dvh;
 }
-h1, h2, h3, h4 { line-height: var(--sw-size-line-tight); letter-spacing: -0.02em; text-wrap: balance; font-weight: 700; }
+h1, h2, h3, h4, h5, h6 { line-height: var(--sw-size-line-tight); letter-spacing: -0.02em; text-wrap: balance; font-weight: 700; }
+/* One heading scale, wherever a heading is: a heading block's h2 and a
+   text block's h2 are the same size, so the page looks as its outline is. */
+h2 { font-size: var(--sw-size-text-xl); }
+h3 { font-size: var(--sw-size-text-lg); }
+h4, h5, h6 { font-size: var(--sw-size-text-md); }
 h1 { font-size: var(--sw-size-text-2xl); margin: 0 0 var(--sw-space-2); }
 p { margin: 0 0 var(--sw-space-3); }
 a { color: var(--sw-color-accent); text-underline-offset: 0.2em; }
