@@ -168,7 +168,7 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 		Header: opts.Header, Footer: opts.Footer,
 		Present:      s.presentFor(r),
 		ExtraScripts: opts.ExtraScripts,
-		Outcome:      s.told(w, r),
+		Outcome:      s.told(w, r) + s.sinceNotice(r),
 		EditControls: s.editControls(body, opts.Left, opts.Right, opts.Header, opts.Footer),
 	}
 	for _, t := range s.app.Types.Types {

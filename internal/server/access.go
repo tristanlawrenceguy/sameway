@@ -75,7 +75,8 @@ func (s *Server) allowed(w http.ResponseWriter, r *http.Request) bool {
 	if strings.HasSuffix(r.URL.Path, "/import") || strings.Contains(r.URL.Path, "/import/") {
 		why = "This part of the workspace is its owner's alone."
 	}
-	if why == "" && v.Access != chat.Edit && v.Access != chat.Host && r.Method != http.MethodGet && r.Method != http.MethodHead {
+	// Saying they have caught up changes nothing but their own notice.
+	if why == "" && v.Access != chat.Edit && v.Access != chat.Host && r.Method != http.MethodGet && r.Method != http.MethodHead && r.URL.Path != "/since/seen" {
 		why = "You can look at this workspace but not change it. Its owner can let you edit."
 	}
 	if why == "" {

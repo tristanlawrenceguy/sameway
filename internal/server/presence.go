@@ -25,8 +25,9 @@ const presentFor = 30 * time.Second
 
 type presence struct {
 	mu   sync.Mutex
-	here map[string]seenAt // by login, on this computer
-	away map[string]seenAt // by login, on the others
+	here map[string]seenAt    // by login, on this computer
+	away map[string]seenAt    // by login, on the others
+	last map[string]time.Time // when each was last about; see since.go
 }
 
 type seenAt struct {
@@ -36,6 +37,7 @@ type seenAt struct {
 
 // seen notes the person making a request as here, on the page it is for.
 func (s *Server) seen(r *http.Request, path string) {
+	s.cameBack(s.whoKey(r))
 	login, name := s.whoAsks(r)
 	if login == "" {
 		return
