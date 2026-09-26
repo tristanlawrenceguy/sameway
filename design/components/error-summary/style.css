@@ -5,6 +5,14 @@
   border: 3px solid var(--sw-color-danger); border-radius: var(--sw-radius-md);
   background: var(--sw-color-bg-raised);
 }
-.sw-error-summary__title { margin: 0 0 var(--sw-space-2); font-size: var(--sw-size-text-lg); }
-.sw-error-summary__list { display: grid; gap: var(--sw-space-1); }
-.sw-error-summary__list .sw-link { color: var(--sw-color-danger); font-weight: 600; }
+.sw-error-summary__title { display: flex; align-items: center; gap: var(--sw-space-2); margin: 0 0 var(--sw-space-2); font-size: var(--sw-size-text-lg); }
+/* The same mark a danger alert carries, so the two are known as one kind. */
+.sw-error-summary__mark {
+  flex: none; display: inline-grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: 50%;
+  background: var(--sw-color-danger); color: var(--sw-color-bg); font-size: var(--sw-size-text-sm); font-weight: 700;
+}
+.sw-error-summary__list { display: grid; gap: 0; }
+/* Each problem is a whole 44px target: a list, not links in a sentence. */
+.sw-error-summary__list .sw-link { display: inline-flex; align-items: center; min-height: var(--sw-size-target); color: var(--sw-color-danger); font-weight: 600; }
+.sw-error-summary__list .sw-link::after { content: none; }
+@media (forced-colors: active) { .sw-error-summary__mark { forced-color-adjust: none; background: CanvasText; color: Canvas; } }
