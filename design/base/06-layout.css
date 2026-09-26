@@ -96,7 +96,7 @@ ol.sw-plain, ul.sw-plain { list-style: none; margin: 0; padding: 0; }
    in its own space, and on a narrow screen the facts go under the title
    rather than squeezing it to a word a line. */
 .sw-row__meta > * { white-space: nowrap; }
-.sw-row__meta > .sw-row__note { white-space: normal; overflow-wrap: anywhere; text-align: right; }
+.sw-row__meta > .sw-row__note, .sw-row__meta > .sw-badge { white-space: normal; overflow-wrap: anywhere; text-align: right; }
 .sw-when--past, .sw-when--today { color: var(--sw-color-warning); font-weight: 600; }
 .sw-row__note { color: var(--sw-color-fg-muted); font-weight: 400; font-size: var(--sw-size-text-sm); margin-left: var(--sw-space-2); }
 

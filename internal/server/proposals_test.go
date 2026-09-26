@@ -52,7 +52,7 @@ func TestQuestionsAreAnsweredWhereTheyAreMet(t *testing.T) {
 	if !strings.Contains(own, `data-component="proposal"`) || !strings.Contains(own, `action="/proposal/`+pid+`/dismiss"`) {
 		t.Error("a pending proposal's page should carry its two answers")
 	}
-	if list := get(t, h, "/t/proposal").Body.String(); !strings.Contains(list, ">Pending</span>") {
+	if list := get(t, h, "/t/proposal").Body.String(); !strings.Contains(list, `data-component="badge" data-tone="info">Pending`) {
 		t.Error("the listing should say the proposal is pending")
 	}
 
@@ -66,7 +66,7 @@ func TestQuestionsAreAnsweredWhereTheyAreMet(t *testing.T) {
 	if strings.Contains(own, `action="/proposal/`+pid+`/dismiss"`) || !strings.Contains(own, ">Dismissed<") {
 		t.Error("an answered proposal offers no answers and says how it was answered")
 	}
-	if list := get(t, h, "/t/proposal").Body.String(); !strings.Contains(list, ">Dismissed</span>") {
+	if list := get(t, h, "/t/proposal").Body.String(); !strings.Contains(list, `data-component="badge" data-tone="info">Dismissed`) {
 		t.Error("the listing should say the proposal was dismissed")
 	}
 
