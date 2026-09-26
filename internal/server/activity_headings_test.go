@@ -2,6 +2,7 @@ package server_test
 
 import (
 	"net/url"
+	"slices"
 	"strings"
 	"testing"
 
@@ -27,10 +28,10 @@ func TestActivityPageHasIndividualHeadings(t *testing.T) {
 	}
 
 	// Acceptance 2: the h3 text contains the full summary (e.g., "Assistant created note First note"), not just the verb.
-	if !strings.Contains(body, "<h3") || !strings.Contains(body, "Assistant created note First note") {
+	if !anyH3Says(body, "Assistant created note First note") {
 		t.Errorf("the <h3> should contain the full activity summary 'Assistant created note First note'\n%s", truncate(body))
 	}
-	if !strings.Contains(body, "Assistant created note Second note") {
+	if !anyH3Says(body, "Assistant created note Second note") {
 		t.Errorf("the second entry <h3> should contain 'Assistant created note Second note'\n%s", truncate(body))
 	}
 
@@ -40,13 +41,10 @@ func TestActivityPageHasIndividualHeadings(t *testing.T) {
 		t.Errorf("expected 2 <h3> elements for 2 activities, got %d\n%s", h3Count, truncate(body))
 	}
 
-	// Each h3 should appear before its corresponding event component.
-	idxH3 := strings.Index(body, "<h3")
-	if idxH3 >= 0 {
-		idxEvent := strings.Index(body[idxH3:], `data-component="event"`)
-		if idxEvent < 0 {
-			t.Errorf("the <h3> should precede the event component for its entry\n%s", truncate(body))
-		}
+	// Each h3 is the event component's own sentence, said once: it sits
+	// inside the entry's event component rather than repeating it above.
+	if strings.Count(body, `<li><div class="sw-event" data-component="event"`) != 2 || strings.Count(body, eventHeading) != 2 {
+		t.Errorf("each entry should be an event component whose sentence is its <h3>\n%s", truncate(body))
 	}
 }
 
@@ -67,12 +65,12 @@ func TestActivityPageHeadingUsesSummaryNotVerb(t *testing.T) {
 	body := get(t, h, "/activity").Body.String()
 
 	// The summary for an assistant-added card is "Assistant added card Shopping".
-	if !strings.Contains(body, "<h3") || !strings.Contains(body, "Assistant added card Shopping") {
+	if !anyH3Says(body, "Assistant added card Shopping") {
 		t.Errorf("the <h3> should contain the full summary 'Assistant added card Shopping'\n%s", truncate(body))
 	}
 
 	// The heading must include both actor and action and target — not just "added".
-	if strings.Contains(body, "<h3>added</h3>") {
+	if slices.Contains(h3Said(body), "added") {
 		t.Error("the <h3> should contain the full summary, not just the verb")
 	}
 }

@@ -10,6 +10,8 @@
   position: relative; top: -0.05em;
 }
 .sw-event__text { flex: 1; }
+/* An entry that is a heading reads as its line, not as a title over it. */
+.sw-event__heading { font: inherit; margin: 0; }
 .sw-event__actor { font-weight: 700; color: var(--sw-actor, var(--sw-color-fg)); }
 /* A person's colour is for the mark only: the six are chosen to be told
    apart as marks, not to be read as text, so their name keeps the text

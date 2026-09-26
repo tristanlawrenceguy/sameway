@@ -71,7 +71,7 @@ func (s *Server) sinceNotice(r *http.Request) template.HTML {
 		if !s.byOther(e, key) {
 			continue
 		}
-		items = append(items, `<li>`+string(s.event(e, from))+`</li>`)
+		items = append(items, `<li>`+string(s.event(e, from, 0, true))+`</li>`)
 	}
 	if len(items) == 0 {
 		return ""

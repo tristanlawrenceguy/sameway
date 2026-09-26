@@ -41,32 +41,25 @@ func TestChatPageRecentActivityHasNoDuplicateEntries(t *testing.T) {
 	body := get(t, h, "/chat").Body.String()
 
 	for _, summary := range []string{"Assistant created note First note", "Assistant updated note Updated content"} {
-		count := strings.Count(body, summary)
+		count := saidTimes(body, summary)
 		if count != 1 {
 			t.Errorf("activity entry %q should appear exactly once on /chat, got %d\n%s", summary, count, truncate(body))
 		}
 	}
 
-	// Check for duplicate <li> blocks with the same h3 heading.
-	events := strings.Split(body, `<li><h3 class="sw-event__heading"`)
-	if len(events) > 1 {
-		events = events[1:]
-		type eventKey struct{ text string }
-		var seen []eventKey
-		for _, evt := range events {
-			idxEnd := strings.Index(evt, `</h3>`)
-			if idxEnd < 0 {
-				continue
-			}
-			text := evt[:idxEnd]
-			key := eventKey{text: text}
-			for _, s := range seen {
-				if s == key {
-					t.Errorf("duplicate activity entry found in recent activity list:\n%q\n%s", text, truncate(body))
-				}
-			}
-			seen = append(seen, key)
+	// Check for duplicate entries: no two h3 headings say the same thing.
+	noDuplicateH3(t, body)
+}
+
+// noDuplicateH3 fails when two h3 headings on the page say the same thing.
+func noDuplicateH3(t *testing.T, body string) {
+	t.Helper()
+	seen := map[string]bool{}
+	for _, text := range h3Said(body) {
+		if seen[text] {
+			t.Errorf("duplicate activity entry found in recent activity list:\n%q\n%s", text, truncate(body))
 		}
+		seen[text] = true
 	}
 }
 
@@ -85,7 +78,7 @@ func TestChatPageRecentActivityNoDuplicateAfterModelAction(t *testing.T) {
 	body := get(t, h, "/chat").Body.String()
 
 	cardSummary := "Assistant added card Shopping"
-	count := strings.Count(body, cardSummary)
+	count := saidTimes(body, cardSummary)
 	if count != 1 {
 		t.Errorf("activity entry %q should appear exactly once on /chat after model action, got %d\n%s", cardSummary, count, truncate(body))
 	}
@@ -111,7 +104,7 @@ func TestTaskDetailPageRecentActivityHasNoDuplicateEntries(t *testing.T) {
 	}
 
 	for _, summary := range []string{"Assistant created task Test Task"} {
-		count := strings.Count(body, summary)
+		count := saidTimes(body, summary)
 		if count != 1 {
 			t.Errorf("activity entry %q should appear exactly once on /t/task page, got %d\n%s", summary, count, truncate(body))
 		}
@@ -138,7 +131,7 @@ func TestNoteDetailPageRecentActivityHasNoDuplicateEntries(t *testing.T) {
 	}
 
 	for _, summary := range []string{"Assistant created note Test Note"} {
-		count := strings.Count(body, summary)
+		count := saidTimes(body, summary)
 		if count != 1 {
 			t.Errorf("activity entry %q should appear exactly once on /t/note page, got %d\n%s", summary, count, truncate(body))
 		}
@@ -156,13 +149,13 @@ func TestActivityPageNoDuplicateEntries(t *testing.T) {
 	body := get(t, h, "/activity").Body.String()
 
 	for _, summary := range []string{"Assistant created note First note", "Assistant updated note Updated content"} {
-		count := strings.Count(body, summary)
+		count := saidTimes(body, summary)
 		if count != 1 {
 			t.Errorf("activity entry %q should appear exactly once on /activity page, got %d\n%s", summary, count, truncate(body))
 		}
 	}
 
-	h3Count := strings.Count(body, `<h3 class="sw-event__heading"`)
+	h3Count := strings.Count(body, eventHeading)
 	if h3Count != 2 {
 		t.Errorf("expected 2 <h3> activity headings on /activity page, got %d\n%s", h3Count, truncate(body))
 	}
