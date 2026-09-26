@@ -48,7 +48,7 @@
   },
   "id": { "type": "string" },
   "a11y": {
-    "role": "region at full, status at glance",
+    "role": "region at full, a link to the habits at glance",
     "keyboard": [
       { "key": "Tab", "does": "reaches each habit's name, the amount field when it has a unit, and Log" },
       { "key": "Enter", "does": "logs" }
