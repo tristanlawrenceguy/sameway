@@ -13,7 +13,7 @@ title out when the page's own heading already says it. Set `live` only when a
 script puts the panel into a page that is already open, as an answer the
 person just asked for; a status region that arrives with a new page is not
 announced, so a page that loads with nothing found says so in its title
-instead: "No results for plumber".
+instead, after its name: "Search: plumber, no results".
 
 Say which empty it is, in its words. First use says what goes here and how to
 add one (No notes yet. Add one yourself, or ask the assistant). Nothing found

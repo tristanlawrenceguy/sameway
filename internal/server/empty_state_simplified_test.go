@@ -218,7 +218,7 @@ func TestEmptyStateHeadingIsShort(t *testing.T) {
 	rec = get(t, h, "/search?q=nonexistent")
 	wantStatus(t, rec, http.StatusOK)
 	body = rec.Body.String()
-	if !strings.Contains(body, `<h2 class="sw-empty__title">No results</h2>`) || !strings.Contains(body, `<title>No results for nonexistent`) {
+	if !strings.Contains(body, `<h2 class="sw-empty__title">No results</h2>`) || !strings.Contains(body, `<title>Search: nonexistent, no results`) {
 		t.Errorf("heading for search should be 'No results', and the window's title says it with the words\n%s", truncate(body))
 	}
 

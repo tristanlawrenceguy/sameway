@@ -26,10 +26,11 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 	if q != "" {
 		hits := search.Find(s.app.Store, s.app.Types, q)
 		title = trimTitle(fmt.Sprintf("Search: %s", q))
-		// The window's title says what the search found: it is the first
+		// The window title names the page and says what the search found,
+		// Search: plumber, no results. It is the first
 		// thing a screen reader says when the results page arrives, which a
 		// status region on a fresh page is not.
-		said = trimTitle(fmt.Sprintf("%s for %s", results(len(hits)), q))
+		said = trimTitle(fmt.Sprintf("Search: %s, %s", q, strings.ToLower(results(len(hits)))))
 		if len(hits) == 0 {
 			b.WriteString(string(s.component("empty", map[string]any{
 				"title": "No results", "message": fmt.Sprintf("Nothing matches “%s”. Try different words, or", q),
@@ -80,7 +81,7 @@ func count(n int) string {
 	return fmt.Sprintf("%d things found", n)
 }
 
-// results is how many a search found, as the window's title starts: No
+// results is how many a search found, as the window title ends: No
 // results, 1 result, 3 results.
 func results(n int) string {
 	switch n {

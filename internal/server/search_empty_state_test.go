@@ -14,7 +14,7 @@ func TestASearchThatFindsNothingSaysSoAndOffersTheAssistant(t *testing.T) {
 	_, h := newApp(t)
 
 	body := get(t, h, "/search?q=plumber").Body.String()
-	if !strings.Contains(body, "<title>No results for plumber") || !strings.Contains(body, "<h1>Search: plumber</h1>") {
+	if !strings.Contains(body, "<title>Search: plumber, no results") || !strings.Contains(body, "<h1>Search: plumber</h1>") {
 		t.Errorf("the title and heading say the search found nothing, and for what\n%s", truncate(body))
 	}
 	if !strings.Contains(body, "Nothing matches “plumber”. Try different words, or") {
@@ -35,7 +35,7 @@ func TestASearchThatFindsSomethingSaysHowManyInItsTitle(t *testing.T) {
 	_, h := newApp(t)
 	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Call the plumber"}), http.StatusCreated)
 	body := get(t, h, "/search?q=plumber").Body.String()
-	if !strings.Contains(body, "<title>1 result for plumber") {
+	if !strings.Contains(body, "<title>Search: plumber, 1 result") {
 		t.Errorf("the title says how many were found\n%s", truncate(body))
 	}
 }
