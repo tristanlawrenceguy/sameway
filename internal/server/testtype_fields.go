@@ -71,9 +71,6 @@ func (s *Server) schemaFields(t *schema.Type) []any {
 			"value": f.Type,
 			"prop":  f.Name,
 		}
-		if f.Description != "" {
-			item["description"] = f.Description
-		}
 		switch f.Type {
 		case "enum":
 			item["value"] = fmt.Sprintf("values: %s", strings.Join(f.Values, ", "))
@@ -81,6 +78,11 @@ func (s *Server) schemaFields(t *schema.Type) []any {
 			item["value"] = fmt.Sprintf("ref -> %s", f.To)
 		case "list":
 			item["value"] = fmt.Sprintf("list of %s", f.Of)
+		}
+		// What the field is for, with its kind: the fields component has
+		// no place of its own for it, and would refuse the page.
+		if f.Description != "" {
+			item["value"] = fmt.Sprintf("%s. %s", item["value"], f.Description)
 		}
 		items = append(items, item)
 	}
