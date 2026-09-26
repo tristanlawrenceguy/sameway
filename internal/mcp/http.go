@@ -39,6 +39,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	var out []response
 	ctx := context.WithValue(r.Context(), offKey{}, offMachine(r))
+	scheme := "https"
+	if r.TLS == nil && !offMachine(r) {
+		scheme = "http"
+	}
+	ctx = context.WithValue(ctx, baseKey{}, scheme+"://"+r.Host)
 	for _, req := range reqs {
 		result, rpcErr := s.handle(ctx, req)
 		if len(req.ID) == 0 || string(req.ID) == "null" {

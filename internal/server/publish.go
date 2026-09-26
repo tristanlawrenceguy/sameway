@@ -68,7 +68,7 @@ func (s *Server) Public(mcp http.Handler) http.Handler {
 		switch {
 		// What is published is published to people and to AI services
 		// the same way: pages for the one, MCP for the other.
-		case r.URL.Path == "/mcp" && pub.Any() && mcp != nil:
+		case strings.EqualFold(r.URL.Path, "/mcp") && pub.Any() && mcp != nil:
 			mcp.ServeHTTP(w, r)
 			return
 		case r.Method != http.MethodGet && r.Method != http.MethodHead:

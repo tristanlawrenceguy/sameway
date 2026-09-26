@@ -136,18 +136,27 @@ func (s *Server) handle(ctx context.Context, req request) (any, *rpcError) {
 		if err := json.Unmarshal(req.Params, &params); err != nil || params.Name == "" {
 			return nil, &rpcError{codeInvalidParams, "tools/call needs params.name and params.arguments"}
 		}
-		text, isError := refusedOff, true
+		text, isError, structured := refusedOff, true, false
 		if ok, svc := s.may(ctx, params.Name); ok {
 			if t, e, public := s.publicCall(ctx, params.Name, params.Arguments); public {
-				text, isError = t, e
+				text, isError, structured = t, e, params.Name == "search" || params.Name == "fetch"
 			} else {
 				text, isError = s.call(ctx, svc, params.Name, params.Arguments)
 			}
 		}
-		return map[string]any{
+		result := map[string]any{
 			"content": []map[string]any{{"type": "text", "text": text}},
 			"isError": isError,
-		}, nil
+		}
+		// search and fetch say it twice, as their callers expect: the
+		// value itself, and the same as JSON in the text.
+		if structured && !isError {
+			var v any
+			if json.Unmarshal([]byte(text), &v) == nil {
+				result["structuredContent"] = v
+			}
+		}
+		return result, nil
 	}
 	return nil, &rpcError{codeMethodNotFound, fmt.Sprintf("method %q is not one this server has; it offers initialize, ping, tools/list and tools/call", req.Method)}
 }
