@@ -35,8 +35,8 @@ func TestMessageWithLinks(t *testing.T) {
 	if !strings.Contains(got, "/t/note/abc") {
 		t.Errorf("output should contain the link href:\n%s", got)
 	}
-	if !strings.Contains(got, "Linked content:") {
-		t.Errorf("output should contain a visually-hidden heading for linked content:\n%s", got)
+	if !strings.Contains(got, `<p class="sw-message__label">Linked</p>`) {
+		t.Errorf("output should label the linked content where it can be seen:\n%s", got)
 	}
 }
 

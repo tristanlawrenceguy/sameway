@@ -22,22 +22,28 @@
 .sw-message--user { background: var(--sw-color-human-soft); }
 .sw-message--error { background: var(--sw-color-danger-soft); }
 .sw-message--error .sw-message__author::before { background: var(--sw-color-danger); box-shadow: 0 0 0 3px var(--sw-color-bg-raised); }
-.sw-message__meta { margin: 0 0 var(--sw-space-2); font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); display: flex; gap: var(--sw-space-2); align-items: baseline; }
+/* Who said it and when, as the turn's heading, so a screen reader moves
+   through a conversation turn by turn; it reads as a line, not a title. */
+.sw-message__meta { margin: 0 0 var(--sw-space-2); font-size: var(--sw-size-text-sm); font-weight: 400; line-height: var(--sw-size-line); letter-spacing: 0; color: var(--sw-color-fg-muted); display: flex; gap: var(--sw-space-2); align-items: baseline; }
+.sw-message__failed { font-weight: 700; color: var(--sw-color-danger); }
 .sw-message__author { font-weight: 700; color: var(--sw-actor, var(--sw-color-fg)); }
 .sw-message--error .sw-message__author { color: var(--sw-color-danger); }
 .sw-message__time { font-variant-numeric: tabular-nums; font-size: var(--sw-size-text-xs); }
-.sw-message__body p { margin: 0 0 var(--sw-space-3); overflow-wrap: anywhere; }
+.sw-message__body p { margin: 0 0 var(--sw-space-3); overflow-wrap: anywhere; white-space: pre-line; }
 .sw-message__body p:last-child { margin-bottom: 0; }
+/* What the reply changed: a small label, then one change to a row, each
+   row a 44px target of its own, so no reach overlaps the next. */
+.sw-message__label { margin: var(--sw-space-3) 0 0; font-size: var(--sw-size-text-xs); font-weight: 700; color: var(--sw-color-fg-muted); }
 .sw-message__changes {
-  list-style: none; margin: var(--sw-space-3) 0 0; padding: var(--sw-space-2) 0 0;
-  display: flex; flex-wrap: wrap; align-items: center; gap: var(--sw-space-2);
-  font-size: var(--sw-size-text-xs);
+  list-style: none; margin: var(--sw-space-1) 0 0; padding: 0;
+  display: grid; gap: 0; font-size: var(--sw-size-text-xs);
 }
 .sw-message__changes li {
-  display: inline-flex; gap: 0.35em; align-items: center;
-  padding: 0.125rem var(--sw-space-2); border-radius: var(--sw-radius-md);
+  display: flex; flex-wrap: wrap; gap: 0.35em; align-items: center; min-height: var(--sw-size-target);
+  padding: 0 var(--sw-space-2); border-radius: var(--sw-radius-md);
   background: var(--sw-actor-soft, var(--sw-color-bg-muted)); color: var(--sw-actor, var(--sw-color-fg-muted));
 }
+.sw-message__changes li + li { margin-top: 1px; }
 .sw-message__attachment { margin: var(--sw-space-2) 0 0; color: var(--sw-color-fg-muted); }
 .sw-message__links {
     list-style: none; margin: var(--sw-space-2) 0 0; padding: 0;
@@ -55,16 +61,14 @@
 .sw-message__change-detail { font-weight: 600; }
 .sw-message__change-target { font-weight: 400; }
 .sw-message__undo { display: inline; margin-left: var(--sw-space-2); }
-/* Undo is a word in the receipt, not a box that stretches it to two lines:
-   drawn the size of the text, still pressed over a 44px area around it. */
+/* Undo is a word in its row; the row gives it its height. */
 .sw-message__undo .sw-button {
-  position: relative; min-height: 0; padding: 0; border: 0; background: none;
+  min-height: var(--sw-size-target); padding: 0 var(--sw-space-1); border: 0; background: none;
   font: inherit; font-weight: 700; color: inherit; text-decoration: underline; text-underline-offset: 0.15em;
 }
-.sw-message__undo .sw-button::after { content: ""; position: absolute; inset: min(0px, calc(50% - var(--sw-size-target) / 2)); }
 /* A link chip stays small but reaches a 44px target, centred on it. */
-.sw-message__link::after, .sw-message__change-link::after {
+.sw-message__link::after {
   content: ""; position: absolute;
   inset: min(0px, calc(50% - var(--sw-size-target) / 2));
 }
-.sw-message__change-link { position: relative; }
+.sw-message__change-link { display: inline-flex; align-items: center; min-height: var(--sw-size-target); }
