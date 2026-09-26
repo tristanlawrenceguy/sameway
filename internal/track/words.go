@@ -15,6 +15,15 @@ func Amount(v float64, unit string) string {
 	if unit == "" {
 		return s
 	}
+	// One of a thing is said as one: 1 glass, 1 hour, not 1 glasses.
+	if v == 1 {
+		switch {
+		case strings.HasSuffix(unit, "sses"):
+			unit = strings.TrimSuffix(unit, "es")
+		case strings.HasSuffix(unit, "s") && !strings.HasSuffix(unit, "ss") && len(unit) > 2:
+			unit = strings.TrimSuffix(unit, "s")
+		}
+	}
 	return s + " " + unit
 }
 

@@ -9,6 +9,8 @@
     "additionalProperties": false,
     "required": [],
     "properties": {
+      "href": { "type": "string", "description": "Where the glance leads, the habits by default." },
+      "when": { "type": "string", "description": "Filled in by the server: today, or this period." },
       "label": { "type": "string", "default": "Keeping up" },
       "detail": { "title": "How much to show", "type": "string", "enum": ["glance", "full"], "default": "full" },
       "tags": { "type": "array", "items": { "type": "string" } },
@@ -32,8 +34,10 @@
         "best": { "type": "integer" },
         "goal": { "type": "string" },
         "log": { "title": "Last logged value", "type": "string" },
+        "when": { "type": "string", "description": "Whose standing this is: today, this week, on Mon 21 Sep." },
         "last": { "type": "array", "items": { "type": "object", "additionalProperties": false, "properties": {
           "date": { "type": "string" },
+          "going": { "type": "boolean", "description": "The period still going, and not met yet: not a miss." },
           "met": { "type": "boolean" },
           "amount": { "type": "number" },
           "logged": { "type": "boolean" },
@@ -44,7 +48,7 @@
   },
   "id": { "type": "string" },
   "a11y": {
-    "role": "region at full, status at glance",
+    "role": "region at full, a link to the habits at glance",
     "keyboard": [
       { "key": "Tab", "does": "reaches each habit's name, the amount field when it has a unit, and Log" },
       { "key": "Enter", "does": "logs" }

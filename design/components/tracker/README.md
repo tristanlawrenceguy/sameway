@@ -41,3 +41,25 @@ it is not met by then, a reminder about it rings once a day, saying
 where it stands, and leads to the habit. An entry is titled by its
 habit and amount (Water: 8 glasses), so it reads on the calendar and in
 a list.
+
+## Why it works this way
+
+- **Log says what it did and where it stands**: "Water: 1 glass logged.
+  Now 6 of 8 glasses.", with Undo there; before, the page just reloaded
+  ([NN/g, visibility of system status](https://www.nngroup.com/articles/visibility-system-status/),
+  [NN/g, user control and freedom](https://www.nngroup.com/articles/user-control-and-freedom/)).
+- **Logged where it is.** With scripts, Log saves without leaving the page,
+  focus staying on it for the next glass; the list catches up when focus
+  leaves it ([WCAG 3.2.2](https://www.w3.org/WAI/WCAG22/Understanding/on-input.html)).
+- **A day still going is not a day missed**: its dot is a dashed ring and
+  says how far it has got; days are named as a person says them, Wed 16 Sep,
+  not 2026-09-16 ([GOV.UK dates](https://design-system.service.gov.uk/patterns/dates/)).
+- **Green means reached**, as in the meter; a limit kept within is in the
+  list colour. The run so far is in words, not a warning-coloured arrow.
+- **The glance counts what can be met**, leaves readings out, and leads to
+  the habits; a habit's standing is named for its day, today or on Mon 21
+  Sep.
+
+Not done, and why: saving a streak with tokens or freezes (a game layer; a
+day still going already is not a miss); a celebration when a target is met
+(motion that distracts; the message says it).

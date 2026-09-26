@@ -113,6 +113,7 @@
       built = control(max ? "textarea-counted" : "textarea", el, id, name);
       var text = source !== null ? source : el.innerText.replace(/\n{3,}/g, "\n\n").trim();
       built.input.rows = Math.min(10, Math.max(3, text.split("\n").length + 1));
+      built.input.style.setProperty("--sw-rows", built.input.rows);
       built.input.setAttribute("tabindex", "0");
       built.input.value = text;
       return counted(built, id, max);

@@ -88,20 +88,19 @@ func TestAPublishedTabIsReadableWithoutTheConversation(t *testing.T) {
 	}
 }
 
-// AI services read what is published, over MCP with no login, only when
-// the owner said they may, and only the published types.
-func TestAIServicesReadWhatIsPublishedWhenAllowed(t *testing.T) {
+// What is published to people is published to AI services the same way,
+// over MCP with no login: only the published types, only reading.
+func TestAIServicesReadWhatPeopleCan(t *testing.T) {
 	a, h := newApp(t)
 	srv := h.(*server.Server)
 	a.Store.Create("note", map[string]any{"title": "Sourdough"})
 	a.Store.Create("task", map[string]any{"title": "Secret errand"})
-	a.Workspace.Config.Publish.Types = "note"
 	pub := srv.Public(&mcp.Server{App: a, Version: "test", Published: func() map[string]bool { return srv.Published().Types }})
 	list := `{"jsonrpc":"2.0","id":1,"method":"tools/list"}`
 	if r := public(t, pub, http.MethodPost, "/mcp", list); r.Code == http.StatusOK {
-		t.Error("AI services are off until the owner says")
+		t.Error("with nothing published, there is nothing for AI services either")
 	}
-	a.Workspace.Config.Publish.AI = "on"
+	a.Workspace.Config.Publish.Types = "note"
 	body := public(t, pub, http.MethodPost, "/mcp", list).Body.String()
 	if !strings.Contains(body, "find_records") || strings.Contains(body, "create_record") || strings.Contains(body, `"search"`) {
 		t.Errorf("reading the published types, and only that: %s", body)

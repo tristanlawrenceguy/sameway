@@ -19,8 +19,12 @@
       var hint = document.getElementById(textarea.id + "-hint");
       if (hint && hint.textContent.indexOf("Enter sends") < 0) hint.textContent += " Enter sends; Shift+Enter starts a new line.";
       textarea.addEventListener("keydown", function (e) {
-        if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
+        // Not the Enter that finishes a Japanese, Chinese or Korean word,
+        // which Safari sends as 229 after the word is done; and nothing is
+        // sent from an empty box.
+        if (e.key === "Enter" && !e.shiftKey && !e.isComposing && e.keyCode !== 229) {
           e.preventDefault();
+          if (!textarea.value.trim()) return;
           if (form.requestSubmit) form.requestSubmit();
           else form.submit();
         }

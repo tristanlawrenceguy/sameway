@@ -82,15 +82,15 @@ tailnet:
   name: ""
   auth_key_env: ""
 
-# What anyone on the internet may read, with no login, at the address
-# above, through Tailscale Funnel: tabs by name and content types by name,
-# comma separated, and ai: on to let AI services read it over MCP. Only
-# what is named here; nothing can be changed from the internet. The easy
-# way is to ask the assistant ("publish my Recipes tab"); it asks first.
+# What anyone on the internet may read, people and AI services alike, with
+# no login, at the address above, through Tailscale Funnel: tabs by name
+# and content types by name, comma separated. People get the pages, AI
+# services the same over MCP. Only what is named here; nothing can be
+# changed from the internet. The easy way is to ask the assistant
+# ("publish my Recipes tab"); it asks first.
 publish:
   tabs: ""
   types: ""
-  ai: off
 
 # How a new version of sameway itself arrives. auto: a release published
 # for this machine is downloaded, checked against the checksums published

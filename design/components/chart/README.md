@@ -31,3 +31,28 @@ leaves the values to the table past seven points. A value below zero is a
 bar going down from the zero line. Numbers are written with thousands
 separated (12,500), and the unit sits above the axis. In forced colours
 the whole picture is drawn in the person's own colours.
+
+## Why it works this way
+
+- **Says what it shows.** A chart with no description still gets a
+  sentence the server writes, since a picture alone tells a person who
+  cannot see it nothing
+  ([WAI complex images](https://www.w3.org/WAI/tutorials/images/complex/),
+  [Chartability](https://chartability.fizz.studio/)).
+- **The numbers as a table**, headed with what they are, so every value
+  can be read, copied and compared
+  ([WCAG 1.1.1](https://www.w3.org/WAI/WCAG22/Understanding/non-text-content.html)).
+- **Readable on a phone.** A narrow picture is drawn for narrow places, so
+  labels are never shrunk to a size nobody can read
+  ([WCAG 1.4.10](https://www.w3.org/WAI/WCAG22/Understanding/reflow.html)).
+- **Honest below zero.** A negative value is a bar down from the zero line,
+  not an empty bar that reads as nothing
+  ([Analysis Function charts guidance](https://analysisfunction.civilservice.gov.uk/policy-store/data-visualisation-charts/)).
+- **Values on the bars**, so colour and height are never the only way to
+  read them ([WCAG 1.4.1](https://www.w3.org/WAI/WCAG22/Understanding/use-of-color.html)).
+- **Drawn in the person's colours** in forced colours.
+
+Not done, and why: a chart drawn by a script in the browser (the server's
+SVG reads the moment the page arrives, with no script); the narrow picture
+labelling every point past seven (the words would not fit; the table has
+them).

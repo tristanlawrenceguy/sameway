@@ -105,14 +105,13 @@ type Config struct {
 	//   tailnet:
 	//     name: home      # https://home.<tailnet>.ts.net
 	Tailnet tailnet.Config `yaml:"tailnet"`
-	// Publish is what anyone on the internet may read, with no login,
-	// through Tailscale Funnel at the workspace's tailnet address: tabs by
-	// name and content types by name, comma separated, and whether AI
-	// services may read it too (ai: on). Empty is nothing; see publish.go.
+	// Publish is what anyone on the internet may read, people and AI
+	// services alike, with no login, through Tailscale Funnel at the
+	// workspace's tailnet address: tabs by name and content types by
+	// name, comma separated. Empty is nothing; see publish.go.
 	Publish struct {
 		Tabs  string `yaml:"tabs"`
 		Types string `yaml:"types"`
-		AI    string `yaml:"ai"`
 	} `yaml:"publish"`
 	// Notify is how a reminder reaches a person beyond an open page: a
 	// notification on this machine ("on", the default, or "off"), and a

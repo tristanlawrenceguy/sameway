@@ -103,9 +103,10 @@ assistant to take it off your phone. It is the `tailnet:` section of
 
 Ask the assistant: *"publish my Recipes tab"*, or *"publish my notes"*. It asks
 first, then anyone can read just that, with no login, at your workspace's
-address (Tailscale Funnel, free on every Tailscale plan). *"Let AI services
-read it"* lets ChatGPT or Claude read what is published over MCP. Nothing
-else is reachable from the internet, nothing can be changed from it, and
+address (Tailscale Funnel, free on every Tailscale plan). AI services such as
+ChatGPT or Claude read the same, over MCP at the same address: what people
+can read, they can, and nothing more. Nothing else is reachable from the
+internet, nothing can be changed from it, and
 *"unpublish"* takes it down at once. The first time, Tailscale may need
 Funnel allowed in your tailnet's access policy; the chat says how.
 

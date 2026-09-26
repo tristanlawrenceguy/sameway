@@ -1,8 +1,8 @@
 # calendar
 
 Use a calendar to show a month and what is on in it. It is a view: nothing
-in it is clickable, so nothing needs a keyboard pattern beyond reading a
-table. To ask someone for a date, use `datepicker`.
+in it needs a keyboard pattern beyond reading a table and following its
+links. To ask someone for a date, use `datepicker`.
 
 Give it `month` as `YYYY-MM` and `events` as days with short labels. Mark
 `today` and it is called out in words as well as colour. `start` chooses
@@ -46,3 +46,26 @@ buttons are in the grid only.
 
 In forced colours an event keeps an edge and today its circle, drawn in
 the system's own colours.
+
+## Why it works this way
+
+- **It says its month.** The caption always names it, so a person who moves
+  a month on hears where they landed
+  ([WAI tables tutorial](https://www.w3.org/WAI/tutorials/tables/caption-summary/)).
+- **Each day read once.** The date and what is on it are one phrase, and
+  the weekday headings say their whole word from their own text, not from
+  an aria-label on a header cell, which screen readers read poorly
+  ([24 Accessibility on a better calendar](https://www.24a11y.com/2018/a-new-day-making-a-better-calendar/)).
+- **A list on a phone.** Seven narrow columns leave room only for dots, so
+  a narrow screen shows the days with something on as a list, as a
+  calendar app's schedule view does; only one of the two is shown, so it
+  is met once ([WCAG 1.4.10](https://www.w3.org/WAI/WCAG22/Understanding/reflow.html)).
+- **A day number that opens its day is a 44px target**
+  ([WCAG 2.5.5](https://www.w3.org/WAI/WCAG22/Understanding/target-size-enhanced.html)).
+- **Today in words as well as colour**, and its circle kept in forced
+  colours ([WCAG 1.4.1](https://www.w3.org/WAI/WCAG22/Understanding/use-of-color.html)).
+- **Worked out on the server**, so it reads correctly without a script.
+
+Not done, and why: a grid you move through with arrow keys (it is a view,
+and its links are reached with Tab); the grid and the list both in the
+accessibility tree (a screen reader would hear the month twice).
