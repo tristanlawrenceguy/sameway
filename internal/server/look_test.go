@@ -35,7 +35,7 @@ func TestAnAgentLooksAtAPageWithoutABrowser(t *testing.T) {
 	}
 	var crumbs bool
 	for _, l := range seen.Outline.Landmarks {
-		crumbs = crumbs || (l.Role == "navigation" && l.Label == "You are here")
+		crumbs = crumbs || (l.Role == "navigation" && l.Label == "Breadcrumb")
 	}
 	if !crumbs {
 		t.Errorf("the crumbs are a labelled navigation landmark, got %v", seen.Outline.Landmarks)

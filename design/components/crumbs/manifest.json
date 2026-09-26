@@ -25,14 +25,14 @@
         }
       },
       "current": { "type": "string", "description": "This page's name, marked as the current page. Leave out when the heading below says it." },
-      "label": { "type": "string", "default": "You are here", "description": "Names the navigation landmark." }
+      "label": { "type": "string", "default": "Breadcrumb", "description": "Names the navigation landmark. Breadcrumb is the name screen reader users know it by; You are here would say they are on the place it leads back to." }
     }
   },
   "a11y": {
     "role": "navigation holding a list of links, the last item aria-current=page",
     "keyboard": [{ "key": "Tab", "does": "reaches each link in turn" }, { "key": "Enter", "does": "goes to that place" }],
     "states": ["aria-current"],
-    "wcag": { "target": "AAA", "notes": "A named navigation landmark (1.3.1) with the trail as an ordered list, so its length is announced. The separators are drawn in CSS and never read. The current page is marked with aria-current and in words, not by colour alone (1.4.1). Links reach a 44px target (2.5.5)." }
+    "wcag": { "target": "AAA", "notes": "A named navigation landmark (1.3.1) with the trail as an ordered list, so its length is announced. The chevrons between places are drawn with CSS borders, not characters, so nothing is read for them. The current page, when given, is plain text with aria-current, set apart from the links by having no underline, not by colour alone (1.4.1). Long names wrap rather than run off a phone (1.4.10). Links reach a 44px target (2.5.5)." }
   },
   "machine": {
     "selector": "[data-component=\"crumbs\"]",
