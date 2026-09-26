@@ -18,10 +18,13 @@
   }
 
   // convert asks the server for the other form of the same words.
-  function convert(body, done) {
+  // convert asks the server for the other view; a failure says so beside
+  // the switch, and nothing typed is lost.
+  function convert(body, done, said) {
     fetch("/api/prose", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
-      .then(function (r) { return r.json(); })
-      .then(done);
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (out) { if (said) said.textContent = ""; done(out); })
+      .catch(function () { if (said) said.textContent = "Could not switch views. Your words are unchanged."; });
   }
 
   // swProseField builds the editor for one rendered field: the prose
@@ -72,6 +75,10 @@
     toggle.className = "sw-button sw-button--quiet sw-pressable";
     toggle.textContent = "Markdown";
     toggle.setAttribute("aria-pressed", "false");
+    // Where a switch that failed says so: a status, there from the start.
+    var said = document.createElement("span");
+    said.className = "sw-small";
+    said.setAttribute("role", "status");
     toggle.addEventListener("click", function () {
       if (source.hidden) {
         convert({ html: editor.innerHTML, level: level }, function (out) {
@@ -80,25 +87,24 @@
           html.disabled = true;
           source.hidden = false;
           toggle.hidden = false;
-          toggle.textContent = "Rich text";
           toggle.setAttribute("aria-pressed", "true");
           source.focus();
-        });
+        }, said);
       } else {
         convert({ markdown: source.value, level: level }, function (out) {
           editor.innerHTML = out.html || editor.innerHTML;
           source.hidden = true;
           html.disabled = false;
           editor.hidden = bar.hidden = false;
-          toggle.textContent = "Markdown";
           toggle.setAttribute("aria-pressed", "false");
           editor.focus();
-        });
+        }, said);
       }
     });
     var switcher = document.createElement("div");
     switcher.className = "sw-cluster sw-prose-switch";
     switcher.appendChild(toggle);
+    switcher.appendChild(said);
 
     // The toolbar and the switch to Markdown share one line under the
     // words: the formatting at the left, the switch at the right.
