@@ -170,8 +170,9 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	// person lands on offers to put it back. No page asks "are you sure".
 	// An action is a button; its own page has that button.
 	if t.Name == chat.ActionType {
+		title := s.title(t, rec)
 		fmt.Fprintf(&b, `<form method="post" action="/act/%s"><input type="hidden" name="from" value="/t/%s/%s">%s</form>`, rec.ID, t.Name, rec.ID,
-			s.component("button", map[string]any{"label": "Run", "context": s.title(t, rec), "type": "submit", "variant": "primary"}))
+			s.component("button", map[string]any{"label": "Run " + trimLabel(title), "context": title, "type": "submit", "variant": "primary"}))
 	}
 	// The record's one press, done or pinned or whatever its yes-or-no
 	// field is, sits under the title; Delete keeps to the quiet bar.
@@ -216,6 +217,14 @@ const maxTitleRunes = 75
 // trimTitle cuts a title to at most six words and at most maxTitleRunes
 // characters so no heading exceeds reasonable length. Titles already within
 // both limits pass through unchanged. An ellipsis is appended when trimmed.
+func trimLabel(s string) string {
+	fields := strings.Fields(s)
+	if len(fields) <= 3 {
+		return s
+	}
+	return strings.Join(fields[:3], " ")
+}
+
 func trimTitle(s string) string {
 	fields := strings.Fields(s)
 	if len(fields) <= 6 && len([]rune(s)) <= maxTitleRunes {
