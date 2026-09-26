@@ -39,8 +39,9 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 		} else {
 			fmt.Fprintf(&b, `<p class="sw-muted sw-small">%s</p>`, template.HTMLEscapeString(count(len(hits))))
 			fmt.Fprintf(&b, `<h2>Results</h2>`)
-			fmt.Fprintf(&b, `<ol class="sw-stack" aria-label="Results for %s">`, template.HTMLEscapeString(q))
+			// Page 2 counts on from where page 1 ended, 21, not from 1 again.
 			pg = pageOf(r, len(hits), searchPageSize)
+			fmt.Fprintf(&b, `<ol class="sw-stack" start="%d" aria-label="Results for %s">`, pg.lo+1, template.HTMLEscapeString(q))
 			for _, h := range hits[pg.lo:pg.hi] {
 				typeEsc := template.HTMLEscapeString(capitalize(h.Type))
 				snippetEsc := template.HTMLEscapeString(h.Snippet)
@@ -71,7 +72,7 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 			b.WriteString(string(s.pageNav(r, pg, "Pages of results")))
 		}
 	}
-	s.page(w, r, pg.title(title), template.HTML(b.String()), pageOptions{JSONURL: "/api/search?q=" + template.URLQueryEscaper(q), Said: said})
+	s.page(w, r, pg.title(title), template.HTML(b.String()), pageOptions{JSONURL: "/api/search?q=" + template.URLQueryEscaper(q), Said: pg.title(said)})
 }
 
 func count(n int) string {
