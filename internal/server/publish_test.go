@@ -102,7 +102,7 @@ func TestAIServicesReadWhatPeopleCan(t *testing.T) {
 	}
 	a.Workspace.Config.Publish.Types = "note"
 	body := public(t, pub, http.MethodPost, "/mcp", list).Body.String()
-	if !strings.Contains(body, "find_records") || strings.Contains(body, "create_record") || strings.Contains(body, `"search"`) {
+	if !strings.Contains(body, "find_records") || strings.Contains(body, "create_record") || strings.Contains(body, `"task"`) {
 		t.Errorf("reading the published types, and only that: %s", body)
 	}
 	notes := public(t, pub, http.MethodPost, "/mcp", `{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"find_records","arguments":{"type":"note"}}}`).Body.String()
@@ -152,5 +152,41 @@ func TestOnlyPublishedFilesAreServed(t *testing.T) {
 	}
 	if r := public(t, pub, http.MethodGet, "/files/"+shown.ID, ""); r.Code == http.StatusNotFound && strings.Contains(r.Body.String(), "not published") {
 		t.Error("a picture on a published tab is served")
+	}
+}
+
+// search and fetch, as ChatGPT's connectors and deep research ask for
+// them, over what is published: a published note is found, cited by its
+// page and read in full; a task, not published, is neither.
+func TestSearchAndFetchWhatIsPublished(t *testing.T) {
+	a, h := newApp(t)
+	srv := h.(*server.Server)
+	n, _ := a.Store.Create("note", map[string]any{"title": "Sourdough", "body": "Flour, water and salt, and patience."})
+	task, _ := a.Store.Create("task", map[string]any{"title": "Sourdough starter errand"})
+	a.Workspace.Config.Publish.Types = "note"
+	pub := srv.Public(&mcp.Server{App: a, Version: "test", Published: func() map[string]bool { return srv.Published().Types }})
+
+	list := public(t, pub, http.MethodPost, "/MCP", `{"jsonrpc":"2.0","id":1,"method":"tools/list"}`).Body.String()
+	if !strings.Contains(list, `"search"`) || !strings.Contains(list, `"fetch"`) {
+		t.Fatalf("search and fetch are offered, at /mcp in any case: %s", list)
+	}
+	var found struct {
+		Result struct {
+			Structured struct {
+				Results []struct{ ID, Title, URL string } `json:"results"`
+			} `json:"structuredContent"`
+		} `json:"result"`
+	}
+	json.Unmarshal(public(t, pub, http.MethodPost, "/mcp", `{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"search","arguments":{"query":"sourdough"}}}`).Body.Bytes(), &found)
+	rs := found.Result.Structured.Results
+	if len(rs) != 1 || rs[0].ID != "note/"+n.ID || rs[0].Title != "Sourdough" || !strings.HasSuffix(rs[0].URL, "/t/note/"+n.ID) {
+		t.Fatalf("search finds the published note, with its page to cite, and not the task: %+v", rs)
+	}
+	doc := public(t, pub, http.MethodPost, "/mcp", `{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"fetch","arguments":{"id":"note/`+n.ID+`"}}}`).Body.String()
+	if !strings.Contains(doc, "patience") || !strings.Contains(doc, "structuredContent") {
+		t.Errorf("fetch reads the note in full: %s", doc)
+	}
+	if hidden := public(t, pub, http.MethodPost, "/mcp", `{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"fetch","arguments":{"id":"task/`+task.ID+`"}}}`).Body.String(); strings.Contains(hidden, "errand") {
+		t.Error("a task is not published, so it is not fetched")
 	}
 }

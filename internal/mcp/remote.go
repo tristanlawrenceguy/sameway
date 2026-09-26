@@ -102,8 +102,16 @@ func (s *Server) listFor(ctx context.Context) []tool {
 		allowed[k] = true
 	}
 	if r.public {
-		// What is published, type by type; search runs across them all.
+		// What is published, type by type, and search and fetch across
+		// it, as ChatGPT's connectors and deep research look for them.
 		allowed = map[string]bool{"describe": true, "find_records": true, "get_record": true}
+		var out []tool
+		for _, t := range all {
+			if allowed[t.Name] {
+				out = append(out, s.onlyPublished(t))
+			}
+		}
+		return append(out, publicSearchTools...)
 	}
 	if r.svc != nil {
 		for _, t := range r.svc.Tools() {
