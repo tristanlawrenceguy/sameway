@@ -17,14 +17,18 @@
   background: var(--sw-color-bg-raised); color: var(--sw-color-danger); border-color: var(--sw-color-danger);
   --sw-press: var(--sw-color-danger-soft);
 }
-/* Quiet: little chrome of its own, sized for a control bar. Contrast and
-   target size are unchanged; the background is dropped and the border is
-   a light line, so it still reads as something to press. */
+/* Quiet: little chrome of its own. Contrast and target size are unchanged;
+   the background is dropped, and the edge is the strong border colour, so
+   standing on its own (Cancel beside Save) it still reads as a button. In a
+   control bar the bar is the frame and the edge goes (04-quiet.css). */
 .sw-button--quiet {
   background: transparent; color: var(--sw-color-fg-muted);
-  border-color: var(--sw-color-border); padding: 0 var(--sw-space-3);
+  border-color: var(--sw-color-border-strong); padding: 0 var(--sw-space-3);
   font-weight: 600; font-size: var(--sw-size-text-sm);
 }
 .sw-button--quiet:hover:not([disabled]) { color: var(--sw-color-fg); background: var(--sw-color-bg-muted); }
 .sw-button:hover:not([disabled]):not([aria-disabled="true"]) { text-decoration: underline; text-underline-offset: 0.2em; }
 .sw-button[disabled], .sw-button[aria-disabled="true"] { cursor: not-allowed; opacity: 0.6; box-shadow: none; }
+/* On, for a button that turns something on and off: more than a colour,
+   a strong edge and a pressed-in shade. */
+.sw-button[aria-pressed="true"] { border-color: var(--sw-color-accent); background: var(--sw-color-accent-soft); color: var(--sw-color-accent); box-shadow: inset 0 2px 0 var(--sw-color-border-strong); }

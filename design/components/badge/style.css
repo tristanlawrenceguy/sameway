@@ -1,12 +1,16 @@
+/* A word or two that says a state, on a pale tint in its own colour. Not a
+   control: no border, no hover, nothing that looks pressable. A long one,
+   such as a record's name, wraps in its box rather than off the page. */
 .sw-badge {
-  display: inline-flex; align-items: center; gap: var(--sw-space-1);
-  padding: 0.125rem var(--sw-space-2);
-  border-radius: var(--sw-radius-pill);
+  display: inline-flex; align-items: flex-start; gap: var(--sw-space-1);
+  max-width: 100%; padding: 0.125rem var(--sw-space-2);
+  border-radius: var(--sw-radius-md);
   font-size: var(--sw-size-text-xs); font-weight: 600; line-height: 1.5;
-  letter-spacing: 0.01em; white-space: nowrap;
+  letter-spacing: 0.01em; overflow-wrap: anywhere;
   background: var(--sw-color-bg-muted); color: var(--sw-color-fg-muted);
 }
-.sw-badge::before { content: ""; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: currentColor; }
+/* The dot keeps to the first line when the words wrap. */
+.sw-badge::before { content: ""; flex: none; width: 0.5rem; height: 0.5rem; margin-block-start: 0.375em; border-radius: 50%; background: currentColor; }
 .sw-badge--human, .sw-badge--assistant, .sw-badge--system { background: var(--sw-actor-soft); color: var(--sw-actor); }
 .sw-badge--success { background: var(--sw-color-success-soft); color: var(--sw-color-success); }
 .sw-badge--warning { background: var(--sw-color-warning-soft); color: var(--sw-color-warning); }
@@ -15,3 +19,9 @@
 /* A fact with no state to it, such as a day, carries no dot: the dot says
    "this is a state" and a date is not one. */
 .sw-badge--neutral::before { content: none; }
+/* Forced colours take the tint and the dot's colour away: the dot is drawn
+   in the text's colour so a state still reads as one. No border, which
+   would make it look like a button. */
+@media (forced-colors: active) {
+  .sw-badge::before { forced-color-adjust: none; background: CanvasText; }
+}

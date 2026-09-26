@@ -16,7 +16,9 @@
       "name": { "type": "string", "description": "Form field name, sent with the form when type is submit." },
       "value": { "type": "string", "description": "Form value sent when this button submits the form." },
       "id": { "type": "string" },
-      "disabled": { "type": "boolean", "default": false },
+      "disabled": { "type": "boolean", "default": false, "description": "Avoid: a disabled button gives no reason and drops out of reach. Keep it pressable and say what is wrong on submit." },
+      "busy": { "type": "boolean", "default": false, "description": "Already sent and waiting: aria-disabled, so it keeps focus and ignores presses until the page answers. Set by the script on submit; set it in the page only for a request already under way." },
+      "pressed": { "type": "boolean", "description": "For a button that turns something on and off: renders aria-pressed. Keep the label the same either way." },
       "action": { "type": "string", "description": "The id of an action record to run when pressed. The button is rendered inside its own form posting to /act/<id>, so do not put it inside another form." },
       "from": { "type": "string", "description": "With action, the page to return to afterwards." }
     }
@@ -28,13 +30,13 @@
       { "key": "Space", "does": "activates" },
       { "key": "Tab", "does": "moves focus to and from the button" }
     ],
-    "states": ["disabled"],
-    "wcag": { "target": "AAA", "notes": "44px minimum target. 7:1 contrast on all variants. Focus ring 3px with 3:1 contrast. The press ring stays visible after release so the activation is felt. Disabled buttons leave the tab order, so keep destructive or important actions enabled and validate on submit instead." }
+    "states": ["disabled", "aria-disabled (busy: sent and waiting)", "aria-pressed"],
+    "wcag": { "target": "AAA", "notes": "44px minimum target. 7:1 contrast on all variants. Focus ring 3px with 3:1 contrast. The press ring stays visible after release so the activation is felt. Disabled buttons leave the tab order, so keep destructive or important actions enabled and validate on submit instead. A form is sent once: its pressed button is aria-disabled until the next page arrives, so a double press does not create or delete twice. An on and off button has aria-pressed and a pressed-in look, not colour alone." }
   },
   "machine": {
     "selector": "[data-component=\"button\"]",
     "identify": "The accessible name is the visible label plus any context text, for example 'Remove card'. Target by role and name.",
-    "operate": "Click it, or focus it and press Enter or Space. A submit button inside a form submits that form. A button whose form posts to /act/<id> runs one of the person's actions. A button inside a quiet control bar is faded until hovered or focused, but it is always present, focusable, and clickable."
+    "operate": "Click it, or focus it and press Enter or Space. A submit button inside a form submits that form. A button whose form posts to /act/<id> runs one of the person's actions. A button with aria-disabled=true was pressed and is waiting for the page to answer; pressing it again does nothing. A button inside a quiet control bar is faded until hovered or focused, but it is always present, focusable, and clickable."
   },
   "examples": [
     { "name": "default", "props": { "label": "Save note" }, "file": "examples/default.html" },
@@ -43,7 +45,8 @@
     { "name": "danger", "props": { "label": "Delete", "context": "note", "variant": "danger", "type": "submit" }, "file": "examples/danger.html" },
     { "name": "quiet", "props": { "label": "Remove", "context": "card", "variant": "quiet", "type": "submit" }, "file": "examples/quiet.html" },
     { "name": "reset", "props": { "label": "Clear form", "type": "reset", "variant": "secondary" }, "file": "examples/reset.html" },
-    { "name": "disabled", "props": { "label": "Sending", "disabled": true, "id": "send" }, "file": "examples/disabled.html" },
+    { "name": "busy", "props": { "label": "Send", "type": "submit", "busy": true, "id": "send" }, "file": "examples/busy.html" },
+    { "name": "pressed", "props": { "label": "Show done tasks", "pressed": true }, "file": "examples/pressed.html" },
     { "name": "action", "props": { "label": "Turn on", "action": "a1" }, "file": "examples/action.html" }
   ]
 }

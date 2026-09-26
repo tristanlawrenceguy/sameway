@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "A small label that states who did something or what state it is in. Tone is spoken as text, never colour alone.",
   "icon": "•",
-  "use": { "when": "one word says a state, or who did something, beside the thing it describes.", "not": "as a button, a link, or decoration.", "with": "card and event, where the state belongs to an item." },
+  "use": { "when": "one word says a state, or who did something, beside the thing it describes.", "not": "as a button, a link, or decoration; never inside or right beside a link or button, where it looks like part of it; never a verb such as Publish, which reads as something to press.", "with": "card and event, where the state belongs to an item." },
   "props": {
     "type": "object",
     "additionalProperties": false,
@@ -11,6 +11,7 @@
     "properties": {
       "label": { "type": "string", "minLength": 1, "description": "Short text such as 'Assistant' or 'Draft'. Say only what is not already obvious; a badge is not a place for timestamps." },
       "tone": { "type": "string", "enum": ["neutral", "human", "assistant", "system", "success", "warning", "danger", "info"], "default": "neutral", "description": "human, assistant, and system are provenance tones; the rest are states." },
+      "context": { "type": "string", "description": "Words read after the label but not shown, when the label alone says nothing heard out of place: 'priority' after 'High'." },
       "id": { "type": "string" }
     }
   },
@@ -33,6 +34,7 @@
     { "name": "success", "props": { "label": "Published", "tone": "success" }, "file": "examples/success.html" },
     { "name": "warning", "props": { "label": "Needs review", "tone": "warning" }, "file": "examples/warning.html" },
     { "name": "danger", "props": { "label": "Failed", "tone": "danger" }, "file": "examples/danger.html" },
-    { "name": "info", "props": { "label": "Beta", "tone": "info", "id": "beta" }, "file": "examples/info.html" }
+    { "name": "info", "props": { "label": "Beta", "tone": "info", "id": "beta" }, "file": "examples/info.html" },
+    { "name": "context", "props": { "label": "High", "tone": "info", "context": "priority" }, "file": "examples/context.html" }
   ]
 }
