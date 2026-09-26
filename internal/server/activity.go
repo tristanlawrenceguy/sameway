@@ -108,11 +108,8 @@ func (s *Server) event(r *store.Record, from string, level int, dated bool) temp
 		props["level"] = level
 	}
 	// Where it was done from, when not here, as the log's own summary says.
-	if via, _ := r.Fields["via"].(string); via != "" {
-		if !strings.HasPrefix(via, "through ") {
-			via = "on " + via
-		}
-		props["via"] = via
+	if via, _ := r.Fields["via"].(string); via != "" && !strings.HasPrefix(via, "through ") {
+		props["via"] = "on " + via
 	}
 	if who, person := s.whoDid(r); who != "" {
 		props["who"], props["person"] = who, person

@@ -17,7 +17,7 @@ the heading, said once, with its time and Undo beside it, not a heading with
 the same sentence under it. Give `datetime` for the time element, and put the
 day in `time` wherever no heading above says it (2 Jan 14:05); on a page
 grouped by day, the time alone. `via` says where it was done from when not
-this computer (on pixel-7, through the command line).
+this computer, such as on a phone or tablet.
 
 Undo says what it undid: "Undone. You added card Plan."
 
