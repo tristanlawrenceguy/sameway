@@ -116,6 +116,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	if t.Name == FileType {
 		b.WriteString(s.fileExtras(rec))
 	}
+	b.WriteString(s.clashNotices(r, t, rec)) // two versions written at once; see clash.go
 	// What this view has been asked to show beyond the least it can say:
 	// see parts.go. Nothing here is on unless somebody asked for it.
 	always, here := s.shown(r)

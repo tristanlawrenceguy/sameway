@@ -29,9 +29,8 @@ type Server struct {
 	// see connect.go.
 	model modelState
 	// notify tells a ring beyond the page; see ring.go.
-	notify func(title, text, url string)
-	// changes counts changes arrived from other computers; see sync.go.
-	changes atomic.Int64
+	notify  func(title, text, url string)
+	changes atomic.Int64 // changes arrived from other computers; see sync.go
 }
 
 // New builds the handler for an app.
@@ -87,6 +86,7 @@ func (s *Server) routes() {
 	m.HandleFunc("POST /clock/{id}/snooze", s.clockSnooze)
 	m.HandleFunc("GET /clock/stream", s.clockStream)
 	m.HandleFunc("POST /sync", s.syncExchange)
+	s.togetherRoutes(m)
 	m.HandleFunc("GET /events", s.events)
 	m.HandleFunc("GET /workspaces", s.workspacesPage)
 	m.HandleFunc("POST /workspaces/start", s.workspacesStart)

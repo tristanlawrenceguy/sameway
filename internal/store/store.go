@@ -71,6 +71,7 @@ func Open(path string, types *schema.Set) (*Store, error) {
 		db.Close()
 		return nil, err
 	}
+	s.migrateClash()
 	return s, nil
 }
 

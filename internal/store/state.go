@@ -30,12 +30,10 @@ type Stamp struct {
 	Field string          `json:"field"`
 	Value json.RawMessage `json:"value"`
 	Clock string          `json:"clock"`
+	Base  string          `json:"base,omitempty"` // what a text was written over; see clash.go
 }
 
-const (
-	fieldDeleted = "_deleted"
-	fieldCreated = "_created"
-)
+const fieldDeleted, fieldCreated = "_deleted", "_created"
 
 func (s *Store) migrateState() error {
 	for _, stmt := range []string{
@@ -124,7 +122,7 @@ func (s *Store) stamp(t *schema.Type, id string, before, after map[string]any, c
 			return
 		}
 		clock := s.clock.next(s.origin)
-		s.db.Exec(`INSERT OR REPLACE INTO _state (type, id, field, value, clock) VALUES (?, ?, ?, ?, ?)`, t.Name, id, field, string(raw), clock)
+		s.db.Exec(`INSERT OR REPLACE INTO _state (type, id, field, value, clock, base) VALUES (?, ?, ?, ?, ?, ?)`, t.Name, id, field, string(raw), clock, s.baseOf(t, field, before))
 		s.db.Exec(`INSERT OR REPLACE INTO _seen (origin, clock) VALUES (?, ?)`, s.origin, clock)
 	}
 	if after == nil {
@@ -193,7 +191,7 @@ func (s *Store) Seen() (map[string]string, error) {
 // has not: the fields whose winning write is newer than the latest the
 // peer holds from the computer that made it.
 func (s *Store) Since(seen map[string]string) ([]Stamp, error) {
-	rows, err := s.db.Query(`SELECT type, id, field, value, clock FROM _state ORDER BY clock`)
+	rows, err := s.db.Query(`SELECT type, id, field, value, clock, COALESCE(base, '') FROM _state ORDER BY clock`)
 	if err != nil {
 		return nil, err
 	}
@@ -202,7 +200,7 @@ func (s *Store) Since(seen map[string]string) ([]Stamp, error) {
 	for rows.Next() {
 		var st Stamp
 		var v string
-		if err := rows.Scan(&st.Type, &st.ID, &st.Field, &v, &st.Clock); err != nil {
+		if err := rows.Scan(&st.Type, &st.ID, &st.Field, &v, &st.Clock, &st.Base); err != nil {
 			return nil, err
 		}
 		if st.Clock > seen[originOf(st.Clock)] {
@@ -220,10 +218,11 @@ func (s *Store) Apply(stamps []Stamp) (int, error) {
 	touched := map[[2]string]bool{}
 	for _, st := range stamps {
 		s.clock.hear(st.Clock)
-		var have string
-		s.db.QueryRow(`SELECT clock FROM _state WHERE type = ? AND id = ? AND field = ?`, st.Type, st.ID, st.Field).Scan(&have)
+		var have, cur, curBase string
+		s.db.QueryRow(`SELECT clock, value, COALESCE(base, '') FROM _state WHERE type = ? AND id = ? AND field = ?`, st.Type, st.ID, st.Field).Scan(&have, &cur, &curBase)
+		s.clash(st, have, cur, curBase)
 		if st.Clock > have {
-			if _, err := s.db.Exec(`INSERT OR REPLACE INTO _state (type, id, field, value, clock) VALUES (?, ?, ?, ?, ?)`, st.Type, st.ID, st.Field, string(st.Value), st.Clock); err != nil {
+			if _, err := s.db.Exec(`INSERT OR REPLACE INTO _state (type, id, field, value, clock, base) VALUES (?, ?, ?, ?, ?, ?)`, st.Type, st.ID, st.Field, string(st.Value), st.Clock, st.Base); err != nil {
 				return 0, err
 			}
 			touched[[2]string{st.Type, st.ID}] = true
