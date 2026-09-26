@@ -135,7 +135,8 @@ func (s *Service) inverse(a *store.Record) (func() (Change, error), error) {
 			return nil, errors.New("it is already back")
 		}
 		return func() (Change, error) { return s.restore(typ, id, before) }, nil
-	case "updated":
+	case "updated", "done", "snoozed":
+		// A reminder dismissed or put off is a change like any other.
 		if typ == "" || id == "" || before == nil {
 			return nil, errors.New("the entry does not say what it was")
 		}
