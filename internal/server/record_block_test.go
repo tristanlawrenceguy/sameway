@@ -58,7 +58,7 @@ func TestARecordBlockIsTheRecordOnTheCanvas(t *testing.T) {
 	var blocks struct{ Records []struct{ ID string } }
 	decode(t, get(t, h, "/api/block"), &blocks)
 	focus := get(t, h, "/canvas/"+blocks.Records[len(blocks.Records)-1].ID).Body.String()
-	if !strings.Contains(focus, "Open this note on its page") || !strings.Contains(focus, "<title>Call the dentist at nine") {
+	if !strings.Contains(focus, "View full") || !strings.Contains(focus, "<title>Call the dentist at nine") {
 		t.Error("the expanded block should be the note at page size, under its own name")
 	}
 
