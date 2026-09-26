@@ -37,7 +37,7 @@ func (s *Server) pane(side, label string, blocks []*store.Record, convo *convers
 	}
 	inner.WriteString(`</ol>`)
 	body, err := s.app.Registry.RenderSlot("disclosure",
-		map[string]any{"label": label, "open": true, "id": side + "-pane"},
+		map[string]any{"label": label, "open": true, "id": side + "-pane", "remember": "site"},
 		template.HTML(inner.String()))
 	if err != nil {
 		return ""

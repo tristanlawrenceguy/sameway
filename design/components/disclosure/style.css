@@ -7,15 +7,6 @@
   border-radius: var(--sw-radius-md); list-style: none;
 }
 .sw-disclosure__summary::-webkit-details-marker { display: none; }
-/* Own marker, so the twisty is a shape we control and can rotate. */
-.sw-disclosure__summary::before {
-  content: ""; flex: none;
-  width: 0.5rem; height: 0.5rem;
-  border-right: 2px solid var(--sw-color-fg-muted); border-bottom: 2px solid var(--sw-color-fg-muted);
-  transform: rotate(-45deg); margin-right: var(--sw-space-1);
-  transition: transform var(--sw-motion-base) var(--sw-motion-ease);
-}
-.sw-disclosure[open] > .sw-disclosure__summary::before { transform: rotate(45deg); }
 .sw-disclosure__summary:hover { color: var(--sw-color-fg); background: var(--sw-color-bg-muted); }
 .sw-disclosure__count {
   font-variant-numeric: tabular-nums; font-size: var(--sw-size-text-xs); font-weight: 700;
@@ -23,4 +14,4 @@
   background: var(--sw-color-bg-muted); color: var(--sw-color-fg-muted);
 }
 .sw-disclosure__body { background: var(--sw-color-bg); color: var(--sw-color-fg-muted); padding: var(--sw-space-2) var(--sw-space-2) var(--sw-space-4); }
-.sw-disclosure[open] > .sw-disclosure__body { animation: sw-enter var(--sw-motion-base) var(--sw-motion-ease) both; }
+.sw-disclosure[open][data-opened] > .sw-disclosure__body { animation: sw-enter var(--sw-motion-base) var(--sw-motion-ease) both; }
