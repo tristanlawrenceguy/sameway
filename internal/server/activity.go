@@ -10,6 +10,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/design"
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
 // record logs a change a person made through a page, with the device it
@@ -97,9 +98,19 @@ func (s *Server) event(r *store.Record, from string, level int, dated bool) temp
 	if dated {
 		at = messageTime(r.CreatedAt)
 	}
+	cAction, _ := r.Fields["action"].(string)
+	cTarget, _ := r.Fields["target"].(string)
+	cDetail, _ := r.Fields["detail"].(string)
+	if cAction == "set" {
+		if label, ok := workspace.SettingTarget(cTarget); ok {
+			cAction = "changed"
+			cTarget = label
+			cDetail = workspace.SettingValueLabel(r.Fields["target"].(string), cDetail)
+		}
+	}
 	props := map[string]any{
 		"actor":    r.Fields["actor"],
-		"action":   r.Fields["action"],
+		"action":   cAction,
 		"time":     at,
 		"datetime": r.CreatedAt.UTC().Format(time.RFC3339),
 		"id":       "activity-" + r.ID,
@@ -117,11 +128,11 @@ func (s *Server) event(r *store.Record, from string, level int, dated bool) temp
 	if who, person := s.whoDid(r); who != "" {
 		props["who"], props["person"] = who, person
 	}
-	if t, _ := r.Fields["target"].(string); t != "" {
-		props["target"] = t
+	if cTarget != "" {
+		props["target"] = cTarget
 	}
-	if d, _ := r.Fields["detail"].(string); d != "" {
-		props["detail"] = d
+	if cDetail != "" {
+		props["detail"] = cDetail
 	}
 	if href := s.hrefFor(r); href != "" {
 		props["href"] = href

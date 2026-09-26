@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
 // undo reverses one activity entry for the person and returns them to the
@@ -53,6 +54,40 @@ func (s *Server) undoable(changes any, latest bool) any {
 			}
 			if !keep {
 				delete(copied, "activity")
+			}
+		}
+		out = append(out, copied)
+	}
+	return out
+}
+
+// humanizeChanges converts machine-language field names in a changes list into
+// human-readable descriptions for setting changes only — other changes pass
+// through unchanged. It mutates each item's "action", "component" and "detail".
+func (s *Server) humanizeChanges(changes any) any {
+	list, ok := changes.([]any)
+	if !ok {
+		return changes
+	}
+	out := make([]any, 0, len(list))
+	for _, item := range list {
+		c, ok := item.(map[string]any)
+		if !ok {
+			out = append(out, item)
+			continue
+		}
+		copied := map[string]any{}
+		for k, v := range c {
+			copied[k] = v
+		}
+		if action, _ := copied["action"].(string); action == "set" {
+			component, _ := copied["component"].(string)
+			detail, _ := copied["detail"].(string)
+			if label, ok := workspace.SettingTarget(component); ok {
+				copied["action"] = "changed"
+				_ = label // used by SettingTarget to confirm it's a known setting key
+				copied["component"] = ""
+				copied["detail"] = workspace.SettingValueLabel(component, detail)
 			}
 		}
 		out = append(out, copied)

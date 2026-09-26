@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
 // ActivityType is the content type that logs every canvas change.
@@ -101,12 +102,24 @@ func summarise(actor string, c Change) string {
 		}
 		return who + " undid: " + c.Undone
 	}
-	parts := []string{who, c.Action}
-	if c.Component != "" {
-		parts = append(parts, c.Component)
+	// Humanize setting changes so the summary reads in plain words.
+	action := c.Action
+	component := c.Component
+	detail := c.Detail
+	if action == "set" {
+		if label, ok := workspace.SettingTarget(component); ok {
+			action = "changed"
+			component = ""
+			detail = workspace.SettingValueLabel(c.Component, c.Detail)
+			return who + " changed " + label + " to " + detail
+		}
 	}
-	if c.Detail != "" {
-		parts = append(parts, c.Detail)
+	parts := []string{who, action}
+	if component != "" {
+		parts = append(parts, component)
+	}
+	if detail != "" {
+		parts = append(parts, detail)
 	}
 	if strings.HasPrefix(c.Via, "through ") {
 		return strings.Join(parts, " ") + ", " + c.Via
