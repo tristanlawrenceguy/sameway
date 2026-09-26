@@ -18,7 +18,7 @@ Where it appears:
 - Every **message** carries `data-role` (user, assistant, error) and
   `data-actor`. The author word is the first thing in the article.
 - Every **canvas block** carries `data-actor` (who last changed it) and
-  shows a **badge** such as "Added by assistant, edited by you · 20:24".
+  shows a **badge** such as "Assistant, edited by you", with the time beside it rather than in it.
   The record behind it has `actor` and `created_by` fields.
 - Every **event** in the activity log names the actor as a word and carries
   `data-actor`, `data-action`, and `data-target`.
