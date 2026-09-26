@@ -155,9 +155,7 @@ ol.sw-plain, ul.sw-plain { list-style: none; margin: 0; padding: 0; }
 .sw-prose pre { background: var(--sw-color-bg-muted); padding: var(--sw-space-3); border-radius: var(--sw-radius-md); overflow-x: auto; }
 .sw-prose pre code { background: none; padding: 0; }
 .sw-prose blockquote { border-left: 3px solid var(--sw-color-border); padding-left: var(--sw-space-3); color: var(--sw-color-fg-muted); }
-.sw-prose table { border-collapse: collapse; width: 100%; }
-.sw-prose caption { text-align: left; font-weight: 600; margin-bottom: var(--sw-space-1); }
-.sw-prose th, .sw-prose td { text-align: left; padding: var(--sw-space-1) var(--sw-space-2); border-bottom: 1px solid var(--sw-color-border); }
+.sw-prose .sw-table-wrap { margin: 0 0 var(--sw-space-3); }
 .sw-prose hr { border: 0; border-top: 1px solid var(--sw-color-border); margin: var(--sw-space-4) 0; }
 .sw-prose > :last-child { margin-bottom: 0; }
 

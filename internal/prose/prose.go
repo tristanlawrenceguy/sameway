@@ -95,15 +95,19 @@ var tableOpen = regexp.MustCompile(`<table>`)
 // captioned gives every table its caption, in order.
 func captioned(html string, captions []string) string {
 	i := 0
+	html = strings.ReplaceAll(html, "</table>", "</table></div>")
 	return tableOpen.ReplaceAllStringFunc(html, func(string) string {
 		caption := ""
 		if i < len(captions) {
 			caption = captions[i]
 		}
 		i++
+		// A wide table scrolls in its own box, which a keyboard can reach,
+		// rather than pushing the page wider on a phone.
 		if caption == "" {
-			return `<table><caption class="sw-visually-hidden">Table</caption>`
+			return `<div class="sw-table-wrap" role="region" tabindex="0" aria-label="Table"><table class="sw-table"><caption class="sw-visually-hidden">Table</caption>`
 		}
-		return "<table><caption>" + template.HTMLEscapeString(caption) + "</caption>"
+		c := template.HTMLEscapeString(caption)
+		return `<div class="sw-table-wrap" role="region" tabindex="0" aria-label="` + c + `"><table class="sw-table"><caption>` + c + "</caption>"
 	})
 }

@@ -103,7 +103,7 @@ func (s *Server) importPreview(w http.ResponseWriter, r *http.Request, t *schema
 	}
 	fmt.Fprintf(&b, `<p class="sw-muted">%d rows in %s. Each column below feeds the field it names; change any that landed wrong, or set it to nothing to leave it out. A column for an email, a phone or a name that feeds nothing still links each row to its person.</p>`, len(tb.Rows), template.HTMLEscapeString(name))
 	fmt.Fprintf(&b, `<form method="post" action="/t/%s/import/%s/run" class="sw-stack sw-import">`, t.Name, id)
-	b.WriteString(`<div class="sw-table-wrap"><table class="sw-table sw-import__table"><caption class="sw-visually-hidden">The first rows, with the field each column feeds</caption><thead><tr>`)
+	b.WriteString(`<div class="sw-table-wrap" role="region" tabindex="0" aria-label="The first rows, with the field each column feeds"><table class="sw-table sw-import__table"><caption class="sw-visually-hidden">The first rows, with the field each column feeds</caption><thead><tr>`)
 	for _, col := range tb.Columns {
 		fmt.Fprintf(&b, `<th scope="col">%s</th>`, template.HTMLEscapeString(col))
 	}

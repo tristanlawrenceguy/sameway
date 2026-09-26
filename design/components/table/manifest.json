@@ -11,6 +11,8 @@
     "properties": {
       "caption": { "type": "string", "minLength": 1, "description": "Names the table. Required so the table is announced meaningfully." },
       "columns": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+      "rowHeader": { "type": "boolean", "default": true, "description": "The first cell of each row names the row, and is read as its header: Plan, Groceries. False when no column names the rows." },
+      "numbers": { "type": "array", "items": { "type": "string" }, "description": "The columns whose values are numbers, set to the right so their figures line up." },
       "rows": { "type": "array", "items": { "type": "array", "items": { "type": "string" } } },
       "id": { "type": "string" }
     }
