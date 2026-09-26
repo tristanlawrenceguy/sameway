@@ -10,3 +10,6 @@
 .sw-record__open { margin: var(--sw-space-4) 0 0; }
 .sw-record__missing { margin: 0; color: var(--sw-color-fg-muted); }
 .sw-record__actions { margin: var(--sw-space-3) 0 0; }
+/* What kind of thing it is, in words, with the list's dot beside it: the
+   dot alone said it only in colour. */
+.sw-record__kind { margin: var(--sw-space-1) 0 0; font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); }
