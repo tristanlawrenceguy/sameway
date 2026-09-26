@@ -96,7 +96,7 @@ ol.sw-plain, ul.sw-plain { list-style: none; margin: 0; padding: 0; }
    in its own space, and on a narrow screen the facts go under the title
    rather than squeezing it to a word a line. */
 .sw-row__meta > * { white-space: nowrap; }
-.sw-row__meta > .sw-row__note { white-space: normal; overflow-wrap: anywhere; text-align: right; }
+.sw-row__meta > .sw-row__note, .sw-row__meta > .sw-badge { white-space: normal; overflow-wrap: anywhere; text-align: right; }
 .sw-when--past, .sw-when--today { color: var(--sw-color-warning); font-weight: 600; }
 .sw-row__note { color: var(--sw-color-fg-muted); font-weight: 400; font-size: var(--sw-size-text-sm); margin-left: var(--sw-space-2); }
 
@@ -182,7 +182,7 @@ ol.sw-plain, ul.sw-plain { list-style: none; margin: 0; padding: 0; }
    way to go on with it or to let it go. */
 .sw-draft { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sw-space-1) var(--sw-space-2); margin: 0 0 var(--sw-space-3); padding: var(--sw-space-1) var(--sw-space-2); border-radius: var(--sw-radius-md); background: var(--sw-color-accent-soft); color: var(--sw-color-fg); }
 .sw-draft__word { font-weight: 600; margin-right: var(--sw-space-1); }
-.sw-draft .sw-button { min-height: 2rem; padding: 0 var(--sw-space-2); font-size: var(--sw-size-text-xs); }
+.sw-draft .sw-button { padding: 0 var(--sw-space-3); font-size: var(--sw-size-text-sm); }
 /* Under a record's title, the next things to do with it: a reminder about
    it, a word with the assistant, its day. One row, the field first. */
 .sw-next { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--sw-space-2) var(--sw-space-3); margin: 0 0 var(--sw-space-4); }

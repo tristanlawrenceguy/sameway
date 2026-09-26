@@ -26,7 +26,7 @@ layer.
 <li class="sw-block sw-reveal">
   … the component …
   <div class="sw-bar sw-quiet">
-    <span class="sw-badge">Assistant</span>
+    <span class="sw-badge sw-badge--assistant" data-component="badge" data-tone="assistant" data-actor="assistant">Assistant</span>
     <a class="sw-link">Edit<span class="sw-visually-hidden"> card</span></a>
     <button class="sw-button">Remove<span class="sw-visually-hidden"> card</span></button>
   </div>
