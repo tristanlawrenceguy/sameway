@@ -115,7 +115,7 @@ func (s *Server) told(w http.ResponseWriter, r *http.Request) template.HTML {
 		kind, state = "danger", "failed"
 	}
 	// A short outcome is its title alone, said as the message.
-	props := map[string]any{"kind": kind, "title": o.Title, "message": o.Text, "dismiss": true}
+	props := map[string]any{"kind": kind, "title": o.Title, "message": o.Text, "dismiss": true, "live": true}
 	if o.Text == "" {
 		props["title"], props["message"] = "", o.Title
 	}
