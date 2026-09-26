@@ -43,7 +43,19 @@ func (r *Registry) funcsAt(depth int) template.FuncMap {
 	// component that shows facts (a record, a collection's cards) shows
 	// them the one way.
 	funcs["fields"] = func(items any) template.HTML {
-		if list, ok := items.([]any); !ok || len(list) == 0 {
+		list, ok := items.([]any)
+		if !ok {
+			return ""
+		}
+		// A name with nothing beside it is left out, and so is a list of
+		// only those.
+		said := 0
+		for _, it := range list {
+			if m, ok := it.(map[string]any); ok && (m["value"] != "" && m["value"] != nil || m["markdown"] != nil && m["markdown"] != "") {
+				said++
+			}
+		}
+		if said == 0 {
 			return ""
 		}
 		return r.child(map[string]any{"component": "fields", "props": map[string]any{"items": items, "compact": true}}, depth)

@@ -70,6 +70,7 @@ func TestMCPOverHTTPNeedsTheToken(t *testing.T) {
 	defer a.Close()
 	post := func(h http.Handler, token, body string) *httptest.ResponseRecorder {
 		req := httptest.NewRequest(http.MethodPost, "/mcp", strings.NewReader(body))
+		req.RemoteAddr = "127.0.0.1:5000" // an agent on this computer; from elsewhere it reads only
 		req.Header.Set("Content-Type", "application/json")
 		if token != "" {
 			req.Header.Set("Authorization", "Bearer "+token)

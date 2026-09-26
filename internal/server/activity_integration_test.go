@@ -21,33 +21,14 @@ func TestNoDuplicateActivityEntries(t *testing.T) {
 	body := get(t, h, "/chat").Body.String()
 
 	for _, summary := range []string{"Assistant created note First note", "Assistant updated note Updated content"} {
-		count := strings.Count(body, summary)
+		count := saidTimes(body, summary)
 		if count != 1 {
 			t.Errorf("activity entry %q should appear exactly once on /chat, got %d\n%s", summary, count, truncate(body))
 		}
 	}
 
-	// Also check for duplicate <li> blocks with the same h3 heading text.
-	events := strings.Split(body, `<li><h3 class="sw-event__heading"`)
-	if len(events) > 1 {
-		events = events[1:]
-		type eventKey struct{ text string }
-		var seen []eventKey
-		for _, evt := range events {
-			idxEnd := strings.Index(evt, `</h3>`)
-			if idxEnd < 0 {
-				continue
-			}
-			text := evt[:idxEnd]
-			key := eventKey{text: text}
-			for _, s := range seen {
-				if s == key {
-					t.Errorf("duplicate activity entry found in recent activity list:\n%q\n%s", text, truncate(body))
-				}
-			}
-			seen = append(seen, key)
-		}
-	}
+	// Also check that no two h3 headings say the same thing.
+	noDuplicateH3(t, body)
 
 	// Also verify there is exactly one <h2 class="sw-visually-hidden">Activity</h2> heading.
 	h2Count := strings.Count(body, `<h2 class="sw-visually-hidden">Activity</h2>`)
@@ -76,7 +57,7 @@ func TestNoDuplicateActivityEntriesAfterModelAction(t *testing.T) {
 	body := get(t, h, "/chat").Body.String()
 
 	cardSummary := "Assistant added card Shopping"
-	count := strings.Count(body, cardSummary)
+	count := saidTimes(body, cardSummary)
 	if count != 1 {
 		t.Errorf("activity entry %q should appear exactly once on /chat after model action, got %d\n%s", cardSummary, count, truncate(body))
 	}

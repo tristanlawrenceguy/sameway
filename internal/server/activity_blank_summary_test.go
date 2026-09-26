@@ -7,9 +7,19 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 )
 
+// noEmptyH3 fails when any h3 on the page says nothing.
+func noEmptyH3(t *testing.T, body string) {
+	t.Helper()
+	for _, h := range h3Said(body) {
+		if h == "" {
+			t.Errorf("blank-summary activity must not render an empty <h3>\n%s", truncate(body))
+		}
+	}
+}
+
 // TestActivityPageBlankSummaryShowsFallback checks that when an activity
-// record has a blank summary, the /activity page renders fallback heading text
-// derived from actor + action + detail instead of an empty h3.
+// record has a blank summary, the /activity page still reads it as a
+// sentence built from actor + action + detail, rather than an empty h3.
 func TestActivityPageBlankSummaryShowsFallback(t *testing.T) {
 	a, h := newApp(t)
 
@@ -29,13 +39,12 @@ func TestActivityPageBlankSummaryShowsFallback(t *testing.T) {
 	body := get(t, h, "/activity").Body.String()
 
 	// The blank-summary record should not produce an empty h3.
-	if strings.Contains(body, `<h3 class="sw-event__heading"></h3>`) {
-		t.Errorf("blank-summary activity must not render <h3 class=\"sw-event__heading\"></h3>\n%s", truncate(body))
-	}
+	noEmptyH3(t, body)
 
-	// The fallback should show "You said hello" (human + action + detail).
-	if !strings.Contains(body, "You said hello") {
-		t.Errorf("expected fallback 'You said hello' for blank-summary human activity\n%s", truncate(body))
+	// It reads "You said: hello" (human + action + detail; with a detail but
+	// no target, the action takes a colon).
+	if !anyH3Says(body, "You said: hello") {
+		t.Errorf("expected fallback 'You said: hello' for blank-summary human activity\n%s", truncate(body))
 	}
 
 	// Verify the record was inserted with a stable id so we can check it.
@@ -44,12 +53,12 @@ func TestActivityPageBlankSummaryShowsFallback(t *testing.T) {
 	}
 
 	// The normal summary entry should still appear correctly.
-	if !strings.Contains(body, "Assistant created note First note") {
+	if !anyH3Says(body, "Assistant created note First note") {
 		t.Errorf("normal activity summary 'Assistant created note First note' missing\n%s", truncate(body))
 	}
 
 	// Total h3 count: one per activity = 2.
-	h3Count := strings.Count(body, `<h3 class="sw-event__heading"`)
+	h3Count := strings.Count(body, eventHeading)
 	if h3Count != 2 {
 		t.Errorf("expected 2 <h3> elements for 2 activities, got %d\n%s", h3Count, truncate(body))
 	}
@@ -74,12 +83,10 @@ func TestActivityPageBlankSummaryAssistantFallback(t *testing.T) {
 	body := get(t, h, "/activity").Body.String()
 
 	// No empty h3.
-	if strings.Contains(body, `<h3 class="sw-event__heading"></h3>`) {
-		t.Error("blank-summary activity must not render an empty <h3>")
-	}
+	noEmptyH3(t, body)
 
 	// Fallback for assistant without detail: "Assistant added card".
-	if !strings.Contains(body, "Assistant added card") {
+	if !anyH3Says(body, "Assistant added card") {
 		t.Errorf("expected fallback 'Assistant added card' for blank-summary assistant activity\n%s", truncate(body))
 	}
 }
@@ -101,12 +108,10 @@ func TestActivityPageBlankSummarySystemFallback(t *testing.T) {
 
 	body := get(t, h, "/activity").Body.String()
 
-	if strings.Contains(body, `<h3 class="sw-event__heading"></h3>`) {
-		t.Error("blank-summary activity must not render an empty <h3>")
-	}
+	noEmptyH3(t, body)
 
-	// Fallback for system: "System failed no model".
-	if !strings.Contains(body, "System failed no model") {
-		t.Errorf("expected fallback 'System failed no model'\n%s", truncate(body))
+	// Fallback for system: "System failed: no model".
+	if !anyH3Says(body, "System failed: no model") {
+		t.Errorf("expected fallback 'System failed: no model'\n%s", truncate(body))
 	}
 }
