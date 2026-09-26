@@ -31,7 +31,7 @@
 .sw-prose-field textarea { margin-top: 0; }
 /* The view that is not in use is really gone; the field class would otherwise keep it displayed. */
 .sw-prose-field [hidden] { display: none; }
-.sw-prose-tools [aria-pressed="true"] { background: var(--sw-color-accent-soft); color: var(--sw-color-accent); }
+.sw-prose-tools [aria-pressed="true"] { background: var(--sw-color-accent-soft); color: var(--sw-color-accent); box-shadow: inset 0 2px 0 var(--sw-color-border-strong); }
 .sw-prose-editor table { border-collapse: collapse; }
 .sw-prose-editor th, .sw-prose-editor td { border: 1px solid var(--sw-color-border); padding: var(--sw-space-1) var(--sw-space-2); min-width: calc(var(--sw-size-target) * 1.5); }
 
