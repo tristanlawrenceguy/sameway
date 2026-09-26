@@ -37,6 +37,7 @@
     "operate": "Radios: check the input whose value is wanted. Dropdown: set the select's value to one of the option values."
   },
   "examples": [
+    { "name": "unchosen", "props": { "label": "Country", "name": "country", "required": true, "as": "dropdown", "options": ["France", "Germany", "Ireland", "Italy", "Spain", "Sweden"] }, "file": "examples/unchosen.html" },
     { "name": "default", "props": { "label": "Status", "name": "status", "options": ["draft", "published"], "value": "draft" }, "file": "examples/default.html" },
     { "name": "labelled", "props": { "label": "Width", "name": "span", "value": "6", "options": [{ "value": "12", "label": "Full width" }, { "value": "6", "label": "Half" }, { "value": "4", "label": "One third" }] }, "file": "examples/labelled.html" },
     { "name": "many", "props": { "label": "Month", "name": "month", "value": "oct", "options": [{ "value": "jan", "label": "January" }, { "value": "feb", "label": "February" }, { "value": "mar", "label": "March" }, { "value": "apr", "label": "April" }, { "value": "may", "label": "May" }, { "value": "jun", "label": "June" }, { "value": "jul", "label": "July" }, { "value": "aug", "label": "August" }, { "value": "sep", "label": "September" }, { "value": "oct", "label": "October" }, { "value": "nov", "label": "November" }, { "value": "dec", "label": "December" }] }, "file": "examples/many.html" },

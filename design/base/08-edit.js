@@ -143,7 +143,8 @@
     var built, i;
     if (options.length > 5) {
       built = control("dropdown", el, id, name);
-      built.input.innerHTML = "";
+      // Nothing chosen yet is said, not the first answer chosen for them.
+      built.input.innerHTML = options.some(function (o) { return o.value === current; }) ? "" : '<option value="" selected>Choose one</option>';
       for (i = 0; i < options.length; i++) {
         var opt = document.createElement("option");
         opt.value = options[i].value;
