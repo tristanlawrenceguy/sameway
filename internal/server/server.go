@@ -151,7 +151,7 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 		Site:       s.app.Workspace.Config.Name,
 		Title:      title,
 		Said:       opts.Said,
-		Controls:   s.app.Workspace.Config.UI.Controls,
+		Controls:   s.controlsFor(r),
 		Pace:       s.app.Workspace.Config.UI.Pace,
 		Lang:       s.app.Workspace.Config.UI.Language,
 		Text:       s.app.Workspace.Config.UI.Text,
@@ -173,7 +173,7 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 		EditControls: s.editControls(body, opts.Left, opts.Right, opts.Header, opts.Footer),
 	}
 	for _, t := range s.app.Types.Types {
-		if t.Internal || !s.listed(t) {
+		if t.Internal || !s.listedFor(r, t) {
 			continue
 		}
 		href := "/t/" + t.Name
