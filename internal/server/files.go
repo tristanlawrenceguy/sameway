@@ -149,9 +149,11 @@ func (s *Server) serveFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	name, _ := rec.Fields["name"].(string)
-	if ct := mime.TypeByExtension(filepath.Ext(stored)); ct != "" {
+	ct := mime.TypeByExtension(filepath.Ext(stored))
+	if ct != "" {
 		w.Header().Set("Content-Type", ct)
 	}
+	fileSafety(w, ct)
 	w.Header().Set("Content-Disposition", fmt.Sprintf(`inline; filename="%s"`, strings.ReplaceAll(name, `"`, "")))
 	http.ServeFile(w, r, filepath.Join(s.app.Workspace.FilesDir(), stored))
 }
@@ -183,10 +185,10 @@ func (s *Server) fileExtras(rec *store.Record) string {
 			// says that it is a picture no one has described yet, and the
 			// page asks for a description.
 			title, _ := rec.Fields["title"].(string)
-			alt = "Picture: " + title + ", not described yet"
+			alt = title + ", not described yet"
 			b.WriteString(`<p class="sw-muted">This picture has no description yet, so someone who cannot see it hears only its name. Press Edit to say what it shows.</p>`)
 		}
-		b.WriteString(string(s.component("image", map[string]any{"src": "/files/" + rec.ID, "alt": alt})))
+		b.WriteString(string(s.component("image", s.pictureOf(rec, alt))))
 	}
 	if status, _ := rec.Fields["status"].(string); status == "converting" {
 		b.WriteString(string(s.component("status", map[string]any{"id": "file-status", "message": "Reading the file. Its text appears here when the converter answers.", "state": "working"})))

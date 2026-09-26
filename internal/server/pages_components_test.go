@@ -57,7 +57,7 @@ func TestAPictureIsTheImageComponent(t *testing.T) {
 	a, h := newApp(t)
 	rec, _ := a.Store.Create("file", map[string]any{"title": "IMG_4032", "kind": "image"})
 	body := get(t, h, "/t/file/"+rec.ID).Body.String()
-	if !strings.Contains(body, `data-component="image"`) || !strings.Contains(body, `alt="Picture: IMG_4032, not described yet"`) {
+	if !strings.Contains(body, `data-component="image"`) || !strings.Contains(body, `alt="IMG_4032, not described yet"`) {
 		t.Errorf("an undescribed picture should be the image component, saying it is not described")
 	}
 }
