@@ -71,8 +71,12 @@ func (c *ctx) openCmd() error {
 	ctx, stop := context.WithCancel(context.Background())
 	defer stop()
 	h := server.New(a)
+	// MCP over HTTP too, as serve has it: at /mcp, for agents on this
+	// computer with the workspace's token, and from the tailnet by who
+	// Tailscale says they are, reading only.
+	all := HandlerFor(a, os.Getenv(a.Workspace.Config.MCP.TokenEnv), h)
 	var srv *http.Server
-	srv = &http.Server{Handler: h}
+	srv = &http.Server{Handler: all}
 	h.WithFleet(&server.Fleet{Launch: launchWorkspace, Exit: func() {
 		go func() {
 			time.Sleep(500 * time.Millisecond)
@@ -85,7 +89,7 @@ func (c *ctx) openCmd() error {
 	a.Chat.StartSchedule(ctx)
 	keepSnapshots(ctx, c.Stdout, a)
 	connectDevices(ctx, c.Stdout, a)
-	joinTailnet(ctx, c.Stdout, a, h, h)
+	joinTailnet(ctx, c.Stdout, a, all, h)
 	if err := srv.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}
