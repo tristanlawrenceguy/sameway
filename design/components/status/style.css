@@ -18,8 +18,11 @@
 .sw-status--done .sw-status__dot { width: auto; height: auto; border-radius: 0; background: none; line-height: 1; }
 .sw-status--done .sw-status__dot::before { content: "✓"; font-weight: 700; }
 .sw-status--error { color: var(--sw-color-danger); background: var(--sw-color-danger-soft); }
+/* An error has a shape of its own too: a mark, not the idle dot. */
+.sw-status--error .sw-status__dot { width: auto; height: auto; border-radius: 0; background: none; line-height: 1; }
+.sw-status--error .sw-status__dot::before { content: "!"; font-weight: 700; }
 .sw-status--idle .sw-status__dot { opacity: 0.5; }
 @media (forced-colors: active) {
   .sw-status__dot { forced-color-adjust: none; background: CanvasText; }
-  .sw-status--working .sw-status__dot, .sw-status--done .sw-status__dot { background: none; }
+  .sw-status--working .sw-status__dot, .sw-status--done .sw-status__dot, .sw-status--error .sw-status__dot { background: none; }
 }
