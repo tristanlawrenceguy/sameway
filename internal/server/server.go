@@ -114,6 +114,7 @@ func (s *Server) routes() {
 	m.HandleFunc("POST /t/{type}/{id}/props", s.recordProps)
 	m.HandleFunc("POST /t/file/upload", s.upload)
 	m.HandleFunc("GET /files/{id}", s.serveFile)
+	m.HandleFunc("GET /files/{id}/still", s.serveStill)
 
 	m.HandleFunc("GET /api/describe", s.apiDescribe)
 	m.HandleFunc("GET /api/search", s.apiSearch)

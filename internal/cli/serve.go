@@ -10,7 +10,8 @@ import (
 )
 
 // Handler is the whole server: the pages and the API, and MCP over HTTP at
-// /mcp for a client elsewhere, behind the workspace's token.
+// /mcp, behind the workspace's token, or for someone Tailscale says the
+// workspace let in; from anywhere but this computer it reads only.
 func Handler(a *app.App, token string) http.Handler {
 	return HandlerFor(a, token, server.New(a))
 }

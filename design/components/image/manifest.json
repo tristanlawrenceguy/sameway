@@ -14,6 +14,8 @@
       "caption": { "type": "string", "description": "Seen by everyone, under the picture." },
       "width": { "type": "integer", "minimum": 1, "description": "Its width in pixels, when known, so the page does not jump as it loads." },
       "height": { "type": "integer", "minimum": 1 },
+      "loading": { "type": "string", "enum": ["lazy", "eager"], "default": "lazy", "description": "eager for a picture seen as the page opens, such as the first thing on it; lazy waits until it is scrolled near." },
+      "still": { "type": "string", "description": "A still picture of one that moves, shown first; with scripts a Play button shows it moving and Stop stills it." },
       "id": { "type": "string" }
     }
   },
@@ -30,6 +32,8 @@
   },
   "examples": [
     { "name": "default", "props": { "src": "/files/fern.jpg", "alt": "The fern on the kitchen shelf, two new fronds uncurling", "width": 320, "height": 180 }, "file": "examples/default.html" },
-    { "name": "captioned", "props": { "src": "/files/fern.jpg", "alt": "The fern from above, its fronds spread wider than the pot", "caption": "The fern, in March", "width": 320, "height": 180 }, "file": "examples/captioned.html" }
+    { "name": "captioned", "props": { "src": "/files/fern.jpg", "alt": "The fern from above, its fronds spread wider than the pot", "caption": "The fern, in March", "width": 320, "height": 180 }, "file": "examples/captioned.html" },
+    { "name": "first", "props": { "src": "/files/fern.jpg", "alt": "The fern on the kitchen shelf", "width": 320, "height": 180, "loading": "eager" }, "file": "examples/first.html" },
+    { "name": "moving", "props": { "src": "/files/wave.gif", "still": "/files/wave.gif/still", "alt": "A hand waving", "width": 200, "height": 200 }, "file": "examples/moving.html" }
   ]
 }

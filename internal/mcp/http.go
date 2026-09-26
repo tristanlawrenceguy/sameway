@@ -1,6 +1,7 @@
 package mcp
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -37,8 +38,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var out []response
+	ctx := context.WithValue(r.Context(), offKey{}, offMachine(r))
 	for _, req := range reqs {
-		result, rpcErr := s.handle(r.Context(), req)
+		result, rpcErr := s.handle(ctx, req)
 		if len(req.ID) == 0 || string(req.ID) == "null" {
 			continue // a notification wants no answer
 		}
@@ -68,10 +70,15 @@ func writeRPC(w http.ResponseWriter, status int, out []response, batch bool) {
 
 // Bearer wraps the HTTP server with the token the workspace names: a
 // request without it is refused with a sentence saying what to send.
-// Without a token there is no HTTP MCP at all; stdio is for the same
-// machine, HTTP is for elsewhere, and elsewhere needs a key.
+// Over the tailnet, Tailscale has already said who is asking and the
+// workspace has let them in, so no token is asked of them. Otherwise,
+// without a token there is no HTTP MCP at all.
 func Bearer(token string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if fromTailnet(r) {
+			next.ServeHTTP(w, r)
+			return
+		}
 		if token == "" {
 			http.Error(w, "MCP over HTTP is off: set the environment variable named by mcp.token_env in workspace.yaml (SAMEWAY_MCP_TOKEN by default) and start sameway again", http.StatusForbidden)
 			return

@@ -43,7 +43,7 @@ func TestAPictureIsDescribedNotNamedByItsFile(t *testing.T) {
 	a, h := newApp(t)
 	pic, _ := a.Store.Create("file", map[string]any{"title": "IMG_4032", "name": "IMG_4032.jpg", "kind": "image"})
 	page := get(t, h, "/t/file/"+pic.ID).Body.String()
-	if !strings.Contains(page, `alt="Picture: IMG_4032, not described yet"`) || !strings.Contains(page, "has no description yet") {
+	if !strings.Contains(page, `alt="IMG_4032, not described yet"`) || !strings.Contains(page, "has no description yet") {
 		t.Errorf("an undescribed picture says so and asks; body: %s", truncate(page))
 	}
 	o, _ := look.Fragment(`<img src="/files/x" alt="IMG_4032.jpg">`)

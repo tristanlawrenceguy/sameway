@@ -1,5 +1,8 @@
-.sw-heading { line-height: 1.25; margin: var(--sw-space-6) 0 var(--sw-space-3); overflow-wrap: anywhere; }
-h1.sw-heading { font-size: var(--sw-size-text-2xl); }
-h2.sw-heading { font-size: var(--sw-size-text-xl); }
-h3.sw-heading { font-size: var(--sw-size-text-lg); }
-h4.sw-heading, h5.sw-heading, h6.sw-heading { font-size: var(--sw-size-text-md); }
+/* A section's heading: sized by its place in the outline, the same scale
+   as the headings inside a block of text, never longer than a line can be
+   read, and on a canvas close to the block it introduces. */
+.sw-heading { line-height: var(--sw-size-line-tight); max-inline-size: var(--sw-size-measure); margin: var(--sw-space-6) 0 var(--sw-space-3); overflow-wrap: anywhere; }
+/* A heading block: the canvas's gap spaces it from what went before, and
+   what it introduces sits close under it. */
+.sw-block > .sw-heading { margin-block: 0; }
+.sw-canvas > [data-block-component="heading"] { padding-block-end: 0; margin-block-end: calc(var(--sw-space-4) * -1); }
