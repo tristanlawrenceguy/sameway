@@ -27,3 +27,22 @@ view what it takes to log for that day: each habit it shows, as it stood
 that day, with Log and the day filled in. With `where: ["habit=<id>"]`
 it is that habit alone. Each entry is a link to its own page, where it
 is edited or deleted.
+
+## How a month is read
+
+The caption always names the month, with the caption given or without, so
+moving a month on says where it landed. A weekday heading draws "Mon" and
+says "Monday" from its own text, the rest of the word hidden after it,
+which screen readers read better than an aria-label on a header cell. A
+day is said once, with what is on it: "Friday 11 September 2026, 2
+events", the number the only part drawn. A day number that opens the day
+is pressed over a whole 44px target.
+
+On a narrow screen, where seven columns leave room only for dots, the
+month is a list of the days that have something on, each with its words;
+the grid and the list are never both shown, so a screen reader meets the
+month once. The list links to each event and its day; an event's action
+buttons are in the grid only.
+
+In forced colours an event keeps an edge and today its circle, drawn in
+the system's own colours.

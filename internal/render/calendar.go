@@ -81,13 +81,17 @@ func weekdayNames(start string) []Weekday {
 	base := time.Date(2024, 1, 7, 0, 0, 0, 0, time.UTC) // a Sunday
 	for i := 0; i < 7; i++ {
 		d := base.AddDate(0, 0, offset+i)
-		out = append(out, Weekday{Short: d.Format("Mon"), Full: d.Weekday().String()})
+		full := d.Weekday().String()
+		out = append(out, Weekday{Short: d.Format("Mon"), Full: full, Rest: full[3:]})
 	}
 	return out
 }
 
 // Weekday is a column heading: what is shown, and what is announced.
-type Weekday struct{ Short, Full string }
+// Rest is what completes the short name to the full one ("day" after
+// "Mon"): drawn hidden after it, so a screen reader hears "Monday" from
+// the header's own text, better supported than an aria-label on a th.
+type Weekday struct{ Short, Full, Rest string }
 
 // eventsOn picks the events falling on one ISO day. Events are the plain
 // maps a component's props carry, each with a date and a label.
@@ -110,6 +114,16 @@ func eventsOn(events any, date string) []map[string]any {
 }
 
 // longDate is the spoken form of an ISO day: "Friday 11 September 2026".
+// dayParts splits a day as it is said around its number: "Friday " before
+// "11", " September 2026" after, so a day is read once, the number drawn.
+func dayParts(date string) []string {
+	t, err := time.Parse("2006-01-02", date)
+	if err != nil {
+		return []string{"", ""}
+	}
+	return []string{t.Weekday().String() + " ", " " + t.Format("January 2006")}
+}
+
 func longDate(date string) string {
 	t, err := time.Parse("2006-01-02", date)
 	if err != nil {

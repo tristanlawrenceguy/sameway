@@ -80,28 +80,21 @@
   .sw-calendar__event time { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
 
-/* In a pane there is no room for what is on, only for which days are busy.
-   The labels stay in the accessibility tree and come back the moment the
-   calendar has room, so nothing is lost, it is only not drawn. */
+/* A phone has no room for a month of words in seven columns, and dots
+   say only that something is on. There the month is a list of the days
+   that have something, each with its words, instead of the grid: one or
+   the other is ever shown, so a screen reader meets it once. */
+.sw-calendar__list { display: none; }
 @container (max-width: 27rem) {
-  .sw-calendar .sw-table { min-width: 0; }
-  /* A phone has room for Mon Tue Wed in small letters, not in capitals
-     spaced out: no side padding, no spacing, no capitals. */
-  .sw-calendar .sw-table thead th { padding-inline: 0; letter-spacing: 0; text-transform: none; }
-  .sw-calendar__day, .sw-calendar__pad { min-height: 3.25rem; padding: var(--sw-space-1) 0.25rem; }
-  .sw-calendar__today { margin-left: 0; }
-  .sw-calendar__events { display: flex; flex-wrap: wrap; gap: 0.2rem; margin-top: 0.3rem; }
-  .sw-calendar__events li,
-  .sw-calendar--page .sw-calendar__events li,
-  .sw-calendar__day--today .sw-calendar__events li {
-    width: 0.45rem; height: 0.45rem; min-height: 0; padding: 0; margin: 0;
-    border-radius: 50%; background: var(--sw-dot, var(--sw-color-accent));
-  }
-  .sw-calendar__event, .sw-calendar__actions {
-    position: absolute; width: 1px; height: 1px; overflow: hidden;
-    clip-path: inset(50%); white-space: nowrap;
-  }
+  .sw-calendar > .sw-table { display: none; }
+  .sw-calendar__list { display: block; padding: var(--sw-space-2) var(--sw-space-3); }
 }
+.sw-calendar__listname { margin: 0 0 var(--sw-space-2); font-weight: 700; }
+.sw-calendar__days { display: grid; gap: var(--sw-space-3); }
+.sw-calendar__listdate { margin: 0 0 var(--sw-space-1); font-weight: 600; font-size: var(--sw-size-text-sm); }
+.sw-calendar__listday--today .sw-calendar__listdate { color: var(--sw-color-accent); }
+.sw-calendar__days .sw-calendar__agenda { display: grid; gap: var(--sw-space-1); padding-inline-start: var(--sw-space-3); border-inline-start: 3px solid var(--sw-dot, var(--sw-color-accent)); }
+.sw-calendar__days .sw-calendar__agenda time { font-weight: 600; font-variant-numeric: tabular-nums; }
 .sw-calendar__months { display: flex; justify-content: space-between; gap: var(--sw-space-3); padding: var(--sw-space-2) var(--sw-space-3); font-size: var(--sw-size-text-sm); }
 .sw-calendar__all { margin: 0; padding: 0 var(--sw-space-3) var(--sw-space-2); font-size: var(--sw-size-text-sm); }
 
@@ -155,3 +148,15 @@ a.sw-calendar__number:hover { background: color-mix(in srgb, var(--sw-color-fg) 
    keeps 3:1 against it. */
 .sw-calendar__events :focus-visible { outline-color: var(--sw-color-fg); }
 .sw-calendar__actions .sw-link { display: inline-flex; align-items: center; justify-content: center; min-height: var(--sw-size-target); min-width: var(--sw-size-target); }
+
+/* A day number that opens the day is pressed over a whole target, drawn
+   the size of the number. */
+a.sw-calendar__number { position: relative; }
+a.sw-calendar__number::after { content: ""; position: absolute; inset: min(0px, calc(50% - var(--sw-size-target) / 2)); }
+
+/* Forced colours take tints away: an event chip keeps an edge, and today
+   keeps its circle in the system's highlight. */
+@media (forced-colors: active) {
+  .sw-calendar__events li { border: 1px solid CanvasText; }
+  .sw-calendar__day--today .sw-calendar__number { forced-color-adjust: none; background: Highlight; color: HighlightText; }
+}

@@ -54,6 +54,8 @@ var Funcs = template.FuncMap{
 	"upcoming":     upcoming,
 	"shortDate":    shortDate,
 	"longDate":     longDate,
+	"dayParts":     dayParts,
+	"contains":     strings.Contains,
 	// Chart shape, for the same reason: arithmetic a template cannot do,
 	// for a picture that must not need JavaScript. See chart.go.
 	"chartShape": chartShape,
