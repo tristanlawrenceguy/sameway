@@ -117,7 +117,12 @@ func (s *Server) blockItem(blk *store.Record, convo *conversation) string {
 	// At icon size the block is a glyph with its name, opening the whole
 	// thing on its own page: everything is still reachable, in less room.
 	if v.Size == "icon" {
-		fmt.Fprintf(&b, `<a class="sw-block__icon" href="/canvas/%s" aria-label="%s"><span aria-hidden="true">%s</span></a></li>`, v.ID, template.HTMLEscapeString(v.Label), template.HTMLEscapeString(v.Icon))
+		// A search's glyph opens the search page, where searching is.
+		href := "/canvas/" + v.ID
+		if v.Component == "search" {
+			href = "/search"
+		}
+		fmt.Fprintf(&b, `<a class="sw-block__icon" href="%s" aria-label="%s"><span aria-hidden="true">%s</span></a></li>`, href, template.HTMLEscapeString(v.Label), template.HTMLEscapeString(v.Icon))
 		return b.String()
 	}
 	// Provenance costs nothing on screen and is complete in the
