@@ -168,7 +168,7 @@ func TestMessageExternalURLRendersAsAnchor(t *testing.T) {
 	}
 
 	got := string(out)
-	want := `<a class="sw-link" href="https://example.com">https://example.com</a>`
+	want := `<a class="sw-link" href="https://example.com">example.com</a>`
 	if !strings.Contains(got, want) {
 		t.Errorf("external URL should become a clickable link\nwant: %s\ngot:\n%s", want, got)
 	}
@@ -244,7 +244,7 @@ func TestMessageMixedLinksOrdered(t *testing.T) {
 	got := string(out)
 
 	// Both anchors must be present.
-	wantURL := `<a class="sw-link" href="https://example.com">https://example.com</a>`
+	wantURL := `<a class="sw-link" href="https://example.com">example.com</a>`
 	wantPath := `<a class="sw-link" href="/t/note/abc123">/t/note/abc123</a>`
 	if !strings.Contains(got, wantURL) {
 		t.Errorf("missing external URL anchor:\ngot:\n%s", got)
@@ -281,7 +281,7 @@ func TestMessageOverlappingURLAndPath(t *testing.T) {
 	got := string(out)
 
 	// The full URL anchor must be present.
-	wantURL := `<a class="sw-link" href="https://example.com/t/note/abc123">https://example.com/t/note/abc123</a>`
+	wantURL := `<a class="sw-link" href="https://example.com/t/note/abc123">example.com/t/note/abc123</a>`
 	if !strings.Contains(got, wantURL) {
 		t.Errorf("full URL anchor missing:\ngot:\n%s", got)
 	}
