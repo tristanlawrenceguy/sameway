@@ -163,7 +163,7 @@ func (s *Server) uploadError(w http.ResponseWriter, r *http.Request, err error) 
 	b.WriteString(string(s.component("alert", map[string]any{
 		"kind":    "danger",
 		"title":   "Could not upload",
-		"message": template.HTMLEscapeString(err.Error()),
+		"message": err.Error(), // the component escapes it; escaping here showed &#39;
 	})))
 	b.WriteString(string(s.component("upload", map[string]any{"id": "upload-error"})))
 	b.WriteString(`<script>(function(){var f=document.querySelector('.sw-upload__field');var err=document.getElementById("upload-error-error");f.addEventListener('invalid',function(e){err.textContent="select a file."},false);document.querySelector(".sw-upload").addEventListener('submit',function(e){if(!f.value){e.preventDefault();err.textContent="select a file.";f.reportValidity()}},{once:true});f.addEventListener('change',function(){err.textContent=""})})();</script>`)

@@ -56,7 +56,7 @@ func (s *Server) workspacesDelete(w http.ResponseWriter, r *http.Request) {
 		nextName = ws.Config.Name
 	}
 	var b strings.Builder
-	b.WriteString(string(s.component("alert", map[string]any{"kind": "success", "title": cur.Config.Name + " deleted",
+	b.WriteString(string(s.component("alert", map[string]any{"kind": "success", "live": true, "title": cur.Config.Name + " deleted",
 		"message": "It is in Sameway's trash with everything that was in its folder (" + trashed.Now + "). Restore it from Workspaces."})))
 	b.WriteString(fmt.Sprintf(`<p class="sw-muted">Opening <a href="%s">%s</a>…</p>`, template.HTMLEscapeString(url), template.HTMLEscapeString(nextName)))
 
