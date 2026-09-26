@@ -10,9 +10,9 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 )
 
-// Checkbox accessible names include checked state so a screen reader user can
-// distinguish items without navigating into each control.  Acceptance items 1,
-// 2 and 3 of backlog 0333.
+// A checkbox is named with its field and its record, so a screen reader
+// user can tell one row's box from the next, and the name stays put when it
+// is ticked: the checked state is the box's own to say.
 func TestAMarkCheckboxAccessibleNameReflectsState(t *testing.T) {
 	_, h := newApp(t)
 
@@ -27,9 +27,12 @@ func TestAMarkCheckboxAccessibleNameReflectsState(t *testing.T) {
 
 	page := get(t, h, "/").Body.String()
 
-	// Unchecked: aria-label should be action-oriented.
-	if !strings.Contains(page, `aria-label="Mark done Order compost"`) {
-		t.Errorf("unchecked task checkbox should have an action-oriented accessible name; page:\n%s", truncate(page))
+	// The name is the field and the record, whatever the state: the box
+	// itself says checked or not checked, so the name never says it twice or
+	// changes under the person as they tick it.
+	name := `> Done<span class="sw-visually-hidden"> Order compost</span>`
+	if !strings.Contains(page, name) || strings.Contains(page, `class="sw-mark__input" type="checkbox" name="prop-done" value="true" aria-label`) {
+		t.Errorf("unchecked task checkbox should be named %q by its label, with no aria-label; page:\n%s", name, truncate(page))
 	}
 	// Checked state attribute must still be absent on the unchecked input.
 	if strings.Count(page, `<input class="sw-mark__input" type="checkbox" name="prop-done" value="true"`) != 1 {
@@ -47,9 +50,9 @@ func TestAMarkCheckboxAccessibleNameReflectsState(t *testing.T) {
 
 	page = get(t, h, "/").Body.String()
 
-	// Checked: aria-label should be state-describing.
-	if !strings.Contains(page, `aria-label="Order compost — done"`) {
-		t.Errorf("checked task checkbox should have a state-describing accessible name; page:\n%s", truncate(page))
+	// Checked: the same name, and the box checked.
+	if !strings.Contains(page, name) || !strings.Contains(page, `value="true" checked>`) {
+		t.Errorf("checked task checkbox should keep its name %q and be checked; page:\n%s", name, truncate(page))
 	}
 
 	// The hidden input toggling the field back to false must still be present.

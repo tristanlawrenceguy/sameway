@@ -9,8 +9,8 @@ import (
 )
 
 // Words says conditions the way a person would: done=false, due<today
-// reads "not done, due before today". A condition it cannot read is left
-// as it was written.
+// reads "not done and due before today", every one of them holding. A
+// condition it cannot read is left as it was written.
 func Words(t *schema.Type, where []string) string {
 	var out []string
 	for _, w := range where {
@@ -24,7 +24,10 @@ func Words(t *schema.Type, where []string) string {
 		}
 		out = append(out, condWords(t, c))
 	}
-	return strings.Join(out, ", ")
+	if len(out) < 2 {
+		return strings.Join(out, "")
+	}
+	return strings.Join(out[:len(out)-1], ", ") + " and " + out[len(out)-1]
 }
 
 func condWords(t *schema.Type, c Cond) string {

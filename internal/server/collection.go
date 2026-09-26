@@ -18,11 +18,16 @@ const collectionComponent = "collection"
 
 // resolveCollection fills a collection block's props from the store: the
 // matching records as items, the list page with the same query, and in
-// words what is wrong when a condition is.
-func (s *Server) resolveCollection(props map[string]any) map[string]any {
+// words what is wrong when a condition is. block is the block's own id,
+// which names the list's heading when it has no id of its own, so two
+// lists of one type on a page are each named by their own heading.
+func (s *Server) resolveCollection(props map[string]any, block string) map[string]any {
 	out := map[string]any{}
 	for k, v := range props {
 		out[k] = v
+	}
+	if id, _ := props["id"].(string); id == "" && block != "" {
+		out["id"] = "collection-" + block
 	}
 	typeName, _ := props["type"].(string)
 	t, ok := s.app.Types.Get(typeName)
@@ -38,10 +43,15 @@ func (s *Server) resolveCollection(props map[string]any) map[string]any {
 	} else if n, ok := props["limit"].(int); ok && n > 0 {
 		limit = n
 	}
-	recs, err := query.Filter(s.app.Store, t, where, order, limit, time.Now())
+	// One more than is shown, to know whether there are more: a list cut
+	// short says so, not only the whole list's page.
+	recs, err := query.Filter(s.app.Store, t, where, order, limit+1, time.Now())
 	if err != nil {
 		out["problem"] = err.Error()
 		return out
+	}
+	if len(recs) > limit {
+		recs, out["more"] = recs[:limit], true
 	}
 	full := props["detail"] == "full"
 	show := strs(props["show"])

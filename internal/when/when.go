@@ -45,12 +45,14 @@ func Store(t time.Time, day bool) string {
 }
 
 var (
-	clockRe   = regexp.MustCompile(`^(\d{1,2})(?::(\d{2}))?(am|pm)?$`)
-	numericRe = regexp.MustCompile(`^(\d{1,2})[/-](\d{1,2})(?:[/-](\d{2,4}))?$`)
-	ordinalRe = regexp.MustCompile(`^(\d{1,2})(st|nd|rd|th)$`)
-	weekdays  = map[string]time.Weekday{"mon": 1, "monday": 1, "tue": 2, "tues": 2, "tuesday": 2, "wed": 3, "wednesday": 3, "thu": 4, "thur": 4, "thurs": 4, "thursday": 4, "fri": 5, "friday": 5, "sat": 6, "saturday": 6, "sun": 0, "sunday": 0}
-	months    = map[string]time.Month{"jan": 1, "january": 1, "feb": 2, "february": 2, "mar": 3, "march": 3, "apr": 4, "april": 4, "may": 5, "jun": 6, "june": 6, "jul": 7, "july": 7, "aug": 8, "august": 8, "sep": 9, "sept": 9, "september": 9, "oct": 10, "october": 10, "nov": 11, "november": 11, "dec": 12, "december": 12}
-	filler    = map[string]bool{"at": true, "on": true, "the": true, "of": true, "in": true, "this": true, "and": true}
+	clockRe     = regexp.MustCompile(`^(\d{1,2})(?:[:.](\d{2}))?(am|pm)?$`)
+	numericRe   = regexp.MustCompile(`^(\d{1,2})([/.-])(\d{1,2})(?:[/.-](\d{2,4}))?$`)
+	yearFirstRe = regexp.MustCompile(`^(\d{4})[/.](\d{1,2})[/.](\d{1,2})$`)
+	abbrevRe    = regexp.MustCompile(`([a-z])\.`)
+	ordinalRe   = regexp.MustCompile(`^(\d{1,2})(st|nd|rd|th)$`)
+	weekdays    = map[string]time.Weekday{"mon": 1, "monday": 1, "tue": 2, "tues": 2, "tuesday": 2, "wed": 3, "wednesday": 3, "thu": 4, "thur": 4, "thurs": 4, "thursday": 4, "fri": 5, "friday": 5, "sat": 6, "saturday": 6, "sun": 0, "sunday": 0}
+	months      = map[string]time.Month{"jan": 1, "january": 1, "feb": 2, "february": 2, "mar": 3, "march": 3, "apr": 4, "april": 4, "may": 5, "jun": 6, "june": 6, "jul": 7, "july": 7, "aug": 8, "august": 8, "sep": 9, "sept": 9, "september": 9, "oct": 10, "october": 10, "nov": 11, "november": 11, "dec": 12, "december": 12}
+	filler      = map[string]bool{"at": true, "on": true, "the": true, "of": true, "in": true, "this": true, "and": true}
 )
 
 // Parse reads s as a day or a moment, relative to now for words like

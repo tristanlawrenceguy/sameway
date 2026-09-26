@@ -16,15 +16,14 @@ import (
 // state, the day that matters to it, what it belongs to, when it was made.
 
 // lede is the line under a record's title: its box when it has one, its
-// facts as chips, then when it was made. On detail pages the mark carries
-// aria-label so screen readers hear the state from the checkbox alone; the
-// lede text starts directly with badges — no leading state word at all.
+// facts as chips, then when it was made. On the record's own page the box
+// is labelled with its word, Done or Pinned, where it can be seen; the
+// record is the page's heading, so the label does not say it again, and the
+// box says checked, so no chip says the state a second time.
 func (s *Server) lede(t *schema.Type, rec *store.Record) template.HTML {
 	box := ""
 	if props, ok := markOf(t, rec); ok {
-		// quiet=true + ariaLabel means the mark renders nothing visible or
-		// visually-hidden: only the checkbox with its aria-label carries it.
-		props["quiet"] = true
+		delete(props, "context")
 		box = string(s.component("mark", props))
 	}
 	return template.HTML(`<p class="sw-lede">` + box + s.facts(t, rec, factOpts{Made: true, Boxed: box != "", Chips: true}) + `</p>`)

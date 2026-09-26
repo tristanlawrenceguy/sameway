@@ -52,7 +52,7 @@ func TestACollectionIsTheRecordsThatMatch(t *testing.T) {
 	// The list page takes the same query and says what it is showing.
 	list := get(t, h, "/t/task?"+url.Values{"where": {"done=false", "due<today"}}.Encode())
 	wantStatus(t, list, http.StatusOK)
-	if body := list.Body.String(); !strings.Contains(body, "Dig the pond") || strings.Contains(body, "Order compost") || !strings.Contains(body, "1 matching not done, due before today") {
+	if body := list.Body.String(); !strings.Contains(body, "Dig the pond") || strings.Contains(body, "Order compost") || !strings.Contains(body, "1 matching not done and due before today") {
 		t.Errorf("the list page filters and says so: %.500s", body)
 	}
 	bad := get(t, h, "/t/task?where=owner%3Dme")

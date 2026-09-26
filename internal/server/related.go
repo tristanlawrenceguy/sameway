@@ -67,7 +67,7 @@ func (s *Server) openLink(l relate.Link, page string, here []string, closable bo
 	props := s.resolveCollection(map[string]any{
 		"type": l.Type, "where": l.Where, "order": l.Order, "limit": 50,
 		"label": capitalize(s.words(l)), "level": 2, "id": "related-" + slugKey(l.Key),
-	})
+	}, "")
 	body := string(s.component(collectionComponent, props))
 	if closable {
 		body += s.fewer(page, l.Key, s.words(l), here)
