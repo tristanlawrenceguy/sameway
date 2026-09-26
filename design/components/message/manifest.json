@@ -14,7 +14,7 @@
       "author": { "type": "string", "description": "Display name. Defaults to You, Assistant, or System by role." },
       "time": { "type": "string", "description": "Human readable time such as 14:05, with the day when it is not today." },
       "datetime": { "type": "string", "description": "The moment, as RFC 3339, for the time element." },
-      "level": { "type": "integer", "minimum": 3, "maximum": 5, "default": 3, "description": "The level of the heading each message starts with, who said it and when: 3 in a chat under its h2." },
+      "level": { "type": "integer", "minimum": 2, "maximum": 5, "default": 3, "description": "The level of the heading each message starts with, who said it and when: 3 in a chat under its h2." },
       "from": { "type": "string", "description": "The page the message is shown on, so an Undo in the receipt returns there." },
       "changes": {
         "type": "array",
@@ -76,10 +76,10 @@
     "operate": "Not interactive."
   },
   "examples": [
-    { "name": "default", "props": { "level": 5, "role": "user", "content": "Add a grocery list with milk, eggs and bread.", "time": "14:05", "id": "msg-1" }, "file": "examples/default.html" },
-    { "name": "assistant", "props": { "level": 5, "role": "assistant", "content": "Done. I added a list with three items.\n\nWant it as a table instead?", "time": "14:05", "changes": [ { "action": "added", "component": "heading", "detail": "Shopping", "href": "/canvas/h1", "activity": "a1" }, { "action": "added", "component": "list" } ] }, "file": "examples/assistant.html" },
-    { "name": "error", "props": { "level": 5, "role": "error", "content": "Could not reach the model at http://localhost:11434." }, "file": "examples/error.html" },
-    { "name": "with links", "props": { "level": 5, "role": "assistant", "content": "I added two items.", "time": "14:05", "changes": [{"action": "added", "component": "note"}], "links": [{"href": "/t/note/abc", "label": "a note"}, {"href": "/canvas/h1", "label": "heading"}] }, "file": "examples/with_links.html" },
-    { "name": "with attachment", "props": { "level": 5, "role": "user", "content": "What does this say?", "time": "14:06", "attachment": { "title": "Lease agreement", "href": "/t/file/f1" } }, "file": "examples/with_attachment.html" }
+    { "name": "default", "props": { "level": 2, "role": "user", "content": "Add a grocery list with milk, eggs and bread.", "time": "14:05", "id": "msg-1" }, "file": "examples/default.html" },
+    { "name": "assistant", "props": { "level": 2, "role": "assistant", "content": "Done. I added a list with three items.\n\nWant it as a table instead?", "time": "14:05", "changes": [ { "action": "added", "component": "heading", "detail": "Shopping", "href": "/canvas/h1", "activity": "a1" }, { "action": "added", "component": "list" } ] }, "file": "examples/assistant.html" },
+    { "name": "error", "props": { "level": 2, "role": "error", "content": "Could not reach the model at http://localhost:11434." }, "file": "examples/error.html" },
+    { "name": "with links", "props": { "level": 2, "role": "assistant", "content": "I added two items.", "time": "14:05", "changes": [{"action": "added", "component": "note"}], "links": [{"href": "/t/note/abc", "label": "a note"}, {"href": "/canvas/h1", "label": "heading"}] }, "file": "examples/with_links.html" },
+    { "name": "with attachment", "props": { "level": 2, "role": "user", "content": "What does this say?", "time": "14:06", "attachment": { "title": "Lease agreement", "href": "/t/file/f1" } }, "file": "examples/with_attachment.html" }
   ]
 }
