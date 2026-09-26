@@ -54,7 +54,7 @@
   },
   "machine": {
     "selector": "[data-component=\"tracker\"]",
-    "identify": "Each habit is a list item with data-id, data-met and data-aim (a limit's data-met is whether it is kept within); the progressbar carries aria-valuenow and aria-valuemax; the streak is .sw-tracker__streak.",
+    "identify": "Each habit is a list item with data-id, data-met and data-aim (a limit's data-met is whether it is kept within); the meter carries aria-valuenow and aria-valuemax; the streak is .sw-tracker__streak.",
     "operate": "To log, fill the amount (when there is one), the day when it was done before (when offered), and activate Log, which POSTs amount and on to /habit/{id}/log. The same is create_record on entry with the habit's id."
   },
   "examples": [
