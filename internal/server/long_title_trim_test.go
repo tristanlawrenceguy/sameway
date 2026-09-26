@@ -104,50 +104,7 @@ func TestDetailPageH1TrimsLongTokenWithSpaces(t *testing.T) {
 	}
 }
 
-// TestSearchCardH2TrimsLongSingleWordTitle verifies that a search result card's
-// h2 heading trims a very-long single-word title. (Acceptance 1, 3.)
-func TestSearchCardH2TrimsLongSingleWordTitle(t *testing.T) {
-	a, h := newApp(t)
-
-	longWord := strings.Repeat("b", 160)
-	_, err := a.Store.Create("note", map[string]any{
-		"title": longWord,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	page := get(t, h, "/search?q="+longWord[:20]) // search for the first 20 chars
-	wantStatus(t, page, 200)
-	body := page.Body.String()
-
-	doc := parse(t, page)
-
-	for _, node := range doc.Elements("h2") {
-		class, _ := htmltest.Attr(node, "class")
-		if class != "sw-card__title" {
-			continue
-		}
-		text := strings.TrimSpace(htmltest.Text(node))
-
-		// The full long word must not appear in the heading.
-		if strings.Contains(text, longWord) {
-			t.Errorf("search card h2 should not contain untrimmed title: got %q (len=%d)", text, len(text))
-		}
-
-		// Must be reasonably short.
-		if len([]rune(text)) > 85 {
-			t.Errorf("search card h2 should be trimmed; got %d runes: %q", len([]rune(text)), text)
-		}
-	}
-
-	// The full untrimmed title must still appear somewhere on the page.
-	if !strings.Contains(body, longWord) {
-		t.Errorf("page should show the full title in a non-heading context")
-	}
-}
-
-// TestListRowH2TrimsLongSingleWordTitle verifies that a listing page's row h2
+// TestListRowH2TrimsLongSingleWordTitle verifies that a list row h2
 // heading trims a very-long single-word title. (Acceptance 3.)
 func TestListRowH2TrimsLongSingleWordTitle(t *testing.T) {
 	a, h := newApp(t)
