@@ -23,16 +23,22 @@
       live.setAttribute("aria-live", "polite");
       count.parentNode.insertBefore(live, count.nextSibling);
       var wait;
-      function update() {
-        var left = max - field.value.length;
-        var text = left >= 0 ? said(left) + " left" : said(-left) + " too many";
-        count.textContent = text;
+      // Characters as the server counts them: a letter each, an emoji one,
+      // a new line one.
+      function words() {
+        var left = max - Array.from(field.value.replace(/\r\n/g, "\n")).length;
         count.classList.toggle("sw-field__count--over", left < 0);
+        return left >= 0 ? said(left) + " left" : said(-left) + " too many";
+      }
+      function update() {
+        var text = words();
+        count.textContent = text;
         clearTimeout(wait);
         wait = setTimeout(function () { live.textContent = text; }, 1000);
       }
       field.addEventListener("input", update);
-      count.textContent = said(max - field.value.length) + " left";
+      // A page sent back over the limit says too many from the start.
+      count.textContent = words();
     });
   };
   function init() { window.swCount(document); }
