@@ -187,3 +187,37 @@ func TestSomeRecordsOfASharedTypeStay(t *testing.T) {
 		t.Errorf("said stays (%v), deleted travels (%v)", said, deleted)
 	}
 }
+
+// Two people rewriting a note's body at once, on two computers, both keep
+// their words: the later version stands everywhere, and the other is kept
+// as one clash, the same on both. Writing one after the other is no clash.
+func TestTextWrittenAtOnceKeepsBothVersions(t *testing.T) {
+	a, b := twoCopies(t)
+	n, _ := a.Create("note", map[string]any{"title": "Plan", "body": "first draft"})
+	sync(t, a, b)
+
+	a.Update("note", n.ID, map[string]any{"body": "draft from a"})
+	b.Update("note", n.ID, map[string]any{"body": "draft from b"})
+	sync(t, a, b)
+	sync(t, a, b)
+	fa, fb := fields(t, a, "note", n.ID), fields(t, b, "note", n.ID)
+	if fa["body"] != fb["body"] {
+		t.Fatalf("both copies agree on the body: %v / %v", fa["body"], fb["body"])
+	}
+	lost := "draft from a"
+	if fa["body"] == lost {
+		lost = "draft from b"
+	}
+	for name, s := range map[string]*store.Store{"a": a, "b": b} {
+		clashes, _ := s.List("clash", store.ListOptions{})
+		if len(clashes) != 1 || clashes[0].Fields["text"] != lost || clashes[0].Fields["target_id"] != n.ID {
+			t.Errorf("%s keeps the replaced version once: %v", name, clashes)
+		}
+	}
+
+	b.Update("note", n.ID, map[string]any{"body": "b, having read a"})
+	sync(t, a, b)
+	if clashes, _ := a.List("clash", store.ListOptions{}); len(clashes) != 1 {
+		t.Errorf("an edit made over the other is no clash: %d", len(clashes))
+	}
+}
