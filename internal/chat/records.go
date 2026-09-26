@@ -147,7 +147,7 @@ func (s *Service) createRecord(typeName string, fields map[string]any) toolResul
 	}
 	rec, err := s.Store.Create(t.Name, fields)
 	if err != nil {
-		return fail("%v. Fix the fields and call create_record again; the %s schema is in the catalogue.", err, t.Name)
+		return fail("I couldn't save those changes — %s. Fix the fields and call create_record again; the %s schema is in the catalogue.", humanizeValidationError(err.Error()), t.Name)
 	}
 	title := recordTitle(t, rec)
 	return toolResult{
@@ -173,7 +173,7 @@ func (s *Service) updateRecord(typeName, id string, fields map[string]any) toolR
 	}
 	rec, err := s.Store.Update(t.Name, id, fields)
 	if err != nil {
-		return fail("%v. Fix the fields and call update_record again; the %s schema is in the catalogue.", err, t.Name)
+		return fail("I couldn't save those changes — %s. Fix the fields and call update_record again; the %s schema is in the catalogue.", humanizeValidationError(err.Error()), t.Name)
 	}
 	title := recordTitle(t, rec)
 	return toolResult{

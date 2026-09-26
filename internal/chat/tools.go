@@ -213,7 +213,7 @@ func (s *Service) addComponent(name string, props map[string]any, l look) toolRe
 		return fail("unknown component %q. Available: %s", name, strings.Join(s.Registry.Names(), ", "))
 	}
 	if _, err := c.Validate(props); err != nil {
-		return fail("%v. Fix the props and call add_component again.", err)
+		return fail("I couldn't save those changes — %s. Fix the props and call add_component again.", humanizeValidationError(err.Error()))
 	}
 	// One conversation only: a second would duplicate every message id.
 	if name == ComponentName {
@@ -270,7 +270,7 @@ func (s *Service) updateComponent(id string, props map[string]any, l look) toolR
 	var what []string
 	if props != nil {
 		if _, err := c.Validate(props); err != nil {
-			return fail("%v. Fix the props and call update_component again.", err)
+			return fail("I couldn't save those changes — %s. Fix the props and call update_component again.", humanizeValidationError(err.Error()))
 		}
 		fields["props"] = props
 		what = append(what, "props")
