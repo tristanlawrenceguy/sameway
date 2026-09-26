@@ -110,7 +110,12 @@
   }
 }
 
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
 :root[data-theme="dark"] {
+  color-scheme: dark;
   --sw-color-accent: #b8bfff;
   --sw-color-accent-fg: #0f1117;
   --sw-color-accent-soft: #222749;
