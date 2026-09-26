@@ -45,6 +45,10 @@ func (s *Server) Changed() { s.changes.Add(1) }
 // workspace changes from elsewhere. The page fetches itself and moves what
 // changed into place (17-refresh.js), as it does after a turn.
 func (s *Server) events(w http.ResponseWriter, r *http.Request) {
+	if isPublic(r) {
+		http.NotFound(w, r) // a published page follows by being read again
+		return
+	}
 	flusher, ok := w.(http.Flusher)
 	if !ok {
 		http.Error(w, "streaming is not possible here", http.StatusNotImplemented)

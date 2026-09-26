@@ -50,8 +50,8 @@ func TestTurnLeavesReceiptProvenanceAndActivity(t *testing.T) {
 	if first["action"] != "added" || first["component"] != "heading" || first["detail"] != "Shopping" || first["id"] == "" {
 		t.Errorf("receipt entry wrong: %v", first)
 	}
-	if second := changes[1].(map[string]any); second["detail"] != "2 items" {
-		t.Errorf("list summary should count items: %v", second)
+	if second := changes[1].(map[string]any); second["detail"] != "list of 2" {
+		t.Errorf("a list with no name is summarised as a list of its count: %v", second)
 	}
 
 	blocks, _ := svc.Store.List(chat.BlockType, store.ListOptions{})

@@ -30,6 +30,9 @@ type Server struct {
 	Version string
 	In      io.Reader
 	Out     io.Writer
+	// Published says which content types are published just now, for a
+	// connection from the internet; see public.go.
+	Published func() map[string]bool
 
 	mu sync.Mutex
 	// http is the web server over the same app, for tools that read a
@@ -135,7 +138,11 @@ func (s *Server) handle(ctx context.Context, req request) (any, *rpcError) {
 		}
 		text, isError := refusedOff, true
 		if ok, svc := s.may(ctx, params.Name); ok {
-			text, isError = s.call(ctx, svc, params.Name, params.Arguments)
+			if t, e, public := s.publicCall(ctx, params.Name, params.Arguments); public {
+				text, isError = t, e
+			} else {
+				text, isError = s.call(ctx, svc, params.Name, params.Arguments)
+			}
 		}
 		return map[string]any{
 			"content": []map[string]any{{"type": "text", "text": text}},

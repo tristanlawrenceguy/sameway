@@ -99,6 +99,16 @@ activity log. The computer running sameway has to be on. To stop, ask the
 assistant to take it off your phone. It is the `tailnet:` section of
 `workspace.yaml`, if you would rather set it there.
 
+## Publishing
+
+Ask the assistant: *"publish my Recipes tab"*, or *"publish my notes"*. It asks
+first, then anyone can read just that, with no login, at your workspace's
+address (Tailscale Funnel, free on every Tailscale plan). *"Let AI services
+read it"* lets ChatGPT or Claude read what is published over MCP. Nothing
+else is reachable from the internet, nothing can be changed from it, and
+*"unpublish"* takes it down at once. The first time, Tailscale may need
+Funnel allowed in your tailnet's access policy; the chat says how.
+
 ## What you get
 
 | For people | For agents |

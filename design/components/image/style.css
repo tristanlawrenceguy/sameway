@@ -1,5 +1,15 @@
 /* A picture fits the column it is in and never makes the page scroll
-   sideways; its caption sits under it, quieter. */
+   sideways, nor stands taller than most of a screen; its caption sits
+   under it, quieter. The box it will fill shows while it loads. */
 .sw-image { margin: 0; }
-.sw-image__img { display: block; max-width: 100%; height: auto; border-radius: var(--sw-radius-md); }
+.sw-image__img {
+  display: block; max-width: 100%; max-height: var(--sw-size-picture); width: auto; height: auto;
+  border-radius: var(--sw-radius-md); background: var(--sw-color-bg-muted);
+}
 .sw-image__caption { margin-top: var(--sw-space-2); font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); }
+.sw-image__play { margin-top: var(--sw-space-2); }
+/* A picture that could not be loaded says so, with what it shows. */
+.sw-image__missing {
+  display: block; margin-top: var(--sw-space-2); padding: var(--sw-space-4); border: 1px dashed var(--sw-color-border-strong);
+  border-radius: var(--sw-radius-md); color: var(--sw-color-fg-muted);
+}

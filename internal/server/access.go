@@ -58,7 +58,7 @@ var ownerOnly = []string{
 // allowed says whether a visitor may make this request, and when not,
 // tells them so on a page of its own.
 func (s *Server) allowed(w http.ResponseWriter, r *http.Request) bool {
-	if isPage(r) {
+	if isPage(r) && !isPublic(r) {
 		s.seen(r, r.URL.Path)
 	}
 	v := chat.VisitorOf(r.Context())
@@ -103,7 +103,7 @@ func (s *Server) conversationFor(r *http.Request, from string) (*conversation, e
 
 func (s *Server) conversationAboutFor(r *http.Request, from, about, prompt string) (*conversation, error) {
 	convo, err := s.conversationAbout(s.chatFor(r), from, about, prompt)
-	if err != nil || chat.VisitorOf(r.Context()).Access != chat.View {
+	if a := chat.VisitorOf(r.Context()).Access; err != nil || a != chat.View && a != chat.Public {
 		return convo, err
 	}
 	convo.Body = template.HTML(`<p class="sw-muted">You can look around this workspace. The assistant is for the people who can change it.</p>`)

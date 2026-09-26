@@ -22,7 +22,19 @@ const (
 	Failed State = "failed"
 	// Off: no machine is named, so the workspace is on no tailnet.
 	Off State = "off"
+	// Published: what the owner published is readable by anyone on the
+	// internet at Link, through Funnel.
+	Published State = "published"
+	// Unpublished: nothing is published any more.
+	Unpublished State = "unpublished"
+	// PublishFailed: Funnel would not open; Err says why, and it is tried
+	// again by itself.
+	PublishFailed State = "publish-failed"
 )
+
+// FunnelPolicy is where a tailnet's access policy is changed, to let a
+// computer use Funnel.
+const FunnelPolicy = "https://login.tailscale.com/admin/acls"
 
 // HTTPSSettings is the page of the Tailscale admin console where a
 // tailnet's HTTPS certificates are turned on.
@@ -54,6 +66,12 @@ func (s Status) String() string {
 		return s.Link
 	case Off:
 		return "off"
+	case Published:
+		return "published on the internet at " + s.Link
+	case Unpublished:
+		return "nothing published"
+	case PublishFailed:
+		return fmt.Sprintf("could not publish: %v", s.Err)
 	}
 	return fmt.Sprintf("not on the tailnet: %v", s.Err)
 }
@@ -71,6 +89,12 @@ func (s Status) Words() string {
 		return fmt.Sprintf("Your phone can open this workspace now. With the Tailscale app on, go to: %s\n\nOnly devices signed in to Tailscale as you get in.", s.Link)
 	case Off:
 		return "This workspace is no longer on your Tailscale network; your phone cannot open it until it is turned on again."
+	case Published:
+		return fmt.Sprintf("Published. Anyone can read what you published, with no login, at: %s\n\nEverything else stays private, and people on your tailnet still see the whole workspace at the same address.", s.Link)
+	case Unpublished:
+		return "Nothing is published any more; the public address shows nothing."
+	case PublishFailed:
+		return fmt.Sprintf("Publishing did not start: %v\n\nIf that is about Funnel, allow it for this computer in your Tailscale access policy, with the funnel attribute (Tailscale's default policy has it): %s\n\nIt tries again by itself.", s.Err, FunnelPolicy)
 	}
 	return fmt.Sprintf("This workspace could not join your Tailscale network: %v", s.Err)
 }
