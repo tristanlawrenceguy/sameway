@@ -57,8 +57,8 @@ func (s *Server) resolveCollection(props map[string]any, block string) map[strin
 	show := strs(props["show"])
 	columns := []any{}
 	for _, name := range show {
-		if _, ok := t.Field(name); ok {
-			columns = append(columns, label(name))
+		if f, ok := t.Field(name); ok {
+			columns = append(columns, fieldLabel(*f))
 		}
 	}
 	out["columns"] = columns
@@ -173,7 +173,8 @@ func orderWords(t *schema.Type, order string) string {
 }
 
 // fieldsOf is the chosen fields of a record as label and value, a ref by
-// the title it points at, in the order asked for.
+// the title it points at and leading to it, in the order asked for, named
+// as the record's own page names them.
 func (s *Server) fieldsOf(t *schema.Type, rec *store.Record, names []string) []any {
 	out := make([]any, 0, len(names))
 	for _, name := range names {
@@ -182,10 +183,14 @@ func (s *Server) fieldsOf(t *schema.Type, rec *store.Record, names []string) []a
 			continue
 		}
 		v := display(*f, rec.Fields[name])
-		if f.Type == "ref" {
-			v = s.refTitle(*f, v)
+		item := map[string]any{"label": fieldLabel(*f), "value": v}
+		if f.Type == "ref" && v != "" {
+			if _, err := s.app.Store.Get(f.To, v); err == nil {
+				item["href"] = "/t/" + f.To + "/" + v
+			}
+			item["value"] = s.refTitle(*f, v)
 		}
-		out = append(out, map[string]any{"label": label(name), "value": v})
+		out = append(out, item)
 	}
 	return out
 }

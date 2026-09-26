@@ -53,7 +53,7 @@ func (s *Server) resolveRecord(props map[string]any) (map[string]any, string) {
 			out["structured"] = f.Type == "markdown"
 			continue
 		}
-		fields = append(fields, map[string]any{"label": label(f.Name), "value": val})
+		fields = append(fields, map[string]any{"label": fieldLabel(f), "value": val})
 	}
 	if len(fields) > 0 {
 		out["fields"] = fields

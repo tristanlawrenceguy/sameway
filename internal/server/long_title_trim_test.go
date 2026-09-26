@@ -24,22 +24,29 @@ func TestDetailPageH1TrimsLongSingleWordTitle(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	doc := parse(t, get(t, h, "/t/note/"+rec.ID))
+	// The heading is the whole title, which wraps anywhere on a phone; the
+	// window title, which has one line, is cut to a reasonable length.
+	page := get(t, h, "/t/note/"+rec.ID)
+	doc := parse(t, page)
 	h1s := doc.Elements("h1")
 	if len(h1s) != 1 {
 		t.Fatalf("expected one h1, got %d", len(h1s))
 	}
-	text := htmltest.Text(h1s[0])
-
-	// The full long word must NOT appear in the heading.
-	if strings.Contains(text, longWord) {
-		t.Errorf("h1 should not contain the untrimmed 160-char title: got %q (len=%d)", text, len(text))
+	if text := htmltest.Text(h1s[0]); text != longWord {
+		t.Errorf("h1 should be the whole title: got %q (len=%d)", text, len(text))
 	}
-
-	// The heading must be short — at most ~85 characters including ellipsis.
-	if len([]rune(text)) > 85 {
-		t.Errorf("h1 should be trimmed to a reasonable length; got %d runes: %q", len([]rune(text)), text)
+	if title := windowTitle(page.Body.String()); len([]rune(title)) > 85 || strings.Contains(title, longWord) {
+		t.Errorf("the window title should be cut to a reasonable length; got %d runes: %q", len([]rune(title)), title)
 	}
+}
+
+// windowTitle is the page's title before the workspace's name.
+func windowTitle(body string) string {
+	i, j := strings.Index(body, "<title>"), strings.Index(body, " · ")
+	if i < 0 || j < i {
+		return ""
+	}
+	return body[i+len("<title>") : j]
 }
 
 // TestDetailPageH1LeavesSixWordTitleUntouched verifies that a title of exactly
@@ -85,17 +92,11 @@ func TestDetailPageH1TrimsLongTokenWithSpaces(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	doc := parse(t, get(t, h, "/t/note/"+rec.ID))
-	h1s := doc.Elements("h1")
-	if len(h1s) != 1 {
-		t.Fatalf("expected one h1, got %d", len(h1s))
+	page := get(t, h, "/t/note/"+rec.ID)
+	if title := windowTitle(page.Body.String()); title == fullTitle {
+		t.Errorf("the window title should be cut when a single token is very long: got %q (len=%d)", title, len(title))
 	}
-	text := htmltest.Text(h1s[0])
-
-	// The full untrimmed title must not appear in the heading.
-	if text == fullTitle {
-		t.Errorf("h1 should be trimmed when a single token is very long: got %q (len=%d)", text, len(text))
-	}
+	text := windowTitle(page.Body.String())
 
 	// Should still contain some of the original words for context.
 	words := strings.Fields(text)
