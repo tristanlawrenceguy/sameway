@@ -23,7 +23,7 @@
   var KEYS = {
     heading: "Ctrl+Shift+1", subheading: "Ctrl+Shift+2", paragraph: "Ctrl+Shift+0",
     bold: "Ctrl+B", italic: "Ctrl+I", strikeThrough: "Ctrl+Shift+X", code: "Ctrl+E",
-    insertUnorderedList: "Ctrl+Shift+8", insertOrderedList: "Ctrl+Shift+7", indent: "Tab", outdent: "Shift+Tab",
+    insertUnorderedList: "Ctrl+Shift+8", insertOrderedList: "Ctrl+Shift+7", indent: "Ctrl+]", outdent: "Ctrl+[",
     quote: "Ctrl+Shift+9", link: "Ctrl+K"
   };
   // What a person types at the start of a line, then a space, to shape it.
@@ -286,7 +286,8 @@
       if (q && !q.textContent.trim()) { e.preventDefault(); run(editor, "paragraph", level); return; }
       if (e.key === " " && !e.ctrlKey && !e.metaKey && typed(editor, level)) { e.preventDefault(); reflect(); return; }
       var cmd = pressed(e);
-      if (!cmd && e.key === "Tab" && !inside("TD") && !inside("TH") && inside("LI")) cmd = e.shiftKey ? "outdent" : "indent";
+      // Tab leaves the text, even in a list: indenting is Ctrl+] and
+      // Ctrl+[, as in other editors, so a keyboard is never kept in.
       if (!cmd || cmd === "bold" || cmd === "italic") return;
       e.preventDefault();
       run(editor, cmd, level);
