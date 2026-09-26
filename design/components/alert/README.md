@@ -42,3 +42,31 @@ page until it is fixed. Nothing closes itself.
 
 Use alerts sparingly: people learn to skip boxes that appear often. A problem
 with one field belongs next to that field, or in an error summary.
+
+## Why it works this way
+
+- **Its kind in words.** A word, a mark, an edge and a tint each say the
+  kind, and a screen reader hears the word first, so nobody depends on
+  colour ([WCAG 1.4.1](https://www.w3.org/WAI/WCAG22/Understanding/use-of-color.html),
+  [GOV.UK warning text](https://design-system.service.gov.uk/components/warning-text/)).
+- **A mark for each kind.** Warning and error have marks of different
+  shapes, and the mark is hidden from screen readers, which would say
+  "warning sign" before the word
+  ([USWDS alert](https://designsystem.digital.gov/components/alert/)).
+- **A heading for its title**, so a page's problem is found by moving from
+  heading to heading
+  ([WCAG 1.3.1](https://www.w3.org/WAI/WCAG22/Understanding/info-and-relationships.html)).
+- **A live role only where it is heard.** A message on the page when it
+  loads is not announced whatever its role, so only a message that arrives
+  later, or the outcome of an action, gets one
+  ([APG alert pattern](https://www.w3.org/WAI/ARIA/apg/patterns/alert/),
+  [Inclusive Components notifications](https://inclusive-components.design/notifications/)).
+- **Close is a 44px target named Close message**, in the corner, clear of
+  the words ([WCAG 2.5.5](https://www.w3.org/WAI/WCAG22/Understanding/target-size-enhanced.html)).
+- **Plain words, no raw errors.** Say what happened and what to do
+  ([NN/g error messages](https://www.nngroup.com/articles/error-message-guidelines/)).
+
+Not done, and why: messages that close themselves (a person who reads
+slowly or looked away misses them); `role=alert` on every message (it is
+not heard on page load, and heard too often it is noise); one mark shared
+by warning and error (the shape then says nothing).

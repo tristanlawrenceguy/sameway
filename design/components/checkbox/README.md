@@ -25,3 +25,24 @@ between several options use `select`.
 The name is the label and never changes with the state: the box itself says
 checked or not checked. The box is `--sw-size-box`, bigger than the browser's
 own, and the label is part of the 44px target.
+
+## Why it works this way
+
+- **Ticks where it is.** With scripts on, a mark saves in the background
+  and the person stays on the box they ticked, instead of the page
+  reloading to its top; without scripts the form is sent as before
+  ([WCAG 3.2.2](https://www.w3.org/WAI/WCAG22/Understanding/on-input.html)).
+- **One name whatever its state.** The box says checked; a name that also
+  changes ("Mark done", then "done") says the state twice or wrongly
+  ([APG checkbox](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/)).
+- **A word in sight.** On a record's page the box has its word beside it,
+  Done or Pinned, not a box with no visible label
+  ([WCAG 3.3.2](https://www.w3.org/WAI/WCAG22/Understanding/labels-or-instructions.html)).
+- **A bigger box**, with the label part of a 44px target
+  ([GOV.UK checkboxes](https://design-system.service.gov.uk/components/checkboxes/)).
+- **Errors in words above the box**, tied to it, and the person's choice
+  kept ([WCAG 3.3.1](https://www.w3.org/WAI/WCAG22/Understanding/error-identification.html)).
+
+Not done, and why: a star for required (not everyone knows it, and a
+screen reader may skip it); a switch for yes and no (it looks like it acts
+at once, which a checkbox in a form does not).

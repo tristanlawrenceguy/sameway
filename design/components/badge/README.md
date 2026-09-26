@@ -35,3 +35,24 @@ telling apart from the others; fewer tones are easier to learn.
 A long label, such as a record's name, wraps inside the badge instead of
 running off a narrow screen, and the dot stays on the first line. In forced
 colours the tint goes, and the dot is drawn in the text's colour.
+
+## Why it works this way
+
+- **Never a control.** No border, hover or pointer, worded as a state, and
+  kept out of links and buttons, because people take a tag that looks like
+  a button for one and press it
+  ([GOV.UK tag](https://design-system.service.gov.uk/components/tag/),
+  [USWDS tag](https://designsystem.digital.gov/components/tag/)).
+- **Heard in context.** `context` is read after the label, so "High" in a
+  row of badges is heard as "High priority"
+  ([W3C COGA](https://www.w3.org/TR/coga-usable/)).
+- **Wraps.** A long label wraps in its box instead of running off a narrow
+  screen ([WCAG 1.4.10](https://www.w3.org/WAI/WCAG22/Understanding/reflow.html)).
+- **Keeps its dot in forced colours**, drawn in the text's colour, so a
+  state still reads as one when the tints go.
+- **Provenance tones only for who did something**, since they set
+  `data-actor`, which the rest of the system reads.
+
+Not done, and why: a border in forced colours (it made badges look like
+buttons); a time in a badge (it is not a state, and says what the row
+already says).
