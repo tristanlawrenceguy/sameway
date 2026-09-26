@@ -29,9 +29,20 @@ func percent(value, max any) int {
 	return int(math.Round(math.Max(0, math.Min(1, v/m)) * 100))
 }
 
-// atMost is value, never past max: a meter's value may not pass its end.
+// atMost is value, never past max nor below nothing: a meter's value lies
+// within its range.
 func atMost(value, max any) float64 {
-	return math.Min(numberOf(value), numberOf(max))
+	return math.Max(0, math.Min(numberOf(value), numberOf(max)))
+}
+
+// pastPercent is how much of a bar past its target is, as a percentage of
+// the whole: 64 of 50 is 22 past. Nothing when it is not past.
+func pastPercent(value, max any) int {
+	v, m := numberOf(value), numberOf(max)
+	if m <= 0 || v <= m {
+		return 0
+	}
+	return int(math.Round((v - m) / v * 100))
 }
 
 // paging is what the pagination component draws: the step back, the step
