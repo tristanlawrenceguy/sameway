@@ -280,3 +280,18 @@ func (failing) Name() string { return "failing" }
 func (failing) Complete(context.Context, llm.Request) (*llm.Response, error) {
 	return nil, errors.New("boom")
 }
+
+// callWithTextAndID returns a response that both calls create_record for a note
+// titled 'Plan' and says text, where the id embedded in the text may differ from
+// what create_record actually creates. This is how the model produces phantom
+// URLs: it bundles tool use with prose naming a wrong identifier.
+func callWithTextAndID(text string) *llm.Response {
+	raw, _ := json.Marshal(map[string]any{
+		"type":   "note",
+		"fields": map[string]any{"title": "Plan"},
+	})
+	return &llm.Response{
+		Text:      text,
+		ToolCalls: []llm.ToolCall{{ID: "c", Name: "create_record", Args: raw}},
+	}
+}
