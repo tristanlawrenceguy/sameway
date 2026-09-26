@@ -17,7 +17,7 @@
     }
   },
   "a11y": {
-    "role": "list",
+    "role": "list, under a heading when it has a name",
     "keyboard": [],
     "states": [],
     "wcag": { "target": "AAA", "notes": "Real ul/ol markup so assistive tech announces item counts and positions (1.3.1). Its name is a visible heading, not an aria-label, so everyone sees what the list is for, it is reached by heading, and it translates (2.4.6). No empty items: a blank mark and a wrong count." }
