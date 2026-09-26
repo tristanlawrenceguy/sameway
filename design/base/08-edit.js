@@ -78,7 +78,10 @@
       built = control("when", el, id, name);
       built.input.value = el.textContent.trim();
       var pick = built.wrap.querySelector(".sw-when-field__pick");
-      pick.setAttribute("aria-label", "Pick a day for " + (el.getAttribute("data-label") || label(name)));
+      pick.id = id + "-pick";
+      built.wrap.querySelector(".sw-when-field__pick-label").htmlFor = pick.id;
+      var read = built.wrap.querySelector(".sw-when-field__read");
+      if (read) { read.id = id + "-read"; read.htmlFor = id; }
       if (/^\d{4}-\d{2}-\d{2}/.test(source || "")) pick.value = source.slice(0, 10);
       if (window.swWhenField) window.swWhenField(built.wrap);
       return built;
@@ -101,7 +104,6 @@
     }
     if (kind === "number") {
       built = control("number", el, id, name);
-      built.input.step = "any";
       built.input.value = source || "";
       return built;
     }

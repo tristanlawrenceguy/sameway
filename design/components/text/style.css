@@ -1,3 +1,5 @@
 .sw-text p { margin: 0 0 var(--sw-space-3); }
 .sw-text p:last-child { margin-bottom: 0; }
-.sw-text--muted { color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); }
+/* Quieter by colour alone, still at 7:1: smaller as well would be harder
+   to read for no gain. */
+.sw-text--muted { color: var(--sw-color-fg-muted); }

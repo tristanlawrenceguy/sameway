@@ -39,7 +39,7 @@
     p.appendChild(said);
     p.appendChild(document.createTextNode(text));
     var wrap = field.closest(".sw-field");
-    var before = wrap ? wrap.querySelector("input, select, textarea, fieldset") : field;
+    var before = wrap ? wrap.querySelector(".sw-when-field__row, input, select, textarea, fieldset") : field;
     (before || field).parentNode.insertBefore(p, before || field);
     return id;
   }

@@ -19,7 +19,7 @@
     "role": "paragraph, with headings, lists, links, code and tables when the content has them",
     "keyboard": [ { "key": "Tab", "does": "reaches each link in the text, in order" } ],
     "states": [],
-    "wcag": { "target": "AAA", "notes": "Line length capped at 68 characters and line height 1.6 (1.4.8 visual presentation). Plain language is the author's job; keep sentences short." }
+    "wcag": { "target": "AAA", "notes": "Line length capped at 68 characters, line height 1.5, never justified; the Wide spacing setting gives 1.4.8 paragraph spacing (G188) and the 1.4.12 values. Headings in the words take their place in the page's outline and never skip a level. A long word or address wraps rather than widening the page. Plain language is the author's job; keep sentences short." }
   },
   "machine": {
     "selector": "[data-component=\"text\"]",

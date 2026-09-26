@@ -3,6 +3,8 @@ package server
 import (
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/when"
+
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -17,6 +19,14 @@ func savedWords(t *schema.Type, rec *store.Record, fields, clean map[string]any,
 		return o
 	}
 	for name := range fields {
+		// A day or a moment says how its words were read: "Due is Fri 2
+		// Oct 2026, 14:00." The words were the person's; this is Sameway's.
+		if f, ok := t.Field(name); ok && f.Type == "datetime" {
+			if v, _ := clean[name].(string); v != "" {
+				o.Text = fieldLabel(*f) + " is " + when.Text(v) + "."
+			}
+			return o
+		}
 		on, ok := clean[name].(bool)
 		if !ok {
 			return o
