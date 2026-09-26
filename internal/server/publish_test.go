@@ -111,3 +111,46 @@ func TestAIServicesReadWhatPeopleCan(t *testing.T) {
 		t.Errorf("notes are published, tasks are not:\n%s\n%s", notes, tasks)
 	}
 }
+
+// What the internet is sent is the page as a reader has it, for people
+// and for anything reading the HTML alike: no control, no conversation,
+// no log, no way to anything unpublished, only its words.
+func TestPublishedPagesCarryNothingButWhatCanBeRead(t *testing.T) {
+	a, h := newApp(t)
+	srv := h.(*server.Server)
+	n, _ := a.Store.Create("note", map[string]any{"title": "Sourdough", "body": "flour, water, salt"})
+	raw, _ := json.Marshal(map[string]any{"name": "Recipes"})
+	a.Chat.Call("create_canvas", raw)
+	a.Workspace.Config.Publish.Types = "note"
+	a.Workspace.Config.Publish.Tabs = "Home"
+	pub := srv.Public(nil)
+	for _, path := range []string{"/", "/t/note", "/t/note/" + n.ID} {
+		body := public(t, pub, http.MethodGet, path, "").Body.String()
+		for _, gone := range []string{`method="post"`, `class="sw-bar"`, `href="/chat"`, `href="/activity"`, `href="/workspaces"`, `href="/t/task"`, `data-block-component="chat"`, `data-edit-fields`} {
+			if strings.Contains(body, gone) {
+				t.Errorf("%s still carries %s", path, gone)
+			}
+		}
+	}
+	if body := public(t, pub, http.MethodGet, "/t/note", "").Body.String(); !strings.Contains(body, `href="/t/note/`+n.ID+`"`) {
+		t.Error("a published note is still linked from its list")
+	}
+}
+
+// A picture on a published tab is served to the internet; a file nobody
+// published is not.
+func TestOnlyPublishedFilesAreServed(t *testing.T) {
+	a, h := newApp(t)
+	srv := h.(*server.Server)
+	shown, _ := a.Store.Create("file", map[string]any{"title": "Fern"})
+	hidden, _ := a.Store.Create("file", map[string]any{"title": "Payslip"})
+	a.Store.Create(chat.BlockType, a.Chat.BlockFields(map[string]any{"component": "image", "props": map[string]any{"src": "/files/" + shown.ID, "alt": "A fern"}}))
+	a.Workspace.Config.Publish.Tabs = "Home"
+	pub := srv.Public(nil)
+	if r := public(t, pub, http.MethodGet, "/files/"+hidden.ID, ""); r.Code != http.StatusNotFound {
+		t.Errorf("a file nobody published is not served: %d", r.Code)
+	}
+	if r := public(t, pub, http.MethodGet, "/files/"+shown.ID, ""); r.Code == http.StatusNotFound && strings.Contains(r.Body.String(), "not published") {
+		t.Error("a picture on a published tab is served")
+	}
+}
