@@ -22,18 +22,21 @@ func TestTrimTitleCutsLongTitles(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Fetch the detail page. The h1 should be trimmed to 6 words max.
-	doc := parse(t, get(t, h, "/t/note/"+rec.ID))
+	// The page's heading is the whole title, wrapped as it needs, so the
+	// page says what it is about; only the window title, which has one
+	// line, is cut to six words.
+	page := get(t, h, "/t/note/"+rec.ID)
+	doc := parse(t, page)
 	h1s := doc.Elements("h1")
 	if len(h1s) != 1 {
 		t.Fatalf("expected one h1, got %d", len(h1s))
 	}
 	text := htmltest.Text(h1s[0])
-
-	// Count words in the heading.
-	words := strings.Split(text, " ")
-	if len(words) > 6 {
-		t.Errorf("h1 should be trimmed to at most 6 words, got %d: %q", len(words), text)
+	if words := strings.Fields(text); len(words) != 13 {
+		t.Errorf("h1 should be the whole title, got %d words: %q", len(words), text)
+	}
+	if !strings.Contains(page.Body.String(), "<title>This is a very long title…") {
+		t.Errorf("the window title is cut to six words")
 	}
 }
 

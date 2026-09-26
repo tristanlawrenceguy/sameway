@@ -69,7 +69,7 @@ func TestThingsKnowWhatTheyAreAbout(t *testing.T) {
 	if open := get(t, h, taskPath+"?show=about:reminder.about").Body.String(); !strings.Contains(open, `href="/t/reminder/`+reminders[0].ID+`"`) {
 		t.Errorf("asking opens the reminders where the person already is\n%s", open)
 	}
-	if rp := get(t, h, "/t/reminder/"+reminders[0].ID).Body.String(); !strings.Contains(rp, `<dt>About</dt><dd data-prop="about" data-source="`+taskPath+`"><a class="sw-link" href="`+taskPath+`">Order compost</a></dd>`) {
+	if rp := get(t, h, "/t/reminder/"+reminders[0].ID).Body.String(); !strings.Contains(rp, `<dt>About</dt><dd data-prop="about" data-source="`+taskPath+`" data-label="About"><a class="sw-link" href="`+taskPath+`">Order compost</a></dd>`) {
 		t.Errorf("a reminder's page leads to what it is about\n%s", rp)
 	}
 

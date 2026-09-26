@@ -124,7 +124,7 @@ func (s *Server) handle(ctx context.Context, req request) (any, *rpcError) {
 	case "ping":
 		return map[string]any{}, nil
 	case "tools/list":
-		return map[string]any{"tools": s.tools()}, nil
+		return map[string]any{"tools": s.listFor(ctx)}, nil
 	case "tools/call":
 		var params struct {
 			Name      string          `json:"name"`
@@ -133,7 +133,10 @@ func (s *Server) handle(ctx context.Context, req request) (any, *rpcError) {
 		if err := json.Unmarshal(req.Params, &params); err != nil || params.Name == "" {
 			return nil, &rpcError{codeInvalidParams, "tools/call needs params.name and params.arguments"}
 		}
-		text, isError := s.call(ctx, params.Name, params.Arguments)
+		text, isError := refusedOff, true
+		if ok, svc := s.may(ctx, params.Name); ok {
+			text, isError = s.call(ctx, svc, params.Name, params.Arguments)
+		}
 		return map[string]any{
 			"content": []map[string]any{{"type": "text", "text": text}},
 			"isError": isError,

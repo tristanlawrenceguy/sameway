@@ -1,7 +1,7 @@
 {
   "name": "heading",
   "version": "1.0.0",
-  "description": "A section heading. Levels must form an outline: one h1 per page, then h2 for sections, h3 inside them, never skipping down a level.",
+  "description": "A section heading. Levels must form an outline: one h1 per page, which the layout gives, then h2 for sections, h3 inside them, never skipping down a level.",
   "icon": "H",
   "use": { "when": "a section starts; span 12, frame bare.", "not": "emphasis, or a label a component already shows.", "with": "the outline: h2 for sections, h3 inside them." },
   "props": {
@@ -10,8 +10,8 @@
     "required": ["text"],
     "properties": {
       "text": { "type": "string", "minLength": 1 },
-      "level": { "title": "Heading level", "type": "integer", "minimum": 1, "maximum": 6, "default": 2, "description": "Pages already have an h1, so content added to a page starts at 2." },
-      "id": { "type": "string", "description": "Anchor id so links and skip targets can point here." }
+      "level": { "title": "Heading level", "type": "integer", "minimum": 2, "maximum": 6, "default": 2, "description": "The page has one h1, which the layout gives, so a heading starts at 2: 2 for a section, 3 inside it." },
+      "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$", "description": "Anchor id so links and skip targets can point here: lowercase words joined by hyphens, unique on the page." }
     }
   },
   "a11y": {

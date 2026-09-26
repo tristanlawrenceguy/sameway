@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/tristanlawrenceguy/sameway/internal/app"
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"net/http"
 	"net/http/httptest"
@@ -69,7 +70,7 @@ func (s *Server) tools() []tool {
 // call runs one tool and returns what the client is told. The reading tools
 // live here; everything that changes something goes through the chat service,
 // so an agent gets the same checks and the same activity log as the assistant.
-func (s *Server) call(ctx context.Context, name string, args json.RawMessage) (string, bool) {
+func (s *Server) call(ctx context.Context, svc *chat.Service, name string, args json.RawMessage) (string, bool) {
 	switch name {
 	case "describe":
 		var a struct {
@@ -98,8 +99,9 @@ func (s *Server) call(ctx context.Context, name string, args json.RawMessage) (s
 		s.web().ServeHTTP(rec, req)
 		return rec.Body.String(), rec.Code >= 400
 	}
-	// get_record, find_records and the rest are the assistant's own tools.
-	return s.App.Chat.Call(name, args)
+	// get_record, find_records and the rest are the assistant's own tools,
+	// as the one the connection is for has them.
+	return svc.Call(name, args)
 }
 
 // web is the HTTP server over the same app, for the tools that read a page
