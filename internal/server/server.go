@@ -214,26 +214,6 @@ var detailPageExtraScripts = []template.HTML{
 	`<script defer src="/design/base/08-edit.js"></script>`,
 }
 
-type pageOptions struct {
-	QuietTitle bool
-	// Said is the window's title when it says more than the heading: the
-	// outcome of a search, heard first when the page arrives.
-	Said         string
-	Shell        string
-	Kicker       template.HTML
-	Lede         template.HTML
-	Dot          int
-	Left         template.HTML
-	Right        template.HTML
-	Header       template.HTML
-	Footer       template.HTML
-	JSONURL      string
-	Focus        string
-	FocusLabel   string
-	Status       int
-	ExtraScripts []template.HTML
-}
-
 func (s *Server) navLink(href, label string, current bool) template.HTML {
 	h, err := s.app.Registry.Render("link", map[string]any{"href": href, "label": label, "current": current})
 	if err != nil {

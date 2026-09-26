@@ -22,18 +22,7 @@ const fail = (msg) => { failures++; console.log(`FAIL ${msg}`); };
 const check = (ok, msg) => { if (!ok) fail(msg); };
 
 async function axe(label) {
-  // A fade under way is neither of its states, so its colours are no one's:
-  // let every finite animation and transition finish first (a hover the
-  // last press left behind, a block arriving). Endless ones, such as a
-  // pulse, are left running; two seconds at most.
-  await page.evaluate(() => Promise.race([
-    Promise.all(document.getAnimations()
-      .filter((a) => a.effect && a.effect.getComputedTiming().endTime !== Infinity)
-      .map((a) => a.finished.catch(() => {}))),
-    new Promise((done) => setTimeout(done, 2000)),
-  ]));
-  const res = await new AxeBuilder({ page }).withTags(AA_TAGS).analyze();
-  for (const v of res.violations) fail(`${label}: axe ${v.id} - ${v.help} (${v.nodes.length} node(s))`);
+  for (const p of await axeProblems(page)) fail(`${label}: ${p}`);
 }
 
 async function shellChecks(label) {
