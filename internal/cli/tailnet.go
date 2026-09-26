@@ -11,9 +11,11 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/mcp"
 	"github.com/tristanlawrenceguy/sameway/internal/peers"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/tailnet"
+	"github.com/tristanlawrenceguy/sameway/internal/update"
 )
 
 // joinTailnet serves h on the person's tailnet too, for as long as
@@ -27,7 +29,14 @@ func joinTailnet(ctx context.Context, out io.Writer, a *app.App, h http.Handler,
 	admit := func(ctx context.Context, p tailnet.Peer) (context.Context, string, bool) {
 		return srv.Admit(ctx, p.Login, p.Name, p.Device, p.Owner)
 	}
-	n := &tailnetNode{out: out, a: a, h: h, admit: admit, news: make(chan struct{})}
+	// What the owner published is what the internet reaches, through
+	// Funnel, with MCP for AI services when that is published too.
+	pub := &tailnet.Funnel{
+		Want: func() bool { return srv.Published().Any() },
+		Handler: srv.Public(&mcp.Server{App: a, Version: update.Version,
+			Published: func() map[string]bool { return srv.Published().Types }}),
+	}
+	n := &tailnetNode{out: out, a: a, h: h, admit: admit, pub: pub, published: publishing(a), news: make(chan struct{})}
 	a.Chat.Tailnet = n.wait
 	go n.follow(ctx)
 	go n.keepInStep(ctx, srv)
@@ -38,6 +47,10 @@ type tailnetNode struct {
 	a     *app.App
 	h     http.Handler
 	admit tailnet.Admit
+	pub   *tailnet.Funnel
+	// published is what was published when the server started: being
+	// published again at start is said on the terminal only.
+	published string
 
 	mu     sync.Mutex
 	last   tailnet.Status
@@ -69,7 +82,7 @@ func (n *tailnetNode) follow(ctx context.Context) {
 			if want != "" {
 				node, cancel := context.WithCancel(ctx)
 				stop = cancel
-				if err := tailnet.Start(node, n.a.Workspace.Config.Tailnet, n.h, n.admit, n.say); err != nil {
+				if err := tailnet.Start(node, n.a.Workspace.Config.Tailnet, n.h, n.admit, n.pub, n.say); err != nil {
 					n.say(tailnet.Status{State: tailnet.Failed, Err: err})
 				}
 			}
@@ -99,6 +112,13 @@ func (n *tailnetNode) say(s tailnet.Status) {
 		n.setup = true
 	}
 	tell := n.setup
+	// Publishing follows the owner's own ask, so what came of it is said
+	// in the chat, unless it is the same as when the server started.
+	switch s.State {
+	case tailnet.Published, tailnet.Unpublished, tailnet.PublishFailed:
+		tell = publishing(n.a) != n.published || s.State == tailnet.PublishFailed
+		n.published = publishing(n.a)
+	}
 	if s.State == tailnet.Ready || s.State == tailnet.Off {
 		n.setup = false
 	}
@@ -177,4 +197,10 @@ func (n *tailnetNode) keepInStep(ctx context.Context, srv *server.Server) {
 			}
 		}
 	}
+}
+
+// publishing is what the workspace publishes, as one line to compare.
+func publishing(a *app.App) string {
+	p := a.Workspace.Config.Publish
+	return p.Tabs + "|" + p.Types + "|" + p.AI
 }

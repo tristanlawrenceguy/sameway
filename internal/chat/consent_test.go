@@ -182,3 +182,21 @@ fields:
 		t.Error("an older copy of the action type still keeps accepted from the assistant")
 	}
 }
+
+// Publishing is only ever asked, in plain words; unpublishing is not.
+func TestPublishingIsAskedAndUnpublishingIsNot(t *testing.T) {
+	svc := newFullService(t)
+	cfg := withSettings(svc, nil)
+	text, isErr := use(t, svc, "set_setting", map[string]any{"key": "publish.tabs", "value": "Recipes"})
+	if isErr || !strings.Contains(text, "asked the person") || cfg["publish.tabs"] != "" {
+		t.Fatalf("publishing is asked, not done: %q", text)
+	}
+	_, ask, detail, _, _ := pending(t, svc)
+	if ask != "Publish Recipes to the internet?" || !strings.Contains(detail, "no login") {
+		t.Errorf("the question says what anyone could read: %q / %q", ask, detail)
+	}
+	cfg["publish.types"] = "note"
+	if text, _ := use(t, svc, "set_setting", map[string]any{"key": "publish.types", "value": ""}); strings.Contains(text, "asked the person") || cfg["publish.types"] != "" {
+		t.Errorf("unpublishing is done at once: %q", text)
+	}
+}
