@@ -92,7 +92,9 @@ func (s *Server) chatFor(r *http.Request) *chat.Service {
 // only look has none: the assistant changes things, so it is for those
 // who may.
 func (s *Server) conversationFor(r *http.Request, from string) (*conversation, error) {
-	return s.conversationAboutFor(r, from, "", "")
+	// ?prompt= puts words in the box wherever the conversation is, so a
+	// thing to ask offered on a page is ready to send on that page.
+	return s.conversationAboutFor(r, from, "", r.URL.Query().Get("prompt"))
 }
 
 func (s *Server) conversationAboutFor(r *http.Request, from, about, prompt string) (*conversation, error) {

@@ -65,7 +65,20 @@ func (s *Server) chatDelete(w http.ResponseWriter, r *http.Request) {
 		s.failed(w, r, "Chat not deleted", err, "/")
 		return
 	}
-	http.Redirect(w, r, backTo(r.PostForm.Get("from")), http.StatusSeeOther)
+	// Deleting a chat is a press away from a mistake: it can be put back.
+	s.tellAt(w, r, outcome{Title: "Chat deleted", Undo: s.lastAbout("conversation")}, backTo(r.PostForm.Get("from")))
+}
+
+// lastAbout is the newest log entry about a kind of thing, so the outcome
+// of an action can offer to take it back.
+func (s *Server) lastAbout(target string) string {
+	recent, _ := s.app.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 5})
+	for _, a := range recent {
+		if a.Fields["target"] == target {
+			return a.ID
+		}
+	}
+	return ""
 }
 
 // blockPlace moves a block to a region of the page, or changes its width,

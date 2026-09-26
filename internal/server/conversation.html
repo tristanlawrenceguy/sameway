@@ -1,5 +1,5 @@
 <div class="sw-chat__tools sw-cluster">
-<details class="sw-chat__menu"><summary class="sw-button sw-button--quiet sw-pressable sw-chat__current"><span class="sw-chat__name">{{.Title}}</span></summary>
+<details class="sw-chat__menu"><summary class="sw-button sw-button--quiet sw-pressable sw-chat__current"><span class="sw-visually-hidden">Chats, this one: </span><span class="sw-chat__name">{{.Title}}</span></summary>
 <div class="sw-chat__panel">
 <form method="post" action="/chat/new"><input type="hidden" name="from" value="{{.From}}">{{.NewChat}}</form>
 {{if .Chats}}<ul class="sw-plain sw-chat__list" aria-label="Chats">
@@ -7,9 +7,9 @@
 {{end}}</ul>{{end}}
 </div></details>
 <span class="sw-chat__place"></span>
-{{if ne .From "/chat"}}<a class="sw-button sw-button--quiet sw-pressable" href="/chat" target="sameway-chat" data-popout>Open<span class="sw-visually-hidden"> chat</span></a>{{end}}
+{{if ne .From "/chat"}}<a class="sw-button sw-button--quiet sw-pressable" href="/chat" target="sameway-chat" data-popout>Open in a window<span class="sw-visually-hidden">: this chat</span></a>{{end}}
 </div>
-{{if .Messages}}<ol class="sw-plain sw-stack sw-chat__log" aria-label="Messages" tabindex="-1">
+{{if .Messages}}<ol class="sw-plain sw-stack sw-chat__log" aria-label="Messages" tabindex="0">
 {{range .Messages}}<li style="view-transition-name: {{.ID}}; view-transition-class: sw-vt-item">{{.HTML}}</li>
 {{end}}</ol>
 {{else}}{{.Empty}}

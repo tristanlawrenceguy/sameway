@@ -8,12 +8,11 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/render/htmltest"
 )
 
-// TestChatMessagesListIsNotFocusable ensures the ol element wrapping message
-// articles on /chat does not create an extra focus stop. A keyboard user tabbing
-// from navigation to controls should not land on the entire messages list as one
-// unit — only interactive elements (textarea, buttons) and individual messages
-// with explicit links should be reachable. This pins down acceptance items 3
-// and 4 of task: no ol has tabindex="0", message articles remain accessible.
+// TestChatMessagesListIsNotFocusable ensures the transcript is one Tab
+// stop, named Messages, and no more: a scrolling list with no links in it
+// cannot be scrolled by a keyboard otherwise (Safari, and Chrome once
+// tabindex is -1), so it takes Tab once, as a whole, and the messages in
+// it stay plain articles.
 func TestChatMessagesListIsNotFocusable(t *testing.T) {
 	a, h := newApp(t)
 
@@ -30,10 +29,17 @@ func TestChatMessagesListIsNotFocusable(t *testing.T) {
 
 	// Acceptance 3: no ol element in the page has tabindex="0" or any
 	// positive tabindex. The ol wrapping messages must be non-focusable via Tab.
+	stops := 0
 	for _, n := range doc.Elements("ol") {
 		if ti, ok := htmltest.Attr(n, "tabindex"); ok && ti != "-1" {
-			t.Errorf("<ol> has tabindex=%q — it becomes a focus stop via Tab; remove or set to -1", ti)
+			stops++
+			if name, _ := htmltest.Attr(n, "aria-label"); name != "Messages" {
+				t.Errorf("a list that takes Tab must be named; got %q", name)
+			}
 		}
+	}
+	if stops != 1 {
+		t.Errorf("the transcript should be one Tab stop, got %d", stops)
 	}
 	// Acceptance 4: message content elements (articles) inside the ol are
 	// still present and accessible — the list container loses focusability but
