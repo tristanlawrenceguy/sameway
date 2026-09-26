@@ -1,35 +1,50 @@
+/* A short message that needs attention. Its kind is said four ways, so no
+   one is left with colour alone: a word read out first (Error, Warning,
+   Success, Information), a mark of its own shape, a coloured edge, and a
+   tinted ground. */
 .sw-alert {
   padding: var(--sw-space-3) var(--sw-space-4);
-  border: 1px solid var(--sw-color-border); border-left: 5px solid var(--sw-color-info);
+  border: 1px solid var(--sw-color-border); border-inline-start: 5px solid var(--sw-color-info);
   border-radius: var(--sw-radius-md);
   background: var(--sw-color-info-soft); color: var(--sw-color-fg);
   max-width: var(--sw-size-measure);
   position: relative;
 }
-.sw-alert__icon { font-size: var(--sw-size-text-lg); margin-right: var(--sw-space-2); }
+/* Room for the close button, so it never sits on the words. */
+.sw-alert--dismissible { padding-inline-end: calc(var(--sw-size-target) + var(--sw-space-2)); }
 .sw-alert p { margin: 0; }
-.sw-alert__title { font-weight: 700; }
-.sw-alert__kind { color: var(--sw-color-info); }
+.sw-alert__title { margin: 0; font-size: var(--sw-size-text-md); font-weight: 700; line-height: 1.4; }
 .sw-alert__title + .sw-alert__message { margin-top: var(--sw-space-1); }
-.sw-alert--success { border-left-color: var(--sw-color-success); background: var(--sw-color-success-soft); }
-.sw-alert--success .sw-alert__kind { color: var(--sw-color-success); }
-.sw-alert--warning { border-left-color: var(--sw-color-warning); background: var(--sw-color-warning-soft); }
-.sw-alert--warning .sw-alert__kind { color: var(--sw-color-warning); }
-.sw-alert--danger { border-left-color: var(--sw-color-danger); background: var(--sw-color-danger-soft); }
-.sw-alert--danger .sw-alert__kind { color: var(--sw-color-danger); }
-.sw-alert__close {
-  position: absolute;
-  top: var(--sw-space-2);
-  right: var(--sw-space-3);
-  background: none;
-  border: none;
-  font-size: var(--sw-size-text-lg);
-  cursor: pointer;
-  color: inherit;
-  padding: var(--sw-space-6);
+/* The mark: one shape per kind, drawn the size of a capital letter. */
+.sw-alert__icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  inline-size: 1.25em; block-size: 1.25em; margin-inline-end: var(--sw-space-2);
+  font-weight: 700; line-height: 1; vertical-align: -0.1em;
 }
-/* With no title, the mark sits before the message on one line, rather
-   than alone on a line of its own. */
-.sw-alert:has(.sw-alert__title--bare) { display: flex; align-items: baseline; }
-.sw-alert__title--bare { margin: 0; }
-.sw-alert__title--bare:empty { display: none; }
+.sw-alert--danger .sw-alert__icon:not(.sw-alert__icon--own) { border-radius: 50%; background: var(--sw-color-danger); color: var(--sw-color-bg); font-size: 0.85em; }
+.sw-alert--danger .sw-alert__icon--own { color: var(--sw-color-danger); }
+.sw-alert--success .sw-alert__icon { color: var(--sw-color-success); }
+.sw-alert--warning .sw-alert__icon { color: var(--sw-color-warning); }
+.sw-alert--info .sw-alert__icon { color: var(--sw-color-info); }
+.sw-alert--success { border-inline-start-color: var(--sw-color-success); background: var(--sw-color-success-soft); }
+.sw-alert--warning { border-inline-start-color: var(--sw-color-warning); background: var(--sw-color-warning-soft); }
+.sw-alert--danger { border-inline-start-color: var(--sw-color-danger); background: var(--sw-color-danger-soft); }
+/* With no title, the mark sits before the message on one line. */
+.sw-alert:has(.sw-alert__line) { display: flex; align-items: baseline; }
+.sw-alert__line { flex: none; }
+/* Close: a whole target in the corner, the × centred in it. */
+.sw-alert__close {
+  position: absolute; inset-block-start: var(--sw-space-1); inset-inline-end: var(--sw-space-1);
+  display: inline-flex; align-items: center; justify-content: center;
+  inline-size: var(--sw-size-target); block-size: var(--sw-size-target); padding: 0;
+  background: none; border: 0; border-radius: var(--sw-radius-md);
+  font-size: var(--sw-size-text-lg); line-height: 1; color: inherit; cursor: pointer;
+}
+.sw-alert__close:hover { background: var(--sw-color-bg-muted); }
+/* Forced colours take the tints away: the edge keeps a style of its own
+   for the kinds that need a person to act, and the error mark keeps its
+   circle. */
+@media (forced-colors: active) {
+  .sw-alert--danger, .sw-alert--warning { border-inline-start-style: double; border-inline-start-width: 6px; }
+  .sw-alert--danger .sw-alert__icon:not(.sw-alert__icon--own) { forced-color-adjust: none; background: CanvasText; color: Canvas; }
+}

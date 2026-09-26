@@ -70,8 +70,8 @@ func TestAlertDismissPropRendersCloseButton(t *testing.T) {
 	if !strings.Contains(out, "sw-alert__close") {
 		t.Errorf("alert with dismiss=true should have class sw-alert__close on the button;\ngot:\n%s", out)
 	}
-	if !strings.Contains(out, `aria-label="Close"`) {
-		t.Errorf("alert close button should have aria-label=\"Close\";\ngot:\n%s", out)
+	if !strings.Contains(out, `aria-label="Close message"`) {
+		t.Errorf("alert close button should have aria-label=\"Close message\";\ngot:\n%s", out)
 	}
 }
 

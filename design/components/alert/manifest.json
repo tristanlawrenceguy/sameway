@@ -10,25 +10,27 @@
     "properties": {
       "message": { "type": "string", "format": "multiline", "minLength": 1 },
       "kind": { "type": "string", "enum": ["info", "success", "warning", "danger"], "default": "info" },
-      "title": { "type": "string", "description": "Optional short title shown in bold before the message." },
+      "title": { "type": "string", "description": "Optional short title, a heading before the message." },
+      "level": { "title": "Heading level", "type": "integer", "minimum": 2, "maximum": 4, "default": 2, "description": "Where the title sits in the page outline." },
+      "live": { "type": "boolean", "default": false, "description": "Announce it: for a message put on the page after it loaded, or an action's outcome. A message present when the page loads is not announced whatever its role." },
       "id": { "type": "string" },
-      "icon": { "type": "string", "description": "Optional visual indicator shown before the title text." },
+      "icon": { "type": "string", "description": "A mark to show instead of the kind's own (ℹ, ✓, ⚠, or a circled ! for an error). Hidden from screen readers, which hear the kind as a word." },
       "dismiss": { "type": "boolean", "description": "When true, renders a close button with data-dismiss attribute." }
     }
   },
   "a11y": {
-    "role": "status for info and success, alert for warning and danger",
+    "role": "paragraphs under a heading when titled; with live, status for info and success and alert for warning and danger",
     "keyboard": [
       { "key": "Tab", "does": "Focuses the close button when present." },
       { "key": "Enter or Space", "does": "Activates the close button, dismissing the alert." }
     ],
     "states": [],
-    "wcag": { "target": "AAA", "notes": "Kind is conveyed by colour and optionally an icon prop (1.4.1). Warning and danger use role=alert so assistive tech announces them when inserted live." }
+    "wcag": { "target": "AAA", "notes": "Kind is said as a word read first, a mark of its own shape, an edge and a tint, never colour alone (1.4.1); in forced colours a warning or error edge turns double. A title is a heading (1.3.1, 2.4.6). Only a live alert takes role=alert or status, since a message present on load is not announced (4.1.3). The close button is a whole 44px target (2.5.5) and never covers the words." }
   },
   "machine": {
     "selector": "[data-component=\"alert\"]",
     "identify": "Read data-kind for the severity and the text content for the message.",
-    "operate": "Not interactive. Errors from the system are surfaced here; read them before retrying."
+    "operate": "Read it before retrying; a dismissible one has a Close message button."
   },
   "examples": [
     { "name": "default", "props": { "message": "Saved." }, "file": "examples/default.html" },
@@ -37,6 +39,7 @@
     { "name": "warning", "props": { "kind": "warning", "title": "No model connected", "message": "Edit the llm section of workspace.yaml and restart.", "id": "model-warning" }, "file": "examples/warning.html" },
     { "name": "with-icon", "props": { "kind": "danger", "icon": "\u26a0", "title": "No model connected", "message": "Edit the llm section of workspace.yaml and restart." }, "file": "examples/with-icon.html" },
     { "name": "info-with-icon", "props": { "kind": "info", "icon": "\u2139", "message": "A note with an icon." }, "file": "examples/info-with-icon.html" },
-    { "name": "with-dismiss", "props": { "kind": "success", "message": "Changes made.", "dismiss": true }, "file": "examples/with-dismiss.html" }
+    { "name": "with-dismiss", "props": { "kind": "success", "message": "Changes made.", "dismiss": true }, "file": "examples/with-dismiss.html" },
+    { "name": "live", "props": { "kind": "danger", "title": "Not saved", "message": "The title is needed.", "live": true, "dismiss": true }, "file": "examples/live.html" }
   ]
 }
