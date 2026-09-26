@@ -54,6 +54,9 @@ func (s *Server) seen(r *http.Request, path string) {
 // owner of this computer's copy, once the tailnet says who that is.
 func (s *Server) whoAsks(r *http.Request) (string, string) {
 	v := chat.VisitorOf(r.Context())
+	if v.Access == chat.Public {
+		return "", "" // someone on the internet is nobody in particular
+	}
 	if v.Login != "" {
 		name := v.Who()
 		if v.Owner() {

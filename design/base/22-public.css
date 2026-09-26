@@ -1,0 +1,11 @@
+/* A published page, as anyone on the internet reads it: they may read,
+   not change, so the controls, the conversation, the log and the ways to
+   the rest of the workspace are not there at all (see publish.go). */
+
+:root[data-controls="none"] .sw-bar,
+:root[data-controls="none"] form[method="post"],
+:root[data-controls="none"] [data-edit],
+:root[data-controls="none"] [data-block-component="chat"],
+:root[data-controls="none"] .sw-activity,
+:root[data-controls="none"] .sw-nav--more,
+:root[data-controls="none"] .sw-present { display: none; }

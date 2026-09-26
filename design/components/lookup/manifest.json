@@ -15,19 +15,20 @@
       "to": { "type": "string", "minLength": 1, "description": "The content type the records are, such as person." },
       "value": { "type": "string", "default": "", "description": "The chosen record's id." },
       "title": { "type": "string", "default": "", "description": "The chosen record's name, shown in the box." },
-      "hint": { "type": "string", "default": "Type part of its name, then choose it from the list." },
+      "hint": { "type": "string", "default": "Type 2 or more letters of its name, then choose it from the list." },
       "required": { "type": "boolean", "default": false }
     }
   },
   "a11y": {
-    "role": "combobox (a text box with the matches as suggestions, from a native datalist)",
+    "role": "combobox (a text box whose matches show in a listbox under it, drawn by its script)",
     "keyboard": [
       { "key": "Tab", "does": "moves focus to and from the box" },
-      { "key": "Down / Up", "does": "moves through the suggestions the browser shows" },
-      { "key": "Enter", "does": "chooses the highlighted suggestion" }
+      { "key": "Down / Up", "does": "opens the matches and moves through them" },
+      { "key": "Enter", "does": "chooses the highlighted match" },
+      { "key": "Escape", "does": "closes the matches; pressed again, puts back what was chosen before" }
     ],
-    "states": ["aria-required"],
-    "wcag": { "target": "AAA", "notes": "A text box with a native datalist, so the platform draws and announces the suggestions (4.1.2). The hint says how it works (3.3.2). The name, never the id, is what a person reads and types." }
+    "states": ["aria-required", "aria-expanded", "aria-activedescendant", "aria-invalid"],
+    "wcag": { "target": "AAA", "notes": "The APG list autocomplete: the box is a combobox and its matches a listbox of 44px options, the one reached by the arrows marked by an edge and weight as well as colour, growing with the page's text (1.4.4) where a native datalist does not, and shown on phones and to voice control where a datalist is not. What was found, nothing found, too few letters and a search that failed are said as they happen (4.1.3). A name that is not a record is said to be so beside the box (3.3.1), and the record chosen before is not sent under it. Records with one title are told apart by a line of each. The hint says how it works (3.3.2). The name, never the id, is what a person reads and types." }
   },
   "machine": {
     "selector": "[data-component=\"lookup\"]",

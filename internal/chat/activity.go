@@ -134,8 +134,12 @@ func Summarise(component string, props map[string]any) string {
 	case "table":
 		return pick("caption")
 	case "list":
+		// Its name, so Remove To pack is not heard as removing some items.
+		if l := pick("label"); l != "" {
+			return l
+		}
 		if items, ok := props["items"].([]any); ok {
-			return fmt.Sprintf("%d items", len(items))
+			return fmt.Sprintf("list of %d", len(items))
 		}
 	case "alert", "status":
 		return pick("title", "message")

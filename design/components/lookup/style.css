@@ -1,2 +1,24 @@
-/* A text field: the suggestions are the browser's own. */
+/* A text field, and under it the records that match: a list drawn here,
+   so it grows with the page's text, each a 44px target, the one reached by
+   the arrows marked by an edge and weight as well as colour. */
+.sw-lookup { position: relative; }
 .sw-lookup .sw-field__input { width: 100%; }
+.sw-lookup__list {
+  position: absolute; z-index: 5; left: 0; right: 0; margin-top: var(--sw-space-1);
+  max-height: 20rem; overflow-y: auto;
+  background: var(--sw-color-bg-raised); color: var(--sw-color-fg);
+  border: 2px solid var(--sw-color-border-strong); border-radius: var(--sw-radius-md);
+  box-shadow: var(--sw-shadow-2);
+}
+.sw-lookup__option, .sw-lookup__none {
+  display: flex; flex-direction: column; justify-content: center;
+  min-height: var(--sw-size-target); padding: var(--sw-space-1) var(--sw-space-3);
+}
+.sw-lookup__option { cursor: pointer; border-left: 4px solid transparent; }
+.sw-lookup__option:hover { background: var(--sw-color-bg-muted); }
+.sw-lookup__option[aria-selected="true"] { background: var(--sw-color-bg-muted); border-left-color: var(--sw-color-accent); font-weight: 700; }
+.sw-lookup__more { font-size: var(--sw-size-text-sm); font-weight: 400; color: var(--sw-color-fg-muted); }
+.sw-lookup__none { color: var(--sw-color-fg-muted); }
+@media (forced-colors: active) {
+  .sw-lookup__option[aria-selected="true"] { border-left-color: Highlight; outline: 2px solid Highlight; }
+}
