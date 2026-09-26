@@ -13,9 +13,9 @@ import (
 
 // TestCalendarNoAriaHiddenWeekdayHeaders renders a full-detail calendar and
 // asserts that the weekday header cells carry no inner span with
-// aria-hidden="true".  Each <th scope="col"> must have the abbreviation as
-// direct text content (visible to everyone), plus an aria-label on the <th>
-// itself for the full name.  Regression guard for backlog item 0297,
+// aria-hidden="true".  Each <th scope="col"> draws the abbreviation and
+// reads the full name from its own text, the rest of the word hidden after
+// it, with no aria-label.  Regression guard for backlog item 0297,
 // acceptance items 1 and 2.
 func TestCalendarNoAriaHiddenWeekdayHeaders(t *testing.T) {
 	reg := render.New()
@@ -51,26 +51,22 @@ func TestCalendarNoAriaHiddenWeekdayHeaders(t *testing.T) {
 			continue // only check column headers
 		}
 
-		// The <th> must have an aria-label with the full day name.
-		label, hasLabel := htmltest.Attr(th, "aria-label")
-		if !hasLabel {
-			t.Errorf("<th scope=\"col\"> is missing aria-label (full weekday name)\nfull output:\n%s", got)
-			continue
+		// The header's own text says the full day: the short name drawn,
+		// the rest hidden after it ("Mon" + "day"), which screen readers
+		// read better than an aria-label on a th.
+		if _, has := htmltest.Attr(th, "aria-label"); has {
+			t.Errorf("a weekday header needs no aria-label; its own text says the day: %s", got)
 		}
-
-		// The full day names are the only possible values.
 		fullNames := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
-		found := false
+		full, found := strings.TrimSpace(htmltest.Text(th)), false
 		for _, fn := range fullNames {
-			if label == fn {
+			if full == fn {
 				found = true
-				break
 			}
 		}
 		if !found {
-			t.Errorf("aria-label on <th scope=\"col\"> is %q; want a full weekday name\nfull output:\n%s", label, got)
+			t.Errorf("weekday header reads %q; want a full weekday name: %s", full, got)
 		}
-
 		// There must be no span with aria-hidden inside this <th>.
 		walkChildren(th, func(n *html.Node) {
 			if n.Data == "span" {
@@ -82,8 +78,11 @@ func TestCalendarNoAriaHiddenWeekdayHeaders(t *testing.T) {
 			}
 		})
 
-		// The direct text content of the <th> must be a weekday abbreviation.
-		text := strings.TrimSpace(htmltest.Text(th))
+		// What is drawn, the header's first text, is a weekday abbreviation.
+		text := ""
+		if th.FirstChild != nil && th.FirstChild.Type == html.TextNode {
+			text = strings.TrimSpace(th.FirstChild.Data)
+		}
 		abbrevs := []string{"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"}
 		found = false
 		for _, ab := range abbrevs {

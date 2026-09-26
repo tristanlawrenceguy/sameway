@@ -120,3 +120,36 @@ func TestNewChatOnAnEmptyChatKeepsIt(t *testing.T) {
 		t.Errorf("an empty chat should be kept, got %d chats", len(svc.Conversations()))
 	}
 }
+
+// Deleting a chat, or clearing one, can be taken back: the chat and every
+// message in it come back as they were.
+func TestADeletedOrClearedChatComesBack(t *testing.T) {
+	svc := newFullService(t)
+	svc.Provider = &scripted{steps: []*llm.Response{{Text: "ok"}}}
+	if _, err := svc.Send(context.Background(), "plan the garden"); err != nil {
+		t.Fatal(err)
+	}
+	id := svc.Current()
+	msgs, _ := svc.MessagesIn(id)
+	if err := svc.Clear(); err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.UndoAs("human", ""); err != nil {
+		t.Fatalf("a cleared chat should be undoable: %v", err)
+	}
+	if back, _ := svc.MessagesIn(id); len(back) != len(msgs) {
+		t.Errorf("clearing undone should bring back %d messages, got %d", len(msgs), len(back))
+	}
+	if err := svc.DeleteChat(id); err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.UndoAs("human", ""); err != nil {
+		t.Fatalf("a deleted chat should be undoable: %v", err)
+	}
+	if _, err := svc.Store.Get(chat.ConversationType, id); err != nil {
+		t.Errorf("the deleted chat should be back")
+	}
+	if back, _ := svc.MessagesIn(id); len(back) != len(msgs) {
+		t.Errorf("its %d messages should be back, got %d", len(msgs), len(back))
+	}
+}

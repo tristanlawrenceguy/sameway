@@ -61,6 +61,9 @@ type Page struct {
 	// bottom: what a person reaches for on every page, such as search.
 	Header template.HTML
 	Footer template.HTML
+	// Present says who else is in the workspace just now, and where; empty
+	// when nobody else is, which is most of the time.
+	Present template.HTML
 	// Focus is an element id to name in the skip link, such as the newest
 	// message, so keyboard users can jump straight to what changed.
 	Focus      string

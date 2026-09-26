@@ -100,12 +100,21 @@ func (s *Service) DeleteChat(id string) error {
 	if err != nil {
 		return err
 	}
+	// Kept in the log, so the chat can be put back with every message.
+	conv, _ := s.Store.Get(ConversationType, id)
+	before := map[string]any{"messages": keptMessages(msgs)}
+	title := ""
+	if conv != nil {
+		before["conversation"] = conv.Fields
+		title, _ = conv.Fields["title"].(string)
+	}
 	for _, m := range msgs {
 		s.Store.Delete(MessageType, m.ID)
 	}
 	if err := s.Store.Delete(ConversationType, id); err != nil {
 		return err
 	}
+	Record(s.Store, "human", Change{Action: "deleted", Component: "conversation", ID: id, Detail: title, Before: before})
 	if s.convo == id {
 		s.convo = ""
 	}
@@ -199,15 +208,16 @@ func (s *Service) Clear() error {
 	if err := s.Available(); err != nil {
 		return err
 	}
-	Record(s.Store, "human", Change{Action: "cleared", Component: "conversation"})
+	msgs, err := s.Messages()
+	if err != nil {
+		return err
+	}
+	// Kept in the log, so the messages can be put back.
+	Record(s.Store, "human", Change{Action: "cleared", Component: "conversation", ID: s.Current(), Before: map[string]any{"messages": keptMessages(msgs)}})
 	// The questions the assistant asked were part of the conversation; a
 	// cleared one has no questions still waiting under it.
 	for _, p := range s.Proposals() {
 		s.Store.Update(ProposalType, p.ID, map[string]any{"state": "dismissed"})
-	}
-	msgs, err := s.Messages()
-	if err != nil {
-		return err
 	}
 	for _, m := range msgs {
 		if err := s.Store.Delete(MessageType, m.ID); err != nil {

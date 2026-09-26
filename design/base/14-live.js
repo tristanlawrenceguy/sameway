@@ -33,7 +33,7 @@
     var log = body.querySelector(".sw-chat__log");
     if (log) return log;
     var empty = body.querySelector(".sw-empty");
-    log = el('<ol class="sw-plain sw-stack sw-chat__log" aria-label="Messages" tabindex="-1"></ol>');
+    log = el('<ol class="sw-plain sw-stack sw-chat__log" aria-label="Messages" tabindex="0"></ol>');
     if (empty) empty.replaceWith(log); else body.insertBefore(log, form);
     return log;
   }

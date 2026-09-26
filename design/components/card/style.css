@@ -5,9 +5,15 @@
   max-width: var(--sw-size-measure);
   transition: box-shadow var(--sw-motion-base) var(--sw-motion-ease), transform var(--sw-motion-base) var(--sw-motion-ease);
 }
-.sw-card:has(.sw-card__title a):hover { box-shadow: var(--sw-shadow-2); transform: translateY(-1px); }
-.sw-card__title { margin: 0; font-size: var(--sw-size-text-lg); line-height: var(--sw-size-line-tight); }
-.sw-card__title a { color: var(--sw-color-accent); text-decoration-thickness: 1px; text-underline-offset: 0.2em; }
+/* A card rises when a press anywhere on it will open it (its script is
+   running), and when its link has keyboard focus, so a keyboard sees what
+   a pointer sees. Without the script only the title is the way in, so the
+   card does not pretend otherwise. */
+.sw-card[data-press] { cursor: pointer; }
+.sw-card[data-press]:hover, .sw-card:has(.sw-card__title a:focus-visible) { box-shadow: var(--sw-shadow-2); transform: translateY(-1px); }
+.sw-card__title { margin: 0; font-size: var(--sw-size-text-lg); line-height: var(--sw-size-line-tight); overflow-wrap: anywhere; }
+/* The title link is a whole target on its own line. */
+.sw-card__title a { display: inline-flex; align-items: center; min-height: var(--sw-size-target); color: var(--sw-color-accent); text-decoration-thickness: 1px; text-underline-offset: 0.2em; }
 .sw-card__meta { margin: var(--sw-space-1) 0 0; color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); overflow-wrap: anywhere; }
 .sw-card__body { margin-top: var(--sw-space-3); }
 .sw-card__body p { margin: 0 0 var(--sw-space-3); }
