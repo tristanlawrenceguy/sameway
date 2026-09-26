@@ -10,7 +10,7 @@
 .sw-field__input, .sw-field__textarea, .sw-field__select {
   display: block; width: 100%; min-height: var(--sw-size-target);
   padding: var(--sw-space-2) var(--sw-space-3);
-  font: inherit; color: var(--sw-color-fg);
+  font: inherit; letter-spacing: inherit; word-spacing: inherit; color: var(--sw-color-fg);
   background: var(--sw-color-bg-raised);
   border: 2px solid var(--sw-color-border-strong); border-radius: var(--sw-radius-md);
   transition: border-color var(--sw-motion-fast) var(--sw-motion-ease), box-shadow var(--sw-motion-fast) var(--sw-motion-ease);
@@ -19,4 +19,7 @@
 .sw-field__input[aria-invalid="true"], .sw-field__textarea[aria-invalid="true"], .sw-field__select[aria-invalid="true"] {
   border-color: var(--sw-color-danger); box-shadow: 0 0 0 3px var(--sw-color-danger-soft);
 }
+/* Any field with a problem has a bar at its edge as well as its words: the
+   red border and its halo are gone in forced colours. */
+.sw-field:has(> [aria-invalid="true"]) { border-inline-start: var(--sw-focus-width) solid var(--sw-color-danger); padding-inline-start: var(--sw-space-3); }
 .sw-field__input::placeholder { color: var(--sw-color-fg-muted); }
