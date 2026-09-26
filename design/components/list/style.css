@@ -1,4 +1,9 @@
+/* Short items with a mark each; room between them, so an item that wraps
+   onto a second line still reads as one. Its name, when it has one, is a
+   heading over it that everyone sees. */
+.sw-list__title { margin: 0 0 var(--sw-space-3); font-size: var(--sw-size-text-lg); line-height: var(--sw-size-line-tight); }
 .sw-list { margin: 0; padding-left: var(--sw-space-6); max-width: var(--sw-size-measure); }
-.sw-list li { margin: var(--sw-space-1) 0; padding-left: var(--sw-space-1); }
+.sw-list li { padding-left: var(--sw-space-1); }
+.sw-list li + li { margin-top: var(--sw-space-2); }
 .sw-list li::marker { color: var(--sw-color-accent); font-weight: 700; }
 ol.sw-list li::marker { font-variant-numeric: tabular-nums; }

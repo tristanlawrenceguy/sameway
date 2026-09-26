@@ -13,6 +13,8 @@ const (
 	// keeps it in step: they may do what an editor may, and their copy can
 	// change anything, so it is the owner's gravest yes.
 	Host = "host"
+	// Public is anyone on the internet, reading what the owner published.
+	Public = "public"
 )
 
 // Visitor is who a request comes from when it is not the machine itself:

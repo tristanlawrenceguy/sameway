@@ -87,7 +87,7 @@ func (s *Server) recordProps(w http.ResponseWriter, r *http.Request) {
 	// A change a person made by hand is a change like any other: in the
 	// log with what it was, so it glows where it shows and can be undone.
 	undo := s.record(r, chat.Change{Action: "updated", Component: t.Name, ID: rec.ID, Detail: s.title(t, rec), Href: detail, Before: rec.Fields})
-	s.tellAt(w, r, outcome{Title: "Changes saved", Undo: undo}, returnTo(r, detail))
+	s.tellAt(w, r, savedWords(t, rec, fields, clean, undo), returnTo(r, detail))
 }
 
 // refused says why an edit was not taken, a sentence for each field in
