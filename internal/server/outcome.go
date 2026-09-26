@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"html/template"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -59,6 +60,14 @@ func (s *Server) tellAt(w http.ResponseWriter, r *http.Request, o outcome, to st
 	if o.For == "" && r.Method == http.MethodPost {
 		o.For = r.URL.Path
 	}
+	// A mark saved by its script stays on its page: the outcome comes back
+	// as the message itself, for the page to show where it is, and nothing
+	// is left in a cookie for the next page to say again (13-mark.js).
+	if r.Header.Get("X-Requested-With") == "sameway-mark" {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		io.WriteString(w, string(s.renderOutcome(o, to)))
+		return
+	}
 	raw, _ := json.Marshal(o)
 	http.SetCookie(w, &http.Cookie{Name: outcomeCookie, Value: base64.RawURLEncoding.EncodeToString(raw),
 		Path: "/", MaxAge: 60, HttpOnly: true, SameSite: http.SameSiteLaxMode})
@@ -110,6 +119,12 @@ func (s *Server) told(w http.ResponseWriter, r *http.Request) template.HTML {
 	if err != nil || json.Unmarshal(raw, &o) != nil || o.Title == "" {
 		return ""
 	}
+	return s.renderOutcome(o, r.URL.RequestURI())
+}
+
+// renderOutcome is an outcome as the page shows it, its Undo returning to
+// from.
+func (s *Server) renderOutcome(o outcome, from string) template.HTML {
 	kind, state := "success", "done"
 	if o.Failed {
 		kind, state = "danger", "failed"
@@ -133,7 +148,7 @@ func (s *Server) told(w http.ResponseWriter, r *http.Request) template.HTML {
 			what = o.Title
 		}
 		alert += `<form method="post" action="/activity/` + template.HTMLEscapeString(o.Undo) + `/undo" class="sw-outcome__undo">` +
-			`<input type="hidden" name="from" value="` + template.HTMLEscapeString(r.URL.RequestURI()) + `">` +
+			`<input type="hidden" name="from" value="` + template.HTMLEscapeString(from) + `">` +
 			string(s.component("button", map[string]any{"label": "Undo", "context": strings.TrimSuffix(what, "."), "type": "submit", "variant": "secondary"})) + `</form>`
 	}
 	return template.HTML(`<div class="sw-outcome" id="outcome" tabindex="-1" data-outcome="` + state + `" data-outcome-for="` + template.HTMLEscapeString(o.For) + `">` + alert + `</div>`)

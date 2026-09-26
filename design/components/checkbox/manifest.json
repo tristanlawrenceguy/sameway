@@ -14,7 +14,9 @@
       "id": { "type": "string" },
       "value": { "type": "string", "default": "true", "description": "Value sent when checked." },
       "checked": { "type": "boolean", "default": false },
-      "hint": { "type": "string" }
+      "hint": { "type": "string" },
+      "required": { "type": "boolean", "default": false, "description": "Only for a box that must be ticked to go on, such as agreeing to something. Says (required) in words." },
+      "error": { "type": "string", "description": "What to do, when the box had to be ticked and was not. Sets aria-invalid and is linked with aria-describedby." }
     }
   },
   "a11y": {
@@ -23,8 +25,8 @@
       { "key": "Tab", "does": "moves focus to and from the checkbox" },
       { "key": "Space", "does": "toggles it" }
     ],
-    "states": ["checked"],
-    "wcag": { "target": "AAA", "notes": "Native input so the checked state is exposed everywhere. The label is clickable and the target is at least 44px tall." }
+    "states": ["checked", "aria-invalid", "aria-required"],
+    "wcag": { "target": "AAA", "notes": "Native input so the checked state is exposed everywhere. The label is clickable and the target is at least 44px tall. The name never changes with the state; the box says checked. Required is said in words, and an error is text above the box, tied to it (3.3.1)." }
   },
   "machine": {
     "selector": "[data-component=\"checkbox\"] input",
@@ -32,6 +34,8 @@
     "operate": "Click the input or its label, or focus it and press Space."
   },
   "examples": [
-    { "name": "default", "props": { "label": "Published", "name": "published", "checked": true }, "file": "examples/default.html" }
+    { "name": "default", "props": { "label": "Published", "name": "published", "checked": true }, "file": "examples/default.html" },
+    { "name": "hint", "props": { "label": "Remind me the day before", "name": "remind", "hint": "A reminder rings at 9:00 the day before it is due." }, "file": "examples/hint.html" },
+    { "name": "error", "props": { "label": "I have saved a copy of this workspace", "name": "saved", "required": true, "error": "Tick the box to say you have a copy, or go back and make one first." }, "file": "examples/error.html" }
   ]
 }
