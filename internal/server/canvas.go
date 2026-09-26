@@ -23,8 +23,11 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 	}
 	// Which tab: Home at /, or a canvas record at /c/<id>.
 	canvas := r.PathValue("canvas")
+	// A tab that is not there gets the site's own page saying so, with the
+	// way on, not a bare not-found line; one the assistant just removed is
+	// never reached, since the turn sends the person Home (chat.go).
 	if !s.app.Chat.HasCanvas(canvas) {
-		http.NotFound(w, r)
+		s.notFoundPage(w, r)
 		return
 	}
 	s.seedChat(canvas)
@@ -79,7 +82,7 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 	opts.Right = s.pane("right", paneLabel("Right pane", right), right, convo)
 	opts.Header = s.strip("header", reg.header, convo)
 	opts.Footer = s.strip("footer", reg.footer, convo)
-	s.page(w, r, "Canvas", template.HTML(b.String()), opts)
+	s.page(w, r, s.tabName(canvas), template.HTML(b.String()), opts)
 }
 
 // blockItem renders one canvas block: the component, its span, its
@@ -117,7 +120,12 @@ func (s *Server) blockItem(blk *store.Record, convo *conversation) string {
 	// At icon size the block is a glyph with its name, opening the whole
 	// thing on its own page: everything is still reachable, in less room.
 	if v.Size == "icon" {
-		fmt.Fprintf(&b, `<a class="sw-block__icon" href="/canvas/%s" aria-label="%s"><span aria-hidden="true">%s</span></a></li>`, v.ID, template.HTMLEscapeString(v.Label), template.HTMLEscapeString(v.Icon))
+		// A search's glyph opens the search page, where searching is.
+		href := "/canvas/" + v.ID
+		if v.Component == "search" {
+			href = "/search"
+		}
+		fmt.Fprintf(&b, `<a class="sw-block__icon" href="%s" aria-label="%s"><span aria-hidden="true">%s</span></a></li>`, href, template.HTMLEscapeString(v.Label), template.HTMLEscapeString(v.Icon))
 		return b.String()
 	}
 	// Provenance costs nothing on screen and is complete in the

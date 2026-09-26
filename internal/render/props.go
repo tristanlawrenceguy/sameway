@@ -78,6 +78,8 @@ var Funcs = template.FuncMap{
 	"percent":     percent,
 	"atMost":      atMost,
 	"pastPercent": pastPercent,
+	"tableCells":  tableCells,
+	"isNumbers":   isNumbers,
 	"pages":       pagesOf,
 }
 

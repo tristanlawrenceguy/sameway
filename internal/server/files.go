@@ -125,6 +125,7 @@ func (s *Server) convertLater(id, converter, name, path string) {
 	if err != nil {
 		s.app.Store.Update(FileType, id, map[string]any{"status": "failed", "note": err.Error()})
 		chat.Record(s.app.Store, "system", chat.Change{Action: "failed", Detail: "converting " + name + ": " + err.Error()})
+		s.Changed()
 		log.Printf("files: %s: %v", name, err)
 		return
 	}
@@ -134,6 +135,7 @@ func (s *Server) convertLater(id, converter, name, path string) {
 	}
 	title, _ := rec.Fields["title"].(string)
 	chat.Record(s.app.Store, "system", chat.Change{Action: "updated", Component: FileType, ID: id, Detail: title + " (converted)", Href: "/t/" + FileType + "/" + id})
+	s.Changed()
 }
 
 // serveFile gives back the original, as the type it is.
@@ -190,8 +192,14 @@ func (s *Server) fileExtras(rec *store.Record) string {
 		}
 		b.WriteString(string(s.component("image", s.pictureOf(rec, alt))))
 	}
-	if status, _ := rec.Fields["status"].(string); status == "converting" {
+	// Reading a file through a converter says so, and says how it ended:
+	// the page follows when it does (convertLater calls Changed).
+	switch rec.Fields["status"] {
+	case "converting":
 		b.WriteString(string(s.component("status", map[string]any{"id": "file-status", "message": "Reading the file. Its text appears here when the converter answers.", "state": "working"})))
+	case "failed":
+		note, _ := rec.Fields["note"].(string)
+		b.WriteString(string(s.component("status", map[string]any{"id": "file-status", "message": "Could not read the file: " + note, "state": "error"})))
 	}
 	fmt.Fprintf(&b, `<p>%s</p>`, s.component("link", map[string]any{"href": "/files/" + rec.ID, "label": "Open the original", "look": "button"}))
 	return b.String()

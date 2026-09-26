@@ -180,7 +180,7 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 		href := "/t/" + t.Name
 		p.Nav = append(p.Nav, render.NavItem{HTML: s.navLink(href, plural(t.Name), strings.HasPrefix(r.URL.Path, href)), Dot: s.dotOf(t.Name)})
 	}
-	more := []struct{ href, label string }{{"/chat", "Chat"}, {"/activity", "Activity"}, {"/workspaces", "Workspaces"}, {"/help", "Help"}}
+	more := []struct{ href, label string }{{"/search", "Search"}, {"/chat", "Chat"}, {"/activity", "Activity"}, {"/workspaces", "Workspaces"}, {"/help", "Help"}}
 	if s.app.Workspace.Config.UI.Developer == "shown" {
 		more = append(more, struct{ href, label string }{"/design", "Design system"})
 	}
