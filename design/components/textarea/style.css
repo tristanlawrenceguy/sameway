@@ -1,2 +1,10 @@
-/* Shares .sw-field classes with text-field. Only textarea-specific rules live here. */
-.sw-field__textarea { resize: vertical; line-height: var(--sw-size-line); }
+/* Shares .sw-field classes with text-field. Only textarea-specific rules live here.
+   The box starts at the size its rows say to expect and grows with what is
+   typed, so a person sees what they wrote; it stops at most of a screen, so
+   Send stays in reach when zoomed in. Without field-sizing, rows hold. */
+.sw-field__textarea {
+  resize: vertical; line-height: var(--sw-size-line);
+  min-height: calc(var(--sw-rows, 4) * var(--sw-size-line) * 1em + 2 * var(--sw-space-2) + 4px);
+  max-height: min(60vh, 40rem);
+}
+@supports (field-sizing: content) { .sw-field__textarea { field-sizing: content; } }
