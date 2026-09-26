@@ -1,6 +1,8 @@
 package server
 
 import (
+	"html/template"
+
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
 
@@ -29,9 +31,12 @@ func (s *Server) resolveRecord(props map[string]any) (map[string]any, string) {
 	}
 	rec, err := s.app.Store.Get(t.Name, id)
 	if err != nil {
+		// Gone, with the way on: the rest of its list.
 		out["missing"] = true
+		out["listHref"], out["listLabel"] = "/t/"+t.Name, "See all "+plural(t.Name)
 		return out, ""
 	}
+	out["kind"] = capitalize(label(t.Name))
 	out["title"] = s.title(t, rec)
 	out["titleProp"] = t.Title
 	var fields []any
@@ -66,4 +71,24 @@ func (s *Server) resolveRecord(props map[string]any) (map[string]any, string) {
 
 func isText(f schema.Field) bool {
 	return f.Type == "text" || f.Type == "markdown"
+}
+
+// recordEditFields is every field of a record block's record, for its
+// editor: on the canvas, Edit offers what the record's own page does, the
+// facts as well as the title and the text, the empty ones behind Add.
+func (s *Server) recordEditFields(name string, props map[string]any) template.HTML {
+	if name != recordComponent || props["missing"] == true {
+		return ""
+	}
+	typeName, _ := props["type"].(string)
+	id, _ := props["record"].(string)
+	t, ok := s.app.Types.Get(typeName)
+	if !ok {
+		return ""
+	}
+	rec, err := s.app.Store.Get(t.Name, id)
+	if err != nil {
+		return ""
+	}
+	return template.HTML(s.editFields(t, rec))
 }

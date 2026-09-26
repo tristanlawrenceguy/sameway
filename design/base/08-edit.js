@@ -189,7 +189,7 @@
     var action = block.getAttribute("data-edit-action");
     if (!action) { action = "/canvas/"+id+"/props"; }
     form.action = action;
-    form.setAttribute("aria-label", "Edit this block");
+    form.setAttribute("aria-label", "Edit " + (block.getAttribute("data-block-label") || "this block"));
 
     var first = null;
     for (var i = 0; i < marked.length; i++) {
