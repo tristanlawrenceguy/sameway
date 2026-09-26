@@ -107,7 +107,7 @@ func (s *Server) conversationAbout(c *chat.Service, from, about, prompt string) 
 		out.LatestID = id
 		props := map[string]any{
 			"role": m.Fields["role"], "content": m.Fields["content"], "id": id, "from": from,
-			"time": messageTime(m.CreatedAt), "changes": s.undoable(m.Fields["changes"], i == len(msgs)-1),
+			"time": messageTime(m.CreatedAt), "datetime": m.CreatedAt.UTC().Format(time.RFC3339), "changes": s.undoable(m.Fields["changes"], i == len(msgs)-1),
 		}
 		if fileID, _ := m.Fields["file"].(string); fileID != "" {
 			props["attachment"] = s.attachment(fileID)
