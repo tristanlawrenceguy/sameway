@@ -44,7 +44,7 @@ func (s *Server) focusPage(w http.ResponseWriter, r *http.Request) {
 		props, _ = s.resolveRecord(props)
 	}
 	if comp.Manifest.Name == collectionComponent {
-		props = s.resolveCollection(props)
+		props = s.resolveCollection(props, rec.ID)
 	}
 	if comp.Manifest.Name == calendarComponent {
 		// The block's own page takes ?month= and ?day= so the months and

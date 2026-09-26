@@ -3,6 +3,10 @@
 .sw-collection__items { display: flex; flex-direction: column; gap: var(--sw-space-2); }
 .sw-collection__item { display: flex; flex-wrap: wrap; gap: var(--sw-space-1) var(--sw-space-3); align-items: baseline; }
 .sw-collection__meta { color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); }
+/* A field's name beside its value in a row, in sight, as the cards' and
+   the table's are: 19 Sep alone does not say Due. */
+.sw-collection__label { font-weight: 600; }
+.sw-collection__more { color: var(--sw-color-fg-muted); margin-right: var(--sw-space-2); }
 .sw-collection__text { flex-basis: 100%; }
 .sw-collection__text p { margin: 0 0 var(--sw-space-2); }
 .sw-collection__text p:last-child { margin-bottom: 0; }
