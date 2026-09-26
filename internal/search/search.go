@@ -35,13 +35,19 @@ const Limit = 50
 // Find looks for every word of q in every record's text fields and every
 // canvas block's props. Every word must appear; case does not matter.
 func Find(st *store.Store, types *schema.Set, q string) []Hit {
+	return FindOf(st, types, q, "")
+}
+
+// FindOf is Find within one type, when only is named: picking a person
+// from thousands finds people, not the fifty notes that also match.
+func FindOf(st *store.Store, types *schema.Set, q, only string) []Hit {
 	words := strings.Fields(strings.ToLower(strings.TrimSpace(q)))
 	if len(words) == 0 {
 		return nil
 	}
 	var hits []Hit
 	for _, t := range types.Types {
-		if Skip[t.Name] {
+		if Skip[t.Name] || only != "" && t.Name != only {
 			continue
 		}
 		recs, err := st.List(t.Name, store.ListOptions{})

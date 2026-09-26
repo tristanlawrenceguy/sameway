@@ -96,7 +96,7 @@ func results(n int) string {
 // apiSearch is the same search for an agent.
 func (s *Server) apiSearch(w http.ResponseWriter, r *http.Request) {
 	q := strings.TrimSpace(r.URL.Query().Get("q"))
-	hits := search.Find(s.app.Store, s.app.Types, q)
+	hits := search.FindOf(s.app.Store, s.app.Types, q, r.URL.Query().Get("type"))
 	if hits == nil {
 		hits = []search.Hit{}
 	}
