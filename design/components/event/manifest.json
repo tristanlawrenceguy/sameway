@@ -17,7 +17,7 @@
       "detail": { "type": "string", "description": "Optional extra text shown after the target." },
       "time": { "type": "string", "description": "Human readable time such as 14:05, with the day when no heading above says it: 2 Jan 14:05." },
       "datetime": { "type": "string", "description": "The moment, as RFC 3339, for the time element." },
-      "via": { "type": "string", "description": "Where it was done from, when not this computer: on pixel-7, through the command line." },
+      "via": { "type": "string", "description": "Where it was done from, when not this computer, such as on a phone or tablet." },
       "level": { "type": "integer", "minimum": 2, "maximum": 4, "description": "Makes the entry's sentence a heading at this level, for a log read heading by heading; the time and Undo stay outside it." },
       "href": { "type": "string", "description": "The page of the thing acted on, so the entry leads to it. Left out when the thing is gone." },
       "undo": { "type": "string", "description": "Where a form posts to reverse this entry. Given only while the entry can still be undone: the thing is still as it left it." },
