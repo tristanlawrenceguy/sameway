@@ -36,10 +36,12 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(&b, `<ol class="sw-stack" aria-label="Results for %s">`, template.HTMLEscapeString(q))
 			pg = pageOf(r, len(hits), searchPageSize)
 			for _, h := range hits[pg.lo:pg.hi] {
-				titleTrimmed := template.HTMLEscapeString(trimTitle(h.Title))
 				typeEsc := template.HTMLEscapeString(capitalize(h.Type))
 				snippetEsc := template.HTMLEscapeString(h.Snippet)
-				fullTitleEsc := template.HTMLEscapeString(h.Title)
+				// The whole title: a result is recognised by it, and a
+				// tooltip holding the rest is out of reach of a keyboard or
+				// a finger.
+				titleEsc := template.HTMLEscapeString(h.Title)
 
 				bodyHTML := ""
 				if snippetEsc != "" {
@@ -48,13 +50,13 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 
 				linkHTML := fmt.Sprintf(
 					`<article class="sw-card" data-component="card">`+
-						`<h2 class="sw-card__title" data-prop="title">`+
-						`<a href="%s" title="%s">%s<span class="sw-visually-hidden"> — %s</span></a>`+
-						`</h2>`+
+						`<h3 class="sw-card__title" data-prop="title">`+
+						`<a href="%s">%s<span class="sw-visually-hidden"> — %s</span></a>`+
+						`</h3>`+
 						`<p class="sw-card__meta">%s</p>`+
 						`%s`+
 						`</article>`,
-					template.HTMLEscapeString(h.Href), fullTitleEsc, titleTrimmed, typeEsc, typeEsc, bodyHTML,
+					template.HTMLEscapeString(h.Href), titleEsc, typeEsc, typeEsc, bodyHTML,
 				)
 
 				fmt.Fprintf(&b, `<li class="sw-dotted" data-dot="%d">%s</li>`, s.dotOf(h.Type), linkHTML)

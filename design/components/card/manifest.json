@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "A titled block of content, optionally linking somewhere. Good for one item in a collection or a summary panel.",
   "icon": "▭",
-  "use": { "when": "one item among several, or a summary a person scans and may open.", "not": "the only thing on the page, which wants text under a heading, or a record with its own page, which wants the record component.", "with": "a heading above a row of cards; span 4 or 6." },
+  "use": { "when": "one item among several, or a summary a person scans and may open.", "not": "the only thing on the page, which wants text under a heading, or a record with its own page, which wants the record component.", "with": "a heading above, the cards in a list, one item each; span 4 or 6. For many items of one kind a person compares or hunts through, a list or a collection reads faster than cards." },
   "props": {
     "type": "object",
     "additionalProperties": false,
@@ -21,12 +21,12 @@
     "role": "article",
     "keyboard": [ { "key": "Tab", "does": "moves focus to the title link when href is set" } ],
     "states": [],
-    "wcag": { "target": "AAA", "notes": "The whole card is not a link; only the title is, so the link text stays meaningful (2.4.9) and the body remains selectable." }
+    "wcag": { "target": "AAA", "notes": "Only the title is a link, so the link text stays meaningful (2.4.9), there is one stop per card, and the body stays selectable. With its script a press anywhere on the card follows the link, as people expect, except when selecting words or pressing a control inside it. The title link is a 44px target (2.5.5). A card rises on keyboard focus as on hover." }
   },
   "machine": {
     "selector": "[data-component=\"card\"]",
     "identify": "An article element whose heading is the title. Read the heading text and the href on its link if present.",
-    "operate": "If the title is a link, activate it to open the item."
+    "operate": "If the title is a link, activate it to open the item; a press anywhere on the card does the same."
   },
   "examples": [
     { "name": "default", "props": { "title": "Grocery list", "body": "Milk, eggs, bread.", "meta": "Updated today" }, "file": "examples/default.html" },
