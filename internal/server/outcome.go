@@ -35,6 +35,9 @@ type outcome struct {
 	// Undo is the activity entry that takes it back, when it can be: the
 	// message carries the Undo, where the person is looking.
 	Undo string `json:"u,omitempty"`
+	// Of is what the Undo takes back, when the text says more than that:
+	// "Undo Tea", not "Undo Tea rings at 19:00".
+	Of string `json:"w,omitempty"`
 	// Problems are what stopped a form, each about one field: the message
 	// is then an error summary, each problem leading to its field.
 	Problems []problem `json:"p,omitempty"`
@@ -143,7 +146,10 @@ func (s *Server) renderOutcome(o outcome, from string) template.HTML {
 		alert = string(s.component("error-summary", map[string]any{"title": o.Title, "items": items}))
 	}
 	if o.Undo != "" {
-		what := o.Text
+		what := o.Of
+		if what == "" {
+			what = o.Text
+		}
 		if what == "" {
 			what = o.Title
 		}

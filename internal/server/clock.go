@@ -5,16 +5,13 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
-	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // The clock: the time, and reminders. A reminder is a record (an alarm
@@ -31,7 +28,7 @@ const clockComponent = "clock"
 const ReminderType = "reminder"
 
 // resolveClock fills what the block leaves to the moment: the time, what
-// is ringing, what is coming, and what is on today.
+// is ringing, and what is coming.
 func (s *Server) resolveClock(props map[string]any) map[string]any {
 	out := map[string]any{}
 	for k, v := range props {
@@ -41,33 +38,62 @@ func (s *Server) resolveClock(props map[string]any) map[string]any {
 	out["now"] = now.Format(time.RFC3339)
 	out["time"] = now.Format("15:04")
 	out["date"] = now.Format("Monday 2 January")
-	ringing, upcoming := []any{}, []any{}
+	ringing := []any{}
+	var next []coming
 	if t, ok := s.app.Types.Get(ReminderType); ok {
 		recs, _ := query.Filter(s.app.Store, t, nil, "at", 0, now)
 		for _, rec := range recs {
 			item := map[string]any{"id": rec.ID, "title": s.title(t, rec), "href": "/t/" + ReminderType + "/" + rec.ID}
 			switch rec.Fields["state"] {
 			case "rang":
+				if text, _ := s.ringWords(rec); rec.Fields["about"] != nil && text != item["title"] {
+					item["text"] = text
+				}
 				ringing = append(ringing, item)
 			case "set":
-				at, _ := rec.Fields["at"].(string)
-				item["when"] = when.Short(at, now)
-				item["kind"], _ = rec.Fields["kind"].(string)
-				if len(upcoming) < 6 {
-					upcoming = append(upcoming, item)
+				v, _ := rec.Fields["at"].(string)
+				at, err := time.Parse(time.RFC3339, v)
+				if err != nil {
+					continue
 				}
+				item["day"], item["time"] = dayOf(at, now), at.In(now.Location()).Format("15:04")
+				item["kind"], _ = rec.Fields["kind"].(string)
+				next = append(next, coming{at, item})
 			}
 		}
 	}
-	out["ringing"], out["upcoming"], out["today"] = ringing, upcoming, s.onToday(now)
+	next = append(next, s.onToday(now)...)
+	out["ringing"], out["upcoming"] = ringing, soonest(next, 8)
 	return out
 }
 
-// onToday is what falls today across every listed type with a day, in
-// time order: the calendar's view of the day, in a few lines.
-func (s *Server) onToday(now time.Time) []any {
+// coming is one thing in Coming up, with the moment it is sorted by.
+type coming struct {
+	at   time.Time
+	item map[string]any
+}
+
+// soonest is what is coming in time order, a reminder and a task at the
+// same hour side by side whatever they are, the first n of them.
+func soonest(all []coming, n int) []any {
+	sort.SliceStable(all, func(i, j int) bool { return all[i].at.Before(all[j].at) })
+	out := []any{}
+	for i, c := range all {
+		if i == n {
+			break
+		}
+		out = append(out, c.item)
+	}
+	return out
+}
+
+// onToday is what falls today across every listed type with a day: the
+// calendar's view of the day. A thing with no time of its own is all day,
+// and comes first.
+func (s *Server) onToday(now time.Time) []coming {
 	day := now.Format("2006-01-02")
-	var items []map[string]any
+	start := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	var items []coming
 	for _, t := range s.app.Types.Types {
 		if t.Internal || t.Name == ReminderType || !s.listed(t) {
 			continue
@@ -86,7 +112,8 @@ func (s *Server) onToday(now time.Time) []any {
 			if err != nil {
 				continue
 			}
-			item := map[string]any{"label": s.title(t, rec), "href": "/t/" + t.Name + "/" + rec.ID}
+			item := map[string]any{"title": s.title(t, rec), "href": "/t/" + t.Name + "/" + rec.ID, "kind": "event", "time": "All day"}
+			at := start
 			if strings.HasSuffix(v, "T00:00:00Z") {
 				if ts.UTC().Format("2006-01-02") != day {
 					continue
@@ -95,110 +122,13 @@ func (s *Server) onToday(now time.Time) []any {
 				if ts.Local().Format("2006-01-02") != day {
 					continue
 				}
-				item["time"] = ts.Local().Format("15:04")
+				at = ts.Local()
+				item["time"] = at.Format("15:04")
 			}
-			items = append(items, item)
+			items = append(items, coming{at, item})
 		}
 	}
-	sort.SliceStable(items, func(i, j int) bool {
-		a, _ := items[i]["time"].(string)
-		b, _ := items[j]["time"].(string)
-		return a < b
-	})
-	out := make([]any, 0, len(items))
-	for i, it := range items {
-		if i == 8 {
-			break
-		}
-		out = append(out, it)
-	}
-	return out
-}
-
-// clockSet makes a reminder from the clock's forms: minutes from now as
-// a timer, or a time of day (today, or tomorrow if it has passed) as an
-// alarm, named for what it is for.
-func (s *Server) clockSet(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm()
-	now := time.Now()
-	fields := map[string]any{"state": "set"}
-	if minutes, err := strconv.Atoi(r.PostForm.Get("minutes")); err == nil && r.PostForm.Get("at") == "" {
-		if minutes < 1 || minutes > 1440 {
-			s.tell(w, r, outcome{Failed: true, Title: "Timer not set", Text: "A timer takes between 1 and 1440 minutes."}, "/")
-			return
-		}
-		fields["kind"], fields["at"] = "timer", when.Store(now.Add(time.Duration(minutes)*time.Minute), false)
-		fields["title"] = fmt.Sprintf("%d minute timer", minutes)
-		if minutes == 1 {
-			fields["title"] = "1 minute timer"
-		}
-	} else {
-		// The time the way a person says it: 7:30, 7pm, tomorrow 6am. A
-		// time already past today is tomorrow.
-		at, dayOnly, ok := when.Parse(r.PostForm.Get("at"), now)
-		if !ok || dayOnly {
-			s.tell(w, r, outcome{Failed: true, Title: "Alarm not set", Text: "An alarm needs a time of day, such as 7:30 or 7pm."}, "/")
-			return
-		}
-		if !at.After(now) {
-			at = at.AddDate(0, 0, 1)
-		}
-		fields["kind"], fields["at"] = "alarm", when.Store(at, false)
-		fields["title"] = strings.TrimSpace(r.PostForm.Get("title"))
-		if fields["title"] == "" {
-			fields["title"] = "Alarm"
-		}
-	}
-	// A reminder set from a record's page is about it, and named for it.
-	if about := r.PostForm.Get("about"); about != "" {
-		if _, _, ok := s.aboutOf(about); ok {
-			fields["about"] = about
-			if title := strings.TrimSpace(r.PostForm.Get("title")); title != "" {
-				fields["title"] = title
-			}
-		}
-	}
-	rec, err := s.app.Store.Create(ReminderType, fields)
-	if err != nil {
-		s.failed(w, r, "Not set", err, "/")
-		return
-	}
-	title, _ := fields["title"].(string)
-	s.record(r, chat.Change{Action: "created", Component: ReminderType, ID: rec.ID, Detail: title})
-	http.Redirect(w, r, backFrom(r), http.StatusSeeOther)
-}
-
-// clockDone dismisses a reminder, rung or not.
-func (s *Server) clockDone(w http.ResponseWriter, r *http.Request) {
-	s.setReminder(w, r, map[string]any{"state": "done"}, "done")
-}
-
-// clockSnooze gives a reminder five more minutes.
-func (s *Server) clockSnooze(w http.ResponseWriter, r *http.Request) {
-	s.setReminder(w, r, map[string]any{"state": "set", "at": when.Store(time.Now().Add(5*time.Minute), false)}, "snoozed")
-}
-
-func (s *Server) setReminder(w http.ResponseWriter, r *http.Request, fields map[string]any, action string) {
-	rec, err := s.app.Store.Get(ReminderType, r.PathValue("id"))
-	if err != nil {
-		s.failed(w, r, "Reminder not changed", err, "/")
-		return
-	}
-	if _, err := s.app.Store.Update(ReminderType, rec.ID, fields); err != nil {
-		s.failed(w, r, "Reminder not changed", err, "/")
-		return
-	}
-	t, _ := s.app.Types.Get(ReminderType)
-	s.record(r, chat.Change{Action: action, Component: ReminderType, ID: rec.ID, Detail: s.title(t, rec), Before: rec.Fields})
-	http.Redirect(w, r, backFrom(r), http.StatusSeeOther)
-}
-
-// backFrom is the page a clock form came from, when it is one of ours.
-func backFrom(r *http.Request) string {
-	if u, err := url.Parse(r.Referer()); err == nil && u.Host == r.Host && strings.HasPrefix(u.Path, "/") {
-		return u.RequestURI()
-	}
-	return "/"
+	return items
 }
 
 // clockStream tells an open page about reminders as they ring, as
@@ -227,7 +157,10 @@ func (s *Server) clockStream(w http.ResponseWriter, r *http.Request) {
 			}
 			told[rec.ID] = true
 			t, _ := s.app.Types.Get(ReminderType)
-			body, _ := json.Marshal(map[string]any{"id": rec.ID, "title": s.title(t, rec), "href": "/t/" + ReminderType + "/" + rec.ID})
+			// What it is about, in words and as a link, as the machine's own
+			// notification says it: Water, 3 of 8 glasses so far.
+			text, link := s.ringWords(rec)
+			body, _ := json.Marshal(map[string]any{"id": rec.ID, "title": s.title(t, rec), "href": "/t/" + ReminderType + "/" + rec.ID, "text": text, "url": link})
 			fmt.Fprintf(w, "event: ring\ndata: %s\n\n", body)
 			flusher.Flush()
 		}
