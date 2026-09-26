@@ -115,32 +115,13 @@ func (s *Server) standing(rec *store.Record, now time.Time) map[string]any {
 		}
 	}
 	last := make([]any, 0, len(sum.Last))
-	for _, p := range sum.Last {
-		last = append(last, map[string]any{"date": track.PeriodLabel(p.Start, h.Cadence), "met": p.Met, "amount": p.Amount, "words": periodWords(h, p), "logged": p.Logged})
+	for i, p := range sum.Last {
+		going := i == len(sum.Last)-1
+		last = append(last, map[string]any{"date": periodName(p.Start, h.Cadence), "met": p.Met, "amount": p.Amount, "words": periodWords(h, p, going, sum), "logged": p.Logged, "going": going && !p.Met})
 	}
 	item["last"] = last
+	item["when"] = periodWhen(now, h.Cadence)
 	return item
-}
-
-// periodWords is how a period went, for a reader of the dots: met or not
-// met, within or over a limit, or what was recorded.
-func periodWords(h track.Habit, p track.Period) string {
-	switch h.Aim {
-	case track.Record:
-		if !p.Logged {
-			return "nothing logged"
-		}
-		return track.Amount(p.Amount, h.Unit)
-	case track.Limit:
-		if p.Met {
-			return track.Amount(p.Amount, h.Unit) + ", within the limit"
-		}
-		if p.Amount > h.Target {
-			return track.Amount(p.Amount, h.Unit) + ", over the limit"
-		}
-		return "not tracked yet"
-	}
-	return ""
 }
 
 func firstOf(values ...string) string {
@@ -161,6 +142,8 @@ func (s *Server) resolveTracker(props map[string]any) map[string]any {
 	}
 	tags := strs(props["tags"])
 	habits := []any{}
+	// Today when every habit is daily; this period when they differ.
+	out["when"] = "today"
 	if _, ok := s.app.Types.Get(HabitType); ok {
 		recs, _ := s.app.Store.List(HabitType, store.ListOptions{OrderBy: "created_at"})
 		now := time.Now()
@@ -171,7 +154,11 @@ func (s *Server) resolveTracker(props map[string]any) map[string]any {
 			if len(tags) > 0 && !hasTag(rec, tags) {
 				continue
 			}
-			habits = append(habits, s.standing(rec, now))
+			item := s.standing(rec, now)
+			if item["period"] != "day" {
+				out["when"] = "this period"
+			}
+			habits = append(habits, item)
 		}
 	}
 	out["habits"] = habits
@@ -203,7 +190,7 @@ func (s *Server) habitLog(w http.ResponseWriter, r *http.Request) {
 	amount := 1.0
 	if v := strings.TrimSpace(r.PostForm.Get("amount")); v != "" {
 		if amount, err = strconv.ParseFloat(strings.ReplaceAll(v, ",", "."), 64); err != nil || amount <= 0 {
-			s.tell(w, r, outcome{Failed: true, Title: "Not logged", Text: "An amount to log is a number above zero, such as 1 or 2.5."}, "/")
+			s.tell(w, r, outcome{Failed: true, Title: h.Name + " not logged", Problems: []problem{{Field: "log-" + h.ID, Text: "An amount to log is a number above zero, such as 1 or 2.5."}}}, "/")
 			return
 		}
 	}
@@ -212,7 +199,7 @@ func (s *Server) habitLog(w http.ResponseWriter, r *http.Request) {
 		now := time.Now()
 		t, day, ok := when.Parse(v, now)
 		if !ok {
-			s.tell(w, r, outcome{Failed: true, Title: "Not logged", Text: "The day it was done reads as a date, such as " + now.AddDate(0, 0, -1).Format("2006-01-02") + " or yesterday."}, "/")
+			s.tell(w, r, outcome{Failed: true, Title: h.Name + " not logged", Problems: []problem{{Field: "on-" + h.ID, Text: "The day it was done reads as a date, such as " + now.AddDate(0, 0, -1).Format("2006-01-02") + " or yesterday."}}}, "/")
 			return
 		}
 		if !day || t.Format("2006-01-02") != now.Format("2006-01-02") {
@@ -228,8 +215,11 @@ func (s *Server) habitLog(w http.ResponseWriter, r *http.Request) {
 		s.failed(w, r, "Not logged", err, "/")
 		return
 	}
-	s.record(r, chat.Change{Action: "logged", Component: HabitType, ID: h.ID, Detail: h.Name + ": " + track.Amount(amount, h.Unit), Href: "/t/" + HabitType + "/" + h.ID, Before: map[string]any{"entry": entry.ID}})
-	http.Redirect(w, r, backFrom(r), http.StatusSeeOther)
+	undo := s.record(r, chat.Change{Action: "logged", Component: HabitType, ID: h.ID, Detail: h.Name + ": " + track.Amount(amount, h.Unit), Href: "/t/" + HabitType + "/" + h.ID, Before: map[string]any{"entry": entry.ID}})
+	// Said, with where it stands now and its Undo: "Water: 1 glass logged.
+	// Now 6 of 8 glasses."
+	sum := track.Summarise(track.Normal(h), s.entriesOf(h.ID), time.Now(), 1)
+	s.tellAt(w, r, outcome{Title: h.Name + ": " + track.Amount(amount, h.Unit) + " logged.", Text: "Now " + track.Progress(track.Normal(h), sum) + ".", Undo: undo, Of: h.Name + " " + track.Amount(amount, h.Unit)}, backFrom(r))
 }
 
 // habitSection is what a habit's own page adds: where it stands, its own
