@@ -20,7 +20,7 @@
 /* Where a link already has a target's size or fills its row, the extra
    reach would only overlap its neighbours. */
 .sw-nav .sw-link::after, .sw-tabs .sw-link::after, .sw-crumbs .sw-link::after, .sw-bar .sw-link::after,
-.sw-pagination .sw-link::after, .sw-calendar__actions .sw-link::after, .sw-collection th .sw-link::after,
+.sw-pagination .sw-link::after, .sw-calendar__actions .sw-link::after,
 .sw-link--button::after, .sw-link--fill::after { content: none; }
 
 /* On its own: the size of a quiet button, in the link colour and
