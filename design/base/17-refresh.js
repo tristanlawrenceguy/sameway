@@ -112,6 +112,9 @@
     // the end when that is where they were.
     var anchor = document.querySelector('[data-block-component="chat"]');
     var anchorTop = anchor && anchor.getBoundingClientRect().top;
+    // What was just said, with its Undo, stays until closed or left, though
+    // the fresh page, fetched without it, has none.
+    var said = document.getElementById("outcome");
     var logs = [];
     document.querySelectorAll(".sw-chat__log").forEach(function (log) {
       logs.push({ log: log, top: log.scrollTop, end: log.scrollHeight - log.scrollTop - log.clientHeight < 48 });
@@ -130,6 +133,10 @@
       });
       old.remove();
     });
+    if (said && !document.getElementById("outcome")) {
+      var head = document.querySelector("main .sw-page-head");
+      if (head) head.after(said); else { var main = document.querySelector("main"); if (main) main.prepend(said); }
+    }
     // The tab's mark, working or done while away, stays with the tab.
     var mark = (document.title.match(/^(⏳|✓) /) || [""])[0];
     if (doc.title) document.title = mark + doc.title.replace(/^(⏳|✓) /, "");
