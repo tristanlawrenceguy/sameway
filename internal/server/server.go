@@ -31,6 +31,7 @@ type Server struct {
 	// notify tells a ring beyond the page; see ring.go.
 	notify  func(title, text, url string)
 	changes atomic.Int64 // changes arrived from other computers; see sync.go
+	present presence     // who else is here just now; see presence.go
 }
 
 // New builds the handler for an app.
@@ -147,26 +148,25 @@ func (s *Server) stylesheet(w http.ResponseWriter, r *http.Request) {
 // page renders a body inside the site layout with the shared navigation.
 func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body template.HTML, opts pageOptions) {
 	p := render.Page{
-		Site:         s.app.Workspace.Config.Name,
-		Title:        title,
-		Controls:     s.app.Workspace.Config.UI.Controls,
-		Pace:         s.app.Workspace.Config.UI.Pace,
-		Lang:         s.app.Workspace.Config.UI.Language,
-		Text:         s.app.Workspace.Config.UI.Text,
-		Spacing:      s.app.Workspace.Config.UI.Spacing,
-		Body:         body,
-		JSONURL:      opts.JSONURL,
-		Focus:        opts.Focus,
-		FocusLabel:   opts.FocusLabel,
-		QuietTitle:   opts.QuietTitle,
-		Kicker:       opts.Kicker,
-		Lede:         opts.Lede,
-		Dot:          opts.Dot,
-		Shell:        opts.Shell,
-		Left:         opts.Left,
-		Right:        opts.Right,
-		Header:       opts.Header,
-		Footer:       opts.Footer,
+		Site:       s.app.Workspace.Config.Name,
+		Title:      title,
+		Controls:   s.app.Workspace.Config.UI.Controls,
+		Pace:       s.app.Workspace.Config.UI.Pace,
+		Lang:       s.app.Workspace.Config.UI.Language,
+		Text:       s.app.Workspace.Config.UI.Text,
+		Spacing:    s.app.Workspace.Config.UI.Spacing,
+		Body:       body,
+		JSONURL:    opts.JSONURL,
+		Focus:      opts.Focus,
+		FocusLabel: opts.FocusLabel,
+		QuietTitle: opts.QuietTitle,
+		Kicker:     opts.Kicker,
+		Lede:       opts.Lede,
+		Dot:        opts.Dot,
+		Shell:      opts.Shell,
+		Left:       opts.Left, Right: opts.Right,
+		Header: opts.Header, Footer: opts.Footer,
+		Present:      s.presentFor(r),
 		ExtraScripts: opts.ExtraScripts,
 		Outcome:      s.told(w, r),
 		EditControls: s.editControls(body, opts.Left, opts.Right, opts.Header, opts.Footer),

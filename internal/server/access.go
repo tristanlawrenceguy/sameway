@@ -58,6 +58,9 @@ var ownerOnly = []string{
 // allowed says whether a visitor may make this request, and when not,
 // tells them so on a page of its own.
 func (s *Server) allowed(w http.ResponseWriter, r *http.Request) bool {
+	if isPage(r) {
+		s.seen(r, r.URL.Path)
+	}
 	v := chat.VisitorOf(r.Context())
 	if v.Owner() {
 		return true

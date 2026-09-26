@@ -20,6 +20,7 @@
 {{if .Nav}}<nav class="sw-nav" aria-label="Main">
 <ul>{{range .Nav}}<li{{if .Dot}} data-dot="{{.Dot}}"{{end}}>{{.HTML}}</li>{{end}}</ul>
 </nav>
+{{end}}{{if .Present}}<p class="sw-present">{{.Present}}</p>
 {{end}}{{if .Header}}<div class="sw-strip sw-strip--header">{{.Header}}</div>
 {{end}}<nav class="sw-nav sw-nav--more" aria-label="This workspace">
 <ul>{{range .More}}<li>{{.}}</li>{{end}}</ul>

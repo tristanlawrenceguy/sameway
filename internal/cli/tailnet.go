@@ -160,7 +160,8 @@ func (n *tailnetNode) keepInStep(ctx context.Context, srv *server.Server) {
 		}
 		for _, p := range list {
 			step, cancel := context.WithTimeout(ctx, 20*time.Second)
-			changed, err := peers.With(step, client, n.a.Store, p)
+			changed, there, err := peers.WithPresence(step, client, n.a.Store, p, srv.PresentHere())
+			srv.HearPresence(there)
 			cancel()
 			if changed > 0 {
 				srv.Changed()

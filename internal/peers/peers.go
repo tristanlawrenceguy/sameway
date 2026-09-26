@@ -22,6 +22,16 @@ import (
 type Message struct {
 	Seen   map[string]string `json:"seen"`
 	Stamps []store.Stamp     `json:"stamps"`
+	// Present is who is in the workspace on the side that sends it, just
+	// now, and where: how people on different computers see each other.
+	Present []Presence `json:"present,omitempty"`
+}
+
+// Presence is one person in the workspace just now.
+type Presence struct {
+	Login string `json:"login"`
+	Name  string `json:"name"`
+	Place string `json:"place,omitempty"` // what they are looking at, by name
 }
 
 // Answer takes what a peer sent and answers with what it lacks. It says
@@ -43,25 +53,32 @@ func Answer(st *store.Store, in Message) (Message, int, error) {
 // the peer has that this copy lacks, then the other way round. It says
 // how many records changed here.
 func With(ctx context.Context, c *http.Client, st *store.Store, peer string) (int, error) {
+	n, _, err := WithPresence(ctx, c, st, peer, nil)
+	return n, err
+}
+
+// WithPresence is With that also says who is here, and hears who is
+// there.
+func WithPresence(ctx context.Context, c *http.Client, st *store.Store, peer string, here []Presence) (int, []Presence, error) {
 	mine, err := st.Seen()
 	if err != nil {
-		return 0, err
+		return 0, nil, err
 	}
-	reply, err := post(ctx, c, peer, Message{Seen: mine})
+	reply, err := post(ctx, c, peer, Message{Seen: mine, Present: here})
 	if err != nil {
-		return 0, err
+		return 0, nil, err
 	}
 	n, err := st.Apply(reply.Stamps)
 	if err != nil {
-		return n, err
+		return n, reply.Present, err
 	}
 	theirs, err := st.Since(reply.Seen)
 	if err != nil || len(theirs) == 0 {
-		return n, err
+		return n, reply.Present, err
 	}
 	mine, _ = st.Seen()
 	_, err = post(ctx, c, peer, Message{Seen: mine, Stamps: theirs})
-	return n, err
+	return n, reply.Present, err
 }
 
 // Peers reads the peers setting: machine names, comma separated.
