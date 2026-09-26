@@ -12,7 +12,7 @@
       "label": { "type": "string", "minLength": 1 },
       "name": { "type": "string", "minLength": 1 },
       "id": { "type": "string" },
-      "value": { "type": "string", "description": "The day as a person reads it, such as Fri 2 Oct 2026 14:00." },
+      "value": { "type": "string", "description": "The day as a person reads it, such as Fri 2 Oct 2026, 14:00." },
       "day": { "type": "string", "description": "The same day as YYYY-MM-DD, so the picker opens on it." },
       "hint": { "type": "string", "default": "A day, like 19 Sep or next Friday, with a time if there is one, like 2pm." },
       "error": { "type": "string" },
@@ -36,7 +36,7 @@
   },
   "examples": [
     { "name": "default", "props": { "label": "Due", "name": "due", "id": "due" }, "file": "examples/default.html" },
-    { "name": "filled", "props": { "label": "Starts", "name": "starts", "id": "starts", "value": "Fri 2 Oct 2026 14:00", "day": "2026-10-02" }, "file": "examples/filled.html" },
-    { "name": "error", "props": { "label": "Deadline", "name": "deadline", "id": "deadline", "value": "someday", "required": true, "error": "Say a day, like 19 Sep or next Friday." }, "file": "examples/error.html" }
+    { "name": "filled", "props": { "label": "Starts", "name": "starts", "id": "starts", "value": "Fri 2 Oct 2026, 14:00", "day": "2026-10-02" }, "file": "examples/filled.html" },
+    { "name": "error", "props": { "label": "Deadline", "name": "deadline", "id": "deadline", "value": "someday", "required": true, "error": "Due must be a day, like 19 Sep, next Friday or tomorrow 2pm" }, "file": "examples/error.html" }
   ]
 }

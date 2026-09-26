@@ -99,6 +99,7 @@ func (s *Server) routes() {
 	m.HandleFunc("POST /workspaces/delete", s.workspacesDelete)
 	m.HandleFunc("POST /workspaces/restore", s.workspacesRestore)
 	m.HandleFunc("GET /search", s.searchPage)
+	m.HandleFunc("GET /when", s.whenRead)
 	m.HandleFunc("GET /design", s.designPage)
 	m.HandleFunc("GET /design/sameway.css", s.stylesheet)
 	m.HandleFunc("GET /design/sameway.js", s.script)

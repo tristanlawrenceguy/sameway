@@ -117,3 +117,22 @@ func TestTextRoundTrips(t *testing.T) {
 		}
 	}
 }
+
+// Words not read say why, as what they must be.
+func TestWhySaysWhatItMustBe(t *testing.T) {
+	now := time.Date(2026, 9, 17, 10, 30, 0, 0, time.UTC)
+	for in, want := range map[string]string{
+		"sometime":   "must be a day, like 19 Sep, next Friday or tomorrow 2pm",
+		"31 feb":     "must be a real day: 31 feb is not one",
+		"25:00":      "must be a real time: 25:00 is not one",
+		"Fri 19 Sep": "must be one day: 19 Sep 2026 is a Saturday, not a Friday",
+		"19 Sep":     "",
+	} {
+		if got := Why(in, now); got != want {
+			t.Errorf("Why(%q) = %q, want %q", in, got, want)
+		}
+	}
+	if _, _, ok := Parse("midday", now); !ok {
+		t.Error("midday is read, as noon is")
+	}
+}

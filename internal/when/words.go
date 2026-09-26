@@ -20,10 +20,20 @@ type reading struct {
 	// bad is a date or a time that does not exist, 31 Feb or 25:00: asked
 	// again, not rolled over into the next month or day.
 	bad bool
+	// why is what was wrong, when something was: "day", "time" or
+	// "weekday", for a person to be told.
+	why string
 }
 
 func words(s string, now time.Time) (time.Time, bool, bool) {
-	r := &reading{now: now, start: time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()), hour: -1, weekday: -1}
+	return newReading(now).read(s)
+}
+
+func newReading(now time.Time) *reading {
+	return &reading{now: now, start: time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()), hour: -1, weekday: -1}
+}
+
+func (r *reading) read(s string) (time.Time, bool, bool) {
 	// A full stop after a word is an abbreviation, Sep. or Fri.; between
 	// numbers it is part of a date or a time, 19.9.2026 or 14.30.
 	w := strings.Fields(abbrevRe.ReplaceAllString(strings.ReplaceAll(s, ",", " "), "$1 "))
@@ -44,6 +54,7 @@ func words(s string, now time.Time) (time.Time, bool, bool) {
 		r.base = r.start
 	}
 	if r.weekday >= 0 && r.base.Weekday() != r.weekday {
+		r.why = "weekday"
 		return time.Time{}, false, false
 	}
 	if r.hour < 0 {
@@ -75,7 +86,7 @@ func (r *reading) word(w []string, i int) (int, bool) {
 	case s == "yesterday":
 		r.setDay(r.start.AddDate(0, 0, -1))
 		return 0, true
-	case s == "noon":
+	case s == "noon" || s == "midday":
 		r.hour, r.minute = 12, 0
 		return 0, true
 	case s == "midnight":
@@ -254,35 +265,10 @@ func (r *reading) month(mo time.Month, rest []string) (int, bool) {
 
 func (r *reading) setDay(d time.Time) { r.base, r.haveDay = d, true }
 
-// setReal sets the day when it exists, and marks the reading bad when it
-// does not.
-func (r *reading) setReal(y, mo, d int) {
-	if !exists(y, mo, d) {
-		r.bad = true
-		return
-	}
-	day, _ := realDay(y, mo, d, r.now.Location())
-	r.setDay(day)
-}
-
-// exists is whether a date written out in full is one.
-func exists(y, mo, d int) bool {
-	_, ok := realDay(y, mo, d, time.UTC)
-	return ok && mo >= 1 && mo <= 12
-}
-
-// realDay is the date, when there is one: time.Date would take 31 Feb as
-// 3 Mar, which is not what anyone wrote. A month past 12 wraps into the
-// next year, as months counted on from now do.
-func realDay(y, mo, d int, loc *time.Location) (time.Time, bool) {
-	t := time.Date(y, time.Month(mo), d, 0, 0, 0, 0, loc)
-	return t, d >= 1 && t.Day() == d
-}
-
 func (r *reading) clock(h, m int, half string) {
 	// 25:00, 13pm and 14:75 are not times.
 	if h > 23 || m > 59 || (half != "" && (h < 1 || h > 12)) {
-		r.bad = true
+		r.bad, r.why = true, "time"
 		return
 	}
 	if half == "pm" && h < 12 {

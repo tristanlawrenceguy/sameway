@@ -171,9 +171,10 @@ func coerce(f Field, v any) (any, error) {
 		if !ok {
 			return nil, fmt.Errorf("must be a day or a moment")
 		}
-		ts, day, ok := when.Parse(s, time.Now())
+		now := time.Now()
+		ts, day, ok := when.Parse(s, now)
 		if !ok {
-			return nil, fmt.Errorf("could not read %q as a day or a moment; try 19 Sep, next Friday, tomorrow 2pm, or 2026-09-19", s)
+			return nil, fmt.Errorf("%s", when.Why(s, now))
 		}
 		return when.Store(ts, day), nil
 	case "list":
