@@ -195,7 +195,10 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	// What this record is connected to, as a line of counts; the address
 	// says which of them are open. See related.go.
 	b.WriteString(s.related(t, rec, always, here))
-	s.page(w, r, trimTitle(s.title(t, rec)), template.HTML(b.String()), pageOptions{
+	// The heading is the whole title, wrapped as it needs; only the window
+	// title, which has one line, is shortened.
+	s.page(w, r, s.title(t, rec), template.HTML(b.String()), pageOptions{
+		Said:         trimTitle(s.title(t, rec)),
 		Kicker:       s.crumbs("/t/"+t.Name, capitalize(plural(t.Name)), "", s.dotOf(t.Name)),
 		Lede:         s.lede(t, rec),
 		JSONURL:      "/api/" + t.Name + "/" + rec.ID,
@@ -217,44 +220,6 @@ func (s *Server) crumbs(listHref, listLabel, here string, dot int) template.HTML
 		props["current"] = here
 	}
 	return s.component("crumbs", props)
-}
-
-// maxTitleRunes is the character ceiling for a heading title. Six medium
-// words fit comfortably under 80 runes, so this catches runaway single-word
-// titles while leaving normal six-word titles alone.
-const maxTitleRunes = 75
-
-// trimTitle cuts a title to at most six words and at most maxTitleRunes
-// characters so no heading exceeds reasonable length. Titles already within
-// both limits pass through unchanged. An ellipsis is appended when trimmed.
-func trimLabel(s string) string {
-	fields := strings.Fields(s)
-	if len(fields) <= 3 {
-		return s
-	}
-	return strings.Join(fields[:3], " ")
-}
-
-// trimWords cuts a string to at most n words.
-func trimWords(s string, n int) string {
-	fields := strings.Fields(s)
-	if len(fields) <= n {
-		return s
-	}
-	return strings.Join(fields[:n], " ")
-}
-
-func trimTitle(s string) string {
-	fields := strings.Fields(s)
-	if len(fields) <= 6 && len([]rune(s)) <= maxTitleRunes {
-		return s
-	}
-	if len(fields) > 6 {
-		return strings.Join(fields[:6], " ") + "…"
-	}
-	// ≤ 6 words but too many characters: truncate at character boundary.
-	runes := []rune(s)
-	return string(runes[:maxTitleRunes-1]) + "…"
 }
 
 func capitalize(s string) string {
