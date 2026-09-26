@@ -139,7 +139,7 @@ const habit = await (await fetch(base + "/api/habit", {
 })).json();
 await page.goto(base + "/t/habit/" + habit.id);
 // Its bar is the meter component, read in words, not as a bare number.
-const meter = page.getByRole("meter", { name: "Water this day" });
+const meter = page.getByRole("meter", { name: "Water today" });
 check(await meter.count() === 1 && (await meter.getAttribute("aria-valuetext") || "").includes("glasses"), "habit: its bar is a meter that says the amount in words");
 await page.getByRole("button", { name: /^Edit/ }).first().click();
 const fields = await page.evaluate(() => [...document.querySelectorAll(".sw-inline-form .sw-inline-field")].map((f) => ({
