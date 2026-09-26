@@ -210,7 +210,7 @@ func (s *Server) messageHTML(id, from string, last bool) string {
 	}
 	props := map[string]any{
 		"role": m.Fields["role"], "content": m.Fields["content"], "id": "msg-" + m.ID, "from": from,
-		"time": m.CreatedAt.Local().Format("15:04"), "changes": s.undoable(m.Fields["changes"], last),
+		"time": messageTime(m.CreatedAt), "datetime": m.CreatedAt.UTC().Format(time.RFC3339), "changes": s.undoable(m.Fields["changes"], last),
 	}
 	if fileID, _ := m.Fields["file"].(string); fileID != "" {
 		props["attachment"] = s.attachment(fileID)

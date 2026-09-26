@@ -15,9 +15,12 @@
       btn.addEventListener("click", function () {
         var alert = this.closest(".sw-outcome") || this.closest(".sw-alert");
         var had = alert && alert.contains(document.activeElement);
+        // The outcome of an edit hands focus back to the Edit it came from.
+        var from = alert && alert.getAttribute("data-outcome-for");
+        var edit = from && document.querySelector('[data-edit-action="' + from + '"] [data-edit]');
         if (alert) alert.remove();
         var main = document.getElementById("main");
-        if (had && main) main.focus();
+        if (had && edit) edit.focus(); else if (had && main) main.focus();
       });
     });
   }

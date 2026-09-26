@@ -29,9 +29,20 @@ func percent(value, max any) int {
 	return int(math.Round(math.Max(0, math.Min(1, v/m)) * 100))
 }
 
-// atMost is value, never past max: a meter's value may not pass its end.
+// atMost is value, never past max nor below nothing: a meter's value lies
+// within its range.
 func atMost(value, max any) float64 {
-	return math.Min(numberOf(value), numberOf(max))
+	return math.Max(0, math.Min(numberOf(value), numberOf(max)))
+}
+
+// pastPercent is how much of a bar past its target is, as a percentage of
+// the whole: 64 of 50 is 22 past. Nothing when it is not past.
+func pastPercent(value, max any) int {
+	v, m := numberOf(value), numberOf(max)
+	if m <= 0 || v <= m {
+		return 0
+	}
+	return int(math.Round((v - m) / v * 100))
 }
 
 // paging is what the pagination component draws: the step back, the step
@@ -66,9 +77,13 @@ func pagesOf(href string, page, pages any) paging {
 // pageWindow is the pages to offer by number: the first, the last, and two
 // either side of the current one; 0 marks a gap between them.
 func pageWindow(p, n int) []int {
+	// The first, the last, and one either side of this one; a gap that
+	// would stand for a single page shows that page instead, so the row is
+	// never more than seven long and a gap always hides two or more.
+	near := func(i int) bool { return i == 1 || i == n || (i >= p-1 && i <= p+1) }
 	var out []int
 	for i := 1; i <= n; i++ {
-		if i == 1 || i == n || (i >= p-2 && i <= p+2) {
+		if near(i) || (near(i-1) && near(i+1)) {
 			out = append(out, i)
 		} else if len(out) > 0 && out[len(out)-1] != 0 {
 			out = append(out, 0)
