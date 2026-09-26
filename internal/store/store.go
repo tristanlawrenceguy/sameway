@@ -180,8 +180,15 @@ func (s *Store) SetMeta(key, value string) {
 	s.db.Exec(`INSERT OR REPLACE INTO _meta (key, value) VALUES (?, ?)`, key, value)
 }
 
-func (s *Store) synced(typeName, id string, rec *Record, err error) {
-	if err == nil && s.AfterSync != nil {
-		s.AfterSync(typeName, id, rec)
+// synced tells AfterSync of each record an exchange wrote, once all of it
+// is written, so a record that points at another arrived with it finds it.
+func (s *Store) synced(touched map[[2]string]bool) {
+	if s.AfterSync == nil {
+		return
+	}
+	for k := range touched {
+		if rec, err := s.Get(k[0], k[1]); err == nil {
+			s.AfterSync(k[0], k[1], rec)
+		}
 	}
 }
