@@ -9,25 +9,40 @@
     "additionalProperties": false,
     "required": [],
     "properties": {
-      "label": { "type": "string", "default": "Keeping up", "description": "Names the region." },
-      "detail": { "title": "How much to show", "type": "string", "enum": ["glance", "full"], "default": "full", "description": "glance is how many are met this period, for a corner. full is every habit with its bar, streak, days and Log." },
-      "tags": { "type": "array", "items": { "type": "string" }, "description": "Show only habits with one of these tags. Leave out for all that are not archived." },
+      "label": { "type": "string", "default": "Keeping up" },
+      "detail": { "title": "How much to show", "type": "string", "enum": ["glance", "full"], "default": "full" },
+      "tags": { "type": "array", "items": { "type": "string" } },
       "habits": { "type": "array", "description": "The habits as they stand. Filled in by the server from the records.", "items": { "type": "object", "additionalProperties": false, "required": ["id", "name"], "properties": {
-        "id": { "type": "string" }, "name": { "type": "string" }, "href": { "type": "string" },
-        "unit": { "type": "string" }, "period": { "type": "string", "description": "day, week, month or year." },
-        "aim": { "type": "string", "enum": ["reach", "limit", "record"], "description": "reach is at least the target; limit is at most, and past it is over; record has no target and no bar." },
-        "dated": { "type": "boolean", "description": "Log offers a day to log for, for something done before today, written as a person would: yesterday, 22 Sep, 2026-09-22. Empty is now. The habit's own page sets it." },
-        "on": { "type": "string", "description": "With dated: the day filled in, as YYYY-MM-DD, such as the day a calendar's day view shows." },
-        "log": { "type": "string", "description": "For a record: the amount Log starts at, the last reading, so the same again is one press. Anything else starts empty, and Log with nothing typed logs one." },
-        "amount": { "type": "number", "description": "This period so far." }, "target": { "type": "number" },
-        "progress": { "type": "string", "description": "In words: 3 of 8 glasses, done, not yet." }, "pct": { "type": "integer", "description": "This period against the target, 0 to 100." },
-        "met": { "type": "boolean" }, "streak": { "type": "integer" }, "streakWords": { "type": "string" }, "best": { "type": "integer" },
-        "goal": { "type": "string", "description": "Progress on a longer goal, in words; empty for none." },
-        "last": { "type": "array", "items": { "type": "object", "additionalProperties": false, "properties": { "date": { "type": "string" }, "met": { "type": "boolean" }, "amount": { "type": "number" }, "logged": { "type": "boolean" }, "words": { "type": "string", "description": "How the period went, for a reader, when met or not met does not say it: 24 hours, over the limit." } } } }
-      } } },
-      "id": { "type": "string" }
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "shortName": { "type": "string", "description": "Trimmed to two words for the Log button." },
+        "href": { "type": "string" },
+        "unit": { "type": "string" },
+        "period": { "type": "string" },
+        "aim": { "type": "string", "enum": ["reach", "limit", "record"] },
+        "dated": { "type": "boolean" },
+        "on": { "type": "string" },
+        "amount": { "type": "number" },
+        "target": { "type": "number" },
+        "progress": { "type": "string" },
+        "pct": { "type": "integer" },
+        "met": { "type": "boolean" },
+        "streak": { "type": "integer" },
+        "streakWords": { "type": "string" },
+        "best": { "type": "integer" },
+        "goal": { "type": "string" },
+        "log": { "title": "Last logged value", "type": "string" },
+        "last": { "type": "array", "items": { "type": "object", "additionalProperties": false, "properties": {
+          "date": { "type": "string" },
+          "met": { "type": "boolean" },
+          "amount": { "type": "number" },
+          "logged": { "type": "boolean" },
+          "words": { "type": "string" }
+        }}
+      } } } }
     }
   },
+  "id": { "type": "string" },
   "a11y": {
     "role": "region at full, status at glance",
     "keyboard": [
@@ -44,19 +59,19 @@
   },
   "examples": [
     { "name": "default", "props": { "habits": [
-      { "id": "h1", "name": "Stretch", "href": "/t/habit/h1", "period": "day", "amount": 1, "target": 1, "progress": "done", "pct": 100, "met": true, "streak": 12, "streakWords": "12 days in a row", "best": 30, "last": [{ "date": "2026-09-16", "met": true }, { "date": "2026-09-17", "met": true }, { "date": "2026-09-18", "met": true }, { "date": "2026-09-19", "met": false }, { "date": "2026-09-20", "met": true }, { "date": "2026-09-21", "met": true }, { "date": "2026-09-22", "met": true }] },
-      { "id": "h2", "name": "Water", "href": "/t/habit/h2", "unit": "glasses", "period": "day", "amount": 5, "target": 8, "progress": "5 of 8 glasses", "pct": 62, "met": false, "streak": 3, "streakWords": "3 days in a row", "best": 9, "last": [{ "date": "2026-09-16", "met": false }, { "date": "2026-09-17", "met": true }, { "date": "2026-09-18", "met": true }, { "date": "2026-09-19", "met": true }, { "date": "2026-09-20", "met": true }, { "date": "2026-09-21", "met": true }, { "date": "2026-09-22", "met": false }] },
-      { "id": "h3", "name": "Run", "href": "/t/habit/h3", "unit": "km", "period": "week", "amount": 10, "target": 15, "progress": "10 of 15 km", "pct": 66, "met": false, "streak": 0, "streakWords": "", "best": 4, "goal": "38 of 100 km by 31 Oct", "last": [{ "date": "2026-08-31", "met": true }, { "date": "2026-09-07", "met": true }, { "date": "2026-09-14", "met": false }, { "date": "2026-09-21", "met": false }] }
+      { "id": "h1", "name": "Stretch", "shortName": "Stretch", "href": "/t/habit/h1", "period": "day", "amount": 1, "target": 1, "progress": "done", "pct": 100, "met": true, "streak": 12, "streakWords": "12 days in a row", "best": 30, "last": [{ "date": "2026-09-16", "met": true }, { "date": "2026-09-17", "met": true }, { "date": "2026-09-18", "met": true }, { "date": "2026-09-19", "met": false }, { "date": "2026-09-20", "met": true }, { "date": "2026-09-21", "met": true }, { "date": "2026-09-22", "met": true }] },
+      { "id": "h2", "name": "Water", "shortName": "Water", "href": "/t/habit/h2", "unit": "glasses", "period": "day", "amount": 5, "target": 8, "progress": "5 of 8 glasses", "pct": 62, "met": false, "streak": 3, "streakWords": "3 days in a row", "best": 9, "last": [{ "date": "2026-09-16", "met": false }, { "date": "2026-09-17", "met": true }, { "date": "2026-09-18", "met": true }, { "date": "2026-09-19", "met": true }, { "date": "2026-09-20", "met": true }, { "date": "2026-09-21", "met": true }, { "date": "2026-09-22", "met": false }] },
+      { "id": "h3", "name": "Run", "shortName": "Run", "href": "/t/habit/h3", "unit": "km", "period": "week", "amount": 10, "target": 15, "progress": "10 of 15 km", "pct": 66, "met": false, "streak": 0, "streakWords": "", "best": 4, "goal": "38 of 100 km by 31 Oct", "last": [{ "date": "2026-08-31", "met": true }, { "date": "2026-09-07", "met": true }, { "date": "2026-09-14", "met": false }, { "date": "2026-09-21", "met": false }] }
     ] }, "file": "examples/default.html" },
     { "name": "limit", "props": { "label": "Allowances", "habits": [
-      { "id": "h4", "name": "Hours worked", "href": "/t/habit/h4", "unit": "hours", "period": "month", "aim": "limit", "dated": true, "amount": 15.5, "target": 21, "progress": "15.5 of 21 hours, 5.5 left", "pct": 74, "met": true, "streak": 2, "streakWords": "2 months in a row within the limit", "best": 2, "last": [{ "date": "2026-06", "met": false, "words": "24 hours, over the limit", "logged": true }, { "date": "2026-07", "met": true, "words": "19 hours, within the limit", "logged": true }, { "date": "2026-08", "met": true, "words": "21 hours, within the limit", "logged": true }, { "date": "2026-09", "met": true, "words": "15.5 hours, within the limit", "logged": true }] },
-      { "id": "h5", "name": "Eating out", "href": "/t/habit/h5", "unit": "€", "period": "week", "aim": "limit", "amount": 64, "target": 50, "progress": "64 of 50 €, 14 over", "pct": 100, "met": false, "streak": 0, "streakWords": "", "best": 3, "last": [{ "date": "2026-09-14", "met": true, "words": "35 €, within the limit", "logged": true }, { "date": "2026-09-21", "met": false, "words": "64 €, over the limit", "logged": true }] }
+      { "id": "h4", "name": "Hours worked", "shortName": "Hours worked", "href": "/t/habit/h4", "unit": "hours", "period": "month", "aim": "limit", "dated": true, "amount": 15.5, "target": 21, "progress": "15.5 of 21 hours, 5.5 left", "pct": 74, "met": true, "streak": 2, "streakWords": "2 months in a row within the limit", "best": 2, "last": [{ "date": "2026-06", "met": false, "words": "24 hours, over the limit", "logged": true }, { "date": "2026-07", "met": true, "words": "19 hours, within the limit", "logged": true }, { "date": "2026-08", "met": true, "words": "21 hours, within the limit", "logged": true }, { "date": "2026-09", "met": true, "words": "15.5 hours, within the limit", "logged": true }] },
+      { "id": "h5", "name": "Eating out", "shortName": "Eating out", "href": "/t/habit/h5", "unit": "\u20ac", "period": "week", "aim": "limit", "amount": 64, "target": 50, "progress": "64 of 50 \u20ac, 14 over", "pct": 100, "met": false, "streak": 0, "streakWords": "", "best": 3, "last": [{ "date": "2026-09-14", "met": true, "words": "35 \u20ac, within the limit", "logged": true }, { "date": "2026-09-21", "met": false, "words": "64 \u20ac, over the limit", "logged": true }] }
     ] }, "file": "examples/limit.html" },
     { "name": "record", "props": { "label": "Measures", "habits": [
-      { "id": "h6", "name": "Weight", "href": "/t/habit/h6", "unit": "kg", "period": "day", "aim": "record", "log": "72.8", "amount": 72.8, "target": 0, "progress": "72.8 kg", "pct": 0, "met": false, "last": [{ "date": "2026-09-20", "met": false, "words": "73.1 kg", "logged": true }, { "date": "2026-09-21", "met": false, "words": "nothing logged" }, { "date": "2026-09-22", "met": false, "words": "72.8 kg", "logged": true }] }
+      { "id": "h6", "name": "Weight", "shortName": "Weight", "href": "/t/habit/h6", "unit": "kg", "period": "day", "aim": "record", "log": "72.8", "amount": 72.8, "target": 0, "progress": "72.8 kg", "pct": 0, "met": false, "last": [{ "date": "2026-09-20", "met": false, "words": "73.1 kg", "logged": true }, { "date": "2026-09-21", "met": false, "words": "nothing logged" }, { "date": "2026-09-22", "met": false, "words": "72.8 kg", "logged": true }] }
     ] }, "file": "examples/record.html" },
     { "name": "glance", "props": { "detail": "glance", "label": "Today", "habits": [
-      { "id": "h1", "name": "Stretch", "met": true, "period": "day" }, { "id": "h2", "name": "Water", "met": false, "period": "day" }
+      { "id": "h1", "name": "Stretch", "shortName": "Stretch", "met": true, "period": "day" }, { "id": "h2", "name": "Water", "shortName": "Water", "met": false, "period": "day" }
     ] }, "file": "examples/glance.html" },
     { "name": "empty", "props": { "label": "Habits" }, "file": "examples/empty.html" }
   ]

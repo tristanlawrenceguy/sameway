@@ -22,8 +22,8 @@ var comfort = []struct {
 }{
 	{"ui.text", "Size of the words", [][2]string{{"normal", "Normal"}, {"large", "Large"}, {"larger", "Larger"}}},
 	{"ui.spacing", "Room between lines and words", [][2]string{{"normal", "Normal"}, {"wide", "Wide"}}},
-	{"ui.pace", "How changes arrive on the page", [][2]string{{"calm", "Calmly, one at a time"}, {"quick", "Quickly"}, {"still", "All at once, without motion"}}},
-	{"ui.controls", "Buttons on each item", [][2]string{{"auto", "Show when pointed at"}, {"visible", "Always show"}}},
+	{"ui.pace", "How changes arrive on the page", [][2]string{{"calm", "Calmly"}, {"quick", "Quickly"}, {"still", "All at once"}}},
+	{"ui.controls", "Buttons on each item", [][2]string{{"auto", "Hover"}, {"visible", "Always show"}}},
 }
 
 func (s *Server) helpPage(w http.ResponseWriter, r *http.Request) {

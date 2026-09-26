@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
@@ -22,7 +23,7 @@ func (s *Server) addButton(t *schema.Type) template.HTML {
 		return ""
 	}
 	return template.HTML(`<form method="post" action="/t/` + template.HTMLEscapeString(t.Name) + `/add" class="sw-add">` +
-		string(s.component("button", map[string]any{"label": "Add a " + t.Name, "type": "submit", "variant": "secondary"})) + `</form>`)
+		string(s.component("button", map[string]any{"label": addLabel(t.Name), "type": "submit", "variant": "secondary"})) + `</form>`)
 }
 
 // addRecord makes a new record with its name to change, and opens it for
@@ -82,6 +83,22 @@ func titleField(t *schema.Type) string {
 		}
 	}
 	return ""
+}
+
+// addLabel builds a button label for adding records: "Add an action" or
+// "Add a note", trimmed to three words total when it would be longer.
+func addLabel(name string) string {
+	var label string
+	if strings.HasPrefix(strings.ToLower(name), "a") ||
+		strings.HasPrefix(strings.ToLower(name), "e") ||
+		strings.HasPrefix(strings.ToLower(name), "i") ||
+		strings.HasPrefix(strings.ToLower(name), "o") ||
+		strings.HasPrefix(strings.ToLower(name), "u") {
+		label = "Add an " + name
+	} else {
+		label = "Add a " + name
+	}
+	return trimLabel(label)
 }
 
 type errNoType string

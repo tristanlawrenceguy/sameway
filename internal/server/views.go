@@ -80,7 +80,9 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 		b.WriteString(string(s.pageNav(r, pg, "Pages of "+plural(t.Name))))
 	}
 	// A new one by hand, and records from a file a person already has,
-	// each said once, quietly, below the list.
+	// each said once, quietly, below the list. The Add button label —
+	// "Add an action" for vowel-starting types, "Add a note" otherwise —
+	// is built in addButton (add.go) via addLabel().
 	b.WriteString(string(s.addButton(t)))
 	if s.importable(t) {
 		b.WriteString(`<p class="sw-quiet-row">` + string(s.component("link", map[string]any{"href": "/t/" + t.Name + "/import", "label": "Import", "context": plural(t.Name), "look": "button"})) + `</p>`)
@@ -172,7 +174,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	if t.Name == chat.ActionType {
 		title := s.title(t, rec)
 		fmt.Fprintf(&b, `<form method="post" action="/act/%s"><input type="hidden" name="from" value="/t/%s/%s">%s</form>`, rec.ID, t.Name, rec.ID,
-			s.component("button", map[string]any{"label": "Run " + trimLabel(title), "context": title, "type": "submit", "variant": "primary"}))
+			s.component("button", map[string]any{"label": "Run " + trimLabel(title), "type": "submit", "variant": "primary"}))
 	}
 	// The record's one press, done or pinned or whatever its yes-or-no
 	// field is, sits under the title; Delete keeps to the quiet bar.
@@ -223,6 +225,15 @@ func trimLabel(s string) string {
 		return s
 	}
 	return strings.Join(fields[:3], " ")
+}
+
+// trimWords cuts a string to at most n words.
+func trimWords(s string, n int) string {
+	fields := strings.Fields(s)
+	if len(fields) <= n {
+		return s
+	}
+	return strings.Join(fields[:n], " ")
 }
 
 func trimTitle(s string) string {
