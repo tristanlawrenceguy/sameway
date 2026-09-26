@@ -22,7 +22,7 @@
           "label": { "type": "string", "description": "Says what the link does on its own, such as Ask the assistant; never here." }
         }
       },
-      "live": { "type": "boolean", "default": false, "description": "Announce it as a status, for an answer the person just asked for, such as a search with no results." }
+      "live": { "type": "boolean", "default": false, "description": "Announce it as a status, only when a script puts it into a page already open, as an answer just asked for. A status that arrives with a new page is not announced; say the outcome in the page title then." }
     }
   },
   "a11y": {
@@ -39,6 +39,6 @@
   "examples": [
     { "name": "default", "props": { "message": "Ask for anything." }, "file": "examples/default.html" },
     { "name": "titled", "props": { "title": "No notes yet", "message": "Add one yourself, or", "action": { "href": "/chat?prompt=Add+a+note", "label": "ask the assistant" } }, "file": "examples/titled.html" },
-    { "name": "live", "props": { "title": "No results", "level": 3, "message": "No matches for plumber. Try other words, or", "action": { "href": "/chat?prompt=plumber", "label": "ask the assistant" }, "live": true }, "file": "examples/live.html" }
+    { "name": "live", "props": { "title": "No results", "level": 3, "message": "Nothing matches plumber. Try other words, or", "action": { "href": "/chat?prompt=Find+plumber", "label": "ask the assistant" }, "live": true }, "file": "examples/live.html" }
   ]
 }

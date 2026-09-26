@@ -131,10 +131,12 @@ func (s *Server) showWorkspaces(w http.ResponseWriter, r *http.Request, problem 
 	b.WriteString(`</section>`)
 
 	others := s.others()
+	b.WriteString(`<section class="sw-stack" aria-labelledby="ws-others"><h2 id="ws-others">Other workspaces</h2>`)
 	if len(others) == 0 {
-		b.WriteString(string(s.component("empty", map[string]any{"title": "No workspaces yet", "message": "Create one below."})))
+		// This one is a workspace, so not "none yet"; and the way to make
+		// another is a link to its field, not a direction to look below.
+		b.WriteString(string(s.component("empty", map[string]any{"message": "Only this one so far.", "action": map[string]any{"href": "#new-name", "label": "Create a workspace"}})))
 	} else {
-		b.WriteString(`<section class="sw-stack" aria-labelledby="ws-others"><h2 id="ws-others">Other workspaces</h2>`)
 		b.WriteString(`<ul class="sw-plain sw-rows">`)
 		for _, o := range others {
 			fmt.Fprintf(&b, `<li class="sw-row sw-ws"><div class="sw-ws__who"><span class="sw-row__title">%s</span><span class="sw-muted sw-small">%s</span></div>`, template.HTMLEscapeString(o.Name), template.HTMLEscapeString(o.Dir))

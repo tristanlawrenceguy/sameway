@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>{{if .Failed}}Error: {{end}}{{.Title}} · {{.Site}}</title>
+<title>{{if .Failed}}Error: {{end}}{{or .Said .Title}} · {{.Site}}</title>
 <link rel="stylesheet" href="/design/sameway.css">
 {{if .JSONURL}}<link rel="alternate" type="application/json" href="{{.JSONURL}}">
 {{end}}<link rel="describedby" href="/api/describe">
