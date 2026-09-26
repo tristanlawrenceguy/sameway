@@ -62,7 +62,7 @@ func TestLongRecordTitleIsWordTrimmedInActivity(t *testing.T) {
 
 	// Verify the summary on the activity page also contains the trimmed title.
 	summary := "Assistant created note " + wantTrimmed
-	if !strings.Contains(body, summary) {
+	if !anyH3Says(body, summary) {
 		t.Errorf("activity page h3 should contain the full summary with 6-word trimmed title\n\nwant: %s\n\ngot body:\n%s", summary, truncate(body))
 	}
 

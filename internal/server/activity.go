@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/design"
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
@@ -20,37 +21,6 @@ func (s *Server) record(r *http.Request, c chat.Change) string {
 		c.ByLogin = s.app.Chat.Owner.Login
 	}
 	return chat.Record(s.app.Store, "human", c)
-}
-
-// headingSummary returns the activity summary if present, otherwise builds a
-// fallback from actor + action + target + detail so blank-summary records get
-// readable heading text like "You said hello" instead of an empty h3.
-func (s *Server) headingSummary(r *store.Record) string {
-	if s2, _ := r.Fields["summary"].(string); s2 != "" {
-		// Written as "You" on the computer where it was done; someone
-		// else's, here, reads as theirs.
-		if who, _ := s.whoDid(r); who != "" && strings.HasPrefix(s2, "You ") {
-			s2 = who + s2[3:]
-		}
-		return template.HTMLEscapeString(s2)
-	}
-	actor, _ := r.Fields["actor"].(string)
-	action, _ := r.Fields["action"].(string)
-	target, _ := r.Fields["target"].(string)
-	detail, _ := r.Fields["detail"].(string)
-
-	who := map[string]string{"human": "You", "assistant": "Assistant", "system": "System"}[actor]
-	if who == "" {
-		who = actor
-	}
-	parts := []string{who, action}
-	if target != "" {
-		parts = append(parts, target)
-	}
-	if detail != "" {
-		parts = append(parts, detail)
-	}
-	return strings.Join(parts, " ")
 }
 
 // recentActivity renders the newest n actions inside a disclosure that is
@@ -103,8 +73,7 @@ func (s *Server) recentActivityAbout(n int, from string, about func(target, id s
 	var inner strings.Builder
 	inner.WriteString(`<ol class="sw-plain sw-stack--tight" aria-label="Recent activity">`)
 	for _, r := range recs {
-		summary := s.headingSummary(r)
-		inner.WriteString(`<li><h3 class="sw-event__heading">` + summary + `</h3>` + string(s.event(r, from)) + `</li>`)
+		inner.WriteString(`<li>` + string(s.event(r, from, 3, true)) + `</li>`)
 	}
 	inner.WriteString(`</ol><p class="sw-small" style="margin:var(--sw-space-3) 0 0">`)
 	inner.WriteString(string(s.component("link", map[string]any{"href": "/activity", "label": everything, "look": "button"})))
@@ -120,13 +89,30 @@ func (s *Server) recentActivityAbout(n int, from string, about func(target, id s
 }
 
 // event renders one entry. One that can still be undone carries the way
-// to undo it: a form posting to the entry, back to the page from.
-func (s *Server) event(r *store.Record, from string) template.HTML {
+// to undo it: a form posting to the entry, back to the page from. level
+// makes its sentence a heading, for a log read heading by heading; dated
+// gives its time the day, where no day's heading above says it.
+func (s *Server) event(r *store.Record, from string, level int, dated bool) template.HTML {
+	at := r.CreatedAt.Local().Format("15:04")
+	if dated {
+		at = messageTime(r.CreatedAt)
+	}
 	props := map[string]any{
-		"actor":  r.Fields["actor"],
-		"action": r.Fields["action"],
-		"time":   r.CreatedAt.Local().Format("15:04"),
-		"id":     "activity-" + r.ID,
+		"actor":    r.Fields["actor"],
+		"action":   r.Fields["action"],
+		"time":     at,
+		"datetime": r.CreatedAt.UTC().Format(time.RFC3339),
+		"id":       "activity-" + r.ID,
+	}
+	if level > 0 {
+		props["level"] = level
+	}
+	// Where it was done from, when not here, as the log's own summary says.
+	if via, _ := r.Fields["via"].(string); via != "" {
+		if !strings.HasPrefix(via, "through ") {
+			via = "on " + via
+		}
+		props["via"] = via
 	}
 	if who, person := s.whoDid(r); who != "" {
 		props["who"], props["person"] = who, person
@@ -206,16 +192,16 @@ func (s *Server) activityPage(w http.ResponseWriter, r *http.Request) {
 	day := ""
 	open := false
 	for _, rec := range recs {
-		d := rec.CreatedAt.Local().Format("Monday 2 January")
+		d := dayHeading(rec.CreatedAt)
 		if d != day {
 			if open {
 				b.WriteString("</ol>")
 			}
-			fmt.Fprintf(&b, `<h2 class="sw-small sw-muted" style="margin-top:var(--sw-space-8)">%s</h2><ol class="sw-plain sw-stack--tight sw-panel" aria-label="Activity on %s">`, template.HTMLEscapeString(d), template.HTMLEscapeString(d))
+			id := "day-" + rec.CreatedAt.Local().Format("2006-01-02")
+			fmt.Fprintf(&b, `<h2 class="sw-small sw-muted" style="margin-top:var(--sw-space-8)" id="%s">%s</h2><ol class="sw-plain sw-stack--tight sw-panel" aria-labelledby="%s">`, id, template.HTMLEscapeString(d), id)
 			day, open = d, true
 		}
-		summary := s.headingSummary(rec)
-		b.WriteString(`<li><h3 class="sw-event__heading">` + summary + `</h3>` + string(s.event(rec, "/activity")) + `</li>`)
+		b.WriteString(`<li>` + string(s.event(rec, "/activity", 3, false)) + `</li>`)
 	}
 	if open {
 		b.WriteString("</ol>")
@@ -245,4 +231,21 @@ func (s *Server) baseFile(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/javascript; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Write(data)
+}
+
+// dayHeading is a day of the log as its heading says it: Today, Yesterday,
+// or the day, with its year when it is not this one.
+func dayHeading(at time.Time) string {
+	at, now := at.Local(), time.Now()
+	y, m, d := now.Date()
+	today := time.Date(y, m, d, 0, 0, 0, 0, now.Location())
+	switch day := time.Date(at.Year(), at.Month(), at.Day(), 0, 0, 0, 0, now.Location()); {
+	case day.Equal(today):
+		return "Today, " + at.Format("Monday 2 January")
+	case day.Equal(today.AddDate(0, 0, -1)):
+		return "Yesterday, " + at.Format("Monday 2 January")
+	case at.Year() != now.Year():
+		return at.Format("Monday 2 January 2006")
+	}
+	return at.Format("Monday 2 January")
 }
