@@ -4,16 +4,25 @@
 .sw-chart { margin: 0; max-width: 100%; }
 .sw-chart__caption { font-weight: 700; margin: 0 0 var(--sw-space-3); }
 .sw-chart__svg { display: block; width: 100%; height: auto; max-width: 40rem; font-size: 12px; font-family: inherit; overflow: visible; }
+/* The picture is drawn twice, wide and narrow, and a place shows the one
+   that fits: shrunk, the wide one's words were drawn too small to read on
+   a phone. Only one is ever shown, so a screen reader meets one picture. */
+.sw-chart--full, .sw-chart--page { container-type: inline-size; }
+.sw-chart__svg--narrow { display: none; }
+@container (max-width: 30rem) {
+  .sw-chart__svg--wide { display: none; }
+  .sw-chart__svg--narrow { display: block; }
+}
+.sw-chart__svg--narrow .sw-chart__tick, .sw-chart__svg--narrow .sw-chart__x, .sw-chart__svg--narrow .sw-chart__targettext { font-size: 13px; }
+.sw-chart__svg--narrow .sw-chart__value { font-size: 14px; }
 /* The grid is a whisper: dotted hairlines, with the baseline drawn solid. */
 .sw-chart__grid { stroke: var(--sw-color-border); stroke-width: 1; stroke-dasharray: 2 4; }
 .sw-chart__grid:first-of-type { stroke-dasharray: none; stroke: var(--sw-color-border-strong); }
 .sw-chart__tick { fill: var(--sw-color-fg-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
 .sw-chart__x { fill: var(--sw-color-fg-muted); font-size: 11px; }
 .sw-chart__value { fill: var(--sw-color-fg); font-weight: 600; font-size: 12px; font-variant-numeric: tabular-nums; }
-/* Bars take the colour of the list they count, and lift a little under
-   the pointer so the one being read stands out. */
-.sw-chart__bar { fill: var(--sw-dot, var(--sw-color-accent)); opacity: 1; transition: opacity var(--sw-motion-fast) var(--sw-motion-ease); }
-.sw-chart__bar:hover { opacity: 1; }
+/* Bars take the colour of the list they count. */
+.sw-chart__bar { fill: var(--sw-dot, var(--sw-color-accent)); }
 .sw-chart__line { stroke: var(--sw-dot, var(--sw-color-accent)); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
 .sw-chart__dot { fill: var(--sw-color-bg-raised); stroke: var(--sw-dot, var(--sw-color-accent)); stroke-width: 2.5; }
 .sw-chart__description { margin: var(--sw-space-2) 0 0; color: var(--sw-color-fg-muted); max-width: var(--sw-size-measure); font-size: var(--sw-size-text-sm); }
@@ -42,3 +51,14 @@
 /* What is wrong, when the chart cannot be drawn: the detail for whoever fixes it. */
 .sw-chart__why { margin-top: var(--sw-space-1); }
 .sw-chart__why p { margin: var(--sw-space-1) 0 0; font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); }
+/* Forced colours: an inline picture keeps its own colours while the page
+   behind it turns to the person's, so every part is drawn in theirs. */
+@media (forced-colors: active) {
+  .sw-chart__bar { fill: CanvasText; }
+  .sw-chart__line { stroke: CanvasText; }
+  .sw-chart__dot { fill: Canvas; stroke: CanvasText; }
+  .sw-chart__grid, .sw-chart__grid:first-of-type { stroke: GrayText; }
+  .sw-chart__tick, .sw-chart__x, .sw-chart__value { fill: CanvasText; }
+  .sw-chart__target { stroke: Highlight; }
+  .sw-chart__targettext { fill: Highlight; stroke: Canvas; }
+}
