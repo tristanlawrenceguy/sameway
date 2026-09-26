@@ -55,7 +55,14 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 		b.WriteString(`<script>(function(){var f=document.querySelector('.sw-upload__field');var err=document.getElementById("upload-error");f.addEventListener('invalid',function(e){err.textContent="select a file."},false);document.querySelector(".sw-upload").addEventListener('submit',function(e){if(!f.value){e.preventDefault();err.textContent="select a file.";f.reportValidity()}},{once:true});f.addEventListener('change',function(){err.textContent=""})})();</script>`)
 	}
 	pg := paged{page: 1, pages: 1}
-	if len(recs) == 0 {
+	if len(recs) == 0 && (len(where) > 0 || order != "") {
+		// Some exist and none matched: not the first-use words, which would
+		// say there are none, but what was looked for and the way back.
+		b.WriteString(string(s.component("empty", map[string]any{
+			"title": "No matching " + plural(t.Name), "message": "Nothing is " + query.Words(t, where) + ". Try fewer conditions, or",
+			"action": map[string]any{"href": "/t/" + t.Name, "label": "see all " + plural(t.Name)},
+		})))
+	} else if len(recs) == 0 {
 		prompt := "Create a " + t.Name + "."
 		b.WriteString(string(s.component("empty", map[string]any{
 			"title": "No " + plural(t.Name) + " yet", "message": "Add one yourself, or", "action": map[string]any{"href": "/chat?prompt=" + url.PathEscape(prompt), "label": "ask the assistant"},

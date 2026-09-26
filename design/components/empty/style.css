@@ -6,3 +6,5 @@
 }
 .sw-empty__title { margin: 0 0 var(--sw-space-2); font-size: var(--sw-size-text-lg); color: var(--sw-color-fg); }
 .sw-empty__message { margin: 0; }
+/* Lines a reader can follow in a wide panel: no longer than the measure. */
+.sw-empty__title, .sw-empty__message { max-width: var(--sw-size-measure); margin-inline: auto; }

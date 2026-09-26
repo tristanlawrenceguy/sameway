@@ -1,6 +1,7 @@
 package render_test
 
 import (
+	"os"
 	"regexp"
 	"strings"
 	"testing"
@@ -60,22 +61,20 @@ func TestDisclosureSummaryHasExplicitColor(t *testing.T) {
 	}
 }
 
-// TestDisclosurePseudoElementUsesToken checks that the disclosure component's
-// .sw-disclosure__summary::before pseudo-element uses an explicit token value
-// instead of currentColor, which can cause axe-core to flag a colour-contrast
-// failure because computed contrast depends on inherited color at hover state
-// or browser-specific rendering (backlog 0161).
+// TestDisclosurePseudoElementUsesToken checks that the twisty a disclosure
+// draws, the shared .sw-twisty::before rule in the base styles, uses an
+// explicit token value instead of currentColor, which can cause axe-core to
+// flag a colour-contrast failure because computed contrast depends on
+// inherited color at hover state or browser-specific rendering (backlog 0161).
 func TestDisclosurePseudoElementUsesToken(t *testing.T) {
-	reg := builtins(t)
-	c, ok := reg.Get("disclosure")
-	if !ok {
-		t.Fatal("disclosure component not found in registry")
+	css, err := os.ReadFile("../../design/base/23-twisty.css")
+	if err != nil {
+		t.Fatal(err)
 	}
-
-	ruleRe := regexp.MustCompile(`(?s)\.sw-disclosure__summary::before\s*\{([^}]*)\}`)
-	matches := ruleRe.FindStringSubmatch(c.CSS)
+	ruleRe := regexp.MustCompile(`(?s)\.sw-twisty::before[^{]*\{([^}]*)\}`)
+	matches := ruleRe.FindStringSubmatch(string(css))
 	if len(matches) < 2 {
-		t.Fatal("disclosure: could not find .sw-disclosure__summary::before rule block in CSS")
+		t.Fatal("could not find the .sw-twisty::before rule block in the base CSS")
 	}
 
 	ruleBody := matches[1]

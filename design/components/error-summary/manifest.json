@@ -31,7 +31,7 @@
     "role": "alert, holding a heading and a list of links",
     "keyboard": [{ "key": "Tab", "does": "reaches each problem's link" }, { "key": "Enter", "does": "moves focus to the field it is about" }],
     "states": ["aria-invalid"],
-    "wcag": { "target": "AAA", "notes": "Announced as an alert when it arrives (4.1.3), and the problems are listed where the form starts, each saying how to fix it (3.3.3) and leading to its field. With scripts, each field it names is marked aria-invalid and described by its problem (3.3.1)." }
+    "wcag": { "target": "AAA", "notes": "Announced as an alert when it arrives (4.1.3), and the problems are listed where the form starts, each saying how to fix it (3.3.3) and leading to its field. With scripts, each field it names is marked aria-invalid and has its problem beside it in words, not only a red edge (1.4.1, 3.3.1), described by that, and focus goes to the summary once, so the whole list is heard first. Its title carries the same mark and hidden Error: as a danger alert, and the window title of the page starts Error:. A problem with no field to lead to is plain words, not a link to nowhere. Each link is a 44px target." }
   },
   "machine": {
     "selector": "[data-component=\"error-summary\"]",

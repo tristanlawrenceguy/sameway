@@ -3,6 +3,10 @@
 .sw-collection__items { display: flex; flex-direction: column; gap: var(--sw-space-2); }
 .sw-collection__item { display: flex; flex-wrap: wrap; gap: var(--sw-space-1) var(--sw-space-3); align-items: baseline; }
 .sw-collection__meta { color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); }
+/* A field's name beside its value in a row, in sight, as the cards' and
+   the table's are: 19 Sep alone does not say Due. */
+.sw-collection__label { font-weight: 600; }
+.sw-collection__more { color: var(--sw-color-fg-muted); margin-right: var(--sw-space-2); }
 .sw-collection__text { flex-basis: 100%; }
 .sw-collection__text p { margin: 0 0 var(--sw-space-2); }
 .sw-collection__text p:last-child { margin-bottom: 0; }
@@ -19,5 +23,5 @@
 .sw-collection th a.sw-link { display: block; margin: calc(-1 * var(--sw-space-2)) calc(-1 * var(--sw-space-3)); padding: var(--sw-space-2) var(--sw-space-3); }
 .sw-collection__all .sw-link--button { margin-left: 0; }
 /* What is wrong, when the list cannot be shown: the detail for whoever fixes it. */
-.sw-collection__why summary { cursor: pointer; min-height: var(--sw-size-target); display: inline-flex; align-items: center; padding: 0 var(--sw-space-2); border-radius: var(--sw-radius-md); color: var(--sw-color-fg-muted); }
+.sw-collection__why summary { cursor: pointer; min-height: var(--sw-size-target); display: inline-flex; align-items: center; gap: var(--sw-space-1); list-style: none; padding: 0 var(--sw-space-2); border-radius: var(--sw-radius-md); color: var(--sw-color-fg-muted); }
 .sw-collection__why p { margin: var(--sw-space-1) 0 0; font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); }

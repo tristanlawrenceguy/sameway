@@ -4,6 +4,7 @@ import (
 	"bytes"
 	_ "embed"
 	"html/template"
+	"strings"
 )
 
 //go:embed layout.html
@@ -15,7 +16,9 @@ var layout = template.Must(template.New("layout").Funcs(Funcs).Parse(layoutSrc))
 type Page struct {
 	Site  string
 	Title string
-	Lang  string
+	// Said is the window's title when it says more than the heading.
+	Said string
+	Lang string
 	// Controls is "auto" or "visible" and lands on the root element, where
 	// the quiet layer reads it. See design/foundations/quiet.md.
 	Controls string
@@ -98,4 +101,10 @@ func RenderPage(p Page) ([]byte, error) {
 type NavItem struct {
 	HTML template.HTML
 	Dot  int
+}
+
+// Failed is a page that says something went wrong: its window title starts
+// Error:, the first thing a screen reader says when it arrives.
+func (p Page) Failed() bool {
+	return strings.Contains(string(p.Outcome), `data-outcome="failed"`)
 }

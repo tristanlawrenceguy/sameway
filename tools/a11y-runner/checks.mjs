@@ -24,10 +24,24 @@ export async function settle(page) {
   await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
 }
 
+// A fade under way is neither of its states, so its colours are no one's:
+// every finite animation and transition finishes first (a hover the last
+// press left behind, a block arriving). Endless ones, such as a pulse, are
+// left running; two seconds at most.
+export async function finished(page) {
+  await page.evaluate(() => Promise.race([
+    Promise.all(document.getAnimations()
+      .filter((a) => a.effect && a.effect.getComputedTiming().endTime !== Infinity)
+      .map((a) => a.finished.catch(() => {}))),
+    new Promise((done) => setTimeout(done, 2000)),
+  ]));
+}
+
 // axe in the page's current mode, at AA unless other tags are given,
 // leaving out any rules named.
 export async function axeProblems(page, skip = [], tags = AA_TAGS) {
   await settle(page);
+  await finished(page);
   const res = await new AxeBuilder({ page }).withTags(tags).disableRules(skip).analyze();
   return res.violations.map((v) => `axe ${v.id} - ${v.help} (${v.nodes.length} node(s): ${v.nodes.slice(0, 3).map((n) => n.target.join(" ")).join(", ")})`);
 }

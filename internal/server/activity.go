@@ -63,9 +63,12 @@ func (s *Server) recentActivityAbout(n int, from string, about func(target, id s
 	if len(recs) == 0 {
 		return ""
 	}
-	total := len(recs)
+	// The count is what is inside; the whole log's size is on its link.
+	everything := "All activity"
 	if about == nil {
-		total, _ = s.app.Store.Count(chat.ActivityType)
+		if total, _ := s.app.Store.Count(chat.ActivityType); total > len(recs) {
+			everything = fmt.Sprintf("All activity, %d changes", total)
+		}
 	}
 	var inner strings.Builder
 	inner.WriteString(`<ol class="sw-plain sw-stack--tight" aria-label="Recent activity">`)
@@ -73,11 +76,11 @@ func (s *Server) recentActivityAbout(n int, from string, about func(target, id s
 		inner.WriteString(`<li>` + string(s.event(r, from, 3, true)) + `</li>`)
 	}
 	inner.WriteString(`</ol><p class="sw-small" style="margin:var(--sw-space-3) 0 0">`)
-	inner.WriteString(string(s.component("link", map[string]any{"href": "/activity", "label": "All activity", "look": "button"})))
+	inner.WriteString(string(s.component("link", map[string]any{"href": "/activity", "label": everything, "look": "button"})))
 	inner.WriteString(`</p>`)
 
 	body, err := s.app.Registry.RenderSlot("disclosure",
-		map[string]any{"label": "Activity", "count": total, "id": "recent-activity"},
+		map[string]any{"label": "Activity", "count": len(recs), "of": "changes", "id": "recent-activity"},
 		template.HTML(inner.String()))
 	if err != nil {
 		return ""
