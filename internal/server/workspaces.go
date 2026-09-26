@@ -141,7 +141,7 @@ func (s *Server) showWorkspaces(w http.ResponseWriter, r *http.Request, problem 
 		for _, o := range others {
 			fmt.Fprintf(&b, `<li class="sw-row sw-ws"><div class="sw-ws__who"><span class="sw-row__title">%s</span><span class="sw-muted sw-small">%s</span></div>`, template.HTMLEscapeString(o.Name), template.HTMLEscapeString(o.Dir))
 			if o.Running {
-				fmt.Fprintf(&b, `<a class="sw-button sw-button--secondary sw-pressable" href="%s" target="_blank" rel="opener">Open<span class="sw-visually-hidden"> %s</span></a>`, template.HTMLEscapeString(o.URL), template.HTMLEscapeString(o.Name))
+				fmt.Fprintf(&b, `<a class="sw-button sw-button--secondary sw-pressable" href="%s" target="_blank" rel="opener">Open<span class="sw-visually-hidden"> %s</span> (new tab)</a>`, template.HTMLEscapeString(o.URL), template.HTMLEscapeString(o.Name))
 			} else {
 				fmt.Fprintf(&b, `<form method="post" action="/workspaces/start"><input type="hidden" name="dir" value="%s"><button type="submit" class="sw-button sw-button--secondary sw-pressable">Start<span class="sw-visually-hidden"> %s</span></button></form>`, template.HTMLEscapeString(o.Dir), template.HTMLEscapeString(o.Name))
 			}

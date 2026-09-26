@@ -1,6 +1,7 @@
 package chat
 
 import (
+	"strings"
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
@@ -37,7 +38,7 @@ func (s *Service) setSetting(key, value string) toolResult {
 	// Joining a tailnet takes a few seconds and then needs the person; the
 	// assistant hears the first step so it can tell them, and the chat has
 	// it too, for when the change was the person's Yes to a question.
-	if key == "tailnet.name" && s.Tailnet != nil {
+	if (key == "tailnet.name" || strings.HasPrefix(key, "publish.")) && s.Tailnet != nil {
 		note = ". " + s.Tailnet(20*time.Second)
 	}
 	return toolResult{text: key + " is now " + value + note, change: &Change{Action: "set", Component: key, Detail: value, Before: map[string]any{"value": was}}}

@@ -221,6 +221,18 @@ own types come with the program and do not travel.
 - **Since you were last here.** Back after half an hour, a person sees what
   others changed meanwhile, each with its Undo, until they say they have.
 
+### Publishing
+
+What the owner explicitly asks to publish (`publish:` tabs and content
+types, and `ai: on` for AI services) is readable by anyone on the internet,
+with no login, at the workspace's own tailnet address, through Tailscale
+Funnel. Funnel's listener is Funnel's alone, so the internet only ever
+reaches `Server.Public`: published pages and records as read-only HTML
+with no controls, conversation or log, and, when allowed, MCP that reads
+the published types and nothing else. Everything else is not found, and
+nothing is written. The tailnet still gets the whole workspace at the same
+address. Publishing is always a question; unpublishing is immediate.
+
 ## 5. How agents use it
 
 - **CLI**: every command supports `--json`. `sameway describe` prints schema and

@@ -48,7 +48,7 @@
     pointer-events: auto;
 }
 .sw-nav .sw-link:hover { background: color-mix(in srgb, var(--sw-color-fg) 8%, transparent); }
-.sw-nav .sw-link[aria-current="page"] { background: color-mix(in srgb, var(--sw-color-fg) 10%, transparent); color: var(--sw-color-fg); font-weight: 600; text-decoration: none; }
+.sw-nav .sw-link[aria-current="page"] { background: color-mix(in srgb, var(--sw-color-fg) 10%, transparent); color: var(--sw-color-fg); font-weight: 600; text-decoration: none; box-shadow: inset 3px 0 0 var(--sw-color-accent); }
 /* Each list has a dot in its own colour, the same one everywhere it
    appears: the sidebar, a page title, the way back on a record's page, a
    search result, a block drawn from that list. data-dot says which. */

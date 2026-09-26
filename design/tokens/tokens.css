@@ -55,6 +55,7 @@
   --sw-size-line: 1.5;
   --sw-size-line-tight: 1.2;
   --sw-size-measure: 68ch;
+  --sw-size-picture: 75vh;
   --sw-size-target: 2.75rem;
   --sw-size-text-2xl: clamp(1.75rem, 1.5rem + 1vw, 2rem);
   --sw-size-text-lg: 1.125rem;

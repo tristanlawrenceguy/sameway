@@ -40,7 +40,7 @@ type Config struct {
 // anything that is not a browser. admit decides who gets in (nil: only
 // the person who signed it in) and marks each request with who they are. say is told each step (see Status); serving here never stops
 // the workspace serving on this machine. It ends when ctx does.
-func Start(ctx context.Context, cfg Config, h http.Handler, admit Admit, say func(Status)) error {
+func Start(ctx context.Context, cfg Config, h http.Handler, admit Admit, pub *Funnel, say func(Status)) error {
 	name := strings.TrimSpace(cfg.Name)
 	if name == "" {
 		return nil
@@ -74,11 +74,11 @@ func Start(ctx context.Context, cfg Config, h http.Handler, admit Admit, say fun
 		<-ctx.Done()
 		srv.Close()
 	}()
-	go serve(ctx, srv, h, admit, say)
+	go serve(ctx, srv, h, admit, pub, say)
 	return nil
 }
 
-func serve(ctx context.Context, srv *tsnet.Server, h http.Handler, admit Admit, say func(Status)) {
+func serve(ctx context.Context, srv *tsnet.Server, h http.Handler, admit Admit, pub *Funnel, say func(Status)) {
 	st, err := srv.Up(ctx)
 	if err != nil {
 		if ctx.Err() == nil {
@@ -93,6 +93,7 @@ func serve(ctx context.Context, srv *tsnet.Server, h http.Handler, admit Admit, 
 		return
 	}
 	h = guard(lc, st.Self, admit, h)
+	go publish(ctx, srv, host, pub, say)
 	client := srv.HTTPClient()
 	me := st.User[st.Self.UserID]
 	plain, err := srv.Listen("tcp", ":80")

@@ -75,7 +75,9 @@ func linkifyNamed(s string, name func(path string) string) template.HTML {
 		if m.start > lastEnd {
 			buf.WriteString(html.EscapeString(s[lastEnd:m.start]))
 		}
-		words := html.EscapeString(m.raw)
+		// An address reads as where it goes, not as its scheme: a screen
+		// reader would spell out "h t t p s colon slash slash".
+		words := html.EscapeString(readable(m.raw))
 		if name != nil && strings.HasPrefix(m.raw, "/t/") {
 			if n := strings.TrimSpace(name(m.raw)); n != "" {
 				words = html.EscapeString(n)
@@ -89,4 +91,14 @@ func linkifyNamed(s string, name func(path string) string) template.HTML {
 	}
 
 	return template.HTML(buf.String())
+}
+
+// readable is an address as a person says it: example.com/guide.
+func readable(raw string) string {
+	s := strings.TrimPrefix(strings.TrimPrefix(raw, "https://"), "http://")
+	s = strings.TrimPrefix(s, "www.")
+	if t := strings.TrimSuffix(s, "/"); t != "" {
+		s = t
+	}
+	return s
 }

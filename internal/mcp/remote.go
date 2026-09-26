@@ -38,8 +38,9 @@ func offMachine(r *http.Request) bool {
 // reach is what a connection may call: every tool, the tools a person's
 // own assistant has (svc), or the reading ones.
 type reach struct {
-	all bool
-	svc *chat.Service
+	all    bool
+	svc    *chat.Service
+	public bool // the internet: what is published, and only that
 }
 
 func (s *Server) reachOf(ctx context.Context) reach {
@@ -48,6 +49,8 @@ func (s *Server) reachOf(ctx context.Context) reach {
 	}
 	v := chat.VisitorOf(ctx)
 	switch {
+	case v.Access == chat.Public:
+		return reach{public: true}
 	case v.Login == "":
 		return reach{} // no one to go by
 	case v.Owner():
@@ -97,6 +100,10 @@ func (s *Server) listFor(ctx context.Context) []tool {
 	allowed := map[string]bool{}
 	for k := range readTools {
 		allowed[k] = true
+	}
+	if r.public {
+		// What is published, type by type; search runs across them all.
+		allowed = map[string]bool{"describe": true, "find_records": true, "get_record": true}
 	}
 	if r.svc != nil {
 		for _, t := range r.svc.Tools() {
