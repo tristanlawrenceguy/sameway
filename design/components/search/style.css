@@ -1,7 +1,7 @@
 .sw-search { display: flex; align-items: center; gap: var(--sw-space-2); flex-wrap: wrap; }
 .sw-search__label { font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); }
 .sw-search__field {
-  min-height: 2.75rem; min-width: 10rem; flex: 1 1 10rem;
+  min-height: var(--sw-size-target); min-width: min(100%, var(--sw-size-search)); flex: 1 1 var(--sw-size-search);
   padding: var(--sw-space-2) var(--sw-space-3);
   border: 1px solid var(--sw-color-border-strong); border-radius: var(--sw-radius-md);
   background: var(--sw-color-bg-raised); color: var(--sw-color-fg);
@@ -11,3 +11,5 @@
 /* In a bar, the label is the button: one word less on the resting page. */
 .sw-canvas--strip .sw-search__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 [data-size="compact"] .sw-search__field { min-width: 7rem; min-height: var(--sw-size-target); }
+/* A word searched for, in a result: bold on a wash, not colour alone. */
+.sw-search__hit { background: var(--sw-color-warning-soft); color: var(--sw-color-fg); font-weight: 600; border-radius: var(--sw-radius-sm); }
