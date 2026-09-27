@@ -81,7 +81,7 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 			b.WriteString(string(s.pageNav(r, pg, "Pages of results")))
 		}
 	}
-	s.page(w, r, pg.title(title), template.HTML(b.String()), pageOptions{JSONURL: "/api/search?q=" + template.URLQueryEscaper(q), Said: pg.title(said)})
+	s.page(w, r, title, template.HTML(b.String()), pageOptions{JSONURL: "/api/search?q=" + template.URLQueryEscaper(q), Said: pg.title(said)})
 }
 
 func count(n int) string {

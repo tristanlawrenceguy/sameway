@@ -2,6 +2,7 @@ package server
 
 import (
 	"html/template"
+	"log"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
@@ -18,7 +19,8 @@ func (s *Server) chatBlock(blk *store.Record, convo *conversation) template.HTML
 	body := strings.Replace(string(convo.Body), `<span class="sw-chat__place"></span>`, string(s.placeMenu(blk, convo.From)), 1)
 	out, err := s.app.Registry.RenderSlot(chat.ComponentName, props, template.HTML(body))
 	if err != nil {
-		return s.component("alert", map[string]any{"kind": "danger", "message": "Could not render the conversation: " + err.Error()})
+		log.Printf("render chat: %v", err)
+		return s.component("alert", map[string]any{"kind": "danger", "message": "The conversation could not be shown. Reload the page to try again."})
 	}
 	return out
 }

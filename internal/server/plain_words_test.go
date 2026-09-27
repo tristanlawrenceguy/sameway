@@ -12,7 +12,7 @@ import (
 func TestTheDesignPageDrawsEveryComponent(t *testing.T) {
 	_, h := newApp(t)
 	body := get(t, h, "/design").Body.String()
-	if i := strings.Index(body, "Could not render"); i >= 0 {
+	if i := strings.Index(body, "could not be shown"); i >= 0 {
 		t.Errorf("the design page failed to draw an example: %.200s", body[i:])
 	}
 }
@@ -56,5 +56,24 @@ func TestASearchResultShowsADayNotAStoredTime(t *testing.T) {
 	body := get(t, h, "/search?q=fern").Body.String()
 	if strings.Contains(body, "2026-09-27T00:00:00Z") || !strings.Contains(body, "Sun 27 Sep 2026") {
 		t.Errorf("the result should say Sun 27 Sep 2026, not the stored time")
+	}
+}
+
+// TestABrokenBlockSaysSoInPlainWords: a block whose props do not fit its
+// component tells a person what could not be shown and what to do, not
+// the schema's own words for why.
+func TestABrokenBlockSaysSoInPlainWords(t *testing.T) {
+	a, h := newApp(t)
+	if _, err := a.Store.Create("block", map[string]any{"component": "button", "props": map[string]any{"text": "Go"}}); err != nil {
+		t.Skip("the store will not hold such a block:", err)
+	}
+	body := get(t, h, "/").Body.String()
+	if !strings.Contains(body, "This button could not be shown") {
+		t.Errorf("the canvas should say the button could not be shown")
+	}
+	for _, raw := range []string{"additional properties", "missing property", "Could not render"} {
+		if strings.Contains(body, raw) {
+			t.Errorf("the canvas should not show %q", raw)
+		}
 	}
 }
