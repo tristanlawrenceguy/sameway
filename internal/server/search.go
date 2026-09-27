@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/search"
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
 // searchPage is one search over everything the person has: every record
@@ -31,12 +32,12 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 			hits = search.FindSome(s.app.Store, s.app.Types, q)
 		}
 		words := search.Words(q)
-		title = trimTitle(fmt.Sprintf("Search: %s", q))
+		title = trim.Title(fmt.Sprintf("Search: %s", q))
 		// The window title names the page and says what the search found,
 		// Search: plumber, no results. It is the first
 		// thing a screen reader says when the results page arrives, which a
 		// status region on a fresh page is not.
-		said = trimTitle(fmt.Sprintf("Search: %s, %s", q, strings.ToLower(results(len(hits)))))
+		said = trim.Title(fmt.Sprintf("Search: %s, %s", q, strings.ToLower(results(len(hits)))))
 		if some && len(hits) > 0 {
 			b.WriteString(`<p class="sw-muted">Nothing has every word. These have some of them.</p>`)
 		}

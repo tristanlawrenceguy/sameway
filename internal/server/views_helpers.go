@@ -7,6 +7,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
@@ -62,7 +63,7 @@ func titleOf(t *schema.Type, rec *store.Record) string {
 			continue
 		}
 		if s, ok := rec.Fields[f.Name].(string); ok && strings.TrimSpace(s) != "" {
-			return truncateTitle(s)
+			return trim.Title(s)
 		}
 	}
 	return t.Name + " " + rec.ID
