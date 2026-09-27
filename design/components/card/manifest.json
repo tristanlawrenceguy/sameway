@@ -34,6 +34,6 @@
   "examples": [
     { "name": "default", "props": { "title": "Grocery list", "body": "Milk, eggs, bread.", "meta": "Updated today" }, "file": "examples/default.html" },
     { "name": "linked", "props": { "title": "Read the architecture", "href": "/t/note/abc123", "level": 2 }, "file": "examples/linked.html" },
-    {"name": "facts", "props": {"title": "Order compost", "href": "/t/task/k3n2p9", "level": 4, "id": "card-k3n2p9", "focusable": true, "fields": [{"label": "Due", "value": "Sat 19 Sep 2026"}, {"label": "Project", "value": "Garden", "href": "/t/project/a1"}], "actions": [{"component": "mark", "props": {"type": "task", "record": "k3n2p9", "field": "done", "label": "Done", "context": "Order compost"}}]}, "file": "examples/facts.html"}
+    {"name": "facts", "props": {"title": "Order compost", "href": "/t/task/k3n2p9", "level": 2, "id": "card-k3n2p9", "focusable": true, "fields": [{"label": "Due", "value": "Sat 19 Sep 2026"}, {"label": "Project", "value": "Garden", "href": "/t/project/a1"}], "actions": [{"component": "mark", "props": {"type": "task", "record": "k3n2p9", "field": "done", "label": "Done", "context": "Order compost"}}]}, "file": "examples/facts.html"}
   ]
 }
