@@ -56,7 +56,7 @@ func howMany(t *schema.Type, recs []*store.Record) template.HTML {
 // made; Boxed leaves out the done chip because a box already shows it;
 // Chips draws the day and what it belongs to as chips rather than words,
 // and words are short, the way a row says them.
-type factOpts struct{ Made, Boxed, Chips bool }
+type factOpts struct{ Made, Boxed, Chips, Row bool }
 
 // facts is what a person wants to know about a record at a glance: done,
 // its state, the day that matters, what it belongs to. A day that has
@@ -86,20 +86,25 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 			}
 		}
 	}
-	for _, f := range t.Shown() {
-		if f.Type == "enum" && t.Name != "action" {
-			if v, ok := rec.Fields[f.Name].(string); ok && v != "" {
-				// "High", heard in a row of facts, says nothing without the
-				// field it is: the field is read after it, not shown. A value
-				// the schema names in a person's words, "Each day" or "Call a
-				// web address", already says what it is, and is heard alone.
-				props := map[string]any{"label": f.ValueLabel(v), "tone": "info"}
-				if f.Labels[v] == "" {
-					props["context"] = strings.ToLower(fieldLabel(f))
+	// Show enum badges only when the caller is not a list row for note/project/file,
+	// and not an action detail (actions hide their kind everywhere).
+	skipEnum := o.Row && (t.Name == "note" || t.Name == "project" || t.Name == "file")
+	if !skipEnum && t.Name != "action" {
+		for _, f := range t.Shown() {
+			if f.Type == "enum" {
+				if v, ok := rec.Fields[f.Name].(string); ok && v != "" {
+					// "High", heard in a row of facts, says nothing without the
+					// field it is: the field is read after it, not shown. A value
+					// the schema names in a person's words, "Each day" or "Call a
+					// web address", already says what it is, and is heard alone.
+					props := map[string]any{"label": f.ValueLabel(v), "tone": "info"}
+					if f.Labels[v] == "" {
+						props["context"] = strings.ToLower(fieldLabel(f))
+					}
+					parts = append(parts, string(s.component("badge", props)))
 				}
-				parts = append(parts, string(s.component("badge", props)))
+				break
 			}
-			break
 		}
 	}
 	// When it last changed is said only for things with no day of their

@@ -82,7 +82,7 @@ func (s *Server) row(t *schema.Type, rec *store.Record, level int) string {
 		whole = ` title="` + template.HTMLEscapeString(full) + `"`
 	}
 	return fmt.Sprintf(`<li class="%s">%s<h%d class="sw-row__title"><a class="sw-row__link" href="/t/%s/%s"%s>%s</a></h%d><p class="sw-row__meta">%s</p></li>`,
-		class, box, level, t.Name, rec.ID, whole, template.HTMLEscapeString(trim.Title(full)), level, s.facts(t, rec, factOpts{Boxed: box != ""}))
+		class, box, level, t.Name, rec.ID, whole, template.HTMLEscapeString(trim.Title(full)), level, s.facts(t, rec, factOpts{Boxed: box != "", Row: true}))
 }
 
 // whenGroup says where a record sits in time: done first, because a done
