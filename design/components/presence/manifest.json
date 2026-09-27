@@ -1,6 +1,6 @@
 {
   "name": "presence",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Who else is in the workspace just now, and where: a quiet line that is there only while someone else is.",
   "icon": "◉",
   "use": {

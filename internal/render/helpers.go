@@ -13,7 +13,9 @@ import (
 func dict(pairs ...any) map[string]any {
 	m := map[string]any{}
 	for i := 0; i+1 < len(pairs); i += 2 {
-		if k, ok := pairs[i].(string); ok {
+		// A value that is not there leaves its key out, as a prop not given,
+		// so a template can pass on what it may not have.
+		if k, ok := pairs[i].(string); ok && pairs[i+1] != nil {
 			m[k] = pairs[i+1]
 		}
 	}

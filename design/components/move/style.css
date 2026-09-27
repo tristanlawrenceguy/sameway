@@ -1,0 +1,2 @@
+.sw-move { display: flex; flex-wrap: wrap; gap: var(--sw-space-2); align-items: end; margin: 0; }
+.sw-move .sw-field { margin: 0; }

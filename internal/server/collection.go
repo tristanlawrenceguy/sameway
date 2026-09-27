@@ -96,7 +96,7 @@ func (s *Server) resolveCollection(props map[string]any, block string) map[strin
 			board = "collection-" + t.Name
 		}
 		for i, rec := range recs {
-			addMove(items[i].(map[string]any), t, *by, rec, board)
+			s.addMove(items[i].(map[string]any), t, *by, rec, board)
 		}
 		out["groups"] = boardGroups(*by, recs, items)
 	}

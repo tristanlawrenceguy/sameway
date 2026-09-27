@@ -66,7 +66,7 @@ func boardGroups(f schema.Field, recs []*store.Record, items []any) []any {
 // moves it: its column picked from the field's choices and a Move button
 // named with the card, which posts the field like any edit, so it is
 // logged and can be undone, and works with no script.
-func addMove(item map[string]any, t *schema.Type, f schema.Field, rec *store.Record, board string) {
+func (s *Server) addMove(item map[string]any, t *schema.Type, f schema.Field, rec *store.Record, board string) {
 	at := board + "-" + rec.ID
 	item["at"] = at
 	options := make([]any, 0, len(f.Values))
@@ -74,13 +74,14 @@ func addMove(item map[string]any, t *schema.Type, f schema.Field, rec *store.Rec
 		options = append(options, map[string]any{"value": v, "label": f.ValueLabel(v)})
 	}
 	value, _ := rec.Fields[f.Name].(string)
-	item["move"] = map[string]any{
-		"action": "/t/" + t.Name + "/" + rec.ID + "/props",
-		"select": map[string]any{"component": "select", "props": map[string]any{
+	actions, _ := item["actions"].([]any)
+	item["actions"] = append(actions, map[string]any{"component": "move", "props": map[string]any{
+		"action": "/t/" + t.Name + "/" + rec.ID + "/props", "title": s.title(t, rec), "back": at,
+		"select": map[string]any{
 			"id": at + "-move", "name": "prop-" + f.Name, "label": fieldLabel(f),
 			"as": "dropdown", "value": value, "options": options,
-		}},
-	}
+		},
+	}})
 }
 
 func orEmpty(v []any) []any {

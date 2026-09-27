@@ -1,6 +1,6 @@
 {
   "name": "card",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A titled block of content, optionally linking somewhere. Good for one item in a collection or a summary panel.",
   "icon": "▭",
   "use": { "when": "one item among several, or a summary a person scans and may open.", "not": "the only thing on the page, which wants text under a heading, or a record with its own page, which wants the record component.", "with": "a heading above, the cards in a list, one item each; span 4 or 6. For many items of one kind a person compares or hunts through, a list or a collection reads faster than cards." },
@@ -14,6 +14,9 @@
       "meta": { "title": "Small print", "type": "string", "description": "Small secondary line such as a date or status." },
       "href": { "title": "Link", "type": "string", "description": "When set, the title becomes a link to this URL." },
       "level": { "title": "Heading level", "type": "integer", "minimum": 2, "maximum": 6, "default": 3, "description": "Heading level of the title so cards fit the page outline." },
+      "fields": {"type": "array", "description": "The thing's facts under the title, as the fields component shows them: label and value, a value that names something with its href.", "items": {"type": "object", "additionalProperties": false, "required": ["label", "value"], "properties": {"label": {"type": "string"}, "value": {"type": "string"}, "href": {"type": "string"}}}},
+      "actions": {"type": "array", "description": "What can be done to the thing from its card, each a component: a mark such as Done, a move to another column, a button, a link.", "items": {"type": "object", "additionalProperties": false, "required": ["component", "props"], "properties": {"component": {"type": "string", "enum": ["mark", "move", "button", "link"]}, "props": {"type": "object"}}}},
+      "focusable": {"type": "boolean", "default": false, "description": "With an id, the card can take focus, so a page that comes back to it after an action (#id) puts focus on it."},
       "id": { "type": "string" }
     }
   },
@@ -30,6 +33,7 @@
   },
   "examples": [
     { "name": "default", "props": { "title": "Grocery list", "body": "Milk, eggs, bread.", "meta": "Updated today" }, "file": "examples/default.html" },
-    { "name": "linked", "props": { "title": "Read the architecture", "href": "/t/note/abc123", "level": 2 }, "file": "examples/linked.html" }
+    { "name": "linked", "props": { "title": "Read the architecture", "href": "/t/note/abc123", "level": 2 }, "file": "examples/linked.html" },
+    {"name": "facts", "props": {"title": "Order compost", "href": "/t/task/k3n2p9", "level": 2, "id": "card-k3n2p9", "focusable": true, "fields": [{"label": "Due", "value": "Sat 19 Sep 2026"}, {"label": "Project", "value": "Garden", "href": "/t/project/a1"}], "actions": [{"component": "mark", "props": {"type": "task", "record": "k3n2p9", "field": "done", "label": "Done", "context": "Order compost"}}]}, "file": "examples/facts.html"}
   ]
 }

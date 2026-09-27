@@ -93,8 +93,8 @@ func TestNestingIsBounded(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if n := strings.Count(string(out), `data-component="nest"`); n != 3 {
-		t.Errorf("expected nesting to stop after 3 levels, got %d: %s", n, out)
+	if n := strings.Count(string(out), `data-component="nest"`); n != 4 {
+		t.Errorf("expected nesting to stop after 4 levels, got %d: %s", n, out)
 	}
 	if !strings.Contains(string(out), "nested too deeply") {
 		t.Errorf("the stop should say why, on the page: %s", out)
@@ -121,7 +121,7 @@ func TestNestingRejectsUnknownComponents(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(out), "sw-problem") || !strings.Contains(string(out), "nonesuch") {
+	if !strings.Contains(string(out), "sw-render-problem") || !strings.Contains(string(out), "nonesuch") {
 		t.Errorf("an unknown nested component should be named on the page: %s", out)
 	}
 }
