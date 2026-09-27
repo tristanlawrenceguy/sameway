@@ -1,6 +1,6 @@
 {
   "name": "tracker",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "What is being kept up, at a glance: each habit against its target for this day, week, month or year (at least the target, at most a limit, or no target when it only records), its streak, the last periods as dots, and a press to log. From the habit and entry records, kept current. At glance detail it is how many are met this period.",
   "icon": "◎",
   "use": { "when": "a person keeps something up and wants to see and log it without thinking: habits, a daily measure, a weekly distance, a monthly allowance of hours or a budget, a reading such as weight.", "not": "a one-off task, which is a task; or numbers over time on their own, which is a chart.", "with": "the habit records behind it, each with its own page, numbers and chart." },

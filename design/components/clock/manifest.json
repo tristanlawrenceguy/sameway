@@ -1,6 +1,6 @@
 {
   "name": "clock",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "The time now, with alarms and timers: set one here, and it rings here when its time comes, with a sound and a notification if the browser allows, until it is dismissed or given five more minutes. Under the time is what is coming: the reminders set and whatever is on today from the calendar's types. A reminder is a record, so it also shows on the calendar and on its own page.",
   "icon": "◷",
   "use": { "when": "a person wants to know the time, be reminded at a time, or time something: in a corner, a header, or a pane.", "not": "a whole month, which is a calendar, or a date to ask for, which is a when-field.", "with": "a calendar, which shows the same reminders on their days." },

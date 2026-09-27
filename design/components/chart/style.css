@@ -33,7 +33,6 @@
 .sw-chart__numbers summary::after { content: "as a table"; font-weight: 400; }
 .sw-chart__numbers summary:hover { background: var(--sw-color-bg-muted); color: var(--sw-color-fg); }
 .sw-chart__numbers .sw-table-wrap { margin-top: var(--sw-space-2); max-width: 24rem; }
-.sw-chart__empty { margin: 0; color: var(--sw-color-fg-muted); }
 /* At a glance: one number and what it is. In brief: the number, its
    trend, and a sparkline. */
 .sw-chart--glance { display: inline-flex; align-items: baseline; gap: var(--sw-space-2); }

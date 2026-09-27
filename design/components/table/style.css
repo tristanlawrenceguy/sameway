@@ -13,7 +13,7 @@
 .sw-table thead th { background: var(--sw-color-bg-muted); font-size: var(--sw-size-text-sm); font-weight: 600; color: var(--sw-color-fg); }
 /* A column of numbers lines up on the right, so its figures compare. */
 .sw-table .sw-table__num { text-align: right; }
-.sw-table__empty { margin: 0; padding: 0 var(--sw-space-3) var(--sw-space-3); color: var(--sw-color-fg-muted); }
+.sw-table__empty { padding: 0 var(--sw-space-3) var(--sw-space-3); }
 /* A row header names its row: plain words in bold, not a column heading. */
 .sw-table tbody th { font-weight: 600; text-align: left; }
 .sw-table tbody tr { transition: background var(--sw-motion-fast) var(--sw-motion-ease); }

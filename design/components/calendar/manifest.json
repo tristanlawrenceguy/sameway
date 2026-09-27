@@ -1,6 +1,6 @@
 {
   "name": "calendar",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "A month and what is on in it, at whatever size it has been given: a marker with a count, a short agenda, a month grid, or a full page with an action beside every event; or one day by the hour. To ask someone for a date use when-field. Given a content type, the records with a date are the events, kept current.",
   "icon": "▦",
   "use": {"when": "a person wants to see when things happen or what is coming, sized to where it sits: glance or brief in a pane, full or page in the main region.", "not": "asking for a date, which is a when-field, or a list of tasks, which is a list.", "with": "events as records, so the same event is on its own page."},
