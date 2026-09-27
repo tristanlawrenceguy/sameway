@@ -43,6 +43,11 @@ func display(f schema.Field, v any) string {
 		return "no"
 	case "datetime":
 		return when.Text(fmt.Sprint(v))
+	case "repeat":
+		if said := when.RepeatText(fmt.Sprint(v)); said != "" {
+			return capitalize(said)
+		}
+		return ""
 	case "enum":
 		return f.ValueLabel(fmt.Sprint(v))
 	}

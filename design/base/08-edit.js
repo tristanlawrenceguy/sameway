@@ -72,17 +72,19 @@
       built.wrap.appendChild(no);
       return built;
     }
-    if (kind === "datetime") {
-      // The when-field component: words, and its picker, which its own
-      // enhance.js shows and wires.
-      built = control("when", el, id, name);
-      built.input.value = el.textContent.trim();
+    if (kind === "datetime" || kind === "repeat") {
+      // The when-field component: words, and for a day its picker, which
+      // its own enhance.js shows and wires. A repeat is its words alone.
+      built = control(kind === "repeat" ? "repeat" : "when", el, id, name);
+      built.input.value = kind === "repeat" ? source || "" : el.textContent.trim();
       var pick = built.wrap.querySelector(".sw-when-field__pick");
-      pick.id = id + "-pick";
-      built.wrap.querySelector(".sw-when-field__pick-label").htmlFor = pick.id;
+      if (pick) {
+        pick.id = id + "-pick";
+        built.wrap.querySelector(".sw-when-field__pick-label").htmlFor = pick.id;
+      }
       var read = built.wrap.querySelector(".sw-when-field__read");
       if (read) { read.id = id + "-read"; read.htmlFor = id; }
-      if (/^\d{4}-\d{2}-\d{2}/.test(source || "")) pick.value = source.slice(0, 10);
+      if (pick && /^\d{4}-\d{2}-\d{2}/.test(source || "")) pick.value = source.slice(0, 10);
       if (window.swWhenField) window.swWhenField(built.wrap);
       return built;
     }

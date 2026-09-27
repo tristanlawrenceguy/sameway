@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
@@ -80,9 +81,17 @@ func (s *Server) clockDone(w http.ResponseWriter, r *http.Request) {
 	s.setReminder(w, r, map[string]any{"state": "done"}, "done")
 }
 
-// clockSnooze gives a reminder five more minutes.
+// clockSnooze gives a reminder five more minutes. One that repeats keeps
+// to its own time of day for the times after (when.KeepTime).
 func (s *Server) clockSnooze(w http.ResponseWriter, r *http.Request) {
-	s.setReminder(w, r, map[string]any{"state": "set", "at": when.Store(time.Now().Add(5*time.Minute), false)}, "snoozed")
+	fields := map[string]any{"state": "set", "at": when.Store(time.Now().Add(5*time.Minute), false)}
+	if rec, err := s.app.Store.Get(ReminderType, r.PathValue("id")); err == nil {
+		if rule, _ := rec.Fields["repeat"].(string); rule != "" {
+			at, _ := rec.Fields["at"].(string)
+			fields["repeat"] = when.KeepTime(rule, at)
+		}
+	}
+	s.setReminder(w, r, fields, "snoozed")
 }
 
 func (s *Server) setReminder(w http.ResponseWriter, r *http.Request, fields map[string]any, action string) {
@@ -91,7 +100,8 @@ func (s *Server) setReminder(w http.ResponseWriter, r *http.Request, fields map[
 		s.failed(w, r, "Reminder not changed", err, "/")
 		return
 	}
-	if _, err := s.app.Store.Update(ReminderType, rec.ID, fields); err != nil {
+	saved, err := s.app.Store.Update(ReminderType, rec.ID, fields)
+	if err != nil {
 		s.failed(w, r, "Reminder not changed", err, "/")
 		return
 	}
@@ -103,6 +113,13 @@ func (s *Server) setReminder(w http.ResponseWriter, r *http.Request, fields map[
 	case action == "snoozed":
 		now := time.Now()
 		o.Title, o.Text = title+": 5 more minutes", "Rings again "+ringsWhen(now.Add(5*time.Minute), now)+"."
+		o.Of = o.Title
+	case saved.Fields["state"] == "set" && action == "done":
+		// One that repeats is set for its next time, not done with.
+		o.Text = "It " + strings.ToLower(repeatsOf(saved)) + ", so it rings again " + ringsWhen(ringsAt(saved), time.Now()) + "."
+		if rec.Fields["state"] == "set" {
+			o.Title = title + ": this time skipped"
+		}
 		o.Of = o.Title
 	case rec.Fields["state"] == "set":
 		o.Title = title + " cancelled"
@@ -148,4 +165,20 @@ func ringsWhen(at, now time.Time) string {
 	default:
 		return "on " + day + " " + clock
 	}
+}
+
+// repeatsOf is how often a reminder rings again, as the clock says it
+// under its name: Repeats every Tuesday. Nothing for one that rings once.
+func repeatsOf(rec *store.Record) string {
+	if rule, _ := rec.Fields["repeat"].(string); rule != "" {
+		return "Repeats " + when.RepeatText(rule)
+	}
+	return ""
+}
+
+// ringsAt is when a reminder is set to ring.
+func ringsAt(rec *store.Record) time.Time {
+	v, _ := rec.Fields["at"].(string)
+	at, _ := time.Parse(time.RFC3339, v)
+	return at
 }
