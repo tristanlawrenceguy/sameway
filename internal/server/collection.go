@@ -63,12 +63,19 @@ func (s *Server) resolveCollection(props map[string]any, block string) map[strin
 	}
 	out["columns"] = columns
 	out["titleLabel"] = label(t.Title)
+	var by *schema.Field
+	if props["as"] == "board" {
+		if by, err = boardField(t, props["by"]); err != nil {
+			out["problem"] = err.Error()
+			return out
+		}
+	}
 	items := make([]any, 0, len(recs))
 	for _, rec := range recs {
 		item := map[string]any{"title": s.title(t, rec), "href": "/t/" + t.Name + "/" + rec.ID}
 		if len(show) > 0 {
 			item["fields"] = s.fieldsOf(t, rec, show)
-		} else if meta := metaOf(t, rec); meta != "" {
+		} else if meta := metaOf(t, rec); meta != "" && by == nil {
 			item["meta"] = meta
 		}
 		if full {
@@ -83,6 +90,9 @@ func (s *Server) resolveCollection(props map[string]any, block string) map[strin
 		items = append(items, item)
 	}
 	out["items"] = items
+	if by != nil {
+		out["groups"] = boardGroups(*by, recs, items)
+	}
 	out["summary"] = query.Words(t, where)
 	out["all"] = listPath(t.Name, where, order)
 	return out

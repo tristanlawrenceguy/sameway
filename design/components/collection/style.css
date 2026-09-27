@@ -26,3 +26,11 @@
 /* What is wrong, when the list cannot be shown: the detail for whoever fixes it. */
 .sw-collection__why summary { cursor: pointer; min-height: var(--sw-size-target); display: inline-flex; align-items: center; gap: var(--sw-space-1); list-style: none; padding: 0 var(--sw-space-2); border-radius: var(--sw-radius-md); color: var(--sw-color-fg-muted); }
 .sw-collection__why p { margin: var(--sw-space-1) 0 0; font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); }
+/* A board: a column per choice, side by side where they fit and one under
+   another on a phone, read column by column. */
+.sw-collection--board { max-width: none; }
+.sw-collection__board { display: grid; gap: var(--sw-space-3); grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); align-items: start; }
+.sw-collection__column { background: var(--sw-color-bg-muted); border-radius: var(--sw-radius-md); padding: var(--sw-space-3); }
+.sw-collection__column-title { margin: 0 0 var(--sw-space-2); font-size: var(--sw-size-text-md); }
+.sw-collection__count { color: var(--sw-color-fg-muted); font-weight: 400; }
+.sw-collection__column-items { display: flex; flex-direction: column; gap: var(--sw-space-2); }
