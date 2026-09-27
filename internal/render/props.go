@@ -241,9 +241,10 @@ func humanizeErrorKind(line string) string {
 	}
 	if idx := strings.Index(line, " got "); idx >= 0 {
 		if rest := line[idx:]; len(rest) > 12 && strings.Contains(rest, ", want ") {
-			var n int
-			fmt.Sscanf(rest, " got %d, want", &n)
-			line = line[:idx] + fmt.Sprintf("must have at least %d characters", n)
+			var gotN, wantN int
+			if _, err := fmt.Sscanf(rest, " got %d, want %d", &gotN, &wantN); err == nil && wantN > 0 {
+				line = line[:idx] + fmt.Sprintf("must have at least %d characters", wantN)
+			}
 		}
 	}
 	return line
