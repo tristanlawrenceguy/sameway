@@ -69,7 +69,7 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 		if v, _ := rec.Fields[f.Name].(bool); v {
 			done = true
 			if !o.Boxed {
-				parts = append(parts, string(s.component("badge", map[string]any{"label": capitalize(label(f.Name)), "tone": "success"})))
+				parts = append(parts, string(s.component("badge", map[string]any{"label": fieldLabel(*f), "tone": "success"})))
 			}
 		}
 	}
@@ -80,7 +80,7 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 		for _, f := range t.Shown() {
 			if f.Type == "bool" && (doneField(t) == nil || f.Name != doneField(t).Name) {
 				if on, _ := rec.Fields[f.Name].(bool); on {
-					parts = append(parts, string(s.component("badge", map[string]any{"label": capitalize(label(f.Name)), "tone": "neutral"})))
+					parts = append(parts, string(s.component("badge", map[string]any{"label": fieldLabel(f), "tone": "neutral"})))
 				}
 			}
 		}
@@ -89,8 +89,14 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 		if f.Type == "enum" {
 			if v, ok := rec.Fields[f.Name].(string); ok && v != "" {
 				// "High", heard in a row of facts, says nothing without the
-				// field it is: the field is read after it, not shown.
-				parts = append(parts, string(s.component("badge", map[string]any{"label": f.ValueLabel(v), "tone": "info", "context": strings.ToLower(fieldLabel(f))})))
+				// field it is: the field is read after it, not shown. A value
+				// the schema names in a person's words, "Each day" or "Call a
+				// web address", already says what it is, and is heard alone.
+				props := map[string]any{"label": f.ValueLabel(v), "tone": "info"}
+				if f.Labels[v] == "" {
+					props["context"] = strings.ToLower(fieldLabel(f))
+				}
+				parts = append(parts, string(s.component("badge", props)))
 			}
 			break
 		}
