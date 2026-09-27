@@ -97,7 +97,8 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	// What just happened to these records is here too, so a deletion can be
 	// taken back where the person lands.
 	b.WriteString(string(s.recentActivityAbout(5, "/t/"+t.Name, func(target, _ string) bool { return target == t.Name })))
-	s.page(w, r, pg.title(capitalize(plural(t.Name))), template.HTML(b.String()), pageOptions{JSONURL: "/api/" + t.Name, Lede: howMany(t, recs), Dot: s.dotOf(t.Name)})
+	name := capitalize(plural(t.Name))
+	s.page(w, r, name, template.HTML(b.String()), pageOptions{JSONURL: "/api/" + t.Name, Said: pg.title(name), Lede: howMany(t, recs), Dot: s.dotOf(t.Name)})
 }
 
 // detailPage shows one record as a definition list with delete.

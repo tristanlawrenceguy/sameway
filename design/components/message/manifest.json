@@ -24,7 +24,7 @@
           "additionalProperties": false,
           "required": ["action"],
           "properties": {
-            "action": { "type": "string", "description": "added, updated, removed, cleared, failed" },
+            "action": { "type": "string", "description": "added, updated, removed, cleared, failed, or changed for a setting. The renderer shows the words it is given, so a setting change is sent already in words: action changed, no component, detail such as pace to Calm, never set with a key such as ui.pace." },
             "component": { "type": "string" },
             "id": { "type": "string", "description": "Block id the change applied to, when it still exists." },
             "detail": { "type": "string" },
@@ -72,7 +72,7 @@
   },
   "machine": {
     "selector": "[data-component=\"message\"]",
-    "identify": "Read data-role for who spoke (user, assistant, error) and data-actor for the provenance tone (human, assistant, system). The article text is the content; the .sw-message__changes list, if present, has one li per canvas change with data-action and data-target.",
+    "identify": "Read data-role for who spoke (user, assistant, error) and data-actor for the provenance tone (human, assistant, system). The article text is the content; the .sw-message__changes list, if present, has one li per canvas change with data-action and data-target. A setting change has data-action changed and its words in the detail, such as pace to Calm.",
     "operate": "Not interactive."
   },
   "examples": [

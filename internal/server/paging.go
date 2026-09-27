@@ -31,7 +31,8 @@ func pageOf(r *http.Request, n, size int) paged {
 }
 
 // title says which page this is when there is more than one, so each has
-// its own title.
+// its own window title. It goes in pageOptions.Said, not the heading: the
+// h1 is the list's name on every page, and the pagination says where.
 func (p paged) title(t string) string {
 	if p.pages < 2 {
 		return t
