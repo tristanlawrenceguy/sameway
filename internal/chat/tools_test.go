@@ -198,7 +198,7 @@ func TestToolErrorsGuideTheModel(t *testing.T) {
 		req  int
 		want string
 	}{
-		{1, "unknown component \"carousel\". Available: alert, badge, button"},
+		{1, "unknown component \"carousel\". Available: alert, audio, badge, button"},
 		{2, "must be one of 'primary', 'secondary', 'danger', 'quiet'"},
 		{3, "unknown tool frobnicate"},
 		{4, "not valid JSON"},
