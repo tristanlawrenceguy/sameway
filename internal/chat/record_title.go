@@ -6,6 +6,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/track"
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
 // recordTitle is what a record is called: its title field, or its id. An
@@ -24,7 +25,7 @@ func recordTitle(st *store.Store, t *schema.Type, rec *store.Record) string {
 		return track.EntryName(habit, unit, rec.Fields)
 	}
 	if v, ok := rec.Fields[t.Title].(string); ok && strings.TrimSpace(v) != "" {
-		return trimWords(v, 6)
+		return trim.Title(v)
 	}
 	return rec.ID
 }

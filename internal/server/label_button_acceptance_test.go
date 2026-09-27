@@ -7,72 +7,22 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 )
 
-// TestHabitLogButtonVisuallyHiddenIsShort verifies that when a habit has a long
-// name, the Log button's visually-hidden span carries at most three words — not
-// the full untrimmed name.  This covers Acceptance 1.
-func TestHabitLogButtonVisuallyHiddenIsShort(t *testing.T) {
+// The Log button says Log, and to a reader which habit: its whole name, or
+// the name cut at a word with an ellipsis, never left hanging on "for".
+func TestHabitLogButtonSaysWhichHabit(t *testing.T) {
 	a, h := newApp(t)
-
-	// Create a habit whose name exceeds three words: "Daily stretch break" (4 words).
-	hab, err := a.Store.Create(server.HabitType, map[string]any{
-		"name":    "Daily stretch break",
-		"cadence": "day",
-		"target":  1,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	page := get(t, h, "/t/"+server.HabitType+"/"+hab.ID).Body.String()
-
-	// The Log button must not contain the full habit name in its visually-hidden span.
-	visHiddenPattern := `<span class="sw-visually-hidden"> Daily stretch break</span>`
-	if strings.Contains(page, visHiddenPattern) {
-		idx2 := strings.Index(page, visHiddenPattern)
-		t.Logf("DEBUG: context around match (100 chars): %q", page[max(0, idx2-100):min(len(page), idx2+200)])
-
-		// Also dump the full tracker section to see what's rendered
-		trackerStart := strings.Index(page, `<section class="sw-tracker sw-tracker--full"`)
-		if trackerStart >= 0 {
-			rest := page[trackerStart:]
-			secEnd := strings.Index(rest, "</section>") + len("</section>")
-			t.Logf("DEBUG: full tracker section:\n%s", rest[:min(secEnd, len(rest))])
+	for name, want := range map[string]string{
+		"Daily stretch break":                          "Daily stretch break",
+		"Exercise for thirty minutes every single day": "Exercise for thirty minutes every single…",
+	} {
+		hab, err := a.Store.Create(server.HabitType, map[string]any{"name": name, "cadence": "day", "target": 1})
+		if err != nil {
+			t.Fatal(err)
 		}
-
-		t.Errorf("Log button visible text + hidden context exceeds 3 words; "+
-			"found %q — the habit name should be trimmed to ≤3 words in the Log button",
-			visHiddenPattern)
-	}
-
-	// The visually-hidden span after "Log" must have at most three words.
-	// Extract the text inside sw-visually-hidden that follows the Log button form.
-	logBtn := `<button type="submit" class="sw-button sw-button--secondary sw-pressable">Log`
-	if !strings.Contains(page, logBtn) {
-		t.Fatal("habit detail page should contain a Log button")
-	}
-
-	// Find the content between "Log" and "</button>" in the form.
-	idx := strings.Index(page, logBtn)
-	if idx < 0 {
-		t.Fatal("could not find Log button start")
-	}
-	rest := page[idx:]
-	btnEnd := strings.Index(rest, "</button>")
-	if btnEnd < 0 {
-		t.Fatal("could not find Log button end")
-	}
-	buttonContent := rest[:btnEnd]
-
-	// Count words in the visually-hidden span.
-	viStart := strings.Index(buttonContent, `class="sw-visually-hidden"`)
-	if viStart >= 0 {
-		innerStart := strings.Index(buttonContent[viStart:], ">") + viStart + 1
-		spanEnd := strings.Index(buttonContent[innerStart:], "</span>") + innerStart
-		hiddenText := buttonContent[innerStart:spanEnd]
-		wordCount := len(strings.Fields(hiddenText))
-		if wordCount > 3 {
-			t.Errorf("Log button visually-hidden span has %d words (max 3): %q",
-				wordCount, strings.TrimSpace(hiddenText))
+		page := get(t, h, "/t/"+server.HabitType+"/"+hab.ID).Body.String()
+		button := `sw-pressable">Log<span class="sw-visually-hidden"> ` + want + `</span></button>`
+		if !strings.Contains(page, button) {
+			t.Errorf("the Log button for %q should read Log %q; page body:\n%s", name, want, truncate(page))
 		}
 	}
 }

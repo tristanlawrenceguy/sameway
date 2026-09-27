@@ -15,6 +15,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
 // Server serves one workspace.
@@ -282,5 +283,5 @@ func (s *Server) linkTitle(path string) string {
 	if err != nil {
 		return ""
 	}
-	return trimTitle(s.title(t, rec))
+	return trim.Title(s.title(t, rec))
 }

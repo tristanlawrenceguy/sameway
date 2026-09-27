@@ -11,14 +11,17 @@ fields:
     maxLength: 200
     description: What to call it; the file name until you say otherwise.
   name:
+    label: File name
     type: string
     description: The file name it arrived with, kept by the system.
     readonly: true
   kind:
+    label: File type
     type: string
     description: What sort of file it is, such as document, spreadsheet, pdf or image; kept by the system.
     readonly: true
   size:
+    label: Size in bytes
     type: int
     description: Bytes, kept by the system.
     readonly: true

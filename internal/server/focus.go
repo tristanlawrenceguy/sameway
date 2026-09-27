@@ -8,6 +8,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
 // Popping a block out: the same block, given the whole middle of the page.
@@ -148,16 +149,8 @@ func (s *Server) expanded(name string, props map[string]any, convo *conversation
 func title(name string, props map[string]any) (string, bool) {
 	for _, key := range []string{"caption", "title", "label", "text"} {
 		if v, ok := props[key].(string); ok && strings.TrimSpace(v) != "" {
-			return trimTitle(v), true
+			return trim.Title(v), true
 		}
 	}
 	return strings.ToUpper(name[:1]) + name[1:], false
-}
-
-func truncateTitle(s string) string {
-	s = strings.TrimSpace(strings.SplitN(s, "\n", 2)[0])
-	if len([]rune(s)) <= 60 {
-		return s
-	}
-	return string([]rune(s)[:59]) + "…"
 }

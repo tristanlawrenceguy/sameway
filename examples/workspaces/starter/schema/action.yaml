@@ -12,6 +12,7 @@ fields:
     maxLength: 80
     description: What the button says, such as Turn on the alarm.
   kind:
+    label: What it does
     type: enum
     values: [webhook, mqtt, command, arrangement, message]
     labels: {webhook: Call a web address, mqtt: Tell a device, command: Run a program on this computer, arrangement: Set up a page, message: Ask the assistant}
