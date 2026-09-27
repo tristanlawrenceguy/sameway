@@ -57,7 +57,7 @@ func TestWhoElseIsHere(t *testing.T) {
 	}
 	srv := h.(*server.Server)
 	srv.HearPresence([]peers.Presence{{Login: "bob@example.com", Name: "Bob", Place: "Plan"}})
-	if page := get(t, h, "/").Body.String(); !strings.Contains(page, "Bob, on Plan") {
+	if page := get(t, h, "/").Body.String(); !strings.Contains(page, "Bob</span>, on Plan") {
 		t.Error("someone on another computer is here too")
 	}
 }

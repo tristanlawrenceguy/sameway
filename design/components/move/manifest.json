@@ -71,9 +71,9 @@
       "props": {
         "action": "/t/task/k3n2p9/props",
         "title": "Order compost",
-        "back": "tasks-k3n2p9",
+        "back": "move-k3n2p9",
         "select": {
-          "id": "tasks-k3n2p9-move",
+          "id": "move-k3n2p9-status",
           "name": "prop-status",
           "label": "Status",
           "as": "dropdown",
