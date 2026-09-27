@@ -76,8 +76,12 @@ func (s *Server) sinceNotice(r *http.Request) template.HTML {
 	if len(items) == 0 {
 		return ""
 	}
-	return template.HTML(`<section class="sw-panel sw-stack" data-component="since" aria-labelledby="since-h"><h2 id="since-h">Since you were last here</h2><ul class="sw-plain sw-stack">` + strings.Join(items, "") +
-		`</ul><form method="post" action="/since/seen"><input type="hidden" name="from" value="` + template.HTMLEscapeString(from) + `"><button type="submit" class="sw-button sw-button--secondary sw-pressable">Got it</button></form></section>`)
+	list := template.HTML(`<ul class="sw-plain sw-stack">` + strings.Join(items, "") + `</ul>`)
+	out, err := s.app.Registry.RenderSlot("since", map[string]any{"seen": "/since/seen", "from": from}, list)
+	if err != nil {
+		return ""
+	}
+	return out
 }
 
 // sinceSeen is the person saying they have caught up.
