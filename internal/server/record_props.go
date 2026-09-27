@@ -87,22 +87,7 @@ func (s *Server) recordProps(w http.ResponseWriter, r *http.Request) {
 	// A change a person made by hand is a change like any other: in the
 	// log with what it was, so it glows where it shows and can be undone.
 	undo := s.record(r, chat.Change{Action: "updated", Component: t.Name, ID: rec.ID, Detail: s.title(t, rec), Href: detail, Before: rec.Fields})
-	s.tellAt(w, r, savedWords(t, rec, fields, clean, undo), returnTo(r, detail)+cameFrom(r.PostFormValue("at")))
-}
-
-// cameFrom is the place on the page an edit was made, such as a card a
-// board moved, for the page to come back to it focused rather than at its
-// top. Only an id is taken.
-func cameFrom(at string) string {
-	if at == "" || len(at) > 200 {
-		return ""
-	}
-	for _, c := range at {
-		if !(c == '-' || c == '_' || c >= '0' && c <= '9' || c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z') {
-			return ""
-		}
-	}
-	return "#" + at
+	s.tellAt(w, r, s.savedText(savedWords(t, rec, fields, clean, undo), t, rec, fields, clean), returnTo(r, detail))
 }
 
 // refused says why an edit was not taken, a sentence for each field in

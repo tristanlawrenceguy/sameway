@@ -71,6 +71,7 @@ func (s *Server) tellAt(w http.ResponseWriter, r *http.Request, o outcome, to st
 		io.WriteString(w, string(s.renderOutcome(o, to)))
 		return
 	}
+	to = withBack(to, placeOf(r))
 	raw, _ := json.Marshal(o)
 	http.SetCookie(w, &http.Cookie{Name: outcomeCookie, Value: base64.RawURLEncoding.EncodeToString(raw),
 		Path: "/", MaxAge: 60, HttpOnly: true, SameSite: http.SameSiteLaxMode})
