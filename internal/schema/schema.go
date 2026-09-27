@@ -16,7 +16,7 @@ import (
 )
 
 // FieldTypes lists every supported field type, in documentation order.
-var FieldTypes = []string{"string", "text", "markdown", "int", "float", "bool", "enum", "list", "json", "datetime", "ref"}
+var FieldTypes = []string{"string", "text", "markdown", "int", "float", "bool", "enum", "list", "json", "datetime", "repeat", "ref"}
 
 var nameRe = regexp.MustCompile(`^[a-z][a-z0-9_]{0,63}$`)
 

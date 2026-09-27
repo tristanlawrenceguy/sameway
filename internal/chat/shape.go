@@ -29,7 +29,7 @@ func (d fieldDef) field() schema.Field {
 
 var fieldProps = map[string]any{
 	"name":        map[string]any{"type": "string", "description": "Lowercase letters, digits and underscores, such as due or priority."},
-	"kind":        map[string]any{"type": "string", "enum": schema.FieldTypes, "description": "string is a line of text, text a paragraph, markdown structured text, datetime a day or a moment, enum one of values, list several strings, ref another record's id (say which type in to), bool yes or no."},
+	"kind":        map[string]any{"type": "string", "enum": schema.FieldTypes, "description": "string is a line of text, text a paragraph, markdown structured text, datetime a day or a moment, repeat how often it happens again (every Tuesday), enum one of values, list several strings, ref another record's id (say which type in to), bool yes or no."},
 	"description": map[string]any{"type": "string", "description": "What the field is for, in a few words: shown to people and to you."},
 	"values":      map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "For enum: the choices."},
 	"to":          map[string]any{"type": "string", "description": "For ref: the content type it points at."},
