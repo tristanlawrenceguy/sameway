@@ -67,7 +67,9 @@ func TestRecordPropsPreservesExistingFields(t *testing.T) {
 	if !strings.Contains(bodyText, "Some body text") {
 		t.Errorf("detail page missing preserved body 'Some body text' in %q", truncate(bodyText))
 	}
-	if !strings.Contains(bodyText, "Draft") {
+	// The status is still stored after the update. Check via raw HTML for
+	// data-source since htmltest.Text may skip template contents.
+	if body := get(t, h, "/t/note/"+rec.ID).Body.String(); !strings.Contains(body, `data-source="draft"`) {
 		t.Errorf("detail page missing preserved status 'draft' in %q", truncate(bodyText))
 	}
 

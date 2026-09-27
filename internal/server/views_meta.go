@@ -26,7 +26,7 @@ func (s *Server) lede(t *schema.Type, rec *store.Record) template.HTML {
 		delete(props, "context")
 		box = string(s.component("mark", props))
 	}
-	return template.HTML(`<p class="sw-lede">` + box + s.facts(t, rec, factOpts{Made: true, Boxed: box != "", Chips: true}) + `</p>`)
+	return template.HTML(`<p class="sw-lede">` + box + s.facts(t, rec, factOpts{Made: true, Boxed: box != "", Chips: true, Detail: true}) + `</p>`)
 }
 
 // howMany says how many there are under a listing's title, and how many
@@ -56,7 +56,7 @@ func howMany(t *schema.Type, recs []*store.Record) template.HTML {
 // made; Boxed leaves out the done chip because a box already shows it;
 // Chips draws the day and what it belongs to as chips rather than words,
 // and words are short, the way a row says them.
-type factOpts struct{ Made, Boxed, Chips, Row bool }
+type factOpts struct{ Made, Boxed, Chips, Row, Detail bool }
 
 // facts is what a person wants to know about a record at a glance: done,
 // its state, the day that matters, what it belongs to. A day that has
@@ -87,16 +87,15 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 		}
 	}
 	// Show enum badges only when the caller is not a list row for note/project/file,
-	// and not an action detail (actions hide their kind everywhere).
+	// and not an action detail (actions hide their kind everywhere). Also skip
+	// note/project on detail pages — the status badge in meta text repeats what
+	// the definition list below already says.
 	skipEnum := o.Row && (t.Name == "note" || t.Name == "project" || t.Name == "file")
-	if !skipEnum && t.Name != "action" {
+	detailSkip := o.Detail && (t.Name == "note" || t.Name == "project")
+	if !skipEnum && !detailSkip && t.Name != "action" {
 		for _, f := range t.Shown() {
 			if f.Type == "enum" {
 				if v, ok := rec.Fields[f.Name].(string); ok && v != "" {
-					// "High", heard in a row of facts, says nothing without the
-					// field it is: the field is read after it, not shown. A value
-					// the schema names in a person's words, "Each day" or "Call a
-					// web address", already says what it is, and is heard alone.
 					props := map[string]any{"label": f.ValueLabel(v), "tone": "info"}
 					if f.Labels[v] == "" {
 						props["context"] = strings.ToLower(fieldLabel(f))

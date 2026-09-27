@@ -8,8 +8,9 @@ import (
 )
 
 // A state badge is heard with its field only when the value needs it:
-// "Draft" is heard as "Draft status", but "Each day" says what it is and
-// is heard alone, never as "Each day cadence".
+// "Each day" says what it is and is heard alone, never as "Each day cadence".
+// Note detail pages do not show status badges in the lede — the definition
+// list below carries that information without exposing internal names.
 func TestAStateBadgeIsHeardWithItsFieldOnlyWhenItNeedsIt(t *testing.T) {
 	a, h := newApp(t)
 	habit, _ := a.Store.Create(server.HabitType, map[string]any{"name": "Read", "cadence": "day"})
@@ -19,8 +20,8 @@ func TestAStateBadgeIsHeardWithItsFieldOnlyWhenItNeedsIt(t *testing.T) {
 	if !strings.Contains(page, `>Each day</span>`) || strings.Contains(page, `cadence</span>`) {
 		t.Errorf("a named value is heard alone:\n%s", page)
 	}
-	if page := get(t, h, "/t/note/"+note.ID).Body.String(); !strings.Contains(page, `Draft<span class="sw-visually-hidden"> status</span>`) {
-		t.Errorf("a bare value is heard with its field:\n%s", page)
+	if page := get(t, h, "/t/note/"+note.ID).Body.String(); strings.Contains(page, `<span class="sw-visually-hidden"> status</span>`) {
+		t.Errorf("note detail lede should not expose \"status\" as a hidden field name:\n%s", page)
 	}
 }
 
