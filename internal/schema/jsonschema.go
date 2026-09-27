@@ -17,7 +17,7 @@ func (t *Type) JSONSchema() map[string]any {
 	for _, f := range t.Shown() {
 		p := map[string]any{}
 		switch f.Type {
-		case "string", "text", "markdown", "datetime":
+		case "string", "text", "markdown", "datetime", "repeat":
 			p["type"] = "string"
 		case "enum":
 			p["type"] = "string"
@@ -49,6 +49,9 @@ func (t *Type) JSONSchema() map[string]any {
 		if f.Type == "datetime" {
 			p["format"] = "date-time"
 			p["description"] = strings.TrimSpace(f.Description + " A day as 2026-09-19 or a moment as RFC 3339; words are read too: tomorrow, next Friday, 19 Sep 2pm.")
+		}
+		if f.Type == "repeat" {
+			p["description"] = strings.TrimSpace(f.Description + " How often, in words: every day, every weekday, every Tuesday, every 2 weeks, every month on the 1st, every year, with until 1 Mar if it ends; empty for once. Kept as an RRULE such as FREQ=WEEKLY;BYDAY=TU, which is read too.")
 		}
 		props[f.Name] = p
 		if f.Required {

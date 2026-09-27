@@ -14,6 +14,7 @@
       "id": { "type": "string" },
       "value": { "type": "string", "description": "The day as a person reads it, such as Fri 2 Oct 2026, 14:00." },
       "day": { "type": "string", "description": "The same day as YYYY-MM-DD, so the picker opens on it." },
+      "repeat": { "type": "boolean", "default": false, "description": "Asks how often instead of when: every Tuesday, every month on the 1st. The words alone, with no picker, since a month cannot show a rule; said back the same way." },
       "hint": { "type": "string", "default": "A day, like 19 Sep or next Friday, with a time if there is one, like 2pm." },
       "error": { "type": "string" },
       "required": { "type": "boolean", "default": false }
@@ -31,12 +32,13 @@
   },
   "machine": {
     "selector": "[data-component=\"when-field\"]",
-    "identify": "input.sw-field__input[type=text] holds the words that are sent; input[type=date] is the picker, which sends nothing itself.",
-    "operate": "Type a day into the text field, such as 2026-10-02 or next Friday 2pm; the server reads it."
+    "identify": "input.sw-field__input[type=text] holds the words that are sent; input[type=date] is the picker, which sends nothing itself. data-repeat marks one that asks how often, with no picker.",
+    "operate": "Type a day into the text field, such as 2026-10-02 or next Friday 2pm, or for a repeat how often, such as every Tuesday; the server reads it."
   },
   "examples": [
     { "name": "default", "props": { "label": "Due", "name": "due", "id": "due" }, "file": "examples/default.html" },
     { "name": "filled", "props": { "label": "Starts", "name": "starts", "id": "starts", "value": "Fri 2 Oct 2026, 14:00", "day": "2026-10-02" }, "file": "examples/filled.html" },
+    { "name": "repeat", "props": { "label": "Repeat", "name": "repeat", "id": "repeat", "value": "every Tuesday", "repeat": true, "hint": "How often, like every day, every Tuesday, every 2 weeks or every month on the 1st; add until 1 Mar if it ends. Empty for once." }, "file": "examples/repeat.html" },
     { "name": "error", "props": { "label": "Deadline", "name": "deadline", "id": "deadline", "value": "someday", "required": true, "error": "Due must be a day, like 19 Sep, next Friday or tomorrow 2pm" }, "file": "examples/error.html" }
   ]
 }
