@@ -254,33 +254,3 @@ func (s *Server) request(method, path string, form url.Values, cookies ...*http.
 	s.mux.ServeHTTP(rec, req)
 	return rec
 }
-
-// lookAtComponent renders one component from props and reads the fragment,
-// so an agent sees what a block would be before adding it, and what a
-// screen reader would be stuck on.
-func (s *Server) lookAtComponent(w http.ResponseWriter, name string, props map[string]any) {
-	c, ok := s.app.Registry.Get(name)
-	if !ok {
-		writeJSON(w, http.StatusNotFound, map[string]any{"error": apiError{Code: "not_found",
-			Message: fmt.Sprintf("no component %q; the components are %s", name, strings.Join(s.app.Registry.Names(), ", "))}})
-		return
-	}
-	if props == nil {
-		props = map[string]any{}
-	}
-	if _, err := c.Validate(props); err != nil {
-		writeJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": apiError{Code: "invalid", Message: err.Error()}})
-		return
-	}
-	html, err := s.app.Registry.Render(name, props)
-	if err != nil {
-		writeError(w, err)
-		return
-	}
-	outline, err := look.Fragment(string(html))
-	if err != nil {
-		writeError(w, err)
-		return
-	}
-	writeJSON(w, http.StatusOK, map[string]any{"component": name, "html": string(html), "outline": outline})
-}
