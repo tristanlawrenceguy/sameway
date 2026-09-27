@@ -1,6 +1,6 @@
 {
   "name": "message",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "One turn in a conversation: who said it, what was said, and for assistant turns the receipt of canvas changes it made. Render inside a list so the conversation has structure.",
   "icon": "…",
   "use": { "when": "one turn of a conversation.", "not": "anything outside the conversation.", "with": "a list of turns." },
@@ -18,18 +18,21 @@
       "from": { "type": "string", "description": "The page the message is shown on, so an Undo in the receipt returns there." },
       "changes": {
         "type": "array",
-        "description": "Canvas changes made during this turn, shown as a receipt under the text.",
+        "description": "Canvas changes made during this turn, shown under the text as Changes made. Each is an event, rendered compact: the message says who, so each line starts at its verb. Give each the props of its activity log entry, so a change reads the same here and in the log.",
         "items": {
           "type": "object",
           "additionalProperties": false,
           "required": ["action"],
           "properties": {
-            "action": { "type": "string", "description": "added, updated, removed, cleared, failed, or changed for a setting. The renderer shows the words it is given, so a setting change is sent already in words: action changed, no component, detail such as pace to Calm, never set with a key such as ui.pace." },
-            "component": { "type": "string" },
-            "id": { "type": "string", "description": "Block id the change applied to, when it still exists." },
+            "actor": { "type": "string", "enum": ["human", "assistant", "system"], "description": "Who made it, for its colour; assistant when left out." },
+            "action": { "type": "string", "minLength": 1, "description": "The event's verb: added, updated, removed, changed. Sent in words, as the log says it: a setting change is action changed, target text size, detail to Large, never set with a key such as ui.text." },
+            "target": { "type": "string", "description": "What was acted on, such as card or text size." },
             "detail": { "type": "string" },
-            "href": { "type": "string", "description": "The page of the thing changed, so the receipt leads to it. Left out when the thing is gone." },
-            "activity": { "type": "string", "description": "The activity entry of this change, given only while it can still be undone; the receipt then offers Undo." }
+            "href": { "type": "string", "description": "The page of the thing changed, so the line leads to it. Left out when the thing is gone." },
+            "undo": { "type": "string", "description": "Where Undo posts, given only under the newest reply and while the change can still be undone; it returns to from." },
+            "who": { "type": "string" },
+            "person": { "type": "integer", "minimum": 1, "maximum": 6 },
+            "via": { "type": "string" }
           }
         }
       },
@@ -62,25 +65,25 @@
   },
   "a11y": {
     "role": "article",
-    "keyboard": [ { "key": "Tab", "does": "reaches the attached file, when there is one, then each change in the receipt that still exists, as a link to its page" } ],
+    "keyboard": [ { "key": "Tab", "does": "reaches the attached file, when there is one, then each change made that still exists, as a link to its page, and its Undo under the newest reply" } ],
     "states": ["data-actor", "data-role"],
-    "wcag": { "target": "AAA", "notes": "Author is text, not colour or alignment alone (1.4.1). Each message is an article with its author as the first line so screen readers can move between turns. The change receipt is a real list with a heading only screen readers hear. Each message starts with a heading, who said it and when, so a conversation is moved through turn by turn. A reply that did not finish says so in words, not only in red. Line breaks the words have are kept. What a reply changed has a visible label and one change to a 44px row, so no reach overlaps." }
+    "wcag": { "target": "AAA", "notes": "Author is text, not colour or alignment alone (1.4.1). Each message is an article with its author as the first line so screen readers can move between turns. Each message starts with a heading, who said it and when, so a conversation is moved through turn by turn. A reply that did not finish says so in words, not only in red. Line breaks the words have are kept. What a reply changed has a visible label, Changes made, and is a list of events, the same lines as the activity log without the actor the heading already says, one change to a 44px row, so no reach overlaps." }
   },
   "template": {
-    "functions": ["paragraphs", "linkify"],
-    "notes": "The linkify function converts internal paths (/t/note/..., /t/file/...) and external URLs (http://, https://) into clickable anchor tags in message content paragraphs."
+    "functions": ["paragraphs", "linkify", "events"],
+    "notes": "The linkify function converts internal paths (/t/note/..., /t/file/...) and external URLs (http://, https://) into clickable anchor tags in message content paragraphs. The events function renders each change as the event component, compact, inside a list item, and passes from on for Undo."
   },
   "machine": {
     "selector": "[data-component=\"message\"]",
-    "identify": "Read data-role for who spoke (user, assistant, error) and data-actor for the provenance tone (human, assistant, system). The article text is the content; the .sw-message__changes list, if present, has one li per canvas change with data-action and data-target. A setting change has data-action changed and its words in the detail, such as pace to Calm.",
+    "identify": "Read data-role for who spoke (user, assistant, error) and data-actor for the provenance tone (human, assistant, system). The article text is the content; the .sw-message__changes list, if present, has one li per canvas change, each an event ([data-component=\"event\"]) with data-action and data-target, read as the event says. A setting change has data-action changed, data-target such as text size, and detail such as to Large.",
     "operate": "Not interactive."
   },
   "examples": [
     { "name": "default", "props": { "level": 2, "role": "user", "content": "Add a grocery list with milk, eggs and bread.", "time": "14:05", "id": "msg-1" }, "file": "examples/default.html" },
-    { "name": "assistant", "props": { "level": 2, "role": "assistant", "content": "Done. I added a list with three items.\n\nWant it as a table instead?", "time": "14:05", "changes": [ { "action": "added", "component": "heading", "detail": "Shopping", "href": "/canvas/h1", "activity": "a1" }, { "action": "added", "component": "list" } ] }, "file": "examples/assistant.html" },
+    { "name": "assistant", "props": { "level": 2, "role": "assistant", "content": "Done. I added a list with three items.\n\nWant it as a table instead?", "time": "14:05", "changes": [ { "action": "added", "target": "heading", "detail": "Shopping", "href": "/canvas/h1", "undo": "/activity/a1/undo" }, { "action": "added", "target": "list" } ] }, "file": "examples/assistant.html" },
     { "name": "error", "props": { "level": 2, "role": "error", "content": "Could not reach the model at http://localhost:11434." }, "file": "examples/error.html" },
-    { "name": "with links", "props": { "level": 2, "role": "assistant", "content": "I added two items.", "time": "14:05", "changes": [{"action": "added", "component": "note"}], "links": [{"href": "/t/note/abc", "label": "a note"}, {"href": "/canvas/h1", "label": "heading"}] }, "file": "examples/with_links.html" },
+    { "name": "with links", "props": { "level": 2, "role": "assistant", "content": "I added two items.", "time": "14:05", "changes": [{"action": "created", "target": "note", "detail": "Seeds to buy", "href": "/t/note/abc"}], "links": [{"href": "/t/note/abc", "label": "a note"}, {"href": "/canvas/h1", "label": "heading"}] }, "file": "examples/with_links.html" },
     { "name": "with attachment", "props": { "level": 2, "role": "user", "content": "What does this say?", "time": "14:06", "attachment": { "title": "Lease agreement", "href": "/t/file/f1" } }, "file": "examples/with_attachment.html" },
-    { "name": "setting change", "props": { "level": 3, "role": "assistant", "content": "Pace is set to calm.", "time": "14:05", "changes": [ { "action": "changed", "detail": "pace to Calm", "activity": "act-1" } ] }, "file": "examples/setting-change.html" }
+    { "name": "setting change", "props": { "level": 3, "role": "assistant", "content": "Pace is set to calm.", "time": "14:05", "changes": [ { "action": "changed", "target": "pace", "detail": "to Calm", "undo": "/activity/act-1/undo" } ] }, "file": "examples/setting-change.html" }
   ]
 }

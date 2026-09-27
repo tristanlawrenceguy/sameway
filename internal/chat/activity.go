@@ -8,7 +8,6 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
-	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
 // ActivityType is the content type that logs every canvas change.
@@ -126,35 +125,6 @@ func summarise(actor string, c Change) string {
 	return strings.Join(parts, " ")
 }
 
-// CleanRecordLink transforms a change map so that record-type links (href
-// starting with /t/) no longer show the internal schema type suffix like
-// "(note)" or "(habit)". It mutates the map in place and returns true when it
-// was a record link.
-func CleanRecordLink(c map[string]any) bool {
-	href, _ := c["href"].(string)
-	if !strings.HasPrefix(href, "/t/") {
-		return false
-	}
-	delete(c, "component")
-	return true
-}
-
-// CleanSettingChange transforms a change map so that setting-change entries
-// display readable names instead of internal keys like "ui.pace". It mutates
-// the map in place and returns true when it was a setting change.
-func CleanSettingChange(c map[string]any) bool {
-	action, _ := c["action"].(string)
-	component, _ := c["component"].(string)
-	detail, _ := c["detail"].(string)
-	if !isSettingChange(Change{Action: action, Component: component, Detail: detail}) {
-		return false
-	}
-	c["action"] = "changed"
-	c["detail"] = settingPhrase(component, detail)
-	delete(c, "component")
-	return true
-}
-
 // isSettingChange reports whether the change is a setting-change entry,
 // identified by action "set" and a component that looks like a dotted path
 // (ui.*, llm.*, etc.).
@@ -171,10 +141,10 @@ func settingSummary(who, key, value string) string {
 	return who + " changed " + settingPhrase(key, value)
 }
 
-// settingPhrase is "text size to Large": the setting by its one name, from
-// the workspace, and the value capitalised.
+// settingPhrase is "text size to Large", as Say says it.
 func settingPhrase(key, value string) string {
-	return strings.ToLower(workspace.SettingLabel(key)) + " to " + strings.ToUpper(value[:1]) + value[1:]
+	name, value := settingWords(key, value)
+	return name + " to " + value
 }
 
 // oldSetting is a setting change as the log wrote it before it spoke in

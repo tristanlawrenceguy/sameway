@@ -41,7 +41,7 @@ func TestAPersonUndoesFromWhereTheyAre(t *testing.T) {
 
 	// The receipt under the newest reply offers Undo, back to the chat.
 	page := get(t, h, "/chat").Body.String()
-	if !strings.Contains(page, `class="sw-message__undo"`) || !strings.Contains(page, `name="from" value="/chat"`) {
+	if receipt := changesMade(page); !strings.Contains(receipt, `class="sw-event__undo"`) || !strings.Contains(receipt, `name="from" value="/chat"`) {
 		t.Fatal("the receipt under the newest reply should offer Undo")
 	}
 
@@ -69,7 +69,7 @@ func TestAPersonUndoesFromWhereTheyAre(t *testing.T) {
 	if !undo.MatchString(act) {
 		t.Error("the undo entry should offer Undo in turn")
 	}
-	if strings.Contains(get(t, h, "/chat").Body.String(), `class="sw-message__undo"`) {
+	if strings.Contains(changesMade(get(t, h, "/chat").Body.String()), `class="sw-event__undo"`) {
 		t.Error("a receipt for something already gone should not offer Undo")
 	}
 
