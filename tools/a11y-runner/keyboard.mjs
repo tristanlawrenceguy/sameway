@@ -49,8 +49,13 @@ async function arm() {
   });
 }
 
-// summary is focusable; a hidden input is a form value, not a control.
-const FOCUSABLE = 'a[href], button:not([disabled]), summary, input:not([disabled]):not([type=hidden]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+// summary is focusable; a hidden input is a form value, not a control. A
+// browser's own audio or video player is one element that Tab passes
+// through several stops inside (play, time, volume): one stop here.
+const FOCUSABLE = 'a[href], button:not([disabled]), summary, input:not([disabled]):not([type=hidden]), select:not([disabled]), textarea:not([disabled]), audio[controls], video[controls], [tabindex]:not([tabindex="-1"])';
+const media = (tag) => /^(audio|video)\b/.test(tag);
+// A player's inner stops are its one stop, however many it has.
+const collapse = (tags) => tags.filter((t, i) => !(media(t) && tags[i - 1] === t));
 
 const focusables = () => page.evaluate((sel) => {
   // Only what is drawn: a control hidden until a script shows it is not met.
@@ -69,36 +74,39 @@ const active = () => page.evaluate(() => {
 async function tabOrder(where, mode) {
   const expected = await focusables();
   await page.evaluate(() => document.body.focus());
-  const seen = [];
-  for (let i = 0; i < expected.length + 2; i++) {
+  let seen = [];
+  for (let i = 0; i < expected.length * 8 + 2; i++) {
     await page.keyboard.press("Tab");
     const a = await active();
     if (a.tag === "body") break;
+    if (media(a.tag) && seen[seen.length - 1] === a.tag) continue;
     seen.push(a.tag);
     if (!a.ring) fail(where, `${a.tag} focused via keyboard without a visible focus ring (${mode})`);
     // In forced colours the ring is the person's own colour; elsewhere it
     // must be 2px and 3:1 against what it is drawn over (2.4.13).
     const weak = mode === "forced" ? null : await focusAppearance(page);
     if (weak) fail(where, `${weak} (${mode})`);
-    if (seen.length === expected.length) break;
+    if (seen.length === expected.length && !media(a.tag)) break;
   }
+  seen = collapse(seen);
   if (seen.join(",") !== expected.join(",")) fail(where, `tab order ${seen.join(",")} differs from DOM order ${expected.join(",")} (${mode})`);
   if (mode !== "light" || expected.length === 0) return expected;
   // Tab from the last control leaves the example; nothing holds focus. A
   // date field takes a Tab for each of its parts before it lets go.
   let out;
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 12; i++) {
     await page.keyboard.press("Tab");
     out = await active();
     if (out.tag === "body") break;
   }
   if (out.tag !== "body") fail(where, `Tab from the last control stays on ${out.tag}: a keyboard trap`);
   // Shift+Tab from the end walks the same order backwards.
-  const back = [];
-  for (let i = 0; i < expected.length; i++) {
+  let back = [];
+  for (let i = 0; i < expected.length * 8 && collapse(back).length < expected.length; i++) {
     await page.keyboard.press("Shift+Tab");
     back.push((await active()).tag);
   }
+  back = collapse(back);
   if (back.reverse().join(",") !== expected.join(",")) fail(where, `Shift+Tab order ${back.join(",")} is not the Tab order reversed`);
   return expected;
 }
