@@ -80,6 +80,7 @@
     { "name": "assistant", "props": { "level": 2, "role": "assistant", "content": "Done. I added a list with three items.\n\nWant it as a table instead?", "time": "14:05", "changes": [ { "action": "added", "component": "heading", "detail": "Shopping", "href": "/canvas/h1", "activity": "a1" }, { "action": "added", "component": "list" } ] }, "file": "examples/assistant.html" },
     { "name": "error", "props": { "level": 2, "role": "error", "content": "Could not reach the model at http://localhost:11434." }, "file": "examples/error.html" },
     { "name": "with links", "props": { "level": 2, "role": "assistant", "content": "I added two items.", "time": "14:05", "changes": [{"action": "added", "component": "note"}], "links": [{"href": "/t/note/abc", "label": "a note"}, {"href": "/canvas/h1", "label": "heading"}] }, "file": "examples/with_links.html" },
-    { "name": "with attachment", "props": { "level": 2, "role": "user", "content": "What does this say?", "time": "14:06", "attachment": { "title": "Lease agreement", "href": "/t/file/f1" } }, "file": "examples/with_attachment.html" }
+    { "name": "with attachment", "props": { "level": 2, "role": "user", "content": "What does this say?", "time": "14:06", "attachment": { "title": "Lease agreement", "href": "/t/file/f1" } }, "file": "examples/with_attachment.html" },
+    { "name": "setting change", "props": { "level": 3, "role": "assistant", "content": "Pace is set to calm.", "time": "14:05", "changes": [ { "action": "changed", "detail": "pace to Calm", "activity": "act-1" } ] }, "file": "examples/setting-change.html" }
   ]
 }

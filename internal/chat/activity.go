@@ -122,6 +122,28 @@ func summarise(actor string, c Change) string {
 	return strings.Join(parts, " ")
 }
 
+// CleanSettingChange transforms a change map so that setting-change entries
+// display readable names instead of internal keys like "ui.pace". It mutates
+// the map in place and returns true when it was a setting change.
+func CleanSettingChange(c map[string]any) bool {
+	action, _ := c["action"].(string)
+	component, _ := c["component"].(string)
+	detail, _ := c["detail"].(string)
+	if action != "set" || component == "" || detail == "" {
+		return false
+	}
+	if !strings.HasPrefix(component, "ui.") && !strings.HasPrefix(component, "llm.") {
+		return false
+	}
+	parts := strings.Split(component, ".")
+	label := parts[len(parts)-1]
+	val := strings.ToUpper(detail[:1]) + detail[1:]
+	c["action"] = "changed"
+	c["detail"] = label + " to " + val
+	delete(c, "component")
+	return true
+}
+
 // isSettingChange reports whether the change is a setting-change entry,
 // identified by action "set" and a component that looks like a dotted path
 // (ui.*, llm.*, etc.).
