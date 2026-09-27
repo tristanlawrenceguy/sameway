@@ -221,6 +221,34 @@ func zeroFor(typ string) any {
 	}
 }
 
+// humanizeErrorKind replaces JSON Schema error-kind strings with plain-language
+// descriptions so users never see internal validation terminology.
+func humanizeErrorKind(line string) string {
+	if idx := strings.Index(line, " additional properties "); idx >= 0 {
+		line = line[:idx] + " contains extra fields it shouldn't"
+	} else if strings.Contains(line, "additional properties") {
+		line = strings.ReplaceAll(line, "additional properties", "contains extra fields it shouldn't")
+	}
+	if strings.Contains(line, " not allowed") {
+		line = strings.ReplaceAll(line, " not allowed", "")
+	}
+	if strings.Contains(line, " missing property ") || strings.Contains(line, ": missing property") {
+		line = strings.ReplaceAll(line, " missing property ", " is needed ")
+		line = strings.ReplaceAll(line, ": missing property", " is needed")
+	}
+	if strings.Contains(line, "is the wrong type") {
+		line = strings.ReplaceAll(line, "is the wrong type", "needs to be a different kind of value")
+	}
+	if idx := strings.Index(line, " got "); idx >= 0 {
+		if rest := line[idx:]; len(rest) > 12 && strings.Contains(rest, ", want ") {
+			var n int
+			fmt.Sscanf(rest, " got %d, want", &n)
+			line = line[:idx] + fmt.Sprintf("must have at least %d characters", n)
+		}
+	}
+	return line
+}
+
 // formatValidation turns a validator error into one readable line per problem.
 func formatValidation(ps *propSchema, err error) error {
 	var ve *jsonschema.ValidationError
@@ -232,7 +260,8 @@ func formatValidation(ps *propSchema, err error) error {
 	var walk func(e *jsonschema.ValidationError)
 	walk = func(e *jsonschema.ValidationError) {
 		if len(e.Causes) == 0 {
-			lines = append(lines, fmt.Sprintf("%s: %s", locationLabel(e.InstanceLocation, ps, e), e.ErrorKind.LocalizedString(printer)))
+			line := fmt.Sprintf("%s: %s", locationLabel(e.InstanceLocation, ps, e), e.ErrorKind.LocalizedString(printer))
+			lines = append(lines, humanizeErrorKind(line))
 			return
 		}
 		for _, c := range e.Causes {
