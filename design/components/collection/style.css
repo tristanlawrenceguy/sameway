@@ -30,7 +30,11 @@
    another on a phone, read column by column. */
 .sw-collection--board { max-width: none; }
 .sw-collection__board { display: grid; gap: var(--sw-space-3); grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); align-items: start; }
-.sw-collection__column { background: var(--sw-color-bg-muted); border-radius: var(--sw-radius-md); padding: var(--sw-space-3); }
+/* The border is clear until forced colours draw it, when the shading goes. */
+.sw-collection__column { background: var(--sw-color-bg-muted); border: 1px solid transparent; border-radius: var(--sw-radius-md); padding: var(--sw-space-3); }
+.sw-collection__tally { margin: 0 0 var(--sw-space-3); font-size: var(--sw-size-text-sm); }
+.sw-collection__move { display: flex; flex-wrap: wrap; gap: var(--sw-space-2); align-items: end; margin: var(--sw-space-2) 0 0; position: relative; z-index: 1; }
+.sw-collection__move .sw-field { margin: 0; }
 .sw-collection__column-title { margin: 0 0 var(--sw-space-2); font-size: var(--sw-size-text-md); }
 .sw-collection__count { color: var(--sw-color-fg-muted); font-weight: 400; }
 .sw-collection__column-items { display: flex; flex-direction: column; gap: var(--sw-space-2); }
