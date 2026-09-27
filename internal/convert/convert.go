@@ -22,6 +22,9 @@ type Result struct {
 	// Image says the file is a picture, which has no text of its own and
 	// needs a description a person wrote.
 	Image bool
+	// Audio says the file is a recording, whose text is its transcript,
+	// made by a transcriber or written by a person.
+	Audio bool
 }
 
 // kinds maps an extension to the built-in reader for it.
@@ -43,6 +46,19 @@ var kinds = map[string]struct {
 
 var images = map[string]bool{"png": true, "jpg": true, "jpeg": true, "gif": true, "webp": true, "svg": true, "avif": true}
 
+// audio is the recordings a browser can play, by extension, with the type
+// each is served as: Windows does not know some of them by itself.
+var audio = map[string]string{
+	"mp3": "audio/mpeg", "m4a": "audio/mp4", "aac": "audio/aac", "wav": "audio/wav",
+	"ogg": "audio/ogg", "oga": "audio/ogg", "opus": "audio/ogg", "webm": "audio/webm", "flac": "audio/flac",
+}
+
+// AudioType is the type a recording is served as, or "" for a file that
+// is not one.
+func AudioType(name string) string {
+	return audio[Ext(name)]
+}
+
 // Ext is a file name's extension, lower case, without the dot.
 func Ext(name string) string {
 	return strings.ToLower(strings.TrimPrefix(path.Ext(name), "."))
@@ -53,7 +69,7 @@ func Ext(name string) string {
 func Builtin(name string) bool {
 	ext := Ext(name)
 	_, ok := kinds[ext]
-	return ok || images[ext]
+	return ok || images[ext] || audio[ext] != ""
 }
 
 // Kind names a file's format from its name.
@@ -61,6 +77,9 @@ func Kind(name string) string {
 	ext := Ext(name)
 	if images[ext] {
 		return "image"
+	}
+	if audio[ext] != "" {
+		return "audio"
 	}
 	if k, ok := kinds[ext]; ok {
 		return k.name
@@ -76,6 +95,9 @@ func Read(name string, data []byte) (Result, error) {
 	ext := Ext(name)
 	if images[ext] {
 		return Result{Kind: "image", Image: true}, nil
+	}
+	if audio[ext] != "" {
+		return Result{Kind: "audio", Audio: true}, nil
 	}
 	k, ok := kinds[ext]
 	if !ok {

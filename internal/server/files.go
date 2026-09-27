@@ -114,6 +114,8 @@ func (s *Server) readNow(id, name string, data []byte) {
 		fields["status"], fields["note"] = "failed", err.Error()
 	case res.Image:
 		fields["note"] = "An image has no text of its own; its description is what anyone who cannot see it gets."
+	case res.Audio:
+		fields["note"] = "A recording's text is its transcript; there is none yet."
 	default:
 		fields["text"] = res.Markdown
 	}
@@ -153,7 +155,10 @@ func (s *Server) serveFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	name, _ := rec.Fields["name"].(string)
-	ct := mime.TypeByExtension(filepath.Ext(stored))
+	ct := convert.AudioType(stored)
+	if ct == "" {
+		ct = mime.TypeByExtension(filepath.Ext(stored))
+	}
 	if ct != "" {
 		w.Header().Set("Content-Type", ct)
 	}
@@ -177,6 +182,9 @@ func (s *Server) fileExtras(rec *store.Record) string {
 			b.WriteString(`<p class="sw-muted">This picture has no description yet, so someone who cannot see it hears only its name. Press Edit to say what it shows.</p>`)
 		}
 		b.WriteString(string(s.component("image", s.pictureOf(rec, alt))))
+	}
+	if kind, _ := rec.Fields["kind"].(string); kind == "audio" {
+		b.WriteString(string(s.component("audio", s.recordingOf(rec))))
 	}
 	// Reading a file through a converter says so, and says how it ended:
 	// the page follows when it does (convertLater calls Changed).
