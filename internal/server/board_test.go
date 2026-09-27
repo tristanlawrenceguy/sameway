@@ -56,7 +56,7 @@ func TestACollectionAsABoardHasAColumnPerChoice(t *testing.T) {
 		t.Fatal("each card has an id to come back to")
 	}
 	at := head[strings.LastIndex(head, `id="`)+len(`id="`):] + "-" + house
-	res := doWithReferer(t, h, "/t/project/"+house+"/props", url.Values{"prop-status": {"done"}, "at": {at}}, "http://example.com/")
+	res := doWithReferer(t, h, "/t/project/"+house+"/props", url.Values{"prop-status": {"done"}, "back": {at}}, "http://example.com/")
 	back, loc := landed(t, h, res)
 	if loc != "/#"+at {
 		t.Errorf("the move comes back to the card, %q, not %q", "/#"+at, loc)
@@ -68,7 +68,7 @@ func TestACollectionAsABoardHasAColumnPerChoice(t *testing.T) {
 	if !strings.Contains(next, `Active <span class="sw-collection__count">(1)</span>`) {
 		t.Error("Active now holds Shed alone")
 	}
-	bad := doWithReferer(t, h, "/t/project/"+house+"/props", url.Values{"prop-status": {"active"}, "at": {`x"><script>`}}, "http://example.com/")
+	bad := doWithReferer(t, h, "/t/project/"+house+"/props", url.Values{"prop-status": {"active"}, "back": {`x"><script>`}}, "http://example.com/")
 	if loc := bad.Header().Get("Location"); strings.Contains(loc, "#") {
 		t.Errorf("only an id is taken to come back to: %q", loc)
 	}

@@ -49,7 +49,7 @@
   },
   "id": { "type": "string" },
   "a11y": {
-    "role": "region at full, a link to the habits at glance",
+    "role": "region at full, a link to the habits at glance; a paragraph saying what is wrong when it is set up wrong",
     "keyboard": [
       { "key": "Tab", "does": "reaches each habit's name, the amount field when it has a unit, and Log" },
       { "key": "Enter", "does": "logs" }
