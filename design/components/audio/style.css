@@ -1,6 +1,9 @@
 .sw-audio { margin: 0; max-width: var(--sw-size-measure); display: flex; flex-direction: column; gap: var(--sw-space-3); }
 .sw-audio__title { font-weight: 600; font-size: var(--sw-size-text-lg); }
 .sw-audio__media { width: 100%; }
+/* The browser's own player keeps focus on itself while its buttons take
+   it inside, where :focus-visible does not reach: the ring is drawn on it. */
+.sw-audio__media:focus { outline: var(--sw-focus-width) solid var(--sw-color-focus); outline-offset: var(--sw-focus-offset); }
 .sw-audio__about { margin: 0; display: flex; flex-wrap: wrap; gap: var(--sw-space-3); align-items: center; }
 .sw-audio__facts { color: var(--sw-color-fg-muted); }
 .sw-audio__none { margin: 0; color: var(--sw-color-fg-muted); }
@@ -8,7 +11,7 @@
    every button, the time large and in figures that line up. */
 .sw-audio__bar { display: flex; flex-wrap: wrap; gap: var(--sw-space-2); align-items: center; }
 .sw-audio__time { font-size: var(--sw-size-text-lg); font-variant-numeric: tabular-nums; min-width: 8ch; }
-.sw-audio__seek { flex: 1 1 12rem; min-height: var(--sw-size-target); accent-color: var(--sw-color-accent); margin: 0; }
+.sw-audio__seek { flex: 1 1 12rem; min-height: var(--sw-size-target); accent-color: var(--sw-color-accent); margin: 0; padding: 0 var(--sw-space-2); border: 1px solid var(--sw-color-border-strong); border-radius: var(--sw-radius-md); background: var(--sw-color-bg-raised); }
 .sw-audio__speed { display: inline-flex; align-items: center; gap: var(--sw-space-1); }
 .sw-audio__speed select { min-height: var(--sw-size-target); font: inherit; color: var(--sw-color-fg); background: var(--sw-color-bg-raised); border: 1px solid var(--sw-color-border-strong); border-radius: var(--sw-radius-md); padding: 0 var(--sw-space-2); }
 .sw-audio__transcript summary { cursor: pointer; min-height: var(--sw-size-target); display: inline-flex; align-items: center; font-weight: 600; }
@@ -22,4 +25,3 @@
 /* Writing it down: the press, and what the page's script is doing. */
 .sw-audio__make, .sw-audio__get { display: flex; flex-wrap: wrap; gap: var(--sw-space-2); align-items: center; margin: 0; }
 .sw-audio__why { margin: 0; flex-basis: 100%; }
-.sw-audio__making:empty { display: none; }

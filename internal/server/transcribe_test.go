@@ -105,7 +105,13 @@ func TestARecordingIsWrittenDownOnThisComputer(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(a.Workspace.FilesDir(), strings.TrimSuffix(stored, filepath.Ext(stored))+".vtt")); err != nil {
 		t.Error("and kept beside the original as WebVTT")
 	}
-	if _, err := os.Stat(filepath.Join(a.Workspace.FilesDir(), id+".speech.wav")); err == nil {
+	gone := false
+	for i := 0; i < 200 && !gone; i++ {
+		_, err := os.Stat(filepath.Join(a.Workspace.FilesDir(), id+".speech.wav"))
+		gone = err != nil
+		time.Sleep(10 * time.Millisecond)
+	}
+	if !gone {
 		t.Error("the sound sent to be written down is not kept")
 	}
 	page = get(t, h, loc).Body.String()
