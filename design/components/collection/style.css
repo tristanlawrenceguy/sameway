@@ -11,7 +11,6 @@
 .sw-collection__text { margin-top: var(--sw-space-1); }
 .sw-collection__text p { margin: 0 0 var(--sw-space-2); }
 .sw-collection__text p:last-child { margin-bottom: 0; }
-.sw-collection__empty { margin: 0; color: var(--sw-color-fg-muted); }
 .sw-collection__all { margin: var(--sw-space-3) 0 0; font-size: var(--sw-size-text-sm); }
 .sw-collection__cards { display: grid; gap: var(--sw-space-3); grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); }
 .sw-collection__cards .sw-card__title, .sw-collection__column-items .sw-card__title { font-size: var(--sw-size-text-md); }

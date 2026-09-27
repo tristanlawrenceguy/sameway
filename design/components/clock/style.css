@@ -63,7 +63,6 @@
 .sw-clock__item .sw-link:hover { text-decoration: underline; text-underline-offset: 0.15em; }
 .sw-clock__item form { margin-left: auto; position: relative; z-index: 1; }
 .sw-clock__item form .sw-button { min-height: var(--sw-size-target); padding: 0 var(--sw-space-2); font-size: var(--sw-size-text-xs); }
-.sw-clock__empty { margin: 0; }
 .sw-clock__notify { justify-self: start; }
 /* Forced colours repaint backgrounds; the bell keeps its shape in the
    person's text colour. */

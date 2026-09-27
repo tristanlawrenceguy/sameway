@@ -8,3 +8,7 @@
 .sw-empty__message { margin: 0; }
 /* Lines a reader can follow in a wide panel: no longer than the measure. */
 .sw-empty__title, .sw-empty__message { max-width: var(--sw-size-measure); margin-inline: auto; }
+/* Quiet: one line where a part of something has nothing in it, a day, a
+   column, a list on a canvas; no panel, read in its place. */
+.sw-empty--quiet { padding: 0; background: none; border-radius: 0; text-align: start; }
+.sw-empty--quiet .sw-empty__message { margin-inline: 0; }

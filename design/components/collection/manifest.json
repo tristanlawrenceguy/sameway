@@ -1,6 +1,6 @@
 {
   "name": "collection",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "The records that match a query, as a live list, table, cards or board: the tasks due this week, the notes tagged garden, the drafts, with the fields a person wants beside each. The same few words pick them here, on the list page, in the assistant's find_records and on the command line.",
   "icon": "≡",
   "use": {"when": "a person wants to see what matches, kept current as records change: what is due, what is open, what is tagged.", "not": "one record on its own, which is a record block; or a search for words, which is the search block.", "with": "a heading in label, and a record block or the list page for the full thing."},
