@@ -17,7 +17,7 @@
       "habits": { "type": "array", "description": "The habits as they stand. Filled in by the server from the records.", "items": { "type": "object", "additionalProperties": false, "required": ["id", "name"], "properties": {
         "id": { "type": "string" },
         "name": { "type": "string" },
-        "shortName": { "type": "string", "description": "Trimmed to two words for the Log button." },
+        "shortName": { "type": "string", "description": "The name as the Log button says it to a reader, cut at a word with an ellipsis when long." },
         "href": { "type": "string" },
         "unit": { "type": "string" },
         "period": { "type": "string" },

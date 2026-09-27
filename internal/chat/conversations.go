@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
 // ConversationType is the content type that holds one chat: a run of
@@ -135,7 +136,7 @@ func (s *Service) Title(c *store.Record) string {
 	msgs, _ := s.MessagesIn(c.ID)
 	for _, m := range msgs {
 		if content, _ := m.Fields["content"].(string); m.Fields["role"] == "user" && strings.TrimSpace(content) != "" {
-			return truncate(strings.TrimSpace(content), 60)
+			return trim.Title(content)
 		}
 	}
 	return "New chat"
@@ -182,7 +183,7 @@ func (s *Service) message(fields map[string]any) (*store.Record, error) {
 		if c, err := s.Store.Get(ConversationType, id); err == nil {
 			if title, _ := c.Fields["title"].(string); title == "" {
 				content, _ := fields["content"].(string)
-				s.Store.Update(ConversationType, id, map[string]any{"title": truncate(strings.TrimSpace(content), 60), "opened": now()})
+				s.Store.Update(ConversationType, id, map[string]any{"title": trim.Title(content), "opened": now()})
 			}
 		}
 	}
