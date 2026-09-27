@@ -14,7 +14,6 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
-	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 // Records are the person's content: the notes, the tasks, whatever the
@@ -126,14 +125,6 @@ func (s *Service) contentType(name string) (*schema.Type, error) {
 	return nil, fmt.Errorf("unknown content type %q. The workspace has: %s", name, strings.Join(s.typeNames(), ", "))
 }
 
-// recordTitle is what a record is called: its title field, or its id.
-func recordTitle(t *schema.Type, rec *store.Record) string {
-	if v, ok := rec.Fields[t.Title].(string); ok && strings.TrimSpace(v) != "" {
-		return trimWords(v, 6)
-	}
-	return rec.ID
-}
-
 func (s *Service) createRecord(typeName string, fields map[string]any) toolResult {
 	t, err := s.contentType(typeName)
 	if err != nil {
@@ -149,7 +140,7 @@ func (s *Service) createRecord(typeName string, fields map[string]any) toolResul
 	if err != nil {
 		return fail("I couldn't save those changes — %s. Fix the fields and call create_record again; the %s schema is in the catalogue.", humanizeValidationError(err.Error()), t.Name)
 	}
-	title := recordTitle(t, rec)
+	title := recordTitle(s.Store, t, rec)
 	return toolResult{
 		text:   fmt.Sprintf("created %s %s: %q. The person can open it at /t/%s/%s.", t.Name, rec.ID, title, t.Name, rec.ID),
 		change: &Change{Action: "created", Component: t.Name, ID: rec.ID, Detail: title, Href: "/t/" + t.Name + "/" + rec.ID},
@@ -175,7 +166,7 @@ func (s *Service) updateRecord(typeName, id string, fields map[string]any) toolR
 	if err != nil {
 		return fail("I couldn't save those changes — %s. Fix the fields and call update_record again; the %s schema is in the catalogue.", humanizeValidationError(err.Error()), t.Name)
 	}
-	title := recordTitle(t, rec)
+	title := recordTitle(s.Store, t, rec)
 	return toolResult{
 		text:   fmt.Sprintf("updated %s %s: %q, at /t/%s/%s.", t.Name, rec.ID, title, t.Name, rec.ID),
 		change: &Change{Action: "updated", Component: t.Name, ID: rec.ID, Detail: title, Href: "/t/" + t.Name + "/" + rec.ID, Before: was.Fields},
@@ -197,7 +188,7 @@ func (s *Service) findRecords(typeName, words string, where []string, order stri
 	words = strings.ToLower(strings.TrimSpace(words))
 	var lines []string
 	for _, rec := range recs {
-		title := recordTitle(t, rec)
+		title := recordTitle(s.Store, t, rec)
 		if words != "" && !strings.Contains(strings.ToLower(title), words) {
 			continue
 		}
@@ -247,7 +238,7 @@ func (s *Service) deleteRecord(typeName, id string) toolResult {
 	}
 	return toolResult{
 		text:   fmt.Sprintf("deleted %s %s", t.Name, id),
-		change: &Change{Action: "deleted", Component: t.Name, ID: id, Detail: recordTitle(t, rec), Before: rec.Fields},
+		change: &Change{Action: "deleted", Component: t.Name, ID: id, Detail: recordTitle(s.Store, t, rec), Before: rec.Fields},
 	}
 }
 

@@ -64,7 +64,8 @@ type factOpts struct{ Made, Boxed, Chips bool }
 // is nothing of the kind, when it last changed.
 func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 	var parts []string
-	done := false
+	// An entry is a thing done: its day is when it happened, never "was".
+	done := t.Name == EntryType
 	if f := doneField(t); f != nil {
 		if v, _ := rec.Fields[f.Name].(bool); v {
 			done = true
@@ -102,8 +103,10 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 	} else if !o.Made && !hasDate(t) {
 		parts = append(parts, `<span class="sw-muted">Updated `+when.Short(rec.UpdatedAt.UTC().Format(time.RFC3339), time.Now())+`</span>`)
 	}
+	// An entry's row is already titled by its habit; saying it again under
+	// the title is the same words twice.
 	for _, f := range t.Shown() {
-		if f.Type == "ref" {
+		if f.Type == "ref" && (o.Chips || t.Name != EntryType) {
 			if id, ok := rec.Fields[f.Name].(string); ok && id != "" {
 				if title := s.refTitle(f, id); title != "" {
 					// Someone it is for: their name, with their colour.

@@ -35,6 +35,13 @@ func trimTitle(s string) string {
 	if len(fields) <= 6 && len([]rune(s)) <= maxTitleRunes {
 		return s
 	}
+	// "Name: how much", an entry, is cut in its name, so a list of them
+	// does not read as the same cut-off name over and over.
+	if head, tail, ok := strings.Cut(s, ": "); ok && len(fields) > 6 {
+		if n := 6 - len(strings.Fields(tail)); n >= 3 && n < len(strings.Fields(head)) {
+			return strings.Join(strings.Fields(head)[:n], " ") + "…: " + tail
+		}
+	}
 	if len(fields) > 6 {
 		return strings.Join(fields[:6], " ") + "…"
 	}

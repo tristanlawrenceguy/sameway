@@ -262,5 +262,5 @@ func (s *Service) describe(typ string, rec *store.Record) Change {
 		return Change{Component: name, ID: rec.ID, Detail: Summarise(name, props), Href: "/canvas/" + rec.ID}
 	}
 	t, _ := s.Store.Types().Get(typ)
-	return Change{Component: typ, ID: rec.ID, Detail: recordTitle(t, rec), Href: "/t/" + typ + "/" + rec.ID}
+	return Change{Component: typ, ID: rec.ID, Detail: recordTitle(s.Store, t, rec), Href: "/t/" + typ + "/" + rec.ID}
 }
