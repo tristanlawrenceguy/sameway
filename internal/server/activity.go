@@ -114,11 +114,23 @@ func (s *Server) event(r *store.Record, from string, level int, dated bool) temp
 	if who, person := s.whoDid(r); who != "" {
 		props["who"], props["person"] = who, person
 	}
-	if t, _ := r.Fields["target"].(string); t != "" {
-		props["target"] = t
-	}
-	if d, _ := r.Fields["detail"].(string); d != "" {
-		props["detail"] = d
+	target, _ := r.Fields["target"].(string)
+	detail, _ := r.Fields["detail"].(string)
+	action, _ := r.Fields["action"].(string)
+	// Replace raw field paths with human-readable text for setting changes.
+	if action == "set" && (strings.HasPrefix(target, "ui.") || strings.HasPrefix(target, "llm.")) {
+		props["action"] = "changed"
+		label := targetKey(target)
+		val := strings.ToUpper(detail[:1]) + detail[1:]
+		props["target"] = label
+		props["detail"] = "to " + val
+	} else {
+		if target != "" {
+			props["target"] = target
+		}
+		if detail != "" {
+			props["detail"] = detail
+		}
 	}
 	if href := s.hrefFor(r); href != "" {
 		props["href"] = href
@@ -138,6 +150,12 @@ func (s *Server) event(r *store.Record, from string, level int, dated bool) temp
 		props["undo"], props["from"] = "/activity/"+r.ID+"/undo", from
 	}
 	return s.component("event", props)
+}
+
+// targetKey extracts the readable name from a setting key: "ui.pace" → "pace".
+func targetKey(key string) string {
+	parts := strings.Split(key, ".")
+	return parts[len(parts)-1]
 }
 
 // hrefFor is the page of the thing an activity entry is about, when it

@@ -276,6 +276,15 @@ func setLine(src, key, scalar string) string {
 	return strings.Join(out, "\n")
 }
 
+// SettingLabel returns a short human-readable label for a setting key.
+// It extracts the last segment of the dotted key and title-cases it:
+// "ui.pace" → "Pace", "ui.spacing" → "Spacing".
+func SettingLabel(key string) string {
+	parts := strings.Split(key, ".")
+	last := parts[len(parts)-1]
+	return strings.ToUpper(last[:1]) + last[1:]
+}
+
 func contains(list []string, s string) bool {
 	for _, v := range list {
 		if v == s {

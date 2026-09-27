@@ -35,7 +35,7 @@ func TestPaceIsSetByAskingAndReadByThePage(t *testing.T) {
 	if a.Workspace.Config.UI.Pace != "quick" {
 		t.Errorf("the workspace should remember the pace, got %q", a.Workspace.Config.UI.Pace)
 	}
-	if !logged(t, h, "Assistant set ui.pace quick") {
+	if !logged(t, h, "Assistant changed pace to Quick") {
 		t.Error("setting the pace is a change like any other, in the log")
 	}
 }
