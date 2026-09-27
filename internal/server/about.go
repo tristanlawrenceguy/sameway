@@ -206,8 +206,9 @@ func (s *Server) remindedToday(rt *schema.Type, about string, now time.Time) boo
 }
 
 // everyEvent is every listed type's records on their days, for a
-// calendar that shows all of it: each event says what kind it is.
-func (s *Server) everyEvent(now time.Time) []any {
+// calendar that shows all of it: each event says what kind it is, and a
+// thing that repeats is on each of its days in the month shown.
+func (s *Server) everyEvent(now time.Time, month string) []any {
 	events := []any{}
 	for _, t := range s.app.Types.Types {
 		if t.Internal || !s.listed(t) {
@@ -225,6 +226,7 @@ func (s *Server) everyEvent(now time.Time) []any {
 			if ev := s.eventOf(t, rec, field); ev != nil {
 				ev["meta"] = t.Name
 				events = append(events, ev)
+				events = append(events, s.repeatedIn(t, rec, field, ev, month)...)
 			}
 		}
 	}
