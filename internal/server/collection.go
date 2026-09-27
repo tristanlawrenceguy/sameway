@@ -91,6 +91,13 @@ func (s *Server) resolveCollection(props map[string]any, block string) map[strin
 	}
 	out["items"] = items
 	if by != nil {
+		board, _ := out["id"].(string)
+		if board == "" {
+			board = "collection-" + t.Name
+		}
+		for i, rec := range recs {
+			addMove(items[i].(map[string]any), t, *by, rec, board)
+		}
 		out["groups"] = boardGroups(*by, recs, items)
 	}
 	out["summary"] = query.Words(t, where)

@@ -27,6 +27,20 @@ func savedWords(t *schema.Type, rec *store.Record, fields, clean map[string]any,
 			}
 			return o
 		}
+		// A choice changed, as a board's Move does, says from where to
+		// where: "Order compost moved from To do to Done."
+		if f, ok := t.Field(name); ok && f.Type == "enum" {
+			was, _ := rec.Fields[name].(string)
+			now, _ := clean[name].(string)
+			if title := strings.TrimSpace(titleOf(t, rec)); title != "" && now != "" && was != now {
+				o.Title = title + " moved to " + f.ValueLabel(now) + "."
+				if was != "" {
+					o.Title = title + " moved from " + f.ValueLabel(was) + " to " + f.ValueLabel(now) + "."
+				}
+				o.Of = title
+			}
+			return o
+		}
 		on, ok := clean[name].(bool)
 		if !ok {
 			return o
