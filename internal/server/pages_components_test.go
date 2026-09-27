@@ -28,6 +28,11 @@ func TestALongListIsReadAPageAtATime(t *testing.T) {
 			t.Errorf("page 3 should carry %s", want)
 		}
 	}
+	// The heading is the list's name on every page; the window title and
+	// the pagination say which page.
+	if !strings.Contains(last, `>Notes</h1>`) || strings.Contains(last, `page 3 of 3</h1>`) {
+		t.Errorf("the heading should be Notes alone, not the page")
+	}
 	if n := strings.Count(last, `data-component="card"`) + strings.Count(last, `class="sw-row`); n == 0 {
 		t.Errorf("page 3 should show the last notes")
 	}

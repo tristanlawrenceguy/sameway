@@ -226,11 +226,14 @@ func (s *Server) navLink(href, label string, current bool) template.HTML {
 }
 
 // component renders a component or, if that fails, a visible error so a
-// broken block never silently disappears.
+// broken block never silently disappears. The person reads what could not
+// be shown and what to do in plain words; why, in the schema's terms, goes
+// to the log.
 func (s *Server) component(name string, props map[string]any) template.HTML {
 	h, err := s.app.Registry.Render(name, props)
 	if err != nil {
-		msg := fmt.Sprintf("Could not render %s: %v", name, err)
+		log.Printf("render %s: %v", name, err)
+		msg := fmt.Sprintf("This %s could not be shown. Something it was given is missing or not right; ask the assistant to fix it.", strings.ReplaceAll(name, "-", " "))
 		h, err = s.app.Registry.Render("alert", map[string]any{"kind": "danger", "message": msg})
 		if err != nil {
 			return template.HTML("<p>" + template.HTMLEscapeString(msg) + "</p>")
