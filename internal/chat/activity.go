@@ -101,6 +101,10 @@ func summarise(actor string, c Change) string {
 		}
 		return who + " undid: " + c.Undone
 	}
+	// Detect setting changes and use human-readable format.
+	if isSettingChange(c) {
+		return settingSummary(who, c.Component, c.Detail)
+	}
 	parts := []string{who, c.Action}
 	if c.Component != "" {
 		parts = append(parts, c.Component)
@@ -116,6 +120,26 @@ func summarise(actor string, c Change) string {
 		return strings.Join(parts, " ") + ", on " + c.Via
 	}
 	return strings.Join(parts, " ")
+}
+
+// isSettingChange reports whether the change is a setting-change entry,
+// identified by action "set" and a component that looks like a dotted path
+// (ui.*, llm.*, etc.).
+func isSettingChange(c Change) bool {
+	if c.Action != "set" || c.Component == "" || c.Detail == "" {
+		return false
+	}
+	return strings.HasPrefix(c.Component, "ui.") || strings.HasPrefix(c.Component, "llm.")
+}
+
+// settingSummary produces a human-readable summary for a setting change:
+// "Assistant changed pace to Calm". The label is the last segment of the key,
+// lowercased; the value is capitalised.
+func settingSummary(who, key, value string) string {
+	parts := strings.Split(key, ".")
+	label := parts[len(parts)-1]
+	val := strings.ToUpper(value[:1]) + value[1:]
+	return who + " changed " + label + " to " + val
 }
 
 // Summarise turns a block's props into a short human label such as
