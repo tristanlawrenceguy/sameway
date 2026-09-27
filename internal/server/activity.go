@@ -88,77 +88,21 @@ func (s *Server) recentActivityAbout(n int, from string, about func(target, id s
 	return template.HTML(`<h2 class="sw-visually-hidden">Activity</h2>` + string(body))
 }
 
-// event renders one entry. One that can still be undone carries the way
-// to undo it: a form posting to the entry, back to the page from. level
-// makes its sentence a heading, for a log read heading by heading; dated
-// gives its time the day, where no day's heading above says it.
+// event renders one entry, as line says it, with its time and its anchor.
+// level makes its sentence a heading, for a log read heading by heading;
+// dated gives its time the day, where no day's heading above says it.
 func (s *Server) event(r *store.Record, from string, level int, dated bool) template.HTML {
 	at := r.CreatedAt.Local().Format("15:04")
 	if dated {
 		at = messageTime(r.CreatedAt)
 	}
-	props := map[string]any{
-		"actor":    r.Fields["actor"],
-		"action":   r.Fields["action"],
-		"time":     at,
-		"datetime": r.CreatedAt.UTC().Format(time.RFC3339),
-		"id":       "activity-" + r.ID,
+	props := s.line(r, true)
+	if props["undo"] != nil {
+		props["from"] = from
 	}
+	props["time"], props["datetime"], props["id"] = at, r.CreatedAt.UTC().Format(time.RFC3339), "activity-"+r.ID
 	if level > 0 {
 		props["level"] = level
-	}
-	// Where it was done from, when not here, as the log's own summary says.
-	if via, _ := r.Fields["via"].(string); via != "" && !strings.HasPrefix(via, "through ") {
-		props["via"] = "on " + via
-	}
-	if who, person := s.whoDid(r); who != "" {
-		props["who"], props["person"] = who, person
-	}
-	target, _ := r.Fields["target"].(string)
-	detail, _ := r.Fields["detail"].(string)
-	action, _ := r.Fields["action"].(string)
-	// Replace raw field paths with human-readable text for setting changes.
-	changeMap := map[string]any{
-		"action":    action,
-		"component": target,
-		"detail":    detail,
-	}
-	if chat.CleanSettingChange(changeMap) {
-		props["action"] = changeMap["action"].(string)
-		label, _ := changeMap["detail"].(string)
-		parts := strings.SplitN(label, " to ", 2)
-		props["target"], props["detail"] = parts[0], "to "+parts[1]
-	} else {
-		if target != "" {
-			props["target"] = target
-		}
-		if detail != "" {
-			props["detail"] = detail
-		}
-	}
-	if href := s.hrefFor(r); href != "" {
-		props["href"] = href
-	}
-	// An undo reads as one: "You undid: Assistant added card Plan". Its
-	// summary is said in words even when it was stored in keys. The colon
-	// is the event's own where the entry has no link, so it is not said twice.
-	if undoes, _ := r.Fields["undoes"].(string); undoes != "" {
-		summary, _ := r.Fields["summary"].(string)
-		summary = chat.CleanSummary(summary)
-		for _, verb := range []string{" undid: ", " put back: "} {
-			if _, after, ok := strings.Cut(summary, verb); ok {
-				verb = strings.TrimSpace(verb)
-				if props["href"] == nil {
-					verb = strings.TrimSuffix(verb, ":")
-				}
-				props["action"], props["detail"] = verb, after
-				delete(props, "target")
-				break
-			}
-		}
-	}
-	if s.app.Chat.Undoable(r) {
-		props["undo"], props["from"] = "/activity/"+r.ID+"/undo", from
 	}
 	return s.component("event", props)
 }

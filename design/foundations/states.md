@@ -28,7 +28,9 @@ Where it appears:
 - After an assistant turn, the reply carries a **receipt**: a list of the
   canvas changes it made ("added heading Shopping", "removed list"). It is
   stored on the message record as `changes` and rendered as
-  `.sw-message__changes` with `data-action` and `data-target` per item.
+  `.sw-message__changes`, one event (`data-component="event"`, compact) per
+  item with `data-action` and `data-target`: the same line the activity log
+  shows for that change.
 - Blocks touched in the last turn get `data-changed="added"` or
   `"updated"`. They flash once in the actor's colour, and a visually hidden
   note ("added in the last turn") is read by screen readers.
@@ -65,7 +67,7 @@ Query by attribute, act by role and name:
 [data-block-id][data-arrival]              its place in the order changes arrive
 [data-block-id][data-actor=human]          blocks a person has touched
 [data-component=message][data-role=error]  failures, in the transcript
-.sw-message__changes li[data-action]       the receipt for a reply
+.sw-message__changes [data-action]         the receipt for a reply, as events
 GET /api/activity                          the full log, newest first
 ```
 
