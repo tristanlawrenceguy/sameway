@@ -13,6 +13,8 @@ func TestTitleCutsAtAWordWithAnEllipsis(t *testing.T) {
 		{"This is a note with a very long title", "This is a note with a…"},
 		{"Exercise for thirty minutes every day", "Exercise for thirty minutes every day"},
 		{"First line\nsecond line", "First line…"},
+		{"8 glasses of water a day: 1 glass", "8 glasses of water…: 1 glass"},
+		{"Search: one two three four five six seven", "Search: one two three four five…"},
 		{long, long[:MaxRunes-1] + "…"},
 		{"Supercalifragilisticexpialidocious " + strings.Repeat("b", 60), "Supercalifragilisticexpialidocious…"},
 	} {

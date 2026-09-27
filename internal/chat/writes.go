@@ -28,7 +28,7 @@ func RecordWrite(st *store.Store, through, action string, rec *store.Record, bef
 	}
 	c := Change{Action: action, Component: rec.Type, ID: rec.ID, Before: before, Via: through}
 	if t, ok := st.Types().Get(rec.Type); ok {
-		c.Detail = recordTitle(t, rec)
+		c.Detail = recordTitle(st, t, rec)
 		if action != "deleted" {
 			c.Href = "/t/" + rec.Type + "/" + rec.ID
 		}

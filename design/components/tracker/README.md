@@ -54,6 +54,12 @@ a list.
 - **A day still going is not a day missed**: its dot is a dashed ring and
   says how far it has got; days are named as a person says them, Wed 16 Sep,
   not 2026-09-16 ([GOV.UK dates](https://design-system.service.gov.uk/patterns/dates/)).
+- **The day to log for is labelled Day**, a word in sight that says what
+  goes there; it was "on", which read as a leftover
+  ([WCAG 3.3.2](https://www.w3.org/WAI/WCAG22/Understanding/labels-or-instructions.html)).
+- **An entry is named by its habit and how much**, Read: 25 minutes, in
+  its list, on its page and in the log, never by its id; its day is when
+  it happened, Today 12:51, not "was", because it is done.
 - **Green means reached**, as in the meter; a limit kept within is in the
   list colour. The run so far is in words, not a warning-coloured arrow.
 - **The glance counts what can be met**, leaves readings out, and leads to

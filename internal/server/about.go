@@ -42,18 +42,12 @@ func (s *Server) aboutOf(path string) (*schema.Type, *store.Record, bool) {
 // entry is its habit and how much.
 func (s *Server) title(t *schema.Type, rec *store.Record) string {
 	if t.Name == EntryType {
+		habit, unit := "", ""
 		if ht, h, ok := s.aboutOf("/t/" + HabitType + "/" + str(rec.Fields["habit"], "")); ok {
-			amount := number(rec.Fields["amount"])
-			if amount == 0 && rec.Fields["amount"] == nil {
-				amount = 1
-			}
-			unit, _ := h.Fields["unit"].(string)
-			how := track.Amount(amount, unit)
-			if unit == "" && amount == 1 {
-				how = "done"
-			}
-			return s.title(ht, h) + ": " + how
+			habit = s.title(ht, h)
+			unit, _ = h.Fields["unit"].(string)
 		}
+		return track.EntryName(habit, unit, rec.Fields)
 	}
 	return titleOf(t, rec)
 }

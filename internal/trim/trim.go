@@ -21,6 +21,16 @@ func Title(s string) string {
 	line = strings.TrimSpace(line)
 	cut := rest != ""
 	if fields := strings.Fields(line); len(fields) > MaxWords {
+		// "Name: how much", an entry, is cut in its name, so a list of
+		// them does not read as the same cut-off name over and over.
+		if head, tail, ok := strings.Cut(line, ": "); ok && !cut {
+			words := strings.Fields(head)
+			if n := MaxWords - len(strings.Fields(tail)); n >= 3 && n < len(words) {
+				if short := strings.Join(words[:n], " ") + "…: " + tail; len([]rune(short)) <= MaxRunes {
+					return short
+				}
+			}
+		}
 		line, cut = strings.Join(fields[:MaxWords], " "), true
 	}
 	if runes := []rune(line); len(runes) > MaxRunes {
