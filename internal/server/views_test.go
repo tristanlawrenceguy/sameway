@@ -128,8 +128,9 @@ func TestDetailPageSkipsEmptyFieldsMessage(t *testing.T) {
 }
 
 // TestDetailPageNonEmptyStatusStillRenders verifies that a non-empty enum field
-// like "status" (which defaults to "draft") is shown as a chip/heading, not
-// repeated in the dl. The status badge still appears on the page.
+// like "status" (which defaults to "draft") is not repeated in the dl and does
+// not appear as a badge in the lede on detail pages. The status value is still
+// available in the edit-fields template for editing.
 func TestDetailPageNonEmptyStatusStillRenders(t *testing.T) {
 	a, h := newApp(t)
 
@@ -142,15 +143,16 @@ func TestDetailPageNonEmptyStatusStillRenders(t *testing.T) {
 	}
 	body := get(t, h, "/t/note/"+rec.ID+fieldsView).Body.String()
 
-	// Status (enum) is excluded from the dl — it appears as a chip.
+	// Status (enum) is excluded from the dl.
 	if strings.Contains(body, "<dt>Status</dt>") {
 		t.Error("detail page should not show <dt>Status</dt> in the dl")
 	}
 
-	// The status badge still renders on the page.
-	page := get(t, h, "/t/note/"+rec.ID+fieldsView).Body.String()
-	if !strings.Contains(page, "sw-badge--info") || !strings.Contains(page, "Draft") {
-		t.Errorf("page should show status as a chip\n%s", truncate(body))
+	// The status badge does not render in the lede on detail pages — it would
+	// expose an internal field name ("Draft status") to screen readers. It is
+	// still available as a data-prop in the edit-fields template for editing.
+	if strings.Contains(body, "sw-badge--info") && strings.Contains(body, "Draft") {
+		t.Errorf("detail page lede should not show status badge\n%s", truncate(body))
 	}
 
 	// The title is still excluded from the dl.
