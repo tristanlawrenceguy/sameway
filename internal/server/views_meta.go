@@ -87,7 +87,7 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 		}
 	}
 	for _, f := range t.Shown() {
-		if f.Type == "enum" {
+		if f.Type == "enum" && t.Name != "action" {
 			if v, ok := rec.Fields[f.Name].(string); ok && v != "" {
 				// "High", heard in a row of facts, says nothing without the
 				// field it is: the field is read after it, not shown. A value
