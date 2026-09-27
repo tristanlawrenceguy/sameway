@@ -1,0 +1,68 @@
+{
+  "name": "since",
+  "version": "1.0.0",
+  "description": "What other people changed while you were away, each with its Undo, until you say you have seen it.",
+  "icon": "↺",
+  "use": {
+    "when": "a person comes back after a while, and others changed things meanwhile.",
+    "not": "the whole activity log, or their own changes.",
+    "with": "event, one per change, in a list in its slot."
+  },
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "seen"
+    ],
+    "properties": {
+      "slot": {
+        "type": "string",
+        "format": "multiline",
+        "description": "The changes. Server code passes a list of rendered events; text from a model or a form is escaped."
+      },
+      "seen": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Where Got it posts."
+      },
+      "from": {
+        "type": "string",
+        "description": "The page it is on, so Got it returns there."
+      }
+    }
+  },
+  "a11y": {
+    "role": "region, named by its heading, with a list of changes and a button",
+    "keyboard": [
+      {
+        "key": "Tab",
+        "does": "reaches each change's link and Undo, then Got it"
+      },
+      {
+        "key": "Enter",
+        "does": "on Got it, puts the list away and returns to the page"
+      }
+    ],
+    "states": [],
+    "wcag": {
+      "target": "AAA",
+      "notes": "A region with its own heading, first on the page it appears on, so it is met before anything else; each change is a list item that says who did what."
+    }
+  },
+  "machine": {
+    "selector": "[data-component=\"since\"]",
+    "identify": "Each [data-component=event] inside is one change by someone else.",
+    "operate": "Submit Got it once they are read; an event's Undo reverses that change."
+  },
+  "examples": [
+    {
+      "name": "default",
+      "props": {
+        "slot": "Hana deleted note Shopping.",
+        "seen": "/since/seen",
+        "from": "/"
+      },
+      "file": "examples/default.html"
+    }
+  ]
+}

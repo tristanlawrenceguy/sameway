@@ -1,0 +1,107 @@
+{
+  "name": "clash",
+  "version": "1.0.0",
+  "description": "Another version of some text, written at the same time as the one on the page on another computer, offered back so nobody's words are lost.",
+  "icon": "⇄",
+  "use": {
+    "when": "two people changed the same text at once on two computers, and the page shows the later version.",
+    "not": "undo, or an edit someone made after seeing the other's.",
+    "with": "the record's page, above what it concerns."
+  },
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "id",
+      "label",
+      "text",
+      "use",
+      "keep"
+    ],
+    "properties": {
+      "id": {
+        "type": "string",
+        "minLength": 1,
+        "description": "The clash's id, for its heading."
+      },
+      "label": {
+        "type": "string",
+        "minLength": 1,
+        "description": "What the field is called, such as Body."
+      },
+      "text": {
+        "type": "string",
+        "format": "multiline",
+        "description": "The other version, as it was written."
+      },
+      "where": {
+        "type": "string",
+        "default": "on another computer",
+        "description": "Where the other version was written."
+      },
+      "use": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Where Use this version posts."
+      },
+      "keep": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Where Keep the one below posts."
+      },
+      "from": {
+        "type": "string",
+        "description": "The page it is on, so the answer returns there."
+      }
+    }
+  },
+  "a11y": {
+    "role": "region, named by its heading, with two buttons",
+    "keyboard": [
+      {
+        "key": "Tab",
+        "does": "reaches Use this version, then Keep the one below"
+      },
+      {
+        "key": "Enter",
+        "does": "on a button, chooses it and returns to the page"
+      }
+    ],
+    "states": [],
+    "wcag": {
+      "target": "AAA",
+      "notes": "A region with its own heading, so it is found in the outline and its buttons are heard with what they choose between. Both buttons say what they do. The other version keeps its line breaks."
+    }
+  },
+  "machine": {
+    "selector": "[data-component=\"clash\"]",
+    "identify": "The heading names the field; the blockquote is the other version.",
+    "operate": "Submit the Use this version form to put it in place (it can be undone), or Keep the one below to keep the page's."
+  },
+  "examples": [
+    {
+      "name": "default",
+      "props": {
+        "id": "c1",
+        "label": "Body",
+        "text": "Flour, water, salt.\nLeave overnight.",
+        "use": "/clash/c1/use",
+        "keep": "/clash/c1/keep",
+        "from": "/t/note/n1"
+      },
+      "file": "examples/default.html"
+    },
+    {
+      "name": "here",
+      "props": {
+        "id": "c2",
+        "label": "Notes",
+        "text": "Call before ten.",
+        "where": "on this computer",
+        "use": "/clash/c2/use",
+        "keep": "/clash/c2/keep"
+      },
+      "file": "examples/here.html"
+    }
+  ]
+}

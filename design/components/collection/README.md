@@ -23,7 +23,14 @@ the type has instead, so the block never renders as nothing.
 `show` names fields to show beside each title, with their names in sight:
 "Due 19 Sep", not a date that could be any of them. `as: table` puts them
 in columns, which scroll sideways on a phone in a box a keyboard can reach;
-`as: cards` puts them in cards, each pressed anywhere to open it. A list
+`as: cards` puts them in cards, each pressed anywhere to open it.
+`as: board` puts a column for each choice of a pick-list field, named
+with `by` (status: To do, Doing, Done), in the order the field lists
+them, each saying how many it holds, and a column for those with none.
+A line over the board names every column with its count and leads to it.
+Each card has a Move form: its column picked from a list and a Move
+button, which saves the field like any edit, comes back to the card
+focused, and says "House moved from Active to Done." with an Undo. A list
 of one line per record is a list; use a table when the fields are the point
 and several are compared.
 
@@ -43,6 +50,10 @@ the list page with the same query, which has them all.
   takes focus
   ([Adrian Roselli on responsive tables](https://adrianroselli.com/2020/11/under-engineered-responsive-tables.html),
   [WCAG 2.1.1](https://www.w3.org/WAI/WCAG22/Understanding/keyboard.html)).
+- **A list that keeps its marks**, the list component's own (`sw-list`):
+  the rows once had them taken away, and Safari with VoiceOver then does
+  not say it is a list or how many are in it
+  ([Scott O'Hara on list-style none](https://www.scottohara.me/blog/2019/01/12/lists-and-safari.html)).
 - **Cards that act as cards**, pressed anywhere to open, as elsewhere.
 - **Says when it is cut short**, so records past the limit are not missed
   without a word.
@@ -51,6 +62,31 @@ the list page with the same query, which has them all.
   ([MoJ filter a list](https://design-patterns.service.justice.gov.uk/patterns/filter-a-list/),
   [NN/g empty states](https://www.nngroup.com/articles/empty-state-interface-design/)).
 
-Not done, and why: field names only for screen readers (sighted people
+- **A board without dragging.** A card moves column when its field
+  changes, on its page or with its press, so a keyboard, a switch and the
+  assistant move it the same way
+  ([WCAG 2.5.7](https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements.html)).
+  Columns are sections with headings, read in order, and stack on a phone.
+  The Move form is a native select and button: no script, and a voice can
+  say "click Move" because the button's name starts with what it shows
+  ([GitHub's testing of a move form](https://github.blog/engineering/user-experience/exploring-the-challenges-in-creating-an-accessible-sortable-list-drag-and-drop/),
+  [WCAG 2.5.3](https://www.w3.org/WAI/WCAG22/Understanding/label-in-name.html)).
+- **Back where you were, told what happened.** After a move the page
+  returns to the card, not its top, and the message names the card and
+  both columns with an Undo
+  ([W3C COGA, make it easy to undo](https://www.w3.org/TR/coga-usable/)).
+- **A tally for those who cannot jump by heading.** A keyboard or switch
+  moves by Tab, not headings, so the line over the board leads to each
+  column.
+- **No sideways scrolling, no tabs or swiping on a phone.** Columns stack,
+  as reflow asks, and nothing is hidden behind a gesture
+  ([WCAG 1.4.10](https://www.w3.org/WAI/WCAG22/Understanding/reflow.html),
+  [NN/g on carousels](https://www.nngroup.com/articles/mobile-carousels/)).
+- **Still a list to Safari.** Plain lists use an empty marker rather than
+  none, so VoiceOver keeps "list, 3 items"
+  ([Scott O'Hara](https://www.scottohara.me/blog/2019/01/12/lists-and-safari.html)).
+
+Not done, and why: dragging cards between columns (the one way that
+leaves out a keyboard unless a second way is built beside it); field names only for screen readers (sighted people
 need them as much); a table squashed to fit a phone (its columns become
 unreadable, so it scrolls in a box instead).

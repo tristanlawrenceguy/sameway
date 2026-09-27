@@ -1,0 +1,1 @@
+<p class="sw-present" data-component="presence">{{or .label "Also here"}}: {{range $i, $p := .people}}{{if $i}}; {{end}}<span class="sw-present__who"{{if $p.colour}} data-person="{{$p.colour}}"{{end}}><span class="sw-present__dot" aria-hidden="true"></span>{{$p.name}}{{if $p.place}}, on {{$p.place}}{{end}}</span>{{end}}</p>

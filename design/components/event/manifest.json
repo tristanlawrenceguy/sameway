@@ -1,6 +1,6 @@
 {
   "name": "event",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "One line of activity: who did what to which thing, and when. Used for change receipts under a reply and for the activity log. Given the thing's page, the entry leads to it.",
   "icon": "•",
   "use": { "when": "one thing that happened, in a receipt or a log.", "not": "a heading or a card.", "with": "a list, so counts and positions are announced." },
@@ -22,6 +22,7 @@
       "href": { "type": "string", "description": "The page of the thing acted on, so the entry leads to it. Left out when the thing is gone." },
       "undo": { "type": "string", "description": "Where a form posts to reverse this entry. Given only while the entry can still be undone: the thing is still as it left it." },
       "from": { "type": "string", "description": "The page the entry is shown on, so undoing returns there." },
+      "compact": { "type": "boolean", "default": false, "description": "For a line under something that already says who, such as a message's Changes made: the actor and its mark are left out, so the line starts at its verb, one 44px row. Not with level: the message has the heading." },
       "id": { "type": "string" }
     }
   },
@@ -29,7 +30,7 @@
     "role": "listitem content: text, or a heading when level is given, with a link to what was acted on and an Undo button when there are",
     "keyboard": [ { "key": "Tab", "does": "reaches the link to the thing acted on, when it still exists, then the Undo button when the entry can be undone" }, { "key": "Enter", "does": "on Undo, reverses the entry and returns to the page" } ],
     "states": [],
-    "wcag": { "target": "AAA", "notes": "The actor is spelled out ('You', 'Assistant', 'System', or the person's name), so provenance never depends on colour. The link text is the target and its detail, so it says where it goes (2.4.4). Render events inside a list so counts and positions are announced. With level, the sentence is the heading, said once, not a heading and the same sentence under it. The time is a time element with its moment, and carries the day where nothing above says it. An entry with no target reads with a colon: System failed: could not reach the model." }
+    "wcag": { "target": "AAA", "notes": "The actor is spelled out ('You', 'Assistant', 'System', or the person's name), so provenance never depends on colour; a compact line leaves it to the message above it, which says it once. The link text is the target and its detail, so it says where it goes (2.4.4). Render events inside a list so counts and positions are announced. With level, the sentence is the heading, said once, not a heading and the same sentence under it. The time is a time element with its moment, and carries the day where nothing above says it. An entry with no target reads with a colon: System failed: could not reach the model." }
   },
   "machine": {
     "selector": "[data-component=\"event\"]",
@@ -42,6 +43,7 @@
     { "name": "person", "props": { "actor": "human", "who": "Hana", "person": 3, "action": "updated", "target": "note", "detail": "Shopping", "time": "09:12", "href": "/t/note/n1" }, "file": "examples/person.html" },
     { "name": "system", "props": { "actor": "system", "action": "failed", "detail": "Could not reach the model.", "id": "evt-1" }, "file": "examples/system.html" },
     { "name": "undo", "props": { "actor": "assistant", "action": "removed", "target": "list", "detail": "Groceries", "time": "20:31", "undo": "/activity/a1/undo" }, "file": "examples/undo.html" },
+    { "name": "compact", "props": { "actor": "assistant", "action": "changed", "target": "text size", "detail": "to Large", "undo": "/activity/a2/undo", "from": "/chat", "compact": true }, "file": "examples/compact.html" },
     { "name": "heading", "props": { "actor": "human", "action": "updated", "target": "note", "detail": "Shopping", "time": "2 Jan 09:12", "datetime": "2026-01-02T09:12:00Z", "via": "on pixel-7", "level": 2, "href": "/t/note/n1" }, "file": "examples/heading.html" }
   ]
 }
