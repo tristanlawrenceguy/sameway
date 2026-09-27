@@ -18,6 +18,16 @@ A file's transcript is kept beside the original as a WebVTT file, and its
 words are also the file record's text, so search finds them and the
 assistant reads them, whoever made the transcript.
 
+## Writing it down
+
+A recording is written down on the computer that hosts the workspace, by
+speech-to-text its owner gets once (Get speech-to-text says how much it
+downloads, from where, and that recordings never leave). From then on the
+page writes each recording down as it opens: its script reads the
+recording as the browser plays it and sends the plain sound, so the host
+needs no other program. Write it down does the same by hand. With no
+script, a WAV can still be written down.
+
 ## Why it works this way
 
 - **A transcript, on the page.** It is what anyone who cannot hear the

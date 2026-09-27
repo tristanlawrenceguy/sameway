@@ -33,6 +33,7 @@ type Server struct {
 	notify  func(title, text, url string)
 	changes atomic.Int64 // changes arrived from other computers; see sync.go
 	present presence     // who else is here just now; see presence.go
+	speech  speechState  // speech-to-text on this computer; see transcribe.go
 }
 
 // New builds the handler for an app.
@@ -117,6 +118,8 @@ func (s *Server) routes() {
 	m.HandleFunc("POST /t/file/upload", s.upload)
 	m.HandleFunc("GET /files/{id}", s.serveFile)
 	m.HandleFunc("GET /files/{id}/still", s.serveStill)
+	m.HandleFunc("POST /files/{id}/transcribe", s.transcribeFile)
+	m.HandleFunc("POST /speech/get", s.speechGet)
 
 	m.HandleFunc("GET /api/describe", s.apiDescribe)
 	m.HandleFunc("GET /api/search", s.apiSearch)

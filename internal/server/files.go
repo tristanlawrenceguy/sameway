@@ -169,7 +169,7 @@ func (s *Server) serveFile(w http.ResponseWriter, r *http.Request) {
 
 // fileExtras is what a file's own page shows beyond its fields: the
 // picture itself when it is one, and the way to the original.
-func (s *Server) fileExtras(rec *store.Record) string {
+func (s *Server) fileExtras(r *http.Request, rec *store.Record) string {
 	var b strings.Builder
 	if kind, _ := rec.Fields["kind"].(string); kind == "image" {
 		alt, _ := rec.Fields["description"].(string)
@@ -183,14 +183,21 @@ func (s *Server) fileExtras(rec *store.Record) string {
 		}
 		b.WriteString(string(s.component("image", s.pictureOf(rec, alt))))
 	}
-	if kind, _ := rec.Fields["kind"].(string); kind == "audio" {
-		b.WriteString(string(s.component("audio", s.recordingOf(rec))))
+	audio := rec.Fields["kind"] == "audio"
+	if audio {
+		props := s.recordingOf(rec)
+		b.WriteString(s.speechOffer(r, rec, props))
+		b.WriteString(string(s.component("audio", props)))
 	}
 	// Reading a file through a converter says so, and says how it ended:
 	// the page follows when it does (convertLater calls Changed).
 	switch rec.Fields["status"] {
 	case "converting":
-		b.WriteString(string(s.component("status", map[string]any{"id": "file-status", "message": "Reading the file. Its text appears here when the converter answers.", "state": "working"})))
+		message := "Reading the file. Its text appears here when the converter answers."
+		if audio {
+			message = "Writing down what is said, on this computer. The transcript appears here when it is done."
+		}
+		b.WriteString(string(s.component("status", map[string]any{"id": "file-status", "message": message, "state": "working"})))
 	case "failed":
 		note, _ := rec.Fields["note"].(string)
 		b.WriteString(string(s.component("status", map[string]any{"id": "file-status", "message": "Could not read the file: " + note, "state": "error"})))

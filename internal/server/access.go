@@ -50,7 +50,7 @@ func (s *Server) Admit(ctx context.Context, login, name, device string, owner bo
 // settings, and a browser driven on the machine. Each person's own chat is
 // theirs (see chatFor).
 var ownerOnly = []string{
-	"/api/look", "/proposal", "/workspaces", "/model", "/help/set", "/activity",
+	"/api/look", "/proposal", "/workspaces", "/speech", "/model", "/help/set", "/activity",
 	"/t/message", "/api/message", "/t/conversation", "/api/conversation",
 	"/t/proposal", "/api/proposal", "/t/activity", "/api/activity",
 }

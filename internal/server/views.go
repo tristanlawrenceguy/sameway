@@ -122,7 +122,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	// A file's page shows the picture when it is one, and the way to the
 	// original, above the fields read from it.
 	if t.Name == FileType {
-		b.WriteString(s.fileExtras(rec))
+		b.WriteString(s.fileExtras(r, rec))
 	}
 	b.WriteString(s.clashNotices(r, t, rec)) // two versions written at once; see clash.go
 	// What this view has been asked to show beyond the least it can say:
@@ -143,7 +143,11 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 		if f.Type == "markdown" {
 			if val := display(f, rec.Fields[f.Name]); val != "" {
 				textField = f.Name
-				fmt.Fprintf(&b, `<div class="sw-prose sw-detail__body" data-prop="%s" data-source="%s" data-prose-level="2">%s</div>`, f.Name, template.HTMLEscapeString(val), prose.Render(val, 2))
+				// A recording's transcript is shown once, under its player,
+				// at its times; Edit still opens it as text.
+				if t.Name != FileType || len(s.heard(rec)) == 0 {
+					fmt.Fprintf(&b, `<div class="sw-prose sw-detail__body" data-prop="%s" data-source="%s" data-prose-level="2">%s</div>`, f.Name, template.HTMLEscapeString(val), prose.Render(val, 2))
+				}
 			}
 			break
 		}
