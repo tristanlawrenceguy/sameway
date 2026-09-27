@@ -118,12 +118,16 @@ func (s *Server) event(r *store.Record, from string, level int, dated bool) temp
 	detail, _ := r.Fields["detail"].(string)
 	action, _ := r.Fields["action"].(string)
 	// Replace raw field paths with human-readable text for setting changes.
-	if action == "set" && (strings.HasPrefix(target, "ui.") || strings.HasPrefix(target, "llm.")) {
-		props["action"] = "changed"
-		label := targetKey(target)
-		val := strings.ToUpper(detail[:1]) + detail[1:]
-		props["target"] = label
-		props["detail"] = "to " + val
+	changeMap := map[string]any{
+		"action":    action,
+		"component": target,
+		"detail":    detail,
+	}
+	if chat.CleanSettingChange(changeMap) {
+		props["action"] = changeMap["action"].(string)
+		label, _ := changeMap["detail"].(string)
+		parts := strings.SplitN(label, " to ", 2)
+		props["target"], props["detail"] = parts[0], "to "+parts[1]
 	} else {
 		if target != "" {
 			props["target"] = target
@@ -150,12 +154,6 @@ func (s *Server) event(r *store.Record, from string, level int, dated bool) temp
 		props["undo"], props["from"] = "/activity/"+r.ID+"/undo", from
 	}
 	return s.component("event", props)
-}
-
-// targetKey extracts the readable name from a setting key: "ui.pace" → "pace".
-func targetKey(key string) string {
-	parts := strings.Split(key, ".")
-	return parts[len(parts)-1]
 }
 
 // hrefFor is the page of the thing an activity entry is about, when it

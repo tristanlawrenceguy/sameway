@@ -64,18 +64,8 @@ func (s *Server) undoable(changes any, latest bool) any {
 	return out
 }
 
-// cleanSettingChange transforms a change map so that setting-change entries
-// display readable names instead of internal keys like "ui.pace". It mutates
-// the map in place.
+// cleanSettingChange delegates to chat.CleanSettingChange for the shared
+// human-readable transformation of setting-change entries.
 func cleanSettingChange(c map[string]any) {
-	action, _ := c["action"].(string)
-	component, _ := c["component"].(string)
-	detail, _ := c["detail"].(string)
-	if action == "set" && (strings.HasPrefix(component, "ui.") || strings.HasPrefix(component, "llm.")) {
-		label := targetKey(component)
-		val := strings.ToUpper(detail[:1]) + detail[1:]
-		c["action"] = "changed"
-		c["detail"] = label + " to " + val
-		delete(c, "component")
-	}
+	chat.CleanSettingChange(c)
 }
