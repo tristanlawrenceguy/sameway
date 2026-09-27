@@ -23,7 +23,10 @@ the type has instead, so the block never renders as nothing.
 `show` names fields to show beside each title, with their names in sight:
 "Due 19 Sep", not a date that could be any of them. `as: table` puts them
 in columns, which scroll sideways on a phone in a box a keyboard can reach;
-`as: cards` puts them in cards, each pressed anywhere to open it. A list
+`as: cards` puts them in cards, each pressed anywhere to open it.
+`as: board` puts a column for each choice of a pick-list field, named
+with `by` (status: To do, Doing, Done), in the order the field lists
+them, each saying how many it holds, and a column for those with none. A list
 of one line per record is a list; use a table when the fields are the point
 and several are compared.
 
@@ -51,6 +54,13 @@ the list page with the same query, which has them all.
   ([MoJ filter a list](https://design-patterns.service.justice.gov.uk/patterns/filter-a-list/),
   [NN/g empty states](https://www.nngroup.com/articles/empty-state-interface-design/)).
 
-Not done, and why: field names only for screen readers (sighted people
+- **A board without dragging.** A card moves column when its field
+  changes, on its page or with its press, so a keyboard, a switch and the
+  assistant move it the same way
+  ([WCAG 2.5.7](https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements.html)).
+  Columns are sections with headings, read in order, and stack on a phone.
+
+Not done, and why: dragging cards between columns (the one way that
+leaves out a keyboard unless a second way is built beside it); field names only for screen readers (sighted people
 need them as much); a table squashed to fit a phone (its columns become
 unreadable, so it scrolls in a box instead).

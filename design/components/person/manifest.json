@@ -1,0 +1,79 @@
+{
+  "name": "person",
+  "version": "1.0.0",
+  "description": "Someone, by name, with the colour they have everywhere in the workspace: who a record is for, who is here, who changed something.",
+  "icon": "●",
+  "use": {
+    "when": "a person is named beside what concerns them: who a task is for, who else is here.",
+    "not": "a link to their page (use link), or a word that is not a person.",
+    "with": "record and collection, where a record is for someone; presence."
+  },
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "name"
+    ],
+    "properties": {
+      "name": {
+        "type": "string",
+        "minLength": 1,
+        "description": "What the person is called."
+      },
+      "colour": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 6,
+        "description": "Their colour, 1 to 6, the same on every computer (chat.PersonColour of their login). Left out, the dot is neutral."
+      },
+      "label": {
+        "type": "string",
+        "description": "Words before the name, such as For, so the chip reads For Hana."
+      },
+      "id": {
+        "type": "string"
+      }
+    }
+  },
+  "a11y": {
+    "role": "text",
+    "keyboard": [],
+    "states": [],
+    "wcag": {
+      "target": "AAA",
+      "notes": "The name is the meaning; the dot is aria-hidden decoration, so no one needs to tell colours apart. The name keeps the text colour at full contrast; the six colours are for marks, not text."
+    }
+  },
+  "machine": {
+    "selector": "[data-component=\"person\"]",
+    "identify": "The text is the label and the name. data-person is their colour, 1 to 6.",
+    "operate": "Not interactive."
+  },
+  "examples": [
+    {
+      "name": "default",
+      "props": {
+        "name": "Hana",
+        "colour": 3
+      },
+      "file": "examples/default.html"
+    },
+    {
+      "name": "label",
+      "props": {
+        "label": "For",
+        "name": "Hana",
+        "colour": 3
+      },
+      "file": "examples/label.html"
+    },
+    {
+      "name": "plain",
+      "props": {
+        "name": "Bob",
+        "id": "who"
+      },
+      "file": "examples/plain.html"
+    }
+  ]
+}

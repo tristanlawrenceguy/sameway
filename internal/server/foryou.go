@@ -1,8 +1,6 @@
 package server
 
 import (
-	"fmt"
-	"html/template"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
@@ -20,8 +18,11 @@ func (s *Server) personChip(label, id, name string) string {
 	if p, err := s.app.Store.Get(chat.PersonType, id); err == nil {
 		login, _ = p.Fields["email"].(string)
 	}
-	return fmt.Sprintf(`<span class="sw-person" data-person="%d"><span class="sw-person__dot" aria-hidden="true"></span>%s %s</span>`,
-		chat.PersonColour(login), template.HTMLEscapeString(label), template.HTMLEscapeString(name))
+	props := map[string]any{"name": name, "label": label}
+	if c := chat.PersonColour(login); c > 0 {
+		props["colour"] = c
+	}
+	return string(s.component("person", props))
 }
 
 // forYou hears of a record written because another computer sent it, and

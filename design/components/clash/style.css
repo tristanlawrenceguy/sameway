@@ -1,0 +1,7 @@
+/* The other version: kept as it was written, line breaks and all, set
+   off from the page's by a rule at its start. */
+.sw-clash__text {
+  margin: 0; white-space: pre-line;
+  padding-inline-start: var(--sw-space-4);
+  border-inline-start: 3px solid var(--sw-color-border-strong);
+}

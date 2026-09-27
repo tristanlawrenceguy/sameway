@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"html/template"
 	"net/http"
 	"net/url"
@@ -113,20 +112,20 @@ func (s *Server) presentFor(r *http.Request) template.HTML {
 		names = append(names, k)
 	}
 	sort.Strings(names)
-	var parts []string
+	var people []any
 	for _, k := range names {
 		p := all[k]
 		name := p.Name
 		if name == "" {
 			name, _, _ = strings.Cut(p.Login, "@")
 		}
-		one := fmt.Sprintf(`<span class="sw-present__who" data-person="%d"><span class="sw-present__dot" aria-hidden="true"></span>%s`, chat.PersonColour(p.Login), template.HTMLEscapeString(name))
+		one := map[string]any{"name": name, "colour": chat.PersonColour(p.Login)}
 		if p.Place != "" {
-			one += ", on " + template.HTMLEscapeString(p.Place)
+			one["place"] = p.Place
 		}
-		parts = append(parts, one+`</span>`)
+		people = append(people, one)
 	}
-	return template.HTML("Also here: " + strings.Join(parts, " "))
+	return s.component("presence", map[string]any{"people": people})
 }
 
 // placeName is what a page is, as a person would say where someone is.
