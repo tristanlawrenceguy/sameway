@@ -1,6 +1,6 @@
 {
   "name": "empty",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "What a place says when there is nothing in it yet: a sentence, a heading when it is the whole page's news, and the one thing to do next as a link.",
   "icon": "○",
   "use": { "when": "a list, a search, a canvas or a conversation has nothing to show.", "not": "an error, which is an alert, or a result that is simply short.", "with": "the action that fills it, named for what it does rather than \"here\"." },
@@ -9,6 +9,7 @@
     "additionalProperties": false,
     "required": ["message"],
     "properties": {
+      "quiet": {"type": "boolean", "default": false, "description": "One muted line with no panel, for a part of something with nothing in it: a day, a column, a list on the canvas. Collection, calendar, chart, clock, tracker and table say their nothing this way."},
       "title": { "type": "string", "description": "A short heading, such as No notes yet. Leave out when the page's own heading already says it." },
       "level": { "title": "Heading level", "type": "integer", "minimum": 2, "maximum": 4, "default": 2, "description": "Where the heading sits in the page outline." },
       "message": { "type": "string", "minLength": 1, "description": "One sentence: what would be here, and how it gets here." },
@@ -39,6 +40,7 @@
   "examples": [
     { "name": "default", "props": { "message": "Ask for anything." }, "file": "examples/default.html" },
     { "name": "titled", "props": { "title": "No notes yet", "message": "Add one yourself, or", "action": { "href": "/chat?prompt=Add+a+note", "label": "ask the assistant" } }, "file": "examples/titled.html" },
-    { "name": "live", "props": { "title": "No results", "level": 3, "message": "Nothing matches plumber. Try other words, or", "action": { "href": "/chat?prompt=Find+plumber", "label": "ask the assistant" }, "live": true }, "file": "examples/live.html" }
+    { "name": "live", "props": { "title": "No results", "level": 3, "message": "Nothing matches plumber. Try other words, or", "action": { "href": "/chat?prompt=Find+plumber", "label": "ask the assistant" }, "live": true }, "file": "examples/live.html" },
+    {"name": "quiet", "props": {"quiet": true, "message": "Nothing on this day."}, "file": "examples/quiet.html"}
   ]
 }

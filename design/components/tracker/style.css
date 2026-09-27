@@ -44,7 +44,6 @@ a.sw-tracker__name:hover { text-decoration: underline; text-underline-offset: 0.
 .sw-tracker .sw-tracker__amount { width: 4rem; min-height: var(--sw-size-target); padding: 0 var(--sw-space-2); text-align: right; font-size: var(--sw-size-text-sm); }
 .sw-tracker__unit { font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); }
 .sw-tracker__log .sw-button { min-height: var(--sw-size-target); padding: 0 var(--sw-space-3); font-size: var(--sw-size-text-sm); }
-.sw-tracker__empty { margin: 0; }
 /* At a glance: met of all, this period. */
 .sw-tracker--glance { display: inline-flex; align-items: center; gap: var(--sw-space-1); min-height: var(--sw-size-target); color: inherit; text-decoration: none; }
 .sw-tracker--glance:hover .sw-tracker__label { text-decoration: underline; }
