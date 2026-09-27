@@ -37,23 +37,38 @@ func (s *Server) recordingOf(rec *store.Record) map[string]any {
 		about += " · " + sizeWords(int64(n))
 	}
 	props["about"] = about
-	if path, ok := s.transcriptPath(rec); ok {
-		if data, err := os.ReadFile(path); err == nil {
-			cues := convert.ParseVTT(string(data))
-			list := make([]any, 0, len(cues))
-			for _, c := range cues {
-				cue := map[string]any{"start": fmt.Sprintf("%.2f", c.Start), "at": convert.Clock(c.Start), "said": convert.Spoken(c.Start), "text": c.Text}
-				if c.Speaker != "" {
-					cue["speaker"] = c.Speaker
-				}
-				list = append(list, cue)
+	if cues := s.heard(rec); len(cues) > 0 {
+		list := make([]any, 0, len(cues))
+		for _, c := range cues {
+			cue := map[string]any{"start": fmt.Sprintf("%.2f", c.Start), "at": convert.Clock(c.Start), "said": convert.Spoken(c.Start), "text": c.Text}
+			if c.Speaker != "" {
+				cue["speaker"] = c.Speaker
 			}
-			if len(list) > 0 {
-				props["cues"] = list
-			}
+			list = append(list, cue)
 		}
+		props["cues"] = list
 	}
 	return props
+}
+
+// heard is a recording's transcript: its text, which people and the
+// assistant correct, when it reads as one, else the WebVTT beside it as
+// it was first written down.
+func (s *Server) heard(rec *store.Record) []convert.Cue {
+	if kind, _ := rec.Fields["kind"].(string); kind != "audio" {
+		return nil
+	}
+	if text, _ := rec.Fields["text"].(string); text != "" {
+		if cues := convert.FromTranscript(text); len(cues) > 0 {
+			return cues
+		}
+	}
+	if path, ok := s.transcriptPath(rec); ok {
+		if data, err := os.ReadFile(path); err == nil {
+			return convert.ParseVTT(string(data))
+		}
+	}
+	return nil
 }
 
 // sizeWords is a file's size as a person reads it: 11 MB, 480 KB.

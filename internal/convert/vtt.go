@@ -96,26 +96,43 @@ func Spoken(s float64) string {
 	return strings.Join(parts, " ")
 }
 
-// Transcript is the cues as the record's text: each speaker's turn a
-// paragraph that begins with when and who, so search finds the words and
-// the assistant reads who said them.
+// Transcript is the cues as the record's text: a paragraph each, which
+// begins with when and who, so search finds the words, the assistant reads
+// who said them, and either of them can correct a word and the recording's
+// page shows the correction at its time (FromTranscript).
 func Transcript(cues []Cue) string {
-	var b strings.Builder
-	last := ""
-	for i, c := range cues {
-		if i == 0 || c.Speaker != last {
-			if i > 0 {
-				b.WriteString("\n\n")
-			}
-			b.WriteString("[" + Clock(c.Start) + "] ")
-			if c.Speaker != "" {
-				b.WriteString("**" + c.Speaker + ":** ")
-			}
-		} else {
-			b.WriteString(" ")
+	parts := make([]string, 0, len(cues))
+	for _, c := range cues {
+		p := "[" + Clock(c.Start) + "] "
+		if c.Speaker != "" {
+			p += "**" + c.Speaker + ":** "
 		}
-		b.WriteString(c.Text)
-		last = c.Speaker
+		parts = append(parts, p+c.Text)
 	}
-	return b.String()
+	return strings.Join(parts, "\n\n")
+}
+
+var transcriptLine = regexp.MustCompile(`(?s)^\[((?:\d+:)?\d{1,2}:\d{2})\]\s+(?:\*\*([^*]+?):\*\*\s*)?(.*)$`)
+
+// FromTranscript reads a transcript back from text written as Transcript
+// writes it, however it has been edited since: a paragraph that begins
+// with its time is a line, and one that does not belongs to the line
+// before it. Text with no times in it is not a transcript.
+func FromTranscript(text string) []Cue {
+	text = strings.ReplaceAll(text, "\r\n", "\n")
+	var out []Cue
+	for _, para := range strings.Split(text, "\n\n") {
+		para = strings.TrimSpace(para)
+		if para == "" {
+			continue
+		}
+		if m := transcriptLine.FindStringSubmatch(para); m != nil {
+			out = append(out, Cue{Start: seconds(m[1] + ".0"), Speaker: strings.TrimSpace(m[2]), Text: strings.Join(strings.Fields(m[3]), " ")})
+			continue
+		}
+		if len(out) > 0 {
+			out[len(out)-1].Text += " " + strings.Join(strings.Fields(para), " ")
+		}
+	}
+	return out
 }

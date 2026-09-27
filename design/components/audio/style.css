@@ -22,3 +22,6 @@
 /* The line being heard: a border and bold type, not colour alone. */
 .sw-audio__cue[aria-current="true"] { border-inline-start-color: var(--sw-color-accent); font-weight: 600; }
 @media (forced-colors: active) { .sw-audio__cue[aria-current="true"] { border-inline-start-color: CanvasText; } }
+/* Writing it down: the press, and what the page's script is doing. */
+.sw-audio__make, .sw-audio__get { display: flex; flex-wrap: wrap; gap: var(--sw-space-2); align-items: center; margin: 0; }
+.sw-audio__why { margin: 0; flex-basis: 100%; }

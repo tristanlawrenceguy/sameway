@@ -19,8 +19,16 @@ func TestAWebVTTBecomesWhoSaidWhatAndWhen(t *testing.T) {
 		t.Error("times are shown and said as people say them")
 	}
 	text := Transcript(cues)
-	if !strings.HasPrefix(text, "[0:00] **Hana:** Morning. Two things from me. The compost order") || !strings.Contains(text, "\n\n[1:02:03] **Sam:** The liner") {
-		t.Errorf("each speaker's turn is a paragraph with when and who: %q", text)
+	if !strings.HasPrefix(text, "[0:00] **Hana:** Morning. Two things from me.\n\n[0:04] **Hana:** The compost order") || !strings.Contains(text, "\n\n[1:02:03] **Sam:** The liner") {
+		t.Errorf("each line is a paragraph with when and who: %q", text)
+	}
+	// Corrected by hand, the text is still the transcript, at its times.
+	back := FromTranscript(strings.Replace(text, "compost order", "compost delivery", 1) + "\n\nAnd one more thing.")
+	if len(back) != 3 || back[1].Start != 4 || back[1].Speaker != "Hana" || back[1].Text != "The compost delivery went in [laughter] at last." || back[2].Start != 3723 || !strings.HasSuffix(back[2].Text, "Thursday. And one more thing.") {
+		t.Errorf("the text reads back as the lines, corrections and all: %+v", back)
+	}
+	if FromTranscript("Just some notes about the meeting.") != nil {
+		t.Error("text with no times is not a transcript")
 	}
 	if Kind("memo.m4a") != "audio" || AudioType("x.opus") != "audio/ogg" || !Builtin("a.mp3") {
 		t.Error("recordings are known by their extension")
