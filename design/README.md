@@ -49,7 +49,7 @@ binary, which serves a living styleguide at `/design`.
 | text-field, textarea, select, checkbox | Input |
 | alert, status, badge | Feedback and state |
 | message, event | Conversation and activity |
-| calendar, datepicker | Dates: a month at four sizes, and one day picked |
+| calendar, when-field | Dates: a month at four sizes, and a day asked for in words |
 
 ### Sizes
 

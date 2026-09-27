@@ -115,11 +115,11 @@ func TestDesignPageHeadingsUnchanged(t *testing.T) {
 	wantStatus(t, rec, http.StatusOK)
 	body := rec.Body.String()
 
-	// The datepicker examples have specific headings that must not be trimmed.
+	// The when-field examples have specific headings that must not be trimmed.
 	for _, wantHeading := range []string{
-		"datepicker — default",
-		"datepicker — chosen",
-		"datepicker — error",
+		"when-field — default",
+		"when-field — filled",
+		"when-field — error",
 	} {
 		if !strings.Contains(body, "<h4 class=\"sw-small\">"+wantHeading+"</h4>") {
 			t.Errorf("/design should contain the untrimmed heading %q\n%s", wantHeading, truncate(body))

@@ -2,7 +2,7 @@
 
 Use a calendar to show a month and what is on in it. It is a view: nothing
 in it needs a keyboard pattern beyond reading a table and following its
-links. To ask someone for a date, use `datepicker`.
+links. To ask someone for a date, use `when-field`.
 
 Give it `month` as `YYYY-MM` and `events` as days with short labels. Mark
 `today` and it is called out in words as well as colour. `start` chooses

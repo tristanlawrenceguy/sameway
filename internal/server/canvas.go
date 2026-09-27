@@ -203,8 +203,8 @@ func (s *Server) canvasBlock(b *store.Record, convo *conversation) canvasBlock {
 		label = name
 	}
 	icon := name[:1]
-	if c, ok := s.app.Registry.Get(name); ok {
-		icon, props = cmp.Or(c.Manifest.Icon, icon), underPageTitle(c, props)
+	if c, p, ok := s.app.Registry.Resolve(name, props); ok {
+		icon, props = cmp.Or(c.Manifest.Icon, icon), underPageTitle(c, p)
 	}
 	return canvasBlock{
 		ID: b.ID, Component: name, Actor: actor, Changed: changed, Person: convo.People[b.ID], Span: span,
