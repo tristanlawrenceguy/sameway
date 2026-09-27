@@ -122,6 +122,19 @@ func summarise(actor string, c Change) string {
 	return strings.Join(parts, " ")
 }
 
+// CleanRecordLink transforms a change map so that record-type links (href
+// starting with /t/) no longer show the internal schema type suffix like
+// "(note)" or "(habit)". It mutates the map in place and returns true when it
+// was a record link.
+func CleanRecordLink(c map[string]any) bool {
+	href, _ := c["href"].(string)
+	if !strings.HasPrefix(href, "/t/") {
+		return false
+	}
+	delete(c, "component")
+	return true
+}
+
 // CleanSettingChange transforms a change map so that setting-change entries
 // display readable names instead of internal keys like "ui.pace". It mutates
 // the map in place and returns true when it was a setting change.

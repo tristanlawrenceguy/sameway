@@ -59,6 +59,8 @@ func (s *Server) undoable(changes any, latest bool) any {
 		}
 		// Replace raw field paths with human-readable text for setting changes.
 		cleanSettingChange(copied)
+		// Strip internal type suffix from record-type change links.
+		cleanRecordLink(copied)
 		out = append(out, copied)
 	}
 	return out
@@ -68,4 +70,10 @@ func (s *Server) undoable(changes any, latest bool) any {
 // human-readable transformation of setting-change entries.
 func cleanSettingChange(c map[string]any) {
 	chat.CleanSettingChange(c)
+}
+
+// cleanRecordLink delegates to chat.CleanRecordLink so record-type changes
+// have their internal schema type suffix removed from link text.
+func cleanRecordLink(c map[string]any) {
+	chat.CleanRecordLink(c)
 }
