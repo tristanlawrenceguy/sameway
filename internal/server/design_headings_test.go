@@ -40,11 +40,11 @@ func TestDesignPageExampleHeadings(t *testing.T) {
 	}
 }
 
-// TestDesignPageDatepickerExamplesHaveHeadings checks that each datepicker
+// TestDesignPageWhenFieldExamplesHaveHeadings checks that each when-field
 // example on /design has its own <h4> heading that distinguishes it from the
-// others, so screen reader users can tell "Due date" from "Start" from
+// others, so screen reader users can tell "Due" from "Starts" from
 // "Deadline (required)".
-func TestDesignPageDatepickerExamplesHaveHeadings(t *testing.T) {
+func TestDesignPageWhenFieldExamplesHaveHeadings(t *testing.T) {
 	_, h := newApp(t)
 	rec := get(t, h, "/design")
 	wantStatus(t, rec, http.StatusOK)
@@ -52,14 +52,14 @@ func TestDesignPageDatepickerExamplesHaveHeadings(t *testing.T) {
 	body := rec.Body.String()
 
 	for _, wantHeading := range []string{
-		"datepicker — default",
-		"datepicker — chosen",
-		"datepicker — error",
+		"when-field — default",
+		"when-field — filled",
+		"when-field — error",
 	} {
 		if !strings.Contains(body, "<h4 class=\"sw-small\">"+wantHeading+"</h4>") {
-			t.Errorf("body should contain an h4 with %q for the datepicker example; "+
+			t.Errorf("body should contain an h4 with %q for the when-field example; "+
 				"this is how screen reader users distinguish duplicate input labels like "+
-				"'Due date', 'Start', and 'Deadline (required)'", wantHeading)
+				"'Due', 'Starts', and 'Deadline (required)'", wantHeading)
 		}
 	}
 

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "A day, or a day and a time, written the way a person says it: 19 Sep, next Friday, tomorrow 2pm. The platform's own date picker stands beside the words for anyone who would rather look at a month, and picking a day writes it into them.",
   "icon": "◴",
-  "use": { "when": "asking for when something is, due or happens.", "not": "a day that must be picked from a month and never typed, which is the datepicker.", "with": "a hint, which is always shown, with an example of what can be typed." },
+  "use": { "when": "asking for when something is, due or happens.", "not": "showing a month and what is in it, which is a calendar.", "with": "a hint, which is always shown, with an example of what can be typed." },
   "props": {
     "type": "object",
     "additionalProperties": false,

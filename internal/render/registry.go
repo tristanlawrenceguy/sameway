@@ -185,7 +185,7 @@ func (r *Registry) Names() []string {
 // Render validates props against the component's schema, applies defaults,
 // and executes the template.
 func (r *Registry) Render(name string, props map[string]any) (template.HTML, error) {
-	c, ok := r.byName[name]
+	c, props, ok := r.Resolve(name, props)
 	if !ok {
 		return "", fmt.Errorf("unknown component %q (known: %s)", name, strings.Join(r.Names(), ", "))
 	}
@@ -194,7 +194,7 @@ func (r *Registry) Render(name string, props map[string]any) (template.HTML, err
 
 // RenderSlot renders a component by name with pre-rendered HTML inside it.
 func (r *Registry) RenderSlot(name string, props map[string]any, slot template.HTML) (template.HTML, error) {
-	c, ok := r.byName[name]
+	c, props, ok := r.Resolve(name, props)
 	if !ok {
 		return "", fmt.Errorf("unknown component %q (known: %s)", name, strings.Join(r.Names(), ", "))
 	}

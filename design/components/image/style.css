@@ -1,9 +1,11 @@
 /* A picture fits the column it is in and never makes the page scroll
    sideways, nor stands taller than most of a screen; its caption sits
-   under it, quieter. The box it will fill shows while it loads. */
+   under it, quieter. The box it will fill shows while it loads: its width
+   comes from its width attribute, not auto, which would leave it no size
+   until it arrived and push what is under it down when it did. */
 .sw-image { margin: 0; }
 .sw-image__img {
-  display: block; max-width: 100%; max-height: var(--sw-size-picture); width: auto; height: auto;
+  display: block; max-width: 100%; max-height: var(--sw-size-picture); height: auto; object-fit: contain;
   border-radius: var(--sw-radius-md); background: var(--sw-color-bg-muted);
 }
 .sw-image__caption { margin-top: var(--sw-space-2); font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); }
