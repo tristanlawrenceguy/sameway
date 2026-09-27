@@ -1,6 +1,6 @@
 {
   "name": "calendar",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "A month and what is on in it, at whatever size it has been given: a marker with a count, a short agenda, a month grid, or a full page with an action beside every event; or one day by the hour. To ask someone for a date use datepicker. Given a content type, the records with a date are the events, kept current.",
   "icon": "▦",
   "use": {"when": "a person wants to see when things happen or what is coming, sized to where it sits: glance or brief in a pane, full or page in the main region.", "not": "a single date, which is a datepicker, or a list of tasks, which is a list.", "with": "events as records, so the same event is on its own page."},
@@ -9,6 +9,7 @@
     "additionalProperties": false,
     "required": [],
     "properties": {
+      "problem": {"type": "string", "description": "Filled in by the server when the block is set up wrong, saying what is wrong and what the workspace has instead. Leave out."},
       "month": {"type": "string", "description": "The month to show, as YYYY-MM, for example 2026-09. Leave out for this month."},
       "detail": {"type": "string", "enum": ["glance", "brief", "full", "page"], "default": "full", "title": "How much to show", "description": "glance is a marker with how many things are coming, for a corner or a narrow pane. brief is the next few, as a list. full is the month grid. page is the month with an action beside every event, for when the calendar has the screen to itself. Expanding a block asks for page."},
       "caption": {"type": "string", "description": "Names the calendar. The month and year are always said with it: \"Tasks due\" reads \"Tasks due, September 2026\", so a person who has moved month knows where they are."},
@@ -37,6 +38,7 @@
     {"name": "page", "props": {"caption": "Meetings this month", "month": "2026-09", "detail": "page", "today": "2026-09-11", "events": [{"date": "2026-09-11", "time": "14:00", "label": "Design review", "actions": [{"component": "button", "props": {"label": "Join", "context": "the design review", "variant": "quiet"}}, {"component": "link", "props": {"href": "/t/note", "label": "Notes", "context": "for the design review"}}]}, {"date": "2026-09-14", "label": "Standup", "actions": [{"component": "badge", "props": {"label": "Daily", "tone": "info"}}]}]}, "file": "examples/page.html"},
     {"name": "empty", "props": {"month": "2026-02", "start": "sunday", "caption": "February, nothing booked"}, "file": "examples/empty.html"},
     {"name": "tasks", "props": {"type": "task", "where": ["done=false"], "date": "due", "month": "2026-09", "today": "2026-09-17", "caption": "Tasks due", "events": [{"date": "2026-09-19", "label": "Order compost", "href": "/t/task/k3n2p9"}, {"date": "2026-09-22", "label": "Plant garlic", "href": "/t/task/m8q4r1"}]}, "file": "examples/tasks.html"},
-    {"name": "months", "props": {"month": "2026-09", "today": "2026-09-17", "caption": "Tasks due, month by month", "events": [{"date": "2026-09-19", "label": "Order compost", "href": "/t/task/k3n2p9"}], "nav": {"previous": {"href": "/canvas/b1?month=2026-08", "label": "August 2026"}, "next": {"href": "/canvas/b1?month=2026-10", "label": "October 2026"}}, "all": "/t/task?order=due"}, "file": "examples/months.html"}
+    {"name": "months", "props": {"month": "2026-09", "today": "2026-09-17", "caption": "Tasks due, month by month", "events": [{"date": "2026-09-19", "label": "Order compost", "href": "/t/task/k3n2p9"}], "nav": {"previous": {"href": "/canvas/b1?month=2026-08", "label": "August 2026"}, "next": {"href": "/canvas/b1?month=2026-10", "label": "October 2026"}}, "all": "/t/task?order=due"}, "file": "examples/months.html"},
+    {"name": "problem", "props": {"type": "event", "problem": "there is no content type event; the workspace has note, project, task"}, "file": "examples/problem.html"}
   ]
 }

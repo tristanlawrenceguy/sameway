@@ -1,6 +1,6 @@
 {
   "name": "tracker",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "What is being kept up, at a glance: each habit against its target for this day, week, month or year (at least the target, at most a limit, or no target when it only records), its streak, the last periods as dots, and a press to log. From the habit and entry records, kept current. At glance detail it is how many are met this period.",
   "icon": "◎",
   "use": { "when": "a person keeps something up and wants to see and log it without thinking: habits, a daily measure, a weekly distance, a monthly allowance of hours or a budget, a reading such as weight.", "not": "a one-off task, which is a task; or numbers over time on their own, which is a chart.", "with": "the habit records behind it, each with its own page, numbers and chart." },
@@ -9,6 +9,7 @@
     "additionalProperties": false,
     "required": [],
     "properties": {
+      "problem": {"type": "string", "description": "Filled in by the server when the block is set up wrong, saying what is wrong and what the workspace has instead. Leave out."},
       "href": { "type": "string", "description": "Where the glance leads, the habits by default." },
       "when": { "type": "string", "description": "Filled in by the server: today, or this period." },
       "label": { "type": "string", "default": "Keeping up" },
@@ -77,6 +78,7 @@
     { "name": "glance", "props": { "detail": "glance", "label": "Today", "habits": [
       { "id": "h1", "name": "Stretch", "shortName": "Stretch", "met": true, "period": "day" }, { "id": "h2", "name": "Water", "shortName": "Water", "met": false, "period": "day" }
     ] }, "file": "examples/glance.html" },
-    { "name": "empty", "props": { "label": "Habits" }, "file": "examples/empty.html" }
+    { "name": "empty", "props": { "label": "Habits" }, "file": "examples/empty.html" },
+    {"name": "problem", "props": {"label": "Garden habits", "tags": ["garden"], "problem": "no habit is tagged garden; the habits have health, reading"}, "file": "examples/problem.html"}
   ]
 }
