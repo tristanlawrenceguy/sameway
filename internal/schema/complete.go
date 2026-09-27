@@ -83,6 +83,15 @@ func (s *Set) Complete(builtin *Set) {
 				t.Fields = append(t.Fields, f)
 				continue
 			}
+			// So does a field's own name in a person's words: a file page
+			// made before them said Name and Path. Its own label wins.
+			if f.Label != "" {
+				for i := range t.Fields {
+					if t.Fields[i].Name == f.Name && t.Fields[i].Label == "" {
+						t.Fields[i].Label = f.Label
+					}
+				}
+			}
 			// Names for an enum's values reach a workspace made before they
 			// were written, for the values its copy has; its own names win.
 			if len(f.Labels) > 0 {

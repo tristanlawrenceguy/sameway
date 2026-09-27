@@ -33,3 +33,22 @@ func TestCompleteBringsValueLabels(t *testing.T) {
 		t.Errorf("a workspace's own names win: %v", mine.Labels)
 	}
 }
+
+// TestCompleteBringsFieldLabels: a workspace whose copy of a provided type
+// predates its field names in a person's words gets them; its own win.
+func TestCompleteBringsFieldLabels(t *testing.T) {
+	ws := &Set{byName: map[string]*Type{}}
+	old := &Type{Name: "file", Fields: []Field{{Name: "name", Type: "string"}, {Name: "kind", Type: "string", Label: "Mine"}}}
+	ws.Types, ws.byName["file"] = []*Type{old}, old
+	builtin := &Set{Types: []*Type{{Name: "file", Provided: true, Fields: []Field{
+		{Name: "name", Type: "string", Label: "File name"},
+		{Name: "kind", Type: "string", Label: "File type"},
+	}}}}
+	ws.Complete(builtin)
+	if f, _ := old.Field("name"); f.Label != "File name" {
+		t.Errorf("name should take the built-in label, got %q", f.Label)
+	}
+	if f, _ := old.Field("kind"); f.Label != "Mine" {
+		t.Errorf("a workspace's own label wins, got %q", f.Label)
+	}
+}
