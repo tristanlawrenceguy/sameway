@@ -1,0 +1,5 @@
+.sw-problem__said { margin: 0; color: var(--sw-color-fg-muted); }
+.sw-problem__why { margin-top: var(--sw-space-1); }
+.sw-problem__why summary { cursor: pointer; min-height: var(--sw-size-target); display: inline-flex; align-items: center; gap: var(--sw-space-1); list-style: none; padding: 0 var(--sw-space-2); border-radius: var(--sw-radius-md); color: var(--sw-color-fg-muted); }
+.sw-problem__why summary::-webkit-details-marker { display: none; }
+.sw-problem__why p { margin: var(--sw-space-1) 0 0; font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); }

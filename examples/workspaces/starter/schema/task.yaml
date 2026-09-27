@@ -15,6 +15,9 @@ fields:
   due:
     type: datetime
     description: When it is due; a day is enough.
+  repeat:
+    type: repeat
+    description: How often it is due again, in words, like every weekday or every month on the 1st; empty for once. Marked done, it is due again on its next day, counted from the day it was due.
   for:
     type: ref
     to: person

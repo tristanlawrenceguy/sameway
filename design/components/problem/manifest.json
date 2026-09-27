@@ -1,0 +1,85 @@
+{
+  "name": "problem",
+  "version": "1.0.0",
+  "description": "Why a block that shows records cannot show them as it is set up, said in place of it: who can fix it in sight, what exactly is wrong a press away.",
+  "icon": "!",
+  "use": {
+    "when": "a list, chart, calendar or tracker is asked for something the workspace does not have: a type, a field, a condition that cannot be read.",
+    "not": "nothing matching, which is an empty state and says what it looked for; or a failed action, which is an alert.",
+    "with": "the component it stands in for, which renders it in its own place."
+  },
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "what",
+      "text"
+    ],
+    "properties": {
+      "what": {
+        "type": "string",
+        "minLength": 1,
+        "description": "What cannot be shown, as a person says it: This list, This chart, This calendar."
+      },
+      "text": {
+        "type": "string",
+        "minLength": 1,
+        "description": "What is wrong, exactly, and what the workspace has instead, for whoever fixes it."
+      },
+      "verb": {
+        "type": "string",
+        "enum": [
+          "shown",
+          "drawn"
+        ],
+        "default": "shown",
+        "description": "What it cannot be: shown, or drawn for a chart."
+      }
+    }
+  },
+  "a11y": {
+    "role": "none; a paragraph and a disclosure, in the place of the block it stands in for",
+    "keyboard": [
+      {
+        "key": "Tab",
+        "does": "reaches What is wrong"
+      },
+      {
+        "key": "Enter",
+        "does": "on What is wrong, opens or closes the detail"
+      }
+    ],
+    "states": [
+      "open",
+      "closed"
+    ],
+    "wcag": {
+      "target": "AAA",
+      "notes": "Something is always said where the block would be, rather than nothing, so an empty space is never mistaken for nothing there (3.3.1). The first sentence says who can fix it in plain words; the detail, in the workspace's own names, is behind a native details element, a press away and read in full when opened (3.3.3)."
+    }
+  },
+  "machine": {
+    "selector": "[data-component=\"problem\"]",
+    "identify": "The p says what cannot be shown; the details' p is what is wrong, word for word what the server found.",
+    "operate": "Read the detail and fix the block's props: its type, field or conditions."
+  },
+  "examples": [
+    {
+      "name": "default",
+      "props": {
+        "what": "This list",
+        "text": "task has no field \"owner\"; it has title, done, due, notes, tags"
+      },
+      "file": "examples/default.html"
+    },
+    {
+      "name": "drawn",
+      "props": {
+        "what": "This chart",
+        "verb": "drawn",
+        "text": "task has no field \"owner\" to group by"
+      },
+      "file": "examples/drawn.html"
+    }
+  ]
+}

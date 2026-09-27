@@ -1,8 +1,6 @@
 package server
 
 import (
-	"fmt"
-	"html/template"
 	"net/http"
 	"strings"
 
@@ -25,7 +23,7 @@ func (s *Server) clashNotices(r *http.Request, t *schema.Type, rec *store.Record
 		return ""
 	}
 	var b strings.Builder
-	back := template.HTMLEscapeString("/t/" + t.Name + "/" + rec.ID)
+	back := "/t/" + t.Name + "/" + rec.ID
 	for _, c := range clashes {
 		if c.Fields["target"] != t.Name || c.Fields["target_id"] != rec.ID || c.Fields["state"] != "open" {
 			continue
@@ -40,8 +38,9 @@ func (s *Server) clashNotices(r *http.Request, t *schema.Type, rec *store.Record
 			who = "on this computer"
 		}
 		text, _ := c.Fields["text"].(string)
-		fmt.Fprintf(&b, `<section class="sw-panel sw-stack" data-component="clash" aria-labelledby="clash-%[1]s-h"><h2 id="clash-%[1]s-h">Another version of %[2]s</h2><p>It was written %[3]s at the same time as the one below, so both are kept. The page shows the later one; this is the other.</p><blockquote class="sw-prose">%[4]s</blockquote><div class="sw-cluster"><form method="post" action="/clash/%[1]s/use"><input type="hidden" name="from" value="%[5]s"><button type="submit" class="sw-button sw-button--primary sw-pressable">Use this version</button></form><form method="post" action="/clash/%[1]s/keep"><input type="hidden" name="from" value="%[5]s"><button type="submit" class="sw-button sw-button--secondary sw-pressable">Keep the one below</button></form></div></section>`,
-			c.ID, template.HTMLEscapeString(label), who, strings.ReplaceAll(template.HTMLEscapeString(text), "\n", "<br>"), back)
+		props := map[string]any{"id": c.ID, "label": label, "where": who, "text": text,
+			"use": "/clash/" + c.ID + "/use", "keep": "/clash/" + c.ID + "/keep", "from": back}
+		b.WriteString(string(s.component("clash", props)))
 	}
 	return b.String()
 }

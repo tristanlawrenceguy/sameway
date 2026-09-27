@@ -116,7 +116,7 @@ func (s *Server) blockItem(blk *store.Record, convo *conversation) string {
 	if v.EditAction != "" {
 		fmt.Fprintf(&b, ` data-edit-action="%s"`, v.EditAction)
 	}
-	fmt.Fprintf(&b, ` style="--sw-span: %d; view-transition-name: block-%s; view-transition-class: sw-vt-item">`, v.Span, v.ID)
+	fmt.Fprintf(&b, ` id="block-%s" style="--sw-span: %d; view-transition-name: block-%s; view-transition-class: sw-vt-item">`, v.ID, v.Span, v.ID)
 	// At icon size the block is a glyph with its name, opening the whole
 	// thing on its own page: everything is still reachable, in less room.
 	if v.Size == "icon" {
@@ -136,7 +136,7 @@ func (s *Server) blockItem(blk *store.Record, convo *conversation) string {
 	if word := toneWords[v.Tone]; word != "" {
 		fmt.Fprintf(&b, `<p class="sw-visually-hidden">%s</p>`, word)
 	}
-	b.WriteString(string(body))
+	b.WriteString(withBlock(string(body), "block-"+v.ID))
 	fmt.Fprintf(&b, `<div class="sw-bar sw-quiet">%s<form method="post" action="/canvas/%s/delete">%s</form></div></li>`,
 		v.Expand, v.ID, v.Remove)
 	return b.String()

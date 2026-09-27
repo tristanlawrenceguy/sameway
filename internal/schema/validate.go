@@ -177,6 +177,18 @@ func coerce(f Field, v any) (any, error) {
 			return nil, fmt.Errorf("%s", when.Why(s, now))
 		}
 		return when.Store(ts, day), nil
+	case "repeat":
+		// How often, the way a person says it; kept as a small RRULE.
+		s, ok := v.(string)
+		if !ok {
+			return nil, fmt.Errorf("must say how often, like every Tuesday")
+		}
+		now := time.Now()
+		rule, ok := when.ParseRepeat(s, now)
+		if !ok {
+			return nil, fmt.Errorf("%s", when.RepeatWhy(s, now))
+		}
+		return rule, nil
 	case "list":
 		return coerceList(f, v)
 	case "json":

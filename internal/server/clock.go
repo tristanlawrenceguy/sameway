@@ -44,6 +44,9 @@ func (s *Server) resolveClock(props map[string]any) map[string]any {
 		recs, _ := query.Filter(s.app.Store, t, nil, "at", 0, now)
 		for _, rec := range recs {
 			item := map[string]any{"id": rec.ID, "title": s.title(t, rec), "href": "/t/" + ReminderType + "/" + rec.ID}
+			if said := repeatsOf(rec); said != "" {
+				item["repeats"] = said
+			}
 			switch rec.Fields["state"] {
 			case "rang":
 				if text, _ := s.ringWords(rec); rec.Fields["about"] != nil && text != item["title"] {

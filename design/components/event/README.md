@@ -1,9 +1,9 @@
 # event
 
 Use an event for one line of activity: "Assistant added table", "You removed
-list", "System failed: could not reach the model". The actor is always
-written as a word, and `data-actor`, `data-action`, and `data-target` carry
-the same facts for machines. Put events in a list; the page decides whether
+list", "System failed: could not reach the model". The actor is written
+as a word (a compact line leaves it to its message), and `data-actor`,
+`data-action`, and `data-target` carry the same facts for machines. Put events in a list; the page decides whether
 that list is a receipt under a reply or the full activity log.
 
 An entry that can still be undone is given `undo`, the address its Undo
@@ -21,8 +21,20 @@ this computer, such as on a phone or tablet.
 
 Undo says what it undid: "Undone. You added card Plan."
 
+Under a message that already says who, as its Changes made list, give
+`compact`: the line starts at its verb ("changed text size to Large"),
+with no actor and no mark, one 44px row, and no heading, since the
+message has one. The message draws each change through this component,
+and the server builds the props for that list and for the activity log
+with one function, so a change reads the same in both.
+
 ## Why it works this way
 
+- **One line for a change, wherever it shows.** The chat once drew its own
+  receipt lines, and wording fixes landed in one place and not the other;
+  now the receipt is these events, compact, and the actor it leaves out
+  is the one its message's heading says, so it is not heard twice
+  ([WCAG 3.2.4](https://www.w3.org/WAI/WCAG22/Understanding/consistent-identification.html)).
 - **Each entry said once.** A heading with the same sentence under it was
   seen and heard twice, and the two could differ, so with `level` the
   sentence is the heading

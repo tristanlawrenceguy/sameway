@@ -14,6 +14,9 @@ fields:
     type: datetime
     required: true
     description: When it rings, as a moment; a day alone rings at midnight.
+  repeat:
+    type: repeat
+    description: How often it rings again, in words, like every day or every Tuesday; empty for once. Dismissed, it is set for its next time.
   kind:
     type: enum
     values: [alarm, timer]

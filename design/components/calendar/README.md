@@ -17,6 +17,10 @@ moving it into the body of the page is all it takes to read them.
 The month grid is worked out on the server, so the component needs no
 JavaScript and reads correctly the moment the HTML arrives.
 
+A record that repeats is shown on each day it falls in the month shown,
+each with `repeats` in words, "Repeats every Tuesday"; only the day it is
+due now carries its actions.
+
 With `type: all` the calendar shows everything with a day together,
 from every listed type: tasks due, reminders, entries logged, each
 event saying what kind it is. A record's page links to its day on the
@@ -65,7 +69,25 @@ the system's own colours.
 - **Today in words as well as colour**, and its circle kept in forced
   colours ([WCAG 1.4.1](https://www.w3.org/WAI/WCAG22/Understanding/use-of-color.html)).
 - **Worked out on the server**, so it reads correctly without a script.
+- **A repeat on each day it falls.** A task or reminder that repeats is
+  shown on every day it falls in the month shown, as a calendar shows a
+  weekly meeting on every week, not only on the day it is next due. Each
+  says it repeats in words beside its name, "Repeats every Tuesday", once,
+  not with a looping-arrows icon alone, which is not read out
+  ([WCAG 1.1.1](https://www.w3.org/WAI/WCAG22/Understanding/non-text-content.html),
+  [W3C COGA, use icons that help the user](https://www.w3.org/TR/coga-usable/#use-icons-that-help-the-user-pattern)).
+  The days are worked out for the month shown and no further, at most one
+  a day, so a repeat that never ends is still a month's worth; they follow
+  the repeat's own rules, the 31st on the last day of a shorter month
+  ([RFC 5545, 3.8.5.3](https://icalendar.org/iCalendar-RFC-5545/3-8-5-3-recurrence-rule.html)).
+- **Only the one due now has its tick.** The later days lead to the same
+  record but carry no action: ticking next week's would tick this week's.
 
 Not done, and why: a grid you move through with arrow keys (it is a view,
 and its links are reached with Tab); the grid and the list both in the
-accessibility tree (a screen reader would hear the month twice).
+accessibility tree (a screen reader would hear the month twice); the days
+a repeat fell on before it was due (those were done, or skipped); skipping
+or moving one day of a repeat on its own (it would need exceptions to the
+rule, RRULE's EXDATE, and a record for each changed day; a reminder can
+skip its next time from the clock, and a task is ticked); a repeating
+icon (the words say it).

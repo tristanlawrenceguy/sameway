@@ -208,14 +208,7 @@ func (s *Server) messageHTML(id, from string, last bool) string {
 	if err != nil {
 		return ""
 	}
-	props := map[string]any{
-		"role": m.Fields["role"], "content": m.Fields["content"], "id": "msg-" + m.ID, "from": from,
-		"time": messageTime(m.CreatedAt), "datetime": m.CreatedAt.UTC().Format(time.RFC3339), "changes": s.undoable(m.Fields["changes"], last),
-	}
-	if fileID, _ := m.Fields["file"].(string); fileID != "" {
-		props["attachment"] = s.attachment(fileID)
-	}
-	return string(s.component("message", props))
+	return string(s.component("message", s.messageProps(m, from, last)))
 }
 
 // statusFor is the status line after a reply, as the page shows it.

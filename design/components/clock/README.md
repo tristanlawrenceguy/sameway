@@ -76,6 +76,24 @@ glasses so far).
   ([MDN requireInteraction](https://developer.mozilla.org/en-US/docs/Web/API/Notification/requireInteraction),
   [WCAG 2.2.1](https://www.w3.org/WAI/WCAG22/Understanding/timing-adjustable.html)).
 
+- **A repeat said in words.** A reminder that repeats says so under its
+  name, "Repeats every Tuesday", where it rings and in Coming up, not with
+  a looping-arrows icon alone, which is not read out and not known to all
+  ([W3C COGA, use icons that help the user](https://www.w3.org/TR/coga-usable/#use-icons-that-help-the-user-pattern),
+  [WCAG 1.1.1](https://www.w3.org/WAI/WCAG22/Understanding/non-text-content.html)).
+- **Dismissed, it is set for its next time**, and the message says when:
+  "It repeats every day, so it rings again tomorrow at 07:00." The time
+  after is counted on its schedule from when it was due, never from when
+  it was dismissed, so an alarm at 07:00 stays at 07:00, five more minutes
+  or not; one missed for days rings next at its next time still to come,
+  not for each it missed. Across a change of clocks it keeps the time on
+  the wall ([RFC 5545, 3.8.5.3](https://icalendar.org/iCalendar-RFC-5545/3-8-5-3-recurrence-rule.html)).
+- **Skip this time**, not Cancel, on a reminder that repeats in Coming up:
+  it skips the one time and sets the next; Undo puts it back. The whole
+  repeat ends by clearing its Repeat on its page, or deleting it.
+
 Not done, and why: a time picker of wheels or dials (typing it as it is
 said is faster, and it is said back); a ring that stops by itself (it is
-missed by anyone away from the screen).
+missed by anyone away from the screen); moving a repeating reminder to its
+next time the moment it rings (it rings until answered; its next time is
+set when it is).

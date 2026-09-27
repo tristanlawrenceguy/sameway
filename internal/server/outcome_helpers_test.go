@@ -16,7 +16,9 @@ func landed(t *testing.T, h http.Handler, rec *httptest.ResponseRecorder) (page 
 		t.Fatalf("an action returns the person to a page (303), got %d: %.300s", rec.Code, rec.Body.String())
 	}
 	at = rec.Header().Get("Location")
-	req := httptest.NewRequest(http.MethodGet, at, nil)
+	// A browser keeps the part after # to itself.
+	path, _, _ := strings.Cut(at, "#")
+	req := httptest.NewRequest(http.MethodGet, path, nil)
 	for _, c := range rec.Result().Cookies() {
 		req.AddCookie(c)
 	}

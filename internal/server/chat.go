@@ -105,14 +105,7 @@ func (s *Server) conversationAbout(c *chat.Service, from, about, prompt string) 
 		out.TurnEnd = m.CreatedAt
 		id := "msg-" + m.ID
 		out.LatestID = id
-		props := map[string]any{
-			"role": m.Fields["role"], "content": m.Fields["content"], "id": id, "from": from,
-			"time": messageTime(m.CreatedAt), "datetime": m.CreatedAt.UTC().Format(time.RFC3339), "changes": s.undoable(m.Fields["changes"], i == len(msgs)-1),
-		}
-		if fileID, _ := m.Fields["file"].(string); fileID != "" {
-			props["attachment"] = s.attachment(fileID)
-		}
-		view.Messages = append(view.Messages, chatMessage{ID: id, HTML: s.component("message", props)})
+		view.Messages = append(view.Messages, chatMessage{ID: id, HTML: s.component("message", s.messageProps(m, from, i == len(msgs)-1))})
 	}
 	out.Count = len(msgs)
 	view.Status = s.status(msgs)

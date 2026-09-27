@@ -163,19 +163,12 @@ func (s *Server) resolveTracker(props map[string]any) map[string]any {
 		}
 	}
 	out["habits"] = habits
-	return out
-}
-
-func hasTag(rec *store.Record, tags []string) bool {
-	have, _ := rec.Fields["tags"].([]any)
-	for _, t := range have {
-		for _, want := range tags {
-			if s, _ := t.(string); strings.EqualFold(s, want) {
-				return true
-			}
+	if len(habits) == 0 && len(tags) > 0 {
+		if have := s.habitTags(); len(have) > 0 {
+			out["problem"] = "no habit is tagged " + strings.Join(tags, " or ") + "; the habits have " + strings.Join(have, ", ")
 		}
 	}
-	return false
+	return out
 }
 
 // habitLog is the Log press: an entry for the amount given or one, now,

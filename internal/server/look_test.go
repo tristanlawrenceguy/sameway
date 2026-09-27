@@ -116,7 +116,7 @@ func TestLookAtComponentRawSettingChangeTransformsAction(t *testing.T) {
 	if !strings.Contains(frag.HTML, "changed") {
 		t.Errorf("raw setting-change action 'set' should be transformed to 'changed'\nwant: 'changed' in HTML\ngot:\n%s", frag.HTML)
 	}
-	if strings.Contains(frag.HTML, `class="sw-message__change-action">set`) {
+	if strings.Contains(frag.HTML, `class="sw-event__action">set`) {
 		t.Errorf("raw word 'set' must not appear as the change action\nwant: 'changed'\ngot:\n%s", frag.HTML)
 	}
 }
@@ -153,7 +153,7 @@ func TestLookAtComponentRawSettingChangeShowsReadableTarget(t *testing.T) {
 		t.Errorf("raw field path 'ui.text' must not appear in rendered changes list\nwant: human-readable label like 'text size'\ngot:\n%s", frag.HTML)
 	}
 
-	if !strings.Contains(frag.HTML, "text size to Large") && !strings.Contains(frag.HTML, "Text size to Large") {
+	if !strings.Contains(said(frag.HTML), "changed text size to Large") {
 		t.Errorf("setting key should be rendered as a human-readable phrase\nwant: 'text size to Large' or similar\ngot:\n%s", frag.HTML)
 	}
 }
@@ -264,7 +264,7 @@ func TestLookAtComponentMixedChangesTransformsOnlySetting(t *testing.T) {
 	if !strings.Contains(frag.HTML, "changed") {
 		t.Errorf("setting change should be transformed to 'changed'\ngot:\n%s", frag.HTML)
 	}
-	if strings.Contains(frag.HTML, `class="sw-message__change-action">set`) {
+	if strings.Contains(frag.HTML, `class="sw-event__action">set`) {
 		t.Errorf("raw word 'set' must not appear\ngot:\n%s", frag.HTML)
 	}
 	if !strings.Contains(frag.HTML, "added") && !strings.Contains(frag.HTML, `"action":"added"`) {

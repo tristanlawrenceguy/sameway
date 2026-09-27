@@ -137,6 +137,9 @@ func (s *Store) Update(typeName, id string, fields map[string]any) (*Record, err
 	if err := s.checkRefs(t, clean); err != nil {
 		return nil, err
 	}
+	// Something that repeats, finished, is due again, however it was
+	// finished (schema/repeat.go).
+	t.Advance(current.Fields, clean, time.Now())
 	now := time.Now().UTC()
 	sets := []string{"updated_at = ?"}
 	args := []any{now.Format(time.RFC3339Nano)}

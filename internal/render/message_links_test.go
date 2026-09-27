@@ -51,7 +51,7 @@ func TestMessageWithChangesAndLinks(t *testing.T) {
 		"content": "I added two items.",
 		"time":    "14:05",
 		"changes": []any{
-			map[string]any{"action": "added", "component": "note"},
+			map[string]any{"action": "added", "target": "note"},
 		},
 		"links": []any{
 			map[string]any{"href": "/t/note/abc", "label": "a note"},

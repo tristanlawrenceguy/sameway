@@ -14,6 +14,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
+	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // Records are the person's content: the notes, the tasks, whatever the
@@ -167,8 +168,14 @@ func (s *Service) updateRecord(typeName, id string, fields map[string]any) toolR
 		return fail("I couldn't save those changes — %s. Fix the fields and call update_record again; the %s schema is in the catalogue.", humanizeValidationError(err.Error()), t.Name)
 	}
 	title := recordTitle(s.Store, t, rec)
+	// Finished, a thing that repeats is due again at once; say so, or the
+	// assistant reads its own tick as undone.
+	again := ""
+	if repeat, day, ok := t.Repeats(); ok && t.Advanced(fields, rec.Fields) {
+		again = fmt.Sprintf(" It repeats (%s), so it is not finished but due again at %v.", when.RepeatText(fmt.Sprint(rec.Fields[repeat])), rec.Fields[day])
+	}
 	return toolResult{
-		text:   fmt.Sprintf("updated %s %s: %q, at /t/%s/%s.", t.Name, rec.ID, title, t.Name, rec.ID),
+		text:   fmt.Sprintf("updated %s %s: %q, at /t/%s/%s.%s", t.Name, rec.ID, title, t.Name, rec.ID, again),
 		change: &Change{Action: "updated", Component: t.Name, ID: rec.ID, Detail: title, Href: "/t/" + t.Name + "/" + rec.ID, Before: was.Fields},
 	}
 }
