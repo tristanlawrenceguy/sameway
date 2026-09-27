@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -78,20 +79,21 @@ func (s *Server) resolveCalendar(props map[string]any, blockID string) map[strin
 		out["events"] = s.everyEvent(now, month)
 		return out
 	}
+	// Set up wrong, it says so, rather than show an empty month, which
+	// reads as nothing on.
 	t, ok := s.app.Types.Get(typeName)
 	if !ok {
-		out["events"] = []any{}
+		out["problem"] = "there is no content type " + typeName + "; the workspace has " + strings.Join(s.app.Types.Names(), ", ")
 		return out
 	}
 	field := dateField(t, props["date"])
 	if field == "" {
-		out["events"] = []any{}
+		out["problem"] = noDateField(t, props["date"])
 		return out
 	}
 	recs, err := query.Filter(s.app.Store, t, strs(props["where"]), field, 0, now)
 	if err != nil {
-		out["events"] = []any{}
-		out["caption"] = err.Error()
+		out["problem"] = err.Error()
 		return out
 	}
 	events := make([]any, 0, len(recs))
@@ -151,6 +153,24 @@ func dateField(t *schema.Type, named any) string {
 		}
 	}
 	return ""
+}
+
+// noDateField says why a type's records cannot go on a calendar: the
+// field named is not a date, or the type has none.
+func noDateField(t *schema.Type, named any) string {
+	var dates []string
+	for _, f := range t.Shown() {
+		if f.Type == "datetime" {
+			dates = append(dates, f.Name)
+		}
+	}
+	if name, _ := named.(string); strings.TrimSpace(name) != "" {
+		if len(dates) > 0 {
+			return fmt.Sprintf("%s has no date field %q; its date fields are %s", t.Name, name, strings.Join(dates, ", "))
+		}
+		return fmt.Sprintf("%s has no date field %q, and no date field at all to place on a calendar", t.Name, name)
+	}
+	return t.Name + " has no date field to place on a calendar; show it as a list instead"
 }
 
 // showFields is the fields a person asked to see beside each event, as
