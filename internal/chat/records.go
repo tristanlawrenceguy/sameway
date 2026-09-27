@@ -15,6 +15,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
 // Records are the person's content: the notes, the tasks, whatever the
@@ -129,7 +130,7 @@ func (s *Service) contentType(name string) (*schema.Type, error) {
 // recordTitle is what a record is called: its title field, or its id.
 func recordTitle(t *schema.Type, rec *store.Record) string {
 	if v, ok := rec.Fields[t.Title].(string); ok && strings.TrimSpace(v) != "" {
-		return trimWords(v, 6)
+		return trim.Title(v)
 	}
 	return rec.ID
 }

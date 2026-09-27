@@ -13,6 +13,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
 // Canvas card controls on / include the note title instead of "card":
@@ -197,7 +198,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	// The heading is the whole title, wrapped as it needs; only the window
 	// title, which has one line, is shortened.
 	s.page(w, r, s.title(t, rec), template.HTML(b.String()), pageOptions{
-		Said:         trimTitle(s.title(t, rec)),
+		Said:         trim.Title(s.title(t, rec)),
 		Kicker:       s.crumbs("/t/"+t.Name, capitalize(plural(t.Name)), "", s.dotOf(t.Name)),
 		Lede:         s.lede(t, rec),
 		JSONURL:      "/api/" + t.Name + "/" + rec.ID,

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
@@ -203,7 +204,7 @@ func Summarise(component string, props map[string]any) string {
 	pick := func(keys ...string) string {
 		for _, k := range keys {
 			if s, ok := props[k].(string); ok && s != "" {
-				return truncate(s, 40)
+				return trim.Title(s)
 			}
 		}
 		return ""
@@ -227,7 +228,7 @@ func Summarise(component string, props map[string]any) string {
 		return pick("label")
 	case "record":
 		// Its title, once the page has read it; the id where it has not.
-		recTitle := trimWords(pick("title", "record"), 6)
+		recTitle := trim.Title(pick("title", "record"))
 		return strings.TrimSpace(pick("type") + " " + recTitle)
 	case "calendar":
 		if caption := pick("caption"); caption != "" {
@@ -247,15 +248,8 @@ func Summarise(component string, props map[string]any) string {
 	return ""
 }
 
-// trimWords cuts s to at most n words, appending an ellipsis when trimmed.
-func trimWords(s string, n int) string {
-	fields := strings.Fields(strings.TrimSpace(s))
-	if len(fields) <= n {
-		return s
-	}
-	return strings.Join(fields[:n], " ") + "…"
-}
-
+// truncate cuts what was said or went wrong to its first line and n
+// characters, for the log. A title goes through trim.Title instead.
 func truncate(s string, n int) string {
 	s = strings.TrimSpace(strings.SplitN(s, "\n", 2)[0])
 	if len([]rune(s)) <= n {

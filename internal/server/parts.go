@@ -86,6 +86,12 @@ func headFields(t *schema.Type, rec *store.Record) map[string]bool {
 	if t.Title != "" {
 		out[t.Title] = true
 	}
+	// A file's page says where its original is with Open the original;
+	// the path the store keeps it under is an id that means nothing to a
+	// person, so it is not said at all.
+	if t.Name == FileType {
+		out["path"] = true
+	}
 	for _, f := range t.Shown() {
 		if f.Type == "bool" {
 			out[f.Name] = true
