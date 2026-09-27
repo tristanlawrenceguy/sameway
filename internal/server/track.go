@@ -12,6 +12,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/track"
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
@@ -92,7 +93,7 @@ func (s *Server) standing(rec *store.Record, now time.Time) map[string]any {
 		pct = int(math.Min(100, math.Round(sum.Now/sum.Target*100)))
 	}
 	item := map[string]any{
-		"id": h.ID, "name": h.Name, "shortName": trimWords(h.Name, 2), "href": "/t/" + HabitType + "/" + h.ID, "unit": h.Unit, "period": h.Cadence, "aim": h.Aim,
+		"id": h.ID, "name": h.Name, "shortName": trim.Title(h.Name), "href": "/t/" + HabitType + "/" + h.ID, "unit": h.Unit, "period": h.Cadence, "aim": h.Aim,
 		"amount": sum.Now, "target": sum.Target, "progress": track.Progress(h, sum), "pct": pct, "met": sum.Met,
 		"streak": sum.Streak, "streakWords": track.StreakWords(sum.Streak, h), "best": sum.Best,
 	}
