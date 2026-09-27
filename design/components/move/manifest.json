@@ -1,0 +1,100 @@
+{
+  "name": "move",
+  "version": "1.0.0",
+  "description": "Moves one record to another choice of a pick-list, such as a task from To do to Done: the choices in a list and a Move button named with the record. It saves like any edit, so it is logged and can be undone, and needs no script.",
+  "icon": "⇄",
+  "use": {
+    "when": "a record sits in a group by a pick-list, as on a board, and a person wants it in another.",
+    "not": "a yes-or-no, which is a mark; or several fields at once, which is the record's editor.",
+    "with": "a card, as one of its actions."
+  },
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "action",
+      "title",
+      "select"
+    ],
+    "properties": {
+      "action": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Where the form posts: the record's /props."
+      },
+      "title": {
+        "type": "string",
+        "minLength": 1,
+        "description": "The record's title, read after Move so each button has its own name."
+      },
+      "back": {
+        "type": "string",
+        "description": "The id on the page to come back to after the move, such as the record's card."
+      },
+      "select": {
+        "type": "object",
+        "description": "The select component's props for the choices: id, name (prop-<field>), label, value, options.",
+        "required": [
+          "name",
+          "label",
+          "options"
+        ]
+      }
+    }
+  },
+  "a11y": {
+    "role": "form controls: a select with its visible label and a button",
+    "keyboard": [
+      {
+        "key": "Tab",
+        "does": "reaches the choices, then Move"
+      },
+      {
+        "key": "Enter",
+        "does": "on Move, saves the choice and comes back to the record"
+      }
+    ],
+    "states": [],
+    "wcag": {
+      "target": "AAA",
+      "notes": "A native select and a button, so a keyboard, a switch, touch and a voice all move a record one way, with no dragging (2.1.1, 2.5.7). The button shows Move and its name adds the record's title after it, so each is told apart and click Move still reaches it (2.5.3). The page comes back to the record and says where it went, with an Undo."
+    }
+  },
+  "machine": {
+    "selector": "[data-component=\"move\"]",
+    "identify": "The form's action is the record's /props; its select's name is prop-<field> and its value the current choice.",
+    "operate": "Choose the new value in the select and submit, or POST prop-<field>=<value> to the action."
+  },
+  "examples": [
+    {
+      "name": "default",
+      "props": {
+        "action": "/t/task/k3n2p9/props",
+        "title": "Order compost",
+        "back": "tasks-k3n2p9",
+        "select": {
+          "id": "tasks-k3n2p9-move",
+          "name": "prop-status",
+          "label": "Status",
+          "as": "dropdown",
+          "value": "todo",
+          "options": [
+            {
+              "value": "todo",
+              "label": "To do"
+            },
+            {
+              "value": "doing",
+              "label": "Doing"
+            },
+            {
+              "value": "done",
+              "label": "Done"
+            }
+          ]
+        }
+      },
+      "file": "examples/default.html"
+    }
+  ]
+}

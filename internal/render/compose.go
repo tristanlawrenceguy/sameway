@@ -14,10 +14,11 @@ import (
 //
 // Nesting is bounded. Each component's template is parsed once per depth,
 // and the deepest copy has no child function left to call, so a component
-// that contained itself would stop rather than recurse forever. Three is
-// enough for the arrangements a page actually needs, and a hard stop beats
-// a stack overflow served to a person.
-const maxNesting = 3
+// that contained itself would stop rather than recurse forever. Four is
+// enough for the arrangements a page actually needs (a board's list holds
+// a card, which holds a move, which holds its select), and a hard stop
+// beats a stack overflow served to a person.
+const maxNesting = 4
 
 // funcsAt returns the template functions for a component parsed to sit at
 // the given nesting depth.
@@ -123,5 +124,5 @@ func (r *Registry) child(spec any, depth int) template.HTML {
 // problem renders a fault where the component would have been, so a bad
 // spec is visible on the page rather than silently missing.
 func problem(msg string) template.HTML {
-	return template.HTML(`<span class="sw-problem" role="status">` + template.HTMLEscapeString(msg) + `</span>`)
+	return template.HTML(`<span class="sw-render-problem" role="status">` + template.HTMLEscapeString(msg) + `</span>`)
 }
