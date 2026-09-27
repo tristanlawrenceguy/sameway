@@ -4,14 +4,19 @@ import (
 	"fmt"
 	"html/template"
 	"net/url"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
 // A conversation's status line and its first words: what it says when a
 // turn ends, and what it offers to ask before anything has been said.
+
+// internalPath matches /t/{type}/{id} patterns in text.
+var internalPath = regexp.MustCompile(`/t/[a-z]+/[a-zA-Z0-9][a-zA-Z0-9_-]*`)
 
 // status summarises the last turn for the live region.
 func (s *Server) status(msgs []*store.Record) template.HTML {
@@ -24,7 +29,7 @@ func (s *Server) status(msgs []*store.Record) template.HTML {
 			// looks: the reason is read out with it, as a reply's words are.
 			props["state"], props["message"] = "error", "The last request failed."
 			if words, _ := last.Fields["content"].(string); strings.TrimSpace(words) != "" {
-				props["said"] = clipWords(words, 200)
+				props["said"] = clipWords(replacePaths(s, words), 200)
 			}
 		case "assistant":
 			n := 0
@@ -43,11 +48,40 @@ func (s *Server) status(msgs []*store.Record) template.HTML {
 			// The reply's first words, read out but not drawn, so a person who
 			// cannot see it arrive hears what it says; the chip stays short.
 			if words, _ := last.Fields["content"].(string); strings.TrimSpace(words) != "" {
-				props["said"] = clipWords(words, 200)
+				props["said"] = clipWords(replacePaths(s, words), 200)
 			}
 		}
 	}
 	return s.component("status", props)
+}
+
+// replacePaths finds /t/{type}/{id} patterns in text and replaces each with
+// the record's title (if the record exists) or a plain-word description like
+// "a note" (if it was deleted). This keeps raw URL paths out of user-facing
+// surfaces such as the status bar.
+func replacePaths(s *Server, text string) string {
+	return internalPath.ReplaceAllStringFunc(text, func(m string) string {
+		trimmed := strings.TrimPrefix(m, "/t/")
+		parts := strings.SplitN(trimmed, "/", 2)
+		if len(parts) != 2 {
+			return m // malformed; leave as-is
+		}
+		typeName, id := parts[0], parts[1]
+		t, ok := s.app.Types.Get(typeName)
+		if !ok {
+			// Unknown type — fall back to a plain word.
+			return "a " + typeName
+		}
+		rec, err := s.app.Store.Get(t.Name, id)
+		if err != nil {
+			return "a " + t.Name
+		}
+		title := trim.Title(s.title(t, rec))
+		if title == "" {
+			return "a " + t.Name
+		}
+		return title
+	})
 }
 
 // chatStarts are a few things to ask, for a chat with nothing in it: a
