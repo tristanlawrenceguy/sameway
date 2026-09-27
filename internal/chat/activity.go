@@ -2,11 +2,13 @@ package chat
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
+	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
 // ActivityType is the content type that logs every canvas change.
@@ -97,10 +99,11 @@ func summarise(actor string, c Change) string {
 		who = c.By
 	}
 	if c.Undone != "" {
+		undone := CleanSummary(c.Undone)
 		if c.Redid {
-			return who + " put back: " + c.Undone
+			return who + " put back: " + undone
 		}
-		return who + " undid: " + c.Undone
+		return who + " undid: " + undone
 	}
 	// Detect setting changes and use human-readable format.
 	if isSettingChange(c) {
@@ -143,17 +146,11 @@ func CleanSettingChange(c map[string]any) bool {
 	action, _ := c["action"].(string)
 	component, _ := c["component"].(string)
 	detail, _ := c["detail"].(string)
-	if action != "set" || component == "" || detail == "" {
+	if !isSettingChange(Change{Action: action, Component: component, Detail: detail}) {
 		return false
 	}
-	if !strings.HasPrefix(component, "ui.") && !strings.HasPrefix(component, "llm.") {
-		return false
-	}
-	parts := strings.Split(component, ".")
-	label := parts[len(parts)-1]
-	val := strings.ToUpper(detail[:1]) + detail[1:]
 	c["action"] = "changed"
-	c["detail"] = label + " to " + val
+	c["detail"] = settingPhrase(component, detail)
 	delete(c, "component")
 	return true
 }
@@ -169,13 +166,36 @@ func isSettingChange(c Change) bool {
 }
 
 // settingSummary produces a human-readable summary for a setting change:
-// "Assistant changed pace to Calm". The label is the last segment of the key,
-// lowercased; the value is capitalised.
+// "Assistant changed pace to Calm".
 func settingSummary(who, key, value string) string {
-	parts := strings.Split(key, ".")
-	label := parts[len(parts)-1]
-	val := strings.ToUpper(value[:1]) + value[1:]
-	return who + " changed " + label + " to " + val
+	return who + " changed " + settingPhrase(key, value)
+}
+
+// settingPhrase is "text size to Large": the setting by its one name, from
+// the workspace, and the value capitalised.
+func settingPhrase(key, value string) string {
+	return strings.ToLower(workspace.SettingLabel(key)) + " to " + strings.ToUpper(value[:1]) + value[1:]
+}
+
+// oldSetting is a setting change as the log wrote it before it spoke in
+// words: "You set ui.text large".
+var oldSetting = regexp.MustCompile(`^(.+?) set ((?:ui|llm)\.[a-z_.]+) ([^\s,]+)(.*)$`)
+
+// CleanSummary says a stored summary in words when it was written in keys,
+// so entries logged before setting names existed read like the rest: "You
+// set ui.text large" is "You changed text size to Large", also inside an
+// undo, "You undid: You set ui.text large". Anything else is left alone.
+func CleanSummary(summary string) string {
+	for _, verb := range []string{" undid: ", " put back: "} {
+		if who, after, ok := strings.Cut(summary, verb); ok {
+			return who + verb + CleanSummary(after)
+		}
+	}
+	m := oldSetting.FindStringSubmatch(summary)
+	if m == nil {
+		return summary
+	}
+	return settingSummary(m[1], m[2], m[3]) + m[4]
 }
 
 // Summarise turns a block's props into a short human label such as

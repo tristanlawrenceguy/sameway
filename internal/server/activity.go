@@ -139,12 +139,19 @@ func (s *Server) event(r *store.Record, from string, level int, dated bool) temp
 	if href := s.hrefFor(r); href != "" {
 		props["href"] = href
 	}
-	// An undo reads as one: "You undid: Assistant added card Plan".
+	// An undo reads as one: "You undid: Assistant added card Plan". Its
+	// summary is said in words even when it was stored in keys. The colon
+	// is the event's own where the entry has no link, so it is not said twice.
 	if undoes, _ := r.Fields["undoes"].(string); undoes != "" {
 		summary, _ := r.Fields["summary"].(string)
+		summary = chat.CleanSummary(summary)
 		for _, verb := range []string{" undid: ", " put back: "} {
 			if _, after, ok := strings.Cut(summary, verb); ok {
-				props["action"], props["detail"] = strings.TrimSpace(verb), after
+				verb = strings.TrimSpace(verb)
+				if props["href"] == nil {
+					verb = strings.TrimSuffix(verb, ":")
+				}
+				props["action"], props["detail"] = verb, after
 				delete(props, "target")
 				break
 			}

@@ -79,7 +79,7 @@ func TestChatChangesMadeSettingChangeIsHumanReadable(t *testing.T) {
 		t.Errorf("changes made list must not contain raw field paths\n\nwant: human-readable text only\n\ngot body:\n%s", truncate(body))
 	}
 
-	if !strings.Contains(said(body), "changed text to Large") && !strings.Contains(said(body), "text is larger now") {
-		t.Errorf("changes made list should show human-readable setting change or reply text\n\nwant: 'changed text to Large' in body text\n\ngot said:\n%q", said(body))
+	if !strings.Contains(said(body), "changed text size to Large") && !strings.Contains(said(body), "text is larger now") {
+		t.Errorf("changes made list should show human-readable setting change or reply text\n\nwant: 'changed text size to Large' in body text\n\ngot said:\n%q", said(body))
 	}
 }

@@ -10,6 +10,10 @@ of its log entry, and the receipt shows an Undo form for it, posting back to
 `from`. Give it only under the newest reply: undo is a moment, and the
 activity log keeps the control for everything older.
 
+A setting change is sent in words, because the receipt shows what it is
+given: `{"action": "changed", "detail": "pace to Calm"}`, with no
+`component`, never `{"action": "set", "component": "ui.pace"}`.
+
 The optional `links` prop accepts an array of link objects with `href` (required)
 and `label` (optional). Links render as inline pills between content and changes.
 When omitted or null, links render silently without error.
