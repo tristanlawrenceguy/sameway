@@ -50,6 +50,10 @@ the list page with the same query, which has them all.
   takes focus
   ([Adrian Roselli on responsive tables](https://adrianroselli.com/2020/11/under-engineered-responsive-tables.html),
   [WCAG 2.1.1](https://www.w3.org/WAI/WCAG22/Understanding/keyboard.html)).
+- **A list that keeps its marks**, the list component's own (`sw-list`):
+  the rows once had them taken away, and Safari with VoiceOver then does
+  not say it is a list or how many are in it
+  ([Scott O'Hara on list-style none](https://www.scottohara.me/blog/2019/01/12/lists-and-safari.html)).
 - **Cards that act as cards**, pressed anywhere to open, as elsewhere.
 - **Says when it is cut short**, so records past the limit are not missed
   without a word.

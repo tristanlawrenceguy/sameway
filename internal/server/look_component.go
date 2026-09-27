@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/look"
 )
 
@@ -22,28 +21,15 @@ func (s *Server) lookAtComponent(w http.ResponseWriter, name string, props map[s
 	if props == nil {
 		props = map[string]any{}
 	}
+	// A message's changes are said as the chat says them, so an agent
+	// that sends a change as it was stored (set, ui.text, large) sees the
+	// line a person would: changed text size to Large.
+	if name == "message" {
+		props["changes"] = s.lookChanges(props["changes"])
+	}
 	if _, err := c.Validate(props); err != nil {
 		writeJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": apiError{Code: "invalid", Message: err.Error()}})
 		return
-	}
-	// Transform raw setting-change props to human-readable form.
-	if name == "message" {
-		if changesAny, ok := props["changes"].([]any); ok {
-			cleanedChanges := make([]any, 0, len(changesAny))
-			for _, item := range changesAny {
-				chg, ok := item.(map[string]any)
-				if !ok {
-					continue
-				}
-				copied := map[string]any{}
-				for k, v := range chg {
-					copied[k] = v
-				}
-				chat.CleanSettingChange(copied)
-				cleanedChanges = append(cleanedChanges, copied)
-			}
-			props["changes"] = cleanedChanges
-		}
 	}
 	html, err := s.app.Registry.Render(name, props)
 	if err != nil {
@@ -56,4 +42,37 @@ func (s *Server) lookAtComponent(w http.ResponseWriter, name string, props map[s
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"component": name, "html": string(html), "outline": outline})
+}
+
+// lookChanges is a message's changes as event lines, through the one
+// wording the chat and the log share. Anything else is left for the
+// manifest to refuse.
+func (s *Server) lookChanges(changes any) any {
+	list, ok := changes.([]any)
+	if !ok {
+		return changes
+	}
+	out := make([]any, 0, len(list))
+	for _, item := range list {
+		c, ok := item.(map[string]any)
+		if !ok {
+			out = append(out, item)
+			continue
+		}
+		props := map[string]any{}
+		for _, k := range []string{"actor", "who", "person", "via", "undo"} {
+			if v, ok := c[k]; ok {
+				props[k] = v
+			}
+		}
+		// A change as a reply stored it names its log entry; its Undo
+		// posts there.
+		if id, _ := c["activity"].(string); id != "" && props["undo"] == nil {
+			props["undo"] = "/activity/" + id + "/undo"
+		}
+		href, _ := c["href"].(string)
+		s.say(props, c, href)
+		out = append(out, props)
+	}
+	return out
 }

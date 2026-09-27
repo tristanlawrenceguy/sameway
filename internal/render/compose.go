@@ -60,6 +60,32 @@ func (r *Registry) funcsAt(depth int) template.FuncMap {
 		}
 		return r.child(map[string]any{"component": "fields", "props": map[string]any{"items": items, "compact": true}}, depth)
 	}
+	// events renders what a turn changed as the event component, compact,
+	// one to a list item: the message they sit under already says who, and
+	// has the heading, so each line starts at its verb and none is a
+	// heading. The Changes made list and the activity log then show a
+	// change the one way. from is where an Undo returns to.
+	funcs["events"] = func(items any, from any) template.HTML {
+		list, _ := items.([]any)
+		var out template.HTML
+		for _, it := range list {
+			m, ok := it.(map[string]any)
+			if !ok {
+				continue
+			}
+			props := map[string]any{"actor": "assistant"}
+			for k, v := range m {
+				props[k] = v
+			}
+			props["compact"] = true
+			delete(props, "level")
+			if f, _ := from.(string); f != "" && props["undo"] != nil && props["from"] == nil {
+				props["from"] = f
+			}
+			out += "<li>" + r.child(map[string]any{"component": "event", "props": props}, depth) + "</li>"
+		}
+		return out
+	}
 	return funcs
 }
 

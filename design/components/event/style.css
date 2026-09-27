@@ -23,3 +23,12 @@
 /* Forced colours repaint backgrounds; the mark keeps its shape in the
    person's text colour. */
 @media (forced-colors: active) { .sw-event__mark { forced-color-adjust: none; background: CanvasText; box-shadow: none; } }
+/* Compact, under a message that says who: one change to a 44px row, from
+   its verb, on the actor's wash, so pressing Undo never lands on the row
+   above. */
+.sw-event--compact {
+  align-items: center; min-height: var(--sw-size-target); padding: 0 var(--sw-space-2);
+  border-radius: var(--sw-radius-md); background: var(--sw-actor-soft, var(--sw-color-bg-muted));
+  font-size: var(--sw-size-text-xs);
+}
+.sw-event--compact .sw-event__action { font-weight: 700; color: var(--sw-actor, var(--sw-color-fg)); }
