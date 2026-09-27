@@ -8,6 +8,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/prose"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // A person edits the whole record where it is. The page at rest says the
@@ -62,6 +63,9 @@ func (s *Server) editField(f schema.Field, v any) string {
 			raw = fmt.Sprint(v)
 		}
 		return fmt.Sprintf(`<span data-prop="%s"%s data-kind="datetime" data-source="%s">%s</span>`, name, lab, esc(raw), esc(val))
+	case "repeat":
+		// Edited in the words it is said in, and read again by the server.
+		return fmt.Sprintf(`<span data-prop="%s"%s data-kind="repeat" data-source="%s">%s</span>`, name, lab, esc(when.RepeatText(fmt.Sprint(v))), esc(val))
 	case "int", "float":
 		return fmt.Sprintf(`<span data-prop="%s"%s data-kind="number" data-source="%s"></span>`, name, lab, esc(val))
 	case "bool":
@@ -111,6 +115,7 @@ func (s *Server) editControls(parts ...template.HTML) template.HTML {
 		control("text", "text-field", map[string]any{"type": "text"}) +
 		control("number", "text-field", map[string]any{"type": "number"}) +
 		control("when", "when-field", map[string]any{}) +
+		control("repeat", "when-field", map[string]any{"repeat": true, "hint": when.RepeatHint}) +
 		control("textarea", "textarea", map[string]any{"rows": 3}) +
 		control("text-counted", "text-field", map[string]any{"type": "text", "maxlength": 1}) +
 		control("textarea-counted", "textarea", map[string]any{"rows": 3, "maxlength": 1}) +

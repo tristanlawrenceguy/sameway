@@ -27,6 +27,11 @@ func savedWords(t *schema.Type, rec *store.Record, fields, clean map[string]any,
 			}
 			return o
 		}
+		// How often, said back as it was read: "Repeat is every Tuesday."
+		if f, ok := t.Field(name); ok && f.Type == "repeat" {
+			o.Text = fieldLabel(*f) + " is " + repeatSaid(clean[name]) + "."
+			return o
+		}
 		// A choice changed, as a board's Move does, says from where to
 		// where: "Order compost moved from To do to Done."
 		if f, ok := t.Field(name); ok && f.Type == "enum" {
@@ -49,6 +54,13 @@ func savedWords(t *schema.Type, rec *store.Record, fields, clean map[string]any,
 		if title == "" {
 			return o
 		}
+		// Ticked, a task that repeats is done and due again at once:
+		// "Water the ferns is done. It repeats every Tuesday, so it is due
+		// again Tue 6 Oct 2026."
+		if t.Advanced(fields, clean) {
+			o.Title, o.Text, o.Of = title+" is done.", dueAgain(t, clean), title
+			return o
+		}
 		word := strings.ToLower(label(name))
 		if name == "show" {
 			word = "shown"
@@ -61,4 +73,24 @@ func savedWords(t *schema.Type, rec *store.Record, fields, clean map[string]any,
 		o.Of = title
 	}
 	return o
+}
+
+// repeatSaid is a stored repeat in words, or once for none.
+func repeatSaid(v any) string {
+	if rule, _ := v.(string); rule != "" {
+		return when.RepeatText(rule)
+	}
+	return "once, not again"
+}
+
+// dueAgain says when a record that repeats is due again, as a sentence;
+// nothing for one that does not repeat.
+func dueAgain(t *schema.Type, fields map[string]any) string {
+	repeat, day, ok := t.Repeats()
+	rule, _ := fields[repeat].(string)
+	next, _ := fields[day].(string)
+	if !ok || rule == "" || next == "" {
+		return ""
+	}
+	return "It repeats " + when.RepeatText(rule) + ", so it is due again " + when.Text(next) + "."
 }

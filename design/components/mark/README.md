@@ -40,6 +40,20 @@ button says an action, and its label must not change with its state.
   two saves arrive; the box is never disabled while it saves
   ([Adrian Roselli on disabled controls](https://adrianroselli.com/2024/02/dont-disable-form-controls.html)).
 
+- **Something that repeats, ticked, is due again.** A task with a Repeat
+  stays one task: ticked, it is done and at once not done, due on its next
+  day, and it says so, "Water the ferns is done. It repeats every 2 weeks,
+  so it is due again Tue 20 Oct 2026." The next day is counted from the day
+  it was due, not the day it was ticked, so every Tuesday stays on
+  Tuesdays; one overdue moves to its next day still to come. That is what
+  Apple Reminders and a plain "every" in Todoist do; Todoist keeps
+  "every!" for counting from the tick, which few use. The 31st falls on
+  the last day of shorter months and goes back to the 31st after. One
+  change, one Undo
+  ([Todoist, completing a recurring task](https://www.todoist.com/help/articles/complete-a-task-with-a-recurring-date-dmI6SVqdP),
+  [Apple Community, repeat from completion](https://discussions.apple.com/thread/255897851)).
+
 Not done, and why: a switch (a switch is for a setting; a checkbox states a
 fact about the thing); a button that toggles (it names an action, and loses
-the form that works without scripts).
+the form that works without scripts); counting a repeat on from the day
+it was ticked (it drifts; the schedule is what the person set).
