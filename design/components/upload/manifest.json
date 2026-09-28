@@ -13,7 +13,7 @@
       "action": { "type": "string", "default": "/t/file/upload", "description": "Where the file goes." },
       "from": { "type": "string", "description": "The page to return to afterwards; the file's own page when left out." },
       "id": { "type": "string", "default": "upload", "description": "Id of the field, so the label reaches it." },
-      "hint": { "type": "string", "description": "What files it takes and how big, said before one is chosen. Left out, the kinds Sameway reads and the 64 MB limit."}
+      "hint": { "type": "string", "description": "What files it takes and how big, said before one is chosen. Left out, the kinds Sameway reads and the 4 GB limit."}
     }
   },
   "a11y": {
