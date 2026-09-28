@@ -104,6 +104,9 @@ func (s *Server) apiList(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
+	if recs == nil {
+		recs = []*store.Record{}
+	}
 	writeJSON(w, http.StatusOK, map[string]any{"type": r.PathValue("type"), "count": len(recs), "records": recs})
 }
 
