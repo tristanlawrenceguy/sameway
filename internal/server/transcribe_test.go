@@ -69,7 +69,7 @@ func TestARecordingIsWrittenDownOnThisComputer(t *testing.T) {
 		time.Sleep(10 * time.Millisecond)
 	}
 	page = get(t, h, loc).Body.String()
-	if !strings.Contains(page, `<form class="sw-audio__make" method="post" action="/files/`+id+`/transcribe" data-auto>`) {
+	if !strings.Contains(page, `<form class="sw-media__make" method="post" action="/files/`+id+`/transcribe" data-auto>`) {
 		t.Errorf("once it is here, the page writes the recording down by itself:\n%.3000s", page)
 	}
 
@@ -115,7 +115,7 @@ func TestARecordingIsWrittenDownOnThisComputer(t *testing.T) {
 		t.Error("the sound sent to be written down is not kept")
 	}
 	page = get(t, h, loc).Body.String()
-	if !strings.Contains(page, `data-start="2.00"`) || !strings.Contains(page, "Dig the pond.") || strings.Contains(page, "sw-audio__make") {
+	if !strings.Contains(page, `data-start="2.00"`) || !strings.Contains(page, "Dig the pond.") || strings.Contains(page, "sw-media__make") {
 		t.Error("the page shows the transcript, and offers nothing more to write down")
 	}
 
