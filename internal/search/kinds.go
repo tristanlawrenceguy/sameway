@@ -133,9 +133,8 @@ func counted(counts map[string]int, except string) string {
 
 // label is a kind as a person reads it, one or many: note, notes.
 func label(name string, n int) string {
-	name = strings.ReplaceAll(name, "_", " ")
 	if n == 1 {
-		return name
+		return schema.Words(name)
 	}
 	return schema.Plural(name)
 }

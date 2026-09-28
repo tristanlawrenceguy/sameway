@@ -36,7 +36,7 @@ func howMany(t *schema.Type, recs []*store.Record) template.HTML {
 	n := len(recs)
 	what := plural(t.Name)
 	if n == 1 {
-		what = t.Name
+		what = schema.Words(t.Name)
 	}
 	text := fmt.Sprintf("%d %s", n, what)
 	if f := doneField(t); f != nil {
