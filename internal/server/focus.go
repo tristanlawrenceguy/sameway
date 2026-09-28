@@ -78,7 +78,8 @@ func (s *Server) focusPage(w http.ResponseWriter, r *http.Request) {
 			dot = fmt.Sprintf(` data-dot="%d"`, n)
 		}
 	}
-	b.WriteString(`<div class="sw-focus__body"` + dot + `>` + string(body) + `</div></div>`)
+	// A list or a calendar can be taken away as it is shown; see export_all.go.
+	b.WriteString(`<div class="sw-focus__body"` + dot + `>` + string(body) + string(s.blockExport(comp.Manifest.Name, props)) + `</div></div>`)
 
 	// The block is the page now, so the panes leave it out: shown twice, it
 	// would be two landmarks with one name.
