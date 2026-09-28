@@ -4,11 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"mime"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -20,7 +18,8 @@ import (
 // FileType is the content type a person's files become.
 const FileType = "file"
 
-// maxUpload bounds one file; a workspace is a person's folder, not a store.
+// maxUpload bounds a file sent inside a JSON body, which is held whole;
+// a file sent as a form streams to disk and may be far larger (keep.go).
 const maxUpload = 64 << 20
 
 // upload takes a file from the form, keeps the original under files/,
@@ -48,61 +47,38 @@ func (s *Server) upload(w http.ResponseWriter, r *http.Request) {
 
 // storeUpload does the work of upload for any form with a file part: the
 // chat composer uses it too. It answers http.ErrMissingFile when the form
-// has no file, so a message without one is not a mistake.
+// has no file, so a message without one is not a mistake. The file goes
+// to disk as it arrives (keep.go), however large, up to 4 GB.
 func (s *Server) storeUpload(r *http.Request) (*store.Record, error) {
 	if _, ok := s.app.Types.Get(FileType); !ok {
 		return nil, errors.New("this workspace has no file type; run sameway init --force to add it")
 	}
-	if err := r.ParseMultipartForm(maxUpload); err != nil {
+	if r.MultipartForm == nil {
+		r.Body = http.MaxBytesReader(nil, r.Body, maxFile+(1<<20))
+	}
+	if err := r.ParseMultipartForm(8 << 20); err != nil {
+		var tooBig *http.MaxBytesError
+		if errors.As(err, &tooBig) {
+			return nil, errors.New("the selected file must be smaller than 4 GB")
+		}
 		if strings.Contains(err.Error(), "multipart") || err == http.ErrNotMultipart {
 			return nil, fmt.Errorf("select a file to add: %w", err)
 		}
-		return nil, fmt.Errorf("the selected file must be smaller than 64 MB")
+		return nil, fmt.Errorf("the file did not arrive whole: %w", err)
 	}
 	part, header, err := r.FormFile("file")
 	if err != nil {
 		return nil, err
 	}
 	defer part.Close()
-	data, err := io.ReadAll(io.LimitReader(part, maxUpload+1))
-	if err != nil || len(data) > maxUpload {
-		return nil, errors.New("the selected file must be smaller than 64 MB")
-	}
-	if len(data) == 0 {
-		return nil, errors.New("the selected file is empty")
-	}
-	name := filepath.Base(header.Filename)
-	title := strings.TrimSpace(r.FormValue("title"))
-	if title == "" {
-		title = strings.TrimSuffix(name, filepath.Ext(name))
-	}
-	fields := map[string]any{"title": title, "name": name, "kind": convert.Kind(name), "size": len(data), "status": "converting"}
-	// What a picture shows, said by whoever added it, for whoever cannot see it.
-	if d := strings.TrimSpace(r.FormValue("description")); d != "" {
-		fields["description"] = d
-	}
-	rec, err := s.app.Store.Create(FileType, fields)
+	rec, path, err := s.keepFile(part, header.Filename, r.FormValue("title"), r.FormValue("description"))
 	if err != nil {
 		return nil, err
 	}
-	stored := rec.ID + strings.ToLower(filepath.Ext(name))
-	dir := s.app.Workspace.FilesDir()
-	if err := os.MkdirAll(dir, 0o755); err == nil {
-		err = os.WriteFile(filepath.Join(dir, stored), data, 0o644)
-	}
-	if err != nil {
-		s.app.Store.Delete(FileType, rec.ID)
-		return nil, fmt.Errorf("could not keep the file: %w", err)
-	}
-	s.app.Store.Update(FileType, rec.ID, map[string]any{"path": stored})
+	title, _ := rec.Fields["title"].(string)
 	s.record(r, chat.Change{Action: "added", Component: FileType, ID: rec.ID, Detail: title, Href: "/t/" + FileType + "/" + rec.ID})
-
-	if converter := s.app.Workspace.Config.Files.Convert[convert.Ext(name)]; converter != "" {
-		go s.convertLater(rec.ID, converter, name, filepath.Join(dir, stored))
-	} else {
-		s.readNow(rec.ID, name, data)
-	}
-	return rec, nil
+	s.readKept(rec.ID, filepath.Base(header.Filename), path, false)
+	return s.app.Store.Get(FileType, rec.ID)
 }
 
 // readNow reads a file the binary understands and finishes the record.

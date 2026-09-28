@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -43,6 +44,11 @@ type conversation struct {
 	// arrive on the page, by block id, so several changes are shown one
 	// after another in the order they were made.
 	Arrival map[string]int
+	// Path and Query are the page's address as it was asked for, so a
+	// block that keeps a person's choices in it (a collection narrowed
+	// or sorted) reads its own and keeps the rest.
+	Path  string
+	Query url.Values
 }
 
 type conversationView struct {
