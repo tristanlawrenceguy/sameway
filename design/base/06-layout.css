@@ -123,7 +123,7 @@ ol.sw-plain, ul.sw-plain { list-style: none; list-style-type: ""; margin: 0; pad
 .sw-strip { display: flex; align-items: center; gap: var(--sw-space-3); min-width: 0; flex: 1 1 auto; pointer-events: auto; }
 .sw-canvas--strip { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sw-space-3); width: 100%; }
 .sw-canvas--strip > .sw-block { flex: 0 1 auto; padding: var(--sw-space-1); background: none; border-color: transparent; box-shadow: none; }
-.sw-canvas--strip > .sw-block > .sw-bar { position: static; }
+.sw-canvas--strip > .sw-block > .sw-bar { margin: 0; }
 /* In a bar a block's own controls sit beside it on its line, not on a
    line under it: at rest they are faded out, and a line of their own was
    an empty band across a phone's header. */
