@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -41,6 +41,8 @@ type speechState struct {
 	getting     bool
 	done, total int64
 	failed      string
+	once        sync.Once    // starts the worker that writes parts down
+	jobs        chan partJob // the parts waiting, one at a time
 }
 
 // UseSpeech sets how this server writes recordings down.
@@ -118,9 +120,11 @@ func (s *Server) getSpeech(kit *Speech) {
 	s.Changed()
 }
 
-// transcribeFile writes one recording down. The page's script sends the
-// recording as 16 kHz WAV; with no script the original is used, when it
-// is a WAV.
+// transcribeFile takes a part of a recording to write down. The page's
+// script sends each part as 16 kHz WAV, with ?part=, ?of= and ?start=
+// saying which and where (one part of one when they are left out). With
+// no sound sent, a WAV is written down here from the original, a chunk
+// at a time; anything else needs the page's script to read it.
 func (s *Server) transcribeFile(w http.ResponseWriter, r *http.Request) {
 	rec, err := s.app.Store.Get(FileType, r.PathValue("id"))
 	if err != nil || !isRecording(rec) {
@@ -132,56 +136,51 @@ func (s *Server) transcribeFile(w http.ResponseWriter, r *http.Request) {
 		s.tell(w, r, outcome{Failed: true, Title: "Not written down", Text: "Speech-to-text is not on this computer yet."}, back)
 		return
 	}
-	var sound io.Reader
-	if strings.HasPrefix(r.Header.Get("Content-Type"), "audio/wav") {
-		sound = http.MaxBytesReader(w, r.Body, 1<<30)
-	} else if path, ok := s.storedPath(rec); ok && strings.EqualFold(filepath.Ext(path), ".wav") {
-		f, err := os.Open(path)
-		if err == nil {
-			defer f.Close()
-			sound = f
+	if !strings.HasPrefix(r.Header.Get("Content-Type"), "audio/wav") {
+		path, ok := s.storedPath(rec)
+		if !ok || !strings.EqualFold(filepath.Ext(path), ".wav") {
+			s.tell(w, r, outcome{Failed: true, Title: "Not written down", Text: "A " + strings.ToUpper(convert.Ext(fmt.Sprint(rec.Fields["name"]))) + " recording is read by this page's script, which is off. Turn scripts on, or add it as a WAV."}, back)
+			return
 		}
-	}
-	if sound == nil {
-		s.tell(w, r, outcome{Failed: true, Title: "Not written down", Text: "A " + strings.ToUpper(convert.Ext(fmt.Sprint(rec.Fields["name"]))) + " recording is read by this page's script, which is off. Turn scripts on, or add it as a WAV."}, back)
+		if err := s.writeWAVHere(rec, path); err != nil {
+			s.tell(w, r, outcome{Failed: true, Title: "Not written down", Text: err.Error()}, back)
+			return
+		}
+		s.tellAt(w, r, outcome{Title: "Writing it down", Text: "The transcript appears here when it is done."}, back)
 		return
 	}
-	samples, rate, err := speech.ReadWAV(sound)
+	q := r.URL.Query()
+	index, _ := strconv.Atoi(q.Get("part"))
+	of, _ := strconv.Atoi(q.Get("of"))
+	start, _ := strconv.ParseFloat(q.Get("start"), 64)
+	if of < 1 || index < 0 || index >= of || of > 10000 || start < 0 {
+		index, of, start = 0, 1, 0
+	}
+	samples, rate, err := speech.ReadWAV(http.MaxBytesReader(w, r.Body, 256<<20))
 	if err != nil {
 		s.tell(w, r, outcome{Failed: true, Title: "Not written down", Text: err.Error()}, back)
 		return
 	}
+	if index == 0 {
+		os.RemoveAll(s.partsDir(rec.ID))
+	}
 	var buf bytes.Buffer
 	speech.WriteWAV(&buf, speech.Resample(samples, rate))
-	wav := filepath.Join(s.app.Workspace.FilesDir(), rec.ID+".speech.wav")
+	os.MkdirAll(s.partsDir(rec.ID), 0o755)
+	wav := filepath.Join(s.partsDir(rec.ID), strconv.Itoa(index)+".wav")
 	if err := os.WriteFile(wav, buf.Bytes(), 0o644); err != nil {
 		s.failed(w, r, "Not written down", err, back)
 		return
 	}
 	s.app.Store.Update(FileType, rec.ID, map[string]any{"status": "converting", "note": "Being written down on this computer."})
-	go s.writeDown(rec, wav)
-	s.tellAt(w, r, outcome{Title: "Writing it down", Text: "The transcript appears here when it is done."}, back)
-}
-
-// writeDown runs the engine on one recording and keeps what it heard.
-func (s *Server) writeDown(rec *store.Record, wav string) {
-	defer os.Remove(wav)
-	cues, err := s.speechKit().Transcribe(context.Background(), wav)
-	title, _ := rec.Fields["title"].(string)
-	switch {
-	case err != nil:
-		s.app.Store.Update(FileType, rec.ID, map[string]any{"status": "failed", "note": "Could not write it down: " + err.Error()})
-		chat.Record(s.app.Store, "system", chat.Change{Action: "failed", Detail: "writing down " + title + ": " + err.Error()})
-	case len(cues) == 0:
-		s.app.Store.Update(FileType, rec.ID, map[string]any{"status": "ready", "note": "No speech was heard in it."})
-	default:
-		if path, ok := s.transcriptPath(rec); ok {
-			os.WriteFile(path, []byte(speech.VTT(cues)), 0o644)
-		}
-		s.app.Store.Update(FileType, rec.ID, map[string]any{"status": "ready", "text": convert.Transcript(cues), "note": "Written down on this computer by " + speech.ModelName + ". Edit the text if it misheard."})
-		chat.Record(s.app.Store, "system", chat.Change{Action: "updated", Component: FileType, ID: rec.ID, Detail: title + ", written down", Href: "/t/" + FileType + "/" + rec.ID})
+	s.enqueue(partJob{id: rec.ID, wav: wav, index: index, of: of, start: start})
+	if of > 1 {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusAccepted)
+		fmt.Fprintf(w, `{"part":%d,"of":%d}`, index, of)
+		return
 	}
-	s.Changed()
+	s.tellAt(w, r, outcome{Title: "Writing it down", Text: "The transcript appears here when it is done."}, back)
 }
 
 // speechOffer is what a recording's page offers about writing it down: to
