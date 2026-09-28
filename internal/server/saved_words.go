@@ -75,6 +75,25 @@ func savedWords(t *schema.Type, rec *store.Record, fields, clean map[string]any,
 	return o
 }
 
+// alreadyThere is what a move to the choice a record already has says,
+// "Status is already To do. Nothing changed.", and whether it was one: a
+// single pick-list field sent with the value it has.
+func alreadyThere(t *schema.Type, rec *store.Record, fields map[string]any) (outcome, bool) {
+	if len(fields) != 1 {
+		return outcome{}, false
+	}
+	for name, v := range fields {
+		f, ok := t.Field(name)
+		now, _ := v.(string)
+		was, _ := rec.Fields[name].(string)
+		if !ok || f.Type != "enum" || now == "" || now != was {
+			return outcome{}, false
+		}
+		return outcome{Title: fieldLabel(*f) + " is already " + f.ValueLabel(now) + ". Nothing changed."}, true
+	}
+	return outcome{}, false
+}
+
 // repeatSaid is a stored repeat in words, or once for none.
 func repeatSaid(v any) string {
 	if rule, _ := v.(string); rule != "" {

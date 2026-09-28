@@ -23,7 +23,7 @@ func (s *Server) addButton(t *schema.Type) template.HTML {
 		return ""
 	}
 	return template.HTML(`<form method="post" action="/t/` + template.HTMLEscapeString(t.Name) + `/add" class="sw-add">` +
-		string(s.component("button", map[string]any{"label": addLabel(t.Name), "type": "submit", "variant": "secondary"})) + `</form>`)
+		string(s.component("button", map[string]any{"label": addLabel(schema.Words(t.Name)), "type": "submit", "variant": "secondary"})) + `</form>`)
 }
 
 // addRecord makes a new record with its name to change, and opens it for
@@ -38,14 +38,14 @@ func (s *Server) addRecord(w http.ResponseWriter, r *http.Request) {
 	}
 	fields := map[string]any{}
 	if name := titleField(t); name != "" {
-		fields[name] = "New " + t.Name
+		fields[name] = "New " + schema.Words(t.Name)
 	}
 	rec, err := s.app.Store.Create(t.Name, fields)
 	if err != nil {
 		s.failed(w, r, "Not added", err, list)
 		return
 	}
-	act := s.record(r, chat.Change{Action: "created", Component: t.Name, ID: rec.ID, Detail: "New " + t.Name, Href: list + "/" + rec.ID})
+	act := s.record(r, chat.Change{Action: "created", Component: t.Name, ID: rec.ID, Detail: "New " + schema.Words(t.Name), Href: list + "/" + rec.ID})
 	// #edit opens the editor on arrival (09-edit-fields.js); added names the
 	// entry that made it, so Cancel before a first Save can take it back.
 	http.Redirect(w, r, list+"/"+rec.ID+"?added="+url.QueryEscape(act)+"#edit", http.StatusSeeOther)
@@ -86,8 +86,13 @@ func titleField(t *schema.Type) string {
 }
 
 // addLabel builds a button label for adding records: "Add an action" or
-// "Add a note", trimmed to three words total when it would be longer.
+// "Add a note", trimmed to three words total when it would be longer. A
+// name of two words goes without its article, "Add test type", so the
+// name is whole and not cut to "Add a test".
 func addLabel(name string) string {
+	if len(strings.Fields(name)) > 1 {
+		return trimLabel("Add " + name)
+	}
 	var label string
 	if strings.HasPrefix(strings.ToLower(name), "a") ||
 		strings.HasPrefix(strings.ToLower(name), "e") ||

@@ -62,6 +62,17 @@ func (s *Service) SendLive(ctx context.Context, canvas, text, fileID string, on 
 // complete asks the model for its next round: as a stream when someone is
 // listening and the model can, so the words show as they come.
 func (s *Service) complete(ctx context.Context, req llm.Request, on func(Event)) (*llm.Response, error) {
+	resp, err := s.completeOnce(ctx, req, on)
+	// A model that cannot see answers again, told a picture was there.
+	if err != nil && cannotSee(err) {
+		if plain, had := withoutPictures(req); had {
+			return s.completeOnce(ctx, plain, on)
+		}
+	}
+	return resp, err
+}
+
+func (s *Service) completeOnce(ctx context.Context, req llm.Request, on func(Event)) (*llm.Response, error) {
 	if st, ok := s.Provider.(llm.Streamer); ok && on != nil {
 		return st.Stream(ctx, req, func(d llm.Delta) {
 			if d.Text != "" {

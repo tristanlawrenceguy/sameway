@@ -55,6 +55,9 @@ type Service struct {
 	// there is none, and a block is then held to its props schema only.
 	// See check.go.
 	Check func(component string, props map[string]any) (shows, problem string)
+	// Picture is a picture file's bytes, ready for a model to see, set by
+	// the server; see pictures.go.
+	Picture func(fileID string) (llm.Image, bool)
 	// Publish sends to an MQTT topic, when the workspace has a broker;
 	// nil means it has none. See mqtt.go.
 	Publish func(topic, payload string) error
@@ -250,40 +253,6 @@ func (s *Service) fields(typeName string, in map[string]any) map[string]any {
 		}
 	}
 	return out
-}
-
-// history returns the recent user and assistant turns as model messages.
-// Error notices are shown to the person but not sent to the model.
-func (s *Service) history() ([]llm.Message, error) {
-	recs, err := s.Messages()
-	if err != nil {
-		return nil, err
-	}
-	if s.HistoryLimit > 0 && len(recs) > s.HistoryLimit {
-		recs = recs[len(recs)-s.HistoryLimit:]
-	}
-	var out []llm.Message
-	for i := range recs {
-		role, _ := recs[i].Fields["role"].(string)
-		content, _ := recs[i].Fields["content"].(string)
-		switch role {
-		case "user":
-			// A file that came with the message comes with it to the model too.
-			if fileID, _ := recs[i].Fields["file"].(string); fileID != "" {
-				content += s.attachment(fileID)
-			}
-			out = append(out, llm.Message{Role: llm.RoleUser, Content: content})
-		case "assistant":
-			// The tools this reply used come first, as the turn they were.
-			out = append(out, replay(recs[i].Fields["tools"])...)
-			out = append(out, llm.Message{Role: llm.RoleAssistant, Content: content})
-		}
-	}
-	// Providers require the conversation to start with a user turn.
-	for len(out) > 0 && out[0].Role != llm.RoleUser {
-		out = out[1:]
-	}
-	return out, nil
 }
 
 // fail stores an error notice in the conversation and returns it with the error.

@@ -71,6 +71,7 @@ func (c *ctx) openCmd() error {
 	ctx, stop := context.WithCancel(context.Background())
 	defer stop()
 	h := server.New(a)
+	h.WriteDownInBackground()
 	// MCP over HTTP too, as serve has it: at /mcp, for agents on this
 	// computer with the workspace's token, and from the tailnet by who
 	// Tailscale says they are, reading only.

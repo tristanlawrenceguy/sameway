@@ -136,6 +136,9 @@ func (s *Server) follow(w http.ResponseWriter, r *http.Request, t *liveTurn, bac
 	for i := 0; ; {
 		events, over, changed := t.since(i)
 		i += len(events)
+		if len(events) > 0 {
+			s.fresh() // a block may use a type the tools just made
+		}
 		for _, e := range events {
 			switch e.Kind {
 			case "said":

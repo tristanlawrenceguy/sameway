@@ -3,6 +3,7 @@ package llm
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -25,7 +26,7 @@ func (o *OpenAI) Name() string { return "openai-compatible (" + o.Model + " at "
 
 type oaMessage struct {
 	Role       string       `json:"role"`
-	Content    string       `json:"content,omitempty"`
+	Content    any          `json:"content,omitempty"` // a string, or parts when there are pictures
 	ToolCalls  []oaToolCall `json:"tool_calls,omitempty"`
 	ToolCallID string       `json:"tool_call_id,omitempty"`
 }
@@ -99,7 +100,8 @@ func (o *OpenAI) Complete(ctx context.Context, req Request) (*Response, error) {
 		return nil, fmt.Errorf("model server returned no choices")
 	}
 	choice := parsed.Choices[0]
-	out := &Response{Text: choice.Message.Content, StopReason: choice.FinishReason}
+	text, _ := choice.Message.Content.(string)
+	out := &Response{Text: text, StopReason: choice.FinishReason}
 	for _, tc := range choice.Message.ToolCalls {
 		args := strings.TrimSpace(tc.Function.Arguments)
 		if args == "" {
@@ -131,7 +133,17 @@ func toOpenAI(m Message) []oaMessage {
 		}
 		return []oaMessage{msg}
 	default:
-		return []oaMessage{{Role: "user", Content: m.Content}}
+		if len(m.Images) == 0 {
+			return []oaMessage{{Role: "user", Content: m.Content}}
+		}
+		// Pictures go as parts, which OpenAI and the local servers that
+		// follow it (Ollama, LM Studio, llama.cpp) take for a model that sees.
+		parts := []map[string]any{}
+		for _, img := range m.Images {
+			parts = append(parts, map[string]any{"type": "image_url", "image_url": map[string]any{"url": "data:" + img.Type + ";base64," + base64.StdEncoding.EncodeToString(img.Data)}})
+		}
+		parts = append(parts, map[string]any{"type": "text", "text": m.Content})
+		return []oaMessage{{Role: "user", Content: parts}}
 	}
 }
 

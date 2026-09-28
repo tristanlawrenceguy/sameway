@@ -1,7 +1,7 @@
 {
   "name": "clash",
-  "version": "1.0.0",
-  "description": "Another version of some text, written at the same time as the one on the page on another computer, offered back so nobody's words are lost.",
+  "version": "1.1.0",
+  "description": "Another version of some text, written at the same time as the one on the page on another computer, offered back with what differs so nobody's words are lost.",
   "icon": "⇄",
   "use": {
     "when": "two people changed the same text at once on two computers, and the page shows the later version.",
@@ -32,22 +32,39 @@
       "text": {
         "type": "string",
         "format": "multiline",
-        "description": "The other version, as it was written."
+        "description": "The other version, as it was written. Shown whole, so it can be read and copied as it is."
       },
       "where": {
         "type": "string",
         "default": "on another computer",
         "description": "Where the other version was written."
       },
+      "diff": {
+        "type": "array",
+        "description": "What differs from the page's version, word by word, in reading order: text both have, text only the page's has, text only this one has. Filled in by the server; shown in a closed disclosure. Leave out when there is nothing to compare.",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["in", "text"],
+          "properties": {
+            "in": {"type": "string", "enum": ["both", "page", "this"], "description": "Which version has this text."},
+            "text": {"type": "string"}
+          }
+        }
+      },
       "use": {
         "type": "string",
         "minLength": 1,
         "description": "Where Use this version posts."
       },
+      "both": {
+        "type": "string",
+        "description": "Where Keep both posts: the page's version, then this one after a blank line. Leave out to offer only the two."
+      },
       "keep": {
         "type": "string",
         "minLength": 1,
-        "description": "Where Keep the one below posts."
+        "description": "Where Keep the page's version posts."
       },
       "from": {
         "type": "string",
@@ -56,27 +73,31 @@
     }
   },
   "a11y": {
-    "role": "region, named by its heading, with two buttons",
+    "role": "region, named by its heading, holding the other version as a blockquote, a disclosure of what differs, and two or three buttons",
     "keyboard": [
       {
         "key": "Tab",
-        "does": "reaches Use this version, then Keep the one below"
+        "does": "reaches What differs, then Use this version, Keep both and Keep the page's version"
       },
       {
         "key": "Enter",
-        "does": "on a button, chooses it and returns to the page"
+        "does": "on What differs, opens or closes it; on a button, chooses it and returns to the page, where the outcome is said with its Undo"
+      },
+      {
+        "key": "Space",
+        "does": "the same as Enter"
       }
     ],
-    "states": [],
+    "states": ["open"],
     "wcag": {
       "target": "AAA",
-      "notes": "A region with its own heading, so it is found in the outline and its buttons are heard with what they choose between. Both buttons say what they do. The other version keeps its line breaks."
+      "notes": "A region with its own heading, so it is found in the outline and its buttons are heard with what they choose between. The versions are named, the page's version and this one, never by where they sit (1.3.3). What differs is marked by shape, struck through or underlined, said in words above it, and heard as words, only in the page's version or only in this one, each said once, since del and ins are announced by some screen readers and not others (1.4.1, 1.3.1). The other version is shown whole as well, so it reads and copies as written. Every choice can be undone."
     }
   },
   "machine": {
     "selector": "[data-component=\"clash\"]",
-    "identify": "The heading names the field; the blockquote is the other version.",
-    "operate": "Submit the Use this version form to put it in place (it can be undone), or Keep the one below to keep the page's."
+    "identify": "The heading names the field; the blockquote is the other version; .sw-clash__page and .sw-clash__this inside What differs are the words only one version has.",
+    "operate": "Submit Use this version to put it in place, Keep both to put it after the page's version, or Keep the page's version to set it aside. Each is logged and can be undone."
   },
   "examples": [
     {
@@ -85,7 +106,13 @@
         "id": "c1",
         "label": "Body",
         "text": "Flour, water, salt.\nLeave overnight.",
+        "diff": [
+          {"in": "both", "text": "Flour, water, salt.\n"},
+          {"in": "page", "text": "Bake at once."},
+          {"in": "this", "text": "Leave overnight."}
+        ],
         "use": "/clash/c1/use",
+        "both": "/clash/c1/both",
         "keep": "/clash/c1/keep",
         "from": "/t/note/n1"
       },
