@@ -81,6 +81,7 @@ runner in tools/a11y-runner.
 | A message can be said instead of typed | every upload and the chat's Attach carry Record, hidden until the page can record; the chat offers Dictate only once speech-to-text is on this computer; /dictate writes the sound down here and answers its words, keeping nothing, refuses sound it cannot read, and without speech-to-text says who can get it ; voice mode (the talk component) is offered beside Dictate only then | `internal/server/dictate_test.go` |
 | Assistant sees the page the person is on | look_at_page does what the person did there and reads it with scripts run, falling back to the served page with no browser; MCP keeps its own look | `internal/server/look_chat_test.go` |
 | Two records alike are told apart | where titles repeat on a list, a block, a board, search, the log or a calendar, each repeated one's link, box, Move, Undo and choice carry hidden words that differ (due Fri 25 Sep, when added, the start of its id), and a title of its own is left plain; a block's Expand and Remove are named after its label | `internal/server/names_apart_test.go`, `internal/server/apart_test.go` |
+| A browser agent on live pages | from the accessibility tree with records alike seeded: every control named, none alike within a landmark, one place per link name, visible label inside the name and not twice, no glyphs, look agrees; find overdue, tick, undo, add a note and search by role and name alone, failing on a strict-mode match of two | `tools/a11y-runner/agent.mjs` (CI) |
 | Every page and the site as a whole | every component check on every page, focus hidden on a phone either way up, live regions that can announce, one place per link name, no two headings or controls alike, titles, the same navigation everywhere, forms sent empty say what is wrong | `tools/a11y-runner/site.mjs` (CI) |
 
 When you add a component, the contract and enum-coverage tests tell you what
@@ -111,6 +112,46 @@ is missing. When you add a way to use the system, add a row here and a test.
 - Do not add a dependency for something the standard library does.
 - New surfaces (MCP, export/import) are generated from the schema and
   manifests, never hand-written per type or component.
+
+## What agents need: the checklist
+
+Beside the rules for people, the 22 checks from the agent accessibility
+audit (2026-09-28): a browser agent finds controls by role and name in the
+accessibility tree, a screenshot agent sees only what is drawn, a tool agent
+reads MCP and the API. Where each is checked: `agent` is
+`tools/a11y-runner/agent.mjs`, `site` is `site.mjs`, `look` is `/api/look`'s
+problems, `go` a Go test; `known` is reported by agent.mjs but fails only
+with `--strict` until its fix lands; `review` and `not yet` are yours to hold.
+
+| # | Check | Where |
+|---|---|---|
+| | **Perceive** | |
+| 1 | Every control named, in the browser's own tree | agent, look |
+| 2 | No two controls of one role and name within a landmark (records alike are told apart by their due day, when added, or id); links of one name go to one place | agent, look, site, go `names_apart_test.go` |
+| 3 | What a control shows is in its name; hidden words add to it, never repeat it | agent, run.mjs |
+| 4 | No operable control below 0.35 opacity at rest | agent (known) |
+| 5 | The document scrolls as one page, so a full-page screenshot has it all | not yet |
+| 6 | No meaning only in a canvas, a hover or a drag | review |
+| | **Understand** | |
+| 7 | One ariaSnapshot golden per page type | not yet |
+| 8 | No glyphs in names; no counts run into words ("This week 1 28 Sep") | agent (glyphs); counts not yet |
+| 9 | A manifest's `machine` says how to find it by role and name, and that holds | go `contract_test.go` (selector); role-and-name not yet |
+| 10 | look says what the browser's tree says | agent (look on the same pages); not compared yet |
+| | **Operate** | |
+| 11 | Everything works without scripts | go `pages_test.go`, review |
+| 12 | After an in-place change the page equals a reload | agent (known) |
+| 13 | An outcome stays, in a status or alert, names the record, offers Undo | agent (tick, undo), go `back_test.go`, `reversible_test.go` |
+| 14 | Nothing is written until a deliberate press; a control that writes says so | review |
+| | **Tools** | |
+| 15 | Every MCP tool titled and annotated; read-only ones proved so by a store diff | not yet |
+| 16 | Every error is `isError` with the next step and the valid choices | go `internal/mcp/*_test.go` (partly) |
+| 17 | List rows can be told apart and are paged | pages: agent, go; tool results not yet |
+| 18 | `describe` has a small index under a budget | not yet |
+| | **Trust** | |
+| 19 | MCP and API writes are logged with the agent's name | not yet |
+| 20 | Record text reaches outside agents marked as content, with who wrote it | not yet |
+| 21 | Irreversible actions ask first; outward tools say openWorldHint | go `consent_test.go` (asking) |
+| 22 | Writes are rate-limited per token | not yet |
 
 ## Adding a component
 
