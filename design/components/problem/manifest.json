@@ -1,6 +1,6 @@
 {
   "name": "problem",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Why a block that shows records cannot show them as it is set up, said in place of it: who can fix it in sight, what exactly is wrong a press away.",
   "icon": "!",
   "use": {
@@ -19,7 +19,7 @@
       "what": {
         "type": "string",
         "minLength": 1,
-        "description": "What cannot be shown, as a person says it: This list, This chart, This calendar."
+        "description": "What cannot be shown, as a person says it and in the singular, since the sentence goes on 'as it is set up': This list, This chart, This calendar, This list of habits."
       },
       "text": {
         "type": "string",
@@ -55,12 +55,12 @@
     ],
     "wcag": {
       "target": "AAA",
-      "notes": "Something is always said where the block would be, rather than nothing, so an empty space is never mistaken for nothing there (3.3.1). The first sentence says who can fix it in plain words; the detail, in the workspace's own names, is behind a native details element, a press away and read in full when opened (3.3.3)."
+      "notes": "Something is always said where the block would be, rather than nothing, so an empty space is never mistaken for nothing there (3.3.1). The first sentence says who can fix it in plain words, in the text colour so it never looks like a muted empty line; the detail, in the workspace's own names, is behind a native details element whose summary carries the twisty every fold has, a press away and read in full when opened (3.3.3). No live role: it arrives with the page, where a live region is not announced. Lines stop at the measure and long names break, so it reads at 320px (1.4.8, 1.4.10)."
     }
   },
   "machine": {
     "selector": "[data-component=\"problem\"]",
-    "identify": "The p says what cannot be shown; the details' p is what is wrong, word for word what the server found.",
+    "identify": "The .sw-problem__said p says what cannot be shown; .sw-problem__detail is what is wrong, word for word what the server found (the capital at its start is drawn by the style, not in the text).",
     "operate": "Read the detail and fix the block's props: its type, field or conditions."
   },
   "examples": [
