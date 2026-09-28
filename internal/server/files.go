@@ -184,6 +184,12 @@ func (s *Server) fileExtras(r *http.Request, rec *store.Record) string {
 		note, _ := rec.Fields["note"].(string)
 		b.WriteString(string(s.component("status", map[string]any{"id": "file-status", "message": "Could not read the file: " + note, "state": "error"})))
 	}
+	// A calendar's events are a press from the calendar.
+	if rec.Fields["kind"] == "calendar" {
+		if t, ok := s.app.Types.Get("event"); ok && s.importable(t) {
+			fmt.Fprintf(&b, `<p>%s</p>`, s.component("link", map[string]any{"href": "/t/event/import?file=" + rec.ID, "label": "Add these events to the calendar", "look": "button"}))
+		}
+	}
 	fmt.Fprintf(&b, `<p>%s</p>`, s.component("link", map[string]any{"href": "/files/" + rec.ID, "label": "Open the original", "look": "button"}))
 	return b.String()
 }

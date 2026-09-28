@@ -111,6 +111,9 @@ func (s *Server) readKept(id, name, path string, wait bool) {
 		return
 	}
 	s.readNow(id, name, data)
+	if kind == "captions" {
+		s.pairCaptions(id, data)
+	}
 }
 
 // AddFile keeps a file from src as a person's own, logged as added
