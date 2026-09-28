@@ -120,6 +120,7 @@ func (s *Server) routes() {
 	m.HandleFunc("GET /files/{id}", s.serveFile)
 	m.HandleFunc("GET /files/{id}/still", s.serveStill)
 	m.HandleFunc("POST /files/{id}/transcribe", s.transcribeFile)
+	m.HandleFunc("GET /files/{id}/captions.vtt", s.captions)
 	m.HandleFunc("POST /speech/get", s.speechGet)
 	m.HandleFunc("POST /dictate", s.dictate)
 
