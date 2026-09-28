@@ -123,7 +123,7 @@ func (s *Server) getSpeech(kit *Speech) {
 // is a WAV.
 func (s *Server) transcribeFile(w http.ResponseWriter, r *http.Request) {
 	rec, err := s.app.Store.Get(FileType, r.PathValue("id"))
-	if err != nil || rec.Fields["kind"] != "audio" {
+	if err != nil || !isRecording(rec) {
 		http.NotFound(w, r)
 		return
 	}

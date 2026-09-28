@@ -1,11 +1,11 @@
 {
-  "name": "audio",
-  "version": "1.1.0",
-  "description": "A recording with its words: played with text-labelled controls (Play, Back 15 seconds, Forward 30 seconds, speed, a seek bar that says where it is in words), its length and size, a Download link, and its transcript under it, each line leading to the moment it was said and marked while it is heard.",
+  "name": "media",
+  "version": "2.0.0",
+  "description": "A recording, heard or seen, with its words: played with text-labelled controls (Play, Back 15 seconds, Forward 30 seconds, speed, a seek bar that says where it is in words), its length and size, a Download link, and its transcript under it, each line leading to the moment it was said and marked while it is heard. A video shows its transcript as captions too.",
   "icon": "♪",
   "use": {
-    "when": "a voice note, a meeting, a podcast or music is part of what the page holds: a file's own page, a note's recording.",
-    "not": "a sound the page makes, such as an alarm, which is the clock's; or a video.",
+    "when": "a voice note, a meeting, a podcast, music or a video is part of what the page holds: a file's own page, a note's recording.",
+    "not": "a sound the page makes, such as an alarm, which is the clock's; or a picture that does not move, which is an image.",
     "with": "a transcript, which is what anyone who cannot hear it gets, and what search and the assistant read."
   },
   "props": {
@@ -112,11 +112,24 @@
             "description": "How much it downloads, in words: 185 MB."
           }
         }
+      },
+      "kind": {
+        "type": "string",
+        "enum": [
+          "audio",
+          "video"
+        ],
+        "default": "audio",
+        "description": "audio is heard; video is seen and heard, and shows its captions."
+      },
+      "captions": {
+        "type": "string",
+        "description": "For a video: its captions as WebVTT, made from its transcript, shown on the picture by the browser."
       }
     }
   },
   "a11y": {
-    "role": "figure named by its title, holding the player (the browser's own, or a group of buttons, a select and a slider) and the transcript as a list of links",
+    "role": "figure named by its title, holding the player (the browser's own, or a group of buttons, a select and a slider), for a video the picture with its captions, and the transcript as a list of links",
     "keyboard": [
       {
         "key": "Tab",
@@ -149,12 +162,12 @@
     ],
     "wcag": {
       "target": "AAA",
-      "notes": "Never plays by itself (1.4.2). The transcript is on the same page, under the player, with who spoke and the sounds that matter (1.2.1). Without a script the browser's own player is there and each line's time is a link into the recording (#t=). With it, the controls are buttons with their words in sight, not only icons (2.5.3), each at least 44 pixels (2.5.5); the seek bar says where it is in words, not a percentage, and not again on every tick while it has focus; the line being heard is marked by a border and bold type as well as colour (1.4.1), is never announced, and the page is never scrolled to it. Nothing moves: no waveform. Writing a recording down happens on the computer that hosts the workspace; the press that gets speech-to-text says how much it downloads, from where, and that recordings never leave, and nothing is downloaded without it."
+      "notes": "Never plays by itself (1.4.2). The transcript is on the same page, under the player, with who spoke and the sounds that matter (1.2.1). Without a script the browser's own player is there and each line's time is a link into the recording (#t=). With it, the controls are buttons with their words in sight, not only icons (2.5.3), each at least 44 pixels (2.5.5); the seek bar says where it is in words, not a percentage, and not again on every tick while it has focus; the line being heard is marked by a border and bold type as well as colour (1.4.1), is never announced, and the page is never scrolled to it. Nothing moves: no waveform. Writing a recording down happens on the computer that hosts the workspace; the press that gets speech-to-text says how much it downloads, from where, and that recordings never leave, and nothing is downloaded without it. A video's transcript is also its captions, a WebVTT track shown on the picture and on by default (1.2.2), made from the same text people and the assistant correct, so a correction shows in both."
     }
   },
   "machine": {
-    "selector": "[data-component=\"audio\"]",
-    "identify": "The audio element's src is the recording; each li[data-start] is one line of the transcript, its link's href ending #t=<seconds>.",
+    "selector": "[data-component=\"media\"]",
+    "identify": "The audio or video element's source is the recording; for a video its track[kind=captions] is the transcript as WebVTT; each li[data-start] is one line of the transcript, its link's href ending #t=<seconds>.",
     "operate": "Play by pressing Play, or set the audio element's currentTime from a line's data-start. The transcript's words are also the file record's text."
   },
   "examples": [
@@ -232,6 +245,33 @@
         }
       },
       "file": "examples/ready.html"
+    },
+    {
+      "name": "video",
+      "props": {
+        "id": "talk",
+        "kind": "video",
+        "title": "Garden talk",
+        "src": "/files/v1",
+        "type": "video/mp4",
+        "about": "MP4 · 48 MB",
+        "captions": "/files/v1/captions.vtt",
+        "cues": [
+          {
+            "start": "0.00",
+            "at": "0:00",
+            "said": "0 seconds",
+            "text": "Welcome to the garden."
+          },
+          {
+            "start": "3.00",
+            "at": "0:03",
+            "said": "3 seconds",
+            "text": "Today, the pond."
+          }
+        ]
+      },
+      "file": "examples/video.html"
     }
   ]
 }
