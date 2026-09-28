@@ -47,6 +47,7 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 		s.fail(w, err)
 		return
 	}
+	b.WriteString(s.exportLinks(t, r.URL.Query())) // and go out again; see export.go
 	// Files come in through a form, because one field and one button is
 	// the better thing here; it can also be placed anywhere as a block.
 	// Empty-state text: "Ask the assistant to add your first" — replaces old "/Add your first" at /t/note/new.
