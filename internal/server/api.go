@@ -1,13 +1,13 @@
 package server
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -167,7 +167,7 @@ func (s *Server) apiFileUpload(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if len(data) > maxUpload {
-			writeError(w, errors.New("the file is too large: 64 MB is the most one can be"))
+			writeError(w, errors.New("the file is too large to send inside JSON: 64 MB is the most; send it as a form (multipart, up to 4 GB) instead"))
 			return
 		}
 
@@ -180,31 +180,14 @@ func (s *Server) apiFileUpload(w http.ResponseWriter, r *http.Request) {
 		if title == "" {
 			title = strings.TrimSuffix(name, filepath.Ext(name))
 		}
-		rec, err := s.app.Store.Create(FileType, map[string]any{
-			"title": title, "name": name, "kind": convert.Kind(name), "size": len(data), "status": "converting",
-		})
+		rec, path, err := s.keepFile(bytes.NewReader(data), name, title, "")
 		if err != nil {
 			writeError(w, err)
 			return
 		}
-		stored := rec.ID + strings.ToLower(filepath.Ext(name))
-		dir := s.app.Workspace.FilesDir()
-		if err := os.MkdirAll(dir, 0o755); err == nil {
-			err = os.WriteFile(filepath.Join(dir, stored), data, 0o644)
-		}
-		if err != nil {
-			s.app.Store.Delete(FileType, rec.ID)
-			writeError(w, fmt.Errorf("could not keep the file: %w", err))
-			return
-		}
-		s.app.Store.Update(FileType, rec.ID, map[string]any{"path": stored})
 		s.record(r, chat.Change{Action: "added", Component: FileType, ID: rec.ID, Detail: title, Href: "/t/" + FileType + "/" + rec.ID})
-
-		if converter := s.app.Workspace.Config.Files.Convert[convert.Ext(name)]; converter != "" {
-			go func() { s.convertLater(rec.ID, converter, name, filepath.Join(dir, stored)) }()
-		} else {
-			s.readNow(rec.ID, name, data)
-		}
+		s.readKept(rec.ID, name, path, false)
+		rec, _ = s.app.Store.Get(FileType, rec.ID)
 
 		w.Header().Set("Location", "/api/"+FileType+"/"+rec.ID)
 		writeJSON(w, http.StatusCreated, rec)

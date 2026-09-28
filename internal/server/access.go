@@ -58,7 +58,9 @@ var ownerOnly = []string{
 // allowed says whether a visitor may make this request, and when not,
 // tells them so on a page of its own.
 func (s *Server) allowed(w http.ResponseWriter, r *http.Request) bool {
-	if isPage(r) && !isPublic(r) {
+	// A page fetching itself to follow a change is not its person moving
+	// about: its live connection says whether they are here (presence.go).
+	if isPage(r) && !isPublic(r) && r.Header.Get("X-Requested-With") != "sameway-live" {
 		s.seen(r, r.URL.Path)
 	}
 	v := chat.VisitorOf(r.Context())
@@ -66,10 +68,8 @@ func (s *Server) allowed(w http.ResponseWriter, r *http.Request) bool {
 		return true
 	}
 	why := ""
-	for _, p := range ownerOnly {
-		if r.URL.Path == p || strings.HasPrefix(r.URL.Path, p+"/") {
-			why = "This part of the workspace is its owner's alone."
-		}
+	if ownerOnlyPath(r.URL.Path) {
+		why = "This part of the workspace is its owner's alone."
 	}
 	// An import writes whatever its columns say, access included.
 	if strings.HasSuffix(r.URL.Path, "/import") || strings.Contains(r.URL.Path, "/import/") {
@@ -103,6 +103,9 @@ func (s *Server) conversationFor(r *http.Request, from string) (*conversation, e
 
 func (s *Server) conversationAboutFor(r *http.Request, from, about, prompt string) (*conversation, error) {
 	convo, err := s.conversationAbout(s.chatFor(r), from, about, prompt)
+	if convo != nil {
+		convo.Path, convo.Query = r.URL.Path, r.URL.Query()
+	}
 	if a := chat.VisitorOf(r.Context()).Access; err != nil || a != chat.View && a != chat.Public {
 		return convo, err
 	}

@@ -1,3 +1,4 @@
-/* What others changed while you were away: a panel, the changes as a
-   list of events, and Got it. */
-.sw-since > ul { margin: 0; }
+/* What others changed while you were away: a panel, how many and since
+   when, the newest few as a list of events, a link to the rest, and
+   Got it. */
+.sw-since > ul, .sw-since > p { margin: 0; }
