@@ -12,7 +12,6 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/design"
-	"github.com/tristanlawrenceguy/sameway/examples"
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/content"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
@@ -32,6 +31,8 @@ type App struct {
 	// Mirror keeps content/ as the portable form of every record.
 	Mirror content.Mirror
 	Chat   *chat.Service
+
+	schemaSeen schemaWatch // what schema/ held when last read; see reload.go
 }
 
 // Load opens the workspace at dir. Pass memoryDB to use an in-memory store
@@ -41,18 +42,8 @@ func Load(dir string, memoryDB bool) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	types, err := schema.Load(ws.SchemaDir())
+	types, err := loadTypes(ws.SchemaDir())
 	if err != nil {
-		return nil, err
-	}
-	// The system owns its internal types. A workspace created before a
-	// field existed still gets that field, so the tools always work.
-	builtin, err := schema.LoadFS(examples.FS, examples.StarterRoot+"/schema")
-	if err != nil {
-		return nil, err
-	}
-	types.Complete(builtin)
-	if err := types.CheckRefs(); err != nil {
 		return nil, err
 	}
 	dbPath := ws.DBPath()

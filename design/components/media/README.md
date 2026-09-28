@@ -1,6 +1,8 @@
-# audio
+# media
 
-A recording and its words: a voice note, a meeting, a podcast, music.
+A recording and its words: a voice note, a meeting, a podcast, music, a
+video. A video shows its transcript as captions on the picture too, on by
+default, made from the same text, so a correction shows in both.
 
 Without a script the browser's own player plays it. With one, a bar with
 words on every control takes its place: Play or Pause, Back 15 seconds,

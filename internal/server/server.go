@@ -34,6 +34,7 @@ type Server struct {
 	changes atomic.Int64 // changes arrived from other computers; see sync.go
 	present presence     // who else is here just now; see presence.go
 	speech  speechState  // speech-to-text on this computer; see transcribe.go
+	host    hostState    // recordings written down with no page; see hostwrite.go
 }
 
 // New builds the handler for an app.
@@ -51,6 +52,7 @@ func New(a *app.App) *Server {
 // ServeHTTP implements http.Handler.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if s.allowed(w, r) {
+		s.fresh()
 		s.mux.ServeHTTP(w, r)
 	}
 }
@@ -118,7 +120,7 @@ func (s *Server) routes() {
 	m.HandleFunc("POST /t/file/upload", s.upload)
 	m.HandleFunc("GET /files/{id}", s.serveFile)
 	m.HandleFunc("GET /files/{id}/still", s.serveStill)
-	m.HandleFunc("POST /files/{id}/transcribe", s.transcribeFile)
+	s.recordingRoutes(m)
 	m.HandleFunc("POST /speech/get", s.speechGet)
 	m.HandleFunc("POST /dictate", s.dictate)
 
