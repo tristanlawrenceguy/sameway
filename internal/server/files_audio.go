@@ -82,8 +82,8 @@ func (s *Server) recordingOf(rec *store.Record) map[string]any {
 			props["captions"] = src + "/captions.vtt"
 		}
 		props["downloads"] = []any{
-			map[string]any{"href": src + "/transcript.srt", "label": "subtitles (SRT)"},
-			map[string]any{"href": src + "/transcript.txt", "label": "text"},
+			map[string]any{"href": src + "/transcript.srt", "format": "srt"},
+			map[string]any{"href": src + "/transcript.txt", "format": "txt"},
 		}
 	}
 	return props

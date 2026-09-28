@@ -128,19 +128,23 @@
       },
       "downloads": {
         "type": "array",
-        "description": "The transcript as files to take away, such as subtitles (SRT) and plain text.",
+        "description": "The transcript as files to take away, shown with the export component: subtitles (format srt) and plain text (format txt).",
         "items": {
           "type": "object",
           "additionalProperties": false,
           "required": [
             "href",
-            "label"
+            "format"
           ],
           "properties": {
             "href": {
               "type": "string"
             },
-            "label": {
+            "format": {
+              "type": "string",
+              "enum": ["srt", "txt"]
+            },
+            "size": {
               "type": "string"
             }
           }
@@ -191,7 +195,7 @@
     "operate": "Play by pressing Play, or set the audio element's currentTime from a line's data-start. The transcript's words are also the file record's text."
   },
   "examples": [
-    {"name": "default", "props": {"id": "standup", "title": "Monday stand-up", "src": "/files/r1", "type": "audio/mp4", "about": "M4A · 3 MB", "cues": [{"start": "0.00", "at": "0:00", "said": "0 seconds", "speaker": "Hana", "text": "Morning. Two things from me."}, {"start": "4.20", "at": "0:04", "said": "4 seconds", "speaker": "Hana", "text": "The compost order went in [laughter] at last."}, {"start": "11.80", "at": "0:11", "said": "11 seconds", "speaker": "Sam", "text": "And the pond liner comes Thursday."}], "downloads": [{"href": "/files/r1/transcript.srt", "label": "subtitles (SRT)"}, {"href": "/files/r1/transcript.txt", "label": "text"}]}, "file": "examples/default.html"},
+    {"name": "default", "props": {"id": "standup", "title": "Monday stand-up", "src": "/files/r1", "type": "audio/mp4", "about": "M4A · 3 MB", "cues": [{"start": "0.00", "at": "0:00", "said": "0 seconds", "speaker": "Hana", "text": "Morning. Two things from me."}, {"start": "4.20", "at": "0:04", "said": "4 seconds", "speaker": "Hana", "text": "The compost order went in [laughter] at last."}, {"start": "11.80", "at": "0:11", "said": "11 seconds", "speaker": "Sam", "text": "And the pond liner comes Thursday."}], "downloads": [{"href": "/files/r1/transcript.srt", "format": "srt", "size": "1 KB"}, {"href": "/files/r1/transcript.txt", "format": "txt", "size": "1 KB"}]}, "file": "examples/default.html"},
     {"name": "untranscribed", "props": {"id": "memo", "title": "Voice memo", "src": "/files/r2", "type": "audio/webm", "about": "WEBM · 480 KB", "none": "No transcript yet. Until there is one, someone who cannot hear it gets only its title."}, "file": "examples/untranscribed.html"},
     {"name": "offer", "props": {"id": "memo2", "title": "Voice memo", "src": "/files/r3", "type": "audio/mp4", "about": "M4A · 1 MB", "get": {"action": "/speech/get", "size": "155 MB"}}, "file": "examples/offer.html"},
     {"name": "ready", "props": {"id": "memo3", "title": "Voice memo", "src": "/files/r4", "type": "audio/mp4", "about": "M4A · 1 MB", "make": {"action": "/files/r4/transcribe"}}, "file": "examples/ready.html"},

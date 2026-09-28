@@ -47,7 +47,6 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 		s.fail(w, err)
 		return
 	}
-	b.WriteString(s.exportLinks(t, r.URL.Query())) // and go out again; see export.go
 	// Files come in through a form, because one field and one button is
 	// the better thing here; it can also be placed anywhere as a block.
 	// Empty-state text: "Ask the assistant to add your first" — replaces old "/Add your first" at /t/note/new.
@@ -95,6 +94,7 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	if s.importable(t) {
 		b.WriteString(`<p class="sw-quiet-row">` + string(s.component("link", map[string]any{"href": "/t/" + t.Name + "/import", "label": "Import", "context": plural(t.Name), "look": "button"})) + `</p>`)
 	}
+	b.WriteString(s.exportLinks(t, r.URL.Query(), recs)) // and they go out again, as the page has them; see export.go
 	// What just happened to these records is here too, so a deletion can be
 	// taken back where the person lands.
 	b.WriteString(string(s.recentActivityAbout(5, "/t/"+t.Name, func(target, _ string) bool { return target == t.Name })))
@@ -126,7 +126,6 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 		b.WriteString(s.fileExtras(r, rec))
 	}
 	b.WriteString(s.clashNotices(r, t, rec)) // two versions written at once; see clash.go
-	b.WriteString(s.documentLinks(t, rec))   // and out as a document; see export_docs.go
 	// What this view has been asked to show beyond the least it can say:
 	// see parts.go. Nothing here is on unless somebody asked for it.
 	always, here := s.shown(r)
@@ -192,6 +191,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 		t.Name, rec.ID, s.component("button", map[string]any{"label": "Delete " + schema.Words(t.Name), "type": "submit", "variant": "quiet"}))
 	b.WriteString(s.editFields(t, rec))
 	b.WriteString(`</div>`)
+	b.WriteString(s.documentLinks(r, t, rec)) // the record as a file, after it; see export_docs.go
 	// Recent activity on this page, so a deletion can be taken back where
 	// the person lands. The log is the workspace's, not the internet's: it
 	// names who changed what, so a published page leaves it out.

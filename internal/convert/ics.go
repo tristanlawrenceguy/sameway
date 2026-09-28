@@ -43,6 +43,7 @@ func ParseICS(data []byte, local *time.Location) []Event {
 				if ev.Title == "" {
 					ev.Title = "Event"
 				}
+				ev.Ends = lastDay(ev.Starts, ev.Ends)
 				out = append(out, *ev)
 			}
 			ev = nil
@@ -66,6 +67,20 @@ func ParseICS(data []byte, local *time.Location) []Event {
 		}
 	}
 	return out
+}
+
+// lastDay is an all-day event's end as a person says it. DTEND is the day
+// after the last (RFC 5545 3.6.1): a one-day event has none left, and one
+// over the 12th and 13th ends on the 13th.
+func lastDay(starts, ends string) string {
+	end, err := time.Parse("2006-01-02", ends)
+	if err != nil || len(starts) != 10 {
+		return ends
+	}
+	if last := end.AddDate(0, 0, -1).Format("2006-01-02"); last > starts {
+		return last
+	}
+	return ""
 }
 
 // property splits NAME;PARAM=x;PARAM=y:value.

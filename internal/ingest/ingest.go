@@ -80,6 +80,11 @@ func ReadCSV(data []byte) (*Table, error) {
 		for i, c := range t.Columns {
 			if i < len(rec) {
 				row[c] = strings.TrimSpace(rec[i])
+				// A ' kept a formula-looking text from running in a
+				// spreadsheet (see export.Inert); the text is what is meant.
+				if len(row[c]) > 1 && row[c][0] == '\'' && strings.ContainsRune("=+-@", rune(row[c][1])) {
+					row[c] = row[c][1:]
+				}
 				if row[c] != "" {
 					empty = false
 				}
