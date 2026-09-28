@@ -1,12 +1,12 @@
 {
   "name": "since",
-  "version": "1.0.0",
-  "description": "What other people changed while you were away, each with its Undo, until you say you have seen it.",
+  "version": "1.1.0",
+  "description": "What other people changed while you were away: how many and since when, the newest few each with its Undo, the rest in the log, until you say you have seen it.",
   "icon": "↺",
   "use": {
     "when": "a person comes back after a while, and others changed things meanwhile.",
-    "not": "the whole activity log, or their own changes.",
-    "with": "event, one per change, in a list in its slot."
+    "not": "the whole activity log, their own changes, or news that has to interrupt.",
+    "with": "event, one per change, in a list in its slot; at most five, the rest counted in more."
   },
   "props": {
     "type": "object",
@@ -18,7 +18,7 @@
       "slot": {
         "type": "string",
         "format": "multiline",
-        "description": "The changes. Server code passes a list of rendered events; text from a model or a form is escaped."
+        "description": "The newest changes, five at most. Server code passes a list of rendered events; text from a model or a form is escaped."
       },
       "seen": {
         "type": "string",
@@ -28,31 +28,59 @@
       "from": {
         "type": "string",
         "description": "The page it is on, so Got it returns there."
+      },
+      "count": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "How many changes others made in all, said first: 12 changes by other people."
+      },
+      "at": {
+        "type": "string",
+        "description": "When the person was last here, as a person says it: 14:05, or 2 Jan 14:05."
+      },
+      "datetime": {
+        "type": "string",
+        "description": "The same moment for machines, in RFC 3339."
+      },
+      "more": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "How many are not listed here. With it, a link to the rest: 7 more changes in Activity."
+      },
+      "id": {
+        "type": "string",
+        "default": "since",
+        "description": "Names its heading (id-h). Only for showing more than one on a page, as the design page does."
+      },
+      "rest": {
+        "type": "string",
+        "default": "/activity",
+        "description": "Where the rest are: the log, at the first change not listed."
       }
     }
   },
   "a11y": {
-    "role": "region, named by its heading, with a list of changes and a button",
+    "role": "region, named by its heading, with a sentence saying how many and since when, a list of changes, a link to the rest and a button",
     "keyboard": [
       {
         "key": "Tab",
-        "does": "reaches each change's link and Undo, then Got it"
+        "does": "reaches each change's link and Undo, the link to the rest, then Got it"
       },
       {
         "key": "Enter",
-        "does": "on Got it, puts the list away and returns to the page"
+        "does": "on Got it, puts the list away and returns to the same page"
       }
     ],
     "states": [],
     "wcag": {
       "target": "AAA",
-      "notes": "A region with its own heading, first on the page it appears on, so it is met before anything else; each change is a list item that says who did what."
+      "notes": "A region with its own heading, first under the page's heading, so it is met before anything else and found by heading or landmark. It is on the page when it loads, so it is not announced; nothing moves focus to it. The sentence says the count and the time once; each change is a list item that says who did what and when. Five at most, so it is never a wall (COGA, avoid too much content)."
     }
   },
   "machine": {
     "selector": "[data-component=\"since\"]",
-    "identify": "Each [data-component=event] inside is one change by someone else.",
-    "operate": "Submit Got it once they are read; an event's Undo reverses that change."
+    "identify": "Each [data-component=event] inside is one change by someone else, newest first. The first p says how many in all; a link says how many more are in the log.",
+    "operate": "Submit Got it once they are read; an event's Undo reverses that change; the link opens the log where the unlisted ones begin."
   },
   "examples": [
     {
@@ -60,9 +88,27 @@
       "props": {
         "slot": "Hana deleted note Shopping.",
         "seen": "/since/seen",
-        "from": "/"
+        "from": "/",
+        "count": 1,
+        "at": "14:05",
+        "datetime": "2026-09-28T12:05:00Z"
       },
       "file": "examples/default.html"
+    },
+    {
+      "name": "more",
+      "props": {
+        "slot": "The newest five changes.",
+        "seen": "/since/seen",
+        "from": "/t/task",
+        "count": 12,
+        "at": "2 Jan 14:05",
+        "datetime": "2026-01-02T13:05:00Z",
+        "more": 7,
+        "rest": "/activity#activity-a1",
+        "id": "since-more"
+      },
+      "file": "examples/more.html"
     }
   ]
 }

@@ -34,6 +34,7 @@ type Server struct {
 	changes atomic.Int64 // changes arrived from other computers; see sync.go
 	present presence     // who else is here just now; see presence.go
 	speech  speechState  // speech-to-text on this computer; see transcribe.go
+	host    hostState    // recordings written down with no page; see hostwrite.go
 }
 
 // New builds the handler for an app.
@@ -51,6 +52,7 @@ func New(a *app.App) *Server {
 // ServeHTTP implements http.Handler.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if s.allowed(w, r) {
+		s.fresh()
 		s.mux.ServeHTTP(w, r)
 	}
 }
@@ -118,7 +120,7 @@ func (s *Server) routes() {
 	m.HandleFunc("POST /t/file/upload", s.upload)
 	m.HandleFunc("GET /files/{id}", s.serveFile)
 	m.HandleFunc("GET /files/{id}/still", s.serveStill)
-	m.HandleFunc("POST /files/{id}/transcribe", s.transcribeFile)
+	s.recordingRoutes(m)
 	m.HandleFunc("POST /speech/get", s.speechGet)
 	m.HandleFunc("POST /dictate", s.dictate)
 
@@ -191,7 +193,11 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 		more = append(more, struct{ href, label string }{"/design", "Design system"})
 	}
 	for _, l := range more {
-		p.More = append(p.More, s.navLink(l.href, l.label, r.URL.Path == l.href))
+		href := l.href
+		if href == "/search" {
+			href = s.searchFrom(r) // from a kind's pages, a search of that kind
+		}
+		p.More = append(p.More, s.navLink(href, l.label, r.URL.Path == l.href))
 	}
 	p.Developer = s.app.Workspace.Config.UI.Developer == "shown"
 	out, err := render.RenderPage(p)

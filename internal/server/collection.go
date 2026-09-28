@@ -22,10 +22,18 @@ const collectionComponent = "collection"
 // which names the list's heading when it has no id of its own, so two
 // lists of one type on a page are each named by their own heading.
 func (s *Server) resolveCollection(props map[string]any, block string) map[string]any {
+	return s.resolveCollectionAt(props, block, nil)
+}
+
+// resolveCollectionAt is resolveCollection on a page a person can narrow
+// and sort it on: at says which page, and its address holds their
+// choices (collection_choices.go).
+func (s *Server) resolveCollectionAt(props map[string]any, block string, at *collectionPlace) map[string]any {
 	out := map[string]any{}
 	for k, v := range props {
 		out[k] = v
 	}
+	delete(out, "choices") // the server's to fill, never the block's
 	if id, _ := props["id"].(string); id == "" && block != "" {
 		out["id"] = "collection-" + block
 	}
@@ -43,12 +51,28 @@ func (s *Server) resolveCollection(props map[string]any, block string) map[strin
 	} else if n, ok := props["limit"].(int); ok && n > 0 {
 		limit = n
 	}
-	// One more than is shown, to know whether there are more: a list cut
-	// short says so, not only the whole list's page.
-	recs, err := query.Filter(s.app.Store, t, where, order, limit+1, time.Now())
+	// All of them, to know how many and whether there are more than are
+	// shown: a list cut short says so, not only the whole list's page.
+	now := time.Now()
+	recs, err := query.Filter(s.app.Store, t, where, order, 0, now)
 	if err != nil {
 		out["problem"] = err.Error()
 		return out
+	}
+	if offered(props, at, block, limit, len(recs)) {
+		by := ""
+		if f, err := boardField(t, props["by"]); err == nil && props["as"] == "board" {
+			by = f.Name
+		}
+		choices := collectionChoices(t, where, order, by)
+		if w, o, active := applyChoices(out, choices, at, block, where, order); active {
+			if recs, err = query.Filter(s.app.Store, t, w, o, 0, now); err != nil {
+				out["problem"] = err.Error()
+				return out
+			}
+			where, order = w, o
+		}
+		out["choices"].(map[string]any)["count"] = countWords(t, len(recs))
 	}
 	if len(recs) > limit {
 		recs, out["more"] = recs[:limit], true
