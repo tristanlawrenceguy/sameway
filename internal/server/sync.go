@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -41,6 +42,21 @@ func (s *Server) syncExchange(w http.ResponseWriter, r *http.Request) {
 // so it follows: another computer's change, arrived by sync.
 func (s *Server) Changed() { s.changes.Add(1) }
 
+// fresh takes the content types as schema/ has them now, before a page or
+// an answer is made from them, so a type or field another process made
+// (the assistant's tools under claude-code run in `sameway mcp`) is there
+// at once, not after a restart. It costs a look at the folder; open pages
+// hear of a change from WatchSchema, or from here, whichever sees it first.
+func (s *Server) fresh() {
+	ok, err := s.app.ReloadSchema()
+	if err != nil {
+		log.Printf("schema: %v", err)
+	}
+	if ok {
+		s.Changed()
+	}
+}
+
 // events tells an open page, as a server-sent event, each time the
 // workspace changes from elsewhere. The page fetches itself and moves what
 // changed into place (17-refresh.js), as it does after a turn.
@@ -61,6 +77,7 @@ func (s *Server) events(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "event: hello\ndata: {}\n\n")
 	flusher.Flush()
 	last, others := s.changes.Load(), s.presentFor(r)
+	idle := r.URL.Query().Get("idle") != ""
 	tick := time.NewTicker(time.Second)
 	defer tick.Stop()
 	for {
@@ -69,9 +86,12 @@ func (s *Server) events(w http.ResponseWriter, r *http.Request) {
 			return
 		case <-tick.C:
 		}
-		// An open page is someone here; who else is here changing is
+		// An open page is someone here, unless it says its person has
+		// been idle a while (20-follow.js); who else is here changing is
 		// news to the page, like a change.
-		s.seen(r, refererPath(r))
+		if !idle {
+			s.seen(r, refererPath(r))
+		}
 		now, who := s.changes.Load(), s.presentFor(r)
 		if now != last || who != others {
 			last, others = now, who

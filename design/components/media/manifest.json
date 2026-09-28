@@ -1,6 +1,6 @@
 {
   "name": "media",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "A recording, heard or seen, with its words: played with text-labelled controls (Play, Back 15 seconds, Forward 30 seconds, speed, a seek bar that says where it is in words), its length and size, a Download link, and its transcript under it, each line leading to the moment it was said and marked while it is heard. A video shows its transcript as captions too.",
   "icon": "♪",
   "use": {
@@ -125,6 +125,26 @@
       "captions": {
         "type": "string",
         "description": "For a video: its captions as WebVTT, made from its transcript, shown on the picture by the browser."
+      },
+      "downloads": {
+        "type": "array",
+        "description": "The transcript as files to take away, such as subtitles (SRT) and plain text.",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "href",
+            "label"
+          ],
+          "properties": {
+            "href": {
+              "type": "string"
+            },
+            "label": {
+              "type": "string"
+            }
+          }
+        }
       }
     }
   },
@@ -171,107 +191,10 @@
     "operate": "Play by pressing Play, or set the audio element's currentTime from a line's data-start. The transcript's words are also the file record's text."
   },
   "examples": [
-    {
-      "name": "default",
-      "props": {
-        "id": "standup",
-        "title": "Monday stand-up",
-        "src": "/files/r1",
-        "type": "audio/mp4",
-        "about": "M4A · 3 MB",
-        "cues": [
-          {
-            "start": "0.00",
-            "at": "0:00",
-            "said": "0 seconds",
-            "speaker": "Hana",
-            "text": "Morning. Two things from me."
-          },
-          {
-            "start": "4.20",
-            "at": "0:04",
-            "said": "4 seconds",
-            "speaker": "Hana",
-            "text": "The compost order went in [laughter] at last."
-          },
-          {
-            "start": "11.80",
-            "at": "0:11",
-            "said": "11 seconds",
-            "speaker": "Sam",
-            "text": "And the pond liner comes Thursday."
-          }
-        ]
-      },
-      "file": "examples/default.html"
-    },
-    {
-      "name": "untranscribed",
-      "props": {
-        "id": "memo",
-        "title": "Voice memo",
-        "src": "/files/r2",
-        "type": "audio/webm",
-        "about": "WEBM · 480 KB",
-        "none": "No transcript yet. Until there is one, someone who cannot hear it gets only its title."
-      },
-      "file": "examples/untranscribed.html"
-    },
-    {
-      "name": "offer",
-      "props": {
-        "id": "memo2",
-        "title": "Voice memo",
-        "src": "/files/r3",
-        "type": "audio/mp4",
-        "about": "M4A · 1 MB",
-        "get": {
-          "action": "/speech/get",
-          "size": "155 MB"
-        }
-      },
-      "file": "examples/offer.html"
-    },
-    {
-      "name": "ready",
-      "props": {
-        "id": "memo3",
-        "title": "Voice memo",
-        "src": "/files/r4",
-        "type": "audio/mp4",
-        "about": "M4A · 1 MB",
-        "make": {
-          "action": "/files/r4/transcribe"
-        }
-      },
-      "file": "examples/ready.html"
-    },
-    {
-      "name": "video",
-      "props": {
-        "id": "talk",
-        "kind": "video",
-        "title": "Garden talk",
-        "src": "/files/v1",
-        "type": "video/mp4",
-        "about": "MP4 · 48 MB",
-        "captions": "/files/v1/captions.vtt",
-        "cues": [
-          {
-            "start": "0.00",
-            "at": "0:00",
-            "said": "0 seconds",
-            "text": "Welcome to the garden."
-          },
-          {
-            "start": "3.00",
-            "at": "0:03",
-            "said": "3 seconds",
-            "text": "Today, the pond."
-          }
-        ]
-      },
-      "file": "examples/video.html"
-    }
+    {"name": "default", "props": {"id": "standup", "title": "Monday stand-up", "src": "/files/r1", "type": "audio/mp4", "about": "M4A · 3 MB", "cues": [{"start": "0.00", "at": "0:00", "said": "0 seconds", "speaker": "Hana", "text": "Morning. Two things from me."}, {"start": "4.20", "at": "0:04", "said": "4 seconds", "speaker": "Hana", "text": "The compost order went in [laughter] at last."}, {"start": "11.80", "at": "0:11", "said": "11 seconds", "speaker": "Sam", "text": "And the pond liner comes Thursday."}], "downloads": [{"href": "/files/r1/transcript.srt", "label": "subtitles (SRT)"}, {"href": "/files/r1/transcript.txt", "label": "text"}]}, "file": "examples/default.html"},
+    {"name": "untranscribed", "props": {"id": "memo", "title": "Voice memo", "src": "/files/r2", "type": "audio/webm", "about": "WEBM · 480 KB", "none": "No transcript yet. Until there is one, someone who cannot hear it gets only its title."}, "file": "examples/untranscribed.html"},
+    {"name": "offer", "props": {"id": "memo2", "title": "Voice memo", "src": "/files/r3", "type": "audio/mp4", "about": "M4A · 1 MB", "get": {"action": "/speech/get", "size": "155 MB"}}, "file": "examples/offer.html"},
+    {"name": "ready", "props": {"id": "memo3", "title": "Voice memo", "src": "/files/r4", "type": "audio/mp4", "about": "M4A · 1 MB", "make": {"action": "/files/r4/transcribe"}}, "file": "examples/ready.html"},
+    {"name": "video", "props": {"id": "talk", "kind": "video", "title": "Garden talk", "src": "/files/v1", "type": "video/mp4", "about": "MP4 · 48 MB", "captions": "/files/v1/captions.vtt", "cues": [{"start": "0.00", "at": "0:00", "said": "0 seconds", "text": "Welcome to the garden."}, {"start": "3.00", "at": "0:03", "said": "3 seconds", "text": "Today, the pond."}]}, "file": "examples/video.html"}
   ]
 }

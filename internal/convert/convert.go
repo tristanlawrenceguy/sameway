@@ -50,7 +50,7 @@ var images = map[string]bool{"png": true, "jpg": true, "jpeg": true, "gif": true
 // audio is the recordings a browser can play, by extension, with the type
 // each is served as: Windows does not know some of them by itself.
 var audio = map[string]string{
-	"mp3": "audio/mpeg", "m4a": "audio/mp4", "aac": "audio/aac", "wav": "audio/wav",
+	"mp3": "audio/mpeg", "m4a": "audio/mp4", "m4b": "audio/mp4", "aac": "audio/aac", "wav": "audio/wav",
 	"ogg": "audio/ogg", "oga": "audio/ogg", "opus": "audio/ogg", "webm": "audio/webm", "flac": "audio/flac",
 }
 
@@ -64,6 +64,7 @@ func AudioType(name string) string {
 // is served as. A .webm is either; KindOf looks inside.
 var video = map[string]string{
 	"mp4": "video/mp4", "m4v": "video/mp4", "mov": "video/quicktime", "mkv": "video/x-matroska",
+	"3gp": "video/3gpp", "3g2": "video/3gpp2",
 }
 
 // MediaType is the type a recording or a video is served as, or "".

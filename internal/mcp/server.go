@@ -15,6 +15,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"sync"
 
@@ -111,6 +112,12 @@ func (s *Server) write(resp response) {
 func (s *Server) handle(ctx context.Context, req request) (any, *rpcError) {
 	if req.JSONRPC != "2.0" {
 		return nil, &rpcError{codeInvalidRequest, `jsonrpc must be "2.0"`}
+	}
+	if req.Method == "tools/list" || req.Method == "tools/call" {
+		// The server beside this, or a person, may have changed the types.
+		if _, err := s.App.ReloadSchema(); err != nil {
+			log.Printf("schema: %v", err)
+		}
 	}
 	switch req.Method {
 	case "initialize":
