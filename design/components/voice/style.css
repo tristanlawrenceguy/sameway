@@ -1,0 +1,8 @@
+.sw-voice { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--sw-space-2); }
+.sw-voice[hidden] { display: none; }
+.sw-voice__time { font-variant-numeric: tabular-nums; font-weight: 600; }
+.sw-voice__said { font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); }
+/* While the microphone is on the button says so in words; the mark beside
+   them is only a second sign, never the only one. */
+.sw-voice[data-state="recording"] .sw-voice__toggle::before { content: ""; width: 0.625rem; height: 0.625rem; border-radius: 50%; background: var(--sw-color-danger); margin-inline-end: var(--sw-space-2); }
+@media (forced-colors: active) { .sw-voice[data-state="recording"] .sw-voice__toggle::before { background: CanvasText; } }

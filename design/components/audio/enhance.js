@@ -133,44 +133,6 @@
     state();
     show();
   }
-  // Any recording this browser can play, as the plain sound the speech
-  // engine reads: 16 kHz, one channel, 16-bit WAV. Made here so the
-  // computer that writes it down needs no other program to read it.
-  function decode(ctx, data) {
-    return new Promise(function (ok, bad) {
-      var p = ctx.decodeAudioData(data, ok, bad);
-      if (p && p.then) p.then(ok, bad);
-    });
-  }
-  function toWav(url) {
-    return fetch(url).then(function (r) { return r.arrayBuffer(); }).then(function (data) {
-      var Ctx = window.OfflineAudioContext || window.webkitOfflineAudioContext, ctx;
-      try { ctx = new Ctx(1, 1, 16000); } catch (e) { ctx = new Ctx(1, 1, 44100); }
-      return decode(ctx, data);
-    }).then(function (buf) {
-      var n = buf.length, ch = buf.numberOfChannels, mono = new Float32Array(n);
-      for (var c = 0; c < ch; c++) {
-        var d = buf.getChannelData(c);
-        for (var i = 0; i < n; i++) mono[i] += d[i] / ch;
-      }
-      if (buf.sampleRate !== 16000) {
-        var step = buf.sampleRate / 16000, out = new Float32Array(Math.floor(n / step));
-        for (var j = 0; j < out.length; j++) {
-          var pos = j * step, k = Math.floor(pos), f = pos - k;
-          out[j] = k + 1 < n ? mono[k] * (1 - f) + mono[k + 1] * f : mono[n - 1];
-        }
-        mono = out;
-      }
-      var bytes = new DataView(new ArrayBuffer(44 + mono.length * 2));
-      function text(at, s) { for (var q = 0; q < s.length; q++) bytes.setUint8(at + q, s.charCodeAt(q)); }
-      text(0, "RIFF"); bytes.setUint32(4, 36 + mono.length * 2, true); text(8, "WAVEfmt ");
-      bytes.setUint32(16, 16, true); bytes.setUint16(20, 1, true); bytes.setUint16(22, 1, true);
-      bytes.setUint32(24, 16000, true); bytes.setUint32(28, 32000, true); bytes.setUint16(32, 2, true);
-      bytes.setUint16(34, 16, true); text(36, "data"); bytes.setUint32(40, mono.length * 2, true);
-      for (var s = 0; s < mono.length; s++) bytes.setInt16(44 + s * 2, Math.max(-1, Math.min(1, mono[s])) * 32767, true);
-      return new Blob([bytes.buffer], { type: "audio/wav" });
-    });
-  }
   function armMake(fig) {
     var form = fig.querySelector(".sw-audio__make"), media = fig.querySelector("audio source") || fig.querySelector("audio");
     if (!form || form._armed || !media) return;
@@ -180,7 +142,7 @@
     function go() {
       btn.setAttribute("aria-disabled", "true");
       said.textContent = "Reading the recording on this device.";
-      toWav(src).then(function (wav) {
+      window.swSpeech.toWav(src).then(function (wav) {
         said.textContent = "Sending it to be written down.";
         return fetch(form.action, { method: "POST", body: wav, headers: { "Content-Type": "audio/wav" }, credentials: "same-origin" });
       }).then(function (r) { location.href = r.url; }, function () {
