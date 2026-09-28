@@ -18,6 +18,11 @@ import (
 
 const away = 30 * time.Minute
 
+// sinceShown is how many changes the notice lists; more are counted and
+// linked to where they are in the log, so a long absence is not a long
+// wall of changes at the top of every page.
+const sinceShown = 5
+
 // whoKey names the one asking, for these notes: their login, or the owner
 // when the tailnet has not said who that is.
 func (s *Server) whoKey(r *http.Request) string {
@@ -58,26 +63,42 @@ func (s *Server) sinceNotice(r *http.Request) template.HTML {
 	if err != nil {
 		return ""
 	}
-	entries, err := s.app.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 60})
+	// The log is newest first, so the scan stops at the first entry from
+	// before they left.
+	entries, err := s.app.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 500})
 	if err != nil {
 		return ""
 	}
-	from := r.URL.Path
-	var items []string
+	from := r.URL.RequestURI()
+	var theirs []*store.Record
 	for _, e := range entries {
-		if !e.CreatedAt.After(since) || len(items) >= 8 {
-			continue
+		if !e.CreatedAt.After(since) {
+			break
 		}
-		if !s.byOther(e, key) {
-			continue
+		if s.byOther(e, key) {
+			theirs = append(theirs, e)
 		}
-		items = append(items, `<li>`+string(s.event(e, from, 0, true))+`</li>`)
 	}
-	if len(items) == 0 {
+	if len(theirs) == 0 {
 		return ""
 	}
+	// A few to read here; the rest wait in the log, from where these end.
+	props := map[string]any{"seen": "/since/seen", "from": from, "count": len(theirs),
+		"at": messageTime(since), "datetime": since.UTC().Format(time.RFC3339)}
+	shown := theirs
+	if len(theirs) > sinceShown {
+		shown = theirs[:sinceShown]
+		props["more"], props["rest"] = len(theirs)-sinceShown, "/activity#activity-"+theirs[sinceShown].ID
+	}
+	var items []string
+	for _, e := range shown {
+		// Without its anchor: the same entry has it in the log, which may
+		// be on this page too, and the rest link leads there.
+		line := strings.Replace(string(s.event(e, from, 0, true)), ` id="activity-`+e.ID+`"`, "", 1)
+		items = append(items, `<li>`+line+`</li>`)
+	}
 	list := template.HTML(`<ul class="sw-plain sw-stack">` + strings.Join(items, "") + `</ul>`)
-	out, err := s.app.Registry.RenderSlot("since", map[string]any{"seen": "/since/seen", "from": from}, list)
+	out, err := s.app.Registry.RenderSlot("since", props, list)
 	if err != nil {
 		return ""
 	}
@@ -88,7 +109,8 @@ func (s *Server) sinceNotice(r *http.Request) template.HTML {
 func (s *Server) sinceSeen(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	s.app.Store.SetMeta("since:"+s.whoKey(r), "")
-	http.Redirect(w, r, backTo(r.PostForm.Get("from")), http.StatusSeeOther)
+	// Back to the page it was on, whichever that was.
+	http.Redirect(w, r, backOf(r, "/"), http.StatusSeeOther)
 }
 
 // byOther says whether a person other than the one asking made a change:
