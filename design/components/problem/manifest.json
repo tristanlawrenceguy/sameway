@@ -68,7 +68,7 @@
       "name": "default",
       "props": {
         "what": "This list",
-        "text": "task has no field \"owner\"; it has title, done, due, notes, tags"
+        "text": "task has no field \"owner\"; it has title, done, status, due, notes, tags"
       },
       "file": "examples/default.html"
     },

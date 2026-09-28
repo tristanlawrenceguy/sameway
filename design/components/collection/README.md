@@ -25,12 +25,16 @@ the type has instead, so the block never renders as nothing.
 in columns, which scroll sideways on a phone in a box a keyboard can reach;
 `as: cards` puts them in cards, each pressed anywhere to open it.
 `as: board` puts a column for each choice of a pick-list field, named
-with `by` (status: To do, Doing, Done), in the order the field lists
+with `by` (a task's status: To do, Doing, Done), in the order the field lists
 them, each saying how many it holds, and a column for those with none.
 A line over the board names every column with its count and leads to it.
 Each card has a Move form: its column picked from a list and a Move
 button, which saves the field like any edit, comes back to the card
-focused, and says "House moved from Active to Done." with an Undo. A list
+focused, and says "House moved from Active to Done." with an Undo. A
+task's status and its done tick are one fact: moving a task to Done ticks
+it, and ticking it moves it to Done, so a board and a list of what is not
+done always agree. A yes-or-no is not a board: it is two columns a list
+filter already gives. A list
 of one line per record is a list; use a table when the fields are the point
 and several are compared.
 

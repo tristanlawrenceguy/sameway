@@ -11,6 +11,8 @@ import (
 // apiAddField adds a field to a content type: POST /api/types/{type}/fields
 // with {name, type, description, values, to, required, default}. The same
 // change the assistant makes with add_field, for an agent that speaks JSON.
+// The answer is the type, with existing saying what the records it
+// already had now hold in the field.
 func (s *Server) apiAddField(w http.ResponseWriter, r *http.Request) {
 	var f schema.Field
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&f); err != nil {
@@ -23,7 +25,11 @@ func (s *Server) apiAddField(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	chat.Record(s.app.Store, "system", chat.Change{Action: "added", Component: "field", Detail: f.Name + " on " + t.Name, Href: "/t/" + t.Name})
-	writeJSON(w, http.StatusCreated, t)
+	// The type as it is now, and what the records it had got, in words.
+	writeJSON(w, http.StatusCreated, struct {
+		*schema.Type
+		Existing string `json:"existing"`
+	}{t, chat.FieldGets(s.app.Store, t, f.Name)})
 }
 
 // apiAddType makes a content type: POST /api/types with {name,

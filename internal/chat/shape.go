@@ -46,7 +46,7 @@ func shapeTools() []llm.Tool {
 		return s
 	}
 	return []llm.Tool{
-		{Name: "add_field", Description: "Add a property to a content type, for everyone: a due date on notes, a priority on tasks. The type's schema file and its table change at once, and every record has the field from then on. Adding is safe; nothing existing changes.",
+		{Name: "add_field", Description: "Add a property to a content type, for everyone: a due date on notes, a priority on tasks. The type's schema file and its table change at once, and every record has the field from then on: the ones already there read as its default (nothing, when it has none), and the answer says how many there are and what they got. Adding is safe; nothing else they hold changes.",
 			Schema: obj(map[string]any{
 				"type":        map[string]any{"type": "string", "description": "The content type to add the field to."},
 				"name":        fieldProps["name"],
@@ -74,8 +74,12 @@ func (s *Service) addField(typeName string, d fieldDef) toolResult {
 	if err != nil {
 		return fail("%v", err)
 	}
+	gets := ""
+	if said := FieldGets(s.Store, t, d.Name); said != "" {
+		gets = " (" + said + ")"
+	}
 	return toolResult{
-		text:   fmt.Sprintf("added %s (%s) to %s; every %s has it now, and its page at /t/%s shows it", d.Name, d.Kind, t.Name, t.Name, t.Name),
+		text:   fmt.Sprintf("added %s (%s) to %s; every %s has it now%s, and its page at /t/%s shows it", d.Name, d.Kind, t.Name, t.Name, gets, t.Name),
 		change: &Change{Action: "added", Component: "field", Detail: d.Name + " on " + t.Name, Href: "/t/" + t.Name},
 	}
 }

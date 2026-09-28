@@ -7,6 +7,10 @@ went, with an Undo.
 
 A board gives each card one, as one of its actions.
 
+A task moved to Done is ticked done too, and one moved out of Done is
+unticked; a task that repeats, moved to Done, is due again on its next day
+and back in To do, and says so, as a tick does.
+
 ## Why it works this way
 
 - **No dragging.** A select and a button work the same by keyboard,

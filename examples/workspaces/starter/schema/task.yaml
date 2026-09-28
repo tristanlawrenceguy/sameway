@@ -1,7 +1,7 @@
 # Something to do, with a day it is due. Provided with every workspace, so
 # a collection of what is due this week has something to show.
 name: task
-description: Something to do, with the day it is due and whether it is done.
+description: Something to do, with the day it is due, where it stands (To do, Doing, Done) and whether it is done.
 title: title
 provided: true
 fields:
@@ -12,6 +12,12 @@ fields:
   done:
     type: bool
     default: false
+  status:
+    type: enum
+    values: [todo, doing, done]
+    labels: {todo: To do, doing: Doing, done: Done}
+    default: todo
+    description: "Where it stands, for a board of tasks. Kept in step with done: a Done task is ticked, ticking one makes it Done, and unticked it goes back to To do."
   due:
     type: datetime
     description: When it is due; a day is enough.
