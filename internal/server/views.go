@@ -126,6 +126,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 		b.WriteString(s.fileExtras(r, rec))
 	}
 	b.WriteString(s.clashNotices(r, t, rec)) // two versions written at once; see clash.go
+	b.WriteString(s.documentLinks(t, rec))   // and out as a document; see export_docs.go
 	// What this view has been asked to show beyond the least it can say:
 	// see parts.go. Nothing here is on unless somebody asked for it.
 	always, here := s.shown(r)

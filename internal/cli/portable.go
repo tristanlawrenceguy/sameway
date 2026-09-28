@@ -3,9 +3,12 @@ package cli
 import (
 	"flag"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/export"
+	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -13,11 +16,33 @@ import (
 // current as records change, so this is for a workspace that predates
 // that, or whose database was changed behind its back.
 func (c *ctx) exportCmd() error {
+	fs := flag.NewFlagSet("export", flag.ContinueOnError)
+	fs.SetOutput(c.Stderr)
+	zipTo := fs.String("zip", "", "write the whole workspace to this zip instead: records as Markdown, files as added, a spreadsheet of each kind")
+	if err := fs.Parse(c.args); err != nil {
+		return err
+	}
 	a, err := c.load()
 	if err != nil {
 		return err
 	}
 	defer a.Close()
+	if *zipTo != "" {
+		f, err := os.Create(*zipTo)
+		if err != nil {
+			return err
+		}
+		srv := server.New(a)
+		if err := export.Everything(f, a.Workspace.Config.Name, a.Store, a.Types, a.Mirror, a.Workspace.FilesDir(), srv.RefTitle); err != nil {
+			f.Close()
+			return err
+		}
+		if err := f.Close(); err != nil {
+			return err
+		}
+		c.print(map[string]any{"zip": *zipTo}, func() { fmt.Fprintf(c.Stdout, "wrote everything to %s\n", *zipTo) })
+		return nil
+	}
 	rep, err := a.Mirror.Export(a.Store)
 	if err != nil {
 		return err
