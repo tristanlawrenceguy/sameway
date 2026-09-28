@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"html/template"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -44,14 +45,16 @@ func (s *Server) dictate(w http.ResponseWriter, r *http.Request) {
 	}
 	samples, rate, err := speech.ReadWAV(http.MaxBytesReader(w, r.Body, 64<<20))
 	if err != nil {
-		answer(http.StatusBadRequest, map[string]string{"error": "The sound could not be read: " + err.Error()})
+		log.Printf("dictate: %v", err)
+		answer(http.StatusBadRequest, map[string]string{"error": "The sound could not be read, so it was not written down."})
 		return
 	}
 	var buf bytes.Buffer
 	speech.WriteWAV(&buf, speech.Resample(samples, rate))
 	f, err := os.CreateTemp("", "sameway-dictate-*.wav")
 	if err != nil {
-		answer(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		log.Printf("dictate: %v", err)
+		answer(http.StatusInternalServerError, map[string]string{"error": "It could not be written down on this computer."})
 		return
 	}
 	path := f.Name()
@@ -62,7 +65,8 @@ func (s *Server) dictate(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	cues, err := s.speechKit().Transcribe(ctx, filepath.Clean(path))
 	if err != nil {
-		answer(http.StatusInternalServerError, map[string]string{"error": "It could not be written down: " + err.Error()})
+		log.Printf("dictate: %v", err)
+		answer(http.StatusInternalServerError, map[string]string{"error": "It could not be written down on this computer."})
 		return
 	}
 	var words []string

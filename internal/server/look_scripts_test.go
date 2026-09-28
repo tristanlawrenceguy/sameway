@@ -82,7 +82,7 @@ func TestALookRunsThePageScriptsAndDoesWhatAPersonDoes(t *testing.T) {
 	rec := postJSON(t, h, http.MethodPost, "/api/look", map[string]any{"path": page, "steps": []map[string]any{{"press": "Edit"}}})
 	wantStatus(t, rec, http.StatusOK)
 	decode(t, rec, &seen)
-	if seen.Scripts == nil || !slices.Equal(seen.Scripts.Did, []string{"pressed button: Edit block"}) {
+	if seen.Scripts == nil || !slices.Equal(seen.Scripts.Did, []string{"pressed button: Edit Water the plants"}) {
 		t.Fatalf("the step presses the Edit button, not the region it is in, got %+v", seen.Scripts)
 	}
 	var body *look.Control
@@ -103,7 +103,7 @@ func TestALookRunsThePageScriptsAndDoesWhatAPersonDoes(t *testing.T) {
 	}
 
 	rec = postJSON(t, h, http.MethodPost, "/api/look", map[string]any{"path": page, "steps": []map[string]any{{"press": "Launch the rocket"}}})
-	if rec.Code != http.StatusUnprocessableEntity || !strings.Contains(rec.Body.String(), "button: Edit block") {
+	if rec.Code != http.StatusUnprocessableEntity || !strings.Contains(rec.Body.String(), "button: Edit Water the plants") {
 		t.Errorf("a step that finds nothing says what the page has, got %d %s", rec.Code, rec.Body.String())
 	}
 }

@@ -25,6 +25,7 @@ Usage:
   sameway check                         validate the workspace schema and components
   sameway update [--check]              install a new version of sameway, or only say whether one is out
   sameway search <words>                find anything by the words in it, records and canvas blocks alike
+  sameway add <file>... [--title words] add files on this computer, copied in as they are (up to 4 GB each)
   sameway look <path>                   a page as a screen reader gets it, with its problems, as JSON
   sameway export                        rewrite content/ from the database (it is kept current as things change)
   sameway import [--dry-run]            read content/ back into the database, after a git pull; one Undo takes it back
@@ -93,6 +94,8 @@ func Run(args []string, env Env) int {
 		err = c.updateCmd()
 	case "look":
 		err = c.lookCmd()
+	case "add":
+		err = c.addCmd()
 	case "search":
 		err = c.searchCmd()
 	case "export":

@@ -8,6 +8,7 @@
 package convert
 
 import (
+	"bytes"
 	"errors"
 	"path"
 	"strings"
@@ -49,7 +50,7 @@ var images = map[string]bool{"png": true, "jpg": true, "jpeg": true, "gif": true
 // audio is the recordings a browser can play, by extension, with the type
 // each is served as: Windows does not know some of them by itself.
 var audio = map[string]string{
-	"mp3": "audio/mpeg", "m4a": "audio/mp4", "aac": "audio/aac", "wav": "audio/wav",
+	"mp3": "audio/mpeg", "m4a": "audio/mp4", "m4b": "audio/mp4", "aac": "audio/aac", "wav": "audio/wav",
 	"ogg": "audio/ogg", "oga": "audio/ogg", "opus": "audio/ogg", "webm": "audio/webm", "flac": "audio/flac",
 }
 
@@ -57,6 +58,35 @@ var audio = map[string]string{
 // is not one.
 func AudioType(name string) string {
 	return audio[Ext(name)]
+}
+
+// video is the videos a browser can play, by extension, with the type each
+// is served as. A .webm is either; KindOf looks inside.
+var video = map[string]string{
+	"mp4": "video/mp4", "m4v": "video/mp4", "mov": "video/quicktime", "mkv": "video/x-matroska",
+	"3gp": "video/3gpp", "3g2": "video/3gpp2",
+}
+
+// MediaType is the type a recording or a video is served as, or "".
+func MediaType(name, kind string) string {
+	if kind == "video" {
+		if t := video[Ext(name)]; t != "" {
+			return t
+		}
+		if Ext(name) == "webm" {
+			return "video/webm"
+		}
+	}
+	return audio[Ext(name)]
+}
+
+// KindOf is Kind with a look at the start of the file, for the one
+// extension that is either: a WebM with a picture in it is a video.
+func KindOf(name string, head []byte) string {
+	if Ext(name) == "webm" && (bytes.Contains(head, []byte("V_VP8")) || bytes.Contains(head, []byte("V_VP9")) || bytes.Contains(head, []byte("V_AV1")) || bytes.Contains(head, []byte("V_MPEG4"))) {
+		return "video"
+	}
+	return Kind(name)
 }
 
 // Ext is a file name's extension, lower case, without the dot.
@@ -69,7 +99,7 @@ func Ext(name string) string {
 func Builtin(name string) bool {
 	ext := Ext(name)
 	_, ok := kinds[ext]
-	return ok || images[ext] || audio[ext] != ""
+	return ok || images[ext] || audio[ext] != "" || video[ext] != ""
 }
 
 // Kind names a file's format from its name.
@@ -80,6 +110,9 @@ func Kind(name string) string {
 	}
 	if audio[ext] != "" {
 		return "audio"
+	}
+	if video[ext] != "" {
+		return "video"
 	}
 	if k, ok := kinds[ext]; ok {
 		return k.name
@@ -98,6 +131,9 @@ func Read(name string, data []byte) (Result, error) {
 	}
 	if audio[ext] != "" {
 		return Result{Kind: "audio", Audio: true}, nil
+	}
+	if video[ext] != "" {
+		return Result{Kind: "video", Audio: true}, nil
 	}
 	k, ok := kinds[ext]
 	if !ok {

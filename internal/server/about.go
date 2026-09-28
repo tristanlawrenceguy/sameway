@@ -224,7 +224,7 @@ func (s *Server) everyEvent(now time.Time, month string) []any {
 		}
 		for _, rec := range recs {
 			if ev := s.eventOf(t, rec, field); ev != nil {
-				ev["meta"] = t.Name
+				ev["meta"] = schema.Words(t.Name)
 				events = append(events, ev)
 				events = append(events, s.repeatedIn(t, rec, field, ev, month)...)
 			}

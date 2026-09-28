@@ -30,3 +30,33 @@ func TestSpansAreInTheTextAsItIs(t *testing.T) {
 		}
 	}
 }
+
+// A plural is looked for as its one, but marked as the word it is: the
+// whole of groceries, not grocerie with its s left out (backlog 0547).
+func TestSpansMarkWholeWords(t *testing.T) {
+	marks := func(text, q string) []string {
+		var out []string
+		for _, sp := range Spans(text, Words(q)) {
+			out = append(out, text[sp[0]:sp[1]])
+		}
+		return out
+	}
+	cases := []struct {
+		text, q string
+		want    []string
+	}{
+		{"Buy groceries — Note", "groceries", []string{"groceries"}},
+		{"Groceries, then more groceries.", "groceries", []string{"Groceries", "groceries"}},
+		{"Call the plumber and both plumbers", "plumbers", []string{"plumber", "plumbers"}},
+		{"Two Cafés and a café", "cafes", []string{"Cafés", "café"}},
+		{"Crème brûlées for the brûlée fan", "brulees creme", []string{"Crème", "brûlées", "brûlée"}},
+		{"cafe\u0301s decomposed", "cafe", []string{"cafe\u0301s"}},
+		{"the rosebuds bloom", "bud", []string{"rosebuds"}},
+		{"日本語の文", "本", []string{"本"}},
+	}
+	for _, c := range cases {
+		if got := marks(c.text, c.q); !reflect.DeepEqual(got, c.want) {
+			t.Errorf("Spans(%q, %q) marks %q, want %q", c.text, c.q, got, c.want)
+		}
+	}
+}
