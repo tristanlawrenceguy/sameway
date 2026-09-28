@@ -103,6 +103,9 @@ func (s *Server) conversationFor(r *http.Request, from string) (*conversation, e
 
 func (s *Server) conversationAboutFor(r *http.Request, from, about, prompt string) (*conversation, error) {
 	convo, err := s.conversationAbout(s.chatFor(r), from, about, prompt)
+	if convo != nil {
+		convo.Path, convo.Query = r.URL.Path, r.URL.Query()
+	}
 	if a := chat.VisitorOf(r.Context()).Access; err != nil || a != chat.View && a != chat.Public {
 		return convo, err
 	}

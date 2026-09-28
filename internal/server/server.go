@@ -191,7 +191,11 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 		more = append(more, struct{ href, label string }{"/design", "Design system"})
 	}
 	for _, l := range more {
-		p.More = append(p.More, s.navLink(l.href, l.label, r.URL.Path == l.href))
+		href := l.href
+		if href == "/search" {
+			href = s.searchFrom(r) // from a kind's pages, a search of that kind
+		}
+		p.More = append(p.More, s.navLink(href, l.label, r.URL.Path == l.href))
 	}
 	p.Developer = s.app.Workspace.Config.UI.Developer == "shown"
 	out, err := render.RenderPage(p)
