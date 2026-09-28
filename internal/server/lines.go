@@ -42,21 +42,48 @@ func (s *Server) say(props, fields map[string]any, href string) {
 		props["target"] = w.Target
 	}
 	detail := w.Detail
-	// Old entry activity records stored a raw database ID in their detail
-	// field (before recordTitle was fixed for EntryType). Resolve those to
-	// readable titles like "Reading: 30 minutes".
-	if w.Target == "entry" && w.Detail != "" {
+
+	// Resolve raw database IDs in detail to readable titles so the log never
+	// shows identifiers. This covers records created without a title (where
+	// recordTitle falls back to id) and old entry entries that stored just
+	// the id as detail. It also resolves "record" component blocks whose
+	// Summarise produced "<type> <id>" from an unresolved record reference.
+	if w.Detail != "" {
 		targetID, _ := fields["target_id"].(string)
+
+		// Case A: detail is exactly the target_id (content records created
+		// without a title). Resolve to readable title.
 		if targetID != "" && w.Detail == targetID {
-			if et, ok := s.app.Types.Get("entry"); ok {
-				if rec, err := s.app.Store.Get("entry", targetID); err == nil {
-					if title := s.title(et, rec); title != "" {
+			if t, ok := s.app.Types.Get(w.Target); ok {
+				if rec, err := s.app.Store.Get(t.Name, targetID); err == nil {
+					if title := s.title(t, rec); title != "" {
 						detail = title
 					}
 				}
 			}
 		}
+
+		// Case B: "record" component whose Summarise produced "<type> <id>".
+		// Replace the generic "record" target with the actual content type
+		// name and resolve the id to a title.
+		if w.Target == "record" && strings.Contains(w.Detail, " ") {
+			parts := strings.SplitN(w.Detail, " ", 2)
+			refType := parts[0]
+			refID := parts[1]
+			if refType != "" && refID != "" {
+				props["target"] = w.Target // keep data-target as "record" for backward compat
+				props["TypeLabel"] = refType
+				if t, ok := s.app.Types.Get(refType); ok {
+					if rec, err := s.app.Store.Get(t.Name, refID); err == nil {
+						if title := s.title(t, rec); title != "" {
+							detail = title
+						}
+					}
+				}
+			}
+		}
 	}
+
 	if detail != "" {
 		props["detail"] = detail
 	}

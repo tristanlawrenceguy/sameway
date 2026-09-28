@@ -23,7 +23,8 @@
       "undo": { "type": "string", "description": "Where a form posts to reverse this entry. Given only while the entry can still be undone: the thing is still as it left it." },
       "from": { "type": "string", "description": "The page the entry is shown on, so undoing returns there." },
       "compact": { "type": "boolean", "default": false, "description": "For a line under something that already says who, such as a message's Changes made: the actor and its mark are left out, so the line starts at its verb, one 44px row. Not with level: the message has the heading." },
-      "id": { "type": "string" }
+      "id": { "type": "string" },
+      "TypeLabel": { "type": "string", "description": "The content type name (note, task, file) replacing generic 'record' in headings." }
     }
   },
   "a11y": {
