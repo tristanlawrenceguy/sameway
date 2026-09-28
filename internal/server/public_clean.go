@@ -162,6 +162,8 @@ func voidElement(tag string) bool {
 // publicFile says whether a kept file is part of something published: a
 // block on a published tab, or a published record, points at it.
 func (s *Server) publicFile(pub Published, id string) bool {
+	// A file's parts, such as a video's captions, go with the file.
+	id, _, _ = strings.Cut(id, "/")
 	ref := "/files/" + id
 	blocks, _ := s.app.Store.List(chat.BlockType, store.ListOptions{})
 	for _, b := range blocks {

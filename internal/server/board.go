@@ -62,10 +62,11 @@ func boardGroups(f schema.Field, recs []*store.Record, items []any) []any {
 	return groups
 }
 
-// addMove gives a board's card an id to come back to and the form that
-// moves it: its column picked from the field's choices and a Move button
-// named with the card, which posts the field like any edit, so it is
-// logged and can be undone, and works with no script.
+// addMove gives a board's card an id and the form that moves it: its
+// column picked from the field's choices and a Move button named with the
+// card, which posts the field like any edit, so it is logged and can be
+// undone, and works with no script. The page comes back to the Move
+// button, in the card's new column, so focus returns to what was pressed.
 func (s *Server) addMove(item map[string]any, t *schema.Type, f schema.Field, rec *store.Record, board string) {
 	at := board + "-" + rec.ID
 	item["at"] = at
@@ -76,7 +77,7 @@ func (s *Server) addMove(item map[string]any, t *schema.Type, f schema.Field, re
 	value, _ := rec.Fields[f.Name].(string)
 	actions, _ := item["actions"].([]any)
 	item["actions"] = append(actions, map[string]any{"component": "move", "props": map[string]any{
-		"action": "/t/" + t.Name + "/" + rec.ID + "/props", "title": s.title(t, rec), "back": at,
+		"action": "/t/" + t.Name + "/" + rec.ID + "/props", "title": s.title(t, rec), "id": at + "-go",
 		"select": map[string]any{
 			"id": at + "-move", "name": "prop-" + f.Name, "label": fieldLabel(f),
 			"as": "dropdown", "value": value, "options": options,

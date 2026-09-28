@@ -64,6 +64,13 @@ func (s *Server) recordProps(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// A move to where it already is changes nothing, so nothing is saved,
+	// logged or offered to undo, and the page says so.
+	if o, same := alreadyThere(t, rec, fields); same {
+		s.tellAt(w, r, o, returnTo(r, detail))
+		return
+	}
+
 	// Merge incoming into existing record and validate against schema.
 	merged := map[string]any{}
 	for k, v := range rec.Fields {
@@ -117,8 +124,8 @@ func (s *Server) refused(w http.ResponseWriter, r *http.Request, t *schema.Type,
 		// Listed with the rest, as words with no field to lead to, so none
 		// is lost when the problems show as a list.
 		for _, name := range rest {
-			said = append(said, capitalize(label(name))+" is not a field of a "+t.Name+".")
-			problems = append(problems, problem{Text: capitalize(label(name)) + " is not a field of a " + t.Name + "."})
+			said = append(said, capitalize(label(name))+" is not a field of a "+schema.Words(t.Name)+".")
+			problems = append(problems, problem{Text: capitalize(label(name)) + " is not a field of a " + schema.Words(t.Name) + "."})
 		}
 	}
 	text := strings.Join(said, " ")

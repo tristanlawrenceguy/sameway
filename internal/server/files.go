@@ -7,6 +7,7 @@ import (
 	"log"
 	"mime"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"strings"
 
@@ -91,6 +92,8 @@ func (s *Server) readNow(id, name string, data []byte) {
 	case res.Image:
 		fields["note"] = "An image has no text of its own; its description is what anyone who cannot see it gets."
 	case res.Audio:
+		// A .webm is heard or seen; what is in it says which.
+		fields["kind"] = convert.KindOf(name, s.headOf(id))
 		fields["note"] = "A recording's text is its transcript; there is none yet."
 	default:
 		fields["text"] = res.Markdown
@@ -131,7 +134,8 @@ func (s *Server) serveFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	name, _ := rec.Fields["name"].(string)
-	ct := convert.AudioType(stored)
+	kind, _ := rec.Fields["kind"].(string)
+	ct := convert.MediaType(stored, kind)
 	if ct == "" {
 		ct = mime.TypeByExtension(filepath.Ext(stored))
 	}
@@ -155,15 +159,17 @@ func (s *Server) fileExtras(r *http.Request, rec *store.Record) string {
 			// page asks for a description.
 			title, _ := rec.Fields["title"].(string)
 			alt = title + ", not described yet"
-			b.WriteString(`<p class="sw-muted">This picture has no description yet, so someone who cannot see it hears only its name. Press Edit to say what it shows.</p>`)
+			b.WriteString(`<p class="sw-muted">This picture has no description yet, so someone who cannot see it hears only its name. Press Edit to say what it shows, or ask the assistant for a draft to check.</p>`)
+			ask := "Describe this picture (/t/" + FileType + "/" + rec.ID + ") for someone who cannot see it, as a draft I will check."
+			fmt.Fprintf(&b, `<p>%s</p>`, s.component("link", map[string]any{"href": "/chat?prompt=" + url.QueryEscape(ask), "label": "Ask the assistant to describe it", "look": "button"}))
 		}
 		b.WriteString(string(s.component("image", s.pictureOf(rec, alt))))
 	}
-	audio := rec.Fields["kind"] == "audio"
+	audio := isRecording(rec)
 	if audio {
 		props := s.recordingOf(rec)
 		b.WriteString(s.speechOffer(r, rec, props))
-		b.WriteString(string(s.component("audio", props)))
+		b.WriteString(string(s.component("media", props)))
 	}
 	// Reading a file through a converter says so, and says how it ended:
 	// the page follows when it does (convertLater calls Changed).
@@ -172,11 +178,20 @@ func (s *Server) fileExtras(r *http.Request, rec *store.Record) string {
 		message := "Reading the file. Its text appears here when the converter answers."
 		if audio {
 			message = "Writing down what is said, on this computer. The transcript appears here when it is done."
+			if note, _ := rec.Fields["note"].(string); strings.Contains(note, "parts done") {
+				message = note + " The transcript appears here when it is done."
+			}
 		}
 		b.WriteString(string(s.component("status", map[string]any{"id": "file-status", "message": message, "state": "working"})))
 	case "failed":
 		note, _ := rec.Fields["note"].(string)
 		b.WriteString(string(s.component("status", map[string]any{"id": "file-status", "message": "Could not read the file: " + note, "state": "error"})))
+	}
+	// A calendar's events are a press from the calendar.
+	if rec.Fields["kind"] == "calendar" {
+		if t, ok := s.app.Types.Get("event"); ok && s.importable(t) {
+			fmt.Fprintf(&b, `<p>%s</p>`, s.component("link", map[string]any{"href": "/t/event/import?file=" + rec.ID, "label": "Add these events to the calendar", "look": "button"}))
+		}
 	}
 	fmt.Fprintf(&b, `<p>%s</p>`, s.component("link", map[string]any{"href": "/files/" + rec.ID, "label": "Open the original", "look": "button"}))
 	return b.String()

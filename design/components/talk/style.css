@@ -2,7 +2,11 @@
 .sw-talk[hidden] { display: none; }
 .sw-talk__controls { display: flex; flex-wrap: wrap; gap: var(--sw-space-2); align-items: center; }
 .sw-talk__state { font-weight: 600; }
-.sw-talk__novoice { margin: 0; color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); }
+.sw-talk__novoice, .sw-talk__hint { margin: 0; color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); }
+/* Hearing you is shown while the person speaks, not said: a screen reader
+   speaking over them would be written down as their words. */
+.sw-talk__heard { display: none; }
+.sw-talk[data-state="hearing"] .sw-talk__heard { display: inline; }
 /* While the microphone is on, a mark beside the words says so a second
    way; it never moves. */
 .sw-talk[data-state="listening"] .sw-talk__state::before, .sw-talk[data-state="hearing"] .sw-talk__state::before { content: ""; display: inline-block; width: 0.625rem; height: 0.625rem; border-radius: 50%; background: var(--sw-color-danger); margin-inline-end: var(--sw-space-2); }
