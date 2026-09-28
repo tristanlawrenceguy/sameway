@@ -52,6 +52,7 @@ func New(a *app.App) *Server {
 // ServeHTTP implements http.Handler.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if s.allowed(w, r) {
+		s.fresh()
 		s.mux.ServeHTTP(w, r)
 	}
 }
