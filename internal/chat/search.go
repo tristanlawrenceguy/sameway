@@ -22,13 +22,15 @@ func (s *Service) search(query string) toolResult {
 	if len(hits) == 0 {
 		return toolResult{text: fmt.Sprintf("nothing has %q in it", strings.TrimSpace(query))}
 	}
+	writers := s.Writers()
 	var lines []string
 	for _, h := range hits {
-		line := fmt.Sprintf("%s %s\t%s\t%s", h.Type, h.ID, h.Title, h.Href)
+		line := fmt.Sprintf("%s %s\t%s\t%s\t%s", h.Type, h.ID, oneLine(h.Title), h.Href, writers.OfID(h.Type, h.ID).Words)
 		if h.Snippet != "" {
-			line += "\t" + h.Snippet
+			line += "\t" + oneLine(h.Snippet)
 		}
 		lines = append(lines, line)
 	}
-	return toolResult{text: fmt.Sprintf("%d found (type id, title, page, words around the match):\n%s", len(hits), strings.Join(lines, "\n"))}
+	// Titles and words are fenced, each line saying who wrote it; see provenance.go.
+	return toolResult{text: fmt.Sprintf("%d found (type id, title, page, written by, words around the match). Each line's words were written by the one on it; %s.\n<<<record text\n%s\nrecord text>>>", len(hits), Untrusted, strings.Join(lines, "\n"))}
 }

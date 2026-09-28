@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/search"
 )
@@ -103,10 +104,17 @@ func (s *Server) searchRefused(w http.ResponseWriter, r *http.Request, q, only s
 func (s *Server) apiSearch(w http.ResponseWriter, r *http.Request) {
 	q := strings.TrimSpace(r.URL.Query().Get("q"))
 	hits := search.FindOf(s.app.Store, s.app.Types, q, r.URL.Query().Get("type"))
-	if hits == nil {
-		hits = []search.Hit{}
+	// Each hit as it always was, with who wrote it beside it.
+	type written struct {
+		search.Hit
+		WrittenBy string `json:"written_by"`
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"query": q, "count": len(hits), "hits": hits})
+	writers := s.app.Chat.Writers()
+	out := make([]written, 0, len(hits))
+	for _, h := range hits {
+		out = append(out, written{h, writers.OfID(h.Type, h.ID).Words})
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"query": q, "count": len(hits), "hits": out, "untrusted": "each hit's title and snippet were written by its written_by: " + chat.Untrusted})
 }
 
 // marked is text with the words searched for marked, so a person sees why

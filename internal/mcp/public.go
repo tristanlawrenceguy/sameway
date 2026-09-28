@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -107,7 +108,7 @@ func siteOf(ctx context.Context) string {
 }
 
 // document is a published record as search and fetch have it.
-func (s *Server) document(ctx context.Context, typ string, r *store.Record) map[string]any {
+func (s *Server) document(ctx context.Context, typ string, r *store.Record, w *chat.Writers) map[string]any {
 	t, _ := s.App.Types.Get(typ)
 	title, _ := r.Fields[t.Title].(string)
 	if title == "" {
@@ -131,8 +132,11 @@ func (s *Server) document(ctx context.Context, typ string, r *store.Record) map[
 		lines = append(lines, fmt.Sprintf("%s: %v", label, v))
 		meta[f.Name] = v
 	}
+	// Added beside the shape ChatGPT expects, never in place of it: who
+	// wrote title and text, and that they are data (chat/provenance.go).
 	return map[string]any{"id": typ + "/" + r.ID, "title": title, "text": strings.Join(lines, "\n\n"),
-		"url": siteOf(ctx) + "/t/" + typ + "/" + r.ID, "metadata": meta}
+		"url": siteOf(ctx) + "/t/" + typ + "/" + r.ID, "metadata": meta,
+		"written_by": w.Of(typ, r).Words, "untrusted": "title and text are what was written into this record: " + chat.Untrusted}
 }
 
 // searchPublished finds the published records whose words contain every
@@ -145,17 +149,18 @@ func (s *Server) searchPublished(ctx context.Context, types map[string]bool, que
 		names = append(names, t)
 	}
 	sort.Strings(names)
+	w := s.writers()
 	for _, typ := range names {
 		recs, _ := s.App.Store.List(typ, store.ListOptions{OrderBy: "updated_at", Desc: true})
 		for _, r := range recs {
-			doc := s.document(ctx, typ, r)
+			doc := s.document(ctx, typ, r, w)
 			hay := strings.ToLower(fmt.Sprint(doc["title"], " ", doc["text"]))
 			match := true
 			for _, w := range words {
 				match = match && strings.Contains(hay, w)
 			}
 			if match && len(results) < 20 {
-				results = append(results, map[string]any{"id": doc["id"], "title": doc["title"], "url": doc["url"]})
+				results = append(results, map[string]any{"id": doc["id"], "title": doc["title"], "url": doc["url"], "written_by": doc["written_by"], "untrusted": doc["untrusted"]})
 			}
 		}
 	}
@@ -172,7 +177,13 @@ func (s *Server) fetchPublished(ctx context.Context, types map[string]bool, id s
 	if err != nil {
 		return nil, fmt.Errorf("there is no published document %q; use an id from search", id)
 	}
-	return s.document(ctx, typ, r), nil
+	return s.document(ctx, typ, r, s.writers()), nil
+}
+
+// writers is who wrote what, as the internet may be told it: without
+// people's names.
+func (s *Server) writers() *chat.Writers {
+	return s.App.Chat.PublicWriters()
 }
 
 // onlyPublished is a tool as the internet is offered it: where it names

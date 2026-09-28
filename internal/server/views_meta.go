@@ -133,7 +133,7 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 		}
 	}
 	if o.Made {
-		parts = append(parts, whenMade(rec))
+		parts = append(parts, whenMade(rec, s.from(t, rec)))
 	}
 	return strings.Join(parts, " ")
 }
@@ -176,14 +176,33 @@ func (s *Server) dayFact(t *schema.Type, rec *store.Record, done, chip bool) str
 }
 
 // whenMade says when a record was made and last changed, as a person reads
-// a time, in one quiet line under its fields.
-func whenMade(rec *store.Record) string {
+// a time, and where its words came from when that was not the owner, in
+// one quiet line under its fields.
+func whenMade(rec *store.Record, from string) string {
 	made := when.Text(rec.CreatedAt.UTC().Format(time.RFC3339))
 	changed := when.Text(rec.UpdatedAt.UTC().Format(time.RFC3339))
-	if changed == made {
-		return `<span class="sw-detail__when sw-muted sw-small">Created ` + made + `</span>`
+	line := "Created " + made
+	if changed != made {
+		line += " · Updated " + changed
 	}
-	return `<span class="sw-detail__when sw-muted sw-small">Created ` + made + ` · Updated ` + changed + `</span>`
+	if from != "" {
+		line += " · From: " + template.HTMLEscapeString(from)
+	}
+	return `<span class="sw-detail__when sw-muted sw-small">` + line + `</span>`
+}
+
+// from is who wrote a record's words, said once on its page, when that
+// was someone other than the owner and their assistant: an import, another
+// person, an agent, an action. A file's or a device's page already says
+// what it is.
+func (s *Server) from(t *schema.Type, rec *store.Record) string {
+	if t.Name == FileType || t.Name == "device" {
+		return ""
+	}
+	if w := s.app.Chat.Writers().Of(t.Name, rec); w.Outside {
+		return w.Words
+	}
+	return ""
 }
 
 // dotOf is the colour a list wears everywhere it appears: the sidebar,
