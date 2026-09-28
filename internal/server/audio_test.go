@@ -26,7 +26,7 @@ func TestARecordingPlaysWithItsTranscript(t *testing.T) {
 		t.Errorf("a recording is kind audio and ready: %v", file.Fields)
 	}
 	page := get(t, h, loc).Body.String()
-	for _, want := range []string{`data-component="audio"`, `<audio class="sw-audio__media" controls preload="metadata"`, `type="audio/mp4"`, "M4A · ", "No transcript yet."} {
+	for _, want := range []string{`data-component="media"`, `<audio class="sw-media__player" controls preload="metadata"`, `type="audio/mp4"`, "M4A · ", "No transcript yet."} {
 		if !strings.Contains(page, want) {
 			t.Errorf("the recording's page should have %s", want)
 		}
@@ -44,7 +44,7 @@ func TestARecordingPlaysWithItsTranscript(t *testing.T) {
 		t.Fatal(err)
 	}
 	page = get(t, h, loc).Body.String()
-	for _, want := range []string{`<li class="sw-audio__cue" data-start="4.20">`, `href="/files/` + id + `#t=4.20"`, "Play from 4 seconds", `<span class="sw-audio__speaker">Hana:</span> The compost order went in.`} {
+	for _, want := range []string{`<li class="sw-media__cue" data-start="4.20">`, `href="/files/` + id + `#t=4.20"`, "Play from 4 seconds", `<span class="sw-media__speaker">Hana:</span> The compost order went in.`} {
 		if !strings.Contains(page, want) {
 			t.Errorf("the transcript should have %s", want)
 		}

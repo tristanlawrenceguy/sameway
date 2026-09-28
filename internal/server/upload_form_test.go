@@ -30,7 +30,7 @@ func TestUploadFormHasSubmitButton(t *testing.T) {
 func TestUploadFormSaysWhatItTakesAndWhereProblemsGo(t *testing.T) {
 	_, h := newApp(t)
 	body := get(t, h, "/t/file").Body.String()
-	for _, want := range []string{"Up to 64 MB.", `class="sw-upload__error" id="upload-error" aria-live="polite"`, `aria-describedby="upload-hint upload-error"`, `data-busy-target="upload-status"`} {
+	for _, want := range []string{"Up to 4 GB.", `class="sw-upload__error" id="upload-error" aria-live="polite"`, `aria-describedby="upload-hint upload-error"`, `data-busy-target="upload-status"`} {
 		if !strings.Contains(body, want) {
 			t.Errorf("the upload form should carry %s: %s", want, truncate(body))
 		}
@@ -47,7 +47,7 @@ func TestUploadScriptSaysWhatIsWrong(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"Select a file to add", "The selected file must be smaller than 64 MB", "The selected file is empty", "setCustomValidity", `querySelectorAll("[data-component=upload]")`} {
+	for _, want := range []string{"Select a file to add", "The selected file must be smaller than 4 GB", "The selected file is empty", "setCustomValidity", `querySelectorAll("[data-component=upload]")`} {
 		if !strings.Contains(string(js), want) {
 			t.Errorf("the upload script should carry %q", want)
 		}

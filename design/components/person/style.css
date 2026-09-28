@@ -1,8 +1,10 @@
 /* A person: their dot in their colour (data-person sets --sw-actor, see
-   base/02-feedback.css), their name in the text colour. */
-.sw-person { display: inline-flex; align-items: center; gap: var(--sw-space-1); color: var(--sw-color-fg); }
+   base/02-feedback.css), their name in the text colour. Inline, so a long
+   name wraps like the words around it, even one with no spaces. */
+.sw-person { color: var(--sw-color-fg); overflow-wrap: anywhere; }
 .sw-person__dot {
-  flex: none; width: 0.625rem; height: 0.625rem; border-radius: 50%;
+  display: inline-block; vertical-align: middle;
+  width: 0.625rem; height: 0.625rem; margin-inline-end: var(--sw-space-1); border-radius: 50%;
   background: var(--sw-actor, var(--sw-color-border-strong));
 }
 @media (forced-colors: active) { .sw-person__dot { background: CanvasText; } }
