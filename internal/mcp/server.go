@@ -33,8 +33,15 @@ type Server struct {
 	// Published says which content types are published just now, for a
 	// connection from the internet; see public.go.
 	Published func() map[string]bool
+	// Assistant says the client is the assistant in the app, whose model
+	// runs the tools in another program (sameway mcp --assistant): its
+	// changes are the assistant's, not an agent's. See agent.go.
+	Assistant bool
 
 	mu sync.Mutex
+	// sessions are the HTTP clients that said who they are, by the
+	// Mcp-Session-Id each was given; see agent.go.
+	sessions sessions
 	// http is the web server over the same app, for tools that read a
 	// page the way the API does.
 	http http.Handler
@@ -70,6 +77,9 @@ const (
 // Serve reads requests until the input ends or the context is cancelled.
 // A notification (no id) gets no reply; everything else gets exactly one.
 func (s *Server) Serve(ctx context.Context) error {
+	// One client for as long as the input lasts: what it calls itself
+	// on initialize names every change it makes.
+	ctx = withConn(ctx, &conn{})
 	sc := bufio.NewScanner(s.In)
 	sc.Buffer(make([]byte, 0, 64*1024), 16*1024*1024)
 	for sc.Scan() {
@@ -113,6 +123,7 @@ func (s *Server) handle(ctx context.Context, req request) (any, *rpcError) {
 	}
 	switch req.Method {
 	case "initialize":
+		connOf(ctx).introduce(req.Params)
 		return map[string]any{
 			"protocolVersion": protocolVersion,
 			"capabilities":    map[string]any{"tools": map[string]any{"listChanged": false}},
@@ -141,7 +152,7 @@ func (s *Server) handle(ctx context.Context, req request) (any, *rpcError) {
 			if t, e, public := s.publicCall(ctx, params.Name, params.Arguments); public {
 				text, isError, structured = t, e, params.Name == "search" || params.Name == "fetch"
 			} else {
-				text, isError = s.call(ctx, svc, params.Name, params.Arguments)
+				text, isError = s.call(ctx, s.forAgent(ctx, svc), params.Name, params.Arguments)
 			}
 		}
 		result := map[string]any{

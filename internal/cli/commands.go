@@ -114,8 +114,17 @@ func (c *ctx) mcpCmd() error {
 	if in == nil {
 		in = os.Stdin
 	}
+	// --assistant is the assistant in the app, whose model runs its tools
+	// here (see llm.Command): its changes are the assistant's. Any other
+	// client is an agent, logged by the name it gives.
+	fs := flag.NewFlagSet("mcp", flag.ContinueOnError)
+	fs.SetOutput(c.Stderr)
+	assistant := fs.Bool("assistant", false, "the client is the assistant in the app")
+	if err := fs.Parse(c.args); err != nil {
+		return err
+	}
 	fmt.Fprintf(c.Stderr, "sameway mcp: serving %q from %s\n", a.Workspace.Config.Name, a.Workspace.Dir)
-	srv := &mcp.Server{App: a, Version: update.Version, In: in, Out: c.Stdout}
+	srv := &mcp.Server{App: a, Version: update.Version, In: in, Out: c.Stdout, Assistant: *assistant}
 	return srv.Serve(context.Background())
 }
 

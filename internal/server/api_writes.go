@@ -2,13 +2,18 @@ package server
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 )
 
-// Writes through the API are changes like any other: logged as the
-// person's, through the API, with what each record was before, so each
-// can be undone. The activity log itself is not written here at all.
+// Writes through the API are changes like any other: logged with what
+// each record was before, so each can be undone. Whatever calls the API
+// is a program, a script or an agent, so its changes are logged as an
+// agent's, by the name it gives (see apiAgent), and a block it places is
+// marked as that agent's too: a record and a block written by the same
+// caller say the same who. The activity log itself is not written here
+// at all.
 
 func (s *Server) apiCreate(w http.ResponseWriter, r *http.Request) {
 	if s.keptLog(w, r) {
@@ -22,12 +27,16 @@ func (s *Server) apiCreate(w http.ResponseWriter, r *http.Request) {
 	if s.keptFromVisitor(w, r, fields) {
 		return
 	}
+	agent := apiAgent(r)
+	if r.PathValue("type") == chat.BlockType {
+		byAgent(fields, agent, true)
+	}
 	rec, err := s.app.Store.Create(r.PathValue("type"), fields)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
-	chat.RecordWrite(s.app.Store, chat.ThroughAPI, "created", rec, nil)
+	chat.AgentWrite(s.app.Store, agent, "created", rec, nil)
 	w.Header().Set("Location", "/api/"+rec.Type+"/"+rec.ID)
 	writeJSON(w, http.StatusCreated, rec)
 }
@@ -49,12 +58,16 @@ func (s *Server) apiUpdate(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
+	agent := apiAgent(r)
+	if r.PathValue("type") == chat.BlockType {
+		byAgent(fields, agent, false)
+	}
 	rec, err := s.app.Store.Update(r.PathValue("type"), r.PathValue("id"), fields)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
-	chat.RecordWrite(s.app.Store, chat.ThroughAPI, "updated", rec, was.Fields)
+	chat.AgentWrite(s.app.Store, agent, "updated", rec, was.Fields)
 	writeJSON(w, http.StatusOK, rec)
 }
 
@@ -72,7 +85,7 @@ func (s *Server) apiDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Logged with everything it had, so it can be put back.
-	chat.RecordWrite(s.app.Store, chat.ThroughAPI, "deleted", was, was.Fields)
+	chat.AgentWrite(s.app.Store, apiAgent(r), "deleted", was, was.Fields)
 	writeJSON(w, http.StatusOK, map[string]any{"deleted": r.PathValue("id")})
 }
 
@@ -86,4 +99,30 @@ func (s *Server) keptLog(w http.ResponseWriter, r *http.Request) bool {
 	writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": apiError{Code: "kept",
 		Message: "the activity log is kept by Sameway and cannot be changed; to take a change back, POST /activity/<id>/undo"}})
 	return true
+}
+
+// apiAgent is who is calling the API: the name its X-Sameway-Agent header
+// gives, or the product its User-Agent names (curl, python-requests),
+// or nobody in particular, "An agent". A browser's User-Agent names no
+// one, since every browser's starts Mozilla.
+func apiAgent(r *http.Request) chat.Agent {
+	name := r.Header.Get("X-Sameway-Agent")
+	if name == "" {
+		product, _, _ := strings.Cut(strings.TrimSpace(r.UserAgent()), "/")
+		if product, _, _ = strings.Cut(product, " "); product != "Mozilla" {
+			name = product
+		}
+	}
+	return chat.Agent{Name: chat.AgentName(name), Through: chat.ThroughAPI}
+}
+
+// byAgent marks a block's fields as the agent's: who changed it last,
+// and on a new one who added it. What the body says of these is not
+// taken: who made a change is the log's to say, not the caller's.
+func byAgent(fields map[string]any, a chat.Agent, created bool) {
+	fields["actor"], fields["agent"] = chat.ActorAgent, a.Name
+	delete(fields, "created_by")
+	if created {
+		fields["created_by"] = chat.ActorAgent
+	}
 }

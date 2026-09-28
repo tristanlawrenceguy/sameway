@@ -26,6 +26,13 @@ func (s *Server) line(r *store.Record, canUndo bool) map[string]any {
 	if who, person := s.whoDid(r); who != "" {
 		props["who"], props["person"] = who, person
 	}
+	// An agent by the name it gave and how it came in, as the summary says
+	// it: Claude Code (through MCP).
+	if r.Fields["actor"] == chat.ActorAgent {
+		by, _ := r.Fields["by"].(string)
+		via, _ := r.Fields["via"].(string)
+		props["who"] = chat.AgentWho(by, via)
+	}
 	href := s.hrefFor(r)
 	s.say(props, r.Fields, href)
 	if canUndo && s.app.Chat.Undoable(r) {

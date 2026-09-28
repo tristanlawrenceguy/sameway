@@ -88,7 +88,8 @@ func Record(st *store.Store, actor string, c Change) string {
 }
 
 // summarise says what happened in a person's words: "Assistant added card
-// Shopping", "You removed list Groceries", "System failed: no model".
+// Shopping", "You removed list Groceries", "System failed: no model",
+// "Claude Code (through MCP) updated task Call plumber".
 func summarise(actor string, c Change) string {
 	who := map[string]string{"human": "You", "assistant": "Assistant", "system": "System"}[actor]
 	if who == "" {
@@ -96,6 +97,11 @@ func summarise(actor string, c Change) string {
 	}
 	if actor == "human" && c.By != "" {
 		who = c.By
+	}
+	if actor == ActorAgent {
+		// Its name and its way in say together that it was an agent.
+		who = AgentWho(c.By, c.Via)
+		c.Via = ""
 	}
 	if c.Undone != "" {
 		undone := CleanSummary(c.Undone)

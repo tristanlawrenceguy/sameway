@@ -99,7 +99,9 @@ func (c *Command) Complete(ctx context.Context, req Request) (*Response, error) 
 }
 
 // mcpConfig writes the MCP configuration the program is handed: this
-// binary, serving this workspace over stdio, under the name sameway.
+// binary, serving this workspace over stdio, under the name sameway, as
+// the assistant's, so what the program changes is logged as the
+// assistant's and not as an outside agent's.
 func (c *Command) mcpConfig() (string, error) {
 	exe := c.Executable
 	if exe == "" {
@@ -109,7 +111,7 @@ func (c *Command) mcpConfig() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	cfg := map[string]any{"mcpServers": map[string]any{"sameway": map[string]any{"command": exe, "args": []string{"--workspace", c.Workspace, "mcp"}}}}
+	cfg := map[string]any{"mcpServers": map[string]any{"sameway": map[string]any{"command": exe, "args": []string{"--workspace", c.Workspace, "mcp", "--assistant"}}}}
 	if err := json.NewEncoder(f).Encode(cfg); err != nil {
 		f.Close()
 		return "", err

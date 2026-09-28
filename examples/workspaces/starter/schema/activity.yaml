@@ -1,4 +1,4 @@
-# The activity log: every change to the canvas, by a person or the assistant.
+# The activity log: every change to the canvas, by a person, the assistant, or an agent.
 # Written by the system; read at /activity, /api/activity, and `sameway activity list`.
 name: activity
 description: One recorded action, with who did it and what it touched.
@@ -10,8 +10,9 @@ fields:
     description: The whole event as one sentence, such as "Assistant added card Shopping". What lists and headings show.
   actor:
     type: enum
-    values: [human, assistant, system]
+    values: [human, assistant, agent, system]
     required: true
+    description: Who made the change. human is a person; assistant is the assistant in the app; agent is a program outside Sameway, over MCP or through the API, named in by; system is the workspace itself.
   action:
     type: string
     required: true
@@ -33,10 +34,10 @@ fields:
     description: The id of the entry this one reversed, when this entry is an undo.
   via:
     type: string
-    description: The device the change was made from when it was not the machine serving, such as a phone over the tailnet.
+    description: The device the change was made from when it was not the machine serving, such as a phone over the tailnet; or the way an agent or a script came in, such as through MCP or through the API.
   by:
     type: string
-    description: Who made the change when it was not the workspace's owner, by name, for someone given access over Tailscale.
+    description: Who made the change when it was not the workspace's owner, by name, for someone given access over Tailscale; for an agent, the name it gave, such as Claude Code, empty when it gave none.
   by_login:
     type: string
     description: Who made the change by their Tailscale login, when known, the owner included, so it reads as theirs on the other computers that host the workspace.
