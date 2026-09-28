@@ -140,16 +140,37 @@
     form._armed = true;
     var said = form.querySelector(".sw-media__making"), btn = form.querySelector("button");
     var src = media.getAttribute("src");
+    // How the sound comes to be written down is the host's to say: there,
+    // for a WAV; in chunks it copied out, each read here in turn; or whole.
     function go() {
       btn.setAttribute("aria-disabled", "true");
       said.textContent = "Reading the recording on this device.";
-      window.swSpeech.toWav(src).then(function (wav) {
-        said.textContent = "Sending it to be written down.";
-        return fetch(form.action, { method: "POST", body: wav, headers: { "Content-Type": "audio/wav" }, credentials: "same-origin" });
-      }).then(function (r) { location.href = r.url; }, function () {
+      var action = form.action;
+      function failed() {
         btn.removeAttribute("aria-disabled");
         said.textContent = "This browser could not read the recording, so it was not written down.";
-      });
+      }
+      fetch(action.replace(/\/transcribe$/, "/sound"), { credentials: "same-origin" }).then(function (r) { return r.json(); }).then(function (plan) {
+        if (plan.host) {
+          return fetch(action, { method: "POST", credentials: "same-origin" }).then(function (r) { location.href = r.url; });
+        }
+        var chunks = plan.whole ? [{ url: src, start: 0 }] : plan.chunks, i = 0;
+        function next() {
+          if (i >= chunks.length) { location.reload(); return null; }
+          var c = chunks[i];
+          if (chunks.length > 1) said.textContent = "Reading part " + (i + 1) + " of " + chunks.length + ".";
+          var to = action + (chunks.length > 1 ? "?part=" + i + "&of=" + chunks.length + "&start=" + c.start : "");
+          return window.swSpeech.toWav(c.url).then(function (wav) {
+            return fetch(to, { method: "POST", body: wav, headers: { "Content-Type": "audio/wav" }, credentials: "same-origin" });
+          }).then(function (r) {
+            if (!r.ok) throw new Error("refused");
+            if (chunks.length === 1) { location.href = r.url; return null; }
+            i++;
+            return next();
+          });
+        }
+        return next();
+      }).catch(failed);
     }
     form.addEventListener("submit", function (e) {
       e.preventDefault();
