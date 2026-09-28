@@ -19,45 +19,66 @@ const Rate = 16000
 // ReadWAV reads a PCM (8, 16, 24 or 32-bit) or float WAV into mono samples
 // between -1 and 1, and its sample rate.
 func ReadWAV(r io.Reader) ([]float32, int, error) {
+	f, err := wavFormat(r)
+	if err != nil {
+		return nil, 0, err
+	}
+	data, err := io.ReadAll(io.LimitReader(r, f.size))
+	if err != nil {
+		return nil, 0, err
+	}
+	samples, err := mono(data, f.format, f.channels, f.bits)
+	return samples, f.rate, err
+}
+
+// wavInfo is what a WAV's header says of its sound.
+type wavInfo struct {
+	format         uint16
+	channels, bits int
+	rate           int
+	size           int64 // bytes of sound
+}
+
+// wavFormat reads a WAV's header and leaves r at the start of its sound.
+func wavFormat(r io.Reader) (wavInfo, error) {
 	var head [12]byte
 	if _, err := io.ReadFull(r, head[:]); err != nil || string(head[0:4]) != "RIFF" || string(head[8:12]) != "WAVE" {
-		return nil, 0, errors.New("this is not a WAV file")
+		return wavInfo{}, errors.New("this is not a WAV file")
 	}
-	var format, channels, bits uint16
-	var rate uint32
+	var f wavInfo
 	for {
 		var ch [8]byte
 		if _, err := io.ReadFull(r, ch[:]); err != nil {
-			return nil, 0, errors.New("the WAV file has no sound in it")
+			return wavInfo{}, errors.New("the WAV file has no sound in it")
 		}
 		size := binary.LittleEndian.Uint32(ch[4:8])
 		switch string(ch[0:4]) {
 		case "fmt ":
 			buf := make([]byte, size)
 			if _, err := io.ReadFull(r, buf); err != nil || size < 16 {
-				return nil, 0, errors.New("the WAV file's format is cut short")
+				return wavInfo{}, errors.New("the WAV file's format is cut short")
 			}
-			format, channels = binary.LittleEndian.Uint16(buf[0:2]), binary.LittleEndian.Uint16(buf[2:4])
-			rate, bits = binary.LittleEndian.Uint32(buf[4:8]), binary.LittleEndian.Uint16(buf[14:16])
-			if format == 0xFFFE && size >= 26 {
-				format = binary.LittleEndian.Uint16(buf[24:26])
+			f.format, f.channels = binary.LittleEndian.Uint16(buf[0:2]), int(binary.LittleEndian.Uint16(buf[2:4]))
+			f.rate, f.bits = int(binary.LittleEndian.Uint32(buf[4:8])), int(binary.LittleEndian.Uint16(buf[14:16]))
+			if f.format == 0xFFFE && size >= 26 {
+				f.format = binary.LittleEndian.Uint16(buf[24:26])
 			}
 			if size%2 == 1 {
 				io.CopyN(io.Discard, r, 1)
 			}
 		case "data":
-			if channels == 0 || rate == 0 {
-				return nil, 0, errors.New("the WAV file's sound comes before its format")
+			if f.channels == 0 || f.rate == 0 {
+				return wavInfo{}, errors.New("the WAV file's sound comes before its format")
 			}
-			data, err := io.ReadAll(io.LimitReader(r, int64(size)))
-			if err != nil {
-				return nil, 0, err
+			f.size = int64(size)
+			// A recording still being written says its size is all of it.
+			if size == 0 || size == 0xFFFFFFFF {
+				f.size = 1 << 62
 			}
-			samples, err := mono(data, format, int(channels), int(bits))
-			return samples, int(rate), err
+			return f, nil
 		default:
 			if _, err := io.CopyN(io.Discard, r, int64(size)+int64(size%2)); err != nil {
-				return nil, 0, errors.New("the WAV file is cut short")
+				return wavInfo{}, errors.New("the WAV file is cut short")
 			}
 		}
 	}

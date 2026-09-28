@@ -23,24 +23,33 @@
   }
   // record starts the microphone and resolves to something that stops it:
   // stop() resolves to the recording, as a Blob of the type recorded.
+  // onend, if set, is called when the microphone stops by itself (taken
+  // away, or its permission withdrawn); stop() still gives what was heard.
   function record() {
     return navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
       var type = bestType(), chunks = [];
       var rec = type ? new MediaRecorder(stream, { mimeType: type }) : new MediaRecorder(stream);
       rec.addEventListener("dataavailable", function (e) { if (e.data && e.data.size) chunks.push(e.data); });
       rec.start(1000);
-      return {
+      var api = {
         type: rec.mimeType || type || "audio/webm",
+        onend: null,
         stop: function () {
+          var done = function () {
+            stream.getTracks().forEach(function (t) { t.stop(); });
+            return new Blob(chunks, { type: rec.mimeType || type || "audio/webm" });
+          };
+          if (rec.state === "inactive") return Promise.resolve(done());
           return new Promise(function (ok) {
-            rec.addEventListener("stop", function () {
-              stream.getTracks().forEach(function (t) { t.stop(); });
-              ok(new Blob(chunks, { type: rec.mimeType || type || "audio/webm" }));
-            }, { once: true });
+            rec.addEventListener("stop", function () { ok(done()); }, { once: true });
             rec.stop();
           });
         }
       };
+      stream.getTracks().forEach(function (t) {
+        t.addEventListener("ended", function () { if (api.onend) api.onend(); });
+      });
+      return api;
     });
   }
   function decode(ctx, data) {

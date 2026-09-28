@@ -208,3 +208,30 @@ func TestReceiptSectionExistsAfterModelAction(t *testing.T) {
 
 	_ = a
 }
+
+// TestMarkdownLinkInReplyShowsItsWords verifies that a reply's link written
+// the Markdown way, as the prompt asks for, shows the thing's title as its
+// words and no brackets or path, on /chat (backlog 0548).
+func TestMarkdownLinkInReplyShowsItsWords(t *testing.T) {
+	a, h := newApp(t)
+	rec, err := a.Store.Create("note", map[string]any{"title": "Seeds to buy"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	postJSON(t, h, http.MethodPost, "/api/message", map[string]any{
+		"role":    "assistant",
+		"content": "I filed it as [Seeds to buy](/t/note/" + rec.ID + ").",
+	})
+	body := get(t, h, "/chat").Body.String()
+	want := `I filed it as <a class="sw-link" href="/t/note/` + rec.ID + `">Seeds to buy</a>.`
+	if !strings.Contains(body, want) {
+		t.Errorf("/chat should show the link by its title:\nwant: %s\n%s", want, truncate(body))
+	}
+	if strings.Contains(body, "[Seeds to buy]") {
+		t.Errorf("/chat shows the Markdown brackets\n%s", truncate(body))
+	}
+	// The status reads the reply out with the link as its name too.
+	if !strings.Contains(body, `<span class="sw-status__said sw-visually-hidden"> I filed it as Seeds to buy.</span>`) {
+		t.Errorf("the status should read the link out as its name\n%s", truncate(body))
+	}
+}
