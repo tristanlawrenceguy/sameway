@@ -62,8 +62,9 @@ func widen(q string) string {
 // kinds is the row of links that narrows the results to one kind, each
 // with how many it found, counted from the one search: All first, then
 // the most found. A kind with nothing found is not offered, unless it is
-// the one shown. It is a row of links, so it needs no script, and the one
-// here is marked as the current page.
+// the one shown. It is the filters component's links, one choice among a
+// few, so it needs no script, and the one here is marked as the current
+// page.
 func (s *Server) kinds(q, only string, all []search.Hit) template.HTML {
 	counts := search.Counts(all)
 	var names []string
@@ -85,11 +86,11 @@ func (s *Server) kinds(q, only string, all []search.Hit) template.HTML {
 	if only != "" {
 		names = append([]string{only}, names...)
 	}
-	items := []any{map[string]any{"href": searchURL(q, ""), "label": fmt.Sprintf("All (%d)", len(all)), "current": only == ""}}
+	opts := []any{map[string]any{"href": searchURL(q, ""), "label": "All", "count": len(all), "selected": only == ""}}
 	for _, name := range names {
-		items = append(items, map[string]any{"href": searchURL(q, name), "label": fmt.Sprintf("%s (%d)", capitalize(plural(name)), counts[name]), "current": name == only})
+		opts = append(opts, map[string]any{"href": searchURL(q, name), "label": capitalize(plural(name)), "count": counts[name], "selected": name == only})
 	}
-	return s.component("tabs", map[string]any{"label": "Kinds of result", "items": items})
+	return s.component("filters", map[string]any{"shape": "links", "label": "Kinds of result", "choices": []any{map[string]any{"label": "Kind", "options": opts}}})
 }
 
 // searchRefused is a search narrowed to a kind there is none of, or one
