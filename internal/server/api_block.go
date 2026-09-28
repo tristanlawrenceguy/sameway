@@ -51,7 +51,7 @@ func (s *Server) blockWrite(w http.ResponseWriter, r *http.Request, fields map[s
 		props = map[string]any{}
 	}
 	if _, err := c.Validate(props); err != nil {
-		writeJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": apiError{Code: "invalid", Message: err.Error()}})
+		writeJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": apiError{Code: "invalid", Message: chat.PropsTrouble(err)}})
 		return "", true
 	}
 	shows, err := s.app.Chat.CheckBlock(name, props)
