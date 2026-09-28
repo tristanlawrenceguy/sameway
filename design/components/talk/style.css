@@ -1,0 +1,9 @@
+.sw-talk { display: flex; flex-direction: column; gap: var(--sw-space-2); padding: var(--sw-space-3); border: 1px solid var(--sw-color-border); border-radius: var(--sw-radius-md); }
+.sw-talk[hidden] { display: none; }
+.sw-talk__controls { display: flex; flex-wrap: wrap; gap: var(--sw-space-2); align-items: center; }
+.sw-talk__state { font-weight: 600; }
+.sw-talk__novoice { margin: 0; color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); }
+/* While the microphone is on, a mark beside the words says so a second
+   way; it never moves. */
+.sw-talk[data-state="listening"] .sw-talk__state::before, .sw-talk[data-state="hearing"] .sw-talk__state::before { content: ""; display: inline-block; width: 0.625rem; height: 0.625rem; border-radius: 50%; background: var(--sw-color-danger); margin-inline-end: var(--sw-space-2); }
+@media (forced-colors: active) { .sw-talk[data-state="listening"] .sw-talk__state::before, .sw-talk[data-state="hearing"] .sw-talk__state::before { background: CanvasText; } }

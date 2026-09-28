@@ -20,13 +20,15 @@ import (
 // message to be read before they are sent. Nothing is kept.
 
 // voiceFor is the chat's microphone: Record for a voice note to attach,
-// always, and Dictate once speech-to-text is on this computer.
-func (s *Server) voiceFor() (record, dictate template.HTML) {
+// always, and Dictate and voice mode once speech-to-text is on this
+// computer.
+func (s *Server) voiceFor() (record, dictate, talk template.HTML) {
 	record = s.component("voice", map[string]any{"mode": "record", "target": "attach", "context": "a voice note to attach"})
 	if s.speechKit().Ready() {
 		dictate = s.component("voice", map[string]any{"mode": "dictate", "target": "message", "action": "/dictate"})
+		talk = s.component("talk", map[string]any{"message": "message", "action": "/dictate"})
 	}
-	return record, dictate
+	return record, dictate, talk
 }
 
 // dictate writes down a short recording sent as WAV and answers its words.
