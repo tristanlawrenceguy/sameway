@@ -50,3 +50,27 @@ func TestARecordingPlaysWithItsTranscript(t *testing.T) {
 		}
 	}
 }
+
+// The player's script: its seek bar holds still under focus, one
+// recording pauses another, and one this browser cannot play says so.
+func TestThePlayerIsQuietAndSaysWhenItCannotPlay(t *testing.T) {
+	data, err := os.ReadFile("../../design/components/audio/enhance.js")
+	if err != nil {
+		t.Fatal(err)
+	}
+	js := string(data)
+	for _, want := range []string{
+		`if (!focused) { seek.value = String(Math.floor(media.currentTime)); said(); }`,
+		`if (a !== media && !a.paused) a.pause();`,
+		`sources[sources.length - 1].addEventListener("error", cannot);`,
+		`"This browser cannot play " + title + ". Download it to play it elsewhere."`,
+		`trouble.setAttribute("role", "status");`,
+	} {
+		if !strings.Contains(js, want) {
+			t.Errorf("the player's script should have %s", want)
+		}
+	}
+	if strings.Contains(js, `"Player: "`) {
+		t.Error("the bar is not a named group that says the title again")
+	}
+}

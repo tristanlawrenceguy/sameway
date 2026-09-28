@@ -1,6 +1,6 @@
 {
   "name": "audio",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "A recording with its words: played with text-labelled controls (Play, Back 15 seconds, Forward 30 seconds, speed, a seek bar that says where it is in words), its length and size, a Download link, and its transcript under it, each line leading to the moment it was said and marked while it is heard.",
   "icon": "♪",
   "use": {
@@ -116,11 +116,11 @@
     }
   },
   "a11y": {
-    "role": "figure named by its title, holding the player (the browser's own, or a group of buttons, a select and a slider) and the transcript as a list of links",
+    "role": "figure named by its title, holding the player (the browser's own, or buttons, a slider and a select) and the transcript as a list of links",
     "keyboard": [
       {
         "key": "Tab",
-        "does": "reaches Play, Back 15 seconds, Forward 30 seconds, Speed, the seek bar, Download, then each line's time in the transcript"
+        "does": "reaches Play, Back 15 seconds, Forward 30 seconds, the seek bar, Speed, Download, then each line's time in the transcript"
       },
       {
         "key": "Enter or Space",
@@ -128,7 +128,7 @@
       },
       {
         "key": "Left and Right arrows",
-        "does": "on the seek bar, move 5 seconds"
+        "does": "on the seek bar, move 5 seconds (Up and Down arrows too)"
       },
       {
         "key": "Page Up and Page Down",
@@ -149,13 +149,13 @@
     ],
     "wcag": {
       "target": "AAA",
-      "notes": "Never plays by itself (1.4.2). The transcript is on the same page, under the player, with who spoke and the sounds that matter (1.2.1). Without a script the browser's own player is there and each line's time is a link into the recording (#t=). With it, the controls are buttons with their words in sight, not only icons (2.5.3), each at least 44 pixels (2.5.5); the seek bar says where it is in words, not a percentage, and not again on every tick while it has focus; the line being heard is marked by a border and bold type as well as colour (1.4.1), is never announced, and the page is never scrolled to it. Nothing moves: no waveform. Writing a recording down happens on the computer that hosts the workspace; the press that gets speech-to-text says how much it downloads, from where, and that recordings never leave, and nothing is downloaded without it."
+      "notes": "Never plays by itself (1.4.2). The transcript is on the same page, under the player, with who spoke and the sounds that matter (1.2.1). Without a script the browser's own player is there and each line's time is a link into the recording (#t=). With it, the controls are buttons with their words in sight, not only icons (2.5.3), each at least 44 pixels (2.5.5); the seek bar says where it is in words, not a percentage, and while it has focus it moves only when moved, so it is not read out on every tick; starting one recording pauses any other on the page, so two never play over each other or a screen reader; a recording this browser cannot play says so in words, once, beside the Download link, in place of controls that do nothing; the line being heard is marked by a border and bold type as well as colour (1.4.1), is never announced, and the page is never scrolled to it. Nothing moves: no waveform. Writing a recording down happens on the computer that hosts the workspace; the press that gets speech-to-text says how much it downloads, from where, and that recordings never leave, and nothing is downloaded without it."
     }
   },
   "machine": {
     "selector": "[data-component=\"audio\"]",
     "identify": "The audio element's src is the recording; each li[data-start] is one line of the transcript, its link's href ending #t=<seconds>.",
-    "operate": "Play by pressing Play, or set the audio element's currentTime from a line's data-start. The transcript's words are also the file record's text."
+    "operate": "Play by pressing Play, or set the audio element's currentTime from a line's data-start. A .sw-audio__trouble with words in it means this browser cannot play the recording; fetch its src instead. The transcript's words are also the file record's text."
   },
   "examples": [
     {

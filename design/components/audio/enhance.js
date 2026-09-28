@@ -6,7 +6,8 @@
 // Play or Pause, Back 15 seconds, Forward 30 seconds, a speed, and a seek
 // bar that says where it is in words. The transcript's times play from
 // their line, and the line being heard is marked, never announced and
-// never scrolled to. Nothing plays by itself.
+// never scrolled to. Nothing plays by itself, one recording pauses when
+// another starts, and one this browser cannot play says so.
 (function () {
   "use strict";
   function clock(s) {
@@ -44,8 +45,6 @@
     var title = (fig.querySelector(".sw-audio__title") || {}).textContent || "the recording";
     var bar = document.createElement("div");
     bar.className = "sw-audio__bar";
-    bar.setAttribute("role", "group");
-    bar.setAttribute("aria-label", "Player: " + title);
     var play = button("Play", " " + title);
     var back = button("Back 15 seconds");
     var fwd = button("Forward 30 seconds");
@@ -72,9 +71,14 @@
     });
     speed.appendChild(rate);
     bar.append(play, back, fwd, time, seek, speed);
+    // Empty until this browser cannot play it; then it says so, once.
+    var trouble = document.createElement("p");
+    trouble.className = "sw-audio__trouble";
+    trouble.setAttribute("role", "status");
     media.removeAttribute("controls");
     media.hidden = true;
     media.insertAdjacentElement("afterend", bar);
+    bar.insertAdjacentElement("afterend", trouble);
 
     var focused = false;
     function said() {
@@ -85,9 +89,9 @@
       var d = isFinite(media.duration) ? media.duration : 0;
       time.textContent = clock(media.currentTime) + (d ? " / " + clock(d) : "");
       if (d) seek.max = String(Math.floor(d));
-      seek.value = String(Math.floor(media.currentTime));
-      // Where it is is said when someone moves it, not on every tick.
-      if (!focused) said();
+      // While it has focus the seek bar moves only when someone moves it:
+      // a value that changes on every tick is read out on every tick.
+      if (!focused) { seek.value = String(Math.floor(media.currentTime)); said(); }
       mark();
     }
     function state() {
@@ -107,7 +111,27 @@
       var d = isFinite(media.duration) ? media.duration : Infinity;
       media.currentTime = Math.min(Math.max(0, t), d);
     }
-    play.addEventListener("click", function () { if (media.paused) media.play(); else media.pause(); });
+    // Moved by keyboard: the bar and its words follow at once.
+    function moved(t) {
+      to(t);
+      seek.value = String(Math.floor(media.currentTime));
+      said();
+    }
+    function cannot() {
+      bar.hidden = true;
+      fig.removeAttribute("data-state");
+      trouble.textContent = "This browser cannot play " + title + ". Download it to play it elsewhere.";
+    }
+    function start() {
+      var p = media.play();
+      if (p && p.catch) p.catch(function (e) { if (e && e.name === "NotSupportedError") cannot(); });
+    }
+    // A failed source says so on itself; the recording on the audio element.
+    media.addEventListener("error", cannot);
+    var sources = media.querySelectorAll("source");
+    if (sources.length) sources[sources.length - 1].addEventListener("error", cannot);
+    if (media.error || media.networkState === 3) cannot();
+    play.addEventListener("click", function () { if (media.paused) start(); else media.pause(); });
     back.addEventListener("click", function () { to(media.currentTime - 15); });
     fwd.addEventListener("click", function () { to(media.currentTime + 30); });
     rate.addEventListener("change", function () { media.playbackRate = parseFloat(rate.value) || 1; });
@@ -116,18 +140,22 @@
     seek.addEventListener("blur", function () { focused = false; });
     seek.addEventListener("keydown", function (e) {
       var step = { ArrowLeft: -5, ArrowDown: -5, ArrowRight: 5, ArrowUp: 5, PageDown: -60, PageUp: 60 }[e.key];
-      if (step) { e.preventDefault(); to(media.currentTime + step); said(); }
-      else if (e.key === "Home") { e.preventDefault(); to(0); said(); }
-      else if (e.key === "End" && isFinite(media.duration)) { e.preventDefault(); to(media.duration); said(); }
+      if (step) { e.preventDefault(); moved(media.currentTime + step); }
+      else if (e.key === "Home") { e.preventDefault(); moved(0); }
+      else if (e.key === "End" && isFinite(media.duration)) { e.preventDefault(); moved(media.duration); }
     });
     ["timeupdate", "loadedmetadata", "durationchange", "seeked"].forEach(function (ev) { media.addEventListener(ev, show); });
     ["play", "pause", "ended"].forEach(function (ev) { media.addEventListener(ev, function () { state(); mark(); }); });
+    // One sound at a time: starting this one pauses any other on the page.
+    media.addEventListener("play", function () {
+      document.querySelectorAll("[data-component=audio] audio").forEach(function (a) { if (a !== media && !a.paused) a.pause(); });
+    });
     fig.querySelectorAll(".sw-audio__at").forEach(function (a) {
       a.addEventListener("click", function (e) {
         e.preventDefault();
         var c = a.closest(".sw-audio__cue");
         to(parseFloat(c.getAttribute("data-start")) || 0);
-        media.play();
+        start();
       });
     });
     state();
