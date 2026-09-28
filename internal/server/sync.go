@@ -61,6 +61,7 @@ func (s *Server) events(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "event: hello\ndata: {}\n\n")
 	flusher.Flush()
 	last, others := s.changes.Load(), s.presentFor(r)
+	idle := r.URL.Query().Get("idle") != ""
 	tick := time.NewTicker(time.Second)
 	defer tick.Stop()
 	for {
@@ -69,9 +70,12 @@ func (s *Server) events(w http.ResponseWriter, r *http.Request) {
 			return
 		case <-tick.C:
 		}
-		// An open page is someone here; who else is here changing is
+		// An open page is someone here, unless it says its person has
+		// been idle a while (20-follow.js); who else is here changing is
 		// news to the page, like a change.
-		s.seen(r, refererPath(r))
+		if !idle {
+			s.seen(r, refererPath(r))
+		}
 		now, who := s.changes.Load(), s.presentFor(r)
 		if now != last || who != others {
 			last, others = now, who
