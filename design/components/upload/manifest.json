@@ -1,6 +1,6 @@
 {
   "name": "upload",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Adds a file. One field and one button, because a form is the better thing here; the file becomes a record whose contents are read into text the page renders with structure and search finds.",
   "icon": "⇧",
   "use": { "when": "a person wants to bring a document, a spreadsheet, a web page, a PDF or a picture into the workspace.", "not": "writing something new, which is a note, or a link to something that stays elsewhere, which is a link.", "with": "the files page, where it lives by default, or the header at compact size when a person adds files often." },

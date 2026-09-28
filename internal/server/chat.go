@@ -50,6 +50,8 @@ type conversationView struct {
 	Messages  []chatMessage
 	Compose   template.HTML
 	Send      template.HTML
+	Record    template.HTML // a voice note for Attach; see dictate.go
+	Dictate   template.HTML // saying the message, once speech-to-text is here
 	Clear     template.HTML
 	NewChat   template.HTML
 	ModelName string
@@ -130,6 +132,7 @@ func (s *Server) conversationAbout(c *chat.Service, from, about, prompt string) 
 	}
 	view.Compose = s.component("textarea", compose)
 	view.Send = s.component("button", map[string]any{"label": "Send", "type": "submit"})
+	view.Record, view.Dictate = s.voiceFor()
 	view.Clear = s.component("button", map[string]any{"label": "Clear", "context": "conversation", "type": "submit", "variant": "quiet"})
 	view.NewChat = s.component("button", map[string]any{"label": "New chat", "type": "submit", "variant": "secondary"})
 
