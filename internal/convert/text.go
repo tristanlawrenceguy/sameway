@@ -28,7 +28,13 @@ func plain(data []byte) (string, error) {
 
 func code(lang string) func([]byte) (string, error) {
 	return func(data []byte) (string, error) {
-		return "```" + lang + "\n" + strings.TrimRight(string(data), "\n") + "\n```\n", nil
+		// The fence is longer than any run of backticks inside, so a file
+		// that holds a fence of its own is still one block.
+		fence := "```"
+		for strings.Contains(string(data), fence) {
+			fence += "`"
+		}
+		return fence + lang + "\n" + strings.TrimRight(string(data), "\n") + "\n" + fence + "\n", nil
 	}
 }
 

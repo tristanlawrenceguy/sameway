@@ -128,6 +128,8 @@ func (s *Server) showWorkspaces(w http.ResponseWriter, r *http.Request, problem 
 	}
 	b.WriteString(`<section class="sw-stack" aria-labelledby="ws-this"><h2 id="ws-this">This workspace</h2>`)
 	b.WriteString(string(s.component("card", map[string]any{"title": cur.Config.Name, "meta": meta, "level": 3})))
+	fmt.Fprintf(&b, `<p>%s</p>`, s.component("link", map[string]any{"href": "/export/workspace.zip", "label": "Download everything in it", "look": "button"}))
+	b.WriteString(`<p class="sw-muted sw-small">One zip: every record as Markdown, every file as it was added, and a spreadsheet of each kind of record.</p>`)
 	b.WriteString(`</section>`)
 
 	others := s.others()

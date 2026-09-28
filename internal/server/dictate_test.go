@@ -71,6 +71,11 @@ func TestAMessageCanBeSaidInsteadOfTyped(t *testing.T) {
 	if bad.Code != http.StatusBadRequest {
 		t.Errorf("sound that cannot be read is refused, got %d", bad.Code)
 	}
+	var refusal struct{ Error string }
+	json.Unmarshal(bad.Body.Bytes(), &refusal)
+	if refusal.Error != "The sound could not be read, so it was not written down." {
+		t.Errorf("a refusal is said in plain words, not a program's error: %q", refusal.Error)
+	}
 
 	// Every upload carries Record, hidden until the page can record.
 	if list := get(t, h, "/t/file").Body.String(); !strings.Contains(list, `data-component="voice" data-mode="record" data-target="upload"`) || !strings.Contains(list, `id="voice-upload" hidden>`) {

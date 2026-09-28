@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -39,10 +40,26 @@ func (s *Server) say(props, fields map[string]any, href string) {
 	w := chat.Say(fields, href != "")
 	props["action"] = w.Action
 	if w.Target != "" {
-		props["target"] = w.Target
+		props["target"] = schema.Words(w.Target)
 	}
-	if w.Detail != "" {
-		props["detail"] = w.Detail
+	detail := w.Detail
+	// Old entry activity records stored a raw database ID in their detail
+	// field (before recordTitle was fixed for EntryType). Resolve those to
+	// readable titles like "Reading: 30 minutes".
+	if w.Target == "entry" && w.Detail != "" {
+		targetID, _ := fields["target_id"].(string)
+		if targetID != "" && w.Detail == targetID {
+			if et, ok := s.app.Types.Get("entry"); ok {
+				if rec, err := s.app.Store.Get("entry", targetID); err == nil {
+					if title := s.title(et, rec); title != "" {
+						detail = title
+					}
+				}
+			}
+		}
+	}
+	if detail != "" {
+		props["detail"] = detail
 	}
 	if href != "" {
 		props["href"] = href

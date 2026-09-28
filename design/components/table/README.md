@@ -27,6 +27,7 @@ row is filled out and what is past the last column is left out.
   [Adrian Roselli on responsive tables](https://adrianroselli.com/2020/11/under-engineered-responsive-tables.html)).
 
 Not done, and why: sorting by a column (tables here are short, and a
-collection already sorts on the server); rows stacked as cards on a phone
+collection already sorts on the server, and its Sort choice lets the
+person looking at it change the order there); rows stacked as cards on a phone
 (it strips the table's meaning in some browsers, and a collection's cards do
 that job); striped rows (borders and the hover already guide the eye).

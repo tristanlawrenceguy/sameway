@@ -45,7 +45,7 @@ func TestWhoElseIsHere(t *testing.T) {
 	hana := chat.Visitor{Name: "Hana", Login: "hana@example.com", Access: chat.Edit}
 	as(t, h, hana, http.MethodGet, "/t/note", "", "")
 	page := get(t, h, "/").Body.String()
-	if !strings.Contains(page, "Also here:") || !strings.Contains(page, "Hana</span>") && !strings.Contains(page, "Hana, on") {
+	if !strings.Contains(page, "Also here:") || !strings.Contains(page, "Hana</bdi></span>") && !strings.Contains(page, "Hana, on") {
 		t.Errorf("the owner sees Hana is here:\n%s", truncate(page))
 	}
 	if !strings.Contains(page, "on Notes") {
@@ -57,7 +57,7 @@ func TestWhoElseIsHere(t *testing.T) {
 	}
 	srv := h.(*server.Server)
 	srv.HearPresence([]peers.Presence{{Login: "bob@example.com", Name: "Bob", Place: "Plan"}})
-	if page := get(t, h, "/").Body.String(); !strings.Contains(page, "Bob</span>, on Plan") {
+	if page := get(t, h, "/").Body.String(); !strings.Contains(page, "Bob</bdi></span>, on Plan") {
 		t.Error("someone on another computer is here too")
 	}
 }

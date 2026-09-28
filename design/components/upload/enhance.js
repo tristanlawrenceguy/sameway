@@ -4,7 +4,7 @@
 // scripts the field is always there, and says to leave it empty for other
 // files. A form sent with no file, or one too big, says so above the field
 // in words, and the field is marked as having a problem; a file too big is
-// caught before it is sent, not after 64 MB has gone. While the file goes
+// caught before it is sent, not after 4 GB has gone. While the file goes
 // its status says so (the status component).
 (function () {
   "use strict";
@@ -24,7 +24,7 @@
       var f = file.files && file.files[0];
       if (about) about.hidden = !(f && /^image\//.test(f.type));
       if (f && max && f.size > max) {
-        file.setCustomValidity("The selected file must be smaller than 64 MB");
+        file.setCustomValidity("The selected file must be smaller than 4 GB");
       } else if (f && f.size === 0) {
         file.setCustomValidity("The selected file is empty");
       } else {

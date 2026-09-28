@@ -31,3 +31,8 @@
 .sw-collection__column-title { margin: 0 0 var(--sw-space-2); font-size: var(--sw-size-text-md); }
 .sw-collection__count { color: var(--sw-color-fg-muted); font-weight: 400; }
 .sw-collection__column-items { display: flex; flex-direction: column; gap: var(--sw-space-2); }
+/* A person's own choices: the controls in a row where they fit, one under
+   another on a phone, then what they are showing in words. */
+.sw-collection__form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--sw-space-2) var(--sw-space-3); margin: 0 0 var(--sw-space-2); padding: 0; border: 0; min-width: 0; }
+.sw-collection__form .sw-field { margin: 0; }
+.sw-collection__showing { margin: 0 0 var(--sw-space-3); font-size: var(--sw-size-text-sm); }
