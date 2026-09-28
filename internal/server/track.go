@@ -39,6 +39,13 @@ func habitOf(rec *store.Record) track.Habit {
 	return h
 }
 
+// noGoal says a habit's goal is none: its schema has the goal empty for
+// none, and a 0 there, as a form or an agent may leave it, means the same,
+// so a habit's page does not say Goal 0.
+func noGoal(typ, field string, v any) bool {
+	return typ == HabitType && field == "goal" && number(v) == 0
+}
+
 func number(v any) float64 {
 	switch n := v.(type) {
 	case float64:

@@ -10,6 +10,7 @@ import "net/http"
 func (s *Server) togetherRoutes(m *http.ServeMux) {
 	s.app.Store.AfterSync = s.forYou
 	m.HandleFunc("POST /clash/{id}/use", s.clashUse)
+	m.HandleFunc("POST /clash/{id}/both", s.clashBoth)
 	m.HandleFunc("POST /clash/{id}/keep", s.clashKeep)
 	m.HandleFunc("POST /since/seen", s.sinceSeen)
 }

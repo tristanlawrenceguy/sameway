@@ -12,7 +12,6 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/design"
-	"github.com/tristanlawrenceguy/sameway/examples"
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/content"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
@@ -32,6 +31,8 @@ type App struct {
 	// Mirror keeps content/ as the portable form of every record.
 	Mirror content.Mirror
 	Chat   *chat.Service
+
+	schemaSeen schemaWatch // what schema/ held when last read; see reload.go
 }
 
 // Load opens the workspace at dir. Pass memoryDB to use an in-memory store
@@ -41,18 +42,8 @@ func Load(dir string, memoryDB bool) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	types, err := schema.Load(ws.SchemaDir())
+	types, err := loadTypes(ws.SchemaDir())
 	if err != nil {
-		return nil, err
-	}
-	// The system owns its internal types. A workspace created before a
-	// field existed still gets that field, so the tools always work.
-	builtin, err := schema.LoadFS(examples.FS, examples.StarterRoot+"/schema")
-	if err != nil {
-		return nil, err
-	}
-	types.Complete(builtin)
-	if err := types.CheckRefs(); err != nil {
 		return nil, err
 	}
 	dbPath := ws.DBPath()
@@ -265,7 +256,7 @@ func (a *App) Describe() Description {
 			"act":              "POST /act/{id} with from=<path to return to> runs one of the person's actions (a record of type action: a webhook, a command on this machine accepted once by the person, an arrangement, or a message to the assistant); POST /api/act/{id} runs it for an agent and answers with the result, or with waiting_for when the person's acceptance is needed first. A button block with action set to the id is the same press on the canvas",
 			"hook":             "POST /hook/{word} runs the action whose trigger field is that word, from anywhere, and answers with the result: how something outside presses a button here. Actions also run on their own with every, at and on",
 			"files":            "POST /t/file/upload (multipart, field file, optional title and from) adds a file: the original is kept and served at GET /files/{id}, and its contents are read into the record's text field as Markdown, at once for text, Markdown, CSV, HTML, EPUB, Word, Excel, PowerPoint and born-digital PDF, or by the converter named in workspace.yaml files.convert for that extension (status says converting until then). POST /api/file/upload with {\"title\": \"...\", \"filename\": \"...\", \"content\": \"<base64>\"} creates a complete record from an agent. Agents can also POST without content to create a stub file record, and POST /chat with a file part attaches it to the message and gives the assistant its text",
-			"search":           "GET /api/search?q=words: every record of every content type and every block whose words match, with a snippet and its page; the same search a person has at /search and the assistant has as the search tool",
+			"search":           "GET /api/search?q=words: every record of every content type and every block whose words match, with a snippet and its page; the same search a person has at /search and the assistant has as the search tool. Search everything first: total and counts say how many of each kind were found, said says it in words. Then &type=task shows only that kind (a kind that cannot be searched in is a 400 naming the ones that can). 50 at a time: page and pages say where you are, and next is the address of the next page when there is one",
 			"undo":             "POST /activity/{id}/undo with from=<path to return to>: reverses one activity entry for a person; agents call the undo_change tool. An entry that can be undone carries before, the thing as it was",
 			"content":          "content/<type>/<id>.md in the workspace is every record as Markdown with front matter, written as it changes; share the folder with git. sameway import reads it back after a pull, sameway export rewrites it",
 			"html_props":       "POST /t/{type}/{id}/props, form-encoded with each field named prop-<field>: the inline editor's route, which answers with the page rather than JSON. A field named html-<field> is the rich editor's HTML, turned into Markdown on the way in, with level-<field> the heading level it was shown at",

@@ -1,6 +1,6 @@
 {
   "name": "move",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Moves one record to another choice of a pick-list, such as a task from To do to Done: the choices in a list and a Move button named with the record. It saves like any edit, so it is logged and can be undone, and needs no script.",
   "icon": "⇄",
   "use": {
@@ -27,9 +27,9 @@
         "minLength": 1,
         "description": "The record's title, read after Move so each button has its own name."
       },
-      "back": {
+      "id": {
         "type": "string",
-        "description": "The id on the page to come back to after the move, such as the record's card."
+        "description": "The Move button's id. The form sends it as the place to come back to, so after the move focus returns to this button, in the record's new place, and hears where it went."
       },
       "select": {
         "type": "object",
@@ -51,13 +51,13 @@
       },
       {
         "key": "Enter",
-        "does": "on Move, saves the choice and comes back to the record"
+        "does": "on Move, saves the choice and comes back to this Move button, in the record's new column, saying where it went"
       }
     ],
     "states": [],
     "wcag": {
       "target": "AAA",
-      "notes": "A native select and a button, so a keyboard, a switch, touch and a voice all move a record one way, with no dragging (2.1.1, 2.5.7). The button shows Move and its name adds the record's title after it, so each is told apart and click Move still reaches it (2.5.3). The page comes back to the record and says where it went, with an Undo."
+      "notes": "A native select and a button, so a keyboard, a switch, touch and a voice all move a record one way, with no dragging (2.1.1, 2.5.7). The button shows Move and its name adds the record's title after it, so each is told apart and click Move still reaches it (2.5.3). The page comes back to the same Move button, now in the record's new column, and focus returns to it (as Atlassian's guidance has it), its description saying where it went; the message and its Undo stay at the top. A move to where it already is saves nothing and says so."
     }
   },
   "machine": {
@@ -71,7 +71,7 @@
       "props": {
         "action": "/t/task/k3n2p9/props",
         "title": "Order compost",
-        "back": "move-k3n2p9",
+        "id": "move-k3n2p9",
         "select": {
           "id": "move-k3n2p9-status",
           "name": "prop-status",

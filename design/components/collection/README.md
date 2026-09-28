@@ -29,14 +29,35 @@ with `by` (status: To do, Doing, Done), in the order the field lists
 them, each saying how many it holds, and a column for those with none.
 A line over the board names every column with its count and leads to it.
 Each card has a Move form: its column picked from a list and a Move
-button, which saves the field like any edit, comes back to the card
-focused, and says "House moved from Active to Done." with an Undo. A list
+button (the move component), which saves the field like any edit, comes
+back to that button focused in the card's new column, and says "House moved from Active to Done." with an Undo. A list
 of one line per record is a list; use a table when the fields are the point
 and several are compared.
 
 `limit` is how many are shown, 20 unless given. When more match, the list
 says it shows the first of them, and its link, See all of them, leads to
 the list page with the same query, which has them all.
+
+The person looking at it can narrow and sort it where it is, without
+asking. Over the list are a few choices made from the type's fields: Sort
+(Newest first, Oldest first, A to Z, and a date field soonest first), and
+one each of a pick-list (Status: Any, Active, Done), a yes-or-no (Done:
+All, Not done, Done) and a date field (Due: Any time, before today, in the
+next 7 days), where the type has them. A field `where` already fixes is not
+offered, nor is a board's own column field. Apply shows them; under the
+form the list says how many match and, once, what it is showing: "2 tasks.
+Showing: not done, due soonest first." with Reset beside it, back to how it
+was set up. The choices only add to `where`, never take from it: the
+assistant decides what the list is about, the person narrows within it.
+
+They are a plain GET form: the choices are in the page's address, named
+after the block (`?c-<block>-sort=due&c-<block>-done=false`), so two lists
+on a canvas keep their own, the form keeps the page's other fields, a live
+refresh and a reload keep them, the link to the list page carries them,
+and none of it needs a script. They are offered on the block's own page,
+and on the canvas at full size when more than five match and `limit` is
+over five; `controls: false` takes them away, for a short list or a small
+space, and `controls: true` offers them anyway. Never in a side pane.
 
 ## Why it works this way
 
@@ -86,7 +107,44 @@ the list page with the same query, which has them all.
   none, so VoiceOver keeps "list, 3 items"
   ([Scott O'Hara](https://www.scottohara.me/blog/2019/01/12/lists-and-safari.html)).
 
-Not done, and why: dragging cards between columns (the one way that
+- **Narrowed where it is, on the server.** A person should not have to
+  ask for "only the overdue ones"; a GET form with a button works with no
+  script, and the address says what is shown, so it can be kept and sent
+  ([GOV.UK finder-frontend](https://github.com/alphagov/finder-frontend),
+  [MoJ filter a list](https://design-patterns.service.justice.gov.uk/patterns/filter-a-list/)).
+- **Apply, not on change.** Choosing an option changes nothing until
+  Apply: a new page on every change moves the ground under a keyboard and
+  a screen reader, and a person setting two choices waits for one
+  ([WCAG 3.2.2](https://www.w3.org/WAI/WCAG22/Understanding/on-input.html),
+  [W3C H32](https://www.w3.org/WAI/WCAG22/Techniques/html/H32),
+  [DWP research on filters](https://design-system.dwp.gov.uk/research/filters),
+  [NN/g on batch and interactive filters](https://www.nngroup.com/articles/applying-filters/)).
+- **What is shown, said once, with a way back.** The choices in words,
+  not a count of them, next to the results, and one Reset
+  ([Baymard on applied filters](https://baymard.com/blog/how-to-design-applied-filters),
+  [DWP research on filters](https://design-system.dwp.gov.uk/research/filters)).
+  How many match is said in words; nothing matching says the conditions
+  and Reset is beside it.
+- **A few choices, in plain words**: at most a sort and three fields,
+  each choice a short phrase, Any or All first
+  ([W3C COGA](https://www.w3.org/TR/coga-usable/)).
+- **The sort said in words, not by aria-sort**, which belongs on a
+  table's own column headers when they sort it; a list's order is said
+  in the line over it, where every person reads it
+  ([Adrian Roselli on sortable table columns](https://adrianroselli.com/2021/04/sortable-table-columns.html)).
+- **Narrow, never widen.** The assistant's `where` is what the list is
+  for; the address can only add what the form offers, so a link cannot
+  make a list show what it was built to leave out.
+- **Nothing last.** Sorted by a date, those with no date come after the
+  ones with one, so "soonest first" starts with what is soonest.
+
+Not done, and why: radios for the choices (the research prefers them to
+dropdowns, but four groups of them would be taller than many lists; each
+dropdown here has three or four short options, labelled in sight);
+submitting on change (3.2.2, above); counts beside each option (each would
+be a query per option on every render, for a handful of records); choices
+kept between visits (the address keeps them, which is enough; MoJ advises
+filters not persist unless people need it); dragging cards between columns (the one way that
 leaves out a keyboard unless a second way is built beside it); field names only for screen readers (sighted people
 need them as much); a table squashed to fit a phone (its columns become
 unreadable, so it scrolls in a box instead).

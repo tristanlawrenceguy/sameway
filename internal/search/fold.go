@@ -54,7 +54,9 @@ func Words(q string) []string {
 }
 
 // Spans are where words are found in text, as byte ranges of the text as
-// it is, in order and not overlapping: for showing the words found.
+// it is, in order and not overlapping: for showing the words found. A span
+// is the whole word a match falls in, so groceries, found as grocerie, is
+// marked groceries and not grocerie with its s left over.
 func Spans(text string, words []string) [][2]int {
 	folded, at := foldIndex(text)
 	var spans [][2]int
@@ -72,7 +74,7 @@ func Spans(text string, words []string) [][2]int {
 			if end < len(at) {
 				last = at[end]
 			}
-			spans = append(spans, [2]int{at[start], last})
+			spans = append(spans, wordAround(text, at[start], last))
 			from = end
 		}
 	}
@@ -88,4 +90,37 @@ func Spans(text string, words []string) [][2]int {
 		out = append(out, s)
 	}
 	return out
+}
+
+// wordAround widens a byte range of text to the word it falls in: back to
+// where the word starts and on to where it ends, a letter at a time, so a
+// letter of more than one byte, or an accent kept as its own mark, is never
+// cut.
+func wordAround(text string, start, end int) [2]int {
+	for start > 0 {
+		r, n := utf8.DecodeLastRuneInString(text[:start])
+		if !inWord(r) {
+			break
+		}
+		start -= n
+	}
+	for end < len(text) {
+		r, n := utf8.DecodeRuneInString(text[end:])
+		if !inWord(r) {
+			break
+		}
+		end += n
+	}
+	return [2]int{start, end}
+}
+
+// inWord says whether a letter belongs to a word: letters, digits, and the
+// marks that sit on them. Writing without spaces between its words, such
+// as Chinese or Japanese, has no word to widen to, so a match there is
+// marked as found.
+func inWord(r rune) bool {
+	if unicode.In(r, unicode.Han, unicode.Hiragana, unicode.Katakana, unicode.Thai) {
+		return false
+	}
+	return unicode.IsLetter(r) || unicode.IsDigit(r) || unicode.Is(unicode.Mn, r)
 }
