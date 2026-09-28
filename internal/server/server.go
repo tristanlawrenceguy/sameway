@@ -34,6 +34,7 @@ type Server struct {
 	changes atomic.Int64 // changes arrived from other computers; see sync.go
 	present presence     // who else is here just now; see presence.go
 	speech  speechState  // speech-to-text on this computer; see transcribe.go
+	host    hostState    // recordings written down with no page; see hostwrite.go
 }
 
 // New builds the handler for an app.

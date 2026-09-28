@@ -98,6 +98,7 @@ func (s *Server) readKept(id, name, path string, wait bool) {
 	kind := convert.Kind(name)
 	if kind == "image" || kind == "audio" || kind == "video" {
 		s.readNow(id, name, nil)
+		s.writeLater(id) // written down here, when this server does that
 		return
 	}
 	if st, err := os.Stat(path); err == nil && st.Size() > maxRead {

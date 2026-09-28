@@ -116,6 +116,7 @@ func (s *Server) getSpeech(kit *Speech) {
 		chat.Record(s.app.Store, "system", chat.Change{Action: "failed", Detail: "getting speech-to-text: " + err.Error()})
 	} else {
 		chat.Record(s.app.Store, "system", chat.Change{Action: "added", Detail: "speech-to-text for this computer (" + speech.ModelName + ")"})
+		s.sweep() // the recordings that were waiting for it
 	}
 	s.Changed()
 }
@@ -196,7 +197,11 @@ func (s *Server) speechOffer(r *http.Request, rec *store.Record, props map[strin
 	s.speech.mu.Unlock()
 	switch {
 	case kit.Ready():
-		props["make"] = map[string]any{"action": "/files/" + rec.ID + "/transcribe", "auto": rec.Fields["status"] != "failed"}
+		// The host writes it down when it can; the page, when not.
+		props["make"] = map[string]any{"action": "/files/" + rec.ID + "/transcribe", "auto": rec.Fields["status"] != "failed" && !s.hostWrites(rec)}
+		if s.hostWaiting(rec.ID) {
+			props["none"] = "No transcript yet. It is waiting to be written down on this computer."
+		}
 	case getting:
 		return string(s.component("status", map[string]any{"id": "speech-status", "state": "working",
 			"message": fmt.Sprintf("Getting speech-to-text for this computer: %s of %s.", sizeWords(done), sizeWords(total))}))

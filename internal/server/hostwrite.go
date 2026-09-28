@@ -77,6 +77,9 @@ func (s *Server) hostWaiting(id string) bool {
 
 // writeLater queues a recording to be written down here, once.
 func (s *Server) writeLater(id string) {
+	if !s.speechKit().Ready() {
+		return
+	}
 	s.host.mu.Lock()
 	defer s.host.mu.Unlock()
 	if !s.host.on || s.host.waiting[id] || s.host.failed[id] {
