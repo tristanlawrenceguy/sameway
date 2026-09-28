@@ -34,7 +34,7 @@ func TestAMessageCanBeSaidInsteadOfTyped(t *testing.T) {
 	if !strings.Contains(page, `data-component="voice" data-mode="record" data-target="attach"`) {
 		t.Error("the chat offers a voice note to attach")
 	}
-	if strings.Contains(page, `data-mode="dictate"`) {
+	if strings.Contains(page, `data-mode="dictate"`) || strings.Contains(page, `data-component="talk"`) {
 		t.Error("dictation is offered only once speech-to-text is here")
 	}
 	var wav bytes.Buffer
@@ -54,6 +54,9 @@ func TestAMessageCanBeSaidInsteadOfTyped(t *testing.T) {
 	page = get(t, h, "/chat").Body.String()
 	if !strings.Contains(page, `data-mode="dictate" data-target="message" data-action="/dictate"`) {
 		t.Error("with speech-to-text here, the message can be dictated")
+	}
+	if !strings.Contains(page, `<section class="sw-talk" data-component="talk" data-message="message" data-action="/dictate" data-state="off"`) || !strings.Contains(page, "Start voice mode") {
+		t.Error("and voice mode is offered, hidden until the page can listen")
 	}
 	res := send()
 	wantStatus(t, res, http.StatusOK)

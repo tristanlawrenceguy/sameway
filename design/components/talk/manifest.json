@@ -1,0 +1,79 @@
+{
+  "name": "talk",
+  "version": "1.0.0",
+  "description": "Voice mode: a spoken conversation with the assistant. It listens until the person stops speaking, writes what was said down on the computer that hosts the workspace, sends it as their message, reads the reply aloud in a voice on this device, and listens again, every word shown in the chat as it goes. Shown only where the browser can record and speech-to-text is on the host.",
+  "icon": "◉",
+  "use": {
+    "when": "a person would rather talk than type: hands busy, eyes elsewhere, or speech easier than keys.",
+    "not": "saying one message and reading it before it goes, which is Dictate (the voice component).",
+    "with": "the chat, whose message and log it uses: everything said and answered is written there."
+  },
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "message",
+      "action"
+    ],
+    "properties": {
+      "message": {
+        "type": "string",
+        "minLength": 1,
+        "description": "The id of the chat's message field, which the words go into and are sent from."
+      },
+      "action": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Where the sound is sent to be written down."
+      },
+      "id": {
+        "type": "string"
+      }
+    }
+  },
+  "a11y": {
+    "role": "region named Voice mode, shown only where it can work, holding buttons with their words in sight, a checkbox, and one status that says each change of state once",
+    "keyboard": [
+      {
+        "key": "Tab",
+        "does": "reaches Start voice mode (End voice mode while it runs), Done speaking while listening, Skip the reply while reading, then Read replies aloud"
+      },
+      {
+        "key": "Enter or Space",
+        "does": "presses the button with focus"
+      },
+      {
+        "key": "Escape",
+        "does": "ends voice mode from anywhere on the page, stopping the microphone and the reading"
+      }
+    ],
+    "states": [
+      "off",
+      "listening",
+      "hearing",
+      "writing",
+      "answering",
+      "speaking",
+      "paused"
+    ],
+    "wcag": {
+      "target": "AAA",
+      "notes": "Everything said and every reply is written in the chat as it happens, so nothing is only heard (1.2). The microphone is asked for when Start voice mode is pressed and is off while a reply is read, so the assistant never hears itself; it pauses after 30 seconds with nothing heard, so it is never left open unattended, and End voice mode or Escape stops it at once. What it is doing is said in words, once each time it changes, and shown beside the buttons, never by a colour or a moving picture alone (1.4.1, 2.2.2). Replies are read in a voice on this device only, so the words are not sent elsewhere to be spoken; where there is none, it says so and the replies are shown. A screen reader already reads the chat's replies, so Read replies aloud can be turned off, and it is remembered on this device. Done speaking ends a turn by hand for anyone whose pauses are long (2.2.1)."
+    }
+  },
+  "machine": {
+    "selector": "[data-component=\"talk\"]",
+    "identify": "data-state says what it is doing: off, listening, hearing, writing, answering, speaking or paused.",
+    "operate": "An agent has no microphone: write in the chat's message instead. data-action takes 16 kHz WAV and answers {\"text\": \"...\"}."
+  },
+  "examples": [
+    {
+      "name": "default",
+      "props": {
+        "message": "message",
+        "action": "/dictate"
+      },
+      "file": "examples/default.html"
+    }
+  ]
+}
