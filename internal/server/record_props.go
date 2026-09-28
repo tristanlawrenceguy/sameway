@@ -64,6 +64,13 @@ func (s *Server) recordProps(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// A move to where it already is changes nothing, so nothing is saved,
+	// logged or offered to undo, and the page says so.
+	if o, same := alreadyThere(t, rec, fields); same {
+		s.tellAt(w, r, o, returnTo(r, detail))
+		return
+	}
+
 	// Merge incoming into existing record and validate against schema.
 	merged := map[string]any{}
 	for k, v := range rec.Fields {
