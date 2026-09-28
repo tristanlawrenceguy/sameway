@@ -7,6 +7,7 @@ import (
 	"log"
 	"mime"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"strings"
 
@@ -158,7 +159,9 @@ func (s *Server) fileExtras(r *http.Request, rec *store.Record) string {
 			// page asks for a description.
 			title, _ := rec.Fields["title"].(string)
 			alt = title + ", not described yet"
-			b.WriteString(`<p class="sw-muted">This picture has no description yet, so someone who cannot see it hears only its name. Press Edit to say what it shows.</p>`)
+			b.WriteString(`<p class="sw-muted">This picture has no description yet, so someone who cannot see it hears only its name. Press Edit to say what it shows, or ask the assistant for a draft to check.</p>`)
+			ask := "Describe this picture (/t/" + FileType + "/" + rec.ID + ") for someone who cannot see it, as a draft I will check."
+			fmt.Fprintf(&b, `<p>%s</p>`, s.component("link", map[string]any{"href": "/chat?prompt=" + url.QueryEscape(ask), "label": "Ask the assistant to describe it", "look": "button"}))
 		}
 		b.WriteString(string(s.component("image", s.pictureOf(rec, alt))))
 	}
