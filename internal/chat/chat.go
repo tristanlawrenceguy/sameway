@@ -49,6 +49,9 @@ type Service struct {
 	// its scripts run where a browser is at hand; set by the server, nil
 	// where there is none. See look.go.
 	Look func(ctx context.Context, ask map[string]any) (string, error)
+	// Picture is a picture file's bytes, ready for a model to see, set by
+	// the server; see pictures.go.
+	Picture func(fileID string) (llm.Image, bool)
 	// Publish sends to an MQTT topic, when the workspace has a broker;
 	// nil means it has none. See mqtt.go.
 	Publish func(topic, payload string) error
@@ -260,6 +263,7 @@ func (s *Service) history() ([]llm.Message, error) {
 		recs = recs[len(recs)-s.HistoryLimit:]
 	}
 	var out []llm.Message
+	var ids [][]string // the pictures each of out comes with
 	for i := range recs {
 		role, _ := recs[i].Fields["role"].(string)
 		content, _ := recs[i].Fields["content"].(string)
@@ -269,13 +273,18 @@ func (s *Service) history() ([]llm.Message, error) {
 			if fileID, _ := recs[i].Fields["file"].(string); fileID != "" {
 				content += s.attachment(fileID)
 			}
+			file, _ := recs[i].Fields["file"].(string)
+			ids = append(ids, s.pictureIDs(content, file))
 			out = append(out, llm.Message{Role: llm.RoleUser, Content: content})
 		case "assistant":
 			// The tools this reply used come first, as the turn they were.
-			out = append(out, replay(recs[i].Fields["tools"])...)
-			out = append(out, llm.Message{Role: llm.RoleAssistant, Content: content})
+			for _, m := range replay(recs[i].Fields["tools"]) {
+				out, ids = append(out, m), append(ids, nil)
+			}
+			out, ids = append(out, llm.Message{Role: llm.RoleAssistant, Content: content}), append(ids, nil)
 		}
 	}
+	s.withPictures(out, ids)
 	// Providers require the conversation to start with a user turn.
 	for len(out) > 0 && out[0].Role != llm.RoleUser {
 		out = out[1:]

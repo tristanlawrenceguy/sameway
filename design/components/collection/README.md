@@ -29,8 +29,8 @@ with `by` (status: To do, Doing, Done), in the order the field lists
 them, each saying how many it holds, and a column for those with none.
 A line over the board names every column with its count and leads to it.
 Each card has a Move form: its column picked from a list and a Move
-button, which saves the field like any edit, comes back to the card
-focused, and says "House moved from Active to Done." with an Undo. A list
+button (the move component), which saves the field like any edit, comes
+back to that button focused in the card's new column, and says "House moved from Active to Done." with an Undo. A list
 of one line per record is a list; use a table when the fields are the point
 and several are compared.
 

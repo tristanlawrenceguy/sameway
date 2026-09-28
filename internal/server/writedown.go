@@ -41,6 +41,11 @@ func (s *Server) recordingRoutes(m *http.ServeMux) {
 	m.HandleFunc("GET /files/{id}/sound", s.soundPlan)
 	m.HandleFunc("GET /files/{id}/sound/{n}", s.soundChunk)
 	m.HandleFunc("POST /files/{id}/transcribe", s.transcribeFile)
+	m.HandleFunc("GET /files/{id}/transcript.srt", s.transcriptFile)
+	m.HandleFunc("GET /files/{id}/transcript.txt", s.transcriptFile)
+	m.HandleFunc("GET /export/workspace.zip", s.exportEverything)
+	m.HandleFunc("GET /export/{file}", s.exportFile)
+	m.HandleFunc("GET /export/{type}/{file}", s.exportDocument)
 }
 
 // enqueue hands a part to the worker, starting it the first time.

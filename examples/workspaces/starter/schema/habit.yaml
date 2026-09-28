@@ -22,28 +22,34 @@ fields:
     default: day
     description: The period a target applies to.
   target:
+    label: How much
     type: float
     default: 1
     description: "What a period is aimed at: 1 for once, 8 for eight glasses, 5 for five kilometres, 21 hours a month for a limit."
   aim:
+    label: Aiming for
     type: enum
     values: [reach, limit, record]
     labels: {reach: At least the target, limit: At most the target, record: Just keep a record}
     default: reach
     description: "reach is at least the target; limit is at most, what goes past it is over (an allowance, a budget, screen time); record has no target, only the numbers (weight)."
   combine:
+    label: Entries in a period
     type: enum
     values: [sum, latest, average]
     labels: {sum: Add them up, latest: The latest one, average: The average}
     default: sum
     description: "How a period's entries make its amount: sum adds them up; latest is the last one logged (a reading such as weight); average is their mean (hours slept)."
   unit:
+    label: Counted in
     type: string
     description: "What is counted: glasses, km, minutes, pages. Empty when it is simply done or not."
   goal:
+    label: Longer goal
     type: float
     description: A total to reach over time, in the unit, such as 100 km; empty for none.
   by:
+    label: Goal by
     type: datetime
     description: When to reach the goal by, if there is one.
   notes:
@@ -52,6 +58,7 @@ fields:
     type: list
     of: string
   remind:
+    label: Remind at
     type: string
     maxLength: 20
     description: "A time of day, such as 20:00 or 8pm: if the habit is not met by then, the clock rings a reminder about it, once a day."

@@ -1,6 +1,6 @@
 {
   "name": "media",
-  "version": "2.0.0",
+  "version": "2.2.0",
   "description": "A recording, heard or seen, with its words: played with text-labelled controls (Play, Back 15 seconds, Forward 30 seconds, speed, a seek bar that says where it is in words), its length and size, a Download link, and its transcript under it, each line leading to the moment it was said and marked while it is heard. A video shows its transcript as captions too.",
   "icon": "♪",
   "use": {
@@ -125,15 +125,39 @@
       "captions": {
         "type": "string",
         "description": "For a video: its captions as WebVTT, made from its transcript, shown on the picture by the browser."
+      },
+      "downloads": {
+        "type": "array",
+        "description": "The transcript as files to take away, shown with the export component: subtitles (format srt) and plain text (format txt).",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "href",
+            "format"
+          ],
+          "properties": {
+            "href": {
+              "type": "string"
+            },
+            "format": {
+              "type": "string",
+              "enum": ["srt", "txt"]
+            },
+            "size": {
+              "type": "string"
+            }
+          }
+        }
       }
     }
   },
   "a11y": {
-    "role": "figure named by its title, holding the player (the browser's own, or a group of buttons, a select and a slider), for a video the picture with its captions, and the transcript as a list of links",
+    "role": "figure named by its title, holding the player (the browser's own, or buttons, a slider and a select), for a video the picture with its captions, and the transcript as a list of links",
     "keyboard": [
       {
         "key": "Tab",
-        "does": "reaches Play, Back 15 seconds, Forward 30 seconds, Speed, the seek bar, Download, then each line's time in the transcript"
+        "does": "reaches Play, Back 15 seconds, Forward 30 seconds, the seek bar, Speed, Download, Transcript, each line's time in the transcript, then the transcript's own downloads"
       },
       {
         "key": "Enter or Space",
@@ -141,7 +165,7 @@
       },
       {
         "key": "Left and Right arrows",
-        "does": "on the seek bar, move 5 seconds"
+        "does": "on the seek bar, move 5 seconds (Up and Down arrows too)"
       },
       {
         "key": "Page Up and Page Down",
@@ -162,116 +186,19 @@
     ],
     "wcag": {
       "target": "AAA",
-      "notes": "Never plays by itself (1.4.2). The transcript is on the same page, under the player, with who spoke and the sounds that matter (1.2.1). Without a script the browser's own player is there and each line's time is a link into the recording (#t=). With it, the controls are buttons with their words in sight, not only icons (2.5.3), each at least 44 pixels (2.5.5); the seek bar says where it is in words, not a percentage, and not again on every tick while it has focus; the line being heard is marked by a border and bold type as well as colour (1.4.1), is never announced, and the page is never scrolled to it. Nothing moves: no waveform. Writing a recording down happens on the computer that hosts the workspace; the press that gets speech-to-text says how much it downloads, from where, and that recordings never leave, and nothing is downloaded without it. A video's transcript is also its captions, a WebVTT track shown on the picture and on by default (1.2.2), made from the same text people and the assistant correct, so a correction shows in both."
+      "notes": "Never plays by itself (1.4.2). The transcript is on the same page, under the player, with who spoke and the sounds that matter (1.2.1). Without a script the browser's own player is there and each line's time is a link into the recording (#t=). With it, the controls are buttons with their words in sight, not only icons (2.5.3), each at least 44 pixels (2.5.5); the seek bar says where it is in words, not a percentage, and while it has focus it moves only when moved, so it is not read out on every tick; starting one recording or video pauses any other on the page, so two never play over each other or a screen reader; one this browser cannot play says so in words, once, just above the Download link, in place of controls that do nothing; the line being heard is marked by a border and bold type as well as colour (1.4.1), is never announced, and the page is never scrolled to it. Nothing moves: no waveform. Writing a recording down happens on the computer that hosts the workspace; the press that gets speech-to-text says how much it downloads, from where, and that recordings never leave, and nothing is downloaded without it. A video's transcript is also its captions, a WebVTT track shown on the picture and on by default (1.2.2), made from the same text people and the assistant correct, so a correction shows in both."
     }
   },
   "machine": {
     "selector": "[data-component=\"media\"]",
     "identify": "The audio or video element's source is the recording; for a video its track[kind=captions] is the transcript as WebVTT; each li[data-start] is one line of the transcript, its link's href ending #t=<seconds>.",
-    "operate": "Play by pressing Play, or set the audio element's currentTime from a line's data-start. The transcript's words are also the file record's text."
+    "operate": "Play by pressing Play, or set the audio or video element's currentTime from a line's data-start. A .sw-media__trouble with words in it means this browser cannot play the recording; fetch its src instead. The transcript's words are also the file record's text."
   },
   "examples": [
-    {
-      "name": "default",
-      "props": {
-        "id": "standup",
-        "title": "Monday stand-up",
-        "src": "/files/r1",
-        "type": "audio/mp4",
-        "about": "M4A · 3 MB",
-        "cues": [
-          {
-            "start": "0.00",
-            "at": "0:00",
-            "said": "0 seconds",
-            "speaker": "Hana",
-            "text": "Morning. Two things from me."
-          },
-          {
-            "start": "4.20",
-            "at": "0:04",
-            "said": "4 seconds",
-            "speaker": "Hana",
-            "text": "The compost order went in [laughter] at last."
-          },
-          {
-            "start": "11.80",
-            "at": "0:11",
-            "said": "11 seconds",
-            "speaker": "Sam",
-            "text": "And the pond liner comes Thursday."
-          }
-        ]
-      },
-      "file": "examples/default.html"
-    },
-    {
-      "name": "untranscribed",
-      "props": {
-        "id": "memo",
-        "title": "Voice memo",
-        "src": "/files/r2",
-        "type": "audio/webm",
-        "about": "WEBM · 480 KB",
-        "none": "No transcript yet. Until there is one, someone who cannot hear it gets only its title."
-      },
-      "file": "examples/untranscribed.html"
-    },
-    {
-      "name": "offer",
-      "props": {
-        "id": "memo2",
-        "title": "Voice memo",
-        "src": "/files/r3",
-        "type": "audio/mp4",
-        "about": "M4A · 1 MB",
-        "get": {
-          "action": "/speech/get",
-          "size": "155 MB"
-        }
-      },
-      "file": "examples/offer.html"
-    },
-    {
-      "name": "ready",
-      "props": {
-        "id": "memo3",
-        "title": "Voice memo",
-        "src": "/files/r4",
-        "type": "audio/mp4",
-        "about": "M4A · 1 MB",
-        "make": {
-          "action": "/files/r4/transcribe"
-        }
-      },
-      "file": "examples/ready.html"
-    },
-    {
-      "name": "video",
-      "props": {
-        "id": "talk",
-        "kind": "video",
-        "title": "Garden talk",
-        "src": "/files/v1",
-        "type": "video/mp4",
-        "about": "MP4 · 48 MB",
-        "captions": "/files/v1/captions.vtt",
-        "cues": [
-          {
-            "start": "0.00",
-            "at": "0:00",
-            "said": "0 seconds",
-            "text": "Welcome to the garden."
-          },
-          {
-            "start": "3.00",
-            "at": "0:03",
-            "said": "3 seconds",
-            "text": "Today, the pond."
-          }
-        ]
-      },
-      "file": "examples/video.html"
-    }
+    {"name": "default", "props": {"id": "standup", "title": "Monday stand-up", "src": "/files/r1", "type": "audio/mp4", "about": "M4A · 3 MB", "cues": [{"start": "0.00", "at": "0:00", "said": "0 seconds", "speaker": "Hana", "text": "Morning. Two things from me."}, {"start": "4.20", "at": "0:04", "said": "4 seconds", "speaker": "Hana", "text": "The compost order went in [laughter] at last."}, {"start": "11.80", "at": "0:11", "said": "11 seconds", "speaker": "Sam", "text": "And the pond liner comes Thursday."}], "downloads": [{"href": "/files/r1/transcript.srt", "format": "srt", "size": "1 KB"}, {"href": "/files/r1/transcript.txt", "format": "txt", "size": "1 KB"}]}, "file": "examples/default.html"},
+    {"name": "untranscribed", "props": {"id": "memo", "title": "Voice memo", "src": "/files/r2", "type": "audio/webm", "about": "WEBM · 480 KB", "none": "No transcript yet. Until there is one, someone who cannot hear it gets only its title."}, "file": "examples/untranscribed.html"},
+    {"name": "offer", "props": {"id": "memo2", "title": "Voice memo", "src": "/files/r3", "type": "audio/mp4", "about": "M4A · 1 MB", "get": {"action": "/speech/get", "size": "155 MB"}}, "file": "examples/offer.html"},
+    {"name": "ready", "props": {"id": "memo3", "title": "Voice memo", "src": "/files/r4", "type": "audio/mp4", "about": "M4A · 1 MB", "make": {"action": "/files/r4/transcribe"}}, "file": "examples/ready.html"},
+    {"name": "video", "props": {"id": "talk", "kind": "video", "title": "Garden talk", "src": "/files/v1", "type": "video/mp4", "about": "MP4 · 48 MB", "captions": "/files/v1/captions.vtt", "cues": [{"start": "0.00", "at": "0:00", "said": "0 seconds", "text": "Welcome to the garden."}, {"start": "3.00", "at": "0:03", "said": "3 seconds", "text": "Today, the pond."}]}, "file": "examples/video.html"}
   ]
 }

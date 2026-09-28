@@ -26,7 +26,11 @@ var synonyms = map[string][]string{
 	"at":           {"date", "when", "time", "date time", "datetime", "timestamp", "sent", "received"},
 	"kind":         {"type", "channel", "call type"},
 	"tags":         {"tag", "labels", "label", "groups", "categories"},
-	"due":          {"due date", "deadline"},
+	"due":          {"due date", "deadline", "starts"},
+	"starts":       {"start", "start date", "begins", "from", "dtstart"},
+	"ends":         {"end", "end date", "finishes", "until", "dtend"},
+	"where":        {"location", "place", "venue", "room"},
+	"repeat":       {"rrule", "recurrence", "repeats"},
 	"done":         {"completed", "finished"},
 }
 
@@ -108,7 +112,14 @@ func (r Report) String() string {
 // picks out, made when there is none.
 func Import(st *store.Store, t *schema.Type, tb *Table, m Mapping) Report {
 	var r Report
+	// A row already here is added again only by mistake: known by its
+	// email, or by the id its calendar gave it.
 	emailField := fieldOfType(t, "email")
+	if emailField == "" {
+		if f, ok := t.Field("uid"); ok && f.Type == "string" {
+			emailField = "uid"
+		}
+	}
 	existing := map[string]bool{}
 	if emailField != "" {
 		if recs, err := st.List(t.Name, store.ListOptions{}); err == nil {
@@ -204,6 +215,14 @@ func fieldOfType(t *schema.Type, what string) string {
 // bool from a word, a moment as RFC 3339 when it is written another way.
 func coerce(f schema.Field, v string) any {
 	switch f.Type {
+	case "enum":
+		// A choice comes back by its label, as an export writes it.
+		for _, val := range f.Values {
+			if strings.EqualFold(v, val) || strings.EqualFold(v, f.ValueLabel(val)) {
+				return val
+			}
+		}
+		return v
 	case "list":
 		var out []any
 		for _, p := range strings.FieldsFunc(v, func(r rune) bool { return r == ',' || r == ';' || r == '|' }) {

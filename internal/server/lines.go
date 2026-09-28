@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -46,7 +47,7 @@ func (s *Server) say(props, fields map[string]any, href string) {
 	w := chat.Say(fields, href != "")
 	props["action"] = w.Action
 	if w.Target != "" {
-		props["target"] = w.Target
+		props["target"] = schema.Words(w.Target)
 	}
 	detail := w.Detail
 	// Old entry activity records stored a raw database ID in their detail

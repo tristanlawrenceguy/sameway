@@ -104,10 +104,17 @@ func (s *Server) apiList(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	if recs == nil {
-		recs = []*store.Record{}
+	// Each record as it always was, with who wrote it beside it.
+	type written struct {
+		*store.Record
+		WrittenBy string `json:"written_by"`
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"type": r.PathValue("type"), "count": len(recs), "records": recs})
+	writers := s.app.Chat.Writers()
+	out := make([]written, 0, len(recs))
+	for _, rec := range recs {
+		out = append(out, written{rec, writers.Of(rec.Type, rec).Words})
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"type": r.PathValue("type"), "count": len(recs), "records": out, "untrusted": "each record's fields were written by its written_by: " + chat.Untrusted})
 }
 
 // apiChat lets an agent talk to the assistant the same way a person does.

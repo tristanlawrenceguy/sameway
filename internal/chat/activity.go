@@ -167,11 +167,13 @@ func CleanSummary(summary string) string {
 			return who + verb + CleanSummary(after)
 		}
 	}
+
 	m := oldSetting.FindStringSubmatch(summary)
-	if m == nil {
-		return summary
+	if m != nil {
+		return settingSummary(m[1], m[2], m[3]) + m[4]
 	}
-	return settingSummary(m[1], m[2], m[3]) + m[4]
+
+	return cleanHumanized(summary)
 }
 
 // Summarise turns a block's props into a short human label such as

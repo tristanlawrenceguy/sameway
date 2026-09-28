@@ -11,8 +11,9 @@ import (
 
 // When two people changed the same text at once on two computers, the
 // later version is on the page and the other is kept (store/clash.go).
-// The record's page offers it back, until someone chooses: use it instead,
-// or keep what is there.
+// The record's page offers it back, with what differs, until someone
+// chooses: use it instead, keep both, or keep the page's. Each choice is
+// logged and can be undone, so no choice loses anyone's words.
 
 func (s *Server) clashNotices(r *http.Request, t *schema.Type, rec *store.Record) string {
 	if _, ok := s.app.Types.Get(store.ClashType); !ok {
@@ -38,49 +39,77 @@ func (s *Server) clashNotices(r *http.Request, t *schema.Type, rec *store.Record
 			who = "on this computer"
 		}
 		text, _ := c.Fields["text"].(string)
+		now, _ := rec.Fields[field].(string)
+		base := "/clash/" + c.ID
 		props := map[string]any{"id": c.ID, "label": label, "where": who, "text": text,
-			"use": "/clash/" + c.ID + "/use", "keep": "/clash/" + c.ID + "/keep", "from": back}
+			"use": base + "/use", "both": base + "/both", "keep": base + "/keep", "from": back}
+		if diff := clashParts(now, text); diff != nil {
+			props["diff"] = diff
+		}
 		b.WriteString(string(s.component("clash", props)))
 	}
 	return b.String()
 }
 
-// clashUse puts the other version in place of the one there, as the
-// person's change, logged and undoable like any other.
-func (s *Server) clashUse(w http.ResponseWriter, r *http.Request) {
-	s.clashChoose(w, r, true)
-}
+// clashUse puts the other version in place of the page's.
+func (s *Server) clashUse(w http.ResponseWriter, r *http.Request) { s.clashChoose(w, r, "used") }
 
-// clashKeep keeps what is there, and the other version goes.
-func (s *Server) clashKeep(w http.ResponseWriter, r *http.Request) {
-	s.clashChoose(w, r, false)
-}
+// clashBoth keeps both: the page's, then the other after a blank line.
+func (s *Server) clashBoth(w http.ResponseWriter, r *http.Request) { s.clashChoose(w, r, "both") }
 
-func (s *Server) clashChoose(w http.ResponseWriter, r *http.Request, use bool) {
+// clashKeep keeps the page's, and the other version is set aside.
+func (s *Server) clashKeep(w http.ResponseWriter, r *http.Request) { s.clashChoose(w, r, "kept") }
+
+// clashChoose makes one choice and says what it did where the person is,
+// with its Undo. Every choice is an update the log can reverse: the text
+// goes back as it was, or the offer comes back.
+func (s *Server) clashChoose(w http.ResponseWriter, r *http.Request, choice string) {
 	r.ParseForm()
-	back := backTo(r.PostForm.Get("from"))
 	c, err := s.app.Store.Get(store.ClashType, r.PathValue("id"))
 	if err != nil || c.Fields["state"] != "open" {
-		http.Redirect(w, r, back, http.StatusSeeOther)
+		s.tell(w, r, outcome{Title: "Already chosen", Text: "Someone chose between these versions already."}, "/")
 		return
 	}
-	state := "kept"
-	if use {
-		typ, _ := c.Fields["target"].(string)
-		id, _ := c.Fields["target_id"].(string)
-		field, _ := c.Fields["field"].(string)
-		was, err := s.app.Store.Get(typ, id)
-		if err != nil {
-			s.failed(w, r, "That version could not be used", err, back)
-			return
-		}
-		if _, err := s.app.Store.Update(typ, id, map[string]any{field: c.Fields["text"]}); err != nil {
-			s.failed(w, r, "That version could not be used", err, back)
-			return
-		}
-		s.record(r, chat.Change{Action: "used the other version of", Component: typ, ID: id, Detail: field, Href: "/t/" + typ + "/" + id, Before: was.Fields})
-		state = "used"
+	typ, _ := c.Fields["target"].(string)
+	id, _ := c.Fields["target_id"].(string)
+	field, _ := c.Fields["field"].(string)
+	href := "/t/" + typ + "/" + id
+	was, err := s.app.Store.Get(typ, id)
+	if err != nil {
+		s.failed(w, r, "Not chosen", err, href)
+		return
 	}
-	s.app.Store.Update(store.ClashType, c.ID, map[string]any{"state": state})
-	http.Redirect(w, r, back, http.StatusSeeOther)
+	label, title := field, id
+	if t, ok := s.app.Types.Get(typ); ok {
+		if f, ok := t.Field(field); ok {
+			label = fieldLabel(*f)
+		}
+		if tt := strings.TrimSpace(titleOf(t, was)); tt != "" {
+			title = tt
+		}
+	}
+	if choice == "kept" {
+		undo := s.record(r, chat.Change{Action: "updated", Component: store.ClashType, ID: c.ID, Detail: label + " of " + title + ", the page's version kept", Href: href, Before: c.Fields})
+		s.app.Store.Update(store.ClashType, c.ID, map[string]any{"state": "kept"})
+		s.tell(w, r, outcome{Title: "The page's version is kept", Text: "The other version of " + label + " is set aside.", Undo: undo, Of: "choosing a version of " + label}, href)
+		return
+	}
+	text, _ := c.Fields["text"].(string)
+	said, detail := "The other version is in place", " (the other version of "+label+")"
+	if choice == "both" {
+		cur, _ := was.Fields[field].(string)
+		text = strings.TrimRight(cur, "\n") + "\n\n" + text
+		said, detail = "Both versions are kept", " (both versions of "+label+")"
+	}
+	if _, err := s.app.Store.Update(typ, id, map[string]any{field: text}); err != nil {
+		s.failed(w, r, "Not chosen", err, href)
+		return
+	}
+	undo := s.record(r, chat.Change{Action: "updated", Component: typ, ID: id, Detail: title + detail, Href: href, Before: was.Fields})
+	s.app.Store.Update(store.ClashType, c.ID, map[string]any{"state": "used"})
+	o := outcome{Title: said, Undo: undo, Of: "choosing a version of " + label}
+	if choice == "both" {
+		o.Text = label + " has the page's version, then the other. Edit it to join them."
+	}
+	s.tell(w, r, o, href)
 }
