@@ -175,6 +175,9 @@ func (s *Server) fileExtras(r *http.Request, rec *store.Record) string {
 		message := "Reading the file. Its text appears here when the converter answers."
 		if audio {
 			message = "Writing down what is said, on this computer. The transcript appears here when it is done."
+			if note, _ := rec.Fields["note"].(string); strings.Contains(note, "parts done") {
+				message = note + " The transcript appears here when it is done."
+			}
 		}
 		b.WriteString(string(s.component("status", map[string]any{"id": "file-status", "message": message, "state": "working"})))
 	case "failed":

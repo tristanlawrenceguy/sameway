@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/mcp"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/update"
@@ -39,7 +40,9 @@ func (c *ctx) serveCmd() error {
 	defer stop()
 	a.Chat.StartSchedule(ctx)
 	h := server.New(a)
+	a.WatchSchema(ctx, app.SchemaEvery, h.Changed)
 	h.StartRinging(ctx, notifier(a))
+	h.WriteDownInBackground()
 	keepSnapshots(ctx, c.Stdout, a)
 	connectDevices(ctx, c.Stdout, a)
 	watchUpdates(ctx, c.Stdout, a)
@@ -124,8 +127,12 @@ func (c *ctx) mcpCmd() error {
 		return err
 	}
 	fmt.Fprintf(c.Stderr, "sameway mcp: serving %q from %s\n", a.Workspace.Config.Name, a.Workspace.Dir)
+	// The server beside it, or a person, may change the types meanwhile.
+	ctx, stop := context.WithCancel(context.Background())
+	defer stop()
+	a.WatchSchema(ctx, app.SchemaEvery, nil)
 	srv := &mcp.Server{App: a, Version: update.Version, In: in, Out: c.Stdout, Assistant: *assistant}
-	return srv.Serve(context.Background())
+	return srv.Serve(ctx)
 }
 
 func (c *ctx) checkCmd() error {

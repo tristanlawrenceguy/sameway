@@ -22,10 +22,10 @@
   transition: opacity var(--sw-motion-base) var(--sw-motion-ease);
 }
 
-/* A block is the exception to focus inside the group: its bar floats over
-   the block's corner, so revealing it while focus is in the content would
-   lay it over the very control that has focus. The bar shows once focus
-   reaches it, which is the next Tab. */
+/* A block is the exception to focus inside the group: focus in its content
+   leaves the bar faded, so moving through a block's controls does not
+   flicker its chrome. The bar shows once focus reaches it, which is the
+   next Tab. */
 .sw-reveal:hover, .sw-reveal:not(.sw-block):focus-within,
 .sw-quiet:focus-within, .sw-quiet:focus-visible { --sw-quiet-opacity: 1; }
 /* Escape puts away what the pointer revealed, until it leaves and comes
@@ -40,16 +40,15 @@
 @media (hover: none), (pointer: coarse) { :root { --sw-quiet-opacity: 1; } }
 @media (prefers-contrast: more), (forced-colors: active) { :root { --sw-quiet-opacity: 1; } }
 :root[data-controls="visible"] { --sw-quiet-opacity: 1; }
-/* Where the bar is always shown it cannot float: it would cover the top of
-   the block's content for good, and a tap meant for a title would land on
-   Remove. So there it takes its own row under the content. */
-@media (hover: none), (pointer: coarse), (prefers-contrast: more), (forced-colors: active) {
-  .sw-block > .sw-bar { position: static; width: fit-content; max-width: 100%; margin: var(--sw-space-3) 0 0 auto; }
-}
-:root[data-controls="visible"] .sw-block > .sw-bar { position: static; width: fit-content; max-width: 100%; margin: var(--sw-space-3) 0 0 auto; }
+/* A block's bar never floats over the block: shown by the pointer on the
+   block, it would lie on whatever sits in the corner under it (a search's
+   button, Start voice mode in a narrow pane, a select), and the press meant
+   for that control would land on Expand or Remove. So it takes its own row
+   under the content, faded at rest like any quiet chrome. */
+.sw-block > .sw-bar { position: static; width: fit-content; max-width: 100%; margin: var(--sw-space-3) 0 0 auto; }
 
-/* Per-item control bars float over the top-right corner of their item. They
-   reserve no space, so a block at rest is exactly as tall as its content. */
+/* A control bar outside a block floats over the top-right corner of its
+   item and reserves no space. */
 .sw-bar {
   position: absolute; right: var(--sw-space-2); top: var(--sw-space-2); z-index: 3;
   display: flex; flex-wrap: wrap; align-items: center; gap: var(--sw-space-1);
