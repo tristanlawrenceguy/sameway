@@ -31,7 +31,7 @@ func TestSomeoneOnThisPageIsSaidToBe(t *testing.T) {
 	a.Chat.Owner = chat.Visitor{Access: chat.Owner, Login: "me@example.com", Name: "Me"}
 	as(t, h, hana, http.MethodGet, "/t/note", "", "")
 	line := presenceLine(get(t, h, "/t/note").Body.String())
-	if !strings.Contains(line, "Hana</span>, on this page") || !strings.Contains(line, "data-here") {
+	if !strings.Contains(line, "Hana</bdi></span>, on this page") || !strings.Contains(line, "data-here") {
 		t.Errorf("on the same page, she is on this page: %s", line)
 	}
 	line = presenceLine(get(t, h, "/").Body.String())
@@ -51,7 +51,7 @@ func TestWhereTheOwnerIsAloneIsNotSaid(t *testing.T) {
 	}
 	get(t, h, "/t/conversation/"+c.ID)
 	line := presenceLine(as(t, h, hana, http.MethodGet, "/", "", "").Body.String())
-	if !strings.Contains(line, "Me</span>") {
+	if !strings.Contains(line, "Me</bdi></span>") {
 		t.Errorf("Hana sees the owner is here: %s", line)
 	}
 	if strings.Contains(line, "surprise") || strings.Contains(line, ", on") {
