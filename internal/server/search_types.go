@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
@@ -18,12 +19,9 @@ import (
 // searchable is a kind a search can be narrowed to: one a person has a
 // page of. What the system keeps for itself, a message or a canvas block,
 // is not offered, and one the person has hidden is not either.
+// The rule is search's own, so an agent narrowing is held to it too.
 func (s *Server) searchable(name string) (*schema.Type, bool) {
-	t, ok := s.app.Types.Get(name)
-	if !ok || t.Internal || t.Hidden || search.Skip[name] {
-		return nil, false
-	}
-	return t, true
+	return search.Searchable(s.app.Types, name)
 }
 
 // searchFrom is where Search in the navigation goes from this page: from
@@ -99,14 +97,30 @@ func (s *Server) searchRefused(w http.ResponseWriter, r *http.Request, q, only s
 	s.page(w, r, "Search", template.HTML(body+searchForm(s, "Search", "", q, "")), pageOptions{Status: http.StatusBadRequest, Said: "Search: no kind called " + only})
 }
 
-// apiSearch is the same search for an agent.
+// apiSearch is the same search for an agent: everything, counted by kind,
+// narrowed by ?type= when asked, a page of search.Limit at a time with
+// ?page=. A kind it cannot narrow to is a 400 in the page's words, never
+// an empty list an agent would take for nothing there.
 func (s *Server) apiSearch(w http.ResponseWriter, r *http.Request) {
 	q := strings.TrimSpace(r.URL.Query().Get("q"))
-	hits := search.FindOf(s.app.Store, s.app.Types, q, r.URL.Query().Get("type"))
-	if hits == nil {
-		hits = []search.Hit{}
+	only := strings.TrimSpace(r.URL.Query().Get("type"))
+	if _, ok := s.searchable(only); only != "" && !ok {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": apiError{Code: "bad_request", Message: search.Refusal(only, search.Kinds(s.app.Types))}})
+		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"query": q, "count": len(hits), "hits": hits})
+	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+	res := search.Narrow(search.FindAll(s.app.Store, s.app.Types, q), q, only, page)
+	out := map[string]any{"query": res.Query, "count": len(res.Hits), "hits": res.Hits, "total": res.Total, "counts": res.Counts,
+		"found": res.Found, "page": res.Page, "pages": res.Pages, "said": res.Said()}
+	if only != "" {
+		out["type"] = only
+	}
+	if res.Page < res.Pages {
+		v := r.URL.Query()
+		v.Set("page", strconv.Itoa(res.Page+1))
+		out["next"] = "/api/search?" + v.Encode()
+	}
+	writeJSON(w, http.StatusOK, out)
 }
 
 // marked is text with the words searched for marked, so a person sees why
