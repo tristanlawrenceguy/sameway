@@ -73,9 +73,10 @@ func TestACollectionAsABoardHasAColumnPerChoice(t *testing.T) {
 		t.Errorf("only an id is taken to come back to: %q", loc)
 	}
 
-	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/block", map[string]any{
-		"component": "collection", "props": map[string]any{"type": "task", "as": "board", "label": "Tasks"},
-	}), http.StatusCreated)
+	// Refused when written; one written before that still says why.
+	board := map[string]any{"type": "task", "as": "board", "label": "Tasks"}
+	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/block", map[string]any{"component": "collection", "props": board}), http.StatusUnprocessableEntity)
+	storedBlock(t, a, "collection", board)
 	if page := get(t, h, "/").Body.String(); !strings.Contains(page, "a board needs a pick-list field for its columns, and task has none") {
 		t.Error("a board of a type with no pick-list says why it cannot be shown")
 	}

@@ -22,6 +22,10 @@ func (s *Server) apiCreate(w http.ResponseWriter, r *http.Request) {
 	if s.keptFromVisitor(w, r, fields) {
 		return
 	}
+	shows, refused := s.blockWrite(w, r, fields, nil)
+	if refused {
+		return
+	}
 	rec, err := s.app.Store.Create(r.PathValue("type"), fields)
 	if err != nil {
 		writeError(w, err)
@@ -29,7 +33,7 @@ func (s *Server) apiCreate(w http.ResponseWriter, r *http.Request) {
 	}
 	chat.RecordWrite(s.app.Store, chat.ThroughAPI, "created", rec, nil)
 	w.Header().Set("Location", "/api/"+rec.Type+"/"+rec.ID)
-	writeJSON(w, http.StatusCreated, rec)
+	writeJSON(w, http.StatusCreated, shownRecord{rec, shows})
 }
 
 func (s *Server) apiUpdate(w http.ResponseWriter, r *http.Request) {
@@ -49,13 +53,17 @@ func (s *Server) apiUpdate(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
+	shows, refused := s.blockWrite(w, r, fields, was)
+	if refused {
+		return
+	}
 	rec, err := s.app.Store.Update(r.PathValue("type"), r.PathValue("id"), fields)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
 	chat.RecordWrite(s.app.Store, chat.ThroughAPI, "updated", rec, was.Fields)
-	writeJSON(w, http.StatusOK, rec)
+	writeJSON(w, http.StatusOK, shownRecord{rec, shows})
 }
 
 func (s *Server) apiDelete(w http.ResponseWriter, r *http.Request) {

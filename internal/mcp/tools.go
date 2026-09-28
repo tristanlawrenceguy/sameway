@@ -99,6 +99,12 @@ func (s *Server) call(ctx context.Context, svc *chat.Service, name string, args 
 		s.web().ServeHTTP(rec, req)
 		return rec.Body.String(), rec.Code >= 400
 	}
+	// A block is checked when written the way its page resolves it, and
+	// that is the web server's to say: over stdio there is none until
+	// something is looked at, so have it now.
+	if s.App.Chat.Check == nil {
+		s.web()
+	}
 	// get_record, find_records and the rest are the assistant's own tools,
 	// as the one the connection is for has them.
 	return svc.Call(name, args)

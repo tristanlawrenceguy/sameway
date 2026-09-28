@@ -25,11 +25,11 @@ func TestABlockSetUpWrongSaysWhatIsWrong(t *testing.T) {
 		{"tracker", map[string]any{"label": "Garden", "tags": []string{"garden"}}, "These habits cannot be shown", "no habit is tagged garden; the habits have health"},
 		{"collection", map[string]any{"type": "event"}, "This list cannot be shown", "there is no content type event"},
 	} {
-		res := postJSON(t, h, http.MethodPost, "/api/block", map[string]any{"component": c.component, "props": c.props})
-		wantStatus(t, res, http.StatusCreated)
-		var blk struct{ ID string }
-		decode(t, res, &blk)
-		page := get(t, h, "/canvas/"+blk.ID).Body.String()
+		// Refused when written, and one written before that still says
+		// what is wrong where it stands.
+		wantStatus(t, postJSON(t, h, http.MethodPost, "/api/block", map[string]any{"component": c.component, "props": c.props}), http.StatusUnprocessableEntity)
+		id := storedBlock(t, a, c.component, c.props)
+		page := get(t, h, "/canvas/"+id).Body.String()
 		if !strings.Contains(page, `data-component="problem"`) || !strings.Contains(page, c.said) || !strings.Contains(page, c.why) {
 			t.Errorf("%s %v should say %q and, under What is wrong, %q", c.component, c.props, c.said, c.why)
 		}

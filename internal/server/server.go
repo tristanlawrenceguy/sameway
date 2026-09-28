@@ -43,6 +43,8 @@ func New(a *app.App) *Server {
 	// A link to a record in a reply reads as the record's name.
 	a.Registry.LinkTitle = s.linkTitle
 	a.Chat.Look = s.lookFor
+	// A block is checked when written as its page will resolve it.
+	a.Chat.Check = s.blockCheck
 	// Wrap the mux so unmatched routes get our HTML 404 page.
 	s.mux = s.wrapNotFound(s.mux)
 	return s

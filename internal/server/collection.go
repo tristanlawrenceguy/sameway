@@ -40,7 +40,7 @@ func (s *Server) resolveCollectionAt(props map[string]any, block string, at *col
 	typeName, _ := props["type"].(string)
 	t, ok := s.app.Types.Get(typeName)
 	if !ok {
-		out["problem"] = "there is no content type " + typeName + "; the workspace has " + strings.Join(s.app.Types.Names(), ", ")
+		out["problem"] = s.noType(typeName)
 		return out
 	}
 	where := strs(props["where"])

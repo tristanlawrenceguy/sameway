@@ -49,6 +49,12 @@ type Service struct {
 	// its scripts run where a browser is at hand; set by the server, nil
 	// where there is none. See look.go.
 	Look func(ctx context.Context, ask map[string]any) (string, error)
+	// Check resolves a block's records the way its page will, without
+	// drawing it: what it would show, in a few words, or why it cannot be
+	// shown, in the words the page would use. Set by the server; nil where
+	// there is none, and a block is then held to its props schema only.
+	// See check.go.
+	Check func(component string, props map[string]any) (shows, problem string)
 	// Publish sends to an MQTT topic, when the workspace has a broker;
 	// nil means it has none. See mqtt.go.
 	Publish func(topic, payload string) error

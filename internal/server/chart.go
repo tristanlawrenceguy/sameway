@@ -30,24 +30,24 @@ func (s *Server) resolveChart(props map[string]any) map[string]any {
 	}
 	t, ok := s.app.Types.Get(typeName)
 	if !ok {
-		out["problem"] = "there is no content type " + typeName + "; the workspace has " + strings.Join(s.app.Types.Names(), ", ")
+		out["problem"] = s.noType(typeName)
 		return out
 	}
 	by, _ := props["by"].(string)
 	period, _ := props["period"].(string)
 	sum, _ := props["sum"].(string)
 	if by == "" {
-		out["problem"] = "a chart from records needs by: the field to group by, or a date field with period day, week or month"
+		out["problem"] = fmt.Sprintf("a chart from records needs by: the field to group by, or a date field with period day, week or month; %s has %s", t.Name, strings.Join(fieldsOfKind(t), ", "))
 		return out
 	}
 	field, ok := t.Field(by)
 	if !ok && by != "created_at" && by != "updated_at" {
-		out["problem"] = fmt.Sprintf("%s has no field %q to group by", t.Name, by)
+		out["problem"] = fmt.Sprintf("%s has no field %q to group by; it has %s, and created_at and updated_at", t.Name, by, strings.Join(fieldsOfKind(t), ", "))
 		return out
 	}
 	if sum != "" {
 		if f, ok := t.Field(sum); !ok || (f.Type != "int" && f.Type != "float") {
-			out["problem"] = fmt.Sprintf("sum needs a number field on %s; %q is not one", t.Name, sum)
+			out["problem"] = noNumber(t, sum)
 			return out
 		}
 	}
@@ -113,6 +113,16 @@ func (s *Server) resolveChart(props map[string]any) map[string]any {
 		out["valueLabel"] = capitalize(label(sum))
 	}
 	return out
+}
+
+// noNumber says why a chart cannot sum a field: it is not a number, and
+// which are, or that leaving sum out counts instead.
+func noNumber(t *schema.Type, sum string) string {
+	out := fmt.Sprintf("sum needs a number field on %s; %q is not one", t.Name, sum)
+	if nums := fieldsOfKind(t, "int", "float"); len(nums) > 0 {
+		return out + "; its number fields are " + strings.Join(nums, ", ")
+	}
+	return out + ", and it has none; leave sum out to count " + plural(t.Name) + " instead"
 }
 
 // bucket is the group a record falls in: a field's value as a person
