@@ -32,7 +32,7 @@ func Say(f map[string]any, linked bool) Words {
 		for _, verb := range []string{" undid: ", " put back: "} {
 			if _, after, ok := strings.Cut(summary, verb); ok {
 				verb = strings.TrimSpace(verb)
-				if !linked {
+				if !linked || target == "" && str("href") == "" {
 					verb = strings.TrimSuffix(verb, ":")
 				}
 				return Words{Action: verb, Detail: after}
