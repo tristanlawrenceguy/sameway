@@ -48,7 +48,7 @@ func TestWrittenBySaysWhoInPlainWords(t *testing.T) {
 			t.Errorf("%s: got %+v, want %+v", id, got, want)
 		}
 	}
-	if got := svc.PublicWriters().OfID("note", bobs).Words; got != "another person" {
+	if got := svc.For(chat.Visitor{Access: chat.Public}).Writers().OfID("note", bobs).Words; got != "another person" {
 		t.Errorf("the internet is not told another person's name: %q", got)
 	}
 }

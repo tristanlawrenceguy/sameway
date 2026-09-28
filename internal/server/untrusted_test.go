@@ -132,3 +132,38 @@ func TestPublishedFetchKeepsItsShapeAndSaysWhoWrote(t *testing.T) {
 		t.Errorf("search keeps id, title and url, and adds written_by: %v", rs)
 	}
 }
+
+// Whatever a reader from the internet asks, over MCP or as a page, who
+// wrote a record is "another person", never their name or login.
+func TestAPublicReaderNeverSeesAnotherPersonsName(t *testing.T) {
+	a, h := newApp(t)
+	srv := h.(*server.Server)
+	n, _ := a.Store.Create("note", map[string]any{"title": "Sourdough", "body": injection})
+	chat.Record(a.Store, "human", chat.Change{Action: "created", Component: "note", ID: n.ID, Detail: "Sourdough", By: "Bobby Tables", ByLogin: "bobby@example.com"})
+	a.Workspace.Config.Publish.Types = "note"
+	pub := srv.Public(&mcp.Server{App: a, Version: "test", Published: func() map[string]bool { return srv.Published().Types }})
+
+	calls := map[string]string{
+		"get_record":   `{"type":"note","id":"` + n.ID + `"}`,
+		"find_records": `{"type":"note"}`,
+		"search":       `{"query":"sourdough"}`,
+		"fetch":        `{"id":"note/` + n.ID + `"}`,
+		"describe":     `{}`,
+	}
+	for name, args := range calls {
+		body := public(t, pub, http.MethodPost, "/mcp", `{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"`+name+`","arguments":`+args+`}}`).Body.String()
+		if strings.Contains(body, "Bobby") || strings.Contains(body, "bobby@") {
+			t.Errorf("%s names the person to the internet: %s", name, body)
+		}
+		if name != "describe" && !strings.Contains(body, "another person") {
+			t.Errorf("%s says another person wrote it: %s", name, body)
+		}
+	}
+	page := public(t, pub, http.MethodGet, "/t/note/"+n.ID, "").Body.String()
+	if strings.Contains(page, "Bobby") || !strings.Contains(page, "From: another person") {
+		t.Errorf("the published page says another person, by no name")
+	}
+	if !strings.Contains(get(t, h, "/t/note/"+n.ID).Body.String(), "From: Bobby Tables, another person") {
+		t.Error("the owner's own page names who wrote it")
+	}
+}

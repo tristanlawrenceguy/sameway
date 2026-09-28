@@ -64,7 +64,8 @@ func (s *Server) publicCall(ctx context.Context, name string, args json.RawMessa
 	if !types[a.Type] {
 		return "only published content can be read here: " + joined(types), true, true
 	}
-	text, isErr := s.App.Chat.Call(name, args)
+	// The service as the internet has it, so written_by names nobody.
+	text, isErr := s.App.Chat.For(chat.Visitor{Access: chat.Public}).Call(name, args)
 	return text, isErr, true
 }
 
@@ -183,7 +184,7 @@ func (s *Server) fetchPublished(ctx context.Context, types map[string]bool, id s
 // writers is who wrote what, as the internet may be told it: without
 // people's names.
 func (s *Server) writers() *chat.Writers {
-	return s.App.Chat.PublicWriters()
+	return s.App.Chat.For(chat.Visitor{Access: chat.Public}).Writers()
 }
 
 // onlyPublished is a tool as the internet is offered it: where it names

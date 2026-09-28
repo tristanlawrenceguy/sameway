@@ -195,8 +195,12 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 		t.Name, rec.ID, s.component("button", map[string]any{"label": "Delete " + t.Name, "type": "submit", "variant": "quiet"}))
 	b.WriteString(s.editFields(t, rec))
 	b.WriteString(`</div>`)
-	// Recent activity on this page, so a deletion can be taken back where the person lands.
-	b.WriteString(string(s.recentActivityAbout(5, "/t/"+t.Name+"/"+rec.ID, func(target, id string) bool { return target == t.Name && id == rec.ID })))
+	// Recent activity on this page, so a deletion can be taken back where
+	// the person lands. The log is the workspace's, not the internet's: it
+	// names who changed what, so a published page leaves it out.
+	if chat.VisitorOf(r.Context()).Access != chat.Public {
+		b.WriteString(string(s.recentActivityAbout(5, "/t/"+t.Name+"/"+rec.ID, func(target, id string) bool { return target == t.Name && id == rec.ID })))
+	}
 	// What this record is connected to, as a line of counts; the address
 	// says which of them are open. See related.go.
 	b.WriteString(s.related(t, rec, always, here))
@@ -205,7 +209,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	s.page(w, r, s.title(t, rec), template.HTML(b.String()), pageOptions{
 		Said:         trim.Title(s.title(t, rec)),
 		Kicker:       s.crumbs("/t/"+t.Name, capitalize(plural(t.Name)), "", s.dotOf(t.Name)),
-		Lede:         s.lede(t, rec),
+		Lede:         s.lede(r, t, rec),
 		JSONURL:      "/api/" + t.Name + "/" + rec.ID,
 		ExtraScripts: detailPageExtraScripts,
 	})

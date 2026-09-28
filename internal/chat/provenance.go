@@ -42,12 +42,9 @@ type Writers struct {
 // reads, without reading a long history on every call.
 const logDepth = 2000
 
-// Writers reads the activity log for who wrote what.
-func (s *Service) Writers() *Writers { return s.writers(false) }
-
-// PublicWriters is Writers as the internet may be told it: another
-// person is not named.
-func (s *Service) PublicWriters() *Writers { return s.writers(true) }
+// Writers reads the activity log for who wrote what. The service as a
+// reader from the internet has it names nobody (see For).
+func (s *Service) Writers() *Writers { return s.writers(s.who.Access == Public) }
 
 func (s *Service) writers(public bool) *Writers {
 	w := &Writers{s: s, by: map[string][]Writer{}, public: public}
