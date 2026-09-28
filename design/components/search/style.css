@@ -13,3 +13,5 @@
 [data-size="compact"] .sw-search__field { min-width: 7rem; min-height: var(--sw-size-target); }
 /* A word searched for, in a result: bold on a wash, not colour alone. */
 .sw-search__hit { background: var(--sw-color-warning-soft); color: var(--sw-color-fg); font-weight: 600; border-radius: var(--sw-radius-sm); }
+/* A search narrowed to one kind says so first, with the way to everything. */
+.sw-search__scope { font-weight: 600; }

@@ -38,29 +38,29 @@
   }
   function arm(fig) {
     if (fig._armed) return;
-    var media = fig.querySelector("audio");
+    var media = fig.querySelector("audio, video");
     if (!media) return;
     fig._armed = true;
-    var title = (fig.querySelector(".sw-audio__title") || {}).textContent || "the recording";
+    var title = (fig.querySelector(".sw-media__title") || {}).textContent || "the recording";
     var bar = document.createElement("div");
-    bar.className = "sw-audio__bar";
+    bar.className = "sw-media__bar";
     bar.setAttribute("role", "group");
     bar.setAttribute("aria-label", "Player: " + title);
     var play = button("Play", " " + title);
     var back = button("Back 15 seconds");
     var fwd = button("Forward 30 seconds");
     var time = document.createElement("span");
-    time.className = "sw-audio__time";
+    time.className = "sw-media__time";
     time.setAttribute("aria-hidden", "true");
     var seek = document.createElement("input");
     seek.type = "range";
-    seek.className = "sw-audio__seek";
+    seek.className = "sw-media__seek";
     seek.min = "0";
     seek.step = "1";
     seek.value = "0";
     seek.setAttribute("aria-label", "Where in " + title);
     var speed = document.createElement("label");
-    speed.className = "sw-audio__speed";
+    speed.className = "sw-media__speed";
     speed.textContent = "Speed ";
     var rate = document.createElement("select");
     [["0.75", "0.75 times"], ["1", "Normal"], ["1.25", "1.25 times"], ["1.5", "1.5 times"], ["2", "Twice"]].forEach(function (o) {
@@ -73,7 +73,8 @@
     speed.appendChild(rate);
     bar.append(play, back, fwd, time, seek, speed);
     media.removeAttribute("controls");
-    media.hidden = true;
+    // A recording that is only heard has nothing to see; a video stays.
+    if (media.tagName === "AUDIO") media.hidden = true;
     media.insertAdjacentElement("afterend", bar);
 
     var focused = false;
@@ -94,7 +95,7 @@
       play.firstChild.nodeValue = media.paused ? "Play" : "Pause";
       fig.setAttribute("data-state", media.paused ? "paused" : "playing");
     }
-    var cues = Array.prototype.slice.call(fig.querySelectorAll(".sw-audio__cue"));
+    var cues = Array.prototype.slice.call(fig.querySelectorAll(".sw-media__cue"));
     function mark() {
       var t = media.currentTime, now = null;
       cues.forEach(function (c) { if (parseFloat(c.getAttribute("data-start")) <= t + 0.05) now = c; });
@@ -122,10 +123,10 @@
     });
     ["timeupdate", "loadedmetadata", "durationchange", "seeked"].forEach(function (ev) { media.addEventListener(ev, show); });
     ["play", "pause", "ended"].forEach(function (ev) { media.addEventListener(ev, function () { state(); mark(); }); });
-    fig.querySelectorAll(".sw-audio__at").forEach(function (a) {
+    fig.querySelectorAll(".sw-media__at").forEach(function (a) {
       a.addEventListener("click", function (e) {
         e.preventDefault();
-        var c = a.closest(".sw-audio__cue");
+        var c = a.closest(".sw-media__cue");
         to(parseFloat(c.getAttribute("data-start")) || 0);
         media.play();
       });
@@ -134,10 +135,10 @@
     show();
   }
   function armMake(fig) {
-    var form = fig.querySelector(".sw-audio__make"), media = fig.querySelector("audio source") || fig.querySelector("audio");
+    var form = fig.querySelector(".sw-media__make"), media = fig.querySelector("audio source, video source") || fig.querySelector("audio, video");
     if (!form || form._armed || !media) return;
     form._armed = true;
-    var said = form.querySelector(".sw-audio__making"), btn = form.querySelector("button");
+    var said = form.querySelector(".sw-media__making"), btn = form.querySelector("button");
     var src = media.getAttribute("src");
     function go() {
       btn.setAttribute("aria-disabled", "true");
@@ -155,12 +156,12 @@
       if (btn.getAttribute("aria-disabled") !== "true") go();
     });
     // Once per recording per visit, so a failure does not repeat itself.
-    var key = "sw-audio-auto:" + form.action;
+    var key = "sw-media-auto:" + form.action;
     var tried = false;
     try { tried = sessionStorage.getItem(key) === "1"; sessionStorage.setItem(key, "1"); } catch (e) {}
     if (form.hasAttribute("data-auto") && !tried) go();
   }
-  function init(root) { (root || document).querySelectorAll("[data-component=audio]").forEach(function (f) { arm(f); armMake(f); }); }
+  function init(root) { (root || document).querySelectorAll("[data-component=media]").forEach(function (f) { arm(f); armMake(f); }); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", function () { init(); });
   else init();
   document.addEventListener("sw:refresh", function () { init(); });

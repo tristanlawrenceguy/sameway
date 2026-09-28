@@ -15,7 +15,7 @@ assistant puts blocks, at compact or icon size.
 ## Why it works this way
 
 - **What it takes, said first.** The kinds of file that are read, that any
-  other is kept as it is, and the 64 MB limit are under the label, before
+  other is kept as it is, and the 4 GB limit are under the label, before
   anyone chooses ([GOV.UK file upload](https://design-system.service.gov.uk/components/file-upload/),
   [WCAG 3.3.4](https://www.w3.org/WAI/WCAG22/Understanding/error-prevention-all.html)).
 - **A problem in words above the field**, marked with a bar and as
