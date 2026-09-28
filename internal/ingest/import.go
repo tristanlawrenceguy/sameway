@@ -204,6 +204,14 @@ func fieldOfType(t *schema.Type, what string) string {
 // bool from a word, a moment as RFC 3339 when it is written another way.
 func coerce(f schema.Field, v string) any {
 	switch f.Type {
+	case "enum":
+		// A choice comes back by its label, as an export writes it.
+		for _, val := range f.Values {
+			if strings.EqualFold(v, val) || strings.EqualFold(v, f.ValueLabel(val)) {
+				return val
+			}
+		}
+		return v
 	case "list":
 		var out []any
 		for _, p := range strings.FieldsFunc(v, func(r rune) bool { return r == ',' || r == ';' || r == '|' }) {

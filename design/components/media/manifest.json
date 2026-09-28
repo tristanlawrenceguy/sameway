@@ -1,6 +1,6 @@
 {
   "name": "media",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "A recording, heard or seen, with its words: played with text-labelled controls (Play, Back 15 seconds, Forward 30 seconds, speed, a seek bar that says where it is in words), its length and size, a Download link, and its transcript under it, each line leading to the moment it was said and marked while it is heard. A video shows its transcript as captions too.",
   "icon": "♪",
   "use": {
@@ -125,6 +125,26 @@
       "captions": {
         "type": "string",
         "description": "For a video: its captions as WebVTT, made from its transcript, shown on the picture by the browser."
+      },
+      "downloads": {
+        "type": "array",
+        "description": "The transcript as files to take away, such as subtitles (SRT) and plain text.",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "href",
+            "label"
+          ],
+          "properties": {
+            "href": {
+              "type": "string"
+            },
+            "label": {
+              "type": "string"
+            }
+          }
+        }
       }
     }
   },
@@ -200,6 +220,16 @@
             "said": "11 seconds",
             "speaker": "Sam",
             "text": "And the pond liner comes Thursday."
+          }
+        ],
+        "downloads": [
+          {
+            "href": "/files/r1/transcript.srt",
+            "label": "subtitles (SRT)"
+          },
+          {
+            "href": "/files/r1/transcript.txt",
+            "label": "text"
           }
         ]
       },
