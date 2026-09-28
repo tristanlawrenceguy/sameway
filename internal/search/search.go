@@ -61,6 +61,27 @@ func FindSome(st *store.Store, types *schema.Set, q string) []Hit {
 	return find(st, types, q, "", true)
 }
 
+// Counts is how many of the hits are of each type: the filters on the
+// results page are counted from the one search, not a search per type.
+func Counts(hits []Hit) map[string]int {
+	n := map[string]int{}
+	for _, h := range hits {
+		n[h.Type]++
+	}
+	return n
+}
+
+// Of is the hits of one type, in the order they were found.
+func Of(hits []Hit, only string) []Hit {
+	var out []Hit
+	for _, h := range hits {
+		if h.Type == only {
+			out = append(out, h)
+		}
+	}
+	return out
+}
+
 func find(st *store.Store, types *schema.Set, q, only string, some bool) []Hit {
 	words := Words(q)
 	if len(words) == 0 {
