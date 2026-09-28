@@ -109,6 +109,12 @@ func (s *Server) publicAllows(pub Published, path string) bool {
 		typ, _, _ := strings.Cut(rest, "/")
 		return pub.Types[typ]
 	}
+	// A published list or record goes out as a file too; nothing else does.
+	if rest, ok := strings.CutPrefix(path, "/export/"); ok {
+		typ, _, _ := strings.Cut(rest, "/")
+		typ, _, _ = strings.Cut(typ, ".")
+		return pub.Types[typ]
+	}
 	return false
 }
 

@@ -27,7 +27,7 @@ func TestWhatComesInGoesOutAgain(t *testing.T) {
 
 	// The list page offers what fits, with its own query.
 	page := get(t, h, "/t/task?where=done%3Dfalse").Body.String()
-	if !strings.Contains(page, `href="/export/task.csv?where=done%3Dfalse" download>Spreadsheet (CSV)`) || !strings.Contains(page, "/export/task.ics") || strings.Contains(page, "/export/task.vcf") {
+	if !strings.Contains(page, `href="/export/task.csv?where=done%3Dfalse" download data-format="csv">Spreadsheet (CSV, `) || !strings.Contains(page, "/export/task.ics") || strings.Contains(page, "/export/task.vcf") {
 		t.Errorf("the task list offers a spreadsheet and a calendar of what it shows:\n%.1500s", page)
 	}
 	if people := get(t, h, "/t/person").Body.String(); !strings.Contains(people, "/export/person.vcf") {
@@ -114,7 +114,7 @@ func TestATranscriptGoesOutAsSubtitlesAndText(t *testing.T) {
 	f, _ := a.Store.Get("file", id)
 	stored := f.Fields["path"].(string)
 	os.WriteFile(filepath.Join(a.Workspace.FilesDir(), strings.TrimSuffix(stored, filepath.Ext(stored))+".vtt"), []byte("WEBVTT\n\n00:00:01.000 --> 00:00:03.000\n<v Hana>Welcome.\n"), 0o644)
-	if page := get(t, h, "/t/file/"+id).Body.String(); !strings.Contains(page, `href="/files/`+id+`/transcript.srt" download>subtitles (SRT)`) {
+	if page := get(t, h, "/t/file/"+id).Body.String(); !strings.Contains(page, `href="/files/`+id+`/transcript.srt" download data-format="srt">Subtitles (SRT`) {
 		t.Error("the page offers the transcript to take away")
 	}
 	srt := get(t, h, "/files/"+id+"/transcript.srt").Body.String()

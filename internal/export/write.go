@@ -34,10 +34,30 @@ func writeCSV(w io.Writer, t *schema.Type, recs []*store.Record, titles Titles) 
 	fields := Fields(t)
 	w.Write([]byte{0xEF, 0xBB, 0xBF}) // the byte-order mark
 	c := csv.NewWriter(w)
+	c.UseCRLF = true // RFC 4180
 	c.Write(Header(fields))
-	c.WriteAll(Rows(fields, recs, titles))
+	rows := Rows(fields, recs, titles)
+	for _, row := range rows {
+		for i, v := range row {
+			if fields[i].Type != "int" && fields[i].Type != "float" {
+				row[i] = Inert(v)
+			}
+		}
+	}
+	c.WriteAll(rows)
 	c.Flush()
 	return c.Error()
+}
+
+// Inert is a cell a spreadsheet will not run: text that starts as a
+// formula does (=, +, -, @, a tab or a return) goes out with a ' before
+// it, which a spreadsheet shows as text (OWASP, CSV injection). Import
+// takes it off again. Numbers are written as numbers, never through here.
+func Inert(v string) string {
+	if v != "" && strings.ContainsRune("=+-@\t\r", rune(v[0])) {
+		return "'" + v
+	}
+	return v
 }
 
 // An Excel sheet has its header in bold, kept in sight as it scrolls,
@@ -137,11 +157,12 @@ func writeICS(w io.Writer, t *schema.Type, recs []*store.Record) error {
 		}
 		title, _ := r.Fields[t.Title].(string)
 		lines = append(lines, "BEGIN:VEVENT", "UID:"+uid, "DTSTAMP:"+stamp, "SUMMARY:"+esc(title), "DTSTART"+icsTime(when))
+		allDay := strings.HasPrefix(icsTime(when), ";VALUE=DATE")
 		if end, _ := r.Fields["ends"].(string); end != "" && start == "starts" {
-			lines = append(lines, "DTEND"+icsTime(end))
+			lines = append(lines, "DTEND"+icsEnd(end, allDay))
 		}
 		if rule, _ := r.Fields["repeat"].(string); rule != "" {
-			lines = append(lines, "RRULE:"+rule)
+			lines = append(lines, "RRULE:"+icsRule(rule, allDay))
 		}
 		if where, _ := r.Fields["where"].(string); where != "" {
 			lines = append(lines, "LOCATION:"+esc(where))
@@ -171,6 +192,35 @@ func icsTime(v string) string {
 		return ";VALUE=DATE:" + t.UTC().Format("20060102")
 	}
 	return ":" + t.UTC().Format("20060102T150405Z")
+}
+
+// icsEnd is an end as DTEND takes it. An all-day end is the day after the
+// last day, since DTEND is not part of the event (RFC 5545 3.6.1), so an
+// event that ends on the 13th ends on the 14th in the file.
+func icsEnd(v string, allDay bool) string {
+	out := icsTime(v)
+	if day, ok := strings.CutPrefix(out, ";VALUE=DATE:"); ok && allDay {
+		if d, err := time.Parse("20060102", day); err == nil {
+			return ";VALUE=DATE:" + d.AddDate(0, 0, 1).Format("20060102")
+		}
+	}
+	return out
+}
+
+// icsRule is a repeat as RRULE takes it: UNTIL must be the same kind of
+// value as the start (RFC 5545 3.3.10), so a timed event's last day runs
+// to its end, in UTC.
+func icsRule(rule string, allDay bool) string {
+	if allDay {
+		return rule
+	}
+	parts := strings.Split(rule, ";")
+	for i, p := range parts {
+		if day, ok := strings.CutPrefix(p, "UNTIL="); ok && len(day) == 8 {
+			parts[i] = "UNTIL=" + day + "T235959Z"
+		}
+	}
+	return strings.Join(parts, ";")
 }
 
 func esc(s string) string {

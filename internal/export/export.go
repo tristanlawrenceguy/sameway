@@ -72,6 +72,13 @@ func dateField(t *schema.Type) string {
 	return ""
 }
 
+// Dated says whether a record has the day a calendar places it on.
+func Dated(t *schema.Type, rec *store.Record) bool {
+	f := dateField(t)
+	v, _ := rec.Fields[f].(string)
+	return f != "" && v != ""
+}
+
 // Titles says what a ref points at, by its title.
 type Titles func(f schema.Field, id string) string
 

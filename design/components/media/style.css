@@ -31,4 +31,3 @@
 .sw-media__make, .sw-media__get { display: flex; flex-wrap: wrap; gap: var(--sw-space-2); align-items: center; margin: 0; }
 .sw-media__why { margin: 0; flex-basis: 100%; }
 video.sw-media__player { max-width: 100%; height: auto; background: var(--sw-color-bg-muted); border-radius: var(--sw-radius-md); }
-.sw-media__downloads { margin: var(--sw-space-2) 0 0; font-size: var(--sw-size-text-sm); }
