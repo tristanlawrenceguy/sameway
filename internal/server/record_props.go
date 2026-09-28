@@ -117,8 +117,8 @@ func (s *Server) refused(w http.ResponseWriter, r *http.Request, t *schema.Type,
 		// Listed with the rest, as words with no field to lead to, so none
 		// is lost when the problems show as a list.
 		for _, name := range rest {
-			said = append(said, capitalize(label(name))+" is not a field of a "+t.Name+".")
-			problems = append(problems, problem{Text: capitalize(label(name)) + " is not a field of a " + t.Name + "."})
+			said = append(said, capitalize(label(name))+" is not a field of a "+schema.Words(t.Name)+".")
+			problems = append(problems, problem{Text: capitalize(label(name)) + " is not a field of a " + schema.Words(t.Name) + "."})
 		}
 	}
 	text := strings.Join(said, " ")
