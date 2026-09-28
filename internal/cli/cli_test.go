@@ -61,7 +61,7 @@ func TestInitRefusesToOverwrite(t *testing.T) {
 	if r := run(t, dir, "init", dir, "--no-detect"); r.code == 0 || !strings.Contains(r.stderr, "--force") {
 		t.Errorf("second init should fail and mention --force: %+v", r)
 	}
-	if r := run(t, dir, "init", dir, "--force", "--no-detect"); r.code != 0 || !strings.Contains(r.stdout, "Edit ") || strings.Contains(r.stdout, "No local model server") {
+	if r := run(t, dir, "init", dir, "--force", "--no-detect"); r.code != 0 || !strings.Contains(r.stdout, "the chat shows what you can connect") || strings.Contains(r.stdout, "No AI model was found") {
 		t.Errorf("init --force --no-detect: %+v", r)
 	}
 }
@@ -84,8 +84,11 @@ func TestDescribeJSON(t *testing.T) {
 	if err := json.Unmarshal([]byte(r.stdout), &d); err != nil {
 		t.Fatalf("describe --json is not JSON: %v\n%s", err, r.stdout)
 	}
-	if len(d.Types) != 5 || len(d.Components) < 19 || d.LLM.Ready || d.LLM.Problem == "" {
-		t.Errorf("describe content: %+v", d)
+	// One type per schema file in the workspace, so a type added to the
+	// starter is expected here the same moment rather than counted by hand.
+	schemas, _ := filepath.Glob(filepath.Join(dir, "schema", "*.yaml"))
+	if len(d.Types) != len(schemas) || len(d.Components) < 19 || d.LLM.Ready || d.LLM.Problem == "" {
+		t.Errorf("describe content (want %d types): %+v", len(schemas), d)
 	}
 	human := run(t, dir, "describe")
 	if !strings.Contains(human.stdout, "Content types:") || !strings.Contains(human.stdout, "note") {
@@ -214,5 +217,72 @@ func TestCheckReportsBrokenExamples(t *testing.T) {
 	r := run(t, dir, "check")
 	if r.code != 1 || !strings.Contains(r.stderr, "component bad example default") {
 		t.Errorf("check should name the broken example: %+v", r)
+	}
+}
+
+// One part of the description is read from the command line the same way an
+// agent reads it over HTTP, and is JSON either way.
+func TestDescribeOnePart(t *testing.T) {
+	dir := initWorkspace(t)
+	r := run(t, dir, "describe", "types", "note")
+	if r.code != 0 || !strings.Contains(r.stdout, `"body"`) || strings.Contains(r.stdout, `"components"`) {
+		t.Errorf("describe types note should print the note type alone: %+v", r)
+	}
+	if r := run(t, dir, "describe", "nope"); r.code == 0 || !strings.Contains(r.stderr, "types, components, arrangements, tools, routes, llm") {
+		t.Errorf("an unknown part should name the parts: %+v", r)
+	}
+}
+
+// The content folder is the portable form: written as records change, read
+// back with import after a pull, rewritten whole with export.
+func TestContentIsThePortableForm(t *testing.T) {
+	dir := initWorkspace(t)
+	r := run(t, dir, "note", "create", "--set", "title=Hello", "--set", "body=Every Sunday.", "--json")
+	if r.code != 0 {
+		t.Fatalf("%+v", r)
+	}
+	var rec struct{ ID string }
+	if err := json.Unmarshal([]byte(r.stdout), &rec); err != nil || rec.ID == "" {
+		t.Fatalf("create --json should print the record: %v %s", err, r.stdout)
+	}
+	path := filepath.Join(dir, "content", "note", rec.ID+".md")
+	data, err := os.ReadFile(path)
+	if err != nil || !strings.Contains(string(data), "title: Hello") || !strings.Contains(string(data), "Every Sunday.") {
+		t.Fatalf("creating a note should write %s: %v\n%s", path, err, data)
+	}
+
+	// Someone edited the file (or a pull brought it): import takes it in.
+	os.WriteFile(path, []byte(strings.Replace(string(data), "title: Hello", "title: Hello again", 1)), 0o644)
+	if r := run(t, dir, "import"); r.code != 0 || !strings.Contains(r.stdout, "updated 1") {
+		t.Fatalf("import should report the update: %+v", r)
+	}
+	if r := run(t, dir, "note", "get", rec.ID); !strings.Contains(r.stdout, "Hello again") {
+		t.Errorf("import should change the record: %s", r.stdout)
+	}
+	if r := run(t, dir, "activity", "list"); !strings.Contains(r.stdout, "You synced content") || !strings.Contains(r.stdout, "1 changed") {
+		t.Errorf("an import is one entry in the log, undone in one go: %s", r.stdout)
+	}
+
+	// The file goes, the record goes; export puts the folder back in step.
+	os.Remove(path)
+	if r := run(t, dir, "import", "--json"); r.code != 0 || !strings.Contains(r.stdout, `"deleted": 1`) {
+		t.Fatalf("import should delete the record whose file is gone: %+v", r)
+	}
+	run(t, dir, "note", "create", "--set", "title=Second")
+	os.RemoveAll(filepath.Join(dir, "content", "note"))
+	if r := run(t, dir, "export", "--json"); r.code != 0 || !strings.Contains(r.stdout, `"written": 1`) {
+		t.Fatalf("export should rewrite the folder: %+v", r)
+	}
+}
+
+// A page reads the same from the command line as over the API.
+func TestLookFromTheCommandLine(t *testing.T) {
+	dir := initWorkspace(t)
+	r := run(t, dir, "look", "/t/note")
+	if r.code != 0 || !strings.Contains(r.stdout, `"headings"`) || !strings.Contains(r.stdout, `"problems": []`) {
+		t.Errorf("look should print the outline as JSON: %+v", r)
+	}
+	if r := run(t, dir, "look"); r.code == 0 || !strings.Contains(r.stderr, "usage") {
+		t.Errorf("look without a path should say how to use it: %+v", r)
 	}
 }

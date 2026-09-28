@@ -15,7 +15,7 @@ import (
 var ErrNotFound = errors.New("not found")
 
 // ListOptions controls List. OrderBy must be a field name, "created_at", or
-// "updated_at". Limit 0 means no limit.
+// "updated_at". Limit is applied only when positive; callers must not pass zero.
 type ListOptions struct {
 	OrderBy string
 	Desc    bool
@@ -32,8 +32,15 @@ func (s *Store) Create(typeName string, fields map[string]any) (*Record, error) 
 	if err != nil {
 		return nil, err
 	}
+	if err := s.checkRefs(t, clean); err != nil {
+		return nil, err
+	}
+	return s.insert(t, NewID(), clean)
+}
+
+func (s *Store) insert(t *schema.Type, id string, clean map[string]any) (*Record, error) {
 	now := time.Now().UTC()
-	rec := &Record{ID: NewID(), Type: t.Name, CreatedAt: now, UpdatedAt: now, Fields: clean}
+	rec := &Record{ID: id, Type: t.Name, CreatedAt: now, UpdatedAt: now, Fields: clean}
 	cols := []string{"id", "created_at", "updated_at"}
 	args := []any{rec.ID, now.Format(time.RFC3339Nano), now.Format(time.RFC3339Nano)}
 	for _, f := range t.Fields {
@@ -45,6 +52,8 @@ func (s *Store) Create(typeName string, fields map[string]any) (*Record, error) 
 	if _, err := s.db.Exec(stmt, args...); err != nil {
 		return nil, fmt.Errorf("insert %s: %w", t.Name, err)
 	}
+	s.stamp(t, id, nil, clean, now)
+	s.wrote(rec)
 	return rec, nil
 }
 
@@ -125,6 +134,12 @@ func (s *Store) Update(typeName, id string, fields map[string]any) (*Record, err
 	if err != nil {
 		return nil, err
 	}
+	if err := s.checkRefs(t, clean); err != nil {
+		return nil, err
+	}
+	// Something that repeats, finished, is due again, however it was
+	// finished (schema/repeat.go).
+	t.Advance(current.Fields, clean, time.Now())
 	now := time.Now().UTC()
 	sets := []string{"updated_at = ?"}
 	args := []any{now.Format(time.RFC3339Nano)}
@@ -137,8 +152,10 @@ func (s *Store) Update(typeName, id string, fields map[string]any) (*Record, err
 	if _, err := s.db.Exec(stmt, args...); err != nil {
 		return nil, fmt.Errorf("update %s: %w", t.Name, err)
 	}
+	s.stamp(t, id, current.Fields, clean, time.Time{})
 	current.Fields = clean
 	current.UpdatedAt = now
+	s.wrote(current)
 	return current, nil
 }
 
@@ -155,6 +172,10 @@ func (s *Store) Delete(typeName, id string) error {
 	if n, _ := res.RowsAffected(); n == 0 {
 		return ErrNotFound
 	}
+	s.stamp(t, id, nil, nil, time.Time{})
+	if s.AfterWrite != nil {
+		s.AfterWrite(t.Name, id, nil)
+	}
 	return nil
 }
 
@@ -163,6 +184,10 @@ func (s *Store) DeleteAll(typeName string) error {
 	t, err := s.typ(typeName)
 	if err != nil {
 		return err
+	}
+	recs, _ := s.List(t.Name, ListOptions{})
+	for _, r := range recs {
+		s.stamp(t, r.ID, nil, nil, time.Time{})
 	}
 	_, err = s.db.Exec(fmt.Sprintf("DELETE FROM %s", quote(t.Name)))
 	return err

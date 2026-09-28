@@ -1,43 +1,128 @@
-/* Page shell: skip links, header, main, footer. */
+/* Page shell: skip links, the sidebar, main, footer.
+ *
+ * On a wide screen the workspace's lists sit in a sidebar on the left,
+ * each with a coloured dot, the way a person keeps lists: the page is
+ * theirs, and the way around it is always in view. On a narrow screen
+ * the same header sits on top and scrolls away with the page, kept to a
+ * few lines: pinned, it took most of a phone's screen, and the lists run
+ * sideways in one row rather than stacking. */
 
 .sw-skip {
-  position: absolute; left: var(--sw-space-2); top: -100px; z-index: 10;
-  padding: var(--sw-space-2) var(--sw-space-4);
-  background: var(--sw-color-accent); color: var(--sw-color-accent-fg);
-  border-radius: var(--sw-radius-md); font-weight: 600;
+    position: absolute; left: var(--sw-space-2); top: -100px; z-index: 10;
+    display: inline-flex; align-items: center; min-height: var(--sw-size-target);
+    padding: var(--sw-space-2) var(--sw-space-4);
+    background: var(--sw-color-accent); color: var(--sw-color-accent-fg);
+    border-radius: var(--sw-radius-md); font-weight: 600;
 }
 .sw-skip:focus { top: var(--sw-space-2); }
 
 .sw-header {
-  position: sticky; top: 0; z-index: 5;
-  padding: var(--sw-space-3) var(--sw-space-4);
-  background: color-mix(in srgb, var(--sw-color-bg) 88%, transparent);
-  backdrop-filter: saturate(1.4) blur(10px);
-  border-bottom: 1px solid var(--sw-color-border);
+    z-index: 5;
+    padding: var(--sw-space-3) var(--sw-space-4);
+    background: color-mix(in srgb, var(--sw-color-bg-muted) 92%, transparent);
+    backdrop-filter: saturate(1.4) blur(10px);
+    border-bottom: 1px solid var(--sw-color-border);
+    pointer-events: none;
 }
 .sw-header__inner, .sw-main, .sw-footer { width: min(100% - 2rem, 90rem); margin-inline: auto; }
-.sw-header__inner { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sw-space-6); }
+.sw-header__inner { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sw-space-2) var(--sw-space-4); }
 .sw-header__brand {
-  display: inline-flex; align-items: center; gap: var(--sw-space-2);
-  font-weight: 800; font-size: var(--sw-size-text-lg); letter-spacing: -0.02em;
-  text-decoration: none; color: inherit; min-height: var(--sw-size-target);
+    display: inline-flex; align-items: center; gap: var(--sw-space-2);
+    font-weight: 700; font-size: var(--sw-size-text-lg); letter-spacing: -0.02em;
+    text-decoration: none; color: inherit; min-height: var(--sw-size-target);
+    pointer-events: auto;
 }
 .sw-header__mark {
-  width: 1.5rem; height: 1.5rem; border-radius: 0.5rem;
-  background: linear-gradient(135deg, var(--sw-color-human), var(--sw-color-assistant));
+    width: 0.875rem; height: 0.875rem; border-radius: 50%;
+    background: var(--sw-color-accent);
 }
-.sw-nav ul { list-style: none; display: flex; flex-wrap: wrap; gap: var(--sw-space-1); margin: 0; padding: 0; }
+/* The lists share the name's line and scroll sideways past its edge. */
+.sw-nav { min-width: 0; max-width: 100%; }
+.sw-header__brand + .sw-nav { flex: 1 1 0; }
+.sw-nav ul { list-style: none; display: flex; flex-wrap: nowrap; overflow-x: auto; gap: var(--sw-space-1); margin: 0; padding: 0; }
+.sw-nav li { flex: none; }
 .sw-nav .sw-link {
-  display: inline-flex; align-items: center; min-height: var(--sw-size-target);
-  padding: 0 var(--sw-space-3); border-radius: var(--sw-radius-pill);
-  text-decoration: none; color: var(--sw-color-fg-muted); font-weight: 500;
+    display: inline-flex; align-items: center; gap: var(--sw-space-3); min-height: var(--sw-size-target);
+    padding: 0 var(--sw-space-3); border-radius: var(--sw-radius-md);
+    text-decoration: none; color: var(--sw-color-fg); font-weight: 500;
+    pointer-events: auto;
 }
-.sw-nav .sw-link:hover { background: var(--sw-color-bg-muted); color: var(--sw-color-fg); }
-.sw-nav .sw-link[aria-current="page"] { background: var(--sw-color-accent-soft); color: var(--sw-color-accent); font-weight: 700; text-decoration: none; }
+.sw-nav .sw-link:hover { background: color-mix(in srgb, var(--sw-color-fg) 8%, transparent); }
+.sw-nav .sw-link[aria-current="page"] { background: color-mix(in srgb, var(--sw-color-fg) 10%, transparent); color: var(--sw-color-fg); font-weight: 600; text-decoration: none; box-shadow: inset 3px 0 0 var(--sw-color-accent); }
+/* Each list has a dot in its own colour, the same one everywhere it
+   appears: the sidebar, a page title, the way back on a record's page, a
+   search result, a block drawn from that list. data-dot says which. */
+[data-dot="1"] { --sw-dot: var(--sw-color-list-1); }
+[data-dot="2"] { --sw-dot: var(--sw-color-list-2); }
+[data-dot="3"] { --sw-dot: var(--sw-color-list-3); }
+[data-dot="4"] { --sw-dot: var(--sw-color-list-4); }
+[data-dot="5"] { --sw-dot: var(--sw-color-list-5); }
+[data-dot="6"] { --sw-dot: var(--sw-color-list-6); }
+.sw-nav li[data-dot] .sw-link::before,
+h1.sw-dotted::before,
+.sw-crumbs li.sw-dotted .sw-link::before,
+li.sw-dotted .sw-card__title::before,
+[data-dot] .sw-collection__title::before,
+.sw-rows[data-dot] .sw-row:not(:has(.sw-mark))::before,
+[data-dot] .sw-collection__item:not(:has(.sw-mark))::before,
+[data-dot] .sw-calendar caption::before,
+[data-dot] .sw-chart__caption::before,
+[data-dot] .sw-record__kind::before {
+  content: ""; display: inline-block; flex: none; vertical-align: 0.05em;
+  width: 0.75rem; height: 0.75rem; border-radius: 50%; margin-right: var(--sw-space-2);
+  background: var(--sw-dot, var(--sw-color-border-strong));
+}
+.sw-nav li[data-dot] .sw-link::before,
+.sw-rows[data-dot] .sw-row:not(:has(.sw-mark))::before,
+[data-dot] .sw-collection__item:not(:has(.sw-mark))::before { margin-right: 0; }
+/* A row that has no box starts with the list's dot, so every row starts
+   with a mark and a list of notes reads like the sidebar. */
+.sw-rows[data-dot] .sw-row:not(:has(.sw-mark))::before { margin-left: 0.375rem; margin-right: 0.375rem; }
+[data-dot] .sw-collection__item:not(:has(.sw-mark))::before { align-self: center; }
+h1.sw-dotted::before { width: 1.125rem; height: 1.125rem; margin-right: var(--sw-space-3); vertical-align: 0.02em; }
+/* In the way back the dot is on the link, part of what is pressed, and
+   leaves the place before it free for the chevron. */
+.sw-crumbs li.sw-dotted .sw-link::before { width: 0.625rem; height: 0.625rem; }
+/* The rest of the workspace: quieter, after the lists. */
+.sw-nav--more .sw-link { min-height: var(--sw-size-target); padding: 0 var(--sw-space-3); font-weight: 500; color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); }
+.sw-nav--more .sw-link:hover { color: var(--sw-color-fg); }
+.sw-nav--more .sw-link[aria-current="page"] { color: var(--sw-color-fg); }
 
-.sw-main { padding-block: var(--sw-space-8) var(--sw-space-16); min-height: 60vh; }
-.sw-footer { padding-block: var(--sw-space-4); color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); border-top: 1px solid var(--sw-color-border); }
-.sw-nav--more ul { gap: var(--sw-space-3); }
-.sw-nav--more .sw-link { min-height: var(--sw-size-target); padding: 0 var(--sw-space-2); font-weight: 500; color: var(--sw-color-fg-muted); text-decoration: none; }
-.sw-nav--more .sw-link:hover { color: var(--sw-color-fg); text-decoration: underline; }
-.sw-nav--more .sw-link[aria-current="page"] { color: var(--sw-color-accent); background: none; }
+.sw-main { padding-block: var(--sw-space-6) var(--sw-space-12); min-height: 60vh; }
+/* The page head: the way here, the title, the few facts under it. */
+.sw-page-head { margin-bottom: var(--sw-space-8); }
+.sw-page-head .sw-crumbs { margin-bottom: var(--sw-space-1); }
+.sw-lede { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sw-space-2) var(--sw-space-3); margin: 0; color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); }
+.sw-lede .sw-mark { min-height: 0; }
+/* A group in a listing: a bold header at body size, a count, one hairline. */
+.sw-group { display: flex; align-items: baseline; gap: var(--sw-space-2); margin: var(--sw-space-8) 0 var(--sw-space-2); padding-bottom: var(--sw-space-2); border-bottom: 1px solid var(--sw-color-border); font-size: var(--sw-size-text-lg); max-width: var(--sw-size-measure); }
+.sw-group:first-child { margin-top: 0; }
+.sw-group__count, .sw-group__range { color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); font-weight: 500; }
+.sw-group__range { margin-left: auto; }
+.sw-footer { padding-block: var(--sw-space-8); color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); }
+.sw-footer__agents { margin: 0; }
+.sw-footer__agents .sw-link { color: var(--sw-color-fg-muted); }
+/* What sits in the header bar keeps to the right, on the brand's line. */
+.sw-strip--header { justify-content: flex-end; align-self: center; }
+
+@media (min-width: 64rem) {
+  body { display: grid; grid-template-columns: 15rem minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
+  .sw-header {
+    position: sticky; top: 0;
+    grid-row: 1 / -1; grid-column: 1;
+    height: 100dvh; overflow-y: auto;
+    padding: var(--sw-space-6) var(--sw-space-3);
+    background: var(--sw-color-bg-muted); backdrop-filter: none;
+    border-bottom: 0; border-right: 1px solid var(--sw-color-border);
+  }
+  .sw-header__brand + .sw-nav { flex: none; }
+  .sw-header__inner { width: auto; margin: 0; height: 100%; flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: var(--sw-space-6); }
+  .sw-header__brand { padding-inline: var(--sw-space-3); }
+  .sw-nav ul { flex-direction: column; flex-wrap: nowrap; overflow-x: visible; gap: 2px; }
+  .sw-nav--more { margin-top: auto; }
+  .sw-strip--header { justify-content: flex-start; align-self: stretch; }
+  .sw-shell { grid-column: 2; min-width: 0; }
+  .sw-footer { grid-column: 2; }
+  .sw-main, .sw-footer { width: auto; margin-inline: 0; max-width: 64rem; padding-inline: var(--sw-space-16); }
+  .sw-main { padding-block: var(--sw-space-16); }
+}

@@ -11,11 +11,9 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
+	"github.com/tristanlawrenceguy/sameway/internal/update"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
-
-// Version is set by the build.
-var Version = "dev"
 
 const usage = `sameway - accessible content and components for people and agents
 
@@ -23,9 +21,20 @@ Usage:
   sameway init [dir] [--force]          create a workspace from the starter preset
   sameway open [--addr host:port]       run the workspace and open it in a browser
   sameway serve [--addr host:port]      run the web server for this workspace
-  sameway describe [--json]             show content types, components, and routes
+  sameway describe [--json] [part [name]]  show content types, components, tools and routes, or one part
   sameway check                         validate the workspace schema and components
+  sameway update [--check]              install a new version of sameway, or only say whether one is out
+  sameway search <words>                find anything by the words in it, records and canvas blocks alike
+  sameway add <file>... [--title words] add files on this computer, copied in as they are (up to 4 GB each)
+  sameway look <path>                   a page as a screen reader gets it, with its problems, as JSON
+  sameway export                        rewrite content/ from the database (it is kept current as things change)
+  sameway import [--dry-run]            read content/ back into the database, after a git pull; one Undo takes it back
+  sameway snapshots                     the daily copies of this workspace's data, newest first
+  sameway restore <path>                put a copy back, keeping the data from before (workspace stopped)
   sameway chat <message>                talk to the assistant from the terminal
+  sameway mcp                           serve the workspace to an MCP client over stdio
+  sameway connect <tool> [--write]      the MCP configuration for claude-code, claude-desktop, cursor, windsurf, vscode, codex, or chatgpt for a client elsewhere
+  sameway discover [type] [--wait 3s]   what the local network announces: brokers, hubs, speakers, printers
   sameway component new <name>          scaffold a component folder in the workspace
   sameway <type> list [--json]          list records of a content type
   sameway <type> get <id> [--json]
@@ -42,7 +51,9 @@ Global flags:
 // Env carries the streams and working directory so tests can drive the CLI.
 type Env struct {
 	Stdout, Stderr io.Writer
-	Dir            string
+	// Stdin is what `sameway mcp` reads its client from.
+	Stdin io.Reader
+	Dir   string
 }
 
 // Run executes args and returns the exit code.
@@ -59,7 +70,7 @@ func Run(args []string, env Env) int {
 		return 2
 	}
 	if *version {
-		fmt.Fprintln(env.Stdout, "sameway", Version)
+		fmt.Fprintln(env.Stdout, "sameway", update.Version)
 		return 0
 	}
 	if sub == "" || sub == "help" || sub == "-h" || sub == "--help" {
@@ -79,8 +90,30 @@ func Run(args []string, env Env) int {
 		err = c.describeCmd()
 	case "check":
 		err = c.checkCmd()
+	case "update":
+		err = c.updateCmd()
+	case "look":
+		err = c.lookCmd()
+	case "add":
+		err = c.addCmd()
+	case "search":
+		err = c.searchCmd()
+	case "export":
+		err = c.exportCmd()
+	case "import":
+		err = c.importCmd()
+	case "snapshots":
+		err = c.snapshotsCmd()
+	case "restore":
+		err = c.restoreCmd()
 	case "chat":
 		err = c.chatCmd()
+	case "connect":
+		err = c.connectCmd()
+	case "discover":
+		err = c.discoverCmd()
+	case "mcp":
+		err = c.mcpCmd()
 	case "component":
 		err = c.componentCmd()
 	default:

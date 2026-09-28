@@ -1,0 +1,61 @@
+/* A tracker is a few things kept up, each a row: the name and its streak,
+   a bar for this period against the target, the numbers in words, the
+   last days as dots, and Log. A met period is the success green; the bar
+   fills in the list colour. */
+.sw-tracker--full { display: grid; gap: var(--sw-space-2); min-width: 0; container-type: inline-size; }
+.sw-tracker__list { display: grid; gap: var(--sw-space-2); }
+.sw-tracker__habit {
+  display: grid; grid-template-columns: 1fr auto; grid-template-areas: "head log" "bar log" "numbers log" "days log";
+  column-gap: var(--sw-space-4); row-gap: var(--sw-space-1); align-items: center;
+  padding: var(--sw-space-3) var(--sw-space-2); border-top: 1px solid var(--sw-color-border);
+}
+.sw-tracker__habit:first-child { border-top: 0; }
+.sw-tracker__head { grid-area: head; position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: var(--sw-space-1) var(--sw-space-2); min-width: 0; min-height: var(--sw-size-target); }
+.sw-tracker__name { font-weight: 600; color: var(--sw-color-fg); text-decoration: none; overflow-wrap: anywhere; }
+a.sw-tracker__name:hover { text-decoration: underline; text-underline-offset: 0.15em; }
+/* The run so far, in words where it can be read, only when there is one:
+   not in the warning colour, which means over a limit. */
+.sw-tracker__streak {
+  flex: 0 1 auto; min-width: 0; overflow-wrap: anywhere; display: inline-flex; align-items: center;
+  padding: 0 0.5em; min-height: 1.375rem; border-radius: var(--sw-radius-pill);
+  background: var(--sw-color-bg-muted); color: var(--sw-color-fg); font-size: var(--sw-size-text-xs); font-weight: 600; font-variant-numeric: tabular-nums;
+}
+/* The bar is the meter component; a limit gone over turns it the warning
+   colour, and the words say how far over. */
+.sw-tracker__bar { grid-area: bar; }
+.sw-tracker__habit[data-aim="limit"][data-met="false"] .sw-tracker__progress { color: var(--sw-color-warning); font-weight: 600; }
+.sw-tracker__numbers { grid-area: numbers; margin: 0; font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); display: flex; flex-wrap: wrap; gap: var(--sw-space-3); font-variant-numeric: tabular-nums; }
+/* Green means reached: a limit kept within stays in the list colour. */
+.sw-tracker__habit[data-met="true"]:not([data-aim="limit"]) .sw-tracker__progress { color: var(--sw-color-success); font-weight: 600; }
+/* The last days: a dot each, filled when met, this one last. */
+.sw-tracker__days { grid-area: days; display: flex; gap: 0.3rem; }
+/* A record has no target to meet: a dot is filled when something was logged. */
+.sw-tracker__habit[data-aim="record"] .sw-tracker__day[data-logged="true"] { background: var(--sw-color-accent); }
+/* A day kept is a filled dot, a day missed an empty ring: the shape says
+   it, not only the colour. */
+.sw-tracker__day { width: 0.5rem; height: 0.5rem; border-radius: 50%; border: 1.5px solid var(--sw-color-border-strong); }
+.sw-tracker__habit:not([data-aim="limit"]) .sw-tracker__day[data-met="true"] { background: var(--sw-color-success); border-color: var(--sw-color-success); }
+.sw-tracker__habit[data-aim="limit"] .sw-tracker__day[data-met="true"] { background: var(--sw-color-accent); border-color: var(--sw-color-accent); }
+/* The one still going is a dashed ring: not a day missed. */
+.sw-tracker__day[data-going="true"] { border-style: dashed; }
+.sw-tracker__day:last-child { box-shadow: 0 0 0 2px var(--sw-color-bg-raised), 0 0 0 3px var(--sw-color-border-strong); }
+.sw-tracker__log { grid-area: log; display: flex; flex-wrap: wrap; align-items: center; gap: var(--sw-space-2); }
+.sw-tracker .sw-tracker__on { width: 7rem; min-height: var(--sw-size-target); padding: 0 var(--sw-space-2); font-size: var(--sw-size-text-sm); }
+.sw-tracker .sw-tracker__amount { width: 4rem; min-height: var(--sw-size-target); padding: 0 var(--sw-space-2); text-align: right; font-size: var(--sw-size-text-sm); }
+.sw-tracker__unit { font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); }
+.sw-tracker__log .sw-button { min-height: var(--sw-size-target); padding: 0 var(--sw-space-3); font-size: var(--sw-size-text-sm); }
+/* At a glance: met of all, this period. */
+.sw-tracker--glance { display: inline-flex; align-items: center; gap: var(--sw-space-1); min-height: var(--sw-size-target); color: inherit; text-decoration: none; }
+.sw-tracker--glance:hover .sw-tracker__label { text-decoration: underline; }
+.sw-tracker__count { font-size: var(--sw-size-text-lg); font-weight: 700; font-variant-numeric: tabular-nums; }
+.sw-tracker__of { font-size: var(--sw-size-text-sm); font-weight: 400; color: var(--sw-color-fg-muted); }
+.sw-tracker__label { font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); }
+/* Narrow (a pane, a phone): Log goes under the habit instead of beside it. */
+@container (max-width: 27rem) {
+  .sw-tracker__habit { grid-template-columns: 1fr; grid-template-areas: "head" "bar" "numbers" "days" "log"; }
+}
+/* Forced colours repaint backgrounds: the bar keeps an edge, its fill and
+   the kept days keep their shape in the person's colours. */
+@media (forced-colors: active) {
+  .sw-tracker__day[data-met="true"] { forced-color-adjust: none; background: CanvasText; border-color: CanvasText; }
+}

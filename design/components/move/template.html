@@ -1,0 +1,1 @@
+<form class="sw-move" method="post" action="{{.action}}" data-component="move">{{if .back}}<input type="hidden" name="back" value="{{.back}}">{{end}}{{child (dict "component" "select" "props" .select)}}<button type="submit" class="sw-button sw-button--secondary sw-pressable">Move<span class="sw-visually-hidden"> {{.title}}</span></button></form>

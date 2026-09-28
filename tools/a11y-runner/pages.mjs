@@ -7,9 +7,12 @@
 //   agent:  reads /api/describe, then finds and operates the same controls by
 //           role and accessible name, and checks every rendered component is
 //           one the description lists.
+// Every page in every mode, and the site as a whole, is site.mjs.
 import { chromium } from "playwright";
 import AxeBuilder from "@axe-core/playwright";
-import { AA_TAGS } from "./shell.mjs";
+import { AA_TAGS, AAA_TAGS } from "./shell.mjs";
+import { axeProblems } from "./checks.mjs";
+import { visualProblems } from "./visual.mjs";
 
 const base = (process.env.SAMEWAY_URL || "http://127.0.0.1:8080").replace(/\/$/, "");
 const browser = await chromium.launch();
@@ -19,8 +22,7 @@ const fail = (msg) => { failures++; console.log(`FAIL ${msg}`); };
 const check = (ok, msg) => { if (!ok) fail(msg); };
 
 async function axe(label) {
-  const res = await new AxeBuilder({ page }).withTags(AA_TAGS).analyze();
-  for (const v of res.violations) fail(`${label}: axe ${v.id} - ${v.help} (${v.nodes.length} node(s))`);
+  for (const p of await axeProblems(page)) fail(`${label}: ${p}`);
 }
 
 async function shellChecks(label) {
@@ -65,48 +67,144 @@ check(page.url().includes("#msg-"), "chat: redirect targets the newest message")
 const errorMsg = page.locator("[data-component=message][data-role=error]");
 check(await errorMsg.count() === 1 && /no model configured/.test(await errorMsg.textContent()), "chat: missing model is recorded as a system message");
 check(await page.getByRole("link", { name: "Skip to latest message" }).count() === 1, "chat: skip link to latest message present");
+// Pressing it takes focus to the newest message, not just to the top of the page.
+await page.getByRole("link", { name: "Skip to latest message" }).focus();
+await page.keyboard.press("Enter");
+check(await page.evaluate(() => {
+  const all = document.querySelectorAll("[data-component=message]");
+  return all.length > 0 && all[all.length - 1].contains(document.activeElement);
+}), "chat: the skip link moves focus to the newest message");
 await axe("home after chat");
 
-// Keyboard-only note creation.
+// Navigate to notes list and verify shell invariants.
 await page.getByRole("link", { name: "notes" }).click();
 await shellChecks("notes list");
-await page.getByRole("link", { name: "New note" }).click();
-await shellChecks("new note");
-const title = page.getByRole("textbox", { name: /Title/ });
-await title.focus();
-await page.keyboard.type("Typed by keyboard");
-await page.keyboard.press("Tab");
-await page.keyboard.type("Body line one");
-await page.keyboard.press("Enter");
-await page.keyboard.type("Body line two");
-check((await page.getByRole("textbox", { name: "Body" }).inputValue()).includes("\n"), "new note: Enter in body inserts a newline");
-await page.getByRole("combobox", { name: "Status" }).selectOption("published");
-await page.getByRole("checkbox", { name: "Pinned" }).check();
-await title.focus();
-await page.keyboard.press("Enter");
-// Enter starts a navigation; wait for the detail URL rather than a load
-// state that the form page already satisfies.
-const detailURL = /\/t\/note\/(?!new$)[a-z0-9]+$/;
-await page.waitForURL(detailURL, { timeout: 10000 }).catch(() => {});
-check(detailURL.test(page.url()), `new note: Enter in the title submits and lands on the detail page (${page.url()})`);
-const h1 = (await page.locator("h1").textContent()).trim();
-check(h1 === "Typed by keyboard", `detail: h1 should be the note title, got ${JSON.stringify(h1)}`);
-const detailText = (await page.locator("main").textContent()).replace(/\s+/g, " ");
-check(detailText.includes("published") && detailText.includes("yes"), `detail: status and pinned saved; page says ${JSON.stringify(detailText.slice(0, 300))}`);
+
+// Create a note via the API so there is one to navigate to on the detail page.
+const apiRec = await fetch(base + "/api/note", {
+  method: "POST",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({ title: "Created by keyboard test", body: "Written by the test.", tags: ["a11y"] }),
+});
+check(apiRec.status === 201, `person API note creation returns 201 (got ${apiRec.status})`);
+const apiNote = await apiRec.json();
+
+// Navigate to the detail page and verify shell invariants.
+await page.goto(base + "/t/note/" + apiNote.id);
 await shellChecks("detail");
 
-// Validation failure with values preserved and errors linked.
-await page.getByRole("link", { name: "Edit note" }).click();
-await page.getByRole("textbox", { name: /Title/ }).fill("x".repeat(201));
-await page.getByRole("button", { name: "Save" }).click();
-await page.getByRole("alert").first().waitFor({ timeout: 10000 }).catch(() => {});
-const invalid = page.getByRole("textbox", { name: /Title/ });
-check(await invalid.getAttribute("aria-invalid") === "true", "edit: over-long title marks the field invalid");
-const describedBy = await invalid.getAttribute("aria-describedby");
-check(describedBy && await page.locator("#" + describedBy.split(" ").pop()).count() === 1, "edit: error text is linked via aria-describedby");
-check((await invalid.inputValue()).length === 201, "edit: submitted value is preserved on error");
-check(await page.getByRole("alert").count() >= 1, "edit: failed submit announces an alert");
-await axe("edit with errors");
+// Editing a note by keyboard alone: Edit puts focus in the form's first
+// field, Tab moves forward through the fields to the body and on to Save,
+// and Save from the keyboard keeps what was typed.
+const focused = () => page.evaluate(() => {
+  const el = document.activeElement;
+  return (el.getAttribute("aria-label") || (el.labels && el.labels[0] && el.labels[0].textContent) || el.textContent || "").trim().replace(/\s+/g, " ");
+});
+const editable = () => page.evaluate(() => { const el = document.activeElement; return el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName); });
+await page.getByRole("button", { name: /^Edit/ }).first().focus();
+await page.keyboard.press("Enter");
+check(await editable(), `edit: Enter on Edit puts focus in a field of the form (got "${await focused()}")`);
+let inBody = (await focused()) === "Body";
+for (let i = 0; i < 8 && !inBody; i++) {
+  await page.keyboard.press("Tab");
+  inBody = (await focused()) === "Body";
+}
+check(inBody, "edit: Tab forward from the first field reaches the body");
+await page.keyboard.press("End");
+await page.keyboard.type(" Typed by keyboard.");
+let reachedSave = false;
+for (let i = 0; i < 10 && !reachedSave; i++) {
+  await page.keyboard.press("Tab");
+  reachedSave = (await focused()) === "Save";
+}
+check(reachedSave, "edit: Tab from the body reaches Save");
+if (reachedSave) {
+  // The save goes by script without leaving the page; wait for it to land.
+  const saved = page.waitForResponse((r) => r.request().method() === "POST", { timeout: 10000 }).catch(() => null);
+  const reloaded = page.waitForEvent("load", { timeout: 10000 }).catch(() => null);
+  await page.keyboard.press("Enter");
+  await saved;
+  await reloaded;
+  const stored = await (await fetch(`${base}/api/note/${apiNote.id}`)).json();
+  check(String(stored.fields.body).includes("Typed by keyboard."), `edit: what was typed is saved (stored ${JSON.stringify(stored.fields.body)})`);
+}
+
+// ---- the editor is the design system -------------------------------------
+// Editing a habit, which has every kind of field: each one the editor makes
+// is a design-system component, a choice offers names rather than the word
+// the machine stores, and the open form passes the same checks as a page.
+const habit = await (await fetch(base + "/api/habit", {
+  method: "POST", headers: { "content-type": "application/json" },
+  body: JSON.stringify({ name: "Water", target: 8, unit: "glasses", aim: "limit" }),
+})).json();
+await page.goto(base + "/t/habit/" + habit.id);
+// Its bar is the meter component, read in words, not as a bare number.
+const meter = page.getByRole("meter", { name: "Water today" });
+check(await meter.count() === 1 && (await meter.getAttribute("aria-valuetext") || "").includes("glasses"), "habit: its bar is a meter that says the amount in words");
+await page.getByRole("button", { name: /^Edit/ }).first().click();
+const fields = await page.evaluate(() => [...document.querySelectorAll(".sw-inline-form .sw-inline-field")].map((f) => ({
+  component: f.dataset.component || (f.classList.contains("sw-prose-field") ? "prose" : ""),
+  label: (f.querySelector("label") || {}).textContent,
+})));
+check(fields.length > 3, `editor: a habit opens with its fields (${fields.length})`);
+for (const f of fields) check(["text-field", "when-field", "textarea", "select", "checkbox", "prose"].includes(f.component), `editor: "${f.label}" is not a design-system control`);
+// Aim has three choices, so it is radios in a group named by the question.
+const aim = page.getByRole("group", { name: "Aim" });
+const offered = await aim.getByRole("radio").evaluateAll((els) => els.map((e) => e.labels[0].textContent));
+check(offered.includes("At most the target") && !offered.includes("limit"), `editor: aim offers names, not stored words (${offered.join(", ")})`);
+check(await aim.getByRole("radio", { name: "At most the target" }).isChecked(), "editor: the habit's own aim is the one chosen");
+for (const p of await axeProblems(page, [], [...AA_TAGS, ...AAA_TAGS])) fail(`editor: ${p}`);
+for (const p of await visualProblems(page)) fail(`editor: ${p}`);
+
+// Too long a title: the count says so as it is typed, and Save is refused
+// with an error summary whose link takes focus back to the field.
+const long = await (await fetch(base + "/api/note", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ title: "Short" }) })).json();
+await page.goto(base + "/t/note/" + long.id);
+await page.getByRole("button", { name: /^Edit/ }).first().click();
+const title = page.locator(".sw-inline-form [name=prop-title]");
+await title.fill("x".repeat(210));
+await title.dispatchEvent("input");
+check((await page.locator(".sw-inline-form .sw-field__count").first().textContent()).includes("10 characters too many"), "editor: the count says how many too many");
+const refused = page.waitForEvent("load", { timeout: 10000 }).catch(() => null);
+await page.locator(".sw-inline-form").getByRole("button", { name: "Save" }).click();
+await refused;
+const summary = page.locator("[data-component=error-summary]");
+check(await summary.count() === 1, "editor: a refused save is listed in an error summary");
+if (await summary.count()) {
+  await summary.getByRole("link").first().click();
+  check(await page.evaluate(() => document.activeElement.name === "prop-title"), "editor: the summary's link takes focus to the field");
+  check(await page.evaluate(() => document.activeElement.getAttribute("aria-invalid") === "true"), "editor: the field it names is marked invalid");
+}
+
+// A day is the when-field component: its picker appears once the script is
+// there to wire it, and picking a day writes it into the words.
+const task = await (await fetch(base + "/api/task", {
+  method: "POST", headers: { "content-type": "application/json" },
+  body: JSON.stringify({ title: "Plant garlic", due: "2026-10-02" }),
+})).json();
+await page.goto(base + "/t/task/" + task.id);
+await page.getByRole("button", { name: /^Edit/ }).first().click();
+const due = page.locator(".sw-inline-form [data-component=when-field]").filter({ hasText: "Due" });
+check(await due.count() === 1, "editor: a task's Due is the when-field component");
+const picker = due.locator(".sw-when-field__pick");
+check(await picker.isVisible(), "editor: the day picker is shown once its script runs");
+await picker.fill("2026-10-09");
+await picker.dispatchEvent("change");
+check((await due.locator("input[type=text]").inputValue()).startsWith("9 Oct 2026"), "editor: picking a day writes it into the words");
+
+// ---- a long list -----------------------------------------------------------
+// Past a page, a list is read a page at a time by plain links; each says which.
+await Promise.all(Array.from({ length: 55 }, (_, i) => fetch(base + "/api/note", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ title: "Paged " + i }) })));
+await page.goto(base + "/t/note");
+const pager = page.getByRole("navigation", { name: "Pages of notes" });
+check(await pager.count() === 1, "list: a long list offers its pages");
+if (await pager.count()) {
+  await pager.getByRole("link", { name: "Next page" }).focus();
+  await Promise.all([page.waitForURL(/page=2/), page.keyboard.press("Enter")]);
+  check(await page.getByRole("navigation", { name: "Pages of notes" }).getByRole("link", { name: "Page 2" }).getAttribute("aria-current") === "page", "list: Enter on Next goes to page 2, marked as the page shown");
+  check((await page.title()).includes("page 2 of"), "list: page 2 says so in its title");
+  for (const p of await axeProblems(page, [], [...AA_TAGS, ...AAA_TAGS])) fail(`list page 2: ${p}`);
+}
 
 // ---- the quiet layer ----------------------------------------------------
 // Per-item controls are faded until hovered or focused, but must stay
@@ -167,7 +265,7 @@ const created = await fetch(base + "/api/note", {
 check(created.status === 201, `agent: POST /api/note returns 201 (got ${created.status})`);
 const rec = await created.json();
 
-for (const path of ["/", "/chat", "/activity", "/t/note", "/t/note/new", `/t/note/${rec.id}`, `/t/note/${rec.id}/edit`]) {
+for (const path of ["/", "/chat", "/design", "/search", "/search?q=agent", "/search?q=agent&type=note", "/search?type=note", "/activity", "/t/note", `/t/note/${rec.id}`]) {
   await page.goto(base + path);
   const names = await page.locator("[data-component]").evaluateAll((els) => els.map((e) => e.dataset.component));
   for (const n of new Set(names)) check(known.has(n), `${path}: renders component ${n} that /api/describe does not list`);

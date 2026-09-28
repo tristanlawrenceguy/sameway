@@ -1,0 +1,14 @@
+/* The words take the room; beside them, once a script can make it write
+   into them, a calendar to pick from, with its own words saying what it
+   is, which a browser without a calendar icon would not show. Under them,
+   how the words were read. */
+.sw-when-field__row { display: flex; flex-wrap: wrap; gap: var(--sw-space-2); align-items: end; }
+.sw-when-field__row > .sw-field__input:first-child { flex: 1 1 12rem; min-width: 0; }
+.sw-when-field__pick-row { display: grid; gap: var(--sw-space-1); flex: 0 0 auto; }
+.sw-when-field__pick-row[hidden] { display: none; }
+.sw-when-field__pick-label { font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); }
+.sw-when-field .sw-when-field__pick { width: auto; cursor: pointer; font-variant-numeric: tabular-nums; }
+/* The icon at full strength: faded, it fell under 7:1. */
+.sw-when-field__pick::-webkit-calendar-picker-indicator { cursor: pointer; }
+.sw-when-field__read { margin: var(--sw-space-1) 0 0; }
+.sw-when-field__read[hidden] { display: none; }

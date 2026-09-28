@@ -1,0 +1,49 @@
+name: release
+
+# A release is what auto-update updates to. Push a tag and this builds a
+# program for each machine, names it the way internal/update looks for
+# (sameway_<version>_<system>_<processor>), writes the sha256 of each one
+# into checksums.txt, and publishes the lot. A running sameway will not
+# install a download whose sum is not in that file, so it has to be here.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - name: Test before publishing anything
+        run: go test ./...
+      - name: Build for every machine
+        env:
+          CGO_ENABLED: "0"
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          mkdir -p dist
+          for target in linux_amd64 linux_arm64 darwin_amd64 darwin_arm64 windows_amd64; do
+            os="${target%_*}"
+            arch="${target#*_}"
+            name="sameway_${version}_${target}"
+            if [ "$os" = windows ]; then
+              name="$name.exe"
+            fi
+            GOOS="$os" GOARCH="$arch" go build \
+              -ldflags "-s -w -X github.com/tristanlawrenceguy/sameway/internal/update.Version=$version" \
+              -o "dist/$name" ./cmd/sameway
+          done
+          cd dist
+          sha256sum sameway_* > checksums.txt
+          cat checksums.txt
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --generate-notes --repo "$GITHUB_REPOSITORY"

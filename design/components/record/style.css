@@ -1,0 +1,15 @@
+.sw-record { max-width: var(--sw-size-measure); }
+.sw-record__title { margin: 0; font-size: var(--sw-size-text-lg); line-height: var(--sw-size-line-tight); }
+.sw-record--brief .sw-record__title { font-size: var(--sw-size-text-md); }
+.sw-record__body { margin-top: var(--sw-space-3); }
+.sw-record__body p { margin: 0 0 var(--sw-space-3); }
+.sw-record__body p:last-child { margin-bottom: 0; }
+/* The record's facts are the fields component, compact; here they only
+   keep their distance from the words above and their wider gutter. */
+.sw-record .sw-fields { margin-top: var(--sw-space-4); column-gap: var(--sw-space-4); }
+.sw-record__open { margin: var(--sw-space-4) 0 0; }
+.sw-record__missing { margin: 0; color: var(--sw-color-fg-muted); }
+.sw-record__actions { margin: var(--sw-space-3) 0 0; }
+/* What kind of thing it is, in words, with the list's dot beside it: the
+   dot alone said it only in colour. */
+.sw-record__kind { margin: var(--sw-space-1) 0 0; font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); }

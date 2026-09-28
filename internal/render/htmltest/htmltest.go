@@ -18,7 +18,24 @@ func Parse(src string) (*Doc, error) {
 	if err != nil {
 		return nil, err
 	}
+	inert(n)
 	return &Doc{Root: n}, nil
+}
+
+// inert empties every template, as a browser holds its content apart
+// from the page: nothing in one is shown, focusable or in the
+// accessibility tree, so nothing reading the page as a person gets it
+// should find it there either.
+func inert(n *html.Node) {
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		if c.Type == html.ElementNode && c.Data == "template" {
+			for c.FirstChild != nil {
+				c.RemoveChild(c.FirstChild)
+			}
+			continue
+		}
+		inert(c)
+	}
 }
 
 // Attr returns an attribute value and whether it is present.
@@ -93,6 +110,28 @@ func Text(n *html.Node) string {
 	return strings.Join(strings.Fields(b.String()), " ")
 }
 
+// VisibleText returns the concatenated text of a node, skipping elements
+// with class sw-visually-hidden (or containing that substring).
+func VisibleText(n *html.Node) string {
+	var b strings.Builder
+	var walk func(n *html.Node)
+	walk = func(c *html.Node) {
+		if c.Type == html.TextNode {
+			b.WriteString(c.Data)
+			return
+		}
+		class, ok := Attr(c, "class")
+		if ok && strings.Contains(class, "sw-visually-hidden") {
+			return
+		}
+		for child := c.FirstChild; child != nil; child = child.NextSibling {
+			walk(child)
+		}
+	}
+	walk(n)
+	return strings.Join(strings.Fields(b.String()), " ")
+}
+
 // Focusable reports whether an element is in the keyboard tab order.
 func Focusable(n *html.Node) bool {
 	if _, disabled := Attr(n, "disabled"); disabled {
@@ -133,6 +172,15 @@ func (d *Doc) AccessibleName(n *html.Node) string {
 		for _, l := range d.Elements("label") {
 			if f, _ := Attr(l, "for"); f == id {
 				return Text(l)
+			}
+		}
+	}
+	// A label wrapping its control names it too, with no id needed: the
+	// way a checkbox in a list of many is labelled.
+	if n.Data == "input" || n.Data == "select" || n.Data == "textarea" {
+		for p := n.Parent; p != nil; p = p.Parent {
+			if p.Type == html.ElementNode && p.Data == "label" {
+				return strings.TrimSpace(Text(p))
 			}
 		}
 	}

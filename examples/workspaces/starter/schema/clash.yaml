@@ -1,0 +1,30 @@
+# A version of some text that lost to another written at the same time,
+# on another computer that hosts this workspace: kept, so nobody's words
+# are lost, and offered on the record's page until someone chooses.
+name: clash
+description: Two people changed the same text at once; this is the version that was replaced.
+internal: true
+title: field
+fields:
+  target:
+    type: string
+    required: true
+    description: The content type of the record the text belongs to.
+  target_id:
+    type: string
+    required: true
+  field:
+    type: string
+    required: true
+    description: The field both changed.
+  text:
+    type: text
+    description: The version that was replaced.
+  origin:
+    type: string
+    description: The computer that wrote it.
+  state:
+    type: enum
+    values: [open, used, kept]
+    default: open
+    description: open until someone chooses; used when this version was put back; kept when the other stayed.

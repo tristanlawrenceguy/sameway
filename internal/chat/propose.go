@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -59,11 +60,40 @@ func (s *Service) propose(summary string, action map[string]any) toolResult {
 	}
 }
 
+// proposeByModel is propose_change: a question in the model's own words.
+// It asks only about the canvas. What cannot be taken back is asked by
+// Sameway, in words the code writes, when the tool itself is called: a
+// question carrying a setting or a command under a summary the model wrote
+// would be answered for something other than what it said.
+func (s *Service) proposeByModel(summary string, raw json.RawMessage) toolResult {
+	var action map[string]any
+	json.Unmarshal(raw, &action)
+	delete(action, "summary")
+	if tool, _ := action["tool"].(string); !modelProposable[tool] {
+		return fail("propose_change carries only add_component, update_component, remove_component or remove_canvas; for anything else call the tool itself, and Sameway asks the person first when it must")
+	}
+	return s.propose(summary, action)
+}
+
 // proposable are the tools a proposal may carry. Asking to ask, or asking to
 // clear everything, is not a question worth deferring.
 var proposable = map[string]bool{
-	"add_component": true, "update_component": true, "remove_component": true,
+	"add_component": true, "update_component": true, "remove_component": true, "remove_canvas": true,
+	// accept_action is what a person's Yes does to a command action: it is
+	// accepted for good, then run.
+	"accept_action": true,
+	// What cannot be taken back is asked first, by the code: see consent.go.
+	"run_action": true, "set_setting": true, "let_in": true, "change_field": true,
 }
+
+// modelProposable are the calls the model may carry in a question of its
+// own wording: changes to the canvas, which are also undoable.
+var modelProposable = map[string]bool{"add_component": true, "update_component": true, "remove_component": true, "remove_canvas": true}
+
+// answering lets one answer at a time through, so a question answered Yes
+// and No at once, or sent twice, is answered once: the second finds it
+// answered, rather than running while the first still runs.
+var answering sync.Mutex
 
 func proposableNames() []string {
 	out := make([]string, 0, len(proposable))
@@ -84,6 +114,8 @@ func sortStrings(s []string) {
 
 // Accept runs a pending proposal and records who agreed to it.
 func (s *Service) Accept(id string) error {
+	answering.Lock()
+	defer answering.Unlock()
 	rec, err := s.Store.Get(ProposalType, id)
 	if err != nil {
 		return err
@@ -100,7 +132,7 @@ func (s *Service) Accept(id string) error {
 	if err != nil {
 		return err
 	}
-	result := s.runTool(llm.ToolCall{Name: tool, Args: args})
+	result := s.runAgreed(llm.ToolCall{Name: tool, Args: args})
 	if result.isErr {
 		return errors.New(result.text)
 	}
@@ -113,11 +145,18 @@ func (s *Service) Accept(id string) error {
 	if result.change != nil {
 		Record(s.Store, "assistant", *result.change)
 	}
+	// A tool that made several changes, such as a command that also put
+	// its answer on the canvas, is logged as the person's: they said yes.
+	for i := range result.changes {
+		Record(s.Store, "human", result.changes[i])
+	}
 	return nil
 }
 
 // Dismiss answers no. Nothing changes except the question going away.
 func (s *Service) Dismiss(id string) error {
+	answering.Lock()
+	defer answering.Unlock()
 	rec, err := s.Store.Get(ProposalType, id)
 	if err != nil {
 		return err

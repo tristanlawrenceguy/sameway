@@ -18,7 +18,7 @@ Where it appears:
 - Every **message** carries `data-role` (user, assistant, error) and
   `data-actor`. The author word is the first thing in the article.
 - Every **canvas block** carries `data-actor` (who last changed it) and
-  shows a **badge** such as "Added by assistant, edited by you · 20:24".
+  shows a **badge** such as "Assistant, edited by you", with the time beside it rather than in it.
   The record behind it has `actor` and `created_by` fields.
 - Every **event** in the activity log names the actor as a word and carries
   `data-actor`, `data-action`, and `data-target`.
@@ -28,10 +28,16 @@ Where it appears:
 - After an assistant turn, the reply carries a **receipt**: a list of the
   canvas changes it made ("added heading Shopping", "removed list"). It is
   stored on the message record as `changes` and rendered as
-  `.sw-message__changes` with `data-action` and `data-target` per item.
+  `.sw-message__changes`, one event (`data-component="event"`, compact) per
+  item with `data-action` and `data-target`: the same line the activity log
+  shows for that change.
 - Blocks touched in the last turn get `data-changed="added"` or
   `"updated"`. They flash once in the actor's colour, and a visually hidden
   note ("added in the last turn") is read by screen readers.
+- Those blocks also get `data-arrival="1"`, `"2"`, ... in the order they
+  changed, and arrive on the page in that order, one after another, each in
+  three stages (see motion.md, Arrival). The conversation block never
+  arrives; it is the person's own tool.
 - Everything, by anyone, lands in the **activity** content type:
   `/activity`, `/api/activity`, `sameway activity list`.
 
@@ -58,8 +64,21 @@ Query by attribute, act by role and name:
 ```
 [data-component=status][data-state]        is anything in flight, how did it end
 [data-block-id][data-changed]              what changed in the last turn
+[data-block-id][data-arrival]              its place in the order changes arrive
 [data-block-id][data-actor=human]          blocks a person has touched
 [data-component=message][data-role=error]  failures, in the transcript
-.sw-message__changes li[data-action]       the receipt for a reply
+.sw-message__changes [data-action]         the receipt for a reply, as events
 GET /api/activity                          the full log, newest first
 ```
+
+## Drafts
+
+Words typed and not yet sent or saved are not lost by leaving the page.
+The chat composer keeps its draft per chat, and an inline edit keeps its
+fields, in the browser under the workspace's origin
+(`sameway:draft:...` in localStorage). A draft is restored when the same
+composer or edit is opened again: the composer fills itself, and a block
+with an unfinished edit says so at the top with Continue editing and
+Discard. A draft goes the moment the message is sent or the edit is
+saved, or cancelled on purpose. Nothing about a draft is sent to the
+server; see `design/base/16-drafts.js`.

@@ -31,6 +31,26 @@ type Record struct {
 type Store struct {
 	db    *sql.DB
 	types *schema.Set
+	// AfterWrite is told about every record written or deleted, with the
+	// record as it now is, or nil when it is gone. The content mirror hangs
+	// here, so the files are never a step behind the database.
+	AfterWrite func(typeName, id string, rec *Record)
+	// Local names the types whose records stay on this computer when the
+	// workspace is hosted in more than one place: chats, questions,
+	// programs to run. Everything else is kept the same; see state.go.
+	Local map[string]bool
+	// LocalRecord keeps single records of a shared type here too: the log
+	// entries that say what was said to the assistant, for one.
+	LocalRecord func(typeName string, fields map[string]any) bool
+	// OnSchema makes this workspace's content type what the other
+	// computers have: added, changed or deleted; see schema_state.go.
+	OnSchema func(sc *Schema) error
+	// AfterSync is told about a record written because of what another
+	// computer sent, after AfterWrite: news from someone else.
+	AfterSync func(typeName, id string, rec *Record)
+
+	origin string
+	clock  hlc
 }
 
 // Open opens (or creates) the database at path and migrates it to match types.
@@ -46,20 +66,35 @@ func Open(path string, types *schema.Set) (*Store, error) {
 	}
 	db.SetMaxOpenConns(1)
 	s := &Store{db: db, types: types}
-	if err := s.migrate(); err != nil {
+	if err := s.Migrate(); err != nil {
 		db.Close()
 		return nil, err
 	}
+	if err := s.migrateState(); err != nil {
+		db.Close()
+		return nil, err
+	}
+	s.migrateClash()
 	return s, nil
 }
 
 // Close releases the database.
 func (s *Store) Close() error { return s.db.Close() }
 
+// Backup writes a whole, consistent copy of the database to path, while
+// this one stays open: how a workspace is copied.
+func (s *Store) Backup(path string) error {
+	_, err := s.db.Exec("VACUUM INTO ?", path)
+	return err
+}
+
 // Types returns the schema set this store was opened with.
 func (s *Store) Types() *schema.Set { return s.types }
 
-func (s *Store) migrate() error {
+// Migrate makes every table match the schema: a new type gets its table, a
+// new field its column. Open runs it, and so does adding a field or a type
+// while the workspace is running.
+func (s *Store) Migrate() error {
 	for _, t := range s.types.Types {
 		cols := []string{"id TEXT PRIMARY KEY", "created_at TEXT NOT NULL", "updated_at TEXT NOT NULL"}
 		for _, f := range t.Fields {
@@ -130,4 +165,30 @@ func NewID() string {
 		panic(err)
 	}
 	return strings.ToLower(base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(b[:]))
+}
+
+// Meta is a note this computer keeps about its copy of the workspace, not
+// shared: what it has already told its owner, for one.
+func (s *Store) Meta(key string) string {
+	var v string
+	s.db.QueryRow(`SELECT value FROM _meta WHERE key = ?`, key).Scan(&v)
+	return v
+}
+
+// SetMeta keeps a note; see Meta.
+func (s *Store) SetMeta(key, value string) {
+	s.db.Exec(`INSERT OR REPLACE INTO _meta (key, value) VALUES (?, ?)`, key, value)
+}
+
+// synced tells AfterSync of each record an exchange wrote, once all of it
+// is written, so a record that points at another arrived with it finds it.
+func (s *Store) synced(touched map[[2]string]bool) {
+	if s.AfterSync == nil {
+		return
+	}
+	for k := range touched {
+		if rec, err := s.Get(k[0], k[1]); err == nil {
+			s.AfterSync(k[0], k[1], rec)
+		}
+	}
 }

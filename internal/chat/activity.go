@@ -2,9 +2,12 @@ package chat
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
 // ActivityType is the content type that logs every canvas change.
@@ -18,21 +21,151 @@ type Change struct {
 	Component string `json:"component,omitempty"`
 	ID        string `json:"id,omitempty"`
 	Detail    string `json:"detail,omitempty"`
+	// Href is the page of the thing changed, so a receipt and a log entry
+	// lead to it: a block's own page, a record's page, a tab. Empty when
+	// the thing is gone.
+	Href string `json:"href,omitempty"`
+	// Activity is the log entry this change was written to, so a receipt
+	// can offer to undo it.
+	Activity string `json:"activity,omitempty"`
+	// Undoes is the entry this change reversed, when it is an undo.
+	Undoes string `json:"undoes,omitempty"`
+	// Via is the device the change was made from when it was not this
+	// machine, such as a phone over the tailnet.
+	Via string `json:"via,omitempty"`
+	// By is the person who made it when that was not the owner, by name,
+	// so the log says "Bob removed" rather than "You removed".
+	By string `json:"by,omitempty"`
+	// ByLogin is who made it by their Tailscale login, when known: the
+	// owner's too, so a change reads as theirs by name on the other
+	// computers that host the workspace.
+	ByLogin string `json:"-"`
+	// Before is the thing as it was before the change, kept in the log so
+	// the change can be undone. It is not part of a receipt.
+	Before map[string]any `json:"-"`
+	// Undone is the sentence of the entry this change reversed, for the
+	// sentence of this one; Redid says that entry was itself an undo, so
+	// this one puts the original back rather than undoing it again.
+	Undone string `json:"-"`
+	Redid  bool   `json:"-"`
 }
 
-// Record writes one activity entry. Missing activity type is not an error:
-// older workspaces simply have no log.
-func Record(st *store.Store, actor string, c Change) {
-	if _, ok := st.Types().Get(ActivityType); !ok {
-		return
+// Record writes one activity entry and returns its id. A missing activity
+// type is not an error: older workspaces simply have no log, and a log
+// without a before field is a log that cannot be undone. The summary is
+// the whole event as one sentence, because that is what a list of events
+// has to show.
+func Record(st *store.Store, actor string, c Change) string {
+	t, ok := st.Types().Get(ActivityType)
+	if !ok {
+		return ""
 	}
-	st.Create(ActivityType, map[string]any{
+	fields := map[string]any{
+		"summary":   summarise(actor, c),
 		"actor":     actor,
 		"action":    c.Action,
 		"target":    c.Component,
 		"target_id": c.ID,
 		"detail":    c.Detail,
-	})
+		"undoes":    c.Undoes,
+		"via":       c.Via,
+		"by":        c.By,
+		"by_login":  c.ByLogin,
+	}
+	if c.Before != nil {
+		fields["before"] = c.Before
+	}
+	for k := range fields {
+		if _, has := t.Field(k); !has {
+			delete(fields, k)
+		}
+	}
+	rec, err := st.Create(ActivityType, fields)
+	if err != nil {
+		return ""
+	}
+	return rec.ID
+}
+
+// summarise says what happened in a person's words: "Assistant added card
+// Shopping", "You removed list Groceries", "System failed: no model".
+func summarise(actor string, c Change) string {
+	who := map[string]string{"human": "You", "assistant": "Assistant", "system": "System"}[actor]
+	if who == "" {
+		who = actor
+	}
+	if actor == "human" && c.By != "" {
+		who = c.By
+	}
+	if c.Undone != "" {
+		undone := CleanSummary(c.Undone)
+		if c.Redid {
+			return who + " put back: " + undone
+		}
+		return who + " undid: " + undone
+	}
+	// Detect setting changes and use human-readable format.
+	if isSettingChange(c) {
+		return settingSummary(who, c.Component, c.Detail)
+	}
+	parts := []string{who, c.Action}
+	if c.Component != "" {
+		parts = append(parts, c.Component)
+	}
+	if c.Detail != "" {
+		parts = append(parts, c.Detail)
+	}
+	// Drop machine-language phrases so summaries stay in plain words.
+	if strings.HasPrefix(c.Via, "through ") {
+		return strings.Join(parts, " ")
+	}
+	if c.Via != "" {
+		return strings.Join(parts, " ") + ", on " + c.Via
+	}
+	return strings.Join(parts, " ")
+}
+
+// isSettingChange reports whether the change is a setting-change entry,
+// identified by action "set" and a component that looks like a dotted path
+// (ui.*, llm.*, etc.).
+func isSettingChange(c Change) bool {
+	if c.Action != "set" || c.Component == "" || c.Detail == "" {
+		return false
+	}
+	return strings.HasPrefix(c.Component, "ui.") || strings.HasPrefix(c.Component, "llm.")
+}
+
+// settingSummary produces a human-readable summary for a setting change:
+// "Assistant changed pace to Calm".
+func settingSummary(who, key, value string) string {
+	return who + " changed " + settingPhrase(key, value)
+}
+
+// settingPhrase is "text size to Large", as Say says it.
+func settingPhrase(key, value string) string {
+	name, value := settingWords(key, value)
+	return name + " to " + value
+}
+
+// oldSetting is a setting change as the log wrote it before it spoke in
+// words: "You set ui.text large".
+var oldSetting = regexp.MustCompile(`^(.+?) set ((?:ui|llm)\.[a-z_.]+) ([^\s,]+)(.*)$`)
+
+// CleanSummary says a stored summary in words when it was written in keys,
+// so entries logged before setting names existed read like the rest: "You
+// set ui.text large" is "You changed text size to Large", also inside an
+// undo, "You undid: You set ui.text large". Anything else is left alone.
+func CleanSummary(summary string) string {
+	for _, verb := range []string{" undid: ", " put back: "} {
+		if who, after, ok := strings.Cut(summary, verb); ok {
+			return who + verb + CleanSummary(after)
+		}
+	}
+	m := oldSetting.FindStringSubmatch(summary)
+	if m == nil {
+		return summary
+	}
+	return settingSummary(m[1], m[2], m[3]) + m[4]
 }
 
 // Summarise turns a block's props into a short human label such as
@@ -41,7 +174,7 @@ func Summarise(component string, props map[string]any) string {
 	pick := func(keys ...string) string {
 		for _, k := range keys {
 			if s, ok := props[k].(string); ok && s != "" {
-				return truncate(s, 40)
+				return trim.Title(s)
 			}
 		}
 		return ""
@@ -52,21 +185,62 @@ func Summarise(component string, props map[string]any) string {
 	case "table":
 		return pick("caption")
 	case "list":
+		// Its name, so Remove To pack is not heard as removing some items.
+		if l := pick("label"); l != "" {
+			return l
+		}
 		if items, ok := props["items"].([]any); ok {
-			return fmt.Sprintf("%d items", len(items))
+			return fmt.Sprintf("list of %d", len(items))
 		}
 	case "alert", "status":
 		return pick("title", "message")
 	case "button", "link", "badge", "text-field", "textarea", "select", "checkbox":
 		return pick("label")
+	case "record":
+		// Its title, once the page has read it; the id where it has not.
+		recTitle := trim.Title(pick("title", "record"))
+		return strings.TrimSpace(pick("type") + " " + recTitle)
+	case "calendar":
+		if caption := pick("caption"); caption != "" {
+			return caption
+		}
+		if month, err := time.Parse("2006-01", pick("month")); err == nil {
+			return month.Format("January 2006")
+		}
+	case ComponentName:
+		return "Conversation"
+	case "search":
+		if label := pick("label"); label != "" {
+			return label
+		}
+		return "Search"
 	}
 	return ""
 }
 
+// truncate cuts what was said or went wrong to its first line and n
+// characters, for the log. A title goes through trim.Title instead.
 func truncate(s string, n int) string {
 	s = strings.TrimSpace(strings.SplitN(s, "\n", 2)[0])
 	if len([]rune(s)) <= n {
 		return s
 	}
 	return string([]rune(s)[:n-1]) + "…"
+}
+
+// LocalEntry says which log entries stay on the computer that wrote them
+// when others host the workspace too: what was said to the assistant, its
+// questions and their answers, and changes to what stays local itself.
+// Every other entry travels, so a change made elsewhere reads as whose it
+// was and glows in their colour here.
+func LocalEntry(local map[string]bool) func(typeName string, fields map[string]any) bool {
+	private := map[string]bool{"said": true, "proposed": true, "agreed to": true, "declined": true, "cleared": true, "failed": true}
+	return func(typeName string, fields map[string]any) bool {
+		if typeName != ActivityType {
+			return false
+		}
+		action, _ := fields["action"].(string)
+		target, _ := fields["target"].(string)
+		return private[action] || local[target] || target == "conversation"
+	}
 }

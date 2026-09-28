@@ -44,6 +44,7 @@ type oaRequest struct {
 	Messages  []oaMessage `json:"messages"`
 	Tools     []any       `json:"tools,omitempty"`
 	MaxTokens int         `json:"max_tokens,omitempty"`
+	Stream    bool        `json:"stream,omitempty"`
 }
 
 type oaResponse struct {
@@ -58,24 +59,7 @@ type oaResponse struct {
 
 // Complete sends one chat completion request.
 func (o *OpenAI) Complete(ctx context.Context, req Request) (*Response, error) {
-	body := oaRequest{Model: o.Model, MaxTokens: o.MaxTokens}
-	if req.System != "" {
-		body.Messages = append(body.Messages, oaMessage{Role: "system", Content: req.System})
-	}
-	for _, m := range req.Messages {
-		body.Messages = append(body.Messages, toOpenAI(m)...)
-	}
-	for _, t := range req.Tools {
-		body.Tools = append(body.Tools, map[string]any{
-			"type": "function",
-			"function": map[string]any{
-				"name":        t.Name,
-				"description": t.Description,
-				"parameters":  t.Schema,
-			},
-		})
-	}
-	payload, err := json.Marshal(body)
+	payload, err := json.Marshal(o.body(req))
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +77,7 @@ func (o *OpenAI) Complete(ctx context.Context, req Request) (*Response, error) {
 	}
 	resp, err := client.Do(httpReq)
 	if err != nil {
-		return nil, fmt.Errorf("could not reach the model at %s: %w", o.BaseURL, err)
+		return nil, fmt.Errorf("the AI model at %s isn't answering; it may not be running (%w)", o.BaseURL, err)
 	}
 	defer resp.Body.Close()
 	raw, err := io.ReadAll(io.LimitReader(resp.Body, 32<<20))
@@ -149,4 +133,26 @@ func toOpenAI(m Message) []oaMessage {
 	default:
 		return []oaMessage{{Role: "user", Content: m.Content}}
 	}
+}
+
+// body is the request on the wire, the same whether it streams or not.
+func (o *OpenAI) body(req Request) oaRequest {
+	body := oaRequest{Model: o.Model, MaxTokens: o.MaxTokens}
+	if req.System != "" {
+		body.Messages = append(body.Messages, oaMessage{Role: "system", Content: req.System})
+	}
+	for _, m := range req.Messages {
+		body.Messages = append(body.Messages, toOpenAI(m)...)
+	}
+	for _, t := range req.Tools {
+		body.Tools = append(body.Tools, map[string]any{
+			"type": "function",
+			"function": map[string]any{
+				"name":        t.Name,
+				"description": t.Description,
+				"parameters":  t.Schema,
+			},
+		})
+	}
+	return body
 }

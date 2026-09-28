@@ -20,13 +20,29 @@ import (
 
 // Manifest is the machine-readable contract of a component.
 type Manifest struct {
-	Name        string          `json:"name"`
-	Version     string          `json:"version"`
-	Description string          `json:"description"`
-	Props       json.RawMessage `json:"props"`
-	A11y        json.RawMessage `json:"a11y"`
-	Machine     json.RawMessage `json:"machine"`
-	Examples    []Example       `json:"examples"`
+	Name        string `json:"name"`
+	Version     string `json:"version"`
+	Description string `json:"description"`
+	// Use is the thought behind the component, written once for the model
+	// and every reader: when a person is served by it, when they are not,
+	// and what it sits with. The prompt carries it, so what works for
+	// people is what the assistant builds from, not something it guesses.
+	Use *Use `json:"use,omitempty"`
+	// Icon is one glyph that stands for the component when a block is shown
+	// at icon size; the name travels with it for assistive technology.
+	Icon     string          `json:"icon,omitempty"`
+	Props    json.RawMessage `json:"props"`
+	A11y     json.RawMessage `json:"a11y"`
+	Machine  json.RawMessage `json:"machine"`
+	Examples []Example       `json:"examples"`
+}
+
+// Use says when a component serves a person, when it does not, and what
+// it belongs with.
+type Use struct {
+	When string `json:"when"`
+	Not  string `json:"not,omitempty"`
+	With string `json:"with,omitempty"`
 }
 
 // Example is one named set of props with its golden output file.
@@ -56,9 +72,14 @@ type Component struct {
 // Registry holds every loaded component by name.
 type Registry struct {
 	byName map[string]*Component
-	tokens string
-	base   string
-	baseJS string
+	// arrangements are whole pages of thought, by name; see arrangement.go.
+	arrangements map[string]*Arrangement
+	tokens       string
+	base         string
+	baseJS       string
+	// LinkTitle names the record at a page address, for links in words
+	// such as the assistant's replies; set by the server.
+	LinkTitle func(path string) string
 }
 
 // New returns an empty registry.
@@ -164,7 +185,7 @@ func (r *Registry) Names() []string {
 // Render validates props against the component's schema, applies defaults,
 // and executes the template.
 func (r *Registry) Render(name string, props map[string]any) (template.HTML, error) {
-	c, ok := r.byName[name]
+	c, props, ok := r.Resolve(name, props)
 	if !ok {
 		return "", fmt.Errorf("unknown component %q (known: %s)", name, strings.Join(r.Names(), ", "))
 	}
@@ -173,7 +194,7 @@ func (r *Registry) Render(name string, props map[string]any) (template.HTML, err
 
 // RenderSlot renders a component by name with pre-rendered HTML inside it.
 func (r *Registry) RenderSlot(name string, props map[string]any, slot template.HTML) (template.HTML, error) {
-	c, ok := r.byName[name]
+	c, props, ok := r.Resolve(name, props)
 	if !ok {
 		return "", fmt.Errorf("unknown component %q (known: %s)", name, strings.Join(r.Names(), ", "))
 	}

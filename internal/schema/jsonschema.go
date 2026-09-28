@@ -1,5 +1,7 @@
 package schema
 
+import "strings"
+
 // JSON Schema is how a content type describes itself to anything outside
 // this package: the describe endpoint, the API docs, and the tools a model
 // calls. It is generated from the same field list the store and the forms
@@ -10,10 +12,12 @@ package schema
 func (t *Type) JSONSchema() map[string]any {
 	props := map[string]any{}
 	var required []string
-	for _, f := range t.Fields {
+	// A hidden field is still stored, and still accepted, but offered to
+	// nobody, the assistant included.
+	for _, f := range t.Shown() {
 		p := map[string]any{}
 		switch f.Type {
-		case "string", "text", "markdown", "datetime":
+		case "string", "text", "markdown", "datetime", "repeat":
 			p["type"] = "string"
 		case "enum":
 			p["type"] = "string"
@@ -29,6 +33,9 @@ func (t *Type) JSONSchema() map[string]any {
 			p["items"] = map[string]any{"type": "string"}
 		case "json":
 			p["type"] = []string{"object", "array", "string", "number", "boolean", "null"}
+		case "ref":
+			p["type"] = "string"
+			p["description"] = "The id of a " + f.To + " (find_records on " + f.To + " gives it), or empty for none."
 		}
 		if f.Description != "" {
 			p["description"] = f.Description
@@ -41,6 +48,10 @@ func (t *Type) JSONSchema() map[string]any {
 		}
 		if f.Type == "datetime" {
 			p["format"] = "date-time"
+			p["description"] = strings.TrimSpace(f.Description + " A day as 2026-09-19 or a moment as RFC 3339; words are read too: tomorrow, next Friday, 19 Sep 2pm.")
+		}
+		if f.Type == "repeat" {
+			p["description"] = strings.TrimSpace(f.Description + " How often, in words: every day, every weekday, every Tuesday, every 2 weeks, every month on the 1st, every year, with until 1 Mar if it ends; empty for once. Kept as an RRULE such as FREQ=WEEKLY;BYDAY=TU, which is read too.")
 		}
 		props[f.Name] = p
 		if f.Required {

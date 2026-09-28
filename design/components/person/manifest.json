@@ -1,0 +1,97 @@
+{
+  "name": "person",
+  "version": "1.1.0",
+  "description": "Someone, by name, with the colour they have everywhere in the workspace: who a record is for, who is here, who changed something.",
+  "icon": "●",
+  "use": {
+    "when": "a person is named beside what concerns them: who a task is for, who else is here.",
+    "not": "a link to their page (use link), or a word that is not a person.",
+    "with": "record and collection, where a record is for someone; presence."
+  },
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "name"
+    ],
+    "properties": {
+      "name": {
+        "type": "string",
+        "minLength": 1,
+        "description": "What the person is called, in full, as they write it. Never cut short: a long name wraps, and a name in a script written right to left keeps its own direction."
+      },
+      "colour": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 6,
+        "description": "Their colour, 1 to 6, the same on every computer (chat.PersonColour of their login). Left out, the dot is neutral."
+      },
+      "label": {
+        "type": "string",
+        "description": "Words before the name, such as For, so the chip reads For Hana."
+      },
+      "id": {
+        "type": "string"
+      }
+    }
+  },
+  "a11y": {
+    "role": "text",
+    "keyboard": [],
+    "states": [],
+    "wcag": {
+      "target": "AAA",
+      "notes": "The name is the meaning; the dot is aria-hidden decoration, so no one needs to tell colours apart (1.4.1), and as a supplementary mark it is not held to 1.4.11, though the six colours stand 3:1 on the page anyway. The name keeps the text colour at full contrast; the six colours are for marks, not text. The name sits in bdi, so a right-to-left name does not reorder the words and punctuation around it. The chip is inline and breaks anywhere, so a long name wraps at 320px (1.4.10). A proper name needs no lang (3.1.2). In forced colours every dot is CanvasText and the name says who."
+    }
+  },
+  "machine": {
+    "selector": "[data-component=\"person\"]",
+    "identify": "The text is the label and the name; the name alone is the bdi. data-person is their colour, 1 to 6.",
+    "operate": "Not interactive."
+  },
+  "examples": [
+    {
+      "name": "default",
+      "props": {
+        "name": "Hana",
+        "colour": 3
+      },
+      "file": "examples/default.html"
+    },
+    {
+      "name": "label",
+      "props": {
+        "label": "For",
+        "name": "Hana",
+        "colour": 3
+      },
+      "file": "examples/label.html"
+    },
+    {
+      "name": "plain",
+      "props": {
+        "name": "Bob",
+        "id": "who"
+      },
+      "file": "examples/plain.html"
+    },
+    {
+      "name": "long",
+      "props": {
+        "label": "For",
+        "name": "Maximiliane Wolkonskaja-Fitzgerald-Oyelaran",
+        "colour": 5
+      },
+      "file": "examples/long.html"
+    },
+    {
+      "name": "right-to-left",
+      "props": {
+        "label": "For",
+        "name": "مريم",
+        "colour": 2
+      },
+      "file": "examples/right-to-left.html"
+    }
+  ]
+}

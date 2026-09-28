@@ -1,5 +1,11 @@
 # Principles
 
+Why any of this exists: to understand what really works for people and
+write it down in a form a machine can build from, so that an AI can
+effortlessly make something with a lot of thought behind it. Each principle
+below, each manifest's "use when", each motion rule, is that thought written
+once, for the assistant and every other reader alike.
+
 1. **Same way for everyone.** A screen reader, a keyboard, a pointer, and an
    agent driving a browser all navigate by the same landmarks, roles, names,
    and attributes. Nothing is built twice.
@@ -26,3 +32,25 @@
 6. **Enforced, not aspirational.** Contrast, keyboard operation, golden
    output, and manifest completeness are tests that fail the build. If it is
    not tested, it is not a rule.
+
+7. **Time to take a change in.** New information arrives in stages a person
+   can follow (where, then what, then the words), one change at a time with
+   a pause between, and a person who has caught up can end the wait. Pace
+   is set by asking, honours reduced motion, and is never the only channel:
+   what the motion shows is also in the text and the activity log. Every
+   limitation is permanent for some, temporary for others and situational
+   for everyone, so pacing is a feature for all, not an accommodation.
+
+8. **Reversible beats confirmed.** A step a person can take back needs no
+   gate in front of it. Undo replaces "are you sure": one step fewer, and
+   less fear of the wrong one.
+
+9. **Plain words, and nothing to remember.** Every message reads first time
+   for a tired person. Where you are and what just happened are on the
+   page (crumbs, receipts, the log), never in memory. Asking what a thing
+   is gets an answer in plain words, and changes nothing.
+
+10. **Tested with people.** The crew's user and tryout roles are a
+    person's stand-in, not a person. Nothing replaces sessions with people
+    who have cognitive and learning disabilities, and the vision says when
+    they are due.

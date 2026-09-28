@@ -1,0 +1,39 @@
+package chat
+
+import (
+	"encoding/json"
+
+	"github.com/tristanlawrenceguy/sameway/internal/llm"
+)
+
+// run executes one tool call and records the change it made, which is the
+// whole of what a tool call is from outside: the conversation and the MCP
+// server both go through here, so a check or a log entry is never done in
+// one place and forgotten in the other.
+func (s *Service) run(call llm.ToolCall) toolResult {
+	if r, no := s.refuseFor(call); no {
+		return r
+	}
+	var r toolResult
+	if call.Name == changeFieldTool.Name {
+		r = s.reshapeCall(call.Args)
+	} else {
+		r = s.runTool(call)
+	}
+	if r.change != nil {
+		// The receipt keeps the entry id, so the change can be undone from
+		// under the reply.
+		r.change.Activity = Record(s.Store, "assistant", *r.change)
+	}
+	for i := range r.changes {
+		r.changes[i].Activity = Record(s.Store, "assistant", r.changes[i])
+	}
+	return r
+}
+
+// Call runs a tool by name for a caller that is not the conversation, and
+// returns what the model would have been told and whether it was an error.
+func (s *Service) Call(name string, args json.RawMessage) (text string, isError bool) {
+	r := s.run(llm.ToolCall{ID: "call", Name: name, Args: args})
+	return r.text, r.isErr
+}

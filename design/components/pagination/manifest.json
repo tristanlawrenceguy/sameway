@@ -1,0 +1,33 @@
+{
+  "name": "pagination",
+  "version": "1.0.0",
+  "description": "The way through a long list a page at a time: Previous, the pages by number with gaps, and Next, each a plain link.",
+  "icon": "⋯",
+  "use": { "when": "a list or a set of results is longer than reads well on one page.", "not": "steps in a task, which are a heading each; or tabs between views.", "with": "how many there are in all, said above the list." },
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["href", "pages"],
+    "properties": {
+      "href": { "type": "string", "minLength": 1, "description": "The list's address, with its own query if it has one; the page is added as ?page=N." },
+      "page": { "type": "integer", "minimum": 1, "default": 1, "description": "The page shown now." },
+      "pages": { "type": "integer", "minimum": 1, "description": "How many pages in all." },
+      "label": { "type": "string", "default": "Pages", "description": "Names the navigation, such as Pages of notes." }
+    }
+  },
+  "a11y": {
+    "role": "navigation holding a list of links, the page shown marked aria-current=page",
+    "keyboard": [{ "key": "Tab", "does": "reaches Previous, each page and Next in turn" }, { "key": "Enter", "does": "goes to that page" }],
+    "states": ["aria-current"],
+    "wcag": { "target": "AAA", "notes": "A named navigation landmark (1.3.1). Each number is read as Page 3, and Previous and Next as Previous page and Next page (2.4.9). The page shown is marked with aria-current and filled, not only coloured (1.4.1). The gap is hidden from readers. Each link reaches 44px (2.5.5)." }
+  },
+  "machine": {
+    "selector": "[data-component=\"pagination\"]",
+    "identify": "[aria-current=page] is the page shown; rel=prev and rel=next are the steps either side.",
+    "operate": "Follow a link to go to that page. An agent reading the list's JSON gets it whole instead."
+  },
+  "examples": [
+    { "name": "default", "props": { "href": "/t/note", "page": 1, "pages": 3, "label": "Pages of notes" }, "file": "examples/default.html" },
+    { "name": "middle", "props": { "href": "/search?q=fern", "page": 6, "pages": 12, "label": "Pages of results" }, "file": "examples/middle.html" }
+  ]
+}

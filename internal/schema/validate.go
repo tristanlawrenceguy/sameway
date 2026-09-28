@@ -3,6 +3,7 @@ package schema
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/tristanlawrenceguy/sameway/internal/when"
 	"strconv"
 	"strings"
 	"time"
@@ -18,7 +19,7 @@ func (e *ValidationError) Error() string {
 	for k, v := range e.Problems {
 		parts = append(parts, k+": "+v)
 	}
-	return "invalid record: " + strings.Join(parts, "; ")
+	return strings.Join(parts, "; ")
 }
 
 // Normalize applies defaults, checks types and constraints, and returns a
@@ -37,7 +38,7 @@ func (t *Type) Normalize(in map[string]any) (map[string]any, error) {
 		if !present || v == nil || v == "" {
 			if f.Default != nil {
 				v = f.Default
-			} else if f.Required {
+			} else if f.Required && !f.Hidden { // nobody is offered a hidden field
 				problems[f.Name] = "is required"
 				continue
 			} else {
@@ -156,16 +157,38 @@ func coerce(f Field, v any) (any, error) {
 			}
 		}
 		return nil, fmt.Errorf("must be true or false")
-	case "datetime":
+	case "ref":
 		s, ok := v.(string)
 		if !ok {
-			return nil, fmt.Errorf("must be an RFC 3339 time")
+			return nil, fmt.Errorf("must be the id of a %s", f.To)
 		}
-		ts, err := time.Parse(time.RFC3339, s)
-		if err != nil {
-			return nil, fmt.Errorf("must be an RFC 3339 time like 2026-09-10T12:00:00Z")
+		return strings.TrimSpace(s), nil
+	case "datetime":
+		// Written the way a person says it or the way a machine does;
+		// kept as a machine reads it. A day alone is midnight UTC on that
+		// date, the same day everywhere.
+		s, ok := v.(string)
+		if !ok {
+			return nil, fmt.Errorf("must be a day or a moment")
 		}
-		return ts.UTC().Format(time.RFC3339), nil
+		now := time.Now()
+		ts, day, ok := when.Parse(s, now)
+		if !ok {
+			return nil, fmt.Errorf("%s", when.Why(s, now))
+		}
+		return when.Store(ts, day), nil
+	case "repeat":
+		// How often, the way a person says it; kept as a small RRULE.
+		s, ok := v.(string)
+		if !ok {
+			return nil, fmt.Errorf("must say how often, like every Tuesday")
+		}
+		now := time.Now()
+		rule, ok := when.ParseRepeat(s, now)
+		if !ok {
+			return nil, fmt.Errorf("%s", when.RepeatWhy(s, now))
+		}
+		return rule, nil
 	case "list":
 		return coerceList(f, v)
 	case "json":

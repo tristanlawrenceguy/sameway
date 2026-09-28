@@ -1,8 +1,10 @@
 package server_test
 
 import (
+	"golang.org/x/net/html"
 	"net/http"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
@@ -46,13 +48,20 @@ func TestBlockCanBePoppedOut(t *testing.T) {
 	h, id := canvasWithACalendar(t)
 	canvas := parse(t, get(t, h, "/"))
 
-	links := canvas.WithAttr("href", "/canvas/"+id)
+	// The receipt under the reply and the activity log may lead to the
+	// block's page too; the block itself offers exactly one Expand control.
+	// A bare "Expand" is uselessly ambiguous when a page has several blocks,
+	// so the accessible name has to say what is being expanded.
+	var links []*html.Node
+	for _, l := range canvas.WithAttr("href", "/canvas/"+id) {
+		if strings.HasPrefix(canvas.AccessibleName(l), "Expand") {
+			links = append(links, l)
+		}
+	}
 	if len(links) != 1 {
 		t.Fatalf("expected one way to expand the block, got %d", len(links))
 	}
-	// A bare "Expand" is uselessly ambiguous when a page has several blocks,
-	// so the accessible name has to say what is being expanded.
-	if name := canvas.AccessibleName(links[0]); name != "Expand calendar" {
+	if name := canvas.AccessibleName(links[0]); name != "Expand September 2026" {
 		t.Errorf("expand link reads as %q", name)
 	}
 
@@ -70,7 +79,7 @@ func TestBlockCanBePoppedOut(t *testing.T) {
 	if len(doc.WithAttr("href", "/")) == 0 {
 		t.Errorf("the expanded view needs a way back to the canvas")
 	}
-	assertAllComponentsKnown(t, doc)
+	assertAllComponentsKnown(t, doc, componentNames)
 }
 
 // TestExpandingAsksAComponentForItsFullestForm: the block was added at a
@@ -130,4 +139,46 @@ func TestExpandingTheConversationKeepsItLive(t *testing.T) {
 func TestExpandingSomethingThatIsNotThere(t *testing.T) {
 	h, _ := canvasWithACalendar(t)
 	wantStatus(t, get(t, h, "/canvas/nope"), http.StatusNotFound)
+}
+
+// TestExpandedBlockIsNotAlsoInThePane: a block from the right pane, given
+// its own page, is shown once. Left in the pane as well, it would be two
+// landmarks with one name, and a heading-by-heading reader would meet it
+// twice.
+func TestExpandedBlockIsNotAlsoInThePane(t *testing.T) {
+	_, h := newApp(t)
+	var blk struct{ ID string }
+	decode(t, postJSON(t, h, "POST", "/api/block", map[string]any{
+		"component": "clock", "region": "right", "size": "compact",
+		"props": map[string]any{"label": "Kitchen clock"},
+	}), &blk)
+	doc := parse(t, get(t, h, "/canvas/"+blk.ID))
+	if n := len(doc.WithAttr("data-component", "clock")); n != 1 {
+		t.Fatalf("the clock's own page shows %d clocks, want 1", n)
+	}
+}
+
+// TestExpandedCollectionHeadingFollowsThePage: expanded, a collection's
+// label sits directly under the page's h1, as an h2, not an h3 that skips
+// a level.
+func TestExpandedCollectionHeadingFollowsThePage(t *testing.T) {
+	_, h := newApp(t)
+	var blk struct{ ID string }
+	decode(t, postJSON(t, h, "POST", "/api/block", map[string]any{
+		"component": "collection",
+		"props":     map[string]any{"type": "note", "label": "All the notes"},
+	}), &blk)
+	doc := parse(t, get(t, h, "/canvas/"+blk.ID))
+	for _, h3 := range doc.Elements("h3") {
+		if htmltest.Text(h3) == "All the notes" {
+			t.Fatal("the expanded collection's label is an h3 under the page's h1")
+		}
+	}
+	found := false
+	for _, h2 := range doc.Elements("h2") {
+		found = found || htmltest.Text(h2) == "All the notes"
+	}
+	if !found {
+		t.Fatalf("the expanded collection's label should be an h2\n%s", doc.Root.Data)
+	}
 }

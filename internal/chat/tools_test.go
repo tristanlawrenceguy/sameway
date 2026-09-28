@@ -6,6 +6,7 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
@@ -22,7 +23,8 @@ func (s *scripted) Name() string { return "scripted" }
 
 func (s *scripted) Complete(_ context.Context, req llm.Request) (*llm.Response, error) {
 	s.seen = append(s.seen, req)
-	if len(s.steps) == 0 {
+	// Offered no tools, a model can only answer in words.
+	if len(s.steps) == 0 || req.Tools == nil {
 		return &llm.Response{Text: "done"}, nil
 	}
 	next := s.steps[0]
@@ -35,9 +37,15 @@ func call(name string, args map[string]any) *llm.Response {
 	return &llm.Response{ToolCalls: []llm.ToolCall{{ID: "c", Name: name, Args: raw}}}
 }
 
+// lastToolResult is the newest tool result in a request: the last
+// message may be words instead, when the turn is being asked to wrap up.
 func lastToolResult(req llm.Request) llm.ToolResult {
-	last := req.Messages[len(req.Messages)-1]
-	return last.ToolResults[len(last.ToolResults)-1]
+	for i := len(req.Messages) - 1; i >= 0; i-- {
+		if n := len(req.Messages[i].ToolResults); n > 0 {
+			return req.Messages[i].ToolResults[n-1]
+		}
+	}
+	return llm.ToolResult{}
 }
 
 func withModel(t *testing.T, steps ...*llm.Response) (*chat.Service, *scripted) {
@@ -69,7 +77,7 @@ func TestUpdateRemoveAndClear(t *testing.T) {
 	m := &scripted{steps: []*llm.Response{call("update_component", map[string]any{"id": id, "props": map[string]any{"bogus": 1}})}}
 	svc.Provider = m
 	svc.Send(context.Background(), "break it")
-	if res := lastToolResult(m.seen[1]); !res.IsError || !strings.Contains(res.Content, "invalid props") {
+	if res := lastToolResult(m.seen[1]); !res.IsError || !strings.Contains(res.Content, "Bogus") {
 		t.Errorf("bad update should return an error result: %+v", res)
 	}
 	rec, _ = svc.Store.Get(chat.BlockType, id)
@@ -191,7 +199,7 @@ func TestToolErrorsGuideTheModel(t *testing.T) {
 		want string
 	}{
 		{1, "unknown component \"carousel\". Available: alert, badge, button"},
-		{2, "invalid props"},
+		{2, "must be one of 'primary', 'secondary', 'danger', 'quiet'"},
 		{3, "unknown tool frobnicate"},
 		{4, "not valid JSON"},
 	}
@@ -209,9 +217,10 @@ func TestToolErrorsGuideTheModel(t *testing.T) {
 func TestSystemPromptCarriesCatalogueAndCanvas(t *testing.T) {
 	svc, m := withModel(t, call("add_component", map[string]any{"component": "list", "props": map[string]any{"items": []string{"a"}}}))
 	svc.ExtraPrompt = "Always answer in Dutch."
+	svc.Now = func() time.Time { return time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC) }
 	svc.Send(context.Background(), "hi")
 	first, second := m.seen[0].System, m.seen[1].System
-	for _, want := range []string{"Component catalogue", "button: ", `"additionalProperties":false`, "Always answer in Dutch.", "(empty)"} {
+	for _, want := range []string{"Component catalogue", "button: ", `"additionalProperties":false`, "Always answer in Dutch.", "(empty)", "Today is Tuesday 15 September 2026."} {
 		if !strings.Contains(first, want) {
 			t.Errorf("first system prompt missing %q", want)
 		}
@@ -223,7 +232,7 @@ func TestSystemPromptCarriesCatalogueAndCanvas(t *testing.T) {
 	for _, tool := range m.seen[0].Tools {
 		names = append(names, tool.Name)
 	}
-	if strings.Join(names, ",") != "add_component,update_component,remove_component,propose_change,clear_canvas" {
+	if strings.Join(names, ",") != "add_component,update_component,remove_component,propose_change,clear_canvas,undo_change,search,run_action,update_sameway,add_arrangement,set_setting,add_field,add_type" {
 		t.Errorf("tools offered: %v", names)
 	}
 }

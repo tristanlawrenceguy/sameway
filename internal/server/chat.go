@@ -2,17 +2,17 @@ package server
 
 import (
 	"bytes"
+	"context"
 	_ "embed"
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
-	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 //go:embed conversation.html
@@ -24,6 +24,7 @@ var conversationTmpl = template.Must(template.New("conversation").Funcs(render.F
 // page around it needs. The same value fills a chat block on the canvas and
 // the standalone /chat page.
 type conversation struct {
+	From     string
 	Body     template.HTML
 	Notice   template.HTML
 	Activity template.HTML
@@ -34,10 +35,20 @@ type conversation struct {
 	LastTurn time.Time
 	TurnEnd  time.Time
 	Count    int
+	People   map[string]int // whose colour each block glows in, if not the owner's
 	// FocusID is the block the page is already showing in full, when it is
 	// showing one. Its own Expand link then says it is the current page
 	// rather than offering to go where you already are.
 	FocusID string
+	// Arrival is the order in which the blocks changed in the last turn
+	// arrive on the page, by block id, so several changes are shown one
+	// after another in the order they were made.
+	Arrival map[string]int
+	// Path and Query are the page's address as it was asked for, so a
+	// block that keeps a person's choices in it (a collection narrowed
+	// or sorted) reads its own and keeps the rest.
+	Path  string
+	Query url.Values
 }
 
 type conversationView struct {
@@ -45,10 +56,24 @@ type conversationView struct {
 	Messages  []chatMessage
 	Compose   template.HTML
 	Send      template.HTML
+	Record    template.HTML // a voice note for Attach; see dictate.go
+	Dictate   template.HTML // saying the message, once speech-to-text is here
+	Talk      template.HTML // voice mode, beside Dictate
 	Clear     template.HTML
+	NewChat   template.HTML
 	ModelName string
 	From      string
 	Proposals []template.HTML
+	// Empty is what the chat says before its first message.
+	Empty template.HTML
+	// Title names the current chat, ChatID is its id, and Chats lists
+	// every chat for the menu.
+	Title  string
+	ChatID string
+	Chats  []chatItem
+	// Turn is the turn under way when the page was made, if any: the
+	// page follows it from /chat/live.
+	Turn string
 }
 
 type chatMessage struct {
@@ -59,49 +84,86 @@ type chatMessage struct {
 // conversation renders the transcript and composer once, for whichever
 // surface is showing it.
 func (s *Server) conversation(from string) (*conversation, error) {
-	out := &conversation{}
+	return s.conversationAbout(s.app.Chat, from, "", "")
+}
+
+// conversationAbout is the conversation with something to say already in
+// the box: the thing a record's page sent the person here about.
+func (s *Server) conversationAbout(c *chat.Service, from, about, prompt string) (*conversation, error) {
+	out := &conversation{From: from}
 	view := conversationView{From: from}
-	if s.app.Chat.Provider == nil {
-		problem := "No model is configured."
-		if s.app.Chat.ProviderErr != nil {
-			problem = s.app.Chat.ProviderErr.Error()
-		}
-		out.Notice = s.component("alert", map[string]any{"kind": "warning", "title": "No model connected",
-			"message": problem + " Edit the llm section of workspace.yaml and restart sameway serve."})
-	} else {
+	view.Chats, view.Title = s.chats(c)
+	view.ChatID = c.Current()
+	// When the assistant cannot reach a model, the conversation says so
+	// and offers what is on this computer; see connect.go.
+	if c.IsOwner() {
+		out.Notice = s.connectCard(from)
+	}
+	if s.app.Chat.Provider != nil {
 		view.ModelName = s.app.Chat.Provider.Name()
 	}
 
-	msgs, err := s.app.Store.List(chat.MessageType, store.ListOptions{OrderBy: "created_at"})
+	msgs, err := c.Messages()
 	if err != nil {
 		return nil, err
 	}
-	for _, m := range msgs {
+	for i, m := range msgs {
 		if m.Fields["role"] == "user" {
 			out.LastTurn = m.CreatedAt
 		}
 		out.TurnEnd = m.CreatedAt
 		id := "msg-" + m.ID
 		out.LatestID = id
-		view.Messages = append(view.Messages, chatMessage{ID: id, HTML: s.component("message", map[string]any{
-			"role": m.Fields["role"], "content": m.Fields["content"], "id": id,
-			"time": m.CreatedAt.Local().Format("15:04"), "changes": m.Fields["changes"],
-		})})
+		view.Messages = append(view.Messages, chatMessage{ID: id, HTML: s.component("message", s.messageProps(m, from, i == len(msgs)-1))})
 	}
 	out.Count = len(msgs)
 	view.Status = s.status(msgs)
-	view.Proposals = s.proposals()
-	view.Compose = s.component("textarea", map[string]any{"label": "Your message", "name": "message", "rows": 3, "required": true})
+	// A turn still running, asked for from another page or before this
+	// one was loaded: the page says so and, with scripts, follows it.
+	if t := s.turns.find("", c.Whose()); t != nil {
+		view.Turn = t.id
+		view.Status = s.component("status", map[string]any{"id": "chat-status", "message": "Assistant is working", "state": "working"})
+	}
+	// The assistant's questions are the owner's to answer.
+	if c.IsOwner() {
+		view.Proposals = s.proposals(from)
+	}
+	view.Empty = s.component("empty", map[string]any{"message": "Ask for anything."}) + template.HTML(chatStarts(from))
+	// Enter sends only where its script says so (20-compose-enter.js), and
+	// not on a touch screen, which has no Shift+Enter for a new line.
+	compose := map[string]any{"label": "Your message", "name": "message", "rows": 3, "required": true, "hint": "Ask for anything, or ask what something on the page is."}
+	if prompt != "" {
+		compose["value"] = prompt
+	} else if t, rec, ok := s.aboutOf(about); ok {
+		compose["value"] = "About " + s.title(t, rec) + " (" + about + "): "
+	}
+	view.Compose = s.component("textarea", compose)
 	view.Send = s.component("button", map[string]any{"label": "Send", "type": "submit"})
+	view.Record, view.Dictate, view.Talk = s.voiceFor()
 	view.Clear = s.component("button", map[string]any{"label": "Clear", "context": "conversation", "type": "submit", "variant": "quiet"})
+	view.NewChat = s.component("button", map[string]any{"label": "New chat", "type": "submit", "variant": "secondary"})
 
 	var body bytes.Buffer
 	if err := conversationTmpl.Execute(&body, view); err != nil {
 		return nil, err
 	}
 	out.Body = template.HTML(body.String())
-	out.Activity = s.recentActivity(8)
+	out.Activity, out.People = s.recentActivity(8, from), s.changedBy()
 	return out, nil
+}
+
+// attachment is how a message shows the file that came with it: its title
+// as a link to its page, or just a word when the file has since gone.
+func (s *Server) attachment(fileID string) map[string]any {
+	rec, err := s.app.Store.Get(FileType, fileID)
+	if err != nil {
+		return map[string]any{"title": "a file that is no longer here"}
+	}
+	title, _ := rec.Fields["title"].(string)
+	if title == "" {
+		title = "a file"
+	}
+	return map[string]any{"title": title, "href": "/t/" + FileType + "/" + rec.ID}
 }
 
 // chatPage shows the conversation on its own page. It is always here, even
@@ -112,7 +174,7 @@ func (s *Server) chatPage(w http.ResponseWriter, r *http.Request) {
 		s.page(w, r, "Chat", s.component("alert", map[string]any{"kind": "danger", "title": "Chat is not available", "message": err.Error()}), pageOptions{})
 		return
 	}
-	convo, err := s.conversation("/chat")
+	convo, err := s.conversationAboutFor(r, "/chat", r.URL.Query().Get("about"), r.URL.Query().Get("prompt"))
 	if err != nil {
 		s.fail(w, err)
 		return
@@ -126,7 +188,11 @@ func (s *Server) chatPage(w http.ResponseWriter, r *http.Request) {
 	if convo.LatestID != "" {
 		opts.Focus, opts.FocusLabel = convo.LatestID, "Skip to latest message"
 	}
-	s.page(w, r, "Chat", template.HTML(string(convo.Notice)+string(body)+string(convo.Activity)), opts)
+	activityHTML := string(convo.Activity)
+	if activityHTML != "" {
+		activityHTML = `<div class="sw-activity">` + activityHTML + `</div>`
+	}
+	s.page(w, r, "Chat", template.HTML(string(convo.Notice)+string(body)+activityHTML), opts)
 }
 
 // backTo is where a conversation form returns to: the surface it was sent
@@ -137,47 +203,43 @@ func backTo(from string) string {
 	if from == "/chat" {
 		return from
 	}
-	if id, ok := strings.CutPrefix(from, "/canvas/"); ok && id != "" && !strings.ContainsAny(id, "/?#") {
-		return from
+	for _, prefix := range []string{"/canvas/", "/c/"} {
+		if id, ok := strings.CutPrefix(from, prefix); ok && id != "" && !strings.ContainsAny(id, "/?#") {
+			return from
+		}
 	}
 	return "/"
 }
 
-// status summarises the last turn for the live region.
-func (s *Server) status(msgs []*store.Record) template.HTML {
-	props := map[string]any{"id": "chat-status", "message": "Ready.", "state": "idle"}
-	if len(msgs) > 0 {
-		last := msgs[len(msgs)-1]
-		switch last.Fields["role"] {
-		case "error":
-			props["state"], props["message"], props["live"] = "error", "The last request failed. See the message below.", "assertive"
-		case "assistant":
-			n := 0
-			if changes, ok := last.Fields["changes"].([]any); ok {
-				n = len(changes)
-			}
-			props["state"] = "done"
-			switch n {
-			case 0:
-				props["message"] = "Assistant replied."
-			case 1:
-				props["message"] = "Assistant replied and made 1 change to the canvas."
-			default:
-				props["message"] = fmt.Sprintf("Assistant replied and made %d changes to the canvas.", n)
-			}
-		}
-	}
-	return s.component("status", props)
-}
-
 // chatSend handles the compose form, then returns to where it was sent from.
 func (s *Server) chatSend(w http.ResponseWriter, r *http.Request) {
+	// A file sent with the message is filed first, as its own record, and
+	// goes to the model with the words. The composer is multipart for that;
+	// a plain form still works for anything that posts without a file.
+	fileID := ""
+	if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/") {
+		file, err := s.storeUpload(r)
+		if err != nil && err != http.ErrMissingFile {
+			s.failed(w, r, "Not sent", err, "/")
+			return
+		}
+		if file != nil {
+			fileID = file.ID
+		}
+	}
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "bad form", http.StatusBadRequest)
 		return
 	}
 	back := backTo(r.PostForm.Get("from"))
-	rec, err := s.app.Chat.Send(r.Context(), r.PostForm.Get("message"))
+	// The tab the person typed on is the one the assistant builds on.
+	canvas := strings.TrimPrefix(strings.TrimPrefix(back, "/c/"), "/")
+	if !strings.HasPrefix(back, "/c/") {
+		canvas = ""
+	}
+	// The turn finishes even if the person leaves the page meanwhile; see
+	// chatStream.
+	rec, err := s.chatFor(r).SendFile(context.WithoutCancel(r.Context()), canvas, r.PostForm.Get("message"), fileID)
 	if rec == nil {
 		// Nothing was recorded (empty message, or chat unavailable). The page
 		// already explains the latter, so just show it again.
@@ -187,14 +249,18 @@ func (s *Server) chatSend(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, back, http.StatusSeeOther)
 		return
 	}
+	// The turn may have removed the tab the person was on: they go Home.
+	if canvas != "" && !s.app.Chat.HasCanvas(canvas) {
+		back = "/"
+	}
 	http.Redirect(w, r, back+"#msg-"+rec.ID, http.StatusSeeOther)
 }
 
 func (s *Server) chatClear(w http.ResponseWriter, r *http.Request) {
-	if err := s.app.Chat.Clear(); err != nil {
-		s.fail(w, err)
+	if err := s.chatFor(r).Clear(); err != nil {
+		s.failed(w, r, "Not cleared", err, "/")
 		return
 	}
 	r.ParseForm()
-	http.Redirect(w, r, backTo(r.PostForm.Get("from")), http.StatusSeeOther)
+	s.tellAt(w, r, outcome{Title: "Conversation cleared", Undo: s.lastAbout("conversation")}, backTo(r.PostForm.Get("from")))
 }

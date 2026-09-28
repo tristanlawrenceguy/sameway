@@ -1,0 +1,24 @@
+/* A change out of sight: a sign at the edge of the screen, in the colour
+   of whoever made the change, that leads to it and goes once it is seen.
+   See 19-offscreen.js. It is for eyes only (aria-hidden), so it carries
+   no focus style of its own and never takes a place in the tab order. */
+
+.sw-offscreen {
+  position: fixed; left: 50%; z-index: 20;
+  transform: translateX(-50%);
+  display: inline-flex; align-items: center; min-height: var(--sw-size-target);
+  padding: 0 var(--sw-space-4);
+  border: 2px solid var(--sw-actor, var(--sw-color-accent)); border-radius: var(--sw-radius-pill);
+  background: var(--sw-color-bg); color: var(--sw-color-fg);
+  box-shadow: var(--sw-shadow-2);
+  font-weight: 600; font-size: var(--sw-size-text-sm); white-space: nowrap;
+  cursor: pointer; user-select: none;
+}
+.sw-offscreen[hidden] { display: none; }
+.sw-offscreen--up { top: calc(var(--sw-space-3) + env(safe-area-inset-top, 0px)); }
+.sw-offscreen--down { bottom: calc(var(--sw-space-3) + env(safe-area-inset-bottom, 0px)); }
+.sw-offscreen:hover { background: var(--sw-actor-soft, var(--sw-color-bg-muted)); }
+
+@media (forced-colors: active) {
+  .sw-offscreen { border-color: CanvasText; background: Canvas; color: CanvasText; }
+}

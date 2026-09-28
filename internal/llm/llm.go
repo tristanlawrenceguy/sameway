@@ -86,6 +86,16 @@ type Config struct {
 	// live in workspace.yaml because that file is shared.
 	APIKeyEnv string `yaml:"api_key_env,omitempty" json:"api_key_env,omitempty"`
 	MaxTokens int    `yaml:"max_tokens,omitempty" json:"max_tokens,omitempty"`
+	// Command is the command line for provider "command": a program on
+	// this machine the person is signed in to, with {prompt}, {system},
+	// {mcp} and {model} as its arguments. Provider "claude-code" fills it
+	// in. Field names the JSON field that holds the reply, if any.
+	Command string `yaml:"command,omitempty" json:"command,omitempty"`
+	Field   string `yaml:"field,omitempty" json:"field,omitempty"`
+	// Workspace and Executable are set by the app, not the file: what the
+	// program's MCP configuration points at.
+	Workspace  string `yaml:"-" json:"-"`
+	Executable string `yaml:"-" json:"-"`
 }
 
 // ErrNotConfigured is returned by New when provider is "none" or empty.
@@ -118,6 +128,22 @@ func New(cfg Config) (Provider, error) {
 			model = "claude-opus-5"
 		}
 		return NewAnthropic(model, key, cfg.MaxTokens), nil
+	case "command", "claude-code":
+		c := Presets[strings.ToLower(cfg.Provider)]
+		if cfg.Command != "" {
+			c.Template = cfg.Command
+		}
+		if cfg.Field != "" {
+			c.Field = cfg.Field
+		}
+		c.Model, c.Workspace, c.Executable = cfg.Model, cfg.Workspace, cfg.Executable
+		if c.Label == "" {
+			c.Label = "command"
+		}
+		if strings.TrimSpace(c.Template) == "" {
+			return nil, errors.New("llm.command is required for provider command: the program to run, with {prompt} where the conversation goes")
+		}
+		return &c, nil
 	}
 	return nil, fmt.Errorf("unknown llm.provider %q (use openai, anthropic, or none)", cfg.Provider)
 }

@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"testing/fstest"
 
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
@@ -51,12 +52,13 @@ func TestParsePreservesFieldOrderAndTitle(t *testing.T) {
 
 func TestParseRejectsBadDefinitions(t *testing.T) {
 	cases := map[string]string{
-		"name: Bad Name\nfields:\n  a: {type: string}":      "lowercase",
-		"name: ok\nfields: {}":                              "no fields",
-		"name: ok\nfields:\n  id: {type: string}":           "reserved",
-		"name: ok\nfields:\n  x: {type: blob}":              "unknown type",
-		"name: ok\nfields:\n  x: {type: enum}":              "needs values",
-		"name: ok\nfields:\n  created_at: {type: datetime}": "reserved",
+		"name: Bad Name\nfields:\n  a: {type: string}":                        "lowercase",
+		"name: ok\nfields: {}":                                                "no fields",
+		"name: ok\nfields:\n  id: {type: string}":                             "reserved",
+		"name: ok\nfields:\n  x: {type: blob}":                                "unknown type",
+		"name: ok\nfields:\n  x: {type: enum}":                                "needs values",
+		"name: ok\nfields:\n  created_at: {type: datetime}":                   "reserved",
+		"name: ok\nfields:\n  x: {type: enum, values: [a], labels: {b: Bee}}": "not one of its values",
 	}
 	for src, want := range cases {
 		_, err := schema.Parse([]byte(src))
@@ -106,7 +108,7 @@ func TestNormalizeReportsEveryProblemAtOnce(t *testing.T) {
 	typ := parse(t, everyType)
 	_, err := typ.Normalize(map[string]any{
 		"name": "too long", "count": "x", "ratio": "y", "on": "maybe", "kind": "z",
-		"tags": 5, "meta": "{bad", "when": "yesterday", "extra": 1,
+		"tags": 5, "meta": "{bad", "when": "someday", "extra": 1,
 	})
 	var ve *schema.ValidationError
 	if !errors.As(err, &ve) {
@@ -166,5 +168,100 @@ func TestLoadDirectory(t *testing.T) {
 	empty, err := schema.Load(dir + "/missing")
 	if err != nil || len(empty.Types) != 0 {
 		t.Errorf("missing dir should give an empty set: %v", err)
+	}
+}
+
+// A workspace keeps the copy of an internal type it was created with. When
+// a later release adds a field to that type, Complete gives the workspace's
+// copy that field too, without touching what the workspace wrote itself.
+func TestCompleteAddsBuiltinFieldsToInternalTypes(t *testing.T) {
+	dir := t.TempDir()
+	old := "name: block\ninternal: true\nfields:\n  component: {type: string, required: true, description: mine}\n  position: {type: int}\n"
+	mine := "name: note\nfields:\n  title: {type: string}\n"
+	stale := "name: activity\ninternal: true\ntitle: action\nfields:\n  action: {type: string, required: true}\n"
+	os.WriteFile(filepath.Join(dir, "block.yaml"), []byte(old), 0o644)
+	os.WriteFile(filepath.Join(dir, "note.yaml"), []byte(mine), 0o644)
+	os.WriteFile(filepath.Join(dir, "activity.yaml"), []byte(stale), 0o644)
+	ws, err := schema.Load(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	builtin, err := schema.LoadFS(fstest.MapFS{
+		"schema/block.yaml":    {Data: []byte("name: block\ninternal: true\nfields:\n  component: {type: string, required: true, description: theirs}\n  region: {type: enum, values: [main, left, right], default: main}\n")},
+		"schema/canvas.yaml":   {Data: []byte("name: canvas\ninternal: true\nfields:\n  name: {type: string, required: true}\n")},
+		"schema/note.yaml":     {Data: []byte("name: note\nfields:\n  title: {type: string}\n  body: {type: text}\n")},
+		"schema/activity.yaml": {Data: []byte("name: activity\ninternal: true\ntitle: summary\nfields:\n  summary: {type: string}\n  action: {type: string, required: true}\n")},
+	}, "schema")
+	if err != nil {
+		t.Fatal(err)
+	}
+	ws.Complete(builtin)
+
+	blk, _ := ws.Get("block")
+	var names []string
+	for _, f := range blk.Fields {
+		names = append(names, f.Name)
+	}
+	if strings.Join(names, ",") != "component,position,region" {
+		t.Errorf("missing fields should be appended after the workspace's own: %v", names)
+	}
+	if region, ok := blk.Field("region"); !ok || region.Default != "main" || len(region.Values) != 3 {
+		t.Errorf("region should arrive with its definition, got %+v", region)
+	}
+	if f, _ := blk.Field("component"); f.Description != "mine" {
+		t.Errorf("a field the workspace defines must stay as written, got %q", f.Description)
+	}
+	// What names a record is the system's to say for an internal type: an
+	// activity log copied before the summary field named events by their
+	// verb, so every heading on the activity page read "said".
+	if act, _ := ws.Get("activity"); act.Title != "summary" {
+		t.Errorf("an internal type takes the built-in title, got %q", act.Title)
+	} else if _, ok := act.Field("summary"); !ok {
+		t.Error("the field the title names arrives with it")
+	}
+	if note, _ := ws.Get("note"); len(note.Fields) != 1 {
+		t.Errorf("a type the person owns must not be completed, got %d fields", len(note.Fields))
+	}
+	// A whole internal type the workspace predates arrives too, so the tabs
+	// exist in a workspace made before there were tabs.
+	if canvas, ok := ws.Get("canvas"); !ok || !canvas.Internal || len(canvas.Fields) != 1 {
+		t.Errorf("a missing internal type should be added from the built-in set, got %+v", canvas)
+	}
+	if names := strings.Join(ws.Names(), ","); names != "activity,block,canvas,note" {
+		t.Errorf("types stay sorted after completion, got %s", names)
+	}
+}
+
+func TestLoadFSMissingDirIsEmpty(t *testing.T) {
+	set, err := schema.LoadFS(fstest.MapFS{}, "schema")
+	if err != nil || len(set.Types) != 0 {
+		t.Fatalf("missing dir should be an empty set, got %v %v", set.Types, err)
+	}
+}
+
+// A ref field names the type it points at, and a workspace whose refs
+// point at a type it does not have is told so before it starts.
+func TestARefNamesWhatItPointsAt(t *testing.T) {
+	if _, err := schema.Parse([]byte("name: task\nfields:\n  title: {type: string}\n  project: {type: ref}\n")); err == nil || !strings.Contains(err.Error(), "needs to") {
+		t.Errorf("a ref without to is refused: %v", err)
+	}
+	typ := parse(t, "name: task\nfields:\n  title: {type: string}\n  project: {type: ref, to: project}\n")
+	props := typ.JSONSchema()["properties"].(map[string]any)
+	if desc, _ := props["project"].(map[string]any)["description"].(string); !strings.Contains(desc, "id of a project") {
+		t.Errorf("the schema says what a ref holds: %v", props["project"])
+	}
+	dir := t.TempDir()
+	os.WriteFile(filepath.Join(dir, "task.yaml"), []byte("name: task\nfields:\n  title: {type: string}\n  project: {type: ref, to: project}\n"), 0o644)
+	set, err := schema.Load(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := set.CheckRefs(); err == nil || !strings.Contains(err.Error(), `points at "project"`) {
+		t.Errorf("a ref to a missing type is named: %v", err)
+	}
+	os.WriteFile(filepath.Join(dir, "project.yaml"), []byte("name: project\nfields:\n  title: {type: string}\n"), 0o644)
+	set, _ = schema.Load(dir)
+	if err := set.CheckRefs(); err != nil {
+		t.Errorf("with the type there, refs are fine: %v", err)
 	}
 }

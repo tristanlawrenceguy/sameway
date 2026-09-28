@@ -2,6 +2,8 @@
   "name": "status",
   "version": "1.0.0",
   "description": "Tells people and machines whether something is happening: idle, working, done, or error. A live region, so screen readers announce changes; data-state so agents can read them.",
+  "icon": "◐",
+  "use": { "when": "something is happening or has just finished and people should know without looking.", "not": "content, or anything a person reads rather than waits for.", "with": "the chat composer, which uses it." },
   "props": {
     "type": "object",
     "additionalProperties": false,
@@ -9,7 +11,7 @@
     "properties": {
       "message": { "type": "string", "minLength": 1, "description": "What is happening, in plain words: 'Assistant is working'." },
       "state": { "type": "string", "enum": ["idle", "working", "done", "error"], "default": "idle" },
-      "live": { "title": "Announce urgently", "type": "string", "enum": ["polite", "assertive"], "default": "polite", "description": "assertive interrupts; use it only for errors." },
+      "said": { "type": "string", "description": "Read out after the message but not drawn: the first words of a reply, so a person who cannot see it arrive hears what it says while the chip stays short." },
       "id": { "type": "string", "description": "Required when a form's enhance script should update this status while a request is in flight." }
     }
   },
@@ -28,6 +30,7 @@
     { "name": "default", "props": { "message": "Ready.", "id": "chat-status" }, "file": "examples/default.html" },
     { "name": "working", "props": { "message": "Assistant is working…", "state": "working" }, "file": "examples/working.html" },
     { "name": "done", "props": { "message": "Added a table to the canvas.", "state": "done" }, "file": "examples/done.html" },
-    { "name": "error", "props": { "message": "Could not reach the model.", "state": "error", "live": "assertive" }, "file": "examples/error.html" }
+    { "name": "said", "props": { "message": "Assistant replied and made 1 change to the canvas.", "said": "The calendar is now on the canvas.", "state": "done", "id": "chat-status" }, "file": "examples/said.html" },
+    { "name": "error", "props": { "message": "Could not reach the model.", "state": "error" }, "file": "examples/error.html" }
   ]
 }

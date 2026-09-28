@@ -1,6 +1,7 @@
 package server
 
 import (
+	"cmp"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -20,39 +21,51 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 		s.page(w, r, "Canvas", s.component("alert", map[string]any{"kind": "danger", "title": "This workspace is incomplete", "message": err.Error()}), pageOptions{})
 		return
 	}
-	s.seedChat()
+	// Which tab: Home at /, or a canvas record at /c/<id>.
+	canvas := r.PathValue("canvas")
+	// A tab that is not there gets the site's own page saying so, with the
+	// way on, not a bare not-found line; one the assistant just removed is
+	// never reached, since the turn sends the person Home (chat.go).
+	if !s.app.Chat.HasCanvas(canvas) {
+		s.notFoundPage(w, r)
+		return
+	}
+	s.seedChat(canvas)
 	blocks, err := s.app.Store.List(chat.BlockType, store.ListOptions{OrderBy: "position"})
 	if err != nil {
 		s.fail(w, err)
 		return
 	}
-	convo, err := s.conversation("/")
+	blocks = chat.OnCanvas(blocks, canvas)
+	convo, err := s.conversationFor(r, chat.CanvasPath(canvas))
 	if err != nil {
 		s.fail(w, err)
 		return
 	}
+	convo.Arrival = arrivals(blocks, convo)
 
 	var b strings.Builder
 	if convo.Notice != "" {
 		b.WriteString(string(convo.Notice))
 	}
-	main, left, right := split(blocks)
+	b.WriteString(string(s.tabBar(canvas)))
+	reg := split(blocks)
+	main, left, right := reg.main, reg.left, reg.right
 	// A workspace with nothing but the conversation shows just that, in the
 	// middle of the page, the way every other assistant opens. Everything
 	// else arrives because someone asked for it.
 	solo := len(left) == 0 && len(right) == 0 && len(main) == 1 &&
 		main[0].Fields["component"] == chat.ComponentName
 
-	if len(blocks) == 0 {
-		b.WriteString(`<p class="sw-empty">This canvas is empty. The conversation is at <a href="/chat">/chat</a>, and anything you ask for there appears here.</p>`)
-	} else {
-		fmt.Fprintf(&b, `<div class="sw-page" data-layout="%s">`, layoutName(solo))
-		b.WriteString(`<ol class="sw-plain sw-canvas" aria-label="Canvas">`)
-		for _, blk := range main {
-			b.WriteString(s.blockItem(blk, convo))
-		}
-		b.WriteString(`</ol></div>`)
+	// The conversation's own "Ask for anything" is the page's one empty
+	// state; a second panel above it saying the page is empty was one more
+	// thing to read before the box to type in.
+	fmt.Fprintf(&b, `<div class="sw-page" data-layout="%s">`, layoutName(solo))
+	b.WriteString(`<ol class="sw-plain sw-canvas" aria-label="Canvas">`)
+	for _, blk := range main {
+		b.WriteString(s.blockItem(blk, convo))
 	}
+	b.WriteString(`</ol></div>`)
 	if convo.Activity != "" {
 		b.WriteString(`<div class="sw-activity">` + string(convo.Activity) + `</div>`)
 	}
@@ -60,63 +73,16 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 	if convo.LatestID != "" {
 		opts.Focus, opts.FocusLabel = convo.LatestID, "Skip to latest message"
 	}
-	opts.QuietTitle = solo
-	opts.Left = s.pane("left", "History", left, convo)
-	opts.Right = s.pane("right", "Alongside", right, convo)
-	s.page(w, r, "Canvas", template.HTML(b.String()), opts)
-}
-
-// canvasBlocks reads the canvas in display order, or nothing if it cannot.
-func (s *Server) canvasBlocks() []*store.Record {
-	blocks, err := s.app.Store.List(chat.BlockType, store.ListOptions{OrderBy: "position"})
-	if err != nil {
-		return nil
-	}
-	return blocks
-}
-
-// split sorts blocks into the three regions of the page.
-func split(blocks []*store.Record) (main, left, right []*store.Record) {
-	for _, blk := range blocks {
-		switch str(blk.Fields["region"], "main") {
-		case "left":
-			left = append(left, blk)
-		case "right", "side": // side was the earlier name for right
-			right = append(right, blk)
-		default:
-			main = append(main, blk)
-		}
-	}
-	return main, left, right
-}
-
-func layoutName(solo bool) string {
-	if solo {
-		return "solo"
-	}
-	return "wide"
-}
-
-// pane renders one of the two full height columns. It collapses to a strip
-// and remembers whether it was open, because a pane that reopens itself on
-// every page load is a pane nobody closes twice.
-func (s *Server) pane(side, label string, blocks []*store.Record, convo *conversation) template.HTML {
-	if len(blocks) == 0 {
-		return ""
-	}
-	var inner strings.Builder
-	fmt.Fprintf(&inner, `<ol class="sw-plain sw-canvas sw-canvas--pane" aria-label="%s pane blocks">`, label)
-	for _, blk := range blocks {
-		inner.WriteString(s.blockItem(blk, convo))
-	}
-	inner.WriteString(`</ol>`)
-	body, err := s.app.Registry.RenderSlot("disclosure",
-		map[string]any{"label": label, "open": true, "id": side + "-pane"},
-		template.HTML(inner.String()))
-	if err != nil {
-		return ""
-	}
-	return body
+	// The canvas is an application whether or not it has panes, so it keeps
+	// the whole width and the same shape as panes come and go. Once it holds
+	// anything, what is on it is the title; "Canvas" stays in the outline.
+	opts.Shell = "app"
+	opts.QuietTitle = len(blocks) > 0
+	opts.Left = s.pane("left", paneLabel("Left pane", left), left, convo)
+	opts.Right = s.pane("right", paneLabel("Right pane", right), right, convo)
+	opts.Header = s.strip("header", reg.header, convo)
+	opts.Footer = s.strip("footer", reg.footer, convo)
+	s.page(w, r, s.tabName(canvas), template.HTML(b.String()), opts)
 }
 
 // blockItem renders one canvas block: the component, its span, its
@@ -128,44 +94,52 @@ func (s *Server) blockItem(blk *store.Record, convo *conversation) string {
 		body = s.chatBlock(blk, convo)
 	}
 	var b strings.Builder
-	fmt.Fprintf(&b, `<li class="sw-block sw-reveal" data-block-id="%s" data-block-component="%s" data-actor="%s" data-frame="%s" data-tone="%s"`,
-		v.ID, v.Component, v.Actor, v.Frame, v.Tone)
+	fmt.Fprintf(&b, `<li class="sw-block sw-reveal" data-block-id="%s" data-block-component="%s" data-actor="%s" data-frame="%s" data-tone="%s" data-size="%s" data-block-label="%s"`,
+		v.ID, v.Component, v.Actor, v.Frame, v.Tone, v.Size, template.HTMLEscapeString(v.Label))
 	if v.Changed != "" {
 		fmt.Fprintf(&b, ` data-changed="%s"`, v.Changed)
+		// Someone else's change glows in their colour.
+		if v.Person > 0 {
+			fmt.Fprintf(&b, ` data-person="%d"`, v.Person)
+		}
 	}
-	fmt.Fprintf(&b, ` style="--sw-span: %d; view-transition-name: block-%s; view-transition-class: sw-vt-item">`, v.Span, v.ID)
+	if props, _ := blk.Fields["props"].(map[string]any); props != nil {
+		if typeName, _ := props["type"].(string); typeName != "" {
+			if dot := s.dotOf(typeName); dot > 0 {
+				fmt.Fprintf(&b, ` data-dot="%d"`, dot)
+			}
+		}
+	}
+	if n := convo.Arrival[v.ID]; n > 0 {
+		fmt.Fprintf(&b, ` data-arrival="%d"`, n)
+	}
+	if v.EditAction != "" {
+		fmt.Fprintf(&b, ` data-edit-action="%s"`, v.EditAction)
+	}
+	fmt.Fprintf(&b, ` id="block-%s" style="--sw-span: %d; view-transition-name: block-%s; view-transition-class: sw-vt-item">`, v.ID, v.Span, v.ID)
+	// At icon size the block is a glyph with its name, opening the whole
+	// thing on its own page: everything is still reachable, in less room.
+	if v.Size == "icon" {
+		// A search's glyph opens the search page, where searching is.
+		href := "/canvas/" + v.ID
+		if v.Component == "search" {
+			href = "/search"
+		}
+		fmt.Fprintf(&b, `<a class="sw-block__icon" href="%s" aria-label="%s"><span aria-hidden="true">%s</span></a></li>`, href, template.HTMLEscapeString(v.Label), template.HTMLEscapeString(v.Icon))
+		return b.String()
+	}
 	// Provenance costs nothing on screen and is complete in the
 	// accessibility tree. Sighted people got it from the glow when it
 	// happened, and can get it again from the activity log.
 	fmt.Fprintf(&b, `<p class="sw-visually-hidden">%s</p>`, template.HTMLEscapeString(v.Provenance))
-	b.WriteString(string(body))
+	// A tone means something, so it is said, not only tinted: WCAG 1.4.1.
+	if word := toneWords[v.Tone]; word != "" {
+		fmt.Fprintf(&b, `<p class="sw-visually-hidden">%s</p>`, word)
+	}
+	b.WriteString(withBlock(string(body), "block-"+v.ID))
 	fmt.Fprintf(&b, `<div class="sw-bar sw-quiet">%s<form method="post" action="/canvas/%s/delete">%s</form></div></li>`,
 		v.Expand, v.ID, v.Remove)
 	return b.String()
-}
-
-// chatBlock renders a chat component with the live conversation inside it.
-func (s *Server) chatBlock(blk *store.Record, convo *conversation) template.HTML {
-	props, _ := blk.Fields["props"].(map[string]any)
-	if props == nil {
-		props = map[string]any{}
-	}
-	out, err := s.app.Registry.RenderSlot(chat.ComponentName, props, convo.Body)
-	if err != nil {
-		return s.component("alert", map[string]any{"kind": "danger", "message": "Could not render the conversation: " + err.Error()})
-	}
-	return out
-}
-
-// seedChat puts a conversation on an empty canvas, so a new workspace has
-// somewhere to talk and a cleared canvas recovers one.
-func (s *Server) seedChat() {
-	if n, err := s.app.Store.Count(chat.BlockType); err != nil || n > 0 {
-		return
-	}
-	s.app.Store.Create(chat.BlockType, s.app.Chat.BlockFields(map[string]any{
-		"component": chat.ComponentName, "props": map[string]any{}, "position": 0, "span": 12,
-	}))
 }
 
 // canvasBlock gathers everything the page needs about one block.
@@ -184,7 +158,7 @@ func (s *Server) canvasBlock(b *store.Record, convo *conversation) canvasBlock {
 	if v, ok := b.Fields["span"].(int64); ok && v >= 1 && v <= 12 {
 		span = int(v)
 	}
-	who := map[string]string{"human": "you", "assistant": "the assistant"}
+	who := map[string]string{"human": "you", "assistant": "the assistant", "system": "the workspace"}
 	provenance := "Added by " + who[createdBy] + "."
 	if actor != createdBy {
 		provenance = "Added by " + who[createdBy] + ", edited by " + who[actor] + "."
@@ -193,7 +167,9 @@ func (s *Server) canvasBlock(b *store.Record, convo *conversation) canvasBlock {
 	// Glow only for what changed in the exchange just finished, or in the
 	// last few seconds, so a marker never outlives the change it reports.
 	changed := ""
-	if inLastTurn(b.CreatedAt, convo) {
+	// What the workspace put there to begin with is not a change.
+	if b.Fields["created_by"] == "system" {
+	} else if inLastTurn(b.CreatedAt, convo) {
 		changed = "added"
 	} else if inLastTurn(b.UpdatedAt, convo) {
 		changed = "updated"
@@ -201,16 +177,46 @@ func (s *Server) canvasBlock(b *store.Record, convo *conversation) canvasBlock {
 	// Removing is the one thing worth a control of its own. Anything else a
 	// person wants changed, they ask for, which is faster than any form and
 	// is the whole point of having an assistant on the page.
+	editAction := ""
+	if name == recordComponent {
+		// A record block edits the record: its editor posts to the record's
+		// own props, and is given every field of it (recordEditFields).
+		props, editAction = s.resolveRecord(props)
+	}
+	if name == collectionComponent {
+		props = s.resolveCollectionAt(props, b.ID, onCanvas(b, convo))
+	}
+	if name == calendarComponent {
+		props = s.resolveCalendar(props, b.ID)
+	}
+	if name == clockComponent {
+		props = s.resolveClock(props)
+	}
+	if name == trackerComponent {
+		props = s.resolveTracker(props)
+	}
+	if name == chartComponent {
+		props = s.resolveChart(props)
+	}
+	label := chat.Summarise(name, props)
+	if label == "" {
+		label = name
+	}
+	icon := name[:1]
+	if c, p, ok := s.app.Registry.Resolve(name, props); ok {
+		icon, props = cmp.Or(c.Manifest.Icon, icon), underPageTitle(c, p)
+	}
 	return canvasBlock{
-		ID: b.ID, Component: name, Actor: actor, Changed: changed, Span: span,
+		ID: b.ID, Component: name, Actor: actor, Changed: changed, Person: convo.People[b.ID], Span: span,
 		Frame: str(b.Fields["frame"], "card"), Tone: str(b.Fields["tone"], "none"),
-		Provenance: provenance,
-		HTML:       s.component(name, props),
+		Size: str(b.Fields["size"], "full"), Label: label, Icon: icon,
+		Provenance: provenance, EditAction: editAction,
+		HTML: s.component(name, props) + s.recordEditFields(name, props),
 		Expand: s.component("link", map[string]any{
-			"href": "/canvas/" + b.ID, "label": "Expand", "context": name,
+			"href": "/canvas/" + b.ID, "label": "Expand", "context": label,
 			"current": convo != nil && convo.FocusID == b.ID,
 		}),
-		Remove: s.component("button", map[string]any{"label": "Remove", "context": name, "type": "submit", "variant": "quiet"}),
+		Remove: s.component("button", map[string]any{"label": "Remove", "context": label, "type": "submit", "variant": "quiet"}),
 	}
 }
 
@@ -245,17 +251,24 @@ func str(v any, fallback string) string {
 }
 
 type canvasBlock struct {
-	ID         string
-	Component  string
-	Actor      string
-	Changed    string
-	Span       int
-	Frame      string
-	Tone       string
-	Provenance string
-	HTML       template.HTML
-	Expand     template.HTML
-	Remove     template.HTML
+	ID        string
+	Component string
+	Actor     string
+	Changed   string
+	Person    int
+	Span      int
+	Frame     string
+	Tone      string
+	// Size is full, compact or icon; Label and Icon are what an icon-sized
+	// block shows: the glyph, and the name assistive technology gets.
+	Size, Label, Icon string
+	Provenance        string
+	HTML              template.HTML
+	Expand            template.HTML
+	Remove            template.HTML
+	// EditAction is where the inline editor posts for this block when it is
+	// not the block's own props: a record block edits the record.
+	EditAction string
 }
 
 // canvasDelete is a person removing a block; it is logged as a human action.
@@ -263,15 +276,21 @@ func (s *Server) canvasDelete(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	rec, err := s.app.Store.Get(chat.BlockType, id)
 	if err != nil {
-		s.fail(w, err)
+		s.failed(w, r, "Not removed", err, "/")
 		return
 	}
 	if err := s.app.Store.Delete(chat.BlockType, id); err != nil {
-		s.fail(w, err)
+		s.failed(w, r, "Not removed", err, "/")
 		return
 	}
 	name, _ := rec.Fields["component"].(string)
 	props, _ := rec.Fields["props"].(map[string]any)
-	chat.Record(s.app.Store, "human", chat.Change{Action: "removed", Component: name, ID: id, Detail: chat.Summarise(name, props)})
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	what := chat.Summarise(name, props)
+	undo := s.record(r, chat.Change{Action: "removed", Component: name, ID: id, Detail: what, Before: rec.Fields})
+	// Its own page is gone with it.
+	back := backOf(r, "/")
+	if strings.HasPrefix(back, "/canvas/"+id) {
+		back = "/"
+	}
+	s.tellAt(w, r, outcome{Title: "Removed", Text: capitalize(what) + " is removed.", Undo: undo}, back)
 }

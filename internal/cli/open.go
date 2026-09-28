@@ -1,15 +1,25 @@
 package cli
 
 import (
+	"context"
+	"errors"
 	"flag"
 	"fmt"
+	"io"
+	"log"
 	"net"
 	"net/http"
+	"os"
 	"os/exec"
 	"runtime"
 	"strings"
+	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/app"
+	"github.com/tristanlawrenceguy/sameway/internal/devices"
+	"github.com/tristanlawrenceguy/sameway/internal/notify"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
+	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
 // openCmd is serve with the last step done for you: it starts the workspace
@@ -54,7 +64,60 @@ func (c *ctx) openCmd() error {
 		}
 	}
 	fmt.Fprintln(c.Stdout, "\nPress Ctrl-C to stop.")
-	return http.Serve(listener, server.New(a))
+	// This workspace is now one this machine knows, at this address, so
+	// any other workspace can offer to open it. The page can start other
+	// workspaces as servers of their own, and stop this one.
+	workspace.Remember(a.Workspace.Dir, listener.Addr().String())
+	ctx, stop := context.WithCancel(context.Background())
+	defer stop()
+	h := server.New(a)
+	h.WriteDownInBackground()
+	// MCP over HTTP too, as serve has it: at /mcp, for agents on this
+	// computer with the workspace's token, and from the tailnet by who
+	// Tailscale says they are, reading only.
+	all := HandlerFor(a, os.Getenv(a.Workspace.Config.MCP.TokenEnv), h)
+	var srv *http.Server
+	srv = &http.Server{Handler: all}
+	h.WithFleet(&server.Fleet{Launch: launchWorkspace, Exit: func() {
+		go func() {
+			time.Sleep(500 * time.Millisecond)
+			srv.Shutdown(context.Background())
+		}()
+	}})
+	// Reminders ring, scheduled actions run and the broker stays connected
+	// for as long as the server does, with or without a page open.
+	h.StartRinging(ctx, notifier(a))
+	a.Chat.StartSchedule(ctx)
+	keepSnapshots(ctx, c.Stdout, a)
+	connectDevices(ctx, c.Stdout, a)
+	joinTailnet(ctx, c.Stdout, a, all, h)
+	if err := srv.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		return err
+	}
+	return nil
+}
+
+// notifier tells a ring beyond the page the way workspace.yaml says,
+// read each time so a setting changed by asking applies at once.
+func notifier(a *app.App) func(title, text, url string) {
+	return func(title, text, url string) {
+		cfg := a.Workspace.Config.Notify
+		n := notify.Notifier{Desktop: cfg.Desktop != "off", Command: cfg.Command}
+		if err := n.Send(title, text, url); err != nil {
+			log.Printf("notify: %v", err)
+		}
+	}
+}
+
+// launchWorkspace starts this same program on another workspace, as a
+// server of its own that outlives this one.
+func launchWorkspace(dir, addr string) error {
+	exe, err := os.Executable()
+	if err != nil {
+		return err
+	}
+	cmd := exec.Command(exe, "open", "--workspace", dir, "--no-browser", "--addr", addr)
+	return cmd.Start()
 }
 
 // openInBrowser hands a URL to whatever the operating system uses for one.
@@ -70,4 +133,21 @@ func openInBrowser(url string) error {
 	default:
 		return exec.Command("xdg-open", url).Start()
 	}
+}
+
+// connectDevices reaches the MQTT broker workspace.yaml names, if any:
+// subscribed topics become devices, and mqtt actions can publish.
+func connectDevices(ctx context.Context, out io.Writer, a *app.App) {
+	cfg := a.Workspace.Config.MQTT
+	if strings.TrimSpace(cfg.Broker) == "" {
+		return
+	}
+	bus, err := devices.Start(ctx, cfg, a.Store)
+	if err != nil {
+		fmt.Fprintf(out, "  mqtt    not connected: %v\n", err)
+		log.Printf("devices: %v", err)
+		return
+	}
+	a.Chat.Publish = bus.Publish
+	fmt.Fprintf(out, "  mqtt    %s, %d topic(s)\n", cfg.Broker, len(cfg.Subscribe))
 }

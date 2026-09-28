@@ -10,14 +10,13 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"sort"
 	"strings"
 
 	"gopkg.in/yaml.v3"
 )
 
 // FieldTypes lists every supported field type, in documentation order.
-var FieldTypes = []string{"string", "text", "markdown", "int", "float", "bool", "enum", "list", "json", "datetime"}
+var FieldTypes = []string{"string", "text", "markdown", "int", "float", "bool", "enum", "list", "json", "datetime", "repeat", "ref"}
 
 var nameRe = regexp.MustCompile(`^[a-z][a-z0-9_]{0,63}$`)
 
@@ -32,11 +31,26 @@ type Field struct {
 	Required    bool     `yaml:"required,omitempty" json:"required,omitempty"`
 	Default     any      `yaml:"default,omitempty" json:"default,omitempty"`
 	Values      []string `yaml:"values,omitempty" json:"values,omitempty"`
-	Of          string   `yaml:"of,omitempty" json:"of,omitempty"`
-	MaxLength   int      `yaml:"maxLength,omitempty" json:"maxLength,omitempty"`
+	// Labels names an enum's values in a person's words, where the value
+	// itself is a word for the machine: reach is "At least the target".
+	// A value without one is shown as itself, made readable (ValueLabel).
+	Labels map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
+	Of     string            `yaml:"of,omitempty" json:"of,omitempty"`
+	// To is the content type a ref field points at: the field holds one
+	// record's id, and the page shows that record's title as a link.
+	To        string `yaml:"to,omitempty" json:"to,omitempty"`
+	MaxLength int    `yaml:"maxLength,omitempty" json:"maxLength,omitempty"`
 	// Multiline asks forms to give this field room: a textarea rather than
 	// one line, and one item per line for a list.
 	Multiline bool `yaml:"multiline,omitempty" json:"multiline,omitempty"`
+	// ReadOnly is a field the system keeps, such as where a file is
+	// stored or whether a command was accepted: shown, never offered to
+	// a person to change by hand. The assistant and the API still set it.
+	ReadOnly bool `yaml:"readonly,omitempty" json:"readonly,omitempty"`
+	// Hidden is a field taken off the pages without losing what it holds:
+	// what a person asked for instead of deleting it. The assistant no
+	// longer fills it in; showing it again brings everything back.
+	Hidden bool `yaml:"hidden,omitempty" json:"hidden,omitempty"`
 }
 
 // Type is one content type.
@@ -50,6 +64,13 @@ type Type struct {
 	// Internal types are used by the system (chat messages, canvas blocks)
 	// and are hidden from the main navigation.
 	Internal bool `yaml:"internal,omitempty" json:"internal,omitempty"`
+	// Provided types come with the system for people to use, such as
+	// actions: a workspace that predates one gets it, like an internal type,
+	// but it is shown and edited like any other.
+	Provided bool `yaml:"provided,omitempty" json:"provided,omitempty"`
+	// Hidden is a type taken off the pages and the assistant's hands,
+	// its records kept, until it is shown again.
+	Hidden bool `yaml:"hidden,omitempty" json:"hidden,omitempty"`
 	// File is the YAML path the type was loaded from, for error messages.
 	File string `yaml:"-" json:"-"`
 }
@@ -62,31 +83,7 @@ type Set struct {
 
 // Load reads every *.yaml file in dir. A missing dir yields an empty set.
 func Load(dir string) (*Set, error) {
-	set := &Set{byName: map[string]*Type{}}
-	entries, err := os.ReadDir(dir)
-	if os.IsNotExist(err) {
-		return set, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	for _, e := range entries {
-		if e.IsDir() || !strings.HasSuffix(e.Name(), ".yaml") {
-			continue
-		}
-		path := filepath.Join(dir, e.Name())
-		t, err := LoadFile(path)
-		if err != nil {
-			return nil, err
-		}
-		if _, dup := set.byName[t.Name]; dup {
-			return nil, fmt.Errorf("%s: content type %q is defined twice", path, t.Name)
-		}
-		set.byName[t.Name] = t
-		set.Types = append(set.Types, t)
-	}
-	sort.Slice(set.Types, func(i, j int) bool { return set.Types[i].Name < set.Types[j].Name })
-	return set, nil
+	return load(os.DirFS(dir), ".", func(name string) string { return filepath.Join(dir, name) })
 }
 
 // LoadFile parses and validates one content type file.
@@ -149,8 +146,16 @@ func (t *Type) validate() error {
 		if f.Type == "enum" && len(f.Values) == 0 {
 			return fmt.Errorf("type %s: enum field %s needs values", t.Name, f.Name)
 		}
+		for v := range f.Labels {
+			if !contains(f.Values, v) {
+				return fmt.Errorf("type %s: field %s labels %q, which is not one of its values (%s)", t.Name, f.Name, v, strings.Join(f.Values, ", "))
+			}
+		}
 		if f.Type == "list" && f.Of == "" {
 			f.Of = "string"
+		}
+		if f.Type == "ref" && f.To == "" {
+			return fmt.Errorf("type %s: ref field %s needs to: the type it points at", t.Name, f.Name)
 		}
 	}
 	if t.Title == "" {
@@ -187,6 +192,17 @@ func (t *Type) Field(name string) (*Field, bool) {
 		}
 	}
 	return nil, false
+}
+
+// Shown are the fields a page shows: all but the hidden ones.
+func (t *Type) Shown() []Field {
+	out := make([]Field, 0, len(t.Fields))
+	for _, f := range t.Fields {
+		if !f.Hidden {
+			out = append(out, f)
+		}
+	}
+	return out
 }
 
 func contains(list []string, s string) bool {

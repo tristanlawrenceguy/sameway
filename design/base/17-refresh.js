@@ -1,0 +1,174 @@
+// The page follows the turn.
+//
+// A block landing on the main canvas is shown the moment it exists, by
+// 14-live.js. Everything else the assistant changes (a record a
+// collection or a calendar shows, a block in a pane, a list that appears
+// in the sidebar, the activity) used to wait for a reload. Now the page
+// fetches itself as it is and moves what changed into place, inside a
+// view transition: a block that moved slides to its new place, a new one
+// arrives, one that has gone leaves, with the same motion the page has
+// between navigations. The chat stays where it is, live, and a block that
+// has not changed is left alone, so nothing flickers. Scripts that arm the
+// page hear sw:refresh afterwards and arm what is new.
+(function () {
+  "use strict";
+  if (!window.fetch || !window.DOMParser) return;
+  var pace = document.documentElement.getAttribute("data-pace");
+  var still = pace === "still" || (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+  // On a narrow screen the whole page scrolls, under a browser bar that
+  // comes and goes, and blocks sliding across it read as a glitch rather
+  // than as motion; there the changes land without the transition.
+  var wide = window.matchMedia ? matchMedia("(min-width: 64rem)") : { matches: true };
+
+  var timer = null, running = false, again = false;
+
+  // swRefresh asks for the page to follow, soon: several asks in a row
+  // become one fetch, and one asked for during a fetch means another after.
+  window.swRefresh = function (delay) {
+    clearTimeout(timer);
+    timer = setTimeout(refresh, delay === undefined ? 400 : delay);
+  };
+
+  function refresh() {
+    if (running) { again = true; return; }
+    running = true;
+    fetch(location.pathname + location.search, { credentials: "same-origin", headers: { "X-Requested-With": "sameway-live" } })
+      .then(function (r) { if (!r.ok) throw new Error("the page came back " + r.status); return r.text(); })
+      .then(function (html) {
+        var doc = new DOMParser().parseFromString(html, "text/html");
+        if (document.startViewTransition && !still && wide.matches) {
+          // A transition waits for a frame to be drawn before it swaps the
+          // page, and a tab that is not drawing never gets one: every
+          // refresh after it would wait for ever. So the page is swapped
+          // once, by the transition or, if it has not in a moment, here.
+          var done = false;
+          var swap = function () { if (!done) { done = true; merge(doc); } };
+          var vt = document.startViewTransition(swap);
+          return Promise.race([vt.updateCallbackDone, new Promise(function (r) { setTimeout(r, 800); })])
+            .catch(function () {})
+            .then(function () { if (!done) { try { vt.skipTransition(); } catch (e) { /* gone */ } swap(); } });
+        }
+        merge(doc);
+      })
+      .catch(function (err) { if (window.console) console.error("live page:", err); })
+      .then(function () { running = false; if (again) { again = false; window.swRefresh(0); } });
+  }
+
+  // sameBlock says whether a block is as it was, apart from its place in
+  // the order of arrival, which the server renumbers each time.
+  function sameBlock(a, b) {
+    var strip = function (n) { return n.outerHTML.replace(/ data-arrival="\d+"/g, ""); };
+    return strip(a) === strip(b);
+  }
+
+  // move puts a node that is in the page in place of one from the fresh
+  // page without taking it out first where the browser can (moveBefore),
+  // so a focused field keeps its focus, and a phone its keyboard, and a
+  // log keeps its scroll. Elsewhere it is an ordinary move, and merge puts
+  // the scroll back itself.
+  function move(have, spot) {
+    if (spot.parentNode.moveBefore) {
+      try { spot.parentNode.moveBefore(have, spot); spot.remove(); return; } catch (e) { /* not movable here */ }
+    }
+    spot.replaceWith(have);
+  }
+
+  // merge puts the fresh page in place of the old, keeping the chat and
+  // every unchanged block as the nodes they were, and the person where
+  // they were: scroll, focus, and the caret in what they were typing.
+  // mark says how to find the focused control again in the fresh page when
+  // it has no id: the block it is in, its kind, and its name, link or form.
+  // Keyboard focus used to fall to the page whenever the assistant changed
+  // anything, and a person tabbing through the page started over.
+  function mark(el) {
+    if (!el || el === document.body || el.id) return null;
+    var block = el.closest("[data-block-id]");
+    var form = el.closest("form");
+    return {
+      block: block && block.getAttribute("data-block-id"), tag: el.tagName,
+      name: (el.getAttribute("aria-label") || el.textContent || "").replace(/\s+/g, " ").trim(),
+      href: el.getAttribute("href"), action: form && form.getAttribute("action")
+    };
+  }
+  function find(m) {
+    var scope = (m.block && document.querySelector('[data-block-id="' + m.block + '"]')) || document;
+    var all = scope.querySelectorAll(m.tag);
+    for (var i = 0; i < all.length; i++) {
+      var el = all[i], form = el.closest("form");
+      var name = (el.getAttribute("aria-label") || el.textContent || "").replace(/\s+/g, " ").trim();
+      if (name === m.name && el.getAttribute("href") === m.href && (form && form.getAttribute("action")) === m.action) return el;
+    }
+    return null;
+  }
+
+  function merge(doc) {
+    var focused = document.activeElement;
+    var focusId = focused && focused.id;
+    var focusMark = mark(focused);
+    var selStart = focused && focused.selectionStart, selEnd = focused && focused.selectionEnd;
+    var y = window.scrollY;
+    // The chat is what the person is reading: the page keeps it where it
+    // was on the screen, whatever grew or went above it, and its log at
+    // the end when that is where they were.
+    var anchor = document.querySelector('[data-block-component="chat"]');
+    var anchorTop = anchor && anchor.getBoundingClientRect().top;
+    // What was just said, with its Undo, stays until closed or left, though
+    // the fresh page, fetched without it, has none.
+    var said = document.getElementById("outcome");
+    var logs = [];
+    document.querySelectorAll(".sw-chat__log").forEach(function (log) {
+      logs.push({ log: log, top: log.scrollTop, end: log.scrollHeight - log.scrollTop - log.clientHeight < 48 });
+    });
+    ["header.sw-header", ".sw-shell"].forEach(function (sel) {
+      var fresh = doc.querySelector(sel), old = document.querySelector(sel);
+      if (!fresh || !old) return;
+      // The fresh page goes in beside the old one first, so a block kept
+      // from the old moves between two parts of the page.
+      fresh = document.importNode(fresh, true);
+      old.after(fresh);
+      // A status keeps its node, taking the fresh words, so the change is
+      // heard: a region put in whole is not read out.
+      fresh.querySelectorAll('[data-component="status"][id]').forEach(function (st) {
+        var have = old.querySelector("#" + st.id);
+        if (!have || !window.swStatus) return;
+        var said = st.querySelector(".sw-status__said");
+        window.swStatus(have, st.getAttribute("data-state"), (st.querySelector(".sw-status__text") || st).textContent, said ? said.textContent.trim() : "");
+        st.replaceWith(have);
+      });
+      fresh.querySelectorAll("[data-block-id]").forEach(function (block) {
+        var have = old.querySelector('[data-block-id="' + block.getAttribute("data-block-id") + '"]');
+        if (!have) return;
+        if (block.getAttribute("data-block-component") === "chat" || sameBlock(have, block)) move(have, block);
+      });
+      old.remove();
+    });
+    if (said && !document.getElementById("outcome")) {
+      var head = document.querySelector("main .sw-page-head");
+      if (head) head.after(said); else { var main = document.querySelector("main"); if (main) main.prepend(said); }
+    }
+    // The tab's mark, working or done while away, stays with the tab.
+    var mark = (document.title.match(/^(⏳|✓) /) || [""])[0];
+    if (doc.title) document.title = mark + doc.title.replace(/^(⏳|✓) /, "");
+    logs.forEach(function (l) { l.log.scrollTo({ top: l.end ? l.log.scrollHeight : l.top, behavior: "instant" }); });
+    // Instant: the page's smooth scrolling would otherwise animate the
+    // correction, and the page would be seen drifting back into place.
+    if (anchor && anchor.isConnected) window.scrollBy({ top: anchor.getBoundingClientRect().top - anchorTop, behavior: "instant" });
+    else window.scrollTo({ top: y, behavior: "instant" });
+    // A control without an id is found again by what it is and where.
+    if (focusMark && !focused.isConnected) {
+      var again = find(focusMark);
+      if (again) again.focus({ preventScroll: true });
+      else if (document.getElementById("main")) document.getElementById("main").focus({ preventScroll: true });
+    }
+    if (focusId && document.activeElement && document.activeElement.id !== focusId) {
+      var back = document.getElementById(focusId);
+      if (back) {
+        back.focus({ preventScroll: true });
+        if (selStart !== null && selStart !== undefined && back.setSelectionRange) {
+          try { back.setSelectionRange(selStart, selEnd); } catch (e) { /* not a text field */ }
+        }
+      }
+    }
+    document.dispatchEvent(new CustomEvent("sw:refresh"));
+  }
+})();

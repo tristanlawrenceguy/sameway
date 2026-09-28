@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -10,79 +11,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/examples"
-	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/app"
+	"github.com/tristanlawrenceguy/sameway/internal/mcp"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
-	"github.com/tristanlawrenceguy/sameway/internal/workspace"
+	"github.com/tristanlawrenceguy/sameway/internal/update"
 )
-
-func (c *ctx) initCmd() error {
-	fs := flag.NewFlagSet("init", flag.ContinueOnError)
-	force := fs.Bool("force", false, "overwrite an existing workspace's config and schema")
-	noDetect := fs.Bool("no-detect", false, "do not probe for local model servers")
-	positional, err := parseMixed(fs, c.args)
-	if err != nil {
-		return err
-	}
-	dir := ""
-	if len(positional) > 0 {
-		dir = positional[0]
-	}
-	// A folder given outright wins, then the global --workspace that every
-	// other command takes, then where you are standing. Without the middle
-	// one, `sameway --workspace elsewhere init` quietly built the workspace
-	// in the current folder instead.
-	if dir == "" {
-		dir = c.workspaceDir
-	}
-	if dir == "" {
-		dir = c.Dir
-		if dir == "" {
-			dir, _ = os.Getwd()
-		}
-	}
-	abs, _ := filepath.Abs(dir)
-	if err := workspace.Init(abs, examples.FS, examples.StarterRoot, *force); err != nil {
-		return err
-	}
-	var found *llm.Detected
-	if !*noDetect {
-		if hits := llm.Detect(context.Background(), llm.DefaultCandidates); len(hits) > 0 {
-			found = &hits[0]
-			if err := pointConfigAt(filepath.Join(abs, workspace.ConfigFile), found); err != nil {
-				return err
-			}
-		}
-	}
-	c.print(map[string]any{"workspace": abs, "detected": found}, func() {
-		fmt.Fprintf(c.Stdout, "Created workspace in %s\n", abs)
-		if found != nil {
-			fmt.Fprintf(c.Stdout, "Found %s at %s and pointed the chat at model %q.\n", found.Server, found.BaseURL, found.Model)
-			if len(found.Models) > 1 {
-				fmt.Fprintf(c.Stdout, "Other models there: %s\n", strings.Join(found.Models[1:], ", "))
-			}
-			fmt.Fprintf(c.Stdout, "\nNext: sameway serve --workspace \"%s\"\n", abs)
-			return
-		}
-		if !*noDetect {
-			fmt.Fprintln(c.Stdout, "No local model server answered (tried Ollama, LM Studio, llama.cpp).")
-		}
-		fmt.Fprintf(c.Stdout, "\nNext:\n  1. Edit %s to point llm at your model.\n  2. Run: sameway serve --workspace \"%s\"\n", filepath.Join(abs, "workspace.yaml"), abs)
-	})
-	return nil
-}
-
-// pointConfigAt rewrites the llm base_url and model lines of a freshly
-// copied starter workspace.yaml so it talks to the detected server.
-func pointConfigAt(path string, d *llm.Detected) error {
-	src, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
-	out := strings.Replace(string(src), "base_url: http://localhost:11434/v1", "base_url: "+d.BaseURL, 1)
-	out = strings.Replace(out, "model: llama3.1", "model: "+d.Model, 1)
-	return os.WriteFile(path, []byte(out), 0o644)
-}
 
 func (c *ctx) serveCmd() error {
 	fs := flag.NewFlagSet("serve", flag.ContinueOnError)
@@ -102,7 +35,24 @@ func (c *ctx) serveCmd() error {
 	if a.Chat.Provider == nil && a.Chat.ProviderErr != nil {
 		fmt.Fprintf(c.Stdout, "  chat    disabled: %v\n", a.Chat.ProviderErr)
 	}
-	return http.ListenAndServe(*addr, server.New(a))
+	// Actions with a schedule run, and reminders ring, while the server does.
+	ctx, stop := context.WithCancel(context.Background())
+	defer stop()
+	a.Chat.StartSchedule(ctx)
+	h := server.New(a)
+	a.WatchSchema(ctx, app.SchemaEvery, h.Changed)
+	h.StartRinging(ctx, notifier(a))
+	h.WriteDownInBackground()
+	keepSnapshots(ctx, c.Stdout, a)
+	connectDevices(ctx, c.Stdout, a)
+	watchUpdates(ctx, c.Stdout, a)
+	token := os.Getenv(a.Workspace.Config.MCP.TokenEnv)
+	if token != "" {
+		fmt.Fprintf(c.Stdout, "  mcp     http://%s/mcp with Authorization: Bearer <%s>\n", *addr, a.Workspace.Config.MCP.TokenEnv)
+	}
+	all := HandlerFor(a, token, h)
+	joinTailnet(ctx, c.Stdout, a, all, h)
+	return http.ListenAndServe(*addr, all)
 }
 
 func (c *ctx) describeCmd() error {
@@ -112,6 +62,21 @@ func (c *ctx) describeCmd() error {
 	}
 	defer a.Close()
 	d := a.Describe()
+	if len(c.args) > 0 {
+		// A part is read for its content, and that is JSON whether or not
+		// --json was given: sameway describe types note.
+		name := ""
+		if len(c.args) > 1 {
+			name = c.args[1]
+		}
+		v, err := d.Part(c.args[0], name)
+		if err != nil {
+			return err
+		}
+		enc := json.NewEncoder(c.Stdout)
+		enc.SetIndent("", "  ")
+		return enc.Encode(v)
+	}
 	c.print(d, func() {
 		fmt.Fprintf(c.Stdout, "Workspace: %s (%s)\n", d.Workspace, a.Workspace.Dir)
 		fmt.Fprintf(c.Stdout, "Model:     %s %s ready=%v\n", d.LLM.Provider, d.LLM.Model, d.LLM.Ready)
@@ -130,9 +95,35 @@ func (c *ctx) describeCmd() error {
 		for _, comp := range d.Components {
 			fmt.Fprintf(c.Stdout, "  %-12s (%s) %s\n", comp.Name, comp.Source, comp.Description)
 		}
+		fmt.Fprintln(c.Stdout, "\nAssistant tools:")
+		for _, tool := range d.Tools {
+			fmt.Fprintf(c.Stdout, "  %-16s %s\n", tool.Name, tool.Description)
+		}
 		fmt.Fprintln(c.Stdout, "\nRun with --json for schemas and manifests.")
 	})
 	return nil
+}
+
+// mcpCmd serves the workspace to one Model Context Protocol client on stdin
+// and stdout, which is how MCP hosts start a server. Nothing else may be
+// printed on stdout while it runs; anything for a person goes to stderr.
+func (c *ctx) mcpCmd() error {
+	a, err := c.load()
+	if err != nil {
+		return err
+	}
+	defer a.Close()
+	in := c.Stdin
+	if in == nil {
+		in = os.Stdin
+	}
+	fmt.Fprintf(c.Stderr, "sameway mcp: serving %q from %s\n", a.Workspace.Config.Name, a.Workspace.Dir)
+	// The server beside it, or a person, may change the types meanwhile.
+	ctx, stop := context.WithCancel(context.Background())
+	defer stop()
+	a.WatchSchema(ctx, app.SchemaEvery, nil)
+	srv := &mcp.Server{App: a, Version: update.Version, In: in, Out: c.Stdout}
+	return srv.Serve(ctx)
 }
 
 func (c *ctx) checkCmd() error {

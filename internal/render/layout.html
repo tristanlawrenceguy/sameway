@@ -1,15 +1,16 @@
 <!doctype html>
-<html lang="{{.Lang}}"{{if .Controls}} data-controls="{{.Controls}}"{{end}}>
+<html lang="{{.Lang}}"{{if .Controls}} data-controls="{{.Controls}}"{{end}}{{if .Pace}} data-pace="{{.Pace}}"{{end}}{{if .Text}} data-text="{{.Text}}"{{end}}{{if .Spacing}} data-spacing="{{.Spacing}}"{{end}}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>{{.Title}} · {{.Site}}</title>
+<title>{{if .Failed}}Error: {{end}}{{or .Said .Title}} · {{.Site}}</title>
 <link rel="stylesheet" href="/design/sameway.css">
 {{if .JSONURL}}<link rel="alternate" type="application/json" href="{{.JSONURL}}">
 {{end}}<link rel="describedby" href="/api/describe">
 <script src="/design/sameway.js" defer></script>
-</head>
+{{range .ExtraScripts}}{{.}}
+{{end}}</head>
 <body{{if .Shell}} data-shell="{{.Shell}}"{{end}}>
 <a class="sw-skip" href="#main">Skip to main content</a>
 {{if .Focus}}<a class="sw-skip" href="#{{.Focus}}">{{.FocusLabel}}</a>
@@ -17,22 +18,28 @@
 <div class="sw-header__inner">
 <a class="sw-header__brand" href="/"><span class="sw-header__mark" aria-hidden="true"></span>{{.Site}}</a>
 {{if .Nav}}<nav class="sw-nav" aria-label="Main">
-<ul>{{range .Nav}}<li>{{.}}</li>{{end}}</ul>
+<ul>{{range .Nav}}<li{{if .Dot}} data-dot="{{.Dot}}"{{end}}>{{.HTML}}</li>{{end}}</ul>
 </nav>
-{{end}}</div>
+{{end}}{{if .Present}}{{.Present}}
+{{end}}{{if .Header}}<div class="sw-strip sw-strip--header">{{.Header}}</div>
+{{end}}<nav class="sw-nav sw-nav--more" aria-label="This workspace">
+<ul>{{range .More}}<li>{{.}}</li>{{end}}</ul>
+</nav>
+</div>
 </header>
 <div class="sw-shell">
 {{if .Left}}<aside class="sw-pane sw-pane--left" aria-label="Left pane">{{.Left}}</aside>
 {{end}}<main id="main" class="sw-main" tabindex="-1">
-<h1{{if .QuietTitle}} class="sw-visually-hidden"{{end}}>{{.Title}}</h1>
-{{.Body}}
+{{if .QuietTitle}}<h1 class="sw-visually-hidden">{{.Title}}</h1>
+{{else}}<div class="sw-page-head">{{.Kicker}}<h1{{if .Dot}} class="sw-dotted" data-dot="{{.Dot}}"{{end}}>{{.Title}}</h1>{{.Lede}}</div>
+{{end}}{{.Outcome}}{{.Body}}
 </main>
 {{if .Right}}<aside class="sw-pane sw-pane--right" aria-label="Right pane">{{.Right}}</aside>
 {{end}}</div>
 <footer class="sw-footer">
-<nav class="sw-nav sw-nav--more" aria-label="This workspace">
-<ul>{{range .More}}<li>{{.}}</li>{{end}}<li><a class="sw-link" href="/api/describe">For agents</a></li></ul>
-</nav>
-</footer>
+{{if .Footer}}<div class="sw-strip sw-strip--footer">{{.Footer}}</div>
+{{end}}{{if .Developer}}<p class="sw-footer__agents"><a class="sw-link" href="/api/describe">For agents</a></p>
+{{end}}</footer>
+{{.EditControls}}
 </body>
 </html>

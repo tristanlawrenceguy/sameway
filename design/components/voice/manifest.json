@@ -1,0 +1,91 @@
+{
+  "name": "voice",
+  "version": "1.1.0",
+  "description": "The microphone, in one button. Record puts a recording into the form's file field, to be sent with the form by the person's own press; Dictate writes down what is said, on the computer that hosts the workspace, into a text field for the person to read before sending. Shown only where the browser can record.",
+  "icon": "●",
+  "use": {
+    "when": "a form takes a file (record a voice note instead of choosing one) or a message (say it instead of typing it).",
+    "not": "playing a recording, which is the audio component; or a form that sends by itself.",
+    "with": "the upload component, which carries Record, and the chat's message, which carries Dictate once speech-to-text is on the computer."
+  },
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "mode",
+      "target"
+    ],
+    "properties": {
+      "mode": {
+        "type": "string",
+        "enum": [
+          "record",
+          "dictate"
+        ],
+        "description": "record fills a file field with the recording; dictate writes what was said into a text field."
+      },
+      "target": {
+        "type": "string",
+        "minLength": 1,
+        "description": "The id of the file field (record) or the text field (dictate)."
+      },
+      "action": {
+        "type": "string",
+        "description": "For dictate: where the sound is sent to be written down."
+      },
+      "context": {
+        "type": "string",
+        "description": "What it records for, read after the button's words, when a page has more than one."
+      },
+      "id": {
+        "type": "string"
+      }
+    }
+  },
+  "a11y": {
+    "role": "none until its script finds a browser that can record; then a button with its words in sight (no aria-pressed: the words change), a timer that is not read out on every tick, and a status that says each change once and briefly",
+    "keyboard": [
+      {
+        "key": "Tab",
+        "does": "reaches Record (or Dictate), which reads Stop recording (or Stop dictating) while the microphone is on"
+      },
+      {
+        "key": "Enter or Space",
+        "does": "starts the microphone, and pressed again stops it; focus stays on the button, which is unavailable (aria-disabled) while dictated words are written down"
+      }
+    ],
+    "states": [
+      "idle",
+      "recording",
+      "writing"
+    ],
+    "wcag": {
+      "target": "AAA",
+      "notes": "One press starts and the next stops: no holding and no sliding (2.5.1), and a press acts when let go (2.5.2). The microphone is asked for only when the button is pressed, never as the page opens; not allowed, no microphone, and a microphone held by another program are each said in words with how to put it right and what still works. The button says what it does in words, changing to Stop recording while it records (2.5.3, 4.1.2); the time is a timer, which is not announced, and the status says briefly that it started, so little is caught by the microphone. Dictation stops at five minutes, shown beside the time and said at the start, and keeps what was said; Dictate again carries on, so nothing is lost (2.2.1). A microphone that goes away part way ends the recording and keeps it. Nothing is sent by itself: a recording waits in the form's field for its own Upload or Send, and dictated words wait in the message to be read and changed. Program errors are not shown. Where the browser cannot record, nothing offers to."
+    }
+  },
+  "machine": {
+    "selector": "[data-component=\"voice\"]",
+    "identify": "data-mode is record or dictate and data-target the id of the field it fills; it is hidden where recording is not possible.",
+    "operate": "An agent has no microphone: attach a file to the field, or write the words in, instead. Dictation's sound can be sent as 16 kHz WAV to data-action, which answers {\"text\": \"...\"}, or {\"error\": \"...\"} in plain words; the page sends at most five minutes."
+  },
+  "examples": [
+    {
+      "name": "record",
+      "props": {
+        "mode": "record",
+        "target": "upload"
+      },
+      "file": "examples/record.html"
+    },
+    {
+      "name": "dictate",
+      "props": {
+        "mode": "dictate",
+        "target": "message",
+        "action": "/dictate"
+      },
+      "file": "examples/dictate.html"
+    }
+  ]
+}

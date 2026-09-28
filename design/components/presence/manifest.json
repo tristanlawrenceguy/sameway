@@ -1,0 +1,122 @@
+{
+  "name": "presence",
+  "version": "1.2.0",
+  "description": "Who else is in the workspace just now, and where: a quiet line that is there only while someone else is.",
+  "icon": "◉",
+  "use": {
+    "when": "other people have the workspace open just now, here or on another computer that hosts it.",
+    "not": "a list of everyone with access, or who was here before.",
+    "with": "the page header, where it sits."
+  },
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "people"
+    ],
+    "properties": {
+      "people": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "name"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "colour": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 6
+            },
+            "place": {
+              "type": "string",
+              "description": "What they are looking at, by name: a tab, a list, a record."
+            },
+            "here": {
+              "type": "boolean",
+              "description": "On the same page as the one reading: said as 'on this page', and, arriving while the page is open, heard once."
+            }
+          }
+        },
+        "description": "Everyone else here, never the one reading."
+      },
+      "label": {
+        "type": "string",
+        "default": "Also here",
+        "description": "The words before the names."
+      }
+    }
+  },
+  "a11y": {
+    "role": "paragraph",
+    "keyboard": [],
+    "states": [],
+    "wcag": {
+      "target": "AAA",
+      "notes": "A sentence, read as one: Also here: Hana, on this page; Bob, on Plan. The line is not a live region: it changes as people come and go, and announcing each would interrupt. Only someone arriving on the reader's own page is said, politely, once per person while the page is open, through a status that is on the page from the start. Leaving is never said. Dots are aria-hidden decoration; names carry the meaning."
+    }
+  },
+  "machine": {
+    "selector": "[data-component=\"presence\"]",
+    "identify": "Each person is a .sw-present__who span: their person chip, then where they are after 'on'. [data-here] marks someone on the same page as the reader.",
+    "operate": "Not interactive.",
+    "notes": "Someone counts while a page of theirs is open and they have touched it in the last ten minutes, or moved about in the last half minute. A published page never includes it. Where the owner is on a part that is theirs alone, only that they are here is said."
+  },
+  "examples": [
+    {
+      "name": "default",
+      "props": {
+        "people": [
+          {
+            "name": "Hana",
+            "colour": 3,
+            "place": "Shopping list"
+          }
+        ]
+      },
+      "file": "examples/default.html"
+    },
+    {
+      "name": "several",
+      "props": {
+        "people": [
+          {
+            "name": "Hana",
+            "colour": 3,
+            "place": "Shopping list"
+          },
+          {
+            "name": "Bob",
+            "colour": 5
+          }
+        ],
+        "label": "Here with you"
+      },
+      "file": "examples/several.html"
+    },
+    {
+      "name": "on-this-page",
+      "props": {
+        "people": [
+          {
+            "name": "Hana",
+            "colour": 3,
+            "here": true
+          },
+          {
+            "name": "Bob",
+            "colour": 5,
+            "place": "Plan"
+          }
+        ]
+      },
+      "file": "examples/on-this-page.html"
+    }
+  ]
+}

@@ -20,12 +20,87 @@ llm:
   # model: claude-opus-5
   # api_key_env: ANTHROPIC_API_KEY
 
+  # No API key: a program you are signed in to, which runs the tools
+  # itself over this workspace's MCP server. claude-code is known;
+  # any other takes command: with {prompt}, {system} and {mcp}.
+  # provider: claude-code
+  # model: haiku        # or sonnet, opus; leave out for the default model
+
 ui:
   # auto: per-item controls and provenance labels fade until you hover a
   # block or tab into it. They stay in the accessibility tree either way,
   # so screen readers and agents always have them.
   # visible: keep them on screen all the time.
   controls: auto
+  # filled: the sidebar lists what has something in it, and any list you
+  # made yourself. all: every list, empty or not.
+  lists: filled
+  # hidden: the design system page and the guide for agents keep out of
+  # the way (they are still there, at /design and /api/describe).
+  # shown: their links are in the sidebar and the footer.
+  developer: hidden
+
+# What a command action may run. A command action runs a program on this
+# machine as you, once you have accepted its line; only programs named
+# here run, directly, never through a shell. Name them comma separated:
+# curl, python, mosquitto_pub. Empty means command actions run nothing.
+actions:
+  allow: ""
+
+# Devices, over MQTT. Zigbee2MQTT, Tasmota, ESPHome and Home Assistant
+# all speak it or bridge to it. subscribe lists the topics whose messages
+# become device records (zigbee2mqtt/+ takes every Zigbee device); an
+# mqtt action publishes to a topic (zigbee2mqtt/kitchen_light/set). Set
+# username_env and password_env to the NAMES of environment variables
+# when the broker wants a login. Empty broker means no devices.
+mqtt:
+  broker: ""
+  client_id: sameway
+  username_env: ""
+  password_env: ""
+  subscribe: []
+
+# How a reminder reaches you when no page is open. desktop shows the
+# system's own notification on this machine. command runs for each ring
+# with {title}, {text} and {url} in its arguments: a push service such as
+# ntfy (curl -d "{title}" ntfy.sh/your-topic) reaches a phone; a mail or
+# messaging command reaches an inbox. Leave command empty for none.
+notify:
+  desktop: on
+  command: ""
+
+# Open this workspace from your phone or another computer, anywhere, over
+# your own Tailscale network. The easy way is to ask the assistant ("I want
+# this on my phone"): it asks first, then walks you through it in the chat.
+# By hand: name the machine here (home becomes
+# https://home.<your-tailnet>.ts.net) and it joins, printing a link to sign
+# in once. For a machine nobody signs in on, set auth_key_env to the NAME of
+# a variable holding an auth key. Nothing is public and nothing needs port
+# forwarding: only devices signed in to Tailscale as you get in, and what
+# you change from one says which in the activity log. Empty name is off.
+tailnet:
+  name: ""
+  auth_key_env: ""
+
+# What anyone on the internet may read, people and AI services alike, with
+# no login, at the address above, through Tailscale Funnel: tabs by name
+# and content types by name, comma separated. People get the pages, AI
+# services the same over MCP. Only what is named here; nothing can be
+# changed from the internet. The easy way is to ask the assistant
+# ("publish my Recipes tab"); it asks first.
+publish:
+  tabs: ""
+  types: ""
+
+# How a new version of sameway itself arrives. auto: a release published
+# for this machine is downloaded, checked against the checksums published
+# with it, and put where this program is, with a line in the activity log
+# saying which version. manual: you are only told a new version is out,
+# and it waits until you ask — say "update" to the assistant, or run
+# `sameway update`. Either way the new version runs from the next start,
+# and a sameway built from source never replaces itself with a release.
+update:
+  mode: auto
 
 chat:
   # How many past messages to send to the model each turn.

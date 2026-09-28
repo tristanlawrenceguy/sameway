@@ -1,11 +1,14 @@
 package server
 
 import (
+	"fmt"
 	"html/template"
 	"net/http"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
 // Popping a block out: the same block, given the whole middle of the page.
@@ -22,12 +25,13 @@ func (s *Server) focusPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	name, _ := rec.Fields["component"].(string)
-	comp, ok := s.app.Registry.Get(name)
+	raw, _ := rec.Fields["props"].(map[string]any)
+	comp, props, ok := s.app.Registry.Resolve(name, raw)
 	if !ok {
 		s.fail(w, err)
 		return
 	}
-	convo, err := s.conversation("/canvas/" + rec.ID)
+	convo, err := s.conversationFor(r, "/canvas/"+rec.ID)
 	if err != nil {
 		s.fail(w, err)
 		return
@@ -35,15 +39,57 @@ func (s *Server) focusPage(w http.ResponseWriter, r *http.Request) {
 
 	convo.FocusID = rec.ID
 
-	props, _ := rec.Fields["props"].(map[string]any)
+	if comp.Manifest.Name == recordComponent {
+		// The record's own words, so the page is named after them and the
+		// expanded block shows them.
+		props, _ = s.resolveRecord(props)
+	}
+	if comp.Manifest.Name == collectionComponent {
+		props = s.resolveCollectionAt(props, rec.ID, &collectionPlace{Path: r.URL.Path, Query: r.URL.Query(), Own: true})
+	}
+	if comp.Manifest.Name == calendarComponent {
+		// The block's own page takes ?month= and ?day= so the months and
+		// days either side are a link away, and the calendar comes back to
+		// this page for them.
+		if m, d := r.URL.Query().Get("month"), r.URL.Query().Get("day"); m != "" || d != "" {
+			props = withMonth(props, m, d)
+		}
+		props = s.resolveCalendar(props, rec.ID)
+	}
+	if comp.Manifest.Name == clockComponent {
+		props = s.resolveClock(props)
+	}
+	if comp.Manifest.Name == trackerComponent {
+		props = s.resolveTracker(props)
+	}
+	if comp.Manifest.Name == chartComponent {
+		props = s.resolveChart(props)
+	}
 	body := s.expanded(comp.Manifest.Name, props, convo)
 
 	var b strings.Builder
 	b.WriteString(`<div class="sw-focus">`)
-	b.WriteString(string(s.component("link", map[string]any{"href": "/", "label": "Back to the canvas"})))
-	b.WriteString(`<div class="sw-focus__body">` + string(body) + `</div></div>`)
+	b.WriteString(string(s.component("link", map[string]any{"href": chat.CanvasPath(canvasOf(rec.Fields)), "label": "Back", "context": "canvas", "look": "button"})))
+	// The block's own page wears its list's colour, as the block does on
+	// the canvas.
+	dot := ""
+	if typeName, _ := props["type"].(string); typeName != "" {
+		if n := s.dotOf(typeName); n > 0 {
+			dot = fmt.Sprintf(` data-dot="%d"`, n)
+		}
+	}
+	b.WriteString(`<div class="sw-focus__body"` + dot + `>` + string(body) + `</div></div>`)
 
-	_, left, right := split(s.canvasBlocks())
+	// The block is the page now, so the panes leave it out: shown twice, it
+	// would be two landmarks with one name.
+	var others []*store.Record
+	for _, blk := range s.canvasBlocks() {
+		if blk.ID != rec.ID {
+			others = append(others, blk)
+		}
+	}
+	reg := split(others)
+	left, right := reg.left, reg.right
 	name, own := title(comp.Manifest.Name, props)
 	s.page(w, r, name, template.HTML(b.String()), pageOptions{
 		// When the block already says what it is (a calendar's caption, a
@@ -66,15 +112,32 @@ func (s *Server) expanded(name string, props map[string]any, convo *conversation
 		}
 	}
 	comp, ok := s.app.Registry.Get(name)
-	if ok && comp.HasProp("detail") {
-		full := map[string]any{}
-		for k, v := range props {
-			full[k] = v
+	if !ok {
+		return s.component(name, props)
+	}
+	full := map[string]any{}
+	for k, v := range props {
+		full[k] = v
+	}
+	if comp.HasProp("level") {
+		full["level"] = int64(2)
+	}
+	// The fullest detail the component has: page where it offers one, full
+	// where that is as far as it goes (a collection).
+	if comp.HasProp("detail") {
+		for _, d := range []string{"page", "full"} {
+			full["detail"] = d
+			if out, err := comp.Render(full); err == nil {
+				return out
+			}
 		}
-		full["detail"] = "page"
-		if out, err := comp.Render(full); err == nil {
-			return out
+		delete(full, "detail")
+		if d, ok := props["detail"]; ok {
+			full["detail"] = d
 		}
+	}
+	if out, err := comp.Render(full); err == nil {
+		return out
 	}
 	return s.component(name, props)
 }
@@ -86,16 +149,8 @@ func (s *Server) expanded(name string, props map[string]any, convo *conversation
 func title(name string, props map[string]any) (string, bool) {
 	for _, key := range []string{"caption", "title", "label", "text"} {
 		if v, ok := props[key].(string); ok && strings.TrimSpace(v) != "" {
-			return truncateTitle(v), true
+			return trim.Title(v), true
 		}
 	}
 	return strings.ToUpper(name[:1]) + name[1:], false
-}
-
-func truncateTitle(s string) string {
-	s = strings.TrimSpace(strings.SplitN(s, "\n", 2)[0])
-	if len([]rune(s)) <= 60 {
-		return s
-	}
-	return string([]rune(s)[:59]) + "…"
 }

@@ -56,7 +56,9 @@ func Generate(src []byte) (string, error) {
 	b.WriteString(strings.Join(light, "\n"))
 	b.WriteString("\n}\n\n@media (prefers-color-scheme: dark) {\n  :root:not([data-theme=\"light\"]) {\n")
 	b.WriteString(indent(strings.Join(dark, "\n")))
-	b.WriteString("\n  }\n}\n\n:root[data-theme=\"dark\"] {\n")
+	// A theme chosen outright sets the browser's own parts too, such as the
+	// date input's calendar and icon, which follow color-scheme, not tokens.
+	b.WriteString("\n  }\n}\n\n:root[data-theme=\"light\"] {\n  color-scheme: light;\n}\n\n:root[data-theme=\"dark\"] {\n  color-scheme: dark;\n")
 	b.WriteString(strings.Join(dark, "\n"))
 	b.WriteString("\n}\n")
 	return b.String(), nil

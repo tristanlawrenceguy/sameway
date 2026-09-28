@@ -6,7 +6,10 @@ import (
 	"flag"
 	"fmt"
 	"strings"
+	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -35,7 +38,9 @@ func (c *ctx) contentCmd(typeName string) error {
 	var sets setFlags
 	fs.Var(&sets, "set", "field=value (repeatable)")
 	data := fs.String("data", "", "JSON object of fields")
-	order := fs.String("order", "", "field to order by")
+	var wheres setFlags
+	fs.Var(&wheres, "where", "condition (repeatable): status=draft, due<+7d, title~garden")
+	order := fs.String("order", "", "field to order by, or -field for the largest or newest first")
 	limit := fs.Int("limit", 0, "max records")
 	positional, err := parseMixed(fs, rest)
 	if err != nil {
@@ -43,7 +48,12 @@ func (c *ctx) contentCmd(typeName string) error {
 	}
 	switch verb {
 	case "list":
-		recs, err := a.Store.List(t.Name, store.ListOptions{OrderBy: *order, Limit: *limit})
+		var recs []*store.Record
+		if len(wheres) > 0 || strings.HasPrefix(*order, "-") {
+			recs, err = query.Filter(a.Store, t, wheres, *order, *limit, time.Now())
+		} else {
+			recs, err = a.Store.List(t.Name, store.ListOptions{OrderBy: *order, Limit: *limit})
+		}
 		if err != nil {
 			return err
 		}
@@ -69,10 +79,14 @@ func (c *ctx) contentCmd(typeName string) error {
 		if err != nil {
 			return err
 		}
+		if t.Name == chat.ActivityType {
+			return errKeptLog
+		}
 		rec, err := a.Store.Create(t.Name, fields)
 		if err != nil {
 			return err
 		}
+		chat.RecordWrite(a.Store, chat.ThroughCLI, "created", rec, nil)
 		c.print(rec, func() { fmt.Fprintf(c.Stdout, "created %s %s\n", t.Name, rec.ID) })
 	case "update":
 		if len(positional) != 1 {
@@ -82,18 +96,34 @@ func (c *ctx) contentCmd(typeName string) error {
 		if err != nil {
 			return err
 		}
+		if t.Name == chat.ActivityType {
+			return errKeptLog
+		}
+		was, err := a.Store.Get(t.Name, positional[0])
+		if err != nil {
+			return err
+		}
 		rec, err := a.Store.Update(t.Name, positional[0], fields)
 		if err != nil {
 			return err
 		}
+		chat.RecordWrite(a.Store, chat.ThroughCLI, "updated", rec, was.Fields)
 		c.print(rec, func() { fmt.Fprintf(c.Stdout, "updated %s %s\n", t.Name, rec.ID) })
 	case "delete":
 		if len(positional) != 1 {
 			return fmt.Errorf("usage: sameway %s delete <id>", t.Name)
 		}
+		if t.Name == chat.ActivityType {
+			return errKeptLog
+		}
+		was, err := a.Store.Get(t.Name, positional[0])
+		if err != nil {
+			return err
+		}
 		if err := a.Store.Delete(t.Name, positional[0]); err != nil {
 			return err
 		}
+		chat.RecordWrite(a.Store, chat.ThroughCLI, "deleted", was, was.Fields)
 		c.print(map[string]any{"deleted": positional[0]}, func() { fmt.Fprintf(c.Stdout, "deleted %s %s\n", t.Name, positional[0]) })
 	default:
 		return fmt.Errorf("unknown verb %q for %s (use list, get, create, update, delete)", verb, t.Name)
@@ -137,3 +167,7 @@ func printRecord(c *ctx, r *store.Record) {
 		fmt.Fprintf(c.Stdout, "%s: %v\n", k, v)
 	}
 }
+
+// errKeptLog is the activity log refusing a hand: it is what makes every
+// other change reversible.
+var errKeptLog = errors.New("the activity log is kept by Sameway and cannot be changed; to take a change back, undo it from the activity page")

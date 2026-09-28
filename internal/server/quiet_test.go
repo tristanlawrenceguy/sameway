@@ -72,14 +72,14 @@ func TestQuietControlsStayAvailableToEveryone(t *testing.T) {
 	if n := len(sub.Elements("a")) + len(sub.Elements("button")); n != 2 {
 		t.Errorf("a block should offer exactly two controls, got %d", n)
 	}
-	expand := findByName(t, sub, "a", "Expand card")
+	expand := findByName(t, sub, "a", "Expand Shopping")
 	if href, _ := htmltest.Attr(expand, "href"); href != "/canvas/"+id {
 		t.Errorf("Expand should lead to the block's own page, got %q", href)
 	}
 	if !htmltest.Focusable(expand) {
 		t.Errorf("Expand in the quiet layer is not focusable")
 	}
-	remove := findByName(t, sub, "button", "Remove card")
+	remove := findByName(t, sub, "button", "Remove Shopping")
 	if typ, _ := htmltest.Attr(remove, "type"); typ != "submit" {
 		t.Errorf("Remove should submit its form, got type %q", typ)
 	}
@@ -135,7 +135,7 @@ func findByName(t *testing.T, doc *htmltest.Doc, tag, name string) *html.Node {
 func TestCompactLabelsKeepFullAccessibleNames(t *testing.T) {
 	h, _ := canvasWithABlock(t)
 	doc := parse(t, get(t, h, "/"))
-	remove := findByName(t, doc, "button", "Remove card")
+	remove := findByName(t, doc, "button", "Remove Shopping")
 	// The visible run of text is just the label; the rest is for machines.
 	visible := ""
 	for c := remove.FirstChild; c != nil; c = c.NextSibling {
@@ -147,7 +147,7 @@ func TestCompactLabelsKeepFullAccessibleNames(t *testing.T) {
 		t.Errorf("visible text should be short, got %q", visible)
 	}
 	hiddenSpans := (&htmltest.Doc{Root: remove}).WithAttr("class", "sw-visually-hidden")
-	if len(hiddenSpans) != 1 || strings.TrimSpace(htmltest.Text(hiddenSpans[0])) != "card" {
+	if len(hiddenSpans) != 1 || strings.TrimSpace(htmltest.Text(hiddenSpans[0])) != "Shopping" {
 		t.Errorf("the context should be carried in a visually hidden span")
 	}
 }

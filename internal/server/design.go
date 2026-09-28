@@ -27,6 +27,7 @@ func (s *Server) designPage(w http.ResponseWriter, r *http.Request) {
 	s.designMotion(&b)
 	s.designStates(&b)
 	s.designComponents(&b)
+	s.designArrangements(&b)
 	s.page(w, r, "Design system", template.HTML(b.String()), pageOptions{JSONURL: "/api/describe"})
 }
 
@@ -50,15 +51,18 @@ func (s *Server) designColour(b *strings.Builder) {
 }
 
 func (s *Server) designType(b *strings.Builder) {
-	b.WriteString(`<h2 id="type">Type</h2><p class="sw-prose">System font stack, fluid sizes above the body size, line height 1.6 for reading and 1.2 for headings, tabular numerals everywhere. Measure is capped at 68 characters.</p>`)
-	for _, size := range []string{"2xl", "xl", "lg", "md", "sm", "xs"} {
-		fmt.Fprintf(b, `<p style="font-size: var(--sw-size-text-%s); margin: 0 0 var(--sw-space-2)">The quick brown fox <code class="sw-small">--sw-size-text-%s</code></p>`, size, size)
+	b.WriteString(`<h2 id="type">Type</h2><p class="sw-prose">A single type scale keeps hierarchy readable at any size. The heading component renders it so the page outline matches what the assistant plans.</p>`)
+	// Each sample is a specimen of how a level looks, kept out of the outline:
+	// real h2 to h6 in a row would skip levels. The h4 above it and the code
+	// line say what it is.
+	b.WriteString(`<h3 id="type-levels">Heading levels</h3>`)
+	for _, level := range []int{2, 3, 4, 5, 6} {
+		fmt.Fprintf(b, "<div class=\"sw-example\"><h4 class=\"sw-small\">heading \u2014 level %d</h4><p class=\"sw-small sw-muted\"><code>{\"text\": \"Type scale example\", \"level\": %d}</code></p><div class=\"sw-example__render\" aria-hidden=\"true\">%s</div></div>", level, level, s.component("heading", map[string]any{"text": "Type scale example", "level": level}))
 	}
 }
 
 func (s *Server) designMotion(b *strings.Builder) {
-	b.WriteString(`<h2 id="motion">Motion</h2><p class="sw-prose">Three durations (120, 220, 420 ms) and one curve. Pages use cross-document view transitions, so adding, editing, and removing blocks animates across full-page navigations without JavaScript. Blocks changed in the last turn flash once on load. Everything stops under <code>prefers-reduced-motion</code>; the change marker becomes a static ring.</p>`)
-	b.WriteString(`<div class="sw-cluster"><div class="sw-panel sw-enter" style="width: 14rem">Enters with <code>.sw-enter</code></div><div class="sw-panel" data-changed="added" data-actor="assistant" style="width: 14rem">Flashes with <code>data-changed</code></div></div>`)
+	b.WriteString(`<h2 id="motion">Motion</h2><p class="sw-prose">A single fade-and-slide animation gives feedback without distraction. Everything stops under <code>prefers-reduced-motion</code>; the change marker becomes a static ring.</p>`)
 }
 
 func (s *Server) designStates(b *strings.Builder) {
@@ -96,11 +100,63 @@ func (s *Server) designComponents(b *strings.Builder) {
 		fmt.Fprintf(b, `<section class="sw-panel sw-stack" id="component-%s" aria-labelledby="component-%s-h"><h3 id="component-%s-h">%s <span class="sw-muted sw-small">(%s)</span></h3><p class="sw-prose">%s</p><p class="sw-small sw-muted"><strong>Role</strong> %s · <strong>WCAG</strong> %s. %s</p>`,
 			c.Manifest.Name, c.Manifest.Name, c.Manifest.Name, template.HTMLEscapeString(c.Manifest.Name), c.Source,
 			template.HTMLEscapeString(c.Manifest.Description), template.HTMLEscapeString(a11y.Role), template.HTMLEscapeString(a11y.WCAG.Target), template.HTMLEscapeString(a11y.WCAG.Notes))
+		if u := c.Manifest.Use; u != nil {
+			fmt.Fprintf(b, `<p class="sw-prose sw-small"><strong>Use when</strong> %s`, template.HTMLEscapeString(u.When))
+			if u.Not != "" {
+				fmt.Fprintf(b, ` <strong>Not when</strong> %s`, template.HTMLEscapeString(u.Not))
+			}
+			if u.With != "" {
+				fmt.Fprintf(b, ` <strong>With</strong> %s`, template.HTMLEscapeString(u.With))
+			}
+			b.WriteString(`</p>`)
+		}
+		// An example is given an id, so this page can link to it, only when
+		// the component takes one; one that does not would refuse it.
+		var schema struct {
+			Properties map[string]json.RawMessage `json:"properties"`
+		}
+		json.Unmarshal(c.Manifest.Props, &schema)
+		_, takesID := schema.Properties["id"]
 		for _, ex := range c.Manifest.Examples {
-			props, _ := json.Marshal(ex.Props)
-			fmt.Fprintf(b, `<div class="sw-example"><p class="sw-small sw-muted">%s <code>%s</code></p><div class="sw-example__render">%s</div></div>`,
-				template.HTMLEscapeString(ex.Name), template.HTMLEscapeString(string(props)), s.component(c.Manifest.Name, ex.Props))
+			exProps := make(map[string]any, len(ex.Props)+1)
+			for k, v := range ex.Props {
+				exProps[k] = v
+			}
+			if takesID {
+				exProps["id"] = c.Manifest.Name + "-" + strings.ToLower(ex.Name)
+			}
+			propsJSON, _ := json.Marshal(ex.Props)
+			fmt.Fprintf(b, "<div class=\"sw-example\"><h4 class=\"sw-small\">%s \u2014 %s</h4><p class=\"sw-small sw-muted\"><code>%s</code></p><div class=\"sw-example__render\">%s</div></div>",
+				template.HTMLEscapeString(c.Manifest.Name), template.HTMLEscapeString(ex.Name), template.HTMLEscapeString(string(propsJSON)), s.component(c.Manifest.Name, exProps))
 		}
 		b.WriteString(`</section>`)
+	}
+}
+
+// designArrangements shows the pages of thought the assistant can apply.
+func (s *Server) designArrangements(b *strings.Builder) {
+	arrangements := s.app.Registry.Arrangements()
+	if len(arrangements) == 0 {
+		return
+	}
+	b.WriteString(`<h2 id="arrangements">Arrangements</h2><p class="sw-prose">A whole page for a job, thought through once: which blocks, where each sits, how wide. The assistant applies one in a single call and fills in the words.</p>`)
+	for _, a := range arrangements {
+		fmt.Fprintf(b, `<section class="sw-panel sw-stack" id="arrangement-%s" aria-labelledby="arrangement-%s-h"><h3 id="arrangement-%s-h">%s <span class="sw-muted sw-small">(%s)</span></h3><p class="sw-prose">%s</p>`,
+			a.Name, a.Name, a.Name, template.HTMLEscapeString(a.Name), a.Source, template.HTMLEscapeString(a.Description))
+		if a.Use != nil {
+			fmt.Fprintf(b, `<p class="sw-prose sw-small"><strong>Use when</strong> %s <strong>Not when</strong> %s</p>`, template.HTMLEscapeString(a.Use.When), template.HTMLEscapeString(a.Use.Not))
+		}
+		b.WriteString(`<ol class="sw-plain sw-stack--tight" aria-label="Blocks, top to bottom">`)
+		for _, blk := range a.Blocks {
+			region, span := blk.Region, blk.Span
+			if region == "" {
+				region = "main"
+			}
+			if span == 0 {
+				span = 6
+			}
+			fmt.Fprintf(b, `<li class="sw-small">%s: <strong>%s</strong>, %s, span %d</li>`, template.HTMLEscapeString(blk.Key), template.HTMLEscapeString(blk.Component), template.HTMLEscapeString(region), span)
+		}
+		b.WriteString(`</ol></section>`)
 	}
 }

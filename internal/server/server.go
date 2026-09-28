@@ -9,63 +9,143 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"sync/atomic"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
 // Server serves one workspace.
 type Server struct {
-	app *app.App
-	css []byte
-	js  []byte
-	mux *http.ServeMux
+	app   *app.App
+	css   []byte
+	js    []byte
+	mux   *http.ServeMux
+	turns turns
+	fleet *Fleet
+	// model is whether the assistant can reach its model, last looked;
+	// see connect.go.
+	model modelState
+	// notify tells a ring beyond the page; see ring.go.
+	notify  func(title, text, url string)
+	changes atomic.Int64 // changes arrived from other computers; see sync.go
+	present presence     // who else is here just now; see presence.go
+	speech  speechState  // speech-to-text on this computer; see transcribe.go
+	host    hostState    // recordings written down with no page; see hostwrite.go
 }
 
 // New builds the handler for an app.
 func New(a *app.App) *Server {
 	s := &Server{app: a, css: []byte(a.Registry.CSS()), js: []byte(a.Registry.JS()), mux: http.NewServeMux()}
 	s.routes()
+	// A link to a record in a reply reads as the record's name.
+	a.Registry.LinkTitle = s.linkTitle
+	a.Chat.Look = s.lookFor
+	// Wrap the mux so unmatched routes get our HTML 404 page.
+	s.mux = s.wrapNotFound(s.mux)
 	return s
 }
 
 // ServeHTTP implements http.Handler.
-func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) { s.mux.ServeHTTP(w, r) }
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if s.allowed(w, r) {
+		s.fresh()
+		s.mux.ServeHTTP(w, r)
+	}
+}
 
 func (s *Server) routes() {
 	m := s.mux
 	m.HandleFunc("GET /{$}", s.canvasPage)
+	m.HandleFunc("GET /c/{canvas}", s.canvasPage)
 	m.HandleFunc("GET /chat", s.chatPage)
+	m.HandleFunc("GET /help", s.helpPage)
+	m.HandleFunc("POST /help/set", s.helpSet)
 	m.HandleFunc("GET /canvas/{id}", s.focusPage)
 	m.HandleFunc("POST /chat", s.chatSend)
+	m.HandleFunc("POST /chat/stream", s.chatStream)
+	m.HandleFunc("POST /chat/stop", s.chatStop)
+	m.HandleFunc("GET /chat/live", s.chatLive)
+	m.HandleFunc("POST /model/use", s.modelUse)
+	m.HandleFunc("POST /t/{type}/add", s.addRecord)
+	m.HandleFunc("POST /model/check", s.modelCheck)
 	m.HandleFunc("POST /chat/clear", s.chatClear)
+	m.HandleFunc("POST /chat/new", s.chatNew)
+	m.HandleFunc("POST /chat/open", s.chatOpen)
+	m.HandleFunc("POST /chat/delete", s.chatDelete)
+	m.HandleFunc("POST /canvas/{id}/place", s.blockPlace)
 	m.HandleFunc("POST /proposal/{id}/accept", s.proposalAccept)
 	m.HandleFunc("POST /proposal/{id}/dismiss", s.proposalDismiss)
+	m.HandleFunc("POST /proposal/{id}/instead", s.proposalInstead)
+	m.HandleFunc("POST /activity/{id}/undo", s.undo)
+	m.HandleFunc("POST /act/{id}", s.act)
 	m.HandleFunc("POST /canvas/{id}/props", s.blockProps)
 	m.HandleFunc("POST /canvas/{id}/delete", s.canvasDelete)
 	m.HandleFunc("GET /activity", s.activityPage)
+	m.HandleFunc("POST /clock/set", s.clockSet)
+	m.HandleFunc("POST /habit/{id}/log", s.habitLog)
+	m.HandleFunc("POST /clock/{id}/done", s.clockDone)
+	m.HandleFunc("POST /clock/{id}/snooze", s.clockSnooze)
+	m.HandleFunc("GET /clock/stream", s.clockStream)
+	m.HandleFunc("POST /sync", s.syncExchange)
+	s.togetherRoutes(m)
+	m.HandleFunc("GET /events", s.events)
+	m.HandleFunc("GET /workspaces", s.workspacesPage)
+	m.HandleFunc("POST /workspaces/start", s.workspacesStart)
+	m.HandleFunc("GET /workspaces/new", s.workspacesNewPage)
+	m.HandleFunc("POST /workspaces/new", s.workspacesNew)
+	m.HandleFunc("GET /workspaces/copy", s.workspacesCopyPage)
+	m.HandleFunc("POST /workspaces/copy", s.workspacesCopy)
+	m.HandleFunc("GET /workspaces/delete", s.workspacesDeletePage)
+	m.HandleFunc("POST /workspaces/delete", s.workspacesDelete)
+	m.HandleFunc("POST /workspaces/restore", s.workspacesRestore)
+	m.HandleFunc("GET /search", s.searchPage)
+	m.HandleFunc("GET /when", s.whenRead)
 	m.HandleFunc("GET /design", s.designPage)
 	m.HandleFunc("GET /design/sameway.css", s.stylesheet)
 	m.HandleFunc("GET /design/sameway.js", s.script)
+	m.HandleFunc("GET /design/base/{file}", s.baseFile)
 
 	m.HandleFunc("GET /t/{type}", s.listPage)
-	m.HandleFunc("GET /t/{type}/new", s.newPage)
-	m.HandleFunc("POST /t/{type}", s.createForm)
+	m.HandleFunc("GET /t/{type}/import", s.importPage)
+	m.HandleFunc("POST /t/{type}/import", s.importUpload)
+	m.HandleFunc("POST /t/{type}/import/{file}/run", s.importRun)
 	m.HandleFunc("GET /t/{type}/{id}", s.detailPage)
-	m.HandleFunc("GET /t/{type}/{id}/edit", s.editPage)
-	m.HandleFunc("POST /t/{type}/{id}", s.updateForm)
-	m.HandleFunc("GET /t/{type}/{id}/confirm-delete", s.confirmDeletePage)
 	m.HandleFunc("POST /t/{type}/{id}/delete", s.deleteForm)
+	m.HandleFunc("POST /t/{type}/{id}/discard", s.discard)
+	m.HandleFunc("POST /t/{type}/{id}/props", s.recordProps)
+	m.HandleFunc("POST /t/file/upload", s.upload)
+	m.HandleFunc("GET /files/{id}", s.serveFile)
+	m.HandleFunc("GET /files/{id}/still", s.serveStill)
+	s.recordingRoutes(m)
+	m.HandleFunc("POST /speech/get", s.speechGet)
+	m.HandleFunc("POST /dictate", s.dictate)
 
 	m.HandleFunc("GET /api/describe", s.apiDescribe)
+	m.HandleFunc("GET /api/search", s.apiSearch)
+	m.HandleFunc("GET /api/describe/{part}", s.apiDescribePart)
+	m.HandleFunc("GET /api/describe/{part}/{name}", s.apiDescribePart)
+	m.HandleFunc("GET /api/look", s.apiLook)
+	m.HandleFunc("POST /api/look", s.apiLook)
+	m.HandleFunc("POST /api/prose", s.apiProse)
+	m.HandleFunc("POST /api/types", s.apiAddType)
+	m.HandleFunc("POST /api/types/{type}/fields", s.apiAddField)
+	m.HandleFunc("POST /api/act/{id}", s.apiAct)
+	m.HandleFunc("POST /hook/{token}", s.hook)
 	m.HandleFunc("POST /api/chat", s.apiChat)
+	m.HandleFunc("POST /api/chat/clear", s.apiChatClear)
+	m.HandleFunc("POST /api/file/upload", s.apiFileUpload)
+	m.HandleFunc("POST /api/import/{type}", s.apiImport)
 	m.HandleFunc("GET /api/{type}", s.apiList)
 	m.HandleFunc("POST /api/{type}", s.apiCreate)
 	m.HandleFunc("GET /api/{type}/{id}", s.apiGet)
 	m.HandleFunc("PUT /api/{type}/{id}", s.apiUpdate)
 	m.HandleFunc("PATCH /api/{type}/{id}", s.apiUpdate)
 	m.HandleFunc("DELETE /api/{type}/{id}", s.apiDelete)
+	m.HandleFunc("/api/", s.apiNotFound)
 }
 
 func (s *Server) stylesheet(w http.ResponseWriter, r *http.Request) {
@@ -79,30 +159,47 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 	p := render.Page{
 		Site:       s.app.Workspace.Config.Name,
 		Title:      title,
-		Controls:   s.app.Workspace.Config.UI.Controls,
+		Said:       opts.Said,
+		Controls:   s.controlsFor(r),
+		Pace:       s.app.Workspace.Config.UI.Pace,
+		Lang:       s.app.Workspace.Config.UI.Language,
+		Text:       s.app.Workspace.Config.UI.Text,
+		Spacing:    s.app.Workspace.Config.UI.Spacing,
 		Body:       body,
 		JSONURL:    opts.JSONURL,
 		Focus:      opts.Focus,
 		FocusLabel: opts.FocusLabel,
 		QuietTitle: opts.QuietTitle,
-		Left:       opts.Left,
-		Right:      opts.Right,
+		Kicker:     opts.Kicker,
+		Lede:       opts.Lede,
+		Dot:        opts.Dot,
+		Shell:      opts.Shell,
+		Left:       opts.Left, Right: opts.Right,
+		Header: opts.Header, Footer: opts.Footer,
+		Present:      s.presentFor(r),
+		ExtraScripts: opts.ExtraScripts,
+		Outcome:      s.told(w, r) + s.sinceNotice(r),
+		EditControls: s.editControls(body, opts.Left, opts.Right, opts.Header, opts.Footer),
 	}
-	// The header carries only the person's own content. The brand is the way
-	// back to the canvas, and everything about the workspace itself lives in
-	// the footer, where it is reachable without taking attention.
 	for _, t := range s.app.Types.Types {
-		if t.Internal {
+		if t.Internal || !s.listedFor(r, t) {
 			continue
 		}
 		href := "/t/" + t.Name
-		p.Nav = append(p.Nav, s.navLink(href, plural(t.Name), strings.HasPrefix(r.URL.Path, href)))
+		p.Nav = append(p.Nav, render.NavItem{HTML: s.navLink(href, plural(t.Name), strings.HasPrefix(r.URL.Path, href)), Dot: s.dotOf(t.Name)})
 	}
-	for _, l := range []struct{ href, label string }{
-		{"/chat", "Chat"}, {"/activity", "Activity"}, {"/design", "Design system"},
-	} {
-		p.More = append(p.More, s.navLink(l.href, l.label, r.URL.Path == l.href))
+	more := []struct{ href, label string }{{"/search", "Search"}, {"/chat", "Chat"}, {"/activity", "Activity"}, {"/workspaces", "Workspaces"}, {"/help", "Help"}}
+	if s.app.Workspace.Config.UI.Developer == "shown" {
+		more = append(more, struct{ href, label string }{"/design", "Design system"})
 	}
+	for _, l := range more {
+		href := l.href
+		if href == "/search" {
+			href = s.searchFrom(r) // from a kind's pages, a search of that kind
+		}
+		p.More = append(p.More, s.navLink(href, l.label, r.URL.Path == l.href))
+	}
+	p.Developer = s.app.Workspace.Config.UI.Developer == "shown"
 	out, err := render.RenderPage(p)
 	if err != nil {
 		s.fail(w, err)
@@ -115,16 +212,19 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 	w.Write(out)
 }
 
-type pageOptions struct {
-	// QuietTitle keeps the page heading in the outline but off the screen,
-	// for a page whose whole content is one thing and says so itself.
-	QuietTitle bool
-	Left       template.HTML
-	Right      template.HTML
-	JSONURL    string
-	Focus      string
-	FocusLabel string
-	Status     int
+// notFoundPage renders a full HTML 404 page with heading, title, and
+// navigation so that anyone landing on an unknown path still gets the same
+// accessible layout as every other page.
+func (s *Server) notFoundPage(w http.ResponseWriter, r *http.Request) {
+	body := template.HTML(`<p>The page you are looking for does not exist.</p>
+` + s.navLink("/", "Home", false))
+	s.page(w, r, "404 · Page not found", body, pageOptions{Status: http.StatusNotFound})
+}
+
+// detailPageExtraScripts are additional <script> tags rendered in the head on
+// content-type record detail pages, enabling inline editing via 08-edit.js.
+var detailPageExtraScripts = []template.HTML{
+	`<script defer src="/design/base/08-edit.js"></script>`,
 }
 
 func (s *Server) navLink(href, label string, current bool) template.HTML {
@@ -136,11 +236,14 @@ func (s *Server) navLink(href, label string, current bool) template.HTML {
 }
 
 // component renders a component or, if that fails, a visible error so a
-// broken block never silently disappears.
+// broken block never silently disappears. The person reads what could not
+// be shown and what to do in plain words; why, in the schema's terms, goes
+// to the log.
 func (s *Server) component(name string, props map[string]any) template.HTML {
 	h, err := s.app.Registry.Render(name, props)
 	if err != nil {
-		msg := fmt.Sprintf("Could not render %s: %v", name, err)
+		log.Printf("render %s: %v", name, err)
+		msg := fmt.Sprintf("This %s could not be shown. Something it was given is missing or not right; ask the assistant to fix it.", strings.ReplaceAll(name, "-", " "))
 		h, err = s.app.Registry.Render("alert", map[string]any{"kind": "danger", "message": msg})
 		if err != nil {
 			return template.HTML("<p>" + template.HTMLEscapeString(msg) + "</p>")
@@ -160,18 +263,38 @@ func (s *Server) fail(w http.ResponseWriter, err error) {
 }
 
 func plural(name string) string {
-	label := strings.ReplaceAll(name, "_", " ")
-	if strings.HasSuffix(label, "s") {
-		return label
+	return schema.Plural(strings.ReplaceAll(name, "_", " "))
+}
+
+// listed says whether a list belongs in the sidebar: one with something in
+// it, or one the person made themselves, which they will want to see even
+// before its first record. An empty list the system provides, such as
+// files in a workspace with no files, is not in the way. ui.lists: all
+// shows every one.
+func (s *Server) listed(t *schema.Type) bool {
+	if t.Hidden {
+		return false
 	}
-	if len(label) >= 2 && label[len(label)-1] == 'y' {
-		lastRune := rune(label[len(label)-2])
-		switch lastRune {
-		case 'a', 'e', 'i', 'o', 'u':
-			return label + "s"
-		default:
-			return label[:len(label)-1] + "ies"
-		}
+	if s.app.Workspace.Config.UI.Lists == "all" || !t.Provided {
+		return true
 	}
-	return label + "s"
+	n, err := s.app.Store.Count(t.Name)
+	return err != nil || n > 0
+}
+
+// linkTitle is the name of the record at /t/<type>/<id>, or nothing.
+func (s *Server) linkTitle(path string) string {
+	parts := strings.Split(strings.TrimPrefix(path, "/t/"), "/")
+	if len(parts) != 2 {
+		return ""
+	}
+	t, ok := s.app.Types.Get(parts[0])
+	if !ok {
+		return ""
+	}
+	rec, err := s.app.Store.Get(t.Name, parts[1])
+	if err != nil {
+		return ""
+	}
+	return trim.Title(s.title(t, rec))
 }

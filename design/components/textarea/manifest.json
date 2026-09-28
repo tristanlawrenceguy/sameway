@@ -2,6 +2,8 @@
   "name": "textarea",
   "version": "1.0.0",
   "description": "A multi-line text input with a visible label, optional hint, and inline error.",
+  "icon": "≣",
+  "use": { "when": "several lines of free text.", "not": "one line, which is a text-field.", "with": "a form." },
   "props": {
     "type": "object",
     "additionalProperties": false,
@@ -13,6 +15,7 @@
       "value": { "type": "string", "format": "multiline", "default": "" },
       "rows": { "title": "Height in lines", "type": "integer", "minimum": 2, "maximum": 40, "default": 4 },
       "hint": { "type": "string" },
+      "maxlength": { "title": "Most characters", "type": "integer", "minimum": 1, "description": "The most it can hold. The field says so, and counts down as a person types, rather than stopping them mid-word." },
       "error": { "type": "string" },
       "required": { "type": "boolean", "default": false }
     }
@@ -21,17 +24,18 @@
     "role": "textbox (multiline)",
     "keyboard": [
       { "key": "Tab", "does": "moves focus to and from the field" },
-      { "key": "Enter", "does": "inserts a new line; use the form's submit button to send" }
+      { "key": "Enter", "does": "inserts a new line; use the form's submit button to send. In the chat's message box, on a device with a keyboard, Enter sends and Shift+Enter starts a new line, and the hint says so" }
     ],
     "states": ["aria-invalid", "aria-required"],
-    "wcag": { "target": "AAA", "notes": "Same contract as text-field. Enter never submits, so people can compose without accidental sends." }
+    "wcag": { "target": "AAA", "notes": "Same contract as text-field. Enter makes a new line, so people can compose without accidental sends, except in the chat's message box with a keyboard, where the hint says Enter sends. The box grows with what is typed, up to most of a screen (1.4.10)." }
   },
   "machine": {
     "selector": "[data-component=\"textarea\"] textarea",
     "identify": "The accessible name is the label text.",
-    "operate": "Focus and type. Submit with the form's submit button, not Enter."
+    "operate": "Focus and type. Submit with the form's submit button; in the chat's message box Enter sends."
   },
   "examples": [
-    { "name": "default", "props": { "label": "Message", "name": "message", "rows": 3, "hint": "Ask for a change or a new component." }, "file": "examples/default.html" }
+    { "name": "default", "props": { "label": "Message", "name": "message", "rows": 3, "hint": "Ask for a change or a new component." }, "file": "examples/default.html" },
+    { "name": "counted", "props": { "label": "Title", "name": "title", "id": "title-counted", "maxlength": 80, "value": "Plant garlic" }, "file": "examples/counted.html" }
   ]
 }

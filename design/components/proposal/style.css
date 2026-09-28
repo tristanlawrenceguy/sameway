@@ -1,3 +1,7 @@
+/* A question the assistant puts, with its answers. What would happen is at
+   the size of the question, since for a question Sameway asks it is the
+   point: the address, the command. One that cannot be undone says so in
+   words, with a mark, and its Yes is in the danger colour. */
 .sw-proposal {
   padding: var(--sw-space-4);
   border: 2px solid var(--sw-actor, var(--sw-color-assistant));
@@ -5,6 +9,14 @@
   background: var(--sw-actor-soft, var(--sw-color-assistant-soft));
   max-width: var(--sw-size-measure);
 }
+.sw-proposal__summary, .sw-proposal__detail { overflow-wrap: anywhere; }
 .sw-proposal__summary { margin: 0; font-weight: 600; }
-.sw-proposal__detail { margin: var(--sw-space-2) 0 0; color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); }
+.sw-proposal__detail { margin: var(--sw-space-2) 0 0; color: var(--sw-color-fg); }
+.sw-proposal__risk { display: flex; align-items: center; gap: var(--sw-space-2); margin: var(--sw-space-3) 0 0; font-weight: 700; color: var(--sw-color-danger); }
+.sw-proposal__mark {
+  flex: none; display: inline-grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: 50%;
+  background: var(--sw-color-danger); color: var(--sw-color-bg); font-size: var(--sw-size-text-sm);
+}
 .sw-proposal__answers { display: flex; flex-wrap: wrap; gap: var(--sw-space-2); margin-top: var(--sw-space-4); }
+.sw-proposal [aria-disabled="true"] { cursor: progress; }
+@media (forced-colors: active) { .sw-proposal__mark { forced-color-adjust: none; background: CanvasText; color: Canvas; } }

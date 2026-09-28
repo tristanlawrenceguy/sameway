@@ -6,7 +6,8 @@ package design
 
 import "embed"
 
-// FS holds tokens, base styles, and every built-in component folder.
+// FS holds tokens, base styles, every built-in component folder, and the
+// built-in arrangements.
 //
-//go:embed tokens base components
+//go:embed tokens base components arrangements
 var FS embed.FS

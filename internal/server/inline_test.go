@@ -19,7 +19,7 @@ func TestPeopleEditContentInPlace(t *testing.T) {
 
 	rec := postForm(t, h, "/canvas/"+id+"/props", url.Values{"prop-title": {"Groceries"}})
 	wantStatus(t, rec, http.StatusSeeOther)
-	if loc := rec.Header().Get("Location"); loc != "/" {
+	if loc := rec.Header().Get("Location"); !strings.HasPrefix(loc, "/") {
 		t.Errorf("an inline edit should leave you where you were, got %q", loc)
 	}
 
@@ -78,20 +78,9 @@ func TestEditableTextIsMarkedForTheEditor(t *testing.T) {
 func TestBadEditIsReportedNotSwallowed(t *testing.T) {
 	h, id := canvasWithABlock(t)
 	rec := postForm(t, h, "/canvas/"+id+"/props", url.Values{"prop-title": {""}})
-	wantStatus(t, rec, http.StatusSeeOther)
-
-	var msgs struct {
-		Records []struct{ Fields map[string]any }
-	}
-	decode(t, get(t, h, "/api/message"), &msgs)
-	reported := false
-	for _, m := range msgs.Records {
-		if m.Fields["role"] == "error" && strings.Contains(m.Fields["content"].(string), "did not save") {
-			reported = true
-		}
-	}
-	if !reported {
-		t.Errorf("a rejected edit should be reported in the conversation")
+	said := after(t, h, rec).Body.String()
+	if !strings.Contains(said, `data-outcome="failed"`) || !strings.Contains(said, "Not saved") || !strings.Contains(said, `data-outcome-for="/canvas/`+id+`/props"`) {
+		t.Errorf("a rejected edit should be said on the page, naming the edit it answers")
 	}
 	// And the block is untouched.
 	page := parse(t, get(t, h, "/"))

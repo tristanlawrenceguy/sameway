@@ -16,7 +16,28 @@ where the manifest says so.
 
 ## Quick start
 
-Requires Go 1.24 or newer. No database, no Node, no config beyond one file.
+No database, no Node, no config beyond one file.
+
+**Download** the program for your computer from the
+[latest release](https://github.com/tristanlawrenceguy/sameway/releases/latest):
+`windows_amd64.exe` for Windows, `darwin_arm64` for a Mac with Apple
+silicon, `darwin_amd64` for an Intel Mac, `linux_amd64` or `linux_arm64` for
+Linux. Rename it `sameway` (`sameway.exe` on Windows), put it in a folder of
+its own, and from a terminal in that folder:
+
+```bash
+sameway init my-workspace
+sameway open --workspace my-workspace
+```
+
+A release keeps itself current from then on (see [Keeping it current](#keeping-it-current)).
+
+The program is not signed yet, so the first run asks once. On Windows,
+*Windows protected your PC* → **More info** → **Run anyway**. On a Mac, run
+`chmod +x sameway && xattr -d com.apple.quarantine sameway` first. On Linux,
+`chmod +x sameway`.
+
+**Or with Go** 1.26.6 or newer:
 
 ```bash
 go install github.com/tristanlawrenceguy/sameway/cmd/sameway@latest
@@ -31,7 +52,9 @@ it. If you have cloned this repository rather than installed the binary, the
 same thing is a double-click: **open-sameway.cmd** on Windows,
 **open-sameway.sh** elsewhere. Both take the same arguments as the command, so
 `open-sameway.cmd --workspace "D:\work\my-workspace"` opens a workspace
-that lives somewhere else.
+that lives somewhere else. Given no workspace they use `$SAMEWAY_WORKSPACE`, or
+the folder you ran them from when that folder is a workspace; a fresh clone has
+neither, so a double-click opens `examples/workspaces/starter` and says so.
 
 Either way it is http://127.0.0.1:8080/. `sameway init` probes for a local model server
 (Ollama on 11434, LM Studio on 1234, llama.cpp on 8090 or 8080) and points
@@ -58,16 +81,59 @@ llm:
 Keys are read from the environment variable you name. They never go in the
 workspace file, because the workspace is meant to be shared.
 
+## On your phone
+
+Ask the assistant: *"I want this on my phone."* It asks first, then puts the
+workspace on your own [Tailscale](https://tailscale.com) network and tells you
+the rest in the chat, one step at a time:
+
+1. Sign in to Tailscale (a free account) from the link it gives you, once.
+2. Install the Tailscale app on your phone and sign in with the same account.
+3. Turn on HTTPS certificates for your tailnet, if the chat says so (one
+   button in Tailscale's DNS settings).
+4. Open the address it gives you, `https://<name>.<your-tailnet>.ts.net`.
+
+Nothing is public and nothing needs port forwarding. Only devices signed in to
+Tailscale as you get in, and what you change from one says which in the
+activity log. The computer running sameway has to be on. To stop, ask the
+assistant to take it off your phone. It is the `tailnet:` section of
+`workspace.yaml`, if you would rather set it there.
+
+## Publishing
+
+Ask the assistant: *"publish my Recipes tab"*, or *"publish my notes"*. It asks
+first, then anyone can read just that, with no login, at your workspace's
+address (Tailscale Funnel, free on every Tailscale plan). AI services such as
+ChatGPT or Claude read the same, over MCP at the same address: what people
+can read, they can, and nothing more. Nothing else is reachable from the
+internet, nothing can be changed from it, and
+*"unpublish"* takes it down at once. The first time, Tailscale may need
+Funnel allowed in your tailnet's access policy; the chat says how.
+
 ## What you get
 
 | For people | For agents |
 |---|---|
 | `/` chat page with a canvas the model edits | `POST /api/chat` with `{"message": "..."}` |
-| `/t/note` list, detail, new, edit pages for every content type | `GET/POST/PUT/DELETE /api/note` |
-| Server-rendered HTML, works without JavaScript | `GET /api/describe` for every schema, manifest, and route |
+| `/t/note` list and detail pages for every content type | `GET/POST/PUT/DELETE /api/note` |
+| Server-rendered HTML, works without JavaScript | `GET /api/describe` for every schema, manifest, tool and route, or `/api/describe/types/note` for one part |
 | Skip links, landmarks, one h1, visible focus, 44px targets | `data-component` on every rendered component |
 | `sameway note create --set title="Hello"` | `sameway note list --json` |
 | Any block opens on its own page at `/canvas/<id>` | One URL per block, at its largest size |
+| Ask the assistant for a note and find it on `/t/note` | `sameway mcp`: an MCP host gets the assistant's own tools, plus reading |
+| Ask for a second tab and get a second canvas at `/c/<id>` | `POST /api/canvas`, or `create_canvas` over chat and MCP |
+| Every page is server-rendered HTML a screen reader can read | `GET /api/look?path=/t/note`: that page as a screen reader gets it, with its structural problems; also `look` over MCP and `sameway look`. With `scripts` (and `steps`: press, type, key) it is read in a headless Chrome or Edge with its scripts run, with the real Tab order and every script error |
+| Add a file on `/t/file`, or attach one to a message: its contents become Markdown on its page, and the assistant reads them | `POST /t/file/upload` (multipart), `GET /files/<id>` for the original; a `files.convert` line in workspace.yaml names a converter per extension, a URL like docling-serve or a command with `{file}` |
+| Edit structured text as it is shown: headings, lists and links from a toolbar, the Markdown one button away | The same props route takes `html-<field>` and turns it into Markdown; `POST /api/prose` converts either way |
+| Ask for what is due this week and get it on the canvas as a list, a table, cards or a board by status, with the properties you name beside each; `/t/task?where=done=false&where=due<=+7d&order=due` is the same list as a page | A `collection` block, `GET /api/task?where=…&order=…`, `find_records` with `where`, and `sameway task list --where …` all take the same query: `field=value`, `title~garden`, `due<today`, `notes=` (empty), dates like `today`, `+7d`, `2026-10-01` |
+| A task belongs to a project, and the task's page links to it | A field of `type: ref` with `to: project` holds the id; the store refuses an id that is not there; `project=<id>` or `project~garden` in any query |
+| A record's page is the record: its title, a few chips, its words. Not its connected records, not a count of them, not a link to them, and not a field the title and chips already said. You ask the assistant, and it puts what you want on the page — for that look, or for good | `internal/relate` works the connections out from the schema in both directions: what points here, what is set about this page, what shares this record's parent, what falls on its day. The page shows none of them; `GET /api/<type>/<id>` and `get_record` return every one with the `where` that lists it, so the assistant knows what is there and hands you `/t/<type>/<id>?show=<key>` (or `?show=fields`) when there is a reason, and `set_setting ui.show +<key>` when you want it every time |
+| Hook up the AI you already use: `sameway connect claude-code` (or cursor, windsurf, vscode, codex, claude-desktop) writes its MCP configuration in one line | The same server over HTTP at `/mcp` behind a token for ChatGPT's connectors, Claude's custom connectors or a hosted agent; every workspace carries an `AGENTS.md` that tells any agent opened in the folder how it all fits |
+| Talk to the assistant with no API key: the chat runs through Claude Code and your own sign-in, tools included | `provider: claude-code`, or `provider: command` with any signed-in program; the tools run inside it over this workspace's MCP server and the receipt is read from the activity log |
+| Tick a task done where you see it: in a list, on the calendar, on a project's page, on its own page, one press, no JavaScript needed, undoable | A `mark` component the server puts on every record with a yes-or-no field; it posts `prop-<field>` to the record's props route, which now logs the change like any other |
+| Ask for the tasks on a calendar and get this month with each task on its day, as a link, kept current | A `calendar` block with `type: task` (and `where`, `date`, `show`) is filled from records when the page renders; `month` and `today` are filled in too |
+| Ask how many tasks got done each week, or spend by month, and get a picture with the numbers as a table under it, kept current | A `chart` block with `type`, `by`, `period`, `sum` and `where`, or a `series` given outright; bars or a line drawn on the server as SVG, named and described, at a glance, in brief, in full or as a page |
+| Ask for a due date on notes, or for a new kind of thing such as contacts, and the shape changes at once, for everyone | `add_field` and `add_type` over chat and MCP, `POST /api/types` and `POST /api/types/<type>/fields` for agents: the schema file, the table and every page change while the workspace runs |
 
 ## The one contract
 
@@ -80,14 +146,20 @@ fields:
   body:   { type: markdown }
   tags:   { type: list, of: string }
   status: { type: enum, values: [draft, published], default: draft }
+  aim:    { type: enum, values: [reach, limit], labels: { reach: At least the target, limit: At most the target } }
+  project: { type: ref, to: project }
 ```
 
+An enum stores its values and shows people its `labels`; a value without a
+label is shown as itself, made readable (`in_progress` reads "In progress").
+
 That file gives you the SQLite table, validation, `sameway note ...` commands,
-`/api/note`, and `/t/note` pages. Add a file, restart, done.
+`/api/note`, and `/t/note` pages. Add a file and restart, or ask the assistant
+for a new property or a new kind of thing and it changes while you watch.
 
 **A component** is one folder in `design/components/` (or in your workspace's
 `components/`), with a manifest that carries the props schema, the
-accessibility contract, the keyboard map, and how a machine finds and operates
+accessibility contract, the keyboard map, the thought behind it (use when, not when, what it sits with), and how a machine finds and operates
 it. See [design/README.md](design/README.md).
 
 ## Workspace folder
@@ -97,7 +169,8 @@ my-workspace/
   workspace.yaml   name, server address, model, chat settings
   schema/          content types
   components/      your own components, same layout as built-ins
-  content/         exported records (milestone 3)
+  content/         every record as Markdown with front matter, kept current
+  files/           the originals of files people add, named by record id
   data.db          live SQLite store, ignored by git
 ```
 
@@ -111,10 +184,60 @@ sameway init [dir]                 create a workspace from the starter preset
 sameway serve                      run the web server
 sameway describe [--json]          content types, components, routes, model status
 sameway check                      validate schema and components
+sameway update [--check]           install a new version of sameway, or only say whether one is out
+sameway export | import            content/ from the database, or back into it
 sameway chat "add a table of ..."  talk to the assistant from the terminal
+sameway mcp                        serve the workspace to an MCP client over stdio
+sameway connect <tool> [--write]   the MCP configuration for claude-code, claude-desktop, cursor, windsurf, vscode or codex; chatgpt for a client elsewhere
 sameway component new <name>       scaffold a component folder
 sameway <type> list|get|create|update|delete [--json]
 ```
+
+## Keeping it current
+
+A sameway from a release keeps itself current. Once a day it looks for a
+newer release for this machine, checks the download against the sha256
+published with it, and puts it where the running program is; the new
+version runs the next time you start it, and the activity log says which
+version arrived. Nothing is installed that is not listed in the release's
+`checksums.txt`.
+
+If you would rather decide each time, say so and it will only tell you a
+new version is out:
+
+```
+you: only update when I ask
+```
+
+which is `update.mode: manual` in `workspace.yaml`. Then say `update` when
+you want it, or run `sameway update`; `sameway update --check` only looks.
+
+A sameway you built yourself says `dev` rather than a version, and never
+replaces itself with a release: it has no way to tell which is newer.
+`make build` on a tagged checkout stamps the version in.
+
+## Hooking up an AI
+
+Two different hook-ups. **As the model behind the chat**, `workspace.yaml`
+names a provider: `anthropic` for Claude, or `openai` with a `base_url` for
+OpenAI and anything that speaks its API (Ollama, LM Studio, llama.cpp,
+OpenRouter). Or no key at all: `provider: claude-code` runs the chat through
+Claude Code with your own sign-in, and `sameway init` picks that by itself when
+it finds Claude Code and no model server; any other signed-in program works
+as `provider: command` with the command line in `command:`. **As a tool the AI
+uses**, any MCP client gets the assistant's whole tool set plus reading:
+
+```bash
+sameway connect claude-code --write     # also claude-desktop, cursor, windsurf, vscode, codex
+```
+
+That writes the tool's own configuration file (or prints it without
+`--write`). A client elsewhere, such as ChatGPT's connectors or Claude's
+custom connectors, reaches the same server at `POST /mcp` once
+`SAMEWAY_MCP_TOKEN` is set and `sameway serve` is reachable over HTTPS;
+`sameway connect chatgpt` prints the steps. Every workspace carries an
+`AGENTS.md` written by `sameway init`, so an agent opened in the folder
+reads how the pages, the API, the command line and MCP fit together.
 
 ## Developing
 

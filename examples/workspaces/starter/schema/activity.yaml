@@ -3,8 +3,11 @@
 name: activity
 description: One recorded action, with who did it and what it touched.
 internal: true
-title: action
+title: summary
 fields:
+  summary:
+    type: string
+    description: The whole event as one sentence, such as "Assistant added card Shopping". What lists and headings show.
   actor:
     type: enum
     values: [human, assistant, system]
@@ -22,3 +25,18 @@ fields:
   detail:
     type: text
     description: Human readable summary.
+  before:
+    type: json
+    description: What the thing was before this change, kept so the change can be undone. Absent when nothing existed before.
+  undoes:
+    type: string
+    description: The id of the entry this one reversed, when this entry is an undo.
+  via:
+    type: string
+    description: The device the change was made from when it was not the machine serving, such as a phone over the tailnet.
+  by:
+    type: string
+    description: Who made the change when it was not the workspace's owner, by name, for someone given access over Tailscale.
+  by_login:
+    type: string
+    description: Who made the change by their Tailscale login, when known, the owner included, so it reads as theirs on the other computers that host the workspace.

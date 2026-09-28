@@ -1,35 +1,53 @@
+/* A message is words with a dot for who said them: no box, no line. The
+   person's words sit on a wash of their blue; the assistant's sit on the
+   page. */
 .sw-message {
   position: relative;
-  padding: var(--sw-space-3) var(--sw-space-4) var(--sw-space-3) calc(var(--sw-space-4) + 0.375rem);
-  border: 1px solid var(--sw-color-border); border-radius: var(--sw-radius-lg);
-  background: var(--sw-color-bg-raised); box-shadow: var(--sw-shadow-1);
+  padding: var(--sw-space-3) var(--sw-space-4);
+  border-radius: var(--sw-radius-lg);
   max-width: var(--sw-size-measure);
-  overflow: hidden;
+  /* Long words wrap rather than being cut off: a hidden overflow here
+     clipped the message when a person's text spacing made it longer. */
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
-/* Actor rail: colour plus the author word, never colour alone. */
-.sw-message::before {
-  content: ""; position: absolute; inset: 0 auto 0 0; width: 0.375rem;
+/* Who said it: a dot in the actor's colour before the author's name,
+   never the colour alone. */
+.sw-message__author::before {
+  content: ""; display: inline-block; width: 0.625rem; height: 0.625rem; border-radius: 50%;
+  margin-right: var(--sw-space-2); vertical-align: 0.05em;
   background: var(--sw-actor, var(--sw-color-border-strong));
+  box-shadow: 0 0 0 3px var(--sw-actor-soft, var(--sw-color-bg-muted));
 }
-.sw-message--user { background: var(--sw-color-bg-muted); box-shadow: none; }
-.sw-message--error { border-color: var(--sw-color-danger); }
-.sw-message--error::before { background: var(--sw-color-danger); }
-.sw-message__meta { margin: 0 0 var(--sw-space-2); font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); display: flex; gap: var(--sw-space-2); align-items: baseline; }
+.sw-message--user { background: var(--sw-color-human-soft); }
+.sw-message--error { background: var(--sw-color-danger-soft); }
+.sw-message--error .sw-message__author::before { background: var(--sw-color-danger); box-shadow: 0 0 0 3px var(--sw-color-bg-raised); }
+/* Who said it and when, as the turn's heading, so a screen reader moves
+   through a conversation turn by turn; it reads as a line, not a title. */
+.sw-message__meta { margin: 0 0 var(--sw-space-2); font-size: var(--sw-size-text-sm); font-weight: 400; line-height: var(--sw-size-line); letter-spacing: 0; color: var(--sw-color-fg-muted); display: flex; gap: var(--sw-space-2); align-items: baseline; }
+.sw-message__failed { font-weight: 700; color: var(--sw-color-danger); }
 .sw-message__author { font-weight: 700; color: var(--sw-actor, var(--sw-color-fg)); }
 .sw-message--error .sw-message__author { color: var(--sw-color-danger); }
 .sw-message__time { font-variant-numeric: tabular-nums; font-size: var(--sw-size-text-xs); }
-.sw-message__body p { margin: 0 0 var(--sw-space-3); overflow-wrap: anywhere; }
+.sw-message__body p { margin: 0 0 var(--sw-space-3); overflow-wrap: anywhere; white-space: pre-line; }
 .sw-message__body p:last-child { margin-bottom: 0; }
-.sw-message__changes {
-  list-style: none; margin: var(--sw-space-3) 0 0; padding: var(--sw-space-2) 0 0;
-  border-top: 1px dashed var(--sw-color-border);
-  display: flex; flex-wrap: wrap; gap: var(--sw-space-2);
-  font-size: var(--sw-size-text-xs);
+/* What the reply changed: a small label, then a list of events, compact,
+   each its own 44px row (event's style), 1px apart so no reach overlaps
+   the next. */
+.sw-message__label { margin: var(--sw-space-3) 0 0; font-size: var(--sw-size-text-xs); font-weight: 700; color: var(--sw-color-fg-muted); }
+.sw-message__changes { list-style: none; margin: var(--sw-space-1) 0 0; padding: 0; display: grid; gap: 1px; }
+.sw-message__attachment { margin: var(--sw-space-2) 0 0; color: var(--sw-color-fg-muted); }
+.sw-message__links {
+    list-style: none; margin: var(--sw-space-2) 0 0; padding: 0;
+    display: flex; flex-wrap: wrap; gap: var(--sw-space-1); font-size: var(--sw-size-text-xs);
 }
-.sw-message__changes li {
-  display: inline-flex; gap: 0.35em; align-items: baseline;
-  padding: 0.125rem var(--sw-space-2); border-radius: var(--sw-radius-pill);
-  background: var(--sw-actor-soft, var(--sw-color-bg-muted)); color: var(--sw-actor, var(--sw-color-fg-muted));
+.sw-message__link {
+    position: relative; display: inline-flex; align-items: baseline;
+    padding: 0.125rem var(--sw-space-2); border-radius: var(--sw-radius-md);
+    background: var(--sw-color-accent-soft); color: var(--sw-color-accent);
 }
-.sw-message__change-action { font-weight: 700; }
-.sw-message__change-target { font-weight: 600; }
+/* A link chip stays small but reaches a 44px target, centred on it. */
+.sw-message__link::after {
+  content: ""; position: absolute;
+  inset: min(0px, calc(50% - var(--sw-size-target) / 2));
+}

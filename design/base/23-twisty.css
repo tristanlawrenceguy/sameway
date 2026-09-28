@@ -1,0 +1,20 @@
+/* The twisty: the one sign, everywhere, that a summary opens something
+   in place. A chevron drawn with two borders, not a character, so there
+   is nothing for a screen reader to read before the words, and turned
+   down when open. Disclosures carry .sw-twisty; the folds inside other
+   components share it by name. */
+.sw-twisty, .sw-chart__numbers summary { list-style: none; }
+.sw-twisty::-webkit-details-marker, .sw-chart__numbers summary::-webkit-details-marker { display: none; }
+.sw-twisty::before,
+.sw-chart__numbers summary::before {
+  content: ""; flex: none;
+  width: 0.5rem; height: 0.5rem;
+  border-right: 2px solid var(--sw-color-fg-muted); border-bottom: 2px solid var(--sw-color-fg-muted);
+  transform: rotate(-45deg); margin-right: var(--sw-space-1);
+  transition: transform var(--sw-motion-base) var(--sw-motion-ease);
+}
+[open] > .sw-twisty::before,
+.sw-chart__numbers[open] summary::before { transform: rotate(45deg); }
+@media (forced-colors: active) {
+  .sw-twisty::before, .sw-chart__numbers summary::before { border-color: CanvasText; }
+}

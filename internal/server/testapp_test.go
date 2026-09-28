@@ -7,8 +7,12 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+
+	"golang.org/x/net/html"
 
 	"github.com/tristanlawrenceguy/sameway/examples"
 	"github.com/tristanlawrenceguy/sameway/internal/app"
@@ -22,6 +26,12 @@ import (
 func newApp(t *testing.T) (*app.App, http.Handler) {
 	t.Helper()
 	dir := t.TempDir()
+	// Always isolate the known-workspaces list so pre-existing workspaces on this
+	// machine do not pollute the "other workspaces" section. Tests that need a
+	// custom path set it AFTER calling newApp via t.Setenv (which overrides).
+	known := filepath.Join(t.TempDir(), "known.json")
+	os.WriteFile(known, []byte("[]"), 0o644)
+	t.Setenv("SAMEWAY_KNOWN", known)
 	if err := workspace.Init(dir, examples.FS, examples.StarterRoot, false); err != nil {
 		t.Fatal(err)
 	}
@@ -110,4 +120,19 @@ func truncate(s string) string {
 		return s[:300] + "…"
 	}
 	return s
+}
+
+// assertAllComponentsKnown walks the parsed HTML and fails if any element uses a
+// data-component value that is not registered in the app's component registry.
+func assertAllComponentsKnown(t *testing.T, doc *htmltest.Doc, names []string) {
+	t.Helper()
+	known := make(map[string]bool, len(names))
+	for _, n := range names {
+		known[n] = true
+	}
+	doc.Walk(func(n *html.Node) {
+		if c, ok := htmltest.Attr(n, "data-component"); ok && !known[c] {
+			t.Errorf("%s: data-component=%q is not a registered component (known: %v)", n.Data, c, names)
+		}
+	})
 }

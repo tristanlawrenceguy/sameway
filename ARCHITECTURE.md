@@ -22,6 +22,7 @@ travels through git.
 | Templates | Go `html/template` with a typed props struct per component | Stdlib, auto-escaping, no code generator. Props are validated against the component manifest in tests. |
 | Storage | SQLite (modernc.org/sqlite) as live store, Markdown/JSON files as portable form | Zero setup. Files make the workspace git-friendly and AI-readable. `export`/`import` keep them in sync; auto-export is a config flag. |
 | CMS scope | Structured content types only, no page builder | Keep the core small. Rendering is done by components; if a view does not exist, create a component. |
+| Connections | Worked out from the schema in `internal/relate`; a page shows none of them, an agent is given all of them | A connection is real in the data whether or not it is drawn. A page that opens every one is a page of other records with the one you came for at the top; a row of links to them is the same page in miniature, there every time for the once it is wanted. So the page shows what the record is, the whole graph goes to the API and the assistant, and `?show=<key>` opens the one there is a reason to open. |
 | Design system | Standalone package (tokens, CSS, HTML patterns, manifests) | Usable in any stack. The Go binary is one consumer. |
 | Accessibility bar | WCAG 2.2 AAA where feasible, AA as hard gate in CI | Every component ships with automated and keyboard tests. |
 | Users | Single user, local first | Auth is an optional module added later, not baked into day one. |
@@ -120,8 +121,10 @@ Nothing is hand-written per surface. Adding a surface means adding a generator.
     schema/                   # load + validate content type files
     store/                    # SQLite, migrations, generic CRUD keyed by schema
     render/                   # template loading, component registry, props validation
+    relate/                   # how one record connects to the others, from the schema
     server/                   # HTTP: HTML views, JSON API, describe endpoint
     mcp/                      # MCP server (stdio + HTTP) generated from schema + manifests
+    update/                   # find, verify and install a release of sameway itself
     cli/                      # commands generated from schema, plus scaffold/check/serve
     a11y/                     # shared helpers: landmarks, headings, live regions
   tools/
@@ -142,8 +145,93 @@ my-workspace/
 ```
 
 `sameway init` creates one. `sameway init --from <git url>` clones a preset.
-Multi-device is git or any folder sync. Later, an optional auth module can sit in
-front of a shared instance without changing this layout.
+Multi-device is git or any folder sync. A phone or another computer can also
+open a running workspace from anywhere over the person's Tailscale network
+(`tailnet:` in workspace.yaml; the node is embedded with tsnet, its keys kept
+under the user's config folder, never in the workspace). Only devices signed
+in as the node's owner get in, and changes made from one carry its name in
+the activity log (`via`).
+
+### People and access
+
+Other people reach a workspace the same way: over Tailscale, either on the
+same tailnet (a team's) or with the machine shared to them from the owner's.
+Tailscale says who each visitor is, by login, which is an email; sameway
+says what they may do, by matching that email to a `person` record.
+
+- **Owner**: whoever signed the node in, and anyone on the machine itself.
+  Everything, including settings, the Workspaces page, and answering the
+  assistant's questions.
+- **Edit** (`person.access: edit`): content, the canvas, actions.
+- **View** (`person.access: view`): reading only.
+- Anyone else is refused, and the owner is asked in the chat whether to
+  let them look. No forms: the owner can also tell the assistant ("let Bob
+  edit"), which asks first; taking access away is immediate and not asked.
+
+`access` is a field Sameway keeps: no page, API call or assistant tool
+writes it except through that question, so nobody raises their own level.
+What someone changes is logged under their name and device ("Bob removed
+card Shopping, on pixel-7"). Everyone who may edit has their own chats with
+the assistant (a conversation carries whose it is), and nobody sees or
+joins another's; the assistant is told whom it is talking to and offers
+them only what their access allows, so settings, updating, page-reading and
+undo stay the owner's, and what it asks them to agree to goes to the owner.
+Someone who may only look has no assistant. Someone knocking reaches the
+owner the way a reminder does, and letting them in says the one step left
+in Tailscale: sharing the machine with them.
+
+### More than one host
+
+A workspace can be hosted by several computers at once, each with its own
+assistant, model and database, kept the same live. Each copy keeps, beside
+its tables, every shared field with the stamp of its latest write
+(`_state`): a hybrid logical clock that also names the computer. For each
+field the latest stamp wins, so copies that have seen the same stamps hold
+the same records whatever order they arrived in; different fields of one
+record merge, and a deletion is a field an undo can win over. Keeping two
+copies in step is each saying what it has seen from every computer and
+getting back what it has not (`internal/peers`, `POST /sync`), every few
+seconds over the tailnet, with the machines in `tailnet.peers`. Only the
+owner's computers and people with `access: host` may, because a copy can
+change anything. Chats, the assistant's questions, actions, devices, files
+and the log stay on the computer that made them. Open pages follow what
+arrives (`/events`, 20-follow.js). Content types travel too: each is stamped
+like a record (`_schema`), with every part that can change on its own as
+its own field: a field's definition, its label, whether it is hidden,
+whether it was deleted, and each choice of a pick-list, so choices added on
+two computers both stay and, for the rest, the latest wins. A copy makes
+its types what the others have through the same changes a person asks for
+(`change_field`: add a choice, relabel, hide or show, delete), written to
+`schema/`; records that arrive before
+their type wait in `_state` and are written when it comes. The system's
+own types come with the program and do not travel.
+
+### Working together
+
+- **Two versions at once.** Each stamp of a text field says what it was
+  written over. Two edits that were each written without seeing the other
+  keep the later everywhere and the other as a `clash`, which the record's
+  page offers back (use it, or keep the page's). Nothing is lost silently.
+- **Who else is here.** People with a page open, here or on another
+  computer that hosts the workspace (carried in each sync exchange), are
+  named in the header with where they are, only while someone else is.
+- **For someone.** A field pointing at a person (a task's `for`) shows as
+  theirs in their colour; one made out for a computer's owner elsewhere
+  rings them once, and their assistant knows what is for them.
+- **Since you were last here.** Back after half an hour, a person sees what
+  others changed meanwhile, each with its Undo, until they say they have.
+
+### Publishing
+
+What the owner explicitly asks to publish (`publish:` tabs and content
+types) is readable by anyone on the internet, people and AI services alike,
+with no login, at the workspace's own tailnet address, through Tailscale
+Funnel. Funnel's listener is Funnel's alone, so the internet only ever
+reaches `Server.Public`: published pages and records as read-only HTML
+with no controls, conversation or log, and MCP that reads the published
+types and nothing else: published to people is published to AI. Everything else is not found, and
+nothing is written. The tailnet still gets the whole workspace at the same
+address. Publishing is always a question; unpublishing is immediate.
 
 ## 5. How agents use it
 
@@ -167,8 +255,11 @@ front of a shared instance without changing this layout.
 
 The home page is a canvas that fills the screen, and the conversation is one
 block on it like any other. The model (any OpenAI-compatible server such as
-Ollama, or Claude through the official SDK) gets five tools: `add_component`,
-`update_component`, `remove_component`, `propose_change`, and `clear_canvas`. Each one writes an ordinary `block` record, so the canvas is
+Ollama, or Claude through the official SDK) gets two kinds of tool: canvas tools
+that place and change components, and record tools generated from the
+workspace's schema, so a person who asks for a note gets a note on `/t/note`,
+not a card. The list lives in one place, the chat service, and `/api/describe`
+and `sameway describe` publish it from there. Each canvas tool writes an ordinary `block` record, so the canvas is
 content like any other: `sameway block list`, `GET /api/block`, and the page
 all show the same thing. The system prompt carries the component catalogue
 (every manifest's props schema) and the current canvas, and is rebuilt after
@@ -180,6 +271,23 @@ with an explanation if they are removed.
 
 The page is full-page navigation only: the form posts, the server runs the
 tool loop, and redirects to the newest message. No JavaScript is required.
+
+Tabs are canvases. Home is the first, at `/`, and needs no record; every
+`canvas` record is one more tab at `/c/<id>`, with blocks of its own (a
+block's `canvas` field says which tab it is on, empty for Home). The tab bar
+is a list of links, shown only once there is a second tab, and switching is a
+page navigation like everything else. A new tab opens on its own chat. The
+assistant is told which tab the person is looking at, builds there unless a
+call names another, and makes or removes tabs with `create_canvas` and
+`remove_canvas`, the latter only through a proposal.
+
+The same tools are a Model Context Protocol server: `sameway mcp` speaks
+newline-delimited JSON-RPC on stdin and stdout, which is how Claude Code,
+Claude Desktop and the other MCP hosts start one. `tools/list` is the chat
+service's list plus `describe` and `get_record`; `tools/call` runs each tool
+through the chat service, so an agent in an MCP host meets the same schema
+checks and writes to the same activity log as the assistant, and a tool added
+to the chat is on MCP the same moment.
 
 ### 5.2 One block, many sizes
 

@@ -37,7 +37,12 @@ func TestRestingCanvasIsQuiet(t *testing.T) {
 		t.Fatalf("expected one main nav")
 	}
 	links := (&htmltest.Doc{Root: main[0]}).Elements("a")
-	if len(links) != 1 || htmltest.Text(links[0]) != "notes" {
-		t.Errorf("the header should carry only content types, got %d links", len(links))
+	// Only the person's own lists, and only those with something in them:
+	// nothing about the workspace itself is in the main nav.
+	kinds := map[string]bool{"actions": true, "files": true, "notes": true, "projects": true, "tasks": true}
+	for _, l := range links {
+		if !kinds[htmltest.Text(l)] {
+			t.Errorf("the header should carry only content types, got %q", htmltest.Text(l))
+		}
 	}
 }

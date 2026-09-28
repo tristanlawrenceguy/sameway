@@ -1,0 +1,84 @@
+{
+  "name": "tracker",
+  "version": "1.2.0",
+  "description": "What is being kept up, at a glance: each habit against its target for this day, week, month or year (at least the target, at most a limit, or no target when it only records), its streak, the last periods as dots, and a press to log. From the habit and entry records, kept current. At glance detail it is how many are met this period.",
+  "icon": "◎",
+  "use": { "when": "a person keeps something up and wants to see and log it without thinking: habits, a daily measure, a weekly distance, a monthly allowance of hours or a budget, a reading such as weight.", "not": "a one-off task, which is a task; or numbers over time on their own, which is a chart.", "with": "the habit records behind it, each with its own page, numbers and chart." },
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [],
+    "properties": {
+      "problem": {"type": "string", "description": "Filled in by the server when the block is set up wrong, saying what is wrong and what the workspace has instead. Leave out."},
+      "href": { "type": "string", "description": "Where the glance leads, the habits by default." },
+      "when": { "type": "string", "description": "Filled in by the server: today, or this period." },
+      "label": { "type": "string", "default": "Keeping up" },
+      "detail": { "title": "How much to show", "type": "string", "enum": ["glance", "full"], "default": "full" },
+      "tags": { "type": "array", "items": { "type": "string" } },
+      "habits": { "type": "array", "description": "The habits as they stand. Filled in by the server from the records.", "items": { "type": "object", "additionalProperties": false, "required": ["id", "name"], "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "shortName": { "type": "string", "description": "The name as the Log button says it to a reader, cut at a word with an ellipsis when long." },
+        "href": { "type": "string" },
+        "unit": { "type": "string" },
+        "period": { "type": "string" },
+        "aim": { "type": "string", "enum": ["reach", "limit", "record"] },
+        "dated": { "type": "boolean" },
+        "on": { "type": "string" },
+        "amount": { "type": "number" },
+        "target": { "type": "number" },
+        "progress": { "type": "string" },
+        "pct": { "type": "integer" },
+        "met": { "type": "boolean" },
+        "streak": { "type": "integer" },
+        "streakWords": { "type": "string" },
+        "best": { "type": "integer" },
+        "goal": { "type": "string" },
+        "log": { "title": "Last logged value", "type": "string" },
+        "when": { "type": "string", "description": "Whose standing this is: today, this week, on Mon 21 Sep." },
+        "last": { "type": "array", "items": { "type": "object", "additionalProperties": false, "properties": {
+          "date": { "type": "string" },
+          "going": { "type": "boolean", "description": "The period still going, and not met yet: not a miss." },
+          "met": { "type": "boolean" },
+          "amount": { "type": "number" },
+          "logged": { "type": "boolean" },
+          "words": { "type": "string" }
+        }}
+      } } } }
+    }
+  },
+  "id": { "type": "string" },
+  "a11y": {
+    "role": "region at full, a link to the habits at glance; a paragraph saying what is wrong when it is set up wrong",
+    "keyboard": [
+      { "key": "Tab", "does": "reaches each habit's name, the amount field when it has a unit, and Log" },
+      { "key": "Enter", "does": "logs" }
+    ],
+    "states": ["aria-valuenow", "data-met"],
+    "wcag": { "target": "AAA", "notes": "A named region. Each bar is the meter component: its value, its target, and the amount in words as its value text, so the picture is never the only way to read it. The streak and each day dot carry their meaning in words for a reader. Log is a plain form that works without scripts. Colour marks a met day, and the word does too." }
+  },
+  "machine": {
+    "selector": "[data-component=\"tracker\"]",
+    "identify": "Each habit is a list item with data-id, data-met and data-aim (a limit's data-met is whether it is kept within); the meter carries aria-valuenow and aria-valuemax; the streak is .sw-tracker__streak.",
+    "operate": "To log, fill the amount (when there is one), the day when it was done before (when offered), and activate Log, which POSTs amount and on to /habit/{id}/log. The same is create_record on entry with the habit's id."
+  },
+  "examples": [
+    { "name": "default", "props": { "habits": [
+      { "id": "h1", "name": "Stretch", "shortName": "Stretch", "href": "/t/habit/h1", "period": "day", "amount": 1, "target": 1, "progress": "done", "pct": 100, "met": true, "streak": 12, "streakWords": "12 days in a row", "best": 30, "last": [{ "date": "2026-09-16", "met": true }, { "date": "2026-09-17", "met": true }, { "date": "2026-09-18", "met": true }, { "date": "2026-09-19", "met": false }, { "date": "2026-09-20", "met": true }, { "date": "2026-09-21", "met": true }, { "date": "2026-09-22", "met": true }] },
+      { "id": "h2", "name": "Water", "shortName": "Water", "href": "/t/habit/h2", "unit": "glasses", "period": "day", "amount": 5, "target": 8, "progress": "5 of 8 glasses", "pct": 62, "met": false, "streak": 3, "streakWords": "3 days in a row", "best": 9, "last": [{ "date": "2026-09-16", "met": false }, { "date": "2026-09-17", "met": true }, { "date": "2026-09-18", "met": true }, { "date": "2026-09-19", "met": true }, { "date": "2026-09-20", "met": true }, { "date": "2026-09-21", "met": true }, { "date": "2026-09-22", "met": false }] },
+      { "id": "h3", "name": "Run", "shortName": "Run", "href": "/t/habit/h3", "unit": "km", "period": "week", "amount": 10, "target": 15, "progress": "10 of 15 km", "pct": 66, "met": false, "streak": 0, "streakWords": "", "best": 4, "goal": "38 of 100 km by 31 Oct", "last": [{ "date": "2026-08-31", "met": true }, { "date": "2026-09-07", "met": true }, { "date": "2026-09-14", "met": false }, { "date": "2026-09-21", "met": false }] }
+    ] }, "file": "examples/default.html" },
+    { "name": "limit", "props": { "label": "Allowances", "habits": [
+      { "id": "h4", "name": "Hours worked", "shortName": "Hours worked", "href": "/t/habit/h4", "unit": "hours", "period": "month", "aim": "limit", "dated": true, "amount": 15.5, "target": 21, "progress": "15.5 of 21 hours, 5.5 left", "pct": 74, "met": true, "streak": 2, "streakWords": "2 months in a row within the limit", "best": 2, "last": [{ "date": "2026-06", "met": false, "words": "24 hours, over the limit", "logged": true }, { "date": "2026-07", "met": true, "words": "19 hours, within the limit", "logged": true }, { "date": "2026-08", "met": true, "words": "21 hours, within the limit", "logged": true }, { "date": "2026-09", "met": true, "words": "15.5 hours, within the limit", "logged": true }] },
+      { "id": "h5", "name": "Eating out", "shortName": "Eating out", "href": "/t/habit/h5", "unit": "\u20ac", "period": "week", "aim": "limit", "amount": 64, "target": 50, "progress": "64 of 50 \u20ac, 14 over", "pct": 100, "met": false, "streak": 0, "streakWords": "", "best": 3, "last": [{ "date": "2026-09-14", "met": true, "words": "35 \u20ac, within the limit", "logged": true }, { "date": "2026-09-21", "met": false, "words": "64 \u20ac, over the limit", "logged": true }] }
+    ] }, "file": "examples/limit.html" },
+    { "name": "record", "props": { "label": "Measures", "habits": [
+      { "id": "h6", "name": "Weight", "shortName": "Weight", "href": "/t/habit/h6", "unit": "kg", "period": "day", "aim": "record", "log": "72.8", "amount": 72.8, "target": 0, "progress": "72.8 kg", "pct": 0, "met": false, "last": [{ "date": "2026-09-20", "met": false, "words": "73.1 kg", "logged": true }, { "date": "2026-09-21", "met": false, "words": "nothing logged" }, { "date": "2026-09-22", "met": false, "words": "72.8 kg", "logged": true }] }
+    ] }, "file": "examples/record.html" },
+    { "name": "glance", "props": { "detail": "glance", "label": "Today", "habits": [
+      { "id": "h1", "name": "Stretch", "shortName": "Stretch", "met": true, "period": "day" }, { "id": "h2", "name": "Water", "shortName": "Water", "met": false, "period": "day" }
+    ] }, "file": "examples/glance.html" },
+    { "name": "empty", "props": { "label": "Habits" }, "file": "examples/empty.html" },
+    {"name": "problem", "props": {"label": "Garden habits", "tags": ["garden"], "problem": "no habit is tagged garden; the habits have health, reading"}, "file": "examples/problem.html"}
+  ]
+}

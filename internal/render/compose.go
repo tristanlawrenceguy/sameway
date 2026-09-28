@@ -14,10 +14,11 @@ import (
 //
 // Nesting is bounded. Each component's template is parsed once per depth,
 // and the deepest copy has no child function left to call, so a component
-// that contained itself would stop rather than recurse forever. Three is
-// enough for the arrangements a page actually needs, and a hard stop beats
-// a stack overflow served to a person.
-const maxNesting = 3
+// that contained itself would stop rather than recurse forever. Four is
+// enough for the arrangements a page actually needs (a board's list holds
+// a card, which holds a move, which holds its select), and a hard stop
+// beats a stack overflow served to a person.
+const maxNesting = 4
 
 // funcsAt returns the template functions for a component parsed to sit at
 // the given nesting depth.
@@ -27,6 +28,7 @@ func (r *Registry) funcsAt(depth int) template.FuncMap {
 		funcs[name] = fn
 	}
 	funcs["child"] = func(spec any) template.HTML { return r.child(spec, depth) }
+	funcs["linkify"] = func(s string) template.HTML { return linkifyNamed(s, r.LinkTitle) }
 	funcs["children"] = func(specs any) template.HTML {
 		list, ok := specs.([]any)
 		if !ok {
@@ -35,6 +37,53 @@ func (r *Registry) funcsAt(depth int) template.FuncMap {
 		var out template.HTML
 		for _, s := range list {
 			out += r.child(s, depth)
+		}
+		return out
+	}
+	// fields renders a thing's facts as the fields component, compact, so a
+	// component that shows facts (a record, a collection's cards) shows
+	// them the one way.
+	funcs["fields"] = func(items any) template.HTML {
+		list, ok := items.([]any)
+		if !ok {
+			return ""
+		}
+		// A name with nothing beside it is left out, and so is a list of
+		// only those.
+		said := 0
+		for _, it := range list {
+			if m, ok := it.(map[string]any); ok && (m["value"] != "" && m["value"] != nil || m["markdown"] != nil && m["markdown"] != "") {
+				said++
+			}
+		}
+		if said == 0 {
+			return ""
+		}
+		return r.child(map[string]any{"component": "fields", "props": map[string]any{"items": items, "compact": true}}, depth)
+	}
+	// events renders what a turn changed as the event component, compact,
+	// one to a list item: the message they sit under already says who, and
+	// has the heading, so each line starts at its verb and none is a
+	// heading. The Changes made list and the activity log then show a
+	// change the one way. from is where an Undo returns to.
+	funcs["events"] = func(items any, from any) template.HTML {
+		list, _ := items.([]any)
+		var out template.HTML
+		for _, it := range list {
+			m, ok := it.(map[string]any)
+			if !ok {
+				continue
+			}
+			props := map[string]any{"actor": "assistant"}
+			for k, v := range m {
+				props[k] = v
+			}
+			props["compact"] = true
+			delete(props, "level")
+			if f, _ := from.(string); f != "" && props["undo"] != nil && props["from"] == nil {
+				props["from"] = f
+			}
+			out += "<li>" + r.child(map[string]any{"component": "event", "props": props}, depth) + "</li>"
 		}
 		return out
 	}
@@ -75,5 +124,5 @@ func (r *Registry) child(spec any, depth int) template.HTML {
 // problem renders a fault where the component would have been, so a bad
 // spec is visible on the page rather than silently missing.
 func problem(msg string) template.HTML {
-	return template.HTML(`<span class="sw-problem" role="status">` + template.HTMLEscapeString(msg) + `</span>`)
+	return template.HTML(`<span class="sw-render-problem" role="status">` + template.HTMLEscapeString(msg) + `</span>`)
 }

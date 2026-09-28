@@ -1,282 +1,86 @@
 package render_test
 
+// The alert: its kind said four ways, its title a heading, its close button
+// a whole target, and a live role only where one is announced.
+
 import (
-	"encoding/json"
 	"strings"
 	"testing"
 
-	"golang.org/x/net/html"
-
 	"github.com/tristanlawrenceguy/sameway/design"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
-	"github.com/tristanlawrenceguy/sameway/internal/render/htmltest"
 )
 
-// TestAlertIconPropDeclared checks the alert manifest declares an optional
-// "icon" string prop — type is string, not required, no default. Acceptance item 1.
-func TestAlertIconPropDeclared(t *testing.T) {
+func renderAlert(t *testing.T, props map[string]any) string {
+	t.Helper()
 	reg := render.New()
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		t.Fatal(err)
 	}
-	c, ok := reg.Get("alert")
-	if !ok {
-		t.Fatal("no alert component registered")
-	}
-
-	var schema struct {
-		Properties map[string]map[string]any `json:"properties"`
-		Required   []string                  `json:"required,omitempty"`
-	}
-	if err := json.Unmarshal(c.Manifest.Props, &schema); err != nil {
-		t.Fatal(err)
-	}
-
-	iconDef, hasIcon := schema.Properties["icon"]
-	if !hasIcon {
-		t.Fatalf("alert manifest missing 'icon' property")
-	}
-	if typ, _ := iconDef["type"].(string); typ != "string" {
-		t.Errorf("icon type is %q; want \"string\"", typ)
-	}
-
-	reqMap := map[string]bool{}
-	for _, r := range schema.Required {
-		reqMap[r] = true
-	}
-	if reqMap["icon"] {
-		t.Error("'icon' should not be in required")
-	}
-}
-
-// TestAlertNoIconSpanWithoutProp renders the alert without an icon prop and
-// asserts no sw-alert__icon span appears. Acceptance item 2 (golden test covers
-// byte-identical output; this checks structural absence).
-func TestAlertNoIconSpanWithoutProp(t *testing.T) {
-	reg := render.New()
-	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
-		t.Fatal(err)
-	}
-
-	alert, ok := reg.Get("alert")
-	if !ok {
-		t.Fatal("no alert component")
-	}
-
-	for _, ex := range alert.Manifest.Examples {
-		if strings.Contains(ex.Name, "-icon") {
-			continue // these have an icon prop by definition
-		}
-		got, err := reg.Render("alert", ex.Props)
-		if err != nil {
-			t.Fatalf("%s: render: %v", ex.Name, err)
-		}
-
-		doc, err := htmltest.Parse(string(got))
-		if err != nil {
-			t.Fatalf("%s: parse: %v", ex.Name, err)
-		}
-
-		found := false
-		doc.Walk(func(n *html.Node) {
-			if n.Data == "span" {
-				for _, a := range n.Attr {
-					if a.Key == "class" && strings.Contains(a.Val, "sw-alert__icon") {
-						found = true
-					}
-				}
-			}
-		})
-		if found {
-			t.Errorf("%s: output contains sw-alert__icon span without icon prop", ex.Name)
-		}
-	}
-}
-
-// TestAlertIconSpanWithProp renders the alert with a danger kind and icon ⚠,
-// then asserts the icon span structure. Acceptance item 3.
-func TestAlertIconSpanWithProp(t *testing.T) {
-	reg := render.New()
-	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
-		t.Fatal(err)
-	}
-
-	got, err := reg.Render("alert", map[string]any{
-		"kind":    "danger",
-		"icon":    "\u26a0", // ⚠
-		"title":   "No model connected",
-		"message": "Edit the llm section of workspace.yaml and restart.",
-	})
+	out, err := reg.Render("alert", props)
 	if err != nil {
 		t.Fatalf("render: %v", err)
 	}
+	return string(out)
+}
 
-	doc, err := htmltest.Parse(string(got))
-	if err != nil {
-		t.Fatalf("parse: %v", err)
-	}
-
-	var iconNode *html.Node
-	doc.Walk(func(n *html.Node) {
-		if n.Data == "span" {
-			for _, a := range n.Attr {
-				if a.Key == "class" && strings.Contains(a.Val, "sw-alert__icon") {
-					iconNode = n
-				}
-			}
+// TestAnAlertSaysItsKindInWords: a screen reader hears the kind as a word
+// first; the mark, a shape of its own per kind, is silent; nothing is added
+// to what is seen.
+func TestAnAlertSaysItsKindInWords(t *testing.T) {
+	for kind, want := range map[string][2]string{
+		"info": {"Information: ", "ℹ"}, "success": {"Success: ", "✓"}, "warning": {"Warning: ", "⚠"}, "danger": {"Error: ", "!"},
+	} {
+		out := renderAlert(t, map[string]any{"kind": kind, "message": "Something happened."})
+		if !strings.Contains(out, `<span class="sw-visually-hidden">`+want[0]+`</span>`) {
+			t.Errorf("%s: a screen reader should hear %q first:\n%s", kind, want[0], out)
 		}
-	})
-	if iconNode == nil {
-		t.Fatalf("output lacks <span class=\"sw-alert__icon\">;\ngot:\n%s", got)
-	}
-
-	hasAriaHidden := false
-	hasAriaLabel := false
-	for _, a := range iconNode.Attr {
-		if a.Key == "aria-hidden" && a.Val == "true" {
-			hasAriaHidden = true
+		if !strings.Contains(out, `<span class="sw-alert__icon" aria-hidden="true">`+want[1]+`</span>`) {
+			t.Errorf("%s: the mark should be %q and silent:\n%s", kind, want[1], out)
 		}
-		if a.Key == "aria-label" && a.Val == "danger" {
-			hasAriaLabel = true
+		if strings.Contains(out, "sw-alert__kind") {
+			t.Errorf("%s: no visible kind label repeats the title", kind)
 		}
-	}
-	if hasAriaHidden {
-		t.Error("icon span must not have aria-hidden=\"true\"")
-	}
-	if hasAriaLabel {
-		t.Error("icon span must not have aria-label; the unicode character is announced by AT and the kind span provides the label text (redundant aria-label creates double-announcing)")
-	}
-
-	text := htmltest.Text(iconNode)
-	if text != "\u26a0" {
-		t.Errorf("icon span text is %q; want \"⚠\"", text)
-	}
-
-	// Confirm icon span appears before kind span in title paragraph.
-	var pTitle *html.Node
-	doc.Walk(func(n *html.Node) {
-		if n.Data == "p" {
-			for _, a := range n.Attr {
-				if a.Key == "class" && strings.Contains(a.Val, "sw-alert__title") {
-					pTitle = n
-					return
-				}
-			}
-		}
-	})
-	if pTitle == nil {
-		t.Fatalf("no <p class=\"sw-alert__title\"> in output")
-	}
-
-	var order struct{ icon, kind int }
-	i := 0
-	for c := pTitle.FirstChild; c != nil; c = c.NextSibling {
-		if c.Type == html.ElementNode && c.Data == "span" {
-			for _, a := range c.Attr {
-				if a.Key == "class" {
-					switch {
-					case strings.Contains(a.Val, "sw-alert__icon"):
-						order.icon = i
-					case strings.Contains(a.Val, "sw-alert__kind"):
-						order.kind = i
-					}
-				}
-			}
-		}
-		i++
-	}
-	if order.icon > 0 && order.icon >= order.kind {
-		t.Errorf("icon span (pos %d) must appear before kind span (pos %d)", order.icon, order.kind)
 	}
 }
 
-// TestAlertInfoKindAriaLabel renders the alert with kind=info and icon ℹ,
-// then asserts the icon span does NOT carry aria-label="info" — redundant
-// announcing would confuse screen readers. Acceptance item 5.
-func TestAlertInfoKindAriaLabel(t *testing.T) {
-	reg := render.New()
-	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
-		t.Fatal(err)
+// TestAnAlertTitleIsAHeading: a person moving by headings finds it.
+func TestAnAlertTitleIsAHeading(t *testing.T) {
+	if out := renderAlert(t, map[string]any{"kind": "danger", "title": "Not saved", "message": "The title is needed."}); !strings.Contains(out, `<h2 class="sw-alert__title">`) {
+		t.Errorf("a title should be an h2:\n%s", out)
 	}
-
-	got, err := reg.Render("alert", map[string]any{
-		"kind":    "info",
-		"icon":    "\u2139", // ℹ
-		"message": "A note with an icon.",
-	})
-	if err != nil {
-		t.Fatalf("render: %v", err)
-	}
-
-	doc, err := htmltest.Parse(string(got))
-	if err != nil {
-		t.Fatalf("parse: %v", err)
-	}
-
-	var iconNode *html.Node
-	doc.Walk(func(n *html.Node) {
-		if n.Data == "span" {
-			for _, a := range n.Attr {
-				if a.Key == "class" && strings.Contains(a.Val, "sw-alert__icon") {
-					iconNode = n
-				}
-			}
-		}
-	})
-	if iconNode == nil {
-		t.Fatalf("output lacks <span class=\"sw-alert__icon\">;\ngot:\n%s", got)
-	}
-
-	hasAriaLabel := false
-	for _, a := range iconNode.Attr {
-		if a.Key == "aria-label" && a.Val == "info" {
-			hasAriaLabel = true
-		}
-	}
-	if hasAriaLabel {
-		t.Error("icon span must not have aria-label; the unicode character is announced by AT and the kind span provides the label text (redundant aria-label creates double-announcing)")
-	}
-
-	text := htmltest.Text(iconNode)
-	if text != "\u2139" {
-		t.Errorf("icon span text is %q; want \"ℹ\"", text)
+	if out := renderAlert(t, map[string]any{"title": "Not saved", "message": "x", "level": 3}); !strings.Contains(out, `<h3 class="sw-alert__title">`) {
+		t.Errorf("level 3 should make an h3:\n%s", out)
 	}
 }
 
-// TestAlertIconIsHTMLEscaped verifies that an icon value containing HTML
-// markup is escaped by the template engine rather than injected raw. Acceptance
-// item 4.
-func TestAlertIconIsHTMLEscaped(t *testing.T) {
-	reg := render.New()
-	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
-		t.Fatal(err)
+// TestOnlyALiveAlertTakesARole: a message present on load is not announced
+// whatever its role, so only one put on the page later, or an outcome,
+// takes one: alert for a warning or error, status otherwise.
+func TestOnlyALiveAlertTakesARole(t *testing.T) {
+	if out := renderAlert(t, map[string]any{"kind": "danger", "message": "x"}); strings.Contains(out, "role=") || strings.Contains(out, "aria-live") {
+		t.Errorf("an alert on the page at load should take no live role:\n%s", out)
 	}
-
-	got, err := reg.Render("alert", map[string]any{
-		"kind":    "danger",
-		"icon":    "<script>alert(1)</script>",
-		"message": "test message",
-	})
-	if err != nil {
-		t.Fatalf("render: %v", err)
-	}
-
-	out := string(got)
-	if strings.Contains(out, "<script>") {
-		t.Errorf("icon value was not HTML-escaped — raw <script> found in output:\n%s", out)
-	}
-
-	doc, err := htmltest.Parse(out)
-	if err != nil {
-		t.Fatalf("parse: %v", err)
-	}
-	foundScript := false
-	doc.Walk(func(n *html.Node) {
-		if n.Data == "script" {
-			foundScript = true
+	for kind, role := range map[string]string{"danger": "alert", "warning": "alert", "success": "status", "info": "status"} {
+		if out := renderAlert(t, map[string]any{"kind": kind, "message": "x", "live": true}); !strings.Contains(out, `role="`+role+`"`) {
+			t.Errorf("a live %s alert should be role=%s:\n%s", kind, role, out)
 		}
-	})
-	if foundScript {
-		t.Error("a <script> element appeared in the DOM from icon prop")
+	}
+}
+
+// TestAnAlertCloseButtonIsNamedAndReachable: a native button, named for what
+// it closes, never taken out of the Tab order.
+func TestAnAlertCloseButtonIsNamedAndReachable(t *testing.T) {
+	out := renderAlert(t, map[string]any{"kind": "success", "message": "Changes made.", "dismiss": true})
+	for _, want := range []string{`<button type="button" class="sw-alert__close" data-dismiss aria-label="Close message">`, "sw-alert--dismissible"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("a dismissible alert should carry %s:\n%s", want, out)
+		}
+	}
+	if strings.Contains(out, `tabindex="-1"`) {
+		t.Errorf("the close button must stay in the Tab order")
+	}
+	if out := renderAlert(t, map[string]any{"message": "x"}); strings.Contains(out, "sw-alert__close") {
+		t.Errorf("no close button unless asked for")
 	}
 }

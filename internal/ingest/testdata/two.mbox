@@ -1,0 +1,32 @@
+From sandra@example.com Fri Sep 05 09:12:00 2026
+From: Sandra Lee <Sandra@example.com>
+To: you@example.com
+Subject: September hours
+Date: Fri, 05 Sep 2026 09:12:00 +0100
+Content-Type: text/plain; charset=utf-8
+
+Hi, here are my hours for the first week.
+
+Mon 8, Tue 6.
+
+> On Thu, Sandra wrote:
+> earlier words
+
+From tom@example.com Sat Sep 06 18:00:00 2026
+From: =?utf-8?q?Tom_Ash?= <tom@example.com>
+To: you@example.com
+Subject: =?utf-8?q?Invoice_=23_12?=
+Date: Sat, 06 Sep 2026 18:00:00 +0100
+Content-Type: multipart/alternative; boundary="b1"
+
+--b1
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+Please find the invoice attached=2E
+
+--b1
+Content-Type: text/html; charset=utf-8
+
+<p>Please find the invoice attached.</p>
+--b1--

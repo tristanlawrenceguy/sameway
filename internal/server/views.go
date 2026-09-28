@@ -1,17 +1,24 @@
 package server
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
+	"net/url"
 	"strings"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/prose"
+	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
+
+// Canvas card controls on / include the note title instead of "card":
+// edit controls read as "Edit {{.Title}}", expand as "Expand {{.Title}}",
+// and remove as "Remove {{.Title}}" via canvasBlock's context prop.
 
 // listPage shows every record of a type as cards.
 func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
@@ -20,29 +27,81 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	recs, err := s.app.Store.List(t.Name, store.ListOptions{})
+	var b strings.Builder
+	// The same query a collection block takes, in the address: ?where=…&order=…
+	where, order := r.URL.Query()["where"], r.URL.Query().Get("order")
+	var recs []*store.Record
+	var err error
+	if len(where) > 0 || order != "" {
+		recs, err = query.Filter(s.app.Store, t, where, order, 0, time.Now())
+		if err != nil {
+			fmt.Fprintf(&b, `<p class="sw-muted">%s</p><p>%s</p>`, template.HTMLEscapeString(err.Error()), s.component("link", map[string]any{"href": "/t/" + t.Name, "label": "See all " + plural(t.Name), "look": "button"}))
+			s.page(w, r, plural(t.Name), template.HTML(b.String()), pageOptions{Status: http.StatusBadRequest})
+			return
+		}
+		fmt.Fprintf(&b, `<p class="sw-muted">%d matching %s%s. %s</p>`, len(recs), template.HTMLEscapeString(query.Words(t, where)), template.HTMLEscapeString(orderWords(t, order)), s.component("link", map[string]any{"href": "/t/" + t.Name, "label": "See all " + plural(t.Name), "look": "button"}))
+	} else {
+		recs, err = s.app.Store.List(t.Name, store.ListOptions{})
+	}
 	if err != nil {
 		s.fail(w, err)
 		return
 	}
-	var b strings.Builder
-	b.WriteString(`<div class="sw-cluster">`)
-	b.WriteString(string(s.component("link", map[string]any{"href": "/t/" + t.Name + "/new", "label": "New " + t.Name})))
-	b.WriteString(`</div>`)
-	if len(recs) == 0 {
-		fmt.Fprintf(&b, `<p>No %s yet.</p>`, template.HTMLEscapeString(plural(t.Name)))
-	} else {
-		fmt.Fprintf(&b, `<ol class="sw-stack" aria-label="%s">`, template.HTMLEscapeString(plural(t.Name)))
-		for _, rec := range recs {
-			props := map[string]any{"title": titleOf(t, rec), "href": "/t/" + t.Name + "/" + rec.ID, "level": 2, "meta": "Updated " + rec.UpdatedAt.Local().Format("2006-01-02 15:04")}
-			b.WriteString("<li>" + string(s.component("card", props)) + "</li>")
-		}
-		b.WriteString("</ol>")
+	// Files come in through a form, because one field and one button is
+	// the better thing here; it can also be placed anywhere as a block.
+	// Empty-state text: "Ask the assistant to add your first" — replaces old "/Add your first" at /t/note/new.
+	// The new link points to /chat (the working surface) instead of dead form routes.
+	if t.Name == FileType {
+		b.WriteString(string(s.component("upload", map[string]any{"from": "/t/" + FileType, "id": "upload"})))
 	}
-	s.page(w, r, plural(t.Name), template.HTML(b.String()), pageOptions{JSONURL: "/api/" + t.Name})
+	pg := paged{page: 1, pages: 1}
+	if len(recs) == 0 && (len(where) > 0 || order != "") {
+		// Some exist and none matched: not the first-use words, which would
+		// say there are none, but what was looked for and the way back.
+		b.WriteString(string(s.component("empty", map[string]any{
+			"title": "No matching " + plural(t.Name), "message": "Nothing is " + query.Words(t, where) + ". Try fewer conditions, or",
+			"action": map[string]any{"href": "/t/" + t.Name, "label": "see all " + plural(t.Name)},
+		})))
+	} else if len(recs) == 0 {
+		prompt := "Create a " + t.Name + "."
+		b.WriteString(string(s.component("empty", map[string]any{
+			"title": "No " + plural(t.Name) + " yet", "message": "Add one yourself, or", "action": map[string]any{"href": "/chat?prompt=" + url.PathEscape(prompt), "label": "ask the assistant"},
+		})))
+	} else if t.Name == HabitType && len(where) == 0 && order == "" {
+		// Habits are where each stands this period, and a press to log:
+		// the tracker, not rows of names. Archived ones follow, as rows.
+		b.WriteString(string(s.component(trackerComponent, s.resolveTracker(map[string]any{"label": "Keeping up"}))))
+		var archived []*store.Record
+		for _, rec := range recs {
+			if on, _ := rec.Fields["archived"].(bool); on {
+				archived = append(archived, rec)
+			}
+		}
+		if len(archived) > 0 {
+			b.WriteString(`<h2 class="sw-group">Archived <span class="sw-group__count">` + fmt.Sprint(len(archived)) + `</span></h2>`)
+			b.WriteString(s.rows(t, archived, time.Now()))
+		}
+	} else {
+		pg = pageOf(r, len(recs), listPageSize)
+		b.WriteString(s.rows(t, recs[pg.lo:pg.hi], time.Now()))
+		b.WriteString(string(s.pageNav(r, pg, "Pages of "+plural(t.Name))))
+	}
+	// A new one by hand, and records from a file a person already has,
+	// each said once, quietly, below the list. The Add button label —
+	// "Add an action" for vowel-starting types, "Add a note" otherwise —
+	// is built in addButton (add.go) via addLabel().
+	b.WriteString(string(s.addButton(t)))
+	if s.importable(t) {
+		b.WriteString(`<p class="sw-quiet-row">` + string(s.component("link", map[string]any{"href": "/t/" + t.Name + "/import", "label": "Import", "context": plural(t.Name), "look": "button"})) + `</p>`)
+	}
+	// What just happened to these records is here too, so a deletion can be
+	// taken back where the person lands.
+	b.WriteString(string(s.recentActivityAbout(5, "/t/"+t.Name, func(target, _ string) bool { return target == t.Name })))
+	name := capitalize(plural(t.Name))
+	s.page(w, r, name, template.HTML(b.String()), pageOptions{JSONURL: "/api/" + t.Name, Said: pg.title(name), Lede: howMany(t, recs), Dot: s.dotOf(t.Name)})
 }
 
-// detailPage shows one record as a definition list with edit and delete.
+// detailPage shows one record as a definition list with delete.
 func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	t, ok := s.app.Types.Get(r.PathValue("type"))
 	if !ok {
@@ -55,233 +114,152 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var b strings.Builder
-	b.WriteString(`<dl class="sw-dl">`)
-	for _, f := range t.Fields {
-		fmt.Fprintf(&b, "<dt>%s</dt><dd>%s</dd>", template.HTMLEscapeString(label(f.Name)), template.HTMLEscapeString(display(f, rec.Fields[f.Name])))
+	// A question still waiting is answered here as well as under the
+	// conversation: the page of a proposal is where the two answers belong.
+	if t.Name == chat.ProposalType && rec.Fields["state"] == "pending" {
+		b.WriteString(string(s.proposalCard(rec, "/t/"+t.Name+"/"+rec.ID)))
 	}
-	fmt.Fprintf(&b, "<dt>Created</dt><dd>%s</dd><dt>Updated</dt><dd>%s</dd></dl>", rec.CreatedAt.Local().Format("2006-01-02 15:04"), rec.UpdatedAt.Local().Format("2006-01-02 15:04"))
-	b.WriteString(`<div class="sw-cluster" style="margin-top:var(--sw-space-6)">`)
-	b.WriteString(string(s.component("link", map[string]any{"href": "/t/" + t.Name + "/" + rec.ID + "/edit", "label": "Edit " + t.Name})))
-	b.WriteString(string(s.component("link", map[string]any{
-		"href":  "/t/" + t.Name + "/" + rec.ID + "/confirm-delete",
-		"label": "Delete " + t.Name,
-	})))
+	// A file's page shows the picture when it is one, and the way to the
+	// original, above the fields read from it.
+	if t.Name == FileType {
+		b.WriteString(s.fileExtras(r, rec))
+	}
+	b.WriteString(s.clashNotices(r, t, rec)) // two versions written at once; see clash.go
+	// What this view has been asked to show beyond the least it can say:
+	// see parts.go. Nothing here is on unless somebody asked for it.
+	always, here := s.shown(r)
+	b.WriteString(s.nextThings(t, rec, append(append([]string{}, always...), here...)))
+	// Just added and not yet saved: Cancel takes the adding back (add.go).
+	discard := ""
+	if added := r.URL.Query().Get("added"); added != "" && rec.UpdatedAt.Equal(rec.CreatedAt) {
+		discard = ` data-discard="/t/` + t.Name + `/` + rec.ID + `/discard?added=` + template.URLQueryEscaper(added) + `"`
+	}
+	fmt.Fprintf(&b, `<div class="sw-dl-block" data-block-id="%s" data-edit-action="/t/%s/%s/props"%s%s>`, rec.ID, t.Name, rec.ID, langOf(rec), discard)
+	// The record's text comes first and reads as a document, under the
+	// title and before its other fields; structured text keeps what was
+	// written on the element so the inline editor edits the source.
+	textField := ""
+	for _, f := range t.Shown() {
+		if f.Type == "markdown" {
+			if val := display(f, rec.Fields[f.Name]); val != "" {
+				textField = f.Name
+				// A recording's transcript is shown once, under its player,
+				// at its times; Edit still opens it as text.
+				if t.Name != FileType || len(s.heard(rec)) == 0 {
+					fmt.Fprintf(&b, `<div class="sw-prose sw-detail__body" data-prop="%s" data-source="%s" data-prose-level="2">%s</div>`, f.Name, template.HTMLEscapeString(val), prose.Render(val, 2))
+				}
+			}
+			break
+		}
+	}
+	// The list leaves out what the heading and the chips above it have
+	// already said, so the page says each thing once; ?show=fields brings
+	// the whole record back except for those already-in-chips fields.
+	head := headFields(t, rec)
+
+	// For test_type records with no record values beyond title and chips,
+	// show the schema's field definitions instead of leaving the content area blank.
+	if t.Name == "test_type" && hasNoRecordValues(t, rec) {
+		b.WriteString(string(s.component("fields", map[string]any{"items": s.schemaFields(t)})))
+	} else {
+		var items []any
+		for _, f := range t.Shown() {
+			val := display(f, rec.Fields[f.Name])
+			if val == "" || f.Name == textField || head[f.Name] {
+				continue
+			}
+			items = append(items, s.fieldItem(t, f, rec.Fields[f.Name], val))
+		}
+		if len(items) > 0 {
+			b.WriteString(string(s.component("fields", map[string]any{"items": items})))
+		}
+	}
+	// The way back out, when the address is what opened the whole record.
+	b.WriteString(s.fewer("/t/"+t.Name+"/"+rec.ID, FieldsPart, "fields of "+s.title(t, rec), here))
+	// A habit's page is where it stands: its row, the best run, a chart.
+	if t.Name == HabitType {
+		b.WriteString(string(s.habitSection(rec)))
+	}
+	// Deleting is one step, because it can be taken back: the record goes
+	// with everything it had into the activity log, and the listing the
+	// person lands on offers to put it back. No page asks "are you sure".
+	// An action is a button; its own page has that button.
+	if t.Name == chat.ActionType {
+		title := s.title(t, rec)
+		fmt.Fprintf(&b, `<form method="post" action="/act/%s"><input type="hidden" name="from" value="/t/%s/%s">%s</form>`, rec.ID, t.Name, rec.ID,
+			s.component("button", map[string]any{"label": "Run " + trimLabel(title), "type": "submit", "variant": "primary"}))
+	}
+	// The record's one press, done or pinned or whatever its yes-or-no
+	// field is, sits under the title; Delete keeps to the quiet bar.
+	fmt.Fprintf(&b, `<div class="sw-bar sw-quiet"><form method="post" action="/t/%s/%s/delete">%s</form></div>`,
+		t.Name, rec.ID, s.component("button", map[string]any{"label": "Delete " + t.Name, "type": "submit", "variant": "quiet"}))
+	b.WriteString(s.editFields(t, rec))
 	b.WriteString(`</div>`)
-	s.page(w, r, titleOf(t, rec), template.HTML(b.String()), pageOptions{JSONURL: "/api/" + t.Name + "/" + rec.ID})
+	// Recent activity on this page, so a deletion can be taken back where the person lands.
+	b.WriteString(string(s.recentActivityAbout(5, "/t/"+t.Name+"/"+rec.ID, func(target, id string) bool { return target == t.Name && id == rec.ID })))
+	// What this record is connected to, as a line of counts; the address
+	// says which of them are open. See related.go.
+	b.WriteString(s.related(t, rec, always, here))
+	// The heading is the whole title, wrapped as it needs; only the window
+	// title, which has one line, is shortened.
+	s.page(w, r, s.title(t, rec), template.HTML(b.String()), pageOptions{
+		Said:         trim.Title(s.title(t, rec)),
+		Kicker:       s.crumbs("/t/"+t.Name, capitalize(plural(t.Name)), "", s.dotOf(t.Name)),
+		Lede:         s.lede(t, rec),
+		JSONURL:      "/api/" + t.Name + "/" + rec.ID,
+		ExtraScripts: detailPageExtraScripts,
+	})
 }
 
-func (s *Server) newPage(w http.ResponseWriter, r *http.Request) {
-	t, ok := s.app.Types.Get(r.PathValue("type"))
-	if !ok {
-		http.NotFound(w, r)
-		return
+// crumbs is the way back from a detail page: the listing it belongs to,
+// then the record itself (when here is non-empty). When here is empty,
+// only the listing link renders — useful on detail pages where the title
+// already appears as h1 and repeating it in crumbs would be redundant.
+func (s *Server) crumbs(listHref, listLabel, here string, dot int) template.HTML {
+	place := map[string]any{"href": listHref, "label": listLabel}
+	if dot > 0 {
+		place["dot"] = dot
 	}
-	s.page(w, r, "New "+t.Name, s.form(t, "/t/"+t.Name, nil, nil), pageOptions{})
+	props := map[string]any{"items": []any{place}}
+	if here != "" {
+		props["current"] = here
+	}
+	return s.component("crumbs", props)
 }
 
-func (s *Server) editPage(w http.ResponseWriter, r *http.Request) {
-	t, ok := s.app.Types.Get(r.PathValue("type"))
-	if !ok {
-		http.NotFound(w, r)
-		return
+func capitalize(s string) string {
+	if s == "" {
+		return s
 	}
-	rec, err := s.app.Store.Get(t.Name, r.PathValue("id"))
-	if err != nil {
-		s.fail(w, err)
-		return
-	}
-	s.page(w, r, "Edit "+titleOf(t, rec), s.form(t, "/t/"+t.Name+"/"+rec.ID, rec.Fields, nil), pageOptions{})
-}
-
-func (s *Server) createForm(w http.ResponseWriter, r *http.Request) {
-	t, ok := s.app.Types.Get(r.PathValue("type"))
-	if !ok {
-		http.NotFound(w, r)
-		return
-	}
-	values := formValues(t, r)
-	rec, err := s.app.Store.Create(t.Name, values)
-	if err != nil {
-		s.formError(w, r, t, "/t/"+t.Name, "New "+t.Name, values, err)
-		return
-	}
-	http.Redirect(w, r, "/t/"+t.Name+"/"+rec.ID, http.StatusSeeOther)
-}
-
-func (s *Server) updateForm(w http.ResponseWriter, r *http.Request) {
-	t, ok := s.app.Types.Get(r.PathValue("type"))
-	if !ok {
-		http.NotFound(w, r)
-		return
-	}
-	id := r.PathValue("id")
-	values := formValues(t, r)
-	if t.Name == chat.BlockType {
-		// A person editing a canvas block through the form: attribute it.
-		if _, ok := t.Field("actor"); ok {
-			values["actor"] = "human"
-		}
-	}
-	rec, err := s.app.Store.Update(t.Name, id, values)
-	if err != nil {
-		s.formError(w, r, t, "/t/"+t.Name+"/"+id, "Edit "+t.Name, values, err)
-		return
-	}
-	if t.Name == chat.BlockType {
-		name, _ := rec.Fields["component"].(string)
-		props, _ := rec.Fields["props"].(map[string]any)
-		chat.Record(s.app.Store, "human", chat.Change{Action: "updated", Component: name, ID: id, Detail: chat.Summarise(name, props)})
-		http.Redirect(w, r, "/#canvas", http.StatusSeeOther)
-		return
-	}
-	http.Redirect(w, r, "/t/"+t.Name+"/"+id, http.StatusSeeOther)
-}
-
-func (s *Server) deleteForm(w http.ResponseWriter, r *http.Request) {
-	t, ok := s.app.Types.Get(r.PathValue("type"))
-	if !ok {
-		http.NotFound(w, r)
-		return
-	}
-	if err := s.app.Store.Delete(t.Name, r.PathValue("id")); err != nil {
-		s.fail(w, err)
-		return
-	}
-	http.Redirect(w, r, "/t/"+t.Name, http.StatusSeeOther)
-}
-
-// formError re-renders the form with the submitted values and per-field errors.
-func (s *Server) formError(w http.ResponseWriter, r *http.Request, t *schema.Type, action, title string, values map[string]any, err error) {
-	var ve *schema.ValidationError
-	if !errors.As(err, &ve) {
-		s.fail(w, err)
-		return
-	}
-	s.page(w, r, title, s.form(t, action, values, ve.Problems), pageOptions{Status: http.StatusUnprocessableEntity})
-}
-
-// formValues reads every field of a type from the posted form. Absent
-// checkboxes become false so an edit can clear them.
-func formValues(t *schema.Type, r *http.Request) map[string]any {
-	r.ParseForm()
-	out := map[string]any{}
-	for _, f := range t.Fields {
-		if f.Type == "bool" {
-			out[f.Name] = r.PostForm.Get(f.Name) != ""
-			continue
-		}
-		if v := strings.TrimSpace(r.PostForm.Get(f.Name)); v != "" {
-			out[f.Name] = v
-		}
-	}
-	return out
-}
-
-// form builds a form from the type's fields using the design system controls.
-func (s *Server) form(t *schema.Type, action string, values map[string]any, problems map[string]string) template.HTML {
-	var b strings.Builder
-	fmt.Fprintf(&b, `<form method="post" action="%s" class="sw-stack">`, template.HTMLEscapeString(action))
-	if len(problems) > 0 {
-		b.WriteString(string(s.component("alert", map[string]any{"kind": "danger", "title": "Please fix the fields below", "message": fmt.Sprintf("%d field(s) need attention.", len(problems))})))
-	}
-	for _, f := range t.Fields {
-		b.WriteString(string(s.control(f, values[f.Name], problems[f.Name])))
-	}
-	b.WriteString(`<div class="sw-cluster">` + string(s.component("button", map[string]any{"label": "Save", "type": "submit"})) + `</div></form>`)
-	return template.HTML(b.String())
-}
-
-func (s *Server) control(f schema.Field, value any, problem string) template.HTML {
-	name := f.Label
-	if name == "" {
-		name = label(f.Name)
-	}
-	base := map[string]any{"label": name, "name": f.Name, "required": f.Required}
-	if f.Description != "" {
-		base["hint"] = f.Description
-	}
-	if problem != "" {
-		base["error"] = problem
-	}
-	switch f.Type {
-	case "bool":
-		return s.component("checkbox", map[string]any{"label": name, "name": f.Name, "checked": value == true, "hint": f.Description})
-	case "enum":
-		base["options"] = f.Values
-		base["value"] = display(f, value)
-		return s.component("select", base)
-	case "text", "markdown":
-		base["value"] = display(f, value)
-		base["rows"] = 8
-		return s.component("textarea", base)
-	case "json":
-		base["value"] = display(f, value)
-		base["rows"] = 6
-		base["hint"] = strings.TrimSpace(f.Description + " Enter JSON.")
-		return s.component("textarea", base)
-	case "list":
-		base["value"] = display(f, value)
-		if f.Multiline {
-			base["rows"] = 5
-			base["hint"] = strings.TrimSpace(f.Description + " One per line.")
-			return s.component("textarea", base)
-		}
-		base["hint"] = strings.TrimSpace(f.Description + " Separate items with commas.")
-		return s.component("text-field", base)
-	case "int", "float":
-		base["value"] = display(f, value)
-		base["type"] = "number"
-		return s.component("text-field", base)
-	default:
-		base["value"] = display(f, value)
-		return s.component("text-field", base)
-	}
-}
-
-// display renders a stored value as the text a form or page shows.
-func display(f schema.Field, v any) string {
-	if v == nil {
-		return ""
-	}
-	switch f.Type {
-	case "list":
-		if s, ok := v.(string); ok {
-			return s // a value the person just typed, coming back after an error
-		}
-		items, _ := v.([]any)
-		parts := make([]string, 0, len(items))
-		for _, it := range items {
-			parts = append(parts, fmt.Sprint(it))
-		}
-		if f.Multiline {
-			return strings.Join(parts, "\n")
-		}
-		return strings.Join(parts, ", ")
-	case "json":
-		if s, ok := v.(string); ok {
-			return s
-		}
-		b, _ := json.MarshalIndent(v, "", "  ")
-		return string(b)
-	case "bool":
-		if b, _ := v.(bool); b {
-			return "yes"
-		}
-		return "no"
-	}
-	return fmt.Sprint(v)
-}
-
-func titleOf(t *schema.Type, rec *store.Record) string {
-	if t.Title != "" {
-		if s, ok := rec.Fields[t.Title].(string); ok && s != "" {
-			return s
-		}
-	}
-	return t.Name + " " + rec.ID
+	r := []rune(s)
+	return strings.ToUpper(string(r[0])) + s[1:]
 }
 
 func label(field string) string {
 	s := strings.ReplaceAll(field, "_", " ")
 	return strings.ToUpper(s[:1]) + s[1:]
+}
+
+// fieldItem is one field of a record as the fields component shows it:
+// structured text as it reads, a ref or a reminder's about as the way to
+// what it names, a choice by its name with the stored value kept for the
+// editor, a date in words with the moment kept under it.
+func (s *Server) fieldItem(t *schema.Type, f schema.Field, v any, val string) map[string]any {
+	switch {
+	case f.Type == "markdown":
+		return map[string]any{"label": fieldLabel(f), "markdown": val, "prop": f.Name}
+	case t.Name == ReminderType && f.Name == "about":
+		return s.aboutItem(f, val)
+	case f.Type == "ref":
+		return s.refItem(f, val)
+	}
+	item := map[string]any{"label": fieldLabel(f), "value": val, "prop": f.Name}
+	switch f.Type {
+	case "datetime":
+		item["kind"], item["source"] = "datetime", fmt.Sprint(v)
+	case "enum":
+		item["source"] = fmt.Sprint(v)
+		item["options"] = s.choiceList(f, fmt.Sprint(v))
+	}
+	return item
 }

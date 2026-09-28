@@ -25,7 +25,7 @@ jobs:
         run: go build -o bin/sameway ./cmd/sameway
 
   components:
-    name: components in a browser (axe + keyboard)
+    name: components in a browser (axe, modes, reflow, spacing, keyboard)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -34,8 +34,8 @@ jobs:
           node-version: 22
       - name: Install runner
         working-directory: tools/a11y-runner
-        run: npm install
-      - name: axe-core over every component example
+        run: npm ci
+      - name: axe-core, dark mode, reflow, text spacing and motion over every component example
         working-directory: tools/a11y-runner
         run: npm run test:axe
       - name: Keyboard operation of every component example
@@ -43,7 +43,7 @@ jobs:
         run: npm run test:keyboard
 
   pages:
-    name: live pages (person and agent paths)
+    name: live pages (person and agent paths, every page in every mode)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -63,7 +63,7 @@ jobs:
           curl -sf http://127.0.0.1:8080/api/describe > /dev/null || (cat /tmp/serve.log; exit 1)
       - name: Install runner
         working-directory: tools/a11y-runner
-        run: npm install
+        run: npm ci
       - name: Drive the pages as a person and as an agent
         working-directory: tools/a11y-runner
         run: npm run test:pages
