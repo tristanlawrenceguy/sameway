@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"html/template"
+	"net/http"
 	"strings"
 	"time"
 
@@ -20,13 +21,13 @@ import (
 // is labelled with its word, Done or Pinned, where it can be seen; the
 // record is the page's heading, so the label does not say it again, and the
 // box says checked, so no chip says the state a second time.
-func (s *Server) lede(t *schema.Type, rec *store.Record) template.HTML {
+func (s *Server) lede(r *http.Request, t *schema.Type, rec *store.Record) template.HTML {
 	box := ""
 	if props, ok := markOf(t, rec); ok {
 		delete(props, "context")
 		box = string(s.component("mark", props))
 	}
-	return template.HTML(`<p class="sw-lede">` + box + s.facts(t, rec, factOpts{Made: true, Boxed: box != "", Chips: true, Detail: true}) + `</p>`)
+	return template.HTML(`<p class="sw-lede">` + box + s.facts(t, rec, factOpts{Made: true, Boxed: box != "", Chips: true, Detail: true, From: s.from(r, t, rec)}) + `</p>`)
 }
 
 // howMany says how many there are under a listing's title, and how many
@@ -56,7 +57,11 @@ func howMany(t *schema.Type, recs []*store.Record) template.HTML {
 // made; Boxed leaves out the done chip because a box already shows it;
 // Chips draws the day and what it belongs to as chips rather than words,
 // and words are short, the way a row says them.
-type factOpts struct{ Made, Boxed, Chips, Row, Detail bool }
+type factOpts struct {
+	Made, Boxed, Chips, Row, Detail bool
+	// From is who wrote the record's words, with Made; see from.
+	From string
+}
 
 // facts is what a person wants to know about a record at a glance: done,
 // its state, the day that matters, what it belongs to. A day that has
@@ -133,7 +138,7 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 		}
 	}
 	if o.Made {
-		parts = append(parts, whenMade(rec))
+		parts = append(parts, whenMade(rec, o.From))
 	}
 	return strings.Join(parts, " ")
 }
@@ -176,14 +181,33 @@ func (s *Server) dayFact(t *schema.Type, rec *store.Record, done, chip bool) str
 }
 
 // whenMade says when a record was made and last changed, as a person reads
-// a time, in one quiet line under its fields.
-func whenMade(rec *store.Record) string {
+// a time, and where its words came from when that was not the owner, in
+// one quiet line under its fields.
+func whenMade(rec *store.Record, from string) string {
 	made := when.Text(rec.CreatedAt.UTC().Format(time.RFC3339))
 	changed := when.Text(rec.UpdatedAt.UTC().Format(time.RFC3339))
-	if changed == made {
-		return `<span class="sw-detail__when sw-muted sw-small">Created ` + made + `</span>`
+	line := "Created " + made
+	if changed != made {
+		line += " · Updated " + changed
 	}
-	return `<span class="sw-detail__when sw-muted sw-small">Created ` + made + ` · Updated ` + changed + `</span>`
+	if from != "" {
+		line += " · From: " + template.HTMLEscapeString(from)
+	}
+	return `<span class="sw-detail__when sw-muted sw-small">` + line + `</span>`
+}
+
+// from is who wrote a record's words, said once on its page, when that
+// was someone other than the owner and their assistant: an import, another
+// person, an agent, an action. A file's or a device's page already says
+// what it is. A reader from the internet is not told anyone's name.
+func (s *Server) from(r *http.Request, t *schema.Type, rec *store.Record) string {
+	if t.Name == FileType || t.Name == "device" {
+		return ""
+	}
+	if w := s.app.Chat.For(chat.VisitorOf(r.Context())).Writers().Of(t.Name, rec); w.Outside {
+		return w.Words
+	}
+	return ""
 }
 
 // dotOf is the colour a list wears everywhere it appears: the sidebar,

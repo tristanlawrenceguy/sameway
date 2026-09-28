@@ -40,13 +40,15 @@ func (s *Service) search(query, only string, page int) toolResult {
 	if len(res.Hits) == 0 {
 		return toolResult{text: res.Said() + ". Leave out type to see them."}
 	}
+	writers := s.Writers()
 	var lines []string
 	for _, h := range res.Hits {
-		line := fmt.Sprintf("%s %s\t%s\t%s", h.Type, h.ID, h.Title, h.Href)
+		line := fmt.Sprintf("%s %s\t%s\t%s\t%s", h.Type, h.ID, oneLine(h.Title), h.Href, writers.OfID(h.Type, h.ID).Words)
 		if h.Snippet != "" {
-			line += "\t" + h.Snippet
+			line += "\t" + oneLine(h.Snippet)
 		}
 		lines = append(lines, line)
 	}
-	return toolResult{text: fmt.Sprintf("%s (type id, title, page, words around the match):\n%s", res.Said(), strings.Join(lines, "\n"))}
+	// Titles and words are fenced, each line saying who wrote it; see provenance.go.
+	return toolResult{text: fmt.Sprintf("%s (type id, title, page, written by, words around the match). Each line's words were written by the one on it; %s.\n<<<record text\n%s\nrecord text>>>", res.Said(), Untrusted, strings.Join(lines, "\n"))}
 }

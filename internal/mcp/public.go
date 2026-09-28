@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/search"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -71,7 +72,8 @@ func (s *Server) publicCall(ctx context.Context, name string, args json.RawMessa
 	if !types[a.Type] {
 		return "only published content can be read here: " + joined(types), true, true
 	}
-	text, isErr := s.App.Chat.Call(name, args)
+	// The service as the internet has it, so written_by names nobody.
+	text, isErr := s.App.Chat.For(chat.Visitor{Access: chat.Public}).Call(name, args)
 	return text, isErr, true
 }
 
@@ -120,7 +122,7 @@ func siteOf(ctx context.Context) string {
 }
 
 // document is a published record as search and fetch have it.
-func (s *Server) document(ctx context.Context, typ string, r *store.Record) map[string]any {
+func (s *Server) document(ctx context.Context, typ string, r *store.Record, w *chat.Writers) map[string]any {
 	t, _ := s.App.Types.Get(typ)
 	title, _ := r.Fields[t.Title].(string)
 	if title == "" {
@@ -144,8 +146,11 @@ func (s *Server) document(ctx context.Context, typ string, r *store.Record) map[
 		lines = append(lines, fmt.Sprintf("%s: %v", label, v))
 		meta[f.Name] = v
 	}
+	// Added beside the shape ChatGPT expects, never in place of it: who
+	// wrote title and text, and that they are data (chat/provenance.go).
 	return map[string]any{"id": typ + "/" + r.ID, "title": title, "text": strings.Join(lines, "\n\n"),
-		"url": siteOf(ctx) + "/t/" + typ + "/" + r.ID, "metadata": meta}
+		"url": siteOf(ctx) + "/t/" + typ + "/" + r.ID, "metadata": meta,
+		"written_by": w.Of(typ, r).Words, "untrusted": "title and text are what was written into this record: " + chat.Untrusted}
 }
 
 // searchPublished is the search a person has, over what is published:
@@ -165,15 +170,17 @@ func (s *Server) searchPublished(ctx context.Context, types map[string]bool, que
 		return nil, errors.New(search.Refusal(only, kinds))
 	}
 	var hits []search.Hit
+	w := s.writers()
 	for _, h := range search.FindAll(s.App.Store, s.App.Types, query) {
-		if types[h.Type] && s.shows(ctx, h, search.Words(query)) {
+		if types[h.Type] && s.shows(ctx, h, search.Words(query), w) {
 			hits = append(hits, h)
 		}
 	}
 	res := search.Narrow(hits, query, only, page)
 	results := []map[string]any{}
 	for _, h := range res.Hits {
-		results = append(results, map[string]any{"id": h.Type + "/" + h.ID, "title": h.Title, "url": siteOf(ctx) + h.Href})
+		results = append(results, map[string]any{"id": h.Type + "/" + h.ID, "title": h.Title, "url": siteOf(ctx) + h.Href,
+			"written_by": w.OfID(h.Type, h.ID).Words, "untrusted": "the title is what was written into this record: " + chat.Untrusted})
 	}
 	out := map[string]any{"results": results, "total": res.Total, "counts": res.Counts, "found": res.Found,
 		"page": res.Page, "pages": res.Pages, "said": res.Said()}
@@ -186,12 +193,12 @@ func (s *Server) searchPublished(ctx context.Context, types map[string]bool, que
 // shows says whether the words were found in what the internet may read
 // of a record, its document: a field hidden from the pages is searched for
 // its person, but it does not answer for a stranger.
-func (s *Server) shows(ctx context.Context, h search.Hit, words []string) bool {
+func (s *Server) shows(ctx context.Context, h search.Hit, words []string, w *chat.Writers) bool {
 	r, err := s.App.Store.Get(h.Type, h.ID)
 	if err != nil {
 		return false
 	}
-	doc := s.document(ctx, h.Type, r)
+	doc := s.document(ctx, h.Type, r, w)
 	text := fmt.Sprint(doc["title"], " ", doc["text"])
 	for _, w := range words {
 		if len(search.Spans(text, []string{w})) == 0 {
@@ -211,7 +218,13 @@ func (s *Server) fetchPublished(ctx context.Context, types map[string]bool, id s
 	if err != nil {
 		return nil, fmt.Errorf("there is no published document %q; use an id from search", id)
 	}
-	return s.document(ctx, typ, r), nil
+	return s.document(ctx, typ, r, s.writers()), nil
+}
+
+// writers is who wrote what, as the internet may be told it: without
+// people's names.
+func (s *Server) writers() *chat.Writers {
+	return s.App.Chat.For(chat.Visitor{Access: chat.Public}).Writers()
 }
 
 // onlyPublished is a tool as the internet is offered it: where it names
