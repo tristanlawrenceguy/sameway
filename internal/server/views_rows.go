@@ -28,10 +28,13 @@ func (s *Server) rows(t *schema.Type, recs []*store.Record, now time.Time) strin
 		}
 	}
 	var b strings.Builder
+	// Told apart across the whole listing, every group of it: an agent or
+	// a person moving by controls meets them all on one page.
+	told := s.recordsApart(t, recs)
 	if dated == "" {
 		fmt.Fprintf(&b, `<ol class="sw-plain sw-rows" data-dot="%d" aria-label="%s">`, s.dotOf(t.Name), template.HTMLEscapeString(plural(t.Name)))
 		for _, rec := range recs {
-			b.WriteString(s.row(t, rec, 2))
+			b.WriteString(s.row(t, rec, 2, told[rec.ID]))
 		}
 		b.WriteString("</ol>")
 		return b.String()
@@ -53,7 +56,7 @@ func (s *Server) rows(t *schema.Type, recs []*store.Record, now time.Time) strin
 		fmt.Fprintf(&b, `<h2 class="sw-group">%s <span class="sw-group__count">%d</span>%s</h2><ol class="sw-plain sw-rows" data-dot="%d" aria-label="%s, %s">`,
 			name, len(list), span, s.dotOf(t.Name), template.HTMLEscapeString(plural(t.Name)), strings.ToLower(name))
 		for _, rec := range list {
-			b.WriteString(s.row(t, rec, 3))
+			b.WriteString(s.row(t, rec, 3, told[rec.ID]))
 		}
 		b.WriteString("</ol>")
 	}
@@ -62,12 +65,15 @@ func (s *Server) rows(t *schema.Type, recs []*store.Record, now time.Time) strin
 
 // row is one record: its box, its title, its facts. Only a primary toggle
 // (done/completed/complete/finished) gets a checkbox in the row; secondary
-// settings like pinned or show are shown as badges instead.
-func (s *Server) row(t *schema.Type, rec *store.Record, level int) string {
+// settings like pinned or show are shown as badges instead. told is what
+// tells it from another row with its title, read after the title by its
+// link and its box, or "".
+func (s *Server) row(t *schema.Type, rec *store.Record, level int, told string) string {
 	class, box := "sw-row", ""
 	if doneField(t) != nil {
 		if props, ok := markOf(t, rec); ok {
 			props["quiet"] = true
+			props["context"] = withContext(str(props["context"], ""), told)
 			box = string(s.component("mark", props))
 			if on, _ := props["checked"].(bool); on {
 				class += " sw-row--done"
@@ -81,8 +87,12 @@ func (s *Server) row(t *schema.Type, rec *store.Record, level int) string {
 	if short := trim.Title(full); short != full {
 		whole = ` title="` + template.HTMLEscapeString(full) + `"`
 	}
-	return fmt.Sprintf(`<li class="%s">%s<h%d class="sw-row__title"><a class="sw-row__link" href="/t/%s/%s"%s>%s</a></h%d><p class="sw-row__meta">%s</p></li>`,
-		class, box, level, t.Name, rec.ID, whole, template.HTMLEscapeString(trim.Title(full)), level, s.facts(t, rec, factOpts{Boxed: box != "", Row: true}))
+	apartHTML := ""
+	if told != "" {
+		apartHTML = `<span class="sw-visually-hidden"> (` + template.HTMLEscapeString(told) + `)</span>`
+	}
+	return fmt.Sprintf(`<li class="%s">%s<h%d class="sw-row__title"><a class="sw-row__link" href="/t/%s/%s"%s>%s%s</a></h%d><p class="sw-row__meta">%s</p></li>`,
+		class, box, level, t.Name, rec.ID, whole, template.HTMLEscapeString(trim.Title(full)), apartHTML, level, s.facts(t, rec, factOpts{Boxed: box != "", Row: true}))
 }
 
 // whenGroup says where a record sits in time: done first, because a done

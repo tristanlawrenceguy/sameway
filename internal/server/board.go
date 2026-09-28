@@ -75,10 +75,13 @@ func (s *Server) addMove(item map[string]any, t *schema.Type, f schema.Field, re
 	}
 	value, _ := rec.Fields[f.Name].(string)
 	actions, _ := item["actions"].([]any)
+	// Every card's choice is named after its card, as its Move is: a board
+	// is a column of selects all called Status otherwise.
+	title := withContext(s.title(t, rec), str(item["context"], ""))
 	item["actions"] = append(actions, map[string]any{"component": "move", "props": map[string]any{
-		"action": "/t/" + t.Name + "/" + rec.ID + "/props", "title": s.title(t, rec), "back": at,
+		"action": "/t/" + t.Name + "/" + rec.ID + "/props", "title": title, "back": at,
 		"select": map[string]any{
-			"id": at + "-move", "name": "prop-" + f.Name, "label": fieldLabel(f),
+			"id": at + "-move", "name": "prop-" + f.Name, "label": fieldLabel(f), "context": title,
 			"as": "dropdown", "value": value, "options": options,
 		},
 	}})

@@ -93,8 +93,10 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 			// the pages keep the kind, as the kinds keep the words.
 			pg = pageOf(r, len(hits), searchPageSize)
 			fmt.Fprintf(&b, `<ol class="sw-stack" start="%d" aria-label="Results for %s">`, pg.lo+1, template.HTMLEscapeString(q))
-			for _, h := range hits[pg.lo:pg.hi] {
-				b.WriteString(s.hitItem(h, words))
+			shown := hits[pg.lo:pg.hi]
+			told := s.hitsApart(shown)
+			for i, h := range shown {
+				b.WriteString(s.hitItem(h, words, told[i]))
 			}
 			b.WriteString("</ol>")
 			b.WriteString(string(s.pageNav(r, pg, "Pages of results")))
@@ -123,8 +125,9 @@ func searchForm(s *Server, label, hint, q, only string) string {
 }
 
 // hitItem is one result: its title with the words marked, what kind it is,
-// and the words around the match.
-func (s *Server) hitItem(h search.Hit, words []string) string {
+// and the words around the match. told tells it from another result with
+// its title and kind, or is "".
+func (s *Server) hitItem(h search.Hit, words []string, told string) string {
 	typeEsc := template.HTMLEscapeString(capitalize(h.Type))
 	bodyHTML := ""
 	if snippet := string(marked(h.Snippet, words)); snippet != "" {
@@ -135,12 +138,12 @@ func (s *Server) hitItem(h search.Hit, words []string) string {
 	card := fmt.Sprintf(
 		`<article class="sw-card" data-component="card">`+
 			`<h3 class="sw-card__title" data-prop="title">`+
-			`<a href="%s">%s<span class="sw-visually-hidden"> — %s</span></a>`+
+			`<a href="%s">%s<span class="sw-visually-hidden"> — %s%s</span></a>`+
 			`</h3>`+
 			`<p class="sw-card__meta">%s</p>`+
 			`%s`+
 			`</article>`,
-		template.HTMLEscapeString(h.Href), marked(h.Title, words), typeEsc, typeEsc, bodyHTML,
+		template.HTMLEscapeString(h.Href), marked(h.Title, words), typeEsc, template.HTMLEscapeString(withContext("", told)), typeEsc, bodyHTML,
 	)
 	return fmt.Sprintf(`<li class="sw-dotted" data-dot="%d">%s</li>`, s.dotOf(h.Type), card)
 }

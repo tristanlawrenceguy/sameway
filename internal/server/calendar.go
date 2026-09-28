@@ -76,7 +76,7 @@ func (s *Server) resolveCalendar(props map[string]any, blockID string) map[strin
 		}
 	}
 	if typeName == "all" {
-		out["events"] = s.everyEvent(now, month)
+		out["events"] = eventsApart(s.everyEvent(now, month), month)
 		return out
 	}
 	// Set up wrong, it says so, rather than show an empty month, which
@@ -108,7 +108,7 @@ func (s *Server) resolveCalendar(props map[string]any, blockID string) map[strin
 		events = append(events, ev)
 		events = append(events, s.repeatedIn(t, rec, field, ev, month)...)
 	}
-	out["events"] = events
+	out["events"] = eventsApart(events, month)
 	out["all"] = listPath(t.Name, strs(props["where"]), field)
 	return out
 }

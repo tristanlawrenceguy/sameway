@@ -95,8 +95,12 @@ func (s *Server) resolveCollectionAt(props map[string]any, block string, at *col
 		}
 	}
 	items := make([]any, 0, len(recs))
+	told := s.recordsApart(t, recs)
 	for _, rec := range recs {
 		item := map[string]any{"title": s.title(t, rec), "href": "/t/" + t.Name + "/" + rec.ID}
+		if told[rec.ID] != "" {
+			item["context"] = told[rec.ID]
+		}
 		if len(show) > 0 {
 			item["fields"] = s.fieldsOf(t, rec, show)
 		} else if meta := metaOf(t, rec); meta != "" && by == nil {
@@ -108,6 +112,7 @@ func (s *Server) resolveCollectionAt(props map[string]any, block string, at *col
 			}
 		}
 		if actions := markActions(t, rec); actions != nil {
+			markApart(actions, told[rec.ID])
 			item["actions"] = actions
 			out["pressable"] = true
 		}
