@@ -36,7 +36,7 @@ func (s *Server) resolveRecord(props map[string]any) (map[string]any, string) {
 		out["listHref"], out["listLabel"] = "/t/"+t.Name, "See all "+plural(t.Name)
 		return out, ""
 	}
-	out["kind"] = capitalize(label(t.Name))
+	out["kind"] = capitalize(schema.Words(t.Name))
 	out["title"] = s.title(t, rec)
 	out["titleProp"] = t.Title
 	var fields []any

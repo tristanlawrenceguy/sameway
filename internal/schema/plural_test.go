@@ -12,9 +12,20 @@ func TestPlural(t *testing.T) {
 		"box": "boxes", "match": "matches", "wish": "wishes",
 		"person": "people", "child": "children", "mouse": "mice",
 		"news": "news", "series": "series", "": "",
+		"test_type": "test types", "reading_entry": "reading entries",
 	} {
 		if got := Plural(in); got != want {
 			t.Errorf("Plural(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
+// TestWords: a type is stored with underscores and said with spaces,
+// in the one place every page asks (backlog 0544).
+func TestWords(t *testing.T) {
+	for in, want := range map[string]string{"test_type": "test type", "note": "note", "a_b_c": "a b c", "": ""} {
+		if got := Words(in); got != want {
+			t.Errorf("Words(%q) = %q, want %q", in, got, want)
 		}
 	}
 }

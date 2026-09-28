@@ -63,7 +63,7 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 			"action": map[string]any{"href": "/t/" + t.Name, "label": "see all " + plural(t.Name)},
 		})))
 	} else if len(recs) == 0 {
-		prompt := "Create a " + t.Name + "."
+		prompt := "Create a " + schema.Words(t.Name) + "."
 		b.WriteString(string(s.component("empty", map[string]any{
 			"title": "No " + plural(t.Name) + " yet", "message": "Add one yourself, or", "action": map[string]any{"href": "/chat?prompt=" + url.PathEscape(prompt), "label": "ask the assistant"},
 		})))
@@ -134,7 +134,9 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	if added := r.URL.Query().Get("added"); added != "" && rec.UpdatedAt.Equal(rec.CreatedAt) {
 		discard = ` data-discard="/t/` + t.Name + `/` + rec.ID + `/discard?added=` + template.URLQueryEscaper(added) + `"`
 	}
-	fmt.Fprintf(&b, `<div class="sw-dl-block" data-block-id="%s" data-edit-action="/t/%s/%s/props"%s%s>`, rec.ID, t.Name, rec.ID, langOf(rec), discard)
+	// The Edit button the inline editor adds is named for what it edits,
+	// the record by its title, as a block on the canvas is (08-edit.js).
+	fmt.Fprintf(&b, `<div class="sw-dl-block" data-block-id="%s" data-block-label="%s" data-edit-action="/t/%s/%s/props"%s%s>`, rec.ID, template.HTMLEscapeString(trim.Title(s.title(t, rec))), t.Name, rec.ID, langOf(rec), discard)
 	// The record's text comes first and reads as a document, under the
 	// title and before its other fields; structured text keeps what was
 	// written on the element so the inline editor edits the source.
@@ -156,23 +158,16 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	// already said, so the page says each thing once; ?show=fields brings
 	// the whole record back except for those already-in-chips fields.
 	head := headFields(t, rec)
-
-	// For test_type records with no record values beyond title and chips,
-	// show the schema's field definitions instead of leaving the content area blank.
-	if t.Name == "test_type" && hasNoRecordValues(t, rec) {
-		b.WriteString(string(s.component("fields", map[string]any{"items": s.schemaFields(t)})))
-	} else {
-		var items []any
-		for _, f := range t.Shown() {
-			val := display(f, rec.Fields[f.Name])
-			if val == "" || f.Name == textField || head[f.Name] {
-				continue
-			}
-			items = append(items, s.fieldItem(t, f, rec.Fields[f.Name], val))
+	var items []any
+	for _, f := range t.Shown() {
+		val := display(f, rec.Fields[f.Name])
+		if val == "" || f.Name == textField || head[f.Name] || noGoal(t.Name, f.Name, rec.Fields[f.Name]) {
+			continue
 		}
-		if len(items) > 0 {
-			b.WriteString(string(s.component("fields", map[string]any{"items": items})))
-		}
+		items = append(items, s.fieldItem(t, f, rec.Fields[f.Name], val))
+	}
+	if len(items) > 0 {
+		b.WriteString(string(s.component("fields", map[string]any{"items": items})))
 	}
 	// The way back out, when the address is what opened the whole record.
 	b.WriteString(s.fewer("/t/"+t.Name+"/"+rec.ID, FieldsPart, "fields of "+s.title(t, rec), here))
@@ -192,7 +187,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	// The record's one press, done or pinned or whatever its yes-or-no
 	// field is, sits under the title; Delete keeps to the quiet bar.
 	fmt.Fprintf(&b, `<div class="sw-bar sw-quiet"><form method="post" action="/t/%s/%s/delete">%s</form></div>`,
-		t.Name, rec.ID, s.component("button", map[string]any{"label": "Delete " + t.Name, "type": "submit", "variant": "quiet"}))
+		t.Name, rec.ID, s.component("button", map[string]any{"label": "Delete " + schema.Words(t.Name), "type": "submit", "variant": "quiet"}))
 	b.WriteString(s.editFields(t, rec))
 	b.WriteString(`</div>`)
 	// Recent activity on this page, so a deletion can be taken back where the person lands.

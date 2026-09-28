@@ -263,7 +263,7 @@ func (s *Server) fail(w http.ResponseWriter, err error) {
 }
 
 func plural(name string) string {
-	return schema.Plural(strings.ReplaceAll(name, "_", " "))
+	return schema.Plural(name)
 }
 
 // listed says whether a list belongs in the sidebar: one with something in
