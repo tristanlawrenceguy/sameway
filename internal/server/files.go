@@ -115,6 +115,8 @@ func (s *Server) readNow(id, name string, data []byte) {
 	case res.Image:
 		fields["note"] = "An image has no text of its own; its description is what anyone who cannot see it gets."
 	case res.Audio:
+		// A .webm is heard or seen; what is in it says which.
+		fields["kind"] = convert.KindOf(name, s.headOf(id))
 		fields["note"] = "A recording's text is its transcript; there is none yet."
 	default:
 		fields["text"] = res.Markdown
@@ -155,7 +157,8 @@ func (s *Server) serveFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	name, _ := rec.Fields["name"].(string)
-	ct := convert.AudioType(stored)
+	kind, _ := rec.Fields["kind"].(string)
+	ct := convert.MediaType(stored, kind)
 	if ct == "" {
 		ct = mime.TypeByExtension(filepath.Ext(stored))
 	}
@@ -183,11 +186,11 @@ func (s *Server) fileExtras(r *http.Request, rec *store.Record) string {
 		}
 		b.WriteString(string(s.component("image", s.pictureOf(rec, alt))))
 	}
-	audio := rec.Fields["kind"] == "audio"
+	audio := isRecording(rec)
 	if audio {
 		props := s.recordingOf(rec)
 		b.WriteString(s.speechOffer(r, rec, props))
-		b.WriteString(string(s.component("audio", props)))
+		b.WriteString(string(s.component("media", props)))
 	}
 	// Reading a file through a converter says so, and says how it ended:
 	// the page follows when it does (convertLater calls Changed).
