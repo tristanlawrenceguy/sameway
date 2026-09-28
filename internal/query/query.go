@@ -232,18 +232,30 @@ func ordered(cmp int, op string) bool {
 }
 
 // Sort orders records by a field, "-field" for the largest or newest
-// first; created_at and updated_at are the record's own times.
+// first; created_at and updated_at are the record's own times. Those with
+// nothing in the field come last either way: "due soonest first" starts
+// with what is due, not with what has no day.
 func Sort(t *schema.Type, recs []*store.Record, order string) {
 	desc := strings.HasPrefix(order, "-")
 	field := strings.TrimPrefix(order, "-")
 	kind := kindOf(t, field)
 	sort.SliceStable(recs, func(i, j int) bool {
+		if a, b := blank(valueOf(recs[i], field)), blank(valueOf(recs[j], field)); a != b {
+			return b
+		}
 		less := lessThan(kind, valueOf(recs[i], field), valueOf(recs[j], field))
 		if desc {
 			return lessThan(kind, valueOf(recs[j], field), valueOf(recs[i], field))
 		}
 		return less
 	})
+}
+
+// blank is a field with nothing in it: not a false or a zero, which say
+// something.
+func blank(v any) bool {
+	s, isString := v.(string)
+	return v == nil || isString && strings.TrimSpace(s) == ""
 }
 
 func lessThan(kind string, a, b any) bool {
