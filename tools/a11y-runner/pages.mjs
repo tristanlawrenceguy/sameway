@@ -265,7 +265,7 @@ const created = await fetch(base + "/api/note", {
 check(created.status === 201, `agent: POST /api/note returns 201 (got ${created.status})`);
 const rec = await created.json();
 
-for (const path of ["/", "/chat", "/design", "/search", "/activity", "/t/note", `/t/note/${rec.id}`]) {
+for (const path of ["/", "/chat", "/design", "/search", "/search?q=agent", "/search?q=agent&type=note", "/search?type=note", "/activity", "/t/note", `/t/note/${rec.id}`]) {
   await page.goto(base + path);
   const names = await page.locator("[data-component]").evaluateAll((els) => els.map((e) => e.dataset.component));
   for (const n of new Set(names)) check(known.has(n), `${path}: renders component ${n} that /api/describe does not list`);
