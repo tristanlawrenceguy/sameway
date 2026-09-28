@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/search"
 )
@@ -110,8 +111,19 @@ func (s *Server) apiSearch(w http.ResponseWriter, r *http.Request) {
 	}
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	res := search.Narrow(search.FindAll(s.app.Store, s.app.Types, q), q, only, page)
-	out := map[string]any{"query": res.Query, "count": len(res.Hits), "hits": res.Hits, "total": res.Total, "counts": res.Counts,
-		"found": res.Found, "page": res.Page, "pages": res.Pages, "said": res.Said()}
+	// Each hit as it always was, with who wrote it beside it.
+	type written struct {
+		search.Hit
+		WrittenBy string `json:"written_by"`
+	}
+	writers := s.app.Chat.Writers()
+	hits := make([]written, 0, len(res.Hits))
+	for _, h := range res.Hits {
+		hits = append(hits, written{h, writers.OfID(h.Type, h.ID).Words})
+	}
+	out := map[string]any{"query": res.Query, "count": len(res.Hits), "hits": hits, "total": res.Total, "counts": res.Counts,
+		"found": res.Found, "page": res.Page, "pages": res.Pages, "said": res.Said(),
+		"untrusted": "each hit's title and snippet were written by its written_by: " + chat.Untrusted}
 	if only != "" {
 		out["type"] = only
 	}
