@@ -26,7 +26,11 @@ var synonyms = map[string][]string{
 	"at":           {"date", "when", "time", "date time", "datetime", "timestamp", "sent", "received"},
 	"kind":         {"type", "channel", "call type"},
 	"tags":         {"tag", "labels", "label", "groups", "categories"},
-	"due":          {"due date", "deadline"},
+	"due":          {"due date", "deadline", "starts"},
+	"starts":       {"start", "start date", "begins", "from", "dtstart"},
+	"ends":         {"end", "end date", "finishes", "until", "dtend"},
+	"where":        {"location", "place", "venue", "room"},
+	"repeat":       {"rrule", "recurrence", "repeats"},
 	"done":         {"completed", "finished"},
 }
 
@@ -108,7 +112,14 @@ func (r Report) String() string {
 // picks out, made when there is none.
 func Import(st *store.Store, t *schema.Type, tb *Table, m Mapping) Report {
 	var r Report
+	// A row already here is added again only by mistake: known by its
+	// email, or by the id its calendar gave it.
 	emailField := fieldOfType(t, "email")
+	if emailField == "" {
+		if f, ok := t.Field("uid"); ok && f.Type == "string" {
+			emailField = "uid"
+		}
+	}
 	existing := map[string]bool{}
 	if emailField != "" {
 		if recs, err := st.List(t.Name, store.ListOptions{}); err == nil {
