@@ -130,3 +130,7 @@ func filepathExt(p string) string {
 	}
 	return ""
 }
+
+// RefTitle is what a ref points at, by its title, for the command line's
+// exports.
+func (s *Server) RefTitle(f schema.Field, id string) string { return s.refTitle(f, id) }
