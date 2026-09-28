@@ -32,6 +32,7 @@ type Presence struct {
 	Login string `json:"login"`
 	Name  string `json:"name"`
 	Place string `json:"place,omitempty"` // what they are looking at, by name
+	Path  string `json:"path,omitempty"`  // and its address, to tell who shares a page
 }
 
 // Answer takes what a peer sent and answers with what it lacks. It says
