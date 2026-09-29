@@ -80,7 +80,7 @@ func (s *Service) addField(typeName string, d fieldDef) toolResult {
 	}
 	return toolResult{
 		text:   fmt.Sprintf("added %s (%s) to %s; every %s has it now%s, and its page at /t/%s shows it", d.Name, d.Kind, t.Name, t.Name, gets, t.Name),
-		change: &Change{Action: "added", Component: "field", Detail: d.Name + " on " + t.Name, Href: "/t/" + t.Name},
+		change: &Change{Action: "added", Component: "field", Detail: d.Name + " on " + schema.Words(t.Name), Href: "/t/" + t.Name},
 	}
 }
 
@@ -98,7 +98,7 @@ func (s *Service) addType(name, description string, defs []fieldDef) toolResult 
 	}
 	return toolResult{
 		text:   fmt.Sprintf("made the content type %s with fields %s; its records live at /t/%s, and create_record makes one", made.Name, fieldNames(made), made.Name),
-		change: &Change{Action: "added", Component: "type", Detail: made.Name, Href: "/t/" + made.Name},
+		change: &Change{Action: "added", Component: "type", Detail: schema.Words(made.Name), Href: "/t/" + made.Name},
 	}
 }
 

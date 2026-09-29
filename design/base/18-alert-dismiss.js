@@ -29,7 +29,8 @@
     var outcome = document.getElementById("outcome");
     if (!outcome) return;
     setTimeout(function () {
-      if (document.querySelector(".sw-inline-form")) return;
+      // Told where the person came back to (23-back.js), it keeps its place.
+      if (document.querySelector(".sw-inline-form") || outcome.hasAttribute("data-outcome-told")) return;
       // Problems with a form are heard as their list, each leading to its field.
       (outcome.querySelector("[data-component=error-summary]") || outcome).focus();
     }, 50);

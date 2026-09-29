@@ -48,18 +48,22 @@ func TestACollectionAsABoardHasAColumnPerChoice(t *testing.T) {
 		t.Error("each card has a Move button named with the card")
 	}
 
-	// Move sends the field like any edit, comes back to the card and says
-	// where it went, with an Undo.
+	// Move sends the field like any edit, comes back to its own Move
+	// button, now in the card's new column, and says where it went, with
+	// an Undo.
 	house := ids["House"]
-	head, _, found := strings.Cut(page, "-"+house+`" tabindex="-1"`)
+	head, _, found := strings.Cut(page, "-"+house+`-go">Move<span class="sw-visually-hidden"> House</span></button>`)
 	if !found {
-		t.Fatal("each card has an id to come back to")
+		t.Fatalf("House's Move button has an id to come back to: %.3000s", page)
 	}
-	at := head[strings.LastIndex(head, `id="`)+len(`id="`):] + "-" + house
+	at := head[strings.LastIndex(head, `id="`)+len(`id="`):] + "-" + house + "-go"
+	if !strings.Contains(page, `<input type="hidden" name="back" value="`+at+`">`) {
+		t.Errorf("the form says to come back to its Move button, %q", at)
+	}
 	res := doWithReferer(t, h, "/t/project/"+house+"/props", url.Values{"prop-status": {"done"}, "back": {at}}, "http://example.com/")
 	back, loc := landed(t, h, res)
 	if loc != "/#"+at {
-		t.Errorf("the move comes back to the card, %q, not %q", "/#"+at, loc)
+		t.Errorf("the move comes back to the Move button, %q, not %q", "/#"+at, loc)
 	}
 	next := back.Body.String()
 	if !strings.Contains(next, "House moved from Active to Done.") || !strings.Contains(next, "Undo") {
@@ -67,6 +71,17 @@ func TestACollectionAsABoardHasAColumnPerChoice(t *testing.T) {
 	}
 	if !strings.Contains(next, `Active <span class="sw-collection__count">(1)</span>`) {
 		t.Error("Active now holds Shed alone")
+	}
+	if done := strings.Index(next, `Done <span class="sw-collection__count">(2)</span>`); done < 0 || strings.Index(next, `id="`+at+`"`) < done {
+		t.Error("the Move button come back to is in the Done column")
+	}
+
+	// A move to where it already is saves nothing, so there is nothing to
+	// undo, and says so.
+	res = doWithReferer(t, h, "/t/project/"+house+"/props", url.Values{"prop-status": {"done"}, "back": {at}}, "http://example.com/")
+	same, _ := landed(t, h, res)
+	if next := same.Body.String(); !strings.Contains(next, "Status is already Done. Nothing changed.") || strings.Contains(next, "sw-outcome__undo") {
+		t.Errorf("a move to where it is says so, with no Undo: %.3000s", next)
 	}
 	bad := doWithReferer(t, h, "/t/project/"+house+"/props", url.Values{"prop-status": {"active"}, "back": {`x"><script>`}}, "http://example.com/")
 	if loc := bad.Header().Get("Location"); strings.Contains(loc, "#") {

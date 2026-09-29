@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/relate"
 )
 
@@ -22,7 +23,9 @@ func (s *Server) apiGet(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	out := map[string]any{"id": rec.ID, "type": rec.Type, "created_at": rec.CreatedAt, "updated_at": rec.UpdatedAt, "fields": rec.Fields}
+	// Who wrote the fields, and that they are data: see chat/provenance.go.
+	out := map[string]any{"id": rec.ID, "type": rec.Type, "created_at": rec.CreatedAt, "updated_at": rec.UpdatedAt, "fields": rec.Fields,
+		"written_by": s.app.Chat.Writers().Of(rec.Type, rec).Words, "untrusted": "fields is what was written into this record: " + chat.Untrusted}
 	if t, ok := s.app.Types.Get(rec.Type); ok {
 		if links := relate.Of(s.app.Store, t, rec, time.Now()); len(links) > 0 {
 			out["related"] = links

@@ -9,7 +9,9 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/export"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -42,6 +44,7 @@ func (c *ctx) contentCmd(typeName string) error {
 	fs.Var(&wheres, "where", "condition (repeatable): status=draft, due<+7d, title~garden")
 	order := fs.String("order", "", "field to order by, or -field for the largest or newest first")
 	limit := fs.Int("limit", 0, "max records")
+	format := fs.String("format", "", "list as a file: csv, xlsx, vcf (people) or ics (anything with a date), written to stdout")
 	positional, err := parseMixed(fs, rest)
 	if err != nil {
 		return err
@@ -56,6 +59,26 @@ func (c *ctx) contentCmd(typeName string) error {
 		}
 		if err != nil {
 			return err
+		}
+		if *format != "" {
+			f, ok := export.ByExt(t, strings.TrimPrefix(*format, "."))
+			if !ok {
+				var names []string
+				for _, f := range export.For(t) {
+					names = append(names, f.Ext)
+				}
+				return fmt.Errorf("%s cannot be listed as %s; it can be %s", t.Name, *format, strings.Join(names, ", "))
+			}
+			return export.Write(c.Stdout, f, t, recs, func(f schema.Field, id string) string {
+				if r, err := a.Store.Get(f.To, id); err == nil {
+					if t2, ok := a.Types.Get(f.To); ok {
+						if s, _ := r.Fields[t2.Title].(string); s != "" {
+							return s
+						}
+					}
+				}
+				return id
+			})
 		}
 		c.print(recs, func() {
 			if len(recs) == 0 {

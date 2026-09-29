@@ -71,7 +71,7 @@ func titleOf(t *schema.Type, rec *store.Record) string {
 			return trim.Title(s)
 		}
 	}
-	return t.Name + " " + rec.ID
+	return schema.Words(t.Name) + " " + rec.ID
 }
 
 // fieldLabel is what a person calls a field: the schema's label, else its

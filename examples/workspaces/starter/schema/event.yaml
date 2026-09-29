@@ -1,0 +1,32 @@
+# Something that happens at a time: a meeting, a birthday, a train.
+# Provided with every workspace, so a calendar brought in from Google,
+# Outlook or Apple (.ics) has somewhere to go, and it shows on the calendar.
+name: event
+description: Something that happens at a time, such as a meeting or a birthday, with when and where; made here, or brought in from a calendar (.ics).
+title: title
+provided: true
+fields:
+  title:
+    type: string
+    required: true
+    maxLength: 200
+  starts:
+    type: datetime
+    description: When it starts; a day alone for one that lasts all day.
+  ends:
+    type: datetime
+    description: When it ends, when that is known.
+  where:
+    type: string
+    label: Where
+    description: Where it is, or the link to join it.
+  repeat:
+    type: repeat
+    description: How often it happens again, in words, like every Monday or every year; empty for once.
+  notes:
+    type: markdown
+    description: Anything else about it.
+  uid:
+    type: string
+    hidden: true
+    description: The calendar's own name for it, so bringing the same calendar in again adds nothing twice.
