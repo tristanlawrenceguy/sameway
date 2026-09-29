@@ -14,6 +14,15 @@ import (
 // Saving from a copy that has gone out of date (see chat/versions.go), for
 // the two who save: a person's page and an agent's request.
 
+// editing is what a record says to the inline editor wherever it is
+// shown, its own page or a block on the canvas, which are the same record
+// drawn twice: where a save goes, what it showed (below), and its
+// language. One function, so the two cannot drift apart again: the
+// canvas once had where to save and nothing else.
+func editing(t *schema.Type, rec *store.Record) string {
+	return versionAttrs(rec) + ` data-edit-action="/t/` + t.Name + `/` + rec.ID + `/props"` + langOf(rec)
+}
+
 // versionAttrs is what a record's page says it showed: the version, and
 // a fingerprint of each field. The editor sends both back with a save
 // (08-edit.js).

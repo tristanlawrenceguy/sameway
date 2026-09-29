@@ -115,3 +115,20 @@ func TestAnAgentsChangeFromAnOldVersionIsRefused(t *testing.T) {
 		t.Errorf("the assistant's change from an old version is not written: %v", rec.Fields["title"])
 	}
 }
+
+// A record on the canvas is the record drawn again: it tells the editor
+// what its own page does, where a save goes, what it showed and its
+// language, so an edit made there loses nobody's work either.
+func TestARecordOnTheCanvasEditsAsItsPageDoes(t *testing.T) {
+	_, h := newApp(t)
+	var made map[string]any
+	decode(t, postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Einkauf", "language": "de"}), &made)
+	id := made["id"].(string)
+	postJSON(t, h, http.MethodPost, "/api/block", map[string]any{"component": "record", "props": map[string]any{"type": "note", "record": id}})
+	editing := regexp.MustCompile(`data-version="[^"]*" data-was="[^"]*" data-edit-action="/t/note/` + id + `/props" lang="de"`)
+	page, canvas := get(t, h, "/t/note/"+id).Body.String(), get(t, h, "/").Body.String()
+	onPage, onCanvas := editing.FindString(page), editing.FindString(canvas)
+	if onPage == "" || onPage != onCanvas {
+		t.Errorf("the canvas says what the page says:\npage:   %q\ncanvas: %q", onPage, onCanvas)
+	}
+}
