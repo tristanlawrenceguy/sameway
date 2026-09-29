@@ -97,3 +97,14 @@ func (a *App) AddType(t *schema.Type) (*schema.Type, error) {
 	a.Store.StampSchema(parsed)
 	return parsed, nil
 }
+
+// ownersTypes are the kinds the schema says are the owner's alone.
+func ownersTypes(types *schema.Set) []string {
+	var out []string
+	for _, t := range types.Types {
+		if t.Owners {
+			out = append(out, t.Name)
+		}
+	}
+	return out
+}

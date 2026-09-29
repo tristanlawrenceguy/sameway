@@ -51,12 +51,6 @@ func (s *Server) recordProps(w http.ResponseWriter, r *http.Request) {
 		s.refused(w, r, t, err, detail)
 		return
 	}
-	for _, f := range t.Fields {
-		if _, sent := fields[f.Name]; sent && f.ReadOnly {
-			s.refused(w, r, t, &schema.ValidationError{Problems: map[string]string{f.Name: "is kept by Sameway and cannot be changed by hand"}}, detail)
-			return
-		}
-	}
 
 	// No fields provided — nothing to say.
 	if len(fields) == 0 {
@@ -96,7 +90,11 @@ func (s *Server) recordProps(w http.ResponseWriter, r *http.Request) {
 	// log with what it was, so it glows where it shows and can be undone.
 	saved, undo, err := chat.WriteAs(s.app.Store, s.who(r), "updated", t.Name, rec.ID, clean)
 	if err != nil {
-		s.failed(w, r, "Not saved", err, detail)
+		if _, why := err.(*schema.ValidationError); why {
+			s.refused(w, r, t, err, detail)
+		} else {
+			s.failed(w, r, "Not saved", err, detail)
+		}
 		return
 	}
 	o := s.savedText(s.savedWords(t, rec, fields, saved.Fields, undo), t, rec, fields, saved.Fields)

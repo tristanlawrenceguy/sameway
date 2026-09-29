@@ -51,12 +51,7 @@ func (c *ctx) contentCmd(typeName string) error {
 	}
 	switch verb {
 	case "list":
-		var recs []*store.Record
-		if len(wheres) > 0 || strings.HasPrefix(*order, "-") {
-			recs, err = query.Filter(a.Store, t, wheres, *order, *limit, time.Now())
-		} else {
-			recs, err = a.Store.List(t.Name, store.ListOptions{OrderBy: *order, Limit: *limit})
-		}
+		recs, err := query.Filter(a.Store, t, wheres, *order, *limit, time.Now())
 		if err != nil {
 			return err
 		}
@@ -102,9 +97,6 @@ func (c *ctx) contentCmd(typeName string) error {
 		if err != nil {
 			return err
 		}
-		if t.Name == chat.ActivityType {
-			return errKeptLog
-		}
 		rec, _, err := chat.WriteAs(a.Store, cliWho, "created", t.Name, "", fields)
 		if err != nil {
 			return err
@@ -118,9 +110,6 @@ func (c *ctx) contentCmd(typeName string) error {
 		if err != nil {
 			return err
 		}
-		if t.Name == chat.ActivityType {
-			return errKeptLog
-		}
 		rec, _, err := chat.WriteAs(a.Store, cliWho, "updated", t.Name, positional[0], fields)
 		if err != nil {
 			return err
@@ -129,9 +118,6 @@ func (c *ctx) contentCmd(typeName string) error {
 	case "delete":
 		if len(positional) != 1 {
 			return fmt.Errorf("usage: sameway %s delete <id>", t.Name)
-		}
-		if t.Name == chat.ActivityType {
-			return errKeptLog
 		}
 		if _, _, err := chat.WriteAs(a.Store, cliWho, "deleted", t.Name, positional[0], nil); err != nil {
 			return err
@@ -182,7 +168,3 @@ func printRecord(c *ctx, r *store.Record) {
 		fmt.Fprintf(c.Stdout, "%s: %v\n", k, v)
 	}
 }
-
-// errKeptLog is the activity log refusing a hand: it is what makes every
-// other change reversible.
-var errKeptLog = errors.New("the activity log is kept by Sameway and cannot be changed; to take a change back, undo it from the activity page")

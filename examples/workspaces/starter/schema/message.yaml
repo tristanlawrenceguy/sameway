@@ -2,6 +2,7 @@
 name: message
 description: A message in the conversation between the person and the assistant.
 internal: true
+owners: true
 title: content
 fields:
   role:

@@ -5,6 +5,7 @@
 name: proposal
 description: A change the assistant suggested and has not made.
 internal: true
+owners: true
 title: summary
 fields:
   summary:

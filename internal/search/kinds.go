@@ -19,7 +19,7 @@ import (
 // canvas block, is not, and one the person has hidden is not either.
 func Searchable(types *schema.Set, name string) (*schema.Type, bool) {
 	t, ok := types.Get(name)
-	if !ok || t.Internal || t.Hidden || Skip[name] {
+	if !ok || !t.Content() || Skip[name] {
 		return nil, false
 	}
 	return t, true

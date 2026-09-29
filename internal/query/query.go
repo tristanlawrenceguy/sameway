@@ -101,7 +101,7 @@ func Filter(st *store.Store, t *schema.Type, where []string, order string, limit
 		titles[key] = title
 		return title
 	}
-	var out []*store.Record
+	out := []*store.Record{}
 	for _, rec := range recs {
 		if matchWith(t, rec, conds, now, lookup) {
 			out = append(out, rec)

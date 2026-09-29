@@ -54,7 +54,12 @@ func (s *Service) mine(c *store.Record) bool {
 // settings, update the program, drive a browser on the machine, and undo
 // (which can put back a setting or someone's access).
 var ownerTools = map[string]bool{"set_setting": true, "update_sameway": true, "look_at_page": true, "undo_change": true,
-	"add_workspace": true, "open_workspace": true, "restore_workspace": true}
+	"add_workspace": true, "open_workspace": true, "restore_workspace": true,
+	"import_records": true}
+
+// OwnersAlone says whether a tool is the owner's alone, for the test that
+// the pages and the assistant agree on what is.
+func OwnersAlone(tool string) bool { return ownerTools[tool] }
 
 // Tools are the tools the model is offered, for the one it speaks for.
 func (s *Service) Tools() []llm.Tool {

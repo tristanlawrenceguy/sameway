@@ -71,9 +71,19 @@ type Type struct {
 	// Hidden is a type taken off the pages and the assistant's hands,
 	// its records kept, until it is shown again.
 	Hidden bool `yaml:"hidden,omitempty" json:"hidden,omitempty"`
+	// Owners marks what is the owner's alone wherever it is read: every
+	// chat, the assistant's questions and the log of what was done and
+	// said. Someone let in reads none of it, on a page, over the API, in
+	// search or an export, and it is not written to content/.
+	Owners bool `yaml:"owners,omitempty" json:"owners,omitempty"`
 	// File is the YAML path the type was loaded from, for error messages.
 	File string `yaml:"-" json:"-"`
 }
+
+// Content says whether a type is the person's own content, as a list, a
+// search, an export and the assistant's record tools all mean it: not the
+// system's (internal) and not taken off the pages (hidden).
+func (t *Type) Content() bool { return !t.Internal && !t.Hidden }
 
 // Set is every content type in a workspace, sorted by name.
 type Set struct {

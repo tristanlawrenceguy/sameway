@@ -7,6 +7,9 @@ import (
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/server"
 )
 
 // What a person does from a page, the assistant can do with a tool, or it
@@ -102,5 +105,34 @@ func TestEveryPageActionIsTheAssistantsOrSaysWhyNot(t *testing.T) {
 	sort.Strings(gone)
 	for _, route := range gone {
 		t.Errorf("POST %s is no longer a page action; take it off pageActionTools", route)
+	}
+}
+
+// The assistant does no more than the pages let the one it speaks for do:
+// a page action that is the owner's alone has only owner's tools, so
+// someone let in cannot ask their assistant for what their pages refuse
+// them. The other way round, a person may do on a page what their
+// assistant may not, for a reason said here.
+var narrowerForTheAssistant = map[string]string{
+	"/t/{type}/{id}/discard": "undo_change takes back anyone's change, so it is the owner's; a person discards only the record they just added",
+}
+
+func TestTheAssistantIsNoWiderThanThePages(t *testing.T) {
+	access := server.RouteAccess()
+	for route, said := range pageActionTools {
+		if strings.HasPrefix(said, "a person's: ") {
+			continue
+		}
+		owners := access["POST "+route] == "owner"
+		for _, tool := range strings.Split(said, ",") {
+			tool = strings.TrimSpace(tool)
+			alone := chat.OwnersAlone(tool)
+			switch {
+			case owners && !alone:
+				t.Errorf("POST %s is the owner's, but %s is anyone's: someone let in could ask for what the page refuses them", route, tool)
+			case !owners && alone && narrowerForTheAssistant[route] == "":
+				t.Errorf("POST %s is anyone's, but %s is the owner's: say why in narrowerForTheAssistant, or open the tool", route, tool)
+			}
+		}
 	}
 }

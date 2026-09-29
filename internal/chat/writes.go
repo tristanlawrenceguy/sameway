@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -27,13 +28,66 @@ type Who struct {
 	ByLogin string
 }
 
+// ErrKeptLog is the activity log refusing a hand, from every way in: it is
+// what makes every other change reversible.
+var ErrKeptLog = errors.New("the activity log is kept by Sameway and cannot be changed; to take a change back, undo it: Undo on the activity page, POST /activity/<id>/undo, or undo_change")
+
 // Write creates, updates or deletes one record, and says it as a change
 // with what the record was before, so it can be undone. It does not log:
 // the assistant's turn logs each change its tools make, with the reply.
 // action is created, updated or deleted; id is empty for created.
 func Write(st *store.Store, action, typ, id string, fields map[string]any) (*store.Record, Change, error) {
+	if t, ok := st.Types().Get(typ); ok {
+		var now map[string]any
+		if action == "updated" {
+			if was, err := st.Get(typ, id); err == nil {
+				now = was.Fields
+			}
+		}
+		if err := keptFields(t, fields, now); err != nil {
+			return nil, Change{}, err
+		}
+	}
+	return write(st, action, typ, id, fields)
+}
+
+// keptFields refuses a field Sameway keeps (a file's path, a person's
+// access, whether an action was accepted), for everyone and from every
+// way in: the page, the API, the command line and the assistant each
+// had their own rule, and the owner could set over the API what the page
+// refused them.
+// A field sent as it already is changes nothing and is let be: a page
+// sends the whole record back.
+func keptFields(t *schema.Type, fields, now map[string]any) error {
+	problems := map[string]string{}
+	for _, f := range t.Fields {
+		v, sent := fields[f.Name]
+		if !sent || !f.ReadOnly || now != nil && Print(v) == Print(now[f.Name]) {
+			continue
+		}
+		problems[f.Name] = "is kept by Sameway and cannot be changed by hand; leave it out"
+	}
+	if len(problems) > 0 {
+		return &schema.ValidationError{Problems: problems}
+	}
+	return nil
+}
+
+// WriteKept is WriteAs for a record whose kept fields the caller worked
+// out itself, such as a file's name and kind from what was sent. Only
+// Sameway's own code calls it, never with what someone typed as those
+// fields.
+func WriteKept(st *store.Store, who Who, action, typ, id string, fields map[string]any) (*store.Record, string, error) {
+	rec, c, err := write(st, action, typ, id, fields)
+	if err != nil {
+		return nil, "", err
+	}
+	return rec, logAs(st, who, c), nil
+}
+
+func write(st *store.Store, action, typ, id string, fields map[string]any) (*store.Record, Change, error) {
 	if typ == ActivityType {
-		return nil, Change{}, errors.New("the activity log is kept by Sameway and cannot be changed; to take a change back, undo it")
+		return nil, Change{}, ErrKeptLog
 	}
 	t, ok := st.Types().Get(typ)
 	if !ok {
@@ -81,11 +135,17 @@ func WriteAs(st *store.Store, who Who, action, typ, id string, fields map[string
 	if err != nil {
 		return nil, "", err
 	}
-	if t, ok := st.Types().Get(typ); !ok || t.Internal {
-		return rec, "", nil
+	return rec, logAs(st, who, c), nil
+}
+
+// logAs logs a change as who's, unless it is to one of the system's own
+// types, which change through the tools and are not the person's content.
+func logAs(st *store.Store, who Who, c Change) string {
+	if t, ok := st.Types().Get(c.Component); !ok || t.Internal {
+		return ""
 	}
 	c.By, c.Via, c.ByLogin = who.By, who.Via, who.ByLogin
-	return rec, Record(st, who.Actor, c), nil
+	return Record(st, who.Actor, c)
 }
 
 // Imported is the batch an import from a file made: records that were not

@@ -40,24 +40,20 @@ func (s *Server) resolveRecord(props map[string]any) (map[string]any, string) {
 	out["kind"] = capitalize(schema.Words(t.Name))
 	out["title"] = s.title(t, rec)
 	out["titleProp"] = t.Title
+	// What it says is what its page says (record_says.go): the same text,
+	// the same fields, each said as the page says it.
+	text, shown := s.says(t, rec)
+	if f, ok := t.Field(text); ok {
+		// Structured text shows its structure here as it does on the
+		// record's page, and is edited the same way.
+		out["text"], out["textProp"], out["structured"] = display(*f, rec.Fields[f.Name]), f.Name, true
+	}
 	var fields []any
-	for _, f := range t.Shown() {
-		if f.Name == t.Title {
-			continue
-		}
+	for _, f := range shown {
 		val := display(f, rec.Fields[f.Name])
-		if val == "" {
-			continue
-		}
-		if f.Type == "ref" {
-			val = s.refTitle(f, val)
-		}
-		if _, have := out["text"]; !have && isText(f) {
-			out["text"], out["textProp"] = val, f.Name
-			// Structured text shows its structure here as it does on the
-			// record's page, and is edited the same way.
-			out["structured"] = f.Type == "markdown"
-			continue
+		item := s.fieldItem(t, f, rec.Fields[f.Name], val)
+		if v, ok := item["value"].(string); ok && v != "" {
+			val = v // a ref or what a reminder is about, by its title
 		}
 		fields = append(fields, map[string]any{"label": fieldLabel(f), "value": val})
 	}

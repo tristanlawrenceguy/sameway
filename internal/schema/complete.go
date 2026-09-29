@@ -139,6 +139,11 @@ func (s *Set) Complete(builtin *Set) {
 		if b.Internal && b.Title != "" {
 			t.Title = b.Title
 		}
+		// Whose it is, likewise: a copy that lost it would open the
+		// owner's conversations to everyone let in.
+		if b.Internal {
+			t.Owners = b.Owners
+		}
 	}
 	sort.Slice(s.Types, func(i, j int) bool { return s.Types[i].Name < s.Types[j].Name })
 }

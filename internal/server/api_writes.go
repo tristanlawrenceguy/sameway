@@ -24,9 +24,6 @@ func (s *Server) apiCreate(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	if s.keptFromVisitor(w, r, fields) {
-		return
-	}
 	shows, refused := s.blockWrite(w, r, fields, nil)
 	if refused {
 		return
@@ -51,9 +48,6 @@ func (s *Server) apiUpdate(w http.ResponseWriter, r *http.Request) {
 	fields, err := readBody(r)
 	if err != nil {
 		writeError(w, err)
-		return
-	}
-	if s.keptFromVisitor(w, r, fields) {
 		return
 	}
 	was, err := s.app.Store.Get(r.PathValue("type"), r.PathValue("id"))
@@ -103,7 +97,7 @@ func (s *Server) keptLog(w http.ResponseWriter, r *http.Request) bool {
 		return false
 	}
 	writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": apiError{Code: "kept",
-		Message: "the activity log is kept by Sameway and cannot be changed; to take a change back, POST /activity/<id>/undo"}})
+		Message: chat.ErrKeptLog.Error()}})
 	return true
 }
 

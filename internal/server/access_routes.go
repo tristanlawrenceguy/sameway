@@ -3,8 +3,6 @@ package server
 import (
 	"net/http"
 	"strings"
-
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 )
 
 // Who may use each route, said for every route here. It used to be a list
@@ -25,11 +23,6 @@ const (
 	// owner is the workspace's owner alone.
 	owner
 )
-
-// ownerTypes are the kinds of record that are the owner's alone wherever
-// they are read or written: every chat, its questions and the log of what
-// was done and said.
-var ownerTypes = []string{chat.MessageType, chat.ConversationType, chat.ProposalType, chat.ActivityType}
 
 var routeAccess = map[string]routeFor{
 	"GET /api/changes":                 people,
@@ -84,9 +77,9 @@ var routeAccess = map[string]routeFor{
 	"GET /design/sameway.js":           people,
 	"GET /design/base/{file}":          people,
 	"GET /t/{type}":                    people,
-	"GET /t/{type}/import":             people,
-	"POST /t/{type}/import":            people,
-	"POST /t/{type}/import/{file}/run": people,
+	"GET /t/{type}/import":             owner,
+	"POST /t/{type}/import":            owner,
+	"POST /t/{type}/import/{file}/run": owner,
 	"GET /t/{type}/{id}":               people,
 	"POST /t/{type}/{id}/delete":       people,
 	"POST /t/{type}/{id}/discard":      people,
@@ -110,7 +103,7 @@ var routeAccess = map[string]routeFor{
 	"POST /api/chat":                   people,
 	"POST /api/chat/clear":             people,
 	"POST /api/file/upload":            people,
-	"POST /api/import/{type}":          people,
+	"POST /api/import/{type}":          owner,
 	"GET /api/{type}":                  people,
 	"POST /api/{type}":                 people,
 	"GET /api/{type}/{id}":             people,
@@ -147,23 +140,25 @@ func (s *Server) routeOf(r *http.Request) string {
 
 // ownerOnlyRequest says whether a request is for the owner alone: its
 // route says so, or no route says anything, or it reads or writes one of
-// the owner's own kinds of record, or it imports, which writes whatever its
-// columns say, access included.
+// the owner's own kinds of record.
 func (s *Server) ownerOnlyRequest(r *http.Request) bool {
 	pattern := s.routeOf(r)
 	if who, said := routeAccess[pattern]; pattern != "" && (!said || who == owner) {
 		return true
 	}
-	return ownerOnlyPath(r.URL.Path)
+	return s.ownerOnlyPath(r.URL.Path)
 }
 
 // ownerOnlyPath says whether a path reads or writes one of the owner's own
-// kinds of record, in a list, a page, the API, an export or an import.
-func ownerOnlyPath(path string) bool {
-	if strings.HasSuffix(path, "/import") || strings.Contains(path, "/import/") {
-		return true
-	}
-	for _, t := range ownerTypes {
+// kinds of record, in a list, a page, the API or an export. An import,
+// which writes whatever its columns say, access included, is the owner's
+// by its routes.
+func (s *Server) ownerOnlyPath(path string) bool {
+	for _, typ := range s.app.Types.Types {
+		if !typ.Owners {
+			continue // the schema says whose each kind is (schema.Type.Owners)
+		}
+		t := typ.Name
 		for _, p := range []string{"/t/" + t, "/api/" + t, "/export/" + t} {
 			if path == p || strings.HasPrefix(path, p+"/") || strings.HasPrefix(path, p+".") {
 				return true

@@ -22,7 +22,7 @@ import (
 
 // exportable says whether a type's records are a person's to take out:
 // the system's own (the conversation, the log, the questions) are not.
-func exportable(t *schema.Type) bool { return !t.Internal && !t.Hidden }
+func exportable(t *schema.Type) bool { return t.Content() }
 
 // exportFile answers /export/<type>.<ext>?where=…&order=… with the file.
 func (s *Server) exportFile(w http.ResponseWriter, r *http.Request) {
@@ -54,11 +54,7 @@ func (s *Server) exportFile(w http.ResponseWriter, r *http.Request) {
 
 // exportRecords are the records a list page with this query shows.
 func (s *Server) exportRecords(t *schema.Type, q url.Values) ([]*store.Record, error) {
-	where, order := q["where"], q.Get("order")
-	if len(where) > 0 || order != "" {
-		return query.Filter(s.app.Store, t, where, order, 0, time.Now())
-	}
-	return s.app.Store.List(t.Name, store.ListOptions{})
+	return query.Filter(s.app.Store, t, q["where"], q.Get("order"), 0, time.Now())
 }
 
 func (s *Server) exportTitles(f schema.Field, id string) string { return s.refTitle(f, id) }
