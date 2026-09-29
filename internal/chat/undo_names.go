@@ -44,13 +44,15 @@ func cleanHumanized(s string) string {
 }
 
 // lookupKey maps a property name back to its setting key. It first checks
-// known labels from settingNames (lowercased), then description prefixes.
+// known labels from settingNames (lowercased), then description prefixes at
+// the start of the string, and finally as a substring for cases like
+// "Pace — how changes arrive" where an em-dash separator follows the label.
 func lookupKey(prop string) string {
 	if key, ok := labelToKey[prop]; ok {
 		return key
 	}
 	for prefix, key := range descPrefixToKey {
-		if strings.HasPrefix(prop, prefix) {
+		if strings.HasPrefix(prop, prefix) || strings.Contains(prop, " — "+prefix) {
 			return key
 		}
 	}
