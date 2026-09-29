@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/render"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -42,8 +43,10 @@ func (s *Server) status(msgs []*store.Record) template.HTML {
 			}
 			// The reply's first words, read out but not drawn, so a person who
 			// cannot see it arrive hears what it says; the chip stays short.
+			// Its links are said as their names, as the reply shows them,
+			// not spelled out as brackets and addresses.
 			if words, _ := last.Fields["content"].(string); strings.TrimSpace(words) != "" {
-				props["said"] = clipWords(words, 200)
+				props["said"] = clipWords(render.LinkWords(words, s.linkTitle), 200)
 			}
 		}
 	}

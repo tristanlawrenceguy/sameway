@@ -35,6 +35,11 @@ func savedWords(t *schema.Type, rec *store.Record, fields, clean map[string]any,
 		// A choice changed, as a board's Move does, says from where to
 		// where: "Order compost moved from To do to Done."
 		if f, ok := t.Field(name); ok && f.Type == "enum" {
+			// Moved to Done, a task that repeats is due again at once.
+			if title := strings.TrimSpace(titleOf(t, rec)); title != "" && t.Advanced(fields, clean) {
+				o.Title, o.Text, o.Of = title+" is done.", dueAgain(t, clean), title
+				return o
+			}
 			was, _ := rec.Fields[name].(string)
 			now, _ := clean[name].(string)
 			if title := strings.TrimSpace(titleOf(t, rec)); title != "" && now != "" && was != now {
@@ -73,6 +78,25 @@ func savedWords(t *schema.Type, rec *store.Record, fields, clean map[string]any,
 		o.Of = title
 	}
 	return o
+}
+
+// alreadyThere is what a move to the choice a record already has says,
+// "Status is already To do. Nothing changed.", and whether it was one: a
+// single pick-list field sent with the value it has.
+func alreadyThere(t *schema.Type, rec *store.Record, fields map[string]any) (outcome, bool) {
+	if len(fields) != 1 {
+		return outcome{}, false
+	}
+	for name, v := range fields {
+		f, ok := t.Field(name)
+		now, _ := v.(string)
+		was, _ := rec.Fields[name].(string)
+		if !ok || f.Type != "enum" || now == "" || now != was {
+			return outcome{}, false
+		}
+		return outcome{Title: fieldLabel(*f) + " is already " + f.ValueLabel(now) + ". Nothing changed."}, true
+	}
+	return outcome{}, false
 }
 
 // repeatSaid is a stored repeat in words, or once for none.

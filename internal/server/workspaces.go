@@ -128,6 +128,7 @@ func (s *Server) showWorkspaces(w http.ResponseWriter, r *http.Request, problem 
 	}
 	b.WriteString(`<section class="sw-stack" aria-labelledby="ws-this"><h2 id="ws-this">This workspace</h2>`)
 	b.WriteString(string(s.component("card", map[string]any{"title": cur.Config.Name, "meta": meta, "level": 3})))
+	b.WriteString(s.takeEverything(r)) // see export_docs.go
 	b.WriteString(`</section>`)
 
 	others := s.others()

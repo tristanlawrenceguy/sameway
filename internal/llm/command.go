@@ -64,11 +64,27 @@ func (c *Command) Complete(ctx context.Context, req Request) (*Response, error) 
 		return nil, err
 	}
 	defer os.Remove(mcpPath)
+	req, pictures, err := c.pictures(req)
+	if err != nil {
+		return nil, err
+	}
+	if pictures != "" {
+		defer os.RemoveAll(filepath.Join(c.Workspace, pictures))
+	}
 	args := fill(tokens(c.Template), map[string]string{
 		"{prompt}": transcript(req), "{system}": req.System, "{mcp}": mcpPath, "{model}": c.Model,
 	})
 	if len(args) == 0 {
 		return nil, errors.New("llm.command names no program")
+	}
+	// The program may read the pictures, and nothing else of the files.
+	if pictures != "" {
+		for i, a := range args {
+			if a == "--allowedTools" && i+1 < len(args) {
+				args = append(args[:i+2], append([]string{"Read(./" + filepath.ToSlash(pictures) + "/**)"}, args[i+2:]...)...)
+				break
+			}
+		}
 	}
 	timeout := c.Timeout
 	if timeout == 0 {
@@ -99,7 +115,9 @@ func (c *Command) Complete(ctx context.Context, req Request) (*Response, error) 
 }
 
 // mcpConfig writes the MCP configuration the program is handed: this
-// binary, serving this workspace over stdio, under the name sameway.
+// binary, serving this workspace over stdio, under the name sameway, as
+// the assistant's, so what the program changes is logged as the
+// assistant's and not as an outside agent's.
 func (c *Command) mcpConfig() (string, error) {
 	exe := c.Executable
 	if exe == "" {
@@ -109,7 +127,7 @@ func (c *Command) mcpConfig() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	cfg := map[string]any{"mcpServers": map[string]any{"sameway": map[string]any{"command": exe, "args": []string{"--workspace", c.Workspace, "mcp"}}}}
+	cfg := map[string]any{"mcpServers": map[string]any{"sameway": map[string]any{"command": exe, "args": []string{"--workspace", c.Workspace, "mcp", "--assistant"}}}}
 	if err := json.NewEncoder(f).Encode(cfg); err != nil {
 		f.Close()
 		return "", err
@@ -216,4 +234,42 @@ func tail(s string, n int) string {
 		return s
 	}
 	return "…" + s[len(s)-n:]
+}
+
+// pictures writes the pictures in a conversation where the program can
+// open them, inside the workspace it runs in, and says in each turn where
+// its pictures are; the folder is gone when the turn is.
+func (c *Command) pictures(req Request) (Request, string, error) {
+	have := false
+	for _, m := range req.Messages {
+		have = have || len(m.Images) > 0
+	}
+	if !have || c.Workspace == "" {
+		return req, "", nil
+	}
+	rel := filepath.Join(".sameway-pictures", fmt.Sprintf("%d", time.Now().UnixNano()))
+	dir := filepath.Join(c.Workspace, rel)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return req, "", err
+	}
+	out := req
+	out.Messages = make([]Message, len(req.Messages))
+	n := 0
+	for i, m := range req.Messages {
+		for _, img := range m.Images {
+			n++
+			ext := strings.TrimPrefix(img.Type, "image/")
+			if ext == "jpeg" {
+				ext = "jpg"
+			}
+			name := fmt.Sprintf("%d.%s", n, ext)
+			if err := os.WriteFile(filepath.Join(dir, name), img.Data, 0o644); err != nil {
+				return req, "", err
+			}
+			m.Content += "\n[A picture came with this, at " + filepath.ToSlash(filepath.Join(rel, name)) + ": open it with Read to see it.]"
+		}
+		m.Images = nil
+		out.Messages[i] = m
+	}
+	return out, rel, nil
 }

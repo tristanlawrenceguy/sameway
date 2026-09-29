@@ -31,6 +31,16 @@ type Message struct {
 	Content     string
 	ToolCalls   []ToolCall
 	ToolResults []ToolResult
+	// Images are pictures that come with a person's turn, for a model
+	// that can see.
+	Images []Image
+}
+
+// Image is one picture: its type (image/jpeg, image/png, image/gif or
+// image/webp) and its bytes.
+type Image struct {
+	Type string
+	Data []byte
 }
 
 // ToolCall is a request from the model to run a tool.

@@ -1,0 +1,33 @@
+.sw-media { margin: 0; max-width: var(--sw-size-measure); display: flex; flex-direction: column; gap: var(--sw-space-3); }
+.sw-media__title { font-weight: 600; font-size: var(--sw-size-text-lg); }
+.sw-media__player { width: 100%; }
+/* The browser's own player keeps focus on itself while its buttons take
+   it inside, where :focus-visible does not reach: the ring is drawn on it. */
+.sw-media__player:focus { outline: var(--sw-focus-width) solid var(--sw-color-focus); outline-offset: var(--sw-focus-offset); }
+.sw-media__about { margin: 0; display: flex; flex-wrap: wrap; gap: var(--sw-space-3); align-items: center; }
+.sw-media__facts { color: var(--sw-color-fg-muted); }
+.sw-media__none { margin: 0; color: var(--sw-color-fg-muted); }
+/* The bar the script puts in place of the browser's own player: words on
+   every button, the time large and in figures that line up. */
+.sw-media__bar { display: flex; flex-wrap: wrap; gap: var(--sw-space-2); align-items: center; }
+.sw-media__time { font-size: var(--sw-size-text-lg); font-variant-numeric: tabular-nums; min-width: 8ch; }
+.sw-media__seek { flex: 1 1 12rem; min-height: var(--sw-size-target); accent-color: var(--sw-color-accent); margin: 0; padding: 0 var(--sw-space-2); border: 1px solid var(--sw-color-border-strong); border-radius: var(--sw-radius-md); background: var(--sw-color-bg-raised); }
+.sw-media__bar[hidden] { display: none; }
+/* What it says when this browser cannot play it; out of the flow while
+   empty, so it adds no gap, yet it stays a live region. */
+.sw-media__trouble { margin: 0; }
+.sw-media__trouble:empty { position: absolute; }
+.sw-media__speed { display: inline-flex; align-items: center; gap: var(--sw-space-1); }
+.sw-media__speed select { min-height: var(--sw-size-target); font: inherit; color: var(--sw-color-fg); background: var(--sw-color-bg-raised); border: 1px solid var(--sw-color-border-strong); border-radius: var(--sw-radius-md); padding: 0 var(--sw-space-2); }
+.sw-media__transcript summary { cursor: pointer; min-height: var(--sw-size-target); display: inline-flex; align-items: center; font-weight: 600; }
+.sw-media__cues { display: flex; flex-direction: column; gap: var(--sw-space-2); margin-top: var(--sw-space-2); }
+.sw-media__cue { display: grid; grid-template-columns: 4.5rem 1fr; gap: var(--sw-space-2); align-items: baseline; padding-inline-start: var(--sw-space-2); border-inline-start: 4px solid transparent; }
+.sw-media__at { font-variant-numeric: tabular-nums; min-height: var(--sw-size-target); display: inline-flex; align-items: center; }
+.sw-media__speaker { font-weight: 600; }
+/* The line being heard: a border and bold type, not colour alone. */
+.sw-media__cue[aria-current="true"] { border-inline-start-color: var(--sw-color-accent); font-weight: 600; }
+@media (forced-colors: active) { .sw-media__cue[aria-current="true"] { border-inline-start-color: CanvasText; } }
+/* Writing it down: the press, and what the page's script is doing. */
+.sw-media__make, .sw-media__get { display: flex; flex-wrap: wrap; gap: var(--sw-space-2); align-items: center; margin: 0; }
+.sw-media__why { margin: 0; flex-basis: 100%; }
+video.sw-media__player { max-width: 100%; height: auto; background: var(--sw-color-bg-muted); border-radius: var(--sw-radius-md); }

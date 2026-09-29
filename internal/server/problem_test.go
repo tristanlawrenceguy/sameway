@@ -18,12 +18,12 @@ func TestABlockSetUpWrongSaysWhatIsWrong(t *testing.T) {
 		props     map[string]any
 		said, why string
 	}{
-		{"calendar", map[string]any{"type": "event"}, "This calendar cannot be shown", "there is no content type event"},
+		{"calendar", map[string]any{"type": "meeting"}, "This calendar cannot be shown", "there is no content type meeting"},
 		{"calendar", map[string]any{"type": "note"}, "This calendar cannot be shown", "note has no date field to place on a calendar"},
 		{"calendar", map[string]any{"type": "task", "date": "title"}, "This calendar cannot be shown", `task has no date field &#34;title&#34;; its date fields are due`},
 		{"calendar", map[string]any{"type": "task", "where": []string{"owner=me"}}, "This calendar cannot be shown", "owner"},
 		{"tracker", map[string]any{"label": "Garden", "tags": []string{"garden"}}, "This list of habits cannot be shown as it is set up", "no habit is tagged garden; the habits have health"},
-		{"collection", map[string]any{"type": "event"}, "This list cannot be shown", "there is no content type event"},
+		{"collection", map[string]any{"type": "meeting"}, "This list cannot be shown", "there is no content type meeting"},
 	} {
 		res := postJSON(t, h, http.MethodPost, "/api/block", map[string]any{"component": c.component, "props": c.props})
 		wantStatus(t, res, http.StatusCreated)

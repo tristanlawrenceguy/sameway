@@ -46,11 +46,14 @@ fields:
     description: Tints the block's surface. Body text keeps its contrast on every tint.
   actor:
     type: enum
-    values: [human, assistant, system]
+    values: [human, assistant, agent, system]
     default: assistant
-    description: Who last changed this block.
+    description: Who last changed this block. agent is a program outside Sameway, over MCP or through the API.
   created_by:
     type: enum
-    values: [human, assistant, system]
+    values: [human, assistant, agent, system]
     default: assistant
     description: Who first added this block.
+  agent:
+    type: string
+    description: The name of the agent that last added or changed this block, when an agent did, such as Claude Code; empty when it gave none.

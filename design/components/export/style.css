@@ -1,0 +1,8 @@
+/* A line saying what, then the files as quiet buttons in a row that
+   wraps; the format and size are part of each link's words, lighter so
+   the kind of file is read first. */
+.sw-export { margin-block: var(--sw-space-4) 0; }
+.sw-export__what { margin: 0 0 var(--sw-space-1); font-weight: 600; }
+.sw-export__files { gap: var(--sw-space-1) var(--sw-space-4); }
+.sw-export__files .sw-link--button { margin-left: 0; font-weight: 600; }
+.sw-export__note { margin: var(--sw-space-2) 0 0; font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); max-width: 60ch; }
