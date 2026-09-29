@@ -44,6 +44,7 @@ func (s *Server) recordingRoutes(m *http.ServeMux) {
 	m.HandleFunc("GET /files/{id}/transcript.srt", s.transcriptFile)
 	m.HandleFunc("GET /files/{id}/transcript.txt", s.transcriptFile)
 	m.HandleFunc("GET /export/workspace.zip", s.exportEverything)
+	m.HandleFunc("GET /export/all.ics", s.exportCalendar)
 	m.HandleFunc("GET /export/{file}", s.exportFile)
 	m.HandleFunc("GET /export/{type}/{file}", s.exportDocument)
 }

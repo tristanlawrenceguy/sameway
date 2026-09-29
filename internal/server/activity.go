@@ -1,6 +1,7 @@
 package server
 
 import (
+	stdcmp "cmp"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -72,8 +73,9 @@ func (s *Server) recentActivityAbout(n int, from string, about func(target, id s
 	}
 	var inner strings.Builder
 	inner.WriteString(`<ol class="sw-plain sw-stack--tight" aria-label="Recent activity">`)
-	for _, r := range recs {
-		inner.WriteString(`<li>` + string(s.event(r, from, 3, true)) + `</li>`)
+	told := s.entriesApart(recs)
+	for i, r := range recs {
+		inner.WriteString(`<li>` + string(s.event(r, from, 3, true, told[i])) + `</li>`)
 	}
 	inner.WriteString(`</ol><p class="sw-small" style="margin:var(--sw-space-3) 0 0">`)
 	inner.WriteString(string(s.component("link", map[string]any{"href": "/activity", "label": everything, "look": "button"})))
@@ -91,7 +93,8 @@ func (s *Server) recentActivityAbout(n int, from string, about func(target, id s
 // event renders one entry, as line says it, with its time and its anchor.
 // level makes its sentence a heading, for a log read heading by heading;
 // dated gives its time the day, where no day's heading above says it.
-func (s *Server) event(r *store.Record, from string, level int, dated bool) template.HTML {
+// told tells it from another entry shown that says the same, or is "".
+func (s *Server) event(r *store.Record, from string, level int, dated bool, told string) template.HTML {
 	at := r.CreatedAt.Local().Format("15:04")
 	if dated {
 		at = messageTime(r.CreatedAt)
@@ -103,6 +106,9 @@ func (s *Server) event(r *store.Record, from string, level int, dated bool) temp
 	props["time"], props["datetime"], props["id"] = at, r.CreatedAt.UTC().Format(time.RFC3339), "activity-"+r.ID
 	if level > 0 {
 		props["level"] = level
+	}
+	if told != "" {
+		props["context"] = told
 	}
 	return s.component("event", props)
 }
@@ -141,21 +147,36 @@ func (s *Server) activityPage(w http.ResponseWriter, r *http.Request) {
 		s.page(w, r, "Activity", s.component("alert", map[string]any{"kind": "info", "message": "This workspace keeps no log yet. Run sameway init --force to add one."}), pageOptions{})
 		return
 	}
-	recs, err := s.app.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 500})
+	all, err := s.app.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true})
 	if err != nil {
 		s.fail(w, err)
 		return
 	}
+	// Narrowed by who, what and when, as the address says, a page at a
+	// time; Undo on an entry comes back to this same narrowing.
+	recs, filters, f := s.narrowLog(all, r.URL.Query(), time.Now())
+	pg := pageOf(r, len(recs), activityPageSize)
+	from := r.URL.RequestURI()
 	var b strings.Builder
 	b.WriteString(`<p class="sw-muted sw-prose">Every change to the canvas, by you or the assistant, newest first.</p>`)
-	if len(recs) == 0 {
+	if len(all) > 0 {
+		b.WriteString(string(s.component("filters", filters)))
+	}
+	switch {
+	case len(all) == 0:
 		b.WriteString(string(s.component("empty", map[string]any{
 			"message": "No activity yet. What you and the assistant change on the canvas shows up here.", "action": map[string]any{"href": "/chat", "label": "Send a message"},
 		})))
+	case len(recs) == 0:
+		b.WriteString(string(s.component("empty", map[string]any{
+			"message": "No changes match: " + filters["showing"].(string) + ".", "action": map[string]any{"href": filters["reset"], "label": "Show every change"},
+		})))
 	}
+	recs = recs[pg.lo:pg.hi]
 	day := ""
 	open := false
-	for _, rec := range recs {
+	told := s.entriesApart(recs)
+	for i, rec := range recs {
 		d := dayHeading(rec.CreatedAt)
 		if d != day {
 			if open {
@@ -165,12 +186,17 @@ func (s *Server) activityPage(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(&b, `<h2 class="sw-small sw-muted" style="margin-top:var(--sw-space-8)" id="%s">%s</h2><ol class="sw-plain sw-stack--tight sw-panel" aria-labelledby="%s">`, id, template.HTMLEscapeString(d), id)
 			day, open = d, true
 		}
-		b.WriteString(`<li>` + string(s.event(rec, "/activity", 3, false)) + `</li>`)
+		b.WriteString(`<li>` + string(s.event(rec, from, 3, false, told[i])) + `</li>`)
 	}
 	if open {
 		b.WriteString("</ol>")
 	}
-	s.page(w, r, "Activity", template.HTML(b.String()), pageOptions{JSONURL: "/api/activity"})
+	b.WriteString(string(s.pageNav(r, pg, "Pages of activity")))
+	said := "Activity"
+	if f.active() {
+		said = fmt.Sprintf("Activity: %s, %s", filters["showing"], stdcmp.Or(filters["count"].(string), "no changes"))
+	}
+	s.page(w, r, "Activity", template.HTML(b.String()), pageOptions{JSONURL: "/api/activity", Said: pg.title(said)})
 }
 
 // script serves the concatenated component enhancement scripts.
