@@ -44,6 +44,67 @@ func TestMessageChangesAreCompactEvents(t *testing.T) {
 	}
 }
 
+// Undo button accessible name for undo entries omits the action word "undid"
+// or "put back", so screen readers announce "Undo Assistant changed pace to
+// Calmly" instead of "Undo undid Assistant changed pace to Calmly". This
+// covers acceptance item 2 of task 0228.
+func TestEventUndoButtonAccessibleName(t *testing.T) {
+	reg := builtins(t)
+
+	// When action is "undid", the button's accessible name should not repeat it.
+	out, err := reg.Render("event", map[string]any{
+		"actor":  "assistant",
+		"action": "undid",
+		"detail": "Assistant changed pace to Calmly",
+		"time":   "14:05",
+		"undo":   "/activity/a1/undo",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := string(out)
+
+	// The visible button text is just "Undo".
+	if !strings.Contains(got, `<button type="submit" class="sw-button sw-button--quiet sw-pressable">Undo`) {
+		t.Errorf("expected Undo button\n%s", got)
+	}
+
+	// The accessible name should not contain the action word for undo verbs.
+	visuallyHidden := got[strings.Index(got, `sw-visually-hidden`):]
+	if strings.Contains(visuallyHidden, "undid") {
+		t.Errorf("undo button accessible name repeats 'undid': %s", visuallyHidden)
+	}
+
+	// The detail should still be present in the accessible name.
+	if !strings.Contains(visuallyHidden, "Assistant changed pace to Calmly") {
+		t.Errorf("button accessible name should include the detail: %s", visuallyHidden)
+	}
+}
+
+func TestEventPutBackButtonAccessibleName(t *testing.T) {
+	reg := builtins(t)
+
+	out, err := reg.Render("event", map[string]any{
+		"actor":  "human",
+		"action": "put back",
+		"detail": "Assistant changed text size to Large",
+		"time":   "15:30",
+		"undo":   "/activity/a2/undo",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := string(out)
+
+	visuallyHidden := got[strings.Index(got, `sw-visually-hidden`):]
+	if strings.Contains(visuallyHidden, "put back") {
+		t.Errorf("undo button accessible name repeats 'put back': %s", visuallyHidden)
+	}
+	if !strings.Contains(visuallyHidden, "Assistant changed text size to Large") {
+		t.Errorf("button accessible name should include the detail: %s", visuallyHidden)
+	}
+}
+
 // A message refuses a change in the stored shape: the server says it in
 // words first, so a key never reaches the page.
 func TestMessageChangesTakeEventProps(t *testing.T) {

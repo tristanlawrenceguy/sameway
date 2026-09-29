@@ -49,6 +49,11 @@ func lookupKey(prop string) string {
 	if key, ok := labelToKey[prop]; ok {
 		return key
 	}
+	for label, key := range labelToKey {
+		if strings.HasPrefix(prop, label) {
+			return key
+		}
+	}
 	for prefix, key := range descPrefixToKey {
 		if strings.HasPrefix(prop, prefix) {
 			return key
