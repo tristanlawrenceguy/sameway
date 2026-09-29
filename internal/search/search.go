@@ -89,7 +89,12 @@ func find(st *store.Store, types *schema.Set, q, only string, some bool) []Hit {
 	}
 	var hits []Hit
 	for _, t := range types.Types {
-		if Skip[t.Name] || only != "" && t.Name != only {
+		// What the system keeps for itself is not searched, except the
+		// canvas's blocks, which are what the person made there. Skip once
+		// was the only rule, and it left out conversations and clashes:
+		// a search by someone let in to look found the titles of the
+		// owner's conversations. Searchable (kinds.go) already said so.
+		if Skip[t.Name] || t.Internal && t.Name != "block" || only != "" && t.Name != only {
 			continue
 		}
 		recs, err := st.List(t.Name, store.ListOptions{})
