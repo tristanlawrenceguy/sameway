@@ -137,11 +137,11 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	}
 	// The Edit button the inline editor adds is named for what it edits,
 	// the record by its title, as a block on the canvas is (08-edit.js).
-	editable := ` data-edit-action="/t/` + t.Name + `/` + rec.ID + `/props"` + versionAttrs(rec)
+	editable, shown := ` data-edit-action="/t/`+t.Name+`/`+rec.ID+`/props"`, versionAttrs(rec)
 	if t.Name == chat.ActivityType {
-		editable = ""
+		editable, shown = "", ""
 	}
-	fmt.Fprintf(&b, `<div class="sw-dl-block" data-block-id="%s" data-block-label="%s"%s%s%s>`, rec.ID, template.HTMLEscapeString(trim.Title(s.title(t, rec))), editable, langOf(rec), discard)
+	fmt.Fprintf(&b, `<div class="sw-dl-block" data-block-id="%s" data-block-label="%s"%s%s%s%s>`, rec.ID, template.HTMLEscapeString(trim.Title(s.title(t, rec))), shown, editable, langOf(rec), discard)
 	// The record's text comes first and reads as a document, under the
 	// title and before its other fields; structured text keeps what was
 	// written on the element so the inline editor edits the source.
