@@ -233,7 +233,7 @@ func (s *Service) addComponent(name string, props map[string]any, l look) toolRe
 		}
 	}
 	// On the tab the person is looking at, unless the call says otherwise.
-	fields := map[string]any{"component": name, "props": props, "position": position, "actor": "assistant", "created_by": "assistant", "canvas": s.current}
+	fields := s.marked(map[string]any{"component": name, "props": props, "position": position, "created_by": s.actor(), "canvas": s.current})
 	if l.SetCanvas && !s.HasCanvas(l.Canvas) {
 		return fail("no canvas with id %q; the tabs and their ids are listed in the prompt, and \"\" is Home", l.Canvas)
 	}
@@ -267,7 +267,7 @@ func (s *Service) updateComponent(id string, props map[string]any, l look) toolR
 	if !ok {
 		return fail("block %s uses unknown component %s", id, name)
 	}
-	fields := map[string]any{"actor": "assistant"}
+	fields := s.marked(map[string]any{})
 	var what []string
 	if props != nil {
 		if _, err := c.Validate(props); err != nil {

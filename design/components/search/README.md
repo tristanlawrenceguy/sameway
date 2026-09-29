@@ -32,7 +32,9 @@ Search tasks.
 - **At icon size it opens the search page**, where searching is.
 - **Everything, then narrowed.** Search always covers everything; the
   results can then be narrowed to one kind, Notes or Tasks, by a row of
-  links with how many each found, All first. They are links, so each
+  links with how many each found, All first: the
+  [filters](../filters/README.md) component as links, one choice among a
+  few, applied on press. They are links, so each
   narrowing is an address that works without a script, keeps the words and
   keeps its kind across pages; the one shown is marked `aria-current="page"`
   ([BBC GEL, filter and sort](https://bbc.github.io/gel/components/filter-and-sort/)).

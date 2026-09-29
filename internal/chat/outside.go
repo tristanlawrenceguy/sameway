@@ -19,7 +19,7 @@ func (s *Service) runsToolsOutside() bool {
 
 // changesAfter is what the assistant did during a turn that ran its
 // tools elsewhere: every log entry after the turn's own "said" entry that
-// is not the person's, as the receipt the reply carries, each undoable.
+// is not the person's nor another agent's, as the receipt the reply carries, each undoable.
 // The log is ordered as it was written, so the said entry is the fence.
 func (s *Service) changesAfter(saidID string) []Change {
 	recs, err := s.Store.List(ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 100})
@@ -33,7 +33,7 @@ func (s *Service) changesAfter(saidID string) []Change {
 		}
 		actor, _ := rec.Fields["actor"].(string)
 		action, _ := rec.Fields["action"].(string)
-		if actor == "human" || action == "said" {
+		if actor == "human" || actor == ActorAgent || action == "said" {
 			continue
 		}
 		target, _ := rec.Fields["target"].(string)

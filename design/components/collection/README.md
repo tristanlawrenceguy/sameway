@@ -54,7 +54,9 @@ Showing: not done, due soonest first." with Reset beside it, back to how it
 was set up. The choices only add to `where`, never take from it: the
 assistant decides what the list is about, the person narrows within it.
 
-They are a plain GET form: the choices are in the page's address, named
+They are the [filters](../filters/README.md) component as a form, a sort
+and up to three fields chosen together, the same as every list that
+narrows. They are a plain GET form: the choices are in the page's address, named
 after the block (`?c-<block>-sort=due&c-<block>-done=false`), so two lists
 on a canvas keep their own, the form keeps the page's other fields, a live
 refresh and a reload keep them, the link to the list page carries them,
