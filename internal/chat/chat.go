@@ -49,6 +49,12 @@ type Service struct {
 	// its scripts run where a browser is at hand; set by the server, nil
 	// where there is none. See look.go.
 	Look func(ctx context.Context, ask map[string]any) (string, error)
+	// Check resolves a block's records the way its page will, without
+	// drawing it: what it would show, in a few words, or why it cannot be
+	// shown, in the words the page would use. Set by the server; nil where
+	// there is none, and a block is then held to its props schema only.
+	// See check.go.
+	Check func(component string, props map[string]any) (shows, problem string)
 	// Picture is a picture file's bytes, ready for a model to see, set by
 	// the server; see pictures.go.
 	Picture func(fileID string) (llm.Image, bool)

@@ -96,7 +96,7 @@ func (s *Server) resolveCalendarAt(props map[string]any, blockID string, at *col
 	// reads as nothing on.
 	t, ok := s.app.Types.Get(typeName)
 	if !ok {
-		out["problem"] = "there is no content type " + typeName + "; the workspace has " + strings.Join(s.app.Types.Names(), ", ")
+		out["problem"] = s.noType(typeName)
 		return out
 	}
 	field := dateField(t, props["date"])

@@ -10,7 +10,7 @@ import (
 // a date, in an order a person expects, with the numbers as a table too;
 // a wrong field is said in words.
 func TestAChartCountsRecords(t *testing.T) {
-	_, h := newApp(t)
+	a, h := newApp(t)
 	var garden struct{ ID string }
 	decode(t, postJSON(t, h, http.MethodPost, "/api/project", map[string]any{"title": "Garden"}), &garden)
 	for _, task := range []map[string]any{
@@ -29,7 +29,8 @@ func TestAChartCountsRecords(t *testing.T) {
 	}), http.StatusCreated)
 	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/block", map[string]any{
 		"component": "chart", "props": map[string]any{"type": "task", "by": "owner"},
-	}), http.StatusCreated)
+	}), http.StatusUnprocessableEntity)
+	storedBlock(t, a, "chart", map[string]any{"type": "task", "by": "owner"})
 
 	page := get(t, h, "/").Body.String()
 	for _, want := range []string{

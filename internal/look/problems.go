@@ -83,6 +83,7 @@ func problems(doc *htmltest.Doc, o *Outline, page bool) []string {
 			out = append(out, fmt.Sprintf("<%s> is focusable but aria-hidden", n.Data))
 		}
 	})
+	out = append(out, setUpWrong(doc)...)
 	last := 0
 	for _, h := range o.Headings {
 		if last > 0 && h.Level > last+1 {
@@ -127,3 +128,48 @@ func fileNamed(alt string) bool {
 }
 
 var cameraName = regexp.MustCompile(`^(img|dsc|dscn|pxl|photo|image|screenshot)[_ -]?\d{2,}`)
+
+// setUpWrong is every block on the page that could only say it is set up
+// wrong, by block, with what is wrong: a person reads "Ask the assistant
+// to fix it", and an agent that looks should hear the same, not a page
+// that holds together. A problem outside a block, such as an example on
+// the design page, is not one.
+func setUpWrong(doc *htmltest.Doc) []string {
+	var out []string
+	for _, n := range doc.WithAttr("data-component", "problem") {
+		where := ""
+		for p := n.Parent; p != nil && where == ""; p = p.Parent {
+			if id, ok := htmltest.Attr(p, "data-block-id"); ok {
+				component, _ := htmltest.Attr(p, "data-block-component")
+				where = fmt.Sprintf("block %s (%s)", id, component)
+			} else if class, _ := htmltest.Attr(p, "class"); strings.Contains(" "+class+" ", " sw-focus__body ") {
+				where = "this block"
+			}
+		}
+		if where == "" {
+			continue
+		}
+		why := ""
+		for _, d := range doc.Elements("details") {
+			if within(d, n) {
+				for c := d.FirstChild; c != nil; c = c.NextSibling {
+					if c.Type == html.ElementNode && c.Data == "p" {
+						why = htmltest.Text(c)
+					}
+				}
+			}
+		}
+		out = append(out, fmt.Sprintf("%s cannot be shown as it is set up: %s", where, why))
+	}
+	return out
+}
+
+// within says whether n is inside of.
+func within(n, of *html.Node) bool {
+	for p := n.Parent; p != nil; p = p.Parent {
+		if p == of {
+			return true
+		}
+	}
+	return false
+}
