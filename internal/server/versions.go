@@ -68,7 +68,7 @@ func (s *Server) staleFor(w http.ResponseWriter, r *http.Request, rec *store.Rec
 		return false
 	}
 	writeJSON(w, http.StatusPreconditionFailed, map[string]any{
-		"error": apiError{Code: "stale", Message: "it has changed since the version you read (If-Match " + want + "): nothing was written. current is the record as it is now; make your change to it and send it again with If-Match set to its updated_at"},
+		"error":   apiError{Code: "stale", Message: "it has changed since the version you read (If-Match " + want + "): nothing was written. current is the record as it is now; make your change to it and send it again with If-Match set to its updated_at"},
 		"current": s.titled(rec),
 	})
 	return true

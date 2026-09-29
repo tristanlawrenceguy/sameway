@@ -14,6 +14,7 @@ import (
 
 func (s *Server) agentRoutes(m *http.ServeMux) {
 	m.HandleFunc("GET /api/workspaces", s.apiWorkspaces)
+	m.HandleFunc("GET /api/changes", s.apiChanges) // changes.go
 }
 
 // apiChat is one turn of the conversation for an agent: the message, the
