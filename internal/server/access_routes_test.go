@@ -56,3 +56,30 @@ func TestAVisitorCannotTakeTheOwnersRecordsAway(t *testing.T) {
 		t.Errorf("a viewer keeps the notes they can read: %d", res.Code)
 	}
 }
+
+// Changing the workspace's shape is for everyone who may change it, the
+// same over the API as through the assistant and MCP, which offer an
+// editor add_type and add_field and a viewer neither.
+func TestTheShapeIsAnEditorsOverEveryWayIn(t *testing.T) {
+	a, h := newApp(t)
+	editor := chat.Visitor{Name: "Bob", Login: "bob@example.com", Access: chat.Edit}
+	viewer := chat.Visitor{Name: "Vi", Login: "vi@example.com", Access: chat.View}
+	body := `{"name":"plant","description":"A plant in the garden","title":"name","fields":[{"name":"name","type":"string"}]}`
+	if res := as(t, h, viewer, http.MethodPost, "/api/types", body, "application/json"); res.Code != http.StatusForbidden {
+		t.Errorf("a viewer adds a type over the API: %d", res.Code)
+	}
+	if res := as(t, h, editor, http.MethodPost, "/api/types", body, "application/json"); res.Code >= 300 {
+		t.Errorf("an editor adds a type over the API: %d %s", res.Code, res.Body.String())
+	}
+	has := func(v chat.Visitor, name string) bool {
+		for _, tool := range a.Chat.For(v).Tools() {
+			if tool.Name == name {
+				return true
+			}
+		}
+		return false
+	}
+	if !has(editor, "add_type") || !has(editor, "add_field") {
+		t.Error("an editor's assistant, and so their MCP connection, can change the shape too")
+	}
+}
