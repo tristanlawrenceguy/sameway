@@ -21,10 +21,18 @@ const calendarComponent = "calendar"
 // either side, on the block's own page; and the events, from the records
 // of a type when one is named.
 func (s *Server) resolveCalendar(props map[string]any, blockID string) map[string]any {
+	return s.resolveCalendarAt(props, blockID, nil)
+}
+
+// resolveCalendarAt is resolveCalendar on a page a calendar of everything
+// can be narrowed to one kind on: at says which, and its address holds
+// the kind picked (calendar_kinds.go).
+func (s *Server) resolveCalendarAt(props map[string]any, blockID string, at *collectionPlace) map[string]any {
 	out := map[string]any{}
 	for k, v := range props {
 		out[k] = v
 	}
+	delete(out, "filter") // the server's to fill, never the block's
 	now := time.Now()
 	month, _ := out["month"].(string)
 	if _, err := time.Parse("2006-01", month); err != nil {
@@ -76,7 +84,12 @@ func (s *Server) resolveCalendar(props map[string]any, blockID string) map[strin
 		}
 	}
 	if typeName == "all" {
-		out["events"] = eventsApart(s.everyEvent(now, month), month)
+		out["events"] = s.everyEvent(now, month)
+		calendarKinds(out, at, blockID)
+		// Told apart among what is shown, once narrowed to its kinds.
+		if events, ok := out["events"].([]any); ok {
+			out["events"] = eventsApart(events, month)
+		}
 		return out
 	}
 	// Set up wrong, it says so, rather than show an empty month, which

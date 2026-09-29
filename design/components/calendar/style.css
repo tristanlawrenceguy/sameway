@@ -63,6 +63,9 @@
 .sw-calendar__event .sw-link { color: inherit; text-decoration: none; font-weight: 500; }
 .sw-calendar__event .sw-link:hover { text-decoration: underline; text-underline-offset: 0.15em; }
 .sw-calendar__meta { color: var(--sw-color-fg-muted); }
+/* On an event's tint, what kind it is (a calendar of everything) is in the
+   words' own colour: the quiet ink falls short of 7:1 there in dark mode. */
+.sw-calendar__events .sw-calendar__meta { color: var(--sw-color-fg); }
 /* That it repeats, in words on each day it falls, never a symbol alone;
    in the words' own colour, which keeps 7:1 on an event's tint. */
 .sw-calendar__repeats { display: block; color: var(--sw-color-fg); font-size: var(--sw-size-text-xs); font-weight: 400; }

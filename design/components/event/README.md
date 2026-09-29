@@ -22,6 +22,16 @@ this computer, such as on a phone or tablet.
 
 Undo says what it undid: "Undone. You added card Plan."
 
+The full log, at `/activity`, can be narrowed by who made a change (You,
+the assistant, the system, or another person by name), what it was to
+(tasks, cards, settings: only kinds the log has) and when (Today, Last 7
+days), chosen together and applied with Apply: the
+[filters](../filters/README.md) component as a form. The choices are in
+the address (`?who=assistant&kind=task&when=week`), the log says how many
+match and what it shows with Reset, it goes a page at a time of 200 with
+the pages keeping the choices, and an entry's `from` is the narrowed
+address, so Undo comes back to the same narrowing.
+
 Under a message that already says who, as its Changes made list, give
 `compact`: the line starts at its verb ("changed text size to Large"),
 with no actor and no mark, one 44px row, and no heading, since the
