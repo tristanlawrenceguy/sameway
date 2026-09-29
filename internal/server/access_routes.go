@@ -32,6 +32,7 @@ const (
 var ownerTypes = []string{chat.MessageType, chat.ConversationType, chat.ProposalType, chat.ActivityType}
 
 var routeAccess = map[string]routeFor{
+	"GET /api/changes":                 people,
 	"GET /api/workspaces":              owner,
 	"/":                                people,
 	"GET /{$}":                         people,

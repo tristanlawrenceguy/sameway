@@ -108,6 +108,7 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 		Limit       int            `json:"limit"`
 		Page        int            `json:"page"`
 		Key         string         `json:"key"`
+		Version     string         `json:"version"`
 		Install     bool           `json:"install"`
 		Value       string         `json:"value"`
 		Kind        string         `json:"kind"`
@@ -138,7 +139,7 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 	case "import_records":
 		return s.importRecords(args.Type, args.File, args.Mapping)
 	case "update_record":
-		return s.updateRecord(args.Type, args.ID, args.Fields)
+		return s.updateRecord(args.Type, args.ID, args.Fields, args.Version)
 	case "find_records":
 		return s.findRecords(args.Type, args.Query, args.Where, args.Order, args.Limit)
 	case "get_record":

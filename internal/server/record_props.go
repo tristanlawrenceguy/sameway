@@ -86,6 +86,10 @@ func (s *Server) recordProps(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Opened a while ago, the page sent back fields as they were then: what
+	// someone else changed since stays, unless this save changed it too.
+	crossed := sinceOpened(t, rec, fields, clean, r.PostForm)
+
 	// What was saved, which for something that repeats and was just
 	// finished is its next time, not the tick (schema/repeat.go).
 	// A change a person made by hand is a change like any other: in the
@@ -95,7 +99,11 @@ func (s *Server) recordProps(w http.ResponseWriter, r *http.Request) {
 		s.failed(w, r, "Not saved", err, detail)
 		return
 	}
-	s.tellAt(w, r, s.savedText(s.savedWords(t, rec, fields, saved.Fields, undo), t, rec, fields, saved.Fields), returnTo(r, detail))
+	o := s.savedText(s.savedWords(t, rec, fields, saved.Fields, undo), t, rec, fields, saved.Fields)
+	if len(crossed) > 0 {
+		o.Text = strings.TrimSpace(o.Text + " " + strings.Join(crossed, ", ") + " had been changed since you opened this; yours is saved over it, and Undo puts back what was there.")
+	}
+	s.tellAt(w, r, o, returnTo(r, detail))
 }
 
 // refused says why an edit was not taken, a sentence for each field in

@@ -16,7 +16,8 @@ const recordComponent = "record"
 // main text, and the other fields with something in them. It also says
 // where the inline editor should post, which is the record's own props
 // endpoint rather than the block's. A record that is gone is said to be
-// gone rather than rendered as nothing.
+// gone rather than rendered as nothing. The second answer is what the
+// editor needs, the same as on the record's own page (editing).
 func (s *Server) resolveRecord(props map[string]any) (map[string]any, string) {
 	out := map[string]any{}
 	for k, v := range props {
@@ -66,7 +67,7 @@ func (s *Server) resolveRecord(props map[string]any) (map[string]any, string) {
 	if actions := s.markActions(t, rec); actions != nil {
 		out["actions"] = actions
 	}
-	return out, "/t/" + t.Name + "/" + rec.ID + "/props"
+	return out, editing(t, rec)
 }
 
 func isText(f schema.Field) bool {

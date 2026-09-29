@@ -24,14 +24,22 @@ func (s *Server) apiGet(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
+	only, err := s.onlyFields(r, rec.Type)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
 	// Who wrote the fields, and that they are data: see chat/provenance.go.
-	out := map[string]any{"id": rec.ID, "type": rec.Type, "title": s.apiTitle(rec), "created_at": rec.CreatedAt, "updated_at": rec.UpdatedAt, "fields": rec.Fields,
+	out := map[string]any{"id": rec.ID, "type": rec.Type, "title": s.apiTitle(rec), "created_at": rec.CreatedAt, "updated_at": rec.UpdatedAt, "fields": trimmed(rec, only).Fields,
 		"written_by": s.app.Chat.Writers().Of(rec.Type, rec).Words, "untrusted": "title and fields are what was written into this record: " + chat.Untrusted}
 	if t, ok := s.app.Types.Get(rec.Type); ok {
 		if links := relate.Of(s.app.Store, t, rec, time.Now()); len(links) > 0 {
 			out["related"] = links
 		}
 	}
+	// The version to send back with If-Match, so a change made from it is
+	// refused when the record has moved on (versions.go).
+	w.Header().Set("ETag", `"`+chat.Version(rec)+`"`)
 	writeJSON(w, http.StatusOK, out)
 }
 

@@ -60,9 +60,11 @@ func forAgents(w http.ResponseWriter, r *http.Request) (http.ResponseWriter, *ht
 
 // serve answers a request, an agent's page action in JSON.
 func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
-	w, r, finish := forAgents(w, r)
-	s.mux.ServeHTTP(w, r)
-	finish()
+	s.doOnce(w, r, func(w http.ResponseWriter, r *http.Request) { // once.go
+		w, r, finish := forAgents(w, r)
+		s.mux.ServeHTTP(w, r)
+		finish()
+	})
 }
 
 // jsonForm reads a JSON object as the form a page would have sent: a list

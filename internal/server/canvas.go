@@ -113,9 +113,7 @@ func (s *Server) blockItem(blk *store.Record, convo *conversation) string {
 	if n := convo.Arrival[v.ID]; n > 0 {
 		fmt.Fprintf(&b, ` data-arrival="%d"`, n)
 	}
-	if v.EditAction != "" {
-		fmt.Fprintf(&b, ` data-edit-action="%s"`, v.EditAction)
-	}
+	b.WriteString(v.Editing) // a record's, as on its own page; see versions.go
 	fmt.Fprintf(&b, ` id="block-%s" style="--sw-span: %d; view-transition-name: block-%s; view-transition-class: sw-vt-item">`, v.ID, v.Span, v.ID)
 	// At icon size the block is a glyph with its name, opening the whole
 	// thing on its own page: everything is still reachable, in less room.
@@ -177,11 +175,11 @@ func (s *Server) canvasBlock(b *store.Record, convo *conversation) canvasBlock {
 	// Removing is the one thing worth a control of its own. Anything else a
 	// person wants changed, they ask for, which is faster than any form and
 	// is the whole point of having an assistant on the page.
-	editAction := ""
+	editing := ""
 	if name == recordComponent {
 		// A record block edits the record: its editor posts to the record's
 		// own props, and is given every field of it (recordEditFields).
-		props, editAction = s.resolveRecord(props)
+		props, editing = s.resolveRecord(props)
 	}
 	if name == collectionComponent {
 		props = s.resolveCollectionAt(props, b.ID, onCanvas(b, convo))
@@ -207,7 +205,7 @@ func (s *Server) canvasBlock(b *store.Record, convo *conversation) canvasBlock {
 		ID: b.ID, Component: name, Actor: actor, Changed: changed, Person: convo.People[b.ID], Span: span,
 		Frame: str(b.Fields["frame"], "card"), Tone: str(b.Fields["tone"], "none"),
 		Size: str(b.Fields["size"], "full"), Label: label, Icon: icon,
-		Provenance: provenance, EditAction: editAction,
+		Provenance: provenance, Editing: editing,
 		HTML: s.component(name, props) + s.recordEditFields(name, props),
 		Expand: s.component("link", map[string]any{
 			"href": "/canvas/" + b.ID, "label": "Expand", "context": label,
@@ -263,9 +261,9 @@ type canvasBlock struct {
 	HTML              template.HTML
 	Expand            template.HTML
 	Remove            template.HTML
-	// EditAction is where the inline editor posts for this block when it is
-	// not the block's own props: a record block edits the record.
-	EditAction string
+	// Editing is what a record block tells the inline editor, the same as
+	// the record's own page: where a save goes and what it showed.
+	Editing string
 }
 
 // canvasDelete is a person removing a block; it is logged as a human action.
