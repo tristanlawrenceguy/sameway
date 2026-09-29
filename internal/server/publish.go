@@ -77,7 +77,10 @@ func (s *Server) Public(mcp http.Handler) http.Handler {
 		case strings.HasPrefix(r.URL.Path, "/design/"):
 			s.ServeHTTP(w, r)
 			return
-		case strings.HasPrefix(r.URL.Path, "/files/") && s.publicFile(pub, strings.TrimPrefix(r.URL.Path, "/files/")):
+		// The file and what is read from it (its captions, its words), but
+		// not its sound copied out for writing it down: that writes into the
+		// workspace's folder, and is the owner's to ask for.
+		case strings.HasPrefix(r.URL.Path, "/files/") && !strings.Contains(r.URL.Path, "/sound") && s.publicFile(pub, strings.TrimPrefix(r.URL.Path, "/files/")):
 			s.ServeHTTP(w, r) // a picture on a published page
 			return
 		}
