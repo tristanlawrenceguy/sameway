@@ -79,7 +79,7 @@ func (s *Service) allTools() []llm.Tool {
 		updateTool,
 		s.arrangementTool(),
 		settingTool,
-	}, append(append(append(append(s.recordTools(), s.canvasTools()...), shapeTools()...), s.lookTools()...), s.accessTools()...)...)
+	}, append(append(append(append(append(s.recordTools(), s.canvasTools()...), shapeTools()...), s.lookTools()...), s.accessTools()...), s.homeTools()...)...)
 }
 
 // runTool executes one tool call.
@@ -203,7 +203,7 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 		// What was cleared goes in the log, so it can be put back whole.
 		return toolResult{text: fmt.Sprintf("cleared %d blocks; the chat stayed", len(gone)), change: &Change{Action: "cleared", Detail: fmt.Sprintf("%d blocks", len(gone)), Before: map[string]any{"blocks": keep(gone)}}}
 	}
-	return fail("unknown tool %s", call.Name)
+	return s.homeTool(call) // see home_tools.go
 }
 
 func (s *Service) addComponent(name string, props map[string]any, l look) toolResult {

@@ -9,4 +9,5 @@ func (s *Server) hooks() {
 	s.app.Chat.Look = s.lookFor
 	s.app.Chat.Picture = s.pictureFor
 	s.app.Chat.Check = s.blockCheck
+	s.app.Chat.Home = s // recordings and workspaces; see home.go
 }

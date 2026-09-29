@@ -9,12 +9,11 @@ import (
 	"testing"
 )
 
-// What a person does from a page, the assistant can do with a tool, or
-// there is a reason it cannot. Each page action says which: the tools that
-// do the same, "a person's: ..." when it is theirs alone by design, or
-// "not yet: ..." when nothing does it for the assistant and something
-// should. A new page action fails here until it says which, so a thing a
-// person can do is never out of the assistant's reach by accident.
+// What a person does from a page, the assistant can do with a tool, or it
+// is theirs alone by design. Each page action says which: the tools that
+// do the same, or "a person's: ..." and why. There is no third answer: a
+// page action with neither is a gap, and a new one fails here until the
+// assistant has a tool for it or the reason it should not is said.
 var pageActionTools = map[string]string{
 	"/t/{type}/add":               "create_record",
 	"/t/{type}/{id}/props":        "update_record",
@@ -23,7 +22,7 @@ var pageActionTools = map[string]string{
 	"/t/{type}/import":            "import_records",
 	"/t/{type}/import/{file}/run": "import_records",
 	"/t/file/upload":              "a person's: a file comes from their computer; the assistant reads files already added",
-	"/files/{id}/transcribe":      "not yet: the assistant cannot ask for a recording to be written down",
+	"/files/{id}/transcribe":      "write_down",
 	"/activity/{id}/undo":         "undo_change",
 	"/act/{id}":                   "run_action",
 	"/canvas/{id}/place":          "update_component",
@@ -42,7 +41,7 @@ var pageActionTools = map[string]string{
 	"/chat/new":                   "a person's: which conversation they are in is theirs",
 	"/chat/open":                  "a person's: the same",
 	"/chat/delete":                "a person's: the same",
-	"/chat/clear":                 "not yet: starting afresh is something a person asks the assistant for",
+	"/chat/clear":                 "clear_conversation",
 	"/proposal/{id}/accept":       "a person's: the answer to the assistant's own question",
 	"/proposal/{id}/dismiss":      "a person's: the same",
 	"/proposal/{id}/instead":      "a person's: the same",
@@ -53,10 +52,10 @@ var pageActionTools = map[string]string{
 	"/speech/get":                 "a person's: a download they are asked about",
 	"/dictate":                    "a person's: their voice",
 	"/sync":                       "a person's: computers exchanging changes, not a change",
-	"/workspaces/new":             "not yet: the assistant cannot make a workspace",
-	"/workspaces/copy":            "not yet: the same",
-	"/workspaces/start":           "not yet: the assistant cannot open another workspace",
-	"/workspaces/restore":         "not yet: the assistant cannot restore one from the trash",
+	"/workspaces/new":             "add_workspace",
+	"/workspaces/copy":            "add_workspace",
+	"/workspaces/start":           "open_workspace",
+	"/workspaces/restore":         "restore_workspace",
 	"/workspaces/delete":          "a person's: deleting a whole workspace is its owner's",
 }
 
@@ -84,7 +83,7 @@ func TestEveryPageActionIsTheAssistantsOrSaysWhyNot(t *testing.T) {
 			switch {
 			case !ok:
 				t.Errorf("POST %s: which tool does the same for the assistant, or why is it a person's? Say so in pageActionTools", route)
-			case strings.HasPrefix(said, "a person's: ") || strings.HasPrefix(said, "not yet: "):
+			case strings.HasPrefix(said, "a person's: "):
 			default:
 				for _, name := range strings.Split(said, ",") {
 					if !tools[strings.TrimSpace(name)] {
@@ -94,19 +93,14 @@ func TestEveryPageActionIsTheAssistantsOrSaysWhyNot(t *testing.T) {
 			}
 		}
 	}
-	var gone, notYet []string
-	for route, said := range pageActionTools {
+	var gone []string
+	for route := range pageActionTools {
 		if !seen[route] {
 			gone = append(gone, route)
-		}
-		if strings.HasPrefix(said, "not yet: ") {
-			notYet = append(notYet, route)
 		}
 	}
 	sort.Strings(gone)
 	for _, route := range gone {
 		t.Errorf("POST %s is no longer a page action; take it off pageActionTools", route)
 	}
-	sort.Strings(notYet)
-	t.Logf("page actions the assistant cannot do yet: %s", strings.Join(notYet, ", "))
 }
