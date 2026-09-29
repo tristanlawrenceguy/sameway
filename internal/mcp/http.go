@@ -44,6 +44,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		scheme = "http"
 	}
 	ctx = context.WithValue(ctx, baseKey{}, scheme+"://"+r.Host)
+	c := s.connFor(r)
+	ctx = withConn(ctx, c)
 	for _, req := range reqs {
 		result, rpcErr := s.handle(ctx, req)
 		if len(req.ID) == 0 || string(req.ID) == "null" {
@@ -54,6 +56,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			resp.Result, resp.Error = nil, rpcErr
 		}
 		out = append(out, resp)
+	}
+	// A client that said who it is gets a session to say it by after.
+	if id := s.sessions.keep(c); id != "" {
+		w.Header().Set("Mcp-Session-Id", id)
 	}
 	if len(out) == 0 {
 		w.WriteHeader(http.StatusAccepted)

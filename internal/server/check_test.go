@@ -44,8 +44,8 @@ var setUpWrong = []struct {
 	props     map[string]any
 	why       string
 }{
-	{"collection", map[string]any{"type": "task", "as": "board", "by": "done"}, "a board needs a pick-list field for its columns, and task has none; show it as a list, table or cards, or add a pick-list field first"},
-	{"collection", map[string]any{"type": "task", "where": []any{"status=open"}}, `task has no field "status"; it has title, done, due`},
+	{"collection", map[string]any{"type": "entry", "as": "board"}, "a board needs a pick-list field for its columns, and entry has none; show it as a list, table or cards, or add a pick-list field first"},
+	{"collection", map[string]any{"type": "task", "where": []any{"owner=me"}}, `task has no field "owner"; it has title, done, status, due`},
 	{"chart", map[string]any{"type": "entry", "by": "at", "period": "day", "sum": "glasses"}, `sum needs a number field on entry; "glasses" is not one; its number fields are amount`},
 	{"chart", map[string]any{"type": "task", "by": "owner"}, `task has no field "owner" to group by; it has title, done`},
 	{"calendar", map[string]any{"type": "tasks"}, "there is no content type tasks (did you mean task?); the workspace has"},
