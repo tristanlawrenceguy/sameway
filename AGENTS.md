@@ -48,6 +48,7 @@ runner in tools/a11y-runner.
 | Model lays out and restyles the canvas | span, position, chat as a removable block | `internal/chat/layout_test.go` |
 | Person uses the HTML pages | landmarks, skip links, one h1, forms, 422 with linked errors, chat transcript, canvas removal | `internal/server/pages_test.go`, `api_test.go` |
 | Agent uses the JSON API | describe completeness, CRUD, stable error shapes, chat builds the canvas | `internal/server/api_test.go` |
+| Agent does what a page does | every POST a form uses answers `Accept: application/json` with the outcome a person reads, never a page; a JSON body is the form; a chat turn carries a file by id | `internal/server/agents_test.go` |
 | Agent uses the CLI | every command, `--json`, flags in any position, errors that say how to fix | `internal/cli/cli_test.go` |
 | sameway keeps itself current | a release is found and compared, a download is refused unless its sha256 is in `checksums.txt`, a zip or tar.gz is unpacked, the program is swapped with the old one moved aside, auto installs and manual only tells, a build that says `dev` does neither | `internal/update/*_test.go`, `internal/workspace/update_test.go`, `internal/chat/version_test.go` |
 | Model uses the canvas tools | add, update, remove, clear, ordering, validation errors, prompt contents, history | `internal/chat/*_test.go` |

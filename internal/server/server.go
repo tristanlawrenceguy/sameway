@@ -51,7 +51,7 @@ func New(a *app.App) *Server {
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if s.allowed(w, r) {
 		s.fresh()
-		s.mux.ServeHTTP(w, r)
+		s.serve(w, r) // a page's actions are an agent's too; see agents.go
 	}
 }
 
@@ -119,6 +119,7 @@ func (s *Server) routes() {
 	m.HandleFunc("GET /files/{id}", s.serveFile)
 	m.HandleFunc("GET /files/{id}/still", s.serveStill)
 	s.recordingRoutes(m)
+	s.agentRoutes(m) // api_agent.go
 	m.HandleFunc("POST /speech/get", s.speechGet)
 	m.HandleFunc("POST /dictate", s.dictate)
 
