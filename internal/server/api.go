@@ -104,17 +104,18 @@ func (s *Server) apiList(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	// Each record as it always was, with who wrote it beside it.
+	// Each record as it always was, with its title and who wrote it beside it.
 	type written struct {
 		*store.Record
+		Title     string `json:"title"`
 		WrittenBy string `json:"written_by"`
 	}
 	writers := s.app.Chat.Writers()
 	out := make([]written, 0, len(recs))
 	for _, rec := range recs {
-		out = append(out, written{rec, writers.Of(rec.Type, rec).Words})
+		out = append(out, written{rec, s.apiTitle(rec), writers.Of(rec.Type, rec).Words})
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"type": r.PathValue("type"), "count": len(recs), "records": out, "untrusted": "each record's fields were written by its written_by: " + chat.Untrusted})
+	writeJSON(w, http.StatusOK, map[string]any{"type": r.PathValue("type"), "count": len(recs), "records": out, "untrusted": "each record's title and fields were written by its written_by: " + chat.Untrusted})
 }
 
 // apiChat lets an agent talk to the assistant the same way a person does.
@@ -197,7 +198,7 @@ func (s *Server) apiFileUpload(w http.ResponseWriter, r *http.Request) {
 		rec, _ = s.app.Store.Get(FileType, rec.ID)
 
 		w.Header().Set("Location", "/api/"+FileType+"/"+rec.ID)
-		writeJSON(w, http.StatusCreated, rec)
+		writeJSON(w, http.StatusCreated, s.titled(rec))
 		return
 	}
 
@@ -216,7 +217,7 @@ func (s *Server) apiFileUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Location", "/api/"+FileType+"/"+rec.ID)
-	writeJSON(w, http.StatusCreated, rec)
+	writeJSON(w, http.StatusCreated, s.titled(rec))
 }
 
 // apiChatClear clears all messages from the current chat session and returns

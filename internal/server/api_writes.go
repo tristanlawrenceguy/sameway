@@ -42,7 +42,7 @@ func (s *Server) apiCreate(w http.ResponseWriter, r *http.Request) {
 	}
 	chat.AgentWrite(s.app.Store, agent, "created", rec, nil)
 	w.Header().Set("Location", "/api/"+rec.Type+"/"+rec.ID)
-	writeJSON(w, http.StatusCreated, shownRecord{rec, shows})
+	writeJSON(w, http.StatusCreated, shownRecord{s.titled(rec), shows})
 }
 
 func (s *Server) apiUpdate(w http.ResponseWriter, r *http.Request) {
@@ -76,7 +76,7 @@ func (s *Server) apiUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	chat.AgentWrite(s.app.Store, agent, "updated", rec, was.Fields)
-	writeJSON(w, http.StatusOK, shownRecord{rec, shows})
+	writeJSON(w, http.StatusOK, shownRecord{s.titled(rec), shows})
 }
 
 func (s *Server) apiDelete(w http.ResponseWriter, r *http.Request) {

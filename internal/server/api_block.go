@@ -10,10 +10,10 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
-// shownRecord is a block as the API answers a write of it: the record,
-// and what it shows, so the one who wrote it has something to notice.
+// shownRecord is a record as the API answers a write of it: the record
+// with its title, and for a block what it shows, so the one who wrote it has something to notice.
 type shownRecord struct {
-	*store.Record
+	titled
 	Shows string `json:"shows,omitempty"`
 }
 
