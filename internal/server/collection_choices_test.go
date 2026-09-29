@@ -77,7 +77,7 @@ func TestACollectionOffersChoicesFromItsSchema(t *testing.T) {
 	id := addCollection(t, h, map[string]any{"type": "task", "label": "Tasks"})
 	list := section(t, get(t, h, "/").Body.String(), id)
 	for _, want := range []string{
-		`<form method="get" action="/#collection-` + id + `"><fieldset class="sw-collection__form"><legend class="sw-visually-hidden">Show and sort: Tasks</legend>`,
+		`<form method="get" action="/#collection-` + id + `"><fieldset class="sw-filters__form"><legend class="sw-visually-hidden">Show and sort: Tasks</legend>`,
 		`name="c-` + id + `-sort"`, `<option value="-created_at" selected>Newest first</option>`,
 		`>A to Z<`, `<option value="due">Due soonest first</option>`,
 		`name="c-` + id + `-done"`, `>Not done<`,
@@ -221,11 +221,11 @@ func TestChoicesAreOfferedWhereTheyHelp(t *testing.T) {
 	many := addCollection(t, h, map[string]any{"type": "task", "label": "Many"})
 	page := get(t, h, "/").Body.String()
 	for _, id := range []string{few, off, short} {
-		if strings.Contains(section(t, page, id), "sw-collection__form") {
+		if strings.Contains(section(t, page, id), "sw-filters__form") {
 			t.Errorf("collection %s should not offer choices, nor keep ones it was given", id)
 		}
 	}
-	if !strings.Contains(section(t, page, many), "sw-collection__form") {
+	if !strings.Contains(section(t, page, many), "sw-filters__form") {
 		t.Error("eight tasks are worth narrowing")
 	}
 	own := get(t, h, "/canvas/"+few).Body.String()

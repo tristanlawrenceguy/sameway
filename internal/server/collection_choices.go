@@ -165,7 +165,7 @@ func applyChoices(out map[string]any, choices []choice, at *collectionPlace, blo
 		}
 		opts := make([]any, 0, len(c.options))
 		for _, o := range c.options {
-			opts = append(opts, map[string]any{"value": o.value, "label": o.label})
+			opts = append(opts, map[string]any{"value": o.value, "label": o.label, "selected": o.value == picked})
 			switch {
 			case o.value != picked:
 			case c.param == "sort":
@@ -179,8 +179,7 @@ func applyChoices(out map[string]any, choices []choice, at *collectionPlace, blo
 			}
 		}
 		selects = append(selects, map[string]any{
-			"id": id + "-" + c.param, "name": prefix + c.param, "label": c.label,
-			"as": "dropdown", "value": picked, "options": opts,
+			"id": id + "-" + c.param, "name": prefix + c.param, "label": c.label, "options": opts,
 		})
 	}
 	// What narrows it is said first, then the order.
@@ -198,7 +197,13 @@ func applyChoices(out map[string]any, choices []choice, at *collectionPlace, blo
 			hidden = append(hidden, map[string]any{"name": name, "value": v})
 		}
 	}
-	ch := map[string]any{"action": at.Path + "#" + id, "selects": selects, "keep": hidden}
+	// The filters component draws them: a form, since a sort and up to
+	// three fields are chosen together and applied at once.
+	name := str(out["label"], str(out["type"], ""))
+	ch := map[string]any{
+		"shape": "form", "label": "Show and sort: " + name, "hideLabel": true, "context": name,
+		"action": at.Path + "#" + id, "choices": selects, "keep": hidden,
+	}
 	if active {
 		reset := at.Path
 		if len(keep) > 0 {
