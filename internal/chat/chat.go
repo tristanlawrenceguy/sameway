@@ -82,6 +82,9 @@ type Service struct {
 	// who is the one this service speaks for, when it is not the owner;
 	// see people.go.
 	who Visitor
+	// agent is the program outside Sameway this service runs tools for,
+	// nil for the assistant in the app; see agent.go.
+	agent *Agent
 
 	// current is the tab the person is looking at while a turn runs: "" is
 	// Home. New blocks land there, and the prompt describes that tab.
