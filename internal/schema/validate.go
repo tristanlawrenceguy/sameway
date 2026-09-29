@@ -28,6 +28,7 @@ func (e *ValidationError) Error() string {
 func (t *Type) Normalize(in map[string]any) (map[string]any, error) {
 	out := map[string]any{}
 	problems := map[string]string{}
+	absent := map[string]bool{}
 	for k := range in {
 		if _, ok := t.Field(k); !ok {
 			problems[k] = "unknown field"
@@ -36,6 +37,7 @@ func (t *Type) Normalize(in map[string]any) (map[string]any, error) {
 	for _, f := range t.Fields {
 		v, present := in[f.Name]
 		if !present || v == nil || v == "" {
+			absent[f.Name] = true
 			if f.Default != nil {
 				v = f.Default
 			} else if f.Required && !f.Hidden { // nobody is offered a hidden field
@@ -56,6 +58,9 @@ func (t *Type) Normalize(in map[string]any) (map[string]any, error) {
 	if len(problems) > 0 {
 		return nil, &ValidationError{Problems: problems}
 	}
+	// A task given only its tick gets its status from it, and the other
+	// way round (stage.go).
+	t.Unstored(out, absent)
 	return out, nil
 }
 

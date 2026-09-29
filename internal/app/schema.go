@@ -97,10 +97,3 @@ func (a *App) AddType(t *schema.Type) (*schema.Type, error) {
 	a.Store.StampSchema(parsed)
 	return parsed, nil
 }
-
-func (a *App) writeSchema(path string, src []byte) error {
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return err
-	}
-	return os.WriteFile(path, src, 0o644)
-}

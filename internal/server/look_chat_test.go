@@ -40,7 +40,7 @@ func TestTheAssistantLooksAtThePageThePersonIsOn(t *testing.T) {
 			}
 		}
 	}
-	for _, want := range []string{`"pressed button: Edit block"`, `"textbox: Body"`, `"focus_order"`} {
+	for _, want := range []string{`"pressed button: Edit Water the plants"`, `"textbox: Body"`, `"focus_order"`} {
 		if !strings.Contains(seen, want) {
 			t.Errorf("the look the model reads carries %s, got\n%.2000s", want, seen)
 		}

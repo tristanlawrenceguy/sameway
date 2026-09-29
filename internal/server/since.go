@@ -118,6 +118,11 @@ func (s *Server) sinceSeen(w http.ResponseWriter, r *http.Request) {
 // someone by their login, or the owner of this computer's copy (written
 // with no login when the tailnet had not said who they are).
 func (s *Server) byOther(e *store.Record, key string) bool {
+	// What an agent did is news to everyone, the one who set it going
+	// included: it worked while they were away.
+	if e.Fields["actor"] == chat.ActorAgent {
+		return true
+	}
 	if e.Fields["actor"] != "human" {
 		return false
 	}

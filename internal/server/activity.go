@@ -1,6 +1,7 @@
 package server
 
 import (
+	stdcmp "cmp"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -146,18 +147,32 @@ func (s *Server) activityPage(w http.ResponseWriter, r *http.Request) {
 		s.page(w, r, "Activity", s.component("alert", map[string]any{"kind": "info", "message": "This workspace keeps no log yet. Run sameway init --force to add one."}), pageOptions{})
 		return
 	}
-	recs, err := s.app.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 500})
+	all, err := s.app.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true})
 	if err != nil {
 		s.fail(w, err)
 		return
 	}
+	// Narrowed by who, what and when, as the address says, a page at a
+	// time; Undo on an entry comes back to this same narrowing.
+	recs, filters, f := s.narrowLog(all, r.URL.Query(), time.Now())
+	pg := pageOf(r, len(recs), activityPageSize)
+	from := r.URL.RequestURI()
 	var b strings.Builder
-	b.WriteString(`<p class="sw-muted sw-prose">Every change to the canvas, by you or the assistant, newest first. The same log is at <a href="/api/activity">/api/activity</a>.</p>`)
-	if len(recs) == 0 {
+	b.WriteString(`<p class="sw-muted sw-prose">Every change to the canvas, by you or the assistant, newest first.</p>`)
+	if len(all) > 0 {
+		b.WriteString(string(s.component("filters", filters)))
+	}
+	switch {
+	case len(all) == 0:
 		b.WriteString(string(s.component("empty", map[string]any{
 			"message": "No activity yet. What you and the assistant change on the canvas shows up here.", "action": map[string]any{"href": "/chat", "label": "Send a message"},
 		})))
+	case len(recs) == 0:
+		b.WriteString(string(s.component("empty", map[string]any{
+			"message": "No changes match: " + filters["showing"].(string) + ".", "action": map[string]any{"href": filters["reset"], "label": "Show every change"},
+		})))
 	}
+	recs = recs[pg.lo:pg.hi]
 	day := ""
 	open := false
 	told := s.entriesApart(recs)
@@ -171,12 +186,17 @@ func (s *Server) activityPage(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(&b, `<h2 class="sw-small sw-muted" style="margin-top:var(--sw-space-8)" id="%s">%s</h2><ol class="sw-plain sw-stack--tight sw-panel" aria-labelledby="%s">`, id, template.HTMLEscapeString(d), id)
 			day, open = d, true
 		}
-		b.WriteString(`<li>` + string(s.event(rec, "/activity", 3, false, told[i])) + `</li>`)
+		b.WriteString(`<li>` + string(s.event(rec, from, 3, false, told[i])) + `</li>`)
 	}
 	if open {
 		b.WriteString("</ol>")
 	}
-	s.page(w, r, "Activity", template.HTML(b.String()), pageOptions{JSONURL: "/api/activity"})
+	b.WriteString(string(s.pageNav(r, pg, "Pages of activity")))
+	said := "Activity"
+	if f.active() {
+		said = fmt.Sprintf("Activity: %s, %s", filters["showing"], stdcmp.Or(filters["count"].(string), "no changes"))
+	}
+	s.page(w, r, "Activity", template.HTML(b.String()), pageOptions{JSONURL: "/api/activity", Said: pg.title(said)})
 }
 
 // script serves the concatenated component enhancement scripts.

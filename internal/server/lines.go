@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -26,6 +27,13 @@ func (s *Server) line(r *store.Record, canUndo bool) map[string]any {
 	if who, person := s.whoDid(r); who != "" {
 		props["who"], props["person"] = who, person
 	}
+	// An agent by the name it gave and how it came in, as the summary says
+	// it: Claude Code (through MCP).
+	if r.Fields["actor"] == chat.ActorAgent {
+		by, _ := r.Fields["by"].(string)
+		via, _ := r.Fields["via"].(string)
+		props["who"] = chat.AgentWho(by, via)
+	}
 	href := s.hrefFor(r)
 	s.say(props, r.Fields, href)
 	if canUndo && s.app.Chat.Undoable(r) {
@@ -39,7 +47,7 @@ func (s *Server) say(props, fields map[string]any, href string) {
 	w := chat.Say(fields, href != "")
 	props["action"] = w.Action
 	if w.Target != "" {
-		props["target"] = w.Target
+		props["target"] = schema.Words(w.Target)
 	}
 	detail := w.Detail
 	// Old entry activity records stored a raw database ID in their detail

@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/search"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
@@ -128,7 +129,7 @@ func searchForm(s *Server, label, hint, q, only string) string {
 // and the words around the match. told tells it from another result with
 // its title and kind, or is "".
 func (s *Server) hitItem(h search.Hit, words []string, told string) string {
-	typeEsc := template.HTMLEscapeString(capitalize(h.Type))
+	typeEsc := template.HTMLEscapeString(capitalize(schema.Words(h.Type)))
 	bodyHTML := ""
 	if snippet := string(marked(h.Snippet, words)); snippet != "" {
 		bodyHTML = fmt.Sprintf(`<div class="sw-card__body" data-prop="body"><p>%s</p></div>`, snippet)

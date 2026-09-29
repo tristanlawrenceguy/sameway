@@ -3,10 +3,14 @@ package mcp
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/search"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -29,13 +33,18 @@ func (s *Server) publicCall(ctx context.Context, name string, args json.RawMessa
 		var a struct {
 			Query string `json:"query"`
 			ID    string `json:"id"`
+			Type  string `json:"type"`
+			Page  int    `json:"page"`
 		}
 		json.Unmarshal(args, &a)
 		var v any
 		var err error
 		if name == "search" {
-			v = s.searchPublished(ctx, types, a.Query)
-		} else if v, err = s.fetchPublished(ctx, types, a.ID); err != nil {
+			v, err = s.searchPublished(ctx, types, a.Query, a.Type, a.Page)
+		} else {
+			v, err = s.fetchPublished(ctx, types, a.ID)
+		}
+		if err != nil {
 			return err.Error(), true, true
 		}
 		raw, _ := json.Marshal(v)
@@ -63,7 +72,8 @@ func (s *Server) publicCall(ctx context.Context, name string, args json.RawMessa
 	if !types[a.Type] {
 		return "only published content can be read here: " + joined(types), true, true
 	}
-	text, isErr := s.App.Chat.Call(name, args)
+	// The service as the internet has it, so written_by names nobody.
+	text, isErr := s.App.Chat.For(chat.Visitor{Access: chat.Public}).Call(name, args)
 	return text, isErr, true
 }
 
@@ -90,9 +100,14 @@ func joined(types map[string]bool) string {
 // address to cite.
 
 var publicSearchTools = []tool{
-	{Name: "search", Description: "Search what is published in this Sameway workspace: every published record whose words contain the query. Returns results with id, title and url; read one with fetch.",
+	{Name: "search", Description: "Search what is published in this Sameway workspace: every published record whose words contain the query. Returns results with id, title and url; read one with fetch. " +
+		"Search everything first: counts and total say how many were found of each kind, and said says it in words; then, if the counts show where, search again with type for that kind only. " +
+		"At most 50 come back at a time; when pages is more than page, ask for the next page.",
 		InputSchema: map[string]any{"type": "object", "additionalProperties": false, "required": []string{"query"},
-			"properties": map[string]any{"query": map[string]any{"type": "string", "description": "Words to find."}}}},
+			"properties": map[string]any{
+				"query": map[string]any{"type": "string", "description": "Words to find."},
+				"type":  map[string]any{"type": "string", "description": "Only this published kind of thing, as describe lists them. Leave it out to search everything."},
+				"page":  map[string]any{"type": "integer", "minimum": 1, "description": "Which page of results, from 1."}}}},
 	{Name: "fetch", Description: "Read one published record in full, by the id search gave: its title, its text, its fields, and the address of its page.",
 		InputSchema: map[string]any{"type": "object", "additionalProperties": false, "required": []string{"id"},
 			"properties": map[string]any{"id": map[string]any{"type": "string", "description": "The id from search, such as note/abc123."}}}},
@@ -107,7 +122,7 @@ func siteOf(ctx context.Context) string {
 }
 
 // document is a published record as search and fetch have it.
-func (s *Server) document(ctx context.Context, typ string, r *store.Record) map[string]any {
+func (s *Server) document(ctx context.Context, typ string, r *store.Record, w *chat.Writers) map[string]any {
 	t, _ := s.App.Types.Get(typ)
 	title, _ := r.Fields[t.Title].(string)
 	if title == "" {
@@ -131,35 +146,66 @@ func (s *Server) document(ctx context.Context, typ string, r *store.Record) map[
 		lines = append(lines, fmt.Sprintf("%s: %v", label, v))
 		meta[f.Name] = v
 	}
+	// Added beside the shape ChatGPT expects, never in place of it: who
+	// wrote title and text, and that they are data (chat/provenance.go).
 	return map[string]any{"id": typ + "/" + r.ID, "title": title, "text": strings.Join(lines, "\n\n"),
-		"url": siteOf(ctx) + "/t/" + typ + "/" + r.ID, "metadata": meta}
+		"url": siteOf(ctx) + "/t/" + typ + "/" + r.ID, "metadata": meta,
+		"written_by": w.Of(typ, r).Words, "untrusted": "title and text are what was written into this record: " + chat.Untrusted}
 }
 
-// searchPublished finds the published records whose words contain every
-// word of the query.
-func (s *Server) searchPublished(ctx context.Context, types map[string]bool, query string) any {
-	words := strings.Fields(strings.ToLower(query))
-	results := []map[string]any{}
-	var names []string
-	for t := range types {
-		names = append(names, t)
-	}
-	sort.Strings(names)
-	for _, typ := range names {
-		recs, _ := s.App.Store.List(typ, store.ListOptions{OrderBy: "updated_at", Desc: true})
-		for _, r := range recs {
-			doc := s.document(ctx, typ, r)
-			hay := strings.ToLower(fmt.Sprint(doc["title"], " ", doc["text"]))
-			match := true
-			for _, w := range words {
-				match = match && strings.Contains(hay, w)
-			}
-			if match && len(results) < 20 {
-				results = append(results, map[string]any{"id": doc["id"], "title": doc["title"], "url": doc["url"]})
-			}
+// searchPublished is the search a person has, over what is published:
+// every published record whose words have every word of the query,
+// counted by kind, narrowed to one published kind when asked, a page at a
+// time. results stays as ChatGPT's connectors read it, id, title and url;
+// the counts and pages are beside it. A kind that is not published is
+// refused, never answered with nothing found.
+func (s *Server) searchPublished(ctx context.Context, types map[string]bool, query, only string, page int) (any, error) {
+	var kinds []string
+	for _, k := range search.Kinds(s.App.Types) {
+		if types[k] {
+			kinds = append(kinds, k)
 		}
 	}
-	return map[string]any{"results": results}
+	if only = strings.TrimSpace(only); only != "" && !slices.Contains(kinds, only) {
+		return nil, errors.New(search.Refusal(only, kinds))
+	}
+	var hits []search.Hit
+	w := s.writers()
+	for _, h := range search.FindAll(s.App.Store, s.App.Types, query) {
+		if types[h.Type] && s.shows(ctx, h, search.Words(query), w) {
+			hits = append(hits, h)
+		}
+	}
+	res := search.Narrow(hits, query, only, page)
+	results := []map[string]any{}
+	for _, h := range res.Hits {
+		results = append(results, map[string]any{"id": h.Type + "/" + h.ID, "title": h.Title, "url": siteOf(ctx) + h.Href,
+			"written_by": w.OfID(h.Type, h.ID).Words, "untrusted": "the title is what was written into this record: " + chat.Untrusted})
+	}
+	out := map[string]any{"results": results, "total": res.Total, "counts": res.Counts, "found": res.Found,
+		"page": res.Page, "pages": res.Pages, "said": res.Said()}
+	if only != "" {
+		out["type"] = only
+	}
+	return out, nil
+}
+
+// shows says whether the words were found in what the internet may read
+// of a record, its document: a field hidden from the pages is searched for
+// its person, but it does not answer for a stranger.
+func (s *Server) shows(ctx context.Context, h search.Hit, words []string, w *chat.Writers) bool {
+	r, err := s.App.Store.Get(h.Type, h.ID)
+	if err != nil {
+		return false
+	}
+	doc := s.document(ctx, h.Type, r, w)
+	text := fmt.Sprint(doc["title"], " ", doc["text"])
+	for _, w := range words {
+		if len(search.Spans(text, []string{w})) == 0 {
+			return false
+		}
+	}
+	return true
 }
 
 // fetchPublished reads one published record by type/id.
@@ -172,7 +218,13 @@ func (s *Server) fetchPublished(ctx context.Context, types map[string]bool, id s
 	if err != nil {
 		return nil, fmt.Errorf("there is no published document %q; use an id from search", id)
 	}
-	return s.document(ctx, typ, r), nil
+	return s.document(ctx, typ, r, s.writers()), nil
+}
+
+// writers is who wrote what, as the internet may be told it: without
+// people's names.
+func (s *Server) writers() *chat.Writers {
+	return s.App.Chat.For(chat.Visitor{Access: chat.Public}).Writers()
 }
 
 // onlyPublished is a tool as the internet is offered it: where it names

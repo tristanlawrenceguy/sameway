@@ -35,6 +35,7 @@ func (s *Store) Create(typeName string, fields map[string]any) (*Record, error) 
 	if err := s.checkRefs(t, clean); err != nil {
 		return nil, err
 	}
+	t.KeepInStep(nil, clean)
 	return s.insert(t, NewID(), clean)
 }
 
@@ -102,7 +103,7 @@ func (s *Store) List(typeName string, opts ListOptions) ([]*Record, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	var out []*Record
+	out := make([]*Record, 0)
 	for rows.Next() {
 		rec, err := scan(t, rows)
 		if err != nil {
@@ -137,8 +138,9 @@ func (s *Store) Update(typeName, id string, fields map[string]any) (*Record, err
 	if err := s.checkRefs(t, clean); err != nil {
 		return nil, err
 	}
-	// Something that repeats, finished, is due again, however it was
-	// finished (schema/repeat.go).
+	// A task's tick and status say one thing (schema/stage.go); finished,
+	// something that repeats is due again, however it was (repeat.go).
+	t.KeepInStep(current.Fields, clean)
 	t.Advance(current.Fields, clean, time.Now())
 	now := time.Now().UTC()
 	sets := []string{"updated_at = ?"}
@@ -234,8 +236,14 @@ func scan(t *schema.Type, rows *sql.Rows) (*Record, error) {
 	rec := &Record{ID: id, Type: t.Name, Fields: map[string]any{}}
 	rec.CreatedAt, _ = time.Parse(time.RFC3339Nano, created)
 	rec.UpdatedAt, _ = time.Parse(time.RFC3339Nano, updated)
+	stage, unset := t.Stage(), false
 	for i, f := range t.Fields {
 		rec.Fields[f.Name] = decode(f, raw[i])
+		unset = unset || (f.Name == stage && !raw[i].Valid)
+	}
+	// A task from before its status reads it from its tick (stage.go).
+	if unset {
+		t.Unstored(rec.Fields, map[string]bool{stage: true})
 	}
 	return rec, nil
 }
