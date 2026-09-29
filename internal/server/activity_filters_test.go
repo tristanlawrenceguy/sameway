@@ -13,12 +13,16 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
-// seedLog makes a log with a change by each of you (a task, through the
-// API), the assistant (a card), the system, and Sam (a note), and one
-// change by the assistant ten days ago.
+// seedLog makes a log with a change by each of you (a task), the
+// assistant (a card), the system, and Sam (a note), and one change by the
+// assistant ten days ago.
 func seedLog(t *testing.T, a *app.App, h http.Handler) {
 	t.Helper()
-	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/task", map[string]any{"title": "Dig the pond"}), http.StatusCreated)
+	task, err := a.Store.Create("task", map[string]any{"title": "Dig the pond"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	chat.Record(a.Store, "human", chat.Change{Action: "created", Component: "task", ID: task.ID, Detail: "Dig the pond"})
 	chat.Record(a.Store, "assistant", chat.Change{Action: "added", Component: "card", ID: "c1", Detail: "Plan the beds"})
 	chat.Record(a.Store, "system", chat.Change{Action: "failed", Detail: "could not reach the model"})
 	chat.Record(a.Store, "human", chat.Change{Action: "added", Component: "note", ID: "n1", Detail: "Fern cuttings", By: "Sam", ByLogin: "sam@example.com"})
@@ -148,5 +152,22 @@ func TestActivityPagesKeepTheChoices(t *testing.T) {
 	}
 	if two := get(t, h, "/activity?who=assistant&page=2").Body.String(); !strings.Contains(two, ">Assistant added card Card 0<") && !strings.Contains(two, "Card 0<") {
 		t.Error("the second page has the oldest")
+	}
+}
+
+// An agent outside Sameway is chosen by the name it gave.
+func TestActivityNamesAgents(t *testing.T) {
+	a, h := newApp(t)
+	seedLog(t, a, h)
+	chat.Record(a.Store, chat.ActorAgent, chat.Change{Action: "added", Component: "note", ID: "n2", Detail: "Seed order", By: "Claude Code", Via: chat.ThroughAPI})
+	body := get(t, h, "/activity").Body.String()
+	i := strings.Index(body, ">Claude Code</option>")
+	if i < 0 {
+		t.Fatalf("an agent is offered by its name\n%s", truncate(body))
+	}
+	v := body[strings.LastIndex(body[:i], `value="`)+7:]
+	v = v[:strings.Index(v, `"`)]
+	if got := get(t, h, "/activity?who="+v).Body.String(); !strings.Contains(got, "Seed order") || strings.Contains(got, "Fern cuttings") {
+		t.Errorf("choosing the agent shows its changes alone: %s", v)
 	}
 }

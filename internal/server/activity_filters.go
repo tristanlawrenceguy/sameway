@@ -32,8 +32,8 @@ const activityPageSize = 200
 // called: you, the assistant, Sam; tasks, cards; today.
 type logChoice struct{ value, label string }
 
-// whoOf is who made a change: you, the assistant, the system, or another
-// person by the name the person component shows them by. Another person's
+// whoOf is who made a change: you, the assistant, the system, an agent
+// by its name, or another person by the name the person component shows them by. Another person's
 // value is a short fingerprint of their login, so the address says who
 // without carrying an email.
 func (s *Server) whoOf(e *store.Record) logChoice {
@@ -42,6 +42,11 @@ func (s *Server) whoOf(e *store.Record) logChoice {
 		return logChoice{"assistant", "Assistant"}
 	case "system":
 		return logChoice{"system", "System"}
+	case chat.ActorAgent:
+		// An agent outside Sameway, by the name it gave or its program's.
+		name, _ := e.Fields["by"].(string)
+		sum := sha256.Sum256([]byte(name))
+		return logChoice{"a-" + hex.EncodeToString(sum[:4]), stdcmp.Or(name, "An agent")}
 	case "human", "":
 		name, _ := s.whoDid(e)
 		if name == "" {
