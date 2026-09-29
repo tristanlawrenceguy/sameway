@@ -118,24 +118,6 @@ func (s *Server) apiList(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"type": r.PathValue("type"), "count": len(recs), "records": out, "untrusted": "each record's title and fields were written by its written_by: " + chat.Untrusted})
 }
 
-// apiChat lets an agent talk to the assistant the same way a person does.
-func (s *Server) apiChat(w http.ResponseWriter, r *http.Request) {
-	body, err := readBody(r)
-	if err != nil {
-		writeError(w, err)
-		return
-	}
-	text, _ := body["message"].(string)
-	// canvas is the tab to build on: a canvas id, or absent for Home.
-	canvas, _ := body["canvas"].(string)
-	rec, err := s.chatFor(r).SendOn(r.Context(), canvas, text)
-	if rec == nil {
-		writeError(w, err)
-		return
-	}
-	writeJSON(w, http.StatusOK, map[string]any{"reply": rec, "ok": err == nil})
-}
-
 // apiDescribePart serves one section of the description, or one item in it,
 // cut by the same Part every other surface uses.
 func (s *Server) apiDescribePart(w http.ResponseWriter, r *http.Request) {
@@ -194,7 +176,10 @@ func (s *Server) apiFileUpload(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		s.record(r, chat.Change{Action: "added", Component: FileType, ID: rec.ID, Detail: title, Href: "/t/" + FileType + "/" + rec.ID})
-		s.readKept(rec.ID, name, path, false)
+		// wait: true answers once the text is read, even by a converter
+		// that takes a while; without it status says converting until then.
+		wait, _ := fields["wait"].(bool)
+		s.readKept(rec.ID, name, path, wait)
 		rec, _ = s.app.Store.Get(FileType, rec.ID)
 
 		w.Header().Set("Location", "/api/"+FileType+"/"+rec.ID)

@@ -1,6 +1,7 @@
 package server
 
 import (
+	stdcmp "cmp"
 	"errors"
 	"fmt"
 	"html/template"
@@ -111,6 +112,12 @@ func (s *Server) workspacesPage(w http.ResponseWriter, r *http.Request) {
 // showWorkspaces is the page: this workspace, the others, and what can
 // be done, with a problem said at the top when there is one.
 func (s *Server) showWorkspaces(w http.ResponseWriter, r *http.Request, problem string) {
+	// An agent gets the problem the page would open with (agents.go).
+	if problem != "" && pageAction(r) {
+		not := map[string]string{"start": "Not started", "new": "Not created", "copy": "Not copied", "delete": "Not deleted"}[strings.TrimPrefix(r.URL.Path, "/workspaces/")]
+		tellJSON(w, outcome{Failed: true, Title: stdcmp.Or(not, "Not done"), Text: problem}, "/workspaces")
+		return
+	}
 	cur := s.app.Workspace
 	var b strings.Builder
 	if problem != "" {
@@ -168,7 +175,7 @@ func (s *Server) showWorkspaces(w http.ResponseWriter, r *http.Request, problem 
 	b.WriteString(string(s.component("button", map[string]any{"label": "Delete", "context": "workspace", "type": "submit", "variant": "danger"})))
 	b.WriteString(`</form></section>`)
 
-	s.page(w, r, "Workspaces", template.HTML(b.String()), pageOptions{Lede: "Each workspace runs on its own, so several can be open at once."})
+	s.page(w, r, "Workspaces", template.HTML(b.String()), pageOptions{Lede: "Each workspace runs on its own, so several can be open at once.", JSONURL: "/api/workspaces"})
 }
 
 func (s *Server) workspacesStart(w http.ResponseWriter, r *http.Request) {
@@ -252,6 +259,10 @@ func (s *Server) showWorkspaceCreated(w http.ResponseWriter, r *http.Request, na
 	opPast := "created"
 	if op == "copy" {
 		opPast = "copied"
+	}
+	if pageAction(r) {
+		tellJSON(w, outcome{Title: "Workspace " + name + " " + opPast, Text: "It is at " + dir + ", but could not be started from here: " + err.Error()}, "/workspaces")
+		return
 	}
 	b.WriteString(string(s.component("alert", map[string]any{
 		"kind":    "success",

@@ -185,6 +185,11 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(&b, `<form method="post" action="/act/%s"><input type="hidden" name="from" value="/t/%s/%s">%s</form>`, rec.ID, t.Name, rec.ID,
 			s.component("button", map[string]any{"label": "Run " + trimLabel(title), "type": "submit", "variant": "primary"}))
 	}
+	// A change in the log is taken back from its own page too.
+	if t.Name == chat.ActivityType && s.app.Chat.Undoable(rec) {
+		fmt.Fprintf(&b, `<form method="post" action="/activity/%s/undo"><input type="hidden" name="from" value="/t/%s/%s">%s</form>`, rec.ID, t.Name, rec.ID,
+			s.component("button", map[string]any{"label": "Undo", "type": "submit", "variant": "secondary"}))
+	}
 	// The record's one press, done or pinned or whatever its yes-or-no
 	// field is, sits under the title; Delete keeps to the quiet bar.
 	fmt.Fprintf(&b, `<div class="sw-bar sw-quiet"><form method="post" action="/t/%s/%s/delete">%s</form></div>`,

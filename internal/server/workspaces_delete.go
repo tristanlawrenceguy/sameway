@@ -55,9 +55,17 @@ func (s *Server) workspacesDelete(w http.ResponseWriter, r *http.Request) {
 	if ws != nil {
 		nextName = ws.Config.Name
 	}
+	said := "It is in Sameway's trash with everything that was in its folder (" + trashed.Now + "). Restore it from Workspaces."
+	if pageAction(r) {
+		tellJSON(w, outcome{Title: cur.Config.Name + " deleted", Text: said}, url)
+		if s.fleet != nil && s.fleet.Exit != nil {
+			s.fleet.Exit()
+		}
+		return
+	}
 	var b strings.Builder
 	b.WriteString(string(s.component("alert", map[string]any{"kind": "success", "live": true, "title": cur.Config.Name + " deleted",
-		"message": "It is in Sameway's trash with everything that was in its folder (" + trashed.Now + "). Restore it from Workspaces."})))
+		"message": said})))
 	b.WriteString(fmt.Sprintf(`<p class="sw-muted">Opening <a href="%s">%s</a>…</p>`, template.HTMLEscapeString(url), template.HTMLEscapeString(nextName)))
 
 	w.Header().Set("Refresh", fmt.Sprintf("3; url=%s", template.HTMLEscapeString(url)))
