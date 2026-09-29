@@ -56,6 +56,7 @@ func (s *Server) title(t *schema.Type, rec *store.Record) string {
 		summary, _ := rec.Fields["summary"].(string)
 		return chat.CleanSummary(summary)
 	}
+	// ActivityType is handled above via CleanSummary; fallthrough for all other types.
 	return titleOf(t, rec)
 }
 
