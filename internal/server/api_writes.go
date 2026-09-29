@@ -106,6 +106,10 @@ func (s *Server) keptLog(w http.ResponseWriter, r *http.Request) bool {
 // or nobody in particular, "An agent". A browser's User-Agent names no
 // one, since every browser's starts Mozilla.
 func apiAgent(r *http.Request) chat.Agent {
+	// An agent with a key is who its key says, whatever it calls itself.
+	if v := chat.VisitorOf(r.Context()); v.Agent {
+		return chat.Agent{Name: v.Name, Through: chat.ThroughAPI}
+	}
 	name := r.Header.Get("X-Sameway-Agent")
 	if name == "" {
 		product, _, _ := strings.Cut(strings.TrimSpace(r.UserAgent()), "/")

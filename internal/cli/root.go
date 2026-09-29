@@ -26,6 +26,7 @@ Usage:
   sameway update [--check]              install a new version of sameway, or only say whether one is out
   sameway search <words>                find anything by the words in it, records and canvas blocks alike
   sameway add <file>... [--title words] add files on this computer, copied in as they are (up to 4 GB each)
+  sameway agent add|list|remove <name>  let an agent in with a key of its own (--access view|edit|owner)
   sameway look <path>                   a page as a screen reader gets it, with its problems, as JSON
   sameway export                        rewrite content/ from the database (it is kept current as things change)
   sameway import [--dry-run]            read content/ back into the database, after a git pull; one Undo takes it back
@@ -110,6 +111,8 @@ func Run(args []string, env Env) int {
 		err = c.chatCmd()
 	case "connect":
 		err = c.connectCmd()
+	case "agent":
+		err = c.agentCmd()
 	case "discover":
 		err = c.discoverCmd()
 	case "mcp":

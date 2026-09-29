@@ -34,6 +34,8 @@ func (s *Service) homeTools() []llm.Tool {
 			Schema: obj(map[string]any{"name": name}, "name")},
 		{Name: "restore_workspace", Description: "Put a deleted workspace back from Sameway's trash, where it was, ready to open.",
 			Schema: obj(map[string]any{"name": name}, "name")},
+		{Name: "take_agent_away", Description: "Take an agent's key away, so it can no longer reach this workspace, when the person asks. Keys are made at the command line with sameway agent add, never here, so a key never passes through the conversation. Undoing this lets the agent back in with the same key.",
+			Schema: obj(map[string]any{"name": map[string]any{"type": "string", "description": "The agent's name, as the log calls it."}}, "name")},
 	}
 }
 
@@ -55,6 +57,13 @@ func (s *Service) homeTool(call llm.ToolCall) toolResult {
 			return fail("could not clear the conversation: %v", err)
 		}
 		return toolResult{text: "the conversation is cleared; the canvas and the other chats stayed, and undo_change puts the messages back", change: &c}
+	}
+	if call.Name == "take_agent_away" {
+		c, err := TakeAgentAway(s.Store, args.Name)
+		if err != nil {
+			return fail("%v", err)
+		}
+		return toolResult{text: args.Name + "'s key no longer works; undo_change lets it back in", change: &c}
 	}
 	did := map[string]func() (string, error){
 		"write_down":        func() (string, error) { return s.home().WriteDown(args.File) },
