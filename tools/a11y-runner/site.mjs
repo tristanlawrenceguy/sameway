@@ -147,10 +147,33 @@ async function checkPage(path) {
   await page.setViewportSize({ width: 1280, height: 720 });
   // What an agent is told about the page: /api/look lists any problems.
   const look = await (await fetch(`${base}/api/look?path=${encodeURIComponent(path)}`)).json();
-  for (const p of look.problems || []) fail(`${label} look: ${typeof p === "string" ? p : JSON.stringify(p)}`);
+  // Examples side by side share names by design, as above.
+  for (const p of look.problems || []) {
+    if ((seeded || path === "/design") && String(p).startsWith("same name")) continue;
+    fail(`${label} look: ${typeof p === "string" ? p : JSON.stringify(p)}`);
+  }
 }
 
 for (const path of [...sitePages, ...Object.keys(blockLabel)]) await checkPage(path);
+
+// ---- a block's bar over its controls -------------------------------------
+// The pointer on a block shows its bar (Edit, Expand, Remove). Laid over a
+// control of the block, it takes the press meant for that control.
+for (const width of [1280, 800]) {
+  await page.setViewportSize({ width, height: 720 });
+  await page.goto(`${base}/c/${canvas.id}`);
+  const covered = await page.evaluate(() => [...document.querySelectorAll(".sw-block")].flatMap((block) => {
+    const bar = block.querySelector(":scope > .sw-bar");
+    if (!bar) return [];
+    const b = bar.getBoundingClientRect();
+    return [...block.querySelectorAll("a[href], button, input, select, textarea, summary")].filter((el) => !bar.contains(el) && el.offsetWidth).filter((el) => {
+      const r = el.getBoundingClientRect();
+      return r.left < b.right && r.right > b.left && r.top < b.bottom && r.bottom > b.top;
+    }).map((el) => `${block.dataset.blockLabel}: its bar lies over "${(el.textContent || el.name || el.tagName).trim().slice(0, 30)}"`);
+  }));
+  for (const p of covered) fail(`/c/${canvas.id} at ${width}px: ${p}`);
+}
+await page.setViewportSize({ width: 1280, height: 720 });
 
 // ---- forms sent empty ------------------------------------------------------
 // Every form with a required field, sent from the keyboard with that field

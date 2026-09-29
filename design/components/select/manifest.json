@@ -10,6 +10,7 @@
     "required": ["label", "name", "options"],
     "properties": {
       "label": { "type": "string", "minLength": 1, "description": "The question: the legend of the radios, or the dropdown's label." },
+      "context": { "type": "string", "description": "Which thing the choice is for, read after the label and not shown, when several of one question sit on a page: a board's Status on each card, with the card's title, heard as Status for Order compost." },
       "name": { "type": "string", "minLength": 1 },
       "id": { "type": "string" },
       "options": { "title": "Choices", "type": "array", "minItems": 1, "items": { "type": ["string", "object"] }, "description": "Either plain strings, shown as-is, or objects {value, label} when what is stored differs from what a person should read." },

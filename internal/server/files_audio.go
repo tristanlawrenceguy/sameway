@@ -81,6 +81,10 @@ func (s *Server) recordingOf(rec *store.Record) map[string]any {
 		if kind == "video" {
 			props["captions"] = src + "/captions.vtt"
 		}
+		props["downloads"] = []any{
+			map[string]any{"href": src + "/transcript.srt", "format": "srt"},
+			map[string]any{"href": src + "/transcript.txt", "format": "txt"},
+		}
 	}
 	return props
 }
@@ -140,4 +144,34 @@ func sizeWords(n int64) string {
 		return fmt.Sprintf("%.0f KB", float64(n)/(1<<10))
 	}
 	return fmt.Sprintf("%d bytes", n)
+}
+
+// pairCaptions gives subtitles to the recording they belong to: one of the
+// same name with no words yet, as its transcript and, for a video, its
+// captions. Subtitles for none stay a file of their own.
+func (s *Server) pairCaptions(id string, data []byte) {
+	sub, err := s.app.Store.Get(FileType, id)
+	if err != nil {
+		return
+	}
+	title, _ := sub.Fields["title"].(string)
+	cues := convert.ParseVTT(string(data))
+	if len(cues) == 0 || title == "" {
+		return
+	}
+	recs, _ := s.app.Store.List(FileType, store.ListOptions{})
+	for _, rec := range recs {
+		other, _ := rec.Fields["title"].(string)
+		if rec.ID == id || !isRecording(rec) || !strings.EqualFold(other, title) || len(s.heard(rec)) > 0 {
+			continue
+		}
+		if path, ok := s.transcriptPath(rec); ok {
+			os.WriteFile(path, []byte(speech.VTT(cues)), 0o644)
+		}
+		name, _ := sub.Fields["name"].(string)
+		s.app.Store.Update(FileType, rec.ID, map[string]any{"text": convert.Transcript(cues), "note": "Its words are from " + name + ". Edit the text if they are wrong."})
+		s.app.Store.Update(FileType, id, map[string]any{"note": "These are the words of " + other + ", given to it."})
+		s.Changed()
+		return
+	}
 }

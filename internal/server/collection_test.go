@@ -73,10 +73,10 @@ func TestACollectionIsTheRecordsThatMatch(t *testing.T) {
 	wantStatus(t, get(t, h, "/api/task?where=owner%3Dme"), http.StatusBadRequest)
 
 	// A wrong condition on the canvas is said in words, not rendered as nothing.
-	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/block", map[string]any{
-		"component": "collection", "props": map[string]any{"type": "task", "where": []string{"owner=me"}, "label": "Mine"},
-	}), http.StatusCreated)
-	if page := get(t, h, "/").Body.String(); !strings.Contains(page, `no field &#34;owner&#34;; it has title, done, due`) {
+	mine := map[string]any{"type": "task", "where": []any{"owner=me"}, "label": "Mine"}
+	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/block", map[string]any{"component": "collection", "props": mine}), http.StatusUnprocessableEntity)
+	storedBlock(t, a, "collection", mine)
+	if page := get(t, h, "/").Body.String(); !strings.Contains(page, `no field &#34;owner&#34;; it has title, done, status, due`) {
 		t.Errorf("the block should explain the wrong field: %.300s", page[strings.Index(page, "Mine"):])
 	}
 	_ = a

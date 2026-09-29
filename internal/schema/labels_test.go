@@ -52,3 +52,25 @@ func TestCompleteBringsFieldLabels(t *testing.T) {
 		t.Errorf("a workspace's own label wins, got %q", f.Label)
 	}
 }
+
+// TestCompleteBringsInternalEnumValues: a workspace whose copy of the
+// activity log predates the agent actor gets the value, so an agent's
+// change is logged there too; a provided type's values stay the
+// workspace's own.
+func TestCompleteBringsInternalEnumValues(t *testing.T) {
+	ws := &Set{byName: map[string]*Type{}}
+	old := &Type{Name: "activity", Internal: true, Fields: []Field{{Name: "actor", Type: "enum", Values: []string{"human", "assistant", "system"}}}}
+	mine := &Type{Name: "habit", Fields: []Field{{Name: "aim", Type: "enum", Values: []string{"reach"}}}}
+	ws.Types, ws.byName["activity"], ws.byName["habit"] = []*Type{old, mine}, old, mine
+	builtin := &Set{Types: []*Type{
+		{Name: "activity", Internal: true, Fields: []Field{{Name: "actor", Type: "enum", Values: []string{"human", "assistant", "agent", "system"}}}},
+		{Name: "habit", Provided: true, Fields: []Field{{Name: "aim", Type: "enum", Values: []string{"reach", "limit"}}}},
+	}}
+	ws.Complete(builtin)
+	if f, _ := old.Field("actor"); len(f.Values) != 4 || f.Values[3] != "agent" {
+		t.Errorf("the log's actor should gain agent: %v", f.Values)
+	}
+	if f, _ := mine.Field("aim"); len(f.Values) != 1 {
+		t.Errorf("a provided type's values are the workspace's: %v", f.Values)
+	}
+}

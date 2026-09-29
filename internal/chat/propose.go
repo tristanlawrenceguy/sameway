@@ -72,7 +72,38 @@ func (s *Service) proposeByModel(summary string, raw json.RawMessage) toolResult
 	if tool, _ := action["tool"].(string); !modelProposable[tool] {
 		return fail("propose_change carries only add_component, update_component, remove_component or remove_canvas; for anything else call the tool itself, and Sameway asks the person first when it must")
 	}
+	// A block that could not be shown is not put to the person: their Yes
+	// would only find it refused.
+	if bad := s.proposedBlock(action); bad != nil {
+		return fail("nothing asked: %s", bad.text)
+	}
 	return s.propose(summary, action)
+}
+
+// proposedBlock checks the block a question would add or change, as the
+// tool itself will when the person says yes.
+func (s *Service) proposedBlock(action map[string]any) *toolResult {
+	props, _ := action["props"].(map[string]any)
+	if props == nil {
+		return nil
+	}
+	name, _ := action["component"].(string)
+	if action["tool"] == "update_component" {
+		id, _ := action["id"].(string)
+		rec, err := s.Store.Get(BlockType, id)
+		if err != nil {
+			return nil // said when it runs, as ever
+		}
+		name, _ = rec.Fields["component"].(string)
+	}
+	name = strings.ToLower(strings.TrimSpace(name))
+	c, ok := s.Registry.Get(name)
+	if !ok {
+		return nil
+	}
+	tool, _ := action["tool"].(string)
+	_, bad := s.writable(tool, c, props)
+	return bad
 }
 
 // proposable are the tools a proposal may carry. Asking to ask, or asking to

@@ -15,10 +15,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"sync"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
 )
 
 // protocolVersion is the MCP revision this server speaks.
@@ -33,8 +35,15 @@ type Server struct {
 	// Published says which content types are published just now, for a
 	// connection from the internet; see public.go.
 	Published func() map[string]bool
+	// Assistant says the client is the assistant in the app, whose model
+	// runs the tools in another program (sameway mcp --assistant): its
+	// changes are the assistant's, not an agent's. See agent.go.
+	Assistant bool
 
 	mu sync.Mutex
+	// sessions are the HTTP clients that said who they are, by the
+	// Mcp-Session-Id each was given; see agent.go.
+	sessions sessions
 	// http is the web server over the same app, for tools that read a
 	// page the way the API does.
 	http http.Handler
@@ -70,6 +79,9 @@ const (
 // Serve reads requests until the input ends or the context is cancelled.
 // A notification (no id) gets no reply; everything else gets exactly one.
 func (s *Server) Serve(ctx context.Context) error {
+	// One client for as long as the input lasts: what it calls itself
+	// on initialize names every change it makes.
+	ctx = withConn(ctx, &conn{})
 	sc := bufio.NewScanner(s.In)
 	sc.Buffer(make([]byte, 0, 64*1024), 16*1024*1024)
 	for sc.Scan() {
@@ -111,8 +123,15 @@ func (s *Server) handle(ctx context.Context, req request) (any, *rpcError) {
 	if req.JSONRPC != "2.0" {
 		return nil, &rpcError{codeInvalidRequest, `jsonrpc must be "2.0"`}
 	}
+	if req.Method == "tools/list" || req.Method == "tools/call" {
+		// The server beside this, or a person, may have changed the types.
+		if _, err := s.App.ReloadSchema(); err != nil {
+			log.Printf("schema: %v", err)
+		}
+	}
 	switch req.Method {
 	case "initialize":
+		connOf(ctx).introduce(req.Params)
 		return map[string]any{
 			"protocolVersion": protocolVersion,
 			"capabilities":    map[string]any{"tools": map[string]any{"listChanged": false}},
@@ -120,7 +139,7 @@ func (s *Server) handle(ctx context.Context, req request) (any, *rpcError) {
 			"instructions": "This is a Sameway workspace: content records of the types the workspace declares, " +
 				"and a canvas of components. Call describe first for the types, their fields, the components " +
 				"and every surface; then find_records, get_record, create_record and update_record for content, " +
-				"and the canvas tools for what the person sees.",
+				"and the canvas tools for what the person sees. " + chat.DataNotInstructions,
 		}, nil
 	case "notifications/initialized", "notifications/cancelled":
 		return nil, nil
@@ -141,7 +160,7 @@ func (s *Server) handle(ctx context.Context, req request) (any, *rpcError) {
 			if t, e, public := s.publicCall(ctx, params.Name, params.Arguments); public {
 				text, isError, structured = t, e, params.Name == "search" || params.Name == "fetch"
 			} else {
-				text, isError = s.call(ctx, svc, params.Name, params.Arguments)
+				text, isError = s.call(ctx, s.forAgent(ctx, svc), params.Name, params.Arguments)
 			}
 		}
 		result := map[string]any{

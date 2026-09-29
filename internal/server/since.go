@@ -91,10 +91,11 @@ func (s *Server) sinceNotice(r *http.Request) template.HTML {
 		props["more"], props["rest"] = len(theirs)-sinceShown, "/activity#activity-"+theirs[sinceShown].ID
 	}
 	var items []string
-	for _, e := range shown {
+	told := s.entriesApart(shown)
+	for i, e := range shown {
 		// Without its anchor: the same entry has it in the log, which may
 		// be on this page too, and the rest link leads there.
-		line := strings.Replace(string(s.event(e, from, 0, true)), ` id="activity-`+e.ID+`"`, "", 1)
+		line := strings.Replace(string(s.event(e, from, 0, true, told[i])), ` id="activity-`+e.ID+`"`, "", 1)
 		items = append(items, `<li>`+line+`</li>`)
 	}
 	list := template.HTML(`<ul class="sw-plain sw-stack">` + strings.Join(items, "") + `</ul>`)
@@ -117,6 +118,11 @@ func (s *Server) sinceSeen(w http.ResponseWriter, r *http.Request) {
 // someone by their login, or the owner of this computer's copy (written
 // with no login when the tailnet had not said who they are).
 func (s *Server) byOther(e *store.Record, key string) bool {
+	// What an agent did is news to everyone, the one who set it going
+	// included: it worked while they were away.
+	if e.Fields["actor"] == chat.ActorAgent {
+		return true
+	}
 	if e.Fields["actor"] != "human" {
 		return false
 	}

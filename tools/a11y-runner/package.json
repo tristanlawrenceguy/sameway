@@ -8,7 +8,8 @@
     "test": "node run.mjs && node keyboard.mjs",
     "test:axe": "node run.mjs",
     "test:keyboard": "node keyboard.mjs",
-    "test:pages": "node pages.mjs && node site.mjs"
+    "test:pages": "node pages.mjs && node site.mjs && node move.mjs",
+    "test:agent": "node agent.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.2",

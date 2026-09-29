@@ -31,7 +31,7 @@ func TestSinceSaysHowManyAndListsAFew(t *testing.T) {
 	}
 
 	notice := sinceSection(get(t, h, "/").Body.String())
-	if !strings.Contains(notice, "7 changes by other people since <time") {
+	if !strings.Contains(notice, "7 changes by others since <time") {
 		t.Fatalf("the count and the time come first:\n%s", notice)
 	}
 	if !strings.Contains(notice, "Here until you press Got it.") {
@@ -63,7 +63,7 @@ func TestSinceGotItStaysOnThePage(t *testing.T) {
 	chat.Record(a.Store, "human", chat.Change{Action: "deleted", Component: "note", Detail: "Shopping", By: "Hana", ByLogin: "hana@example.com"})
 
 	notice := sinceSection(get(t, h, "/activity").Body.String())
-	if !strings.Contains(notice, `name="from" value="/activity"`) || !strings.Contains(notice, "1 change by other people") {
+	if !strings.Contains(notice, `name="from" value="/activity"`) || !strings.Contains(notice, "1 change by others") {
 		t.Fatalf("the notice knows its page and says one change:\n%s", notice)
 	}
 	res := postForm(t, h, "/since/seen", url.Values{"from": {"/activity"}})

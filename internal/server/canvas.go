@@ -158,7 +158,7 @@ func (s *Server) canvasBlock(b *store.Record, convo *conversation) canvasBlock {
 	if v, ok := b.Fields["span"].(int64); ok && v >= 1 && v <= 12 {
 		span = int(v)
 	}
-	who := map[string]string{"human": "you", "assistant": "the assistant", "system": "the workspace"}
+	who := blockWho(b)
 	provenance := "Added by " + who[createdBy] + "."
 	if actor != createdBy {
 		provenance = "Added by " + who[createdBy] + ", edited by " + who[actor] + "."
@@ -187,7 +187,7 @@ func (s *Server) canvasBlock(b *store.Record, convo *conversation) canvasBlock {
 		props = s.resolveCollectionAt(props, b.ID, onCanvas(b, convo))
 	}
 	if name == calendarComponent {
-		props = s.resolveCalendar(props, b.ID)
+		props = s.resolveCalendarAt(props, b.ID, onCanvas(b, convo))
 	}
 	if name == clockComponent {
 		props = s.resolveClock(props)
@@ -198,10 +198,7 @@ func (s *Server) canvasBlock(b *store.Record, convo *conversation) canvasBlock {
 	if name == chartComponent {
 		props = s.resolveChart(props)
 	}
-	label := chat.Summarise(name, props)
-	if label == "" {
-		label = name
-	}
+	label := blockName(name, props)
 	icon := name[:1]
 	if c, p, ok := s.app.Registry.Resolve(name, props); ok {
 		icon, props = cmp.Or(c.Manifest.Icon, icon), underPageTitle(c, p)

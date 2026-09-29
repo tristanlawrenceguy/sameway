@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -26,6 +27,13 @@ func (s *Server) line(r *store.Record, canUndo bool) map[string]any {
 	if who, person := s.whoDid(r); who != "" {
 		props["who"], props["person"] = who, person
 	}
+	// An agent by the name it gave and how it came in, as the summary says
+	// it: Claude Code (through MCP).
+	if r.Fields["actor"] == chat.ActorAgent {
+		by, _ := r.Fields["by"].(string)
+		via, _ := r.Fields["via"].(string)
+		props["who"] = chat.AgentWho(by, via)
+	}
 	href := s.hrefFor(r)
 	s.say(props, r.Fields, href)
 	if canUndo && s.app.Chat.Undoable(r) {
@@ -39,7 +47,7 @@ func (s *Server) say(props, fields map[string]any, href string) {
 	w := chat.Say(fields, href != "")
 	props["action"] = w.Action
 	if w.Target != "" {
-		props["target"] = w.Target
+		props["target"] = schema.Words(w.Target)
 	}
 	detail := w.Detail
 
@@ -71,8 +79,7 @@ func (s *Server) say(props, fields map[string]any, href string) {
 			refType := parts[0]
 			refID := parts[1]
 			if refType != "" && refID != "" {
-				props["target"] = w.Target // keep data-target as "record" for backward compat
-				props["TypeLabel"] = refType
+				props["target"] = schema.Words(refType)
 				if t, ok := s.app.Types.Get(refType); ok {
 					if rec, err := s.app.Store.Get(t.Name, refID); err == nil {
 						if title := s.title(t, rec); title != "" {

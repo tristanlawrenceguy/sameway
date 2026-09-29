@@ -42,7 +42,7 @@ func (s *Server) designColour(b *strings.Builder) {
 		names = append(names, n)
 	}
 	sort.Strings(names)
-	b.WriteString(`<h2 id="colour">Colour</h2><p class="sw-prose">Three actor tones carry provenance: <strong>human</strong> (indigo), <strong>assistant</strong> (teal), <strong>system</strong> (amber). Every text role reaches 7:1 on every surface in both themes; a Go test fails the build otherwise. Swatches below show the current theme.</p>`)
+	b.WriteString(`<h2 id="colour">Colour</h2><p class="sw-prose">Three actor tones carry provenance: <strong>human</strong> (indigo), <strong>assistant</strong> (teal), <strong>system</strong> (amber). An <strong>agent</strong> outside Sameway takes the assistant's tone and is told from it by name, and by a square mark in the log. Every text role reaches 7:1 on every surface in both themes; a Go test fails the build otherwise. Swatches below show the current theme.</p>`)
 	b.WriteString(`<ul class="sw-plain sw-swatches">`)
 	for _, n := range names {
 		fmt.Fprintf(b, `<li class="sw-swatch"><span class="sw-swatch__chip" style="background: var(--sw-color-%s)" aria-hidden="true"></span><code>--sw-color-%s</code><span class="sw-muted sw-small">light %s · dark %s</span></li>`, n, n, doc.Color[n]["light"], doc.Color[n]["dark"])
@@ -69,7 +69,7 @@ func (s *Server) designStates(b *strings.Builder) {
 	b.WriteString(`<h2 id="states">State language</h2><p class="sw-prose">The same facts are always available three ways: as text a person reads, as colour a sighted person scans, and as attributes a machine queries.</p>`)
 	b.WriteString(`<div class="sw-table-wrap" role="region" aria-label="State attributes" tabindex="0"><table class="sw-table"><caption>Attributes every page uses</caption><thead><tr><th scope="col">Fact</th><th scope="col">Attribute</th><th scope="col">Values</th></tr></thead><tbody>`)
 	rows := [][3]string{
-		{"Who did it", "data-actor", "human, assistant, system"},
+		{"Who did it", "data-actor", "human, assistant, agent, system"},
 		{"What changed in the last turn", "data-changed", "added, updated"},
 		{"Is a request in flight", "data-state on [data-region]", "idle, working"},
 		{"Outcome of the last request", "data-state on [data-component=status]", "idle, working, done, error"},

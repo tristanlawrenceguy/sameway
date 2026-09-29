@@ -13,6 +13,7 @@
       "body": { "type": "string", "format": "multiline", "description": "Plain text. Blank lines start a new paragraph." },
       "meta": { "title": "Small print", "type": "string", "description": "Small secondary line such as a date or status." },
       "href": { "title": "Link", "type": "string", "description": "When set, the title becomes a link to this URL." },
+      "context": { "type": "string", "description": "Words read after the title by its link and not shown, when another card beside it has the same title: due Fri 25 Sep." },
       "level": { "title": "Heading level", "type": "integer", "minimum": 2, "maximum": 6, "default": 3, "description": "Heading level of the title so cards fit the page outline." },
       "fields": {"type": "array", "description": "The thing's facts under the title, as the fields component shows them: label and value, a value that names something with its href.", "items": {"type": "object", "additionalProperties": false, "required": ["label", "value"], "properties": {"label": {"type": "string"}, "value": {"type": "string"}, "href": {"type": "string"}}}},
       "actions": {"type": "array", "description": "What can be done to the thing from its card, each a component: a mark such as Done, a move to another column, a button, a link.", "items": {"type": "object", "additionalProperties": false, "required": ["component", "props"], "properties": {"component": {"type": "string", "enum": ["mark", "move", "button", "link"]}, "props": {"type": "object"}}}},

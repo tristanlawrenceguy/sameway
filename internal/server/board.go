@@ -24,9 +24,9 @@ func boardField(t *schema.Type, by any) (*schema.Field, error) {
 		enums = append(enums, f.Name)
 	}
 	if len(enums) == 0 {
-		return nil, fmt.Errorf("a board needs a pick-list field for its columns, and %s has none; show it as a list, table or cards instead", t.Name)
+		return nil, fmt.Errorf("a board needs a pick-list field for its columns, and %s has none; show it as a list, table or cards, or add a pick-list field first", t.Name)
 	}
-	return nil, fmt.Errorf("%s has no pick-list field %q to make the board's columns; it has %s", t.Name, name, strings.Join(enums, ", "))
+	return nil, fmt.Errorf("%s has no pick-list field %q to make the board's columns; its pick-list fields are %s", t.Name, name, strings.Join(enums, ", "))
 }
 
 // boardGroups puts each item in the column of its record's choice, in the
@@ -62,10 +62,11 @@ func boardGroups(f schema.Field, recs []*store.Record, items []any) []any {
 	return groups
 }
 
-// addMove gives a board's card an id to come back to and the form that
-// moves it: its column picked from the field's choices and a Move button
-// named with the card, which posts the field like any edit, so it is
-// logged and can be undone, and works with no script.
+// addMove gives a board's card an id and the form that moves it: its
+// column picked from the field's choices and a Move button named with the
+// card, which posts the field like any edit, so it is logged and can be
+// undone, and works with no script. The page comes back to the Move
+// button, in the card's new column, so focus returns to what was pressed.
 func (s *Server) addMove(item map[string]any, t *schema.Type, f schema.Field, rec *store.Record, board string) {
 	at := board + "-" + rec.ID
 	item["at"] = at
@@ -75,10 +76,13 @@ func (s *Server) addMove(item map[string]any, t *schema.Type, f schema.Field, re
 	}
 	value, _ := rec.Fields[f.Name].(string)
 	actions, _ := item["actions"].([]any)
+	// Every card's choice is named after its card, as its Move is: a board
+	// is a column of selects all called Status otherwise.
+	title := withContext(s.title(t, rec), str(item["context"], ""))
 	item["actions"] = append(actions, map[string]any{"component": "move", "props": map[string]any{
-		"action": "/t/" + t.Name + "/" + rec.ID + "/props", "title": s.title(t, rec), "back": at,
+		"action": "/t/" + t.Name + "/" + rec.ID + "/props", "title": title, "id": at + "-go",
 		"select": map[string]any{
-			"id": at + "-move", "name": "prop-" + f.Name, "label": fieldLabel(f),
+			"id": at + "-move", "name": "prop-" + f.Name, "label": fieldLabel(f), "context": title,
 			"as": "dropdown", "value": value, "options": options,
 		},
 	}})

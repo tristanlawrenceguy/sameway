@@ -68,6 +68,10 @@ func (t *Type) Advance(before, clean map[string]any, now time.Time) bool {
 		return false
 	}
 	clean[name], clean[day], clean[repeat] = again, next, when.DropTime(rule)
+	// Due again, a task is To do again, not Done (stage.go).
+	if flag, f, ok := t.stage(); ok && flag == name {
+		clean[f.Name] = notDone(f)
+	}
 	return true
 }
 
@@ -77,7 +81,14 @@ func (t *Type) Advance(before, clean map[string]any, now time.Time) bool {
 func (t *Type) Advanced(sent, saved map[string]any) bool {
 	repeat, _, ok := t.Repeats()
 	name, done, _, finishes := t.finishing()
-	if !ok || !finishes || sent[name] == nil || saved[repeat] == "" || saved[name] == done {
+	if !ok || !finishes || saved[repeat] == "" || saved[name] == done {
+		return false
+	}
+	// A board's Move to Done finishes a task as its tick does (stage.go).
+	if flag, g, ok := t.stage(); ok && flag == name && sent[g.Name] == "done" {
+		return true
+	}
+	if sent[name] == nil {
 		return false
 	}
 	f, _ := t.Field(name)

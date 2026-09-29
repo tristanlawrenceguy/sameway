@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"path"
+	"slices"
 	"sort"
 	"strings"
 )
@@ -102,6 +103,21 @@ func (s *Set) Complete(builtin *Set) {
 							if l, ok := f.Labels[v]; ok {
 								t.Fields[i].Labels[v] = l
 							}
+						}
+					}
+				}
+			}
+			// A value the system gives an enum of its own reaches a copy
+			// made before it: without it, an older workspace's log could
+			// not say an agent made a change, and dropped the entry.
+			if b.Internal && f.Type == "enum" {
+				for i := range t.Fields {
+					if t.Fields[i].Name != f.Name || t.Fields[i].Type != "enum" {
+						continue
+					}
+					for _, v := range f.Values {
+						if !slices.Contains(t.Fields[i].Values, v) {
+							t.Fields[i].Values = append(t.Fields[i].Values, v)
 						}
 					}
 				}

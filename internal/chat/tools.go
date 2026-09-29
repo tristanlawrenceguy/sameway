@@ -31,7 +31,7 @@ func (s *Service) BlockFields(in map[string]any) map[string]any {
 // tool added or changed shows up on every surface at once.
 func (s *Service) allTools() []llm.Tool {
 	return append([]llm.Tool{
-		{Name: "add_component", Description: "Add a component to the canvas the person is looking at. Props must match the component's props schema from the catalogue. Returns the new block id.",
+		{Name: "add_component", Description: "Add a component to the canvas the person is looking at. Props must match the component's props schema from the catalogue. Returns the new block id and what it shows; a block that could not be shown (a type, field, date field, condition or tag the workspace does not have) is not added, and the error says why and what to do instead.",
 			Schema: obj(map[string]any{
 				"component": map[string]any{"type": "string", "description": "Component name from the catalogue."},
 				"props":     map[string]any{"type": "object", "description": "Props matching the component's schema."},
@@ -74,7 +74,7 @@ func (s *Service) allTools() []llm.Tool {
 		{Name: "clear_canvas", Description: "Remove every block from the canvas except the chat, which stays so the person can keep talking. Only when the person asks to start over. To remove the chat too, call remove_component on it.",
 			Schema: obj(map[string]any{})},
 		undoTool,
-		searchTool,
+		s.searchTool(),
 		actionTool,
 		updateTool,
 		s.arrangementTool(),
@@ -106,6 +106,7 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 		Where       []string       `json:"where"`
 		Order       string         `json:"order"`
 		Limit       int            `json:"limit"`
+		Page        int            `json:"page"`
 		Key         string         `json:"key"`
 		Install     bool           `json:"install"`
 		Value       string         `json:"value"`
@@ -157,7 +158,7 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 	case "add_arrangement":
 		return s.addArrangement(args.Name, args.Fills)
 	case "search":
-		return s.search(args.Query)
+		return s.search(args.Query, args.Type, args.Page)
 	case "run_action":
 		// What cannot be taken back is asked first; see consent.go.
 		if r, ask := s.askFirst("run_action", args.ID, "", ""); ask {
@@ -212,8 +213,9 @@ func (s *Service) addComponent(name string, props map[string]any, l look) toolRe
 	if !ok {
 		return fail("unknown component %q. Available: %s", name, strings.Join(s.Registry.Names(), ", "))
 	}
-	if _, err := c.Validate(props); err != nil {
-		return fail("I couldn't save those changes — %s. Fix the props and call add_component again.", humanizeValidationError(err.Error()))
+	shows, bad := s.writable("add_component", c, props)
+	if bad != nil {
+		return *bad
 	}
 	// One conversation only: a second would duplicate every message id.
 	if name == ComponentName {
@@ -232,7 +234,7 @@ func (s *Service) addComponent(name string, props map[string]any, l look) toolRe
 		}
 	}
 	// On the tab the person is looking at, unless the call says otherwise.
-	fields := map[string]any{"component": name, "props": props, "position": position, "actor": "assistant", "created_by": "assistant", "canvas": s.current}
+	fields := s.marked(map[string]any{"component": name, "props": props, "position": position, "created_by": s.actor(), "canvas": s.current})
 	if l.SetCanvas && !s.HasCanvas(l.Canvas) {
 		return fail("no canvas with id %q; the tabs and their ids are listed in the prompt, and \"\" is Home", l.Canvas)
 	}
@@ -251,7 +253,7 @@ func (s *Service) addComponent(name string, props map[string]any, l look) toolRe
 		where += " with " + strings.Join(layout, ", ")
 	}
 	return toolResult{
-		text:   where,
+		text:   showing(where, shows),
 		change: &Change{Action: "added", Component: name, ID: rec.ID, Detail: Summarise(name, props), Href: "/canvas/" + rec.ID},
 	}
 }
@@ -266,11 +268,13 @@ func (s *Service) updateComponent(id string, props map[string]any, l look) toolR
 	if !ok {
 		return fail("block %s uses unknown component %s", id, name)
 	}
-	fields := map[string]any{"actor": "assistant"}
+	fields := s.marked(map[string]any{})
 	var what []string
+	var shows string
 	if props != nil {
-		if _, err := c.Validate(props); err != nil {
-			return fail("I couldn't save those changes — %s. Fix the props and call update_component again.", humanizeValidationError(err.Error()))
+		var bad *toolResult
+		if shows, bad = s.writable("update_component", c, props); bad != nil {
+			return *bad
 		}
 		fields["props"] = props
 		what = append(what, "props")
@@ -291,5 +295,5 @@ func (s *Service) updateComponent(id string, props map[string]any, l look) toolR
 	if _, err := s.Store.Update(BlockType, id, s.fields(BlockType, fields)); err != nil {
 		return fail("could not update block %s: %v", id, err)
 	}
-	return toolResult{text: "updated " + strings.Join(what, " and ") + " on block " + id, change: &Change{Action: "updated", Component: name, ID: id, Detail: Summarise(name, props), Href: "/canvas/" + id, Before: rec.Fields}}
+	return toolResult{text: showing("updated "+strings.Join(what, " and ")+" on block "+id, shows), change: &Change{Action: "updated", Component: name, ID: id, Detail: Summarise(name, props), Href: "/canvas/" + id, Before: rec.Fields}}
 }

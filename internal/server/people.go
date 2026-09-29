@@ -57,3 +57,14 @@ func (s *Server) changedBy() map[string]int {
 	}
 	return out
 }
+
+// blockWho names each actor for a block's provenance: "Added by you",
+// "Added by Claude Code". An agent is named by the last that touched the
+// block, "an agent" when it gave no name.
+func blockWho(b *store.Record) map[string]string {
+	agent, _ := b.Fields["agent"].(string)
+	if agent == "" {
+		agent = "an agent"
+	}
+	return map[string]string{"human": "you", "assistant": "the assistant", "system": "the workspace", chat.ActorAgent: agent}
+}

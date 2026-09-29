@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/look"
 )
 
@@ -28,7 +29,7 @@ func (s *Server) lookAtComponent(w http.ResponseWriter, name string, props map[s
 		props["changes"] = s.lookChanges(props["changes"])
 	}
 	if _, err := c.Validate(props); err != nil {
-		writeJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": apiError{Code: "invalid", Message: err.Error()}})
+		writeJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": apiError{Code: "invalid", Message: chat.PropsTrouble(err)}})
 		return
 	}
 	html, err := s.app.Registry.Render(name, props)
@@ -40,6 +41,11 @@ func (s *Server) lookAtComponent(w http.ResponseWriter, name string, props map[s
 	if err != nil {
 		writeError(w, err)
 		return
+	}
+	// Read before it is added, a block that could not be shown says so,
+	// as adding it would.
+	if _, problem := s.blockCheck(name, props); problem != "" {
+		outline.Problems = append(outline.Problems, "this "+name+" cannot be shown as it is set up: "+problem)
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"component": name, "html": string(html), "outline": outline})
 }

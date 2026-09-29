@@ -33,4 +33,8 @@ func TestAWebVTTBecomesWhoSaidWhatAndWhen(t *testing.T) {
 	if Kind("memo.m4a") != "audio" || AudioType("x.opus") != "audio/ogg" || !Builtin("a.mp3") {
 		t.Error("recordings are known by their extension")
 	}
+	// An audiobook and an old phone's video are MP4 underneath.
+	if Kind("Book.m4b") != "audio" || MediaType("Book.m4b", "audio") != "audio/mp4" || Kind("clip.3gp") != "video" || MediaType("clip.3gp", "video") != "video/3gpp" || Kind("clip.3g2") != "video" {
+		t.Error("an audiobook is a recording and a 3GP a video, each served as its own type")
+	}
 }

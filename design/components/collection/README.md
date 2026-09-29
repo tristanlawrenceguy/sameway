@@ -25,14 +25,18 @@ the type has instead, so the block never renders as nothing.
 in columns, which scroll sideways on a phone in a box a keyboard can reach;
 `as: cards` puts them in cards, each pressed anywhere to open it.
 `as: board` puts a column for each choice of a pick-list field, named
-with `by` (status: To do, Doing, Done), in the order the field lists
+with `by` (a task's status: To do, Doing, Done), in the order the field lists
 them, each saying how many it holds, and a column for those with none.
 A line over the board names every column with its count and leads to it.
 Each card has a Move form: its column picked from a list and a Move
-button, which saves the field like any edit, comes back to the card
-focused, and says "House moved from Active to Done." with an Undo. A list
-of one line per record is a list; use a table when the fields are the point
-and several are compared.
+button (the move component), which saves the field like any edit, comes
+back to that button focused in the card's new column, and says "House
+moved from Active to Done." with an Undo. A task's status and its done
+tick are one fact: moving a task to Done ticks it, and ticking it moves
+it to Done, so a board and a list of what is not done always agree. A
+yes-or-no is not a board: it is two columns a list filter already gives.
+A list of one line per record is a list; use a table when the fields are
+the point and several are compared.
 
 `limit` is how many are shown, 20 unless given. When more match, the list
 says it shows the first of them, and its link, See all of them, leads to
@@ -50,7 +54,9 @@ Showing: not done, due soonest first." with Reset beside it, back to how it
 was set up. The choices only add to `where`, never take from it: the
 assistant decides what the list is about, the person narrows within it.
 
-They are a plain GET form: the choices are in the page's address, named
+They are the [filters](../filters/README.md) component as a form, a sort
+and up to three fields chosen together, the same as every list that
+narrows. They are a plain GET form: the choices are in the page's address, named
 after the block (`?c-<block>-sort=due&c-<block>-done=false`), so two lists
 on a canvas keep their own, the form keeps the page's other fields, a live
 refresh and a reload keep them, the link to the list page carries them,
@@ -64,6 +70,16 @@ space, and `controls: true` offers them anyway. Never in a side pane.
 - **Its own name.** A list's heading id comes from its block, so two lists
   of one type on a canvas are each named by their own heading
   ([WCAG 4.1.2](https://www.w3.org/WAI/WCAG22/Understanding/name-role-value.html)).
+- **Two alike told apart.** Two records with one title would be two links
+  "Call plumber" to different pages and two boxes "Done Call plumber", which
+  someone moving by links or controls cannot tell apart, and an agent's
+  role-and-name locator refuses to guess between. So only those whose titles
+  repeat get `context`, the first fact that differs (due Fri 25 Sep, when it
+  was added, the start of its id), hidden after the title and on its box and
+  its Move; a title of its own is left as it is
+  ([WCAG 2.4.9](https://www.w3.org/WAI/WCAG22/Understanding/link-purpose-link-only.html),
+  [2.4.6](https://www.w3.org/WAI/WCAG22/Understanding/headings-and-labels.html),
+  [Playwright, strictness](https://playwright.dev/docs/locators#strictness)).
 - **Fields named in sight.** A date beside a title could be any date, so
   its field's name is shown, not only said to a screen reader
   ([W3C COGA](https://www.w3.org/TR/coga-usable/)).
