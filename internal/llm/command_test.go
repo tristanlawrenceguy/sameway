@@ -66,7 +66,7 @@ func TestACommandProviderRunsTheSignedInProgram(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"echo: Person: make a note", "You: Done.", "You used create_record", "Now the person says:\nand a task", "system: Be brief.", "model: haiku", "\"command\":\"/bin/sameway\"", "\"--workspace\",", "\"mcp\"]"} {
+	for _, want := range []string{"echo: Person: make a note", "You: Done.", "You used create_record", "Now the person says:\nand a task", "system: Be brief.", "model: haiku", "\"command\":\"/bin/sameway\"", "\"--workspace\",", "\"mcp\",\"--assistant\"]"} {
 		if !strings.Contains(resp.Text, want) {
 			t.Errorf("the program should get the conversation, the system prompt and the MCP config; missing %q in:\n%s", want, resp.Text)
 		}

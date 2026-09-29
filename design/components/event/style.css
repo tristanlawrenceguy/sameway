@@ -9,6 +9,9 @@
   box-shadow: 0 0 0 3px var(--sw-actor-soft, var(--sw-color-bg-muted));
   position: relative; top: -0.05em;
 }
+/* An agent's mark is square, so it is told from a person's or the
+   assistant's by shape as well as by the name in words beside it. */
+.sw-event[data-actor="agent"] .sw-event__mark { border-radius: 2px; }
 .sw-event__text { flex: 1; }
 /* An entry that is a heading reads as its line, not as a title over it. */
 .sw-event__heading { font: inherit; margin: 0; }

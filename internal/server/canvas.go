@@ -158,7 +158,7 @@ func (s *Server) canvasBlock(b *store.Record, convo *conversation) canvasBlock {
 	if v, ok := b.Fields["span"].(int64); ok && v >= 1 && v <= 12 {
 		span = int(v)
 	}
-	who := map[string]string{"human": "you", "assistant": "the assistant", "system": "the workspace"}
+	who := blockWho(b)
 	provenance := "Added by " + who[createdBy] + "."
 	if actor != createdBy {
 		provenance = "Added by " + who[createdBy] + ", edited by " + who[actor] + "."

@@ -19,6 +19,11 @@ const (
 // RecordWrite logs a create, update or delete of rec made through a way
 // in. before is what the record was; nil for one just made.
 func RecordWrite(st *store.Store, through, action string, rec *store.Record, before map[string]any) string {
+	return recordWrite(st, "human", Change{Via: through}, action, rec, before)
+}
+
+// recordWrite is RecordWrite and AgentWrite: c says who and how.
+func recordWrite(st *store.Store, actor string, c Change, action string, rec *store.Record, before map[string]any) string {
 	// What is logged is the person's content: notes, tasks, people, and
 	// the rest. The system's own types (the canvas's blocks, messages)
 	// change through the tools, which log them; written straight through
@@ -26,14 +31,14 @@ func RecordWrite(st *store.Store, through, action string, rec *store.Record, bef
 	if t, ok := st.Types().Get(rec.Type); !ok || t.Internal {
 		return ""
 	}
-	c := Change{Action: action, Component: rec.Type, ID: rec.ID, Before: before, Via: through}
+	c.Action, c.Component, c.ID, c.Before = action, rec.Type, rec.ID, before
 	if t, ok := st.Types().Get(rec.Type); ok {
 		c.Detail = recordTitle(st, t, rec)
 		if action != "deleted" {
 			c.Href = "/t/" + rec.Type + "/" + rec.ID
 		}
 	}
-	return Record(st, "human", c)
+	return Record(st, actor, c)
 }
 
 // Imported is the batch an import from a file made: records that were not
