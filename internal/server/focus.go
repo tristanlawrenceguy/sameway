@@ -54,7 +54,7 @@ func (s *Server) focusPage(w http.ResponseWriter, r *http.Request) {
 		if m, d := r.URL.Query().Get("month"), r.URL.Query().Get("day"); m != "" || d != "" {
 			props = withMonth(props, m, d)
 		}
-		props = s.resolveCalendar(props, rec.ID)
+		props = s.resolveCalendarAt(props, rec.ID, &collectionPlace{Path: r.URL.Path, Query: r.URL.Query(), Own: true})
 	}
 	if comp.Manifest.Name == clockComponent {
 		props = s.resolveClock(props)
