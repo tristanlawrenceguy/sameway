@@ -2,6 +2,7 @@ package server_test
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/server"
 )
 
 // sinceSection is the notice on a page, or "".
@@ -72,5 +74,23 @@ func TestSinceGotItStaysOnThePage(t *testing.T) {
 	}
 	if res := postForm(t, h, "/since/seen", url.Values{"from": {"//evil.example"}}); res.Header().Get("Location") != "/" {
 		t.Error("only a page of ours is returned to")
+	}
+}
+
+// What others changed is for the people let in: a published page, read by
+// anyone on the internet, never shows it, though nobody it knows was
+// taken for the owner.
+func TestAPublishedPageDoesNotSayWhatChanged(t *testing.T) {
+	a, h := newApp(t)
+	a.Store.SetMeta("last:owner", time.Now().Add(-2*time.Hour).UTC().Format(time.RFC3339Nano))
+	chat.Record(a.Store, "human", chat.Change{Action: "added", Component: "note", Detail: "Private plans", By: "Hana", ByLogin: "hana@example.com"})
+	if !strings.Contains(get(t, h, "/").Body.String(), "changes by others since") && !strings.Contains(get(t, h, "/").Body.String(), "change by others since") {
+		t.Fatal("the owner is told, to start with")
+	}
+	n, _ := a.Store.Create("note", map[string]any{"title": "Sourdough"})
+	a.Workspace.Config.Publish.Types = "note"
+	page := public(t, h.(*server.Server).Public(nil), http.MethodGet, "/t/note/"+n.ID, "").Body.String()
+	if !strings.Contains(page, "Sourdough") || strings.Contains(page, "by others since") || strings.Contains(page, "Private plans") {
+		t.Errorf("the internet is not shown the log:\n%s", truncate(page))
 	}
 }
