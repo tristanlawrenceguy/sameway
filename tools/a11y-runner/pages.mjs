@@ -12,6 +12,7 @@ import { chromium } from "playwright";
 import AxeBuilder from "@axe-core/playwright";
 import { AA_TAGS, AAA_TAGS } from "./shell.mjs";
 import { axeProblems } from "./checks.mjs";
+import { filtered } from "./filtered.mjs";
 import { visualProblems } from "./visual.mjs";
 
 const base = (process.env.SAMEWAY_URL || "http://127.0.0.1:8080").replace(/\/$/, "");
@@ -265,7 +266,7 @@ const created = await fetch(base + "/api/note", {
 check(created.status === 201, `agent: POST /api/note returns 201 (got ${created.status})`);
 const rec = await created.json();
 
-for (const path of ["/", "/chat", "/design", "/search", "/search?q=agent", "/search?q=agent&type=note", "/search?type=note", "/activity", "/t/note", `/t/note/${rec.id}`]) {
+for (const path of ["/", "/chat", "/design", "/search", "/search?q=agent", "/search?q=agent&type=note", "/search?type=note", "/activity", ...(await filtered(page, base, check, fail)), "/t/note", `/t/note/${rec.id}`]) {
   await page.goto(base + path);
   const names = await page.locator("[data-component]").evaluateAll((els) => els.map((e) => e.dataset.component));
   for (const n of new Set(names)) check(known.has(n), `${path}: renders component ${n} that /api/describe does not list`);
