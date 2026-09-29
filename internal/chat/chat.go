@@ -58,6 +58,9 @@ type Service struct {
 	// Picture is a picture file's bytes, ready for a model to see, set by
 	// the server; see pictures.go.
 	Picture func(fileID string) (llm.Image, bool)
+	// Home is the machine's side of the assistant's tools, set by the
+	// server; see home_tools.go.
+	Home Home
 	// Publish sends to an MQTT topic, when the workspace has a broker;
 	// nil means it has none. See mqtt.go.
 	Publish func(topic, payload string) error

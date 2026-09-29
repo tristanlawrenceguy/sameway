@@ -10,11 +10,11 @@ import (
 // checkbox. A task has done, a note has pinned, an action has show; a type
 // with no such field offers nothing. The checkbox is named with the field
 // and, for a screen reader, the record.
-func markOf(t *schema.Type, rec *store.Record) (map[string]any, bool) {
+func (s *Server) markOf(t *schema.Type, rec *store.Record) (map[string]any, bool) {
 	// doneField handles the primary toggle: done/completed/complete/finished.
 	if f := doneField(t); f != nil {
 		on, _ := rec.Fields[f.Name].(bool)
-		return map[string]any{"type": t.Name, "record": rec.ID, "field": f.Name, "label": capitalize(label(f.Name)), "checked": on, "context": titleOf(t, rec)}, true
+		return map[string]any{"type": t.Name, "record": rec.ID, "field": f.Name, "label": capitalize(label(f.Name)), "checked": on, "context": s.title(t, rec)}, true
 	}
 	// For types without a done field, look for a first toggleable bool like
 	// pinned or show — these get checkboxes on detail pages but not in rows.
@@ -25,7 +25,7 @@ func markOf(t *schema.Type, rec *store.Record) (map[string]any, bool) {
 		switch f.Name {
 		case "pinned", "show":
 			on, _ := rec.Fields[f.Name].(bool)
-			return map[string]any{"type": t.Name, "record": rec.ID, "field": f.Name, "label": capitalize(label(f.Name)), "checked": on, "context": titleOf(t, rec)}, true
+			return map[string]any{"type": t.Name, "record": rec.ID, "field": f.Name, "label": capitalize(label(f.Name)), "checked": on, "context": s.title(t, rec)}, true
 		}
 	}
 	return nil, false
@@ -50,11 +50,11 @@ func doneField(t *schema.Type) *schema.Field {
 // markActions is the mark as the actions list a component's item takes.
 // Only primary toggles (done/completed/complete/finished) get checkboxes in
 // rows; secondary settings like pinned or show are shown as badges instead.
-func markActions(t *schema.Type, rec *store.Record) []any {
+func (s *Server) markActions(t *schema.Type, rec *store.Record) []any {
 	if doneField(t) == nil {
 		return nil
 	}
-	props, ok := markOf(t, rec)
+	props, ok := s.markOf(t, rec)
 	if !ok {
 		return nil
 	}

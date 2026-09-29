@@ -23,7 +23,7 @@ import (
 // box says checked, so no chip says the state a second time.
 func (s *Server) lede(r *http.Request, t *schema.Type, rec *store.Record) template.HTML {
 	box := ""
-	if props, ok := markOf(t, rec); ok {
+	if props, ok := s.markOf(t, rec); ok {
 		delete(props, "context")
 		box = string(s.component("mark", props))
 	}

@@ -61,7 +61,6 @@ func Record(st *store.Store, actor string, c Change) string {
 		return ""
 	}
 	fields := map[string]any{
-		"summary":   summarise(actor, c),
 		"actor":     actor,
 		"action":    c.Action,
 		"target":    c.Component,
@@ -75,6 +74,16 @@ func Record(st *store.Store, actor string, c Change) string {
 	if c.Before != nil {
 		fields["before"] = c.Before
 	}
+	// Kept for whatever reads the stored words; every surface of sameway
+	// says the entry through Sentence, from the fields.
+	fields["summary"] = Sentence(st, fields)
+	if c.Undone != "" && !strings.Contains(fields["summary"].(string), ": ") {
+		verb := " undid: "
+		if c.Redid {
+			verb = " put back: "
+		}
+		fields["summary"] = whoDid(actor, c.By, c.Via) + verb + CleanSummary(c.Undone)
+	}
 	for k := range fields {
 		if _, has := t.Field(k); !has {
 			delete(fields, k)
@@ -85,50 +94,6 @@ func Record(st *store.Store, actor string, c Change) string {
 		return ""
 	}
 	return rec.ID
-}
-
-// summarise says what happened in a person's words: "Assistant added card
-// Shopping", "You removed list Groceries", "System failed: no model",
-// "Claude Code (through MCP) updated task Call plumber".
-func summarise(actor string, c Change) string {
-	who := map[string]string{"human": "You", "assistant": "Assistant", "system": "System"}[actor]
-	if who == "" {
-		who = actor
-	}
-	if actor == "human" && c.By != "" {
-		who = c.By
-	}
-	if actor == ActorAgent {
-		// Its name and its way in say together that it was an agent.
-		who = AgentWho(c.By, c.Via)
-		c.Via = ""
-	}
-	if c.Undone != "" {
-		undone := CleanSummary(c.Undone)
-		if c.Redid {
-			return who + " put back: " + undone
-		}
-		return who + " undid: " + undone
-	}
-	// Detect setting changes and use human-readable format.
-	if isSettingChange(c) {
-		return settingSummary(who, c.Component, c.Detail)
-	}
-	parts := []string{who, c.Action}
-	if c.Component != "" {
-		parts = append(parts, c.Component)
-	}
-	if c.Detail != "" {
-		parts = append(parts, c.Detail)
-	}
-	// Drop machine-language phrases so summaries stay in plain words.
-	if strings.HasPrefix(c.Via, "through ") {
-		return strings.Join(parts, " ")
-	}
-	if c.Via != "" {
-		return strings.Join(parts, " ") + ", on " + c.Via
-	}
-	return strings.Join(parts, " ")
 }
 
 // isSettingChange reports whether the change is a setting-change entry,

@@ -194,7 +194,10 @@ func (s *Server) apiFileUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	name := filepath.Base(filename)
-	rec, err := s.app.Store.Create(FileType, map[string]any{
+	if title == "" {
+		title = strings.TrimSuffix(name, filepath.Ext(name))
+	}
+	rec, _, err := chat.WriteAs(s.app.Store, apiAgent(r).As(), "created", FileType, "", map[string]any{
 		"title": title, "name": name, "kind": convert.Kind(name), "size": 0, "status": "ready",
 	})
 	if err != nil {

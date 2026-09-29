@@ -14,7 +14,7 @@ import (
 func (s *Server) entriesApart(recs []*store.Record) []string {
 	names := make([]string, len(recs))
 	for i, r := range recs {
-		w := chat.Say(r.Fields, true)
+		w := chat.Say(s.app.Store, r.Fields)
 		names[i] = strings.Join([]string{w.Action, w.Target, w.Detail}, " ")
 	}
 	return apart(names, func(i int) []string {

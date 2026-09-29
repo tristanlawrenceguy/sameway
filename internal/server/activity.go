@@ -13,15 +13,26 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
-// record logs a change a person made through a page, with the device it
-// came from when that was not this machine.
-func (s *Server) record(r *http.Request, c chat.Change) string {
-	v := chat.VisitorOf(r.Context())
-	c.Via, c.By, c.ByLogin = v.Device, v.Who(), v.Login
-	if c.ByLogin == "" && v.Owner() {
-		c.ByLogin = s.app.Chat.Owner.Login
+// who made a request's change: a person on a page, with the device it
+// came from when that was not this machine, or an agent posting the
+// page's form (agents.go), by the name it gave.
+func (s *Server) who(r *http.Request) chat.Who {
+	if pageAction(r) {
+		return apiAgent(r).As()
 	}
-	return chat.Record(s.app.Store, "human", c)
+	v := chat.VisitorOf(r.Context())
+	w := chat.Who{Actor: "human", Via: v.Device, By: v.Who(), ByLogin: v.Login}
+	if w.ByLogin == "" && v.Owner() {
+		w.ByLogin = s.app.Chat.Owner.Login
+	}
+	return w
+}
+
+// record logs a change made through a page, as whoever made it.
+func (s *Server) record(r *http.Request, c chat.Change) string {
+	w := s.who(r)
+	c.Via, c.By, c.ByLogin = w.Via, w.By, w.ByLogin
+	return chat.Record(s.app.Store, w.Actor, c)
 }
 
 // recentActivity renders the newest n actions inside a disclosure that is

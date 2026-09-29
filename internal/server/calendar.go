@@ -145,7 +145,7 @@ func (s *Server) eventOf(t *schema.Type, rec *store.Record, field string) map[st
 	if clock != "" {
 		ev["time"] = clock
 	}
-	if actions := markActions(t, rec); actions != nil {
+	if actions := s.markActions(t, rec); actions != nil {
 		ev["actions"] = actions
 	}
 	return ev

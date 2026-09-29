@@ -63,7 +63,7 @@ func (s *Server) savedText(o outcome, t *schema.Type, rec *store.Record, fields,
 		}
 		if text := s.changedWords(*f, rec.Fields[name], clean[name]); text != "" {
 			o.Text = text
-			if title := strings.TrimSpace(titleOf(t, rec)); title != "" {
+			if title := strings.TrimSpace(s.title(t, rec)); title != "" {
 				o.Of = title
 			}
 		}

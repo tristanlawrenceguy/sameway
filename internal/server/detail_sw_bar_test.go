@@ -68,30 +68,6 @@ func TestDetailPageSwBarContainsDeleteLink(t *testing.T) {
 	}
 }
 
-// TestDetailPageActivityHasSwBarInsideBlock checks that activity detail pages
-// also render a div.sw-bar.sw-quiet inside their data-block-id wrapper.
-func TestDetailPageActivityHasSwBarInsideBlock(t *testing.T) {
-	a, h := newApp(t)
-
-	rec, err := a.Store.Create("activity", map[string]any{
-		"actor": "human", "action": "added", "detail": "A test activity",
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	body := get(t, h, "/t/activity/"+rec.ID).Body.String()
-
-	blockOpen := strings.Index(body, `data-block-id="`+rec.ID+`"`)
-	if blockOpen < 0 {
-		t.Fatalf("activity detail missing data-block-id wrapper\n%s", truncate(body))
-	}
-
-	swBarIdx := strings.Index(body[blockOpen:], `<div class="sw-bar sw-quiet">`)
-	if swBarIdx < 0 {
-		t.Errorf("sw-dl-block for activity %s should contain a div.sw-bar.sw-quiet inside it\n%s", rec.ID, truncate(body))
-	}
-}
-
 // TestDetailPageProposalHasSwBarInsideBlock checks that proposal detail pages
 // also render a div.sw-bar.sw-quiet inside their data-block-id wrapper.
 func TestDetailPageProposalHasSwBarInsideBlock(t *testing.T) {

@@ -209,12 +209,23 @@ func (s *Service) Clear() error {
 	if err := s.Available(); err != nil {
 		return err
 	}
-	msgs, err := s.Messages()
+	c, err := s.clearing()
 	if err != nil {
 		return err
 	}
 	// Kept in the log, so the messages can be put back.
-	Record(s.Store, "human", Change{Action: "cleared", Component: "conversation", ID: s.Current(), Before: map[string]any{"messages": keptMessages(msgs)}})
+	Record(s.Store, "human", c)
+	return nil
+}
+
+// clearing clears the conversation and says it as a change, with the
+// messages it had, for whoever cleared it to log.
+func (s *Service) clearing() (Change, error) {
+	msgs, err := s.Messages()
+	if err != nil {
+		return Change{}, err
+	}
+	c := Change{Action: "cleared", Component: "conversation", ID: s.Current(), Before: map[string]any{"messages": keptMessages(msgs)}}
 	// The questions the assistant asked were part of the conversation; a
 	// cleared one has no questions still waiting under it.
 	for _, p := range s.Proposals() {
@@ -222,10 +233,10 @@ func (s *Service) Clear() error {
 	}
 	for _, m := range msgs {
 		if err := s.Store.Delete(MessageType, m.ID); err != nil {
-			return err
+			return Change{}, err
 		}
 	}
-	return nil
+	return c, nil
 }
 
 // now is the moment as an opened stamp: fixed width, so that the order

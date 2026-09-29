@@ -6,8 +6,6 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
-	"github.com/tristanlawrenceguy/sameway/internal/store"
-	"github.com/tristanlawrenceguy/sameway/internal/trim"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
@@ -52,26 +50,6 @@ func display(f schema.Field, v any) string {
 		return f.ValueLabel(fmt.Sprint(v))
 	}
 	return fmt.Sprint(v)
-}
-
-// titleOf names a record: its title field, else the first string field
-// with something in it, else its type and id. A blank title used to fall
-// straight to the id, so a list of activities read as a column of "said".
-func titleOf(t *schema.Type, rec *store.Record) string {
-	if t.Title != "" {
-		if s, ok := rec.Fields[t.Title].(string); ok && s != "" {
-			return s
-		}
-	}
-	for _, f := range t.Shown() {
-		if f.Type != "string" && f.Type != "text" && f.Type != "enum" {
-			continue
-		}
-		if s, ok := rec.Fields[f.Name].(string); ok && strings.TrimSpace(s) != "" {
-			return trim.Title(s)
-		}
-	}
-	return schema.Words(t.Name) + " " + rec.ID
 }
 
 // fieldLabel is what a person calls a field: the schema's label, else its

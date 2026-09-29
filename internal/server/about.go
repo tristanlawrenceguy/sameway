@@ -41,23 +41,7 @@ func (s *Server) aboutOf(path string) (*schema.Type, *store.Record, bool) {
 // title is a record's title, with what the type alone cannot say: an
 // entry is its habit and how much.
 func (s *Server) title(t *schema.Type, rec *store.Record) string {
-	if t.Name == EntryType {
-		habit, unit := "", ""
-		if ht, h, ok := s.aboutOf("/t/" + HabitType + "/" + str(rec.Fields["habit"], "")); ok {
-			habit = s.title(ht, h)
-			unit, _ = h.Fields["unit"].(string)
-		}
-		return track.EntryName(habit, unit, rec.Fields)
-	}
-	if t.Name == chat.ActivityType {
-		// Activity titles come from the summary field which may contain raw
-		// em-dash descriptions (e.g., "how changes arrive to Calmly"). Wrap
-		// with CleanSummary so headings show readable property names.
-		summary, _ := rec.Fields["summary"].(string)
-		return chat.CleanSummary(summary)
-	}
-	// ActivityType is handled above via CleanSummary; fallthrough for all other types.
-	return titleOf(t, rec)
+	return chat.Name(s.app.Store, t, rec)
 }
 
 // aboutItem is a reminder's about on its page: the thing, as the way there.

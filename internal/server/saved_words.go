@@ -13,7 +13,7 @@ import (
 // true, "Order compost is done.", so ticking down a list is heard as each
 // thing, not "Changes saved" again and again; its Undo names the thing.
 // Any other edit is "Changes saved".
-func savedWords(t *schema.Type, rec *store.Record, fields, clean map[string]any, undo string) outcome {
+func (s *Server) savedWords(t *schema.Type, rec *store.Record, fields, clean map[string]any, undo string) outcome {
 	o := outcome{Title: "Changes saved", Undo: undo}
 	if len(fields) != 1 {
 		return o
@@ -36,13 +36,13 @@ func savedWords(t *schema.Type, rec *store.Record, fields, clean map[string]any,
 		// where: "Order compost moved from To do to Done."
 		if f, ok := t.Field(name); ok && f.Type == "enum" {
 			// Moved to Done, a task that repeats is due again at once.
-			if title := strings.TrimSpace(titleOf(t, rec)); title != "" && t.Advanced(fields, clean) {
+			if title := strings.TrimSpace(s.title(t, rec)); title != "" && t.Advanced(fields, clean) {
 				o.Title, o.Text, o.Of = title+" is done.", dueAgain(t, clean), title
 				return o
 			}
 			was, _ := rec.Fields[name].(string)
 			now, _ := clean[name].(string)
-			if title := strings.TrimSpace(titleOf(t, rec)); title != "" && now != "" && was != now {
+			if title := strings.TrimSpace(s.title(t, rec)); title != "" && now != "" && was != now {
 				o.Title = title + " moved to " + f.ValueLabel(now) + "."
 				if was != "" {
 					o.Title = title + " moved from " + f.ValueLabel(was) + " to " + f.ValueLabel(now) + "."
@@ -55,7 +55,7 @@ func savedWords(t *schema.Type, rec *store.Record, fields, clean map[string]any,
 		if !ok {
 			return o
 		}
-		title := strings.TrimSpace(titleOf(t, rec))
+		title := strings.TrimSpace(s.title(t, rec))
 		if title == "" {
 			return o
 		}

@@ -30,6 +30,7 @@
             "detail": { "type": "string" },
             "href": { "type": "string", "description": "The page of the thing changed, so the line leads to it. Left out when the thing is gone." },
             "undo": { "type": "string", "description": "Where Undo posts, given only under the newest reply and while the change can still be undone; it returns to from." },
+            "undoes": { "type": "boolean", "description": "The change took another back, as the event's undoes: action is the bare verb (undid) and detail what it took back." },
             "who": { "type": "string" },
             "person": { "type": "integer", "minimum": 1, "maximum": 6 },
             "via": { "type": "string" }

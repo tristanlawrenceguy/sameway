@@ -6,60 +6,6 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/render/htmltest"
 )
 
-// TestDetailPageActivityDataAttributes checks that activity detail pages also
-// get data-block-id, data-edit-action, and data-prop attributes.
-func TestDetailPageActivityDataAttributes(t *testing.T) {
-	a, h := newApp(t)
-
-	rec, err := a.Store.Create("activity", map[string]any{
-		"actor":  "human",
-		"action": "added",
-		"detail": "A test activity",
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	doc := parse(t, get(t, h, "/t/activity/"+rec.ID+fieldsView))
-
-	blocks := doc.WithAttr("data-block-id", rec.ID)
-	if len(blocks) == 0 {
-		t.Errorf("activity detail should have a div with data-block-id=%q\n%s", rec.ID, truncate(get(t, h, "/t/activity/"+rec.ID+fieldsView).Body.String()))
-	}
-
-	if len(blocks) == 0 {
-		t.Fatalf("no wrapping div found for data-edit-action check")
-	}
-	action, ok := htmltest.Attr(blocks[0], "data-edit-action")
-	if !ok {
-		t.Errorf("activity wrapping div should have data-edit-action\n%s", truncate(get(t, h, "/t/activity/"+rec.ID+fieldsView).Body.String()))
-		return
-	}
-	want := "/t/activity/" + rec.ID + "/props"
-	if action != want {
-		t.Errorf("data-edit-action = %q, want %q", action, want)
-	}
-
-	for _, prop := range []string{"action", "detail"} {
-		dd := doc.WithAttr("data-prop", prop)
-		if len(dd) == 0 {
-			t.Errorf("<dd data-prop=%q should exist for activity detail\n%s", prop, truncate(get(t, h, "/t/activity/"+rec.ID+fieldsView).Body.String()))
-		}
-	}
-
-	// Actor (enum) is excluded from the dl because it appears as a chip.
-	dd := doc.WithAttr("data-prop", "actor")
-	if len(dd) > 0 {
-		t.Errorf("<dd should not have data-prop=\"actor\" on activity — actor is in chips\n%s", truncate(get(t, h, "/t/activity/"+rec.ID+fieldsView).Body.String()))
-	}
-
-	for _, prop := range []string{"Created", "Updated"} {
-		dd = doc.WithAttr("data-prop", prop)
-		if len(dd) > 0 {
-			t.Errorf("<dd should not have data-prop=%q on activity\n%s", prop, truncate(get(t, h, "/t/activity/"+rec.ID+fieldsView).Body.String()))
-		}
-	}
-}
-
 // TestDetailPageProposalDataAttributes checks that proposal detail pages also
 // get the same data attributes pattern.
 func TestDetailPageProposalDataAttributes(t *testing.T) {

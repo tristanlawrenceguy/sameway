@@ -35,12 +35,11 @@ func (s *Server) apiCreate(w http.ResponseWriter, r *http.Request) {
 	if r.PathValue("type") == chat.BlockType {
 		byAgent(fields, agent, true)
 	}
-	rec, err := s.app.Store.Create(r.PathValue("type"), fields)
+	rec, _, err := chat.WriteAs(s.app.Store, agent.As(), "created", r.PathValue("type"), "", fields)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
-	chat.AgentWrite(s.app.Store, agent, "created", rec, nil)
 	w.Header().Set("Location", "/api/"+rec.Type+"/"+rec.ID)
 	writeJSON(w, http.StatusCreated, shownRecord{s.titled(rec), shows})
 }
@@ -70,12 +69,11 @@ func (s *Server) apiUpdate(w http.ResponseWriter, r *http.Request) {
 	if r.PathValue("type") == chat.BlockType {
 		byAgent(fields, agent, false)
 	}
-	rec, err := s.app.Store.Update(r.PathValue("type"), r.PathValue("id"), fields)
+	rec, _, err := chat.WriteAs(s.app.Store, agent.As(), "updated", r.PathValue("type"), r.PathValue("id"), fields)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
-	chat.AgentWrite(s.app.Store, agent, "updated", rec, was.Fields)
 	writeJSON(w, http.StatusOK, shownRecord{s.titled(rec), shows})
 }
 
@@ -83,17 +81,11 @@ func (s *Server) apiDelete(w http.ResponseWriter, r *http.Request) {
 	if s.keptLog(w, r) {
 		return
 	}
-	was, err := s.app.Store.Get(r.PathValue("type"), r.PathValue("id"))
-	if err != nil {
-		writeError(w, err)
-		return
-	}
-	if err := s.app.Store.Delete(r.PathValue("type"), r.PathValue("id")); err != nil {
-		writeError(w, err)
-		return
-	}
 	// Logged with everything it had, so it can be put back.
-	chat.AgentWrite(s.app.Store, apiAgent(r), "deleted", was, was.Fields)
+	if _, _, err := chat.WriteAs(s.app.Store, apiAgent(r).As(), "deleted", r.PathValue("type"), r.PathValue("id"), nil); err != nil {
+		writeError(w, err)
+		return
+	}
 	writeJSON(w, http.StatusOK, map[string]any{"deleted": r.PathValue("id")})
 }
 

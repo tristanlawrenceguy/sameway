@@ -159,45 +159,24 @@ func TestRecordPropsNonExistentRecordReturns404(t *testing.T) {
 	}
 }
 
-// TestRecordPropsWorksForActivity checks that the handler works for other
-// content types (activity) — acceptance item 5.
-func TestRecordPropsWorksForActivity(t *testing.T) {
+// The log is kept by Sameway: an entry's page is not a way to edit it,
+// as the API and the command line are not. It is undone instead.
+func TestRecordPropsKeepsTheLog(t *testing.T) {
 	a, h := newApp(t)
-
-	rec, err := a.Store.Create("activity", map[string]any{
-		"actor":  "human",
-		"action": "updated",
-	})
+	rec, err := a.Store.Create("activity", map[string]any{"actor": "human", "action": "updated"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	detailPath := "/t/activity/" + rec.ID
-
 	form := url.Values{}
 	form.Set("prop-detail", "New detail text")
-	r := postForm(t, h, detailPath+"/props", form)
-	wantStatus(t, r, http.StatusSeeOther)
-
-	loc := r.Header().Get("Location")
-	if !strings.Contains(loc, "/t/activity/"+rec.ID) {
-		t.Errorf("redirect Location = %q, want it to contain /t/activity/%s", loc, rec.ID)
+	postForm(t, h, "/t/activity/"+rec.ID+"/props", form)
+	if updated, _ := a.Store.Get("activity", rec.ID); updated.Fields["detail"] == "New detail text" {
+		t.Error("an entry in the log is not edited from its page")
 	}
-
-	follow := parse(t, get(t, h, r.Header().Get("Location")))
-	bodyText := htmltest.Text(follow.Root)
-	if !strings.Contains(bodyText, "New detail text") {
-		t.Errorf("detail page should show updated detail field, got %q", truncate(bodyText))
+	page := get(t, h, "/t/activity/"+rec.ID).Body.String()
+	if strings.Contains(page, "data-edit-action") || strings.Contains(page, "/delete\"") {
+		t.Error("an entry's page offers no Edit and no Delete")
 	}
-
-	updated, err := a.Store.Get("activity", rec.ID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if updated.Fields["detail"] != "New detail text" {
-		t.Errorf("stored detail = %q, want 'New detail text'", updated.Fields["detail"])
-	}
-
-	assertAllComponentsKnown(t, follow, componentNames)
 }
 
 // TestRecordPropsNoFieldsRedirects checks that POSTing without any prop-
