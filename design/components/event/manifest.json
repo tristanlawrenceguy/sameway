@@ -23,6 +23,7 @@
       "context": { "type": "string", "description": "Only when another entry shown says the same: the words that tell this one apart, such as due Fri 25 Sep, read after what it says by its link and its Undo and not shown." },
       "undo": { "type": "string", "description": "Where a form posts to reverse this entry. Given only while the entry can still be undone: the thing is still as it left it." },
       "from": { "type": "string", "description": "The page the entry is shown on, so undoing returns there." },
+      "undoes": { "type": "boolean", "default": false, "description": "This entry took another change back: action is the bare verb (undid, put back) and the change it took back is the detail, after a colon the component adds; its button says Put back rather than Undo undid." },
       "compact": { "type": "boolean", "default": false, "description": "For a line under something that already says who, such as a message's Changes made: the actor and its mark are left out, so the line starts at its verb, one 44px row. Not with level: the message has the heading." },
       "id": { "type": "string" }
     }
@@ -45,6 +46,7 @@
     { "name": "agent", "props": { "actor": "agent", "who": "Claude Code (through MCP)", "action": "updated", "target": "task", "detail": "Call plumber", "time": "10:40", "href": "/t/task/t1", "undo": "/activity/a3/undo" }, "file": "examples/agent.html" },
     { "name": "system", "props": { "actor": "system", "action": "failed", "detail": "Could not reach the model.", "id": "evt-1" }, "file": "examples/system.html" },
     { "name": "undo", "props": { "actor": "assistant", "action": "removed", "target": "list", "detail": "Groceries", "time": "20:31", "undo": "/activity/a1/undo" }, "file": "examples/undo.html" },
+    { "name": "put-back", "props": { "actor": "human", "action": "undid", "detail": "Assistant removed list Groceries", "time": "20:32", "undo": "/activity/a4/undo", "undoes": true }, "file": "examples/put-back.html" },
     { "name": "compact", "props": { "actor": "assistant", "action": "changed", "target": "text size", "detail": "to Large", "undo": "/activity/a2/undo", "from": "/chat", "compact": true }, "file": "examples/compact.html" },
     { "name": "heading", "props": { "actor": "human", "action": "updated", "target": "note", "detail": "Shopping", "time": "2 Jan 09:12", "datetime": "2026-01-02T09:12:00Z", "via": "on pixel-7", "level": 2, "href": "/t/note/n1" }, "file": "examples/heading.html" }
   ]

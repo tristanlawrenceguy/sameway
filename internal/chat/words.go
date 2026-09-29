@@ -3,6 +3,7 @@ package chat
 import (
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
@@ -14,28 +15,24 @@ type Words struct{ Action, Target, Detail string }
 
 // Say is the words for a change, from its log entry's fields: action,
 // target, detail, and for an undo, undoes and summary. A receipt's change
-// is said the same way with its component as the target. linked says the
-// line leads to the thing; an undo then keeps its colon, which the event
-// adds itself where there is no link, so it is never said twice.
+// is said the same way with its component as the target. An undo is its
+// bare verb and the sentence of what it took back; the event puts the
+// colon between them, so no verb carries punctuation into data-action.
 //
 //	set ui.text large          changed text size to Large
 //	created note Shopping      created note Shopping
-//	(undo) You undid: ...      undid: Assistant added card Plan
-func Say(f map[string]any, linked bool) Words {
+//	(undo) You undid: ...      undid, Assistant added card Plan
+func Say(st *store.Store, f map[string]any) Words {
 	str := func(k string) string { s, _ := f[k].(string); return s }
 	action, target, detail := str("action"), str("target"), str("detail")
 	if target == "" {
 		target = str("component")
 	}
 	if str("undoes") != "" {
-		summary := CleanSummary(str("summary"))
+		summary := Sentence(st, f)
 		for _, verb := range []string{" undid: ", " put back: "} {
 			if _, after, ok := strings.Cut(summary, verb); ok {
-				verb = strings.TrimSpace(verb)
-				if !linked || target == "" && str("href") == "" {
-					verb = strings.TrimSuffix(verb, ":")
-				}
-				return Words{Action: verb, Detail: after}
+				return Words{Action: strings.Trim(verb, " :"), Detail: after}
 			}
 		}
 	}

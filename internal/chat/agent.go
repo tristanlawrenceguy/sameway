@@ -3,8 +3,6 @@ package chat
 import (
 	"strings"
 	"unicode"
-
-	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 // An agent is a program outside Sameway that changes the workspace:
@@ -113,8 +111,6 @@ func (s *Service) marked(fields map[string]any) map[string]any {
 	return fields
 }
 
-// AgentWrite logs a create, update or delete of rec an agent made through
-// the API, as RecordWrite does for the person.
-func AgentWrite(st *store.Store, a Agent, action string, rec *store.Record, before map[string]any) string {
-	return recordWrite(st, ActorAgent, Change{By: a.Name, Via: a.Through}, action, rec, before)
-}
+// As is who an agent is in the log: by the name it gave, through the way
+// it came in.
+func (a Agent) As() Who { return Who{Actor: ActorAgent, By: a.Name, Via: a.Through} }

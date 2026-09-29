@@ -107,14 +107,13 @@ func (s *Service) createRecord(typeName string, fields map[string]any) toolResul
 	if r, kept := keptBySystem(t, fields); kept {
 		return r
 	}
-	rec, err := s.Store.Create(t.Name, fields)
+	rec, c, err := Write(s.Store, "created", t.Name, "", fields)
 	if err != nil {
 		return fail("I couldn't save those changes — %s. Fix the fields and call create_record again; the %s schema is in the catalogue.", humanizeValidationError(err.Error()), t.Name)
 	}
-	title := recordTitle(s.Store, t, rec)
 	return toolResult{
-		text:   fmt.Sprintf("created %s %s: %q. The person can open it at /t/%s/%s.", t.Name, rec.ID, title, t.Name, rec.ID),
-		change: &Change{Action: "created", Component: t.Name, ID: rec.ID, Detail: title, Href: "/t/" + t.Name + "/" + rec.ID},
+		text:   fmt.Sprintf("created %s %s: %q. The person can open it at /t/%s/%s.", t.Name, rec.ID, c.Detail, t.Name, rec.ID),
+		change: &c,
 	}
 }
 
@@ -129,15 +128,14 @@ func (s *Service) updateRecord(typeName, id string, fields map[string]any) toolR
 	if r, kept := keptBySystem(t, fields); kept {
 		return r
 	}
-	was, err := s.Store.Get(t.Name, id)
-	if err != nil {
+	if _, err := s.Store.Get(t.Name, id); err != nil {
 		return fail("no %s with id %s. Use find_records to get the id", t.Name, id)
 	}
-	rec, err := s.Store.Update(t.Name, id, fields)
+	rec, c, err := Write(s.Store, "updated", t.Name, id, fields)
 	if err != nil {
 		return fail("I couldn't save those changes — %s. Fix the fields and call update_record again; the %s schema is in the catalogue.", humanizeValidationError(err.Error()), t.Name)
 	}
-	title := recordTitle(s.Store, t, rec)
+	title := c.Detail
 	// Finished, a thing that repeats is due again at once; say so, or the
 	// assistant reads its own tick as undone.
 	again := ""
@@ -146,7 +144,7 @@ func (s *Service) updateRecord(typeName, id string, fields map[string]any) toolR
 	}
 	return toolResult{
 		text:   fmt.Sprintf("updated %s %s: %q, at /t/%s/%s.%s", t.Name, rec.ID, title, t.Name, rec.ID, again),
-		change: &Change{Action: "updated", Component: t.Name, ID: rec.ID, Detail: title, Href: "/t/" + t.Name + "/" + rec.ID, Before: was.Fields},
+		change: &c,
 	}
 }
 
@@ -208,17 +206,14 @@ func (s *Service) deleteRecord(typeName, id string) toolResult {
 	if err != nil {
 		return fail("%v", err)
 	}
-	rec, err := s.Store.Get(t.Name, id)
-	if err != nil {
+	if _, err := s.Store.Get(t.Name, id); err != nil {
 		return fail("no %s with id %s", t.Name, id)
 	}
-	if err := s.Store.Delete(t.Name, id); err != nil {
+	_, c, err := Write(s.Store, "deleted", t.Name, id, nil)
+	if err != nil {
 		return fail("could not delete %s %s: %v", t.Name, id, err)
 	}
-	return toolResult{
-		text:   fmt.Sprintf("deleted %s %s", t.Name, id),
-		change: &Change{Action: "deleted", Component: t.Name, ID: id, Detail: recordTitle(s.Store, t, rec), Before: rec.Fields},
-	}
+	return toolResult{text: fmt.Sprintf("deleted %s %s", t.Name, id), change: &c}
 }
 
 // importRecords makes records of a type from a kept file, through ingest,

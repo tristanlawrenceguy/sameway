@@ -46,7 +46,7 @@ func (s *Server) seen(r *http.Request, path string) {
 	// Where the owner is on a part that is theirs alone, such as one of
 	// their conversations, is theirs too: they are said to be here, not
 	// where, since its title is not the others' to read.
-	if !ownerOnlyPath(path) {
+	if look, err := http.NewRequest(http.MethodGet, path, nil); err == nil && !s.ownerOnlyRequest(look) {
 		p.Place, p.Path = s.placeName(path), path
 	}
 	s.present.mu.Lock()
@@ -55,16 +55,6 @@ func (s *Server) seen(r *http.Request, path string) {
 		s.present.here = map[string]seenAt{}
 	}
 	s.present.here[login] = seenAt{p, time.Now()}
-}
-
-// ownerOnlyPath says whether a path is one of the owner's own parts.
-func ownerOnlyPath(path string) bool {
-	for _, p := range ownerOnly {
-		if path == p || strings.HasPrefix(path, p+"/") {
-			return true
-		}
-	}
-	return false
 }
 
 // whoAsks is the login and name of who makes a request: a visitor, or the

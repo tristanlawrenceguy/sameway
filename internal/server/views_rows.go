@@ -71,7 +71,7 @@ func (s *Server) rows(t *schema.Type, recs []*store.Record, now time.Time) strin
 func (s *Server) row(t *schema.Type, rec *store.Record, level int, told string) string {
 	class, box := "sw-row", ""
 	if doneField(t) != nil {
-		if props, ok := markOf(t, rec); ok {
+		if props, ok := s.markOf(t, rec); ok {
 			props["quiet"] = true
 			props["context"] = withContext(str(props["context"], ""), told)
 			box = string(s.component("mark", props))

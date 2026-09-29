@@ -4,7 +4,6 @@ import (
 	"context"
 	"html/template"
 	"net/http"
-	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 )
@@ -44,17 +43,6 @@ func (s *Server) Admit(ctx context.Context, login, name, device string, owner bo
 	return chat.WithVisitor(ctx, v), "", true
 }
 
-// ownerOnly are the parts of the workspace that are its owner's alone:
-// the assistant's questions, every chat's raw records and the log of what
-// was said, the other workspaces on the machine, the model, the comfort
-// settings, and a browser driven on the machine. Each person's own chat is
-// theirs (see chatFor).
-var ownerOnly = []string{
-	"/api/look", "/proposal", "/workspaces", "/speech", "/export/workspace.zip", "/model", "/help/set", "/activity",
-	"/t/message", "/api/message", "/t/conversation", "/api/conversation",
-	"/t/proposal", "/api/proposal", "/t/activity", "/api/activity", "/api/workspaces",
-}
-
 // allowed says whether a visitor may make this request, and when not,
 // tells them so on a page of its own.
 func (s *Server) allowed(w http.ResponseWriter, r *http.Request) bool {
@@ -68,11 +56,7 @@ func (s *Server) allowed(w http.ResponseWriter, r *http.Request) bool {
 		return true
 	}
 	why := ""
-	if ownerOnlyPath(r.URL.Path) {
-		why = "This part of the workspace is its owner's alone."
-	}
-	// An import writes whatever its columns say, access included.
-	if strings.HasSuffix(r.URL.Path, "/import") || strings.Contains(r.URL.Path, "/import/") {
+	if s.ownerOnlyRequest(r) { // see access_routes.go
 		why = "This part of the workspace is its owner's alone."
 	}
 	// Saying they have caught up changes nothing but their own notice.

@@ -137,7 +137,11 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	}
 	// The Edit button the inline editor adds is named for what it edits,
 	// the record by its title, as a block on the canvas is (08-edit.js).
-	fmt.Fprintf(&b, `<div class="sw-dl-block" data-block-id="%s" data-block-label="%s" data-edit-action="/t/%s/%s/props"%s%s>`, rec.ID, template.HTMLEscapeString(trim.Title(s.title(t, rec))), t.Name, rec.ID, langOf(rec), discard)
+	editable := ` data-edit-action="/t/` + t.Name + `/` + rec.ID + `/props"`
+	if t.Name == chat.ActivityType {
+		editable = ""
+	}
+	fmt.Fprintf(&b, `<div class="sw-dl-block" data-block-id="%s" data-block-label="%s"%s%s%s>`, rec.ID, template.HTMLEscapeString(trim.Title(s.title(t, rec))), editable, langOf(rec), discard)
 	// The record's text comes first and reads as a document, under the
 	// title and before its other fields; structured text keeps what was
 	// written on the element so the inline editor edits the source.
@@ -191,10 +195,14 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 			s.component("button", map[string]any{"label": "Undo", "type": "submit", "variant": "secondary"}))
 	}
 	// The record's one press, done or pinned or whatever its yes-or-no
-	// field is, sits under the title; Delete keeps to the quiet bar.
-	fmt.Fprintf(&b, `<div class="sw-bar sw-quiet"><form method="post" action="/t/%s/%s/delete">%s</form></div>`,
-		t.Name, rec.ID, s.component("button", map[string]any{"label": "Delete " + schema.Words(t.Name), "type": "submit", "variant": "quiet"}))
-	b.WriteString(s.editFields(t, rec))
+	// field is, sits under the title; Delete keeps to the quiet bar. The
+	// log is kept by Sameway: an entry is undone, never edited or deleted,
+	// on its page as over the API.
+	if t.Name != chat.ActivityType {
+		fmt.Fprintf(&b, `<div class="sw-bar sw-quiet"><form method="post" action="/t/%s/%s/delete">%s</form></div>`,
+			t.Name, rec.ID, s.component("button", map[string]any{"label": "Delete " + schema.Words(t.Name), "type": "submit", "variant": "quiet"}))
+		b.WriteString(s.editFields(t, rec))
+	}
 	b.WriteString(`</div>`)
 	b.WriteString(s.documentLinks(r, t, rec)) // the record as a file, after it; see export_docs.go
 	// Recent activity on this page, so a deletion can be taken back where

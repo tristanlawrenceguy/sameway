@@ -40,12 +40,11 @@ func (s *Server) addRecord(w http.ResponseWriter, r *http.Request) {
 	if name := titleField(t); name != "" {
 		fields[name] = "New " + schema.Words(t.Name)
 	}
-	rec, err := s.app.Store.Create(t.Name, fields)
+	rec, act, err := chat.WriteAs(s.app.Store, s.who(r), "created", t.Name, "", fields)
 	if err != nil {
 		s.failed(w, r, "Not added", err, list)
 		return
 	}
-	act := s.record(r, chat.Change{Action: "created", Component: t.Name, ID: rec.ID, Detail: "New " + schema.Words(t.Name), Href: list + "/" + rec.ID})
 	// #edit opens the editor on arrival (09-edit-fields.js); added names the
 	// entry that made it, so Cancel before a first Save can take it back.
 	http.Redirect(w, r, list+"/"+rec.ID+"?added="+url.QueryEscape(act)+"#edit", http.StatusSeeOther)

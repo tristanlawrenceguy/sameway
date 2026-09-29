@@ -44,8 +44,12 @@ func (s *Server) line(r *store.Record, canUndo bool) map[string]any {
 
 // say puts a change's words and its link into an event's props.
 func (s *Server) say(props, fields map[string]any, href string) {
-	w := chat.Say(fields, href != "")
+	w := chat.Say(s.app.Store, fields)
 	props["action"] = w.Action
+	// An undo is its verb, a colon the event adds, and what it took back.
+	if undoes, _ := fields["undoes"].(string); undoes != "" {
+		props["undoes"] = true
+	}
 	if w.Target != "" {
 		props["target"] = schema.Words(w.Target)
 	}

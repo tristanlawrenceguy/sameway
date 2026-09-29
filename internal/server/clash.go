@@ -84,7 +84,7 @@ func (s *Server) clashChoose(w http.ResponseWriter, r *http.Request, choice stri
 		if f, ok := t.Field(field); ok {
 			label = fieldLabel(*f)
 		}
-		if tt := strings.TrimSpace(titleOf(t, was)); tt != "" {
+		if tt := strings.TrimSpace(s.title(t, was)); tt != "" {
 			title = tt
 		}
 	}

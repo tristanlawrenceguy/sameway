@@ -105,11 +105,10 @@ func (c *ctx) contentCmd(typeName string) error {
 		if t.Name == chat.ActivityType {
 			return errKeptLog
 		}
-		rec, err := a.Store.Create(t.Name, fields)
+		rec, _, err := chat.WriteAs(a.Store, cliWho, "created", t.Name, "", fields)
 		if err != nil {
 			return err
 		}
-		chat.RecordWrite(a.Store, chat.ThroughCLI, "created", rec, nil)
 		c.print(rec, func() { fmt.Fprintf(c.Stdout, "created %s %s\n", t.Name, rec.ID) })
 	case "update":
 		if len(positional) != 1 {
@@ -122,15 +121,10 @@ func (c *ctx) contentCmd(typeName string) error {
 		if t.Name == chat.ActivityType {
 			return errKeptLog
 		}
-		was, err := a.Store.Get(t.Name, positional[0])
+		rec, _, err := chat.WriteAs(a.Store, cliWho, "updated", t.Name, positional[0], fields)
 		if err != nil {
 			return err
 		}
-		rec, err := a.Store.Update(t.Name, positional[0], fields)
-		if err != nil {
-			return err
-		}
-		chat.RecordWrite(a.Store, chat.ThroughCLI, "updated", rec, was.Fields)
 		c.print(rec, func() { fmt.Fprintf(c.Stdout, "updated %s %s\n", t.Name, rec.ID) })
 	case "delete":
 		if len(positional) != 1 {
@@ -139,20 +133,18 @@ func (c *ctx) contentCmd(typeName string) error {
 		if t.Name == chat.ActivityType {
 			return errKeptLog
 		}
-		was, err := a.Store.Get(t.Name, positional[0])
-		if err != nil {
+		if _, _, err := chat.WriteAs(a.Store, cliWho, "deleted", t.Name, positional[0], nil); err != nil {
 			return err
 		}
-		if err := a.Store.Delete(t.Name, positional[0]); err != nil {
-			return err
-		}
-		chat.RecordWrite(a.Store, chat.ThroughCLI, "deleted", was, was.Fields)
 		c.print(map[string]any{"deleted": positional[0]}, func() { fmt.Fprintf(c.Stdout, "deleted %s %s\n", t.Name, positional[0]) })
 	default:
 		return fmt.Errorf("unknown verb %q for %s (use list, get, create, update, delete)", verb, t.Name)
 	}
 	return nil
 }
+
+// cliWho is the person at the command line, as the log says it.
+var cliWho = chat.Who{Actor: "human", Via: chat.ThroughCLI}
 
 func fieldsFrom(sets []string, data string) (map[string]any, error) {
 	fields := map[string]any{}

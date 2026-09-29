@@ -111,7 +111,7 @@ func (s *Server) resolveCollectionAt(props map[string]any, block string, at *col
 				item["text"] = text
 			}
 		}
-		if actions := markActions(t, rec); actions != nil {
+		if actions := s.markActions(t, rec); actions != nil {
 			markApart(actions, told[rec.ID])
 			item["actions"] = actions
 			out["pressable"] = true

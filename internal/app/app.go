@@ -65,6 +65,7 @@ func Load(dir string, memoryDB bool) (*App, error) {
 	a.Mirror = content.Mirror{Dir: ws.ContentDir(), Types: types, Skip: []string{chat.MessageType, chat.ConversationType, chat.ProposalType, chat.ActivityType}}
 	st.AfterWrite = a.Mirror.Changed
 	a.share()
+	chat.Resay(st) // the log in today's words; see chat/names.go
 	a.Chat = &chat.Service{
 		Store:        st,
 		Registry:     reg,

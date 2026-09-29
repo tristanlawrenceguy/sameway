@@ -1,0 +1,112 @@
+package server_test
+
+import (
+	"os"
+	"path/filepath"
+	"regexp"
+	"sort"
+	"strings"
+	"testing"
+)
+
+// What a person does from a page, the assistant can do with a tool, or
+// there is a reason it cannot. Each page action says which: the tools that
+// do the same, "a person's: ..." when it is theirs alone by design, or
+// "not yet: ..." when nothing does it for the assistant and something
+// should. A new page action fails here until it says which, so a thing a
+// person can do is never out of the assistant's reach by accident.
+var pageActionTools = map[string]string{
+	"/t/{type}/add":               "create_record",
+	"/t/{type}/{id}/props":        "update_record",
+	"/t/{type}/{id}/discard":      "undo_change",
+	"/t/{type}/{id}/delete":       "a person's: a record goes when a person deletes it, or when its making is undone",
+	"/t/{type}/import":            "import_records",
+	"/t/{type}/import/{file}/run": "import_records",
+	"/t/file/upload":              "a person's: a file comes from their computer; the assistant reads files already added",
+	"/files/{id}/transcribe":      "not yet: the assistant cannot ask for a recording to be written down",
+	"/activity/{id}/undo":         "undo_change",
+	"/act/{id}":                   "run_action",
+	"/canvas/{id}/place":          "update_component",
+	"/canvas/{id}/props":          "update_component",
+	"/canvas/{id}/delete":         "remove_component",
+	"/help/set":                   "set_setting",
+	"/model/use":                  "set_setting",
+	"/model/check":                "a person's: checking the model is checking the assistant itself",
+	"/clock/set":                  "create_record",
+	"/clock/{id}/done":            "update_record",
+	"/clock/{id}/snooze":          "update_record",
+	"/habit/{id}/log":             "create_record",
+	"/chat":                       "a person's: it is what they say to the assistant",
+	"/chat/stream":                "a person's: the same",
+	"/chat/stop":                  "a person's: stopping the assistant",
+	"/chat/new":                   "a person's: which conversation they are in is theirs",
+	"/chat/open":                  "a person's: the same",
+	"/chat/delete":                "a person's: the same",
+	"/chat/clear":                 "not yet: starting afresh is something a person asks the assistant for",
+	"/proposal/{id}/accept":       "a person's: the answer to the assistant's own question",
+	"/proposal/{id}/dismiss":      "a person's: the same",
+	"/proposal/{id}/instead":      "a person's: the same",
+	"/clash/{id}/use":             "a person's: which of two versions to keep",
+	"/clash/{id}/both":            "a person's: the same",
+	"/clash/{id}/keep":            "a person's: the same",
+	"/since/seen":                 "a person's: what they have seen",
+	"/speech/get":                 "a person's: a download they are asked about",
+	"/dictate":                    "a person's: their voice",
+	"/sync":                       "a person's: computers exchanging changes, not a change",
+	"/workspaces/new":             "not yet: the assistant cannot make a workspace",
+	"/workspaces/copy":            "not yet: the same",
+	"/workspaces/start":           "not yet: the assistant cannot open another workspace",
+	"/workspaces/restore":         "not yet: the assistant cannot restore one from the trash",
+	"/workspaces/delete":          "a person's: deleting a whole workspace is its owner's",
+}
+
+func TestEveryPageActionIsTheAssistantsOrSaysWhyNot(t *testing.T) {
+	a, _ := newApp(t)
+	tools := map[string]bool{}
+	for _, tool := range a.Describe().Tools {
+		tools[tool.Name] = true
+	}
+	files, _ := filepath.Glob("*.go")
+	pattern := regexp.MustCompile(`HandleFunc\("POST (/[^"]*)"`)
+	seen := map[string]bool{}
+	for _, f := range files {
+		if strings.HasSuffix(f, "_test.go") {
+			continue
+		}
+		src, _ := os.ReadFile(f)
+		for _, m := range pattern.FindAllStringSubmatch(string(src), -1) {
+			route := m[1]
+			if strings.HasPrefix(route, "/api/") || route == "/mcp" || strings.HasPrefix(route, "/hook/") {
+				continue
+			}
+			seen[route] = true
+			said, ok := pageActionTools[route]
+			switch {
+			case !ok:
+				t.Errorf("POST %s: which tool does the same for the assistant, or why is it a person's? Say so in pageActionTools", route)
+			case strings.HasPrefix(said, "a person's: ") || strings.HasPrefix(said, "not yet: "):
+			default:
+				for _, name := range strings.Split(said, ",") {
+					if !tools[strings.TrimSpace(name)] {
+						t.Errorf("POST %s names the tool %q, which the assistant does not have", route, name)
+					}
+				}
+			}
+		}
+	}
+	var gone, notYet []string
+	for route, said := range pageActionTools {
+		if !seen[route] {
+			gone = append(gone, route)
+		}
+		if strings.HasPrefix(said, "not yet: ") {
+			notYet = append(notYet, route)
+		}
+	}
+	sort.Strings(gone)
+	for _, route := range gone {
+		t.Errorf("POST %s is no longer a page action; take it off pageActionTools", route)
+	}
+	sort.Strings(notYet)
+	t.Logf("page actions the assistant cannot do yet: %s", strings.Join(notYet, ", "))
+}

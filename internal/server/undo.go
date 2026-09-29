@@ -15,8 +15,7 @@ func (s *Server) undo(w http.ResponseWriter, r *http.Request) {
 	// What is undone, said with the outcome: "Undone. You added card Plan."
 	what := ""
 	if e, err := s.app.Store.Get(chat.ActivityType, r.PathValue("id")); err == nil {
-		if said, _ := e.Fields["summary"].(string); said != "" {
-			said = chat.CleanSummary(said)
+		if said := chat.Sentence(s.app.Store, e.Fields); said != "" {
 			said = strings.TrimSpace(strings.TrimSuffix(said, "through the API"))
 			said = strings.TrimSpace(strings.TrimSuffix(said, "through the command line"))
 			what = strings.TrimSuffix(said, ".") + "."

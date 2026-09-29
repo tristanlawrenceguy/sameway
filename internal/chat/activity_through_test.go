@@ -8,7 +8,7 @@ import (
 )
 
 // ActivitySummariesNeverReferenceTheAPI checks that new activity summaries
-// produced by summarise() never contain ", through the API" or "through the
+// written through WriteAs never contain ", through the API" or "through the
 // command line", so headings and body text on /activity read in plain words.
 func TestActivitySummariesNeverReferenceTheAPI(t *testing.T) {
 	svc := newFullService(t)
@@ -18,9 +18,9 @@ func TestActivitySummariesNeverReferenceTheAPI(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	id := chat.RecordWrite(svc.Store, chat.ThroughAPI, "updated", rec, map[string]any{})
+	_, id, _ := chat.WriteAs(svc.Store, chat.Who{Actor: "human", Via: chat.ThroughAPI}, "updated", "note", rec.ID, map[string]any{"title": rec.Fields["title"]})
 	if id == "" {
-		t.Fatal("expected activity record from RecordWrite with ThroughAPI")
+		t.Fatal("expected activity record from WriteAs with ThroughAPI")
 	}
 
 	entry, err := svc.Store.Get(chat.ActivityType, id)
@@ -52,9 +52,9 @@ func TestActivitySummariesNeverReferenceTheCLI(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	id := chat.RecordWrite(svc.Store, chat.ThroughCLI, "updated", rec, map[string]any{})
+	_, id, _ := chat.WriteAs(svc.Store, chat.Who{Actor: "human", Via: chat.ThroughCLI}, "updated", "note", rec.ID, map[string]any{"title": rec.Fields["title"]})
 	if id == "" {
-		t.Fatal("expected activity record from RecordWrite with ThroughCLI")
+		t.Fatal("expected activity record from WriteAs with ThroughCLI")
 	}
 
 	entry, err := svc.Store.Get(chat.ActivityType, id)
@@ -78,9 +78,9 @@ func TestNonThroughViaStillSaysOn(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	id := chat.RecordWrite(svc.Store, "pixel-7", "updated", rec, map[string]any{})
+	_, id, _ := chat.WriteAs(svc.Store, chat.Who{Actor: "human", Via: "pixel-7"}, "updated", "note", rec.ID, map[string]any{"title": rec.Fields["title"]})
 	if id == "" {
-		t.Fatal("expected activity record from RecordWrite")
+		t.Fatal("expected activity record from WriteAs")
 	}
 
 	got, err := svc.Store.Get(chat.ActivityType, id)

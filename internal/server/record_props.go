@@ -88,15 +88,14 @@ func (s *Server) recordProps(w http.ResponseWriter, r *http.Request) {
 
 	// What was saved, which for something that repeats and was just
 	// finished is its next time, not the tick (schema/repeat.go).
-	saved, err := s.app.Store.Update(t.Name, rec.ID, clean)
+	// A change a person made by hand is a change like any other: in the
+	// log with what it was, so it glows where it shows and can be undone.
+	saved, undo, err := chat.WriteAs(s.app.Store, s.who(r), "updated", t.Name, rec.ID, clean)
 	if err != nil {
 		s.failed(w, r, "Not saved", err, detail)
 		return
 	}
-	// A change a person made by hand is a change like any other: in the
-	// log with what it was, so it glows where it shows and can be undone.
-	undo := s.record(r, chat.Change{Action: "updated", Component: t.Name, ID: rec.ID, Detail: s.title(t, rec), Href: detail, Before: rec.Fields})
-	s.tellAt(w, r, s.savedText(savedWords(t, rec, fields, saved.Fields, undo), t, rec, fields, saved.Fields), returnTo(r, detail))
+	s.tellAt(w, r, s.savedText(s.savedWords(t, rec, fields, saved.Fields, undo), t, rec, fields, saved.Fields), returnTo(r, detail))
 }
 
 // refused says why an edit was not taken, a sentence for each field in

@@ -24,13 +24,13 @@ func (s *Server) deleteForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	title := s.title(t, rec)
-	if err := s.app.Store.Delete(t.Name, rec.ID); err != nil {
+	// Logged with what it was, so the deletion can be undone, from the
+	// message that says it happened.
+	_, undo, err := chat.WriteAs(s.app.Store, s.who(r), "deleted", t.Name, rec.ID, nil)
+	if err != nil {
 		s.failed(w, r, "Not deleted", err, list)
 		return
 	}
-	// Logged with what it was, so the deletion can be undone, from the
-	// message that says it happened.
-	undo := s.record(r, chat.Change{Action: "deleted", Component: t.Name, ID: rec.ID, Detail: title, Before: rec.Fields})
 	// Back where the person was, unless that was the record's own page,
 	// which is gone: then its list.
 	back := backOf(r, list)
