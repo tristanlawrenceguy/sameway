@@ -76,7 +76,7 @@ func TestACollectionIsTheRecordsThatMatch(t *testing.T) {
 	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/block", map[string]any{
 		"component": "collection", "props": map[string]any{"type": "task", "where": []string{"owner=me"}, "label": "Mine"},
 	}), http.StatusCreated)
-	if page := get(t, h, "/").Body.String(); !strings.Contains(page, `no field &#34;owner&#34;; it has title, done, due`) {
+	if page := get(t, h, "/").Body.String(); !strings.Contains(page, `no field &#34;owner&#34;; it has title, done, status, due`) {
 		t.Errorf("the block should explain the wrong field: %.300s", page[strings.Index(page, "Mine"):])
 	}
 	_ = a

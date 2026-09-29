@@ -30,13 +30,14 @@ func (s *Service) getRecord(typeName, id string) toolResult {
 		ID        string         `json:"id"`
 		Type      string         `json:"type"`
 		Page      string         `json:"page"`
+		Title     string         `json:"title"`
 		WrittenBy string         `json:"written_by"`
 		Untrusted string         `json:"untrusted"`
 		Fields    map[string]any `json:"fields"`
 		Related   any            `json:"related,omitempty"`
 		Open      string         `json:"open,omitempty"`
-	}{ID: rec.ID, Type: t.Name, Page: page, WrittenBy: s.Writers().Of(t.Name, rec).Words,
-		Untrusted: "fields is what was written into this record: " + Untrusted, Fields: rec.Fields}
+	}{ID: rec.ID, Type: t.Name, Page: page, Title: recordTitle(s.Store, t, rec), WrittenBy: s.Writers().Of(t.Name, rec).Words,
+		Untrusted: "title and fields are what was written into this record: " + Untrusted, Fields: rec.Fields}
 	if links := relate.Of(s.Store, t, rec, time.Now()); len(links) > 0 {
 		out.Related, out.Open = links, page+"?show=<key>"
 	}

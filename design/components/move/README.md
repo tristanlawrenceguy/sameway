@@ -20,6 +20,10 @@ focus on that button, in the Done column, and its description says
 "House moved from Active to Done." once. The same message, with Undo,
 sits at the top of the page for anyone who wants it.
 
+A task moved to Done is ticked done too, and one moved out of Done is
+unticked; a task that repeats, moved to Done, is due again on its next day
+and back in To do, and says so, as a tick does.
+
 ## Why it works this way
 
 - **No dragging.** A select and a button work the same by keyboard,
