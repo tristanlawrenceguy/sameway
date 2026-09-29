@@ -113,6 +113,13 @@ func (s *Server) apiList(w http.ResponseWriter, r *http.Request) {
 	writers := s.app.Chat.Writers()
 	out := make([]written, 0, len(recs))
 	for _, rec := range recs {
+		if rec.Type == chat.ActivityType {
+			if summary, ok := rec.Fields["summary"].(string); ok {
+				if undoes, _ := rec.Fields["undoes"].(string); undoes != "" {
+					rec.Fields["summary"] = chat.CleanSummary(summary)
+				}
+			}
+		}
 		out = append(out, written{rec, s.apiTitle(rec), writers.Of(rec.Type, rec).Words})
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"type": r.PathValue("type"), "count": len(recs), "records": out, "untrusted": "each record's title and fields were written by its written_by: " + chat.Untrusted})
