@@ -49,6 +49,14 @@ func (s *Server) title(t *schema.Type, rec *store.Record) string {
 		}
 		return track.EntryName(habit, unit, rec.Fields)
 	}
+	if t.Name == chat.ActivityType {
+		// Activity titles come from the summary field which may contain raw
+		// em-dash descriptions (e.g., "how changes arrive to Calmly"). Wrap
+		// with CleanSummary so headings show readable property names.
+		summary, _ := rec.Fields["summary"].(string)
+		return chat.CleanSummary(summary)
+	}
+	// ActivityType is handled above via CleanSummary; fallthrough for all other types.
 	return titleOf(t, rec)
 }
 
