@@ -1,6 +1,6 @@
 {
   "name": "event",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "One line of activity: who did what to which thing, and when. Used for change receipts under a reply and for the activity log. Given the thing's page, the entry leads to it.",
   "icon": "•",
   "use": { "when": "one thing that happened, in a receipt or a log.", "not": "a heading or a card.", "with": "a list, so counts and positions are announced." },
@@ -9,8 +9,8 @@
     "additionalProperties": false,
     "required": ["actor", "action"],
     "properties": {
-      "actor": { "type": "string", "enum": ["human", "assistant", "system"] },
-      "who": { "type": "string", "description": "The person's name when a human other than the reader did it, such as someone the owner let in or who hosts the workspace too. Left out, a human is 'You'." },
+      "actor": { "type": "string", "enum": ["human", "assistant", "agent", "system"], "description": "Who did it: human is a person; assistant is the assistant in the app; agent is a program outside Sameway, such as Claude Code or ChatGPT over MCP or a script through the API; system is the workspace itself." },
+      "who": { "type": "string", "description": "The person's name when a human other than the reader did it, such as someone the owner let in or who hosts the workspace too. Left out, a human is 'You'. For an agent, its name and how it came in, such as 'Claude Code (through MCP)'; left out, an agent is 'An agent'." },
       "person": { "type": "integer", "minimum": 1, "maximum": 6, "description": "That person's colour, 1 to 6, the same on every computer: the entry's mark is in it, as the change glowed in it." },
       "action": { "type": "string", "minLength": 1, "description": "Past-tense verb: added, updated, removed, cleared, said, failed." },
       "target": { "type": "string", "description": "What was acted on, such as 'table' or 'list Groceries'." },
@@ -30,7 +30,7 @@
     "role": "listitem content: text, or a heading when level is given, with a link to what was acted on and an Undo button when there are",
     "keyboard": [ { "key": "Tab", "does": "reaches the link to the thing acted on, when it still exists, then the Undo button when the entry can be undone" }, { "key": "Enter", "does": "on Undo, reverses the entry and returns to the page" } ],
     "states": [],
-    "wcag": { "target": "AAA", "notes": "The actor is spelled out ('You', 'Assistant', 'System', or the person's name), so provenance never depends on colour; a compact line leaves it to the message above it, which says it once. The link text is the target and its detail, so it says where it goes (2.4.4). Render events inside a list so counts and positions are announced. With level, the sentence is the heading, said once, not a heading and the same sentence under it. The time is a time element with its moment, and carries the day where nothing above says it. An entry with no target reads with a colon: System failed: could not reach the model." }
+    "wcag": { "target": "AAA", "notes": "The actor is spelled out ('You', 'Assistant', 'System', the person's name, or an agent's name and how it came in), so provenance never depends on colour, and an agent's mark is square where a person's or the assistant's is round; a compact line leaves it to the message above it, which says it once. The link text is the target and its detail, so it says where it goes (2.4.4). Render events inside a list so counts and positions are announced. With level, the sentence is the heading, said once, not a heading and the same sentence under it. The time is a time element with its moment, and carries the day where nothing above says it. An entry with no target reads with a colon: System failed: could not reach the model." }
   },
   "machine": {
     "selector": "[data-component=\"event\"]",
@@ -41,6 +41,7 @@
     { "name": "default", "props": { "actor": "assistant", "action": "added", "target": "table", "detail": "Shopping list", "time": "20:24", "href": "/canvas/b7" }, "file": "examples/default.html" },
     { "name": "human", "props": { "actor": "human", "action": "removed", "target": "list" }, "file": "examples/human.html" },
     { "name": "person", "props": { "actor": "human", "who": "Hana", "person": 3, "action": "updated", "target": "note", "detail": "Shopping", "time": "09:12", "href": "/t/note/n1" }, "file": "examples/person.html" },
+    { "name": "agent", "props": { "actor": "agent", "who": "Claude Code (through MCP)", "action": "updated", "target": "task", "detail": "Call plumber", "time": "10:40", "href": "/t/task/t1", "undo": "/activity/a3/undo" }, "file": "examples/agent.html" },
     { "name": "system", "props": { "actor": "system", "action": "failed", "detail": "Could not reach the model.", "id": "evt-1" }, "file": "examples/system.html" },
     { "name": "undo", "props": { "actor": "assistant", "action": "removed", "target": "list", "detail": "Groceries", "time": "20:31", "undo": "/activity/a1/undo" }, "file": "examples/undo.html" },
     { "name": "compact", "props": { "actor": "assistant", "action": "changed", "target": "text size", "detail": "to Large", "undo": "/activity/a2/undo", "from": "/chat", "compact": true }, "file": "examples/compact.html" },
