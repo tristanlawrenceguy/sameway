@@ -82,10 +82,23 @@ func (s *Server) apiList(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	// A page at a time and only some fields, when asked; see api_read.go.
+	size, page, err := listPage(r.URL.Query(), limit)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	if page > 0 {
+		limit = 0
+	}
+	only, err := s.onlyFields(r, r.PathValue("type"))
+	if err != nil {
+		writeError(w, err)
+		return
+	}
 	// ?where= (repeatable) and ?order= take the same query a collection
 	// block does: field=value, due<today, -due; see the collection component.
 	var recs []*store.Record
-	var err error
 	if where := r.URL.Query()["where"]; len(where) > 0 || strings.HasPrefix(r.URL.Query().Get("order"), "-") {
 		t, ok := s.app.Types.Get(r.PathValue("type"))
 		if !ok {
@@ -110,12 +123,20 @@ func (s *Server) apiList(w http.ResponseWriter, r *http.Request) {
 		Title     string `json:"title"`
 		WrittenBy string `json:"written_by"`
 	}
+	var about map[string]any
+	if page > 0 {
+		recs, about = onePage(r, recs, size, page)
+	}
 	writers := s.app.Chat.Writers()
 	out := make([]written, 0, len(recs))
 	for _, rec := range recs {
-		out = append(out, written{rec, s.apiTitle(rec), writers.Of(rec.Type, rec).Words})
+		out = append(out, written{trimmed(rec, only), s.apiTitle(rec), writers.Of(rec.Type, rec).Words})
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"type": r.PathValue("type"), "count": len(recs), "records": out, "untrusted": "each record's title and fields were written by its written_by: " + chat.Untrusted})
+	answer := map[string]any{"type": r.PathValue("type"), "count": len(recs), "records": out, "untrusted": "each record's title and fields were written by its written_by: " + chat.Untrusted}
+	for k, v := range about {
+		answer[k] = v
+	}
+	writeJSON(w, http.StatusOK, answer)
 }
 
 // apiDescribePart serves one section of the description, or one item in it,
