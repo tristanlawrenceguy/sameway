@@ -23,6 +23,7 @@ func (s *Store) Restore(typeName, id string, fields map[string]any) (*Record, er
 	if _, err := s.Get(t.Name, id); err == nil {
 		return nil, fmt.Errorf("%s %s already exists", t.Name, id)
 	}
+	t.KeepInStep(nil, clean)
 	return s.insert(t, id, clean)
 }
 
@@ -42,6 +43,7 @@ func (s *Store) Put(typeName, id string, fields map[string]any, created, updated
 	if was, err := s.Get(t.Name, id); err == nil {
 		before = was.Fields
 	}
+	t.KeepInStep(before, clean)
 	rec, err := s.put(t, id, clean, created, updated)
 	if err == nil {
 		s.stamp(t, id, before, clean, created)

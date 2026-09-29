@@ -100,7 +100,8 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 	if !skipEnum && !detailSkip && t.Name != "action" {
 		for _, f := range t.Shown() {
 			if f.Type == "enum" {
-				if v, ok := rec.Fields[f.Name].(string); ok && v != "" {
+				// A task's status says only Doing: To do and Done are its tick.
+				if v, ok := rec.Fields[f.Name].(string); ok && v != "" && (f.Name != t.Stage() || t.SaysMoreThanTick(v)) {
 					props := map[string]any{"label": f.ValueLabel(v), "tone": "info"}
 					if f.Labels[v] == "" {
 						props["context"] = strings.ToLower(fieldLabel(f))

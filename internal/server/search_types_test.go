@@ -28,7 +28,7 @@ func TestSearchIsEverythingWithTheKindsCounted(t *testing.T) {
 	h := seeds(t)
 	body := get(t, h, "/search?q=seeds").Body.String()
 	for _, want := range []string{"Order", "Sow the", "Buy", "Water", "Label", "5 things found",
-		`<nav class="sw-tabs" data-component="tabs" aria-label="Kinds of result">`,
+		`<nav class="sw-filters sw-filters--links" data-component="filters" data-shape="links" aria-label="Kinds of result">`,
 		`href="/search?q=seeds" aria-current="page">All (5)</a>`,
 		`href="/search?q=seeds&amp;type=task">Tasks (3)</a>`,
 		`href="/search?q=seeds&amp;type=note">Notes (2)</a>`,

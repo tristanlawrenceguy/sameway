@@ -25,14 +25,18 @@ the type has instead, so the block never renders as nothing.
 in columns, which scroll sideways on a phone in a box a keyboard can reach;
 `as: cards` puts them in cards, each pressed anywhere to open it.
 `as: board` puts a column for each choice of a pick-list field, named
-with `by` (status: To do, Doing, Done), in the order the field lists
+with `by` (a task's status: To do, Doing, Done), in the order the field lists
 them, each saying how many it holds, and a column for those with none.
 A line over the board names every column with its count and leads to it.
 Each card has a Move form: its column picked from a list and a Move
 button (the move component), which saves the field like any edit, comes
-back to that button focused in the card's new column, and says "House moved from Active to Done." with an Undo. A list
-of one line per record is a list; use a table when the fields are the point
-and several are compared.
+back to that button focused in the card's new column, and says "House
+moved from Active to Done." with an Undo. A task's status and its done
+tick are one fact: moving a task to Done ticks it, and ticking it moves
+it to Done, so a board and a list of what is not done always agree. A
+yes-or-no is not a board: it is two columns a list filter already gives.
+A list of one line per record is a list; use a table when the fields are
+the point and several are compared.
 
 `limit` is how many are shown, 20 unless given. When more match, the list
 says it shows the first of them, and its link, See all of them, leads to
@@ -50,7 +54,9 @@ Showing: not done, due soonest first." with Reset beside it, back to how it
 was set up. The choices only add to `where`, never take from it: the
 assistant decides what the list is about, the person narrows within it.
 
-They are a plain GET form: the choices are in the page's address, named
+They are the [filters](../filters/README.md) component as a form, a sort
+and up to three fields chosen together, the same as every list that
+narrows. They are a plain GET form: the choices are in the page's address, named
 after the block (`?c-<block>-sort=due&c-<block>-done=false`), so two lists
 on a canvas keep their own, the form keeps the page's other fields, a live
 refresh and a reload keep them, the link to the list page carries them,
