@@ -147,7 +147,11 @@ async function checkPage(path) {
   await page.setViewportSize({ width: 1280, height: 720 });
   // What an agent is told about the page: /api/look lists any problems.
   const look = await (await fetch(`${base}/api/look?path=${encodeURIComponent(path)}`)).json();
-  for (const p of look.problems || []) fail(`${label} look: ${typeof p === "string" ? p : JSON.stringify(p)}`);
+  // Examples side by side share names by design, as above.
+  for (const p of look.problems || []) {
+    if ((seeded || path === "/design") && String(p).startsWith("same name")) continue;
+    fail(`${label} look: ${typeof p === "string" ? p : JSON.stringify(p)}`);
+  }
 }
 
 for (const path of [...sitePages, ...Object.keys(blockLabel)]) await checkPage(path);

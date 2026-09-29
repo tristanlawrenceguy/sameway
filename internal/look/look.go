@@ -87,8 +87,11 @@ func read(src string, page bool) (*Outline, error) {
 	}
 	seenComponent := map[string]bool{}
 	forms := map[*html.Node]int{}
-	var walk func(n *html.Node, underHidden bool)
-	walk = func(n *html.Node, underHidden bool) {
+	// scopes[i] is the landmark Controls[i] is in, as an index into
+	// Landmarks, or -1 outside any: two alike are two alike within one.
+	var scopes []int
+	var walk func(n *html.Node, underHidden bool, scope int)
+	walk = func(n *html.Node, underHidden bool, scope int) {
 		if n.Type == html.ElementNode {
 			if _, ok := htmltest.Attr(n, "hidden"); ok {
 				underHidden = true
@@ -106,6 +109,7 @@ func read(src string, page bool) (*Outline, error) {
 			}
 			if l, ok := landmark(doc, n); ok {
 				o.Landmarks = append(o.Landmarks, l)
+				scope = len(o.Landmarks) - 1
 			}
 			if len(n.Data) == 2 && n.Data[0] == 'h' && n.Data[1] >= '1' && n.Data[1] <= '6' {
 				o.Headings = append(o.Headings, Heading{Level: int(n.Data[1] - '0'), Text: htmltest.Text(n)})
@@ -113,17 +117,21 @@ func read(src string, page bool) (*Outline, error) {
 			if c, ok := control(doc, n, forms); ok {
 				c.Hidden = underHidden
 				o.Controls = append(o.Controls, c)
+				scopes = append(scopes, scope)
 			}
 			if l, ok := live(n); ok {
 				o.Live = append(o.Live, l)
 			}
 		}
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			walk(c, underHidden)
+			walk(c, underHidden, scope)
 		}
 	}
-	walk(doc.Root, false)
+	walk(doc.Root, false, -1)
 	o.Problems = append(o.Problems, problems(doc, o, page)...)
+	if page {
+		o.Problems = append(o.Problems, sameNames(o, scopes)...)
+	}
 	return o, nil
 }
 

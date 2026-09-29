@@ -61,8 +61,8 @@ func TestACalendarMovesBetweenMonths(t *testing.T) {
 	for _, want := range []string{
 		`data-month="2026-09"`, `>Order compost</a>`,
 		`<nav class="sw-calendar__months" aria-label="Other months, September 2026">`,
-		`href="/canvas/` + block.ID + `?month=2026-08" rel="prev">&larr; August 2026</a>`,
-		`href="/canvas/` + block.ID + `?month=2026-10" rel="next">October 2026 &rarr;</a>`,
+		`href="/canvas/` + block.ID + `?month=2026-08" rel="prev"><span aria-hidden="true">&larr; </span>August 2026</a>`,
+		`href="/canvas/` + block.ID + `?month=2026-10" rel="next">October 2026<span aria-hidden="true"> &rarr;</span></a>`,
 		`<a class="sw-link sw-link--button" href="/t/task?order=due">See the list<span class="sw-visually-hidden">: September 2026</span></a>`,
 	} {
 		if !strings.Contains(page, want) {
