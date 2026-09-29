@@ -12,8 +12,8 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
-// Everything reversible. A delete through the API is logged, as the
-// person's, with how it came and everything the record had, so it can be
+// Everything reversible. A delete through the API is logged, as an
+// agent's, with how it came and everything the record had, so it can be
 // put back like any other.
 func TestADeleteThroughTheAPICanBeUndone(t *testing.T) {
 	a, h := newApp(t)
@@ -21,7 +21,7 @@ func TestADeleteThroughTheAPICanBeUndone(t *testing.T) {
 	wantStatus(t, do(t, h, http.MethodDelete, "/api/note/"+note.ID, nil, ""), http.StatusOK)
 
 	log := get(t, h, "/activity").Body.String()
-	if !strings.Contains(said(log), "You deleted note Water the plants") {
+	if !strings.Contains(said(log), "An agent (through the API) deleted note Water the plants") {
 		t.Fatalf("the delete is in the log, saying how it came: %s", truncate(log))
 	}
 	undo := regexp.MustCompile(`action="(/activity/[^/"]+/undo)"`).FindStringSubmatch(log)

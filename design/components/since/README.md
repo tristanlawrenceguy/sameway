@@ -1,20 +1,24 @@
 # since
 
-Back after half an hour or more, a person is shown what other people
+Back after half an hour or more, a person is shown what other people,
+and agents such as Claude Code over MCP or a script through the API,
 changed while they were away, each change with its Undo, at the top of the
 pages they open. It stays until they press Got it.
 
 ## What it says
 
 First, in one sentence, how many changes and since when: "12 changes by
-other people since 2 Jan 14:05. Here until you press Got it." Then the
+others since 2 Jan 14:05. Here until you press Got it." Then the
 newest five, each saying who did what and when. The rest are counted in a
 link, "7 more changes in Activity", which opens the log where they begin.
 
 ## Only others
 
 Their own changes are not news to them, so they are left out; so is what
-was said to the assistant, which stays in each person's own chat.
+was said to the assistant, which stays in each person's own chat. What an
+agent did is in, even one they set going themselves: it worked while they
+were away, and each line names it, "Claude Code (through MCP) updated
+task Call plumber", with its Undo.
 
 ## Kept by each computer
 
