@@ -66,9 +66,9 @@ func (s *Service) recordTools() []llm.Tool {
 			}, "type", "fields")},
 		{Name: "update_record", Description: "Change fields on a record that exists. Only the fields given change. Use find_records first to get the id.",
 			Schema: obj(map[string]any{
-				"type":   typeArg,
-				"id":     map[string]any{"type": "string", "description": "The record's id, from find_records or from a page URL /t/<type>/<id>."},
-				"fields": map[string]any{"type": "object", "description": "The fields to change and their new values."},
+				"type":    typeArg,
+				"id":      map[string]any{"type": "string", "description": "The record's id, from find_records or from a page URL /t/<type>/<id>."},
+				"fields":  map[string]any{"type": "object", "description": "The fields to change and their new values."},
 				"version": map[string]any{"type": "string", "description": "The version get_record gave, when you read the record first: if it has changed since, nothing is written and you are shown it as it is now, to change again."},
 			}, "type", "id", "fields")},
 		{Name: "find_records", Description: "List records of a type to get their ids: all of them, those whose title contains the query, or those matching where. The same where and order a collection block takes.",
