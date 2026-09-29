@@ -69,6 +69,7 @@ func (s *Service) recordTools() []llm.Tool {
 				"type":   typeArg,
 				"id":     map[string]any{"type": "string", "description": "The record's id, from find_records or from a page URL /t/<type>/<id>."},
 				"fields": map[string]any{"type": "object", "description": "The fields to change and their new values."},
+				"version": map[string]any{"type": "string", "description": "The version get_record gave, when you read the record first: if it has changed since, nothing is written and you are shown it as it is now, to change again."},
 			}, "type", "id", "fields")},
 		{Name: "find_records", Description: "List records of a type to get their ids: all of them, those whose title contains the query, or those matching where. The same where and order a collection block takes.",
 			Schema: obj(map[string]any{
@@ -117,7 +118,7 @@ func (s *Service) createRecord(typeName string, fields map[string]any) toolResul
 	}
 }
 
-func (s *Service) updateRecord(typeName, id string, fields map[string]any) toolResult {
+func (s *Service) updateRecord(typeName, id string, fields map[string]any, version string) toolResult {
 	t, err := s.contentType(typeName)
 	if err != nil {
 		return fail("%v", err)
@@ -128,8 +129,13 @@ func (s *Service) updateRecord(typeName, id string, fields map[string]any) toolR
 	if r, kept := keptBySystem(t, fields); kept {
 		return r
 	}
-	if _, err := s.Store.Get(t.Name, id); err != nil {
+	was, err := s.Store.Get(t.Name, id)
+	if err != nil {
 		return fail("no %s with id %s. Use find_records to get the id", t.Name, id)
+	}
+	if version != "" && !SameVersion(was, version) {
+		now, _ := json.Marshal(was.Fields)
+		return fail("%s %s has changed since version %s, so nothing was written. As it is now (version %s): %s. Make your change to this and send it with the new version", t.Name, id, version, Version(was), now)
 	}
 	rec, c, err := Write(s.Store, "updated", t.Name, id, fields)
 	if err != nil {

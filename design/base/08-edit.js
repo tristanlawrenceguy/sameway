@@ -196,6 +196,15 @@
     if (!action) { action = "/canvas/"+id+"/props"; }
     form.action = action;
     form.setAttribute("aria-label", "Edit " + (block.getAttribute("data-block-label") || "this block"));
+    // What the page showed goes back with the save, so a field changed by
+    // someone else since is not put back as it was (server/versions.go).
+    ["version", "was"].forEach(function (k) {
+      var v = block.getAttribute("data-" + k);
+      if (!v) return;
+      var h = document.createElement("input");
+      h.type = "hidden"; h.name = k; h.value = v;
+      form.appendChild(h);
+    });
 
     var first = null;
     for (var i = 0; i < marked.length; i++) {

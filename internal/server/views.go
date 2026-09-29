@@ -137,7 +137,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	}
 	// The Edit button the inline editor adds is named for what it edits,
 	// the record by its title, as a block on the canvas is (08-edit.js).
-	editable := ` data-edit-action="/t/` + t.Name + `/` + rec.ID + `/props"`
+	editable := ` data-edit-action="/t/` + t.Name + `/` + rec.ID + `/props"` + versionAttrs(rec)
 	if t.Name == chat.ActivityType {
 		editable = ""
 	}

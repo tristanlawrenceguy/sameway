@@ -61,6 +61,9 @@ func (s *Server) apiUpdate(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
+	if s.staleFor(w, r, was) { // see versions.go
+		return
+	}
 	shows, refused := s.blockWrite(w, r, fields, was)
 	if refused {
 		return
@@ -79,6 +82,9 @@ func (s *Server) apiUpdate(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) apiDelete(w http.ResponseWriter, r *http.Request) {
 	if s.keptLog(w, r) {
+		return
+	}
+	if was, err := s.app.Store.Get(r.PathValue("type"), r.PathValue("id")); err == nil && s.staleFor(w, r, was) {
 		return
 	}
 	// Logged with everything it had, so it can be put back.

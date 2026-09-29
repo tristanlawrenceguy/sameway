@@ -32,6 +32,9 @@ func (s *Server) apiGet(w http.ResponseWriter, r *http.Request) {
 			out["related"] = links
 		}
 	}
+	// The version to send back with If-Match, so a change made from it is
+	// refused when the record has moved on (versions.go).
+	w.Header().Set("ETag", `"`+chat.Version(rec)+`"`)
 	writeJSON(w, http.StatusOK, out)
 }
 
