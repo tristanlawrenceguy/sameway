@@ -35,6 +35,11 @@ func savedWords(t *schema.Type, rec *store.Record, fields, clean map[string]any,
 		// A choice changed, as a board's Move does, says from where to
 		// where: "Order compost moved from To do to Done."
 		if f, ok := t.Field(name); ok && f.Type == "enum" {
+			// Moved to Done, a task that repeats is due again at once.
+			if title := strings.TrimSpace(titleOf(t, rec)); title != "" && t.Advanced(fields, clean) {
+				o.Title, o.Text, o.Of = title+" is done.", dueAgain(t, clean), title
+				return o
+			}
 			was, _ := rec.Fields[name].(string)
 			now, _ := clean[name].(string)
 			if title := strings.TrimSpace(titleOf(t, rec)); title != "" && now != "" && was != now {

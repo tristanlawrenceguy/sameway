@@ -14,6 +14,10 @@ type's first such field: in a collection's items, on a record block, on a
 calendar event at page detail, and on the record's own page. Give `context`
 the record's title so each checkbox has its own name.
 
+A task's tick and its status are kept in step: ticked, it is Done on a
+board; unticked, a Done task goes back to To do (a task in Doing is never
+ticked, so nothing else is lost; Undo puts back what it was).
+
 Why a checkbox and not a switch or a button: a checkbox is the control
 with the widest support and it states the fact; a switch says the same with
 less support and an on-off metaphor that suits settings better; a toggle

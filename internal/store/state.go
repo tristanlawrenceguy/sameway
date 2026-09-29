@@ -294,6 +294,7 @@ func (s *Store) materialize(typeName, id string) error {
 		// field required here and not there) waits in _state.
 		return nil
 	}
+	t.KeepInStep(nil, clean)
 	_, err = s.put(t, id, clean, created, time.Now().UTC())
 	return err
 }
