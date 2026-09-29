@@ -105,7 +105,7 @@ func (s *Server) change(e *store.Record, owner bool) map[string]any {
 	target, _ := e.Fields["target"].(string)
 	id, _ := e.Fields["target_id"].(string)
 	t, isType := s.app.Types.Get(target)
-	if !owner && (!isType || t.Internal || ownerOnlyPath("/t/"+target)) {
+	if !owner && (!isType || !t.Content() || t.Owners) {
 		return nil // the canvas, settings and the owner's own records are the owner's news
 	}
 	c := map[string]any{"at": e.CreatedAt.UTC().Format(time.RFC3339Nano), "action": e.Fields["action"], "type": target}

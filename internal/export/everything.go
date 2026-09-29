@@ -41,7 +41,7 @@ spreadsheets/  each kind of record as a spreadsheet (CSV), to open in
                anything.
 `, name, now.Format("2 January 2006, 15:04"))
 	for _, t := range types.Types {
-		if t.Internal || t.Hidden {
+		if !t.Content() {
 			continue
 		}
 		recs, err := st.List(t.Name, store.ListOptions{})

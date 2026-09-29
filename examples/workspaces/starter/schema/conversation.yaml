@@ -3,6 +3,7 @@
 name: conversation
 description: A chat between the person and the assistant, with its own history. The one opened most recently is the one the chat shows.
 internal: true
+owners: true
 title: title
 fields:
   title:

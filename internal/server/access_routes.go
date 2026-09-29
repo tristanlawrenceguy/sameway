@@ -3,8 +3,6 @@ package server
 import (
 	"net/http"
 	"strings"
-
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 )
 
 // Who may use each route, said for every route here. It used to be a list
@@ -25,11 +23,6 @@ const (
 	// owner is the workspace's owner alone.
 	owner
 )
-
-// ownerTypes are the kinds of record that are the owner's alone wherever
-// they are read or written: every chat, its questions and the log of what
-// was done and said.
-var ownerTypes = []string{chat.MessageType, chat.ConversationType, chat.ProposalType, chat.ActivityType}
 
 var routeAccess = map[string]routeFor{
 	"GET /api/changes":                 people,
@@ -153,15 +146,19 @@ func (s *Server) ownerOnlyRequest(r *http.Request) bool {
 	if who, said := routeAccess[pattern]; pattern != "" && (!said || who == owner) {
 		return true
 	}
-	return ownerOnlyPath(r.URL.Path)
+	return s.ownerOnlyPath(r.URL.Path)
 }
 
 // ownerOnlyPath says whether a path reads or writes one of the owner's own
 // kinds of record, in a list, a page, the API or an export. An import,
 // which writes whatever its columns say, access included, is the owner's
 // by its routes.
-func ownerOnlyPath(path string) bool {
-	for _, t := range ownerTypes {
+func (s *Server) ownerOnlyPath(path string) bool {
+	for _, typ := range s.app.Types.Types {
+		if !typ.Owners {
+			continue // the schema says whose each kind is (schema.Type.Owners)
+		}
+		t := typ.Name
 		for _, p := range []string{"/t/" + t, "/api/" + t, "/export/" + t} {
 			if path == p || strings.HasPrefix(path, p+"/") || strings.HasPrefix(path, p+".") {
 				return true

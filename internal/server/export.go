@@ -22,7 +22,7 @@ import (
 
 // exportable says whether a type's records are a person's to take out:
 // the system's own (the conversation, the log, the questions) are not.
-func exportable(t *schema.Type) bool { return !t.Internal && !t.Hidden }
+func exportable(t *schema.Type) bool { return t.Content() }
 
 // exportFile answers /export/<type>.<ext>?where=…&order=… with the file.
 func (s *Server) exportFile(w http.ResponseWriter, r *http.Request) {

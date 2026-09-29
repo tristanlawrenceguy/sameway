@@ -3,6 +3,7 @@
 name: activity
 description: One recorded action, with who did it and what it touched.
 internal: true
+owners: true
 title: summary
 fields:
   summary:
