@@ -24,9 +24,9 @@ func boardField(t *schema.Type, by any) (*schema.Field, error) {
 		enums = append(enums, f.Name)
 	}
 	if len(enums) == 0 {
-		return nil, fmt.Errorf("a board needs a pick-list field for its columns, and %s has none; show it as a list, table or cards instead", t.Name)
+		return nil, fmt.Errorf("a board needs a pick-list field for its columns, and %s has none; show it as a list, table or cards, or add a pick-list field first", t.Name)
 	}
-	return nil, fmt.Errorf("%s has no pick-list field %q to make the board's columns; it has %s", t.Name, name, strings.Join(enums, ", "))
+	return nil, fmt.Errorf("%s has no pick-list field %q to make the board's columns; its pick-list fields are %s", t.Name, name, strings.Join(enums, ", "))
 }
 
 // boardGroups puts each item in the column of its record's choice, in the

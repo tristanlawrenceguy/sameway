@@ -27,6 +27,10 @@ func (s *Server) apiCreate(w http.ResponseWriter, r *http.Request) {
 	if s.keptFromVisitor(w, r, fields) {
 		return
 	}
+	shows, refused := s.blockWrite(w, r, fields, nil)
+	if refused {
+		return
+	}
 	agent := apiAgent(r)
 	if r.PathValue("type") == chat.BlockType {
 		byAgent(fields, agent, true)
@@ -38,7 +42,7 @@ func (s *Server) apiCreate(w http.ResponseWriter, r *http.Request) {
 	}
 	chat.AgentWrite(s.app.Store, agent, "created", rec, nil)
 	w.Header().Set("Location", "/api/"+rec.Type+"/"+rec.ID)
-	writeJSON(w, http.StatusCreated, s.titled(rec))
+	writeJSON(w, http.StatusCreated, shownRecord{s.titled(rec), shows})
 }
 
 func (s *Server) apiUpdate(w http.ResponseWriter, r *http.Request) {
@@ -58,6 +62,10 @@ func (s *Server) apiUpdate(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
+	shows, refused := s.blockWrite(w, r, fields, was)
+	if refused {
+		return
+	}
 	agent := apiAgent(r)
 	if r.PathValue("type") == chat.BlockType {
 		byAgent(fields, agent, false)
@@ -68,7 +76,7 @@ func (s *Server) apiUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	chat.AgentWrite(s.app.Store, agent, "updated", rec, was.Fields)
-	writeJSON(w, http.StatusOK, s.titled(rec))
+	writeJSON(w, http.StatusOK, shownRecord{s.titled(rec), shows})
 }
 
 func (s *Server) apiDelete(w http.ResponseWriter, r *http.Request) {

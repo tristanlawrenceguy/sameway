@@ -42,7 +42,10 @@ func (s *Service) addArrangement(name string, fills map[string]any) toolResult {
 	}
 	var out toolResult
 	var lines []string
-	for _, b := range a.Blocks {
+	// Every block is checked before any is added, so one that could not
+	// be shown leaves no half of the page behind.
+	all := make([]map[string]any, len(a.Blocks))
+	for i, b := range a.Blocks {
 		props := map[string]any{}
 		for k, v := range b.Props {
 			props[k] = v
@@ -52,6 +55,17 @@ func (s *Service) addArrangement(name string, fills map[string]any) toolResult {
 				props[k] = v
 			}
 		}
+		all[i] = props
+		c, ok := s.Registry.Get(b.Component)
+		if !ok {
+			return fail("arrangement %s, block %s: unknown component %q", name, b.Key, b.Component)
+		}
+		if _, bad := s.writable("add_arrangement", c, props); bad != nil {
+			return fail("arrangement %s, block %s: %s", name, b.Key, bad.text)
+		}
+	}
+	for i, b := range a.Blocks {
+		props := all[i]
 		l := look{Frame: b.Frame, Tone: b.Tone, Region: b.Region}
 		if b.Span > 0 {
 			span := b.Span
