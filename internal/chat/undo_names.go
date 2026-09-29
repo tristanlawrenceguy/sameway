@@ -84,6 +84,9 @@ func cleanHumanized(s string) string {
 
 // lookupKey maps a property name back to its setting key. It first checks
 // known labels from settingNames (lowercased), then description prefixes.
+// The caller (cleanHumanized) strips em-dash field descriptions before
+// passing the property name here, so "pace — how changes arrive" becomes
+// just "pace".
 func lookupKey(prop string) string {
 	if key, ok := labelToKey[prop]; ok {
 		return key
