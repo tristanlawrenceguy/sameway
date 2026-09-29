@@ -70,6 +70,16 @@ space, and `controls: true` offers them anyway. Never in a side pane.
 - **Its own name.** A list's heading id comes from its block, so two lists
   of one type on a canvas are each named by their own heading
   ([WCAG 4.1.2](https://www.w3.org/WAI/WCAG22/Understanding/name-role-value.html)).
+- **Two alike told apart.** Two records with one title would be two links
+  "Call plumber" to different pages and two boxes "Done Call plumber", which
+  someone moving by links or controls cannot tell apart, and an agent's
+  role-and-name locator refuses to guess between. So only those whose titles
+  repeat get `context`, the first fact that differs (due Fri 25 Sep, when it
+  was added, the start of its id), hidden after the title and on its box and
+  its Move; a title of its own is left as it is
+  ([WCAG 2.4.9](https://www.w3.org/WAI/WCAG22/Understanding/link-purpose-link-only.html),
+  [2.4.6](https://www.w3.org/WAI/WCAG22/Understanding/headings-and-labels.html),
+  [Playwright, strictness](https://playwright.dev/docs/locators#strictness)).
 - **Fields named in sight.** A date beside a title could be any date, so
   its field's name is shown, not only said to a screen reader
   ([W3C COGA](https://www.w3.org/TR/coga-usable/)).

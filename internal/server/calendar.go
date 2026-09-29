@@ -86,6 +86,10 @@ func (s *Server) resolveCalendarAt(props map[string]any, blockID string, at *col
 	if typeName == "all" {
 		out["events"] = s.everyEvent(now, month)
 		calendarKinds(out, at, blockID)
+		// Told apart among what is shown, once narrowed to its kinds.
+		if events, ok := out["events"].([]any); ok {
+			out["events"] = eventsApart(events, month)
+		}
 		return out
 	}
 	// Set up wrong, it says so, rather than show an empty month, which
@@ -117,7 +121,7 @@ func (s *Server) resolveCalendarAt(props map[string]any, blockID string, at *col
 		events = append(events, ev)
 		events = append(events, s.repeatedIn(t, rec, field, ev, month)...)
 	}
-	out["events"] = events
+	out["events"] = eventsApart(events, month)
 	out["all"] = listPath(t.Name, strs(props["where"]), field)
 	return out
 }

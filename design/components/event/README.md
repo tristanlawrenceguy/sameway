@@ -78,6 +78,11 @@ never by colour alone. `system` is the workspace itself.
 - **Undo is a real form** and says what it undid, so the person knows the
   right thing was taken back
   ([NN/g user control and freedom](https://www.nngroup.com/articles/user-control-and-freedom/)).
+- **Two entries alike told apart.** "Created task Call plumber" twice, for
+  two tasks, would be two links and two Undo buttons with one name; the
+  server gives each `context`, what tells its record from the other's (due
+  Fri 25 Sep), else its time, heard after the words and never shown
+  ([WCAG 2.4.9](https://www.w3.org/WAI/WCAG22/Understanding/link-purpose-link-only.html)).
 - **Where it was done from**, when not this computer, so a change made
   elsewhere is not a surprise ([W3C COGA](https://www.w3.org/TR/coga-usable/)).
 

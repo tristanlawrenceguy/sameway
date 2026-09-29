@@ -20,6 +20,7 @@
       "via": { "type": "string", "description": "Where it was done from, when not this computer, such as on a phone or tablet." },
       "level": { "type": "integer", "minimum": 2, "maximum": 4, "description": "Makes the entry's sentence a heading at this level, for a log read heading by heading; the time and Undo stay outside it." },
       "href": { "type": "string", "description": "The page of the thing acted on, so the entry leads to it. Left out when the thing is gone." },
+      "context": { "type": "string", "description": "Only when another entry shown says the same: the words that tell this one apart, such as due Fri 25 Sep, read after what it says by its link and its Undo and not shown." },
       "undo": { "type": "string", "description": "Where a form posts to reverse this entry. Given only while the entry can still be undone: the thing is still as it left it." },
       "from": { "type": "string", "description": "The page the entry is shown on, so undoing returns there." },
       "compact": { "type": "boolean", "default": false, "description": "For a line under something that already says who, such as a message's Changes made: the actor and its mark are left out, so the line starts at its verb, one 44px row. Not with level: the message has the heading." },

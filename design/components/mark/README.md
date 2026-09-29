@@ -5,7 +5,8 @@ record: done on a task in a list, pinned on a note on its page. It is a
 native checkbox inside its label, so a screen reader hears the fact
 ("Done, checkbox, not checked, Order compost") rather than an action, and
 Space changes it. With scripts the change saves itself; without them a Save
-button beside it does the same in one more step. Either way it posts
+button beside it, named with the box when it has a context ("Save Done
+Order compost", so a list of them is not a column of Save), does the same in one more step. Either way it posts
 `prop-<field>` to the record's own props route, the change is logged and
 undoable like any other. With scripts it saves where it is, focus staying on the box; without, the page comes back where it was.
 

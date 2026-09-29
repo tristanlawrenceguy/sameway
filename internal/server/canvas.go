@@ -198,10 +198,7 @@ func (s *Server) canvasBlock(b *store.Record, convo *conversation) canvasBlock {
 	if name == chartComponent {
 		props = s.resolveChart(props)
 	}
-	label := chat.Summarise(name, props)
-	if label == "" {
-		label = name
-	}
+	label := blockName(name, props)
 	icon := name[:1]
 	if c, p, ok := s.app.Registry.Resolve(name, props); ok {
 		icon, props = cmp.Or(c.Manifest.Icon, icon), underPageTitle(c, p)

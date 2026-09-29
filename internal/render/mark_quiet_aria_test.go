@@ -46,7 +46,9 @@ func TestAMarkQuietWithAriaLabelRendersNoAdjacentText(t *testing.T) {
 
 	// After the closing > of the <input>, nothing should follow — no visible
 	// text and no span. The aria-label is the sole source of the accessible name.
-	if strings.Contains(got, `<span class="sw-visually-hidden">`) {
+	// Only the label: the Save shown without scripts is named with the box.
+	inLabel := got[strings.Index(got, "<label"):strings.Index(got, "</label>")]
+	if strings.Contains(inLabel, `<span class="sw-visually-hidden">`) {
 		t.Errorf("mark with quiet+ariaLabel must not render a visually-hidden span after the input (duplicate label); got:\n%s", got)
 	}
 
