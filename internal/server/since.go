@@ -58,6 +58,12 @@ func (s *Server) cameBack(key string) {
 // sinceNotice is what the others changed while the one asking was away,
 // or nothing.
 func (s *Server) sinceNotice(r *http.Request) template.HTML {
+	// What others changed is for the people let in. Someone reading a
+	// published page is nobody the workspace knows, and was taken for its
+	// owner here: the internet was shown the owner's log.
+	if isPublic(r) {
+		return ""
+	}
 	key := s.whoKey(r)
 	since, err := time.Parse(time.RFC3339Nano, s.app.Store.Meta("since:"+key))
 	if err != nil {
