@@ -52,7 +52,7 @@ func (s *Server) Admit(ctx context.Context, login, name, device string, owner bo
 var ownerOnly = []string{
 	"/api/look", "/proposal", "/workspaces", "/speech", "/export/workspace.zip", "/model", "/help/set", "/activity",
 	"/t/message", "/api/message", "/t/conversation", "/api/conversation",
-	"/t/proposal", "/api/proposal", "/t/activity", "/api/activity",
+	"/t/proposal", "/api/proposal", "/t/activity", "/api/activity", "/api/workspaces",
 }
 
 // allowed says whether a visitor may make this request, and when not,
