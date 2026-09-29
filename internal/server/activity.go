@@ -17,7 +17,7 @@ import (
 // came from when that was not this machine, or an agent posting the
 // page's form (agents.go), by the name it gave.
 func (s *Server) who(r *http.Request) chat.Who {
-	if pageAction(r) {
+	if pageAction(r) || chat.VisitorOf(r.Context()).Agent {
 		return apiAgent(r).As()
 	}
 	v := chat.VisitorOf(r.Context())

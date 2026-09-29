@@ -131,5 +131,9 @@ func (s *Server) connFor(r *http.Request) *conn {
 			return c
 		}
 	}
+	// An agent with a key is who its key says, whatever it calls itself.
+	if v := chat.VisitorOf(r.Context()); v.Agent {
+		return &conn{name: v.Name}
+	}
 	return &conn{name: chat.AgentName(r.Header.Get("X-Sameway-Agent"))}
 }

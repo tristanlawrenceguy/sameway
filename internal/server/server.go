@@ -49,7 +49,7 @@ func New(a *app.App) *Server {
 
 // ServeHTTP implements http.Handler.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if s.allowed(w, r) {
+	if r, ok := s.keyed(w, r); ok && s.allowed(w, r) { // an agent's key; see agent_keys.go
 		s.fresh()
 		s.serve(w, r) // a page's actions are an agent's too; see agents.go
 	}

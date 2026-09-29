@@ -26,6 +26,9 @@ type Visitor struct {
 	Login  string
 	Access string
 	Device string
+	// Agent says it is an agent let in with a key of its own, named by
+	// the key (agent_keys.go) rather than by what it says of itself.
+	Agent bool
 }
 
 // Owner says whether the visitor may do everything.

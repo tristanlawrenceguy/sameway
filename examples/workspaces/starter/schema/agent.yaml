@@ -1,0 +1,30 @@
+# An agent let in with a key of its own: a program, such as Claude Code or
+# a script, that reaches the workspace over the API or MCP. The key names
+# it in the log and says what it may do; taking the key away takes the
+# access. Made with `sameway agent add`, which shows the key once. Only a
+# fingerprint of the key is kept here, never the key.
+name: agent
+description: An agent let in with a key of its own.
+internal: true
+owners: true
+title: name
+fields:
+  name:
+    type: string
+    required: true
+    description: What the log calls it, such as Claude Code.
+  access:
+    type: enum
+    values: [view, edit, owner]
+    labels: {view: Can look, edit: Can change, owner: Everything the owner can}
+    default: edit
+    readonly: true
+    description: What its key lets it do.
+  key:
+    type: string
+    readonly: true
+    description: A fingerprint of its key, to know it by; the key itself is not kept.
+  last_used:
+    type: datetime
+    readonly: true
+    description: When its key was last used.
