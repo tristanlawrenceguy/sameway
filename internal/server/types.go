@@ -22,7 +22,7 @@ func (s *Server) apiAddField(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": err.Error()})
 		return
 	}
-	chat.Record(s.app.Store, "system", chat.Change{Action: "added", Component: "field", Detail: f.Name + " on " + t.Name, Href: "/t/" + t.Name})
+	chat.Record(s.app.Store, "system", chat.Change{Action: "added", Component: "field", Detail: f.Name + " on " + schema.Words(t.Name), Href: "/t/" + t.Name})
 	writeJSON(w, http.StatusCreated, t)
 }
 
@@ -45,6 +45,6 @@ func (s *Server) apiAddType(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": err.Error()})
 		return
 	}
-	chat.Record(s.app.Store, "system", chat.Change{Action: "added", Component: "type", Detail: t.Name, Href: "/t/" + t.Name})
+	chat.Record(s.app.Store, "system", chat.Change{Action: "added", Component: "type", Detail: schema.Words(t.Name), Href: "/t/" + t.Name})
 	writeJSON(w, http.StatusCreated, t)
 }

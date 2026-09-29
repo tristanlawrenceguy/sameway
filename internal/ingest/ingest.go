@@ -32,6 +32,8 @@ func Read(name string, data []byte) (*Table, error) {
 	ext := strings.ToLower(filepath.Ext(name))
 	head := strings.ToUpper(string(bytes.TrimLeft(data[:min(len(data), 64)], "\xef\xbb\xbf \r\n\t")))
 	switch {
+	case ext == ".ics" || strings.HasPrefix(head, "BEGIN:VCALENDAR"):
+		return ReadICS(data)
 	case ext == ".vcf" || ext == ".vcard" || strings.HasPrefix(head, "BEGIN:VCARD"):
 		return ReadVCard(data)
 	case ext == ".mbox" || ext == ".eml" || strings.HasPrefix(head, "FROM ") || strings.HasPrefix(head, "RETURN-PATH:") || strings.HasPrefix(head, "RECEIVED:"):
@@ -39,7 +41,7 @@ func Read(name string, data []byte) (*Table, error) {
 	case ext == ".csv" || ext == ".tsv" || ext == ".txt" || ext == "":
 		return ReadCSV(data)
 	}
-	return nil, fmt.Errorf("%s is not a file that can be read as records: a .csv, a .vcf of contacts or a .mbox of mail is", name)
+	return nil, fmt.Errorf("%s is not a file that can be read as records: a .csv, a .vcf of contacts, a .mbox of mail or an .ics calendar is", name)
 }
 
 // ReadCSV reads a delimited file with a header row. The delimiter is the
@@ -78,6 +80,11 @@ func ReadCSV(data []byte) (*Table, error) {
 		for i, c := range t.Columns {
 			if i < len(rec) {
 				row[c] = strings.TrimSpace(rec[i])
+				// A ' kept a formula-looking text from running in a
+				// spreadsheet (see export.Inert); the text is what is meant.
+				if len(row[c]) > 1 && row[c][0] == '\'' && strings.ContainsRune("=+-@", rune(row[c][1])) {
+					row[c] = row[c][1:]
+				}
 				if row[c] != "" {
 					empty = false
 				}

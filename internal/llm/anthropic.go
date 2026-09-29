@@ -2,6 +2,7 @@ package llm
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -92,7 +93,11 @@ func toAnthropic(m Message) anthropic.MessageParam {
 		}
 		return anthropic.NewUserMessage(blocks...)
 	default:
-		return anthropic.NewUserMessage(anthropic.NewTextBlock(m.Content))
+		var blocks []anthropic.ContentBlockParamUnion
+		for _, img := range m.Images {
+			blocks = append(blocks, anthropic.NewImageBlockBase64(img.Type, base64.StdEncoding.EncodeToString(img.Data)))
+		}
+		return anthropic.NewUserMessage(append(blocks, anthropic.NewTextBlock(m.Content))...)
 	}
 }
 

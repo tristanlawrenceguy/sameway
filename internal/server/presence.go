@@ -15,8 +15,9 @@ import (
 
 // Who else is in the workspace just now, and where, so two people do not
 // set about the same thing at once. Someone is here while they have a page
-// open (its live connection says so every second) or moved about in the
-// last half minute; people on the other computers that host the workspace
+// open and have touched it in the last ten minutes (its live connection
+// says so every second, until the page says they are idle) or moved about
+// in the last half minute; people on the other computers that host the workspace
 // are here by what those computers say at each exchange. The page says it
 // only when someone else is: "Also here: Hana, on Shopping list".
 
@@ -41,12 +42,29 @@ func (s *Server) seen(r *http.Request, path string) {
 	if login == "" {
 		return
 	}
+	p := peers.Presence{Login: login, Name: name}
+	// Where the owner is on a part that is theirs alone, such as one of
+	// their conversations, is theirs too: they are said to be here, not
+	// where, since its title is not the others' to read.
+	if !ownerOnlyPath(path) {
+		p.Place, p.Path = s.placeName(path), path
+	}
 	s.present.mu.Lock()
 	defer s.present.mu.Unlock()
 	if s.present.here == nil {
 		s.present.here = map[string]seenAt{}
 	}
-	s.present.here[login] = seenAt{peers.Presence{Login: login, Name: name, Place: s.placeName(path)}, time.Now()}
+	s.present.here[login] = seenAt{p, time.Now()}
+}
+
+// ownerOnlyPath says whether a path is one of the owner's own parts.
+func ownerOnlyPath(path string) bool {
+	for _, p := range ownerOnly {
+		if path == p || strings.HasPrefix(path, p+"/") {
+			return true
+		}
+	}
+	return false
 }
 
 // whoAsks is the login and name of who makes a request: a visitor, or the
@@ -92,8 +110,18 @@ func (s *Server) HearPresence(ps []peers.Presence) {
 }
 
 // presentFor says who else is here, for the one asking; empty when nobody.
+// Someone on the same page as the one asking is "on this page": that is
+// when two people might set about the same thing. A published page says
+// nothing: who is in the workspace is not the internet's to know.
 func (s *Server) presentFor(r *http.Request) template.HTML {
+	if isPublic(r) {
+		return ""
+	}
 	me, _ := s.whoAsks(r)
+	mine := r.URL.Path
+	if mine == "/events" {
+		mine = refererPath(r) // the live connection is for the page it came from
+	}
 	s.present.mu.Lock()
 	all := map[string]seenAt{}
 	for _, m := range []map[string]seenAt{s.present.away, s.present.here} {
@@ -120,7 +148,9 @@ func (s *Server) presentFor(r *http.Request) template.HTML {
 			name, _, _ = strings.Cut(p.Login, "@")
 		}
 		one := map[string]any{"name": name, "colour": chat.PersonColour(p.Login)}
-		if p.Place != "" {
+		if p.Path != "" && p.Path == mine {
+			one["here"] = true
+		} else if p.Place != "" {
 			one["place"] = p.Place
 		}
 		people = append(people, one)
