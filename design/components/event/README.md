@@ -1,8 +1,9 @@
 # event
 
 Use an event for one line of activity: "Assistant added table", "You removed
-list", "System failed: could not reach the model". The actor is written
-as a word (a compact line leaves it to its message), and `data-actor`,
+list", "System failed: could not reach the model", "Claude Code (through
+MCP) updated task Call plumber". The actor is written as a word (a compact
+line leaves it to its message), and `data-actor`,
 `data-action`, and `data-target` carry the same facts for machines. Put events in a list; the page decides whether
 that list is a receipt under a reply or the full activity log.
 
@@ -38,6 +39,18 @@ message has one. The message draws each change through this component,
 and the server builds the props for that list and for the activity log
 with one function, so a change reads the same in both.
 
+## Who did it
+
+`actor` is one of four. `human` is a person: "You", or their name in
+`who`, with their colour in `person`. `assistant` is the assistant in the
+app, whichever model it runs on. `agent` is a program outside Sameway:
+Claude Code, Claude Desktop, ChatGPT or any other client over MCP, or a
+script through the API. Its `who` is the name it gave and how it came in,
+"Claude Code (through MCP)", "backup (through the API)"; one that gave no
+name is "An agent". Its mark is square, in the assistant's tone, so it is
+told from a person or the assistant by the words first and by shape too,
+never by colour alone. `system` is the workspace itself.
+
 ## Why it works this way
 
 - **One line for a change, wherever it shows.** The chat once drew its own
@@ -57,6 +70,11 @@ with one function, so a change reads the same in both.
   [GOV.UK style guide](https://www.gov.uk/guidance/style-guide/a-to-z)).
 - **The actor as a word**, so who did it never depends on a colour or a
   mark ([WCAG 1.4.1](https://www.w3.org/WAI/WCAG22/Understanding/use-of-color.html)).
+- **An agent by its name.** Every outside client used to read as
+  "Assistant" and every API script as "You", so a person could not tell
+  what they did from what Claude Code or a script did; now each is logged
+  by the name it gave, and can be undone the same way
+  ([OWASP LLM06 excessive agency](https://genai.owasp.org/llmrisk/llm062025-excessive-agency/)).
 - **Undo is a real form** and says what it undid, so the person knows the
   right thing was taken back
   ([NN/g user control and freedom](https://www.nngroup.com/articles/user-control-and-freedom/)).

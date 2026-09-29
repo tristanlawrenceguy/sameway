@@ -153,7 +153,7 @@ func (s *Server) activityPage(w http.ResponseWriter, r *http.Request) {
 	pg := pageOf(r, len(recs), activityPageSize)
 	from := r.URL.RequestURI()
 	var b strings.Builder
-	b.WriteString(`<p class="sw-muted sw-prose">Every change to the canvas, by you or the assistant, newest first. The same log is at <a href="/api/activity">/api/activity</a>.</p>`)
+	b.WriteString(`<p class="sw-muted sw-prose">Every change to the canvas, by you or the assistant, newest first.</p>`)
 	if len(all) > 0 {
 		b.WriteString(string(s.component("filters", filters)))
 	}

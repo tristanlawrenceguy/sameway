@@ -74,7 +74,7 @@ func (s *Service) allTools() []llm.Tool {
 		{Name: "clear_canvas", Description: "Remove every block from the canvas except the chat, which stays so the person can keep talking. Only when the person asks to start over. To remove the chat too, call remove_component on it.",
 			Schema: obj(map[string]any{})},
 		undoTool,
-		searchTool,
+		s.searchTool(),
 		actionTool,
 		updateTool,
 		s.arrangementTool(),
@@ -106,6 +106,7 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 		Where       []string       `json:"where"`
 		Order       string         `json:"order"`
 		Limit       int            `json:"limit"`
+		Page        int            `json:"page"`
 		Key         string         `json:"key"`
 		Install     bool           `json:"install"`
 		Value       string         `json:"value"`
@@ -157,7 +158,7 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 	case "add_arrangement":
 		return s.addArrangement(args.Name, args.Fills)
 	case "search":
-		return s.search(args.Query)
+		return s.search(args.Query, args.Type, args.Page)
 	case "run_action":
 		// What cannot be taken back is asked first; see consent.go.
 		if r, ask := s.askFirst("run_action", args.ID, "", ""); ask {
@@ -232,7 +233,7 @@ func (s *Service) addComponent(name string, props map[string]any, l look) toolRe
 		}
 	}
 	// On the tab the person is looking at, unless the call says otherwise.
-	fields := map[string]any{"component": name, "props": props, "position": position, "actor": "assistant", "created_by": "assistant", "canvas": s.current}
+	fields := s.marked(map[string]any{"component": name, "props": props, "position": position, "created_by": s.actor(), "canvas": s.current})
 	if l.SetCanvas && !s.HasCanvas(l.Canvas) {
 		return fail("no canvas with id %q; the tabs and their ids are listed in the prompt, and \"\" is Home", l.Canvas)
 	}
@@ -266,7 +267,7 @@ func (s *Service) updateComponent(id string, props map[string]any, l look) toolR
 	if !ok {
 		return fail("block %s uses unknown component %s", id, name)
 	}
-	fields := map[string]any{"actor": "assistant"}
+	fields := s.marked(map[string]any{})
 	var what []string
 	if props != nil {
 		if _, err := c.Validate(props); err != nil {

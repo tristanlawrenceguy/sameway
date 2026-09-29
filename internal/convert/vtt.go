@@ -136,3 +136,29 @@ func FromTranscript(text string) []Cue {
 	}
 	return out
 }
+
+// SRT writes cues as SubRip subtitles, each until the next begins when it
+// has no end of its own, the last for a few seconds.
+func SRT(cues []Cue) string {
+	var b strings.Builder
+	for i, c := range cues {
+		end := c.End
+		if end <= c.Start {
+			end = c.Start + 5
+			if i+1 < len(cues) && cues[i+1].Start > c.Start {
+				end = cues[i+1].Start
+			}
+		}
+		text := c.Text
+		if c.Speaker != "" {
+			text = c.Speaker + ": " + text
+		}
+		fmt.Fprintf(&b, "%d\n%s --> %s\n%s\n\n", i+1, srtTime(c.Start), srtTime(end), text)
+	}
+	return b.String()
+}
+
+func srtTime(s float64) string {
+	ms := int(s*1000 + 0.5)
+	return fmt.Sprintf("%02d:%02d:%02d,%03d", ms/3600000, ms/60000%60, ms/1000%60, ms%1000)
+}

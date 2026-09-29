@@ -253,7 +253,7 @@ func countWords(t *schema.Type, n int) string {
 	if n == 0 {
 		return ""
 	}
-	name := strings.ReplaceAll(t.Name, "_", " ")
+	name := schema.Words(t.Name)
 	if n != 1 {
 		name = plural(t.Name)
 	}
