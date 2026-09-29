@@ -49,7 +49,7 @@ func showing(line, shows string) string {
 // bad is the tool's error when it may not, and nothing should be written.
 func (s *Service) writable(tool string, c *render.Component, props map[string]any) (shows string, bad *toolResult) {
 	if _, err := c.Validate(props); err != nil {
-		r := fail("I couldn't save those changes — %s. Fix the props and call %s again.", humanizeValidationError(err.Error()), tool)
+		r := fail("%s Fix the props and call %s again.", PropsTrouble(err), tool)
 		return "", &r
 	}
 	// Checked now, not only when drawn: a block that could only say it is

@@ -221,3 +221,19 @@ func TestALookListsBlocksSetUpWrong(t *testing.T) {
 		t.Errorf("a component looked at before it is added says it could not be shown, got %q", seen.Outline.Problems)
 	}
 }
+
+// Through the API, props that do not fit are said as a model or program
+// needs them, with the prop likely meant and every one there is.
+func TestTheAPISaysPropsThatDoNotFitForWhoeverFixesThem(t *testing.T) {
+	_, h := newApp(t)
+	for _, path := range []string{"/api/block", "/api/look"} {
+		res := postJSON(t, h, http.MethodPost, path, map[string]any{"component": "button", "props": map[string]any{"text": "Go", "tone": "info"}})
+		wantStatus(t, res, http.StatusUnprocessableEntity)
+		body := res.Body.String()
+		for _, want := range []string{"text is not a button prop; button takes label, not text", "tone is a block field, not a button prop: pass it beside props, not inside them", "label is required and missing", "label (required)"} {
+			if !strings.Contains(body, want) {
+				t.Errorf("POST %s should say %q: %s", path, want, body)
+			}
+		}
+	}
+}

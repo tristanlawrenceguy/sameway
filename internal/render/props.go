@@ -11,8 +11,6 @@ import (
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
 	"github.com/tristanlawrenceguy/sameway/internal/prose"
-	"golang.org/x/text/language"
-	"golang.org/x/text/message"
 )
 
 // Funcs are the template functions available to every component template.
@@ -103,6 +101,10 @@ type propSchema struct {
 	schema     *jsonschema.Schema
 	properties map[string]map[string]any
 	order      []string
+	// name is the component's, and required the props it cannot do
+	// without, for saying what is wrong with props (props_error.go).
+	name     string
+	required []string
 }
 
 func compileProps(name string, raw json.RawMessage) (*propSchema, error) {
@@ -122,8 +124,15 @@ func compileProps(name string, raw json.RawMessage) (*propSchema, error) {
 	if err != nil {
 		return nil, err
 	}
-	ps := &propSchema{schema: sch, properties: map[string]map[string]any{}}
+	ps := &propSchema{schema: sch, properties: map[string]map[string]any{}, name: name}
 	if m, ok := doc.(map[string]any); ok {
+		if req, ok := m["required"].([]any); ok {
+			for _, r := range req {
+				if s, ok := r.(string); ok {
+					ps.required = append(ps.required, s)
+				}
+			}
+		}
 		if props, ok := m["properties"].(map[string]any); ok {
 			for k, v := range props {
 				if pm, ok := v.(map[string]any); ok {
@@ -221,26 +230,15 @@ func zeroFor(typ string) any {
 	}
 }
 
-// formatValidation turns a validator error into one readable line per problem.
+// formatValidation turns a validator error into a *PropsError: one
+// readable line per problem for a person, and each problem whole for the
+// one fixing the call.
 func formatValidation(ps *propSchema, err error) error {
 	var ve *jsonschema.ValidationError
 	if !errors.As(err, &ve) {
 		return err
 	}
-	printer := message.NewPrinter(language.English)
-	var lines []string
-	var walk func(e *jsonschema.ValidationError)
-	walk = func(e *jsonschema.ValidationError) {
-		if len(e.Causes) == 0 {
-			lines = append(lines, fmt.Sprintf("%s: %s", locationLabel(e.InstanceLocation, ps, e), e.ErrorKind.LocalizedString(printer)))
-			return
-		}
-		for _, c := range e.Causes {
-			walk(c)
-		}
-	}
-	walk(ve)
-	return errors.New(strings.Join(lines, "; "))
+	return propsError(ps, ve)
 }
 
 // capitalize returns the string with its first letter uppercased.

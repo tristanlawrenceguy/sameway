@@ -77,7 +77,7 @@ func TestUpdateRemoveAndClear(t *testing.T) {
 	m := &scripted{steps: []*llm.Response{call("update_component", map[string]any{"id": id, "props": map[string]any{"bogus": 1}})}}
 	svc.Provider = m
 	svc.Send(context.Background(), "break it")
-	if res := lastToolResult(m.seen[1]); !res.IsError || !strings.Contains(res.Content, "Bogus") {
+	if res := lastToolResult(m.seen[1]); !res.IsError || !strings.Contains(res.Content, "bogus is not a text prop") {
 		t.Errorf("bad update should return an error result: %+v", res)
 	}
 	rec, _ = svc.Store.Get(chat.BlockType, id)
@@ -199,7 +199,7 @@ func TestToolErrorsGuideTheModel(t *testing.T) {
 		want string
 	}{
 		{1, "unknown component \"carousel\". Available: alert, badge, button"},
-		{2, "must be one of 'primary', 'secondary', 'danger', 'quiet'"},
+		{2, `variant must be one of "primary", "secondary", "danger", "quiet", not "huge"`},
 		{3, "unknown tool frobnicate"},
 		{4, "not valid JSON"},
 	}
