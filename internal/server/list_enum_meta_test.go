@@ -79,8 +79,7 @@ func TestFileListDoesNotShowStatusBadge(t *testing.T) {
 
 	var rec struct{ ID string }
 	decode(t, postJSON(t, h, http.MethodPost, "/api/file", map[string]any{
-		"title":  "Receipts",
-		"status": "ready",
+		"title": "Receipts",
 	}), &rec)
 
 	body := get(t, h, "/t/file").Body.String()

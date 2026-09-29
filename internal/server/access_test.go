@@ -96,7 +96,9 @@ func TestWhatEachLevelMayDo(t *testing.T) {
 		t.Errorf("an import could write access, so it is the owner's: %d", rec.Code)
 	}
 	carol, _ := a.Store.Create("person", map[string]any{"name": "Carol", "email": "carol@example.com"})
-	if rec := as(t, h, editor, http.MethodPatch, "/api/person/"+carol.ID, `{"access":"edit"}`, "application/json"); rec.Code != http.StatusForbidden {
+	// Access is kept by Sameway: given by asking, never set by hand, by
+	// anyone, the owner included (422, naming the field).
+	if rec := as(t, h, editor, http.MethodPatch, "/api/person/"+carol.ID, `{"access":"edit"}`, "application/json"); rec.Code != http.StatusUnprocessableEntity {
 		t.Errorf("an editor cannot give access through the API: %d", rec.Code)
 	}
 	if got, _ := a.Store.Get("person", carol.ID); got.Fields["access"] == "edit" {

@@ -97,23 +97,3 @@ func (s *Server) conversationAboutFor(r *http.Request, from, about, prompt strin
 	convo.Notice, convo.Activity, convo.LatestID = "", "", ""
 	return convo, nil
 }
-
-// keptFromVisitor refuses, to anyone but the owner, a write through the
-// API that sets a field Sameway keeps, such as a person's access: the
-// pages already refuse it, and the API must not be the way round.
-func (s *Server) keptFromVisitor(w http.ResponseWriter, r *http.Request, fields map[string]any) bool {
-	if chat.VisitorOf(r.Context()).Owner() {
-		return false
-	}
-	t, ok := s.app.Types.Get(r.PathValue("type"))
-	if !ok {
-		return false
-	}
-	for _, f := range t.Fields {
-		if _, sent := fields[f.Name]; sent && f.ReadOnly {
-			writeJSON(w, http.StatusForbidden, map[string]any{"error": f.Name + " is kept by Sameway and cannot be set here"})
-			return true
-		}
-	}
-	return false
-}

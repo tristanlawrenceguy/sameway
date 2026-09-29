@@ -30,18 +30,16 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	var b strings.Builder
 	// The same query a collection block takes, in the address: ?where=…&order=…
 	where, order := r.URL.Query()["where"], r.URL.Query().Get("order")
-	var recs []*store.Record
-	var err error
+	// One way to list, for the page, the API, an export and the command
+	// line: query.Filter, which with no query is every record.
+	recs, err := query.Filter(s.app.Store, t, where, order, 0, time.Now())
 	if len(where) > 0 || order != "" {
-		recs, err = query.Filter(s.app.Store, t, where, order, 0, time.Now())
 		if err != nil {
 			fmt.Fprintf(&b, `<p class="sw-muted">%s</p><p>%s</p>`, template.HTMLEscapeString(err.Error()), s.component("link", map[string]any{"href": "/t/" + t.Name, "label": "See all " + plural(t.Name), "look": "button"}))
 			s.page(w, r, plural(t.Name), template.HTML(b.String()), pageOptions{Status: http.StatusBadRequest})
 			return
 		}
 		fmt.Fprintf(&b, `<p class="sw-muted">%d matching %s%s. %s</p>`, len(recs), template.HTMLEscapeString(query.Words(t, where)), template.HTMLEscapeString(orderWords(t, order)), s.component("link", map[string]any{"href": "/t/" + t.Name, "label": "See all " + plural(t.Name), "look": "button"}))
-	} else {
-		recs, err = s.app.Store.List(t.Name, store.ListOptions{})
 	}
 	if err != nil {
 		s.fail(w, err)
@@ -145,31 +143,21 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	// The record's text comes first and reads as a document, under the
 	// title and before its other fields; structured text keeps what was
 	// written on the element so the inline editor edits the source.
-	textField := ""
-	for _, f := range t.Shown() {
-		if f.Type == "markdown" {
-			if val := display(f, rec.Fields[f.Name]); val != "" {
-				textField = f.Name
-				// A recording's transcript is shown once, under its player,
-				// at its times; Edit still opens it as text.
-				if t.Name != FileType || len(s.heard(rec)) == 0 {
-					fmt.Fprintf(&b, `<div class="sw-prose sw-detail__body" data-prop="%s" data-source="%s" data-prose-level="2">%s</div>`, f.Name, template.HTMLEscapeString(val), prose.Render(val, 2))
-				}
-			}
-			break
+	// What it says is chosen as the canvas chooses it (record_says.go).
+	textField, shownFields := s.says(t, rec)
+	if f, ok := t.Field(textField); ok {
+		// A recording's transcript is shown once, under its player, at
+		// its times; Edit still opens it as text.
+		if val := display(*f, rec.Fields[f.Name]); t.Name != FileType || len(s.heard(rec)) == 0 {
+			fmt.Fprintf(&b, `<div class="sw-prose sw-detail__body" data-prop="%s" data-source="%s" data-prose-level="2">%s</div>`, f.Name, template.HTMLEscapeString(val), prose.Render(val, 2))
 		}
 	}
 	// The list leaves out what the heading and the chips above it have
 	// already said, so the page says each thing once; ?show=fields brings
 	// the whole record back except for those already-in-chips fields.
-	head := headFields(t, rec)
 	var items []any
-	for _, f := range t.Shown() {
-		val := display(f, rec.Fields[f.Name])
-		if val == "" || f.Name == textField || head[f.Name] || noGoal(t.Name, f.Name, rec.Fields[f.Name]) {
-			continue
-		}
-		items = append(items, s.fieldItem(t, f, rec.Fields[f.Name], val))
+	for _, f := range shownFields {
+		items = append(items, s.fieldItem(t, f, rec.Fields[f.Name], display(f, rec.Fields[f.Name])))
 	}
 	if len(items) > 0 {
 		b.WriteString(string(s.component("fields", map[string]any{"items": items})))

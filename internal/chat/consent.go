@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
-	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
 
 // What the assistant does is either reversible, and then it just does it
@@ -245,18 +244,6 @@ func (s *Service) runAgreed(call llm.ToolCall) toolResult {
 		return s.reshapeCall(call.Args)
 	}
 	return s.runTool(call)
-}
-
-// keptBySystem refuses fields Sameway keeps itself, such as whether a
-// command was accepted: the assistant may read them, never write them.
-// Accepting a command is the person's, on the card that asks them.
-func keptBySystem(t *schema.Type, fields map[string]any) (toolResult, bool) {
-	for _, f := range t.Fields {
-		if _, sent := fields[f.Name]; sent && f.ReadOnly {
-			return fail("%s is kept by Sameway and cannot be set by the assistant; leave it out", f.Name), true
-		}
-	}
-	return toolResult{}, false
 }
 
 func clip(s string, n int) string {

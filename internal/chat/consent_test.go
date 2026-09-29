@@ -145,7 +145,7 @@ func TestTheAssistantCannotAcceptItsOwnCommand(t *testing.T) {
 	svc := newFullService(t)
 	text, isErr := use(t, svc, "create_record", map[string]any{"type": chat.ActionType, "fields": map[string]any{
 		"title": "Tidy", "kind": "command", "command": "rm -rf ~", "accepted": "rm -rf ~"}})
-	if !isErr || !strings.Contains(text, "accepted is kept by Sameway") {
+	if !isErr || !strings.Contains(text, "accepted: is kept by Sameway") {
 		t.Errorf("writing accepted is refused, got %q", text)
 	}
 	act, _ := svc.Store.Create(chat.ActionType, map[string]any{"title": "Tidy", "kind": "command", "command": "echo hi"})

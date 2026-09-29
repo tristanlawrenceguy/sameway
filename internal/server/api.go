@@ -98,21 +98,18 @@ func (s *Server) apiList(w http.ResponseWriter, r *http.Request) {
 	}
 	// ?where= (repeatable) and ?order= take the same query a collection
 	// block does: field=value, due<today, -due; see the collection component.
-	var recs []*store.Record
-	if where := r.URL.Query()["where"]; len(where) > 0 || strings.HasPrefix(r.URL.Query().Get("order"), "-") {
-		t, ok := s.app.Types.Get(r.PathValue("type"))
-		if !ok {
-			writeError(w, fmt.Errorf("no content type %q", r.PathValue("type")))
-			return
-		}
-		recs, err = query.Filter(s.app.Store, t, where, r.URL.Query().Get("order"), limit, time.Now())
-	} else {
-		recs, err = s.app.Store.List(r.PathValue("type"), store.ListOptions{
-			OrderBy: r.URL.Query().Get("order"),
-			Desc:    r.URL.Query().Get("dir") == "desc",
-			Limit:   limit,
-		})
+	// The list page's own query, one way for every surface: query.Filter.
+	// ?dir=desc is the older way to say -order.
+	order := r.URL.Query().Get("order")
+	if r.URL.Query().Get("dir") == "desc" && order != "" && !strings.HasPrefix(order, "-") {
+		order = "-" + order
 	}
+	t, ok := s.app.Types.Get(r.PathValue("type"))
+	if !ok {
+		writeError(w, fmt.Errorf("no content type %q", r.PathValue("type")))
+		return
+	}
+	recs, err := query.Filter(s.app.Store, t, r.URL.Query()["where"], order, limit, time.Now())
 	if err != nil {
 		writeError(w, err)
 		return
@@ -218,7 +215,7 @@ func (s *Server) apiFileUpload(w http.ResponseWriter, r *http.Request) {
 	if title == "" {
 		title = strings.TrimSuffix(name, filepath.Ext(name))
 	}
-	rec, _, err := chat.WriteAs(s.app.Store, apiAgent(r).As(), "created", FileType, "", map[string]any{
+	rec, _, err := chat.WriteKept(s.app.Store, apiAgent(r).As(), "created", FileType, "", map[string]any{
 		"title": title, "name": name, "kind": convert.Kind(name), "size": 0, "status": "ready",
 	})
 	if err != nil {

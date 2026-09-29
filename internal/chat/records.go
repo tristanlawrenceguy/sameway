@@ -105,9 +105,6 @@ func (s *Service) createRecord(typeName string, fields map[string]any) toolResul
 	if fields == nil {
 		fields = map[string]any{}
 	}
-	if r, kept := keptBySystem(t, fields); kept {
-		return r
-	}
 	rec, c, err := Write(s.Store, "created", t.Name, "", fields)
 	if err != nil {
 		return fail("I couldn't save those changes — %s. Fix the fields and call create_record again; the %s schema is in the catalogue.", humanizeValidationError(err.Error()), t.Name)
@@ -125,9 +122,6 @@ func (s *Service) updateRecord(typeName, id string, fields map[string]any, versi
 	}
 	if len(fields) == 0 {
 		return fail("nothing to change: pass the fields to change and their new values")
-	}
-	if r, kept := keptBySystem(t, fields); kept {
-		return r
 	}
 	was, err := s.Store.Get(t.Name, id)
 	if err != nil {
