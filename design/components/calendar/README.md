@@ -26,6 +26,16 @@ from every listed type: tasks due, reminders, entries logged, each
 event saying what kind it is. A record's page links to its day on the
 first calendar on the canvas, as See that day.
 
+When a month of everything holds more than one kind, a row of links over
+it narrows it to one: All (12), Tasks (5), Reminders (4), Entries (3),
+each with how many it has in the month, the one shown marked. It is the
+[filters](../filters/README.md) component as links, one choice among a
+few, applied as it is pressed. The kind is in the page's address, named
+after the block (`?c-<block>-type=task`), so two calendars keep their
+own, and the months and days either side, and each day number, keep it.
+It is offered on the canvas at full size and on the block's own page, and
+only narrows: a calendar of one type is never offered another.
+
 A calendar of entries (`type: entry`, or `type: all`) offers in its day
 view what it takes to log for that day: each habit it shows, as it stood
 that day, with Log and the day filled in. With `where: ["habit=<id>"]`
@@ -82,6 +92,12 @@ the system's own colours.
   ([RFC 5545, 3.8.5.3](https://icalendar.org/iCalendar-RFC-5545/3-8-5-3-recurrence-rule.html)).
 - **Only the one due now has its tick.** The later days lead to the same
   record but carry no action: ticking next week's would tick this week's.
+- **One kind at a time, by links.** A month of everything is busy; one
+  choice among a few kinds is links with counts, applied on press, with
+  All first, the one shown aria-current and said in weight and a bar
+  ([BBC GEL, filter and sort](https://bbc.github.io/gel/components/filter-and-sort/),
+  [NN/g, filters vs facets](https://www.nngroup.com/articles/filters-vs-facets/)).
+  The counts are the month's, which is what is on the page.
 
 Not done, and why: a grid you move through with arrow keys (it is a view,
 and its links are reached with Tab); the grid and the list both in the
@@ -90,4 +106,7 @@ a repeat fell on before it was due (those were done, or skipped); skipping
 or moving one day of a repeat on its own (it would need exceptions to the
 rule, RRULE's EXDATE, and a record for each changed day; a reminder can
 skip its next time from the clock, and a task is ticked); a repeating
-icon (the words say it).
+icon (the words say it); several kinds at once as checkboxes (a form
+with Apply for what is one quick choice; All is one press away); kinds
+with none in the month (a link to an empty month says nothing a person
+can act on).

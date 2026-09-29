@@ -143,9 +143,31 @@ func nameParts(name string) string {
 // iCalendar: each record an event at its day or time, repeating as it
 // does, with its own id so a calendar that takes it again keeps one.
 func writeICS(w io.Writer, t *schema.Type, recs []*store.Record) error {
-	start := dateField(t)
-	lines := []string{"BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//sameway//sameway//EN", "CALSCALE:GREGORIAN", "X-WR-CALNAME:" + esc(strings.ToUpper(t.Name[:1])+t.Name[1:])}
+	return Calendar(w, strings.ToUpper(t.Name[:1])+t.Name[1:], []Group{{t, recs}})
+}
+
+// A Group is the records of one type.
+type Group struct {
+	Type    *schema.Type
+	Records []*store.Record
+}
+
+// Calendar writes one calendar of the records of several types, each on
+// its day, such as everything on the calendar at once.
+func Calendar(w io.Writer, name string, groups []Group) error {
+	lines := []string{"BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//sameway//sameway//EN", "CALSCALE:GREGORIAN", "X-WR-CALNAME:" + esc(name)}
 	stamp := time.Now().UTC().Format("20060102T150405Z")
+	for _, g := range groups {
+		lines = append(lines, events(g.Type, g.Records, stamp)...)
+	}
+	lines = append(lines, "END:VCALENDAR")
+	return writeLines(w, lines)
+}
+
+// events are a type's records as VEVENTs, those with a day.
+func events(t *schema.Type, recs []*store.Record, stamp string) []string {
+	start := dateField(t)
+	var lines []string
 	for _, r := range recs {
 		when, _ := r.Fields[start].(string)
 		if when == "" {
@@ -175,8 +197,7 @@ func writeICS(w io.Writer, t *schema.Type, recs []*store.Record) error {
 		}
 		lines = append(lines, "END:VEVENT")
 	}
-	lines = append(lines, "END:VCALENDAR")
-	return writeLines(w, lines)
+	return lines
 }
 
 // icsTime is a stored time as DTSTART takes it: a day alone, or UTC.

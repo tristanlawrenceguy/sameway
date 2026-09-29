@@ -187,7 +187,7 @@ func (s *Server) canvasBlock(b *store.Record, convo *conversation) canvasBlock {
 		props = s.resolveCollectionAt(props, b.ID, onCanvas(b, convo))
 	}
 	if name == calendarComponent {
-		props = s.resolveCalendar(props, b.ID)
+		props = s.resolveCalendarAt(props, b.ID, onCanvas(b, convo))
 	}
 	if name == clockComponent {
 		props = s.resolveClock(props)
