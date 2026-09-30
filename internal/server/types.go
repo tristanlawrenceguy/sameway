@@ -16,12 +16,12 @@ import (
 func (s *Server) apiAddField(w http.ResponseWriter, r *http.Request) {
 	var f schema.Field
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&f); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "send a field as JSON: {name, type, description, values, to, required, default}"})
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": apiError{Code: "bad_request", Message: "send a field as JSON: {name, type, description, values, to, required, default}"}})
 		return
 	}
 	t, err := s.app.AddField(r.PathValue("type"), f)
 	if err != nil {
-		writeJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": err.Error()})
+		writeJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": apiError{Code: "invalid", Message: err.Error()}})
 		return
 	}
 	chat.Record(s.app.Store, "system", chat.Change{Action: "added", Component: "field", Detail: f.Name + " on " + schema.Words(t.Name), Href: "/t/" + t.Name})
@@ -43,12 +43,12 @@ func (s *Server) apiAddType(w http.ResponseWriter, r *http.Request) {
 		Fields      []schema.Field `json:"fields"`
 	}
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&in); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "send a type as JSON: {name, description, title, fields: [{name, type, ...}]}"})
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": apiError{Code: "bad_request", Message: "send a type as JSON: {name, description, title, fields: [{name, type, ...}]}"}})
 		return
 	}
 	t, err := s.app.AddType(&schema.Type{Name: in.Name, Description: in.Description, Title: in.Title, Fields: in.Fields})
 	if err != nil {
-		writeJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": err.Error()})
+		writeJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": apiError{Code: "invalid", Message: err.Error()}})
 		return
 	}
 	chat.Record(s.app.Store, "system", chat.Change{Action: "added", Component: "type", Detail: schema.Words(t.Name), Href: "/t/" + t.Name})

@@ -39,20 +39,32 @@ func (s *Server) WriteDown(id string) (string, error) {
 
 // MakeWorkspace makes a workspace beside this one and starts it.
 func (s *Server) MakeWorkspace(name string, copy bool) (string, error) {
-	name = strings.TrimSpace(name)
-	build, did := s.blank, "made"
+	did := "made"
 	if copy {
-		build, did = s.copy, "copied this workspace to"
+		did = "copied this workspace to"
 	}
-	dir, err := build(name)
+	dir, url, notStarted, err := s.makeWorkspace(name, copy)
 	if err != nil {
 		return "", err
 	}
-	url, err := s.start(dir)
-	if err != nil {
-		return fmt.Sprintf("%s %s at %s, but it could not be started from here: %v", did, name, dir, err), nil
+	if notStarted != nil {
+		return fmt.Sprintf("%s %s at %s, but it could not be started from here: %v", did, name, dir, notStarted), nil
 	}
 	return fmt.Sprintf("%s %s at %s; it is open at %s", did, name, dir, url), nil
+}
+
+// makeWorkspace makes a workspace beside this one, blank or as a copy,
+// and starts it: the one way, for the workspaces page and the assistant.
+func (s *Server) makeWorkspace(name string, copy bool) (dir, url string, notStarted, err error) {
+	build := s.blank
+	if copy {
+		build = s.copy
+	}
+	if dir, err = build(strings.TrimSpace(name)); err != nil {
+		return "", "", nil, err
+	}
+	url, notStarted = s.start(dir)
+	return dir, url, notStarted, nil
 }
 
 // OpenWorkspace starts another known workspace, by its name.

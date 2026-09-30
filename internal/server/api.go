@@ -199,12 +199,11 @@ func (s *Server) apiFileUpload(w http.ResponseWriter, r *http.Request) {
 		if title == "" {
 			title = strings.TrimSuffix(name, filepath.Ext(name))
 		}
-		rec, path, err := s.keepFile(bytes.NewReader(data), name, title, "")
+		rec, path, err := s.keepFile(apiAgent(r).As(), bytes.NewReader(data), name, title, "")
 		if err != nil {
 			writeError(w, err)
 			return
 		}
-		s.record(r, chat.Change{Action: "added", Component: FileType, ID: rec.ID, Detail: title, Href: "/t/" + FileType + "/" + rec.ID})
 		// wait: true answers once the text is read, even by a converter
 		// that takes a while; without it status says converting until then.
 		wait, _ := fields["wait"].(bool)
