@@ -1,11 +1,10 @@
 package server
 
 import (
+	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
-	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -29,19 +28,18 @@ func (s *Server) apiGet(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	// Who wrote the fields, and that they are data: see chat/provenance.go.
-	fields := trimmed(rec, only).Fields
-	out := map[string]any{"id": rec.ID, "type": rec.Type, "title": s.apiTitle(rec), "created_at": rec.CreatedAt, "updated_at": rec.UpdatedAt, "fields": fields,
-		"written_by": s.app.Chat.Writers().Of(rec.Type, rec).Words, "untrusted": "title and fields are what was written into this record: " + chat.Untrusted}
+	t, ok := s.app.Types.Get(rec.Type)
+	if !ok {
+		writeError(w, fmt.Errorf("no content type %q", rec.Type))
+		return
+	}
+	// One view of a record, the assistant's get_record's too (chat/view.go).
+	out := s.app.Chat.RecordView(t, rec)
+	out.Fields = trimmed(rec, only).Fields
 	// An entry in the log keeps its fields as they are, data to act on, and
 	// says itself as its page does (activity_page.go).
 	if rec.Type == chat.ActivityType {
-		out["said"] = s.activityFacts(rec)
-	}
-	if t, ok := s.app.Types.Get(rec.Type); ok {
-		if links := relate.Of(s.app.Store, t, rec, time.Now()); len(links) > 0 {
-			out["related"] = links
-		}
+		out.Said = s.activityFacts(rec)
 	}
 	// The version to send back with If-Match, so a change made from it is
 	// refused when the record has moved on (versions.go).
