@@ -1,6 +1,6 @@
 {
   "name": "tracker",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "What is being kept up, at a glance: each habit against its target for this day, week, month or year (at least the target, at most a limit, or no target when it only records), its streak, the last periods as dots, and a press to log. From the habit and entry records, kept current. At glance detail it is how many are met this period.",
   "icon": "◎",
   "use": { "when": "a person keeps something up and wants to see and log it without thinking: habits, a daily measure, a weekly distance, a monthly allowance of hours or a budget, a reading such as weight.", "not": "a one-off task, which is a task; or numbers over time on their own, which is a chart.", "with": "the habit records behind it, each with its own page, numbers and chart." },
@@ -12,10 +12,11 @@
       "problem": {"type": "string", "description": "Filled in by the server when the block is set up wrong, saying what is wrong and what the workspace has instead. Leave out."},
       "href": { "type": "string", "description": "Where the glance leads, the habits by default." },
       "when": { "type": "string", "description": "Filled in by the server: today, or this period." },
-      "label": { "type": "string", "default": "Keeping up" },
+      "label": { "type": "string", "description": "Names the tracker, shown over it as its heading and naming its region. Leave out for none shown; it is then called Keeping up." },
+      "level": { "type": "integer", "minimum": 2, "maximum": 4, "default": 3, "description": "Heading level of the label so the block fits the page outline; 2 on a canvas and a block's own page, filled in for you." },
       "detail": { "title": "How much to show", "type": "string", "enum": ["glance", "full"], "default": "full" },
-      "tags": { "type": "array", "items": { "type": "string" } },
-      "habits": { "type": "array", "description": "The habits as they stand. Filled in by the server from the records.", "items": { "type": "object", "additionalProperties": false, "required": ["id", "name"], "properties": {
+      "tags": { "type": "array", "items": { "type": "string" }, "description": "Only the habits with one of these tags, such as [\"health\"]. Leave out, and habits too, for every habit not archived." },
+      "habits": { "type": "array", "description": "Which habits to show, by name or id, in this order, such as [\"Pages per day\"]; with tags as well, those of them with one of the tags. Leave out for every habit not archived. The server fills it in with each habit as it stands, an object.", "items": { "anyOf": [{ "type": "string" }, { "type": "object", "additionalProperties": false, "required": ["id", "name"], "properties": {
         "id": { "type": "string" },
         "name": { "type": "string" },
         "shortName": { "type": "string", "description": "The name as the Log button says it to a reader, cut at a word with an ellipsis when long." },
@@ -44,7 +45,7 @@
           "logged": { "type": "boolean" },
           "words": { "type": "string" }
         }}
-      } } } }
+      } } }] } }
     }
   },
   "id": { "type": "string" },

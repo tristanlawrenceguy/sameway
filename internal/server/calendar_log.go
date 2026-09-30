@@ -1,6 +1,7 @@
 package server
 
 import (
+	"slices"
 	"strings"
 	"time"
 
@@ -11,9 +12,14 @@ import (
 // logged: each habit it shows, as it stood that day, with Log filled in
 // for that day, so a day missed can be logged where it is seen. A
 // calendar of one habit's entries (where habit=<id>) offers that habit;
-// one of all entries, or of everything, offers every habit kept.
-func (s *Server) logForDay(typeName string, where []string, day time.Time) []any {
-	if typeName != EntryType && typeName != "all" {
+// one of all entries, of everything, or of several kinds with entry among
+// them (types), offers every habit kept.
+func (s *Server) logForDay(typeName string, kinds, where []string, day time.Time) []any {
+	shows := kinds // types, when given, are what the calendar shows
+	if len(shows) == 0 {
+		shows = []string{typeName}
+	}
+	if !slices.Contains(shows, EntryType) && !slices.Contains(shows, "all") {
 		return nil
 	}
 	if _, ok := s.app.Types.Get(HabitType); !ok {
@@ -41,5 +47,5 @@ func (s *Server) logForDay(typeName string, where []string, day time.Time) []any
 		return nil
 	}
 	label := "Log for " + day.Format("Mon 2 Jan")
-	return []any{map[string]any{"component": trackerComponent, "props": map[string]any{"label": label, "habits": habits}}}
+	return []any{map[string]any{"component": trackerComponent, "props": map[string]any{"label": label, "level": 4, "habits": habits}}}
 }

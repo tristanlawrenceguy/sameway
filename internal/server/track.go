@@ -141,22 +141,31 @@ func firstOf(values ...string) string {
 	return ""
 }
 
-// resolveTracker fills a tracker block from the habits, all that are not
-// archived, or those with one of the tags asked for.
+// resolveTracker fills a tracker block from the habits: those named in
+// habits, by name or id, in that order, or else all that are not
+// archived; of them, those with one of the tags asked for.
 func (s *Server) resolveTracker(props map[string]any) map[string]any {
 	out := map[string]any{}
 	for k, v := range props {
 		out[k] = v
 	}
 	tags := strs(props["tags"])
+	named := strs(props["habits"]) // names or ids; objects are the server's own
 	habits := []any{}
 	// Today when every habit is daily; this period when they differ.
 	out["when"] = "today"
 	if _, ok := s.app.Types.Get(HabitType); ok {
 		recs, _ := s.app.Store.List(HabitType, store.ListOptions{OrderBy: "created_at"})
+		if len(named) > 0 {
+			var problem string
+			if recs, problem = pickHabits(recs, named); problem != "" {
+				out["habits"], out["problem"] = []any{}, problem
+				return out
+			}
+		}
 		now := time.Now()
 		for _, rec := range recs {
-			if archived, _ := rec.Fields["archived"].(bool); archived {
+			if archived, _ := rec.Fields["archived"].(bool); archived && len(named) == 0 {
 				continue
 			}
 			if len(tags) > 0 && !hasTag(rec, tags) {
@@ -232,8 +241,10 @@ func (s *Server) habitSection(rec *store.Record) template.HTML {
 	item := s.standing(rec, now)
 	item["dated"] = true
 	var b strings.Builder
-	b.WriteString(`<section class="sw-stack sw-habit" aria-labelledby="habit-standing"><h2 id="habit-standing">Keeping up</h2>`)
-	b.WriteString(string(s.component(trackerComponent, map[string]any{"label": h.Name, "habits": []any{item}})))
+	// The heading names the part of the page; the tracker under it is the
+	// region, called Keeping up, and shows no heading of its own.
+	b.WriteString(`<div class="sw-stack sw-habit"><h2 id="habit-standing">Keeping up</h2>`)
+	b.WriteString(string(s.component(trackerComponent, map[string]any{"habits": []any{item}})))
 	best, _ := item["best"].(int)
 	if best > 0 {
 		fmt.Fprintf(&b, `<p class="sw-muted sw-small">Best run: %s.</p>`, template.HTMLEscapeString(track.StreakWords(best, h)))
@@ -265,7 +276,7 @@ func (s *Server) habitSection(rec *store.Record) template.HTML {
 		props["unit"] = h.Unit
 	}
 	b.WriteString(string(s.component("chart", props)))
-	b.WriteString(`</section>`)
+	b.WriteString(`</div>`)
 	return template.HTML(b.String())
 }
 

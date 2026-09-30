@@ -68,7 +68,7 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	} else if t.Name == HabitType && len(where) == 0 && order == "" {
 		// Habits are where each stands this period, and a press to log:
 		// the tracker, not rows of names. Archived ones follow, as rows.
-		b.WriteString(string(s.component(trackerComponent, s.resolveTracker(map[string]any{"label": "Keeping up"}))))
+		b.WriteString(string(s.component(trackerComponent, s.resolveTracker(map[string]any{}))))
 		var archived []*store.Record
 		for _, rec := range recs {
 			if on, _ := rec.Fields["archived"].(bool); on {
