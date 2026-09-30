@@ -21,9 +21,13 @@ import (
 type placed struct {
 	rec                         *store.Record
 	comp, region, frame, detail string
+	size                        string
 	props                       map[string]any
 	span                        int
 	pos                         int64
+	// seen is how the person's browser drew it, by device, where it did;
+	// see layout_measured.go.
+	seen map[string]Reading
 }
 
 func placedOf(blk *store.Record) placed {
@@ -33,6 +37,7 @@ func placedOf(blk *store.Record) placed {
 	p.props, _ = blk.Fields["props"].(map[string]any)
 	p.detail, _ = p.props["detail"].(string)
 	p.pos, _ = blk.Fields["position"].(int64)
+	p.size, _ = blk.Fields["size"].(string)
 	return p
 }
 
@@ -184,9 +189,11 @@ func fill(row []placed) int {
 // building to read.
 func (s *Service) LayoutNow(canvas string) string {
 	var all []placed
-	for _, b := range s.canvasBlocks(canvas) {
+	recs := s.canvasBlocks(canvas)
+	for _, b := range recs {
 		all = append(all, placedOf(b))
 	}
+	s.measure(all, recs)
 	main := region(all, "main")
 	var b strings.Builder
 	b.WriteString("Layout now")
@@ -196,7 +203,11 @@ func (s *Service) LayoutNow(canvas string) string {
 	for i, row := range gridRows(main) {
 		var parts []string
 		for _, p := range row {
-			parts = append(parts, fmt.Sprintf("%s %d", p.called(), p.span))
+			part := fmt.Sprintf("%s %d", p.called(), p.span)
+			if r, ok := p.wide(); ok {
+				part += fmt.Sprintf(" (%spx)", px(r.Height))
+			}
+			parts = append(parts, part)
 		}
 		sep := ", "
 		if i == 0 {
@@ -217,7 +228,8 @@ func (s *Service) LayoutNow(canvas string) string {
 		}
 	}
 	b.WriteString(".")
-	problems := layoutProblems(all)
+	b.WriteString(measuredHow(all))
+	problems := append(layoutProblems(all), roomProblems(all, canvas)...)
 	if len(problems) == 0 {
 		b.WriteString(" It reads in order with full rows.")
 		return b.String()

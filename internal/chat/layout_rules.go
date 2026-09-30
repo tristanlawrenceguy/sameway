@@ -24,17 +24,7 @@ func layoutProblems(all []placed) []string {
 			last := row[len(row)-1]
 			out = append(out, fmt.Sprintf("row %d leaves %d of 12 empty: widen %s to %d, or put a block of %d beside it", i+1, 12-n, last.name(), last.span+12-n, 12-n))
 		}
-		for _, t := range row {
-			if !t.tall() {
-				continue
-			}
-			for _, sh := range row {
-				if sh.short() {
-					out = append(out, fmt.Sprintf("%s is tall beside %s, which leaves a hole under %s: give the %s a row of its own, or the right pane with detail brief", t.name(), sh.name(), sh.name(), t.comp))
-					break
-				}
-			}
-		}
+		out = append(out, besideProblems(row)...)
 	}
 	out = append(out, outlineProblems(main)...)
 	out = append(out, groupProblems(main)...)
@@ -230,16 +220,8 @@ func suggestArrangement(all []placed, canvas string) string {
 		shaped[i] = p
 	}
 	for _, row := range gridRows(shaped) {
-		tall, short := false, false
-		for _, p := range row {
-			tall, short = tall || p.tall(), short || p.short()
-		}
-		if tall && short {
-			for _, p := range row {
-				if p.tall() {
-					span[p.rec.ID] = 12
-				}
-			}
+		for _, id := range tooTall(row) {
+			span[id] = 12
 		}
 	}
 	for i := range shaped {

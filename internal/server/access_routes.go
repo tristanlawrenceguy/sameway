@@ -34,6 +34,7 @@ var routeAccess = map[string]routeFor{
 	"GET /help":                        people,
 	"POST /help/set":                   owner,
 	"GET /canvas/{id}":                 people,
+	"POST /canvas/measure":             people, // and only those who may change it: measure.go
 	"POST /chat":                       people,
 	"POST /chat/stream":                people,
 	"POST /chat/stop":                  people,

@@ -48,7 +48,7 @@ var indexShort = map[string]string{
 	"create":   "POST /api/{type} with a JSON object of fields",
 	"update":   "PATCH /api/{type}/{id} with the fields to change; If-Match with updated_at refuses a change made from an older version",
 	"search":   "GET /api/search?q=words: every record and block that matches, counted by kind; &type= narrows",
-	"look":     "GET /api/look?path=/: a page as a screen reader gets it, and its problems; POST does what a person does",
+	"look":     "GET /api/look?path=/: a page as a screen reader gets it, and its problems; on a page of blocks, measured is each block's height and any scroll inside it as the person's own browser drew it; POST does what a person does",
 	"actions":  "POST a page's form with Accept: application/json and the answer is JSON: {ok, title, text, location, undo, fields}",
 	"keys":     "Authorization: Bearer sw_... is an agent key the owner made (sameway agent add); the log names you by it",
 	"describe": "GET /api/describe: this index; /api/describe/{part} and /api/describe/{part}/{name} one part or one thing; ?full=1 everything",

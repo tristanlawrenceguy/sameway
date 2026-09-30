@@ -29,6 +29,7 @@ var pageActionTools = map[string]string{
 	"/activity/{id}/undo":         "undo_change",
 	"/act/{id}":                   "run_action",
 	"/canvas/{id}/place":          "update_component",
+	"/canvas/measure":             "a person's: their browser says how the page came out on their screen; the assistant reads it in Layout now",
 	"/canvas/{id}/props":          "update_component",
 	"/canvas/{id}/keep":           "update_component",
 	"/canvas/{id}/delete":         "remove_component",

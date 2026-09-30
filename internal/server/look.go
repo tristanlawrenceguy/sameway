@@ -27,6 +27,10 @@ type Looked struct {
 	// Scripts is what reading with the page's scripts run adds, when it
 	// was asked for.
 	Scripts *Scripted `json:"scripts,omitempty"`
+	// Measured is how each block on a page of blocks was drawn, in the
+	// person's own browser and, with scripts, in the look browser; see
+	// measure_look.go.
+	Measured *LookMeasured `json:"measured,omitempty"`
 }
 
 // Scripted is what only a page with its scripts run can say: what each
@@ -135,6 +139,7 @@ func (s *Server) lookAt(w http.ResponseWriter, ask lookAsk, method string, form 
 		return
 	}
 	out.Outline = narrow(outline, ask)
+	out.Measured = s.measuredAt(path, nil)
 	writeJSON(w, http.StatusOK, out)
 }
 
@@ -194,6 +199,7 @@ func (s *Server) lookScripted(w http.ResponseWriter, r *http.Request, ask lookAs
 	if run.URL != ask.Path {
 		out.Landed = run.URL
 	}
+	out.Measured = s.measuredAt(ask.Path, run.Measured)
 	writeJSON(w, http.StatusOK, out)
 }
 

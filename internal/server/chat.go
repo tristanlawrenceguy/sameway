@@ -53,6 +53,10 @@ type conversation struct {
 	// only change things (Keep these choices, a block's name) are not
 	// offered them.
 	LookOnly bool
+	// Measure says the page measures its blocks where it is drawn, and
+	// Panes which side panes its tab has; see measure.go.
+	Measure bool
+	Panes   string
 }
 
 type conversationView struct {
