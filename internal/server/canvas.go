@@ -43,6 +43,7 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	convo.Arrival = arrivals(blocks, convo)
+	convo.Measure, convo.Panes = measuring(r), chat.Panes(blocks)
 
 	var b strings.Builder
 	if convo.Notice != "" {
@@ -60,7 +61,7 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 	// The conversation's own "Ask for anything" is the page's one empty
 	// state; a second panel above it saying the page is empty was one more
 	// thing to read before the box to type in.
-	fmt.Fprintf(&b, `<div class="sw-page" data-layout="%s">`, layoutName(solo))
+	fmt.Fprintf(&b, `<div class="sw-page" data-layout="%s"%s>`, layoutName(solo), measurePage(r, "tab", canvas))
 	b.WriteString(`<ol class="sw-plain sw-canvas" aria-label="Canvas">`)
 	for _, blk := range main {
 		b.WriteString(s.blockItem(blk, convo))
@@ -112,6 +113,7 @@ func (s *Server) blockItem(blk *store.Record, convo *conversation) string {
 		fmt.Fprintf(&b, ` data-arrival="%d"`, n)
 	}
 	b.WriteString(v.Editing) // a record's, as on its own page; see versions.go
+	b.WriteString(measureAttr(blk, convo))
 	fmt.Fprintf(&b, ` id="block-%s" style="--sw-span: %d; view-transition-name: block-%s; view-transition-class: sw-vt-item">`, v.ID, v.Span, v.ID)
 	// At icon size the block is a glyph with its name, opening the whole
 	// thing on its own page: everything is still reachable, in less room.

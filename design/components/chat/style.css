@@ -52,6 +52,9 @@
 .sw-chat__starts .sw-chat__start { border: 1px solid var(--sw-color-border-strong); background: var(--sw-color-bg-raised); margin-left: 0; }
 /* The composer's file control is the platform's own; its button is drawn
    like the other quiet buttons so the row reads as one thing. */
+/* No wider than the column it is in: its own width, button and file name,
+   ran past a side pane's edge. */
+.sw-compose__file { max-width: 100%; min-width: 0; }
 .sw-compose__file::file-selector-button {
   font: inherit; font-weight: 600; font-size: var(--sw-size-text-sm); color: var(--sw-color-fg);
   min-height: var(--sw-size-target); padding: 0 var(--sw-space-3); margin-right: var(--sw-space-2);

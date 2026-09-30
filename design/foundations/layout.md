@@ -39,6 +39,74 @@ Sameway tells it after every write how the page now reads.
   or a section heading above) is the writer's to say; changing the level
   silently would give a different outline from the one intended.
 
+## Measured, not guessed
+
+How tall a block is depends on things only the person's own browser knows:
+the window's width, the zoom, the text size and spacing they chose
+(`ui.text`, `ui.spacing`), the fonts, and whether it is a phone. So the page
+measures itself where it is drawn (`design/base/25-measure.js`) and says
+how it came out:
+
+- each block's height, width and where its row starts;
+- anything inside it that scrolls, with its content and box heights, or
+  that is cut off where nothing scrolls, and how much is hidden;
+- how far it runs past the right edge of the screen (WCAG 1.4.10);
+- in a side pane that scrolls on its own, the pane's height;
+- the screen: its width (phone below 600px, tablet below 1024px, desktop),
+  pixel ratio, root font size, and how many columns the grid had.
+
+It measures after the page loads and again on a real change of size (a
+`ResizeObserver`, 4px or more), once the page has been still for a moment
+and never more often than every five seconds, and sends only when
+something changed. What scrolls by design says so with `data-scrolls`
+(the conversation's history and its list of chats, a lookup's choices),
+as `.sw-table-wrap` does for a wide table and fields and code do by being
+what they are; it is counted apart and never flagged.
+
+The server keeps the latest reading of each block on each kind of screen
+(in memory and in the store's own notes, not synced to other copies, at
+most 600, and dropped after seven days). A reading names the block as it
+was drawn (its component, props, span, region, frame, size, and on a tab
+which panes it has, but not its position): once any of those change, the
+reading no longer stands and the block waits to be measured again.
+
+Layout now then gives each row's heights ("Errands" collection 6
+(820px)), says "Heights measured on your desktop (1,440px wide) and your
+phone (390px wide)" or "Heights estimated: nobody has opened this tab since
+it changed", judges blank space beside a shorter block by the measured
+heights instead of by kind, and names what the screen could not show, each
+with the `arrange_canvas` call that gives it room:
+
+> "Errands" scrolls inside on your phone (1,240px of content in a 480px
+> box): give it span 12: arrange_canvas {"blocks":[...]}
+
+`GET /api/look` on Home, a tab or a block's own page gives the readings
+under `measured` (and with scripts, the same measuring in the look
+browser's window, `measured.look_browser`), and the accessibility runner
+checks the seeded pages at desktop and phone widths with the same script.
+
+When nothing is measured, Layout now keeps to the estimates. It does not
+open a headless browser to measure on demand: that takes seconds on every
+write, and its window is not the person's. A look with scripts measures
+in passing, since its browser is already open.
+
+### What is sent, and by whom
+
+Only numbers and ids: block ids and versions, which page (tab or a
+block's own), the tab's id, and sizes in whole pixels. Never a word a
+block shows, a label, a value or an address. The script reads no text,
+and a test holds it to that. `POST /canvas/measure` takes only those
+fields, refuses anything else, caps every number (50,000px, 200 blocks)
+and drops a block not on the page named or changed since it was drawn.
+
+Only the people who may change a page are measured: the owner, editors
+and hosts. A published page and someone who may only look get no
+`data-measure` mark, so the script never runs for them, and the route
+refuses them, an agent's key, and the internet. Nothing is sent when the
+browser asks to save data (`navigator.connection.saveData`), or when a
+program drives it (`navigator.webdriver`, a headless browser), since that
+window is not a person's.
+
 ## Why a suggestion and not a solver
 
 Work on AI layout pairs a model, which knows what the person meant, with
@@ -51,7 +119,16 @@ call that would fix it, and the model sends it, changes it, or leaves it.
 
 ## Not done
 
-- Height is guessed from the component and its detail, not measured.
+- Height is measured only once someone who may change a tab has opened
+  it since it last changed; until then it is guessed from the component
+  and its detail. Nothing measures a tab nobody opens.
+- Readings are per kind of screen, not per person: the owner's phone and
+  an editor's phone share one reading, the latest.
+- A block's height also changes with its records (a list grows), which
+  does not make a reading stale; it stands until the page is opened again
+  or seven days pass.
+- A block that scrolls sideways by design (a wide table in a narrow
+  column) is counted but not flagged.
 - "Most important" knows only what is late; it does not know what the
   person said matters most.
 - Headings in the side panes are not part of the outline check.

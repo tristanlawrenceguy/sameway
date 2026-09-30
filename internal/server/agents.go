@@ -36,7 +36,7 @@ func pageAction(r *http.Request) bool {
 	if r.Method != http.MethodPost || !wantsJSON(r) && !sentJSON {
 		return false
 	}
-	for _, p := range []string{"/api/", "/mcp", "/hook/", "/sync"} {
+	for _, p := range []string{"/api/", "/mcp", "/hook/", "/sync", "/canvas/measure"} {
 		if strings.HasPrefix(r.URL.Path, p) {
 			return false
 		}

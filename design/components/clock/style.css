@@ -34,7 +34,9 @@
    labels always in sight above them, in one line when there is room. */
 .sw-clock__set { display: grid; gap: var(--sw-space-3); }
 .sw-clock__form { display: flex; align-items: flex-end; gap: var(--sw-space-2) var(--sw-space-3); flex-wrap: wrap; }
-.sw-clock__field { display: grid; gap: var(--sw-space-1); min-width: 0; }
+/* One column that may be narrower than a text field's own width, so the
+   field fits a phone's pane instead of running past the screen's edge. */
+.sw-clock__field { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sw-space-1); min-width: 0; }
 .sw-clock__field--grow { flex: 1 1 8rem; }
 .sw-clock__label { font-size: var(--sw-size-text-sm); font-weight: 600; }
 .sw-clock__optional { font-weight: 400; color: var(--sw-color-fg-muted); }

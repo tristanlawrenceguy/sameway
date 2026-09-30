@@ -71,6 +71,9 @@ type Service struct {
 	// Needs is what the person has said they need, and Language the
 	// workspace's language; both go into every prompt. Set by the app.
 	Needs, Language string
+	// Measured is each block as the person's own browser drew it, for
+	// Layout now; nil where nothing is measured. See measured.go.
+	Measured *Measures
 	// convo is the chat that is open, once known; see Current.
 	convo       string
 	ExtraPrompt string

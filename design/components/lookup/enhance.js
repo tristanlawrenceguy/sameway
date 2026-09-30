@@ -31,6 +31,7 @@
     var list = el("ul", "sw-plain sw-lookup__list");
     list.id = box.id + "-options";
     list.setAttribute("role", "listbox");
+    list.setAttribute("data-scrolls", ""); // a list of choices scrolls by design (25-measure.js)
     list.hidden = true;
     if (label) { label.id = label.id || box.id + "-label"; list.setAttribute("aria-labelledby", label.id); }
     var status = el("p", "sw-visually-hidden");

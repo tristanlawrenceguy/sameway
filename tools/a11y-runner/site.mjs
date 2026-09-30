@@ -14,6 +14,9 @@
 //   - a Tab walk at desktop (with focus appearance), at 320px, and on a phone
 //     held sideways, for focus hidden under sticky parts
 //   - /api/look, for what an agent is told
+//   - measured with the page's own script (measure.mjs): no block on a
+//     seeded tab scrolls inside, is cut off or runs off the screen, at a
+//     desktop and a phone width, and a long list that does is flagged
 // and the site: every page titled after itself and no two alike, the main
 // navigation the same everywhere, and every form that has required fields
 // saying what is wrong when sent empty.
@@ -24,6 +27,7 @@ import { join, resolve } from "node:path";
 import { AA_TAGS, AAA_TAGS } from "./shell.mjs";
 import { setMode, settle, axeProblems, reflowProblems, spacingProblems, motionProblems, obscuredFocusProblems } from "./checks.mjs";
 import { focusAppearance, visualProblems, forcedColourProblems, textZoomProblems, errorWiringProblems } from "./visual.mjs";
+import { innerScrollProblems, scrollFlagProblems } from "./measure.mjs";
 
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..", "..");
 const base = (process.env.SAMEWAY_URL || "http://127.0.0.1:8080").replace(/\/$/, "");
@@ -155,6 +159,10 @@ async function checkPage(path) {
 }
 
 for (const path of [...sitePages, ...Object.keys(blockLabel)]) await checkPage(path);
+
+// ---- measured, not guessed -------------------------------------------------
+for (const p of await innerScrollProblems(page, base, ["/", `/c/${canvas.id}`])) fail(`measured: ${p}`);
+for (const p of await scrollFlagProblems(page, base, post)) fail(`measured: ${p}`);
 
 // ---- a block's bar over its controls -------------------------------------
 // The pointer on a block shows its bar (Edit, Expand, Remove). Laid over a
