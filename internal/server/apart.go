@@ -175,7 +175,8 @@ func markApart(actions []any, context string) {
 }
 
 // eventsApart tells apart a calendar's events with one label, two called
-// Call plumber, by their day and time, then by the record they lead to.
+// Call plumber, by their kind, their day and time, then by the record
+// they lead to.
 // Only those in the month shown are met together; month "" is them all.
 func eventsApart(events []any, month string) []any {
 	names := make([]string, len(events))
@@ -196,7 +197,14 @@ func eventsApart(events []any, month string) []any {
 			}
 		}
 		id := path.Base(str(ev["href"], ""))
-		return []string{on, "id " + shortID(id), "id " + id}
+		// On a calendar of several kinds a task and a reminder of one name
+		// are told apart by their kind first, which is not said otherwise.
+		kind := schema.Words(str(ev["kind"], ""))
+		both := on
+		if kind != "" {
+			both = kind + ", " + on
+		}
+		return []string{kind, on, both, "id " + shortID(id), "id " + id}
 	})
 	for i, e := range events {
 		if ev, ok := e.(map[string]any); ok && told[i] != "" {

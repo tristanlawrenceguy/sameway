@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// A calendar of everything (type: all) narrowed to one kind: a row of
+// A calendar of several kinds (type: all, or types) narrowed to one: a row of
 // links, All, Tasks, Reminders, Events, each with how many it has in the
 // month shown (the filters component as links, one choice among a few).
 // It is offered only when the month has more than one kind. The choice is
@@ -17,7 +17,7 @@ import (
 
 // calendarKinds narrows a calendar of everything to the kind picked in the
 // page's address and fills its filter: the kinds in the month with their
-// counts, All first. The events' meta is their kind, as everyEvent sets it.
+// counts, All first. Each event carries its kind, as everyEvent sets it.
 func calendarKinds(out map[string]any, at *collectionPlace, block string) {
 	if at == nil || at.Path == "" || block == "" {
 		return
@@ -29,7 +29,7 @@ func calendarKinds(out map[string]any, at *collectionPlace, block string) {
 	inMonth := 0
 	for _, e := range events {
 		ev, _ := e.(map[string]any)
-		kind, _ := ev["meta"].(string)
+		kind, _ := ev["kind"].(string)
 		date, _ := ev["date"].(string)
 		if kind == "" || !strings.HasPrefix(date, month) {
 			continue
@@ -40,18 +40,20 @@ func calendarKinds(out map[string]any, at *collectionPlace, block string) {
 	picked := at.Query.Get(param)
 	if hasKind := slices.ContainsFunc(events, func(e any) bool {
 		ev, _ := e.(map[string]any)
-		return picked != "" && ev["meta"] == picked
+		return picked != "" && ev["kind"] == picked
 	}); !hasKind {
 		picked = "" // a kind the calendar does not have narrows nothing
 	}
 	if picked != "" {
 		kept := make([]any, 0, len(events))
 		for _, e := range events {
-			if ev, _ := e.(map[string]any); ev["meta"] == picked {
+			if ev, _ := e.(map[string]any); ev["kind"] == picked {
 				kept = append(kept, e)
 			}
 		}
 		out["events"] = kept
+		// What is shown is that kind alone, so what it goes out as is too.
+		out["types"] = []any{picked}
 		keepKind(out, param, picked)
 	}
 	if len(counts) < 2 && picked == "" {

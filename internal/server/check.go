@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -156,6 +157,13 @@ func (s *Server) chartShows(props, out map[string]any) string {
 func (s *Server) calendarShows(props, out map[string]any) string {
 	typeName, _ := props["type"].(string)
 	events, _ := out["events"].([]any)
+	if kinds := strs(props["types"]); len(kinds) > 0 && !slices.Contains(kinds, "all") {
+		var names []string
+		for _, k := range kinds {
+			names = append(names, plural(k))
+		}
+		return andList(names) + " with a date, " + fmt.Sprint(len(events)) + " in all"
+	}
 	switch typeName {
 	case "":
 		return fmt.Sprintf("the %d events given", len(events))
@@ -188,6 +196,15 @@ func trackerShows(props, out map[string]any) string {
 	shows := many(len(habits), HabitType)
 	if tags := strs(props["tags"]); len(tags) > 0 {
 		shows += " tagged " + strings.Join(tags, " or ")
+	}
+	if len(strs(props["habits"])) > 0 {
+		var names []string
+		for _, h := range habits {
+			if m, ok := h.(map[string]any); ok {
+				names = append(names, str(m["name"], ""))
+			}
+		}
+		shows += ": " + andList(names)
 	}
 	return shows
 }

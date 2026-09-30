@@ -111,7 +111,7 @@ func TestACalendarOfEverythingSaysWhatItShowsByKind(t *testing.T) {
 		}
 	}
 	said, isErr := call(t, a, "add_component", map[string]any{"component": "calendar", "props": map[string]any{"type": "all"}})
-	want := "; it shows every record with a date, 10 in all: 8 entries, 2 tasks; mostly entries, which crowd out the rest: a calendar of one type (type: task) shows only that type"
+	want := "; it shows every record with a date, 10 in all: 8 entries, 2 tasks; mostly entries, which crowd out the rest: a calendar of only the kinds wanted (types: [\"task\"]) leaves them out"
 	if isErr || !strings.HasSuffix(said, want) {
 		t.Errorf("a calendar of everything says its kinds, want %q, got %q", want, said)
 	}

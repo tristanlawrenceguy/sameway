@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -75,16 +76,23 @@ func (s *Server) resolveCalendarAt(props map[string]any, blockID string, at *col
 		}
 	}
 	typeName, _ := props["type"].(string)
-	if typeName == "" {
+	kinds := strs(props["types"])
+	if typeName == "" && len(kinds) == 0 {
 		return out
 	}
 	if day != "" {
-		if add := s.logForDay(typeName, strs(props["where"]), shownDay); add != nil {
+		if add := s.logForDay(typeName, kinds, strs(props["where"]), shownDay); add != nil {
 			out["add"] = add
 		}
 	}
-	if typeName == "all" {
-		out["events"] = s.everyEvent(now, month)
+	if typeName == "all" || len(kinds) > 0 {
+		// Several kinds together: the ones named, or every listed type.
+		only, problem := s.calendarTypes(kinds)
+		if problem != "" {
+			out["problem"] = problem
+			return out
+		}
+		out["events"] = s.everyEvent(now, month, only)
 		calendarKinds(out, at, blockID)
 		// Told apart among what is shown, once narrowed to its kinds.
 		if events, ok := out["events"].([]any); ok {
@@ -124,6 +132,38 @@ func (s *Server) resolveCalendarAt(props map[string]any, blockID string, at *col
 	out["events"] = eventsApart(events, month)
 	out["all"] = listPath(t.Name, strs(props["where"]), field)
 	return out
+}
+
+// calendarTypes is the types a calendar of several kinds shows: those
+// named in types, each of which must have a date to place, or nil for
+// every listed type (types empty, or holding all). Set up wrong, it says
+// why, as the page would.
+func (s *Server) calendarTypes(names []string) ([]*schema.Type, string) {
+	if len(names) == 0 || slices.Contains(names, "all") {
+		return nil, ""
+	}
+	var only []*schema.Type
+	for _, name := range names {
+		t, ok := s.app.Types.Get(name)
+		if !ok {
+			return nil, s.noType(name)
+		}
+		if dateField(t, nil) == "" {
+			return nil, noDateField(t, nil)
+		}
+		if !slices.Contains(only, t) {
+			only = append(only, t)
+		}
+	}
+	return only, ""
+}
+
+// andList is names as said: tasks, reminders and entries.
+func andList(names []string) string {
+	if len(names) < 2 {
+		return strings.Join(names, "")
+	}
+	return strings.Join(names[:len(names)-1], ", ") + " and " + names[len(names)-1]
 }
 
 // eventOf is one record on the calendar, or nil when its date will not
