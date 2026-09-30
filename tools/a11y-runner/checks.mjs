@@ -37,6 +37,28 @@ export async function finished(page) {
   ]));
 }
 
+// A turn ends with the page fetching itself and moving what changed into
+// place (17-refresh.js), a moment after the reply shows. Measured before
+// that lands, the page is swapped under axe, and under the pointer the last
+// press left: the browser finds the hover again only on a later frame or
+// timer, and a block's bar fades in while its contrast is read (CI on PR
+// #363, "home after chat", 1.65:1 on Expand and Remove at part opacity).
+// armRefresh listens for it before the press and says where the pointer
+// will be; refreshed waits for it (false if it never comes), then puts
+// the pointer there again, so the hover is settled now and finished()
+// waits out its fade.
+export async function armRefresh(page, control) {
+  await page.evaluate(() => { window.__swRefreshed = new Promise((r) => document.addEventListener("sw:refresh", () => r(true), { once: true })); });
+  const box = await control.boundingBox();
+  return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+}
+
+export async function refreshed(page, pointer, ms = 5000) {
+  const landed = await page.evaluate((ms) => Promise.race([window.__swRefreshed, new Promise((r) => setTimeout(() => r(false), ms))]), ms);
+  await page.mouse.move(pointer.x, pointer.y);
+  return landed;
+}
+
 // axe in the page's current mode, at AA unless other tags are given,
 // leaving out any rules named.
 export async function axeProblems(page, skip = [], tags = AA_TAGS) {
