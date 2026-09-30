@@ -31,6 +31,9 @@ type collectionPlace struct {
 	Path  string
 	Query url.Values
 	Own   bool
+	// Change says the one looking may change the block, so choices made
+	// can be kept as its setup (collection_keep.go).
+	Change bool
 }
 
 // onCanvas is the place of a collection block on a canvas: a person
@@ -40,7 +43,7 @@ func onCanvas(b *store.Record, convo *conversation) *collectionPlace {
 	if convo == nil || str(b.Fields["region"], "main") != "main" || str(b.Fields["size"], "full") != "full" {
 		return nil
 	}
-	return &collectionPlace{Path: convo.Path, Query: convo.Query}
+	return &collectionPlace{Path: convo.Path, Query: convo.Query, Change: !convo.LookOnly}
 }
 
 // choice is one control: the sort, or one field to narrow by.
@@ -211,6 +214,9 @@ func applyChoices(out map[string]any, choices []choice, at *collectionPlace, blo
 		}
 		ch["showing"] = strings.Join(said, ", ")
 		ch["reset"] = reset + "#" + id
+		if at.Change {
+			ch["save"] = keepForm(at.Query, block, reset+"#"+id)
+		}
 	}
 	out["choices"] = ch
 	return where, order, active

@@ -52,6 +52,7 @@ var routeAccess = map[string]routeFor{
 	"POST /activity/{id}/undo":         owner,
 	"POST /act/{id}":                   people,
 	"POST /canvas/{id}/props":          people,
+	"POST /canvas/{id}/keep":           people,
 	"POST /canvas/{id}/delete":         people,
 	"GET /activity":                    owner,
 	"POST /clock/set":                  people,

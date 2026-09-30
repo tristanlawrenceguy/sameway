@@ -22,7 +22,9 @@ with `#the-list` so the page lands on it), the page's other address fields
 to keep (`keep`, sent on as hidden inputs), the choices (each a `name`,
 a `label` and `options` of `value`, `label`, `selected`, and for links an
 `href` and a `count`), what is shown in words (`count`, `showing`) and the
-way back (`reset`). The server decides which choices make sense and
+way back (`reset`), and for those who may change the list Keep these
+choices (`save`: the address to POST to and its hidden fields), which
+makes the choices shown the list's own setup. The server decides which choices make sense and
 applies them, and only adds to what a list was set up to show, never takes
 from it.
 
@@ -42,7 +44,7 @@ window title say what it shows.
 form: "Show, group; Who, Anyone, pop-up button" for each select in turn,
 then "Apply, button". After Apply the page comes back at the list, and the
 line under the form says how many match and what is shown, and "Reset,
-link". Moving through a select's options says each one and moves nothing.
+link", then, where offered, "Keep these choices for Tasks, button". Moving through a select's options says each one and moves nothing.
 
 ## Why it works this way
 
@@ -77,6 +79,12 @@ link". Moving through a select's options says each one and moves nothing.
 - **Narrow, never widen** (DWP above: filters are AND, each one takes
   away). The address can only add what the choices offer; a list set up
   to show undone tasks cannot be made to show done ones by a link.
+- **Kept when the person says so.** A look stays a look: the address
+  holds it and nothing is saved. Keep these choices, next to Reset and
+  only where a person may change the list, makes it the list's setup, a
+  plain POST that narrows it the same way and is undone like any edit.
+  Without it, choices that read "Showing: not done, due soonest first"
+  looked kept and were not (the agent evaluation, T5).
 - **Plain words, few of them.** Any or All first, each answer a short
   phrase, at most four selects ([W3C COGA](https://www.w3.org/TR/coga-usable/)).
 - **Links look like links; the one shown does not.** The others are
@@ -91,7 +99,10 @@ select on change (3.2.2, above); a live region for the new count (the
 results are a new page, whose title says it); checkboxes to pick several
 kinds at once (one kind or all covers a person's own things, and a form
 of checkboxes needs Apply, which makes one quick choice two steps);
-removable tags for each applied filter (with three selects at most, one
+Keep these choices on the links shape (one choice among a few is a
+place to go, not a setup; a calendar's kinds come with its several
+types); a confirmation before keeping (Undo is on the outcome); removable
+tags for each applied filter (with three selects at most, one
 Reset and the selects themselves, which keep what was chosen, say the
 same thing); a panel of filters that slides in on a phone (it hides the
 choices, and a few selects wrap onto their own lines instead).

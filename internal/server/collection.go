@@ -65,14 +65,15 @@ func (s *Server) resolveCollectionAt(props map[string]any, block string, at *col
 			by = f.Name
 		}
 		choices := collectionChoices(t, where, order, by)
+		setup := setupWords(t, where, order, choices) // collection_keep.go
 		if w, o, active := applyChoices(out, choices, at, block, where, order); active {
 			if recs, err = query.Filter(s.app.Store, t, w, o, 0, now); err != nil {
 				out["problem"] = err.Error()
 				return out
 			}
-			where, order = w, o
+			where, order, setup = w, o, ""
 		}
-		out["choices"].(map[string]any)["count"] = countWords(t, len(recs))
+		out["choices"].(map[string]any)["count"] = countSaying(t, len(recs), setup)
 	}
 	if len(recs) > limit {
 		recs, out["more"] = recs[:limit], true

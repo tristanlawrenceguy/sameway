@@ -13,8 +13,10 @@
 //   - no glyphs in names (a tick, a cross, an arrow): noise, or nothing
 //   - no name carries the injected instruction
 //   - /api/look finds nothing wrong
-// and it does five everyday things by role and name alone, as an agent
-// does: find what is overdue, tick one done, undo it, add a note, search.
+// and it does six everyday things by role and name alone, as an agent
+// does: find what is overdue, tick one done, undo it, add a note, search,
+// and make a list show only what is not done, soonest first, under a new
+// name (Keep these choices, then Edit).
 // A locator that matches two is Playwright's strict-mode error, and fails
 // with the locator.
 //
@@ -57,12 +59,15 @@ await post("/api/note", { title: "Meeting notes", body: "Agenda: the boiler." })
 const injected = await post("/api/note", { title: "Meeting notes", body: INJECTION });
 for (let i = 0; i < 2; i++) await post("/api/project", { title: "Garden", status: "active" });
 const canvas = await post("/api/canvas", { name: "Agent" });
+const blocks = [];
 for (const [component, props] of [
   ["collection", { type: "task", label: "Up next", where: ["done=false"], order: "due" }],
   ["collection", { type: "note", label: "Notes" }],
   ["collection", { type: "project", label: "Projects", as: "board" }],
   ["calendar", { type: "task" }],
-]) await post("/api/block", { component, props, canvas: canvas.id, region: "main", size: "full", span: 12 });
+  ["collection", { type: "task", label: "Tasks", controls: true }],
+]) blocks.push(await post("/api/block", { component, props, canvas: canvas.id, region: "main", size: "full", span: 12 }));
+const tasksBlock = blocks[blocks.length - 1];
 const overdueSaid = `due ${said(day(-3))}`;
 
 // ---- what each page says to an agent ----------------------------------------
@@ -229,6 +234,29 @@ else {
     await Promise.all([page.waitForURL(`**/t/task/${overdue.id}`), page.getByRole("link", { name: hit, exact: true }).click()]);
   });
 }
+
+// 6. The evaluation's T5: only the tasks not done, soonest first, kept,
+// and the list renamed, from the page.
+await page.goto(`${base}/c/${canvas.id}`);
+const tasks = page.getByRole("region", { name: "Tasks", exact: true });
+const kept = await act("keep: Show and sort, Apply, then 'Keep these choices for Tasks'", async () => {
+  await tasks.getByRole("combobox", { name: "Done", exact: true }).selectOption({ label: "Not done" });
+  await tasks.getByRole("combobox", { name: "Sort", exact: true }).selectOption({ label: "Due soonest first" });
+  await Promise.all([page.waitForLoadState("load"), tasks.getByRole("button", { name: "Apply to Tasks", exact: true }).click()]);
+  await Promise.all([page.waitForLoadState("load"), page.getByRole("button", { name: "Keep these choices for Tasks", exact: true }).click()]);
+  return true;
+});
+if (kept) {
+  const props = (await record("block", tasksBlock.id)).fields.props;
+  if (!(props.where || []).includes("done=false") || props.order !== "due") fail(`keep: the Tasks block is set up as ${JSON.stringify(props)}`);
+}
+const renamed = await act("rename: getByRole('button', { name: 'Edit Tasks' }), the Name box, Save", async () => {
+  await page.getByRole("button", { name: "Edit Tasks", exact: true }).click();
+  await page.getByRole("textbox", { name: "Name", exact: true }).fill("Soon");
+  await Promise.all([page.waitForLoadState("load"), page.getByRole("button", { name: "Save", exact: true }).click()]);
+  return true;
+});
+if (renamed && (await record("block", tasksBlock.id)).fields.props.label !== "Soon") fail("rename: the Tasks block is not called Soon");
 
 await browser.close();
 console.log(`agent: ${failures} failure(s), ${known} known`);
