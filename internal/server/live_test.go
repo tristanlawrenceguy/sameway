@@ -24,6 +24,18 @@ func (g *gated) Complete(ctx context.Context, _ llm.Request) (*llm.Response, err
 	return &llm.Response{Text: "Here it is, done while you were away."}, nil
 }
 
+// answered is a recorder that says when the response's status is set:
+// for /chat/live, once it has found the turn (or found none).
+type answered struct {
+	*httptest.ResponseRecorder
+	found chan struct{}
+}
+
+func (a *answered) WriteHeader(code int) {
+	a.ResponseRecorder.WriteHeader(code)
+	close(a.found)
+}
+
 // Going to another page mid-turn does not stop the assistant. The turn
 // runs on, the page gone to says the assistant is working and carries
 // the turn's id, and /chat/live tells that page the turn from its start
@@ -56,12 +68,19 @@ func TestATurnGoesOnWhenThePersonGoesElsewhere(t *testing.T) {
 		t.Error("a page made mid-turn shows the message and says the assistant is working")
 	}
 
-	live := httptest.NewRecorder()
+	// The reply waits until the page has found the turn: let go sooner,
+	// the turn could end before the page asks, and the page would rightly
+	// be told there is nothing to follow (it then reloads, 14-live.js).
+	live := &answered{ResponseRecorder: httptest.NewRecorder(), found: make(chan struct{})}
 	followed := make(chan struct{})
 	go func() {
 		h.ServeHTTP(live, httptest.NewRequest(http.MethodGet, "/chat/live?from=/chat", nil))
 		close(followed)
 	}()
+	<-live.found
+	if live.Code != http.StatusOK {
+		t.Fatalf("a page opened mid-turn finds the turn to follow, got %d", live.Code)
+	}
 	close(model.release)
 	<-followed
 

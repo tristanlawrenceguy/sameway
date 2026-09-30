@@ -30,7 +30,11 @@ background colour, not for contrast: there the person's own theme sets
 every colour. On live pages the quiet layer is shown before axe runs,
 because axe passes over anything at opacity 0 and those controls are what
 hover and focus show. Checks run with reduced motion so transitions and
-arrivals are finished before anything is measured.
+arrivals are finished before anything is measured. After a chat turn,
+pages.mjs waits for the page's live refresh to land and settles the
+pointer's hover before axe runs (`armRefresh`, `refreshed` in checks.mjs):
+measured sooner, a block's bar can fade in under axe and fail contrast at
+part opacity, now and then, depending on timing.
 
 ## Waivers
 

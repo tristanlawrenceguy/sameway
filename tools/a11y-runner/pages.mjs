@@ -1,8 +1,6 @@
 // Live page tests against a running sameway server (SAMEWAY_URL, default
 // http://127.0.0.1:8080). The workspace must have llm.provider: none so no
-// model is dialled.
-//
-// Two passes over the same pages:
+// model is dialled. Two passes over the same pages:
 //   person: keyboard only, skip links, landmarks, forms, error recovery, axe
 //   agent:  reads /api/describe, then finds and operates the same controls by
 //           role and accessible name, and checks every rendered component is
@@ -11,7 +9,7 @@
 import { chromium } from "playwright";
 import AxeBuilder from "@axe-core/playwright";
 import { AA_TAGS, AAA_TAGS } from "./shell.mjs";
-import { axeProblems } from "./checks.mjs";
+import { axeProblems, armRefresh, refreshed } from "./checks.mjs";
 import { filtered } from "./filtered.mjs";
 import { visualProblems } from "./visual.mjs";
 
@@ -57,6 +55,7 @@ const busy = page.evaluate(() => new Promise((resolve) => {
     text: document.getElementById("chat-status").textContent,
   }), 0), { once: true });
 }));
+const pointer = await armRefresh(page, page.getByRole("button", { name: "Send" }));
 await page.getByRole("button", { name: "Send" }).click();
 const busyState = await busy;
 check(busyState.busy === "true" && busyState.region === "working" && busyState.status === "working" && /working/i.test(busyState.text), `chat: submit marks the form, region, and status as working (${JSON.stringify(busyState)})`);
@@ -75,6 +74,7 @@ check(await page.evaluate(() => {
   const all = document.querySelectorAll("[data-component=message]");
   return all.length > 0 && all[all.length - 1].contains(document.activeElement);
 }), "chat: the skip link moves focus to the newest message");
+check(await refreshed(page, pointer), "chat: the page follows the turn (the live refresh lands)");
 await axe("home after chat");
 
 // Navigate to notes list and verify shell invariants.

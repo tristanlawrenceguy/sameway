@@ -146,9 +146,11 @@
       var head = document.querySelector("main .sw-page-head");
       if (head) head.after(said); else { var main = document.querySelector("main"); if (main) main.prepend(said); }
     }
-    // The tab's mark, working or done while away, stays with the tab.
-    var mark = (document.title.match(/^(⏳|✓) /) || [""])[0];
-    if (doc.title) document.title = mark + doc.title.replace(/^(⏳|✓) /, "");
+    // The tab's mark, working or done while away, stays with the tab. Not
+    // named mark: a var of that name here would hide mark() above for the
+    // whole of merge, and every refresh would throw before it began.
+    var tabMark = (document.title.match(/^(⏳|✓) /) || [""])[0];
+    if (doc.title) document.title = tabMark + doc.title.replace(/^(⏳|✓) /, "");
     logs.forEach(function (l) { l.log.scrollTo({ top: l.end ? l.log.scrollHeight : l.top, behavior: "instant" }); });
     // Instant: the page's smooth scrolling would otherwise animate the
     // correction, and the page would be seen drifting back into place.
