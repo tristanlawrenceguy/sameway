@@ -98,6 +98,12 @@ the system's own colours.
   ([BBC GEL, filter and sort](https://bbc.github.io/gel/components/filter-and-sort/),
   [NN/g, filters vs facets](https://www.nngroup.com/articles/filters-vs-facets/)).
   The counts are the month's, which is what is on the page.
+- **Says what it shows by kind when written.** A calendar of everything
+  tells the one who writes it how many of each kind it holds, most first
+  ("44 in all: 32 entries, 9 tasks, 3 reminders"), and when one kind is
+  more than half, that it crowds out the rest; a model that was told "44
+  in all" called them all tasks and reminders. One of a type that shows
+  nothing says "nothing yet" and what it waits for.
 
 Not done, and why: a grid you move through with arrow keys (it is a view,
 and its links are reached with Tab); the grid and the list both in the

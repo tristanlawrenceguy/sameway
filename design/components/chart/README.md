@@ -51,6 +51,14 @@ the whole picture is drawn in the person's own colours.
 - **Values on the bars**, so colour and height are never the only way to
   read them ([WCAG 1.4.1](https://www.w3.org/WAI/WCAG22/Understanding/use-of-color.html)).
 - **Drawn in the person's colours** in forced colours.
+- **A date needs a period.** A chart by a date with no `period` is refused
+  when it is written, with the days its records fall on, so the writer
+  picks day, week or month; left to a default, one monthly bar of 142 was
+  told to a person as their daily water. Its line then says which: "30
+  days, 2026-09-01 to 2026-09-30". A chart stored before this still groups
+  by month. Conditions that ask one field for two values are refused too,
+  as a list's are, and a chart with nothing to draw says "nothing yet"
+  and what it waits for.
 
 Not done, and why: a chart drawn by a script in the browser (the server's
 SVG reads the moment the page arrives, with no script); the narrow picture

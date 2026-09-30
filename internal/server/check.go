@@ -33,6 +33,9 @@ func (s *Server) blockCheck(component string, props map[string]any) (shows, prob
 	if p, _ := out["problem"].(string); p != "" {
 		return "", p
 	}
+	if p := s.meaningProblem(component, props); p != "" {
+		return "", p
+	}
 	switch component {
 	case collectionComponent:
 		return s.collectionShows(props), ""
@@ -89,6 +92,9 @@ func (s *Server) collectionShows(props map[string]any) string {
 	where := strs(props["where"])
 	order, _ := props["order"].(string)
 	recs, _ := query.Filter(s.app.Store, t, where, order, 0, time.Now())
+	if len(recs) == 0 {
+		return nothingYet(t.Name, where, "")
+	}
 	out := many(len(recs), t.Name)
 	if w := query.Words(t, where); w != "" {
 		out += ", " + w
@@ -108,7 +114,9 @@ func (s *Server) collectionShows(props map[string]any) string {
 }
 
 // chartShows is a chart in a few words: what it draws and over how many
-// bars or points: Amount of entries by date: 30 days, in glasses.
+// bars or points, and over a date, which days, weeks or months, so one
+// bar for a month is never read as a month of days: Amount of entries by
+// At: 30 days, 2026-09-01 to 2026-09-30, in glasses.
 func (s *Server) chartShows(props, out map[string]any) string {
 	series, _ := out["series"].([]any)
 	caption, _ := out["caption"].(string)
@@ -122,19 +130,19 @@ func (s *Server) chartShows(props, out map[string]any) string {
 	if typeName, _ := props["type"].(string); typeName != "" {
 		t, _ := s.app.Types.Get(typeName)
 		by, _ := props["by"].(string)
-		f, ok := t.Field(by)
-		if by == "created_at" || by == "updated_at" || ok && f.Type == "datetime" {
+		if len(series) == 0 {
+			return nothingYet(t.Name, strs(props["where"]), "")
+		}
+		if byDate(t, by) {
 			period, _ := props["period"].(string)
 			if period == "" {
 				period = "month"
 			}
-			groups = fmt.Sprintf("%d %ss", len(series), period)
-			if len(series) == 1 {
-				groups = "1 " + period
+			first, last, n := dateSpan(out)
+			groups = fmt.Sprintf("%d %ss, %s to %s", n, period, first, last)
+			if n == 1 {
+				groups = "1 " + period + ", " + first
 			}
-		}
-		if len(series) == 0 {
-			groups = "nothing to draw yet: no " + plural(t.Name) + " match"
 		}
 	}
 	shows := caption + ": " + groups
@@ -152,7 +160,7 @@ func (s *Server) calendarShows(props, out map[string]any) string {
 	case "":
 		return fmt.Sprintf("the %d events given", len(events))
 	case "all":
-		return "every record with a date, " + fmt.Sprint(len(events)) + " in all"
+		return everyKind(events)
 	}
 	t, _ := s.app.Types.Get(typeName)
 	field := dateField(t, props["date"])
@@ -163,6 +171,9 @@ func (s *Server) calendarShows(props, out map[string]any) string {
 		if v, _ := rec.Fields[field].(string); v != "" {
 			n++
 		}
+	}
+	if n == 0 {
+		return nothingYet(t.Name, where, strings.ToLower(label(field)))
 	}
 	shows := many(n, t.Name) + " by " + strings.ToLower(label(field))
 	if w := query.Words(t, where); w != "" {
