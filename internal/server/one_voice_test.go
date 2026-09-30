@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 // A change in the log is said the same way wherever it is read, however
@@ -57,5 +58,40 @@ func TestAChangeIsSaidOneWayEverywhere(t *testing.T) {
 		if !strings.Contains(body, want) {
 			t.Errorf("%s says %q:\n%.600s", where, want, body)
 		}
+	}
+}
+
+// The crew's findings 0586, 0587, 0591 and 0594, on the entries that
+// raised them: a type named as stored (test_type), entries alike in one
+// second, and an update's page that read out its stored fields.
+func TestTheLogSaysEverythingInWords(t *testing.T) {
+	a, h := newApp(t)
+	a.Store.Create("activity", map[string]any{"actor": "system", "action": "added", "target": "type", "detail": "test_type", "summary": "System added type test_type"})
+	a.Store.Create("activity", map[string]any{"actor": "system", "action": "added", "target": "field", "detail": "test_field on test_type", "summary": "System added field test_field on test_type"})
+	for range 3 {
+		chat.Record(a.Store, "system", chat.Change{Action: "failed", Detail: "claude: exit status 1"})
+	}
+	var made map[string]any
+	decode(t, postJSON(t, h, "POST", "/api/note", map[string]any{"title": "Plan"}), &made)
+	postJSON(t, h, "PATCH", "/api/note/"+made["id"].(string), map[string]any{"title": "Plan B"})
+
+	list := get(t, h, "/t/activity").Body.String()
+	for _, raw := range []string{"test_type", "test_field", "(id "} {
+		if strings.Contains(list, raw) {
+			t.Errorf("the log's list says %q", raw)
+		}
+	}
+	if !strings.Contains(list, "added type test type") || !strings.Contains(list, "first of 3") {
+		t.Errorf("types in words, and alike entries by which came first")
+	}
+	entries, _ := a.Store.List("activity", store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
+	page := get(t, h, "/t/activity/"+entries[0].ID).Body.String()
+	for _, raw := range []string{"<dt>Action</dt>", "<dt>Target id</dt>", "{", "<dt>Before</dt>"} {
+		if strings.Contains(page[strings.Index(page, "<main"):], raw) {
+			t.Errorf("an update's page shows %q", raw)
+		}
+	}
+	if !strings.Contains(page, "Title was") || !strings.Contains(page, "Plan B") {
+		t.Errorf("it says what the note is and what it was")
 	}
 }

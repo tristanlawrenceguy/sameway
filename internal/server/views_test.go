@@ -74,12 +74,9 @@ func TestDetailPageSkipsEmptyFieldsActivity(t *testing.T) {
 	}
 	body := get(t, h, "/t/activity/"+rec.ID+fieldsView).Body.String()
 
-	// Actor (enum) is excluded from the dl; Action (string) still renders.
-	if strings.Contains(body, "<dt>Actor</dt>") {
-		t.Error("detail page should not show <dt>Actor</dt> in the dl")
-	}
-	if !strings.Contains(body, "<dl class=\"sw-fields\"") || !strings.Contains(body, "<dt>Action</dt>") || !strings.Contains(body, "added") {
-		t.Errorf("detail page should show Action row\n%s", truncate(body))
+	// An entry says what happened, not what it stores: no Actor, no Action.
+	if strings.Contains(body, "<dt>Actor</dt>") || strings.Contains(body, "<dt>Action</dt>") {
+		t.Errorf("an entry's page says it in words, not its stored fields\n%s", truncate(body))
 	}
 
 	// Fields like target, target_id, detail were never set — their labels must be absent.

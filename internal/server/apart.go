@@ -1,7 +1,8 @@
 package server
 
 import (
-	"path"
+	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -18,7 +19,9 @@ import (
 // cannot tell them apart (WCAG 2.4.6 and 2.4.9; a Playwright getByRole
 // that matches two refuses to guess). So where a list shows records whose
 // titles repeat, each of the repeated ones is told apart by the first fact
-// that differs: the day it is due, then when it was added, then its id.
+// that differs: the day it is due, then when it was added, to the minute
+// and then the second, and last by where it comes: the first of 3. An id
+// was once the last resort, and read to a person as a string of letters.
 // Only when needed: a title that is its own stays as it is, and the words
 // are read after the name, never shown twice.
 
@@ -27,7 +30,11 @@ import (
 // item i could be told apart by, best first; the first way whose words
 // differ across every item sharing the name is used for all of them. A
 // way may leave one item without words, which is then the plain one.
-func apart(names []string, ways func(i int) []string) []string {
+//
+// rank, when given, orders the ones that nothing tells apart for their
+// number, first to last: when each was added, so a note is "the first of
+// 2" in its list and in the log alike, whichever order each shows them in.
+func apart(names []string, ways func(i int) []string, rank ...func(i int) string) []string {
 	out := make([]string, len(names))
 	groups := map[string][]int{}
 	var order []string
@@ -52,7 +59,8 @@ func apart(names []string, ways func(i int) []string) []string {
 			cands[j] = ways(i)
 			most = max(most, len(cands[j]))
 		}
-		for w := 0; w < most; w++ {
+		found := false
+		for w := 0; w < most && !found; w++ {
 			seen, differ := map[string]bool{}, true
 			for _, c := range cands {
 				v := ""
@@ -73,7 +81,18 @@ func apart(names []string, ways func(i int) []string) []string {
 					out[i] = cands[j][w]
 				}
 			}
-			break
+			found = true
+		}
+		// Nothing about them differs that a person would say: they are told
+		// apart by where each comes, as they are listed.
+		if !found {
+			ordered := append([]int(nil), g...)
+			if len(rank) > 0 {
+				sort.SliceStable(ordered, func(x, y int) bool { return rank[0](ordered[x]) < rank[0](ordered[y]) })
+			}
+			for j, i := range ordered {
+				out[i] = ordinal(j+1) + " of " + fmt.Sprint(len(g))
+			}
 		}
 	}
 	return out
@@ -82,15 +101,28 @@ func apart(names []string, ways func(i int) []string) []string {
 // recordWays is what tells one record from another with its title: the
 // day that matters to it (due Fri 25 Sep), when it was added, its id.
 func recordWays(t *schema.Type, rec *store.Record) []string {
-	return []string{dayWords(t, rec), "added " + momentWords(rec.CreatedAt), "id " + shortID(rec.ID), "id " + rec.ID}
+	return []string{dayWords(t, rec), "added " + momentWords(rec.CreatedAt), "added " + secondWords(rec.CreatedAt)}
 }
 
-// shortID is the start of an id, enough to tell a few apart.
-func shortID(id string) string {
-	if len(id) > 6 {
-		return id[:6]
+// secondWords is a moment to the second, for two added in one minute.
+func secondWords(at time.Time) string {
+	return shortDay(at.Local()) + ", " + at.Local().Format("15:04:05")
+}
+
+// ordinal is a place in a list in words: first, second, … 11th.
+func ordinal(n int) string {
+	words := []string{"", "first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth"}
+	if n < len(words) {
+		return words[n]
 	}
-	return id
+	suffix := "th"
+	if n%100 < 11 || n%100 > 13 {
+		suffix = map[int]string{1: "st", 2: "nd", 3: "rd"}[n%10]
+		if suffix == "" {
+			suffix = "th"
+		}
+	}
+	return fmt.Sprint(n) + suffix
 }
 
 // recordsApart is apart for one type's records shown together, by id.
@@ -99,7 +131,7 @@ func (s *Server) recordsApart(t *schema.Type, recs []*store.Record) map[string]s
 	for i, rec := range recs {
 		names[i] = s.title(t, rec)
 	}
-	said := apart(names, func(i int) []string { return recordWays(t, recs[i]) })
+	said := apart(names, func(i int) []string { return recordWays(t, recs[i]) }, func(i int) string { return addedRank(recs[i]) })
 	out := map[string]string{}
 	for i, rec := range recs {
 		if said[i] != "" {
@@ -196,7 +228,6 @@ func eventsApart(events []any, month string) []any {
 				on += ", " + at
 			}
 		}
-		id := path.Base(str(ev["href"], ""))
 		// On a calendar of several kinds a task and a reminder of one name
 		// are told apart by their kind first, which is not said otherwise.
 		kind := schema.Words(str(ev["kind"], ""))
@@ -204,7 +235,7 @@ func eventsApart(events []any, month string) []any {
 		if kind != "" {
 			both = kind + ", " + on
 		}
-		return []string{kind, on, both, "id " + shortID(id), "id " + id}
+		return []string{kind, on, both}
 	})
 	for i, e := range events {
 		if ev, ok := e.(map[string]any); ok && told[i] != "" {
@@ -230,4 +261,9 @@ func blockName(component string, props map[string]any) string {
 		}
 	}
 	return component
+}
+
+// addedRank orders records by when they were added, for their number.
+func addedRank(rec *store.Record) string {
+	return rec.CreatedAt.UTC().Format("2006-01-02T15:04:05.000000000") + " " + rec.ID
 }
