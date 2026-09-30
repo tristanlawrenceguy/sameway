@@ -95,7 +95,11 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	b.WriteString(s.exportLinks(t, r.URL.Query(), recs)) // and they go out again, as the page has them; see export.go
 	// What just happened to these records is here too, so a deletion can be
 	// taken back where the person lands.
-	b.WriteString(string(s.recentActivityAbout(5, "/t/"+t.Name, func(target, _ string) bool { return target == t.Name })))
+	// The log names who changed what: the people let in read it here, the
+	// internet does not, on a published list as on a published record.
+	if chat.VisitorOf(r.Context()).Access != chat.Public {
+		b.WriteString(string(s.recentActivityAbout(5, "/t/"+t.Name, func(target, _ string) bool { return target == t.Name })))
+	}
 	name := capitalize(plural(t.Name))
 	s.page(w, r, name, template.HTML(b.String()), pageOptions{JSONURL: "/api/" + t.Name, Said: pg.title(name), Lede: howMany(t, recs), Dot: s.dotOf(t.Name)})
 }
