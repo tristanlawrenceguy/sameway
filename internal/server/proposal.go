@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -59,7 +60,9 @@ func (s *Server) proposalCard(p *store.Record, from string) template.HTML {
 	// What it would do cannot be taken back: the question says so, and its
 	// Yes looks like it.
 	if action, _ := p.Fields["action"].(map[string]any); action != nil {
-		if tool, _ := action["tool"].(string); cannotUndo[tool] {
+		tool, _ := action["tool"].(string)
+		key, _ := action["key"].(string)
+		if cannotUndo[tool] && (tool != "set_setting" || chat.Outward(key)) {
 			props["risk"] = true
 		}
 	}

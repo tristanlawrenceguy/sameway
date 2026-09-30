@@ -131,6 +131,10 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	// What this view has been asked to show beyond the least it can say:
 	// see parts.go. Nothing here is on unless somebody asked for it.
 	always, here := s.shown(r)
+	// Asked for often enough, a part is offered for good, here (learn.go).
+	if offer := s.noticeUse(r, t, rec, always, here); offer != nil {
+		b.WriteString(string(s.proposalCard(offer, r.URL.RequestURI())))
+	}
 	b.WriteString(s.nextThings(t, rec, append(append([]string{}, always...), here...)))
 	// Just added and not yet saved: Cancel takes the adding back (add.go).
 	discard := ""
