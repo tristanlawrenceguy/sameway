@@ -16,6 +16,11 @@ func (s *Server) hitsApart(hits []search.Hit) []string {
 				return recordWays(t, rec)
 			}
 		}
-		return []string{"id " + h.ID}
+		return nil // told apart by which was added first
+	}, func(i int) string {
+		if rec, err := s.app.Store.Get(hits[i].Type, hits[i].ID); err == nil {
+			return addedRank(rec)
+		}
+		return hits[i].ID
 	})
 }

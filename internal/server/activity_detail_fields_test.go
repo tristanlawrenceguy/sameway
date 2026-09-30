@@ -3,7 +3,6 @@ package server_test
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"strings"
 	"testing"
 )
@@ -104,13 +103,11 @@ func TestActivityDetailAfterFieldIsReadable(t *testing.T) {
 	}
 }
 
-// TestAPIActivityBeforeFieldIsReadable checks that GET /api/activity/{id} returns a
-// cleaned, human-readable string for the "before" field on set-type entries. The
-// Before value should be just the text (e.g. "Medium") not a JSON object with a
-// "value" key. This covers acceptance item 3.
-func TestAPIActivityBeforeFieldIsReadable(t *testing.T) {
+// An entry's fields over the API stay the data they are, for an agent to
+// act on (undo reads before as it is); what the entry says, in words, is
+// beside them as said, the very words its page shows.
+func TestAPIActivityKeepsItsDataAndSaysItAsThePageDoes(t *testing.T) {
 	a, h := newApp(t)
-
 	rec, err := a.Store.Create("activity", map[string]any{
 		"summary": "Assistant changed text size to Large",
 		"actor":   "assistant",
@@ -122,108 +119,26 @@ func TestAPIActivityBeforeFieldIsReadable(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
 	var one struct {
-		Title  string         `json:"title"`
-		Fields map[string]any `json:"fields"`
+		Fields map[string]any   `json:"fields"`
+		Said   []map[string]any `json:"said"`
 	}
-	resp := get(t, h, "/api/activity/"+rec.ID)
-	if resp.Code != http.StatusOK {
-		t.Fatalf("expected status 200, got %d", resp.Code)
+	json.Unmarshal(get(t, h, "/api/activity/"+rec.ID).Body.Bytes(), &one)
+	if before, ok := one.Fields["before"].(map[string]any); !ok || before["value"] != "medium" || one.Fields["target"] != "ui.text" {
+		t.Errorf("the fields are the entry's data as stored: %v", one.Fields)
 	}
-	json.Unmarshal(resp.Body.Bytes(), &one)
-
-	beforeVal := one.Fields["before"]
-
-	// The before field should be a plain string, not a map.
-	if m, ok := beforeVal.(map[string]any); ok {
-		t.Errorf("API 'before' field must be a plain string for set-type entries, got JSON object: %+v", m)
+	page := said(get(t, h, "/t/activity/"+rec.ID).Body.String())
+	found := false
+	for _, item := range one.Said {
+		label, value := fmt.Sprint(item["label"]), fmt.Sprint(item["value"])
+		if label == "Text size was" && value == "Medium" {
+			found = true
+		}
+		if !strings.Contains(page, label) || !strings.Contains(page, value) {
+			t.Errorf("the page says what the API says: %s %s not in %q", label, value, page)
+		}
 	}
-
-	// The value should be capitalised "Medium".
-	if s, ok := beforeVal.(string); !ok || strings.ToLower(s) != "medium" {
-		t.Errorf("API 'before' field should be a string like 'Medium', got %T: %v", beforeVal, beforeVal)
-	}
-}
-
-// TestAPIActivityTargetFieldIsReadable checks that GET /api/activity/{id} returns the
-// human-readable setting name for the "target" field on set-type entries. The API
-// should return "Text size" not "ui.text". This covers acceptance item 3.
-func TestAPIActivityTargetFieldIsReadable(t *testing.T) {
-	a, h := newApp(t)
-
-	rec, err := a.Store.Create("activity", map[string]any{
-		"summary": "Assistant changed text size to Large",
-		"actor":   "assistant",
-		"action":  "set",
-		"target":  "ui.text",
-		"detail":  "large",
-		"before":  map[string]any{"value": "medium"},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var one struct {
-		Title  string         `json:"title"`
-		Fields map[string]any `json:"fields"`
-	}
-	resp := get(t, h, "/api/activity/"+rec.ID)
-	json.Unmarshal(resp.Body.Bytes(), &one)
-
-	targetVal := one.Fields["target"]
-
-	if s, ok := targetVal.(string); !ok || strings.Contains(s, "ui.text") {
-		t.Errorf("API 'target' field should be the human-readable name (e.g. 'Text size'), got %q", targetVal)
-	}
-
-	if !strings.Contains(fmt.Sprint(targetVal), "text size") && !strings.Contains(fmt.Sprint(targetVal), "Text size") {
-		t.Errorf("API 'target' field should show 'Text size', not 'ui.text'; got %v", targetVal)
-	}
-}
-
-// TestAPIAndHTMLSetEntryFieldsMatch checks that the cleaned values returned by the
-// API for a set-type activity entry match what the HTML detail page renders. This
-// covers acceptance item 3 (consistency between surfaces).
-func TestAPIAndHTMLSetEntryFieldsMatch(t *testing.T) {
-	a, h := newApp(t)
-
-	rec, err := a.Store.Create("activity", map[string]any{
-		"summary": "Assistant changed text size to Large",
-		"actor":   "assistant",
-		"action":  "set",
-		"target":  "ui.text",
-		"detail":  "large",
-		"before":  map[string]any{"value": "medium"},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var one struct {
-		Title  string         `json:"title"`
-		Fields map[string]any `json:"fields"`
-	}
-	resp := get(t, h, "/api/activity/"+rec.ID)
-	json.Unmarshal(resp.Body.Bytes(), &one)
-
-	htmlBody := get(t, h, "/t/activity/"+rec.ID).Body.String()
-
-	// API before field should match what the HTML renders.
-	apiBefore := fmt.Sprint(one.Fields["before"])
-	if !strings.Contains(said(htmlBody), apiBefore) && !strings.Contains(said(htmlBody), strings.ToLower(apiBefore)) {
-		t.Errorf("API 'before' value %q should appear in HTML detail page\nHTML said: %q", apiBefore, said(htmlBody))
-	}
-
-	// API target field should match what the HTML renders.
-	apiTarget := fmt.Sprint(one.Fields["target"])
-	if !strings.Contains(said(htmlBody), apiTarget) && !strings.Contains(said(htmlBody), strings.ToLower(apiTarget)) {
-		t.Errorf("API 'target' value %q should appear in HTML detail page\nHTML said: %q", apiTarget, said(htmlBody))
-	}
-
-	// API detail field should match what the HTML renders.
-	apiDetail := fmt.Sprint(one.Fields["detail"])
-	if !strings.Contains(said(htmlBody), apiDetail) && !strings.Contains(said(htmlBody), strings.ToLower(apiDetail)) {
-		t.Errorf("API 'detail' value %q should appear in HTML detail page\nHTML said: %q", apiDetail, said(htmlBody))
+	if !found {
+		t.Errorf("said is in words: %v", one.Said)
 	}
 }

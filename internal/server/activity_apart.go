@@ -10,7 +10,7 @@ import (
 // entriesApart tells apart log entries shown together that say the same,
 // "created task Call plumber" twice, whose links and Undo buttons would
 // share a name (apart.go): the way the record's own list tells it apart
-// while it exists, then by their time, then by their id.
+// while it exists, then by their time, then by which was added first.
 func (s *Server) entriesApart(recs []*store.Record) []string {
 	names := make([]string, len(recs))
 	for i, r := range recs {
@@ -27,6 +27,18 @@ func (s *Server) entriesApart(recs []*store.Record) []string {
 				ways = recordWays(t, rec)
 			}
 		}
-		return append(ways, "at "+momentWords(r.CreatedAt), "entry "+shortID(r.ID), "entry "+r.ID)
+		return append(ways, "at "+momentWords(r.CreatedAt), "at "+secondWords(r.CreatedAt))
+	}, func(i int) string {
+		// Numbered as the records they are about are, so an entry and
+		// its record's row say the same.
+		r := recs[i]
+		target, _ := r.Fields["target"].(string)
+		id, _ := r.Fields["target_id"].(string)
+		if t, ok := s.app.Types.Get(target); ok && id != "" {
+			if rec, err := s.app.Store.Get(t.Name, id); err == nil {
+				return addedRank(rec)
+			}
+		}
+		return addedRank(r)
 	})
 }

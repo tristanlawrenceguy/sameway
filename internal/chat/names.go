@@ -90,6 +90,18 @@ func Sentence(st *store.Store, f map[string]any) string {
 		return CleanSummary(str("summary"))
 	}
 	c := Change{Action: str("action"), Component: str("target"), Detail: str("detail"), Via: str("via")}
+	// A type or a field is said in words, as it is everywhere else: an
+	// entry written before that said test_type.
+	switch c.Component {
+	case "type":
+		c.Detail = schema.Words(c.Detail)
+	case "field":
+		name, of, _ := strings.Cut(c.Detail, " on ")
+		c.Detail = schema.Words(name)
+		if of != "" {
+			c.Detail += " on " + schema.Words(of)
+		}
+	}
 	if c.Action == "" {
 		return CleanSummary(str("summary"))
 	}

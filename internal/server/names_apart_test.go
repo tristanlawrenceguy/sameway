@@ -159,7 +159,7 @@ func TestRepeatedTitlesAreToldApartInSearchAndTheLog(t *testing.T) {
 
 // Notes have no day: two made the same minute are told apart by the start
 // of their ids, the same words on their list and in the log.
-func TestUndatedTwinsAreToldApartByTheirIds(t *testing.T) {
+func TestUndatedTwinsAreToldApartByWhichCameFirst(t *testing.T) {
 	_, h := newApp(t)
 	for range 2 {
 		wantStatus(t, postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Meeting notes"}), http.StatusCreated)
@@ -174,8 +174,8 @@ func TestUndatedTwinsAreToldApartByTheirIds(t *testing.T) {
 			told = append(told, strings.TrimPrefix(n, "Meeting notes "))
 		}
 	}
-	if len(told) != 2 || !strings.Contains(told[0], "(added ") && !strings.Contains(told[0], "(id ") {
-		t.Fatalf("two notes alike are told apart by when they were added or their id: %q", told)
+	if len(told) != 2 || !strings.Contains(told[0], "(added ") && !strings.Contains(told[0], " of 2)") || strings.Contains(strings.Join(told, ""), "(id ") {
+		t.Fatalf("two notes alike are told apart by when they were added or which came first, never an id: %q", told)
 	}
 	log := names(t, get(t, h, "/activity").Body.String(), "button")
 	for _, w := range told {
