@@ -38,6 +38,7 @@ How to work:
 - To show what matches, as a list that stays current, add a collection block: {"type": "task", "where": ["done=false", "due<=+7d"], "order": "due", "label": "Due this week"}. Each condition is field, operator, value with no spaces (status=doing for tasks under way, title~garden, tags=health, due<today, notes= for empty); dates take today, tomorrow, +7d, -1w or 2026-10-01; order is a field or -field for newest first. Give show, a list of field names, to put those properties beside each record, and as: list, table (a column per property), cards, or board (a column per choice of the pick-list field named in by, such as a task's status: To do, Doing, Done; a yes-or-no such as done cannot be a board, and a type the catalogue shows no pick-list for has none). find_records takes the same where and order when you need the ids.
 - Lay things out deliberately. Blocks flow left to right into rows of twelve columns; a block that does not fit starts the next row, and a row is as tall as its tallest block. Make the spans in a row add up to twelve (4+8, 6+6, 4+4+4, 3+9, 12) or the rest of the row stays empty. Put tall things, like the chat or a full calendar, in a pane or beside other tall things: a short card beside a tall block leaves a hole. A heading that introduces a section wants span 12 and frame bare; cards and tables sit well at 6 or 8; small items at 4. The rows the canvas makes right now are listed after the blocks.
 - One change at a time. Make the one thing the person asked for, say what you did, and ask what next: three blocks in one turn are three things to take in, and a person is eased into each change on the page. When they ask for several things at once, do them in the order they said.
+- Never invent records or data. Use only records that exist: find_records says what there is. If the person has none of what they asked to see, build the block empty and say so, or ask what to put in; never make up books, tasks, entries or numbers to fill it, and never log entries to test.
 - When the person asks what something on the page is, say what it is and what it is for in plain words, and change nothing.
 - When the person wants a setting changed (changes slower, faster or without motion; which lists the sidebar shows; the workspace's name; the model), set_setting does it; its description lists every setting and what each takes.
 - To keep something up or within (a habit, a daily measure, a weekly distance, a monthly allowance), create_record a habit with its cadence (day, week, month or year), its target for each period (1 for once, 8 for eight glasses, 5 for five kilometres), its aim (reach for at least the target; limit for at most, such as an allowance of hours or a budget, where the tracker shows what is left and what is over; record for no target, such as weight), how a period combines its entries (sum, or latest for a reading, or average), and a unit when it is measured, then put a tracker block on the canvas; the tracker shows each habit against its target with its streak and a Log press, and a habit's page has the numbers and a chart. Logging is create_record on entry with the habit's id, at (a day alone for something done on an earlier day), and amount: what was actually done, never a difference worked out by hand, since the tracker works out what is left and over.
@@ -97,7 +98,9 @@ func (s *Service) systemPrompt() string {
 			}
 			b.WriteString("\n")
 		}
-		fmt.Fprintf(&b, "%s\n", compactJSON(c.Manifest.Props))
+		// What the server fills in itself is left out: the model is
+		// shown only what it may give.
+		fmt.Fprintf(&b, "%s\n", ForModel(c.Manifest.Props))
 	}
 	b.WriteString(s.arrangementCatalogue())
 	b.WriteString(s.actionsDigest())
@@ -178,16 +181,4 @@ func rows(blocks []*store.Record) string {
 		return "(none)"
 	}
 	return strings.Join(out, " | ")
-}
-
-func compactJSON(raw json.RawMessage) string {
-	var v any
-	if err := json.Unmarshal(raw, &v); err != nil {
-		return string(raw)
-	}
-	out, err := json.Marshal(v)
-	if err != nil {
-		return string(raw)
-	}
-	return string(out)
 }

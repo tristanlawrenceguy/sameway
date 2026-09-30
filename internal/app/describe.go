@@ -7,16 +7,36 @@ import (
 )
 
 // Parts names the sections of a Description that can be read on their own.
-var Parts = []string{"types", "components", "arrangements", "tools", "routes", "llm"}
+var Parts = []string{"types", "components", "arrangements", "tools", "routes", "llm", "index", "full"}
 
 // Part is one section of the description, or one named item in a section,
 // so an agent reads what it needs without the whole document: the fields of
 // one type before creating a record, or the routes alone. Every surface that
 // serves the description (HTTP, MCP, the command line) cuts it here, so a
 // part means the same thing everywhere.
-func (d Description) Part(part, name string) (any, error) {
-	if part == "" {
+//
+// With nothing asked it is the index, a few kilobytes; "full" is the whole
+// description, and a name without a part is looked for in every part.
+// Components come compact (the props a writer gives and one example)
+// unless full is asked, as ?full=1 does over HTTP.
+func (d Description) Part(part, name string) (any, error) { return d.part(part, name, false) }
+
+// FullPart is Part with components whole, manifest and all.
+func (d Description) FullPart(part, name string) (any, error) { return d.part(part, name, true) }
+
+func (d Description) part(part, name string, full bool) (any, error) {
+	switch {
+	case part == "" && name == "" && full, part == "full":
 		return d, nil
+	case part == "" && name == "", part == "index":
+		return d.Index(), nil
+	case part == "":
+		for _, p := range []string{"components", "types", "tools", "routes", "arrangements"} {
+			if v, err := d.part(p, name, full); err == nil {
+				return v, nil
+			}
+		}
+		return nil, fmt.Errorf("describe has no part, component, type, tool, route or arrangement named %q; the parts are %s, and the index (GET /api/describe, or describe with no arguments) names the rest", name, strings.Join(Parts, ", "))
 	}
 	var items []string
 	var found any
@@ -46,14 +66,21 @@ func (d Description) Part(part, name string) (any, error) {
 			}
 		}
 	case "components":
-		if name == "" {
+		if name == "" && full {
 			return d.Components, nil
 		}
+		var list []ComponentSummary
 		for _, c := range d.Components {
 			items = append(items, c.Name)
-			if c.Name == name {
+			list = append(list, ComponentSummary{c.Name, c.Description, c.Use})
+			if c.Name == name && full {
 				found = c
+			} else if c.Name == name {
+				found = c.Compact()
 			}
+		}
+		if name == "" {
+			return list, nil
 		}
 	case "arrangements":
 		if name == "" {

@@ -254,7 +254,7 @@ if (await disclosure.count()) {
 
 // ---- agent --------------------------------------------------------------
 
-const describe = await (await fetch(base + "/api/describe")).json();
+const describe = await (await fetch(base + "/api/describe?full=1")).json();
 const known = new Set(describe.components.map((c) => c.name));
 check(describe.types.some((t) => t.name === "note") && known.has("button"), "describe: lists types and components");
 
