@@ -187,7 +187,7 @@ func TestABlockWrittenSaysWhatItShows(t *testing.T) {
 	}{
 		{"collection", map[string]any{"type": "task", "where": []any{"done=false"}, "order": "due", "label": "Up next"}, "; it shows 3 tasks, not done, by due"},
 		{"collection", map[string]any{"type": "task", "as": "table", "label": "All"}, "; it shows 4 tasks, as a table"},
-		{"chart", map[string]any{"type": "entry", "by": "at", "period": "day", "sum": "amount", "unit": "glasses"}, "; it shows Amount of entries by At: 2 days, in glasses"},
+		{"chart", map[string]any{"type": "entry", "by": "at", "period": "day", "sum": "amount", "unit": "glasses"}, "; it shows Amount of entries by At: 2 days, 2026-09-01 to 2026-09-02, in glasses"},
 		{"chart", map[string]any{"type": "task", "by": "done"}, "; it shows How many tasks by Done: 2 groups"},
 		{"calendar", map[string]any{"type": "task"}, "; it shows 1 task by due"},
 		{"tracker", map[string]any{}, "; it shows 1 habit"},

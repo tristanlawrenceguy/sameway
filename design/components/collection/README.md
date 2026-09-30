@@ -151,6 +151,13 @@ space, and `controls: true` offers them anyway. Never in a side pane.
 - **Narrow, never widen.** The assistant's `where` is what the list is
   for; the address can only add what the form offers, so a link cannot
   make a list show what it was built to leave out.
+- **Checked for meaning when written.** Conditions that ask one field for
+  two values (status=reading and status=to read) can never all hold, so
+  the list could never show anything; it is refused with the fix, one
+  value or one list per value. A list whose conditions simply match
+  nothing now is written, since records may come (a list of books to read
+  before the first), but what it shows is said as "nothing yet: no book
+  matches ..." rather than "0 books", which a model read as done.
 - **Nothing last.** Sorted by a date, those with no date come after the
   ones with one, so "soonest first" starts with what is soonest.
 
