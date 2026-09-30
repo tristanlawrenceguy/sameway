@@ -156,8 +156,12 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	// already said, so the page says each thing once; ?show=fields brings
 	// the whole record back except for those already-in-chips fields.
 	var items []any
+	fields := rec.Fields
+	if t.Name == chat.ActivityType {
+		fields = cleanActivityFields(rec)
+	}
 	for _, f := range shownFields {
-		items = append(items, s.fieldItem(t, f, rec.Fields[f.Name], display(f, rec.Fields[f.Name])))
+		items = append(items, s.fieldItem(t, f, fields[f.Name], display(f, fields[f.Name])))
 	}
 	if len(items) > 0 {
 		b.WriteString(string(s.component("fields", map[string]any{"items": items})))
