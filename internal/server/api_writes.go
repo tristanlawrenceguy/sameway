@@ -38,7 +38,7 @@ func (s *Server) apiCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Location", "/api/"+rec.Type+"/"+rec.ID)
-	writeJSON(w, http.StatusCreated, shownRecord{s.titled(rec), shows})
+	writeJSON(w, http.StatusCreated, shownRecord{s.titled(rec), shows, s.layoutOf(r, rec)})
 }
 
 func (s *Server) apiUpdate(w http.ResponseWriter, r *http.Request) {
@@ -71,7 +71,7 @@ func (s *Server) apiUpdate(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, shownRecord{s.titled(rec), shows})
+	writeJSON(w, http.StatusOK, shownRecord{s.titled(rec), shows, s.layoutOf(r, rec)})
 }
 
 func (s *Server) apiDelete(w http.ResponseWriter, r *http.Request) {
@@ -82,11 +82,16 @@ func (s *Server) apiDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Logged with everything it had, so it can be put back.
-	if _, _, err := chat.WriteAs(s.app.Store, apiAgent(r).As(), "deleted", r.PathValue("type"), r.PathValue("id"), nil); err != nil {
+	gone, _, err := chat.WriteAs(s.app.Store, apiAgent(r).As(), "deleted", r.PathValue("type"), r.PathValue("id"), nil)
+	if err != nil {
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"deleted": r.PathValue("id")})
+	out := map[string]any{"deleted": r.PathValue("id")}
+	if layout := s.layoutOf(r, gone); layout != "" {
+		out["layout"] = layout
+	}
+	writeJSON(w, http.StatusOK, out)
 }
 
 // keptLog refuses a write to the activity log itself: it is what makes

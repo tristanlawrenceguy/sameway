@@ -30,14 +30,15 @@ const indexAbout = `Sameway is a person's own workspace: records of content type
 var indexBuild = []string{
 	`1. Find what there is: GET /api/{type} lists a type's records (?where=done=false&order=due narrows and sorts), GET /api/search?q=words searches everything, GET /api/canvas lists the tabs beside Home, GET /api/block the blocks. Use only records that exist: if the person has none, say so or ask; never make up records, and never log entries to test.`,
 	`2. Pick a component from components below; GET /api/describe/components/{name} gives the props it takes and an example to start from.`,
-	`3. Add a block: POST /api/block with {"component", "props", "canvas", "span", "position"} (block_add below). It is checked before it is written; the answer's shows says in words what the block shows. Read it.`,
-	`4. Change a block with PATCH /api/block/{id}, take it away with DELETE /api/block/{id}. GET /api/look?path=/ reads the page as a screen reader gets it.`,
+	`3. Add a block: POST /api/block with {"component", "props", "canvas", "span", "position"} (block_add below). It is checked before it is written; the answer's shows says in words what the block shows, and layout how the page reads now. Read both.`,
+	`4. Lay out the whole page, not only what you added: POST /api/arrange (block_arrange below) puts every block in reading order with its width in one change: most important first, related things together, rows of twelve filled, headings in order.`,
+	`5. Change a block with PATCH /api/block/{id}, take it away with DELETE /api/block/{id}. GET /api/look?path=/ reads the page as a screen reader gets it.`,
 	`Records: POST /api/{type} makes one (its fields: /api/describe/types/{type}), PATCH /api/{type}/{id} changes one. A page's form answers in JSON only when sent with Accept: application/json (actions below); without it the answer is a page.`,
 }
 
 // indexFirst are the routes an agent building needs, in the order it needs
 // them, said whole; the rest follow by name, in a line each.
-var indexFirst = []string{"block_add", "block_update", "block_remove", "blocks", "errors"}
+var indexFirst = []string{"block_add", "block_update", "block_arrange", "block_remove", "blocks", "errors"}
 
 // indexShort says the routes most used next in a line, where their own
 // first words would not.

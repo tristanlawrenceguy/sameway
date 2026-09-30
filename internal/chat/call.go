@@ -20,6 +20,7 @@ func (s *Service) run(call llm.ToolCall) toolResult {
 	} else {
 		r = s.runTool(call)
 	}
+	r = s.layoutAfter(call.Name, r) // see arrange.go
 	if r.change != nil {
 		// The receipt keeps the entry id, so the change can be undone from
 		// under the reply.

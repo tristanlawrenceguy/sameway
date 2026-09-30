@@ -106,6 +106,7 @@ var routeAccess = map[string]routeFor{
 	"POST /api/import/{type}":          owner,
 	"GET /api/{type}":                  people,
 	"POST /api/{type}":                 people,
+	"POST /api/arrange":                people,
 	"GET /api/{type}/{id}":             people,
 	"PUT /api/{type}/{id}":             people,
 	"PATCH /api/{type}/{id}":           people,

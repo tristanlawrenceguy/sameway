@@ -135,6 +135,7 @@ func (s *Server) routes() {
 	m.HandleFunc("POST /api/act/{id}", s.apiAct)
 	m.HandleFunc("POST /hook/{token}", s.hook)
 	m.HandleFunc("POST /api/chat", s.apiChat)
+	m.HandleFunc("POST /api/arrange", s.apiArrange)
 	m.HandleFunc("POST /api/chat/clear", s.apiChatClear)
 	m.HandleFunc("POST /api/file/upload", s.apiFileUpload)
 	m.HandleFunc("POST /api/import/{type}", s.apiImport)

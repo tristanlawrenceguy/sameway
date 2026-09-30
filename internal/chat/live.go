@@ -131,7 +131,7 @@ func describe(call llm.ToolCall) string {
 		return "Changing the shape of" + or(a(args.Type), " the content")
 	case "run_action":
 		return "Running an action"
-	case "add_arrangement":
+	case "add_arrangement", "arrange_canvas":
 		return "Arranging the page"
 	case "clear_canvas":
 		return "Clearing the page"
