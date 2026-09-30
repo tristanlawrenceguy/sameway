@@ -19,7 +19,7 @@ import (
 // an agent calling describe does not have to guess its existence.
 func TestDescribeRoutesContainsMessage(t *testing.T) {
 	_, h := newApp(t)
-	rec := get(t, h, "/api/describe")
+	rec := get(t, h, "/api/describe?full=1")
 	wantStatus(t, rec, http.StatusOK)
 	var d struct {
 		Routes map[string]string

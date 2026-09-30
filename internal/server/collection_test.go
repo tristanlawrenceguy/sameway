@@ -16,9 +16,12 @@ import (
 func TestACollectionIsTheRecordsThatMatch(t *testing.T) {
 	a, h := newApp(t)
 	day := func(d int) string { return time.Now().AddDate(0, 0, d).UTC().Format(time.RFC3339) }
+	// Shown to the minute, so the day due is taken once: worked out again
+	// later, a minute may have turned in between.
+	compost := day(2)
 	for _, task := range []map[string]any{
 		{"title": "Dig the pond", "due": day(-2)},
-		{"title": "Order compost", "due": day(2)},
+		{"title": "Order compost", "due": compost},
 		{"title": "Plant garlic", "due": day(5)},
 		{"title": "Call the dentist", "due": day(3), "done": true},
 		{"title": "Read the seed catalogue", "due": day(30)},
@@ -45,7 +48,7 @@ func TestACollectionIsTheRecordsThatMatch(t *testing.T) {
 	if strings.Index(page, "Order compost") > strings.Index(page, "Plant garlic") {
 		t.Error("the tasks come in due order")
 	}
-	if !strings.Contains(page, "Due "+when.Text(day(2))) {
+	if !strings.Contains(page, "Due "+when.Text(compost)) {
 		t.Error("each task shows the day it is due")
 	}
 

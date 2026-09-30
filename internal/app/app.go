@@ -227,10 +227,11 @@ type DescribedComponent struct {
 	Source      string `json:"source"`
 	Description string `json:"description"`
 	// Use is the thought behind the component: when it serves a person.
-	Use     *render.Use     `json:"use,omitempty"`
-	Props   json.RawMessage `json:"props"`
-	A11y    json.RawMessage `json:"a11y,omitempty"`
-	Machine json.RawMessage `json:"machine,omitempty"`
+	Use      *render.Use      `json:"use,omitempty"`
+	Props    json.RawMessage  `json:"props"`
+	A11y     json.RawMessage  `json:"a11y,omitempty"`
+	Machine  json.RawMessage  `json:"machine,omitempty"`
+	Examples []render.Example `json:"examples,omitempty"`
 }
 
 // Describe builds the description from live state.
@@ -239,8 +240,8 @@ func (a *App) Describe() Description {
 		Workspace: a.Workspace.Config.Name,
 		Dir:       a.Workspace.Dir,
 		LLM:       DescribedLLM{Provider: a.Workspace.Config.LLM.Provider, Model: a.Workspace.Config.LLM.Model, Ready: a.Chat.Provider != nil},
-		Routes: map[string]string{
-			"describe":         "GET /api/describe; one part: GET /api/describe/{types|components|arrangements|tools|routes|llm}; one item: GET /api/describe/types/{name}, likewise components and tools",
+		Routes: withBuild(map[string]string{
+			"describe":         "GET /api/describe is the index: how to build, the routes, the components and types in a line each. One part: GET /api/describe/{types|components|arrangements|tools|routes|llm}; one item: GET /api/describe/types/{name}, likewise components (props and an example), tools and routes. Everything at once: GET /api/describe?full=1",
 			"list":             "GET /api/{type}; ?where=<condition> (repeatable) and ?order=<field|-field> take the same query a collection block does: status=draft, due<=+7d, title~garden, tags=health, notes= (empty); dates today, tomorrow, +7d, -1w, 2026-10-01. The list page /t/{type} takes the same ?where= and ?order=. &page=<n> gives one page (limit records, 50 when not said) with total, pages and next; without it, all of them. &fields=title,status on a list or a record gives only those fields, a name it does not have refused with the ones it has",
 			"create":           "POST /api/{type} with a JSON object of fields",
 			"import":           "POST /api/import/{type} with {\"file\": <id of a file record>, \"mapping\": {column: field}} makes records from a CSV, a vCard or a mailbox the person added (upload first with POST /api/file/upload); the answer says how many were made, skipped and linked to people",
@@ -267,16 +268,15 @@ func (a *App) Describe() Description {
 			"export":           "GET /export/{type}.{csv|xlsx|vcf|ics} is a list as a file to keep, taking the list page's ?where= and ?order= (vcf for people, ics for anything with a date); GET /export/{type}/{id}.{md|html|docx|pdf} is one record as a document, and .ics or .vcf when it is a calendar entry or a contact; GET /export/all.ics is everything with a day as one calendar; GET /export/workspace.zip (the owner's) is the whole workspace: content/, files/ and a spreadsheet of each kind. Each answers with Content-Disposition: attachment. Pages offer them with the export component; hand a person the address rather than the file",
 			"content":          "content/<type>/<id>.md in the workspace is every record as Markdown with front matter, written as it changes; share the folder with git. sameway import reads it back after a pull, sameway export rewrites it",
 			"html_props":       "POST /t/{type}/{id}/props, form-encoded with each field named prop-<field>: the inline editor's route, which answers with the page rather than JSON. A field named html-<field> is the rich editor's HTML, turned into Markdown on the way in, with level-<field> the heading level it was shown at",
-			"mcp_http":         "POST /mcp: the MCP server over HTTP, one JSON-RPC message or a batch per request, for a client elsewhere; needs Authorization: Bearer <token>, the token being the environment variable named by mcp.token_env in workspace.yaml (SAMEWAY_MCP_TOKEN), and is off without it. The same server over stdio is `sameway mcp`; `sameway connect <tool>` writes the configuration for a local client",
+			"mcp_http":         "POST /mcp: the MCP server over HTTP, one JSON-RPC message or a batch per request, for a client elsewhere. Send Authorization: Bearer <key>: an agent key the owner made with sameway agent add <name> --access view|edit|owner, or the workspace token named by mcp.token_env in workspace.yaml (SAMEWAY_MCP_TOKEN) when one is set; someone Tailscale says the workspace let in needs neither. The same server over stdio is `sameway mcp`; `sameway connect <tool>` writes the configuration for a local client",
 			"types":            "POST /api/types with {name, description, title, fields: [{name, type, description, values, to, required, default}]} makes a content type while the workspace runs: its schema file, its table, its pages; POST /api/types/{type}/fields with one field adds a property to a type and answers the type with existing, what the records it already had now hold in it (\"3 existing tasks get priority empty\"). The assistant has the same as add_type and add_field",
 			"prose":            "POST /api/prose with {\"markdown\": \"...\", \"level\": 3} gives {\"html\"}: the page's rendering of that Markdown; with {\"html\": \"...\", \"level\": 3} gives {\"markdown\"}: the same words back as Markdown, headings at the level the source had",
 			"canvas_props":     "POST /canvas/{block-id}/props, the same form for a block on the canvas: prop-label=Up next renames a collection (prop-caption a calendar or chart). A post with no prop- field is refused (400), not ignored. POST /canvas/{block-id}/keep with the collection's c-<block>-<choice> fields from its Show and sort form keeps those choices as the block's where and order",
 			"css":              "GET /design/sameway.css",
-			"canvas_blocks":    "GET /api/block",
 			"proposal_accept":  "POST /proposal/{id}/accept with from=<path to return to>: accepts a pending proposal so the assistant's change goes through; after accepting the person is returned to the page they were on",
 			"proposal_dismiss": "POST /proposal/{id}/dismiss with from=<path to return to>: rejects a pending proposal and does not make any changes; after dismissing the person is returned to the page they were on",
 			"message":          "GET /api/message",
-		},
+		}),
 	}
 	if a.Chat.ProviderErr != nil {
 		d.LLM.Problem = a.Chat.ProviderErr.Error()
@@ -286,7 +286,7 @@ func (a *App) Describe() Description {
 		d.Types = append(d.Types, DescribedType{Name: t.Name, Description: t.Description, Internal: t.Internal, Title: t.Title, Fields: t.Fields, Schema: t.JSONSchema(), Count: n})
 	}
 	for _, c := range a.Registry.Components() {
-		d.Components = append(d.Components, DescribedComponent{Name: c.Manifest.Name, Source: c.Source, Description: c.Manifest.Description, Use: c.Manifest.Use, Props: c.Manifest.Props, A11y: c.Manifest.A11y, Machine: c.Manifest.Machine})
+		d.Components = append(d.Components, DescribedComponent{Name: c.Manifest.Name, Source: c.Source, Description: c.Manifest.Description, Use: c.Manifest.Use, Props: c.Manifest.Props, A11y: c.Manifest.A11y, Machine: c.Manifest.Machine, Examples: c.Manifest.Examples})
 	}
 	d.Arrangements = a.Registry.Arrangements()
 	for _, t := range a.Chat.Tools() {

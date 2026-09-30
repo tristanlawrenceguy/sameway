@@ -193,8 +193,12 @@ func (s *Service) contentCatalogue() string {
 	var b strings.Builder
 	b.WriteString("\nContent types (name: description, then fields schema). A record of one of these is what the person finds on its page at /t/<type>; make it with create_record, never as a card on the canvas:\n")
 	for _, t := range types {
-		raw, _ := json.Marshal(t.JSONSchema())
-		fmt.Fprintf(&b, "\n%s: %s\n%s\n", t.Name, t.Description, raw)
+		// The description is said once, beside the name, and what the
+		// system keeps is left out of what the model is asked to write.
+		schema := t.JSONSchema()
+		delete(schema, "description")
+		raw, _ := json.Marshal(schema)
+		fmt.Fprintf(&b, "\n%s: %s\n%s\n", t.Name, t.Description, ForModel(raw))
 	}
 	return b.String()
 }

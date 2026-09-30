@@ -115,13 +115,13 @@ func TestAnAgentDrivesTheWorkspaceOverMCP(t *testing.T) {
 		t.Error("ping answers with an empty result")
 	}
 
-	// Reading: get_record returns the whole record, describe the whole workspace.
+	// Reading: get_record returns the whole record, describe the index.
 	_, more := drive(t,
 		`{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"describe","arguments":{}}}`,
 		`{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"get_record","arguments":{"type":"note","id":"nope"}}}`,
 	)
-	if described, isErr := text(t, more[0]); isErr || !strings.Contains(described, `"tools"`) || !strings.Contains(described, `"mcp"`) {
-		t.Errorf("describe over MCP should carry the tools and the mcp route: err=%v", isErr)
+	if described, isErr := text(t, more[0]); isErr || !strings.Contains(described, "/api/describe/tools") || !strings.Contains(described, "mcp_http: ") {
+		t.Errorf("describe over MCP should point at the tools and carry the mcp route: err=%v", isErr)
 	}
 	if msg, isErr := text(t, more[1]); !isErr || !strings.Contains(msg, "find_records") {
 		t.Errorf("a missing record is a tool error that says what to do: %q", msg)

@@ -23,12 +23,12 @@ type tool struct {
 // through its prompt and an agent cannot, and then the assistant's own list.
 func (s *Server) tools() []tool {
 	out := []tool{
-		{Name: "describe", Description: "Everything about this workspace: content types with their field schemas, components with their manifests, the assistant's tools, and every route. Call it first. Give part to read one section, and name for one item in it: part types, name note is the fields of a note.",
+		{Name: "describe", Description: "Call it first. With no arguments, the index: what this workspace is, how to build a page (find records, pick a component, add a block), the routes, and a line for each component and content type. name alone reads one thing: name meter is the meter component's props with an example, name task the fields of a task. part reads one section (part components is every component in a line); part full is everything, too big for most clients.",
 			InputSchema: map[string]any{
 				"type": "object",
 				"properties": map[string]any{
-					"part": map[string]any{"type": "string", "enum": app.Parts, "description": "One section of the description, or omit for all of it."},
-					"name": map[string]any{"type": "string", "description": "One item in that section: a type, component or tool name, or a route key."},
+					"part": map[string]any{"type": "string", "enum": app.Parts, "description": "One section of the description; omit for the index, or with name to look in every section."},
+					"name": map[string]any{"type": "string", "description": "One item: a component, type or tool name, or a route key such as block_add."},
 				},
 				"additionalProperties": false,
 			}},
@@ -79,7 +79,7 @@ func (s *Server) call(ctx context.Context, svc *chat.Service, name string, args 
 		}
 		if len(args) > 0 {
 			if err := json.Unmarshal(args, &a); err != nil {
-				return "arguments were not valid JSON: " + err.Error(), true
+				return chat.ArgsTrouble(err), true
 			}
 		}
 		v, err := s.App.Describe().Part(a.Part, a.Name)

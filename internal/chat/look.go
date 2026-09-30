@@ -52,7 +52,7 @@ func (s *Service) lookAtPage(raw json.RawMessage) toolResult {
 	var ask map[string]any
 	if len(raw) > 0 {
 		if err := json.Unmarshal(raw, &ask); err != nil {
-			return fail("arguments were not valid JSON: %v", err)
+			return fail("%s", ArgsTrouble(err))
 		}
 	}
 	if ask == nil {
