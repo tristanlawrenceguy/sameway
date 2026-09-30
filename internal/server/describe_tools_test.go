@@ -10,7 +10,7 @@ import (
 // tool added to the chat service is on /api/describe the same moment.
 func TestDescribeListsTheAssistantTools(t *testing.T) {
 	_, h := newApp(t)
-	rec := get(t, h, "/api/describe")
+	rec := get(t, h, "/api/describe?full=1")
 	wantStatus(t, rec, http.StatusOK)
 	var d struct {
 		Tools []struct {

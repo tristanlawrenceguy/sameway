@@ -47,7 +47,7 @@ runner in tools/a11y-runner.
 | Chrome that is faded but still available | quiet layer stays in the DOM, tab order, and accessibility tree; compact labels keep full accessible names; the log is collapsed but never lost | `internal/server/quiet_test.go` |
 | Model lays out and restyles the canvas | span, position, chat as a removable block | `internal/chat/layout_test.go` |
 | Person uses the HTML pages | landmarks, skip links, one h1, forms, 422 with linked errors, chat transcript, canvas removal | `internal/server/pages_test.go`, `api_test.go` |
-| Agent uses the JSON API | describe completeness, CRUD, stable error shapes, chat builds the canvas | `internal/server/api_test.go` |
+| Agent uses the JSON API | describe is a short index that says how to build (POST /api/block first) with the rest by part or ?full=1, describe completeness, CRUD, stable error shapes, chat builds the canvas | `internal/server/api_test.go`, `describe_index_test.go` |
 | Agent does what a page does | every POST a form uses answers `Accept: application/json` with the outcome a person reads, never a page; a JSON body is the form; a chat turn carries a file by id | `internal/server/agents_test.go` |
 | One name, one sentence, one write | a record is named by chat.Name and a change said by chat.Sentence on every surface, old stored words included; records are written through chat.WriteAs from every way in, and a new direct store write fails until it says why | `internal/server/one_voice_test.go`, `writes_test.go` |
 | The assistant can do what a page does | every page action names the tool that does the same, or says why it is a person's ("a person's: …") or what is missing ("not yet: …") | `internal/server/tools_parity_test.go` |
@@ -163,7 +163,7 @@ with `--strict` until its fix lands; `review` and `not yet` are yours to hold.
 | 15 | Every MCP tool titled and annotated; read-only ones proved so by a store diff | not yet |
 | 16 | Every error is `isError` with the next step and the valid choices | go `internal/mcp/*_test.go` (partly) |
 | 17 | List rows can be told apart and are paged | pages: agent, go; tool results not yet |
-| 18 | `describe` has a small index under a budget | not yet |
+| 18 | `describe` has a small index under a budget | go `describe_index_test.go` (16 KB, block routes first), `internal/mcp/describe_size_test.go` (nothing but full past a client's limit), `prompt_budget_test.go` (the in-app prompt at 113 KB) |
 | | **Trust** | |
 | 19 | MCP and API writes are logged with the agent's name | not yet |
 | 20 | Record text reaches outside agents marked as content, with who wrote it | not yet |

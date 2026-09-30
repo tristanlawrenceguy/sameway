@@ -1,15 +1,15 @@
 {
   "name": "trip",
-  "description": "A trip in one place: the dates, what to pack, what to book.",
+  "description": "A trip in one place: the events coming up, and two lists of tasks that get shorter as they are done: what to pack (tagged packing) and what to book (tagged booking).",
   "use": {
     "when": "the person is planning a journey or a stay away: they need the dates in view and two short lists that get shorter.",
-    "not": "a single appointment, which is a calendar block, or a packing list on its own, which is a list.",
-    "with": "the dates as event records, so bookings have their own pages."
+    "not": "a single appointment, which is a calendar block, or a packing list on its own, which is a collection of tasks.",
+    "with": "the dates as event records and each thing to pack or book as a task tagged packing or booking, made with create_record from what the person says."
   },
   "blocks": [
     { "key": "title", "component": "heading", "props": { "text": "The trip", "level": 2 }, "span": 12, "frame": "bare" },
-    { "key": "dates", "component": "calendar", "props": { "month": "2026-09", "detail": "full", "caption": "Trip dates" }, "span": 12 },
-    { "key": "pack", "component": "list", "props": { "items": ["Passport", "Charger", "Walking shoes"], "label": "To pack", "level": 3 }, "span": 6 },
-    { "key": "book", "component": "list", "props": { "items": ["Train", "Hotel", "Dinner on the first night"], "label": "To book", "level": 3 }, "span": 6 }
+    { "key": "dates", "component": "calendar", "props": { "type": "event", "detail": "full", "caption": "Trip dates" }, "span": 12 },
+    { "key": "pack", "component": "collection", "props": { "type": "task", "where": ["tags=packing", "done=false"], "order": "title", "label": "To pack" }, "span": 6 },
+    { "key": "book", "component": "collection", "props": { "type": "task", "where": ["tags=booking", "done=false"], "order": "due", "show": ["due"], "label": "To book" }, "span": 6 }
   ]
 }

@@ -81,9 +81,9 @@ func writeRPC(w http.ResponseWriter, status int, out []response, batch bool) {
 
 // Bearer wraps the HTTP server with the token the workspace names: a
 // request without it is refused with a sentence saying what to send.
-// Over the tailnet, Tailscale has already said who is asking and the
-// workspace has let them in, so no token is asked of them. Otherwise,
-// without a token there is no HTTP MCP at all.
+// An agent with a key of its own (sameway agent add), and someone
+// Tailscale says the workspace let in, have already been told apart, so no
+// token is asked of them. Otherwise, without a token there is no HTTP MCP.
 func Bearer(token string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if fromTailnet(r) {
@@ -91,13 +91,13 @@ func Bearer(token string, next http.Handler) http.Handler {
 			return
 		}
 		if token == "" {
-			http.Error(w, "MCP over HTTP is off: set the environment variable named by mcp.token_env in workspace.yaml (SAMEWAY_MCP_TOKEN by default) and start sameway again", http.StatusForbidden)
+			http.Error(w, "MCP over HTTP needs a key: send Authorization: Bearer <key>, a key the owner makes with sameway agent add <name>; or set the environment variable named by mcp.token_env in workspace.yaml (SAMEWAY_MCP_TOKEN by default) and start sameway again", http.StatusForbidden)
 			return
 		}
 		got := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
 		if got != token {
 			w.Header().Set("WWW-Authenticate", `Bearer realm="sameway"`)
-			http.Error(w, "send the workspace's MCP token as Authorization: Bearer <token>", http.StatusUnauthorized)
+			http.Error(w, "send an agent key (sameway agent add <name>) or the workspace's MCP token as Authorization: Bearer <key>", http.StatusUnauthorized)
 			return
 		}
 		next.ServeHTTP(w, r)

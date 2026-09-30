@@ -1,15 +1,15 @@
 {
   "name": "week",
-  "description": "A week planned: what is on, what is to do, and room for notes.",
+  "description": "The week from the person's own records: what is coming up, the tasks due in the next seven days, and the habits being kept up.",
   "use": {
-    "when": "the person wants to plan or see their week: appointments, things to do, a few notes.",
-    "not": "a single event, which is a calendar block, or a plain list of tasks with no dates, which is a list.",
-    "with": "events as records, so each is on its own page too."
+    "when": "the person wants to plan or see their week: appointments, things to do, what they keep up.",
+    "not": "a single event, which is a calendar block, or a plain list of tasks with no dates, which is a collection of tasks.",
+    "with": "the events and tasks as records, made with create_record from what the person says, so each is on its own page too and shows here."
   },
   "blocks": [
     { "key": "title", "component": "heading", "props": { "text": "This week", "level": 2 }, "span": 12, "frame": "bare" },
-    { "key": "calendar", "component": "calendar", "props": { "month": "2026-09", "detail": "brief", "caption": "This week" }, "region": "right" },
-    { "key": "todo", "component": "list", "props": { "items": ["Book the dentist", "Call the plumber", "Send the invoice"], "label": "To do", "level": 3 }, "span": 8 },
-    { "key": "notes", "component": "text", "props": { "content": "Notes for the week go here.", "muted": true }, "span": 4, "frame": "bare" }
+    { "key": "calendar", "component": "calendar", "props": { "type": "event", "detail": "brief", "caption": "Coming up" }, "region": "right" },
+    { "key": "todo", "component": "collection", "props": { "type": "task", "where": ["done=false", "due<=+7d"], "order": "due", "show": ["due"], "label": "To do this week" }, "span": 8 },
+    { "key": "habits", "component": "tracker", "props": { "label": "Keeping up" }, "span": 4 }
   ]
 }

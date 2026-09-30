@@ -31,7 +31,7 @@ func (s *Service) BlockFields(in map[string]any) map[string]any {
 // tool added or changed shows up on every surface at once.
 func (s *Service) allTools() []llm.Tool {
 	return append([]llm.Tool{
-		{Name: "add_component", Description: "Add a component to the canvas the person is looking at. Props must match the component's props schema from the catalogue. Returns the new block id and what it shows; a block that could not be shown (a type, field, date field, condition or tag the workspace does not have) is not added, and the error says why and what to do instead.",
+		{Name: "add_component", Description: "Add a component to the canvas the person is looking at. Props must match the component's props schema from the catalogue. Returns the new block id and what it shows; read it: \"nothing yet\" means it shows no records now. A block that could not be shown (a type, field, date field, condition or tag the workspace does not have, one field asked for two values, a chart by a date with no period) is not added, and the error says why and what to do instead.",
 			Schema: obj(map[string]any{
 				"component": map[string]any{"type": "string", "description": "Component name from the catalogue."},
 				"props":     map[string]any{"type": "object", "description": "Props matching the component's schema."},
@@ -122,7 +122,7 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 	}
 	if len(call.Args) > 0 {
 		if err := json.Unmarshal(call.Args, &args); err != nil {
-			return fail("arguments were not valid JSON: %v", err)
+			return fail("%s", ArgsTrouble(err))
 		}
 	}
 	switch call.Name {

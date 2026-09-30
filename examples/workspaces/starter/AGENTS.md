@@ -21,14 +21,21 @@ is not known on later requests; an `X-Sameway-Agent: <name>` header names
 you on every request instead. Blocks you place say "Added by <name>".
 
 A client elsewhere reaches the same server at `POST /mcp` once `sameway serve`
-is running and the environment variable named by `mcp.token_env` in
-`workspace.yaml` (`SAMEWAY_MCP_TOKEN` by default) is set; send it as
-`Authorization: Bearer <token>`.
+is running, with a key of its own: the owner runs
+`sameway agent add <name> --access view|edit|owner`, which shows the key once,
+and you send it as `Authorization: Bearer sw_...`. The token named by
+`mcp.token_env` in `workspace.yaml` (`SAMEWAY_MCP_TOKEN`) works too, when set.
 
 ## The API and the command line
 
-`GET /api/describe` says everything: types with their fields, components with
-their props, the assistant's tools, every route. `GET /api/<type>`,
+`GET /api/describe` is the index: how to build, the routes, and a line for
+each component and type; `/api/describe/components/<name>` is one
+component's props with an example, `?full=1` everything. To build a page,
+find the records (`GET /api/<type>`), then `POST /api/block` with
+`{"component", "props", "canvas", "span", "position"}`: it is checked before it
+is written, and the answer's `shows` says what the block shows.
+`PATCH /api/block/<id>` changes it, `DELETE` takes it away. Build from records
+that exist; never make up records to have something to show. `GET /api/<type>`,
 `POST /api/<type>`, `PUT /api/<type>/<id>` and `DELETE` do what they say;
 `?where=done=false&where=due<=+7d&order=due` picks records the way a
 collection block does. What you write through the API is logged as an
