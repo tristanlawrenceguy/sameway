@@ -85,20 +85,20 @@ func (s *Server) apiProse(w http.ResponseWriter, r *http.Request) {
 		Level    int     `json:"level"`
 	}
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&in); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "send JSON with markdown or html, and level"})
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": apiError{Code: "bad_request", Message: "send JSON with markdown or html, and level"}})
 		return
 	}
 	switch {
 	case in.HTML != nil:
 		md, err := fromHTML(*in.HTML, in.Level)
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]any{"error": err.Error()})
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": apiError{Code: "bad_request", Message: err.Error()}})
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"markdown": md})
 	case in.Markdown != nil:
 		writeJSON(w, http.StatusOK, map[string]any{"html": string(prose.Render(*in.Markdown, in.Level))})
 	default:
-		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "send markdown or html"})
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": apiError{Code: "bad_request", Message: "send markdown or html"}})
 	}
 }

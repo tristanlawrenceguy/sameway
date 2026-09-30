@@ -8,6 +8,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
+	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
 // ActivityType is the content type that logs every canvas change.
@@ -96,14 +97,20 @@ func Record(st *store.Store, actor string, c Change) string {
 	return rec.ID
 }
 
-// isSettingChange reports whether the change is a setting-change entry,
-// identified by action "set" and a component that looks like a dotted path
-// (ui.*, llm.*, etc.).
+// isSettingChange reports whether the change is a setting-change entry:
+// action "set" on any line of workspace.yaml the settings table has, so
+// publishing, notifications and the rest are said in words as the pace
+// and the text size always were.
 func isSettingChange(c Change) bool {
 	if c.Action != "set" || c.Component == "" || c.Detail == "" {
 		return false
 	}
-	return strings.HasPrefix(c.Component, "ui.") || strings.HasPrefix(c.Component, "llm.")
+	for _, st := range workspace.Settings {
+		if st.Key == c.Component {
+			return true
+		}
+	}
+	return false
 }
 
 // settingSummary produces a human-readable summary for a setting change:
@@ -120,7 +127,7 @@ func settingPhrase(key, value string) string {
 
 // oldSetting is a setting change as the log wrote it before it spoke in
 // words: "You set ui.text large".
-var oldSetting = regexp.MustCompile(`^(.+?) set ((?:ui|llm)\.[a-z_.]+) ([^\s,]+)(.*)$`)
+var oldSetting = regexp.MustCompile(`^(.+?) set ([a-z_]+\.[a-z_.]+) ([^\s,]+)(.*)$`)
 
 // CleanSummary says a stored summary in words when it was written in keys,
 // so entries logged before setting names existed read like the rest: "You

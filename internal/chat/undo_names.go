@@ -3,6 +3,8 @@ package chat
 import (
 	"regexp"
 	"strings"
+
+	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
 // alreadyHumanized matches an already-humanized setting change summary:
@@ -11,16 +13,6 @@ import (
 // property name (label or description fragment), third is the value, fourth
 // is any trailing text.
 var alreadyHumanized = regexp.MustCompile(`^(.+?) changed (.+?) to ([A-Z].*)(.*)$`)
-
-// descPrefixToKey maps the beginning of a setting's doc to its key, so raw
-// descriptions stored in older summaries map back to setting keys for display.
-var descPrefixToKey = map[string]string{
-	"room between lines":                         "ui.spacing",
-	"how large the words are":                    "ui.text",
-	"how changes arrive":                         "ui.pace",
-	"auto fades per-item controls until hovered": "ui.controls",
-	"lists shown on pages":                       "ui.lists",
-}
 
 // cleanHumanized rewrites an already-humanized setting change summary back to
 // the standard format, so description fragments and label names resolve to
@@ -43,31 +35,26 @@ func cleanHumanized(s string) string {
 	return s
 }
 
-// lookupKey maps a property name back to its setting key. It first checks
-// known labels from settingNames (lowercased), then description prefixes at
-// the start of the string, and finally as a substring for cases like
-// "Pace — how changes arrive" where an em-dash separator follows the label.
+// lookupKey maps what an older summary called a setting back to its key:
+// its label ("text size"), or the start of what the setting says it is
+// ("how changes arrive", "pace — how changes arrive"). Both come from the
+// settings themselves (workspace.Settings, workspace.SettingLabel), so a
+// setting renamed or added is found without a list here to keep in step.
 func lookupKey(prop string) string {
-	if key, ok := labelToKey[prop]; ok {
-		return key
+	prop = strings.ToLower(strings.TrimSpace(prop))
+	for _, st := range workspace.Settings {
+		if strings.ToLower(workspace.SettingLabel(st.Key)) == prop {
+			return st.Key
+		}
 	}
-	for prefix, key := range descPrefixToKey {
-		if strings.HasPrefix(prop, prefix) || strings.Contains(prop, " — "+prefix) {
-			return key
+	for _, st := range workspace.Settings {
+		doc := strings.ToLower(st.Doc)
+		if i := strings.IndexAny(doc, ":;,"); i > 0 {
+			doc = doc[:i]
+		}
+		if doc != "" && (strings.HasPrefix(prop, doc) || strings.Contains(prop, "— "+doc) || strings.HasPrefix(doc, prop)) {
+			return st.Key
 		}
 	}
 	return ""
-}
-
-// labelToKey maps lowercased setting labels to their keys.
-var labelToKey = map[string]string{
-	"text size":       "ui.text",
-	"spacing":         "ui.spacing",
-	"pace":            "ui.pace",
-	"item buttons":    "ui.controls",
-	"lists shown":     "ui.lists",
-	"developer pages": "ui.developer",
-	"language":        "ui.language",
-	"model provider":  "llm.provider",
-	"model":           "llm.model",
 }

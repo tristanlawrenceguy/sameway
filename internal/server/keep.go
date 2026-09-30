@@ -28,8 +28,11 @@ const maxFile = 4 << 30
 const maxRead = 64 << 20
 
 // keepFile makes a file's record and streams src into the files folder
-// under it. The record says converting until the file is read.
-func (s *Server) keepFile(src io.Reader, name, title, description string) (*store.Record, string, error) {
+// under it, and logs it as added by who: one place for the page's upload,
+// the API and the command line, which each logged it their own way (the
+// API as a person, though an agent sent it). The record says converting
+// until the file is read.
+func (s *Server) keepFile(who chat.Who, src io.Reader, name, title, description string) (*store.Record, string, error) {
 	if _, ok := s.app.Types.Get(FileType); !ok {
 		return nil, "", errors.New("this workspace has no file type; run sameway init --force to add it")
 	}
@@ -80,7 +83,12 @@ func (s *Server) keepFile(src io.Reader, name, title, description string) (*stor
 		return nil, "", fmt.Errorf("could not keep the file: %w", err)
 	}
 	rec, err = s.app.Store.Update(FileType, rec.ID, map[string]any{"path": stored, "size": n})
-	return rec, path, err
+	if err != nil {
+		return rec, path, err
+	}
+	chat.Record(s.app.Store, who.Actor, chat.Change{Action: "added", Component: FileType, ID: rec.ID, Detail: title,
+		Href: "/t/" + FileType + "/" + rec.ID, By: who.By, Via: who.Via, ByLogin: who.ByLogin})
+	return rec, path, nil
 }
 
 // readKept reads a kept file into its record: by the workspace's converter
@@ -120,12 +128,10 @@ func (s *Server) readKept(id, name, path string, wait bool) {
 // through the command line, and reads it before it returns: the command
 // line's way to add a file already on this computer without a browser.
 func (s *Server) AddFile(ctx context.Context, src io.Reader, name, title string) (*store.Record, error) {
-	rec, path, err := s.keepFile(src, name, title, "")
+	rec, path, err := s.keepFile(chat.Who{Actor: "human", Via: chat.ThroughCLI}, src, name, title, "")
 	if err != nil {
 		return nil, err
 	}
-	t, _ := rec.Fields["title"].(string)
-	chat.Record(s.app.Store, "human", chat.Change{Action: "added", Component: FileType, ID: rec.ID, Detail: t, Href: "/t/" + FileType + "/" + rec.ID, Via: chat.ThroughCLI})
 	s.readKept(rec.ID, name, path, true)
 	return s.app.Store.Get(FileType, rec.ID)
 }

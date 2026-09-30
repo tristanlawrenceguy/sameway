@@ -72,12 +72,10 @@ func (s *Server) storeUpload(r *http.Request) (*store.Record, error) {
 		return nil, err
 	}
 	defer part.Close()
-	rec, path, err := s.keepFile(part, header.Filename, r.FormValue("title"), r.FormValue("description"))
+	rec, path, err := s.keepFile(s.who(r), part, header.Filename, r.FormValue("title"), r.FormValue("description"))
 	if err != nil {
 		return nil, err
 	}
-	title, _ := rec.Fields["title"].(string)
-	s.record(r, chat.Change{Action: "added", Component: FileType, ID: rec.ID, Detail: title, Href: "/t/" + FileType + "/" + rec.ID})
 	s.readKept(rec.ID, filepath.Base(header.Filename), path, false)
 	return s.app.Store.Get(FileType, rec.ID)
 }
