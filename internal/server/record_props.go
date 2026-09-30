@@ -52,9 +52,9 @@ func (s *Server) recordProps(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// No fields provided — nothing to say.
+	// No fields named as the form names them: said, not passed over.
 	if len(fields) == 0 {
-		http.Redirect(w, r, returnTo(r, detail), http.StatusSeeOther)
+		s.nothingEdited(w, r, func(n string) bool { _, ok := t.Field(n); return ok }, returnTo(r, detail))
 		return
 	}
 

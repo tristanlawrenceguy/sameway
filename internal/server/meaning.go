@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/query"
@@ -101,7 +102,7 @@ func everyKind(events []any) string {
 	var kinds []string
 	for _, e := range events {
 		ev, _ := e.(map[string]any)
-		kind, _ := ev["meta"].(string)
+		kind, _ := ev["kind"].(string) // the type's name, as everyEvent sets it
 		if kind == "" {
 			kind = "other"
 		}
@@ -121,7 +122,14 @@ func everyKind(events []any) string {
 	}
 	out += ": " + strings.Join(parts, ", ")
 	if top := kinds[0]; counts[top]*2 > len(events) {
-		out += fmt.Sprintf("; mostly %s, which crowd out the rest: a calendar of one type (type: %s) shows only that type", plural(top), strings.ReplaceAll(kinds[1], " ", "_"))
+		// The kinds it buries, named as types takes them.
+		rest := make([]string, 0, len(kinds)-1)
+		for _, k := range kinds[1:] {
+			if k != "other" {
+				rest = append(rest, strconv.Quote(k))
+			}
+		}
+		out += fmt.Sprintf("; mostly %s, which crowd out the rest: a calendar of only the kinds wanted (types: [%s]) leaves them out", plural(top), strings.Join(rest, ", "))
 	}
 	return out
 }

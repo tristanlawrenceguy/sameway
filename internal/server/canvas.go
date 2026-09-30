@@ -70,9 +70,6 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 		b.WriteString(`<div class="sw-activity">` + string(convo.Activity) + `</div>`)
 	}
 	opts := pageOptions{JSONURL: "/api/block"}
-	if convo.LatestID != "" {
-		opts.Focus, opts.FocusLabel = convo.LatestID, "Skip to latest message"
-	}
 	// The canvas is an application whether or not it has panes, so it keeps
 	// the whole width and the same shape as panes come and go. Once it holds
 	// anything, what is on it is the title; "Canvas" stays in the outline.
@@ -82,6 +79,7 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 	opts.Right = s.pane("right", paneLabel("Right pane", right), right, convo)
 	opts.Header = s.strip("header", reg.header, convo)
 	opts.Footer = s.strip("footer", reg.footer, convo)
+	skipToLatest(&opts, convo.LatestID, b.String())
 	s.page(w, r, s.tabName(canvas), template.HTML(b.String()), opts)
 }
 
@@ -206,7 +204,7 @@ func (s *Server) canvasBlock(b *store.Record, convo *conversation) canvasBlock {
 		Frame: str(b.Fields["frame"], "card"), Tone: str(b.Fields["tone"], "none"),
 		Size: str(b.Fields["size"], "full"), Label: label, Icon: icon,
 		Provenance: provenance, Editing: editing,
-		HTML: s.component(name, props) + s.recordEditFields(name, props),
+		HTML: s.component(name, props) + s.recordEditFields(name, props) + nameEdit(name, props, convo),
 		Expand: s.component("link", map[string]any{
 			"href": "/canvas/" + b.ID, "label": "Expand", "context": label,
 			"current": convo != nil && convo.FocusID == b.ID,

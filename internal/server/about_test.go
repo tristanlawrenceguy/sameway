@@ -94,13 +94,13 @@ func TestThingsKnowWhatTheyAreAbout(t *testing.T) {
 	told = nil
 	mu.Unlock()
 
-	// The calendar shows everything with a day, each saying what it is.
+	// The calendar shows everything with a day, each carrying its kind.
 	day := get(t, h, "/canvas/"+cal.ID+"?day="+tomorrow.Format("2006-01-02")).Body.String()
-	if !strings.Contains(day, `href="`+taskPath+`"`) || !strings.Contains(day, `<span class="sw-calendar__meta">task</span>`) {
-		t.Errorf("a calendar of type all has the task on its day, saying it is a task\n%s", day)
+	if !strings.Contains(day, `href="`+taskPath+`"`) || !strings.Contains(day, `data-kind="task"`) {
+		t.Errorf("a calendar of type all has the task on its day, with its kind\n%s", day)
 	}
 	today := get(t, h, "/canvas/"+cal.ID+"?day="+now.Format("2006-01-02")).Body.String()
-	if !strings.Contains(today, `href="/t/reminder/`+reminders[0].ID+`"`) || !strings.Contains(today, `<span class="sw-calendar__meta">reminder</span>`) {
+	if !strings.Contains(today, `href="/t/reminder/`+reminders[0].ID+`"`) || !strings.Contains(today, `data-kind="reminder"`) {
 		t.Errorf("and the reminder on its day\n%s", today)
 	}
 

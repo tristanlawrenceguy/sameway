@@ -46,7 +46,7 @@ func (s *Server) blockProps(w http.ResponseWriter, r *http.Request) {
 		props[k] = v
 	}
 	if len(edited) == 0 {
-		http.Redirect(w, r, backOf(r, "/"), http.StatusSeeOther)
+		s.nothingEdited(w, r, comp.HasProp, "/")
 		return
 	}
 

@@ -50,8 +50,10 @@ func (s *Server) repeatedIn(t *schema.Type, rec *store.Record, field string, ev 
 		}
 		delete(later, "actions")
 		later["repeats"] = said
-		if meta, ok := ev["meta"]; ok {
-			later["meta"] = meta
+		for _, k := range []string{"meta", "kind"} {
+			if v, ok := ev[k]; ok {
+				later[k] = v
+			}
 		}
 		out = append(out, later)
 	}

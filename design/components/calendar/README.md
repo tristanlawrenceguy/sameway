@@ -22,11 +22,23 @@ each with `repeats` in words, "Repeats every Tuesday"; only the day it is
 due now carries its actions.
 
 With `type: all` the calendar shows everything with a day together,
-from every listed type: tasks due, reminders, entries logged, each
-event saying what kind it is. A record's page links to its day on the
-first calendar on the canvas, as See that day.
+from every listed type: tasks due, reminders, entries logged. That can
+be a lot: a habit logged every day puts an entry on every day. To show
+some kinds together, name them: `types: ["task", "reminder"]` is tasks
+due and reminders, and nothing else, each on the days of its type's
+first date field (`date`, `where` and `show` are for one type). A type
+not there, or with no day, is refused when the block is written, with
+the type likely meant. A record's page links to its day on the first
+calendar on the canvas, as See that day.
 
-When a month of everything holds more than one kind, a row of links over
+An event does not end in its kind ("Drink water: 6 glasses entry"):
+the kinds are said once, by the links that narrow to them, and a task
+and a reminder of one name are told apart by their kind, in hidden
+words after the name, as two of one name always are. Each event
+carries its kind as `data-kind`.
+
+When a month of everything, or of the types named, holds more than one
+kind, a row of links over
 it narrows it to one: All (12), Tasks (5), Reminders (4), Entries (3),
 each with how many it has in the month, the one shown marked. It is the
 [filters](../filters/README.md) component as links, one choice among a
@@ -34,9 +46,13 @@ few, applied as it is pressed. The kind is in the page's address, named
 after the block (`?c-<block>-type=task`), so two calendars keep their
 own, and the months and days either side, and each day number, keep it.
 It is offered on the canvas at full size and on the block's own page, and
-only narrows: a calendar of one type is never offered another.
+only narrows: a calendar of one type is never offered another. On its
+own page the calendar goes out as it is shown: everything as
+`/export/all.ics`, the types named or the kind picked as
+`/export/all.ics?type=task&type=reminder`.
 
-A calendar of entries (`type: entry`, or `type: all`) offers in its day
+A calendar of entries (`type: entry`, `type: all`, or entry among
+`types`) offers in its day
 view what it takes to log for that day: each habit it shows, as it stood
 that day, with Log and the day filled in. With `where: ["habit=<id>"]`
 it is that habit alone. Each entry is a link to its own page, where it
@@ -98,10 +114,21 @@ the system's own colours.
   ([BBC GEL, filter and sort](https://bbc.github.io/gel/components/filter-and-sort/),
   [NN/g, filters vs facets](https://www.nngroup.com/articles/filters-vs-facets/)).
   The counts are the month's, which is what is on the page.
+- **The kinds a person asked for, named.** "A calendar of my tasks and
+  reminders" is two types, not one and not all of them: all of them
+  put a habit's entry on every day and bury the rest. So a calendar
+  takes a list of types, and the kinds filter narrows within it.
+- **Its kind said once.** A kind word after every event is read after
+  every name ("… entry", "… task"), dozens of times a month; the links
+  over the month already say which kinds there are and how many
+  ([WCAG 2.4.6](https://www.w3.org/WAI/WCAG22/Understanding/headings-and-labels.html)
+  asks labels to describe, not repeat). Where two events share a name,
+  the kind is the first thing that tells them apart.
 - **Says what it shows by kind when written.** A calendar of everything
   tells the one who writes it how many of each kind it holds, most first
   ("44 in all: 32 entries, 9 tasks, 3 reminders"), and when one kind is
-  more than half, that it crowds out the rest; a model that was told "44
+  more than half, that it crowds out the rest and which types to name
+  instead; a model that was told "44
   in all" called them all tasks and reminders. One of a type that shows
   nothing says "nothing yet" and what it waits for.
 
@@ -115,4 +142,7 @@ skip its next time from the clock, and a task is ticked); a repeating
 icon (the words say it); several kinds at once as checkboxes (a form
 with Apply for what is one quick choice; All is one press away); kinds
 with none in the month (a link to an empty month says nothing a person
-can act on).
+can act on); `type` taking a list (it stays one type or all, as every
+block that reads it expects; several are `types`); `where` and `show`
+for several types (a condition or a field is one type's); a visible
+mark for each kind in a month of several (narrow to one instead).

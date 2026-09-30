@@ -45,6 +45,26 @@ func trimFilled(v any) any {
 				o["required"] = kept
 			}
 		}
+		// One shape the writer gives and one the server fills in (a
+		// tracker's habits: names, then each habit as it stands): only
+		// the writer's is kept, in place of the choice.
+		if alts, ok := o["anyOf"].([]any); ok {
+			var kept []any
+			for _, a := range alts {
+				if d, ok := a.(map[string]any); !ok || !ServerFilled(str(d["description"])) {
+					kept = append(kept, a)
+				}
+			}
+			switch one, isMap := first(kept).(map[string]any); {
+			case len(kept) == 1 && isMap:
+				delete(o, "anyOf")
+				for k, x := range one {
+					o[k] = x
+				}
+			case len(kept) > 0:
+				o["anyOf"] = kept
+			}
+		}
 		for k, x := range o {
 			o[k] = trimFilled(x)
 		}
@@ -75,6 +95,13 @@ func ServerFilled(desc string) bool {
 		return true
 	}
 	return false
+}
+
+func first(vs []any) any {
+	if len(vs) == 0 {
+		return nil
+	}
+	return vs[0]
 }
 
 func str(v any) string {

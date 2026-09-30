@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
@@ -15,11 +16,16 @@ import (
 // Everything with a day goes out as one calendar, and a list or a
 // calendar on its own page as it is shown there.
 
-// exportCalendar answers /export/all.ics: everything with a day.
+// exportCalendar answers /export/all.ics: everything with a day, or the
+// types named, ?type=task&type=reminder, as a calendar of several shows.
 func (s *Server) exportCalendar(w http.ResponseWriter, r *http.Request) {
 	var groups []export.Group
+	only := r.URL.Query()["type"]
 	for _, t := range s.app.Types.Types {
-		if _, ok := export.ByExt(t, "ics"); !ok || !exportable(t) || !s.listed(t) {
+		if _, ok := export.ByExt(t, "ics"); !ok || !exportable(t) {
+			continue
+		}
+		if len(only) > 0 && !slices.Contains(only, t.Name) || len(only) == 0 && !s.listed(t) {
 			continue
 		}
 		recs, err := s.app.Store.List(t.Name, store.ListOptions{})
@@ -38,8 +44,18 @@ func (s *Server) exportCalendar(w http.ResponseWriter, r *http.Request) {
 // own page: the records it shows, with the choices made on it.
 func (s *Server) blockExport(name string, props map[string]any) template.HTML {
 	typeName, _ := props["type"].(string)
-	if name == calendarComponent && typeName == "all" {
-		return s.component("export", map[string]any{"what": "everything on the calendar", "items": []any{map[string]any{"href": "/export/all.ics", "format": "ics"}}})
+	kinds := strs(props["types"])
+	if name == calendarComponent && props["problem"] == nil && (typeName == "all" || len(kinds) > 0) {
+		what, href := "everything on the calendar", "/export/all.ics"
+		if len(kinds) > 0 && !slices.Contains(kinds, "all") {
+			// The kinds shown, as the calendar shows them, and no more.
+			var names []string
+			for _, k := range kinds {
+				names = append(names, plural(k))
+			}
+			what, href = "these "+andList(names), href+"?"+url.Values{"type": kinds}.Encode()
+		}
+		return s.component("export", map[string]any{"what": what, "items": []any{map[string]any{"href": href, "format": "ics"}}})
 	}
 	t, ok := s.app.Types.Get(typeName)
 	all, _ := props["all"].(string)

@@ -169,7 +169,8 @@ func TestChoicesArePerBlock(t *testing.T) {
 	if !strings.Contains(first, `href="/?prompt=hello#collection-`+one+`">Reset`) {
 		t.Errorf("Reset takes away only this list's choices: %.3000s", first)
 	}
-	if strings.Contains(first, `<input type="hidden" name="c-`+one) {
+	show, _, _ := strings.Cut(first, `class="sw-filters__keep"`) // Keep these choices sends them, once
+	if strings.Contains(show, `<input type="hidden" name="c-`+one) {
 		t.Error("a form does not carry its own choices twice")
 	}
 }

@@ -197,15 +197,22 @@ func (s *Server) remindedToday(rt *schema.Type, about string, now time.Time) boo
 	return false
 }
 
-// everyEvent is every listed type's records on their days, for a
-// calendar that shows all of it: each event says what kind it is, and a
-// thing that repeats is on each of its days in the month shown.
-func (s *Server) everyEvent(now time.Time, month string) []any {
+// everyEvent is the records of several types on their days, for a
+// calendar that shows them together: the types in only, or every listed
+// type when only is nil. Each event carries its kind, the type's name,
+// for the kinds to narrow by and to tell two of one name apart; a thing
+// that repeats is on each of its days in the month shown.
+func (s *Server) everyEvent(now time.Time, month string, only []*schema.Type) []any {
 	events := []any{}
-	for _, t := range s.app.Types.Types {
-		if t.Internal || !s.listed(t) {
-			continue
+	types := only
+	if types == nil {
+		for _, t := range s.app.Types.Types {
+			if !t.Internal && s.listed(t) {
+				types = append(types, t)
+			}
 		}
+	}
+	for _, t := range types {
 		field := dateField(t, nil)
 		if field == "" {
 			continue
@@ -216,7 +223,7 @@ func (s *Server) everyEvent(now time.Time, month string) []any {
 		}
 		for _, rec := range recs {
 			if ev := s.eventOf(t, rec, field); ev != nil {
-				ev["meta"] = schema.Words(t.Name)
+				ev["kind"] = t.Name
 				events = append(events, ev)
 				events = append(events, s.repeatedIn(t, rec, field, ev, month)...)
 			}

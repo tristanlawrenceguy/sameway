@@ -42,13 +42,14 @@
       },
       "count": { "type": "string", "description": "Form: how many match, in words: 12 tasks." },
       "showing": { "type": "string", "description": "Form: the choices made, in words, when any differ from how it was set up: not done, due soonest first." },
-      "reset": { "type": "string", "description": "Form: the same page without these choices, when any are made." }
+      "reset": { "type": "string", "description": "Form: the same page without these choices, when any are made." },
+      "save": { "type": "object", "additionalProperties": false, "required": ["action", "fields"], "description": "Form: Keep these choices, a POST that makes the choices shown the list's own setup, for those who may change it. Given only with reset.", "properties": { "action": { "type": "string", "description": "Where the choices are kept: /canvas/<block>/keep." }, "fields": { "type": "array", "description": "The choices and the page to come back to, sent as hidden inputs.", "items": { "type": "object", "additionalProperties": false, "required": ["name", "value"], "properties": { "name": { "type": "string" }, "value": { "type": "string" } } } } } }
     }
   },
   "a11y": {
     "role": "links: navigation holding a list of links, the one shown aria-current=page. form: a group (fieldset with a legend) of labelled native selects and an Apply button, then a paragraph saying how many match and what is shown, with a Reset link",
     "keyboard": [
-      { "key": "Tab", "does": "reaches each link in turn; in a form, each select, then Apply, then Reset" },
+      { "key": "Tab", "does": "reaches each link in turn; in a form, each select, then Apply, then Reset, then Keep these choices where offered" },
       { "key": "Enter", "does": "on a link, shows that choice; on Apply, shows what the selects say" },
       { "key": "Up / Down", "does": "in a select, moves between its options without changing the page" }
     ],
@@ -57,8 +58,8 @@
   },
   "machine": {
     "selector": "[data-component=\"filters\"]",
-    "identify": "data-shape says links or form. links: each a is one choice, [aria-current=page] the one shown, the count in brackets. form: each select is one choice, named as its address field; .sw-filters__showing says how many match and what is shown; its link is Reset.",
-    "operate": "links: follow one. form: set the selects and submit, or GET the form's action with the selects' names and values added to the hidden fields' own; Reset is the same page without them."
+    "identify": "data-shape says links or form. links: each a is one choice, [aria-current=page] the one shown, the count in brackets. form: each select is one choice, named as its address field; .sw-filters__showing says how many match and what is shown; its link is Reset. .sw-filters__keep is Keep these choices, when offered.",
+    "operate": "links: follow one. form: set the selects and submit, or GET the form's action with the selects' names and values added to the hidden fields' own; Reset is the same page without them. Keep these choices POSTs them to its action, which makes them the list's own where and order, undoable from the activity log."
   },
   "examples": [
     { "name": "links", "props": { "shape": "links", "label": "Kinds of result", "choices": [{ "label": "Kind", "options": [{ "label": "All", "count": 5, "href": "/search?q=seeds", "selected": true }, { "label": "Tasks", "count": 3, "href": "/search?q=seeds&type=task" }, { "label": "Notes", "count": 2, "href": "/search?q=seeds&type=note" }] }] }, "file": "examples/links.html" },

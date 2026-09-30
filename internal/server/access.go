@@ -94,6 +94,6 @@ func (s *Server) conversationAboutFor(r *http.Request, from, about, prompt strin
 		return convo, err
 	}
 	convo.Body = template.HTML(`<p class="sw-muted">You can look around this workspace. The assistant is for the people who can change it.</p>`)
-	convo.Notice, convo.Activity, convo.LatestID = "", "", ""
+	convo.Notice, convo.Activity, convo.LatestID, convo.LookOnly = "", "", "", true
 	return convo, nil
 }

@@ -179,9 +179,10 @@ func TestRecordPropsKeepsTheLog(t *testing.T) {
 	}
 }
 
-// TestRecordPropsNoFieldsRedirects checks that POSTing without any prop-
-// prefixed values returns a redirect (no-op behavior).
-func TestRecordPropsNoFieldsRedirects(t *testing.T) {
+// TestRecordPropsNoFieldsSaysSo checks that POSTing without any prop-
+// prefixed values is refused in words, not passed over with an empty
+// redirect: an agent that sent title=... got a 303 and nothing done.
+func TestRecordPropsNoFieldsSaysSo(t *testing.T) {
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{
@@ -191,13 +192,10 @@ func TestRecordPropsNoFieldsRedirects(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	form := url.Values{}
-	r := postForm(t, h, "/t/note/"+rec.ID+"/props", form)
-	wantStatus(t, r, http.StatusSeeOther)
-
-	loc := r.Header().Get("Location")
-	if !strings.Contains(loc, "/t/note/"+rec.ID) {
-		t.Errorf("redirect Location = %q, want it to contain /t/note/%s", loc, rec.ID)
+	r := postForm(t, h, "/t/note/"+rec.ID+"/props", url.Values{"title": {"Changed"}})
+	wantStatus(t, r, http.StatusBadRequest)
+	if body := r.Body.String(); !strings.Contains(body, "prop-<name>") || !strings.Contains(body, "send prop-title") {
+		t.Errorf("the answer says what the form takes: %q", body)
 	}
 
 	unchanged, err := a.Store.Get("note", rec.ID)

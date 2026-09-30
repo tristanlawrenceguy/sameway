@@ -34,7 +34,15 @@ drawn across it; a line rather than bars when the amount is a latest or
 an average.
 
 Sizes: `glance` is how many are met this period; `full` is every
-habit. `tags` narrows to habits with one of those tags.
+habit. `habits` names the ones to show, by name or id, in that order:
+`habits: ["Pages per day"]` is a reading tracker with that habit alone
+(a name that is no habit's is refused when the block is written, with
+the one likely meant). `tags` narrows to habits with one of those tags,
+`tags: ["health"]`, of all of them or of those named. `label` names the
+tracker: shown over it as its heading and naming its region; left out,
+none is shown and the region is called Keeping up. `level` is the
+heading's level, 2 to 4, as a collection's is: 2 on a canvas and a
+block's own page, straight under the page's title.
 
 A habit aimed to reach with a `remind` time (20:00, 8pm) nudges through the clock: if
 it is not met by then, a reminder about it rings once a day, saying
@@ -60,6 +68,14 @@ a list.
 - **An entry is named by its habit and how much**, Read: 25 minutes, in
   its list, on its page and in the log, never by its id; its day is when
   it happened, Today 12:51, not "was", because it is done.
+- **The unit is said once.** The amount's label is the unit drawn beside
+  the field, "pages", which says "Amount in pages for Pages per day" to a
+  reader: one label, not a hidden one and a drawn one both read, which
+  came out as "Amount in pages pages"
+  ([WCAG 2.5.3](https://www.w3.org/WAI/WCAG22/Understanding/label-in-name.html)).
+- **A tracker shows what it was asked for.** "A reading tracker" is one
+  habit, so a tracker picks its habits by name and says its label; before,
+  it showed every habit under a name nobody could see.
 - **Green means reached**, as in the meter; a limit kept within is in the
   list colour. The run so far is in words, not a warning-coloured arrow.
 - **The glance counts what can be met**, leaves readings out, and leads to
@@ -68,4 +84,5 @@ a list.
 
 Not done, and why: saving a streak with tokens or freezes (a game layer; a
 day still going already is not a miss); a celebration when a target is met
-(motion that distracts; the message says it).
+(motion that distracts; the message says it); a heading when there is no
+label (a default heading of Keeping up would repeat the page's own).

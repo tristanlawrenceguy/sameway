@@ -30,6 +30,7 @@ var pageActionTools = map[string]string{
 	"/act/{id}":                   "run_action",
 	"/canvas/{id}/place":          "update_component",
 	"/canvas/{id}/props":          "update_component",
+	"/canvas/{id}/keep":           "update_component",
 	"/canvas/{id}/delete":         "remove_component",
 	"/help/set":                   "set_setting",
 	"/model/use":                  "set_setting",
