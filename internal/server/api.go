@@ -63,8 +63,15 @@ func readBody(r *http.Request) (map[string]any, error) {
 	return fields, nil
 }
 
+// apiDescribe is the index: how to build, the routes, and a line for each
+// component and type, a few kilobytes. ?full=1 is everything, which is
+// hundreds of kilobytes and was read by an agent routes last.
 func (s *Server) apiDescribe(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, s.app.Describe())
+	if r.URL.Query().Get("full") != "" {
+		writeJSON(w, http.StatusOK, s.app.Describe())
+		return
+	}
+	writeJSON(w, http.StatusOK, s.app.Describe().Index())
 }
 
 func (s *Server) apiList(w http.ResponseWriter, r *http.Request) {
@@ -139,7 +146,11 @@ func (s *Server) apiList(w http.ResponseWriter, r *http.Request) {
 // apiDescribePart serves one section of the description, or one item in it,
 // cut by the same Part every other surface uses.
 func (s *Server) apiDescribePart(w http.ResponseWriter, r *http.Request) {
-	v, err := s.app.Describe().Part(r.PathValue("part"), r.PathValue("name"))
+	part := s.app.Describe().Part
+	if r.URL.Query().Get("full") != "" {
+		part = s.app.Describe().FullPart
+	}
+	v, err := part(r.PathValue("part"), r.PathValue("name"))
 	if err != nil {
 		writeJSON(w, http.StatusNotFound, map[string]any{"error": apiError{Code: "not_found", Message: err.Error()}})
 		return

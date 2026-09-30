@@ -96,3 +96,8 @@ Run `sameway component new <name>` to scaffold. A component is not done until:
 3. `make a11y` reports no AA violations and no keyboard failures.
 4. It uses tokens only, reads `--sw-actor` for provenance colour, and keeps
    every interactive target at least 44 by 44 CSS pixels.
+5. A prop the server fills in says so in its description: it starts
+   "Filled in by the server", or ends "Leave out." or "Filled in by the
+   server.". Such props are left out of what a model or agent is shown to
+   write (the in-app prompt and `describe <component>`), and out of the
+   example it is given; the full manifest still has them.

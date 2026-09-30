@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
@@ -69,7 +70,11 @@ func (c *ctx) describeCmd() error {
 		if len(c.args) > 1 {
 			name = c.args[1]
 		}
-		v, err := d.Part(c.args[0], name)
+		part := c.args[0]
+		if len(c.args) == 1 && !slices.Contains(app.Parts, part) {
+			part, name = "", part // sameway describe meter: a name alone
+		}
+		v, err := d.Part(part, name)
 		if err != nil {
 			return err
 		}

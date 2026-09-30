@@ -122,7 +122,7 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 	}
 	if len(call.Args) > 0 {
 		if err := json.Unmarshal(call.Args, &args); err != nil {
-			return fail("arguments were not valid JSON: %v", err)
+			return fail("%s", ArgsTrouble(err))
 		}
 	}
 	switch call.Name {
