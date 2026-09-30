@@ -1,7 +1,6 @@
 package chat
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -83,107 +82,19 @@ func (s *Service) allTools() []llm.Tool {
 	}, append(append(append(append(append(s.recordTools(), s.canvasTools()...), shapeTools()...), s.lookTools()...), s.accessTools()...), s.homeTools()...)...)
 }
 
-// runTool executes one tool call.
+// runTool executes one tool call, by the handler its name has in
+// toolHandlers (tool_handlers.go).
 func (s *Service) runTool(call llm.ToolCall) toolResult {
-	var args struct {
-		File        string         `json:"file"`
-		Mapping     map[string]any `json:"mapping"`
-		Component   string         `json:"component"`
-		ID          string         `json:"id"`
-		Props       map[string]any `json:"props"`
-		Span        *int           `json:"span"`
-		Position    *int           `json:"position"`
-		Frame       string         `json:"frame"`
-		Tone        string         `json:"tone"`
-		Region      string         `json:"region"`
-		Size        string         `json:"size"`
-		Canvas      *string        `json:"canvas"`
-		Name        string         `json:"name"`
-		Summary     string         `json:"summary"`
-		Tool        string         `json:"tool"`
-		Type        string         `json:"type"`
-		Fields      map[string]any `json:"fields"`
-		Query       string         `json:"query"`
-		Where       []string       `json:"where"`
-		Order       string         `json:"order"`
-		Limit       int            `json:"limit"`
-		Page        int            `json:"page"`
-		Key         string         `json:"key"`
-		Version     string         `json:"version"`
-		Install     bool           `json:"install"`
-		Value       string         `json:"value"`
-		Kind        string         `json:"kind"`
-		Description string         `json:"description"`
-		Values      []string       `json:"values"`
-		To          string         `json:"to"`
-		Required    bool           `json:"required"`
-		Default     any            `json:"default"`
-		Properties  []fieldDef     `json:"properties"`
-		Fills       map[string]any `json:"fills"`
-	}
+	var args toolArgs
 	if len(call.Args) > 0 {
 		if err := json.Unmarshal(call.Args, &args); err != nil {
 			return fail("%s", ArgsTrouble(err))
 		}
 	}
-	switch call.Name {
-	case "propose_change":
-		return s.proposeByModel(args.Summary, call.Args)
-	case "look_at_page":
-		return s.lookAtPage(call.Args)
-	case "create_canvas":
-		return s.createCanvas(args.Name)
-	case "remove_canvas":
-		return s.removeCanvas(args.ID)
-	case "create_record":
-		return s.createRecord(args.Type, args.Fields)
-	case "import_records":
-		return s.importRecords(args.Type, args.File, args.Mapping)
-	case "update_record":
-		return s.updateRecord(args.Type, args.ID, args.Fields, args.Version)
-	case "find_records":
-		return s.findRecords(args.Type, args.Query, args.Where, args.Order, args.Limit)
-	case "get_record":
-		return s.getRecord(args.Type, args.ID)
-	case "add_field":
-		return s.addField(args.Type, fieldDef{Name: args.Name, Kind: args.Kind, Description: args.Description, Values: args.Values, To: args.To, Required: args.Required, Default: args.Default})
-	case "add_type":
-		return s.addType(args.Name, args.Description, args.Properties)
-	case "add_component":
-		return s.addComponent(args.Component, args.Props, look{Span: args.Span, Position: args.Position, Frame: args.Frame, Tone: args.Tone, Region: args.Region, Size: args.Size, Canvas: deref(args.Canvas), SetCanvas: args.Canvas != nil})
-	case "update_component":
-		return s.updateComponent(args.ID, args.Props, look{Span: args.Span, Position: args.Position, Frame: args.Frame, Tone: args.Tone, Region: args.Region, Size: args.Size, Canvas: deref(args.Canvas), SetCanvas: args.Canvas != nil})
-	case "remove_component":
-		return s.removeBlock(args.ID)
-	case "undo_change":
-		return s.Undo(args.ID)
-	case "add_arrangement":
-		return s.addArrangement(args.Name, args.Fills)
-	case "search":
-		return s.search(args.Query, args.Type, args.Page)
-	case "run_action":
-		// What cannot be taken back is asked first; see consent.go.
-		if r, ask := s.askFirst("run_action", args.ID, "", ""); ask {
-			return r
-		}
-		return s.Run(context.Background(), args.ID, s.current)
-	case "accept_action":
-		return s.acceptAction(context.Background(), args.ID)
-	case "update_sameway":
-		return s.updateSameway(args.Install)
-	case "let_in":
-		return s.letInCall(call.Args)
-	case "set_setting":
-		if r, ask := s.askFirst("set_setting", "", args.Key, args.Value); ask {
-			return r
-		}
-		return s.setSetting(args.Key, args.Value)
-	case "clear_canvas":
-		return s.clearCanvas()
-	case "arrange_canvas":
-		return s.arrangeCall(call.Args)
+	if run, ok := toolHandlers()[call.Name]; ok {
+		return run(s, args, call)
 	}
-	return s.homeTool(call) // see home_tools.go
+	return fail("unknown tool %s", call.Name)
 }
 
 func (s *Service) addComponent(name string, props map[string]any, l look) toolResult {

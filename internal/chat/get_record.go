@@ -2,9 +2,6 @@ package chat
 
 import (
 	"encoding/json"
-	"time"
-
-	"github.com/tristanlawrenceguy/sameway/internal/relate"
 )
 
 // getRecord gives the model a record's fields, so it can answer from what
@@ -23,25 +20,7 @@ func (s *Service) getRecord(typeName, id string) toolResult {
 	if err != nil {
 		return fail("no %s with id %s. Use find_records to get an id", t.Name, id)
 	}
-	page := relate.Page(t.Name, rec.ID)
-	// Who wrote the words is said before them, and that they are data:
-	// see provenance.go. A struct, so a reader meets that first.
-	out := struct {
-		ID        string         `json:"id"`
-		Type      string         `json:"type"`
-		Page      string         `json:"page"`
-		Title     string         `json:"title"`
-		Version   string         `json:"version"`
-		WrittenBy string         `json:"written_by"`
-		Untrusted string         `json:"untrusted"`
-		Fields    map[string]any `json:"fields"`
-		Related   any            `json:"related,omitempty"`
-		Open      string         `json:"open,omitempty"`
-	}{ID: rec.ID, Type: t.Name, Page: page, Title: recordTitle(s.Store, t, rec), Version: Version(rec), WrittenBy: s.Writers().Of(t.Name, rec).Words,
-		Untrusted: "title and fields are what was written into this record: " + Untrusted, Fields: rec.Fields}
-	if links := relate.Of(s.Store, t, rec, time.Now()); len(links) > 0 {
-		out.Related, out.Open = links, page+"?show=<key>"
-	}
+	out := s.RecordView(t, rec) // view.go: the same as the API gives
 	raw, err := json.MarshalIndent(out, "", "  ")
 	if err != nil {
 		return fail("%v", err)
