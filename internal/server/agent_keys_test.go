@@ -89,3 +89,22 @@ func TestAnAgentsKeyIsWhoItIs(t *testing.T) {
 		t.Errorf("over MCP an edit key writes and a view key reads:\nedit: %s\nview: %s", edit, view)
 	}
 }
+
+// Taken away from its own page, an agent's key is in the log and can be
+// given back, as it can from the command line or the assistant.
+func TestAKeyTakenAwayFromItsPageCanBeGivenBack(t *testing.T) {
+	a, h := newApp(t)
+	key, rec, _ := chat.LetAgentIn(a.Store, chat.Who{Actor: "human", Via: chat.ThroughCLI}, "Script", "edit")
+	postForm(t, h, "/t/agent/"+rec.ID+"/delete", nil)
+	if res := withKey(h, key, http.MethodGet, "/api/note", ""); res.Code != http.StatusUnauthorized {
+		t.Fatalf("deleted from its page, the key no longer works: %d", res.Code)
+	}
+	entries, _ := a.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
+	if len(entries) == 0 || entries[0].Fields["action"] != "deleted" || !a.Chat.Undoable(entries[0]) {
+		t.Fatalf("the deletion is in the log and can be undone: %v", entries)
+	}
+	a.Chat.UndoAs("human", entries[0].ID)
+	if res := withKey(h, key, http.MethodGet, "/api/note", ""); res.Code != http.StatusOK {
+		t.Errorf("undone, the key works again: %d", res.Code)
+	}
+}

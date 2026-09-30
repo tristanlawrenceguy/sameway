@@ -1,6 +1,7 @@
 package server_test
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -99,7 +100,12 @@ func TestThingsKnowWhatTheyAreAbout(t *testing.T) {
 	if !strings.Contains(day, `href="`+taskPath+`"`) || !strings.Contains(day, `data-kind="task"`) {
 		t.Errorf("a calendar of type all has the task on its day, with its kind\n%s", day)
 	}
-	today := get(t, h, "/canvas/"+cal.ID+"?day="+now.Format("2006-01-02")).Body.String()
+	// On the reminder's own day, which after 23:50 is tomorrow.
+	ringsOn := now.Format("2006-01-02")
+	if at, err := time.Parse(time.RFC3339, fmt.Sprint(reminders[0].Fields["at"])); err == nil {
+		ringsOn = at.Local().Format("2006-01-02")
+	}
+	today := get(t, h, "/canvas/"+cal.ID+"?day="+ringsOn).Body.String()
 	if !strings.Contains(today, `href="/t/reminder/`+reminders[0].ID+`"`) || !strings.Contains(today, `data-kind="reminder"`) {
 		t.Errorf("and the reminder on its day\n%s", today)
 	}
