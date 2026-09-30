@@ -19,6 +19,9 @@
 .sw-filters__form .sw-field { margin: 0; }
 .sw-filters__legend { padding: 0; margin-bottom: var(--sw-space-2); font-weight: 600; }
 .sw-filters__showing { margin: 0 0 var(--sw-space-3); font-size: var(--sw-size-text-sm); }
+/* Keep these choices: under what is shown, before the list, for those
+   who may change the block. */
+.sw-filters__keep { margin: 0 0 var(--sw-space-3); }
 /* Forced colours paint every border in the text colour: only the choice
    shown keeps its bar. */
 @media (forced-colors: active) {

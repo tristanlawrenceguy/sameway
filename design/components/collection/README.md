@@ -65,6 +65,22 @@ and on the canvas at full size when more than five match and `limit` is
 over five; `controls: false` takes them away, for a short list or a small
 space, and `controls: true` offers them anyway. Never in a side pane.
 
+Choices made can be kept. Beside Reset, a person who may change the
+block has **Keep these choices**, a plain POST form (`/canvas/<block>/keep`,
+no script) that makes them the block's own setup: the picks are added to
+its `where` and the sort becomes its `order`. The page comes back at the
+list as it is now set up, and the line under the form says so: "6 tasks,
+not done, due soonest first." Reset now returns to that. The change is
+logged as the person's and its outcome carries Undo, as any edit does;
+someone who may only look is not offered it.
+
+The list's name is edited where it is, with the canvas's Edit: the block
+tells the inline editor its `label` is its one field, Name, so Edit opens
+a box holding "Tasks", and Save renames it, logged and undoable. The same
+goes for a calendar's and a chart's `caption`. A list shown as cards or a
+board does not offer its cards' titles for editing: they are the records',
+changed on their own pages.
+
 ## Why it works this way
 
 - **Its own name.** A list's heading id comes from its block, so two lists
@@ -151,6 +167,20 @@ space, and `controls: true` offers them anyway. Never in a side pane.
 - **Narrow, never widen.** The assistant's `where` is what the list is
   for; the address can only add what the form offers, so a link cannot
   make a list show what it was built to leave out.
+- **Kept by the person, narrowing still.** Choices live in the address,
+  which suits a look; a person who says "only the ones not done, soonest
+  first" means the list, and had no way to say it but to ask. In the
+  agent evaluation (T5) an agent working the page as a person would set
+  both choices, read "Showing: not done, due soonest first" and took it
+  as done, and nothing was kept. Keeping them adds the picks to `where`
+  rather than replacing it, so what the assistant set the list up for
+  still holds (choices only ever narrow), and the sort replaces `order`,
+  which the choices already did. Undo, not a confirmation, is the way
+  back ([NN/g on confirmation dialogs](https://www.nngroup.com/articles/confirmation-dialog/)).
+- **Renamed in place.** The name is the one thing about a list a person
+  most often wants different, and the same agent looked for a way to
+  call the list "Up next", found none and said it could not be done.
+  Edit already fixes words where they are; it now covers a list's name.
 - **Checked for meaning when written.** Conditions that ask one field for
   two values (status=reading and status=to read) can never all hold, so
   the list could never show anything; it is refused with the fix, one
@@ -166,8 +196,12 @@ dropdowns, but four groups of them would be taller than many lists; each
 dropdown here has three or four short options, labelled in sight);
 submitting on change (3.2.2, above); counts beside each option (each would
 be a query per option on every render, for a handful of records); choices
-kept between visits (the address keeps them, which is enough; MoJ advises
-filters not persist unless people need it); dragging cards between columns (the one way that
+remembered between visits on their own (the address keeps them, which is
+enough; MoJ advises filters not persist unless people need it: Keep these
+choices is that need, said by the person); keeping choices on a calendar,
+whose kinds are links and whose setup is its type (next, with the
+calendar's several types); a separate Rename control (Edit is where words
+are changed already, and one way is easier to find than two); dragging cards between columns (the one way that
 leaves out a keyboard unless a second way is built beside it); field names only for screen readers (sighted people
 need them as much); a table squashed to fit a phone (its columns become
 unreadable, so it scrolls in a box instead).

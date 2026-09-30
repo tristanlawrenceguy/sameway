@@ -27,12 +27,16 @@ func wantsJSON(r *http.Request) bool {
 }
 
 // pageAction is a request an agent makes of a page's form: a POST outside
-// /api, /mcp and /hook, which answer JSON already.
+// /api, /mcp and /hook, which answer JSON already. A JSON body is an
+// agent's whatever it accepts: no browser form sends one, and read as a
+// form it was nothing, so the handler saw no fields and the agent was sent
+// back with nothing done and nothing said (the agent evaluation, C-t5).
 func pageAction(r *http.Request) bool {
-	if r.Method != http.MethodPost || !wantsJSON(r) {
+	sentJSON := strings.HasPrefix(r.Header.Get("Content-Type"), "application/json")
+	if r.Method != http.MethodPost || !wantsJSON(r) && !sentJSON {
 		return false
 	}
-	for _, p := range []string{"/api/", "/mcp", "/hook/"} {
+	for _, p := range []string{"/api/", "/mcp", "/hook/", "/sync"} {
 		if strings.HasPrefix(r.URL.Path, p) {
 			return false
 		}

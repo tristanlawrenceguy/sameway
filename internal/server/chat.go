@@ -49,6 +49,10 @@ type conversation struct {
 	// or sorted) reads its own and keeps the rest.
 	Path  string
 	Query url.Values
+	// LookOnly is someone who may look but not change: controls that
+	// only change things (Keep these choices, a block's name) are not
+	// offered them.
+	LookOnly bool
 }
 
 type conversationView struct {

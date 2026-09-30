@@ -32,6 +32,7 @@ var writesTheStoreItself = map[string]string{
 	"canvas.go canvasDelete":        "the canvas's own blocks, logged with the canvas's words",
 	"chats.go blockPlace":           "the same",
 	"props.go blockProps":           "the same",
+	"collection_keep.go canvasKeep": "the same",
 	"tabs.go seedChat":              "a new tab's chat block, part of making the tab",
 	"keep.go keepFile":              "a file kept on disk; each way of adding one logs it as added",
 	"keep.go readKept":              "a file's reading: its status and text, not anyone's change",
