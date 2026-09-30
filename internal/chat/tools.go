@@ -56,6 +56,7 @@ func (s *Service) allTools() []llm.Tool {
 			}, "id")},
 		{Name: "remove_component", Description: "Remove one block from the canvas by id.",
 			Schema: obj(map[string]any{"id": map[string]any{"type": "string"}}, "id")},
+		arrangeTool,
 		{Name: "propose_change", Description: "Ask before making a change instead of making it. Use this whenever a change takes something away, and whenever you are guessing at what the person wants. Nothing happens until they answer. Carries one add_component, update_component, or remove_component call.",
 			Schema: obj(map[string]any{
 				"summary":   map[string]any{"type": "string", "description": "The question, in plain words, ending in a question mark. Say what would change and why you are asking."},
@@ -178,31 +179,9 @@ func (s *Service) runTool(call llm.ToolCall) toolResult {
 		}
 		return s.setSetting(args.Key, args.Value)
 	case "clear_canvas":
-		// Starting over means clearing the content, not deleting the
-		// conversation the person is typing into.
-		blocks, err := s.Store.List(BlockType, store.ListOptions{})
-		if err != nil {
-			return fail("could not read the canvas: %v", err)
-		}
-		var gone []*store.Record
-		for _, b := range blocks {
-			if b.Fields["component"] == ComponentName {
-				continue
-			}
-			// Only the tab the person is looking at: the others keep theirs.
-			if on, _ := b.Fields["canvas"].(string); on != s.current {
-				continue
-			}
-			if err := s.Store.Delete(BlockType, b.ID); err != nil {
-				return fail("could not clear the canvas: %v", err)
-			}
-			gone = append(gone, b)
-		}
-		if len(gone) == 0 {
-			return toolResult{text: "the canvas was already empty"}
-		}
-		// What was cleared goes in the log, so it can be put back whole.
-		return toolResult{text: fmt.Sprintf("cleared %d blocks; the chat stayed", len(gone)), change: &Change{Action: "cleared", Detail: fmt.Sprintf("%d blocks", len(gone)), Before: map[string]any{"blocks": keep(gone)}}}
+		return s.clearCanvas()
+	case "arrange_canvas":
+		return s.arrangeCall(call.Args)
 	}
 	return s.homeTool(call) // see home_tools.go
 }
@@ -242,6 +221,9 @@ func (s *Service) addComponent(name string, props map[string]any, l look) toolRe
 	layout, err := l.apply(fields)
 	if err != nil {
 		return fail("%v", err)
+	}
+	if why := s.skipIfWritten(fields["canvas"].(string), withFields(&store.Record{ID: "new"}, fields)); why != "" {
+		return fail("not added: %s", why)
 	}
 	rec, err := s.Store.Create(BlockType, s.fields(BlockType, fields))
 	if err != nil {
@@ -292,6 +274,9 @@ func (s *Service) updateComponent(id string, props map[string]any, l look) toolR
 	what = append(what, layout...)
 	if len(what) == 0 {
 		return fail("nothing to change: pass props, span, position, frame, tone, or region")
+	}
+	if on, _ := withFields(rec, fields).Fields["canvas"].(string); s.skipIfWritten(on, withFields(rec, fields)) != "" {
+		return fail("not changed: %s", s.skipIfWritten(on, withFields(rec, fields)))
 	}
 	if _, err := s.Store.Update(BlockType, id, s.fields(BlockType, fields)); err != nil {
 		return fail("could not update block %s: %v", id, err)

@@ -15,6 +15,8 @@ import (
 type shownRecord struct {
 	titled
 	Shows string `json:"shows,omitempty"`
+	// Layout is how the block's tab reads now; see chat.LayoutNow.
+	Layout string `json:"layout,omitempty"`
 }
 
 // blockWrite holds a block written through the API to what the

@@ -193,7 +193,7 @@ func TestABlockWrittenSaysWhatItShows(t *testing.T) {
 		{"tracker", map[string]any{}, "; it shows 1 habit"},
 	} {
 		said, isErr := call(t, a, "add_component", map[string]any{"component": c.component, "props": c.props})
-		if isErr || !strings.HasSuffix(said, c.shows) {
+		if isErr || !strings.HasSuffix(strings.SplitN(said, "\n", 2)[0], c.shows) {
 			t.Errorf("add_component %s %v should end %q, got %q", c.component, c.props, c.shows, said)
 		}
 	}
