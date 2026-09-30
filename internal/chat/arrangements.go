@@ -89,7 +89,7 @@ func (s *Service) addArrangement(name string, fills map[string]any) toolResult {
 		}
 		lines = append(lines, b.Key+": "+r.text)
 	}
-	out.text = fmt.Sprintf("added the %s arrangement, %d blocks, top to bottom:\n%s\nEach block shows the person's own records as they are and keeps current; one with none yet says so on the page. To fill it, create_record the things the person named; do not make any up.", name, len(a.Blocks), strings.Join(lines, "\n"))
+	out.text = fmt.Sprintf("added the %s arrangement, %d blocks, top to bottom:\n%s\nEach block shows the person's own records as they are and keeps current; one that shows nothing yet is right while they have none, and says so on the page. To fill it, create_record the things the person named; do not make any up.", name, len(a.Blocks), strings.Join(lines, "\n"))
 	return out
 }
 

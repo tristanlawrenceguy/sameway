@@ -36,9 +36,9 @@ func noPlaceholders(t *testing.T, page string) {
 func TestArrangementsOnAnEmptyWorkspaceSayThereIsNothingYet(t *testing.T) {
 	a, h := newApp(t)
 	for name, shows := range map[string][]string{
-		"week": {"calendar: added calendar", "it shows 0 events by starts", "todo: added collection", "it shows 0 tasks, not done", "habits: added tracker", "it shows 0 habits"},
-		"desk": {"drafts: added collection", "it shows 0 notes", "pinned: added collection"},
-		"trip": {"dates: added calendar", "it shows 0 events", "pack: added collection", "it shows 0 tasks", "book: added collection"},
+		"week": {"calendar: added calendar", "it shows nothing yet: no event has a starts", "todo: added collection", "it shows nothing yet: no task matches done=false and due<=+7d", "habits: added tracker", "it shows 0 habits"},
+		"desk": {"drafts: added collection", "it shows nothing yet: no note matches status=draft", "pinned: added collection", "it shows nothing yet: no note matches pinned=true"},
+		"trip": {"dates: added calendar", "it shows nothing yet: no event has a starts", "pack: added collection", "it shows nothing yet: no task matches tags=packing and done=false", "book: added collection", "it fills in as records are added"},
 	} {
 		said := arrange(t, a, name)
 		for _, s := range shows {
@@ -121,7 +121,7 @@ func TestReadingSaysWhatTheWorkspaceLacks(t *testing.T) {
 		t.Fatal(said)
 	}
 	said = arrange(t, a, "reading")
-	if !strings.Contains(said, "list: added collection") || !strings.Contains(said, "it shows 0 books") {
+	if !strings.Contains(said, "list: added collection") || !strings.Contains(said, "it shows nothing yet: no book matches status=to_read") {
 		t.Errorf("reading should say what each block shows, got %q", said)
 	}
 	page := get(t, h, "/").Body.String()
