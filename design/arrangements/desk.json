@@ -1,14 +1,14 @@
 {
   "name": "desk",
-  "description": "A place to write, with ideas kept to one side.",
+  "description": "A place to write: the draft notes in full, with pinned notes kept to one side.",
   "use": {
-    "when": "the person wants to write something longer than a note and keep the ideas for it beside the words.",
-    "not": "a short note, which is a note record, or a to-do list, which is the week arrangement.",
-    "with": "a note record once the writing is worth keeping on its own page."
+    "when": "the person is writing something longer than a line, as notes, and wants the drafts in view with the notes they keep coming back to beside them.",
+    "not": "a short note on its own, which is a note record, or a to-do list, which is the week arrangement.",
+    "with": "the writing as note records, made with create_record from the person's own words; a draft is status draft, and pinning a note puts it to one side."
   },
   "blocks": [
     { "key": "title", "component": "heading", "props": { "text": "Writing", "level": 2 }, "span": 12, "frame": "bare" },
-    { "key": "draft", "component": "text", "props": { "content": "Start here." }, "span": 8, "frame": "bare" },
-    { "key": "ideas", "component": "list", "props": { "items": ["An idea to come back to"], "label": "Ideas", "level": 3 }, "span": 4 }
+    { "key": "drafts", "component": "collection", "props": { "type": "note", "where": ["status=draft"], "order": "-updated_at", "detail": "full", "label": "Drafts" }, "span": 8 },
+    { "key": "pinned", "component": "collection", "props": { "type": "note", "where": ["pinned=true"], "order": "-updated_at", "label": "Pinned" }, "span": 4 }
   ]
 }

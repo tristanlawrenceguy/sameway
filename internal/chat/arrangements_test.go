@@ -10,19 +10,19 @@ import (
 )
 
 // One call lays out a whole page the way it was thought through: each
-// block in its region at its width, in order, with the person's words
-// filled in, each logged and undoable on its own.
+// block in its region at its width, in order, with the props given in
+// fills, each logged and undoable on its own.
 func TestAnArrangementIsAPageInOneCall(t *testing.T) {
 	svc := newFullService(t)
 	raw, _ := json.Marshal(map[string]any{"name": "week", "fills": map[string]any{
-		"todo": map[string]any{"items": []string{"Water the plants", "Call Sam"}},
+		"todo": map[string]any{"label": "Due soon"},
 	}})
 	text, isErr := svc.Call("add_arrangement", raw)
 	if isErr {
 		t.Fatal(text)
 	}
-	if !strings.Contains(text, "4 blocks") || !strings.Contains(text, "todo: added list") {
-		t.Errorf("the result should list every block, got %q", text)
+	if !strings.Contains(text, "4 blocks") || !strings.Contains(text, "todo: added collection") || !strings.Contains(text, "do not make any up") {
+		t.Errorf("the result should list every block and say not to invent records, got %q", text)
 	}
 	blocks, _ := svc.Store.List(chat.BlockType, store.ListOptions{OrderBy: "position"})
 	if len(blocks) != 4 {
@@ -38,11 +38,10 @@ func TestAnArrangementIsAPageInOneCall(t *testing.T) {
 	if got["heading"].Fields["span"] != int64(12) || got["heading"].Fields["frame"] != "bare" {
 		t.Errorf("the heading is full width and bare, got %v", got["heading"].Fields)
 	}
-	items, _ := got["list"].Fields["props"].(map[string]any)["items"].([]any)
-	if len(items) != 2 || items[0] != "Water the plants" {
-		t.Errorf("the fill should replace the starting items, got %v", items)
+	if label := got["collection"].Fields["props"].(map[string]any)["label"]; label != "Due soon" {
+		t.Errorf("the fill should replace the starting label, got %v", label)
 	}
-	if blocks[0].Fields["component"] != "heading" || blocks[3].Fields["component"] != "text" {
+	if blocks[0].Fields["component"] != "heading" || blocks[3].Fields["component"] != "tracker" {
 		t.Errorf("blocks keep the arrangement's order: %v %v", blocks[0].Fields["component"], blocks[3].Fields["component"])
 	}
 
@@ -60,5 +59,21 @@ func TestAnArrangementIsAPageInOneCall(t *testing.T) {
 
 	if text, isErr := svc.Call("add_arrangement", json.RawMessage(`{"name":"nope"}`)); !isErr || !strings.Contains(text, "week") {
 		t.Errorf("an unknown arrangement should be refused with the list, got %q", text)
+	}
+}
+
+// What a block lists comes from records: items given in fills would be
+// thrown away when it is drawn, so they are refused with what to do.
+func TestAnArrangementsListsAreNotFilledIn(t *testing.T) {
+	svc := newFullService(t)
+	raw, _ := json.Marshal(map[string]any{"name": "week", "fills": map[string]any{
+		"todo": map[string]any{"items": []any{map[string]any{"title": "Call Sam", "href": "/t/task/x"}}},
+	}})
+	text, isErr := svc.Call("add_arrangement", raw)
+	if !isErr || !strings.Contains(text, "block todo: items is filled in from the person's task records") || !strings.Contains(text, "create_record") {
+		t.Errorf("items in fills should be refused with what to do, got %q", text)
+	}
+	if blocks, _ := svc.Store.List(chat.BlockType, store.ListOptions{}); len(blocks) != 0 {
+		t.Errorf("nothing is added, got %d blocks", len(blocks))
 	}
 }

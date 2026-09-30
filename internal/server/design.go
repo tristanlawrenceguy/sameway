@@ -139,12 +139,15 @@ func (s *Server) designArrangements(b *strings.Builder) {
 	if len(arrangements) == 0 {
 		return
 	}
-	b.WriteString(`<h2 id="arrangements">Arrangements</h2><p class="sw-prose">A whole page for a job, thought through once: which blocks, where each sits, how wide. The assistant applies one in a single call and fills in the words.</p>`)
+	b.WriteString(`<h2 id="arrangements">Arrangements</h2><p class="sw-prose">A whole page for a job, thought through once: which blocks, where each sits, how wide. The assistant applies one in a single call. Every block shows the person's own records, and says so when there are none yet; none holds example words.</p>`)
 	for _, a := range arrangements {
 		fmt.Fprintf(b, `<section class="sw-panel sw-stack" id="arrangement-%s" aria-labelledby="arrangement-%s-h"><h3 id="arrangement-%s-h">%s <span class="sw-muted sw-small">(%s)</span></h3><p class="sw-prose">%s</p>`,
 			a.Name, a.Name, a.Name, template.HTMLEscapeString(a.Name), a.Source, template.HTMLEscapeString(a.Description))
 		if a.Use != nil {
 			fmt.Fprintf(b, `<p class="sw-prose sw-small"><strong>Use when</strong> %s <strong>Not when</strong> %s</p>`, template.HTMLEscapeString(a.Use.When), template.HTMLEscapeString(a.Use.Not))
+		}
+		for _, n := range a.Needs {
+			fmt.Fprintf(b, `<p class="sw-prose sw-small"><strong>Needs</strong> a %s type; without one, the assistant is told how to make it and nothing is added.</p>`, template.HTMLEscapeString(n.Type))
 		}
 		b.WriteString(`<ol class="sw-plain sw-stack--tight" aria-label="Blocks, top to bottom">`)
 		for _, blk := range a.Blocks {
