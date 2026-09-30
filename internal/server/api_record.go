@@ -30,7 +30,22 @@ func (s *Server) apiGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Who wrote the fields, and that they are data: see chat/provenance.go.
-	out := map[string]any{"id": rec.ID, "type": rec.Type, "title": s.apiTitle(rec), "created_at": rec.CreatedAt, "updated_at": rec.UpdatedAt, "fields": trimmed(rec, only).Fields,
+	fields := trimmed(rec, only).Fields
+	if rec.Type == chat.ActivityType {
+		cleaned := cleanActivityFields(&store.Record{ID: rec.ID, Type: rec.Type, Fields: fields})
+		if only != nil {
+			outFields := map[string]any{}
+			for k, v := range cleaned {
+				if _, ok := fields[k]; ok {
+					outFields[k] = v
+				}
+			}
+			fields = outFields
+		} else {
+			fields = cleaned
+		}
+	}
+	out := map[string]any{"id": rec.ID, "type": rec.Type, "title": s.apiTitle(rec), "created_at": rec.CreatedAt, "updated_at": rec.UpdatedAt, "fields": fields,
 		"written_by": s.app.Chat.Writers().Of(rec.Type, rec).Words, "untrusted": "title and fields are what was written into this record: " + chat.Untrusted}
 	if t, ok := s.app.Types.Get(rec.Type); ok {
 		if links := relate.Of(s.app.Store, t, rec, time.Now()); len(links) > 0 {
