@@ -55,10 +55,11 @@ func (c *ctx) connectCmd() error {
 	}
 	if positional[0] == "chatgpt" || positional[0] == "remote" {
 		fmt.Fprintf(c.Stdout, "A client elsewhere (ChatGPT's connectors, Claude's custom connectors, a hosted agent) reaches this workspace over HTTP:\n\n"+
-			"  1. set SAMEWAY_MCP_TOKEN to a long secret (or the variable named by mcp.token_env in workspace.yaml)\n"+
+			"  1. give it a key of its own: sameway agent add ChatGPT --access edit (or view, to read only); the key is shown once\n"+
 			"  2. run: sameway serve, reachable to the client over HTTPS (a tunnel such as cloudflared or ngrok will do)\n"+
-			"  3. give the client the URL https://<your host>/mcp with the header Authorization: Bearer <that secret>\n\n"+
-			"Without the token the /mcp route answers 403 and says so.\n")
+			"  3. give the client the URL https://<your host>/mcp with the header Authorization: Bearer <that key>\n\n"+
+			"The log names it by its key, and sameway agent remove ChatGPT takes it away. The workspace's one\n"+
+			"MCP token (SAMEWAY_MCP_TOKEN, or the variable named by mcp.token_env) still works, to read only.\n")
 		return nil
 	}
 	cl, ok := clients[positional[0]]

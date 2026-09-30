@@ -141,7 +141,9 @@ func WriteAs(st *store.Store, who Who, action, typ, id string, fields map[string
 // logAs logs a change as who's, unless it is to one of the system's own
 // types, which change through the tools and are not the person's content.
 func logAs(st *store.Store, who Who, c Change) string {
-	if t, ok := st.Types().Get(c.Component); !ok || t.Internal {
+	// An agent's key is the system's kind, but taking one away is a change
+	// the owner makes, and undoing it lets the agent back in.
+	if t, ok := st.Types().Get(c.Component); !ok || t.Internal && t.Name != AgentType {
 		return ""
 	}
 	c.By, c.Via, c.ByLogin = who.By, who.Via, who.ByLogin

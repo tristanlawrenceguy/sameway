@@ -52,14 +52,11 @@ func LetAgentIn(st *store.Store, who Who, name, access string) (string, *store.R
 		return "", nil, err
 	}
 	key := KeyPrefix + strings.ToLower(base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(raw))
+	// Logged, so it can be seen and taken back (logAs lets agents' keys in).
 	rec, _, err := WriteKept(st, who, "created", AgentType, "", map[string]any{"name": name, "access": access, "key": keyPrint(key)})
 	if err != nil {
 		return "", nil, err
 	}
-	// The system's own kinds are not logged by WriteKept; letting an agent
-	// in is, so it can be seen and taken back.
-	c := Change{Action: "let in", Component: AgentType, ID: rec.ID, Detail: name + " (" + access + ")", By: who.By, Via: who.Via, ByLogin: who.ByLogin}
-	Record(st, who.Actor, c)
 	return key, rec, nil
 }
 
