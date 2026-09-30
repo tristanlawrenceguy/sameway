@@ -25,6 +25,17 @@ func TestArrangementsAreCheckedWhenLoaded(t *testing.T) {
 			if _, ok := reg.Get(b.Component); !ok {
 				t.Errorf("%s: block %s uses unknown component %s", a.Name, b.Key, b.Component)
 			}
+			// A built-in arrangement shows the person's records, not
+			// example words they would have to clear away: a heading
+			// names the page, and every other block is bound to data.
+			switch b.Component {
+			case "heading", "collection", "calendar", "tracker", "chart":
+			default:
+				t.Errorf("%s: block %s is a %s, whose words would be examples; use a block that shows records", a.Name, b.Key, b.Component)
+			}
+			if b.Component == "calendar" && b.Props["type"] == nil {
+				t.Errorf("%s: calendar %s shows no records without a type", a.Name, b.Key)
+			}
 		}
 	}
 	if _, ok := reg.Arrangement("week"); !ok {

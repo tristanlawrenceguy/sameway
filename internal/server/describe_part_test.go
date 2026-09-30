@@ -96,7 +96,7 @@ func TestArrangementsAreDescribed(t *testing.T) {
 	var d struct {
 		Tools []struct{ Name string }
 	}
-	decode(t, get(t, h, "/api/describe"), &d)
+	decode(t, get(t, h, "/api/describe?full=1"), &d)
 	found := false
 	for _, tool := range d.Tools {
 		found = found || tool.Name == "add_arrangement"

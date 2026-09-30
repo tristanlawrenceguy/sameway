@@ -11,16 +11,28 @@ import (
 )
 
 // An Arrangement is the thought behind a whole page, written once: which
-// blocks a job wants, where each sits and how wide, in what order, with
-// words the assistant fills in. A component is what a thing is; an
-// arrangement is what a page for a job is. The assistant applies one in
-// one call instead of composing a layout from scratch every time.
+// blocks a job wants, where each sits and how wide, in what order. A
+// component is what a thing is; an arrangement is what a page for a job
+// is. The assistant applies one in one call instead of composing a layout
+// from scratch every time. Its blocks show the person's own records (a
+// collection, a calendar, a tracker), so a page made from one holds what
+// is theirs, or says there is nothing yet, and never example words.
 type Arrangement struct {
 	Name        string          `json:"name"`
 	Description string          `json:"description"`
 	Use         *Use            `json:"use,omitempty"`
+	Needs       []Need          `json:"needs,omitempty"`
 	Blocks      []ArrangedBlock `json:"blocks"`
 	Source      string          `json:"source"`
+}
+
+// Need is a content type an arrangement's blocks show and a workspace may
+// not have yet, such as book for reading: its fields as add_type takes
+// them, so whoever applies the arrangement can be told how to make it.
+type Need struct {
+	Type        string           `json:"type"`
+	Description string           `json:"description"`
+	Fields      []map[string]any `json:"fields"`
 }
 
 // ArrangedBlock is one block of an arrangement: the component, its
@@ -85,6 +97,16 @@ func (r *Registry) checkArrangement(a *Arrangement) error {
 	}
 	if a.Use == nil || a.Use.When == "" {
 		return fmt.Errorf("needs use.when: the thought behind it")
+	}
+	for _, n := range a.Needs {
+		if n.Type == "" || len(n.Fields) == 0 {
+			return fmt.Errorf("a need names a type and its fields")
+		}
+		for _, f := range n.Fields {
+			if f["name"] == nil || f["kind"] == nil {
+				return fmt.Errorf("need %s: each field has a name and a kind", n.Type)
+			}
+		}
 	}
 	keys := map[string]bool{}
 	for i, b := range a.Blocks {

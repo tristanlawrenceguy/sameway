@@ -13,7 +13,7 @@ binary, which serves a living styleguide at `/design`.
 | Read | For |
 |---|---|
 | [foundations/principles.md](foundations/principles.md) | The five rules every decision follows |
-| [arrangements/](arrangements/) | Whole pages of thought: which blocks a job wants, where each sits, how wide; the assistant applies one in a call |
+| [arrangements/](arrangements/) | Whole pages of thought: which blocks a job wants, where each sits, how wide; the assistant applies one in a call. Every block shows the person's own records (collection, calendar, tracker) with an honest empty state, never example words; one that needs a type the workspace lacks (reading needs book) adds nothing and says how to make it |
 | [foundations/color.md](foundations/color.md) | Palette, roles, actor tones, the 7:1 contract |
 | [foundations/typography.md](foundations/typography.md) | Scale, measure, numerals |
 | [foundations/motion.md](foundations/motion.md) | Durations, curves, view transitions, reduced motion |
@@ -96,3 +96,8 @@ Run `sameway component new <name>` to scaffold. A component is not done until:
 3. `make a11y` reports no AA violations and no keyboard failures.
 4. It uses tokens only, reads `--sw-actor` for provenance colour, and keeps
    every interactive target at least 44 by 44 CSS pixels.
+5. A prop the server fills in says so in its description: it starts
+   "Filled in by the server", or ends "Leave out." or "Filled in by the
+   server.". Such props are left out of what a model or agent is shown to
+   write (the in-app prompt and `describe <component>`), and out of the
+   example it is given; the full manifest still has them.

@@ -15,7 +15,7 @@ import (
 // one call: types with schemas, components with contracts, routes, model state.
 func TestDescribeIsCompleteForAgents(t *testing.T) {
 	_, h := newApp(t)
-	rec := get(t, h, "/api/describe")
+	rec := get(t, h, "/api/describe?full=1")
 	wantStatus(t, rec, http.StatusOK)
 	var d struct {
 		Workspace string

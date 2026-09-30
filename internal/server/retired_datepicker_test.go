@@ -46,7 +46,7 @@ func TestRetiredDatepickerBlockShowsAsWhenField(t *testing.T) {
 	if _, ok := a.Registry.Get("datepicker"); ok {
 		t.Error("datepicker should not be a component the assistant can choose")
 	}
-	rec := get(t, h, "/api/describe")
+	rec := get(t, h, "/api/describe?full=1")
 	wantStatus(t, rec, http.StatusOK)
 	if strings.Contains(rec.Body.String(), "datepicker") {
 		t.Error("/api/describe still offers datepicker")
