@@ -124,6 +124,13 @@ the system's own colours.
   ([WCAG 2.4.6](https://www.w3.org/WAI/WCAG22/Understanding/headings-and-labels.html)
   asks labels to describe, not repeat). Where two events share a name,
   the kind is the first thing that tells them apart.
+- **Says what it shows by kind when written.** A calendar of everything
+  tells the one who writes it how many of each kind it holds, most first
+  ("44 in all: 32 entries, 9 tasks, 3 reminders"), and when one kind is
+  more than half, that it crowds out the rest and which types to name
+  instead; a model that was told "44
+  in all" called them all tasks and reminders. One of a type that shows
+  nothing says "nothing yet" and what it waits for.
 
 Not done, and why: a grid you move through with arrow keys (it is a view,
 and its links are reached with Tab); the grid and the list both in the
