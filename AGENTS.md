@@ -162,7 +162,7 @@ with `--strict` until its fix lands; `review` and `not yet` are yours to hold.
 | 13 | An outcome stays, in a status or alert, names the record, offers Undo | agent (tick, undo), go `back_test.go`, `reversible_test.go` |
 | 14 | Nothing is written until a deliberate press; a control that writes says so | review |
 | | **Tools** | |
-| 15 | Every MCP tool titled and annotated; read-only ones proved so by a store diff | not yet |
+| 15 | Every MCP tool titled and annotated; read-only ones proved so by a store diff | `internal/mcp/annotations.go`; `TestEveryToolSaysWhatItIs`, `TestReadOnlyToolsChangeNothing` (the workspace on disk hashed before and after) |
 | 16 | Every error is `isError` with the next step and the valid choices | go `internal/mcp/*_test.go` (partly) |
 | 17 | List rows can be told apart and are paged | pages: agent, go; tool results not yet |
 | 18 | `describe` has a small index under a budget | go `describe_index_test.go` (16 KB, block routes first), `internal/mcp/describe_size_test.go` (nothing but full past a client's limit), `prompt_budget_test.go` (the in-app prompt at 113 KB) |
