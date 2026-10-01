@@ -3,6 +3,7 @@ package chat
 import (
 	"regexp"
 	"strings"
+	"sync"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 )
@@ -86,4 +87,28 @@ func withoutPictures(req llm.Request) (llm.Request, bool) {
 		out.Messages[i] = m
 	}
 	return out, had
+}
+
+// What each model has shown of whether it sees pictures, by its name: a
+// fact about the model, learned the first time one is sent, so a page can
+// say it before the person sends another. It is not kept past a restart.
+var sight sync.Map // provider name → bool
+
+// Sees says whether the model has shown it sees pictures, and whether
+// that is known yet.
+func Sees(model string) (sees, known bool) {
+	v, ok := sight.Load(model)
+	if !ok {
+		return false, false
+	}
+	return v.(bool), true
+}
+
+func hasPictures(req llm.Request) bool {
+	for _, m := range req.Messages {
+		if len(m.Images) > 0 {
+			return true
+		}
+	}
+	return false
 }

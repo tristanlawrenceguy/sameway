@@ -161,6 +161,13 @@
         start();
       });
     });
+    // Opened at a line of the transcript (a meeting's decision links to
+    // where it was said): the player is set there, to play from it.
+    var at = fig.id && location.hash.indexOf("#" + fig.id + "-at-") === 0 ? parseFloat(location.hash.slice(fig.id.length + 5)) : NaN;
+    if (!isNaN(at)) {
+      if (media.readyState > 0) to(at);
+      else media.addEventListener("loadedmetadata", function once() { media.removeEventListener("loadedmetadata", once); to(at); });
+    }
     state();
     show();
   }

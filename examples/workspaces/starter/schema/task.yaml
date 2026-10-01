@@ -33,6 +33,11 @@ fields:
     type: ref
     to: project
     description: The project it belongs to, if any.
+  event:
+    type: ref
+    to: event
+    label: Came up at
+    description: The meeting it came up at, if any.
   notes:
     type: markdown
     description: Anything worth remembering about it.

@@ -75,6 +75,28 @@ func TestAPIRecordTextSaysWhoWroteIt(t *testing.T) {
 	if len(found.Hits) != 1 || found.Hits[0].ID != mailed.ID || found.Hits[0].WrittenBy != "an import from inbox.mbox" || found.Untrusted == "" {
 		t.Errorf("a search hit says who wrote it: %s", body)
 	}
+
+	var feed struct {
+		Changes []struct {
+			Title     string `json:"title"`
+			WrittenBy string `json:"written_by"`
+		} `json:"changes"`
+		Untrusted string `json:"untrusted"`
+	}
+	body = get(t, h, "/api/changes?since=2000-01-01T00:00:00Z").Body.String()
+	json.Unmarshal([]byte(body), &feed)
+	titled := 0
+	for _, c := range feed.Changes {
+		if c.Title != "" {
+			titled++
+			if c.WrittenBy == "" {
+				titled = -100
+			}
+		}
+	}
+	if titled < 1 || feed.Untrusted == "" {
+		t.Errorf("a change's title says who wrote it: %s", body)
+	}
 }
 
 // A record whose words came from an import says so on its page, once, in

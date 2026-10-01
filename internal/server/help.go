@@ -31,6 +31,7 @@ func (s *Server) helpPage(w http.ResponseWriter, r *http.Request) {
 	b.WriteString(`<section class="sw-stack" aria-labelledby="help-ask"><h2 id="help-ask">Asking the assistant</h2>
 <p>Type what you want in the message box and press Enter; Shift and Enter starts a new line. The assistant makes your notes, tasks and pages, and answers questions about them. When it wants to do something that cannot be undone, such as sending something to a website, it asks you first.</p>
 <p>Tell it what you need, in your own words: "I use a screen reader", "keep things simple", "larger text please". It remembers.</p></section>`)
+	b.WriteString(s.limitsSection(chat.VisitorOf(r.Context()).Owner())) // limits.go
 	b.WriteString(`<section class="sw-stack" aria-labelledby="help-hand"><h2 id="help-hand">Doing things yourself</h2>
 <p>Every list has a button to add one, such as Add a note. On anything you made, Edit changes it where it is, and Save keeps the change. Escape or Cancel leaves it as it was.</p>
 <p>After you do something, a message at the top of the page says what happened.</p></section>`)
