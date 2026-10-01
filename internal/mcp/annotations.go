@@ -23,12 +23,13 @@ var toolTraits = map[string]traits{
 	"search":       {title: "Search everything", readOnly: true, idempotent: true},
 
 	// Content.
-	"create_record":  {title: "Make a record"},
-	"update_record":  {title: "Change a record", idempotent: true},
-	"import_records": {title: "Bring records in from a file"},
-	"add_type":       {title: "Add a kind of record"},
-	"add_field":      {title: "Add a field to a kind"},
-	"change_field":   {title: "Change or remove a field", destructive: true},
+	"create_record":    {title: "Make a record"},
+	"update_record":    {title: "Change a record", idempotent: true},
+	"import_records":   {title: "Bring records in from a file"},
+	"write_up_meeting": {title: "Write up a meeting"},
+	"add_type":         {title: "Add a kind of record"},
+	"add_field":        {title: "Add a field to a kind"},
+	"change_field":     {title: "Change or remove a field", destructive: true},
 
 	// The canvas.
 	"add_component":    {title: "Add a block"},

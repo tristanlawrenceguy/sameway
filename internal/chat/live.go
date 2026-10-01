@@ -111,6 +111,8 @@ func describe(call llm.ToolCall) string {
 		return "Creating" + or(a(args.Type), " a record")
 	case "import_records":
 		return "Importing " + or(plural(args.Type), "records") + " from a file"
+	case "write_up_meeting":
+		return "Writing up the meeting"
 	case "update_record":
 		return "Updating" + or(a(args.Type), " a record")
 	case "delete_record":

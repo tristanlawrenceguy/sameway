@@ -75,6 +75,13 @@ func (s *Service) writers(public bool) *Writers {
 		if id, _ := e.Fields["target_id"].(string); id != "" {
 			w.add(target+"/"+id, w.entry(e))
 		}
+		// A write-up made its tasks too, each in the batch on its entry.
+		if action == "wrote up" {
+			before, _ := e.Fields["before"].(map[string]any)
+			for _, c := range batchIn(before) {
+				w.add(c.typ+"/"+c.id, w.entry(e))
+			}
+		}
 	}
 	return w
 }

@@ -167,6 +167,7 @@ func (s *Server) fileExtras(r *http.Request, rec *store.Record) string {
 	if audio {
 		props := s.recordingOf(rec)
 		b.WriteString(s.speechOffer(r, rec, props))
+		b.WriteString(s.recordingOffer(r, rec)) // meeting.go
 		b.WriteString(string(s.component("media", props)))
 	}
 	// Reading a file through a converter says so, and says how it ended:

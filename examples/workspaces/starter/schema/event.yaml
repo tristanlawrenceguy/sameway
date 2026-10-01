@@ -1,8 +1,10 @@
-# Something that happens at a time: a meeting, a birthday, a train.
+# Something that happens at a time: a meeting, a birthday, a train. A
+# meeting with a recording is written up from its transcript: a summary,
+# what was decided, and tasks that came up at it (write_up_meeting).
 # Provided with every workspace, so a calendar brought in from Google,
 # Outlook or Apple (.ics) has somewhere to go, and it shows on the calendar.
 name: event
-description: Something that happens at a time, such as a meeting or a birthday, with when and where; made here, or brought in from a calendar (.ics).
+description: Something that happens at a time, such as a meeting or a birthday, with when and where; made here, or brought in from a calendar (.ics). A meeting can keep its recording, and what was said and decided at it.
 title: title
 provided: true
 fields:
@@ -26,6 +28,17 @@ fields:
   notes:
     type: markdown
     description: Anything else about it.
+  recording:
+    type: ref
+    to: file
+    label: Recording
+    description: The recording of it, when there is one; a meeting is written up from its transcript.
+  summary:
+    type: markdown
+    description: What was said, in short, written up from the recording or by hand.
+  decisions:
+    type: markdown
+    description: What was decided, one a line, each with where in the recording it was said.
   uid:
     type: string
     hidden: true

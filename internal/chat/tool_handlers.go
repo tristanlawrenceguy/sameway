@@ -42,6 +42,10 @@ type toolArgs struct {
 	Default     any            `json:"default"`
 	Properties  []fieldDef     `json:"properties"`
 	Fills       map[string]any `json:"fills"`
+	Event       string         `json:"event"`
+	Recording   string         `json:"recording"`
+	Decisions   []meetingItem  `json:"decisions"`
+	Tasks       []meetingItem  `json:"tasks"`
 }
 
 // toolHandlers is what each tool does, by its name: one table, where a
@@ -64,6 +68,9 @@ func toolHandlers() map[string]func(s *Service, a toolArgs, call llm.ToolCall) t
 		},
 		"create_record": func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
 			return s.createRecord(a.Type, a.Fields)
+		},
+		"write_up_meeting": func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
+			return s.writeUpMeeting(a.Event, a.Recording, a.Summary, a.Decisions, a.Tasks)
 		},
 		"import_records": func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
 			return s.importRecords(a.Type, a.File, a.Mapping)
