@@ -17,8 +17,11 @@ import (
 
 // Telling speakers apart: the same engine's diarisation program, with a
 // model that finds where one voice gives way to another (pyannote
-// segmentation 3.0) and one that tells voices apart (3D-Speaker CAM++,
-// trained on English speech). Like speech-to-text, it is fetched once,
+// segmentation 3.0) and one that tells voices apart (3D-Speaker
+// ERes2Net, trained on English speech). Chosen by measuring: on an AMI
+// meeting with its official annotations (ami_bench_test.go) it put 20% of
+// speech wrong, told how many spoke, where the other voice models the
+// engine's makers publish put 31% to 114% wrong. Like speech-to-text, it is fetched once,
 // when the owner asks, from where its makers publish it, each checked
 // against the fingerprint written here; and the recording never leaves.
 
@@ -26,7 +29,7 @@ const models = "https://github.com/k2-fsa/sherpa-onnx/releases/download/"
 
 var speakerModels = []asset{
 	{models + "speaker-segmentation-models/sherpa-onnx-pyannote-segmentation-3-0.tar.bz2", "24615ee884c897d9d2ba09bb4d30da6bb1b15e685065962db5b02e76e4996488", 6958444, "speakers-segmentation.tar.bz2"},
-	{models + "speaker-recongition-models/3dspeaker_speech_campplus_sv_en_voxceleb_16k.onnx", "357a834f702b80161e5b981182c038e18553c1f2ca752ed6cec2052365d4129b", 29596978, "speakers-voices.onnx"},
+	{models + "speaker-recongition-models/3dspeaker_speech_eres2net_sv_en_voxceleb_16k.onnx", "c59158379255ad66e161679cca6af8d52d51e389e3224ab7d7a7baae295c2db5", 26485263, "speakers-voices.onnx"},
 }
 
 // SpeakersSize is how much telling speakers apart downloads.
@@ -113,13 +116,22 @@ func Diarize(ctx context.Context, dir, wav string, speakers int) ([]Turn, error)
 	if !SpeakersReady(dir) {
 		return nil, fmt.Errorf("telling speakers apart is not on this computer yet")
 	}
-	cluster := "--clustering.cluster-threshold=0.5"
+	// Not told how many: on the AMI meeting 1.1 found a few voices too
+	// many (21.5% wrong) where 1.2 found four (20.1%) but 1.3 found only
+	// one. Too many can be put together when they are named; one cannot
+	// be pulled apart, so the setting stays clear of that edge.
+	cluster := "--clustering.cluster-threshold=1.1"
 	if speakers >= 2 {
 		cluster = "--clustering.num-clusters=" + strconv.Itoa(speakers)
 	}
+	return diarizeWith(ctx, dir, wav, cluster, filepath.Join(dir, speakerModels[1].Name))
+}
+
+// diarizeWith runs the program with the clustering and voice model asked for.
+func diarizeWith(ctx context.Context, dir, wav, cluster, voices string) ([]Turn, error) {
 	cmd := exec.CommandContext(ctx, diariser(dir), cluster,
 		"--segmentation.pyannote-model="+segmentation(dir),
-		"--embedding.model="+filepath.Join(dir, speakerModels[1].Name),
+		"--embedding.model="+voices,
 		wav)
 	lib := filepath.Join(dir, "engine", "lib")
 	cmd.Env = append(os.Environ(), "LD_LIBRARY_PATH="+lib, "DYLD_LIBRARY_PATH="+lib)
