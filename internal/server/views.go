@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
-	"github.com/tristanlawrenceguy/sameway/internal/prose"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -130,6 +129,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	if t.Name == chat.EventType {
 		b.WriteString(s.meetingExtras(r, rec)) // meeting.go
 	}
+	b.WriteString(s.writingOn(r, t, rec))     // writing.go
 	b.WriteString(s.suggestionsOn(r, t, rec)) // suggestions.go
 	b.WriteString(s.writingHelp(r, t, rec))   // writing_help.go
 	b.WriteString(s.clashNotices(r, t, rec))  // two versions written at once; see clash.go
@@ -162,7 +162,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 		// A recording's transcript is shown once, under its player, at
 		// its times; Edit still opens it as text.
 		if val := display(*f, rec.Fields[f.Name]); t.Name != FileType || len(s.heard(rec)) == 0 {
-			fmt.Fprintf(&b, `<div class="sw-prose sw-detail__body" data-prop="%s" data-source="%s" data-prose-level="2">%s</div>`, f.Name, template.HTMLEscapeString(val), prose.Render(val, 2))
+			fmt.Fprintf(&b, `<div class="sw-prose sw-detail__body" data-prop="%s" data-source="%s" data-prose-level="2">%s</div>`, f.Name, template.HTMLEscapeString(val), bodyHTML(rec, val))
 		}
 	}
 	// The list leaves out what the heading and the chips above it have

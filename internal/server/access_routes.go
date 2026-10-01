@@ -86,6 +86,8 @@ var routeAccess = map[string]routeFor{
 	"POST /t/{type}/import/{file}/run": owner,
 	"GET /t/{type}/{id}":               people,
 	"POST /t/{type}/{id}/delete":       people,
+	"GET /t/{type}/{id}/whole":         people,
+	"POST /t/{type}/{id}/parts/move":   people,
 	"POST /t/{type}/{id}/discard":      people,
 	"POST /t/{type}/{id}/props":        people,
 	"POST /t/file/upload":              people,
