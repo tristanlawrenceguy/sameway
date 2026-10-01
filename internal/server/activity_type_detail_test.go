@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+
+	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 // ActivityDetailIsReadableInAPIAndHTML checks that a type-setting activity
@@ -72,6 +74,48 @@ func TestActivityDetailIsReadableInAPIAndHTML(t *testing.T) {
 	entryPage := get(t, h, "/t/activity/"+entry.ID).Body.String()
 	if strings.Contains(said(entryPage), "test_type") {
 		t.Errorf("the entry's detail page still shows the raw identifier %q\n%s", "test_type", truncate(entryPage))
+	}
+
+	// Acceptance 1: detail field must show display-form name, not raw id.
+	fields := myRec["fields"].(map[string]any)
+	detail, _ := fields["detail"].(string)
+	if detail == "test_type" {
+		t.Errorf("acceptance 1: API list detail is still the raw identifier %q; want 'Test Type'; full record: %#v", detail, myRec)
+	}
+
+	// Acceptance 2: summary field must be cleaned for type-setting entries.
+	summary, _ := fields["summary"].(string)
+	if strings.Contains(summary, "test_type") {
+		t.Errorf("acceptance 2: API list summary still has raw identifier %q; want 'System added type Test Type'; got %q", "test_type", summary)
+	}
+
+	// Acceptance 3: non-type-setting entries must be unaffected.
+	a.Store.Create("activity", map[string]any{
+		"actor":   "assistant",
+		"action":  "created",
+		"target":  "note",
+		"detail":  store.NewID(),
+		"summary": "Assistant created note Plan",
+	})
+	apiList2 := get(t, h, "/api/activity").Body.String()
+	var apiResp2 map[string]any
+	json.Unmarshal([]byte(apiList2), &apiResp2)
+	recsArr2, ok := apiResp2["records"].([]any)
+	if !ok {
+		t.Fatal("no records in second API list")
+	}
+	for _, r := range recsArr2 {
+		rec, ok := r.(map[string]any)
+		if !ok {
+			continue
+		}
+		target, _ := rec["target"].(string)
+		if target == "note" {
+			sum, _ := rec["summary"].(string)
+			if sum != "Assistant created note Plan" {
+				t.Errorf("acceptance 3: non-type entry summary was changed to %q; expected 'Assistant created note Plan'", sum)
+			}
+		}
 	}
 }
 

@@ -134,7 +134,22 @@ func (s *Server) apiList(w http.ResponseWriter, r *http.Request) {
 	writers := s.app.Chat.Writers()
 	out := make([]written, 0, len(recs))
 	for _, rec := range recs {
-		out = append(out, written{trimmed(rec, only), s.apiTitle(rec), writers.Of(rec.Type, rec).Words})
+		tr := trimmed(rec, only)
+		if rec.Type == chat.ActivityType && tr.Fields != nil {
+			fieldsCopy := make(map[string]any, len(tr.Fields))
+			for k, v := range tr.Fields {
+				fieldsCopy[k] = v
+			}
+			cleanActivityFields(fieldsCopy)
+			tr = &store.Record{
+				ID:        rec.ID,
+				Type:      rec.Type,
+				CreatedAt: rec.CreatedAt,
+				UpdatedAt: rec.UpdatedAt,
+				Fields:    fieldsCopy,
+			}
+		}
+		out = append(out, written{tr, s.apiTitle(rec), writers.Of(rec.Type, rec).Words})
 	}
 	answer := map[string]any{"type": r.PathValue("type"), "count": len(recs), "records": out, "untrusted": "each record's title and fields were written by its written_by: " + chat.Untrusted}
 	for k, v := range about {
