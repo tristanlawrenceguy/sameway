@@ -91,6 +91,13 @@ func Of(st *store.Store, t *schema.Type, rec *store.Record, now time.Time) []Lin
 					Why:   "their " + f.Name + " is this " + t.Name,
 					Where: others(u, t, rec, f.Name+"="+rec.ID), Order: "-updated_at",
 				}, now)
+			case f.RefList() && f.To == t.Name:
+				// A list holding it: the meetings a person is in.
+				out = add(out, st, u, Link{
+					Kind: PointsHere, Type: u.Name, Field: f.Name,
+					Why:   "their " + f.Name + " include this " + t.Name,
+					Where: others(u, t, rec, f.Name+"="+rec.ID), Order: "-updated_at",
+				}, now)
 			case f.Name == AboutField && f.Type == "string":
 				out = add(out, st, u, Link{
 					Kind: About, Type: u.Name, Field: f.Name,

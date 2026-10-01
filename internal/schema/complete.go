@@ -154,7 +154,7 @@ func (s *Set) Complete(builtin *Set) {
 func (s *Set) CheckRefs() error {
 	for _, t := range s.Types {
 		for _, f := range t.Fields {
-			if f.Type != "ref" {
+			if f.RefTo() == "" {
 				continue
 			}
 			if _, ok := s.byName[f.To]; !ok {
