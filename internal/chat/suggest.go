@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/prose"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -24,23 +25,31 @@ type suggested struct {
 	Passage     string `json:"passage"`
 	Replacement string `json:"replacement"`
 	Why         string `json:"why"`
+	Kind        string `json:"kind"`
+	Meaning     bool   `json:"meaning"`
 }
+
+// mostSuggested is how many changes one pass suggests: a writer handed
+// hundreds stops reading them, and an editor picks what matters.
+const mostSuggested = 15
 
 func (s *Service) suggestTools() []llm.Tool {
 	if _, ok := s.Store.Types().Get(SuggestionType); !ok {
 		return nil
 	}
 	return []llm.Tool{{Name: "suggest_edits",
-		Description: "Suggest changes to someone's writing instead of making them: each is a passage as it is now, the words to put in its place and why, shown on the record's page for the person to accept or decline one by one. Use it whenever you are asked to improve, shorten, correct, translate or tidy words a person wrote; use update_record only for what is yours to write. Read the record first with get_record, and copy each passage exactly, with enough words that it occurs once.",
+		Description: "Suggest changes to a person's writing instead of making them; they accept or decline each on its page. Use it to improve, shorten, correct or translate their words; update_record is for words that are yours. Do only the help asked for, keep their voice, small changes, at most 15. Feedback on structure is said in words, not suggested. Copy each passage exactly from get_record, long enough to occur once.",
 		Schema: obj(map[string]any{
 			"type":  map[string]any{"type": "string", "description": "The record's content type, such as note."},
 			"id":    map[string]any{"type": "string", "description": "The record's id."},
-			"field": map[string]any{"type": "string", "description": "The field whose words change; the record's main text when left out."},
-			"edits": map[string]any{"type": "array", "description": "The changes, each to a different passage.", "items": obj(map[string]any{
-				"passage":     map[string]any{"type": "string", "description": "The words as they are now, exactly, occurring once."},
-				"replacement": map[string]any{"type": "string", "description": "The words to put in their place; empty takes the passage out."},
-				"why":         map[string]any{"type": "string", "description": "Why, in a short sentence the person reads to decide."},
-			}, "passage", "replacement", "why")},
+			"field": map[string]any{"type": "string", "description": "The field; its main text when left out."},
+			"edits": map[string]any{"type": "array", "items": obj(map[string]any{
+				"passage":     map[string]any{"type": "string", "description": "The words now, exactly."},
+				"replacement": map[string]any{"type": "string", "description": "What replaces them; empty takes them out."},
+				"why":         map[string]any{"type": "string", "description": "Why, in a short sentence."},
+				"kind":        map[string]any{"type": "string", "enum": []string{"fix", "clarity", "style", "structure"}, "description": "fix: spelling, grammar, typos; clarity; style; structure: moving or cutting."},
+				"meaning":     map[string]any{"type": "boolean", "description": "It changes what is said, not only how."},
+			}, "passage", "replacement", "why", "kind")},
 		}, "type", "id", "edits")}}
 }
 
@@ -79,6 +88,9 @@ func (s *Service) suggestEdits(typeName, id, field string, edits []suggested) to
 	if len(edits) == 0 {
 		return fail("no edits given; each is a passage, its replacement and why")
 	}
+	if len(edits) > mostSuggested {
+		return fail("nothing suggested: %d changes is more than a writer can weigh in one go; suggest the %d that matter most", len(edits), mostSuggested)
+	}
 	text := wordsOf(rec.Fields[field])
 	// Each passage is found once, and none overlaps another, so each can
 	// be accepted on its own in any order.
@@ -112,7 +124,11 @@ func (s *Service) suggestEdits(typeName, id, field string, edits []suggested) to
 	about := t.Name + "/" + rec.ID
 	var batch []BatchItem
 	for _, e := range edits {
-		made, err := s.Store.Create(SuggestionType, map[string]any{"about": about, "field": field,
+		kind := e.Kind
+		if _, only := prose.FormatChange(e.Passage, e.Replacement); only {
+			kind = "format"
+		}
+		made, err := s.Store.Create(SuggestionType, map[string]any{"about": about, "field": field, "kind": kind, "meaning": e.Meaning,
 			"passage": e.Passage, "replacement": e.Replacement, "why": strings.TrimSpace(e.Why)})
 		if err != nil {
 			return fail("could not suggest: %v", err)
@@ -145,31 +161,57 @@ func Suggestions(st *store.Store, typeName, id string) []*store.Record {
 // ErrOutdated is a suggestion whose words are no longer there.
 var ErrOutdated = errors.New("the words it would change have changed since, so it no longer fits; it is set aside")
 
-// AcceptSuggestion makes a suggested change, as who's, and returns the
-// record it changed and its entry in the log.
-func AcceptSuggestion(st *store.Store, who Who, id string) (*store.Record, string, error) {
-	sg, err := st.Get(SuggestionType, id)
-	if err != nil || sg.Fields["state"] != "pending" {
-		return nil, "", errors.New("that suggestion is not waiting any more")
+// AcceptSuggestions makes suggested changes to one record, as who's, in
+// one change to it: one entry in the log, one Undo. One whose words have
+// changed since is set aside, not guessed at. It returns the record, its
+// entry, how many went in and how many no longer fitted.
+func AcceptSuggestions(st *store.Store, who Who, ids []string) (rec *store.Record, entry string, made, outdated int, err error) {
+	var typ, recID string
+	fields := map[string]any{}
+	var took []string
+	for _, id := range ids {
+		sg, err := st.Get(SuggestionType, id)
+		if err != nil || sg.Fields["state"] != "pending" {
+			continue
+		}
+		t, r, _ := strings.Cut(wordsOf(sg.Fields["about"]), "/")
+		if typ == "" {
+			typ, recID = t, r
+			if rec, err = st.Get(typ, recID); err != nil {
+				DeclineSuggestion(st, id)
+				return nil, "", 0, 0, errors.New("what it was about is gone")
+			}
+		}
+		if t != typ || r != recID {
+			continue // one record at a time
+		}
+		field := wordsOf(sg.Fields["field"])
+		text, ok := fields[field].(string)
+		if !ok {
+			text = wordsOf(rec.Fields[field])
+		}
+		passage := wordsOf(sg.Fields["passage"])
+		if passage == "" || strings.Count(text, passage) != 1 {
+			DeclineSuggestion(st, id)
+			outdated++
+			continue
+		}
+		fields[field] = strings.Replace(text, passage, wordsOf(sg.Fields["replacement"]), 1)
+		took = append(took, id)
 	}
-	typ, recID, _ := strings.Cut(wordsOf(sg.Fields["about"]), "/")
-	field := wordsOf(sg.Fields["field"])
-	rec, err := st.Get(typ, recID)
-	if err != nil {
-		DeclineSuggestion(st, id)
-		return nil, "", errors.New("what it was about is gone")
+	if len(took) == 0 {
+		if outdated > 0 {
+			return rec, "", 0, outdated, ErrOutdated
+		}
+		return nil, "", 0, 0, errors.New("that suggestion is not waiting any more")
 	}
-	text, passage := wordsOf(rec.Fields[field]), wordsOf(sg.Fields["passage"])
-	if strings.Count(text, passage) != 1 {
-		DeclineSuggestion(st, id)
-		return nil, "", ErrOutdated
+	if rec, entry, err = WriteAs(st, who, "updated", typ, recID, fields); err != nil {
+		return nil, "", 0, outdated, err
 	}
-	changed, entry, err := WriteAs(st, who, "updated", typ, recID, map[string]any{field: strings.Replace(text, passage, wordsOf(sg.Fields["replacement"]), 1)})
-	if err != nil {
-		return nil, "", err
+	for _, id := range took {
+		st.Update(SuggestionType, id, map[string]any{"state": "accepted"})
 	}
-	st.Update(SuggestionType, id, map[string]any{"state": "accepted"})
-	return changed, entry, nil
+	return rec, entry, len(took), outdated, nil
 }
 
 // DeclineSuggestion sets a suggestion aside, changing nothing else.

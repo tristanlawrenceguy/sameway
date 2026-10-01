@@ -1,8 +1,9 @@
 {
   "name": "suggestion",
   "version": "1.0.0",
-  "description": "A change suggested to someone's writing and not made: why, then the words in place, what would go struck through and what would come underlined, with Accept and Decline. Shown on the page of what it is about.",
+  "description": "A change suggested to someone's writing and not made, shown as writing: why, then the sentence as it is now and as it would read, formatted, with the part that changes highlighted, and Accept and Decline. A change to the formatting alone is said in words. Shown on the page of what it is about.",
   "icon": "±",
+  "pageOnly": true,
   "use": {
     "when": "the assistant or an agent suggests a change to words a person wrote, rather than making it.",
     "not": "a change to the canvas or a setting, which is a proposal; or words the assistant is writing for itself.",
@@ -12,38 +13,55 @@
     "type": "object",
     "additionalProperties": false,
     "required": [
+      "label",
       "why",
-      "passage",
+      "now",
+      "nowMark",
       "accept",
       "decline"
     ],
     "properties": {
+      "label": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Which it is among those waiting, such as 2 of 5: it names the group with why, and makes each Accept and Decline its own."
+      },
       "why": {
         "type": "string",
         "minLength": 1,
-        "description": "Why, in a sentence: it names the group, and the buttons say it again for a screen reader."
+        "description": "Why, in a sentence."
       },
-      "passage": {
-        "type": "string",
-        "minLength": 1,
-        "description": "The words there now that it would change."
+      "meaning": {
+        "type": "boolean",
+        "default": false,
+        "description": "It changes what is said, not only how, and says so."
       },
-      "replacement": {
+      "describe": {
         "type": "string",
-        "description": "The words that would come in their place; empty takes the passage out."
+        "description": "The change in words, when words say it better than the text can: Make it bold, Make it a heading."
       },
-      "before": {
+      "now": {
         "type": "string",
-        "description": "A few words before the passage, so it reads in its sentence."
+        "format": "multiline",
+        "description": "The writing around the change as it is now, as Markdown; it is shown formatted."
+      },
+      "nowMark": {
+        "type": "string",
+        "description": "The passage within now that would change, highlighted."
       },
       "after": {
         "type": "string",
-        "description": "A few words after it."
+        "format": "multiline",
+        "description": "The same writing with the change made; empty when the change takes it all out."
+      },
+      "afterMark": {
+        "type": "string",
+        "description": "What came in, within after, highlighted."
       },
       "outdated": {
         "type": "boolean",
         "default": false,
-        "description": "The passage is no longer there: it says so and offers only to set it aside."
+        "description": "The words it would change are no longer there: it says so and offers only to set it aside."
       },
       "accept": {
         "type": "string",
@@ -88,23 +106,24 @@
     "states": [],
     "wcag": {
       "target": "AAA",
-      "notes": "A group named by why and described by the words, so moving to Accept says what would change (1.3.1). What goes and what comes are marked by strike and underline as well as colour (1.4.1), and in words for a screen reader. Nothing changes until a button is pressed (3.2.5)."
+      "notes": "A group named by its place among those waiting and why, so moving to Accept says which (1.3.1). The writing is shown formatted as it reads, never as markup; the changed part is highlighted with an outline as well as colour (1.4.1) and named for a screen reader. Nothing changes until a button is pressed (3.2.5)."
     }
   },
   "machine": {
     "selector": "[data-component=\"suggestion\"]",
-    "identify": "A group whose accessible name is why. del is what would go, ins what would come.",
+    "identify": "A group whose accessible name is its place and why. The highlighted mark in Now is what would change; in With the change, what comes in.",
     "operate": "Post to Accept or Decline. Nothing changes until you do; an outdated one only sets aside."
   },
   "examples": [
     {
       "name": "default",
       "props": {
-        "why": "Shorter, and says who decides.",
-        "before": "At the meeting ",
-        "passage": "it was decided by everyone that",
-        "replacement": "we decided",
-        "after": " the garden opens in May.",
+        "label": "1 of 3",
+        "why": "Shorter, and says who decided.",
+        "now": "At the meeting it was decided by everyone that the garden opens in May.",
+        "nowMark": "it was decided by everyone that",
+        "after": "At the meeting we decided that the garden opens in May.",
+        "afterMark": "we decided that",
         "accept": "/suggestions/s1/accept",
         "decline": "/suggestions/s1/decline",
         "id": "suggestion-s1"
@@ -112,27 +131,63 @@
       "file": "examples/default.html"
     },
     {
-      "name": "take-out",
+      "name": "format",
       "props": {
-        "why": "Repeats the sentence before.",
-        "passage": "As said above, the pond needs a liner.",
+        "label": "2 of 3",
+        "why": "Makes the list of jobs easy to scan.",
+        "describe": "Make it a list",
+        "now": "Jobs\n\nPaint the shed\nFix the gate",
+        "nowMark": "Paint the shed\nFix the gate",
+        "after": "Jobs\n\n- Paint the shed\n- Fix the gate",
+        "afterMark": "",
         "accept": "/suggestions/s2/accept",
         "decline": "/suggestions/s2/decline",
-        "actor": "agent",
         "id": "suggestion-s2"
+      },
+      "file": "examples/format.html"
+    },
+    {
+      "name": "meaning",
+      "props": {
+        "label": "3 of 3",
+        "why": "The plan says April elsewhere.",
+        "meaning": true,
+        "now": "The pond liner comes in **May**.",
+        "nowMark": "May",
+        "after": "The pond liner comes in **April**.",
+        "afterMark": "April",
+        "actor": "agent",
+        "accept": "/suggestions/s3/accept",
+        "decline": "/suggestions/s3/decline",
+        "id": "suggestion-s3"
+      },
+      "file": "examples/meaning.html"
+    },
+    {
+      "name": "take-out",
+      "props": {
+        "label": "1 of 1",
+        "why": "Repeats the sentence before.",
+        "now": "The pond needs a liner. As said above, the pond needs a liner.",
+        "nowMark": "As said above, the pond needs a liner.",
+        "after": "The pond needs a liner. ",
+        "accept": "/suggestions/s4/accept",
+        "decline": "/suggestions/s4/decline",
+        "id": "suggestion-s4"
       },
       "file": "examples/take-out.html"
     },
     {
       "name": "outdated",
       "props": {
+        "label": "1 of 1",
         "why": "Fixes the spelling.",
-        "passage": "recieve",
-        "replacement": "receive",
+        "now": "",
+        "nowMark": "recieve",
         "outdated": true,
-        "accept": "/suggestions/s3/accept",
-        "decline": "/suggestions/s3/decline",
-        "id": "suggestion-s3"
+        "accept": "/suggestions/s5/accept",
+        "decline": "/suggestions/s5/decline",
+        "id": "suggestion-s5"
       },
       "file": "examples/outdated.html"
     }

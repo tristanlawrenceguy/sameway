@@ -79,6 +79,7 @@ func (s *Server) routes() {
 	m.HandleFunc("POST /activity/{id}/undo", s.undo)
 	m.HandleFunc("POST /act/{id}", s.act)
 	m.HandleFunc("POST /suggestions/{id}/{answer}", s.suggestionAnswer)
+	m.HandleFunc("POST /suggestions/accept-all", s.suggestionsAcceptAll)
 	m.HandleFunc("POST /canvas/{id}/props", s.blockProps)
 	m.HandleFunc("POST /canvas/{id}/keep", s.canvasKeep)
 	m.HandleFunc("POST /canvas/{id}/delete", s.canvasDelete)

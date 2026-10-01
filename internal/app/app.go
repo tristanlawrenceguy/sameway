@@ -218,7 +218,7 @@ type DescribedType struct {
 	Internal    bool           `json:"internal,omitempty"`
 	Title       string         `json:"title_field,omitempty"`
 	Fields      []schema.Field `json:"fields"`
-	Schema      map[string]any `json:"schema"`
+	Schema      map[string]any `json:"schema,omitempty"` // not in the list of types; see describe.go
 	Count       int            `json:"count"`
 }
 
@@ -287,7 +287,7 @@ func (a *App) Describe() Description {
 		n, _ := a.Store.Count(t.Name)
 		d.Types = append(d.Types, DescribedType{Name: t.Name, Description: t.Description, Internal: t.Internal, Title: t.Title, Fields: t.Fields, Schema: t.JSONSchema(), Count: n})
 	}
-	for _, c := range a.Registry.Components() {
+	for _, c := range a.Registry.Blocks() {
 		d.Components = append(d.Components, DescribedComponent{Name: c.Manifest.Name, Source: c.Source, Description: c.Manifest.Description, Use: c.Manifest.Use, Props: c.Manifest.Props, A11y: c.Manifest.A11y, Machine: c.Manifest.Machine, Examples: c.Manifest.Examples})
 	}
 	d.Arrangements = a.Registry.Arrangements()

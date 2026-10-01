@@ -30,7 +30,11 @@ type Manifest struct {
 	Use *Use `json:"use,omitempty"`
 	// Icon is one glyph that stands for the component when a block is shown
 	// at icon size; the name travels with it for assistive technology.
-	Icon     string          `json:"icon,omitempty"`
+	Icon string `json:"icon,omitempty"`
+	// PageOnly is a component Sameway places itself, on the page it belongs
+	// to, such as a suggested change on its record: it is never a block, so
+	// the catalogue leaves it out and add_component refuses it.
+	PageOnly bool            `json:"pageOnly,omitempty"`
 	Props    json.RawMessage `json:"props"`
 	A11y     json.RawMessage `json:"a11y"`
 	Machine  json.RawMessage `json:"machine"`

@@ -48,6 +48,10 @@ func showing(line, shows string) string {
 // the component, and the block can be shown. shows is what it would show;
 // bad is the tool's error when it may not, and nothing should be written.
 func (s *Service) writable(tool string, c *render.Component, props map[string]any) (shows string, bad *toolResult) {
+	if c.Manifest.PageOnly {
+		r := fail("%s is not a block: Sameway shows it itself on the page it belongs to. Pick a component from the catalogue.", c.Manifest.Name)
+		return "", &r
+	}
 	if _, err := c.Validate(props); err != nil {
 		r := fail("%s Fix the props and call %s again.", PropsTrouble(err), tool)
 		return "", &r

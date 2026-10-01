@@ -4,29 +4,32 @@
 # decline. Accepting is an ordinary change, logged and undone like any
 # other. Internal; shown on the record it is about.
 name: suggestion
-description: A change to some writing that was suggested and not made, waiting to be accepted or declined.
+description: A suggested change to some writing, waiting for an answer.
 internal: true
 title: why
 fields:
   about:
     type: string
     required: true
-    description: The record it is about, as type/id.
   field:
     type: string
     required: true
-    description: The field of that record whose words it changes.
   passage:
     type: text
     required: true
-    description: The words there now, exactly, which it changes.
   replacement:
     type: text
-    description: The words to put in their place; empty takes the passage out.
   why:
     type: text
     required: true
-    description: Why, in a sentence, for the one deciding.
+  kind:
+    type: enum
+    values: [fix, clarity, style, structure, format]
+    labels: {fix: Fixes, clarity: Clarity, style: Style, structure: Structure, format: Formatting}
+    default: clarity
+  meaning:
+    type: bool
+    default: false
   state:
     type: enum
     values: [pending, accepted, declined]

@@ -18,8 +18,8 @@ func TestSuggestedEditsWaitForTheWriter(t *testing.T) {
 		t.Fatal(err)
 	}
 	out := run(t, svc, "suggest_edits", map[string]any{"type": "note", "id": note.ID, "edits": []any{
-		map[string]any{"passage": "it was decided by everyone that", "replacement": "we decided", "why": "Shorter."},
-		map[string]any{"passage": "recieve", "replacement": "receive", "why": "Spelling."},
+		map[string]any{"passage": "it was decided by everyone that", "replacement": "we decided", "why": "Shorter.", "kind": "clarity"},
+		map[string]any{"passage": "recieve", "replacement": "receive", "why": "Spelling.", "kind": "fix"},
 	}})
 	if !strings.Contains(out, "2 changes") || !strings.Contains(out, "/t/note/"+note.ID) {
 		t.Errorf("it says what waits and where: %s", out)
@@ -32,7 +32,7 @@ func TestSuggestedEditsWaitForTheWriter(t *testing.T) {
 		t.Fatalf("both wait on the note, got %d", len(waiting))
 	}
 
-	if _, _, err := chat.AcceptSuggestion(svc.Store, chat.Who{Actor: "human"}, waiting[1].ID); err != nil {
+	if _, _, _, _, err := chat.AcceptSuggestions(svc.Store, chat.Who{Actor: "human"}, []string{waiting[1].ID}); err != nil {
 		t.Fatal(err)
 	}
 	now, _ := svc.Store.Get("note", note.ID)
@@ -45,7 +45,7 @@ func TestSuggestedEditsWaitForTheWriter(t *testing.T) {
 
 	// The writer changes the sentence; the other suggestion no longer fits.
 	svc.Store.Update("note", note.ID, map[string]any{"body": "We all agreed: the garden opens in May. We receive seeds in April."})
-	if _, _, err := chat.AcceptSuggestion(svc.Store, chat.Who{Actor: "human"}, waiting[0].ID); err != chat.ErrOutdated {
+	if _, _, _, _, err := chat.AcceptSuggestions(svc.Store, chat.Who{Actor: "human"}, []string{waiting[0].ID}); err != chat.ErrOutdated {
 		t.Errorf("an outdated suggestion is not guessed at: %v", err)
 	}
 	if left := chat.Suggestions(svc.Store, "note", note.ID); len(left) != 0 {
@@ -63,13 +63,59 @@ func TestASuggestionMustFindItsWords(t *testing.T) {
 	svc := newFullService(t)
 	note, _ := svc.Store.Create("note", map[string]any{"title": "N", "body": "the cat sat on the mat"})
 	refused(t, svc, "suggest_edits", map[string]any{"type": "note", "id": note.ID, "edits": []any{
-		map[string]any{"passage": "dog", "replacement": "cat", "why": "x"}}}, "copy it exactly")
+		map[string]any{"passage": "dog", "replacement": "cat", "why": "x", "kind": "fix"}}}, "copy it exactly")
 	refused(t, svc, "suggest_edits", map[string]any{"type": "note", "id": note.ID, "edits": []any{
-		map[string]any{"passage": "the", "replacement": "a", "why": "x"}}}, "occurs 2 times")
+		map[string]any{"passage": "the", "replacement": "a", "why": "x", "kind": "fix"}}}, "occurs 2 times")
 	refused(t, svc, "suggest_edits", map[string]any{"type": "note", "id": note.ID, "edits": []any{
-		map[string]any{"passage": "cat sat", "replacement": "dog sat", "why": "x"},
-		map[string]any{"passage": "sat on", "replacement": "lay on", "why": "y"}}}, "overlaps")
+		map[string]any{"passage": "cat sat", "replacement": "dog sat", "why": "x", "kind": "fix"},
+		map[string]any{"passage": "sat on", "replacement": "lay on", "why": "y", "kind": "fix"}}}, "overlaps")
 	if n := len(chat.Suggestions(svc.Store, "note", note.ID)); n != 0 {
 		t.Errorf("nothing suggested when refused: %d", n)
 	}
+}
+
+// A change to the formatting alone is found as one, whatever the model
+// called it; several accepted together are one change and one Undo; and
+// more than a writer can weigh in one go is refused.
+func TestSuggestionsAreKindedAndTakenTogether(t *testing.T) {
+	svc := newFullService(t)
+	note, _ := svc.Store.Create("note", map[string]any{"title": "N", "body": "Plans\n\nWe recieve seeds and teh pond liner."})
+	run(t, svc, "suggest_edits", map[string]any{"type": "note", "id": note.ID, "edits": []any{
+		map[string]any{"passage": "Plans", "replacement": "## Plans", "why": "A heading.", "kind": "style"},
+		map[string]any{"passage": "recieve", "replacement": "receive", "why": "Spelling.", "kind": "fix"},
+		map[string]any{"passage": "teh", "replacement": "the", "why": "Typo.", "kind": "fix"},
+	}})
+	waiting := chat.Suggestions(svc.Store, "note", note.ID)
+	if waiting[0].Fields["kind"] != "format" || waiting[1].Fields["kind"] != "fix" {
+		t.Errorf("formatting is found by Sameway: %v, %v", waiting[0].Fields["kind"], waiting[1].Fields["kind"])
+	}
+	_, _, made, _, err := chat.AcceptSuggestions(svc.Store, chat.Who{Actor: "human"}, []string{waiting[1].ID, waiting[2].ID})
+	if err != nil || made != 2 {
+		t.Fatalf("both fixes go in: %d %v", made, err)
+	}
+	now, _ := svc.Store.Get("note", note.ID)
+	if now.Fields["body"] != "Plans\n\nWe receive seeds and the pond liner." {
+		t.Errorf("both fixes in one change: %q", now.Fields["body"])
+	}
+	updated := entries(t, svc, "updated")
+	if len(updated) != 1 {
+		t.Fatalf("one change, one entry: %d", len(updated))
+	}
+	run(t, svc, "undo_change", map[string]any{"id": updated[0].ID})
+	if back, _ := svc.Store.Get("note", note.ID); back.Fields["body"] != note.Fields["body"] {
+		t.Errorf("one Undo takes both back: %q", back.Fields["body"])
+	}
+	many := []any{}
+	for i := 0; i < 16; i++ {
+		many = append(many, map[string]any{"passage": "Plans", "replacement": "Plan", "why": "x", "kind": "fix"})
+	}
+	refused(t, svc, "suggest_edits", map[string]any{"type": "note", "id": note.ID, "edits": many}, "matter most")
+}
+
+// A suggestion card is Sameway's to place on the page it belongs to: it
+// is refused as a block (and left out of the catalogue: prompt_budget_test).
+func TestASuggestionIsNotABlock(t *testing.T) {
+	svc := newFullService(t)
+	refused(t, svc, "add_component", map[string]any{"component": "suggestion", "props": map[string]any{
+		"label": "1 of 1", "why": "x", "now": "a", "nowMark": "a", "accept": "/a", "decline": "/d"}}, "not a block")
 }
