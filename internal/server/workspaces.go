@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
-	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -74,32 +73,7 @@ func (s *Server) copy(name string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	src := s.app.Workspace.Dir
-	err = filepath.WalkDir(src, func(p string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		rel, _ := filepath.Rel(src, p)
-		if rel == "." {
-			return os.MkdirAll(dir, 0o755)
-		}
-		if strings.HasPrefix(rel, "data.db") {
-			return nil
-		}
-		target := filepath.Join(dir, rel)
-		if d.IsDir() {
-			return os.MkdirAll(target, 0o755)
-		}
-		data, err := os.ReadFile(p)
-		if err != nil {
-			return err
-		}
-		return os.WriteFile(target, data, 0o644)
-	})
-	if err != nil {
-		return "", err
-	}
-	if err := s.app.Store.Backup(filepath.Join(dir, "data.db")); err != nil {
+	if err := s.app.CopyTo(dir, false); err != nil {
 		return "", err
 	}
 	return dir, s.settle(dir, name)

@@ -117,6 +117,7 @@ func (s *Server) listFor(ctx context.Context) []tool {
 		for _, t := range r.svc.Tools() {
 			allowed[t.Name] = true
 		}
+		allowed["try"] = true // whoever may change things may try a change
 	}
 	var out []tool
 	for _, t := range all {

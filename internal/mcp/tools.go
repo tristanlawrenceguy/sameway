@@ -66,6 +66,7 @@ func (s *Server) tools() []tool {
 		}
 		out = append(out, tool{Name: t.Name, Description: t.Description, InputSchema: t.Schema})
 	}
+	out = append(out, tryTool) // try.go
 	// What each is like, for a client to ask before it acts (annotations.go).
 	for i := range out {
 		if a := annotations(out[i].Name); a != nil {
@@ -79,6 +80,18 @@ func (s *Server) tools() []tool {
 // live here; everything that changes something goes through the chat service,
 // so an agent gets the same checks and the same activity log as the assistant.
 func (s *Server) call(ctx context.Context, svc *chat.Service, name string, args json.RawMessage) (string, bool) {
+	// An agent let in with a key changes things at its pace (chat/pace.go).
+	// try makes a copy of the workspace each time, so it is paced too.
+	if v := chat.VisitorOf(ctx); v.Agent && (!toolTraits[name].readOnly || name == "try") {
+		if wait := chat.Pace(v.Login); wait > 0 {
+			return chat.SlowDown(wait), true
+		}
+	}
+	return s.run(ctx, svc, name, args)
+}
+
+// run is call without the pace, for a tool tried on a copy.
+func (s *Server) run(ctx context.Context, svc *chat.Service, name string, args json.RawMessage) (string, bool) {
 	switch name {
 	case "describe":
 		var a struct {
@@ -99,6 +112,8 @@ func (s *Server) call(ctx context.Context, svc *chat.Service, name string, args 
 			return err.Error(), true
 		}
 		return string(raw), false
+	case "try":
+		return s.try(ctx, args)
 	case "look":
 		// The same handler the HTTP API has, so a page reads the same either way.
 		req := httptest.NewRequest(http.MethodPost, "/api/look", bytes.NewReader(args))
