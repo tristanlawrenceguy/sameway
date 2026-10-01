@@ -46,7 +46,8 @@ func (s *Server) apiChanges(w http.ResponseWriter, r *http.Request) {
 			out, cursor, more := s.changesSince(since, limit, owner, q.Get("since") == "")
 			if len(out) > 0 || !time.Now().Before(deadline) {
 				writeJSON(w, http.StatusOK, map[string]any{"changes": out, "cursor": cursor, "more": more,
-					"next": "/api/changes?since=" + cursor})
+					"next":      "/api/changes?since=" + cursor,
+					"untrusted": "each change's title was written by its written_by: " + chat.Untrusted})
 				return
 			}
 		}
@@ -84,6 +85,7 @@ func (s *Server) changesSince(since time.Time, limit int, owner, start bool) ([]
 		cursor = time.Now().UTC().Format(time.RFC3339Nano)
 	}
 	var out []map[string]any
+	writers := s.app.Chat.Writers()
 	for _, e := range all {
 		if !e.CreatedAt.After(since) {
 			continue
@@ -92,7 +94,7 @@ func (s *Server) changesSince(since time.Time, limit int, owner, start bool) ([]
 			return out, cursor, true
 		}
 		cursor = e.CreatedAt.UTC().Format(time.RFC3339Nano)
-		if c := s.change(e, owner); c != nil {
+		if c := s.change(e, owner, writers); c != nil {
 			out = append(out, c)
 		}
 	}
@@ -101,7 +103,7 @@ func (s *Server) changesSince(since time.Time, limit int, owner, start bool) ([]
 
 // change is one entry as an agent reads it, or nil when it is not the
 // asker's to read.
-func (s *Server) change(e *store.Record, owner bool) map[string]any {
+func (s *Server) change(e *store.Record, owner bool, writers *chat.Writers) map[string]any {
 	target, _ := e.Fields["target"].(string)
 	id, _ := e.Fields["target_id"].(string)
 	t, isType := s.app.Types.Get(target)
@@ -114,6 +116,7 @@ func (s *Server) change(e *store.Record, owner bool) map[string]any {
 		if isType {
 			if rec, err := s.app.Store.Get(target, id); err == nil {
 				c["title"], c["version"], c["page"] = s.title(t, rec), chat.Version(rec), "/t/"+target+"/"+id
+				c["written_by"] = writers.Of(target, rec).Words
 			} else {
 				c["gone"] = true
 			}

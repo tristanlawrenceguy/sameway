@@ -24,7 +24,10 @@ func (s *Server) entriesApart(recs []*store.Record) []string {
 		id, _ := r.Fields["target_id"].(string)
 		if t, ok := s.app.Types.Get(target); ok && id != "" {
 			if rec, err := s.app.Store.Get(t.Name, id); err == nil {
-				ways = recordWays(t, rec)
+				// Said as its row is, number and all: a time here once
+				// named two notes made a second apart differently from
+				// their list.
+				return recordWays(t, rec)
 			}
 		}
 		return append(ways, "at "+momentWords(r.CreatedAt), "at "+secondWords(r.CreatedAt))

@@ -46,7 +46,7 @@ func TestReadOnlyToolsChangeNothing(t *testing.T) {
 	if err := workspace.Init(dir, examples.FS, examples.StarterRoot, false); err != nil {
 		t.Fatal(err)
 	}
-	a, err := app.Load(dir, true)
+	a, err := app.Load(dir, false) // on disk, so the database is hashed too
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,6 +63,7 @@ func TestReadOnlyToolsChangeNothing(t *testing.T) {
 		"find_records": `{"type":"task"}`,
 		"get_record":   `{"type":"task","id":"` + task.ID + `"}`,
 		"search":       `{"query":"plumber"}`,
+		"try":          `{"name":"update_record","arguments":{"type":"task","id":"` + task.ID + `","fields":{"done":true}}}`,
 	}
 	var calls []string
 	for _, raw := range result(t, listed[0])["tools"].([]any) {
@@ -122,6 +123,10 @@ func fingerprint(t *testing.T, dir string) string {
 	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
 			return err
+		}
+		// SQLite's shared-memory index changes as it is read.
+		if strings.HasSuffix(path, "-shm") {
+			return nil
 		}
 		b, err := os.ReadFile(path)
 		if err != nil {
