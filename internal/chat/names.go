@@ -94,12 +94,12 @@ func Sentence(st *store.Store, f map[string]any) string {
 	// entry written before that said test_type.
 	switch c.Component {
 	case "type":
-		c.Detail = schema.Words(c.Detail)
+		c.Detail = schema.DisplayName(c.Detail)
 	case "field":
 		name, of, _ := strings.Cut(c.Detail, " on ")
-		c.Detail = schema.Words(name)
+		c.Detail = schema.DisplayName(name)
 		if of != "" {
-			c.Detail += " on " + schema.Words(of)
+			c.Detail += " on " + schema.DisplayName(of)
 		}
 	}
 	if c.Action == "" {

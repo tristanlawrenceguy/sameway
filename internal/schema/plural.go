@@ -13,6 +13,20 @@ func Words(name string) string {
 	return strings.ReplaceAll(name, "_", " ")
 }
 
+// DisplayName is the same as Words but with each word capitalised, for
+// activity entries where a type name appears to people: test_type → Test
+// Type, meeting notes template → Meeting Notes Template. Use this only
+// where a type identifier sits in an activity entry's detail field.
+func DisplayName(name string) string {
+	words := strings.Split(strings.ReplaceAll(name, "_", " "), " ")
+	for i, w := range words {
+		if len(w) > 0 {
+			words[i] = strings.ToUpper(string(w[0])) + w[1:]
+		}
+	}
+	return strings.Join(words, " ")
+}
+
 // Plural is the plural of a content type's name, for headings, navigation
 // and sentences: activity, activities; box, boxes; person, people;
 // test_type, test types. A name that already ends in s is taken to be
