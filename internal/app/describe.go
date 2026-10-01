@@ -18,7 +18,8 @@ var Parts = []string{"types", "components", "arrangements", "tools", "routes", "
 // With nothing asked it is the index, a few kilobytes; "full" is the whole
 // description, and a name without a part is looked for in every part.
 // Components come compact (the props a writer gives and one example)
-// unless full is asked, as ?full=1 does over HTTP.
+// unless full is asked, as ?full=1 does over HTTP, and the list of types
+// without each one's JSON Schema, which a type asked for by name has.
 func (d Description) Part(part, name string) (any, error) { return d.part(part, name, false) }
 
 // FullPart is Part with components whole, manifest and all.
@@ -56,8 +57,16 @@ func (d Description) part(part, name string, full bool) (any, error) {
 			}
 		}
 	case "types":
-		if name == "" {
+		if name == "" && full {
 			return d.Types, nil
+		}
+		if name == "" {
+			list := make([]DescribedType, len(d.Types))
+			for i, t := range d.Types {
+				t.Schema = nil
+				list[i] = t
+			}
+			return list, nil
 		}
 		for _, t := range d.Types {
 			items = append(items, t.Name)
