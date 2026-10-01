@@ -52,7 +52,9 @@ func PageParts(st *store.Store, t *schema.Type, rec *store.Record) []PagePart {
 		}
 	}
 	if t.Name == EventType {
-		if id, _ := rec.Fields["recording"].(string); id != "" {
+		if id, _ := rec.Fields["recording"].(string); id == "" {
+			add("recording", "a place to record it (the microphone, and this computer's sound for a call), or to add the recording or transcript the meeting app made")
+		} else {
 			add("recording", "its recording, played with its transcript")
 			if s, _ := rec.Fields["summary"].(string); strings.TrimSpace(s) == "" {
 				add("write-up", "the offer to have it written up from its recording")

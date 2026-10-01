@@ -47,6 +47,7 @@ type toolArgs struct {
 	Recording   string         `json:"recording"`
 	Decisions   []meetingItem  `json:"decisions"`
 	Tasks       []meetingItem  `json:"tasks"`
+	How         string         `json:"how"`
 	Piece       string         `json:"piece"`
 	Parts       []string       `json:"parts"`
 	Material    []materialItem `json:"material"`
@@ -86,7 +87,7 @@ func toolHandlers() map[string]func(s *Service, a toolArgs, call llm.ToolCall) t
 			if s.Now != nil {
 				now = s.Now()
 			}
-			return s.askToRecord(a.Event, now)
+			return s.askToRecord(a.Event, a.How, now)
 		},
 		"write_up_meeting": func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
 			return s.writeUpMeeting(a.Event, a.Recording, a.Summary, a.Decisions, a.Tasks)

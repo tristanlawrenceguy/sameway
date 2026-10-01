@@ -33,13 +33,14 @@ func (s *Service) recordingTools() []llm.Tool {
 		return nil
 	}
 	return []llm.Tool{{Name: "ask_to_record",
-		Description: "Have a meeting ask to be recorded when it starts: a reminder at its start, repeating as it does, that opens its page ready to record (the microphone, and the computer's sound for a call). Use it when the person wants a meeting recorded, or records this one each time; never for every event.",
+		Description: "Have a meeting remind the person about its recording: with how here, a reminder as it starts that opens its page ready to record (the microphone, and this computer's sound for a call); with how app, for a meeting Teams, Zoom or Meet records, a reminder as it ends to add that recording or transcript on its page. Each repeats as the meeting does. Use it when the person wants a meeting recorded, or records this one each time; never for every event.",
 		Schema: obj(map[string]any{
 			"event": map[string]any{"type": "string", "description": "The event id of the meeting."},
+			"how":   map[string]any{"type": "string", "enum": []string{"here", "app"}, "description": "here: Sameway records it; app: the meeting app does, and its file is added after. here when left out."},
 		}, "event")}}
 }
 
-func (s *Service) askToRecord(eventID string, now time.Time) toolResult {
+func (s *Service) askToRecord(eventID, how string, now time.Time) toolResult {
 	ev, err := s.Store.Get(EventType, eventID)
 	if err != nil {
 		return fail("no event %s; find_records on event", eventID)
@@ -47,19 +48,61 @@ func (s *Service) askToRecord(eventID string, now time.Time) toolResult {
 	et, _ := s.Store.Types().Get(EventType)
 	title := Name(s.Store, et, ev)
 	about := RecordAbout(eventID)
-	if had := remindersAbout(s.Store, about); len(had) > 0 {
-		return toolResult{text: fmt.Sprintf("%s already asks to be recorded when it starts.", title)}
+	name, notes := "Record "+title, "Starting now. Its page is ready to record: the microphone, and this computer's sound for a call."
+	if how == "app" {
+		name, notes = "Add the recording of "+title, "It has ended. Add the recording or transcript the meeting app made (a .vtt from Teams or Zoom, or the audio) on its page."
+	}
+	for _, r := range RemindersAbout(s.Store, about) {
+		if r.Fields["title"] == name {
+			return toolResult{text: fmt.Sprintf("%s already has that reminder: /t/%s/%s.", title, ReminderType, r.ID)}
+		}
 	}
 	starts, _ := ev.Fields["starts"].(string)
 	repeat, _ := ev.Fields["repeat"].(string)
-	at := starts
-	if at == "" {
+	if starts == "" {
 		return fail("%s has no start time to ring at; set starts first", title)
 	}
-	// A meeting that repeats rings at its next time still to come.
+	at := nextStart(starts, repeat, now, MeetingLength(ev))
+	if how == "app" {
+		if t, err := time.Parse(time.RFC3339, at); err == nil {
+			at = t.Add(MeetingLength(ev)).Format(time.RFC3339)
+		}
+	}
+	if t, err := time.Parse(time.RFC3339, at); err == nil && t.Before(now) {
+		return fail("%s is over and does not repeat, so there is nothing to ring for", title)
+	}
+	rec, c, err := Write(s.Store, "created", ReminderType, "", map[string]any{
+		"title": name, "at": at, "repeat": repeat, "about": about, "notes": notes})
+	if err != nil {
+		return fail("could not set it: %v", err)
+	}
+	when := at
+	if repeat != "" {
+		when += ", " + strings.ToLower(whenRepeat(repeat))
+	}
+	return toolResult{text: fmt.Sprintf("%s: a reminder at %s that opens its page: /t/%s/%s.", name, when, ReminderType, rec.ID), change: &c}
+}
+
+// MeetingLength is how long a meeting runs, an hour when it does not say.
+func MeetingLength(ev *store.Record) time.Duration {
+	s, _ := ev.Fields["starts"].(string)
+	e, _ := ev.Fields["ends"].(string)
+	st, err1 := time.Parse(time.RFC3339, s)
+	en, err2 := time.Parse(time.RFC3339, e)
+	if err1 != nil || err2 != nil || !en.After(st) {
+		return time.Hour
+	}
+	return en.Sub(st)
+}
+
+// nextStart is a meeting's start still to come, or its one start: a
+// repeating meeting whose time is past moves on to the next, one that
+// is on now keeps its start.
+func nextStart(starts, repeat string, now time.Time, length time.Duration) string {
+	at := starts
 	for i := 0; repeat != "" && i < 1000; i++ {
-		ts, err := time.Parse(time.RFC3339, at)
-		if err != nil || !ts.Before(now) {
+		t, err := time.Parse(time.RFC3339, at)
+		if err != nil || !t.Add(length).Before(now) {
 			break
 		}
 		next, ok := when.Next(repeat, at, now)
@@ -68,20 +111,13 @@ func (s *Service) askToRecord(eventID string, now time.Time) toolResult {
 		}
 		at = next
 	}
-	if ts, err := time.Parse(time.RFC3339, at); err == nil && ts.Before(now) {
-		return fail("%s started at %s and does not repeat, so there is nothing to ring for", title, at)
-	}
-	rec, c, err := Write(s.Store, "created", ReminderType, "", map[string]any{
-		"title": "Record " + title, "at": at, "repeat": repeat, "about": about,
-		"notes": "It opens the meeting's page ready to record."})
-	if err != nil {
-		return fail("could not set it: %v", err)
-	}
-	return toolResult{text: fmt.Sprintf("%s now asks to be recorded when it starts (%s%s), with a reminder that opens its page ready to record: /t/%s/%s.",
-		title, at, map[bool]string{true: ", " + strings.ToLower(when.RepeatText(repeat)), false: ""}[repeat != ""], ReminderType, rec.ID), change: &c}
+	return at
 }
 
-func remindersAbout(st *store.Store, about string) []*store.Record {
+func whenRepeat(repeat string) string { return when.RepeatText(repeat) }
+
+// RemindersAbout are the reminders, still to answer, about a page.
+func RemindersAbout(st *store.Store, about string) []*store.Record {
 	all, _ := st.List(ReminderType, store.ListOptions{})
 	var out []*store.Record
 	for _, r := range all {
