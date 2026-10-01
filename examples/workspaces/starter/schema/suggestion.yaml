@@ -1,0 +1,34 @@
+# A change to someone's words that the assistant or an agent suggested
+# and has not made: these words, in place of those, and why. It waits on
+# the page of what it is about, for whoever may change that to accept or
+# decline. Accepting is an ordinary change, logged and undone like any
+# other. Internal; shown on the record it is about.
+name: suggestion
+description: A change to some writing that was suggested and not made, waiting to be accepted or declined.
+internal: true
+title: why
+fields:
+  about:
+    type: string
+    required: true
+    description: The record it is about, as type/id.
+  field:
+    type: string
+    required: true
+    description: The field of that record whose words it changes.
+  passage:
+    type: text
+    required: true
+    description: The words there now, exactly, which it changes.
+  replacement:
+    type: text
+    description: The words to put in their place; empty takes the passage out.
+  why:
+    type: text
+    required: true
+    description: Why, in a sentence, for the one deciding.
+  state:
+    type: enum
+    values: [pending, accepted, declined]
+    labels: {pending: Waiting, accepted: Accepted, declined: Declined}
+    default: pending

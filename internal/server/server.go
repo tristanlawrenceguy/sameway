@@ -26,9 +26,7 @@ type Server struct {
 	mux   *http.ServeMux
 	turns turns
 	fleet *Fleet
-	// model is whether the assistant can reach its model, last looked;
-	// see connect.go.
-	model modelState
+	model modelState // whether the assistant can reach its model, last looked; connect.go
 	// notify tells a ring beyond the page; see ring.go.
 	notify  func(title, text, url string)
 	changes atomic.Int64 // changes arrived from other computers; see sync.go
@@ -80,6 +78,7 @@ func (s *Server) routes() {
 	m.HandleFunc("POST /proposal/{id}/instead", s.proposalInstead)
 	m.HandleFunc("POST /activity/{id}/undo", s.undo)
 	m.HandleFunc("POST /act/{id}", s.act)
+	m.HandleFunc("POST /suggestions/{id}/{answer}", s.suggestionAnswer)
 	m.HandleFunc("POST /canvas/{id}/props", s.blockProps)
 	m.HandleFunc("POST /canvas/{id}/keep", s.canvasKeep)
 	m.HandleFunc("POST /canvas/{id}/delete", s.canvasDelete)

@@ -1,0 +1,20 @@
+/* A change suggested to someone's words: why, then the words in place with
+   what would go struck through and what would come underlined, so it reads
+   as the sentence it would become. Colour is never the only sign: the
+   strike and the underline carry it, and a screen reader hears "Take out"
+   and "Put in". */
+.sw-suggestion {
+  padding: var(--sw-space-4);
+  border: 2px solid var(--sw-actor, var(--sw-color-assistant));
+  border-radius: var(--sw-radius-lg);
+  background: var(--sw-actor-soft, var(--sw-color-assistant-soft));
+  max-width: var(--sw-size-measure);
+}
+.sw-suggestion__why { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.sw-suggestion__words { margin: var(--sw-space-2) 0 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.sw-suggestion__out { text-decoration: line-through; text-decoration-thickness: 2px; background: var(--sw-color-danger-soft); color: var(--sw-color-fg); }
+.sw-suggestion__in { text-decoration: underline; text-decoration-thickness: 2px; background: var(--sw-color-success-soft); color: var(--sw-color-fg); }
+.sw-suggestion__around { color: var(--sw-color-fg-muted); }
+.sw-suggestion--outdated .sw-suggestion__words { color: var(--sw-color-fg-muted); }
+.sw-suggestion__answers { display: flex; flex-wrap: wrap; gap: var(--sw-space-2); margin-top: var(--sw-space-3); }
+@media (forced-colors: active) { .sw-suggestion__out, .sw-suggestion__in { background: none; color: CanvasText; } }

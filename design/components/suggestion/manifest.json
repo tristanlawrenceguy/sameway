@@ -1,0 +1,140 @@
+{
+  "name": "suggestion",
+  "version": "1.0.0",
+  "description": "A change suggested to someone's writing and not made: why, then the words in place, what would go struck through and what would come underlined, with Accept and Decline. Shown on the page of what it is about.",
+  "icon": "±",
+  "use": {
+    "when": "the assistant or an agent suggests a change to words a person wrote, rather than making it.",
+    "not": "a change to the canvas or a setting, which is a proposal; or words the assistant is writing for itself.",
+    "with": "the record it is about, above its fields; one per change, each answered on its own."
+  },
+  "props": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "why",
+      "passage",
+      "accept",
+      "decline"
+    ],
+    "properties": {
+      "why": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Why, in a sentence: it names the group, and the buttons say it again for a screen reader."
+      },
+      "passage": {
+        "type": "string",
+        "minLength": 1,
+        "description": "The words there now that it would change."
+      },
+      "replacement": {
+        "type": "string",
+        "description": "The words that would come in their place; empty takes the passage out."
+      },
+      "before": {
+        "type": "string",
+        "description": "A few words before the passage, so it reads in its sentence."
+      },
+      "after": {
+        "type": "string",
+        "description": "A few words after it."
+      },
+      "outdated": {
+        "type": "boolean",
+        "default": false,
+        "description": "The passage is no longer there: it says so and offers only to set it aside."
+      },
+      "accept": {
+        "type": "string",
+        "minLength": 1,
+        "description": "URL Accept posts to."
+      },
+      "decline": {
+        "type": "string",
+        "minLength": 1,
+        "description": "URL Decline posts to."
+      },
+      "actor": {
+        "type": "string",
+        "enum": [
+          "assistant",
+          "agent"
+        ],
+        "default": "assistant",
+        "description": "Who suggested it, for its colour."
+      },
+      "from": {
+        "type": "string",
+        "description": "The page it is answered from, to come back to."
+      },
+      "id": {
+        "type": "string"
+      }
+    }
+  },
+  "a11y": {
+    "role": "group",
+    "keyboard": [
+      {
+        "key": "Tab",
+        "does": "moves to Accept, then Decline"
+      },
+      {
+        "key": "Enter",
+        "does": "gives that answer"
+      }
+    ],
+    "states": [],
+    "wcag": {
+      "target": "AAA",
+      "notes": "A group named by why and described by the words, so moving to Accept says what would change (1.3.1). What goes and what comes are marked by strike and underline as well as colour (1.4.1), and in words for a screen reader. Nothing changes until a button is pressed (3.2.5)."
+    }
+  },
+  "machine": {
+    "selector": "[data-component=\"suggestion\"]",
+    "identify": "A group whose accessible name is why. del is what would go, ins what would come.",
+    "operate": "Post to Accept or Decline. Nothing changes until you do; an outdated one only sets aside."
+  },
+  "examples": [
+    {
+      "name": "default",
+      "props": {
+        "why": "Shorter, and says who decides.",
+        "before": "At the meeting ",
+        "passage": "it was decided by everyone that",
+        "replacement": "we decided",
+        "after": " the garden opens in May.",
+        "accept": "/suggestions/s1/accept",
+        "decline": "/suggestions/s1/decline",
+        "id": "suggestion-s1"
+      },
+      "file": "examples/default.html"
+    },
+    {
+      "name": "take-out",
+      "props": {
+        "why": "Repeats the sentence before.",
+        "passage": "As said above, the pond needs a liner.",
+        "accept": "/suggestions/s2/accept",
+        "decline": "/suggestions/s2/decline",
+        "actor": "agent",
+        "id": "suggestion-s2"
+      },
+      "file": "examples/take-out.html"
+    },
+    {
+      "name": "outdated",
+      "props": {
+        "why": "Fixes the spelling.",
+        "passage": "recieve",
+        "replacement": "receive",
+        "outdated": true,
+        "accept": "/suggestions/s3/accept",
+        "decline": "/suggestions/s3/decline",
+        "id": "suggestion-s3"
+      },
+      "file": "examples/outdated.html"
+    }
+  ]
+}
