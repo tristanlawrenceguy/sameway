@@ -55,6 +55,11 @@ func (s *Server) say(props, fields map[string]any, href string) {
 	}
 	detail := w.Detail
 
+	// Resolve raw type identifiers in activity detail to readable names.
+	if w.Target == "type" {
+		detail = schema.DisplayName(w.Detail)
+	}
+
 	// Resolve raw database IDs in detail to readable titles so the log never
 	// shows identifiers. This covers records created without a title (where
 	// recordTitle falls back to id) and old entry entries that stored just

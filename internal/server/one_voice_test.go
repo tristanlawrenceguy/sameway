@@ -81,7 +81,7 @@ func TestTheLogSaysEverythingInWords(t *testing.T) {
 			t.Errorf("the log's list says %q", raw)
 		}
 	}
-	if !strings.Contains(list, "added type test type") || !strings.Contains(list, "first of 3") {
+	if !strings.Contains(list, "added type Test Type") || !strings.Contains(list, "first of 3") {
 		t.Errorf("types in words, and alike entries by which came first")
 	}
 	entries, _ := a.Store.List("activity", store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
