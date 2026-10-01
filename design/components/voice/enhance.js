@@ -31,6 +31,12 @@
   function refused(e, mode) {
     var still = mode === "dictate" ? " The message can still be typed." : " A file can still be chosen.";
     var name = e && e.name;
+    if (name === "NoSoundShared") {
+      return "What was shared had no sound, so nothing was recorded. Press Record again and tick Share audio; for an app such as Teams or Zoom, share the entire screen." + still;
+    }
+    if (name === "ShareRefused") {
+      return "Nothing was shared, so nothing was recorded. Press Record and share the call's tab, or the entire screen, with Share audio ticked; or untick the computer's sound." + still;
+    }
     if (name === "NotAllowedError" || name === "SecurityError") {
       return "The microphone was not allowed, so nothing was recorded. It can be allowed in the browser's settings for this site." + still;
     }
@@ -52,6 +58,9 @@
     var btn = el.querySelector(".sw-voice__toggle"), word = el.querySelector(".sw-voice__word");
     var time = el.querySelector(".sw-voice__time"), said = el.querySelector(".sw-voice__said");
     var idle = word.textContent, rec = null, started = 0, tick = null;
+    // The computer's sound, offered where the browser can give it.
+    var also = el.querySelector(".sw-voice__also");
+    if (also && window.swSpeech.canHearComputer && window.swSpeech.canHearComputer()) also.hidden = false;
     var failed = "It could not be written down, so nothing was put in the message. Press Dictate to try again, or type it.";
     function state(s) {
       el.setAttribute("data-state", s);
@@ -113,9 +122,10 @@
       if (el.getAttribute("data-state") === "writing") return;
       if (rec) { finish(""); return; }
       said.textContent = "";
-      window.swSpeech.record().then(function (r) {
+      var computer = !!(also && !also.hidden && also.querySelector("input").checked);
+      window.swSpeech.record({ computer: computer }).then(function (r) {
         rec = r;
-        r.onend = function () { finish("The microphone stopped, so the recording ended. "); };
+        r.onend = function () { finish(computer ? "The microphone or the shared sound stopped, so the recording ended. " : "The microphone stopped, so the recording ended. "); };
         started = Date.now();
         word.textContent = mode === "dictate" ? "Stop dictating" : "Stop recording";
         state("recording");

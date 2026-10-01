@@ -21,12 +21,52 @@
   function supported() {
     return !!(window.isSecureContext && navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
   }
+  // canHearComputer says whether this browser can be given the computer's
+  // sound, or a tab's: what the other people on a call say.
+  function canHearComputer() {
+    return supported() && !!navigator.mediaDevices.getDisplayMedia && !!(window.AudioContext || window.webkitAudioContext);
+  }
+  // computerSound asks the person to share a tab or the screen with its
+  // sound, keeps the sound and lets the picture go. The browser cannot be
+  // asked for sound alone; a share without sound is refused.
+  function computerSound() {
+    return navigator.mediaDevices.getDisplayMedia({
+      video: true, audio: { echoCancellation: false, noiseSuppression: false },
+      systemAudio: "include", selfBrowserSurface: "exclude", restrictOwnAudio: true
+    }).then(function (shared) {
+      shared.getVideoTracks().forEach(function (t) { t.stop(); });
+      if (!shared.getAudioTracks().length) {
+        var e = new Error("no sound shared");
+        e.name = "NoSoundShared";
+        throw e;
+      }
+      return shared;
+    }, function (e) {
+      var r = new Error("nothing shared");
+      r.name = "ShareRefused";
+      throw r;
+    });
+  }
+  // mix is the microphone and the computer's sound as one stream.
+  function mix(mic, shared) {
+    var Ctx = window.AudioContext || window.webkitAudioContext, ctx = new Ctx(), out = ctx.createMediaStreamDestination();
+    ctx.createMediaStreamSource(mic).connect(out);
+    ctx.createMediaStreamSource(new MediaStream(shared.getAudioTracks())).connect(out);
+    return { stream: out.stream, ctx: ctx };
+  }
   // record starts the microphone and resolves to something that stops it:
   // stop() resolves to the recording, as a Blob of the type recorded.
   // onend, if set, is called when the microphone stops by itself (taken
   // away, or its permission withdrawn); stop() still gives what was heard.
-  function record() {
-    return navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+  // With opts.computer, the computer's sound is recorded with it.
+  function record(opts) {
+    var shared = null;
+    var asked = opts && opts.computer ? computerSound().then(function (s) { shared = s; }) : Promise.resolve();
+    return asked.then(function () {
+      return navigator.mediaDevices.getUserMedia({ audio: true });
+    }).then(function (mic) {
+      var mixed = shared ? mix(mic, shared) : null, stream = mixed ? mixed.stream : mic;
+      var all = shared ? mic.getTracks().concat(shared.getTracks()) : mic.getTracks();
       var type = bestType(), chunks = [];
       var rec = type ? new MediaRecorder(stream, { mimeType: type }) : new MediaRecorder(stream);
       rec.addEventListener("dataavailable", function (e) { if (e.data && e.data.size) chunks.push(e.data); });
@@ -36,7 +76,8 @@
         onend: null,
         stop: function () {
           var done = function () {
-            stream.getTracks().forEach(function (t) { t.stop(); });
+            all.forEach(function (t) { t.stop(); });
+            if (mixed) mixed.ctx.close();
             return new Blob(chunks, { type: rec.mimeType || type || "audio/webm" });
           };
           if (rec.state === "inactive") return Promise.resolve(done());
@@ -46,10 +87,13 @@
           });
         }
       };
-      stream.getTracks().forEach(function (t) {
+      all.forEach(function (t) {
         t.addEventListener("ended", function () { if (api.onend) api.onend(); });
       });
       return api;
+    }, function (e) {
+      if (shared) shared.getTracks().forEach(function (t) { t.stop(); });
+      throw e;
     });
   }
   function decode(ctx, data) {
@@ -93,5 +137,5 @@
       return new Blob([bytes.buffer], { type: "audio/wav" });
     });
   }
-  window.swSpeech = { supported: supported, record: record, toWav: toWav, ext: ext };
+  window.swSpeech = { supported: supported, canHearComputer: canHearComputer, record: record, toWav: toWav, ext: ext };
 })();
