@@ -28,7 +28,7 @@ func (s *Server) lede(r *http.Request, t *schema.Type, rec *store.Record) templa
 		delete(props, "context")
 		box = string(s.component("mark", props))
 	}
-	return template.HTML(`<p class="sw-lede">` + box + s.facts(t, rec, factOpts{Made: true, Boxed: box != "", Chips: true, Detail: true, From: s.from(r, t, rec)}) + `</p>`)
+	return template.HTML(`<p class="sw-lede">` + box + " " + s.facts(t, rec, factOpts{Made: true, Boxed: box != "", Chips: true, Detail: true, From: s.from(r, t, rec)}) + `</p>`)
 }
 
 // howMany says how many there are under a listing's title, and how many
