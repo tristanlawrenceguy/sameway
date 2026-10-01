@@ -74,3 +74,53 @@ func TestActivityDetailIsReadableInAPIAndHTML(t *testing.T) {
 		t.Errorf("the entry's detail page still shows the raw identifier %q\n%s", "test_type", truncate(entryPage))
 	}
 }
+
+// TestAPIActivityDetailFieldResolvesTypeIdentifier checks that GET
+// /api/activity/{id} resolves raw schema identifiers in the detail field
+// when the entry targets a content type (target == "type"). This is the
+// single-record API endpoint — the list and HTML pages already resolve it.
+// Acceptance item 1: the JSON response must show display-form names, not
+// raw identifiers like test_type.
+func TestAPIActivityDetailFieldResolvesTypeIdentifier(t *testing.T) {
+	a, h := newApp(t)
+
+	// Create a type-setting entry with raw identifiers.
+	entry, err := a.Store.Create("activity", map[string]any{
+		"actor":   "system",
+		"action":  "added",
+		"target":  "type",
+		"detail":  "test_type",
+		"summary": "System added type test_type",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var one map[string]any
+	json.Unmarshal(get(t, h, "/api/activity/"+entry.ID).Body.Bytes(), &one)
+	fields, _ := one["fields"].(map[string]any)
+	detail, ok := fields["detail"].(string)
+	if !ok || detail != "Test Type" {
+		t.Errorf("GET /api/activity/{id} for a type-setting entry should resolve the detail field to display name 'Test Type', got %q (ok=%v)", detail, ok)
+	}
+
+	// Non-type entries must keep their raw fields unchanged.
+	setEntry, err := a.Store.Create("activity", map[string]any{
+		"actor":   "assistant",
+		"action":  "set",
+		"target":  "ui.text",
+		"detail":  "large",
+		"summary": "Assistant changed text size to Large",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var setOne map[string]any
+	json.Unmarshal(get(t, h, "/api/activity/"+setEntry.ID).Body.Bytes(), &setOne)
+	setFields, _ := setOne["fields"].(map[string]any)
+	setDetail, ok2 := setFields["detail"].(string)
+	if !ok2 || setDetail != "large" {
+		t.Errorf("non-type entries must keep raw detail; expected 'large', got %q (ok=%v)", setDetail, ok2)
+	}
+}
