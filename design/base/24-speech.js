@@ -72,7 +72,9 @@
     var meLevel = meter(me), themLevel = meter(them), seen = "", m = 0, t = 0, n = 0;
     var tick = setInterval(function () {
       var tl = themLevel(), ml = meLevel();
-      if (tl > 0.01) t++; else if (ml > 0.015) m++;
+      // Floors measured on the AMI meeting corpus (internal/speech/ami_bench_test.go):
+      // a call is near silent between speakers, so a low floor finds them.
+      if (tl > 0.002) t++; else if (ml > 0.003) m++;
       if (++n === 4) {
         seen += t > 0 && t >= m ? "t" : m > 0 ? "m" : ".";
         m = t = n = 0;
