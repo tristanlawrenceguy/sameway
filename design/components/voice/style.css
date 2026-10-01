@@ -1,5 +1,8 @@
 .sw-voice { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--sw-space-2); }
 .sw-voice[hidden] { display: none; }
+.sw-voice__also { display: inline-flex; align-items: center; gap: var(--sw-space-2); min-height: 2.75rem; }
+.sw-voice__also[hidden] { display: none; }
+.sw-voice__also input { width: 1.25rem; height: 1.25rem; }
 .sw-voice__time { font-variant-numeric: tabular-nums; font-weight: 600; }
 .sw-voice__said { font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); }
 /* While the microphone is on the button says so in words; the mark beside

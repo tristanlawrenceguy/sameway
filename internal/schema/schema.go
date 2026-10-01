@@ -167,6 +167,9 @@ func (t *Type) validate() error {
 		if f.Type == "ref" && f.To == "" {
 			return fmt.Errorf("type %s: ref field %s needs to: the type it points at", t.Name, f.Name)
 		}
+		if f.Type == "list" && f.Of == "ref" && f.To == "" {
+			return fmt.Errorf("type %s: list field %s of refs needs to: the type its items point at", t.Name, f.Name)
+		}
 	}
 	if t.Title == "" {
 		for _, f := range t.Fields {
@@ -223,3 +226,15 @@ func contains(list []string, s string) bool {
 	}
 	return false
 }
+
+// RefTo is the type a field points at, whether it holds one record (ref)
+// or several (a list of refs), or "" for a field that points nowhere.
+func (f Field) RefTo() string {
+	if f.Type == "ref" || f.Type == "list" && f.Of == "ref" {
+		return f.To
+	}
+	return ""
+}
+
+// RefList says whether a field holds several records: a list of refs.
+func (f Field) RefList() bool { return f.Type == "list" && f.Of == "ref" }

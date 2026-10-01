@@ -1,6 +1,7 @@
 package ingest
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
@@ -34,11 +35,17 @@ func newLinker(st *store.Store, t *schema.Type) *linker {
 	if len(refs) != 1 {
 		return nil
 	}
-	to, ok := st.Types().Get(refs[0].To)
+	return linkerFor(st, refs[0])
+}
+
+// linkerFor finds and makes the records one field links to, by email,
+// phone or name: a row's one person, or each of a meeting's people.
+func linkerFor(st *store.Store, f schema.Field) *linker {
+	to, ok := st.Types().Get(f.To)
 	if !ok {
 		return nil
 	}
-	l := &linker{st: st, field: refs[0].Name, to: to, title: to.Title, email: fieldOfType(to, "email"), phone: fieldOfType(to, "phone"),
+	l := &linker{st: st, field: f.Name, to: to, title: to.Title, email: fieldOfType(to, "email"), phone: fieldOfType(to, "phone"),
 		byEmail: map[string]string{}, byPhone: map[string]string{}, byName: map[string]string{}}
 	if l.email == "" && l.phone == "" {
 		return nil
@@ -88,9 +95,14 @@ func (l *linker) link(row map[string]string, m Mapping) (id, who string) {
 		}
 		return ""
 	}
-	email := strings.ToLower(pick("from_email", "email", "e-mail", "email address"))
-	phone := digits(pick("phone", "number", "telephone", "mobile", "from_phone"))
-	name := pick("from_name", "name", "person", "contact", "who")
+	return l.find(pick("from_name", "name", "person", "contact", "who"), pick("from_email", "email", "e-mail", "email address"),
+		pick("phone", "number", "telephone", "mobile", "from_phone"))
+}
+
+// find is the person with this email, phone or name, made when there is
+// none, and what to call them.
+func (l *linker) find(name, rawEmail, rawPhone string) (id, who string) {
+	email, phone := strings.ToLower(strings.TrimSpace(rawEmail)), digits(rawPhone)
 	if email != "" {
 		if id, ok := l.byEmail[email]; ok {
 			return id, l.nameOf(id, name, email)
@@ -110,7 +122,7 @@ func (l *linker) link(row map[string]string, m Mapping) (id, who string) {
 		return "", ""
 	}
 	fields := map[string]any{}
-	who = firstOf(name, email, pick("phone", "number", "telephone", "mobile", "from_phone"))
+	who = firstOf(name, email, rawPhone)
 	if l.title != "" {
 		fields[l.title] = who
 	}
@@ -118,7 +130,7 @@ func (l *linker) link(row map[string]string, m Mapping) (id, who string) {
 		fields[l.email] = email
 	}
 	if l.phone != "" && phone != "" {
-		fields[l.phone] = pick("phone", "number", "telephone", "mobile", "from_phone")
+		fields[l.phone] = rawPhone
 	}
 	rec, err := l.st.Create(l.to.Name, fields)
 	if err != nil {
@@ -153,4 +165,41 @@ func digits(s string) string {
 		d = d[len(d)-10:]
 	}
 	return d
+}
+
+// nameAndEmail splits "Ann Lee <ann@example.com>" into its two halves;
+// an address alone is the email, anything else the name.
+func nameAndEmail(s string) (name, email string) {
+	s = strings.TrimSpace(s)
+	if i, j := strings.LastIndex(s, "<"), strings.LastIndex(s, ">"); i >= 0 && j > i {
+		return strings.TrimSpace(s[:i]), strings.TrimSpace(s[i+1 : j])
+	}
+	if strings.Contains(s, "@") && !strings.Contains(s, " ") {
+		return "", s
+	}
+	return s, ""
+}
+
+// linkLists finds, or makes, each record a list of refs names: a
+// meeting's people, by their email or name.
+func linkLists(st *store.Store, t *schema.Type, fields map[string]any) {
+	for _, f := range t.Fields {
+		items, _ := fields[f.Name].([]any)
+		if !f.RefList() || len(items) == 0 {
+			continue
+		}
+		l := linkerFor(st, f)
+		if l == nil {
+			delete(fields, f.Name)
+			continue
+		}
+		ids := make([]any, 0, len(items))
+		for _, it := range items {
+			name, email := nameAndEmail(fmt.Sprint(it))
+			if id, _ := l.find(name, email, ""); id != "" {
+				ids = append(ids, id)
+			}
+		}
+		fields[f.Name] = ids
+	}
 }

@@ -38,6 +38,9 @@ var ErrKeptLog = errors.New("the activity log is kept by Sameway and cannot be c
 // action is created, updated or deleted; id is empty for created.
 func Write(st *store.Store, action, typ, id string, fields map[string]any) (*store.Record, Change, error) {
 	if t, ok := st.Types().Get(typ); ok {
+		if err := refNamesToIDs(st, t, fields); err != nil { // ref_names.go
+			return nil, Change{}, err
+		}
 		var now map[string]any
 		if action == "updated" {
 			if was, err := st.Get(typ, id); err == nil {

@@ -111,3 +111,16 @@ func (s *Server) choiceList(f schema.Field, current string) []any {
 	}
 	return list
 }
+
+// refNames are the records a list of refs holds, by name, in its order:
+// how they read and how they are typed in to change them.
+func (s *Server) refNames(f schema.Field, v any) string {
+	items, _ := v.([]any)
+	names := make([]string, 0, len(items))
+	for _, it := range items {
+		if id, _ := it.(string); id != "" {
+			names = append(names, s.refTitle(f, id))
+		}
+	}
+	return strings.Join(names, ", ")
+}

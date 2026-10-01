@@ -20,19 +20,18 @@ import (
 
 // Server serves one workspace.
 type Server struct {
-	app   *app.App
-	css   []byte
-	js    []byte
-	mux   *http.ServeMux
-	turns turns
-	fleet *Fleet
-	model modelState // whether the assistant can reach its model, last looked; connect.go
-	// notify tells a ring beyond the page; see ring.go.
-	notify  func(title, text, url string)
-	changes atomic.Int64 // changes arrived from other computers; see sync.go
-	present presence     // who else is here just now; see presence.go
-	speech  speechState  // speech-to-text on this computer; see transcribe.go
-	host    hostState    // recordings written down with no page; see hostwrite.go
+	app     *app.App
+	css, js []byte
+	mux     *http.ServeMux
+	turns   turns
+	fleet   *Fleet
+	model   modelState                    // whether the assistant can reach its model, last looked; connect.go
+	notify  func(title, text, url string) // tells a ring beyond the page; ring.go
+	changes atomic.Int64                  // changes arrived from other computers; see sync.go
+	present presence                      // who else is here just now; see presence.go
+	speech  speechState                   // speech-to-text on this computer; see transcribe.go
+	host    hostState                     // recordings written down with no page; see hostwrite.go
+	apps    meetingApps                   // transcripts brought from Teams and Zoom; meeting_fetch.go
 }
 
 // New builds the handler for an app.
@@ -40,7 +39,6 @@ func New(a *app.App) *Server {
 	s := &Server{app: a, css: []byte(a.Registry.CSS()), js: []byte(a.Registry.JS()), mux: http.NewServeMux()}
 	s.routes()
 	s.hooks() // what the rest of the app asks of the pages; see hooks.go
-	// Wrap the mux so unmatched routes get our HTML 404 page.
 	s.mux = s.wrapNotFound(s.mux)
 	return s
 }
@@ -124,6 +122,8 @@ func (s *Server) routes() {
 	s.recordingRoutes(m)
 	s.agentRoutes(m) // api_agent.go
 	m.HandleFunc("POST /speech/get", s.speechGet)
+	m.HandleFunc("POST /speech/speakers/get", s.speakersGet)
+	m.HandleFunc("POST /meetings/teams/connect", s.teamsConnect)
 	m.HandleFunc("POST /dictate", s.dictate)
 
 	m.HandleFunc("GET /api/describe", s.apiDescribe)

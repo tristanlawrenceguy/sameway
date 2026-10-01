@@ -2,6 +2,7 @@ package chat
 
 import (
 	"context"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 )
@@ -46,6 +47,7 @@ type toolArgs struct {
 	Recording   string         `json:"recording"`
 	Decisions   []meetingItem  `json:"decisions"`
 	Tasks       []meetingItem  `json:"tasks"`
+	How         string         `json:"how"`
 	Piece       string         `json:"piece"`
 	Parts       []string       `json:"parts"`
 	Material    []materialItem `json:"material"`
@@ -79,6 +81,13 @@ func toolHandlers() map[string]func(s *Service, a toolArgs, call llm.ToolCall) t
 		},
 		"suggest_edits": func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
 			return s.suggestEdits(a.Type, a.ID, a.Field, a.Edits)
+		},
+		"ask_to_record": func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
+			now := time.Now()
+			if s.Now != nil {
+				now = s.Now()
+			}
+			return s.askToRecord(a.Event, a.How, now)
 		},
 		"write_up_meeting": func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
 			return s.writeUpMeeting(a.Event, a.Recording, a.Summary, a.Decisions, a.Tasks)

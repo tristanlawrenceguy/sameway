@@ -38,6 +38,12 @@ func (s *Server) upload(w http.ResponseWriter, r *http.Request) {
 	}
 	own := "/t/" + FileType + "/" + rec.ID
 	title, _ := rec.Fields["title"].(string)
+	// Added from a meeting's page, it is that meeting's (meeting.go).
+	if m := r.FormValue("meeting"); m != "" {
+		said := s.toMeeting(r, m, rec)
+		s.tellAt(w, r, outcome{Title: "Added", Text: title + " is added." + said}, backOf(r, "/t/"+chat.EventType+"/"+m))
+		return
+	}
 	// The file's own page shows it; anywhere else, the message does.
 	if from := r.FormValue("from"); local(from) {
 		s.tellAt(w, r, outcome{Title: "Added", Text: title + " is in your files."}, from)
@@ -76,6 +82,7 @@ func (s *Server) storeUpload(r *http.Request) (*store.Record, error) {
 	if err != nil {
 		return nil, err
 	}
+	s.keepVoices(r, rec) // who was heard each second, for a call; voices.go
 	s.readKept(rec.ID, filepath.Base(header.Filename), path, false)
 	return s.app.Store.Get(FileType, rec.ID)
 }

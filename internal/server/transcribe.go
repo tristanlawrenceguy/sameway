@@ -42,6 +42,7 @@ type speechState struct {
 	done, total int64
 	failed      string
 	once        sync.Once    // starts the worker that writes parts down
+	speakers    *speakersKit // telling speakers apart; speakers.go
 	jobs        chan partJob // the parts waiting, one at a time
 }
 

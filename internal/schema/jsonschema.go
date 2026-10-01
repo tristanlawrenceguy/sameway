@@ -31,6 +31,9 @@ func (t *Type) JSONSchema() map[string]any {
 		case "list":
 			p["type"] = "array"
 			p["items"] = map[string]any{"type": "string"}
+			if f.Of == "ref" {
+				p["description"] = "Ids of " + f.To + " records (find_records on " + f.To + " gives them)."
+			}
 		case "json":
 			p["type"] = []string{"object", "array", "string", "number", "boolean", "null"}
 		case "ref":
@@ -39,6 +42,9 @@ func (t *Type) JSONSchema() map[string]any {
 		}
 		if f.Description != "" {
 			p["description"] = f.Description
+			if f.RefList() {
+				p["description"] = f.Description + " Ids of " + f.To + " records."
+			}
 		}
 		if f.Default != nil {
 			p["default"] = f.Default

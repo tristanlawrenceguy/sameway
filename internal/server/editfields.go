@@ -47,6 +47,9 @@ func (s *Server) editFields(t *schema.Type, rec *store.Record) string {
 // in it now as written, and for a field with set values, the values.
 func (s *Server) editField(f schema.Field, v any) string {
 	val := display(f, v)
+	if f.RefList() {
+		val = s.refNames(f, v) // edited as names, matched again on save
+	}
 	esc := template.HTMLEscapeString
 	name, lab := esc(f.Name), ` data-label="`+esc(fieldLabel(f))+`"`
 	switch f.Type {

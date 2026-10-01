@@ -33,6 +33,7 @@
         "type": "string",
         "description": "For dictate: where the sound is sent to be written down."
       },
+      "sound": { "type": "string", "enum": ["microphone", "computer"], "default": "microphone", "description": "What a recording hears. computer offers to record the computer's sound with the microphone, the other people on a call, where the browser can share it; for a meeting." },
       "context": {
         "type": "string",
         "description": "What it records for, read after the button's words, when a page has more than one."
@@ -77,6 +78,16 @@
         "target": "upload"
       },
       "file": "examples/record.html"
+    },
+    {
+      "name": "meeting",
+      "props": {
+        "mode": "record",
+        "target": "upload",
+        "sound": "computer",
+        "context": "the meeting"
+      },
+      "file": "examples/meeting.html"
     },
     {
       "name": "dictate",
