@@ -23,8 +23,8 @@ func TestLongerWritingIsOrganisedOnItsPages(t *testing.T) {
 		}
 		return r.ID
 	}
-	book := mk(map[string]any{"title": "The Pond", "body": "How we made a pond.", "aim": 20})
-	one := mk(map[string]any{"title": "Digging", "body": "We dug for a week.", "synopsis": "The hole."})
+	book := mk(map[string]any{"title": "The Pond", "body": "How we made a pond."})
+	one := mk(map[string]any{"title": "Digging", "body": "We dug for a week."})
 	two := mk(map[string]any{"title": "Lining", "body": "The liner came late."})
 	three := mk(map[string]any{"title": "Filling", "body": "Rain did the rest."})
 	guide := mk(map[string]any{"title": "Submission guidelines", "body": "Under 5,000 words."})
@@ -32,6 +32,11 @@ func TestLongerWritingIsOrganisedOnItsPages(t *testing.T) {
 	if text, isErr := a.Chat.Call("organise_writing", args); isErr {
 		t.Fatal(text)
 	}
+	// A note has none of this until it is organised; then it has it all.
+	if _, err := a.Store.Update("note", book, map[string]any{"aim": 20}); err != nil {
+		t.Fatal(err)
+	}
+	a.Store.Update("note", one, map[string]any{"synopsis": "The hole."})
 
 	if rest := get(t, h, "/t/note/"+book).Body.String(); strings.Contains(rest, `id="parts"`) || strings.Contains(rest, `id="material"`) {
 		t.Error("at rest the piece's page is the piece: its outline and material are parts, off until asked")
@@ -124,7 +129,11 @@ func TestOrganisingAddsTheFieldsATypeLacks(t *testing.T) {
 func TestARecordSaysWhatItsPageCanShow(t *testing.T) {
 	a, h := newApp(t)
 	piece, _ := a.Store.Create("note", map[string]any{"title": "Book"})
-	part, _ := a.Store.Create("note", map[string]any{"title": "One", "part_of": piece.ID})
+	part, _ := a.Store.Create("note", map[string]any{"title": "One"})
+	args, _ := json.Marshal(map[string]any{"piece": piece.ID, "parts": []string{part.ID}})
+	if text, isErr := a.Chat.Call("organise_writing", args); isErr {
+		t.Fatal(text)
+	}
 	var got struct {
 		Parts []struct{ Key string } `json:"parts"`
 		Open  string                 `json:"open"`
@@ -136,5 +145,60 @@ func TestARecordSaysWhatItsPageCanShow(t *testing.T) {
 	json.Unmarshal(get(t, h, "/api/note/"+part.ID).Body.Bytes(), &got)
 	if len(got.Parts) != 1 || got.Parts[0].Key != "place" {
 		t.Errorf("a part says where it is: %+v", got)
+	}
+}
+
+// Parts come in reading order, those named first, then the rest as they
+// were; material is for the whole; a piece cannot go inside its own part;
+// and one Undo takes an organising back.
+func TestOrganisingKeepsOrderAndUndoes(t *testing.T) {
+	a, _ := newApp(t)
+	note := func(title string) string {
+		r, err := a.Store.Create("note", map[string]any{"title": title})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return r.ID
+	}
+	call := func(args map[string]any) (string, bool) {
+		raw, _ := json.Marshal(args)
+		return a.Chat.Call("organise_writing", raw)
+	}
+	book, one, two, three, guide := note("The Pond"), note("Digging"), note("Lining"), note("Filling"), note("Guidelines")
+	call(map[string]any{"piece": book, "parts": []string{two, one}, "material": []any{map[string]any{"id": guide}}})
+	call(map[string]any{"piece": book, "parts": []string{three}})
+	nt, _ := a.Types.Get("note")
+	piece, _ := a.Store.Get("note", book)
+	var titles []string
+	for _, p := range chat.Parts(a.Store, nt, piece) {
+		titles = append(titles, p.Fields["title"].(string))
+	}
+	if strings.Join(titles, ",") != "Filling,Lining,Digging" {
+		t.Errorf("parts named come first, in order, then the rest: %v", titles)
+	}
+	part, _ := a.Store.Get("note", one)
+	if mine, above := chat.Material(a.Store, nt, part); len(mine) != 0 || len(above[book]) != 1 {
+		t.Errorf("a part has the whole piece's material: %v %v", mine, above)
+	}
+	if text, isErr := call(map[string]any{"piece": one, "parts": []string{book}}); !isErr || !strings.Contains(text, "inside it") {
+		t.Errorf("a piece cannot go inside its own part: %s", text)
+	}
+	entries, _ := a.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true})
+	var last string
+	for _, e := range entries {
+		if e.Fields["action"] == "organised" {
+			last = e.ID
+			break
+		}
+	}
+	undo, _ := json.Marshal(map[string]any{"id": last})
+	if text, isErr := a.Chat.Call("undo_change", undo); isErr {
+		t.Fatal(text)
+	}
+	if p, _ := a.Store.Get("note", three); p.Fields["part_of"] == book {
+		t.Error("undo takes the second organising back")
+	}
+	if p, _ := a.Store.Get("note", two); p.Fields["part_of"] != book {
+		t.Error("and leaves the first")
 	}
 }
