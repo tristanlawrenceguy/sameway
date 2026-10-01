@@ -16,7 +16,7 @@ import (
 // limitsSection is the help page's account of them.
 func (s *Server) limitsSection(owner bool) string {
 	var b strings.Builder
-	b.WriteString(`<section class="sw-stack" aria-labelledby="help-limits"><h2 id="help-limits">What this computer can do</h2><ul>`)
+	b.WriteString(`<section class="sw-stack" aria-labelledby="help-limits"><h2 id="help-limits">What this computer can do</h2><ul class="sw-limits">`)
 	line := func(text string) { b.WriteString("<li>" + text + "</li>") }
 
 	if p := s.app.Chat.Provider; p == nil || s.app.Chat.ProviderErr != nil {

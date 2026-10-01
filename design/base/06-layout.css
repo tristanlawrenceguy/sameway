@@ -186,3 +186,6 @@ ol.sw-plain, ul.sw-plain { list-style: none; list-style-type: ""; margin: 0; pad
 .sw-next__remind { display: flex; align-items: flex-end; gap: var(--sw-space-2); }
 .sw-next__remind .sw-field { margin: 0; }
 .sw-next__remind .sw-field__input { width: 11rem; }
+/* What this computer can do (the help page): setting names and permission
+   names are long single words, so they may break rather than widen a phone. */
+.sw-limits { overflow-wrap: anywhere; }
