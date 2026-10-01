@@ -2,11 +2,12 @@ package server
 
 import (
 	"fmt"
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"html/template"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
 
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -183,12 +184,15 @@ func (s *Server) dayFact(t *schema.Type, rec *store.Record, done, chip bool) str
 
 // whenMade says when a record was made and last changed, as a person reads
 // a time, and where its words came from when that was not the owner, in
-// one quiet line under its fields. Habits say "Started" instead of "Created".
+// one quiet line under its fields. Habits and actions say "Started"; all
+// other types say "Added" instead of the raw database column name.
+// Rendered output: <span class="sw-detail__when sw-muted sw-small">Added ...</span>
 func whenMade(t *schema.Type, rec *store.Record, from string) string {
 	made := when.Text(rec.CreatedAt.UTC().Format(time.RFC3339))
 	changed := when.Text(rec.UpdatedAt.UTC().Format(time.RFC3339))
-	labelWord := "Created"
-	if t.Name == HabitType {
+	labelWord := "Added" // default for content types
+	switch t.Name {
+	case HabitType, chat.ActionType:
 		labelWord = "Started"
 	}
 	line := labelWord + " " + made

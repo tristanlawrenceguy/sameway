@@ -34,23 +34,24 @@ func TestHabitDetailLedeSaysStartedNotCreated(t *testing.T) {
 	}
 }
 
-// TestNonHabitDetailPagesStillSayCreated ensures that non-habit detail pages
-// continue to use "Created" in their lede. This task only changes habit ledes;
-// note, activity and message pages must be unaffected (acceptance item 3).
-func TestNonHabitDetailPagesStillSayCreated(t *testing.T) {
+// TestNonHabitDetailPagesUseAdded ensures that non-habit detail pages use
+// "Added" instead of the raw field name "Created". This task changes all
+// non-habit ledes to say "Added"; habit and action pages say "Started"
+// (acceptance item 3).
+func TestNonHabitDetailPagesUseAdded(t *testing.T) {
 	a, h := newApp(t)
 
-	// A note page should still say "Created".
+	// A note page should use "Added".
 	noteRec, err := a.Store.Create("note", map[string]any{"title": "A note"})
 	if err != nil {
 		t.Fatal(err)
 	}
 	notePage := get(t, h, "/t/note/"+noteRec.ID+fieldsView).Body.String()
-	if !strings.Contains(notePage, ">Created ") {
-		t.Error("note detail page should still say \"Created\" in the lede")
+	if !strings.Contains(notePage, ">Added ") {
+		t.Error("note detail page should say \"Added\" in the lede")
 	}
 
-	// An activity entry page should still say "Created".
+	// An activity entry page should use "Added".
 	actRec, err := a.Store.Create("activity", map[string]any{
 		"actor":  "human",
 		"action": "added",
@@ -59,11 +60,11 @@ func TestNonHabitDetailPagesStillSayCreated(t *testing.T) {
 		t.Fatal(err)
 	}
 	actPage := get(t, h, "/t/activity/"+actRec.ID+fieldsView).Body.String()
-	if !strings.Contains(actPage, ">Created ") {
-		t.Error("activity detail page should still say \"Created\" in the lede")
+	if !strings.Contains(actPage, ">Added ") {
+		t.Error("activity detail page should say \"Added\" in the lede")
 	}
 
-	// A message page should still say "Created".
+	// A message page should use "Added".
 	msgRec, err := a.Store.Create("message", map[string]any{
 		"role":    "user",
 		"content": "hello world",
@@ -72,8 +73,8 @@ func TestNonHabitDetailPagesStillSayCreated(t *testing.T) {
 		t.Fatal(err)
 	}
 	msgPage := get(t, h, "/t/message/"+msgRec.ID+fieldsView).Body.String()
-	if !strings.Contains(msgPage, ">Created ") {
-		t.Error("message detail page should still say \"Created\" in the lede")
+	if !strings.Contains(msgPage, ">Added ") {
+		t.Error("message detail page should say \"Added\" in the lede")
 	}
 }
 
