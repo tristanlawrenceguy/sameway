@@ -2,7 +2,9 @@ package server
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
@@ -14,9 +16,21 @@ import (
 // rather than taken for no key at all. Without a key, a request from this
 // computer is the owner's, as it always was.
 
-// keyed makes a request with an agent's key that agent's.
+// keyed makes a request with an agent's key that agent's, and keeps its
+// changes to the agent's pace (chat/pace.go); reading is never paced.
 func (s *Server) keyed(w http.ResponseWriter, r *http.Request) (*http.Request, bool) {
-	return AgentKey(s.app, w, r)
+	r, ok := AgentKey(s.app, w, r)
+	if !ok || r.Method == http.MethodGet || r.Method == http.MethodHead {
+		return r, ok
+	}
+	if v := chat.VisitorOf(r.Context()); v.Agent {
+		if wait := chat.Pace(v.Login); wait > 0 {
+			w.Header().Set("Retry-After", strconv.Itoa(int(wait/time.Second)+1))
+			writeJSON(w, http.StatusTooManyRequests, map[string]any{"error": apiError{Code: "slow_down", Message: chat.SlowDown(wait)}})
+			return r, false
+		}
+	}
+	return r, true
 }
 
 // AgentKey is keyed for any handler of the workspace's, MCP's too.

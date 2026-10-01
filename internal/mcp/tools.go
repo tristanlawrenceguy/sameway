@@ -107,6 +107,12 @@ func (s *Server) call(ctx context.Context, svc *chat.Service, name string, args 
 		s.web()
 		svc.Check = s.App.Chat.Check
 	}
+	// An agent let in with a key changes things at its pace (chat/pace.go).
+	if v := chat.VisitorOf(ctx); v.Agent && !toolTraits[name].readOnly {
+		if wait := chat.Pace(v.Login); wait > 0 {
+			return chat.SlowDown(wait), true
+		}
+	}
 	// get_record, find_records and the rest are the assistant's own tools,
 	// as the one the connection is for has them.
 	return svc.Call(name, args)
