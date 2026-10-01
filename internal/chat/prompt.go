@@ -84,7 +84,7 @@ func (s *Service) systemPrompt() string {
 		b.WriteString(s.ExtraPrompt)
 	}
 	b.WriteString("\n\nComponent catalogue (name: description, when it serves a person and when it does not, then props schema):\n")
-	for _, c := range s.Registry.Components() {
+	for _, c := range s.Registry.Blocks() {
 		fmt.Fprintf(&b, "\n%s: %s\n", c.Manifest.Name, c.Manifest.Description)
 		// The thought behind the component travels with it, so the model
 		// builds from what works for people rather than guessing at it.

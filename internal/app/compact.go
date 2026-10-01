@@ -25,6 +25,9 @@ type CompactComponent struct {
 func (c DescribedComponent) Compact() CompactComponent {
 	out := CompactComponent{Name: c.Name, Description: c.Description, Use: c.Use, Props: chat.ForModel(c.Props),
 		Add: `POST /api/block with {"component": "` + c.Name + `", "props": <props like the example>}; the whole manifest, with its accessibility contract, is at /api/describe/components/` + c.Name + `?full=1`}
+	if c.PageOnly {
+		out.Add = "Not a block: Sameway shows it itself on the page it belongs to, so it is met there, never added."
+	}
 	if len(c.Examples) > 0 {
 		filled := serverFilledProps(c.Props)
 		out.Example = map[string]any{}
