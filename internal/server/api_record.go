@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -40,6 +41,14 @@ func (s *Server) apiGet(w http.ResponseWriter, r *http.Request) {
 	// says itself as its page does (activity_page.go).
 	if rec.Type == chat.ActivityType {
 		out.Said = s.activityFacts(rec)
+		// Resolve raw type identifiers in the detail field so agents read
+		// display names, not schema keys. This mirrors what say() does for
+		// the HTML event component (lines.go:59-61).
+		if target, _ := rec.Fields["target"].(string); target == "type" {
+			if detail, ok := out.Fields["detail"].(string); ok && detail != "" {
+				out.Fields["detail"] = schema.DisplayName(detail)
+			}
+		}
 	}
 	// The version to send back with If-Match, so a change made from it is
 	// refused when the record has moved on (versions.go).
