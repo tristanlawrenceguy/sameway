@@ -66,8 +66,12 @@ func (s *Service) complete(ctx context.Context, req llm.Request, on func(Event))
 	// A model that cannot see answers again, told a picture was there.
 	if err != nil && cannotSee(err) {
 		if plain, had := withoutPictures(req); had {
+			sight.Store(s.Provider.Name(), false)
 			return s.completeOnce(ctx, plain, on)
 		}
+	}
+	if err == nil && hasPictures(req) {
+		sight.Store(s.Provider.Name(), true)
 	}
 	return resp, err
 }
