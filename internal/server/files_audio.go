@@ -70,8 +70,14 @@ func (s *Server) recordingOf(rec *store.Record) map[string]any {
 	props["about"] = about
 	if cues := s.heard(rec); len(cues) > 0 {
 		list := make([]any, 0, len(cues))
+		anchored := map[int]bool{}
 		for _, c := range cues {
 			cue := map[string]any{"start": fmt.Sprintf("%.2f", c.Start), "at": convert.Clock(c.Start), "said": convert.Spoken(c.Start), "text": c.Text}
+			// A line is linked to by its second, as a meeting's write-up
+			// does (chat/meeting.go); the first line in a second has it.
+			if sec := int(c.Start); !anchored[sec] {
+				anchored[sec], cue["anchor"] = true, fmt.Sprint(sec)
+			}
 			if c.Speaker != "" {
 				cue["speaker"] = c.Speaker
 			}

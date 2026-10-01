@@ -44,7 +44,7 @@ func TestARecordingPlaysWithItsTranscript(t *testing.T) {
 		t.Fatal(err)
 	}
 	page = get(t, h, loc).Body.String()
-	for _, want := range []string{`<li class="sw-media__cue" data-start="4.20">`, `href="/files/` + id + `#t=4.20"`, "Play from 4 seconds", `<span class="sw-media__speaker">Hana:</span> The compost order went in.`} {
+	for _, want := range []string{`<li class="sw-media__cue" data-start="4.20" id="media-` + id + `-at-4">`, `href="/files/` + id + `#t=4.20"`, "Play from 4 seconds", `<span class="sw-media__speaker">Hana:</span> The compost order went in.`} {
 		if !strings.Contains(page, want) {
 			t.Errorf("the transcript should have %s", want)
 		}

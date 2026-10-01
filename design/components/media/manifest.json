@@ -64,6 +64,10 @@
             "text": {
               "type": "string",
               "description": "What was said, and sounds such as [laughter]."
+            },
+            "anchor": {
+              "type": "string",
+              "description": "The whole second it starts at, for a link to this line: #<id>-at-<anchor> scrolls to it, and plays from it with scripts. The first line in a second has it."
             }
           }
         },

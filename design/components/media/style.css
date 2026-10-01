@@ -25,6 +25,7 @@
 .sw-media__at { font-variant-numeric: tabular-nums; min-height: var(--sw-size-target); display: inline-flex; align-items: center; }
 .sw-media__speaker { font-weight: 600; }
 /* The line being heard: a border and bold type, not colour alone. */
+.sw-media__cue:target { border-inline-start-color: var(--sw-color-accent); }
 .sw-media__cue[aria-current="true"] { border-inline-start-color: var(--sw-color-accent); font-weight: 600; }
 @media (forced-colors: active) { .sw-media__cue[aria-current="true"] { border-inline-start-color: CanvasText; } }
 /* Writing it down: the press, and what the page's script is doing. */
