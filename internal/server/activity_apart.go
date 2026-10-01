@@ -4,8 +4,32 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
+
+// cleanActivityFields resolves raw schema identifiers in type-setting activity
+// entries. When target is "type", detail holds the raw identifier (e.g.,
+// "test_type") and summary may contain it too ("System added type test_type").
+// Both are replaced with their display-form names ("Test Type") so agents
+// reading the API list see human-readable values, not internal IDs.
+func cleanActivityFields(fields map[string]any) {
+	target, _ := fields["target"].(string)
+	if target != "type" {
+		return // nothing to clean for non-type-setting entries
+	}
+	detail, _ := fields["detail"].(string)
+	summary, _ := fields["summary"].(string)
+
+	cleanedDetail := schema.DisplayName(detail)
+	fields["detail"] = cleanedDetail
+
+	if strings.Contains(summary, " "+detail) {
+		fields["summary"] = strings.Replace(summary, " "+detail, " "+cleanedDetail, 1)
+	} else if strings.HasSuffix(summary, detail) && summary != cleanedDetail {
+		fields["summary"] = summary[:len(summary)-len(detail)] + cleanedDetail
+	}
+}
 
 // entriesApart tells apart log entries shown together that say the same,
 // "created task Call plumber" twice, whose links and Undo buttons would
