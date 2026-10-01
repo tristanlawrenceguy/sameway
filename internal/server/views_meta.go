@@ -139,7 +139,7 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 		}
 	}
 	if o.Made {
-		parts = append(parts, whenMade(rec, o.From))
+		parts = append(parts, whenMade(t, rec, o.From))
 	}
 	return strings.Join(parts, " ")
 }
@@ -183,11 +183,15 @@ func (s *Server) dayFact(t *schema.Type, rec *store.Record, done, chip bool) str
 
 // whenMade says when a record was made and last changed, as a person reads
 // a time, and where its words came from when that was not the owner, in
-// one quiet line under its fields.
-func whenMade(rec *store.Record, from string) string {
+// one quiet line under its fields. Habits say "Started" instead of "Created".
+func whenMade(t *schema.Type, rec *store.Record, from string) string {
 	made := when.Text(rec.CreatedAt.UTC().Format(time.RFC3339))
 	changed := when.Text(rec.UpdatedAt.UTC().Format(time.RFC3339))
-	line := "Created " + made
+	labelWord := "Created"
+	if t.Name == HabitType {
+		labelWord = "Started"
+	}
+	line := labelWord + " " + made
 	if changed != made {
 		line += " · Updated " + changed
 	}
