@@ -82,6 +82,7 @@ func (s *Server) storeUpload(r *http.Request) (*store.Record, error) {
 	if err != nil {
 		return nil, err
 	}
+	s.keepVoices(r, rec) // who was heard each second, for a call; voices.go
 	s.readKept(rec.ID, filepath.Base(header.Filename), path, false)
 	return s.app.Store.Get(FileType, rec.ID)
 }

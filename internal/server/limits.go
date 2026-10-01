@@ -36,6 +36,13 @@ func (s *Server) limitsSection(owner bool) string {
 	switch {
 	case s.speechKit().Ready():
 		line("Recordings: speech-to-text is on this computer, so a recording you add is written down.")
+		switch {
+		case s.speakers().Ready():
+			line("Speakers: told apart in a recording written down whole, as Speaker 1, Speaker 2; edit the text to name them. A call recorded with this computer's sound says you and them instead.")
+		case owner:
+			line(`Speakers: not told apart yet, so a transcript says who spoke only for a call recorded with this computer's sound. Telling them apart is a ` + sizeWords(speech.SpeakersSize()) + ` download, and recordings never leave this computer. <form method="post" action="/speech/speakers/get">` +
+				string(s.component("button", map[string]any{"label": "Get speaker separation", "type": "submit", "variant": "secondary"})) + `</form>`)
+		}
 	case !speech.Supported() && !s.speech.given:
 		line("Recordings: there is no speech-to-text for this kind of computer, so a recording keeps a transcript only when one is written by hand.")
 	case owner:

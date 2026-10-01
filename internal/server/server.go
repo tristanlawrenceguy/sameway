@@ -20,19 +20,18 @@ import (
 
 // Server serves one workspace.
 type Server struct {
-	app   *app.App
-	css   []byte
-	js    []byte
-	mux   *http.ServeMux
-	turns turns
-	fleet *Fleet
-	model modelState // whether the assistant can reach its model, last looked; connect.go
-	// notify tells a ring beyond the page; see ring.go.
-	notify  func(title, text, url string)
-	changes atomic.Int64 // changes arrived from other computers; see sync.go
-	present presence     // who else is here just now; see presence.go
-	speech  speechState  // speech-to-text on this computer; see transcribe.go
-	host    hostState    // recordings written down with no page; see hostwrite.go
+	app     *app.App
+	css     []byte
+	js      []byte
+	mux     *http.ServeMux
+	turns   turns
+	fleet   *Fleet
+	model   modelState                    // whether the assistant can reach its model, last looked; connect.go
+	notify  func(title, text, url string) // tells a ring beyond the page; ring.go
+	changes atomic.Int64                  // changes arrived from other computers; see sync.go
+	present presence                      // who else is here just now; see presence.go
+	speech  speechState                   // speech-to-text on this computer; see transcribe.go
+	host    hostState                     // recordings written down with no page; see hostwrite.go
 }
 
 // New builds the handler for an app.
@@ -124,6 +123,7 @@ func (s *Server) routes() {
 	s.recordingRoutes(m)
 	s.agentRoutes(m) // api_agent.go
 	m.HandleFunc("POST /speech/get", s.speechGet)
+	m.HandleFunc("POST /speech/speakers/get", s.speakersGet)
 	m.HandleFunc("POST /dictate", s.dictate)
 
 	m.HandleFunc("GET /api/describe", s.apiDescribe)

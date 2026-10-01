@@ -94,6 +94,7 @@ var routeAccess = map[string]routeFor{
 	"GET /files/{id}":                  people,
 	"GET /files/{id}/still":            people,
 	"POST /speech/get":                 owner,
+	"POST /speech/speakers/get":        owner,
 	"POST /dictate":                    people,
 	"GET /api/describe":                people,
 	"GET /api/search":                  people,

@@ -66,8 +66,14 @@
       el.setAttribute("data-state", s);
       if (s === "writing") btn.setAttribute("aria-disabled", "true"); else btn.removeAttribute("aria-disabled");
     }
-    function fill(blob, seconds, why) {
+    function fill(blob, seconds, why, voices) {
       var file = new File([blob], "Recording " + stamp(new Date()) + "." + window.swSpeech.ext(blob.type), { type: blob.type });
+      // Who was heard each second goes with it, for naming the transcript.
+      if (target.form) {
+        var v = target.form.querySelector("input[name=voices]");
+        if (!v) { v = document.createElement("input"); v.type = "hidden"; v.name = "voices"; target.form.appendChild(v); }
+        v.value = voices || "";
+      }
       var dt = new DataTransfer();
       dt.items.add(file);
       target.files = dt.files;
@@ -114,8 +120,9 @@
       time.hidden = true;
       word.textContent = idle;
       state("idle");
+      var voices = r.voices ? r.voices() : "";
       r.stop().then(function (blob) {
-        if (mode === "dictate") dictate(blob, why); else fill(blob, seconds, why);
+        if (mode === "dictate") dictate(blob, why); else fill(blob, seconds, why, voices);
       });
     }
     btn.addEventListener("click", function () {

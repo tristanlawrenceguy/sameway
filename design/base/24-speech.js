@@ -47,12 +47,38 @@
       throw r;
     });
   }
-  // mix is the microphone and the computer's sound as one stream.
+  // mix is the microphone and the computer's sound as one stream, and who
+  // was heard each second: t when the call is sounding (them), m when only
+  // the microphone is (me), . for neither. The call is read from its own
+  // sound, never the microphone's, so a call heard through speakers is
+  // still them. The server names the transcript's lines from it.
   function mix(mic, shared) {
     var Ctx = window.AudioContext || window.webkitAudioContext, ctx = new Ctx(), out = ctx.createMediaStreamDestination();
-    ctx.createMediaStreamSource(mic).connect(out);
-    ctx.createMediaStreamSource(new MediaStream(shared.getAudioTracks())).connect(out);
-    return { stream: out.stream, ctx: ctx };
+    var me = ctx.createMediaStreamSource(mic), them = ctx.createMediaStreamSource(new MediaStream(shared.getAudioTracks()));
+    me.connect(out);
+    them.connect(out);
+    function meter(src) {
+      var a = ctx.createAnalyser();
+      a.fftSize = 2048;
+      src.connect(a);
+      var buf = new Float32Array(a.fftSize);
+      return function () {
+        a.getFloatTimeDomainData(buf);
+        var sum = 0;
+        for (var i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+        return Math.sqrt(sum / buf.length);
+      };
+    }
+    var meLevel = meter(me), themLevel = meter(them), seen = "", m = 0, t = 0, n = 0;
+    var tick = setInterval(function () {
+      var tl = themLevel(), ml = meLevel();
+      if (tl > 0.01) t++; else if (ml > 0.015) m++;
+      if (++n === 4) {
+        seen += t > 0 && t >= m ? "t" : m > 0 ? "m" : ".";
+        m = t = n = 0;
+      }
+    }, 250);
+    return { stream: out.stream, ctx: ctx, voices: function () { return seen; }, stop: function () { clearInterval(tick); } };
   }
   // record starts the microphone and resolves to something that stops it:
   // stop() resolves to the recording, as a Blob of the type recorded.
@@ -74,10 +100,12 @@
       var api = {
         type: rec.mimeType || type || "audio/webm",
         onend: null,
+        // voices is who was heard each second, when the call was recorded.
+        voices: function () { return mixed ? mixed.voices() : ""; },
         stop: function () {
           var done = function () {
             all.forEach(function (t) { t.stop(); });
-            if (mixed) mixed.ctx.close();
+            if (mixed) { mixed.stop(); mixed.ctx.close(); }
             return new Blob(chunks, { type: rec.mimeType || type || "audio/webm" });
           };
           if (rec.state === "inactive") return Promise.resolve(done());
