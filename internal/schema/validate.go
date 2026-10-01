@@ -233,7 +233,7 @@ func coerceList(f Field, v any) (any, error) {
 	default:
 		return nil, fmt.Errorf("must be a list")
 	}
-	elem := Field{Type: f.Of}
+	elem := Field{Type: f.Of, To: f.To}
 	if elem.Type == "" {
 		elem.Type = "string"
 	}

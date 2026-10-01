@@ -159,3 +159,13 @@ func TestEverySystemHasAPinnedEngine(t *testing.T) {
 		}
 	}
 }
+
+// The program's lines are read as turns, the voices numbered in the order
+// they are first heard.
+func TestTurnsAreNumberedAsTheyAreHeard(t *testing.T) {
+	out := "Started\n0.031 -- 2.039 speaker_01\n2.039 -- 3.777 speaker_00\n5.330 -- 5.971 speaker_01\nprogress 100.00%\n"
+	turns := ParseTurns(out)
+	if len(turns) != 3 || turns[0].Speaker != 1 || turns[1].Speaker != 2 || turns[2].Speaker != 1 || turns[1].Start != 2.039 {
+		t.Errorf("turns: %+v", turns)
+	}
+}

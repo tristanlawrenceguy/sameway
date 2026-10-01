@@ -23,6 +23,7 @@ import (
 
 // aboutOf reads a page path, /t/{type}/{id}, back to the record it names.
 func (s *Server) aboutOf(path string) (*schema.Type, *store.Record, bool) {
+	path, _, _ = strings.Cut(path, "?") // a part to open, such as a meeting's recording
 	parts := strings.Split(strings.TrimPrefix(strings.TrimSpace(path), "/"), "/")
 	if len(parts) != 3 || parts[0] != "t" {
 		return nil, nil, false
@@ -132,6 +133,10 @@ func (s *Server) ringWords(rec *store.Record) (text, url string) {
 	}
 	url = about
 	text = s.title(t, target)
+	// A meeting's reminder to record says what to do, in its own notes.
+	if notes, _ := rec.Fields["notes"].(string); t.Name == chat.EventType && strings.Contains(about, "show=recording") && notes != "" {
+		text = notes
+	}
 	if t.Name == HabitType {
 		h := habitOf(target)
 		sum := track.Summarise(h, s.entriesOf(h.ID), time.Now(), 1)

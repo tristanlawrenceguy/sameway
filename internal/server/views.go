@@ -271,6 +271,10 @@ func (s *Server) fieldItem(t *schema.Type, f schema.Field, v any, val string) ma
 		return s.aboutItem(f, val)
 	case f.Type == "ref":
 		return s.refItem(f, val)
+	case f.RefList():
+		// Several records, by name, as they are typed in to change them.
+		names := s.refNames(f, v)
+		return map[string]any{"label": fieldLabel(f), "value": names, "prop": f.Name, "source": names}
 	}
 	item := map[string]any{"label": fieldLabel(f), "value": val, "prop": f.Name}
 	switch f.Type {

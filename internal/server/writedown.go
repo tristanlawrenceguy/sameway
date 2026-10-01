@@ -93,6 +93,9 @@ func (s *Server) writePart(j partJob) {
 		cues[i].Start += j.start
 		cues[i].End += j.start
 	}
+	if j.of == 1 {
+		cues = s.whoSpoke(rec, j.wav, j.start, cues) // speakers.go
+	}
 	dir := s.partsDir(j.id)
 	os.MkdirAll(dir, 0o755)
 	os.WriteFile(filepath.Join(dir, strconv.Itoa(j.index)+".vtt"), []byte(speech.VTT(cues)), 0o644)
@@ -127,6 +130,7 @@ func (s *Server) finishWriting(rec *store.Record, cues []convert.Cue) {
 		s.Changed()
 		return
 	}
+	cues = s.namedVoices(rec, cues) // me and them, for a call; voices.go
 	if path, ok := s.transcriptPath(rec); ok {
 		os.WriteFile(path, []byte(speech.VTT(cues)), 0o644)
 	}

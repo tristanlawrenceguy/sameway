@@ -168,6 +168,7 @@ func Import(st *store.Store, t *schema.Type, tb *Table, m Mapping) Report {
 				fields[t.Title] = capitalize(firstOf(kind, t.Name)) + " with " + label
 			}
 		}
+		linkLists(st, t, fields) // a meeting's people, found or made; people.go
 		rec, err := st.Create(t.Name, fields)
 		if err != nil {
 			r.Skipped++

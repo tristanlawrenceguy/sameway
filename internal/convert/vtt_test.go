@@ -38,3 +38,18 @@ func TestAWebVTTBecomesWhoSaidWhatAndWhen(t *testing.T) {
 		t.Error("an audiobook is a recording and a 3GP a video, each served as its own type")
 	}
 }
+
+// Zoom writes who spoke as "Name: words" inside the cue; that is read as
+// the speaker when most cues do it, and left alone when one merely has a
+// colon.
+func TestZoomNamesAreReadFromTheCue(t *testing.T) {
+	zoom := "WEBVTT\n\n1\n00:00:01.000 --> 00:00:03.000\nAnn Lee: Morning, two things.\n\n2\n00:00:04.000 --> 00:00:06.000\nBen: We ship on Friday.\n"
+	cues := ParseVTT(zoom)
+	if len(cues) != 2 || cues[0].Speaker != "Ann Lee" || cues[0].Text != "Morning, two things." || cues[1].Speaker != "Ben" {
+		t.Errorf("Zoom's names are the speakers: %+v", cues)
+	}
+	plain := "WEBVTT\n\n00:00:01.000 --> 00:00:03.000\nNote: this is a film.\n\n00:00:04.000 --> 00:00:06.000\nIt begins at night.\n\n00:00:07.000 --> 00:00:09.000\nThe end.\n"
+	if c := ParseVTT(plain); c[0].Speaker != "" || c[0].Text != "Note: this is a film." {
+		t.Errorf("one colon is not a name: %+v", c[0])
+	}
+}

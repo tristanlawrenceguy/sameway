@@ -119,6 +119,8 @@ func describe(call llm.ToolCall) string {
 		return "Organising the writing"
 	case "suggest_edits":
 		return "Suggesting changes"
+	case "ask_to_record":
+		return "Setting the meeting to ask to be recorded"
 	case "write_up_meeting":
 		return "Writing up the meeting"
 	case "update_record":

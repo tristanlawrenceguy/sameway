@@ -50,8 +50,34 @@ func ParseVTT(text string) []Cue {
 			break
 		}
 	}
-	return out
+	return namedInline(out)
 }
+
+// namedInline reads who spoke from "Name: words", as Zoom writes its
+// transcripts, when the file has no voice tags and most of its cues begin
+// that way: a cue that merely contains a colon is not taken for a name.
+func namedInline(cues []Cue) []Cue {
+	named := 0
+	for _, c := range cues {
+		if c.Speaker != "" {
+			return cues
+		}
+		if inlineName.MatchString(c.Text) {
+			named++
+		}
+	}
+	if named < 2 || named*2 < len(cues) {
+		return cues
+	}
+	for i, c := range cues {
+		if m := inlineName.FindStringSubmatch(c.Text); m != nil {
+			cues[i].Speaker, cues[i].Text = strings.TrimSpace(m[1]), strings.TrimSpace(m[2])
+		}
+	}
+	return cues
+}
+
+var inlineName = regexp.MustCompile(`^([^:\[\]]{1,40}?):\s+(.+)$`)
 
 // seconds reads 01:02:03.500, 02:03.500 or 00:02:03,500.
 func seconds(t string) float64 {

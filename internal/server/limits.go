@@ -16,7 +16,7 @@ import (
 // limitsSection is the help page's account of them.
 func (s *Server) limitsSection(owner bool) string {
 	var b strings.Builder
-	b.WriteString(`<section class="sw-stack" aria-labelledby="help-limits"><h2 id="help-limits">What this computer can do</h2><ul>`)
+	b.WriteString(`<section class="sw-stack" aria-labelledby="help-limits"><h2 id="help-limits">What this computer can do</h2><ul class="sw-limits">`)
 	line := func(text string) { b.WriteString("<li>" + text + "</li>") }
 
 	if p := s.app.Chat.Provider; p == nil || s.app.Chat.ProviderErr != nil {
@@ -36,6 +36,13 @@ func (s *Server) limitsSection(owner bool) string {
 	switch {
 	case s.speechKit().Ready():
 		line("Recordings: speech-to-text is on this computer, so a recording you add is written down.")
+		switch {
+		case s.speakers().Ready():
+			line("Speakers: told apart in a recording written down whole, as Speaker 1, Speaker 2; edit the text to name them. A call recorded with this computer's sound says you and them instead.")
+		case owner:
+			line(`Speakers: not told apart yet, so a transcript says who spoke only for a call recorded with this computer's sound. Telling them apart is a ` + sizeWords(speech.SpeakersSize()) + ` download, and recordings never leave this computer. <form method="post" action="/speech/speakers/get">` +
+				string(s.component("button", map[string]any{"label": "Get speaker separation", "type": "submit", "variant": "secondary"})) + `</form>`)
+		}
 	case !speech.Supported() && !s.speech.given:
 		line("Recordings: there is no speech-to-text for this kind of computer, so a recording keeps a transcript only when one is written by hand.")
 	case owner:
@@ -43,6 +50,11 @@ func (s *Server) limitsSection(owner bool) string {
 			string(s.component("button", map[string]any{"label": "Get speech-to-text", "type": "submit", "variant": "secondary"})) + `</form>`)
 	default:
 		line("Recordings: speech-to-text is not on this computer yet, so a recording keeps a transcript only when one is written by hand. The owner can get it.")
+	}
+	if owner {
+		for _, l := range s.appLines() { // meeting_fetch_help.go
+			line(l)
+		}
 	}
 	b.WriteString(`</ul></section>`)
 	return b.String()

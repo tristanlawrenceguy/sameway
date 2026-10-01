@@ -2,6 +2,7 @@ package convert
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 	_ "time/tzdata" // a calendar's time zones, on any computer
@@ -18,6 +19,8 @@ import (
 type Event struct {
 	UID, Title, Where, Notes, Repeat string
 	Starts, Ends                     string // RFC 3339, or a date alone for all day
+	// People are who is in it, organiser first, as "Name <email>".
+	People []string
 }
 
 // ParseICS reads the events of a calendar file.
@@ -58,6 +61,10 @@ func ParseICS(data []byte, local *time.Location) []Event {
 			ev.UID = value
 		case name == "RRULE":
 			ev.Repeat = value
+		case name == "ORGANIZER", name == "ATTENDEE":
+			if who := attendee(params, value); who != "" && !slices.Contains(ev.People, who) {
+				ev.People = append(ev.People, who)
+			}
 		case name == "DTSTART":
 			ev.Starts = icsTime(value, params, local)
 		case name == "DTEND":
@@ -180,4 +187,21 @@ func icsWhen(v string) string {
 		return t.Format("Mon 2 Jan 2006")
 	}
 	return v
+}
+
+// attendee is one person an invitation names, as "Name <email>": its CN
+// and its mailto address, either alone when it has only one.
+func attendee(params map[string]string, value string) string {
+	email := strings.TrimSpace(value)
+	if strings.HasPrefix(strings.ToLower(email), "mailto:") {
+		email = email[len("mailto:"):]
+	}
+	name := strings.Trim(unescape(params["CN"]), `"`)
+	switch {
+	case name != "" && email != "" && !strings.EqualFold(name, email):
+		return name + " <" + email + ">"
+	case email != "":
+		return email
+	}
+	return name
 }

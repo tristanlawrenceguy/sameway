@@ -100,6 +100,16 @@ type Config struct {
 	// MQTT is the broker the workspace talks to for devices: what it
 	// subscribes to becomes device records, and mqtt actions publish.
 	MQTT devices.Config `yaml:"mqtt"`
+	// Meetings are the meeting apps a transcript is brought from once a
+	// meeting is over (internal/meetfetch): ids only, and the name of the
+	// environment variable that holds Zoom's secret, never a secret.
+	Meetings struct {
+		TeamsClientID string `yaml:"teams_client_id"`
+		TeamsTenant   string `yaml:"teams_tenant"`
+		ZoomAccountID string `yaml:"zoom_account_id"`
+		ZoomClientID  string `yaml:"zoom_client_id"`
+		ZoomSecretEnv string `yaml:"zoom_secret_env"`
+	} `yaml:"meetings"`
 	// Tailnet puts the workspace on the person's Tailscale network, so a
 	// phone signed in to it opens the workspace from anywhere:
 	//   tailnet:

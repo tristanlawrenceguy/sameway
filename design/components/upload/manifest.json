@@ -13,7 +13,8 @@
       "action": { "type": "string", "default": "/t/file/upload", "description": "Where the file goes." },
       "from": { "type": "string", "description": "The page to return to afterwards; the file's own page when left out." },
       "id": { "type": "string", "default": "upload", "description": "Id of the field, so the label reaches it." },
-      "hint": { "type": "string", "description": "What files it takes and how big, said before one is chosen. Left out, the kinds Sameway reads and the 4 GB limit."}
+      "hint": { "type": "string", "description": "What files it takes and how big, said before one is chosen. Left out, the kinds Sameway reads and the 4 GB limit."},
+      "sound": { "type": "string", "enum": ["microphone", "computer"], "default": "microphone", "description": "What its Record button hears: computer offers this computer's sound with the microphone, the other people on a call; for a meeting." }
     }
   },
   "a11y": {
@@ -31,6 +32,7 @@
     "operate": "POST the form with a file, or POST /t/file/upload directly; the record appears at /t/file and in /api/file."
   },
   "examples": [
-    { "name": "default", "props": { "label": "Upload" }, "file": "examples/default.html" }
+    { "name": "default", "props": { "label": "Upload" }, "file": "examples/default.html" },
+    { "name": "meeting", "props": { "label": "Add the recording", "action": "/t/file/upload?meeting=e1", "from": "/t/event/e1", "id": "meeting-recording", "sound": "computer", "hint": "Record it here, or add the recording or transcript the meeting app made: a .vtt from Teams or Zoom, or the audio." }, "file": "examples/meeting.html" }
   ]
 }

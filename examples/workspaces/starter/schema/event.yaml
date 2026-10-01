@@ -22,6 +22,12 @@ fields:
     type: string
     label: Where
     description: Where it is, or the link to join it.
+  people:
+    type: list
+    of: ref
+    to: person
+    label: People
+    description: Who is in it.
   repeat:
     type: repeat
     description: How often it happens again, in words, like every Monday or every year; empty for once.

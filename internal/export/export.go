@@ -114,6 +114,10 @@ func Value(f schema.Field, v any, titles Titles) string {
 		items, _ := v.([]any)
 		parts := make([]string, 0, len(items))
 		for _, it := range items {
+			if f.RefList() && titles != nil {
+				parts = append(parts, titles(f, fmt.Sprint(it))) // people by name
+				continue
+			}
 			parts = append(parts, fmt.Sprint(it))
 		}
 		return strings.Join(parts, ", ")
