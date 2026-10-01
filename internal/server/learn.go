@@ -90,6 +90,18 @@ func partWords(s *Server, t *schema.Type, rec *store.Record, key string) string 
 		return "the way to ask the assistant about it"
 	case DayPart:
 		return "its day on the calendar"
+	case ContentsPart:
+		return "its contents"
+	case PlacePart:
+		return "where it is in its piece"
+	case OutlinePart:
+		return "its outline"
+	case MaterialPart:
+		return "the material kept with it"
+	case RecordingPart:
+		return "its recording"
+	case WriteUpPart:
+		return "the offer to write it up"
 	}
 	for _, l := range relate.Of(s.app.Store, t, rec, time.Now()) {
 		if l.Key == key {

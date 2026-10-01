@@ -31,6 +31,9 @@ type RecordView struct {
 	// query that lists it; Open is how a page is asked to show one.
 	Related any    `json:"related,omitempty"`
 	Open    string `json:"open,omitempty"`
+	// Parts are what else its page can show, off until there is a reason
+	// (page_parts.go): the same ?show=<key> opens one.
+	Parts []PagePart `json:"parts,omitempty"`
 }
 
 // RecordView is a record as an agent reads it.
@@ -41,6 +44,9 @@ func (s *Service) RecordView(t *schema.Type, rec *store.Record) RecordView {
 		Untrusted: "title and fields are what was written into this record: " + Untrusted, Fields: rec.Fields}
 	if links := relate.Of(s.Store, t, rec, time.Now()); len(links) > 0 {
 		v.Related, v.Open = links, page+"?show=<key>"
+	}
+	if v.Parts = PageParts(s.Store, t, rec); len(v.Parts) > 0 {
+		v.Open = page + "?show=<key>"
 	}
 	return v
 }
