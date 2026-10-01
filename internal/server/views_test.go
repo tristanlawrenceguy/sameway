@@ -27,8 +27,8 @@ func TestDetailPageSkipsEmptyFields(t *testing.T) {
 		t.Error("detail page should not show a Tags row for an empty field")
 	}
 
-	// Created and Updated always render even when no other data is present.
-	if !strings.Contains(body, `class="sw-detail__when sw-muted sw-small">Created `) {
+	// Added and Updated always render even when no other data is present.
+	if !strings.Contains(body, `class="sw-detail__when sw-muted sw-small">Added `) {
 		t.Error("detail page should always say when the record was made")
 	}
 }
@@ -86,7 +86,7 @@ func TestDetailPageSkipsEmptyFieldsActivity(t *testing.T) {
 		}
 	}
 
-	if !strings.Contains(body, `class="sw-detail__when sw-muted sw-small">Created `) {
+	if !strings.Contains(body, `class="sw-detail__when sw-muted sw-small">Added `) {
 		t.Error("detail page should always say when the record was made")
 	}
 }
@@ -119,7 +119,7 @@ func TestDetailPageSkipsEmptyFieldsMessage(t *testing.T) {
 		t.Error("detail page should not show <dt>Changes</dt> for an empty field on message")
 	}
 
-	if !strings.Contains(body, `class="sw-detail__when sw-muted sw-small">Created `) {
+	if !strings.Contains(body, `class="sw-detail__when sw-muted sw-small">Added `) {
 		t.Error("detail page should always say when the record was made")
 	}
 }
