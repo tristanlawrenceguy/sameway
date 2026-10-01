@@ -169,8 +169,8 @@ with `--strict` until its fix lands; `review` and `not yet` are yours to hold.
 | | **Trust** | |
 | 19 | MCP and API writes are logged with the agent's name, from its key when it has one | go `agent_keys_test.go`, `writes_test.go` |
 | 20 | Record text reaches outside agents marked as content, with who wrote it | not yet |
-| 21 | Irreversible actions ask first; outward tools say openWorldHint | go `consent_test.go` (asking) |
-| 22 | Writes are rate-limited per token | not yet |
+| 21 | Irreversible actions ask first; outward tools say openWorldHint | go `consent_test.go` (asking), `internal/mcp/annotations.go` (run_action and update_sameway say openWorldHint) |
+| 22 | Writes are rate-limited per token | `internal/chat/pace.go` (60 changes a minute per key; reads and the owner unpaced); go `pace_test.go`, `agent_pace_test.go`, `internal/mcp/pace_test.go` |
 
 ## Adding a component
 
