@@ -22,6 +22,7 @@ var pageActionTools = map[string]string{
 	"/t/{type}/{id}/props":        "update_record",
 	"/t/{type}/{id}/discard":      "undo_change",
 	"/t/{type}/{id}/delete":       "a person's: a record goes when a person deletes it, or when its making is undone",
+	"/t/{type}/{id}/parts/move":   "organise_writing",
 	"/t/{type}/import":            "import_records",
 	"/t/{type}/import/{file}/run": "import_records",
 	"/t/file/upload":              "a person's: a file comes from their computer; the assistant reads files already added",

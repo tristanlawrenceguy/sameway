@@ -25,3 +25,24 @@ fields:
   language:
     type: string
     description: The language the note is written in, as a code such as de or fr, when it is not the workspace's; screen readers read it in that voice.
+  synopsis:
+    type: text
+    description: What it is about, in a line, for the outline.
+  part_of:
+    type: ref
+    to: note
+    label: Part of
+    description: The longer piece it is part of, as a chapter is of a book.
+  parts:
+    type: list
+    of: string
+    hidden: true
+  aim:
+    type: int
+    label: Words to aim for
+    description: How many words the whole piece should come to.
+  material_for:
+    type: ref
+    to: note
+    label: Material for
+    description: What it is background for, such as guidelines or research; never part of it.

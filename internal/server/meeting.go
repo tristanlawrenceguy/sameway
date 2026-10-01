@@ -14,7 +14,9 @@ import (
 // A meeting is an event with its recording: its page plays the recording
 // with its transcript, and until it is written up offers to have the
 // assistant write it up (chat/meeting.go). A recording with a transcript
-// that no meeting has offers the same.
+// that no meeting has offers the same. Both are parts of the page
+// (parts.go), recording and write-up, off until the assistant sees a
+// reason or the person keeps them on.
 
 // meetingExtras is what an event's page shows of its recording.
 func (s *Server) meetingExtras(r *http.Request, rec *store.Record) string {
@@ -26,18 +28,24 @@ func (s *Server) meetingExtras(r *http.Request, rec *store.Record) string {
 	if err != nil || !isRecording(file) {
 		return ""
 	}
+	_, here := s.shown(r)
+	page := "/t/" + chat.EventType + "/" + rec.ID
 	var b strings.Builder
-	if summary, _ := rec.Fields["summary"].(string); strings.TrimSpace(summary) == "" && len(s.heard(file)) > 0 && changes(r) {
+	if summary, _ := rec.Fields["summary"].(string); strings.TrimSpace(summary) == "" && len(s.heard(file)) > 0 && changes(r) && s.showing(r, WriteUpPart) {
 		b.WriteString(writeUpOffer("Write up this meeting (/t/"+chat.EventType+"/"+rec.ID+") from its recording (/t/"+FileType+"/"+id+")", "Ask the assistant to write it up", s))
+		b.WriteString(s.fewer(page, WriteUpPart, "the offer to write it up", here))
 	}
-	b.WriteString(string(s.component("media", s.recordingOf(file))))
+	if s.showing(r, RecordingPart) {
+		b.WriteString(string(s.component("media", s.recordingOf(file))))
+		b.WriteString(s.fewer(page, RecordingPart, "the recording", here))
+	}
 	return b.String()
 }
 
 // recordingOffer is a recording's page offering a write-up, when it has a
 // transcript and no meeting has it yet.
 func (s *Server) recordingOffer(r *http.Request, file *store.Record) string {
-	if !changes(r) || len(s.heard(file)) == 0 {
+	if !changes(r) || !s.showing(r, WriteUpPart) || len(s.heard(file)) == 0 {
 		return ""
 	}
 	t, ok := s.app.Types.Get(chat.EventType)

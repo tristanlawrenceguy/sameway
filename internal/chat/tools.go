@@ -79,7 +79,7 @@ func (s *Service) allTools() []llm.Tool {
 		updateTool,
 		s.arrangementTool(),
 		settingTool,
-	}, append(append(append(append(append(append(s.recordTools(), s.meetingTools()...), s.canvasTools()...), shapeTools()...), s.lookTools()...), s.accessTools()...), s.homeTools()...)...)
+	}, append(append(append(append(append(append(append(s.recordTools(), s.meetingTools()...), s.organiseTools()...), s.canvasTools()...), shapeTools()...), s.lookTools()...), s.accessTools()...), s.homeTools()...)...)
 }
 
 // runTool executes one tool call, by the handler its name has in

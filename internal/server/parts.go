@@ -42,6 +42,16 @@ const (
 	AskPart = "ask"
 	// DayPart is the way to this record's day on the canvas calendar.
 	DayPart = "day"
+	// Longer writing (writing.go): a long piece's contents, where a part
+	// is in its piece, a piece's outline, and the material kept with it.
+	ContentsPart = "contents"
+	PlacePart    = "place"
+	OutlinePart  = "outline"
+	MaterialPart = "material"
+	// A meeting (meeting.go): its recording played on its page, and the
+	// offer to write it up from the transcript.
+	RecordingPart = "recording"
+	WriteUpPart   = "write-up"
 )
 
 // shown is what this view has been asked to show: always, from the

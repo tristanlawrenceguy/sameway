@@ -113,6 +113,8 @@ func (s *Server) routes() {
 	m.HandleFunc("POST /t/{type}/import", s.importUpload)
 	m.HandleFunc("POST /t/{type}/import/{file}/run", s.importRun)
 	m.HandleFunc("GET /t/{type}/{id}", s.detailPage)
+	m.HandleFunc("GET /t/{type}/{id}/whole", s.wholePage)
+	m.HandleFunc("POST /t/{type}/{id}/parts/move", s.moveParts)
 	m.HandleFunc("POST /t/{type}/{id}/delete", s.deleteForm)
 	m.HandleFunc("POST /t/{type}/{id}/discard", s.discard)
 	m.HandleFunc("POST /t/{type}/{id}/props", s.recordProps)
@@ -212,9 +214,7 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 	w.Write(out)
 }
 
-// notFoundPage renders a full HTML 404 page with heading, title, and
-// navigation so that anyone landing on an unknown path still gets the same
-// accessible layout as every other page.
+// notFoundPage is a 404 in the same accessible layout as every other page.
 func (s *Server) notFoundPage(w http.ResponseWriter, r *http.Request) {
 	body := template.HTML(`<p>The page you are looking for does not exist.</p>
 ` + s.navLink("/", "Home", false))
