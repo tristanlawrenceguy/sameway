@@ -15,8 +15,10 @@ import (
 // holds, under the names the protocol expects.
 type tool struct {
 	Name        string         `json:"name"`
+	Title       string         `json:"title,omitempty"`
 	Description string         `json:"description"`
 	InputSchema map[string]any `json:"inputSchema"`
+	Annotations map[string]any `json:"annotations,omitempty"`
 }
 
 // tools lists what a client may call: reading, which the assistant does
@@ -63,6 +65,12 @@ func (s *Server) tools() []tool {
 			continue
 		}
 		out = append(out, tool{Name: t.Name, Description: t.Description, InputSchema: t.Schema})
+	}
+	// What each is like, for a client to ask before it acts (annotations.go).
+	for i := range out {
+		if a := annotations(out[i].Name); a != nil {
+			out[i].Title, out[i].Annotations = a["title"].(string), a
+		}
 	}
 	return out
 }
