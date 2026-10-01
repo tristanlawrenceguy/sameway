@@ -88,7 +88,7 @@ func (s *Server) wholePage(w http.ResponseWriter, r *http.Request) {
 	href := "/t/" + t.Name + "/" + piece.ID
 	var b strings.Builder
 	fmt.Fprintf(&b, `<p><a class="sw-link" href="%s">Back to %s</a></p>`, href, template.HTMLEscapeString(title))
-	fmt.Fprintf(&b, `<p class="sw-muted">%s.</p>`, amount(chat.WordCount(md), "word"))
+	fmt.Fprintf(&b, `<p class="sw-muted">%s.</p>`, inWords(chat.WordCount(md), "word"))
 	fmt.Fprintf(&b, `<article class="sw-prose">%s</article>`, prose.Render(md, 2))
 	b.WriteString(string(s.component("export", map[string]any{"what": "all of " + title, "items": []any{
 		map[string]any{"href": href + "/whole?as=docx", "format": "docx"},
@@ -133,12 +133,4 @@ func (s *Server) moveParts(w http.ResponseWriter, r *http.Request) {
 	}
 	name := s.title(t, parts[to])
 	s.tell(w, r, outcome{Title: fmt.Sprintf("Moved %s to part %d of %d", name, to+1, len(parts)), Undo: entry, Of: "the move"}, back)
-}
-
-// amount is a count in words: 1 word, 3,000 words.
-func amount(n int, one string) string {
-	if n == 1 {
-		return "1 " + one
-	}
-	return fmt.Sprintf("%d %ss", n, one)
 }

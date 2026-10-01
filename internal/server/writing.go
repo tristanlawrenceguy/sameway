@@ -76,7 +76,7 @@ func (s *Server) outline(r *http.Request, t *schema.Type, piece *store.Record, p
 		total += words
 		title := s.title(t, p)
 		fmt.Fprintf(&b, `<li><p><a class="sw-link" href="/t/%s/%s">%s</a></p>`, t.Name, p.ID, template.HTMLEscapeString(title))
-		facts := []string{amount(words, "word")}
+		facts := []string{inWords(words, "word")}
 		if f, ok := t.Field("status"); ok {
 			if v := export.Value(*f, p.Fields["status"], s.exportTitles); v != "" {
 				facts = append([]string{v}, facts...)
@@ -108,7 +108,7 @@ func (s *Server) outline(r *http.Request, t *schema.Type, piece *store.Record, p
 		b.WriteString(string(s.component("meter", map[string]any{"label": "Words", "value": total, "max": aim, "state": state,
 			"text": fmt.Sprintf("%d of %d words", total, aim), "words": true})))
 	} else {
-		fmt.Fprintf(&b, `<p>%s in all.</p>`, amount(total, "word"))
+		fmt.Fprintf(&b, `<p>%s in all.</p>`, inWords(total, "word"))
 	}
 	fmt.Fprintf(&b, `<p>%s</p></section>`, s.component("link", map[string]any{"href": "/t/" + t.Name + "/" + piece.ID + "/whole", "label": "Read it all", "look": "button"}))
 	return b.String()

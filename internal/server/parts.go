@@ -52,6 +52,9 @@ const (
 	// offer to write it up from the transcript.
 	RecordingPart = "recording"
 	WriteUpPart   = "write-up"
+	// WritingHelpPart offers the kinds of help an editor gives with a
+	// piece of writing (writing_help.go).
+	WritingHelpPart = "writing-help"
 )
 
 // shown is what this view has been asked to show: always, from the

@@ -29,6 +29,7 @@ var toolTraits = map[string]traits{
 	"import_records":   {title: "Bring records in from a file"},
 	"write_up_meeting": {title: "Write up a meeting"},
 	"organise_writing": {title: "Organise longer writing", idempotent: true},
+	"suggest_edits":    {title: "Suggest changes to some writing"},
 	"add_type":         {title: "Add a kind of record"},
 	"add_field":        {title: "Add a field to a kind"},
 	"change_field":     {title: "Change or remove a field", destructive: true},
