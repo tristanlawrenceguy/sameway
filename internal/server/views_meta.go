@@ -93,10 +93,10 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 	}
 	// Show enum badges only when the caller is not a list row for note/project/file,
 	// and not an action detail (actions hide their kind everywhere). Also skip
-	// note/project on detail pages — the status badge in meta text repeats what
+	// note/project/file on detail pages — the status badge in meta text repeats what
 	// the definition list below already says.
 	skipEnum := o.Row && (t.Name == "note" || t.Name == "project" || t.Name == "file")
-	detailSkip := o.Detail && (t.Name == "note" || t.Name == "project")
+	detailSkip := o.Detail && (t.Name == "note" || t.Name == "project" || t.Name == "file")
 	if !skipEnum && !detailSkip && t.Name != "action" {
 		for _, f := range t.Shown() {
 			if f.Type == "enum" {

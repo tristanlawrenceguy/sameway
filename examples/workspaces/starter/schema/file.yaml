@@ -21,7 +21,7 @@ fields:
     description: What sort of file it is, such as document, spreadsheet, pdf or image; kept by the system.
     readonly: true
   size:
-    label: Size in bytes
+    label: File size
     type: int
     description: Bytes, kept by the system.
     readonly: true

@@ -46,6 +46,14 @@ func display(f schema.Field, v any) string {
 			return capitalize(said)
 		}
 		return ""
+	case "int":
+		if n, ok := v.(int64); ok && f.Name == "size" {
+			return sizeWords(n)
+		}
+		if n, ok := v.(int); ok && f.Name == "size" {
+			return sizeWords(int64(n))
+		}
+		return fmt.Sprint(v)
 	case "enum":
 		return f.ValueLabel(fmt.Sprint(v))
 	}
