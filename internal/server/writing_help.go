@@ -14,13 +14,15 @@ import (
 // tightening of the sentences, or feedback on how it is put together.
 // Each asks the assistant for that and nothing more, and what it suggests
 // waits for them (suggestions.go); feedback on structure comes back in
-// words, as an editor's would, not as changes. Help comes when asked.
+// words, as an editor's would, not as changes. Help comes when asked: it
+// is a part of the page (parts.go), off until the assistant sees a reason
+// and hands over ?show=writing-help, or the person keeps it on.
 
 // writingHelpWords is how long a piece is before help is offered.
 const writingHelpWords = 30
 
 func (s *Server) writingHelp(r *http.Request, t *schema.Type, rec *store.Record) string {
-	if !changes(r) || t.Internal {
+	if !changes(r) || t.Internal || !s.showing(r, WritingHelpPart) {
 		return ""
 	}
 	field := ""
@@ -46,6 +48,9 @@ func (s *Server) writingHelp(r *http.Request, t *schema.Type, rec *store.Record)
 		b.WriteString(string(s.component("link", map[string]any{"href": "/chat?prompt=" + url.QueryEscape(a.ask), "label": a.label, "look": "button"})))
 		b.WriteString(" ")
 	}
-	b.WriteString(`</p></section>`)
+	b.WriteString(`</p>`)
+	_, here := s.shown(r)
+	b.WriteString(s.fewer("/t/"+t.Name+"/"+rec.ID, WritingHelpPart, "help with the writing", here))
+	b.WriteString(`</section>`)
 	return b.String()
 }

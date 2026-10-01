@@ -33,10 +33,16 @@ func TestSuggestionsWaitOnTheWritingAsItReads(t *testing.T) {
 	}
 	page := get(t, h, "/t/note/"+note.ID).Body.String()
 	for _, want := range []string{"4 suggested changes", "<h3>Fixes</h3>", "<h3>Formatting</h3>", "<h3>Clarity</h3>", "Accept all 2 fixes", "Make it a heading",
-		`Would change: </span>it was decided by everyone that</mark>`, "Help with the writing", "Check spelling and typos"} {
+		`Would change: </span>it was decided by everyone that</mark>`} {
 		if !strings.Contains(page, want) {
 			t.Errorf("the page should have %q", want)
 		}
+	}
+	if strings.Contains(page, "Help with the writing") {
+		t.Error("help is a part, off until there is a reason")
+	}
+	if asked := get(t, h, "/t/note/"+note.ID+"?show=writing-help").Body.String(); !strings.Contains(asked, "Check spelling and typos") {
+		t.Error("?show=writing-help opens it")
 	}
 	if strings.Contains(page, "## Jobs") {
 		t.Error("a heading is shown as a heading, never as Markdown")
