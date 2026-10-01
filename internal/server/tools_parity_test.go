@@ -59,6 +59,7 @@ var pageActionTools = map[string]string{
 	"/since/seen":                 "a person's: what they have seen",
 	"/speech/get":                 "a person's: a download they are asked about",
 	"/speech/speakers/get":        "a person's: the same",
+	"/meetings/teams/connect":     "a person's: signing in to their Microsoft account",
 	"/dictate":                    "a person's: their voice",
 	"/sync":                       "a person's: computers exchanging changes, not a change",
 	"/workspaces/new":             "add_workspace",

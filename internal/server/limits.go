@@ -51,6 +51,11 @@ func (s *Server) limitsSection(owner bool) string {
 	default:
 		line("Recordings: speech-to-text is not on this computer yet, so a recording keeps a transcript only when one is written by hand. The owner can get it.")
 	}
+	if owner {
+		for _, l := range s.appLines() { // meeting_fetch_help.go
+			line(l)
+		}
+	}
 	b.WriteString(`</ul></section>`)
 	return b.String()
 }

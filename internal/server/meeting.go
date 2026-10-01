@@ -93,7 +93,7 @@ func (s *Server) recordingToAdd(r *http.Request, ev *store.Record) string {
 	}
 	say := "Record it here: the microphone, and with the box ticked this computer's sound, the other people on a call (share the call's tab, or the entire screen for an app such as Teams or Zoom, with its sound). Headphones keep the call out of the microphone. Or add the recording or transcript the meeting app makes, afterwards."
 	if over {
-		say = "It has ended with no recording. Add the recording or transcript the meeting app made, a .vtt from Teams or Zoom or the audio, or one made on another device."
+		say = "It has ended with no recording. Add the recording or transcript the meeting app made, a .vtt from Teams or Zoom or the audio, or one made on another device." + s.fetchSaid(ev)
 	}
 	_, here := s.shown(r)
 	var b strings.Builder
