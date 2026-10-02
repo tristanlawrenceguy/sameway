@@ -23,7 +23,7 @@ func TestAMeetingAsksForItsRecording(t *testing.T) {
 	}
 	call := func(how string) string {
 		raw, _ := json.Marshal(map[string]any{"event": ev.ID, "how": how})
-		text, isErr := a.Chat.Call("ask_to_record", raw)
+		text, isErr := a.Chat.Call("record_meeting", raw)
 		if isErr {
 			t.Fatal(text)
 		}

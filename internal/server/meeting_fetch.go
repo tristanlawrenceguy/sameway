@@ -17,7 +17,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
-// A meeting the app records (ask_to_record, how app) has its transcript
+// A meeting the app records (record_meeting, how app) has its transcript
 // brought from Teams or Zoom once it is over, when the person has
 // connected that app: every few minutes for a day after it ends, found by
 // the join link in its where, kept as a file and given to the meeting as

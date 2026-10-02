@@ -60,9 +60,8 @@ func (s *Server) tools() []tool {
 			}},
 	}
 	for _, t := range s.App.Chat.Tools() {
-		// The assistant's own look is look above, with more to it; and
-		// describe above is what details is to the assistant.
-		if t.Name == "look_at_page" || t.Name == "details" {
+		// The assistant's own look is look above, with more to it.
+		if t.Name == "look_at_page" {
 			continue
 		}
 		out = append(out, tool{Name: t.Name, Description: t.Description, InputSchema: t.Schema})

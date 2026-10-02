@@ -155,6 +155,7 @@ func (s *Server) handle(ctx context.Context, req request) (any, *rpcError) {
 		if err := json.Unmarshal(req.Params, &params); err != nil || params.Name == "" {
 			return nil, &rpcError{codeInvalidParams, "tools/call needs params.name and params.arguments"}
 		}
+		noteCall(params.Name, params.Arguments) // calls.go
 		text, isError, structured := refusedOff, true, false
 		if ok, svc := s.may(ctx, params.Name); ok {
 			if t, e, public := s.publicCall(ctx, params.Name, params.Arguments); public {
