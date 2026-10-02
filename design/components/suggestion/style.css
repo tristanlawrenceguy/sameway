@@ -2,7 +2,7 @@
    as it is and as it would be, formatted as it reads, the part that
    changes highlighted. Never Markdown, never a diff of characters. The
    highlight is a background with an outline, and a screen reader hears
-   "Would change" and "Changed", so colour is never the only sign. */
+   where the change starts and ends, so colour is never the only sign. */
 .sw-suggestion {
   padding: var(--sw-space-4);
   border: 2px solid var(--sw-actor, var(--sw-color-assistant));
@@ -14,13 +14,13 @@
 .sw-suggestion__why { margin: var(--sw-space-1) 0 0; font-weight: 600; overflow-wrap: anywhere; }
 .sw-suggestion__meaning { margin: var(--sw-space-2) 0 0; font-weight: 600; color: var(--sw-color-fg); }
 .sw-suggestion__describe, .sw-suggestion__gone { margin: var(--sw-space-2) 0 0; }
-.sw-suggestion__compare { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--sw-space-3); margin-top: var(--sw-space-3); }
+.sw-suggestion__compare { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr)); gap: var(--sw-space-3); margin-top: var(--sw-space-3); }
 .sw-suggestion__side { min-width: 0; }
 .sw-suggestion__caption { margin: 0 0 var(--sw-space-1); font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted); }
 .sw-suggestion__text { overflow-wrap: anywhere; }
 .sw-suggestion__text > :first-child { margin-top: 0; }
 .sw-suggestion__text > :last-child { margin-bottom: 0; }
-.sw-suggestion__text mark { background: var(--sw-color-accent-soft); color: var(--sw-color-fg); outline: 2px solid var(--sw-color-accent); border-radius: var(--sw-radius-sm); }
+.sw-suggestion__text .sw-prose__changed { background: var(--sw-color-accent-soft); color: var(--sw-color-fg); outline: 2px solid var(--sw-color-accent); border-radius: var(--sw-radius-sm); }
 .sw-suggestion__empty { color: var(--sw-color-fg-muted); font-style: italic; }
 .sw-suggestion__answers { display: flex; flex-wrap: wrap; gap: var(--sw-space-2); margin-top: var(--sw-space-3); }
-@media (forced-colors: active) { .sw-suggestion__text mark { background: Mark; color: MarkText; } }
+@media (forced-colors: active) { .sw-suggestion__text .sw-prose__changed { background: Mark; color: MarkText; } }

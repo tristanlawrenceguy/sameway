@@ -31,10 +31,10 @@ var Funcs = template.FuncMap{
 	// markdown renders structured text: headings from the given level, lists,
 	// emphasis, links, code, captioned tables. See internal/prose.
 	"markdown": func(s string, base any) template.HTML { return prose.Render(s, num(base)) },
-	// marked is markdown with one passage highlighted and named for a
-	// screen reader: a suggested change, shown as the writing reads.
-	"marked": func(s, passage, label string, base any) template.HTML {
-		return prose.Marked(s, passage, label, num(base))
+	// marked is markdown with one passage highlighted, its start and end
+	// said to a screen reader: a suggested change, shown as it reads.
+	"marked": func(s, passage, start, end string, base any) template.HTML {
+		return prose.Marked(s, passage, start, end, num(base))
 	},
 	// add is for a heading level one below another: the prose inside a
 	// card starts a level under the card's own title.
