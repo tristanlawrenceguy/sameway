@@ -55,6 +55,7 @@ func (s *Store) insert(t *schema.Type, id string, clean map[string]any) (*Record
 	}
 	s.stamp(t, id, nil, clean, now)
 	s.wrote(rec)
+	s.changed(t, nil, rec) // onchange.go
 	return rec, nil
 }
 
@@ -124,6 +125,7 @@ func (s *Store) Update(typeName, id string, fields map[string]any) (*Record, err
 	if err != nil {
 		return nil, err
 	}
+	was := *current // as it was, for OnChange
 	merged := map[string]any{}
 	for k, v := range current.Fields {
 		merged[k] = v
@@ -158,6 +160,7 @@ func (s *Store) Update(typeName, id string, fields map[string]any) (*Record, err
 	current.Fields = clean
 	current.UpdatedAt = now
 	s.wrote(current)
+	s.changed(t, &was, current)
 	return current, nil
 }
 
@@ -167,6 +170,7 @@ func (s *Store) Delete(typeName, id string) error {
 	if err != nil {
 		return err
 	}
+	was := s.before(t, id)
 	res, err := s.db.Exec(fmt.Sprintf("DELETE FROM %s WHERE id = ?", quote(t.Name)), id)
 	if err != nil {
 		return err
@@ -178,21 +182,8 @@ func (s *Store) Delete(typeName, id string) error {
 	if s.AfterWrite != nil {
 		s.AfterWrite(t.Name, id, nil)
 	}
+	s.changed(t, was, nil)
 	return nil
-}
-
-// DeleteAll removes every record of a type.
-func (s *Store) DeleteAll(typeName string) error {
-	t, err := s.typ(typeName)
-	if err != nil {
-		return err
-	}
-	recs, _ := s.List(t.Name, ListOptions{})
-	for _, r := range recs {
-		s.stamp(t, r.ID, nil, nil, time.Time{})
-	}
-	_, err = s.db.Exec(fmt.Sprintf("DELETE FROM %s", quote(t.Name)))
-	return err
 }
 
 // Count returns how many records a type has.

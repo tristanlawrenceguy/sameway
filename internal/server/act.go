@@ -1,8 +1,11 @@
 package server
 
 import (
+	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
@@ -65,7 +68,7 @@ func (s *Server) hook(w http.ResponseWriter, r *http.Request) {
 		if t, _ := rec.Fields["trigger"].(string); t == "" || t != token {
 			continue
 		}
-		text, proposal, err := s.app.Chat.RunAs(r.Context(), "system", rec.ID, "")
+		text, proposal, err := s.app.Chat.RunAsWith(r.Context(), "system", rec.ID, "", hookValues(r))
 		if err != nil {
 			writeError(w, errors.New(err.Error()))
 			return
@@ -78,4 +81,31 @@ func (s *Server) hook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusNotFound, map[string]any{"error": apiError{Code: "not_found", Message: "no action has that trigger"}})
+}
+
+// hookValues are what a request to a hook sent, each field by name, for
+// the action to fill {{name}} with: a JSON object's fields (anything not
+// text as JSON), a form's, and the address's own.
+func hookValues(r *http.Request) map[string]string {
+	vars := map[string]string{}
+	for k, v := range r.URL.Query() {
+		vars[k] = strings.Join(v, ", ")
+	}
+	body, _ := io.ReadAll(io.LimitReader(r.Body, 64<<10))
+	var obj map[string]any
+	if json.Unmarshal(body, &obj) == nil {
+		for k, v := range obj {
+			if s, ok := v.(string); ok {
+				vars[k] = s
+			} else {
+				raw, _ := json.Marshal(v)
+				vars[k] = string(raw)
+			}
+		}
+	} else if form, err := url.ParseQuery(string(body)); err == nil {
+		for k, v := range form {
+			vars[k] = strings.Join(v, ", ")
+		}
+	}
+	return vars
 }

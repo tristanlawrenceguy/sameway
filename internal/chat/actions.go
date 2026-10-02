@@ -38,6 +38,13 @@ func (s *Service) Run(ctx context.Context, id, canvas string) toolResult {
 	if err != nil {
 		return fail("no action with id %s; the actions are listed in the prompt, or find_records on %s finds one", id, ActionType)
 	}
+	return s.runRecord(ctx, rec, canvas)
+}
+
+// runRecord carries out an action as given: as stored, or filled with
+// what set it off (automate.go).
+func (s *Service) runRecord(ctx context.Context, rec *store.Record, canvas string) toolResult {
+	id := rec.ID
 	title, _ := rec.Fields["title"].(string)
 	switch kind, _ := rec.Fields["kind"].(string); kind {
 	case "arrangement":
@@ -104,7 +111,7 @@ func (s *Service) webhook(ctx context.Context, rec *store.Record, title string) 
 	if len([]rune(answer)) > 2000 {
 		answer = string([]rune(answer)[:2000])
 	}
-	out := toolResult{text: fmt.Sprintf("%s answered %d", title, resp.StatusCode)}
+	out := toolResult{text: fmt.Sprintf("%s answered %d", title, resp.StatusCode), answer: answer}
 	if answer != "" {
 		out.text += ": " + answer
 	}
@@ -167,7 +174,11 @@ func (s *Service) actionsDigest() string {
 // under their name, returning what the action answered. When the action
 // needs accepting first, proposal is the question now waiting for them.
 func (s *Service) RunAs(ctx context.Context, actor, id, canvas string) (text, proposal string, err error) {
-	r := s.Run(ctx, id, canvas)
+	return s.logRun(ctx, actor, s.Run(ctx, id, canvas))
+}
+
+// logRun records what a run did under whoever asked for it.
+func (s *Service) logRun(ctx context.Context, actor string, r toolResult) (text, proposal string, err error) {
 	for i := range r.changes {
 		r.changes[i].Via, r.changes[i].By, r.changes[i].ByLogin = Via(ctx), VisitorOf(ctx).Who(), cmp.Or(VisitorOf(ctx).Login, s.Owner.Login)
 		Record(s.Store, actor, r.changes[i])

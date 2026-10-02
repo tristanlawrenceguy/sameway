@@ -35,6 +35,8 @@ type Store struct {
 	// record as it now is, or nil when it is gone. The content mirror hangs
 	// here, so the files are never a step behind the database.
 	AfterWrite func(typeName, id string, rec *Record)
+	// OnChange is told what a record was and is; see onchange.go.
+	OnChange func(t *schema.Type, was, now *Record)
 	// Local names the types whose records stay on this computer when the
 	// workspace is hosted in more than one place: chats, questions,
 	// programs to run. Everything else is kept the same; see state.go.

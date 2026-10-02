@@ -88,6 +88,7 @@ func (c *ctx) openCmd() error {
 	// for as long as the server does, with or without a page open.
 	h.StartRinging(ctx, notifier(a))
 	a.Chat.StartSchedule(ctx)
+	a.Chat.StartAutomating() // actions that run when something happens; chat/automate.go
 	keepSnapshots(ctx, c.Stdout, a)
 	connectDevices(ctx, c.Stdout, a)
 	joinTailnet(ctx, c.Stdout, a, all, h)

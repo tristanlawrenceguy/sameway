@@ -85,7 +85,7 @@ func (s *Service) command(ctx context.Context, rec *store.Record, title string) 
 			answer = strings.TrimSpace(answer + "\n(stopped after " + CommandTimeout.String() + ")")
 		}
 	}
-	res := toolResult{text: fmt.Sprintf("%s finished with exit code %d", title, code)}
+	res := toolResult{text: fmt.Sprintf("%s finished with exit code %d", title, code), answer: answer}
 	if answer != "" {
 		res.text += ": " + answer
 	}
