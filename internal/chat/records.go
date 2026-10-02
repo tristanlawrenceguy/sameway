@@ -71,10 +71,10 @@ func (s *Service) recordTools() []llm.Tool {
 				"fields":  map[string]any{"type": "object", "description": "The fields to change and their new values."},
 				"version": map[string]any{"type": "string", "description": "The version get_record gave, when you read the record first: if it has changed since, nothing is written and you are shown it as it is now, to change again."},
 			}, "type", "id", "fields")},
-		{Name: "find_records", Description: "List records of a type to get their ids: all of them, those whose title contains the query, or those matching where. The same where and order a collection block takes.",
+		{Name: "find_records", Description: "List records of a type to get their ids: all of them, those holding every word of the query in their title or words, or those matching where. The same where and order a collection block takes.",
 			Schema: obj(map[string]any{
 				"type":  typeArg,
-				"query": map[string]any{"type": "string", "description": "Text the title should contain. Leave empty for every record."},
+				"query": map[string]any{"type": "string", "description": "Words each record found must hold, in its title or its words, in any order. Leave empty for every record."},
 				"where": map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Conditions that must all hold. " + query.Grammar},
 				"order": map[string]any{"type": "string", "description": "A field, or -field for the largest or newest first. Newest first when left out."},
 				"limit": map[string]any{"type": "integer", "description": "How many to list. Defaults to 10."},
@@ -107,9 +107,10 @@ func (s *Service) createRecord(typeName string, fields map[string]any) toolResul
 	}
 	rec, c, err := Write(s.Store, "created", t.Name, "", fields)
 	if err != nil {
-		return fail("I couldn't save those changes — %s. Fix the fields and call create_record again; details %s gives its schema.", humanizeValidationError(err.Error()), t.Name)
+		return fail("I couldn't save those changes — %s. %s Fix the fields and call create_record again.", humanizeValidationError(err.Error()), typeHelp(t))
 	}
 	text := fmt.Sprintf("created %s %s: %q. The person can open it at /t/%s/%s.", t.Name, rec.ID, c.Detail, t.Name, rec.ID)
+	text += s.datesSaid(t, fields, rec) + s.sameTitle(t, rec) // dates_said.go, same_title.go
 	if t.Name == EventType && len(s.recordingTools()) > 0 {
 		text += fmt.Sprintf(" If the person wants this meeting recorded, call the record_meeting tool yourself now with event %s (how app when Teams, Zoom or Meet records it): it sets up the reminder that opens the page ready to record. The tools are yours; never tell the person to use them.", rec.ID)
 	}
@@ -134,7 +135,7 @@ func (s *Service) updateRecord(typeName, id string, fields map[string]any, versi
 	}
 	rec, c, err := Write(s.Store, "updated", t.Name, id, fields)
 	if err != nil {
-		return fail("I couldn't save those changes — %s. Fix the fields and call update_record again; details %s gives its schema.", humanizeValidationError(err.Error()), t.Name)
+		return fail("I couldn't save those changes — %s. %s Fix the fields and call update_record again.", humanizeValidationError(err.Error()), typeHelp(t))
 	}
 	title := c.Detail
 	// Finished, a thing that repeats is due again at once; say so, or the
@@ -144,7 +145,7 @@ func (s *Service) updateRecord(typeName, id string, fields map[string]any, versi
 		again = fmt.Sprintf(" It repeats (%s), so it is not finished but due again at %v.", when.RepeatText(fmt.Sprint(rec.Fields[repeat])), rec.Fields[day])
 	}
 	return toolResult{
-		text:   fmt.Sprintf("updated %s %s: %q, at /t/%s/%s.%s", t.Name, rec.ID, title, t.Name, rec.ID, again),
+		text:   fmt.Sprintf("updated %s %s: %q, at /t/%s/%s.%s", t.Name, rec.ID, title, t.Name, rec.ID, again) + s.datesSaid(t, fields, rec),
 		change: &c,
 	}
 }
@@ -166,7 +167,7 @@ func (s *Service) findRecords(typeName, words string, where []string, order stri
 	var lines []string
 	for _, rec := range recs {
 		title := recordTitle(s.Store, t, rec)
-		if words != "" && !strings.Contains(strings.ToLower(title), words) {
+		if words != "" && !holdsAll(title, rec, words) {
 			continue
 		}
 		lines = append(lines, fmt.Sprintf("%s\t%s\t%s", rec.ID, oneLine(title), writers.Of(t.Name, rec).Words))

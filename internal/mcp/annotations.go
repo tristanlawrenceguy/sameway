@@ -21,7 +21,6 @@ var toolTraits = map[string]traits{
 	"find_records": {title: "Find records", readOnly: true, idempotent: true},
 	"get_record":   {title: "Read a record", readOnly: true, idempotent: true},
 	"search":       {title: "Search everything", readOnly: true, idempotent: true},
-	"details":      {title: "Read one component, type or arrangement", readOnly: true, idempotent: true},
 	"try":          {title: "Try a change without making it", readOnly: true, idempotent: true},
 
 	// Content.

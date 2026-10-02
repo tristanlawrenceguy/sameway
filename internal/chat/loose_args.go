@@ -6,9 +6,9 @@ import (
 )
 
 // A smaller model reaches for the shapes it knows: a record's fields
-// beside type instead of inside fields, fields as a JSON string, details
-// asked by type or component instead of name. What it meant is plain, so
-// it is taken as meant, where an error would cost it a turn or five.
+// beside type instead of inside fields, as a JSON string, or under set.
+// What it meant is plain, so it is taken as meant, where an error would
+// cost it a turn or five.
 
 // loosen rewrites a call's arguments into the shape its tool takes, or
 // returns them as they were.
@@ -50,15 +50,6 @@ func loosen(tool string, raw json.RawMessage) json.RawMessage {
 			}
 			if len(fields) > 0 {
 				m["fields"], changed = fields, true
-			}
-		}
-	case "details":
-		if _, ok := m["name"]; !ok {
-			for _, k := range []string{"type", "component", "arrangement"} {
-				if v, ok := m[k].(string); ok && v != "" {
-					m["name"], changed = v, true
-					break
-				}
 			}
 		}
 	}

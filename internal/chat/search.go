@@ -33,7 +33,9 @@ func (s *Service) search(query, only string, page int) toolResult {
 	if _, ok := search.Searchable(types, only); only != "" && !ok {
 		return fail("%s", search.Refusal(only, search.Kinds(types)))
 	}
-	res := search.Narrow(search.FindAll(s.Store, types, query), query, only, page)
+	hits, some := search.Matches(s.Store, types, query)
+	res := search.Narrow(hits, query, only, page)
+	res.Some = some
 	if res.Total == 0 {
 		return toolResult{text: fmt.Sprintf("nothing has %q in it", res.Query)}
 	}

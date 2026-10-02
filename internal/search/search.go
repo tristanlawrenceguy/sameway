@@ -32,33 +32,15 @@ var Skip = map[string]bool{"message": true, "activity": true, "proposal": true, 
 // Limit caps how many hits come back.
 const Limit = 50
 
-// Find looks for every word of q in every record's text fields and every
-// canvas block's props. Every word must appear; case and accents do not
-// matter, and a plural finds its one. At most Limit come back.
-func Find(st *store.Store, types *schema.Set, q string) []Hit {
-	return FindOf(st, types, q, "")
-}
-
-// FindOf is Find within one type, when only is named: picking a person
-// from thousands finds people, not the fifty notes that also match.
-func FindOf(st *store.Store, types *schema.Set, q, only string) []Hit {
-	hits := find(st, types, q, only, false)
-	if len(hits) > Limit {
-		hits = hits[:Limit]
+// Matches is what a search finds, the one way for the search page, the
+// assistant, the API, the command line and AI services: everything with
+// every word, or, when nothing has them all and there are several, what
+// has some of them, most first, with some true so it is said.
+func Matches(st *store.Store, types *schema.Set, q string) (hits []Hit, some bool) {
+	if hits = find(st, types, q, "", false); len(hits) > 0 || len(Words(q)) < 2 {
+		return hits, false
 	}
-	return hits
-}
-
-// FindAll is every hit, for the search page, which shows them a page at a
-// time and says how many there are.
-func FindAll(st *store.Store, types *schema.Set, q string) []Hit {
-	return find(st, types, q, "", false)
-}
-
-// FindSome is what has some of the words, when nothing has every one of
-// them: most words matched first.
-func FindSome(st *store.Store, types *schema.Set, q string) []Hit {
-	return find(st, types, q, "", true)
+	return find(st, types, q, "", true), true
 }
 
 // Counts is how many of the hits are of each type: the filters on the

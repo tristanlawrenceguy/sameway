@@ -43,12 +43,7 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 	title, said := label, label
 	pg := paged{page: 1, pages: 1}
 	if q != "" {
-		all := search.FindAll(s.app.Store, s.app.Types, q)
-		// Nothing has every word: what has some of them, said as such.
-		some := len(all) == 0 && len(strings.Fields(q)) > 1
-		if some {
-			all = search.FindSome(s.app.Store, s.app.Types, q)
-		}
+		all, some := search.Matches(s.app.Store, s.app.Types, q)
 		hits := all
 		if only != "" {
 			hits = search.Of(all, only)
@@ -67,7 +62,7 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 				template.HTMLEscapeString(plural(only)), len(hits), len(all), widen(q))
 		}
 		if some && len(all) > 0 {
-			b.WriteString(`<p class="sw-muted">Nothing has every word. These have some of them.</p>`)
+			b.WriteString(`<p class="sw-muted">` + search.SomeWords + `</p>`)
 		}
 		b.WriteString(string(s.kinds(q, only, all)))
 		switch {

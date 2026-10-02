@@ -111,7 +111,9 @@ func (s *Server) apiSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-	res := search.Narrow(search.FindAll(s.app.Store, s.app.Types, q), q, only, page)
+	found, some := search.Matches(s.app.Store, s.app.Types, q)
+	res := search.Narrow(found, q, only, page)
+	res.Some = some
 	// Each hit as it always was, with who wrote it beside it.
 	type written struct {
 		search.Hit
@@ -123,7 +125,7 @@ func (s *Server) apiSearch(w http.ResponseWriter, r *http.Request) {
 		hits = append(hits, written{h, writers.OfID(h.Type, h.ID).Words})
 	}
 	out := map[string]any{"query": res.Query, "count": len(res.Hits), "hits": hits, "total": res.Total, "counts": res.Counts,
-		"found": res.Found, "page": res.Page, "pages": res.Pages, "said": res.Said(),
+		"found": res.Found, "page": res.Page, "pages": res.Pages, "said": res.Said(), "some": res.Some,
 		"untrusted": "each hit's title and snippet were written by its written_by: " + chat.Untrusted}
 	if only != "" {
 		out["type"] = only
