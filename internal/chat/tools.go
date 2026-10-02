@@ -87,6 +87,7 @@ func (s *Service) allTools() []llm.Tool {
 // toolHandlers (tool_handlers.go).
 func (s *Service) runTool(call llm.ToolCall) toolResult {
 	var args toolArgs
+	call.Args = loosen(call.Name, call.Args) // loose_args.go
 	if len(call.Args) > 0 {
 		if err := json.Unmarshal(call.Args, &args); err != nil {
 			return fail("%s", ArgsTrouble(err))

@@ -21,6 +21,7 @@ var toolTraits = map[string]traits{
 	"find_records": {title: "Find records", readOnly: true, idempotent: true},
 	"get_record":   {title: "Read a record", readOnly: true, idempotent: true},
 	"search":       {title: "Search everything", readOnly: true, idempotent: true},
+	"details":      {title: "Read one component, type or arrangement", readOnly: true, idempotent: true},
 	"try":          {title: "Try a change without making it", readOnly: true, idempotent: true},
 
 	// Content.
@@ -28,7 +29,7 @@ var toolTraits = map[string]traits{
 	"update_record":    {title: "Change a record", idempotent: true},
 	"import_records":   {title: "Bring records in from a file"},
 	"write_up_meeting": {title: "Write up a meeting"},
-	"ask_to_record":    {title: "Have a meeting ask to be recorded", idempotent: true},
+	"record_meeting":   {title: "Record a meeting", idempotent: true},
 	"organise_writing": {title: "Organise longer writing", idempotent: true},
 	"suggest_edits":    {title: "Suggest changes to some writing"},
 	"add_type":         {title: "Add a kind of record"},

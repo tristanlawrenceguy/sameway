@@ -74,6 +74,14 @@ func Parse(s string, now time.Time) (t time.Time, day bool, ok bool) {
 	if t, err := time.ParseInLocation("2006-01-02", s, now.Location()); err == nil {
 		return t, true, true
 	}
+	// 2026-10-06 2pm: a date with its time in words, as models write it.
+	if len(s) > 11 && s[10] == ' ' {
+		if d, err := time.ParseInLocation("2006-01-02", s[:10], now.Location()); err == nil {
+			if t, day, ok := words("today "+strings.ToLower(s[11:]), d); ok && !day && t.Format("2006-01-02") == s[:10] {
+				return t, false, true
+			}
+		}
+	}
 	if t, ok := shift(s, now); ok {
 		return t, false, true
 	}

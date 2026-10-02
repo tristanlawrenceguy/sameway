@@ -109,10 +109,11 @@ func (s *Service) createRecord(typeName string, fields map[string]any) toolResul
 	if err != nil {
 		return fail("I couldn't save those changes — %s. Fix the fields and call create_record again; details %s gives its schema.", humanizeValidationError(err.Error()), t.Name)
 	}
-	return toolResult{
-		text:   fmt.Sprintf("created %s %s: %q. The person can open it at /t/%s/%s.", t.Name, rec.ID, c.Detail, t.Name, rec.ID),
-		change: &c,
+	text := fmt.Sprintf("created %s %s: %q. The person can open it at /t/%s/%s.", t.Name, rec.ID, c.Detail, t.Name, rec.ID)
+	if t.Name == EventType && len(s.recordingTools()) > 0 {
+		text += fmt.Sprintf(" If the person wants this meeting recorded, call the record_meeting tool yourself now with event %s (how app when Teams, Zoom or Meet records it): it sets up the reminder that opens the page ready to record. The tools are yours; never tell the person to use them.", rec.ID)
 	}
+	return toolResult{text: text, change: &c}
 }
 
 func (s *Service) updateRecord(typeName, id string, fields map[string]any, version string) toolResult {
