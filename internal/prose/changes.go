@@ -19,10 +19,13 @@ func Plain(md string) string {
 	return strings.Join(strings.Fields(html.UnescapeString(tags.ReplaceAllString(string(Render(md, 2)), " "))), " ")
 }
 
-// Marked renders Markdown with the one passage given highlighted, a word
-// for a screen reader before it (label). Where the passage cannot be
-// marked as one stretch of a paragraph, the text is rendered unmarked.
-func Marked(md, passage, label string, base int) template.HTML {
+// Marked renders Markdown with the one passage given highlighted, with
+// words for a screen reader where it starts and where it ends. It is a
+// plain span, not mark: screen readers say mark differently or not at
+// all, and some say its end and some do not, so the words are heard the
+// same everywhere, once. Where the passage cannot be marked as one
+// stretch of a paragraph, the text is rendered unmarked.
+func Marked(md, passage, start, end string, base int) template.HTML {
 	at := strings.Index(md, passage)
 	if passage == "" || at < 0 {
 		return Render(md, base)
@@ -40,11 +43,14 @@ func Marked(md, passage, label string, base int) template.HTML {
 	if i < 0 || j < i || blockTag.MatchString(out[i:j]) {
 		return template.HTML(strings.NewReplacer(open, "", shut, "").Replace(out))
 	}
-	mark := `<mark class="sw-prose__changed">`
-	if label != "" {
-		mark += `<span class="sw-visually-hidden">` + template.HTMLEscapeString(label) + `: </span>`
+	mark, unmark := `<span class="sw-prose__changed">`, `</span>`
+	if start != "" {
+		mark += `<span class="sw-visually-hidden">` + template.HTMLEscapeString(start) + `: </span>`
 	}
-	return template.HTML(out[:i] + mark + out[i+len(open):j] + `</mark>` + out[j+len(shut):])
+	if end != "" {
+		unmark = `<span class="sw-visually-hidden">, ` + template.HTMLEscapeString(end) + `,</span>` + unmark
+	}
+	return template.HTML(out[:i] + mark + out[i+len(open):j] + unmark + out[j+len(shut):])
 }
 
 var (

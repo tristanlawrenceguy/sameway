@@ -79,8 +79,9 @@ func (s *Server) suggestionProps(rec, sg *store.Record, label, from string) map[
 	text, _ := rec.Fields[str(sg.Fields["field"], "")].(string)
 	passage, replacement := str(sg.Fields["passage"], ""), str(sg.Fields["replacement"], "")
 	props := map[string]any{"id": "suggestion-" + sg.ID, "label": label, "why": str(sg.Fields["why"], ""),
-		"meaning": sg.Fields["meaning"] == true, "now": "", "nowMark": passage, "from": from, "actor": s.actorOf(sg),
+		"meaning": sg.Fields["meaning"] == true, "now": "", "nowMark": passage, "from": from,
 		"accept": "/suggestions/" + sg.ID + "/accept", "decline": "/suggestions/" + sg.ID + "/decline"}
+	props["actor"], props["by"] = s.suggestedBy(sg)
 	at := strings.Index(text, passage)
 	if at < 0 || strings.Count(text, passage) != 1 {
 		props["outdated"] = true
@@ -124,12 +125,14 @@ func paragraphOf(text string, from, to int) (int, int) {
 // sentenceEnd is where a sentence ends and the next begins.
 var sentenceEnd = regexp.MustCompile(`[.!?]["'”’)]?\s+`)
 
-// actorOf is who suggested it, for its colour: an agent, or the assistant.
-func (s *Server) actorOf(sg *store.Record) string {
-	if w := s.app.Chat.Writers().Of(chat.SuggestionType, sg); strings.Contains(w.Words, "agent") {
-		return "agent"
+// suggestedBy is who suggested it, from the activity log: an agent by
+// its name where the log has one, or the assistant. It is said in words
+// as well as by colour, so nobody depends on the colour to know.
+func (s *Server) suggestedBy(sg *store.Record) (actor, by string) {
+	if w := s.app.Chat.Writers().Of(chat.SuggestionType, sg); strings.HasSuffix(w.Words, "an agent") {
+		return "agent", w.Words
 	}
-	return "assistant"
+	return "assistant", "the assistant"
 }
 
 // suggestionAnswer accepts or declines one suggestion.

@@ -27,14 +27,14 @@ func TestAFormattingChangeIsSaidInWords(t *testing.T) {
 // The passage is highlighted in the writing as it reads, with no Markdown
 // showing; where it cannot be one stretch, the writing is shown unmarked.
 func TestThePassageIsMarkedInTheWritingAsItReads(t *testing.T) {
-	got := string(Marked("We **all** agreed that the garden opens.", "agreed that", "Changing", 3))
-	if !strings.Contains(got, `<mark class="sw-prose__changed"><span class="sw-visually-hidden">Changing: </span>agreed that</mark>`) || strings.Contains(got, "**") {
+	got := string(Marked("We **all** agreed that the garden opens.", "agreed that", "Change starts", "change ends", 3))
+	if !strings.Contains(got, `<span class="sw-prose__changed"><span class="sw-visually-hidden">Change starts: </span>agreed that<span class="sw-visually-hidden">, change ends,</span></span> the garden`) || strings.Contains(got, "**") || strings.Contains(got, "<mark") {
 		t.Errorf("marked as it reads: %s", got)
 	}
-	if got := string(Marked("## Plans\n\nSome text", "## Plans", "", 3)); !strings.Contains(got, "<h3") || !strings.Contains(got, "<mark") {
+	if got := string(Marked("## Plans\n\nSome text", "## Plans", "", "", 3)); !strings.Contains(got, "<h3") || !strings.Contains(got, "sw-prose__changed") {
 		t.Errorf("a heading stays a heading, marked: %s", got)
 	}
-	if got := string(Marked("One.\n\nTwo.", "One.\n\nTwo", "", 3)); strings.Contains(got, "<mark") || strings.Contains(got, "\uE000") {
+	if got := string(Marked("One.\n\nTwo.", "One.\n\nTwo", "", "", 3)); strings.Contains(got, "sw-prose__changed") || strings.Contains(got, "\uE000") {
 		t.Errorf("across paragraphs, shown unmarked: %s", got)
 	}
 }

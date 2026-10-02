@@ -33,7 +33,9 @@ func TestSuggestionsWaitOnTheWritingAsItReads(t *testing.T) {
 	}
 	page := get(t, h, "/t/note/"+note.ID).Body.String()
 	for _, want := range []string{"4 suggested changes", "<h3>Fixes</h3>", "<h3>Formatting</h3>", "<h3>Clarity</h3>", "Accept all 2 fixes", "Make it a heading",
-		`Would change: </span>it was decided by everyone that</mark>`} {
+		`Change starts: </span>it was decided by everyone that<span class="sw-visually-hidden">, change ends,</span></span>`,
+		// Who suggested it is said in words, not by colour alone.
+		`1 of 4</span>, suggested by the assistant</p>`} {
 		if !strings.Contains(page, want) {
 			t.Errorf("the page should have %q", want)
 		}
@@ -70,5 +72,26 @@ func TestSuggestionsWaitOnTheWritingAsItReads(t *testing.T) {
 	h.ServeHTTP(rec, req)
 	if !strings.Contains(rec.Body.String(), "1 left.") {
 		t.Errorf("an answer says how many are left: %s", rec.Body.String())
+	}
+}
+
+// Who suggested a change is said in words beside its coloured edge: an
+// agent by the name the activity log has for it.
+func TestASuggestionSaysWhoSuggestedIt(t *testing.T) {
+	a, h := newApp(t)
+	note, err := a.Store.Create("note", map[string]any{"title": "Garden", "body": "The pond liner comes in May."})
+	if err != nil {
+		t.Fatal(err)
+	}
+	args, _ := json.Marshal(map[string]any{"type": "note", "id": note.ID, "edits": []any{
+		map[string]any{"passage": "May", "replacement": "April", "why": "The plan says April.", "kind": "clarity"},
+	}})
+	agent := a.Chat.ByAgent(chat.Agent{Name: "Claude Code", Through: chat.ThroughMCP})
+	if text, isErr := agent.Call("suggest_edits", args); isErr {
+		t.Fatal(text)
+	}
+	page := get(t, h, "/t/note/"+note.ID).Body.String()
+	if !strings.Contains(page, `data-actor="agent"`) || !strings.Contains(page, "1 of 1</span>, suggested by Claude Code, an agent</p>") {
+		t.Error("an agent's suggestion names the agent in words")
 	}
 }

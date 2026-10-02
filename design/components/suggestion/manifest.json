@@ -1,7 +1,7 @@
 {
   "name": "suggestion",
-  "version": "1.0.0",
-  "description": "A change suggested to someone's writing and not made, shown as writing: why, then the sentence as it is now and as it would read, formatted, with the part that changes highlighted, and Accept and Decline. A change to the formatting alone is said in words. Shown on the page of what it is about.",
+  "version": "1.1.0",
+  "description": "A change suggested to someone's writing and not made, shown as writing: who suggested it and why, then the sentence as it is now and as it would read, formatted, with the part that changes highlighted, and Accept and Decline. A change to the formatting alone is said in words. Shown on the page of what it is about.",
   "icon": "±",
   "pageOnly": true,
   "use": {
@@ -80,7 +80,11 @@
           "agent"
         ],
         "default": "assistant",
-        "description": "Who suggested it, for its colour."
+        "description": "Who suggested it, for its colour; said in words too, by by."
+      },
+      "by": {
+        "type": "string",
+        "description": "Who suggested it, in words, after suggested by: the assistant, or an agent by its name from the activity log, such as Claude Code, an agent. Left out, it is said from actor."
       },
       "from": {
         "type": "string",
@@ -106,12 +110,12 @@
     "states": [],
     "wcag": {
       "target": "AAA",
-      "notes": "A group named by its place among those waiting and why, so moving to Accept says which (1.3.1). The writing is shown formatted as it reads, never as markup; the changed part is highlighted with an outline as well as colour (1.4.1) and named for a screen reader. Nothing changes until a button is pressed (3.2.5)."
+      "notes": "A group named by its place among those waiting and why, so moving to Accept says which (1.3.1). Who suggested it is said in words, not only by the colour of its edge (1.4.1). The writing is shown formatted as it reads, never as markup; the changed part is highlighted with an outline as well as colour (1.4.1), and a screen reader hears where it starts and where it ends, in the same words in every screen reader, not the mark element's, which some say and some do not. Nothing changes until a button is pressed (3.2.5)."
     }
   },
   "machine": {
     "selector": "[data-component=\"suggestion\"]",
-    "identify": "A group whose accessible name is its place and why. The highlighted mark in Now is what would change; in With the change, what comes in.",
+    "identify": "A group whose accessible name is its place and why; the line with its place says who suggested it. The highlighted span (.sw-prose__changed) in Now is what would change; in With the change, what comes in.",
     "operate": "Post to Accept or Decline. Nothing changes until you do; an outdated one only sets aside."
   },
   "examples": [
@@ -159,7 +163,8 @@
         "actor": "agent",
         "accept": "/suggestions/s3/accept",
         "decline": "/suggestions/s3/decline",
-        "id": "suggestion-s3"
+        "id": "suggestion-s3",
+        "by": "Claude Code, an agent"
       },
       "file": "examples/meaning.html"
     },
