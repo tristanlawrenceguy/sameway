@@ -179,7 +179,7 @@ func (s *Service) findRecords(typeName, words string, where []string, order stri
 		if words == "" && len(where) == 0 {
 			return toolResult{text: fmt.Sprintf("there are no %s records yet", t.Name)}
 		}
-		return toolResult{text: fmt.Sprintf("no %s matches %s", t.Name, strings.TrimSpace(strings.Join(append(where, words), " ")))}
+		return toolResult{text: fmt.Sprintf("no %s matches %s. search finds words in every kind at once, when it may be another.", t.Name, strings.TrimSpace(strings.Join(append(where, words), " ")))}
 	}
 	// The titles are fenced, each line saying who wrote it; see provenance.go.
 	return toolResult{text: fmt.Sprintf("%s records, newest first (id, title, written by). Each title was written by the one on its line; %s.\n<<<record text\n%s\nrecord text>>>", t.Name, Untrusted, strings.Join(lines, "\n"))}

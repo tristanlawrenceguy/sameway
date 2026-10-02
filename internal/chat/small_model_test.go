@@ -104,3 +104,21 @@ func TestSearchFallsBackToSomeOfTheWords(t *testing.T) {
 		t.Errorf("some of the words, said so: %s", text)
 	}
 }
+
+// An action that could never run is refused with how to write it: what
+// is a kind of record, and a condition goes in only.
+func TestAnActionThatCouldNeverRunIsRefused(t *testing.T) {
+	svc := newFullService(t)
+	raw := []byte(`{"type":"action","fields":{"title":"Tell","kind":"webhook","url":"https://example.com/h","when":"changed","what":"status=done"}}`)
+	if text, isErr := svc.Call("create_record", raw); !isErr || !strings.Contains(text, `a condition goes in only, as ["status=done"]`) {
+		t.Errorf("what is a kind, a condition goes in only: %s", text)
+	}
+	raw = []byte(`{"type":"action","fields":{"title":"Tell","kind":"webhook","url":"https://example.com/h","when":"changed","what":"task","only":["colour=red"]}}`)
+	if _, isErr := svc.Call("create_record", raw); !isErr {
+		t.Error("a condition the kind cannot meet is refused")
+	}
+	raw = []byte(`{"type":"action","fields":{"title":"Tell","kind":"webhook","url":"https://example.com/h","when":"changed","what":"task","only":["status=done"]}}`)
+	if text, isErr := svc.Call("create_record", raw); isErr {
+		t.Errorf("a right one is kept: %s", text)
+	}
+}
