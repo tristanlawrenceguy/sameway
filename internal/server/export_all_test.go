@@ -13,11 +13,7 @@ import (
 // the choices made on them.
 func TestACalendarAndAListGoOutAsTheyAreShown(t *testing.T) {
 	a, h := newApp(t)
-<<<<<<< HEAD
 	a.Store.Create("task", map[string]any{"title": "Dig the pond", "due": "2026-12-01T00:00:00Z"})
-=======
-	a.Store.Create("task", map[string]any{"title": "Dig the pond", "due": time.Now().AddDate(0, 0, 10).Format(time.RFC3339)})
->>>>>>> origin/main
 	a.Store.Create("event", map[string]any{"title": "Harvest fair", "starts": "2026-10-12T00:00:00Z"})
 	a.Store.Create("reminder", map[string]any{"title": "Water the beans", "at": "2026-10-02T07:00:00Z"})
 	ics := get(t, h, "/export/all.ics").Body.String()
@@ -42,4 +38,6 @@ func TestACalendarAndAListGoOutAsTheyAreShown(t *testing.T) {
 	if !strings.Contains(page, want) || !strings.Contains(page, "Download these 2 tasks") {
 		t.Errorf("the collection's page offers what it shows, narrowed as it is:\n%s", page)
 	}
+
+	_ = time.Now // use the import to avoid unused import error
 }

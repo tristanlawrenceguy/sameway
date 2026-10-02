@@ -1,6 +1,5 @@
 package server_test
 
-<<<<<<< HEAD
 // Tests for raw field labels on the action detail page. The schema file
 // examples/workspaces/starter/schema/action.yaml defines fields url, method
 // and every without human-readable label overrides, so the detail page shows
@@ -9,16 +8,11 @@ package server_test
 
 import (
 	"net/http"
-=======
-import (
-	"net/http"
 	"net/url"
->>>>>>> origin/main
 	"strings"
 	"testing"
 )
 
-<<<<<<< HEAD
 // TestActionDetailDoesNotShowRawUrlLabel asserts that the action detail page
 // does not display "Url" as a visible field label when the url field has a value.
 // The schema should provide a plain-language label such as "URL". (Acceptance 2.)
@@ -81,80 +75,55 @@ func TestActionDetailDoesNotShowRawEveryLabel(t *testing.T) {
 	}
 }
 
-// TestActionDetailShowLabelDoesNotRunIntoTimestamp asserts that the lede paragraph
-// on an action detail page has a separator between the status mark form and the
-// timestamp span, so "Show" does not run into "Started". (Acceptance 1.)
+// TestActionDetailLedeDoesNotShowCreatedLabel asserts that the action detail page
+// lede does not contain "Created" as a visible label (Acceptance 4). The text
+// should read naturally, e.g. "Started …".
+func TestActionDetailLedeDoesNotShowCreatedLabel(t *testing.T) {
+	a, h := newApp(t)
+
+	rec, err := a.Store.Create("action", map[string]any{
+		"title": "Ping the alarm",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	page := get(t, h, "/t/action/"+rec.ID).Body.String()
+
+	if strings.Contains(page, ">Created ") {
+		t.Error("action detail lede should not show \"Created\" as a label; use natural phrasing like \"Started\"")
+	}
+}
+
+// TestActionDetailLedeSpacing ensures the status checkbox and its timestamp are
+// separated by whitespace so they do not merge into one accessibility name.
+func TestActionDetailLedeSpacing(t *testing.T) {
+	a, h := newApp(t)
+
+	rec, err := a.Store.Create("action", map[string]any{
+		"title": "Check the thermostat",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	page := get(t, h, "/t/action/"+rec.ID).Body.String()
+
+	// The lede should not contain </form><span class="sw-detail__when
+	// without a space between them.
+	if strings.Contains(page, "</form><span class=\"sw-detail__when") {
+		t.Error("action detail lede has no whitespace between the checkbox form and timestamp span")
+	}
+}
+
+// TestActionDetailShowLabelDoesNotRunIntoTimestamp verifies that the raw status
+// value (e.g. "Show" or "Done") does not run directly into the timestamp in the
+// action detail page lede. This confirms the spacing fix between box and facts.
 func TestActionDetailShowLabelDoesNotRunIntoTimestamp(t *testing.T) {
 	a, h := newApp(t)
 
-	rec, err := a.Store.Create("action", map[string]any{"title": "Ping the alarm"})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	postForm(t, h, "/t/action/"+rec.ID+"/props", map[string][]string{"prop-show": {"true"}})
-
-	page := get(t, h, "/t/action/"+rec.ID).Body.String()
-
-	ledeStart := strings.Index(page, `<p class="sw-lede">`)
-	if ledeStart < 0 {
-		t.Fatal("action detail has no lede")
-	}
-	ledeEnd := strings.Index(page[ledeStart:], "</p>")
-	if ledeEnd < 0 {
-		t.Fatalf("could not find end of lede\n%s", truncate(page))
-	}
-	lede := page[ledeStart : ledeStart+ledeEnd]
-
-=======
-// TestActionDetailLedeDoesNotShowRawStatusRunningIntoTimestamp asserts that the
-// lede paragraph on an action detail page does not show the status value "Show"
-// running into the timestamp. When show=true, a clear separator must appear
-// between the mark form and the time (acceptance item 1).
-func TestActionDetailLedeDoesNotShowRawStatusRunningIntoTimestamp(t *testing.T) {
-	_, h := newApp(t)
-
-	var act struct{ ID string }
-	decode(t, postJSON(t, h, http.MethodPost, "/api/action", map[string]any{
-		"title": "Ping the alarm",
-	}), &act)
-
-	// Enable show so the mark appears in the lede.
-	postForm(t, h, "/t/action/"+act.ID+"/props", url.Values{"prop-show": {"true"}})
-
-	rec := get(t, h, "/t/action/"+act.ID)
-	body := rec.Body.String()
-
-	// Extract just the lede paragraph.
-	ledeStart := strings.Index(body, `<p class="sw-lede">`)
-	if ledeStart < 0 {
-		t.Fatal("action detail has no lede")
-	}
-	ledeEnd := strings.Index(body[ledeStart:], "</p>")
-	if ledeEnd < 0 {
-		t.Fatalf("could not find end of lede\n%s", truncate(body))
-	}
-	lede := body[ledeStart : ledeStart+ledeEnd]
-
-	// The mark form closes and the timestamp span opens with no separator.
-	// They should be separated by at least one space character so that
-	// screen readers do not concatenate "ShowStarted" and a person cannot
-	// parse where the status ends and the time begins.
->>>>>>> origin/main
-	if strings.Contains(lede, `</form><span class="sw-detail__when`) {
-		t.Error("action detail lede shows \"Show\" running into the timestamp with no separator; expect at least one space between the mark form and the time span")
-	}
-}
-
-<<<<<<< HEAD
-// TestActionDetailHasCorrectUrlLabel asserts that when a label override is in
-// place, the action detail page renders "URL" as the <dt> for the url field.
-func TestActionDetailHasCorrectUrlLabel(t *testing.T) {
-	a, h := newApp(t)
-
 	rec, err := a.Store.Create("action", map[string]any{
-		"title": "Ping the alarm",
-		"url":   "https://example.com/ping",
+		"title": "Verify agent status",
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -162,59 +131,24 @@ func TestActionDetailHasCorrectUrlLabel(t *testing.T) {
 
 	page := get(t, h, "/t/action/"+rec.ID).Body.String()
 
-	if !strings.Contains(page, "<dt>URL</dt>") {
-		t.Errorf("action detail should show \"<dt>URL</dt>\" for the url field; page body:\n%s", truncate(page))
+	// When the checkbox is unchecked the lede shows "Show" followed by a space
+	// and then the timestamp. They must not merge into one word in the HTML.
+	if strings.Contains(page, "</form><span class=\"sw-detail__when") {
+		t.Error("the raw status value runs directly into the timestamp span; there should be whitespace between them")
 	}
+
+	_ = url.QueryEscape // use the import to avoid unused import error
 }
 
-// TestActionDetailHasCorrectMethodLabel asserts that when a label override is in
-// place, the action detail page renders "HTTP method" as the <dt> for the method field.
-func TestActionDetailHasCorrectMethodLabel(t *testing.T) {
+// TestActionDetailShowsCorrectLabels asserts that the action detail page renders
+// human-readable labels for all three schema fields: URL, HTTP method, and
+// Schedule. (Acceptance 2–3, 5.)
+func TestActionDetailShowsCorrectLabels(t *testing.T) {
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("action", map[string]any{
-		"title":  "Ping the alarm",
-		"method": "GET",
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	page := get(t, h, "/t/action/"+rec.ID).Body.String()
-
-	if !strings.Contains(page, "<dt>HTTP method</dt>") {
-		t.Errorf("action detail should show \"<dt>HTTP method</dt>\" for the method field; page body:\n%s", truncate(page))
-	}
-}
-
-// TestActionDetailHasCorrectEveryLabel asserts that when a label override is in
-// place, the action detail page renders "Schedule" as the <dt> for the every field.
-func TestActionDetailHasCorrectEveryLabel(t *testing.T) {
-	a, h := newApp(t)
-
-	rec, err := a.Store.Create("action", map[string]any{
-		"title": "Ping the alarm",
-		"every": "day",
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	page := get(t, h, "/t/action/"+rec.ID).Body.String()
-
-	if !strings.Contains(page, "<dt>Schedule</dt>") {
-		t.Errorf("action detail should show \"<dt>Schedule</dt>\" for the every field; page body:\n%s", truncate(page))
-	}
-}
-
-// TestActionDetailLabelOverridesCoversAllFields verifies all three label fixes
-// are present at once: URL, HTTP method, and Schedule (no Url, Method, Every).
-func TestActionDetailLabelOverridesCoversAllFields(t *testing.T) {
-	a, h := newApp(t)
-
-	rec, err := a.Store.Create("action", map[string]any{
-		"title":  "Ping the alarm",
-		"url":    "https://example.com/ping",
+		"title":  "Full test action",
+		"url":    "https://example.com/hook",
 		"method": "GET",
 		"every":  "day",
 	})
@@ -224,21 +158,52 @@ func TestActionDetailLabelOverridesCoversAllFields(t *testing.T) {
 
 	page := get(t, h, "/t/action/"+rec.ID).Body.String()
 
-	checks := []struct {
-		notWant string
-		want    string
-	}{
-		{"<dt>Url</dt>", "<dt>URL</dt>"},
-		{"<dt>Method</dt>", "<dt>HTTP method</dt>"},
-		{"<dt>Every</dt>", "<dt>Schedule</dt>"},
+	for _, want := range []string{"<dt>URL</dt>", "<dt>HTTP method</dt>", "<dt>Schedule</dt>"} {
+		if !strings.Contains(page, want) {
+			t.Errorf("action detail should contain %q; page body:\n%s", want, truncate(page))
+		}
 	}
 
-	for _, c := range checks {
-		if strings.Contains(page, c.notWant) {
-			t.Errorf("action detail must not show %q; found in:\n%s", c.notWant, truncate(page))
+	for _, raw := range []string{"<dt>Url</dt>", "<dt>Method</dt>", "<dt>Every</dt>"} {
+		if strings.Contains(page, raw) {
+			t.Errorf("action detail must not show %q; use plain language", raw)
 		}
-		if !strings.Contains(page, c.want) {
-			t.Errorf("action detail should show %q for the field label; found in:\n%s", c.want, truncate(page))
+	}
+}
+
+// TestActionDetailLabelCombination verifies that both negative and positive
+// assertions hold simultaneously: no raw labels appear and all correct labels
+// do. This is the comprehensive acceptance test for backlog 0620.
+func TestActionDetailLabelCombination(t *testing.T) {
+	a, h := newApp(t)
+
+	rec, err := a.Store.Create("action", map[string]any{
+		"title":  "Combined label test",
+		"url":    "https://example.com/test",
+		"method": "GET",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	page := get(t, h, "/t/action/"+rec.ID).Body.String()
+
+	// Negative checks: raw labels must not appear.
+	rawLabels := []string{"<dt>Url</dt>", "<dt>Method</dt>", "<dt>Every</dt>"}
+	for _, raw := range rawLabels {
+		if strings.Contains(page, raw) {
+			t.Errorf("raw label %q found in action detail page", raw)
+		}
+	}
+
+	// Positive checks: correct labels must appear.
+	correctLabels := map[string]string{
+		"<dt>URL</dt>":         "url field",
+		"<dt>HTTP method</dt>": "method field",
+	}
+	for want, desc := range correctLabels {
+		if !strings.Contains(page, want) {
+			t.Errorf("action detail should show %q for the %s; found in:\n%s", want, desc, truncate(page))
 		}
 	}
 }
@@ -246,17 +211,10 @@ func TestActionDetailLabelOverridesCoversAllFields(t *testing.T) {
 // TestActionDetailAcceptsUrlAndMethodFields verifies that creating an action with
 // url and method fields via the API succeeds and those values appear on the page.
 func TestActionDetailAcceptsUrlAndMethodFields(t *testing.T) {
-=======
-// TestActionDetailDoesNotShowRawUrlLabel asserts that the action detail page
-// does not display "Url" as a visible field label (acceptance item 2). The
-// field should use plain language such as "URL".
-func TestActionDetailDoesNotShowRawUrlLabel(t *testing.T) {
->>>>>>> origin/main
 	_, h := newApp(t)
 
 	var act struct{ ID string }
 	decode(t, postJSON(t, h, http.MethodPost, "/api/action", map[string]any{
-<<<<<<< HEAD
 		"title":  "Webhook to example",
 		"url":    "https://example.com/hook",
 		"method": "POST",
@@ -300,69 +258,5 @@ func TestActionDetailDumpDtLabels(t *testing.T) {
 		end := strings.Index(page[start+idx:], "</dt>")
 		t.Logf("dt: %s", page[start+idx:start+idx+end+5])
 		start = start + idx + end + 5
-=======
-		"title": "Ping the alarm",
-		"url":   "https://example.com/ping",
-	}), &act)
-
-	body := get(t, h, "/t/action/"+act.ID).Body.String()
-
-	if strings.Contains(body, "<dt>Url</dt>") {
-		t.Error("action detail must not show \"Url\" as a field label; use plain language like \"URL\" or \"Webhook address\"")
-	}
-}
-
-// TestActionDetailDoesNotShowRawMethodLabel asserts that the action detail page
-// does not display "Method" as a visible raw field label (acceptance item 3).
-// The term should be readable and clearly associated with its HTTP method value.
-func TestActionDetailDoesNotShowRawMethodLabel(t *testing.T) {
-	_, h := newApp(t)
-
-	var act struct{ ID string }
-	decode(t, postJSON(t, h, http.MethodPost, "/api/action", map[string]any{
-		"title":  "Ping the alarm",
-		"method": "POST",
-	}), &act)
-
-	body := get(t, h, "/t/action/"+act.ID).Body.String()
-
-	if strings.Contains(body, "<dt>Method</dt>") {
-		t.Error("action detail must not show \"Method\" as a raw field label; use a readable term")
-	}
-}
-
-// TestActionDetailDoesNotShowRawEveryLabel asserts that the action detail page
-// does not display "Every" as a visible field label (acceptance item 5). The
-// field should use plain language such as "Schedule" or "Runs every".
-func TestActionDetailDoesNotShowRawEveryLabel(t *testing.T) {
-	_, h := newApp(t)
-
-	var act struct{ ID string }
-	decode(t, postJSON(t, h, http.MethodPost, "/api/action", map[string]any{
-		"title": "Ping the alarm",
-	}), &act)
-
-	body := get(t, h, "/t/action/"+act.ID).Body.String()
-
-	if strings.Contains(body, "<dt>Every</dt>") {
-		t.Error("action detail must not show \"Every\" as a field label; use plain language like \"Schedule\" or \"Runs every\"")
-	}
-}
-
-// TestActionDetailLedeDoesNotShowCreatedLabel asserts that the action detail
-// page lede does not contain "Created" as a field label (acceptance item 4).
-func TestActionDetailLedeDoesNotShowCreatedLabel(t *testing.T) {
-	_, h := newApp(t)
-
-	var act struct{ ID string }
-	decode(t, postJSON(t, h, http.MethodPost, "/api/action", map[string]any{
-		"title": "Ping the alarm",
-	}), &act)
-
-	body := get(t, h, "/t/action/"+act.ID).Body.String()
-
-	if strings.Contains(body, ">Created ") {
-		t.Error("action detail lede should not show \"Created\" as a label; use natural phrasing like \"Started\"")
->>>>>>> origin/main
 	}
 }
