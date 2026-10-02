@@ -160,19 +160,32 @@ func (s *Server) dayFact(t *schema.Type, rec *store.Record, done, chip bool) str
 		now := time.Now()
 		dayOnly := strings.HasSuffix(v, "T00:00:00Z")
 		past := !done && (!dayOnly && ts.Before(now) || dayOnly && ts.AddDate(0, 0, 1).Before(now))
+
 		if chip {
 			// A day is a fact, not something a person did: info, not the
 			// human tone, which says who did a thing.
-			text, tone := label(f.Name)+" "+when.Text(v), "info"
-			if past {
+			text := when.Text(v)
+			tone := "info"
+			if f.Label != "" {
+				text = f.Label + " " + text
+			} else if t.Provided && label(f.Name) != "" {
+				text = label(f.Name) + " " + text
+			}
+			if past && f.Label != "" {
+				text, tone = "Was "+strings.ToLower(f.Label)+" "+when.Text(v), "warning"
+			} else if past && t.Provided {
 				text, tone = "Was "+strings.ToLower(label(f.Name))+" "+when.Text(v), "warning"
+			} else if past {
+				text, tone = when.Text(v), "warning"
 			}
 			return string(s.component("badge", map[string]any{"label": text, "tone": tone}))
 		}
 		short := when.Short(v, now)
 		class := "sw-when"
 		switch {
-		case past:
+		case past && f.Label != "":
+			short, class = "Was "+strings.ToLower(f.Label)+" "+short, "sw-when sw-when--past"
+		case past && t.Provided:
 			short, class = "Was "+strings.ToLower(label(f.Name))+" "+short, "sw-when sw-when--past"
 		case strings.HasPrefix(short, "Today"):
 			class = "sw-when sw-when--today"
