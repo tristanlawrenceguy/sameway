@@ -30,7 +30,7 @@ func TestFindLooksThroughEverythingAPersonHas(t *testing.T) {
 	st.Create("message", map[string]any{"role": "user", "content": "plumber plumber plumber"})
 	st.Create("activity", map[string]any{"summary": "You said plumber", "actor": "human", "action": "said"})
 
-	hits := search.Find(st, types, "plumber")
+	hits, _ := search.Matches(st, types, "plumber")
 	if len(hits) != 3 {
 		t.Fatalf("three things mention the plumber, got %d: %+v", len(hits), hits)
 	}
@@ -53,10 +53,10 @@ func TestFindLooksThroughEverythingAPersonHas(t *testing.T) {
 	}
 
 	// Every word must appear; case does not matter; blank finds nothing.
-	if two := search.Find(st, types, "Plumber Tuesday"); len(two) != 1 || two[0].Title != "Garden" {
+	if two, _ := search.Matches(st, types, "Plumber Tuesday"); len(two) != 1 || two[0].Title != "Garden" {
 		t.Errorf("all words must match, got %+v", two)
 	}
-	if none := search.Find(st, types, "   "); none != nil {
+	if none, _ := search.Matches(st, types, "   "); none != nil {
 		t.Errorf("a blank search finds nothing, got %+v", none)
 	}
 }

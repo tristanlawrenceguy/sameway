@@ -19,8 +19,14 @@ func (c *ctx) searchCmd() error {
 	}
 	defer a.Close()
 	q := strings.Join(c.args, " ")
-	hits := search.Find(a.Store, a.Types, q)
-	c.print(map[string]any{"query": q, "count": len(hits), "hits": hits}, func() {
+	hits, some := search.Matches(a.Store, a.Types, q)
+	if len(hits) > search.Limit {
+		hits = hits[:search.Limit]
+	}
+	c.print(map[string]any{"query": q, "count": len(hits), "hits": hits, "some": some}, func() {
+		if some && len(hits) > 0 {
+			fmt.Fprintln(c.Stdout, search.SomeWords)
+		}
 		if len(hits) == 0 {
 			fmt.Fprintf(c.Stdout, "nothing has %q in it\n", q)
 		}

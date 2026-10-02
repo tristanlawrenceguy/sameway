@@ -85,7 +85,7 @@ func TestACommandProviderRunsTheSignedInProgram(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(resp.Text, "echo:  | system:  | model:  | stdin: Be brief.\n\n---\n\nmake a note") {
+	if !strings.Contains(resp.Text, "echo:  | system:  | model:  | stdin: Be brief.\n\n---\n\nThe person says:\nmake a note") {
 		t.Errorf("stdin should carry the system prompt and the conversation, and no model flag: %s", resp.Text)
 	}
 

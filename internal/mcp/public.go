@@ -171,12 +171,14 @@ func (s *Server) searchPublished(ctx context.Context, types map[string]bool, que
 	}
 	var hits []search.Hit
 	w := s.writers()
-	for _, h := range search.FindAll(s.App.Store, s.App.Types, query) {
-		if types[h.Type] && s.shows(ctx, h, search.Words(query), w) {
+	found, some := search.Matches(s.App.Store, s.App.Types, query)
+	for _, h := range found {
+		if types[h.Type] && s.shows(ctx, h, search.Words(query), some, w) {
 			hits = append(hits, h)
 		}
 	}
 	res := search.Narrow(hits, query, only, page)
+	res.Some = some
 	results := []map[string]any{}
 	for _, h := range res.Hits {
 		results = append(results, map[string]any{"id": h.Type + "/" + h.ID, "title": h.Title, "url": siteOf(ctx) + h.Href,
@@ -193,19 +195,24 @@ func (s *Server) searchPublished(ctx context.Context, types map[string]bool, que
 // shows says whether the words were found in what the internet may read
 // of a record, its document: a field hidden from the pages is searched for
 // its person, but it does not answer for a stranger.
-func (s *Server) shows(ctx context.Context, h search.Hit, words []string, w *chat.Writers) bool {
+func (s *Server) shows(ctx context.Context, h search.Hit, words []string, some bool, w *chat.Writers) bool {
 	r, err := s.App.Store.Get(h.Type, h.ID)
 	if err != nil {
 		return false
 	}
 	doc := s.document(ctx, h.Type, r, w)
 	text := fmt.Sprint(doc["title"], " ", doc["text"])
+	// Every word in what is published; with some (search.Find), one.
 	for _, w := range words {
-		if len(search.Spans(text, []string{w})) == 0 {
+		found := len(search.Spans(text, []string{w})) > 0
+		if found && some {
+			return true
+		}
+		if !found && !some {
 			return false
 		}
 	}
-	return true
+	return !some
 }
 
 // fetchPublished reads one published record by type/id.

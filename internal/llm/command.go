@@ -163,8 +163,13 @@ func transcript(req Request) string {
 		switch m.Role {
 		case RoleUser:
 			if last {
+				// Said as the person's, even alone: after the rules, a
+				// short request (Give tasks a priority) read as one more
+				// rule, and the model greeted instead of doing it.
 				if b.Len() > 0 {
 					b.WriteString("\n\nNow the person says:\n")
+				} else {
+					b.WriteString("The person says:\n")
 				}
 				b.WriteString(m.Content)
 			} else {

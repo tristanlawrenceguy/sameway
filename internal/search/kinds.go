@@ -63,6 +63,8 @@ type Result struct {
 	// From is where this page starts among those found, from 0.
 	From int   `json:"-"`
 	Hits []Hit `json:"hits"`
+	// Some is true when nothing had every word and these have some (Find).
+	Some bool `json:"some,omitempty"`
 }
 
 // Narrow is the hits of everything, counted by kind, narrowed to only when
@@ -87,6 +89,9 @@ func Narrow(all []Hit, q, only string, page int) Result {
 // them these are and how to ask for the next.
 func (r Result) Said() string {
 	var b strings.Builder
+	if r.Some && r.Total > 0 {
+		b.WriteString(SomeWords + " ")
+	}
 	switch {
 	case r.Total == 0:
 		return "Nothing found"
@@ -138,3 +143,7 @@ func label(name string, n int) string {
 	}
 	return schema.Plural(name)
 }
+
+// SomeWords says a search found what has some of the words, on every
+// surface alike.
+const SomeWords = "Nothing has every word; these have some of them, most first."

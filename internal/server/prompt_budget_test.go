@@ -11,9 +11,9 @@ import (
 // promptBudget is what the in-app prompt may weigh on the starter
 // workspace. It carried every component's props and every type's schema
 // until it reached 115 KB and had no room left; now it names each in a
-// line and details reads one when it is needed, about 32 KB. A prompt that
+// line and a refusal gives the whole of one when it is needed, about 32 KB.
 // grows past this is paid for on every turn, so what is new goes behind
-// details too.
+// a refusal too.
 const promptBudget = 40 * 1024
 
 // The assistant is told the rules and the catalogue on every turn, so the

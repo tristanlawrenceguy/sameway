@@ -70,6 +70,11 @@ func (s *Service) addField(typeName string, d fieldDef) toolResult {
 	if s.AddField == nil {
 		return fail("this workspace cannot change its schema from here")
 	}
+	// A model asked to organise writing reached for a field of its own
+	// ("part of") two times in three; the tool that does it is said here.
+	if writingField[strings.NewReplacer(" ", "_", "-", "_").Replace(strings.ToLower(d.Name))] {
+		return fail("pieces of writing in parts are organised with organise_writing, not a field of your own: it adds part_of, parts and material_for itself and sets the parts in order and the material in one change. Call organise_writing with piece (the whole), parts (their ids in order) and material (guidelines, research and the like). add_field is for other properties.")
+	}
 	t, err := s.AddField(strings.ToLower(strings.TrimSpace(typeName)), d.field())
 	if err != nil {
 		return fail("%v", err)
@@ -109,3 +114,8 @@ func fieldNames(t *schema.Type) string {
 	}
 	return strings.Join(names, ", ")
 }
+
+// writingField is a field name that means a piece and its parts, which
+// organise_writing keeps.
+var writingField = map[string]bool{"part_of": true, "partof": true, "parts": true, "parent": true, "chapter_of": true,
+	"section_of": true, "belongs_to": true, "chapters": true, "sections": true, "material_for": true, "material": true}

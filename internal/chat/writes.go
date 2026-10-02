@@ -50,6 +50,11 @@ func Write(st *store.Store, action, typ, id string, fields map[string]any) (*sto
 		if err := keptFields(t, fields, now); err != nil {
 			return nil, Change{}, err
 		}
+		if typ == ActionType {
+			if err := watches(st, fields); err != nil { // automate.go
+				return nil, Change{}, err
+			}
+		}
 	}
 	return write(st, action, typ, id, fields)
 }

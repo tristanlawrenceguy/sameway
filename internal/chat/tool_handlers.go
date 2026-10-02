@@ -64,9 +64,6 @@ func toolHandlers() map[string]func(s *Service, a toolArgs, call llm.ToolCall) t
 		"propose_change": func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
 			return s.proposeByModel(a.Summary, call.Args)
 		},
-		"details": func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
-			return s.details(a.Name)
-		},
 		"look_at_page": func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
 			return s.lookAtPage(call.Args)
 		},

@@ -53,7 +53,7 @@ func (s *Service) writable(tool string, c *render.Component, props map[string]an
 		return "", &r
 	}
 	if _, err := c.Validate(props); err != nil {
-		r := fail("%s Fix the props and call %s again.", PropsTrouble(err), tool)
+		r := fail("%s\n%s\nFix the props and call %s again.", PropsTrouble(err), componentHelp(c), tool)
 		return "", &r
 	}
 	// Checked now, not only when drawn: a block that could only say it is
