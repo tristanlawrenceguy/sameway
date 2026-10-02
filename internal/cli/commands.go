@@ -40,6 +40,7 @@ func (c *ctx) serveCmd() error {
 	ctx, stop := context.WithCancel(context.Background())
 	defer stop()
 	a.Chat.StartSchedule(ctx)
+	a.Chat.StartAutomating() // actions that run when something happens; chat/automate.go
 	h := server.New(a)
 	a.WatchSchema(ctx, app.SchemaEvery, h.Changed)
 	h.StartRinging(ctx, notifier(a))

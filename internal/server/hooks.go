@@ -10,4 +10,10 @@ func (s *Server) hooks() {
 	s.app.Chat.Picture = s.pictureFor
 	s.app.Chat.Check = s.blockCheck
 	s.app.Chat.Home = s // recordings and workspaces; see home.go
+	// What an automation did on its own is told like a ring (ring.go).
+	s.app.Chat.Tell = func(title, text, url string) {
+		if s.notify != nil {
+			go s.notify(title, text, s.linkTo(url))
+		}
+	}
 }
