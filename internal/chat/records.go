@@ -51,7 +51,7 @@ func (s *Service) recordTools() []llm.Tool {
 	if len(names) == 0 {
 		return nil
 	}
-	typeArg := map[string]any{"type": "string", "enum": names, "description": "A content type from the catalogue."}
+	typeArg := map[string]any{"type": "string", "enum": names, "description": "A content type, as the prompt lists it."}
 	return []llm.Tool{
 		{Name: "import_records", Description: "Make records from a file the person added: a CSV with a header row, a vCard (.vcf) of contacts, or a mailbox (.mbox) of mail. Each column is matched to a field by name; a column for an email, phone or name links each row to its person, made when new. Use it when the person attaches such a file and wants its contents as records, rather than creating them one by one. Returns how many were made.",
 			Schema: obj(map[string]any{
@@ -107,7 +107,7 @@ func (s *Service) createRecord(typeName string, fields map[string]any) toolResul
 	}
 	rec, c, err := Write(s.Store, "created", t.Name, "", fields)
 	if err != nil {
-		return fail("I couldn't save those changes — %s. Fix the fields and call create_record again; the %s schema is in the catalogue.", humanizeValidationError(err.Error()), t.Name)
+		return fail("I couldn't save those changes — %s. Fix the fields and call create_record again; details %s gives its schema.", humanizeValidationError(err.Error()), t.Name)
 	}
 	return toolResult{
 		text:   fmt.Sprintf("created %s %s: %q. The person can open it at /t/%s/%s.", t.Name, rec.ID, c.Detail, t.Name, rec.ID),
@@ -133,7 +133,7 @@ func (s *Service) updateRecord(typeName, id string, fields map[string]any, versi
 	}
 	rec, c, err := Write(s.Store, "updated", t.Name, id, fields)
 	if err != nil {
-		return fail("I couldn't save those changes — %s. Fix the fields and call update_record again; the %s schema is in the catalogue.", humanizeValidationError(err.Error()), t.Name)
+		return fail("I couldn't save those changes — %s. Fix the fields and call update_record again; details %s gives its schema.", humanizeValidationError(err.Error()), t.Name)
 	}
 	title := c.Detail
 	// Finished, a thing that repeats is due again at once; say so, or the
@@ -181,30 +181,6 @@ func (s *Service) findRecords(typeName, words string, where []string, order stri
 	}
 	// The titles are fenced, each line saying who wrote it; see provenance.go.
 	return toolResult{text: fmt.Sprintf("%s records, newest first (id, title, written by). Each title was written by the one on its line; %s.\n<<<record text\n%s\nrecord text>>>", t.Name, Untrusted, strings.Join(lines, "\n"))}
-}
-
-// contentCatalogue renders the content types for the system prompt: what a
-// person can have, and the fields each takes.
-func (s *Service) contentCatalogue() string {
-	types := s.contentTypes()
-	if len(types) == 0 {
-		return ""
-	}
-	var b strings.Builder
-	b.WriteString("\nContent types (name: description, then fields schema). A record of one of these is what the person finds on its page at /t/<type>; make it with create_record, never as a card on the canvas. Each takes only the fields listed:\n")
-	for _, t := range types {
-		// The description is said once, beside the name, and what the
-		// system keeps is left out of what the model is asked to write.
-		// So is that each is an object taking only these fields, which the
-		// header says once rather than every type again.
-		schema := t.JSONSchema()
-		delete(schema, "description")
-		delete(schema, "type")
-		delete(schema, "additionalProperties")
-		raw, _ := json.Marshal(schema)
-		fmt.Fprintf(&b, "\n%s: %s\n%s\n", t.Name, t.Description, ForModel(raw))
-	}
-	return b.String()
 }
 
 // deleteRecord is not a tool: a record goes when a person deletes it, or
