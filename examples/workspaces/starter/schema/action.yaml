@@ -64,17 +64,36 @@ fields:
     values: [never, hour, day, week]
     labels: {never: Only when pressed, hour: Every hour, day: Every day, week: Every week}
     default: never
-    description: Run on its own this often. day and week run at the time in at; week on the day in on.
+    description: How often it runs on its own.
   at:
     type: string
-    description: For every day or week, the time to run, as HH:MM on this machine's clock.
+    description: For day or week, HH:MM on this machine's clock.
   on:
     type: enum
     values: [monday, tuesday, wednesday, thursday, friday, saturday, sunday]
     description: For every week, which day.
+  when:
+    label: When
+    type: enum
+    values: [added, changed, removed]
+    labels: {added: A record is added, changed: A record comes to match, removed: A record is removed}
+    description: Run when a what record is added, comes to match only (any change if none), or is removed.
+  what:
+    label: Of
+    type: string
+    description: The type when watches.
+  only:
+    label: Only if
+    type: list
+    description: Conditions, as a list takes them (status=done).
+  then:
+    label: Then
+    type: ref
+    to: action
+    description: Run next, with {{result}}.
   trigger:
     type: string
-    description: A long secret word. When set, anything outside can run this action by sending POST /hook/<word> to this server.
+    description: A long secret word; POST /hook/<word> runs it.
   last_run:
     type: string
     description: When it last ran on its own, kept by the system.

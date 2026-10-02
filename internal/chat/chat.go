@@ -55,6 +55,10 @@ type Service struct {
 	// there is none, and a block is then held to its props schema only.
 	// See check.go.
 	Check func(component string, props map[string]any) (shows, problem string)
+	// Tell lets the person know, beyond the page, what was done for them
+	// while they were away: an automation's turn (automate.go).
+	Tell func(title, text, url string)
+	auto *automation // actions waiting for something to happen; automate.go
 	// Picture is a picture file's bytes, ready for a model to see, set by
 	// the server; see pictures.go.
 	Picture func(fileID string) (llm.Image, bool)
@@ -152,7 +156,11 @@ func (s *Service) sendTurn(ctx context.Context, canvas, text, fileID string, on 
 	if on != nil {
 		on(Event{Kind: "said", ID: mine.ID})
 	}
-	said := Record(s.Store, "human", Change{Action: "said", Detail: truncate(text, 80), Via: Via(ctx), By: VisitorOf(ctx).Who()})
+	actor, by := "human", VisitorOf(ctx).Who()
+	if name := automatedBy(ctx); name != "" {
+		actor, by = "system", name // asked by an automation, not the person; automate.go
+	}
+	said := Record(s.Store, actor, Change{Action: "said", Detail: truncate(text, 80), Via: Via(ctx), By: by})
 	if s.Provider == nil {
 		err := s.ProviderErr
 		if err == nil {
