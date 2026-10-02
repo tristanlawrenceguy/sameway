@@ -30,9 +30,10 @@ func (s *Service) BlockFields(in map[string]any) map[string]any {
 // tool added or changed shows up on every surface at once.
 func (s *Service) allTools() []llm.Tool {
 	return append([]llm.Tool{
-		{Name: "add_component", Description: "Add a component to the canvas the person is looking at. Props must match the component's props schema from the catalogue. Returns the new block id and what it shows; read it: \"nothing yet\" means it shows no records now. A block that could not be shown (a type, field, date field, condition or tag the workspace does not have, one field asked for two values, a chart by a date with no period) is not added, and the error says why and what to do instead.",
+		detailsTool, // details.go
+		{Name: "add_component", Description: "Add a component to the canvas the person is looking at. Props must match the component's props schema, which details gives. Returns the new block id and what it shows; read it: \"nothing yet\" means it shows no records now. A block that could not be shown (a type, field, date field, condition or tag the workspace does not have, one field asked for two values, a chart by a date with no period) is not added, and the error says why and what to do instead.",
 			Schema: obj(map[string]any{
-				"component": map[string]any{"type": "string", "description": "Component name from the catalogue."},
+				"component": map[string]any{"type": "string", "description": "Component name, as the prompt lists it."},
 				"props":     map[string]any{"type": "object", "description": "Props matching the component's schema."},
 				"span":      map[string]any{"type": "integer", "description": "Width in columns of twelve. 12 is full width, 6 half, 4 a third. Defaults to 6."},
 				"frame":     map[string]any{"type": "string", "enum": []string{"card", "bare"}, "description": "card gives the block a surface, bare sits flush on the page. Defaults to card."},

@@ -28,11 +28,11 @@ Components can sit inside other components where a prop says so. Such a prop tak
 
 How to work:
 - When the person asks for something, build it on the canvas with the tools, then reply with one or two short sentences saying what you did. Do not paste HTML or props into the reply.
-- Use only components from the catalogue below, with props that match each schema exactly. If a tool returns an error, fix the props and call the tool again.
+- Use only components listed below. Before adding one you have not read in this conversation, read it with details, then give props that match its schema exactly. If a tool returns an error, fix the props and call the tool again.
 - Words are Markdown. A text block and a note's body take headings with #, lists with - or 1., *emphasis*, [links](/t/note), code, and tables; a line starting "Table:" just above a table is its caption. Give a text block level so its headings fit the outline: 2 on the canvas, 3 or 4 under something that already has a heading. Use structure when the words have it, and plain sentences when they do not.
-- Content is not the canvas. When the person asks for a note, a task, or anything that is a content type in the catalogue, make a record with create_record: it lives on its own page at /t/<type>, where they will look for it, and a card on the canvas is not a note. To change one, find_records gives its id, then update_record changes only the fields you pass. To answer from what a record says, get_record gives every field; a title is not the words. Tell the person where it is with a link named by its title, the page path the tool returns inside it: [Seeds to buy](/t/note/<id>), never the path on its own. To show a record on the canvas, add a record block with {"type": "note", "record": "<id>"}: it is the same record as on its page, edited in either place, so never copy a record's words into a card.
+- Content is not the canvas. When the person asks for a note, a task, or anything that is a content type listed below, make a record with create_record: it lives on its own page at /t/<type>, where they will look for it, and a card on the canvas is not a note. To change one, find_records gives its id, then update_record changes only the fields you pass. To answer from what a record says, get_record gives every field; a title is not the words. Tell the person where it is with a link named by its title, the page path the tool returns inside it: [Seeds to buy](/t/note/<id>), never the path on its own. To show a record on the canvas, add a record block with {"type": "note", "record": "<id>"}: it is the same record as on its page, edited in either place, so never copy a record's words into a card.
 - The shape of the content is theirs too. When the person wants a new property on a kind of thing (a due date on notes, a priority on tasks), add_field puts it on the type for everyone, at once; when they want a new kind of thing (contacts, habits, recipes), add_type makes it with its fields, the title first, and create_record then makes records of it. Adding takes nothing away, so it needs no permission; say what you added and where it shows.
-- A field of type ref holds another record's id, and the catalogue says which type: find_records on that type gives the id. A task with project set belongs to that project, and the project's page lists its tasks by itself; a collection with project=<id> shows them anywhere.
+- A field of type ref holds another record's id, and the type list says which (id of project): find_records on that type gives the id. A task with project set belongs to that project, and the project's page lists its tasks by itself; a collection with project=<id> shows them anywhere.
 - Numbers as a picture: a chart block from records, {"type": "task", "by": "status"} counts tasks that are To do, Doing and Done; {"type": "task", "by": "due", "period": "week", "where": ["done=true"], "kind": "line"} is done tasks per week; sum names a number field to add up instead of counting. Write caption for what is counted and description for what the picture shows in a sentence. Or give series yourself as [{label, value}]. The numbers are always a table under the picture as well.
 - A calendar block with type set shows a type's records on their days, as links, kept current: {"type": "task", "where": ["done=false"], "caption": "Due"}. Events given, without type, are only for things that are not records: they cannot be opened, edited or logged against. Never copy records into events; to show a habit's days, {"type": "entry", "where": ["habit=<id>"]}, whose day view also logs that habit for the day. Several kinds: {"types": ["task", "reminder"]}.
 - To show what matches, as a list that stays current, add a collection block: {"type": "task", "where": ["done=false", "due<=+7d"], "order": "due", "label": "Due this week"}. Each condition is field, operator, value with no spaces (status=doing for tasks under way, title~garden, tags=health, due<today, notes= for empty); dates take today, tomorrow, +7d, -1w or 2026-10-01; order is a field or -field for newest first. Give show, a list of field names, to put those properties beside each record, and as: list, table (a column per property), cards, or board (a column per choice of the pick-list field named in by, such as a task's status: To do, Doing, Done; a yes-or-no such as done cannot be a board, and a type the catalogue shows no pick-list for has none). find_records takes the same where and order when you need the ids.
@@ -61,7 +61,7 @@ How to work:
 - Use short, everyday words and short sentences. Say "page" and "your notes", not canvas, block, record, component or type, unless the person uses those words first. Name things by their names, not their addresses: an address only ever goes inside a link, never as words.
 - When the person says what they need (they use a screen reader, want larger text or more space, find something hard, want things kept simple), set_setting ui.needs with it in their words, so it holds next time too; ui.text and ui.spacing change the page itself.`
 
-// systemPrompt assembles the instructions, the component catalogue, and the
+// systemPrompt assembles the instructions, the components in a line each, and the
 // current canvas so the model always sees the real state.
 func (s *Service) systemPrompt() string {
 	var b strings.Builder
@@ -83,28 +83,12 @@ func (s *Service) systemPrompt() string {
 		b.WriteString("\n\nWorkspace instructions:\n")
 		b.WriteString(s.ExtraPrompt)
 	}
-	b.WriteString("\n\nComponent catalogue (name: description, when it serves a person and when it does not, then props schema):\n")
-	for _, c := range s.Registry.Blocks() {
-		fmt.Fprintf(&b, "\n%s: %s\n", c.Manifest.Name, c.Manifest.Description)
-		// The thought behind the component travels with it, so the model
-		// builds from what works for people rather than guessing at it.
-		if u := c.Manifest.Use; u != nil {
-			fmt.Fprintf(&b, "  Use when: %s", u.When)
-			if u.Not != "" {
-				fmt.Fprintf(&b, " Not when: %s", u.Not)
-			}
-			if u.With != "" {
-				fmt.Fprintf(&b, " With: %s", u.With)
-			}
-			b.WriteString("\n")
-		}
-		// What the server fills in itself is left out: the model is
-		// shown only what it may give.
-		fmt.Fprintf(&b, "%s\n", ForModel(c.Manifest.Props))
-	}
+	// A line for each component and type; details reads the rest of one
+	// when it is about to be used (details.go).
+	b.WriteString(s.componentIndex())
 	b.WriteString(s.arrangementCatalogue())
 	b.WriteString(s.actionsDigest())
-	b.WriteString(s.contentCatalogue())
+	b.WriteString(s.typeIndex())
 	b.WriteString(s.canvasDigest(s.current))
 	b.WriteString(s.undoDigest())
 	b.WriteString("\nCurrent canvas, top to bottom (id, component, span, frame, tone, props):\n")

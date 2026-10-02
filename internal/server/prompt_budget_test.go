@@ -9,9 +9,12 @@ import (
 )
 
 // promptBudget is what the in-app prompt may weigh on the starter
-// workspace: the 113 KB it weighed before the catalogue was trimmed. A
-// prompt that grows past it is paid for on every turn.
-const promptBudget = 113 * 1024
+// workspace. It carried every component's props and every type's schema
+// until it reached 115 KB and had no room left; now it names each in a
+// line and details reads one when it is needed, about 32 KB. A prompt that
+// grows past this is paid for on every turn, so what is new goes behind
+// details too.
+const promptBudget = 40 * 1024
 
 // The assistant is told the rules and the catalogue on every turn, so the
 // prompt is held to a budget, and among the rules is the one the haiku

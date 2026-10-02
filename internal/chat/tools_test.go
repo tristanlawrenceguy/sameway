@@ -220,7 +220,7 @@ func TestSystemPromptCarriesCatalogueAndCanvas(t *testing.T) {
 	svc.Now = func() time.Time { return time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC) }
 	svc.Send(context.Background(), "hi")
 	first, second := m.seen[0].System, m.seen[1].System
-	for _, want := range []string{"Component catalogue", "button: ", `"additionalProperties":false`, "Always answer in Dutch.", "(empty)", "Today is Tuesday 15 September 2026."} {
+	for _, want := range []string{"Components (name: what it is", "button: ", "Always answer in Dutch.", "(empty)", "Today is Tuesday 15 September 2026."} {
 		if !strings.Contains(first, want) {
 			t.Errorf("first system prompt missing %q", want)
 		}
@@ -232,7 +232,7 @@ func TestSystemPromptCarriesCatalogueAndCanvas(t *testing.T) {
 	for _, tool := range m.seen[0].Tools {
 		names = append(names, tool.Name)
 	}
-	if strings.Join(names, ",") != "add_component,update_component,remove_component,arrange_canvas,propose_change,clear_canvas,undo_change,search,run_action,update_sameway,add_arrangement,set_setting,add_field,add_type,clear_conversation,write_down,add_workspace,open_workspace,restore_workspace,take_agent_away" {
+	if strings.Join(names, ",") != "details,add_component,update_component,remove_component,arrange_canvas,propose_change,clear_canvas,undo_change,search,run_action,update_sameway,add_arrangement,set_setting,add_field,add_type,clear_conversation,write_down,add_workspace,open_workspace,restore_workspace,take_agent_away" {
 		t.Errorf("tools offered: %v", names)
 	}
 }
