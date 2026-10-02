@@ -12,7 +12,7 @@ import (
 // the choices made on them.
 func TestACalendarAndAListGoOutAsTheyAreShown(t *testing.T) {
 	a, h := newApp(t)
-	a.Store.Create("task", map[string]any{"title": "Dig the pond", "due": "2026-10-01T00:00:00Z"})
+	a.Store.Create("task", map[string]any{"title": "Dig the pond", "due": "2026-12-01T00:00:00Z"})
 	a.Store.Create("event", map[string]any{"title": "Harvest fair", "starts": "2026-10-12T00:00:00Z"})
 	a.Store.Create("reminder", map[string]any{"title": "Water the beans", "at": "2026-10-02T07:00:00Z"})
 	ics := get(t, h, "/export/all.ics").Body.String()

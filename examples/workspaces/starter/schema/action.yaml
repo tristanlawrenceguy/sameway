@@ -18,9 +18,11 @@ fields:
     labels: {webhook: Call a web address, mqtt: Tell a device, command: Run a program on this computer, arrangement: Set up a page, message: Ask the assistant}
     default: webhook
   url:
+    label: URL
     type: string
     description: For a webhook, the address to call, starting with http:// or https://.
   method:
+    label: HTTP method
     type: enum
     values: [POST, GET]
     default: POST
@@ -57,6 +59,7 @@ fields:
     type: string
     description: The canvas block that shows this action's answer, kept by the system.
   every:
+    label: Schedule
     type: enum
     values: [never, hour, day, week]
     labels: {never: Only when pressed, hour: Every hour, day: Every day, week: Every week}
