@@ -8,17 +8,22 @@ import (
 )
 
 // A state badge is heard with its field only when the value needs it:
-// "Each day" says what it is and is heard alone, never as "Each day cadence".
-// Note detail pages do not show status badges in the lede — the definition
+// habit detail pages do not show status badges in the lede — the definition
 // list below carries that information without exposing internal names.
+// Note detail pages also skip enum badges in the lede for the same reason.
 func TestAStateBadgeIsHeardWithItsFieldOnlyWhenItNeedsIt(t *testing.T) {
 	a, h := newApp(t)
 	habit, _ := a.Store.Create(server.HabitType, map[string]any{"name": "Read", "cadence": "day"})
 	note, _ := a.Store.Create("note", map[string]any{"title": "Plans", "status": "draft"})
 
+	// Habit detail pages skip enum badges in the lede entirely (the cadence
+	// value is not shown as a chip; it appears in the fields list below).
 	page := get(t, h, "/t/habit/"+habit.ID).Body.String()
-	if !strings.Contains(page, `>Each day</span>`) || strings.Contains(page, `cadence</span>`) {
-		t.Errorf("a named value is heard alone:\n%s", page)
+	if strings.Contains(page, `>Each day</span>`) {
+		t.Errorf("habit detail lede should not show cadence badge:\n%s", page)
+	}
+	if strings.Contains(page, `cadence</span>`) {
+		t.Errorf("habit detail lede should not expose \"cadence\" as a field name:\n%s", page)
 	}
 	if page := get(t, h, "/t/note/"+note.ID).Body.String(); strings.Contains(page, `<span class="sw-visually-hidden"> status</span>`) {
 		t.Errorf("note detail lede should not expose \"status\" as a hidden field name:\n%s", page)

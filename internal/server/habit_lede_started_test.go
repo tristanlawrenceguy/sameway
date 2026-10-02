@@ -113,3 +113,32 @@ func TestHabitDetailLedeStillShowsAllInformation(t *testing.T) {
 		t.Error("habit detail page must still have a lede paragraph")
 	}
 }
+
+// TestHabitDetailLedeNoCadenceBadge asserts that a habit detail page does not
+// show the raw cadence value "Each day" as a visible badge chip in its lede.
+// The creation time is still present via whenMade() ("Started ...") at the end
+// of the lede (acceptance item 2 and 3).
+func TestHabitDetailLedeNoCadenceBadge(t *testing.T) {
+	a, h := newApp(t)
+
+	rec, err := a.Store.Create("habit", map[string]any{
+		"name":   "Water",
+		"target": 8.0,
+		"unit":   "glasses",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	page := get(t, h, "/t/habit/"+rec.ID+fieldsView).Body.String()
+
+	// The lede must NOT contain "Each day" as a visible badge chip.
+	if strings.Contains(page, ">Each day</span>") {
+		t.Error("habit detail page should not show \"Each day\" — it uses the raw cadence enum value instead of plain language")
+	}
+
+	// It should still say "Started" to indicate when the habit was begun.
+	if !strings.Contains(page, ">Started ") {
+		t.Error("habit detail page lede should say \"Started\" with the creation time")
+	}
+}
