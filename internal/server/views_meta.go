@@ -94,10 +94,10 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 	}
 	// Show enum badges only when the caller is not a list row for note/project/file,
 	// and not an action detail (actions hide their kind everywhere). Also skip
-	// note/project/file/task on detail pages — the status badge in meta text repeats what
+	// note/project/file/task/habit on detail pages — the status badge in meta text repeats what
 	// the definition list below already says.
 	skipEnum := o.Row && (t.Name == "note" || t.Name == "project" || t.Name == "file")
-	detailSkip := o.Detail && (t.Name == "note" || t.Name == "project" || t.Name == "file" || t.Name == "task")
+	detailSkip := o.Detail && (t.Name == "note" || t.Name == "project" || t.Name == "file" || t.Name == "task" || t.Name == HabitType)
 	if !skipEnum && !detailSkip && t.Name != "action" {
 		for _, f := range t.Shown() {
 			if f.Type == "enum" {
@@ -115,7 +115,7 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 	}
 	// When it last changed is said only for things with no day of their
 	// own, such as a note; a task with no due date has nothing to add.
-	if d := s.dayFact(t, rec, done, o.Chips); d != "" {
+	if d := s.dayFact(t, rec, done, o.Chips && t.Name != EntryType); d != "" {
 		parts = append(parts, d)
 	} else if !o.Made && !hasDate(t) {
 		parts = append(parts, `<span class="sw-muted">Updated `+when.Short(rec.UpdatedAt.UTC().Format(time.RFC3339), time.Now())+`</span>`)
