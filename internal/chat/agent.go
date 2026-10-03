@@ -37,8 +37,19 @@ func (a Agent) Who() string {
 }
 
 // AgentWho is Agent.Who from a log entry's by and via.
+// machineNames are known machine-language identifiers that should be
+// treated as anonymous, so they appear as "An agent" instead of raw client
+// strings like "Go-http-client".
+var machineNames = map[string]bool{
+	"Go-http-client": true,
+}
+
+// MachineName reports whether name is a known machine-language identifier
+// that should be hidden from user-facing surfaces.
+func MachineName(name string) bool { return machineNames[name] }
+
 func AgentWho(name, through string) string {
-	if name == "" {
+	if name == "" || machineNames[name] {
 		name = "An agent"
 	}
 	if strings.HasPrefix(through, "through ") {
