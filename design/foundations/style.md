@@ -9,7 +9,8 @@ is below; nothing here is a taste of our own.
 do: a listing is rows with room around them, groups are separated by a
 bold header and one hairline, and a page head has real room under it.
 Nothing is boxed unless it is one thing: a record on its own page, a block
-on the canvas, a message. Those float on one soft shadow.
+on the canvas, a message. Those float on a soft, layered shadow with an
+edge of their own, and a card that can be pressed lifts (elevation.md).
 
 **One typeface.** The platform's sans, at reading size (16px, line 1.5).
 No serif, no second face. Titles are the same face, bold, tighter

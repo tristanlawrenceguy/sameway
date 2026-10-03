@@ -36,9 +36,11 @@ ol.sw-plain, ul.sw-plain { list-style: none; list-style-type: ""; margin: 0; pad
   background: var(--sw-color-bg-raised);
   border: 1px solid var(--sw-color-border);
   box-shadow: var(--sw-shadow-1);
-  transition: box-shadow var(--sw-motion-base) var(--sw-motion-ease);
+  transition: box-shadow var(--sw-motion-base) var(--sw-motion-ease), border-color var(--sw-motion-base) var(--sw-motion-ease);
 }
-.sw-block:hover, .sw-block:focus-within { box-shadow: var(--sw-shadow-2); }
+/* Worked with: a deeper shadow and, for a dark page where a shadow hardly
+   shows, a lighter edge. A block does not rise: it is not one target. */
+.sw-block:hover, .sw-block:focus-within { box-shadow: var(--sw-shadow-2); border-color: var(--sw-color-border-lift); }
 
 /* frame: how much surface a block brings. */
 .sw-block[data-frame="bare"] { background: none; border-color: transparent; box-shadow: none; padding: var(--sw-space-2); }

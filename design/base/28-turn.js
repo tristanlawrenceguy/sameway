@@ -94,14 +94,17 @@
       li.className = "sw-block sw-block--pending";
       li.setAttribute("data-actor", "assistant");
       li.style.setProperty("--sw-span", d.span || 6);
-      li.innerHTML = '<p class="sw-visually-hidden"></p>';
+      // Its shape, in grey bars, rather than empty space (29-skeleton.css);
+      // busy, and saying in words what is coming, until it lands.
+      li.setAttribute("aria-busy", "true");
+      li.innerHTML = '<p class="sw-visually-hidden"></p><div class="sw-skeleton" aria-hidden="true"><span></span><span></span><span></span></div>';
       li.firstChild.textContent = (d.label || "Adding a block") + "…";
       c.appendChild(li);
       held.push(li);
     }
     function mark(id, how) {
       var blk = document.querySelector('[data-block-id="' + id.replace(/["\\]/g, "") + '"]');
-      if (blk) blk.setAttribute("data-pending", how);
+      if (blk) { blk.setAttribute("data-pending", how); blk.setAttribute("aria-busy", "true"); }
     }
     function again() {
       var c = canvas();
@@ -143,7 +146,7 @@
         held = []; marked = {};
         if (status) status.removeAttribute("data-still");
         document.querySelectorAll(".sw-block--pending").forEach(function (p) { p.remove(); });
-        document.querySelectorAll("[data-pending]").forEach(function (b) { b.removeAttribute("data-pending"); });
+        document.querySelectorAll("[data-pending]").forEach(function (b) { b.removeAttribute("data-pending"); b.removeAttribute("aria-busy"); });
       }
     };
   };

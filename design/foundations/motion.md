@@ -273,7 +273,9 @@ alive without making noise (`design/base/28-turn.js`, `28-turn.css`):
   outlined, solid (dashed if it is about to go). The held place says
   "Adding a chart of water…" to a screen reader that reaches it.
 
-Nothing travels. The outline fades in over `motion-slow`. Under reduced
+While it waits the place shows the block's shape in grey bars (a skeleton,
+elevation.md), which shimmer twice, slowly, and stop. Nothing travels.
+The outline fades in over `motion-slow`. Under reduced
 motion it is simply there, and the block that lands cross-fades in over
 `motion-fast` where the outline was instead of its staged arrival; under
 the still pace both are simply there. Under forced colours the outlines

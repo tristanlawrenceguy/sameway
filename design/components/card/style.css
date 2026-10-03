@@ -3,14 +3,25 @@
   border: 1px solid var(--sw-color-border); border-radius: var(--sw-radius-lg);
   background: var(--sw-color-bg-raised); box-shadow: var(--sw-shadow-1);
   max-width: var(--sw-size-measure);
-  transition: box-shadow var(--sw-motion-base) var(--sw-motion-ease), transform var(--sw-motion-base) var(--sw-motion-ease);
+  transition: box-shadow var(--sw-motion-base) var(--sw-motion-ease), transform var(--sw-motion-base) var(--sw-motion-ease),
+    background-color var(--sw-motion-base) var(--sw-motion-ease), border-color var(--sw-motion-base) var(--sw-motion-ease);
 }
 /* A card rises when a press anywhere on it will open it (its script is
    running), and when its link has keyboard focus, so a keyboard sees what
    a pointer sees. Without the script only the title is the way in, so the
    card does not pretend otherwise. */
 .sw-card[data-press] { cursor: pointer; }
-.sw-card[data-press]:hover, .sw-card:has(.sw-card__title a:focus-visible) { box-shadow: var(--sw-shadow-2); transform: translateY(-1px); }
+/* Lifted: a lighter surface and edge (which is what shows on a dark page,
+   where a shadow hardly does), a deeper shadow, and one pixel up by a
+   transform, so nothing around it moves (design/foundations/elevation.md). */
+.sw-card[data-press]:hover, .sw-card:has(.sw-card__title a:focus-visible) {
+  background: var(--sw-color-bg-lift); border-color: var(--sw-color-border-lift);
+  box-shadow: var(--sw-shadow-2); transform: translateY(-1px);
+}
+/* Under reduced motion it does not rise; the surface, edge and shadow say it. */
+@media (prefers-reduced-motion: reduce) { .sw-card[data-press]:hover, .sw-card:has(.sw-card__title a:focus-visible) { transform: none; } }
+/* Forced colours drop the shadow and the surface: the edge says it. */
+@media (forced-colors: active) { .sw-card[data-press]:hover, .sw-card:has(.sw-card__title a:focus-visible) { border-color: Highlight; } }
 .sw-card__title { margin: 0; font-size: var(--sw-size-text-lg); line-height: var(--sw-size-line-tight); overflow-wrap: anywhere; }
 /* The title link is a whole target on its own line. */
 .sw-card__title a { display: inline-flex; align-items: center; min-height: var(--sw-size-target); color: var(--sw-color-accent); text-decoration-thickness: 1px; text-underline-offset: 0.2em; }

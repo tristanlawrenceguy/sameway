@@ -17,6 +17,7 @@ binary, which serves a living styleguide at `/design`.
 | [foundations/color.md](foundations/color.md) | Palette, roles, actor tones, the 7:1 contract |
 | [foundations/typography.md](foundations/typography.md) | Scale, measure, numerals |
 | [foundations/motion.md](foundations/motion.md) | Durations, curves, view transitions, reduced motion |
+| [foundations/elevation.md](foundations/elevation.md) | Surfaces, shadows, lifting, dark surfaces, skeletons, forced colours |
 | [foundations/states.md](foundations/states.md) | Provenance, change markers, busy state, activity: text, colour, and attributes |
 | [foundations/quiet.md](foundations/quiet.md) | How chrome stays available to everyone while being visible only on demand |
 
