@@ -5,7 +5,8 @@
 //
 //	SAMEWAY_BENCH_MODEL=haiku SAMEWAY_BENCH_OUT=bench.jsonl go test ./internal/bench -timeout 120m -v
 //
-// SAMEWAY_BENCH_RUNS repeats each request (a model varies), and
+// SAMEWAY_BENCH_RUNS repeats each request (a model varies),
+// SAMEWAY_BENCH_COMMAND runs Claude Code with another command line, and
 // SAMEWAY_BENCH_ONLY runs the requests whose names contain it.
 package bench
 
@@ -80,14 +81,21 @@ func TestAssistant(t *testing.T) {
 		}
 	}
 	passed, calls, refused, secs := 0, 0, 0, 0.0
+	failed := map[string]bool{}
 	for _, r := range all {
 		if r.Passed {
 			passed++
+		} else {
+			failed[r.Request] = true
 		}
 		calls, refused, secs = calls+r.Calls, refused+r.Refused, secs+r.Seconds
 	}
 	if n := len(all); n > 0 {
-		t.Logf("%d of %d passed; %.1f calls, %.1f refused and %.0fs a request", passed, n, float64(calls)/float64(n), float64(refused)/float64(n), secs/float64(n))
+		// Every run, as τ-bench's pass^k: what does it once in three cannot
+		// be relied on.
+		asked := len(all) / runs
+		t.Logf("%d of %d passed; %d of %d requests passed every run; %.1f calls, %.1f refused and %.0fs a request",
+			passed, n, asked-len(failed), asked, float64(calls)/float64(n), float64(refused)/float64(n), secs/float64(n))
 	}
 }
 
@@ -104,7 +112,7 @@ func runOne(t *testing.T, exe, model string, r request, run int) result {
 	if r.seed != nil {
 		r.seed(t, a)
 	}
-	a.Chat.Provider, err = llm.New(llm.Config{Provider: "claude-code", Model: model, Workspace: dir, Executable: exe})
+	a.Chat.Provider, err = llm.New(llm.Config{Provider: "claude-code", Model: model, Workspace: dir, Executable: exe, Command: os.Getenv("SAMEWAY_BENCH_COMMAND")})
 	if err != nil {
 		t.Fatal(err)
 	}
