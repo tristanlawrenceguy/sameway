@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -25,7 +26,7 @@ func (s *Server) status(msgs []*store.Record) template.HTML {
 			// looks: the reason is read out with it, as a reply's words are.
 			props["state"], props["message"] = "error", "The last request failed."
 			if words, _ := last.Fields["content"].(string); strings.TrimSpace(words) != "" {
-				props["said"] = clipWords(words, 200)
+				props["said"] = clipWords(chat.SanitizeError(words), 200)
 			}
 		case "assistant":
 			n := 0

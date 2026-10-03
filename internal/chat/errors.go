@@ -115,6 +115,56 @@ func nearestProp(name string, props []string) string {
 	return render.Nearest(name, props)
 }
 
+// SanitizeError turns raw diagnostic strings into plain language for users.
+// Provider prefixes, exit codes and file paths are removed; if the result is
+// empty a friendly fallback is returned instead. The function is idempotent.
+func SanitizeError(s string) string {
+	if s == "" {
+		return s
+	}
+
+	const fallback = "The assistant could not reach the model. Try again."
+
+	// Strip provider prefixes at the start: "claude:", "anthropic:", "openai:"
+	s = strings.TrimLeftFunc(strings.TrimSpace(s), func(r rune) bool {
+		return r != ':' && !strings.ContainsRune("abcdefghijklmnopqrstuvwxyz", r)
+	})
+	// Remove any leading provider name followed by ":".
+	if re := regexp.MustCompile(`^[a-z]+:`); re.MatchString(s) {
+		s = strings.TrimSpace(re.ReplaceAllString(s, ""))
+	}
+
+	// Replace "exit status N" with plain language.
+	if re := regexp.MustCompile(`(?i)exit status \d+`); re.MatchString(s) {
+		s = re.ReplaceAllString(s, "The model did not respond")
+	}
+
+	// Remove file paths like "/tmp/xyz", "/path/to/file".
+	if re := regexp.MustCompile(`/[\S]+`); re.MatchString(s) {
+		s = strings.TrimSpace(re.ReplaceAllString(s, ""))
+	}
+
+	// Remove common OS-level error phrases that are diagnostic noise.
+	for _, phrase := range []string{
+		"permission denied",
+		"connection refused",
+		"no such file or directory",
+		"timed out",
+		"network is unreachable",
+	} {
+		s = regexp.MustCompile(`(?i)`+regexp.QuoteMeta(phrase)).ReplaceAllString(s, "")
+	}
+
+	// Clean up double spaces and leading/trailing whitespace.
+	s = strings.Join(strings.Fields(s), " ")
+	s = strings.TrimSpace(s)
+
+	if s == "" {
+		return fallback
+	}
+	return s
+}
+
 // withA is a JSON type with its article: a string, an object, an array.
 func withA(kind string) string {
 	if kind == "" {

@@ -147,8 +147,12 @@ func (s *Server) receipt(changes any, latest bool) []any {
 // loaded or the message arrived live, so the two are the same HTML.
 // latest is the newest message, whose receipt can offer Undo.
 func (s *Server) messageProps(m *store.Record, from string, latest bool) map[string]any {
+	content := m.Fields["content"]
+	if role, _ := m.Fields["role"].(string); role == "error" {
+		content = chat.SanitizeError(content.(string))
+	}
 	props := map[string]any{
-		"role": m.Fields["role"], "content": m.Fields["content"], "id": "msg-" + m.ID, "from": from,
+		"role": m.Fields["role"], "content": content, "id": "msg-" + m.ID, "from": from,
 		"time": messageTime(m.CreatedAt), "datetime": m.CreatedAt.UTC().Format(time.RFC3339),
 		"changes": s.receipt(m.Fields["changes"], latest),
 	}
