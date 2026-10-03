@@ -45,6 +45,7 @@
   --sw-motion-fast: 120ms;
   --sw-motion-glow: 1400ms;
   --sw-motion-slow: 420ms;
+  --sw-motion-travel: 1.5rem;
   --sw-radius-lg: 0.75rem;
   --sw-radius-md: 0.5rem;
   --sw-radius-pill: 999px;

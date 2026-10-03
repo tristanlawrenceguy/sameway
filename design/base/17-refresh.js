@@ -13,11 +13,11 @@
 (function () {
   "use strict";
   if (!window.fetch || !window.DOMParser) return;
-  var pace = document.documentElement.getAttribute("data-pace");
-  var still = pace === "still" || (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+  var root = document.documentElement;
   // On a narrow screen the whole page scrolls, under a browser bar that
   // comes and goes, and blocks sliding across it read as a glitch rather
-  // than as motion; there the changes land without the transition.
+  // than as motion; there the changes cross-fade where they land, as they
+  // do under reduced motion and the still pace (26-travel.css).
   var wide = window.matchMedia ? matchMedia("(min-width: 64rem)") : { matches: true };
 
   var timer = null, running = false, again = false;
@@ -36,14 +36,21 @@
       .then(function (r) { if (!r.ok) throw new Error("the page came back " + r.status); return r.text(); })
       .then(function (html) {
         var doc = new DOMParser().parseFromString(html, "text/html");
-        if (document.startViewTransition && !still && wide.matches) {
+        if (document.startViewTransition && document.visibilityState !== "hidden") {
           // A transition waits for a frame to be drawn before it swaps the
           // page, and a tab that is not drawing never gets one: every
           // refresh after it would wait for ever. So the page is swapped
           // once, by the transition or, if it has not in a moment, here.
-          var done = false;
-          var swap = function () { if (!done) { done = true; merge(doc); } };
+          // Items are named for it on both sides, so a ticked row slides
+          // into Done (26-travel.js), and unnamed before the merge, which
+          // compares blocks as the server sends them.
+          var travel = window.swTravel, done = false;
+          var swap = function () { if (!done) { done = true; if (travel) travel.clear(); merge(doc); if (travel) travel.name(); } };
+          if (!wide.matches) root.setAttribute("data-motion", "fade");
+          if (travel) travel.name();
           var vt = document.startViewTransition(swap);
+          var after = function () { if (travel) travel.clear(); root.removeAttribute("data-motion"); };
+          vt.finished.then(after, after);
           return Promise.race([vt.updateCallbackDone, new Promise(function (r) { setTimeout(r, 800); })])
             .catch(function () {})
             .then(function () { if (!done) { try { vt.skipTransition(); } catch (e) { /* gone */ } swap(); } });

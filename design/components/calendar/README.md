@@ -79,6 +79,10 @@ the system's own colours.
 
 ## Why it works this way
 
+- **Previous and next slide the month the way asked**, a short way along
+  one axis (Material's shared axis), so going forward and back feel
+  different; under reduced motion or the still pace the month cross-fades
+  in place (design/foundations/motion.md).
 - **It says its month.** The caption always names it, so a person who moves
   a month on hears where they landed
   ([WAI tables tutorial](https://www.w3.org/WAI/tutorials/tables/caption-summary/)).

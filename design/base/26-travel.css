@@ -1,0 +1,44 @@
+/* Travel: what a person does moves where it goes (26-travel.js names the
+   items). A ticked row slides into Done, a moved card to its column, a
+   filtered list's items into their new order, all in --sw-travel, well
+   under a quarter of a second, so the change is seen and not waited for.
+   Transform and opacity only, drawn by the browser from snapshots: nothing
+   on the page is laid out twice. */
+:root { --sw-travel: var(--sw-motion-base); --sw-axis: 1; }
+:root[data-pace="quick"] { --sw-travel: var(--sw-motion-fast); }
+:root[data-travel="prev"] { --sw-axis: -1; }
+
+@keyframes sw-fade-in { from { opacity: 0; } }
+@keyframes sw-fade-out { to { opacity: 0; } }
+
+::view-transition-group(.sw-vt-move) { animation-duration: var(--sw-travel); animation-timing-function: var(--sw-motion-ease); }
+/* An item that came into the list fades in where it is; one that left it
+   fades out quickly where it was. Neither travels. */
+::view-transition-new(.sw-vt-move):only-child { animation: sw-fade-in var(--sw-travel) var(--sw-motion-ease) both; }
+::view-transition-old(.sw-vt-move):only-child { animation: sw-fade-out var(--sw-motion-fast) var(--sw-motion-ease) both; }
+
+/* A calendar's next month comes in from the side it was asked for, and the
+   month left goes out the other way: one axis, a short distance, the way
+   pages of a book turn (Material's shared axis). */
+@keyframes sw-days-out { to { opacity: 0; transform: translateX(calc(var(--sw-axis) * -1 * var(--sw-motion-travel))); } }
+@keyframes sw-days-in { from { opacity: 0; transform: translateX(calc(var(--sw-axis) * var(--sw-motion-travel))); } }
+::view-transition-group(.sw-vt-days) { animation-duration: var(--sw-travel); }
+::view-transition-old(.sw-vt-days) { animation: sw-days-out var(--sw-travel) var(--sw-motion-ease) both; }
+::view-transition-new(.sw-vt-days) { animation: sw-days-in var(--sw-travel) var(--sw-motion-ease) both; }
+
+/* Reduced motion, the still pace, and a narrow screen while the page
+   follows a turn: nothing travels, grows or slides. What changed
+   cross-fades where it now is, quickly, so a change is still seen to
+   happen (WCAG 2.3.3 counts opacity as no motion). Every transition on
+   the page, the arrival of blocks and the page's own cross-fade too. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*) { animation: none !important; }
+  ::view-transition-old(*) { animation: sw-fade-out var(--sw-motion-fast) linear both !important; }
+  ::view-transition-new(*) { animation: sw-fade-in var(--sw-motion-fast) linear both !important; }
+}
+:root[data-pace="still"]::view-transition-group(*), :root[data-motion="fade"]::view-transition-group(*) { animation: none !important; }
+:root[data-pace="still"]::view-transition-old(*), :root[data-motion="fade"]::view-transition-old(*) { animation: sw-fade-out var(--sw-motion-fast) linear both !important; }
+:root[data-pace="still"]::view-transition-new(*), :root[data-motion="fade"]::view-transition-new(*) { animation: sw-fade-in var(--sw-motion-fast) linear both !important; }
+
+/* A ticked row's title greys as it is struck through, rather than snapping. */
+.sw-row__link { transition: color var(--sw-motion-fast) var(--sw-motion-ease); }
