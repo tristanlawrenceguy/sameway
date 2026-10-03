@@ -38,6 +38,13 @@ button says an action, and its label must not change with its state.
   catching up.
 - **A refused save is not shown as saved.** The box goes back and the reason
   is said as an alert.
+- **The press is answered at once.** The tick draws itself and the row is
+  struck through on the press, before the server answers, since a reply
+  later than a tenth of a second reads as a press that did nothing
+  ([NN/g, response times](https://www.nngroup.com/articles/response-times-3-important-limits/)).
+  The words said are still the server's, once. Under reduced motion the
+  tick is simply there, and under forced colours the box, its fill and
+  the tick take the system's colours.
 - **Nothing moves under the person.** A ticked row stays where it is, struck
   through; the list is brought up to date when focus leaves it
   ([GOV.UK task list](https://design-system.service.gov.uk/components/task-list/)).

@@ -7,7 +7,7 @@ something is different. It is never ambient.
 
 | Token | Value | Use |
 |---|---|---|
-| `motion-fast` | 120 ms | Hover, press, focus colour |
+| `motion-fast` | 120 ms | Hover, press release, focus colour, the cross-fade under reduced motion |
 | `motion-base` | 220 ms | Exits, page cross-fade |
 | `motion-slow` | 420 ms | Enters, morphs |
 | `motion-glow` | 1400 ms | The change glow |
@@ -77,6 +77,35 @@ transitions shows the finished page, with no error. Focus is never moved
 by any of it. While a transition runs (a quarter of a second at most) the
 page takes no clicks, which is the browser's rule and the reason these
 stay short; nothing moves before the person has acted.
+
+## Press: a control answers at once
+
+Within a tenth of a second a response reads as caused by the press
+(NN/g); later, as a press that did nothing. So every control answers in
+the frame it is pressed, before any server has spoken
+(`design/base/27-press.css`, `02-feedback.css`):
+
+- **A button**, and a link shaped as one, rings and gives a little
+  (scale 0.97) the moment it is pressed, and lets go over `motion-fast`.
+- **A row or card that is one target** (a list's row, a type's listing,
+  an agenda's day, a card's title) shades and is ringed inside its edge.
+  Colour and a ring only: nothing changes place or size, so nothing
+  around it moves.
+- **A mark's tick draws itself**: the box fills and the check is drawn
+  from its short stroke to its long one over `motion-base`. Checked is
+  the shape of the tick as well as the fill; the box's edge is
+  `border-strong`, 3:1.
+- **A tick shows on the press.** The row is struck through at once, not
+  when the server answers (`13-mark.js`); a refusal puts the box and the
+  row back and says why as an alert. What is said is still the server's
+  outcome, once, through the region there from the start: the box and
+  the row show what was pressed, the words what happened.
+
+Under reduced motion nothing gives or draws: the press is the colour and
+the ring, the tick simply there. Under forced colours shadows and fills
+go, so a pressed row is outlined in `Highlight`, and the mark's box, fill
+and tick take the system's colours (`CanvasText`, `Highlight`,
+`HighlightText`); no meaning rests on the animation.
 
 ## Arrival
 
@@ -270,6 +299,13 @@ to `/chat` and the page comes back whole, as before. See
 - **Firefox across pages.** Firefox has same-document transitions (a
   tick slides) but not cross-document ones yet; there a Move, a filter
   or a month shows the finished page.
+- **Optimistic changes beyond a tick.** A board Move, an edit and a
+  delete come back as a page, with their outcome and focus where they
+  were; showing them before the server agrees would mean undoing a
+  change on screen that the person may already have read as done. A
+  tick is the one place the press itself is the whole change.
+- **A tick that springs or bounces.** The check draws once, in the time
+  of a fade; anything more is decoration.
 - **Letting clicks through during a transition**
   (`::view-transition { pointer-events: none }`). A click would land on a
   page the person cannot see yet; a quarter of a second without clicks is

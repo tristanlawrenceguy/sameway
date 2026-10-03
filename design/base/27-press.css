@@ -1,0 +1,42 @@
+/* Press: a control answers at once. A button already does (02-feedback.css:
+   the ring snaps on, it gives a little, and both go after release). The
+   same answer for what is pressed but is not a button: a link shaped as
+   one, and a row or card that is one target as a whole. On press the
+   answer is there in the same frame, well inside the tenth of a second
+   that feels instant; on release it goes over motion-fast. Colour, a ring
+   and a slight give only: nothing changes its place or the space it takes,
+   so nothing around it moves. */
+.sw-link--button:active {
+  box-shadow: 0 0 0 0.4rem var(--sw-color-accent-soft);
+  transform: scale(0.97);
+  transition-duration: 0ms;
+}
+
+/* A row or card: shaded and ringed inside its edge while pressed. */
+.sw-collection__item, .sw-calendar__agenda > li, .sw-row, .sw-card {
+  transition: background var(--sw-motion-fast) var(--sw-motion-ease), box-shadow var(--sw-motion-fast) var(--sw-motion-ease);
+}
+.sw-collection__item:has(> .sw-link--fill:active),
+.sw-calendar__agenda > li:has(.sw-link--fill:active),
+.sw-row:has(.sw-row__link:active),
+.sw-card:has(.sw-card__title a:active) {
+  background: var(--sw-color-bg-muted);
+  box-shadow: inset 0 0 0 2px var(--sw-color-border-strong);
+  transition-duration: 0ms;
+}
+
+/* Under reduced motion a press does not give: the colour and the ring
+   answer it, and nothing changes size. */
+@media (prefers-reduced-motion: reduce) {
+  .sw-pressable:active:not([disabled]):not([aria-disabled="true"]),
+  .sw-link--button:active, .sw-checkbox__input:active, .sw-mark__input:active { transform: none; }
+}
+
+/* Forced colours drop shadows and fills: a pressed row or card is outlined
+   in the system's highlight instead, so the press is still seen. */
+@media (forced-colors: active) {
+  .sw-collection__item:has(> .sw-link--fill:active),
+  .sw-calendar__agenda > li:has(.sw-link--fill:active),
+  .sw-row:has(.sw-row__link:active),
+  .sw-card:has(.sw-card__title a:active) { outline: 2px solid Highlight; outline-offset: -2px; }
+}
