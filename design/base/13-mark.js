@@ -9,6 +9,13 @@
 // when focus leaves it, not under the person's hands: a ticked row would
 // jump to the Done group, or out of a list of what is not done.
 //
+// The row answers the press at once: struck through as the box is ticked,
+// before the server has said anything, since a save that takes longer than
+// a tenth of a second would otherwise read as a press that did nothing.
+// The server's words are still what is said, once: the box and the row
+// show what was pressed, the outcome says what happened, and a refusal
+// puts both back and says why.
+//
 // Without scripts, or if the background send fails, the form is sent as a
 // form, and its Save button, there for a browser without scripts, works.
 (function () {
@@ -59,6 +66,8 @@
     form.classList.add("sw-mark--live");
     var box = form.querySelector(".sw-mark__input");
     if (!box) return;
+    var row = form.closest(".sw-row");
+    function shown() { if (row) row.classList.toggle("sw-row--done", box.checked); }
     var busy = false, again = false;
     function send() {
       busy = true;
@@ -71,9 +80,9 @@
           t.innerHTML = html.trim();
           var fresh = t.content.firstElementChild;
           var failed = !!(fresh && fresh.matches("[data-outcome=failed]"));
+          // Refused: back as it was, and the alert says why.
           if (failed) box.checked = !sent;
-          var row = form.closest(".sw-row");
-          if (row) row.classList.toggle("sw-row--done", box.checked);
+          shown();
           if (fresh) { say(fresh, failed); show(fresh); }
           busy = false;
           // Ticked again while it saved: once more, as the box is now.
@@ -84,6 +93,7 @@
     }
     box.addEventListener("change", function () {
       if (!window.fetch) { form.submit(); return; }
+      shown();
       if (busy) { again = true; return; }
       send();
     });
