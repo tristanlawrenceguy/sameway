@@ -225,7 +225,8 @@ func (s *Service) sendTurn(ctx context.Context, canvas, text, fileID string, on 
 		results := llm.Message{Role: llm.RoleTool}
 		for _, call := range resp.ToolCalls {
 			if on != nil {
-				on(Event{Kind: "tool", Tool: call.Name, Label: describe(call)})
+				label, aim := s.doing(call)
+				on(Event{Kind: "tool", Tool: call.Name, Label: label, Aim: aim})
 			}
 			r := s.run(call)
 			results.ToolResults = append(results.ToolResults, llm.ToolResult{CallID: call.ID, Content: r.text, IsError: r.isErr})

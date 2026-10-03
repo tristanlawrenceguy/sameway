@@ -51,24 +51,6 @@
     return { li: li, words: words, steps: li.querySelector(".sw-live__steps") };
   }
 
-  // The log follows the turn only while the person is reading its end.
-  // Someone who has scrolled up, or is selecting text, is left where they
-  // are: text that moves under the pointer cannot be selected.
-  function follower(log) {
-    var stick = true, pressed = false;
-    function nearEnd() { return log.scrollHeight - log.scrollTop - log.clientHeight < 48; }
-    log.addEventListener("scroll", function () { stick = nearEnd(); });
-    log.addEventListener("pointerdown", function () { pressed = true; });
-    document.addEventListener("pointerup", function () { pressed = false; });
-    document.addEventListener("pointercancel", function () { pressed = false; });
-    return function () {
-      if (pressed) return;
-      var sel = window.getSelection && getSelection();
-      if (sel && !sel.isCollapsed && sel.anchorNode && log.contains(sel.anchorNode)) return;
-      if (stick) log.scrollTop = log.scrollHeight;
-    };
-  }
-
   // Blocks land one at a time, with a breath between when several come
   // at once; under reduced motion or a still pace they land as they come.
   function lander() {
@@ -84,7 +66,10 @@
         return;
       }
       var node = el(item.html);
-      if (have) have.replaceWith(node); else canvas.appendChild(node);
+      node.classList.add("sw-landed"); // under reduced motion it fades in (28-turn.css)
+      // A new block takes the place held for it while its call ran (28-turn.js).
+      have = have || canvas.querySelector(".sw-block--pending");
+      if (have) { have._landed = true; have.replaceWith(node); } else canvas.appendChild(node);
       var page = canvas.closest(".sw-page");
       if (page && page.getAttribute("data-layout") === "solo") page.setAttribute("data-layout", "canvas");
     }
@@ -123,10 +108,12 @@
     var log = logFor(form);
     var live = liveMessage(log);
     var land = lander();
-    var follow = follower(log);
+    var follow = window.swFollower(log);
     var ta = form.querySelector("textarea");
     var asked = ta ? ta.value : "";
     var settled = false, heard = false, stop = null;
+    var watch = window.swWatchTurn ? window.swWatchTurn(form) : null;
+    var write = window.swWriter(live.words, follow, watch);
     // The steps: what the assistant is doing, one dot each. A step is
     // early while the model is still saying what it wants; the same tool
     // fills the step in when it runs. Until anything arrives, a dot says
@@ -141,6 +128,7 @@
     function step(d) {
       thinking(false);
       var label = d.label || d.tool || "Working";
+      if (watch) watch.step(d, label);
       if (!d.early) {
         finish();
         var early = d.tool && live.steps.querySelector('[data-early][data-tool="' + escape(d.tool) + '"]');
@@ -156,6 +144,8 @@
     function settle(d) {
       settled = true;
       form._sending = false;
+      write.stop();
+      if (watch) watch.done();
       if (stop) { if (stop === document.activeElement && ta) ta.focus(); stop.remove(); }
       live.li.classList.remove("sw-live");
       if (d.html) live.li.innerHTML = d.html; else live.li.remove();
@@ -216,11 +206,12 @@
           thinking(true);
           stop = window.swStopControl(form, d.turn);
           break;
-        case "delta": thinking(false); live.words.data += d.text || ""; break;
-        case "text": thinking(false); live.words.data = d.text || ""; break;
+        case "delta": thinking(false); write(d.text); break;
+        case "text": thinking(false); write.all(d.text); break;
         case "tool": step(d); break;
         case "change":
           finish();
+          if (watch && d.block) watch.landed(d.block, d.action === "added" && (!d.region || d.region === "main"));
           if (d.block && d.html) land(d);
           // Whatever else the change touched follows, once things settle.
           refreshSoon();

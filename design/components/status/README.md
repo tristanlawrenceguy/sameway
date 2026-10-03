@@ -21,7 +21,14 @@ page simply reloads with the result.
   supported and disruptive
   ([Sara Soueidan on live regions](https://www.sarasoueidan.com/blog/accessible-notifications-with-aria-live-regions-part-1/)).
 - **A long wait is said once to be still going**, after fifteen seconds,
-  never again ([NN/g on progress indicators](https://www.nngroup.com/articles/progress-indicators/)).
+  never again ([NN/g on progress indicators](https://www.nngroup.com/articles/progress-indicators/)),
+  in the words of what is going on when the status has them
+  (`data-still`: "Still adding a chart of water…").
+- **The assistant's turn says what it is doing**, in words from its calls
+  ("Looking up your tasks…"), through this same region: at most once
+  every 2.5 seconds, the newest words winning, nothing said twice in one
+  turn (`design/base/28-turn.js`). Words, not a spinner: what is drawn is
+  what is heard.
 - **A file being read says how it ended**, failure included, and the page
   follows when it does, instead of working for ever.
 - **A page brought back with Back** asks the server how the request ended
@@ -29,6 +36,7 @@ page simply reloads with the result.
 - **Each state has its own shape**: an open ring, a tick, a mark for an
   error, never colour alone.
 
-Not done, and why: a percentage (the length of the work is not known); each
-step said as it happens (too much to hear); a turning spinner (the words say
-it, and nothing moves on its own for long).
+Not done, and why: a percentage (the length of the work is not known); every
+step said as it happens (too much to hear: the newest is said, at a pace
+that can be heard); a turning spinner (the words say it, and nothing moves
+on its own for long).
