@@ -7,7 +7,7 @@ something is different. It is never ambient.
 
 | Token | Value | Use |
 |---|---|---|
-| `motion-fast` | 120 ms | Hover, press, focus colour |
+| `motion-fast` | 120 ms | Hover, press release, focus colour, the cross-fade under reduced motion |
 | `motion-base` | 220 ms | Exits, page cross-fade |
 | `motion-slow` | 420 ms | Enters, morphs |
 | `motion-glow` | 1400 ms | The change glow |
@@ -78,6 +78,35 @@ by any of it. While a transition runs (a quarter of a second at most) the
 page takes no clicks, which is the browser's rule and the reason these
 stay short; nothing moves before the person has acted.
 
+## Press: a control answers at once
+
+Within a tenth of a second a response reads as caused by the press
+(NN/g); later, as a press that did nothing. So every control answers in
+the frame it is pressed, before any server has spoken
+(`design/base/27-press.css`, `02-feedback.css`):
+
+- **A button**, and a link shaped as one, rings and gives a little
+  (scale 0.97) the moment it is pressed, and lets go over `motion-fast`.
+- **A row or card that is one target** (a list's row, a type's listing,
+  an agenda's day, a card's title) shades and is ringed inside its edge.
+  Colour and a ring only: nothing changes place or size, so nothing
+  around it moves.
+- **A mark's tick draws itself**: the box fills and the check is drawn
+  from its short stroke to its long one over `motion-base`. Checked is
+  the shape of the tick as well as the fill; the box's edge is
+  `border-strong`, 3:1.
+- **A tick shows on the press.** The row is struck through at once, not
+  when the server answers (`13-mark.js`); a refusal puts the box and the
+  row back and says why as an alert. What is said is still the server's
+  outcome, once, through the region there from the start: the box and
+  the row show what was pressed, the words what happened.
+
+Under reduced motion nothing gives or draws: the press is the colour and
+the ring, the tick simply there. Under forced colours shadows and fills
+go, so a pressed row is outlined in `Highlight`, and the mark's box, fill
+and tick take the system's colours (`CanvasText`, `Highlight`,
+`HighlightText`); no meaning rests on the animation.
+
 ## Arrival
 
 A person is eased into new information, even when the change itself was
@@ -141,7 +170,9 @@ the change is still findable.
 
 While a request is in flight, `status/enhance.js` switches the status
 component to `working`, whose dot pulses. The text changes at the same
-time, so the state is announced and readable without the animation.
+time, so the state is announced and readable without the animation. During the
+assistant's turn the words then follow what it is doing (below, "A turn
+you can watch").
 
 ## Reduced motion
 
@@ -212,6 +243,42 @@ each in; a single change is not delayed. Without scripts the form posts
 to `/chat` and the page comes back whole, as before. See
 `design/base/14-live.js` and `internal/server/stream.go`.
 
+## A turn you can watch
+
+A turn is the longest wait in Sameway, and the page should show it is
+alive without making noise (`design/base/28-turn.js`, `28-turn.css`):
+
+- **The status line says what the assistant is doing**, in words its
+  calls give: "Adding a chart of water…", "Looking up your tasks…",
+  "Arranging the page…", "Changing the list of tasks…", "Writing the
+  reply…" (`internal/chat/doing.go`). Not a spinner: a spinner says only
+  that something is happening; the words say what. The status is a polite
+  live region, so every change is read out; it changes at most once every
+  2.5 seconds, the newest words winning when steps come close together,
+  and the same words are never said twice in one turn. What is drawn is
+  what is heard: the words are the region's own. A step still going after
+  fifteen seconds says so in its own words ("Still adding a chart of
+  water…"). The page following the turn does not put the server's
+  "working" back over the step being said.
+- **The reply grows calmly.** Its words go on the page a few times a
+  second (every 80 ms), not letter by letter and with no caret, and the
+  log follows the end at once rather than gliding after every word. The
+  words are not in a live region: a screen reader hears the finished
+  reply once, at the end, with the status (`swSay`).
+- **A block about to be added holds its place**: as soon as the model
+  starts the call, a dashed outline in the assistant's colour stands where
+  the block will land, as wide as it will be. It is the first stage of the
+  block's arrival, held; when the block lands it takes that place and its
+  arrival plays on from the outline. A block about to be changed is
+  outlined, solid (dashed if it is about to go). The held place says
+  "Adding a chart of water…" to a screen reader that reaches it.
+
+Nothing travels. The outline fades in over `motion-slow`. Under reduced
+motion it is simply there, and the block that lands cross-fades in over
+`motion-fast` where the outline was instead of its staged arrival; under
+the still pace both are simply there. Under forced colours the outlines
+take `Highlight`.
+
 ## Sources
 
 - Material 3 motion: durations step by 50 ms, short 50 to 200 ms, medium
@@ -251,7 +318,25 @@ to `/chat` and the page comes back whole, as before. See
   ([NN/g, response times](https://www.nngroup.com/articles/response-times-3-important-limits/),
   [NN/g, animation duration](https://www.nngroup.com/articles/animation-duration/)).
 
+- Status said in words, politely, and not too often: a status message is
+  heard without moving focus ([WCAG 4.1.3](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html));
+  live regions announce every change, queue behind one another and are
+  best kept few and terse ([Scott O'Hara, Are we live?](https://www.scottohara.me/blog/2022/02/05/are-we-live.html),
+  [MDN, ARIA live regions](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Guides/Live_regions)).
+
 ## Not done, and why
+
+- **Text that types itself.** Drawing the reply letter by letter, or a
+  blinking caret at its end, is motion that explains nothing: the words
+  are already there. They land in short bursts instead.
+- **Saying every step.** A turn can call ten tools in a few seconds; a
+  screen reader told each would still be reading the first ones after the
+  turn was over. The newest step is said, and nothing twice.
+- **A spinner in the status.** The dot pulses four beats and stops (WCAG
+  2.2.2); the words carry the state.
+- **A held place in a pane.** The place is held only on the main canvas,
+  where the block lands at once; a block for a pane arrives with the page
+  that follows the turn.
 
 - **Moving a ticked row at once.** The next row would slide up under the
   pointer or the next Space; it moves when focus leaves the list.
@@ -270,6 +355,13 @@ to `/chat` and the page comes back whole, as before. See
 - **Firefox across pages.** Firefox has same-document transitions (a
   tick slides) but not cross-document ones yet; there a Move, a filter
   or a month shows the finished page.
+- **Optimistic changes beyond a tick.** A board Move, an edit and a
+  delete come back as a page, with their outcome and focus where they
+  were; showing them before the server agrees would mean undoing a
+  change on screen that the person may already have read as done. A
+  tick is the one place the press itself is the whole change.
+- **A tick that springs or bounces.** The check draws once, in the time
+  of a fade; anything more is decoration.
 - **Letting clicks through during a transition**
   (`::view-transition { pointer-events: none }`). A click would land on a
   page the person cannot see yet; a quarter of a second without clicks is

@@ -5,3 +5,31 @@
 .sw-mark__save { font-size: var(--sw-size-text-sm); }
 /* With scripts, a change saves itself and the button is not needed. */
 .sw-mark--live .sw-mark__save { display: none; }
+/* The tick draws itself: the box fills, then the check is drawn from its
+   short stroke to its long one, over motion-base, the moment the box is
+   pressed. The box is drawn here rather than by the browser so the tick
+   can be; its edge is border-strong (3:1), the fill and tick the accent's.
+   Checked or not is the shape of the tick as well as the fill, never the
+   colour alone. Under reduced motion the tick is simply there; under
+   forced colours the box, its fill and the tick take the system's
+   colours (CanvasText, Highlight, HighlightText). */
+.sw-mark .sw-mark__input {
+  appearance: none; -webkit-appearance: none;
+  display: inline-grid; place-content: center; flex: none;
+  border: 2px solid var(--sw-color-border-strong); background: var(--sw-color-bg);
+  transition: background var(--sw-motion-fast) var(--sw-motion-ease), border-color var(--sw-motion-fast) var(--sw-motion-ease), transform var(--sw-motion-fast) var(--sw-motion-ease);
+}
+.sw-mark .sw-mark__input::before {
+  content: ""; width: 0.75rem; height: 0.4rem;
+  border: solid var(--sw-color-accent-fg); border-width: 0 0 0.1875rem 0.1875rem;
+  transform: translateY(-0.0625rem) rotate(-45deg);
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path var(--sw-motion-base) var(--sw-motion-ease);
+}
+.sw-mark .sw-mark__input:checked { background: var(--sw-color-accent); border-color: var(--sw-color-accent); }
+.sw-mark .sw-mark__input:checked::before { clip-path: inset(0); }
+@media (forced-colors: active) {
+  .sw-mark .sw-mark__input { forced-color-adjust: none; border-color: CanvasText; background: Canvas; }
+  .sw-mark .sw-mark__input:checked { border-color: Highlight; background: Highlight; }
+  .sw-mark .sw-mark__input::before { border-color: HighlightText; }
+}

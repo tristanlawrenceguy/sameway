@@ -138,6 +138,10 @@
       fresh.querySelectorAll('[data-component="status"][id]').forEach(function (st) {
         var have = old.querySelector("#" + st.id);
         if (!have || !window.swStatus) return;
+        // A turn under way on this page says its own steps (28-turn.js):
+        // the page's words would only be said over them.
+        var busy = document.querySelector('form[data-busy-target="' + st.id + '"]');
+        if (busy && busy._sending) { st.replaceWith(have); return; }
         var said = st.querySelector(".sw-status__said");
         window.swStatus(have, st.getAttribute("data-state"), (st.querySelector(".sw-status__text") || st).textContent, said ? said.textContent.trim() : "");
         st.replaceWith(have);
