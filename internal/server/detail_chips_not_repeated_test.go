@@ -38,9 +38,8 @@ func TestDetailChipsNotRepeatedInFields(t *testing.T) {
 			t.Errorf("normal page should have a Done chip\n%s", truncate(page))
 		}
 
-		// The Due date chip is rendered as a badge. Check for the sw-badge class and
-		// the "Due" label text — the actual HTML uses multiple space-separated classes.
-		hasDueChip := strings.Contains(page, `<span class="sw-when"`) || (strings.Contains(page, `class="sw-badge`) && strings.Contains(page, ">Due "))
+		// The Due date chip is rendered as a badge with only the date text (no raw field name).
+		hasDueChip := strings.Contains(page, `<span class="sw-when"`) || (strings.Contains(page, `class="sw-badge`))
 		if !hasDueChip {
 			t.Errorf("normal page should have a Due date chip\n%s", truncate(page))
 		}

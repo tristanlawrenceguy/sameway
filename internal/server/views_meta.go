@@ -147,6 +147,8 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 
 // dayFact is the record's first date: short at the right of a row, in full
 // as a chip under a title; amber with "was" when it has passed undone.
+// When no custom Label exists on the field, only the date text appears — no
+// raw schema column name prefix (see TestTaskDetailLedeNoRawDueLabel).
 func (s *Server) dayFact(t *schema.Type, rec *store.Record, done, chip bool) string {
 	for _, f := range t.Shown() {
 		if f.Type != "datetime" {
@@ -168,13 +170,9 @@ func (s *Server) dayFact(t *schema.Type, rec *store.Record, done, chip bool) str
 			tone := "info"
 			if f.Label != "" {
 				text = f.Label + " " + text
-			} else if t.Provided && label(f.Name) != "" {
-				text = label(f.Name) + " " + text
 			}
 			if past && f.Label != "" {
 				text, tone = "Was "+strings.ToLower(f.Label)+" "+when.Text(v), "warning"
-			} else if past && t.Provided {
-				text, tone = "Was "+strings.ToLower(label(f.Name))+" "+when.Text(v), "warning"
 			} else if past {
 				text, tone = when.Text(v), "warning"
 			}
@@ -185,8 +183,6 @@ func (s *Server) dayFact(t *schema.Type, rec *store.Record, done, chip bool) str
 		switch {
 		case past && f.Label != "":
 			short, class = "Was "+strings.ToLower(f.Label)+" "+short, "sw-when sw-when--past"
-		case past && t.Provided:
-			short, class = "Was "+strings.ToLower(label(f.Name))+" "+short, "sw-when sw-when--past"
 		case strings.HasPrefix(short, "Today"):
 			class = "sw-when sw-when--today"
 		}
