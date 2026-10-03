@@ -45,8 +45,12 @@ func (s *Server) whoOf(e *store.Record) logChoice {
 	case chat.ActorAgent:
 		// An agent outside Sameway, by the name it gave or its program's.
 		name, _ := e.Fields["by"].(string)
-		sum := sha256.Sum256([]byte(name))
-		return logChoice{"a-" + hex.EncodeToString(sum[:4]), stdcmp.Or(name, "An agent")}
+		label := stdcmp.Or(name, "An agent")
+		if chat.MachineName(label) {
+			label = "An agent"
+		}
+		sum := sha256.Sum256([]byte(label))
+		return logChoice{"a-" + hex.EncodeToString(sum[:4]), label}
 	case "human", "":
 		name, _ := s.whoDid(e)
 		if name == "" {

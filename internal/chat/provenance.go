@@ -131,6 +131,9 @@ func (w *Writers) entry(e *store.Record) Writer {
 	case "system":
 		return Writer{Words: "an action run by a schedule or a webhook", Outside: true}
 	case "agent":
+		if MachineName(by) {
+			return Writer{Words: "an agent", Outside: true}
+		}
 		if by != "" && !w.public {
 			return Writer{Words: by + ", an agent", Outside: true}
 		}
