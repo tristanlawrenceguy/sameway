@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="/design/sameway.css">
 {{if .JSONURL}}<link rel="alternate" type="application/json" href="{{.JSONURL}}">
 {{end}}<link rel="describedby" href="/api/describe">
-<script src="/design/sameway.js" defer></script>
+<script src="/design/sameway.js" defer blocking="render"></script>
 {{range .ExtraScripts}}{{.}}
 {{end}}</head>
 <body{{if .Shell}} data-shell="{{.Shell}}"{{end}}>

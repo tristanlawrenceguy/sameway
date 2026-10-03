@@ -46,6 +46,10 @@ and back in To do, and says so, as a tick does.
   page when it loads is not read out, so this is how it is heard
   ([Atlassian](https://atlassian.design/components/pragmatic-drag-and-drop/accessibility-guidelines),
   [Scott O'Hara, are we live](https://www.scottohara.me/blog/2022/02/05/are-we-live.html)).
+- **The card glides to its new column** as the page comes back, in under
+  a quarter of a second, so the eye follows where it went; under reduced
+  motion it cross-fades in its new place instead, with no travel
+  (design/foundations/motion.md).
 - **An edit like any other**, logged and undone the same way.
 - **A move to where it already is saves nothing** and says "Status is
   already Done. Nothing changed.", with no Undo for a change never made.

@@ -13,6 +13,7 @@ something is different. It is never ambient.
 | `motion-glow` | 1400 ms | The change glow |
 | `motion-arrive` | 2600 ms | One block arriving: place, shape, content |
 | `motion-between` | 3000 ms | From one arrival to the next |
+| `motion-travel` | 1.5rem | How far a calendar's month slides (shared axis) |
 | `motion-ease` | `cubic-bezier(0.2, 0.8, 0.2, 1)` | Everything that moves |
 | `motion-ease-out` | `cubic-bezier(0, 0, 0.2, 1)` | Flashes that only fade |
 
@@ -31,6 +32,51 @@ the `sw-vt-item` class, which maps to:
 
 Browsers without the feature simply reload, and the change markers below
 still play, so nothing is lost.
+
+## What a person does moves where it goes
+
+Most motion follows the assistant's changes. A person's own actions used
+to snap: a ticked task vanished from its group, a moved card reappeared
+in another column, a filtered list was simply a new list. Now each is a
+view transition that shows where the thing went
+(`design/base/26-travel.js` and `26-travel.css`):
+
+- **A tick** strikes the row through at once, its title greying over
+  `motion-fast`. The row moves to Done when focus leaves the list, not
+  under the person's hands (`13-mark.js`), and when it does it slides
+  there, the groups and their counts settling around it. The same holds
+  for a mark in a collection, and for whatever the assistant changes
+  while the page follows a turn (`17-refresh.js`).
+- **A board Move** glides the card to its new column across the reload,
+  and focus comes back to its Move button as before.
+- **Applying a list's filters or sort**, on a collection, the activity
+  log or a calendar's kinds, moves the items that stay into their new
+  order; those that go fade out where they were, new ones fade in.
+- **A calendar's previous or next** slides the month in from the side
+  asked for and the old one out the other way: one axis, `motion-travel`
+  far, as Material's shared axis does.
+
+How: the script names each list item (its block and its record) only for
+the moment of a transition, on both pages of a navigation (`pageswap` on
+the page left, `pagereveal` on the page arrived) or both sides of an
+in-page change, and takes the names off after, so the page at rest is the
+page the server sent and a refresh still compares blocks as sent.
+Navigations to another page are left to the page cross-fade. A tick
+stays a same-document change; the others are already form posts and
+links, so they ride the cross-document transition the page already had,
+with no script submitting forms (a form that works without scripts keeps
+working the same way with them). `sameway.js` blocks the first render so
+`pagereveal` is heard in time (Chrome's guidance; a deferred script alone
+is not guaranteed to run before the first frame).
+
+Timing: `motion-base` (220 ms) at the calm pace, `motion-fast` (120 ms)
+at the quick pace, both inside NN/g's 0.1 to 1 s band for feeling direct
+and Material's 200 to 300 ms for a change of this size. Transform and
+opacity only, drawn by the browser from snapshots. A browser without view
+transitions shows the finished page, with no error. Focus is never moved
+by any of it. While a transition runs (a quarter of a second at most) the
+page takes no clicks, which is the browser's rule and the reason these
+stay short; nothing moves before the person has acted.
 
 ## Arrival
 
@@ -99,10 +145,17 @@ time, so the state is announced and readable without the animation.
 
 ## Reduced motion
 
-Under `prefers-reduced-motion: reduce`: view transitions are disabled,
-every animation and transition collapses to 0.01 ms, smooth scrolling is
-off, and the change marker becomes a static 3px ring in the actor's colour.
-Meaning is preserved; only movement is removed.
+Under `prefers-reduced-motion: reduce`: every animation and transition
+collapses to 0.01 ms, smooth scrolling is off, and the change marker
+becomes a static 3px ring in the actor's colour. View transitions stay,
+reduced rather than removed: nothing travels, grows or slides, and what
+changed cross-fades where it now is over `motion-fast`. WCAG 2.3.3 counts
+opacity as no motion, and Val Head's and Eric Bailey's advice is to
+replace the movement that triggers vestibular symptoms (large travel,
+zoom, parallax) with a cross-fade, not to take away the sign that
+something changed. The still pace does the same, and so does a narrow
+screen while the page follows a turn. Meaning is preserved; only movement
+is removed.
 
 ## Rules
 
@@ -113,7 +166,15 @@ Meaning is preserved; only movement is removed.
   stages, whose length is the point: they give a person time to take a
   change in, which is part of accessibility, not decoration.
 - Do not add JavaScript to animate. If CSS cannot express it, it is not
-  worth animating.
+  worth animating. A script may say what is the same thing before and
+  after (a view transition name); the motion itself stays CSS.
+- A person's own action moves in under a quarter of a second
+  (`motion-base` or less), transform and opacity only, and never moves
+  focus, or anything under the pointer before they act.
+- Under reduced motion and the still pace a change may cross-fade; it may
+  not travel, grow or slide. `tools/a11y-runner/motion.mjs` records every
+  view transition animation of a tick, a Move, a filter and a month, and
+  fails if one moves anything under reduced motion.
 
 ## The turn as it happens
 
@@ -150,3 +211,66 @@ pace: none under `still` or reduced motion), so there is time to take
 each in; a single change is not delayed. Without scripts the form posts
 to `/chat` and the page comes back whole, as before. See
 `design/base/14-live.js` and `internal/server/stream.go`.
+
+## Sources
+
+- Material 3 motion: durations step by 50 ms, short 50 to 200 ms, medium
+  250 to 400 ms; standard easing; shared axis X slides 30dp and fades
+  over 300 ms ([Material Components, Motion](https://github.com/material-components/material-components-android/blob/master/docs/theming/Motion.md),
+  [shared axis](https://blog.stylingandroid.com/material-motion-shared-axis/)).
+- Apple HIG: motion with a purpose, brief feedback, never the only way
+  something is conveyed, subtler under Reduce Motion
+  ([Motion](https://developer.apple.com/design/human-interface-guidelines/motion)).
+- Val Head: large travel, motion out of step with scrolling, and zoom are
+  the triggers; reduce rather than remove, cross-fade instead
+  ([Designing safer web animation](https://alistapart.com/article/designing-safer-web-animation-for-motion-sensitivity/),
+  [reduced motion in the wild](https://valhead.com/2020/05/09/reduced-motion-in-the-wild/)).
+  Eric Bailey: reduce, don't remove, since animation helps comprehension
+  ([Revisiting prefers-reduced-motion](https://css-tricks.com/revisiting-prefers-reduced-motion/)).
+  [web.dev on prefers-reduced-motion](https://web.dev/articles/prefers-reduced-motion).
+  Vestibular disorders: avoid parallax, large travel, zoom, spinning
+  ([A11y Project](https://www.a11yproject.com/posts/understanding-vestibular-disorders/)).
+- WCAG 2.2: [2.2.2 Pause, Stop, Hide](https://www.w3.org/WAI/WCAG22/Understanding/pause-stop-hide.html)
+  (more than 5 s needs a stop: the arrival's Show all),
+  [2.3.1 Three Flashes](https://www.w3.org/WAI/WCAG22/Understanding/three-flashes-or-below-threshold.html)
+  (nothing here flashes), [2.3.3 Animation from Interactions](https://www.w3.org/WAI/WCAG22/Understanding/animation-from-interactions.html)
+  (motion from an interaction can be turned off; opacity is not motion).
+- View transitions: same-document in Chrome 111, Safari 18, Firefox 144;
+  cross-document in Chrome 126 and Safari 18.2; `view-transition-class` in
+  Chrome 125, Safari 18.2, Firefox 144; a page takes no clicks while one
+  runs; `pagereveal` needs a script that runs before the first render
+  ([Chrome, same-document](https://developer.chrome.com/docs/web-platform/view-transitions/same-document),
+  [cross-document](https://developer.chrome.com/docs/web-platform/view-transitions/cross-document),
+  [MDN](https://developer.mozilla.org/en-US/docs/Web/API/View_Transition_API),
+  [Bramus on interactivity](https://www.bram.us/2025/01/29/view-transitions-page-interactivity/)).
+- FLIP, which view transitions do for us: measure first and last, invert
+  with a transform, play; transform and opacity only
+  ([Paul Lewis](https://aerotwist.com/blog/flip-your-animations/)).
+- Response times: 0.1 s feels instant, 1 s keeps the flow; small feedback
+  about 100 ms, a change on screen 200 to 300 ms
+  ([NN/g, response times](https://www.nngroup.com/articles/response-times-3-important-limits/),
+  [NN/g, animation duration](https://www.nngroup.com/articles/animation-duration/)).
+
+## Not done, and why
+
+- **Moving a ticked row at once.** The next row would slide up under the
+  pointer or the next Space; it moves when focus leaves the list.
+- **Filters submitted by script, for a same-document transition.** The
+  forms are GETs that work without scripts and already ride the
+  cross-document transition; submitting by script would add nothing a
+  person sees.
+- **Table rows.** A row cannot be lifted out of its table to move; a list
+  shown as a table changes in place under the page cross-fade.
+- **Blocks resizing faster.** A block that grows because of a person's
+  action still morphs over `motion-slow`, as it does for the assistant's
+  changes; the items inside it travel in `motion-base`.
+- **Calm meaning less travel.** Calm is the default pace, so making it a
+  cross-fade would take the motion from nearly everyone; the still pace
+  and reduced motion are the ways to ask for less, and both cross-fade.
+- **Firefox across pages.** Firefox has same-document transitions (a
+  tick slides) but not cross-document ones yet; there a Move, a filter
+  or a month shows the finished page.
+- **Letting clicks through during a transition**
+  (`::view-transition { pointer-events: none }`). A click would land on a
+  page the person cannot see yet; a quarter of a second without clicks is
+  the safer cost.

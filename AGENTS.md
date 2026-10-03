@@ -73,6 +73,7 @@ runner in tools/a11y-runner.
 | Questions are answered where they are met | answers carry the page they were given on and return there, a proposal's own page offers them while pending, clearing the conversation clears its questions, listings show state | `internal/server/proposals_test.go` |
 | Model makes and fills tabs | create_canvas, blocks land on the tab the person is on or the one named, the prompt lists the tabs and the current one's blocks, clear_canvas clears one tab, remove_canvas takes its blocks | `internal/chat/canvases_test.go` |
 | Person sees and hears a component in a real browser | axe AA and AAA in light and dark, role matches the manifest, 320px reflow, text spacing, 200% text, reduced motion, 3:1 field edges, 44px targets, no colour-only state, visible names in the accessible name, forced colours, errors tied to fields | `tools/a11y-runner/run.mjs` (CI) |
+| What a person does moves where it goes, and not under reduced motion | a tick (once focus leaves the list), a board Move, a filter Apply and a calendar month, by keyboard, with motion and with prefers-reduced-motion: every view transition animation is recorded as it runs; under reduced motion none travels, grows or slides; with motion the tick, the card and the month travel; focus stays on the box ticked and comes back to Move | `tools/a11y-runner/motion.mjs` (CI, test:pages), `internal/server/travel_script_test.go` |
 | Person uses a keyboard in a real browser | Tab order, focus ring 2px and 3:1 in light, dark and forced colours, no trap, every control operated by its kind | `tools/a11y-runner/keyboard.mjs` (CI) |
 | Person and agent on live pages | keyboard-only flows (the skip link reaches the newest message; a note is edited and saved by keyboard alone), the editor's fields are all design-system components with choices by name and the open form passes axe AAA, role-and-name targeting, describe matches what renders | `tools/a11y-runner/pages.mjs` (CI) |
 | Agent reads a page with its scripts run | `look` with scripts and steps drives the Chrome, Edge or Chromium on the machine: a script-built editor is read with its values, Tab is pressed for real from the top, a step that finds nothing lists what the page has, script errors are said; values, forms and only/kind/name without a browser | `internal/server/look_scripts_test.go` (skips with no browser) |
@@ -141,6 +142,10 @@ is missing. When you add a way to use the system, add a row here and a test.
   server-rendered HTML; progressive enhancement only, and only in a
   component's own `enhance.js`.
 - Do not add a dependency for something the standard library does.
+- Motion explains a change and never moves focus. A person's own action
+  moves in `motion-base` or less, transform and opacity only; under
+  reduced motion and the still pace it may cross-fade but not travel
+  (design/foundations/motion.md).
 - New surfaces (MCP, export/import) are generated from the schema and
   manifests, never hand-written per type or component.
 
