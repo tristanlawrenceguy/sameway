@@ -146,7 +146,15 @@ func (s *Server) follow(w http.ResponseWriter, r *http.Request, t *liveTurn, bac
 			case "delta", "text":
 				send(e.Kind, map[string]any{"text": e.Text})
 			case "tool":
-				send("tool", map[string]any{"tool": e.Tool, "label": e.Label, "early": e.Early})
+				data := map[string]any{"tool": e.Tool, "label": e.Label, "early": e.Early}
+				// Where the call lands, so the page can mark the place.
+				if e.Aim.Block != "" {
+					data["block"] = e.Aim.Block
+				}
+				if e.Aim.Region != "" {
+					data["region"], data["span"] = e.Aim.Region, e.Aim.Span
+				}
+				send("tool", data)
 			case "change":
 				data := map[string]any{"action": e.Change.Action, "component": e.Change.Component, "id": e.Change.ID, "detail": e.Change.Detail}
 				if blk, region, html := s.liveBlock(e.Change, t.started); html != "" {

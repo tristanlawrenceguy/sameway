@@ -38,7 +38,7 @@ func TestATurnIsToldAsItHappens(t *testing.T) {
 	}
 	out := rec.Body.String()
 	// The stream is JSON, so quotes inside the HTML come escaped.
-	order := []string{"event: said", "event: tool", `"label":"Adding a card"`, "event: change", `data-block-id=`, `data-changed=\"added\"`, "event: text", "Added a card called Shopping.", "event: done", `sw-message--assistant`}
+	order := []string{"event: said", "event: tool", `"label":"Adding a card called Shopping"`, `"region":"main"`, "event: change", `data-block-id=`, `data-changed=\"added\"`, "event: text", "Added a card called Shopping.", "event: done", `sw-message--assistant`}
 	at := -1
 	for _, want := range order {
 		i := strings.Index(out, want)
@@ -102,7 +102,7 @@ func TestAToolIsNamedBeforeItsCallIsWhole(t *testing.T) {
 
 	out := rec.Body.String()
 	early := strings.Index(out, `"early":true`)
-	full := strings.Index(out, `"label":"Adding a card"`)
+	full := strings.Index(out, `"label":"Adding a card called Shopping"`)
 	if early < 0 || full < 0 || early > full {
 		t.Errorf("an early step names the tool before the full one, got\n%s", out)
 	}

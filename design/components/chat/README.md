@@ -33,6 +33,13 @@ either way.
   request failed and why, never "see below"
   ([WCAG 1.3.3](https://www.w3.org/WAI/WCAG22/Understanding/sensory-characteristics.html)).
 - **A message from another day says its day** with its time.
+- **A turn you can watch.** While the assistant works, the status beside
+  Send says what it is doing in words, a few seconds apart, and the reply
+  grows in short bursts with no caret; a screen reader hears the reply
+  once, whole, when it is done. A block about to be added holds its place
+  on the canvas in the assistant's colour
+  ([WCAG 4.1.3](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html);
+  design/foundations/motion.md).
 
 Not done, and why: a confirmation before deleting (Undo does the same
 without a question each time); sending on Enter on a phone (there is then

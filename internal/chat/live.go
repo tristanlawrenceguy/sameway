@@ -2,11 +2,9 @@ package chat
 
 import (
 	"context"
-	"encoding/json"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
-	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -33,6 +31,9 @@ type Event struct {
 	Label  string
 	Early  bool
 	Change *Change
+	// Aim is where a call is about to change the canvas, so the page can
+	// mark the place while the call runs; zero for a call that does not.
+	Aim Target
 	// ID is the record made: the person's message for said, the reply for
 	// done, the error message for error.
 	ID string
@@ -92,95 +93,4 @@ func (s *Service) completeOnce(ctx context.Context, req llm.Request, on func(Eve
 		on(Event{Kind: "text", Text: resp.Text})
 	}
 	return resp, err
-}
-
-// describe says a tool call in a few words a person can watch go by.
-func describe(call llm.ToolCall) string {
-	var args struct {
-		Component string `json:"component"`
-		Type      string `json:"type"`
-		Query     string `json:"query"`
-		Key       string `json:"key"`
-	}
-	json.Unmarshal(call.Args, &args)
-	a := an
-	switch call.Name {
-	case "add_component":
-		return "Adding" + or(a(args.Component), " a block")
-	case "update_component":
-		return "Changing a block"
-	case "remove_component":
-		return "Removing a block"
-	case "create_record":
-		return "Creating" + or(a(args.Type), " a record")
-	case "import_records":
-		return "Importing " + or(plural(args.Type), "records") + " from a file"
-	case "organise_writing":
-		return "Organising the writing"
-	case "suggest_edits":
-		return "Suggesting changes"
-	case "record_meeting":
-		return "Setting the meeting to ask to be recorded"
-	case "write_up_meeting":
-		return "Writing up the meeting"
-	case "update_record":
-		return "Updating" + or(a(args.Type), " a record")
-	case "delete_record":
-		return "Deleting" + or(a(args.Type), " a record")
-	case "find_records":
-		return "Looking through" + or(" "+plural(args.Type), " the records")
-	case "get_record":
-		return "Reading" + or(a(args.Type), " a record")
-	case "look_at_page":
-		return "Looking at the page"
-	case "search":
-		return "Searching for " + strings.TrimSpace(args.Query)
-	case "propose_change":
-		return "Proposing a change"
-	case "set_setting":
-		return "Changing " + or(args.Key, "a setting")
-	case "add_field", "add_type":
-		return "Changing the shape of" + or(a(args.Type), " the content")
-	case "run_action":
-		return "Running an action"
-	case "add_arrangement", "arrange_canvas":
-		return "Arranging the page"
-	case "clear_canvas":
-		return "Clearing the page"
-	case "undo_change":
-		return "Undoing a change"
-	}
-	return strings.ToUpper(call.Name[:1]) + strings.ReplaceAll(call.Name[1:], "_", " ")
-}
-
-// an is " a card" or " an image": a noun with its article, or nothing.
-func an(noun string) string {
-	if noun == "" {
-		return ""
-	}
-	if strings.ContainsAny(noun[:1], "aeiou") {
-		return " an " + noun
-	}
-	return " a " + noun
-}
-
-// describeChange says a change that landed in the log, in a few words:
-// "Added a card".
-func describeChange(c Change) string {
-	verb := c.Action
-	if verb == "" {
-		verb = "changed"
-	}
-	return strings.ToUpper(verb[:1]) + verb[1:] + or(an(c.Component), " a block")
-}
-
-func or(s, fallback string) string {
-	if strings.TrimSpace(s) == "" {
-		return fallback
-	}
-	return s
-}
-
-func plural(s string) string {
-	return schema.Plural(s)
 }

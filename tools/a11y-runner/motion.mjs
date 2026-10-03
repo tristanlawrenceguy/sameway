@@ -51,6 +51,65 @@ const settle = (page, ms = 700) => page.waitForTimeout(ms);
 const record = (page) => page.evaluate(() => window.__swVT.splice(0));
 const travels = (vt, part) => vt.filter((a) => a.travels && (!part || a.pe.includes(part)));
 
+// A turn you can watch (28-turn.js), fed to the page as the server would
+// send it: the status says each step in words, no more often than one can
+// be heard and each once; a new block's place is held in the assistant's
+// colour and the block lands there; a block being changed is outlined;
+// nothing travels under reduced motion, and every mark goes at the end.
+async function watchTurn(page, mode, reduced) {
+  await page.goto(base + "/");
+  await page.evaluate(() => {
+    const status = document.getElementById("chat-status");
+    window.__said = [];
+    new MutationObserver(() => window.__said.push({ at: performance.now(), text: status.querySelector(".sw-status__text").textContent }))
+      .observe(status, { childList: true, characterData: true, subtree: true });
+    let push;
+    const body = new ReadableStream({ start(c) { push = c; } });
+    const enc = new TextEncoder();
+    window.__send = (event, data) => push.enqueue(enc.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
+    window.__end = () => push.close();
+    window.swRefresh = () => {}; // the server knows nothing of this turn: the page stays as fed
+    window.swFollowTurn(document.querySelector("form.sw-compose"), Promise.resolve(new Response(body, { headers: { "Content-Type": "text/event-stream" } })));
+  });
+  const send = (event, data) => page.evaluate(([e, d]) => window.__send(e, d), [event, data]);
+  const other = await page.locator(".sw-main .sw-canvas > li[data-block-id]").first().getAttribute("data-block-id");
+  await send("tool", { tool: "add_component", label: "Adding a block", early: true });
+  await settle(page, 200);
+  const held = await page.evaluate(() => {
+    const p = document.querySelector(".sw-main .sw-canvas .sw-block--pending");
+    return p && { at: [...p.parentNode.children].indexOf(p), outline: getComputedStyle(p).outlineStyle, words: p.textContent };
+  });
+  check(held && held.outline === "dashed" && /Adding a block/.test(held.words), `${mode}: a block about to be added has its place held, in words too (${JSON.stringify(held)})`);
+  for (const w of ["Here ", "is ", "your ", "water ", "chart."]) await send("delta", { text: w });
+  await send("tool", { tool: "add_component", label: "Adding a chart of water", region: "main", span: 6 });
+  await send("tool", { tool: "update_component", label: "Changing the chat", block: other });
+  await settle(page, 300);
+  check(await page.evaluate((id) => getComputedStyle(document.querySelector(`[data-block-id="${id}"]`)).outlineStyle === "solid", other), `${mode}: a block about to be changed is outlined`);
+  check((await page.locator(".sw-live__text").textContent()) === "Here is your water chart.", `${mode}: the reply's words are all there, in order`);
+  await send("change", { block: "turn-test", region: "main", action: "added", html: '<li class="sw-block" data-block-id="turn-test" data-actor="assistant" data-changed="added" data-arrival="1" style="--sw-span: 6"><p>Water</p></li>' });
+  await settle(page, 1600);
+  const landed = await page.evaluate(() => {
+    const b = document.querySelector('[data-block-id="turn-test"]');
+    const moves = b && b.getAnimations({ subtree: true }).flatMap((a) => a.effect.getKeyframes()).some((k) => k.transform && k.transform !== "none");
+    return b && { at: [...b.parentNode.children].indexOf(b), held: document.querySelectorAll(".sw-block--pending").length, moves };
+  });
+  check(landed && landed.at === held?.at && landed.held === 0, `${mode}: the block lands where its place was held (${JSON.stringify(landed)} vs ${JSON.stringify(held)})`);
+  check(landed && !landed.moves, `${mode}: the block arrives without travelling`);
+  await settle(page, 2600);
+  await send("done", { status: '<div class="sw-status sw-status--done" data-state="done" role="status"><span class="sw-status__text">Assistant replied</span></div>' });
+  await send("text", { text: "" });
+  await page.evaluate(() => window.__end());
+  await settle(page, 300);
+  const said = await page.evaluate(() => window.__said.map((x) => ({ at: Math.round(x.at), text: x.text })).filter((x, i, all) => i === 0 || x.text !== all[i - 1].text));
+  const during = said.filter((x) => x.text !== "Assistant replied");
+  const texts = during.map((x) => x.text);
+  check(new Set(texts).size === texts.length, `${mode}: each step is said once (${JSON.stringify(texts)})`);
+  check(during.every((x, i) => i === 0 || x.at - during[i - 1].at >= 2400), `${mode}: the status changes no more often than it can be heard (${JSON.stringify(during)})`);
+  // Steps that come close together are not all said: the newest wins.
+  check(texts[0] === "Adding a block…" && texts[texts.length - 1] === "Changing the chat…" && texts.every((t) => !/_/.test(t)), `${mode}: the status says what is being done, in words, the newest when steps come close together (${JSON.stringify(texts)})`);
+  check(await page.evaluate(() => !document.querySelector(".sw-block--pending, [data-pending]")), `${mode}: every mark goes when the turn ends`);
+}
+
 async function run(reduced) {
   const mode = reduced ? "reduced motion" : "motion";
   const browser = await chromium.launch();
@@ -173,6 +232,8 @@ async function run(reduced) {
     check(travels(vt).length === 0, `${mode}: the next month travels: ${JSON.stringify(travels(vt).slice(0, 3))}`);
     check(vt.length > 0, `${mode}: the next month still cross-fades in`);
   } else check(travels(vt, "sw-days-").length > 0, `${mode}: the next month slides in (${vt.length} animations, none travel)`);
+
+  await watchTurn(page, mode, reduced);
 
   await browser.close();
   for (const path of made) await fetch(base + path, { method: "DELETE" });

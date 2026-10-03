@@ -170,7 +170,9 @@ the change is still findable.
 
 While a request is in flight, `status/enhance.js` switches the status
 component to `working`, whose dot pulses. The text changes at the same
-time, so the state is announced and readable without the animation.
+time, so the state is announced and readable without the animation. During the
+assistant's turn the words then follow what it is doing (below, "A turn
+you can watch").
 
 ## Reduced motion
 
@@ -241,6 +243,42 @@ each in; a single change is not delayed. Without scripts the form posts
 to `/chat` and the page comes back whole, as before. See
 `design/base/14-live.js` and `internal/server/stream.go`.
 
+## A turn you can watch
+
+A turn is the longest wait in Sameway, and the page should show it is
+alive without making noise (`design/base/28-turn.js`, `28-turn.css`):
+
+- **The status line says what the assistant is doing**, in words its
+  calls give: "Adding a chart of water…", "Looking up your tasks…",
+  "Arranging the page…", "Changing the list of tasks…", "Writing the
+  reply…" (`internal/chat/doing.go`). Not a spinner: a spinner says only
+  that something is happening; the words say what. The status is a polite
+  live region, so every change is read out; it changes at most once every
+  2.5 seconds, the newest words winning when steps come close together,
+  and the same words are never said twice in one turn. What is drawn is
+  what is heard: the words are the region's own. A step still going after
+  fifteen seconds says so in its own words ("Still adding a chart of
+  water…"). The page following the turn does not put the server's
+  "working" back over the step being said.
+- **The reply grows calmly.** Its words go on the page a few times a
+  second (every 80 ms), not letter by letter and with no caret, and the
+  log follows the end at once rather than gliding after every word. The
+  words are not in a live region: a screen reader hears the finished
+  reply once, at the end, with the status (`swSay`).
+- **A block about to be added holds its place**: as soon as the model
+  starts the call, a dashed outline in the assistant's colour stands where
+  the block will land, as wide as it will be. It is the first stage of the
+  block's arrival, held; when the block lands it takes that place and its
+  arrival plays on from the outline. A block about to be changed is
+  outlined, solid (dashed if it is about to go). The held place says
+  "Adding a chart of water…" to a screen reader that reaches it.
+
+Nothing travels. The outline fades in over `motion-slow`. Under reduced
+motion it is simply there, and the block that lands cross-fades in over
+`motion-fast` where the outline was instead of its staged arrival; under
+the still pace both are simply there. Under forced colours the outlines
+take `Highlight`.
+
 ## Sources
 
 - Material 3 motion: durations step by 50 ms, short 50 to 200 ms, medium
@@ -280,7 +318,25 @@ to `/chat` and the page comes back whole, as before. See
   ([NN/g, response times](https://www.nngroup.com/articles/response-times-3-important-limits/),
   [NN/g, animation duration](https://www.nngroup.com/articles/animation-duration/)).
 
+- Status said in words, politely, and not too often: a status message is
+  heard without moving focus ([WCAG 4.1.3](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html));
+  live regions announce every change, queue behind one another and are
+  best kept few and terse ([Scott O'Hara, Are we live?](https://www.scottohara.me/blog/2022/02/05/are-we-live.html),
+  [MDN, ARIA live regions](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Guides/Live_regions)).
+
 ## Not done, and why
+
+- **Text that types itself.** Drawing the reply letter by letter, or a
+  blinking caret at its end, is motion that explains nothing: the words
+  are already there. They land in short bursts instead.
+- **Saying every step.** A turn can call ten tools in a few seconds; a
+  screen reader told each would still be reading the first ones after the
+  turn was over. The newest step is said, and nothing twice.
+- **A spinner in the status.** The dot pulses four beats and stops (WCAG
+  2.2.2); the words carry the state.
+- **A held place in a pane.** The place is held only on the main canvas,
+  where the block lands at once; a block for a pane arrives with the page
+  that follows the turn.
 
 - **Moving a ticked row at once.** The next row would slide up under the
   pointer or the next Space; it moves when focus leaves the list.
