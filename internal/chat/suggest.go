@@ -11,8 +11,10 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
-// Someone's own words are theirs to change. Asked to improve them, the
-// assistant or an agent suggests: these words in place of those, and why,
+// Someone's own words are theirs to change. Asked for a change there is
+// no reason to turn down (fix the spelling), the assistant makes it; for
+// judgement calls on their words (tighten, improve, reword) it suggests,
+// deciding case by case: these words in place of those, and why,
 // each waiting on the record's page for whoever may change it to accept
 // or decline. Accepting is an ordinary change, logged and undone like any
 // other; a suggestion whose words have changed since says so rather than
@@ -38,7 +40,7 @@ func (s *Service) suggestTools() []llm.Tool {
 		return nil
 	}
 	return []llm.Tool{{Name: "suggest_edits",
-		Description: "Suggest changes to a person's writing instead of making them; they accept or decline each on its page. Use it to improve, shorten, correct or translate their words; update_record is for words that are yours. Do only the help asked for, keep their voice, small changes, at most 15. Feedback on structure is said in words, not suggested. Copy each passage exactly from get_record, long enough to occur once.",
+		Description: "Suggest changes to a person's writing instead of making them; they accept or decline each on its page. Judge each case: a plain command (fix the spelling) you just do with update_record; suggest when the changes are judgement calls on their words. Do only the help asked for, keep their voice, small changes, at most 15. Feedback on structure is said in words, not suggested. Copy each passage exactly from get_record, long enough to occur once.",
 		Schema: obj(map[string]any{
 			"type":  map[string]any{"type": "string", "description": "The record's content type, such as note."},
 			"id":    map[string]any{"type": "string", "description": "The record's id."},

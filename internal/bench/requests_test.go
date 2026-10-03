@@ -135,7 +135,7 @@ func requests() []request {
 		{name: "suggest", seed: letter, say: "Fix the spelling in my note Letter to Sam",
 			check: func(a *app.App, _ string) string {
 				n := find(a, "note", "title", "letter")
-				return all(want(len(list(a, "suggestion")) > 0, "no suggestions"), want(has(n, "body", "wonderfull"), "the words were changed, not suggested"))
+				return want(len(list(a, "suggestion")) > 0 || !has(n, "body", "wonderfull"), "neither fixed nor suggested")
 			}},
 		{name: "automate", say: "Whenever a task is marked done, send its title to https://example.com/hook",
 			check: func(a *app.App, _ string) string {
