@@ -8,7 +8,7 @@
   max-height: 20rem; overflow-y: auto;
   background: var(--sw-color-bg-raised); color: var(--sw-color-fg);
   border: 2px solid var(--sw-color-border-strong); border-radius: var(--sw-radius-md);
-  box-shadow: var(--sw-shadow-2);
+  box-shadow: var(--sw-shadow-3);
 }
 .sw-lookup__option, .sw-lookup__none {
   display: flex; flex-direction: column; justify-content: center;

@@ -26,6 +26,12 @@ var pairs = []pair{
 	{"fg-muted", "bg", 7, "secondary text"},
 	{"fg-muted", "bg-muted", 7, "secondary text on muted surface"},
 	{"fg-muted", "bg-raised", 7, "secondary text on cards"},
+	// A card lifted under the pointer or focus is a lighter surface in dark
+	// (design/foundations/elevation.md): its words keep 7:1 on it.
+	{"fg", "bg-lift", 7, "body text on a lifted card"},
+	{"fg-muted", "bg-lift", 7, "secondary text on a lifted card"},
+	{"accent", "bg-lift", 7, "a lifted card's link"},
+	{"focus", "bg-lift", 3, "focus ring on a lifted card"},
 	{"accent", "bg", 7, "links"},
 	{"accent", "bg-muted", 7, "links on muted surface"},
 	{"accent-fg", "accent", 7, "primary button label"},

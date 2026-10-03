@@ -1,0 +1,29 @@
+/* Something on its way: where content takes noticeable time, its shape
+   stands in its place rather than empty space (design/foundations/
+   elevation.md). Grey bars, a heading's and a few lines', hidden from
+   screen readers; the place itself says in words what is coming and is
+   aria-busy until it lands.
+
+   The bars may shimmer: a soft light passes across them, slowly, twice
+   (2 x 2.4 s, under WCAG 2.2.2's five seconds), then they are still. The
+   light moves by background position, not by moving anything. Under
+   reduced motion and the still pace there is no shimmer at all. */
+@keyframes sw-shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
+
+.sw-skeleton { display: grid; gap: var(--sw-space-3); padding-block: var(--sw-space-1); }
+.sw-skeleton > span {
+  display: block; height: var(--sw-space-3); border-radius: var(--sw-radius-pill);
+  background: linear-gradient(90deg, var(--sw-color-bg-muted) 0%, var(--sw-color-bg-muted) 40%, var(--sw-color-border) 50%, var(--sw-color-bg-muted) 60%, var(--sw-color-bg-muted) 100%);
+  background-size: 300% 100%;
+  animation: sw-shimmer 2400ms linear 2 both;
+}
+.sw-skeleton > span:first-child { width: 45%; height: var(--sw-space-4); }
+.sw-skeleton > span:nth-child(2) { width: 90%; }
+.sw-skeleton > span:nth-child(3) { width: 70%; }
+
+@media (prefers-reduced-motion: reduce) { .sw-skeleton > span { animation: none !important; } }
+:root[data-pace="still"] .sw-skeleton > span { animation: none; }
+
+/* Forced colours take the greys away: the bars are drawn in the system's
+   own colour for things greyed out, so the shape still shows. */
+@media (forced-colors: active) { .sw-skeleton > span { forced-color-adjust: none; background: GrayText; animation: none; } }

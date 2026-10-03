@@ -35,6 +35,12 @@ CSS, never by moving the markup.
   ([NN/g cards](https://www.nngroup.com/articles/cards-component/)).
 - **The same cue for a keyboard.** The card rises on keyboard focus as it
   does on hover ([WCAG 2.4.7](https://www.w3.org/WAI/WCAG22/Understanding/focus-visible.html)).
+- **Lifted, not only shadowed.** Rising, its surface and edge lighten as
+  its shadow deepens: on a dark page a shadow hardly shows, so the lighter
+  surface says it, as Material's dark theme does; under forced colours,
+  which drop shadows, the edge turns `Highlight`; under reduced motion it
+  does not move, the rest still changes
+  (design/foundations/elevation.md).
 - **Whole titles.** A result is known by its title, so it wraps rather than
   being cut, with the rest in a tooltip no keyboard or finger reaches. The
   title link is a 44px target

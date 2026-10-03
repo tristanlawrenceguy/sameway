@@ -16,7 +16,7 @@
 .sw-chat__panel {
   position: absolute; z-index: 20; top: calc(100% + var(--sw-space-1)); left: 0;
   min-width: 18rem; max-width: min(28rem, 90vw); padding: var(--sw-space-3);
-  background: var(--sw-color-bg-raised); border: 1px solid var(--sw-color-border); border-radius: var(--sw-radius-lg); box-shadow: var(--sw-shadow-2);
+  background: var(--sw-color-bg-raised); border: 1px solid var(--sw-color-border); border-radius: var(--sw-radius-lg); box-shadow: var(--sw-shadow-3);
   display: grid; gap: var(--sw-space-2);
 }
 .sw-chat__panel > p { margin: var(--sw-space-2) 0 0; }

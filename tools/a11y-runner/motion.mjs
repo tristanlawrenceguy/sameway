@@ -77,14 +77,19 @@ async function watchTurn(page, mode, reduced) {
   await settle(page, 200);
   const held = await page.evaluate(() => {
     const p = document.querySelector(".sw-main .sw-canvas .sw-block--pending");
-    return p && { at: [...p.parentNode.children].indexOf(p), outline: getComputedStyle(p).outlineStyle, words: p.textContent };
+    const bars = p && [...p.querySelectorAll(".sw-skeleton > span")];
+    const runs = bars ? bars.flatMap((b) => b.getAnimations()).map((x) => x.effect.getComputedTiming().endTime) : [];
+    return p && { at: [...p.parentNode.children].indexOf(p), outline: getComputedStyle(p).outlineStyle, words: p.textContent,
+      busy: p.getAttribute("aria-busy"), hidden: p.querySelector(".sw-skeleton")?.getAttribute("aria-hidden"), bars: bars.length, runs: runs.filter((t) => t > 1).length, longest: Math.max(0, ...runs) };
   });
+  check(held && held.busy === "true" && held.hidden === "true" && held.bars === 3, `${mode}: the held place is busy, its skeleton hidden from screen readers (${JSON.stringify(held)})`);
+  check(held && (reduced ? held.runs === 0 : held.runs === 3 && held.longest < 5000), `${mode}: the skeleton ${reduced ? "does not shimmer" : "shimmers for under five seconds"} (${JSON.stringify(held)})`);
   check(held && held.outline === "dashed" && /Adding a block/.test(held.words), `${mode}: a block about to be added has its place held, in words too (${JSON.stringify(held)})`);
   for (const w of ["Here ", "is ", "your ", "water ", "chart."]) await send("delta", { text: w });
   await send("tool", { tool: "add_component", label: "Adding a chart of water", region: "main", span: 6 });
   await send("tool", { tool: "update_component", label: "Changing the chat", block: other });
   await settle(page, 300);
-  check(await page.evaluate((id) => getComputedStyle(document.querySelector(`[data-block-id="${id}"]`)).outlineStyle === "solid", other), `${mode}: a block about to be changed is outlined`);
+  check(await page.evaluate((id) => ((b) => getComputedStyle(b).outlineStyle === "solid" && b.getAttribute("aria-busy") === "true")(document.querySelector(`[data-block-id="${id}"]`)), other), `${mode}: a block about to be changed is outlined and busy`);
   check((await page.locator(".sw-live__text").textContent()) === "Here is your water chart.", `${mode}: the reply's words are all there, in order`);
   await send("change", { block: "turn-test", region: "main", action: "added", html: '<li class="sw-block" data-block-id="turn-test" data-actor="assistant" data-changed="added" data-arrival="1" style="--sw-span: 6"><p>Water</p></li>' });
   await settle(page, 1600);
