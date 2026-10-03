@@ -41,7 +41,7 @@ type Command struct {
 
 // Presets are the programs known well enough to fill the template in.
 // Claude Code is given only Read (for pictures) of its own tools: with
-// all of them in view beside Sameway's, Haiku did 40 of 43 everyday
+// all of them in view beside Sameway's, Haiku did 46 of 51 everyday
 // requests in 28 seconds each; with them gone, 51 of 51 in 12
 // (internal/bench).
 var Presets = map[string]Command{
