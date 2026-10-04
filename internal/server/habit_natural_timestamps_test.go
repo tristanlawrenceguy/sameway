@@ -44,8 +44,8 @@ func TestHabitDetailLedeNoMachineFormatDate(t *testing.T) {
 		t.Errorf("habit detail lede should use natural language timestamps, got %q — contains a 24-hour clock pattern (machine format like Wed 30 Sep 2026, 13:31)", whenText)
 	}
 
-	// It must still say "Started" before the date.
-	if !strings.HasPrefix(whenText, "Started ") {
-		t.Errorf("habit detail lede should start with 'Started ', got %q", whenText)
+	// It must NOT start with "Started" or any label prefix — just relative timestamp.
+	if strings.HasPrefix(whenText, "Started ") {
+		t.Errorf("habit detail lede should not start with 'Started '; got %q", whenText)
 	}
 }

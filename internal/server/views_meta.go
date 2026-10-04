@@ -191,23 +191,14 @@ func (s *Server) dayFact(t *schema.Type, rec *store.Record, done, chip bool) str
 	return ""
 }
 
-// whenMade says when a record was made and last changed, as a person reads
-// a time, and where its words came from when that was not the owner, in
-// one quiet line under its fields. Habits and actions say "Started"; all
-// other types say "Added" instead of the raw database column name.
-// Rendered output: <span class="sw-detail__when sw-muted sw-small">Added ...</span>
+// whenMade says when a record was made, as a person reads a time, and where
+// its words came from when that was not the owner, in one quiet line under
+// its fields. No field-name label prefix: just the relative timestamp text so
+// dates read naturally without "Added" or "Started" before them. Rendered
+// output: <span class="sw-detail__when sw-muted sw-small">4 days ago at 1:31pm</span>
 func whenMade(t *schema.Type, rec *store.Record, from string) string {
 	made := when.Relative(rec.CreatedAt.UTC().Format(time.RFC3339), time.Now())
-	changed := when.Relative(rec.UpdatedAt.UTC().Format(time.RFC3339), time.Now())
-	labelWord := "Added" // default for content types
-	switch t.Name {
-	case HabitType, chat.ActionType:
-		labelWord = "Started"
-	}
-	line := labelWord + " " + made
-	if changed != made {
-		line += " · Updated " + changed
-	}
+	line := made
 	if from != "" {
 		line += " · From: " + template.HTMLEscapeString(from)
 	}

@@ -7,6 +7,7 @@ package server_test
 // appear in the lede.
 
 import (
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -53,8 +54,12 @@ func TestTaskDetailLedeHasNoStatusBadgeDoing(t *testing.T) {
 	}
 
 	// Human-readable metadata must still appear: due date chip and creation time.
-	if !strings.Contains(lede, "Added ") {
-		t.Error("task detail lede should still show when the record was created")
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*">([^<]+)</span>`)
+	matches := re.FindStringSubmatch(lede)
+	if len(matches) < 2 {
+		t.Error("task detail lede should have a sw-detail__when span with the creation time")
+	} else if strings.HasPrefix(matches[1], "Added ") {
+		t.Error("task detail lede should not start with 'Added' label; got timestamp only")
 	}
 }
 
@@ -101,8 +106,12 @@ func TestTaskDetailLedeHasNoStatusBadgeDone(t *testing.T) {
 	}
 
 	// Human-readable metadata must still appear: creation time.
-	if !strings.Contains(lede, "Added ") {
-		t.Error("task detail lede should still show when the record was created")
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*">([^<]+)</span>`)
+	matches := re.FindStringSubmatch(lede)
+	if len(matches) < 2 {
+		t.Error("task detail lede should have a sw-detail__when span with the creation time")
+	} else if strings.HasPrefix(matches[1], "Added ") {
+		t.Error("task detail lede should not start with 'Added' label; got timestamp only")
 	}
 }
 
@@ -143,8 +152,12 @@ func TestTaskDetailLedeHasNoStatusBadgeForUndoneTask(t *testing.T) {
 	}
 
 	// Human-readable metadata must still appear: creation time.
-	if !strings.Contains(page, "Added ") {
-		t.Error("task detail page should still show when the record was created")
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*">([^<]+)</span>`)
+	matches := re.FindStringSubmatch(page)
+	if len(matches) < 2 {
+		t.Error("task detail page should have a sw-detail__when span with the creation time")
+	} else if strings.HasPrefix(matches[1], "Added ") {
+		t.Error("task detail lede should not start with 'Added' label; got timestamp only")
 	}
 
 	// The Done checkbox must be unchecked.

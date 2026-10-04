@@ -40,7 +40,7 @@ func TestTaskDetailLedeNoRawDueLabel(t *testing.T) {
 	}
 
 	// The creation timestamp via whenMade should still be present.
-	if !strings.Contains(page, ">Added ") {
+	if !strings.Contains(page, `class="sw-detail__when sw-muted sw-small"`) {
 		t.Error("task detail page lede should still show creation time")
 	}
 }

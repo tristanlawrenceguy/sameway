@@ -30,7 +30,7 @@ func TestNoteDetailPageHasNoStatusLabelInLede(t *testing.T) {
 	}
 
 	// Creation time must still appear in the page (createdAt == updatedAt on a fresh record).
-	if !strings.Contains(page, "Added ") {
+	if !strings.Contains(page, `class="sw-detail__when sw-muted sw-small"`) {
 		t.Error("note detail page should still show when the record was created")
 	}
 }
@@ -58,7 +58,7 @@ func TestProjectDetailPageHasNoStatusLabelInLede(t *testing.T) {
 	}
 
 	// Creation time must still appear in the page (createdAt == updatedAt on a fresh record).
-	if !strings.Contains(page, "Added ") {
+	if !strings.Contains(page, `class="sw-detail__when sw-muted sw-small"`) {
 		t.Error("project detail page should still show when the record was created")
 	}
 }
@@ -86,7 +86,7 @@ func TestProjectDetailPageDoneStatusHasNoStatusLabelInLede(t *testing.T) {
 	}
 
 	// Creation time must still appear in the page.
-	if !strings.Contains(page, "Added ") {
+	if !strings.Contains(page, `class="sw-detail__when sw-muted sw-small"`) {
 		t.Error("project detail page should still show when the record was created")
 	}
 }
