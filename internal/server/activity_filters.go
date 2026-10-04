@@ -227,3 +227,11 @@ func changesWords(n int) string {
 	}
 	return strconv.Itoa(n) + " changes"
 }
+
+// oneOrMany is the word for a count: 1 change, 2 changes.
+func oneOrMany(n int, one, many string) string {
+	if n == 1 {
+		return one
+	}
+	return many
+}
