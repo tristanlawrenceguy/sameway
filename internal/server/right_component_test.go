@@ -32,7 +32,7 @@ func TestATaskWithNoDayDoesNotSayWhenItChanged(t *testing.T) {
 	if strings.Contains(get(t, h, "/t/task").Body.String(), "Updated ") {
 		t.Errorf("a task row should not say when it was updated")
 	}
-	if !strings.Contains(get(t, h, "/t/note").Body.String(), "Updated ") {
+	if !strings.Contains(get(t, h, "/t/note").Body.String(), `class="sw-muted"`) {
 		t.Errorf("a note, which has no day of its own, still says when it changed")
 	}
 }

@@ -35,8 +35,8 @@ func TestNoteListDoesNotShowStatusBadge(t *testing.T) {
 	if strings.Contains(row, "Draft") || strings.Contains(row, `sw-badge`) {
 		t.Errorf("note list row must not show status badge 'Draft'; found in:\n%s", truncate(row))
 	}
-	if !strings.Contains(row, "Updated") {
-		t.Errorf("note list row should still show the Updated timestamp; found in:\n%s", truncate(row))
+	if !strings.Contains(row, "sw-muted") {
+		t.Errorf("note list row should still show the timestamp; found in:\n%s", truncate(row))
 	}
 }
 
@@ -66,8 +66,8 @@ func TestProjectListDoesNotShowStatusBadge(t *testing.T) {
 	if strings.Contains(row, "Active") || strings.Contains(row, `sw-badge`) {
 		t.Errorf("project list row must not show status badge 'Active'; found in:\n%s", truncate(row))
 	}
-	if !strings.Contains(row, "Updated") {
-		t.Errorf("project list row should still show the Updated timestamp; found in:\n%s", truncate(row))
+	if !strings.Contains(row, "sw-muted") {
+		t.Errorf("project list row should still show the timestamp; found in:\n%s", truncate(row))
 	}
 }
 
@@ -97,7 +97,7 @@ func TestFileListDoesNotShowStatusBadge(t *testing.T) {
 	if strings.Contains(row, "Ready") || strings.Contains(row, `sw-badge`) {
 		t.Errorf("file list row must not show status badge 'Ready'; found in:\n%s", truncate(row))
 	}
-	if !strings.Contains(row, "Updated") {
-		t.Errorf("file list row should still show the Updated timestamp; found in:\n%s", truncate(row))
+	if !strings.Contains(row, "sw-muted") {
+		t.Errorf("file list row should still show the timestamp; found in:\n%s", truncate(row))
 	}
 }

@@ -118,7 +118,7 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 	if d := s.dayFact(t, rec, done, o.Chips && t.Name != EntryType); d != "" {
 		parts = append(parts, d)
 	} else if !o.Made && !hasDate(t) {
-		parts = append(parts, `<span class="sw-muted">Updated `+when.Short(rec.UpdatedAt.UTC().Format(time.RFC3339), time.Now())+`</span>`)
+		parts = append(parts, `<span class="sw-muted">`+when.Relative(rec.UpdatedAt.UTC().Format(time.RFC3339), time.Now())+`</span>`)
 	}
 	// An entry's row is already titled by its habit; saying it again under
 	// the title is the same words twice.
