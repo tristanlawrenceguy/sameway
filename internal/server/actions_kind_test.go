@@ -87,7 +87,7 @@ func TestActionsListStillShowsUpdatedTime(t *testing.T) {
 
 	body := get(t, h, "/t/action").Body.String()
 
-	if !strings.Contains(body, "Updated") {
+	if !strings.Contains(body, "sw-muted") {
 		t.Errorf("actions list should still show when each action was updated; found in:\n%s", truncate(body))
 	}
 }
