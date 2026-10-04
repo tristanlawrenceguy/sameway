@@ -106,7 +106,7 @@ func (s *Service) failAfter(said string, err error, changes []Change, tools []ma
 	if len(changes) == 0 {
 		return s.fail(err)
 	}
-	Record(s.Store, "system", Change{Action: "failed", Detail: truncate(err.Error(), 200)})
+	Record(s.Store, "system", Change{Action: "failed", Detail: truncate(SanitizeError(err.Error()), 200)})
 	rec, storeErr := s.message(map[string]any{"role": "error", "content": err.Error() + " What it had done before that is below, and each can be undone.", "changes": changes, "tools": tools})
 	if storeErr != nil {
 		return nil, storeErr

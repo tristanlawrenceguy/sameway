@@ -114,6 +114,7 @@ runner in tools/a11y-runner.
 | Assistant sees the page the person is on | look_at_page does what the person did there and reads it with scripts run, falling back to the served page with no browser; MCP keeps its own look | `internal/server/look_chat_test.go` |
 | Two records alike are told apart | where titles repeat on a list, a block, a board, search, the log or a calendar, each repeated one's link, box, Move, Undo and choice carry hidden words that differ (due Fri 25 Sep, when added, the start of its id), and a title of its own is left plain; a block's Expand and Remove are named after its label | `internal/server/names_apart_test.go`, `internal/server/apart_test.go` |
 | A browser agent on live pages | from the accessibility tree with records alike seeded: every control named, none alike within a landmark, one place per link name, visible label inside the name and not twice, no glyphs, look agrees; find overdue, tick, undo, add a note and search by role and name alone, failing on a strict-mode match of two | `tools/a11y-runner/agent.mjs` (CI) |
+| No machine words reach a person | every page of a workspace filled through the API and the assistant (lists, records, the home canvas with a list, a calendar, a chart and a tracker, search, the log, help, workspaces), as its text and every name, label and description a screen reader says, holds no machine date, record id, field name as stored or title-cased (created_at, Created At), choice as stored where it has a label, library name (Go-http-client), exit status, schema word, nil or NaN, and no two values with nothing between them ("This week 1 4 Oct", "Activity8 changes"); a count says what it counts, one or many; an agent is named by its key or X-Sameway-Agent, never its User-Agent, which names a library; a program's error is said as what it said about the trouble (chat.SanitizeError), not its name, exit status or a path; a search hit's snippet holds no record's id, keeps each value apart, and is shown only when the words are in it | `internal/server/machine_words_test.go`, `internal/chat/plain_error_test.go` |
 | Every page and the site as a whole | every component check on every page, focus hidden on a phone either way up, live regions that can announce, one place per link name, no two headings or controls alike, titles, the same navigation everywhere, forms sent empty say what is wrong | `tools/a11y-runner/site.mjs` (CI) |
 
 When you add a component, the contract and enum-coverage tests tell you what
@@ -170,7 +171,7 @@ with `--strict` until its fix lands; `review` and `not yet` are yours to hold.
 | 6 | No meaning only in a canvas, a hover or a drag | review |
 | | **Understand** | |
 | 7 | One ariaSnapshot golden per page type | not yet |
-| 8 | No glyphs in names; no counts run into words ("This week 1 28 Sep") | agent (glyphs); counts not yet |
+| 8 | No glyphs in names; no counts run into words ("This week 1 28 Sep") | agent (glyphs); go `machine_words_test.go` (counts and any two values with nothing between them) |
 | 9 | A manifest's `machine` says how to find it by role and name, and that holds | go `contract_test.go` (selector); role-and-name not yet |
 | 10 | look says what the browser's tree says | agent (look on the same pages); not compared yet |
 | | **Operate** | |
