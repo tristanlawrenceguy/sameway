@@ -197,8 +197,8 @@ func (s *Server) dayFact(t *schema.Type, rec *store.Record, done, chip bool) str
 // other types say "Added" instead of the raw database column name.
 // Rendered output: <span class="sw-detail__when sw-muted sw-small">Added ...</span>
 func whenMade(t *schema.Type, rec *store.Record, from string) string {
-	made := when.Text(rec.CreatedAt.UTC().Format(time.RFC3339))
-	changed := when.Text(rec.UpdatedAt.UTC().Format(time.RFC3339))
+	made := when.Relative(rec.CreatedAt.UTC().Format(time.RFC3339), time.Now())
+	changed := when.Relative(rec.UpdatedAt.UTC().Format(time.RFC3339), time.Now())
 	labelWord := "Added" // default for content types
 	switch t.Name {
 	case HabitType, chat.ActionType:
