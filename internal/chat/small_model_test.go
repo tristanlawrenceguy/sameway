@@ -122,3 +122,25 @@ func TestAnActionThatCouldNeverRunIsRefused(t *testing.T) {
 		t.Errorf("a right one is kept: %s", text)
 	}
 }
+
+// A timed thing given a day alone becomes all day, as a person setting
+// tomorrow means; the result says the time went, so a model moving it
+// can put the time back.
+func TestADayAloneSaysTheTimeWent(t *testing.T) {
+	svc := newFullService(t)
+	ev, _ := svc.Store.Create("event", map[string]any{"title": "Team lunch", "starts": "2026-10-08 12:30"})
+	raw := []byte(`{"type":"event","id":"` + ev.ID + `","fields":{"starts":"2026-10-09"}}`)
+	if text, _ := svc.Call("update_record", raw); !strings.Contains(text, "starts was at 12:30 and is now the whole day") {
+		t.Errorf("the time going is said: %s", text)
+	}
+}
+
+// Nothing found says the day searched with its weekday, so a day counted
+// wrong shows.
+func TestNothingFoundSaysTheDay(t *testing.T) {
+	svc := newFullService(t)
+	svc.Store.Create("task", map[string]any{"title": "Pay rent", "due": "2026-10-08"})
+	if text, _ := svc.Call("find_records", []byte(`{"type":"task","where":["due=2026-10-10"]}`)); !strings.Contains(text, "Sat 10 Oct") {
+		t.Errorf("the weekday is said: %s", text)
+	}
+}

@@ -95,3 +95,26 @@ func (s *Service) clock() time.Time {
 	}
 	return time.Now()
 }
+
+// timeLost says when a change gave a timed field a day alone, so its time
+// went: a model moving lunch at 12:30 to Friday wrote the day only, two
+// times in three, and the lunch became all day.
+func timeLost(t *schema.Type, given map[string]any, was, now *store.Record) string {
+	var lost []string
+	for _, f := range t.Fields {
+		if _, ok := given[f.Name]; !ok || f.Type != "datetime" {
+			continue
+		}
+		before, _ := was.Fields[f.Name].(string)
+		after, _ := now.Fields[f.Name].(string)
+		old, err := time.Parse(time.RFC3339, before)
+		if err != nil || strings.HasSuffix(before, "T00:00:00Z") || !strings.HasSuffix(after, "T00:00:00Z") {
+			continue
+		}
+		lost = append(lost, fmt.Sprintf("%s was at %s and is now the whole day", f.Name, old.In(time.Local).Format("15:04")))
+	}
+	if len(lost) == 0 {
+		return ""
+	}
+	return " " + strings.Join(lost, "; ") + ": if it should keep its time, give the day with the time."
+}
