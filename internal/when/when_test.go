@@ -138,3 +138,53 @@ func TestWhySaysWhatItMustBe(t *testing.T) {
 		t.Error("midday is read, as noon is")
 	}
 }
+
+// Relative formats stored moments and days as natural-language phrasing.
+func TestRelativeFormats(t *testing.T) {
+	// A Thursday at mid-morning — all comparisons relative to this.
+	now := time.Date(2026, 9, 17, 10, 30, 0, 0, time.UTC)
+
+	cases := []struct {
+		v    string
+		want string
+	}{
+		// Today (diff == 0).
+		{"2026-09-17T08:00:00Z", "Today at 8:00am"},
+		{"2026-09-17T14:30:00Z", "Today at 2:30pm"},
+		// Yesterday (diff == -1).
+		{"2026-09-16T09:00:00Z", "Yesterday at 9:00am"},
+		{"2026-09-16T23:59:00Z", "Yesterday at 11:59pm"},
+		// Tomorrow (diff == 1).
+		{"2026-09-18T07:15:00Z", "Tomorrow at 7:15am"},
+		// Within past week (diff -2..-6).
+		{"2026-09-15T13:31:00Z", "2 days ago at 1:31pm"},
+		{"2026-09-14T06:00:00Z", "3 days ago at 6:00am"},
+		{"2026-09-11T22:00:00Z", "6 days ago at 10:00pm"},
+		// Within future week (diff 2..6).
+		{"2026-09-19T13:31:00Z", "In 2 days at 1:31pm"},
+		{"2026-09-23T06:00:00Z", "In 6 days at 6:00am"},
+		// Older same-year (diff >= 7 or <= -7).
+		{"2026-08-01T15:45:00Z", "Sat 1 Aug at 3:45pm"},
+		{"2026-01-01T00:30:00Z", "Thu 1 Jan at 12:30am"},
+		// Cross-year.
+		{"2025-12-25T18:00:00Z", "Dec 25 at 6:00pm 2025"},
+		{"2024-03-15T09:00:00Z", "Mar 15 at 9:00am 2024"},
+		// Day-only values (fall through to shortDay).
+		{"2026-09-17T00:00:00Z", "Today"},
+		{"2026-09-18T00:00:00Z", "Tomorrow"},
+		{"2026-09-16T00:00:00Z", "Yesterday"},
+		{"2026-09-14T00:00:00Z", "Mon 14 Sep"},
+		{"2026-08-01T00:00:00Z", "1 Aug"},
+		{"2025-03-15T00:00:00Z", "15 Mar 2025"},
+		// Not a stored value — pass through unchanged.
+		{"not a date", "not a date"},
+		{"", ""},
+	}
+
+	for _, c := range cases {
+		got := Relative(c.v, now)
+		if got != c.want {
+			t.Errorf("Relative(%q, %s) = %q, want %q", c.v, now.Format("2006-01-02"), got, c.want)
+		}
+	}
+}
