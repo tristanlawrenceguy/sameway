@@ -178,7 +178,7 @@ func (s *Server) dayFact(t *schema.Type, rec *store.Record, done, chip bool) str
 			}
 			return string(s.component("badge", map[string]any{"label": text, "tone": tone}))
 		}
-		short := when.Short(v, now)
+		short := when.Relative(v, now)
 		class := "sw-when"
 		switch {
 		case past && f.Label != "":
