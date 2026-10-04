@@ -12,7 +12,6 @@
 package when
 
 import (
-	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -176,74 +175,6 @@ func Short(v string, now time.Time) string {
 		return d.Format("2 Jan") + clock
 	}
 	return d.Format("2 Jan 2006") + clock
-}
-
-// Relative is a stored value the way a person reads it on a list row:
-// "Today at 12:53am", "Yesterday at 6pm", "Two days ago at 9pm", or
-// "Last Monday" for more than a week back. The time uses a 12-hour clock
-// with am/pm; dates far away omit the time.
-// Anything that is not a stored value comes back as it is.
-func Relative(v string, now time.Time) string {
-	ts, err := time.Parse(time.RFC3339, v)
-	if err != nil {
-		return v
-	}
-
-	dayOnly := strings.HasSuffix(v, "T00:00:00Z")
-	localDay := ts.Local()
-	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-	d := time.Date(localDay.Year(), localDay.Month(), localDay.Day(), 0, 0, 0, 0, now.Location())
-	diff := int(d.Sub(today).Hours() / 24)
-
-	var datePart string
-	switch {
-	case diff == 0:
-		datePart = "Today"
-	case diff == 1:
-		datePart = "Tomorrow"
-	case diff > 1 && diff < 7:
-		datePart = d.Weekday().String() + " at " + timeStr(localDay)
-		return datePart
-	case diff < 0 && diff > -7:
-		n := -diff
-		if n == 1 {
-			datePart = "Yesterday"
-		} else {
-			datePart = fmt.Sprintf("%d days ago", n)
-		}
-	default:
-		// More than a week back — use the month/day form.
-		datePart = localDay.Format("2 Jan")
-		if !dayOnly {
-			return datePart + " at " + timeStr(localDay)
-		}
-		return datePart
-	}
-
-	if dayOnly {
-		return datePart
-	}
-	return datePart + " at " + timeStr(localDay)
-}
-
-// timeStr formats a time as 12-hour with am/pm, like "1:53am" or "6pm".
-func timeStr(t time.Time) string {
-	h := t.Hour()
-	m := t.Minute()
-	suffix := "am"
-	switch {
-	case h == 0:
-		h = 12
-	case h == 12:
-		suffix = "pm"
-	case h > 12:
-		h -= 12
-		suffix = "pm"
-	}
-	if m == 0 {
-		return fmt.Sprintf("%d%s", h, suffix)
-	}
-	return fmt.Sprintf("%d:%02d%s", h, m, suffix)
 }
 
 // setReal sets the day when it exists, and marks the reading bad when it
