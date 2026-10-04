@@ -29,7 +29,7 @@ func TestATrackerShowsTheHabitsItNames(t *testing.T) {
 	page := get(t, h, "/canvas/"+made.ID).Body.String()
 	for _, want := range []string{
 		`aria-label="Reading"`, `<h2 class="sw-tracker__title">Reading</h2>`,
-		`<label class="sw-tracker__unit" for="log-` + pages.ID + `"><span class="sw-visually-hidden">Amount in </span>pages<span class="sw-visually-hidden"> for Pages per day</span></label>`,
+		`<label class="sw-tracker__unit" for="log-` + pages.ID + `">pages</label>`,
 	} {
 		if !strings.Contains(page, want) {
 			t.Errorf("the tracker shows %s\n%s", want, truncate(page))
