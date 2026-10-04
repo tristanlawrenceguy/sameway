@@ -36,7 +36,7 @@ func newestEntry(t *testing.T, st *store.Store) *store.Record {
 }
 
 // A program calling the API is an agent, named by its X-Sameway-Agent
-// header, or else by its User-Agent's product; a browser's names nobody.
+// header, or else "An agent": a User-Agent names a library, not who called.
 func TestAnAPIWriteIsLoggedByTheAgentsName(t *testing.T) {
 	a, h := newApp(t)
 	cases := []struct {
@@ -44,7 +44,7 @@ func TestAnAPIWriteIsLoggedByTheAgentsName(t *testing.T) {
 		want   string
 	}{
 		{map[string]string{"X-Sameway-Agent": "backup", "User-Agent": "curl/8.4.0"}, "backup (through the API) created note Plan"},
-		{map[string]string{"User-Agent": "python-requests/2.31.0"}, "python-requests (through the API) created note Plan"},
+		{map[string]string{"User-Agent": "python-requests/2.31.0"}, "An agent (through the API) created note Plan"},
 		{map[string]string{"User-Agent": "Mozilla/5.0 (Windows NT 10.0)"}, "An agent (through the API) created note Plan"},
 		{nil, "An agent (through the API) created note Plan"},
 	}

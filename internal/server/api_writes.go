@@ -2,7 +2,6 @@ package server
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 )
@@ -107,22 +106,15 @@ func (s *Server) keptLog(w http.ResponseWriter, r *http.Request) bool {
 }
 
 // apiAgent is who is calling the API: the name its X-Sameway-Agent header
-// gives, or the product its User-Agent names (curl, python-requests),
-// or nobody in particular, "An agent". A browser's User-Agent names no
-// one, since every browser's starts Mozilla.
+// gives, or nobody in particular, "An agent". The User-Agent is not a
+// name: it names the library that sent the request (Go-http-client,
+// python-requests), which reached people as "Added by Go-http-client".
 func apiAgent(r *http.Request) chat.Agent {
 	// An agent with a key is who its key says, whatever it calls itself.
 	if v := chat.VisitorOf(r.Context()); v.Agent {
 		return chat.Agent{Name: v.Name, Through: chat.ThroughAPI}
 	}
-	name := r.Header.Get("X-Sameway-Agent")
-	if name == "" {
-		product, _, _ := strings.Cut(strings.TrimSpace(r.UserAgent()), "/")
-		if product, _, _ = strings.Cut(product, " "); product != "Mozilla" {
-			name = product
-		}
-	}
-	return chat.Agent{Name: chat.AgentName(name), Through: chat.ThroughAPI}
+	return chat.Agent{Name: chat.AgentName(r.Header.Get("X-Sameway-Agent")), Through: chat.ThroughAPI}
 }
 
 // byAgent marks a block's fields as the agent's: who changed it last,

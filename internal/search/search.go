@@ -134,6 +134,10 @@ func texts(t *schema.Type, rec *store.Record) (title, body string) {
 		if v == nil {
 			continue
 		}
+		// A record it points at is an id, no word of anyone's; it is left out.
+		if f.Type == "ref" || f.RefList() {
+			continue
+		}
 		// A date and a choice are found and shown as a person reads them,
 		// not as they are stored; yes or no says nothing on its own.
 		var s string
@@ -159,7 +163,8 @@ func texts(t *schema.Type, rec *store.Record) (title, body string) {
 	if title == "" {
 		title = t.Name + " " + rec.ID
 	}
-	return title, strings.Join(parts, " ")
+	// Each value apart, as a reader needs: "Done · Fri 9 Oct · home".
+	return title, strings.Join(parts, " · ")
 }
 
 // flatten turns any field value into words.

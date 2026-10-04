@@ -63,7 +63,7 @@ func (s *Server) changedBy() map[string]int {
 // block, "an agent" when it gave no name.
 func blockWho(b *store.Record) map[string]string {
 	agent, _ := b.Fields["agent"].(string)
-	if agent == "" {
+	if agent == "" || chat.AgentWho(agent, "") == "An agent" {
 		agent = "an agent"
 	}
 	return map[string]string{"human": "you", "assistant": "the assistant", "system": "the workspace", chat.ActorAgent: agent}

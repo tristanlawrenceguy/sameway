@@ -93,7 +93,7 @@ func (s *Server) recentActivityAbout(n int, from string, about func(target, id s
 	inner.WriteString(`</p>`)
 
 	body, err := s.app.Registry.RenderSlot("disclosure",
-		map[string]any{"label": "Activity", "count": len(recs), "of": "changes", "id": "recent-activity"},
+		map[string]any{"label": "Activity", "count": len(recs), "of": oneOrMany(len(recs), "change", "changes"), "id": "recent-activity"},
 		template.HTML(inner.String()))
 	if err != nil {
 		return ""

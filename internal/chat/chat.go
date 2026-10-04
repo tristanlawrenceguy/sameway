@@ -275,7 +275,7 @@ func (s *Service) fields(typeName string, in map[string]any) map[string]any {
 
 // fail stores an error notice in the conversation and returns it with the error.
 func (s *Service) fail(err error) (*store.Record, error) {
-	Record(s.Store, "system", Change{Action: "failed", Detail: truncate(err.Error(), 200)})
+	Record(s.Store, "system", Change{Action: "failed", Detail: truncate(SanitizeError(err.Error()), 200)})
 	rec, storeErr := s.message(map[string]any{"role": "error", "content": err.Error()})
 	if storeErr != nil {
 		return nil, storeErr

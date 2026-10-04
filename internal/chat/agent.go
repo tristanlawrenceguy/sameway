@@ -36,18 +36,16 @@ func (a Agent) Who() string {
 	return AgentWho(a.Name, a.Through)
 }
 
-// AgentWho is Agent.Who from a log entry's by and via.
-// machineNames are known machine-language identifiers that should be
-// treated as anonymous, so they appear as "An agent" instead of raw client
-// strings like "Go-http-client".
+// machineNames are libraries' names that entries written before agents
+// stopped being named by their User-Agent still hold: said as "An agent".
 var machineNames = map[string]bool{
 	"Go-http-client": true,
 }
 
-// MachineName reports whether name is a known machine-language identifier
-// that should be hidden from user-facing surfaces.
+// MachineName says whether a stored name is a library's, said as "An agent".
 func MachineName(name string) bool { return machineNames[name] }
 
+// AgentWho is Agent.Who from a log entry's by and via.
 func AgentWho(name, through string) string {
 	if name == "" || machineNames[name] {
 		name = "An agent"
