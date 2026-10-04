@@ -145,7 +145,7 @@ func (s *Service) updateRecord(typeName, id string, fields map[string]any, versi
 		again = fmt.Sprintf(" It repeats (%s), so it is not finished but due again at %v.", when.RepeatText(fmt.Sprint(rec.Fields[repeat])), rec.Fields[day])
 	}
 	return toolResult{
-		text:   fmt.Sprintf("updated %s %s: %q, at /t/%s/%s.%s", t.Name, rec.ID, title, t.Name, rec.ID, again) + s.datesSaid(t, fields, rec),
+		text:   fmt.Sprintf("updated %s %s: %q, at /t/%s/%s.%s", t.Name, rec.ID, title, t.Name, rec.ID, again) + s.datesSaid(t, fields, rec) + timeLost(t, fields, was, rec),
 		change: &c,
 	}
 }
@@ -179,10 +179,15 @@ func (s *Service) findRecords(typeName, words string, where []string, order stri
 		if words == "" && len(where) == 0 {
 			return toolResult{text: fmt.Sprintf("there are no %s records yet", t.Name)}
 		}
-		return toolResult{text: fmt.Sprintf("no %s matches %s. search finds words in every kind at once, when it may be another.", t.Name, strings.TrimSpace(strings.Join(append(where, words), " ")))}
+		said := strings.TrimSpace(strings.Join([]string{query.Words(t, where), words}, " "))
+		return toolResult{text: fmt.Sprintf("no %s matches %s. Leave out query to list them all and judge by their titles; search finds words in every kind at once.", t.Name, said)}
 	}
 	// The titles are fenced, each line saying who wrote it; see provenance.go.
-	return toolResult{text: fmt.Sprintf("%s records, newest first (id, title, written by). Each title was written by the one on its line; %s.\n<<<record text\n%s\nrecord text>>>", t.Name, Untrusted, strings.Join(lines, "\n"))}
+	matching := ""
+	if len(where) > 0 {
+		matching = " " + query.Words(t, where)
+	}
+	return toolResult{text: fmt.Sprintf("%s records%s, newest first (id, title, written by). Each title was written by the one on its line; %s.\n<<<record text\n%s\nrecord text>>>", t.Name, matching, Untrusted, strings.Join(lines, "\n"))}
 }
 
 // deleteRecord is not a tool: a record goes when a person deletes it, or
