@@ -1,7 +1,6 @@
 package bench
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
@@ -9,8 +8,6 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
-	"github.com/tristanlawrenceguy/sameway/internal/store"
-	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // request is one thing a person asks, what is there before, and how to
@@ -22,263 +19,181 @@ type request struct {
 	check func(a *app.App, reply string) string
 }
 
+// requests are the hard ones: several steps at once, changes to what is
+// there without touching the rest, days counted, an ambiguity to ask
+// about, a layout, an answer from two kinds of record. The easy ones (a
+// note, a list, a chart) passed every run once Claude Code was given
+// only Read, and were retired.
 func requests() []request {
 	return []request{
-		{name: "checklist", say: "Put a checklist of milk, eggs and bread on the page",
+		{name: "repeat", say: "Every Monday at 9am remind me to send my timesheet",
 			check: func(a *app.App, _ string) string {
-				return all(titled(a, "milk"), titled(a, "eggs"), titled(a, "bread"), block(a, "", ""))
-			}},
-		{name: "note", say: "Make a note called Garden plans: I want tomatoes and basil this year",
-			check: func(a *app.App, _ string) string {
-				n := find(a, "note", "title", "garden")
-				if n == nil {
-					return "no note titled garden"
-				}
-				return want(has(n, "body", "tomato"), "the note does not say tomatoes")
-			}},
-		{name: "remind", say: "Remind me to call the dentist next Friday",
-			check: func(a *app.App, _ string) string {
-				day := next(time.Friday)
-				for _, typ := range []string{"task", "reminder"} {
-					if r := find(a, typ, "title", "dentist"); r != nil {
-						return want(onDay(r, day), fmt.Sprintf("the %s is not on %s: %v", typ, day, r.Fields))
+				for _, typ := range []string{"reminder", "task"} {
+					if r := find(a, typ, "title", "timesheet"); r != nil {
+						rep := strings.ToUpper(fmt.Sprint(r.Fields["repeat"]))
+						// Weekly from a Monday is every Monday, BYDAY or not.
+						monday := onDay(r, next(time.Monday)) || strings.Contains(rep, "MO")
+						return all(want(strings.Contains(rep, "WEEKLY") && monday, "it does not repeat on Mondays: "+rep),
+							want(timeIs(r, "at", 9, 0) || timeIs(r, "due", 9, 0), "it is not at 9:00"))
 					}
 				}
-				return "no task or reminder about the dentist"
+				return "no timesheet reminder"
 			}},
-		{name: "meeting", say: "I have a meeting with Ana Silva and Joe Brown next Tuesday at 2pm about pricing. I want to record its audio so it gets transcribed and written up afterwards.",
+		{name: "move-day", seed: func(t *testing.T, a *app.App) {
+			mustCreate(t, a, "task", map[string]any{"title": "Call the bank", "due": day(time.Thursday, 0)})
+			mustCreate(t, a, "task", map[string]any{"title": "Pay rent", "due": day(time.Thursday, 0)})
+			mustCreate(t, a, "event", map[string]any{"title": "Team lunch", "starts": at(day(time.Thursday, 0), 12, 30)})
+			mustCreate(t, a, "task", map[string]any{"title": "Water plants", "due": day(time.Wednesday, 0)})
+		}, say: "Move everything I have on Thursday to Friday",
 			check: func(a *app.App, _ string) string {
-				ev := find(a, "event", "title", "pric")
-				if ev == nil {
-					return "no pricing event"
-				}
-				day := next(time.Tuesday)
-				return all(want(onDay(ev, day) && hourIs(ev, "starts", 14), fmt.Sprintf("starts %v, not %s 14:00", ev.Fields["starts"], day)),
-					want(count(ev.Fields["people"]) == 2, fmt.Sprintf("people %v", ev.Fields["people"])),
-					want(len(list(a, "reminder")) > 0, "no reminder to record it"))
+				fri := day(time.Thursday, 1)
+				bank, rent, lunch, water := find(a, "task", "title", "bank"), find(a, "task", "title", "rent"), find(a, "event", "title", "lunch"), find(a, "task", "title", "water")
+				return all(want(onDay(bank, fri) && onDay(rent, fri), "the tasks are not on Friday"),
+					want(onDay(lunch, fri) && timeIs(lunch, "starts", 12, 30), fmt.Sprintf("lunch is at %v, not Friday 12:30", lunch.Fields["starts"])),
+					want(onDay(water, day(time.Wednesday, 0)), "Wednesday's task was moved"))
 			}},
-		{name: "chart", seed: tasks, say: "Show a chart of my tasks by status",
-			check: func(a *app.App, _ string) string { return block(a, "chart", `"task"`) }},
-		{name: "todo-list", seed: tasks, say: "Show my tasks that are not done, soonest due first",
-			check: func(a *app.App, _ string) string { return block(a, "", "due") }},
-		{name: "calendar", say: "Show a calendar of my events",
-			check: func(a *app.App, _ string) string { return block(a, "calendar", "") }},
-		{name: "countdown", say: "Count down the days to my holiday in Lisbon on 20 December",
-			check: func(a *app.App, _ string) string {
-				ev := find(a, "event", "title", "lisbon")
-				if ev == nil {
-					ev = find(a, "event", "where", "lisbon")
-				}
-				if ev == nil {
-					return "no Lisbon event"
-				}
-				return want(onDay(ev, fmt.Sprintf("%d-12-20", time.Now().Year())), fmt.Sprintf("starts %v", ev.Fields["starts"]))
-			}},
-		{name: "habit", say: "Keep a habit: 8 glasses of water a day",
-			check: func(a *app.App, _ string) string {
-				h := find(a, "habit", "name", "water")
-				if h == nil {
-					return "no water habit"
-				}
-				return want(fmt.Sprint(h.Fields["target"]) == "8", fmt.Sprintf("target %v", h.Fields["target"]))
-			}},
-		{name: "new-type", say: "I want to keep track of the books I read, with the author and my rating out of 5",
-			check: func(a *app.App, _ string) string {
-				for _, n := range a.Store.Types().Names() {
-					t, _ := a.Store.Types().Get(n)
-					_, au := t.Field("author")
-					_, ra := t.Field("rating")
-					if au && ra {
-						return ""
-					}
-				}
-				return "no type with author and rating"
-			}},
-		{name: "add-field", say: "Give tasks a priority: low, medium or high",
-			check: func(a *app.App, _ string) string {
-				t, _ := a.Store.Types().Get("task")
-				f, ok := t.Field("priority")
-				if !ok {
-					return "task has no priority"
-				}
-				return want(strings.Contains(strings.Join(f.Values, ","), "medium"), fmt.Sprintf("priority is %s %v", f.Type, f.Values))
-			}},
-		{name: "tab", seed: tasks, say: "Make a tab called Work with my tasks on it",
-			check: func(a *app.App, _ string) string {
-				c := find(a, chat.CanvasType, "name", "work")
-				if c == nil {
-					return "no Work tab"
-				}
-				for _, b := range list(a, chat.BlockType) {
-					if b.Fields["canvas"] == c.ID && strings.Contains(jsonOf(b.Fields["props"]), "task") {
-						return ""
-					}
-				}
-				return "nothing with tasks on the Work tab"
-			}},
-		{name: "tick", seed: tasks, say: "I bought the paint, tick it off",
-			check: func(a *app.App, _ string) string {
-				p := find(a, "task", "title", "paint")
-				return want(p != nil && (p.Fields["status"] == "done" || p.Fields["done"] == true), "Buy paint is not done")
-			}},
-		{name: "question", seed: boiler, say: "When is the boiler engineer coming?",
-			check: func(_ *app.App, reply string) string {
-				return want(strings.Contains(strings.ToLower(reply), "thursday"), "the reply does not say Thursday")
-			}},
-		{name: "organise", seed: novel, say: "Organise my novel The Long Field: Chapter 1 and Chapter 2 are its parts, in that order, and Submission guidelines is material for it",
-			check: func(a *app.App, _ string) string {
-				novel := find(a, "note", "title", "long field")
-				c1, c2, g := find(a, "note", "title", "chapter 1"), find(a, "note", "title", "chapter 2"), find(a, "note", "title", "guidelines")
-				return all(want(fmt.Sprint(c1.Fields[chat.PartOf]) == novel.ID && fmt.Sprint(c2.Fields[chat.PartOf]) == novel.ID, "the chapters are not its parts"),
-					want(strings.Contains(fmt.Sprint(g.Fields[chat.MaterialFor]), novel.ID), "the guidelines are not its material"))
-			}},
-		{name: "suggest", seed: letter, say: "Fix the spelling in my note Letter to Sam",
-			check: func(a *app.App, _ string) string {
-				n := find(a, "note", "title", "letter")
-				return want(len(list(a, "suggestion")) > 0 || !has(n, "body", "wonderfull"), "neither fixed nor suggested")
-			}},
-		{name: "automate", say: "Whenever a task is marked done, send its title to https://example.com/hook",
-			check: func(a *app.App, _ string) string {
-				if act := find(a, "action", "url", "example.com"); act != nil {
-					return want(act.Fields["when"] == "changed" && act.Fields["what"] == "task", fmt.Sprintf("the action runs on %v %v", act.Fields["when"], act.Fields["what"]))
-				}
-				return want(len(list(a, "proposal")) > 0, "no action and nothing asked")
-			}},
-	}
-}
-
-func tasks(t *testing.T, a *app.App) {
-	for _, f := range []map[string]any{
-		{"title": "Buy paint", "status": "todo", "due": "2026-10-10"},
-		{"title": "Send invoice", "status": "doing", "due": "2026-10-05"},
-		{"title": "Book flights", "status": "done"},
-	} {
-		mustCreate(t, a, "task", f)
-	}
-}
-
-func boiler(t *testing.T, a *app.App) {
-	mustCreate(t, a, "note", map[string]any{"title": "Boiler", "body": "The engineer comes on Thursday at 9. The code for the boiler is 4471."})
-	mustCreate(t, a, "note", map[string]any{"title": "Garden", "body": "Plant garlic in October."})
-}
-
-func novel(t *testing.T, a *app.App) {
-	for _, title := range []string{"The Long Field", "Chapter 1", "Chapter 2", "Submission guidelines"} {
-		mustCreate(t, a, "note", map[string]any{"title": title, "body": "Words of " + title + "."})
-	}
-}
-
-func letter(t *testing.T, a *app.App) {
-	mustCreate(t, a, "note", map[string]any{"title": "Letter to Sam", "body": "Thank you for the wonderfull dinner. It was realy lovely to see you agian."})
-}
-
-func mustCreate(t *testing.T, a *app.App, typ string, f map[string]any) {
-	if _, err := a.Store.Create(typ, f); err != nil {
-		t.Fatal(err)
-	}
-}
-
-func list(a *app.App, typ string) []*store.Record {
-	r, _ := a.Store.List(typ, store.ListOptions{})
-	return r
-}
-
-// find is the first record of a type whose field holds the words.
-func find(a *app.App, typ, field, words string) *store.Record {
-	for _, r := range list(a, typ) {
-		if has(r, field, words) {
-			return r
-		}
-	}
-	return nil
-}
-
-func has(r *store.Record, field, words string) bool {
-	return r != nil && strings.Contains(strings.ToLower(fmt.Sprint(r.Fields[field])), words)
-}
-
-// titled says whether any content record is titled or named with the words.
-func titled(a *app.App, words string) string {
-	for _, typ := range a.Store.Types().Names() {
-		if find(a, typ, "title", words) != nil || find(a, typ, "name", words) != nil {
-			return ""
-		}
-	}
-	return "nothing titled " + words
-}
-
-// block says whether a block of the component (any, when "") whose props
-// hold the words is on a canvas.
-func block(a *app.App, component, words string) string {
-	for _, b := range list(a, chat.BlockType) {
-		if b.Fields["component"] == "chat" {
-			continue
-		}
-		if (component == "" || b.Fields["component"] == component) && strings.Contains(jsonOf(b.Fields["props"]), words) {
-			return ""
-		}
-	}
-	return fmt.Sprintf("no %s block with %s", component, words)
-}
-
-func jsonOf(v any) string {
-	if s, ok := v.(string); ok {
-		return s
-	}
-	b, _ := json.Marshal(v)
-	return string(b)
-}
-
-func count(v any) int {
-	switch l := v.(type) {
-	case []any:
-		return len(l)
-	case []string:
-		return len(l)
-	}
-	return 0
-}
-
-// next is the coming day with that weekday, as a person means it.
-func next(wd time.Weekday) string {
-	now := time.Now()
-	d := (int(wd) - int(now.Weekday()) + 7) % 7
-	if d == 0 {
-		d = 7
-	}
-	return now.AddDate(0, 0, d).Format("2006-01-02")
-}
-
-func onDay(r *store.Record, day string) bool {
-	for _, f := range []string{"due", "at", "starts"} {
-		if v, ok := r.Fields[f].(string); ok && v != "" {
-			if t, _, ok := when.Parse(v, time.Now()); ok && t.In(time.Local).Format("2006-01-02") == day {
-				return true
+		{name: "bulk-tag", seed: func(t *testing.T, a *app.App) {
+			for _, n := range [][2]string{{"Tomato seedlings", "Pot them on in May."}, {"Compost bins", "Turn the heap monthly."}, {"Pruning roses", "Cut back in February."},
+				{"Tax return", "Due in January."}, {"Book club", "Next: Middlemarch."}, {"Car service", "Booked for Tuesday."}} {
+				mustCreate(t, a, "note", map[string]any{"title": n[0], "body": n[1]})
 			}
-		}
+		}, say: "Tag my garden notes with garden",
+			check: func(a *app.App, _ string) string {
+				var wrong []string
+				for _, n := range list(a, "note") {
+					title := fmt.Sprint(n.Fields["title"])
+					garden := strings.Contains("Tomato seedlings|Compost bins|Pruning roses", title)
+					if tagged(n, "garden") != garden {
+						wrong = append(wrong, title)
+					}
+				}
+				return want(len(wrong) == 0, "tagged wrong: "+strings.Join(wrong, ", "))
+			}},
+		{name: "follow-up", seed: func(t *testing.T, a *app.App) {
+			mustCreate(t, a, "person", map[string]any{"name": "Ana Silva"})
+			mustCreate(t, a, "person", map[string]any{"name": "Joe Brown"})
+			mustCreate(t, a, "event", map[string]any{"title": "Pricing review", "starts": at(time.Now().AddDate(0, 0, -2).Format("2006-01-02"), 10, 0),
+				"notes": "Ana Silva will send the new price list by 9 October. Joe Brown will update the website once it is out. We agreed to raise prices by 5%."})
+		}, say: "Turn my notes from the pricing review into tasks for who said they'd do what",
+			check: func(a *app.App, _ string) string {
+				ana, joe := find(a, "person", "name", "ana"), find(a, "person", "name", "joe")
+				list, site := find(a, "task", "title", "price list"), find(a, "task", "title", "website")
+				if list == nil || site == nil {
+					return "no tasks for the price list and the website"
+				}
+				return all(want(fmt.Sprint(list.Fields["for"]) == ana.ID, "the price list is not Ana's"), want(fmt.Sprint(site.Fields["for"]) == joe.ID, "the website is not Joe's"),
+					want(onDay(list, fmt.Sprintf("%d-10-09", time.Now().Year())), fmt.Sprintf("the price list is due %v, not 9 October", list.Fields["due"])))
+			}},
+		{name: "today-tab", seed: func(t *testing.T, a *app.App) {
+			mustCreate(t, a, "task", map[string]any{"title": "Post the parcel", "due": time.Now().Format("2006-01-02")})
+			mustCreate(t, a, "event", map[string]any{"title": "Physio", "starts": at(time.Now().Format("2006-01-02"), 15, 0)})
+			mustCreate(t, a, "habit", map[string]any{"name": "Drink water", "cadence": "day", "target": 8, "unit": "glasses"})
+		}, say: "Make me a Today tab with what's due today, today's events and my water habit",
+			check: func(a *app.App, _ string) string {
+				c := find(a, chat.CanvasType, "name", "today")
+				if c == nil {
+					return "no Today tab"
+				}
+				return all(want(on(a, c.ID, "task"), "no tasks on it"), want(on(a, c.ID, "event"), "no events on it"), want(on(a, c.ID, "habit") || on(a, c.ID, "tracker"), "no habit on it"))
+			}},
+		{name: "ambiguous", seed: func(t *testing.T, a *app.App) {
+			mustCreate(t, a, "task", map[string]any{"title": "Send invoice to Ana", "status": "todo"})
+			mustCreate(t, a, "task", map[string]any{"title": "Send invoice to Joe", "status": "todo"})
+		}, say: "Mark the invoice task done",
+			check: func(a *app.App, reply string) string {
+				for _, r := range list(a, "task") {
+					if r.Fields["status"] == "done" || r.Fields["done"] == true {
+						return "it guessed: " + fmt.Sprint(r.Fields["title"]) + " was ticked"
+					}
+				}
+				return want(strings.Contains(reply, "?"), "it neither asked nor did anything")
+			}},
+		{name: "next-week", seed: func(t *testing.T, a *app.App) {
+			mustCreate(t, a, "event", map[string]any{"title": "Dentist", "starts": at(day(time.Tuesday, 0), 10, 0)})
+		}, say: "My dentist appointment moved to the same time a week later",
+			check: func(a *app.App, _ string) string {
+				d := find(a, "event", "title", "dentist")
+				return want(onDay(d, day(time.Tuesday, 7)) && timeIs(d, "starts", 10, 0), fmt.Sprintf("it starts %v, not %s 10:00", d.Fields["starts"], day(time.Tuesday, 7)))
+			}},
+		{name: "priority", seed: func(t *testing.T, a *app.App) {
+			for _, title := range []string{"Fix the leak [urgent]", "Book flights", "Renew insurance [urgent]", "Clean the garage"} {
+				mustCreate(t, a, "task", map[string]any{"title": title})
+			}
+		}, say: "Give tasks a priority (low, medium or high) and set the urgent ones to high",
+			check: func(a *app.App, _ string) string {
+				var wrong []string
+				for _, r := range list(a, "task") {
+					title := fmt.Sprint(r.Fields["title"])
+					if (r.Fields["priority"] == "high") != strings.Contains(title, "urgent") {
+						wrong = append(wrong, title)
+					}
+				}
+				return want(len(wrong) == 0, "priority wrong on: "+strings.Join(wrong, ", "))
+			}},
+		{name: "split", seed: func(t *testing.T, a *app.App) {
+			mustCreate(t, a, "note", map[string]any{"title": "Trip report", "body": "## Day 1\nWe arrived in Porto.\n\n## Day 2\nWe walked to the river.\n\n## Day 3\nWe flew home."})
+		}, say: "Split my Trip report into one note per day, kept as its parts in order",
+			check: func(a *app.App, _ string) string {
+				trip := find(a, "note", "title", "trip report")
+				var found []string
+				for _, n := range list(a, "note") {
+					if fmt.Sprint(n.Fields[chat.PartOf]) == trip.ID {
+						found = append(found, fmt.Sprint(n.Fields["body"]))
+					}
+				}
+				words := strings.Join(found, " ")
+				return want(len(found) == 3 && strings.Contains(words, "Porto") && strings.Contains(words, "river") && strings.Contains(words, "flew"), fmt.Sprintf("%d parts", len(found)))
+			}},
+		{name: "automate", say: "When a task tagged client is marked done, send its title and who it was for to https://example.com/hook",
+			check: func(a *app.App, _ string) string {
+				act := find(a, "action", "url", "example.com")
+				if act == nil {
+					return want(len(list(a, "proposal")) > 0, "no action and nothing asked")
+				}
+				only, sent := strings.ToLower(jsonOf(act.Fields["only"])), fmt.Sprint(act.Fields["url"], act.Fields["body"], act.Fields["payload"])
+				return all(want(act.Fields["what"] == "task" && strings.Contains(only, "client") && strings.Contains(only, "done"), "it runs on "+fmt.Sprint(act.Fields["what"], " ", only)),
+					want(strings.Contains(sent, "{{title}}") && strings.Contains(sent, "{{for}}"), "it does not send the title and who it was for: "+sent))
+			}},
+		{name: "two-kinds", seed: func(t *testing.T, a *app.App) {
+			mustCreate(t, a, "note", map[string]any{"title": "Passport", "body": "Renewal costs £88.50 online, about three weeks."})
+			mustCreate(t, a, "task", map[string]any{"title": "Renew passport", "due": fmt.Sprintf("%d-11-12", time.Now().Year())})
+		}, say: "When do I need to renew my passport, and what will it cost?",
+			check: func(_ *app.App, reply string) string {
+				return all(want(strings.Contains(reply, "88.50"), "the cost is not said"), want(strings.Contains(reply, "12"), "the day is not said"))
+			}},
+		{name: "people", seed: func(t *testing.T, a *app.App) {
+			mustCreate(t, a, "event", map[string]any{"title": "Pricing", "starts": at(day(time.Tuesday, 0), 14, 0)})
+		}, say: "Add Ana Silva (ana@example.com) and Joe Brown (joe@example.com) and put them both on the Pricing meeting",
+			check: func(a *app.App, _ string) string {
+				ana, joe, ev := find(a, "person", "email", "ana@"), find(a, "person", "email", "joe@"), find(a, "event", "title", "pricing")
+				if ana == nil || joe == nil {
+					return "Ana or Joe is missing, or without an email"
+				}
+				people := jsonOf(ev.Fields["people"])
+				return want(strings.Contains(people, ana.ID) && strings.Contains(people, joe.ID), "the meeting's people are "+people)
+			}},
+		{name: "layout", seed: func(t *testing.T, a *app.App) {
+			blockOf(t, a, "collection", map[string]any{"type": "task", "label": "Shopping list"})
+			blockOf(t, a, "collection", map[string]any{"type": "note", "label": "Notes"})
+			blockOf(t, a, "calendar", map[string]any{"type": "event", "caption": "Calendar"})
+		}, say: "Put my shopping list and my notes side by side, with the calendar full width under them",
+			check: func(a *app.App, _ string) string {
+				var shop, notes, cal map[string]any
+				for _, b := range list(a, chat.BlockType) {
+					switch p := jsonOf(b.Fields["props"]); {
+					case strings.Contains(p, "Shopping"):
+						shop = b.Fields
+					case strings.Contains(p, `"Notes"`):
+						notes = b.Fields
+					case b.Fields["component"] == "calendar":
+						cal = b.Fields
+					}
+				}
+				if shop == nil || notes == nil || cal == nil {
+					return "a block went missing"
+				}
+				return all(want(num(shop["span"]) == 6 && num(notes["span"]) == 6, fmt.Sprintf("spans %v and %v, not 6 and 6", shop["span"], notes["span"])),
+					want(num(cal["span"]) == 12 && num(cal["position"]) > num(shop["position"]) && num(cal["position"]) > num(notes["position"]), "the calendar is not full width under them"))
+			}},
 	}
-	return false
-}
-
-func hourIs(r *store.Record, field string, hour int) bool {
-	v, _ := r.Fields[field].(string)
-	t, _, ok := when.Parse(v, time.Now())
-	return ok && t.In(time.Local).Hour() == hour
-}
-
-func want(ok bool, why string) string {
-	if ok {
-		return ""
-	}
-	return why
-}
-
-func all(whys ...string) string {
-	var out []string
-	for _, w := range whys {
-		if w != "" {
-			out = append(out, w)
-		}
-	}
-	return strings.Join(out, "; ")
 }
