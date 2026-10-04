@@ -1,6 +1,7 @@
 package server_test
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -78,10 +79,29 @@ func seedTwins(t *testing.T, h http.Handler) (overdue, later string) {
 		wantStatus(t, postJSON(t, h, http.MethodPost, "/api/task", task), http.StatusCreated)
 	}
 	day := func(d time.Time) string {
-		if d.Year() != time.Now().Year() {
-			return d.Format("Mon 2 Jan 2006")
+		now := time.Now()
+		today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+		nd := time.Date(d.UTC().Year(), d.UTC().Month(), d.UTC().Day(), 0, 0, 0, 0, now.Location())
+		diff := int(nd.Sub(today).Hours() / 24)
+		switch {
+		case diff == 0:
+			return "Today"
+		case diff < 0 && diff >= -6:
+			if diff == -1 {
+				return "Yesterday"
+			}
+			return nd.Format("Mon 2 Jan")
+		case diff > 0 && diff <= 6:
+			if diff == 1 {
+				return "Tomorrow"
+			}
+			return fmt.Sprintf("In %d days", diff)
+		default:
+			if nd.Year() == now.Year() {
+				return nd.Format("2 Jan")
+			}
+			return nd.Format("2 Jan 2006")
 		}
-		return d.Format("Mon 2 Jan")
 	}
 	return "due " + day(a), "due " + day(b)
 }

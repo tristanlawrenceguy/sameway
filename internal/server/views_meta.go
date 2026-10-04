@@ -113,15 +113,15 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 			}
 		}
 	}
-	// When it last changed is said only for things with no day of their
-	// own, such as a note; a task with no due date has nothing to add.
+
+	// The record's first date: short at the right of a row, in full as a chip.
 	if d := s.dayFact(t, rec, done, o.Chips && t.Name != EntryType); d != "" {
 		parts = append(parts, d)
 	} else if !o.Made && !hasDate(t) {
 		parts = append(parts, `<span class="sw-muted">`+when.Relative(rec.UpdatedAt.UTC().Format(time.RFC3339), time.Now())+`</span>`)
 	}
-	// An entry's row is already titled by its habit; saying it again under
-	// the title is the same words twice.
+
+	// An entry's row is already titled by its habit; saying it again under the title is the same words twice.
 	for _, f := range t.Shown() {
 		if f.Type == "ref" && (o.Chips || t.Name != EntryType) {
 			if id, ok := rec.Fields[f.Name].(string); ok && id != "" {
@@ -139,6 +139,7 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 			break
 		}
 	}
+
 	if o.Made {
 		parts = append(parts, whenMade(t, rec, o.From))
 	}
@@ -165,16 +166,18 @@ func (s *Server) dayFact(t *schema.Type, rec *store.Record, done, chip bool) str
 
 		if chip {
 			// A day is a fact, not something a person did: info, not the
-			// human tone, which says who did a thing.
-			text := when.Text(v)
+			// human tone, which says who did a thing. Use relative text so
+			// dates read in natural language ("Tomorrow at 10am") rather than
+			// machine format ("Mon 5 Oct 2026, 14:00").
+			text := when.Relative(v, now)
 			tone := "info"
 			if f.Label != "" {
 				text = f.Label + " " + text
 			}
 			if past && f.Label != "" {
-				text, tone = "Was "+strings.ToLower(f.Label)+" "+when.Text(v), "warning"
+				text, tone = "Was "+strings.ToLower(f.Label)+" "+when.Relative(v, now), "warning"
 			} else if past {
-				text, tone = when.Text(v), "warning"
+				text, tone = when.Relative(v, now), "warning"
 			}
 			return string(s.component("badge", map[string]any{"label": text, "tone": tone}))
 		}

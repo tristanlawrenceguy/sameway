@@ -99,7 +99,7 @@ func apart(names []string, ways func(i int) []string, rank ...func(i int) string
 }
 
 // recordWays is what tells one record from another with its title: the
-// day that matters to it (due Fri 25 Sep), when it was added, its id.
+// day that matters to it (due tomorrow), when it was added, its id.
 func recordWays(t *schema.Type, rec *store.Record) []string {
 	return []string{dayWords(t, rec), "added " + momentWords(rec.CreatedAt), "added " + secondWords(rec.CreatedAt)}
 }
@@ -139,46 +139,6 @@ func (s *Server) recordsApart(t *schema.Type, recs []*store.Record) map[string]s
 		}
 	}
 	return out
-}
-
-// dayWords is the record's first day as a few words after its title, the
-// field named: due Fri 25 Sep, with the year when it is not this one.
-func dayWords(t *schema.Type, rec *store.Record) string {
-	for _, f := range t.Shown() {
-		if f.Type != "datetime" {
-			continue
-		}
-		if v, _ := rec.Fields[f.Name].(string); v != "" {
-			if w := whenWords(v); w != "" {
-				return strings.ToLower(fieldLabel(f)) + " " + w
-			}
-		}
-	}
-	return ""
-}
-
-// whenWords is a stored day or moment, short: Fri 25 Sep, or with its
-// time, Fri 25 Sep, 14:05.
-func whenWords(v string) string {
-	ts, err := time.Parse(time.RFC3339, v)
-	if err != nil {
-		return ""
-	}
-	if strings.HasSuffix(v, "T00:00:00Z") {
-		return shortDay(ts.UTC())
-	}
-	return momentWords(ts)
-}
-
-func momentWords(at time.Time) string {
-	return shortDay(at.Local()) + ", " + at.Local().Format("15:04")
-}
-
-func shortDay(d time.Time) string {
-	if d.Year() != time.Now().Year() {
-		return d.Format("Mon 2 Jan 2006")
-	}
-	return d.Format("Mon 2 Jan")
 }
 
 // withContext is a name and the words that tell it apart: Call plumber
