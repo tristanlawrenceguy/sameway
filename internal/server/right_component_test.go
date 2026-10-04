@@ -13,7 +13,7 @@ func TestTheHabitsPageIsTheTracker(t *testing.T) {
 	a.Store.Create("habit", map[string]any{"name": "Water", "target": 8, "unit": "glasses"})
 	a.Store.Create("habit", map[string]any{"name": "Old one", "archived": true})
 	page := get(t, h, "/t/habit").Body.String()
-	for _, want := range []string{`data-component="tracker"`, `role="meter"`, `>Log<`, `>Archived <span class="sw-group__count">1</span>`} {
+	for _, want := range []string{`data-component="tracker"`, `role="meter"`, `>Log<`, `>Archived <span class="sw-group__count">1<span class="sw-visually-hidden"> habit</span></span>`} {
 		if !strings.Contains(page, want) {
 			t.Errorf("the habits page should carry %s", want)
 		}
