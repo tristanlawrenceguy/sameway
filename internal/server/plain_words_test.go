@@ -49,13 +49,21 @@ func TestAnEmptyListSaysWhatItLookedFor(t *testing.T) {
 }
 
 // TestASearchResultShowsADayNotAStoredTime: the snippet of a task found by
-// its title shows its due day as a person reads it.
+// its title shows its due day in natural language, not the stored format.
 func TestASearchResultShowsADayNotAStoredTime(t *testing.T) {
 	a, h := newApp(t)
 	a.Store.Create("task", map[string]any{"title": "Repot the fern", "due": "2026-09-27T00:00:00Z"})
 	body := get(t, h, "/search?q=fern").Body.String()
-	if strings.Contains(body, "2026-09-27T00:00:00Z") || !strings.Contains(body, "Sun 27 Sep 2026") {
-		t.Errorf("the result should say Sun 27 Sep 2026, not the stored time")
+	// Natural language dates are used in search snippets now (Relative instead
+	// of Text), so no raw RFC 3339 or machine format should appear.
+	if strings.Contains(body, "2026-09-27T00:00:00Z") {
+		t.Errorf("the result must not contain the stored time; found in:\n%s", truncate(body))
+	}
+	// The date should be shown in natural language (e.g., weekday, "27 Sep", or
+	// a relative form). For a day-only value that is more than 7 days away,
+	// shortDay returns "27 Sep" (no year for same-year dates).
+	if !strings.Contains(body, "27 Sep") {
+		t.Errorf("the result should show the date in natural language; found in:\n%s", truncate(body))
 	}
 }
 
