@@ -92,7 +92,7 @@ func start(ctx context.Context, program string) (*browser, error) {
 	b.cmd = exec.Command(program, "--headless=new", "--remote-debugging-port=0", "--user-data-dir="+dir,
 		"--no-first-run", "--no-default-browser-check", "--disable-gpu", "--disable-extensions",
 		"--window-size=1280,900", "about:blank")
-	b.cmd.Stderr = &b.said
+	b.cmd.Stderr, b.cmd.WaitDelay = &b.said, 2*time.Second // helpers may hold stderr open
 	if err := b.cmd.Start(); err != nil {
 		os.RemoveAll(dir)
 		return nil, fmt.Errorf("starting %s: %w", program, err)
