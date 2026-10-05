@@ -18,11 +18,11 @@ func ledeOf(t *testing.T, h http.Handler, path string) string {
 	rec := get(t, h, path)
 	wantStatus(t, rec, http.StatusOK)
 	body := rec.Body.String()
-	i := strings.Index(body, `<p class="sw-lede">`)
+	i := strings.Index(body, `<div class="sw-lede">`)
 	if i < 0 {
 		t.Fatalf("%s has no lede\n%s", path, truncate(body))
 	}
-	j := strings.Index(body[i:], "</p>")
+	j := strings.Index(body[i:], "</div>")
 	return body[i : i+j]
 }
 

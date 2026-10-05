@@ -85,7 +85,7 @@ func TestAFileDetailLedeHasNoRawStatusBadge(t *testing.T) {
 
 	page := get(t, h, "/t/file/"+file.ID).Body.String()
 
-	// The lede is the <p class="sw-lede"> element. Check that it does not
+	// The lede is the <div class="sw-lede"> element. Check that it does not
 	// contain a badge component for "Ready" (which would indicate a raw
 	// status value mashed into the meta text).
 	if strings.Contains(page, `<span class="sw-visually-hidden"> status</span>`) {
@@ -93,11 +93,11 @@ func TestAFileDetailLedeHasNoRawStatusBadge(t *testing.T) {
 	}
 
 	// Also check that "Ready" does not appear inside the lede paragraph.
-	ledeStart := strings.Index(page, `<p class="sw-lede">`)
+	ledeStart := strings.Index(page, `<div class="sw-lede">`)
 	if ledeStart == -1 {
 		t.Fatal("no lede found in page")
 	}
-	ledeEnd := strings.Index(page[ledeStart:], `</p>`)
+	ledeEnd := strings.Index(page[ledeStart:], `</div>`)
 	if ledeEnd == -1 {
 		t.Fatal("no closing tag for lede")
 	}

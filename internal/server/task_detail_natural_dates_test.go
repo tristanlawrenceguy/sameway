@@ -41,11 +41,11 @@ func TestTaskDetailLedeDueDateNaturalLanguage(t *testing.T) {
 	page := get(t, h, "/t/task/"+result.Records[0].ID+"?show=fields").Body.String()
 
 	// Extract the lede paragraph.
-	ledeStart := strings.Index(page, `<p class="sw-lede">`)
+	ledeStart := strings.Index(page, `<div class="sw-lede">`)
 	if ledeStart == -1 {
 		t.Fatal("no lede found in task detail page")
 	}
-	ledeEnd := strings.Index(page[ledeStart:], `</p>`)
+	ledeEnd := strings.Index(page[ledeStart:], `</div>`)
 	if ledeEnd == -1 {
 		t.Fatal("no closing tag for lede")
 	}
