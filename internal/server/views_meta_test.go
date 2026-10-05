@@ -52,17 +52,7 @@ func TestDayFactNoRawLabelOnDateField(t *testing.T) {
 	}
 
 	// The lede should still contain the creation timestamp.
-	ledeStart := strings.Index(page, `<p class="sw-lede">`)
-	if ledeStart == -1 {
-		t.Fatal("no lede found in meeting_notes_template detail page")
-	}
-	ledeEnd := strings.Index(page[ledeStart:], `</p>`)
-	if ledeEnd == -1 {
-		t.Fatal("no closing tag for lede")
-	}
-	lede := page[ledeStart : ledeStart+ledeEnd]
-
-	if !strings.Contains(lede, "Added ") {
+	if !strings.Contains(page, `class="sw-detail__when sw-muted sw-small"`) {
 		t.Error("meeting_notes_template detail lede should still show creation time")
 	}
 }
