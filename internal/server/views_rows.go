@@ -51,7 +51,7 @@ func (s *Server) rows(t *schema.Type, recs []*store.Record, now time.Time) strin
 		}
 		span := ""
 		if name == "This week" {
-			span = fmt.Sprintf(` <span class="sw-group__range">%s – %s</span>`, now.Format("2 Jan"), now.AddDate(0, 0, 6).Format("2 Jan"))
+			span = fmt.Sprintf(` <span class="sw-group__range">%s to %s</span>`, now.Format("2 Jan"), now.AddDate(0, 0, 6).Format("2 Jan"))
 		}
 		fmt.Fprintf(&b, `<h2 class="sw-group">%s <span class="sw-group__count">%d<span class="sw-visually-hidden"> %s,</span></span>%s</h2><ol class="sw-plain sw-rows" data-dot="%d" aria-label="%s, %s">`,
 			name, len(list), oneOrMany(len(list), schema.Words(t.Name), schema.Words(plural(t.Name))), span, s.dotOf(t.Name), template.HTMLEscapeString(plural(t.Name)), strings.ToLower(name))

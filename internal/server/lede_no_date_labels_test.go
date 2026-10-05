@@ -19,7 +19,7 @@ func TestNoteDetailLedeNoAddedLabel(t *testing.T) {
 
 	body := get(t, h, "/t/note/"+rec.ID).Body.String()
 
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*">([^<]+)</span>`)
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(body)
 	if len(matches) < 2 {
 		t.Fatal("note detail page should have a sw-detail__when span in the lede")
@@ -50,7 +50,7 @@ func TestTaskDetailLedeNoCreatedLabel(t *testing.T) {
 
 	body := get(t, h, "/t/task/"+rec.ID).Body.String()
 
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*">([^<]+)</span>`)
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(body)
 	if len(matches) < 2 {
 		t.Fatal("task detail page should have a sw-detail__when span in the lede")
@@ -84,7 +84,7 @@ func TestTaskDetailLedeNoUpdatedLabel(t *testing.T) {
 
 	body := get(t, h, "/t/task/"+rec.ID).Body.String()
 
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*">([^<]+)</span>`)
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(body)
 	if len(matches) < 2 {
 		t.Fatal("task detail page should have a sw-detail__when span in the lede")
@@ -119,7 +119,7 @@ func TestHabitDetailLedeNoStartedLabel(t *testing.T) {
 
 	body := get(t, h, "/t/habit/"+rec.ID).Body.String()
 
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*">([^<]+)</span>`)
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(body)
 	if len(matches) < 2 {
 		t.Fatal("habit detail page should have a sw-detail__when span in the lede")

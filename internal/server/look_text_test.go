@@ -36,7 +36,7 @@ func TestLookReadsWhatAPageSays(t *testing.T) {
 		}
 		return strings.Join(lines, "\n")
 	}
-	if task := says("/t/task/" + paint); !strings.Contains(task, "Done") || !strings.Contains(task, "at 2:00pm For Ana Silva") {
+	if task := says("/t/task/" + paint); !strings.Contains(task, "Done") || !strings.Contains(task, "at 2pm For Ana Silva") {
 		t.Errorf("a record's lede is read with its day and its state:\n%s", task)
 	}
 	if chat := says("/chat"); !strings.Contains(chat, "Invalid API key") || strings.Contains(chat, "exit status") {

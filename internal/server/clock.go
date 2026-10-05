@@ -12,6 +12,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // The clock: the time, and reminders. A reminder is a record (an alarm
@@ -36,7 +37,7 @@ func (s *Server) resolveClock(props map[string]any) map[string]any {
 	}
 	now := time.Now()
 	out["now"] = now.Format(time.RFC3339)
-	out["time"] = now.Format("15:04")
+	out["time"] = when.Face(now)
 	out["date"] = now.Format("Monday 2 January")
 	ringing := []any{}
 	var next []coming
@@ -59,7 +60,7 @@ func (s *Server) resolveClock(props map[string]any) map[string]any {
 				if err != nil {
 					continue
 				}
-				item["day"], item["time"] = dayOf(at, now), at.In(now.Location()).Format("15:04")
+				item["day"], item["time"] = dayOf(at, now), when.Clock(at.In(now.Location()))
 				item["kind"], _ = rec.Fields["kind"].(string)
 				next = append(next, coming{at, item})
 			}
@@ -126,7 +127,7 @@ func (s *Server) onToday(now time.Time) []coming {
 					continue
 				}
 				at = ts.Local()
-				item["time"] = at.Format("15:04")
+				item["time"] = when.Clock(at)
 			}
 			items = append(items, coming{at, item})
 		}

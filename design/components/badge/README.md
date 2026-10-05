@@ -55,4 +55,7 @@ colours the tint goes, and the dot is drawn in the text's colour.
 
 Not done, and why: a border in forced colours (it made badges look like
 buttons); a time in a badge (it is not a state, and says what the row
-already says).
+already says). A record's day under its title is the one
+exception, being where it stands rather than when something happened:
+"Due Fri 9 Oct", "Overdue, due yesterday", named by its field and held in
+a time element around the badge (design/foundations/glance.md).

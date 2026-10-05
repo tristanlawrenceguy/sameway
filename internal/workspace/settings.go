@@ -42,6 +42,7 @@ var Settings = []Setting{
 	{"ui.text", "enum", []string{"normal", "large", "larger"}, "how large the words are: normal, large or larger"},
 	{"ui.spacing", "enum", []string{"normal", "wide"}, "room between lines, words and paragraphs: normal, or wide for people who read more easily with more room"},
 	{"ui.needs", "string", nil, "what the person has said they need, in their words (I use a screen reader; keep things simple; I am colour blind): you follow it in every reply and every page you make. Set it the moment they tell you, and add to it, keeping what was there"},
+	{"ui.clock", "enum", []string{"12", "24"}, "how a time of day is said: 12 (2pm, 5:30pm) or 24 (14:00); empty follows the language, 12 for English"},
 	{"ui.language", "string", nil, "the workspace's language as a code (en, de, es, fr): the pages say it so screen readers use the right voice, and you reply in it"},
 	{"ui.lists", "enum", []string{"filled", "all"}, "which lists the sidebar shows: filled (something in them, or made by the person) or all"},
 	{"ui.developer", "enum", []string{"hidden", "shown"}, "the design system and the guide for agents: hidden from the sidebar or shown"},

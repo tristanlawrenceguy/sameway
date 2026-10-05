@@ -25,7 +25,7 @@ func TestHabitDetailLedeNoMachineFormatDate(t *testing.T) {
 	body := get(t, h, "/t/habit/"+rec.ID+fieldsView).Body.String()
 
 	// Extract the sw-detail__when span content.
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*">([^<]+)</span>`)
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(body)
 	if len(matches) < 2 {
 		t.Fatal("habit detail page should have a sw-detail__when span in the lede")

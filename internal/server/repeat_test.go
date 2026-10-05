@@ -115,7 +115,7 @@ func TestARepeatingReminderRingsAgain(t *testing.T) {
 	if rec.Fields["state"] != "set" || rec.Fields["at"] != next || rec.Fields["repeat"] != "FREQ=DAILY" {
 		t.Errorf("dismissed, it is set for tomorrow at its own time (%s), got %v", next, rec.Fields)
 	}
-	if !strings.Contains(page, "Stretch: this time skipped") || !strings.Contains(page, "It repeats every day, so it rings again tomorrow at "+at.Format("15:04")+".") {
+	if !strings.Contains(page, "Stretch: this time skipped") || !strings.Contains(page, "It repeats every day, so it rings again tomorrow at "+when.Clock(at)+".") {
 		t.Errorf("dismissing says when it rings again\n%s", said(page))
 	}
 	if page := get(t, h, "/").Body.String(); !strings.Contains(page, "Skip this time") || !strings.Contains(page, "Repeats every day") {

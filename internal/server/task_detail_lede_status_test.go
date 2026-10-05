@@ -54,7 +54,7 @@ func TestTaskDetailLedeHasNoStatusBadgeDoing(t *testing.T) {
 	}
 
 	// Human-readable metadata must still appear: due date chip and creation time.
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*">([^<]+)</span>`)
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(lede)
 	if len(matches) < 2 {
 		t.Error("task detail lede should have a sw-detail__when span with the creation time")
@@ -106,7 +106,7 @@ func TestTaskDetailLedeHasNoStatusBadgeDone(t *testing.T) {
 	}
 
 	// Human-readable metadata must still appear: creation time.
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*">([^<]+)</span>`)
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(lede)
 	if len(matches) < 2 {
 		t.Error("task detail lede should have a sw-detail__when span with the creation time")
@@ -152,7 +152,7 @@ func TestTaskDetailLedeHasNoStatusBadgeForUndoneTask(t *testing.T) {
 	}
 
 	// Human-readable metadata must still appear: creation time.
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*">([^<]+)</span>`)
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(page)
 	if len(matches) < 2 {
 		t.Error("task detail page should have a sw-detail__when span with the creation time")

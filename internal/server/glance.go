@@ -9,7 +9,6 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
-	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // What a record says at a glance is worked out once, here, from its
@@ -29,6 +28,8 @@ type glanceFact struct {
 	Label  string // a person's field's label: For
 	Short  string // a day as a row says it, a class to go with it
 	Class  string
+	When   string // a day's value, for its <time datetime>
+	Full   string // a day in full, when its words leave the date out
 }
 
 // glance is what a record says at a glance, by the schema's rules, not by
@@ -38,13 +39,18 @@ type glanceFact struct {
 //     state (Draft, Pending); a kind, a method, a cadence is the record's
 //     own page's to say;
 //   - a setting that is on, by its label (Pinned, On the canvas);
-//   - its first day, in words, with the field's own label when it has one,
-//     "was" and amber when it has passed undone; an entry's is when it
-//     happened, never was;
-//   - what it belongs to or who it is for, unless that is its title.
+//   - its first day, in words, named by its field (Due Fri 9 Oct,
+//     Starts tomorrow at 2pm), and "Overdue" in words and amber when it
+//     has passed on a record that can be done and is not; a day that has
+//     passed on anything else (a meeting, an entry) is only past;
+//   - what it belongs to or who it is for, unless that is its title; a
+//     file it points at is an attachment, not what it belongs to.
+//
+// The order is always this one, so the same fact sits in the same place
+// on every row (design/foundations/glance.md).
 func (s *Server) glance(t *schema.Type, rec *store.Record, now time.Time) []glanceFact {
 	var out []glanceFact
-	done := t.Name == EntryType
+	done := false
 	if f := doneField(t); f != nil {
 		if on, _ := rec.Fields[f.Name].(bool); on {
 			done = true
@@ -73,7 +79,7 @@ func (s *Server) glance(t *schema.Type, rec *store.Record, now time.Time) []glan
 	title := strings.TrimSpace(chat.Name(s.app.Store, t, rec))
 	for _, f := range t.Shown() {
 		id, _ := rec.Fields[f.Name].(string)
-		if f.Type != "ref" || id == "" {
+		if f.Type != "ref" || id == "" || f.To == FileType {
 			continue
 		}
 		if name := s.refTitle(f, id); name != "" && name != title {
@@ -86,46 +92,6 @@ func (s *Server) glance(t *schema.Type, rec *store.Record, now time.Time) []glan
 		break
 	}
 	return out
-}
-
-// dayGlance is a record's first day as a person reads it.
-func dayGlance(t *schema.Type, rec *store.Record, done bool, now time.Time) (glanceFact, bool) {
-	for _, f := range t.Shown() {
-		v, _ := rec.Fields[f.Name].(string)
-		if f.Type != "datetime" || v == "" {
-			continue
-		}
-		ts, _ := time.Parse(time.RFC3339, v)
-		dayOnly := strings.HasSuffix(v, "T00:00:00Z")
-		past := !done && (!dayOnly && ts.Before(now) || dayOnly && ts.AddDate(0, 0, 1).Before(now))
-		words := when.Relative(v, now)
-		text, tone, class := words, "info", "sw-when"
-		if f.Label != "" {
-			text = f.Label + " " + afterLabel(words)
-		}
-		switch {
-		case past && f.Label != "":
-			text, tone = "Was "+strings.ToLower(f.Label)+" "+afterLabel(words), "warning"
-			class += " sw-when--past"
-		case past:
-			tone = "warning"
-		case strings.HasPrefix(words, "Today"):
-			class += " sw-when--today"
-		}
-		return glanceFact{Kind: "day", Field: f.Name, Text: text, Tone: tone, Short: text, Class: class}, true
-	}
-	return glanceFact{}, false
-}
-
-// afterLabel lowers a phrase's first letter where it follows a label:
-// Due tomorrow, not Due Tomorrow. A month or a day's name stays as it is.
-func afterLabel(s string) string {
-	for _, w := range []string{"Today", "Tomorrow", "Yesterday", "In "} {
-		if strings.HasPrefix(s, w) {
-			return strings.ToLower(s[:1]) + s[1:]
-		}
-	}
-	return s
 }
 
 // glanceText is the facts as plain words, for a block's list.
@@ -148,7 +114,9 @@ func (s *Server) glanceHTML(facts []glanceFact, chips bool, boxed string) string
 		case f.Kind == "person":
 			parts = append(parts, s.personChip(f.Label, f.Person, strings.TrimPrefix(f.Text, f.Label+" ")))
 		case f.Kind == "day" && !chips:
-			parts = append(parts, `<span class="`+f.Class+`">`+template.HTMLEscapeString(f.Short)+`</span>`)
+			parts = append(parts, timeHTML(f.Class, f.When, f.Full, template.HTML(template.HTMLEscapeString(f.Short))))
+		case f.Kind == "day":
+			parts = append(parts, timeHTML("", f.When, f.Full, s.component("badge", map[string]any{"label": f.Text, "tone": f.Tone})))
 		case f.Kind == "ref" && !chips:
 			parts = append(parts, `<span class="sw-row__note">`+template.HTMLEscapeString(f.Text)+`</span>`)
 		default:
