@@ -60,11 +60,11 @@ func TestActionDetailLedeDoesNotShowKindBadge(t *testing.T) {
 	body := rec.Body.String()
 
 	// Extract just the lede paragraph.
-	ledeStart := strings.Index(body, `<p class="sw-lede">`)
+	ledeStart := strings.Index(body, `<div class="sw-lede">`)
 	if ledeStart < 0 {
 		t.Fatalf("action detail has no lede\n%s", truncate(body))
 	}
-	ledeEnd := strings.Index(body[ledeStart:], "</p>")
+	ledeEnd := strings.Index(body[ledeStart:], "</div>")
 	if ledeEnd < 0 {
 		t.Fatalf("could not find end of lede\n%s", truncate(body))
 	}

@@ -28,7 +28,8 @@ func (s *Server) lede(r *http.Request, t *schema.Type, rec *store.Record) templa
 		delete(props, "context")
 		box = string(s.component("mark", props))
 	}
-	return template.HTML(`<p class="sw-lede">` + box + " " + s.facts(t, rec, factOpts{Made: true, Boxed: box != "", Chips: true, Detail: true, From: s.from(r, t, rec)}) + `</p>`)
+	// A div, not a p: a form inside a p ends the p, and the line came apart.
+	return template.HTML(`<div class="sw-lede">` + box + " " + s.facts(t, rec, factOpts{Made: true, Boxed: box != "", Chips: true, Detail: true, From: s.from(r, t, rec)}) + `</div>`)
 }
 
 // howMany says how many there are under a listing's title, and how many

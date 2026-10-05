@@ -20,6 +20,8 @@ type Outline struct {
 	Headings  []Heading  `json:"headings,omitempty"`
 	Controls  []Control  `json:"controls,omitempty"`
 	Live      []Live     `json:"live,omitempty"`
+	// Text is what the page says, passage by passage (text.go).
+	Text []Passage `json:"text,omitempty"`
 	// Components is every data-component present, in document order.
 	Components []string `json:"components,omitempty"`
 	// Problems is what a screen reader user would be stuck on. Empty means
@@ -128,6 +130,7 @@ func read(src string, page bool) (*Outline, error) {
 		}
 	}
 	walk(doc.Root, false, -1)
+	o.Text = passages(doc.Root)
 	o.Problems = append(o.Problems, problems(doc, o, page)...)
 	if page {
 		o.Problems = append(o.Problems, sameNames(o, scopes)...)

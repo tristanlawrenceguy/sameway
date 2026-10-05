@@ -90,7 +90,7 @@ func (s *Server) apiLook(w http.ResponseWriter, r *http.Request) {
 	}
 	for _, section := range ask.Only {
 		if !lookSections[strings.TrimSpace(section)] {
-			writeError(w, fmt.Errorf("only takes landmarks, headings, controls, live and components; not %q", section))
+			writeError(w, fmt.Errorf("only takes landmarks, headings, controls, live, components and text; not %q", section))
 			return
 		}
 	}
@@ -204,7 +204,7 @@ func (s *Server) lookScripted(w http.ResponseWriter, r *http.Request, ask lookAs
 }
 
 // lookSections are the parts of an outline only can keep.
-var lookSections = map[string]bool{"landmarks": true, "headings": true, "controls": true, "live": true, "components": true}
+var lookSections = map[string]bool{"landmarks": true, "headings": true, "controls": true, "live": true, "components": true, "text": true}
 
 // narrow keeps what was asked for from a long outline: the sections named
 // in only, and the controls of kind, or with name among their words. The
@@ -226,6 +226,9 @@ func narrow(o *look.Outline, ask lookAsk) *look.Outline {
 		}
 		if !keep["live"] {
 			o.Live = nil
+		}
+		if !keep["text"] {
+			o.Text = nil
 		}
 		if !keep["components"] {
 			o.Components = nil

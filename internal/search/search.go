@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -145,7 +146,7 @@ func texts(t *schema.Type, rec *store.Record) (title, body string) {
 		case "bool":
 			continue
 		case "datetime":
-			s = when.Text(flatten(v))
+			s = when.Relative(flatten(v), time.Now())
 		case "enum":
 			s = f.ValueLabel(flatten(v))
 		default:

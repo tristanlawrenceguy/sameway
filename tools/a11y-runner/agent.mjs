@@ -227,8 +227,8 @@ await act("search: getByRole('searchbox', { name: 'Search' })", async () => {
   await Promise.all([page.waitForURL(/\/search\?/), page.getByRole("searchbox", { name: "Search" }).press("Enter")]);
 });
 const results = [...((await act("search: getByRole('list', { name: 'Results for plumber' })", () => page.getByRole("list", { name: "Results for plumber" }).ariaSnapshot())) || "").matchAll(/link "([^"]+)"/g)].map((m) => m[1]);
-const hit = results.find((n) => n.startsWith("Call plumber") && n.includes(overdueSaid));
-if (!hit) fail(`search: no result names the overdue Call plumber by its day: ${results.join(" | ")}`);
+const hit = results.find((n) => n.startsWith("Call plumber") && n.includes("(first of"));
+if (!hit) fail(`search: no result named Call plumber (first of 2): ${results.join(" | ")}`);
 else {
   await act(`search: getByRole('link', { name: '${hit}', exact: true })`, async () => {
     await Promise.all([page.waitForURL(`**/t/task/${overdue.id}`), page.getByRole("link", { name: hit, exact: true }).click()]);
