@@ -8,7 +8,6 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
-	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // collectionComponent is the block that shows the records matching a
@@ -104,7 +103,7 @@ func (s *Server) resolveCollectionAt(props map[string]any, block string, at *col
 		}
 		if len(show) > 0 {
 			item["fields"] = s.fieldsOf(t, rec, show)
-		} else if meta := metaOf(t, rec); meta != "" && by == nil {
+		} else if meta := s.glanceText(t, rec); meta != "" && by == nil {
 			item["meta"] = meta
 		}
 		if full {
@@ -148,26 +147,6 @@ func listPath(typeName string, where []string, order string) string {
 		return "/t/" + typeName
 	}
 	return "/t/" + typeName + "?" + q.Encode()
-}
-
-// metaOf is the one thing worth saying beside a title in a list: the day
-// it is due, or its state.
-func metaOf(t *schema.Type, rec *store.Record) string {
-	for _, f := range t.Shown() {
-		if f.Type == "datetime" {
-			if v, ok := rec.Fields[f.Name].(string); ok && v != "" {
-				return label(f.Name) + " " + when.Text(v)
-			}
-		}
-	}
-	for _, f := range t.Shown() {
-		if f.Type == "enum" {
-			if v, ok := rec.Fields[f.Name].(string); ok && v != "" {
-				return f.ValueLabel(v)
-			}
-		}
-	}
-	return ""
 }
 
 // textOf is the record's main text, for a full collection.

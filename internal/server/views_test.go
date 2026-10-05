@@ -35,7 +35,7 @@ func TestDetailPageSkipsEmptyFields(t *testing.T) {
 
 // TestDetailPageShowsNonEmptyFields ensures that fields with real values still
 // render correctly when empty fields are skipped. Bool and enum types are
-// excluded from the dl because they appear as chips/heading instead.
+// excluded from the dl as the heading; its role is said there, once.
 func TestDetailPageShowsNonEmptyFields(t *testing.T) {
 	a, h := newApp(t)
 
@@ -92,8 +92,8 @@ func TestDetailPageSkipsEmptyFieldsActivity(t *testing.T) {
 }
 
 // TestDetailPageSkipsEmptyFieldsMessage ensures message detail pages also skip
-// empty fields in their definition list. The enum role and title (content) are
-// excluded from the dl because they appear as chips/heading instead.
+// empty fields in their definition list. The title (content) is
+// excluded from the dl as the heading; its role is said there, once.
 func TestDetailPageSkipsEmptyFieldsMessage(t *testing.T) {
 	a, h := newApp(t)
 
@@ -106,9 +106,9 @@ func TestDetailPageSkipsEmptyFieldsMessage(t *testing.T) {
 	}
 	body := get(t, h, "/t/message/"+rec.ID+fieldsView).Body.String()
 
-	// Role (enum) and Content (title) are excluded from the dl.
-	if strings.Contains(body, "<dt>Role</dt>") {
-		t.Error("detail page should not show <dt>Role</dt> in the dl")
+	// Content (title) is excluded from the dl; the role is said in it.
+	if !strings.Contains(body, "<dt>Role</dt>") {
+		t.Error("a message's role is said in its fields, its own page's to say")
 	}
 	if strings.Contains(body, "<dt>Content</dt>") {
 		t.Error("detail page should not show <dt>Content</dt> — content is the title/h1")
