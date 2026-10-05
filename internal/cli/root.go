@@ -18,6 +18,7 @@ import (
 const usage = `sameway - accessible content and components for people and agents
 
 Usage:
+  sameway                               open your workspace in the browser, making it the first time
   sameway init [dir] [--force]          create a workspace from the starter preset
   sameway open [--addr host:port]       run the workspace and open it in a browser
   sameway serve [--addr host:port]      run the web server for this workspace
@@ -74,11 +75,18 @@ func Run(args []string, env Env) int {
 		fmt.Fprintln(env.Stdout, "sameway", update.Version)
 		return 0
 	}
-	if sub == "" || sub == "help" || sub == "-h" || sub == "--help" {
+	if sub == "help" || sub == "-h" || sub == "--help" {
 		fmt.Fprint(env.Stdout, usage)
 		return 0
 	}
 	c := &ctx{Env: env, JSON: *jsonFlag, workspaceDir: *wsFlag, args: fs.Args()}
+	// Nothing after it is a double-click: open the person's workspace (start.go).
+	if sub == "" {
+		if err := c.startCmd(); err != nil {
+			return 1
+		}
+		return 0
+	}
 	var err error
 	switch sub {
 	case "init":
