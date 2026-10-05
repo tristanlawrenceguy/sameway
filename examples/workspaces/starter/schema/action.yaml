@@ -46,6 +46,7 @@ fields:
     description: The command line you accepted, kept by the system. A command runs only while it matches this.
     readonly: true
   show:
+    label: On the canvas
     type: bool
     default: false
     description: For a webhook or a command, put the answer on the canvas as a text block, kept up to date on every run.

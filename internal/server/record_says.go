@@ -20,7 +20,7 @@ func (s *Server) says(t *schema.Type, rec *store.Record) (text string, fields []
 			break
 		}
 	}
-	head := headFields(t, rec)
+	head := s.headFields(t, rec) // glance.go
 	for _, f := range t.Shown() {
 		if f.Name == text || head[f.Name] || display(f, rec.Fields[f.Name]) == "" || noGoal(t.Name, f.Name, rec.Fields[f.Name]) {
 			continue

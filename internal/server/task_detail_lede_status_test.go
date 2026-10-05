@@ -1,10 +1,10 @@
 package server_test
 
-// Task detail pages must not show raw status enum badges ("Doing", "Done") in
-// the lede paragraph — backlog 0552, task 0245. The checkbox (the mark) conveys
-// completion; the definition list below carries status details without exposing
-// internal names. Only human-readable metadata (due date, creation time) should
-// appear in the lede.
+// A task's page says at a glance what its row says (glance.go): Doing as a
+// chip, said once and not again in its fields; Done and To do are its box.
+// It never exposes the field's name (backlog 0552, task 0245). Keeping the
+// status out of the lede and out of the fields alike once left Doing said
+// nowhere on the page.
 
 import (
 	"regexp"
@@ -12,10 +12,10 @@ import (
 	"testing"
 )
 
-// TestTaskDetailLedeHasNoStatusBadgeDoing asserts that an undone task whose
-// status is "doing" does not show a raw "Doing" badge chip in its lede text
-// under the heading (backlog 0552, acceptance item 1 & 2). The checkbox must
-// remain unchecked while no status word appears in the paragraph.
+// TestTaskDetailLedeHasNoStatusBadgeDoing asserts that a task whose
+// status is "doing" says Doing once, in its lede and not in its fields, and
+// exposes no field name (backlog 0552, acceptance item 1 & 2). The checkbox must
+// remain unchecked.
 func TestTaskDetailLedeHasNoStatusBadgeDoing(t *testing.T) {
 	a, h := newApp(t)
 
@@ -41,8 +41,8 @@ func TestTaskDetailLedeHasNoStatusBadgeDoing(t *testing.T) {
 	}
 	lede := page[ledeStart : ledeStart+ledeEnd]
 
-	if strings.Contains(lede, ">Doing</span>") {
-		t.Errorf("task detail lede must not show raw \"Doing\" status badge:\n%s", lede)
+	if !strings.Contains(lede, ">Doing</span>") || strings.Contains(page[ledeStart+ledeEnd:], "<dt>Status</dt>") {
+		t.Errorf("a task's page says Doing once, at a glance as its row does, and not again in its fields:\n%s", lede)
 	}
 	if strings.Contains(lede, `<span class="sw-visually-hidden"> status</span>`) {
 		t.Errorf("task detail lede must not expose internal field name \"status\":\n%s", lede)

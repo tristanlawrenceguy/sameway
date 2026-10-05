@@ -29,7 +29,7 @@ func (s *Server) lede(r *http.Request, t *schema.Type, rec *store.Record) templa
 		box = string(s.component("mark", props))
 	}
 	// A div, not a p: a form inside a p ends the p, and the line came apart.
-	return template.HTML(`<div class="sw-lede">` + box + " " + s.facts(t, rec, factOpts{Made: true, Boxed: box != "", Chips: true, Detail: true, From: s.from(r, t, rec)}) + `</div>`)
+	return template.HTML(`<div class="sw-lede">` + box + " " + s.facts(t, rec, factOpts{Made: true, Boxed: box != "", Chips: true, From: s.from(r, t, rec)}) + `</div>`)
 }
 
 // howMany says how many there are under a listing's title, and how many
@@ -60,39 +60,27 @@ func howMany(t *schema.Type, recs []*store.Record) template.HTML {
 // Chips draws the day and what it belongs to as chips rather than words,
 // and words are short, the way a row says them.
 type factOpts struct {
-	Made, Boxed, Chips, Row, Detail bool
+	Made, Boxed, Chips bool
 	// From is who wrote the record's words, with Made; see from.
 	From string
 }
 
-// facts is what a person wants to know about a record at a glance: done,
-// its state, the day that matters, what it belongs to. A day that has
-// passed on something not done is amber, with the word "was". When there
-// is nothing of the kind, when it last changed.
+// facts is what a record says at a glance (glance.go), as chips under its
+// title or short words at a row's right: the same on its own page as in
+// its list. With no day to say, a row says when the record last changed;
+// the record's own page says when it was made.
 func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
-	var parts []string
-	// An entry is a thing done: its day is when it happened, never "was".
-	done := t.Name == EntryType
-	if f := doneField(t); f != nil {
-		if v, _ := rec.Fields[f.Name].(bool); v {
-			done = true
-			if !o.Boxed {
-				parts = append(parts, string(s.component("badge", map[string]any{"label": fieldLabel(*f), "tone": "success"})))
-			}
-		}
+	now := time.Now()
+	facts := s.glance(t, rec, now)
+	day := false
+	for _, f := range facts {
+		day = day || f.Kind == "day"
 	}
-	// A setting that is on, such as pinned or show, is said as a badge — but
-	// not when the mark checkbox already carries it (Boxed=true), since that
-	// would repeat the same fact twice.
-	if !o.Boxed || doneField(t) != nil {
-		for _, f := range t.Shown() {
-			if f.Type == "bool" && (doneField(t) == nil || f.Name != doneField(t).Name) {
-				if on, _ := rec.Fields[f.Name].(bool); on {
-					parts = append(parts, string(s.component("badge", map[string]any{"label": fieldLabel(f), "tone": "neutral"})))
-				}
-			}
-		}
+	boxed := ""
+	if o.Boxed {
+		boxed = s.boxed(t, rec)
 	}
+<<<<<<< HEAD
 	// Show enum badges only when the caller is not a list row for note/project/file/reminder,
 	// and not an action detail (actions hide their kind everywhere). Also skip
 	// note/project/file/task/habit/reminder on detail pages — the status badge in meta text repeats what
@@ -113,86 +101,16 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 				break
 			}
 		}
+=======
+	out := s.glanceHTML(facts, o.Chips, boxed)
+	if !day && !o.Made && !hasDate(t) {
+		out = strings.TrimSpace(out + ` <span class="sw-muted">` + when.Relative(rec.UpdatedAt.UTC().Format(time.RFC3339), now) + `</span>`)
+>>>>>>> origin/main
 	}
-
-	// The record's first date: short at the right of a row, in full as a chip.
-	if d := s.dayFact(t, rec, done, o.Chips && t.Name != EntryType); d != "" {
-		parts = append(parts, d)
-	} else if !o.Made && !hasDate(t) {
-		parts = append(parts, `<span class="sw-muted">`+when.Relative(rec.UpdatedAt.UTC().Format(time.RFC3339), time.Now())+`</span>`)
-	}
-
-	// An entry's row is already titled by its habit; saying it again under the title is the same words twice.
-	for _, f := range t.Shown() {
-		if f.Type == "ref" && (o.Chips || t.Name != EntryType) {
-			if id, ok := rec.Fields[f.Name].(string); ok && id != "" {
-				if title := s.refTitle(f, id); title != "" {
-					// Someone it is for: their name, with their colour.
-					if f.To == chat.PersonType {
-						parts = append(parts, s.personChip(fieldLabel(f), id, title))
-					} else if o.Chips {
-						parts = append(parts, string(s.component("badge", map[string]any{"label": title, "tone": "neutral"})))
-					} else {
-						parts = append(parts, `<span class="sw-row__note">`+template.HTMLEscapeString(title)+`</span>`)
-					}
-				}
-			}
-			break
-		}
-	}
-
 	if o.Made {
-		parts = append(parts, whenMade(t, rec, o.From))
+		out = strings.TrimSpace(out + " " + whenMade(t, rec, o.From))
 	}
-	return strings.Join(parts, " ")
-}
-
-// dayFact is the record's first date: short at the right of a row, in full
-// as a chip under a title; amber with "was" when it has passed undone.
-// When no custom Label exists on the field, only the date text appears — no
-// raw schema column name prefix (see TestTaskDetailLedeNoRawDueLabel).
-func (s *Server) dayFact(t *schema.Type, rec *store.Record, done, chip bool) string {
-	for _, f := range t.Shown() {
-		if f.Type != "datetime" {
-			continue
-		}
-		v, ok := rec.Fields[f.Name].(string)
-		if !ok || v == "" {
-			continue
-		}
-		ts, _ := time.Parse(time.RFC3339, v)
-		now := time.Now()
-		dayOnly := strings.HasSuffix(v, "T00:00:00Z")
-		past := !done && (!dayOnly && ts.Before(now) || dayOnly && ts.AddDate(0, 0, 1).Before(now))
-
-		if chip {
-			// A day is a fact, not something a person did: info, not the
-			// human tone, which says who did a thing. Use relative text so
-			// dates read in natural language ("Tomorrow at 10am") rather than
-			// machine format ("Mon 5 Oct 2026, 14:00").
-			text := when.Relative(v, now)
-			tone := "info"
-			if f.Label != "" {
-				text = f.Label + " " + text
-			}
-			if past && f.Label != "" {
-				text, tone = "Was "+strings.ToLower(f.Label)+" "+when.Relative(v, now), "warning"
-			} else if past {
-				text, tone = when.Relative(v, now), "warning"
-			}
-			return string(s.component("badge", map[string]any{"label": text, "tone": tone}))
-		}
-		short := when.Relative(v, now)
-		class := "sw-when"
-		switch {
-		case past && f.Label != "":
-			short, class = "Was "+strings.ToLower(f.Label)+" "+short, "sw-when sw-when--past"
-		case strings.HasPrefix(short, "Today"):
-			class = "sw-when sw-when--today"
-		}
-		return `<span class="` + class + `">` + template.HTMLEscapeString(short) + `</span>`
-	}
-	return ""
+	return out
 }
 
 // whenMade says when a record was made, as a person reads a time, and where
