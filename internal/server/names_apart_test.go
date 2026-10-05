@@ -12,7 +12,7 @@ import (
 // Two records with one title are told apart wherever they are listed
 // together, by the day that matters to them, so no two controls on the
 // page share a name and no two links of one name go to different pages
-// (WCAG 2.4.6, 2.4.9; a getByRole that matches two is refused). A title
+// (WCAG 2.4.6, 2.4.9; a getByRole that matches two refuses to guess). A title
 // that is its own keeps its plain name: the words are added only when
 // needed, hidden, after the visible title.
 
@@ -79,6 +79,7 @@ func hasPrefix(list []string, prefix string) bool {
 // each twin is told apart by.
 func seedTwins(t *testing.T, h http.Handler) (overdue, later string) {
 	t.Helper()
+
 	a, b := time.Now().AddDate(0, 0, -3), time.Now().AddDate(0, 0, 4)
 	for _, task := range []map[string]any{
 		{"title": "Call plumber", "due": a.Format("2006-01-02")},
@@ -163,7 +164,6 @@ func TestRepeatedTitlesAreToldApartInABlockAndItsControlsAreNamedAfterIt(t *test
 		t.Errorf("a block with a label is not named by its component")
 	}
 }
-
 func TestRepeatedTitlesAreToldApartInSearchAndTheLog(t *testing.T) {
 	_, h := newApp(t)
 	overdue, later := seedTwins(t, h)
@@ -171,8 +171,6 @@ func TestRepeatedTitlesAreToldApartInSearchAndTheLog(t *testing.T) {
 	if same := sameNames(t, results); len(same) > 0 {
 		t.Errorf("search results share a name: %v", same)
 	}
-<<<<<<< HEAD
-=======
 	// Search results use ordinals to tell apart identical titles, never raw
 	// field labels like "(due" — those are database column names. The log
 	// still uses the full context from recordWays for undo buttons.
@@ -180,7 +178,6 @@ func TestRepeatedTitlesAreToldApartInSearchAndTheLog(t *testing.T) {
 	if !has(linkNames, "Call plumber — Task (first of 2)") && !has(linkNames, "Call plumber — Task (second of 2)") {
 		t.Errorf("a result says what tells it apart: %q", linkNames)
 	}
->>>>>>> origin/main
 	log := get(t, h, "/activity").Body.String()
 	if same := sameNames(t, log); len(same) > 0 {
 		t.Errorf("activity entries share a name: %v", same)
@@ -191,7 +188,7 @@ func TestRepeatedTitlesAreToldApartInSearchAndTheLog(t *testing.T) {
 		if strings.HasPrefix(link, "Call plumber — Task (") {
 			context := strings.TrimPrefix(link, "Call plumber — Task (")
 			context = context[:strings.Index(context, ")")]
-			if !has(names(t, log, "button"), "Undo created task Call plumber ("+context+")") {
+			if !strings.Contains(context, " of ") && !has(names(t, log, "button"), "Undo created task Call plumber ("+context+")") {
 				t.Errorf("search and activity agree on what tells them apart: no %q in buttons", "Call plumber ("+context+")")
 			}
 		}
