@@ -83,6 +83,9 @@ type Config struct {
 		// de or es: the pages say it, so screen readers read them in the
 		// right voice, and the assistant replies in it. English when empty.
 		Language string `yaml:"language"`
+		// Clock is how a time of day is said: "12" (2pm, 5:30pm), "24"
+		// (14:00), or empty for what the language uses (12 for English).
+		Clock string `yaml:"clock"`
 	} `yaml:"ui"`
 	Chat struct {
 		// HistoryLimit caps how many past messages are sent to the model.

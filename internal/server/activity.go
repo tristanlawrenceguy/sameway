@@ -11,6 +11,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/design"
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // who made a request's change: a person on a page, with the device it
@@ -106,7 +107,7 @@ func (s *Server) recentActivityAbout(n int, from string, about func(target, id s
 // dated gives its time the day, where no day's heading above says it.
 // told tells it from another entry shown that says the same, or is "".
 func (s *Server) event(r *store.Record, from string, level int, dated bool, told string) template.HTML {
-	at := r.CreatedAt.Local().Format("15:04")
+	at := when.Clock(r.CreatedAt.Local())
 	if dated {
 		at = messageTime(r.CreatedAt)
 	}

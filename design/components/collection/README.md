@@ -99,6 +99,12 @@ changed on their own pages.
 - **Fields named in sight.** A date beside a title could be any date, so
   its field's name is shown, not only said to a screen reader
   ([W3C COGA](https://www.w3.org/TR/coga-usable/)).
+- **Each item says what its row says.** Without `show`, an item's words
+  are the record's glance, in the order every row uses: "Doing · Due Fri
+  9 Oct at 2pm · For Ana Silva", or "Overdue, due yesterday" in words for
+  what is late; the same words an agent reads as `glance`
+  (design/foundations/glance.md,
+  [NN/g list entries](https://www.nngroup.com/articles/list-entries/)).
 - **A table a keyboard can scroll.** On a phone it is a named region that
   takes focus
   ([Adrian Roselli on responsive tables](https://adrianroselli.com/2020/11/under-engineered-responsive-tables.html),

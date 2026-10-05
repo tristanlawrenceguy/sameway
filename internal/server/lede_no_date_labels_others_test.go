@@ -19,7 +19,7 @@ func TestActionDetailLedeNoStartedLabel(t *testing.T) {
 
 	body := get(t, h, "/t/action/"+rec.ID).Body.String()
 
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*">([^<]+)</span>`)
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(body)
 	if len(matches) < 2 {
 		t.Fatal("action detail page should have a sw-detail__when span in the lede")
@@ -61,7 +61,7 @@ func TestEntryDetailLedeNoAddedLabel(t *testing.T) {
 
 	body := get(t, h, "/t/entry/"+entryRec.ID).Body.String()
 
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*">([^<]+)</span>`)
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(body)
 	if len(matches) < 2 {
 		t.Fatal("entry detail page should have a sw-detail__when span in the lede")
@@ -91,7 +91,7 @@ func TestFileDetailLedeNoAddedLabel(t *testing.T) {
 
 	body := get(t, h, "/t/file/"+rec.ID).Body.String()
 
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*">([^<]+)</span>`)
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(body)
 	if len(matches) < 2 {
 		t.Fatal("file detail page should have a sw-detail__when span in the lede")
@@ -121,7 +121,7 @@ func TestPersonDetailLedeNoAddedLabel(t *testing.T) {
 
 	body := get(t, h, "/t/person/"+rec.ID).Body.String()
 
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*">([^<]+)</span>`)
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(body)
 	if len(matches) < 2 {
 		t.Fatal("person detail page should have a sw-detail__when span in the lede")
@@ -151,7 +151,7 @@ func TestProjectDetailLedeNoAddedLabel(t *testing.T) {
 
 	body := get(t, h, "/t/project/"+rec.ID).Body.String()
 
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*">([^<]+)</span>`)
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(body)
 	if len(matches) < 2 {
 		t.Fatal("project detail page should have a sw-detail__when span in the lede")

@@ -38,6 +38,16 @@ a fact that points at another record leads to it, wherever it is shown.
   ([WCAG 3.2.4 Consistent Identification](https://www.w3.org/WAI/WCAG22/Understanding/consistent-identification)).
 - **Line breaks kept**, so a list's lines and a note's paragraphs read as
   written.
+- **A day in full, in a time element.** A date field reads "Sat 19 Sep 2026
+  at 2pm", day before month, the time on the person's clock, which the day
+  field reads back as the same value; give `datetime` and the value sits
+  in a `<time>` holding it for a machine, while a screen reader reads the
+  words (design/foundations/glance.md,
+  [MDN time](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/time)).
+- **Not what the line above said.** On a record's page the facts leave
+  out what its heading and chips already say (its due day, its state), so
+  nothing is read twice; a reference stays, being a way there
+  ([GOV.UK summary list](https://design-system.service.gov.uk/components/summary-list/)).
 - **A link alone in a value is a 44px target**, reaching into its row's
   padding ([WCAG 2.5.5](https://www.w3.org/WAI/WCAG22/Understanding/target-size-enhanced.html)).
 

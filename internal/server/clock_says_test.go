@@ -19,11 +19,11 @@ import (
 func TestTheClockSaysWhatItSet(t *testing.T) {
 	a, h := newApp(t)
 	page := after(t, h, postForm(t, h, "/clock/set", url.Values{"at": {"tomorrow 7am"}, "title": {"Call the vet"}})).Body.String()
-	if !strings.Contains(page, "Alarm set") || !strings.Contains(page, "Call the vet rings tomorrow at 07:00.") {
+	if !strings.Contains(page, "Alarm set") || !strings.Contains(page, "Call the vet rings tomorrow at 7am.") {
 		t.Errorf("setting an alarm says what and when\n%s", truncate(page))
 	}
 	page = after(t, h, postForm(t, h, "/clock/set", url.Values{"minutes": {"10"}})).Body.String()
-	at := time.Now().Add(10 * time.Minute).Format("15:04")
+	at := when.Clock(time.Now().Add(10 * time.Minute))
 	if !strings.Contains(page, "Timer set") || !strings.Contains(page, "10 minute timer rings ") || !strings.Contains(page, at) {
 		t.Errorf("setting a timer says when it rings, about %s\n%s", at, truncate(page))
 	}
@@ -66,7 +66,7 @@ func TestComingUpIsOneListInTimeOrder(t *testing.T) {
 	if task < 0 || vet < 0 || task > vet {
 		t.Errorf("today's task comes before tomorrow's alarm\n%s", truncate(page))
 	}
-	if !strings.Contains(page, `<span class="sw-clock__when"><span class="sw-clock__day">Tomorrow</span> 09:00</span>`) {
+	if !strings.Contains(page, `<span class="sw-clock__when"><span class="sw-clock__day">Tomorrow</span> 9am</span>`) {
 		t.Errorf("a reminder on another day has its day above its time\n%s", truncate(page))
 	}
 }

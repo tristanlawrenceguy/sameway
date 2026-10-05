@@ -14,6 +14,7 @@ var settingNames = map[string]string{
 	"ui.lists":     "Lists shown",
 	"ui.developer": "Developer pages",
 	"ui.language":  "Language",
+	"ui.clock":     "Clock",
 	"llm.provider": "Model provider",
 	"llm.model":    "Model",
 }

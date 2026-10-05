@@ -34,7 +34,7 @@ func TestSearchResultSnippetsHaveNoMachineFormatDate(t *testing.T) {
 			body := get(t, h, "/search?q="+strings.ReplaceAll(tc.payload["title"].(string), " ", "+")).Body.String()
 
 			// No full year like 2026 in the body.
-			if strings.Contains(body, "2026") {
+			if strings.Contains(visibleText(body), "2026") {
 				t.Errorf("search result snippet must not contain a bare full year like '2026'; found in:\n%s", truncate(body))
 			}
 

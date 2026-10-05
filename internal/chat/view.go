@@ -34,6 +34,9 @@ type RecordView struct {
 	// Parts are what else its page can show, off until there is a reason
 	// (page_parts.go): the same ?show=<key> opens one.
 	Parts []PagePart `json:"parts,omitempty"`
+	// Glance is what its row and its page say beside its title, in the
+	// same words: "Doing · Overdue, due yesterday · For Ana Silva".
+	Glance string `json:"glance,omitempty"`
 }
 
 // RecordView is a record as an agent reads it.
@@ -47,6 +50,9 @@ func (s *Service) RecordView(t *schema.Type, rec *store.Record) RecordView {
 	}
 	if v.Parts = PageParts(s.Store, t, rec); len(v.Parts) > 0 {
 		v.Open = page + "?show=<key>"
+	}
+	if s.Glance != nil {
+		v.Glance = s.Glance(t, rec)
 	}
 	return v
 }
