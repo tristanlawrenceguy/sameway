@@ -39,6 +39,7 @@ var pageActionTools = map[string]string{
 	"/help/set":                   "set_setting",
 	"/model/use":                  "set_setting",
 	"/model/check":                "a person's: checking the model is checking the assistant itself",
+	"/model/key":                  "a person's: a key is their own secret, pasted by them; no model is handed one",
 	"/clock/set":                  "create_record",
 	"/clock/{id}/done":            "update_record",
 	"/clock/{id}/snooze":          "update_record",
