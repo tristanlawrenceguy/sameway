@@ -29,7 +29,7 @@ func (s *Server) lede(r *http.Request, t *schema.Type, rec *store.Record) templa
 		box = string(s.component("mark", props))
 	}
 	// A div, not a p: a form inside a p ends the p, and the line came apart.
-	return template.HTML(`<div class="sw-lede">` + box + " " + s.facts(t, rec, factOpts{Made: true, Boxed: box != "", Chips: true, From: s.from(r, t, rec)}) + `</div>`)
+	return template.HTML(`<div class="sw-lede">` + box + " " + s.facts(t, rec, factOpts{Made: true, Boxed: box != "", Chips: true, Detail: true, From: s.from(r, t, rec)}) + `</div>`)
 }
 
 // howMany says how many there are under a listing's title, and how many
@@ -61,6 +61,9 @@ func howMany(t *schema.Type, recs []*store.Record) template.HTML {
 // and words are short, the way a row says them.
 type factOpts struct {
 	Made, Boxed, Chips bool
+	// Row marks a list-row call (skip enum badges there); Detail marks the
+	// record's own page lede (also skip enum badges to avoid raw field names).
+	Row, Detail bool
 	// From is who wrote the record's words, with Made; see from.
 	From string
 }
@@ -80,13 +83,19 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 	if o.Boxed {
 		boxed = s.boxed(t, rec)
 	}
-<<<<<<< HEAD
+
 	// Show enum badges only when the caller is not a list row for note/project/file/reminder,
 	// and not an action detail (actions hide their kind everywhere). Also skip
 	// note/project/file/task/habit/reminder on detail pages — the status badge in meta text repeats what
 	// the definition list below already says.
 	skipEnum := o.Row && (t.Name == "note" || t.Name == "project" || t.Name == "file" || t.Name == ReminderType)
 	detailSkip := o.Detail && (t.Name == "note" || t.Name == "project" || t.Name == "file" || t.Name == "task" || t.Name == HabitType || t.Name == ReminderType)
+
+	out := s.glanceHTML(facts, o.Chips, boxed)
+	if !day && !o.Made && !hasDate(t) {
+		out = strings.TrimSpace(out + ` <span class="sw-muted">` + when.Relative(rec.UpdatedAt.UTC().Format(time.RFC3339), now) + `</span>`)
+	}
+
 	if !skipEnum && !detailSkip && t.Name != "action" {
 		for _, f := range t.Shown() {
 			if f.Type == "enum" {
@@ -96,17 +105,13 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 					if f.Labels[v] == "" {
 						props["context"] = strings.ToLower(fieldLabel(f))
 					}
-					parts = append(parts, string(s.component("badge", props)))
+					out = out + " " + string(s.component("badge", props))
 				}
 				break
 			}
 		}
-=======
-	out := s.glanceHTML(facts, o.Chips, boxed)
-	if !day && !o.Made && !hasDate(t) {
-		out = strings.TrimSpace(out + ` <span class="sw-muted">` + when.Relative(rec.UpdatedAt.UTC().Format(time.RFC3339), now) + `</span>`)
->>>>>>> origin/main
 	}
+
 	if o.Made {
 		out = strings.TrimSpace(out + " " + whenMade(t, rec, o.From))
 	}
