@@ -31,11 +31,11 @@ func TestTaskDetailLedeHasNoStatusBadgeDoing(t *testing.T) {
 	page := get(t, h, "/t/task/"+rec.ID).Body.String()
 
 	// The lede must not contain a badge chip for the status value "Doing".
-	ledeStart := strings.Index(page, `<p class="sw-lede">`)
+	ledeStart := strings.Index(page, `<div class="sw-lede">`)
 	if ledeStart == -1 {
 		t.Fatal("no lede found in task detail page")
 	}
-	ledeEnd := strings.Index(page[ledeStart:], `</p>`)
+	ledeEnd := strings.Index(page[ledeStart:], `</div>`)
 	if ledeEnd == -1 {
 		t.Fatal("no closing tag for lede")
 	}
@@ -83,11 +83,11 @@ func TestTaskDetailLedeHasNoStatusBadgeDone(t *testing.T) {
 	page := get(t, h, "/t/task/"+rec.ID).Body.String()
 
 	// The lede must not contain a badge chip for the status value "Done".
-	ledeStart := strings.Index(page, `<p class="sw-lede">`)
+	ledeStart := strings.Index(page, `<div class="sw-lede">`)
 	if ledeStart == -1 {
 		t.Fatal("no lede found in task detail page")
 	}
-	ledeEnd := strings.Index(page[ledeStart:], `</p>`)
+	ledeEnd := strings.Index(page[ledeStart:], `</div>`)
 	if ledeEnd == -1 {
 		t.Fatal("no closing tag for lede")
 	}
@@ -132,11 +132,11 @@ func TestTaskDetailLedeHasNoStatusBadgeForUndoneTask(t *testing.T) {
 	page := get(t, h, "/t/task/"+rec.ID).Body.String()
 
 	// The lede must not contain any status badge chip.
-	ledeStart := strings.Index(page, `<p class="sw-lede">`)
+	ledeStart := strings.Index(page, `<div class="sw-lede">`)
 	if ledeStart == -1 {
 		t.Fatal("no lede found in task detail page")
 	}
-	ledeEnd := strings.Index(page[ledeStart:], `</p>`)
+	ledeEnd := strings.Index(page[ledeStart:], `</div>`)
 	if ledeEnd == -1 {
 		t.Fatal("no closing tag for lede")
 	}

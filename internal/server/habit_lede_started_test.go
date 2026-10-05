@@ -137,7 +137,7 @@ func TestHabitDetailLedeStillShowsAllInformation(t *testing.T) {
 		t.Error("habit detail should show the unit setting")
 	}
 
-	// The lede paragraph must still be rendered (the <p class="sw-lede">).
+	// The lede must still be rendered.
 	if !strings.Contains(page, `class="sw-lede"`) {
 		t.Error("habit detail page must still have a lede paragraph")
 	}

@@ -22,17 +22,13 @@ func Relative(v string, now time.Time) string {
 		return shortDay(ts, now)
 	}
 
-	// Moment with time-of-day: compute relative phrasing in UTC (the zone
-	// the store uses), then format clock for display in local time.
-	nowUTC := now.UTC()
-	today := time.Date(nowUTC.Year(), nowUTC.Month(), nowUTC.Day(), 0, 0, 0, 0, time.UTC)
-	local := ts.UTC()
-	d := time.Date(local.Year(), local.Month(), local.Day(), 0, 0, 0, 0, time.UTC)
+	// A moment is said in the reader's own zone, the one now is in: in UTC
+	// a task due at 14:00 in Lisbon read as due at 12:00pm.
+	nowHere := now
+	today := time.Date(nowHere.Year(), nowHere.Month(), nowHere.Day(), 0, 0, 0, 0, now.Location())
+	local := ts.In(now.Location())
+	d := time.Date(local.Year(), local.Month(), local.Day(), 0, 0, 0, 0, now.Location())
 	diff := int(d.Sub(today).Hours() / 24)
-
-	// Use UTC for the clock display: stored values are always in UTC and this
-	// avoids timezone-shift bugs when Local() moves times by hours (e.g. on Windows
-	// boxes where the system zone is not UTC).
 	clock := formatClock(local)
 
 	switch {
@@ -50,7 +46,7 @@ func Relative(v string, now time.Time) string {
 		return fmt.Sprintf("In %d days at %s", diff, clock)
 	default:
 		// Older dates.
-		if local.Year() == nowUTC.Year() {
+		if local.Year() == nowHere.Year() {
 			return d.Format("Mon 2 Jan") + " at " + clock
 		}
 		return fmt.Sprintf("%s at %s %d", d.Format("Jan 2"), clock, local.Year())
