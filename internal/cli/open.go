@@ -40,6 +40,7 @@ func (c *ctx) openCmd() error {
 	}
 	defer a.Close()
 
+	asked := *addr != ""
 	if *addr == "" {
 		*addr = a.Workspace.Config.Server.Addr
 	}
@@ -47,6 +48,11 @@ func (c *ctx) openCmd() error {
 	// listening on shows an error the person has to understand, and a port
 	// already in use is worth saying plainly rather than racing on.
 	listener, err := net.Listen("tcp", *addr)
+	// The port in workspace.yaml is often another program's (8080 is many
+	// a program's): the next free one will do, where none was asked for.
+	if err != nil && !asked {
+		listener, err = nextFree(*addr)
+	}
 	if err != nil {
 		return fmt.Errorf("could not listen on %s: %w\nSomething else may already be using it; try --addr 127.0.0.1:8081", *addr, err)
 	}
@@ -123,7 +129,7 @@ func launchWorkspace(dir, addr string) error {
 
 // openInBrowser hands a URL to whatever the operating system uses for one.
 // Nothing is installed for this: every platform already has a way.
-func openInBrowser(url string) error {
+var openInBrowser = func(url string) error {
 	switch runtime.GOOS {
 	case "windows":
 		// rundll32 takes the URL as a single argument, so a query string with
