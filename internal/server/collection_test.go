@@ -48,8 +48,8 @@ func TestACollectionIsTheRecordsThatMatch(t *testing.T) {
 	if strings.Index(page, "Order compost") > strings.Index(page, "Plant garlic") {
 		t.Error("the tasks come in due order")
 	}
-	if !strings.Contains(page, "Due "+when.Text(compost)) {
-		t.Error("each task shows the day it is due")
+	if !strings.Contains(page, when.Relative(compost, time.Now())) {
+		t.Error("each task shows the day it is due as relative text without raw label prefix")
 	}
 
 	// The list page takes the same query and says what it is showing.

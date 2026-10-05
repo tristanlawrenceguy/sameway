@@ -151,12 +151,15 @@ func listPath(typeName string, where []string, order string) string {
 }
 
 // metaOf is the one thing worth saying beside a title in a list: the day
-// it is due, or its state.
+// it is due, or its state. No raw schema column name prefix — just the
+// relative time itself so dates read naturally without "Due" or "At" before
+// them, and natural-language times (12-hour clock) instead of machine-format
+// weekday+month patterns (acceptance item 2).
 func metaOf(t *schema.Type, rec *store.Record) string {
 	for _, f := range t.Shown() {
 		if f.Type == "datetime" {
 			if v, ok := rec.Fields[f.Name].(string); ok && v != "" {
-				return label(f.Name) + " " + when.Text(v)
+				return when.Relative(v, time.Now())
 			}
 		}
 	}

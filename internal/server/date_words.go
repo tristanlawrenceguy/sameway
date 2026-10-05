@@ -10,7 +10,9 @@ import (
 )
 
 // dayWords is the record's first day as a few words after its title, the
-// field named: due tomorrow, with the year when it is not this one.
+// field named: tomorrow, with the year when it is not this one. No raw
+// schema column name or label prefix — just the relative time itself so
+// dates read naturally without "due" or "on" before them.
 func dayWords(t *schema.Type, rec *store.Record) string {
 	for _, f := range t.Shown() {
 		if f.Type != "datetime" {
@@ -20,7 +22,7 @@ func dayWords(t *schema.Type, rec *store.Record) string {
 		if v == "" || v == f.Name {
 			continue
 		}
-		return "due " + whenWords(v)
+		return whenWords(v)
 	}
 	for _, f := range t.Shown() {
 		if f.Type != "time" {
@@ -30,7 +32,7 @@ func dayWords(t *schema.Type, rec *store.Record) string {
 		if v == "" || v == f.Name {
 			continue
 		}
-		return "due " + whenWords(v)
+		return whenWords(v)
 	}
 	for _, f := range t.Shown() {
 		if f.Type != "date" {
@@ -40,7 +42,7 @@ func dayWords(t *schema.Type, rec *store.Record) string {
 		if v == "" || v == f.Name {
 			continue
 		}
-		return "on " + whenWords(v)
+		return whenWords(v)
 	}
 	return ""
 }

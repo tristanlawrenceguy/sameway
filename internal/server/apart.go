@@ -99,9 +99,11 @@ func apart(names []string, ways func(i int) []string, rank ...func(i int) string
 }
 
 // recordWays is what tells one record from another with its title: the
-// day that matters to it (due tomorrow), when it was added, its id.
+// day that matters to it (tomorrow), when it was added, its id. No raw
+// schema column name or label prefix — just the relative time itself so
+// dates read naturally without "added" before them.
 func recordWays(t *schema.Type, rec *store.Record) []string {
-	return []string{dayWords(t, rec), "added " + momentWords(rec.CreatedAt), "added " + secondWords(rec.CreatedAt)}
+	return []string{dayWords(t, rec), momentWords(rec.CreatedAt), secondWords(rec.CreatedAt)}
 }
 
 // secondWords is a moment to the second, for two added in one minute.
@@ -183,7 +185,7 @@ func eventsApart(events []any, month string) []any {
 		ev, _ := events[i].(map[string]any)
 		on := ""
 		if d, err := time.Parse("2006-01-02", str(ev["date"], "")); err == nil {
-			on = "on " + shortDay(d)
+			on = shortDay(d)
 			if at := str(ev["time"], ""); at != "" {
 				on += ", " + at
 			}

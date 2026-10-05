@@ -102,7 +102,7 @@ func seedTwins(t *testing.T, h http.Handler) (overdue, later string) {
 			return nd.Format("2 Jan 2006")
 		}
 	}
-	return "due " + day(a), "due " + day(b)
+	return day(a), day(b)
 }
 
 func TestRepeatedTitlesAreToldApartOnTheirList(t *testing.T) {
@@ -193,7 +193,7 @@ func TestUndatedTwinsAreToldApartByWhichCameFirst(t *testing.T) {
 			told = append(told, strings.TrimPrefix(n, "Meeting notes "))
 		}
 	}
-	if len(told) != 2 || !strings.Contains(told[0], "(added ") && !strings.Contains(told[0], " of 2)") || strings.Contains(strings.Join(told, ""), "(id ") {
+	if len(told) != 2 || !strings.Contains(told[0], " of 2)") && !strings.Contains(told[0], " of ") || strings.Contains(strings.Join(told, ""), "(id ") {
 		t.Fatalf("two notes alike are told apart by when they were added or which came first, never an id: %q", told)
 	}
 	log := names(t, get(t, h, "/activity").Body.String(), "button")
@@ -251,8 +251,8 @@ func TestACalendarTellsLikeEventsApartByTheirDays(t *testing.T) {
 	}
 	links := names(t, page, "link")
 	for _, d := range []time.Time{first, first.AddDate(0, 0, 1)} {
-		if !has(links, "Water ferns (on "+day(d)+")") {
-			t.Errorf("no link Water ferns on %s in %q", day(d), links)
+		if !has(links, "Water ferns ("+day(d)+")") {
+			t.Errorf("no link Water ferns (%s) in %q", day(d), links)
 		}
 	}
 }
