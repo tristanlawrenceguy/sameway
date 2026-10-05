@@ -1,6 +1,7 @@
 package look
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -71,6 +72,7 @@ type browser struct {
 	next    int
 	waiting map[int]chan reply
 	errors  []string
+	said    bytes.Buffer // its stderr, said when it does not start
 }
 
 type reply struct {
@@ -80,8 +82,8 @@ type reply struct {
 	} `json:"error"`
 }
 
-// launch starts the browser with a page open and listened to.
-func launch(ctx context.Context, program string) (*browser, error) {
+// start starts the browser with a page open and listened to (launch.go).
+func start(ctx context.Context, program string) (*browser, error) {
 	dir, err := os.MkdirTemp("", "sameway-look-")
 	if err != nil {
 		return nil, err
@@ -90,13 +92,14 @@ func launch(ctx context.Context, program string) (*browser, error) {
 	b.cmd = exec.Command(program, "--headless=new", "--remote-debugging-port=0", "--user-data-dir="+dir,
 		"--no-first-run", "--no-default-browser-check", "--disable-gpu", "--disable-extensions",
 		"--window-size=1280,900", "about:blank")
+	b.cmd.Stderr = &b.said
 	if err := b.cmd.Start(); err != nil {
 		os.RemoveAll(dir)
 		return nil, fmt.Errorf("starting %s: %w", program, err)
 	}
 	// The browser writes the port it listens on, and its address, here.
 	var port []string
-	for deadline := time.Now().Add(20 * time.Second); ; {
+	for deadline := time.Now().Add(portWait); ; {
 		if raw, err := os.ReadFile(filepath.Join(dir, "DevToolsActivePort")); err == nil {
 			if port = strings.Fields(string(raw)); len(port) == 2 {
 				break
@@ -104,7 +107,7 @@ func launch(ctx context.Context, program string) (*browser, error) {
 		}
 		if time.Now().After(deadline) || ctx.Err() != nil {
 			b.close()
-			return nil, fmt.Errorf("%s did not open its DevTools port", program)
+			return nil, errNoPort{program, lastLine(b.said.String())}
 		}
 		time.Sleep(50 * time.Millisecond)
 	}
