@@ -41,9 +41,7 @@ func TestHelpAndVersion(t *testing.T) {
 	if r := run(t, "", "help"); r.code != 0 || !strings.Contains(r.stdout, "Usage:") {
 		t.Errorf("help: %+v", r)
 	}
-	if r := run(t, ""); r.code != 0 || !strings.Contains(r.stdout, "Usage:") {
-		t.Errorf("no args should print usage: %+v", r)
-	}
+	// No args is a double-click: it opens a workspace (start_test.go).
 	if r := run(t, "", "--version"); r.code != 0 || !strings.HasPrefix(r.stdout, "sameway ") {
 		t.Errorf("version: %+v", r)
 	}
