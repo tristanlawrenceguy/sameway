@@ -116,7 +116,7 @@ func shortDay2(d time.Time, now time.Time) string {
 		if diff == 1 {
 			return "Tomorrow"
 		}
-		return fmt.Sprintf("In %d days", diff)
+		return nd.Format("Mon 2 Jan")
 	default:
 		if nd.Year() == now.Year() {
 			return nd.Format("2 Jan")

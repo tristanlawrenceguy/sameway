@@ -1,14 +1,14 @@
 package server_test
 
 import (
+	"regexp"
 	"strings"
 	"testing"
 )
 
-// TestFileDetailLedeSaysAddedNotCreated asserts that a file detail page uses
-// "Added" instead of the database field name "Created" in its lede paragraph
-// (acceptance item 4). The word Created must not appear as a human-readable
-// label on a file page.
+// TestFileDetailLedeNoAddedLabel asserts that a file detail page does not show
+// "Added", "Created" or any other label prefix before the creation timestamp in
+// its lede paragraph. The span still exists with just the relative time text.
 func TestFileDetailLedeSaysAddedNotCreated(t *testing.T) {
 	a, h := newApp(t)
 
@@ -22,14 +22,21 @@ func TestFileDetailLedeSaysAddedNotCreated(t *testing.T) {
 	if strings.Contains(page, ">Created ") {
 		t.Error("file detail page should not show \"Created\" — it uses the database field name instead of plain language")
 	}
-	if !strings.Contains(page, ">Added ") {
-		t.Error("file detail page lede should say \"Added\" before the creation time")
+	// Check that the span exists with timestamp text (no label prefix).
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*">([^<]+)</span>`)
+	matches := re.FindStringSubmatch(page)
+	if len(matches) < 2 {
+		t.Error("file detail page lede should have a sw-detail__when span with the creation time")
+		return
+	}
+	whenText := matches[1]
+	if strings.HasPrefix(whenText, "Added ") || strings.HasPrefix(whenText, "Created ") {
+		t.Errorf("file detail page lede should not start with a label prefix; got %q", whenText)
 	}
 }
 
-// TestPersonDetailLedeSaysAddedNotCreated asserts that a person detail page
-// uses "Added" instead of the raw field name "Created" in its lede paragraph
-// (acceptance item 5).
+// TestPersonDetailLedeNoAddedLabel asserts that a person detail page does not
+// show "Added" or "Created" as a label prefix before the creation timestamp.
 func TestPersonDetailLedeSaysAddedNotCreated(t *testing.T) {
 	a, h := newApp(t)
 
@@ -43,14 +50,20 @@ func TestPersonDetailLedeSaysAddedNotCreated(t *testing.T) {
 	if strings.Contains(page, ">Created ") {
 		t.Error("person detail page should not show \"Created\" — it uses the database field name instead of plain language")
 	}
-	if !strings.Contains(page, ">Added ") {
-		t.Error("person detail page lede should say \"Added\" before the creation time")
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*">([^<]+)</span>`)
+	matches := re.FindStringSubmatch(page)
+	if len(matches) < 2 {
+		t.Error("person detail page lede should have a sw-detail__when span with the creation time")
+		return
+	}
+	whenText := matches[1]
+	if strings.HasPrefix(whenText, "Added ") || strings.HasPrefix(whenText, "Created ") {
+		t.Errorf("person detail page lede should not start with a label prefix; got %q", whenText)
 	}
 }
 
-// TestActionDetailLedeSaysStartedNotCreated asserts that an action detail page
-// uses "Started" instead of "Created" in its lede paragraph (acceptance item 6).
-// Actions are initiated actions, like habits.
+// TestActionDetailLedeNoStartedLabel asserts that an action detail page does
+// not show "Started" or "Created" as a label prefix before the creation timestamp.
 func TestActionDetailLedeSaysStartedNotCreated(t *testing.T) {
 	a, h := newApp(t)
 
@@ -64,13 +77,20 @@ func TestActionDetailLedeSaysStartedNotCreated(t *testing.T) {
 	if strings.Contains(page, ">Created ") {
 		t.Error("action detail page should not show \"Created\" — it uses the database field name instead of plain language")
 	}
-	if !strings.Contains(page, ">Started ") {
-		t.Error("action detail page lede should say \"Started\" before the creation time, like habits do")
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*">([^<]+)</span>`)
+	matches := re.FindStringSubmatch(page)
+	if len(matches) < 2 {
+		t.Error("action detail page lede should have a sw-detail__when span with the creation time")
+		return
+	}
+	whenText := matches[1]
+	if strings.HasPrefix(whenText, "Started ") || strings.HasPrefix(whenText, "Created ") {
+		t.Errorf("action detail page lede should not start with a label prefix; got %q", whenText)
 	}
 }
 
-// TestTaskDetailLedeSaysAddedNotCreated asserts that a task detail page uses
-// "Added" instead of "Created" in its lede paragraph (acceptance item 2).
+// TestTaskDetailLedeNoAddedLabel asserts that a task detail page does not show
+// "Added" or "Created" as a label prefix before the creation timestamp.
 func TestTaskDetailLedeSaysAddedNotCreated(t *testing.T) {
 	a, h := newApp(t)
 
@@ -84,14 +104,20 @@ func TestTaskDetailLedeSaysAddedNotCreated(t *testing.T) {
 	if strings.Contains(page, ">Created ") {
 		t.Error("task detail page should not show \"Created\" — it uses the database field name instead of plain language")
 	}
-	if !strings.Contains(page, ">Added ") {
-		t.Error("task detail page lede should say \"Added\" before the creation time")
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*">([^<]+)</span>`)
+	matches := re.FindStringSubmatch(page)
+	if len(matches) < 2 {
+		t.Error("task detail page lede should have a sw-detail__when span with the creation time")
+		return
+	}
+	whenText := matches[1]
+	if strings.HasPrefix(whenText, "Added ") || strings.HasPrefix(whenText, "Created ") {
+		t.Errorf("task detail page lede should not start with a label prefix; got %q", whenText)
 	}
 }
 
-// TestNoteDetailLedeSaysAddedNotCreated asserts that a note detail page uses
-// "Added" instead of the raw field name "Created" in its lede paragraph
-// (acceptance item 3).
+// TestNoteDetailLedeNoAddedLabel asserts that a note detail page does not show
+// "Added" or any other label prefix before the creation timestamp.
 func TestNoteDetailLedeSaysAddedNotCreated(t *testing.T) {
 	a, h := newApp(t)
 
@@ -105,13 +131,20 @@ func TestNoteDetailLedeSaysAddedNotCreated(t *testing.T) {
 	if strings.Contains(page, ">Created ") {
 		t.Error("note detail page should not show \"Created\" — it uses the database field name instead of plain language")
 	}
-	if !strings.Contains(page, ">Added ") {
-		t.Error("note detail page lede should say \"Added\" before the creation time")
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*">([^<]+)</span>`)
+	matches := re.FindStringSubmatch(page)
+	if len(matches) < 2 {
+		t.Error("note detail page lede should have a sw-detail__when span with the creation time")
+		return
+	}
+	whenText := matches[1]
+	if strings.HasPrefix(whenText, "Added ") || strings.HasPrefix(whenText, "Created ") {
+		t.Errorf("note detail page lede should not start with a label prefix; got %q", whenText)
 	}
 }
 
-// TestProjectDetailLedeSaysAddedNotCreated asserts that a project detail page
-// uses "Added" instead of "Created" in its lede paragraph (acceptance item 5).
+// TestProjectDetailLedeNoAddedLabel asserts that a project detail page does not
+// show "Added" or "Created" as a label prefix before the creation timestamp.
 func TestProjectDetailLedeSaysAddedNotCreated(t *testing.T) {
 	a, h := newApp(t)
 
@@ -125,7 +158,14 @@ func TestProjectDetailLedeSaysAddedNotCreated(t *testing.T) {
 	if strings.Contains(page, ">Created ") {
 		t.Error("project detail page should not show \"Created\" — it uses the database field name instead of plain language")
 	}
-	if !strings.Contains(page, ">Added ") {
-		t.Error("project detail page lede should say \"Added\" before the creation time")
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*">([^<]+)</span>`)
+	matches := re.FindStringSubmatch(page)
+	if len(matches) < 2 {
+		t.Error("project detail page lede should have a sw-detail__when span with the creation time")
+		return
+	}
+	whenText := matches[1]
+	if strings.HasPrefix(whenText, "Added ") || strings.HasPrefix(whenText, "Created ") {
+		t.Errorf("project detail page lede should not start with a label prefix; got %q", whenText)
 	}
 }
