@@ -3,9 +3,10 @@ package render
 import (
 	"fmt"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
+
+	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // Date maths for the calendar component. A month grid cannot be built in a
@@ -171,7 +172,7 @@ func upcoming(events any, from string, count any) []map[string]any {
 		}
 		ti, _ := out[i]["time"].(string)
 		tj, _ := out[j]["time"].(string)
-		return ti < tj
+		return minutesOf(ti) < minutesOf(tj)
 	})
 	if n > 0 && len(out) > n {
 		out = out[:n]
@@ -202,13 +203,11 @@ func dayHours(events []map[string]any) []Hour {
 	byHour := map[int][]map[string]any{}
 	for _, e := range events {
 		t, _ := e["time"].(string)
-		if len(t) < 2 {
+		m := minutesOf(t)
+		if m < 0 {
 			continue
 		}
-		h, err := strconv.Atoi(t[:2])
-		if err != nil || h < 0 || h > 23 {
-			continue
-		}
+		h := m / 60
 		byHour[h] = append(byHour[h], e)
 		if h < first {
 			first = h
@@ -219,9 +218,23 @@ func dayHours(events []map[string]any) []Hour {
 	}
 	var out []Hour
 	for h := first; h <= last; h++ {
-		out = append(out, Hour{Label: fmt.Sprintf("%02d:00", h), Events: byHour[h]})
+		out = append(out, Hour{Label: when.Clock(time.Date(2000, 1, 1, h, 0, 0, 0, time.UTC)), Events: byHour[h]})
 	}
 	return out
+}
+
+// minutesOf is a time of day as minutes after midnight, however it is
+// written (14:00, 2pm, 5:30pm, midday), or -1 when it is none: the server
+// writes it as the person's clock says it, an agent as it likes.
+func minutesOf(s string) int {
+	if strings.TrimSpace(s) == "" {
+		return -1
+	}
+	t, day, ok := when.Parse(s, time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC))
+	if !ok || day {
+		return -1
+	}
+	return t.Hour()*60 + t.Minute()
 }
 
 // allDay is the events of a day with no time of day.

@@ -16,14 +16,20 @@ where the manifest says so.
 
 ## Quick start
 
-No database, no Node, no config beyond one file.
+1. **Download** the program for your computer from the
+   [latest release](https://github.com/tristanlawrenceguy/sameway/releases/latest):
+   `windows_amd64.exe` for Windows, `darwin_arm64` for a Mac with Apple
+   silicon, `darwin_amd64` for an Intel Mac, `linux_amd64` or `linux_arm64`
+   for Linux.
+2. **Double-click it.** The first time, it makes your workspace in your
+   Documents folder (Documents\Sameway) and opens it in your browser. After
+   that, a double-click opens the same workspace again, or shows it if it is
+   already open. Keep the small window it opens while you use Sameway; close
+   it to stop.
 
-**Download** the program for your computer from the
-[latest release](https://github.com/tristanlawrenceguy/sameway/releases/latest):
-`windows_amd64.exe` for Windows, `darwin_arm64` for a Mac with Apple
-silicon, `darwin_amd64` for an Intel Mac, `linux_amd64` or `linux_arm64` for
-Linux. Rename it `sameway` (`sameway.exe` on Windows), put it in a folder of
-its own, and from a terminal in that folder:
+**From a terminal**, to choose where a workspace goes: rename the file
+`sameway` (`sameway.exe` on Windows), put it in a folder of its own, and in
+that folder:
 
 ```bash
 sameway init my-workspace

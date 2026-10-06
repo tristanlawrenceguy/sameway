@@ -13,6 +13,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
+	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // Canvas card controls on / include the note title instead of "card":
@@ -284,6 +285,9 @@ func (s *Server) fieldItem(t *schema.Type, f schema.Field, v any, val string) ma
 	switch f.Type {
 	case "datetime":
 		item["kind"], item["source"] = "datetime", fmt.Sprint(v)
+		if m := when.Machine(fmt.Sprint(v)); m != "" {
+			item["datetime"] = m
+		}
 	case "enum":
 		item["source"] = fmt.Sprint(v)
 		item["options"] = s.choiceList(f, fmt.Sprint(v))

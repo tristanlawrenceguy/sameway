@@ -156,7 +156,7 @@ func dayOf(at, now time.Time) string {
 // ringsWhen is when a reminder rings, as it ends a sentence: at 14:30,
 // tomorrow at 07:00, on Monday at 09:00.
 func ringsWhen(at, now time.Time) string {
-	clock := "at " + at.In(now.Location()).Format("15:04")
+	clock := "at " + when.Clock(at.In(now.Location()))
 	switch day := dayOf(at, now); day {
 	case "":
 		return clock

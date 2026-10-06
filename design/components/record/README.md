@@ -32,6 +32,14 @@ the page outline.
   ([W3C COGA, avoid data loss](https://www.w3.org/TR/coga-usable/)).
 - **Closing the saved message returns focus to the Edit** it came from, not
   the top of the page.
+- **The same few words as its row.** Under its title a record says what
+  its row in a list says, in the same order (its tick, its state, a
+  setting that is on, its day named by its field, who it is for), worked
+  out once from the schema; late is said in words, "Overdue, due
+  yesterday", not in amber alone, and only for what can be done; its
+  fields then leave those out (design/foundations/glance.md,
+  [NN/g list entries](https://www.nngroup.com/articles/list-entries/),
+  [WCAG 1.4.1](https://www.w3.org/WAI/WCAG22/Understanding/use-of-color.html)).
 
 Not done, and why: a Change link on every fact (many small targets on a
 canvas of blocks; one Edit reaches them all); saving each field as it is

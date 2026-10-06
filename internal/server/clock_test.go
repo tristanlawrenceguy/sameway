@@ -31,7 +31,7 @@ func TestTheClockSetsListsAndRings(t *testing.T) {
 	a.Store.Create("task", map[string]any{"title": "Water the tomatoes", "due": when.Store(four, false)})
 
 	page := get(t, h, "/").Body.String()
-	if !strings.Contains(page, `data-component="clock"`) || !strings.Contains(page, "Water the tomatoes") || !strings.Contains(page, `class="sw-clock__when">16:00<`) {
+	if !strings.Contains(page, `data-component="clock"`) || !strings.Contains(page, "Water the tomatoes") || !strings.Contains(page, `class="sw-clock__when">4pm<`) {
 		t.Errorf("the clock is on the canvas with what is on today\n%s", page)
 	}
 

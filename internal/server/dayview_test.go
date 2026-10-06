@@ -37,10 +37,10 @@ func TestACalendarShowsOneDayByTheHour(t *testing.T) {
 		t.Error("a task with a day and no time is all day")
 	}
 	hours := page[strings.Index(page, `sw-calendar__hours"`):]
-	if !strings.Contains(hours, ">09:00<") || strings.Index(hours, ">09:00<") > strings.Index(hours, "Call the vet") {
+	if !strings.Contains(hours, ">9am<") || strings.Index(hours, ">9am<") > strings.Index(hours, "Call the vet") {
 		t.Error("a timed task sits in its hour")
 	}
-	if !strings.Contains(hours, ">21:00<") || strings.Contains(hours, ">23:00<") {
+	if !strings.Contains(hours, ">9pm<") || strings.Contains(hours, ">11pm<") {
 		t.Error("the hours reach as late as the latest thing and no further")
 	}
 	if !strings.Contains(page, `?day=2026-09-20"`) || !strings.Contains(page, `?day=2026-09-22"`) || !strings.Contains(page, `?month=2026-09">September<`) {

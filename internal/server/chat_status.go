@@ -10,6 +10,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // A conversation's status line and its first words: what it says when a
@@ -83,10 +84,10 @@ func clipWords(s string, n int) string {
 func messageTime(at time.Time) string {
 	at, now := at.Local(), time.Now()
 	if at.YearDay() == now.YearDay() && at.Year() == now.Year() {
-		return at.Format("15:04")
+		return when.Clock(at)
 	}
 	if at.Year() == now.Year() {
-		return at.Format("2 Jan 15:04")
+		return at.Format("2 Jan") + " at " + when.Clock(at)
 	}
-	return at.Format("2 Jan 2006 15:04")
+	return at.Format("2 Jan 2006") + " at " + when.Clock(at)
 }
