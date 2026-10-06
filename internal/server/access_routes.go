@@ -43,6 +43,7 @@ var routeAccess = map[string]routeFor{
 	"POST /t/{type}/add":               people,
 	"POST /model/check":                owner,
 	"POST /model/key":                  owner,
+	"POST /model/ollama":               owner,
 	"POST /chat/clear":                 people,
 	"POST /chat/new":                   people,
 	"POST /chat/open":                  people,
