@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
-	"os"
 	"os/exec"
 	"strings"
 	"sync"
@@ -106,7 +105,7 @@ func modelChoices(ctx context.Context) []modelChoice {
 			Settings: [][2]string{{"llm.model", "sonnet"}, {"llm.provider", "claude-code"}},
 		})
 	}
-	if os.Getenv("ANTHROPIC_API_KEY") != "" {
+	if llm.Key("ANTHROPIC_API_KEY") != "" {
 		out = append(out, modelChoice{
 			ID:       "anthropic",
 			Label:    "Use Claude with your saved key",
@@ -145,6 +144,7 @@ func (s *Server) connectCard(from string) template.HTML {
 		b.WriteString(`<li><a class="sw-link" href="https://claude.com/claude-code">Claude Code</a> uses your Claude account. Install it and sign in.</li>`)
 		b.WriteString(`</ul>`)
 	}
+	b.WriteString(string(s.keyForm(hidden))) // model_key.go
 	b.WriteString(`<form method="post" action="/model/check">` + hidden)
 	b.WriteString(string(s.component("button", map[string]any{"label": "Check again", "type": "submit", "variant": "secondary"})))
 	b.WriteString(`</form></div>`)
