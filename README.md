@@ -26,6 +26,11 @@ where the manifest says so.
    that, a double-click opens the same workspace again, or shows it if it is
    already open. Keep the small window it opens while you use Sameway; close
    it to stop.
+3. **Give the assistant a model**, from the page that opens, whichever suits
+   you: install [Ollama](https://ollama.com/download) (free, and nothing
+   leaves your computer), then press **Check again** and **Fetch a free
+   model**; or paste a key from Anthropic or OpenRouter; or, if you use
+   Claude Code, choose it. Everything but the assistant works without one.
 
 **From a terminal**, to choose where a workspace goes: rename the file
 `sameway` (`sameway.exe` on Windows), put it in a folder of its own, and in
