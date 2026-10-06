@@ -39,9 +39,9 @@ func (s *Server) status(msgs []*store.Record) template.HTML {
 			case 0:
 				props["message"] = "Assistant replied."
 			case 1:
-				props["message"] = "Assistant replied and made 1 change to the canvas."
+				props["message"] = "Assistant replied and made 1 change."
 			default:
-				props["message"] = fmt.Sprintf("Assistant replied and made %d changes to the canvas.", n)
+				props["message"] = fmt.Sprintf("Assistant replied and made %d changes.", n)
 			}
 			// The reply's first words, read out but not drawn, so a person who
 			// cannot see it arrive hears what it says; the chip stays short.
