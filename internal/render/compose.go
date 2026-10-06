@@ -29,6 +29,7 @@ func (r *Registry) funcsAt(depth int) template.FuncMap {
 	}
 	funcs["child"] = func(spec any) template.HTML { return r.child(spec, depth) }
 	funcs["linkify"] = func(s string) template.HTML { return linkifyNamed(s, r.LinkTitle) }
+	funcs["passage"] = func(s string) template.HTML { return passage(s, r.LinkTitle) }
 	funcs["children"] = func(specs any) template.HTML {
 		list, ok := specs.([]any)
 		if !ok {

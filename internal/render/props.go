@@ -76,6 +76,8 @@ var Funcs = template.FuncMap{
 	// assistant chat replies can be navigated with one click.  javascript:
 	// payloads are rejected; everything else passes through as escaped text.
 	"linkify": linkify,
+	// passage is a message's paragraph, its dash or numbered lines a list.
+	"passage": func(s string) template.HTML { return passage(s, nil) },
 	// For the meter and pagination components: see helpers.go.
 	"dict":        dict,
 	"percent":     percent,

@@ -222,8 +222,10 @@ func TestMessageTemplateUsesLinkify(t *testing.T) {
 	}
 
 	src := string(templateSrc)
-	if !strings.Contains(src, "linkify") {
-		t.Errorf("message template must call linkify on paragraph content to make inline URLs clickable\nwant: {{linkify .}} in the content range block\ngot:\n%s", src)
+	// passage links a paragraph's words as linkify does, and makes its dash
+	// lines a list (passage.go).
+	if !strings.Contains(src, "{{passage .}}") {
+		t.Errorf("message template must call passage on paragraph content to make inline URLs clickable\nwant: {{passage .}} in the content range block\ngot:\n%s", src)
 	}
 }
 

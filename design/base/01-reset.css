@@ -1,6 +1,9 @@
 /* Reset, type, and links. Depends on tokens.css. */
 
 *, *::before, *::after { box-sizing: border-box; }
+/* Hidden means hidden, whatever display a class gives: a button's flex
+   showed voice mode's Done speaking before voice mode had started. */
+[hidden] { display: none !important; }
 
 html {
   font-family: var(--sw-font-sans);
