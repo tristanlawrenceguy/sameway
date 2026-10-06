@@ -211,6 +211,10 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	}
 	b.WriteString(`</div>`)
 	b.WriteString(s.documentLinks(r, t, rec)) // the record as a file, after it; see export_docs.go
+	// Tasks belonging to this project, so a person can see what work is here.
+	if t.Name == "project" {
+		b.WriteString(string(s.tasksSection(rec.ID)))
+	}
 	// Recent activity on this page, so a deletion can be taken back where
 	// the person lands. The log is the workspace's, not the internet's: it
 	// names who changed what, so a published page leaves it out.
