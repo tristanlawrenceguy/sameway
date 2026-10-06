@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"net/http"
 	"os/exec"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -126,7 +127,7 @@ func (s *Server) connectCard(from string) template.HTML {
 	esc := template.HTMLEscapeString
 	hidden := `<input type="hidden" name="from" value="` + esc(from) + `">`
 	var b strings.Builder
-	b.WriteString(`<div class="sw-connect sw-stack"><h2 class="sw-visually-hidden">Connect the assistant</h2>`)
+	b.WriteString(`<div class="sw-connect sw-stack" data-wait="` + esc(s.modelWait()) + `"><h2 class="sw-visually-hidden">Connect the assistant</h2>`)
 	// A status message, and a heading to find it by from the page's outline.
 	b.WriteString(string(s.component("alert", map[string]any{"kind": "info", "title": "Connect the assistant to an AI model",
 		"message": why + " The assistant needs an AI model to think with. Everything else in Sameway works without one."})))
@@ -140,7 +141,7 @@ func (s *Server) connectCard(from string) template.HTML {
 		b.WriteString(`</ul>`)
 	} else {
 		b.WriteString(`<p>Nothing was found on this computer yet. Either of these works:</p><ul class="sw-connect__ways">`)
-		b.WriteString(`<li><a class="sw-link" href="https://ollama.com/download">Ollama</a> runs AI models on this computer, free, and nothing leaves it. Install it, then press Check again: Sameway fetches a model for it.</li>`)
+		b.WriteString(`<li><a class="sw-link" href="` + ollamaDownload() + `">Download Ollama</a>: it runs AI models on this computer, free, and nothing leaves it. Install it and this page sees it, then offers a free model for it.</li>`)
 		b.WriteString(`<li><a class="sw-link" href="https://claude.com/claude-code">Claude Code</a> uses your Claude account. Install it and sign in.</li>`)
 		b.WriteString(`</ul>`)
 	}
@@ -203,4 +204,57 @@ func (s *Server) modelCheck(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.Redirect(w, r, backOf(r, "/"), http.StatusSeeOther)
+}
+
+// ollamaDownload is Ollama's installer for this computer, so the person
+// downloads it with one press instead of finding it on a page of them.
+// Linux installs it with a command, which the page there gives.
+func ollamaDownload() string {
+	switch runtime.GOOS {
+	case "windows":
+		return "https://ollama.com/download/OllamaSetup.exe"
+	case "darwin":
+		return "https://ollama.com/download/Ollama.dmg"
+	}
+	return "https://ollama.com/download/linux"
+}
+
+// modelWait is the connect card in a few words that change when it would:
+// what was found, and how far a fetch has come. The page asks for them
+// while the card is up and follows when they change (31-connect-wait.js),
+// so Ollama installed, or a model fetched, shows without Check again.
+func (s *Server) modelWait() string {
+	why, choices := s.modelProblem()
+	if why == "" {
+		return "ready"
+	}
+	parts := []string{why}
+	for _, c := range choices {
+		parts = append(parts, c.ID)
+	}
+	f := s.fetching()
+	f.Lock()
+	if f.running {
+		parts = append(parts, "fetching", fmt.Sprint(percent(f.done, f.total)))
+	}
+	parts = append(parts, f.err)
+	f.Unlock()
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	parts = append(parts, fmt.Sprint(ollamaWithoutModel(ctx)))
+	return strings.Join(parts, "|")
+}
+
+func percent(done, total int64) int64 {
+	if total <= 0 {
+		return 0
+	}
+	return done * 100 / total
+}
+
+// modelWaitState is modelWait for the page that is waiting.
+func (s *Server) modelWaitState(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-store")
+	fmt.Fprint(w, s.modelWait())
 }
