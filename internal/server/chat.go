@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 )
 
@@ -108,7 +109,7 @@ func (s *Server) conversationAbout(c *chat.Service, from, about, prompt string) 
 		out.Notice = s.connectCard(from)
 	}
 	if s.app.Chat.Provider != nil {
-		view.ModelName = s.app.Chat.Provider.Name()
+		view.ModelName = llm.Words(s.app.Chat.Provider)
 	}
 
 	msgs, err := c.Messages()

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/speech"
 )
 
@@ -22,7 +23,7 @@ func (s *Server) limitsSection(owner bool) string {
 	if p := s.app.Chat.Provider; p == nil || s.app.Chat.ProviderErr != nil {
 		line("The assistant has no model to answer with yet; Connect a model on the chat page.")
 	} else {
-		model := template.HTMLEscapeString(p.Name())
+		model := template.HTMLEscapeString(llm.Words(p))
 		switch sees, known := chat.Sees(p.Name()); {
 		case !known:
 			line("Pictures: the assistant's model, " + model + ", has not been sent one yet. If it cannot see them it says so, and answers from a picture's description.")

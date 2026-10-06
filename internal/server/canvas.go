@@ -18,7 +18,7 @@ import (
 // locks anyone out.
 func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 	if err := s.app.Chat.Available(); err != nil {
-		s.page(w, r, "Canvas", s.component("alert", map[string]any{"kind": "danger", "title": "This workspace is incomplete", "message": err.Error()}), pageOptions{})
+		s.page(w, r, "Home", s.component("alert", map[string]any{"kind": "danger", "title": "This workspace is incomplete", "message": err.Error()}), pageOptions{})
 		return
 	}
 	// Which tab: Home at /, or a canvas record at /c/<id>.
@@ -73,7 +73,7 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 	opts := pageOptions{JSONURL: "/api/block"}
 	// The canvas is an application whether or not it has panes, so it keeps
 	// the whole width and the same shape as panes come and go. Once it holds
-	// anything, what is on it is the title; "Canvas" stays in the outline.
+	// anything, what is on it is the title; the tab's name stays in the outline.
 	opts.Shell = "app"
 	opts.QuietTitle = len(blocks) > 0
 	opts.Left = s.pane("left", paneLabel("Left pane", left), left, convo)

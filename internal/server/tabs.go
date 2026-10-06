@@ -27,19 +27,16 @@ func (s *Server) tabBar(current string) template.HTML {
 }
 
 // tabName is what a tab's page is called, in its window title and its
-// heading: its own name once there are tabs, so Home, Garden and Money are
-// told apart when they arrive, and Canvas while there is only the one.
+// heading: its own name, so Home, Garden and Money are told apart. It used
+// to be Canvas while there was only the one, a word nobody uses for the
+// page they open first.
 func (s *Server) tabName(canvas string) string {
-	canvases := s.app.Chat.Canvases()
-	if len(canvases) < 2 {
-		return "Canvas"
-	}
-	for _, c := range canvases {
-		if c.ID == canvas {
+	for _, c := range s.app.Chat.Canvases() {
+		if c.ID == canvas && c.Name != "" {
 			return c.Name
 		}
 	}
-	return "Canvas"
+	return "Home"
 }
 
 // seedChat puts a conversation on an empty canvas, so a new workspace and a
