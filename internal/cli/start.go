@@ -41,6 +41,7 @@ func (c *ctx) startCmd() error {
 			return nil
 		}
 	}
+	keepProgram(c.Stdout) // keep.go
 	fmt.Fprintln(c.Stdout, "Opening Sameway in your browser…")
 	c.workspaceDir, c.args, c.plain = dir, nil, true
 	return c.holdOpen(c.openCmd())
