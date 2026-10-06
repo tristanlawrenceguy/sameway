@@ -23,7 +23,7 @@ func TestFileDetailLedeSaysAddedNotCreated(t *testing.T) {
 		t.Error("file detail page should not show \"Created\" — it uses the database field name instead of plain language")
 	}
 	// Check that the span exists with timestamp text (no label prefix).
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*">([^<]+)</span>`)
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(page)
 	if len(matches) < 2 {
 		t.Error("file detail page lede should have a sw-detail__when span with the creation time")
@@ -50,7 +50,7 @@ func TestPersonDetailLedeSaysAddedNotCreated(t *testing.T) {
 	if strings.Contains(page, ">Created ") {
 		t.Error("person detail page should not show \"Created\" — it uses the database field name instead of plain language")
 	}
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*">([^<]+)</span>`)
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(page)
 	if len(matches) < 2 {
 		t.Error("person detail page lede should have a sw-detail__when span with the creation time")
@@ -77,7 +77,7 @@ func TestActionDetailLedeSaysStartedNotCreated(t *testing.T) {
 	if strings.Contains(page, ">Created ") {
 		t.Error("action detail page should not show \"Created\" — it uses the database field name instead of plain language")
 	}
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*">([^<]+)</span>`)
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(page)
 	if len(matches) < 2 {
 		t.Error("action detail page lede should have a sw-detail__when span with the creation time")
@@ -104,7 +104,7 @@ func TestTaskDetailLedeSaysAddedNotCreated(t *testing.T) {
 	if strings.Contains(page, ">Created ") {
 		t.Error("task detail page should not show \"Created\" — it uses the database field name instead of plain language")
 	}
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*">([^<]+)</span>`)
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(page)
 	if len(matches) < 2 {
 		t.Error("task detail page lede should have a sw-detail__when span with the creation time")
@@ -131,7 +131,7 @@ func TestNoteDetailLedeSaysAddedNotCreated(t *testing.T) {
 	if strings.Contains(page, ">Created ") {
 		t.Error("note detail page should not show \"Created\" — it uses the database field name instead of plain language")
 	}
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*">([^<]+)</span>`)
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(page)
 	if len(matches) < 2 {
 		t.Error("note detail page lede should have a sw-detail__when span with the creation time")
@@ -158,7 +158,7 @@ func TestProjectDetailLedeSaysAddedNotCreated(t *testing.T) {
 	if strings.Contains(page, ">Created ") {
 		t.Error("project detail page should not show \"Created\" — it uses the database field name instead of plain language")
 	}
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*">([^<]+)</span>`)
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(page)
 	if len(matches) < 2 {
 		t.Error("project detail page lede should have a sw-detail__when span with the creation time")

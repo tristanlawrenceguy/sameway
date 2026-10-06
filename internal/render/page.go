@@ -3,8 +3,12 @@ package render
 import (
 	"bytes"
 	_ "embed"
+	"fmt"
 	"html/template"
 	"strings"
+	"time"
+
+	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 //go:embed layout.html
@@ -107,4 +111,18 @@ type NavItem struct {
 // Error:, the first thing a screen reader says when it arrives.
 func (p Page) Failed() bool {
 	return strings.Contains(string(p.Outcome), `data-outcome="failed"`)
+}
+
+// TimeAttrs says on the root element how this computer tells the time, for
+// the script that keeps a page's days true while it is open
+// (30-days.js): its offset from UTC in minutes, its today, and the 24-hour
+// clock when that is the person's.
+func (p Page) TimeAttrs() template.HTMLAttr {
+	now := time.Now()
+	_, off := now.Zone()
+	a := fmt.Sprintf(` data-zone="%d" data-today="%s"`, off/60, now.Format("2006-01-02"))
+	if when.Hours24 != nil && when.Hours24() {
+		a += ` data-clock="24"`
+	}
+	return template.HTMLAttr(a)
 }

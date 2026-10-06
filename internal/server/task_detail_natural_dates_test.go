@@ -49,7 +49,7 @@ func TestTaskDetailLedeDueDateNaturalLanguage(t *testing.T) {
 	if ledeEnd == -1 {
 		t.Fatal("no closing tag for lede")
 	}
-	lede := page[ledeStart : ledeStart+ledeEnd]
+	lede := visibleText(page[ledeStart : ledeStart+ledeEnd]) // what it says, not the value its time holds
 
 	// The date must NOT contain a 4-digit year (machine format indicator).
 	machineYearRe := regexp.MustCompile(`\d{4}`)

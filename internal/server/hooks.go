@@ -9,7 +9,8 @@ func (s *Server) hooks() {
 	s.app.Chat.Look = s.lookFor
 	s.app.Chat.Picture = s.pictureFor
 	s.app.Chat.Check = s.blockCheck
-	s.app.Chat.Home = s // recordings and workspaces; see home.go
+	s.app.Chat.Glance = s.glanceText // what a record says at a glance, glance.go
+	s.app.Chat.Home = s              // recordings and workspaces; see home.go
 	// What an automation did on its own is told like a ring (ring.go).
 	s.app.Chat.Tell = func(title, text, url string) {
 		if s.notify != nil {

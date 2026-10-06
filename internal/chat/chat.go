@@ -55,6 +55,9 @@ type Service struct {
 	// there is none, and a block is then held to its props schema only.
 	// See check.go.
 	Check func(component string, props map[string]any) (shows, problem string)
+	// Glance is what a record says beside its title, in the words its row
+	// and its page use (server/glance.go); set by the server.
+	Glance func(t *schema.Type, rec *store.Record) string
 	// Tell lets the person know, beyond the page, what was done for them
 	// while they were away: an automation's turn (automate.go).
 	Tell func(title, text, url string)

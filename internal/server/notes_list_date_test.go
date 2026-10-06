@@ -61,7 +61,7 @@ func TestNoteListShowsNaturalDate(t *testing.T) {
 
 	// Find the closing </span>.
 	spanContent := row[mutedStart+mutedEnd+1:]
-	closeSpan := strings.Index(spanContent, "</span>")
+	closeSpan := strings.Index(spanContent, "</time>")
 	if closeSpan < 0 {
 		t.Errorf("could not find end of sw-muted span; found in:\n%s", truncate(row))
 		return
@@ -120,7 +120,7 @@ func TestNoteListNoMachineFormatDatePattern(t *testing.T) {
 
 	// Machine format: "Updated Mon 15 Sep" or "Mon 15 Sep". We check that the
 	// row does NOT contain a pattern like weekday abbreviation + day + month.
-	if matched, _ := regexp.MatchString(`(?i)[A-Z][a-z]{2}\s+\d{1,2}\s+[A-Z][a-z]{2}`, row); matched {
+	if matched, _ := regexp.MatchString(`(?i)[A-Z][a-z]{2}\s+\d{1,2}\s+[A-Z][a-z]{2}`, visibleText(row)); matched {
 		t.Errorf("note list row must not contain machine-format date like 'Sat 26 Sep'; found in:\n%s", truncate(row))
 	}
 
@@ -168,7 +168,7 @@ func TestEntryListShowsNaturalDate(t *testing.T) {
 	}
 
 	// Extract the sw-when span from the row (dayFact renders into this class).
-	whenStart := strings.Index(row, `sw-when`)
+	whenStart := strings.Index(row, `<time class="sw-when`)
 	if whenStart < 0 {
 		t.Errorf("entry list row should contain a span with class=\"sw-when\" for the date; found in:\n%s", truncate(body))
 		return
@@ -183,7 +183,7 @@ func TestEntryListShowsNaturalDate(t *testing.T) {
 
 	// Find the closing </span>.
 	spanContent := row[whenStart+whenEnd+1:]
-	closeSpan := strings.Index(spanContent, "</span>")
+	closeSpan := strings.Index(spanContent, "</time>")
 	if closeSpan < 0 {
 		t.Errorf("could not find end of sw-when span; found in:\n%s", truncate(body))
 		return
@@ -250,7 +250,7 @@ func TestAllListPagesNoMachineFormatDate(t *testing.T) {
 			}
 
 			// No machine-format weekday+month pattern like "Sat 26 Sep".
-			if matched, _ := regexp.MatchString(`(?i)[A-Z][a-z]{2}\s+\d{1,2}\s+[A-Z][a-z]{2}`, row); matched {
+			if matched, _ := regexp.MatchString(`(?i)[A-Z][a-z]{2}\s+\d{1,2}\s+[A-Z][a-z]{2}`, visibleText(row)); matched {
 				t.Errorf("list row must not contain machine-format date like 'Sat 26 Sep'; found in:\n%s", truncate(row))
 			}
 
@@ -275,10 +275,16 @@ func TestAllListPagesNoMachineFormatDate(t *testing.T) {
 				if strings.Contains(row, ">Updated ") {
 					t.Errorf("file list row must not show 'Updated' prefix; found in:\n%s", truncate(row))
 				}
-				if matched, _ := regexp.MatchString(`(?i)[A-Z][a-z]{2}\s+\d{1,2}\s+[A-Z][a-z]{2}`, row); matched {
+				if matched, _ := regexp.MatchString(`(?i)[A-Z][a-z]{2}\s+\d{1,2}\s+[A-Z][a-z]{2}`, visibleText(row)); matched {
 					t.Errorf("file list row must not contain machine-format date like 'Sat 26 Sep'; found in:\n%s", truncate(row))
 				}
 			}
 		}
 	}
+}
+
+// visibleText is what a row shows, its tags and their attributes left out:
+// the full date a <time> holds for a pointer is not what the row says.
+func visibleText(row string) string {
+	return regexp.MustCompile(`<[^>]*>`).ReplaceAllString(row, " ")
 }

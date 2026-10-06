@@ -9,6 +9,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // calendarComponent is the month block. Given a content type, its records
@@ -179,7 +180,7 @@ func (s *Server) eventOf(t *schema.Type, rec *store.Record, field string) map[st
 	day, clock := ts.UTC().Format("2006-01-02"), ""
 	if !strings.HasSuffix(v, "T00:00:00Z") {
 		local := ts.Local()
-		day, clock = local.Format("2006-01-02"), local.Format("15:04")
+		day, clock = local.Format("2006-01-02"), when.Clock(local)
 	}
 	ev := map[string]any{"date": day, "label": s.title(t, rec), "href": "/t/" + t.Name + "/" + rec.ID}
 	if clock != "" {

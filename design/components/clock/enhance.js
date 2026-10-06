@@ -16,9 +16,17 @@
     var base = Date.parse(clock.getAttribute("data-now"));
     if (!time || isNaN(base)) return;
     var start = Date.now();
+    // The face tells the workspace's time, as every other time on the page
+    // does, on the person's clock: 2:05pm, or 14:05 (internal/when Face).
+    var root = document.documentElement;
+    var zone = parseInt(root.getAttribute("data-zone"), 10);
+    var h24 = root.getAttribute("data-clock") === "24";
     function show() {
       var d = new Date(base + (Date.now() - start));
-      time.textContent = pad(d.getHours()) + ":" + pad(d.getMinutes());
+      var here = isNaN(zone) ? d : new Date(d.getTime() + zone * 60000);
+      var h = isNaN(zone) ? here.getHours() : here.getUTCHours();
+      var m = isNaN(zone) ? here.getMinutes() : here.getUTCMinutes();
+      time.textContent = h24 ? pad(h) + ":" + pad(m) : ((h % 12) || 12) + ":" + pad(m) + (h < 12 ? "am" : "pm");
       time.setAttribute("datetime", d.toISOString());
     }
     show();

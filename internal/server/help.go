@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // Help is one page, in the same place on every page (the footer), that
@@ -24,6 +25,7 @@ var comfort = []struct {
 	{"ui.spacing", "Room between lines and words", [][2]string{{"normal", "Normal"}, {"wide", "Wide"}}},
 	{"ui.pace", "How changes arrive on the page", [][2]string{{"calm", "Calmly"}, {"quick", "Quickly"}, {"still", "All at once"}}},
 	{"ui.controls", "Buttons on each item", [][2]string{{"auto", "Hover"}, {"visible", "Always show"}}},
+	{"ui.clock", "Times of day", [][2]string{{"12", "12-hour, like 5:30pm"}, {"24", "24-hour, like 17:30"}}},
 }
 
 func (s *Server) helpPage(w http.ResponseWriter, r *http.Request) {
@@ -45,6 +47,9 @@ func (s *Server) helpPage(w http.ResponseWriter, r *http.Request) {
 	b.WriteString(`<section class="sw-stack" aria-labelledby="help-comfort"><h2 id="help-comfort">Making Sameway easier to use</h2>`)
 	for _, c := range comfort {
 		now := s.app.Workspace.Get(c.key)
+		if c.key == "ui.clock" && now == "" && when.Hours24 != nil && when.Hours24() {
+			now = "24" // what the language uses, until chosen
+		}
 		b.WriteString(`<div class="sw-stack--tight"><h3>` + template.HTMLEscapeString(c.heading) + `</h3><ul class="sw-plain sw-cluster">`)
 		for _, v := range c.values {
 			current := now == v[0] || (now == "" && v[0] == c.values[0][0])

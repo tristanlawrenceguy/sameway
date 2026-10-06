@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/look"
+	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // Two records with one title are told apart wherever they are listed
@@ -77,31 +78,9 @@ func seedTwins(t *testing.T, h http.Handler) (overdue, later string) {
 	} {
 		wantStatus(t, postJSON(t, h, http.MethodPost, "/api/task", task), http.StatusCreated)
 	}
-	day := func(d time.Time) string {
-		now := time.Now()
-		today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-		nd := time.Date(d.UTC().Year(), d.UTC().Month(), d.UTC().Day(), 0, 0, 0, 0, now.Location())
-		diff := int(nd.Sub(today).Hours() / 24)
-		switch {
-		case diff == 0:
-			return "Today"
-		case diff < 0 && diff >= -6:
-			if diff == -1 {
-				return "Yesterday"
-			}
-			return nd.Format("Mon 2 Jan")
-		case diff > 0 && diff <= 6:
-			if diff == 1 {
-				return "Tomorrow"
-			}
-			return nd.Format("Mon 2 Jan")
-		default:
-			if nd.Year() == now.Year() {
-				return nd.Format("2 Jan")
-			}
-			return nd.Format("2 Jan 2006")
-		}
-	}
+	// The day as every page says it (internal/when), from the date the task
+	// was given: its UTC date read back near midnight was a day out.
+	day := func(d time.Time) string { return when.Relative(when.Store(d, true), time.Now()) }
 	return "due " + day(a), "due " + day(b)
 }
 
@@ -247,12 +226,9 @@ func TestACalendarTellsLikeEventsApartByTheirDays(t *testing.T) {
 	if same := sameNames(t, page); len(same) > 0 {
 		t.Errorf("a calendar's events share a name: %v", same)
 	}
-	day := func(d time.Time) string {
-		if d.Year() != now.Year() {
-			return d.Format("Mon 2 Jan 2006")
-		}
-		return d.Format("Mon 2 Jan")
-	}
+	// The day as every page says it (internal/when), from the date the task
+	// was given: its UTC date read back near midnight was a day out.
+	day := func(d time.Time) string { return when.Relative(when.Store(d, true), time.Now()) }
 	links := names(t, page, "link")
 	for _, d := range []time.Time{first, first.AddDate(0, 0, 1)} {
 		if !has(links, "Water ferns (on "+day(d)+")") {

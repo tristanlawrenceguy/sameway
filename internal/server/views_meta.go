@@ -93,7 +93,7 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 
 	out := s.glanceHTML(facts, o.Chips, boxed)
 	if !day && !o.Made && !hasDate(t) {
-		out = strings.TrimSpace(out + ` <span class="sw-muted">` + when.Relative(rec.UpdatedAt.UTC().Format(time.RFC3339), now) + `</span>`)
+		out = strings.TrimSpace(out + " " + happened("sw-muted", rec.UpdatedAt, now))
 	}
 
 	if !skipEnum && !detailSkip && t.Name != "action" {
@@ -122,14 +122,25 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 // its words came from when that was not the owner, in one quiet line under
 // its fields. No field-name label prefix: just the relative timestamp text so
 // dates read naturally without "Added" or "Started" before them. Rendered
-// output: <span class="sw-detail__when sw-muted sw-small">4 days ago at 1:31pm</span>
+// output: <span class="sw-detail__when sw-muted sw-small"><time datetime="…">3 days ago</time></span>
 func whenMade(t *schema.Type, rec *store.Record, from string) string {
-	made := when.Relative(rec.CreatedAt.UTC().Format(time.RFC3339), time.Now())
-	line := made
+	line := happened("", rec.CreatedAt, time.Now())
 	if from != "" {
 		line += " · From: " + template.HTMLEscapeString(from)
 	}
 	return `<span class="sw-detail__when sw-muted sw-small">` + line + `</span>`
+}
+
+// happened is when something happened, as a person reads it (3 days ago),
+// in a <time> holding the moment, with the date in full for a pointer
+// when the words leave it out.
+func happened(class string, at, now time.Time) string {
+	words := when.Ago(at, now)
+	full := ""
+	if when.LeavesDateOut(words) {
+		full = when.Full(at.UTC().Format(time.RFC3339))
+	}
+	return timeHTML(class, at.UTC().Format(time.RFC3339), full, template.HTML(template.HTMLEscapeString(words)))
 }
 
 // from is who wrote a record's words, said once on its page, when that
@@ -174,4 +185,14 @@ func hasDate(t *schema.Type) bool {
 		}
 	}
 	return false
+}
+
+// happenedAfter is happened after a word such as deleted: deleted today at
+// 2pm, not deleted Today at 2pm.
+func happenedAfter(class string, at, now time.Time) string {
+	h := happened(class, at, now)
+	for _, w := range []string{">Today", ">Yesterday"} {
+		h = strings.Replace(h, w, ">"+strings.ToLower(w[1:2])+w[2:], 1)
+	}
+	return h
 }

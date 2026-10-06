@@ -49,10 +49,14 @@ system) is below them, smaller. The page is the rest of the width, its
 content on a reading measure with air on every side.
 
 **The day, the short way.** At the right of a row a day is "Today",
-"Tomorrow", "Saturday", "29 Sep", with the time when there is one, in the
-quiet ink; today and a day that has passed are amber, with the word. Under
-a title the same day is a blue chip in full. What a thing belongs to is
-grey words beside its title in a row and a grey chip under a title.
+"Tomorrow", "Sat 19 Sep", with the time on the person's clock when there
+is one ("at 2pm"), in the quiet ink; today and a day that has passed are
+amber, with the word (the list's Overdue heading). Under a title the same
+day is a blue chip named by its field, "Due Sat 19 Sep", and a late one
+an amber chip that says so, "Overdue, due yesterday". What a thing belongs
+to is grey words beside its title in a row and a grey chip under a title.
+What a record says beside its title, and how every day and time is said:
+[glance.md](glance.md).
 
 **Rows and checkboxes.** A record with a yes-or-no field shows it as a
 checkbox at the front of its row, ticked in the blue, the title beside it
