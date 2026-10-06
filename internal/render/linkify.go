@@ -111,6 +111,11 @@ func findLinks(s string, name func(path string) string) []linkMatch {
 	}
 
 	for i, m := range kept {
+		// A small model wraps a link in code marks, `Call the dentist`;
+		// the link is what was meant, so the marks go with it.
+		if m.start > 0 && m.end < len(s) && s[m.start-1] == '`' && s[m.end] == '`' {
+			kept[i].start, kept[i].end = m.start-1, m.end+1
+		}
 		words := readable(m.raw)
 		if m.words != "" && !isAddress(m.words) {
 			words = m.words
