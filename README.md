@@ -26,8 +26,9 @@ where the manifest says so.
 2. **Double-click it.** The first time, it makes your workspace in your
    Documents folder (Documents\Sameway) and opens it in your browser. After
    that, a double-click opens the same workspace again, or shows it if it is
-   already open. On Windows, keep the small window it opens while you use
-   Sameway, and close it to stop; on a Mac it runs in the background, and
+   already open. On Windows it also puts Sameway in your Start menu the
+   first time; keep the small window it opens while you use Sameway, and
+   close it to stop; on a Mac it runs in the background, and
    **Workspaces** in Sameway stops it.
 
    Sameway is not signed yet, so the first time your computer asks once.
