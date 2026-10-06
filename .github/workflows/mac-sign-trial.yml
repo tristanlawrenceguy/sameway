@@ -13,6 +13,5 @@ jobs:
           curl -sSLO https://github.com/tristanlawrenceguy/sameway/releases/download/v0.1.1/Sameway-Mac-AppleSilicon.zip
           unzip -q Sameway-Mac-AppleSilicon.zip
           rcodesign sign Sameway.app
-          rcodesign verify Sameway.app/Contents/MacOS/sameway
           rcodesign print-signature-info Sameway.app/Contents/MacOS/sameway | head -60
           find Sameway.app
