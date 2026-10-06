@@ -53,8 +53,18 @@ func (s *Server) limitsSection(owner bool) string {
 		line("Recordings: speech-to-text is not on this computer yet, so a recording keeps a transcript only when one is written by hand. The owner can get it.")
 	}
 	if owner {
-		for _, l := range s.appLines() { // meeting_fetch_help.go
+		lines, setup := s.appLines() // meeting_fetch_help.go
+		for _, l := range lines {
 			line(l)
+		}
+		if len(setup) > 0 {
+			inner := "<ul>"
+			for _, l := range setup {
+				inner += "<li>" + l + "</li>"
+			}
+			if body, err := s.app.Registry.RenderSlot("disclosure", map[string]any{"label": "Transcripts from Teams or Zoom"}, template.HTML(inner+"</ul>")); err == nil {
+				line(string(body))
+			}
 		}
 	}
 	b.WriteString(`</ul></section>`)
