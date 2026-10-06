@@ -8,7 +8,6 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
-	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 // From the page, a person starts a new chat, goes back to an earlier one,
@@ -54,36 +53,17 @@ func TestAPersonMovesBetweenChats(t *testing.T) {
 	}
 }
 
-// The chat is a block, so its menu can place the block: in a pane or the
-// middle, and how wide. The move is logged as the person's.
-func TestAPersonPlacesTheChat(t *testing.T) {
-	a, h := newApp(t)
+// Where the chat sits is the assistant's to arrange, as for any block: a
+// person asks, and the chat's menu has no Place of its own. Pop out stays
+// on the canvas, and the chat page itself has neither.
+func TestTheChatIsPlacedByAsking(t *testing.T) {
+	_, h := newApp(t)
 	page := get(t, h, "/").Body.String()
-	if !strings.Contains(page, ">Place<") || !strings.Contains(page, `name="region" value="left"`) || !strings.Contains(page, `data-popout`) {
-		t.Errorf("the chat on the canvas offers Place and Pop out\n%s", page)
-	}
-	blocks, _ := a.Store.List(chat.BlockType, store.ListOptions{})
-	id := ""
-	for _, b := range blocks {
-		if b.Fields["component"] == chat.ComponentName {
-			id = b.ID
-		}
-	}
-	wantStatus(t, postForm(t, h, "/canvas/"+id+"/place", url.Values{"region": {"right"}, "from": {"/"}}), http.StatusSeeOther)
-	blk, _ := a.Store.Get(chat.BlockType, id)
-	if blk.Fields["region"] != "right" || blk.Fields["actor"] != "human" {
-		t.Errorf("the chat moved to the right pane at the person's asking, got %v by %v", blk.Fields["region"], blk.Fields["actor"])
-	}
-	wantStatus(t, postForm(t, h, "/canvas/"+id+"/place", url.Values{"region": {"main"}, "span": {"6"}, "from": {"/"}}), http.StatusSeeOther)
-	blk, _ = a.Store.Get(chat.BlockType, id)
-	if blk.Fields["region"] != "main" || blk.Fields["span"] != int64(6) && blk.Fields["span"] != 6 && blk.Fields["span"] != float64(6) {
-		t.Errorf("back to the middle, half wide, got %v %v", blk.Fields["region"], blk.Fields["span"])
-	}
-	if !strings.Contains(get(t, h, "/activity").Body.String(), "middle") {
-		t.Error("the move is in the activity log")
+	if strings.Contains(page, ">Place<") || strings.Contains(page, "/place\"") || !strings.Contains(page, `data-popout`) {
+		t.Errorf("the chat on the canvas offers Pop out and no Place\n%s", page)
 	}
 	page = get(t, h, "/chat").Body.String()
-	if strings.Contains(page, ">Place<") || strings.Contains(page, "data-popout") {
-		t.Error("the chat page itself is neither placed nor popped out")
+	if strings.Contains(page, "data-popout") {
+		t.Error("the chat page itself is not popped out")
 	}
 }
