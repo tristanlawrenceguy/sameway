@@ -156,6 +156,13 @@ func (u Updater) Latest(ctx context.Context) (*Release, error) {
 			rel.Asset, rel.Name, rel.Size = a.URL, a.Name, a.Size
 		}
 	}
+	// The program under its own name wins over the same program packed for
+	// a person (Sameway-Linux-x64.tar.gz), which may come first.
+	for _, a := range body.Assets {
+		if a.Name == AssetName(rel.Version) {
+			rel.Asset, rel.Name, rel.Size = a.URL, a.Name, a.Size
+		}
+	}
 	return rel, nil
 }
 
