@@ -30,7 +30,6 @@ var writesTheStoreItself = map[string]string{
 	"track.go habitLog":             "an amount logged against a habit, logged as the habit's",
 	"clash.go clashChoose":          "a version chosen after two edits at once, logged as that choice",
 	"canvas.go canvasDelete":        "the canvas's own blocks, logged with the canvas's words",
-	"chats.go blockPlace":           "the same",
 	"props.go blockProps":           "the same",
 	"collection_keep.go canvasKeep": "the same",
 	"tabs.go seedChat":              "a new tab's chat block, part of making the tab",

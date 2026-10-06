@@ -49,7 +49,6 @@ var routeAccess = map[string]routeFor{
 	"POST /chat/new":                   people,
 	"POST /chat/open":                  people,
 	"POST /chat/delete":                people,
-	"POST /canvas/{id}/place":          people,
 	"POST /proposal/{id}/accept":       owner,
 	"POST /proposal/{id}/dismiss":      owner,
 	"POST /proposal/{id}/instead":      owner,
