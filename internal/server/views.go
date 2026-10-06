@@ -88,6 +88,9 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	// each said once, quietly, below the list. The Add button label —
 	// "Add an action" for vowel-starting types, "Add a note" otherwise —
 	// is built in addButton (add.go) via addLabel().
+	// A heading of their own, heard and not seen: after the rows' headings
+	// they were read as the last record's ("Morning walk: Import events").
+	b.WriteString(`<h2 class="sw-visually-hidden">Add and download</h2>`)
 	b.WriteString(string(s.addButton(t)))
 	if s.importable(t) {
 		b.WriteString(`<p class="sw-quiet-row">` + string(s.component("link", map[string]any{"href": "/t/" + t.Name + "/import", "label": "Import", "context": plural(t.Name), "look": "button"})) + `</p>`)

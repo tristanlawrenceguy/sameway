@@ -40,7 +40,17 @@ func Say(st *store.Store, f map[string]any) Words {
 		name, value := settingWords(target, detail)
 		return Words{Action: "changed", Target: name, Detail: "to " + value}
 	}
-	return Words{Action: action, Target: target, Detail: detail}
+	return Words{Action: action, Target: personWord(target), Detail: strings.TrimLeft(detail, "-*• ")}
+}
+
+// personWord is what a person calls a thing the code calls otherwise: a
+// canvas is a tab ("added canvas Weekend" was said). A detail that began
+// as a list's first line keeps its words, not its dash.
+func personWord(target string) string {
+	if target == "canvas" {
+		return "tab"
+	}
+	return target
 }
 
 // settingWords is a setting by its one name, from the workspace, and the

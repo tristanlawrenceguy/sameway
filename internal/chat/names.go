@@ -110,7 +110,7 @@ func Sentence(st *store.Store, f map[string]any) string {
 	}
 	parts := []string{who, c.Action}
 	if c.Component != "" {
-		parts = append(parts, schema.Words(c.Component))
+		parts = append(parts, schema.Words(personWord(c.Component)))
 	}
 	if c.Detail != "" {
 		parts = append(parts, c.Detail)
