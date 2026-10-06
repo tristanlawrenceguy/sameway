@@ -140,11 +140,12 @@ func (s *Server) connectCard(from string) template.HTML {
 		b.WriteString(`</ul>`)
 	} else {
 		b.WriteString(`<p>Nothing was found on this computer yet. Either of these works:</p><ul class="sw-connect__ways">`)
-		b.WriteString(`<li><a class="sw-link" href="https://ollama.com/download">Ollama</a> runs AI models on this computer, free, and nothing leaves it. Install it, then in a terminal run <code>ollama pull llama3.1</code>.</li>`)
+		b.WriteString(`<li><a class="sw-link" href="https://ollama.com/download">Ollama</a> runs AI models on this computer, free, and nothing leaves it. Install it, then press Check again: Sameway fetches a model for it.</li>`)
 		b.WriteString(`<li><a class="sw-link" href="https://claude.com/claude-code">Claude Code</a> uses your Claude account. Install it and sign in.</li>`)
 		b.WriteString(`</ul>`)
 	}
-	b.WriteString(string(s.keyForm(hidden))) // model_key.go
+	b.WriteString(string(s.ollamaCard(hidden))) // ollama_setup.go
+	b.WriteString(string(s.keyForm(hidden)))    // model_key.go
 	b.WriteString(`<form method="post" action="/model/check">` + hidden)
 	b.WriteString(string(s.component("button", map[string]any{"label": "Check again", "type": "submit", "variant": "secondary"})))
 	b.WriteString(`</form></div>`)
@@ -164,6 +165,19 @@ func (s *Server) modelUse(w http.ResponseWriter, r *http.Request) {
 		}
 		if s.app.Chat.SetSetting == nil {
 			s.failed(w, r, "Not connected", errors.New("this workspace has no settings file"), "/")
+			return
+		}
+		// An Ollama model is used through Sameway's copy of it, with room
+		// for the prompt Ollama's default would cut (ollama_setup.go).
+		if base, model := setting(c.Settings, "llm.base_url"), setting(c.Settings, "llm.model"); llm.IsOllama(base) {
+			slow, done := context.WithTimeout(r.Context(), time.Minute)
+			defer done()
+			if err := s.useOllama(slow, model); err != nil {
+				s.failed(w, r, "Not connected", err, "/")
+				return
+			}
+			s.forgetModel()
+			s.tell(w, r, outcome{Title: "Connected", Text: strings.TrimPrefix(c.Label, "Use ") + " is the assistant's model now. Say hello."}, "/")
 			return
 		}
 		for _, kv := range c.Settings {

@@ -32,6 +32,7 @@ func (s *Server) modelRoutes(m *http.ServeMux) {
 	m.HandleFunc("POST /model/use", s.modelUse)
 	m.HandleFunc("POST /model/check", s.modelCheck)
 	m.HandleFunc("POST /model/key", s.modelKey)
+	m.HandleFunc("POST /model/ollama", s.ollamaFetch) // ollama_setup.go
 }
 
 // keyForm is the paste-a-key part of the connect card.
