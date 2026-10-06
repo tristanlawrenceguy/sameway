@@ -23,3 +23,12 @@ func TestAReplysDashLinesAreAList(t *testing.T) {
 		t.Errorf("lines that only start like a list stay a paragraph: %s", got)
 	}
 }
+
+// Words a model made **bold** are bold, without their stars.
+func TestBoldWordsAreBold(t *testing.T) {
+	got := string(passage("**Saturday walk** at 9am\n- **Call** grandma", nil))
+	want := "<p><strong>Saturday walk</strong> at 9am</p><ul><li><strong>Call</strong> grandma</li></ul>"
+	if got != want {
+		t.Errorf("got  %s\nwant %s", got, want)
+	}
+}

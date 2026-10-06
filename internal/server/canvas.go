@@ -18,7 +18,7 @@ import (
 // locks anyone out.
 func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 	if err := s.app.Chat.Available(); err != nil {
-		s.page(w, r, "Canvas", s.component("alert", map[string]any{"kind": "danger", "title": "This workspace is incomplete", "message": err.Error()}), pageOptions{})
+		s.page(w, r, "Home", s.component("alert", map[string]any{"kind": "danger", "title": "This workspace is incomplete", "message": err.Error()}), pageOptions{})
 		return
 	}
 	// Which tab: Home at /, or a canvas record at /c/<id>.
@@ -73,7 +73,7 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 	opts := pageOptions{JSONURL: "/api/block"}
 	// The canvas is an application whether or not it has panes, so it keeps
 	// the whole width and the same shape as panes come and go. Once it holds
-	// anything, what is on it is the title; "Canvas" stays in the outline.
+	// anything, what is on it is the title; the tab's name stays in the outline.
 	opts.Shell = "app"
 	opts.QuietTitle = len(blocks) > 0
 	opts.Left = s.pane("left", paneLabel("Left pane", left), left, convo)
@@ -129,7 +129,9 @@ func (s *Server) blockItem(blk *store.Record, convo *conversation) string {
 	// Provenance costs nothing on screen and is complete in the
 	// accessibility tree. Sighted people got it from the glow when it
 	// happened, and can get it again from the activity log.
-	fmt.Fprintf(&b, `<p class="sw-visually-hidden">%s</p>`, template.HTMLEscapeString(v.Provenance))
+	if v.Provenance != "" {
+		fmt.Fprintf(&b, `<p class="sw-visually-hidden">%s</p>`, template.HTMLEscapeString(v.Provenance))
+	}
 	// A tone means something, so it is said, not only tinted: WCAG 1.4.1.
 	if word := toneWords[v.Tone]; word != "" {
 		fmt.Fprintf(&b, `<p class="sw-visually-hidden">%s</p>`, word)
@@ -160,6 +162,10 @@ func (s *Server) canvasBlock(b *store.Record, convo *conversation) canvasBlock {
 	provenance := "Added by " + who[createdBy] + "."
 	if actor != createdBy {
 		provenance = "Added by " + who[createdBy] + ", edited by " + who[actor] + "."
+	}
+	// "Added by the workspace", heard before what a workspace begins with, said nothing.
+	if provenance = strings.Replace(provenance, "Added by the workspace, e", "E", 1); createdBy == "system" && actor == createdBy {
+		provenance = ""
 	}
 
 	// Glow only for what changed in the exchange just finished, or in the

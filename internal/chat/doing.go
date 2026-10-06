@@ -33,6 +33,7 @@ type callArgs struct {
 	Type      string         `json:"type"`
 	Query     string         `json:"query"`
 	Key       string         `json:"key"`
+	Name      string         `json:"name"`
 }
 
 // nouns are what people call a component when it is not its own name.
@@ -113,7 +114,7 @@ func describe(call llm.ToolCall) string {
 		return "Asking you about a change"
 	case "set_setting":
 		return "Changing " + or(args.Key, "a setting")
-	case "add_field", "add_type":
+	case "add_type":
 		return "Changing the shape of" + or(a(schema.Words(args.Type)), " the content")
 	case "run_action":
 		return "Running an action"
@@ -123,6 +124,26 @@ func describe(call llm.ToolCall) string {
 		return "Clearing the page"
 	case "undo_change":
 		return "Undoing a change"
+	case "create_canvas":
+		return "Adding a tab" + or(called(args.Name), "")
+	case "remove_canvas":
+		return "Removing a tab"
+	case "add_field", "change_field":
+		return "Changing the shape of" + or(a(schema.Words(args.Type)), " the content")
+	case "clear_conversation":
+		return "Clearing the conversation"
+	case "add_workspace":
+		return "Making a workspace"
+	case "open_workspace":
+		return "Opening a workspace"
+	case "restore_workspace":
+		return "Bringing a workspace back"
+	case "let_in", "take_agent_away":
+		return "Changing who can use this"
+	case "update_sameway":
+		return "Updating Sameway"
+	case "write_down":
+		return "Writing down a recording"
 	}
 	return strings.ToUpper(call.Name[:1]) + strings.ReplaceAll(call.Name[1:], "_", " ")
 }
@@ -187,4 +208,12 @@ func or(s, fallback string) string {
 
 func plural(s string) string {
 	return schema.Plural(s)
+}
+
+// called is " called Weekend", or "" for no name.
+func called(name string) string {
+	if strings.TrimSpace(name) == "" {
+		return ""
+	}
+	return " called " + clip(strings.TrimSpace(name), 40)
 }

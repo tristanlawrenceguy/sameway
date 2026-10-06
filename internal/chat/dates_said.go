@@ -24,6 +24,7 @@ var weekdayNames = map[string]time.Weekday{"sunday": time.Sunday, "monday": time
 func (s *Service) datesSaid(t *schema.Type, given map[string]any, rec *store.Record) string {
 	now := s.clock()
 	var said []string
+	var ats []time.Time
 	on := map[time.Weekday]bool{}
 	for _, f := range t.Fields {
 		if f.Type != "datetime" {
@@ -44,6 +45,7 @@ func (s *Service) datesSaid(t *schema.Type, given map[string]any, rec *store.Rec
 			said = append(said, f.Name+" "+at.Format("Monday 2 January 2006, 15:04"))
 		}
 		on[at.Weekday()] = true
+		ats = append(ats, at)
 	}
 	if len(said) == 0 {
 		return ""
@@ -52,7 +54,7 @@ func (s *Service) datesSaid(t *schema.Type, given map[string]any, rec *store.Rec
 	named := s.weekdaysSaid()
 	for _, wd := range named {
 		if on[wd] {
-			return text
+			return text + s.notTheComing(ats, named, now)
 		}
 	}
 	if len(named) > 0 {
@@ -65,6 +67,30 @@ func (s *Service) datesSaid(t *schema.Type, given map[string]any, rec *store.Rec
 		text += fmt.Sprintf(" The person said %s, and none of these is one: %s. If they meant one of those, put it right with update_record.", strings.Join(names, " or "), strings.Join(days, "; "))
 	}
 	return text
+}
+
+// notTheComing says when a day falls on a weekday the person named but is
+// not the coming one: asked on a Tuesday to plan "a walk on Saturday", a
+// small model wrote the Saturday after next. It may be what they meant
+// (next Saturday), so it is said, not changed.
+func (s *Service) notTheComing(ats []time.Time, named []time.Weekday, now time.Time) string {
+	var out []string
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	for _, at := range ats {
+		for _, wd := range named {
+			if at.Weekday() != wd {
+				continue
+			}
+			if ahead := int(at.Sub(today).Hours() / 24); ahead >= 7 {
+				first := today.AddDate(0, 0, (int(wd)-int(now.Weekday())+7)%7)
+				out = append(out, fmt.Sprintf("%s is not the coming %s, which is %s", at.Format("Monday 2 January"), wd, first.Format("2 January")))
+			}
+		}
+	}
+	if len(out) == 0 {
+		return ""
+	}
+	return " " + strings.Join(out, "; ") + ". If the person meant the coming one, put it right with update_record."
 }
 
 // weekdaysSaid is the weekdays the person named in their latest message.
