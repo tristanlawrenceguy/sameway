@@ -48,6 +48,17 @@ jobs:
       # newest: the Windows program, a Mac app that opens with a double-click
       # (a bare binary needed chmod and xattr typed in a terminal, and Finder
       # could not run it at all), and a Linux archive that keeps it runnable.
+      # A Mac app whose program carries only the signature Go's linker gives
+      # it is reported as damaged on Apple silicon, with nothing to press.
+      # Signed as a whole, ad hoc (no Apple account needed), it is only
+      # unverified, and Open Anyway in Privacy & Security opens it.
+      - name: Get rcodesign
+        run: |
+          curl -sSLo rcodesign.tar.gz https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%2F0.29.0/apple-codesign-0.29.0-x86_64-unknown-linux-musl.tar.gz
+          echo "dbe85cedd8ee4217b64e9a0e4c2aef92ab8bcaaa41f20bde99781ff02e600002  rcodesign.tar.gz" | sha256sum -c
+          tar -xzf rcodesign.tar.gz --strip-components=1 -C "$RUNNER_TEMP" apple-codesign-0.29.0-x86_64-unknown-linux-musl/rcodesign
+          rm rcodesign.tar.gz
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
       - name: Downloads for people
         run: |
           version="${GITHUB_REF_NAME#v}"
@@ -69,6 +80,7 @@ jobs:
               '<key>LSMinimumSystemVersion</key><string>11.0</string>' \
               '<key>LSUIElement</key><true/>' \
               '</dict></plist>' > Sameway.app/Contents/Info.plist
+            rcodesign sign Sameway.app
             zip -qry "Sameway-Mac-${kind}.zip" Sameway.app
             rm -rf Sameway.app
           done

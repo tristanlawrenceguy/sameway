@@ -44,9 +44,9 @@ func (s *Server) ollamaCard(hidden string) template.HTML {
 	if running {
 		how := "starting"
 		if total > 0 {
-			how = fmt.Sprintf("%d%% of %s", done*100/total, llm.FreeModelWords)
+			how = fmt.Sprintf("%d%% of %s", percent(done, total), llm.FreeModelWords)
 		}
-		return template.HTML(`<p role="status">Fetching the free model: ` + template.HTMLEscapeString(how) + `. It runs on this computer once it is here; Check again says how far it has come.</p>`)
+		return template.HTML(`<p role="status">Fetching the free model: ` + template.HTMLEscapeString(how) + `. It runs on this computer once it is here.</p>`)
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()

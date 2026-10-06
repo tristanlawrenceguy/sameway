@@ -31,6 +31,7 @@ var keyKinds = []struct {
 func (s *Server) modelRoutes(m *http.ServeMux) {
 	m.HandleFunc("POST /model/use", s.modelUse)
 	m.HandleFunc("POST /model/check", s.modelCheck)
+	m.HandleFunc("GET /model/wait", s.modelWaitState) // connect.go
 	m.HandleFunc("POST /model/key", s.modelKey)
 	m.HandleFunc("POST /model/ollama", s.ollamaFetch) // ollama_setup.go
 }
