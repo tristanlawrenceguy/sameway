@@ -29,13 +29,15 @@ func TestARefIsARecordPointingAtAnother(t *testing.T) {
 	if !strings.Contains(page, `<dt>Project</dt><dd data-prop="project" data-source="`+garden.ID+`" data-options="`) || !strings.Contains(page, `"><a class="sw-link" href="/t/project/`+garden.ID+`">Garden</a></dd>`) {
 		t.Errorf("the task's page shows its project as a link: %.700s", page[strings.Index(page, "<dl"):])
 	}
-	// The project's page is the project. Not its tasks, and not a count of
-	// them either: the page says what the record is, and what else exists
-	// is asked for.
+	// The project's page lists its own tasks (always visible), but the related
+	// section stays closed at rest: no counts, no links — those need ?show=.
 	project := get(t, h, "/t/project/"+garden.ID).Body.String()
-	for _, gone := range []string{"Dig the pond", ">1 task</a>", ">Related</h2>"} {
+	if !strings.Contains(project, "Dig the pond") {
+		t.Errorf("the project's page shows its tasks as a collection; not found\n%.600s", project)
+	}
+	for _, gone := range []string{">1 task</a>", ">Related</h2>"} {
 		if strings.Contains(project, gone) {
-			t.Errorf("the project's page at rest says nothing of its tasks, found %q: %.600s", gone, project)
+			t.Errorf("the project's page at rest says nothing of its related section, found %q: %.600s", gone, project)
 		}
 	}
 	open := get(t, h, "/t/project/"+garden.ID+"?show=points-here:task.project").Body.String()
