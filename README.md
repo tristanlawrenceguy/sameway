@@ -16,25 +16,36 @@ where the manifest says so.
 
 ## Quick start
 
-1. **Download** the program for your computer from the
-   [latest release](https://github.com/tristanlawrenceguy/sameway/releases/latest):
-   `windows_amd64.exe` for Windows, `darwin_arm64` for a Mac with Apple
-   silicon, `darwin_amd64` for an Intel Mac, `linux_amd64` or `linux_arm64`
-   for Linux.
+1. **Download** Sameway for your computer:
+   - **Windows:** [Sameway-Windows.exe](https://github.com/tristanlawrenceguy/sameway/releases/latest/download/Sameway-Windows.exe)
+   - **Mac:** [Apple silicon (M1 and later)](https://github.com/tristanlawrenceguy/sameway/releases/latest/download/Sameway-Mac-AppleSilicon.zip)
+     or [Intel](https://github.com/tristanlawrenceguy/sameway/releases/latest/download/Sameway-Mac-Intel.zip).
+     Open the zip and drag **Sameway** to your Applications folder.
+   - **Linux:** [x64](https://github.com/tristanlawrenceguy/sameway/releases/latest/download/Sameway-Linux-x64.tar.gz)
+     or [ARM](https://github.com/tristanlawrenceguy/sameway/releases/latest/download/Sameway-Linux-ARM.tar.gz)
 2. **Double-click it.** The first time, it makes your workspace in your
    Documents folder (Documents\Sameway) and opens it in your browser. After
    that, a double-click opens the same workspace again, or shows it if it is
-   already open. Keep the small window it opens while you use Sameway; close
-   it to stop.
+   already open. On Windows, keep the small window it opens while you use
+   Sameway, and close it to stop; on a Mac it runs in the background, and
+   **Workspaces** in Sameway stops it.
+
+   Sameway is not signed yet, so the first time your computer asks once.
+   On **Windows**: *Windows protected your PC* → **More info** → **Run
+   anyway**. On a **Mac**: when it says it cannot check Sameway, open
+   **System Settings → Privacy & Security** and press **Open Anyway** beside
+   Sameway.
 3. **Give the assistant a model**, from the page that opens, whichever suits
    you: install [Ollama](https://ollama.com/download) (free, and nothing
    leaves your computer), then press **Check again** and **Fetch a free
    model**; or paste a key from Anthropic or OpenRouter; or, if you use
    Claude Code, choose it. Everything but the assistant works without one.
 
-**From a terminal**, to choose where a workspace goes: rename the file
-`sameway` (`sameway.exe` on Windows), put it in a folder of its own, and in
-that folder:
+**From a terminal**, to choose where a workspace goes: take the program for
+your machine from the [latest release](https://github.com/tristanlawrenceguy/sameway/releases/latest)
+(`sameway_<version>_<system>_<processor>`), rename it `sameway`
+(`sameway.exe` on Windows), put it in a folder of its own, and in that
+folder:
 
 ```bash
 sameway init my-workspace
@@ -43,10 +54,8 @@ sameway open --workspace my-workspace
 
 A release keeps itself current from then on (see [Keeping it current](#keeping-it-current)).
 
-The program is not signed yet, so the first run asks once. On Windows,
-*Windows protected your PC* → **More info** → **Run anyway**. On a Mac, run
-`chmod +x sameway && xattr -d com.apple.quarantine sameway` first. On Linux,
-`chmod +x sameway`.
+On a Mac, run `chmod +x sameway && xattr -d com.apple.quarantine sameway`
+first; on Linux, `chmod +x sameway`.
 
 **Or with Go** 1.26.6 or newer:
 

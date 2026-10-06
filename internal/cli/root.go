@@ -185,6 +185,8 @@ type ctx struct {
 	workspaceDir string
 	args         []string
 	app          *app.App
+	// plain is a double-click's run: what open says is for a person, not a terminal.
+	plain bool
 }
 
 // load opens the workspace for commands that need it.
