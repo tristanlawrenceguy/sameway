@@ -117,3 +117,20 @@ func OllamaRoomy(ctx context.Context, model string) (string, error) {
 	}
 	return name, nil
 }
+
+// OllamaKeep asks Ollama to keep a model loaded for a while, "30m": it
+// unloads one after five minutes unused by default, and loading it again
+// costs the next message seconds (internal/chat warm.go).
+func OllamaKeep(ctx context.Context, model, keep string) error {
+	body, _ := json.Marshal(map[string]any{"model": model, "keep_alive": keep})
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, OllamaURL+"/api/generate", bytes.NewReader(body))
+	if err != nil {
+		return err
+	}
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	res.Body.Close()
+	return nil
+}
