@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -92,15 +93,14 @@ func (c *ctx) openCmd() error {
 	var srv *http.Server
 	srv = &http.Server{Handler: all}
 	exit := func() {
-	_, port, _ := net.SplitHostPort(listener.Addr().String())
-	lan := &lanServer{port: port, h: h.LAN(all)} // lan.go
-	h.WithFleet(&server.Fleet{Launch: launchWorkspace, LAN: lan.set, LANBase: lan.Base, Exit: func() {
 		go func() {
 			time.Sleep(500 * time.Millisecond)
 			srv.Shutdown(context.Background())
 		}()
 	}
-	h.WithFleet(&server.Fleet{Launch: launchWorkspace, Exit: exit, Restart: func() error {
+	_, port, _ := net.SplitHostPort(listener.Addr().String())
+	lan := &lanServer{port: port, h: h.LAN(all)} // lan.go
+	h.WithFleet(&server.Fleet{Launch: launchWorkspace, Exit: exit, LAN: lan.set, LANBase: lan.Base, Restart: func() error {
 		if err := startAgain(a.Workspace.Dir, listener.Addr().String()); err != nil { // restart.go
 			return err
 		}
