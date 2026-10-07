@@ -27,6 +27,9 @@ type Notifier struct {
 	// Command is a command line run for each ring, with {title}, {text}
 	// and {url} replaced in its arguments. Empty runs nothing.
 	Command string
+	// Phone is an ntfy topic address each ring is also posted to, for a
+	// phone with the ntfy app (phone.go). Empty sends nothing.
+	Phone string
 	// Run runs a program; nil runs it for real. Tests put their own here.
 	Run func(env []string, name string, args ...string) error
 }
@@ -36,8 +39,13 @@ type Notifier struct {
 func (n Notifier) Send(title, text, url string) error {
 	var errs []error
 	if n.Desktop {
-		if err := n.desktop(title, text); err != nil {
+		if err := n.desktop(title, text, url); err != nil {
 			errs = append(errs, fmt.Errorf("desktop notification: %w", err))
+		}
+	}
+	if strings.TrimSpace(n.Phone) != "" {
+		if err := toPhone(n.Phone, title, text, url); err != nil {
+			errs = append(errs, fmt.Errorf("phone: %w", err))
 		}
 	}
 	if strings.TrimSpace(n.Command) != "" {
@@ -54,8 +62,8 @@ func (n Notifier) Send(title, text, url string) error {
 // desktop is the system's own notification, on each system in its way.
 // The words travel in the environment, never in a command line, so no
 // title can break out of one.
-func (n Notifier) desktop(title, text string) error {
-	env := []string{"SAMEWAY_TITLE=" + title, "SAMEWAY_TEXT=" + text}
+func (n Notifier) desktop(title, text, url string) error {
+	env := []string{"SAMEWAY_TITLE=" + title, "SAMEWAY_TEXT=" + text, "SAMEWAY_URL=" + url}
 	switch runtime.GOOS {
 	case "windows":
 		return n.run(env, "powershell", "-NoProfile", "-NonInteractive", "-EncodedCommand", encoded(toastScript))
@@ -69,13 +77,16 @@ func (n Notifier) desktop(title, text string) error {
 // toastScript shows a Windows toast through the runtime the system has,
 // under the identity PowerShell already holds, so nothing needs
 // installing or registering. The reminder scenario keeps it on screen
-// and sounds the reminder tone.
+// and sounds the reminder tone; pressed, it opens the reminder's page.
 const toastScript = `[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] > $null
 [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] > $null
 $t = [System.Security.SecurityElement]::Escape($env:SAMEWAY_TITLE)
 $b = [System.Security.SecurityElement]::Escape($env:SAMEWAY_TEXT)
+$u = [System.Security.SecurityElement]::Escape($env:SAMEWAY_URL)
+$open = ''
+if ($u) { $open = " activationType='protocol' launch='$u'" }
 $x = New-Object Windows.Data.Xml.Dom.XmlDocument
-$x.LoadXml("<toast scenario='reminder'><visual><binding template='ToastGeneric'><text>$t</text><text>$b</text></binding></visual><audio src='ms-winsoundevent:Notification.Reminder'/></toast>")
+$x.LoadXml("<toast scenario='reminder'$open><visual><binding template='ToastGeneric'><text>$t</text><text>$b</text></binding></visual><audio src='ms-winsoundevent:Notification.Reminder'/></toast>")
 $n = New-Object Windows.UI.Notifications.ToastNotification $x
 [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe').Show($n)`
 

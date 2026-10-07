@@ -136,6 +136,9 @@ type Config struct {
 	Notify struct {
 		Desktop string `yaml:"desktop"`
 		Command string `yaml:"command"`
+		// Phone is the ntfy topic address a ring is also sent to, for a
+		// phone with the ntfy app (internal/notify); set from Help.
+		Phone string `yaml:"phone"`
 	} `yaml:"notify"`
 	// Update is how a new version of sameway arrives: "auto" (the
 	// default) installs a release on its own and says so in the activity

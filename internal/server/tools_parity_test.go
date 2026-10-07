@@ -72,6 +72,7 @@ var pageActionTools = map[string]string{
 	"/bring":                      "import_records",
 	"/at-login":                   "a person's: what starts when this computer does is its owner's choice",
 	"/restart":                    "a person's: restarting ends the assistant's own turn",
+	"/notify/phone":               "set_setting",
 }
 
 func TestEveryPageActionIsTheAssistantsOrSaysWhyNot(t *testing.T) {

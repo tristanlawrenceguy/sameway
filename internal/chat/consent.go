@@ -73,6 +73,11 @@ var outward = map[string]func(now, next string, s *Service) question{
 			fmt.Sprintf("The assistant wants to sign in to its AI service with the secret saved on this computer as %s (now %s). That secret would be sent to %s with every message. Only say yes if %s is the key for that service.", next, orNone(now), orNone(host(s.setting("llm.base_url"))), next),
 			"Yes, use " + next, "No, keep it as it is"}
 	},
+	"notify.phone": func(now, next string, _ *Service) question {
+		return question{"Send your reminders to a phone?",
+			fmt.Sprintf("Each reminder's words would also go to %s, through the ntfy service, to whoever subscribes to it (now: %s).", next, orNone(now)),
+			"Yes, send them", "No, don't"}
+	},
 	"notify.command": func(now, next string, _ *Service) question {
 		return question{"Run a program every time a reminder goes off?",
 			fmt.Sprintf("The assistant wants each reminder to also run this on your computer, as you, with access to your files: %s. A program can do things Sameway can't undo, so only say yes if you asked for this.", next),

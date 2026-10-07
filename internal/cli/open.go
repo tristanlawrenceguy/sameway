@@ -131,7 +131,7 @@ func (c *ctx) openCmd() error {
 func notifier(a *app.App) func(title, text, url string) {
 	return func(title, text, url string) {
 		cfg := a.Workspace.Config.Notify
-		n := notify.Notifier{Desktop: cfg.Desktop != "off", Command: cfg.Command}
+		n := notify.Notifier{Desktop: cfg.Desktop != "off", Command: cfg.Command, Phone: cfg.Phone}
 		if err := n.Send(title, text, url); err != nil {
 			log.Printf("notify: %v", err)
 		}
