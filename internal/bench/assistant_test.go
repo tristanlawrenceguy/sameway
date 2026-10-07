@@ -8,7 +8,9 @@
 // SAMEWAY_BENCH_RUNS repeats each request (a model varies),
 // SAMEWAY_BENCH_COMMAND runs Claude Code with another command line,
 // SAMEWAY_BENCH_BASE_URL runs a model server instead (llama.cpp, Ollama), and
-// SAMEWAY_BENCH_ONLY runs the requests whose names contain it.
+// SAMEWAY_BENCH_ONLY runs the requests whose names contain it, and
+// SAMEWAY_BENCH_SET=newcomer runs a newcomer's first ten minutes instead
+// of the hard requests.
 package bench
 
 import (
@@ -66,8 +68,12 @@ func TestAssistant(t *testing.T) {
 		}
 		defer out.Close()
 	}
+	set := requests()
+	if os.Getenv("SAMEWAY_BENCH_SET") == "newcomer" {
+		set = newcomer() // newcomer_test.go
+	}
 	var all []result
-	for _, r := range requests() {
+	for _, r := range set {
 		if only != "" && !strings.Contains(r.name, only) {
 			continue
 		}
