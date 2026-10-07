@@ -93,7 +93,11 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	b.WriteString(`<h2 class="sw-visually-hidden">Add and download</h2>`)
 	b.WriteString(string(s.addButton(t)))
 	if s.importable(t) {
-		b.WriteString(`<p class="sw-quiet-row">` + string(s.component("link", map[string]any{"href": "/t/" + t.Name + "/import", "label": "Import", "context": plural(t.Name), "look": "button"})) + `</p>`)
+		b.WriteString(`<p class="sw-quiet-row">` + string(s.component("link", map[string]any{"href": "/t/" + t.Name + "/import", "label": "Import", "context": plural(t.Name), "look": "button"})))
+		if t.Name == "task" || t.Name == "note" { // bring.go knows these apps' exports
+			b.WriteString(" " + string(s.component("link", map[string]any{"href": "/bring", "label": "Bring yours from another app"})))
+		}
+		b.WriteString(`</p>`)
 	}
 	b.WriteString(s.exportLinks(t, r.URL.Query(), recs)) // and they go out again, as the page has them; see export.go
 	// What just happened to these records is here too, so a deletion can be
