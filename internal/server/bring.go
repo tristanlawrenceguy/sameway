@@ -10,6 +10,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/ingest"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
 
 // Bring your things: one page for what a person has in another app. It
@@ -88,4 +89,17 @@ func (s *Server) bring(w http.ResponseWriter, r *http.Request) {
 func (s *Server) bringRoutes(m *http.ServeMux) {
 	m.HandleFunc("GET /bring", s.bringPage)
 	m.HandleFunc("POST /bring", s.bring)
+}
+
+// importLinks are a list's ways in from a file: Import for any file, and
+// for tasks and notes, the apps Bring your things knows.
+func (s *Server) importLinks(t *schema.Type) string {
+	if !s.importable(t) {
+		return ""
+	}
+	out := `<p class="sw-quiet-row">` + string(s.component("link", map[string]any{"href": "/t/" + t.Name + "/import", "label": "Import", "context": plural(t.Name), "look": "button"}))
+	if t.Name == "task" || t.Name == "note" {
+		out += " " + string(s.component("link", map[string]any{"href": "/bring", "label": "Bring yours from another app"}))
+	}
+	return out + `</p>`
 }
