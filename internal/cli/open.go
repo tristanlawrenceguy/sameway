@@ -92,6 +92,9 @@ func (c *ctx) openCmd() error {
 	var srv *http.Server
 	srv = &http.Server{Handler: all}
 	exit := func() {
+	_, port, _ := net.SplitHostPort(listener.Addr().String())
+	lan := &lanServer{port: port, h: h.LAN(all)} // lan.go
+	h.WithFleet(&server.Fleet{Launch: launchWorkspace, LAN: lan.set, LANBase: lan.Base, Exit: func() {
 		go func() {
 			time.Sleep(500 * time.Millisecond)
 			srv.Shutdown(context.Background())
@@ -120,6 +123,11 @@ func (c *ctx) openCmd() error {
 	// sign-in, never looked for a new version at all.
 	watchUpdates(ctx, notes, a)
 	connectDevices(ctx, c.Stdout, a)
+	if a.Workspace.Config.Server.LAN == "on" {
+		if err := lan.set(true); err != nil {
+			fmt.Fprintf(c.Stdout, "  wi-fi   %v\n", err)
+		}
+	}
 	joinTailnet(ctx, c.Stdout, a, all, h)
 	if err := srv.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return err

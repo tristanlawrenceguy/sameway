@@ -32,6 +32,9 @@ type Config struct {
 	Name   string `yaml:"name"`
 	Server struct {
 		Addr string `yaml:"addr"`
+		// LAN "on" answers on this computer's Wi-Fi address too, for
+		// phones paired on Workspaces (internal/server phone_lan.go).
+		LAN string `yaml:"lan"`
 	} `yaml:"server"`
 	LLM llm.Config `yaml:"llm"`
 	// MCP over HTTP at /mcp, for clients elsewhere: ChatGPT's connectors,

@@ -103,4 +103,6 @@ func (s *Server) routes() {
 	m.HandleFunc("/api/", s.apiNotFound)
 	m.HandleFunc("POST /restart", s.restart)
 	m.HandleFunc("POST /notify/phone", s.phoneSet)
+	s.phoneRoutes(m)                                                    // phone_lan_page.go
+	m.HandleFunc("GET /favicon.svg", icon("icon.svg", "image/svg+xml")) // icon.go
 }
