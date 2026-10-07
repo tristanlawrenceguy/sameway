@@ -43,6 +43,57 @@ jobs:
           cd dist
           sha256sum sameway_* > checksums.txt
           cat checksums.txt
+      # The same programs as a person downloads them, under names that do
+      # not change, so releases/latest/download/<name> always links to the
+      # newest: the Windows program, a Mac app that opens with a double-click
+      # (a bare binary needed chmod and xattr typed in a terminal, and Finder
+      # could not run it at all), and a Linux archive that keeps it runnable.
+      # A Mac app whose program carries only the signature Go's linker gives
+      # it is reported as damaged on Apple silicon, with nothing to press.
+      # Signed as a whole, ad hoc (no Apple account needed), it is only
+      # unverified, and Open Anyway in Privacy & Security opens it.
+      - name: Get rcodesign
+        run: |
+          curl -sSLo rcodesign.tar.gz https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%2F0.29.0/apple-codesign-0.29.0-x86_64-unknown-linux-musl.tar.gz
+          echo "dbe85cedd8ee4217b64e9a0e4c2aef92ab8bcaaa41f20bde99781ff02e600002  rcodesign.tar.gz" | sha256sum -c
+          tar -xzf rcodesign.tar.gz --strip-components=1 -C "$RUNNER_TEMP" apple-codesign-0.29.0-x86_64-unknown-linux-musl/rcodesign
+          rm rcodesign.tar.gz
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+      - name: Downloads for people
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          cd dist
+          cp "sameway_${version}_windows_amd64.exe" Sameway-Windows.exe
+          for pair in darwin_arm64:AppleSilicon darwin_amd64:Intel; do
+            target="${pair%%:*}"; kind="${pair##*:}"
+            mkdir -p Sameway.app/Contents/MacOS
+            cp "sameway_${version}_${target}" Sameway.app/Contents/MacOS/sameway
+            chmod +x Sameway.app/Contents/MacOS/sameway
+            printf '%s\n' '<?xml version="1.0" encoding="UTF-8"?>' \
+              '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' \
+              '<plist version="1.0"><dict>' \
+              '<key>CFBundleName</key><string>Sameway</string>' \
+              '<key>CFBundleIdentifier</key><string>io.github.tristanlawrenceguy.sameway</string>' \
+              '<key>CFBundleExecutable</key><string>sameway</string>' \
+              '<key>CFBundlePackageType</key><string>APPL</string>' \
+              "<key>CFBundleShortVersionString</key><string>${version}</string>" \
+              '<key>LSMinimumSystemVersion</key><string>11.0</string>' \
+              '<key>LSUIElement</key><true/>' \
+              '</dict></plist>' > Sameway.app/Contents/Info.plist
+            rcodesign sign Sameway.app
+            zip -qry "Sameway-Mac-${kind}.zip" Sameway.app
+            rm -rf Sameway.app
+          done
+          for pair in linux_amd64:x64 linux_arm64:ARM; do
+            target="${pair%%:*}"; kind="${pair##*:}"
+            mkdir -p pack/sameway
+            cp "sameway_${version}_${target}" pack/sameway/sameway
+            chmod +x pack/sameway/sameway
+            tar -C pack -czf "Sameway-Linux-${kind}.tar.gz" sameway
+            rm -rf pack
+          done
+          sha256sum Sameway-* >> checksums.txt
+          ls -la
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}

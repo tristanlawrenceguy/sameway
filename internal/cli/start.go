@@ -41,8 +41,9 @@ func (c *ctx) startCmd() error {
 			return nil
 		}
 	}
-	fmt.Fprintln(c.Stdout, "Sameway is opening in your browser. Keep this window open while you use it; close it to stop.")
-	c.workspaceDir, c.args = dir, nil
+	keepProgram(c.Stdout) // keep.go
+	fmt.Fprintln(c.Stdout, "Opening Sameway in your browser…")
+	c.workspaceDir, c.args, c.plain = dir, nil, true
 	return c.holdOpen(c.openCmd())
 }
 

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/speech"
 )
 
@@ -22,7 +23,7 @@ func (s *Server) limitsSection(owner bool) string {
 	if p := s.app.Chat.Provider; p == nil || s.app.Chat.ProviderErr != nil {
 		line("The assistant has no model to answer with yet; Connect a model on the chat page.")
 	} else {
-		model := template.HTMLEscapeString(p.Name())
+		model := template.HTMLEscapeString(llm.Words(p))
 		switch sees, known := chat.Sees(p.Name()); {
 		case !known:
 			line("Pictures: the assistant's model, " + model + ", has not been sent one yet. If it cannot see them it says so, and answers from a picture's description.")
@@ -52,8 +53,18 @@ func (s *Server) limitsSection(owner bool) string {
 		line("Recordings: speech-to-text is not on this computer yet, so a recording keeps a transcript only when one is written by hand. The owner can get it.")
 	}
 	if owner {
-		for _, l := range s.appLines() { // meeting_fetch_help.go
+		lines, setup := s.appLines() // meeting_fetch_help.go
+		for _, l := range lines {
 			line(l)
+		}
+		if len(setup) > 0 {
+			inner := "<ul>"
+			for _, l := range setup {
+				inner += "<li>" + l + "</li>"
+			}
+			if body, err := s.app.Registry.RenderSlot("disclosure", map[string]any{"label": "Transcripts from Teams or Zoom"}, template.HTML(inner+"</ul>")); err == nil {
+				line(string(body))
+			}
 		}
 	}
 	b.WriteString(`</ul></section>`)

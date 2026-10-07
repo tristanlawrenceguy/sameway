@@ -3,7 +3,6 @@ package server
 import (
 	"html/template"
 	"log"
-	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -15,9 +14,7 @@ func (s *Server) chatBlock(blk *store.Record, convo *conversation) template.HTML
 	if props == nil {
 		props = map[string]any{}
 	}
-	// The chat is a block, so its menu can also place the block.
-	body := strings.Replace(string(convo.Body), `<span class="sw-chat__place"></span>`, string(s.placeMenu(blk, convo.From)), 1)
-	out, err := s.app.Registry.RenderSlot(chat.ComponentName, props, template.HTML(body))
+	out, err := s.app.Registry.RenderSlot(chat.ComponentName, props, convo.Body)
 	if err != nil {
 		log.Printf("render chat: %v", err)
 		return s.component("alert", map[string]any{"kind": "danger", "message": "The conversation could not be shown. Reload the page to try again."})

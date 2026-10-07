@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"os"
 	"os/exec"
 	"strings"
 	"sync"
@@ -109,7 +108,7 @@ func Answers(ctx context.Context, cfg Config) (bool, string) {
 		// A cloud service lists its models only to a key; a local one to
 		// anyone. Only a local one can be asked without the key.
 		if !local(base) {
-			if cfg.APIKeyEnv != "" && os.Getenv(cfg.APIKeyEnv) == "" {
+			if cfg.APIKeyEnv != "" && Key(cfg.APIKeyEnv) == "" {
 				return false, "The key for the AI service at " + base + " is not saved on this computer (" + cfg.APIKeyEnv + ")."
 			}
 			return true, ""
@@ -119,7 +118,7 @@ func Answers(ctx context.Context, cfg Config) (bool, string) {
 		}
 		return false, "The AI model at " + base + " isn't answering. It may not be running."
 	case "anthropic":
-		if cfg.APIKeyEnv == "" || os.Getenv(cfg.APIKeyEnv) == "" {
+		if cfg.APIKeyEnv == "" || Key(cfg.APIKeyEnv) == "" {
 			return false, "The key for Claude is not saved on this computer."
 		}
 		return true, ""

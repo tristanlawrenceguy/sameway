@@ -120,10 +120,19 @@
     // the model is thinking.
     function running() { return live.steps.querySelectorAll('[data-state="running"]:not([data-early])'); }
     function finish() { running().forEach(function (s) { s.setAttribute("data-state", "done"); }); }
+    // A model on the person's own computer can think for most of a minute
+    // before its first word, and a dot that only says Thinking for that
+    // long reads as stuck; after a while it says that is how it goes.
+    var slow = null;
     function thinking(on) {
       var have = live.steps.querySelector("[data-thinking]");
-      if (on && !have) live.steps.appendChild(el('<li class="sw-live__step" data-state="running" data-thinking><span class="sw-live__dot" aria-hidden="true"></span>Thinking</li>'));
-      if (!on && have) have.remove();
+      if (on && !have) {
+        var li = el('<li class="sw-live__step" data-state="running" data-thinking><span class="sw-live__dot" aria-hidden="true"></span><span>Thinking</span></li>');
+        live.steps.appendChild(li);
+        clearTimeout(slow);
+        slow = setTimeout(function () { if (li.isConnected) li.lastChild.textContent = "Still thinking. Some models take a minute."; }, 10000);
+      }
+      if (!on && have) { clearTimeout(slow); have.remove(); }
     }
     function step(d) {
       thinking(false);

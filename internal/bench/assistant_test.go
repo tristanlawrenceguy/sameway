@@ -6,7 +6,8 @@
 //	SAMEWAY_BENCH_MODEL=haiku SAMEWAY_BENCH_OUT=bench.jsonl go test ./internal/bench -timeout 120m -v
 //
 // SAMEWAY_BENCH_RUNS repeats each request (a model varies),
-// SAMEWAY_BENCH_COMMAND runs Claude Code with another command line, and
+// SAMEWAY_BENCH_COMMAND runs Claude Code with another command line,
+// SAMEWAY_BENCH_BASE_URL runs a model server instead (llama.cpp, Ollama), and
 // SAMEWAY_BENCH_ONLY runs the requests whose names contain it.
 package bench
 
@@ -112,7 +113,13 @@ func runOne(t *testing.T, exe, model string, r request, run int) result {
 	if r.seed != nil {
 		r.seed(t, a)
 	}
-	a.Chat.Provider, err = llm.New(llm.Config{Provider: "claude-code", Model: model, Workspace: dir, Executable: exe, Command: os.Getenv("SAMEWAY_BENCH_COMMAND")})
+	cfg := llm.Config{Provider: "claude-code", Model: model, Workspace: dir, Executable: exe, Command: os.Getenv("SAMEWAY_BENCH_COMMAND")}
+	// A model server instead (a local llama.cpp or Ollama), as most people
+	// who have no Claude run it.
+	if base := os.Getenv("SAMEWAY_BENCH_BASE_URL"); base != "" {
+		cfg = llm.Config{Provider: "openai", BaseURL: base, Model: model, MaxTokens: 4096}
+	}
+	a.Chat.Provider, err = llm.New(cfg)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
-	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -45,6 +45,10 @@ type modelState struct {
 	ok      bool
 	why     string
 	choices []modelChoice
+	// woke is when Sameway last started Ollama itself (ollama_wake.go);
+	// waking says it is starting now, so nothing else is offered.
+	woke   time.Time
+	waking bool
 }
 
 const modelStateFor = 15 * time.Second
@@ -54,7 +58,11 @@ const modelStateFor = 15 * time.Second
 func (s *Server) modelProblem() (string, []modelChoice) {
 	s.model.mu.Lock()
 	defer s.model.mu.Unlock()
-	if time.Since(s.model.at) < modelStateFor {
+	fresh := modelStateFor
+	if s.model.waking {
+		fresh = 3 * time.Second // Ollama starting is seen as soon as it answers
+	}
+	if time.Since(s.model.at) < fresh {
 		if s.model.ok {
 			return "", nil
 		}
@@ -71,6 +79,7 @@ func (s *Server) modelProblem() (string, []modelChoice) {
 		why = "The AI model is not set up right (" + err.Error() + ")."
 	default:
 		ok, why = llm.Answers(ctx, s.app.Workspace.Config.LLM)
+		why = s.wakeOllama(ok, why)
 	}
 	s.model.at, s.model.ok, s.model.why, s.model.choices = time.Now(), ok, why, nil
 	if !ok {
@@ -94,7 +103,7 @@ func modelChoices(ctx context.Context) []modelChoice {
 		out = append(out, modelChoice{
 			ID:       "server " + d.BaseURL,
 			Label:    fmt.Sprintf("Use %s (%s)", d.Server, d.Model),
-			Where:    "Runs on this computer. Your conversations and notes stay here.",
+			Where:    "Runs on this computer, free. Your conversations and notes stay here. Slower than Claude, and it gets more wrong.",
 			Settings: [][2]string{{"llm.base_url", d.BaseURL}, {"llm.model", d.Model}, {"llm.provider", "openai"}},
 		})
 	}
@@ -106,7 +115,7 @@ func modelChoices(ctx context.Context) []modelChoice {
 			Settings: [][2]string{{"llm.model", "sonnet"}, {"llm.provider", "claude-code"}},
 		})
 	}
-	if os.Getenv("ANTHROPIC_API_KEY") != "" {
+	if llm.Key("ANTHROPIC_API_KEY") != "" {
 		out = append(out, modelChoice{
 			ID:       "anthropic",
 			Label:    "Use Claude with your saved key",
@@ -127,7 +136,7 @@ func (s *Server) connectCard(from string) template.HTML {
 	esc := template.HTMLEscapeString
 	hidden := `<input type="hidden" name="from" value="` + esc(from) + `">`
 	var b strings.Builder
-	b.WriteString(`<div class="sw-connect sw-stack"><h2 class="sw-visually-hidden">Connect the assistant</h2>`)
+	b.WriteString(`<div class="sw-connect sw-stack" data-wait="` + esc(s.modelWait()) + `"><h2 class="sw-visually-hidden">Connect the assistant</h2>`)
 	// A status message, and a heading to find it by from the page's outline.
 	b.WriteString(string(s.component("alert", map[string]any{"kind": "info", "title": "Connect the assistant to an AI model",
 		"message": why + " The assistant needs an AI model to think with. Everything else in Sameway works without one."})))
@@ -139,12 +148,14 @@ func (s *Server) connectCard(from string) template.HTML {
 			b.WriteString(`</form><p class="sw-small sw-muted">` + esc(c.Where) + `</p></li>`)
 		}
 		b.WriteString(`</ul>`)
-	} else {
+	} else if !s.model.waking {
 		b.WriteString(`<p>Nothing was found on this computer yet. Either of these works:</p><ul class="sw-connect__ways">`)
-		b.WriteString(`<li><a class="sw-link" href="https://ollama.com/download">Ollama</a> runs AI models on this computer, free, and nothing leaves it. Install it, then in a terminal run <code>ollama pull llama3.1</code>.</li>`)
+		b.WriteString(`<li><a class="sw-link" href="` + ollamaDownload() + `">Download Ollama</a>: it runs AI models on this computer, free, and nothing leaves it; slower than Claude, and it gets more wrong. Install it and this page sees it, then offers a free model for it.</li>`)
 		b.WriteString(`<li><a class="sw-link" href="https://claude.com/claude-code">Claude Code</a> uses your Claude account. Install it and sign in.</li>`)
 		b.WriteString(`</ul>`)
 	}
+	b.WriteString(string(s.ollamaCard(hidden))) // ollama_setup.go
+	b.WriteString(string(s.keyForm(hidden)))    // model_key.go
 	b.WriteString(`<form method="post" action="/model/check">` + hidden)
 	b.WriteString(string(s.component("button", map[string]any{"label": "Check again", "type": "submit", "variant": "secondary"})))
 	b.WriteString(`</form></div>`)
@@ -164,6 +175,19 @@ func (s *Server) modelUse(w http.ResponseWriter, r *http.Request) {
 		}
 		if s.app.Chat.SetSetting == nil {
 			s.failed(w, r, "Not connected", errors.New("this workspace has no settings file"), "/")
+			return
+		}
+		// An Ollama model is used through Sameway's copy of it, with room
+		// for the prompt Ollama's default would cut (ollama_setup.go).
+		if base, model := setting(c.Settings, "llm.base_url"), setting(c.Settings, "llm.model"); llm.IsOllama(base) {
+			slow, done := context.WithTimeout(r.Context(), time.Minute)
+			defer done()
+			if err := s.useOllama(slow, model); err != nil {
+				s.failed(w, r, "Not connected", err, "/")
+				return
+			}
+			s.forgetModel()
+			s.tell(w, r, outcome{Title: "Connected", Text: strings.TrimPrefix(c.Label, "Use ") + " is the assistant's model now. Say hello."}, "/")
 			return
 		}
 		for _, kv := range c.Settings {
@@ -189,4 +213,76 @@ func (s *Server) modelCheck(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.Redirect(w, r, backOf(r, "/"), http.StatusSeeOther)
+}
+
+// ollamaDownload is Ollama's installer for this computer, so the person
+// downloads it with one press instead of finding it on a page of them.
+// Linux installs it with a command, which the page there gives.
+func ollamaDownload() string {
+	switch runtime.GOOS {
+	case "windows":
+		return "https://ollama.com/download/OllamaSetup.exe"
+	case "darwin":
+		return "https://ollama.com/download/Ollama.dmg"
+	}
+	return "https://ollama.com/download/linux"
+}
+
+// modelWait is the connect card in a few words that change when it would:
+// what was found, and how far a fetch has come. The page asks for them
+// while the card is up and follows when they change (31-connect-wait.js),
+// so Ollama installed, or a model fetched, shows without Check again.
+func (s *Server) modelWait() string {
+	why, choices := s.modelProblem()
+	if why == "" {
+		return "ready"
+	}
+	parts := []string{why}
+	for _, c := range choices {
+		parts = append(parts, c.ID)
+	}
+	f := s.fetching()
+	f.Lock()
+	if f.running {
+		parts = append(parts, "fetching", fmt.Sprint(percent(f.done, f.total)))
+	}
+	parts = append(parts, f.err)
+	f.Unlock()
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	parts = append(parts, fmt.Sprint(ollamaWithoutModel(ctx)))
+	return strings.Join(parts, "|")
+}
+
+func percent(done, total int64) int64 {
+	if total <= 0 {
+		return 0
+	}
+	return done * 100 / total
+}
+
+// modelWaitState is modelWait for the page that is waiting.
+func (s *Server) modelWaitState(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-store")
+	fmt.Fprint(w, s.modelWait())
+}
+
+// wakeOllama starts Ollama when the workspace uses it and it is installed
+// but not answering, at most once a minute, and says so in place of an
+// address that is not answering. Called with s.model held.
+func (s *Server) wakeOllama(ok bool, why string) string {
+	s.model.waking = false
+	if ok || !llm.IsOllama(s.app.Workspace.Config.LLM.BaseURL) {
+		return why
+	}
+	if time.Since(s.model.woke) < time.Minute {
+		s.model.waking = true
+		return "Ollama is starting. This page follows when it is ready."
+	}
+	if llm.WakeOllama() {
+		s.model.woke, s.model.waking = time.Now(), true
+		return "Ollama was not running, so Sameway is starting it. This page follows when it is ready."
+	}
+	return "Ollama is not running on this computer."
 }

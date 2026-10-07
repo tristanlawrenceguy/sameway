@@ -48,6 +48,13 @@ func (c *ctx) initCmd() error {
 	if !*noDetect {
 		if hits := llm.Detect(context.Background(), llm.DefaultCandidates); len(hits) > 0 {
 			found = &hits[0]
+			// An Ollama model is used through Sameway's copy with room for
+			// its prompt, which Ollama's default would cut (llm/ollama.go).
+			if llm.IsOllama(found.BaseURL) {
+				if roomy, err := llm.OllamaRoomy(context.Background(), found.Model); err == nil {
+					found.Model = roomy
+				}
+			}
 			if err := pointConfigAt(filepath.Join(abs, workspace.ConfigFile), found); err != nil {
 				return err
 			}
@@ -58,6 +65,11 @@ func (c *ctx) initCmd() error {
 			if err := pointConfigAtCommand(filepath.Join(abs, workspace.ConfigFile), signedIn); err != nil {
 				return err
 			}
+		} else if err := pointConfigAtCommand(filepath.Join(abs, workspace.ConfigFile), "none"); err != nil {
+			// Nothing here: no model, said plainly, rather than the starter's
+			// guess at Ollama, which met a newcomer as an address that
+			// "isn't answering". The page offers what to connect.
+			return err
 		}
 	}
 	c.print(map[string]any{"workspace": abs, "detected": found, "signed_in": signedIn}, func() {

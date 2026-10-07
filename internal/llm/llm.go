@@ -11,7 +11,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 )
 
@@ -118,7 +117,7 @@ func New(cfg Config) (Provider, error) {
 	}
 	key := ""
 	if cfg.APIKeyEnv != "" {
-		key = os.Getenv(cfg.APIKeyEnv)
+		key = Key(cfg.APIKeyEnv) // keys.go
 	}
 	switch strings.ToLower(cfg.Provider) {
 	case "", "none":

@@ -58,10 +58,16 @@ func (c *ctx) openCmd() error {
 	}
 	where := "http://" + listener.Addr().String()
 
-	fmt.Fprintf(c.Stdout, "sameway serving %q from %s\n  open    %s/\n  agents  %s/api/describe\n",
-		a.Workspace.Config.Name, a.Workspace.Dir, where, where)
-	if a.Chat.Provider == nil && a.Chat.ProviderErr != nil {
-		fmt.Fprintf(c.Stdout, "  chat    disabled: %v\n", a.Chat.ProviderErr)
+	// A double-click's window is read by a person who did not type a
+	// command: where Sameway is and how to stop it, nothing for agents.
+	if c.plain {
+		fmt.Fprintf(c.Stdout, "Sameway is open at %s/\nYour workspace is in %s.\n\nKeep this window open while you use Sameway. Close it to stop Sameway.\n", where, a.Workspace.Dir)
+	} else {
+		fmt.Fprintf(c.Stdout, "sameway serving %q from %s\n  open    %s/\n  agents  %s/api/describe\n",
+			a.Workspace.Config.Name, a.Workspace.Dir, where, where)
+		if a.Chat.Provider == nil && a.Chat.ProviderErr != nil {
+			fmt.Fprintf(c.Stdout, "  chat    disabled: %v\n", a.Chat.ProviderErr)
+		}
 	}
 	if !*stay {
 		target := where + "/" + strings.TrimPrefix(*page, "/")
@@ -69,7 +75,9 @@ func (c *ctx) openCmd() error {
 			fmt.Fprintf(c.Stdout, "  (could not open a browser: %v — visit %s yourself)\n", err, target)
 		}
 	}
-	fmt.Fprintln(c.Stdout, "\nPress Ctrl-C to stop.")
+	if !c.plain {
+		fmt.Fprintln(c.Stdout, "\nPress Ctrl-C to stop.")
+	}
 	// This workspace is now one this machine knows, at this address, so
 	// any other workspace can offer to open it. The page can start other
 	// workspaces as servers of their own, and stop this one.
@@ -95,7 +103,12 @@ func (c *ctx) openCmd() error {
 	h.StartRinging(ctx, notifier(a))
 	a.Chat.StartSchedule(ctx)
 	a.Chat.StartAutomating() // actions that run when something happens; chat/automate.go
-	keepSnapshots(ctx, c.Stdout, a)
+	// Daily copies are kept either way; a double-click's window does not list them.
+	notes := io.Writer(c.Stdout)
+	if c.plain {
+		notes = io.Discard
+	}
+	keepSnapshots(ctx, notes, a)
 	connectDevices(ctx, c.Stdout, a)
 	joinTailnet(ctx, c.Stdout, a, all, h)
 	if err := srv.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
