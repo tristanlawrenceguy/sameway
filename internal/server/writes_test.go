@@ -33,6 +33,7 @@ var writesTheStoreItself = map[string]string{
 	"props.go blockProps":           "the same",
 	"collection_keep.go canvasKeep": "the same",
 	"tabs.go seedChat":              "a new tab's chat block, part of making the tab",
+	"example.go fillExample":        "the example's Home blocks, part of making the example, in a workspace of its own",
 	"keep.go keepFile":              "a file kept on disk, logged as added by who added it, here",
 	"keep.go readKept":              "a file's reading: its status and text, not anyone's change",
 	"files.go readNow":              "the same",

@@ -19,7 +19,7 @@ func TestAnExampleWorkspaceShowsAWeek(t *testing.T) {
 		t.Fatalf("Workspaces offers it: %s", truncate(page))
 	}
 	postForm(t, h, "/workspaces/example", nil)
-	ex, err := app.Load(filepath.Join(filepath.Dir(a.Workspace.Dir), "Example"), false)
+	ex, err := app.Load(filepath.Join(filepath.Dir(a.Workspace.Dir), "example"), false) // named by its slug
 	if err != nil {
 		t.Fatalf("the example is a workspace beside this one: %v", err)
 	}
