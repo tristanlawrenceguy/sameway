@@ -93,6 +93,8 @@ func Run(args []string, env Env) int {
 		err = c.initCmd()
 	case "open":
 		err = c.openCmd()
+	case "at-login":
+		err = c.atLoginCmd() // apart.go, internal/atlogin
 	case "serve":
 		err = c.serveCmd()
 	case "describe":

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/atlogin"
 	"github.com/tristanlawrenceguy/sameway/internal/ingest"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
@@ -111,6 +112,9 @@ func (s *Service) createRecord(typeName string, fields map[string]any) toolResul
 	}
 	text := fmt.Sprintf("created %s %s: %q. The person can open it at /t/%s/%s.", t.Name, rec.ID, c.Detail, t.Name, rec.ID)
 	text += s.datesSaid(t, fields, rec) + s.sameTitle(t, rec) // dates_said.go, same_title.go
+	if t.Name == "reminder" && atlogin.Path() != "" && !atlogin.On() {
+		text += " Reminders ring only while Sameway is open, and it does not open when this computer starts; if this one matters, tell the person that Open Sameway when I sign in, on Workspaces, keeps it ringing."
+	}
 	if t.Name == EventType && len(s.recordingTools()) > 0 {
 		text += fmt.Sprintf(" If the person wants this meeting recorded, call the record_meeting tool yourself now with event %s (how app when Teams, Zoom or Meet records it): it sets up the reminder that opens the page ready to record. The tools are yours; never tell the person to use them.", rec.ID)
 	}
