@@ -31,14 +31,19 @@ var keepProgram = func(out io.Writer) {
 		return
 	}
 	lnk := filepath.Join(roaming, "Microsoft", "Windows", "Start Menu", "Programs", "Sameway.lnk")
-	if _, err := os.Stat(lnk); err == nil {
-		return // kept before; a person who took it away keeps it away
-	}
 	kept := filepath.Join(local, "Programs", "Sameway", "Sameway.exe")
+	_, err = os.Stat(kept)
+	first := err != nil
+	// A Sameway double-clicked from elsewhere, a newer download, is the one
+	// kept: the Start menu and Sameway in the background run what was
+	// clicked last. One kept that is running stays as it is.
 	if !strings.EqualFold(filepath.Clean(exe), kept) {
-		if err := copyProgram(exe, kept); err != nil {
+		if err := copyProgram(exe, kept); err != nil && first {
 			return
 		}
+	}
+	if _, err := os.Stat(lnk); err == nil || !first {
+		return // made before; a person who took it away keeps it away
 	}
 	if err := shortcut(lnk, kept); err != nil {
 		return
@@ -64,4 +69,18 @@ var shortcut = func(lnk, target string) error {
 	script := "$s=(New-Object -ComObject WScript.Shell).CreateShortcut(" + q(lnk) + ");$s.TargetPath=" + q(target) +
 		";$s.WorkingDirectory=" + q(filepath.Dir(target)) + ";$s.Description='Sameway';$s.Save()"
 	return exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", script).Run()
+}
+
+// keptProgram is the program kept for the Start menu, or "" when there is
+// none.
+func keptProgram() string {
+	local := os.Getenv("LOCALAPPDATA")
+	if local == "" {
+		return ""
+	}
+	kept := filepath.Join(local, "Programs", "Sameway", "Sameway.exe")
+	if _, err := os.Stat(kept); err != nil {
+		return ""
+	}
+	return kept
 }
