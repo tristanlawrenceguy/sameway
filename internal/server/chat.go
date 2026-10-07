@@ -108,6 +108,12 @@ func (s *Server) conversationAbout(c *chat.Service, from, about, prompt string) 
 	if c.IsOwner() {
 		out.Notice = s.connectCard(from)
 	}
+	// A model on this computer is readied for the next message while the
+	// person reads the page (chat/warm.go), when it answers and is not
+	// already busy with a turn.
+	if out.Notice == "" && s.turns.find("", c.Whose()) == nil {
+		go c.Warm(context.Background())
+	}
 	if s.app.Chat.Provider != nil {
 		view.ModelName = llm.Words(s.app.Chat.Provider)
 	}
