@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"fmt"
 	"html/template"
 	"net/http"
 	"strings"
@@ -19,12 +20,12 @@ import (
 
 // keyKinds are the keys a person can paste, by how each begins.
 var keyKinds = []struct {
-	prefix, env, label string
-	settings           [][2]string
+	prefix, env, label, company, page string
+	settings                          [][2]string
 }{
-	{"sk-ant-", "ANTHROPIC_API_KEY", "Claude (Anthropic)",
+	{"sk-ant-", "ANTHROPIC_API_KEY", "Claude (Anthropic)", "Anthropic", "console.anthropic.com/settings/keys",
 		[][2]string{{"llm.api_key_env", "ANTHROPIC_API_KEY"}, {"llm.model", "claude-sonnet-5"}, {"llm.provider", "anthropic"}}},
-	{"sk-or-", "OPENROUTER_API_KEY", "OpenRouter",
+	{"sk-or-", "OPENROUTER_API_KEY", "OpenRouter", "OpenRouter", "openrouter.ai/keys",
 		[][2]string{{"llm.api_key_env", "OPENROUTER_API_KEY"}, {"llm.base_url", "https://openrouter.ai/api/v1"}, {"llm.model", "openrouter/auto"}, {"llm.provider", "openai"}}},
 }
 
@@ -60,6 +61,17 @@ func (s *Server) modelKey(w http.ResponseWriter, r *http.Request) {
 			s.failed(w, r, "Not connected", errors.New("this workspace has no settings file"), "/")
 			return
 		}
+		// Asked about before it is kept: a key the provider does not know is
+		// said to be wrong here, not at the first message (llm.CheckKey).
+		verdict, why := llm.CheckKey(r.Context(), k.env, key)
+		switch verdict {
+		case llm.KeyRefused:
+			s.failed(w, r, "Not connected", fmt.Errorf("%s did not accept this key. Check that all of it was copied, or make a new one on %s", k.company, k.page), "/")
+			return
+		case llm.KeyNoCredit:
+			s.failed(w, r, "Not connected", fmt.Errorf("this key has no credit left. Add some on %s, then paste it again", k.page), "/")
+			return
+		}
 		if err := llm.SaveKey(k.env, key); err != nil {
 			s.failed(w, r, "Not connected", errors.New("the key could not be kept: "+err.Error()), "/")
 			return
@@ -71,7 +83,11 @@ func (s *Server) modelKey(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		s.forgetModel()
-		s.tell(w, r, outcome{Title: "Connected", Text: k.label + " is the assistant's model now. Say hello."}, "/")
+		said := k.label + " is the assistant's model now. Say hello."
+		if verdict == llm.KeyUnchecked {
+			said += " The key could not be checked just now (" + why.Error() + "); if the first message fails, paste it again."
+		}
+		s.tell(w, r, outcome{Title: "Connected", Text: said}, "/")
 		return
 	}
 	s.failed(w, r, "Not connected", errors.New("that is not a key Sameway knows: paste one from Anthropic, which begins sk-ant-, or from OpenRouter, which begins sk-or-"), "/")
