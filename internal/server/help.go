@@ -41,7 +41,6 @@ func (s *Server) helpPage(w http.ResponseWriter, r *http.Request) {
 <p>A calendar in Google, Outlook or iCloud is kept in step from <a class="sw-link" href="/calendars">Calendars</a>.</p></section>`)
 	b.WriteString(appSection) // app_install.go
 <p>Tasks and notes in another app (Todoist, Google Tasks or Keep, Evernote, Notion, Obsidian) come in from <a class="sw-link" href="/bring">Bring your things</a>.</p></section>`)
-<p>After you do something, a message at the top of the page says what happened.</p></section>`)
 	if chat.VisitorOf(r.Context()).Owner() {
 		b.WriteString(s.feedbackSection()) // feedback.go
 	}
