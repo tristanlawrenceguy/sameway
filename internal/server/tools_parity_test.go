@@ -68,6 +68,7 @@ var pageActionTools = map[string]string{
 	"/workspaces/start":           "open_workspace",
 	"/workspaces/restore":         "restore_workspace",
 	"/workspaces/delete":          "a person's: deleting a whole workspace is its owner's",
+	"/quit":                       "a person's: stopping Sameway ends the assistant's own turn",
 }
 
 func TestEveryPageActionIsTheAssistantsOrSaysWhyNot(t *testing.T) {

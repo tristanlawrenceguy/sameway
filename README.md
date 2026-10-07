@@ -53,9 +53,8 @@ The same list is one address away for whoever wants it:
    Documents folder (Documents\Sameway) and opens it in your browser. After
    that, a double-click opens the same workspace again, or shows it if it is
    already open. On Windows it also puts Sameway in your Start menu the
-   first time; keep the small window it opens while you use Sameway, and
-   close it to stop; on a Mac it runs in the background, and
-   **Workspaces** in Sameway stops it.
+   first time. Sameway runs in the background; to stop it, choose **Quit
+   Sameway** on its **Workspaces** page.
 
    Sameway is not signed yet, so the first time your computer asks once.
    On **Windows**: *Windows protected your PC* → **More info** → **Run
