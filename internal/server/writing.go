@@ -78,7 +78,7 @@ func (s *Server) outline(r *http.Request, t *schema.Type, piece *store.Record, p
 		fmt.Fprintf(&b, `<li><p><a class="sw-link" href="/t/%s/%s">%s</a></p>`, t.Name, p.ID, template.HTMLEscapeString(title))
 		facts := []string{inWords(words, "word")}
 		if f, ok := t.Field("status"); ok {
-			if v := export.Value(*f, p.Fields["status"], s.exportTitles); v != "" {
+			if v := export.Value(*f, p.Fields["status"], s.RefTitle); v != "" {
 				facts = append([]string{v}, facts...)
 			}
 		}

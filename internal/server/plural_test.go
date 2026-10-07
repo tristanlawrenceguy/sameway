@@ -1,6 +1,10 @@
 package server
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
+)
 
 // TestPlural pins down English pluralisation used in navigation labels,
 // empty-state text and listing page headings. The old implementation simply
@@ -25,37 +29,37 @@ func TestPlural(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.in, func(t *testing.T) {
-			if got := plural(c.in); got != c.want {
-				t.Errorf("plural(%q) = %q, want %q", c.in, got, c.want)
+			if got := schema.Plural(c.in); got != c.want {
+				t.Errorf("schema.Plural(%q) = %q, want %q", c.in, got, c.want)
 			}
 		})
 	}
 
 	// Underscored names (used internally for type keys) get spaces too.
 	t.Run("underscores", func(t *testing.T) {
-		if got := plural("user_profile"); got != "user profiles" {
-			t.Errorf("plural(%q) = %q, want %q", "user_profile", got, "user profiles")
+		if got := schema.Plural("user_profile"); got != "user profiles" {
+			t.Errorf("schema.Plural(%q) = %q, want %q", "user_profile", got, "user profiles")
 		}
 	})
 
 	// A single-character word ending in y still gets +s (edge case).
 	t.Run("single letter y", func(t *testing.T) {
-		if got := plural("y"); got != "ys" {
-			t.Errorf(`plural("y") = %q, want "ys"`, got)
+		if got := schema.Plural("y"); got != "ys" {
+			t.Errorf(`schema.Plural("y") = %q, want "ys"`, got)
 		}
 	})
 
 	// A two-letter word consonant+y should become …ies.
 	t.Run("two letter consonant y", func(t *testing.T) {
-		if got := plural("by"); got != "bies" {
-			t.Errorf(`plural("by") = %q, want "bies"`, got)
+		if got := schema.Plural("by"); got != "bies" {
+			t.Errorf(`schema.Plural("by") = %q, want "bies"`, got)
 		}
 	})
 
 	// A two-letter word vowel+y should become +s.
 	t.Run("two letter vowel y", func(t *testing.T) {
-		if got := plural("ay"); got != "ays" {
-			t.Errorf(`plural("ay") = %q, want "ays"`, got)
+		if got := schema.Plural("ay"); got != "ays" {
+			t.Errorf(`schema.Plural("ay") = %q, want "ays"`, got)
 		}
 	})
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 	"github.com/tristanlawrenceguy/sameway/internal/update"
 )
 
@@ -163,7 +164,7 @@ func (s *Service) sendTurn(ctx context.Context, canvas, text, fileID string, on 
 	if name := automatedBy(ctx); name != "" {
 		actor, by = "system", name // asked by an automation, not the person; automate.go
 	}
-	said := Record(s.Store, actor, Change{Action: "said", Detail: truncate(text, 80), Via: Via(ctx), By: by})
+	said := Record(s.Store, actor, Change{Action: "said", Detail: trim.Line(text, 80), Via: Via(ctx), By: by})
 	if s.Provider == nil {
 		err := s.ProviderErr
 		if err == nil {
@@ -278,7 +279,7 @@ func (s *Service) fields(typeName string, in map[string]any) map[string]any {
 
 // fail stores an error notice in the conversation and returns it with the error.
 func (s *Service) fail(err error) (*store.Record, error) {
-	Record(s.Store, "system", Change{Action: "failed", Detail: truncate(SanitizeError(err.Error()), 200)})
+	Record(s.Store, "system", Change{Action: "failed", Detail: trim.Line(SanitizeError(err.Error()), 200)})
 	rec, storeErr := s.message(map[string]any{"role": "error", "content": err.Error()})
 	if storeErr != nil {
 		return nil, storeErr

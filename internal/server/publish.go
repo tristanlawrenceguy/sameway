@@ -134,7 +134,7 @@ func (s *Server) publicIndex(w http.ResponseWriter, r *http.Request, pub Publish
 	}
 	for _, t := range s.app.Types.Types {
 		if pub.Types[t.Name] {
-			fmt.Fprintf(&b, `<li>%s</li>`, s.navLink("/t/"+t.Name, plural(t.Name), false))
+			fmt.Fprintf(&b, `<li>%s</li>`, s.navLink("/t/"+t.Name, schema.Plural(t.Name), false))
 		}
 	}
 	b.WriteString(`</ul>`)

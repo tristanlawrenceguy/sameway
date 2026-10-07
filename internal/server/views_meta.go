@@ -36,7 +36,7 @@ func (s *Server) lede(r *http.Request, t *schema.Type, rec *store.Record) templa
 // of them are done when the type keeps that.
 func howMany(t *schema.Type, recs []*store.Record) template.HTML {
 	n := len(recs)
-	what := plural(t.Name)
+	what := schema.Plural(t.Name)
 	if n == 1 {
 		what = schema.Words(t.Name)
 	}

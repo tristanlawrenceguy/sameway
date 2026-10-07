@@ -44,3 +44,30 @@ func Title(s string) string {
 	}
 	return line
 }
+
+// Clip cuts s to at most n characters, counted as characters and not
+// bytes, so an accent or an emoji is never split. Like Title, an ellipsis
+// says it was cut and counts towards n. Unlike Title it cuts where it must,
+// for text that is not a title: a log line, a quoted value, an error.
+func Clip(s string, n int) string {
+	r := []rune(s)
+	if len(r) <= n {
+		return s
+	}
+	if n < 1 {
+		n = 1
+	}
+	return strings.TrimRight(string(r[:n-1]), " ") + "…"
+}
+
+// Line is the first line of s, clipped to n characters.
+func Line(s string, n int) string {
+	line, _, _ := strings.Cut(s, "\n")
+	return Clip(strings.TrimSpace(line), n)
+}
+
+// Flat is all of s on one line, its runs of space and line breaks made one
+// space, clipped to n characters: what a notification or a status says.
+func Flat(s string, n int) string {
+	return Clip(strings.Join(strings.Fields(s), " "), n)
+}

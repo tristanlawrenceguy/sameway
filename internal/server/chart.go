@@ -94,9 +94,9 @@ func (s *Server) resolveChart(props map[string]any) map[string]any {
 	}
 	out["series"] = series
 	if _, has := out["caption"]; !has {
-		what := "How many " + plural(t.Name)
+		what := "How many " + schema.Plural(t.Name)
 		if sum != "" {
-			what = capitalize(label(sum)) + " of " + plural(t.Name)
+			what = capitalize(label(sum)) + " of " + schema.Plural(t.Name)
 		}
 		out["caption"] = what + " by " + label(by)
 	}
@@ -108,7 +108,7 @@ func (s *Server) resolveChart(props map[string]any) map[string]any {
 	if period != "" && kind == "datetime" {
 		out["groupLabel"] = capitalize(period)
 	}
-	out["valueLabel"] = capitalize(plural(t.Name))
+	out["valueLabel"] = capitalize(schema.Plural(t.Name))
 	if sum != "" {
 		out["valueLabel"] = capitalize(label(sum))
 	}
@@ -122,7 +122,7 @@ func noNumber(t *schema.Type, sum string) string {
 	if nums := fieldsOfKind(t, "int", "float"); len(nums) > 0 {
 		return out + "; its number fields are " + strings.Join(nums, ", ")
 	}
-	return out + ", and it has none; leave sum out to count " + plural(t.Name) + " instead"
+	return out + ", and it has none; leave sum out to count " + schema.Plural(t.Name) + " instead"
 }
 
 // bucket is the group a record falls in: a field's value as a person
@@ -159,7 +159,7 @@ func (s *Server) bucket(t *schema.Type, f *schema.Field, kind string, rec *store
 	}
 	v := display(*f, rec.Fields[by])
 	if f.Type == "ref" {
-		v = s.refTitle(*f, v)
+		v = s.RefTitle(*f, v)
 	}
 	if v == "" {
 		return "None"

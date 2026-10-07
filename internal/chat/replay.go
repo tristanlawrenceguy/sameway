@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
 // replayChars caps a tool result as it is replayed in history: enough to
@@ -17,7 +18,7 @@ func used(call llm.ToolCall, r toolResult) map[string]any {
 	if err := json.Unmarshal(call.Args, &args); err != nil || args == nil {
 		args = map[string]any{}
 	}
-	return map[string]any{"id": call.ID, "name": call.Name, "args": args, "result": truncate(r.text, replayChars), "error": r.isErr}
+	return map[string]any{"id": call.ID, "name": call.Name, "args": args, "result": trim.Line(r.text, replayChars), "error": r.isErr}
 }
 
 // replay turns a message's tools back into the turn the model made: the

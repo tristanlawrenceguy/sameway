@@ -82,7 +82,7 @@ func (s *Server) glance(t *schema.Type, rec *store.Record, now time.Time) []glan
 		if f.Type != "ref" || id == "" || f.To == FileType {
 			continue
 		}
-		if name := s.refTitle(f, id); name != "" && name != title {
+		if name := s.RefTitle(f, id); name != "" && name != title {
 			if f.To == chat.PersonType {
 				out = append(out, glanceFact{Kind: "person", Field: f.Name, Text: fieldLabel(f) + " " + name, Person: id, Label: fieldLabel(f)})
 			} else {

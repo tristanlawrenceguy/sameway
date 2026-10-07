@@ -34,7 +34,7 @@ func (s *Server) exportFile(w http.ResponseWriter, r *http.Request) {
 	}
 	f, ok := export.ByExt(t, ext)
 	if !ok {
-		http.Error(w, fmt.Sprintf("%s cannot be taken out as .%s; it can be %s", plural(t.Name), ext, formatList(t)), http.StatusNotFound)
+		http.Error(w, fmt.Sprintf("%s cannot be taken out as .%s; it can be %s", schema.Plural(t.Name), ext, formatList(t)), http.StatusNotFound)
 		return
 	}
 	recs, err := s.exportRecords(t, r.URL.Query())
@@ -43,12 +43,12 @@ func (s *Server) exportFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var buf bytes.Buffer
-	if err := export.Write(&buf, f, t, recs, s.exportTitles); err != nil {
+	if err := export.Write(&buf, f, t, recs, s.RefTitle); err != nil {
 		s.fail(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", f.Type)
-	attachment(w, fmt.Sprintf("%s %s.%s", capitalize(plural(t.Name)), time.Now().Format("2006-01-02"), f.Ext))
+	attachment(w, fmt.Sprintf("%s %s.%s", capitalize(schema.Plural(t.Name)), time.Now().Format("2006-01-02"), f.Ext))
 	w.Write(buf.Bytes())
 }
 
@@ -56,8 +56,6 @@ func (s *Server) exportFile(w http.ResponseWriter, r *http.Request) {
 func (s *Server) exportRecords(t *schema.Type, q url.Values) ([]*store.Record, error) {
 	return query.Filter(s.app.Store, t, q["where"], q.Get("order"), 0, time.Now())
 }
-
-func (s *Server) exportTitles(f schema.Field, id string) string { return s.refTitle(f, id) }
 
 func formatList(t *schema.Type) string {
 	var names []string
@@ -85,7 +83,7 @@ func (s *Server) exportLinks(t *schema.Type, q url.Values, recs []*store.Record)
 	for _, f := range export.For(t) {
 		items = append(items, map[string]any{"href": "/export/" + t.Name + "." + f.Ext + query, "format": f.Ext, "size": s.exportSize(f, t, recs)})
 	}
-	what := "these " + fmt.Sprint(len(recs)) + " " + plural(t.Name)
+	what := "these " + fmt.Sprint(len(recs)) + " " + schema.Plural(t.Name)
 	if len(recs) == 1 {
 		what = "this " + schema.Words(t.Name)
 	}
@@ -96,7 +94,7 @@ func (s *Server) exportLinks(t *schema.Type, q url.Values, recs []*store.Record)
 // are small, and a size said is a size people can decide on.
 func (s *Server) exportSize(f export.Format, t *schema.Type, recs []*store.Record) string {
 	var n counter
-	if err := export.Write(&n, f, t, recs, s.exportTitles); err != nil {
+	if err := export.Write(&n, f, t, recs, s.RefTitle); err != nil {
 		return ""
 	}
 	return sizeWords(int64(n))
@@ -160,7 +158,3 @@ func filepathExt(p string) string {
 	}
 	return ""
 }
-
-// RefTitle is what a ref points at, by its title, for the command line's
-// exports.
-func (s *Server) RefTitle(f schema.Field, id string) string { return s.refTitle(f, id) }

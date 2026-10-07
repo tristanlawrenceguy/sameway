@@ -214,7 +214,7 @@ func (s *Server) fieldsOf(t *schema.Type, rec *store.Record, names []string) []a
 			if _, err := s.app.Store.Get(f.To, v); err == nil {
 				item["href"] = "/t/" + f.To + "/" + v
 			}
-			item["value"] = s.refTitle(*f, v)
+			item["value"] = s.RefTitle(*f, v)
 		}
 		out = append(out, item)
 	}

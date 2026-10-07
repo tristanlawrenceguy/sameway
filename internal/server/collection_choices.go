@@ -261,7 +261,7 @@ func countWords(t *schema.Type, n int) string {
 	}
 	name := schema.Words(t.Name)
 	if n != 1 {
-		name = plural(t.Name)
+		name = schema.Plural(t.Name)
 	}
 	return strconv.Itoa(n) + " " + name
 }

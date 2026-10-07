@@ -9,6 +9,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
 // ProposalType is the content type holding changes waiting for an answer.
@@ -56,7 +57,7 @@ func (s *Service) propose(summary string, action map[string]any) toolResult {
 	}
 	return toolResult{
 		text:   "asked the person: " + summary + " (proposal " + rec.ID + ", nothing has changed yet)",
-		change: &Change{Action: "proposed", ID: rec.ID, Detail: truncate(summary, 80)},
+		change: &Change{Action: "proposed", ID: rec.ID, Detail: trim.Line(summary, 80)},
 	}
 }
 
@@ -172,7 +173,7 @@ func (s *Service) Accept(id string) error {
 	}
 	// The assistant made the change, but the person is why it happened.
 	summary, _ := rec.Fields["summary"].(string)
-	Record(s.Store, "human", Change{Action: "agreed to", Detail: truncate(summary, 80)})
+	Record(s.Store, "human", Change{Action: "agreed to", Detail: trim.Line(summary, 80)})
 	if result.change != nil {
 		Record(s.Store, "assistant", *result.change)
 	}
@@ -199,6 +200,6 @@ func (s *Service) Dismiss(id string) error {
 		return err
 	}
 	summary, _ := rec.Fields["summary"].(string)
-	Record(s.Store, "human", Change{Action: "declined", Detail: truncate(summary, 80)})
+	Record(s.Store, "human", Change{Action: "declined", Detail: trim.Line(summary, 80)})
 	return nil
 }

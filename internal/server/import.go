@@ -12,6 +12,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/ingest"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
 // Records from a file. Every list page offers to import from a file: a
@@ -40,16 +41,16 @@ func (s *Server) importPage(w http.ResponseWriter, r *http.Request) {
 	var b strings.Builder
 	switch t.Name {
 	case "event", "task", "reminder":
-		b.WriteString(`<p class="sw-muted">A calendar (.ics) from Google Calendar, Outlook or Apple Calendar, or a CSV with a header row. The file is kept with your files; its events become ` + template.HTMLEscapeString(plural(t.Name)) + `, each at its time and repeating as it did, and you see how each column lands before anything is made. Bringing the same calendar in again adds nothing twice.</p>`)
+		b.WriteString(`<p class="sw-muted">A calendar (.ics) from Google Calendar, Outlook or Apple Calendar, or a CSV with a header row. The file is kept with your files; its events become ` + template.HTMLEscapeString(schema.Plural(t.Name)) + `, each at its time and repeating as it did, and you see how each column lands before anything is made. Bringing the same calendar in again adds nothing twice.</p>`)
 	case "person":
-		b.WriteString(`<p class="sw-muted">A CSV with a header row, a vCard (.vcf) of contacts, or a mailbox (.mbox) of mail. The file is kept with your files; its rows become ` + template.HTMLEscapeString(plural(t.Name)) + `, and you see how each column lands before anything is made.</p>`)
+		b.WriteString(`<p class="sw-muted">A CSV with a header row, a vCard (.vcf) of contacts, or a mailbox (.mbox) of mail. The file is kept with your files; its rows become ` + template.HTMLEscapeString(schema.Plural(t.Name)) + `, and you see how each column lands before anything is made.</p>`)
 	default:
-		b.WriteString(`<p class="sw-muted">A CSV with a header row, a tab-separated file (.tsv), or plain text (.txt). The file is kept with your files; its rows become ` + template.HTMLEscapeString(plural(t.Name)) + `, and you see how each column lands before anything is made.</p>`)
+		b.WriteString(`<p class="sw-muted">A CSV with a header row, a tab-separated file (.tsv), or plain text (.txt). The file is kept with your files; its rows become ` + template.HTMLEscapeString(schema.Plural(t.Name)) + `, and you see how each column lands before anything is made.</p>`)
 	}
 	fmt.Fprintf(&b, `<form method="post" action="/t/%s/import" enctype="multipart/form-data" class="sw-stack sw-import"><div class="sw-field"><label class="sw-field__label" for="import-file">File</label><input class="sw-field__input" id="import-file" type="file" name="file" accept=".csv,.tsv,.txt,.vcf,.vcard,.mbox,.eml,.ics" required aria-describedby="import-error"><span class="sw-visually-hidden" id="import-error" role="status" aria-live="assertive"></span></div>%s</form>`,
 		t.Name, s.component("button", map[string]any{"label": "Read the file", "type": "submit"}))
 	b.WriteString(`<script>(function(){var f=document.getElementById("import-file");var err=document.getElementById("import-error");f.addEventListener('invalid',function(e){err.textContent="select a file."},false);document.querySelector(".sw-import").addEventListener('submit',function(e){if(!f.value){e.preventDefault();err.textContent="select a file.";f.reportValidity()}},{once:true});f.addEventListener('change',function(){err.textContent=""})})();</script>`)
-	s.page(w, r, "Import "+plural(t.Name), template.HTML(b.String()), pageOptions{Kicker: s.crumbs("/t/"+t.Name, capitalize(plural(t.Name)), "", s.dotOf(t.Name)), Dot: s.dotOf(t.Name)})
+	s.page(w, r, "Import "+schema.Plural(t.Name), template.HTML(b.String()), pageOptions{Kicker: s.crumbs("/t/"+t.Name, capitalize(schema.Plural(t.Name)), "", s.dotOf(t.Name)), Dot: s.dotOf(t.Name)})
 }
 
 // importUpload keeps the file and goes to its preview.
@@ -95,7 +96,7 @@ func (s *Server) importPreview(w http.ResponseWriter, r *http.Request, t *schema
 	}
 	tb, err := ingest.Read(name, data)
 	if err != nil {
-		s.page(w, r, "Import "+plural(t.Name), s.component("alert", map[string]any{"kind": "warning", "title": "Nothing was read", "message": err.Error()}), pageOptions{Status: http.StatusBadRequest})
+		s.page(w, r, "Import "+schema.Plural(t.Name), s.component("alert", map[string]any{"kind": "warning", "title": "Nothing was read", "message": err.Error()}), pageOptions{Status: http.StatusBadRequest})
 		return
 	}
 	m := ingest.Guess(t, tb.Columns)
@@ -130,18 +131,14 @@ func (s *Server) importPreview(w http.ResponseWriter, r *http.Request, t *schema
 		}
 		b.WriteString(`<tr>`)
 		for _, col := range tb.Columns {
-			v := row[col]
-			if len(v) > 80 {
-				v = v[:80] + "…"
-			}
-			fmt.Fprintf(&b, `<td>%s</td>`, template.HTMLEscapeString(v))
+			fmt.Fprintf(&b, `<td>%s</td>`, template.HTMLEscapeString(trim.Clip(row[col], 80)))
 		}
 		b.WriteString(`</tr>`)
 	}
 	b.WriteString(`</tbody></table></div>`)
-	b.WriteString(string(s.component("button", map[string]any{"label": fmt.Sprintf("Import %d %s", len(tb.Rows), plural(t.Name)), "type": "submit"})))
+	b.WriteString(string(s.component("button", map[string]any{"label": fmt.Sprintf("Import %d %s", len(tb.Rows), schema.Plural(t.Name)), "type": "submit"})))
 	b.WriteString(`</form>`)
-	s.page(w, r, "Import "+plural(t.Name), template.HTML(b.String()), pageOptions{Kicker: s.crumbs("/t/"+t.Name, capitalize(plural(t.Name)), "", s.dotOf(t.Name)), Dot: s.dotOf(t.Name)})
+	s.page(w, r, "Import "+schema.Plural(t.Name), template.HTML(b.String()), pageOptions{Kicker: s.crumbs("/t/"+t.Name, capitalize(schema.Plural(t.Name)), "", s.dotOf(t.Name)), Dot: s.dotOf(t.Name)})
 }
 
 // importRun makes the records as the form says and goes to the list,
@@ -164,7 +161,7 @@ func (s *Server) importRun(w http.ResponseWriter, r *http.Request) {
 		s.importPreview(w, r, t, r.PathValue("file"), err.Error())
 		return
 	}
-	s.tellAt(w, r, outcome{Title: "Imported", Text: capitalize(plural(t.Name)) + " from the file: " + report.String() + "."}, "/t/"+t.Name)
+	s.tellAt(w, r, outcome{Title: "Imported", Text: capitalize(schema.Plural(t.Name)) + " from the file: " + report.String() + "."}, "/t/"+t.Name)
 }
 
 // importFile reads a kept file as a table and makes records of t from
@@ -183,7 +180,7 @@ func (s *Server) importFile(t *schema.Type, fileID string, m ingest.Mapping) (in
 		m = ingest.Guess(t, tb.Columns)
 	}
 	report := ingest.Import(s.app.Store, t, tb, m)
-	chat.Record(s.app.Store, "human", chat.Change{Action: "imported", Component: t.Name, Detail: fmt.Sprintf("%d %s from %s", report.Made, plural(t.Name), name), Href: "/t/" + t.Name, Before: chat.Imported(t.Name, report.IDs)})
+	chat.Record(s.app.Store, "human", chat.Change{Action: "imported", Component: t.Name, Detail: fmt.Sprintf("%d %s from %s", report.Made, schema.Plural(t.Name), name), Href: "/t/" + t.Name, Before: chat.Imported(t.Name, report.IDs)})
 	return report, nil
 }
 

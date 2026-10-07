@@ -10,6 +10,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
 // act runs one of the person's actions from a button and returns them to
@@ -36,10 +37,7 @@ func (s *Server) act(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// What it came back with, in a sentence or two.
-	if r := []rune(strings.TrimSpace(text)); len(r) > 240 {
-		text = string(r[:239]) + "…"
-	}
-	s.tellAt(w, r, outcome{Title: "Done", Text: strings.TrimSpace(text)}, back)
+	s.tellAt(w, r, outcome{Title: "Done", Text: trim.Clip(strings.TrimSpace(text), 240)}, back)
 }
 
 // apiAct runs an action for an agent and answers with what came back, or

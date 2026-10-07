@@ -5,6 +5,8 @@ import (
 	"errors"
 	"strings"
 	"time"
+
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
 // A person comes to Sameway with their things somewhere else, and the
@@ -215,9 +217,7 @@ func firstLine(s string) string {
 	if i := strings.IndexByte(s, '\n'); i >= 0 {
 		s = s[:i]
 	}
-	if r := []rune(s); len(r) > 60 {
-		s = string(r[:60]) + "…"
-	}
+	s = trim.Clip(s, 60)
 	if s == "" {
 		return "Untitled"
 	}

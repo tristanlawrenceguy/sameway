@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -77,7 +78,7 @@ func kindOf(e *store.Record) logChoice {
 	case target == chat.CanvasType:
 		return logChoice{target, "Tabs"}
 	}
-	return logChoice{target, capitalize(plural(target))}
+	return logChoice{target, capitalize(schema.Plural(target))}
 }
 
 // whenSince is how far back a time a log is narrowed to goes: the start

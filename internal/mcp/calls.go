@@ -6,6 +6,8 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
 // noteCall writes each tool called, with its arguments and, when it was
@@ -25,14 +27,7 @@ func noteCall(name string, args json.RawMessage, refused bool, text string) {
 	defer f.Close()
 	outcome, why := "ok", ""
 	if refused {
-		outcome, why = "refused", "\t"+clip(strings.ReplaceAll(text, "\n", " "), 300)
+		outcome, why = "refused", "\t"+trim.Clip(strings.ReplaceAll(text, "\n", " "), 300)
 	}
-	fmt.Fprintf(f, "%s %s %s %s%s\n", time.Now().Format("15:04:05"), outcome, name, clip(string(args), 300), why)
-}
-
-func clip(s string, n int) string {
-	if len(s) > n {
-		return s[:n] + "..."
-	}
-	return s
+	fmt.Fprintf(f, "%s %s %s %s%s\n", time.Now().Format("15:04:05"), outcome, name, trim.Clip(string(args), 300), why)
 }

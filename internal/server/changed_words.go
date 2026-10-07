@@ -36,7 +36,7 @@ func (s *Server) shownAs(f schema.Field, v any) string {
 	text := strings.TrimSpace(display(f, v))
 	switch f.Type {
 	case "ref":
-		return s.refTitle(f, text)
+		return s.RefTitle(f, text)
 	case "enum":
 		if text != "" {
 			return f.ValueLabel(text)

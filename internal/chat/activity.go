@@ -198,16 +198,6 @@ func Summarise(component string, props map[string]any) string {
 	return ""
 }
 
-// truncate cuts what was said or went wrong to its first line and n
-// characters, for the log. A title goes through trim.Title instead.
-func truncate(s string, n int) string {
-	s = strings.TrimSpace(strings.SplitN(s, "\n", 2)[0])
-	if len([]rune(s)) <= n {
-		return s
-	}
-	return string([]rune(s)[:n-1]) + "…"
-}
-
 // LocalEntry says which log entries stay on the computer that wrote them
 // when others host the workspace too: what was said to the assistant, its
 // questions and their answers, and changes to what stays local itself.

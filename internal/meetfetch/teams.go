@@ -17,6 +17,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
 // Where Microsoft and Zoom answer; tests stand their own in.
@@ -203,7 +205,7 @@ func (t *Teams) raw(ctx context.Context, tok, to string) ([]byte, error) {
 		return nil, errors.New("the organisation's Teams policy keeps speaker names out of transcripts, so Graph will not give it this way")
 	}
 	if res.StatusCode >= 300 {
-		return nil, fmt.Errorf("Microsoft Graph answered %s: %s", res.Status, clip(string(body)))
+		return nil, fmt.Errorf("Microsoft Graph answered %s: %s", res.Status, trim.Clip(string(body), 300))
 	}
 	return body, nil
 }
@@ -226,16 +228,9 @@ func answer(c *http.Client, req *http.Request, out any) error {
 		if e.Error != "" {
 			return &oauthError{Code: e.Error, Description: e.Description + e.Reason}
 		}
-		return fmt.Errorf("%s answered %s: %s", req.URL.Host, res.Status, clip(string(body)))
+		return fmt.Errorf("%s answered %s: %s", req.URL.Host, res.Status, trim.Clip(string(body), 300))
 	}
 	return json.Unmarshal(body, out)
-}
-
-func clip(s string) string {
-	if len(s) > 300 {
-		return s[:300] + "…"
-	}
-	return s
 }
 
 // ErrNotConnected is a meeting app nobody has connected yet.

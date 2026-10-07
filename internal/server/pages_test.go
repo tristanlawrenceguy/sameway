@@ -253,7 +253,7 @@ func TestListingPageHeadingsAreCapitalized(t *testing.T) {
 }
 
 // TestNavLinksStayLowercase ensures that only the page heading is capitalized;
-// nav link labels remain lowercase as they call plural() directly.
+// nav link labels remain lowercase as they call schema.Plural() directly.
 func TestNavLinksStayLowercase(t *testing.T) {
 	_, h := newApp(t)
 	doc := parse(t, get(t, h, "/t/note"))

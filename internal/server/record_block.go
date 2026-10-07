@@ -34,7 +34,7 @@ func (s *Server) resolveRecord(props map[string]any) (map[string]any, string) {
 	if err != nil {
 		// Gone, with the way on: the rest of its list.
 		out["missing"] = true
-		out["listHref"], out["listLabel"] = "/t/"+t.Name, "See all "+plural(t.Name)
+		out["listHref"], out["listLabel"] = "/t/"+t.Name, "See all "+schema.Plural(t.Name)
 		return out, ""
 	}
 	out["kind"] = capitalize(schema.Words(t.Name))

@@ -5,6 +5,8 @@ import (
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
 
 // A calendar of several kinds (type: all, or types) narrowed to one: a row of
@@ -75,7 +77,7 @@ func calendarKinds(out map[string]any, at *collectionPlace, block string) {
 	}
 	opts := []any{map[string]any{"label": "All", "count": inMonth, "href": withKind(at, param, "") + anchor, "selected": picked == ""}}
 	for _, name := range names {
-		opts = append(opts, map[string]any{"label": capitalize(plural(name)), "count": counts[name], "href": withKind(at, param, name) + anchor, "selected": name == picked})
+		opts = append(opts, map[string]any{"label": capitalize(schema.Plural(name)), "count": counts[name], "href": withKind(at, param, name) + anchor, "selected": name == picked})
 	}
 	label := "Kinds of event"
 	if c, _ := out["caption"].(string); c != "" {

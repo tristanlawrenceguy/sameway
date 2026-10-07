@@ -10,8 +10,6 @@ import (
 // what it is, so the stream decodes from any frame with nothing before it.
 type adts struct{ profile, freq, channels int }
 
-var aacRates = []int{96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000, 7350}
-
 // parseASC reads an AAC AudioSpecificConfig, as MP4 and Matroska keep it.
 func parseASC(b []byte) (*adts, error) {
 	if len(b) < 2 {
@@ -31,13 +29,6 @@ func parseASC(b []byte) (*adts, error) {
 		ch = 2
 	}
 	return &adts{profile: obj - 1, freq: freq, channels: ch}, nil
-}
-
-func (a *adts) rate() int {
-	if a.freq < len(aacRates) {
-		return aacRates[a.freq]
-	}
-	return 44100
 }
 
 func (a *adts) begin(io.Writer) error { return nil }

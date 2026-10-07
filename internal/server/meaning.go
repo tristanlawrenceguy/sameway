@@ -40,7 +40,7 @@ func (s *Server) meaningProblem(component string, props map[string]any) string {
 	}
 	withDay["period"] = "day"
 	if first, last, n := dateSpan(s.resolveChart(withDay)); n > 0 {
-		out += fmt.Sprintf("; the %s it counts fall on %d days, %s to %s", plural(t.Name), n, first, last)
+		out += fmt.Sprintf("; the %s it counts fall on %d days, %s to %s", schema.Plural(t.Name), n, first, last)
 	}
 	return out
 }
@@ -76,8 +76,8 @@ func dateSpan(out map[string]any) (first, last string, n int) {
 // book), so it is written; if some should show now, the conditions are
 // wrong, and the writer is the one to know.
 func nothingYet(typeName string, where []string, has string) string {
-	one := strings.ReplaceAll(typeName, "_", " ")
-	out := "nothing yet: there are no " + plural(typeName)
+	one := schema.Words(typeName)
+	out := "nothing yet: there are no " + schema.Plural(typeName)
 	switch {
 	case has != "" && len(where) > 0:
 		out = "nothing yet: no " + one + " has a " + has + " and matches " + strings.Join(where, " and ")
@@ -129,7 +129,7 @@ func everyKind(events []any) string {
 				rest = append(rest, strconv.Quote(k))
 			}
 		}
-		out += fmt.Sprintf("; mostly %s, which crowd out the rest: a calendar of only the kinds wanted (types: [%s]) leaves them out", plural(top), strings.Join(rest, ", "))
+		out += fmt.Sprintf("; mostly %s, which crowd out the rest: a calendar of only the kinds wanted (types: [%s]) leaves them out", schema.Plural(top), strings.Join(rest, ", "))
 	}
 	return out
 }

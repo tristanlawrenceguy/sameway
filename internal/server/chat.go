@@ -90,12 +90,6 @@ type chatMessage struct {
 	HTML template.HTML
 }
 
-// conversation renders the transcript and composer once, for whichever
-// surface is showing it.
-func (s *Server) conversation(from string) (*conversation, error) {
-	return s.conversationAbout(s.app.Chat, from, "", "")
-}
-
 // conversationAbout is the conversation with something to say already in
 // the box: the thing a record's page sent the person here about.
 func (s *Server) conversationAbout(c *chat.Service, from, about, prompt string) (*conversation, error) {

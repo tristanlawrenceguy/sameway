@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
 // retryWaits are the pauses before sending again when a provider is busy
@@ -51,9 +53,7 @@ func (o *OpenAI) send(ctx context.Context, payload []byte, stream bool) (*http.R
 		if json.Unmarshal(raw, &parsed) == nil && parsed.Error != nil {
 			msg = parsed.Error.Message
 		}
-		if len(msg) > 400 {
-			msg = msg[:400] + "…"
-		}
+		msg = trim.Clip(msg, 400)
 		f := Classify(resp.StatusCode, msg, whoAt(o.BaseURL), o.Model)
 		if !f.Retry() || attempt >= len(retryWaits) {
 			return nil, f

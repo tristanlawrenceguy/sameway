@@ -73,8 +73,8 @@ func (s *Server) bring(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		chat.Record(s.app.Store, "human", chat.Change{Action: "imported", Component: t.Name,
-			Detail: fmt.Sprintf("%d %s from %s", report.Made, plural(t.Name), got.From), Href: "/t/" + t.Name, Before: chat.Imported(t.Name, report.IDs)})
-		said = append(said, fmt.Sprintf("%d %s", report.Made, plural(t.Name)))
+			Detail: fmt.Sprintf("%d %s from %s", report.Made, schema.Plural(t.Name), got.From), Href: "/t/" + t.Name, Before: chat.Imported(t.Name, report.IDs)})
+		said = append(said, fmt.Sprintf("%d %s", report.Made, schema.Plural(t.Name)))
 		if to == "/" {
 			to = "/t/" + t.Name
 		}
@@ -97,7 +97,7 @@ func (s *Server) importLinks(t *schema.Type) string {
 	if !s.importable(t) {
 		return ""
 	}
-	out := `<p class="sw-quiet-row">` + string(s.component("link", map[string]any{"href": "/t/" + t.Name + "/import", "label": "Import", "context": plural(t.Name), "look": "button"}))
+	out := `<p class="sw-quiet-row">` + string(s.component("link", map[string]any{"href": "/t/" + t.Name + "/import", "label": "Import", "context": schema.Plural(t.Name), "look": "button"}))
 	if t.Name == "task" || t.Name == "note" {
 		out += " " + string(s.component("link", map[string]any{"href": "/bring", "label": "Bring yours from another app"}))
 	}

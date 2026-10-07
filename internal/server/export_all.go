@@ -10,6 +10,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/export"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -51,7 +52,7 @@ func (s *Server) blockExport(name string, props map[string]any) template.HTML {
 			// The kinds shown, as the calendar shows them, and no more.
 			var names []string
 			for _, k := range kinds {
-				names = append(names, plural(k))
+				names = append(names, schema.Plural(k))
 			}
 			what, href = "these "+andList(names), href+"?"+url.Values{"type": kinds}.Encode()
 		}
@@ -73,7 +74,7 @@ func (s *Server) blockExport(name string, props map[string]any) template.HTML {
 	html := s.exportLinks(t, q, recs)
 	if name == calendarComponent {
 		// A calendar goes out as a calendar.
-		html = string(s.component("export", map[string]any{"what": "these " + plural(t.Name), "items": []any{map[string]any{
+		html = string(s.component("export", map[string]any{"what": "these " + schema.Plural(t.Name), "items": []any{map[string]any{
 			"href": "/export/" + t.Name + ".ics" + strings.TrimPrefix(all, "/t/"+t.Name), "format": "ics", "size": s.exportSize(export.ICS, t, recs)}}}))
 	}
 	return template.HTML(html)
