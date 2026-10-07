@@ -21,3 +21,8 @@ func icon(name, kind string) http.HandlerFunc {
 		w.Write(data)
 	}
 }
+
+func iconRoutes(m *http.ServeMux) {
+	m.HandleFunc("GET /favicon.svg", icon("icon.svg", "image/svg+xml"))
+	m.HandleFunc("GET /favicon.ico", icon("icon.ico", "image/x-icon"))
+}

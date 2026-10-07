@@ -50,3 +50,9 @@ func (s *Server) quit(w http.ResponseWriter, r *http.Request) {
 	}
 	s.fleet.Exit() // a moment after the page is written: open.go
 }
+
+// quitRoutes are Quit Sameway and opening it at sign-in (at_login.go).
+func (s *Server) quitRoutes(m *http.ServeMux) {
+	m.HandleFunc("POST /quit", s.quit)
+	m.HandleFunc("POST /at-login", s.atLoginSet)
+}
