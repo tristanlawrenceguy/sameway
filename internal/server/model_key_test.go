@@ -1,6 +1,9 @@
 package server_test
 
 import (
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -20,6 +23,13 @@ func TestAPersonPastesAKey(t *testing.T) {
 	was := llm.DefaultCandidates
 	llm.DefaultCandidates = nil
 	defer func() { llm.DefaultCandidates = was }()
+	openrouter := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		io.WriteString(w, `{"data":{"limit_remaining":null}}`)
+	}))
+	defer openrouter.Close()
+	wasURL := llm.OpenRouterKeyURL
+	llm.OpenRouterKeyURL = openrouter.URL
+	defer func() { llm.OpenRouterKeyURL = wasURL }()
 	a, h := newApp(t)
 
 	page := get(t, h, "/chat").Body.String()
