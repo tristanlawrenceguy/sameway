@@ -51,6 +51,7 @@ var Settings = []Setting{
 	{"chat.system_prompt", "string", nil, "words put before the built-in instructions to the model"},
 	{"update.mode", "enum", update.Modes, "how a new version of sameway arrives: auto installs a release on its own and says so in the activity log, manual only says one is there and waits to be asked (either way it runs from the next start)"},
 	{"notify.desktop", "enum", []string{"on", "off"}, "a notification on this machine when a reminder rings, whether or not a page is open"},
+	{"notify.phone", "string", nil, "an ntfy topic address each reminder is also sent to, for a phone with the free ntfy app; Send reminders to my phone, on Help, sets one up"},
 	{"notify.command", "string", nil, "a command run when a reminder rings, with {title}, {text} and {url} in its arguments: a push service such as ntfy, an email, a text"},
 	{"actions.allow", "string", nil, "the programs a command action may run, by name, comma separated (curl, python); empty means command actions run nothing"},
 	{"mqtt.broker", "string", nil, "the MQTT broker for devices, such as tcp://192.168.1.10:1883; empty means none (takes effect at the next start)"},
@@ -155,7 +156,7 @@ func (w *Workspace) Set(key, value string) error {
 // reminder, no programs allowed, no broker. Undoing a change to one of
 // them puts it back to nothing.
 var canBeEmpty = map[string]bool{
-	"notify.command": true, "actions.allow": true, "chat.system_prompt": true, "ui.needs": true, "ui.language": true,
+	"notify.command": true, "notify.phone": true, "actions.allow": true, "chat.system_prompt": true, "ui.needs": true, "ui.language": true,
 	"mqtt.broker": true, "mqtt.client_id": true, "llm.base_url": true, "tailnet.name": true, "tailnet.peers": true, "publish.tabs": true, "publish.types": true,
 }
 

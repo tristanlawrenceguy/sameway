@@ -38,7 +38,7 @@ func TestARingIsToldEveryWay(t *testing.T) {
 	if want == "" {
 		want = "notify-send"
 	}
-	if desk.name != want || !strings.Contains(strings.Join(desk.env, " "), "SAMEWAY_TITLE=Tea") {
+	if desk.name != want || !strings.Contains(strings.Join(desk.env, " "), "SAMEWAY_TITLE=Tea") || !strings.Contains(strings.Join(desk.env, " "), "SAMEWAY_URL=http://127.0.0.1:8080/t/reminder/r1") {
 		t.Errorf("the desktop notification is the system's own, with the words in the environment: %s %v", desk.name, desk.env)
 	}
 	if cmd.name != "curl" || strings.Join(cmd.args, "|") != "-d|Reminder: Tea|-H|Click: http://127.0.0.1:8080/t/reminder/r1|ntfy.sh/mine" {
