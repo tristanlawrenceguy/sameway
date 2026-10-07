@@ -101,6 +101,8 @@ func (s *Server) routes() {
 	m.HandleFunc("GET /when", s.whenRead)
 	m.HandleFunc("GET /design", s.designPage)
 	m.HandleFunc("GET /design/sameway.css", s.stylesheet)
+	m.HandleFunc("GET /favicon.svg", icon("icon.svg", "image/svg+xml")) // icon.go
+	m.HandleFunc("GET /favicon.ico", icon("icon.ico", "image/x-icon"))
 	m.HandleFunc("GET /design/sameway.js", s.script)
 	m.HandleFunc("GET /design/base/{file}", s.baseFile)
 

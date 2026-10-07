@@ -80,6 +80,8 @@ var routeAccess = map[string]routeFor{
 	"GET /when":                        people,
 	"GET /design":                      people,
 	"GET /design/sameway.css":          people,
+	"GET /favicon.svg":                 people,
+	"GET /favicon.ico":                 people,
 	"GET /design/sameway.js":           people,
 	"GET /design/base/{file}":          people,
 	"GET /t/{type}":                    people,

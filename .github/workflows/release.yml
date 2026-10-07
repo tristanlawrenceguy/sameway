@@ -23,6 +23,11 @@ jobs:
           go-version-file: go.mod
       - name: Test before publishing anything
         run: go test ./...
+      # The Windows program carries Sameway's icon (design/brand, drawn by
+      # tools/icons), so the Start menu and the taskbar show it; the
+      # resource is made here, for Windows builds only, and not kept in git.
+      - name: Icon for the Windows program
+        run: go run github.com/tc-hib/go-winres@v0.3.3 simply --arch amd64 --icon design/brand/icon.ico --manifest cli --product-name Sameway --file-description Sameway --out cmd/sameway/rsrc
       - name: Build for every machine
         env:
           CGO_ENABLED: "0"
@@ -66,8 +71,9 @@ jobs:
           cp "sameway_${version}_windows_amd64.exe" Sameway-Windows.exe
           for pair in darwin_arm64:AppleSilicon darwin_amd64:Intel; do
             target="${pair%%:*}"; kind="${pair##*:}"
-            mkdir -p Sameway.app/Contents/MacOS
+            mkdir -p Sameway.app/Contents/MacOS Sameway.app/Contents/Resources
             cp "sameway_${version}_${target}" Sameway.app/Contents/MacOS/sameway
+            cp ../design/brand/icon.icns Sameway.app/Contents/Resources/icon.icns
             chmod +x Sameway.app/Contents/MacOS/sameway
             printf '%s\n' '<?xml version="1.0" encoding="UTF-8"?>' \
               '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' \
@@ -75,6 +81,7 @@ jobs:
               '<key>CFBundleName</key><string>Sameway</string>' \
               '<key>CFBundleIdentifier</key><string>io.github.tristanlawrenceguy.sameway</string>' \
               '<key>CFBundleExecutable</key><string>sameway</string>' \
+              '<key>CFBundleIconFile</key><string>icon</string>' \
               '<key>CFBundlePackageType</key><string>APPL</string>' \
               "<key>CFBundleShortVersionString</key><string>${version}</string>" \
               '<key>LSMinimumSystemVersion</key><string>11.0</string>' \
@@ -89,6 +96,7 @@ jobs:
             mkdir -p pack/sameway
             cp "sameway_${version}_${target}" pack/sameway/sameway
             chmod +x pack/sameway/sameway
+            cp ../design/brand/icon.png pack/sameway/sameway.png
             tar -C pack -czf "Sameway-Linux-${kind}.tar.gz" sameway
             rm -rf pack
           done

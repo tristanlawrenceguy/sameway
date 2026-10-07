@@ -1,0 +1,20 @@
+name: icon-trial
+on: pull_request
+jobs:
+  trial:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - run: go run github.com/tc-hib/go-winres@v0.3.3 simply --arch amd64 --icon design/brand/icon.ico --manifest cli --product-name Sameway --file-description Sameway --out cmd/sameway/rsrc
+      - run: |
+          ls -la cmd/sameway
+          GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -o win.exe ./cmd/sameway
+          GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o lin ./cmd/sameway
+          ls -la win.exe lin
+          python3 - <<'PY'
+          d=open('win.exe','rb').read()
+          print('rsrc section:', b'.rsrc' in d, 'icon png inside:', d.count(b'\x89PNG'))
+          PY
