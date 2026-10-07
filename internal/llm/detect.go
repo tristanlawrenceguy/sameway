@@ -114,6 +114,11 @@ func Answers(ctx context.Context, cfg Config) (bool, string) {
 			return true, ""
 		}
 		if models := listModels(ctx, base); len(models) > 0 {
+			// The model chosen, deleted since or never fetched, is said: its
+			// server answering is not the model answering.
+			if cfg.Model != "" && !hasModel(models, cfg.Model) {
+				return false, "The model " + cfg.Model + " is not on this computer any more."
+			}
 			return true, ""
 		}
 		return false, "The AI model at " + base + " isn't answering. It may not be running."
@@ -135,6 +140,17 @@ func Answers(ctx context.Context, cfg Config) (bool, string) {
 func local(base string) bool {
 	for _, h := range []string{"//localhost", "//127.0.0.1", "//[::1]"} {
 		if strings.Contains(base, h) {
+			return true
+		}
+	}
+	return false
+}
+
+// hasModel says whether a server's list has a model, ":latest" or not.
+func hasModel(models []string, want string) bool {
+	bare := func(m string) string { return strings.TrimSuffix(m, ":latest") }
+	for _, m := range models {
+		if bare(m) == bare(want) {
 			return true
 		}
 	}

@@ -1,7 +1,6 @@
 package llm
 
 import (
-	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -9,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"strings"
-	"time"
 )
 
 // OpenAI talks to any server implementing the OpenAI chat completions API.
@@ -64,21 +62,9 @@ func (o *OpenAI) Complete(ctx context.Context, req Request) (*Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, o.BaseURL+"/chat/completions", bytes.NewReader(payload))
+	resp, err := o.send(ctx, payload, false) // openai_send.go
 	if err != nil {
 		return nil, err
-	}
-	httpReq.Header.Set("Content-Type", "application/json")
-	if o.APIKey != "" {
-		httpReq.Header.Set("Authorization", "Bearer "+o.APIKey)
-	}
-	client := o.Client
-	if client == nil {
-		client = &http.Client{Timeout: 5 * time.Minute}
-	}
-	resp, err := client.Do(httpReq)
-	if err != nil {
-		return nil, fmt.Errorf("the AI model at %s isn't answering; it may not be running (%w)", o.BaseURL, err)
 	}
 	defer resp.Body.Close()
 	raw, err := io.ReadAll(io.LimitReader(resp.Body, 32<<20))
@@ -86,7 +72,7 @@ func (o *OpenAI) Complete(ctx context.Context, req Request) (*Response, error) {
 		return nil, err
 	}
 	var parsed oaResponse
-	if jsonErr := json.Unmarshal(raw, &parsed); jsonErr != nil || resp.StatusCode >= 400 {
+	if jsonErr := json.Unmarshal(raw, &parsed); jsonErr != nil {
 		msg := strings.TrimSpace(string(raw))
 		if parsed.Error != nil {
 			msg = parsed.Error.Message

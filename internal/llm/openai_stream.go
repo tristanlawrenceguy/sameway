@@ -2,14 +2,10 @@ package llm
 
 import (
 	"bufio"
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"strings"
-	"time"
 )
 
 // Streamer is a provider that can say its reply as it comes. on gets each
@@ -59,36 +55,11 @@ func (o *OpenAI) Stream(ctx context.Context, req Request, on func(Delta)) (*Resp
 	if err != nil {
 		return nil, err
 	}
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, o.BaseURL+"/chat/completions", bytes.NewReader(payload))
+	resp, err := o.send(ctx, payload, true) // openai_send.go
 	if err != nil {
 		return nil, err
 	}
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("Accept", "text/event-stream")
-	if o.APIKey != "" {
-		httpReq.Header.Set("Authorization", "Bearer "+o.APIKey)
-	}
-	client := o.Client
-	if client == nil {
-		client = &http.Client{Timeout: 5 * time.Minute}
-	}
-	resp, err := client.Do(httpReq)
-	if err != nil {
-		return nil, fmt.Errorf("the AI model at %s isn't answering; it may not be running (%w)", o.BaseURL, err)
-	}
 	defer resp.Body.Close()
-	if resp.StatusCode >= 400 {
-		raw, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-		var parsed oaResponse
-		msg := strings.TrimSpace(string(raw))
-		if json.Unmarshal(raw, &parsed) == nil && parsed.Error != nil {
-			msg = parsed.Error.Message
-		}
-		if len(msg) > 400 {
-			msg = msg[:400] + "…"
-		}
-		return nil, fmt.Errorf("model server returned %s: %s", resp.Status, msg)
-	}
 	out := &Response{}
 	var text strings.Builder
 	calls := map[int]*ToolCall{}

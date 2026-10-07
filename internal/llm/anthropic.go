@@ -56,7 +56,7 @@ func (a *Anthropic) Complete(ctx context.Context, req Request) (*Response, error
 	if err != nil {
 		var apiErr *anthropic.Error
 		if errors.As(err, &apiErr) {
-			return nil, fmt.Errorf("anthropic returned HTTP %d: %s", apiErr.StatusCode, apiErr.Error())
+			return nil, Classify(apiErr.StatusCode, apiMessage(apiErr.Error()), "Anthropic", a.Model) // failure.go
 		}
 		return nil, fmt.Errorf("could not reach the Claude API: %w", err)
 	}

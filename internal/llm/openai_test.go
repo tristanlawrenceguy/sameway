@@ -71,8 +71,9 @@ func TestOpenAIErrorsAreReadable(t *testing.T) {
 	defer srv.Close()
 	p := &llm.OpenAI{BaseURL: srv.URL + "/v1", Model: "llama9"}
 	_, err := p.Complete(context.Background(), llm.Request{Messages: []llm.Message{{Role: llm.RoleUser, Content: "hi"}}})
-	if err == nil || !strings.Contains(err.Error(), "404") || !strings.Contains(err.Error(), "try pulling it first") {
-		t.Errorf("error should carry status and server message: %v", err)
+	f, ok := err.(*llm.Failure)
+	if !ok || f.Kind != llm.FailModel || f.Status != 404 || !strings.Contains(f.Said, "try pulling it first") || !strings.Contains(err.Error(), "The model llama9 is not there any more") {
+		t.Errorf("a missing model is said as one, the status and the server's words kept: %v", err)
 	}
 
 	srv.Close()
