@@ -144,6 +144,9 @@ func (s *Server) conversationAbout(c *chat.Service, from, about, prompt string) 
 		view.Proposals = s.proposals(from)
 	}
 	view.Empty = s.component("empty", map[string]any{"message": "Ask for anything."}) + template.HTML(chatStarts(from))
+	if c.IsOwner() && s.brandNew() {
+		view.Empty = s.welcome(from) // welcome.go
+	}
 	// Enter sends only where its script says so (20-compose-enter.js), and
 	// not on a touch screen, which has no Shift+Enter for a new line.
 	compose := map[string]any{"label": "Your message", "name": "message", "rows": 3, "required": true, "hint": "Ask for anything, or ask what something on the page is."}
