@@ -15,16 +15,26 @@ import (
 // it there again the next day, and lost it when they tidied Downloads. On
 // Windows the first double-click now keeps the program where a person's own
 // programs go (LOCALAPPDATA\Programs\Sameway) and puts it in the Start menu,
-// once. A Mac keeps it in Applications, where the person drags it; a
-// program run from the temporary folder (go run, a test) is never kept.
+// once; a Mac and Linux have theirs in keep_menus.go. A program run from
+// the temporary folder (go run, a test) is never kept.
 
 // keepProgram keeps the running program and says so, or does nothing.
 var keepProgram = func(out io.Writer) {
-	if runtime.GOOS != "windows" {
-		return
-	}
 	exe, err := os.Executable()
 	if err != nil || strings.HasPrefix(strings.ToLower(exe), strings.ToLower(os.TempDir())) {
+		return
+	}
+	switch runtime.GOOS {
+	case "windows":
+	case "darwin":
+		if home, err := os.UserHomeDir(); err == nil {
+			keepOnMac(out, exe, home) // keep_menus.go
+		}
+		return
+	default:
+		if home, err := os.UserHomeDir(); err == nil {
+			keepOnLinux(out, exe, home)
+		}
 		return
 	}
 	local, roaming := os.Getenv("LOCALAPPDATA"), os.Getenv("APPDATA")
