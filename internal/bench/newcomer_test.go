@@ -94,6 +94,10 @@ func newcomer() []request {
 			mustCreate(t, a, "task", map[string]any{"title": "Renew passport", "due": tomorrow})
 		}, say: "Show my tasks on the page",
 			check: func(a *app.App, _ string) string { return block(a, "collection", "task") }},
+		{name: "setup-home", say: "Set Sameway up for my home. I want to keep track of shopping, chores and bills. Don't ask me anything, just set it up.",
+			check: func(a *app.App, _ string) string { return setUp(a, "bill") }},
+		{name: "setup-work", say: "Set Sameway up for my work. I want to keep track of tasks, meetings and clients. Don't ask me anything, just set it up.",
+			check: func(a *app.App, _ string) string { return setUp(a, "client") }},
 		{name: "what-can", say: "What can you do here?",
 			check: func(_ *app.App, reply string) string {
 				r := strings.ToLower(reply)
@@ -112,4 +116,34 @@ func anyTitled(a *app.App, words string) *store.Record {
 		}
 	}
 	return nil
+}
+
+// setUp says whether a set-up was built: something of the kind named (a
+// kind of record, or a list showing one), at least two things on the
+// page besides the chat, and nothing made up to fill them.
+func setUp(a *app.App, kind string) string {
+	blocks, kinded := 0, false
+	for _, b := range list(a, chat.BlockType) {
+		if b.Fields["component"] == "chat" {
+			continue
+		}
+		blocks++
+		if strings.Contains(strings.ToLower(jsonOf(b.Fields["props"])), kind) {
+			kinded = true
+		}
+	}
+	for _, name := range a.Store.Types().Names() {
+		if strings.Contains(name, kind) {
+			kinded = true
+		}
+	}
+	made := 0
+	for _, t := range a.Types.Types {
+		if t.Internal {
+			continue
+		}
+		n, _ := a.Store.Count(t.Name)
+		made += n
+	}
+	return all(want(kinded, "nothing for "+kind+"s"), want(blocks >= 2, fmt.Sprintf("%d things on the page", blocks)), want(made == 0, fmt.Sprintf("%d records made up", made)))
 }

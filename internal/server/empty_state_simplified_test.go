@@ -88,15 +88,21 @@ func TestListPageEmptyStateForTasks(t *testing.T) {
 }
 
 // TestTheHomePageHasOneEmptyState: a home page with only the conversation
-// says so once, in the conversation, right above the box to type in.
+// says so once, in the conversation, right above the box to type in: a
+// brand-new workspace's welcome with its ways to start (welcome.go), and
+// Ask for anything once something is in it.
 func TestTheHomePageHasOneEmptyState(t *testing.T) {
-	_, h := newApp(t)
+	a, h := newApp(t)
 	body := get(t, h, "/").Body.String()
-	if n := strings.Count(body, `data-component="empty"`); n != 1 {
-		t.Errorf("the home page should have one empty state, got %d: %s", n, truncate(body))
+	if n := strings.Count(body, `data-component="empty"`); n != 1 || !strings.Contains(body, "Welcome to Sameway.") || !strings.Contains(body, ">Home: shopping, chores, bills<") {
+		t.Errorf("a brand-new home page welcomes, once, with ways to start (%d): %s", n, truncate(body))
 	}
-	if !strings.Contains(body, "Ask for anything.") {
-		t.Errorf("the conversation should say Ask for anything")
+	if _, err := a.Store.Create("note", map[string]any{"title": "Seeds"}); err != nil {
+		t.Fatal(err)
+	}
+	body = get(t, h, "/").Body.String()
+	if n := strings.Count(body, `data-component="empty"`); n != 1 || !strings.Contains(body, "Ask for anything.") || strings.Contains(body, "Welcome to Sameway.") {
+		t.Errorf("once something is in it, the conversation says Ask for anything, once (%d)", n)
 	}
 }
 
