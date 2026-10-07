@@ -70,6 +70,8 @@ var pageActionTools = map[string]string{
 	"/workspaces/delete":          "a person's: deleting a whole workspace is its owner's",
 	"/quit":                       "a person's: stopping Sameway ends the assistant's own turn",
 	"/bring":                      "import_records",
+	"/calendars/add":              "a person's: a calendar link is their own secret, pasted by them",
+	"/calendars/remove":           "a person's: a calendar link is their own secret, pasted by them",
 	"/at-login":                   "a person's: what starts when this computer does is its owner's choice",
 	"/restart":                    "a person's: restarting ends the assistant's own turn",
 }

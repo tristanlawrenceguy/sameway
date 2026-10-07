@@ -44,6 +44,7 @@ func (c *ctx) serveCmd() error {
 	h := server.New(a)
 	a.WatchSchema(ctx, app.SchemaEvery, h.Changed)
 	h.StartRinging(ctx, notifier(a))
+	h.KeepCalendars(ctx)
 	h.WriteDownInBackground()
 	keepSnapshots(ctx, c.Stdout, a)
 	connectDevices(ctx, c.Stdout, a)

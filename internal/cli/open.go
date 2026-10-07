@@ -107,6 +107,7 @@ func (c *ctx) openCmd() error {
 	// Reminders ring, scheduled actions run and the broker stays connected
 	// for as long as the server does, with or without a page open.
 	h.StartRinging(ctx, notifier(a))
+	h.KeepCalendars(ctx) // calendars kept in step every hour
 	a.Chat.StartSchedule(ctx)
 	a.Chat.StartAutomating() // actions that run when something happens; chat/automate.go
 	// Daily copies are kept either way; a double-click's window does not list them.
