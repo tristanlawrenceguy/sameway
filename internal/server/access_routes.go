@@ -88,6 +88,7 @@ var routeAccess = map[string]routeFor{
 	"GET /today":                       people,
 	"POST /brief":                      owner,
 	"POST /workspaces/example":         owner,
+	"POST /feedback":                   owner,
 	"POST /at-login":                   owner,
 	"POST /restart":                    owner,
 	"POST /notify/phone":               owner,
