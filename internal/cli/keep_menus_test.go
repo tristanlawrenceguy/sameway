@@ -29,7 +29,10 @@ func TestSamewayIsKeptWhereEachComputerFindsIt(t *testing.T) {
 
 	var copied [][2]string
 	was := copyApp
-	copyApp = func(from, to string) error { copied = append(copied, [2]string{from, to}); return os.MkdirAll(to, 0o755) }
+	copyApp = func(from, to string) error {
+		copied = append(copied, [2]string{from, to})
+		return os.MkdirAll(to, 0o755)
+	}
 	defer func() { copyApp = was }()
 	app := filepath.Join(home, "Downloads", "Sameway.app", "Contents", "MacOS", "sameway")
 	if !keepOnMac(&out, app, home) || len(copied) != 1 || copied[0][1] != filepath.Join(home, "Applications", "Sameway.app") {
