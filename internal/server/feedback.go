@@ -3,6 +3,7 @@ package server
 import (
 	"html/template"
 	"net/http"
+	"net/url"
 	"runtime"
 	"strings"
 
@@ -67,6 +68,11 @@ func (s *Server) feedback(w http.ResponseWriter, r *http.Request) {
 		title = string(rs[:80]) + "…"
 	}
 	body := what + "\n\n---\n" + s.feedbackFacts()
+	// An agent is told the same: all that would go, and where it is sent.
+	if pageAction(r) {
+		tellJSON(w, outcome{Title: "What would go to the makers", Text: body}, issuesNew+"?title="+url.QueryEscape(title)+"&body="+url.QueryEscape(body))
+		return
+	}
 	esc := template.HTMLEscapeString
 	page := `<p>This is all that would go, to the makers' page on GitHub, where you can change it and send it, which needs a GitHub account. Nothing has been sent.</p>
 <form method="get" action="` + issuesNew + `" target="_blank" rel="noopener" class="sw-stack">` +
