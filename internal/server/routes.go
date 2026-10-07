@@ -14,10 +14,14 @@ func (s *Server) routes() {
 	m.HandleFunc("POST /chat/stream", s.chatStream)
 	m.HandleFunc("POST /chat/stop", s.chatStop)
 	m.HandleFunc("GET /chat/live", s.chatLive)
-	s.modelRoutes(m)    // model_key.go
-	s.bringRoutes(m)    // bring.go
-	s.calendarRoutes(m) // calendar_links.go
-	s.todayRoutes(m)    // today.go
+	s.modelRoutes(m)                                       // model_key.go
+	s.bringRoutes(m)                                       // bring.go
+	s.calendarRoutes(m)                                    // calendar_links.go
+	s.todayRoutes(m)                                       // today.go
+	s.modelRoutes(m)                                       // model_key.go
+	s.bringRoutes(m)                                       // bring.go
+	s.calendarRoutes(m)                                    // calendar_links.go
+	m.HandleFunc("POST /workspaces/example", s.tryExample) // example.go
 	m.HandleFunc("POST /t/{type}/add", s.addRecord)
 	m.HandleFunc("POST /chat/clear", s.chatClear)
 	m.HandleFunc("POST /chat/new", s.chatNew)

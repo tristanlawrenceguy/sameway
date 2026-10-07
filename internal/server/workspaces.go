@@ -223,6 +223,8 @@ func (s *Server) showWorkspaceCreated(w http.ResponseWriter, r *http.Request, na
 // newSection is the form that makes a blank workspace, on the workspaces page and on its own.
 func (s *Server) newSection() string {
 	var b strings.Builder
+	b.WriteString(`<section class="sw-stack" aria-labelledby="ws-example"><h2 id="ws-example">Try it with an example</h2><p class="sw-muted">A workspace of its own, beside this one, with a week of tasks, events, a habit and notes in it, to see what Sameway does before yours is full. Delete it here when you are done.</p><form method="post" action="/workspaces/example">` +
+		string(s.component("button", map[string]any{"label": "Open an example", "type": "submit", "variant": "secondary"})) + `</form></section>`)
 	b.WriteString(`<section class="sw-stack" aria-labelledby="ws-new"><h2 id="ws-new">New workspace</h2><p class="sw-muted">A blank workspace beside this one, with the same model, in a window of its own.</p><form method="post" action="/workspaces/new" class="sw-stack">`)
 	b.WriteString(string(s.component("text-field", map[string]any{"label": "Name", "name": "name", "required": true, "id": "new-name", "autocomplete": "off"})))
 	b.WriteString(string(s.component("button", map[string]any{"label": "Create", "type": "submit"})))
