@@ -175,7 +175,7 @@ func (s *Service) sendTurn(ctx context.Context, canvas, text, fileID string, on 
 	if err != nil {
 		return nil, err
 	}
-	req := llm.Request{System: s.systemPrompt(), Messages: history, Tools: s.Tools()}
+	req := llm.Request{System: s.systemPrompt(), Messages: history, Tools: s.toolsFor(s.Tools(), history)} // toolset.go
 	if on != nil && s.runsToolsOutside() {
 		// The tools run in another program; the log is where their
 		// changes show, so it is watched while the turn runs.
