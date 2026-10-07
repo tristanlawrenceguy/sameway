@@ -148,6 +148,11 @@ type Config struct {
 	// log, "manual" only says one is there and waits to be asked. Either
 	// way a new version runs from the next start, and a build that cannot
 	// say which version it is never replaces itself.
+	// Brief.At is when the morning brief is sent, "07:30"; "" sends none
+	// (internal/server today.go).
+	Brief struct {
+		At string `yaml:"at"`
+	} `yaml:"brief"`
 	Update struct {
 		Mode string `yaml:"mode"`
 	} `yaml:"update"`
