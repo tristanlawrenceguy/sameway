@@ -21,13 +21,7 @@ import (
 var groupOrder = []string{"Overdue", "Today", "This week", "Later", "No date", "Done"}
 
 func (s *Server) rows(t *schema.Type, recs []*store.Record, now time.Time) string {
-	dated := ""
-	for _, f := range t.Shown() {
-		if f.Type == "datetime" {
-			dated = f.Name
-			break
-		}
-	}
+	dated := t.DayField()
 	var b strings.Builder
 	// Told apart across the whole listing, every group of it: an agent or
 	// a person moving by controls meets them all on one page.
@@ -79,7 +73,7 @@ func (s *Server) rows(t *schema.Type, recs []*store.Record, now time.Time) strin
 // nil for non-project types.
 func (s *Server) row(t *schema.Type, rec *store.Record, level int, told string, taskCounts map[string]int) string {
 	class, box := "sw-row", ""
-	if doneField(t) != nil {
+	if t.DoneField() != nil {
 		if props, ok := s.markOf(t, rec); ok {
 			props["quiet"] = true
 			props["context"] = withContext(str(props["context"], ""), told)
@@ -151,7 +145,7 @@ func (s *Server) taskCountMap(projects []*store.Record) map[string]int {
 // whenGroup says where a record sits in time: done first, because a done
 // thing is not overdue whatever its day was.
 func whenGroup(t *schema.Type, rec *store.Record, dated string, now time.Time) string {
-	if f := doneField(t); f != nil {
+	if f := t.DoneField(); f != nil {
 		if on, _ := rec.Fields[f.Name].(bool); on {
 			return "Done"
 		}

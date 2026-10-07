@@ -149,7 +149,7 @@ func (s *Server) calendarTypes(names []string) ([]*schema.Type, string) {
 		if !ok {
 			return nil, s.noType(name)
 		}
-		if dateField(t, nil) == "" {
+		if !t.HasDay() {
 			return nil, noDateField(t, nil)
 		}
 		if !slices.Contains(only, t) {
@@ -193,7 +193,8 @@ func (s *Server) eventOf(t *schema.Type, rec *store.Record, field string) map[st
 }
 
 // dateField is the field the days come from: the one named, or the
-// type's first datetime field.
+// type's day (schema DayField), as a list, an export and a record's
+// related things have it.
 func dateField(t *schema.Type, named any) string {
 	if name, _ := named.(string); strings.TrimSpace(name) != "" {
 		if f, ok := t.Field(name); ok && f.Type == "datetime" {
@@ -201,12 +202,7 @@ func dateField(t *schema.Type, named any) string {
 		}
 		return ""
 	}
-	for _, f := range t.Shown() {
-		if f.Type == "datetime" {
-			return f.Name
-		}
-	}
-	return ""
+	return t.DayField()
 }
 
 // noDateField says why a type's records cannot go on a calendar: the

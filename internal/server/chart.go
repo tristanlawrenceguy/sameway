@@ -96,21 +96,18 @@ func (s *Server) resolveChart(props map[string]any) map[string]any {
 	if _, has := out["caption"]; !has {
 		what := "How many " + schema.Plural(t.Name)
 		if sum != "" {
-			what = capitalize(label(sum)) + " of " + schema.Plural(t.Name)
+			what = t.FieldDisplay(sum) + " of " + schema.Plural(t.Name)
 		}
-		out["caption"] = what + " by " + label(by)
+		out["caption"] = what + " by " + t.FieldWords(by)
 	}
 	// The numbers table heads its columns with what they are.
-	out["groupLabel"] = capitalize(label(by))
-	if field != nil && field.Label != "" {
-		out["groupLabel"] = field.Label
-	}
+	out["groupLabel"] = t.FieldDisplay(by)
 	if period != "" && kind == "datetime" {
 		out["groupLabel"] = capitalize(period)
 	}
 	out["valueLabel"] = capitalize(schema.Plural(t.Name))
 	if sum != "" {
-		out["valueLabel"] = capitalize(label(sum))
+		out["valueLabel"] = t.FieldDisplay(sum)
 	}
 	return out
 }

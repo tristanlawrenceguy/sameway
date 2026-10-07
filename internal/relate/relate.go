@@ -128,7 +128,7 @@ func Of(st *store.Store, t *schema.Type, rec *store.Record, now time.Time) []Lin
 		return out
 	}
 	for _, u := range st.Types().Types {
-		field := DayField(u)
+		field := u.DayField()
 		if u.Internal || field == "" {
 			continue
 		}
@@ -154,20 +154,10 @@ func Find(links []Link, key string) (Link, bool) {
 // Page is a record's page, the address every surface names it by.
 func Page(typeName, id string) string { return "/t/" + typeName + "/" + id }
 
-// DayField is where a type's day comes from: its first datetime field.
-func DayField(t *schema.Type) string {
-	for _, f := range t.Fields {
-		if f.Type == "datetime" {
-			return f.Name
-		}
-	}
-	return ""
-}
-
 // Day is the day a record falls on, or "" when it has no date. A day kept
 // as midnight UTC is that day everywhere; a moment is the day it is here.
 func Day(t *schema.Type, rec *store.Record) string {
-	field := DayField(t)
+	field := t.DayField()
 	if field == "" {
 		return ""
 	}

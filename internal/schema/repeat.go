@@ -13,17 +13,16 @@ import (
 // has one entry and one Undo puts back the day it was and the tick.
 
 // Repeats names a type's repeat field and the day it moves: its first
-// repeat field and its first datetime field. ok is false for a type that
-// has not both.
+// repeat field and its day (DayField). ok is false for a type that has
+// not both.
 func (t *Type) Repeats() (repeat, day string, ok bool) {
 	for _, f := range t.Fields {
-		if f.Type == "repeat" && repeat == "" {
+		if f.Type == "repeat" {
 			repeat = f.Name
-		}
-		if f.Type == "datetime" && day == "" {
-			day = f.Name
+			break
 		}
 	}
+	day = t.DayField()
 	return repeat, day, repeat != "" && day != ""
 }
 
@@ -33,7 +32,7 @@ func (t *Type) Repeats() (repeat, day string, ok bool) {
 func (t *Type) finishing() (name string, done, again any, ok bool) {
 	for _, f := range t.Fields {
 		switch {
-		case f.Type == "bool" && (f.Name == "done" || f.Name == "completed" || f.Name == "complete" || f.Name == "finished"):
+		case f.Type == "bool" && isDoneName(f.Name):
 			return f.Name, true, false, true
 		case f.Type == "enum" && contains(f.Values, "done") && f.Values[0] != "done":
 			again := any(f.Values[0])

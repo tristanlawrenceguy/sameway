@@ -40,7 +40,7 @@ func Contradiction(t *schema.Type, where []string) string {
 			continue
 		}
 		return fmt.Sprintf("%s and %s can never both hold, since a %s has one %s, so it would never show anything; use one value, or one block per value (one list per %s)",
-			prev, c, schema.Words(t.Name), fieldWord(t, c.Field), fieldWord(t, c.Field))
+			prev, c, schema.Words(t.Name), t.FieldWords(c.Field), t.FieldWords(c.Field))
 	}
 	return ""
 }
@@ -61,11 +61,4 @@ func same(kind, a, b string) bool {
 		}
 	}
 	return a == b
-}
-
-func fieldWord(t *schema.Type, field string) string {
-	if f, ok := t.Field(field); ok && f.Label != "" {
-		return strings.ToLower(f.Label)
-	}
-	return strings.ReplaceAll(field, "_", " ")
 }

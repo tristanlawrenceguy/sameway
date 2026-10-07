@@ -75,11 +75,11 @@ func TestAnUndoneTaskBoxSaysDoneUnchecked(t *testing.T) {
 	wantBoxWord(t, ledeOf(t, h, "/t/task/"+task.ID), "done", "Done", false)
 }
 
-func TestAnActionBoxSaysShow(t *testing.T) {
+func TestAnActionBoxSaysItsLabel(t *testing.T) {
 	_, h := newApp(t)
 	var act struct{ ID string }
 	decode(t, postJSON(t, h, http.MethodPost, "/api/action", map[string]any{"title": "Ping me", "show": true}), &act)
-	wantBoxWord(t, ledeOf(t, h, "/t/action/"+act.ID), "show", "Show", true)
+	wantBoxWord(t, ledeOf(t, h, "/t/action/"+act.ID), "show", "On the canvas", true)
 }
 
 // TestPinningNoteStillWorks checks that toggling the pinned checkbox on a note

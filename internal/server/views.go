@@ -260,11 +260,6 @@ func capitalize(s string) string {
 	return strings.ToUpper(string(r[0])) + s[1:]
 }
 
-func label(field string) string {
-	s := strings.ReplaceAll(field, "_", " ")
-	return strings.ToUpper(s[:1]) + s[1:]
-}
-
 // fieldItem is one field of a record as the fields component shows it:
 // structured text as it reads, a ref or a reminder's about as the way to
 // what it names, a choice by its name with the stored value kept for the
@@ -272,7 +267,7 @@ func label(field string) string {
 func (s *Server) fieldItem(t *schema.Type, f schema.Field, v any, val string) map[string]any {
 	switch {
 	case f.Type == "markdown":
-		return map[string]any{"label": fieldLabel(f), "markdown": val, "prop": f.Name}
+		return map[string]any{"label": f.Display(), "markdown": val, "prop": f.Name}
 	case t.Name == ReminderType && f.Name == "about":
 		return s.aboutItem(f, val)
 	case f.Type == "ref":
@@ -280,9 +275,9 @@ func (s *Server) fieldItem(t *schema.Type, f schema.Field, v any, val string) ma
 	case f.RefList():
 		// Several records, by name, as they are typed in to change them.
 		names := s.refNames(f, v)
-		return map[string]any{"label": fieldLabel(f), "value": names, "prop": f.Name, "source": names}
+		return map[string]any{"label": f.Display(), "value": names, "prop": f.Name, "source": names}
 	}
-	item := map[string]any{"label": fieldLabel(f), "value": val, "prop": f.Name}
+	item := map[string]any{"label": f.Display(), "value": val, "prop": f.Name}
 	switch f.Type {
 	case "datetime":
 		item["kind"], item["source"] = "datetime", fmt.Sprint(v)

@@ -70,11 +70,8 @@ func Guess(t *schema.Type, columns []string) Mapping {
 	for _, col := range columns {
 		n := normal(col)
 		if n == "date" || n == "when" || n == "at" || n == "time" || n == "sent" {
-			for _, f := range t.Fields {
-				if f.Type == "datetime" {
-					take(col, f.Name)
-					break
-				}
+			if day := t.DayField(); day != "" {
+				take(col, day)
 			}
 		}
 	}

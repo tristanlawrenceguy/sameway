@@ -113,8 +113,8 @@ func (s *Server) refused(w http.ResponseWriter, r *http.Request, t *schema.Type,
 		seen := map[string]bool{}
 		for _, f := range t.Fields {
 			if msg, ok := ve.Problems[f.Name]; ok {
-				said = append(said, fieldLabel(f)+" "+msg+".")
-				problems = append(problems, problem{Field: f.Name, Text: fieldLabel(f) + " " + msg + "."})
+				said = append(said, f.Display()+" "+msg+".")
+				problems = append(problems, problem{Field: f.Name, Text: f.Display() + " " + msg + "."})
 				seen[f.Name] = true
 			}
 		}
@@ -129,8 +129,8 @@ func (s *Server) refused(w http.ResponseWriter, r *http.Request, t *schema.Type,
 		// Listed with the rest, as words with no field to lead to, so none
 		// is lost when the problems show as a list.
 		for _, name := range rest {
-			said = append(said, capitalize(label(name))+" is not a field of a "+schema.Words(t.Name)+".")
-			problems = append(problems, problem{Text: capitalize(label(name)) + " is not a field of a " + schema.Words(t.Name) + "."})
+			said = append(said, t.FieldDisplay(name)+" is not a field of a "+schema.Words(t.Name)+".")
+			problems = append(problems, problem{Text: t.FieldDisplay(name) + " is not a field of a " + schema.Words(t.Name) + "."})
 		}
 	}
 	text := strings.Join(said, " ")

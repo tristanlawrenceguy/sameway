@@ -23,13 +23,13 @@ func (s *Server) savedWords(t *schema.Type, rec *store.Record, fields, clean map
 		// Oct 2026, 14:00." The words were the person's; this is Sameway's.
 		if f, ok := t.Field(name); ok && f.Type == "datetime" {
 			if v, _ := clean[name].(string); v != "" {
-				o.Text = fieldLabel(*f) + " is " + when.Text(v) + "."
+				o.Text = f.Display() + " is " + when.Text(v) + "."
 			}
 			return o
 		}
 		// How often, said back as it was read: "Repeat is every Tuesday."
 		if f, ok := t.Field(name); ok && f.Type == "repeat" {
-			o.Text = fieldLabel(*f) + " is " + repeatSaid(clean[name]) + "."
+			o.Text = f.Display() + " is " + repeatSaid(clean[name]) + "."
 			return o
 		}
 		// A choice changed, as a board's Move does, says from where to
@@ -66,7 +66,7 @@ func (s *Server) savedWords(t *schema.Type, rec *store.Record, fields, clean map
 			o.Title, o.Text, o.Of = title+" is done.", dueAgain(t, clean), title
 			return o
 		}
-		word := strings.ToLower(label(name))
+		word := t.FieldWords(name)
 		if name == "show" {
 			word = "shown"
 		}
@@ -94,7 +94,7 @@ func alreadyThere(t *schema.Type, rec *store.Record, fields map[string]any) (out
 		if !ok || f.Type != "enum" || now == "" || now != was {
 			return outcome{}, false
 		}
-		return outcome{Title: fieldLabel(*f) + " is already " + f.ValueLabel(now) + ". Nothing changed."}, true
+		return outcome{Title: f.Display() + " is already " + f.ValueLabel(now) + ". Nothing changed."}, true
 	}
 	return outcome{}, false
 }

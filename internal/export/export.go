@@ -36,7 +36,7 @@ func For(t *schema.Type) []Format {
 	if contactish(t) {
 		out = append(out, VCard)
 	}
-	if dateField(t) != "" {
+	if t.HasDay() {
 		out = append(out, ICS)
 	}
 	return out
@@ -58,23 +58,9 @@ func contactish(t *schema.Type) bool {
 	return email || phone
 }
 
-// dateField is the field a record's day comes from: starts, else the
-// first date field.
-func dateField(t *schema.Type) string {
-	if f, ok := t.Field("starts"); ok && f.Type == "datetime" {
-		return f.Name
-	}
-	for _, f := range t.Shown() {
-		if f.Type == "datetime" {
-			return f.Name
-		}
-	}
-	return ""
-}
-
 // Dated says whether a record has the day a calendar places it on.
 func Dated(t *schema.Type, rec *store.Record) bool {
-	f := dateField(t)
+	f := t.DayField()
 	v, _ := rec.Fields[f].(string)
 	return f != "" && v != ""
 }
@@ -96,10 +82,7 @@ func Fields(t *schema.Type) []schema.Field {
 func Header(fields []schema.Field) []string {
 	out := make([]string, len(fields))
 	for i, f := range fields {
-		out[i] = f.Label
-		if out[i] == "" {
-			out[i] = strings.ToUpper(f.Name[:1]) + strings.ReplaceAll(f.Name[1:], "_", " ")
-		}
+		out[i] = f.Display()
 	}
 	return out
 }

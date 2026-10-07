@@ -37,6 +37,14 @@ open each record to tell them apart, few enough to scan
 A row of a type with no day says when it last changed instead; a record's
 own page says when it was made.
 
+Which field is a type's day is the schema's one answer (`DayField`):
+`starts` when it has one, else its first shown datetime field. A list
+groups its rows by it, a calendar puts records on it, an export's
+calendar file writes it, and what else is on a record's day is found by
+it, so they never disagree. The glance says the first day a record has a
+value in, named by its field, so an interaction with only a follow up
+still says it, though its row sits under No date.
+
 | Type | At a glance |
 |---|---|
 | task | Done, Doing, Due Fri 9 Oct at 2pm (Overdue, due yesterday), For Ana Silva or its project |

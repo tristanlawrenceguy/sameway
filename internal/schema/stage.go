@@ -17,7 +17,7 @@ func (t *Type) stage() (flag string, stage *Field, ok bool) {
 	for i := range t.Fields {
 		g := &t.Fields[i]
 		switch {
-		case g.Type == "bool" && flag == "" && (g.Name == "done" || g.Name == "completed" || g.Name == "complete" || g.Name == "finished"):
+		case g.Type == "bool" && flag == "" && isDoneName(g.Name):
 			flag = g.Name
 		case g.Type == "enum" && f == nil && contains(g.Values, "done") && g.Values[0] != "done":
 			f = g

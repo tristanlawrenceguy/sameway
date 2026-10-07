@@ -12,25 +12,15 @@ import (
 // day is said (internal/when): this file once had its own, which said a
 // moment in UTC after the glance had stopped doing so.
 
-// dayWords is the record's first day as a few words after its title, the
-// field named: due tomorrow, with the year when it is not this one.
+// dayWords is the record's day (schema DayField) as a few words after its
+// title: due tomorrow, with the year when it is not this one.
 func dayWords(t *schema.Type, rec *store.Record) string {
-	for _, kind := range []string{"datetime", "time", "date"} {
-		for _, f := range t.Shown() {
-			if f.Type != kind {
-				continue
-			}
-			v := str(rec.Fields[f.Name], f.Name)
-			if v == "" || v == f.Name {
-				continue
-			}
-			if kind == "date" {
-				return "on " + whenWords(v)
-			}
-			return "due " + whenWords(v)
-		}
+	day := t.DayField()
+	v := str(rec.Fields[day], day)
+	if day == "" || v == "" || v == day {
+		return ""
 	}
-	return ""
+	return "due " + whenWords(v)
 }
 
 // whenWords is a stored day or moment as a person plans by it.

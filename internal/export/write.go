@@ -166,7 +166,7 @@ func Calendar(w io.Writer, name string, groups []Group) error {
 
 // events are a type's records as VEVENTs, those with a day.
 func events(t *schema.Type, recs []*store.Record, stamp string) []string {
-	start := dateField(t)
+	start := t.DayField()
 	var lines []string
 	for _, r := range recs {
 		when, _ := r.Fields[start].(string)
@@ -177,8 +177,7 @@ func events(t *schema.Type, recs []*store.Record, stamp string) []string {
 		if uid == "" {
 			uid = r.ID + "@sameway"
 		}
-		title, _ := r.Fields[t.Title].(string)
-		lines = append(lines, "BEGIN:VEVENT", "UID:"+uid, "DTSTAMP:"+stamp, "SUMMARY:"+esc(title), "DTSTART"+icsTime(when))
+		lines = append(lines, "BEGIN:VEVENT", "UID:"+uid, "DTSTAMP:"+stamp, "SUMMARY:"+esc(t.Called(r.ID, r.Fields)), "DTSTART"+icsTime(when))
 		allDay := strings.HasPrefix(icsTime(when), ";VALUE=DATE")
 		if end, _ := r.Fields["ends"].(string); end != "" && start == "starts" {
 			lines = append(lines, "DTEND"+icsEnd(end, allDay))
@@ -192,7 +191,7 @@ func events(t *schema.Type, recs []*store.Record, stamp string) []string {
 		if notes, _ := r.Fields["notes"].(string); notes != "" {
 			lines = append(lines, "DESCRIPTION:"+esc(notes))
 		}
-		if done, ok := r.Fields["done"].(bool); ok && done {
+		if t.Done(r.Fields) {
 			lines = append(lines, "STATUS:CONFIRMED", "X-SAMEWAY-DONE:TRUE")
 		}
 		lines = append(lines, "END:VEVENT")

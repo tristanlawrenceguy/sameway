@@ -41,7 +41,7 @@ func howMany(t *schema.Type, recs []*store.Record) template.HTML {
 		what = schema.Words(t.Name)
 	}
 	text := fmt.Sprintf("%d %s", n, what)
-	if f := doneField(t); f != nil {
+	if f := t.DoneField(); f != nil {
 		done := 0
 		for _, rec := range recs {
 			if on, _ := rec.Fields[f.Name].(bool); on {
@@ -49,7 +49,7 @@ func howMany(t *schema.Type, recs []*store.Record) template.HTML {
 			}
 		}
 		if done > 0 {
-			text += fmt.Sprintf(" · %d %s", done, strings.ToLower(label(f.Name)))
+			text += fmt.Sprintf(" · %d %s", done, f.Words())
 		}
 	}
 	return template.HTML(`<p class="sw-lede">` + template.HTMLEscapeString(text) + `</p>`)
@@ -81,7 +81,7 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 		boxed = s.boxed(t, rec)
 	}
 	out := s.glanceHTML(facts, o.Chips, boxed)
-	if !day && !o.Made && !hasDate(t) {
+	if !day && !o.Made && !t.HasDay() {
 		out = strings.TrimSpace(out + " " + happened("sw-muted", rec.UpdatedAt, now))
 	}
 	if o.Made {
@@ -147,16 +147,6 @@ func (s *Server) dotOf(typeName string) int {
 		}
 	}
 	return 0
-}
-
-// hasDate says whether a type has a day of its own, such as a task's due.
-func hasDate(t *schema.Type) bool {
-	for _, f := range t.Shown() {
-		if f.Type == "datetime" {
-			return true
-		}
-	}
-	return false
 }
 
 // happenedAfter is happened after a word such as deleted: deleted today at

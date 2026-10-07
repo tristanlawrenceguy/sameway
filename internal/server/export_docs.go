@@ -167,7 +167,7 @@ func (s *Server) recordMarkdown(t *schema.Type, rec *store.Record, heading bool)
 			continue
 		}
 		if v := export.Value(f, rec.Fields[f.Name], s.RefTitle); v != "" && v != "no" {
-			fmt.Fprintf(&b, "- **%s:** %s\n", fieldLabel(f), v)
+			fmt.Fprintf(&b, "- **%s:** %s\n", f.Display(), v)
 		}
 	}
 	if text != "" {

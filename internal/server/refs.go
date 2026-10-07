@@ -40,7 +40,7 @@ func (s *Server) RefTitle(f schema.Field, id string) string {
 // title as a link to its page, with the id and the other choices kept for
 // the inline editor.
 func (s *Server) refItem(f schema.Field, id string) map[string]any {
-	item := map[string]any{"label": fieldLabel(f), "value": s.RefTitle(f, id), "prop": f.Name, "source": id}
+	item := map[string]any{"label": f.Display(), "value": s.RefTitle(f, id), "prop": f.Name, "source": id}
 	if list := s.choiceList(f, id); len(list) > 0 {
 		item["options"] = list
 	}

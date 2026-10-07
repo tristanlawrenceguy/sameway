@@ -115,7 +115,7 @@ func (s *Server) importPreview(w http.ResponseWriter, r *http.Request, t *schema
 	// the way the editor does, so a person picks "Due" rather than "due".
 	options := []any{map[string]any{"value": "", "label": "Nothing"}}
 	for _, f := range t.Fields {
-		options = append(options, map[string]any{"value": f.Name, "label": fieldLabel(f)})
+		options = append(options, map[string]any{"value": f.Name, "label": f.Display()})
 	}
 	for i, col := range tb.Columns {
 		b.WriteString(`<td>`)

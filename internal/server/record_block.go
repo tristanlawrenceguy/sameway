@@ -55,7 +55,7 @@ func (s *Server) resolveRecord(props map[string]any) (map[string]any, string) {
 		if v, ok := item["value"].(string); ok && v != "" {
 			val = v // a ref or what a reminder is about, by its title
 		}
-		fields = append(fields, map[string]any{"label": fieldLabel(f), "value": val})
+		fields = append(fields, map[string]any{"label": f.Display(), "value": val})
 	}
 	if len(fields) > 0 {
 		out["fields"] = fields
