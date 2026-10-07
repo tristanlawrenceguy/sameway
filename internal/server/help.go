@@ -36,7 +36,8 @@ func (s *Server) helpPage(w http.ResponseWriter, r *http.Request) {
 	b.WriteString(s.limitsSection(chat.VisitorOf(r.Context()).Owner())) // limits.go
 	b.WriteString(`<section class="sw-stack" aria-labelledby="help-hand"><h2 id="help-hand">Doing things yourself</h2>
 <p>Every list has a button to add one, such as Add a note. On anything you made, Edit changes it where it is, and Save keeps the change. Escape or Cancel leaves it as it was.</p>
-<p>After you do something, a message at the top of the page says what happened.</p></section>`)
+<p>After you do something, a message at the top of the page says what happened.</p>
+<p>Tasks and notes in another app (Todoist, Google Tasks or Keep, Evernote, Notion, Obsidian) come in from <a class="sw-link" href="/bring">Bring your things</a>.</p></section>`)
 	b.WriteString(`<section class="sw-stack" aria-labelledby="help-undo"><h2 id="help-undo">Taking things back</h2>
 <p>Almost everything can be undone: the message after a change has an Undo button, and <a class="sw-link" href="/activity">Activity</a> lists every change with its own Undo. A deleted workspace goes to the trash, and <a class="sw-link" href="/workspaces">Workspaces</a> can bring it back.</p></section>`)
 	b.WriteString(`<section class="sw-stack" aria-labelledby="help-keys"><h2 id="help-keys">Keyboard</h2><ul>
