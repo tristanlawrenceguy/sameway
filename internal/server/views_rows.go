@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
@@ -26,17 +25,12 @@ func (s *Server) rows(t *schema.Type, recs []*store.Record, now time.Time) strin
 	// Told apart across the whole listing, every group of it: an agent or
 	// a person moving by controls meets them all on one page.
 	told := s.recordsApart(t, recs)
-
-	// Pre-compute task counts for each project row once, so we don't query per-row.
-	var taskCounts map[string]int
-	if t.Name == "project" {
-		taskCounts = s.taskCountMap(recs)
-	}
-
+	// What is in each, counted for the whole listing at once (glance_count.go).
+	in := s.countsOf(t, recs)
 	if dated == "" {
 		fmt.Fprintf(&b, `<ol class="sw-plain sw-rows" data-dot="%d" aria-label="%s">`, s.dotOf(t.Name), template.HTMLEscapeString(schema.Plural(t.Name)))
 		for _, rec := range recs {
-			b.WriteString(s.row(t, rec, 2, told[rec.ID], taskCounts))
+			b.WriteString(s.row(t, rec, 2, told[rec.ID], in))
 		}
 		b.WriteString("</ol>")
 		return b.String()
@@ -58,7 +52,7 @@ func (s *Server) rows(t *schema.Type, recs []*store.Record, now time.Time) strin
 		fmt.Fprintf(&b, `<h2 class="sw-group">%s <span class="sw-group__count">%d<span class="sw-visually-hidden"> %s,</span></span>%s</h2><ol class="sw-plain sw-rows" data-dot="%d" aria-label="%s, %s">`,
 			name, len(list), oneOrMany(len(list), schema.Words(t.Name), schema.Words(schema.Plural(t.Name))), span, s.dotOf(t.Name), template.HTMLEscapeString(schema.Plural(t.Name)), strings.ToLower(name))
 		for _, rec := range list {
-			b.WriteString(s.row(t, rec, 3, told[rec.ID], taskCounts))
+			b.WriteString(s.row(t, rec, 3, told[rec.ID], in))
 		}
 		b.WriteString("</ol>")
 	}
@@ -69,9 +63,9 @@ func (s *Server) rows(t *schema.Type, recs []*store.Record, now time.Time) strin
 // (done/completed/complete/finished) gets a checkbox in the row; secondary
 // settings like pinned or show are shown as badges instead. told is what
 // tells it from another row with its title, read after the title by its
-// link and its box, or "". taskCounts maps project IDs to their task counts;
-// nil for non-project types.
-func (s *Server) row(t *schema.Type, rec *store.Record, level int, told string, taskCounts map[string]int) string {
+// link and its box, or "". in is what is in the listing's records,
+// counted once for all of them.
+func (s *Server) row(t *schema.Type, rec *store.Record, level int, told string, in counts) string {
 	class, box := "sw-row", ""
 	if t.DoneField() != nil {
 		if props, ok := s.markOf(t, rec); ok {
@@ -94,52 +88,8 @@ func (s *Server) row(t *schema.Type, rec *store.Record, level int, told string, 
 	if told != "" {
 		apartHTML = `<span class="sw-visually-hidden"> (` + template.HTMLEscapeString(told) + `)</span>`
 	}
-
-	// Project rows show their task count in the meta area.
-	var extraMeta string
-	if t.Name == "project" && taskCounts != nil {
-		count := taskCounts[rec.ID]
-		extraMeta = s.taskCountText(count)
-	}
-
-	return fmt.Sprintf(`<li class="%s">%s<h%d class="sw-row__title"><a class="sw-row__link" href="/t/%s/%s"%s>%s%s</a></h%d><p class="sw-row__meta">%s%s</p></li>`,
-		class, box, level, t.Name, rec.ID, whole, template.HTMLEscapeString(trim.Title(full)), apartHTML, level, s.facts(t, rec, factOpts{Boxed: box != ""}), extraMeta)
-}
-
-// taskCountText returns a human-readable task count string.
-func (s *Server) taskCountText(n int) string {
-	if n == 1 {
-		return " · 1 task"
-	}
-	return " · " + fmt.Sprint(n) + " tasks"
-}
-
-// taskCountMap counts how many tasks reference each project in the list.
-func (s *Server) taskCountMap(projects []*store.Record) map[string]int {
-	counts := make(map[string]int, len(projects))
-	for _, p := range projects {
-		counts[p.ID] = 0
-	}
-
-	// Count all tasks at once and tally by project.
-	taskType, ok := s.app.Types.Get("task")
-	if !ok {
-		return counts
-	}
-	allTasks, err := query.Filter(s.app.Store, taskType, nil, "", 0, time.Now())
-	if err != nil {
-		return counts
-	}
-	for _, task := range allTasks {
-		pid, _ := task.Fields["project"].(string)
-		if pid == "" {
-			continue
-		}
-		if _, ok := counts[pid]; ok {
-			counts[pid]++
-		}
-	}
-	return counts
+	return fmt.Sprintf(`<li class="%s">%s<h%d class="sw-row__title"><a class="sw-row__link" href="/t/%s/%s"%s>%s%s</a></h%d><p class="sw-row__meta">%s</p></li>`,
+		class, box, level, t.Name, rec.ID, whole, template.HTMLEscapeString(trim.Title(full)), apartHTML, level, s.facts(t, rec, factOpts{Boxed: box != "", Counts: in}))
 }
 
 // whenGroup says where a record sits in time: done first, because a done

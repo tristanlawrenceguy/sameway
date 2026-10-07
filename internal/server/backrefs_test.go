@@ -53,6 +53,12 @@ func TestAListedRefListsItsRecordsOnItsTarget(t *testing.T) {
 	if n := strings.Count(page, ">Knead the dough</a>"); n != 1 {
 		t.Errorf("listed once, not again as an opened connection; listed %d times", n)
 	}
+	// What a page lists, its glance counts: one rule for what a record holds.
+	var view struct{ Glance string }
+	decode(t, get(t, h, "/api/recipe/"+recipe.ID), &view)
+	if view.Glance != "1 step" {
+		t.Errorf("a recipe's glance is %q, want %q", view.Glance, "1 step")
+	}
 
 	decode(t, postJSON(t, h, http.MethodPost, "/api/project", map[string]any{"title": "Garden"}), &project)
 	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/task", map[string]any{"title": "Dig the beds", "project": project.ID}), http.StatusCreated)
