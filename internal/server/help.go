@@ -39,6 +39,8 @@ func (s *Server) helpPage(w http.ResponseWriter, r *http.Request) {
 <p>After you do something, a message at the top of the page says what happened.</p>
 <p>Tasks and notes in another app (Todoist, Google Tasks or Keep, Evernote, Notion, Obsidian) come in from <a class="sw-link" href="/bring">Bring your things</a>.</p>
 <p>A calendar in Google, Outlook or iCloud is kept in step from <a class="sw-link" href="/calendars">Calendars</a>.</p></section>`)
+<p>After you do something, a message at the top of the page says what happened.</p></section>`)
+	b.WriteString(appSection) // app_install.go
 	b.WriteString(`<section class="sw-stack" aria-labelledby="help-undo"><h2 id="help-undo">Taking things back</h2>
 <p>Almost everything can be undone: the message after a change has an Undo button, and <a class="sw-link" href="/activity">Activity</a> lists every change with its own Undo. A deleted workspace goes to the trash, and <a class="sw-link" href="/workspaces">Workspaces</a> can bring it back.</p></section>`)
 	b.WriteString(`<section class="sw-stack" aria-labelledby="help-keys"><h2 id="help-keys">Keyboard</h2><ul>
