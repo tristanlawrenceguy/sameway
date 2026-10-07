@@ -14,6 +14,32 @@ go: a checklist, a table, a card, a form. It can only use components from the
 design system, so what it builds is WCAG 2.2 AA clean by construction, and AAA
 where the manifest says so.
 
+## What it looks like
+
+You type into the chat:
+
+> Show me what's due this week, as a list, with the project beside each task.
+
+Run on the starter workspace with a 4-billion-parameter model through Ollama (7 October 2026), the assistant:
+
+1. Tried to add a list with settings a list does not take. Sameway refused and said why, and nothing was saved.
+2. Tried again with the right ones: tasks due within seven days, soonest first, with the due day and the project. Sameway answered "it shows 3 tasks, due by 7 days from now, by due".
+3. Arranged the page around the new list, as one change that one Undo takes back.
+
+Then it replied: "Done. Here are your three tasks due this week, listed with their project next to each one."
+
+The page now reads:
+
+- Order seeds: Tomorrow, Garden
+- Fix the contact form: Fri 9 Oct, Website
+- Prune the apple tree: Mon 12 Oct, Garden
+
+The same list is one address away for whoever wants it:
+
+- a person: `/t/task?where=due<=%2B7d&order=due`
+- an agent: `GET /api/task?where=due<=%2B7d&order=due`
+- the command line: `sameway task list --where "due<=+7d" --order due`
+
 ## Quick start
 
 1. **Download** Sameway for your computer:
@@ -146,7 +172,7 @@ Funnel allowed in your tailnet's access policy; the chat says how.
 | Every page is server-rendered HTML a screen reader can read | `GET /api/look?path=/t/note`: that page as a screen reader gets it, with its structural problems; also `look` over MCP and `sameway look`. With `scripts` (and `steps`: press, type, key) it is read in a headless Chrome or Edge with its scripts run, with the real Tab order and every script error |
 | Add a file on `/t/file`, or attach one to a message: its contents become Markdown on its page, and the assistant reads them | `POST /t/file/upload` (multipart), `GET /files/<id>` for the original; a `files.convert` line in workspace.yaml names a converter per extension, a URL like docling-serve or a command with `{file}` |
 | Edit structured text as it is shown: headings, lists and links from a toolbar, the Markdown one button away | The same props route takes `html-<field>` and turns it into Markdown; `POST /api/prose` converts either way |
-| Ask for what is due this week and get it on the canvas as a list, a table, cards or a board by status, with the properties you name beside each; `/t/task?where=done=false&where=due<=+7d&order=due` is the same list as a page | A `collection` block, `GET /api/task?where=…&order=…`, `find_records` with `where`, and `sameway task list --where …` all take the same query: `field=value`, `title~garden`, `due<today`, `notes=` (empty), dates like `today`, `+7d`, `2026-10-01` |
+| Ask for what is due this week and get it on the canvas as a list, a table, cards or a board by status, with the properties you name beside each; `/t/task?where=done=false&where=due<=%2B7d&order=due` is the same list as a page | A `collection` block, `GET /api/task?where=…&order=…`, `find_records` with `where`, and `sameway task list --where …` all take the same query: `field=value`, `title~garden`, `due<today`, `notes=` (empty), dates like `today`, `+7d`, `2026-10-01` |
 | A task belongs to a project, and the task's page links to it | A field of `type: ref` with `to: project` holds the id; the store refuses an id that is not there; `project=<id>` or `project~garden` in any query |
 | A record's page is the record: its title, a few chips, its words. Not its connected records, not a count of them, not a link to them, and not a field the title and chips already said. You ask the assistant, and it puts what you want on the page — for that look, or for good | `internal/relate` works the connections out from the schema in both directions: what points here, what is set about this page, what shares this record's parent, what falls on its day. The page shows none of them; `GET /api/<type>/<id>` and `get_record` return every one with the `where` that lists it, so the assistant knows what is there and hands you `/t/<type>/<id>?show=<key>` (or `?show=fields`) when there is a reason, and `set_setting ui.show +<key>` when you want it every time |
 | Hook up the AI you already use: `sameway connect claude-code` (or cursor, windsurf, vscode, codex, claude-desktop) writes its MCP configuration in one line | The same server over HTTP at `/mcp` behind a token for ChatGPT's connectors, Claude's custom connectors or a hosted agent; every workspace carries an `AGENTS.md` that tells any agent opened in the folder how it all fits |
@@ -274,6 +300,10 @@ Tests are organised by the way a component gets used: rendered from props,
 read by an agent through its manifest, fed hostile input, used through the
 pages, the API, the CLI, the chat tools, and a real keyboard in a real
 browser. The table in [AGENTS.md](AGENTS.md) maps each to its test file.
+
+## If it is useful
+
+A star helps other people find Sameway. If something breaks, or a page is hard to use with a keyboard, a screen reader or an AI agent, please open an issue: those are treated as bugs, not requests. Want to build something? Start with a [good first issue](https://github.com/tristanlawrenceguy/sameway/labels/good%20first%20issue); adding a component is a good first contribution, and the tests tell you when it is done.
 
 Read [ARCHITECTURE.md](ARCHITECTURE.md) for the design and
 [AGENTS.md](AGENTS.md) if you are an AI contributor. MIT licensed.
