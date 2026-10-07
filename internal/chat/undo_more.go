@@ -12,9 +12,6 @@ import (
 // and still could not be taken back: a setting changed, an amount logged
 // against a habit, a batch of records made from a file or a folder.
 
-// EntryType is the content type of what is logged against a habit.
-const EntryType = "entry"
-
 // inverseMore reverses the kinds of entry inverse does not know.
 func (s *Service) inverseMore(a *store.Record) (func() (Change, error), error) {
 	action, _ := a.Fields["action"].(string)

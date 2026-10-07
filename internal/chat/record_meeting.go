@@ -17,9 +17,6 @@ import (
 // the clock's own reminder, made for this. Only a meeting someone wants
 // recorded asks; a calendar full of events stays quiet.
 
-// ReminderType is the content type of an alarm.
-const ReminderType = "reminder"
-
 // RecordAbout is the page a meeting's reminder leads to.
 func RecordAbout(eventID string) string {
 	return "/t/" + EventType + "/" + eventID + "?show=recording"

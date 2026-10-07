@@ -77,14 +77,6 @@ func fieldsOfKind(t *schema.Type, kinds ...string) []string {
 	return out
 }
 
-// many is a count and what of: 1 task, 3 tasks, 0 tasks.
-func many(n int, typeName string) string {
-	if n == 1 {
-		return "1 " + schema.Words(typeName)
-	}
-	return fmt.Sprintf("%d %s", n, schema.Plural(typeName))
-}
-
 // collectionShows is a list in a few words: how many, which, in what
 // order, and how: 3 tasks, not done, by due.
 func (s *Server) collectionShows(props map[string]any) string {
@@ -96,7 +88,7 @@ func (s *Server) collectionShows(props map[string]any) string {
 	if len(recs) == 0 {
 		return nothingYet(t.Name, where, "")
 	}
-	out := many(len(recs), t.Name)
+	out := schema.Count(len(recs), t.Name)
 	if w := query.Words(t, where); w != "" {
 		out += ", " + w
 	}
@@ -183,7 +175,7 @@ func (s *Server) calendarShows(props, out map[string]any) string {
 	if n == 0 {
 		return nothingYet(t.Name, where, t.FieldWords(field))
 	}
-	shows := many(n, t.Name) + " by " + t.FieldWords(field)
+	shows := schema.Count(n, t.Name) + " by " + t.FieldWords(field)
 	if w := query.Words(t, where); w != "" {
 		shows += ", " + w
 	}
@@ -193,7 +185,7 @@ func (s *Server) calendarShows(props, out map[string]any) string {
 // trackerShows is a tracker in a few words: how many habits, and which.
 func trackerShows(props, out map[string]any) string {
 	habits, _ := out["habits"].([]any)
-	shows := many(len(habits), HabitType)
+	shows := schema.Count(len(habits), HabitType)
 	if tags := strs(props["tags"]); len(tags) > 0 {
 		shows += " tagged " + strings.Join(tags, " or ")
 	}

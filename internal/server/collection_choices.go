@@ -4,7 +4,6 @@ import (
 	"maps"
 	"net/url"
 	"slices"
-	"strconv"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/query"
@@ -253,16 +252,4 @@ func offered(props map[string]any, at *collectionPlace, block string, limit, mat
 		}
 	}
 	return limit > fewEnough && matched > fewEnough
-}
-
-// countWords says how many match: 12 tasks, 1 task.
-func countWords(t *schema.Type, n int) string {
-	if n == 0 {
-		return ""
-	}
-	name := schema.Words(t.Name)
-	if n != 1 {
-		name = schema.Plural(t.Name)
-	}
-	return strconv.Itoa(n) + " " + name
 }

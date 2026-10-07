@@ -8,11 +8,6 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
-// CanvasType is the content type that holds the tabs. The first canvas,
-// Home, needs no record: it is the blocks whose canvas is empty. Every
-// record of this type is one more tab beside it, with blocks of its own.
-const CanvasType = "canvas"
-
 // Canvas is one tab as the pages and the prompt see it.
 type Canvas struct {
 	ID   string // "" for Home

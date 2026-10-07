@@ -16,9 +16,6 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
-// FileType is the content type a person's files become.
-const FileType = "file"
-
 // maxUpload bounds a file sent inside a JSON body, which is held whole;
 // a file sent as a form streams to disk and may be far larger (keep.go).
 const maxUpload = 64 << 20

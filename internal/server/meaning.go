@@ -114,11 +114,11 @@ func everyKind(events []any) string {
 	sort.SliceStable(kinds, func(i, j int) bool { return counts[kinds[i]] > counts[kinds[j]] })
 	out := fmt.Sprintf("every record with a date, %d in all", len(events))
 	if len(kinds) < 2 {
-		return out + ": " + many(len(events), kinds[0])
+		return out + ": " + schema.Count(len(events), kinds[0])
 	}
 	parts := make([]string, len(kinds))
 	for i, k := range kinds {
-		parts[i] = many(counts[k], k)
+		parts[i] = schema.Count(counts[k], k)
 	}
 	out += ": " + strings.Join(parts, ", ")
 	if top := kinds[0]; counts[top]*2 > len(events) {

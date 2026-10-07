@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/export"
 	"github.com/tristanlawrenceguy/sameway/internal/search"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -124,21 +125,16 @@ func siteOf(ctx context.Context) string {
 // document is a published record as search and fetch have it.
 func (s *Server) document(ctx context.Context, typ string, r *store.Record, w *chat.Writers) map[string]any {
 	t, _ := s.App.Types.Get(typ)
-	title := chat.Name(s.App.Store, t, r)
-	var lines []string
+	// Named and said from its own fields alone (schema Called, export.Text
+	// with no titles): another record, an entry's habit or a ref's target,
+	// may not be published, so it is never looked up or named.
+	title := t.Called(r.ID, r.Fields)
+	// Its writing comes first, as a search result's snippet is read.
 	meta := map[string]any{"type": typ, "updated": r.UpdatedAt.Format("2006-01-02")}
-	for _, f := range t.Shown() {
-		v := r.Fields[f.Name]
-		if v == nil || v == "" || f.Name == t.Title || f.Type == "ref" {
-			continue
-		}
-		label := f.Display()
-		if s, ok := v.(string); ok && (f.Type == "text" || f.Type == "markdown") {
-			lines = append(lines, s)
-			continue
-		}
-		lines = append(lines, fmt.Sprintf("%s: %v", label, v))
-		meta[f.Name] = v
+	facts, lines := export.Text(t, r.Fields, nil)
+	for _, f := range facts {
+		lines = append(lines, f.Name+": "+f.Value)
+		meta[f.Field.Name] = r.Fields[f.Field.Name]
 	}
 	// Added beside the shape ChatGPT expects, never in place of it: who
 	// wrote title and text, and that they are data (chat/provenance.go).

@@ -28,8 +28,8 @@ func Name(st *store.Store, t *schema.Type, rec *store.Record) string {
 	case EntryType:
 		habit, unit := "", ""
 		if id, _ := rec.Fields["habit"].(string); id != "" {
-			ht, ok := st.Types().Get("habit")
-			if h, err := st.Get("habit", id); ok && err == nil {
+			ht, ok := st.Types().Get(HabitType)
+			if h, err := st.Get(HabitType, id); ok && err == nil {
 				habit = Name(st, ht, h)
 				unit, _ = h.Fields["unit"].(string)
 			}

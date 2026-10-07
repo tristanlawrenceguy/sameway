@@ -151,27 +151,19 @@ func (s *Server) lang() string {
 }
 
 // recordMarkdown is a record as Markdown: its title (when heading says),
-// its facts as a list of names and values, then its text.
+// its facts as a list of names and values, then its writing, as every
+// record taken out as text says them (export.Text).
 func (s *Server) recordMarkdown(t *schema.Type, rec *store.Record, heading bool) string {
 	var b strings.Builder
 	if heading {
 		b.WriteString("# " + s.title(t, rec) + "\n\n")
 	}
-	text := ""
-	for _, f := range t.Shown() {
-		if f.Name == t.Title {
-			continue
-		}
-		if f.Type == "markdown" && text == "" {
-			text, _ = rec.Fields[f.Name].(string)
-			continue
-		}
-		if v := export.Value(f, rec.Fields[f.Name], s.RefTitle); v != "" && v != "no" {
-			fmt.Fprintf(&b, "- **%s:** %s\n", f.Display(), v)
-		}
+	facts, body := export.Text(t, rec.Fields, s.RefTitle)
+	for _, f := range facts {
+		fmt.Fprintf(&b, "- **%s:** %s\n", f.Name, f.Value)
 	}
-	if text != "" {
-		b.WriteString("\n" + strings.TrimSpace(text) + "\n")
+	if len(body) > 0 {
+		b.WriteString("\n" + strings.Join(body, "\n\n") + "\n")
 	}
 	return b.String()
 }

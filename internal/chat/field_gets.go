@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/export"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -54,29 +55,11 @@ func FieldGets(st *store.Store, t *schema.Type, name string) string {
 	return head + ": " + strings.Join(parts, ", ")
 }
 
-// valueWords is a stored value as a person reads it: a choice by its
-// label, yes or no, and empty for nothing.
+// valueWords is a stored value as a person reads it (export.Said): a
+// choice by its label, yes or no, a day in words, and empty for nothing.
 func valueWords(f schema.Field, v any) string {
-	switch x := v.(type) {
-	case nil:
+	if l, ok := v.([]any); v == nil || v == "" || ok && len(l) == 0 {
 		return "empty"
-	case bool:
-		if x {
-			return "yes"
-		}
-		return "no"
-	case string:
-		if x == "" {
-			return "empty"
-		}
-		if f.Type == "enum" {
-			return f.ValueLabel(x)
-		}
-		return x
-	case []any:
-		if len(x) == 0 {
-			return "empty"
-		}
 	}
-	return fmt.Sprint(v)
+	return export.Said(f, v, nil)
 }

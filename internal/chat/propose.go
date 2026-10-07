@@ -12,9 +12,6 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
-// ProposalType is the content type holding changes waiting for an answer.
-const ProposalType = "proposal"
-
 // A proposal is how the assistant asks instead of acting. It stores the tool
 // call it would have made; accepting runs that call through exactly the same
 // code the assistant's own tool calls take, so there is no second path that

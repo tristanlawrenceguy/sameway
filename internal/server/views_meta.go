@@ -35,12 +35,7 @@ func (s *Server) lede(r *http.Request, t *schema.Type, rec *store.Record) templa
 // howMany says how many there are under a listing's title, and how many
 // of them are done when the type keeps that.
 func howMany(t *schema.Type, recs []*store.Record) template.HTML {
-	n := len(recs)
-	what := schema.Plural(t.Name)
-	if n == 1 {
-		what = schema.Words(t.Name)
-	}
-	text := fmt.Sprintf("%d %s", n, what)
+	text := schema.Count(len(recs), t.Name)
 	if f := t.DoneField(); f != nil {
 		done := 0
 		for _, rec := range recs {

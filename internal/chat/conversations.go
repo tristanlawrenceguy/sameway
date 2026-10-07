@@ -11,12 +11,6 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
-// ConversationType is the content type that holds one chat: a run of
-// messages with its own history. A person can have several and move
-// between them; the one opened most recently is the one the chat shows,
-// and the only one the model is told about.
-const ConversationType = "conversation"
-
 // Current is the id of the chat that is open: the one opened most
 // recently, made when there is none yet.
 func (s *Service) Current() string {

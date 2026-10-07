@@ -5,10 +5,6 @@ import (
 	"strings"
 )
 
-// FileType is the content type a person's files become; see the server's
-// upload. The chat only reads it.
-const FileType = "file"
-
 // attachmentChars caps how much of a file's text goes to the model with
 // one message; the rest is on the file's page, which the model can name.
 const attachmentChars = 8000

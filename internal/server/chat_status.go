@@ -5,13 +5,11 @@ import (
 	"html/template"
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
-	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // A conversation's status line and its first words: what it says when a
@@ -69,17 +67,4 @@ func chatStarts(from string) string {
 	}
 	b.WriteString(`</ul>`)
 	return b.String()
-}
-
-// messageTime is when a message was sent, as its chat shows it: the time
-// alone today, the day with it before, so an old chat reads true.
-func messageTime(at time.Time) string {
-	at, now := at.Local(), time.Now()
-	if at.YearDay() == now.YearDay() && at.Year() == now.Year() {
-		return when.Clock(at)
-	}
-	if at.Year() == now.Year() {
-		return at.Format("2 Jan") + " at " + when.Clock(at)
-	}
-	return at.Format("2 Jan 2006") + " at " + when.Clock(at)
 }

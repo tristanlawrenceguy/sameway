@@ -146,10 +146,8 @@ func Ago(t, now time.Time) string {
 		return "Yesterday at " + Clock(local)
 	case n > -7:
 		return fmt.Sprintf("%d days ago", -n)
-	case local.Year() == now.Year():
-		return local.Format("2 Jan")
 	}
-	return local.Format("2 Jan 2006")
+	return Date(local, now)
 }
 
 // Full is a stored day or moment in full, for when the words above leave

@@ -25,9 +25,6 @@ import (
 
 const clockComponent = "clock"
 
-// ReminderType is the content type the clock sets and rings.
-const ReminderType = "reminder"
-
 // resolveClock fills what the block leaves to the moment: the time, what
 // is ringing, and what is coming.
 func (s *Server) resolveClock(props map[string]any) map[string]any {

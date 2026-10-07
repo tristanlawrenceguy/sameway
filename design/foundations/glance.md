@@ -89,6 +89,12 @@ still says it, though its row sits under No date.
   ([GOV.UK style guide, dates](https://guidance.publishing.service.gov.uk/writing-to-gov-uk-standards/style-guides/a-to-z-style-guide/)).
 - **A day alone has no time** and is the same day everywhere (it is kept as
   that date); an all-day event shows no time.
+- **Headings and short dates are said by `internal/when` too**: a month
+  "September 2026" (`Month`), a day over what happened on it "Today,
+  Wednesday 7 October" (`DayHeading`), a date beside a name "2 Oct", "2 Oct
+  2025" (`Date`), a message's time alone today and "5 Oct at 2pm" before
+  (`Sent`). A record taken out as text (Markdown, a published record over
+  MCP) says its days in full, "Friday 9 October 2026", by `export.Text`.
 
 ## How a time is said
 

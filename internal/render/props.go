@@ -11,6 +11,7 @@ import (
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
 	"github.com/tristanlawrenceguy/sameway/internal/prose"
+	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // Funcs are the template functions available to every component template.
@@ -47,7 +48,7 @@ var Funcs = template.FuncMap{
 	// Calendar shape, computed here because a template cannot do date maths
 	// and a month view must not need JavaScript. See calendar.go.
 	"monthWeeks":   monthWeeks,
-	"monthName":    monthName,
+	"monthName":    when.Month,
 	"weekdayNames": weekdayNames,
 	"eventsOn":     eventsOn,
 	"dayHours":     dayHours,
