@@ -66,6 +66,9 @@ func (s *Server) chatStream(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		defer s.turns.end(t)
 		rec, err := c.SendLive(ctx, canvas, text, fileID, t.add)
+		if err != nil {
+			s.forgetModel() // a key refused or a model gone shows the connect card now
+		}
 		if rec == nil && err != nil {
 			log.Printf("chat: %v", err)
 			t.add(chat.Event{Kind: "error", Text: err.Error()})
@@ -219,7 +222,7 @@ func (s *Server) messageHTML(id, from string, last bool) string {
 	if err != nil {
 		return ""
 	}
-	return string(s.component("message", s.messageProps(m, from, last)))
+	return string(s.messageShown(m, from, last)) // again.go
 }
 
 // statusFor is the status line after a reply, as the page shows it.

@@ -123,7 +123,7 @@ func (s *Server) conversationAbout(c *chat.Service, from, about, prompt string) 
 		out.TurnEnd = m.CreatedAt
 		id := "msg-" + m.ID
 		out.LatestID = id
-		view.Messages = append(view.Messages, chatMessage{ID: id, HTML: s.component("message", s.messageProps(m, from, i == len(msgs)-1))})
+		view.Messages = append(view.Messages, chatMessage{ID: id, HTML: s.messageShown(m, from, i == len(msgs)-1)}) // again.go
 	}
 	out.Count = len(msgs)
 	view.Status = s.status(msgs)
@@ -249,6 +249,9 @@ func (s *Server) chatSend(w http.ResponseWriter, r *http.Request) {
 	// The turn finishes even if the person leaves the page meanwhile; see
 	// chatStream.
 	rec, err := s.chatFor(r).SendFile(context.WithoutCancel(r.Context()), canvas, r.PostForm.Get("message"), fileID)
+	if err != nil {
+		s.forgetModel() // a key refused or a model gone shows the connect card now
+	}
 	if rec == nil {
 		// Nothing was recorded (empty message, or chat unavailable). The page
 		// already explains the latter, so just show it again.

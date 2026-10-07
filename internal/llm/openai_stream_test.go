@@ -61,7 +61,8 @@ func TestOpenAIStreamsWordsAndReassemblesToolCalls(t *testing.T) {
 	}
 }
 
-// A refusal from the model server is said in words, not read as a stream.
+// A refusal from the model server is said in words, not read as a stream:
+// what it means and what to do, the server's own words kept beside it.
 func TestOpenAIStreamSaysWhatWentWrong(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
@@ -70,7 +71,8 @@ func TestOpenAIStreamSaysWhatWentWrong(t *testing.T) {
 	defer srv.Close()
 	p := &OpenAI{BaseURL: srv.URL, Model: "m"}
 	_, err := p.Stream(context.Background(), Request{}, nil)
-	if err == nil || !strings.Contains(err.Error(), "bad key") {
-		t.Errorf("the server's words should be in the error, got %v", err)
+	f, ok := err.(*Failure)
+	if !ok || f.Kind != FailKey || f.Said != "bad key" || !strings.Contains(err.Error(), "did not accept the key") {
+		t.Errorf("a refused key is said as one, the server's words kept, got %v", err)
 	}
 }
