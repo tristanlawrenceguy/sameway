@@ -99,4 +99,5 @@ func (s *Server) routes() {
 	m.HandleFunc("PATCH /api/{type}/{id}", s.apiUpdate)
 	m.HandleFunc("DELETE /api/{type}/{id}", s.apiDelete)
 	m.HandleFunc("/api/", s.apiNotFound)
+	m.HandleFunc("POST /restart", s.restart)
 }

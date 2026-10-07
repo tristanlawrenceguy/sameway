@@ -28,6 +28,9 @@ type Fleet struct {
 	Launch func(dir, addr string) error
 	// Exit stops this server, once the response in hand is written.
 	Exit func()
+	// Restart starts this program again on this workspace and address,
+	// the version installed since, and stops this one (internal/cli).
+	Restart func() error
 }
 
 // WithFleet gives the server the means to start and stop workspaces.

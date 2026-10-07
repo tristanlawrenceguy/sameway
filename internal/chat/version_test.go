@@ -22,7 +22,7 @@ func TestUpdateSamewayAsksTheUpdaterAndSaysWhatItSaid(t *testing.T) {
 		// says how to get the new version if they want it.
 		{"a question", false, update.Outcome{Current: "0.3.0", Latest: "0.4.0", Newer: true, Says: "sameway 0.4.0 is out; this is 0.3.0"}, "sameway update"},
 		{"nothing newer", false, update.Outcome{Current: "0.4.0", Latest: "0.4.0", Says: "sameway 0.4.0 is the latest"}, "is the latest"},
-		{"an install", true, update.Outcome{Current: "0.3.0", Latest: "0.4.0", Newer: true, Installed: true, Says: update.Installed("0.4.0")}, "next start"},
+		{"an install", true, update.Outcome{Current: "0.3.0", Latest: "0.4.0", Newer: true, Installed: true, Says: update.Installed("0.4.0")}, "restarts"},
 	} {
 		svc, m := withModel(t, call("update_sameway", map[string]any{"install": c.install}))
 		asked := 0

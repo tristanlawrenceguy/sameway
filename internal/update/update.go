@@ -188,16 +188,16 @@ func (u Updater) Run(ctx context.Context, install bool) (Outcome, error) {
 		return out, err
 	}
 	out.Installed, out.Path, out.Says = true, where, Installed(rel.Version)
+	setPending(rel.Version) // pending.go
 	return out, nil
 }
 
 // Check is Run without installing anything.
 func (u Updater) Check(ctx context.Context) (Outcome, error) { return u.Run(ctx, false) }
 
-// Installed is the sentence a finished install reads as, in one place
-// because the log entry, the terminal and the assistant all say it.
+// Installed is what a finished install says, wherever it is said.
 func Installed(version string) string {
-	return "sameway " + version + " is installed; it runs from the next start"
+	return "sameway " + version + " is installed; it runs once Sameway restarts, which the page offers"
 }
 
 // AskFor is what a person does about a new version themselves, added to

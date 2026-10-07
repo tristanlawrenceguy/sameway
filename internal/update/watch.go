@@ -57,6 +57,7 @@ func (u Updater) Watch(ctx context.Context, mode func() string, every time.Durat
 					break
 				}
 				here[rel.Version] = true
+				setPending(rel.Version)
 				out.Installed, out.Path, out.Says = true, where, Installed(rel.Version)
 				tell(out, nil)
 			}
