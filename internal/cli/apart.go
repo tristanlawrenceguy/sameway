@@ -25,6 +25,26 @@ const apartEnv = "SAMEWAY_APART"
 // did; false means start it here, as before. Windows' alone (apart_windows.go).
 var goApart = func(c *ctx, dir string) (bool, error) { return false, nil }
 
+// atLogin opens a workspace as the computer starts: apart and at once on
+// Windows, where it is run from a minimised window that should go; here
+// otherwise, with no browser (internal/atlogin).
+var atLogin = func(c *ctx, dir string) error {
+	c.workspaceDir, c.args = dir, []string{"--no-browser"}
+	return c.openCmd()
+}
+
+// atLoginCmd is sameway at-login, what the sign-in entry runs.
+func (c *ctx) atLoginCmd() error {
+	dir := c.workspaceDir
+	if dir == "" {
+		var err error
+		if dir, _, err = c.yourWorkspace(); err != nil {
+			return err
+		}
+	}
+	return atLogin(c, dir)
+}
+
 // waitApart waits for the Sameway started apart to answer for dir, or to
 // end, and says which.
 func (c *ctx) waitApart(cmd *exec.Cmd, dir, logPath string) error {

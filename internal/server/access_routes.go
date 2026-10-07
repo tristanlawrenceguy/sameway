@@ -77,6 +77,7 @@ var routeAccess = map[string]routeFor{
 	"POST /workspaces/delete":          owner,
 	"POST /workspaces/restore":         owner,
 	"POST /quit":                       owner,
+	"POST /at-login":                   owner,
 	"GET /search":                      people,
 	"GET /when":                        people,
 	"GET /design":                      people,

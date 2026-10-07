@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/tristanlawrenceguy/sameway/internal/atlogin"
 )
 
 // A person who double-clicked Sameway in their Downloads folder had to find
@@ -62,13 +63,9 @@ func copyProgram(from, to string) error {
 	return os.WriteFile(to, data, 0o755)
 }
 
-// shortcut makes a Start menu entry through Windows' own Shell object; Go
-// has no way of its own to write a .lnk.
+// shortcut makes a Start menu entry (internal/atlogin writes .lnk files).
 var shortcut = func(lnk, target string) error {
-	q := func(s string) string { return "'" + strings.ReplaceAll(s, "'", "''") + "'" }
-	script := "$s=(New-Object -ComObject WScript.Shell).CreateShortcut(" + q(lnk) + ");$s.TargetPath=" + q(target) +
-		";$s.WorkingDirectory=" + q(filepath.Dir(target)) + ";$s.Description='Sameway';$s.Save()"
-	return exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", script).Run()
+	return atlogin.Shortcut(lnk, target, "", filepath.Dir(target), false)
 }
 
 // keptProgram is the program kept for the Start menu, or "" when there is
