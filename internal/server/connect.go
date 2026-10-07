@@ -45,6 +45,10 @@ type modelState struct {
 	ok      bool
 	why     string
 	choices []modelChoice
+	// woke is when Sameway last started Ollama itself (ollama_wake.go);
+	// waking says it is starting now, so nothing else is offered.
+	woke   time.Time
+	waking bool
 }
 
 const modelStateFor = 15 * time.Second
@@ -54,7 +58,11 @@ const modelStateFor = 15 * time.Second
 func (s *Server) modelProblem() (string, []modelChoice) {
 	s.model.mu.Lock()
 	defer s.model.mu.Unlock()
-	if time.Since(s.model.at) < modelStateFor {
+	fresh := modelStateFor
+	if s.model.waking {
+		fresh = 3 * time.Second // Ollama starting is seen as soon as it answers
+	}
+	if time.Since(s.model.at) < fresh {
 		if s.model.ok {
 			return "", nil
 		}
@@ -71,6 +79,7 @@ func (s *Server) modelProblem() (string, []modelChoice) {
 		why = "The AI model is not set up right (" + err.Error() + ")."
 	default:
 		ok, why = llm.Answers(ctx, s.app.Workspace.Config.LLM)
+		why = s.wakeOllama(ok, why)
 	}
 	s.model.at, s.model.ok, s.model.why, s.model.choices = time.Now(), ok, why, nil
 	if !ok {
@@ -139,7 +148,7 @@ func (s *Server) connectCard(from string) template.HTML {
 			b.WriteString(`</form><p class="sw-small sw-muted">` + esc(c.Where) + `</p></li>`)
 		}
 		b.WriteString(`</ul>`)
-	} else {
+	} else if !s.model.waking {
 		b.WriteString(`<p>Nothing was found on this computer yet. Either of these works:</p><ul class="sw-connect__ways">`)
 		b.WriteString(`<li><a class="sw-link" href="` + ollamaDownload() + `">Download Ollama</a>: it runs AI models on this computer, free, and nothing leaves it; slower than Claude, and it gets more wrong. Install it and this page sees it, then offers a free model for it.</li>`)
 		b.WriteString(`<li><a class="sw-link" href="https://claude.com/claude-code">Claude Code</a> uses your Claude account. Install it and sign in.</li>`)
@@ -257,4 +266,23 @@ func (s *Server) modelWaitState(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-store")
 	fmt.Fprint(w, s.modelWait())
+}
+
+// wakeOllama starts Ollama when the workspace uses it and it is installed
+// but not answering, at most once a minute, and says so in place of an
+// address that is not answering. Called with s.model held.
+func (s *Server) wakeOllama(ok bool, why string) string {
+	s.model.waking = false
+	if ok || !llm.IsOllama(s.app.Workspace.Config.LLM.BaseURL) {
+		return why
+	}
+	if time.Since(s.model.woke) < time.Minute {
+		s.model.waking = true
+		return "Ollama is starting. This page follows when it is ready."
+	}
+	if llm.WakeOllama() {
+		s.model.woke, s.model.waking = time.Now(), true
+		return "Ollama was not running, so Sameway is starting it. This page follows when it is ready."
+	}
+	return "Ollama is not running on this computer."
 }
