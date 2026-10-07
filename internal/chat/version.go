@@ -15,7 +15,7 @@ import (
 
 var updateTool = llm.Tool{
 	Name:        "update_sameway",
-	Description: "Look for a new version of the sameway program itself. With install true, install it when there is one; without, only say whether there is. Say what came back word for word: a new version runs from the next start, so the person has to restart it. Not for content and not for the canvas.",
+	Description: "Look for a new version of the sameway program itself. With install true, install it when there is one; without, only say whether there is. Say what came back word for word: a new version runs once Sameway restarts, which the page offers with Restart Sameway. Not for content and not for the canvas.",
 	Schema: map[string]any{"type": "object", "properties": map[string]any{
 		"install": map[string]any{"type": "boolean", "description": "true when the person asked to update or upgrade; false when they only asked whether a new version is out."},
 	}, "additionalProperties": false},

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -47,7 +46,7 @@ func (c *ctx) openCmd() error {
 	// Bind before opening anything: a browser pointed at a port nobody is
 	// listening on shows an error the person has to understand, and a port
 	// already in use is worth saying plainly rather than racing on.
-	listener, err := net.Listen("tcp", *addr)
+	listener, err := listenFor(*addr) // restart.go
 	// The port in workspace.yaml is often another program's (8080 is many
 	// a program's): the next free one will do, where none was asked for.
 	if err != nil && !asked {
@@ -92,11 +91,18 @@ func (c *ctx) openCmd() error {
 	all := HandlerFor(a, os.Getenv(a.Workspace.Config.MCP.TokenEnv), h)
 	var srv *http.Server
 	srv = &http.Server{Handler: all}
-	h.WithFleet(&server.Fleet{Launch: launchWorkspace, Exit: func() {
+	exit := func() {
 		go func() {
 			time.Sleep(500 * time.Millisecond)
 			srv.Shutdown(context.Background())
 		}()
+	}
+	h.WithFleet(&server.Fleet{Launch: launchWorkspace, Exit: exit, Restart: func() error {
+		if err := startAgain(a.Workspace.Dir, listener.Addr().String()); err != nil { // restart.go
+			return err
+		}
+		exit()
+		return nil
 	}})
 	// Reminders ring, scheduled actions run and the broker stays connected
 	// for as long as the server does, with or without a page open.
@@ -109,6 +115,9 @@ func (c *ctx) openCmd() error {
 		notes = io.Discard
 	}
 	keepSnapshots(ctx, notes, a)
+	// Kept current as serve is: a double-clicked Sameway, or one opened at
+	// sign-in, never looked for a new version at all.
+	watchUpdates(ctx, notes, a)
 	connectDevices(ctx, c.Stdout, a)
 	joinTailnet(ctx, c.Stdout, a, all, h)
 	if err := srv.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {

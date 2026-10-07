@@ -37,8 +37,8 @@ func TestInstallPutsTheNewProgramWhereTheOldOneWas(t *testing.T) {
 	if !out.Installed || out.Path != exe {
 		t.Fatalf("installed=%v path=%q, want true and %q", out.Installed, out.Path, exe)
 	}
-	if !strings.Contains(out.Says, "0.4.0 is installed") || !strings.Contains(out.Says, "next start") {
-		t.Errorf("says %q; it has to say the new version runs from the next start", out.Says)
+	if !strings.Contains(out.Says, "0.4.0 is installed") || !strings.Contains(out.Says, "restarts") || update.Pending() != "0.4.0" {
+		t.Errorf("says %q, waiting %q; it has to say the new version runs once Sameway restarts, and wait for it", out.Says, update.Pending())
 	}
 	got, err := os.ReadFile(exe)
 	if err != nil || string(got) != "new program" {
