@@ -38,6 +38,7 @@ runner in tools/a11y-runner.
 | `internal/update/` | finding, checking and installing a release of sameway itself | `update.go` |
 | `internal/bench/` | the assistant measured with a real model on everyday requests, each in a fresh workspace | `assistant_test.go` |
 | `examples/workspaces/starter/` | what `sameway init` copies | |
+| `design/brand/` | Sameway's icon in every form (svg, png, ico, icns); redraw with `go run ./tools/icons` | `tools/icons/main.go` |
 
 ## What the tests cover, by the way a component gets used
 

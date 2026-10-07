@@ -18,3 +18,4 @@ tools/a11y-runner/report/
 Thumbs.db
 .idea/
 .vscode/
+cmd/sameway/*.syso
