@@ -113,6 +113,7 @@ func (s *Server) showWorkspaces(w http.ResponseWriter, r *http.Request, problem 
 	b.WriteString(s.atLoginSection())  // at_login.go
 	b.WriteString(s.quitSection())     // quit.go
 	b.WriteString(`</section>`)
+	b.WriteString(s.phoneSection(r)) // phone_lan_page.go
 
 	others := s.others()
 	b.WriteString(`<section class="sw-stack" aria-labelledby="ws-others"><h2 id="ws-others">Other workspaces</h2>`)

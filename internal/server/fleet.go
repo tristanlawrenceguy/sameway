@@ -31,6 +31,11 @@ type Fleet struct {
 	// Restart starts this program again on this workspace and address,
 	// the version installed since, and stops this one (internal/cli).
 	Restart func() error
+	// LAN starts or stops answering on this computer's Wi-Fi address, for
+	// a paired phone (phone_lan.go); LANBase is that address while it
+	// answers, "" when it does not.
+	LAN     func(on bool) error
+	LANBase func() string
 }
 
 // WithFleet gives the server the means to start and stop workspaces.

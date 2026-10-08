@@ -31,6 +31,7 @@ type Setting struct {
 var Settings = []Setting{
 	{"name", "string", nil, "what the workspace is called, on every page"},
 	{"server.addr", "string", nil, "the address to serve on, from the next start"},
+	{"server.lan", "enum", []string{"on", "off"}, "whether Sameway also answers on this computer's Wi-Fi, for phones paired on Workspaces; turned on there, by the owner"},
 	{"llm.provider", "string", nil, "the kind of model: anthropic, openai-compatible, ollama, claude-code or command"},
 	{"llm.model", "string", nil, "the model's name"},
 	{"llm.base_url", "string", nil, "where an openai-compatible model answers"},

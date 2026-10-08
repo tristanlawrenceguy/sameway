@@ -78,6 +78,14 @@ var outward = map[string]func(now, next string, s *Service) question{
 			fmt.Sprintf("Each reminder's words would also go to %s, through the ntfy service, to whoever subscribes to it (now: %s).", next, orNone(now)),
 			"Yes, send them", "No, don't"}
 	},
+	"server.lan": func(now, next string, _ *Service) question {
+		if next != "on" {
+			return question{"Stop answering on the Wi-Fi?", "Sameway would answer on this computer only, from its next start.", "Yes, stop", "No, keep it"}
+		}
+		return question{"Answer on the Wi-Fi?",
+			"From its next start Sameway would also answer other devices on this computer's Wi-Fi. Only phones paired on Workspaces get in; anyone else on the Wi-Fi sees a page saying how to pair.",
+			"Yes, answer on the Wi-Fi", "No, this computer only"}
+	},
 	"notify.command": func(now, next string, _ *Service) question {
 		return question{"Run a program every time a reminder goes off?",
 			fmt.Sprintf("The assistant wants each reminder to also run this on your computer, as you, with access to your files: %s. A program can do things Sameway can't undo, so only say yes if you asked for this.", next),
