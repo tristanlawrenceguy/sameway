@@ -136,6 +136,7 @@ func (s *Server) showWorkspaces(w http.ResponseWriter, r *http.Request, problem 
 	}
 	b.WriteString(`</section>`)
 
+	b.WriteString(s.cloudSection()) // cloud_backup.go
 	b.WriteString(s.trashSection())
 	b.WriteString(s.newSection() + s.copySection() + s.deleteSection())
 

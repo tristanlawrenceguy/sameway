@@ -20,6 +20,7 @@ func (s *Server) routes() {
 	s.todayRoutes(m)                                       // today.go
 	m.HandleFunc("POST /workspaces/example", s.tryExample) // example.go
 	m.HandleFunc("POST /feedback", s.feedback)             // feedback.go
+	s.cloudRoutes(m)                                       // cloud_restore.go
 	m.HandleFunc("POST /t/{type}/add", s.addRecord)
 	m.HandleFunc("POST /chat/clear", s.chatClear)
 	m.HandleFunc("POST /chat/new", s.chatNew)
