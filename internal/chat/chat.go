@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/blocks"
+
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
@@ -44,12 +46,11 @@ type Service struct {
 	// its scripts run where a browser is at hand; set by the server, nil
 	// where there is none. See look.go.
 	Look func(ctx context.Context, ask map[string]any) (string, error)
-	// Check resolves a block's records the way its page will, without
-	// drawing it: what it would show, in a few words, or why it cannot be
-	// shown, in the words the page would use. Set by the server; nil where
-	// there is none, and a block is then held to its props schema only.
-	// See check.go.
-	Check func(component string, props map[string]any) (shows, problem string)
+	// Blocks is what a block is worked out from, to check one the way its
+	// page will resolve it before it is written (check.go); nil where
+	// there are no records, and a block is then held to its props schema
+	// only.
+	Blocks *blocks.Workspace
 	// Tell lets the person know, beyond the page, what was done for them
 	// while they were away: an automation's turn (automate.go).
 	Tell func(title, text, url string)

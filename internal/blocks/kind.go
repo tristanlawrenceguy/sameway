@@ -35,32 +35,32 @@ type Page struct {
 	Change bool
 }
 
-// Kind is one data-bound component: how its props resolve to what its
-// template draws, and what it shows in a few words ("3 habits",
-// "How many tasks by Status: 3 groups") once resolved. A resolved block
-// that cannot be shown says why in out["problem"], in the words its page
-// shows.
+// Kind is what Sameway knows of one component beyond its manifest, in
+// one place: for a data-bound one (a chart, a list), how its props
+// resolve to what its template draws and what it shows in a few words
+// ("3 habits", "How many tasks by Status: 3 groups"); for any, what a
+// person calls it, how tall it usually stands, and which prop holds its
+// heading. A resolved block that cannot be shown says why in
+// out["problem"], in the words its page shows. The table is kinds.go.
 type Kind struct {
+	// Resolve is nil for a component that reads no records.
 	Resolve func(w *Workspace, props map[string]any, at Place) map[string]any
 	// Shows is nil for a kind with nothing to count.
 	Shows func(w *Workspace, props, out map[string]any) string
-}
-
-// kinds are the data-bound components, by name.
-var kinds = map[string]Kind{
-	ChartComponent:   {Resolve: resolveChart, Shows: chartShows},
-	TrackerComponent: {Resolve: resolveTracker, Shows: trackerShows},
-	ClockComponent:   {Resolve: resolveClock},
-	CollectionComponent: {Resolve: resolveCollection, Shows: func(w *Workspace, props, _ map[string]any) string {
-		return w.collectionShows(props)
-	}},
-	CalendarComponent: {Resolve: resolveCalendar, Shows: (*Workspace).calendarShows},
+	// Noun is what people call it when not its name: a list, not a
+	// collection. Empty, its name in words.
+	Noun string
+	// Height is how tall it usually stands beside others, Tall or Short,
+	// from its props; nil or "" is in between.
+	Height func(props map[string]any) string
+	// Heading is the prop holding the heading it puts in the page outline.
+	Heading string
 }
 
 // Of is a component's kind, when it is a data-bound one.
 func Of(component string) (Kind, bool) {
 	k, ok := kinds[component]
-	return k, ok
+	return k, ok && k.Resolve != nil
 }
 
 // Resolve is a block's props as its template takes them: resolved by its

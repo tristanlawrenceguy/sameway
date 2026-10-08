@@ -73,6 +73,7 @@ func Load(dir string, memoryDB bool) (*App, error) {
 	sayTimes(ws)      // on the person's clock; clock.go
 	a.Chat = &chat.Service{
 		Book:         a.Records,
+		Blocks:       a.Blocks,
 		Registry:     reg,
 		HistoryLimit: ws.Config.Chat.HistoryLimit,
 		ExtraPrompt:  ws.Config.Chat.SystemPrompt,

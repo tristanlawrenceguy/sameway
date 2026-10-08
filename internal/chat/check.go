@@ -3,6 +3,8 @@ package chat
 import (
 	"fmt"
 
+	"github.com/tristanlawrenceguy/sameway/internal/blocks"
+
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 )
 
@@ -25,10 +27,10 @@ func (e *CannotShow) Error() string {
 // *CannotShow error says why it would not show anything, so nothing is
 // written. Its props are for the caller to have validated first.
 func (s *Service) CheckBlock(component string, props map[string]any) (shows string, err error) {
-	if s.Check == nil {
+	if s.Blocks == nil {
 		return "", nil
 	}
-	shows, problem := s.Check(component, props)
+	shows, problem := blocks.Check(s.Blocks, component, props)
 	if problem != "" {
 		return "", &CannotShow{Component: component, Problem: problem}
 	}

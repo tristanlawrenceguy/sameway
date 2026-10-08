@@ -2,13 +2,13 @@ package server
 
 // hooks are what the rest of the app asks of the server: a link to a
 // record in a reply reads as the record's name, the assistant can look at
-// a page, it is shown a picture when its model can see (pictures.go), and a
-// block is checked when written as its page will resolve it (check.go).
+// a page, and it is shown a picture when its model can see (pictures.go).
+// A block is checked when written by internal/blocks, which needs no
+// server.
 func (s *Server) hooks() {
 	s.app.Registry.LinkTitle = s.linkTitle
 	s.app.Chat.Look = s.lookFor
 	s.app.Chat.Picture = s.pictureFor
-	s.app.Chat.Check = s.blockCheck
 	s.app.Chat.Home = s // recordings and workspaces; see home.go
 	// A record arriving from another computer made out for this one's
 	// owner tells them (foryou.go).

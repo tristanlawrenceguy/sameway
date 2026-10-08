@@ -115,3 +115,6 @@ func withMonth(props map[string]any, month, day string) map[string]any {
 	}
 	return out
 }
+
+// noType says a type is not there, and what is (blocks.NoType).
+func (s *Server) noType(name string) string { return s.app.Blocks.NoType(name) }
