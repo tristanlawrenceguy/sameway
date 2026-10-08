@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -44,8 +44,8 @@ func TestLateTasksAreAPressFromDealtWith(t *testing.T) {
 	if got, _ := a.Store.Get("task", call.ID); !strings.Contains(got.Fields["due"].(string), "T") {
 		t.Errorf("a task with a time keeps it: %v", got.Fields["due"])
 	}
-	entries, _ := a.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
-	if err := a.Chat.UndoAs("human", entries[0].ID); err != nil {
+	entries, _ := a.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
+	if err := a.Records.UndoAs("human", entries[0].ID); err != nil {
 		t.Fatal(err)
 	}
 	if got, _ := a.Store.Get("task", passport.ID); !strings.HasPrefix(got.Fields["due"].(string), day(-1)) {

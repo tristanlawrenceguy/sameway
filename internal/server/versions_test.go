@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // A person saves from a page opened before an agent changed the record.
@@ -104,7 +104,7 @@ func TestAnAgentsChangeFromAnOldVersionIsRefused(t *testing.T) {
 	}
 
 	rec, _ := a.Store.Get("note", id)
-	old := chat.Version(rec)
+	old := records.Version(rec)
 	postJSON(t, h, http.MethodPatch, "/api/note/"+id, map[string]any{"title": "Plan D"})
 	a.Chat.Provider, a.Chat.ProviderErr = &scripted{steps: []*llm.Response{
 		toolCall("update_record", map[string]any{"type": "note", "id": id, "fields": map[string]any{"title": "Plan E"}, "version": old}),

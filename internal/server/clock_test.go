@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
@@ -21,7 +21,7 @@ import (
 // or have five more minutes.
 func TestTheClockSetsListsAndRings(t *testing.T) {
 	a, h := newApp(t)
-	blk, err := a.Store.Create(chat.BlockType, a.Chat.BlockFields(map[string]any{"component": "clock", "props": map[string]any{}}))
+	blk, err := a.Store.Create(records.BlockType, a.Chat.BlockFields(map[string]any{"component": "clock", "props": map[string]any{}}))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -3,6 +3,7 @@ package chat
 import (
 	"errors"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -21,5 +22,5 @@ func (s *Service) Offer(ask, why, yes, no string, action map[string]any) (*store
 	if r.isErr || r.change == nil {
 		return nil, errors.New(r.text)
 	}
-	return s.Store.Get(ProposalType, r.change.ID)
+	return s.Store.Get(records.ProposalType, r.change.ID)
 }

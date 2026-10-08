@@ -139,12 +139,12 @@ surface decides for itself:
     workspace/                # the workspace folder: find, load, init, snapshots, trash
     schema/                   # content type files: load, validate, JSON Schema
     store/                    # SQLite, one table per type, field stamps for sync
-    records/                  # (being added) records' domain code, moving out of chat
+    records/                  # writes, the activity log, undo, names, who asks and who wrote what
     render/                   # component registry, props validation, page layout
     relate/  query/  search/  # connections, the "which records" grammar, search
     when/  track/  trim/      # days and repeats, habit arithmetic, short titles
     prose/                    # Markdown rendered for the design system
-    chat/                     # the assistant's tool loop and tools, one write path
+    chat/                     # the conversation with a model: turns, prompts, tools
     llm/                      # provider-neutral chat: OpenAI-compatible and Anthropic
     server/                   # HTTP: HTML pages, JSON API, describe, look
     mcp/                      # MCP over stdio and HTTP, from the chat tools
@@ -169,6 +169,17 @@ surface decides for itself:
   docs/tests/                 # what each test covers, by area
   examples/workspaces/starter # what `sameway init` copies
 ```
+
+`internal/records` is the workspace's records as Sameway keeps them,
+whoever asks: who is asking and what they may do (`Visitor`), how a
+record is written and logged (`WriteAs`, `Change`, `Record`), undoing a
+change (`Book.Undo`), what a record and a change are called (`Name`,
+`Sentence`), who wrote a record's words (`Writers`, `RecordView`) and an
+agent key's pace. It sits on `store` and `schema`; the server, MCP, the
+command line and `internal/chat` all go through it, so every way in
+writes, logs, names and takes back the same way. `internal/chat` is the
+conversation with a model (turns, prompts, tools), built on a
+`records.Book`.
 
 ## 4. Workspace folder
 

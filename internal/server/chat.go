@@ -13,6 +13,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 )
 
@@ -191,7 +192,7 @@ func (s *Server) chatPage(w http.ResponseWriter, r *http.Request) {
 		s.fail(w, err)
 		return
 	}
-	body, err := s.app.Registry.RenderSlot(chat.ComponentName, map[string]any{"layout": "bare"}, convo.Body)
+	body, err := s.app.Registry.RenderSlot(records.ComponentName, map[string]any{"layout": "bare"}, convo.Body)
 	if err != nil {
 		s.fail(w, err)
 		return

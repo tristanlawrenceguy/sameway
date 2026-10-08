@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
 
@@ -112,7 +113,7 @@ func TestSendingSomewhereIsAskedAndThePersonsOwnPressIsNot(t *testing.T) {
 
 	svc := newFullService(t)
 	withSettings(svc, nil)
-	hook, err := svc.Store.Create(chat.ActionType, map[string]any{"title": "Share notes", "kind": "webhook", "url": remote.URL + "/in", "body": "all my notes"})
+	hook, err := svc.Store.Create(records.ActionType, map[string]any{"title": "Share notes", "kind": "webhook", "url": remote.URL + "/in", "body": "all my notes"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -143,13 +144,13 @@ func TestSendingSomewhereIsAskedAndThePersonsOwnPressIsNot(t *testing.T) {
 // action, or by importing one.
 func TestTheAssistantCannotAcceptItsOwnCommand(t *testing.T) {
 	svc := newFullService(t)
-	text, isErr := use(t, svc, "create_record", map[string]any{"type": chat.ActionType, "fields": map[string]any{
+	text, isErr := use(t, svc, "create_record", map[string]any{"type": records.ActionType, "fields": map[string]any{
 		"title": "Tidy", "kind": "command", "command": "rm -rf ~", "accepted": "rm -rf ~"}})
 	if !isErr || !strings.Contains(text, "accepted: is kept by Sameway") {
 		t.Errorf("writing accepted is refused, got %q", text)
 	}
-	act, _ := svc.Store.Create(chat.ActionType, map[string]any{"title": "Tidy", "kind": "command", "command": "echo hi"})
-	if text, isErr := use(t, svc, "update_record", map[string]any{"type": chat.ActionType, "id": act.ID, "fields": map[string]any{"accepted": "echo hi"}}); !isErr {
+	act, _ := svc.Store.Create(records.ActionType, map[string]any{"title": "Tidy", "kind": "command", "command": "echo hi"})
+	if text, isErr := use(t, svc, "update_record", map[string]any{"type": records.ActionType, "id": act.ID, "fields": map[string]any{"accepted": "echo hi"}}); !isErr {
 		t.Errorf("changing accepted is refused too, got %q", text)
 	}
 }

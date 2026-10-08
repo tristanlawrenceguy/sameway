@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -197,7 +198,7 @@ func (s *Service) CanvasBlocks(canvas string) []*store.Record { return s.canvasB
 func (s *Service) MeasuredOn(canvas, focus string) []Reading {
 	var out []Reading
 	if focus != "" {
-		if blk, err := s.Store.Get(BlockType, focus); err == nil {
+		if blk, err := s.Store.Get(records.BlockType, focus); err == nil {
 			out = inOrder(s.Measured.Fresh(blk.ID, "focus", MeasureVersion(blk, "")))
 		}
 		return out

@@ -10,6 +10,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -61,14 +62,14 @@ func TestUpdateRemoveAndClear(t *testing.T) {
 	if _, err := svc.Send(context.Background(), "add text"); err != nil {
 		t.Fatal(err)
 	}
-	blocks, _ := svc.Store.List(chat.BlockType, store.ListOptions{})
+	blocks, _ := svc.Store.List(records.BlockType, store.ListOptions{})
 	id := blocks[0].ID
 
 	svc.Provider = &scripted{steps: []*llm.Response{call("update_component", map[string]any{"id": id, "props": map[string]any{"content": "v2", "muted": true}})}}
 	if _, err := svc.Send(context.Background(), "make it muted"); err != nil {
 		t.Fatal(err)
 	}
-	rec, _ := svc.Store.Get(chat.BlockType, id)
+	rec, _ := svc.Store.Get(records.BlockType, id)
 	props := rec.Fields["props"].(map[string]any)
 	if props["content"] != "v2" || props["muted"] != true {
 		t.Errorf("update did not replace props: %v", props)
@@ -80,7 +81,7 @@ func TestUpdateRemoveAndClear(t *testing.T) {
 	if res := lastToolResult(m.seen[1]); !res.IsError || !strings.Contains(res.Content, "bogus is not a text prop") {
 		t.Errorf("bad update should return an error result: %+v", res)
 	}
-	rec, _ = svc.Store.Get(chat.BlockType, id)
+	rec, _ = svc.Store.Get(records.BlockType, id)
 	if rec.Fields["props"].(map[string]any)["content"] != "v2" {
 		t.Errorf("bad update must leave the block unchanged")
 	}
@@ -93,7 +94,7 @@ func TestUpdateRemoveAndClear(t *testing.T) {
 	}
 	svc.Provider = &scripted{steps: []*llm.Response{call("remove_component", map[string]any{"id": id})}}
 	svc.Send(context.Background(), "remove")
-	if n, _ := svc.Store.Count(chat.BlockType); n != 0 {
+	if n, _ := svc.Store.Count(records.BlockType); n != 0 {
 		t.Errorf("remove left %d blocks", n)
 	}
 
@@ -103,7 +104,7 @@ func TestUpdateRemoveAndClear(t *testing.T) {
 		call("clear_canvas", nil),
 	}}
 	svc.Send(context.Background(), "two then clear")
-	if n, _ := svc.Store.Count(chat.BlockType); n != 0 {
+	if n, _ := svc.Store.Count(records.BlockType); n != 0 {
 		t.Errorf("clear_canvas left %d blocks", n)
 	}
 
@@ -114,8 +115,8 @@ func TestUpdateRemoveAndClear(t *testing.T) {
 		call("clear_canvas", nil),
 	}}
 	svc.Send(context.Background(), "chat, text, then clear")
-	left, _ := svc.Store.List(chat.BlockType, store.ListOptions{})
-	if len(left) != 1 || left[0].Fields["component"] != chat.ComponentName {
+	left, _ := svc.Store.List(records.BlockType, store.ListOptions{})
+	if len(left) != 1 || left[0].Fields["component"] != records.ComponentName {
 		t.Errorf("clear_canvas should leave only the chat block, got %+v", left)
 	}
 }
@@ -133,7 +134,7 @@ func TestComponentNamesAreCaseInsensitive(t *testing.T) {
 			t.Errorf("call %d should succeed despite casing: %s", i, res.Content)
 		}
 	}
-	blocks, _ := svc.Store.List(chat.BlockType, store.ListOptions{OrderBy: "position"})
+	blocks, _ := svc.Store.List(records.BlockType, store.ListOptions{OrderBy: "position"})
 	if len(blocks) != 2 || blocks[0].Fields["component"] != "list" || blocks[1].Fields["component"] != "table" {
 		t.Errorf("stored names should be canonical: %+v", blocks)
 	}
@@ -176,7 +177,7 @@ func TestBlocksKeepInsertionOrder(t *testing.T) {
 		call("add_component", map[string]any{"component": "heading", "props": map[string]any{"text": "Third"}}),
 	)
 	svc.Send(context.Background(), "three headings")
-	blocks, _ := svc.Store.List(chat.BlockType, store.ListOptions{OrderBy: "position"})
+	blocks, _ := svc.Store.List(records.BlockType, store.ListOptions{OrderBy: "position"})
 	var got []string
 	for _, b := range blocks {
 		got = append(got, b.Fields["props"].(map[string]any)["text"].(string))
@@ -209,7 +210,7 @@ func TestToolErrorsGuideTheModel(t *testing.T) {
 			t.Errorf("call %d: want error containing %q, got %+v", c.req, c.want, res)
 		}
 	}
-	if n, _ := svc.Store.Count(chat.BlockType); n != 0 {
+	if n, _ := svc.Store.Count(records.BlockType); n != 0 {
 		t.Errorf("no block should have been saved, got %d", n)
 	}
 }
@@ -243,7 +244,7 @@ func TestHistoryLimitAndErrorFiltering(t *testing.T) {
 	for _, text := range []string{"one", "two"} {
 		svc.Send(context.Background(), text)
 	}
-	svc.Store.Create(chat.MessageType, map[string]any{"role": "error", "content": "boom"})
+	svc.Store.Create(records.MessageType, map[string]any{"role": "error", "content": "boom"})
 	svc.Send(context.Background(), "three")
 	last := m.seen[len(m.seen)-1].Messages
 	if last[0].Role != llm.RoleUser {
@@ -260,7 +261,7 @@ func TestHistoryLimitAndErrorFiltering(t *testing.T) {
 	if err := svc.Clear(); err != nil {
 		t.Fatal(err)
 	}
-	if n, _ := svc.Store.Count(chat.MessageType); n != 0 {
+	if n, _ := svc.Store.Count(records.MessageType); n != 0 {
 		t.Errorf("Clear left %d messages", n)
 	}
 }

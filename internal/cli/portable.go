@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/export"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -72,17 +72,17 @@ func (c *ctx) importCmd() error {
 	defer a.Close()
 	m := a.Mirror
 	m.DryRun = *dry
-	var batch []chat.BatchItem
+	var batch []records.BatchItem
 	rep, err := m.Import(a.Store, func(action string, rec *store.Record, before map[string]any) {
-		batch = append(batch, chat.BatchItem{Type: rec.Type, ID: rec.ID, Before: before})
+		batch = append(batch, records.BatchItem{Type: rec.Type, ID: rec.ID, Before: before})
 	})
 	if err != nil {
 		return err
 	}
 	if len(batch) > 0 {
-		chat.Record(a.Store, "human", chat.Change{Action: "synced", Component: "content",
+		records.Record(a.Store, "human", records.Change{Action: "synced", Component: "content",
 			Detail: fmt.Sprintf("from %s: %d made, %d changed, %d removed", a.Mirror.Dir, rep.Created, rep.Updated, rep.Deleted),
-			Before: chat.Batch(batch), Via: chat.ThroughCLI})
+			Before: records.Batch(batch), Via: records.ThroughCLI})
 	}
 	c.print(rep, func() {
 		if *dry {

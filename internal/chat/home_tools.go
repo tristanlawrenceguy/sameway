@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // What a person can do from a page the assistant can do when asked:
@@ -59,7 +60,7 @@ func (s *Service) homeTool(call llm.ToolCall) toolResult {
 		return toolResult{text: "the conversation is cleared; the canvas and the other chats stayed, and undo_change puts the messages back", change: &c}
 	}
 	if call.Name == "take_agent_away" {
-		c, err := TakeAgentAway(s.Store, args.Name)
+		c, err := records.TakeAgentAway(s.Store, args.Name)
 		if err != nil {
 			return fail("%v", err)
 		}

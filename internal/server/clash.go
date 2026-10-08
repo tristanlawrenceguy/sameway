@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -89,7 +89,7 @@ func (s *Server) clashChoose(w http.ResponseWriter, r *http.Request, choice stri
 		}
 	}
 	if choice == "kept" {
-		undo := s.record(r, chat.Change{Action: "updated", Component: store.ClashType, ID: c.ID, Detail: label + " of " + title + ", the page's version kept", Href: href, Before: c.Fields})
+		undo := s.record(r, records.Change{Action: "updated", Component: store.ClashType, ID: c.ID, Detail: label + " of " + title + ", the page's version kept", Href: href, Before: c.Fields})
 		s.app.Store.Update(store.ClashType, c.ID, map[string]any{"state": "kept"})
 		s.tell(w, r, outcome{Title: "The page's version is kept", Text: "The other version of " + label + " is set aside.", Undo: undo, Of: "choosing a version of " + label}, href)
 		return
@@ -105,7 +105,7 @@ func (s *Server) clashChoose(w http.ResponseWriter, r *http.Request, choice stri
 		s.failed(w, r, "Not chosen", err, href)
 		return
 	}
-	undo := s.record(r, chat.Change{Action: "updated", Component: typ, ID: id, Detail: title + detail, Href: href, Before: was.Fields})
+	undo := s.record(r, records.Change{Action: "updated", Component: typ, ID: id, Detail: title + detail, Href: href, Before: was.Fields})
 	s.app.Store.Update(store.ClashType, c.ID, map[string]any{"state": "used"})
 	o := outcome{Title: said, Undo: undo, Of: "choosing a version of " + label}
 	if choice == "both" {

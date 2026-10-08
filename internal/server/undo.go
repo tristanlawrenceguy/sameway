@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // undo reverses one activity entry for the person and returns them to the
@@ -14,14 +14,14 @@ func (s *Server) undo(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	// What is undone, said with the outcome: "Undone. You added card Plan."
 	what := ""
-	if e, err := s.app.Store.Get(chat.ActivityType, r.PathValue("id")); err == nil {
-		if said := chat.Sentence(s.app.Store, e.Fields); said != "" {
+	if e, err := s.app.Store.Get(records.ActivityType, r.PathValue("id")); err == nil {
+		if said := records.Sentence(s.app.Store, e.Fields); said != "" {
 			said = strings.TrimSpace(strings.TrimSuffix(said, "through the API"))
 			said = strings.TrimSpace(strings.TrimSuffix(said, "through the command line"))
 			what = strings.TrimSuffix(said, ".") + "."
 		}
 	}
-	if err := s.app.Chat.UndoAs("human", r.PathValue("id")); err != nil {
+	if err := s.app.Records.UndoAs("human", r.PathValue("id")); err != nil {
 		s.failed(w, r, "Not undone", err, "/")
 		return
 	}

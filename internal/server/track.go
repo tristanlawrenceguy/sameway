@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/track"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
@@ -212,7 +212,7 @@ func (s *Server) habitLog(w http.ResponseWriter, r *http.Request) {
 		s.failed(w, r, "Not logged", err, "/")
 		return
 	}
-	undo := s.record(r, chat.Change{Action: "logged", Component: HabitType, ID: h.ID, Detail: h.Name + ": " + track.Amount(amount, h.Unit), Href: "/t/" + HabitType + "/" + h.ID, Before: map[string]any{"entry": entry.ID}})
+	undo := s.record(r, records.Change{Action: "logged", Component: HabitType, ID: h.ID, Detail: h.Name + ": " + track.Amount(amount, h.Unit), Href: "/t/" + HabitType + "/" + h.ID, Before: map[string]any{"entry": entry.ID}})
 	// Said, with where it stands now and its Undo: "Water: 1 glass logged.
 	// Now 6 of 8 glasses."
 	sum := track.Summarise(track.Normal(h), s.entriesOf(h.ID), time.Now(), 1)

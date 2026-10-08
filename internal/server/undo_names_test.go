@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // An undo of a setting change logged before setting names existed reads in
@@ -12,13 +12,13 @@ import (
 // Large", not "You undid:: You set ui.text large".
 func TestOldSettingUndoReadsInWords(t *testing.T) {
 	a, h := newApp(t)
-	old, err := a.Store.Create(chat.ActivityType, map[string]any{
+	old, err := a.Store.Create(records.ActivityType, map[string]any{
 		"summary": "You set ui.text large", "actor": "human", "action": "set", "target": "ui.text", "detail": "large",
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := a.Store.Create(chat.ActivityType, map[string]any{
+	if _, err := a.Store.Create(records.ActivityType, map[string]any{
 		"summary": "You undid: You set ui.text large", "actor": "human", "action": "set", "target": "ui.text", "detail": "normal", "undoes": old.ID,
 	}); err != nil {
 		t.Fatal(err)

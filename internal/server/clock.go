@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
@@ -208,7 +208,7 @@ func (s *Server) ring(now time.Time) []*store.Record {
 			log.Printf("clock: %v", err)
 			continue
 		}
-		chat.Record(s.app.Store, "system", chat.Change{Action: "rang", Component: ReminderType, ID: rec.ID, Detail: s.title(t, rec)})
+		records.Record(s.app.Store, "system", records.Change{Action: "rang", Component: ReminderType, ID: rec.ID, Detail: s.title(t, rec)})
 		rang = append(rang, rec)
 	}
 	return rang

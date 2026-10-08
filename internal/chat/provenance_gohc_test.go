@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // TestGoHttpClientProvenanceSaysAnAgent checks that an activity entry
@@ -25,13 +25,13 @@ func TestGoHttpClientProvenanceSaysAnAgent(t *testing.T) {
 	id := noteID("Go-Client Note")
 
 	// Record an activity entry with Go-http-client as the agent.
-	chat.Record(svc.Store, chat.ActorAgent, chat.Change{
+	records.Record(svc.Store, records.ActorAgent, records.Change{
 		Action:    "created",
 		Component: "note",
 		ID:        id,
 		Detail:    "Go-Client Note",
 		By:        "Go-http-client",
-		Via:       chat.ThroughAPI,
+		Via:       records.ThroughAPI,
 	})
 
 	w := svc.Writers()

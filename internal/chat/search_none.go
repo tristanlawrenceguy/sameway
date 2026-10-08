@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -31,8 +32,8 @@ func (s *Service) noneOfKind(typeName string) string {
 	writers := s.Writers()
 	var lines []string
 	for _, rec := range recs {
-		lines = append(lines, fmt.Sprintf("%s\t%s\t%s", rec.ID, oneLine(recordTitle(s.Store, t, rec)), writers.Of(t.Name, rec).Words))
+		lines = append(lines, fmt.Sprintf("%s\t%s\t%s", rec.ID, oneLine(records.Title(s.Store, t, rec)), writers.Of(t.Name, rec).Words))
 	}
 	return fmt.Sprintf(" Nothing says it in words, but the person may mean some of these by what they are about: all %s (id, title, written by). Judge each by its title, and get_record one to read it; %s.\n<<<record text\n%s\nrecord text>>>",
-		schema.Count(len(recs), t.Name), Untrusted, strings.Join(lines, "\n"))
+		schema.Count(len(recs), t.Name), records.Untrusted, strings.Join(lines, "\n"))
 }

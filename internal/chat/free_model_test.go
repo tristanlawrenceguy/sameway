@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 func ask(t *testing.T, svc *chat.Service, tool string, args map[string]any) (string, bool) {
@@ -55,11 +56,11 @@ func TestWhatASmallModelIsToldNow(t *testing.T) {
 
 	a, _ := svc.Store.Create("task", map[string]any{"title": "Send invoice to Ana"})
 	joe, _ := svc.Store.Create("task", map[string]any{"title": "Send invoice to Joe"})
-	svc.Store.Create(chat.MessageType, map[string]any{"role": "user", "content": "Mark the invoice to Joe done"})
+	svc.Store.Create(records.MessageType, map[string]any{"role": "user", "content": "Mark the invoice to Joe done"})
 	if text, isErr := ask(t, svc, "update_record", map[string]any{"type": "task", "id": joe.ID, "fields": map[string]any{"done": true}}); isErr {
 		t.Errorf("words that single one out are not stopped: %s", text)
 	}
-	svc.Store.Create(chat.MessageType, map[string]any{"role": "user", "content": "Mark the invoice task done"})
+	svc.Store.Create(records.MessageType, map[string]any{"role": "user", "content": "Mark the invoice task done"})
 	text, isErr := ask(t, svc, "update_record", map[string]any{"type": "task", "id": a.ID, "fields": map[string]any{"done": true}})
 	if !isErr || !strings.Contains(text, "Send invoice to Joe") || !strings.Contains(text, "Ask them which") {
 		t.Fatalf("a change the words do not single out is stopped, to ask: %s", text)
@@ -76,7 +77,7 @@ func TestWhatASmallModelIsToldNow(t *testing.T) {
 // how; one sending a name the record does not have says what it has.
 func TestAnActionSaysWhenItShouldRun(t *testing.T) {
 	svc := newFullService(t)
-	svc.Store.Create(chat.MessageType, map[string]any{"role": "user", "content": "When a task tagged client is marked done, send its title to https://example.com/hook"})
+	svc.Store.Create(records.MessageType, map[string]any{"role": "user", "content": "When a task tagged client is marked done, send its title to https://example.com/hook"})
 	text, _ := ask(t, svc, "create_record", map[string]any{"type": "action", "fields": map[string]any{"title": "Tell the hook", "kind": "webhook", "url": "https://example.com/hook", "body": "{{name}} for {{for}}"}})
 	if !strings.Contains(text, "set when") || !strings.Contains(text, "nothing called {{name}}") || !strings.Contains(text, "{{title}}") {
 		t.Errorf("%s", text)

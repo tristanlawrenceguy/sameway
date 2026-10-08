@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // TestActivityDetailHeadingUsesCleanSummary checks that the H1 heading on a
@@ -17,7 +17,7 @@ func TestActivityDetailHeadingUsesCleanSummary(t *testing.T) {
 
 	// Seed an undo entry with a raw em-dash description in the summary field
 	// (the kind that titleOf returns today).
-	rec, err := a.Store.Create(chat.ActivityType, map[string]any{
+	rec, err := a.Store.Create(records.ActivityType, map[string]any{
 		"summary": "You undid: Assistant changed Pace — how changes arrive to Calmly",
 		"actor":   "human",
 		"action":  "set",
@@ -37,7 +37,7 @@ func TestActivityDetailHeadingUsesCleanSummary(t *testing.T) {
 	}
 
 	// Acceptance 3: non-undo entries with humanized text should also be clean.
-	cleanRec, err := a.Store.Create(chat.ActivityType, map[string]any{
+	cleanRec, err := a.Store.Create(records.ActivityType, map[string]any{
 		"summary": "Assistant changed Pace to Calmly",
 		"actor":   "assistant",
 		"action":  "set",
@@ -63,7 +63,7 @@ func TestAPIActivityTitleUsesCleanSummary(t *testing.T) {
 	a, h := newApp(t)
 
 	// Seed an undo entry with a raw em-dash description.
-	rec, err := a.Store.Create(chat.ActivityType, map[string]any{
+	rec, err := a.Store.Create(records.ActivityType, map[string]any{
 		"summary": "You undid: Assistant changed Pace — how changes arrive to Calmly",
 		"actor":   "human",
 		"action":  "set",
@@ -93,7 +93,7 @@ func TestAPIActivityTitleUsesCleanSummary(t *testing.T) {
 	}
 
 	// Acceptance 3: non-undo entries also get cleaned titles.
-	cleanRec, err := a.Store.Create(chat.ActivityType, map[string]any{
+	cleanRec, err := a.Store.Create(records.ActivityType, map[string]any{
 		"summary": "Assistant changed Pace to Calmly",
 		"actor":   "assistant",
 		"action":  "set",

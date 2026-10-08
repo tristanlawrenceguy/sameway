@@ -1,6 +1,11 @@
-package chat
+package records
 
-import "context"
+import (
+	"context"
+	"strings"
+
+	"github.com/tristanlawrenceguy/sameway/internal/store"
+)
 
 // Access levels a person can have in a workspace they open from another
 // device. The owner is whoever signed the machine in to Tailscale, and
@@ -68,3 +73,34 @@ func WithVia(ctx context.Context, device string) context.Context {
 
 // Via is the device a request came from, or "" for this machine.
 func Via(ctx context.Context) string { return VisitorOf(ctx).Device }
+
+// PersonByEmail is the person who signs in with this email, if any.
+func (b *Book) PersonByEmail(email string) *store.Record {
+	if _, ok := b.Store.Types().Get(PersonType); !ok || email == "" {
+		return nil
+	}
+	people, err := b.Store.List(PersonType, store.ListOptions{})
+	if err != nil {
+		return nil
+	}
+	for _, p := range people {
+		if e, _ := p.Fields["email"].(string); strings.EqualFold(strings.TrimSpace(e), email) {
+			return p
+		}
+	}
+	return nil
+}
+
+// PersonColour is the colour someone's changes are shown in, 1 to 6, from
+// their login: the same person has the same colour on every computer.
+func PersonColour(login string) int {
+	login = strings.ToLower(strings.TrimSpace(login))
+	if login == "" {
+		return 0
+	}
+	h := uint32(2166136261)
+	for i := 0; i < len(login); i++ {
+		h = (h ^ uint32(login[i])) * 16777619
+	}
+	return int(h%6) + 1
+}

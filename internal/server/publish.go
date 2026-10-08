@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
 
@@ -58,12 +58,12 @@ func splitList(list string) []string {
 }
 
 // isPublic says whether a request came from the internet.
-func isPublic(r *http.Request) bool { return chat.VisitorOf(r.Context()).Access == chat.Public }
+func isPublic(r *http.Request) bool { return records.VisitorOf(r.Context()).Access == records.Public }
 
 // Public is the workspace as the internet has it.
 func (s *Server) Public(mcp http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		r = r.WithContext(chat.WithVisitor(r.Context(), chat.Visitor{Access: chat.Public}))
+		r = r.WithContext(records.WithVisitor(r.Context(), records.Visitor{Access: records.Public}))
 		pub := s.Published()
 		switch {
 		// What is published is published to people and to AI services
@@ -130,7 +130,7 @@ func (s *Server) publicIndex(w http.ResponseWriter, r *http.Request, pub Publish
 	var b strings.Builder
 	b.WriteString(`<ul class="sw-plain sw-stack">`)
 	for id, title := range pub.Tabs {
-		fmt.Fprintf(&b, `<li>%s</li>`, s.navLink(chat.CanvasPath(id), title, false))
+		fmt.Fprintf(&b, `<li>%s</li>`, s.navLink(records.CanvasPath(id), title, false))
 	}
 	for _, t := range s.app.Types.Types {
 		if pub.Types[t.Name] {

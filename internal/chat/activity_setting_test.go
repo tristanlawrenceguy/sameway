@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // TestSummariseSettingChangeIsHumanReadable checks that a setting-change
@@ -15,7 +15,7 @@ import (
 func TestSummariseSettingChangeIsHumanReadable(t *testing.T) {
 	svc := newFullService(t)
 
-	id := chat.Record(svc.Store, "assistant", chat.Change{
+	id := records.Record(svc.Store, "assistant", records.Change{
 		Action:    "set",
 		Component: "ui.pace",
 		Detail:    "calm",
@@ -25,7 +25,7 @@ func TestSummariseSettingChangeIsHumanReadable(t *testing.T) {
 		t.Fatal("expected activity record to be created")
 	}
 
-	entry, err := svc.Store.Get(chat.ActivityType, id)
+	entry, err := svc.Store.Get(records.ActivityType, id)
 	if err != nil {
 		t.Fatalf("activity not stored: %v", err)
 	}
@@ -58,7 +58,7 @@ func TestSummariseSettingChangeNoInternalFieldNames(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		id := chat.Record(svc.Store, "assistant", chat.Change{
+		id := records.Record(svc.Store, "assistant", records.Change{
 			Action:    "set",
 			Component: tc.key,
 			Detail:    tc.value,
@@ -67,7 +67,7 @@ func TestSummariseSettingChangeNoInternalFieldNames(t *testing.T) {
 			t.Fatalf("expected activity record for %q", tc.key)
 		}
 
-		entry, _ := svc.Store.Get(chat.ActivityType, id)
+		entry, _ := svc.Store.Get(records.ActivityType, id)
 		summary, _ := entry.Fields["summary"].(string)
 
 		if containsDotPath(summary) {
@@ -81,13 +81,13 @@ func TestSummariseSettingChangeNoInternalFieldNames(t *testing.T) {
 func TestSummariseSettingChangeHumanActor(t *testing.T) {
 	svc := newFullService(t)
 
-	id := chat.Record(svc.Store, "human", chat.Change{
+	id := records.Record(svc.Store, "human", records.Change{
 		Action:    "set",
 		Component: "ui.spacing",
 		Detail:    "wide",
 	})
 
-	entry, _ := svc.Store.Get(chat.ActivityType, id)
+	entry, _ := svc.Store.Get(records.ActivityType, id)
 	summary, _ := entry.Fields["summary"].(string)
 
 	want := "You changed spacing to Wide"
@@ -103,13 +103,13 @@ func TestSummariseSettingChangeHumanActor(t *testing.T) {
 func TestSummariseNonSettingChangeIsUnchanged(t *testing.T) {
 	svc := newFullService(t)
 
-	id := chat.Record(svc.Store, "assistant", chat.Change{
+	id := records.Record(svc.Store, "assistant", records.Change{
 		Action:    "added",
 		Component: "heading",
 		Detail:    "Shopping",
 	})
 
-	entry, _ := svc.Store.Get(chat.ActivityType, id)
+	entry, _ := svc.Store.Get(records.ActivityType, id)
 	summary, _ := entry.Fields["summary"].(string)
 
 	want := "Assistant added heading Shopping"

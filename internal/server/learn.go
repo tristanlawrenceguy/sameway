@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -35,7 +35,7 @@ const (
 // for good once it has been asked for often enough. It returns the offer
 // when one was made just now, for the page to put in front of them.
 func (s *Server) noticeUse(r *http.Request, t *schema.Type, rec *store.Record, always, here []string) *store.Record {
-	if !chat.VisitorOf(r.Context()).Owner() || pageAction(r) || r.Header.Get("X-Requested-With") == "sameway-live" {
+	if !records.VisitorOf(r.Context()).Owner() || pageAction(r) || r.Header.Get("X-Requested-With") == "sameway-live" {
 		return nil
 	}
 	var offered *store.Record

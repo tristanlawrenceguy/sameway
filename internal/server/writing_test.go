@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -60,10 +60,10 @@ func TestLongerWritingIsOrganisedOnItsPages(t *testing.T) {
 	postForm(t, h, "/t/note/"+book+"/parts/move", url.Values{"part": {three}, "dir": {"up"}})
 	nt, _ := a.Types.Get("note")
 	piece, _ := a.Store.Get("note", book)
-	if parts := chat.Parts(a.Store, nt, piece); parts[1].ID != three {
+	if parts := records.Parts(a.Store, nt, piece); parts[1].ID != three {
 		t.Errorf("Filling moved up to second")
 	}
-	log, _ := a.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
+	log, _ := a.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
 	if log[0].Fields["action"] != "updated" || log[0].Fields["target_id"] != book {
 		t.Errorf("a move is one change to the piece, to undo like any other: %v", log[0].Fields)
 	}
@@ -116,7 +116,7 @@ func TestOrganisingAddsTheFieldsATypeLacks(t *testing.T) {
 		t.Fatal(text)
 	}
 	tt, _ := a.Types.Get("task")
-	if !chat.Organised(tt) {
+	if !records.Organised(tt) {
 		t.Fatal("task can be organised now")
 	}
 	if got, _ := a.Store.Get("task", small.ID); got.Fields["part_of"] != big.ID {
@@ -170,20 +170,20 @@ func TestOrganisingKeepsOrderAndUndoes(t *testing.T) {
 	nt, _ := a.Types.Get("note")
 	piece, _ := a.Store.Get("note", book)
 	var titles []string
-	for _, p := range chat.Parts(a.Store, nt, piece) {
+	for _, p := range records.Parts(a.Store, nt, piece) {
 		titles = append(titles, p.Fields["title"].(string))
 	}
 	if strings.Join(titles, ",") != "Filling,Lining,Digging" {
 		t.Errorf("parts named come first, in order, then the rest: %v", titles)
 	}
 	part, _ := a.Store.Get("note", one)
-	if mine, above := chat.Material(a.Store, nt, part); len(mine) != 0 || len(above[book]) != 1 {
+	if mine, above := records.Material(a.Store, nt, part); len(mine) != 0 || len(above[book]) != 1 {
 		t.Errorf("a part has the whole piece's material: %v %v", mine, above)
 	}
 	if text, isErr := call(map[string]any{"piece": one, "parts": []string{book}}); !isErr || !strings.Contains(text, "inside it") {
 		t.Errorf("a piece cannot go inside its own part: %s", text)
 	}
-	entries, _ := a.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true})
+	entries, _ := a.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true})
 	var last string
 	for _, e := range entries {
 		if e.Fields["action"] == "organised" {

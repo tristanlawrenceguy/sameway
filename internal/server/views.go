@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
@@ -98,7 +98,7 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	// taken back where the person lands.
 	// The log names who changed what: the people let in read it here, the
 	// internet does not, on a published list as on a published record.
-	if chat.VisitorOf(r.Context()).Access != chat.Public {
+	if records.VisitorOf(r.Context()).Access != records.Public {
 		b.WriteString(string(s.recentActivityAbout(5, "/t/"+t.Name, func(target, _ string) bool { return target == t.Name })))
 	}
 	name := capitalize(schema.Plural(t.Name))
@@ -120,7 +120,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	var b strings.Builder
 	// A question still waiting is answered here as well as under the
 	// conversation: the page of a proposal is where the two answers belong.
-	if t.Name == chat.ProposalType && rec.Fields["state"] == "pending" {
+	if t.Name == records.ProposalType && rec.Fields["state"] == "pending" {
 		b.WriteString(string(s.proposalCard(rec, "/t/"+t.Name+"/"+rec.ID)))
 	}
 	// A file's page shows the picture when it is one, and the way to the
@@ -128,7 +128,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	if t.Name == FileType {
 		b.WriteString(s.fileExtras(r, rec))
 	}
-	if t.Name == chat.EventType {
+	if t.Name == records.EventType {
 		b.WriteString(s.meetingExtras(r, rec)) // meeting.go
 	}
 	b.WriteString(s.writingOn(r, t, rec))     // writing.go
@@ -151,7 +151,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	// The Edit button the inline editor adds is named for what it edits,
 	// the record by its title, as a block on the canvas is (08-edit.js).
 	editable := editing(t, rec) // see versions.go
-	if t.Name == chat.ActivityType {
+	if t.Name == records.ActivityType {
 		editable = langOf(rec)
 	}
 	fmt.Fprintf(&b, `<div class="sw-dl-block" data-block-id="%s" data-block-label="%s"%s%s>`, rec.ID, template.HTMLEscapeString(trim.Title(s.title(t, rec))), editable, discard)
@@ -175,7 +175,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 		items = append(items, s.fieldItem(t, f, rec.Fields[f.Name], display(f, rec.Fields[f.Name])))
 	}
 	// An entry in the log says what happened, not what it stores.
-	if t.Name == chat.ActivityType {
+	if t.Name == records.ActivityType {
 		items = s.activityFacts(rec) // activity_page.go
 	}
 	if len(items) > 0 {
@@ -191,13 +191,13 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	// with everything it had into the activity log, and the listing the
 	// person lands on offers to put it back. No page asks "are you sure".
 	// An action is a button; its own page has that button.
-	if t.Name == chat.ActionType {
+	if t.Name == records.ActionType {
 		title := s.title(t, rec)
 		fmt.Fprintf(&b, `<form method="post" action="/act/%s"><input type="hidden" name="from" value="/t/%s/%s">%s</form>`, rec.ID, t.Name, rec.ID,
 			s.component("button", map[string]any{"label": "Run " + trimLabel(title), "type": "submit", "variant": "primary"}))
 	}
 	// A change in the log is taken back from its own page too.
-	if t.Name == chat.ActivityType && s.app.Chat.Undoable(rec) {
+	if t.Name == records.ActivityType && s.app.Records.Undoable(rec) {
 		fmt.Fprintf(&b, `<form method="post" action="/activity/%s/undo"><input type="hidden" name="from" value="/t/%s/%s">%s</form>`, rec.ID, t.Name, rec.ID,
 			s.component("button", map[string]any{"label": "Undo", "type": "submit", "variant": "secondary"}))
 	}
@@ -205,7 +205,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	// field is, sits under the title; Delete keeps to the quiet bar. The
 	// log is kept by Sameway: an entry is undone, never edited or deleted,
 	// on its page as over the API.
-	if t.Name != chat.ActivityType {
+	if t.Name != records.ActivityType {
 		fmt.Fprintf(&b, `<div class="sw-bar sw-quiet"><form method="post" action="/t/%s/%s/delete">%s</form></div>`,
 			t.Name, rec.ID, s.component("button", map[string]any{"label": "Delete " + schema.Words(t.Name), "type": "submit", "variant": "quiet"}))
 		b.WriteString(s.editFields(t, rec))
@@ -218,7 +218,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	// Recent activity on this page, so a deletion can be taken back where
 	// the person lands. The log is the workspace's, not the internet's: it
 	// names who changed what, so a published page leaves it out.
-	if chat.VisitorOf(r.Context()).Access != chat.Public {
+	if records.VisitorOf(r.Context()).Access != records.Public {
 		b.WriteString(string(s.recentActivityAbout(5, "/t/"+t.Name+"/"+rec.ID, func(target, id string) bool { return target == t.Name && id == rec.ID })))
 	}
 	// What this record is connected to, as a line of counts; the address

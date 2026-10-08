@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // A person who cannot see the reply arrive hears what it says: the chat's
@@ -28,8 +28,8 @@ func TestTheStatusSaysWhatTheReplySays(t *testing.T) {
 // page, so none is left waiting where nobody can see it.
 func TestAnsweringOneQuestionSetsTheOthersAside(t *testing.T) {
 	a, h := newApp(t)
-	one, _ := a.Store.Create(chat.ProposalType, map[string]any{"summary": "Remove the first?", "action": map[string]any{"tool": "remove_component", "id": "x"}, "state": "pending"})
-	a.Store.Create(chat.ProposalType, map[string]any{"summary": "Remove the second?", "action": map[string]any{"tool": "remove_component", "id": "y"}, "state": "pending"})
+	one, _ := a.Store.Create(records.ProposalType, map[string]any{"summary": "Remove the first?", "action": map[string]any{"tool": "remove_component", "id": "x"}, "state": "pending"})
+	a.Store.Create(records.ProposalType, map[string]any{"summary": "Remove the second?", "action": map[string]any{"tool": "remove_component", "id": "y"}, "state": "pending"})
 	wantStatus(t, postForm(t, h, "/proposal/"+one.ID+"/dismiss", url.Values{"from": {"/chat"}}), http.StatusSeeOther)
 	if waiting := a.Chat.Proposals(); len(waiting) != 0 {
 		t.Errorf("no question is left waiting unseen, got %d", len(waiting))

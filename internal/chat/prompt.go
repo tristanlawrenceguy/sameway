@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -99,9 +100,9 @@ func (s *Service) systemPrompt() string {
 	b.WriteString(s.canvasDigest(s.current))
 	b.WriteString(s.undoDigest())
 	b.WriteString("\nCurrent canvas, top to bottom (id, component, span, frame, tone, props):\n")
-	blocks, err := s.Store.List(BlockType, store.ListOptions{OrderBy: "position"})
+	blocks, err := s.Store.List(records.BlockType, store.ListOptions{OrderBy: "position"})
 	if err == nil {
-		blocks = OnCanvas(blocks, s.current)
+		blocks = records.OnCanvas(blocks, s.current)
 	}
 	if err != nil || len(blocks) == 0 {
 		b.WriteString("(empty)\n")

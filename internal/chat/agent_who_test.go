@@ -3,7 +3,7 @@ package chat_test
 import (
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // TestGoHttpClientIsAnAgent checks that machine-language identifiers like
@@ -19,13 +19,13 @@ func TestGoHttpClientIsAnAgent(t *testing.T) {
 		via  string
 		want string
 	}{
-		{"", chat.ThroughAPI, "An agent (through the API)"},
-		{"Go-http-client", chat.ThroughAPI, "An agent (through the API)"},
+		{"", records.ThroughAPI, "An agent (through the API)"},
+		{"Go-http-client", records.ThroughAPI, "An agent (through the API)"},
 		{"Go-http-client", "", "An agent"},
-		{"Claude Code", chat.ThroughMCP, "Claude Code (through MCP)"},
+		{"Claude Code", records.ThroughMCP, "Claude Code (through MCP)"},
 	}
 	for _, c := range cases {
-		got := chat.AgentWho(c.name, c.via)
+		got := records.AgentWho(c.name, c.via)
 		if got != c.want {
 			t.Errorf("AgentWho(%q, %q): got %q, want %q", c.name, c.via, got, c.want)
 		}

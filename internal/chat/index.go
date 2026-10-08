@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
@@ -63,7 +64,7 @@ func (s *Service) componentIndex() string {
 // typeIndex is each content type in a line: what it is, and its fields
 // by name and kind.
 func (s *Service) typeIndex() string {
-	types := s.contentTypes()
+	types := records.ContentTypes(s.Store)
 	if len(types) == 0 {
 		return ""
 	}

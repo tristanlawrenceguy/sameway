@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // run executes one tool call and records the change it made, which is the
@@ -26,10 +27,10 @@ func (s *Service) run(call llm.ToolCall) toolResult {
 	if r.change != nil {
 		// The receipt keeps the entry id, so the change can be undone from
 		// under the reply.
-		r.change.Activity = Record(s.Store, s.actor(), s.byWho(*r.change))
+		r.change.Activity = records.Record(s.Store, s.actor(), s.byWho(*r.change))
 	}
 	for i := range r.changes {
-		r.changes[i].Activity = Record(s.Store, s.actor(), s.byWho(r.changes[i]))
+		r.changes[i].Activity = records.Record(s.Store, s.actor(), s.byWho(r.changes[i]))
 	}
 	return r
 }

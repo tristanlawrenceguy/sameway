@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -63,10 +64,10 @@ func clock(at string) (int, int) {
 // RunDue runs every action whose time has come, as the system, and
 // records when. It returns the ids it ran.
 func (s *Service) RunDue(ctx context.Context, now time.Time) []string {
-	if _, ok := s.Store.Types().Get(ActionType); !ok {
+	if _, ok := s.Store.Types().Get(records.ActionType); !ok {
 		return nil
 	}
-	recs, err := s.Store.List(ActionType, store.ListOptions{})
+	recs, err := s.Store.List(records.ActionType, store.ListOptions{})
 	if err != nil {
 		return nil
 	}
@@ -77,9 +78,9 @@ func (s *Service) RunDue(ctx context.Context, now time.Time) []string {
 		}
 		// Stamp first, so a slow or failing run is not tried again every
 		// minute; the log says what happened either way.
-		s.Store.Update(ActionType, rec.ID, map[string]any{"last_run": now.UTC().Format(time.RFC3339)})
+		s.Store.Update(records.ActionType, rec.ID, map[string]any{"last_run": now.UTC().Format(time.RFC3339)})
 		if _, _, err := s.RunAs(ctx, "system", rec.ID, ""); err != nil {
-			Record(s.Store, "system", Change{Action: "failed", Detail: "scheduled action: " + err.Error()})
+			records.Record(s.Store, "system", records.Change{Action: "failed", Detail: "scheduled action: " + err.Error()})
 		}
 		ran = append(ran, rec.ID)
 	}

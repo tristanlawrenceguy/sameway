@@ -11,7 +11,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/examples"
 	"github.com/tristanlawrenceguy/sameway/internal/app"
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
@@ -98,7 +98,7 @@ func TestAWorkspaceOpensTheOthers(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer na.Close()
-	if n, _ := na.Store.Count(chat.BlockType); n != 0 {
+	if n, _ := na.Store.Count(records.BlockType); n != 0 {
 		t.Errorf("a new workspace starts blank, with none of the starter examples, got %d blocks", n)
 	}
 	if len(f.started) != 2 {
@@ -106,7 +106,7 @@ func TestAWorkspaceOpensTheOthers(t *testing.T) {
 	}
 
 	// A copy: everything here, database included.
-	a.Store.Create(chat.BlockType, a.Chat.BlockFields(map[string]any{"component": "heading", "props": map[string]any{"text": "Keep me"}}))
+	a.Store.Create(records.BlockType, a.Chat.BlockFields(map[string]any{"component": "heading", "props": map[string]any{"text": "Keep me"}}))
 	res = postForm(t, h, "/workspaces/copy", url.Values{"name": {"Home base copy"}})
 	wantStatus(t, res, http.StatusSeeOther)
 	copied := filepath.Join(filepath.Dir(a.Workspace.Dir), "home-base-copy")
@@ -115,7 +115,7 @@ func TestAWorkspaceOpensTheOthers(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer ca.Close()
-	blocks, _ := ca.Store.List(chat.BlockType, store.ListOptions{})
+	blocks, _ := ca.Store.List(records.BlockType, store.ListOptions{})
 	found := false
 	for _, b := range blocks {
 		if props, _ := b.Fields["props"].(map[string]any); props != nil && props["text"] == "Keep me" {

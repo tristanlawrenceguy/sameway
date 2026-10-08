@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -60,7 +60,7 @@ func TestAPIClearConversation(t *testing.T) {
 	}
 
 	// Acceptance 3: activity log has a "cleared" entry.
-	log, err := a.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
+	log, err := a.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
 	if err != nil {
 		t.Fatalf("could not read activity log: %v", err)
 	}
@@ -100,7 +100,7 @@ func TestAPIClearConversationEmpty(t *testing.T) {
 	}
 
 	// Activity log should still have the cleared entry.
-	log, err := a.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
+	log, err := a.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
 	if err != nil {
 		t.Fatalf("could not read activity log: %v", err)
 	}

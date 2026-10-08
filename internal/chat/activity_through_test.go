@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // ActivitySummariesNeverReferenceTheAPI checks that new activity summaries
@@ -18,12 +18,12 @@ func TestActivitySummariesNeverReferenceTheAPI(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, id, _ := chat.WriteAs(svc.Store, chat.Who{Actor: "human", Via: chat.ThroughAPI}, "updated", "note", rec.ID, map[string]any{"title": rec.Fields["title"]})
+	_, id, _ := records.WriteAs(svc.Store, records.Who{Actor: "human", Via: records.ThroughAPI}, "updated", "note", rec.ID, map[string]any{"title": rec.Fields["title"]})
 	if id == "" {
 		t.Fatal("expected activity record from WriteAs with ThroughAPI")
 	}
 
-	entry, err := svc.Store.Get(chat.ActivityType, id)
+	entry, err := svc.Store.Get(records.ActivityType, id)
 	if err != nil {
 		t.Fatalf("activity not stored: %v", err)
 	}
@@ -52,12 +52,12 @@ func TestActivitySummariesNeverReferenceTheCLI(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, id, _ := chat.WriteAs(svc.Store, chat.Who{Actor: "human", Via: chat.ThroughCLI}, "updated", "note", rec.ID, map[string]any{"title": rec.Fields["title"]})
+	_, id, _ := records.WriteAs(svc.Store, records.Who{Actor: "human", Via: records.ThroughCLI}, "updated", "note", rec.ID, map[string]any{"title": rec.Fields["title"]})
 	if id == "" {
 		t.Fatal("expected activity record from WriteAs with ThroughCLI")
 	}
 
-	entry, err := svc.Store.Get(chat.ActivityType, id)
+	entry, err := svc.Store.Get(records.ActivityType, id)
 	if err != nil {
 		t.Fatalf("activity not stored: %v", err)
 	}
@@ -78,12 +78,12 @@ func TestNonThroughViaStillSaysOn(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, id, _ := chat.WriteAs(svc.Store, chat.Who{Actor: "human", Via: "pixel-7"}, "updated", "note", rec.ID, map[string]any{"title": rec.Fields["title"]})
+	_, id, _ := records.WriteAs(svc.Store, records.Who{Actor: "human", Via: "pixel-7"}, "updated", "note", rec.ID, map[string]any{"title": rec.Fields["title"]})
 	if id == "" {
 		t.Fatal("expected activity record from WriteAs")
 	}
 
-	got, err := svc.Store.Get(chat.ActivityType, id)
+	got, err := svc.Store.Get(records.ActivityType, id)
 	if err != nil {
 		t.Fatalf("activity not stored: %v", err)
 	}

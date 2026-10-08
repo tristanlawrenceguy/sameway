@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/render/htmltest"
 )
 
@@ -26,7 +26,7 @@ func TestWhatIsInARecordIsSaidTheSameEverywhere(t *testing.T) {
 	} {
 		postJSON(t, h, http.MethodPost, "/api/task", task)
 	}
-	a.Store.Create(chat.BlockType, a.Chat.BlockFields(map[string]any{"component": "collection", "props": map[string]any{"type": "project", "label": "Projects"}}))
+	a.Store.Create(records.BlockType, a.Chat.BlockFields(map[string]any{"component": "collection", "props": map[string]any{"type": "project", "label": "Projects"}}))
 	const says = "3 tasks, 1 done"
 
 	// Its row, as short words at the row's right.

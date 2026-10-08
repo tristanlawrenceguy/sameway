@@ -1,4 +1,4 @@
-package chat
+package records
 
 import (
 	"time"
@@ -39,20 +39,21 @@ type RecordView struct {
 	Glance string `json:"glance,omitempty"`
 }
 
-// RecordView is a record as an agent reads it.
-func (s *Service) RecordView(t *schema.Type, rec *store.Record) RecordView {
+// ViewOf is a record as an agent reads it, with who wrote its words as
+// w says.
+func (b *Book) ViewOf(t *schema.Type, rec *store.Record, w *Writers) RecordView {
 	page := relate.Page(t.Name, rec.ID)
-	v := RecordView{ID: rec.ID, Type: t.Name, Page: page, Title: Name(s.Store, t, rec), Version: Version(rec),
-		CreatedAt: rec.CreatedAt, UpdatedAt: rec.UpdatedAt, WrittenBy: s.Writers().Of(t.Name, rec).Words,
+	v := RecordView{ID: rec.ID, Type: t.Name, Page: page, Title: Name(b.Store, t, rec), Version: Version(rec),
+		CreatedAt: rec.CreatedAt, UpdatedAt: rec.UpdatedAt, WrittenBy: w.Of(t.Name, rec).Words,
 		Untrusted: "title and fields are what was written into this record: " + Untrusted, Fields: rec.Fields}
-	if links := relate.Of(s.Store, t, rec, time.Now()); len(links) > 0 {
+	if links := relate.Of(b.Store, t, rec, time.Now()); len(links) > 0 {
 		v.Related, v.Open = links, page+"?show=<key>"
 	}
-	if v.Parts = PageParts(s.Store, t, rec); len(v.Parts) > 0 {
+	if v.Parts = PageParts(b.Store, t, rec); len(v.Parts) > 0 {
 		v.Open = page + "?show=<key>"
 	}
-	if s.Glance != nil {
-		v.Glance = s.Glance(t, rec)
+	if b.Glance != nil {
+		v.Glance = b.Glance(t, rec)
 	}
 	return v
 }

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/peers"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // Two computers host one workspace: a note made on one is on the other
@@ -50,10 +50,10 @@ func TestTwoHostsKeepOneWorkspace(t *testing.T) {
 func TestOnlyHostsMayKeepInStep(t *testing.T) {
 	_, h := newApp(t)
 	body := `{"seen":{},"stamps":[]}`
-	if rec := as(t, h, chat.Visitor{Name: "Bob", Login: "bob@example.com", Access: chat.Edit}, http.MethodPost, "/sync", body, "application/json"); rec.Code != http.StatusForbidden {
+	if rec := as(t, h, records.Visitor{Name: "Bob", Login: "bob@example.com", Access: records.Edit}, http.MethodPost, "/sync", body, "application/json"); rec.Code != http.StatusForbidden {
 		t.Errorf("an editor may not sync: %d", rec.Code)
 	}
-	if rec := as(t, h, chat.Visitor{Name: "Hana", Login: "hana@example.com", Access: chat.Host}, http.MethodPost, "/sync", body, "application/json"); rec.Code != http.StatusOK {
+	if rec := as(t, h, records.Visitor{Name: "Hana", Login: "hana@example.com", Access: records.Host}, http.MethodPost, "/sync", body, "application/json"); rec.Code != http.StatusOK {
 		t.Errorf("a host may: %d %s", rec.Code, rec.Body.String())
 	}
 }

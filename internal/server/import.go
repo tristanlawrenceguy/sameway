@@ -9,9 +9,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/export"
 	"github.com/tristanlawrenceguy/sameway/internal/ingest"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
@@ -184,7 +184,7 @@ func (s *Server) importFile(t *schema.Type, fileID string, m ingest.Mapping) (in
 		m = ingest.Guess(t, tb.Columns)
 	}
 	report := ingest.Import(s.app.Store, t, tb, m)
-	chat.Record(s.app.Store, "human", chat.Change{Action: "imported", Component: t.Name, Detail: fmt.Sprintf("%d %s from %s", report.Made, schema.Plural(t.Name), name), Href: "/t/" + t.Name, Before: chat.Imported(t.Name, report.IDs)})
+	records.Record(s.app.Store, "human", records.Change{Action: "imported", Component: t.Name, Detail: fmt.Sprintf("%d %s from %s", report.Made, schema.Plural(t.Name), name), Href: "/t/" + t.Name, Before: records.Imported(t.Name, report.IDs)})
 	return report, nil
 }
 

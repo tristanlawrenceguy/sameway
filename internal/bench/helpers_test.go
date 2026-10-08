@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
@@ -42,7 +42,7 @@ func has(r *store.Record, field, words string) bool {
 // block says whether a block of the component (any, when "") whose props
 // hold the words is on a canvas.
 func block(a *app.App, component, words string) string {
-	for _, b := range list(a, chat.BlockType) {
+	for _, b := range list(a, records.BlockType) {
 		if b.Fields["component"] == "chat" {
 			continue
 		}
@@ -131,7 +131,7 @@ func tagged(r *store.Record, tag string) bool {
 // on says whether a block on the canvas named holds the words in its
 // component or props.
 func on(a *app.App, canvasID, words string) bool {
-	for _, b := range list(a, chat.BlockType) {
+	for _, b := range list(a, records.BlockType) {
 		if b.Fields["canvas"] == canvasID && strings.Contains(strings.ToLower(fmt.Sprint(b.Fields["component"])+jsonOf(b.Fields["props"])), words) {
 			return true
 		}
@@ -140,7 +140,7 @@ func on(a *app.App, canvasID, words string) bool {
 }
 
 func blockOf(t *testing.T, a *app.App, component string, props map[string]any) string {
-	r, err := a.Store.Create(chat.BlockType, a.Chat.BlockFields(map[string]any{"component": component, "props": props}))
+	r, err := a.Store.Create(records.BlockType, a.Chat.BlockFields(map[string]any{"component": component, "props": props}))
 	if err != nil {
 		t.Fatal(err)
 	}

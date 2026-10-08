@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -47,7 +47,7 @@ func (s *Server) apiArrange(w http.ResponseWriter, r *http.Request) {
 // layoutOf is how a block's tab reads after a write through the API, for
 // the answer: the same line the assistant's tools end with.
 func (s *Server) layoutOf(r *http.Request, rec *store.Record) string {
-	if r.PathValue("type") != chat.BlockType || rec == nil {
+	if r.PathValue("type") != records.BlockType || rec == nil {
 		return ""
 	}
 	canvas, _ := rec.Fields["canvas"].(string)

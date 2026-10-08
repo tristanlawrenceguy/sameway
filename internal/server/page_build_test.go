@@ -8,15 +8,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 // blockPropsOf reads a block's stored props.
 func blockPropsOf(t *testing.T, s *store.Store, id string) map[string]any {
 	t.Helper()
-	rec, err := s.Get(chat.BlockType, id)
+	rec, err := s.Get(records.BlockType, id)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -186,9 +186,9 @@ func TestHomeSkipLinkTargetExists(t *testing.T) {
 	if target, there := skipTarget(); target == "" || !there {
 		t.Fatalf("with the chat on Home, the link leads to its latest message: %q %v", target, there)
 	}
-	blocks, _ := a.Store.List(chat.BlockType, store.ListOptions{})
+	blocks, _ := a.Store.List(records.BlockType, store.ListOptions{})
 	for _, b := range blocks {
-		if b.Fields["component"] == chat.ComponentName {
+		if b.Fields["component"] == records.ComponentName {
 			wantStatus(t, postForm(t, h, "/canvas/"+b.ID+"/delete", url.Values{}), http.StatusSeeOther)
 		}
 	}
@@ -202,7 +202,7 @@ func TestALookerIsNotOfferedKeepOrRename(t *testing.T) {
 	a, h := newApp(t)
 	seedTasks(t, a)
 	id := addCollection(t, h, map[string]any{"type": "task", "label": "Tasks", "controls": true})
-	v := chat.Visitor{Login: "vic@example.com", Name: "Vic", Access: chat.View}
+	v := records.Visitor{Login: "vic@example.com", Name: "Vic", Access: records.View}
 	page := as(t, h, v, http.MethodGet, "/?c-"+id+"-done=false", "", "").Body.String()
 	if !strings.Contains(page, "Showing: not done") {
 		t.Fatalf("a looker still narrows: %.2000s", page)

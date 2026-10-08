@@ -3,13 +3,13 @@ package chat_test
 import (
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // Sentence resolves raw type identifiers in an activity entry's detail to
 // human-readable display names when the target is "type". This covers
 // acceptance items 1 and 2: API summaries must say "System added type Test Type",
-// not "System added type test_type". The fix lives in chat/names.go where
+// not "System added type test_type". The fix lives in records/names.go where
 // Sentence() calls schema.DisplayName for type-setting detail.
 func TestSentenceResolvesTypeDetail(t *testing.T) {
 	for _, c := range []struct {
@@ -30,7 +30,7 @@ func TestSentenceResolvesTypeDetail(t *testing.T) {
 		},
 	} {
 		st := newFullService(t).Store
-		got := chat.Sentence(st, c.fields)
+		got := records.Sentence(st, c.fields)
 		if got != c.want {
 			t.Errorf("Sentence(%v) = %q, want %q", c.fields, got, c.want)
 		}

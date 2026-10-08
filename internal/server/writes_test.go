@@ -11,12 +11,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
-// A record is written one way from every way in: chat.WriteAs, which
+// A record is written one way from every way in: records.WriteAs, which
 // writes, keeps what was there and logs it as whoever did it. A handler
 // that writes the store itself has to do all three and can forget one, as
 // the API's file without content once forgot the log, so it could never
@@ -81,7 +81,7 @@ func TestRecordsAreWrittenOneWay(t *testing.T) {
 							key := filepath.Base(f) + " " + fn.Name.Name
 							found[key] = true
 							if writesTheStoreItself[key] == "" {
-								t.Errorf("%s writes the store itself: write records through chat.WriteAs, or say here why it does not", key)
+								t.Errorf("%s writes the store itself: write records through records.WriteAs, or say here why it does not", key)
 							}
 						}
 					}
@@ -104,13 +104,13 @@ func TestEveryWayInLeavesTheSameTrail(t *testing.T) {
 	a, h := newApp(t)
 	trail := func(way, id, action, actor string) {
 		t.Helper()
-		entries, _ := a.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true})
+		entries, _ := a.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true})
 		for _, e := range entries {
 			if e.Fields["target_id"] == id && e.Fields["action"] == action {
 				if e.Fields["actor"] != actor {
 					t.Errorf("%s: %s is logged as %v's, not %s's", way, action, e.Fields["actor"], actor)
 				}
-				if !a.Chat.Undoable(e) {
+				if !a.Records.Undoable(e) {
 					t.Errorf("%s: %s cannot be undone", way, action)
 				}
 				return
@@ -132,18 +132,18 @@ func TestEveryWayInLeavesTheSameTrail(t *testing.T) {
 	var made map[string]any
 	decode(t, postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "From the API"}), &made)
 	id, _ = made["id"].(string)
-	trail("the API", id, "created", chat.ActorAgent)
+	trail("the API", id, "created", records.ActorAgent)
 	postJSON(t, h, http.MethodPatch, "/api/note/"+id, map[string]any{"title": "Changed"})
-	trail("the API", id, "updated", chat.ActorAgent)
+	trail("the API", id, "updated", records.ActorAgent)
 	do(t, h, http.MethodDelete, "/api/note/"+id, nil, "")
-	trail("the API", id, "deleted", chat.ActorAgent)
+	trail("the API", id, "deleted", records.ActorAgent)
 	up := postJSON(t, h, http.MethodPost, "/api/file/upload", map[string]any{"filename": "later.pdf"})
 	var stub map[string]any
 	decode(t, up, &stub)
 	if up.Code != http.StatusCreated {
 		t.Fatalf("a file without content: %d %v", up.Code, stub)
 	}
-	trail("the API's file without content", stub["id"].(string), "created", chat.ActorAgent)
+	trail("the API's file without content", stub["id"].(string), "created", records.ActorAgent)
 
 	// The assistant.
 	a.Chat.Provider, a.Chat.ProviderErr = &scripted{steps: []*llm.Response{

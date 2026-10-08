@@ -1,4 +1,4 @@
-package chat
+package records
 
 // The content types Sameway itself reads and writes by name, in one place.
 // They were declared beside whatever used them first, and the server and
@@ -43,3 +43,8 @@ const (
 	// SuggestionType is a suggested change.
 	SuggestionType = "suggestion"
 )
+
+// ComponentName is the component that renders the conversation. It is a
+// block like any other, so it can be moved, restyled, or removed; the
+// server fills it with the live transcript when it renders the canvas.
+const ComponentName = "chat"

@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // TestSummariseRecordUsesWordTrimming checks that Summarise for the "record"
@@ -15,7 +15,7 @@ func TestSummariseRecordUsesWordTrimming(t *testing.T) {
 	const longTitle = "This is a note with a very long multi-word title that exceeds six words and should be trimmed"
 	wantTrimmed := "This is a note with a…"
 
-	got := chat.Summarise("record", map[string]any{
+	got := records.Summarise("record", map[string]any{
 		"type":   "note",
 		"record": longTitle,
 	})
@@ -39,7 +39,7 @@ func TestSummariseRecordUsesWordTrimming(t *testing.T) {
 // TestSummariseShortRecordNotTrimmed checks that records with six or fewer
 // words in the title are not trimmed by Summarise.
 func TestSummariseShortRecordNotTrimmed(t *testing.T) {
-	got := chat.Summarise("record", map[string]any{
+	got := records.Summarise("record", map[string]any{
 		"type":   "note",
 		"record": "Call the dentist",
 	})

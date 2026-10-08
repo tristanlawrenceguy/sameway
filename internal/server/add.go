@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
 
@@ -40,7 +40,7 @@ func (s *Server) addRecord(w http.ResponseWriter, r *http.Request) {
 	if name := titleField(t); name != "" {
 		fields[name] = "New " + schema.Words(t.Name)
 	}
-	rec, act, err := chat.WriteAs(s.app.Store, s.who(r), "created", t.Name, "", fields)
+	rec, act, err := records.WriteAs(s.app.Store, s.who(r), "created", t.Name, "", fields)
 	if err != nil {
 		s.failed(w, r, "Not added", err, list)
 		return
@@ -58,13 +58,13 @@ func (s *Server) discard(w http.ResponseWriter, r *http.Request) {
 	t, rec := r.PathValue("type"), r.PathValue("id")
 	back := "/t/" + t + "/" + rec
 	got, err := s.app.Store.Get(t, rec)
-	entry, err2 := s.app.Store.Get(chat.ActivityType, r.FormValue("added"))
+	entry, err2 := s.app.Store.Get(records.ActivityType, r.FormValue("added"))
 	if err != nil || err2 != nil || !got.UpdatedAt.Equal(got.CreatedAt) ||
 		entry.Fields["action"] != "created" || entry.Fields["target_id"] != rec {
 		http.Redirect(w, r, back, http.StatusSeeOther)
 		return
 	}
-	if err := s.app.Chat.UndoAs("human", entry.ID); err != nil {
+	if err := s.app.Records.UndoAs("human", entry.ID); err != nil {
 		http.Redirect(w, r, back, http.StatusSeeOther)
 		return
 	}
