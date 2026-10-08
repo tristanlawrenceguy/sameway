@@ -15,6 +15,7 @@ import (
 // without anything else changing.
 
 var settingOp = Op{Title: "Change a setting", Traits: Traits{Idempotent: true},
+	Access: ForOwner,
 	Tool: llm.Tool{
 		Name:        "set_setting",
 		Description: "Change one setting of this workspace when the person asks for it, and say so. Most are reversible and happen at once; the few that send the conversation or a secret somewhere else, let a program run, or open the workspace to others cannot be taken back, so calling this puts the question to the person for you and nothing changes until they say yes. The settings: " + workspace.SettingsDoc() + ". A setting that holds a key or a token takes the NAME of the environment variable that holds it, never the key.",

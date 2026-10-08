@@ -12,6 +12,7 @@ import (
 // searchOp names the kinds the search can be narrowed to as they are now,
 // so a kind added while the workspace runs is offered at once.
 var searchOp = Op{Title: "Search everything", Traits: Traits{ReadOnly: true, Idempotent: true},
+	Access: ForViewers,
 	Tool: llm.Tool{
 		Name: "search",
 		Description: "Find anything the person has by the words in it: every record of every content type and every block on the canvas, with where each is. Use it before saying something does not exist, and to find the id of a thing they mention. " +

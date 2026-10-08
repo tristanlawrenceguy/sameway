@@ -17,10 +17,14 @@ import (
 // else on the network, with only the token, there is nobody to go by, so
 // it reads and does not change.
 
-// readTools are what a connection from elsewhere may call.
-var readTools = map[string]bool{"describe": true, "find_records": true, "get_record": true, "search": true}
-
 type offKey struct{}
+
+// readTool says whether a connection from elsewhere may call a tool:
+// describe, and the ops that are for whoever may look (chat.ForViewers).
+func readTool(name string) bool {
+	op, ok := chat.OpFor(name)
+	return name == "describe" || ok && op.Access == chat.ForViewers
+}
 
 // offMachine says whether a request came from somewhere other than this
 // computer.
@@ -99,8 +103,8 @@ func (s *Server) listFor(ctx context.Context) []tool {
 		return all
 	}
 	allowed := map[string]bool{}
-	for k := range readTools {
-		allowed[k] = true
+	for _, t := range all {
+		allowed[t.Name] = readTool(t.Name)
 	}
 	if r.public {
 		// What is published, type by type, and search and fetch across

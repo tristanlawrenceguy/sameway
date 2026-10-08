@@ -15,6 +15,7 @@ type Op struct {
 	llm.Tool        // its name, what it does and what it takes, as the model reads them
 	Title    string // what it does, as a person reads it: "Make a record"
 	Traits
+	Access Access
 	// Offered says whether this workspace offers it, and fills in what its
 	// schema names from the workspace (its content types, its kinds) on
 	// the copy it is given; nil is always.
@@ -28,6 +29,16 @@ type Op struct {
 // it back), whether calling it twice is the same as once, and whether it
 // reaches beyond this workspace.
 type Traits struct{ ReadOnly, Destructive, Idempotent, OpenWorld bool }
+
+// Access is who may have an op done: the pages, the assistant, MCP and
+// the API all go by it.
+type Access int
+
+const (
+	ForEditors Access = iota // whoever may change the workspace
+	ForViewers               // whoever may look at it: the op only reads
+	ForOwner                 // the workspace's owner alone
+)
 
 // registry is every op, in the order the model is given them (the order
 // matters to a model here, which reads again only from where a turn's

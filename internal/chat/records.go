@@ -40,6 +40,7 @@ func typed(s *Service, t *llm.Tool) bool {
 
 var recordOps = []Op{
 	{Title: "Bring records in from a file",
+		Access: ForOwner,
 		Tool: llm.Tool{Name: "import_records", Description: "Make records from a file the person added: a CSV with a header row, a vCard (.vcf) of contacts, or a mailbox (.mbox) of mail. Each column is matched to a field by name; a column for an email, phone or name links each row to its person, made when new. Use it when the person attaches such a file and wants its contents as records, rather than creating them one by one. Returns how many were made.",
 			Schema: obj(map[string]any{
 				"type":    typeArg,
@@ -61,6 +62,7 @@ var recordOps = []Op{
 				"version": map[string]any{"type": "string", "description": "The version get_record gave, when you read the record first: if it has changed since, nothing is written and you are shown it as it is now, to change again."},
 			}, "type", "id", "fields")}, Offered: typed},
 	{Title: "Find records", Traits: Traits{ReadOnly: true, Idempotent: true},
+		Access: ForViewers,
 		Tool: llm.Tool{Name: "find_records", Description: "List records of a type to get their ids: all of them, those holding every word of the query in their title or words, or those matching where. The same where and order a collection block takes.",
 			Schema: obj(map[string]any{
 				"type":  typeArg,
@@ -70,6 +72,7 @@ var recordOps = []Op{
 				"limit": map[string]any{"type": "integer", "description": "How many to list. Defaults to 10."},
 			}, "type")}, Offered: typed},
 	{Title: "Read a record", Traits: Traits{ReadOnly: true, Idempotent: true},
+		Access: ForViewers,
 		Tool: llm.Tool{Name: "get_record", Description: "Read one record with every field, by id: a note's body, a file's text. Use it before answering from what a record says. It also returns related: everything the record is joined to — what points at it, what is set about it, what sits beside it under the same parent, what else falls on its day — each with a count and the where that lists them. Their page shows only the counts. When you have a reason to put one in front of the person, send them the page with that connection open: /t/<type>/<id>?show=<key>.",
 			Schema: obj(map[string]any{
 				"type": typeArg,
