@@ -1,0 +1,50 @@
+{
+  "name": "health",
+  "description": "Health and habits: the habits kept, the appointments coming up, and the reminders.",
+  "use": {
+    "when": "the person wants to keep up habits and keep track of appointments.",
+    "not": "a single reminder, which is a reminder record.",
+    "with": "each habit as a habit record and each appointment as an event, made with create_record."
+  },
+  "blocks": [
+    {
+      "key": "title",
+      "component": "heading",
+      "props": {
+        "text": "Health",
+        "level": 2
+      },
+      "span": 12,
+      "frame": "bare"
+    },
+    {
+      "key": "habits",
+      "component": "tracker",
+      "props": {},
+      "span": 12
+    },
+    {
+      "key": "appointments",
+      "component": "calendar",
+      "props": {
+        "type": "event",
+        "detail": "brief",
+        "caption": "Appointments"
+      },
+      "span": 6
+    },
+    {
+      "key": "reminders",
+      "component": "collection",
+      "props": {
+        "type": "reminder",
+        "order": "at",
+        "show": [
+          "at"
+        ],
+        "label": "Reminders"
+      },
+      "span": 6
+    }
+  ]
+}

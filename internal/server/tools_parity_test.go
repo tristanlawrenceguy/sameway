@@ -68,6 +68,7 @@ var pageActionTools = map[string]string{
 	"/workspaces/start":           "open_workspace",
 	"/workspaces/restore":         "restore_workspace",
 	"/workspaces/delete":          "a person's: deleting a whole workspace is its owner's",
+	"/templates/use":              "add_arrangement",
 	"/quit":                       "a person's: stopping Sameway ends the assistant's own turn",
 	"/bring":                      "import_records",
 	"/calendars/add":              "a person's: a calendar link is their own secret, pasted by them",
