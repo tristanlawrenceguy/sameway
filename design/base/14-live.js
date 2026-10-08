@@ -85,7 +85,7 @@
   // fetches the page as it now is and moves what changed into place, with
   // a transition. A block landing on the main canvas is shown at once,
   // above; this brings the rest.
-  function refreshSoon(delay) { if (window.swRefresh) window.swRefresh(delay); }
+  function refreshSoon(delay) { sw.refresh(delay); }
 
   function parse(frame) {
     var event = "message", data = "";
@@ -99,7 +99,7 @@
   }
 
   function statusText(form, message) {
-    if (window.swStatus) window.swStatus(document.getElementById(form.getAttribute("data-busy-target")), null, message, "");
+    sw.status(document.getElementById(form.getAttribute("data-busy-target")), null, message, "");
   }
 
   // send runs a turn on the page: the one the form asks for, or, with a

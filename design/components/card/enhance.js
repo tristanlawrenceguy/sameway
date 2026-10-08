@@ -8,23 +8,17 @@
 // the title alone is the link, a whole target.
 (function () {
   "use strict";
-  function arm(root) {
-    (root || document).querySelectorAll("[data-component=card]").forEach(function (card) {
-      var link = card.querySelector(".sw-card__title a");
-      if (!link || card._armed) return;
-      card._armed = true;
-      card.setAttribute("data-press", "");
-      var down = 0;
-      card.addEventListener("pointerdown", function () { down = Date.now(); });
-      card.addEventListener("click", function (e) {
-        if (e.target.closest("a, button, input, select, textarea, label, summary")) return;
-        if (Date.now() - down > 400 || String(window.getSelection() || "")) return;
-        if (e.ctrlKey || e.metaKey) window.open(link.href, "_blank");
-        else link.click();
-      });
+  sw.arm("[data-component=card]", function (card) {
+    var link = card.querySelector(".sw-card__title a");
+    if (!link) return;
+    card.setAttribute("data-press", "");
+    var down = 0;
+    card.addEventListener("pointerdown", function () { down = Date.now(); });
+    card.addEventListener("click", function (e) {
+      if (e.target.closest("a, button, input, select, textarea, label, summary")) return;
+      if (Date.now() - down > 400 || String(window.getSelection() || "")) return;
+      if (e.ctrlKey || e.metaKey) window.open(link.href, "_blank");
+      else link.click();
     });
-  }
-  function init() { arm(document); }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
-  document.addEventListener("sw:refresh", init);
+  });
 })();

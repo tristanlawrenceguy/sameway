@@ -68,12 +68,12 @@
     // say puts words on the status line, at most every GAP, the newest
     // words winning, each only once a turn.
     function put(words) {
-      if (!status || said[words] || !window.swStatus) return;
+      if (!status || said[words]) return;
       said[words] = true;
       last = Date.now();
       // After fifteen quiet seconds the line says it is still at it.
       status.setAttribute("data-still", "Still " + words.charAt(0).toLowerCase() + words.slice(1));
-      window.swStatus(status, "working", words, "");
+      sw.status(status, "working", words, "");
     }
     function say(words) {
       if (said[words]) return;
