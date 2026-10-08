@@ -182,8 +182,8 @@ func (s *Server) cloudSection() string {
 	} else {
 		b.WriteString(`<p>The daily copies stay on this computer. With OneDrive, Dropbox, iCloud Drive or Google Drive installed, a copy can go there too.</p>`)
 	}
-	b.WriteString(`<h3>Start from a copy</h3><form method="post" action="/workspaces/from-copy" enctype="multipart/form-data" class="sw-stack"><label for="from-copy">A copy Sameway made</label><input type="file" id="from-copy" name="file" accept=".zip" required>` +
-		string(s.component("button", map[string]any{"label": "Bring it back", "type": "submit", "variant": "secondary"})) + `</form></section>`)
+	b.WriteString(`<h3>Start from a copy</h3>` + string(s.component("upload", map[string]any{"label": "Bring it back", "action": "/workspaces/from-copy", "from": "/workspaces", "id": "from-copy",
+		"hint": "A zip Sameway made, from the Sameway copies folder in your cloud folder. It becomes a workspace beside this one."})) + `</section>`)
 	return b.String()
 }
 
