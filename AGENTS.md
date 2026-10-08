@@ -5,7 +5,7 @@ This file is for you. Humans should read README.md and CONTRIBUTING.md.
 ## Run and verify
 
 ```bash
-go run ./tools/check          # file-size lint, component folders, tokens
+go run ./tools/check          # function and file size, component folders, tokens
 go test ./...                 # includes golden output for every component
 go vet ./... && gofmt -l .    # both must be clean
 go build -o bin/sameway ./cmd/sameway
@@ -40,7 +40,7 @@ runner in tools/a11y-runner.
 | `examples/workspaces/starter/` | what `sameway init` copies | |
 | `design/brand/` | Sameway's icon in every form (svg, png, ico, icns, and the app's 192, 512 and square sizes); redraw with `go run ./tools/icons`; every page names /manifest.webmanifest (a standalone window, its icons) and a touch icon, so a browser installs Sameway as an app, which Help offers where it can (32-install.js) | `tools/icons/main.go`, `internal/server/app_install_test.go` |
 
-## What the tests cover, by the way a component gets used
+## What the tests cover
 
 | Way of using it | Test | Run |
 |---|---|---|
@@ -141,14 +141,33 @@ runner in tools/a11y-runner.
 | A late task is a press from dealt with | on Today each task has Done and Tomorrow beside it, and a late one Today too: a press each, logged, Undo in the message; with two or more late, the count and the oldest day, and Move all to today, one change (rescheduled, a batch) that one Undo takes back; a task with a time keeps its time, one without stays a day | `internal/server/today_nudge_test.go` |
 | No machine words reach a person | every page of a workspace filled through the API and the assistant (lists, records, the home canvas with a list, a calendar, a chart and a tracker, search, the log, help, workspaces), as its text and every name, label and description a screen reader says, holds no machine date, record id, field name as stored or title-cased (created_at, Created At), choice as stored where it has a label, library name (Go-http-client), exit status, schema word, nil or NaN, and no two values with nothing between them ("This week 1 4 Oct", "Activity8 changes"); a count says what it counts, one or many; an agent is named by its key or X-Sameway-Agent, never its User-Agent, which names a library; a program's error is said as what it said about the trouble (chat.SanitizeError), not its name, exit status or a path; a search hit's snippet holds no record's id, keeps each value apart, and is shown only when the words are in it | `internal/server/machine_words_test.go`, `internal/chat/plain_error_test.go` |
 | Every page and the site as a whole | every component check on every page, focus hidden on a phone either way up, live regions that can announce, one place per link name, no two headings or controls alike, titles, the same navigation everywhere, forms sent empty say what is wrong | `tools/a11y-runner/site.mjs` (CI) |
+The table of ways Sameway gets used, each with what is checked and where, is
+split by area so parallel changes rarely touch the same file:
+
+- [Components](docs/tests/components.md): each component on its own: rendered from props, read by its manifest, given hostile props, overridden, and seen, heard and used by keyboard in a real browser.
+- [Canvas and tabs](docs/tests/canvas.md): the canvas the model builds: blocks, tabs, layout and its measuring, and blocks checked or set up wrong.
+- [Pages people read](docs/tests/pages.md): the HTML pages a person reads and uses: what a page says and leaves out, lists narrowed and sorted, editing, and no machine words.
+- [Outside agents](docs/tests/agents.md): agents that use Sameway from outside: the JSON API, MCP, the CLI, look, keys, and doing what a page does.
+- [The assistant](docs/tests/assistant.md): the model inside Sameway: its tools, its prompt, how it is measured, and what it asks before doing.
+- [People and computers together](docs/tests/together.md): who may open a workspace and how copies on several computers, a phone and the internet stay in step.
+- [The program on a computer](docs/tests/program.md): starting, updating, first run, backups, undo, reminders and telling the makers.
+- [Records in and out](docs/tests/data.md): records coming in from files and other apps, going out again, repeating, holding other records, writing, and actions that run on changes.
+- [Recordings and meetings](docs/tests/recordings.md): recordings played, written down and said by who spoke, and meetings recorded and written up.
 
 When you add a component, the contract and enum-coverage tests tell you what
-is missing. When you add a way to use the system, add a row here and a test.
+is missing. When you add a way to use the system, add a row and a test to the
+area it belongs to, or a new file in `docs/tests/` linked here.
 
 ## Rules the tooling enforces
 
-- **300 lines per file.** `tools/check` fails above it. Read the whole file
-  before editing; split a file rather than growing it.
+- **Short functions, files split by topic.** `tools/check` fails a non-test
+  Go function over 80 lines (count from `func` to its closing brace) and a
+  file over 400 lines; a file over 300 is printed as a warning. Long
+  functions from before the rule are listed in `tools/check/debt.go` with
+  their length and may only shrink; when you shorten one, lower or remove
+  its entry. A new file named `*_more.go`, `*_extra.go` or `*_helpers.go`
+  fails: when a file grows, give the function or topic that grew a file
+  named for what it does. Read the whole file before editing.
 - **Golden examples.** A component template must reproduce every example in
   its manifest byte for byte. After changing a template or manifest run
   `UPDATE_GOLDEN=1 go test ./internal/render/` and commit the example files.
@@ -177,43 +196,8 @@ is missing. When you add a way to use the system, add a row here and a test.
 
 ## What agents need: the checklist
 
-Beside the rules for people, the 22 checks from the agent accessibility
-audit (2026-09-28): a browser agent finds controls by role and name in the
-accessibility tree, a screenshot agent sees only what is drawn, a tool agent
-reads MCP and the API. Where each is checked: `agent` is
-`tools/a11y-runner/agent.mjs`, `site` is `site.mjs`, `look` is `/api/look`'s
-problems, `go` a Go test; `known` is reported by agent.mjs but fails only
-with `--strict` until its fix lands; `review` and `not yet` are yours to hold.
-
-| # | Check | Where |
-|---|---|---|
-| | **Perceive** | |
-| 1 | Every control named, in the browser's own tree | agent, look |
-| 2 | No two controls of one role and name within a landmark (records alike are told apart by their due day, when added, or id); links of one name go to one place | agent, look, site, go `names_apart_test.go` |
-| 3 | What a control shows is in its name; hidden words add to it, never repeat it | agent, run.mjs |
-| 4 | No operable control below 0.35 opacity at rest | agent (known) |
-| 5 | The document scrolls as one page, so a full-page screenshot has it all | not yet |
-| 6 | No meaning only in a canvas, a hover or a drag | review |
-| | **Understand** | |
-| 7 | One ariaSnapshot golden per page type | not yet |
-| 8 | No glyphs in names; no counts run into words ("This week 1 28 Sep") | agent (glyphs); go `machine_words_test.go` (counts and any two values with nothing between them) |
-| 9 | A manifest's `machine` says how to find it by role and name, and that holds | go `contract_test.go` (selector); role-and-name not yet |
-| 10 | look says what the browser's tree says | agent (look on the same pages); not compared yet |
-| | **Operate** | |
-| 11 | Everything works without scripts | go `pages_test.go`, review |
-| 12 | After an in-place change the page equals a reload | agent (known) |
-| 13 | An outcome stays, in a status or alert, names the record, offers Undo | agent (tick, undo), go `back_test.go`, `reversible_test.go` |
-| 14 | Nothing is written until a deliberate press; a control that writes says so | review |
-| | **Tools** | |
-| 15 | Every MCP tool titled and annotated; read-only ones proved so by a store diff | `internal/mcp/annotations.go`; `TestEveryToolSaysWhatItIs`, `TestReadOnlyToolsChangeNothing` (the workspace on disk hashed before and after) |
-| 16 | Every error is `isError` with the next step and the valid choices | go `internal/mcp/*_test.go` (partly) |
-| 17 | List rows can be told apart and are paged | pages: agent, go; tool results not yet |
-| 18 | `describe` has a small index under a budget | go `describe_index_test.go` (16 KB, block routes first), `internal/mcp/describe_size_test.go` (nothing but full past a client's limit), `prompt_budget_test.go` (the in-app prompt at 40 KB: a line per component and type, the rest in a refusal) |
-| | **Trust** | |
-| 19 | MCP and API writes are logged with the agent's name, from its key when it has one | go `agent_keys_test.go`, `writes_test.go` |
-| 20 | Record text reaches outside agents marked as content, with who wrote it | `internal/chat/provenance.go` (written_by and untrusted on a record, a list, search, the changes feed, the tools and public MCP); go `untrusted_test.go`, `internal/mcp/untrusted_test.go` |
-| 21 | Irreversible actions ask first; outward tools say openWorldHint | go `consent_test.go` (asking), `internal/mcp/annotations.go` (run_action and update_sameway say openWorldHint) |
-| 22 | Writes are rate-limited per token | `internal/chat/pace.go` (60 changes a minute per key; reads and the owner unpaced); go `pace_test.go`, `agent_pace_test.go`, `internal/mcp/pace_test.go` |
+The 22 checks from the agent accessibility audit (2026-09-28), each with where
+it is checked, are in [docs/tests/agent-checklist.md](docs/tests/agent-checklist.md).
 
 ## Adding a component
 
