@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
@@ -25,8 +26,8 @@ func (s *Server) rows(t *schema.Type, recs []*store.Record, now time.Time) strin
 	// Told apart across the whole listing, every group of it: an agent or
 	// a person moving by controls meets them all on one page.
 	told := s.recordsApart(t, recs)
-	// What is in each, counted for the whole listing at once (glance_count.go).
-	in := s.countsOf(t, recs)
+	// What is in each, counted for the whole listing at once (records/glance_count.go).
+	in := records.CountsOf(s.app.Store, t, recs)
 	if dated == "" {
 		fmt.Fprintf(&b, `<ol class="sw-plain sw-rows" data-dot="%d" aria-label="%s">`, s.dotOf(t.Name), template.HTMLEscapeString(schema.Plural(t.Name)))
 		for _, rec := range recs {
@@ -65,7 +66,7 @@ func (s *Server) rows(t *schema.Type, recs []*store.Record, now time.Time) strin
 // tells it from another row with its title, read after the title by its
 // link and its box, or "". in is what is in the listing's records,
 // counted once for all of them.
-func (s *Server) row(t *schema.Type, rec *store.Record, level int, told string, in counts) string {
+func (s *Server) row(t *schema.Type, rec *store.Record, level int, told string, in records.Counts) string {
 	class, box := "sw-row", ""
 	if t.DoneField() != nil {
 		if props, ok := s.markOf(t, rec); ok {

@@ -52,8 +52,6 @@ func (b *Book) ViewOf(t *schema.Type, rec *store.Record, w *Writers) RecordView 
 	if v.Parts = PageParts(b.Store, t, rec); len(v.Parts) > 0 {
 		v.Open = page + "?show=<key>"
 	}
-	if b.Glance != nil {
-		v.Glance = b.Glance(t, rec)
-	}
+	v.Glance = GlanceText(b.Store, t, rec, nil)
 	return v
 }

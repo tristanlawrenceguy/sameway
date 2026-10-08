@@ -2,7 +2,7 @@
 
 A record is met far more often in a list than on its own page, so the few
 words beside its title decide whether a person opens it. Those words are
-worked out once, from the schema (`internal/server/glance.go`), and every
+worked out once, from the schema (`internal/records/glance.go`), and every
 surface says the same facts its own way: chips under the title on its page,
 short words at the right of its row, plain words in a list on the canvas,
 and `glance` over the API and in the assistant's `get_record`. Days and

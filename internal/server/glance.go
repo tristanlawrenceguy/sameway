@@ -11,113 +11,14 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
-// What a record says at a glance is worked out once, here, from its
-// schema, and every surface shows the same facts its own way: the line
-// under a record's title as chips, a list's row as short words, a block's
-// list as plain text. Three functions once said it three ways, each
-// patched by the type it was caught on, and the same record read "Due Fri
-// 9 Oct 2026, 14:00" on the canvas and "In 4 days at 2:00pm" on its list.
-
-// glanceFact is one thing a record says at a glance.
-type glanceFact struct {
-	Kind   string // done, state, flag, day, person, ref, count
-	Field  string // the field it says, which the record's page need not list again
-	Text   string // as a person reads it
-	Tone   string // the badge's tone
-	Person string // a person's id, for their colour
-	Label  string // a person's field's label: For
-	Short  string // a day as a row says it, a class to go with it
-	Class  string
-	When   string // a day's value, for its <time datetime>
-	Full   string // a day in full, when its words leave the date out
-}
-
-// glance is what a record says at a glance, by the schema's rules, not by
-// its type's name:
-//   - its done tick, when ticked;
-//   - its stage when it says more than the tick (Doing), or its status or
-//     state (Draft, Pending); a kind, a method, a cadence is the record's
-//     own page's to say;
-//   - a setting that is on, by its label (Pinned, On the canvas);
-//   - its first day, in words, named by its field (Due Fri 9 Oct,
-//     Starts tomorrow at 2pm), and "Overdue" in words and amber when it
-//     has passed on a record that can be done and is not; a day that has
-//     passed on anything else (a meeting, an entry) is only past;
-//   - what it belongs to or who it is for, unless that is its title; a
-//     file it points at is an attachment, not what it belongs to;
-//   - what is in it: how many records name it as theirs, and how many of
-//     them are done (3 tasks, 1 done), from in, what a listing counted
-//     for all its rows at once, or counted for this one when in is nil
-//     (glance_count.go).
-//
-// The order is always this one, so the same fact sits in the same place
-// on every row (design/foundations/glance.md).
-func (s *Server) glance(t *schema.Type, rec *store.Record, now time.Time, in counts) []glanceFact {
-	var out []glanceFact
-	done := false
-	if f := t.DoneField(); f != nil {
-		if on, _ := rec.Fields[f.Name].(bool); on {
-			done = true
-			out = append(out, glanceFact{Kind: "done", Field: f.Name, Text: f.Display(), Tone: "success"})
-		}
-	}
-	for _, f := range t.Shown() {
-		v, _ := rec.Fields[f.Name].(string)
-		if f.Type != "enum" || v == "" {
-			continue
-		}
-		if worth, said := stateWorth(t, f, v); said && worth {
-			out = append(out, glanceFact{Kind: "state", Field: f.Name, Text: f.ValueLabel(v), Tone: "info"})
-		}
-	}
-	for _, f := range t.Shown() {
-		if f.Type == "bool" && (t.DoneField() == nil || f.Name != t.DoneField().Name) {
-			if on, _ := rec.Fields[f.Name].(bool); on {
-				out = append(out, glanceFact{Kind: "flag", Field: f.Name, Text: f.Display(), Tone: "neutral"})
-			}
-		}
-	}
-	if d, ok := dayGlance(t, rec, done, now); ok {
-		out = append(out, d)
-	}
-	title := strings.TrimSpace(records.Name(s.app.Store, t, rec))
-	for _, f := range t.Shown() {
-		id, _ := rec.Fields[f.Name].(string)
-		if f.Type != "ref" || id == "" || f.To == FileType {
-			continue
-		}
-		if name := s.RefTitle(f, id); name != "" && name != title {
-			if f.To == records.PersonType {
-				out = append(out, glanceFact{Kind: "person", Field: f.Name, Text: f.Display() + " " + name, Person: id, Label: f.Display()})
-			} else {
-				out = append(out, glanceFact{Kind: "ref", Field: f.Name, Text: name, Tone: "neutral"})
-			}
-		}
-		break
-	}
-	if in == nil {
-		in = s.countsOf(t, []*store.Record{rec})
-	}
-	for _, words := range in[rec.ID] {
-		out = append(out, glanceFact{Kind: "count", Text: words, Tone: "neutral"})
-	}
-	return out
-}
-
-// glanceText is the facts as plain words, for a block's list and for an
-// agent; in is as glance takes it.
-func (s *Server) glanceText(t *schema.Type, rec *store.Record, in counts) string {
-	var words []string
-	for _, f := range s.glance(t, rec, time.Now(), in) {
-		words = append(words, f.Text)
-	}
-	return strings.Join(words, " · ")
-}
+// What a record says at a glance is worked out in internal/records
+// (glance.go there), from the schema and the store; here it is shown: as
+// chips under a record's title, or short words at a row's right.
 
 // glanceHTML is the facts as a page shows them: chips under a title, or
 // short words at a row's right. boxed is the field a box beside them
 // already shows (done, pinned), which is not said again.
-func (s *Server) glanceHTML(facts []glanceFact, chips bool, boxed string) string {
+func (s *Server) glanceHTML(facts []records.Fact, chips bool, boxed string) string {
 	var parts []string
 	for _, f := range facts {
 		switch {
@@ -155,7 +56,7 @@ func (s *Server) headFields(t *schema.Type, rec *store.Record) map[string]bool {
 	// What the line above says is not said again; a link to what it
 	// belongs to is, being a way there the chip is not. What is in it has
 	// no field of its own, so it is not counted for this.
-	for _, f := range s.glance(t, rec, time.Now(), counts{}) {
+	for _, f := range records.Glance(s.app.Store, t, rec, time.Now(), records.Counts{}) {
 		if f.Kind != "ref" && f.Kind != "person" {
 			out[f.Field] = true
 		}
@@ -163,33 +64,11 @@ func (s *Server) headFields(t *schema.Type, rec *store.Record) map[string]bool {
 	// A state not worth saying (To do, Draft) is said nowhere at rest; one
 	// worth saying is said in the fields, where it is changed.
 	for _, f := range t.Shown() {
-		if worth, state := stateWorth(t, f, fmt.Sprint(rec.Fields[f.Name])); state && !worth {
+		if worth, state := records.StateWorth(t, f, fmt.Sprint(rec.Fields[f.Name])); state && !worth {
 			out[f.Name] = true
 		}
 	}
 	return out
-}
-
-// stateWorth says whether a field is a record's state (its stage, or a
-// status or state) and whether its value is worth saying: a stage when it
-// says more than the tick (Doing; To do and Done are the tick), a status
-// or state when it is not where every record rests (Published, not
-// Draft), or when it waits on someone (Pending).
-func stateWorth(t *schema.Type, f schema.Field, v string) (worth, state bool) {
-	if f.Type != "enum" {
-		return false, false
-	}
-	if f.Name == t.Stage() {
-		return t.SaysMoreThanTick(v), true
-	}
-	if f.Name != "status" && f.Name != "state" {
-		return false, false
-	}
-	rest, _ := f.Default.(string)
-	if rest == "" && len(f.Values) > 0 {
-		rest = f.Values[0]
-	}
-	return v != rest || v == "pending", true
 }
 
 // boxed is the field a record's own page shows as a box (done, pinned),
@@ -200,4 +79,22 @@ func (s *Server) boxed(t *schema.Type, rec *store.Record) string {
 		return f
 	}
 	return ""
+}
+
+// timeHTML puts what a day says in a <time> holding its value, with the
+// date in full as its title when the words leave it out (Today). A screen
+// reader reads the words, which say it on their own; the value is for a
+// machine, the title for a pointer.
+func timeHTML(class, value, full string, inner template.HTML) string {
+	b := "<time"
+	if class != "" {
+		b += ` class="` + class + `"`
+	}
+	if value != "" {
+		b += ` datetime="` + template.HTMLEscapeString(value) + `"`
+	}
+	if full != "" {
+		b += ` title="` + template.HTMLEscapeString(full) + `"`
+	}
+	return b + ">" + string(inner) + "</time>"
 }
