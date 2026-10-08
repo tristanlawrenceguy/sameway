@@ -112,7 +112,7 @@ func (s *Service) createRecord(typeName string, fields map[string]any) toolResul
 		return fail("I couldn't save those changes — %s. %s Fix the fields and call create_record again.", humanizeValidationError(err.Error()), typeHelp(t))
 	}
 	text := fmt.Sprintf("created %s %s: %q. The person can open it at /t/%s/%s.", t.Name, rec.ID, c.Detail, t.Name, rec.ID)
-	text += s.datesSaid(t, fields, rec, false) + s.sameTitle(t, rec) + s.whoseSaid(t, rec) + s.actionSaid(t, rec) // dates_said.go, same_title.go, whose_said.go, action_when_said.go
+	text += s.datesSaid(t, fields, rec, false) + s.sameTitle(t, rec) + s.whoseSaid(t, rec) + s.actionSaid(t, rec) + s.splitSaid(t) // dates_said.go, same_title.go, whose_said.go, action_when_said.go
 	if t.Name == "reminder" && atlogin.Path() != "" && !atlogin.On() {
 		text += " Reminders ring only while Sameway is open, and it does not open when this computer starts; if this one matters, tell the person that Open Sameway when I sign in, on Workspaces, keeps it ringing."
 	}

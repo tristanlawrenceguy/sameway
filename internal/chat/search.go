@@ -37,7 +37,11 @@ func (s *Service) search(query, only string, page int) toolResult {
 	res := search.Narrow(hits, query, only, page)
 	res.Some = some
 	if res.Total == 0 {
-		return toolResult{text: fmt.Sprintf("nothing has %q in it.", res.Query) + s.noneOfKind(only)} // search_none.go
+		text := fmt.Sprintf("nothing has %q in it", res.Query)
+		if all := s.noneOfKind(only); all != "" { // search_none.go
+			text += "." + all
+		}
+		return toolResult{text: text}
 	}
 	if len(res.Hits) == 0 {
 		return toolResult{text: res.Said() + ". Leave out type to see them."}

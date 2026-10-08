@@ -79,3 +79,18 @@ func (s *Service) kindSaid(lower string) string {
 	}
 	return ""
 }
+
+// splitSaid is said on a note made while the person asked for one to be
+// split: a small model made the parts as notes and stopped, so they were
+// three loose notes, not the piece's parts.
+func (s *Service) splitSaid(t *schema.Type) string {
+	if t.Name != "note" {
+		return ""
+	}
+	_, said := s.latestAsk()
+	lower := strings.ToLower(said)
+	if !strings.Contains(lower, "split") && !strings.Contains(lower, "into parts") && !strings.Contains(lower, "chapters") {
+		return ""
+	}
+	return " If it is a part of the note the person asked to split, once every part is made call organise_writing with that note as the piece and the parts in order; until then they are loose notes."
+}
