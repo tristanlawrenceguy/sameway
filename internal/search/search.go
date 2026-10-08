@@ -38,10 +38,30 @@ const Limit = 50
 // every word, or, when nothing has them all and there are several, what
 // has some of them, most first, with some true so it is said.
 func Matches(st *store.Store, types *schema.Set, q string) (hits []Hit, some bool) {
+	if days := daysAsked(q, time.Now()); len(days) > 0 { // days.go
+		if on := onDays(st, types, days, time.Now()); len(on) > 0 {
+			return withWords(on, find(st, types, q, "", false)), false
+		}
+	}
 	if hits = find(st, types, q, "", false); len(hits) > 0 || len(Words(q)) < 2 {
 		return hits, false
 	}
 	return find(st, types, q, "", true), true
+}
+
+// withWords is the hits on a day, then those with the words not already
+// among them.
+func withWords(on, words []Hit) []Hit {
+	have := map[string]bool{}
+	for _, h := range on {
+		have[h.Type+"/"+h.ID] = true
+	}
+	for _, h := range words {
+		if !have[h.Type+"/"+h.ID] {
+			on = append(on, h)
+		}
+	}
+	return on
 }
 
 // Counts is how many of the hits are of each type: the filters on the
