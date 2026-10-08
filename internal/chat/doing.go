@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/blocks"
+
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
@@ -38,19 +40,13 @@ type callArgs struct {
 	Name      string         `json:"name"`
 }
 
-// nouns are what people call a component when it is not its own name.
-var nouns = map[string]string{"collection": "list", "text": "piece of text", "record": "record", "filters": "set of filters"}
-
 // thing names a block by what it is and what it shows: "list of tasks",
 // "card called Shopping", "calendar", or "block" when nothing is known.
 func thing(component string, props map[string]any) string {
 	if component == "" {
 		return "block"
 	}
-	noun := nouns[component]
-	if noun == "" {
-		noun = schema.Words(component)
-	}
+	noun := blocks.Noun(component)
 	typeName, _ := props["type"].(string)
 	if component == "record" && typeName != "" {
 		return schema.Words(typeName)

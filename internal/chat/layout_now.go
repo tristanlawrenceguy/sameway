@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/blocks"
+
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
@@ -80,36 +82,15 @@ func (p placed) shows() string {
 }
 
 // tall says a block is usually taller than a card, short that it is a line
-// or two; everything else is in between.
-func (p placed) tall() bool {
-	small := p.detail == "glance" || p.detail == "brief"
-	switch p.comp {
-	case records.ComponentName, "table":
-		return true
-	case "calendar", "tracker", "chart":
-		return !small
-	case "collection":
-		as, _ := p.props["as"].(string)
-		return as == "board"
-	}
-	return false
-}
+// or two (blocks.Height); everything else is in between.
+func (p placed) tall() bool { return blocks.Height(p.comp, p.props) == blocks.Tall }
 
-func (p placed) short() bool {
-	switch p.comp {
-	case "heading", "button", "link", "badge", "status", "alert", "search", "card", "clock":
-		return true
-	case "text":
-		s, _ := p.props["content"].(string)
-		return len(s) < 240
-	}
-	return false
-}
+func (p placed) short() bool { return blocks.Height(p.comp, p.props) == blocks.Short }
 
 // heading is the heading a block puts in the page outline: its level (2
 // unless set, since a block sits under the page's h1) and its words.
 func (p placed) heading() (int, string, bool) {
-	key := map[string]string{"heading": "text", "collection": "label", "list": "label", "card": "title", "alert": "title"}[p.comp]
+	key := blocks.Heading(p.comp)
 	if key == "" {
 		return 0, "", false
 	}

@@ -28,6 +28,7 @@ runner in tools/a11y-runner.
 | `internal/schema/` | content type files to Go types, validation, JSON Schema | `schema.go` |
 | `internal/store/` | SQLite, one table per type | `store.go` |
 | `internal/render/` | component registry, props validation, page layout | `registry.go` |
+| `internal/blocks/` | the page model without HTTP: what a block shows, resolved from its props, the records and where it is shown; one Kind per component (resolve, what it shows, its noun, height, heading), used by the pages, the assistant and MCP alike | `kind.go`, `kinds.go` |
 | `internal/relate/` | how one record connects to the others, worked out from the schema | `relate.go` |
 | `internal/server/parts.go` | the parts of a page that are off until somebody asks: the keys, and who turned one on | `parts.go` |
 | `internal/llm/` | provider-neutral chat + tools; openai.go and anthropic.go | `llm.go` |
