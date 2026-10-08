@@ -29,7 +29,6 @@ var longFuncs = map[string]int{
 	"internal/server.Server.listPage":            83,
 	"internal/server.Server.narrowLog":           112,
 	"internal/server.Server.resolveCalendarAt":   105,
-	"internal/server.Server.resolveChart":        92,
 	"internal/server.Server.resolveCollectionAt": 110,
 	"internal/server.Server.searchPage":          84,
 	"internal/server.Server.shareSave":           81,
@@ -42,7 +41,6 @@ var longFuncs = map[string]int{
 // *_helpers) from before the rule. Renaming one for what it does, or
 // folding it back where it belongs, takes it out of this list.
 var splitByName = map[string]bool{
-	"internal/server/views_helpers.go":                true,
 	"internal/server/detail_attributes_extra_test.go": true,
 	"internal/server/outcome_helpers_test.go":         true,
 	"internal/server/record_props_extra_test.go":      true,

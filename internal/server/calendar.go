@@ -159,14 +159,6 @@ func (s *Server) calendarTypes(names []string) ([]*schema.Type, string) {
 	return only, ""
 }
 
-// andList is names as said: tasks, reminders and entries.
-func andList(names []string) string {
-	if len(names) < 2 {
-		return strings.Join(names, "")
-	}
-	return strings.Join(names[:len(names)-1], ", ") + " and " + names[len(names)-1]
-}
-
 // eventOf is one record on the calendar, or nil when its date will not
 // read. A day with no time is stored as midnight UTC; it is that day
 // everywhere, with no time to show. Anything else is a moment, shown in

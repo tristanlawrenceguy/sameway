@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/blocks"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -39,7 +40,7 @@ func (s *Server) logForDay(typeName string, kinds, where []string, day time.Time
 		if archived, _ := rec.Fields["archived"].(bool); archived || (only != "" && rec.ID != only) {
 			continue
 		}
-		item := s.standing(rec, asOf)
+		item := blocks.Standing(s.app.Store, rec, asOf)
 		item["dated"], item["on"] = true, on
 		habits = append(habits, item)
 	}

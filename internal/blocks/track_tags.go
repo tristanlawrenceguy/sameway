@@ -1,10 +1,11 @@
-package server
+package blocks
 
 import (
 	"slices"
 	"sort"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -23,12 +24,12 @@ func hasTag(rec *store.Record, tags []string) bool {
 
 // habitTags is every tag the habits carry, so a tracker asked for one
 // that none has can say which they do.
-func (s *Server) habitTags() []string {
-	recs, _ := s.app.Store.List(HabitType, store.ListOptions{})
+func habitTags(st *store.Store) []string {
+	recs, _ := st.List(records.HabitType, store.ListOptions{})
 	seen := map[string]bool{}
 	var out []string
 	for _, rec := range recs {
-		for _, tag := range strs(rec.Fields["tags"]) {
+		for _, tag := range Strs(rec.Fields["tags"]) {
 			if !seen[tag] {
 				seen[tag] = true
 				out = append(out, tag)

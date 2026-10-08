@@ -97,7 +97,7 @@ func (s *Server) reviewPage(w http.ResponseWriter, r *http.Request) {
 		b.WriteString(`<p>Late, and still to do. Move each to next week, or say it is done.</p>`)
 		list(slipped, true)
 	}
-	b.WriteString(`<h2>Habits</h2>` + string(s.component("tracker", s.resolveTracker(map[string]any{"level": 3}))))
+	b.WriteString(`<h2>Habits</h2>` + string(s.component("tracker", s.tracker(map[string]any{"level": 3}))))
 	b.WriteString(`<h2>The week ahead</h2>`)
 	if len(ahead) == 0 {
 		b.WriteString(`<p class="sw-muted">Nothing is due in the next seven days.</p>`)

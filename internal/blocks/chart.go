@@ -1,4 +1,4 @@
-package server
+package blocks
 
 import (
 	"fmt"
@@ -7,79 +7,97 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/query"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
-// chartComponent draws numbers from records: how many, or the sum of a
+// ChartComponent draws numbers from records: how many, or the sum of a
 // field, grouped by a field or by the day, week or month of a date. The
 // series is read when the page renders, so the picture is what is true
 // now; without a type, the series is whatever the block carries.
-const chartComponent = "chart"
+const ChartComponent = "chart"
 
 // resolveChart fills a chart block's series from the store when it names
 // a type, and says in words what is wrong when something is.
-func (s *Server) resolveChart(props map[string]any) map[string]any {
-	out := map[string]any{}
-	for k, v := range props {
-		out[k] = v
-	}
+func resolveChart(w *Workspace, props map[string]any, _ Place) map[string]any {
+	out := copyProps(props)
 	typeName, _ := props["type"].(string)
 	if typeName == "" {
 		return out
 	}
-	t, ok := s.app.Types.Get(typeName)
+	t, ok := w.Store.Types().Get(typeName)
 	if !ok {
-		out["problem"] = s.noType(typeName)
+		out["problem"] = w.NoType(typeName)
 		return out
 	}
-	by, _ := props["by"].(string)
-	period, _ := props["period"].(string)
-	sum, _ := props["sum"].(string)
-	if by == "" {
-		out["problem"] = fmt.Sprintf("a chart from records needs by: the field to group by, or a date field with period day, week or month; %s has %s", t.Name, strings.Join(fieldsOfKind(t), ", "))
+	g, problem := groupingOf(t, props)
+	if problem != "" {
+		out["problem"] = problem
 		return out
 	}
-	field, ok := t.Field(by)
-	if !ok && by != "created_at" && by != "updated_at" {
-		out["problem"] = fmt.Sprintf("%s has no field %q to group by; it has %s, and created_at and updated_at", t.Name, by, strings.Join(fieldsOfKind(t), ", "))
-		return out
-	}
-	if sum != "" {
-		if f, ok := t.Field(sum); !ok || (f.Type != "int" && f.Type != "float") {
-			out["problem"] = noNumber(t, sum)
-			return out
-		}
-	}
-	recs, err := query.Filter(s.app.Store, t, strs(props["where"]), "", 0, time.Now())
+	recs, err := query.Filter(w.Store, t, Strs(props["where"]), "", 0, time.Now())
 	if err != nil {
 		out["problem"] = err.Error()
 		return out
 	}
-	kind := "string"
+	out["series"] = g.series(w.Store, t, recs)
+	g.label(out, t)
+	return out
+}
+
+// grouping is how a chart from records groups them: by a field, or by
+// the day, week or month of a date (kind datetime), counting them or
+// summing a number field.
+type grouping struct {
+	by, period, sum, kind string
+	field                 *schema.Field
+}
+
+// groupingOf reads a chart's grouping from its props, or why it cannot.
+func groupingOf(t *schema.Type, props map[string]any) (grouping, string) {
+	var g grouping
+	g.by, _ = props["by"].(string)
+	g.period, _ = props["period"].(string)
+	g.sum, _ = props["sum"].(string)
+	if g.by == "" {
+		return g, fmt.Sprintf("a chart from records needs by: the field to group by, or a date field with period day, week or month; %s has %s", t.Name, strings.Join(FieldsOfKind(t), ", "))
+	}
+	field, ok := t.Field(g.by)
+	if !ok && g.by != "created_at" && g.by != "updated_at" {
+		return g, fmt.Sprintf("%s has no field %q to group by; it has %s, and created_at and updated_at", t.Name, g.by, strings.Join(FieldsOfKind(t), ", "))
+	}
+	if g.sum != "" {
+		if f, ok := t.Field(g.sum); !ok || (f.Type != "int" && f.Type != "float") {
+			return g, noNumber(t, g.sum)
+		}
+	}
+	g.field, g.kind = field, "datetime"
 	if ok {
-		kind = field.Type
-	} else {
-		kind = "datetime"
+		g.kind = field.Type
 	}
-	if kind == "datetime" && period == "" {
-		period = "month"
+	if g.kind == "datetime" && g.period == "" {
+		g.period = "month"
 	}
+	return g, ""
+}
+
+// series is the records counted or summed into their groups, in the
+// order a person expects them.
+func (g grouping) series(st *store.Store, t *schema.Type, recs []*store.Record) []any {
 	totals := map[string]float64{}
-	first := map[string]int{}
 	var keys []string
-	for i, rec := range recs {
-		key := s.bucket(t, field, kind, rec, by, period)
+	for _, rec := range recs {
+		key := bucket(st, t, g.field, g.kind, rec, g.by, g.period)
 		if key == "" {
 			continue
 		}
 		if _, seen := totals[key]; !seen {
 			keys = append(keys, key)
-			first[key] = i
 		}
-		if sum != "" {
-			n, _ := rec.Fields[sum].(float64)
-			if i64, ok := rec.Fields[sum].(int64); ok {
+		if g.sum != "" {
+			n, _ := rec.Fields[g.sum].(float64)
+			if i64, ok := rec.Fields[g.sum].(int64); ok {
 				n = float64(i64)
 			}
 			totals[key] += n
@@ -87,36 +105,39 @@ func (s *Server) resolveChart(props map[string]any) map[string]any {
 			totals[key]++
 		}
 	}
-	sortKeys(keys, totals, kind, field)
+	sortKeys(keys, totals, g.kind, g.field)
 	series := make([]any, 0, len(keys))
 	for _, k := range keys {
 		series = append(series, map[string]any{"label": k, "value": totals[k]})
 	}
-	out["series"] = series
+	return series
+}
+
+// label names what the chart draws, unless its caption is given, and
+// heads the numbers table's columns with what they are.
+func (g grouping) label(out map[string]any, t *schema.Type) {
 	if _, has := out["caption"]; !has {
 		what := "How many " + schema.Plural(t.Name)
-		if sum != "" {
-			what = t.FieldDisplay(sum) + " of " + schema.Plural(t.Name)
+		if g.sum != "" {
+			what = t.FieldDisplay(g.sum) + " of " + schema.Plural(t.Name)
 		}
-		out["caption"] = what + " by " + t.FieldWords(by)
+		out["caption"] = what + " by " + t.FieldWords(g.by)
 	}
-	// The numbers table heads its columns with what they are.
-	out["groupLabel"] = t.FieldDisplay(by)
-	if period != "" && kind == "datetime" {
-		out["groupLabel"] = capitalize(period)
+	out["groupLabel"] = t.FieldDisplay(g.by)
+	if g.period != "" && g.kind == "datetime" {
+		out["groupLabel"] = Capitalize(g.period)
 	}
-	out["valueLabel"] = capitalize(schema.Plural(t.Name))
-	if sum != "" {
-		out["valueLabel"] = t.FieldDisplay(sum)
+	out["valueLabel"] = Capitalize(schema.Plural(t.Name))
+	if g.sum != "" {
+		out["valueLabel"] = t.FieldDisplay(g.sum)
 	}
-	return out
 }
 
 // noNumber says why a chart cannot sum a field: it is not a number, and
 // which are, or that leaving sum out counts instead.
 func noNumber(t *schema.Type, sum string) string {
 	out := fmt.Sprintf("sum needs a number field on %s; %q is not one", t.Name, sum)
-	if nums := fieldsOfKind(t, "int", "float"); len(nums) > 0 {
+	if nums := FieldsOfKind(t, "int", "float"); len(nums) > 0 {
 		return out + "; its number fields are " + strings.Join(nums, ", ")
 	}
 	return out + ", and it has none; leave sum out to count " + schema.Plural(t.Name) + " instead"
@@ -124,7 +145,7 @@ func noNumber(t *schema.Type, sum string) string {
 
 // bucket is the group a record falls in: a field's value as a person
 // reads it, or the day, week or month of a date.
-func (s *Server) bucket(t *schema.Type, f *schema.Field, kind string, rec *store.Record, by, period string) string {
+func bucket(st *store.Store, t *schema.Type, f *schema.Field, kind string, rec *store.Record, by, period string) string {
 	if kind == "datetime" {
 		var v string
 		switch by {
@@ -154,9 +175,9 @@ func (s *Server) bucket(t *schema.Type, f *schema.Field, kind string, rec *store
 	if f == nil {
 		return ""
 	}
-	v := display(*f, rec.Fields[by])
+	v := Display(*f, rec.Fields[by])
 	if f.Type == "ref" {
-		v = s.RefTitle(*f, v)
+		v = records.RefTitle(st, *f, v)
 	}
 	if v == "" {
 		return "None"

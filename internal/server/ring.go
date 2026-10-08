@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/blocks"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
@@ -48,7 +49,7 @@ func (s *Server) Ring(now time.Time) []*store.Record {
 	}
 	t, _ := s.app.Types.Get(ReminderType)
 	for _, rec := range rang {
-		text, url := s.ringWords(rec)
+		text, url := blocks.RingWords(s.app.Store, rec)
 		go s.notify(s.title(t, rec), text, s.linkTo(url))
 	}
 	return rang

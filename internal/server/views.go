@@ -68,7 +68,7 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	} else if t.Name == HabitType && len(where) == 0 && order == "" {
 		// Habits are where each stands this period, and a press to log:
 		// the tracker, not rows of names. Archived ones follow, as rows.
-		b.WriteString(string(s.component(trackerComponent, s.resolveTracker(map[string]any{}))))
+		b.WriteString(string(s.component(trackerComponent, s.tracker(map[string]any{}))))
 		var archived []*store.Record
 		for _, rec := range recs {
 			if on, _ := rec.Fields["archived"].(bool); on {
@@ -250,14 +250,6 @@ func (s *Server) crumbs(listHref, listLabel, here string, dot int) template.HTML
 		props["current"] = here
 	}
 	return s.component("crumbs", props)
-}
-
-func capitalize(s string) string {
-	if s == "" {
-		return s
-	}
-	r := []rune(s)
-	return strings.ToUpper(string(r[0])) + s[1:]
 }
 
 // fieldItem is one field of a record as the fields component shows it:
