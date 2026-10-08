@@ -2,11 +2,11 @@ package server_test
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/tristanlawrenceguy/sameway/internal/server"
 )
 
 // TestEveryAPIRouteIsDescribed: an agent learns the API from
@@ -14,21 +14,15 @@ import (
 // method. A route added without a line in describe is one no agent finds
 // (backlog 0190, 0402).
 func TestEveryAPIRouteIsDescribed(t *testing.T) {
-	files, _ := filepath.Glob("*.go")
-	pattern := regexp.MustCompile(`HandleFunc\("([A-Z]+) (/api/[^"]*)"`)
+	pattern := regexp.MustCompile(`^([A-Z]+) (/api/.*)$`)
 	var routes [][]string
-	for _, f := range files {
-		if strings.HasSuffix(f, "_test.go") {
-			continue
+	for _, r := range server.Routes() {
+		if m := pattern.FindStringSubmatch(r.Pattern); m != nil {
+			routes = append(routes, m)
 		}
-		src, err := os.ReadFile(f)
-		if err != nil {
-			t.Fatal(err)
-		}
-		routes = append(routes, pattern.FindAllStringSubmatch(string(src), -1)...)
 	}
 	if len(routes) == 0 {
-		t.Fatal("found no /api routes in the server's source")
+		t.Fatal("found no /api routes in the route table")
 	}
 
 	_, h := newApp(t)

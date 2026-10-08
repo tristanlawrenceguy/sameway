@@ -31,7 +31,6 @@ var longFuncs = map[string]int{
 	"internal/server.Server.resolveCalendarAt":   105,
 	"internal/server.Server.resolveChart":        92,
 	"internal/server.Server.resolveCollectionAt": 110,
-	"internal/server.Server.routes":              113,
 	"internal/server.Server.searchPage":          84,
 	"internal/server.Server.shareSave":           81,
 	"internal/soundtrack.readMKV":                83,

@@ -12,14 +12,6 @@ import (
 // workspaces on this machine. What pages do is an agent's already, through
 // the same forms (agents.go).
 
-func (s *Server) agentRoutes(m *http.ServeMux) {
-	m.HandleFunc("GET /api/workspaces", s.apiWorkspaces)
-	m.HandleFunc("GET /api/changes", s.apiChanges)      // changes.go
-	m.HandleFunc("POST /api/arrange", s.apiArrange)     // api_arrange.go
-	m.HandleFunc("POST /api/tools/{name}", s.apiTool)   // api_tools.go
-	m.HandleFunc("POST /canvas/measure", s.measurePost) // measure.go
-}
-
 // apiChat is one turn of the conversation for an agent: the message, the
 // tab it is about, and a file already added (POST /api/file/upload), whose
 // text goes to the assistant with the message as it does for a person.

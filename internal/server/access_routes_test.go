@@ -14,28 +14,25 @@ import (
 
 // Every route says who may use it; one nobody said anything about is the
 // owner's alone until somebody does, rather than open to everyone let in.
+// And every route is in the table: one registered beside it would say
+// nothing of who may use it.
 func TestEveryRouteSaysWhoMayUseIt(t *testing.T) {
+	for _, r := range server.Routes() {
+		if r.Access == "" {
+			t.Errorf("%s: who may use it? Say so in its route (routes*.go): people, or owner", r.Pattern)
+		}
+	}
 	files, _ := filepath.Glob("*.go")
-	pattern := regexp.MustCompile(`(?:HandleFunc|Handle)\("([^"]*)"`)
-	routes := map[string]bool{}
+	registered := regexp.MustCompile(`(?:HandleFunc|Handle)\("([^"]*)"`)
 	for _, f := range files {
 		if strings.HasSuffix(f, "_test.go") {
 			continue
 		}
 		src, _ := os.ReadFile(f)
-		for _, m := range pattern.FindAllStringSubmatch(string(src), -1) {
-			routes[m[1]] = true
-		}
-	}
-	said := server.RouteAccess()
-	for route := range routes {
-		if _, ok := said[route]; !ok {
-			t.Errorf("%s: who may use it? Say so in routeAccess (access_routes.go): people, or owner", route)
-		}
-	}
-	for route := range said {
-		if !routes[route] {
-			t.Errorf("%s is no longer a route; take it out of routeAccess", route)
+		for _, m := range registered.FindAllStringSubmatch(string(src), -1) {
+			if m[1] != "/" { // notfound.go wraps the whole table
+				t.Errorf("%s: %s is registered outside the route table; give it a route in routes*.go", f, m[1])
+			}
 		}
 	}
 }

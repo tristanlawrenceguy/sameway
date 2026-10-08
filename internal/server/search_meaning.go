@@ -183,7 +183,3 @@ func (s *Server) meaningFetch(w http.ResponseWriter, r *http.Request) {
 	st.Unlock()
 	s.tell(w, r, outcome{Title: "Fetching search by meaning", Text: fmt.Sprintf("%s, through Ollama. Searches find by meaning a few minutes after it is here.", meaning.FetchWords)}, "/help")
 }
-
-func (s *Server) meaningRoutes(m *http.ServeMux) {
-	m.HandleFunc("POST /meaning/fetch", s.meaningFetch)
-}

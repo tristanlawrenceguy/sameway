@@ -1,117 +1,118 @@
 package server
 
-// routes is every address the server answers, in one table: it grew past
-// server.go's room (tools/check keeps a file under 300 lines).
+import (
+	"net/http"
+
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
+)
+
+// Every address the server answers is one table, by area across the
+// routes_*.go files: what serves it, who may use it, for a page action the
+// assistant's tool that does the same or why it is a person's alone, and
+// whether the internet may read it when what it shows is published. The
+// mux, who may make a request (access_routes.go), the page actions' tools
+// and what is public (publish.go) are all read from here; they were four
+// lists kept in step by tests.
+
+// route is one address.
+type route struct {
+	pattern string
+	handle  func(*Server, http.ResponseWriter, *http.Request)
+	access  routeFor
+	// tool is a page action's op (chat/op.go): what the assistant does to
+	// do the same. persons is instead why it is a person's alone.
+	tool, persons string
+	// public says the internet may read it, when what it shows is
+	// published: a published tab, list or record, its files and styles.
+	public bool
+}
+
+// routeTable is every route. It is put together in init, because what a
+// route serves can lead back to the table (a dry run serves a copy).
+var routeTable []route
+
+var routeIndex = map[string]int{}
+
+func init() {
+	for _, area := range [][]route{pageRoutes, recordRoutes, ownerRoutes, apiRoutes} {
+		routeTable = append(routeTable, area...)
+	}
+	for i, rt := range routeTable {
+		if _, twice := routeIndex[rt.pattern]; twice {
+			panic("two routes are " + rt.pattern)
+		}
+		if _, ok := chat.OpFor(rt.tool); rt.tool != "" && !ok {
+			panic(rt.pattern + " names the tool " + rt.tool + ", which the assistant does not have")
+		}
+		routeIndex[rt.pattern] = i
+	}
+}
+
+// routes registers every route in the table.
 func (s *Server) routes() {
-	m := s.mux
-	m.HandleFunc("GET /{$}", s.canvasPage)
-	m.HandleFunc("GET /c/{canvas}", s.canvasPage)
-	m.HandleFunc("GET /chat", s.chatPage)
-	m.HandleFunc("GET /help", s.helpPage)
-	m.HandleFunc("POST /help/set", s.helpSet)
-	m.HandleFunc("GET /canvas/{id}", s.focusPage)
-	m.HandleFunc("POST /chat", s.chatSend)
-	m.HandleFunc("POST /chat/stream", s.chatStream)
-	m.HandleFunc("POST /chat/stop", s.chatStop)
-	m.HandleFunc("GET /chat/live", s.chatLive)
-	s.modelRoutes(m)                                       // model_key.go
-	s.bringRoutes(m)                                       // bring.go
-	s.calendarRoutes(m)                                    // calendar_links.go
-	s.shareRoutes(m)                                       // share.go
-	s.todayRoutes(m)                                       // today.go
-	s.mailRoutes(m)                                        // mail_in.go
-	s.todayNudgeRoutes(m)                                  // today_nudge.go
-	m.HandleFunc("POST /workspaces/example", s.tryExample) // example.go
-	m.HandleFunc("POST /feedback", s.feedback)             // feedback.go
-	s.cloudRoutes(m)                                       // cloud_restore.go
-	m.HandleFunc("POST /t/{type}/add", s.addRecord)
-	m.HandleFunc("POST /chat/clear", s.chatClear)
-	m.HandleFunc("POST /chat/new", s.chatNew)
-	m.HandleFunc("POST /chat/open", s.chatOpen)
-	m.HandleFunc("POST /chat/delete", s.chatDelete)
-	m.HandleFunc("POST /proposal/{id}/accept", s.proposalAccept)
-	m.HandleFunc("POST /proposal/{id}/dismiss", s.proposalDismiss)
-	m.HandleFunc("POST /proposal/{id}/instead", s.proposalInstead)
-	m.HandleFunc("POST /activity/{id}/undo", s.undo)
-	m.HandleFunc("POST /act/{id}", s.act)
-	m.HandleFunc("POST /suggestions/{id}/{answer}", s.suggestionAnswer)
-	m.HandleFunc("POST /suggestions/accept-all", s.suggestionsAcceptAll)
-	m.HandleFunc("POST /canvas/{id}/props", s.blockProps)
-	m.HandleFunc("POST /canvas/{id}/keep", s.canvasKeep)
-	m.HandleFunc("POST /canvas/{id}/delete", s.canvasDelete)
-	m.HandleFunc("GET /activity", s.activityPage)
-	m.HandleFunc("POST /clock/set", s.clockSet)
-	m.HandleFunc("POST /habit/{id}/log", s.habitLog)
-	m.HandleFunc("POST /clock/{id}/done", s.clockDone)
-	m.HandleFunc("POST /clock/{id}/snooze", s.clockSnooze)
-	m.HandleFunc("GET /clock/stream", s.clockStream)
-	m.HandleFunc("POST /sync", s.syncExchange)
-	s.togetherRoutes(m)
-	m.HandleFunc("GET /events", s.events)
-	m.HandleFunc("GET /workspaces", s.workspacesPage)
-	m.HandleFunc("POST /workspaces/start", s.workspacesStart)
-	m.HandleFunc("GET /workspaces/new", s.workspacesNewPage)
-	m.HandleFunc("POST /workspaces/new", s.workspacesNew)
-	m.HandleFunc("GET /workspaces/copy", s.workspacesCopyPage)
-	m.HandleFunc("POST /workspaces/copy", s.workspacesCopy)
-	m.HandleFunc("GET /workspaces/delete", s.workspacesDeletePage)
-	m.HandleFunc("POST /workspaces/delete", s.workspacesDelete)
-	m.HandleFunc("POST /workspaces/restore", s.workspacesRestore)
-	s.quitRoutes(m) // quit.go
-	m.HandleFunc("GET /search", s.searchPage)
-	m.HandleFunc("GET /when", s.whenRead)
-	m.HandleFunc("GET /design", s.designPage)
-	m.HandleFunc("GET /design/sameway.css", s.stylesheet)
-	iconRoutes(m) // icon.go
-	m.HandleFunc("GET /design/sameway.js", s.script)
-	m.HandleFunc("GET /design/base/{file}", s.baseFile)
+	for _, rt := range routeTable {
+		handle := rt.handle
+		s.mux.HandleFunc(rt.pattern, func(w http.ResponseWriter, r *http.Request) { handle(s, w, r) })
+	}
+}
 
-	m.HandleFunc("GET /t/{type}", s.listPage)
-	m.HandleFunc("GET /t/{type}/import", s.importPage)
-	m.HandleFunc("POST /t/{type}/import", s.importUpload)
-	m.HandleFunc("POST /t/{type}/import/{file}/run", s.importRun)
-	m.HandleFunc("GET /t/{type}/{id}", s.detailPage)
-	m.HandleFunc("GET /t/{type}/{id}/whole", s.wholePage)
-	m.HandleFunc("POST /t/{type}/{id}/parts/move", s.moveParts)
-	m.HandleFunc("POST /t/{type}/{id}/delete", s.deleteForm)
-	m.HandleFunc("POST /t/{type}/{id}/discard", s.discard)
-	m.HandleFunc("POST /t/{type}/{id}/props", s.recordProps)
-	m.HandleFunc("POST /t/file/upload", s.upload)
-	m.HandleFunc("GET /files/{id}", s.serveFile)
-	m.HandleFunc("GET /files/{id}/still", s.serveStill)
-	s.recordingRoutes(m)
-	s.agentRoutes(m) // api_agent.go
-	m.HandleFunc("POST /speech/get", s.speechGet)
-	m.HandleFunc("POST /speech/speakers/get", s.speakersGet)
-	m.HandleFunc("POST /meetings/teams/connect", s.teamsConnect)
-	m.HandleFunc("POST /dictate", s.dictate)
+// plain is a handler that needs no server, as a route's.
+func plain(h http.HandlerFunc) func(*Server, http.ResponseWriter, *http.Request) {
+	return func(_ *Server, w http.ResponseWriter, r *http.Request) { h(w, r) }
+}
 
-	m.HandleFunc("GET /api/describe", s.apiDescribe)
-	m.HandleFunc("GET /api/search", s.apiSearch)
-	m.HandleFunc("GET /api/describe/{part}", s.apiDescribePart)
-	m.HandleFunc("GET /api/describe/{part}/{name}", s.apiDescribePart)
-	m.HandleFunc("GET /api/look", s.apiLook)
-	m.HandleFunc("POST /api/look", s.apiLook)
-	m.HandleFunc("POST /api/prose", s.apiProse)
-	m.HandleFunc("POST /api/types", s.apiAddType)
-	m.HandleFunc("POST /api/types/{type}/fields", s.apiAddField)
-	m.HandleFunc("POST /api/act/{id}", s.apiAct)
-	m.HandleFunc("POST /hook/{token}", s.hook)
-	m.HandleFunc("POST /api/chat", s.apiChat)
-	m.HandleFunc("POST /api/chat/clear", s.apiChatClear)
-	m.HandleFunc("POST /api/file/upload", s.apiFileUpload)
-	m.HandleFunc("POST /api/import/{type}", s.apiImport)
-	m.HandleFunc("GET /api/{type}", s.apiList)
-	m.HandleFunc("POST /api/{type}", s.apiCreate)
-	m.HandleFunc("GET /api/{type}/{id}", s.apiGet)
-	m.HandleFunc("PUT /api/{type}/{id}", s.apiUpdate)
-	m.HandleFunc("PATCH /api/{type}/{id}", s.apiUpdate)
-	m.HandleFunc("DELETE /api/{type}/{id}", s.apiDelete)
-	s.templateRoutes(m) // templates_page.go
-	s.meaningRoutes(m)  // search_meaning.go
-	s.reviewRoutes(m)   // review.go
-	m.HandleFunc("/api/", s.apiNotFound)
-	m.HandleFunc("POST /restart", s.restart)
-	m.HandleFunc("POST /notify/phone", s.phoneSet)
-	s.phoneRoutes(m) // phone_lan_page.go
+// pageRoutes are the canvas, the conversation, and the pages around them.
+var pageRoutes = []route{
+	{pattern: "GET /{$}", handle: (*Server).canvasPage, access: people, public: true},
+	{pattern: "GET /c/{canvas}", handle: (*Server).canvasPage, access: people, public: true},
+	{pattern: "GET /canvas/{id}", handle: (*Server).focusPage, access: people},
+	{pattern: "POST /canvas/{id}/props", handle: (*Server).blockProps, access: people, tool: "update_component"},
+	{pattern: "POST /canvas/{id}/keep", handle: (*Server).canvasKeep, access: people, tool: "update_component"},
+	{pattern: "POST /canvas/{id}/delete", handle: (*Server).canvasDelete, access: people, tool: "remove_component"},
+	// And only those who may change it: measure.go.
+	{pattern: "POST /canvas/measure", handle: (*Server).measurePost, access: people, persons: "their browser says how the page came out on their screen; the assistant reads it in Layout now"},
+	{pattern: "GET /chat", handle: (*Server).chatPage, access: people},
+	{pattern: "POST /chat", handle: (*Server).chatSend, access: people, persons: "it is what they say to the assistant"},
+	{pattern: "POST /chat/stream", handle: (*Server).chatStream, access: people, persons: "the same"},
+	{pattern: "POST /chat/stop", handle: (*Server).chatStop, access: people, persons: "stopping the assistant"},
+	{pattern: "GET /chat/live", handle: (*Server).chatLive, access: people},
+	{pattern: "POST /chat/clear", handle: (*Server).chatClear, access: people, tool: "clear_conversation"},
+	{pattern: "POST /chat/new", handle: (*Server).chatNew, access: people, persons: "which conversation they are in is theirs"},
+	{pattern: "POST /chat/open", handle: (*Server).chatOpen, access: people, persons: "the same"},
+	{pattern: "POST /chat/delete", handle: (*Server).chatDelete, access: people, persons: "the same"},
+	{pattern: "POST /proposal/{id}/accept", handle: (*Server).proposalAccept, access: owner, persons: "the answer to the assistant's own question"},
+	{pattern: "POST /proposal/{id}/dismiss", handle: (*Server).proposalDismiss, access: owner, persons: "the same"},
+	{pattern: "POST /proposal/{id}/instead", handle: (*Server).proposalInstead, access: owner, persons: "the same"},
+	{pattern: "GET /activity", handle: (*Server).activityPage, access: owner},
+	{pattern: "POST /activity/{id}/undo", handle: (*Server).undo, access: owner, tool: "undo_change"},
+	{pattern: "GET /help", handle: (*Server).helpPage, access: people},
+	{pattern: "POST /help/set", handle: (*Server).helpSet, access: owner, tool: "set_setting"},
+	{pattern: "POST /clock/set", handle: (*Server).clockSet, access: people, tool: "create_record"},
+	{pattern: "POST /clock/{id}/done", handle: (*Server).clockDone, access: people, tool: "update_record"},
+	{pattern: "POST /clock/{id}/snooze", handle: (*Server).clockSnooze, access: people, tool: "update_record"},
+	{pattern: "GET /clock/stream", handle: (*Server).clockStream, access: people},
+	{pattern: "POST /habit/{id}/log", handle: (*Server).habitLog, access: people, tool: "create_record"},
+	{pattern: "GET /events", handle: (*Server).events, access: people},
+	{pattern: "GET /search", handle: (*Server).searchPage, access: people},
+	{pattern: "GET /when", handle: (*Server).whenRead, access: people},
+	{pattern: "POST /dictate", handle: (*Server).dictate, access: people, persons: "their voice"},
+	{pattern: "POST /sync", handle: (*Server).syncExchange, access: people, persons: "computers exchanging changes, not a change"},
+	// Working together: choosing between two versions written at once
+	// (clash.go), and saying they have caught up on what others did (since.go).
+	{pattern: "POST /clash/{id}/use", handle: (*Server).clashUse, access: people, persons: "which of two versions to keep"},
+	{pattern: "POST /clash/{id}/both", handle: (*Server).clashBoth, access: people, persons: "the same"},
+	{pattern: "POST /clash/{id}/keep", handle: (*Server).clashKeep, access: people, persons: "the same"},
+	{pattern: "POST /since/seen", handle: (*Server).sinceSeen, access: people, persons: "what they have seen"},
+	{pattern: "GET /design", handle: (*Server).designPage, access: people},
+	{pattern: "GET /design/sameway.css", handle: (*Server).stylesheet, access: people, public: true},
+	{pattern: "GET /design/sameway.js", handle: (*Server).script, access: people, public: true},
+	{pattern: "GET /design/base/{file}", handle: (*Server).baseFile, access: people, public: true},
+	// The icons: icon.go.
+	{pattern: "GET /favicon.svg", handle: plain(icon("icon.svg", "image/svg+xml")), access: people},
+	{pattern: "GET /favicon.ico", handle: plain(icon("icon.ico", "image/x-icon")), access: people},
+	{pattern: "GET /icon-192.png", handle: plain(icon("icon-192.png", "image/png")), access: people},
+	{pattern: "GET /icon-512.png", handle: plain(icon("icon-512.png", "image/png")), access: people},
+	{pattern: "GET /icon-square-180.png", handle: plain(icon("icon-square-180.png", "image/png")), access: people},
+	{pattern: "GET /icon-square-512.png", handle: plain(icon("icon-square-512.png", "image/png")), access: people},
+	{pattern: "GET /manifest.webmanifest", handle: plain(appManifest), access: people},
 }

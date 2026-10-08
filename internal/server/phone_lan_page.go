@@ -109,10 +109,3 @@ func (s *Server) setSetting(key, value string) {
 		s.app.Records.SetSetting(key, value)
 	}
 }
-
-func (s *Server) phoneRoutes(m *http.ServeMux) {
-	m.HandleFunc("POST /phone/on", s.phoneOn)
-	m.HandleFunc("POST /phone/off", s.phoneOff)
-	m.HandleFunc("POST /phone/forget", s.phoneForget)
-	m.HandleFunc("POST /phone/invite", s.phoneInvite) // lan_invite.go
-}

@@ -168,8 +168,3 @@ func clipRunes(s string, n int) string {
 	}
 	return s
 }
-
-func (s *Server) shareRoutes(m *http.ServeMux) {
-	m.HandleFunc("GET /share", s.sharePage)
-	m.HandleFunc("POST /share", s.shareSave)
-}

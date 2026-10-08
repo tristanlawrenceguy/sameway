@@ -116,7 +116,3 @@ func (s *Server) focusSection(l todayLists, list func(string, []todayItem) strin
 	}
 	return out
 }
-
-func (s *Server) todayFocusRoutes(m *http.ServeMux) {
-	m.HandleFunc("POST /today/sort", s.todaySort)
-}

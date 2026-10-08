@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
@@ -38,24 +36,14 @@ func TestEveryPageActionAnswersAnAgent(t *testing.T) {
 	// (the same turn is POST /api/chat), and files sent as multipart (an
 	// agent sends them to POST /api/file/upload).
 	elsewhere := map[string]bool{"/chat/stream": true, "/t/file/upload": true}
-	files, _ := filepath.Glob("*.go")
-	pattern := regexp.MustCompile(`HandleFunc\("POST (/[^"]*)"`)
 	var routes []string
-	for _, f := range files {
-		if strings.HasSuffix(f, "_test.go") {
-			continue
-		}
-		src, _ := os.ReadFile(f)
-		for _, m := range pattern.FindAllStringSubmatch(string(src), -1) {
-			p := m[1]
-			if strings.HasPrefix(p, "/api/") || p == "/mcp" || strings.HasPrefix(p, "/hook/") || elsewhere[p] {
-				continue
-			}
+	for _, r := range pageActions() { // tools_parity_test.go
+		if p := strings.TrimPrefix(r.Pattern, "POST "); !elsewhere[p] {
 			routes = append(routes, p)
 		}
 	}
 	if len(routes) < 30 {
-		t.Fatalf("found only %d page actions in the server's source", len(routes))
+		t.Fatalf("found only %d page actions in the route table", len(routes))
 	}
 	_, h := newApp(t)
 	for _, route := range routes {
