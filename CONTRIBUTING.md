@@ -49,7 +49,8 @@ Much of Sameway is built by AI agents working through the same checks you run, w
 
 - Client-side rendering, frontend frameworks, or JavaScript that a component
   needs in order to work at all.
-- Files over 300 lines, or files that do more than one thing.
+- Functions over 80 lines, files over 400 lines, files that do more than one
+  thing, or files split by size (`*_more.go`, `*_extra.go`, `*_helpers.go`).
 - Colour used as the only signal, targets under 44 pixels, missing labels.
 - Dependencies that duplicate the standard library.
 
