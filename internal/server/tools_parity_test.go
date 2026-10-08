@@ -69,6 +69,7 @@ var pageActionTools = map[string]string{
 	"/workspaces/restore":         "restore_workspace",
 	"/workspaces/delete":          "a person's: deleting a whole workspace is its owner's",
 	"/templates/use":              "add_arrangement",
+	"/meaning/fetch":              "a person's: what is fetched to this computer is its owner's choice",
 	"/review/next":                "update_record",
 	"/review/done":                "update_record",
 	"/review/on":                  "set_setting",

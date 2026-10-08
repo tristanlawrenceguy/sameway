@@ -23,6 +23,9 @@ type Hit struct {
 	Title   string `json:"title"`
 	Snippet string `json:"snippet,omitempty"`
 	Href    string `json:"href"`
+	// Near says it was found by what it is about, not by its words
+	// (near.go).
+	Near bool `json:"near,omitempty"`
 	// score orders hits: a title match before a body match.
 	score int
 }
@@ -39,9 +42,22 @@ const Limit = 50
 // has some of them, most first, with some true so it is said.
 func Matches(st *store.Store, types *schema.Set, q string) (hits []Hit, some bool) {
 	if hits = find(st, types, q, "", false); len(hits) > 0 || len(Words(q)) < 2 {
-		return hits, false
+		return near(st, types, q, hits), false
 	}
-	return find(st, types, q, "", true), true
+	// Some of the words is a weak match ("the plumber" has "the" in "Renew
+	// the passport"); what is near in meaning goes before it.
+	partial := find(st, types, q, "", true)
+	nearOnly := near(st, types, q, nil)
+	have := map[string]bool{}
+	for _, h := range nearOnly {
+		have[h.Type+"/"+h.ID] = true
+	}
+	for _, h := range partial {
+		if !have[h.Type+"/"+h.ID] {
+			nearOnly = append(nearOnly, h)
+		}
+	}
+	return nearOnly, true
 }
 
 // Counts is how many of the hits are of each type: the filters on the
