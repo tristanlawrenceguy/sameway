@@ -19,6 +19,7 @@ func (s *Server) routes() {
 	s.calendarRoutes(m)                                    // calendar_links.go
 	s.shareRoutes(m)                                       // share.go
 	s.todayRoutes(m)                                       // today.go
+	s.todayNudgeRoutes(m)                                  // today_nudge.go
 	m.HandleFunc("POST /workspaces/example", s.tryExample) // example.go
 	m.HandleFunc("POST /feedback", s.feedback)             // feedback.go
 	s.cloudRoutes(m)                                       // cloud_restore.go
@@ -107,6 +108,7 @@ func (s *Server) routes() {
 	m.HandleFunc("PATCH /api/{type}/{id}", s.apiUpdate)
 	m.HandleFunc("DELETE /api/{type}/{id}", s.apiDelete)
 	s.templateRoutes(m) // templates_page.go
+	s.meaningRoutes(m)  // search_meaning.go
 	s.reviewRoutes(m)   // review.go
 	m.HandleFunc("/api/", s.apiNotFound)
 	m.HandleFunc("POST /restart", s.restart)
