@@ -57,7 +57,7 @@ func (s *Service) Triage(ctx context.Context, message string, sent time.Time, pe
 		names = strings.Join(people, ", ")
 	}
 	ask := fmt.Sprintf("Sent %s.\n\n%s", sent.Format("Monday 2 January 2006, 15:04"), clipRunes(message, 6000))
-	resp, err := s.Provider.Complete(ctx, llm.Request{System: fmt.Sprintf(triageSystem, names), Messages: []llm.Message{{Role: llm.RoleUser, Content: ask}}, MaxTokens: 2048})
+	resp, err := s.Provider.Complete(ctx, llm.Request{System: fmt.Sprintf(triageSystem, names), Messages: []llm.Message{{Role: llm.RoleUser, Content: ask}}, MaxTokens: 2048, Effort: "none"})
 	if err != nil {
 		return Suggestion{}, err
 	}
