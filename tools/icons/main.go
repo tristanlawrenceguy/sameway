@@ -1,5 +1,6 @@
 // Command icons draws Sameway's icon and writes it in every form a system
-// asks for, into design/brand: icon.svg for the browser tab, icon.png for
+// asks for, into design/brand: icon.svg for the browser tab, the app's
+// sizes for installing it (icon-192, icon-512, and square ones), icon.png for
 // Linux and the Windows resource the release builds, icon.ico for
 // Windows, icon.icns for the Mac app. The icon is shapes, not a picture,
 // so it is drawn here with the standard library and every size is sharp:
@@ -37,6 +38,14 @@ func main() {
 	must(os.WriteFile(filepath.Join(out, "icon.svg"), []byte(svg), 0o644))
 	must(os.WriteFile(filepath.Join(out, "icon.png"), encode(draw(256)), 0o644))
 	must(os.WriteFile(filepath.Join(out, "icon.ico"), ico(16, 24, 32, 48, 64, 256), 0o644))
+	// For installing it as an app: the sizes a browser asks for, and a
+	// square without corners for a phone's home screen and for masking,
+	// which round it themselves (the strokes keep well inside the safe zone).
+	must(os.WriteFile(filepath.Join(out, "icon-192.png"), encode(draw(192)), 0o644))
+	must(os.WriteFile(filepath.Join(out, "icon-512.png"), encode(draw(512)), 0o644))
+	radius = 0
+	must(os.WriteFile(filepath.Join(out, "icon-square-180.png"), encode(draw(180)), 0o644))
+	must(os.WriteFile(filepath.Join(out, "icon-square-512.png"), encode(draw(512)), 0o644))
 	must(os.WriteFile(filepath.Join(out, "icon.icns"), icns(), 0o644))
 	fmt.Println("wrote", out)
 }
@@ -82,6 +91,9 @@ func draw(n int) *image.NRGBA {
 }
 
 func inRounded(x, y float64) bool {
+	if radius == 0 {
+		return x >= 0 && y >= 0 && x <= 64 && y <= 64
+	}
 	cx := math.Max(radius, math.Min(64-radius, x))
 	cy := math.Max(radius, math.Min(64-radius, y))
 	return x >= 0 && y >= 0 && x <= 64 && y <= 64 && math.Hypot(x-cx, y-cy) <= radius

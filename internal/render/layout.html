@@ -7,6 +7,9 @@
 <title>{{if .Failed}}Error: {{end}}{{or .Said .Title}} · {{.Site}}</title>
 <link rel="stylesheet" href="/design/sameway.css">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icon-square-180.png">
+<meta name="theme-color" content="#1a45a8">
 {{if .JSONURL}}<link rel="alternate" type="application/json" href="{{.JSONURL}}">
 {{end}}<link rel="describedby" href="/api/describe">
 <script src="/design/sameway.js" defer blocking="render"></script>
