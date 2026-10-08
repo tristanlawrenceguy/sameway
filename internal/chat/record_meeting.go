@@ -23,12 +23,13 @@ func RecordAbout(eventID string) string {
 	return "/t/" + records.EventType + "/" + eventID + "?show=recording"
 }
 
-var recordingOps = []Op{{Tool: llm.Tool{Name: "record_meeting",
-	Description: "Record a meeting, transcribe it and write it up after: this sets it up. With how here, a reminder as it starts that opens its page ready to record (the microphone, and this computer's sound for a call); with how app, for a meeting Teams, Zoom or Meet records, a reminder as it ends to add that recording or transcript on its page. Each repeats as the meeting does. Use it when the person wants a meeting recorded, or records this one each time; never for every event.",
-	Schema: obj(map[string]any{
-		"event": map[string]any{"type": "string", "description": "The event id of the meeting."},
-		"how":   map[string]any{"type": "string", "enum": []string{"here", "app"}, "description": "here: Sameway records it; app: the meeting app does, and its file is added after. here when left out."},
-	}, "event")}, Offered: has(records.ReminderType, records.EventType)}}
+var recordingOps = []Op{{Title: "Record a meeting", Traits: Traits{Idempotent: true},
+	Tool: llm.Tool{Name: "record_meeting",
+		Description: "Record a meeting, transcribe it and write it up after: this sets it up. With how here, a reminder as it starts that opens its page ready to record (the microphone, and this computer's sound for a call); with how app, for a meeting Teams, Zoom or Meet records, a reminder as it ends to add that recording or transcript on its page. Each repeats as the meeting does. Use it when the person wants a meeting recorded, or records this one each time; never for every event.",
+		Schema: obj(map[string]any{
+			"event": map[string]any{"type": "string", "description": "The event id of the meeting."},
+			"how":   map[string]any{"type": "string", "enum": []string{"here", "app"}, "description": "here: Sameway records it; app: the meeting app does, and its file is added after. here when left out."},
+		}, "event")}, Offered: has(records.ReminderType, records.EventType)}}
 
 func (s *Service) askToRecord(eventID, how string, now time.Time) toolResult {
 	ev, err := s.Store.Get(records.EventType, eventID)

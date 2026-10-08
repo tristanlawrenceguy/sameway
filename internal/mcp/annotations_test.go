@@ -30,7 +30,7 @@ func TestEveryToolSaysWhatItIs(t *testing.T) {
 		tool := raw.(map[string]any)
 		ann, _ := tool["annotations"].(map[string]any)
 		if ann == nil || tool["title"] == "" || ann["title"] != tool["title"] {
-			t.Errorf("%v has no title or annotations: add it to toolTraits in internal/mcp/annotations.go", tool["name"])
+			t.Errorf("%v has no title or annotations: give its Op a Title (internal/chat), or ownTools one in internal/mcp/annotations.go", tool["name"])
 			continue
 		}
 		if ann["readOnlyHint"] == true && ann["destructiveHint"] == true {

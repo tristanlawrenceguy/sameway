@@ -12,12 +12,22 @@ import (
 
 // Op is one thing the assistant can do.
 type Op struct {
-	llm.Tool // its name, what it does and what it takes, as the model reads them
+	llm.Tool        // its name, what it does and what it takes, as the model reads them
+	Title    string // what it does, as a person reads it: "Make a record"
+	Traits
 	// Offered says whether this workspace offers it, and fills in what its
 	// schema names from the workspace (its content types, its kinds) on
 	// the copy it is given; nil is always.
 	Offered func(s *Service, t *llm.Tool) bool
 }
+
+// Traits are what an op is like, as MCP's annotations say it, so a client
+// can ask its person before what changes or reaches outside, and run what
+// only reads without asking: whether it only reads, whether what it
+// changes is taken away (removed, cleared, deleted, even though Undo puts
+// it back), whether calling it twice is the same as once, and whether it
+// reaches beyond this workspace.
+type Traits struct{ ReadOnly, Destructive, Idempotent, OpenWorld bool }
 
 // registry is every op, in the order the model is given them (the order
 // matters to a model here, which reads again only from where a turn's

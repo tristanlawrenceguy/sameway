@@ -12,13 +12,14 @@ import (
 // (internal/records/undo.go). Here is the assistant's side of it: the
 // tool, and the changes it is told it could take back.
 
-var undoOp = Op{Tool: llm.Tool{
-	Name:        "undo_change",
-	Description: "Reverse one change from the activity log, yours or the person's: an added thing is removed, a removed thing is put back with everything it had, an update goes back to what it was. Undoing an undo puts it back again. Without an id, the newest change that can still be undone.",
-	Schema: map[string]any{"type": "object", "properties": map[string]any{
-		"id": map[string]any{"type": "string", "description": "The activity entry's id, from the recent changes listed in the prompt."},
-	}, "additionalProperties": false},
-}}
+var undoOp = Op{Title: "Undo a change",
+	Tool: llm.Tool{
+		Name:        "undo_change",
+		Description: "Reverse one change from the activity log, yours or the person's: an added thing is removed, a removed thing is put back with everything it had, an update goes back to what it was. Undoing an undo puts it back again. Without an id, the newest change that can still be undone.",
+		Schema: map[string]any{"type": "object", "properties": map[string]any{
+			"id": map[string]any{"type": "string", "description": "The activity entry's id, from the recent changes listed in the prompt."},
+		}, "additionalProperties": false},
+	}}
 
 // undo is undo_change: the reversal, ready to be recorded with the turn.
 func (s *Service) undo(id string) toolResult {

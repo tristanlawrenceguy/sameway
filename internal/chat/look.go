@@ -18,22 +18,23 @@ import (
 // one says how to narrow it.
 const lookLimit = 16000
 
-var lookOps = []Op{{Tool: llm.Tool{Name: "look_at_page",
-	Description: "See a page of this workspace the way the person gets it: its headings, landmarks and controls with what they hold, what is hidden, where Tab goes, and every script error and structural problem. Use it when the person says something does not work, look right, or cannot be reached, doing what they did as steps, and to check a page after you change it, before saying it is done. It changes nothing.",
-	Schema: obj(map[string]any{
-		"path": map[string]any{"type": "string", "description": "The page, such as /t/note/abc or /c/work. Defaults to the tab the person is on."},
-		"steps": map[string]any{"type": "array", "description": "What the person did there first, in order. Controls and fields are found by the name a screen reader says.",
-			"items": map[string]any{"type": "object", "additionalProperties": false, "properties": map[string]any{
-				"press": map[string]any{"type": "string", "description": "Press the control with this name."},
-				"type":  map[string]any{"type": "string", "description": "Type these words, into the focused field or the one named by into."},
-				"into":  map[string]any{"type": "string", "description": "The field to type into, by name."},
-				"key":   map[string]any{"type": "string", "description": "Press a key: Tab, Shift+Tab, Enter, Escape, Space, an arrow key, Home, End, Backspace or Delete."},
-				"wait":  map[string]any{"type": "integer", "description": "Wait this many milliseconds."},
-			}}},
-		"only": map[string]any{"type": "array", "items": map[string]any{"type": "string", "enum": []string{"landmarks", "headings", "controls", "live", "components"}}, "description": "Keep only these parts of a long page; problems always stay."},
-		"kind": map[string]any{"type": "string", "description": "Keep only controls of this kind: link, button, textbox, checkbox, radio, listbox, disclosure."},
-		"name": map[string]any{"type": "string", "description": "Keep only controls with these words in their name."},
-	})}, Offered: func(s *Service, _ *llm.Tool) bool { return s.Look != nil }}}
+var lookOps = []Op{{Title: "Read a page", Traits: Traits{ReadOnly: true, Idempotent: true},
+	Tool: llm.Tool{Name: "look_at_page",
+		Description: "See a page of this workspace the way the person gets it: its headings, landmarks and controls with what they hold, what is hidden, where Tab goes, and every script error and structural problem. Use it when the person says something does not work, look right, or cannot be reached, doing what they did as steps, and to check a page after you change it, before saying it is done. It changes nothing.",
+		Schema: obj(map[string]any{
+			"path": map[string]any{"type": "string", "description": "The page, such as /t/note/abc or /c/work. Defaults to the tab the person is on."},
+			"steps": map[string]any{"type": "array", "description": "What the person did there first, in order. Controls and fields are found by the name a screen reader says.",
+				"items": map[string]any{"type": "object", "additionalProperties": false, "properties": map[string]any{
+					"press": map[string]any{"type": "string", "description": "Press the control with this name."},
+					"type":  map[string]any{"type": "string", "description": "Type these words, into the focused field or the one named by into."},
+					"into":  map[string]any{"type": "string", "description": "The field to type into, by name."},
+					"key":   map[string]any{"type": "string", "description": "Press a key: Tab, Shift+Tab, Enter, Escape, Space, an arrow key, Home, End, Backspace or Delete."},
+					"wait":  map[string]any{"type": "integer", "description": "Wait this many milliseconds."},
+				}}},
+			"only": map[string]any{"type": "array", "items": map[string]any{"type": "string", "enum": []string{"landmarks", "headings", "controls", "live", "components"}}, "description": "Keep only these parts of a long page; problems always stay."},
+			"kind": map[string]any{"type": "string", "description": "Keep only controls of this kind: link, button, textbox, checkbox, radio, listbox, disclosure."},
+			"name": map[string]any{"type": "string", "description": "Keep only controls with these words in their name."},
+		})}, Offered: func(s *Service, _ *llm.Tool) bool { return s.Look != nil }}}
 
 // lookAtPage reads a page for the model, on the tab the person is on
 // when none is named.

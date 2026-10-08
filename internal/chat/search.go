@@ -11,21 +11,22 @@ import (
 
 // searchOp names the kinds the search can be narrowed to as they are now,
 // so a kind added while the workspace runs is offered at once.
-var searchOp = Op{Tool: llm.Tool{
-	Name: "search",
-	Description: "Find anything the person has by the words in it: every record of every content type and every block on the canvas, with where each is. Use it before saying something does not exist, and to find the id of a thing they mention. " +
-		"Search everything first: the answer begins with how many were found of each kind, 12 found: 7 notes, 3 tasks, 2 blocks. Then, if the counts show where it is, search again with type to see only that kind. " +
-		fmt.Sprintf("At most %d come back at a time; the answer says when there are more, and page asks for them.", search.Limit),
-	Schema: map[string]any{"type": "object", "properties": map[string]any{
-		"query": map[string]any{"type": "string", "description": "Words that must all appear."},
-		"type":  map[string]any{"type": "string", "description": "Only this kind of thing. Leave it out to search everything."},
-		"page":  map[string]any{"type": "integer", "minimum": 1, "description": "Which page of results, from 1; only when the answer says there are more."},
-	}, "required": []string{"query"}, "additionalProperties": false},
-}, Offered: func(s *Service, t *llm.Tool) bool {
-	kinds := strings.Join(search.Kinds(s.Store.Types()), ", ")
-	withProp(t, "type", map[string]any{"type": "string", "description": "Only this kind of thing, one of: " + kinds + ". Leave it out to search everything."})
-	return true
-}}
+var searchOp = Op{Title: "Search everything", Traits: Traits{ReadOnly: true, Idempotent: true},
+	Tool: llm.Tool{
+		Name: "search",
+		Description: "Find anything the person has by the words in it: every record of every content type and every block on the canvas, with where each is. Use it before saying something does not exist, and to find the id of a thing they mention. " +
+			"Search everything first: the answer begins with how many were found of each kind, 12 found: 7 notes, 3 tasks, 2 blocks. Then, if the counts show where it is, search again with type to see only that kind. " +
+			fmt.Sprintf("At most %d come back at a time; the answer says when there are more, and page asks for them.", search.Limit),
+		Schema: map[string]any{"type": "object", "properties": map[string]any{
+			"query": map[string]any{"type": "string", "description": "Words that must all appear."},
+			"type":  map[string]any{"type": "string", "description": "Only this kind of thing. Leave it out to search everything."},
+			"page":  map[string]any{"type": "integer", "minimum": 1, "description": "Which page of results, from 1; only when the answer says there are more."},
+		}, "required": []string{"query"}, "additionalProperties": false},
+	}, Offered: func(s *Service, t *llm.Tool) bool {
+		kinds := strings.Join(search.Kinds(s.Store.Types()), ", ")
+		withProp(t, "type", map[string]any{"type": "string", "description": "Only this kind of thing, one of: " + kinds + ". Leave it out to search everything."})
+		return true
+	}}
 
 // search is one search over everything, the same one the page and the API
 // use: counted by kind, narrowed when a type is named, a page at a time.

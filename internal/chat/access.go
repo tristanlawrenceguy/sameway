@@ -15,15 +15,16 @@ import (
 // here, and giving access is always put to the owner first, so nobody can
 // let themselves in or raise their own level.
 
-var letInOp = Op{Tool: llm.Tool{
-	Name:        "let_in",
-	Description: "Give someone access to this workspace from their own devices over Tailscale, or take it away, when the owner asks: \"let Bob edit\", \"Carol can look\", \"stop Bob\". They are matched by the email they sign in to Tailscale with, and reach the workspace once the owner shares this machine with them in Tailscale (or they are on the same tailnet). view reads only; edit changes content and the canvas and presses buttons; host is edit, and their own computer keeps a full copy of the workspace in step with this one (for when they host it too, with their own assistant); none takes access away. Giving access is put to the owner as a question for you, and nothing changes until they say yes; taking it away happens at once.",
-	Schema: obj(map[string]any{
-		"email":  map[string]any{"type": "string"},
-		"name":   map[string]any{"type": "string"},
-		"access": map[string]any{"type": "string", "enum": []string{records.View, records.Edit, records.Host, "none"}},
-	}, "email", "access"),
-}, Offered: has(records.PersonType)}
+var letInOp = Op{Title: "Let a person in",
+	Tool: llm.Tool{
+		Name:        "let_in",
+		Description: "Give someone access to this workspace from their own devices over Tailscale, or take it away, when the owner asks: \"let Bob edit\", \"Carol can look\", \"stop Bob\". They are matched by the email they sign in to Tailscale with, and reach the workspace once the owner shares this machine with them in Tailscale (or they are on the same tailnet). view reads only; edit changes content and the canvas and presses buttons; host is edit, and their own computer keeps a full copy of the workspace in step with this one (for when they host it too, with their own assistant); none takes access away. Giving access is put to the owner as a question for you, and nothing changes until they say yes; taking it away happens at once.",
+		Schema: obj(map[string]any{
+			"email":  map[string]any{"type": "string"},
+			"name":   map[string]any{"type": "string"},
+			"access": map[string]any{"type": "string", "enum": []string{records.View, records.Edit, records.Host, "none"}},
+		}, "email", "access"),
+	}, Offered: has(records.PersonType)}
 
 // accessOps are offered only where the workspace can do what they do:
 // let_in where there are people to let in, change_field where the schema

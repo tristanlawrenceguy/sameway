@@ -30,13 +30,13 @@ func (s *Server) try(ctx context.Context, args json.RawMessage) (string, bool) {
 	if err := json.Unmarshal(args, &a); err != nil || a.Name == "" {
 		return "try needs name, the tool to try, and arguments, its arguments", true
 	}
-	tr, known := toolTraits[a.Name]
+	_, tr, known := traitsOf(a.Name)
 	switch {
 	case !known || a.Name == "try":
 		return "there is no tool " + a.Name + " to try; tools/list has them", true
-	case tr.openWorld:
+	case tr.OpenWorld:
 		return a.Name + " reaches outside the workspace, so a copy cannot try it; ask the person before you run it", true
-	case tr.readOnly:
+	case tr.ReadOnly:
 		return a.Name + " changes nothing, so call it as it is", true
 	}
 	if ok, _ := s.may(ctx, a.Name); !ok {
