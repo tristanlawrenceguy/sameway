@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/ingest"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
@@ -50,7 +50,7 @@ func (s *Server) saveCalendarLinks(l []calendarLink) {
 // syncCalendar fetches one calendar and keeps its events in step.
 func (s *Server) syncCalendar(ctx context.Context, l *calendarLink) {
 	l.At, l.Err = time.Now(), ""
-	t, ok := s.app.Types.Get(chat.EventType)
+	t, ok := s.app.Types.Get(records.EventType)
 	if !ok {
 		l.Err = "this workspace has no events"
 		return
@@ -84,7 +84,7 @@ func (s *Server) syncCalendar(ctx context.Context, l *calendarLink) {
 	}
 	l.UIDs = done.UIDs
 	if said := done.String(); said != "" {
-		chat.Record(s.app.Store, "system", chat.Change{Action: "kept in step", Component: "calendar", Detail: l.Name + ": " + said, Href: "/t/event"})
+		records.Record(s.app.Store, "system", records.Change{Action: "kept in step", Component: "calendar", Detail: l.Name + ": " + said, Href: "/t/event"})
 	}
 }
 
@@ -141,7 +141,7 @@ func (s *Server) calendarsPage(w http.ResponseWriter, r *http.Request) {
 	if len(links) > 0 {
 		b.WriteString(`<h2>Kept in step</h2><ul class="sw-plain sw-rows">`)
 		for _, l := range links {
-			state := schema.Count(len(l.UIDs), chat.EventType) + ", checked " + when.Sent(l.At, time.Now())
+			state := schema.Count(len(l.UIDs), records.EventType) + ", checked " + when.Sent(l.At, time.Now())
 			if l.Err != "" {
 				state = "Not up to date: " + l.Err
 			}

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // A search finds what the one searching may read, and nothing the system
@@ -13,9 +13,9 @@ import (
 // anyone, and so not for someone let in to look.
 func TestASearchDoesNotFindTheOwnersConversations(t *testing.T) {
 	a, h := newApp(t)
-	a.Store.Create(chat.ConversationType, map[string]any{"title": "Divorce lawyer questions"})
+	a.Store.Create(records.ConversationType, map[string]any{"title": "Divorce lawyer questions"})
 	a.Store.Create("note", map[string]any{"title": "Lawyer for the house"})
-	viewer := chat.Visitor{Name: "Vi", Login: "vi@example.com", Access: chat.View}
+	viewer := records.Visitor{Name: "Vi", Login: "vi@example.com", Access: records.View}
 	for _, path := range []string{"/search?q=lawyer", "/api/search?q=lawyer"} {
 		body := as(t, h, viewer, http.MethodGet, path, "", "").Body.String()
 		if strings.Contains(body, "Divorce") {

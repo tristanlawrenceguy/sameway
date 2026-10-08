@@ -3,7 +3,7 @@ package server
 import (
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -38,7 +38,7 @@ func cleanActivityFields(fields map[string]any) {
 func (s *Server) entriesApart(recs []*store.Record) []string {
 	names := make([]string, len(recs))
 	for i, r := range recs {
-		w := chat.Say(s.app.Store, r.Fields)
+		w := records.Say(s.app.Store, r.Fields)
 		names[i] = strings.Join([]string{w.Action, w.Target, w.Detail}, " ")
 	}
 	return apart(names, func(i int) []string {

@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -24,7 +24,7 @@ func TestARealModelWritesUpAMeeting(t *testing.T) {
 	c := llm.Presets["claude-code"]
 	c.Model, c.Workspace, c.Timeout = model, t.TempDir(), 5*time.Minute
 	svc.Provider = &c
-	file, err := svc.Store.Create(chat.FileType, map[string]any{"title": "Monday stand-up", "kind": "audio", "text": standup})
+	file, err := svc.Store.Create(records.FileType, map[string]any{"title": "Monday stand-up", "kind": "audio", "text": standup})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -32,7 +32,7 @@ func TestARealModelWritesUpAMeeting(t *testing.T) {
 	if _, err := svc.Send(context.Background(), ask); err != nil {
 		t.Fatal(err)
 	}
-	events, _ := svc.Store.List(chat.EventType, store.ListOptions{})
+	events, _ := svc.Store.List(records.EventType, store.ListOptions{})
 	if len(events) != 1 {
 		t.Fatalf("the model made one meeting, got %d", len(events))
 	}

@@ -8,15 +8,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/look"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // A link to a record in a reply reads as the record's name, not its address.
 func TestALinkInAReplyReadsAsTheRecordsName(t *testing.T) {
 	a, h := newApp(t)
 	note, _ := a.Store.Create("note", map[string]any{"title": "Water the plants"})
-	a.Store.Create(chat.MessageType, map[string]any{"role": "assistant", "content": "Done: it is at /t/note/" + note.ID + "."})
+	a.Store.Create(records.MessageType, map[string]any{"role": "assistant", "content": "Done: it is at /t/note/" + note.ID + "."})
 	page := get(t, h, "/chat").Body.String()
 	if !strings.Contains(page, `href="/t/note/`+note.ID+`">Water the plants</a>`) {
 		t.Errorf("the link says the note's name; body: %s", truncate(page))

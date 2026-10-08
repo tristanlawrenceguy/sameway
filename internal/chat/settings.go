@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
@@ -41,5 +42,5 @@ func (s *Service) setSetting(key, value string) toolResult {
 	if (key == "tailnet.name" || strings.HasPrefix(key, "publish.")) && s.Tailnet != nil {
 		note = ". " + s.Tailnet(20*time.Second)
 	}
-	return toolResult{text: key + " is now " + value + note, change: &Change{Action: "set", Component: key, Detail: value, Before: map[string]any{"value": was}}}
+	return toolResult{text: key + " is now " + value + note, change: &records.Change{Action: "set", Component: key, Detail: value, Before: map[string]any{"value": was}}}
 }

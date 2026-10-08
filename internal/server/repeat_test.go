@@ -12,7 +12,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/examples"
 	"github.com/tristanlawrenceguy/sameway/internal/app"
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
@@ -100,7 +100,7 @@ func TestARepeatingTaskDoneIsDueAgain(t *testing.T) {
 // words, and Cancel on one that repeats skips only this time.
 func TestARepeatingReminderRingsAgain(t *testing.T) {
 	a, h := newApp(t)
-	a.Store.Create(chat.BlockType, a.Chat.BlockFields(map[string]any{"component": "clock", "props": map[string]any{}}))
+	a.Store.Create(records.BlockType, a.Chat.BlockFields(map[string]any{"component": "clock", "props": map[string]any{}}))
 	now := time.Now()
 	at := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), 0, 0, time.Local).Add(-time.Minute)
 	rem, _ := a.Store.Create(server.ReminderType, map[string]any{"title": "Stretch", "at": when.Store(at, false), "state": "rang", "repeat": "every day"})

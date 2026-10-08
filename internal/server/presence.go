@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/peers"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
 
@@ -61,8 +61,8 @@ func (s *Server) seen(r *http.Request, path string) {
 // whoAsks is the login and name of who makes a request: a visitor, or the
 // owner of this computer's copy, once the tailnet says who that is.
 func (s *Server) whoAsks(r *http.Request) (string, string) {
-	v := chat.VisitorOf(r.Context())
-	if v.Access == chat.Public {
+	v := records.VisitorOf(r.Context())
+	if v.Access == records.Public {
 		return "", "" // someone on the internet is nobody in particular
 	}
 	if v.Login != "" {
@@ -138,7 +138,7 @@ func (s *Server) presentFor(r *http.Request) template.HTML {
 		if name == "" {
 			name, _, _ = strings.Cut(p.Login, "@")
 		}
-		one := map[string]any{"name": name, "colour": chat.PersonColour(p.Login)}
+		one := map[string]any{"name": name, "colour": records.PersonColour(p.Login)}
 		if p.Path != "" && p.Path == mine {
 			one["here"] = true
 		} else if p.Place != "" {
@@ -155,7 +155,7 @@ func (s *Server) placeName(path string) string {
 	case path == "/" || path == "":
 		return "Home"
 	case strings.HasPrefix(path, "/c/"):
-		if c, err := s.app.Store.Get(chat.CanvasType, strings.TrimPrefix(path, "/c/")); err == nil {
+		if c, err := s.app.Store.Get(records.CanvasType, strings.TrimPrefix(path, "/c/")); err == nil {
 			if title, _ := c.Fields["title"].(string); title != "" {
 				return title
 			}

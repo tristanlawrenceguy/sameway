@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // Over REST, a block write answers with the layout line, and POST
@@ -48,7 +48,7 @@ func TestTheAPIArrangesATabInOneChange(t *testing.T) {
 	if err := a.Chat.UndoAs("human", e.ID); err != nil {
 		t.Fatal(err)
 	}
-	blk, _ := a.Store.Get(chat.BlockType, ids[0])
+	blk, _ := a.Store.Get(records.BlockType, ids[0])
 	if blk.Fields["span"] != int64(6) {
 		t.Errorf("undo should put the span back: %v", blk.Fields["span"])
 	}

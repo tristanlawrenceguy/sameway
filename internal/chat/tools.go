@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -13,7 +14,7 @@ import (
 // server code can write provenance and layout fields without checking
 // whether an older workspace has them.
 func (s *Service) BlockFields(in map[string]any) map[string]any {
-	return s.fields(BlockType, in)
+	return s.fields(records.BlockType, in)
 }
 
 // Tools is what the model can call: the canvas tools, which write ordinary
@@ -102,17 +103,17 @@ func (s *Service) addComponent(name string, props map[string]any, l look) toolRe
 		return *bad
 	}
 	// One conversation only: a second would duplicate every message id.
-	if name == ComponentName {
-		if existing, err := s.Store.List(BlockType, store.ListOptions{}); err == nil {
+	if name == records.ComponentName {
+		if existing, err := s.Store.List(records.BlockType, store.ListOptions{}); err == nil {
 			for _, b := range existing {
-				if b.Fields["component"] == ComponentName {
+				if b.Fields["component"] == records.ComponentName {
 					return fail("there is already a chat block on the canvas (id %s); move or restyle that one with update_component instead", b.ID)
 				}
 			}
 		}
 	}
 	position := 0
-	if existing, err := s.Store.List(BlockType, store.ListOptions{OrderBy: "position", Desc: true, Limit: 1}); err == nil && len(existing) > 0 {
+	if existing, err := s.Store.List(records.BlockType, store.ListOptions{OrderBy: "position", Desc: true, Limit: 1}); err == nil && len(existing) > 0 {
 		if p, ok := existing[0].Fields["position"].(int64); ok {
 			position = int(p) + 1
 		}
@@ -129,7 +130,7 @@ func (s *Service) addComponent(name string, props map[string]any, l look) toolRe
 	if why := s.skipIfWritten(fields["canvas"].(string), withFields(&store.Record{ID: "new"}, fields)); why != "" {
 		return fail("not added: %s", why)
 	}
-	rec, err := s.Store.Create(BlockType, s.fields(BlockType, fields))
+	rec, err := s.Store.Create(records.BlockType, s.fields(records.BlockType, fields))
 	if err != nil {
 		return fail("could not save the block: %v", err)
 	}
@@ -141,12 +142,12 @@ func (s *Service) addComponent(name string, props map[string]any, l look) toolRe
 	}
 	return toolResult{
 		text:   showing(where, shows),
-		change: &Change{Action: "added", Component: name, ID: rec.ID, Detail: Summarise(name, props), Href: "/canvas/" + rec.ID},
+		change: &records.Change{Action: "added", Component: name, ID: rec.ID, Detail: records.Summarise(name, props), Href: "/canvas/" + rec.ID},
 	}
 }
 
 func (s *Service) updateComponent(id string, props map[string]any, l look) toolResult {
-	rec, err := s.Store.Get(BlockType, id)
+	rec, err := s.Store.Get(records.BlockType, id)
 	if err != nil {
 		return fail("no block with id %s on the canvas", id)
 	}
@@ -182,8 +183,8 @@ func (s *Service) updateComponent(id string, props map[string]any, l look) toolR
 	if on, _ := withFields(rec, fields).Fields["canvas"].(string); s.skipIfWritten(on, withFields(rec, fields)) != "" {
 		return fail("not changed: %s", s.skipIfWritten(on, withFields(rec, fields)))
 	}
-	if _, err := s.Store.Update(BlockType, id, s.fields(BlockType, fields)); err != nil {
+	if _, err := s.Store.Update(records.BlockType, id, s.fields(records.BlockType, fields)); err != nil {
 		return fail("could not update block %s: %v", id, err)
 	}
-	return toolResult{text: showing("updated "+strings.Join(what, " and ")+" on block "+id, shows), change: &Change{Action: "updated", Component: name, ID: id, Detail: Summarise(name, props), Href: "/canvas/" + id, Before: rec.Fields}}
+	return toolResult{text: showing("updated "+strings.Join(what, " and ")+" on block "+id, shows), change: &records.Change{Action: "updated", Component: name, ID: id, Detail: records.Summarise(name, props), Href: "/canvas/" + id, Before: rec.Fields}}
 }

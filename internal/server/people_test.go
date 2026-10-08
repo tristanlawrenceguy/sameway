@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/peers"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // A change made on another computer that hosts the workspace comes here in
@@ -18,8 +18,8 @@ import (
 func TestAChangeFromAnotherHostIsTheirs(t *testing.T) {
 	mine, hMine := newApp(t)
 	hana, hHana := newApp(t)
-	mine.Chat.Owner = chat.Visitor{Access: chat.Owner, Login: "tristan@example.com", Name: "Tristan"}
-	hana.Chat.Owner = chat.Visitor{Access: chat.Owner, Login: "hana@example.com", Name: "Hana"}
+	mine.Chat.Owner = records.Visitor{Access: records.Owner, Login: "tristan@example.com", Name: "Tristan"}
+	hana.Chat.Owner = records.Visitor{Access: records.Owner, Login: "hana@example.com", Name: "Hana"}
 	srv := httptest.NewServer(hHana)
 	defer srv.Close()
 
@@ -27,7 +27,7 @@ func TestAChangeFromAnotherHostIsTheirs(t *testing.T) {
 	if r := postForm(t, hHana, "/t/note/"+note.ID+"/delete", nil); r.Code >= 400 {
 		t.Fatalf("Hana deletes the note on her computer: %d", r.Code)
 	}
-	chat.Record(hana.Store, "human", chat.Change{Action: "said", Detail: "something private"})
+	records.Record(hana.Store, "human", records.Change{Action: "said", Detail: "something private"})
 
 	if _, err := peers.With(context.Background(), http.DefaultClient, mine.Store, strings.TrimPrefix(srv.URL, "http://")); err != nil {
 		t.Fatal(err)
@@ -47,11 +47,11 @@ func TestAChangeFromAnotherHostIsTheirs(t *testing.T) {
 // Someone else's latest change to a block makes it glow in their colour.
 func TestABlockGlowsInTheColourOfWhoChangedIt(t *testing.T) {
 	a, h := newApp(t)
-	blk, err := a.Store.Create(chat.BlockType, a.Chat.BlockFields(map[string]any{"component": "heading", "props": map[string]any{"text": "Plan"}, "actor": "human"}))
+	blk, err := a.Store.Create(records.BlockType, a.Chat.BlockFields(map[string]any{"component": "heading", "props": map[string]any{"text": "Plan"}, "actor": "human"}))
 	if err != nil {
 		t.Fatal(err)
 	}
-	chat.Record(a.Store, "human", chat.Change{Action: "updated", Component: "heading", ID: blk.ID, By: "Bob", ByLogin: "bob@example.com"})
+	records.Record(a.Store, "human", records.Change{Action: "updated", Component: "heading", ID: blk.ID, By: "Bob", ByLogin: "bob@example.com"})
 	body := get(t, h, "/").Body.String()
 	i := strings.Index(body, `data-block-id="`+blk.ID+`"`)
 	if i < 0 {
@@ -64,11 +64,11 @@ func TestABlockGlowsInTheColourOfWhoChangedIt(t *testing.T) {
 }
 
 func TestEveryoneHasOneColourEverywhere(t *testing.T) {
-	c := chat.PersonColour("Bob@Example.com")
-	if c < 1 || c > 6 || c != chat.PersonColour("bob@example.com") {
+	c := records.PersonColour("Bob@Example.com")
+	if c < 1 || c > 6 || c != records.PersonColour("bob@example.com") {
 		t.Errorf("a person's colour is one of six and does not depend on case: %d", c)
 	}
-	if chat.PersonColour("") != 0 {
+	if records.PersonColour("") != 0 {
 		t.Error("nobody has no colour")
 	}
 }

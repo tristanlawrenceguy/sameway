@@ -9,12 +9,13 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 func newest(t *testing.T, svc *chat.Service) *store.Record {
 	t.Helper()
-	log, _ := svc.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
+	log, _ := svc.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
 	if len(log) == 0 {
 		t.Fatal("nothing logged")
 	}
@@ -54,7 +55,7 @@ func TestAnImportIsUndoneInOneGo(t *testing.T) {
 		rec, _ := svc.Store.Create("person", map[string]any{"name": name})
 		ids = append(ids, rec.ID)
 	}
-	chat.Record(svc.Store, "human", chat.Change{Action: "imported", Component: "person", Detail: "3 people from contacts.csv", Before: chat.Imported("person", ids)})
+	records.Record(svc.Store, "human", records.Change{Action: "imported", Component: "person", Detail: "3 people from contacts.csv", Before: records.Imported("person", ids)})
 	undo(t, svc, newest(t, svc).ID)
 	if n, _ := svc.Store.Count("person"); n != 0 {
 		t.Fatalf("one undo takes the whole import back, %d left", n)

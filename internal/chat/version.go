@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/update"
 )
 
@@ -33,7 +34,7 @@ func (s *Service) updateSameway(install bool) toolResult {
 		return fail("%v", err)
 	}
 	if out.Installed {
-		return toolResult{text: out.Says, change: &Change{Action: "updated to", Component: "sameway " + out.Latest}}
+		return toolResult{text: out.Says, change: &records.Change{Action: "updated to", Component: "sameway " + out.Latest}}
 	}
 	if out.Newer {
 		return toolResult{text: out.Says + update.AskFor}

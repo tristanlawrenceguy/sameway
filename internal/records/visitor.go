@@ -90,3 +90,17 @@ func (b *Book) PersonByEmail(email string) *store.Record {
 	}
 	return nil
 }
+
+// PersonColour is the colour someone's changes are shown in, 1 to 6, from
+// their login: the same person has the same colour on every computer.
+func PersonColour(login string) int {
+	login = strings.ToLower(strings.TrimSpace(login))
+	if login == "" {
+		return 0
+	}
+	h := uint32(2166136261)
+	for i := 0; i < len(login); i++ {
+		h = (h ^ uint32(login[i])) * 16777619
+	}
+	return int(h%6) + 1
+}

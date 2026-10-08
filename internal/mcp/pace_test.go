@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/mcp"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 )
 
@@ -16,7 +16,7 @@ import (
 // only reads is never held back.
 func TestAnAgentsToolCallsArePaced(t *testing.T) {
 	a, id := starter(t)
-	key, _, err := chat.LetAgentIn(a.Store, chat.Who{Actor: "human", Via: chat.ThroughCLI}, "Busy", "edit")
+	key, _, err := records.LetAgentIn(a.Store, records.Who{Actor: "human", Via: records.ThroughCLI}, "Busy", "edit")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -36,11 +36,11 @@ func TestAnAgentsToolCallsArePaced(t *testing.T) {
 		return call(n, "update_record", `{"type":"task","id":"`+id+`","fields":{"done":`+strconv.FormatBool(n%2 == 0)+`}}`)
 	}
 	made, out := 0, tick(0)
-	for ; !strings.Contains(out, `"isError":true`) && made < 3*chat.PaceChanges; made++ {
+	for ; !strings.Contains(out, `"isError":true`) && made < 3*records.PaceChanges; made++ {
 		out = tick(made + 1)
 	}
-	if made < chat.PaceChanges || !strings.Contains(out, "wait") {
-		t.Errorf("past %d changes the tool says to wait; refused after %d: %s", chat.PaceChanges, made, out)
+	if made < records.PaceChanges || !strings.Contains(out, "wait") {
+		t.Errorf("past %d changes the tool says to wait; refused after %d: %s", records.PaceChanges, made, out)
 	}
 	if out := call(100, "get_record", `{"type":"task","id":"`+id+`"}`); strings.Contains(out, `"isError":true`) {
 		t.Errorf("a tool that only reads is not paced: %s", out)

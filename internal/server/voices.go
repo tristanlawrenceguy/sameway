@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -103,7 +103,7 @@ func (s *Server) voiceNames(rec *store.Record) (me, them string) {
 			me, ownerID = s.title(pt, found[0]), found[0].ID
 		}
 	}
-	et, ok := s.app.Types.Get(chat.EventType)
+	et, ok := s.app.Types.Get(records.EventType)
 	if !ok {
 		return
 	}

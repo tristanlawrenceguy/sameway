@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -25,7 +26,7 @@ type shownRecord struct {
 // a change. It answers 422 and says so when the block may not be written;
 // otherwise shows is what it would show.
 func (s *Server) blockWrite(w http.ResponseWriter, r *http.Request, fields map[string]any, was *store.Record) (shows string, refused bool) {
-	if r.PathValue("type") != chat.BlockType {
+	if r.PathValue("type") != records.BlockType {
 		return "", false
 	}
 	_, newProps := fields["props"]

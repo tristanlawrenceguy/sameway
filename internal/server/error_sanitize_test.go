@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // TestChatPageShowsPlainErrorMessages checks that when an error-role message
@@ -20,7 +20,7 @@ func TestChatPageShowsPlainErrorMessages(t *testing.T) {
 
 	// Seed an error-role message with a raw diagnostic string the way the
 	// chat loop stores it when a provider call fails.
-	chat.Record(a.Store, "system", chat.Change{Action: "failed"})
+	records.Record(a.Store, "system", records.Change{Action: "failed"})
 	_, err := a.Store.Create("message", map[string]any{
 		"role":    "user",
 		"content": "hello",

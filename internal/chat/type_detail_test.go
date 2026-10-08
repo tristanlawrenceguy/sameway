@@ -3,7 +3,7 @@ package chat_test
 import (
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // Sentence resolves raw type identifiers in an activity entry's detail to
@@ -30,7 +30,7 @@ func TestSentenceResolvesTypeDetail(t *testing.T) {
 		},
 	} {
 		st := newFullService(t).Store
-		got := chat.Sentence(st, c.fields)
+		got := records.Sentence(st, c.fields)
 		if got != c.want {
 			t.Errorf("Sentence(%v) = %q, want %q", c.fields, got, c.want)
 		}

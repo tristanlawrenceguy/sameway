@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -60,7 +60,7 @@ func TestUpdateComponentValidationErrorsAreHumanised(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	blocks, _ := svc.Store.List(chat.BlockType, store.ListOptions{})
+	blocks, _ := svc.Store.List(records.BlockType, store.ListOptions{})
 	if len(blocks) == 0 {
 		t.Fatalf("expected a block to exist for update test")
 	}
@@ -92,7 +92,7 @@ func TestUpdateComponentValidationErrorsAreHumanised(t *testing.T) {
 	}
 
 	// The original block must be unchanged.
-	rec, _ := svc.Store.Get(chat.BlockType, id)
+	rec, _ := svc.Store.Get(records.BlockType, id)
 	if props, ok := rec.Fields["props"].(map[string]any); !ok || props["bogus_field"] != nil {
 		t.Errorf("block should not have been updated with invalid props: %+v", rec.Fields)
 	}

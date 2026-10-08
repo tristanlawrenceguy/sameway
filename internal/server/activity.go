@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/design"
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
@@ -17,12 +17,12 @@ import (
 // who made a request's change: a person on a page, with the device it
 // came from when that was not this machine, or an agent posting the
 // page's form (agents.go), by the name it gave.
-func (s *Server) who(r *http.Request) chat.Who {
-	if pageAction(r) || chat.VisitorOf(r.Context()).Agent {
+func (s *Server) who(r *http.Request) records.Who {
+	if pageAction(r) || records.VisitorOf(r.Context()).Agent {
 		return apiAgent(r).As()
 	}
-	v := chat.VisitorOf(r.Context())
-	w := chat.Who{Actor: "human", Via: v.Device, By: v.Who(), ByLogin: v.Login}
+	v := records.VisitorOf(r.Context())
+	w := records.Who{Actor: "human", Via: v.Device, By: v.Who(), ByLogin: v.Login}
 	if w.ByLogin == "" && v.Owner() {
 		w.ByLogin = s.app.Chat.Owner.Login
 	}
@@ -30,10 +30,10 @@ func (s *Server) who(r *http.Request) chat.Who {
 }
 
 // record logs a change made through a page, as whoever made it.
-func (s *Server) record(r *http.Request, c chat.Change) string {
+func (s *Server) record(r *http.Request, c records.Change) string {
 	w := s.who(r)
 	c.Via, c.By, c.ByLogin = w.Via, w.By, w.ByLogin
-	return chat.Record(s.app.Store, w.Actor, c)
+	return records.Record(s.app.Store, w.Actor, c)
 }
 
 // recentActivity renders the newest n actions inside a disclosure that is
@@ -51,14 +51,14 @@ func (s *Server) recentActivity(n int, from string) template.HTML {
 // to its kind. A page is about what it is about, so it does not list
 // changes to everything else there is.
 func (s *Server) recentActivityAbout(n int, from string, about func(target, id string) bool) template.HTML {
-	if _, ok := s.app.Types.Get(chat.ActivityType); !ok {
+	if _, ok := s.app.Types.Get(records.ActivityType); !ok {
 		return ""
 	}
 	limit := n
 	if about != nil {
 		limit = 200
 	}
-	all, err := s.app.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: limit})
+	all, err := s.app.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: limit})
 	if err != nil {
 		return ""
 	}
@@ -79,7 +79,7 @@ func (s *Server) recentActivityAbout(n int, from string, about func(target, id s
 	// The count is what is inside; the whole log's size is on its link.
 	everything := "All activity"
 	if about == nil {
-		if total, _ := s.app.Store.Count(chat.ActivityType); total > len(recs) {
+		if total, _ := s.app.Store.Count(records.ActivityType); total > len(recs) {
 			everything = fmt.Sprintf("All activity, %d changes", total)
 		}
 	}
@@ -135,9 +135,9 @@ func (s *Server) hrefFor(r *store.Record) string {
 	if target == "" || id == "" {
 		return ""
 	}
-	if target == chat.CanvasType {
-		if _, err := s.app.Store.Get(chat.CanvasType, id); err == nil {
-			return chat.CanvasPath(id)
+	if target == records.CanvasType {
+		if _, err := s.app.Store.Get(records.CanvasType, id); err == nil {
+			return records.CanvasPath(id)
 		}
 		return ""
 	}
@@ -147,7 +147,7 @@ func (s *Server) hrefFor(r *store.Record) string {
 		}
 		return ""
 	}
-	if _, err := s.app.Store.Get(chat.BlockType, id); err == nil {
+	if _, err := s.app.Store.Get(records.BlockType, id); err == nil {
 		return "/canvas/" + id
 	}
 	return ""
@@ -155,11 +155,11 @@ func (s *Server) hrefFor(r *store.Record) string {
 
 // activityPage lists every recorded action, newest first, grouped by day.
 func (s *Server) activityPage(w http.ResponseWriter, r *http.Request) {
-	if _, ok := s.app.Types.Get(chat.ActivityType); !ok {
+	if _, ok := s.app.Types.Get(records.ActivityType); !ok {
 		s.page(w, r, "Activity", s.component("alert", map[string]any{"kind": "info", "message": "This workspace keeps no log yet. Run sameway init --force to add one."}), pageOptions{})
 		return
 	}
-	all, err := s.app.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true})
+	all, err := s.app.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true})
 	if err != nil {
 		s.fail(w, err)
 		return

@@ -9,6 +9,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/prose"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -129,7 +130,7 @@ var sentenceEnd = regexp.MustCompile(`[.!?]["'”’)]?\s+`)
 // its name where the log has one, or the assistant. It is said in words
 // as well as by colour, so nobody depends on the colour to know.
 func (s *Server) suggestedBy(sg *store.Record) (actor, by string) {
-	if w := s.app.Chat.Writers().Of(chat.SuggestionType, sg); strings.HasSuffix(w.Words, "an agent") {
+	if w := s.app.Chat.Writers().Of(records.SuggestionType, sg); strings.HasSuffix(w.Words, "an agent") {
 		return "agent", w.Words
 	}
 	return "assistant", "the assistant"
@@ -138,7 +139,7 @@ func (s *Server) suggestedBy(sg *store.Record) (actor, by string) {
 // suggestionAnswer accepts or declines one suggestion.
 func (s *Server) suggestionAnswer(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
-	sg, err := s.app.Store.Get(chat.SuggestionType, id)
+	sg, err := s.app.Store.Get(records.SuggestionType, id)
 	if err != nil {
 		s.tell(w, r, outcome{Failed: true, Title: "No such suggestion", Text: "It may have been answered already."}, "/")
 		return
@@ -211,7 +212,7 @@ func (s *Server) left(about string) string {
 func (s *Server) mayAnswer(w http.ResponseWriter, r *http.Request, about string) bool {
 	typ, _, _ := strings.Cut(about, "/")
 	t, ok := s.app.Types.Get(typ)
-	if !ok || t.Owners && !chat.VisitorOf(r.Context()).Owner() {
+	if !ok || t.Owners && !records.VisitorOf(r.Context()).Owner() {
 		s.tell(w, r, outcome{Failed: true, Title: "Not yours to change"}, "/")
 		return false
 	}

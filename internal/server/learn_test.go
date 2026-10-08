@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -19,17 +19,17 @@ func TestAPartAskedForOftenIsOffered(t *testing.T) {
 		rec, _ := a.Store.Create("task", map[string]any{"title": title})
 		ids = append(ids, rec.ID)
 	}
-	editor := chat.Visitor{Name: "Bob", Login: "bob@example.com", Access: chat.Edit}
+	editor := records.Visitor{Name: "Bob", Login: "bob@example.com", Access: records.Edit}
 	for _, id := range ids[:3] {
 		as(t, h, editor, http.MethodGet, "/t/task/"+id+"?show=fields", "", "")
 	}
-	if ps, _ := a.Store.List(chat.ProposalType, store.ListOptions{}); len(ps) != 0 {
+	if ps, _ := a.Store.List(records.ProposalType, store.ListOptions{}); len(ps) != 0 {
 		t.Fatal("someone let in is not watched")
 	}
 	get(t, h, "/t/task/"+ids[0]+"?show=fields")
 	get(t, h, "/t/task/"+ids[1]+"?show=fields")
 	third := get(t, h, "/t/task/"+ids[2]+"?show=fields").Body.String()
-	ps, _ := a.Store.List(chat.ProposalType, store.ListOptions{})
+	ps, _ := a.Store.List(records.ProposalType, store.ListOptions{})
 	if len(ps) != 1 {
 		t.Fatalf("the third time, one offer: %d", len(ps))
 	}
@@ -37,14 +37,14 @@ func TestAPartAskedForOftenIsOffered(t *testing.T) {
 		t.Errorf("the offer is on the page, with its reason\n%s", truncate(third))
 	}
 	get(t, h, "/t/task/"+ids[3]+"?show=fields")
-	if ps, _ := a.Store.List(chat.ProposalType, store.ListOptions{}); len(ps) != 1 {
+	if ps, _ := a.Store.List(records.ProposalType, store.ListOptions{}); len(ps) != 1 {
 		t.Errorf("asked once only: %d offers", len(ps))
 	}
 	res := postForm(t, h, "/proposal/"+ps[0].ID+"/accept", nil)
 	if res.Code >= 400 || !strings.Contains(a.Workspace.Config.UI.Show, "fields") {
 		t.Fatalf("yes turns it on for the workspace: %d %q", res.Code, a.Workspace.Config.UI.Show)
 	}
-	entries, _ := a.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true})
+	entries, _ := a.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true})
 	for _, e := range entries {
 		if e.Fields["action"] == "set" && e.Fields["target"] == "ui.show" {
 			if !a.Chat.Undoable(e) {

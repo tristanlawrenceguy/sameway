@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
@@ -27,7 +27,7 @@ func TestALimitAndARecordAreTracked(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	a.Store.Create(chat.BlockType, a.Chat.BlockFields(map[string]any{"component": "tracker", "props": map[string]any{}}))
+	a.Store.Create(records.BlockType, a.Chat.BlockFields(map[string]any{"component": "tracker", "props": map[string]any{}}))
 	now := time.Now()
 	a.Store.Create(server.EntryType, map[string]any{"habit": hours.ID, "at": when.Store(now, true), "amount": 15})
 	a.Store.Create(server.EntryType, map[string]any{"habit": weight.ID, "at": when.Store(now.Add(-time.Minute), false), "amount": 73.1})

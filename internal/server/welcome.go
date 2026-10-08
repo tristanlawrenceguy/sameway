@@ -5,7 +5,7 @@ import (
 	"html/template"
 	"net/url"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // A new workspace opened on an empty page with "Ask for anything" and four
@@ -35,7 +35,7 @@ func (s *Server) brandNew() bool {
 			return false
 		}
 	}
-	n, _ := s.app.Store.Count(chat.MessageType)
+	n, _ := s.app.Store.Count(records.MessageType)
 	return n == 0
 }
 

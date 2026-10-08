@@ -7,9 +7,9 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/export"
 	"github.com/tristanlawrenceguy/sameway/internal/prose"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -34,11 +34,11 @@ func (s *Server) writingOn(r *http.Request, t *schema.Type, rec *store.Record) s
 		}
 	}
 	part(ContentsPart, "contents", s.contents(t, rec))
-	if !chat.Organised(t) {
+	if !records.Organised(t) {
 		return b.String()
 	}
 	part(PlacePart, "where it is in its piece", s.placeInPiece(t, rec))
-	if parts := chat.Parts(s.app.Store, t, rec); len(parts) > 0 {
+	if parts := records.Parts(s.app.Store, t, rec); len(parts) > 0 {
 		part(OutlinePart, "the outline", s.outline(r, t, rec, parts))
 	}
 	part(MaterialPart, "the material", s.materialOf(t, rec))
@@ -47,11 +47,11 @@ func (s *Server) writingOn(r *http.Request, t *schema.Type, rec *store.Record) s
 
 // placeInPiece is "Part 2 of 5 of The Pond", with the parts either side.
 func (s *Server) placeInPiece(t *schema.Type, rec *store.Record) string {
-	piece := chat.PieceOf(s.app.Store, t, rec)
+	piece := records.PieceOf(s.app.Store, t, rec)
 	if piece == nil {
 		return ""
 	}
-	parts := chat.Parts(s.app.Store, t, piece)
+	parts := records.Parts(s.app.Store, t, piece)
 	at := slices.IndexFunc(parts, func(p *store.Record) bool { return p.ID == rec.ID })
 	name := template.HTMLEscapeString(s.title(t, piece))
 	var b strings.Builder
@@ -70,9 +70,9 @@ func (s *Server) placeInPiece(t *schema.Type, rec *store.Record) string {
 func (s *Server) outline(r *http.Request, t *schema.Type, piece *store.Record, parts []*store.Record) string {
 	var b strings.Builder
 	b.WriteString(`<section class="sw-stack" aria-labelledby="parts"><h2 id="parts">Parts</h2><ol class="sw-stack">`)
-	total := chat.WordCount(s.textOf(t, piece))
+	total := records.WordCount(s.textOf(t, piece))
 	for i, p := range parts {
-		words := chat.WordCount(s.textOf(t, p))
+		words := records.WordCount(s.textOf(t, p))
 		total += words
 		title := s.title(t, p)
 		fmt.Fprintf(&b, `<li><p><a class="sw-link" href="/t/%s/%s">%s</a></p>`, t.Name, p.ID, template.HTMLEscapeString(title))
@@ -82,7 +82,7 @@ func (s *Server) outline(r *http.Request, t *schema.Type, piece *store.Record, p
 				facts = append([]string{v}, facts...)
 			}
 		}
-		if syn, _ := p.Fields[chat.Synopsis].(string); strings.TrimSpace(syn) != "" {
+		if syn, _ := p.Fields[records.Synopsis].(string); strings.TrimSpace(syn) != "" {
 			fmt.Fprintf(&b, `<p>%s</p>`, template.HTMLEscapeString(syn))
 		}
 		fmt.Fprintf(&b, `<p class="sw-muted">%s</p>`, strings.Join(facts, " · "))
@@ -100,7 +100,7 @@ func (s *Server) outline(r *http.Request, t *schema.Type, piece *store.Record, p
 		b.WriteString(`</li>`)
 	}
 	b.WriteString(`</ol>`)
-	if aim, ok := piece.Fields[chat.Aim].(int64); ok && aim > 0 {
+	if aim, ok := piece.Fields[records.Aim].(int64); ok && aim > 0 {
 		state := "going"
 		if int64(total) >= aim {
 			state = "met"
@@ -116,7 +116,7 @@ func (s *Server) outline(r *http.Request, t *schema.Type, piece *store.Record, p
 
 // materialOf lists what is kept for this writing, then for what it is in.
 func (s *Server) materialOf(t *schema.Type, rec *store.Record) string {
-	mine, above := chat.Material(s.app.Store, t, rec)
+	mine, above := records.Material(s.app.Store, t, rec)
 	if len(mine) == 0 && len(above) == 0 {
 		return ""
 	}
@@ -136,7 +136,7 @@ func (s *Server) materialOf(t *schema.Type, rec *store.Record) string {
 		b.WriteString(`</ul>`)
 	}
 	list("", mine)
-	for p := chat.PieceOf(s.app.Store, t, rec); p != nil; p = chat.PieceOf(s.app.Store, t, p) {
+	for p := records.PieceOf(s.app.Store, t, rec); p != nil; p = records.PieceOf(s.app.Store, t, p) {
 		list("For all of "+s.title(t, p), above[p.ID])
 		if len(above) == 0 {
 			break

@@ -18,11 +18,11 @@ import (
 
 func writingFields(typeName string) []schema.Field {
 	return []schema.Field{
-		{Name: Synopsis, Type: "text", Description: "What it is about, in a line, for the outline."},
-		{Name: PartOf, Type: "ref", To: typeName, Label: "Part of", Description: "The longer piece it is part of, as a chapter is of a book."},
-		{Name: PartsOrder, Type: "list", Of: "string", Hidden: true},
-		{Name: Aim, Type: "int", Label: "Words to aim for", Description: "How many words the whole piece should come to."},
-		{Name: MaterialFor, Type: "ref", To: typeName, Label: "Material for", Description: "What it is background for, such as guidelines or research; never part of it."},
+		{Name: records.Synopsis, Type: "text", Description: "What it is about, in a line, for the outline."},
+		{Name: records.PartOf, Type: "ref", To: typeName, Label: "Part of", Description: "The longer piece it is part of, as a chapter is of a book."},
+		{Name: records.PartsOrder, Type: "list", Of: "string", Hidden: true},
+		{Name: records.Aim, Type: "int", Label: "Words to aim for", Description: "How many words the whole piece should come to."},
+		{Name: records.MaterialFor, Type: "ref", To: typeName, Label: "Material for", Description: "What it is background for, such as guidelines or research; never part of it."},
 	}
 }
 
@@ -63,16 +63,16 @@ func (s *Service) organiseWriting(typeName, pieceID string, parts []string, mate
 	if t, err = s.writingType(t); err != nil {
 		return fail("%v", err)
 	}
-	var batch []BatchItem
+	var batch []records.BatchItem
 	write := func(id string, fields map[string]any) error {
 		was, err := s.Store.Get(t.Name, id)
 		if err != nil {
 			return fmt.Errorf("no %s %s; find_records to get its id", t.Name, id)
 		}
-		if _, _, err := Write(s.Store, "updated", t.Name, id, fields); err != nil {
+		if _, _, err := records.Write(s.Store, "updated", t.Name, id, fields); err != nil {
 			return err
 		}
-		batch = append(batch, BatchItem{Type: t.Name, ID: id, Before: was.Fields})
+		batch = append(batch, records.BatchItem{Type: t.Name, ID: id, Before: was.Fields})
 		return nil
 	}
 	for _, id := range parts {
@@ -81,17 +81,17 @@ func (s *Service) organiseWriting(typeName, pieceID string, parts []string, mate
 		}
 	}
 	order := append([]string{}, parts...)
-	for _, p := range Parts(s.Store, t, piece) {
+	for _, p := range records.Parts(s.Store, t, piece) {
 		if !slices.Contains(order, p.ID) {
 			order = append(order, p.ID)
 		}
 	}
 	for _, id := range parts {
-		if err := write(id, map[string]any{PartOf: pieceID}); err != nil {
+		if err := write(id, map[string]any{records.PartOf: pieceID}); err != nil {
 			return fail("nothing organised: %v", err)
 		}
 	}
-	if err := write(pieceID, map[string]any{PartsOrder: order}); err != nil {
+	if err := write(pieceID, map[string]any{records.PartsOrder: order}); err != nil {
 		return fail("nothing organised: %v", err)
 	}
 	for _, m := range material {
@@ -99,19 +99,19 @@ func (s *Service) organiseWriting(typeName, pieceID string, parts []string, mate
 		if to == "" {
 			to = pieceID
 		}
-		if err := write(m.ID, map[string]any{MaterialFor: to}); err != nil {
+		if err := write(m.ID, map[string]any{records.MaterialFor: to}); err != nil {
 			return fail("the parts are in order, but not the material: %v", err)
 		}
 	}
-	title := Name(s.Store, t, piece)
+	title := records.Name(s.Store, t, piece)
 	// The link opens what was just made, the outline and the material,
 	// since that is what the person asked to see.
 	href := "/t/" + t.Name + "/" + pieceID + "?show=outline"
 	if len(material) > 0 {
 		href += "&show=material"
 	}
-	c := Change{Action: "organised", Component: t.Name, ID: pieceID, Href: href,
-		Detail: fmt.Sprintf("%s, %d parts and %d material", title, len(order), len(material)), Before: Batch(batch)}
+	c := records.Change{Action: "organised", Component: t.Name, ID: pieceID, Href: href,
+		Detail: fmt.Sprintf("%s, %d parts and %d material", title, len(order), len(material)), Before: records.Batch(batch)}
 	return toolResult{text: fmt.Sprintf("organised %s %s: %d parts in order and %d records of material; %s opens its page with the outline; send it, and say so.",
 		t.Name, title, len(order), len(material), c.Href), change: &c}
 }

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
@@ -12,7 +13,7 @@ import (
 
 // One change, one way of saying it. The activity log and the Changes made
 // list under a reply both show a change as the event component, from the
-// props line builds, and line says it through chat.Say: so a wording fixed
+// props line builds, and line says it through records.Say: so a wording fixed
 // here is fixed in both, and the same change reads the same in both.
 
 // line is one log entry as the event component shows it: who, the words,
@@ -30,10 +31,10 @@ func (s *Server) line(r *store.Record, canUndo bool) map[string]any {
 	}
 	// An agent by the name it gave and how it came in, as the summary says
 	// it: Claude Code (through MCP).
-	if r.Fields["actor"] == chat.ActorAgent {
+	if r.Fields["actor"] == records.ActorAgent {
 		by, _ := r.Fields["by"].(string)
 		via, _ := r.Fields["via"].(string)
-		props["who"] = chat.AgentWho(by, via)
+		props["who"] = records.AgentWho(by, via)
 	}
 	href := s.hrefFor(r)
 	s.say(props, r.Fields, href)
@@ -45,7 +46,7 @@ func (s *Server) line(r *store.Record, canUndo bool) map[string]any {
 
 // say puts a change's words and its link into an event's props.
 func (s *Server) say(props, fields map[string]any, href string) {
-	w := chat.Say(s.app.Store, fields)
+	w := records.Say(s.app.Store, fields)
 	props["action"] = w.Action
 	// An undo is its verb, a colon the event adds, and what it took back.
 	if undoes, _ := fields["undoes"].(string); undoes != "" {
@@ -125,7 +126,7 @@ func (s *Server) receipt(changes any, latest bool) []any {
 		}
 		stored, _ := c["href"].(string)
 		if id, _ := c["activity"].(string); id != "" {
-			if entry, err := s.app.Store.Get(chat.ActivityType, id); err == nil {
+			if entry, err := s.app.Store.Get(records.ActivityType, id); err == nil {
 				props := s.line(entry, latest)
 				// A change to a kind, not one thing, such as a field added
 				// to notes, has no id the log can follow; its page is the

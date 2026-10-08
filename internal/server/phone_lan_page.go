@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"rsc.io/qr"
 )
 
@@ -98,7 +98,7 @@ func (s *Server) phoneForget(w http.ResponseWriter, r *http.Request) {
 	}
 	s.saveLanDevices(kept)
 	if gone != "" {
-		chat.Record(s.app.Store, "human", chat.Change{Action: "removed", Component: "device", Detail: gone})
+		records.Record(s.app.Store, "human", records.Change{Action: "removed", Component: "device", Detail: gone})
 	}
 	s.tell(w, r, outcome{Title: "Removed", Text: gone + " no longer opens Sameway."}, "/workspaces#ws-phone")
 }

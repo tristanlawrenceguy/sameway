@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 type changesOut struct {
@@ -44,7 +44,7 @@ func TestAnAgentFollowsChanges(t *testing.T) {
 	go func() {
 		time.Sleep(400 * time.Millisecond)
 		a.Store.Create("note", map[string]any{"title": "Later"})
-		chat.Record(a.Store, "human", chat.Change{Action: "created", Component: "note", Detail: "Later"})
+		records.Record(a.Store, "human", records.Change{Action: "created", Component: "note", Detail: "Later"})
 	}()
 	began := time.Now()
 	waited := read("/api/changes?wait=10&since=" + next.Cursor)
@@ -54,8 +54,8 @@ func TestAnAgentFollowsChanges(t *testing.T) {
 
 	// Someone let in reads the changes to what they may read, not who.
 	a.Chat.SetSetting = func(string, string) error { return nil }
-	chat.Record(a.Store, "human", chat.Change{Action: "set", Component: "ui.pace", Detail: "quick"})
-	editor := chat.Visitor{Name: "Bob", Login: "bob@example.com", Access: chat.Edit}
+	records.Record(a.Store, "human", records.Change{Action: "set", Component: "ui.pace", Detail: "quick"})
+	editor := records.Visitor{Name: "Bob", Login: "bob@example.com", Access: records.Edit}
 	var theirs changesOut
 	json.Unmarshal(as(t, h, editor, http.MethodGet, "/api/changes?since="+start.Cursor, "", "").Body.Bytes(), &theirs)
 	for _, c := range theirs.Changes {

@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/peers"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -41,8 +41,8 @@ func TestTheOtherVersionIsOfferedOnThePage(t *testing.T) {
 // Someone else here is said, with where they are; oneself never is.
 func TestWhoElseIsHere(t *testing.T) {
 	a, h := newApp(t)
-	a.Chat.Owner = chat.Visitor{Access: chat.Owner, Login: "me@example.com", Name: "Me"}
-	hana := chat.Visitor{Name: "Hana", Login: "hana@example.com", Access: chat.Edit}
+	a.Chat.Owner = records.Visitor{Access: records.Owner, Login: "me@example.com", Name: "Me"}
+	hana := records.Visitor{Name: "Hana", Login: "hana@example.com", Access: records.Edit}
 	as(t, h, hana, http.MethodGet, "/t/note", "", "")
 	page := get(t, h, "/").Body.String()
 	if !strings.Contains(page, "Also here:") || !strings.Contains(page, "Hana</bdi></span>") && !strings.Contains(page, "Hana, on") {
@@ -67,7 +67,7 @@ func TestWhoElseIsHere(t *testing.T) {
 func TestSomethingForYouReachesYou(t *testing.T) {
 	mine, hMine := newApp(t)
 	hana, hHana := newApp(t)
-	mine.Chat.Owner = chat.Visitor{Access: chat.Owner, Login: "me@example.com", Name: "Me"}
+	mine.Chat.Owner = records.Visitor{Access: records.Owner, Login: "me@example.com", Name: "Me"}
 	rang := make(chan string, 4)
 	hMine.(*server.Server).OnRing(func(title, text, url string) { rang <- title })
 
@@ -102,8 +102,8 @@ func TestSomethingForYouReachesYou(t *testing.T) {
 func TestSinceYouWereLastHere(t *testing.T) {
 	a, h := newApp(t)
 	a.Store.SetMeta("last:owner", time.Now().Add(-2*time.Hour).UTC().Format(time.RFC3339Nano))
-	chat.Record(a.Store, "human", chat.Change{Action: "deleted", Component: "note", Detail: "Shopping", By: "Hana", ByLogin: "hana@example.com"})
-	chat.Record(a.Store, "human", chat.Change{Action: "added", Component: "note", Detail: "Mine"})
+	records.Record(a.Store, "human", records.Change{Action: "deleted", Component: "note", Detail: "Shopping", By: "Hana", ByLogin: "hana@example.com"})
+	records.Record(a.Store, "human", records.Change{Action: "added", Component: "note", Detail: "Mine"})
 
 	page := get(t, h, "/").Body.String()
 	if !strings.Contains(page, "Since you were last here") || !strings.Contains(page, "Shopping") {

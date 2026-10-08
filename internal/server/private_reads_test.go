@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -28,24 +28,24 @@ func TestNothingOfTheOwnersIsReadByOthers(t *testing.T) {
 
 	// The owner's alone, marked: a conversation and what was said in it,
 	// a question the assistant asked, and a person the owner let in.
-	convo, _ := a.Store.Create(chat.ConversationType, map[string]any{"title": "OWNERCONVO lawyer questions"})
-	a.Store.Create(chat.MessageType, map[string]any{"role": "user", "content": "OWNERSAID keep this between us", "conversation": convo.ID})
-	a.Store.Create(chat.ProposalType, map[string]any{"summary": "OWNERASKED delete the diary?", "action": map[string]any{"tool": "remove_component"}, "state": "pending"})
+	convo, _ := a.Store.Create(records.ConversationType, map[string]any{"title": "OWNERCONVO lawyer questions"})
+	a.Store.Create(records.MessageType, map[string]any{"role": "user", "content": "OWNERSAID keep this between us", "conversation": convo.ID})
+	a.Store.Create(records.ProposalType, map[string]any{"summary": "OWNERASKED delete the diary?", "action": map[string]any{"tool": "remove_component"}, "state": "pending"})
 	a.Store.Create("person", map[string]any{"name": "Hana", "email": "hana-private@example.com", "access": "edit"})
 	// The log, which names who changed what: the internet's never, and a
 	// viewer's only as the pages let people see changes (not this entry,
 	// which is about the owner's conversation).
-	chat.Record(a.Store, "human", chat.Change{Action: "cleared", Component: "conversation", ID: convo.ID, Detail: "OWNERLOG private plans"})
+	records.Record(a.Store, "human", records.Change{Action: "cleared", Component: "conversation", ID: convo.ID, Detail: "OWNERLOG private plans"})
 	// The owner was away, so their "since you were last here" holds the
 	// log's news: it must stay theirs.
 	a.Store.SetMeta("last:owner", time.Now().Add(-2*time.Hour).UTC().Format(time.RFC3339Nano))
 	get(t, h, "/")
-	chat.Record(a.Store, "human", chat.Change{Action: "added", Component: "note", Detail: "OWNERNEWS Hana's plans", By: "Hana", ByLogin: "hana@example.com"})
+	records.Record(a.Store, "human", records.Change{Action: "added", Component: "note", Detail: "OWNERNEWS Hana's plans", By: "Hana", ByLogin: "hana@example.com"})
 	note, _ := a.Store.Create("note", map[string]any{"title": "Sourdough", "body": "Flour, water and salt."})
 	a.Workspace.Config.Publish.Types = "note"
 	a.Workspace.Config.Publish.Tabs = "Home"
 	pub := srv.Public(nil)
-	viewer := chat.Visitor{Name: "Vi", Login: "vi@example.com", Access: chat.View}
+	viewer := records.Visitor{Name: "Vi", Login: "vi@example.com", Access: records.View}
 
 	ids := map[string]string{}
 	for _, typ := range a.Types.Types {

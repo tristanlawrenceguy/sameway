@@ -18,17 +18,17 @@ type Canvas struct {
 
 // Canvases lists the tabs in order: Home first, then the records by position.
 func (s *Service) Canvases() []Canvas {
-	out := []Canvas{{Name: "Home", Path: HomePath}}
-	if _, ok := s.Store.Types().Get(CanvasType); !ok {
+	out := []Canvas{{Name: "Home", Path: records.HomePath}}
+	if _, ok := s.Store.Types().Get(records.CanvasType); !ok {
 		return out
 	}
-	recs, err := s.Store.List(CanvasType, store.ListOptions{OrderBy: "position"})
+	recs, err := s.Store.List(records.CanvasType, store.ListOptions{OrderBy: "position"})
 	if err != nil {
 		return out
 	}
 	for _, rec := range recs {
 		name, _ := rec.Fields["name"].(string)
-		out = append(out, Canvas{ID: rec.ID, Name: name, Path: CanvasPath(rec.ID)})
+		out = append(out, Canvas{ID: rec.ID, Name: name, Path: records.CanvasPath(rec.ID)})
 	}
 	return out
 }
@@ -46,7 +46,7 @@ func (s *Service) HasCanvas(id string) bool {
 // canvasTools are offered when the workspace has the canvas type, which every
 // workspace made or opened since tabs existed does.
 func (s *Service) canvasTools() []llm.Tool {
-	if _, ok := s.Store.Types().Get(CanvasType); !ok {
+	if _, ok := s.Store.Types().Get(records.CanvasType); !ok {
 		return nil
 	}
 	obj := func(props map[string]any, required ...string) map[string]any {
@@ -81,13 +81,13 @@ func (s *Service) createCanvas(name string) toolResult {
 		}
 	}
 	position := len(s.Canvases())
-	rec, err := s.Store.Create(CanvasType, map[string]any{"name": name, "position": position})
+	rec, err := s.Store.Create(records.CanvasType, map[string]any{"name": name, "position": position})
 	if err != nil {
 		return fail("could not add the canvas: %v", err)
 	}
 	return toolResult{
-		text:   fmt.Sprintf("added canvas %s: %q, at %s. Blocks go on it with canvas: %q on add_component.", rec.ID, name, CanvasPath(rec.ID), rec.ID),
-		change: &Change{Action: "added", Component: CanvasType, ID: rec.ID, Detail: name, Href: CanvasPath(rec.ID)},
+		text:   fmt.Sprintf("added canvas %s: %q, at %s. Blocks go on it with canvas: %q on add_component.", rec.ID, name, records.CanvasPath(rec.ID), rec.ID),
+		change: &records.Change{Action: "added", Component: records.CanvasType, ID: rec.ID, Detail: name, Href: records.CanvasPath(rec.ID)},
 	}
 }
 

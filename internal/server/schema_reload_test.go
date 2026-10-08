@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 )
@@ -45,7 +45,7 @@ func TestATypeMadeByAnotherProcessIsServedWithoutARestart(t *testing.T) {
 	if _, err := b.Store.Create("recipe", map[string]any{"title": "Lentil soup"}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := b.Store.Create(chat.BlockType, b.Chat.BlockFields(map[string]any{"component": "collection", "props": map[string]any{"type": "recipe"}})); err != nil {
+	if _, err := b.Store.Create(records.BlockType, b.Chat.BlockFields(map[string]any{"component": "collection", "props": map[string]any{"type": "recipe"}})); err != nil {
 		t.Fatal(err)
 	}
 

@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -31,7 +31,7 @@ func TestModelMakesAndChangesRecords(t *testing.T) {
 	if notes[0].Fields["status"] != "draft" {
 		t.Errorf("the schema's defaults apply, got status %v", notes[0].Fields["status"])
 	}
-	if blocks, _ := svc.Store.List(chat.BlockType, store.ListOptions{}); len(blocks) != 0 {
+	if blocks, _ := svc.Store.List(records.BlockType, store.ListOptions{}); len(blocks) != 0 {
 		t.Errorf("a note is not a canvas block, got %d blocks", len(blocks))
 	}
 	id := notes[0].ID
@@ -43,7 +43,7 @@ func TestModelMakesAndChangesRecords(t *testing.T) {
 	if found.IsError || !strings.Contains(found.Content, id+"\tCall the dentist") {
 		t.Errorf("find_records should list the id with its title: %+v", found)
 	}
-	activity, _ := svc.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
+	activity, _ := svc.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
 	if len(activity) != 1 || activity[0].Fields["action"] != "created" || activity[0].Fields["target"] != "note" {
 		t.Errorf("creating a record is a change the log records, got %+v", activity)
 	}

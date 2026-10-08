@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -32,7 +33,7 @@ func TestAWebhookActionCallsOutAndShowsItsAnswer(t *testing.T) {
 	chat.HTTPClient = remote.Client()
 
 	svc := newFullService(t)
-	weather, err := svc.Store.Create(chat.ActionType, map[string]any{
+	weather, err := svc.Store.Create(records.ActionType, map[string]any{
 		"title": "Update the weather", "kind": "webhook", "url": remote.URL + "/weather",
 		"body": `{"city": "Bristol"}`, "show": true,
 	})
@@ -46,16 +47,16 @@ func TestAWebhookActionCallsOutAndShowsItsAnswer(t *testing.T) {
 	if got.method != "POST" || got.body != `{"city": "Bristol"}` || got.ct != "application/json" {
 		t.Errorf("the webhook should get the body as JSON, got %+v", got)
 	}
-	blocks, _ := svc.Store.List(chat.BlockType, store.ListOptions{})
+	blocks, _ := svc.Store.List(records.BlockType, store.ListOptions{})
 	if len(blocks) != 1 || blocks[0].Fields["props"].(map[string]any)["content"] != "18°C and clear" {
 		t.Fatalf("show should put the answer on the canvas, got %v", blocks)
 	}
 	press(svc, weather.ID)
-	blocks, _ = svc.Store.List(chat.BlockType, store.ListOptions{})
+	blocks, _ = svc.Store.List(records.BlockType, store.ListOptions{})
 	if len(blocks) != 1 || blocks[0].Fields["props"].(map[string]any)["content"] != "12°C and raining" {
 		t.Errorf("a second run should update the same block, got %v", blocks)
 	}
-	log, _ := svc.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at"})
+	log, _ := svc.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at"})
 	var ran int
 	for _, e := range log {
 		if e.Fields["action"] == "ran" {
@@ -68,7 +69,7 @@ func TestAWebhookActionCallsOutAndShowsItsAnswer(t *testing.T) {
 
 	// An arrangement action lays out a page; a message action is the
 	// person's to press, not the assistant's, so its text goes as they wrote it.
-	week, _ := svc.Store.Create(chat.ActionType, map[string]any{"title": "Plan the week", "kind": "arrangement", "arrangement": "week"})
+	week, _ := svc.Store.Create(records.ActionType, map[string]any{"title": "Plan the week", "kind": "arrangement", "arrangement": "week"})
 	if text, isErr := svc.Call("run_action", json.RawMessage(`{"id":"`+week.ID+`"}`)); isErr || !strings.Contains(text, "4 blocks") {
 		t.Errorf("an arrangement action should lay out the page, got err=%v %q", isErr, text)
 	}

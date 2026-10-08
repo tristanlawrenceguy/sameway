@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
@@ -31,7 +31,7 @@ func TestThingsKnowWhatTheyAreAbout(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	cal, _ := a.Store.Create(chat.BlockType, a.Chat.BlockFields(map[string]any{"component": "calendar", "props": map[string]any{"type": "all"}}))
+	cal, _ := a.Store.Create(records.BlockType, a.Chat.BlockFields(map[string]any{"component": "calendar", "props": map[string]any{"type": "all"}}))
 	taskPath := "/t/task/" + task.ID
 
 	// The task's page at rest offers nothing to do with it: the ways on

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
@@ -15,7 +15,7 @@ import (
 // and the month a link away.
 func TestACalendarShowsOneDayByTheHour(t *testing.T) {
 	a, h := newApp(t)
-	blk, err := a.Store.Create(chat.BlockType, a.Chat.BlockFields(map[string]any{"component": "calendar", "props": map[string]any{"type": "task"}}))
+	blk, err := a.Store.Create(records.BlockType, a.Chat.BlockFields(map[string]any{"component": "calendar", "props": map[string]any{"type": "task"}}))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -73,7 +73,7 @@ func (s *Service) createRecord(typeName string, fields map[string]any) toolResul
 	if fields == nil {
 		fields = map[string]any{}
 	}
-	rec, c, err := Write(s.Store, "created", t.Name, "", fields)
+	rec, c, err := records.Write(s.Store, "created", t.Name, "", fields)
 	if err != nil {
 		return fail("I couldn't save those changes — %s. %s Fix the fields and call create_record again.", humanizeValidationError(err.Error()), typeHelp(t))
 	}
@@ -82,7 +82,7 @@ func (s *Service) createRecord(typeName string, fields map[string]any) toolResul
 	if t.Name == "reminder" && atlogin.Path() != "" && !atlogin.On() {
 		text += " Reminders ring only while Sameway is open, and it does not open when this computer starts; if this one matters, tell the person that Open Sameway when I sign in, on Workspaces, keeps it ringing."
 	}
-	if t.Name == EventType && len(s.recordingTools()) > 0 {
+	if t.Name == records.EventType && len(s.recordingTools()) > 0 {
 		text += fmt.Sprintf(" If the person wants this meeting recorded, call the record_meeting tool yourself now with event %s (how app when Teams, Zoom or Meet records it): it sets up the reminder that opens the page ready to record. The tools are yours; never tell the person to use them.", rec.ID)
 	}
 	return toolResult{text: text, change: &c}
@@ -100,11 +100,11 @@ func (s *Service) updateRecord(typeName, id string, fields map[string]any, versi
 	if err != nil {
 		return fail("no %s with id %s. Use find_records to get the id", t.Name, id)
 	}
-	if version != "" && !SameVersion(was, version) {
+	if version != "" && !records.SameVersion(was, version) {
 		now, _ := json.Marshal(was.Fields)
-		return fail("%s %s has changed since version %s, so nothing was written. As it is now (version %s): %s. Make your change to this and send it with the new version", t.Name, id, version, Version(was), now)
+		return fail("%s %s has changed since version %s, so nothing was written. As it is now (version %s): %s. Make your change to this and send it with the new version", t.Name, id, version, records.Version(was), now)
 	}
-	rec, c, err := Write(s.Store, "updated", t.Name, id, fields)
+	rec, c, err := records.Write(s.Store, "updated", t.Name, id, fields)
 	if err != nil {
 		return fail("I couldn't save those changes — %s. %s Fix the fields and call update_record again.", humanizeValidationError(err.Error()), typeHelp(t))
 	}
@@ -158,7 +158,7 @@ func (s *Service) findRecords(typeName, words string, where []string, order stri
 	if len(where) > 0 {
 		matching = " " + query.Words(t, where)
 	}
-	return toolResult{text: fmt.Sprintf("%s records%s, newest first (id, title, written by). Each title was written by the one on its line; %s.\n<<<record text\n%s\nrecord text>>>", t.Name, matching, Untrusted, strings.Join(lines, "\n"))}
+	return toolResult{text: fmt.Sprintf("%s records%s, newest first (id, title, written by). Each title was written by the one on its line; %s.\n<<<record text\n%s\nrecord text>>>", t.Name, matching, records.Untrusted, strings.Join(lines, "\n"))}
 }
 
 // importRecords makes records of a type from a kept file, through ingest,
@@ -168,7 +168,7 @@ func (s *Service) importRecords(typeName, fileID string, mapping map[string]any)
 	if err != nil {
 		return fail("%v", err)
 	}
-	file, err := s.Store.Get(FileType, fileID)
+	file, err := s.Store.Get(records.FileType, fileID)
 	if err != nil {
 		return fail("no file with id %s; the id is on the message the file came with, or find_records on file", fileID)
 	}
@@ -198,6 +198,6 @@ func (s *Service) importRecords(typeName, fileID string, mapping map[string]any)
 	title := fmt.Sprintf("%d %s from %s", report.Made, schema.Plural(t.Name), name)
 	return toolResult{
 		text:   fmt.Sprintf("%s: %s. The person can see them at /t/%s.", t.Name, report.String(), t.Name),
-		change: &Change{Action: "imported", Component: t.Name, Detail: title, Href: "/t/" + t.Name, Before: Imported(t.Name, report.IDs)},
+		change: &records.Change{Action: "imported", Component: t.Name, Detail: title, Href: "/t/" + t.Name, Before: records.Imported(t.Name, report.IDs)},
 	}
 }

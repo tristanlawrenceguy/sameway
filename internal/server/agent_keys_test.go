@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/cli"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -26,18 +26,18 @@ func withKey(h http.Handler, key, method, path, body string) *httptest.ResponseR
 // says, and is gone when the key is taken away, until that is undone.
 func TestAnAgentsKeyIsWhoItIs(t *testing.T) {
 	a, h := newApp(t)
-	me := chat.Who{Actor: "human", Via: chat.ThroughCLI}
-	editKey, _, err := chat.LetAgentIn(a.Store, me, "Claude Code", "edit")
+	me := records.Who{Actor: "human", Via: records.ThroughCLI}
+	editKey, _, err := records.LetAgentIn(a.Store, me, "Claude Code", "edit")
 	if err != nil {
 		t.Fatal(err)
 	}
-	viewKey, _, _ := chat.LetAgentIn(a.Store, me, "Reader", "view")
+	viewKey, _, _ := records.LetAgentIn(a.Store, me, "Reader", "view")
 
 	if res := withKey(h, editKey, http.MethodPost, "/api/note", `{"title":"From a key"}`); res.Code != http.StatusCreated {
 		t.Fatalf("an edit key writes: %d %s", res.Code, res.Body.String())
 	}
-	entries, _ := a.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
-	if s, _ := entries[0].Fields["summary"].(string); entries[0].Fields["actor"] != chat.ActorAgent || !strings.Contains(s, "Claude Code") || strings.Contains(s, "Somebody Else") {
+	entries, _ := a.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
+	if s, _ := entries[0].Fields["summary"].(string); entries[0].Fields["actor"] != records.ActorAgent || !strings.Contains(s, "Claude Code") || strings.Contains(s, "Somebody Else") {
 		t.Errorf("the log names the key's agent, not what it calls itself: %v", entries[0].Fields)
 	}
 	if res := withKey(h, viewKey, http.MethodPost, "/api/note", `{"title":"No"}`); res.Code != http.StatusForbidden {
@@ -53,11 +53,11 @@ func TestAnAgentsKeyIsWhoItIs(t *testing.T) {
 		t.Errorf("a key nobody made is refused, not taken for none: %d", res.Code)
 	}
 
-	c, err := chat.TakeAgentAway(a.Store, "claude code")
+	c, err := records.TakeAgentAway(a.Store, "claude code")
 	if err != nil {
 		t.Fatal(err)
 	}
-	entry := chat.Record(a.Store, "human", c)
+	entry := records.Record(a.Store, "human", c)
 	if res := withKey(h, editKey, http.MethodGet, "/api/note", ""); res.Code != http.StatusUnauthorized {
 		t.Errorf("a key taken away no longer works: %d", res.Code)
 	}
@@ -94,12 +94,12 @@ func TestAnAgentsKeyIsWhoItIs(t *testing.T) {
 // given back, as it can from the command line or the assistant.
 func TestAKeyTakenAwayFromItsPageCanBeGivenBack(t *testing.T) {
 	a, h := newApp(t)
-	key, rec, _ := chat.LetAgentIn(a.Store, chat.Who{Actor: "human", Via: chat.ThroughCLI}, "Script", "edit")
+	key, rec, _ := records.LetAgentIn(a.Store, records.Who{Actor: "human", Via: records.ThroughCLI}, "Script", "edit")
 	postForm(t, h, "/t/agent/"+rec.ID+"/delete", nil)
 	if res := withKey(h, key, http.MethodGet, "/api/note", ""); res.Code != http.StatusUnauthorized {
 		t.Fatalf("deleted from its page, the key no longer works: %d", res.Code)
 	}
-	entries, _ := a.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
+	entries, _ := a.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
 	if len(entries) == 0 || entries[0].Fields["action"] != "deleted" || !a.Chat.Undoable(entries[0]) {
 		t.Fatalf("the deletion is in the log and can be undone: %v", entries)
 	}

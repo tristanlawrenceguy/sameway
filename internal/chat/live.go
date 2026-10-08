@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -30,7 +31,7 @@ type Event struct {
 	Tool   string
 	Label  string
 	Early  bool
-	Change *Change
+	Change *records.Change
 	// Aim is where a call is about to change the canvas, so the page can
 	// mark the place while the call runs; zero for a call that does not.
 	Aim Target

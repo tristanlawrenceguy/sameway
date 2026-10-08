@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/search"
 )
 
@@ -52,7 +53,7 @@ func (s *Service) search(query, only string, page int) toolResult {
 		lines = append(lines, line)
 	}
 	// Titles and words are fenced, each line saying who wrote it; see records/provenance.go.
-	return toolResult{text: fmt.Sprintf("%s (type id, title, page, written by, words around the match). Each line's words were written by the one on it; %s.\n<<<record text\n%s\nrecord text>>>", res.Said(), Untrusted, strings.Join(lines, "\n"))}
+	return toolResult{text: fmt.Sprintf("%s (type id, title, page, written by, words around the match). Each line's words were written by the one on it; %s.\n<<<record text\n%s\nrecord text>>>", res.Said(), records.Untrusted, strings.Join(lines, "\n"))}
 }
 
 // oneLine keeps a record's words to the one line a listing gives them,

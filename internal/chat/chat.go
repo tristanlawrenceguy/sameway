@@ -82,10 +82,10 @@ type Service struct {
 
 	// who is the one this service speaks for, when it is not the owner;
 	// see people.go.
-	who Visitor
+	who records.Visitor
 	// agent is the program outside Sameway this service runs tools for,
 	// nil for the assistant in the app; see agent.go.
-	agent *Agent
+	agent *records.Agent
 
 	// current is the tab the person is looking at while a turn runs: "" is
 	// Home. New blocks land there, and the prompt describes that tab.
@@ -95,7 +95,7 @@ type Service struct {
 // Available reports whether the workspace has the content types the chat
 // needs. The error explains what is missing.
 func (s *Service) Available() error {
-	for _, name := range []string{MessageType, BlockType} {
+	for _, name := range []string{records.MessageType, records.BlockType} {
 		if _, ok := s.Store.Types().Get(name); !ok {
 			return fmt.Errorf("content type %q is missing from schema/; run `sameway init --force` to restore it", name)
 		}
@@ -147,11 +147,11 @@ func (s *Service) sendTurn(ctx context.Context, canvas, text, fileID string, on 
 	if on != nil {
 		on(Event{Kind: "said", ID: mine.ID})
 	}
-	actor, by := "human", VisitorOf(ctx).Who()
+	actor, by := "human", records.VisitorOf(ctx).Who()
 	if name := automatedBy(ctx); name != "" {
 		actor, by = "system", name // asked by an automation, not the person; automate.go
 	}
-	said := Record(s.Store, actor, Change{Action: "said", Detail: trim.Line(text, 80), Via: Via(ctx), By: by})
+	said := records.Record(s.Store, actor, records.Change{Action: "said", Detail: trim.Line(text, 80), Via: records.Via(ctx), By: by})
 	if s.Provider == nil {
 		err := s.ProviderErr
 		if err == nil {
@@ -169,7 +169,7 @@ func (s *Service) sendTurn(ctx context.Context, canvas, text, fileID string, on 
 		// changes show, so it is watched while the turn runs.
 		defer s.watch(ctx, said, on)()
 	}
-	var changes []Change
+	var changes []records.Change
 	var tools []map[string]any
 	corrected := false
 	var p progress
@@ -266,7 +266,7 @@ func (s *Service) fields(typeName string, in map[string]any) map[string]any {
 
 // fail stores an error notice in the conversation and returns it with the error.
 func (s *Service) fail(err error) (*store.Record, error) {
-	Record(s.Store, "system", Change{Action: "failed", Detail: trim.Line(SanitizeError(err.Error()), 200)})
+	records.Record(s.Store, "system", records.Change{Action: "failed", Detail: trim.Line(SanitizeError(err.Error()), 200)})
 	rec, storeErr := s.message(map[string]any{"role": "error", "content": err.Error()})
 	if storeErr != nil {
 		return nil, storeErr

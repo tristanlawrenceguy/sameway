@@ -106,17 +106,17 @@ func (s *Service) arrange(canvas string, items []arrangeItem) toolResult {
 	if why := newSkip(before, after); why != "" {
 		return fail("nothing was arranged: %s", why)
 	}
-	var batch []BatchItem
+	var batch []records.BatchItem
 	for _, it := range items {
 		was := byID[it.ID]
 		if !moves(was, next[it.ID]) {
 			continue
 		}
-		if _, err := s.Store.Update(BlockType, it.ID, s.fields(BlockType, next[it.ID])); err != nil {
+		if _, err := s.Store.Update(records.BlockType, it.ID, s.fields(records.BlockType, next[it.ID])); err != nil {
 			s.putBack(batch)
 			return fail("nothing was arranged: could not move %s: %v", it.ID, err)
 		}
-		batch = append(batch, BatchItem{Type: BlockType, ID: it.ID, Before: was.Fields})
+		batch = append(batch, records.BatchItem{Type: records.BlockType, ID: it.ID, Before: was.Fields})
 	}
 	if len(batch) == 0 {
 		return toolResult{text: "the tab is already arranged that way; nothing changed"}
@@ -124,10 +124,10 @@ func (s *Service) arrange(canvas string, items []arrangeItem) toolResult {
 	name, href := "Home", "/"
 	for _, c := range s.Canvases() {
 		if c.ID == canvas && canvas != "" {
-			name, href = c.Name, CanvasPath(canvas)
+			name, href = c.Name, records.CanvasPath(canvas)
 		}
 	}
-	c := Change{Action: "arranged", Detail: fmt.Sprintf("%s, %d blocks", name, len(batch)), Href: href, Before: Batch(batch)}
+	c := records.Change{Action: "arranged", Detail: fmt.Sprintf("%s, %d blocks", name, len(batch)), Href: href, Before: records.Batch(batch)}
 	return toolResult{text: fmt.Sprintf("arranged %s: %d blocks moved or reshaped, in one change that one Undo takes back", name, len(batch)), change: &c}
 }
 
@@ -144,9 +144,9 @@ func moves(b *store.Record, fields map[string]any) bool {
 
 // putBack undoes the part of an arrangement already written, when a later
 // block could not be.
-func (s *Service) putBack(done []BatchItem) {
+func (s *Service) putBack(done []records.BatchItem) {
 	for _, d := range done {
-		s.Store.Update(BlockType, d.ID, d.Before)
+		s.Store.Update(records.BlockType, d.ID, d.Before)
 	}
 }
 
@@ -221,7 +221,7 @@ func (s *Service) layoutAfter(name string, r toolResult) toolResult {
 		return r
 	}
 	canvas, found := "", false
-	if blk, err := s.Store.Get(BlockType, c.ID); err == nil && c.ID != "" {
+	if blk, err := s.Store.Get(records.BlockType, c.ID); err == nil && c.ID != "" {
 		canvas, found = blk.Fields["canvas"].(string)
 	}
 	if !found && c.Before != nil {

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
@@ -164,7 +165,7 @@ func (s *Service) doing(call llm.ToolCall) (string, Target) {
 			return label, Target{}
 		}
 		aim := Target{Block: args.ID}
-		blk, err := s.Store.Get(BlockType, args.ID)
+		blk, err := s.Store.Get(records.BlockType, args.ID)
 		if err != nil {
 			return label, aim
 		}
@@ -192,7 +193,7 @@ func an(noun string) string {
 
 // describeChange says a change that landed in the log, in a few words:
 // "Added a card".
-func describeChange(c Change) string {
+func describeChange(c records.Change) string {
 	verb := c.Action
 	if verb == "" {
 		verb = "changed"

@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/tristanlawrenceguy/sameway/internal/app"
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
-	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"net/http"
 	"net/http/httptest"
+
+	"github.com/tristanlawrenceguy/sameway/internal/app"
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/server"
 )
 
 // tool is what MCP calls a tool: the same shape the chat service already
@@ -82,9 +84,9 @@ func (s *Server) tools() []tool {
 func (s *Server) call(ctx context.Context, svc *chat.Service, name string, args json.RawMessage) (string, bool) {
 	// An agent let in with a key changes things at its pace (records/pace.go).
 	// try makes a copy of the workspace each time, so it is paced too.
-	if v := chat.VisitorOf(ctx); v.Agent && (!toolTraits[name].readOnly || name == "try") {
-		if wait := chat.Pace(v.Login); wait > 0 {
-			return chat.SlowDown(wait), true
+	if v := records.VisitorOf(ctx); v.Agent && (!toolTraits[name].readOnly || name == "try") {
+		if wait := records.Pace(v.Login); wait > 0 {
+			return records.SlowDown(wait), true
 		}
 	}
 	return s.run(ctx, svc, name, args)

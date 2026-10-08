@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // A person can have several chats. Each has its own history: what was
@@ -65,7 +65,7 @@ func TestChatsKeepTheirOwnHistory(t *testing.T) {
 	if svc.Current() != second.ID {
 		t.Error("deleting the current chat opens the most recent of the rest")
 	}
-	if n, _ := svc.Store.Count(chat.MessageType); n != 2 {
+	if n, _ := svc.Store.Count(records.MessageType); n != 2 {
 		t.Errorf("deleting a chat takes its messages, leaving the other two, got %d", n)
 	}
 }
@@ -75,7 +75,7 @@ func TestChatsKeepTheirOwnHistory(t *testing.T) {
 func TestOlderMessagesBelongToTheFirstChat(t *testing.T) {
 	svc := newFullService(t)
 	svc.Provider = &scripted{}
-	svc.Store.Create(chat.MessageType, map[string]any{"role": "user", "content": "from before"})
+	svc.Store.Create(records.MessageType, map[string]any{"role": "user", "content": "from before"})
 	msgs, _ := svc.Messages()
 	if len(msgs) != 1 || msgs[0].Fields["content"] != "from before" {
 		t.Errorf("the old message is in the first chat, got %d", len(msgs))
@@ -101,7 +101,7 @@ func TestClearEmptiesOnlyTheCurrentChat(t *testing.T) {
 	if msgs, _ := svc.Messages(); len(msgs) != 0 {
 		t.Errorf("the current chat is empty, got %d", len(msgs))
 	}
-	if n, _ := svc.Store.Count(chat.MessageType); n != 2 {
+	if n, _ := svc.Store.Count(records.MessageType); n != 2 {
 		t.Errorf("the other chat keeps its two messages, got %d", n)
 	}
 }
@@ -146,7 +146,7 @@ func TestADeletedOrClearedChatComesBack(t *testing.T) {
 	if err := svc.UndoAs("human", ""); err != nil {
 		t.Fatalf("a deleted chat should be undoable: %v", err)
 	}
-	if _, err := svc.Store.Get(chat.ConversationType, id); err != nil {
+	if _, err := svc.Store.Get(records.ConversationType, id); err != nil {
 		t.Errorf("the deleted chat should be back")
 	}
 	if back, _ := svc.MessagesIn(id); len(back) != len(msgs) {

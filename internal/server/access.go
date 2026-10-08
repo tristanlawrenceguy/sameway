@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // Other people open the workspace over Tailscale, which says who they are;
@@ -16,7 +17,7 @@ import (
 // anyone whose Tailscale login is the email of a person with access. Anyone
 // else is told they have asked, and the owner is asked in the chat.
 func (s *Server) Admit(ctx context.Context, login, name, device string, owner bool) (context.Context, string, bool) {
-	v := chat.Visitor{Login: login, Name: name, Device: device}
+	v := records.Visitor{Login: login, Name: name, Device: device}
 	p := s.app.Chat.PersonByEmail(login)
 	if p != nil {
 		v.Person = p.ID
@@ -26,8 +27,8 @@ func (s *Server) Admit(ctx context.Context, login, name, device string, owner bo
 	}
 	switch {
 	case owner:
-		v.Access = chat.Owner
-	case p != nil && (p.Fields["access"] == chat.View || p.Fields["access"] == chat.Edit || p.Fields["access"] == chat.Host):
+		v.Access = records.Owner
+	case p != nil && (p.Fields["access"] == records.View || p.Fields["access"] == records.Edit || p.Fields["access"] == records.Host):
 		v.Access, _ = p.Fields["access"].(string)
 	default:
 		// The owner hears of it where they are, the way a reminder rings.
@@ -40,7 +41,7 @@ func (s *Server) Admit(ctx context.Context, login, name, device string, owner bo
 		}
 		return ctx, "You have asked to open " + s.app.Workspace.Config.Name + ". It opens here once its owner says yes: reload this page then.\n", false
 	}
-	return chat.WithVisitor(ctx, v), "", true
+	return records.WithVisitor(ctx, v), "", true
 }
 
 // allowed says whether a visitor may make this request, and when not,
@@ -51,7 +52,7 @@ func (s *Server) allowed(w http.ResponseWriter, r *http.Request) bool {
 	if isPage(r) && !isPublic(r) && r.Header.Get("X-Requested-With") != "sameway-live" {
 		s.seen(r, r.URL.Path)
 	}
-	v := chat.VisitorOf(r.Context())
+	v := records.VisitorOf(r.Context())
 	if v.Owner() {
 		return true
 	}
@@ -60,7 +61,7 @@ func (s *Server) allowed(w http.ResponseWriter, r *http.Request) bool {
 		why = "This part of the workspace is its owner's alone."
 	}
 	// Saying they have caught up changes nothing but their own notice.
-	if why == "" && v.Access != chat.Edit && v.Access != chat.Host && r.Method != http.MethodGet && r.Method != http.MethodHead && r.URL.Path != "/since/seen" {
+	if why == "" && v.Access != records.Edit && v.Access != records.Host && r.Method != http.MethodGet && r.Method != http.MethodHead && r.URL.Path != "/since/seen" {
 		why = "You can look at this workspace but not change it. Its owner can let you edit."
 	}
 	if why == "" {
@@ -73,7 +74,7 @@ func (s *Server) allowed(w http.ResponseWriter, r *http.Request) bool {
 // chatFor is the assistant as the one asking has it: their own chats and
 // turns, and the tools their access allows. See chat/people.go.
 func (s *Server) chatFor(r *http.Request) *chat.Service {
-	return s.app.Chat.For(chat.VisitorOf(r.Context()))
+	return s.app.Chat.For(records.VisitorOf(r.Context()))
 }
 
 // conversationFor is the conversation of the one asking. Someone who may
@@ -90,7 +91,7 @@ func (s *Server) conversationAboutFor(r *http.Request, from, about, prompt strin
 	if convo != nil {
 		convo.Path, convo.Query = r.URL.Path, r.URL.Query()
 	}
-	if a := chat.VisitorOf(r.Context()).Access; err != nil || a != chat.View && a != chat.Public {
+	if a := records.VisitorOf(r.Context()).Access; err != nil || a != records.View && a != records.Public {
 		return convo, err
 	}
 	convo.Body = template.HTML(`<p class="sw-muted">You can look around this workspace. The assistant is for the people who can change it.</p>`)

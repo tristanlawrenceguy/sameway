@@ -144,6 +144,7 @@ surface decides for itself:
     store/                    # SQLite, migrations, generic CRUD keyed by schema
     render/                   # template loading, component registry, props validation
     relate/                   # how one record connects to the others, from the schema
+    records/                  # writes, the activity log, undo, names, who asks and who wrote what
     server/                   # HTTP: HTML views, JSON API, describe endpoint
     mcp/                      # MCP server (stdio + HTTP) generated from schema + manifests
     update/                   # find, verify and install a release of sameway itself
@@ -154,6 +155,17 @@ surface decides for itself:
     a11y-runner/              # Node dev-only: playwright + axe-core against examples
   examples/workspaces/        # notes, blog, inventory: each is a shareable preset
 ```
+
+`internal/records` is the workspace's records as Sameway keeps them,
+whoever asks: who is asking and what they may do (`Visitor`), how a
+record is written and logged (`WriteAs`, `Change`, `Record`), undoing a
+change (`Book.Undo`), what a record and a change are called (`Name`,
+`Sentence`), who wrote a record's words (`Writers`, `RecordView`) and an
+agent key's pace. It sits on `store` and `schema`; the server, MCP, the
+command line and `internal/chat` all go through it, so every way in
+writes, logs, names and takes back the same way. `internal/chat` is the
+conversation with a model (turns, prompts, tools), built on a
+`records.Book`.
 
 ## 4. Workspace folder
 

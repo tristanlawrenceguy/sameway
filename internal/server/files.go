@@ -11,8 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -38,7 +38,7 @@ func (s *Server) upload(w http.ResponseWriter, r *http.Request) {
 	// Added from a meeting's page, it is that meeting's (meeting.go).
 	if m := r.FormValue("meeting"); m != "" {
 		said := s.toMeeting(r, m, rec)
-		s.tellAt(w, r, outcome{Title: "Added", Text: title + " is added." + said}, backOf(r, "/t/"+chat.EventType+"/"+m))
+		s.tellAt(w, r, outcome{Title: "Added", Text: title + " is added." + said}, backOf(r, "/t/"+records.EventType+"/"+m))
 		return
 	}
 	// The file's own page shows it; anywhere else, the message does.
@@ -109,7 +109,7 @@ func (s *Server) convertLater(id, converter, name, path string) {
 	md, err := convert.External(context.Background(), converter, name, path)
 	if err != nil {
 		s.app.Store.Update(FileType, id, map[string]any{"status": "failed", "note": err.Error()})
-		chat.Record(s.app.Store, "system", chat.Change{Action: "failed", Detail: "converting " + name + ": " + err.Error()})
+		records.Record(s.app.Store, "system", records.Change{Action: "failed", Detail: "converting " + name + ": " + err.Error()})
 		s.Changed()
 		log.Printf("files: %s: %v", name, err)
 		return
@@ -119,7 +119,7 @@ func (s *Server) convertLater(id, converter, name, path string) {
 		return
 	}
 	title, _ := rec.Fields["title"].(string)
-	chat.Record(s.app.Store, "system", chat.Change{Action: "updated", Component: FileType, ID: id, Detail: title + " (converted)", Href: "/t/" + FileType + "/" + id})
+	records.Record(s.app.Store, "system", records.Change{Action: "updated", Component: FileType, ID: id, Detail: title + " (converted)", Href: "/t/" + FileType + "/" + id})
 	s.Changed()
 }
 

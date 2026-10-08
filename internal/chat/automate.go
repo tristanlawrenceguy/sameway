@@ -63,17 +63,17 @@ func (s *Service) StartAutomating() {
 
 // recordChanged finds the actions waiting for what just happened.
 func (s *Service) recordChanged(t *schema.Type, was, now *store.Record) {
-	if s.auto == nil || t.Internal || t.Name == ActionType {
+	if s.auto == nil || t.Internal || t.Name == records.ActionType {
 		return
 	}
-	at, ok := s.Store.Types().Get(ActionType)
+	at, ok := s.Store.Types().Get(records.ActionType)
 	if !ok {
 		return
 	}
 	if _, has := at.Field("when"); !has {
 		return
 	}
-	actions, err := s.Store.List(ActionType, store.ListOptions{})
+	actions, err := s.Store.List(records.ActionType, store.ListOptions{})
 	if err != nil {
 		return
 	}
@@ -101,7 +101,7 @@ func (s *Service) recordChanged(t *schema.Type, was, now *store.Record) {
 		if !s.auto.fresh(a.ID, rec.ID) {
 			continue
 		}
-		job := automationJob{action: a.ID, vars: s.recordVars(t, rec), why: whenWords(when, t, Name(s.Store, t, rec))}
+		job := automationJob{action: a.ID, vars: s.recordVars(t, rec), why: whenWords(when, t, records.Name(s.Store, t, rec))}
 		select {
 		case s.auto.jobs <- job:
 		default: // more than can be kept up with; the log is not flooded
@@ -128,7 +128,7 @@ func whenWords(when string, t *schema.Type, title string) string {
 
 // runAutomation runs one action, as the automation, and what it leads to.
 func (s *Service) runAutomation(j automationJob) {
-	rec, err := s.Store.Get(ActionType, j.action)
+	rec, err := s.Store.Get(records.ActionType, j.action)
 	if err != nil {
 		return
 	}
@@ -137,14 +137,14 @@ func (s *Service) runAutomation(j automationJob) {
 	r := s.runRecord(ctx, filled(rec, j.vars), "")
 	for i := range r.changes {
 		r.changes[i].By, r.changes[i].Via = title, "because "+j.why
-		Record(s.Store, "system", r.changes[i])
+		records.Record(s.Store, "system", r.changes[i])
 	}
 	if r.change != nil {
 		r.change.By, r.change.Via = title, "because "+j.why
-		Record(s.Store, "system", *r.change)
+		records.Record(s.Store, "system", *r.change)
 	}
 	if r.isErr {
-		Record(s.Store, "system", Change{Action: "failed", Component: ActionType, ID: rec.ID, Detail: title + ": " + r.text, Via: "because " + j.why})
+		records.Record(s.Store, "system", records.Change{Action: "failed", Component: records.ActionType, ID: rec.ID, Detail: title + ": " + r.text, Via: "because " + j.why})
 		return
 	}
 	if kind, _ := rec.Fields["kind"].(string); kind == "message" && s.Tell != nil {
@@ -179,7 +179,7 @@ func automatedBy(ctx context.Context) string {
 // recordVars are what a record fills {{name}} with: its title, type, id,
 // page, and each field as it reads (a ref by its title).
 func (s *Service) recordVars(t *schema.Type, rec *store.Record) map[string]string {
-	vars := map[string]string{"title": Name(s.Store, t, rec), "type": t.Name, "id": rec.ID, "page": "/t/" + t.Name + "/" + rec.ID}
+	vars := map[string]string{"title": records.Name(s.Store, t, rec), "type": t.Name, "id": rec.ID, "page": "/t/" + t.Name + "/" + rec.ID}
 	for _, f := range t.Fields {
 		v := rec.Fields[f.Name]
 		switch {
@@ -190,7 +190,7 @@ func (s *Service) recordVars(t *schema.Type, rec *store.Record) map[string]strin
 			for _, id := range idsOf(v) {
 				if to, ok := s.Store.Types().Get(f.RefTo()); ok {
 					if r, err := s.Store.Get(to.Name, id); err == nil {
-						names = append(names, Name(s.Store, to, r))
+						names = append(names, records.Name(s.Store, to, r))
 					}
 				}
 			}
@@ -243,7 +243,7 @@ func filled(action *store.Record, vars map[string]string) *store.Record {
 		put("message", func(v string) string { return v })
 		// What filled it came from a record or a request, written by
 		// anyone: the assistant reads it as data (records/provenance.go).
-		out.Fields["message"] = out.Fields["message"].(string) + "\n\n(What was filled into this message came from what set it off: " + Untrusted + ".)"
+		out.Fields["message"] = out.Fields["message"].(string) + "\n\n(What was filled into this message came from what set it off: " + records.Untrusted + ".)"
 	}
 	return &out
 }
@@ -258,7 +258,7 @@ func idsOf(v any) []string {
 // RunAsWith is RunAs with what set the action off filled in: a request
 // to its hook, say. Each value is a field of what was sent.
 func (s *Service) RunAsWith(ctx context.Context, actor, id, canvas string, vars map[string]string) (text, proposal string, err error) {
-	rec, gerr := s.Store.Get(ActionType, id)
+	rec, gerr := s.Store.Get(records.ActionType, id)
 	if gerr != nil {
 		return "", "", fmt.Errorf("no action with id %s", id)
 	}

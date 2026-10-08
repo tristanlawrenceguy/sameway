@@ -5,10 +5,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
-var bob = chat.Visitor{Name: "Bob", Login: "Bob@Example.com", Access: chat.Edit, Device: "pixel-7"}
+var bob = records.Visitor{Name: "Bob", Login: "Bob@Example.com", Access: records.Edit, Device: "pixel-7"}
 
 // Bob has his own conversations with the assistant: he sees none of the
 // owner's, the owner sees none of his, and he cannot open the owner's.

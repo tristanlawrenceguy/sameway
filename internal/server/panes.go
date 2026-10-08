@@ -5,7 +5,7 @@ import (
 	"html/template"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -16,7 +16,7 @@ func paneLabel(side string, blocks []*store.Record) string {
 	if len(blocks) == 1 {
 		name, _ := blocks[0].Fields["component"].(string)
 		props, _ := blocks[0].Fields["props"].(map[string]any)
-		if summary := chat.Summarise(name, props); summary != "" {
+		if summary := records.Summarise(name, props); summary != "" {
 			return summary
 		}
 	}

@@ -10,8 +10,8 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/examples"
 	"github.com/tristanlawrenceguy/sameway/internal/app"
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/mcp"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
@@ -48,7 +48,7 @@ func serve(t *testing.T, a *app.App, assistant bool, lines ...string) {
 // latest is the newest activity entry.
 func latest(t *testing.T, a *app.App) *store.Record {
 	t.Helper()
-	recs, err := a.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
+	recs, err := a.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
 	if err != nil || len(recs) == 0 {
 		t.Fatalf("the log should have an entry: %v", err)
 	}
@@ -72,11 +72,11 @@ func TestAnMCPClientsChangesAreLoggedByItsName(t *testing.T) {
 	a, id := starter(t)
 	serve(t, a, false, initialize(`{"name":"claude-code","version":"2.1.0"}`), tick(id), addCard)
 
-	blocks, _ := a.Store.List(chat.BlockType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
-	if len(blocks) != 1 || blocks[0].Fields["created_by"] != chat.ActorAgent || blocks[0].Fields["actor"] != chat.ActorAgent || blocks[0].Fields["agent"] != "Claude Code" {
+	blocks, _ := a.Store.List(records.BlockType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
+	if len(blocks) != 1 || blocks[0].Fields["created_by"] != records.ActorAgent || blocks[0].Fields["actor"] != records.ActorAgent || blocks[0].Fields["agent"] != "Claude Code" {
 		t.Errorf("a block an agent places is marked as that agent's: %+v", blocks)
 	}
-	recs, _ := a.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at"})
+	recs, _ := a.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at"})
 	var ticked *store.Record
 	for _, r := range recs {
 		if r.Fields["target_id"] == id {
@@ -86,7 +86,7 @@ func TestAnMCPClientsChangesAreLoggedByItsName(t *testing.T) {
 	if ticked == nil {
 		t.Fatal("the tick should be in the log")
 	}
-	if ticked.Fields["actor"] != chat.ActorAgent || ticked.Fields["by"] != "Claude Code" || ticked.Fields["via"] != chat.ThroughMCP {
+	if ticked.Fields["actor"] != records.ActorAgent || ticked.Fields["by"] != "Claude Code" || ticked.Fields["via"] != records.ThroughMCP {
 		t.Errorf("the tick is the agent's, by its name, through MCP: %v", ticked.Fields)
 	}
 	if got := ticked.Fields["summary"]; got != "Claude Code (through MCP) updated task Call plumber" {
@@ -109,7 +109,7 @@ func TestAnUnnamedClientIsAnAgent(t *testing.T) {
 	a, id := starter(t)
 	serve(t, a, false, tick(id))
 	e := latest(t, a)
-	if e.Fields["actor"] != chat.ActorAgent || e.Fields["summary"] != "An agent (through MCP) updated task Call plumber" {
+	if e.Fields["actor"] != records.ActorAgent || e.Fields["summary"] != "An agent (through MCP) updated task Call plumber" {
 		t.Errorf("an unnamed client is An agent: %v", e.Fields)
 	}
 }
@@ -123,7 +123,7 @@ func TestTheAssistantInTheAppStaysTheAssistant(t *testing.T) {
 	if e.Fields["actor"] != "assistant" || !strings.HasPrefix(e.Fields["summary"].(string), "Assistant added card") {
 		t.Errorf("the assistant's change is the assistant's: %v", e.Fields)
 	}
-	blocks, _ := a.Store.List(chat.BlockType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
+	blocks, _ := a.Store.List(records.BlockType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
 	if len(blocks) != 1 || blocks[0].Fields["created_by"] != "assistant" {
 		t.Errorf("and so is its block: %+v", blocks)
 	}

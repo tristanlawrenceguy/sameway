@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -31,13 +32,13 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.seedChat(canvas)
-	blocks, err := s.app.Store.List(chat.BlockType, store.ListOptions{OrderBy: "position"})
+	blocks, err := s.app.Store.List(records.BlockType, store.ListOptions{OrderBy: "position"})
 	if err != nil {
 		s.fail(w, err)
 		return
 	}
-	blocks = chat.OnCanvas(blocks, canvas)
-	convo, err := s.conversationFor(r, chat.CanvasPath(canvas))
+	blocks = records.OnCanvas(blocks, canvas)
+	convo, err := s.conversationFor(r, records.CanvasPath(canvas))
 	if err != nil {
 		s.fail(w, err)
 		return
@@ -56,7 +57,7 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 	// middle of the page, the way every other assistant opens. Everything
 	// else arrives because someone asked for it.
 	solo := len(left) == 0 && len(right) == 0 && len(main) == 1 &&
-		main[0].Fields["component"] == chat.ComponentName
+		main[0].Fields["component"] == records.ComponentName
 
 	// The conversation's own "Ask for anything" is the page's one empty
 	// state; a second panel above it saying the page is empty was one more
@@ -89,7 +90,7 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 func (s *Server) blockItem(blk *store.Record, convo *conversation) string {
 	v := s.canvasBlock(blk, convo)
 	body := v.HTML
-	if v.Component == chat.ComponentName {
+	if v.Component == records.ComponentName {
 		body = s.chatBlock(blk, convo)
 	}
 	var b strings.Builder
@@ -275,19 +276,19 @@ type canvasBlock struct {
 // canvasDelete is a person removing a block; it is logged as a human action.
 func (s *Server) canvasDelete(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
-	rec, err := s.app.Store.Get(chat.BlockType, id)
+	rec, err := s.app.Store.Get(records.BlockType, id)
 	if err != nil {
 		s.failed(w, r, "Not removed", err, "/")
 		return
 	}
-	if err := s.app.Store.Delete(chat.BlockType, id); err != nil {
+	if err := s.app.Store.Delete(records.BlockType, id); err != nil {
 		s.failed(w, r, "Not removed", err, "/")
 		return
 	}
 	name, _ := rec.Fields["component"].(string)
 	props, _ := rec.Fields["props"].(map[string]any)
-	what := chat.Summarise(name, props)
-	undo := s.record(r, chat.Change{Action: "removed", Component: name, ID: id, Detail: what, Before: rec.Fields})
+	what := records.Summarise(name, props)
+	undo := s.record(r, records.Change{Action: "removed", Component: name, ID: id, Detail: what, Before: rec.Fields})
 	// Its own page is gone with it.
 	back := backOf(r, "/")
 	if strings.HasPrefix(back, "/canvas/"+id) {

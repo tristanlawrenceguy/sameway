@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -39,7 +39,7 @@ func (s *Server) apiGet(w http.ResponseWriter, r *http.Request) {
 	out.Fields = trimmed(rec, only).Fields
 	// An entry in the log keeps its fields as they are, data to act on, and
 	// says itself as its page does (activity_page.go).
-	if rec.Type == chat.ActivityType {
+	if rec.Type == records.ActivityType {
 		out.Said = s.activityFacts(rec)
 		// Resolve raw type identifiers in the detail field so agents read
 		// display names, not schema keys. This mirrors what say() does for
@@ -52,7 +52,7 @@ func (s *Server) apiGet(w http.ResponseWriter, r *http.Request) {
 	}
 	// The version to send back with If-Match, so a change made from it is
 	// refused when the record has moved on (versions.go).
-	w.Header().Set("ETag", `"`+chat.Version(rec)+`"`)
+	w.Header().Set("ETag", `"`+records.Version(rec)+`"`)
 	writeJSON(w, http.StatusOK, out)
 }
 

@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 )
 
@@ -42,7 +43,7 @@ func TestTheMeasuringRouteTakesOnlyNumbersFromThoseWhoMayChange(t *testing.T) {
 	if !strings.Contains(get(t, h, "/").Body.String(), `data-measure="tab"`) {
 		t.Error("the owner's Home should be marked for measuring")
 	}
-	for _, who := range []chat.Visitor{{Name: "Vi", Access: chat.View}, {Access: chat.Public}} {
+	for _, who := range []records.Visitor{{Name: "Vi", Access: records.View}, {Access: records.Public}} {
 		if body := as(t, h, who, http.MethodGet, "/", "", "").Body.String(); strings.Contains(body, "data-measure") {
 			t.Errorf("a page for %s access should not be measured", who.Access)
 		}
@@ -50,7 +51,7 @@ func TestTheMeasuringRouteTakesOnlyNumbersFromThoseWhoMayChange(t *testing.T) {
 			t.Errorf("%s access should be refused a measurement: %d", who.Access, r.Code)
 		}
 	}
-	if r := as(t, h, chat.Visitor{Name: "bot", Access: chat.Edit, Agent: true}, http.MethodPost, "/canvas/measure", measureOf(id, v, 600), "application/json"); r.Code != http.StatusForbidden {
+	if r := as(t, h, records.Visitor{Name: "bot", Access: records.Edit, Agent: true}, http.MethodPost, "/canvas/measure", measureOf(id, v, 600), "application/json"); r.Code != http.StatusForbidden {
 		t.Errorf("an agent's key measures nothing: %d", r.Code)
 	}
 	if r := public(t, srv.Public(nil), http.MethodPost, "/canvas/measure", measureOf(id, v, 600)); r.Code != http.StatusMethodNotAllowed {
@@ -90,7 +91,7 @@ func TestTheMeasuringRouteTakesOnlyNumbersFromThoseWhoMayChange(t *testing.T) {
 	if r := postJSONRaw(t, h, "/canvas/measure", good); r.Code != http.StatusNoContent {
 		t.Fatalf("the owner's measurement should be kept: %d %s", r.Code, r.Body.String())
 	}
-	if r := as(t, h, chat.Visitor{Name: "Ed", Access: chat.Edit}, http.MethodPost, "/canvas/measure", good, "application/json"); r.Code != http.StatusNoContent {
+	if r := as(t, h, records.Visitor{Name: "Ed", Access: records.Edit}, http.MethodPost, "/canvas/measure", good, "application/json"); r.Code != http.StatusNoContent {
 		t.Errorf("an editor's page is measured too: %d", r.Code)
 	}
 	got := a.Chat.MeasuredOn("", "")
@@ -187,5 +188,5 @@ func mustHandler(t *testing.T) http.Handler {
 
 func postJSONRaw(t *testing.T, h http.Handler, path, body string) *httptest.ResponseRecorder {
 	t.Helper()
-	return as(t, h, chat.Visitor{Access: chat.Owner}, http.MethodPost, path, body, "application/json")
+	return as(t, h, records.Visitor{Access: records.Owner}, http.MethodPost, path, body, "application/json")
 }

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
@@ -26,7 +26,7 @@ func TestAHabitIsTrackedOutOfTheBox(t *testing.T) {
 	}
 	stretch, _ := a.Store.Create(server.HabitType, map[string]any{"name": "Stretch"})
 	a.Store.Create(server.HabitType, map[string]any{"name": "Old", "archived": true})
-	blk, err := a.Store.Create(chat.BlockType, a.Chat.BlockFields(map[string]any{"component": "tracker", "props": map[string]any{}}))
+	blk, err := a.Store.Create(records.BlockType, a.Chat.BlockFields(map[string]any{"component": "tracker", "props": map[string]any{}}))
 	if err != nil {
 		t.Fatal(err)
 	}

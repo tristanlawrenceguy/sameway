@@ -55,14 +55,14 @@ func TestTurnLeavesReceiptProvenanceAndActivity(t *testing.T) {
 		t.Errorf("a list with no name is summarised as a list of its count: %v", second)
 	}
 
-	blocks, _ := svc.Store.List(chat.BlockType, store.ListOptions{})
+	blocks, _ := svc.Store.List(records.BlockType, store.ListOptions{})
 	for _, b := range blocks {
 		if b.Fields["actor"] != "assistant" || b.Fields["created_by"] != "assistant" {
 			t.Errorf("block provenance should be assistant: %v", b.Fields)
 		}
 	}
 
-	log, _ := svc.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at"})
+	log, _ := svc.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at"})
 	var got []string
 	for _, r := range log {
 		got = append(got, r.Fields["actor"].(string)+":"+r.Fields["action"].(string))
@@ -77,7 +77,7 @@ func TestFailureIsLoggedAsSystem(t *testing.T) {
 	svc := newFullService(t)
 	svc.Provider = failing{}
 	svc.Send(context.Background(), "hi")
-	log, _ := svc.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at"})
+	log, _ := svc.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at"})
 	if len(log) != 2 || log[1].Fields["actor"] != "system" || log[1].Fields["action"] != "failed" {
 		t.Errorf("expected human:said then system:failed, got %d entries", len(log))
 	}
@@ -93,7 +93,7 @@ func TestOlderWorkspacesWithoutActivityStillWork(t *testing.T) {
 	if _, err := svc.Send(context.Background(), "add text"); err != nil {
 		t.Fatalf("turn failed on a minimal schema: %v", err)
 	}
-	if n, _ := svc.Store.Count(chat.BlockType); n != 1 {
+	if n, _ := svc.Store.Count(records.BlockType); n != 1 {
 		t.Errorf("block should be saved without provenance fields, got %d", n)
 	}
 }

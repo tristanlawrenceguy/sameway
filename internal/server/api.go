@@ -13,9 +13,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -135,7 +135,7 @@ func (s *Server) apiList(w http.ResponseWriter, r *http.Request) {
 	out := make([]written, 0, len(recs))
 	for _, rec := range recs {
 		tr := trimmed(rec, only)
-		if rec.Type == chat.ActivityType && tr.Fields != nil {
+		if rec.Type == records.ActivityType && tr.Fields != nil {
 			fieldsCopy := make(map[string]any, len(tr.Fields))
 			for k, v := range tr.Fields {
 				fieldsCopy[k] = v
@@ -151,7 +151,7 @@ func (s *Server) apiList(w http.ResponseWriter, r *http.Request) {
 		}
 		out = append(out, written{tr, s.apiTitle(rec), writers.Of(rec.Type, rec).Words})
 	}
-	answer := map[string]any{"type": r.PathValue("type"), "count": len(recs), "records": out, "untrusted": "each record's title and fields were written by its written_by: " + chat.Untrusted}
+	answer := map[string]any{"type": r.PathValue("type"), "count": len(recs), "records": out, "untrusted": "each record's title and fields were written by its written_by: " + records.Untrusted}
 	for k, v := range about {
 		answer[k] = v
 	}
@@ -240,7 +240,7 @@ func (s *Server) apiFileUpload(w http.ResponseWriter, r *http.Request) {
 	if title == "" {
 		title = strings.TrimSuffix(name, filepath.Ext(name))
 	}
-	rec, _, err := chat.WriteKept(s.app.Store, apiAgent(r).As(), "created", FileType, "", map[string]any{
+	rec, _, err := records.WriteKept(s.app.Store, apiAgent(r).As(), "created", FileType, "", map[string]any{
 		"title": title, "name": name, "kind": convert.Kind(name), "size": 0, "status": "ready",
 	})
 	if err != nil {

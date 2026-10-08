@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -44,7 +44,7 @@ func TestTabsAreCanvases(t *testing.T) {
 	if _, err := svc.SendOn(context.Background(), garden, "plan the beds"); err != nil {
 		t.Fatal(err)
 	}
-	blocks, _ := svc.Store.List(chat.BlockType, store.ListOptions{OrderBy: "position"})
+	blocks, _ := svc.Store.List(records.BlockType, store.ListOptions{OrderBy: "position"})
 	on := map[string]string{}
 	for _, b := range blocks {
 		props, _ := b.Fields["props"].(map[string]any)
@@ -80,7 +80,7 @@ func TestTabsAreCanvases(t *testing.T) {
 	if res := lastToolResult(m.seen[1]); !strings.Contains(res.Content, "cleared 1 block") {
 		t.Errorf("clear_canvas should clear only this tab: %+v", res)
 	}
-	blocks, _ = svc.Store.List(chat.BlockType, store.ListOptions{})
+	blocks, _ = svc.Store.List(records.BlockType, store.ListOptions{})
 	if len(blocks) != 2 {
 		t.Errorf("Home's two blocks should survive, got %d", len(blocks))
 	}

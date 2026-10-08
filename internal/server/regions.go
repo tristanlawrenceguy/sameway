@@ -4,7 +4,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -14,7 +14,7 @@ import (
 
 // canvasBlocks reads the canvas in display order, or nothing if it cannot.
 func (s *Server) canvasBlocks() []*store.Record {
-	blocks, err := s.app.Store.List(chat.BlockType, store.ListOptions{OrderBy: "position"})
+	blocks, err := s.app.Store.List(records.BlockType, store.ListOptions{OrderBy: "position"})
 	if err != nil {
 		return nil
 	}
@@ -62,7 +62,7 @@ func arrivals(blocks []*store.Record, convo *conversation) map[string]int {
 	var changes []change
 	for _, b := range blocks {
 		// What the system put there to begin with is not news either.
-		if b.Fields["component"] == chat.ComponentName || b.Fields["created_by"] == "system" {
+		if b.Fields["component"] == records.ComponentName || b.Fields["created_by"] == "system" {
 			continue
 		}
 		switch {

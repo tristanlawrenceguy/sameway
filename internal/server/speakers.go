@@ -7,9 +7,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/speech"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -99,7 +99,7 @@ func (s *Server) whoSpoke(rec *store.Record, wav string, start float64, cues []c
 // howManySpeak is how many people are in the recording's meeting, the
 // owner among them, or 0 when nobody says.
 func (s *Server) howManySpeak(rec *store.Record) int {
-	et, ok := s.app.Types.Get(chat.EventType)
+	et, ok := s.app.Types.Get(records.EventType)
 	if !ok {
 		return 0
 	}
@@ -128,13 +128,13 @@ func (s *Server) speakersGet(w http.ResponseWriter, r *http.Request) {
 		s.tell(w, r, outcome{Failed: true, Title: "Speech-to-text first", Text: "Telling speakers apart works on what speech-to-text writes down, so it needs that on this computer first."}, "/help")
 		return
 	}
-	s.record(r, chat.Change{Action: "started", Detail: "getting speaker separation for this computer (" + sizeWords(speech.SpeakersSize()) + ")"})
+	s.record(r, records.Change{Action: "started", Detail: "getting speaker separation for this computer (" + sizeWords(speech.SpeakersSize()) + ")"})
 	go func() {
 		err := kit.Install(context.Background(), nil)
 		if err != nil {
-			chat.Record(s.app.Store, "system", chat.Change{Action: "failed", Detail: "getting speaker separation: " + err.Error()})
+			records.Record(s.app.Store, "system", records.Change{Action: "failed", Detail: "getting speaker separation: " + err.Error()})
 		} else {
-			chat.Record(s.app.Store, "system", chat.Change{Action: "added", Detail: "speaker separation for this computer"})
+			records.Record(s.app.Store, "system", records.Change{Action: "added", Detail: "speaker separation for this computer"})
 		}
 		s.Changed()
 	}()

@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // TestActivityPageHasIndividualHeadings checks that each activity entry on
@@ -16,9 +16,9 @@ import (
 func TestActivityPageHasIndividualHeadings(t *testing.T) {
 	a, h := newApp(t)
 
-	// Seed two distinct activity entries via chat.Record (the same way chat does).
-	chat.Record(a.Store, "assistant", chat.Change{Action: "created", Component: "note", ID: "aaa1", Detail: "First note", Href: "/t/note/aaa1"})
-	chat.Record(a.Store, "assistant", chat.Change{Action: "created", Component: "note", ID: "bbb2", Detail: "Second note", Href: "/t/note/bbb2"})
+	// Seed two distinct activity entries via records.Record (the same way chat does).
+	records.Record(a.Store, "assistant", records.Change{Action: "created", Component: "note", ID: "aaa1", Detail: "First note", Href: "/t/note/aaa1"})
+	records.Record(a.Store, "assistant", records.Change{Action: "created", Component: "note", ID: "bbb2", Detail: "Second note", Href: "/t/note/bbb2"})
 
 	body := get(t, h, "/activity").Body.String()
 
