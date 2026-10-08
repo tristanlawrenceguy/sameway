@@ -52,10 +52,14 @@ func (s *Server) limitsSection(owner bool) string {
 	default:
 		line("Recordings: speech-to-text is not on this computer yet, so a recording keeps a transcript only when one is written by hand. The owner can get it.")
 	}
+	line(`Saving from elsewhere: a page, a photo or a few words, from your browser's bookmarks bar or your phone's Share menu, with <a class="sw-link" href="/share">Save to Sameway</a>.`)
 	if owner {
-		line(s.phoneLine())          // phone.go
-		line(s.mailLine())           // mail_in.go
-		line(s.briefLine())          // today.go
+		line(s.phoneLine()) // phone.go
+		line(s.mailLine())  // mail_in.go
+		line(s.briefLine()) // today.go
+		line(s.phoneLine()) // phone.go
+		line(s.briefLine())
+		line(s.reviewLine())         // review.go          // today.go
 		lines, setup := s.appLines() // meeting_fetch_help.go
 		for _, l := range lines {
 			line(l)

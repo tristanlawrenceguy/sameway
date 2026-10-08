@@ -17,6 +17,7 @@ func (s *Server) routes() {
 	s.modelRoutes(m)                                       // model_key.go
 	s.bringRoutes(m)                                       // bring.go
 	s.calendarRoutes(m)                                    // calendar_links.go
+	s.shareRoutes(m)                                       // share.go
 	s.todayRoutes(m)                                       // today.go
 	s.mailRoutes(m)                                        // mail_in.go
 	m.HandleFunc("POST /workspaces/example", s.tryExample) // example.go
@@ -106,6 +107,7 @@ func (s *Server) routes() {
 	m.HandleFunc("PATCH /api/{type}/{id}", s.apiUpdate)
 	m.HandleFunc("DELETE /api/{type}/{id}", s.apiDelete)
 	s.templateRoutes(m) // templates_page.go
+	s.reviewRoutes(m)   // review.go
 	m.HandleFunc("/api/", s.apiNotFound)
 	m.HandleFunc("POST /restart", s.restart)
 	m.HandleFunc("POST /notify/phone", s.phoneSet)
