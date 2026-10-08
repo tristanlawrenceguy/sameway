@@ -3,14 +3,10 @@ package chat
 import (
 	"fmt"
 	"slices"
-	"strings"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
-	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
-	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 // Longer writing is a piece made of parts, as a book is of chapters: each
@@ -20,15 +16,6 @@ import (
 // part. A workspace made before these fields has them added the first time
 // a piece is organised.
 
-// Writing fields, by name, as the starter's note has them.
-const (
-	PartOf      = "part_of"
-	PartsOrder  = "parts"
-	MaterialFor = "material_for"
-	Synopsis    = "synopsis"
-	Aim         = "aim"
-)
-
 func writingFields(typeName string) []schema.Field {
 	return []schema.Field{
 		{Name: Synopsis, Type: "text", Description: "What it is about, in a line, for the outline."},
@@ -37,12 +24,6 @@ func writingFields(typeName string) []schema.Field {
 		{Name: Aim, Type: "int", Label: "Words to aim for", Description: "How many words the whole piece should come to."},
 		{Name: MaterialFor, Type: "ref", To: typeName, Label: "Material for", Description: "What it is background for, such as guidelines or research; never part of it."},
 	}
-}
-
-// Organised says whether a type can be organised into pieces and parts.
-func Organised(t *schema.Type) bool {
-	f, ok := t.Field(PartOf)
-	return ok && f.Type == "ref" && f.To == t.Name
 }
 
 type materialItem struct {
@@ -95,7 +76,7 @@ func (s *Service) organiseWriting(typeName, pieceID string, parts []string, mate
 		return nil
 	}
 	for _, id := range parts {
-		if id == pieceID || slices.Contains(piecesAbove(s.Store, t, piece), id) {
+		if id == pieceID || slices.Contains(records.PiecesAbove(s.Store, t, piece), id) {
 			return fail("%s cannot be a part of %s, which is inside it", id, pieceID)
 		}
 	}
@@ -151,70 +132,3 @@ func (s *Service) writingType(t *schema.Type) (*schema.Type, error) {
 	}
 	return t, nil
 }
-
-// Parts are a piece's parts in reading order: as the piece keeps them,
-// then any it does not name yet, oldest first.
-func Parts(st *store.Store, t *schema.Type, piece *store.Record) []*store.Record {
-	if !Organised(t) {
-		return nil
-	}
-	recs, _ := query.Filter(st, t, []string{PartOf + "=" + piece.ID}, "created_at", 0, time.Now())
-	order, _ := piece.Fields[PartsOrder].([]any)
-	rank := func(r *store.Record) int {
-		for i, id := range order {
-			if id == r.ID {
-				return i
-			}
-		}
-		return len(order)
-	}
-	slices.SortStableFunc(recs, func(a, b *store.Record) int { return rank(a) - rank(b) })
-	return recs
-}
-
-// PieceOf is the piece a part belongs to, or nil.
-func PieceOf(st *store.Store, t *schema.Type, rec *store.Record) *store.Record {
-	if !Organised(t) {
-		return nil
-	}
-	id, _ := rec.Fields[PartOf].(string)
-	if id == "" || id == rec.ID {
-		return nil
-	}
-	piece, err := st.Get(t.Name, id)
-	if err != nil {
-		return nil
-	}
-	return piece
-}
-
-// piecesAbove are the ids of the pieces a record is inside, nearest first.
-func piecesAbove(st *store.Store, t *schema.Type, rec *store.Record) []string {
-	var out []string
-	for p := PieceOf(st, t, rec); p != nil && !slices.Contains(out, p.ID) && len(out) < 20; p = PieceOf(st, t, p) {
-		out = append(out, p.ID)
-	}
-	return out
-}
-
-// Material is what is kept for a record (material_for points at it),
-// then what is kept for each piece it is inside, each with what it is for.
-func Material(st *store.Store, t *schema.Type, rec *store.Record) (mine []*store.Record, above map[string][]*store.Record) {
-	if _, ok := t.Field(MaterialFor); !ok {
-		return nil, nil
-	}
-	of := func(id string) []*store.Record {
-		recs, _ := query.Filter(st, t, []string{MaterialFor + "=" + id}, "created_at", 0, time.Now())
-		return recs
-	}
-	mine, above = of(rec.ID), map[string][]*store.Record{}
-	for _, id := range piecesAbove(st, t, rec) {
-		if m := of(id); len(m) > 0 {
-			above[id] = m
-		}
-	}
-	return mine, above
-}
-
-// WordCount counts the words in text.
-func WordCount(text string) int { return len(strings.Fields(text)) }

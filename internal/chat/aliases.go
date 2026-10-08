@@ -36,15 +36,29 @@ const (
 	ActorAgent = records.ActorAgent
 
 	HomePath = records.HomePath
+
+	Untrusted           = records.Untrusted
+	DataNotInstructions = records.DataNotInstructions
+	PaceChanges         = records.PaceChanges
+
+	PartOf      = records.PartOf
+	PartsOrder  = records.PartsOrder
+	MaterialFor = records.MaterialFor
+	Synopsis    = records.Synopsis
+	Aim         = records.Aim
 )
 
 type (
-	Visitor   = records.Visitor
-	Agent     = records.Agent
-	BatchItem = records.BatchItem
-	Change    = records.Change
-	Who       = records.Who
-	Words     = records.Words
+	Visitor    = records.Visitor
+	Agent      = records.Agent
+	BatchItem  = records.BatchItem
+	Change     = records.Change
+	Who        = records.Who
+	Words      = records.Words
+	Writer     = records.Writer
+	Writers    = records.Writers
+	RecordView = records.RecordView
+	PagePart   = records.PagePart
 )
 
 var (
@@ -76,4 +90,12 @@ var (
 	Say          = records.Say
 	CanvasPath   = records.CanvasPath
 	OnCanvas     = records.OnCanvas
+	PageParts    = records.PageParts
+	Pace         = records.Pace
+	SlowDown     = records.SlowDown
+	Organised    = records.Organised
+	Parts        = records.Parts
+	PieceOf      = records.PieceOf
+	Material     = records.Material
+	WordCount    = records.WordCount
 )

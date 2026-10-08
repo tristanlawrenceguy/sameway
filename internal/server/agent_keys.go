@@ -17,7 +17,7 @@ import (
 // computer is the owner's, as it always was.
 
 // keyed makes a request with an agent's key that agent's, and keeps its
-// changes to the agent's pace (chat/pace.go); reading is never paced.
+// changes to the agent's pace (records/pace.go); reading is never paced.
 func (s *Server) keyed(w http.ResponseWriter, r *http.Request) (*http.Request, bool) {
 	r, ok := AgentKey(s.app, w, r)
 	if !ok || r.Method == http.MethodGet || r.Method == http.MethodHead {

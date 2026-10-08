@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
-	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 // Who else may open this workspace, from their own devices over Tailscale,
@@ -137,23 +136,6 @@ func verb(access string) string {
 		return "host this workspace too"
 	}
 	return "no longer open this workspace"
-}
-
-// PersonByEmail is the person who signs in with this email, if any.
-func (s *Service) PersonByEmail(email string) *store.Record {
-	if _, ok := s.Store.Types().Get(PersonType); !ok || email == "" {
-		return nil
-	}
-	people, err := s.Store.List(PersonType, store.ListOptions{})
-	if err != nil {
-		return nil
-	}
-	for _, p := range people {
-		if e, _ := p.Fields["email"].(string); strings.EqualFold(strings.TrimSpace(e), email) {
-			return p
-		}
-	}
-	return nil
 }
 
 // Knock asks the owner, once, whether someone who reached the workspace

@@ -11,7 +11,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
-// Saving from a copy that has gone out of date (see chat/versions.go), for
+// Saving from a copy that has gone out of date (see records/versions.go), for
 // the two who save: a person's page and an agent's request.
 
 // editing is what a record says to the inline editor wherever it is

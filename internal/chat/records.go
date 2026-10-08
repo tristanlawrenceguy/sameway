@@ -153,7 +153,7 @@ func (s *Service) findRecords(typeName, words string, where []string, order stri
 		said := strings.TrimSpace(strings.Join([]string{query.Words(t, where), words}, " "))
 		return toolResult{text: fmt.Sprintf("no %s matches %s. Leave out query to list them all and judge by their titles; search finds words in every kind at once.", t.Name, said)}
 	}
-	// The titles are fenced, each line saying who wrote it; see provenance.go.
+	// The titles are fenced, each line saying who wrote it; see records/provenance.go.
 	matching := ""
 	if len(where) > 0 {
 		matching = " " + query.Words(t, where)

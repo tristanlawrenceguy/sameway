@@ -15,26 +15,6 @@ import (
 // reversal is itself an entry with its own before, which is why undoing an
 // undo just works, and why there is no redo.
 
-// Book is one workspace's records with what keeping them needs beyond the
-// store: its settings, which a change can set and an undo set back.
-type Book struct {
-	Store *store.Store
-	// SetSetting changes one line of workspace.yaml, when there is one:
-	// the pace, which lists show, the model, the name. Set by the app.
-	SetSetting func(key, value string) error
-	// Setting reads one line of workspace.yaml as it is now, for the
-	// questions that say what would change from what; set by the app.
-	Setting func(key string) string
-}
-
-// setting is one line of workspace.yaml, or "" where there is none.
-func (b *Book) setting(key string) string {
-	if b.Setting == nil {
-		return ""
-	}
-	return b.Setting(key)
-}
-
 // Undoable says whether an entry can be reversed now: it is the kind of
 // entry that can be, and the thing is still as the entry left it.
 func (b *Book) Undoable(a *store.Record) bool {

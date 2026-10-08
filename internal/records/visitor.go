@@ -1,6 +1,11 @@
 package records
 
-import "context"
+import (
+	"context"
+	"strings"
+
+	"github.com/tristanlawrenceguy/sameway/internal/store"
+)
 
 // Access levels a person can have in a workspace they open from another
 // device. The owner is whoever signed the machine in to Tailscale, and
@@ -68,3 +73,20 @@ func WithVia(ctx context.Context, device string) context.Context {
 
 // Via is the device a request came from, or "" for this machine.
 func Via(ctx context.Context) string { return VisitorOf(ctx).Device }
+
+// PersonByEmail is the person who signs in with this email, if any.
+func (b *Book) PersonByEmail(email string) *store.Record {
+	if _, ok := b.Store.Types().Get(PersonType); !ok || email == "" {
+		return nil
+	}
+	people, err := b.Store.List(PersonType, store.ListOptions{})
+	if err != nil {
+		return nil
+	}
+	for _, p := range people {
+		if e, _ := p.Fields["email"].(string); strings.EqualFold(strings.TrimSpace(e), email) {
+			return p
+		}
+	}
+	return nil
+}

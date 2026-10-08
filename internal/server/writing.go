@@ -14,7 +14,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
-// Longer writing on its pages (chat/organise.go): a piece shows its outline
+// Longer writing on its pages (records/pieces.go): a piece shows its outline
 // (each part with what it is about, where it stands and how long it is,
 // moved up or down by whoever may change it), its words against what it
 // aims for, and a way to read it all as one; a part says where it is in

@@ -242,7 +242,7 @@ func filled(action *store.Record, vars map[string]string) *store.Record {
 	if msg, _ := out.Fields["message"].(string); placeholder.MatchString(msg) {
 		put("message", func(v string) string { return v })
 		// What filled it came from a record or a request, written by
-		// anyone: the assistant reads it as data (provenance.go).
+		// anyone: the assistant reads it as data (records/provenance.go).
 		out.Fields["message"] = out.Fields["message"].(string) + "\n\n(What was filled into this message came from what set it off: " + Untrusted + ".)"
 	}
 	return &out

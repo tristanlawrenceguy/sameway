@@ -80,7 +80,7 @@ func (s *Server) tools() []tool {
 // live here; everything that changes something goes through the chat service,
 // so an agent gets the same checks and the same activity log as the assistant.
 func (s *Server) call(ctx context.Context, svc *chat.Service, name string, args json.RawMessage) (string, bool) {
-	// An agent let in with a key changes things at its pace (chat/pace.go).
+	// An agent let in with a key changes things at its pace (records/pace.go).
 	// try makes a copy of the workspace each time, so it is paced too.
 	if v := chat.VisitorOf(ctx); v.Agent && (!toolTraits[name].readOnly || name == "try") {
 		if wait := chat.Pace(v.Login); wait > 0 {

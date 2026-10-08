@@ -34,7 +34,7 @@ func (s *Server) apiGet(w http.ResponseWriter, r *http.Request) {
 		writeError(w, fmt.Errorf("no content type %q", rec.Type))
 		return
 	}
-	// One view of a record, the assistant's get_record's too (chat/view.go).
+	// One view of a record, the assistant's get_record's too (records/view.go).
 	out := s.app.Chat.RecordView(t, rec)
 	out.Fields = trimmed(rec, only).Fields
 	// An entry in the log keeps its fields as they are, data to act on, and
