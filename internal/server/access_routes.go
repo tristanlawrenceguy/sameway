@@ -159,6 +159,7 @@ var routeAccess = map[string]routeFor{
 	"GET /api/{type}":                  people,
 	"POST /api/{type}":                 people,
 	"POST /api/arrange":                people,
+	"POST /api/tools/{name}":           people, // and the tools the one asking may have: api_tools.go
 	"GET /api/{type}/{id}":             people,
 	"PUT /api/{type}/{id}":             people,
 	"PATCH /api/{type}/{id}":           people,

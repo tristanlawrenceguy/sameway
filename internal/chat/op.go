@@ -41,7 +41,12 @@ type Op struct {
 // changes is taken away (removed, cleared, deleted, even though Undo puts
 // it back), whether calling it twice is the same as once, and whether it
 // reaches beyond this workspace.
-type Traits struct{ ReadOnly, Destructive, Idempotent, OpenWorld bool }
+type Traits struct {
+	ReadOnly    bool `json:"read_only"`
+	Destructive bool `json:"destructive"`
+	Idempotent  bool `json:"idempotent"`
+	OpenWorld   bool `json:"open_world"`
+}
 
 // Access is who may have an op done: the pages, the assistant, MCP and
 // the API all go by it.
