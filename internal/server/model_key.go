@@ -29,14 +29,17 @@ var keyKinds = []struct {
 		[][2]string{{"llm.api_key_env", "OPENROUTER_API_KEY"}, {"llm.base_url", "https://openrouter.ai/api/v1"}, {"llm.model", "openrouter/auto"}, {"llm.provider", "openai"}}},
 }
 
-// keyForm is the paste-a-key part of the connect card.
-func (s *Server) keyForm(hidden string) template.HTML {
+// keyForm is where a story's key is pasted: one company's, in its words.
+func (s *Server) keyForm(hidden, prefix string) template.HTML {
+	company := "Anthropic"
+	if prefix == "sk-or-" {
+		company = "OpenRouter"
+	}
 	var b strings.Builder
 	b.WriteString(`<form method="post" action="/model/key" class="sw-stack">` + hidden)
-	b.WriteString(string(s.component("text-field", map[string]any{"label": "Or paste a key", "name": "key", "type": "password", "autocomplete": "off",
-		"hint": "A key from Anthropic (it begins sk-ant-) or OpenRouter (sk-or-). Claude answers quickest and gets the most right; it costs a little for each message. The key is kept in your own settings on this computer, not in the workspace; your conversations then go to that company."})))
-	b.WriteString(string(s.component("button", map[string]any{"label": "Use this key", "type": "submit", "variant": "secondary"})))
-	b.WriteString(`<p class="sw-small">Make one at <a class="sw-link" href="https://console.anthropic.com/settings/keys">Anthropic's keys page</a> or <a class="sw-link" href="https://openrouter.ai/keys">OpenRouter's</a>.</p>`)
+	b.WriteString(string(s.component("text-field", map[string]any{"label": "Your " + company + " key", "name": "key", "id": "key-" + strings.ToLower(company), "type": "password", "autocomplete": "off",
+		"hint": "It begins " + prefix + ". It is kept in your own settings on this computer, not in the workspace; your conversations then go to " + company + "."})))
+	b.WriteString(string(s.component("button", map[string]any{"label": "Use this key", "context": company, "type": "submit", "variant": "secondary"})))
 	b.WriteString(`</form>`)
 	return template.HTML(b.String())
 }

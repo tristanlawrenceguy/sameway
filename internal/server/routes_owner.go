@@ -18,6 +18,8 @@ var ownerRoutes = []route{
 	{pattern: "POST /cloud-sync", handle: (*Server).cloudSyncOn, access: owner, persons: "which computers hold a copy of the workspace is its owner's choice", reach: outward},
 	{pattern: "POST /cloud-sync/off", handle: (*Server).cloudSyncOff, access: owner, persons: "which computers hold a copy of the workspace is its owner's choice", reach: outward},
 	{pattern: "POST /workspaces/join", handle: (*Server).cloudJoin, access: owner, persons: "which computers hold a copy of the workspace is its owner's choice", reach: outward},
+	{pattern: "GET /apps", handle: (*Server).appsPage, access: owner},
+	{pattern: "POST /apps/connect", handle: (*Server).appsConnect, access: owner, persons: "what reaches into their other programs is theirs to say", reach: outward},
 	{pattern: "POST /model/use", handle: (*Server).modelUse, access: owner, tool: "set_setting", reach: outward},
 	{pattern: "POST /model/check", handle: (*Server).modelCheck, access: owner, persons: "checking the model is checking the assistant itself", reach: outward},
 	{pattern: "GET /model/wait", handle: (*Server).modelWaitState, access: owner},

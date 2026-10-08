@@ -124,14 +124,6 @@ func (s *Server) run(ctx context.Context, svc *chat.Service, name string, args j
 		s.web().ServeHTTP(rec, req)
 		return rec.Body.String(), rec.Code >= 400
 	}
-	// A block is checked when written the way its page resolves it, and
-	// that is the web server's to say: over stdio there is none until
-	// something is looked at, so have it now. svc is the agent's copy of
-	// the chat service, made before, so it is given the check too.
-	if svc.Check == nil {
-		s.web()
-		svc.Check = s.App.Chat.Check
-	}
 	// get_record, find_records and the rest are the assistant's own tools,
 	// as the one the connection is for has them.
 	return svc.Call(name, args)

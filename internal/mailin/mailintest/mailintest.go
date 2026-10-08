@@ -56,3 +56,9 @@ type literal struct {
 }
 
 func (l literal) Size() int64 { return l.n }
+
+// Has says whether the user has a folder.
+func (s *Server) Has(folder string) bool {
+	_, err := s.user.Status(folder, &imap.StatusOptions{})
+	return err == nil
+}

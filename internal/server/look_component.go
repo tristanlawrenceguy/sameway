@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/blocks"
+
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/look"
 )
@@ -44,7 +46,7 @@ func (s *Server) lookAtComponent(w http.ResponseWriter, name string, props map[s
 	}
 	// Read before it is added, a block that could not be shown says so,
 	// as adding it would.
-	if _, problem := s.blockCheck(name, props); problem != "" {
+	if _, problem := blocks.Check(s.app.Blocks, name, props); problem != "" {
 		outline.Problems = append(outline.Problems, "this "+name+" cannot be shown as it is set up: "+problem)
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"component": name, "html": string(html), "outline": outline})

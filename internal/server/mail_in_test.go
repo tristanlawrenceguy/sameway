@@ -47,7 +47,10 @@ func TestEmailComesInAsNotesToSort(t *testing.T) {
 	if strings.Contains(a.Store.Meta("mail:account"), "abcdefghijklmnop") {
 		t.Error("the password is not in the workspace")
 	}
-	if page := get(t, h, "/mail").Body.String(); !strings.Contains(page, "me+sameway@example.com") {
+	if card := get(t, h, "/mail/contact.vcf").Body.String(); !strings.Contains(card, "EMAIL;TYPE=INTERNET:me+sameway@example.com") {
+		t.Errorf("the address is a contact to add, nothing to remember: %s", card)
+	}
+	if page := get(t, h, "/mail").Body.String(); !strings.Contains(page, "me+sameway@example.com") || !strings.Contains(page, "contact.vcf") {
 		t.Errorf("the page says where to send: %s", truncate(page))
 	}
 	today := get(t, h, "/today").Body.String()
