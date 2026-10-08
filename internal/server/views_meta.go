@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/devices"
 
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -115,7 +116,7 @@ func happened(class string, at, now time.Time) string {
 // person, an agent, an action. A file's or a device's page already says
 // what it is. A reader from the internet is not told anyone's name.
 func (s *Server) from(r *http.Request, t *schema.Type, rec *store.Record) string {
-	if t.Name == FileType || t.Name == "device" {
+	if t.Name == FileType || t.Name == devices.DeviceType {
 		return ""
 	}
 	if w := s.app.Chat.For(chat.VisitorOf(r.Context())).Writers().Of(t.Name, rec); w.Outside {

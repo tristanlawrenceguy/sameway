@@ -38,8 +38,12 @@ type Field struct {
 	Of     string            `yaml:"of,omitempty" json:"of,omitempty"`
 	// To is the content type a ref field points at: the field holds one
 	// record's id, and the page shows that record's title as a link.
-	To        string `yaml:"to,omitempty" json:"to,omitempty"`
-	MaxLength int    `yaml:"maxLength,omitempty" json:"maxLength,omitempty"`
+	To string `yaml:"to,omitempty" json:"to,omitempty"`
+	// Listed is a ref whose records the page of the record it points at
+	// lists, under its own heading: a task's project, so a project's page
+	// lists its tasks. Any other ref is a connection opened when asked.
+	Listed    bool `yaml:"listed,omitempty" json:"listed,omitempty"`
+	MaxLength int  `yaml:"maxLength,omitempty" json:"maxLength,omitempty"`
 	// Multiline asks forms to give this field room: a textarea rather than
 	// one line, and one item per line for a list.
 	Multiline bool `yaml:"multiline,omitempty" json:"multiline,omitempty"`

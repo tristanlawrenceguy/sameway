@@ -104,7 +104,8 @@ func (s *Server) routes() {
 	m.HandleFunc("PUT /api/{type}/{id}", s.apiUpdate)
 	m.HandleFunc("PATCH /api/{type}/{id}", s.apiUpdate)
 	m.HandleFunc("DELETE /api/{type}/{id}", s.apiDelete)
-	s.meaningRoutes(m) // search_meaning.go
+	s.templateRoutes(m) // templates_page.go
+	s.meaningRoutes(m)  // search_meaning.go
 	m.HandleFunc("/api/", s.apiNotFound)
 	m.HandleFunc("POST /restart", s.restart)
 	m.HandleFunc("POST /notify/phone", s.phoneSet)

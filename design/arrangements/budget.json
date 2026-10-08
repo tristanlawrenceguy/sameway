@@ -1,0 +1,100 @@
+{
+  "name": "budget",
+  "description": "Money in view: what was spent, by kind and by month.",
+  "use": {
+    "when": "the person wants to see where their money goes.",
+    "not": "a single bill, which is a task with a due day.",
+    "with": "each payment as an expense record with its amount, kind and day, made with create_record from what the person says or brings in from a spreadsheet of their bank's."
+  },
+  "needs": [
+    {
+      "type": "expense",
+      "description": "Money spent.",
+      "fields": [
+        {
+          "name": "title",
+          "kind": "string",
+          "required": true
+        },
+        {
+          "name": "amount",
+          "kind": "float",
+          "required": true
+        },
+        {
+          "name": "category",
+          "kind": "enum",
+          "values": [
+            "home",
+            "food",
+            "transport",
+            "fun",
+            "bills",
+            "other"
+          ],
+          "default": "other",
+          "description": "What kind of spending."
+        },
+        {
+          "name": "on",
+          "kind": "datetime",
+          "description": "The day it was spent."
+        }
+      ]
+    }
+  ],
+  "blocks": [
+    {
+      "key": "title",
+      "component": "heading",
+      "props": {
+        "text": "Budget",
+        "level": 2
+      },
+      "span": 12,
+      "frame": "bare"
+    },
+    {
+      "key": "bykind",
+      "component": "chart",
+      "props": {
+        "type": "expense",
+        "by": "category",
+        "sum": "amount",
+        "caption": "Spent by kind",
+        "description": "How much went on each kind of spending."
+      },
+      "span": 6
+    },
+    {
+      "key": "bymonth",
+      "component": "chart",
+      "props": {
+        "type": "expense",
+        "by": "on",
+        "period": "month",
+        "sum": "amount",
+        "kind": "line",
+        "caption": "Spent by month",
+        "description": "How spending changes month to month."
+      },
+      "span": 6
+    },
+    {
+      "key": "recent",
+      "component": "collection",
+      "props": {
+        "type": "expense",
+        "order": "-on",
+        "show": [
+          "amount",
+          "category",
+          "on"
+        ],
+        "as": "table",
+        "label": "Recent spending"
+      },
+      "span": 12
+    }
+  ]
+}

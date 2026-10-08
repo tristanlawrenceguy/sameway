@@ -71,23 +71,7 @@ jobs:
           cp "sameway_${version}_windows_amd64.exe" Sameway-Windows.exe
           for pair in darwin_arm64:AppleSilicon darwin_amd64:Intel; do
             target="${pair%%:*}"; kind="${pair##*:}"
-            mkdir -p Sameway.app/Contents/MacOS Sameway.app/Contents/Resources
-            cp "sameway_${version}_${target}" Sameway.app/Contents/MacOS/sameway
-            cp ../design/brand/icon.icns Sameway.app/Contents/Resources/icon.icns
-            chmod +x Sameway.app/Contents/MacOS/sameway
-            printf '%s\n' '<?xml version="1.0" encoding="UTF-8"?>' \
-              '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' \
-              '<plist version="1.0"><dict>' \
-              '<key>CFBundleName</key><string>Sameway</string>' \
-              '<key>CFBundleIdentifier</key><string>io.github.tristanlawrenceguy.sameway</string>' \
-              '<key>CFBundleExecutable</key><string>sameway</string>' \
-              '<key>CFBundleIconFile</key><string>icon</string>' \
-              '<key>CFBundlePackageType</key><string>APPL</string>' \
-              "<key>CFBundleShortVersionString</key><string>${version}</string>" \
-              '<key>LSMinimumSystemVersion</key><string>11.0</string>' \
-              '<key>LSUIElement</key><true/>' \
-              '</dict></plist>' > Sameway.app/Contents/Info.plist
-            rcodesign sign Sameway.app
+            ../tools/package/macapp.sh "sameway_${version}_${target}" "$version" Sameway.app
             zip -qry "Sameway-Mac-${kind}.zip" Sameway.app
             rm -rf Sameway.app
           done

@@ -1,0 +1,82 @@
+{
+  "name": "study",
+  "description": "Studies in one place: each course, the deadlines coming up, and the month ahead.",
+  "use": {
+    "when": "the person is a student with courses, assignments and exams.",
+    "not": "a single essay, which is the desk arrangement.",
+    "with": "each course as a course record and each assignment or exam as a task with its due day, made with create_record."
+  },
+  "needs": [
+    {
+      "type": "course",
+      "description": "Something being studied: a module, a class, a subject.",
+      "fields": [
+        {
+          "name": "title",
+          "kind": "string",
+          "required": true
+        },
+        {
+          "name": "teacher",
+          "kind": "string"
+        },
+        {
+          "name": "notes",
+          "kind": "text"
+        }
+      ]
+    }
+  ],
+  "blocks": [
+    {
+      "key": "title",
+      "component": "heading",
+      "props": {
+        "text": "Studies",
+        "level": 2
+      },
+      "span": 12,
+      "frame": "bare"
+    },
+    {
+      "key": "deadlines",
+      "component": "collection",
+      "props": {
+        "type": "task",
+        "where": [
+          "done=false",
+          "due<=+21d"
+        ],
+        "order": "due",
+        "show": [
+          "due"
+        ],
+        "label": "Deadlines"
+      },
+      "span": 6
+    },
+    {
+      "key": "courses",
+      "component": "collection",
+      "props": {
+        "type": "course",
+        "order": "title",
+        "label": "Courses"
+      },
+      "span": 6
+    },
+    {
+      "key": "month",
+      "component": "calendar",
+      "props": {
+        "type": "task",
+        "where": [
+          "done=false"
+        ],
+        "detail": "full",
+        "caption": "Due this month"
+      },
+      "span": 12
+    }
+  ]
+}
