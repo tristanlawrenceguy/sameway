@@ -54,6 +54,7 @@ func (s *Server) limitsSection(owner bool) string {
 	}
 	if owner {
 		line(s.phoneLine())          // phone.go
+		line(s.briefLine())          // today.go
 		lines, setup := s.appLines() // meeting_fetch_help.go
 		for _, l := range lines {
 			line(l)
