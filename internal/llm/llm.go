@@ -69,6 +69,11 @@ type Request struct {
 	Messages  []Message
 	Tools     []Tool
 	MaxTokens int
+	// Effort is how long a model that thinks may think first: "none" for
+	// a narrow question answered in a line (triage), where a small model
+	// on this computer otherwise spent its whole answer thinking. Empty
+	// leaves it to the model. A model server takes it as reasoning_effort.
+	Effort string
 }
 
 // Response is the model's reply: text, tool calls, or both.

@@ -21,7 +21,7 @@ func (s *Server) mailToSort() []*store.Record {
 	recs, _ := s.app.Store.List("note", store.ListOptions{OrderBy: "created_at"})
 	var out []*store.Record
 	for _, r := range recs {
-		if taggedWith(r, toSort) && taggedWith(r, "email") {
+		if taggedWith(r, toSort) && (taggedWith(r, "email") || taggedWith(r, "shared")) {
 			out = append(out, r)
 		}
 	}
@@ -38,7 +38,9 @@ func taggedWith(r *store.Record, tag string) bool {
 	return false
 }
 
-// mailSection is From your email on Today.
+// mailSection is To sort on Today: each email or shared message with what
+// the model made of it (triage.go), kept, changed or set aside with a press;
+// before it has, or with no model, made a task or set aside by hand.
 func (s *Server) mailSection() string {
 	notes := s.mailToSort()
 	if len(notes) == 0 {
@@ -46,15 +48,21 @@ func (s *Server) mailSection() string {
 	}
 	esc := template.HTMLEscapeString
 	var b strings.Builder
-	b.WriteString(`<h2>From your email</h2><ul class="sw-plain sw-rows">`)
+	b.WriteString(`<h2>To sort</h2><ul class="sw-plain sw-rows">`)
 	for _, n := range notes {
 		title, _ := n.Fields["title"].(string)
-		b.WriteString(`<li class="sw-cluster"><a class="sw-link" href="/t/note/` + n.ID + `">` + esc(title) + `</a>`)
-		for _, f := range []struct{ action, label, variant string }{{"/mail/task", "Make it a task", "secondary"}, {"/mail/sorted", "Done with it", "quiet"}} {
+		b.WriteString(`<li class="sw-stack"><a class="sw-link" href="/t/note/` + n.ID + `">` + esc(title) + `</a>`)
+		presses := []struct{ action, label, variant string }{{"/mail/task", "Make it a task", "secondary"}, {"/mail/sorted", "Done with it", "quiet"}}
+		if sug := s.suggestionFor(n.ID); sug != nil && sug.Task {
+			b.WriteString(`<p>` + esc(suggestionWords(sug)) + `</p>`) // triage_today.go
+			presses = []struct{ action, label, variant string }{{"/sort/keep", "Keep", "secondary"}, {"/sort/change", "Change", "quiet"}, {"/mail/sorted", "Not a task", "quiet"}}
+		}
+		b.WriteString(`<div class="sw-cluster">`)
+		for _, f := range presses {
 			b.WriteString(`<form method="post" action="` + f.action + `"><input type="hidden" name="id" value="` + n.ID + `">` +
 				string(s.component("button", map[string]any{"label": f.label, "context": title, "type": "submit", "variant": f.variant})) + `</form>`)
 		}
-		b.WriteString(`</li>`)
+		b.WriteString(`</div></li>`)
 	}
 	b.WriteString(`</ul>`)
 	return b.String()
@@ -64,7 +72,7 @@ func (s *Server) mailSection() string {
 func (s *Server) sortedNote(r *http.Request, id string) (*store.Record, string, error) {
 	n, err := s.app.Store.Get("note", id)
 	if err != nil || !taggedWith(n, toSort) {
-		return nil, "", errors.New("that email has been dealt with already")
+		return nil, "", errors.New("that has been dealt with already")
 	}
 	var tags []any
 	for _, t := range n.Fields["tags"].([]any) {

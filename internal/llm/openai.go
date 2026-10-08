@@ -46,6 +46,7 @@ type oaRequest struct {
 	Tools     []any       `json:"tools,omitempty"`
 	MaxTokens int         `json:"max_tokens,omitempty"`
 	Stream    bool        `json:"stream,omitempty"`
+	Effort    string      `json:"reasoning_effort,omitempty"`
 }
 
 type oaResponse struct {
@@ -135,7 +136,7 @@ func toOpenAI(m Message) []oaMessage {
 
 // body is the request on the wire, the same whether it streams or not.
 func (o *OpenAI) body(req Request) oaRequest {
-	body := oaRequest{Model: o.Model, MaxTokens: o.MaxTokens}
+	body := oaRequest{Model: o.Model, MaxTokens: o.MaxTokens, Effort: req.Effort}
 	if req.System != "" {
 		body.Messages = append(body.Messages, oaMessage{Role: "system", Content: req.System})
 	}
