@@ -96,6 +96,10 @@ func (s *Server) resolveCollectionAt(props map[string]any, block string, at *col
 	}
 	items := make([]any, 0, len(recs))
 	told := s.recordsApart(t, recs)
+	var in counts // what is in each, counted once for the list (glance_count.go)
+	if len(show) == 0 && by == nil {
+		in = s.countsOf(t, recs)
+	}
 	for _, rec := range recs {
 		item := map[string]any{"title": s.title(t, rec), "href": "/t/" + t.Name + "/" + rec.ID}
 		if told[rec.ID] != "" {
@@ -103,7 +107,7 @@ func (s *Server) resolveCollectionAt(props map[string]any, block string, at *col
 		}
 		if len(show) > 0 {
 			item["fields"] = s.fieldsOf(t, rec, show)
-		} else if meta := s.glanceText(t, rec); meta != "" && by == nil {
+		} else if meta := s.glanceText(t, rec, in); meta != "" && by == nil {
 			item["meta"] = meta
 		}
 		if full {
