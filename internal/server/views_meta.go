@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"html/template"
 	"net/http"
 	"strings"
@@ -34,7 +33,8 @@ func (s *Server) lede(r *http.Request, t *schema.Type, rec *store.Record) templa
 }
 
 // howMany says how many there are under a listing's title, and how many
-// of them are done when the type keeps that.
+// of them are done when the type keeps that, in the words a record says
+// what is in it (glance_count.go).
 func howMany(t *schema.Type, recs []*store.Record) template.HTML {
 	text := schema.Count(len(recs), t.Name)
 	if f := t.DoneField(); f != nil {
@@ -45,7 +45,7 @@ func howMany(t *schema.Type, recs []*store.Record) template.HTML {
 			}
 		}
 		if done > 0 {
-			text += fmt.Sprintf(" · %d %s", done, f.Words())
+			text += " · " + doneWords(f, done)
 		}
 	}
 	return template.HTML(`<p class="sw-lede">` + template.HTMLEscapeString(text) + `</p>`)
@@ -54,9 +54,12 @@ func howMany(t *schema.Type, recs []*store.Record) template.HTML {
 // factOpts says how the facts are shown: Made adds when the record was
 // made; Boxed leaves out the done chip because a box already shows it;
 // Chips draws the day and what it belongs to as chips rather than words,
-// and words are short, the way a row says them.
+// and words are short, the way a row says them. Counts is what is in the
+// records of the listing the row is in, counted for all of them at once;
+// nil counts it for this record alone.
 type factOpts struct {
 	Made, Boxed, Chips bool
+	Counts             counts
 	// From is who wrote the record's words, with Made; see from.
 	From string
 }
@@ -67,7 +70,7 @@ type factOpts struct {
 // the record's own page says when it was made.
 func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 	now := time.Now()
-	facts := s.glance(t, rec, now)
+	facts := s.glance(t, rec, now, o.Counts)
 	day := false
 	for _, f := range facts {
 		day = day || f.Kind == "day"

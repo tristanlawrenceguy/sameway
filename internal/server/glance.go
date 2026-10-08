@@ -20,7 +20,7 @@ import (
 
 // glanceFact is one thing a record says at a glance.
 type glanceFact struct {
-	Kind   string // done, state, flag, day, person, ref
+	Kind   string // done, state, flag, day, person, ref, count
 	Field  string // the field it says, which the record's page need not list again
 	Text   string // as a person reads it
 	Tone   string // the badge's tone
@@ -44,11 +44,15 @@ type glanceFact struct {
 //     has passed on a record that can be done and is not; a day that has
 //     passed on anything else (a meeting, an entry) is only past;
 //   - what it belongs to or who it is for, unless that is its title; a
-//     file it points at is an attachment, not what it belongs to.
+//     file it points at is an attachment, not what it belongs to;
+//   - what is in it: how many records name it as theirs, and how many of
+//     them are done (3 tasks, 1 done), from in, what a listing counted
+//     for all its rows at once, or counted for this one when in is nil
+//     (glance_count.go).
 //
 // The order is always this one, so the same fact sits in the same place
 // on every row (design/foundations/glance.md).
-func (s *Server) glance(t *schema.Type, rec *store.Record, now time.Time) []glanceFact {
+func (s *Server) glance(t *schema.Type, rec *store.Record, now time.Time, in counts) []glanceFact {
 	var out []glanceFact
 	done := false
 	if f := t.DoneField(); f != nil {
@@ -91,13 +95,20 @@ func (s *Server) glance(t *schema.Type, rec *store.Record, now time.Time) []glan
 		}
 		break
 	}
+	if in == nil {
+		in = s.countsOf(t, []*store.Record{rec})
+	}
+	for _, words := range in[rec.ID] {
+		out = append(out, glanceFact{Kind: "count", Text: words, Tone: "neutral"})
+	}
 	return out
 }
 
-// glanceText is the facts as plain words, for a block's list.
-func (s *Server) glanceText(t *schema.Type, rec *store.Record) string {
+// glanceText is the facts as plain words, for a block's list and for an
+// agent; in is as glance takes it.
+func (s *Server) glanceText(t *schema.Type, rec *store.Record, in counts) string {
 	var words []string
-	for _, f := range s.glance(t, rec, time.Now()) {
+	for _, f := range s.glance(t, rec, time.Now(), in) {
 		words = append(words, f.Text)
 	}
 	return strings.Join(words, " · ")
@@ -117,7 +128,7 @@ func (s *Server) glanceHTML(facts []glanceFact, chips bool, boxed string) string
 			parts = append(parts, timeHTML(f.Class, f.When, f.Full, template.HTML(template.HTMLEscapeString(f.Short))))
 		case f.Kind == "day":
 			parts = append(parts, timeHTML("", f.When, f.Full, s.component("badge", map[string]any{"label": f.Text, "tone": f.Tone})))
-		case f.Kind == "ref" && !chips:
+		case (f.Kind == "ref" || f.Kind == "count") && !chips:
 			parts = append(parts, `<span class="sw-row__note">`+template.HTMLEscapeString(f.Text)+`</span>`)
 		default:
 			parts = append(parts, string(s.component("badge", map[string]any{"label": f.Text, "tone": f.Tone})))
@@ -142,8 +153,9 @@ func (s *Server) headFields(t *schema.Type, rec *store.Record) map[string]bool {
 	}
 	out[s.boxed(t, rec)] = true
 	// What the line above says is not said again; a link to what it
-	// belongs to is, being a way there the chip is not.
-	for _, f := range s.glance(t, rec, time.Now()) {
+	// belongs to is, being a way there the chip is not. What is in it has
+	// no field of its own, so it is not counted for this.
+	for _, f := range s.glance(t, rec, time.Now(), counts{}) {
 		if f.Kind != "ref" && f.Kind != "person" {
 			out[f.Field] = true
 		}
