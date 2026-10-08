@@ -55,6 +55,7 @@ func (s *Server) cloudCopies(folder string) []string {
 // KeepCloudCopy puts today's copy in the cloud folder, once a day, while
 // ctx lasts.
 func (s *Server) KeepCloudCopy(ctx context.Context) {
+	s.KeepCloudSync(ctx) // and other computers kept in step through it; cloud_sync.go
 	go func() {
 		tick := time.NewTicker(time.Hour)
 		defer tick.Stop()

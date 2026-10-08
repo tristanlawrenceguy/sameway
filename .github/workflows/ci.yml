@@ -6,10 +6,16 @@ on:
   pull_request:
 
 jobs:
-  go:
+  # The fast checks run first; the browser jobs wait for them, so a format,
+  # vet, size or debt-list failure is reported in a minute or two and
+  # nothing slow starts. The tests run alongside, as they take longest.
+  check:
+    name: check (format, vet, sizes, debt list only goes down)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
       - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
@@ -17,8 +23,20 @@ jobs:
         run: test -z "$(gofmt -l .)" || (gofmt -l . && exit 1)
       - name: Vet
         run: go vet ./...
-      - name: Repo check (file sizes, component folders, tokens)
-        run: go run ./tools/check
+      - name: Repo check (file and function sizes, debt list, component folders, tokens)
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          git fetch -q --depth=1 origin "$BASE" 2>/dev/null || true
+          go run ./tools/check -base "$BASE"
+
+  go:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
       - name: Test (contracts, golden output, HTTP, CLI, chat tools)
         run: go test ./...
       - name: Build
@@ -26,6 +44,7 @@ jobs:
 
   components:
     name: components in a browser (axe, modes, reflow, spacing, keyboard)
+    needs: check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -44,6 +63,7 @@ jobs:
 
   pages:
     name: live pages (person and agent paths, every page in every mode)
+    needs: check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5

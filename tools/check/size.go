@@ -13,13 +13,11 @@ import (
 	"strings"
 )
 
-// File and function size. A file over WarnLines is said, not failed: the
-// reader's problem is long functions and files split by size rather than
-// topic, so the hard cap on files is looser and functions have one of
-// their own.
+// File and function size. Both are hard limits: a warning tier was tried
+// and agents read it as permission, so a file over MaxLines fails, and the
+// name rule below stops a split by size from passing it.
 const (
-	WarnLines    = 300 // a file over this is reported as a warning
-	MaxLines     = 400 // a file over this fails
+	MaxLines     = 300 // a source file over this fails
 	MaxFuncLines = 80  // a non-test Go function over this fails, unless in longFuncs
 )
 
@@ -31,13 +29,15 @@ var sourceExt = map[string]bool{".go": true, ".css": true, ".html": true, ".js":
 
 var skipDirs = map[string]bool{".git": true, "node_modules": true, "bin": true, "dist": true}
 
-// report is what a check found: warnings are printed, problems fail.
+// report is what a check found: notes and warnings are printed, problems fail.
 type report struct {
+	notes    []string
 	warnings []string
 	problems []string
 }
 
 func (r *report) add(o report) {
+	r.notes = append(r.notes, o.notes...)
 	r.warnings = append(r.warnings, o.warnings...)
 	r.problems = append(r.problems, o.problems...)
 }
@@ -74,11 +74,8 @@ func checkFileSizes(root string) report {
 			return
 		}
 		lines := bytes.Count(data, []byte("\n"))
-		switch {
-		case lines > MaxLines:
-			r.problems = append(r.problems, fmt.Sprintf("%s has %d lines (max %d); split it by topic", rel, lines, MaxLines))
-		case lines > WarnLines:
-			r.warnings = append(r.warnings, fmt.Sprintf("%s has %d lines (over %d); a long function or a second topic in it may want its own file", rel, lines, WarnLines))
+		if lines > MaxLines {
+			r.problems = append(r.problems, fmt.Sprintf("%s has %d lines (max %d); split by topic: move a group of related functions into a file named after what it holds", rel, lines, MaxLines))
 		}
 	})
 	return r
