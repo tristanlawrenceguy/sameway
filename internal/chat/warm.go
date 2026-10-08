@@ -41,7 +41,10 @@ func (s *Service) Warm(ctx context.Context) bool {
 	}
 	// The person's next message comes after all of this; a placeholder
 	// stands where it will be, so the model reads everything before it.
-	req := llm.Request{System: s.systemPrompt(), Messages: append(history, llm.Message{Role: llm.RoleUser, Content: "."}), Tools: s.Tools()}
+	msgs := append(history, llm.Message{Role: llm.RoleUser, Content: "."})
+	// The tools a turn is given (toolset.go), so what is read ahead is the
+	// start the next turn shares: the core, and what the chat has used.
+	req := llm.Request{System: s.systemPrompt(), Messages: msgs, Tools: s.toolsFor(s.Tools(), msgs)}
 	one := *o
 	one.MaxTokens = 1
 	one.Complete(ctx, req)
