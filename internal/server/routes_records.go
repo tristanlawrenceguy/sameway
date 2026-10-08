@@ -44,6 +44,7 @@ var recordRoutes = []route{
 	{pattern: "POST /review/done", handle: (*Server).reviewDone, access: people, tool: "update_record", reach: inward},
 	{pattern: "POST /review/on", handle: (*Server).reviewOn, access: owner, tool: "set_setting", reach: inward},
 	{pattern: "GET /mail", handle: (*Server).mailPage, access: owner},
+	{pattern: "GET /mail/contact.vcf", handle: (*Server).mailContact, access: owner},
 	{pattern: "POST /mail/connect", handle: (*Server).mailConnect, access: owner, persons: "a mailbox and its password are its owner's to give", reach: outward},
 	{pattern: "POST /mail/off", handle: (*Server).mailOff, access: owner, persons: "a mailbox and its password are its owner's to give", reach: outward},
 	{pattern: "POST /mail/task", handle: (*Server).mailTask, access: people, tool: "create_record", reach: inward},

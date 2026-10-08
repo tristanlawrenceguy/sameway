@@ -121,12 +121,15 @@ func dial(ctx context.Context, a Account) (*imapclient.Client, error) {
 	return c, nil
 }
 
-// Check signs in and out, to say at once whether the account works.
+// Check signs in and out, to say at once whether the account works, and
+// makes the Sameway folder when there is none, so a service with no +
+// addresses has somewhere to put mail without the person making it.
 func Check(ctx context.Context, a Account) error {
 	c, err := dial(ctx, a)
 	if err != nil {
 		return err
 	}
+	c.Create(Folder, nil).Wait() // there already, it says so; either way it is there
 	c.Logout().Wait()
 	c.Close()
 	return nil
