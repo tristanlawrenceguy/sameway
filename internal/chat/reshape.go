@@ -28,7 +28,7 @@ type Reshaper interface {
 	RemoveType(typeName string) error
 }
 
-var changeFieldTool = llm.Tool{
+var changeFieldOp = Op{Tool: llm.Tool{
 	Name:        "change_field",
 	Description: "Change a content type the person already has: add_choice gives a pick-list (enum) another choice (value, and label for how it reads); label renames how a field, or with value one of its choices, is shown (its name and what is stored stay); hide takes a field, or with no field the whole type, off the pages and out of your hands while keeping everything it holds; show brings it back; delete removes a field, or with no field the whole type and its records, on every computer that hosts the workspace. Delete is always put to the person as a question with hiding offered first; nothing is deleted until they choose. When someone asks to remove something, offer hiding.",
 	Schema: map[string]any{"type": "object", "additionalProperties": false, "required": []string{"type", "change"}, "properties": map[string]any{
@@ -38,7 +38,7 @@ var changeFieldTool = llm.Tool{
 		"value":  map[string]any{"type": "string", "description": "add_choice: the choice. label: the choice to rename, when renaming a choice."},
 		"label":  map[string]any{"type": "string", "description": "How it reads: the new label, or the new choice's label."},
 	}},
-}
+}, Offered: func(s *Service, _ *llm.Tool) bool { return s.Reshape != nil }}
 
 type reshapeArgs struct {
 	Type   string `json:"type"`

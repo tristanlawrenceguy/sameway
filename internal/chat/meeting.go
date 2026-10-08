@@ -24,27 +24,24 @@ type meetingItem struct {
 	For   string `json:"for"`
 }
 
-func (s *Service) meetingTools() []llm.Tool {
-	if _, ok := s.Store.Types().Get(records.EventType); !ok {
-		return nil
-	}
-	at := map[string]any{"type": "string", "description": "Where in the recording it was said, as the transcript's [m:ss] or [h:mm:ss] gives it, such as 12:03. Leave out when it was not."}
-	return []llm.Tool{{Name: "write_up_meeting",
-		Description: "Write up a meeting from its recording's transcript: a short summary, what was decided, and the tasks that came up, each with where in the recording it was said. Read the recording with get_record on file first. Give the event when the meeting is one already, the recording when it is not and a meeting is made for it, or both to join them. It is written in one go and undone in one go; the decisions and tasks link to the line they came from.",
-		Schema: obj(map[string]any{
-			"event":     map[string]any{"type": "string", "description": "The event id of the meeting, when there is one."},
-			"recording": map[string]any{"type": "string", "description": "The file id of its recording."},
-			"summary":   map[string]any{"type": "string", "description": "What was said, in short: a few sentences or a short list, in Markdown."},
-			"decisions": map[string]any{"type": "array", "description": "What was decided, one each.", "items": obj(map[string]any{
-				"text": map[string]any{"type": "string", "description": "The decision, in a sentence."}, "at": at}, "text")},
-			"tasks": map[string]any{"type": "array", "description": "What someone is to do, one each; each becomes a task.", "items": obj(map[string]any{
-				"title": map[string]any{"type": "string", "description": "The task, as a short thing to do."},
-				"at":    at,
-				"due":   map[string]any{"type": "string", "description": "When it is due, when one was said, as a date."},
-				"for":   map[string]any{"type": "string", "description": "The person id it is for, when it was said who; find_records on person."},
-			}, "title")},
-		}, "summary")}}
-}
+// heardAt is where in a recording something was said.
+var heardAt = map[string]any{"type": "string", "description": "Where in the recording it was said, as the transcript's [m:ss] or [h:mm:ss] gives it, such as 12:03. Leave out when it was not."}
+
+var meetingOps = []Op{{Tool: llm.Tool{Name: "write_up_meeting",
+	Description: "Write up a meeting from its recording's transcript: a short summary, what was decided, and the tasks that came up, each with where in the recording it was said. Read the recording with get_record on file first. Give the event when the meeting is one already, the recording when it is not and a meeting is made for it, or both to join them. It is written in one go and undone in one go; the decisions and tasks link to the line they came from.",
+	Schema: obj(map[string]any{
+		"event":     map[string]any{"type": "string", "description": "The event id of the meeting, when there is one."},
+		"recording": map[string]any{"type": "string", "description": "The file id of its recording."},
+		"summary":   map[string]any{"type": "string", "description": "What was said, in short: a few sentences or a short list, in Markdown."},
+		"decisions": map[string]any{"type": "array", "description": "What was decided, one each.", "items": obj(map[string]any{
+			"text": map[string]any{"type": "string", "description": "The decision, in a sentence."}, "at": heardAt}, "text")},
+		"tasks": map[string]any{"type": "array", "description": "What someone is to do, one each; each becomes a task.", "items": obj(map[string]any{
+			"title": map[string]any{"type": "string", "description": "The task, as a short thing to do."},
+			"at":    heardAt,
+			"due":   map[string]any{"type": "string", "description": "When it is due, when one was said, as a date."},
+			"for":   map[string]any{"type": "string", "description": "The person id it is for, when it was said who; find_records on person."},
+		}, "title")},
+	}, "summary")}, Offered: has(records.EventType)}}
 
 func (s *Service) writeUpMeeting(eventID, fileID, summary string, decisions, tasks []meetingItem) toolResult {
 	if eventID == "" && fileID == "" {

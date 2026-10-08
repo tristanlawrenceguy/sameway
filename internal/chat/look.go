@@ -18,7 +18,7 @@ import (
 // one says how to narrow it.
 const lookLimit = 16000
 
-var lookTool = llm.Tool{Name: "look_at_page",
+var lookOps = []Op{{Tool: llm.Tool{Name: "look_at_page",
 	Description: "See a page of this workspace the way the person gets it: its headings, landmarks and controls with what they hold, what is hidden, where Tab goes, and every script error and structural problem. Use it when the person says something does not work, look right, or cannot be reached, doing what they did as steps, and to check a page after you change it, before saying it is done. It changes nothing.",
 	Schema: obj(map[string]any{
 		"path": map[string]any{"type": "string", "description": "The page, such as /t/note/abc or /c/work. Defaults to the tab the person is on."},
@@ -33,15 +33,7 @@ var lookTool = llm.Tool{Name: "look_at_page",
 		"only": map[string]any{"type": "array", "items": map[string]any{"type": "string", "enum": []string{"landmarks", "headings", "controls", "live", "components"}}, "description": "Keep only these parts of a long page; problems always stay."},
 		"kind": map[string]any{"type": "string", "description": "Keep only controls of this kind: link, button, textbox, checkbox, radio, listbox, disclosure."},
 		"name": map[string]any{"type": "string", "description": "Keep only controls with these words in their name."},
-	})}
-
-// lookTools is the look, when the server has lent the way to take it.
-func (s *Service) lookTools() []llm.Tool {
-	if s.Look == nil {
-		return nil
-	}
-	return []llm.Tool{lookTool}
-}
+	})}, Offered: func(s *Service, _ *llm.Tool) bool { return s.Look != nil }}}
 
 // lookAtPage reads a page for the model, on the tab the person is on
 // when none is named.

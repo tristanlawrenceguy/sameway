@@ -43,29 +43,17 @@ func (s *Service) HasCanvas(id string) bool {
 	return false
 }
 
-// canvasTools are offered when the workspace has the canvas type, which every
+// canvasOps are offered when the workspace has the canvas type, which every
 // workspace made or opened since tabs existed does.
-func (s *Service) canvasTools() []llm.Tool {
-	if _, ok := s.Store.Types().Get(records.CanvasType); !ok {
-		return nil
-	}
-	obj := func(props map[string]any, required ...string) map[string]any {
-		o := map[string]any{"type": "object", "properties": props, "additionalProperties": false}
-		if len(required) > 0 {
-			o["required"] = required
-		}
-		return o
-	}
-	return []llm.Tool{
-		{Name: "create_canvas", Description: "Add a tab: a new canvas beside Home with blocks of its own. Use it when the person asks for a separate page or tab, or when what they want does not belong with what is already on the canvas. Returns the canvas id, which add_component takes as canvas.",
-			Schema: obj(map[string]any{
-				"name": map[string]any{"type": "string", "description": "The tab's name, in the person's words, one or two of them: Work, Garden, Rome."},
-			}, "name")},
-		{Name: "remove_canvas", Description: "Remove a tab and every block on it. Ask first with propose_change; Home cannot be removed.",
-			Schema: obj(map[string]any{
-				"id": map[string]any{"type": "string", "description": "The canvas id, from the list of tabs."},
-			}, "id")},
-	}
+var canvasOps = []Op{
+	{Tool: llm.Tool{Name: "create_canvas", Description: "Add a tab: a new canvas beside Home with blocks of its own. Use it when the person asks for a separate page or tab, or when what they want does not belong with what is already on the canvas. Returns the canvas id, which add_component takes as canvas.",
+		Schema: obj(map[string]any{
+			"name": map[string]any{"type": "string", "description": "The tab's name, in the person's words, one or two of them: Work, Garden, Rome."},
+		}, "name")}, Offered: has(records.CanvasType)},
+	{Tool: llm.Tool{Name: "remove_canvas", Description: "Remove a tab and every block on it. Ask first with propose_change; Home cannot be removed.",
+		Schema: obj(map[string]any{
+			"id": map[string]any{"type": "string", "description": "The canvas id, from the list of tabs."},
+		}, "id")}, Offered: has(records.CanvasType)},
 }
 
 func (s *Service) createCanvas(name string) toolResult {

@@ -22,22 +22,22 @@ type Home interface {
 	RestoreWorkspace(name string) (string, error)
 }
 
-func (s *Service) homeTools() []llm.Tool {
-	name := map[string]any{"type": "string", "description": "The workspace's name, as the person calls it."}
-	return []llm.Tool{
-		{Name: "clear_conversation", Description: "Start this conversation afresh: its messages go and the canvas, its blocks and the other chats stay. Only when the person asks to start over or clear the chat. It can be undone, which puts the messages back.",
-			Schema: obj(map[string]any{})},
-		{Name: "write_down", Description: "Have a recording (an audio or video file) written down as a transcript on this computer. The words arrive in its text as they are heard; the answer says whether it started or what the person must do instead.",
-			Schema: obj(map[string]any{"file": map[string]any{"type": "string", "description": "The file record's id."}}, "file")},
-		{Name: "add_workspace", Description: "Make a new workspace beside this one, blank or as a copy of this one, and open it in a window of its own. Only when the person asks for one.",
-			Schema: obj(map[string]any{"name": name, "copy": map[string]any{"type": "boolean", "description": "True for a copy of this workspace with everything in it; false or left out for a blank one."}}, "name")},
-		{Name: "open_workspace", Description: "Open another workspace on this computer, starting it if it is not running, and say its address. An unknown name answers with the names there are.",
-			Schema: obj(map[string]any{"name": name}, "name")},
-		{Name: "restore_workspace", Description: "Put a deleted workspace back from Sameway's trash, where it was, ready to open.",
-			Schema: obj(map[string]any{"name": name}, "name")},
-		{Name: "take_agent_away", Description: "Take an agent's key away, so it can no longer reach this workspace, when the person asks. Keys are made at the command line with sameway agent add, never here, so a key never passes through the conversation. Undoing this lets the agent back in with the same key.",
-			Schema: obj(map[string]any{"name": map[string]any{"type": "string", "description": "The agent's name, as the log calls it."}}, "name")},
-	}
+// workspaceName is a workspace, as an argument.
+var workspaceName = map[string]any{"type": "string", "description": "The workspace's name, as the person calls it."}
+
+var homeOps = []Op{
+	{Tool: llm.Tool{Name: "clear_conversation", Description: "Start this conversation afresh: its messages go and the canvas, its blocks and the other chats stay. Only when the person asks to start over or clear the chat. It can be undone, which puts the messages back.",
+		Schema: obj(map[string]any{})}},
+	{Tool: llm.Tool{Name: "write_down", Description: "Have a recording (an audio or video file) written down as a transcript on this computer. The words arrive in its text as they are heard; the answer says whether it started or what the person must do instead.",
+		Schema: obj(map[string]any{"file": map[string]any{"type": "string", "description": "The file record's id."}}, "file")}},
+	{Tool: llm.Tool{Name: "add_workspace", Description: "Make a new workspace beside this one, blank or as a copy of this one, and open it in a window of its own. Only when the person asks for one.",
+		Schema: obj(map[string]any{"name": workspaceName, "copy": map[string]any{"type": "boolean", "description": "True for a copy of this workspace with everything in it; false or left out for a blank one."}}, "name")}},
+	{Tool: llm.Tool{Name: "open_workspace", Description: "Open another workspace on this computer, starting it if it is not running, and say its address. An unknown name answers with the names there are.",
+		Schema: obj(map[string]any{"name": workspaceName}, "name")}},
+	{Tool: llm.Tool{Name: "restore_workspace", Description: "Put a deleted workspace back from Sameway's trash, where it was, ready to open.",
+		Schema: obj(map[string]any{"name": workspaceName}, "name")}},
+	{Tool: llm.Tool{Name: "take_agent_away", Description: "Take an agent's key away, so it can no longer reach this workspace, when the person asks. Keys are made at the command line with sameway agent add, never here, so a key never passes through the conversation. Undoing this lets the agent back in with the same key.",
+		Schema: obj(map[string]any{"name": map[string]any{"type": "string", "description": "The agent's name, as the log calls it."}}, "name")}},
 }
 
 // homeTool runs one of the tools above, or says the tool is unknown.

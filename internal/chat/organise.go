@@ -31,22 +31,17 @@ type materialItem struct {
 	For string `json:"for"`
 }
 
-func (s *Service) organiseTools() []llm.Tool {
-	if len(records.TypeNames(s.Store)) == 0 {
-		return nil
-	}
-	return []llm.Tool{{Name: "organise_writing",
-		Description: "Organise longer writing: a piece made of parts in order, as a book of chapters, and the material that goes with it (guidelines, submission details, research) for the whole or for one part. Give the piece and its parts in reading order; parts it has already and you leave out stay, after them. One change, undone in one go. Fields the type lacks for this are added first. Make the parts with create_record before.",
-		Schema: obj(map[string]any{
-			"type":  map[string]any{"type": "string", "description": "The content type; note when left out."},
-			"piece": map[string]any{"type": "string", "description": "The id of the whole piece."},
-			"parts": map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Ids of its parts, in reading order."},
-			"material": map[string]any{"type": "array", "description": "Records that are material for it.", "items": obj(map[string]any{
-				"id":  map[string]any{"type": "string", "description": "The record's id."},
-				"for": map[string]any{"type": "string", "description": "The part it is for; the whole piece when left out."},
-			}, "id")},
-		}, "piece")}}
-}
+var organiseOps = []Op{{Tool: llm.Tool{Name: "organise_writing",
+	Description: "Organise longer writing: a piece made of parts in order, as a book of chapters, and the material that goes with it (guidelines, submission details, research) for the whole or for one part. Give the piece and its parts in reading order; parts it has already and you leave out stay, after them. One change, undone in one go. Fields the type lacks for this are added first. Make the parts with create_record before.",
+	Schema: obj(map[string]any{
+		"type":  map[string]any{"type": "string", "description": "The content type; note when left out."},
+		"piece": map[string]any{"type": "string", "description": "The id of the whole piece."},
+		"parts": map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Ids of its parts, in reading order."},
+		"material": map[string]any{"type": "array", "description": "Records that are material for it.", "items": obj(map[string]any{
+			"id":  map[string]any{"type": "string", "description": "The record's id."},
+			"for": map[string]any{"type": "string", "description": "The part it is for; the whole piece when left out."},
+		}, "id")},
+	}, "piece")}, Offered: func(s *Service, _ *llm.Tool) bool { return len(records.TypeNames(s.Store)) > 0 }}}
 
 func (s *Service) organiseWriting(typeName, pieceID string, parts []string, material []materialItem) toolResult {
 	if typeName == "" {

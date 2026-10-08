@@ -17,7 +17,7 @@ func (s *Service) run(call llm.ToolCall) toolResult {
 		return r
 	}
 	var r toolResult
-	if call.Name == changeFieldTool.Name {
+	if call.Name == changeFieldOp.Name {
 		r = s.reshapeCall(call.Args)
 	} else {
 		r = s.runTool(call)
