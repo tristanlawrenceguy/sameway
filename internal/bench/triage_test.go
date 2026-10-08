@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -72,46 +73,52 @@ func TestTriage(t *testing.T) {
 		t.Fatal(err)
 	}
 	svc := &chat.Service{Provider: p}
+	runs, _ := strconv.Atoi(os.Getenv("SAMEWAY_BENCH_RUNS"))
+	if runs < 1 {
+		runs = 1
+	}
 	var tasks, days, matters, whole int
 	var secs float64
-	for _, c := range triageCases {
-		began := time.Now()
-		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
-		sug, err := svc.Triage(ctx, c.text, triageSent, []string{"Ana", "Joe Brown"})
-		cancel()
-		secs += time.Since(began).Seconds()
-		if err != nil {
-			t.Logf("%-20s error: %v", c.name, err)
-			continue
+	for run := 0; run < runs; run++ {
+		for _, c := range triageCases {
+			began := time.Now()
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+			sug, err := svc.Triage(ctx, c.text, triageSent, []string{"Ana", "Joe Brown"})
+			cancel()
+			secs += time.Since(began).Seconds()
+			if err != nil {
+				t.Logf("%-20s error: %v", c.name, err)
+				continue
+			}
+			due := ""
+			if sug.Due != "" {
+				due = sug.Due[:10]
+			}
+			okTask := sug.Task == c.task
+			okDay := !c.task || due == c.due
+			okMatters := !c.task || sug.Important == c.important
+			var wrong []string
+			if okTask {
+				tasks++
+			} else {
+				wrong = append(wrong, fmt.Sprintf("task %v", sug.Task))
+			}
+			if okDay {
+				days++
+			} else {
+				wrong = append(wrong, fmt.Sprintf("due %q not %q", due, c.due))
+			}
+			if okMatters {
+				matters++
+			} else {
+				wrong = append(wrong, fmt.Sprintf("important %v", sug.Important))
+			}
+			if len(wrong) == 0 {
+				whole++
+			}
+			t.Logf("%-20s %-4s %-28q %s", c.name, map[bool]string{true: "ok", false: "FAIL"}[len(wrong) == 0], sug.Title, strings.Join(wrong, "; "))
 		}
-		due := ""
-		if sug.Due != "" {
-			due = sug.Due[:10]
-		}
-		okTask := sug.Task == c.task
-		okDay := !c.task || due == c.due
-		okMatters := !c.task || sug.Important == c.important
-		var wrong []string
-		if okTask {
-			tasks++
-		} else {
-			wrong = append(wrong, fmt.Sprintf("task %v", sug.Task))
-		}
-		if okDay {
-			days++
-		} else {
-			wrong = append(wrong, fmt.Sprintf("due %q not %q", due, c.due))
-		}
-		if okMatters {
-			matters++
-		} else {
-			wrong = append(wrong, fmt.Sprintf("important %v", sug.Important))
-		}
-		if len(wrong) == 0 {
-			whole++
-		}
-		t.Logf("%-20s %-4s %-28q %s", c.name, map[bool]string{true: "ok", false: "FAIL"}[len(wrong) == 0], sug.Title, strings.Join(wrong, "; "))
 	}
-	n := len(triageCases)
+	n := len(triageCases) * runs
 	t.Logf("TRIAGE %s: all right %d/%d; task or not %d/%d; day %d/%d; matters %d/%d; %.1fs each", model, whole, n, tasks, n, days, n, matters, n, secs/float64(n))
 }

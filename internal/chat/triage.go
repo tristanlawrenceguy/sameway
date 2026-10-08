@@ -83,12 +83,19 @@ func (s *Service) Triage(ctx context.Context, message string, sent time.Time, pe
 	// for "by Friday" on Monday the 12th, and 30 November for 31 January.
 	for _, v := range []any{out.When, out.Due} {
 		if d, ok := v.(string); ok && sug.Due == "" {
-			if at, day, ok := when.Parse(dayWords(d), sent); ok {
+			if at, day, ok := when.Parse(dayWords(d), sent); ok && (at.Format("2006-01-02") != sent.Format("2006-01-02") || saysToday(d)) {
 				sug.Due = when.Store(at, day) // a day it could not read is left out, not guessed
 			}
 		}
 	}
 	return sug, nil
+}
+
+// saysToday is whether words name the day they were written on: "now" and
+// "when you can" are no day, and a small model gave them as one.
+func saysToday(s string) bool {
+	s = strings.ToLower(s)
+	return strings.Contains(s, "today") || strings.Contains(s, "tonight") || strings.Contains(s, "this morning") || strings.Contains(s, "this afternoon") || strings.Contains(s, "this evening")
 }
 
 // dayWords is a day as a message says it, without what says how it
