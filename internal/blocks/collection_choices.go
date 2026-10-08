@@ -1,4 +1,4 @@
-package server
+package blocks
 
 import (
 	"maps"
@@ -8,7 +8,6 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
-	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 // A person's own choices on a collection: a few plain ways to narrow it
@@ -33,16 +32,6 @@ type collectionPlace struct {
 	// Change says the one looking may change the block, so choices made
 	// can be kept as its setup (collection_keep.go).
 	Change bool
-}
-
-// onCanvas is the place of a collection block on a canvas: a person
-// narrows and sorts it where it has room, on the canvas itself at full
-// size, not in a pane or a strip.
-func onCanvas(b *store.Record, convo *conversation) *collectionPlace {
-	if convo == nil || str(b.Fields["region"], "main") != "main" || str(b.Fields["size"], "full") != "full" {
-		return nil
-	}
-	return &collectionPlace{Path: convo.Path, Query: convo.Query, Change: !convo.LookOnly}
 }
 
 // choice is one control: the sort, or one field to narrow by.
@@ -112,7 +101,7 @@ func collectionChoices(t *schema.Type, where []string, order, by string) []choic
 		c := choice{param: yes.Name, label: yes.Display(), options: []option{{label: "All"}}}
 		for _, v := range []string{"false", "true"} {
 			w := yes.Name + "=" + v
-			c.options = append(c.options, option{value: v, label: capitalize(query.Words(t, []string{w})), where: []string{w}})
+			c.options = append(c.options, option{value: v, label: Capitalize(query.Words(t, []string{w})), where: []string{w}})
 		}
 		out = append(out, c)
 	}
@@ -150,7 +139,7 @@ func hasOption(opts []option, value string) bool {
 // words, the way back to how it was set up) and returns the where and
 // order to query with and whether anything was picked. Only values the
 // controls offer count, so the address cannot add a condition of its own.
-func applyChoices(out map[string]any, choices []choice, at *collectionPlace, block string, where []string, order string) ([]string, string, bool) {
+func applyChoices(out map[string]any, choices []choice, at *Page, block string, where []string, order string) ([]string, string, bool) {
 	prefix := "c-" + block + "-"
 	id, _ := out["id"].(string)
 	base := baseOrder(order)
@@ -235,7 +224,7 @@ func lowerFirst(s string) string {
 // the block's own page, and on a canvas when more than a few match and the
 // block was not set up as a short list. Never where there is no page to
 // come back to.
-func offered(props map[string]any, at *collectionPlace, block string, limit, matched int) bool {
+func offered(props map[string]any, at *Page, block string, limit, matched int) bool {
 	if at == nil || at.Path == "" || block == "" {
 		return false
 	}

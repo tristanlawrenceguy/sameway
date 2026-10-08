@@ -189,14 +189,8 @@ func (s *Server) canvasBlock(b *store.Record, convo *conversation) canvasBlock {
 		// own props, and is given every field of it (recordEditFields).
 		props, editing = s.resolveRecord(props)
 	}
-	if name == collectionComponent {
-		props = s.resolveCollectionAt(props, b.ID, onCanvas(b, convo))
-	}
-	if name == calendarComponent {
-		props = s.resolveCalendarAt(props, b.ID, onCanvas(b, convo))
-	}
 	if _, ok := blocks.Of(name); ok {
-		props = blocks.Resolve(s.app.Blocks, name, props, blocks.Place{Block: b.ID})
+		props = s.resolve(name, props, b.ID, onCanvas(b, convo))
 	}
 	label := blockName(name, props)
 	icon := name[:1]

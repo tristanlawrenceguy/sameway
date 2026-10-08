@@ -1,4 +1,4 @@
-package server
+package blocks
 
 import (
 	"net/url"
@@ -20,7 +20,7 @@ import (
 // calendarKinds narrows a calendar of everything to the kind picked in the
 // page's address and fills its filter: the kinds in the month with their
 // counts, All first. Each event carries its kind, as everyEvent sets it.
-func calendarKinds(out map[string]any, at *collectionPlace, block string) {
+func calendarKinds(out map[string]any, at *Page, block string) {
 	if at == nil || at.Path == "" || block == "" {
 		return
 	}
@@ -77,7 +77,7 @@ func calendarKinds(out map[string]any, at *collectionPlace, block string) {
 	}
 	opts := []any{map[string]any{"label": "All", "count": inMonth, "href": withKind(at, param, "") + anchor, "selected": picked == ""}}
 	for _, name := range names {
-		opts = append(opts, map[string]any{"label": capitalize(schema.Plural(name)), "count": counts[name], "href": withKind(at, param, name) + anchor, "selected": name == picked})
+		opts = append(opts, map[string]any{"label": Capitalize(schema.Plural(name)), "count": counts[name], "href": withKind(at, param, name) + anchor, "selected": name == picked})
 	}
 	label := "Kinds of event"
 	if c, _ := out["caption"].(string); c != "" {
@@ -88,7 +88,7 @@ func calendarKinds(out map[string]any, at *collectionPlace, block string) {
 
 // withKind is the page's address with this calendar's kind set, or taken
 // away for All, the rest as it is.
-func withKind(at *collectionPlace, param, kind string) string {
+func withKind(at *Page, param, kind string) string {
 	q := url.Values{}
 	for k, v := range at.Query {
 		q[k] = v

@@ -5,11 +5,8 @@ import (
 	"fmt"
 	"maps"
 	"net/http"
-	"net/url"
-	"slices"
-	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/query"
+	"github.com/tristanlawrenceguy/sameway/internal/blocks"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
@@ -28,56 +25,6 @@ import (
 // and the list only narrows, as the choices do; its order is replaced.
 // It is logged and undone like any other change to a block, and the page
 // comes back at Reset, which is now the kept setup.
-
-// keepForm is what Keep these choices sends: the picks in the address
-// that belong to this block, and the page to come back to.
-func keepForm(q url.Values, block, back string) map[string]any {
-	prefix := "c-" + block + "-"
-	fields := []any{}
-	for _, name := range slices.Sorted(maps.Keys(q)) {
-		if !strings.HasPrefix(name, prefix) {
-			continue
-		}
-		for _, v := range q[name] {
-			fields = append(fields, map[string]any{"name": name, "value": v})
-		}
-	}
-	fields = append(fields, map[string]any{"name": "from", "value": back})
-	return map[string]any{"action": "/canvas/" + block + "/keep", "fields": fields}
-}
-
-// setupWords is what a collection is set up to show, said after how many
-// match when no choice is made: "9 tasks, not done, due soonest first".
-// Once choices are kept this is where they are read back.
-func setupWords(t *schema.Type, where []string, order string, choices []choice) string {
-	var said []string
-	if w := query.Words(t, where); w != "" {
-		said = append(said, w)
-	}
-	if order != "" && order != baseOrder("") {
-		words := strings.TrimPrefix(orderWords(t, order), ", ")
-		if len(choices) > 0 {
-			for _, o := range choices[0].options {
-				if o.value == order && o.label != "As set up" {
-					words = lowerFirst(o.label)
-				}
-			}
-		}
-		said = append(said, words)
-	}
-	return strings.Join(said, ", ")
-}
-
-// countSaying is how many match, with what the list is set up to show.
-func countSaying(t *schema.Type, n int, setup string) string {
-	if n == 0 {
-		return ""
-	}
-	if setup == "" {
-		return schema.Count(n, t.Name)
-	}
-	return schema.Count(n, t.Name) + ", " + setup
-}
 
 // canvasKeep makes the choices a person made on a collection its setup.
 func (s *Server) canvasKeep(w http.ResponseWriter, r *http.Request) {
@@ -106,30 +53,22 @@ func (s *Server) canvasKeep(w http.ResponseWriter, r *http.Request) {
 		s.failed(w, r, "Not kept", errors.New(s.noType(typeName)), "/")
 		return
 	}
-	where := strs(props["where"])
-	order, _ := props["order"].(string)
-	by := ""
-	if f, err := boardField(t, props["by"]); err == nil && props["as"] == "board" {
-		by = f.Name
-	}
 	// The same choices the page offered, read the same way, so only what
 	// they offer can be kept.
-	out := map[string]any{"id": "collection-" + rec.ID}
-	kept, sorted, active := applyChoices(out, collectionChoices(t, where, order, by), &collectionPlace{Path: "/", Query: r.PostForm}, rec.ID, where, order)
+	where, order, said, active := blocks.Kept(t, props, rec.ID, r.PostForm)
 	if !active {
 		s.failed(w, r, "Nothing to keep", errors.New("no choice differs from how the list is set up: choose with Show and sort, Apply, then Keep these choices"), "/")
 		return
 	}
-	said, _ := out["choices"].(map[string]any)["showing"].(string)
-	list := make([]any, 0, len(kept))
-	for _, c := range kept {
+	list := make([]any, 0, len(where))
+	for _, c := range where {
 		list = append(list, c)
 	}
 	if len(list) > 0 {
 		props["where"] = list
 	}
-	if sorted != baseOrder(order) {
-		props["order"] = sorted
+	if order != "" {
+		props["order"] = order
 	}
 	clean, err := comp.Validate(props)
 	if err != nil {

@@ -51,6 +51,10 @@ var kinds = map[string]Kind{
 	ChartComponent:   {Resolve: resolveChart, Shows: chartShows},
 	TrackerComponent: {Resolve: resolveTracker, Shows: trackerShows},
 	ClockComponent:   {Resolve: resolveClock},
+	CollectionComponent: {Resolve: resolveCollection, Shows: func(w *Workspace, props, _ map[string]any) string {
+		return w.collectionShows(props)
+	}},
+	CalendarComponent: {Resolve: resolveCalendar, Shows: (*Workspace).calendarShows},
 }
 
 // Of is a component's kind, when it is a data-bound one.
