@@ -3,6 +3,8 @@ package chat
 import (
 	"strings"
 	"unicode"
+
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
 // An agent is a program outside Sameway that changes the workspace:
@@ -80,10 +82,7 @@ func AgentName(name string) string {
 		return r
 	}, name)
 	name = strings.Join(strings.Fields(name), " ")
-	if r := []rune(name); len(r) > 60 {
-		name = string(r[:59]) + "…"
-	}
-	return name
+	return trim.Clip(name, 60)
 }
 
 // ByAgent is this service acting for an agent: every tool it runs is

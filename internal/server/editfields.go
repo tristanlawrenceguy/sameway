@@ -81,7 +81,7 @@ func (s *Server) editField(f schema.Field, v any) string {
 		val = raw
 		if options == "" && f.Type == "ref" {
 			// A ref past the most a list can hold is looked up by name.
-			return fmt.Sprintf(`<span data-prop="%s"%s data-kind="lookup" data-to="%s" data-source="%s" data-title="%s"></span>`, name, lab, esc(f.To), esc(raw), esc(s.refTitle(f, raw)))
+			return fmt.Sprintf(`<span data-prop="%s"%s data-kind="lookup" data-to="%s" data-source="%s" data-title="%s"></span>`, name, lab, esc(f.To), esc(raw), esc(s.RefTitle(f, raw)))
 		}
 		if options == "" {
 			return ""

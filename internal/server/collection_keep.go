@@ -139,7 +139,7 @@ func (s *Server) canvasKeep(w http.ResponseWriter, r *http.Request) {
 		s.failed(w, r, "Not kept", err, "/")
 		return
 	}
-	label := str(clean["label"], plural(t.Name))
+	label := str(clean["label"], schema.Plural(t.Name))
 	undo := s.record(r, chat.Change{
 		Action: "updated", Component: name, ID: rec.ID, Detail: label + " kept as " + said, Before: rec.Fields,
 	})

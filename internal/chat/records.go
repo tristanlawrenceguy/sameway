@@ -245,7 +245,7 @@ func (s *Service) importRecords(typeName, fileID string, mapping map[string]any)
 		m = ingest.Guess(t, tb.Columns)
 	}
 	report := ingest.Import(s.Store, t, tb, m)
-	title := fmt.Sprintf("%d %s from %s", report.Made, plural(t.Name), name)
+	title := fmt.Sprintf("%d %s from %s", report.Made, schema.Plural(t.Name), name)
 	return toolResult{
 		text:   fmt.Sprintf("%s: %s. The person can see them at /t/%s.", t.Name, report.String(), t.Name),
 		change: &Change{Action: "imported", Component: t.Name, Detail: title, Href: "/t/" + t.Name, Before: Imported(t.Name, report.IDs)},

@@ -238,7 +238,7 @@ func (s *Server) showFields(t *schema.Type, rec *store.Record, names []string) s
 		}
 		v := display(*f, rec.Fields[name])
 		if f.Type == "ref" {
-			v = s.refTitle(*f, v)
+			v = s.RefTitle(*f, v)
 		}
 		if v != "" {
 			parts = append(parts, v)

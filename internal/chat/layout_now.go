@@ -45,7 +45,7 @@ func placedOf(blk *store.Record) placed {
 func (p placed) label() string {
 	for _, k := range []string{"label", "caption", "title", "text", "name"} {
 		if s, ok := p.props[k].(string); ok && strings.TrimSpace(s) != "" {
-			return `"` + trim.Title(firstLine(s, 32)) + `"`
+			return `"` + trim.Title(trim.Line(s, 32)) + `"`
 		}
 	}
 	return ""
@@ -70,14 +70,6 @@ func (p placed) called() string {
 		return l + " " + p.comp
 	}
 	return p.name()
-}
-
-func firstLine(s string, n int) string {
-	s = strings.TrimSpace(strings.SplitN(s, "\n", 2)[0])
-	if r := []rune(s); len(r) > n {
-		return string(r[:n-1]) + "…"
-	}
-	return s
 }
 
 // shows is the kind of record a block shows, "" when it shows none.

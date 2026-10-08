@@ -39,16 +39,6 @@ func has(r *store.Record, field, words string) bool {
 	return r != nil && strings.Contains(strings.ToLower(fmt.Sprint(r.Fields[field])), words)
 }
 
-// titled says whether any content record is titled or named with the words.
-func titled(a *app.App, words string) string {
-	for _, typ := range a.Store.Types().Names() {
-		if find(a, typ, "title", words) != nil || find(a, typ, "name", words) != nil {
-			return ""
-		}
-	}
-	return "nothing titled " + words
-}
-
 // block says whether a block of the component (any, when "") whose props
 // hold the words is on a canvas.
 func block(a *app.App, component, words string) string {
@@ -69,16 +59,6 @@ func jsonOf(v any) string {
 	}
 	b, _ := json.Marshal(v)
 	return string(b)
-}
-
-func count(v any) int {
-	switch l := v.(type) {
-	case []any:
-		return len(l)
-	case []string:
-		return len(l)
-	}
-	return 0
 }
 
 // next is the coming day with that weekday, as a person means it.

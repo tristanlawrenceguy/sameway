@@ -11,6 +11,8 @@ import (
 	"net/mail"
 	"strings"
 	"time"
+
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
 // mboxColumns are the columns a mailbox is read into: one row per message,
@@ -96,11 +98,7 @@ func firstText(msg *mail.Message) string {
 		}
 		lines = append(lines, l)
 	}
-	out := strings.TrimSpace(strings.Join(lines, "\n"))
-	if len(out) > 600 {
-		out = out[:600] + "…"
-	}
-	return out
+	return trim.Clip(strings.TrimSpace(strings.Join(lines, "\n")), 600)
 }
 
 func readPart(contentType, encoding string, r io.Reader) string {

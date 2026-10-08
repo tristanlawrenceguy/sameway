@@ -1,8 +1,5 @@
 /* Layout primitives and surfaces. */
 
-.sw-region { min-width: 0; }
-.sw-region__head { display: flex; align-items: center; justify-content: space-between; gap: var(--sw-space-4); margin-bottom: var(--sw-space-4); min-height: var(--sw-size-target); }
-.sw-region__head h2 { margin: 0; font-size: var(--sw-size-text-xl); }
 .sw-stack > * + * { margin-top: var(--sw-space-4); }
 .sw-stack--tight > * + * { margin-top: var(--sw-space-2); }
 .sw-cluster { display: flex; flex-wrap: wrap; gap: var(--sw-space-2); align-items: center; }

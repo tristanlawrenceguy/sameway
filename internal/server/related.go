@@ -79,7 +79,7 @@ func (s *Server) openLink(l relate.Link, page string, here []string, closable bo
 // words is a connection in a person's words: how many, of what, and what
 // makes them related, short enough to read in a line.
 func (s *Server) words(l relate.Link) string {
-	thing := plural(l.Type)
+	thing := schema.Plural(l.Type)
 	if l.Count == 1 {
 		thing = l.Type
 	}

@@ -9,6 +9,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/prose"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
 // Someone's own words are theirs to change. Asked for a change there is
@@ -105,9 +106,9 @@ func (s *Service) suggestEdits(typeName, id, field string, edits []suggested) to
 		case e.Passage == "":
 			problems = append(problems, fmt.Sprintf("edit %d has no passage", i+1))
 		case n == 0:
-			problems = append(problems, fmt.Sprintf("edit %d: %q is not in the %s; copy it exactly from get_record", i+1, clip(e.Passage, 60), field))
+			problems = append(problems, fmt.Sprintf("edit %d: %q is not in the %s; copy it exactly from get_record", i+1, trim.Clip(e.Passage, 60), field))
 		case n > 1:
-			problems = append(problems, fmt.Sprintf("edit %d: %q occurs %d times; give more of the words around it so it occurs once", i+1, clip(e.Passage, 60), n))
+			problems = append(problems, fmt.Sprintf("edit %d: %q occurs %d times; give more of the words around it so it occurs once", i+1, trim.Clip(e.Passage, 60), n))
 		case e.Passage == e.Replacement:
 			problems = append(problems, fmt.Sprintf("edit %d changes nothing", i+1))
 		default:

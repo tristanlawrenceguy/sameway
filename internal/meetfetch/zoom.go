@@ -10,6 +10,8 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
 // Where Zoom answers; tests stand their own in.
@@ -77,7 +79,7 @@ func (z *Zoom) Transcript(ctx context.Context, meeting string) ([]byte, error) {
 		return nil, ErrNotYet // no recording yet, or none was made
 	}
 	if status >= 300 {
-		return nil, fmt.Errorf("Zoom answered %d: %s", status, clip(string(body)))
+		return nil, fmt.Errorf("Zoom answered %d: %s", status, trim.Clip(string(body), 300))
 	}
 	var rec struct {
 		Files []struct {

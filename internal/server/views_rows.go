@@ -40,7 +40,7 @@ func (s *Server) rows(t *schema.Type, recs []*store.Record, now time.Time) strin
 	}
 
 	if dated == "" {
-		fmt.Fprintf(&b, `<ol class="sw-plain sw-rows" data-dot="%d" aria-label="%s">`, s.dotOf(t.Name), template.HTMLEscapeString(plural(t.Name)))
+		fmt.Fprintf(&b, `<ol class="sw-plain sw-rows" data-dot="%d" aria-label="%s">`, s.dotOf(t.Name), template.HTMLEscapeString(schema.Plural(t.Name)))
 		for _, rec := range recs {
 			b.WriteString(s.row(t, rec, 2, told[rec.ID], taskCounts))
 		}
@@ -62,7 +62,7 @@ func (s *Server) rows(t *schema.Type, recs []*store.Record, now time.Time) strin
 			span = fmt.Sprintf(` <span class="sw-group__range">%s to %s</span>`, now.Format("2 Jan"), now.AddDate(0, 0, 6).Format("2 Jan"))
 		}
 		fmt.Fprintf(&b, `<h2 class="sw-group">%s <span class="sw-group__count">%d<span class="sw-visually-hidden"> %s,</span></span>%s</h2><ol class="sw-plain sw-rows" data-dot="%d" aria-label="%s, %s">`,
-			name, len(list), oneOrMany(len(list), schema.Words(t.Name), schema.Words(plural(t.Name))), span, s.dotOf(t.Name), template.HTMLEscapeString(plural(t.Name)), strings.ToLower(name))
+			name, len(list), oneOrMany(len(list), schema.Words(t.Name), schema.Words(schema.Plural(t.Name))), span, s.dotOf(t.Name), template.HTMLEscapeString(schema.Plural(t.Name)), strings.ToLower(name))
 		for _, rec := range list {
 			b.WriteString(s.row(t, rec, 3, told[rec.ID], taskCounts))
 		}

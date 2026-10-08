@@ -35,11 +35,11 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	recs, err := query.Filter(s.app.Store, t, where, order, 0, time.Now())
 	if len(where) > 0 || order != "" {
 		if err != nil {
-			fmt.Fprintf(&b, `<p class="sw-muted">%s</p><p>%s</p>`, template.HTMLEscapeString(err.Error()), s.component("link", map[string]any{"href": "/t/" + t.Name, "label": "See all " + plural(t.Name), "look": "button"}))
-			s.page(w, r, plural(t.Name), template.HTML(b.String()), pageOptions{Status: http.StatusBadRequest})
+			fmt.Fprintf(&b, `<p class="sw-muted">%s</p><p>%s</p>`, template.HTMLEscapeString(err.Error()), s.component("link", map[string]any{"href": "/t/" + t.Name, "label": "See all " + schema.Plural(t.Name), "look": "button"}))
+			s.page(w, r, schema.Plural(t.Name), template.HTML(b.String()), pageOptions{Status: http.StatusBadRequest})
 			return
 		}
-		fmt.Fprintf(&b, `<p class="sw-muted">%d matching %s%s. %s</p>`, len(recs), template.HTMLEscapeString(query.Words(t, where)), template.HTMLEscapeString(orderWords(t, order)), s.component("link", map[string]any{"href": "/t/" + t.Name, "label": "See all " + plural(t.Name), "look": "button"}))
+		fmt.Fprintf(&b, `<p class="sw-muted">%d matching %s%s. %s</p>`, len(recs), template.HTMLEscapeString(query.Words(t, where)), template.HTMLEscapeString(orderWords(t, order)), s.component("link", map[string]any{"href": "/t/" + t.Name, "label": "See all " + schema.Plural(t.Name), "look": "button"}))
 	}
 	if err != nil {
 		s.fail(w, err)
@@ -57,13 +57,13 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 		// Some exist and none matched: not the first-use words, which would
 		// say there are none, but what was looked for and the way back.
 		b.WriteString(string(s.component("empty", map[string]any{
-			"title": "No matching " + plural(t.Name), "message": "Nothing is " + query.Words(t, where) + ". Try fewer conditions, or",
-			"action": map[string]any{"href": "/t/" + t.Name, "label": "see all " + plural(t.Name)},
+			"title": "No matching " + schema.Plural(t.Name), "message": "Nothing is " + query.Words(t, where) + ". Try fewer conditions, or",
+			"action": map[string]any{"href": "/t/" + t.Name, "label": "see all " + schema.Plural(t.Name)},
 		})))
 	} else if len(recs) == 0 {
 		prompt := "Create a " + schema.Words(t.Name) + "."
 		b.WriteString(string(s.component("empty", map[string]any{
-			"title": "No " + plural(t.Name) + " yet", "message": "Add one yourself, or", "action": map[string]any{"href": "/chat?prompt=" + url.PathEscape(prompt), "label": "ask the assistant"},
+			"title": "No " + schema.Plural(t.Name) + " yet", "message": "Add one yourself, or", "action": map[string]any{"href": "/chat?prompt=" + url.PathEscape(prompt), "label": "ask the assistant"},
 		})))
 	} else if t.Name == HabitType && len(where) == 0 && order == "" {
 		// Habits are where each stands this period, and a press to log:
@@ -76,13 +76,13 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if len(archived) > 0 {
-			b.WriteString(`<h2 class="sw-group">Archived <span class="sw-group__count">` + fmt.Sprint(len(archived)) + `<span class="sw-visually-hidden"> ` + oneOrMany(len(archived), schema.Words(t.Name), schema.Words(plural(t.Name))) + `</span></span></h2>`)
+			b.WriteString(`<h2 class="sw-group">Archived <span class="sw-group__count">` + fmt.Sprint(len(archived)) + `<span class="sw-visually-hidden"> ` + oneOrMany(len(archived), schema.Words(t.Name), schema.Words(schema.Plural(t.Name))) + `</span></span></h2>`)
 			b.WriteString(s.rows(t, archived, time.Now()))
 		}
 	} else {
 		pg = pageOf(r, len(recs), listPageSize)
 		b.WriteString(s.rows(t, recs[pg.lo:pg.hi], time.Now()))
-		b.WriteString(string(s.pageNav(r, pg, "Pages of "+plural(t.Name))))
+		b.WriteString(string(s.pageNav(r, pg, "Pages of "+schema.Plural(t.Name))))
 	}
 	// A new one by hand, and records from a file a person already has,
 	// each said once, quietly, below the list. The Add button label —
@@ -101,7 +101,7 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	if chat.VisitorOf(r.Context()).Access != chat.Public {
 		b.WriteString(string(s.recentActivityAbout(5, "/t/"+t.Name, func(target, _ string) bool { return target == t.Name })))
 	}
-	name := capitalize(plural(t.Name))
+	name := capitalize(schema.Plural(t.Name))
 	s.page(w, r, name, template.HTML(b.String()), pageOptions{JSONURL: "/api/" + t.Name, Said: pg.title(name), Lede: howMany(t, recs), Dot: s.dotOf(t.Name)})
 }
 
@@ -229,7 +229,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	// title, which has one line, is shortened.
 	s.page(w, r, s.title(t, rec), template.HTML(b.String()), pageOptions{
 		Said:         trim.Title(s.title(t, rec)),
-		Kicker:       s.crumbs("/t/"+t.Name, capitalize(plural(t.Name)), "", s.dotOf(t.Name)),
+		Kicker:       s.crumbs("/t/"+t.Name, capitalize(schema.Plural(t.Name)), "", s.dotOf(t.Name)),
 		Lede:         s.lede(r, t, rec),
 		JSONURL:      "/api/" + t.Name + "/" + rec.ID,
 		ExtraScripts: detailPageExtraScripts,

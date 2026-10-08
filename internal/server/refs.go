@@ -18,9 +18,10 @@ import (
 // has, in both directions and beyond refs, is worked out in
 // internal/relate and shown by related.go as a line of counts.
 
-// refTitle is what a ref field shows: the title of the record it points
-// at, or a word for one that has gone.
-func (s *Server) refTitle(f schema.Field, id string) string {
+// RefTitle is what a ref field shows: the title of the record it points
+// at, or a word for one that has gone. Exports use it too, the command
+// line's among them.
+func (s *Server) RefTitle(f schema.Field, id string) string {
 	if id == "" {
 		return ""
 	}
@@ -39,7 +40,7 @@ func (s *Server) refTitle(f schema.Field, id string) string {
 // title as a link to its page, with the id and the other choices kept for
 // the inline editor.
 func (s *Server) refItem(f schema.Field, id string) map[string]any {
-	item := map[string]any{"label": fieldLabel(f), "value": s.refTitle(f, id), "prop": f.Name, "source": id}
+	item := map[string]any{"label": fieldLabel(f), "value": s.RefTitle(f, id), "prop": f.Name, "source": id}
 	if list := s.choiceList(f, id); len(list) > 0 {
 		item["options"] = list
 	}
@@ -106,7 +107,7 @@ func (s *Server) choiceList(f schema.Field, current string) []any {
 			found = found || rec.ID == current
 		}
 		if current != "" && !found {
-			add(current, s.refTitle(f, current))
+			add(current, s.RefTitle(f, current))
 		}
 	}
 	return list
@@ -119,7 +120,7 @@ func (s *Server) refNames(f schema.Field, v any) string {
 	names := make([]string, 0, len(items))
 	for _, it := range items {
 		if id, _ := it.(string); id != "" {
-			names = append(names, s.refTitle(f, id))
+			names = append(names, s.RefTitle(f, id))
 		}
 	}
 	return strings.Join(names, ", ")

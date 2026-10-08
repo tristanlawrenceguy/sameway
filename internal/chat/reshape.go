@@ -8,6 +8,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
 // A content type changes after it is made, by asking: a pick-list gets a
@@ -153,7 +154,7 @@ func (s *Service) Instead(id string) error {
 	}
 	s.Store.Update(ProposalType, id, map[string]any{"state": "accepted"})
 	label, _ := rec.Fields["instead"].(string)
-	Record(s.Store, "human", Change{Action: "chose", Detail: truncate(label, 80)})
+	Record(s.Store, "human", Change{Action: "chose", Detail: trim.Line(label, 80)})
 	if result.change != nil {
 		Record(s.Store, "assistant", *result.change)
 	}

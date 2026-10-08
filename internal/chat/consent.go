@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
 // What the assistant does is either reversible, and then it just does it
@@ -171,7 +172,7 @@ func (s *Service) askFirst(call string, id, key, value string) (toolResult, bool
 			topic, _ := rec.Fields["topic"].(string)
 			payload, _ := rec.Fields["payload"].(string)
 			q = question{"Send a signal to one of your devices?",
-				fmt.Sprintf("%s It tells %s: %q. The device may act on it straight away.", press, topic, clip(payload, 120)),
+				fmt.Sprintf("%s It tells %s: %q. The device may act on it straight away.", press, topic, trim.Clip(payload, 120)),
 				"Send it", "Don't send"}
 		default:
 			url, _ := rec.Fields["url"].(string)
@@ -179,7 +180,7 @@ func (s *Service) askFirst(call string, id, key, value string) (toolResult, bool
 			body, _ := rec.Fields["body"].(string)
 			what := "It contacts " + url + "."
 			if body != "" && method != http.MethodGet {
-				what = fmt.Sprintf("It sends this to %s: %q.", url, clip(body, 160))
+				what = fmt.Sprintf("It sends this to %s: %q.", url, trim.Clip(body, 160))
 			}
 			q = question{"Send something from Sameway to " + host(url) + "?",
 				press + " " + what + " Once sent, it can't be unsent.",
@@ -257,13 +258,6 @@ func (s *Service) runAgreed(call llm.ToolCall) toolResult {
 		return s.reshapeCall(call.Args)
 	}
 	return s.runTool(call)
-}
-
-func clip(s string, n int) string {
-	if r := []rune(s); len(r) > n {
-		return string(r[:n-1]) + "…"
-	}
-	return s
 }
 
 // quoted is a name as a person reads it quoted.

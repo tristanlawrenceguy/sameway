@@ -6,6 +6,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
 // What the assistant is doing, in words a person can watch go by: the
@@ -54,11 +55,11 @@ func thing(component string, props map[string]any) string {
 		return schema.Words(typeName)
 	}
 	if typeName != "" {
-		return noun + " of " + plural(typeName)
+		return noun + " of " + schema.Plural(typeName)
 	}
 	for _, k := range []string{"title", "label", "heading", "name"} {
 		if s, _ := props[k].(string); strings.TrimSpace(s) != "" {
-			return noun + " called " + clip(strings.TrimSpace(s), 40)
+			return noun + " called " + trim.Clip(strings.TrimSpace(s), 40)
 		}
 	}
 	return noun
@@ -71,7 +72,7 @@ func describe(call llm.ToolCall) string {
 	a := an
 	title := ""
 	if s, _ := args.Fields["title"].(string); strings.TrimSpace(s) != "" {
-		title = " called " + clip(strings.TrimSpace(s), 40)
+		title = " called " + trim.Clip(strings.TrimSpace(s), 40)
 	}
 	switch call.Name {
 	case "add_component":
@@ -83,7 +84,7 @@ func describe(call llm.ToolCall) string {
 	case "create_record":
 		return "Adding" + or(a(schema.Words(args.Type)), " a record") + title
 	case "import_records":
-		return "Importing " + or(plural(args.Type), "records") + " from a file"
+		return "Importing " + or(schema.Plural(args.Type), "records") + " from a file"
 	case "organise_writing":
 		return "Organising the writing"
 	case "suggest_edits":
@@ -100,14 +101,14 @@ func describe(call llm.ToolCall) string {
 		if args.Type == "" {
 			return "Looking up your records"
 		}
-		return "Looking up your " + plural(args.Type)
+		return "Looking up your " + schema.Plural(args.Type)
 	case "get_record":
 		return "Reading" + or(a(schema.Words(args.Type)), " a record")
 	case "look_at_page":
 		return "Looking at the page"
 	case "search":
 		if q := strings.TrimSpace(args.Query); q != "" {
-			return "Searching for " + clip(q, 40)
+			return "Searching for " + trim.Clip(q, 40)
 		}
 		return "Searching"
 	case "propose_change":
@@ -206,14 +207,10 @@ func or(s, fallback string) string {
 	return s
 }
 
-func plural(s string) string {
-	return schema.Plural(s)
-}
-
 // called is " called Weekend", or "" for no name.
 func called(name string) string {
 	if strings.TrimSpace(name) == "" {
 		return ""
 	}
-	return " called " + clip(strings.TrimSpace(name), 40)
+	return " called " + trim.Clip(strings.TrimSpace(name), 40)
 }

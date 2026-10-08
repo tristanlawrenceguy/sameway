@@ -80,9 +80,9 @@ func fieldsOfKind(t *schema.Type, kinds ...string) []string {
 // many is a count and what of: 1 task, 3 tasks, 0 tasks.
 func many(n int, typeName string) string {
 	if n == 1 {
-		return "1 " + strings.ReplaceAll(typeName, "_", " ")
+		return "1 " + schema.Words(typeName)
 	}
-	return fmt.Sprintf("%d %s", n, plural(typeName))
+	return fmt.Sprintf("%d %s", n, schema.Plural(typeName))
 }
 
 // collectionShows is a list in a few words: how many, which, in what
@@ -160,7 +160,7 @@ func (s *Server) calendarShows(props, out map[string]any) string {
 	if kinds := strs(props["types"]); len(kinds) > 0 && !slices.Contains(kinds, "all") {
 		var names []string
 		for _, k := range kinds {
-			names = append(names, plural(k))
+			names = append(names, schema.Plural(k))
 		}
 		return andList(names) + " with a date, " + fmt.Sprint(len(events)) + " in all"
 	}

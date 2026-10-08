@@ -132,15 +132,6 @@ func (s *Server) standing(rec *store.Record, now time.Time) map[string]any {
 	return item
 }
 
-func firstOf(values ...string) string {
-	for _, v := range values {
-		if strings.TrimSpace(v) != "" {
-			return v
-		}
-	}
-	return ""
-}
-
 // resolveTracker fills a tracker block from the habits: those named in
 // habits, by name or id, in that order, or else all that are not
 // archived; of them, those with one of the tags asked for.

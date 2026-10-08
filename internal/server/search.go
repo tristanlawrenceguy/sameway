@@ -35,9 +35,9 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 	lead := ""
 	label, hint, in := "Search", "Any words in a note, an event, an action, or a block on the canvas.", ""
 	if only != "" {
-		label, hint, in = "Search "+plural(only), "Any words in your "+plural(only)+".", " in "+plural(only)
+		label, hint, in = "Search "+schema.Plural(only), "Any words in your "+schema.Plural(only)+".", " in "+schema.Plural(only)
 		if q == "" {
-			lead = fmt.Sprintf(`<p class="sw-search__scope">Searching %s only. %s</p>`, template.HTMLEscapeString(plural(only)), widen(q))
+			lead = fmt.Sprintf(`<p class="sw-search__scope">Searching %s only. %s</p>`, template.HTMLEscapeString(schema.Plural(only)), widen(q))
 		}
 	}
 	title, said := label, label
@@ -59,7 +59,7 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 			// The scope in words, and the way back to everything first:
 			// a narrowed search nobody noticed looks like a missing thing.
 			lead = fmt.Sprintf(`<p class="sw-search__scope">Showing %s only, %d of %d found. %s</p>`,
-				template.HTMLEscapeString(plural(only)), len(hits), len(all), widen(q))
+				template.HTMLEscapeString(schema.Plural(only)), len(hits), len(all), widen(q))
 		}
 		if some && len(all) > 0 {
 			b.WriteString(`<p class="sw-muted">` + search.SomeWords + `</p>`)
@@ -69,7 +69,7 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 		case len(all) == 0:
 			where := ""
 			if only != "" {
-				where = ", in " + plural(only) + " or anywhere else"
+				where = ", in " + schema.Plural(only) + " or anywhere else"
 			}
 			b.WriteString(string(s.component("empty", map[string]any{
 				"title": "No results", "message": fmt.Sprintf("Nothing matches “%s”%s. Try different words, or", q, where),
@@ -77,7 +77,7 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 			})))
 		case len(hits) == 0:
 			b.WriteString(string(s.component("empty", map[string]any{
-				"title": "No " + plural(only) + " match", "message": fmt.Sprintf("Nothing in %s matches “%s”, but %s. You can", plural(only), q, elsewhere(len(all))),
+				"title": "No " + schema.Plural(only) + " match", "message": fmt.Sprintf("Nothing in %s matches “%s”, but %s. You can", schema.Plural(only), q, elsewhere(len(all))),
 				"action": map[string]any{"href": searchURL(q, ""), "label": "search everything"},
 			})))
 		default:

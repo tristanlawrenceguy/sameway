@@ -34,7 +34,6 @@
   animation: sw-glow var(--sw-motion-glow) var(--sw-motion-ease-out) 1 both;
   animation-delay: 140ms;
 }
-.sw-enter { animation: sw-enter var(--sw-motion-slow) var(--sw-motion-ease) both; }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }

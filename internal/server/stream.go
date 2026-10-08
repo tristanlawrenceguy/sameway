@@ -11,6 +11,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
 // A turn as it happens. The composer is a form and posts to /chat, where
@@ -113,10 +114,7 @@ func (s *Server) tellDone(t *liveTurn, rec *store.Record, err error, back string
 	} else if err != nil {
 		title, text = "The assistant could not finish", err.Error()
 	}
-	if r := []rune(strings.Join(strings.Fields(text), " ")); len(r) > 140 {
-		text = string(r[:139]) + "…"
-	}
-	go s.notify(title, text, s.linkTo(path))
+	go s.notify(title, trim.Flat(text, 140), s.linkTo(path))
 }
 
 // follow writes a turn's events as server-sent events, those so far and

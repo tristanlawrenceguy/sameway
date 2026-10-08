@@ -10,6 +10,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
@@ -27,7 +28,7 @@ func (s *Server) status(msgs []*store.Record) template.HTML {
 			// looks: the reason is read out with it, as a reply's words are.
 			props["state"], props["message"] = "error", "The last request failed."
 			if words, _ := last.Fields["content"].(string); strings.TrimSpace(words) != "" {
-				props["said"] = clipWords(chat.SanitizeError(words), 200)
+				props["said"] = trim.Flat(chat.SanitizeError(words), 200)
 			}
 		case "assistant":
 			n := 0
@@ -48,7 +49,7 @@ func (s *Server) status(msgs []*store.Record) template.HTML {
 			// Its links are said as their names, as the reply shows them,
 			// not spelled out as brackets and addresses.
 			if words, _ := last.Fields["content"].(string); strings.TrimSpace(words) != "" {
-				props["said"] = clipWords(render.LinkWords(words, s.linkTitle), 200)
+				props["said"] = trim.Flat(render.LinkWords(words, s.linkTitle), 200)
 			}
 		}
 	}
@@ -68,15 +69,6 @@ func chatStarts(from string) string {
 	}
 	b.WriteString(`</ul>`)
 	return b.String()
-}
-
-// clipWords is text on one line, cut at about n characters.
-func clipWords(s string, n int) string {
-	s = strings.Join(strings.Fields(s), " ")
-	if r := []rune(s); len(r) > n {
-		return string(r[:n-1]) + "…"
-	}
-	return s
 }
 
 // messageTime is when a message was sent, as its chat shows it: the time

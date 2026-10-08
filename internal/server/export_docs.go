@@ -139,7 +139,7 @@ func (s *Server) recordFile(r *http.Request, t *schema.Type, rec *store.Record, 
 	}
 	f, _ := export.ByExt(t, ext)
 	var buf bytes.Buffer
-	err := export.Write(&buf, f, t, []*store.Record{rec}, s.exportTitles)
+	err := export.Write(&buf, f, t, []*store.Record{rec}, s.RefTitle)
 	return buf.Bytes(), f.Type, err
 }
 
@@ -166,7 +166,7 @@ func (s *Server) recordMarkdown(t *schema.Type, rec *store.Record, heading bool)
 			text, _ = rec.Fields[f.Name].(string)
 			continue
 		}
-		if v := export.Value(f, rec.Fields[f.Name], s.exportTitles); v != "" && v != "no" {
+		if v := export.Value(f, rec.Fields[f.Name], s.RefTitle); v != "" && v != "no" {
 			fmt.Fprintf(&b, "- **%s:** %s\n", fieldLabel(f), v)
 		}
 	}
@@ -238,7 +238,7 @@ func (s *Server) exportEverything(w http.ResponseWriter, r *http.Request) {
 	name := s.app.Workspace.Config.Name
 	w.Header().Set("Content-Type", "application/zip")
 	attachment(w, name+" "+time.Now().Format("2006-01-02")+".zip")
-	if err := export.Everything(w, name, s.app.Store, s.app.Types, s.app.Mirror, s.app.Workspace.FilesDir(), s.exportTitles); err != nil {
+	if err := export.Everything(w, name, s.app.Store, s.app.Types, s.app.Mirror, s.app.Workspace.FilesDir(), s.RefTitle); err != nil {
 		log.Printf("export: %v", err)
 	}
 }

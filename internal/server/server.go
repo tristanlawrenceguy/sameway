@@ -89,7 +89,7 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 			continue
 		}
 		href := "/t/" + t.Name
-		p.Nav = append(p.Nav, render.NavItem{HTML: s.navLink(href, plural(t.Name), strings.HasPrefix(r.URL.Path, href)), Dot: s.dotOf(t.Name)})
+		p.Nav = append(p.Nav, render.NavItem{HTML: s.navLink(href, schema.Plural(t.Name), strings.HasPrefix(r.URL.Path, href)), Dot: s.dotOf(t.Name)})
 	}
 	more := []struct{ href, label string }{{"/search", "Search"}, {"/chat", "Chat"}, {"/activity", "Activity"}, {"/workspaces", "Workspaces"}, {"/help", "Help"}}
 	if s.app.Workspace.Config.UI.Developer == "shown" {
@@ -161,10 +161,6 @@ func (s *Server) fail(w http.ResponseWriter, err error) {
 		status = http.StatusNotFound
 	}
 	http.Error(w, err.Error(), status)
-}
-
-func plural(name string) string {
-	return schema.Plural(name)
 }
 
 // listed says whether a list belongs in the sidebar: one with something in

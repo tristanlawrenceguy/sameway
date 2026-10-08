@@ -8,6 +8,8 @@ import (
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
 // OpenAI talks to any server implementing the OpenAI chat completions API.
@@ -77,9 +79,7 @@ func (o *OpenAI) Complete(ctx context.Context, req Request) (*Response, error) {
 		if parsed.Error != nil {
 			msg = parsed.Error.Message
 		}
-		if len(msg) > 400 {
-			msg = msg[:400] + "…"
-		}
+		msg = trim.Clip(msg, 400)
 		return nil, fmt.Errorf("model server returned %s: %s", resp.Status, msg)
 	}
 	if len(parsed.Choices) == 0 {

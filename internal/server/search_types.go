@@ -87,7 +87,7 @@ func (s *Server) kinds(q, only string, all []search.Hit) template.HTML {
 	}
 	opts := []any{map[string]any{"href": searchURL(q, ""), "label": "All", "count": len(all), "selected": only == ""}}
 	for _, name := range names {
-		opts = append(opts, map[string]any{"href": searchURL(q, name), "label": capitalize(plural(name)), "count": counts[name], "selected": name == only})
+		opts = append(opts, map[string]any{"href": searchURL(q, name), "label": capitalize(schema.Plural(name)), "count": counts[name], "selected": name == only})
 	}
 	return s.component("filters", map[string]any{"shape": "links", "label": "Kinds of result", "choices": []any{map[string]any{"label": "Kind", "options": opts}}})
 }

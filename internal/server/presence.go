@@ -11,6 +11,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/peers"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
 
 // Who else is in the workspace just now, and where, so two people do not
@@ -165,7 +166,7 @@ func (s *Server) placeName(path string) string {
 		}
 		parts := strings.Split(strings.TrimPrefix(path, "/t/"), "/")
 		if len(parts) == 1 && parts[0] != "" {
-			p := plural(parts[0])
+			p := schema.Plural(parts[0])
 			return strings.ToUpper(p[:1]) + p[1:]
 		}
 	}
