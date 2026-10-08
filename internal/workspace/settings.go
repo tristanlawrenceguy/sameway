@@ -53,6 +53,7 @@ var Settings = []Setting{
 	{"update.mode", "enum", update.Modes, "how a new version of sameway arrives: auto installs a release on its own and says so in the activity log, manual only says one is there and waits to be asked (either way it runs from the next start)"},
 	{"notify.desktop", "enum", []string{"on", "off"}, "a notification on this machine when a reminder rings, whether or not a page is open"},
 	{"notify.phone", "string", nil, "an ntfy topic address each reminder is also sent to, for a phone with the free ntfy app; Send reminders to my phone, on Help, sets one up"},
+	{"review.on", "enum", []string{"", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"}, "the weekday the weekly review says it is ready, in the evening; empty says nothing"},
 	{"brief.at", "string", nil, "when the morning brief is sent each day, as hours and minutes such as 07:30: what is on today, as a notification leading to Today; empty sends none"},
 	{"backup.folder", "string", nil, "a cloud folder (OneDrive, Dropbox, iCloud Drive, Google Drive) a whole copy of the workspace goes to once a day, the last seven kept; set from Workspaces"},
 	{"notify.command", "string", nil, "a command run when a reminder rings, with {title}, {text} and {url} in its arguments: a push service such as ntfy, an email, a text"},
@@ -159,7 +160,7 @@ func (w *Workspace) Set(key, value string) error {
 // reminder, no programs allowed, no broker. Undoing a change to one of
 // them puts it back to nothing.
 var canBeEmpty = map[string]bool{
-	"notify.command": true, "notify.phone": true, "brief.at": true, "backup.folder": true, "actions.allow": true, "chat.system_prompt": true, "ui.needs": true, "ui.language": true,
+	"notify.command": true, "notify.phone": true, "brief.at": true, "review.on": true, "backup.folder": true, "actions.allow": true, "chat.system_prompt": true, "ui.needs": true, "ui.language": true,
 	"mqtt.broker": true, "mqtt.client_id": true, "llm.base_url": true, "tailnet.name": true, "tailnet.peers": true, "publish.tabs": true, "publish.types": true,
 }
 
