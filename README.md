@@ -298,7 +298,8 @@ make pages     # drive a running server as a person and as an agent (Node, dev o
 Tests are organised by the way a component gets used: rendered from props,
 read by an agent through its manifest, fed hostile input, used through the
 pages, the API, the CLI, the chat tools, and a real keyboard in a real
-browser. The table in [AGENTS.md](AGENTS.md) maps each to its test file.
+browser. The tables in [docs/tests/](docs/tests/), linked from
+[AGENTS.md](AGENTS.md), map each to its test file.
 
 ## If it is useful
 
