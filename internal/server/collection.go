@@ -166,26 +166,6 @@ func textOf(t *schema.Type, rec *store.Record) string {
 	return ""
 }
 
-// strs reads a list of strings out of props, whatever JSON made of it.
-func strs(v any) []string {
-	var out []string
-	switch x := v.(type) {
-	case []string:
-		return x
-	case []any:
-		for _, it := range x {
-			if s, ok := it.(string); ok && strings.TrimSpace(s) != "" {
-				out = append(out, s)
-			}
-		}
-	case string:
-		if strings.TrimSpace(x) != "" {
-			out = append(out, x)
-		}
-	}
-	return out
-}
-
 // orderWords says an order in words for a list page's line.
 func orderWords(t *schema.Type, order string) string {
 	name := t.FieldWords

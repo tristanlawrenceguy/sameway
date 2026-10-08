@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/blocks"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
@@ -30,7 +31,7 @@ func (s *Server) meaningProblem(component string, props map[string]any) string {
 		return ""
 	}
 	by, _ := props["by"].(string)
-	if period, _ := props["period"].(string); period != "" || !byDate(t, by) {
+	if period, _ := props["period"].(string); period != "" || !blocks.ByDate(t, by) {
 		return ""
 	}
 	out := fmt.Sprintf("grouping by a date needs a period: day, week or month (period: day draws one bar a day of %s, week one a week, month one a month)", by)
@@ -39,54 +40,10 @@ func (s *Server) meaningProblem(component string, props map[string]any) string {
 		withDay[k] = v
 	}
 	withDay["period"] = "day"
-	if first, last, n := dateSpan(s.resolveChart(withDay)); n > 0 {
+	if first, last, n := blocks.DateSpan(blocks.Resolve(s.app.Blocks, chartComponent, withDay, blocks.Place{})); n > 0 {
 		out += fmt.Sprintf("; the %s it counts fall on %d days, %s to %s", schema.Plural(t.Name), n, first, last)
 	}
 	return out
-}
-
-// byDate is whether a chart groups by a date: created_at, updated_at or
-// a date field.
-func byDate(t *schema.Type, by string) bool {
-	if by == "created_at" || by == "updated_at" {
-		return true
-	}
-	f, ok := t.Field(by)
-	return ok && f.Type == "datetime"
-}
-
-// dateSpan is the first and last group of a chart by a date, and how
-// many groups there are.
-func dateSpan(out map[string]any) (first, last string, n int) {
-	series, _ := out["series"].([]any)
-	if len(series) == 0 {
-		return "", "", 0
-	}
-	label := func(v any) string {
-		m, _ := v.(map[string]any)
-		l, _ := m["label"].(string)
-		return l
-	}
-	return label(series[0]), label(series[len(series)-1]), len(series)
-}
-
-// nothingYet is a block that shows nothing, said so a model cannot read
-// it as done: which records it waits for (has: a field they need set), and why it is not refused.
-// Records may be added later (a list of books to read, before the first
-// book), so it is written; if some should show now, the conditions are
-// wrong, and the writer is the one to know.
-func nothingYet(typeName string, where []string, has string) string {
-	one := schema.Words(typeName)
-	out := "nothing yet: there are no " + schema.Plural(typeName)
-	switch {
-	case has != "" && len(where) > 0:
-		out = "nothing yet: no " + one + " has a " + has + " and matches " + strings.Join(where, " and ")
-	case has != "":
-		out = "nothing yet: no " + one + " has a " + has
-	case len(where) > 0:
-		out = "nothing yet: no " + one + " matches " + strings.Join(where, " and ")
-	}
-	return out + " (it fills in as records are added; if some should show now, change the conditions)"
 }
 
 // everyKind is a calendar of everything in a few words: how many events,

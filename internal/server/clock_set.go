@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/blocks"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
@@ -55,7 +56,7 @@ func (s *Server) clockSet(w http.ResponseWriter, r *http.Request) {
 	}
 	// A reminder set from a record's page is about it, and named for it.
 	if about := r.PostForm.Get("about"); about != "" {
-		if _, _, ok := s.aboutOf(about); ok {
+		if _, _, ok := blocks.AboutOf(s.app.Store, about); ok {
 			fields["about"] = about
 			if title := strings.TrimSpace(r.PostForm.Get("title")); title != "" {
 				fields["title"] = title
@@ -116,7 +117,7 @@ func (s *Server) setReminder(w http.ResponseWriter, r *http.Request, fields map[
 		o.Of = o.Title
 	case saved.Fields["state"] == "set" && action == "done":
 		// One that repeats is set for its next time, not done with.
-		o.Text = "It " + strings.ToLower(repeatsOf(saved)) + ", so it rings again " + ringsWhen(ringsAt(saved), time.Now()) + "."
+		o.Text = "It " + strings.ToLower(blocks.RepeatsOf(saved)) + ", so it rings again " + ringsWhen(ringsAt(saved), time.Now()) + "."
 		if rec.Fields["state"] == "set" {
 			o.Title = title + ": this time skipped"
 		}
@@ -135,29 +136,11 @@ func backFrom(r *http.Request) string {
 	return "/"
 }
 
-// dayOf is the day of a moment in the words the clock uses beside its
-// time: nothing for today, Tomorrow, a weekday within the week, a date
-// after that.
-func dayOf(at, now time.Time) string {
-	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-	at = at.In(now.Location())
-	d := time.Date(at.Year(), at.Month(), at.Day(), 0, 0, 0, 0, now.Location())
-	switch diff := int(d.Sub(today).Hours() / 24); {
-	case diff == 0:
-		return ""
-	case diff == 1:
-		return "Tomorrow"
-	case diff > 1 && diff < 7:
-		return d.Format("Monday")
-	}
-	return d.Format("2 Jan")
-}
-
 // ringsWhen is when a reminder rings, as it ends a sentence: at 14:30,
 // tomorrow at 07:00, on Monday at 09:00.
 func ringsWhen(at, now time.Time) string {
 	clock := "at " + when.Clock(at.In(now.Location()))
-	switch day := dayOf(at, now); day {
+	switch day := blocks.DayOf(at, now); day {
 	case "":
 		return clock
 	case "Tomorrow":
@@ -165,15 +148,6 @@ func ringsWhen(at, now time.Time) string {
 	default:
 		return "on " + day + " " + clock
 	}
-}
-
-// repeatsOf is how often a reminder rings again, as the clock says it
-// under its name: Repeats every Tuesday. Nothing for one that rings once.
-func repeatsOf(rec *store.Record) string {
-	if rule, _ := rec.Fields["repeat"].(string); rule != "" {
-		return "Repeats " + when.RepeatText(rule)
-	}
-	return ""
 }
 
 // ringsAt is when a reminder is set to ring.

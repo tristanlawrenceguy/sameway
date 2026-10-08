@@ -1,8 +1,11 @@
-package server
+package blocks
 
 import (
+	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/track"
 )
 
@@ -61,4 +64,23 @@ func periodWords(h track.Habit, p track.Period, going bool, sum track.Summary) s
 		return "still going, " + track.Progress(h, sum) + " so far"
 	}
 	return ""
+}
+
+// trackerShows is a tracker in a few words: how many habits, and which.
+func trackerShows(_ *Workspace, props, out map[string]any) string {
+	habits, _ := out["habits"].([]any)
+	shows := schema.Count(len(habits), records.HabitType)
+	if tags := Strs(props["tags"]); len(tags) > 0 {
+		shows += " tagged " + strings.Join(tags, " or ")
+	}
+	if len(Strs(props["habits"])) > 0 {
+		var names []string
+		for _, h := range habits {
+			if m, ok := h.(map[string]any); ok {
+				names = append(names, str(m["name"], ""))
+			}
+		}
+		shows += ": " + AndList(names)
+	}
+	return shows
 }

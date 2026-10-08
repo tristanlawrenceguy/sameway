@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/blocks"
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -194,14 +195,8 @@ func (s *Server) canvasBlock(b *store.Record, convo *conversation) canvasBlock {
 	if name == calendarComponent {
 		props = s.resolveCalendarAt(props, b.ID, onCanvas(b, convo))
 	}
-	if name == clockComponent {
-		props = s.resolveClock(props)
-	}
-	if name == trackerComponent {
-		props = s.resolveTracker(props)
-	}
-	if name == chartComponent {
-		props = s.resolveChart(props)
+	if _, ok := blocks.Of(name); ok {
+		props = blocks.Resolve(s.app.Blocks, name, props, blocks.Place{Block: b.ID})
 	}
 	label := blockName(name, props)
 	icon := name[:1]

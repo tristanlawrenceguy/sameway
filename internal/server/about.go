@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/blocks"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
@@ -23,20 +24,7 @@ import (
 
 // aboutOf reads a page path, /t/{type}/{id}, back to the record it names.
 func (s *Server) aboutOf(path string) (*schema.Type, *store.Record, bool) {
-	path, _, _ = strings.Cut(path, "?") // a part to open, such as a meeting's recording
-	parts := strings.Split(strings.TrimPrefix(strings.TrimSpace(path), "/"), "/")
-	if len(parts) != 3 || parts[0] != "t" {
-		return nil, nil, false
-	}
-	t, ok := s.app.Types.Get(parts[1])
-	if !ok {
-		return nil, nil, false
-	}
-	rec, err := s.app.Store.Get(t.Name, parts[2])
-	if err != nil {
-		return nil, nil, false
-	}
-	return t, rec, true
+	return blocks.AboutOf(s.app.Store, path)
 }
 
 // title is a record's title, with what the type alone cannot say: an
@@ -120,31 +108,6 @@ func (s *Server) firstBlock(component string) *store.Record {
 	return nil
 }
 
-// ringWords is what a ring says beyond the page and where it leads: the
-// thing it is about, and for a habit where it stands; the reminder
-// itself when it is about nothing.
-func (s *Server) ringWords(rec *store.Record) (text, url string) {
-	url = "/t/" + ReminderType + "/" + rec.ID
-	text = "It is time."
-	about, _ := rec.Fields["about"].(string)
-	t, target, ok := s.aboutOf(about)
-	if !ok {
-		return text, url
-	}
-	url = about
-	text = s.title(t, target)
-	// A meeting's reminder to record says what to do, in its own notes.
-	if notes, _ := rec.Fields["notes"].(string); t.Name == records.EventType && strings.Contains(about, "show=recording") && notes != "" {
-		text = notes
-	}
-	if t.Name == HabitType {
-		h := habitOf(target)
-		sum := track.Summarise(h, s.entriesOf(h.ID), time.Now(), 1)
-		text = h.Name + ": " + track.Progress(h, sum) + " so far"
-	}
-	return text, url
-}
-
 // nudges is the clock keeping a habit: one with a remind time that is
 // past for today and not yet met rings once, as a reminder about it,
 // that rings and reads like any other.
@@ -164,13 +127,13 @@ func (s *Server) nudges(now time.Time) []*store.Record {
 		if !ok || dayOnly || at.After(now) || at.Before(track.PeriodStart(now, "day")) {
 			continue
 		}
-		h := track.Normal(habitOf(hrec))
+		h := track.Normal(blocks.HabitOf(hrec))
 		if h.Aim != track.Reach {
 			// A reminder is for something still to do; a limit or a
 			// record has nothing to do by a time.
 			continue
 		}
-		sum := track.Summarise(h, s.entriesOf(h.ID), now, 1)
+		sum := track.Summarise(h, blocks.EntriesOf(s.app.Store, h.ID), now, 1)
 		about := "/t/" + HabitType + "/" + h.ID
 		if sum.Met || s.remindedToday(rt, about, now) {
 			continue

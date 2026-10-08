@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/blocks"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
@@ -56,14 +57,8 @@ func (s *Server) focusPage(w http.ResponseWriter, r *http.Request) {
 		}
 		props = s.resolveCalendarAt(props, rec.ID, &collectionPlace{Path: r.URL.Path, Query: r.URL.Query(), Own: true, Change: !convo.LookOnly})
 	}
-	if comp.Manifest.Name == clockComponent {
-		props = s.resolveClock(props)
-	}
-	if comp.Manifest.Name == trackerComponent {
-		props = s.resolveTracker(props)
-	}
-	if comp.Manifest.Name == chartComponent {
-		props = s.resolveChart(props)
+	if _, ok := blocks.Of(comp.Manifest.Name); ok {
+		props = blocks.Resolve(s.app.Blocks, comp.Manifest.Name, props, blocks.Place{Block: rec.ID})
 	}
 	body := s.expanded(comp.Manifest.Name, props, convo)
 

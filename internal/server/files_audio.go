@@ -141,17 +141,6 @@ func (s *Server) captions(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, speech.VTT(cues))
 }
 
-// sizeWords is a file's size as a person reads it: 11 MB, 480 KB.
-func sizeWords(n int64) string {
-	switch {
-	case n >= 1<<20:
-		return fmt.Sprintf("%.0f MB", float64(n)/(1<<20))
-	case n >= 1<<10:
-		return fmt.Sprintf("%.0f KB", float64(n)/(1<<10))
-	}
-	return fmt.Sprintf("%d bytes", n)
-}
-
 // pairCaptions gives subtitles to the recording they belong to: one of the
 // same name with no words yet, as its transcript and, for a video, its
 // captions. Subtitles for none stay a file of their own.
