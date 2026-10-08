@@ -63,7 +63,7 @@ func (c *ctx) agentCmd() error {
 		if err != nil {
 			return err
 		}
-		records.Record(a.Store, "human", records.Change{Action: ch.Action, Component: ch.Component, ID: ch.ID, Detail: ch.Detail, Before: ch.Before, Via: records.ThroughCLI})
+		records.Record(a.Store, "human", records.Change{Action: ch.Action, Component: ch.Component, ID: ch.ID, Detail: ch.Detail, Ops: ch.Ops, Via: records.ThroughCLI})
 		c.print(map[string]any{"removed": positional[1]}, func() {
 			fmt.Fprintf(c.Stdout, "%s's key no longer works. Undo it from the activity page to let it back in.\n", positional[1])
 		})

@@ -134,3 +134,31 @@ func TestOneThingMustBeAsTheEntryLeftIt(t *testing.T) {
 		t.Errorf("a setting is undone back to nothing: %+v %v %q", c, err, b.Setting("ui.pace"))
 	}
 }
+
+// What a writer logs keeps its ops and no before of its own shape: made,
+// changed and deleted through WriteAs, each undone by them.
+func TestWritesKeepTheirOps(t *testing.T) {
+	b := newBook(t)
+	who := records.Who{Actor: "human"}
+	rec, _, err := records.WriteAs(b.Store, who, "created", "note", "", map[string]any{"title": "One"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	records.WriteAs(b.Store, who, "updated", "note", rec.ID, map[string]any{"title": "Two"})
+	records.WriteAs(b.Store, who, "deleted", "note", rec.ID, nil)
+	entries := b.Recent(3)
+	for _, e := range entries {
+		ops := records.EntryOps(e)
+		if len(ops) != 1 || ops[0].ID != rec.ID || e.Fields["before"] != nil {
+			t.Errorf("%s keeps its op and no before: %+v %v", e.Fields["action"], ops, e.Fields["before"])
+		}
+	}
+	for i, want := range []any{"Two", "One", nil} {
+		if err := b.UndoAs("human", entries[i].ID); err != nil {
+			t.Fatal(err)
+		}
+		if got := title(b, "note", rec.ID); got != want {
+			t.Errorf("undone back to %v, got %v", want, got)
+		}
+	}
+}

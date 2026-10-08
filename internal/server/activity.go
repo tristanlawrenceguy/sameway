@@ -36,6 +36,22 @@ func (s *Server) record(r *http.Request, c records.Change) string {
 	return records.Record(s.app.Store, w.Actor, c)
 }
 
+// apply makes a change through a page: it writes the change's ops, all
+// or none, and logs the change, with them, as whoever made it. A change
+// that makes its thing is named by the id it was given. It returns the
+// log entry and the ops as made.
+func (s *Server) apply(r *http.Request, c records.Change, ops ...records.Op) (string, []records.Op, error) {
+	done, err := s.app.Records.Apply(ops...)
+	if err != nil {
+		return "", nil, err
+	}
+	if c.ID == "" && len(done) > 0 {
+		c.ID = done[len(done)-1].ID
+	}
+	c.Ops = done
+	return s.record(r, c), done, nil
+}
+
 // recentActivity renders the newest n actions inside a disclosure that is
 // closed by default, so the log is there when wanted and silent otherwise.
 // The full log is always on its own page, which is what a screen reader user

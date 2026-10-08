@@ -38,7 +38,7 @@ func (s *Server) activityFacts(e *store.Record) []any {
 	}
 
 	// What it was before, field by field, where that is different now.
-	before, _ := e.Fields["before"].(map[string]any)
+	before := records.EntryBefore(e)
 	switch {
 	case str("action") == "set" && before != nil:
 		was := fmt.Sprint(before["value"])

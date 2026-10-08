@@ -270,14 +270,14 @@ func (s *Server) canvasDelete(w http.ResponseWriter, r *http.Request) {
 		s.failed(w, r, "Not removed", err, "/")
 		return
 	}
-	if err := s.app.Store.Delete(records.BlockType, id); err != nil {
-		s.failed(w, r, "Not removed", err, "/")
-		return
-	}
 	name, _ := rec.Fields["component"].(string)
 	props, _ := rec.Fields["props"].(map[string]any)
 	what := records.Summarise(name, props)
-	undo := s.record(r, records.Change{Action: "removed", Component: name, ID: id, Detail: what, Before: rec.Fields})
+	undo, _, err := s.apply(r, records.Change{Action: "removed", Component: name, ID: id, Detail: what}, records.Op{Type: records.BlockType, ID: id})
+	if err != nil {
+		s.failed(w, r, "Not removed", err, "/")
+		return
+	}
 	// Its own page is gone with it.
 	back := backOf(r, "/")
 	if strings.HasPrefix(back, "/canvas/"+id) {

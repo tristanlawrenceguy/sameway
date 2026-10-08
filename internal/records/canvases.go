@@ -41,21 +41,11 @@ func RemoveCanvas(st *store.Store, id string) (Change, error) {
 		return Change{}, fmt.Errorf("no canvas with id %s; the tabs are listed in the prompt", id)
 	}
 	name, _ := rec.Fields["name"].(string)
-	blocks, _ := st.List(BlockType, store.ListOptions{})
-	var gone []*store.Record
-	for _, b := range OnCanvas(blocks, id) {
-		if st.Delete(BlockType, b.ID) == nil {
-			gone = append(gone, b)
-		}
-	}
-	if err := st.Delete(CanvasType, id); err != nil {
-		return Change{}, fmt.Errorf("could not remove the canvas: %v", err)
-	}
 	// The tab and its blocks go into the log together, so undoing this
 	// puts the whole tab back.
-	before := map[string]any{"blocks": Keep(gone)}
-	for k, v := range rec.Fields {
-		before[k] = v
+	done, err := ApplyOps(st, Op{Type: CanvasType, ID: id})
+	if err != nil {
+		return Change{}, fmt.Errorf("could not remove the canvas: %v", err)
 	}
-	return Change{Action: "removed", Component: CanvasType, ID: id, Detail: name, Before: before}, nil
+	return Change{Action: "removed", Component: CanvasType, ID: id, Detail: name, Ops: done}, nil
 }

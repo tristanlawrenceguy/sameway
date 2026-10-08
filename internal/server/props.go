@@ -56,13 +56,11 @@ func (s *Server) blockProps(w http.ResponseWriter, r *http.Request) {
 		s.failed(w, r, "Not saved", err, "/")
 		return
 	}
-	if _, err := s.app.Store.Update(records.BlockType, rec.ID,
-		s.app.Chat.BlockFields(map[string]any{"props": clean, "actor": "human"})); err != nil {
+	undo, _, err := s.apply(r, records.Change{Action: "updated", Component: name, ID: rec.ID, Detail: records.Summarise(name, clean)},
+		records.Op{Type: records.BlockType, ID: rec.ID, After: s.app.Chat.BlockFields(map[string]any{"props": clean, "actor": "human"})})
+	if err != nil {
 		s.failed(w, r, "Not saved", err, "/")
 		return
 	}
-	undo := s.record(r, records.Change{
-		Action: "updated", Component: name, ID: rec.ID, Detail: records.Summarise(name, clean), Before: rec.Fields,
-	})
 	s.tell(w, r, outcome{Title: "Changes saved", Undo: undo}, "/")
 }

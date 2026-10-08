@@ -89,8 +89,8 @@ func (s *Server) clashChoose(w http.ResponseWriter, r *http.Request, choice stri
 		}
 	}
 	if choice == "kept" {
-		undo := s.record(r, records.Change{Action: "updated", Component: store.ClashType, ID: c.ID, Detail: label + " of " + title + ", the page's version kept", Href: href, Before: c.Fields})
-		s.app.Store.Update(store.ClashType, c.ID, map[string]any{"state": "kept"})
+		undo, _, _ := s.apply(r, records.Change{Action: "updated", Component: store.ClashType, ID: c.ID, Detail: label + " of " + title + ", the page's version kept", Href: href},
+			records.Op{Type: store.ClashType, ID: c.ID, After: map[string]any{"state": "kept"}})
 		s.tell(w, r, outcome{Title: "The page's version is kept", Text: "The other version of " + label + " is set aside.", Undo: undo, Of: "choosing a version of " + label}, href)
 		return
 	}
@@ -101,12 +101,14 @@ func (s *Server) clashChoose(w http.ResponseWriter, r *http.Request, choice stri
 		text = strings.TrimRight(cur, "\n") + "\n\n" + text
 		said, detail = "Both versions are kept", " (both versions of "+label+")"
 	}
-	if _, err := s.app.Store.Update(typ, id, map[string]any{field: text}); err != nil {
+	undo, _, err := s.apply(r, records.Change{Action: "updated", Component: typ, ID: id, Detail: title + detail, Href: href},
+		records.Op{Type: typ, ID: id, After: map[string]any{field: text}})
+	if err != nil {
 		s.failed(w, r, "Not chosen", err, href)
 		return
 	}
-	undo := s.record(r, records.Change{Action: "updated", Component: typ, ID: id, Detail: title + detail, Href: href, Before: was.Fields})
-	s.app.Store.Update(store.ClashType, c.ID, map[string]any{"state": "used"})
+	// The offer is used up; undoing the choice puts the text back.
+	records.ApplyOps(s.app.Store, records.Op{Type: store.ClashType, ID: c.ID, After: map[string]any{"state": "used"}})
 	o := outcome{Title: said, Undo: undo, Of: "choosing a version of " + label}
 	if choice == "both" {
 		o.Text = label + " has the page's version, then the other. Edit it to join them."

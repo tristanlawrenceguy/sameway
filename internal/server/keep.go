@@ -47,10 +47,11 @@ func (s *Server) keepFile(who records.Who, src io.Reader, name, title, descripti
 	if d := strings.TrimSpace(description); d != "" {
 		fields["description"] = d
 	}
-	rec, err := s.app.Store.Create(FileType, fields)
+	made, err := records.ApplyOps(s.app.Store, records.Op{Type: FileType, After: fields})
 	if err != nil {
 		return nil, "", err
 	}
+	rec := &store.Record{ID: made[0].ID, Type: FileType, Fields: made[0].After}
 	stored := rec.ID + strings.ToLower(filepath.Ext(name))
 	dir := s.app.Workspace.FilesDir()
 	path := filepath.Join(dir, stored)
@@ -76,18 +77,21 @@ func (s *Server) keepFile(who records.Who, src io.Reader, name, title, descripti
 	}
 	if err != nil {
 		os.Remove(path)
-		s.app.Store.Delete(FileType, rec.ID)
+		records.ApplyOps(s.app.Store, records.Op{Type: FileType, ID: rec.ID})
 		if strings.Contains(err.Error(), "4 GB") || strings.Contains(err.Error(), "empty") {
 			return nil, "", err
 		}
 		return nil, "", fmt.Errorf("could not keep the file: %w", err)
 	}
-	rec, err = s.app.Store.Update(FileType, rec.ID, map[string]any{"path": stored, "size": n})
+	kept, err := records.ApplyOps(s.app.Store, records.Op{Type: FileType, ID: rec.ID, After: map[string]any{"path": stored, "size": n}})
 	if err != nil {
 		return rec, path, err
 	}
+	rec, _ = s.app.Store.Get(FileType, rec.ID)
+	// Logged as made whole: undoing it takes the file's record away.
+	made[0].After = kept[0].After
 	records.Record(s.app.Store, who.Actor, records.Change{Action: "added", Component: FileType, ID: rec.ID, Detail: title,
-		Href: "/t/" + FileType + "/" + rec.ID, By: who.By, Via: who.Via, ByLogin: who.ByLogin})
+		Href: "/t/" + FileType + "/" + rec.ID, By: who.By, Via: who.Via, ByLogin: who.ByLogin, Ops: made})
 	return rec, path, nil
 }
 

@@ -34,8 +34,8 @@ func (s *Service) setSetting(key, value string) toolResult {
 	if s.SetSetting == nil {
 		return fail("this workspace has no settings file")
 	}
-	was := s.setting(key)
-	if err := s.SetSetting(key, value); err != nil {
+	done, err := s.Apply(records.Op{Type: records.SettingOp, ID: key, After: map[string]any{"value": value}})
+	if err != nil {
 		return fail("%v", err)
 	}
 	note := ""
@@ -48,5 +48,5 @@ func (s *Service) setSetting(key, value string) toolResult {
 	if (key == "tailnet.name" || strings.HasPrefix(key, "publish.")) && s.Tailnet != nil {
 		note = ". " + s.Tailnet(20*time.Second)
 	}
-	return toolResult{text: key + " is now " + value + note, change: &records.Change{Action: "set", Component: key, Detail: value, Before: map[string]any{"value": was}}}
+	return toolResult{text: key + " is now " + value + note, change: &records.Change{Action: "set", Component: key, Detail: value, Ops: done}}
 }

@@ -63,13 +63,12 @@ func (s *Server) clockSet(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	rec, err := s.app.Store.Create(ReminderType, fields)
+	title, _ := fields["title"].(string)
+	undo, _, err := s.apply(r, records.Change{Action: "created", Component: ReminderType, Detail: title}, records.Op{Type: ReminderType, After: fields})
 	if err != nil {
 		s.failed(w, r, "Not set", err, "/")
 		return
 	}
-	title, _ := fields["title"].(string)
-	undo := s.record(r, records.Change{Action: "created", Component: ReminderType, ID: rec.ID, Detail: title})
 	what := "Alarm set"
 	if fields["kind"] == "timer" {
 		what = "Timer set"
@@ -101,14 +100,14 @@ func (s *Server) setReminder(w http.ResponseWriter, r *http.Request, fields map[
 		s.failed(w, r, "Reminder not changed", err, "/")
 		return
 	}
-	saved, err := s.app.Store.Update(ReminderType, rec.ID, fields)
+	t, _ := s.app.Types.Get(ReminderType)
+	title := s.title(t, rec)
+	undo, done, err := s.apply(r, records.Change{Action: action, Component: ReminderType, ID: rec.ID, Detail: title}, records.Op{Type: ReminderType, ID: rec.ID, After: fields})
 	if err != nil {
 		s.failed(w, r, "Reminder not changed", err, "/")
 		return
 	}
-	t, _ := s.app.Types.Get(ReminderType)
-	title := s.title(t, rec)
-	undo := s.record(r, records.Change{Action: action, Component: ReminderType, ID: rec.ID, Detail: title, Before: rec.Fields})
+	saved := &store.Record{ID: rec.ID, Type: ReminderType, Fields: done[0].After}
 	o := outcome{Title: title + " dismissed", Undo: undo}
 	switch {
 	case action == "snoozed":

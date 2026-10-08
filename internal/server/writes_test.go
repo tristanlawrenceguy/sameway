@@ -16,25 +16,18 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
-// A record is written one way from every way in: records.WriteAs, which
-// writes, keeps what was there and logs it as whoever did it. A handler
-// that writes the store itself has to do all three and can forget one, as
-// the API's file without content once forgot the log, so it could never
-// be undone. These write the store directly for a reason, said here; a new
-// one fails until it goes through WriteAs or says why it does not.
+// A record is written one way from every way in: as a change's ops, by
+// records.WriteAs or Apply (s.apply on a page), which write, keep what was
+// there and log it as whoever did it. A handler that writes the store
+// itself has to do all three and can forget one, as the API's file without
+// content once forgot the log, so it could never be undone. These write
+// the store directly for a reason, said here; a new one fails until it
+// goes through Apply or says why it does not.
 var writesTheStoreItself = map[string]string{
 	"about.go nudges":               "a reminder ringing is the system's, logged as rang",
 	"clock.go ring":                 "the same",
-	"clock_set.go clockSet":         "an alarm or timer set, logged in its own words",
-	"clock_set.go setReminder":      "a reminder dismissed or snoozed, logged in its own words",
-	"track.go habitLog":             "an amount logged against a habit, logged as the habit's",
-	"clash.go clashChoose":          "a version chosen after two edits at once, logged as that choice",
-	"canvas.go canvasDelete":        "the canvas's own blocks, logged with the canvas's words",
-	"props.go blockProps":           "the same",
-	"collection_keep.go canvasKeep": "the same",
 	"tabs.go seedChat":              "a new tab's chat block, part of making the tab",
 	"example.go fillExample":        "the example's Home blocks, part of making the example, in a workspace of its own",
-	"keep.go keepFile":              "a file kept on disk, logged as added by who added it, here",
 	"keep.go readKept":              "a file's reading: its status and text, not anyone's change",
 	"files.go readNow":              "the same",
 	"files.go convertLater":         "the same",
@@ -81,7 +74,7 @@ func TestRecordsAreWrittenOneWay(t *testing.T) {
 							key := filepath.Base(f) + " " + fn.Name.Name
 							found[key] = true
 							if writesTheStoreItself[key] == "" {
-								t.Errorf("%s writes the store itself: write records through records.WriteAs, or say here why it does not", key)
+								t.Errorf("%s writes the store itself: write records through records.WriteAs or Apply, or say here why it does not", key)
 							}
 						}
 					}

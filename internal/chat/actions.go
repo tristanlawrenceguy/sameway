@@ -141,11 +141,12 @@ func (s *Service) webhook(ctx context.Context, rec *store.Record, title string) 
 func (s *Service) show(rec *store.Record, title, answer string) (records.Change, error) {
 	props := map[string]any{"content": answer}
 	if id, _ := rec.Fields["block"].(string); id != "" {
-		if was, err := s.Store.Get(records.BlockType, id); err == nil {
-			if _, err := s.Store.Update(records.BlockType, id, s.fields(records.BlockType, map[string]any{"props": props, "actor": "assistant"})); err != nil {
+		if _, err := s.Store.Get(records.BlockType, id); err == nil {
+			done, err := s.Apply(records.Op{Type: records.BlockType, ID: id, After: s.fields(records.BlockType, map[string]any{"props": props, "actor": "assistant"})})
+			if err != nil {
 				return records.Change{}, err
 			}
-			return records.Change{Action: "updated", Component: "text", ID: id, Detail: title, Href: "/canvas/" + id, Before: was.Fields}, nil
+			return records.Change{Action: "updated", Component: "text", ID: id, Detail: title, Href: "/canvas/" + id, Ops: done}, nil
 		}
 	}
 	r := s.addComponent("text", props, look{})

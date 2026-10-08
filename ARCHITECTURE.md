@@ -172,8 +172,11 @@ surface decides for itself:
 
 `internal/records` is the workspace's records as Sameway keeps them,
 whoever asks: who is asking and what they may do (`Visitor`), how a
-record is written and logged (`WriteAs`, `Change`, `Record`), undoing a
-change (`Book.Undo`), what a record and a change are called (`Name`,
+record is written and logged (`WriteAs`, `Change`, `Record`), a change
+as the ops it wrote, each thing as it was and became, written all or
+none (`Op`, `Book.Apply`), undoing a change (`Book.Undo`: its ops the
+other way; entries from before ops are read in undo_legacy.go), what a
+record and a change are called (`Name`,
 `Sentence`), who wrote a record's words (`Writers`, `RecordView`) and an
 agent key's pace. It sits on `store` and `schema`; the server, MCP, the
 command line and `internal/chat` all go through it, so every way in
