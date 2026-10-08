@@ -77,6 +77,7 @@ var pageActionTools = map[string]string{
 	"/phone/forget":               "a person's: letting other devices reach the workspace is its owner's choice",
 	"/brief":                      "set_setting",
 	"/workspaces/example":         "add_workspace",
+	"/feedback":                   "a person's: what goes to the makers is theirs to read and send",
 	"/at-login":                   "a person's: what starts when this computer does is its owner's choice",
 	"/restart":                    "a person's: restarting ends the assistant's own turn",
 	"/notify/phone":               "set_setting",
