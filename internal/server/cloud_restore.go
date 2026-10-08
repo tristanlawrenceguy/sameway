@@ -102,4 +102,5 @@ func unpackCopy(data []byte, dir string) error {
 func (s *Server) cloudRoutes(m *http.ServeMux) {
 	m.HandleFunc("POST /backup/cloud", s.cloudSet)
 	m.HandleFunc("POST /workspaces/from-copy", s.fromCopy)
+	s.cloudSyncRoutes(m) // cloud_sync.go
 }

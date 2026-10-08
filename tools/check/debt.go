@@ -2,9 +2,10 @@ package main
 
 // Debt the checks know about. These lists say where the code is harder to
 // read than the rules allow today; they are information, not exceptions to
-// copy. An entry may only shrink: lower a length when a function gets
-// shorter, and take an entry out when it meets the rule. Adding one is for
-// moving an entry with its function (a package rename), not for new code.
+// copy. The lists only go down: lower a length when a function gets
+// shorter, and take an entry out when it meets the rule. CI runs
+// `go run ./tools/check -base <base>` and fails a change that adds an entry
+// or raises a length here; shorten or split the code instead.
 
 // longFuncs are non-test functions over MaxFuncLines, keyed by package
 // directory and Name or Recv.Name, with their length when the cap came in
