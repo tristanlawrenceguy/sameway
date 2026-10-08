@@ -50,6 +50,9 @@ func (s *Service) search(query, only string, page int) toolResult {
 		if h.Snippet != "" {
 			line += "\t" + oneLine(h.Snippet)
 		}
+		if h.Near {
+			line += "\t(found by meaning, not its words)"
+		}
 		lines = append(lines, line)
 	}
 	// Titles and words are fenced, each line saying who wrote it; see records/provenance.go.
