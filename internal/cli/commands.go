@@ -46,6 +46,7 @@ func (c *ctx) serveCmd() error {
 	h.StartRinging(ctx, notifier(a))
 	h.KeepCalendars(ctx)
 	h.KeepBrief(ctx)     // the morning brief, when one is set
+	h.KeepMail(ctx)      // email sent to the workspace, when connected
 	h.KeepCloudCopy(ctx) // a daily copy in the cloud folder, when one is chosen
 	h.WriteDownInBackground()
 	keepSnapshots(ctx, c.Stdout, a)
