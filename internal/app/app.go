@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/blocks"
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/content"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
@@ -31,6 +32,9 @@ type App struct {
 	// Records are the workspace's records as every way in keeps them: the
 	// same Book the chat is built on. See internal/records.
 	Records *records.Book
+	// Blocks is what a block is worked out from, for the pages, the
+	// assistant and MCP alike. See internal/blocks.
+	Blocks *blocks.Workspace
 
 	schemaSeen schemaWatch // what schema/ held when last read; see reload.go
 }
@@ -59,7 +63,7 @@ func Load(dir string, memoryDB bool) (*App, error) {
 		st.Close()
 		return nil, err
 	}
-	a := &App{Workspace: ws, Types: types, Store: st, Registry: reg, Records: &records.Book{Store: st, Setting: ws.Get}}
+	a := &App{Workspace: ws, Types: types, Store: st, Registry: reg, Records: &records.Book{Store: st, Setting: ws.Get}, Blocks: &blocks.Workspace{Store: st, Settings: ws}}
 	// The conversation, its questions and the log are history, not content;
 	// everything else is written to content/ as it changes.
 	a.Mirror = content.Mirror{Dir: ws.ContentDir(), Types: types, Skip: ownersTypes(types)}

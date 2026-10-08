@@ -66,10 +66,6 @@ func (s *Server) resolveRecord(props map[string]any) (map[string]any, string) {
 	return out, editing(t, rec)
 }
 
-func isText(f schema.Field) bool {
-	return f.Type == "text" || f.Type == "markdown"
-}
-
 // recordEditFields is every field of a record block's record, for its
 // editor: on the canvas, Edit offers what the record's own page does, the
 // facts as well as the title and the text, the empty ones behind Add.

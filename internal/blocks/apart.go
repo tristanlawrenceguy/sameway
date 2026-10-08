@@ -1,4 +1,4 @@
-package server
+package blocks
 
 import (
 	"fmt"
@@ -6,10 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
-	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
 // Two records with one title make two controls with one name: two boxes
@@ -25,7 +23,7 @@ import (
 // Only when needed: a title that is its own stays as it is, and the words
 // are read after the name, never shown twice.
 
-// apart gives each of names the words that tell it from the others with
+// Apart gives each of names the words that tell it from the others with
 // the same name, or "" where the name is its own. ways(i) are the words
 // item i could be told apart by, best first; the first way whose words
 // differ across every item sharing the name is used for all of them. A
@@ -34,7 +32,7 @@ import (
 // rank, when given, orders the ones that nothing tells apart for their
 // number, first to last: when each was added, so a note is "the first of
 // 2" in its list and in the log alike, whichever order each shows them in.
-func apart(names []string, ways func(i int) []string, rank ...func(i int) string) []string {
+func Apart(names []string, ways func(i int) []string, rank ...func(i int) string) []string {
 	out := make([]string, len(names))
 	groups := map[string][]int{}
 	var order []string
@@ -98,14 +96,14 @@ func apart(names []string, ways func(i int) []string, rank ...func(i int) string
 	return out
 }
 
-// recordWays is what tells one record from another with its title: the
+// RecordWays is what tells one record from another with its title: the
 // day that matters to it (due tomorrow), when it was added, its id.
-func recordWays(t *schema.Type, rec *store.Record) []string {
-	return []string{dayWords(t, rec), "added " + momentWords(rec.CreatedAt), "added " + secondWords(rec.CreatedAt)}
+func RecordWays(t *schema.Type, rec *store.Record) []string {
+	return []string{dayWords(t, rec), "added " + MomentWords(rec.CreatedAt), "added " + SecondWords(rec.CreatedAt)}
 }
 
-// secondWords is a moment to the second, for two added in one minute.
-func secondWords(at time.Time) string {
+// SecondWords is a moment to the second, for two added in one minute.
+func SecondWords(at time.Time) string {
 	return shortDay(at.Local()) + ", " + at.Local().Format("15:04:05")
 }
 
@@ -125,13 +123,13 @@ func ordinal(n int) string {
 	return fmt.Sprint(n) + suffix
 }
 
-// recordsApart is apart for one type's records shown together, by id.
-func (s *Server) recordsApart(t *schema.Type, recs []*store.Record) map[string]string {
+// RecordsApart is apart for one type's records shown together, by id.
+func (ws *Workspace) RecordsApart(t *schema.Type, recs []*store.Record) map[string]string {
 	names := make([]string, len(recs))
 	for i, rec := range recs {
-		names[i] = s.title(t, rec)
+		names[i] = ws.title(t, rec)
 	}
-	said := apart(names, func(i int) []string { return recordWays(t, recs[i]) }, func(i int) string { return addedRank(recs[i]) })
+	said := Apart(names, func(i int) []string { return RecordWays(t, recs[i]) }, func(i int) string { return AddedRank(recs[i]) })
 	out := map[string]string{}
 	for i, rec := range recs {
 		if said[i] != "" {
@@ -141,10 +139,10 @@ func (s *Server) recordsApart(t *schema.Type, recs []*store.Record) map[string]s
 	return out
 }
 
-// withContext is a name and the words that tell it apart: Call plumber
+// WithContext is a name and the words that tell it apart: Call plumber
 // (due Fri 25 Sep). In brackets, because a browser puts a space before
 // words hidden in a span of their own, so a comma would be heard alone.
-func withContext(name, context string) string {
+func WithContext(name, context string) string {
 	if context == "" {
 		return name
 	}
@@ -160,7 +158,7 @@ func markApart(actions []any, context string) {
 	for _, a := range actions {
 		if m, ok := a.(map[string]any); ok && m["component"] == "mark" {
 			if p, ok := m["props"].(map[string]any); ok {
-				p["context"] = withContext(str(p["context"], ""), context)
+				p["context"] = WithContext(str(p["context"], ""), context)
 			}
 		}
 	}
@@ -179,7 +177,7 @@ func eventsApart(events []any, month string) []any {
 			names[i] = "" // not met here
 		}
 	}
-	told := apart(names, func(i int) []string {
+	told := Apart(names, func(i int) []string {
 		ev, _ := events[i].(map[string]any)
 		on := ""
 		if d, err := time.Parse("2006-01-02", str(ev["date"], "")); err == nil {
@@ -207,23 +205,7 @@ func eventsApart(events []any, month string) []any {
 	return events
 }
 
-// blockName is what a block's own controls are named after: Remove Up
-// next, Expand Up next, from the label the block shows, and the plain
-// name of its component only when it has none. Two lists would otherwise
-// both be Remove collection.
-func blockName(component string, props map[string]any) string {
-	if said := records.Summarise(component, props); said != "" {
-		return said
-	}
-	for _, k := range []string{"label", "caption", "title"} {
-		if v, _ := props[k].(string); strings.TrimSpace(v) != "" {
-			return trim.Title(v)
-		}
-	}
-	return component
-}
-
-// addedRank orders records by when they were added, for their number.
-func addedRank(rec *store.Record) string {
+// AddedRank orders records by when they were added, for their number.
+func AddedRank(rec *store.Record) string {
 	return rec.CreatedAt.UTC().Format("2006-01-02T15:04:05.000000000") + " " + rec.ID
 }

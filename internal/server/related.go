@@ -64,10 +64,10 @@ func (s *Server) related(t *schema.Type, rec *store.Record, always, here []strin
 // the workspace turned on carries none: it is on because somebody wanted
 // it there every time, and it goes the way it came, by asking.
 func (s *Server) openLink(l relate.Link, page string, here []string, closable bool) string {
-	props := s.resolveCollection(map[string]any{
+	props := s.resolve(collectionComponent, map[string]any{
 		"type": l.Type, "where": l.Where, "order": l.Order, "limit": 50,
 		"label": capitalize(s.words(l)), "level": 2, "id": "related-" + slugKey(l.Key),
-	}, "")
+	}, "", nil)
 	body := string(s.component(collectionComponent, props))
 	if closable {
 		body += s.fewer(page, l.Key, s.words(l), here)
