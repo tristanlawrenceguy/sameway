@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
@@ -55,5 +56,29 @@ func TestADoubleClickWaitsOnAnError(t *testing.T) {
 	c.holdOpen(os.ErrPermission)
 	if !strings.Contains(out.String(), "Press Enter to close") {
 		t.Errorf("the reason stays on screen: %s", out.String())
+	}
+}
+
+// Opened again while it runs, its tab out of sight and the server slow to
+// answer, the running one is shown in a new tab, whatever case or trailing
+// separator its folder was written with; a second Sameway is not started.
+func TestOpeningAgainShowsTheRunningOne(t *testing.T) {
+	t.Setenv("SAMEWAY_KNOWN", filepath.Join(t.TempDir(), "known.json"))
+	dir := filepath.Join(t.TempDir(), "Home")
+	os.MkdirAll(dir, 0o755)
+	os.WriteFile(filepath.Join(dir, workspace.ConfigFile), []byte("name: Home\n"), 0o644)
+	slow := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { time.Sleep(1500 * time.Millisecond) }))
+	defer slow.Close()
+	workspace.Remember(dir, strings.TrimPrefix(slow.URL, "http://"))
+	opened := ""
+	openInBrowser = func(url string) error { opened = url; return nil }
+	var out bytes.Buffer
+	c := &ctx{Env: Env{Stdout: &out, Stderr: &out}}
+	c.workspaceDir = strings.ToLower(dir) + string(filepath.Separator) // as Windows may write it
+	if err := c.startCmd(); err != nil {
+		t.Fatal(err)
+	}
+	if opened != slow.URL+"/" {
+		t.Errorf("the running one is opened: %q\n%s", opened, out.String())
 	}
 }

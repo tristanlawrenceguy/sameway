@@ -40,7 +40,7 @@ func Render(markdown string, base int) template.HTML {
 	if err := md.Convert(src, &buf); err != nil {
 		return template.HTML("<p>" + template.HTMLEscapeString(markdown) + "</p>")
 	}
-	return template.HTML(captioned(buf.String(), shift.captions))
+	return template.HTML(Outward(captioned(buf.String(), shift.captions))) // outward.go
 }
 
 // outline shifts heading levels to fit the page, and lifts "Table: ..."

@@ -16,7 +16,8 @@ var tags = regexp.MustCompile(`<[^>]*>`)
 
 // Plain is what Markdown says with its formatting taken away.
 func Plain(md string) string {
-	return strings.Join(strings.Fields(html.UnescapeString(tags.ReplaceAllString(string(Render(md, 2)), " "))), " ")
+	out := strings.ReplaceAll(string(Render(md, 2)), NewTab, "") // a link's note is not its words
+	return strings.Join(strings.Fields(html.UnescapeString(tags.ReplaceAllString(out, " "))), " ")
 }
 
 // Marked renders Markdown with the one passage given highlighted, with
