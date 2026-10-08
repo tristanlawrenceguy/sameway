@@ -98,7 +98,7 @@ func (r Result) Said() string {
 	case r.Type == "":
 		fmt.Fprintf(&b, "%d found: %s", r.Total, counted(r.Counts, ""))
 	default:
-		fmt.Fprintf(&b, "Showing %s only: %d of %d found", label(r.Type, 2), r.Found, r.Total)
+		fmt.Fprintf(&b, "Showing %s only: %d of %d found", schema.Plural(r.Type), r.Found, r.Total)
 		if rest := counted(r.Counts, r.Type); rest != "" {
 			fmt.Fprintf(&b, " (%s elsewhere)", rest)
 		}
@@ -131,17 +131,9 @@ func counted(counts map[string]int, except string) string {
 	})
 	parts := make([]string, len(names))
 	for i, name := range names {
-		parts[i] = fmt.Sprintf("%d %s", counts[name], label(name, counts[name]))
+		parts[i] = schema.Count(counts[name], name)
 	}
 	return strings.Join(parts, ", ")
-}
-
-// label is a kind as a person reads it, one or many: note, notes.
-func label(name string, n int) string {
-	if n == 1 {
-		return schema.Words(name)
-	}
-	return schema.Plural(name)
 }
 
 // SomeWords says a search found what has some of the words, on every

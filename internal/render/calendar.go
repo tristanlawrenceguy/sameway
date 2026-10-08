@@ -65,15 +65,6 @@ func weekStart(start string) int {
 	return int(time.Monday)
 }
 
-// monthName is the heading for a month: "September 2026".
-func monthName(month string) string {
-	t, err := time.Parse("2006-01", strings.TrimSpace(month))
-	if err != nil {
-		return month
-	}
-	return t.Format("January 2006")
-}
-
 // weekdayNames lists the seven column headings in order, each as the short
 // form and the full name, so a table header can show one and say the other.
 func weekdayNames(start string) []Weekday {

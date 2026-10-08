@@ -3,9 +3,11 @@ package server
 import (
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // Several chats. A person can start a new chat, go back to an earlier one,
@@ -27,7 +29,7 @@ func (s *Server) chats(svc *chat.Service) (items []chatItem, current string) {
 	id := svc.Current()
 	for _, c := range svc.Conversations() {
 		title := svc.Title(c)
-		item := chatItem{ID: c.ID, Title: title, When: c.CreatedAt.Local().Format("2 Jan"), Current: c.ID == id}
+		item := chatItem{ID: c.ID, Title: title, When: when.Date(c.CreatedAt, time.Now()), Current: c.ID == id}
 		if item.Current {
 			current = title
 		}

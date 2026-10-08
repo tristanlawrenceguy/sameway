@@ -8,6 +8,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // Coming back after a while, a person is told what the others changed
@@ -90,7 +91,7 @@ func (s *Server) sinceNotice(r *http.Request) template.HTML {
 	}
 	// A few to read here; the rest wait in the log, from where these end.
 	props := map[string]any{"seen": "/since/seen", "from": from, "count": len(theirs),
-		"at": messageTime(since), "datetime": since.UTC().Format(time.RFC3339)}
+		"at": when.Sent(since, time.Now()), "datetime": since.UTC().Format(time.RFC3339)}
 	shown := theirs
 	if len(theirs) > sinceShown {
 		shown = theirs[:sinceShown]

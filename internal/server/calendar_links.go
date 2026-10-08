@@ -15,6 +15,8 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/ingest"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
+	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // Calendars: the link a calendar elsewhere gives for subscribing (Google's
@@ -48,7 +50,7 @@ func (s *Server) saveCalendarLinks(l []calendarLink) {
 // syncCalendar fetches one calendar and keeps its events in step.
 func (s *Server) syncCalendar(ctx context.Context, l *calendarLink) {
 	l.At, l.Err = time.Now(), ""
-	t, ok := s.app.Types.Get("event")
+	t, ok := s.app.Types.Get(chat.EventType)
 	if !ok {
 		l.Err = "this workspace has no events"
 		return
@@ -139,7 +141,7 @@ func (s *Server) calendarsPage(w http.ResponseWriter, r *http.Request) {
 	if len(links) > 0 {
 		b.WriteString(`<h2>Kept in step</h2><ul class="sw-plain sw-rows">`)
 		for _, l := range links {
-			state := fmt.Sprintf("%d events, checked %s", len(l.UIDs), l.At.Format("2 Jan 15:04"))
+			state := schema.Count(len(l.UIDs), chat.EventType) + ", checked " + when.Sent(l.At, time.Now())
 			if l.Err != "" {
 				state = "Not up to date: " + l.Err
 			}

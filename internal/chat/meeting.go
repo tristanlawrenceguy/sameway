@@ -6,6 +6,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
 
 // A meeting is an event, and its recording is a file with a transcript.
@@ -13,9 +14,6 @@ import (
 // up, each decision and task linked to the line of the transcript where
 // it was said, so anyone can go back and hear it. It is written in one
 // go and taken back in one go: one entry in the log, one Undo.
-
-// EventType is the content type of a meeting.
-const EventType = "event"
 
 type meetingItem struct {
 	Text  string `json:"text"`
@@ -129,7 +127,7 @@ func (s *Service) writeUpMeeting(eventID, fileID, summary string, decisions, tas
 	c := s.recordBatch(eventID, event, made, len(lines), batch)
 	title, _ := event["title"].(string)
 	return toolResult{text: fmt.Sprintf("wrote up %s, with its tasks shown, at %s: the summary, %s and %s, each linked to where it was said.",
-		title, c.Href, count(len(lines), "decision"), count(made, "task")), change: &c}
+		title, c.Href, schema.Count(len(lines), "decision"), schema.Count(made, "task")), change: &c}
 }
 
 // recordBatch is the write-up as one change, for the log and its Undo.
@@ -137,7 +135,7 @@ func (s *Service) recordBatch(eventID string, event map[string]any, tasks, decis
 	title, _ := event["title"].(string)
 	// Its page shows the tasks that came up at it: a write-up asks for them.
 	return Change{Action: "wrote up", Component: EventType, ID: eventID, Href: "/t/" + EventType + "/" + eventID + "?show=points-here:task.event",
-		Detail: fmt.Sprintf("%s, %s and %s", title, count(decisions, "decision"), count(tasks, "task")), Before: Batch(batch)}
+		Detail: fmt.Sprintf("%s, %s and %s", title, schema.Count(decisions, "decision"), schema.Count(tasks, "task")), Before: Batch(batch)}
 }
 
 // moment is " (at 12:03)" linked to that line of the recording's
@@ -176,11 +174,4 @@ func clockSeconds(at string) (int, bool) {
 		total = total*60 + n
 	}
 	return total, true
-}
-
-func count(n int, one string) string {
-	if n == 1 {
-		return "1 " + one
-	}
-	return fmt.Sprintf("%d %ss", n, one)
 }

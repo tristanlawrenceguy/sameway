@@ -20,11 +20,7 @@ import (
 // The arithmetic is in internal/track; this reads the habit and entry
 // records and puts the numbers where a person looks.
 
-const (
-	trackerComponent = "tracker"
-	HabitType        = "habit"
-	EntryType        = "entry"
-)
+const trackerComponent = "tracker"
 
 // habitOf reads a habit record.
 func habitOf(rec *store.Record) track.Habit {

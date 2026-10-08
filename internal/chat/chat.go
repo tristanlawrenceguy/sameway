@@ -18,9 +18,6 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/update"
 )
 
-// MessageType is the content type that holds conversation turns.
-const MessageType = "message"
-
 // Service holds the dependencies for one workspace's chat.
 type Service struct {
 	// SetSetting changes one line of workspace.yaml, when there is one:

@@ -109,7 +109,7 @@ func (s *Server) recentActivityAbout(n int, from string, about func(target, id s
 func (s *Server) event(r *store.Record, from string, level int, dated bool, told string) template.HTML {
 	at := when.Clock(r.CreatedAt.Local())
 	if dated {
-		at = messageTime(r.CreatedAt)
+		at = when.Sent(r.CreatedAt, time.Now())
 	}
 	props := s.line(r, true)
 	if props["undo"] != nil {
@@ -189,7 +189,7 @@ func (s *Server) activityPage(w http.ResponseWriter, r *http.Request) {
 	open := false
 	told := s.entriesApart(recs)
 	for i, rec := range recs {
-		d := dayHeading(rec.CreatedAt)
+		d := when.DayHeading(rec.CreatedAt, time.Now())
 		if d != day {
 			if open {
 				b.WriteString("</ol>")
@@ -233,21 +233,4 @@ func (s *Server) baseFile(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/javascript; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Write(data)
-}
-
-// dayHeading is a day of the log as its heading says it: Today, Yesterday,
-// or the day, with its year when it is not this one.
-func dayHeading(at time.Time) string {
-	at, now := at.Local(), time.Now()
-	y, m, d := now.Date()
-	today := time.Date(y, m, d, 0, 0, 0, 0, now.Location())
-	switch day := time.Date(at.Year(), at.Month(), at.Day(), 0, 0, 0, 0, now.Location()); {
-	case day.Equal(today):
-		return "Today, " + at.Format("Monday 2 January")
-	case day.Equal(today.AddDate(0, 0, -1)):
-		return "Yesterday, " + at.Format("Monday 2 January")
-	case at.Year() != now.Year():
-		return at.Format("Monday 2 January 2006")
-	}
-	return at.Format("Monday 2 January")
 }

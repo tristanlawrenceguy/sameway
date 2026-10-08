@@ -21,9 +21,6 @@ import (
 // other; a suggestion whose words have changed since says so rather than
 // guessing where it was meant to go.
 
-// SuggestionType is the content type of a suggested change.
-const SuggestionType = "suggestion"
-
 type suggested struct {
 	Passage     string `json:"passage"`
 	Replacement string `json:"replacement"`
@@ -141,9 +138,9 @@ func (s *Service) suggestEdits(typeName, id, field string, edits []suggested) to
 	title := Name(s.Store, t, rec)
 	page := "/t/" + t.Name + "/" + rec.ID
 	c := Change{Action: "suggested", Component: t.Name, ID: rec.ID, Href: page,
-		Detail: fmt.Sprintf("%s, %s", title, count(len(edits), "change")), Before: Batch(batch)}
+		Detail: fmt.Sprintf("%s, %s", title, schema.Count(len(edits), "change")), Before: Batch(batch)}
 	return toolResult{text: fmt.Sprintf("suggested %s to %s %s; they wait on its page, %s, for the person to accept or decline each. Nothing is changed until they do.",
-		count(len(edits), "change"), t.Name, title, page), change: &c}
+		schema.Count(len(edits), "change"), t.Name, title, page), change: &c}
 }
 
 // Suggestions are those waiting on a record, oldest first.

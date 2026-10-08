@@ -4,15 +4,12 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
+	"github.com/tristanlawrenceguy/sameway/internal/when"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
-
-// ActivityType is the content type that logs every canvas change.
-const ActivityType = "activity"
 
 // Change is one canvas edit made during a turn or by a person. It is
 // stored on assistant messages (as the receipt shown under the reply) and
@@ -184,8 +181,8 @@ func Summarise(component string, props map[string]any) string {
 		if caption := pick("caption"); caption != "" {
 			return caption
 		}
-		if month, err := time.Parse("2006-01", pick("month")); err == nil {
-			return month.Format("January 2006")
+		if m := pick("month"); when.Month(m) != m {
+			return when.Month(m)
 		}
 	case ComponentName:
 		return "Conversation"

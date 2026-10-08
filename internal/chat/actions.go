@@ -15,10 +15,6 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
-// ActionType is the content type that holds a person's own actions: a
-// button that does something, inside Sameway or outside it.
-const ActionType = "action"
-
 // HTTPClient sends webhook actions. Tests point it at a local server.
 var HTTPClient = &http.Client{Timeout: 10 * time.Second}
 

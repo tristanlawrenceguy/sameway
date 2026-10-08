@@ -4,9 +4,9 @@ import (
 	"net/url"
 	"slices"
 	"strings"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
+	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // A calendar of several kinds (type: all, or types) narrowed to one: a row of
@@ -83,7 +83,7 @@ func calendarKinds(out map[string]any, at *collectionPlace, block string) {
 	if c, _ := out["caption"].(string); c != "" {
 		label += ": " + c
 	}
-	out["filter"] = map[string]any{"shape": "links", "label": label + ", " + monthLabel(month), "choices": []any{map[string]any{"label": "Kind", "options": opts}}}
+	out["filter"] = map[string]any{"shape": "links", "label": label + ", " + when.Month(month), "choices": []any{map[string]any{"label": "Kind", "options": opts}}}
 }
 
 // withKind is the page's address with this calendar's kind set, or taken
@@ -128,12 +128,4 @@ func keepKind(out map[string]any, param, kind string) {
 	if base, _ := out["dayBase"].(string); strings.HasSuffix(base, "?day=") {
 		out["dayBase"] = strings.TrimSuffix(base, "day=") + url.QueryEscape(param) + "=" + url.QueryEscape(kind) + "&day="
 	}
-}
-
-// monthLabel is a month as a person reads it: September 2026.
-func monthLabel(month string) string {
-	if m, err := time.Parse("2006-01", month); err == nil {
-		return m.Format("January 2006")
-	}
-	return month
 }

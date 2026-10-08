@@ -9,9 +9,6 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
-// BlockType is the content type that holds canvas items.
-const BlockType = "block"
-
 // ComponentName is the component that renders the conversation. It is a
 // block like any other, so it can be moved, restyled, or removed; the
 // server fills it with the live transcript when it renders the canvas.

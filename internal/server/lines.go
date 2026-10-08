@@ -7,6 +7,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // One change, one way of saying it. The activity log and the Changes made
@@ -153,7 +154,7 @@ func (s *Server) messageProps(m *store.Record, from string, latest bool) map[str
 	}
 	props := map[string]any{
 		"role": m.Fields["role"], "content": content, "id": "msg-" + m.ID, "from": from,
-		"time": messageTime(m.CreatedAt), "datetime": m.CreatedAt.UTC().Format(time.RFC3339),
+		"time": when.Sent(m.CreatedAt, time.Now()), "datetime": m.CreatedAt.UTC().Format(time.RFC3339),
 		"changes": s.receipt(m.Fields["changes"], latest),
 	}
 	if fileID, _ := m.Fields["file"].(string); fileID != "" {

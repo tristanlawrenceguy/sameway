@@ -15,9 +15,6 @@ import (
 // here, and giving access is always put to the owner first, so nobody can
 // let themselves in or raise their own level.
 
-// PersonType is the content type people are kept in.
-const PersonType = "person"
-
 var letInTool = llm.Tool{
 	Name:        "let_in",
 	Description: "Give someone access to this workspace from their own devices over Tailscale, or take it away, when the owner asks: \"let Bob edit\", \"Carol can look\", \"stop Bob\". They are matched by the email they sign in to Tailscale with, and reach the workspace once the owner shares this machine with them in Tailscale (or they are on the same tailnet). view reads only; edit changes content and the canvas and presses buttons; host is edit, and their own computer keeps a full copy of the workspace in step with this one (for when they host it too, with their own assistant); none takes access away. Giving access is put to the owner as a question for you, and nothing changes until they say yes; taking it away happens at once.",

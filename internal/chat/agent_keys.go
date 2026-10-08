@@ -20,9 +20,6 @@ import (
 // fingerprint is kept; the key is shown once, where it is made, and never
 // passes through the conversation.
 
-// AgentType holds the agents let in with keys.
-const AgentType = "agent"
-
 // KeyPrefix starts every agent key, so one is told from the MCP token.
 const KeyPrefix = "sw_"
 

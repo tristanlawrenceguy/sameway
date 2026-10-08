@@ -70,11 +70,13 @@ func setupWords(t *schema.Type, where []string, order string, choices []choice) 
 
 // countSaying is how many match, with what the list is set up to show.
 func countSaying(t *schema.Type, n int, setup string) string {
-	count := countWords(t, n)
-	if count == "" || setup == "" {
-		return count
+	if n == 0 {
+		return ""
 	}
-	return count + ", " + setup
+	if setup == "" {
+		return schema.Count(n, t.Name)
+	}
+	return schema.Count(n, t.Name) + ", " + setup
 }
 
 // canvasKeep makes the choices a person made on a collection its setup.

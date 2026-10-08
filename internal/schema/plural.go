@@ -1,6 +1,9 @@
 package schema
 
-import "strings"
+import (
+	"strconv"
+	"strings"
+)
 
 // irregular plurals English does not form by rule.
 var irregular = map[string]string{"person": "people", "child": "children", "mouse": "mice", "man": "men", "woman": "women"}
@@ -45,4 +48,14 @@ func Plural(name string) string {
 		return name[:len(name)-1] + "ies"
 	}
 	return name + "s"
+}
+
+// Count is how many of a type there are, in words: 1 task, 3 tasks, 0
+// tasks, 2 people. Every count of records said to a person or an agent
+// goes through it, so none says "1 tasks" or "2 persons".
+func Count(n int, name string) string {
+	if n == 1 {
+		return "1 " + Words(name)
+	}
+	return strconv.Itoa(n) + " " + Plural(name)
 }
