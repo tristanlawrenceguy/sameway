@@ -2,11 +2,10 @@ package server
 
 import (
 	"encoding/json"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"html/template"
 	"net/http"
 	"time"
-
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 )
 
 // Someone else in the house, on the same Wi-Fi: the owner names them and
@@ -48,8 +47,8 @@ func (s *Server) inviteForm() string {
 	return `<h3>Someone else on this Wi-Fi</h3><p>Invite someone in your home or office to open this workspace from their own phone or computer. They see only what you let them: to look, or to edit. Your conversations with the assistant stay yours.</p>` +
 		`<form method="post" action="/phone/invite" class="sw-stack">` +
 		string(s.component("text-field", map[string]any{"label": "Their name", "name": "name", "required": true, "autocomplete": "off"})) +
-		string(s.component("select", map[string]any{"label": "They may", "name": "access", "value": chat.Edit, "as": "radios",
-			"options": []any{map[string]any{"value": chat.Edit, "label": "Edit: add and change things"}, map[string]any{"value": chat.View, "label": "Look: read only"}}})) +
+		string(s.component("select", map[string]any{"label": "They may", "name": "access", "value": records.Edit, "as": "radios",
+			"options": []any{map[string]any{"value": records.Edit, "label": "Edit: add and change things"}, map[string]any{"value": records.View, "label": "Look: read only"}}})) +
 		string(s.component("button", map[string]any{"label": "Make an invite", "type": "submit", "variant": "secondary"})) + `</form>`
 }
 
@@ -103,7 +102,7 @@ func (s *Server) lanJoin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.saveLanInvites(kept)
-	p, err := s.app.Store.Get(chat.PersonType, found.Person)
+	p, err := s.app.Store.Get(records.PersonType, found.Person)
 	if err != nil {
 		lanSay(w, "The one this invite was for is no longer in this workspace.")
 		return
@@ -112,27 +111,27 @@ func (s *Server) lanJoin(w http.ResponseWriter, r *http.Request) {
 	secret := token(32)
 	device := name + "'s " + phoneName(r.UserAgent())
 	s.saveLanDevices(append(s.lanDevices(), lanDevice{ID: token(6), Hash: hashOf(secret), Name: device, Person: p.ID, Added: time.Now()}))
-	chat.Record(s.app.Store, "human", chat.Change{Action: "paired", Component: "device", Detail: device})
+	records.Record(s.app.Store, "human", records.Change{Action: "paired", Component: "device", Detail: device})
 	http.SetCookie(w, &http.Cookie{Name: lanCookie, Value: secret, Path: "/", HttpOnly: true, SameSite: http.SameSiteLaxMode, MaxAge: 400 * 24 * 3600})
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 // lanVisitor is who a paired device lets in: the owner, or the person it
 // was invited for, with what they may do now.
-func (s *Server) lanVisitor(d lanDevice) (chat.Visitor, bool) {
+func (s *Server) lanVisitor(d lanDevice) (records.Visitor, bool) {
 	if d.Person == "" {
-		return chat.Visitor{Access: chat.Owner, Name: "Owner", Device: d.Name}, true
+		return records.Visitor{Access: records.Owner, Name: "Owner", Device: d.Name}, true
 	}
-	p, err := s.app.Store.Get(chat.PersonType, d.Person)
+	p, err := s.app.Store.Get(records.PersonType, d.Person)
 	if err != nil {
-		return chat.Visitor{}, false
+		return records.Visitor{}, false
 	}
 	access, _ := p.Fields["access"].(string)
-	if access != chat.View && access != chat.Edit {
-		return chat.Visitor{}, false
+	if access != records.View && access != records.Edit {
+		return records.Visitor{}, false
 	}
 	name, _ := p.Fields["name"].(string)
-	return chat.Visitor{Person: p.ID, Name: name, Login: "device:" + d.ID, Access: access, Device: d.Name}, true
+	return records.Visitor{Person: p.ID, Name: name, Login: "device:" + d.ID, Access: access, Device: d.Name}, true
 }
 
 // mayWords is what an invited device may do, said beside it.
@@ -144,7 +143,7 @@ func (s *Server) mayWords(d lanDevice) string {
 	switch {
 	case !ok:
 		return ", shut out"
-	case v.Access == chat.View:
+	case v.Access == records.View:
 		return ", may look"
 	}
 	return ", may edit"

@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // TestUnresolvedNoteDetailShowsRawID seeds an activity entry where target is
@@ -27,7 +27,7 @@ func TestUnresolvedNoteDetailShowsRawID(t *testing.T) {
 	// Seed an activity entry where detail = raw note id (the bug condition).
 	// This simulates what happens when a record is stored with no title and
 	// recordTitle falls back to the id.
-	chat.Record(a.Store, "assistant", chat.Change{
+	records.Record(a.Store, "assistant", records.Change{
 		Action:    "created",
 		Component: "note",
 		ID:        note.ID,
@@ -70,7 +70,7 @@ func TestUnresolvedRecordComponentShowsLabelAndID(t *testing.T) {
 	wantDetail := "note " + note.ID // what Summarise("record",{type:"note",record: id}) produces
 
 	// Seed an activity entry mimicking what add_component(record, ...) writes.
-	chat.Record(a.Store, "assistant", chat.Change{
+	records.Record(a.Store, "assistant", records.Change{
 		Action:    "added",
 		Component: "record",
 		ID:        note.ID,
@@ -117,7 +117,7 @@ func TestResolvedRecordWithExistingTitleStillWorks(t *testing.T) {
 	}
 
 	// Seed an activity entry where detail is already the title (normal case).
-	chat.Record(a.Store, "assistant", chat.Change{
+	records.Record(a.Store, "assistant", records.Change{
 		Action:    "created",
 		Component: "note",
 		ID:        note.ID,

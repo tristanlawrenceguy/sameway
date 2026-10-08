@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -15,7 +15,7 @@ const standup = "[0:00] **Ann:** Morning, two things.\n\n[0:12] **Ben:** We ship
 // was said. It is one entry in the log, and one Undo takes it all back.
 func TestAMeetingIsWrittenUpFromItsRecording(t *testing.T) {
 	svc := newFullService(t)
-	file, err := svc.Store.Create(chat.FileType, map[string]any{"title": "Monday stand-up", "kind": "audio", "text": standup})
+	file, err := svc.Store.Create(records.FileType, map[string]any{"title": "Monday stand-up", "kind": "audio", "text": standup})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -28,7 +28,7 @@ func TestAMeetingIsWrittenUpFromItsRecording(t *testing.T) {
 	if !strings.Contains(out, "1 decision and 2 tasks") || !strings.Contains(out, "?show=points-here:task.event") {
 		t.Errorf("it says what it wrote: %s", out)
 	}
-	events, _ := svc.Store.List(chat.EventType, store.ListOptions{})
+	events, _ := svc.Store.List(records.EventType, store.ListOptions{})
 	if len(events) != 1 {
 		t.Fatalf("a meeting is made for the recording, got %d", len(events))
 	}
@@ -56,7 +56,7 @@ func TestAMeetingIsWrittenUpFromItsRecording(t *testing.T) {
 		t.Fatalf("a write-up is one entry, got %d", len(wrote))
 	}
 	run(t, svc, "undo_change", map[string]any{"id": wrote[0].ID})
-	if events, _ := svc.Store.List(chat.EventType, store.ListOptions{}); len(events) != 0 {
+	if events, _ := svc.Store.List(records.EventType, store.ListOptions{}); len(events) != 0 {
 		t.Error("undo takes the meeting it made away")
 	}
 	if tasks, _ := svc.Store.List("task", store.ListOptions{}); len(tasks) != 0 {
@@ -68,18 +68,18 @@ func TestAMeetingIsWrittenUpFromItsRecording(t *testing.T) {
 // puts it back as it was.
 func TestAnEventIsWrittenUpInPlace(t *testing.T) {
 	svc := newFullService(t)
-	file, _ := svc.Store.Create(chat.FileType, map[string]any{"title": "Call", "kind": "audio", "text": standup})
-	ev, err := svc.Store.Create(chat.EventType, map[string]any{"title": "Weekly call", "recording": file.ID})
+	file, _ := svc.Store.Create(records.FileType, map[string]any{"title": "Call", "kind": "audio", "text": standup})
+	ev, err := svc.Store.Create(records.EventType, map[string]any{"title": "Weekly call", "recording": file.ID})
 	if err != nil {
 		t.Fatal(err)
 	}
 	run(t, svc, "write_up_meeting", map[string]any{"event": ev.ID, "summary": "Short."})
-	now, _ := svc.Store.Get(chat.EventType, ev.ID)
+	now, _ := svc.Store.Get(records.EventType, ev.ID)
 	if now.Fields["summary"] != "Short." || now.Fields["title"] != "Weekly call" {
 		t.Errorf("written up in place: %v", now.Fields)
 	}
 	run(t, svc, "undo_change", map[string]any{"id": entries(t, svc, "wrote up")[0].ID})
-	if back, _ := svc.Store.Get(chat.EventType, ev.ID); back.Fields["summary"] != "" {
+	if back, _ := svc.Store.Get(records.EventType, ev.ID); back.Fields["summary"] != "" {
 		t.Errorf("undo puts it back as it was: %v", back.Fields)
 	}
 	refused(t, svc, "write_up_meeting", map[string]any{"summary": "Nothing to write it on."}, "give the event")

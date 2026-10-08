@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -16,7 +17,7 @@ import (
 // nobody's, as every chat did before there were other people.
 
 // For is the service as v has it. The owner has the service itself.
-func (s *Service) For(v Visitor) *Service {
+func (s *Service) For(v records.Visitor) *Service {
 	if v.Owner() || v.Access == "" {
 		return s
 	}
@@ -95,20 +96,6 @@ func (s *Service) whoPrompt() string {
 	return fmt.Sprintf("\n\nYou are talking with %s, whom the workspace's owner has let %s it from their own device. This is their own conversation; the owner does not see it. Settings, updating Sameway, reading pages in a browser and undoing are the owner's: if %s asks for one, say the owner can. What you ask them to agree to goes to the owner to answer.", name, s.who.Access, name)
 }
 
-// PersonColour is the colour someone's changes are shown in, 1 to 6, from
-// their login: the same person has the same colour on every computer.
-func PersonColour(login string) int {
-	login = strings.ToLower(strings.TrimSpace(login))
-	if login == "" {
-		return 0
-	}
-	h := uint32(2166136261)
-	for i := 0; i < len(login); i++ {
-		h = (h ^ uint32(login[i])) * 16777619
-	}
-	return int(h%6) + 1
-}
-
 // forYouPrompt tells the model what is for the one it is talking to: the
 // records that point at them as a person, not yet done, so "what is for
 // me?" has an answer.
@@ -122,9 +109,9 @@ func (s *Service) forYouPrompt() string {
 		return ""
 	}
 	var lines []string
-	for _, t := range s.contentTypes() {
+	for _, t := range records.ContentTypes(s.Store) {
 		for _, f := range t.Fields {
-			if f.Type != "ref" || f.To != PersonType {
+			if f.Type != "ref" || f.To != records.PersonType {
 				continue
 			}
 			recs, _ := s.Store.List(t.Name, store.ListOptions{OrderBy: "updated_at", Desc: true, Limit: 50})
@@ -132,7 +119,7 @@ func (s *Service) forYouPrompt() string {
 				if r.Fields[f.Name] != me.ID || t.Done(r.Fields) || len(lines) >= 10 {
 					continue
 				}
-				lines = append(lines, fmt.Sprintf("- %s: %s (/t/%s/%s)", t.Name, Name(s.Store, t, r), t.Name, r.ID))
+				lines = append(lines, fmt.Sprintf("- %s: %s (/t/%s/%s)", t.Name, records.Name(s.Store, t, r), t.Name, r.ID))
 			}
 		}
 	}

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
@@ -69,7 +70,7 @@ func (s *Server) chatDelete(w http.ResponseWriter, r *http.Request) {
 // lastAbout is the newest log entry about a kind of thing, so the outcome
 // of an action can offer to take it back.
 func (s *Server) lastAbout(target string) string {
-	recent, _ := s.app.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 5})
+	recent, _ := s.app.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 5})
 	for _, a := range recent {
 		if a.Fields["target"] == target {
 			return a.ID

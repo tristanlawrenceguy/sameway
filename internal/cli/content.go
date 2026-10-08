@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/export"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -97,7 +97,7 @@ func (c *ctx) contentCmd(typeName string) error {
 		if err != nil {
 			return err
 		}
-		rec, _, err := chat.WriteAs(a.Store, cliWho, "created", t.Name, "", fields)
+		rec, _, err := records.WriteAs(a.Store, cliWho, "created", t.Name, "", fields)
 		if err != nil {
 			return err
 		}
@@ -110,7 +110,7 @@ func (c *ctx) contentCmd(typeName string) error {
 		if err != nil {
 			return err
 		}
-		rec, _, err := chat.WriteAs(a.Store, cliWho, "updated", t.Name, positional[0], fields)
+		rec, _, err := records.WriteAs(a.Store, cliWho, "updated", t.Name, positional[0], fields)
 		if err != nil {
 			return err
 		}
@@ -119,7 +119,7 @@ func (c *ctx) contentCmd(typeName string) error {
 		if len(positional) != 1 {
 			return fmt.Errorf("usage: sameway %s delete <id>", t.Name)
 		}
-		if _, _, err := chat.WriteAs(a.Store, cliWho, "deleted", t.Name, positional[0], nil); err != nil {
+		if _, _, err := records.WriteAs(a.Store, cliWho, "deleted", t.Name, positional[0], nil); err != nil {
 			return err
 		}
 		c.print(map[string]any{"deleted": positional[0]}, func() { fmt.Fprintf(c.Stdout, "deleted %s %s\n", t.Name, positional[0]) })
@@ -130,7 +130,7 @@ func (c *ctx) contentCmd(typeName string) error {
 }
 
 // cliWho is the person at the command line, as the log says it.
-var cliWho = chat.Who{Actor: "human", Via: chat.ThroughCLI}
+var cliWho = records.Who{Actor: "human", Via: records.ThroughCLI}
 
 func fieldsFrom(sets []string, data string) (map[string]any, error) {
 	fields := map[string]any{}

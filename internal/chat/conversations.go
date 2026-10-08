@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
@@ -15,13 +16,13 @@ import (
 // recently, made when there is none yet.
 func (s *Service) Current() string {
 	if s.convo != "" {
-		if _, err := s.Store.Get(ConversationType, s.convo); err == nil {
+		if _, err := s.Store.Get(records.ConversationType, s.convo); err == nil {
 			return s.convo
 		}
 	}
 	all := s.Conversations()
 	if len(all) == 0 {
-		rec, err := s.Store.Create(ConversationType, map[string]any{"opened": now(), "person": s.whose()})
+		rec, err := s.Store.Create(records.ConversationType, map[string]any{"opened": now(), "person": s.whose()})
 		if err != nil {
 			return ""
 		}
@@ -35,7 +36,7 @@ func (s *Service) Current() string {
 // Conversations lists every chat of the one this service speaks for, the
 // most recently opened first.
 func (s *Service) Conversations() []*store.Record {
-	all, err := s.Store.List(ConversationType, store.ListOptions{})
+	all, err := s.Store.List(records.ConversationType, store.ListOptions{})
 	if err != nil {
 		return nil
 	}
@@ -62,10 +63,10 @@ func (s *Service) NewChat() (*store.Record, error) {
 	// again keeps it rather than leaving empty chats behind in the list.
 	if id := s.Current(); id != "" {
 		if msgs, err := s.MessagesIn(id); err == nil && len(msgs) == 0 {
-			return s.Store.Update(ConversationType, id, map[string]any{"opened": now()})
+			return s.Store.Update(records.ConversationType, id, map[string]any{"opened": now()})
 		}
 	}
-	rec, err := s.Store.Create(ConversationType, map[string]any{"opened": now(), "person": s.whose()})
+	rec, err := s.Store.Create(records.ConversationType, map[string]any{"opened": now(), "person": s.whose()})
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +79,7 @@ func (s *Service) OpenChat(id string) error {
 	if !s.theirs(id) {
 		return fmt.Errorf("there is no chat %q of yours", id)
 	}
-	if _, err := s.Store.Update(ConversationType, id, map[string]any{"opened": now()}); err != nil {
+	if _, err := s.Store.Update(records.ConversationType, id, map[string]any{"opened": now()}); err != nil {
 		return err
 	}
 	s.convo = id
@@ -96,20 +97,20 @@ func (s *Service) DeleteChat(id string) error {
 		return err
 	}
 	// Kept in the log, so the chat can be put back with every message.
-	conv, _ := s.Store.Get(ConversationType, id)
-	before := map[string]any{"messages": keptMessages(msgs)}
+	conv, _ := s.Store.Get(records.ConversationType, id)
+	before := map[string]any{"messages": records.Keep(msgs)}
 	title := ""
 	if conv != nil {
 		before["conversation"] = conv.Fields
 		title, _ = conv.Fields["title"].(string)
 	}
 	for _, m := range msgs {
-		s.Store.Delete(MessageType, m.ID)
+		s.Store.Delete(records.MessageType, m.ID)
 	}
-	if err := s.Store.Delete(ConversationType, id); err != nil {
+	if err := s.Store.Delete(records.ConversationType, id); err != nil {
 		return err
 	}
-	Record(s.Store, "human", Change{Action: "deleted", Component: "conversation", ID: id, Detail: title, Before: before})
+	records.Record(s.Store, "human", records.Change{Action: "deleted", Component: "conversation", ID: id, Detail: title, Before: before})
 	if s.convo == id {
 		s.convo = ""
 	}
@@ -139,7 +140,7 @@ func (s *Service) Title(c *store.Record) string {
 // MessagesIn are the messages of one chat, oldest first. A message from
 // before there were several chats names none, and belongs to the oldest.
 func (s *Service) MessagesIn(id string) ([]*store.Record, error) {
-	recs, err := s.Store.List(MessageType, store.ListOptions{OrderBy: "created_at"})
+	recs, err := s.Store.List(records.MessageType, store.ListOptions{OrderBy: "created_at"})
 	if err != nil {
 		return nil, err
 	}
@@ -169,15 +170,15 @@ func (s *Service) MessagesIn(id string) ([]*store.Record, error) {
 func (s *Service) message(fields map[string]any) (*store.Record, error) {
 	id := s.Current()
 	fields["conversation"] = id
-	rec, err := s.Store.Create(MessageType, s.fields(MessageType, fields))
+	rec, err := s.Store.Create(records.MessageType, s.fields(records.MessageType, fields))
 	if err != nil {
 		return nil, err
 	}
 	if fields["role"] == "user" && id != "" {
-		if c, err := s.Store.Get(ConversationType, id); err == nil {
+		if c, err := s.Store.Get(records.ConversationType, id); err == nil {
 			if title, _ := c.Fields["title"].(string); title == "" {
 				content, _ := fields["content"].(string)
-				s.Store.Update(ConversationType, id, map[string]any{"title": trim.Title(content), "opened": now()})
+				s.Store.Update(records.ConversationType, id, map[string]any{"title": trim.Title(content), "opened": now()})
 			}
 		}
 	}
@@ -208,26 +209,26 @@ func (s *Service) Clear() error {
 		return err
 	}
 	// Kept in the log, so the messages can be put back.
-	Record(s.Store, "human", c)
+	records.Record(s.Store, "human", c)
 	return nil
 }
 
 // clearing clears the conversation and says it as a change, with the
 // messages it had, for whoever cleared it to log.
-func (s *Service) clearing() (Change, error) {
+func (s *Service) clearing() (records.Change, error) {
 	msgs, err := s.Messages()
 	if err != nil {
-		return Change{}, err
+		return records.Change{}, err
 	}
-	c := Change{Action: "cleared", Component: "conversation", ID: s.Current(), Before: map[string]any{"messages": keptMessages(msgs)}}
+	c := records.Change{Action: "cleared", Component: "conversation", ID: s.Current(), Before: map[string]any{"messages": records.Keep(msgs)}}
 	// The questions the assistant asked were part of the conversation; a
 	// cleared one has no questions still waiting under it.
 	for _, p := range s.Proposals() {
-		s.Store.Update(ProposalType, p.ID, map[string]any{"state": "dismissed"})
+		s.Store.Update(records.ProposalType, p.ID, map[string]any{"state": "dismissed"})
 	}
 	for _, m := range msgs {
-		if err := s.Store.Delete(MessageType, m.ID); err != nil {
-			return Change{}, err
+		if err := s.Store.Delete(records.MessageType, m.ID); err != nil {
+			return records.Change{}, err
 		}
 	}
 	return c, nil
@@ -254,6 +255,6 @@ var (
 
 // theirs says whether a chat belongs to the one this service speaks for.
 func (s *Service) theirs(id string) bool {
-	c, err := s.Store.Get(ConversationType, id)
+	c, err := s.Store.Get(records.ConversationType, id)
 	return err == nil && s.mine(c)
 }

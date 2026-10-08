@@ -12,10 +12,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/mailin"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
 
@@ -171,7 +171,7 @@ func (s *Server) readMail(ctx context.Context) (int, error) {
 
 // mailNote is one email as a note to sort, its files kept beside it.
 func (s *Server) mailNote(m mailin.Mail) error {
-	who := chat.Who{Actor: "system", Via: "from email"}
+	who := records.Who{Actor: "system", Via: "from email"}
 	text := m.Text
 	if h := m.HTML(); h != "" {
 		text, _ = convert.HTMLToMarkdown(h)
@@ -197,7 +197,7 @@ func (s *Server) mailNote(m mailin.Mail) error {
 	if title == "" {
 		title = "Email from " + m.From
 	}
-	_, _, err := chat.WriteAs(s.app.Store, who, "created", "note", "", map[string]any{
+	_, _, err := records.WriteAs(s.app.Store, who, "created", "note", "", map[string]any{
 		"title": clipMail(title, 200), "body": strings.Join(parts, "\n\n"), "tags": []any{"email", toSort}})
 	return err
 }

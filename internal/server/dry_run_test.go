@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // A change sent as a dry run is answered as it would be, refusal and all,
@@ -23,7 +24,7 @@ func TestADryRunAnswersAndChangesNothing(t *testing.T) {
 		return res
 	}
 	before, _ := a.Store.Count("note")
-	logged, _ := a.Store.Count(chat.ActivityType)
+	logged, _ := a.Store.Count(records.ActivityType)
 
 	res := try(http.MethodPost, "/api/note", `{"title":"Only tried"}`)
 	if res.Code != http.StatusCreated || !strings.Contains(res.Body.String(), "Only tried") || res.Header().Get("Sameway-Dry-Run") == "" {
@@ -38,7 +39,7 @@ func TestADryRunAnswersAndChangesNothing(t *testing.T) {
 	if now, _ := a.Store.Count("note"); now != before {
 		t.Errorf("a dry run made a note: %d, was %d", now, before)
 	}
-	if now, _ := a.Store.Count(chat.ActivityType); now != logged {
+	if now, _ := a.Store.Count(records.ActivityType); now != logged {
 		t.Errorf("a dry run was logged: %d, was %d", now, logged)
 	}
 	if chat.Workdir != workdir {

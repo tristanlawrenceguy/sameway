@@ -173,7 +173,7 @@ func (s *Server) modelUse(w http.ResponseWriter, r *http.Request) {
 		if c.ID != want {
 			continue
 		}
-		if s.app.Chat.SetSetting == nil {
+		if s.app.Records.SetSetting == nil {
 			s.failed(w, r, "Not connected", errors.New("this workspace has no settings file"), "/")
 			return
 		}
@@ -191,7 +191,7 @@ func (s *Server) modelUse(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		for _, kv := range c.Settings {
-			if err := s.app.Chat.SetSetting(kv[0], kv[1]); err != nil {
+			if err := s.app.Records.SetSetting(kv[0], kv[1]); err != nil {
 				s.failed(w, r, "Not connected", err, "/")
 				return
 			}

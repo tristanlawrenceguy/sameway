@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
@@ -19,7 +19,7 @@ import (
 // component that has more to show at that size is asked for its fullest
 // form, and one that has not simply arrives larger.
 func (s *Server) focusPage(w http.ResponseWriter, r *http.Request) {
-	rec, err := s.app.Store.Get(chat.BlockType, r.PathValue("id"))
+	rec, err := s.app.Store.Get(records.BlockType, r.PathValue("id"))
 	if err != nil {
 		s.fail(w, err)
 		return
@@ -69,7 +69,7 @@ func (s *Server) focusPage(w http.ResponseWriter, r *http.Request) {
 
 	var b strings.Builder
 	b.WriteString(`<div class="sw-focus"` + measurePage(r, "focus", "") + `>`)
-	b.WriteString(string(s.component("link", map[string]any{"href": chat.CanvasPath(canvasOf(rec.Fields)), "label": "Back", "context": "canvas", "look": "button"})))
+	b.WriteString(string(s.component("link", map[string]any{"href": records.CanvasPath(canvasOf(rec.Fields)), "label": "Back", "context": "canvas", "look": "button"})))
 	// The block's own page wears its list's colour, as the block does on
 	// the canvas.
 	dot := ""
@@ -106,7 +106,7 @@ func (s *Server) focusPage(w http.ResponseWriter, r *http.Request) {
 
 // expanded renders a component at its fullest, when it has one.
 func (s *Server) expanded(name string, props map[string]any, convo *conversation) template.HTML {
-	if name == chat.ComponentName {
+	if name == records.ComponentName {
 		out, err := s.app.Registry.RenderSlot(name, props, convo.Body)
 		if err == nil {
 			return out

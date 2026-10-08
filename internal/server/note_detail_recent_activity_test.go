@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // TestNoteDetailPageRecentActivityHasH3Headings checks that the note detail page's
@@ -21,9 +21,9 @@ func TestNoteDetailPageRecentActivityHasH3Headings(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Seed two distinct activity entries via chat.Record (the same way chat does).
-	chat.Record(a.Store, "assistant", chat.Change{Action: "created", Component: "note", ID: noteRec.ID, Detail: "Test Note"})
-	chat.Record(a.Store, "assistant", chat.Change{Action: "updated", Component: "note", ID: noteRec.ID, Detail: "Added content"})
+	// Seed two distinct activity entries via records.Record (the same way chat does).
+	records.Record(a.Store, "assistant", records.Change{Action: "created", Component: "note", ID: noteRec.ID, Detail: "Test Note"})
+	records.Record(a.Store, "assistant", records.Change{Action: "updated", Component: "note", ID: noteRec.ID, Detail: "Added content"})
 
 	body := get(t, h, "/t/note/"+noteRec.ID).Body.String()
 
@@ -66,7 +66,7 @@ func TestNoteDetailPageRecentActivitySummaryFromHeadingText(t *testing.T) {
 	}
 
 	// Seed an assistant activity about this note, with a whole summary.
-	chat.Record(a.Store, "assistant", chat.Change{Action: "updated", Component: "note", ID: noteRec.ID, Detail: "Shopping"})
+	records.Record(a.Store, "assistant", records.Change{Action: "updated", Component: "note", ID: noteRec.ID, Detail: "Shopping"})
 
 	body := get(t, h, "/t/note/"+noteRec.ID).Body.String()
 

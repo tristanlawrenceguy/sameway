@@ -7,7 +7,7 @@ import (
 	"io"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/update"
 )
 
@@ -65,6 +65,6 @@ func watchUpdates(ctx context.Context, out io.Writer, a *app.App) {
 		if o.Installed {
 			action = "updated to"
 		}
-		chat.Record(a.Store, "system", chat.Change{Action: action, Component: "sameway " + o.Latest})
+		records.Record(a.Store, "system", records.Change{Action: action, Component: "sameway " + o.Latest})
 	})
 }

@@ -5,16 +5,13 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"io/fs"
 	"os"
-	"path/filepath"
-	"sort"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/design"
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/content"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -31,6 +28,9 @@ type App struct {
 	// Mirror keeps content/ as the portable form of every record.
 	Mirror content.Mirror
 	Chat   *chat.Service
+	// Records are the workspace's records as every way in keeps them: the
+	// same Book the chat is built on. See internal/records.
+	Records *records.Book
 
 	schemaSeen schemaWatch // what schema/ held when last read; see reload.go
 }
@@ -59,16 +59,16 @@ func Load(dir string, memoryDB bool) (*App, error) {
 		st.Close()
 		return nil, err
 	}
-	a := &App{Workspace: ws, Types: types, Store: st, Registry: reg}
+	a := &App{Workspace: ws, Types: types, Store: st, Registry: reg, Records: &records.Book{Store: st, Setting: ws.Get}}
 	// The conversation, its questions and the log are history, not content;
 	// everything else is written to content/ as it changes.
 	a.Mirror = content.Mirror{Dir: ws.ContentDir(), Types: types, Skip: ownersTypes(types)}
 	st.AfterWrite = a.Mirror.Changed
 	a.share()
-	chat.Resay(st) // the log in today's words; see chat/names.go
-	sayTimes(ws)   // on the person's clock; clock.go
+	records.Resay(st) // the log in today's words; see records/names.go
+	sayTimes(ws)      // on the person's clock; clock.go
 	a.Chat = &chat.Service{
-		Store:        st,
+		Book:         a.Records,
 		Registry:     reg,
 		HistoryLimit: ws.Config.Chat.HistoryLimit,
 		ExtraPrompt:  ws.Config.Chat.SystemPrompt,
@@ -81,7 +81,7 @@ func Load(dir string, memoryDB bool) (*App, error) {
 	llmCfg.Executable, _ = os.Executable()
 	a.Chat.Provider, a.Chat.ProviderErr = llm.New(llmCfg)
 	a.Chat.Allow = allowList(ws.Config.Actions.Allow)
-	a.Chat.SetSetting = func(key, value string) error {
+	a.Records.SetSetting = func(key, value string) error {
 		if err := ws.Set(key, value); err != nil {
 			return err
 		}
@@ -98,84 +98,12 @@ func Load(dir string, memoryDB bool) (*App, error) {
 		}
 		return nil
 	}
-	a.Chat.Setting = ws.Get
 	a.Chat.AddField, a.Chat.AddType, a.Chat.Reshape = a.AddField, a.AddType, a
 	// Keeping the program current is the program's own business, not the
 	// workspace's: the updater needs nothing from here.
 	a.Chat.Update = update.Updater{}.Run
 	chat.Workdir = ws.Dir
 	return a, nil
-}
-
-// NewRegistry loads the built-in components and then the workspace ones.
-func NewRegistry(workspaceComponents string) (*render.Registry, error) {
-	reg := render.New()
-	tokensCSS, err := fs.ReadFile(design.FS, "tokens/tokens.css")
-	if err != nil {
-		return nil, fmt.Errorf("design tokens missing; run `go run ./tools/tokens`: %w", err)
-	}
-	baseCSS, err := baseStyles()
-	if err != nil {
-		return nil, err
-	}
-	reg.SetBase(string(tokensCSS), baseCSS)
-	baseJS, err := baseScripts()
-	if err != nil {
-		return nil, err
-	}
-	reg.SetBaseJS(baseJS)
-	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
-		return nil, err
-	}
-	if err := reg.LoadArrangementsFS(design.FS, "arrangements", "builtin"); err != nil {
-		return nil, err
-	}
-	if workspaceComponents != "" {
-		if err := reg.LoadDir(workspaceComponents, "workspace"); err != nil {
-			return nil, err
-		}
-		// A workspace may keep arrangements of its own beside its components.
-		if err := reg.LoadArrangementsDir(filepath.Join(filepath.Dir(workspaceComponents), "arrangements"), "workspace"); err != nil {
-			return nil, err
-		}
-	}
-	return reg, nil
-}
-
-// baseStyles concatenates every stylesheet in design/base in filename
-// order. The files are numbered so the order is deterministic and each one
-// covers a single concern.
-func baseStyles() (string, error) {
-	return concatBase(".css")
-}
-
-func concatBase(ext string) (string, error) {
-	entries, err := fs.ReadDir(design.FS, "base")
-	if err != nil {
-		return "", err
-	}
-	names := make([]string, 0, len(entries))
-	for _, e := range entries {
-		if strings.HasSuffix(e.Name(), ext) {
-			names = append(names, e.Name())
-		}
-	}
-	sort.Strings(names)
-	var b strings.Builder
-	for _, n := range names {
-		src, err := fs.ReadFile(design.FS, "base/"+n)
-		if err != nil {
-			return "", err
-		}
-		fmt.Fprintf(&b, "\n/* base: %s */\n%s", n, src)
-	}
-	return b.String(), nil
-}
-
-// baseScripts concatenates every script in design/base, the same way its
-// stylesheets are concatenated.
-func baseScripts() (string, error) {
-	return concatBase(".js")
 }
 
 // Close releases the store.

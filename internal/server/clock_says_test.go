@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
@@ -52,7 +52,7 @@ func TestTheClockSaysWhatItSet(t *testing.T) {
 // another day has its day above its time.
 func TestComingUpIsOneListInTimeOrder(t *testing.T) {
 	a, h := newApp(t)
-	if _, err := a.Store.Create(chat.BlockType, a.Chat.BlockFields(map[string]any{"component": "clock", "props": map[string]any{}})); err != nil {
+	if _, err := a.Store.Create(records.BlockType, a.Chat.BlockFields(map[string]any{"component": "clock", "props": map[string]any{}})); err != nil {
 		t.Fatal(err)
 	}
 	now := time.Now()

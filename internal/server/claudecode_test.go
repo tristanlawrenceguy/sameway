@@ -13,6 +13,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
@@ -69,7 +70,7 @@ func TestARealTurnThroughClaudeCode(t *testing.T) {
 	if live == 0 || kinds[len(kinds)-1] != "done" {
 		t.Errorf("changes are told as they land, before the turn is done; events %v", kinds)
 	}
-	blocks, _ := a.Store.List(chat.BlockType, store.ListOptions{})
+	blocks, _ := a.Store.List(records.BlockType, store.ListOptions{})
 	if len(blocks) == 0 {
 		t.Error("a block is on the canvas afterwards")
 	}

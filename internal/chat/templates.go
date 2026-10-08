@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 )
 
@@ -63,10 +64,10 @@ func (s *Service) UseTemplate(name, actor string) (string, error) {
 			return fmt.Errorf("%s", r.text)
 		}
 		if r.change != nil {
-			Record(s.Store, actor, *r.change)
+			records.Record(s.Store, actor, *r.change)
 		}
 		for _, c := range r.changes {
-			Record(s.Store, actor, c)
+			records.Record(s.Store, actor, c)
 		}
 		return nil
 	}

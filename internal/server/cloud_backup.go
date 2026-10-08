@@ -55,6 +55,7 @@ func (s *Server) cloudCopies(folder string) []string {
 // KeepCloudCopy puts today's copy in the cloud folder, once a day, while
 // ctx lasts.
 func (s *Server) KeepCloudCopy(ctx context.Context) {
+	s.KeepCloudSync(ctx) // and other computers kept in step through it; cloud_sync.go
 	go func() {
 		tick := time.NewTicker(time.Hour)
 		defer tick.Stop()
@@ -190,11 +191,11 @@ func (s *Server) cloudSection() string {
 func (s *Server) cloudSet(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	folder := r.PostForm.Get("folder")
-	if s.app.Chat.SetSetting == nil {
+	if s.app.Records.SetSetting == nil {
 		s.failed(w, r, "Not changed", errors.New("this workspace has no settings file"), "/workspaces")
 		return
 	}
-	if err := s.app.Chat.SetSetting("backup.folder", folder); err != nil {
+	if err := s.app.Records.SetSetting("backup.folder", folder); err != nil {
 		s.failed(w, r, "Not changed", err, "/workspaces")
 		return
 	}

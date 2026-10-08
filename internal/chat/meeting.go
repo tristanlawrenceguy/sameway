@@ -6,6 +6,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
 
@@ -24,7 +25,7 @@ type meetingItem struct {
 }
 
 func (s *Service) meetingTools() []llm.Tool {
-	if _, ok := s.Store.Types().Get(EventType); !ok {
+	if _, ok := s.Store.Types().Get(records.EventType); !ok {
 		return nil
 	}
 	at := map[string]any{"type": "string", "description": "Where in the recording it was said, as the transcript's [m:ss] or [h:mm:ss] gives it, such as 12:03. Leave out when it was not."}
@@ -49,10 +50,10 @@ func (s *Service) writeUpMeeting(eventID, fileID, summary string, decisions, tas
 	if eventID == "" && fileID == "" {
 		return fail("give the event of the meeting, or the recording to make one for; find_records on event or on file")
 	}
-	var batch []BatchItem
+	var batch []records.BatchItem
 	var event map[string]any
 	if eventID != "" {
-		rec, err := s.Store.Get(EventType, eventID)
+		rec, err := s.Store.Get(records.EventType, eventID)
 		if err != nil {
 			return fail("no event %s; find_records on event, or give only the recording to make one", eventID)
 		}
@@ -64,7 +65,7 @@ func (s *Service) writeUpMeeting(eventID, fileID, summary string, decisions, tas
 	var heard []convert.Cue
 	var recordingTitle string
 	if fileID != "" {
-		file, err := s.Store.Get(FileType, fileID)
+		file, err := s.Store.Get(records.FileType, fileID)
 		if err != nil {
 			return fail("no file %s; find_records on file for the recording", fileID)
 		}
@@ -86,17 +87,17 @@ func (s *Service) writeUpMeeting(eventID, fileID, summary string, decisions, tas
 	}
 	if event == nil {
 		fields["title"] = strings.TrimSpace("Meeting: " + recordingTitle)
-		rec, _, err := Write(s.Store, "created", EventType, "", fields)
+		rec, _, err := records.Write(s.Store, "created", records.EventType, "", fields)
 		if err != nil {
 			return fail("the meeting could not be made: %v", err)
 		}
 		eventID, event = rec.ID, rec.Fields
-		batch = append(batch, BatchItem{Type: EventType, ID: rec.ID})
+		batch = append(batch, records.BatchItem{Type: records.EventType, ID: rec.ID})
 	} else {
-		if _, _, err := Write(s.Store, "updated", EventType, eventID, fields); err != nil {
+		if _, _, err := records.Write(s.Store, "updated", records.EventType, eventID, fields); err != nil {
 			return fail("the meeting could not be written up: %v", err)
 		}
-		batch = append(batch, BatchItem{Type: EventType, ID: eventID, Before: event})
+		batch = append(batch, records.BatchItem{Type: records.EventType, ID: eventID, Before: event})
 	}
 
 	made := 0
@@ -115,13 +116,13 @@ func (s *Service) writeUpMeeting(eventID, fileID, summary string, decisions, tas
 		if t.For != "" {
 			f["for"] = t.For
 		}
-		rec, _, err := Write(s.Store, "created", "task", "", f)
+		rec, _, err := records.Write(s.Store, "created", "task", "", f)
 		if err != nil {
 			// What was written stays one batch, so Undo still takes it all.
 			s.recordBatch(eventID, event, made, len(lines), batch)
 			return fail("the meeting is written up, but the task %q could not be made: %v; make it with create_record", title, err)
 		}
-		batch = append(batch, BatchItem{Type: "task", ID: rec.ID})
+		batch = append(batch, records.BatchItem{Type: "task", ID: rec.ID})
 		made++
 	}
 	c := s.recordBatch(eventID, event, made, len(lines), batch)
@@ -131,11 +132,11 @@ func (s *Service) writeUpMeeting(eventID, fileID, summary string, decisions, tas
 }
 
 // recordBatch is the write-up as one change, for the log and its Undo.
-func (s *Service) recordBatch(eventID string, event map[string]any, tasks, decisions int, batch []BatchItem) Change {
+func (s *Service) recordBatch(eventID string, event map[string]any, tasks, decisions int, batch []records.BatchItem) records.Change {
 	title, _ := event["title"].(string)
 	// Its page shows the tasks that came up at it: a write-up asks for them.
-	return Change{Action: "wrote up", Component: EventType, ID: eventID, Href: "/t/" + EventType + "/" + eventID + "?show=points-here:task.event",
-		Detail: fmt.Sprintf("%s, %s and %s", title, schema.Count(decisions, "decision"), schema.Count(tasks, "task")), Before: Batch(batch)}
+	return records.Change{Action: "wrote up", Component: records.EventType, ID: eventID, Href: "/t/" + records.EventType + "/" + eventID + "?show=points-here:task.event",
+		Detail: fmt.Sprintf("%s, %s and %s", title, schema.Count(decisions, "decision"), schema.Count(tasks, "task")), Before: records.Batch(batch)}
 }
 
 // moment is " (at 12:03)" linked to that line of the recording's
@@ -156,7 +157,7 @@ func moment(fileID string, heard []convert.Cue, at string) string {
 			start = int(c.Start)
 		}
 	}
-	return fmt.Sprintf(" ([at %s](/t/%s/%s#media-%s-at-%d))", convert.Clock(float64(start)), FileType, fileID, fileID, start)
+	return fmt.Sprintf(" ([at %s](/t/%s/%s#media-%s-at-%d))", convert.Clock(float64(start)), records.FileType, fileID, fileID, start)
 }
 
 // clockSeconds reads 12:03 or 1:02:03 as seconds.

@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
@@ -99,7 +100,7 @@ func (s *Service) notTheComing(ats []time.Time, named []time.Weekday, now time.T
 
 // weekdaysSaid is the weekdays the person named in their latest message.
 func (s *Service) weekdaysSaid() []time.Weekday {
-	msgs, _ := s.Store.List(MessageType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 10})
+	msgs, _ := s.Store.List(records.MessageType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 10})
 	for _, m := range msgs {
 		if m.Fields["role"] != "user" {
 			continue

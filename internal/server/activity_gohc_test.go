@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // TestActivityFilterHidesGoHttpClient checks that "Go-http-client" is not
@@ -16,13 +16,13 @@ func TestActivityFilterHidesGoHttpClient(t *testing.T) {
 	a, h := newApp(t)
 	seedLog(t, a, h)
 	// Create an activity entry with Go-http-client as the agent name.
-	chat.Record(a.Store, chat.ActorAgent, chat.Change{
+	records.Record(a.Store, records.ActorAgent, records.Change{
 		Action:    "added",
 		Component: "note",
 		ID:        "n-gohc",
 		Detail:    "Go-Client note",
 		By:        "Go-http-client",
-		Via:       chat.ThroughAPI,
+		Via:       records.ThroughAPI,
 	})
 
 	body := get(t, h, "/activity").Body.String()

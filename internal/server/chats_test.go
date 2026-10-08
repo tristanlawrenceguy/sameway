@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // From the page, a person starts a new chat, goes back to an earlier one,
@@ -48,7 +48,7 @@ func TestAPersonMovesBetweenChats(t *testing.T) {
 	if len(a.Chat.Conversations()) != 1 {
 		t.Error("the deleted chat is gone")
 	}
-	if n, _ := a.Store.Count(chat.MessageType); n != 2 {
+	if n, _ := a.Store.Count(records.MessageType); n != 2 {
 		t.Errorf("and its messages with it, leaving the first chat's two, got %d", n)
 	}
 }

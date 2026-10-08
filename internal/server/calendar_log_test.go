@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
@@ -23,7 +23,7 @@ func TestACalendarOfEntriesLogsForTheDayShown(t *testing.T) {
 	day := time.Now().AddDate(0, 0, -3)
 	on := day.Format("2006-01-02")
 	entry, _ := a.Store.Create(server.EntryType, map[string]any{"habit": hours.ID, "at": when.Store(day, true), "amount": 2})
-	cal, err := a.Store.Create(chat.BlockType, a.Chat.BlockFields(map[string]any{"component": "calendar", "props": map[string]any{"type": "entry", "where": []any{"habit=" + hours.ID}}}))
+	cal, err := a.Store.Create(records.BlockType, a.Chat.BlockFields(map[string]any{"component": "calendar", "props": map[string]any{"type": "entry", "where": []any{"habit=" + hours.ID}}}))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -58,7 +58,7 @@ func TestACalendarOfEntriesLogsForTheDayShown(t *testing.T) {
 	}
 
 	// A calendar of words, not records, offers nothing to log.
-	words, _ := a.Store.Create(chat.BlockType, a.Chat.BlockFields(map[string]any{"component": "calendar", "props": map[string]any{"events": []any{map[string]any{"date": on, "label": "Dentist"}}}}))
+	words, _ := a.Store.Create(records.BlockType, a.Chat.BlockFields(map[string]any{"component": "calendar", "props": map[string]any{"events": []any{map[string]any{"date": on, "label": "Dentist"}}}}))
 	if page := get(t, h, "/canvas/"+words.ID+"?day="+on).Body.String(); strings.Contains(page, "sw-calendar__add") {
 		t.Error("a calendar without a type offers nothing to log")
 	}

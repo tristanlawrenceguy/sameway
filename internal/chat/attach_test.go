@@ -10,6 +10,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -41,7 +42,7 @@ func withFiles(t *testing.T, steps ...*llm.Response) (*chat.Service, *scripted) 
 		t.Fatal(err)
 	}
 	m := &scripted{steps: steps}
-	return &chat.Service{Store: st, Registry: reg, Provider: m, HistoryLimit: 10}, m
+	return &chat.Service{Book: &records.Book{Store: st}, Registry: reg, Provider: m, HistoryLimit: 10}, m
 }
 
 // The model gets what a file says with the message it came with, and is

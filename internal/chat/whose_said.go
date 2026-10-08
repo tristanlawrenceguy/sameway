@@ -5,6 +5,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -20,7 +21,7 @@ import (
 func (s *Service) whoseSaid(t *schema.Type, rec *store.Record) string {
 	var field string
 	for _, f := range t.Fields {
-		if f.Type == "ref" && f.To == PersonType {
+		if f.Type == "ref" && f.To == records.PersonType {
 			if v, _ := rec.Fields[f.Name].(string); v != "" {
 				return ""
 			}
@@ -32,14 +33,14 @@ func (s *Service) whoseSaid(t *schema.Type, rec *store.Record) string {
 	if field == "" {
 		return ""
 	}
-	if _, ok := s.Store.Types().Get(PersonType); !ok {
+	if _, ok := s.Store.Types().Get(records.PersonType); !ok {
 		return ""
 	}
-	people, err := s.Store.List(PersonType, store.ListOptions{})
+	people, err := s.Store.List(records.PersonType, store.ListOptions{})
 	if err != nil {
 		return ""
 	}
-	title, body := recordTitle(s.Store, t, rec), ""
+	title, body := records.Title(s.Store, t, rec), ""
 	for _, f := range t.Fields {
 		if v, ok := rec.Fields[f.Name].(string); ok && (f.Type == "text" || f.Type == "markdown" || f.Type == "string") {
 			body += " " + v
@@ -50,7 +51,7 @@ func (s *Service) whoseSaid(t *schema.Type, rec *store.Record) string {
 	for _, p := range people {
 		name, _ := p.Fields["name"].(string)
 		if name != "" && namedIn(name, words) {
-			found = append(found, fmt.Sprintf("%s (%s %s)", name, PersonType, p.ID))
+			found = append(found, fmt.Sprintf("%s (%s %s)", name, records.PersonType, p.ID))
 		}
 	}
 	if len(found) != 1 {

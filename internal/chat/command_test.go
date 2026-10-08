@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -51,7 +52,7 @@ func TestACommandRunsOnlyOnceThePersonHasAcceptedIt(t *testing.T) {
 	svc := newFullService(t)
 	allowHelper(svc)
 	line := echoLine("hello there")
-	action, err := svc.Store.Create(chat.ActionType, map[string]any{"title": "Say hello", "kind": "command", "command": line, "show": true})
+	action, err := svc.Store.Create(records.ActionType, map[string]any{"title": "Say hello", "kind": "command", "command": line, "show": true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -66,7 +67,7 @@ func TestACommandRunsOnlyOnceThePersonHasAcceptedIt(t *testing.T) {
 	if len(pending) != 1 || !strings.Contains(pending[0].Fields["detail"].(string), "hello there") {
 		t.Fatalf("the question should show the command line, got %v", pending)
 	}
-	if blocks, _ := svc.Store.List(chat.BlockType, store.ListOptions{}); len(blocks) != 0 {
+	if blocks, _ := svc.Store.List(records.BlockType, store.ListOptions{}); len(blocks) != 0 {
 		t.Fatal("nothing should have run before acceptance")
 	}
 
@@ -74,11 +75,11 @@ func TestACommandRunsOnlyOnceThePersonHasAcceptedIt(t *testing.T) {
 	if err := svc.Accept(pending[0].ID); err != nil {
 		t.Fatal(err)
 	}
-	blocks, _ := svc.Store.List(chat.BlockType, store.ListOptions{})
+	blocks, _ := svc.Store.List(records.BlockType, store.ListOptions{})
 	if len(blocks) != 1 || !strings.Contains(blocks[0].Fields["props"].(map[string]any)["content"].(string), "hello there") {
 		t.Fatalf("accepting should run the command and show what it printed, got %v", blocks)
 	}
-	rec, _ := svc.Store.Get(chat.ActionType, action.ID)
+	rec, _ := svc.Store.Get(records.ActionType, action.ID)
 	if rec.Fields["accepted"] != line {
 		t.Errorf("the accepted line is kept on the action, got %v", rec.Fields["accepted"])
 	}
@@ -98,7 +99,7 @@ func TestACommandRunsOnlyOnceThePersonHasAcceptedIt(t *testing.T) {
 	if _, proposal, err := svc.RunAs(context.Background(), "human", action.ID, ""); err != nil || proposal != "" {
 		t.Errorf("a person's press runs it without asking again: %v %q", err, proposal)
 	}
-	log, _ := svc.Store.List(chat.ActivityType, store.ListOptions{})
+	log, _ := svc.Store.List(records.ActivityType, store.ListOptions{})
 	ran := 0
 	for _, e := range log {
 		if e.Fields["action"] == "ran" {
@@ -110,14 +111,14 @@ func TestACommandRunsOnlyOnceThePersonHasAcceptedIt(t *testing.T) {
 	}
 
 	// A changed command line is a new question.
-	svc.Store.Update(chat.ActionType, action.ID, map[string]any{"command": echoLine("something else")})
+	svc.Store.Update(records.ActionType, action.ID, map[string]any{"command": echoLine("something else")})
 	if text, isErr := svc.Call("run_action", raw); isErr || !strings.Contains(text, "has not been accepted") {
 		t.Errorf("a changed command asks again, got err=%v %q", isErr, text)
 	}
 	// A failing command says so and is an error to the caller.
 	os.Setenv("SAMEWAY_FAKE_EXIT", "3")
 	defer os.Unsetenv("SAMEWAY_FAKE_EXIT")
-	bad, _ := svc.Store.Create(chat.ActionType, map[string]any{"title": "Fail", "kind": "command", "command": echoLine("boom"), "accepted": echoLine("boom")})
+	bad, _ := svc.Store.Create(records.ActionType, map[string]any{"title": "Fail", "kind": "command", "command": echoLine("boom"), "accepted": echoLine("boom")})
 	if text, isErr := press(svc, bad.ID); !isErr || !strings.Contains(text, "exit code 3") {
 		t.Errorf("a failing command reports its exit code as an error, got err=%v %q", isErr, text)
 	}
@@ -132,7 +133,7 @@ func TestACommandStaysInsideTheBoundary(t *testing.T) {
 
 	// Not allowed: nothing runs, accepted or not, and the message says how
 	// to allow it.
-	action, _ := svc.Store.Create(chat.ActionType, map[string]any{"title": "Say hello", "kind": "command", "command": echoLine("hi"), "accepted": echoLine("hi")})
+	action, _ := svc.Store.Create(records.ActionType, map[string]any{"title": "Say hello", "kind": "command", "command": echoLine("hi"), "accepted": echoLine("hi")})
 	if text, isErr := press(svc, action.ID); !isErr || !strings.Contains(text, "actions.allow") {
 		t.Errorf("a program not on the allow list is refused with the way to allow it, got err=%v %q", isErr, text)
 	}
@@ -149,7 +150,7 @@ func TestACommandStaysInsideTheBoundary(t *testing.T) {
 	// No shell: what would be a pipe or a second command is only words
 	// handed to the program.
 	shelly := echoLine(`one "two words" | rm -rf ; echo three && four`)
-	svc.Store.Update(chat.ActionType, action.ID, map[string]any{"command": shelly, "accepted": shelly})
+	svc.Store.Update(records.ActionType, action.ID, map[string]any{"command": shelly, "accepted": shelly})
 	text, isErr := press(svc, action.ID)
 	if isErr || !strings.Contains(text, "one two words | rm -rf ; echo three && four") {
 		t.Errorf("the line is arguments to the program and nothing more, got err=%v %q", isErr, text)
@@ -158,12 +159,12 @@ func TestACommandStaysInsideTheBoundary(t *testing.T) {
 	// The folder must be the workspace or under it.
 	chat.Workdir = t.TempDir()
 	defer func() { chat.Workdir = "" }()
-	svc.Store.Update(chat.ActionType, action.ID, map[string]any{"folder": filepath.Dir(chat.Workdir)})
+	svc.Store.Update(records.ActionType, action.ID, map[string]any{"folder": filepath.Dir(chat.Workdir)})
 	if text, isErr := press(svc, action.ID); !isErr || !strings.Contains(text, "outside the workspace") {
 		t.Errorf("a folder outside the workspace is refused, got err=%v %q", isErr, text)
 	}
 	os.MkdirAll(filepath.Join(chat.Workdir, "sub"), 0o755)
-	svc.Store.Update(chat.ActionType, action.ID, map[string]any{"folder": "sub"})
+	svc.Store.Update(records.ActionType, action.ID, map[string]any{"folder": "sub"})
 	if text, isErr := press(svc, action.ID); isErr || !strings.Contains(text, "exit code 0") {
 		t.Errorf("a folder under the workspace is fine, got err=%v %q", isErr, text)
 	}

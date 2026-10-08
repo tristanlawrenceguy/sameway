@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
@@ -130,7 +130,7 @@ func (s *Server) reviewDone(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) reviewWrite(w http.ResponseWriter, r *http.Request, fields map[string]any, said string) {
 	id := r.PostForm.Get("id")
-	rec, act, err := chat.WriteAs(s.app.Store, s.who(r), "updated", "task", id, fields)
+	rec, act, err := records.WriteAs(s.app.Store, s.who(r), "updated", "task", id, fields)
 	if err != nil {
 		s.failed(w, r, "Not changed", err, "/review")
 		return
@@ -183,11 +183,11 @@ func (s *Server) reviewLine() string {
 func (s *Server) reviewOn(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	on := strings.ToLower(strings.TrimSpace(r.PostForm.Get("on")))
-	if s.app.Chat.SetSetting == nil {
+	if s.app.Records.SetSetting == nil {
 		s.failed(w, r, "Not set", errors.New("this workspace has no settings file"), "/help")
 		return
 	}
-	if err := s.app.Chat.SetSetting("review.on", on); err != nil {
+	if err := s.app.Records.SetSetting("review.on", on); err != nil {
 		s.failed(w, r, "Not set", err, "/help")
 		return
 	}

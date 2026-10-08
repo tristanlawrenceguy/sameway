@@ -3,7 +3,7 @@ package chat_test
 import (
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // written_by says who wrote a record's words in plain words, from the
@@ -12,7 +12,7 @@ import (
 // Only what came from beyond the owner and their assistant is outside.
 func TestWrittenBySaysWhoInPlainWords(t *testing.T) {
 	svc := newFullService(t)
-	svc.Owner = chat.Visitor{Login: "me@example.com"}
+	svc.Owner = records.Visitor{Login: "me@example.com"}
 	note := func(title string) string {
 		rec, err := svc.Store.Create("note", map[string]any{"title": title})
 		if err != nil {
@@ -21,22 +21,22 @@ func TestWrittenBySaysWhoInPlainWords(t *testing.T) {
 		return rec.ID
 	}
 	mine, token, bobs, imported, assisted, silent := note("Mine"), note("Token"), note("Bob's"), note("Mail"), note("Assisted"), note("Old")
-	log := func(actor, id string, c chat.Change) {
+	log := func(actor, id string, c records.Change) {
 		c.Component, c.ID = "note", id
 		if c.Action == "" {
 			c.Action = "created"
 		}
-		chat.Record(svc.Store, actor, c)
+		records.Record(svc.Store, actor, c)
 	}
-	log("human", mine, chat.Change{ByLogin: "me@example.com", Via: "phone"})
-	log("human", token, chat.Change{Via: chat.ThroughAPI})
-	log("human", bobs, chat.Change{By: "Bob", ByLogin: "bob@example.com"})
-	log("human", assisted, chat.Change{})
-	log("assistant", assisted, chat.Change{Action: "updated"})
-	chat.Record(svc.Store, "human", chat.Change{Action: "imported", Component: "note", Detail: "1 notes from inbox.mbox", Before: chat.Imported("note", []string{imported})})
+	log("human", mine, records.Change{ByLogin: "me@example.com", Via: "phone"})
+	log("human", token, records.Change{Via: records.ThroughAPI})
+	log("human", bobs, records.Change{By: "Bob", ByLogin: "bob@example.com"})
+	log("human", assisted, records.Change{})
+	log("assistant", assisted, records.Change{Action: "updated"})
+	records.Record(svc.Store, "human", records.Change{Action: "imported", Component: "note", Detail: "1 notes from inbox.mbox", Before: records.Imported("note", []string{imported})})
 
 	w := svc.Writers()
-	for id, want := range map[string]chat.Writer{
+	for id, want := range map[string]records.Writer{
 		mine:     {Words: "the owner"},
 		token:    {Words: "the owner's API token"},
 		bobs:     {Words: "Bob, another person", Outside: true},
@@ -48,7 +48,7 @@ func TestWrittenBySaysWhoInPlainWords(t *testing.T) {
 			t.Errorf("%s: got %+v, want %+v", id, got, want)
 		}
 	}
-	if got := svc.For(chat.Visitor{Access: chat.Public}).Writers().OfID("note", bobs).Words; got != "another person" {
+	if got := svc.For(records.Visitor{Access: records.Public}).Writers().OfID("note", bobs).Words; got != "another person" {
 		t.Errorf("the internet is not told another person's name: %q", got)
 	}
 }

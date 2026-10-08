@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 )
 
@@ -46,7 +46,7 @@ func TestEveryRouteSaysWhoMayUseIt(t *testing.T) {
 // internal kinds are not taken out.
 func TestAVisitorCannotTakeTheOwnersRecordsAway(t *testing.T) {
 	_, h := newApp(t)
-	viewer := chat.Visitor{Name: "Vi", Login: "vi@example.com", Access: chat.View}
+	viewer := records.Visitor{Name: "Vi", Login: "vi@example.com", Access: records.View}
 	for _, path := range []string{"/export/activity.csv", "/export/message.xlsx", "/export/conversation.csv", "/t/activity", "/api/activity", "/api/workspaces", "/workspaces"} {
 		if res := as(t, h, viewer, http.MethodGet, path, "", ""); res.Code != http.StatusForbidden {
 			t.Errorf("a viewer reads %s: %d", path, res.Code)
@@ -62,8 +62,8 @@ func TestAVisitorCannotTakeTheOwnersRecordsAway(t *testing.T) {
 // editor add_type and add_field and a viewer neither.
 func TestTheShapeIsAnEditorsOverEveryWayIn(t *testing.T) {
 	a, h := newApp(t)
-	editor := chat.Visitor{Name: "Bob", Login: "bob@example.com", Access: chat.Edit}
-	viewer := chat.Visitor{Name: "Vi", Login: "vi@example.com", Access: chat.View}
+	editor := records.Visitor{Name: "Bob", Login: "bob@example.com", Access: records.Edit}
+	viewer := records.Visitor{Name: "Vi", Login: "vi@example.com", Access: records.View}
 	body := `{"name":"plant","description":"A plant in the garden","title":"name","fields":[{"name":"name","type":"string"}]}`
 	if res := as(t, h, viewer, http.MethodPost, "/api/types", body, "application/json"); res.Code != http.StatusForbidden {
 		t.Errorf("a viewer adds a type over the API: %d", res.Code)
@@ -71,7 +71,7 @@ func TestTheShapeIsAnEditorsOverEveryWayIn(t *testing.T) {
 	if res := as(t, h, editor, http.MethodPost, "/api/types", body, "application/json"); res.Code >= 300 {
 		t.Errorf("an editor adds a type over the API: %d %s", res.Code, res.Body.String())
 	}
-	has := func(v chat.Visitor, name string) bool {
+	has := func(v records.Visitor, name string) bool {
 		for _, tool := range a.Chat.For(v).Tools() {
 			if tool.Name == name {
 				return true

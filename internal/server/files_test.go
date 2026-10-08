@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -121,7 +121,7 @@ func TestChatTakesAFileWithTheMessage(t *testing.T) {
 	if !strings.Contains(last, "What does this say?") || !strings.Contains(last, "The pond needs a liner.") || !strings.Contains(last, "filed at /t/file/") {
 		t.Errorf("the model gets the words, the file's text and where it is filed: %q", last)
 	}
-	msgs, _ := a.Store.List(chat.MessageType, store.ListOptions{OrderBy: "created_at"})
+	msgs, _ := a.Store.List(records.MessageType, store.ListOptions{OrderBy: "created_at"})
 	if len(msgs) != 2 || msgs[0].Fields["file"] == "" {
 		t.Fatalf("the user message carries the file id: %v", msgs)
 	}
@@ -136,7 +136,7 @@ func TestChatTakesAFileWithTheMessage(t *testing.T) {
 	// A message with the field left empty is just a message.
 	body, ct = multipartFile(t, "", "", url.Values{"from": {"/chat"}, "message": {"Only words."}})
 	wantStatus(t, do(t, h, http.MethodPost, "/chat", body, ct), http.StatusSeeOther)
-	msgs, _ = a.Store.List(chat.MessageType, store.ListOptions{OrderBy: "created_at"})
+	msgs, _ = a.Store.List(records.MessageType, store.ListOptions{OrderBy: "created_at"})
 	if file, _ := msgs[2].Fields["file"].(string); len(msgs) != 4 || file != "" {
 		t.Errorf("no file, no attachment: %v", msgs[2].Fields)
 	}

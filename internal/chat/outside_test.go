@@ -7,6 +7,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // outside stands in for a program that runs the tools itself: while
@@ -18,7 +19,7 @@ func (o *outside) Name() string       { return "outside" }
 func (o *outside) ToolsOutside() bool { return true }
 func (o *outside) Complete(_ context.Context, _ llm.Request) (*llm.Response, error) {
 	rec, _ := o.svc.Store.Create("note", map[string]any{"title": "Made elsewhere"})
-	chat.Record(o.svc.Store, "assistant", chat.Change{Action: "created", Component: "note", ID: rec.ID, Detail: "Made elsewhere"})
+	records.Record(o.svc.Store, "assistant", records.Change{Action: "created", Component: "note", ID: rec.ID, Detail: "Made elsewhere"})
 	return &llm.Response{Text: "I made the note at /t/note/" + rec.ID + "."}, nil
 }
 
@@ -27,7 +28,7 @@ func (o *outside) Complete(_ context.Context, _ llm.Request) (*llm.Response, err
 // entry undoable, and nothing from before the turn.
 func TestAReplyFromOutsideToolsCarriesTheReceiptFromTheLog(t *testing.T) {
 	svc := newFullService(t)
-	chat.Record(svc.Store, "assistant", chat.Change{Action: "created", Component: "note", Detail: "earlier"})
+	records.Record(svc.Store, "assistant", records.Change{Action: "created", Component: "note", Detail: "earlier"})
 	svc.Provider = &outside{svc: svc}
 	reply, err := svc.Send(context.Background(), "make a note")
 	if err != nil {

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -30,9 +31,9 @@ var actionTool = llm.Tool{
 // person's to press: it talks to the assistant on their behalf, and the
 // canvas is where the reply lands.
 func (s *Service) Run(ctx context.Context, id, canvas string) toolResult {
-	rec, err := s.Store.Get(ActionType, id)
+	rec, err := s.Store.Get(records.ActionType, id)
 	if err != nil {
-		return fail("no action with id %s; the actions are listed in the prompt, or find_records on %s finds one", id, ActionType)
+		return fail("no action with id %s; the actions are listed in the prompt, or find_records on %s finds one", id, records.ActionType)
 	}
 	return s.runRecord(ctx, rec, canvas)
 }
@@ -47,7 +48,7 @@ func (s *Service) runRecord(ctx context.Context, rec *store.Record, canvas strin
 		name, _ := rec.Fields["arrangement"].(string)
 		r := s.addArrangement(name, nil)
 		if !r.isErr {
-			r.changes = append(r.changes, Change{Action: "ran", Component: ActionType, ID: id, Detail: title, Href: "/t/" + ActionType + "/" + id})
+			r.changes = append(r.changes, records.Change{Action: "ran", Component: records.ActionType, ID: id, Detail: title, Href: "/t/" + records.ActionType + "/" + id})
 		}
 		return r
 	case "command":
@@ -62,7 +63,7 @@ func (s *Service) runRecord(ctx context.Context, rec *store.Record, canvas strin
 		if _, err := s.SendOn(ctx, canvas, text); err != nil {
 			return fail("could not send %q for action %s: %v", text, title, err)
 		}
-		return toolResult{text: "sent to the assistant: " + text, change: &Change{Action: "ran", Component: ActionType, ID: id, Detail: title, Href: "/t/" + ActionType + "/" + id}}
+		return toolResult{text: "sent to the assistant: " + text, change: &records.Change{Action: "ran", Component: records.ActionType, ID: id, Detail: title, Href: "/t/" + records.ActionType + "/" + id}}
 	default:
 		return s.webhook(ctx, rec, title)
 	}
@@ -112,7 +113,7 @@ func (s *Service) webhook(ctx context.Context, rec *store.Record, title string) 
 		out.text += ": " + answer
 	}
 	detail := fmt.Sprintf("%s (%d)", title, resp.StatusCode)
-	out.changes = append(out.changes, Change{Action: "ran", Component: ActionType, ID: rec.ID, Detail: detail, Href: "/t/" + ActionType + "/" + rec.ID})
+	out.changes = append(out.changes, records.Change{Action: "ran", Component: records.ActionType, ID: rec.ID, Detail: detail, Href: "/t/" + records.ActionType + "/" + rec.ID})
 	if resp.StatusCode >= 400 {
 		out.isErr = true
 		return out
@@ -130,31 +131,31 @@ func (s *Service) webhook(ctx context.Context, rec *store.Record, title string) 
 // show puts an action's answer on the canvas: a text block kept by id on
 // the action, so the second run updates the first block rather than
 // adding another.
-func (s *Service) show(rec *store.Record, title, answer string) (Change, error) {
+func (s *Service) show(rec *store.Record, title, answer string) (records.Change, error) {
 	props := map[string]any{"content": answer}
 	if id, _ := rec.Fields["block"].(string); id != "" {
-		if was, err := s.Store.Get(BlockType, id); err == nil {
-			if _, err := s.Store.Update(BlockType, id, s.fields(BlockType, map[string]any{"props": props, "actor": "assistant"})); err != nil {
-				return Change{}, err
+		if was, err := s.Store.Get(records.BlockType, id); err == nil {
+			if _, err := s.Store.Update(records.BlockType, id, s.fields(records.BlockType, map[string]any{"props": props, "actor": "assistant"})); err != nil {
+				return records.Change{}, err
 			}
-			return Change{Action: "updated", Component: "text", ID: id, Detail: title, Href: "/canvas/" + id, Before: was.Fields}, nil
+			return records.Change{Action: "updated", Component: "text", ID: id, Detail: title, Href: "/canvas/" + id, Before: was.Fields}, nil
 		}
 	}
 	r := s.addComponent("text", props, look{})
 	if r.isErr || r.change == nil {
-		return Change{}, errors.New(r.text)
+		return records.Change{}, errors.New(r.text)
 	}
-	s.Store.Update(ActionType, rec.ID, map[string]any{"block": r.change.ID})
+	s.Store.Update(records.ActionType, rec.ID, map[string]any{"block": r.change.ID})
 	return *r.change, nil
 }
 
 // actionsDigest lists the person's actions for the prompt, so the model
 // can put one on a button or run one when asked.
 func (s *Service) actionsDigest() string {
-	if _, ok := s.Store.Types().Get(ActionType); !ok {
+	if _, ok := s.Store.Types().Get(records.ActionType); !ok {
 		return ""
 	}
-	recs, err := s.Store.List(ActionType, store.ListOptions{OrderBy: "created_at"})
+	recs, err := s.Store.List(records.ActionType, store.ListOptions{OrderBy: "created_at"})
 	if err != nil || len(recs) == 0 {
 		return ""
 	}
@@ -176,14 +177,14 @@ func (s *Service) RunAs(ctx context.Context, actor, id, canvas string) (text, pr
 // logRun records what a run did under whoever asked for it.
 func (s *Service) logRun(ctx context.Context, actor string, r toolResult) (text, proposal string, err error) {
 	for i := range r.changes {
-		r.changes[i].Via, r.changes[i].By, r.changes[i].ByLogin = Via(ctx), VisitorOf(ctx).Who(), cmp.Or(VisitorOf(ctx).Login, s.Owner.Login)
-		Record(s.Store, actor, r.changes[i])
+		r.changes[i].Via, r.changes[i].By, r.changes[i].ByLogin = records.Via(ctx), records.VisitorOf(ctx).Who(), cmp.Or(records.VisitorOf(ctx).Login, s.Owner.Login)
+		records.Record(s.Store, actor, r.changes[i])
 	}
 	if r.change != nil {
 		if r.change.Action == "proposed" {
 			proposal = r.change.ID
 		}
-		Record(s.Store, actor, *r.change)
+		records.Record(s.Store, actor, *r.change)
 	}
 	if r.isErr {
 		return r.text, proposal, errors.New(r.text)

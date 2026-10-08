@@ -2,6 +2,7 @@ package chat
 
 import (
 	"errors"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -15,35 +16,35 @@ func (s *Service) GiveAccess(name, access string) (*store.Record, error) {
 	if name == "" {
 		return nil, errors.New("say who it is for")
 	}
-	if access != View && access != Edit {
+	if access != records.View && access != records.Edit {
 		return nil, errors.New("choose whether they may look or edit")
 	}
-	if _, ok := s.Store.Types().Get(PersonType); !ok {
+	if _, ok := s.Store.Types().Get(records.PersonType); !ok {
 		return nil, errors.New("this workspace has no people")
 	}
 	p := s.PersonByName(name)
 	if p == nil {
-		rec, err := s.Store.Create(PersonType, map[string]any{"name": name, "access": access})
+		rec, err := s.Store.Create(records.PersonType, map[string]any{"name": name, "access": access})
 		if err != nil {
 			return nil, err
 		}
-		Record(s.Store, "human", Change{Action: "let in", Component: PersonType, ID: rec.ID, Detail: name + " to " + access})
+		records.Record(s.Store, "human", records.Change{Action: "let in", Component: records.PersonType, ID: rec.ID, Detail: name + " to " + access})
 		return rec, nil
 	}
 	before := p.Fields["access"]
-	rec, err := s.Store.Update(PersonType, p.ID, map[string]any{"access": access})
+	rec, err := s.Store.Update(records.PersonType, p.ID, map[string]any{"access": access})
 	if err != nil {
 		return nil, err
 	}
 	if before != access {
-		Record(s.Store, "human", Change{Action: "let in", Component: PersonType, ID: p.ID, Detail: name + " to " + access, Before: map[string]any{"access": before}})
+		records.Record(s.Store, "human", records.Change{Action: "let in", Component: records.PersonType, ID: p.ID, Detail: name + " to " + access, Before: map[string]any{"access": before}})
 	}
 	return rec, nil
 }
 
 // PersonByName is the person of that name, in any case, if there is one.
 func (s *Service) PersonByName(name string) *store.Record {
-	people, err := s.Store.List(PersonType, store.ListOptions{})
+	people, err := s.Store.List(records.PersonType, store.ListOptions{})
 	if err != nil {
 		return nil
 	}

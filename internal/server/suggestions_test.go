@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // Suggestions wait on the writing's page, grouped as an editor would and
@@ -49,7 +50,7 @@ func TestSuggestionsWaitOnTheWritingAsItReads(t *testing.T) {
 	if strings.Contains(page, "## Jobs") {
 		t.Error("a heading is shown as a heading, never as Markdown")
 	}
-	viewer := as(t, h, chat.Visitor{Name: "Ana", Login: "ana@example.com", Access: chat.View}, http.MethodGet, "/t/note/"+note.ID, "", "").Body.String()
+	viewer := as(t, h, records.Visitor{Name: "Ana", Login: "ana@example.com", Access: records.View}, http.MethodGet, "/t/note/"+note.ID, "", "").Body.String()
 	if strings.Contains(viewer, "suggested change") || strings.Contains(viewer, "Help with the writing") {
 		t.Error("someone who may only look sees no suggestions and no help")
 	}
@@ -86,7 +87,7 @@ func TestASuggestionSaysWhoSuggestedIt(t *testing.T) {
 	args, _ := json.Marshal(map[string]any{"type": "note", "id": note.ID, "edits": []any{
 		map[string]any{"passage": "May", "replacement": "April", "why": "The plan says April.", "kind": "clarity"},
 	}})
-	agent := a.Chat.ByAgent(chat.Agent{Name: "Claude Code", Through: chat.ThroughMCP})
+	agent := a.Chat.ByAgent(records.Agent{Name: "Claude Code", Through: records.ThroughMCP})
 	if text, isErr := agent.Call("suggest_edits", args); isErr {
 		t.Fatal(text)
 	}

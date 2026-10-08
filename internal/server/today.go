@@ -208,11 +208,11 @@ func (s *Server) briefSet(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if s.app.Chat.SetSetting == nil {
+	if s.app.Records.SetSetting == nil {
 		s.failed(w, r, "Not set", errors.New("this workspace has no settings file"), "/help")
 		return
 	}
-	if err := s.app.Chat.SetSetting("brief.at", at); err != nil {
+	if err := s.app.Records.SetSetting("brief.at", at); err != nil {
 		s.failed(w, r, "Not set", err, "/help")
 		return
 	}

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // blockProps receives an inline edit: one or more props of a block, sent as
@@ -15,7 +15,7 @@ import (
 // there is no field here for layout, ids, or anything the component does not
 // itself show.
 func (s *Server) blockProps(w http.ResponseWriter, r *http.Request) {
-	rec, err := s.app.Store.Get(chat.BlockType, r.PathValue("id"))
+	rec, err := s.app.Store.Get(records.BlockType, r.PathValue("id"))
 	if err != nil {
 		s.failed(w, r, "Not saved", err, "/")
 		return
@@ -56,13 +56,13 @@ func (s *Server) blockProps(w http.ResponseWriter, r *http.Request) {
 		s.failed(w, r, "Not saved", err, "/")
 		return
 	}
-	if _, err := s.app.Store.Update(chat.BlockType, rec.ID,
+	if _, err := s.app.Store.Update(records.BlockType, rec.ID,
 		s.app.Chat.BlockFields(map[string]any{"props": clean, "actor": "human"})); err != nil {
 		s.failed(w, r, "Not saved", err, "/")
 		return
 	}
-	undo := s.record(r, chat.Change{
-		Action: "updated", Component: name, ID: rec.ID, Detail: chat.Summarise(name, clean), Before: rec.Fields,
+	undo := s.record(r, records.Change{
+		Action: "updated", Component: name, ID: rec.ID, Detail: records.Summarise(name, clean), Before: rec.Fields,
 	})
 	s.tell(w, r, outcome{Title: "Changes saved", Undo: undo}, "/")
 }

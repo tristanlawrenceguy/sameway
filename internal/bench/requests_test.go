@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // request is one thing a person asks, what is there before, and how to
@@ -90,7 +90,7 @@ func requests() []request {
 			mustCreate(t, a, "habit", map[string]any{"name": "Drink water", "cadence": "day", "target": 8, "unit": "glasses"})
 		}, say: "Make me a Today tab with what's due today, today's events and my water habit",
 			check: func(a *app.App, _ string) string {
-				c := find(a, chat.CanvasType, "name", "today")
+				c := find(a, records.CanvasType, "name", "today")
 				if c == nil {
 					return "no Today tab"
 				}
@@ -137,7 +137,7 @@ func requests() []request {
 				trip := find(a, "note", "title", "trip report")
 				var found []string
 				for _, n := range list(a, "note") {
-					if fmt.Sprint(n.Fields[chat.PartOf]) == trip.ID {
+					if fmt.Sprint(n.Fields[records.PartOf]) == trip.ID {
 						found = append(found, fmt.Sprint(n.Fields["body"]))
 					}
 				}
@@ -179,7 +179,7 @@ func requests() []request {
 		}, say: "Put my shopping list and my notes side by side, with the calendar full width under them",
 			check: func(a *app.App, _ string) string {
 				var shop, notes, cal map[string]any
-				for _, b := range list(a, chat.BlockType) {
+				for _, b := range list(a, records.BlockType) {
 					switch p := jsonOf(b.Fields["props"]); {
 					case strings.Contains(p, "Shopping"):
 						shop = b.Fields

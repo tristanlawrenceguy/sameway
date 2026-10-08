@@ -8,7 +8,7 @@ import (
 
 // Called is what a record of this type is called, from its fields alone:
 // its title field, or else the first thing it says (a choice by its
-// label), or else its kind and id. chat.Name, which every surface names a
+// label), or else its kind and id. records.Name, which every surface names a
 // record by, adds what needs the store (an entry by its habit, a change by
 // its sentence); a package below chat, an export or a query matching a
 // ref by its title, calls this, so a record with no title is called the

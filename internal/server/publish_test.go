@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/mcp"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 )
 
@@ -28,7 +28,7 @@ func public(t *testing.T, h http.Handler, method, path, body string) *httptest.R
 func TestTheInternetReadsOnlyWhatIsPublished(t *testing.T) {
 	a, h := newApp(t)
 	srv := h.(*server.Server)
-	a.Chat.Owner = chat.Visitor{Access: chat.Owner, Login: "me@example.com", Name: "Me"}
+	a.Records.Owner = records.Visitor{Access: records.Owner, Login: "me@example.com", Name: "Me"}
 	a.Chat.Say("the owner's private words")
 	n, _ := a.Store.Create("note", map[string]any{"title": "Sourdough", "body": "flour, water, salt"})
 	a.Store.Create("task", map[string]any{"title": "Secret errand"})
@@ -144,7 +144,7 @@ func TestOnlyPublishedFilesAreServed(t *testing.T) {
 	srv := h.(*server.Server)
 	shown, _ := a.Store.Create("file", map[string]any{"title": "Fern"})
 	hidden, _ := a.Store.Create("file", map[string]any{"title": "Payslip"})
-	a.Store.Create(chat.BlockType, a.Chat.BlockFields(map[string]any{"component": "image", "props": map[string]any{"src": "/files/" + shown.ID, "alt": "A fern"}}))
+	a.Store.Create(records.BlockType, a.Chat.BlockFields(map[string]any{"component": "image", "props": map[string]any{"src": "/files/" + shown.ID, "alt": "A fern"}}))
 	a.Workspace.Config.Publish.Tabs = "Home"
 	pub := srv.Public(nil)
 	if r := public(t, pub, http.MethodGet, "/files/"+hidden.ID, ""); r.Code != http.StatusNotFound {

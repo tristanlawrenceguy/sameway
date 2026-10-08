@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/speech"
 )
@@ -56,7 +56,7 @@ func TestARecordingIsWrittenDownOnThisComputer(t *testing.T) {
 	if !strings.Contains(page, `action="/speech/get"`) || !strings.Contains(page, "Recordings never leave this computer") || !strings.Contains(page, "downloaded once from GitHub and Hugging Face") {
 		t.Errorf("the owner is offered speech-to-text, saying what it fetches:\n%.3000s", page)
 	}
-	viewer := chat.Visitor{Name: "Hana", Login: "hana@example.com", Access: chat.Edit}
+	viewer := records.Visitor{Name: "Hana", Login: "hana@example.com", Access: records.Edit}
 	if theirs := as(t, h, viewer, http.MethodGet, loc, "", "").Body.String(); strings.Contains(theirs, `action="/speech/get"`) || !strings.Contains(theirs, "The owner of this workspace can get speech-to-text") {
 		t.Error("only the owner is offered it; others are told who can")
 	}

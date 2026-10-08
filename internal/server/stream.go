@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
@@ -198,11 +199,11 @@ func (s *Server) chatStop(w http.ResponseWriter, r *http.Request) {
 // liveBlock is a changed block rendered as it now is, or nothing when the
 // change was not to a block that is still there. A removed block is still
 // a change the page hears about; it just carries no HTML.
-func (s *Server) liveBlock(c *chat.Change, started time.Time) (id, region, html string) {
+func (s *Server) liveBlock(c *records.Change, started time.Time) (id, region, html string) {
 	if c.ID == "" || c.Action == "removed" {
 		return c.ID, "", ""
 	}
-	blk, err := s.app.Store.Get(chat.BlockType, c.ID)
+	blk, err := s.app.Store.Get(records.BlockType, c.ID)
 	if err != nil {
 		return c.ID, "", ""
 	}
@@ -216,7 +217,7 @@ func (s *Server) liveBlock(c *chat.Change, started time.Time) (id, region, html 
 
 // messageHTML is one message as the page shows it.
 func (s *Server) messageHTML(id, from string, last bool) string {
-	m, err := s.app.Store.Get(chat.MessageType, id)
+	m, err := s.app.Store.Get(records.MessageType, id)
 	if err != nil {
 		return ""
 	}
@@ -225,7 +226,7 @@ func (s *Server) messageHTML(id, from string, last bool) string {
 
 // statusFor is the status line after a reply, as the page shows it.
 func (s *Server) statusFor(id string) string {
-	m, err := s.app.Store.Get(chat.MessageType, id)
+	m, err := s.app.Store.Get(records.MessageType, id)
 	if err != nil {
 		return ""
 	}

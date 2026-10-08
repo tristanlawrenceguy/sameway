@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // There is no count of rounds: a model that makes one call per round
@@ -107,7 +107,7 @@ func (s *stopping) Complete(ctx context.Context, _ llm.Request) (*llm.Response, 
 // was stopped rather than reporting an error.
 func TestAStoppedTurnKeepsWhatItDid(t *testing.T) {
 	svc := newFullService(t)
-	chat.Record(svc.Store, "assistant", chat.Change{Action: "created", Component: "note", Detail: "earlier"})
+	records.Record(svc.Store, "assistant", records.Change{Action: "created", Component: "note", Detail: "earlier"})
 	p := &stopping{started: make(chan struct{})}
 	svc.Provider = p
 	ctx, cancel := context.WithCancel(context.Background())

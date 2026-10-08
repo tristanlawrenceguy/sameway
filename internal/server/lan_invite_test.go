@@ -1,6 +1,7 @@
 package server_test
 
 import (
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -8,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 )
 
@@ -30,7 +30,7 @@ func TestSomeoneOnTheWiFiIsInvitedByName(t *testing.T) {
 		t.Fatalf("the invite's link and code: %d %s", res.Code, truncate(res.Body.String()))
 	}
 	ana := a.Chat.PersonByName("ana")
-	if ana == nil || ana.Fields["access"] != chat.View {
+	if ana == nil || ana.Fields["access"] != records.View {
 		t.Fatalf("Ana may look: %v", ana)
 	}
 	wifi := srv.LAN(h)
@@ -70,7 +70,7 @@ func TestSomeoneOnTheWiFiIsInvitedByName(t *testing.T) {
 	if res := ask("POST", "/t/note/add", cookie); res.Code != http.StatusSeeOther {
 		t.Errorf("one who may edit adds: %d", res.Code)
 	}
-	if _, err := a.Store.Update(chat.PersonType, ana.ID, map[string]any{"access": ""}); err != nil {
+	if _, err := a.Store.Update(records.PersonType, ana.ID, map[string]any{"access": ""}); err != nil {
 		t.Fatal(err)
 	}
 	if res := ask("GET", "/", cookie); res.Code != http.StatusForbidden || !strings.Contains(res.Body.String(), "no longer opens") {

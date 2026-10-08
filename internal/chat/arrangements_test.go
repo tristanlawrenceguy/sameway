@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -24,7 +24,7 @@ func TestAnArrangementIsAPageInOneCall(t *testing.T) {
 	if !strings.Contains(text, "4 blocks") || !strings.Contains(text, "todo: added collection") || !strings.Contains(text, "do not make any up") {
 		t.Errorf("the result should list every block and say not to invent records, got %q", text)
 	}
-	blocks, _ := svc.Store.List(chat.BlockType, store.ListOptions{OrderBy: "position"})
+	blocks, _ := svc.Store.List(records.BlockType, store.ListOptions{OrderBy: "position"})
 	if len(blocks) != 4 {
 		t.Fatalf("the week arrangement has four blocks, got %d", len(blocks))
 	}
@@ -46,14 +46,14 @@ func TestAnArrangementIsAPageInOneCall(t *testing.T) {
 	}
 
 	// Every block is its own entry in the log, so one can be undone alone.
-	log, _ := svc.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at"})
+	log, _ := svc.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at"})
 	if len(log) != 4 {
 		t.Fatalf("four blocks, four log entries, got %d", len(log))
 	}
 	if text, isErr := svc.Call("undo_change", json.RawMessage(`{}`)); isErr {
 		t.Fatal(text)
 	}
-	if after, _ := svc.Store.List(chat.BlockType, store.ListOptions{}); len(after) != 3 {
+	if after, _ := svc.Store.List(records.BlockType, store.ListOptions{}); len(after) != 3 {
 		t.Errorf("undoing the newest change removes one block, got %d left", len(after))
 	}
 
@@ -73,7 +73,7 @@ func TestAnArrangementsListsAreNotFilledIn(t *testing.T) {
 	if !isErr || !strings.Contains(text, "block todo: items is filled in from the person's task records") || !strings.Contains(text, "create_record") {
 		t.Errorf("items in fills should be refused with what to do, got %q", text)
 	}
-	if blocks, _ := svc.Store.List(chat.BlockType, store.ListOptions{}); len(blocks) != 0 {
+	if blocks, _ := svc.Store.List(records.BlockType, store.ListOptions{}); len(blocks) != 0 {
 		t.Errorf("nothing is added, got %d blocks", len(blocks))
 	}
 }

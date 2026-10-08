@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -46,7 +47,7 @@ func weekPage(t *testing.T, svc *chat.Service) (heading, due, tracker, overdue s
 }
 
 func layout(t *testing.T, svc *chat.Service) map[string][2]int64 {
-	blocks, _ := svc.Store.List(chat.BlockType, store.ListOptions{})
+	blocks, _ := svc.Store.List(records.BlockType, store.ListOptions{})
 	out := map[string][2]int64{}
 	for _, b := range blocks {
 		p, _ := b.Fields["position"].(int64)
@@ -57,7 +58,7 @@ func layout(t *testing.T, svc *chat.Service) map[string][2]int64 {
 }
 
 func entries(t *testing.T, svc *chat.Service, action string) []*store.Record {
-	all, _ := svc.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at"})
+	all, _ := svc.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at"})
 	var out []*store.Record
 	for _, a := range all {
 		if a.Fields["action"] == action {
