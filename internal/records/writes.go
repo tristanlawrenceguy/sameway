@@ -157,13 +157,3 @@ func logAs(st *store.Store, who Who, c Change) string {
 	c.By, c.Via, c.ByLogin = who.By, who.Via, who.ByLogin
 	return Record(st, who.Actor, c)
 }
-
-// Imported is the batch an import from a file made: records that were not
-// there before, so undoing it takes them away together.
-func Imported(typ string, ids []string) map[string]any {
-	items := make([]BatchItem, 0, len(ids))
-	for _, id := range ids {
-		items = append(items, BatchItem{Type: typ, ID: id})
-	}
-	return Batch(items)
-}

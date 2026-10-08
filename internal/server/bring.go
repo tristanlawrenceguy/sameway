@@ -73,7 +73,7 @@ func (s *Server) bring(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		records.Record(s.app.Store, "human", records.Change{Action: "imported", Component: t.Name,
-			Detail: fmt.Sprintf("%d %s from %s", report.Made, schema.Plural(t.Name), got.From), Href: "/t/" + t.Name, Before: records.Imported(t.Name, report.IDs)})
+			Detail: fmt.Sprintf("%d %s from %s", report.Made, schema.Plural(t.Name), got.From), Href: "/t/" + t.Name, Ops: records.Made(s.app.Store, t.Name, report.IDs)})
 		said = append(said, fmt.Sprintf("%d %s", report.Made, schema.Plural(t.Name)))
 		if to == "/" {
 			to = "/t/" + t.Name

@@ -137,6 +137,6 @@ func (s *Server) todayLate(w http.ResponseWriter, r *http.Request) {
 	}
 	detail := fmt.Sprintf("%d late tasks to today", len(batch))
 	who := s.who(r)
-	act := records.Record(s.app.Store, who.Actor, records.Change{Action: "rescheduled", Component: "task", Detail: detail, Before: records.Batch(batch), By: who.By, Via: who.Via, ByLogin: who.ByLogin})
+	act := records.Record(s.app.Store, who.Actor, records.Change{Action: "rescheduled", Component: "task", Detail: detail, Ops: records.OpsOf(s.app.Store, batch), By: who.By, Via: who.Via, ByLogin: who.ByLogin})
 	s.tellAt(w, r, outcome{Title: "Moved", Text: fmt.Sprintf("%d tasks are due today.", len(batch)), Undo: act, Of: detail}, "/today")
 }

@@ -140,7 +140,7 @@ func (s *Service) suggestEdits(typeName, id, field string, edits []suggested) to
 	title := records.Name(s.Store, t, rec)
 	page := "/t/" + t.Name + "/" + rec.ID
 	c := records.Change{Action: "suggested", Component: t.Name, ID: rec.ID, Href: page,
-		Detail: fmt.Sprintf("%s, %s", title, schema.Count(len(edits), "change")), Before: records.Batch(batch)}
+		Detail: fmt.Sprintf("%s, %s", title, schema.Count(len(edits), "change")), Ops: records.OpsOf(s.Store, batch)}
 	return toolResult{text: fmt.Sprintf("suggested %s to %s %s; they wait on its page, %s, for the person to accept or decline each. Nothing is changed until they do.",
 		schema.Count(len(edits), "change"), t.Name, title, page), change: &c}
 }

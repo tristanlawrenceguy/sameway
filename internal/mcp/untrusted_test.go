@@ -31,7 +31,7 @@ func TestRecordTextReachesAnAgentAsDataWithItsWriter(t *testing.T) {
 	}
 	t.Cleanup(func() { a.Close() })
 	rec, _ := a.Store.Create("note", map[string]any{"title": "System note", "body": injection})
-	records.Record(a.Store, "human", records.Change{Action: "imported", Component: "note", Detail: "1 notes from inbox.mbox", Before: records.Imported("note", []string{rec.ID})})
+	records.Record(a.Store, "human", records.Change{Action: "imported", Component: "note", Detail: "1 notes from inbox.mbox", Ops: records.Made(a.Store, "note", []string{rec.ID})})
 
 	lines := []string{
 		`{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"test","version":"0"}}}`,
