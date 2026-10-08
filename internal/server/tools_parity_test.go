@@ -78,6 +78,7 @@ var pageActionTools = map[string]string{
 	"/phone/forget":               "a person's: letting other devices reach the workspace is its owner's choice",
 	"/brief":                      "set_setting",
 	"/workspaces/example":         "add_workspace",
+	"/phone/invite":               "a person's: who may come in is the owner's to say, face to face",
 	"/feedback":                   "a person's: what goes to the makers is theirs to read and send",
 	"/backup/cloud":               "set_setting",
 	"/workspaces/from-copy":       "a person's: a copy is a file they choose on their computer",

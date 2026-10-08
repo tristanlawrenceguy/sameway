@@ -34,6 +34,8 @@ type lanDevice struct {
 	Hash  string    `json:"hash"`
 	Name  string    `json:"name"`
 	Added time.Time `json:"added"`
+	// Person is who it was invited for (lan_invite.go); none is the owner's.
+	Person string `json:"person,omitempty"`
 }
 
 var lanCodes sync.Map // code -> expiry time.Time
@@ -71,6 +73,10 @@ func lanPairCode() string {
 // a paired phone only, as the owner.
 func (s *Server) LAN(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/pair" && r.URL.Query().Has("invite") {
+			s.lanJoin(w, r) // lan_invite.go
+			return
+		}
 		if r.URL.Path == "/pair" {
 			s.lanPair(w, r)
 			return
@@ -78,11 +84,16 @@ func (s *Server) LAN(next http.Handler) http.Handler {
 		if c, err := r.Cookie(lanCookie); err == nil {
 			h := hashOf(c.Value)
 			for _, d := range s.lanDevices() {
-				if d.Hash == h {
-					v := chat.Visitor{Access: chat.Owner, Name: "Owner", Device: d.Name}
-					next.ServeHTTP(w, r.WithContext(chat.WithVisitor(r.Context(), v)))
+				if d.Hash != h {
+					continue
+				}
+				v, ok := s.lanVisitor(d)
+				if !ok {
+					lanSay(w, "This device no longer opens this workspace. Ask its owner to invite you again.")
 					return
 				}
+				next.ServeHTTP(w, r.WithContext(chat.WithVisitor(r.Context(), v)))
+				return
 			}
 		}
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -121,6 +132,8 @@ func phoneName(ua string) string {
 		return "iPad"
 	case strings.Contains(l, "android"):
 		return "Android phone"
+	case strings.Contains(l, "windows"), strings.Contains(l, "macintosh"), strings.Contains(l, "linux"), strings.Contains(l, "cros"):
+		return "computer"
 	}
 	return "Phone"
 }
