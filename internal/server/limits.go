@@ -53,7 +53,10 @@ func (s *Server) limitsSection(owner bool) string {
 		line("Recordings: speech-to-text is not on this computer yet, so a recording keeps a transcript only when one is written by hand. The owner can get it.")
 	}
 	if owner {
-		line(s.phoneLine())          // phone.go
+		line(s.phoneLine())                // phone.go
+		if l := s.meaningLine(); l != "" { // search_meaning.go
+			line(l)
+		}
 		line(s.briefLine())          // today.go
 		lines, setup := s.appLines() // meeting_fetch_help.go
 		for _, l := range lines {

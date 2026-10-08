@@ -125,6 +125,9 @@ func searchForm(s *Server, label, hint, q, only string) string {
 // its title and kind, or is "".
 func (s *Server) hitItem(h search.Hit, words []string, told string) string {
 	typeEsc := template.HTMLEscapeString(capitalize(schema.Words(h.Type)))
+	if h.Near {
+		typeEsc += ", close in meaning" // found by what it is about (search_meaning.go)
+	}
 	bodyHTML := ""
 	if snippet := string(marked(h.Snippet, words)); snippet != "" {
 		bodyHTML = fmt.Sprintf(`<div class="sw-card__body" data-prop="body"><p>%s</p></div>`, snippet)
