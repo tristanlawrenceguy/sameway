@@ -16,6 +16,7 @@ var undoOp = Op{Title: "Undo a change",
 	Access: ForOwner,
 	Core:   true,
 	Doing:  saying("Undoing a change"),
+	Run:    func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.undo(a.ID) },
 	Tool: llm.Tool{
 		Name:        "undo_change",
 		Description: "Reverse one change from the activity log, yours or the person's: an added thing is removed, a removed thing is put back with everything it had, an update goes back to what it was. Undoing an undo puts it back again. Without an id, the newest change that can still be undone.",

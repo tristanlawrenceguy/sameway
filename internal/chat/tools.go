@@ -1,7 +1,6 @@
 package chat
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -23,6 +22,9 @@ var blockOps = []Op{
 	{Title: "Add a block",
 		Core:  true,
 		Doing: func(a callArgs) string { return "Adding" + an(thing(a.Component, a.Props)) },
+		Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
+			return s.addComponent(a.Component, a.Props, a.look())
+		},
 		Tool: llm.Tool{Name: "add_component", Description: "Add a component to the canvas the person is looking at. Props must match the component's props schema; a refusal gives the schema and an example. Returns the new block id and what it shows; read it: \"nothing yet\" means it shows no records now. A block that could not be shown (a type, field, date field, condition or tag the workspace does not have, one field asked for two values, a chart by a date with no period) is not added, and the error says why and what to do instead.",
 			Schema: obj(map[string]any{
 				"component": map[string]any{"type": "string", "description": "Component name, as the prompt lists it."},
@@ -37,6 +39,9 @@ var blockOps = []Op{
 	{Title: "Change a block", Traits: Traits{Idempotent: true},
 		Core:  true,
 		Doing: saying("Changing a block"),
+		Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
+			return s.updateComponent(a.ID, a.Props, a.look())
+		},
 		Tool: llm.Tool{Name: "update_component", Description: "Change a block already on the canvas: its props, its width, or its place in the order. Props replace the old ones completely, so send them all.",
 			Schema: obj(map[string]any{
 				"id":       map[string]any{"type": "string", "description": "Block id from the canvas listing."},
@@ -52,12 +57,16 @@ var blockOps = []Op{
 	{Title: "Remove a block", Traits: Traits{Destructive: true, Idempotent: true},
 		Core:  true,
 		Doing: saying("Removing a block"),
+		Run:   func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.removeBlock(a.ID) },
 		Tool: llm.Tool{Name: "remove_component", Description: "Remove one block from the canvas by id.",
 			Schema: obj(map[string]any{"id": map[string]any{"type": "string"}}, "id")}},
 	arrangeOp,
 	{Title: "Ask the person before a change",
 		Core:  true,
 		Doing: saying("Asking you about a change"),
+		Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
+			return s.proposeByModel(a.Summary, call.Args)
+		},
 		Tool: llm.Tool{Name: "propose_change", Description: "Ask before making a change instead of making it. Use this whenever a change takes something away, and whenever you are guessing at what the person wants. Nothing happens until they answer. Carries one add_component, update_component, or remove_component call.",
 			Schema: obj(map[string]any{
 				"summary":   map[string]any{"type": "string", "description": "The question, in plain words, ending in a question mark. Say what would change and why you are asking."},
@@ -76,30 +85,9 @@ var blockOps = []Op{
 	{Title: "Clear the page", Traits: Traits{Destructive: true, Idempotent: true},
 		Words: []string{"clear", "start over", "empty the"},
 		Doing: saying("Clearing the page"),
+		Run:   func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.clearCanvas() },
 		Tool: llm.Tool{Name: "clear_canvas", Description: "Remove every block from the canvas except the chat, which stays so the person can keep talking. Only when the person asks to start over. To remove the chat too, call remove_component on it.",
 			Schema: obj(map[string]any{})}},
-}
-
-// runOp executes one tool call, by the handler its name has in
-// toolHandlers (tool_handlers.go). What its Op asks first is asked,
-// unless the person has agreed to this very call already.
-func (s *Service) runOp(call llm.ToolCall, agreed bool) toolResult {
-	var args toolArgs
-	call.Args = loosen(call.Name, call.Args) // loose_args.go
-	if len(call.Args) > 0 {
-		if err := json.Unmarshal(call.Args, &args); err != nil {
-			return fail("%s", ArgsTrouble(err))
-		}
-	}
-	if op := opNamed(call.Name); op.Asks != nil && !agreed {
-		if r, ask := op.Asks(s, args, call); ask {
-			return r
-		}
-	}
-	if run, ok := toolHandlers()[call.Name]; ok {
-		return run(s, args, call)
-	}
-	return fail("unknown tool %s", call.Name)
 }
 
 func (s *Service) addComponent(name string, props map[string]any, l look) toolResult {

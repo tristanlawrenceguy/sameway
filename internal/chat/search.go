@@ -15,6 +15,7 @@ var searchOp = Op{Title: "Search everything", Traits: Traits{ReadOnly: true, Ide
 	Access: ForViewers,
 	Core:   true,
 	Doing:  searching,
+	Run:    func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.search(a.Query, a.Type, a.Page) },
 	Tool: llm.Tool{
 		Name: "search",
 		Description: "Find anything the person has by the words in it: every record of every content type and every block on the canvas, with where each is. Use it before saying something does not exist, and to find the id of a thing they mention. " +

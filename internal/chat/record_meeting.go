@@ -26,6 +26,9 @@ func RecordAbout(eventID string) string {
 var recordingOps = []Op{{Title: "Record a meeting", Traits: Traits{Idempotent: true},
 	Words: []string{"meeting", "record", "call", "zoom", "teams"},
 	Doing: saying("Setting the meeting to ask to be recorded"),
+	Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
+		return s.askToRecord(a.Event, a.How, s.clock())
+	},
 	Tool: llm.Tool{Name: "record_meeting",
 		Description: "Record a meeting, transcribe it and write it up after: this sets it up. With how here, a reminder as it starts that opens its page ready to record (the microphone, and this computer's sound for a call); with how app, for a meeting Teams, Zoom or Meet records, a reminder as it ends to add that recording or transcript on its page. Each repeats as the meeting does. Use it when the person wants a meeting recorded, or records this one each time; never for every event.",
 		Schema: obj(map[string]any{

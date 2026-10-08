@@ -1,6 +1,8 @@
 package chat
 
 import (
+	"encoding/json"
+
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 )
 
@@ -25,6 +27,8 @@ type Op struct {
 	// instead of making it, or answers false when this call may simply
 	// run; a Yes runs it without asking again (consent.go).
 	Asks func(s *Service, a toolArgs, call llm.ToolCall) (toolResult, bool)
+	// Run does it, with the arguments read and anything asked agreed.
+	Run func(s *Service, a toolArgs, call llm.ToolCall) toolResult
 	// Offered says whether this workspace offers it, and fills in what its
 	// schema names from the workspace (its content types, its kinds) on
 	// the copy it is given; nil is always.
@@ -60,12 +64,15 @@ var opIndex = map[string]int{}
 
 func init() {
 	for _, list := range [][]Op{blockOps, {undoOp, searchOp, actionOp, updateOp, arrangementOp, settingOp},
-		recordOps, meetingOps, organiseOps, suggestOps, recordingOps, canvasOps, shapeOps, lookOps, accessOps, homeOps} {
+		recordOps, meetingOps, organiseOps, suggestOps, recordingOps, canvasOps, shapeOps, lookOps, accessOps, homeOps, {acceptOp}} {
 		registry = append(registry, list...)
 	}
 	for i, o := range registry {
 		if _, twice := opIndex[o.Name]; twice {
 			panic("two ops are called " + o.Name)
+		}
+		if o.Run == nil {
+			panic(o.Name + " has nothing to run it")
 		}
 		opIndex[o.Name] = i
 	}
@@ -130,4 +137,26 @@ func withProp(t *llm.Tool, name string, prop map[string]any) {
 	props[name] = prop
 	schema["properties"] = props
 	t.Schema = schema
+}
+
+// runOp runs one call by its op: what the op asks first is asked, unless
+// the person has agreed to this very call already, and then it runs.
+func (s *Service) runOp(call llm.ToolCall, agreed bool) toolResult {
+	var args toolArgs
+	call.Args = loosen(call.Name, call.Args) // loose_args.go
+	if len(call.Args) > 0 {
+		if err := json.Unmarshal(call.Args, &args); err != nil {
+			return fail("%s", ArgsTrouble(err))
+		}
+	}
+	op, ok := OpFor(call.Name)
+	if !ok {
+		return fail("unknown tool %s", call.Name)
+	}
+	if op.Asks != nil && !agreed {
+		if r, ask := op.Asks(s, args, call); ask {
+			return r
+		}
+	}
+	return op.Run(s, args, call)
 }

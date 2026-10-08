@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -181,6 +182,14 @@ func tokens(line string) []string {
 	}
 	return out
 }
+
+// acceptOp is a command card's Yes, carried by a question: never offered
+// to the model, which may only ask.
+var acceptOp = Op{Title: "Accept a command", Tool: llm.Tool{Name: "accept_action"},
+	Offered: func(*Service, *llm.Tool) bool { return false },
+	Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
+		return s.acceptAction(context.Background(), a.ID)
+	}}
 
 // acceptAction is what a person's Yes on the card does: the command line
 // as it stands is accepted for good, then run. The accepted line is kept,

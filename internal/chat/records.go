@@ -43,6 +43,9 @@ var recordOps = []Op{
 		Access: ForOwner,
 		Words:  []string{"import", "file", "spreadsheet", "csv", "excel", "contacts", "calendar file"},
 		Doing:  func(a callArgs) string { return "Importing " + or(schema.Plural(a.Type), "records") + " from a file" },
+		Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
+			return s.importRecords(a.Type, a.File, a.Mapping)
+		},
 		Tool: llm.Tool{Name: "import_records", Description: "Make records from a file the person added: a CSV with a header row, a vCard (.vcf) of contacts, or a mailbox (.mbox) of mail. Each column is matched to a field by name; a column for an email, phone or name links each row to its person, made when new. Use it when the person attaches such a file and wants its contents as records, rather than creating them one by one. Returns how many were made.",
 			Schema: obj(map[string]any{
 				"type":    typeArg,
@@ -52,6 +55,7 @@ var recordOps = []Op{
 	{Title: "Make a record",
 		Core:  true,
 		Doing: func(a callArgs) string { return "Adding" + or(an(schema.Words(a.Type)), " a record") + a.called() },
+		Run:   func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.createRecord(a.Type, a.Fields) },
 		Tool: llm.Tool{Name: "create_record", Description: "Make a record of a content type: a note, a task, whatever the workspace declares. It appears on its own page at /t/<type> and in the listing there. Fields must match the type's schema in the catalogue. Returns the new record's id and page.",
 			Schema: obj(map[string]any{
 				"type":   typeArg,
@@ -60,6 +64,9 @@ var recordOps = []Op{
 	{Title: "Change a record", Traits: Traits{Idempotent: true},
 		Core:  true,
 		Doing: func(a callArgs) string { return "Updating" + or(an(schema.Words(a.Type)), " a record") },
+		Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
+			return s.updateRecord(a.Type, a.ID, a.Fields, a.Version)
+		},
 		Tool: llm.Tool{Name: "update_record", Description: "Change fields on a record that exists. Only the fields given change. Use find_records first to get the id.",
 			Schema: obj(map[string]any{
 				"type":    typeArg,
@@ -71,6 +78,9 @@ var recordOps = []Op{
 		Access: ForViewers,
 		Core:   true,
 		Doing:  func(a callArgs) string { return "Looking up your " + or(schema.Plural(a.Type), "records") },
+		Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
+			return s.findRecords(a.Type, a.Query, a.Where, a.Order, a.Limit)
+		},
 		Tool: llm.Tool{Name: "find_records", Description: "List records of a type to get their ids: all of them, those holding every word of the query in their title or words, or those matching where. The same where and order a collection block takes.",
 			Schema: obj(map[string]any{
 				"type":  typeArg,
@@ -83,6 +93,7 @@ var recordOps = []Op{
 		Access: ForViewers,
 		Core:   true,
 		Doing:  func(a callArgs) string { return "Reading" + or(an(schema.Words(a.Type)), " a record") },
+		Run:    func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.getRecord(a.Type, a.ID) },
 		Tool: llm.Tool{Name: "get_record", Description: "Read one record with every field, by id: a note's body, a file's text. Use it before answering from what a record says. It also returns related: everything the record is joined to — what points at it, what is set about it, what sits beside it under the same parent, what else falls on its day — each with a count and the where that lists them. Their page shows only the counts. When you have a reason to put one in front of the person, send them the page with that connection open: /t/<type>/<id>?show=<key>.",
 			Schema: obj(map[string]any{
 				"type": typeArg,

@@ -42,6 +42,9 @@ var shapeOps = []Op{
 	{Title: "Add a field to a kind",
 		Core:  true,
 		Doing: reshaping,
+		Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
+			return s.addField(a.Type, fieldDef{Name: a.Name, Kind: a.Kind, Description: a.Description, Values: a.Values, To: a.To, Required: a.Required, Default: a.Default})
+		},
 		Tool: llm.Tool{Name: "add_field", Description: "Add a property to a content type, for everyone: a due date on notes, a priority on tasks. The type's schema file and its table change at once, and every record has the field from then on: the ones already there read as its default (nothing, when it has none), and the answer says how many there are and what they got. Adding is safe; nothing else they hold changes.",
 			Schema: obj(map[string]any{
 				"type":        map[string]any{"type": "string", "description": "The content type to add the field to."},
@@ -56,6 +59,9 @@ var shapeOps = []Op{
 	{Title: "Add a kind of record",
 		Core:  true,
 		Doing: reshaping,
+		Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
+			return s.addType(a.Name, a.Description, a.Properties)
+		},
 		Tool: llm.Tool{Name: "add_type", Description: "Make a new content type, for everyone: a kind of thing the person keeps, such as habit, contact or recipe, with its own page at /t/<name>, its own records and its own fields. Give the title field first.",
 			Schema: obj(map[string]any{
 				"name":        map[string]any{"type": "string", "description": "Singular, lowercase, such as contact."},

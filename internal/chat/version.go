@@ -18,6 +18,7 @@ var updateOp = Op{Title: "Update Sameway", Traits: Traits{OpenWorld: true},
 	Access: ForOwner,
 	Words:  []string{"update", "version", "new sameway"},
 	Doing:  saying("Updating Sameway"),
+	Run:    func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.updateSameway(a.Install) },
 	Tool: llm.Tool{
 		Name:        "update_sameway",
 		Description: "Look for a new version of the sameway program itself. With install true, install it when there is one; without, only say whether there is. Say what came back word for word: a new version runs once Sameway restarts, which the page offers with Restart Sameway. Not for content and not for the canvas.",

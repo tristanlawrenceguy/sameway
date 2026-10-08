@@ -30,6 +30,9 @@ var heardAt = map[string]any{"type": "string", "description": "Where in the reco
 var meetingOps = []Op{{Title: "Write up a meeting",
 	Words: []string{"meeting", "transcript", "recording", "minutes", "write up", "write-up"},
 	Doing: saying("Writing up the meeting"),
+	Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
+		return s.writeUpMeeting(a.Event, a.Recording, a.Summary, a.Decisions, a.Tasks)
+	},
 	Tool: llm.Tool{Name: "write_up_meeting",
 		Description: "Write up a meeting from its recording's transcript: a short summary, what was decided, and the tasks that came up, each with where in the recording it was said. Read the recording with get_record on file first. Give the event when the meeting is one already, the recording when it is not and a meeting is made for it, or both to join them. It is written in one go and undone in one go; the decisions and tasks link to the line they came from.",
 		Schema: obj(map[string]any{

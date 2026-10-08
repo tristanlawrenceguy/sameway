@@ -34,6 +34,9 @@ type materialItem struct {
 var organiseOps = []Op{{Title: "Organise longer writing", Traits: Traits{Idempotent: true},
 	Words: []string{"chapter", "part", "draft", "essay", "story", "book", "piece", "outline", "material"},
 	Doing: saying("Organising the writing"),
+	Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
+		return s.organiseWriting(a.Type, a.Piece, a.Parts, a.Material)
+	},
 	Tool: llm.Tool{Name: "organise_writing",
 		Description: "Organise longer writing: a piece made of parts in order, as a book of chapters, and the material that goes with it (guidelines, submission details, research) for the whole or for one part. Give the piece and its parts in reading order; parts it has already and you leave out stay, after them. One change, undone in one go. Fields the type lacks for this are added first. Make the parts with create_record before.",
 		Schema: obj(map[string]any{
