@@ -1,0 +1,78 @@
+{
+  "name": "jobs",
+  "description": "A job search: the roles applied for by where each stands, and the interviews coming up.",
+  "use": {
+    "when": "the person is looking for work and wants each application and its next step in view.",
+    "not": "a single interview, which is an event, or work tasks, which is the week arrangement.",
+    "with": "each role as an application record, made with create_record; stage says how far it has got."
+  },
+  "needs": [
+    {
+      "type": "application",
+      "description": "A job applied for, or meant to be.",
+      "fields": [
+        {
+          "name": "title",
+          "kind": "string",
+          "required": true,
+          "description": "The role and where, such as Designer at Acme."
+        },
+        {
+          "name": "stage",
+          "kind": "enum",
+          "values": [
+            "to_apply",
+            "applied",
+            "interview",
+            "offer",
+            "no"
+          ],
+          "default": "to_apply",
+          "description": "How far it has got."
+        },
+        {
+          "name": "link",
+          "kind": "string",
+          "description": "The advert."
+        },
+        {
+          "name": "notes",
+          "kind": "text"
+        }
+      ]
+    }
+  ],
+  "blocks": [
+    {
+      "key": "title",
+      "component": "heading",
+      "props": {
+        "text": "Job search",
+        "level": 2
+      },
+      "span": 12,
+      "frame": "bare"
+    },
+    {
+      "key": "board",
+      "component": "collection",
+      "props": {
+        "type": "application",
+        "as": "board",
+        "by": "stage",
+        "label": "Applications"
+      },
+      "span": 12
+    },
+    {
+      "key": "interviews",
+      "component": "calendar",
+      "props": {
+        "type": "event",
+        "detail": "brief",
+        "caption": "Interviews"
+      },
+      "span": 12
+    }
+  ]
+}

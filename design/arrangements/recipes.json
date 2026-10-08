@@ -1,0 +1,91 @@
+{
+  "name": "recipes",
+  "description": "Recipes to cook: the ones to try, the favourites, and what is on the shopping list.",
+  "use": {
+    "when": "the person collects recipes and plans what to cook.",
+    "not": "a single shopping list, which is a list of tasks.",
+    "with": "each recipe as a recipe record and each thing to buy as a task tagged shopping, made with create_record."
+  },
+  "needs": [
+    {
+      "type": "recipe",
+      "description": "A dish and how to make it.",
+      "fields": [
+        {
+          "name": "title",
+          "kind": "string",
+          "required": true
+        },
+        {
+          "name": "status",
+          "kind": "enum",
+          "values": [
+            "to_try",
+            "favourite",
+            "made"
+          ],
+          "default": "to_try",
+          "description": "Whether it is still to try, a favourite, or made."
+        },
+        {
+          "name": "method",
+          "kind": "markdown",
+          "description": "What it takes and how."
+        }
+      ]
+    }
+  ],
+  "blocks": [
+    {
+      "key": "title",
+      "component": "heading",
+      "props": {
+        "text": "Recipes",
+        "level": 2
+      },
+      "span": 12,
+      "frame": "bare"
+    },
+    {
+      "key": "try",
+      "component": "collection",
+      "props": {
+        "type": "recipe",
+        "where": [
+          "status=to_try"
+        ],
+        "order": "-created_at",
+        "label": "To try",
+        "as": "cards"
+      },
+      "span": 6
+    },
+    {
+      "key": "favourites",
+      "component": "collection",
+      "props": {
+        "type": "recipe",
+        "where": [
+          "status=favourite"
+        ],
+        "order": "title",
+        "label": "Favourites"
+      },
+      "span": 6
+    },
+    {
+      "key": "shopping",
+      "component": "collection",
+      "props": {
+        "type": "task",
+        "where": [
+          "tags=shopping",
+          "done=false"
+        ],
+        "order": "title",
+        "label": "To buy"
+      },
+      "span": 12
+    }
+  ]
+}
