@@ -122,6 +122,15 @@ func (s *Set) Complete(builtin *Set) {
 					}
 				}
 			}
+			// A ref the system lists on its target's page is listed on
+			// an older copy's too: a project's tasks, from before the flag.
+			if f.Listed {
+				for i := range t.Fields {
+					if t.Fields[i].Name == f.Name && t.Fields[i].RefTo() == f.To {
+						t.Fields[i].Listed = true
+					}
+				}
+			}
 			// A field the system keeps stays the system's, whatever an
 			// older copy of the type says.
 			if f.ReadOnly {
