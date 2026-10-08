@@ -124,7 +124,11 @@ func (s *Server) shareSave(w http.ResponseWriter, r *http.Request) {
 	if title == "" {
 		title = "Saved " + time.Now().Format("2 Jan 15:04")
 	}
-	rec, act, err := records.WriteAs(s.app.Store, s.who(r), "created", shareType, "", map[string]any{"title": clipRunes(title, 200), "body": strings.Join(parts, "\n\n")})
+	fields := map[string]any{"title": clipRunes(title, 200), "body": strings.Join(parts, "\n\n")}
+	if link == "" { // a message or a photo, not a page to read: it may ask something; triage.go
+		fields["tags"] = []any{"shared", toSort}
+	}
+	rec, act, err := records.WriteAs(s.app.Store, s.who(r), "created", shareType, "", fields)
 	if err != nil {
 		s.failed(w, r, "Not saved", err, "/share")
 		return
@@ -132,6 +136,7 @@ func (s *Server) shareSave(w http.ResponseWriter, r *http.Request) {
 	if len(files) > 0 {
 		said += fmt.Sprintf(" %s kept in your files.", schema.Count(len(files), FileType))
 	}
+	s.triageSoon() // triage.go
 	s.tellAt(w, r, outcome{Title: "Saved", Text: title + " is in your notes." + said, Undo: act, Of: title}, "/t/"+shareType+"/"+rec.ID)
 }
 

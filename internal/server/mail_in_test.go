@@ -51,7 +51,7 @@ func TestEmailComesInAsNotesToSort(t *testing.T) {
 		t.Errorf("the page says where to send: %s", truncate(page))
 	}
 	today := get(t, h, "/today").Body.String()
-	if !strings.Contains(today, "From your email") || !strings.Contains(today, "Make it a task") {
+	if !strings.Contains(today, "To sort") || !strings.Contains(today, "Make it a task") {
 		t.Fatalf("Today lists it: %s", truncate(today))
 	}
 	rec := postForm(t, h, "/mail/task", url.Values{"id": {n.ID}})
@@ -63,7 +63,7 @@ func TestEmailComesInAsNotesToSort(t *testing.T) {
 	for _, task := range tasks {
 		made = made || task.Fields["title"] == "Dentist on Friday"
 	}
-	if !made || strings.Contains(get(t, h, "/today").Body.String(), "From your email") {
+	if !made || strings.Contains(get(t, h, "/today").Body.String(), "To sort") {
 		t.Error("the task is made and the email is sorted")
 	}
 }
