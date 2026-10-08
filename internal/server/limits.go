@@ -58,8 +58,6 @@ func (s *Server) limitsSection(owner bool) string {
 		if l := s.meaningLine(); l != "" { // search_meaning.go
 			line(l)
 		}
-		line(s.briefLine()) // today.go
-		line(s.phoneLine()) // phone.go
 		line(s.briefLine())
 		line(s.reviewLine())         // review.go          // today.go
 		lines, setup := s.appLines() // meeting_fetch_help.go
