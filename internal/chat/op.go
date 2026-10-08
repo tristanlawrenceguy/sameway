@@ -21,6 +21,10 @@ type Op struct {
 	// Doing says a call in a few words a person watches go by while it
 	// runs, from what the call makes and of what (doing.go).
 	Doing func(a callArgs) string
+	// Asks, for what may not be taken back, puts the call to the person
+	// instead of making it, or answers false when this call may simply
+	// run; a Yes runs it without asking again (consent.go).
+	Asks func(s *Service, a toolArgs, call llm.ToolCall) (toolResult, bool)
 	// Offered says whether this workspace offers it, and fills in what its
 	// schema names from the workspace (its content types, its kinds) on
 	// the copy it is given; nil is always.

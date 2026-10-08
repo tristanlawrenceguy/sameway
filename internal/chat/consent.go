@@ -1,8 +1,6 @@
 package chat
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -135,69 +133,74 @@ func mqttSecret(now, next string, s *Service) question {
 		"Yes, use " + next, "No, keep it as it is"}
 }
 
-// askFirst puts an irreversible call to the person instead of making it.
-// It answers false when the call is reversible and should simply run.
-func (s *Service) askFirst(call string, id, key, value string) (toolResult, bool) {
-	switch call {
-	case "set_setting":
-		put, ok := outward[key]
-		// Taking the workspace off the tailnet, or no longer keeping in
-		// step with anyone, sends nothing anywhere.
-		if !ok || ((key == "tailnet.name" || key == "tailnet.peers" || strings.HasPrefix(key, "publish.")) && (strings.TrimSpace(value) == "" || value == "off")) {
+// An op that may not be taken back says so with Asks (op.go): it puts the
+// call to the person instead of making it, or answers false when this
+// call is reversible and should simply run. A Yes runs the op without
+// asking again (runAgreed).
+
+// askSetting is set_setting's question, for the settings in outward.
+func (s *Service) askSetting(a toolArgs, _ llm.ToolCall) (toolResult, bool) {
+	key, value := a.Key, a.Value
+	put, ok := outward[key]
+	// Taking the workspace off the tailnet, or no longer keeping in
+	// step with anyone, sends nothing anywhere.
+	if !ok || ((key == "tailnet.name" || key == "tailnet.peers" || strings.HasPrefix(key, "publish.")) && (strings.TrimSpace(value) == "" || value == "off")) {
+		return toolResult{}, false
+	}
+	q := put(s.setting(key), strings.TrimSpace(value), s)
+	return s.ask(q, map[string]any{"tool": "set_setting", "key": key, "value": value}), true
+}
+
+// askAction is run_action's question, for an action that reaches outside.
+func (s *Service) askAction(a toolArgs, _ llm.ToolCall) (toolResult, bool) {
+	id := a.ID
+	rec, err := s.Store.Get(records.ActionType, id)
+	if err != nil {
+		return toolResult{}, false // Run says there is no such action
+	}
+	title, _ := rec.Fields["title"].(string)
+	press := "The assistant wants to press your " + quoted(title) + " button now."
+	var q question
+	switch kind, _ := rec.Fields["kind"].(string); kind {
+	case "arrangement", "message":
+		return toolResult{}, false // inside the workspace, and undone like any change
+	case "command":
+		line, _ := rec.Fields["command"].(string)
+		line = strings.TrimSpace(line)
+		// A command that would be refused, or that has not been
+		// accepted and so asks on its own card, is left to Run.
+		args := tokens(line)
+		if len(args) == 0 || !s.allowed(args[0]) {
 			return toolResult{}, false
 		}
-		q := put(s.setting(key), strings.TrimSpace(value), s)
-		return s.ask(q, map[string]any{"tool": "set_setting", "key": key, "value": value}), true
-	case "run_action":
-		rec, err := s.Store.Get(records.ActionType, id)
-		if err != nil {
-			return toolResult{}, false // Run says there is no such action
+		if _, err := s.folderFor(rec); err != nil {
+			return toolResult{}, false
 		}
-		title, _ := rec.Fields["title"].(string)
-		press := "The assistant wants to press your " + quoted(title) + " button now."
-		var q question
-		switch kind, _ := rec.Fields["kind"].(string); kind {
-		case "arrangement", "message":
-			return toolResult{}, false // inside the workspace, and undone like any change
-		case "command":
-			line, _ := rec.Fields["command"].(string)
-			line = strings.TrimSpace(line)
-			// A command that would be refused, or that has not been
-			// accepted and so asks on its own card, is left to Run.
-			args := tokens(line)
-			if len(args) == 0 || !s.allowed(args[0]) {
-				return toolResult{}, false
-			}
-			if _, err := s.folderFor(rec); err != nil {
-				return toolResult{}, false
-			}
-			if accepted, _ := rec.Fields["accepted"].(string); accepted != line {
-				return toolResult{}, false
-			}
-			q = question{"Run a program on this computer?",
-				press + " It runs " + strings.TrimSpace(line) + " as you, with access to your files. What it does can't be undone from Sameway.",
-				"Run it", "Don't run it"}
-		case "mqtt":
-			topic, _ := rec.Fields["topic"].(string)
-			payload, _ := rec.Fields["payload"].(string)
-			q = question{"Send a signal to one of your devices?",
-				fmt.Sprintf("%s It tells %s: %q. The device may act on it straight away.", press, topic, trim.Clip(payload, 120)),
-				"Send it", "Don't send"}
-		default:
-			url, _ := rec.Fields["url"].(string)
-			method, _ := rec.Fields["method"].(string)
-			body, _ := rec.Fields["body"].(string)
-			what := "It contacts " + url + "."
-			if body != "" && method != http.MethodGet {
-				what = fmt.Sprintf("It sends this to %s: %q.", url, trim.Clip(body, 160))
-			}
-			q = question{"Send something from Sameway to " + host(url) + "?",
-				press + " " + what + " Once sent, it can't be unsent.",
-				"Send it", "Don't send"}
+		if accepted, _ := rec.Fields["accepted"].(string); accepted != line {
+			return toolResult{}, false
 		}
-		return s.ask(q, map[string]any{"tool": "run_action", "id": id}), true
+		q = question{"Run a program on this computer?",
+			press + " It runs " + strings.TrimSpace(line) + " as you, with access to your files. What it does can't be undone from Sameway.",
+			"Run it", "Don't run it"}
+	case "mqtt":
+		topic, _ := rec.Fields["topic"].(string)
+		payload, _ := rec.Fields["payload"].(string)
+		q = question{"Send a signal to one of your devices?",
+			fmt.Sprintf("%s It tells %s: %q. The device may act on it straight away.", press, topic, trim.Clip(payload, 120)),
+			"Send it", "Don't send"}
+	default:
+		url, _ := rec.Fields["url"].(string)
+		method, _ := rec.Fields["method"].(string)
+		body, _ := rec.Fields["body"].(string)
+		what := "It contacts " + url + "."
+		if body != "" && method != http.MethodGet {
+			what = fmt.Sprintf("It sends this to %s: %q.", url, trim.Clip(body, 160))
+		}
+		q = question{"Send something from Sameway to " + host(url) + "?",
+			press + " " + what + " Once sent, it can't be unsent.",
+			"Send it", "Don't send"}
 	}
-	return toolResult{}, false
+	return s.ask(q, map[string]any{"tool": "run_action", "id": id}), true
 }
 
 // ask records the question, in the code's words, with the call a Yes runs.
@@ -248,25 +251,7 @@ func privateAddr(addr string) bool {
 // runAgreed is what a person's Yes to a proposal does: the call they were
 // asked about, as it was put to them, without asking again.
 func (s *Service) runAgreed(call llm.ToolCall) toolResult {
-	var args struct {
-		ID    string `json:"id"`
-		Key   string `json:"key"`
-		Value string `json:"value"`
-	}
-	json.Unmarshal(call.Args, &args)
-	switch call.Name {
-	case "run_action":
-		return s.Run(context.Background(), args.ID, s.current)
-	case "set_setting":
-		return s.setSetting(args.Key, args.Value)
-	case "let_in":
-		var a letInArgs
-		json.Unmarshal(call.Args, &a)
-		return s.letIn(a)
-	case changeFieldOp.Name:
-		return s.reshapeCall(call.Args)
-	}
-	return s.runTool(call)
+	return s.runOp(call, true)
 }
 
 // quoted is a name as a person reads it quoted.

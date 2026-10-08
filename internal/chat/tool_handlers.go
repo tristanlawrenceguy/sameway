@@ -129,10 +129,6 @@ func toolHandlers() map[string]func(s *Service, a toolArgs, call llm.ToolCall) t
 			return s.search(a.Query, a.Type, a.Page)
 		},
 		"run_action": func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
-			// What cannot be taken back is asked first; see consent.go.
-			if r, ask := s.askFirst("run_action", a.ID, "", ""); ask {
-				return r
-			}
 			return s.Run(context.Background(), a.ID, s.current)
 		},
 		"accept_action": func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
@@ -142,12 +138,12 @@ func toolHandlers() map[string]func(s *Service, a toolArgs, call llm.ToolCall) t
 			return s.updateSameway(a.Install)
 		},
 		"let_in": func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
-			return s.letInCall(call.Args)
+			return s.letIn(letInOf(call.Args))
+		},
+		"change_field": func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
+			return s.reshapeCall(call.Args)
 		},
 		"set_setting": func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
-			if r, ask := s.askFirst("set_setting", "", a.Key, a.Value); ask {
-				return r
-			}
 			return s.setSetting(a.Key, a.Value)
 		},
 		"clear_canvas": func(s *Service, a toolArgs, call llm.ToolCall) toolResult {

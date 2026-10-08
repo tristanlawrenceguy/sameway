@@ -19,7 +19,7 @@ func TestEveryToolHasAHandler(t *testing.T) {
 	for _, name := range chat.HandledTools() {
 		handled[name] = true
 	}
-	offered := map[string]bool{"accept_action": true} // a question's Yes, not the model's own
+	offered := map[string]bool{"accept_action": true, "change_field": true} // a question's Yes, not the model's own; change_field where the schema can change
 	for _, tool := range svc.Tools() {
 		offered[tool.Name] = true
 		if !handled[tool.Name] {

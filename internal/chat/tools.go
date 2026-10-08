@@ -80,14 +80,20 @@ var blockOps = []Op{
 			Schema: obj(map[string]any{})}},
 }
 
-// runTool executes one tool call, by the handler its name has in
-// toolHandlers (tool_handlers.go).
-func (s *Service) runTool(call llm.ToolCall) toolResult {
+// runOp executes one tool call, by the handler its name has in
+// toolHandlers (tool_handlers.go). What its Op asks first is asked,
+// unless the person has agreed to this very call already.
+func (s *Service) runOp(call llm.ToolCall, agreed bool) toolResult {
 	var args toolArgs
 	call.Args = loosen(call.Name, call.Args) // loose_args.go
 	if len(call.Args) > 0 {
 		if err := json.Unmarshal(call.Args, &args); err != nil {
 			return fail("%s", ArgsTrouble(err))
+		}
+	}
+	if op := opNamed(call.Name); op.Asks != nil && !agreed {
+		if r, ask := op.Asks(s, args, call); ask {
+			return r
 		}
 	}
 	if run, ok := toolHandlers()[call.Name]; ok {
