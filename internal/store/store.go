@@ -77,6 +77,7 @@ func Open(path string, types *schema.Set) (*Store, error) {
 		return nil, err
 	}
 	s.migrateClash()
+	s.originHere(path) // origin_here.go
 	return s, nil
 }
 
