@@ -189,7 +189,8 @@ func (s *Server) briefLine() string {
 	if at != "" {
 		said = "Morning brief: what is on today is sent at " + at + ", leading to Today."
 	}
-	return template.HTMLEscapeString(said) + ` <form method="post" action="/brief" class="sw-cluster"><label for="brief-at">Time</label><input type="time" id="brief-at" name="at" value="` + template.HTMLEscapeString(at) + `">` +
+	return template.HTMLEscapeString(said) + ` <form method="post" action="/brief" class="sw-stack">` +
+		string(s.component("text-field", map[string]any{"label": "Time of the brief", "name": "at", "id": "brief-at", "value": at, "hint": "Hours and minutes, such as 07:30. Empty sends none."})) +
 		string(s.component("button", map[string]any{"label": "Set the morning brief", "type": "submit", "variant": "secondary"})) + `</form>`
 }
 
