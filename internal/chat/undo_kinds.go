@@ -43,7 +43,7 @@ func (s *Service) inverseMore(a *store.Record) (func() (Change, error), error) {
 			return nil, errors.New("it is already gone")
 		}
 		return func() (Change, error) { return s.take(EntryType, id) }, nil
-	case "imported", "synced", "arranged", "wrote up", "organised", "suggested":
+	case "imported", "synced", "arranged", "wrote up", "organised", "suggested", "rescheduled":
 		// A batch: records made, changed and removed by one import, each
 		// with what it was before (nothing, for one it made).
 		changes := batchIn(before)
