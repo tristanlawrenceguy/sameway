@@ -37,6 +37,7 @@ fields:
   event:
     type: ref
     to: event
+    listed: true
     label: Came up at
     description: The meeting it came up at, if any.
   notes:

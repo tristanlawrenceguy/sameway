@@ -14,6 +14,7 @@ fields:
   person:
     type: ref
     to: person
+    listed: true
     description: Who it was with. An import links by their email, phone or name, and makes the person when new.
   kind:
     type: enum
