@@ -9,7 +9,7 @@ import (
 
 	"golang.org/x/net/html"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -107,7 +107,7 @@ func dropped(tok html.Token, allowed func(string) bool) bool {
 		return !strings.EqualFold(attr(tok, "method"), "get") || !reachable(attr(tok, "action"), allowed)
 	case tok.Data == "template" && hasAttr(tok, "data-edit-fields"):
 		return true
-	case attr(tok, "data-block-component") == chat.ComponentName:
+	case attr(tok, "data-block-component") == records.ComponentName:
 		return true
 	}
 	for _, c := range strings.Fields(attr(tok, "class")) {
@@ -165,7 +165,7 @@ func (s *Server) publicFile(pub Published, id string) bool {
 	// A file's parts, such as a video's captions, go with the file.
 	id, _, _ = strings.Cut(id, "/")
 	ref := "/files/" + id
-	blocks, _ := s.app.Store.List(chat.BlockType, store.ListOptions{})
+	blocks, _ := s.app.Store.List(records.BlockType, store.ListOptions{})
 	for _, b := range blocks {
 		canvas, _ := b.Fields["canvas"].(string)
 		if _, ok := pub.Tabs[canvas]; !ok {

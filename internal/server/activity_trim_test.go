@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -48,7 +48,7 @@ func TestLongRecordTitleIsWordTrimmedInActivity(t *testing.T) {
 	// A ~75-char truncation of the long title would look like:
 	// "This is a note with a very long multi-word title that excee…" (63 chars).
 	// The 6-word trimmed version is only 24 runes.
-	activity, _ := a.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
+	activity, _ := a.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
 	if len(activity) == 0 {
 		t.Fatal("no activity entries found")
 	}

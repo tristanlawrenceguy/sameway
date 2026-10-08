@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
 
@@ -88,7 +88,7 @@ func (s *Server) recordProps(w http.ResponseWriter, r *http.Request) {
 	// finished is its next time, not the tick (schema/repeat.go).
 	// A change a person made by hand is a change like any other: in the
 	// log with what it was, so it glows where it shows and can be undone.
-	saved, undo, err := chat.WriteAs(s.app.Store, s.who(r), "updated", t.Name, rec.ID, clean)
+	saved, undo, err := records.WriteAs(s.app.Store, s.who(r), "updated", t.Name, rec.ID, clean)
 	if err != nil {
 		if _, why := err.(*schema.ValidationError); why {
 			s.refused(w, r, t, err, detail)

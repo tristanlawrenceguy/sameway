@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // Undo of an already-humanized setting change reads in plain words on /activity:
@@ -16,7 +16,7 @@ func TestUndoHumanizedSettingReadsInPlainWords(t *testing.T) {
 
 	// Seed an original setting-change entry with already-humanized text
 	// (as it would be stored if the assistant previously wrote it in words).
-	old, err := a.Store.Create(chat.ActivityType, map[string]any{
+	old, err := a.Store.Create(records.ActivityType, map[string]any{
 		"summary": "Assistant changed Room between lines and words to Wide",
 		"actor":   "assistant",
 		"action":  "set",
@@ -28,7 +28,7 @@ func TestUndoHumanizedSettingReadsInPlainWords(t *testing.T) {
 	}
 
 	// The undo entry carries the raw summary from the original change.
-	if _, err := a.Store.Create(chat.ActivityType, map[string]any{
+	if _, err := a.Store.Create(records.ActivityType, map[string]any{
 		"summary": "You undid: Assistant changed Room between lines and words to Wide",
 		"actor":   "human",
 		"action":  "set",

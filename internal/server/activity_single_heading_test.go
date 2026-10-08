@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // TestActivityPageHasSingleActivityHeading checks that the /activity listing
@@ -15,7 +15,7 @@ import (
 func TestActivityPageHasSingleActivityHeading(t *testing.T) {
 	a, h := newApp(t)
 
-	chat.Record(a.Store, "assistant", chat.Change{Action: "created", Component: "note", ID: "aaa1", Detail: "First note"})
+	records.Record(a.Store, "assistant", records.Change{Action: "created", Component: "note", ID: "aaa1", Detail: "First note"})
 
 	rec := get(t, h, "/activity")
 	wantStatus(t, rec, http.StatusOK)

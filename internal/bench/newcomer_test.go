@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -45,7 +45,7 @@ func newcomer() []request {
 						all = append(all, strings.ToLower(jsonOf(r.Fields)))
 					}
 				}
-				for _, b := range list(a, chat.BlockType) {
+				for _, b := range list(a, records.BlockType) {
 					all = append(all, strings.ToLower(jsonOf(b.Fields["props"])))
 				}
 				got := strings.Join(all, " ")
@@ -123,7 +123,7 @@ func anyTitled(a *app.App, words string) *store.Record {
 // page besides the chat, and nothing made up to fill them.
 func setUp(a *app.App, kind string) string {
 	blocks, kinded := 0, false
-	for _, b := range list(a, chat.BlockType) {
+	for _, b := range list(a, records.BlockType) {
 		if b.Fields["component"] == "chat" {
 			continue
 		}

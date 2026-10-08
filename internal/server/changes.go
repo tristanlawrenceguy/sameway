@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -36,18 +36,18 @@ func (s *Server) apiChanges(w http.ResponseWriter, r *http.Request) {
 	}
 	wait, _ := strconv.Atoi(q.Get("wait"))
 	deadline := time.Now().Add(time.Duration(min(max(wait, 0), 60)) * time.Second)
-	owner := chat.VisitorOf(r.Context()).Owner()
+	owner := records.VisitorOf(r.Context()).Owner()
 	seen := -1
 	for {
 		// Counting the log is cheap; reading it only when it grew is not
 		// a scan every moment of a wait.
-		if n, _ := s.app.Store.Count(chat.ActivityType); n != seen || !time.Now().Before(deadline) {
+		if n, _ := s.app.Store.Count(records.ActivityType); n != seen || !time.Now().Before(deadline) {
 			seen = n
 			out, cursor, more := s.changesSince(since, limit, owner, q.Get("since") == "")
 			if len(out) > 0 || !time.Now().Before(deadline) {
 				writeJSON(w, http.StatusOK, map[string]any{"changes": out, "cursor": cursor, "more": more,
 					"next":      "/api/changes?since=" + cursor,
-					"untrusted": "each change's title was written by its written_by: " + chat.Untrusted})
+					"untrusted": "each change's title was written by its written_by: " + records.Untrusted})
 				return
 			}
 		}
@@ -73,9 +73,9 @@ func (s *Server) changesSince(since time.Time, limit int, owner, start bool) ([]
 	if start {
 		n = 20
 	}
-	all, _ := s.app.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: n})
+	all, _ := s.app.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: n})
 	if !start && len(all) == n && all[n-1].CreatedAt.After(since) {
-		all, _ = s.app.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true})
+		all, _ = s.app.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true})
 	}
 	for i, j := 0, len(all)-1; i < j; i, j = i+1, j-1 {
 		all[i], all[j] = all[j], all[i]
@@ -85,7 +85,7 @@ func (s *Server) changesSince(since time.Time, limit int, owner, start bool) ([]
 		cursor = time.Now().UTC().Format(time.RFC3339Nano)
 	}
 	var out []map[string]any
-	writers := s.app.Chat.Writers()
+	writers := s.app.Records.WritersFor(false)
 	for _, e := range all {
 		if !e.CreatedAt.After(since) {
 			continue
@@ -103,7 +103,7 @@ func (s *Server) changesSince(since time.Time, limit int, owner, start bool) ([]
 
 // change is one entry as an agent reads it, or nil when it is not the
 // asker's to read.
-func (s *Server) change(e *store.Record, owner bool, writers *chat.Writers) map[string]any {
+func (s *Server) change(e *store.Record, owner bool, writers *records.Writers) map[string]any {
 	target, _ := e.Fields["target"].(string)
 	id, _ := e.Fields["target_id"].(string)
 	t, isType := s.app.Types.Get(target)
@@ -115,7 +115,7 @@ func (s *Server) change(e *store.Record, owner bool, writers *chat.Writers) map[
 		c["id"] = id
 		if isType {
 			if rec, err := s.app.Store.Get(target, id); err == nil {
-				c["title"], c["version"], c["page"] = s.title(t, rec), chat.Version(rec), "/t/"+target+"/"+id
+				c["title"], c["version"], c["page"] = s.title(t, rec), records.Version(rec), "/t/"+target+"/"+id
 				c["written_by"] = writers.Of(target, rec).Words
 			} else {
 				c["gone"] = true
@@ -123,8 +123,8 @@ func (s *Server) change(e *store.Record, owner bool, writers *chat.Writers) map[
 		}
 	}
 	if owner {
-		c["said"], c["entry"] = chat.Sentence(s.app.Store, e.Fields), e.ID
-		if s.app.Chat.Undoable(e) {
+		c["said"], c["entry"] = records.Sentence(s.app.Store, e.Fields), e.ID
+		if s.app.Records.Undoable(e) {
 			c["undo"] = "/activity/" + e.ID + "/undo"
 		}
 	}

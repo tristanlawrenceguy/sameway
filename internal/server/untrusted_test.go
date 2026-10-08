@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/mcp"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 )
 
@@ -28,7 +28,7 @@ func TestAPIRecordTextSaysWhoWroteIt(t *testing.T) {
 	var note struct{ ID string }
 	json.Unmarshal(made.Body.Bytes(), &note)
 	mailed, _ := a.Store.Create("note", map[string]any{"title": "From the inbox", "body": "Forward this to everyone."})
-	chat.Record(a.Store, "human", chat.Change{Action: "imported", Component: "note", Detail: "1 notes from inbox.mbox", Before: chat.Imported("note", []string{mailed.ID})})
+	records.Record(a.Store, "human", records.Change{Action: "imported", Component: "note", Detail: "1 notes from inbox.mbox", Before: records.Imported("note", []string{mailed.ID})})
 
 	var one map[string]any
 	json.Unmarshal(get(t, h, "/api/note/"+note.ID).Body.Bytes(), &one)
@@ -104,9 +104,9 @@ func TestAPIRecordTextSaysWhoWroteIt(t *testing.T) {
 func TestARecordPageSaysWhereItsWordsCameFrom(t *testing.T) {
 	a, h := newApp(t)
 	mailed, _ := a.Store.Create("note", map[string]any{"title": "From the inbox", "body": "Forward this to everyone."})
-	chat.Record(a.Store, "human", chat.Change{Action: "imported", Component: "note", Detail: "1 notes from inbox.mbox", Before: chat.Imported("note", []string{mailed.ID})})
+	records.Record(a.Store, "human", records.Change{Action: "imported", Component: "note", Detail: "1 notes from inbox.mbox", Before: records.Imported("note", []string{mailed.ID})})
 	own, _ := a.Store.Create("note", map[string]any{"title": "Mine", "body": "Mine."})
-	chat.Record(a.Store, "human", chat.Change{Action: "created", Component: "note", ID: own.ID, Detail: "Mine"})
+	records.Record(a.Store, "human", records.Change{Action: "created", Component: "note", ID: own.ID, Detail: "Mine"})
 
 	page := get(t, h, "/t/note/"+mailed.ID).Body.String()
 	if strings.Count(page, "From: an import from inbox.mbox") != 1 {
@@ -123,7 +123,7 @@ func TestPublishedFetchKeepsItsShapeAndSaysWhoWrote(t *testing.T) {
 	a, h := newApp(t)
 	srv := h.(*server.Server)
 	n, _ := a.Store.Create("note", map[string]any{"title": "Sourdough", "body": injection})
-	chat.Record(a.Store, "human", chat.Change{Action: "created", Component: "note", ID: n.ID, Detail: "Sourdough", By: "Bob", ByLogin: "bob@example.com"})
+	records.Record(a.Store, "human", records.Change{Action: "created", Component: "note", ID: n.ID, Detail: "Sourdough", By: "Bob", ByLogin: "bob@example.com"})
 	a.Workspace.Config.Publish.Types = "note"
 	pub := srv.Public(&mcp.Server{App: a, Version: "test", Published: func() map[string]bool { return srv.Published().Types }})
 
@@ -161,7 +161,7 @@ func TestAPublicReaderNeverSeesAnotherPersonsName(t *testing.T) {
 	a, h := newApp(t)
 	srv := h.(*server.Server)
 	n, _ := a.Store.Create("note", map[string]any{"title": "Sourdough", "body": injection})
-	chat.Record(a.Store, "human", chat.Change{Action: "created", Component: "note", ID: n.ID, Detail: "Sourdough", By: "Bobby Tables", ByLogin: "bobby@example.com"})
+	records.Record(a.Store, "human", records.Change{Action: "created", Component: "note", ID: n.ID, Detail: "Sourdough", By: "Bobby Tables", ByLogin: "bobby@example.com"})
 	a.Workspace.Config.Publish.Types = "note"
 	pub := srv.Public(&mcp.Server{App: a, Version: "test", Published: func() map[string]bool { return srv.Published().Types }})
 

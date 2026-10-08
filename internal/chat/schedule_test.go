@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -53,8 +54,8 @@ func TestActionsRunOnTheirOwnAtTheirTime(t *testing.T) {
 	defer remote.Close()
 	chat.HTTPClient = remote.Client()
 	svc := newFullService(t)
-	weather, _ := svc.Store.Create(chat.ActionType, map[string]any{"title": "Weather", "url": remote.URL, "every": "hour", "show": true})
-	svc.Store.Create(chat.ActionType, map[string]any{"title": "Alarm", "url": remote.URL, "every": "never"})
+	weather, _ := svc.Store.Create(records.ActionType, map[string]any{"title": "Weather", "url": remote.URL, "every": "hour", "show": true})
+	svc.Store.Create(records.ActionType, map[string]any{"title": "Alarm", "url": remote.URL, "every": "never"})
 
 	ran := svc.RunDue(context.Background(), tuesday)
 	if len(ran) != 1 || ran[0] != weather.ID || calls != 1 {
@@ -66,15 +67,15 @@ func TestActionsRunOnTheirOwnAtTheirTime(t *testing.T) {
 	if later := svc.RunDue(context.Background(), tuesday.Add(61*time.Minute)); len(later) != 1 || calls != 2 {
 		t.Errorf("an hour later it runs again, got %v after %d calls", later, calls)
 	}
-	rec, _ := svc.Store.Get(chat.ActionType, weather.ID)
+	rec, _ := svc.Store.Get(records.ActionType, weather.ID)
 	if rec.Fields["last_run"] == "" {
 		t.Error("the action should remember when it ran")
 	}
-	blocks, _ := svc.Store.List(chat.BlockType, store.ListOptions{})
+	blocks, _ := svc.Store.List(records.BlockType, store.ListOptions{})
 	if len(blocks) != 1 || blocks[0].Fields["props"].(map[string]any)["content"] != "sunny" {
 		t.Errorf("a scheduled webhook with show keeps one block current, got %v", blocks)
 	}
-	log, _ := svc.Store.List(chat.ActivityType, store.ListOptions{})
+	log, _ := svc.Store.List(records.ActivityType, store.ListOptions{})
 	system := 0
 	for _, e := range log {
 		if e.Fields["actor"] == "system" && e.Fields["action"] == "ran" {

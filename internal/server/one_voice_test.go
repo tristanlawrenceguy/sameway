@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -37,7 +37,7 @@ func TestAChangeIsSaidOneWayEverywhere(t *testing.T) {
 	}
 	// The stored words are brought up to date when a workspace opens, so
 	// what hands out the fields as they are (the API, MCP) agrees too.
-	if n := chat.Resay(a.Store); n != 2 {
+	if n := records.Resay(a.Store); n != 2 {
 		t.Errorf("both old entries are said again, got %d", n)
 	}
 	surfaces["the API's record"] = get(t, h, "/api/activity/"+undo.ID).Body.String()
@@ -69,7 +69,7 @@ func TestTheLogSaysEverythingInWords(t *testing.T) {
 	a.Store.Create("activity", map[string]any{"actor": "system", "action": "added", "target": "type", "detail": "test_type", "summary": "System added type test_type"})
 	a.Store.Create("activity", map[string]any{"actor": "system", "action": "added", "target": "field", "detail": "test_field on test_type", "summary": "System added field test_field on test_type"})
 	for range 3 {
-		chat.Record(a.Store, "system", chat.Change{Action: "failed", Detail: "claude: exit status 1"})
+		records.Record(a.Store, "system", records.Change{Action: "failed", Detail: "claude: exit status 1"})
 	}
 	var made map[string]any
 	decode(t, postJSON(t, h, "POST", "/api/note", map[string]any{"title": "Plan"}), &made)

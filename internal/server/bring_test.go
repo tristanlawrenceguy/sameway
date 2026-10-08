@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -39,8 +39,8 @@ func TestThingsAreBroughtFromAnotherApp(t *testing.T) {
 	if len(tasks) != 2 {
 		t.Fatalf("the tasks came in: %d", len(tasks))
 	}
-	log, _ := a.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
-	if len(log) != 1 || !strings.Contains(chat.Sentence(a.Store, log[0].Fields), "2 tasks from Todoist") {
+	log, _ := a.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
+	if len(log) != 1 || !strings.Contains(records.Sentence(a.Store, log[0].Fields), "2 tasks from Todoist") {
 		t.Fatalf("as one change: %v", log)
 	}
 	postForm(t, h, "/activity/"+log[0].ID+"/undo", nil)

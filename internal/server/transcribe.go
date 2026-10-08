@@ -11,8 +11,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/speech"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -88,7 +88,7 @@ func (s *Server) speechGet(w http.ResponseWriter, r *http.Request) {
 	}
 	s.speech.mu.Unlock()
 	if !already {
-		s.record(r, chat.Change{Action: "started", Detail: "getting speech-to-text for this computer (" + sizeWords(speech.DownloadSize()) + ")"})
+		s.record(r, records.Change{Action: "started", Detail: "getting speech-to-text for this computer (" + sizeWords(speech.DownloadSize()) + ")"})
 		go s.getSpeech(kit)
 	}
 	s.tell(w, r, outcome{Title: "Getting speech-to-text", Text: "It downloads once, about " + sizeWords(speech.DownloadSize()) + ". Recordings are written down as soon as it is here."}, "/t/"+FileType)
@@ -114,9 +114,9 @@ func (s *Server) getSpeech(kit *Speech) {
 	}
 	s.speech.mu.Unlock()
 	if err != nil {
-		chat.Record(s.app.Store, "system", chat.Change{Action: "failed", Detail: "getting speech-to-text: " + err.Error()})
+		records.Record(s.app.Store, "system", records.Change{Action: "failed", Detail: "getting speech-to-text: " + err.Error()})
 	} else {
-		chat.Record(s.app.Store, "system", chat.Change{Action: "added", Detail: "speech-to-text for this computer (" + speech.ModelName + ")"})
+		records.Record(s.app.Store, "system", records.Change{Action: "added", Detail: "speech-to-text for this computer (" + speech.ModelName + ")"})
 		s.sweep() // the recordings that were waiting for it
 	}
 	s.Changed()
@@ -206,7 +206,7 @@ func (s *Server) speechOffer(r *http.Request, rec *store.Record, props map[strin
 	case getting:
 		return string(s.component("status", map[string]any{"id": "speech-status", "state": "working",
 			"message": fmt.Sprintf("Getting speech-to-text for this computer: %s of %s.", sizeWords(done), sizeWords(total))}))
-	case chat.VisitorOf(r.Context()).Owner() && (speech.Supported() || s.speech.given):
+	case records.VisitorOf(r.Context()).Owner() && (speech.Supported() || s.speech.given):
 		if failed != "" {
 			props["none"] = "No transcript yet. Getting speech-to-text did not work: " + failed
 		}

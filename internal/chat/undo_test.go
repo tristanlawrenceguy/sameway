@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -25,11 +25,11 @@ func TestUndoRunsTheLogBackwards(t *testing.T) {
 		return text
 	}
 	blocks := func() []*store.Record {
-		recs, _ := svc.Store.List(chat.BlockType, store.ListOptions{})
+		recs, _ := svc.Store.List(records.BlockType, store.ListOptions{})
 		return recs
 	}
 	newest := func() string {
-		recs, _ := svc.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
+		recs, _ := svc.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
 		s, _ := recs[0].Fields["summary"].(string)
 		return s
 	}
@@ -85,29 +85,29 @@ func TestUndoRunsTheLogBackwards(t *testing.T) {
 		t.Fatal("removing the tab should take its block with it")
 	}
 	must("undo_change", map[string]any{})
-	if !svc.HasCanvas(garden) || len(chat.OnCanvas(blocks(), garden)) != 1 {
+	if !svc.HasCanvas(garden) || len(records.OnCanvas(blocks(), garden)) != 1 {
 		t.Fatal("undoing the removal should put the tab and its block back")
 	}
 
 	// Clearing the canvas is undone whole.
 	must("clear_canvas", map[string]any{})
-	if len(chat.OnCanvas(blocks(), "")) != 0 {
+	if len(records.OnCanvas(blocks(), "")) != 0 {
 		t.Fatal("clear should empty Home")
 	}
 	must("undo_change", map[string]any{})
-	if len(chat.OnCanvas(blocks(), "")) != 1 {
+	if len(records.OnCanvas(blocks(), "")) != 1 {
 		t.Fatal("undoing a clear should put the blocks back")
 	}
 
 	// An entry that no longer applies says so instead of doing something else.
-	entries, _ := svc.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at"})
+	entries, _ := svc.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at"})
 	var added string
 	for _, e := range entries {
 		if e.Fields["summary"] == "Assistant added heading Shopping" {
 			added = e.ID
 		}
 	}
-	svc.Store.Delete(chat.BlockType, id)
+	svc.Store.Delete(records.BlockType, id)
 	if text, isErr := svc.Call("undo_change", json.RawMessage(`{"id":"`+added+`"}`)); !isErr || !strings.Contains(text, "already gone") {
 		t.Errorf("undoing an addition of something gone should be refused with the reason, got %q", text)
 	}

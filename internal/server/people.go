@@ -4,7 +4,7 @@ import (
 	stdcmp "cmp"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -19,19 +19,19 @@ func (s *Server) whoDid(entry *store.Record) (string, int) {
 	}
 	login, _ := entry.Fields["by_login"].(string)
 	by, _ := entry.Fields["by"].(string)
-	if login == "" && by == "" || login != "" && strings.EqualFold(login, s.app.Chat.Owner.Login) {
+	if login == "" && by == "" || login != "" && strings.EqualFold(login, s.app.Records.Owner.Login) {
 		return "", 0
 	}
 	name := by
 	if name == "" {
-		if p := s.app.Chat.PersonByEmail(login); p != nil {
+		if p := s.app.Records.PersonByEmail(login); p != nil {
 			name, _ = p.Fields["name"].(string)
 		}
 	}
 	if name == "" {
 		name, _, _ = strings.Cut(login, "@")
 	}
-	return name, chat.PersonColour(stdcmp.Or(login, by))
+	return name, records.PersonColour(stdcmp.Or(login, by))
 }
 
 // changedBy is, for each block someone other than the owner changed
@@ -40,7 +40,7 @@ func (s *Server) whoDid(entry *store.Record) (string, int) {
 // since a glow only lasts for the latest changes.
 func (s *Server) changedBy() map[string]int {
 	out := map[string]int{}
-	entries, err := s.app.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 40})
+	entries, err := s.app.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 40})
 	if err != nil {
 		return out
 	}
@@ -63,8 +63,8 @@ func (s *Server) changedBy() map[string]int {
 // block, "an agent" when it gave no name.
 func blockWho(b *store.Record) map[string]string {
 	agent, _ := b.Fields["agent"].(string)
-	if agent == "" || chat.AgentWho(agent, "") == "An agent" {
+	if agent == "" || records.AgentWho(agent, "") == "An agent" {
 		agent = "an agent"
 	}
-	return map[string]string{"human": "you", "assistant": "the assistant", "system": "the workspace", chat.ActorAgent: agent}
+	return map[string]string{"human": "you", "assistant": "the assistant", "system": "the workspace", records.ActorAgent: agent}
 }

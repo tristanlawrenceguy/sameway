@@ -9,20 +9,20 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 // as makes a request as someone on another device, the way the tailnet
 // marks one it has let in.
-func as(t *testing.T, h http.Handler, v chat.Visitor, method, path string, body string, contentType string) *httptest.ResponseRecorder {
+func as(t *testing.T, h http.Handler, v records.Visitor, method, path string, body string, contentType string) *httptest.ResponseRecorder {
 	t.Helper()
 	req := httptest.NewRequest(method, path, strings.NewReader(body))
 	if contentType != "" {
 		req.Header.Set("Content-Type", contentType)
 	}
-	req = req.WithContext(chat.WithVisitor(req.Context(), v))
+	req = req.WithContext(records.WithVisitor(req.Context(), v))
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	return rec
@@ -39,11 +39,11 @@ func TestWhoGetsInIsWhoTheOwnerLetIn(t *testing.T) {
 	}
 
 	ctx, _, ok := srv.Admit(context.Background(), "bob@example.com", "Robert", "pixel-7", false)
-	v := chat.VisitorOf(ctx)
-	if !ok || v.Access != chat.Edit || v.Name != "Bob" || v.Device != "pixel-7" {
+	v := records.VisitorOf(ctx)
+	if !ok || v.Access != records.Edit || v.Name != "Bob" || v.Device != "pixel-7" {
 		t.Errorf("Bob should get in to edit, under the name the owner knows him by: %+v %v", v, ok)
 	}
-	if ctx, _, ok := srv.Admit(context.Background(), "me@example.com", "Me", "laptop", true); !ok || !chat.VisitorOf(ctx).Owner() {
+	if ctx, _, ok := srv.Admit(context.Background(), "me@example.com", "Me", "laptop", true); !ok || !records.VisitorOf(ctx).Owner() {
 		t.Error("the owner's own device gets in as the owner")
 	}
 
@@ -73,8 +73,8 @@ func TestWhatEachLevelMayDo(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	viewer := chat.Visitor{Name: "Vi", Login: "vi@example.com", Access: chat.View, Device: "tablet"}
-	editor := chat.Visitor{Person: bob.ID, Name: "Bob", Login: "bob@example.com", Access: chat.Edit, Device: "pixel-7"}
+	viewer := records.Visitor{Name: "Vi", Login: "vi@example.com", Access: records.View, Device: "tablet"}
+	editor := records.Visitor{Person: bob.ID, Name: "Bob", Login: "bob@example.com", Access: records.Edit, Device: "pixel-7"}
 	note := `{"title":"From a guest"}`
 
 	if rec := as(t, h, viewer, http.MethodGet, "/t/note", "", ""); rec.Code != http.StatusOK {
@@ -117,7 +117,7 @@ func TestAVisitorDoesNotSeeTheOwnersConversation(t *testing.T) {
 	if !strings.Contains(get(t, h, "/").Body.String(), "the owner&#39;s private words") {
 		t.Skip("this canvas shows no conversation to hide")
 	}
-	body := as(t, h, chat.Visitor{Name: "Vi", Access: chat.View}, http.MethodGet, "/", "", "").Body.String()
+	body := as(t, h, records.Visitor{Name: "Vi", Access: records.View}, http.MethodGet, "/", "", "").Body.String()
 	if strings.Contains(body, "private words") {
 		t.Error("a visitor should not see the owner's conversation")
 	}
@@ -129,12 +129,12 @@ func TestAVisitorDoesNotSeeTheOwnersConversation(t *testing.T) {
 // A change someone else makes is theirs in the log, by name and device.
 func TestTheLogSaysWhoElseMadeAChange(t *testing.T) {
 	a, h := newApp(t)
-	editor := chat.Visitor{Name: "Bob", Access: chat.Edit, Device: "pixel-7"}
+	editor := records.Visitor{Name: "Bob", Access: records.Edit, Device: "pixel-7"}
 	rec, _ := a.Store.Create("note", map[string]any{"title": "Shopping"})
 	if r := as(t, h, editor, http.MethodPost, "/t/note/"+rec.ID+"/delete", "", "application/x-www-form-urlencoded"); r.Code >= 400 {
 		t.Fatalf("Bob deletes a note: %d", r.Code)
 	}
-	log, _ := a.Store.List(chat.ActivityType, store.ListOptions{})
+	log, _ := a.Store.List(records.ActivityType, store.ListOptions{})
 	found := false
 	for _, e := range log {
 		if s, _ := e.Fields["summary"].(string); strings.HasPrefix(s, "Bob deleted") && strings.HasSuffix(s, ", on pixel-7") {
@@ -151,7 +151,7 @@ func TestTheLogSaysWhoElseMadeAChange(t *testing.T) {
 func TestAnEditorHasTheirOwnChat(t *testing.T) {
 	a, h := newApp(t)
 	a.Chat.Say("the owner's private words")
-	bob := chat.Visitor{Name: "Bob", Login: "bob@example.com", Access: chat.Edit}
+	bob := records.Visitor{Name: "Bob", Login: "bob@example.com", Access: records.Edit}
 	rec := as(t, h, bob, http.MethodGet, "/chat", "", "")
 	if rec.Code != http.StatusOK || strings.Contains(rec.Body.String(), "private words") {
 		t.Errorf("Bob's chat opens, without the owner's words: %d", rec.Code)
@@ -159,7 +159,7 @@ func TestAnEditorHasTheirOwnChat(t *testing.T) {
 	if !strings.Contains(rec.Body.String(), `name="message"`) {
 		t.Error("Bob can write to the assistant")
 	}
-	vi := as(t, h, chat.Visitor{Name: "Vi", Login: "vi@example.com", Access: chat.View}, http.MethodGet, "/chat", "", "").Body.String()
+	vi := as(t, h, records.Visitor{Name: "Vi", Login: "vi@example.com", Access: records.View}, http.MethodGet, "/chat", "", "").Body.String()
 	if strings.Contains(vi, `name="message"`) || !strings.Contains(vi, "for the people who can change it") {
 		t.Error("someone who may only look has no assistant, and is told why")
 	}

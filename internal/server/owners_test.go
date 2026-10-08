@@ -9,7 +9,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/examples"
 	"github.com/tristanlawrenceguy/sameway/internal/app"
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
@@ -33,7 +33,7 @@ func TestAnOlderWorkspaceKeepsTheOwnersRecordsTheirs(t *testing.T) {
 	}
 	t.Cleanup(func() { a.Close() })
 	h := server.New(a)
-	viewer := chat.Visitor{Name: "Vi", Login: "vi@example.com", Access: chat.View}
+	viewer := records.Visitor{Name: "Vi", Login: "vi@example.com", Access: records.View}
 	for _, path := range []string{"/t/activity", "/api/message", "/t/conversation", "/export/activity.csv"} {
 		if res := as(t, h, viewer, http.MethodGet, path, "", ""); res.Code != http.StatusForbidden {
 			t.Errorf("%s is the owner's in an older workspace too: %d", path, res.Code)

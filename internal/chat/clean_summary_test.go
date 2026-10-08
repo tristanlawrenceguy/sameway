@@ -3,7 +3,7 @@ package chat_test
 import (
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // Summaries stored in keys before setting names existed are said in words,
@@ -18,7 +18,7 @@ func TestCleanSummary(t *testing.T) {
 		"Assistant added card Plan":                "Assistant added card Plan",
 		"You undid: Assistant added card Plan":     "You undid: Assistant added card Plan",
 	} {
-		if got := chat.CleanSummary(in); got != want {
+		if got := records.CleanSummary(in); got != want {
 			t.Errorf("CleanSummary(%q) = %q, want %q", in, got, want)
 		}
 	}

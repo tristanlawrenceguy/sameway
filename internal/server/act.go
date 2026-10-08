@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
@@ -33,7 +33,7 @@ func (s *Server) act(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if proposal != "" {
-		http.Redirect(w, r, "/t/"+chat.ProposalType+"/"+proposal, http.StatusSeeOther)
+		http.Redirect(w, r, "/t/"+records.ProposalType+"/"+proposal, http.StatusSeeOther)
 		return
 	}
 	// What it came back with, in a sentence or two.
@@ -50,7 +50,7 @@ func (s *Server) apiAct(w http.ResponseWriter, r *http.Request) {
 	}
 	out := map[string]any{"ran": r.PathValue("id"), "result": text}
 	if proposal != "" {
-		out["waiting_for"] = "/t/" + chat.ProposalType + "/" + proposal
+		out["waiting_for"] = "/t/" + records.ProposalType + "/" + proposal
 	}
 	writeJSON(w, http.StatusOK, out)
 }
@@ -61,7 +61,7 @@ func (s *Server) apiAct(w http.ResponseWriter, r *http.Request) {
 // way, and a command not yet accepted stays a question for the person.
 func (s *Server) hook(w http.ResponseWriter, r *http.Request) {
 	token := r.PathValue("token")
-	recs, _ := s.app.Store.List(chat.ActionType, store.ListOptions{})
+	recs, _ := s.app.Store.List(records.ActionType, store.ListOptions{})
 	for _, rec := range recs {
 		if t, _ := rec.Fields["trigger"].(string); t == "" || t != token {
 			continue
@@ -73,7 +73,7 @@ func (s *Server) hook(w http.ResponseWriter, r *http.Request) {
 		}
 		out := map[string]any{"ran": rec.ID, "result": text}
 		if proposal != "" {
-			out["waiting_for"] = "/t/" + chat.ProposalType + "/" + proposal
+			out["waiting_for"] = "/t/" + records.ProposalType + "/" + proposal
 		}
 		writeJSON(w, http.StatusOK, out)
 		return

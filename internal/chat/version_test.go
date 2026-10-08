@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/update"
 )
@@ -61,7 +61,7 @@ func TestAnInstallGoesOnTheReceiptAndInTheLog(t *testing.T) {
 	if got := changes[0].(map[string]any); got["action"] != "updated to" || got["component"] != "sameway 0.4.0" {
 		t.Errorf("receipt entry wrong: %v", got)
 	}
-	log, _ := svc.Store.List(chat.ActivityType, store.ListOptions{})
+	log, _ := svc.Store.List(records.ActivityType, store.ListOptions{})
 	var found string
 	for _, entry := range log {
 		if summary, _ := entry.Fields["summary"].(string); strings.Contains(summary, "sameway 0.4.0") {

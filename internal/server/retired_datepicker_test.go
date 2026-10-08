@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // TestRetiredDatepickerBlockShowsAsWhenField checks that a canvas saved
@@ -14,7 +14,7 @@ import (
 // and that the assistant is no longer offered a datepicker.
 func TestRetiredDatepickerBlockShowsAsWhenField(t *testing.T) {
 	a, h := newApp(t)
-	blk, err := a.Store.Create(chat.BlockType, a.Chat.BlockFields(map[string]any{
+	blk, err := a.Store.Create(records.BlockType, a.Chat.BlockFields(map[string]any{
 		"component": "datepicker",
 		"props": map[string]any{
 			"label": "Due date", "name": "due", "value": "2026-10-02",

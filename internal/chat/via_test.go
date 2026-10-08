@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -15,14 +15,14 @@ import (
 func TestSaidFromAnotherDeviceSaysWhich(t *testing.T) {
 	svc := newFullService(t)
 	svc.Provider = &scripted{steps: []*llm.Response{}}
-	ctx := chat.WithVia(context.Background(), "pixel-7")
+	ctx := records.WithVia(context.Background(), "pixel-7")
 	if _, err := svc.Send(ctx, "hello from the train"); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := svc.Send(context.Background(), "hello from the desk"); err != nil {
 		t.Fatal(err)
 	}
-	log, err := svc.Store.List(chat.ActivityType, store.ListOptions{})
+	log, err := svc.Store.List(records.ActivityType, store.ListOptions{})
 	if err != nil {
 		t.Fatal(err)
 	}

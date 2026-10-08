@@ -15,7 +15,7 @@ func (s *Server) hooks() {
 	s.app.Chat.Picture = s.pictureFor
 	s.app.Chat.Check = s.blockCheck
 	// What a record says at a glance, glance.go, for one record at a time.
-	s.app.Chat.Glance = func(t *schema.Type, rec *store.Record) string { return s.glanceText(t, rec, nil) }
+	s.app.Records.Glance = func(t *schema.Type, rec *store.Record) string { return s.glanceText(t, rec, nil) }
 	s.app.Chat.Home = s // recordings and workspaces; see home.go
 	// What an automation did on its own is told like a ring (ring.go).
 	s.app.Chat.Tell = func(title, text, url string) {

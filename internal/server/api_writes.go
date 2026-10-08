@@ -3,7 +3,7 @@ package server
 import (
 	"net/http"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // Writes through the API are changes like any other: logged with what
@@ -28,10 +28,10 @@ func (s *Server) apiCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	agent := apiAgent(r)
-	if r.PathValue("type") == chat.BlockType {
+	if r.PathValue("type") == records.BlockType {
 		byAgent(fields, agent, true)
 	}
-	rec, _, err := chat.WriteAs(s.app.Store, agent.As(), "created", r.PathValue("type"), "", fields)
+	rec, _, err := records.WriteAs(s.app.Store, agent.As(), "created", r.PathValue("type"), "", fields)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -62,10 +62,10 @@ func (s *Server) apiUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	agent := apiAgent(r)
-	if r.PathValue("type") == chat.BlockType {
+	if r.PathValue("type") == records.BlockType {
 		byAgent(fields, agent, false)
 	}
-	rec, _, err := chat.WriteAs(s.app.Store, agent.As(), "updated", r.PathValue("type"), r.PathValue("id"), fields)
+	rec, _, err := records.WriteAs(s.app.Store, agent.As(), "updated", r.PathValue("type"), r.PathValue("id"), fields)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -81,7 +81,7 @@ func (s *Server) apiDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Logged with everything it had, so it can be put back.
-	gone, _, err := chat.WriteAs(s.app.Store, apiAgent(r).As(), "deleted", r.PathValue("type"), r.PathValue("id"), nil)
+	gone, _, err := records.WriteAs(s.app.Store, apiAgent(r).As(), "deleted", r.PathValue("type"), r.PathValue("id"), nil)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -97,11 +97,11 @@ func (s *Server) apiDelete(w http.ResponseWriter, r *http.Request) {
 // every other change reversible, so it is kept by Sameway, read by anyone,
 // and changed by nobody. A change is taken back by undoing it.
 func (s *Server) keptLog(w http.ResponseWriter, r *http.Request) bool {
-	if r.PathValue("type") != chat.ActivityType {
+	if r.PathValue("type") != records.ActivityType {
 		return false
 	}
 	writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": apiError{Code: "kept",
-		Message: chat.ErrKeptLog.Error()}})
+		Message: records.ErrKeptLog.Error()}})
 	return true
 }
 
@@ -109,21 +109,21 @@ func (s *Server) keptLog(w http.ResponseWriter, r *http.Request) bool {
 // gives, or nobody in particular, "An agent". The User-Agent is not a
 // name: it names the library that sent the request (Go-http-client,
 // python-requests), which reached people as "Added by Go-http-client".
-func apiAgent(r *http.Request) chat.Agent {
+func apiAgent(r *http.Request) records.Agent {
 	// An agent with a key is who its key says, whatever it calls itself.
-	if v := chat.VisitorOf(r.Context()); v.Agent {
-		return chat.Agent{Name: v.Name, Through: chat.ThroughAPI}
+	if v := records.VisitorOf(r.Context()); v.Agent {
+		return records.Agent{Name: v.Name, Through: records.ThroughAPI}
 	}
-	return chat.Agent{Name: chat.AgentName(r.Header.Get("X-Sameway-Agent")), Through: chat.ThroughAPI}
+	return records.Agent{Name: records.AgentName(r.Header.Get("X-Sameway-Agent")), Through: records.ThroughAPI}
 }
 
 // byAgent marks a block's fields as the agent's: who changed it last,
 // and on a new one who added it. What the body says of these is not
 // taken: who made a change is the log's to say, not the caller's.
-func byAgent(fields map[string]any, a chat.Agent, created bool) {
-	fields["actor"], fields["agent"] = chat.ActorAgent, a.Name
+func byAgent(fields map[string]any, a records.Agent, created bool) {
+	fields["actor"], fields["agent"] = records.ActorAgent, a.Name
 	delete(fields, "created_by")
 	if created {
-		fields["created_by"] = chat.ActorAgent
+		fields["created_by"] = records.ActorAgent
 	}
 }

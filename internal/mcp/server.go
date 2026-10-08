@@ -20,7 +20,7 @@ import (
 	"sync"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // protocolVersion is the MCP revision this server speaks.
@@ -139,7 +139,7 @@ func (s *Server) handle(ctx context.Context, req request) (any, *rpcError) {
 			"instructions": "This is a Sameway workspace: content records of the types the workspace declares, " +
 				"and a canvas of components. Call describe first for the types, their fields, the components " +
 				"and every surface; then find_records, get_record, create_record and update_record for content, " +
-				"and the canvas tools for what the person sees. " + chat.DataNotInstructions,
+				"and the canvas tools for what the person sees. " + records.DataNotInstructions,
 		}, nil
 	case "notifications/initialized", "notifications/cancelled":
 		return nil, nil

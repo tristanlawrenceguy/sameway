@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -32,7 +33,7 @@ func TestSuggestedEditsWaitForTheWriter(t *testing.T) {
 		t.Fatalf("both wait on the note, got %d", len(waiting))
 	}
 
-	if _, _, _, _, err := chat.AcceptSuggestions(svc.Store, chat.Who{Actor: "human"}, []string{waiting[1].ID}); err != nil {
+	if _, _, _, _, err := chat.AcceptSuggestions(svc.Store, records.Who{Actor: "human"}, []string{waiting[1].ID}); err != nil {
 		t.Fatal(err)
 	}
 	now, _ := svc.Store.Get("note", note.ID)
@@ -45,13 +46,13 @@ func TestSuggestedEditsWaitForTheWriter(t *testing.T) {
 
 	// The writer changes the sentence; the other suggestion no longer fits.
 	svc.Store.Update("note", note.ID, map[string]any{"body": "We all agreed: the garden opens in May. We receive seeds in April."})
-	if _, _, _, _, err := chat.AcceptSuggestions(svc.Store, chat.Who{Actor: "human"}, []string{waiting[0].ID}); err != chat.ErrOutdated {
+	if _, _, _, _, err := chat.AcceptSuggestions(svc.Store, records.Who{Actor: "human"}, []string{waiting[0].ID}); err != chat.ErrOutdated {
 		t.Errorf("an outdated suggestion is not guessed at: %v", err)
 	}
 	if left := chat.Suggestions(svc.Store, "note", note.ID); len(left) != 0 {
 		t.Errorf("answered, nothing waits: %d", len(left))
 	}
-	all, _ := svc.Store.List(chat.SuggestionType, store.ListOptions{})
+	all, _ := svc.Store.List(records.SuggestionType, store.ListOptions{})
 	if len(all) != 2 {
 		t.Errorf("they are kept, answered: %d", len(all))
 	}
@@ -89,7 +90,7 @@ func TestSuggestionsAreKindedAndTakenTogether(t *testing.T) {
 	if waiting[0].Fields["kind"] != "format" || waiting[1].Fields["kind"] != "fix" {
 		t.Errorf("formatting is found by Sameway: %v, %v", waiting[0].Fields["kind"], waiting[1].Fields["kind"])
 	}
-	_, _, made, _, err := chat.AcceptSuggestions(svc.Store, chat.Who{Actor: "human"}, []string{waiting[1].ID, waiting[2].ID})
+	_, _, made, _, err := chat.AcceptSuggestions(svc.Store, records.Who{Actor: "human"}, []string{waiting[1].ID, waiting[2].ID})
 	if err != nil || made != 2 {
 		t.Fatalf("both fixes go in: %d %v", made, err)
 	}

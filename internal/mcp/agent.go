@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // Every change a client makes is logged as that agent's, by the name it
@@ -62,15 +63,15 @@ func (c *conn) introduce(params json.RawMessage) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.name == "" {
-		c.name = chat.AgentName(name)
+		c.name = records.AgentName(name)
 	}
 	c.fresh = true
 }
 
-func (c *conn) agent() chat.Agent {
+func (c *conn) agent() records.Agent {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	return chat.Agent{Name: c.name, Through: chat.ThroughMCP}
+	return records.Agent{Name: c.name, Through: records.ThroughMCP}
 }
 
 // forAgent is the service a tool runs through, as the client's: the
@@ -132,8 +133,8 @@ func (s *Server) connFor(r *http.Request) *conn {
 		}
 	}
 	// An agent with a key is who its key says, whatever it calls itself.
-	if v := chat.VisitorOf(r.Context()); v.Agent {
+	if v := records.VisitorOf(r.Context()); v.Agent {
 		return &conn{name: v.Name}
 	}
-	return &conn{name: chat.AgentName(r.Header.Get("X-Sameway-Agent"))}
+	return &conn{name: records.AgentName(r.Header.Get("X-Sameway-Agent"))}
 }

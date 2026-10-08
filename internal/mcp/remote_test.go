@@ -9,8 +9,8 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/examples"
 	"github.com/tristanlawrenceguy/sameway/internal/app"
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/mcp"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
@@ -30,7 +30,7 @@ func httpServer(t *testing.T) (*app.App, http.Handler) {
 
 // post sends one JSON-RPC request from where, with the token or not, as
 // the visitor the tailnet says, if any.
-func post(t *testing.T, h http.Handler, from, token string, v *chat.Visitor, body string) (int, map[string]any) {
+func post(t *testing.T, h http.Handler, from, token string, v *records.Visitor, body string) (int, map[string]any) {
 	t.Helper()
 	req := httptest.NewRequest(http.MethodPost, "/mcp", strings.NewReader(body))
 	req.RemoteAddr = from
@@ -38,7 +38,7 @@ func post(t *testing.T, h http.Handler, from, token string, v *chat.Visitor, bod
 		req.Header.Set("Authorization", "Bearer "+token)
 	}
 	if v != nil {
-		req = req.WithContext(chat.WithVisitor(req.Context(), *v))
+		req = req.WithContext(records.WithVisitor(req.Context(), *v))
 	}
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
@@ -104,7 +104,7 @@ func TestFromElsewhereAnAgentReadsOnly(t *testing.T) {
 // the token is still needed.
 func TestTailscaleIsTheKeyAndTheRoleIsTheReach(t *testing.T) {
 	a, h := httpServer(t)
-	hana := &chat.Visitor{Name: "Hana", Login: "hana@example.com", Access: chat.Edit, Device: "laptop"}
+	hana := &records.Visitor{Name: "Hana", Login: "hana@example.com", Access: records.Edit, Device: "laptop"}
 	code, reply := post(t, h, "100.64.0.7:5000", "", hana, list)
 	names := strings.Join(toolNames(reply), ",")
 	if code != http.StatusOK || !strings.Contains(names, "create_record") || strings.Contains(names, "set_setting") {
@@ -119,13 +119,13 @@ func TestTailscaleIsTheKeyAndTheRoleIsTheReach(t *testing.T) {
 		t.Error("settings are the owner's, not Hana's")
 	}
 
-	vi := &chat.Visitor{Name: "Vi", Login: "vi@example.com", Access: chat.View}
+	vi := &records.Visitor{Name: "Vi", Login: "vi@example.com", Access: records.View}
 	_, reply = post(t, h, "100.64.0.8:5000", "", vi, list)
 	if names := strings.Join(toolNames(reply), ","); strings.Contains(names, "create_record") || !strings.Contains(names, "get_record") {
 		t.Errorf("Vi, who may look, reads only: %s", names)
 	}
 
-	mine := &chat.Visitor{Login: "me@example.com", Access: chat.Owner, Device: "my-laptop"}
+	mine := &records.Visitor{Login: "me@example.com", Access: records.Owner, Device: "my-laptop"}
 	if _, reply = post(t, h, "100.64.0.9:5000", "", mine, list); !strings.Contains(strings.Join(toolNames(reply), ","), "set_setting") {
 		t.Error("the owner's own laptop may do everything")
 	}

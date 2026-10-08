@@ -120,7 +120,7 @@ func toolHandlers() map[string]func(s *Service, a toolArgs, call llm.ToolCall) t
 			return s.removeBlock(a.ID)
 		},
 		"undo_change": func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
-			return s.Undo(a.ID)
+			return s.undo(a.ID)
 		},
 		"add_arrangement": func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
 			return s.addArrangement(a.Name, a.Fills)

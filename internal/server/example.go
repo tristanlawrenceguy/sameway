@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // A newcomer could only find out what Sameway is like by filling it, and
@@ -53,7 +53,7 @@ func fillExample(dir string, now time.Time) error {
 	at := func(d, h, m int) string { return fmt.Sprintf("%s %02d:%02d", day(d), h, m) }
 	made := map[string]string{}
 	put := func(key, typ string, f map[string]any) error {
-		rec, _, err := chat.Write(a.Store, "created", typ, "", f)
+		rec, _, err := records.Write(a.Store, "created", typ, "", f)
 		if err == nil && key != "" {
 			made[key] = rec.ID
 		}
@@ -114,7 +114,7 @@ func fillExample(dir string, now time.Time) error {
 		{"component": "calendar", "span": 6, "props": map[string]any{"types": []any{"task", "event", "reminder"}, "caption": "This month"}},
 		{"component": "tracker", "span": 6, "props": map[string]any{"habits": []any{"Water"}}},
 	} {
-		if _, err := a.Store.Create(chat.BlockType, a.Chat.BlockFields(b)); err != nil {
+		if _, err := a.Store.Create(records.BlockType, a.Chat.BlockFields(b)); err != nil {
 			return fmt.Errorf("block: %w", err)
 		}
 	}

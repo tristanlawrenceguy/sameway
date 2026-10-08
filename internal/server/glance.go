@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -80,14 +80,14 @@ func (s *Server) glance(t *schema.Type, rec *store.Record, now time.Time, in cou
 	if d, ok := dayGlance(t, rec, done, now); ok {
 		out = append(out, d)
 	}
-	title := strings.TrimSpace(chat.Name(s.app.Store, t, rec))
+	title := strings.TrimSpace(records.Name(s.app.Store, t, rec))
 	for _, f := range t.Shown() {
 		id, _ := rec.Fields[f.Name].(string)
 		if f.Type != "ref" || id == "" || f.To == FileType {
 			continue
 		}
 		if name := s.RefTitle(f, id); name != "" && name != title {
-			if f.To == chat.PersonType {
+			if f.To == records.PersonType {
 				out = append(out, glanceFact{Kind: "person", Field: f.Name, Text: f.Display() + " " + name, Person: id, Label: f.Display()})
 			} else {
 				out = append(out, glanceFact{Kind: "ref", Field: f.Name, Text: name, Tone: "neutral"})

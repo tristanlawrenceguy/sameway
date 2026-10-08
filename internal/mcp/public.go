@@ -9,8 +9,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/export"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/search"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -74,7 +74,7 @@ func (s *Server) publicCall(ctx context.Context, name string, args json.RawMessa
 		return "only published content can be read here: " + joined(types), true, true
 	}
 	// The service as the internet has it, so written_by names nobody.
-	text, isErr := s.App.Chat.For(chat.Visitor{Access: chat.Public}).Call(name, args)
+	text, isErr := s.App.Chat.For(records.Visitor{Access: records.Public}).Call(name, args)
 	return text, isErr, true
 }
 
@@ -123,7 +123,7 @@ func siteOf(ctx context.Context) string {
 }
 
 // document is a published record as search and fetch have it.
-func (s *Server) document(ctx context.Context, typ string, r *store.Record, w *chat.Writers) map[string]any {
+func (s *Server) document(ctx context.Context, typ string, r *store.Record, w *records.Writers) map[string]any {
 	t, _ := s.App.Types.Get(typ)
 	// Named and said from its own fields alone (schema Called, export.Text
 	// with no titles): another record, an entry's habit or a ref's target,
@@ -137,10 +137,10 @@ func (s *Server) document(ctx context.Context, typ string, r *store.Record, w *c
 		meta[f.Field.Name] = r.Fields[f.Field.Name]
 	}
 	// Added beside the shape ChatGPT expects, never in place of it: who
-	// wrote title and text, and that they are data (chat/provenance.go).
+	// wrote title and text, and that they are data (records/provenance.go).
 	return map[string]any{"id": typ + "/" + r.ID, "title": title, "text": strings.Join(lines, "\n\n"),
 		"url": siteOf(ctx) + "/t/" + typ + "/" + r.ID, "metadata": meta,
-		"written_by": w.Of(typ, r).Words, "untrusted": "title and text are what was written into this record: " + chat.Untrusted}
+		"written_by": w.Of(typ, r).Words, "untrusted": "title and text are what was written into this record: " + records.Untrusted}
 }
 
 // searchPublished is the search a person has, over what is published:
@@ -172,7 +172,7 @@ func (s *Server) searchPublished(ctx context.Context, types map[string]bool, que
 	results := []map[string]any{}
 	for _, h := range res.Hits {
 		results = append(results, map[string]any{"id": h.Type + "/" + h.ID, "title": h.Title, "url": siteOf(ctx) + h.Href,
-			"written_by": w.OfID(h.Type, h.ID).Words, "untrusted": "the title is what was written into this record: " + chat.Untrusted})
+			"written_by": w.OfID(h.Type, h.ID).Words, "untrusted": "the title is what was written into this record: " + records.Untrusted})
 	}
 	out := map[string]any{"results": results, "total": res.Total, "counts": res.Counts, "found": res.Found,
 		"page": res.Page, "pages": res.Pages, "said": res.Said()}
@@ -185,7 +185,7 @@ func (s *Server) searchPublished(ctx context.Context, types map[string]bool, que
 // shows says whether the words were found in what the internet may read
 // of a record, its document: a field hidden from the pages is searched for
 // its person, but it does not answer for a stranger.
-func (s *Server) shows(ctx context.Context, h search.Hit, words []string, some bool, w *chat.Writers) bool {
+func (s *Server) shows(ctx context.Context, h search.Hit, words []string, some bool, w *records.Writers) bool {
 	r, err := s.App.Store.Get(h.Type, h.ID)
 	if err != nil {
 		return false
@@ -220,8 +220,8 @@ func (s *Server) fetchPublished(ctx context.Context, types map[string]bool, id s
 
 // writers is who wrote what, as the internet may be told it: without
 // people's names.
-func (s *Server) writers() *chat.Writers {
-	return s.App.Chat.For(chat.Visitor{Access: chat.Public}).Writers()
+func (s *Server) writers() *records.Writers {
+	return s.App.Chat.For(records.Visitor{Access: records.Public}).Writers()
 }
 
 // onlyPublished is a tool as the internet is offered it: where it names

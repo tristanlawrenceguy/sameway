@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/track"
@@ -42,7 +42,7 @@ func (s *Server) aboutOf(path string) (*schema.Type, *store.Record, bool) {
 // title is a record's title, with what the type alone cannot say: an
 // entry is its habit and how much.
 func (s *Server) title(t *schema.Type, rec *store.Record) string {
-	return chat.Name(s.app.Store, t, rec)
+	return records.Name(s.app.Store, t, rec)
 }
 
 // aboutItem is a reminder's about on its page: the thing, as the way there.
@@ -134,7 +134,7 @@ func (s *Server) ringWords(rec *store.Record) (text, url string) {
 	url = about
 	text = s.title(t, target)
 	// A meeting's reminder to record says what to do, in its own notes.
-	if notes, _ := rec.Fields["notes"].(string); t.Name == chat.EventType && strings.Contains(about, "show=recording") && notes != "" {
+	if notes, _ := rec.Fields["notes"].(string); t.Name == records.EventType && strings.Contains(about, "show=recording") && notes != "" {
 		text = notes
 	}
 	if t.Name == HabitType {
@@ -180,7 +180,7 @@ func (s *Server) nudges(now time.Time) []*store.Record {
 		if err != nil {
 			continue
 		}
-		chat.Record(s.app.Store, "system", chat.Change{Action: "rang", Component: ReminderType, ID: rec.ID, Detail: h.Name + ": " + track.Progress(h, sum) + " so far", Href: about})
+		records.Record(s.app.Store, "system", records.Change{Action: "rang", Component: ReminderType, ID: rec.ID, Detail: h.Name + ": " + track.Progress(h, sum) + " so far", Href: about})
 		rang = append(rang, rec)
 	}
 	return rang

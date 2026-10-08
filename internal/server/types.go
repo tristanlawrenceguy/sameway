@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
 
@@ -24,7 +25,7 @@ func (s *Server) apiAddField(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": apiError{Code: "invalid", Message: err.Error()}})
 		return
 	}
-	chat.Record(s.app.Store, "system", chat.Change{Action: "added", Component: "field", Detail: f.Name + " on " + schema.Words(t.Name), Href: "/t/" + t.Name})
+	records.Record(s.app.Store, "system", records.Change{Action: "added", Component: "field", Detail: f.Name + " on " + schema.Words(t.Name), Href: "/t/" + t.Name})
 	// The type as it is now, and what the records it had got, in words.
 	writeJSON(w, http.StatusCreated, struct {
 		*schema.Type
@@ -51,6 +52,6 @@ func (s *Server) apiAddType(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": apiError{Code: "invalid", Message: err.Error()}})
 		return
 	}
-	chat.Record(s.app.Store, "system", chat.Change{Action: "added", Component: "type", Detail: schema.Words(t.Name), Href: "/t/" + t.Name})
+	records.Record(s.app.Store, "system", records.Change{Action: "added", Component: "type", Detail: schema.Words(t.Name), Href: "/t/" + t.Name})
 	writeJSON(w, http.StatusCreated, t)
 }

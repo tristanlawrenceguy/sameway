@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // TestChatPageHasSingleActivityHeading checks that the /chat page renders
@@ -15,7 +15,7 @@ func TestChatPageHasSingleActivityHeading(t *testing.T) {
 	a, h := newApp(t)
 
 	// Seed an activity so the disclosure appears.
-	chat.Record(a.Store, "assistant", chat.Change{Action: "created", Component: "note", ID: "aaa1", Detail: "First note"})
+	records.Record(a.Store, "assistant", records.Change{Action: "created", Component: "note", ID: "aaa1", Detail: "First note"})
 
 	body := get(t, h, "/chat").Body.String()
 
@@ -35,8 +35,8 @@ func TestChatPageHasSingleActivityHeading(t *testing.T) {
 func TestChatPageRecentActivityHasNoDuplicateEntries(t *testing.T) {
 	a, h := newApp(t)
 
-	chat.Record(a.Store, "assistant", chat.Change{Action: "created", Component: "note", ID: "aaa1", Detail: "First note"})
-	chat.Record(a.Store, "assistant", chat.Change{Action: "updated", Component: "note", ID: "aaa1", Detail: "Updated content"})
+	records.Record(a.Store, "assistant", records.Change{Action: "created", Component: "note", ID: "aaa1", Detail: "First note"})
+	records.Record(a.Store, "assistant", records.Change{Action: "updated", Component: "note", ID: "aaa1", Detail: "Updated content"})
 
 	body := get(t, h, "/chat").Body.String()
 
@@ -94,7 +94,7 @@ func TestTaskDetailPageRecentActivityHasNoDuplicateEntries(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	chat.Record(a.Store, "assistant", chat.Change{Action: "created", Component: "task", ID: taskRec.ID, Detail: "Test Task"})
+	records.Record(a.Store, "assistant", records.Change{Action: "created", Component: "task", ID: taskRec.ID, Detail: "Test Task"})
 
 	body := get(t, h, "/t/task/"+taskRec.ID).Body.String()
 
@@ -121,7 +121,7 @@ func TestNoteDetailPageRecentActivityHasNoDuplicateEntries(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	chat.Record(a.Store, "assistant", chat.Change{Action: "created", Component: "note", ID: noteRec.ID, Detail: "Test Note"})
+	records.Record(a.Store, "assistant", records.Change{Action: "created", Component: "note", ID: noteRec.ID, Detail: "Test Note"})
 
 	body := get(t, h, "/t/note/"+noteRec.ID).Body.String()
 
@@ -143,8 +143,8 @@ func TestNoteDetailPageRecentActivityHasNoDuplicateEntries(t *testing.T) {
 func TestActivityPageNoDuplicateEntries(t *testing.T) {
 	a, h := newApp(t)
 
-	chat.Record(a.Store, "assistant", chat.Change{Action: "created", Component: "note", ID: "aaa1", Detail: "First note"})
-	chat.Record(a.Store, "assistant", chat.Change{Action: "updated", Component: "note", ID: "aaa1", Detail: "Updated content"})
+	records.Record(a.Store, "assistant", records.Change{Action: "created", Component: "note", ID: "aaa1", Detail: "First note"})
+	records.Record(a.Store, "assistant", records.Change{Action: "updated", Component: "note", ID: "aaa1", Detail: "Updated content"})
 
 	body := get(t, h, "/activity").Body.String()
 

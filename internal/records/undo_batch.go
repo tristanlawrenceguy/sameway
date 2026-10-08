@@ -1,4 +1,4 @@
-package chat
+package records
 
 import (
 	"errors"
@@ -8,12 +8,6 @@ import (
 // A batch is one entry for many records: an import, a sync, a meeting
 // written up, writing organised or suggested. It is kept on its entry as
 // each record's type, id and what it was, and taken back as one.
-
-// A batchChange is one record a batch touched and what it was before it.
-type batchChange struct {
-	typ, id string
-	before  map[string]any
-}
 
 // Batch is how a batch is kept on its entry: for each record, its type,
 // its id, and its fields before, absent for a record the batch made.
@@ -29,15 +23,17 @@ func Batch(changes []BatchItem) map[string]any {
 	return map[string]any{"changes": list}
 }
 
-// BatchItem is one record in a batch, for the code that made the batch.
+// BatchItem is one record in a batch and what it was before it.
 type BatchItem struct {
 	Type, ID string
 	Before   map[string]any
 }
 
-func batchIn(before map[string]any) []batchChange {
+// BatchOf is the records a batch entry's before keeps, as Batch wrote
+// them.
+func BatchOf(before map[string]any) []BatchItem {
 	list, _ := before["changes"].([]any)
-	var out []batchChange
+	var out []BatchItem
 	for _, v := range list {
 		m, ok := v.(map[string]any)
 		if !ok {
@@ -47,7 +43,7 @@ func batchIn(before map[string]any) []batchChange {
 		id, _ := m["id"].(string)
 		was, _ := m["before"].(map[string]any)
 		if typ != "" && id != "" {
-			out = append(out, batchChange{typ, id, was})
+			out = append(out, BatchItem{typ, id, was})
 		}
 	}
 	return out
@@ -56,35 +52,35 @@ func batchIn(before map[string]any) []batchChange {
 // reverseBatch puts every record a batch touched back as it was: one it
 // made goes, one it changed or removed comes back. What each was just
 // now is kept on the reversal, so undoing that redoes the batch.
-func (s *Service) reverseBatch(target string, changes []batchChange) (Change, error) {
+func (b *Book) reverseBatch(target string, changes []BatchItem) (Change, error) {
 	var back []BatchItem
 	n := 0
 	for _, c := range changes {
-		cur, err := s.Store.Get(c.typ, c.id)
+		cur, err := b.Store.Get(c.Type, c.ID)
 		var now map[string]any
 		if err == nil {
 			now = cur.Fields
 		}
 		switch {
-		case c.before == nil && now == nil:
+		case c.Before == nil && now == nil:
 			continue // made, and already gone
-		case c.before == nil:
-			if err := s.Store.Delete(c.typ, c.id); err != nil {
+		case c.Before == nil:
+			if err := b.Store.Delete(c.Type, c.ID); err != nil {
 				return Change{}, err
 			}
 		case now == nil:
-			if _, err := s.Store.Restore(c.typ, c.id, c.before); err != nil {
+			if _, err := b.Store.Restore(c.Type, c.ID, c.Before); err != nil {
 				return Change{}, err
 			}
 		default:
-			if same(now, c.before) {
+			if Same(now, c.Before) {
 				continue
 			}
-			if _, err := s.Store.Update(c.typ, c.id, c.before); err != nil {
+			if _, err := b.Store.Update(c.Type, c.ID, c.Before); err != nil {
 				return Change{}, err
 			}
 		}
-		back = append(back, BatchItem{Type: c.typ, ID: c.id, Before: now})
+		back = append(back, BatchItem{Type: c.Type, ID: c.ID, Before: now})
 		n++
 	}
 	if n == 0 {

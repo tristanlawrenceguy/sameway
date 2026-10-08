@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
@@ -19,10 +20,10 @@ import (
 
 // proposals lists the questions still waiting for an answer, oldest first.
 func (s *Service) Proposals() []*store.Record {
-	if _, ok := s.Store.Types().Get(ProposalType); !ok {
+	if _, ok := s.Store.Types().Get(records.ProposalType); !ok {
 		return nil
 	}
-	recs, err := s.Store.List(ProposalType, store.ListOptions{OrderBy: "created_at"})
+	recs, err := s.Store.List(records.ProposalType, store.ListOptions{OrderBy: "created_at"})
 	if err != nil {
 		return nil
 	}
@@ -37,7 +38,7 @@ func (s *Service) Proposals() []*store.Record {
 
 // propose records a question rather than making the change.
 func (s *Service) propose(summary string, action map[string]any) toolResult {
-	if _, ok := s.Store.Types().Get(ProposalType); !ok {
+	if _, ok := s.Store.Types().Get(records.ProposalType); !ok {
 		return fail("this workspace has no proposal type, so changes cannot be offered for approval; make the change directly or run `sameway init --force`")
 	}
 	summary = strings.TrimSpace(summary)
@@ -48,13 +49,13 @@ func (s *Service) propose(summary string, action map[string]any) toolResult {
 	if !proposable[tool] {
 		return fail("proposals can only carry %s", strings.Join(proposableNames(), ", "))
 	}
-	rec, err := s.Store.Create(ProposalType, map[string]any{"summary": summary, "action": action, "state": "pending"})
+	rec, err := s.Store.Create(records.ProposalType, map[string]any{"summary": summary, "action": action, "state": "pending"})
 	if err != nil {
 		return fail("could not save the proposal: %v", err)
 	}
 	return toolResult{
 		text:   "asked the person: " + summary + " (proposal " + rec.ID + ", nothing has changed yet)",
-		change: &Change{Action: "proposed", ID: rec.ID, Detail: trim.Line(summary, 80)},
+		change: &records.Change{Action: "proposed", ID: rec.ID, Detail: trim.Line(summary, 80)},
 	}
 }
 
@@ -88,7 +89,7 @@ func (s *Service) proposedBlock(action map[string]any) *toolResult {
 	name, _ := action["component"].(string)
 	if action["tool"] == "update_component" {
 		id, _ := action["id"].(string)
-		rec, err := s.Store.Get(BlockType, id)
+		rec, err := s.Store.Get(records.BlockType, id)
 		if err != nil {
 			return nil // said when it runs, as ever
 		}
@@ -145,7 +146,7 @@ func sortStrings(s []string) {
 func (s *Service) Accept(id string) error {
 	answering.Lock()
 	defer answering.Unlock()
-	rec, err := s.Store.Get(ProposalType, id)
+	rec, err := s.Store.Get(records.ProposalType, id)
 	if err != nil {
 		return err
 	}
@@ -165,19 +166,19 @@ func (s *Service) Accept(id string) error {
 	if result.isErr {
 		return errors.New(result.text)
 	}
-	if _, err := s.Store.Update(ProposalType, id, map[string]any{"state": "accepted"}); err != nil {
+	if _, err := s.Store.Update(records.ProposalType, id, map[string]any{"state": "accepted"}); err != nil {
 		return err
 	}
 	// The assistant made the change, but the person is why it happened.
 	summary, _ := rec.Fields["summary"].(string)
-	Record(s.Store, "human", Change{Action: "agreed to", Detail: trim.Line(summary, 80)})
+	records.Record(s.Store, "human", records.Change{Action: "agreed to", Detail: trim.Line(summary, 80)})
 	if result.change != nil {
-		Record(s.Store, "assistant", *result.change)
+		records.Record(s.Store, "assistant", *result.change)
 	}
 	// A tool that made several changes, such as a command that also put
 	// its answer on the canvas, is logged as the person's: they said yes.
 	for i := range result.changes {
-		Record(s.Store, "human", result.changes[i])
+		records.Record(s.Store, "human", result.changes[i])
 	}
 	return nil
 }
@@ -186,17 +187,17 @@ func (s *Service) Accept(id string) error {
 func (s *Service) Dismiss(id string) error {
 	answering.Lock()
 	defer answering.Unlock()
-	rec, err := s.Store.Get(ProposalType, id)
+	rec, err := s.Store.Get(records.ProposalType, id)
 	if err != nil {
 		return err
 	}
 	if rec.Fields["state"] != "pending" {
 		return errors.New("that question has already been answered")
 	}
-	if _, err := s.Store.Update(ProposalType, id, map[string]any{"state": "dismissed"}); err != nil {
+	if _, err := s.Store.Update(records.ProposalType, id, map[string]any{"state": "dismissed"}); err != nil {
 		return err
 	}
 	summary, _ := rec.Fields["summary"].(string)
-	Record(s.Store, "human", Change{Action: "declined", Detail: trim.Line(summary, 80)})
+	records.Record(s.Store, "human", records.Change{Action: "declined", Detail: trim.Line(summary, 80)})
 	return nil
 }

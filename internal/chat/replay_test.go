@@ -7,6 +7,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -22,7 +23,7 @@ func TestHistoryReplaysTheToolsAReplyUsed(t *testing.T) {
 	if _, err := svc.Send(context.Background(), "make a note called Plan"); err != nil {
 		t.Fatal(err)
 	}
-	msgs, _ := svc.Store.List(chat.MessageType, store.ListOptions{OrderBy: "created_at"})
+	msgs, _ := svc.Store.List(records.MessageType, store.ListOptions{OrderBy: "created_at"})
 	tools, _ := msgs[1].Fields["tools"].([]any)
 	if len(tools) != 1 {
 		t.Fatalf("the reply should carry the one tool it used, got %v", msgs[1].Fields["tools"])
@@ -63,9 +64,9 @@ func TestHistoryReplaysTheToolsAReplyUsed(t *testing.T) {
 
 func replayOf(t *testing.T, svc *chat.Service, content string) []llm.Message {
 	t.Helper()
-	svc.Store.DeleteAll(chat.MessageType)
-	svc.Store.Create(chat.MessageType, map[string]any{"role": "user", "content": "hi"})
-	svc.Store.Create(chat.MessageType, map[string]any{"role": "assistant", "content": content})
+	svc.Store.DeleteAll(records.MessageType)
+	svc.Store.Create(records.MessageType, map[string]any{"role": "user", "content": "hi"})
+	svc.Store.Create(records.MessageType, map[string]any{"role": "assistant", "content": content})
 	m := &scripted{}
 	svc.Provider = m
 	svc.Send(context.Background(), "again")

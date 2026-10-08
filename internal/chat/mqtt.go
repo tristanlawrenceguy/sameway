@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -29,6 +30,6 @@ func (s *Service) mqttAction(_ context.Context, rec *store.Record, title string)
 	}
 	return toolResult{
 		text:   fmt.Sprintf("%s published %q to %s", title, payload, topic),
-		change: &Change{Action: "ran", Component: ActionType, ID: rec.ID, Detail: title + " (" + topic + ")", Href: "/t/" + ActionType + "/" + rec.ID},
+		change: &records.Change{Action: "ran", Component: records.ActionType, ID: rec.ID, Detail: title + " (" + topic + ")", Href: "/t/" + records.ActionType + "/" + rec.ID},
 	}
 }

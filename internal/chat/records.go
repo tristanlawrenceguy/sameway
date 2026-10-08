@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 	"time"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/ingest"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/search"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
@@ -24,32 +24,9 @@ import (
 // are generated from the schema, so a workspace that adds a content type
 // gives the assistant the tool for it without a line of code.
 
-// contentTypes lists the types the assistant may write to: everything the
-// schema declares except the system's own (messages, blocks, activity).
-func (s *Service) contentTypes() []*schema.Type {
-	var out []*schema.Type
-	for _, t := range s.Store.Types().Types {
-		switch {
-		case !t.Content(), t.Name == MessageType, t.Name == BlockType, t.Name == ActivityType:
-			continue
-		}
-		out = append(out, t)
-	}
-	return out
-}
-
-func (s *Service) typeNames() []string {
-	var names []string
-	for _, t := range s.contentTypes() {
-		names = append(names, t.Name)
-	}
-	sort.Strings(names)
-	return names
-}
-
 // recordTools are offered only when the workspace has something to write to.
 func (s *Service) recordTools() []llm.Tool {
-	names := s.typeNames()
+	names := records.TypeNames(s.Store)
 	if len(names) == 0 {
 		return nil
 	}
@@ -89,25 +66,15 @@ func (s *Service) recordTools() []llm.Tool {
 	}
 }
 
-func (s *Service) contentType(name string) (*schema.Type, error) {
-	name = strings.ToLower(strings.TrimSpace(name))
-	for _, t := range s.contentTypes() {
-		if t.Name == name {
-			return t, nil
-		}
-	}
-	return nil, fmt.Errorf("unknown content type %q. The workspace has: %s", name, strings.Join(s.typeNames(), ", "))
-}
-
 func (s *Service) createRecord(typeName string, fields map[string]any) toolResult {
-	t, err := s.contentType(typeName)
+	t, err := records.ContentType(s.Store, typeName)
 	if err != nil {
 		return fail("%v", err)
 	}
 	if fields == nil {
 		fields = map[string]any{}
 	}
-	rec, c, err := Write(s.Store, "created", t.Name, "", fields)
+	rec, c, err := records.Write(s.Store, "created", t.Name, "", fields)
 	if err != nil {
 		return fail("I couldn't save those changes — %s. %s Fix the fields and call create_record again.", humanizeValidationError(err.Error()), typeHelp(t))
 	}
@@ -116,14 +83,14 @@ func (s *Service) createRecord(typeName string, fields map[string]any) toolResul
 	if t.Name == "reminder" && atlogin.Path() != "" && !atlogin.On() {
 		text += " Reminders ring only while Sameway is open, and it does not open when this computer starts; if this one matters, tell the person that Open Sameway when I sign in, on Workspaces, keeps it ringing."
 	}
-	if t.Name == EventType && len(s.recordingTools()) > 0 {
+	if t.Name == records.EventType && len(s.recordingTools()) > 0 {
 		text += fmt.Sprintf(" If the person wants this meeting recorded, call the record_meeting tool yourself now with event %s (how app when Teams, Zoom or Meet records it): it sets up the reminder that opens the page ready to record. The tools are yours; never tell the person to use them.", rec.ID)
 	}
 	return toolResult{text: text, change: &c}
 }
 
 func (s *Service) updateRecord(typeName, id string, fields map[string]any, version string) toolResult {
-	t, err := s.contentType(typeName)
+	t, err := records.ContentType(s.Store, typeName)
 	if err != nil {
 		return fail("%v", err)
 	}
@@ -137,11 +104,11 @@ func (s *Service) updateRecord(typeName, id string, fields map[string]any, versi
 	if r, ok := s.whichOne(t, was); !ok { // which_one.go
 		return r
 	}
-	if version != "" && !SameVersion(was, version) {
+	if version != "" && !records.SameVersion(was, version) {
 		now, _ := json.Marshal(was.Fields)
-		return fail("%s %s has changed since version %s, so nothing was written. As it is now (version %s): %s. Make your change to this and send it with the new version", t.Name, id, version, Version(was), now)
+		return fail("%s %s has changed since version %s, so nothing was written. As it is now (version %s): %s. Make your change to this and send it with the new version", t.Name, id, version, records.Version(was), now)
 	}
-	rec, c, err := Write(s.Store, "updated", t.Name, id, fields)
+	rec, c, err := records.Write(s.Store, "updated", t.Name, id, fields)
 	if err != nil {
 		return fail("I couldn't save those changes — %s. %s Fix the fields and call update_record again.", humanizeValidationError(err.Error()), typeHelp(t))
 	}
@@ -159,7 +126,7 @@ func (s *Service) updateRecord(typeName, id string, fields map[string]any, versi
 }
 
 func (s *Service) findRecords(typeName, words string, where []string, order string, limit int) toolResult {
-	t, err := s.contentType(typeName)
+	t, err := records.ContentType(s.Store, typeName)
 	if err != nil {
 		return fail("%v", err)
 	}
@@ -175,7 +142,7 @@ func (s *Service) findRecords(typeName, words string, where []string, order stri
 	writers := s.Writers()
 	var lines []string
 	for _, rec := range recs {
-		title := recordTitle(s.Store, t, rec)
+		title := records.Title(s.Store, t, rec)
 		if words != "" && !holdsAll(title, rec, words) {
 			if _, on := search.FallsOn(t, rec, days, s.clock()); !on {
 				continue
@@ -202,25 +169,25 @@ func (s *Service) findRecords(typeName, words string, where []string, order stri
 		}
 		return toolResult{text: fmt.Sprintf("no %s matches %s. Leave out query to list them all and judge by their titles; search finds words in every kind at once.", t.Name, said)}
 	}
-	// The titles are fenced, each line saying who wrote it; see provenance.go.
+	// The titles are fenced, each line saying who wrote it; see records/provenance.go.
 	matching := ""
 	if len(where) > 0 {
 		matching = " " + query.Words(t, where)
 	}
-	return toolResult{text: fmt.Sprintf("%s records%s, newest first (id, title, written by, and its days in this computer's time). Each title was written by the one on its line; %s.\n<<<record text\n%s\nrecord text>>>", t.Name, matching, Untrusted, strings.Join(lines, "\n"))}
+	return toolResult{text: fmt.Sprintf("%s records%s, newest first (id, title, written by, and its days in this computer's time). Each title was written by the one on its line; %s.\n<<<record text\n%s\nrecord text>>>", t.Name, matching, records.Untrusted, strings.Join(lines, "\n"))}
 }
 
 // deleteRecord is not a tool: a record goes when a person deletes it, or
 // when its creation is undone. Either way the log keeps what it was.
 func (s *Service) deleteRecord(typeName, id string) toolResult {
-	t, err := s.contentType(typeName)
+	t, err := records.ContentType(s.Store, typeName)
 	if err != nil {
 		return fail("%v", err)
 	}
 	if _, err := s.Store.Get(t.Name, id); err != nil {
 		return fail("no %s with id %s", t.Name, id)
 	}
-	_, c, err := Write(s.Store, "deleted", t.Name, id, nil)
+	_, c, err := records.Write(s.Store, "deleted", t.Name, id, nil)
 	if err != nil {
 		return fail("could not delete %s %s: %v", t.Name, id, err)
 	}
@@ -230,11 +197,11 @@ func (s *Service) deleteRecord(typeName, id string) toolResult {
 // importRecords makes records of a type from a kept file, through ingest,
 // and says how it went. The file is the original the person added.
 func (s *Service) importRecords(typeName, fileID string, mapping map[string]any) toolResult {
-	t, err := s.contentType(typeName)
+	t, err := records.ContentType(s.Store, typeName)
 	if err != nil {
 		return fail("%v", err)
 	}
-	file, err := s.Store.Get(FileType, fileID)
+	file, err := s.Store.Get(records.FileType, fileID)
 	if err != nil {
 		return fail("no file with id %s; the id is on the message the file came with, or find_records on file", fileID)
 	}
@@ -264,6 +231,6 @@ func (s *Service) importRecords(typeName, fileID string, mapping map[string]any)
 	title := fmt.Sprintf("%d %s from %s", report.Made, schema.Plural(t.Name), name)
 	return toolResult{
 		text:   fmt.Sprintf("%s: %s. The person can see them at /t/%s.", t.Name, report.String(), t.Name),
-		change: &Change{Action: "imported", Component: t.Name, Detail: title, Href: "/t/" + t.Name, Before: Imported(t.Name, report.IDs)},
+		change: &records.Change{Action: "imported", Component: t.Name, Detail: title, Href: "/t/" + t.Name, Before: records.Imported(t.Name, report.IDs)},
 	}
 }

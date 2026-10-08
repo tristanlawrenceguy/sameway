@@ -6,13 +6,14 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // reading is a block as a browser of the given width drew it, of the block
 // as it is now.
 func reading(t *testing.T, svc *chat.Service, id string, width, height int) chat.Reading {
 	t.Helper()
-	blk, err := svc.Store.Get(chat.BlockType, id)
+	blk, err := svc.Store.Get(records.BlockType, id)
 	if err != nil {
 		t.Fatal(err)
 	}

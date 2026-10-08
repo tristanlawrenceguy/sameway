@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -43,11 +43,11 @@ func (s *Server) whoOf(e *store.Record) logChoice {
 		return logChoice{"assistant", "Assistant"}
 	case "system":
 		return logChoice{"system", "System"}
-	case chat.ActorAgent:
+	case records.ActorAgent:
 		// An agent outside Sameway, by the name it gave or its program's.
 		name, _ := e.Fields["by"].(string)
 		label := stdcmp.Or(name, "An agent")
-		if chat.MachineName(label) {
+		if records.MachineName(label) {
 			label = "An agent"
 		}
 		sum := sha256.Sum256([]byte(label))
@@ -75,7 +75,7 @@ func kindOf(e *store.Record) logChoice {
 		return logChoice{"settings", "Settings"}
 	case target == "":
 		return logChoice{"other", "Other changes"}
-	case target == chat.CanvasType:
+	case target == records.CanvasType:
 		return logChoice{target, "Tabs"}
 	}
 	return logChoice{target, capitalize(schema.Plural(target))}

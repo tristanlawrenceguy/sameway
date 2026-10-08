@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/update"
 )
@@ -33,11 +34,11 @@ func (s *Server) feedbackFacts() string {
 	if p := s.app.Workspace.Config.LLM.Provider; p != "" {
 		b.WriteString(", model: " + p)
 	}
-	recent, _ := s.app.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 200})
+	recent, _ := s.app.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 200})
 	var failed []string
 	for _, r := range recent {
 		if r.Fields["action"] == "failed" && len(failed) < 5 {
-			failed = append(failed, "- "+r.CreatedAt.Format("2 Jan 15:04")+": "+chat.SanitizeError(chat.Sentence(s.app.Store, r.Fields)))
+			failed = append(failed, "- "+r.CreatedAt.Format("2 Jan 15:04")+": "+chat.SanitizeError(records.Sentence(s.app.Store, r.Fields)))
 		}
 	}
 	if len(failed) > 0 {

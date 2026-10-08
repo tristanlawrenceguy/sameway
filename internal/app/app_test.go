@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // A workspace made before blocks had a region must still let the assistant
@@ -31,13 +31,13 @@ func TestOldWorkspaceStillPlacesBlocksInPanes(t *testing.T) {
 	if _, ok := blk.Field("region"); !ok {
 		t.Fatal("block should have gained region from the built-in definition")
 	}
-	rec, err := a.Store.Create(chat.BlockType, a.Chat.BlockFields(map[string]any{
+	rec, err := a.Store.Create(records.BlockType, a.Chat.BlockFields(map[string]any{
 		"component": "calendar", "props": map[string]any{"month": "2026-09"}, "region": "left",
 	}))
 	if err != nil {
 		t.Fatal(err)
 	}
-	got, _ := a.Store.Get(chat.BlockType, rec.ID)
+	got, _ := a.Store.Get(records.BlockType, rec.ID)
 	if got.Fields["region"] != "left" {
 		t.Errorf("region should survive the round trip, got %v", got.Fields["region"])
 	}

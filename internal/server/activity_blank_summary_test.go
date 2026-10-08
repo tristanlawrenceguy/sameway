@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // noEmptyH3 fails when any h3 on the page says nothing.
@@ -24,9 +24,9 @@ func TestActivityPageBlankSummaryShowsFallback(t *testing.T) {
 	a, h := newApp(t)
 
 	// Seed one normal and one blank-summary activity so we can verify both.
-	chat.Record(a.Store, "assistant", chat.Change{Action: "created", Component: "note", ID: "aaa1", Detail: "First note"})
+	records.Record(a.Store, "assistant", records.Change{Action: "created", Component: "note", ID: "aaa1", Detail: "First note"})
 
-	rec, err := a.Store.Create(chat.ActivityType, map[string]any{
+	rec, err := a.Store.Create(records.ActivityType, map[string]any{
 		"summary": "",
 		"actor":   "human",
 		"action":  "said",
@@ -70,7 +70,7 @@ func TestActivityPageBlankSummaryAssistantFallback(t *testing.T) {
 	a, h := newApp(t)
 
 	// Seed an assistant activity with empty summary and no detail.
-	_, err := a.Store.Create(chat.ActivityType, map[string]any{
+	_, err := a.Store.Create(records.ActivityType, map[string]any{
 		"summary": "",
 		"actor":   "assistant",
 		"action":  "added",
@@ -96,7 +96,7 @@ func TestActivityPageBlankSummaryAssistantFallback(t *testing.T) {
 func TestActivityPageBlankSummarySystemFallback(t *testing.T) {
 	a, h := newApp(t)
 
-	_, err := a.Store.Create(chat.ActivityType, map[string]any{
+	_, err := a.Store.Create(records.ActivityType, map[string]any{
 		"summary": "",
 		"actor":   "system",
 		"action":  "failed",

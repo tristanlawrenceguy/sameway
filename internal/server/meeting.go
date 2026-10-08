@@ -9,6 +9,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -30,10 +31,10 @@ func (s *Server) meetingExtras(r *http.Request, rec *store.Record) string {
 		return ""
 	}
 	_, here := s.shown(r)
-	page := "/t/" + chat.EventType + "/" + rec.ID
+	page := "/t/" + records.EventType + "/" + rec.ID
 	var b strings.Builder
 	if summary, _ := rec.Fields["summary"].(string); strings.TrimSpace(summary) == "" && len(s.heard(file)) > 0 && changes(r) && s.showing(r, WriteUpPart) {
-		b.WriteString(writeUpOffer("Write up this meeting (/t/"+chat.EventType+"/"+rec.ID+") from its recording (/t/"+FileType+"/"+id+")", "Ask the assistant to write it up", s))
+		b.WriteString(writeUpOffer("Write up this meeting (/t/"+records.EventType+"/"+rec.ID+") from its recording (/t/"+FileType+"/"+id+")", "Ask the assistant to write it up", s))
 		b.WriteString(s.fewer(page, WriteUpPart, "the offer to write it up", here))
 	}
 	if s.showing(r, RecordingPart) {
@@ -49,7 +50,7 @@ func (s *Server) recordingOffer(r *http.Request, file *store.Record) string {
 	if !changes(r) || !s.showing(r, WriteUpPart) || len(s.heard(file)) == 0 {
 		return ""
 	}
-	t, ok := s.app.Types.Get(chat.EventType)
+	t, ok := s.app.Types.Get(records.EventType)
 	if !ok {
 		return ""
 	}
@@ -69,8 +70,8 @@ func writeUpOffer(ask, label string, s *Server) string {
 
 // changes says whether whoever asked may change the workspace.
 func changes(r *http.Request) bool {
-	a := chat.VisitorOf(r.Context()).Access
-	return a != chat.View && a != chat.Public
+	a := records.VisitorOf(r.Context()).Access
+	return a != records.View && a != records.Public
 }
 
 // recordingToAdd is a meeting with no recording yet: record it here, the
@@ -82,7 +83,7 @@ func (s *Server) recordingToAdd(r *http.Request, ev *store.Record) string {
 	if !changes(r) {
 		return ""
 	}
-	page := "/t/" + chat.EventType + "/" + ev.ID
+	page := "/t/" + records.EventType + "/" + ev.ID
 	over := false
 	if st, err := time.Parse(time.RFC3339, str(ev.Fields["starts"], "")); err == nil {
 		over = time.Now().After(st.Add(chat.MeetingLength(ev)))
@@ -108,14 +109,14 @@ func (s *Server) recordingToAdd(r *http.Request, ev *store.Record) string {
 // toMeeting gives a meeting the file just added as its recording, as the
 // person's own change, when it has none; it says what it did.
 func (s *Server) toMeeting(r *http.Request, eventID string, file *store.Record) string {
-	ev, err := s.app.Store.Get(chat.EventType, eventID)
+	ev, err := s.app.Store.Get(records.EventType, eventID)
 	if err != nil {
 		return ""
 	}
 	if had, _ := ev.Fields["recording"].(string); had != "" {
 		return " The meeting has a recording already, so this one is in your files."
 	}
-	if _, _, err := chat.WriteAs(s.app.Store, s.who(r), "updated", chat.EventType, eventID, map[string]any{"recording": file.ID}); err != nil {
+	if _, _, err := records.WriteAs(s.app.Store, s.who(r), "updated", records.EventType, eventID, map[string]any{"recording": file.ID}); err != nil {
 		return " It could not be given to the meeting: " + err.Error()
 	}
 	return " It is the meeting's recording now."

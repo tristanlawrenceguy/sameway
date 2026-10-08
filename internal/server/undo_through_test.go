@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // UndoPageStripsThroughTheAPISuffix checks that the undo success page does
@@ -18,7 +18,7 @@ func TestUndoPageStripsThroughTheAPISuffix(t *testing.T) {
 	// Seed an old-style activity record with the "through the API" suffix
 	// in its stored summary — this is what older records have.
 	oldID := "old-undo-api"
-	_, err := a.Store.Create(chat.ActivityType, map[string]any{
+	_, err := a.Store.Create(records.ActivityType, map[string]any{
 		"summary":   "You deleted note Water the plants, through the API.",
 		"actor":     "human",
 		"action":    "deleted",
@@ -65,7 +65,7 @@ func TestUndoPageStripsThroughCLISuffix(t *testing.T) {
 	a, h := newApp(t)
 
 	oldID := "old-undo-cli"
-	_, err := a.Store.Create(chat.ActivityType, map[string]any{
+	_, err := a.Store.Create(records.ActivityType, map[string]any{
 		"summary":   "You deleted note Seed, through the command line.",
 		"actor":     "human",
 		"action":    "deleted",

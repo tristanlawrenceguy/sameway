@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // Telling the makers shows everything that would go before anything goes:
@@ -15,7 +15,7 @@ import (
 func TestTellingTheMakersShowsAllThatWouldGo(t *testing.T) {
 	a, h := newApp(t)
 	t.Setenv("SAMEWAY_TEST_KEY", "sk-ant-secret")
-	chat.Record(a.Store, "system", chat.Change{Action: "failed", Detail: "Anthropic did not accept the key saved on this computer"})
+	records.Record(a.Store, "system", records.Change{Action: "failed", Detail: "Anthropic did not accept the key saved on this computer"})
 	if help := get(t, h, "/help").Body.String(); !strings.Contains(help, "Something not right?") {
 		t.Fatalf("Help offers it: %s", truncate(help))
 	}

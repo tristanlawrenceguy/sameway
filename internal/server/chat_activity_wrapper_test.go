@@ -6,8 +6,7 @@ import (
 	"testing"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
-
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // TestChatActivityHasSwActivityWrapper checks that the Activity section on
@@ -16,7 +15,7 @@ import (
 func TestChatActivityHasSwActivityWrapper(t *testing.T) {
 	a, h := newApp(t)
 
-	chat.Record(a.Store, "assistant", chat.Change{Action: "created", Component: "note", ID: "aaa1", Detail: "First note"})
+	records.Record(a.Store, "assistant", records.Change{Action: "created", Component: "note", ID: "aaa1", Detail: "First note"})
 
 	body := get(t, h, "/chat").Body.String()
 

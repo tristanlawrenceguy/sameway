@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
@@ -20,7 +20,7 @@ func TestARecordSaysTheSameEverywhere(t *testing.T) {
 	ana, _ := a.Store.Create("person", map[string]any{"name": "Ana Silva"})
 	due := time.Now().AddDate(0, 0, 3).Format("2006-01-02") + " 14:00"
 	task, _ := a.Store.Create("task", map[string]any{"title": "Buy paint", "status": "doing", "due": due, "for": ana.ID})
-	a.Store.Create(chat.BlockType, a.Chat.BlockFields(map[string]any{"component": "collection", "props": map[string]any{"type": "task", "label": "Tasks"}}))
+	a.Store.Create(records.BlockType, a.Chat.BlockFields(map[string]any{"component": "collection", "props": map[string]any{"type": "task", "label": "Tasks"}}))
 	day := when.Relative(task.Fields["due"].(string), time.Now())
 
 	pages := map[string]string{
@@ -59,7 +59,7 @@ func TestLateIsSaidInWordsAndOnlyOfWhatCanBeDone(t *testing.T) {
 	yesterday := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
 	task, _ := a.Store.Create("task", map[string]any{"title": "Pay rent", "due": yesterday})
 	meeting, _ := a.Store.Create("event", map[string]any{"title": "Standup", "starts": yesterday + " 09:00"})
-	a.Store.Create(chat.BlockType, a.Chat.BlockFields(map[string]any{"component": "collection", "props": map[string]any{"type": "task", "label": "Tasks"}}))
+	a.Store.Create(records.BlockType, a.Chat.BlockFields(map[string]any{"component": "collection", "props": map[string]any{"type": "task", "label": "Tasks"}}))
 
 	for where, page := range map[string]string{"its page": get(t, h, "/t/task/"+task.ID).Body.String(), "the canvas": get(t, h, "/").Body.String()} {
 		if !strings.Contains(read(page), "Overdue, due yesterday") {

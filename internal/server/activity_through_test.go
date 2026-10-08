@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // ActivityPageDoesNotShowThroughTheAPI checks that old activity entries with
@@ -16,7 +16,7 @@ func TestActivityPageDoesNotShowThroughTheAPI(t *testing.T) {
 
 	// Seed an old-style activity record with via="through the API" and no
 	// headingSummary — this is what older records look like.
-	_, err := a.Store.Create(chat.ActivityType, map[string]any{
+	_, err := a.Store.Create(records.ActivityType, map[string]any{
 		"summary":   "You deleted note Water the plants, through the API",
 		"actor":     "human",
 		"action":    "deleted",
@@ -49,7 +49,7 @@ func TestActivityPageDoesNotShowThroughTheAPI(t *testing.T) {
 func TestActivityPageDoesNotShowThroughCLI(t *testing.T) {
 	a, h := newApp(t)
 
-	_, err := a.Store.Create(chat.ActivityType, map[string]any{
+	_, err := a.Store.Create(records.ActivityType, map[string]any{
 		"summary":   "You deleted note Seed, through the command line",
 		"actor":     "human",
 		"action":    "deleted",
@@ -81,7 +81,7 @@ func TestActivityPageDoesNotShowThroughCLI(t *testing.T) {
 func TestActivityPageStillShowsNonThroughVia(t *testing.T) {
 	a, h := newApp(t)
 
-	_, err := a.Store.Create(chat.ActivityType, map[string]any{
+	_, err := a.Store.Create(records.ActivityType, map[string]any{
 		"summary":   "You deleted note Water the plants",
 		"actor":     "human",
 		"action":    "deleted",

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
@@ -36,7 +36,7 @@ func TestOldEntryActivityShowsReadableFallback(t *testing.T) {
 	}
 
 	// Seed an old-style activity entry where detail = raw entry ID.
-	chat.Record(a.Store, "assistant", chat.Change{
+	records.Record(a.Store, "assistant", records.Change{
 		Action:    "created",
 		Component: "entry",
 		ID:        entry.ID,

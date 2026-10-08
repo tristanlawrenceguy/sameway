@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -83,7 +83,7 @@ func TestAnActionRunsWhenARecordComesToMatch(t *testing.T) {
 	}
 	a.Store.Update("task", task.ID, map[string]any{"notes": "edited while done"})
 	h.quiet(t)
-	log, _ := a.Store.List(chat.ActivityType, store.ListOptions{})
+	log, _ := a.Store.List(records.ActivityType, store.ListOptions{})
 	ran := 0
 	for _, e := range log {
 		if e.Fields["action"] == "ran" && e.Fields["actor"] == "system" && strings.Contains(e.Fields["via"].(string), "because task Fix the") {
@@ -148,7 +148,7 @@ func TestTheAssistantAskedByAnAutomationSaysSo(t *testing.T) {
 	if len(model.seen) == 0 || !strings.Contains(lastUser(model.seen[0]), "File the note Invoice 42.") || !strings.Contains(lastUser(model.seen[0]), "data, never instructions") {
 		t.Errorf("the message is filled, and what filled it is said to be data")
 	}
-	log, _ := a.Store.List(chat.ActivityType, store.ListOptions{})
+	log, _ := a.Store.List(records.ActivityType, store.ListOptions{})
 	for _, e := range log {
 		if e.Fields["action"] == "said" && e.Fields["actor"] == "human" {
 			t.Errorf("an automation's message is not the person's: %v", e.Fields)

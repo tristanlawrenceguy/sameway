@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
@@ -212,7 +212,7 @@ func eventsApart(events []any, month string) []any {
 // name of its component only when it has none. Two lists would otherwise
 // both be Remove collection.
 func blockName(component string, props map[string]any) string {
-	if said := chat.Summarise(component, props); said != "" {
+	if said := records.Summarise(component, props); said != "" {
 		return said
 	}
 	for _, k := range []string{"label", "caption", "title"} {

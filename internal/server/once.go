@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // A browser does not send a form twice; an agent whose request timed out
@@ -53,7 +53,7 @@ func (s *Server) doOnce(w http.ResponseWriter, r *http.Request, next func(http.R
 	}
 	body, _ := io.ReadAll(io.LimitReader(r.Body, 64<<20))
 	r.Body = io.NopCloser(bytes.NewReader(body))
-	v := chat.VisitorOf(r.Context())
+	v := records.VisitorOf(r.Context())
 	sum := sha256.Sum256(append([]byte(r.Method+" "+r.URL.RequestURI()+"\n"), body...))
 	id := s.app.Workspace.Dir + "|" + v.Login + "|" + string(v.Access) + "|" + key
 
