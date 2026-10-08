@@ -14,6 +14,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
+	"github.com/tristanlawrenceguy/sameway/internal/search"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
@@ -111,7 +112,7 @@ func (s *Service) createRecord(typeName string, fields map[string]any) toolResul
 		return fail("I couldn't save those changes — %s. %s Fix the fields and call create_record again.", humanizeValidationError(err.Error()), typeHelp(t))
 	}
 	text := fmt.Sprintf("created %s %s: %q. The person can open it at /t/%s/%s.", t.Name, rec.ID, c.Detail, t.Name, rec.ID)
-	text += s.datesSaid(t, fields, rec) + s.sameTitle(t, rec) + s.whoseSaid(t, rec) // dates_said.go, same_title.go, whose_said.go
+	text += s.datesSaid(t, fields, rec, false) + s.sameTitle(t, rec) + s.whoseSaid(t, rec) + s.actionSaid(t, rec) // dates_said.go, same_title.go, whose_said.go, action_when_said.go
 	if t.Name == "reminder" && atlogin.Path() != "" && !atlogin.On() {
 		text += " Reminders ring only while Sameway is open, and it does not open when this computer starts; if this one matters, tell the person that Open Sameway when I sign in, on Workspaces, keeps it ringing."
 	}
@@ -152,7 +153,7 @@ func (s *Service) updateRecord(typeName, id string, fields map[string]any, versi
 		again = fmt.Sprintf(" It repeats (%s), so it is not finished but due again at %v.", when.RepeatText(fmt.Sprint(rec.Fields[repeat])), rec.Fields[day])
 	}
 	return toolResult{
-		text:   fmt.Sprintf("updated %s %s: %q, at /t/%s/%s.%s", t.Name, rec.ID, title, t.Name, rec.ID, again) + s.datesSaid(t, fields, rec) + timeLost(t, fields, was, rec),
+		text:   fmt.Sprintf("updated %s %s: %q, at /t/%s/%s.%s", t.Name, rec.ID, title, t.Name, rec.ID, again) + s.datesSaid(t, fields, rec, len(daysOf(t, was, s.clock())) > 0) + timeLost(t, fields, was, rec),
 		change: &c,
 	}
 }
@@ -170,12 +171,15 @@ func (s *Service) findRecords(typeName, words string, where []string, order stri
 		return fail("%v", err)
 	}
 	words = strings.ToLower(strings.TrimSpace(words))
+	days := search.DaysAsked(words, s.clock()) // a day asked for finds what falls on it
 	writers := s.Writers()
 	var lines []string
 	for _, rec := range recs {
 		title := recordTitle(s.Store, t, rec)
 		if words != "" && !holdsAll(title, rec, words) {
-			continue
+			if _, on := search.FallsOn(t, rec, days, s.clock()); !on {
+				continue
+			}
 		}
 		line := fmt.Sprintf("%s\t%s\t%s", rec.ID, oneLine(title), writers.Of(t.Name, rec).Words)
 		if days := daysOf(t, rec, s.clock()); len(days) > 0 { // days_shown.go

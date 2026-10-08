@@ -39,7 +39,11 @@ const Limit = 50
 // has some of them, most first, with some true so it is said.
 func Matches(st *store.Store, types *schema.Set, q string) (hits []Hit, some bool) {
 	if days := daysAsked(q, time.Now()); len(days) > 0 { // days.go
-		if on := onDays(st, types, days, time.Now()); len(on) > 0 {
+		on := onDays(st, types, days, time.Now())
+		if len(on) == 0 && namesWeekday(q) {
+			on = onDays(st, types, weekLater(days), time.Now()) // that weekday, the week after
+		}
+		if len(on) > 0 {
 			return withWords(on, find(st, types, q, "", false)), false
 		}
 	}

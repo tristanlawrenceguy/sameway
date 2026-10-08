@@ -55,6 +55,37 @@ func daysAsked(q string, now time.Time) []time.Time {
 var weekdayNames = map[string]time.Weekday{"sunday": time.Sunday, "monday": time.Monday, "tuesday": time.Tuesday,
 	"wednesday": time.Wednesday, "thursday": time.Thursday, "friday": time.Friday, "saturday": time.Saturday}
 
+// DaysAsked are the days a query asks for, when it is a day and nothing
+// else; the assistant's find_records asks the same.
+func DaysAsked(q string, now time.Time) map[string]bool {
+	want := map[string]bool{}
+	for _, d := range daysAsked(q, now) {
+		want[d.Format("2006-01-02")] = true
+	}
+	return want
+}
+
+// FallsOn is whether a record has a date on one of the days, and which,
+// in words: "due Thursday 15 October", "starts Thursday 15 October 12:30".
+func FallsOn(t *schema.Type, rec *store.Record, days map[string]bool, now time.Time) (string, bool) {
+	for _, f := range t.Fields {
+		if f.Type != "datetime" {
+			continue
+		}
+		v, _ := rec.Fields[f.Name].(string)
+		at, allDay, ok := when.Stored(v, now.In(time.Local))
+		if v == "" || !ok || !days[at.Format("2006-01-02")] {
+			continue
+		}
+		said := schema.Words(f.Name) + " " + at.Format("Monday 2 January")
+		if !allDay {
+			said += at.Format(" 15:04")
+		}
+		return said, true
+	}
+	return "", false
+}
+
 // onDays is every record with a date on one of the days, the day said.
 func onDays(st *store.Store, types *schema.Set, days []time.Time, now time.Time) []Hit {
 	want := map[string]bool{}
@@ -66,39 +97,35 @@ func onDays(st *store.Store, types *schema.Set, days []time.Time, now time.Time)
 		if Skip[t.Name] || t.Internal {
 			continue
 		}
-		var dated []schema.Field
-		for _, f := range t.Fields {
-			if f.Type == "datetime" {
-				dated = append(dated, f)
-			}
-		}
-		if len(dated) == 0 {
-			continue
-		}
 		recs, err := st.List(t.Name, store.ListOptions{})
 		if err != nil {
 			continue
 		}
 		for _, rec := range recs {
-			for _, f := range dated {
-				v, _ := rec.Fields[f.Name].(string)
-				at, allDay, ok := when.Parse(v, now)
-				if v == "" || !ok {
-					continue
-				}
-				at = at.In(time.Local)
-				if !want[at.Format("2006-01-02")] {
-					continue
-				}
-				said := schema.Words(f.Name) + " " + at.Format("Monday 2 January")
-				if !allDay {
-					said += at.Format(" 15:04")
-				}
+			if said, ok := FallsOn(t, rec, want, now); ok {
 				title, _ := texts(t, rec)
 				hits = append(hits, Hit{Type: t.Name, ID: rec.ID, Title: title, Snippet: said, Href: "/t/" + t.Name + "/" + rec.ID})
-				break
 			}
 		}
 	}
 	return hits
+}
+
+// namesWeekday is whether a query says a weekday: "Thursday 8 October",
+// asked on that Thursday, may mean the next one.
+func namesWeekday(q string) bool {
+	for _, w := range strings.Fields(strings.ToLower(q)) {
+		if _, ok := weekdayNames[strings.Trim(w, ",.?")]; ok {
+			return true
+		}
+	}
+	return false
+}
+
+func weekLater(days []time.Time) []time.Time {
+	out := make([]time.Time, len(days))
+	for i, d := range days {
+		out[i] = d.AddDate(0, 0, 7)
+	}
+	return out
 }

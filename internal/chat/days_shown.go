@@ -24,11 +24,10 @@ func daysOf(t *schema.Type, rec *store.Record, now time.Time) []string {
 			continue
 		}
 		v, _ := rec.Fields[f.Name].(string)
-		at, allDay, ok := when.Parse(v, now)
+		at, allDay, ok := when.Stored(v, now.In(time.Local))
 		if v == "" || !ok {
 			continue
 		}
-		at = at.In(time.Local)
 		day := at.Format("Monday 2 January")
 		if at.Year() != now.Year() {
 			day += at.Format(" 2006")
