@@ -212,10 +212,9 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	}
 	b.WriteString(`</div>`)
 	b.WriteString(s.documentLinks(r, t, rec)) // the record as a file, after it; see export_docs.go
-	// Tasks belonging to this project, so a person can see what work is here.
-	if t.Name == "project" {
-		b.WriteString(string(s.tasksSection(rec.ID)))
-	}
+	// What the schema lists here, such as a project's tasks (backrefs.go).
+	listed, keys := s.backrefs(t, rec)
+	b.WriteString(listed)
 	// Recent activity on this page, so a deletion can be taken back where
 	// the person lands. The log is the workspace's, not the internet's: it
 	// names who changed what, so a published page leaves it out.
@@ -224,7 +223,8 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	}
 	// What this record is connected to, as a line of counts; the address
 	// says which of them are open. See related.go.
-	b.WriteString(s.related(t, rec, always, here))
+	// What is listed above is not opened again.
+	b.WriteString(s.related(t, rec, less(always, keys), less(here, keys)))
 	// The heading is the whole title, wrapped as it needs; only the window
 	// title, which has one line, is shortened.
 	s.page(w, r, s.title(t, rec), template.HTML(b.String()), pageOptions{

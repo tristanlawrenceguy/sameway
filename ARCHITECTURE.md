@@ -121,6 +121,10 @@ surface decides for itself:
   label, else its name with spaces.
 - **A record's name** (`Called`, and `chat.Name` above it): its title,
   else the first thing it says, else its kind and id.
+- **What its page lists** (`listed: true` on a ref field): the records
+  whose ref points at it, under their own heading, such as a project's
+  tasks (`task.project` in the starter schema). Any other ref is a
+  connection a page opens when asked (`?show=`), never both.
 
 ## 3. Repository layout
 

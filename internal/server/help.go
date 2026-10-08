@@ -37,6 +37,7 @@ func (s *Server) helpPage(w http.ResponseWriter, r *http.Request) {
 	b.WriteString(`<section class="sw-stack" aria-labelledby="help-hand"><h2 id="help-hand">Doing things yourself</h2>
 <p>Every list has a button to add one, such as Add a note. On anything you made, Edit changes it where it is, and Save keeps the change. Escape or Cancel leaves it as it was.</p>
 <p>After you do something, a message at the top of the page says what happened.</p>
+<p>Ready-made pages for a job (a job search, clients, a budget, a house move and more) are a press away in <a class="sw-link" href="/templates">Templates</a>.</p>
 <p>Tasks and notes in another app (Todoist, Google Tasks or Keep, Evernote, Notion, Obsidian) come in from <a class="sw-link" href="/bring">Bring your things</a>.</p>
 <p>A calendar in Google, Outlook or iCloud is kept in step from <a class="sw-link" href="/calendars">Calendars</a>.</p></section>`)
 	b.WriteString(appSection) // app_install.go

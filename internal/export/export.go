@@ -33,7 +33,7 @@ var (
 // spreadsheet, people as contacts, anything with a date as a calendar.
 func For(t *schema.Type) []Format {
 	out := []Format{CSV, Excel}
-	if contactish(t) {
+	if Contactish(t) {
 		out = append(out, VCard)
 	}
 	if t.HasDay() {
@@ -52,7 +52,9 @@ func ByExt(t *schema.Type, ext string) (Format, bool) {
 	return Format{}, false
 }
 
-func contactish(t *schema.Type) bool {
+// Contactish says whether a type's records are contacts: it has an email or a
+// phone. Its export offers vCard, and its import a vCard or a mailbox.
+func Contactish(t *schema.Type) bool {
 	_, email := t.Field("email")
 	_, phone := t.Field("phone")
 	return email || phone

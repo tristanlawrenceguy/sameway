@@ -1,0 +1,52 @@
+name: smoke
+
+# What a person downloads, run as they would run it, on the machines they
+# have: the program packed as a release packs it, started with nothing
+# after it as a double-click starts it, in a home folder new to Sameway,
+# answering with the welcome and stopping when asked. On a Mac the app is
+# made with the release's own script and checked with Apple's codesign,
+# which no test could do on Linux. tools/package/firstrun.sh is the run.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  first-run:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - name: Build as a release does
+        env:
+          CGO_ENABLED: "0"
+        run: go build -ldflags "-s -w" -o sameway-bin ./cmd/sameway
+      - name: Linux, as the archive unpacks
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p pack/sameway && cp sameway-bin pack/sameway/sameway && chmod +x pack/sameway/sameway
+          tools/package/firstrun.sh "$PWD/pack/sameway/sameway"
+          test -f "$HOME/.local/share/applications/sameway.desktop" || true
+      - name: Mac, as the app is made and opened
+        if: runner.os == 'macOS'
+        run: |
+          tools/package/macapp.sh sameway-bin 0.0.0 "$PWD/Sameway.app"
+          codesign --verify --deep --strict --verbose=2 Sameway.app
+          codesign -dv Sameway.app 2>&1 | grep -q "Identifier=io.github.tristanlawrenceguy.sameway"
+          tools/package/firstrun.sh "$PWD/Sameway.app/Contents/MacOS/sameway"
+      - name: Windows, as the downloaded program is double-clicked
+        if: runner.os == 'Windows'
+        run: |
+          cp sameway-bin Sameway-Windows.exe
+          tools/package/firstrun.sh "$PWD/Sameway-Windows.exe"

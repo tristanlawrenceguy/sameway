@@ -68,6 +68,7 @@ var pageActionTools = map[string]string{
 	"/workspaces/start":           "open_workspace",
 	"/workspaces/restore":         "restore_workspace",
 	"/workspaces/delete":          "a person's: deleting a whole workspace is its owner's",
+	"/templates/use":              "add_arrangement",
 	"/review/next":                "update_record",
 	"/review/done":                "update_record",
 	"/review/on":                  "set_setting",
