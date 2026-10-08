@@ -174,7 +174,7 @@ func (s *Server) transcribeFile(w http.ResponseWriter, r *http.Request) {
 		s.failed(w, r, "Not written down", err, back)
 		return
 	}
-	s.app.Store.Update(FileType, rec.ID, map[string]any{"status": "converting", "note": "Being written down on this computer."})
+	s.fileSays(rec.ID, map[string]any{"status": "converting", "note": "Being written down on this computer."})
 	s.enqueue(partJob{id: rec.ID, wav: wav, index: index, of: of, start: start})
 	if of > 1 {
 		w.Header().Set("Content-Type", "application/json")

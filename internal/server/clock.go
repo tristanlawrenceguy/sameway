@@ -93,7 +93,9 @@ func (s *Server) ring(now time.Time) []*store.Record {
 		if err != nil || ts.After(now) {
 			continue
 		}
-		if _, err := s.app.Store.Update(ReminderType, rec.ID, map[string]any{"state": "rang"}); err != nil {
+		// Ringing is the system's: written as an op, logged as rang, and
+		// not taken back.
+		if _, err := records.ApplyOps(s.app.Store, records.Op{Type: ReminderType, ID: rec.ID, After: map[string]any{"state": "rang"}}); err != nil {
 			log.Printf("clock: %v", err)
 			continue
 		}

@@ -151,11 +151,11 @@ func (s *Server) readInBackground(id string) error {
 	defer srv.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Hour)
 	defer cancel()
-	s.app.Store.Update(FileType, id, map[string]any{"status": "converting", "note": "Being written down on this computer."})
+	s.fileSays(id, map[string]any{"status": "converting", "note": "Being written down on this computer."})
 	s.Changed()
 	out, err := look.RunScript(ctx, "http://"+ln.Addr().String()+"/search", fmt.Sprintf(readScript, id))
 	if err != nil {
-		s.app.Store.Update(FileType, id, map[string]any{"status": "ready", "note": "A recording's text is its transcript; there is none yet."})
+		s.fileSays(id, map[string]any{"status": "ready", "note": "A recording's text is its transcript; there is none yet."})
 		if errors.Is(err, look.ErrNoBrowser) {
 			return err
 		}

@@ -114,7 +114,7 @@ func fillExample(dir string, now time.Time) error {
 		{"component": "calendar", "span": 6, "props": map[string]any{"types": []any{"task", "event", "reminder"}, "caption": "This month"}},
 		{"component": "tracker", "span": 6, "props": map[string]any{"habits": []any{"Water"}}},
 	} {
-		if _, err := a.Store.Create(records.BlockType, a.Chat.BlockFields(b)); err != nil {
+		if _, err := records.ApplyOps(a.Store, records.Op{Type: records.BlockType, After: a.Chat.BlockFields(b)}); err != nil {
 			return fmt.Errorf("block: %w", err)
 		}
 	}
