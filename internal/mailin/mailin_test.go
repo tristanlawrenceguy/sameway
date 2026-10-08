@@ -27,6 +27,13 @@ func TestOnlyMailForTheWorkspaceIsRead(t *testing.T) {
 	if err := Check(ctx, Account{Host: srv.Addr, User: "me@example.com", Password: "wrong", Insecure: true}); err == nil || !strings.Contains(err.Error(), "app password") {
 		t.Errorf("a wrong password is said plainly: %v", err)
 	}
+	plain := mailintest.Start(t, "you@example.com", "pw")
+	if err := Check(ctx, Account{Host: plain.Addr, User: "you@example.com", Password: "pw", Insecure: true}); err != nil {
+		t.Fatal(err)
+	}
+	if !plain.Has(Folder) {
+		t.Error("connecting makes the Sameway folder, so there is somewhere to move mail")
+	}
 	mails, marks, err := New(ctx, a, nil)
 	if err != nil || len(mails) != 1 || mails[0].Subject != "Dentist on Friday" || mails[0].Text != "At 10." || !strings.Contains(mails[0].From, "Ana Silva") {
 		t.Fatalf("the +sameway mail, alone: %+v %v", mails, err)

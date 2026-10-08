@@ -48,18 +48,11 @@ func (s *Server) mailAccount() (mailin.Account, bool) {
 // mailInsecure lets a test read from a mail server without TLS.
 var mailInsecure = false
 
-var mailHow = []struct{ service, how string }{
-	{"Gmail", "Turn on 2-Step Verification, then make one at myaccount.google.com/apppasswords."},
-	{"iCloud", "At account.apple.com, Sign-In and Security, App-Specific Passwords. iCloud has no + addresses: move mail to a folder called Sameway instead."},
-	{"Yahoo", "At login.yahoo.com/account/security, Generate app password."},
-	{"Fastmail", "Settings, Privacy & Security, App passwords, with IMAP access."},
-}
-
 func (s *Server) mailPage(w http.ResponseWriter, r *http.Request) {
 	esc := template.HTMLEscapeString
 	var b strings.Builder
 	if a, ok := s.mailAccount(); ok {
-		b.WriteString(`<p>Connected to ` + esc(a.User) + `. Send or forward mail to <strong>` + esc(mailin.PlusAddress(a.User)) + `</strong>, or move it to a folder called ` + mailin.Folder + `, and it comes in as a note within five minutes. Nothing in your mailbox is marked read, moved or deleted.</p>`)
+		b.WriteString(`<p>Connected to ` + esc(a.User) + `. ` + sendTo(a.User) + ` It comes in within five minutes and is sorted for you on Today. Nothing in your mailbox is marked read, moved or deleted.</p>`) // mail_stories.go
 		if at := s.app.Store.Meta("mail:checked"); at != "" {
 			b.WriteString(`<p class="sw-small sw-muted">Last looked: ` + esc(at) + `</p>`)
 		}
@@ -67,15 +60,7 @@ func (s *Server) mailPage(w http.ResponseWriter, r *http.Request) {
 		s.page(w, r, "Email in", template.HTML(b.String()), pageOptions{})
 		return
 	}
-	b.WriteString(`<p>Connect your mailbox once, and anything you send or forward to your own address with +sameway after the name (you+sameway@gmail.com) comes in as a note, with its attachments. Only that mail is read, and nothing is changed in your mailbox.</p>`)
-	b.WriteString(`<p>It needs an app password: one your mail service makes for a program, so your own password is never given.</p><dl class="sw-stack">`)
-	for _, h := range mailHow {
-		b.WriteString(`<dt><strong>` + esc(h.service) + `</strong></dt><dd>` + esc(h.how) + `</dd>`)
-	}
-	b.WriteString(`</dl><form method="post" action="/mail/connect" class="sw-stack">`)
-	b.WriteString(string(s.component("text-field", map[string]any{"label": "Your email address", "name": "user", "type": "email", "required": true, "autocomplete": "email", "spellcheck": false})))
-	b.WriteString(string(s.component("text-field", map[string]any{"label": "App password", "name": "password", "type": "password", "required": true, "autocomplete": "off", "spellcheck": false, "hint": "Kept on this computer only, outside the workspace."})))
-	b.WriteString(string(s.component("button", map[string]any{"label": "Connect", "type": "submit"})) + `</form>`)
+	b.WriteString(s.mailStoryPage(r)) // mail_stories.go
 	s.page(w, r, "Email in", template.HTML(b.String()), pageOptions{Lede: "Mail you forward becomes notes and tasks."})
 }
 
@@ -106,7 +91,10 @@ func (s *Server) mailConnect(w http.ResponseWriter, r *http.Request) {
 	s.app.Store.SetMeta("mail:account", string(raw))
 	s.app.Store.SetMeta("mail:marks", "")
 	n, _ := s.readMail(ctx)
-	said := "Send or forward mail to " + mailin.PlusAddress(user) + " and it comes in as a note."
+	said := "Move mail to the Sameway folder, made in your mailbox just now, and it comes in as a note."
+	if storyFor(user).Plus { // mail_stories.go
+		said = "Send or forward mail to " + mailin.PlusAddress(user) + " and it comes in as a note."
+	}
 	if n > 0 {
 		said += " " + schema.Count(n, "email") + " from the last week came in already."
 	}
@@ -212,7 +200,7 @@ func clipMail(s string, n int) string {
 // mailLine is Email in on Help.
 func (s *Server) mailLine() string {
 	if a, ok := s.mailAccount(); ok {
-		return `Email: mail sent or forwarded to ` + template.HTMLEscapeString(mailin.PlusAddress(a.User)) + ` comes in as a note to sort, on <a class="sw-link" href="/today">Today</a>. <a class="sw-link" href="/mail">Email in</a>`
+		return `Email: ` + sendTo(a.User) + ` It is sorted for you on <a class="sw-link" href="/today">Today</a>.` // mail_stories.go
 	}
 	return `Email: forward a booking, a bill or a note to self and have it here, as a note to sort or a task. <a class="sw-link" href="/mail">Connect your email</a>`
 }
