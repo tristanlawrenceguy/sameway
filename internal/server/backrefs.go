@@ -3,13 +3,14 @@ package server
 import (
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 // A record's page lists what is in it: the records of each ref the schema
-// marks listed that point at it (withins, glance_count.go), the same rule
+// marks listed that point at it (records.Withins, records/glance_count.go), the same rule
 // its glance counts by. A project lists its tasks, a person its
 // interactions, a meeting the tasks that came up at it. It was a section
 // written for projects by name; any type can now have one, by its schema,
@@ -23,8 +24,8 @@ import (
 func (s *Server) backrefs(t *schema.Type, rec *store.Record) (string, []string) {
 	var b strings.Builder
 	var keys []string
-	for _, w := range s.withins(t) {
-		u, f := w.t, w.field
+	for _, w := range records.Withins(s.app.Store, t) {
+		u, f := w.T, w.Field
 		id := strings.ReplaceAll(schema.Plural(u.Name), " ", "-") + "-" + rec.ID
 		if f != t.Name {
 			id += "-" + slugKey(f)
