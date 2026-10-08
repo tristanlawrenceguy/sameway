@@ -31,9 +31,13 @@ func (c *ctx) startCmd() error {
 	if made {
 		fmt.Fprintf(c.Stdout, "Made your workspace in %s.\n", dir)
 	}
-	// Already running: show it, do not start it again on a port it holds.
+	// Already running: show it in a new tab, do not start it again. A
+	// second Sameway on one workspace fails on what only one may hold,
+	// and a person who opened it again, its tab out of sight, met that
+	// error instead of their workspace. So the same folder however it is
+	// written, and a server slow to answer (busy warming a model) counts.
 	for _, k := range workspace.KnownWorkspaces() {
-		if k.Dir == dir && k.Addr != "" && answers("http://"+k.Addr) {
+		if sameDir(k.Dir, dir) && k.Addr != "" && answersWithin("http://"+k.Addr, 5*time.Second) {
 			fmt.Fprintf(c.Stdout, "Sameway is already open at http://%s/\n", k.Addr)
 			if err := openInBrowser("http://" + k.Addr + "/"); err != nil {
 				fmt.Fprintf(c.Stdout, "Visit http://%s/ in your browser.\n", k.Addr)
@@ -99,8 +103,11 @@ func isDir(p string) bool {
 }
 
 // answers says whether a workspace server answers at base.
-func answers(base string) bool {
-	client := http.Client{Timeout: time.Second}
+func answers(base string) bool { return answersWithin(base, time.Second) }
+
+// answersWithin is answers, waiting as long as a busy server may take.
+func answersWithin(base string, wait time.Duration) bool {
+	client := http.Client{Timeout: wait}
 	res, err := client.Get(base + "/api/describe")
 	if err != nil {
 		return false

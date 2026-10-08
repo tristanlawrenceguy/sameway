@@ -4,6 +4,7 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
+	"github.com/tristanlawrenceguy/sameway/internal/prose"
 	"html/template"
 	"strings"
 	"time"
@@ -97,7 +98,7 @@ func RenderPage(p Page) ([]byte, error) {
 	if err := layout.Execute(&buf, p); err != nil {
 		return nil, err
 	}
-	return buf.Bytes(), nil
+	return []byte(prose.Outward(buf.String())), nil // a link to another site opens in a new tab
 }
 
 // NavItem is one list in the sidebar: the rendered link, and which of the
