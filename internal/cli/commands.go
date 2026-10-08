@@ -46,6 +46,7 @@ func (c *ctx) serveCmd() error {
 	h.StartRinging(ctx, notifier(a))
 	h.KeepCalendars(ctx)
 	h.KeepMeaning(ctx)   // search by meaning, when an embedding model is here
+	h.KeepReview(ctx)    // the weekly review, on the day set
 	h.KeepBrief(ctx)     // the morning brief, when one is set
 	h.KeepCloudCopy(ctx) // a daily copy in the cloud folder, when one is chosen
 	h.WriteDownInBackground()

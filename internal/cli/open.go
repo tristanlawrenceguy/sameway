@@ -112,6 +112,7 @@ func (c *ctx) openCmd() error {
 	h.StartRinging(ctx, notifier(a))
 	h.KeepCalendars(ctx) // calendars kept in step every hour
 	h.KeepMeaning(ctx)   // search by meaning, when an embedding model is here
+	h.KeepReview(ctx)    // the weekly review, on the day set
 	h.KeepBrief(ctx)     // the morning brief, when one is set
 	h.KeepCloudCopy(ctx) // a daily copy in the cloud folder, when one is chosen
 	a.Chat.StartSchedule(ctx)
