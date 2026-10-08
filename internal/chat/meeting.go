@@ -139,7 +139,7 @@ func (s *Service) recordBatch(eventID string, event map[string]any, tasks, decis
 	title, _ := event["title"].(string)
 	// Its page shows the tasks that came up at it: a write-up asks for them.
 	return records.Change{Action: "wrote up", Component: records.EventType, ID: eventID, Href: "/t/" + records.EventType + "/" + eventID + "?show=points-here:task.event",
-		Detail: fmt.Sprintf("%s, %s and %s", title, schema.Count(decisions, "decision"), schema.Count(tasks, "task")), Before: records.Batch(batch)}
+		Detail: fmt.Sprintf("%s, %s and %s", title, schema.Count(decisions, "decision"), schema.Count(tasks, "task")), Ops: records.OpsOf(s.Store, batch)}
 }
 
 // moment is " (at 12:03)" linked to that line of the recording's

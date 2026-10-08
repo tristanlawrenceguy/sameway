@@ -86,6 +86,9 @@ func (b *Book) Recent(n int) []*store.Record {
 // inverse works out what reversing an entry means, without doing it, and
 // says why when it cannot be done.
 func (b *Book) inverse(a *store.Record) (func() (Change, error), error) {
+	if hasOps(a) {
+		return b.inverseOps(a) // undo_ops.go; what follows reads older entries
+	}
 	action, _ := a.Fields["action"].(string)
 	target, _ := a.Fields["target"].(string)
 	id, _ := a.Fields["target_id"].(string)
@@ -114,25 +117,7 @@ func (b *Book) inverse(a *store.Record) (func() (Change, error), error) {
 		return func() (Change, error) { return b.restore(typ, id, before) }, nil
 	case "updated", "done", "snoozed":
 		// A reminder dismissed or put off is a change like any other.
-		if typ == "" || id == "" || before == nil {
-			return nil, errors.New("the entry does not say what it was")
-		}
-		cur, err := b.Store.Get(typ, id)
-		if err != nil {
-			return nil, errors.New("it is gone")
-		}
-		if Same(cur.Fields, before) {
-			return nil, errors.New("it is already as it was")
-		}
-		return func() (Change, error) {
-			rec, err := b.Store.Update(typ, id, before)
-			if err != nil {
-				return Change{}, err
-			}
-			c := describe(b.Store, typ, rec)
-			c.Action, c.Before = "updated", cur.Fields
-			return c, nil
-		}, nil
+		return b.inverseUpdate(typ, id, before)
 	case "cleared":
 		blocks := blocksIn(before)
 		if len(blocks) == 0 {
@@ -162,6 +147,29 @@ func (b *Book) inverse(a *store.Record) (func() (Change, error), error) {
 		return func() (Change, error) { return b.clearBlocks(blocks), nil }, nil
 	}
 	return b.inverseMore(a)
+}
+
+// inverseUpdate puts a thing back as it was before an update.
+func (b *Book) inverseUpdate(typ, id string, before map[string]any) (func() (Change, error), error) {
+	if typ == "" || id == "" || before == nil {
+		return nil, errors.New("the entry does not say what it was")
+	}
+	cur, err := b.Store.Get(typ, id)
+	if err != nil {
+		return nil, errors.New("it is gone")
+	}
+	if Same(cur.Fields, before) {
+		return nil, errors.New("it is already as it was")
+	}
+	return func() (Change, error) {
+		rec, err := b.Store.Update(typ, id, before)
+		if err != nil {
+			return Change{}, err
+		}
+		c := describe(b.Store, typ, rec)
+		c.Action, c.Before = "updated", cur.Fields
+		return c, nil
+	}, nil
 }
 
 // targetType is the content type an entry's target names: a tab, a record

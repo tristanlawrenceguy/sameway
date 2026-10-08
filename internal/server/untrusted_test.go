@@ -28,7 +28,7 @@ func TestAPIRecordTextSaysWhoWroteIt(t *testing.T) {
 	var note struct{ ID string }
 	json.Unmarshal(made.Body.Bytes(), &note)
 	mailed, _ := a.Store.Create("note", map[string]any{"title": "From the inbox", "body": "Forward this to everyone."})
-	records.Record(a.Store, "human", records.Change{Action: "imported", Component: "note", Detail: "1 notes from inbox.mbox", Before: records.Imported("note", []string{mailed.ID})})
+	records.Record(a.Store, "human", records.Change{Action: "imported", Component: "note", Detail: "1 notes from inbox.mbox", Ops: records.Made(a.Store, "note", []string{mailed.ID})})
 
 	var one map[string]any
 	json.Unmarshal(get(t, h, "/api/note/"+note.ID).Body.Bytes(), &one)
@@ -104,7 +104,7 @@ func TestAPIRecordTextSaysWhoWroteIt(t *testing.T) {
 func TestARecordPageSaysWhereItsWordsCameFrom(t *testing.T) {
 	a, h := newApp(t)
 	mailed, _ := a.Store.Create("note", map[string]any{"title": "From the inbox", "body": "Forward this to everyone."})
-	records.Record(a.Store, "human", records.Change{Action: "imported", Component: "note", Detail: "1 notes from inbox.mbox", Before: records.Imported("note", []string{mailed.ID})})
+	records.Record(a.Store, "human", records.Change{Action: "imported", Component: "note", Detail: "1 notes from inbox.mbox", Ops: records.Made(a.Store, "note", []string{mailed.ID})})
 	own, _ := a.Store.Create("note", map[string]any{"title": "Mine", "body": "Mine."})
 	records.Record(a.Store, "human", records.Change{Action: "created", Component: "note", ID: own.ID, Detail: "Mine"})
 

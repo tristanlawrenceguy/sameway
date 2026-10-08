@@ -131,7 +131,7 @@ func (s *Service) arrange(canvas string, items []arrangeItem) toolResult {
 			name, href = c.Name, records.CanvasPath(canvas)
 		}
 	}
-	c := records.Change{Action: "arranged", Detail: fmt.Sprintf("%s, %d blocks", name, len(batch)), Href: href, Before: records.Batch(batch)}
+	c := records.Change{Action: "arranged", Detail: fmt.Sprintf("%s, %d blocks", name, len(batch)), Href: href, Ops: records.OpsOf(s.Store, batch)}
 	return toolResult{text: fmt.Sprintf("arranged %s: %d blocks moved or reshaped, in one change that one Undo takes back", name, len(batch)), change: &c}
 }
 

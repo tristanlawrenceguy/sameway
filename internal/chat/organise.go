@@ -112,7 +112,7 @@ func (s *Service) organiseWriting(typeName, pieceID string, parts []string, mate
 		href += "&show=material"
 	}
 	c := records.Change{Action: "organised", Component: t.Name, ID: pieceID, Href: href,
-		Detail: fmt.Sprintf("%s, %d parts and %d material", title, len(order), len(material)), Before: records.Batch(batch)}
+		Detail: fmt.Sprintf("%s, %d parts and %d material", title, len(order), len(material)), Ops: records.OpsOf(s.Store, batch)}
 	return toolResult{text: fmt.Sprintf("organised %s %s: %d parts in order and %d records of material; %s opens its page with the outline; send it, and say so.",
 		t.Name, title, len(order), len(material), c.Href), change: &c}
 }

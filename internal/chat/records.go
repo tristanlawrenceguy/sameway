@@ -266,6 +266,6 @@ func (s *Service) importRecords(typeName, fileID string, mapping map[string]any)
 	title := fmt.Sprintf("%d %s from %s", report.Made, schema.Plural(t.Name), name)
 	return toolResult{
 		text:   fmt.Sprintf("%s: %s. The person can see them at /t/%s.", t.Name, report.String(), t.Name),
-		change: &records.Change{Action: "imported", Component: t.Name, Detail: title, Href: "/t/" + t.Name, Before: records.Imported(t.Name, report.IDs)},
+		change: &records.Change{Action: "imported", Component: t.Name, Detail: title, Href: "/t/" + t.Name, Ops: records.Made(s.Store, t.Name, report.IDs)},
 	}
 }

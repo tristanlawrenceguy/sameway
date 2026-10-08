@@ -64,8 +64,7 @@ func (b *Book) WritersFor(public bool) *Writers {
 			if _, file, ok := strings.Cut(detail, " from "); ok {
 				from = "an import from " + file
 			}
-			before, _ := e.Fields["before"].(map[string]any)
-			for _, c := range BatchOf(before) {
+			for _, c := range EntryOps(e) {
 				w.add(c.Type+"/"+c.ID, Writer{Words: from, Outside: true})
 			}
 			continue
@@ -76,8 +75,7 @@ func (b *Book) WritersFor(public bool) *Writers {
 		// A write-up made its tasks too, and a suggestion of edits its
 		// suggestions, each in the batch on its entry.
 		if action == "wrote up" || action == "suggested" {
-			before, _ := e.Fields["before"].(map[string]any)
-			for _, c := range BatchOf(before) {
+			for _, c := range EntryOps(e) {
 				w.add(c.Type+"/"+c.ID, w.entry(e))
 			}
 		}

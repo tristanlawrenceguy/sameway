@@ -55,7 +55,7 @@ func TestAnImportIsUndoneInOneGo(t *testing.T) {
 		rec, _ := svc.Store.Create("person", map[string]any{"name": name})
 		ids = append(ids, rec.ID)
 	}
-	records.Record(svc.Store, "human", records.Change{Action: "imported", Component: "person", Detail: "3 people from contacts.csv", Before: records.Imported("person", ids)})
+	records.Record(svc.Store, "human", records.Change{Action: "imported", Component: "person", Detail: "3 people from contacts.csv", Ops: records.Made(svc.Store, "person", ids)})
 	undo(t, svc, newest(t, svc).ID)
 	if n, _ := svc.Store.Count("person"); n != 0 {
 		t.Fatalf("one undo takes the whole import back, %d left", n)

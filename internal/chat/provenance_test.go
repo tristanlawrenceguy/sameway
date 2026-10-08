@@ -33,7 +33,7 @@ func TestWrittenBySaysWhoInPlainWords(t *testing.T) {
 	log("human", bobs, records.Change{By: "Bob", ByLogin: "bob@example.com"})
 	log("human", assisted, records.Change{})
 	log("assistant", assisted, records.Change{Action: "updated"})
-	records.Record(svc.Store, "human", records.Change{Action: "imported", Component: "note", Detail: "1 notes from inbox.mbox", Before: records.Imported("note", []string{imported})})
+	records.Record(svc.Store, "human", records.Change{Action: "imported", Component: "note", Detail: "1 notes from inbox.mbox", Ops: records.Made(svc.Store, "note", []string{imported})})
 
 	w := svc.Writers()
 	for id, want := range map[string]records.Writer{
