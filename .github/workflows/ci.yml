@@ -60,6 +60,9 @@ jobs:
       - name: Keyboard operation of every component example
         working-directory: tools/a11y-runner
         run: npm run test:keyboard
+      - name: What the page scripts do (arm, refresh, bus, connection)
+        working-directory: tools/a11y-runner
+        run: npm run test:behave
 
   pages:
     name: live pages (person and agent paths, every page in every mode)

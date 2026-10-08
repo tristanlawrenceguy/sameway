@@ -24,17 +24,17 @@ func TestATurnIsSaidOnceAndMarkedInPlace(t *testing.T) {
 	}
 	js, css, live := read("28-turn.js"), read("28-turn.css"), read("14-live.js")
 	for _, want := range []string{
-		"var GAP = 2500",                                // one thing said at a time, with time to hear it
-		"if (said[words]) return",                       // each thing once a turn
-		`window.swStatus(status, "working", words, "")`, // in the region already on the page, drawn as heard
-		`"data-still"`,                                  // a long step says it is still going, in its own words
-		`"Writing the reply…"`,                          // the reply starting is said once, not its words
-		"setTimeout(flush, 80)",                         // words land a few times a second, not each piece
-		`behavior: "instant"`,                           // the log does not glide after every word
-		`"sw-block sw-block--pending"`,                  // a new block's place is held
-		`"data-actor", "assistant"`,                     // in the assistant's colour
-		`"data-pending"`,                                // a block being changed is outlined
-		"sw-visually-hidden",                            // the held place says what is coming
+		"var GAP = 2500",                          // one thing said at a time, with time to hear it
+		"if (said[words]) return",                 // each thing once a turn
+		`sw.status(status, "working", words, "")`, // in the region already on the page, drawn as heard
+		`"data-still"`,                            // a long step says it is still going, in its own words
+		`"Writing the reply…"`,                    // the reply starting is said once, not its words
+		"setTimeout(flush, 80)",                   // words land a few times a second, not each piece
+		`behavior: "instant"`,                     // the log does not glide after every word
+		`"sw-block sw-block--pending"`,            // a new block's place is held
+		`"data-actor", "assistant"`,               // in the assistant's colour
+		`"data-pending"`,                          // a block being changed is outlined
+		"sw-visually-hidden",                      // the held place says what is coming
 	} {
 		if !strings.Contains(js, want) {
 			t.Errorf("28-turn.js must have %s", want)

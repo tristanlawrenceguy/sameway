@@ -19,19 +19,13 @@
     asked = null;
     buttons().forEach(function (b) { b.hidden = true; });
   });
-  // Each button its own listener, armed again when the page refreshes.
-  function arm() {
-    buttons().forEach(function (b) {
-      if (b._armed) return;
-      b._armed = true;
-      b.hidden = !asked;
-      b.addEventListener("click", function () {
-        if (!asked) return;
-        asked.prompt();
-        asked.userChoice.then(function () { asked = null; buttons().forEach(function (x) { x.hidden = true; }); });
-      });
+  // Each button its own listener, a new one armed when the page refreshes.
+  sw.arm("[data-install]", function (b) {
+    b.hidden = !asked;
+    b.addEventListener("click", function () {
+      if (!asked) return;
+      asked.prompt();
+      asked.userChoice.then(function () { asked = null; buttons().forEach(function (x) { x.hidden = true; }); });
     });
-  }
-  arm();
-  document.addEventListener("sw:refresh", arm);
+  });
 })();

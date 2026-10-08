@@ -22,9 +22,9 @@
 
   var timer = null, running = false, again = false;
 
-  // swRefresh asks for the page to follow, soon: several asks in a row
+  // sw.refresh asks for the page to follow, soon: several asks in a row
   // become one fetch, and one asked for during a fetch means another after.
-  window.swRefresh = function (delay) {
+  sw.refresh = function (delay) {
     clearTimeout(timer);
     timer = setTimeout(refresh, delay === undefined ? 400 : delay);
   };
@@ -58,7 +58,7 @@
         merge(doc);
       })
       .catch(function (err) { if (window.console) console.error("live page:", err); })
-      .then(function () { running = false; if (again) { again = false; window.swRefresh(0); } });
+      .then(function () { running = false; if (again) { again = false; sw.refresh(0); } });
   }
 
   // sameBlock says whether a block is as it was, apart from its place in
@@ -137,13 +137,13 @@
       // heard: a region put in whole is not read out.
       fresh.querySelectorAll('[data-component="status"][id]').forEach(function (st) {
         var have = old.querySelector("#" + st.id);
-        if (!have || !window.swStatus) return;
+        if (!have) return;
         // A turn under way on this page says its own steps (28-turn.js):
         // the page's words would only be said over them.
         var busy = document.querySelector('form[data-busy-target="' + st.id + '"]');
         if (busy && busy._sending) { st.replaceWith(have); return; }
         var said = st.querySelector(".sw-status__said");
-        window.swStatus(have, st.getAttribute("data-state"), (st.querySelector(".sw-status__text") || st).textContent, said ? said.textContent.trim() : "");
+        sw.status(have, st.getAttribute("data-state"), (st.querySelector(".sw-status__text") || st).textContent, said ? said.textContent.trim() : "");
         st.replaceWith(have);
       });
       fresh.querySelectorAll("[data-block-id]").forEach(function (block) {
@@ -182,6 +182,6 @@
         }
       }
     }
-    document.dispatchEvent(new CustomEvent("sw:refresh"));
+    sw.emit("refresh");
   }
 })();

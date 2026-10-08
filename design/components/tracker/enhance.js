@@ -35,7 +35,7 @@
       var head = document.querySelector("main .sw-page-head") || document.querySelector("main");
       if (head) head.parentNode === document.body ? head.prepend(fresh) : head.after(fresh);
     }
-    document.dispatchEvent(new CustomEvent("sw:refresh"));
+    sw.emit("refresh");
   }
   function arm(form) {
     if (form._logArmed || !window.fetch) return;
@@ -61,7 +61,7 @@
             if (ev.relatedTarget && list.contains(ev.relatedTarget)) return;
             list.removeEventListener("focusout", gone);
             list._waiting = false;
-            if (window.swRefresh) window.swRefresh(0);
+            sw.refresh(0);
           });
         })
         .catch(function () { form.submit(); });

@@ -11,13 +11,13 @@
 // longer said to be here, until they move again.
 (function () {
   "use strict";
-  if (!window.EventSource || !window.swRefresh) return;
+  if (!window.EventSource) return;
   var IDLE = 10 * 60 * 1000;
   var es = null, idle = false, moved = Date.now();
   function open() {
     if (es) return;
     es = new EventSource(idle ? "/events?idle=1" : "/events");
-    es.addEventListener("changed", function () { window.swRefresh(300); });
+    es.addEventListener("changed", function () { sw.refresh(300); });
   }
   function close() { if (es) { es.close(); es = null; } }
   function become(now) {
@@ -32,7 +32,7 @@
   // A tab nobody is looking at does not hold a connection open; it
   // catches up when it is looked at again.
   document.addEventListener("visibilitychange", function () {
-    if (document.hidden) { close(); } else { moved = Date.now(); idle = false; open(); window.swRefresh(0); }
+    if (document.hidden) { close(); } else { moved = Date.now(); idle = false; open(); sw.refresh(0); }
   });
   if (!document.hidden) open();
 })();

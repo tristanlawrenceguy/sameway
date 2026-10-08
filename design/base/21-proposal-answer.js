@@ -13,7 +13,7 @@
   // Its state with its words: a failure is never shown with the tick of
   // the last success, nor said into a status faded out at rest.
   function say(words, state) {
-    if (window.swStatus) window.swStatus(document.getElementById("chat-status"), state || "done", words, "");
+    sw.status(document.getElementById("chat-status"), state || "done", words, "");
   }
 
   function answer(btn) {
@@ -40,7 +40,7 @@
         }
         document.querySelectorAll(".sw-proposal").forEach(function (p) { p.remove(); });
         say(kind === "dismiss" ? "Left as it was." : "Done: " + btn.textContent.trim() + ".");
-        if (window.swRefresh) window.swRefresh(0);
+        sw.refresh(0);
         var box = document.querySelector("form.sw-compose textarea");
         if (box) box.focus();
       })

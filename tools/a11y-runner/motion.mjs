@@ -68,7 +68,7 @@ async function watchTurn(page, mode, reduced) {
     const enc = new TextEncoder();
     window.__send = (event, data) => push.enqueue(enc.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
     window.__end = () => push.close();
-    window.swRefresh = () => {}; // the server knows nothing of this turn: the page stays as fed
+    sw.refresh = () => {}; // the server knows nothing of this turn: the page stays as fed
     window.swFollowTurn(document.querySelector("form.sw-compose"), Promise.resolve(new Response(body, { headers: { "Content-Type": "text/event-stream" } })));
   });
   const send = (event, data) => page.evaluate(([e, d]) => window.__send(e, d), [event, data]);
