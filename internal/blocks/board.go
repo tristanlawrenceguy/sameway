@@ -1,4 +1,4 @@
-package server
+package blocks
 
 import (
 	"fmt"
@@ -8,9 +8,9 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
-// boardField is the pick-list field whose choices are a board's columns:
+// BoardField is the pick-list field whose choices are a board's columns:
 // the one named in by, else the type's first shown pick-list.
-func boardField(t *schema.Type, by any) (*schema.Field, error) {
+func BoardField(t *schema.Type, by any) (*schema.Field, error) {
 	name, _ := by.(string)
 	var enums []string
 	for _, f := range t.Shown() {
@@ -67,7 +67,7 @@ func boardGroups(f schema.Field, recs []*store.Record, items []any) []any {
 // card, which posts the field like any edit, so it is logged and can be
 // undone, and works with no script. The page comes back to the Move
 // button, in the card's new column, so focus returns to what was pressed.
-func (s *Server) addMove(item map[string]any, t *schema.Type, f schema.Field, rec *store.Record, board string) {
+func (ws *Workspace) addMove(item map[string]any, t *schema.Type, f schema.Field, rec *store.Record, board string) {
 	at := board + "-" + rec.ID
 	item["at"] = at
 	options := make([]any, 0, len(f.Values))
@@ -78,7 +78,7 @@ func (s *Server) addMove(item map[string]any, t *schema.Type, f schema.Field, re
 	actions, _ := item["actions"].([]any)
 	// Every card's choice is named after its card, as its Move is: a board
 	// is a column of selects all called Status otherwise.
-	title := withContext(s.title(t, rec), str(item["context"], ""))
+	title := WithContext(ws.title(t, rec), str(item["context"], ""))
 	item["actions"] = append(actions, map[string]any{"component": "move", "props": map[string]any{
 		"action": "/t/" + t.Name + "/" + rec.ID + "/props", "title": title, "id": at + "-go",
 		"select": map[string]any{

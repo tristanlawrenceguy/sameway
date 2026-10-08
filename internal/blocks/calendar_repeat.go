@@ -1,4 +1,4 @@
-package server
+package blocks
 
 import (
 	"time"
@@ -23,7 +23,7 @@ const mostInMonth = 31
 // repeatedIn is a record's later times in the month shown, as events, and
 // ev, its own event, says it repeats too. Nothing for a record that does
 // not repeat, or a calendar drawn from a day it does not move.
-func (s *Server) repeatedIn(t *schema.Type, rec *store.Record, field string, ev map[string]any, month string) []any {
+func (ws *Workspace) repeatedIn(t *schema.Type, rec *store.Record, field string, ev map[string]any, month string) []any {
 	repeat, day, ok := t.Repeats()
 	rule, _ := rec.Fields[repeat].(string)
 	v, _ := rec.Fields[field].(string)
@@ -44,7 +44,7 @@ func (s *Server) repeatedIn(t *schema.Type, rec *store.Record, field string, ev 
 			again.Fields[k] = x
 		}
 		again.Fields[field] = at
-		later := s.eventOf(t, &again, field)
+		later := ws.eventOf(t, &again, field)
 		if later == nil {
 			continue
 		}

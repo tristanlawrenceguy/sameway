@@ -30,13 +30,13 @@ func (s *Server) backrefs(t *schema.Type, rec *store.Record) (string, []string) 
 		if f != t.Name {
 			id += "-" + slugKey(f)
 		}
-		props := s.resolveCollection(map[string]any{
+		props := s.resolve(collectionComponent, map[string]any{
 			"type":  u.Name,
 			"where": []string{f + "=" + rec.ID},
 			"order": "-updated_at",
 			"label": capitalize(schema.Plural(u.Name)),
 			"id":    id,
-		}, "")
+		}, "", nil)
 		delete(props, "summary") // the template says "Nothing here yet." when empty
 		b.WriteString(string(s.component(collectionComponent, props)))
 		keys = append(keys, relate.PointsHere+":"+u.Name+"."+f)

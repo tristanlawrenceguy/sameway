@@ -45,9 +45,6 @@ func (s *Server) focusPage(w http.ResponseWriter, r *http.Request) {
 		// expanded block shows them.
 		props, _ = s.resolveRecord(props)
 	}
-	if comp.Manifest.Name == collectionComponent {
-		props = s.resolveCollectionAt(props, rec.ID, &collectionPlace{Path: r.URL.Path, Query: r.URL.Query(), Own: true, Change: !convo.LookOnly})
-	}
 	if comp.Manifest.Name == calendarComponent {
 		// The block's own page takes ?month= and ?day= so the months and
 		// days either side are a link away, and the calendar comes back to
@@ -55,10 +52,11 @@ func (s *Server) focusPage(w http.ResponseWriter, r *http.Request) {
 		if m, d := r.URL.Query().Get("month"), r.URL.Query().Get("day"); m != "" || d != "" {
 			props = withMonth(props, m, d)
 		}
-		props = s.resolveCalendarAt(props, rec.ID, &collectionPlace{Path: r.URL.Path, Query: r.URL.Query(), Own: true, Change: !convo.LookOnly})
 	}
 	if _, ok := blocks.Of(comp.Manifest.Name); ok {
-		props = blocks.Resolve(s.app.Blocks, comp.Manifest.Name, props, blocks.Place{Block: rec.ID})
+		// Its own page: a person narrows, sorts and moves through months
+		// here, in its address.
+		props = s.resolve(comp.Manifest.Name, props, rec.ID, &blocks.Page{Path: r.URL.Path, Query: r.URL.Query(), Own: true, Change: !convo.LookOnly})
 	}
 	body := s.expanded(comp.Manifest.Name, props, convo)
 

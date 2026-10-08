@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
+	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
@@ -182,4 +184,14 @@ func (w *Workspace) Listed(t *schema.Type) bool {
 	}
 	n, err := w.Store.Count(t.Name)
 	return err != nil || n > 0
+}
+
+// title is what a record is called (records.Name).
+func (w *Workspace) title(t *schema.Type, rec *store.Record) string {
+	return records.Name(w.Store, t, rec)
+}
+
+// refTitle is what a ref names, by its record's name (records.RefTitle).
+func (w *Workspace) refTitle(f schema.Field, id string) string {
+	return records.RefTitle(w.Store, f, id)
 }

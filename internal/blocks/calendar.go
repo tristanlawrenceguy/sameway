@@ -1,4 +1,4 @@
-package server
+package blocks
 
 import (
 	"fmt"
@@ -12,142 +12,103 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
-// calendarComponent is the month block. Given a content type, its records
+// CalendarComponent is the month block. Given a content type, its records
 // with a date are the events, read when the page renders, so the month a
 // person glances at is what is true now; without one, the events are
 // whatever the block carries.
-const calendarComponent = "calendar"
+const CalendarComponent = "calendar"
 
 // resolveCalendar fills what the block left out: the month and today, so
 // a calendar never has to be told what day it is; the way to the months
 // either side, on the block's own page; and the events, from the records
-// of a type when one is named.
-func (s *Server) resolveCalendar(props map[string]any, blockID string) map[string]any {
-	return s.resolveCalendarAt(props, blockID, nil)
-}
-
-// resolveCalendarAt is resolveCalendar on a page a calendar of everything
-// can be narrowed to one kind on: at says which, and its address holds
-// the kind picked (calendar_kinds.go).
-func (s *Server) resolveCalendarAt(props map[string]any, blockID string, at *collectionPlace) map[string]any {
-	out := map[string]any{}
-	for k, v := range props {
-		out[k] = v
-	}
+// of a type when one is named. On a page a calendar of everything can be
+// narrowed to one kind on, the page's address holds the kind picked
+// (calendar_kinds.go).
+func resolveCalendar(ws *Workspace, props map[string]any, at Place) map[string]any {
+	out := copyProps(props)
 	delete(out, "filter") // the server's to fill, never the block's
 	now := time.Now()
-	month, _ := out["month"].(string)
-	if _, err := time.Parse("2006-01", month); err != nil {
-		month = now.Format("2006-01")
-		out["month"] = month
-	}
-	if d, _ := out["today"].(string); d == "" {
-		out["today"] = now.Format("2006-01-02")
-	}
-	// One day instead of the month: its month is the one shown, and the
-	// days either side are a link away, as the months are.
-	day, _ := out["day"].(string)
-	shownDay, dayErr := time.Parse("2006-01-02", day)
-	if day != "" && dayErr != nil {
-		delete(out, "day")
-		day = ""
-	}
-	if day != "" {
-		out["month"] = shownDay.Format("2006-01")
-		month = out["month"].(string)
-	}
-	if blockID != "" {
-		base := "/canvas/" + blockID
-		out["dayBase"] = base + "?day="
-		if day != "" {
-			prev, next := shownDay.AddDate(0, 0, -1), shownDay.AddDate(0, 0, 1)
-			out["nav"] = map[string]any{
-				"previous": map[string]any{"href": base + "?day=" + prev.Format("2006-01-02"), "label": prev.Format("Mon 2 Jan")},
-				"next":     map[string]any{"href": base + "?day=" + next.Format("2006-01-02"), "label": next.Format("Mon 2 Jan")},
-				"month":    map[string]any{"href": base + "?month=" + month, "label": shownDay.Format("January")},
-			}
-		} else {
-			shown, _ := time.Parse("2006-01", month)
-			prev, next := shown.AddDate(0, -1, 0), shown.AddDate(0, 1, 0)
-			out["nav"] = map[string]any{
-				"previous": map[string]any{"href": base + "?month=" + prev.Format("2006-01"), "label": prev.Format("January 2006")},
-				"next":     map[string]any{"href": base + "?month=" + next.Format("2006-01"), "label": next.Format("January 2006")},
-				"today":    map[string]any{"href": base + "?day=" + now.Format("2006-01-02"), "label": "Today"},
-			}
-		}
+	month, day, shownDay := shownMonth(out, now)
+	if at.Block != "" {
+		calendarNav(out, at.Block, month, day, shownDay, now)
 	}
 	typeName, _ := props["type"].(string)
-	kinds := strs(props["types"])
+	kinds := Strs(props["types"])
 	if typeName == "" && len(kinds) == 0 {
 		return out
 	}
 	if day != "" {
-		if add := s.logForDay(typeName, kinds, strs(props["where"]), shownDay); add != nil {
+		if add := ws.logForDay(typeName, kinds, Strs(props["where"]), shownDay); add != nil {
 			out["add"] = add
 		}
 	}
 	if typeName == "all" || len(kinds) > 0 {
 		// Several kinds together: the ones named, or every listed type.
-		only, problem := s.calendarTypes(kinds)
+		only, problem := ws.calendarTypes(kinds)
 		if problem != "" {
 			out["problem"] = problem
 			return out
 		}
-		out["events"] = s.everyEvent(now, month, only)
-		calendarKinds(out, at, blockID)
+		out["events"] = ws.everyEvent(now, month, only)
+		calendarKinds(out, at.Page, at.Block)
 		// Told apart among what is shown, once narrowed to its kinds.
 		if events, ok := out["events"].([]any); ok {
 			out["events"] = eventsApart(events, month)
 		}
 		return out
 	}
-	// Set up wrong, it says so, rather than show an empty month, which
-	// reads as nothing on.
-	t, ok := s.app.Types.Get(typeName)
+	ws.typeEvents(out, props, typeName, month, now)
+	return out
+}
+
+// typeEvents fills a calendar of one type's records on their days. Set
+// up wrong, it says so, rather than show an empty month, which reads as
+// nothing on.
+func (ws *Workspace) typeEvents(out, props map[string]any, typeName, month string, now time.Time) {
+	t, ok := ws.Store.Types().Get(typeName)
 	if !ok {
-		out["problem"] = s.noType(typeName)
-		return out
+		out["problem"] = ws.NoType(typeName)
+		return
 	}
 	field := dateField(t, props["date"])
 	if field == "" {
 		out["problem"] = noDateField(t, props["date"])
-		return out
+		return
 	}
-	recs, err := query.Filter(s.app.Store, t, strs(props["where"]), field, 0, now)
+	recs, err := query.Filter(ws.Store, t, Strs(props["where"]), field, 0, now)
 	if err != nil {
 		out["problem"] = err.Error()
-		return out
+		return
 	}
 	events := make([]any, 0, len(recs))
 	for _, rec := range recs {
-		ev := s.eventOf(t, rec, field)
+		ev := ws.eventOf(t, rec, field)
 		if ev == nil {
 			continue
 		}
-		if meta := s.showFields(t, rec, strs(props["show"])); meta != "" {
+		if meta := ws.showFields(t, rec, Strs(props["show"])); meta != "" {
 			ev["meta"] = meta
 		}
 		events = append(events, ev)
-		events = append(events, s.repeatedIn(t, rec, field, ev, month)...)
+		events = append(events, ws.repeatedIn(t, rec, field, ev, month)...)
 	}
 	out["events"] = eventsApart(events, month)
-	out["all"] = listPath(t.Name, strs(props["where"]), field)
-	return out
+	out["all"] = listPath(t.Name, Strs(props["where"]), field)
 }
 
 // calendarTypes is the types a calendar of several kinds shows: those
 // named in types, each of which must have a date to place, or nil for
 // every listed type (types empty, or holding all). Set up wrong, it says
 // why, as the page would.
-func (s *Server) calendarTypes(names []string) ([]*schema.Type, string) {
+func (ws *Workspace) calendarTypes(names []string) ([]*schema.Type, string) {
 	if len(names) == 0 || slices.Contains(names, "all") {
 		return nil, ""
 	}
 	var only []*schema.Type
 	for _, name := range names {
-		t, ok := s.app.Types.Get(name)
+		t, ok := ws.Store.Types().Get(name)
 		if !ok {
-			return nil, s.noType(name)
+			return nil, ws.NoType(name)
 		}
 		if !t.HasDay() {
 			return nil, noDateField(t, nil)
@@ -163,7 +124,7 @@ func (s *Server) calendarTypes(names []string) ([]*schema.Type, string) {
 // read. A day with no time is stored as midnight UTC; it is that day
 // everywhere, with no time to show. Anything else is a moment, shown in
 // local time.
-func (s *Server) eventOf(t *schema.Type, rec *store.Record, field string) map[string]any {
+func (ws *Workspace) eventOf(t *schema.Type, rec *store.Record, field string) map[string]any {
 	v, _ := rec.Fields[field].(string)
 	ts, err := time.Parse(time.RFC3339, v)
 	if err != nil {
@@ -174,11 +135,11 @@ func (s *Server) eventOf(t *schema.Type, rec *store.Record, field string) map[st
 		local := ts.Local()
 		day, clock = local.Format("2006-01-02"), when.Clock(local)
 	}
-	ev := map[string]any{"date": day, "label": s.title(t, rec), "href": "/t/" + t.Name + "/" + rec.ID}
+	ev := map[string]any{"date": day, "label": ws.title(t, rec), "href": "/t/" + t.Name + "/" + rec.ID}
 	if clock != "" {
 		ev["time"] = clock
 	}
-	if actions := s.markActions(t, rec); actions != nil {
+	if actions := ws.MarkActions(t, rec); actions != nil {
 		ev["actions"] = actions
 	}
 	return ev
@@ -217,16 +178,16 @@ func noDateField(t *schema.Type, named any) string {
 
 // showFields is the fields a person asked to see beside each event, as
 // their values: a ref by the title it points at, a bool by yes or no.
-func (s *Server) showFields(t *schema.Type, rec *store.Record, names []string) string {
+func (ws *Workspace) showFields(t *schema.Type, rec *store.Record, names []string) string {
 	var parts []string
 	for _, name := range names {
 		f, ok := t.Field(name)
 		if !ok {
 			continue
 		}
-		v := display(*f, rec.Fields[name])
+		v := Display(*f, rec.Fields[name])
 		if f.Type == "ref" {
-			v = s.RefTitle(*f, v)
+			v = ws.refTitle(*f, v)
 		}
 		if v != "" {
 			parts = append(parts, v)
@@ -235,21 +196,37 @@ func (s *Server) showFields(t *schema.Type, rec *store.Record, names []string) s
 	return strings.Join(parts, " · ")
 }
 
-// withMonth is the block's props with another month shown, the rest as
-// they are; the stored block is not touched. An empty day is the month
-// again.
-func withMonth(props map[string]any, month, day string) map[string]any {
-	out := map[string]any{}
-	for k, v := range props {
-		out[k] = v
+// everyEvent is the records of several types on their days, for a
+// calendar that shows them together: the types in only, or every listed
+// type when only is nil. Each event carries its kind, the type's name,
+// for the kinds to narrow by and to tell two of one name apart; a thing
+// that repeats is on each of its days in the month shown.
+func (ws *Workspace) everyEvent(now time.Time, month string, only []*schema.Type) []any {
+	events := []any{}
+	types := only
+	if types == nil {
+		for _, t := range ws.Store.Types().Types {
+			if !t.Internal && ws.Listed(t) {
+				types = append(types, t)
+			}
+		}
 	}
-	if month != "" {
-		out["month"] = month
+	for _, t := range types {
+		field := t.DayField()
+		if field == "" {
+			continue
+		}
+		recs, err := query.Filter(ws.Store, t, nil, field, 0, now)
+		if err != nil {
+			continue
+		}
+		for _, rec := range recs {
+			if ev := ws.eventOf(t, rec, field); ev != nil {
+				ev["kind"] = t.Name
+				events = append(events, ev)
+				events = append(events, ws.repeatedIn(t, rec, field, ev, month)...)
+			}
+		}
 	}
-	if day != "" {
-		out["day"] = day
-	} else {
-		delete(out, "day")
-	}
-	return out
+	return events
 }

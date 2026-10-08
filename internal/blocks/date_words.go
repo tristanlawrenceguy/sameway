@@ -1,4 +1,4 @@
-package server
+package blocks
 
 import (
 	"time"
@@ -31,8 +31,8 @@ func whenWords(v string) string {
 	return when.Relative(v, time.Now())
 }
 
-// momentWords is a moment as a person plans by it: Today at 3pm.
-func momentWords(at time.Time) string { return when.At(at, time.Now()) }
+// MomentWords is a moment as a person plans by it: Today at 3pm.
+func MomentWords(at time.Time) string { return when.At(at, time.Now()) }
 
 // shortDay is a date as a person plans by it: Today, Fri 9 Oct.
 func shortDay(d time.Time) string { return when.Day(d, time.Now()) }
