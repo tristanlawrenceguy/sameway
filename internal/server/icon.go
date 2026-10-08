@@ -25,9 +25,10 @@ func icon(name, kind string) http.HandlerFunc {
 func iconRoutes(m *http.ServeMux) {
 	m.HandleFunc("GET /favicon.svg", icon("icon.svg", "image/svg+xml"))
 	m.HandleFunc("GET /favicon.ico", icon("icon.ico", "image/x-icon"))
-	for _, n := range []string{"icon-192.png", "icon-512.png", "icon-square-180.png", "icon-square-512.png"} {
-		m.HandleFunc("GET /"+n, icon(n, "image/png"))
-	}
+	m.HandleFunc("GET /icon-192.png", icon("icon-192.png", "image/png"))
+	m.HandleFunc("GET /icon-512.png", icon("icon-512.png", "image/png"))
+	m.HandleFunc("GET /icon-square-180.png", icon("icon-square-180.png", "image/png"))
+	m.HandleFunc("GET /icon-square-512.png", icon("icon-square-512.png", "image/png"))
 	m.HandleFunc("GET /manifest.webmanifest", appManifest)
 }
 
