@@ -98,6 +98,7 @@ var routeAccess = map[string]routeFor{
 	"POST /mail/task":                  people,
 	"POST /mail/sorted":                people,
 	"POST /today/done":                 people,
+	"POST /today/sort":                 people,
 	"POST /today/move":                 people,
 	"POST /today/late":                 people,
 	"GET /today":                       people,

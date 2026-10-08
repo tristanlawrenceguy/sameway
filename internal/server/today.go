@@ -102,31 +102,40 @@ func (s *Server) today(now time.Time) todayLists {
 func (s *Server) todayPage(w http.ResponseWriter, r *http.Request) {
 	now := time.Now()
 	l := s.today(now)
-	var b strings.Builder
-	section := func(title string, items []todayItem) {
+	dayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	list := func(title string, items []todayItem) string {
 		if len(items) == 0 {
-			return
+			return ""
 		}
-		b.WriteString(`<h2>` + title + `</h2><ul class="sw-plain sw-rows">`)
+		var b strings.Builder
+		if title != "" {
+			b.WriteString(`<h2>` + title + `</h2>`)
+		}
+		b.WriteString(`<ul class="sw-plain sw-rows">`)
 		for _, it := range items {
 			b.WriteString(`<li><a class="sw-link" href="` + template.HTMLEscapeString(it.Href) + `">` + template.HTMLEscapeString(it.Title) + `</a>`)
 			if it.When != "" {
 				b.WriteString(` <span class="sw-muted sw-small">` + template.HTMLEscapeString(it.When) + `</span>`)
 			}
-			b.WriteString(s.taskPresses(it, title == "Late") + `</li>`) // today_nudge.go
+			b.WriteString(s.taskPresses(it, it.At.Before(dayStart)) + `</li>`) // today_nudge.go
 		}
 		b.WriteString(`</ul>`)
+		return b.String()
 	}
-	b.WriteString(s.lateNudge(l.Late, now)) // today_nudge.go
-	section("Late", l.Late)
-	section("Tasks", l.Tasks)
-	section("Events", l.Events)
-	section("Reminders", l.Reminders)
+	var b strings.Builder
+	if focus := s.focusSection(l, list); focus != "" { // today_focus.go
+		b.WriteString(focus)
+	} else {
+		b.WriteString(s.lateNudge(l.Late, now)) // today_nudge.go
+		b.WriteString(list("Late", l.Late) + list("Tasks", l.Tasks))
+	}
+	b.WriteString(list("Events", l.Events) + list("Reminders", l.Reminders))
 	mail := s.mailSection() // mail_sort.go
 	b.WriteString(mail)
 	if l.count() == 0 && mail == "" {
 		b.WriteString(string(s.component("empty", map[string]any{"message": "Nothing is due today, and nothing is late."})))
 	}
+	b.WriteString(s.dumpBox()) // today_focus.go
 	s.page(w, r, "Today", template.HTML(b.String()), pageOptions{Lede: template.HTML(now.Format("Monday 2 January"))})
 }
 

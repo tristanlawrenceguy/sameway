@@ -83,6 +83,7 @@ var pageActionTools = map[string]string{
 	"/mail/off":                   "a person's: a mailbox and its password are its owner's to give",
 	"/mail/task":                  "create_record",
 	"/mail/sorted":                "update_record",
+	"/today/sort":                 "a person's: it is what they say to the assistant",
 	"/today/done":                 "update_record",
 	"/today/move":                 "update_record",
 	"/today/late":                 "update_record",

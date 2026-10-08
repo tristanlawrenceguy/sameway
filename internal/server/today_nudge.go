@@ -142,6 +142,7 @@ func (s *Server) todayLate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) todayNudgeRoutes(m *http.ServeMux) {
+	s.todayFocusRoutes(m) // today_focus.go
 	m.HandleFunc("POST /today/done", s.todayDone)
 	m.HandleFunc("POST /today/move", s.todayMove)
 	m.HandleFunc("POST /today/late", s.todayLate)
