@@ -9,11 +9,6 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
-// ComponentName is the component that renders the conversation. It is a
-// block like any other, so it can be moved, restyled, or removed; the
-// server fills it with the live transcript when it renders the canvas.
-const ComponentName = "chat"
-
 // BlockFields drops keys the workspace's block schema does not define, so
 // server code can write provenance and layout fields without checking
 // whether an older workspace has them.

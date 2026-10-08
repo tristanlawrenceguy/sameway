@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/query"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -81,7 +82,7 @@ func (s *Service) recordChanged(t *schema.Type, was, now *store.Record) {
 		if when == "" || a.Fields["what"] != t.Name {
 			continue
 		}
-		conds, err := query.ParseAll(t, strings2(a.Fields["only"]))
+		conds, err := query.ParseAll(t, records.StringList(a.Fields["only"]))
 		if err != nil {
 			continue
 		}
@@ -195,7 +196,7 @@ func (s *Service) recordVars(t *schema.Type, rec *store.Record) map[string]strin
 			}
 			vars[f.Name] = strings.Join(names, ", ")
 		case f.Type == "list":
-			vars[f.Name] = strings.Join(strings2(v), ", ")
+			vars[f.Name] = strings.Join(records.StringList(v), ", ")
 		default:
 			vars[f.Name] = fmt.Sprint(v)
 		}
@@ -247,26 +248,11 @@ func filled(action *store.Record, vars map[string]string) *store.Record {
 	return &out
 }
 
-func strings2(v any) []string {
-	var out []string
-	switch l := v.(type) {
-	case []any:
-		for _, x := range l {
-			if s, ok := x.(string); ok && strings.TrimSpace(s) != "" {
-				out = append(out, strings.TrimSpace(s))
-			}
-		}
-	case []string:
-		out = l
-	}
-	return out
-}
-
 func idsOf(v any) []string {
 	if s, ok := v.(string); ok && s != "" {
 		return []string{s}
 	}
-	return strings2(v)
+	return records.StringList(v)
 }
 
 // RunAsWith is RunAs with what set the action off filled in: a request

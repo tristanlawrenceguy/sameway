@@ -1,4 +1,4 @@
-package chat
+package records
 
 import (
 	"errors"
@@ -51,7 +51,7 @@ func Write(st *store.Store, action, typ, id string, fields map[string]any) (*sto
 			return nil, Change{}, err
 		}
 		if typ == ActionType {
-			if err := watches(st, fields); err != nil { // automate.go
+			if err := watches(st, fields); err != nil { // watches.go
 				return nil, Change{}, err
 			}
 		}
@@ -121,7 +121,7 @@ func write(st *store.Store, action, typ, id string, fields map[string]any) (*sto
 	if err != nil {
 		return nil, Change{}, err
 	}
-	c := Change{Action: action, Component: typ, ID: rec.ID, Detail: recordTitle(st, t, rec)}
+	c := Change{Action: action, Component: typ, ID: rec.ID, Detail: Title(st, t, rec)}
 	if action != "deleted" {
 		c.Href = "/t/" + typ + "/" + rec.ID
 	}

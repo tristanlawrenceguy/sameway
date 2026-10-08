@@ -3,6 +3,7 @@ package chat
 import (
 	"errors"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -46,7 +47,7 @@ func (s *Service) inverseMore(a *store.Record) (func() (Change, error), error) {
 	case "imported", "synced", "arranged", "wrote up", "organised", "suggested":
 		// A batch: records made, changed and removed by one import, each
 		// with what it was before (nothing, for one it made).
-		changes := batchIn(before)
+		changes := records.BatchOf(before)
 		if len(changes) == 0 {
 			return nil, errors.New("the entry does not say what it changed")
 		}

@@ -13,6 +13,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/ingest"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
@@ -170,7 +171,7 @@ func (s *Service) findRecords(typeName, words string, where []string, order stri
 	writers := s.Writers()
 	var lines []string
 	for _, rec := range recs {
-		title := recordTitle(s.Store, t, rec)
+		title := records.Title(s.Store, t, rec)
 		if words != "" && !holdsAll(title, rec, words) {
 			continue
 		}

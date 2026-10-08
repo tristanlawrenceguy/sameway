@@ -3,6 +3,7 @@ package chat
 import (
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -67,8 +68,8 @@ func (s *Service) writers(public bool) *Writers {
 				from = "an import from " + file
 			}
 			before, _ := e.Fields["before"].(map[string]any)
-			for _, c := range batchIn(before) {
-				w.add(c.typ+"/"+c.id, Writer{Words: from, Outside: true})
+			for _, c := range records.BatchOf(before) {
+				w.add(c.Type+"/"+c.ID, Writer{Words: from, Outside: true})
 			}
 			continue
 		}
@@ -79,8 +80,8 @@ func (s *Service) writers(public bool) *Writers {
 		// suggestions, each in the batch on its entry.
 		if action == "wrote up" || action == "suggested" {
 			before, _ := e.Fields["before"].(map[string]any)
-			for _, c := range batchIn(before) {
-				w.add(c.typ+"/"+c.id, w.entry(e))
+			for _, c := range records.BatchOf(before) {
+				w.add(c.Type+"/"+c.ID, w.entry(e))
 			}
 		}
 	}

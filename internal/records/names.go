@@ -1,4 +1,4 @@
-package chat
+package records
 
 import (
 	"strings"
@@ -43,9 +43,9 @@ func Name(st *store.Store, t *schema.Type, rec *store.Record) string {
 	return t.Called(rec.ID, rec.Fields)
 }
 
-// recordTitle is a record's name short enough for a sentence: a title
+// Title is a record's name short enough for a sentence: a title
 // field trimmed; an entry's name, which keeps its amount, as it is.
-func recordTitle(st *store.Store, t *schema.Type, rec *store.Record) string {
+func Title(st *store.Store, t *schema.Type, rec *store.Record) string {
 	if t.Name == EntryType || t.Name == ActivityType {
 		return Name(st, t, rec)
 	}
