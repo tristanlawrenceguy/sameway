@@ -158,7 +158,12 @@ func TestActivityIsHiddenButNotLost(t *testing.T) {
 	h, _ := canvasWithABlock(t)
 	doc := parse(t, get(t, h, "/"))
 
-	details := doc.WithAttr("data-component", "disclosure")
+	var details []*html.Node
+	for _, d := range doc.WithAttr("data-component", "disclosure") {
+		if !strings.Contains(htmltest.Text(d), "Which of these do you have") && !inConnectCard(d) {
+			details = append(details, d)
+		}
+	}
 	if len(details) != 1 {
 		t.Fatalf("expected the activity log in one disclosure, got %d", len(details))
 	}
@@ -203,4 +208,15 @@ func TestControlsVisibleSetting(t *testing.T) {
 	if v, _ := htmltest.Attr(doc.Elements("html")[0], "data-controls"); v != "visible" {
 		t.Errorf("ui.controls: visible should reach the root element, got %q", v)
 	}
+}
+
+// inConnectCard is whether a node is in the card that connects a model,
+// whose stories are disclosures of their own (connect_stories.go).
+func inConnectCard(n *html.Node) bool {
+	for p := n.Parent; p != nil; p = p.Parent {
+		if c, _ := htmltest.Attr(p, "class"); strings.Contains(c, "sw-connect") {
+			return true
+		}
+	}
+	return false
 }
