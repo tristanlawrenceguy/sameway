@@ -18,20 +18,24 @@ import (
 // one entry in the log and one Undo, and it is refused whole when it would
 // lose a block or break the outline.
 
-var arrangeTool = llm.Tool{
-	Name:        "arrange_canvas",
-	Description: "Lay out a whole tab in one change: list every block on it (from the canvas listing) in the order it should be read, top to bottom, each with the width and place it should have. The list order becomes the order on the page; what an item leaves out stays as it is. Use it after adding something, to move and reshape what was already there so the page reads well: what matters most first, related things together, rows of twelve filled, headings in order. Blocks in the header and footer may be left out. One Undo takes the whole arrangement back. Refused, with nothing changed, when a block is missing or listed twice, or a heading would skip a level.",
-	Schema: obj(map[string]any{
-		"blocks": map[string]any{"type": "array", "description": "Every block on the tab, in reading order.", "items": obj(map[string]any{
-			"id":     map[string]any{"type": "string", "description": "Block id from the canvas listing."},
-			"span":   map[string]any{"type": "integer", "description": "Width in columns of twelve; the spans in a row should add up to 12."},
-			"region": map[string]any{"type": "string", "enum": []string{"main", "left", "right", "header", "footer"}},
-			"frame":  map[string]any{"type": "string", "enum": []string{"card", "bare"}},
-			"size":   map[string]any{"type": "string", "enum": []string{"full", "compact", "icon"}},
-		}, "id")},
-		"canvas": map[string]any{"type": "string", "description": "The tab, as a canvas id; empty string is Home. Defaults to the tab the person is looking at."},
-	}, "blocks"),
-}
+var arrangeOp = Op{Title: "Lay a tab out", Traits: Traits{Idempotent: true},
+	Core:  true,
+	Doing: saying("Arranging the page"),
+	Run:   func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.arrangeCall(call.Args) },
+	Tool: llm.Tool{
+		Name:        "arrange_canvas",
+		Description: "Lay out a whole tab in one change: list every block on it (from the canvas listing) in the order it should be read, top to bottom, each with the width and place it should have. The list order becomes the order on the page; what an item leaves out stays as it is. Use it after adding something, to move and reshape what was already there so the page reads well: what matters most first, related things together, rows of twelve filled, headings in order. Blocks in the header and footer may be left out. One Undo takes the whole arrangement back. Refused, with nothing changed, when a block is missing or listed twice, or a heading would skip a level.",
+		Schema: obj(map[string]any{
+			"blocks": map[string]any{"type": "array", "description": "Every block on the tab, in reading order.", "items": obj(map[string]any{
+				"id":     map[string]any{"type": "string", "description": "Block id from the canvas listing."},
+				"span":   map[string]any{"type": "integer", "description": "Width in columns of twelve; the spans in a row should add up to 12."},
+				"region": map[string]any{"type": "string", "enum": []string{"main", "left", "right", "header", "footer"}},
+				"frame":  map[string]any{"type": "string", "enum": []string{"card", "bare"}},
+				"size":   map[string]any{"type": "string", "enum": []string{"full", "compact", "icon"}},
+			}, "id")},
+			"canvas": map[string]any{"type": "string", "description": "The tab, as a canvas id; empty string is Home. Defaults to the tab the person is looking at."},
+		}, "blocks"),
+	}}
 
 func (s *Service) arrangeCall(raw json.RawMessage) toolResult {
 	var args struct {
@@ -51,7 +55,7 @@ func (s *Service) arrangeCall(raw json.RawMessage) toolResult {
 // Arrange is arrange_canvas for a caller that is not the conversation,
 // such as POST /api/arrange: the same checks, the same one entry.
 func (s *Service) Arrange(canvas string, blocks json.RawMessage) (string, bool) {
-	r := s.run(llm.ToolCall{ID: "call", Name: arrangeTool.Name, Args: mustJSON(map[string]any{"canvas": canvas, "blocks": blocks})})
+	r := s.run(llm.ToolCall{ID: "call", Name: arrangeOp.Name, Args: mustJSON(map[string]any{"canvas": canvas, "blocks": blocks})})
 	return r.text, r.isErr
 }
 

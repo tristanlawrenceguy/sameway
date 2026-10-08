@@ -51,16 +51,14 @@ func (s *Service) mine(c *store.Record) bool {
 	return strings.EqualFold(p, s.whose())
 }
 
-// ownerTools are what only the owner may have the assistant do: change
-// settings, update the program, drive a browser on the machine, and undo
-// (which can put back a setting or someone's access).
-var ownerTools = map[string]bool{"set_setting": true, "update_sameway": true, "look_at_page": true, "undo_change": true,
-	"add_workspace": true, "open_workspace": true, "restore_workspace": true,
-	"import_records": true, "take_agent_away": true}
-
-// OwnersAlone says whether a tool is the owner's alone, for the test that
+// OwnersAlone says whether a tool is the owner's alone (its Op says ForOwner:
+// settings, updating the program, a browser on the machine, undoing, which
+// can put back a setting or someone's access), for the test that
 // the pages and the assistant agree on what is.
-func OwnersAlone(tool string) bool { return ownerTools[tool] }
+func OwnersAlone(tool string) bool {
+	op, _ := OpFor(tool)
+	return op.Access == ForOwner
+}
 
 // Tools are the tools the model is offered, for the one it speaks for.
 func (s *Service) Tools() []llm.Tool {
@@ -70,7 +68,7 @@ func (s *Service) Tools() []llm.Tool {
 	}
 	out := all[:0:0]
 	for _, t := range all {
-		if !ownerTools[t.Name] {
+		if !OwnersAlone(t.Name) {
 			out = append(out, t)
 		}
 	}
@@ -80,7 +78,7 @@ func (s *Service) Tools() []llm.Tool {
 // refuseFor stops a tool the one this service speaks for may not use,
 // whatever the model tried.
 func (s *Service) refuseFor(call llm.ToolCall) (toolResult, bool) {
-	if s.owner() || !ownerTools[call.Name] {
+	if s.owner() || !OwnersAlone(call.Name) {
 		return toolResult{}, false
 	}
 	return fail("%s is for the workspace's owner; say they can ask for it", call.Name), true

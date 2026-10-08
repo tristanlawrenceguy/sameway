@@ -19,13 +19,20 @@ import (
 // HTTPClient sends webhook actions. Tests point it at a local server.
 var HTTPClient = &http.Client{Timeout: 10 * time.Second}
 
-var actionTool = llm.Tool{
-	Name:        "run_action",
-	Description: "Run one of the person's actions now, by id: a webhook they set up (an alarm, a weather update), a command on their machine (the first run asks them once, on a card), or an arrangement. Actions of kind message are for the person to press, not for you. The result goes in the activity log; a webhook or command with show set puts its answer on the canvas.",
-	Schema: map[string]any{"type": "object", "properties": map[string]any{
-		"id": map[string]any{"type": "string", "description": "The action's id, from the actions listed in the prompt or find_records."},
-	}, "required": []string{"id"}, "additionalProperties": false},
-}
+var actionOp = Op{Title: "Run an action", Traits: Traits{OpenWorld: true},
+	Words: []string{"run", "press", "button", "action", "webhook", "send to"},
+	Doing: saying("Running an action"),
+	Asks:  (*Service).askAction,
+	Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
+		return s.Run(context.Background(), a.ID, s.current)
+	},
+	Tool: llm.Tool{
+		Name:        "run_action",
+		Description: "Run one of the person's actions now, by id: a webhook they set up (an alarm, a weather update), a command on their machine (the first run asks them once, on a card), or an arrangement. Actions of kind message are for the person to press, not for you. The result goes in the activity log; a webhook or command with show set puts its answer on the canvas.",
+		Schema: map[string]any{"type": "object", "properties": map[string]any{
+			"id": map[string]any{"type": "string", "description": "The action's id, from the actions listed in the prompt or find_records."},
+		}, "required": []string{"id"}, "additionalProperties": false},
+	}}
 
 // Run carries out one action for whoever asked. A message action is the
 // person's to press: it talks to the assistant on their behalf, and the

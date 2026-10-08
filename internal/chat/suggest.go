@@ -34,11 +34,13 @@ type suggested struct {
 // hundreds stops reading them, and an editor picks what matters.
 const mostSuggested = 15
 
-func (s *Service) suggestTools() []llm.Tool {
-	if _, ok := s.Store.Types().Get(records.SuggestionType); !ok {
-		return nil
-	}
-	return []llm.Tool{{Name: "suggest_edits",
+var suggestOps = []Op{{Title: "Suggest changes to some writing",
+	Words: []string{"spelling", "grammar", "proofread", "edit", "tighten", "feedback", "writing", "improve"},
+	Doing: saying("Suggesting changes"),
+	Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
+		return s.suggestEdits(a.Type, a.ID, a.Field, a.Edits)
+	},
+	Tool: llm.Tool{Name: "suggest_edits",
 		Description: "Suggest changes to a person's writing instead of making them; they accept or decline each on its page. Judge each case: a plain command (fix the spelling) you just do with update_record; suggest when the changes are judgement calls on their words. Do only the help asked for, keep their voice, small changes, at most 15. Feedback on structure is said in words, not suggested. Copy each passage exactly from get_record, long enough to occur once.",
 		Schema: obj(map[string]any{
 			"type":  map[string]any{"type": "string", "description": "The record's content type, such as note."},
@@ -51,8 +53,7 @@ func (s *Service) suggestTools() []llm.Tool {
 				"kind":        map[string]any{"type": "string", "enum": []string{"fix", "clarity", "style", "structure"}, "description": "fix: spelling, grammar, typos; clarity; style; structure: moving or cutting."},
 				"meaning":     map[string]any{"type": "boolean", "description": "It changes what is said, not only how."},
 			}, "passage", "replacement", "why", "kind")},
-		}, "type", "id", "edits")}}
-}
+		}, "type", "id", "edits")}, Offered: has(records.SuggestionType)}}
 
 // textField is the field a suggestion changes: the one named, or the
 // record's main text (its first markdown field, else its first text one).

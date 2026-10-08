@@ -24,7 +24,7 @@ func (s *Server) tried(w http.ResponseWriter, r *http.Request) bool {
 		return false
 	}
 	for _, p := range outward {
-		if strings.HasPrefix(r.URL.Path, p) {
+		if strings.HasPrefix(r.URL.Path, p) || toolOutward(r.URL.Path) {
 			writeJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": apiError{Code: "cannot_try",
 				Message: r.URL.Path + " reaches outside the workspace, so a copy cannot try it; send it without " + DryRun + " when the person has said yes"}})
 			return true

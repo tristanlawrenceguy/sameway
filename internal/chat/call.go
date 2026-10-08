@@ -16,12 +16,7 @@ func (s *Service) run(call llm.ToolCall) toolResult {
 		logCall(call, r)
 		return r
 	}
-	var r toolResult
-	if call.Name == changeFieldTool.Name {
-		r = s.reshapeCall(call.Args)
-	} else {
-		r = s.runTool(call)
-	}
+	r := s.runOp(call, false)
 	r = s.layoutAfter(call.Name, r) // see arrange.go
 	logCall(call, r)                // tool_log.go
 	if r.change != nil {

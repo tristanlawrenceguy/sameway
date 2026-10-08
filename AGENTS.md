@@ -31,7 +31,7 @@ runner in tools/a11y-runner.
 | `internal/relate/` | how one record connects to the others, worked out from the schema | `relate.go` |
 | `internal/server/parts.go` | the parts of a page that are off until somebody asks: the keys, and who turned one on | `parts.go` |
 | `internal/llm/` | provider-neutral chat + tools; openai.go and anthropic.go | `llm.go` |
-| `internal/chat/` | the tool loop, the canvas tools, and the record tools generated from the schema | `chat.go` |
+| `internal/chat/` | the tool loop, and every operation the assistant, MCP and `POST /api/tools/{name}` offer, one `Op` each in one registry | `chat.go`, `op.go` |
 | `internal/mcp/` | the Model Context Protocol server: the chat tools plus reading, over stdio | `server.go` |
 | `internal/server/` | HTML pages and JSON API | `server.go`, `canvas.go` |
 | `internal/cli/` | the sameway command | `root.go` |

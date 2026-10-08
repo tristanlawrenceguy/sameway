@@ -286,7 +286,8 @@ address. Publishing is always a question; unpublishing is immediate.
 - **CLI**: every command supports `--json`. `sameway describe` prints schema and
   component manifests. `sameway component new <name>` scaffolds a compliant folder.
   `sameway chat "..."` talks to the assistant from a terminal.
-- **JSON API**: `/api/describe`, `/api/{type}`, `/api/{type}/{id}`, `/api/chat`.
+- **JSON API**: `/api/describe`, `/api/{type}`, `/api/{type}/{id}`, `/api/chat`,
+  and every assistant tool at `POST /api/tools/{name}`.
   Errors carry a stable code and per-field messages.
 - **MCP**: `sameway mcp` serves the assistant's tools plus `describe` and
   `get_record` over stdio for Claude Code and other hosts, and the server
@@ -336,6 +337,17 @@ service's list plus `describe` and `get_record`; `tools/call` runs each tool
 through the chat service, so an agent in an MCP host meets the same schema
 checks and writes to the same activity log as the assistant, and a tool added
 to the chat is on MCP the same moment.
+
+Everything the assistant can do is one registry of operations
+(`internal/chat/op.go`). Each `Op`, listed beside its code, carries its
+tool definition (and when the workspace offers it), its title and traits
+(read only, destructive, idempotent, open world), who may have it done
+(view, edit or owner), whether a small model here always gets it and the
+words that bring it, what the status line says while it runs, what it asks
+the person first, and what runs it. The model's tool list, MCP's
+`tools/list` with its annotations, `/api/describe/tools` and
+`POST /api/tools/{name}` are all read from it, so nothing about a tool is
+said twice.
 
 ### 5.2 One block, many sizes
 

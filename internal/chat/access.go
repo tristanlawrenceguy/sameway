@@ -15,29 +15,25 @@ import (
 // here, and giving access is always put to the owner first, so nobody can
 // let themselves in or raise their own level.
 
-var letInTool = llm.Tool{
-	Name:        "let_in",
-	Description: "Give someone access to this workspace from their own devices over Tailscale, or take it away, when the owner asks: \"let Bob edit\", \"Carol can look\", \"stop Bob\". They are matched by the email they sign in to Tailscale with, and reach the workspace once the owner shares this machine with them in Tailscale (or they are on the same tailnet). view reads only; edit changes content and the canvas and presses buttons; host is edit, and their own computer keeps a full copy of the workspace in step with this one (for when they host it too, with their own assistant); none takes access away. Giving access is put to the owner as a question for you, and nothing changes until they say yes; taking it away happens at once.",
-	Schema: obj(map[string]any{
-		"email":  map[string]any{"type": "string"},
-		"name":   map[string]any{"type": "string"},
-		"access": map[string]any{"type": "string", "enum": []string{records.View, records.Edit, records.Host, "none"}},
-	}, "email", "access"),
-}
+var letInOp = Op{Title: "Let a person in",
+	Words: []string{"let ", "access", "share", "invite", "family", "colleague"},
+	Doing: saying("Changing who can use this"),
+	Asks:  (*Service).letInAsks,
+	Run:   func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.letIn(letInOf(call.Args)) },
+	Tool: llm.Tool{
+		Name:        "let_in",
+		Description: "Give someone access to this workspace from their own devices over Tailscale, or take it away, when the owner asks: \"let Bob edit\", \"Carol can look\", \"stop Bob\". They are matched by the email they sign in to Tailscale with, and reach the workspace once the owner shares this machine with them in Tailscale (or they are on the same tailnet). view reads only; edit changes content and the canvas and presses buttons; host is edit, and their own computer keeps a full copy of the workspace in step with this one (for when they host it too, with their own assistant); none takes access away. Giving access is put to the owner as a question for you, and nothing changes until they say yes; taking it away happens at once.",
+		Schema: obj(map[string]any{
+			"email":  map[string]any{"type": "string"},
+			"name":   map[string]any{"type": "string"},
+			"access": map[string]any{"type": "string", "enum": []string{records.View, records.Edit, records.Host, "none"}},
+		}, "email", "access"),
+	}, Offered: has(records.PersonType)}
 
-// accessTools are the tools offered only where the workspace can do what
-// they do: let_in where there are people to let in, change_field where the
-// schema can be changed from here.
-func (s *Service) accessTools() []llm.Tool {
-	var out []llm.Tool
-	if _, ok := s.Store.Types().Get(records.PersonType); ok {
-		out = append(out, letInTool)
-	}
-	if s.Reshape != nil {
-		out = append(out, changeFieldTool)
-	}
-	return out
-}
+// accessOps are offered only where the workspace can do what they do:
+// let_in where there are people to let in, change_field where the schema
+// can be changed from here.
+var accessOps = []Op{letInOp, changeFieldOp}
 
 type letInArgs struct {
 	Email  string `json:"email"`
@@ -45,26 +41,32 @@ type letInArgs struct {
 	Access string `json:"access"`
 }
 
-// letInCall is the assistant's call: giving access is asked, taking it
-// away is done.
-func (s *Service) letInCall(raw json.RawMessage) toolResult {
+// letInOf reads a let_in call, its email as Tailscale says logins.
+func letInOf(raw json.RawMessage) letInArgs {
 	var a letInArgs
 	json.Unmarshal(raw, &a)
 	a.Email = strings.ToLower(strings.TrimSpace(a.Email))
+	return a
+}
+
+// letInAsks is let_in's question: giving access is asked, taking it away
+// is done, by the owner alone.
+func (s *Service) letInAsks(_ toolArgs, call llm.ToolCall) (toolResult, bool) {
+	a := letInOf(call.Args)
 	if !strings.Contains(a.Email, "@") {
-		return fail("let_in needs the email they sign in to Tailscale with, such as bob@example.com")
+		return fail("let_in needs the email they sign in to Tailscale with, such as bob@example.com"), true
 	}
 	switch a.Access {
 	case "none":
 		if !s.owner() {
-			return fail("only the workspace's owner can take someone's access away")
+			return fail("only the workspace's owner can take someone's access away"), true
 		}
-		return s.letIn(a)
+		return toolResult{}, false
 	case records.View, records.Edit, records.Host:
 		q := letInQuestion(a)
-		return s.ask(q, map[string]any{"tool": "let_in", "email": a.Email, "name": a.Name, "access": a.Access})
+		return s.ask(q, map[string]any{"tool": "let_in", "email": a.Email, "name": a.Name, "access": a.Access}), true
 	}
-	return fail("access is view, edit or none, not %q", a.Access)
+	return fail("access is view, edit or none, not %q", a.Access), true
 }
 
 func letInQuestion(a letInArgs) question {

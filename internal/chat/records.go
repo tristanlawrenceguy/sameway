@@ -24,46 +24,81 @@ import (
 // are generated from the schema, so a workspace that adds a content type
 // gives the assistant the tool for it without a line of code.
 
-// recordTools are offered only when the workspace has something to write to.
-func (s *Service) recordTools() []llm.Tool {
+// typeArg is an op's content type, offered as the ones the workspace has
+// now (typed).
+var typeArg = map[string]any{"type": "string", "description": "A content type, as the prompt lists it."}
+
+// typed offers a record op where the workspace has something to write to.
+func typed(s *Service, t *llm.Tool) bool {
 	names := records.TypeNames(s.Store)
 	if len(names) == 0 {
-		return nil
+		return false
 	}
-	typeArg := map[string]any{"type": "string", "enum": names, "description": "A content type, as the prompt lists it."}
-	return []llm.Tool{
-		{Name: "import_records", Description: "Make records from a file the person added: a CSV with a header row, a vCard (.vcf) of contacts, or a mailbox (.mbox) of mail. Each column is matched to a field by name; a column for an email, phone or name links each row to its person, made when new. Use it when the person attaches such a file and wants its contents as records, rather than creating them one by one. Returns how many were made.",
+	withProp(t, "type", map[string]any{"type": "string", "enum": names, "description": typeArg["description"]})
+	return true
+}
+
+var recordOps = []Op{
+	{Title: "Bring records in from a file",
+		Access: ForOwner,
+		Words:  []string{"import", "file", "spreadsheet", "csv", "excel", "contacts", "calendar file"},
+		Doing:  func(a callArgs) string { return "Importing " + or(schema.Plural(a.Type), "records") + " from a file" },
+		Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
+			return s.importRecords(a.Type, a.File, a.Mapping)
+		},
+		Tool: llm.Tool{Name: "import_records", Description: "Make records from a file the person added: a CSV with a header row, a vCard (.vcf) of contacts, or a mailbox (.mbox) of mail. Each column is matched to a field by name; a column for an email, phone or name links each row to its person, made when new. Use it when the person attaches such a file and wants its contents as records, rather than creating them one by one. Returns how many were made.",
 			Schema: obj(map[string]any{
 				"type":    typeArg,
 				"file":    map[string]any{"type": "string", "description": "The id of the file record, from the message it came with or from find_records on file."},
 				"mapping": map[string]any{"type": "object", "description": "Optional: which column feeds which field, as {column: field}. Leave out to match by name.", "additionalProperties": map[string]any{"type": "string"}},
-			}, "type", "file")},
-		{Name: "create_record", Description: "Make a record of a content type: a note, a task, whatever the workspace declares. It appears on its own page at /t/<type> and in the listing there. Fields must match the type's schema in the catalogue. Returns the new record's id and page.",
+			}, "type", "file")}, Offered: typed},
+	{Title: "Make a record",
+		Core:  true,
+		Doing: func(a callArgs) string { return "Adding" + or(an(schema.Words(a.Type)), " a record") + a.called() },
+		Run:   func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.createRecord(a.Type, a.Fields) },
+		Tool: llm.Tool{Name: "create_record", Description: "Make a record of a content type: a note, a task, whatever the workspace declares. It appears on its own page at /t/<type> and in the listing there. Fields must match the type's schema in the catalogue. Returns the new record's id and page.",
 			Schema: obj(map[string]any{
 				"type":   typeArg,
 				"fields": map[string]any{"type": "object", "description": "Field values matching the type's schema. Leave a field out to take its default."},
-			}, "type", "fields")},
-		{Name: "update_record", Description: "Change fields on a record that exists. Only the fields given change. Use find_records first to get the id.",
+			}, "type", "fields")}, Offered: typed},
+	{Title: "Change a record", Traits: Traits{Idempotent: true},
+		Core:  true,
+		Doing: func(a callArgs) string { return "Updating" + or(an(schema.Words(a.Type)), " a record") },
+		Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
+			return s.updateRecord(a.Type, a.ID, a.Fields, a.Version)
+		},
+		Tool: llm.Tool{Name: "update_record", Description: "Change fields on a record that exists. Only the fields given change. Use find_records first to get the id.",
 			Schema: obj(map[string]any{
 				"type":    typeArg,
 				"id":      map[string]any{"type": "string", "description": "The record's id, from find_records or from a page URL /t/<type>/<id>."},
 				"fields":  map[string]any{"type": "object", "description": "The fields to change and their new values."},
 				"version": map[string]any{"type": "string", "description": "The version get_record gave, when you read the record first: if it has changed since, nothing is written and you are shown it as it is now, to change again."},
-			}, "type", "id", "fields")},
-		{Name: "find_records", Description: "List records of a type to get their ids: all of them, those holding every word of the query in their title or words, or those matching where. The same where and order a collection block takes.",
+			}, "type", "id", "fields")}, Offered: typed},
+	{Title: "Find records", Traits: Traits{ReadOnly: true, Idempotent: true},
+		Access: ForViewers,
+		Core:   true,
+		Doing:  func(a callArgs) string { return "Looking up your " + or(schema.Plural(a.Type), "records") },
+		Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
+			return s.findRecords(a.Type, a.Query, a.Where, a.Order, a.Limit)
+		},
+		Tool: llm.Tool{Name: "find_records", Description: "List records of a type to get their ids: all of them, those holding every word of the query in their title or words, or those matching where. The same where and order a collection block takes.",
 			Schema: obj(map[string]any{
 				"type":  typeArg,
 				"query": map[string]any{"type": "string", "description": "Words each record found must hold, in its title or its words, in any order. Leave empty for every record."},
 				"where": map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Conditions that must all hold. " + query.Grammar},
 				"order": map[string]any{"type": "string", "description": "A field, or -field for the largest or newest first. Newest first when left out."},
 				"limit": map[string]any{"type": "integer", "description": "How many to list. Defaults to 10."},
-			}, "type")},
-		{Name: "get_record", Description: "Read one record with every field, by id: a note's body, a file's text. Use it before answering from what a record says. It also returns related: everything the record is joined to — what points at it, what is set about it, what sits beside it under the same parent, what else falls on its day — each with a count and the where that lists them. Their page shows only the counts. When you have a reason to put one in front of the person, send them the page with that connection open: /t/<type>/<id>?show=<key>.",
+			}, "type")}, Offered: typed},
+	{Title: "Read a record", Traits: Traits{ReadOnly: true, Idempotent: true},
+		Access: ForViewers,
+		Core:   true,
+		Doing:  func(a callArgs) string { return "Reading" + or(an(schema.Words(a.Type)), " a record") },
+		Run:    func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.getRecord(a.Type, a.ID) },
+		Tool: llm.Tool{Name: "get_record", Description: "Read one record with every field, by id: a note's body, a file's text. Use it before answering from what a record says. It also returns related: everything the record is joined to — what points at it, what is set about it, what sits beside it under the same parent, what else falls on its day — each with a count and the where that lists them. Their page shows only the counts. When you have a reason to put one in front of the person, send them the page with that connection open: /t/<type>/<id>?show=<key>.",
 			Schema: obj(map[string]any{
 				"type": typeArg,
 				"id":   map[string]any{"type": "string", "description": "The record's id, from find_records or from a page URL /t/<type>/<id>."},
-			}, "type", "id")},
-	}
+			}, "type", "id")}, Offered: typed},
 }
 
 func (s *Service) createRecord(typeName string, fields map[string]any) toolResult {
@@ -83,7 +118,7 @@ func (s *Service) createRecord(typeName string, fields map[string]any) toolResul
 	if t.Name == "reminder" && atlogin.Path() != "" && !atlogin.On() {
 		text += " Reminders ring only while Sameway is open, and it does not open when this computer starts; if this one matters, tell the person that Open Sameway when I sign in, on Workspaces, keeps it ringing."
 	}
-	if t.Name == records.EventType && len(s.recordingTools()) > 0 {
+	if t.Name == records.EventType && s.hasTypes(records.ReminderType, records.EventType) {
 		text += fmt.Sprintf(" If the person wants this meeting recorded, call the record_meeting tool yourself now with event %s (how app when Teams, Zoom or Meet records it): it sets up the reminder that opens the page ready to record. The tools are yours; never tell the person to use them.", rec.ID)
 	}
 	return toolResult{text: text, change: &c}
