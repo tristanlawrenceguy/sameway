@@ -56,6 +56,21 @@ export async function armRefresh(page, control) {
 export async function refreshed(page, pointer, ms = 5000) {
   const landed = await page.evaluate((ms) => Promise.race([window.__swRefreshed, new Promise((r) => setTimeout(() => r(false), ms))]), ms);
   await page.mouse.move(pointer.x, pointer.y);
+  // Then away, to the page's empty margin: where the press was is often a
+  // new block now, whose bar a hover fades in on a frame of the browser's
+  // choosing, sometimes after finished() has looked (CI on #491, #495 to
+  // #499, "home after chat", the quiet bar's Remove at part opacity). With
+  // nothing under the pointer, nothing fades in.
+  const away = await page.evaluate(() => {
+    const w = innerWidth, h = innerHeight;
+    for (const [x, y] of [[w - 2, h / 2], [2, h / 2], [w - 2, 2], [2, h - 2], [w / 2, h - 2]]) {
+      const el = document.elementFromPoint(x, y);
+      if (!el || !el.closest("[data-block-id], a, button, input, textarea, select, label, [tabindex], .sw-bar")) return { x, y };
+    }
+    return { x: 0, y: 0 };
+  });
+  await page.mouse.move(away.x, away.y);
+  await settle(page);
   return landed;
 }
 

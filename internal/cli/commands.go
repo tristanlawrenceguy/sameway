@@ -45,6 +45,7 @@ func (c *ctx) serveCmd() error {
 	a.WatchSchema(ctx, app.SchemaEvery, h.Changed)
 	h.StartRinging(ctx, notifier(a))
 	h.KeepCalendars(ctx)
+	h.KeepReview(ctx)    // the weekly review, on the day set
 	h.KeepBrief(ctx)     // the morning brief, when one is set
 	h.KeepCloudCopy(ctx) // a daily copy in the cloud folder, when one is chosen
 	h.KeepCloudSync(ctx) // other computers kept in step through it, when chosen
