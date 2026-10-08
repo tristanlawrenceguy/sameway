@@ -186,3 +186,15 @@ func LeavesDateOut(words string) bool {
 	}
 	return strings.Contains(words, " ago")
 }
+
+// Stored reads a stored value as the reader plans by it: a whole day as
+// that date here, never midnight UTC moved into this zone (02:00, or the
+// day before west of Greenwich), and a moment in the reader's zone.
+func Stored(v string, now time.Time) (t time.Time, day bool, ok bool) {
+	if IsDay(v) {
+		d, err := time.ParseInLocation("2006-01-02", v[:10], now.Location())
+		return d, err == nil, err == nil
+	}
+	t, day, ok = Parse(v, now)
+	return t.In(now.Location()), day, ok
+}
