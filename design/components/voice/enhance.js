@@ -151,8 +151,5 @@
       });
     });
   }
-  function init() { document.querySelectorAll("[data-component=voice]").forEach(arm); }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
-  else init();
-  document.addEventListener("sw:refresh", init);
+  sw.arm("[data-component=voice]", arm);
 })();

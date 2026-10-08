@@ -38,8 +38,5 @@
     });
     check();
   }
-  function init() { document.querySelectorAll("[data-component=upload]").forEach(arm); }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
-  else init();
-  document.addEventListener("sw:refresh", init);
+  sw.arm("[data-component=upload]", arm);
 })();

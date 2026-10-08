@@ -117,10 +117,12 @@
     });
   }
 
-  function init() {
-    settle();
-    document.querySelectorAll("form.sw-compose").forEach(compose);
-    document.querySelectorAll("[data-block-id]").forEach(offer);
+  sw.ready(settle);
+  sw.arm("form.sw-compose", compose);
+  sw.arm("[data-block-id]", offer);
+  // An edit's form is made by a press (08-edit.js), not brought by a
+  // refresh: it is watched for as it is put in.
+  sw.ready(function () {
     document.querySelectorAll("form.sw-inline-form").forEach(watch);
     if (!window.MutationObserver) return;
     new MutationObserver(function (records) {
@@ -132,10 +134,5 @@
         });
       });
     }).observe(document.body, { childList: true, subtree: true });
-  }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
-  document.addEventListener("sw:refresh", function () {
-    document.querySelectorAll("form.sw-compose").forEach(compose);
-    document.querySelectorAll("[data-block-id]").forEach(offer);
   });
 })();

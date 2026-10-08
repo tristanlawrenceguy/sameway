@@ -164,8 +164,5 @@
     if (root.matches && root.matches("[data-component=lookup]")) all.unshift(root);
     all.forEach(arm);
   };
-  function init() { window.swLookup(document); }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
-  else init();
-  document.addEventListener("sw:refresh", init);
+  sw.arm("[data-component=lookup]", window.swLookup);
 })();

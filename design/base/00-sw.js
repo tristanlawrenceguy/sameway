@@ -8,6 +8,7 @@
 //   sw.arm(selector, fn)  fn(el) once for each element that matches, on load
 //                         and whenever the page brings nodes in (a refresh,
 //                         an outcome shown); an element is armed only once.
+//   sw.scan()             arm what a script has just put in the page itself.
 //   sw.ready(fn)          fn once the page is parsed.
 //   sw.on / sw.off / sw.emit(name, detail)
 //                         a tiny bus: "refresh" when the page has followed
@@ -27,6 +28,7 @@
   if (window.sw) return; // a page that loads a base file again keeps the one core
   var sw = window.sw = {};
   var handlers = {};
+  var scans = [];
 
   sw.on = function (name, fn) { (handlers[name] = handlers[name] || []).push(fn); };
   sw.off = function (name, fn) {
@@ -57,9 +59,11 @@
         try { fn(el); } catch (err) { if (window.console) console.error("sw arm " + selector + ":", err); }
       });
     }
+    scans.push(scan);
     sw.ready(scan);
     sw.on("refresh", scan);
   };
+  sw.scan = function () { scans.forEach(function (scan) { scan(); }); };
 
   sw.refresh = function () {};
 

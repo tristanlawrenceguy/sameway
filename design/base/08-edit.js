@@ -286,12 +286,5 @@
     bar.insertBefore(btn, bar.firstChild);
   }
 
-  function init() {
-    document.querySelectorAll("[data-block-id]").forEach(arm);
-  }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
-  else init();
-  // A page that refreshed part of itself during a live turn has new blocks
-  // to arm; the ones already armed say so and are left alone.
-  document.addEventListener("sw:refresh", init);
+  sw.arm("[data-block-id]", arm);
 })();

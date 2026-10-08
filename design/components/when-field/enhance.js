@@ -60,8 +60,5 @@
       words.addEventListener("change", tell);
     });
   };
-  function init() { window.swWhenField(document); }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
-  else init();
-  document.addEventListener("sw:refresh", init);
+  sw.arm("[data-component=when-field]", window.swWhenField);
 })();

@@ -41,5 +41,5 @@
   }
 
   wait();
-  document.addEventListener("sw:refresh", wait);
+  sw.on("refresh", wait);
 })();

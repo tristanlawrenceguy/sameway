@@ -30,7 +30,7 @@
     document.body.appendChild(region);
     namesHere().forEach(function (n) { heard[n] = true; });
   }
-  document.addEventListener("sw:refresh", function () {
+  sw.on("refresh", function () {
     if (!region) return;
     var fresh = namesHere().filter(function (n) { return !heard[n]; });
     if (!fresh.length) return;
@@ -40,6 +40,5 @@
     clearTimeout(region._clear);
     region._clear = setTimeout(function () { region.textContent = ""; }, 10000);
   });
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
-  else start();
+  sw.ready(start);
 })();

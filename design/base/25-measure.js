@@ -154,12 +154,8 @@
     });
     if (moved) soon();
   });
-  function watch() {
-    watcher.observe(document.documentElement);
-    document.querySelectorAll("[data-measure-v]").forEach(function (el) { watcher.observe(el); });
-  }
-  watch();
-  document.addEventListener("sw:refresh", watch);
+  watcher.observe(document.documentElement);
+  sw.arm("[data-measure-v]", function (el) { watcher.observe(el); });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(soon);
   window.addEventListener("load", soon);
 })();
