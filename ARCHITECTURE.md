@@ -4,8 +4,9 @@ Name: **Sameway**. License: MIT. Module path: `github.com/tristanlawrenceguy/sam
 (the account is tristanlawrenceguy; change the
 module path in `go.mod` and the imports if the repo lands elsewhere).
 
-Status: milestone 1 is scaffolded and verified (see section 8). The starter
-page is a chat whose model edits the same page through tools; see section 5.
+Status: in daily use (section 8 says what is built). The home page is a
+canvas the assistant builds through tools, beside the conversation; see
+section 5.
 
 A single Go binary that serves a structured-content system built on an accessible
 design system. One contract per component and per content type generates every
@@ -19,13 +20,13 @@ travels through git.
 |---|---|---|
 | Backend language | Go | 1 to 3 second compile loop, one idiomatic style, gofmt/vet keep AI-written code uniform, pure-Go SQLite means no C toolchain, single binary. |
 | Rendering | Server-rendered HTML, progressive enhancement, no frontend framework | Best accessibility by default. Output is plain HTML an agent can read as easily as a screen reader. Fits "documents, forms, lists". |
-| Templates | Go `html/template` with a typed props struct per component | Stdlib, auto-escaping, no code generator. Props are validated against the component manifest in tests. |
-| Storage | SQLite (modernc.org/sqlite) as live store, Markdown/JSON files as portable form | Zero setup. Files make the workspace git-friendly and AI-readable. `export`/`import` keep them in sync; auto-export is a config flag. |
+| Templates | Go `html/template`; props are a JSON object (`map[string]any`) | Stdlib, auto-escaping, no code generator. Every render validates the props against the manifest's JSON Schema and applies its defaults before the template runs (`internal/render`), so the manifest is the only definition of a component's props. |
+| Storage | SQLite (modernc.org/sqlite) as live store, Markdown/JSON files as portable form | Zero setup. Files make the workspace git-friendly and AI-readable. `sameway export` and `sameway import` move between them. |
 | CMS scope | Structured content types only, no page builder | Keep the core small. Rendering is done by components; if a view does not exist, create a component. |
 | Connections | Worked out from the schema in `internal/relate`; a page shows none of them, an agent is given all of them | A connection is real in the data whether or not it is drawn. A page that opens every one is a page of other records with the one you came for at the top; a row of links to them is the same page in miniature, there every time for the once it is wanted. So the page shows what the record is, the whole graph goes to the API and the assistant, and `?show=<key>` opens the one there is a reason to open. |
 | Design system | Standalone package (tokens, CSS, HTML patterns, manifests) | Usable in any stack. The Go binary is one consumer. |
 | Accessibility bar | WCAG 2.2 AAA where feasible, AA as hard gate in CI | Every component ships with automated and keyboard tests. |
-| Users | Single user, local first | Auth is an optional module added later, not baked into day one. |
+| Users | One owner, local first; other people by who Tailscale says they are | No accounts or passwords: the owner is whoever is at the computer or signed the node in, and other people get the access their `person` record gives (section 4). |
 | Sharing | Workspace = git-friendly folder | Push a repo or sync a folder. Presets are just repos. |
 
 ## 2. The one contract
@@ -40,12 +41,11 @@ must render exactly what the examples show (enforced by golden tests).
 ```
 design/components/button/
   manifest.json      # name, description, props schema, a11y contract, machine notes
-  template.html      # html/template, receives typed props
+  template.html      # html/template, receives props validated against the manifest
   style.css          # scoped by class prefix, uses tokens only
   enhance.js         # optional, progressive enhancement, no framework
   examples/          # plain HTML files, the standalone spec and golden output
-  README.md          # human docs, generated sections from manifest
-  test/              # axe + keyboard + golden tests
+  README.md          # when to use it, why it works this way, what is not done
 ```
 
 `manifest.json` shape:
@@ -98,9 +98,10 @@ From one schema file the system generates:
 - SQLite table and migration
 - validation
 - CLI: `sameway note create|get|list|update|delete`, all with `--json`
-- MCP tools: `note_create`, `note_get`, `note_list`, `note_update`, `note_delete`
+- Assistant and MCP tools: `create_record`, `update_record`, `find_records`,
+  `get_record`, which take the type and check its fields
 - JSON API: `/api/note`, `/api/note/{id}`
-- HTML views: `/note`, `/note/{id}`, `/note/new`, built from the named components
+- HTML views: `/t/note`, `/t/note/{id}`, built from the design system's components
 - `describe` output so an agent can learn the type without reading rows
 
 Nothing is hand-written per surface. Adding a surface means adding a generator.
@@ -127,41 +128,55 @@ surface decides for itself:
 ```
 /
   README.md  LICENSE  ARCHITECTURE.md  CONTRIBUTING.md  AGENTS.md
-  design/                     # standalone design system, publishable
-    tokens/tokens.json        # single source; tokens.css generated
-    base/                     # reset, typography, focus ring, reduced motion, print
-    components/<name>/        # see 2.1
-    package.json              # publishes css + manifests + examples
-  cmd/sameway/main.go           # entry point, wires modules
+  cmd/sameway/main.go         # entry point
   internal/
-    workspace/                # folder layout, init, export, import, presets
-    schema/                   # load + validate content type files
-    store/                    # SQLite, migrations, generic CRUD keyed by schema
-    render/                   # template loading, component registry, props validation
-    relate/                   # how one record connects to the others, from the schema
-    server/                   # HTTP: HTML views, JSON API, describe endpoint
-    mcp/                      # MCP server (stdio + HTTP) generated from schema + manifests
+    app/                      # wires a workspace, schema, store, components and chat
+    workspace/                # the workspace folder: find, load, init, snapshots, trash
+    schema/                   # content type files: load, validate, JSON Schema
+    store/                    # SQLite, one table per type, field stamps for sync
+    records/                  # (being added) records' domain code, moving out of chat
+    render/                   # component registry, props validation, page layout
+    relate/  query/  search/  # connections, the "which records" grammar, search
+    when/  track/  trim/      # days and repeats, habit arithmetic, short titles
+    prose/                    # Markdown rendered for the design system
+    chat/                     # the assistant's tool loop and tools, one write path
+    llm/                      # provider-neutral chat: OpenAI-compatible and Anthropic
+    server/                   # HTTP: HTML pages, JSON API, describe, look
+    mcp/                      # MCP over stdio and HTTP, from the chat tools
+    look/                     # reads a page as a screen reader or an agent does
+    cli/                      # the sameway command, every command with --json
+    content/  export/         # Markdown with front matter; CSV, Excel, vCard, iCal out
+    ingest/  convert/         # files and other apps' exports in; files as text
+    speech/  soundtrack/      # speech-to-text on this computer; sound out of video
+    meetfetch/                # meeting transcripts from Teams and Zoom
+    notify/  atlogin/         # notifications; opening at sign-in
+    tailnet/  peers/          # Tailscale; keeping several hosts' copies the same
+    devices/  discover/       # MQTT devices; what the local network announces
     update/                   # find, verify and install a release of sameway itself
-    cli/                      # commands generated from schema, plus scaffold/check/serve
-    a11y/                     # shared helpers: landmarks, headings, live regions
+    tokens/                   # tokens.json to CSS
+    bench/                    # the assistant measured with a real model (tests only)
+  design/                     # tokens, base, components, foundations, arrangements,
+                              # brand; see design/README.md
   tools/
-    check/                    # file-size lint, manifest validator, golden test runner
-    a11y-runner/              # Node dev-only: playwright + axe-core against examples
-  examples/workspaces/        # notes, blog, inventory: each is a shareable preset
+    check/                    # function and file size, component folders, tokens
+    tokens/  icons/           # regenerate tokens.css; redraw the icon
+    a11y-runner/              # Node dev-only: playwright + axe-core, pages and site
+  docs/tests/                 # what each test covers, by area
+  examples/workspaces/starter # what `sameway init` copies
 ```
 
 ## 4. Workspace folder
 
 ```
 my-workspace/
-  workspace.yaml     # name, theme tokens override, auto-export flag, enabled components
+  workspace.yaml     # name, llm, server, ui, tailnet, publish and other settings
   schema/            # content types
   components/        # local components or overrides, same folder contract as design/
   content/           # exported records: content/note/<id>.md with frontmatter
-  data.db            # live SQLite store, gitignored, rebuilt by `import`
+  data.db            # live SQLite store, gitignored, refilled by `import`
 ```
 
-`sameway init` creates one. `sameway init --from <git url>` clones a preset.
+`sameway init` creates one from the starter.
 Multi-device is git or any folder sync. A phone or another computer can also
 open a running workspace from anywhere over the person's Tailscale network
 (`tailnet:` in workspace.yaml; the node is embedded with tsnet, its keys kept
@@ -257,9 +272,9 @@ address. Publishing is always a question; unpublishing is immediate.
   `sameway chat "..."` talks to the assistant from a terminal.
 - **JSON API**: `/api/describe`, `/api/{type}`, `/api/{type}/{id}`, `/api/chat`.
   Errors carry a stable code and per-field messages.
-- **MCP** (milestone 4): `sameway mcp` exposes tools for every content type and
-  resources for the schema, manifests, and design tokens. Works over stdio for
-  Claude Code and over HTTP for remote agents.
+- **MCP**: `sameway mcp` serves the assistant's tools plus `describe` and
+  `get_record` over stdio for Claude Code and other hosts, and the server
+  serves the same at `/mcp` over HTTP for remote agents.
 - **Browser**: every page has landmarks, a single `h1`, skip links,
   `data-component` on each component, and a
   `<link rel="alternate" type="application/json">` to the same data. An agent
@@ -335,7 +350,7 @@ Enforced by `make check` and CI, not by convention alone.
   `*_more.go`, `*_extra.go` or `*_helpers.go` fail, since they are split by
   size rather than topic. Long functions and such files from before the rule
   are listed in `tools/check/debt.go` and may only shrink.
-- **One concern per file, one README per package** describing what lives there.
+- **One concern per file, one package comment per package** saying what lives there.
 - **Every command has `--json`**, every error has a stable code and a fix hint.
 - **Golden tests**: component template output must match its example HTML.
 - **A11y gate**: axe-core and keyboard tests run against every example. AA
@@ -356,23 +371,17 @@ Enforced by `make check` and CI, not by convention alone.
 
 Where AAA is infeasible for a component, the manifest says so and why.
 
-## 8. Milestones
+## 8. What is built
 
-1. **Skeleton** (done): repo layout, `init`, `serve`, `describe`, `check`,
-   content types with generated CLI, JSON API, and HTML views; thirteen
-   components with manifests, golden tests, and the a11y runner; the chat
-   showcase with OpenAI-compatible and Anthropic providers; repo lint with
-   the 300-line cap; CI workflow.
-2. **Design system depth**: radio group, fieldset, details/summary, dialog
-   (native), pagination, breadcrumb; keyboard tests in the a11y runner;
-   AAA waiver files; publish `@sameway/design`.
-3. **Export/import**: content as Markdown with front matter in `content/`,
-   `sameway export`, `sameway import`, optional auto-export on write.
-4. **MCP server** from the same schema and manifests, stdio and HTTP.
-5. **Presets and docs**: three example workspaces, docs site built with the
-   system itself, `init --from <git url>`.
-6. **Later**: optional auth module, streaming replies if a real need appears,
-   theme editor, Markdown rendering for `markdown` fields.
+The milestones planned at the start are done or replaced: the skeleton, the
+design system (now 50 components, with foundations and arrangements),
+export and import, the MCP server over stdio and HTTP, and a starter
+workspace. Beyond them: people and access over Tailscale, several hosts
+kept in step, publishing, recordings written down on the computer, imports
+from other apps, updates of sameway itself, and a benchmark of the
+assistant with real models. What each covers and where it is tested is in
+[docs/tests/](docs/tests/). Not done: a docs site built with the system
+itself, presets cloned from a git URL, auto-export on write.
 
 ## 9. Settled decisions
 

@@ -5,8 +5,8 @@ Accessible by construction, and not boring about it: a high-contrast palette
 with a point of view, motion that explains change, and a state language that
 tells everyone, human or machine, who did what and what is happening now.
 
-Published on its own as `@sameway/design` and embedded in the `sameway`
-binary, which serves a living styleguide at `/design`.
+Packaged on its own as `@sameway/design` (`package.json`) and embedded in
+the `sameway` binary, which serves a living styleguide at `/design`.
 
 ## Foundations
 
@@ -20,15 +20,22 @@ binary, which serves a living styleguide at `/design`.
 | [foundations/elevation.md](foundations/elevation.md) | Surfaces, shadows, lifting, dark surfaces, skeletons, forced colours |
 | [foundations/states.md](foundations/states.md) | Provenance, change markers, busy state, activity: text, colour, and attributes |
 | [foundations/quiet.md](foundations/quiet.md) | How chrome stays available to everyone while being visible only on demand |
+| [foundations/style.md](foundations/style.md) | What the product looks like, in words: air and one blue |
+| [foundations/layout.md](foundations/layout.md) | The page as a whole: rows, panes, heading order, and the Layout now line |
+| [foundations/glance.md](foundations/glance.md) | What a record says beside its title, and how a day is said |
 
 ## What is in this folder
 
 - `tokens/tokens.json` is the single source of tokens. `tokens.css` is
   generated from it with `go run ./tools/tokens` and checked in. A Go test
   fails the build if any text pairing drops below 7:1 in either theme.
-- `base/*.css` is the foundation, one concern per file, concatenated in
-  filename order: reset, feedback, motion, the quiet layer, page shell,
-  layout, styleguide.
+- `base/` is the foundation, one concern per file, loaded in filename order:
+  `*.css` from the reset, feedback, motion, the quiet layer, page shell and
+  layout onwards, and `*.js` for page-wide progressive enhancement (editing,
+  live regions, following changes, measuring blocks). Every page works
+  without the scripts.
+- `arrangements/*.json` are whole pages a job wants, applied in one call.
+- `brand/` is the icon in every form, drawn by `go run ./tools/icons`.
 - `components/<name>/` is one component per folder:
   - `manifest.json`: props (JSON Schema), accessibility contract, keyboard
     map, and how a machine identifies and operates it.
@@ -44,13 +51,16 @@ binary, which serves a living styleguide at `/design`.
 
 | Component | Purpose |
 |---|---|
-| heading, text, list, table, card | Content |
-| link, button | Actions |
-| chat, disclosure | Containers: a conversation region, and detail hidden behind a summary |
-| text-field, textarea, select, checkbox | Input |
-| alert, status, badge | Feedback and state |
-| message, event | Conversation and activity |
-| calendar, when-field | Dates: a month at four sizes, and a day asked for in words |
+| heading, text, list, table, card, fields, image | Content |
+| link, button, crumbs, tabs, pagination | Actions and ways around |
+| chat, disclosure, message, talk, voice | Conversation, and detail behind a summary |
+| text-field, textarea, select, checkbox, when-field, lookup, upload | Input |
+| alert, status, badge, empty, error-summary, problem, meter | Feedback and state |
+| event, since, presence, person, proposal, clash, suggestion | Who did what, who is here, what waits on a person |
+| collection, record, mark, move, filters, search, export | Records: lists, one record, ticking, moving, narrowing, finding, taking away |
+| calendar, chart, tracker, clock, media | Days, numbers, habits, time, and recordings |
+
+Each folder's README says when to use it; `sameway describe` lists them all.
 
 ### Sizes
 
