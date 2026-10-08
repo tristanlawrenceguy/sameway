@@ -1,17 +1,20 @@
 // Command check lints the repository so AI-written contributions stay readable:
 //
-//   - a source file over WarnLines lines is said; over MaxLines fails
+//   - a source file over MaxLines lines fails
 //   - a non-test Go function over MaxFuncLines fails, unless it is one of the
 //     long functions recorded in debt.go, which may only shrink
 //   - no new Go file named *_more, *_extra or *_helpers (split by size, not topic)
 //   - every component folder has manifest.json, template.html, style.css, README.md, examples/
 //   - design/tokens/tokens.css matches tokens.json
+//   - with -base REF: tools/check/debt.go only goes down from REF (no entry
+//     added, no recorded length raised)
 //
-// Run from the repository root: go run ./tools/check
+// Run from the repository root: go run ./tools/check [-base origin/main]
 package main
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -20,7 +23,15 @@ import (
 )
 
 func main() {
+	base := flag.String("base", "", "git ref to compare tools/check/debt.go with; the debt list may only go down from it")
+	flag.Parse()
 	r := run(".")
+	if *base != "" {
+		r.add(checkDebtAgainst(*base))
+	}
+	for _, n := range r.notes {
+		fmt.Println("check: note:", n)
+	}
 	for _, w := range r.warnings {
 		fmt.Println("check: warning:", w)
 	}
