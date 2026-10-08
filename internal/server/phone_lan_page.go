@@ -28,10 +28,11 @@ func (s *Server) phoneSection(r *http.Request) string {
 	link := base + "/pair?code=" + lanPairCode()
 	b.WriteString(`<p>Scan this with your phone's camera, on the same Wi-Fi as this computer. It works once, for ten minutes; reload this page for another.</p>`)
 	b.WriteString(`<figure class="sw-stack">` + qrSVG(link) + `<figcaption class="sw-small sw-muted">Or open ` + template.HTMLEscapeString(link) + ` on the phone.</figcaption></figure>`)
+	b.WriteString(s.inviteForm()) // lan_invite.go
 	if devices := s.lanDevices(); len(devices) > 0 {
 		b.WriteString(`<h3>Paired</h3><ul class="sw-plain sw-rows">`)
 		for _, d := range devices {
-			b.WriteString(`<li class="sw-cluster">` + template.HTMLEscapeString(d.Name) + ` <span class="sw-muted sw-small">since ` + d.Added.Format("2 Jan") + `</span><form method="post" action="/phone/forget"><input type="hidden" name="id" value="` + d.ID + `">` +
+			b.WriteString(`<li class="sw-cluster">` + template.HTMLEscapeString(d.Name) + s.mayWords(d) + ` <span class="sw-muted sw-small">since ` + d.Added.Format("2 Jan") + `</span><form method="post" action="/phone/forget"><input type="hidden" name="id" value="` + d.ID + `">` +
 				string(s.component("button", map[string]any{"label": "Remove", "context": d.Name + " paired " + d.Added.Format("2 Jan 15:04"), "type": "submit", "variant": "quiet"})) + `</form></li>`)
 		}
 		b.WriteString(`</ul>`)
@@ -113,4 +114,5 @@ func (s *Server) phoneRoutes(m *http.ServeMux) {
 	m.HandleFunc("POST /phone/on", s.phoneOn)
 	m.HandleFunc("POST /phone/off", s.phoneOff)
 	m.HandleFunc("POST /phone/forget", s.phoneForget)
+	m.HandleFunc("POST /phone/invite", s.phoneInvite) // lan_invite.go
 }
