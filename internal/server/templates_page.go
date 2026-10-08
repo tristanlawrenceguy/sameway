@@ -45,8 +45,3 @@ func (s *Server) templateUse(w http.ResponseWriter, r *http.Request) {
 	}
 	s.tellAt(w, r, outcome{Title: "Ready", Text: "The template is a tab of its own now. Add what you keep there, or ask the assistant to."}, records.CanvasPath(id))
 }
-
-func (s *Server) templateRoutes(m *http.ServeMux) {
-	m.HandleFunc("GET /templates", s.templatesPage)
-	m.HandleFunc("POST /templates/use", s.templateUse)
-}

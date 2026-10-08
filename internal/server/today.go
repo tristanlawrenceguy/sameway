@@ -231,8 +231,3 @@ func (s *Server) briefSet(w http.ResponseWriter, r *http.Request) {
 	}
 	s.tell(w, r, o, "/help")
 }
-
-func (s *Server) todayRoutes(m *http.ServeMux) {
-	m.HandleFunc("GET /today", s.todayPage)
-	m.HandleFunc("POST /brief", s.briefSet)
-}

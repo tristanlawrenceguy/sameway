@@ -198,13 +198,6 @@ func (s *Server) reviewOn(w http.ResponseWriter, r *http.Request) {
 	s.tell(w, r, o, "/help")
 }
 
-func (s *Server) reviewRoutes(m *http.ServeMux) {
-	m.HandleFunc("GET /review", s.reviewPage)
-	m.HandleFunc("POST /review/next", s.reviewMove)
-	m.HandleFunc("POST /review/done", s.reviewDone)
-	m.HandleFunc("POST /review/on", s.reviewOn)
-}
-
 // reviewDays are the days to choose from, and none.
 func reviewDays() []any {
 	out := []any{map[string]any{"value": "", "label": "No reminder"}}

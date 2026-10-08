@@ -209,14 +209,6 @@ func clipMail(s string, n int) string {
 	return s
 }
 
-func (s *Server) mailRoutes(m *http.ServeMux) {
-	m.HandleFunc("GET /mail", s.mailPage)
-	m.HandleFunc("POST /mail/connect", s.mailConnect)
-	m.HandleFunc("POST /mail/off", s.mailOff)
-	m.HandleFunc("POST /mail/task", s.mailTask) // mail_sort.go
-	m.HandleFunc("POST /mail/sorted", s.mailSorted)
-}
-
 // mailLine is Email in on Help.
 func (s *Server) mailLine() string {
 	if a, ok := s.mailAccount(); ok {

@@ -266,9 +266,3 @@ func (s *Server) syncRound() {
 		s.syncStart(folder)
 	}
 }
-
-func (s *Server) cloudSyncRoutes(m *http.ServeMux) {
-	m.HandleFunc("POST /cloud-sync", s.cloudSyncOn)
-	m.HandleFunc("POST /cloud-sync/off", s.cloudSyncOff)
-	m.HandleFunc("POST /workspaces/join", s.cloudJoin)
-}

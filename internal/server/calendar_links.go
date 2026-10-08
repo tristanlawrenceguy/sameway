@@ -199,12 +199,6 @@ func (s *Server) calendarRemove(w http.ResponseWriter, r *http.Request) {
 	s.tellAt(w, r, outcome{Title: "No longer kept in step", Text: gone + "'s events stay as they are; nothing more comes from it."}, "/calendars")
 }
 
-func (s *Server) calendarRoutes(m *http.ServeMux) {
-	m.HandleFunc("GET /calendars", s.calendarsPage)
-	m.HandleFunc("POST /calendars/add", s.calendarAdd)
-	m.HandleFunc("POST /calendars/remove", s.calendarRemove)
-}
-
 func linkID() string {
 	b := make([]byte, 6)
 	rand.Read(b)

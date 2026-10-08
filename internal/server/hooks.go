@@ -17,6 +17,9 @@ func (s *Server) hooks() {
 	// What a record says at a glance, glance.go, for one record at a time.
 	s.app.Records.Glance = func(t *schema.Type, rec *store.Record) string { return s.glanceText(t, rec, nil) }
 	s.app.Chat.Home = s // recordings and workspaces; see home.go
+	// A record arriving from another computer made out for this one's
+	// owner tells them (foryou.go).
+	s.app.Store.AfterSync = s.forYou
 	// What an automation did on its own is told like a ring (ring.go).
 	s.app.Chat.Tell = func(title, text, url string) {
 		if s.notify != nil {

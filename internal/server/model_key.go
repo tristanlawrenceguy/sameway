@@ -29,14 +29,6 @@ var keyKinds = []struct {
 		[][2]string{{"llm.api_key_env", "OPENROUTER_API_KEY"}, {"llm.base_url", "https://openrouter.ai/api/v1"}, {"llm.model", "openrouter/auto"}, {"llm.provider", "openai"}}},
 }
 
-func (s *Server) modelRoutes(m *http.ServeMux) {
-	m.HandleFunc("POST /model/use", s.modelUse)
-	m.HandleFunc("POST /model/check", s.modelCheck)
-	m.HandleFunc("GET /model/wait", s.modelWaitState) // connect.go
-	m.HandleFunc("POST /model/key", s.modelKey)
-	m.HandleFunc("POST /model/ollama", s.ollamaFetch) // ollama_setup.go
-}
-
 // keyForm is the paste-a-key part of the connect card.
 func (s *Server) keyForm(hidden string) template.HTML {
 	var b strings.Builder

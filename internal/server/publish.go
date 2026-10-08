@@ -64,7 +64,7 @@ func isPublic(r *http.Request) bool { return records.VisitorOf(r.Context()).Acce
 func (s *Server) Public(mcp http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		r = r.WithContext(records.WithVisitor(r.Context(), records.Visitor{Access: records.Public}))
-		pub := s.Published()
+		pub, open := s.Published(), s.publicRoute(r)
 		switch {
 		// What is published is published to people and to AI services
 		// the same way: pages for the one, MCP for the other.
@@ -74,20 +74,22 @@ func (s *Server) Public(mcp http.Handler) http.Handler {
 		case r.Method != http.MethodGet && r.Method != http.MethodHead:
 			http.Error(w, "this is a published page: it can be read, not changed", http.StatusMethodNotAllowed)
 			return
-		case strings.HasPrefix(r.URL.Path, "/design/"):
+		case open && strings.HasPrefix(r.URL.Path, "/design/"):
 			s.ServeHTTP(w, r)
 			return
 		// The file and what is read from it (its captions, its words), but
 		// not its sound copied out for writing it down: that writes into the
 		// workspace's folder, and is the owner's to ask for.
-		case strings.HasPrefix(r.URL.Path, "/files/") && !strings.Contains(r.URL.Path, "/sound") && s.publicFile(pub, strings.TrimPrefix(r.URL.Path, "/files/")):
+		// Which routes the internet may reach at all, the route table says
+		// (public, in routes*.go); what is published decides the rest.
+		case open && strings.HasPrefix(r.URL.Path, "/files/") && s.publicFile(pub, strings.TrimPrefix(r.URL.Path, "/files/")):
 			s.ServeHTTP(w, r) // a picture on a published page
 			return
 		}
 		// Every page is sent as a reader has it; see public_clean.go.
 		s.cleaned(w, r, func(w http.ResponseWriter, r *http.Request) {
 			switch {
-			case s.publicAllows(pub, r.URL.Path):
+			case open && s.publicAllows(pub, r.URL.Path):
 				s.ServeHTTP(w, r)
 			case r.URL.Path == "/":
 				s.publicIndex(w, r, pub)
@@ -157,4 +159,11 @@ func (s *Server) controlsFor(r *http.Request) string {
 		return "none"
 	}
 	return s.app.Workspace.Config.UI.Controls
+}
+
+// publicRoute says whether the route a request goes to is one the
+// internet may read, when what it shows is published.
+func (s *Server) publicRoute(r *http.Request) bool {
+	rt, ok := routeAt(s.routeOf(r))
+	return ok && rt.public
 }

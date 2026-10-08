@@ -140,10 +140,3 @@ func (s *Server) todayLate(w http.ResponseWriter, r *http.Request) {
 	act := records.Record(s.app.Store, who.Actor, records.Change{Action: "rescheduled", Component: "task", Detail: detail, Before: records.Batch(batch), By: who.By, Via: who.Via, ByLogin: who.ByLogin})
 	s.tellAt(w, r, outcome{Title: "Moved", Text: fmt.Sprintf("%d tasks are due today.", len(batch)), Undo: act, Of: detail}, "/today")
 }
-
-func (s *Server) todayNudgeRoutes(m *http.ServeMux) {
-	s.todayFocusRoutes(m) // today_focus.go
-	m.HandleFunc("POST /today/done", s.todayDone)
-	m.HandleFunc("POST /today/move", s.todayMove)
-	m.HandleFunc("POST /today/late", s.todayLate)
-}

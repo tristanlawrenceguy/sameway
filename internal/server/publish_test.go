@@ -47,6 +47,13 @@ func TestTheInternetReadsOnlyWhatIsPublished(t *testing.T) {
 			t.Errorf("%s is not published: %d", path, r.Code)
 		}
 	}
+	// Under a published type, only the routes the table says are public:
+	// not the owner's import page, not a recording's sound.
+	for _, path := range []string{"/t/note/import", "/files/" + n.ID + "/sound"} {
+		if r := public(t, pub, http.MethodGet, path, ""); r.Code != http.StatusNotFound {
+			t.Errorf("%s is not a public route: %d", path, r.Code)
+		}
+	}
 	if r := public(t, pub, http.MethodPost, "/t/note/add", ""); r.Code != http.StatusMethodNotAllowed {
 		t.Errorf("nothing is written from the internet: %d", r.Code)
 	}

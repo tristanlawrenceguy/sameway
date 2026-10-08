@@ -86,11 +86,6 @@ func (s *Server) bring(w http.ResponseWriter, r *http.Request) {
 	s.tellAt(w, r, outcome{Title: "Brought in from " + got.From, Text: strings.Join(said, " and ") + ". Undo in Activity takes each kind away again."}, to)
 }
 
-func (s *Server) bringRoutes(m *http.ServeMux) {
-	m.HandleFunc("GET /bring", s.bringPage)
-	m.HandleFunc("POST /bring", s.bring)
-}
-
 // importLinks are a list's ways in from a file: Import for any file, and
 // for tasks and notes, the apps Bring your things knows.
 func (s *Server) importLinks(t *schema.Type) string {

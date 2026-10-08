@@ -22,16 +22,6 @@ func icon(name, kind string) http.HandlerFunc {
 	}
 }
 
-func iconRoutes(m *http.ServeMux) {
-	m.HandleFunc("GET /favicon.svg", icon("icon.svg", "image/svg+xml"))
-	m.HandleFunc("GET /favicon.ico", icon("icon.ico", "image/x-icon"))
-	m.HandleFunc("GET /icon-192.png", icon("icon-192.png", "image/png"))
-	m.HandleFunc("GET /icon-512.png", icon("icon-512.png", "image/png"))
-	m.HandleFunc("GET /icon-square-180.png", icon("icon-square-180.png", "image/png"))
-	m.HandleFunc("GET /icon-square-512.png", icon("icon-square-512.png", "image/png"))
-	m.HandleFunc("GET /manifest.webmanifest", appManifest)
-}
-
 // appManifest lets a browser install Sameway as an app of its own: a
 // window without tabs or an address bar, its icon in the taskbar, the
 // Start menu or the Dock, and on a phone's home screen (app_install.go).
