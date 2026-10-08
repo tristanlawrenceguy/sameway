@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/export"
 	"github.com/tristanlawrenceguy/sameway/internal/ingest"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
@@ -39,11 +40,14 @@ func (s *Server) importPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var b strings.Builder
-	switch t.Name {
-	case "event", "task", "reminder":
-		b.WriteString(`<p class="sw-muted">A calendar (.ics) from Google Calendar, Outlook or Apple Calendar, or a CSV with a header row. The file is kept with your files; its events become ` + template.HTMLEscapeString(schema.Plural(t.Name)) + `, each at its time and repeating as it did, and you see how each column lands before anything is made. Bringing the same calendar in again adds nothing twice.</p>`)
-	case "person":
+	// What a file can become is said by what the type is, as its export
+	// is chosen (export.For): contacts for one with an email or a phone,
+	// a calendar for one with a day.
+	switch {
+	case export.Contactish(t):
 		b.WriteString(`<p class="sw-muted">A CSV with a header row, a vCard (.vcf) of contacts, or a mailbox (.mbox) of mail. The file is kept with your files; its rows become ` + template.HTMLEscapeString(schema.Plural(t.Name)) + `, and you see how each column lands before anything is made.</p>`)
+	case t.HasDay():
+		b.WriteString(`<p class="sw-muted">A calendar (.ics) from Google Calendar, Outlook or Apple Calendar, or a CSV with a header row. The file is kept with your files; its events become ` + template.HTMLEscapeString(schema.Plural(t.Name)) + `, each at its time and repeating as it did, and you see how each column lands before anything is made. Bringing the same calendar in again adds nothing twice.</p>`)
 	default:
 		b.WriteString(`<p class="sw-muted">A CSV with a header row, a tab-separated file (.tsv), or plain text (.txt). The file is kept with your files; its rows become ` + template.HTMLEscapeString(schema.Plural(t.Name)) + `, and you see how each column lands before anything is made.</p>`)
 	}

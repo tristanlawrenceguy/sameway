@@ -47,5 +47,6 @@ func (s *Server) welcome(from string) template.HTML {
 	for _, st := range setups {
 		b += fmt.Sprintf(`<li><a class="sw-link sw-link--button sw-chat__start" href="%s?prompt=%s">%s</a></li>`, esc(from), url.QueryEscape(st.ask), esc(st.label))
 	}
-	return template.HTML(b + `</ul>`)
+	b += `</ul><p class="sw-small">Or start from a <a class="sw-link" href="/templates">template</a>: a job search, clients, a budget, a house move and more.</p>`
+	return template.HTML(b)
 }

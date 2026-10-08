@@ -1,0 +1,110 @@
+{
+  "name": "clients",
+  "description": "The people and companies you work for: each client with where things stand, what is to do for them, and the meetings coming up.",
+  "use": {
+    "when": "the person works for clients or customers and wants who they are, where each stands, and what is next in one place.",
+    "not": "a single contact, which is a person record, or a project's tasks alone, which is the week arrangement.",
+    "with": "each client as a client record and what is to do for one as a task tagged client, made with create_record from what the person says."
+  },
+  "needs": [
+    {
+      "type": "client",
+      "description": "Someone the person works for: a customer, a company, a patron.",
+      "fields": [
+        {
+          "name": "name",
+          "kind": "string",
+          "required": true
+        },
+        {
+          "name": "stage",
+          "kind": "enum",
+          "values": [
+            "lead",
+            "active",
+            "paused",
+            "done"
+          ],
+          "default": "lead",
+          "description": "Where things stand with them."
+        },
+        {
+          "name": "email",
+          "kind": "string"
+        },
+        {
+          "name": "notes",
+          "kind": "text"
+        }
+      ]
+    }
+  ],
+  "blocks": [
+    {
+      "key": "title",
+      "component": "heading",
+      "props": {
+        "text": "Clients",
+        "level": 2
+      },
+      "span": 12,
+      "frame": "bare"
+    },
+    {
+      "key": "active",
+      "component": "collection",
+      "props": {
+        "type": "client",
+        "where": [
+          "stage=active"
+        ],
+        "order": "name",
+        "label": "Active",
+        "show": [
+          "email"
+        ]
+      },
+      "span": 6
+    },
+    {
+      "key": "leads",
+      "component": "collection",
+      "props": {
+        "type": "client",
+        "where": [
+          "stage=lead"
+        ],
+        "order": "-created_at",
+        "label": "Leads"
+      },
+      "span": 6
+    },
+    {
+      "key": "todo",
+      "component": "collection",
+      "props": {
+        "type": "task",
+        "where": [
+          "done=false",
+          "tags=client"
+        ],
+        "order": "due",
+        "show": [
+          "due"
+        ],
+        "label": "To do for clients"
+      },
+      "span": 6
+    },
+    {
+      "key": "meetings",
+      "component": "calendar",
+      "props": {
+        "type": "event",
+        "detail": "brief",
+        "caption": "Meetings"
+      },
+      "span": 6
+    }
+  ]
+}

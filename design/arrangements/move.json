@@ -1,0 +1,62 @@
+{
+  "name": "move",
+  "description": "A house move: what is left to do before and after the day, the day itself and what is booked.",
+  "use": {
+    "when": "the person is moving home and wants the long list of jobs shrinking as they go.",
+    "not": "a single appointment, which is an event.",
+    "with": "each job as a task tagged moving, made with create_record; the move day and bookings as events."
+  },
+  "blocks": [
+    {
+      "key": "title",
+      "component": "heading",
+      "props": {
+        "text": "The move",
+        "level": 2
+      },
+      "span": 12,
+      "frame": "bare"
+    },
+    {
+      "key": "todo",
+      "component": "collection",
+      "props": {
+        "type": "task",
+        "where": [
+          "tags=moving",
+          "done=false"
+        ],
+        "order": "due",
+        "show": [
+          "due"
+        ],
+        "label": "Still to do"
+      },
+      "span": 8
+    },
+    {
+      "key": "dates",
+      "component": "calendar",
+      "props": {
+        "type": "event",
+        "detail": "brief",
+        "caption": "Dates"
+      },
+      "span": 4
+    },
+    {
+      "key": "done",
+      "component": "collection",
+      "props": {
+        "type": "task",
+        "where": [
+          "tags=moving",
+          "done=true"
+        ],
+        "order": "-updated_at",
+        "label": "Done"
+      },
+      "span": 12
+    }
+  ]
+}
