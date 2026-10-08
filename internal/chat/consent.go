@@ -77,6 +77,7 @@ var outward = map[string]func(now, next string, s *Service) question{
 		return question{"Send your reminders to a phone?",
 			fmt.Sprintf("Each reminder's words would also go to %s, through the ntfy service, to whoever subscribes to it (now: %s).", next, orNone(now)),
 			"Yes, send them", "No, don't"}
+	},
 	"server.lan": func(now, next string, _ *Service) question {
 		if next != "on" {
 			return question{"Stop answering on the Wi-Fi?", "Sameway would answer on this computer only, from its next start.", "Yes, stop", "No, keep it"}
