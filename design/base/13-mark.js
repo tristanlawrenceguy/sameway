@@ -47,7 +47,7 @@
       var head = document.querySelector("main .sw-page-head") || document.querySelector("main");
       if (head) head.parentNode === document.body ? head.prepend(fresh) : head.after(fresh);
     }
-    document.dispatchEvent(new CustomEvent("sw:refresh"));
+    sw.emit("refresh");
   }
   // Once focus leaves the list the box was in, the page catches up.
   function refreshWhenLeft(form) {
@@ -58,7 +58,7 @@
       if (e.relatedTarget && list.contains(e.relatedTarget)) return;
       list.removeEventListener("focusout", gone);
       list._waiting = false;
-      if (window.swRefresh) window.swRefresh(0);
+      sw.refresh(0);
     });
   }
   function arm(form) {

@@ -18,7 +18,7 @@ func TestAPageLeftOpenKeepsItsDaysTrue(t *testing.T) {
 	js := string(data)
 	for _, want := range []string{
 		`getAttribute("data-zone")`, `getAttribute("data-today")`, // the server's zone and day
-		"window.swRefresh(0)",                 // the refresh that keeps focus and scroll
+		"sw.refresh(0)",                       // the refresh that keeps focus and scroll
 		`time[datetime*='T']`,                 // a time shown passing
 		`visibilityState === "hidden"`,        // a hidden tab waits
 		`"visibilitychange"`,                  // and catches up when seen

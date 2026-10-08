@@ -23,11 +23,11 @@
   function look() {
     timer = null;
     var card = document.querySelector(".sw-connect[data-wait]");
-    if (!card || !window.swRefresh) return;
+    if (!card) return;
     fetch("/model/wait", { credentials: "same-origin", cache: "no-store" })
       .then(function (r) { if (!r.ok) throw new Error("the server answered " + r.status); return r.text(); })
       .then(function (now) {
-        if (now !== card.getAttribute("data-wait") && !typing(card)) window.swRefresh(0);
+        if (now !== card.getAttribute("data-wait") && !typing(card)) sw.refresh(0);
         else wait();
       })
       // A server that cannot say (another person's page, a server gone) is

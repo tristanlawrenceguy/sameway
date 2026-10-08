@@ -7,9 +7,7 @@
 // browser shows only its broken-picture mark and the words it stands for.
 (function () {
   "use strict";
-  function arm(img) {
-    if (img._armed) return;
-    img._armed = true;
+  sw.arm("[data-component=image] .sw-image__img", function (img) {
     img.addEventListener("error", function () {
       if (img.nextElementSibling && img.nextElementSibling.classList.contains("sw-image__missing")) return;
       var p = document.createElement("span");
@@ -31,8 +29,5 @@
       b.setAttribute("aria-pressed", play ? "true" : "false");
     });
     img.insertAdjacentElement("afterend", b);
-  }
-  function init() { document.querySelectorAll("[data-component=image] .sw-image__img").forEach(arm); }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
-  document.addEventListener("sw:refresh", init);
+  });
 })();

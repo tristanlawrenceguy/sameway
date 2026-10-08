@@ -51,7 +51,7 @@ func TestTheConnectCardNoticesWhatIsInstalled(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{`fetch("/model/wait"`, `getAttribute("data-wait")`, "window.swRefresh(0)", "typing(card)"} {
+	for _, want := range []string{`fetch("/model/wait"`, `getAttribute("data-wait")`, "sw.refresh(0)", "typing(card)"} {
 		if !strings.Contains(string(js), want) {
 			t.Errorf("31-connect-wait.js does not have %s", want)
 		}

@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "postinstall": "playwright install chromium",
-    "test": "node run.mjs && node keyboard.mjs",
+    "test": "node run.mjs && node keyboard.mjs && node behave.mjs",
     "test:axe": "node run.mjs",
     "test:keyboard": "node keyboard.mjs",
+    "test:behave": "node behave.mjs",
     "test:pages": "node pages.mjs && node site.mjs && node move.mjs && node motion.mjs",
     "test:agent": "node agent.mjs"
   },
