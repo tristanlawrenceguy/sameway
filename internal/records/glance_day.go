@@ -1,7 +1,6 @@
-package server
+package records
 
 import (
-	"html/template"
 	"strings"
 	"time"
 
@@ -17,7 +16,7 @@ import (
 
 // dayGlance is a record's first day as a person reads it. done is whether
 // it is ticked.
-func dayGlance(t *schema.Type, rec *store.Record, done bool, now time.Time) (glanceFact, bool) {
+func dayGlance(t *schema.Type, rec *store.Record, done bool, now time.Time) (Fact, bool) {
 	for _, f := range t.Shown() {
 		v, _ := rec.Fields[f.Name].(string)
 		if f.Type != "datetime" || v == "" {
@@ -47,9 +46,9 @@ func dayGlance(t *schema.Type, rec *store.Record, done bool, now time.Time) (gla
 		if when.LeavesDateOut(words) {
 			full = when.Full(v)
 		}
-		return glanceFact{Kind: "day", Field: f.Name, Text: text, Tone: tone, Short: words, Class: class, When: when.Machine(v), Full: full}, true
+		return Fact{Kind: "day", Field: f.Name, Text: text, Tone: tone, Short: words, Class: class, When: when.Machine(v), Full: full}, true
 	}
-	return glanceFact{}, false
+	return Fact{}, false
 }
 
 // dayPassed is whether a stored day or moment is before now: a moment once
@@ -95,22 +94,4 @@ func afterLabel(s string) string {
 		}
 	}
 	return s
-}
-
-// timeHTML puts what a day says in a <time> holding its value, with the
-// date in full as its title when the words leave it out (Today). A screen
-// reader reads the words, which say it on their own; the value is for a
-// machine, the title for a pointer.
-func timeHTML(class, value, full string, inner template.HTML) string {
-	b := "<time"
-	if class != "" {
-		b += ` class="` + class + `"`
-	}
-	if value != "" {
-		b += ` datetime="` + template.HTMLEscapeString(value) + `"`
-	}
-	if full != "" {
-		b += ` title="` + template.HTMLEscapeString(full) + `"`
-	}
-	return b + ">" + string(inner) + "</time>"
 }

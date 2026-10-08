@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -22,18 +23,7 @@ import (
 // at, or a word for one that has gone. Exports use it too, the command
 // line's among them.
 func (s *Server) RefTitle(f schema.Field, id string) string {
-	if id == "" {
-		return ""
-	}
-	t, ok := s.app.Types.Get(f.To)
-	if !ok {
-		return id
-	}
-	rec, err := s.app.Store.Get(f.To, id)
-	if err != nil {
-		return "a " + f.To + " that is no longer here"
-	}
-	return s.title(t, rec)
+	return records.RefTitle(s.app.Store, f, id)
 }
 
 // refItem is a ref on a record's page, as one of its fields: the target's

@@ -34,7 +34,7 @@ func (s *Server) lede(r *http.Request, t *schema.Type, rec *store.Record) templa
 
 // howMany says how many there are under a listing's title, and how many
 // of them are done when the type keeps that, in the words a record says
-// what is in it (glance_count.go).
+// what is in it (records/glance_count.go).
 func howMany(t *schema.Type, recs []*store.Record) template.HTML {
 	text := schema.Count(len(recs), t.Name)
 	if f := t.DoneField(); f != nil {
@@ -45,7 +45,7 @@ func howMany(t *schema.Type, recs []*store.Record) template.HTML {
 			}
 		}
 		if done > 0 {
-			text += " · " + doneWords(f, done)
+			text += " · " + records.DoneWords(f, done)
 		}
 	}
 	return template.HTML(`<p class="sw-lede">` + template.HTMLEscapeString(text) + `</p>`)
@@ -59,18 +59,18 @@ func howMany(t *schema.Type, recs []*store.Record) template.HTML {
 // nil counts it for this record alone.
 type factOpts struct {
 	Made, Boxed, Chips bool
-	Counts             counts
+	Counts             records.Counts
 	// From is who wrote the record's words, with Made; see from.
 	From string
 }
 
-// facts is what a record says at a glance (glance.go), as chips under its
+// facts is what a record says at a glance (records/glance.go), as chips under its
 // title or short words at a row's right: the same on its own page as in
 // its list. With no day to say, a row says when the record last changed;
 // the record's own page says when it was made.
 func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 	now := time.Now()
-	facts := s.glance(t, rec, now, o.Counts)
+	facts := records.Glance(s.app.Store, t, rec, now, o.Counts)
 	day := false
 	for _, f := range facts {
 		day = day || f.Kind == "day"

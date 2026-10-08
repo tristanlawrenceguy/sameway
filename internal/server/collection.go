@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/query"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -96,9 +97,9 @@ func (s *Server) resolveCollectionAt(props map[string]any, block string, at *col
 	}
 	items := make([]any, 0, len(recs))
 	told := s.recordsApart(t, recs)
-	var in counts // what is in each, counted once for the list (glance_count.go)
+	var in records.Counts // what is in each, counted once for the list (records/glance_count.go)
 	if len(show) == 0 && by == nil {
-		in = s.countsOf(t, recs)
+		in = records.CountsOf(s.app.Store, t, recs)
 	}
 	for _, rec := range recs {
 		item := map[string]any{"title": s.title(t, rec), "href": "/t/" + t.Name + "/" + rec.ID}
@@ -107,7 +108,7 @@ func (s *Server) resolveCollectionAt(props map[string]any, block string, at *col
 		}
 		if len(show) > 0 {
 			item["fields"] = s.fieldsOf(t, rec, show)
-		} else if meta := s.glanceText(t, rec, in); meta != "" && by == nil {
+		} else if meta := records.GlanceText(s.app.Store, t, rec, in); meta != "" && by == nil {
 			item["meta"] = meta
 		}
 		if full {
