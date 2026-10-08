@@ -2,6 +2,8 @@ package chat
 
 import (
 	"encoding/json"
+
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // getRecord gives the model a record's fields, so it can answer from what
@@ -12,7 +14,7 @@ import (
 // about, and because it is the one deciding whether the person has a
 // reason to see any of it.
 func (s *Service) getRecord(typeName, id string) toolResult {
-	t, err := s.contentType(typeName)
+	t, err := records.ContentType(s.Store, typeName)
 	if err != nil {
 		return fail("%v", err)
 	}

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -122,7 +123,7 @@ func (s *Service) forYouPrompt() string {
 		return ""
 	}
 	var lines []string
-	for _, t := range s.contentTypes() {
+	for _, t := range records.ContentTypes(s.Store) {
 		for _, f := range t.Fields {
 			if f.Type != "ref" || f.To != PersonType {
 				continue

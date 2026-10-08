@@ -8,6 +8,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -29,7 +30,7 @@ func newFullService(t *testing.T) *chat.Service {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return &chat.Service{Store: st, Registry: reg, HistoryLimit: 10}
+	return &chat.Service{Book: &records.Book{Store: st}, Registry: reg, HistoryLimit: 10}
 }
 
 func TestTurnLeavesReceiptProvenanceAndActivity(t *testing.T) {

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 	"time"
 
@@ -24,32 +23,9 @@ import (
 // are generated from the schema, so a workspace that adds a content type
 // gives the assistant the tool for it without a line of code.
 
-// contentTypes lists the types the assistant may write to: everything the
-// schema declares except the system's own (messages, blocks, activity).
-func (s *Service) contentTypes() []*schema.Type {
-	var out []*schema.Type
-	for _, t := range s.Store.Types().Types {
-		switch {
-		case !t.Content(), t.Name == MessageType, t.Name == BlockType, t.Name == ActivityType:
-			continue
-		}
-		out = append(out, t)
-	}
-	return out
-}
-
-func (s *Service) typeNames() []string {
-	var names []string
-	for _, t := range s.contentTypes() {
-		names = append(names, t.Name)
-	}
-	sort.Strings(names)
-	return names
-}
-
 // recordTools are offered only when the workspace has something to write to.
 func (s *Service) recordTools() []llm.Tool {
-	names := s.typeNames()
+	names := records.TypeNames(s.Store)
 	if len(names) == 0 {
 		return nil
 	}
@@ -89,18 +65,8 @@ func (s *Service) recordTools() []llm.Tool {
 	}
 }
 
-func (s *Service) contentType(name string) (*schema.Type, error) {
-	name = strings.ToLower(strings.TrimSpace(name))
-	for _, t := range s.contentTypes() {
-		if t.Name == name {
-			return t, nil
-		}
-	}
-	return nil, fmt.Errorf("unknown content type %q. The workspace has: %s", name, strings.Join(s.typeNames(), ", "))
-}
-
 func (s *Service) createRecord(typeName string, fields map[string]any) toolResult {
-	t, err := s.contentType(typeName)
+	t, err := records.ContentType(s.Store, typeName)
 	if err != nil {
 		return fail("%v", err)
 	}
@@ -123,7 +89,7 @@ func (s *Service) createRecord(typeName string, fields map[string]any) toolResul
 }
 
 func (s *Service) updateRecord(typeName, id string, fields map[string]any, version string) toolResult {
-	t, err := s.contentType(typeName)
+	t, err := records.ContentType(s.Store, typeName)
 	if err != nil {
 		return fail("%v", err)
 	}
@@ -156,7 +122,7 @@ func (s *Service) updateRecord(typeName, id string, fields map[string]any, versi
 }
 
 func (s *Service) findRecords(typeName, words string, where []string, order string, limit int) toolResult {
-	t, err := s.contentType(typeName)
+	t, err := records.ContentType(s.Store, typeName)
 	if err != nil {
 		return fail("%v", err)
 	}
@@ -195,27 +161,10 @@ func (s *Service) findRecords(typeName, words string, where []string, order stri
 	return toolResult{text: fmt.Sprintf("%s records%s, newest first (id, title, written by). Each title was written by the one on its line; %s.\n<<<record text\n%s\nrecord text>>>", t.Name, matching, Untrusted, strings.Join(lines, "\n"))}
 }
 
-// deleteRecord is not a tool: a record goes when a person deletes it, or
-// when its creation is undone. Either way the log keeps what it was.
-func (s *Service) deleteRecord(typeName, id string) toolResult {
-	t, err := s.contentType(typeName)
-	if err != nil {
-		return fail("%v", err)
-	}
-	if _, err := s.Store.Get(t.Name, id); err != nil {
-		return fail("no %s with id %s", t.Name, id)
-	}
-	_, c, err := Write(s.Store, "deleted", t.Name, id, nil)
-	if err != nil {
-		return fail("could not delete %s %s: %v", t.Name, id, err)
-	}
-	return toolResult{text: fmt.Sprintf("deleted %s %s", t.Name, id), change: &c}
-}
-
 // importRecords makes records of a type from a kept file, through ingest,
 // and says how it went. The file is the original the person added.
 func (s *Service) importRecords(typeName, fileID string, mapping map[string]any) toolResult {
-	t, err := s.contentType(typeName)
+	t, err := records.ContentType(s.Store, typeName)
 	if err != nil {
 		return fail("%v", err)
 	}

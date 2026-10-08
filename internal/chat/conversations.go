@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
@@ -97,7 +98,7 @@ func (s *Service) DeleteChat(id string) error {
 	}
 	// Kept in the log, so the chat can be put back with every message.
 	conv, _ := s.Store.Get(ConversationType, id)
-	before := map[string]any{"messages": keptMessages(msgs)}
+	before := map[string]any{"messages": records.Keep(msgs)}
 	title := ""
 	if conv != nil {
 		before["conversation"] = conv.Fields
@@ -219,7 +220,7 @@ func (s *Service) clearing() (Change, error) {
 	if err != nil {
 		return Change{}, err
 	}
-	c := Change{Action: "cleared", Component: "conversation", ID: s.Current(), Before: map[string]any{"messages": keptMessages(msgs)}}
+	c := Change{Action: "cleared", Component: "conversation", ID: s.Current(), Before: map[string]any{"messages": records.Keep(msgs)}}
 	// The questions the assistant asked were part of the conversation; a
 	// cleared one has no questions still waiting under it.
 	for _, p := range s.Proposals() {

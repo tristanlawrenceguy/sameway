@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -13,17 +14,6 @@ type Canvas struct {
 	ID   string // "" for Home
 	Name string
 	Path string
-}
-
-// HomePath is where the first canvas lives.
-const HomePath = "/"
-
-// CanvasPath is the page for a canvas: Home, or a tab by id.
-func CanvasPath(id string) string {
-	if id == "" {
-		return HomePath
-	}
-	return "/c/" + id
 }
 
 // Canvases lists the tabs in order: Home first, then the records by position.
@@ -51,18 +41,6 @@ func (s *Service) HasCanvas(id string) bool {
 		}
 	}
 	return false
-}
-
-// OnCanvas keeps the blocks that belong to one tab.
-func OnCanvas(blocks []*store.Record, id string) []*store.Record {
-	var out []*store.Record
-	for _, b := range blocks {
-		on, _ := b.Fields["canvas"].(string)
-		if on == id {
-			out = append(out, b)
-		}
-	}
-	return out
 }
 
 // canvasTools are offered when the workspace has the canvas type, which every
@@ -114,33 +92,14 @@ func (s *Service) createCanvas(name string) toolResult {
 }
 
 func (s *Service) removeCanvas(id string) toolResult {
-	if id == "" {
-		return fail("Home is the first canvas and stays; remove the blocks on it instead")
-	}
-	rec, err := s.Store.Get(CanvasType, id)
+	c, err := records.RemoveCanvas(s.Store, id)
 	if err != nil {
-		return fail("no canvas with id %s; the tabs are listed in the prompt", id)
+		return fail("%v", err)
 	}
-	name, _ := rec.Fields["name"].(string)
-	blocks, _ := s.Store.List(BlockType, store.ListOptions{})
-	var gone []*store.Record
-	for _, b := range OnCanvas(blocks, id) {
-		if s.Store.Delete(BlockType, b.ID) == nil {
-			gone = append(gone, b)
-		}
-	}
-	if err := s.Store.Delete(CanvasType, id); err != nil {
-		return fail("could not remove the canvas: %v", err)
-	}
-	// The tab and its blocks go into the log together, so undoing this
-	// puts the whole tab back.
-	before := map[string]any{"blocks": keep(gone)}
-	for k, v := range rec.Fields {
-		before[k] = v
-	}
+	blocks, _ := c.Before["blocks"].([]any)
 	return toolResult{
-		text:   fmt.Sprintf("removed canvas %s (%q) and the %d blocks on it", id, name, len(gone)),
-		change: &Change{Action: "removed", Component: CanvasType, ID: id, Detail: name, Before: before},
+		text:   fmt.Sprintf("removed canvas %s (%q) and the %d blocks on it", id, c.Detail, len(blocks)),
+		change: &c,
 	}
 }
 

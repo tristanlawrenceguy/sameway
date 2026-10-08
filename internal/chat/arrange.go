@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -134,7 +135,7 @@ func (s *Service) arrange(canvas string, items []arrangeItem) toolResult {
 // touched it is not a change of its own.
 func moves(b *store.Record, fields map[string]any) bool {
 	for k, v := range fields {
-		if k != "actor" && k != "agent" && !same(map[string]any{k: v}, map[string]any{k: b.Fields[k]}) {
+		if k != "actor" && k != "agent" && !records.Same(map[string]any{k: v}, map[string]any{k: b.Fields[k]}) {
 			return true
 		}
 	}

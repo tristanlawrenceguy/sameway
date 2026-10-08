@@ -10,6 +10,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -59,7 +60,7 @@ func newService(t *testing.T) (*chat.Service, *fakeProvider) {
 		t.Fatal(err)
 	}
 	fp := &fakeProvider{}
-	return &chat.Service{Store: st, Registry: reg, Provider: fp, HistoryLimit: 10}, fp
+	return &chat.Service{Book: &records.Book{Store: st}, Registry: reg, Provider: fp, HistoryLimit: 10}, fp
 }
 
 func TestSendRunsToolLoop(t *testing.T) {

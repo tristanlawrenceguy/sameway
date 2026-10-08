@@ -8,6 +8,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -50,7 +51,7 @@ type materialItem struct {
 }
 
 func (s *Service) organiseTools() []llm.Tool {
-	if len(s.typeNames()) == 0 {
+	if len(records.TypeNames(s.Store)) == 0 {
 		return nil
 	}
 	return []llm.Tool{{Name: "organise_writing",
@@ -70,7 +71,7 @@ func (s *Service) organiseWriting(typeName, pieceID string, parts []string, mate
 	if typeName == "" {
 		typeName = "note"
 	}
-	t, err := s.contentType(typeName)
+	t, err := records.ContentType(s.Store, typeName)
 	if err != nil {
 		return fail("%v", err)
 	}

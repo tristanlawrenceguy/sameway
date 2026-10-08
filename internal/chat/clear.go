@@ -3,6 +3,7 @@ package chat
 import (
 	"fmt"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -32,5 +33,5 @@ func (s *Service) clearCanvas() toolResult {
 		return toolResult{text: "the canvas was already empty"}
 	}
 	// What was cleared goes in the log, so it can be put back whole.
-	return toolResult{text: fmt.Sprintf("cleared %d blocks; the chat stayed", len(gone)), change: &Change{Action: "cleared", Detail: fmt.Sprintf("%d blocks", len(gone)), Before: map[string]any{"blocks": keep(gone)}}}
+	return toolResult{text: fmt.Sprintf("cleared %d blocks; the chat stayed", len(gone)), change: &Change{Action: "cleared", Detail: fmt.Sprintf("%d blocks", len(gone)), Before: map[string]any{"blocks": records.Keep(gone)}}}
 }

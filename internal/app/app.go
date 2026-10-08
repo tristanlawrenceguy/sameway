@@ -15,6 +15,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/content"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -68,7 +69,7 @@ func Load(dir string, memoryDB bool) (*App, error) {
 	chat.Resay(st) // the log in today's words; see chat/names.go
 	sayTimes(ws)   // on the person's clock; clock.go
 	a.Chat = &chat.Service{
-		Store:        st,
+		Book:         &records.Book{Store: st, Setting: ws.Get},
 		Registry:     reg,
 		HistoryLimit: ws.Config.Chat.HistoryLimit,
 		ExtraPrompt:  ws.Config.Chat.SystemPrompt,
@@ -98,7 +99,6 @@ func Load(dir string, memoryDB bool) (*App, error) {
 		}
 		return nil
 	}
-	a.Chat.Setting = ws.Get
 	a.Chat.AddField, a.Chat.AddType, a.Chat.Reshape = a.AddField, a.AddType, a
 	// Keeping the program current is the program's own business, not the
 	// workspace's: the updater needs nothing from here.

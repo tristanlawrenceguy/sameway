@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -20,12 +21,9 @@ import (
 
 // Service holds the dependencies for one workspace's chat.
 type Service struct {
-	// SetSetting changes one line of workspace.yaml, when there is one:
-	// the pace, which lists show, the model, the name. Set by the app.
-	SetSetting func(key, value string) error
-	// Setting reads one line of workspace.yaml as it is now, for the
-	// questions that say what would change from what; set by the app.
-	Setting func(key string) string
+	// Book is the workspace's records: the store, the settings, the log
+	// and undoing it. See internal/records.
+	*records.Book
 	// Update looks for a new version of the sameway program and installs
 	// it when told to, set by the app; nil when this build cannot update
 	// itself. See internal/update.
@@ -35,7 +33,6 @@ type Service struct {
 	AddField     func(typeName string, f schema.Field) (*schema.Type, error)
 	Reshape      Reshaper // changes a type after it is made; see reshape.go
 	AddType      func(t *schema.Type) (*schema.Type, error)
-	Store        *store.Store
 	Registry     *render.Registry
 	Provider     llm.Provider
 	ProviderErr  error

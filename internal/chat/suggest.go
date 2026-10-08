@@ -7,6 +7,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/prose"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
@@ -74,7 +75,7 @@ func textField(t *schema.Type, name string) (string, error) {
 }
 
 func (s *Service) suggestEdits(typeName, id, field string, edits []suggested) toolResult {
-	t, err := s.contentType(typeName)
+	t, err := records.ContentType(s.Store, typeName)
 	if err != nil {
 		return fail("%v", err)
 	}

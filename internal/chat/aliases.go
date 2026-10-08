@@ -34,6 +34,8 @@ const (
 	ThroughCLI = records.ThroughCLI
 	ThroughMCP = records.ThroughMCP
 	ActorAgent = records.ActorAgent
+
+	HomePath = records.HomePath
 )
 
 type (
@@ -72,4 +74,6 @@ var (
 	WriteAs      = records.WriteAs
 	WriteKept    = records.WriteKept
 	Say          = records.Say
+	CanvasPath   = records.CanvasPath
+	OnCanvas     = records.OnCanvas
 )
