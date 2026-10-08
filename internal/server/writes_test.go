@@ -46,6 +46,7 @@ var writesTheStoreItself = map[string]string{
 	"writedown.go writeWAVHere":     "the same",
 	"schema_change.go RemoveField":  "a type's shape changing, logged as the schema change",
 	"schema_change.go RemoveType":   "the same",
+	"today_nudge.go todayLate":      "every late task moved as one change, a batch, so one Undo takes them all back",
 }
 
 func TestRecordsAreWrittenOneWay(t *testing.T) {
