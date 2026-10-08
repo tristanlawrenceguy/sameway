@@ -49,6 +49,8 @@ var recordRoutes = []route{
 	{pattern: "POST /mail/off", handle: (*Server).mailOff, access: owner, persons: "a mailbox and its password are its owner's to give", reach: outward},
 	{pattern: "POST /mail/task", handle: (*Server).mailTask, access: people, tool: "create_record", reach: inward},
 	{pattern: "POST /mail/sorted", handle: (*Server).mailSorted, access: people, tool: "update_record", reach: inward},
+	{pattern: "POST /sort/keep", handle: (*Server).sortKeep, access: people, tool: "create_record", reach: inward},
+	{pattern: "POST /sort/change", handle: (*Server).sortChange, access: people, tool: "create_record", reach: inward},
 	{pattern: "GET /templates", handle: (*Server).templatesPage, access: people},
 	{pattern: "POST /templates/use", handle: (*Server).templateUse, access: people, tool: "add_arrangement", reach: inward},
 	{pattern: "GET /share", handle: (*Server).sharePage, access: people},

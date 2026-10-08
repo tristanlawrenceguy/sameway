@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
 
@@ -124,7 +123,7 @@ func (s *Server) shareSave(w http.ResponseWriter, r *http.Request) {
 	if title == "" {
 		title = "Saved " + time.Now().Format("2 Jan 15:04")
 	}
-	rec, act, err := records.WriteAs(s.app.Store, s.who(r), "created", shareType, "", map[string]any{"title": clipRunes(title, 200), "body": strings.Join(parts, "\n\n")})
+	rec, act, err := s.writeShare(r, clipRunes(title, 200), strings.Join(parts, "\n\n"), link == "")
 	if err != nil {
 		s.failed(w, r, "Not saved", err, "/share")
 		return

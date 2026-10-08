@@ -184,7 +184,7 @@ func (s *Server) importFile(t *schema.Type, fileID string, m ingest.Mapping) (in
 		m = ingest.Guess(t, tb.Columns)
 	}
 	report := ingest.Import(s.app.Store, t, tb, m)
-	records.Record(s.app.Store, "human", records.Change{Action: "imported", Component: t.Name, Detail: fmt.Sprintf("%d %s from %s", report.Made, schema.Plural(t.Name), name), Href: "/t/" + t.Name, Before: records.Imported(t.Name, report.IDs)})
+	records.Record(s.app.Store, "human", records.Change{Action: "imported", Component: t.Name, Detail: fmt.Sprintf("%d %s from %s", report.Made, schema.Plural(t.Name), name), Href: "/t/" + t.Name, Ops: records.Made(s.app.Store, t.Name, report.IDs)})
 	return report, nil
 }
 

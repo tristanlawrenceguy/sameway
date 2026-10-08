@@ -41,6 +41,9 @@ type Change struct {
 	// Before is the thing as it was before the change, kept in the log so
 	// the change can be undone. It is not part of a receipt.
 	Before map[string]any `json:"-"`
+	// Ops is what the change wrote, each thing as it was and became
+	// (change.go): what a new entry keeps so it can be taken back.
+	Ops []Op `json:"-"`
 	// Undone is the sentence of the entry this change reversed, for the
 	// sentence of this one; Redid says that entry was itself an undo, so
 	// this one puts the original back rather than undoing it again.
@@ -71,6 +74,9 @@ func Record(st *store.Store, actor string, c Change) string {
 	}
 	if c.Before != nil {
 		fields["before"] = c.Before
+	}
+	if len(c.Ops) > 0 {
+		fields["ops"] = opsField(c.Ops)
 	}
 	// Kept for whatever reads the stored words; every surface of sameway
 	// says the entry through Sentence, from the fields.

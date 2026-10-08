@@ -61,7 +61,7 @@ for (const name of readdirSync(componentsDir).sort()) {
 if (!blocks.length) fail("no examples could be placed on a canvas");
 
 const sitePages = ["/", "/chat", "/design", "/search", "/search?q=keyboard", "/activity", "/t/note", `/t/note/${note.id}`, "/t/note/import",
-  "/help", "/share", "/workspaces", "/workspaces/new", "/workspaces/copy", "/workspaces/delete", "/t/nothing-here", `/c/${canvas.id}`];
+  "/help", "/share", "/apps", "/workspaces", "/workspaces/new", "/workspaces/copy", "/workspaces/delete", "/t/nothing-here", `/c/${canvas.id}`];
 const blockLabel = Object.fromEntries(blocks.map((b) => [`/canvas/${b.id}`, b.label]));
 
 // ---- one page -------------------------------------------------------------

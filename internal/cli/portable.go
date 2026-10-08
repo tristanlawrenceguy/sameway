@@ -82,7 +82,7 @@ func (c *ctx) importCmd() error {
 	if len(batch) > 0 {
 		records.Record(a.Store, "human", records.Change{Action: "synced", Component: "content",
 			Detail: fmt.Sprintf("from %s: %d made, %d changed, %d removed", a.Mirror.Dir, rep.Created, rep.Updated, rep.Deleted),
-			Before: records.Batch(batch), Via: records.ThroughCLI})
+			Ops:    records.OpsOf(a.Store, batch), Via: records.ThroughCLI})
 	}
 	c.print(rep, func() {
 		if *dry {
