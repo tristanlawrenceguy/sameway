@@ -78,6 +78,8 @@ var pageActionTools = map[string]string{
 	"/brief":                      "set_setting",
 	"/workspaces/example":         "add_workspace",
 	"/feedback":                   "a person's: what goes to the makers is theirs to read and send",
+	"/backup/cloud":               "set_setting",
+	"/workspaces/from-copy":       "a person's: a copy is a file they choose on their computer",
 	"/at-login":                   "a person's: what starts when this computer does is its owner's choice",
 	"/restart":                    "a person's: restarting ends the assistant's own turn",
 	"/notify/phone":               "set_setting",
