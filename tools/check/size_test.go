@@ -32,17 +32,16 @@ func has(list []string, part string) bool {
 	return false
 }
 
-func TestFileOverWarnLinesWarnsAndOverMaxLinesFails(t *testing.T) {
+func TestFileOverMaxLinesFails(t *testing.T) {
 	root := t.TempDir()
-	write(t, root, "ok.css", strings.Repeat("a\n", WarnLines))
-	write(t, root, "warn.css", strings.Repeat("a\n", WarnLines+1))
+	write(t, root, "ok.css", strings.Repeat("a\n", MaxLines))
 	write(t, root, "fail.css", strings.Repeat("a\n", MaxLines+1))
 	write(t, root, "node_modules/big.js", strings.Repeat("a\n", MaxLines+1))
 	r := checkFileSizes(root)
-	if len(r.warnings) != 1 || !has(r.warnings, "warn.css has 301 lines") {
-		t.Errorf("warnings = %q, want warn.css alone", r.warnings)
+	if len(r.warnings) != 0 {
+		t.Errorf("warnings = %q, want none: the file limit has no warning tier", r.warnings)
 	}
-	if len(r.problems) != 1 || !has(r.problems, "fail.css has 401 lines") {
+	if len(r.problems) != 1 || !has(r.problems, "fail.css has 301 lines (max 300); split by topic") {
 		t.Errorf("problems = %q, want fail.css alone", r.problems)
 	}
 }
