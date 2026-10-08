@@ -39,6 +39,7 @@ func appManifest(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/manifest+json")
 	w.Write([]byte(`{"name":"Sameway","short_name":"Sameway","start_url":"/","scope":"/","display":"standalone",` +
 		`"background_color":"#ffffff","theme_color":"#1a45a8","description":"Your workspace, with an assistant",` +
+		`"share_target":{"action":"/share","method":"POST","enctype":"multipart/form-data","params":{"title":"title","text":"text","url":"url","files":[{"name":"files","accept":["image/*","application/pdf","text/*","audio/*","video/*"]}]}},` +
 		`"icons":[{"src":"/icon-192.png","sizes":"192x192","type":"image/png"},{"src":"/icon-512.png","sizes":"512x512","type":"image/png"},` +
 		`{"src":"/icon-square-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}]}`))
 }
