@@ -175,7 +175,9 @@ whoever asks: who is asking and what they may do (`Visitor`), how a
 record is written and logged (`WriteAs`, `Change`, `Record`), a change
 as the ops it wrote, each thing as it was and became, written all or
 none (`Op`, `Book.Apply`), undoing a change (`Book.Undo`: its ops the
-other way; entries from before ops are read in undo_legacy.go), what a
+other way; entries from before ops are read in undo_legacy.go), who
+hears of a change (`records.Listen`, once per change logged;
+`store.Listen`, once per record written, which automations use), what a
 record and a change are called (`Name`,
 `Sentence`), who wrote a record's words (`Writers`, `RecordView`) and an
 agent key's pace. It sits on `store` and `schema`; the server, MCP, the

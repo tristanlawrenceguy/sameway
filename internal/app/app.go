@@ -112,7 +112,10 @@ func Load(dir string, memoryDB bool) (*App, error) {
 }
 
 // Close releases the store.
-func (a *App) Close() error { return a.Store.Close() }
+func (a *App) Close() error {
+	records.Forget(a.Store)
+	return a.Store.Close()
+}
 
 // Description is the machine-readable summary served at /api/describe and
 // printed by `sameway describe --json`.
