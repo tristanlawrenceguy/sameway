@@ -78,10 +78,11 @@ func routeAt(pattern string) (route, bool) {
 
 // Route is one route as the tests read it: who may use it ("people",
 // "owner", or "" when nobody said), and for a page action the tool that
-// does the same or why it is a person's.
+// does the same or why it is a person's, and where what it changes is
+// ("inward", "outward", "tool", or "" when nobody said; dry_run.go).
 type Route struct {
-	Pattern, Access, Tool, Persons string
-	Public                         bool
+	Pattern, Access, Tool, Persons, Reach string
+	Public                                bool
 }
 
 // Routes is every route, for the tests that every one says who may use
@@ -90,7 +91,7 @@ func Routes() []Route {
 	var out []Route
 	for _, rt := range routeTable {
 		out = append(out, Route{Pattern: rt.pattern, Access: map[routeFor]string{people: "people", owner: "owner"}[rt.access],
-			Tool: rt.tool, Persons: rt.persons, Public: rt.public})
+			Tool: rt.tool, Persons: rt.persons, Public: rt.public, Reach: map[reach]string{inward: "inward", outward: "outward", byTool: "tool"}[rt.reach]})
 	}
 	return out
 }

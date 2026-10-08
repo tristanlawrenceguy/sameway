@@ -185,7 +185,7 @@ func tokens(line string) []string {
 
 // acceptOp is a command card's Yes, carried by a question: never offered
 // to the model, which may only ask.
-var acceptOp = Op{Title: "Accept a command", Tool: llm.Tool{Name: "accept_action"},
+var acceptOp = Op{Title: "Accept a command", Traits: Traits{OpenWorld: true}, Tool: llm.Tool{Name: "accept_action"},
 	Offered: func(*Service, *llm.Tool) bool { return false },
 	Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
 		return s.acceptAction(context.Background(), a.ID)
