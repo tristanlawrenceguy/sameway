@@ -20,7 +20,11 @@ func (s *Service) getRecord(typeName, id string) toolResult {
 	if err != nil {
 		return fail("no %s with id %s. Use find_records to get an id", t.Name, id)
 	}
-	out := s.RecordView(t, rec) // view.go: the same as the API gives
+	// view.go: the same as the API gives, and its days in words; days_shown.go
+	out := struct {
+		RecordView
+		Days string `json:"days_here,omitempty"`
+	}{s.RecordView(t, rec), daysLine(t, rec, s.clock())}
 	raw, err := json.MarshalIndent(out, "", "  ")
 	if err != nil {
 		return fail("%v", err)

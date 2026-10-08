@@ -74,7 +74,7 @@ func TestAssistant(t *testing.T) {
 	}
 	var all []result
 	for _, r := range set {
-		if only != "" && !strings.Contains(r.name, only) {
+		if only != "" && !named(r.name, only) {
 			continue
 		}
 		for run := 1; run <= runs; run++ {
@@ -133,6 +133,10 @@ func runOne(t *testing.T, exe, model string, r request, run int) result {
 	calls := filepath.Join(dir, "calls.log")
 	os.Setenv("SAMEWAY_MCP_LOG", calls)
 	defer os.Unsetenv("SAMEWAY_MCP_LOG")
+	if cfg.Provider == "openai" { // its tools run here, not over MCP
+		os.Setenv("SAMEWAY_TOOL_LOG", calls)
+		defer os.Unsetenv("SAMEWAY_TOOL_LOG")
+	}
 
 	res := result{Request: r.name, Run: run}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
@@ -187,4 +191,15 @@ func build(t *testing.T) string {
 	}
 	t.Fatal("could not build a sameway this machine lets run")
 	return ""
+}
+
+// named is whether a request is one of SAMEWAY_BENCH_ONLY's, a comma list
+// of names or parts of names.
+func named(name, only string) bool {
+	for _, o := range strings.Split(only, ",") {
+		if o = strings.TrimSpace(o); o != "" && strings.Contains(name, o) {
+			return true
+		}
+	}
+	return false
 }

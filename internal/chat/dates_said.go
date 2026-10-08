@@ -21,7 +21,9 @@ var weekdayNames = map[string]time.Weekday{"sunday": time.Sunday, "monday": time
 	"wednesday": time.Wednesday, "thursday": time.Thursday, "friday": time.Friday, "saturday": time.Saturday}
 
 // datesSaid is what a write did to the record's days, in words, or "".
-func (s *Service) datesSaid(t *schema.Type, given map[string]any, rec *store.Record) string {
+// moved says the record had days before, which a weekday the person named
+// is counted from ("move Thursday's to Friday"), not from today.
+func (s *Service) datesSaid(t *schema.Type, given map[string]any, rec *store.Record, moved bool) string {
 	now := s.clock()
 	var said []string
 	var ats []time.Time
@@ -34,11 +36,10 @@ func (s *Service) datesSaid(t *schema.Type, given map[string]any, rec *store.Rec
 			continue
 		}
 		v, _ := rec.Fields[f.Name].(string)
-		at, day, ok := when.Parse(v, now)
+		at, day, ok := when.Stored(v, now.In(time.Local)) // a whole day as its date, a moment here
 		if v == "" || !ok {
 			continue
 		}
-		at = at.In(time.Local) // as the store reads a time without a zone
 		if day {
 			said = append(said, f.Name+" "+at.Format("Monday 2 January 2006"))
 		} else {
@@ -54,6 +55,9 @@ func (s *Service) datesSaid(t *schema.Type, given map[string]any, rec *store.Rec
 	named := s.weekdaysSaid()
 	for _, wd := range named {
 		if on[wd] {
+			if moved {
+				return text
+			}
 			return text + s.notTheComing(ats, named, now)
 		}
 	}

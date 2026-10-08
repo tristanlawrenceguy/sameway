@@ -181,7 +181,7 @@ func (s *Service) sendTurn(ctx context.Context, canvas, text, fileID string, on 
 	}
 	var changes []Change
 	var tools []map[string]any
-	corrected := false
+	corrected, nudged := false, false
 	var p progress
 	for {
 		resp, err := s.complete(ctx, req, on)
@@ -194,6 +194,15 @@ func (s *Service) sendTurn(ctx context.Context, canvas, text, fileID string, on 
 		}
 		if len(resp.ToolCalls) == 0 {
 			reply := strings.TrimSpace(resp.Text)
+			// A small model ends a turn of tool calls with no words a
+			// fifth of the time; asked once, it says what it did. Only a
+			// model server's (OpenAI-style): the Claude API takes no second
+			// person's turn after a tool's, and Claude says what it did.
+			if _, server := s.Provider.(*llm.OpenAI); reply == "" && !nudged && server {
+				nudged = true
+				req.Messages = append(req.Messages, llm.Message{Role: llm.RoleUser, Content: "(Sameway: your reply had no words. Tell the person in a sentence or two what you did, or answer them; call a tool first only if something is still to do.)"})
+				continue
+			}
 			if reply == "" {
 				reply = "(The model returned an empty reply.)"
 			}
