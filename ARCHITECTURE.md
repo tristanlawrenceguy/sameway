@@ -330,8 +330,11 @@ levels; past that the page says so rather than recursing.
 
 Enforced by `make check` and CI, not by convention alone.
 
-- **File size cap**: 300 lines per source file. The lint fails above it. Agents
-  read whole files before editing, so files stay small enough to read.
+- **Function and file size**: a non-test Go function over 80 lines fails the
+  lint, a file over 400 lines fails and one over 300 is a warning. Files named
+  `*_more.go`, `*_extra.go` or `*_helpers.go` fail, since they are split by
+  size rather than topic. Long functions and such files from before the rule
+  are listed in `tools/check/debt.go` and may only shrink.
 - **One concern per file, one README per package** describing what lives there.
 - **Every command has `--json`**, every error has a stable code and a fix hint.
 - **Golden tests**: component template output must match its example HTML.

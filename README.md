@@ -288,7 +288,7 @@ reads how the pages, the API, the command line and MCP fit together.
 ## Developing
 
 ```bash
-make check     # gofmt, go vet, repo lint (300-line file cap), tests
+make check     # gofmt, go vet, repo lint (function and file size), tests
 make golden    # regenerate component example files from templates
 make a11y      # axe-core + keyboard tests over every component example (Node, dev only)
 make run       # serve the example starter workspace

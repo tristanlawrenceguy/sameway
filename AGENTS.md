@@ -5,7 +5,7 @@ This file is for you. Humans should read README.md and CONTRIBUTING.md.
 ## Run and verify
 
 ```bash
-go run ./tools/check          # file-size lint, component folders, tokens
+go run ./tools/check          # function and file size, component folders, tokens
 go test ./...                 # includes golden output for every component
 go vet ./... && gofmt -l .    # both must be clean
 go build -o bin/sameway ./cmd/sameway
@@ -139,8 +139,14 @@ is missing. When you add a way to use the system, add a row here and a test.
 
 ## Rules the tooling enforces
 
-- **300 lines per file.** `tools/check` fails above it. Read the whole file
-  before editing; split a file rather than growing it.
+- **Short functions, files split by topic.** `tools/check` fails a non-test
+  Go function over 80 lines (count from `func` to its closing brace) and a
+  file over 400 lines; a file over 300 is printed as a warning. Long
+  functions from before the rule are listed in `tools/check/debt.go` with
+  their length and may only shrink; when you shorten one, lower or remove
+  its entry. A new file named `*_more.go`, `*_extra.go` or `*_helpers.go`
+  fails: when a file grows, give the function or topic that grew a file
+  named for what it does. Read the whole file before editing.
 - **Golden examples.** A component template must reproduce every example in
   its manifest byte for byte. After changing a template or manifest run
   `UPDATE_GOLDEN=1 go test ./internal/render/` and commit the example files.
