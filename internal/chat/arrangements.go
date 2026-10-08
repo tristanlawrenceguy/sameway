@@ -18,6 +18,7 @@ import (
 
 var arrangementOp = Op{Title: "Add a ready-made arrangement",
 	Words: []string{"arrangement", "layout", "arrange"},
+	Doing: saying("Arranging the page"),
 	Tool: llm.Tool{
 		Name:        "add_arrangement",
 		Description: "Add a whole arrangement of blocks for a job the person named, laid out as the catalogue says, in one call. Each block shows the person's own records as they are (their tasks, events, notes, habits), kept current, and says so on the page when there are none yet; nothing in it is example text. The result says what each block shows. To put things on it, create the records the person gave you with create_record; never invent any. An arrangement that needs a type the workspace lacks adds nothing and says how to make it.",

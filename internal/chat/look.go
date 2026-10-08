@@ -21,6 +21,7 @@ const lookLimit = 16000
 var lookOps = []Op{{Title: "Read a page", Traits: Traits{ReadOnly: true, Idempotent: true},
 	Access: ForOwner,
 	Words:  []string{"page", "screen", "see", "look", "this"},
+	Doing:  saying("Looking at the page"),
 	Tool: llm.Tool{Name: "look_at_page",
 		Description: "See a page of this workspace the way the person gets it: its headings, landmarks and controls with what they hold, what is hidden, where Tab goes, and every script error and structural problem. Use it when the person says something does not work, look right, or cannot be reached, doing what they did as steps, and to check a page after you change it, before saying it is done. It changes nothing.",
 		Schema: obj(map[string]any{

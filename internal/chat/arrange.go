@@ -19,7 +19,8 @@ import (
 // lose a block or break the outline.
 
 var arrangeOp = Op{Title: "Lay a tab out", Traits: Traits{Idempotent: true},
-	Core: true,
+	Core:  true,
+	Doing: saying("Arranging the page"),
 	Tool: llm.Tool{
 		Name:        "arrange_canvas",
 		Description: "Lay out a whole tab in one change: list every block on it (from the canvas listing) in the order it should be read, top to bottom, each with the width and place it should have. The list order becomes the order on the page; what an item leaves out stays as it is. Use it after adding something, to move and reshape what was already there so the page reads well: what matters most first, related things together, rows of twelve filled, headings in order. Blocks in the header and footer may be left out. One Undo takes the whole arrangement back. Refused, with nothing changed, when a block is missing or listed twice, or a heading would skip a level.",

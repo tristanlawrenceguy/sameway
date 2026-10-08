@@ -36,6 +36,7 @@ const mostSuggested = 15
 
 var suggestOps = []Op{{Title: "Suggest changes to some writing",
 	Words: []string{"spelling", "grammar", "proofread", "edit", "tighten", "feedback", "writing", "improve"},
+	Doing: saying("Suggesting changes"),
 	Tool: llm.Tool{Name: "suggest_edits",
 		Description: "Suggest changes to a person's writing instead of making them; they accept or decline each on its page. Judge each case: a plain command (fix the spelling) you just do with update_record; suggest when the changes are judgement calls on their words. Do only the help asked for, keep their voice, small changes, at most 15. Feedback on structure is said in words, not suggested. Copy each passage exactly from get_record, long enough to occur once.",
 		Schema: obj(map[string]any{

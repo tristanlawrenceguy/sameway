@@ -66,88 +66,37 @@ func thing(component string, props map[string]any) string {
 	return noun
 }
 
-// describe says a tool call in a few words a person can watch go by.
+// describe says a tool call in a few words a person can watch go by, as
+// its Op's Doing says it, or its name in words.
 func describe(call llm.ToolCall) string {
 	var args callArgs
 	json.Unmarshal(call.Args, &args)
-	a := an
-	title := ""
-	if s, _ := args.Fields["title"].(string); strings.TrimSpace(s) != "" {
-		title = " called " + trim.Clip(strings.TrimSpace(s), 40)
-	}
-	switch call.Name {
-	case "add_component":
-		return "Adding" + an(thing(args.Component, args.Props))
-	case "update_component":
-		return "Changing a block"
-	case "remove_component":
-		return "Removing a block"
-	case "create_record":
-		return "Adding" + or(a(schema.Words(args.Type)), " a record") + title
-	case "import_records":
-		return "Importing " + or(schema.Plural(args.Type), "records") + " from a file"
-	case "organise_writing":
-		return "Organising the writing"
-	case "suggest_edits":
-		return "Suggesting changes"
-	case "record_meeting":
-		return "Setting the meeting to ask to be recorded"
-	case "write_up_meeting":
-		return "Writing up the meeting"
-	case "update_record":
-		return "Updating" + or(a(schema.Words(args.Type)), " a record")
-	case "delete_record":
-		return "Deleting" + or(a(schema.Words(args.Type)), " a record")
-	case "find_records":
-		if args.Type == "" {
-			return "Looking up your records"
-		}
-		return "Looking up your " + schema.Plural(args.Type)
-	case "get_record":
-		return "Reading" + or(a(schema.Words(args.Type)), " a record")
-	case "look_at_page":
-		return "Looking at the page"
-	case "search":
-		if q := strings.TrimSpace(args.Query); q != "" {
-			return "Searching for " + trim.Clip(q, 40)
-		}
-		return "Searching"
-	case "propose_change":
-		return "Asking you about a change"
-	case "set_setting":
-		return "Changing " + or(args.Key, "a setting")
-	case "add_type":
-		return "Changing the shape of" + or(a(schema.Words(args.Type)), " the content")
-	case "run_action":
-		return "Running an action"
-	case "add_arrangement", "arrange_canvas":
-		return "Arranging the page"
-	case "clear_canvas":
-		return "Clearing the page"
-	case "undo_change":
-		return "Undoing a change"
-	case "create_canvas":
-		return "Adding a tab" + or(called(args.Name), "")
-	case "remove_canvas":
-		return "Removing a tab"
-	case "add_field", "change_field":
-		return "Changing the shape of" + or(a(schema.Words(args.Type)), " the content")
-	case "clear_conversation":
-		return "Clearing the conversation"
-	case "add_workspace":
-		return "Making a workspace"
-	case "open_workspace":
-		return "Opening a workspace"
-	case "restore_workspace":
-		return "Bringing a workspace back"
-	case "let_in", "take_agent_away":
-		return "Changing who can use this"
-	case "update_sameway":
-		return "Updating Sameway"
-	case "write_down":
-		return "Writing down a recording"
+	if op := opNamed(call.Name); op.Doing != nil {
+		return op.Doing(args)
 	}
 	return strings.ToUpper(call.Name[:1]) + strings.ReplaceAll(call.Name[1:], "_", " ")
+}
+
+// saying is an op's Doing when it is the same words every time.
+func saying(words string) func(callArgs) string {
+	return func(callArgs) string { return words }
+}
+
+// called is the title a call gives a record: " called Dentist", or "".
+func (a callArgs) called() string {
+	s, _ := a.Fields["title"].(string)
+	return called(s)
+}
+
+func searching(a callArgs) string {
+	if q := strings.TrimSpace(a.Query); q != "" {
+		return "Searching for " + trim.Clip(q, 40)
+	}
+	return "Searching"
+}
+
+func reshaping(a callArgs) string {
+	return "Changing the shape of" + or(an(schema.Words(a.Type)), " the content")
 }
 
 // doing is describe with what the store knows: a block changed or removed
