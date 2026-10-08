@@ -17,6 +17,7 @@ func (s *Server) routes() {
 	s.modelRoutes(m)                                       // model_key.go
 	s.bringRoutes(m)                                       // bring.go
 	s.calendarRoutes(m)                                    // calendar_links.go
+	s.shareRoutes(m)                                       // share.go
 	s.todayRoutes(m)                                       // today.go
 	m.HandleFunc("POST /workspaces/example", s.tryExample) // example.go
 	m.HandleFunc("POST /feedback", s.feedback)             // feedback.go
