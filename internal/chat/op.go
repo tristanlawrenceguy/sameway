@@ -16,6 +16,8 @@ type Op struct {
 	Title    string // what it does, as a person reads it: "Make a record"
 	Traits
 	Access Access
+	Core   bool     // given to a small model here every turn (toolset.go)
+	Words  []string // words in a message that bring it to a small model here
 	// Offered says whether this workspace offers it, and fills in what its
 	// schema names from the workspace (its content types, its kinds) on
 	// the copy it is given; nil is always.
@@ -69,6 +71,13 @@ func OpFor(name string) (Op, bool) {
 		return Op{}, false
 	}
 	return registry[i], true
+}
+
+// opNamed is the op of that name, or none: an unknown name is not core,
+// has no words and nothing to describe it.
+func opNamed(name string) Op {
+	op, _ := OpFor(name)
+	return op
 }
 
 // allTools is every op this workspace offers, as the model reads it.

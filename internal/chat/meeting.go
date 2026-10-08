@@ -28,6 +28,7 @@ type meetingItem struct {
 var heardAt = map[string]any{"type": "string", "description": "Where in the recording it was said, as the transcript's [m:ss] or [h:mm:ss] gives it, such as 12:03. Leave out when it was not."}
 
 var meetingOps = []Op{{Title: "Write up a meeting",
+	Words: []string{"meeting", "transcript", "recording", "minutes", "write up", "write-up"},
 	Tool: llm.Tool{Name: "write_up_meeting",
 		Description: "Write up a meeting from its recording's transcript: a short summary, what was decided, and the tasks that came up, each with where in the recording it was said. Read the recording with get_record on file first. Give the event when the meeting is one already, the recording when it is not and a meeting is made for it, or both to join them. It is written in one go and undone in one go; the decisions and tasks link to the line they came from.",
 		Schema: obj(map[string]any{
