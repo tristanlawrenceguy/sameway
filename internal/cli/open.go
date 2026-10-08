@@ -113,6 +113,7 @@ func (c *ctx) openCmd() error {
 	h.KeepCalendars(ctx) // calendars kept in step every hour
 	h.KeepBrief(ctx)     // the morning brief, when one is set
 	h.KeepCloudCopy(ctx) // a daily copy in the cloud folder, when one is chosen
+	h.KeepCloudSync(ctx) // other computers kept in step through it, when chosen
 	a.Chat.StartSchedule(ctx)
 	a.Chat.StartAutomating() // actions that run when something happens; chat/automate.go
 	// Daily copies are kept either way; a double-click's window does not list them.

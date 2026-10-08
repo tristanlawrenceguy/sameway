@@ -47,6 +47,7 @@ func (c *ctx) serveCmd() error {
 	h.KeepCalendars(ctx)
 	h.KeepBrief(ctx)     // the morning brief, when one is set
 	h.KeepCloudCopy(ctx) // a daily copy in the cloud folder, when one is chosen
+	h.KeepCloudSync(ctx) // other computers kept in step through it, when chosen
 	h.WriteDownInBackground()
 	keepSnapshots(ctx, c.Stdout, a)
 	connectDevices(ctx, c.Stdout, a)
