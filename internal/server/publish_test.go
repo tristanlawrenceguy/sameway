@@ -28,7 +28,7 @@ func public(t *testing.T, h http.Handler, method, path, body string) *httptest.R
 func TestTheInternetReadsOnlyWhatIsPublished(t *testing.T) {
 	a, h := newApp(t)
 	srv := h.(*server.Server)
-	a.Chat.Owner = records.Visitor{Access: records.Owner, Login: "me@example.com", Name: "Me"}
+	a.Records.Owner = records.Visitor{Access: records.Owner, Login: "me@example.com", Name: "Me"}
 	a.Chat.Say("the owner's private words")
 	n, _ := a.Store.Create("note", map[string]any{"title": "Sourdough", "body": "flour, water, salt"})
 	a.Store.Create("task", map[string]any{"title": "Secret errand"})

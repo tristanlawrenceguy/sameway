@@ -24,7 +24,7 @@ func (s *Server) who(r *http.Request) records.Who {
 	v := records.VisitorOf(r.Context())
 	w := records.Who{Actor: "human", Via: v.Device, By: v.Who(), ByLogin: v.Login}
 	if w.ByLogin == "" && v.Owner() {
-		w.ByLogin = s.app.Chat.Owner.Login
+		w.ByLogin = s.app.Records.Owner.Login
 	}
 	return w
 }

@@ -53,7 +53,7 @@ func TestAnAgentFollowsChanges(t *testing.T) {
 	}
 
 	// Someone let in reads the changes to what they may read, not who.
-	a.Chat.SetSetting = func(string, string) error { return nil }
+	a.Records.SetSetting = func(string, string) error { return nil }
 	records.Record(a.Store, "human", records.Change{Action: "set", Component: "ui.pace", Detail: "quick"})
 	editor := records.Visitor{Name: "Bob", Login: "bob@example.com", Access: records.Edit}
 	var theirs changesOut

@@ -122,7 +122,9 @@ func (s *Server) todayPage(w http.ResponseWriter, r *http.Request) {
 	section("Tasks", l.Tasks)
 	section("Events", l.Events)
 	section("Reminders", l.Reminders)
-	if l.count() == 0 {
+	mail := s.mailSection() // mail_sort.go
+	b.WriteString(mail)
+	if l.count() == 0 && mail == "" {
 		b.WriteString(string(s.component("empty", map[string]any{"message": "Nothing is due today, and nothing is late."})))
 	}
 	s.page(w, r, "Today", template.HTML(b.String()), pageOptions{Lede: template.HTML(now.Format("Monday 2 January"))})
@@ -206,11 +208,11 @@ func (s *Server) briefSet(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if s.app.Chat.SetSetting == nil {
+	if s.app.Records.SetSetting == nil {
 		s.failed(w, r, "Not set", errors.New("this workspace has no settings file"), "/help")
 		return
 	}
-	if err := s.app.Chat.SetSetting("brief.at", at); err != nil {
+	if err := s.app.Records.SetSetting("brief.at", at); err != nil {
 		s.failed(w, r, "Not set", err, "/help")
 		return
 	}

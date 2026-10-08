@@ -32,6 +32,9 @@ type App struct {
 	// Mirror keeps content/ as the portable form of every record.
 	Mirror content.Mirror
 	Chat   *chat.Service
+	// Records are the workspace's records as every way in keeps them: the
+	// same Book the chat is built on. See internal/records.
+	Records *records.Book
 
 	schemaSeen schemaWatch // what schema/ held when last read; see reload.go
 }
@@ -60,7 +63,7 @@ func Load(dir string, memoryDB bool) (*App, error) {
 		st.Close()
 		return nil, err
 	}
-	a := &App{Workspace: ws, Types: types, Store: st, Registry: reg}
+	a := &App{Workspace: ws, Types: types, Store: st, Registry: reg, Records: &records.Book{Store: st, Setting: ws.Get}}
 	// The conversation, its questions and the log are history, not content;
 	// everything else is written to content/ as it changes.
 	a.Mirror = content.Mirror{Dir: ws.ContentDir(), Types: types, Skip: ownersTypes(types)}
@@ -69,7 +72,7 @@ func Load(dir string, memoryDB bool) (*App, error) {
 	records.Resay(st) // the log in today's words; see records/names.go
 	sayTimes(ws)      // on the person's clock; clock.go
 	a.Chat = &chat.Service{
-		Book:         &records.Book{Store: st, Setting: ws.Get},
+		Book:         a.Records,
 		Registry:     reg,
 		HistoryLimit: ws.Config.Chat.HistoryLimit,
 		ExtraPrompt:  ws.Config.Chat.SystemPrompt,
@@ -82,7 +85,7 @@ func Load(dir string, memoryDB bool) (*App, error) {
 	llmCfg.Executable, _ = os.Executable()
 	a.Chat.Provider, a.Chat.ProviderErr = llm.New(llmCfg)
 	a.Chat.Allow = allowList(ws.Config.Actions.Allow)
-	a.Chat.SetSetting = func(key, value string) error {
+	a.Records.SetSetting = func(key, value string) error {
 		if err := ws.Set(key, value); err != nil {
 			return err
 		}

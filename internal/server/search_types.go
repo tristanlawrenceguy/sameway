@@ -119,7 +119,7 @@ func (s *Server) apiSearch(w http.ResponseWriter, r *http.Request) {
 		search.Hit
 		WrittenBy string `json:"written_by"`
 	}
-	writers := s.app.Chat.Writers()
+	writers := s.app.Records.WritersFor(false)
 	hits := make([]written, 0, len(res.Hits))
 	for _, h := range res.Hits {
 		hits = append(hits, written{h, writers.OfID(h.Type, h.ID).Words})

@@ -183,11 +183,11 @@ func (s *Server) reviewLine() string {
 func (s *Server) reviewOn(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	on := strings.ToLower(strings.TrimSpace(r.PostForm.Get("on")))
-	if s.app.Chat.SetSetting == nil {
+	if s.app.Records.SetSetting == nil {
 		s.failed(w, r, "Not set", errors.New("this workspace has no settings file"), "/help")
 		return
 	}
-	if err := s.app.Chat.SetSetting("review.on", on); err != nil {
+	if err := s.app.Records.SetSetting("review.on", on); err != nil {
 		s.failed(w, r, "Not set", err, "/help")
 		return
 	}

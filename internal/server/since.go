@@ -136,7 +136,7 @@ func (s *Server) byOther(e *store.Record, key string) bool {
 	login, _ := e.Fields["by_login"].(string)
 	by, _ := e.Fields["by"].(string)
 	if login == "" && by == "" {
-		login = s.app.Chat.Owner.Login
+		login = s.app.Records.Owner.Login
 		if login == "" {
 			login = "owner"
 		}

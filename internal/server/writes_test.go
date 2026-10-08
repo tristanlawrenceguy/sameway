@@ -110,7 +110,7 @@ func TestEveryWayInLeavesTheSameTrail(t *testing.T) {
 				if e.Fields["actor"] != actor {
 					t.Errorf("%s: %s is logged as %v's, not %s's", way, action, e.Fields["actor"], actor)
 				}
-				if !a.Chat.Undoable(e) {
+				if !a.Records.Undoable(e) {
 					t.Errorf("%s: %s cannot be undone", way, action)
 				}
 				return

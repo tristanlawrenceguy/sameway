@@ -38,7 +38,7 @@ func (s *Server) line(r *store.Record, canUndo bool) map[string]any {
 	}
 	href := s.hrefFor(r)
 	s.say(props, r.Fields, href)
-	if canUndo && s.app.Chat.Undoable(r) {
+	if canUndo && s.app.Records.Undoable(r) {
 		props["undo"] = "/activity/" + r.ID + "/undo"
 	}
 	return props

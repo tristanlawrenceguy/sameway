@@ -41,7 +41,7 @@ func TestTheOtherVersionIsOfferedOnThePage(t *testing.T) {
 // Someone else here is said, with where they are; oneself never is.
 func TestWhoElseIsHere(t *testing.T) {
 	a, h := newApp(t)
-	a.Chat.Owner = records.Visitor{Access: records.Owner, Login: "me@example.com", Name: "Me"}
+	a.Records.Owner = records.Visitor{Access: records.Owner, Login: "me@example.com", Name: "Me"}
 	hana := records.Visitor{Name: "Hana", Login: "hana@example.com", Access: records.Edit}
 	as(t, h, hana, http.MethodGet, "/t/note", "", "")
 	page := get(t, h, "/").Body.String()
@@ -67,7 +67,7 @@ func TestWhoElseIsHere(t *testing.T) {
 func TestSomethingForYouReachesYou(t *testing.T) {
 	mine, hMine := newApp(t)
 	hana, hHana := newApp(t)
-	mine.Chat.Owner = records.Visitor{Access: records.Owner, Login: "me@example.com", Name: "Me"}
+	mine.Records.Owner = records.Visitor{Access: records.Owner, Login: "me@example.com", Name: "Me"}
 	rang := make(chan string, 4)
 	hMine.(*server.Server).OnRing(func(title, text, url string) { rang <- title })
 

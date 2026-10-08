@@ -64,7 +64,7 @@ func (s *Server) discard(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, back, http.StatusSeeOther)
 		return
 	}
-	if err := s.app.Chat.UndoAs("human", entry.ID); err != nil {
+	if err := s.app.Records.UndoAs("human", entry.ID); err != nil {
 		http.Redirect(w, r, back, http.StatusSeeOther)
 		return
 	}

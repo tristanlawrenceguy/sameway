@@ -85,7 +85,7 @@ func (s *Server) changesSince(since time.Time, limit int, owner, start bool) ([]
 		cursor = time.Now().UTC().Format(time.RFC3339Nano)
 	}
 	var out []map[string]any
-	writers := s.app.Chat.Writers()
+	writers := s.app.Records.WritersFor(false)
 	for _, e := range all {
 		if !e.CreatedAt.After(since) {
 			continue
@@ -124,7 +124,7 @@ func (s *Server) change(e *store.Record, owner bool, writers *records.Writers) m
 	}
 	if owner {
 		c["said"], c["entry"] = records.Sentence(s.app.Store, e.Fields), e.ID
-		if s.app.Chat.Undoable(e) {
+		if s.app.Records.Undoable(e) {
 			c["undo"] = "/activity/" + e.ID + "/undo"
 		}
 	}

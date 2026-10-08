@@ -104,8 +104,8 @@ func (s *Server) phoneForget(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) setSetting(key, value string) {
-	if s.app.Chat.SetSetting != nil {
-		s.app.Chat.SetSetting(key, value)
+	if s.app.Records.SetSetting != nil {
+		s.app.Records.SetSetting(key, value)
 	}
 }
 

@@ -197,7 +197,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 			s.component("button", map[string]any{"label": "Run " + trimLabel(title), "type": "submit", "variant": "primary"}))
 	}
 	// A change in the log is taken back from its own page too.
-	if t.Name == records.ActivityType && s.app.Chat.Undoable(rec) {
+	if t.Name == records.ActivityType && s.app.Records.Undoable(rec) {
 		fmt.Fprintf(&b, `<form method="post" action="/activity/%s/undo"><input type="hidden" name="from" value="/t/%s/%s">%s</form>`, rec.ID, t.Name, rec.ID,
 			s.component("button", map[string]any{"label": "Undo", "type": "submit", "variant": "secondary"}))
 	}

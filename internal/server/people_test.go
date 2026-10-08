@@ -18,8 +18,8 @@ import (
 func TestAChangeFromAnotherHostIsTheirs(t *testing.T) {
 	mine, hMine := newApp(t)
 	hana, hHana := newApp(t)
-	mine.Chat.Owner = records.Visitor{Access: records.Owner, Login: "tristan@example.com", Name: "Tristan"}
-	hana.Chat.Owner = records.Visitor{Access: records.Owner, Login: "hana@example.com", Name: "Hana"}
+	mine.Records.Owner = records.Visitor{Access: records.Owner, Login: "tristan@example.com", Name: "Tristan"}
+	hana.Records.Owner = records.Visitor{Access: records.Owner, Login: "hana@example.com", Name: "Hana"}
 	srv := httptest.NewServer(hHana)
 	defer srv.Close()
 

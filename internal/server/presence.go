@@ -68,11 +68,11 @@ func (s *Server) whoAsks(r *http.Request) (string, string) {
 	if v.Login != "" {
 		name := v.Who()
 		if v.Owner() {
-			name = s.app.Chat.Owner.Name
+			name = s.app.Records.Owner.Name
 		}
 		return strings.ToLower(v.Login), name
 	}
-	return strings.ToLower(s.app.Chat.Owner.Login), s.app.Chat.Owner.Name
+	return strings.ToLower(s.app.Records.Owner.Login), s.app.Records.Owner.Name
 }
 
 // PresentHere is who is here on this computer just now, for the others.

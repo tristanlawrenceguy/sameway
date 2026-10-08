@@ -45,7 +45,7 @@ func TestTheAPIArrangesATabInOneChange(t *testing.T) {
 	if e.Fields["action"] != "arranged" || e.Fields["summary"] != "layout-test (through the API) arranged Home, 2 blocks" {
 		t.Errorf("one entry, the agent's: %v", e.Fields)
 	}
-	if err := a.Chat.UndoAs("human", e.ID); err != nil {
+	if err := a.Records.UndoAs("human", e.ID); err != nil {
 		t.Fatal(err)
 	}
 	blk, _ := a.Store.Get(records.BlockType, ids[0])

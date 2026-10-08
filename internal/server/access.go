@@ -18,7 +18,7 @@ import (
 // else is told they have asked, and the owner is asked in the chat.
 func (s *Server) Admit(ctx context.Context, login, name, device string, owner bool) (context.Context, string, bool) {
 	v := records.Visitor{Login: login, Name: name, Device: device}
-	p := s.app.Chat.PersonByEmail(login)
+	p := s.app.Records.PersonByEmail(login)
 	if p != nil {
 		v.Person = p.ID
 		if n, _ := p.Fields["name"].(string); n != "" {

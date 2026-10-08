@@ -21,7 +21,7 @@ func (s *Server) undo(w http.ResponseWriter, r *http.Request) {
 			what = strings.TrimSuffix(said, ".") + "."
 		}
 	}
-	if err := s.app.Chat.UndoAs("human", r.PathValue("id")); err != nil {
+	if err := s.app.Records.UndoAs("human", r.PathValue("id")); err != nil {
 		s.failed(w, r, "Not undone", err, "/")
 		return
 	}

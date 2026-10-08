@@ -130,7 +130,7 @@ var sentenceEnd = regexp.MustCompile(`[.!?]["'”’)]?\s+`)
 // its name where the log has one, or the assistant. It is said in words
 // as well as by colour, so nobody depends on the colour to know.
 func (s *Server) suggestedBy(sg *store.Record) (actor, by string) {
-	if w := s.app.Chat.Writers().Of(records.SuggestionType, sg); strings.HasSuffix(w.Words, "an agent") {
+	if w := s.app.Records.WritersFor(false).Of(records.SuggestionType, sg); strings.HasSuffix(w.Words, "an agent") {
 		return "agent", w.Words
 	}
 	return "assistant", "the assistant"

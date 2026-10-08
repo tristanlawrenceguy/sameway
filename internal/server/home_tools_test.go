@@ -30,7 +30,7 @@ func TestTheAssistantClearsTheConversation(t *testing.T) {
 	entries, _ := a.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true})
 	for _, e := range entries {
 		if e.Fields["action"] == "cleared" && e.Fields["target"] == "conversation" {
-			if e.Fields["actor"] != "assistant" || !a.Chat.Undoable(e) {
+			if e.Fields["actor"] != "assistant" || !a.Records.Undoable(e) {
 				t.Errorf("the clearing is the assistant's and can be undone: %v", e.Fields)
 			}
 			return

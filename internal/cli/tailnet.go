@@ -103,7 +103,7 @@ func (n *tailnetNode) say(s tailnet.Status) {
 		n.client = s.Client
 	}
 	if s.OwnerLogin != "" {
-		n.a.Chat.Owner = records.Visitor{Access: records.Owner, Login: s.OwnerLogin, Name: s.OwnerName}
+		n.a.Records.Owner = records.Visitor{Access: records.Owner, Login: s.OwnerLogin, Name: s.OwnerName}
 	}
 	if s.State == tailnet.Off || s.State == tailnet.Failed {
 		n.client = nil

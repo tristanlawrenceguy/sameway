@@ -19,12 +19,12 @@ func (s *Server) whoDid(entry *store.Record) (string, int) {
 	}
 	login, _ := entry.Fields["by_login"].(string)
 	by, _ := entry.Fields["by"].(string)
-	if login == "" && by == "" || login != "" && strings.EqualFold(login, s.app.Chat.Owner.Login) {
+	if login == "" && by == "" || login != "" && strings.EqualFold(login, s.app.Records.Owner.Login) {
 		return "", 0
 	}
 	name := by
 	if name == "" {
-		if p := s.app.Chat.PersonByEmail(login); p != nil {
+		if p := s.app.Records.PersonByEmail(login); p != nil {
 			name, _ = p.Fields["name"].(string)
 		}
 	}

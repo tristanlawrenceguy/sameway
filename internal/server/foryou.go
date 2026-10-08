@@ -28,7 +28,7 @@ func (s *Server) personChip(label, id, name string) string {
 // forYou hears of a record written because another computer sent it, and
 // tells the owner of this one when it is newly theirs.
 func (s *Server) forYou(typeName, id string, rec *store.Record) {
-	me := strings.ToLower(s.app.Chat.Owner.Login)
+	me := strings.ToLower(s.app.Records.Owner.Login)
 	t, ok := s.app.Types.Get(typeName)
 	if rec == nil || me == "" || !ok || s.notify == nil {
 		return

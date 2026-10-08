@@ -83,7 +83,7 @@ func TestTasksMakeABoardByStatus(t *testing.T) {
 	if rec, _ := a.Store.Get("task", ids["Dig the pond"]); rec.Fields["status"] != "done" {
 		t.Errorf("ticked, a task is Done, got %v", rec.Fields["status"])
 	}
-	if err := a.Chat.UndoAs("owner", ""); err != nil {
+	if err := a.Records.UndoAs("owner", ""); err != nil {
 		t.Fatal(err)
 	}
 	if rec, _ := a.Store.Get("task", ids["Dig the pond"]); rec.Fields["status"] != "doing" || rec.Fields["done"] != false {

@@ -131,7 +131,7 @@ func (s *Server) apiList(w http.ResponseWriter, r *http.Request) {
 	if page > 0 {
 		recs, about = onePage(r, recs, size, page)
 	}
-	writers := s.app.Chat.Writers()
+	writers := s.app.Records.WritersFor(false)
 	out := make([]written, 0, len(recs))
 	for _, rec := range recs {
 		tr := trimmed(rec, only)

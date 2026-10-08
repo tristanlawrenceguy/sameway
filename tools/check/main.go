@@ -1,6 +1,9 @@
 // Command check lints the repository so AI-written contributions stay readable:
 //
-//   - no source file over MaxLines lines (agents read whole files before editing)
+//   - a source file over WarnLines lines is said; over MaxLines fails
+//   - a non-test Go function over MaxFuncLines fails, unless it is one of the
+//     long functions recorded in debt.go, which may only shrink
+//   - no new Go file named *_more, *_extra or *_helpers (split by size, not topic)
 //   - every component folder has manifest.json, template.html, style.css, README.md, examples/
 //   - design/tokens/tokens.css matches tokens.json
 //
@@ -12,59 +15,34 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/tokens"
 )
 
-// MaxLines is the hard cap for any source file.
-const MaxLines = 300
-
-var sourceExt = map[string]bool{".go": true, ".css": true, ".html": true, ".js": true, ".mjs": true, ".json": true, ".yaml": true}
-
-var skipDirs = map[string]bool{".git": true, "node_modules": true, "bin": true, "dist": true}
-
 func main() {
-	var problems []string
-	problems = append(problems, checkFileSizes(".")...)
-	problems = append(problems, checkComponents("design/components")...)
-	problems = append(problems, checkTokens()...)
-	for _, p := range problems {
+	r := run(".")
+	for _, w := range r.warnings {
+		fmt.Println("check: warning:", w)
+	}
+	for _, p := range r.problems {
 		fmt.Fprintln(os.Stderr, "check:", p)
 	}
-	if len(problems) > 0 {
-		fmt.Fprintf(os.Stderr, "check: %d problem(s)\n", len(problems))
+	if len(r.problems) > 0 {
+		fmt.Fprintf(os.Stderr, "check: %d problem(s)\n", len(r.problems))
 		os.Exit(1)
 	}
 	fmt.Println("check: ok")
 }
 
-func checkFileSizes(root string) []string {
-	var problems []string
-	filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
-		if err != nil {
-			return nil
-		}
-		if d.IsDir() {
-			if skipDirs[d.Name()] {
-				return filepath.SkipDir
-			}
-			return nil
-		}
-		if !sourceExt[filepath.Ext(path)] || strings.HasSuffix(path, "go.sum") {
-			return nil
-		}
-		data, err := os.ReadFile(path)
-		if err != nil {
-			return nil
-		}
-		lines := bytes.Count(data, []byte("\n"))
-		if lines > MaxLines {
-			problems = append(problems, fmt.Sprintf("%s has %d lines (max %d); split it", filepath.ToSlash(path), lines, MaxLines))
-		}
-		return nil
-	})
-	return problems
+// run checks the repository at root.
+func run(root string) report {
+	var r report
+	r.add(checkFileSizes(root))
+	r.add(checkFileNames(root))
+	r.add(checkFuncLengths(root))
+	r.problems = append(r.problems, checkComponents(filepath.Join(root, "design/components"))...)
+	r.problems = append(r.problems, checkTokens(root)...)
+	return r
 }
 
 func checkComponents(root string) []string {
@@ -96,8 +74,8 @@ func checkComponents(root string) []string {
 	return problems
 }
 
-func checkTokens() []string {
-	src, err := os.ReadFile("design/tokens/tokens.json")
+func checkTokens(root string) []string {
+	src, err := os.ReadFile(filepath.Join(root, "design/tokens/tokens.json"))
 	if err != nil {
 		return []string{"cannot read design/tokens/tokens.json: " + err.Error()}
 	}
@@ -105,7 +83,7 @@ func checkTokens() []string {
 	if err != nil {
 		return []string{err.Error()}
 	}
-	got, err := os.ReadFile("design/tokens/tokens.css")
+	got, err := os.ReadFile(filepath.Join(root, "design/tokens/tokens.css"))
 	if err != nil || string(got) != want {
 		return []string{"design/tokens/tokens.css is out of date; run `go run ./tools/tokens`"}
 	}

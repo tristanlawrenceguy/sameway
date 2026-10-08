@@ -28,7 +28,7 @@ func presenceLine(page string) string {
 // page can say so once when they arrive; elsewhere, where they are.
 func TestSomeoneOnThisPageIsSaidToBe(t *testing.T) {
 	a, h := newApp(t)
-	a.Chat.Owner = records.Visitor{Access: records.Owner, Login: "me@example.com", Name: "Me"}
+	a.Records.Owner = records.Visitor{Access: records.Owner, Login: "me@example.com", Name: "Me"}
 	as(t, h, hana, http.MethodGet, "/t/note", "", "")
 	line := presenceLine(get(t, h, "/t/note").Body.String())
 	if !strings.Contains(line, "Hana</bdi></span>, on this page") || !strings.Contains(line, "data-here") {
@@ -44,7 +44,7 @@ func TestSomeoneOnThisPageIsSaidToBe(t *testing.T) {
 // not said: its title is not the others' to read.
 func TestWhereTheOwnerIsAloneIsNotSaid(t *testing.T) {
 	a, h := newApp(t)
-	a.Chat.Owner = records.Visitor{Access: records.Owner, Login: "me@example.com", Name: "Me"}
+	a.Records.Owner = records.Visitor{Access: records.Owner, Login: "me@example.com", Name: "Me"}
 	c, err := a.Store.Create(records.ConversationType, map[string]any{"title": "A surprise for Hana"})
 	if err != nil {
 		t.Fatal(err)
@@ -62,7 +62,7 @@ func TestWhereTheOwnerIsAloneIsNotSaid(t *testing.T) {
 // A published page does not carry who is in the workspace, even hidden.
 func TestAPublishedPageSaysNothingOfWhoIsHere(t *testing.T) {
 	a, h := newApp(t)
-	a.Chat.Owner = records.Visitor{Access: records.Owner, Login: "me@example.com", Name: "Me"}
+	a.Records.Owner = records.Visitor{Access: records.Owner, Login: "me@example.com", Name: "Me"}
 	n, _ := a.Store.Create("note", map[string]any{"title": "Sourdough"})
 	a.Workspace.Config.Publish.Types = "note"
 	as(t, h, hana, http.MethodGet, "/t/note", "", "")
@@ -76,7 +76,7 @@ func TestAPublishedPageSaysNothingOfWhoIsHere(t *testing.T) {
 // makes them here; nor does a page fetching itself to follow a change.
 func TestIdleIsNotHere(t *testing.T) {
 	a, h := newApp(t)
-	a.Chat.Owner = records.Visitor{Access: records.Owner, Login: "me@example.com", Name: "Me"}
+	a.Records.Owner = records.Visitor{Access: records.Owner, Login: "me@example.com", Name: "Me"}
 	follow := func(path string) {
 		ctx, cancel := context.WithTimeout(records.WithVisitor(context.Background(), hana), 1500*time.Millisecond)
 		defer cancel()

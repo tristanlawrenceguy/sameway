@@ -93,7 +93,7 @@ func TestAnMCPClientsChangesAreLoggedByItsName(t *testing.T) {
 		t.Errorf("the log's sentence names the agent: %q", got)
 	}
 
-	if err := a.Chat.UndoAs("human", ticked.ID); err != nil {
+	if err := a.Records.UndoAs("human", ticked.ID); err != nil {
 		t.Fatal(err)
 	}
 	if task, _ := a.Store.Get("task", id); task.Fields["done"] == true {

@@ -13,6 +13,7 @@ import (
 // one place and forgotten in the other.
 func (s *Service) run(call llm.ToolCall) toolResult {
 	if r, no := s.refuseFor(call); no {
+		logCall(call, r)
 		return r
 	}
 	var r toolResult
@@ -22,6 +23,7 @@ func (s *Service) run(call llm.ToolCall) toolResult {
 		r = s.runTool(call)
 	}
 	r = s.layoutAfter(call.Name, r) // see arrange.go
+	logCall(call, r)                // tool_log.go
 	if r.change != nil {
 		// The receipt keeps the entry id, so the change can be undone from
 		// under the reply.

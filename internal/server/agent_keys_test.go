@@ -61,7 +61,7 @@ func TestAnAgentsKeyIsWhoItIs(t *testing.T) {
 	if res := withKey(h, editKey, http.MethodGet, "/api/note", ""); res.Code != http.StatusUnauthorized {
 		t.Errorf("a key taken away no longer works: %d", res.Code)
 	}
-	if err := a.Chat.UndoAs("human", entry); err != nil {
+	if err := a.Records.UndoAs("human", entry); err != nil {
 		t.Fatal(err)
 	}
 	if res := withKey(h, editKey, http.MethodGet, "/api/note", ""); res.Code != http.StatusOK {
@@ -100,10 +100,10 @@ func TestAKeyTakenAwayFromItsPageCanBeGivenBack(t *testing.T) {
 		t.Fatalf("deleted from its page, the key no longer works: %d", res.Code)
 	}
 	entries, _ := a.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
-	if len(entries) == 0 || entries[0].Fields["action"] != "deleted" || !a.Chat.Undoable(entries[0]) {
+	if len(entries) == 0 || entries[0].Fields["action"] != "deleted" || !a.Records.Undoable(entries[0]) {
 		t.Fatalf("the deletion is in the log and can be undone: %v", entries)
 	}
-	a.Chat.UndoAs("human", entries[0].ID)
+	a.Records.UndoAs("human", entries[0].ID)
 	if res := withKey(h, key, http.MethodGet, "/api/note", ""); res.Code != http.StatusOK {
 		t.Errorf("undone, the key works again: %d", res.Code)
 	}
