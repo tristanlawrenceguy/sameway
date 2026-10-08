@@ -34,7 +34,7 @@ func TestAChartCountsRecords(t *testing.T) {
 
 	page := get(t, h, "/").Body.String()
 	for _, want := range []string{
-		`<figcaption class="sw-chart__caption" id="done-by-month-caption">How many tasks by Due</figcaption>`,
+		`<figcaption class="sw-chart__caption" id="done-by-month-caption">How many tasks by due</figcaption>`,
 		`<th scope="row">Aug 2026</th><td class="sw-table__num">2</td></tr><tr><th scope="row">Sep 2026</th><td class="sw-table__num">1</td>`,
 		`role="img" aria-labelledby="done-by-month-caption"`, `<rect class="sw-chart__bar"`,
 		`<th scope="row">Garden</th><td class="sw-table__num">2</td>`, `<th scope="row">None</th><td class="sw-table__num">2</td>`, `<summary class="sw-pressable">Tasks by project</summary>`,

@@ -129,11 +129,10 @@ func (s *Service) forYouPrompt() string {
 			}
 			recs, _ := s.Store.List(t.Name, store.ListOptions{OrderBy: "updated_at", Desc: true, Limit: 50})
 			for _, r := range recs {
-				if r.Fields[f.Name] != me.ID || r.Fields["done"] == true || len(lines) >= 10 {
+				if r.Fields[f.Name] != me.ID || t.Done(r.Fields) || len(lines) >= 10 {
 					continue
 				}
-				title, _ := r.Fields[t.Title].(string)
-				lines = append(lines, fmt.Sprintf("- %s: %s (/t/%s/%s)", t.Name, title, t.Name, r.ID))
+				lines = append(lines, fmt.Sprintf("- %s: %s (/t/%s/%s)", t.Name, Name(s.Store, t, r), t.Name, r.ID))
 			}
 		}
 	}

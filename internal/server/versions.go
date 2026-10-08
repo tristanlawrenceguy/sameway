@@ -62,7 +62,7 @@ func sinceOpened(t *schema.Type, rec *store.Record, fields, clean map[string]any
 			continue
 		}
 		if f, ok := t.Field(name); ok {
-			crossed = append(crossed, fieldLabel(*f))
+			crossed = append(crossed, f.Display())
 		}
 	}
 	return crossed

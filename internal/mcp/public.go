@@ -124,10 +124,7 @@ func siteOf(ctx context.Context) string {
 // document is a published record as search and fetch have it.
 func (s *Server) document(ctx context.Context, typ string, r *store.Record, w *chat.Writers) map[string]any {
 	t, _ := s.App.Types.Get(typ)
-	title, _ := r.Fields[t.Title].(string)
-	if title == "" {
-		title = typ
-	}
+	title := chat.Name(s.App.Store, t, r)
 	var lines []string
 	meta := map[string]any{"type": typ, "updated": r.UpdatedAt.Format("2006-01-02")}
 	for _, f := range t.Shown() {
@@ -135,10 +132,7 @@ func (s *Server) document(ctx context.Context, typ string, r *store.Record, w *c
 		if v == nil || v == "" || f.Name == t.Title || f.Type == "ref" {
 			continue
 		}
-		label := f.Label
-		if label == "" {
-			label = f.Name
-		}
+		label := f.Display()
 		if s, ok := v.(string); ok && (f.Type == "text" || f.Type == "markdown") {
 			lines = append(lines, s)
 			continue

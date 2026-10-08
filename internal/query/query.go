@@ -93,9 +93,7 @@ func Filter(st *store.Store, t *schema.Type, where []string, order string, limit
 		title := ""
 		if target, err := st.Get(to, id); err == nil {
 			if tt, ok := st.Types().Get(to); ok {
-				if v, ok := target.Fields[tt.Title].(string); ok {
-					title = v
-				}
+				title = tt.Called(id, target.Fields)
 			}
 		}
 		titles[key] = title

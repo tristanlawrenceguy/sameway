@@ -90,26 +90,27 @@ func collectionChoices(t *schema.Type, where []string, order, by string) []choic
 			enum = &f
 		case f.Type == "bool" && yes == nil && !fixed[f.Name]:
 			yes = &f
-		case (f.Type == "date" || f.Type == "datetime") && day == nil:
-			day = &f
 		}
 	}
+	if d, ok := t.Field(t.DayField()); ok {
+		day = d
+	}
 	if day != nil {
-		sort.options = append(sort.options, option{value: day.Name, label: fieldLabel(*day) + " soonest first", order: day.Name})
+		sort.options = append(sort.options, option{value: day.Name, label: day.Display() + " soonest first", order: day.Name})
 	}
 	if base := baseOrder(order); !hasOption(sort.options, base) {
 		sort.options = append([]option{{value: base, label: "As set up", order: base}}, sort.options...)
 	}
 	out := []choice{sort}
 	if enum != nil {
-		c := choice{param: enum.Name, label: fieldLabel(*enum), options: []option{{label: "Any"}}}
+		c := choice{param: enum.Name, label: enum.Display(), options: []option{{label: "Any"}}}
 		for _, v := range enum.Values {
 			c.options = append(c.options, option{value: v, label: enum.ValueLabel(v), where: []string{enum.Name + "=" + v}})
 		}
 		out = append(out, c)
 	}
 	if yes != nil {
-		c := choice{param: yes.Name, label: fieldLabel(*yes), options: []option{{label: "All"}}}
+		c := choice{param: yes.Name, label: yes.Display(), options: []option{{label: "All"}}}
 		for _, v := range []string{"false", "true"} {
 			w := yes.Name + "=" + v
 			c.options = append(c.options, option{value: v, label: capitalize(query.Words(t, []string{w})), where: []string{w}})
@@ -117,7 +118,7 @@ func collectionChoices(t *schema.Type, where []string, order, by string) []choic
 		out = append(out, c)
 	}
 	if day != nil && !fixed[day.Name] {
-		name := fieldLabel(*day)
+		name := day.Display()
 		out = append(out, choice{param: day.Name, label: name, options: []option{
 			{label: "Any time"},
 			{value: "past", label: name + " before today", where: []string{day.Name + "<today"}},

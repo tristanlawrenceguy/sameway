@@ -60,7 +60,7 @@ func TestABlockThatCouldNotMeanWhatWasWrittenIsRefused(t *testing.T) {
 	// With the period, the line says which days, so a month is never
 	// read as days.
 	said, isErr := call(t, a, "add_component", map[string]any{"component": "chart", "props": map[string]any{"type": "entry", "by": "at", "period": "day", "sum": "amount", "unit": "glasses"}})
-	if want := "; it shows Amount of entries by At: 30 days, " + first + " to " + time.Now().Format("2006-01-02") + ", in glasses"; isErr || !strings.HasSuffix(strings.SplitN(said, "\n", 2)[0], want) {
+	if want := "; it shows Amount of entries by at: 30 days, " + first + " to " + time.Now().Format("2006-01-02") + ", in glasses"; isErr || !strings.HasSuffix(strings.SplitN(said, "\n", 2)[0], want) {
 		t.Errorf("a chart by day says its days, want %q, got %q", want, said)
 	}
 	// Stored before the check, a chart by a date with no period still

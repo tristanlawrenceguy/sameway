@@ -26,7 +26,7 @@ from every listed type: tasks due, reminders, entries logged. That can
 be a lot: a habit logged every day puts an entry on every day. To show
 some kinds together, name them: `types: ["task", "reminder"]` is tasks
 due and reminders, and nothing else, each on the days of its type's
-first date field (`date`, `where` and `show` are for one type). A type
+day (`starts`, else its first shown date field) (`date`, `where` and `show` are for one type). A type
 not there, or with no day, is refused when the block is written, with
 the type likely meant. A record's page links to its day on the first
 calendar on the canvas, as See that day.

@@ -48,9 +48,9 @@ func (s *Server) title(t *schema.Type, rec *store.Record) string {
 // aboutItem is a reminder's about on its page: the thing, as the way there.
 func (s *Server) aboutItem(f schema.Field, val string) map[string]any {
 	if t, rec, ok := s.aboutOf(val); ok {
-		return map[string]any{"label": fieldLabel(f), "value": s.title(t, rec), "href": "/t/" + t.Name + "/" + rec.ID, "prop": f.Name, "source": val}
+		return map[string]any{"label": f.Display(), "value": s.title(t, rec), "href": "/t/" + t.Name + "/" + rec.ID, "prop": f.Name, "source": val}
 	}
-	return map[string]any{"label": fieldLabel(f), "value": val, "prop": f.Name}
+	return map[string]any{"label": f.Display(), "value": val, "prop": f.Name}
 }
 
 // nextThings is what a record's page offers to do with it, in one row
@@ -95,7 +95,7 @@ func (s *Server) nextThings(t *schema.Type, rec *store.Record, on []string) stri
 
 // dayOf is the day a record falls on, from its first date field.
 func (s *Server) dayOf(t *schema.Type, rec *store.Record) string {
-	field := dateField(t, nil)
+	field := t.DayField()
 	if field == "" {
 		return ""
 	}
@@ -218,7 +218,7 @@ func (s *Server) everyEvent(now time.Time, month string, only []*schema.Type) []
 		}
 	}
 	for _, t := range types {
-		field := dateField(t, nil)
+		field := t.DayField()
 		if field == "" {
 			continue
 		}

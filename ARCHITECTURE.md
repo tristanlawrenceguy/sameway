@@ -105,6 +105,23 @@ From one schema file the system generates:
 
 Nothing is hand-written per surface. Adding a surface means adding a generator.
 
+A few facts about a record are asked everywhere, so the schema answers
+each once (`internal/schema/day.go`, `labels.go`, `called.go`) and no
+surface decides for itself:
+
+- **Its day** (`DayField`): `starts` when it is a shown datetime field,
+  else the first shown datetime field. A list's groups, the calendar, a
+  record's related things on its day, the calendar export, an import's
+  date column and what a repeat moves all go by it. A hidden datetime is
+  bookkeeping, not a day.
+- **Whether it is done** (`DoneField`, `Done`): a yes-or-no named done,
+  completed, complete or finished, or a pick-list at done (a reminder's
+  state).
+- **A field's name** (`Display`, and `Words` inside a sentence): its
+  label, else its name with spaces.
+- **A record's name** (`Called`, and `chat.Name` above it): its title,
+  else the first thing it says, else its kind and id.
+
 ## 3. Repository layout
 
 ```

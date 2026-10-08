@@ -82,11 +82,11 @@ func (s *Server) resolveCollectionAt(props map[string]any, block string, at *col
 	columns := []any{}
 	for _, name := range show {
 		if f, ok := t.Field(name); ok {
-			columns = append(columns, fieldLabel(*f))
+			columns = append(columns, f.Display())
 		}
 	}
 	out["columns"] = columns
-	out["titleLabel"] = label(t.Title)
+	out["titleLabel"] = t.FieldDisplay(t.Title)
 	var by *schema.Field
 	if props["as"] == "board" {
 		if by, err = boardField(t, props["by"]); err != nil {
@@ -183,12 +183,7 @@ func strs(v any) []string {
 
 // orderWords says an order in words for a list page's line.
 func orderWords(t *schema.Type, order string) string {
-	name := func(n string) string {
-		if f, ok := t.Field(n); ok {
-			return strings.ToLower(fieldLabel(*f))
-		}
-		return strings.ToLower(label(n))
-	}
+	name := t.FieldWords
 	switch {
 	case order == "":
 		return ""
@@ -209,7 +204,7 @@ func (s *Server) fieldsOf(t *schema.Type, rec *store.Record, names []string) []a
 			continue
 		}
 		v := display(*f, rec.Fields[name])
-		item := map[string]any{"label": fieldLabel(*f), "value": v}
+		item := map[string]any{"label": f.Display(), "value": v}
 		if f.Type == "ref" && v != "" {
 			if _, err := s.app.Store.Get(f.To, v); err == nil {
 				item["href"] = "/t/" + f.To + "/" + v

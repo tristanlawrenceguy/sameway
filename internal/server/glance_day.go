@@ -31,7 +31,7 @@ func dayGlance(t *schema.Type, rec *store.Record, done bool, now time.Time) (gla
 		}
 		passed := dayPassed(v, now)
 		switch {
-		case passed && doneField(t) != nil && !done:
+		case passed && t.DoneField() != nil && !done:
 			// Late is said in words, not only in amber (WCAG 1.4.1). A row
 			// keeps its short day: its listing's Overdue heading says it.
 			text, tone, class = "Overdue, "+afterLabel(words), "warning", class+" sw-when--past"
@@ -69,7 +69,7 @@ func dayPassed(v string, now time.Time) bool {
 // Starts, Goal by. A field called at or on is said by its words already
 // (Today at 2pm), and is not named.
 func dayName(f schema.Field) string {
-	name := fieldLabel(f)
+	name := f.Display()
 	switch strings.ToLower(name) {
 	case "at", "on", "when", "date", "day", "time":
 		return ""

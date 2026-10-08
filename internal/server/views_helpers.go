@@ -59,12 +59,3 @@ func display(f schema.Field, v any) string {
 	}
 	return fmt.Sprint(v)
 }
-
-// fieldLabel is what a person calls a field: the schema's label, else its
-// name made readable.
-func fieldLabel(f schema.Field) string {
-	if f.Label != "" {
-		return f.Label
-	}
-	return label(f.Name)
-}

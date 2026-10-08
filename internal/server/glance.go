@@ -51,10 +51,10 @@ type glanceFact struct {
 func (s *Server) glance(t *schema.Type, rec *store.Record, now time.Time) []glanceFact {
 	var out []glanceFact
 	done := false
-	if f := doneField(t); f != nil {
+	if f := t.DoneField(); f != nil {
 		if on, _ := rec.Fields[f.Name].(bool); on {
 			done = true
-			out = append(out, glanceFact{Kind: "done", Field: f.Name, Text: fieldLabel(*f), Tone: "success"})
+			out = append(out, glanceFact{Kind: "done", Field: f.Name, Text: f.Display(), Tone: "success"})
 		}
 	}
 	for _, f := range t.Shown() {
@@ -67,9 +67,9 @@ func (s *Server) glance(t *schema.Type, rec *store.Record, now time.Time) []glan
 		}
 	}
 	for _, f := range t.Shown() {
-		if f.Type == "bool" && (doneField(t) == nil || f.Name != doneField(t).Name) {
+		if f.Type == "bool" && (t.DoneField() == nil || f.Name != t.DoneField().Name) {
 			if on, _ := rec.Fields[f.Name].(bool); on {
-				out = append(out, glanceFact{Kind: "flag", Field: f.Name, Text: fieldLabel(f), Tone: "neutral"})
+				out = append(out, glanceFact{Kind: "flag", Field: f.Name, Text: f.Display(), Tone: "neutral"})
 			}
 		}
 	}
@@ -84,7 +84,7 @@ func (s *Server) glance(t *schema.Type, rec *store.Record, now time.Time) []glan
 		}
 		if name := s.RefTitle(f, id); name != "" && name != title {
 			if f.To == chat.PersonType {
-				out = append(out, glanceFact{Kind: "person", Field: f.Name, Text: fieldLabel(f) + " " + name, Person: id, Label: fieldLabel(f)})
+				out = append(out, glanceFact{Kind: "person", Field: f.Name, Text: f.Display() + " " + name, Person: id, Label: f.Display()})
 			} else {
 				out = append(out, glanceFact{Kind: "ref", Field: f.Name, Text: name, Tone: "neutral"})
 			}

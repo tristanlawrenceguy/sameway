@@ -18,7 +18,7 @@ func (s *Server) changedWords(f schema.Field, before, after any) string {
 	if was == now {
 		return ""
 	}
-	name := fieldLabel(f)
+	name := f.Display()
 	switch {
 	case !short(was) || !short(now) || f.Type == "markdown" || f.Type == "text" && (strings.Contains(was, "\n") || strings.Contains(now, "\n")):
 		return name + " changed."

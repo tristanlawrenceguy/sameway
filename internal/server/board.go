@@ -57,7 +57,7 @@ func boardGroups(f schema.Field, recs []*store.Record, items []any) []any {
 		}
 	}
 	if len(none) > 0 {
-		groups = append(groups, map[string]any{"label": "No " + strings.ToLower(fieldLabel(f)), "items": none})
+		groups = append(groups, map[string]any{"label": "No " + strings.ToLower(f.Display()), "items": none})
 	}
 	return groups
 }
@@ -82,7 +82,7 @@ func (s *Server) addMove(item map[string]any, t *schema.Type, f schema.Field, re
 	item["actions"] = append(actions, map[string]any{"component": "move", "props": map[string]any{
 		"action": "/t/" + t.Name + "/" + rec.ID + "/props", "title": title, "id": at + "-go",
 		"select": map[string]any{
-			"id": at + "-move", "name": "prop-" + f.Name, "label": fieldLabel(f), "context": title,
+			"id": at + "-move", "name": "prop-" + f.Name, "label": f.Display(), "context": title,
 			"as": "dropdown", "value": value, "options": options,
 		},
 	}})

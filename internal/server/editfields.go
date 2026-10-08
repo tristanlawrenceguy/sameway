@@ -51,7 +51,7 @@ func (s *Server) editField(f schema.Field, v any) string {
 		val = s.refNames(f, v) // edited as names, matched again on save
 	}
 	esc := template.HTMLEscapeString
-	name, lab := esc(f.Name), ` data-label="`+esc(fieldLabel(f))+`"`
+	name, lab := esc(f.Name), ` data-label="`+esc(f.Display())+`"`
 	switch f.Type {
 	case "markdown":
 		return fmt.Sprintf(`<div class="sw-prose" data-prop="%s"%s data-source="%s" data-prose-level="2">%s</div>`, name, lab, esc(val), prose.Render(val, 2))

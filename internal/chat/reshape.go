@@ -113,11 +113,7 @@ func (s *Service) askDelete(a reshapeArgs) toolResult {
 	q := question{ask: fmt.Sprintf("Delete %s and every %s in it?", schema.Words(t.Name), schema.Words(t.Name)), yes: "Delete it", no: "Keep it"}
 	q.detail = fmt.Sprintf("All %d would be gone, on every computer that hosts this workspace, and it can't be undone. Hiding it instead takes it off the pages and keeps everything, until you show it again.", n)
 	if a.Field != "" {
-		label := a.Field
-		if f, ok := t.Field(a.Field); ok && f.Label != "" {
-			label = f.Label
-		}
-		q.ask = fmt.Sprintf("Delete %s from every %s?", label, schema.Words(t.Name))
+		q.ask = fmt.Sprintf("Delete %s from every %s?", t.FieldWords(a.Field), schema.Words(t.Name))
 		q.detail = fmt.Sprintf("%d of %d have something in it; that would be cleared, on every computer that hosts this workspace, and it can't be undone. Hiding it instead takes it off the pages and keeps what they hold, until you show it again.", held, n)
 	}
 	del := map[string]any{"tool": "change_field", "type": a.Type, "field": a.Field, "change": "delete", "agreed": true}

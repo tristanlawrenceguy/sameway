@@ -31,11 +31,8 @@ func Words(t *schema.Type, where []string) string {
 }
 
 func condWords(t *schema.Type, c Cond) string {
-	name := strings.ToLower(strings.ReplaceAll(c.Field, "_", " "))
+	name := t.FieldWords(c.Field)
 	f, has := t.Field(c.Field)
-	if has && f.Label != "" {
-		name = strings.ToLower(f.Label)
-	}
 	switch c.Field {
 	case "created_at":
 		name = "added"

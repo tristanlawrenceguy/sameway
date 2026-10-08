@@ -32,7 +32,7 @@ func (s *Server) clashNotices(r *http.Request, t *schema.Type, rec *store.Record
 		field, _ := c.Fields["field"].(string)
 		label := field
 		if f, ok := t.Field(field); ok {
-			label = fieldLabel(*f)
+			label = f.Display()
 		}
 		who := "on another computer"
 		if c.Fields["origin"] == s.app.Store.Origin() {
@@ -82,7 +82,7 @@ func (s *Server) clashChoose(w http.ResponseWriter, r *http.Request, choice stri
 	label, title := field, id
 	if t, ok := s.app.Types.Get(typ); ok {
 		if f, ok := t.Field(field); ok {
-			label = fieldLabel(*f)
+			label = f.Display()
 		}
 		if tt := strings.TrimSpace(s.title(t, was)); tt != "" {
 			title = tt

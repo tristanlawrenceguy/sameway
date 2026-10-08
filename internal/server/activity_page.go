@@ -62,7 +62,7 @@ func (s *Server) activityFacts(e *store.Record) []any {
 			if f.Type == "ref" {
 				said = s.RefTitle(f, said)
 			}
-			items = append(items, map[string]any{"label": fieldLabel(f) + " was", "value": said})
+			items = append(items, map[string]any{"label": f.Display() + " was", "value": said})
 		}
 	}
 

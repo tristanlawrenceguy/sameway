@@ -104,7 +104,7 @@ func (s *Server) collectionShows(props map[string]any) string {
 	switch props["as"] {
 	case "board":
 		if f, err := boardField(t, props["by"]); err == nil {
-			out += ", as a board by " + strings.ToLower(fieldLabel(*f))
+			out += ", as a board by " + strings.ToLower(f.Display())
 		}
 	case "table":
 		out += ", as a table"
@@ -181,9 +181,9 @@ func (s *Server) calendarShows(props, out map[string]any) string {
 		}
 	}
 	if n == 0 {
-		return nothingYet(t.Name, where, strings.ToLower(label(field)))
+		return nothingYet(t.Name, where, t.FieldWords(field))
 	}
-	shows := many(n, t.Name) + " by " + strings.ToLower(label(field))
+	shows := many(n, t.Name) + " by " + t.FieldWords(field)
 	if w := query.Words(t, where); w != "" {
 		shows += ", " + w
 	}

@@ -102,7 +102,7 @@ func (s *Server) onToday(now time.Time) []coming {
 		if t.Internal || t.Name == ReminderType || !s.listed(t) {
 			continue
 		}
-		field := dateField(t, nil)
+		field := t.DayField()
 		if field == "" {
 			continue
 		}

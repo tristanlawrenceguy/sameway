@@ -40,23 +40,7 @@ func Name(st *store.Store, t *schema.Type, rec *store.Record) string {
 			return said
 		}
 	}
-	if t.Title != "" {
-		if s, ok := rec.Fields[t.Title].(string); ok && strings.TrimSpace(s) != "" {
-			return s
-		}
-	}
-	for _, f := range t.Shown() {
-		if f.Type != "string" && f.Type != "text" && f.Type != "enum" {
-			continue
-		}
-		if s, ok := rec.Fields[f.Name].(string); ok && strings.TrimSpace(s) != "" {
-			if f.Type == "enum" {
-				s = f.ValueLabel(s)
-			}
-			return trim.Title(s)
-		}
-	}
-	return schema.Words(t.Name) + " " + rec.ID
+	return t.Called(rec.ID, rec.Fields)
 }
 
 // recordTitle is a record's name short enough for a sentence: a title
