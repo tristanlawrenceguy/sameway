@@ -158,8 +158,7 @@ func (w *Workspace) Set(key, value string) error {
 // reminder, no programs allowed, no broker. Undoing a change to one of
 // them puts it back to nothing.
 var canBeEmpty = map[string]bool{
-	"notify.command": true, "notify.phone": true, "actions.allow": true, "chat.system_prompt": true, "ui.needs": true, "ui.language": true,
-	"notify.command": true, "brief.at": true, "actions.allow": true, "chat.system_prompt": true, "ui.needs": true, "ui.language": true,
+	"notify.command": true, "notify.phone": true, "brief.at": true, "actions.allow": true, "chat.system_prompt": true, "ui.needs": true, "ui.language": true,
 	"mqtt.broker": true, "mqtt.client_id": true, "llm.base_url": true, "tailnet.name": true, "tailnet.peers": true, "publish.tabs": true, "publish.types": true,
 }
 

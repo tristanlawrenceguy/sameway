@@ -17,8 +17,6 @@ func (s *Server) routes() {
 	s.modelRoutes(m)    // model_key.go
 	s.bringRoutes(m)    // bring.go
 	s.calendarRoutes(m) // calendar_links.go
-	s.modelRoutes(m)    // model_key.go
-	s.bringRoutes(m)    // bring.go
 	s.todayRoutes(m)    // today.go
 	m.HandleFunc("POST /t/{type}/add", s.addRecord)
 	m.HandleFunc("POST /chat/clear", s.chatClear)
