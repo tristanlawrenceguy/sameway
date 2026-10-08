@@ -3,7 +3,7 @@ package server
 import (
 	"html/template"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -31,7 +31,7 @@ func (s *Server) messageShown(m *store.Record, from string, latest bool) templat
 // askedBefore is what the person said last before a message, in the same
 // chat.
 func (s *Server) askedBefore(m *store.Record) string {
-	recent, _ := s.app.Store.List(chat.MessageType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 40})
+	recent, _ := s.app.Store.List(records.MessageType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 40})
 	for _, r := range recent {
 		if r.Fields["conversation"] != m.Fields["conversation"] || r.CreatedAt.After(m.CreatedAt) || r.Fields["role"] != "user" {
 			continue

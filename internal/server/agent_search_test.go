@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/mcp"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 )
 
@@ -23,7 +23,7 @@ func seedsEverywhere(t *testing.T) (*app.App, http.Handler) {
 	for _, title := range []string{"Buy seeds", "Water seeds", "Label seeds"} {
 		a.Store.Create("task", map[string]any{"title": title})
 	}
-	a.Store.Create(chat.BlockType, a.Chat.BlockFields(map[string]any{"component": "text", "props": map[string]any{"text": "Seeds by the door"}}))
+	a.Store.Create(records.BlockType, a.Chat.BlockFields(map[string]any{"component": "text", "props": map[string]any{"text": "Seeds by the door"}}))
 	return a, h
 }
 

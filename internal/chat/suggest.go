@@ -7,6 +7,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/prose"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
@@ -34,7 +35,7 @@ type suggested struct {
 const mostSuggested = 15
 
 func (s *Service) suggestTools() []llm.Tool {
-	if _, ok := s.Store.Types().Get(SuggestionType); !ok {
+	if _, ok := s.Store.Types().Get(records.SuggestionType); !ok {
 		return nil
 	}
 	return []llm.Tool{{Name: "suggest_edits",
@@ -74,7 +75,7 @@ func textField(t *schema.Type, name string) (string, error) {
 }
 
 func (s *Service) suggestEdits(typeName, id, field string, edits []suggested) toolResult {
-	t, err := s.contentType(typeName)
+	t, err := records.ContentType(s.Store, typeName)
 	if err != nil {
 		return fail("%v", err)
 	}
@@ -122,33 +123,33 @@ func (s *Service) suggestEdits(typeName, id, field string, edits []suggested) to
 		return fail("nothing suggested: %s", strings.Join(problems, "; "))
 	}
 	about := t.Name + "/" + rec.ID
-	var batch []BatchItem
+	var batch []records.BatchItem
 	for _, e := range edits {
 		kind := e.Kind
 		if _, only := prose.FormatChange(e.Passage, e.Replacement); only {
 			kind = "format"
 		}
-		made, err := s.Store.Create(SuggestionType, map[string]any{"about": about, "field": field, "kind": kind, "meaning": e.Meaning,
+		made, err := s.Store.Create(records.SuggestionType, map[string]any{"about": about, "field": field, "kind": kind, "meaning": e.Meaning,
 			"passage": e.Passage, "replacement": e.Replacement, "why": strings.TrimSpace(e.Why)})
 		if err != nil {
 			return fail("could not suggest: %v", err)
 		}
-		batch = append(batch, BatchItem{Type: SuggestionType, ID: made.ID})
+		batch = append(batch, records.BatchItem{Type: records.SuggestionType, ID: made.ID})
 	}
-	title := Name(s.Store, t, rec)
+	title := records.Name(s.Store, t, rec)
 	page := "/t/" + t.Name + "/" + rec.ID
-	c := Change{Action: "suggested", Component: t.Name, ID: rec.ID, Href: page,
-		Detail: fmt.Sprintf("%s, %s", title, schema.Count(len(edits), "change")), Before: Batch(batch)}
+	c := records.Change{Action: "suggested", Component: t.Name, ID: rec.ID, Href: page,
+		Detail: fmt.Sprintf("%s, %s", title, schema.Count(len(edits), "change")), Before: records.Batch(batch)}
 	return toolResult{text: fmt.Sprintf("suggested %s to %s %s; they wait on its page, %s, for the person to accept or decline each. Nothing is changed until they do.",
 		schema.Count(len(edits), "change"), t.Name, title, page), change: &c}
 }
 
 // Suggestions are those waiting on a record, oldest first.
 func Suggestions(st *store.Store, typeName, id string) []*store.Record {
-	if _, ok := st.Types().Get(SuggestionType); !ok {
+	if _, ok := st.Types().Get(records.SuggestionType); !ok {
 		return nil
 	}
-	all, _ := st.List(SuggestionType, store.ListOptions{OrderBy: "created_at"})
+	all, _ := st.List(records.SuggestionType, store.ListOptions{OrderBy: "created_at"})
 	var out []*store.Record
 	for _, r := range all {
 		if r.Fields["about"] == typeName+"/"+id && r.Fields["state"] == "pending" {
@@ -165,12 +166,12 @@ var ErrOutdated = errors.New("the words it would change have changed since, so i
 // one change to it: one entry in the log, one Undo. One whose words have
 // changed since is set aside, not guessed at. It returns the record, its
 // entry, how many went in and how many no longer fitted.
-func AcceptSuggestions(st *store.Store, who Who, ids []string) (rec *store.Record, entry string, made, outdated int, err error) {
+func AcceptSuggestions(st *store.Store, who records.Who, ids []string) (rec *store.Record, entry string, made, outdated int, err error) {
 	var typ, recID string
 	fields := map[string]any{}
 	var took []string
 	for _, id := range ids {
-		sg, err := st.Get(SuggestionType, id)
+		sg, err := st.Get(records.SuggestionType, id)
 		if err != nil || sg.Fields["state"] != "pending" {
 			continue
 		}
@@ -205,18 +206,18 @@ func AcceptSuggestions(st *store.Store, who Who, ids []string) (rec *store.Recor
 		}
 		return nil, "", 0, 0, errors.New("that suggestion is not waiting any more")
 	}
-	if rec, entry, err = WriteAs(st, who, "updated", typ, recID, fields); err != nil {
+	if rec, entry, err = records.WriteAs(st, who, "updated", typ, recID, fields); err != nil {
 		return nil, "", 0, outdated, err
 	}
 	for _, id := range took {
-		st.Update(SuggestionType, id, map[string]any{"state": "accepted"})
+		st.Update(records.SuggestionType, id, map[string]any{"state": "accepted"})
 	}
 	return rec, entry, len(took), outdated, nil
 }
 
 // DeclineSuggestion sets a suggestion aside, changing nothing else.
 func DeclineSuggestion(st *store.Store, id string) error {
-	_, err := st.Update(SuggestionType, id, map[string]any{"state": "declined"})
+	_, err := st.Update(records.SuggestionType, id, map[string]any{"state": "declined"})
 	return err
 }
 

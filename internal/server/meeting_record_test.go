@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -70,7 +71,7 @@ func TestAMeetingAsksForItsRecording(t *testing.T) {
 	if file == "" {
 		t.Fatal("the file added on the meeting's page is its recording")
 	}
-	log, _ := a.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
+	log, _ := a.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
 	if log[0].Fields["target_id"] != ev.ID {
 		t.Error("giving it to the meeting is a change to undo like any other")
 	}

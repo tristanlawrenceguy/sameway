@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -63,8 +64,8 @@ var (
 // measuring says whether this request's page is measured: someone who may
 // change it, in a browser, not an agent and not the public.
 func measuring(r *http.Request) bool {
-	v := chat.VisitorOf(r.Context())
-	return !v.Agent && (v.Owner() || v.Access == chat.Edit || v.Access == chat.Host)
+	v := records.VisitorOf(r.Context())
+	return !v.Agent && (v.Owner() || v.Access == records.Edit || v.Access == records.Host)
 }
 
 // measurePage is the attribute that turns the measuring on for a page, and
@@ -159,7 +160,7 @@ func (s *Server) readings(b measureBody) []chat.Reading {
 	now := time.Now()
 	var out []chat.Reading
 	for _, m := range b.Blocks {
-		blk, err := s.app.Store.Get(chat.BlockType, m.ID)
+		blk, err := s.app.Store.Get(records.BlockType, m.ID)
 		if err != nil || b.View == "tab" && !contains(blocks, m.ID) {
 			continue
 		}

@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // Sameway answered only on this computer; using it from a phone meant
@@ -79,8 +79,8 @@ func (s *Server) LAN(next http.Handler) http.Handler {
 			h := hashOf(c.Value)
 			for _, d := range s.lanDevices() {
 				if d.Hash == h {
-					v := chat.Visitor{Access: chat.Owner, Name: "Owner", Device: d.Name}
-					next.ServeHTTP(w, r.WithContext(chat.WithVisitor(r.Context(), v)))
+					v := records.Visitor{Access: records.Owner, Name: "Owner", Device: d.Name}
+					next.ServeHTTP(w, r.WithContext(records.WithVisitor(r.Context(), v)))
 					return
 				}
 			}
@@ -106,7 +106,7 @@ func (s *Server) lanPair(w http.ResponseWriter, r *http.Request) {
 	name := phoneName(r.UserAgent())
 	devices := append(s.lanDevices(), lanDevice{ID: token(6), Hash: hashOf(secret), Name: name, Added: time.Now()})
 	s.saveLanDevices(devices)
-	chat.Record(s.app.Store, "human", chat.Change{Action: "paired", Component: "device", Detail: name})
+	records.Record(s.app.Store, "human", records.Change{Action: "paired", Component: "device", Detail: name})
 	http.SetCookie(w, &http.Cookie{Name: lanCookie, Value: secret, Path: "/", HttpOnly: true, SameSite: http.SameSiteLaxMode, MaxAge: 400 * 24 * 3600})
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

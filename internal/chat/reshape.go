@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
@@ -92,7 +93,7 @@ func (s *Service) reshape(a reshapeArgs) toolResult {
 	if err != nil {
 		return fail("%v", err)
 	}
-	return toolResult{text: action + " " + what, change: &Change{Action: action, Component: "field", Detail: what, Href: "/t/" + a.Type}}
+	return toolResult{text: action + " " + what, change: &records.Change{Action: action, Component: "field", Detail: what, Href: "/t/" + a.Type}}
 }
 
 // askDelete puts deleting to the person: delete, hide instead, or keep.
@@ -120,7 +121,7 @@ func (s *Service) askDelete(a reshapeArgs) toolResult {
 	hide := map[string]any{"tool": "change_field", "type": a.Type, "field": a.Field, "change": "hide"}
 	r := s.ask(q, del)
 	if !r.isErr && r.change != nil {
-		s.Store.Update(ProposalType, r.change.ID, map[string]any{"instead": "Hide it instead", "instead_action": hide})
+		s.Store.Update(records.ProposalType, r.change.ID, map[string]any{"instead": "Hide it instead", "instead_action": hide})
 		r.text += " They can also hide it instead."
 	}
 	return r
@@ -131,7 +132,7 @@ func (s *Service) askDelete(a reshapeArgs) toolResult {
 func (s *Service) Instead(id string) error {
 	answering.Lock()
 	defer answering.Unlock()
-	rec, err := s.Store.Get(ProposalType, id)
+	rec, err := s.Store.Get(records.ProposalType, id)
 	if err != nil {
 		return err
 	}
@@ -148,11 +149,11 @@ func (s *Service) Instead(id string) error {
 	if result.isErr {
 		return fmt.Errorf("%s", result.text)
 	}
-	s.Store.Update(ProposalType, id, map[string]any{"state": "accepted"})
+	s.Store.Update(records.ProposalType, id, map[string]any{"state": "accepted"})
 	label, _ := rec.Fields["instead"].(string)
-	Record(s.Store, "human", Change{Action: "chose", Detail: trim.Line(label, 80)})
+	records.Record(s.Store, "human", records.Change{Action: "chose", Detail: trim.Line(label, 80)})
 	if result.change != nil {
-		Record(s.Store, "assistant", *result.change)
+		records.Record(s.Store, "assistant", *result.change)
 	}
 	return nil
 }

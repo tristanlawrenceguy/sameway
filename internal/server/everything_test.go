@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // The whole workspace is its owner's to take out, and offered where the
@@ -19,7 +19,7 @@ func TestOnlyTheOwnerTakesEverything(t *testing.T) {
 	if res.Code != http.StatusOK || res.Header().Get("Content-Type") != "application/zip" || !strings.HasPrefix(res.Body.String(), "PK") {
 		t.Errorf("the owner gets a zip: %d %q", res.Code, res.Header().Get("Content-Type"))
 	}
-	hana := chat.Visitor{Name: "Hana", Login: "hana@example.com", Access: chat.Edit}
+	hana := records.Visitor{Name: "Hana", Login: "hana@example.com", Access: records.Edit}
 	if res := as(t, h, hana, http.MethodGet, "/export/workspace.zip", "", ""); strings.HasPrefix(res.Body.String(), "PK") {
 		t.Error("someone else does not")
 	}

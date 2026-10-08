@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/ingest"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
 
@@ -72,8 +72,8 @@ func (s *Server) bring(w http.ResponseWriter, r *http.Request) {
 		if report.Made == 0 {
 			continue
 		}
-		chat.Record(s.app.Store, "human", chat.Change{Action: "imported", Component: t.Name,
-			Detail: fmt.Sprintf("%d %s from %s", report.Made, schema.Plural(t.Name), got.From), Href: "/t/" + t.Name, Before: chat.Imported(t.Name, report.IDs)})
+		records.Record(s.app.Store, "human", records.Change{Action: "imported", Component: t.Name,
+			Detail: fmt.Sprintf("%d %s from %s", report.Made, schema.Plural(t.Name), got.From), Href: "/t/" + t.Name, Before: records.Imported(t.Name, report.IDs)})
 		said = append(said, fmt.Sprintf("%d %s", report.Made, schema.Plural(t.Name)))
 		if to == "/" {
 			to = "/t/" + t.Name

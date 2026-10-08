@@ -31,12 +31,12 @@ func (s *Server) phoneLine() string {
 // phoneSet makes a topic and sends the first message to it, or stops.
 func (s *Server) phoneSet(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	if s.app.Chat.SetSetting == nil {
+	if s.app.Records.SetSetting == nil {
 		s.failed(w, r, "Not changed", errors.New("this workspace has no settings file"), "/help")
 		return
 	}
 	if r.PostForm.Get("set") != "on" {
-		if err := s.app.Chat.SetSetting("notify.phone", ""); err != nil {
+		if err := s.app.Records.SetSetting("notify.phone", ""); err != nil {
 			s.failed(w, r, "Not changed", err, "/help")
 			return
 		}
@@ -50,7 +50,7 @@ func (s *Server) phoneSet(w http.ResponseWriter, r *http.Request) {
 		s.failed(w, r, "Not set up", errors.New("ntfy could not be reached ("+err.Error()+"); try again when this computer is online"), "/help")
 		return
 	}
-	if err := s.app.Chat.SetSetting("notify.phone", topic); err != nil {
+	if err := s.app.Records.SetSetting("notify.phone", topic); err != nil {
 		s.failed(w, r, "Not set up", err, "/help")
 		return
 	}

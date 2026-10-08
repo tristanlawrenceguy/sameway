@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
@@ -72,7 +72,7 @@ func (s *Server) sinceNotice(r *http.Request) template.HTML {
 	}
 	// The log is newest first, so the scan stops at the first entry from
 	// before they left.
-	entries, err := s.app.Store.List(chat.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 500})
+	entries, err := s.app.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 500})
 	if err != nil {
 		return ""
 	}
@@ -127,7 +127,7 @@ func (s *Server) sinceSeen(w http.ResponseWriter, r *http.Request) {
 func (s *Server) byOther(e *store.Record, key string) bool {
 	// What an agent did is news to everyone, the one who set it going
 	// included: it worked while they were away.
-	if e.Fields["actor"] == chat.ActorAgent {
+	if e.Fields["actor"] == records.ActorAgent {
 		return true
 	}
 	if e.Fields["actor"] != "human" {
@@ -136,7 +136,7 @@ func (s *Server) byOther(e *store.Record, key string) bool {
 	login, _ := e.Fields["by_login"].(string)
 	by, _ := e.Fields["by"].(string)
 	if login == "" && by == "" {
-		login = s.app.Chat.Owner.Login
+		login = s.app.Records.Owner.Login
 		if login == "" {
 			login = "owner"
 		}

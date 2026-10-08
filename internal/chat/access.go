@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
-	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // Who else may open this workspace, from their own devices over Tailscale,
@@ -21,7 +21,7 @@ var letInTool = llm.Tool{
 	Schema: obj(map[string]any{
 		"email":  map[string]any{"type": "string"},
 		"name":   map[string]any{"type": "string"},
-		"access": map[string]any{"type": "string", "enum": []string{View, Edit, Host, "none"}},
+		"access": map[string]any{"type": "string", "enum": []string{records.View, records.Edit, records.Host, "none"}},
 	}, "email", "access"),
 }
 
@@ -30,7 +30,7 @@ var letInTool = llm.Tool{
 // schema can be changed from here.
 func (s *Service) accessTools() []llm.Tool {
 	var out []llm.Tool
-	if _, ok := s.Store.Types().Get(PersonType); ok {
+	if _, ok := s.Store.Types().Get(records.PersonType); ok {
 		out = append(out, letInTool)
 	}
 	if s.Reshape != nil {
@@ -60,7 +60,7 @@ func (s *Service) letInCall(raw json.RawMessage) toolResult {
 			return fail("only the workspace's owner can take someone's access away")
 		}
 		return s.letIn(a)
-	case View, Edit, Host:
+	case records.View, records.Edit, records.Host:
 		q := letInQuestion(a)
 		return s.ask(q, map[string]any{"tool": "let_in", "email": a.Email, "name": a.Name, "access": a.Access})
 	}
@@ -75,10 +75,10 @@ func letInQuestion(a letInArgs) question {
 	can := "read everything here except your conversations with the assistant"
 	ask, yes := "Let "+who+" look at this workspace?", "Yes, let them look"
 	switch a.Access {
-	case Edit:
+	case records.Edit:
 		can = "read and change what is here (notes, records, the canvas) and press its buttons, but not its settings or your conversations with the assistant"
 		ask, yes = "Let "+who+" edit this workspace?", "Yes, let them edit"
-	case Host:
+	case records.Host:
 		can = "keep a full copy of it on their own computer, in step with this one, and change anything in it, including who else may come in. Your conversations with the assistant stay on this computer. Only say yes to someone you trust with all of it"
 		ask, yes = "Let "+who+" host this workspace too?", "Yes, let them host it"
 	}
@@ -104,15 +104,15 @@ func (s *Service) letIn(a letInArgs) toolResult {
 		if name == "" {
 			name, _, _ = strings.Cut(a.Email, "@")
 		}
-		rec, err := s.Store.Create(PersonType, map[string]any{"name": name, "email": a.Email, "access": access})
+		rec, err := s.Store.Create(records.PersonType, map[string]any{"name": name, "email": a.Email, "access": access})
 		if err != nil {
 			return fail("could not add them: %v", err)
 		}
 		s.Say(s.shareWords(name, a.Email))
-		return toolResult{text: name + " can now " + verb(access), change: &Change{Action: "let in", Component: PersonType, ID: rec.ID, Detail: name + " to " + access}}
+		return toolResult{text: name + " can now " + verb(access), change: &records.Change{Action: "let in", Component: records.PersonType, ID: rec.ID, Detail: name + " to " + access}}
 	}
 	before := p.Fields["access"]
-	if _, err := s.Store.Update(PersonType, p.ID, map[string]any{"access": access}); err != nil {
+	if _, err := s.Store.Update(records.PersonType, p.ID, map[string]any{"access": access}); err != nil {
 		return fail("could not change their access: %v", err)
 	}
 	name, _ := p.Fields["name"].(string)
@@ -124,36 +124,19 @@ func (s *Service) letIn(a letInArgs) toolResult {
 	if access == "" {
 		action, detail = "took access from", name
 	}
-	return toolResult{text: name + " can now " + verb(access), change: &Change{Action: action, Component: PersonType, ID: p.ID, Detail: detail, Before: map[string]any{"access": before}}}
+	return toolResult{text: name + " can now " + verb(access), change: &records.Change{Action: action, Component: records.PersonType, ID: p.ID, Detail: detail, Before: map[string]any{"access": before}}}
 }
 
 func verb(access string) string {
 	switch access {
-	case View:
+	case records.View:
 		return "look at this workspace"
-	case Edit:
+	case records.Edit:
 		return "edit this workspace"
-	case Host:
+	case records.Host:
 		return "host this workspace too"
 	}
 	return "no longer open this workspace"
-}
-
-// PersonByEmail is the person who signs in with this email, if any.
-func (s *Service) PersonByEmail(email string) *store.Record {
-	if _, ok := s.Store.Types().Get(PersonType); !ok || email == "" {
-		return nil
-	}
-	people, err := s.Store.List(PersonType, store.ListOptions{})
-	if err != nil {
-		return nil
-	}
-	for _, p := range people {
-		if e, _ := p.Fields["email"].(string); strings.EqualFold(strings.TrimSpace(e), email) {
-			return p
-		}
-	}
-	return nil
 }
 
 // Knock asks the owner, once, whether someone who reached the workspace
@@ -168,7 +151,7 @@ func (s *Service) Knock(login, name, device string) bool {
 			return false
 		}
 	}
-	a := letInArgs{Email: login, Name: name, Access: View}
+	a := letInArgs{Email: login, Name: name, Access: records.View}
 	q := letInQuestion(a)
 	if device != "" {
 		q.detail = fmt.Sprintf("They tried to open it just now, from %s. ", device) + q.detail

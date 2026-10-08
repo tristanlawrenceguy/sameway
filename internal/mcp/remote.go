@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // What an agent connected over HTTP may do follows who it is for. At the
@@ -24,7 +25,7 @@ type offKey struct{}
 // offMachine says whether a request came from somewhere other than this
 // computer.
 func offMachine(r *http.Request) bool {
-	if chat.VisitorOf(r.Context()).Login != "" {
+	if records.VisitorOf(r.Context()).Login != "" {
 		return true
 	}
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
@@ -47,15 +48,15 @@ func (s *Server) reachOf(ctx context.Context) reach {
 	if off, _ := ctx.Value(offKey{}).(bool); !off {
 		return reach{all: true}
 	}
-	v := chat.VisitorOf(ctx)
+	v := records.VisitorOf(ctx)
 	switch {
-	case v.Access == chat.Public:
+	case v.Access == records.Public:
 		return reach{public: true}
 	case v.Login == "":
 		return reach{} // no one to go by
 	case v.Owner():
 		return reach{all: true}
-	case v.Access == chat.Edit || v.Access == chat.Host:
+	case v.Access == records.Edit || v.Access == records.Host:
 		return reach{svc: s.App.Chat.For(v)}
 	}
 	return reach{}
@@ -87,7 +88,7 @@ const refusedOff = "This connection may not do that. Over the tailnet it may do 
 // workspace let in, or one of its owner's devices. Who they are is the
 // authentication, so no token is asked of them.
 func fromTailnet(r *http.Request) bool {
-	return chat.VisitorOf(r.Context()).Login != ""
+	return records.VisitorOf(r.Context()).Login != ""
 }
 
 // listFor is the tools a connection may call.

@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/search"
 )
@@ -119,14 +119,14 @@ func (s *Server) apiSearch(w http.ResponseWriter, r *http.Request) {
 		search.Hit
 		WrittenBy string `json:"written_by"`
 	}
-	writers := s.app.Chat.Writers()
+	writers := s.app.Records.WritersFor(false)
 	hits := make([]written, 0, len(res.Hits))
 	for _, h := range res.Hits {
 		hits = append(hits, written{h, writers.OfID(h.Type, h.ID).Words})
 	}
 	out := map[string]any{"query": res.Query, "count": len(res.Hits), "hits": hits, "total": res.Total, "counts": res.Counts,
 		"found": res.Found, "page": res.Page, "pages": res.Pages, "said": res.Said(), "some": res.Some,
-		"untrusted": "each hit's title and snippet were written by its written_by: " + chat.Untrusted}
+		"untrusted": "each hit's title and snippet were written by its written_by: " + records.Untrusted}
 	if only != "" {
 		out["type"] = only
 	}

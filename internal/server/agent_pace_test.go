@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // An agent's key changes things at most PaceChanges a minute; past that it
@@ -13,18 +13,18 @@ import (
 // computer is not held back.
 func TestAnAgentsChangesArePaced(t *testing.T) {
 	a, h := newApp(t)
-	key, _, err := chat.LetAgentIn(a.Store, chat.Who{Actor: "human", Via: chat.ThroughCLI}, "Busy", "edit")
+	key, _, err := records.LetAgentIn(a.Store, records.Who{Actor: "human", Via: records.ThroughCLI}, "Busy", "edit")
 	if err != nil {
 		t.Fatal(err)
 	}
 	// The budget comes back a change a second, and a slow machine earns
 	// some back while it sends, so send until refused.
 	made, res := 0, withKey(h, key, http.MethodPost, "/api/note", `{"title":"One more"}`)
-	for ; res.Code == http.StatusCreated && made < 3*chat.PaceChanges; made++ {
+	for ; res.Code == http.StatusCreated && made < 3*records.PaceChanges; made++ {
 		res = withKey(h, key, http.MethodPost, "/api/note", `{"title":"One more"}`)
 	}
-	if made < chat.PaceChanges {
-		t.Errorf("the first %d changes are within the pace, refused after %d: %d %s", chat.PaceChanges, made, res.Code, res.Body.String())
+	if made < records.PaceChanges {
+		t.Errorf("the first %d changes are within the pace, refused after %d: %d %s", records.PaceChanges, made, res.Code, res.Body.String())
 	}
 	if res.Code != http.StatusTooManyRequests || res.Header().Get("Retry-After") == "" || !strings.Contains(res.Body.String(), `"slow_down"`) {
 		t.Errorf("past the pace is 429 slow_down with Retry-After: %d %q %.300s", res.Code, res.Header().Get("Retry-After"), res.Body.String())

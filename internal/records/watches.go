@@ -1,4 +1,4 @@
-package chat
+package records
 
 import (
 	"fmt"
@@ -31,8 +31,25 @@ func watches(st *store.Store, fields map[string]any) error {
 		}
 		return fmt.Errorf("%s", why)
 	}
-	if _, err := query.ParseAll(t, strings2(fields["only"])); err != nil {
+	if _, err := query.ParseAll(t, StringList(fields["only"])); err != nil {
 		return fmt.Errorf("only: %v", err)
 	}
 	return nil
+}
+
+// StringList is a stored list of words as strings, each trimmed, with
+// the empty ones and anything not a string left out.
+func StringList(v any) []string {
+	var out []string
+	switch l := v.(type) {
+	case []any:
+		for _, x := range l {
+			if s, ok := x.(string); ok && strings.TrimSpace(s) != "" {
+				out = append(out, strings.TrimSpace(s))
+			}
+		}
+	case []string:
+		out = l
+	}
+	return out
 }

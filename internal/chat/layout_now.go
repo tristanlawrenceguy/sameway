@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
@@ -83,7 +84,7 @@ func (p placed) shows() string {
 func (p placed) tall() bool {
 	small := p.detail == "glance" || p.detail == "brief"
 	switch p.comp {
-	case ComponentName, "table":
+	case records.ComponentName, "table":
 		return true
 	case "calendar", "tracker", "chart":
 		return !small
@@ -133,11 +134,11 @@ func (p placed) heading() (int, string, bool) {
 
 // canvasBlocks is the blocks on one tab, in the order the page gives them.
 func (s *Service) canvasBlocks(canvas string) []*store.Record {
-	blocks, err := s.Store.List(BlockType, store.ListOptions{OrderBy: "position"})
+	blocks, err := s.Store.List(records.BlockType, store.ListOptions{OrderBy: "position"})
 	if err != nil {
 		return nil
 	}
-	return OnCanvas(blocks, canvas)
+	return records.OnCanvas(blocks, canvas)
 }
 
 // region is the blocks of one region, in order.

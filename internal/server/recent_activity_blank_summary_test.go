@@ -4,7 +4,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // TestRecentActivityBlankSummaryShowsFallback checks that the recent activity
@@ -14,7 +14,7 @@ func TestRecentActivityBlankSummaryShowsFallback(t *testing.T) {
 	a, h := newApp(t)
 
 	// Seed a human activity with an empty summary directly into the store.
-	_, err := a.Store.Create(chat.ActivityType, map[string]any{
+	_, err := a.Store.Create(records.ActivityType, map[string]any{
 		"summary": "",
 		"actor":   "human",
 		"action":  "said",
@@ -43,7 +43,7 @@ func TestRecentActivityBlankSummaryShowsFallback(t *testing.T) {
 func TestRecentActivityBlankSummaryAssistantFallback(t *testing.T) {
 	a, h := newApp(t)
 
-	_, err := a.Store.Create(chat.ActivityType, map[string]any{
+	_, err := a.Store.Create(records.ActivityType, map[string]any{
 		"summary": "",
 		"actor":   "assistant",
 		"action":  "added",

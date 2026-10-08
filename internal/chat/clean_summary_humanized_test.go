@@ -3,7 +3,7 @@ package chat_test
 import (
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // Already-humanized setting change summaries in undo context are cleaned back
@@ -19,7 +19,7 @@ func TestCleanSummaryHumanizedSettingUndo(t *testing.T) {
 		"You undid: Assistant changed Text size to Normal":                            "You undid: Assistant changed text size to Normal",
 		"You undid: Assistant changed Room between lines and words to Wide, on phone": "You undid: Assistant changed spacing to Wide, on phone",
 	} {
-		if got := chat.CleanSummary(in); got != want {
+		if got := records.CleanSummary(in); got != want {
 			t.Errorf("CleanSummary(%q) = %q, want %q", in, got, want)
 		}
 	}

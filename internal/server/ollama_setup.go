@@ -109,11 +109,11 @@ func (s *Server) useOllama(ctx context.Context, model string) error {
 	if err != nil {
 		return err
 	}
-	if s.app.Chat.SetSetting == nil {
+	if s.app.Records.SetSetting == nil {
 		return fmt.Errorf("this workspace has no settings file")
 	}
 	for _, kv := range [][2]string{{"llm.base_url", llm.OllamaURL + "/v1"}, {"llm.model", name}, {"llm.provider", "openai"}} {
-		if err := s.app.Chat.SetSetting(kv[0], kv[1]); err != nil {
+		if err := s.app.Records.SetSetting(kv[0], kv[1]); err != nil {
 			return err
 		}
 	}

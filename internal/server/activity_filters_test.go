@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -22,12 +22,12 @@ func seedLog(t *testing.T, a *app.App, h http.Handler) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	chat.Record(a.Store, "human", chat.Change{Action: "created", Component: "task", ID: task.ID, Detail: "Dig the pond"})
-	chat.Record(a.Store, "assistant", chat.Change{Action: "added", Component: "card", ID: "c1", Detail: "Plan the beds"})
-	chat.Record(a.Store, "system", chat.Change{Action: "failed", Detail: "could not reach the model"})
-	chat.Record(a.Store, "human", chat.Change{Action: "added", Component: "note", ID: "n1", Detail: "Fern cuttings", By: "Sam", ByLogin: "sam@example.com"})
+	records.Record(a.Store, "human", records.Change{Action: "created", Component: "task", ID: task.ID, Detail: "Dig the pond"})
+	records.Record(a.Store, "assistant", records.Change{Action: "added", Component: "card", ID: "c1", Detail: "Plan the beds"})
+	records.Record(a.Store, "system", records.Change{Action: "failed", Detail: "could not reach the model"})
+	records.Record(a.Store, "human", records.Change{Action: "added", Component: "note", ID: "n1", Detail: "Fern cuttings", By: "Sam", ByLogin: "sam@example.com"})
 	old := time.Now().AddDate(0, 0, -10)
-	if _, err := a.Store.Put(chat.ActivityType, "oldentry", map[string]any{
+	if _, err := a.Store.Put(records.ActivityType, "oldentry", map[string]any{
 		"summary": "Assistant added card Last spring", "actor": "assistant", "action": "added", "target": "card", "target_id": "c0", "detail": "Last spring",
 	}, old, old); err != nil {
 		t.Fatal(err)
@@ -127,7 +127,7 @@ func TestActivityKeepsItsPlace(t *testing.T) {
 	if !strings.Contains(body, `<input type="hidden" name="from" value="/activity?who=you&amp;show=links">`) {
 		t.Fatalf("Undo carries the narrowed address\n%s", truncate(body))
 	}
-	entries, _ := a.Store.List(chat.ActivityType, store.ListOptions{})
+	entries, _ := a.Store.List(records.ActivityType, store.ListOptions{})
 	id := ""
 	for _, e := range entries {
 		if e.Fields["target"] == "task" {
@@ -144,7 +144,7 @@ func TestActivityKeepsItsPlace(t *testing.T) {
 func TestActivityPagesKeepTheChoices(t *testing.T) {
 	a, h := newApp(t)
 	for i := range 205 {
-		chat.Record(a.Store, "assistant", chat.Change{Action: "added", Component: "card", ID: fmt.Sprint("c", i), Detail: fmt.Sprint("Card ", i)})
+		records.Record(a.Store, "assistant", records.Change{Action: "added", Component: "card", ID: fmt.Sprint("c", i), Detail: fmt.Sprint("Card ", i)})
 	}
 	body := get(t, h, "/activity?who=assistant").Body.String()
 	if !strings.Contains(body, "205 changes.") || !strings.Contains(body, `aria-label="Pages of activity"`) || !strings.Contains(body, `href="/activity?page=2&amp;who=assistant"`) && !strings.Contains(body, `href="/activity?who=assistant&amp;page=2"`) {
@@ -159,7 +159,7 @@ func TestActivityPagesKeepTheChoices(t *testing.T) {
 func TestActivityNamesAgents(t *testing.T) {
 	a, h := newApp(t)
 	seedLog(t, a, h)
-	chat.Record(a.Store, chat.ActorAgent, chat.Change{Action: "added", Component: "note", ID: "n2", Detail: "Seed order", By: "Claude Code", Via: chat.ThroughAPI})
+	records.Record(a.Store, records.ActorAgent, records.Change{Action: "added", Component: "note", ID: "n2", Detail: "Seed order", By: "Claude Code", Via: records.ThroughAPI})
 	body := get(t, h, "/activity").Body.String()
 	i := strings.Index(body, ">Claude Code</option>")
 	if i < 0 {

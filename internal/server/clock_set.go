@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
@@ -68,7 +68,7 @@ func (s *Server) clockSet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	title, _ := fields["title"].(string)
-	undo := s.record(r, chat.Change{Action: "created", Component: ReminderType, ID: rec.ID, Detail: title})
+	undo := s.record(r, records.Change{Action: "created", Component: ReminderType, ID: rec.ID, Detail: title})
 	what := "Alarm set"
 	if fields["kind"] == "timer" {
 		what = "Timer set"
@@ -107,7 +107,7 @@ func (s *Server) setReminder(w http.ResponseWriter, r *http.Request, fields map[
 	}
 	t, _ := s.app.Types.Get(ReminderType)
 	title := s.title(t, rec)
-	undo := s.record(r, chat.Change{Action: action, Component: ReminderType, ID: rec.ID, Detail: title, Before: rec.Fields})
+	undo := s.record(r, records.Change{Action: action, Component: ReminderType, ID: rec.ID, Detail: title, Before: rec.Fields})
 	o := outcome{Title: title + " dismissed", Undo: undo}
 	switch {
 	case action == "snoozed":

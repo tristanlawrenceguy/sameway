@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -20,12 +21,9 @@ import (
 
 // Service holds the dependencies for one workspace's chat.
 type Service struct {
-	// SetSetting changes one line of workspace.yaml, when there is one:
-	// the pace, which lists show, the model, the name. Set by the app.
-	SetSetting func(key, value string) error
-	// Setting reads one line of workspace.yaml as it is now, for the
-	// questions that say what would change from what; set by the app.
-	Setting func(key string) string
+	// Book is the workspace's records: the store, the settings, the log
+	// and undoing it. See internal/records.
+	*records.Book
 	// Update looks for a new version of the sameway program and installs
 	// it when told to, set by the app; nil when this build cannot update
 	// itself. See internal/update.
@@ -35,7 +33,6 @@ type Service struct {
 	AddField     func(typeName string, f schema.Field) (*schema.Type, error)
 	Reshape      Reshaper // changes a type after it is made; see reshape.go
 	AddType      func(t *schema.Type) (*schema.Type, error)
-	Store        *store.Store
 	Registry     *render.Registry
 	Provider     llm.Provider
 	ProviderErr  error
@@ -53,9 +50,6 @@ type Service struct {
 	// there is none, and a block is then held to its props schema only.
 	// See check.go.
 	Check func(component string, props map[string]any) (shows, problem string)
-	// Glance is what a record says beside its title, in the words its row
-	// and its page use (server/glance.go); set by the server.
-	Glance func(t *schema.Type, rec *store.Record) string
 	// Tell lets the person know, beyond the page, what was done for them
 	// while they were away: an automation's turn (automate.go).
 	Tell func(title, text, url string)
@@ -86,16 +80,12 @@ type Service struct {
 	// is this month. Defaults to time.Now; tests pin it.
 	Now func() time.Time
 
-	// Owner is who owns this computer's copy, by their Tailscale login and
-	// name, once the tailnet says; set by the command line. What they do
-	// is theirs by name on the other computers that host the workspace.
-	Owner Visitor
 	// who is the one this service speaks for, when it is not the owner;
 	// see people.go.
-	who Visitor
+	who records.Visitor
 	// agent is the program outside Sameway this service runs tools for,
 	// nil for the assistant in the app; see agent.go.
-	agent *Agent
+	agent *records.Agent
 
 	// current is the tab the person is looking at while a turn runs: "" is
 	// Home. New blocks land there, and the prompt describes that tab.
@@ -105,7 +95,7 @@ type Service struct {
 // Available reports whether the workspace has the content types the chat
 // needs. The error explains what is missing.
 func (s *Service) Available() error {
-	for _, name := range []string{MessageType, BlockType} {
+	for _, name := range []string{records.MessageType, records.BlockType} {
 		if _, ok := s.Store.Types().Get(name); !ok {
 			return fmt.Errorf("content type %q is missing from schema/; run `sameway init --force` to restore it", name)
 		}
@@ -157,11 +147,11 @@ func (s *Service) sendTurn(ctx context.Context, canvas, text, fileID string, on 
 	if on != nil {
 		on(Event{Kind: "said", ID: mine.ID})
 	}
-	actor, by := "human", VisitorOf(ctx).Who()
+	actor, by := "human", records.VisitorOf(ctx).Who()
 	if name := automatedBy(ctx); name != "" {
 		actor, by = "system", name // asked by an automation, not the person; automate.go
 	}
-	said := Record(s.Store, actor, Change{Action: "said", Detail: trim.Line(text, 80), Via: Via(ctx), By: by})
+	said := records.Record(s.Store, actor, records.Change{Action: "said", Detail: trim.Line(text, 80), Via: records.Via(ctx), By: by})
 	if s.Provider == nil {
 		err := s.ProviderErr
 		if err == nil {
@@ -179,7 +169,7 @@ func (s *Service) sendTurn(ctx context.Context, canvas, text, fileID string, on 
 		// changes show, so it is watched while the turn runs.
 		defer s.watch(ctx, said, on)()
 	}
-	var changes []Change
+	var changes []records.Change
 	var tools []map[string]any
 	corrected, nudged := false, false
 	var p progress
@@ -285,7 +275,7 @@ func (s *Service) fields(typeName string, in map[string]any) map[string]any {
 
 // fail stores an error notice in the conversation and returns it with the error.
 func (s *Service) fail(err error) (*store.Record, error) {
-	Record(s.Store, "system", Change{Action: "failed", Detail: trim.Line(SanitizeError(err.Error()), 200)})
+	records.Record(s.Store, "system", records.Change{Action: "failed", Detail: trim.Line(SanitizeError(err.Error()), 200)})
 	rec, storeErr := s.message(map[string]any{"role": "error", "content": err.Error()})
 	if storeErr != nil {
 		return nil, storeErr

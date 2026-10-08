@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -21,25 +22,25 @@ func (s *Service) runsToolsOutside() bool {
 // tools elsewhere: every log entry after the turn's own "said" entry that
 // is not the person's nor another agent's, as the receipt the reply carries, each undoable.
 // The log is ordered as it was written, so the said entry is the fence.
-func (s *Service) changesAfter(saidID string) []Change {
-	recs, err := s.Store.List(ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 100})
+func (s *Service) changesAfter(saidID string) []records.Change {
+	recs, err := s.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 100})
 	if err != nil {
 		return nil
 	}
-	var out []Change
+	var out []records.Change
 	for _, rec := range recs {
 		if rec.ID == saidID {
 			break
 		}
 		actor, _ := rec.Fields["actor"].(string)
 		action, _ := rec.Fields["action"].(string)
-		if actor == "human" || actor == ActorAgent || action == "said" {
+		if actor == "human" || actor == records.ActorAgent || action == "said" {
 			continue
 		}
 		target, _ := rec.Fields["target"].(string)
 		id, _ := rec.Fields["target_id"].(string)
 		detail, _ := rec.Fields["detail"].(string)
-		c := Change{Action: action, Component: target, ID: id, Detail: detail, Activity: rec.ID}
+		c := records.Change{Action: action, Component: target, ID: id, Detail: detail, Activity: rec.ID}
 		if id != "" {
 			if _, isType := s.Store.Types().Get(target); isType {
 				c.Href = "/t/" + target + "/" + id
@@ -47,7 +48,7 @@ func (s *Service) changesAfter(saidID string) []Change {
 				c.Href = "/canvas/" + id
 			}
 		}
-		out = append([]Change{c}, out...)
+		out = append([]records.Change{c}, out...)
 	}
 	return out
 }

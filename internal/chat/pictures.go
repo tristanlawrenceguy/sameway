@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // Pictures come to the model with the conversation, for a model that can
@@ -29,7 +30,7 @@ func (s *Service) pictureIDs(content, attached string) []string {
 			return
 		}
 		seen[id] = true
-		if rec, err := s.Store.Get(FileType, id); err == nil && rec.Fields["kind"] == "image" {
+		if rec, err := s.Store.Get(records.FileType, id); err == nil && rec.Fields["kind"] == "image" {
 			ids = append(ids, id)
 		}
 	}
@@ -50,7 +51,7 @@ func (s *Service) withPictures(msgs []llm.Message, ids [][]string) {
 	for i := len(msgs) - 1; i >= 0; i-- {
 		for _, id := range ids[i] {
 			if sent >= picturesSent {
-				msgs[i].Content += "\n[A picture came with this earlier, filed at /t/" + FileType + "/" + id + ".]"
+				msgs[i].Content += "\n[A picture came with this earlier, filed at /t/" + records.FileType + "/" + id + ".]"
 				continue
 			}
 			if img, ok := s.Picture(id); ok {

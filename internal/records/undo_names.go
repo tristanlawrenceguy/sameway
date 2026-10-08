@@ -1,4 +1,4 @@
-package chat
+package records
 
 import (
 	"regexp"

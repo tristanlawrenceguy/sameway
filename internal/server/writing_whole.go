@@ -8,9 +8,9 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/export"
 	"github.com/tristanlawrenceguy/sameway/internal/prose"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -33,7 +33,7 @@ func (s *Server) wholeMarkdown(t *schema.Type, piece *store.Record, level int, s
 	if level > mostDepth {
 		return b.String()
 	}
-	for _, p := range chat.Parts(s.app.Store, t, piece) {
+	for _, p := range records.Parts(s.app.Store, t, piece) {
 		if seen[p.ID] {
 			continue
 		}
@@ -57,7 +57,7 @@ func shiftHeadings(md string, level int) string {
 // wholePage reads a piece as one, or gives it as a file (?as=md or docx).
 func (s *Server) wholePage(w http.ResponseWriter, r *http.Request) {
 	t, ok := s.app.Types.Get(r.PathValue("type"))
-	if !ok || !chat.Organised(t) {
+	if !ok || !records.Organised(t) {
 		http.NotFound(w, r)
 		return
 	}
@@ -88,7 +88,7 @@ func (s *Server) wholePage(w http.ResponseWriter, r *http.Request) {
 	href := "/t/" + t.Name + "/" + piece.ID
 	var b strings.Builder
 	fmt.Fprintf(&b, `<p><a class="sw-link" href="%s">Back to %s</a></p>`, href, template.HTMLEscapeString(title))
-	fmt.Fprintf(&b, `<p class="sw-muted">%s.</p>`, inWords(chat.WordCount(md), "word"))
+	fmt.Fprintf(&b, `<p class="sw-muted">%s.</p>`, inWords(records.WordCount(md), "word"))
 	fmt.Fprintf(&b, `<article class="sw-prose">%s</article>`, prose.Render(md, 2))
 	b.WriteString(string(s.component("export", map[string]any{"what": "all of " + title, "items": []any{
 		map[string]any{"href": href + "/whole?as=docx", "format": "docx"},
@@ -102,7 +102,7 @@ func (s *Server) moveParts(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	t, ok := s.app.Types.Get(r.PathValue("type"))
 	back := "/t/" + r.PathValue("type") + "/" + r.PathValue("id")
-	if !ok || !chat.Organised(t) {
+	if !ok || !records.Organised(t) {
 		http.NotFound(w, r)
 		return
 	}
@@ -111,7 +111,7 @@ func (s *Server) moveParts(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	parts := chat.Parts(s.app.Store, t, piece)
+	parts := records.Parts(s.app.Store, t, piece)
 	at := slices.IndexFunc(parts, func(p *store.Record) bool { return p.ID == r.FormValue("part") })
 	to := at - 1
 	if r.FormValue("dir") == "down" {
@@ -126,7 +126,7 @@ func (s *Server) moveParts(w http.ResponseWriter, r *http.Request) {
 	for i, p := range parts {
 		order[i] = p.ID
 	}
-	_, entry, err := chat.WriteAs(s.app.Store, s.who(r), "updated", t.Name, piece.ID, map[string]any{chat.PartsOrder: order})
+	_, entry, err := records.WriteAs(s.app.Store, s.who(r), "updated", t.Name, piece.ID, map[string]any{records.PartsOrder: order})
 	if err != nil {
 		s.tell(w, r, outcome{Failed: true, Title: "Not moved", Text: err.Error()}, back)
 		return

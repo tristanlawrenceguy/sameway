@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -98,12 +98,12 @@ func (s *Server) voiceNames(rec *store.Record) (me, them string) {
 		return
 	}
 	ownerID := ""
-	if login := s.app.Chat.Owner.Login; login != "" {
+	if login := s.app.Records.Owner.Login; login != "" {
 		if found, _ := query.Filter(s.app.Store, pt, []string{"email=" + login}, "", 1, time.Now()); len(found) == 1 {
 			me, ownerID = s.title(pt, found[0]), found[0].ID
 		}
 	}
-	et, ok := s.app.Types.Get(chat.EventType)
+	et, ok := s.app.Types.Get(records.EventType)
 	if !ok {
 		return
 	}

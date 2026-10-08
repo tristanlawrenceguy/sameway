@@ -7,6 +7,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -46,7 +47,7 @@ func TestATurnSaysWhatItIsDoingInWords(t *testing.T) {
 				toolOf("f", "create_record", map[string]any{"type": "task", "fields": map[string]any{"title": "Buy milk"}}),
 			}}
 		case 2:
-			blocks, _ := svc.Store.List(chat.BlockType, store.ListOptions{})
+			blocks, _ := svc.Store.List(records.BlockType, store.ListOptions{})
 			for _, b := range blocks {
 				if b.Fields["component"] == "collection" {
 					return &llm.Response{ToolCalls: []llm.ToolCall{toolOf("g", "update_component", map[string]any{"id": b.ID, "span": 6})}}

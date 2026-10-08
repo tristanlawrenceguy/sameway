@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 )
 
@@ -29,7 +29,7 @@ func TestSinceSaysHowManyAndListsAFew(t *testing.T) {
 	a, h := newApp(t)
 	a.Store.SetMeta("last:owner", time.Now().Add(-2*time.Hour).UTC().Format(time.RFC3339Nano))
 	for i := range 7 {
-		chat.Record(a.Store, "human", chat.Change{Action: "added", Component: "note", Detail: fmt.Sprintf("Idea %d", i), By: "Hana", ByLogin: "hana@example.com"})
+		records.Record(a.Store, "human", records.Change{Action: "added", Component: "note", Detail: fmt.Sprintf("Idea %d", i), By: "Hana", ByLogin: "hana@example.com"})
 	}
 
 	notice := sinceSection(get(t, h, "/").Body.String())
@@ -62,7 +62,7 @@ func TestSinceSaysHowManyAndListsAFew(t *testing.T) {
 func TestSinceGotItStaysOnThePage(t *testing.T) {
 	a, h := newApp(t)
 	a.Store.SetMeta("last:owner", time.Now().Add(-2*time.Hour).UTC().Format(time.RFC3339Nano))
-	chat.Record(a.Store, "human", chat.Change{Action: "deleted", Component: "note", Detail: "Shopping", By: "Hana", ByLogin: "hana@example.com"})
+	records.Record(a.Store, "human", records.Change{Action: "deleted", Component: "note", Detail: "Shopping", By: "Hana", ByLogin: "hana@example.com"})
 
 	notice := sinceSection(get(t, h, "/activity").Body.String())
 	if !strings.Contains(notice, `name="from" value="/activity"`) || !strings.Contains(notice, "1 change by others") {
@@ -83,7 +83,7 @@ func TestSinceGotItStaysOnThePage(t *testing.T) {
 func TestAPublishedPageDoesNotSayWhatChanged(t *testing.T) {
 	a, h := newApp(t)
 	a.Store.SetMeta("last:owner", time.Now().Add(-2*time.Hour).UTC().Format(time.RFC3339Nano))
-	chat.Record(a.Store, "human", chat.Change{Action: "added", Component: "note", Detail: "Private plans", By: "Hana", ByLogin: "hana@example.com"})
+	records.Record(a.Store, "human", records.Change{Action: "added", Component: "note", Detail: "Private plans", By: "Hana", ByLogin: "hana@example.com"})
 	if !strings.Contains(get(t, h, "/").Body.String(), "changes by others since") && !strings.Contains(get(t, h, "/").Body.String(), "change by others since") {
 		t.Fatal("the owner is told, to start with")
 	}

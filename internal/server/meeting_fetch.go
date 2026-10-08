@@ -14,6 +14,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/meetfetch"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -85,7 +86,7 @@ func (s *Server) FetchMeetings(now time.Time) {
 	if !teams && !zoom {
 		return
 	}
-	et, ok := s.app.Types.Get(chat.EventType)
+	et, ok := s.app.Types.Get(records.EventType)
 	if !ok {
 		return
 	}
@@ -147,19 +148,19 @@ func (s *Server) wantsApp(ev *store.Record, now time.Time) bool {
 // keepFetched keeps a transcript brought from an app and gives it to its
 // meeting, as the system's change, logged and undone like any other.
 func (s *Server) keepFetched(ev *store.Record, vtt []byte, teams bool) {
-	et, _ := s.app.Types.Get(chat.EventType)
+	et, _ := s.app.Types.Get(records.EventType)
 	title, from := s.title(et, ev), "Zoom"
 	if teams {
 		from = "Teams"
 	}
-	who := chat.Who{Actor: "system", Via: "from " + from}
+	who := records.Who{Actor: "system", Via: "from " + from}
 	rec, path, err := s.keepFile(who, bytes.NewReader(vtt), title+" transcript.vtt", "Transcript of "+title, "")
 	if err != nil {
 		log.Printf("meetings: keeping %s: %v", title, err)
 		return
 	}
 	s.readKept(rec.ID, title+" transcript.vtt", path, true)
-	if _, _, err := chat.WriteAs(s.app.Store, who, "updated", chat.EventType, ev.ID, map[string]any{"recording": rec.ID}); err != nil {
+	if _, _, err := records.WriteAs(s.app.Store, who, "updated", records.EventType, ev.ID, map[string]any{"recording": rec.ID}); err != nil {
 		log.Printf("meetings: giving %s its transcript: %v", title, err)
 	}
 	s.Changed()
@@ -187,7 +188,7 @@ func (s *Server) teamsConnect(w http.ResponseWriter, r *http.Request) {
 		}
 		s.apps.mu.Unlock()
 		if err == nil {
-			chat.Record(s.app.Store, "system", chat.Change{Action: "added", Detail: "a connection to Teams, for bringing meeting transcripts"})
+			records.Record(s.app.Store, "system", records.Change{Action: "added", Detail: "a connection to Teams, for bringing meeting transcripts"})
 		}
 		s.Changed()
 	}()

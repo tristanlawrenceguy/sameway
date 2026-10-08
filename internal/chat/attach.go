@@ -3,6 +3,8 @@ package chat
 import (
 	"fmt"
 	"strings"
+
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // attachmentChars caps how much of a file's text goes to the model with
@@ -12,7 +14,7 @@ const attachmentChars = 8000
 // attachment is what the model is told about a file that came with a
 // message: what it is, where it is filed, and its text.
 func (s *Service) attachment(id string) string {
-	rec, err := s.Store.Get(FileType, id)
+	rec, err := s.Store.Get(records.FileType, id)
 	if err != nil {
 		return "\n\n[The attached file is no longer here.]"
 	}
@@ -22,7 +24,7 @@ func (s *Service) attachment(id string) string {
 	status, _ := rec.Fields["status"].(string)
 	description, _ := rec.Fields["description"].(string)
 	var b strings.Builder
-	fmt.Fprintf(&b, "\n\n[Attached: %s, a %s, filed at /t/%s/%s.", title, kind, FileType, rec.ID)
+	fmt.Fprintf(&b, "\n\n[Attached: %s, a %s, filed at /t/%s/%s.", title, kind, records.FileType, rec.ID)
 	switch {
 	case status == "converting":
 		b.WriteString(" Its text is still being read; say so, and that it will be on its page.]")

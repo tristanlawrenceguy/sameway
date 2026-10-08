@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -72,7 +72,7 @@ func (s *Server) sortedNote(r *http.Request, id string) (*store.Record, string, 
 			tags = append(tags, t)
 		}
 	}
-	_, act, err := chat.WriteAs(s.app.Store, s.who(r), "updated", "note", id, map[string]any{"tags": tags})
+	_, act, err := records.WriteAs(s.app.Store, s.who(r), "updated", "note", id, map[string]any{"tags": tags})
 	return n, act, err
 }
 
@@ -90,7 +90,7 @@ func (s *Server) mailTask(w http.ResponseWriter, r *http.Request) {
 			fields["notes"] = "From the email [" + title + "](/t/note/" + n.ID + ")."
 		}
 	}
-	task, act, err := chat.WriteAs(s.app.Store, s.who(r), "created", "task", "", fields)
+	task, act, err := records.WriteAs(s.app.Store, s.who(r), "created", "task", "", fields)
 	if err != nil {
 		s.failed(w, r, "Not made", err, "/today")
 		return

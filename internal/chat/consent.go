@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
@@ -148,7 +149,7 @@ func (s *Service) askFirst(call string, id, key, value string) (toolResult, bool
 		q := put(s.setting(key), strings.TrimSpace(value), s)
 		return s.ask(q, map[string]any{"tool": "set_setting", "key": key, "value": value}), true
 	case "run_action":
-		rec, err := s.Store.Get(ActionType, id)
+		rec, err := s.Store.Get(records.ActionType, id)
 		if err != nil {
 			return toolResult{}, false // Run says there is no such action
 		}
@@ -205,7 +206,7 @@ func (s *Service) ask(q question, action map[string]any) toolResult {
 	if r.isErr || r.change == nil {
 		return r
 	}
-	s.Store.Update(ProposalType, r.change.ID, map[string]any{"detail": q.detail, "yes": q.yes, "no": q.no})
+	s.Store.Update(records.ProposalType, r.change.ID, map[string]any{"detail": q.detail, "yes": q.yes, "no": q.no})
 	r.text += ". It was put to them as: " + q.ask + " " + q.detail
 	return r
 }

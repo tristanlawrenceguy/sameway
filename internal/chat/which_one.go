@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -38,7 +39,7 @@ func (s *Service) whichOne(t *schema.Type, rec *store.Record) (toolResult, bool)
 			return toolResult{}, true
 		}
 	}
-	mine := nameWords(recordTitle(s.Store, t, rec))
+	mine := nameWords(records.Title(s.Store, t, rec))
 	shared := map[string]bool{}
 	for w := range asked {
 		if mine[w] && !plain[w] && len([]rune(w)) >= 3 {
@@ -56,7 +57,7 @@ func (s *Service) whichOne(t *schema.Type, rec *store.Record) (toolResult, bool)
 		if o.ID == rec.ID {
 			continue
 		}
-		theirs := nameWords(recordTitle(s.Store, t, o))
+		theirs := nameWords(records.Title(s.Store, t, o))
 		fits := true
 		for w := range shared {
 			fits = fits && theirs[w]
@@ -73,14 +74,14 @@ func (s *Service) whichOne(t *schema.Type, rec *store.Record) (toolResult, bool)
 			return toolResult{}, true
 		}
 		return fail("nothing was changed: the person's words, %q, fit %q no better than %q (%s %s). Ask them which one they mean; if you know it is this one, send the same change again.",
-			strings.TrimSpace(said), recordTitle(s.Store, t, rec), recordTitle(s.Store, t, o), t.Name, o.ID), false
+			strings.TrimSpace(said), records.Title(s.Store, t, rec), records.Title(s.Store, t, o), t.Name, o.ID), false
 	}
 	return toolResult{}, true
 }
 
 // latestAsk is the person's latest message: its id and its words.
 func (s *Service) latestAsk() (id, words string) {
-	msgs, _ := s.Store.List(MessageType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 10})
+	msgs, _ := s.Store.List(records.MessageType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 10})
 	for _, m := range msgs {
 		if m.Fields["role"] == "user" {
 			if time.Since(m.CreatedAt) > 15*time.Minute {

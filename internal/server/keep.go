@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -32,7 +32,7 @@ const maxRead = 64 << 20
 // the API and the command line, which each logged it their own way (the
 // API as a person, though an agent sent it). The record says converting
 // until the file is read.
-func (s *Server) keepFile(who chat.Who, src io.Reader, name, title, description string) (*store.Record, string, error) {
+func (s *Server) keepFile(who records.Who, src io.Reader, name, title, description string) (*store.Record, string, error) {
 	if _, ok := s.app.Types.Get(FileType); !ok {
 		return nil, "", errors.New("this workspace has no file type; run sameway init --force to add it")
 	}
@@ -86,7 +86,7 @@ func (s *Server) keepFile(who chat.Who, src io.Reader, name, title, description 
 	if err != nil {
 		return rec, path, err
 	}
-	chat.Record(s.app.Store, who.Actor, chat.Change{Action: "added", Component: FileType, ID: rec.ID, Detail: title,
+	records.Record(s.app.Store, who.Actor, records.Change{Action: "added", Component: FileType, ID: rec.ID, Detail: title,
 		Href: "/t/" + FileType + "/" + rec.ID, By: who.By, Via: who.Via, ByLogin: who.ByLogin})
 	return rec, path, nil
 }
@@ -128,7 +128,7 @@ func (s *Server) readKept(id, name, path string, wait bool) {
 // through the command line, and reads it before it returns: the command
 // line's way to add a file already on this computer without a browser.
 func (s *Server) AddFile(ctx context.Context, src io.Reader, name, title string) (*store.Record, error) {
-	rec, path, err := s.keepFile(chat.Who{Actor: "human", Via: chat.ThroughCLI}, src, name, title, "")
+	rec, path, err := s.keepFile(records.Who{Actor: "human", Via: records.ThroughCLI}, src, name, title, "")
 	if err != nil {
 		return nil, err
 	}

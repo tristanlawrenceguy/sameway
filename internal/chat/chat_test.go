@@ -10,6 +10,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -59,7 +60,7 @@ func newService(t *testing.T) (*chat.Service, *fakeProvider) {
 		t.Fatal(err)
 	}
 	fp := &fakeProvider{}
-	return &chat.Service{Store: st, Registry: reg, Provider: fp, HistoryLimit: 10}, fp
+	return &chat.Service{Book: &records.Book{Store: st}, Registry: reg, Provider: fp, HistoryLimit: 10}, fp
 }
 
 func TestSendRunsToolLoop(t *testing.T) {
@@ -74,7 +75,7 @@ func TestSendRunsToolLoop(t *testing.T) {
 	if fp.calls != 3 {
 		t.Errorf("expected 3 model calls, got %d", fp.calls)
 	}
-	blocks, _ := svc.Store.List(chat.BlockType, store.ListOptions{})
+	blocks, _ := svc.Store.List(records.BlockType, store.ListOptions{})
 	if len(blocks) != 1 || blocks[0].Fields["component"] != "list" {
 		t.Fatalf("expected one list block, got %+v", blocks)
 	}
@@ -87,7 +88,7 @@ func TestSendRunsToolLoop(t *testing.T) {
 	if third.Messages[0].Role != llm.RoleUser {
 		t.Errorf("conversation must start with the user turn")
 	}
-	msgs, _ := svc.Store.List(chat.MessageType, store.ListOptions{OrderBy: "created_at"})
+	msgs, _ := svc.Store.List(records.MessageType, store.ListOptions{OrderBy: "created_at"})
 	if len(msgs) != 2 || msgs[0].Fields["role"] != "user" || msgs[1].Fields["role"] != "assistant" {
 		t.Errorf("expected user then assistant messages, got %d", len(msgs))
 	}

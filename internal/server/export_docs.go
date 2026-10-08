@@ -17,10 +17,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/content"
 	"github.com/tristanlawrenceguy/sameway/internal/export"
 	"github.com/tristanlawrenceguy/sameway/internal/look"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -239,7 +239,7 @@ func (s *Server) exportEverything(w http.ResponseWriter, r *http.Request) {
 // about how big it is before it is packed: the files as kept and each
 // record's Markdown.
 func (s *Server) takeEverything(r *http.Request) string {
-	if !chat.VisitorOf(r.Context()).Owner() {
+	if !records.VisitorOf(r.Context()).Owner() {
 		return ""
 	}
 	var n int64

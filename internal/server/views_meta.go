@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/devices"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -122,7 +122,7 @@ func (s *Server) from(r *http.Request, t *schema.Type, rec *store.Record) string
 	if t.Name == FileType || t.Name == devices.DeviceType {
 		return ""
 	}
-	if w := s.app.Chat.For(chat.VisitorOf(r.Context())).Writers().Of(t.Name, rec); w.Outside {
+	if w := s.app.Chat.For(records.VisitorOf(r.Context())).Writers().Of(t.Name, rec); w.Outside {
 		return w.Words
 	}
 	return ""

@@ -3,7 +3,7 @@ package app
 import (
 	"slices"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -15,7 +15,7 @@ import (
 // types included, which only ever grow.
 func (a *App) share() {
 	a.Store.Local = map[string]bool{"message": true, "conversation": true, "proposal": true, "action": true, "device": true, "file": true}
-	a.Store.LocalRecord = chat.LocalEntry(a.Store.Local)
+	a.Store.LocalRecord = records.LocalEntry(a.Store.Local)
 	a.Store.OnSchema = a.adopt
 }
 

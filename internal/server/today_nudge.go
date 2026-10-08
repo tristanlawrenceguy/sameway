@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
@@ -83,7 +83,7 @@ func (s *Server) todayDone(w http.ResponseWriter, r *http.Request) {
 	title, _, _, err := s.dueOf(id, time.Now())
 	if err == nil {
 		var act string
-		_, act, err = chat.WriteAs(s.app.Store, s.who(r), "updated", "task", id, map[string]any{"done": true})
+		_, act, err = records.WriteAs(s.app.Store, s.who(r), "updated", "task", id, map[string]any{"done": true})
 		if err == nil {
 			s.tellAt(w, r, outcome{Title: "Done", Text: title + " is done.", Undo: act, Of: title}, "/today")
 			return
@@ -103,7 +103,7 @@ func (s *Server) todayMove(w http.ResponseWriter, r *http.Request) {
 	title, at, allDay, err := s.dueOf(id, now)
 	if err == nil {
 		var act string
-		_, act, err = chat.WriteAs(s.app.Store, s.who(r), "updated", "task", id, map[string]any{"due": dayFor(at, allDay, day)})
+		_, act, err = records.WriteAs(s.app.Store, s.who(r), "updated", "task", id, map[string]any{"due": dayFor(at, allDay, day)})
 		if err == nil {
 			s.tellAt(w, r, outcome{Title: "Moved", Text: title + " is due " + word + ", " + day.Format("Monday 2 January") + ".", Undo: act, Of: title}, "/today")
 			return
@@ -115,7 +115,7 @@ func (s *Server) todayMove(w http.ResponseWriter, r *http.Request) {
 // todayLate moves every late task to today, as one change.
 func (s *Server) todayLate(w http.ResponseWriter, r *http.Request) {
 	now := time.Now()
-	var batch []chat.BatchItem
+	var batch []records.BatchItem
 	for _, it := range s.today(now).Late {
 		if it.Type != "task" {
 			continue
@@ -129,7 +129,7 @@ func (s *Server) todayLate(w http.ResponseWriter, r *http.Request) {
 			s.failed(w, r, "Not all moved", err, "/today")
 			return
 		}
-		batch = append(batch, chat.BatchItem{Type: "task", ID: it.ID, Before: before})
+		batch = append(batch, records.BatchItem{Type: "task", ID: it.ID, Before: before})
 	}
 	if len(batch) == 0 {
 		s.tellAt(w, r, outcome{Title: "Nothing to move", Text: "No task is late."}, "/today")
@@ -137,7 +137,7 @@ func (s *Server) todayLate(w http.ResponseWriter, r *http.Request) {
 	}
 	detail := fmt.Sprintf("%d late tasks to today", len(batch))
 	who := s.who(r)
-	act := chat.Record(s.app.Store, who.Actor, chat.Change{Action: "rescheduled", Component: "task", Detail: detail, Before: chat.Batch(batch), By: who.By, Via: who.Via, ByLogin: who.ByLogin})
+	act := records.Record(s.app.Store, who.Actor, records.Change{Action: "rescheduled", Component: "task", Detail: detail, Before: records.Batch(batch), By: who.By, Via: who.Via, ByLogin: who.ByLogin})
 	s.tellAt(w, r, outcome{Title: "Moved", Text: fmt.Sprintf("%d tasks are due today.", len(batch)), Undo: act, Of: detail}, "/today")
 }
 

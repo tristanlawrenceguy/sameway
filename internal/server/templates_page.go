@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
 
@@ -43,7 +43,7 @@ func (s *Server) templateUse(w http.ResponseWriter, r *http.Request) {
 		s.failed(w, r, "Not made", err, "/templates")
 		return
 	}
-	s.tellAt(w, r, outcome{Title: "Ready", Text: "The template is a tab of its own now. Add what you keep there, or ask the assistant to."}, chat.CanvasPath(id))
+	s.tellAt(w, r, outcome{Title: "Ready", Text: "The template is a tab of its own now. Add what you keep there, or ask the assistant to."}, records.CanvasPath(id))
 }
 
 func (s *Server) templateRoutes(m *http.ServeMux) {

@@ -6,12 +6,12 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
-// Saving from a copy that has gone out of date (see chat/versions.go), for
+// Saving from a copy that has gone out of date (see records/versions.go), for
 // the two who save: a person's page and an agent's request.
 
 // editing is what a record says to the inline editor wherever it is
@@ -27,8 +27,8 @@ func editing(t *schema.Type, rec *store.Record) string {
 // a fingerprint of each field. The editor sends both back with a save
 // (08-edit.js).
 func versionAttrs(rec *store.Record) string {
-	prints, _ := json.Marshal(chat.Prints(rec.Fields))
-	return ` data-version="` + chat.Version(rec) + `" data-was="` + template.HTMLEscapeString(string(prints)) + `"`
+	prints, _ := json.Marshal(records.Prints(rec.Fields))
+	return ` data-version="` + records.Version(rec) + `" data-was="` + template.HTMLEscapeString(string(prints)) + `"`
 }
 
 // sinceOpened reconciles a save from a page with what changed since the
@@ -44,7 +44,7 @@ func sinceOpened(t *schema.Type, rec *store.Record, fields, clean map[string]any
 		}
 		return ""
 	}
-	if version := get("version"); version == "" || chat.SameVersion(rec, version) {
+	if version := get("version"); version == "" || records.SameVersion(rec, version) {
 		return nil
 	}
 	var was map[string]string
@@ -53,11 +53,11 @@ func sinceOpened(t *schema.Type, rec *store.Record, fields, clean map[string]any
 	}
 	for name := range fields {
 		then, known := was[name]
-		now := chat.Print(rec.Fields[name])
+		now := records.Print(rec.Fields[name])
 		if !known || now == then {
 			continue // nobody else changed it
 		}
-		if chat.Print(clean[name]) == then {
+		if records.Print(clean[name]) == then {
 			clean[name] = rec.Fields[name] // the person left it; the other change stays
 			continue
 		}
@@ -73,7 +73,7 @@ func sinceOpened(t *schema.Type, rec *store.Record, fields, clean map[string]any
 // with the record as it is, to change again.
 func (s *Server) staleFor(w http.ResponseWriter, r *http.Request, rec *store.Record) bool {
 	want := strings.TrimSpace(r.Header.Get("If-Match"))
-	if want == "" || want == "*" || chat.SameVersion(rec, want) {
+	if want == "" || want == "*" || records.SameVersion(rec, want) {
 		return false
 	}
 	writeJSON(w, http.StatusPreconditionFailed, map[string]any{

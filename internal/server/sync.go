@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/peers"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // Other computers that host this workspace keep in step with it here; see
@@ -16,7 +16,7 @@ import (
 // made hosts may: a copy can change anything, access included.
 
 func (s *Server) syncExchange(w http.ResponseWriter, r *http.Request) {
-	if v := chat.VisitorOf(r.Context()); !v.Owner() && v.Access != chat.Host {
+	if v := records.VisitorOf(r.Context()); !v.Owner() && v.Access != records.Host {
 		writeJSON(w, http.StatusForbidden, map[string]any{"error": "only the computers that host this workspace keep in step with it"})
 		return
 	}

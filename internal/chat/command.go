@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -89,8 +90,8 @@ func (s *Service) command(ctx context.Context, rec *store.Record, title string) 
 	if answer != "" {
 		res.text += ": " + answer
 	}
-	res.changes = append(res.changes, Change{Action: "ran", Component: ActionType, ID: rec.ID,
-		Detail: fmt.Sprintf("%s (exit %d)", title, code), Href: "/t/" + ActionType + "/" + rec.ID})
+	res.changes = append(res.changes, records.Change{Action: "ran", Component: records.ActionType, ID: rec.ID,
+		Detail: fmt.Sprintf("%s (exit %d)", title, code), Href: "/t/" + records.ActionType + "/" + rec.ID})
 	if code != 0 {
 		res.isErr = true
 		return res
@@ -185,13 +186,13 @@ func tokens(line string) []string {
 // as it stands is accepted for good, then run. The accepted line is kept,
 // not a flag, so an edited command asks again.
 func (s *Service) acceptAction(ctx context.Context, id string) toolResult {
-	rec, err := s.Store.Get(ActionType, id)
+	rec, err := s.Store.Get(records.ActionType, id)
 	if err != nil {
 		return fail("no action with id %s", id)
 	}
 	line, _ := rec.Fields["command"].(string)
 	line = strings.TrimSpace(line)
-	if _, err := s.Store.Update(ActionType, id, map[string]any{"accepted": line}); err != nil {
+	if _, err := s.Store.Update(records.ActionType, id, map[string]any{"accepted": line}); err != nil {
 		return fail("could not accept action %s: %v", id, err)
 	}
 	rec.Fields["accepted"] = line

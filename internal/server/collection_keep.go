@@ -9,8 +9,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
 
@@ -81,7 +81,7 @@ func countSaying(t *schema.Type, n int, setup string) string {
 
 // canvasKeep makes the choices a person made on a collection its setup.
 func (s *Server) canvasKeep(w http.ResponseWriter, r *http.Request) {
-	rec, err := s.app.Store.Get(chat.BlockType, r.PathValue("id"))
+	rec, err := s.app.Store.Get(records.BlockType, r.PathValue("id"))
 	if err != nil {
 		s.failed(w, r, "Not kept", err, "/")
 		return
@@ -136,13 +136,13 @@ func (s *Server) canvasKeep(w http.ResponseWriter, r *http.Request) {
 		s.failed(w, r, "Not kept", err, "/")
 		return
 	}
-	if _, err := s.app.Store.Update(chat.BlockType, rec.ID,
+	if _, err := s.app.Store.Update(records.BlockType, rec.ID,
 		s.app.Chat.BlockFields(map[string]any{"props": clean, "actor": "human"})); err != nil {
 		s.failed(w, r, "Not kept", err, "/")
 		return
 	}
 	label := str(clean["label"], schema.Plural(t.Name))
-	undo := s.record(r, chat.Change{
+	undo := s.record(r, records.Change{
 		Action: "updated", Component: name, ID: rec.ID, Detail: label + " kept as " + said, Before: rec.Fields,
 	})
 	s.tell(w, r, outcome{Title: "Choices kept", Text: capitalize(label) + " now shows " + said + ".", Undo: undo, Of: "keeping " + said}, "/")

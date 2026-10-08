@@ -3,7 +3,7 @@ package server
 import (
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -15,11 +15,11 @@ import (
 // personChip is someone a record is for, with their colour.
 func (s *Server) personChip(label, id, name string) string {
 	login := ""
-	if p, err := s.app.Store.Get(chat.PersonType, id); err == nil {
+	if p, err := s.app.Store.Get(records.PersonType, id); err == nil {
 		login, _ = p.Fields["email"].(string)
 	}
 	props := map[string]any{"name": name, "label": label}
-	if c := chat.PersonColour(login); c > 0 {
+	if c := records.PersonColour(login); c > 0 {
 		props["colour"] = c
 	}
 	return string(s.component("person", props))
@@ -28,17 +28,17 @@ func (s *Server) personChip(label, id, name string) string {
 // forYou hears of a record written because another computer sent it, and
 // tells the owner of this one when it is newly theirs.
 func (s *Server) forYou(typeName, id string, rec *store.Record) {
-	me := strings.ToLower(s.app.Chat.Owner.Login)
+	me := strings.ToLower(s.app.Records.Owner.Login)
 	t, ok := s.app.Types.Get(typeName)
 	if rec == nil || me == "" || !ok || s.notify == nil {
 		return
 	}
 	for _, f := range t.Fields {
 		pid, _ := rec.Fields[f.Name].(string)
-		if f.Type != "ref" || f.To != chat.PersonType || pid == "" {
+		if f.Type != "ref" || f.To != records.PersonType || pid == "" {
 			continue
 		}
-		p, err := s.app.Store.Get(chat.PersonType, pid)
+		p, err := s.app.Store.Get(records.PersonType, pid)
 		if err != nil {
 			continue
 		}

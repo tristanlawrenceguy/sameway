@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
@@ -32,7 +32,7 @@ func (s *Server) activityFacts(e *store.Record) []any {
 			items = append(items, map[string]any{"label": capitalize(schema.Words(t.Name)), "value": s.title(t, rec), "href": href})
 		}
 	case href != "":
-		items = append(items, map[string]any{"label": "About", "value": chat.Sentence(s.app.Store, map[string]any{"action": "", "summary": str("detail")}), "href": href})
+		items = append(items, map[string]any{"label": "About", "value": records.Sentence(s.app.Store, map[string]any{"action": "", "summary": str("detail")}), "href": href})
 	case isType && id != "":
 		items = append(items, map[string]any{"label": capitalize(schema.Words(t.Name)), "value": "no longer here"})
 	}
@@ -56,7 +56,7 @@ func (s *Server) activityFacts(e *store.Record) []any {
 		for _, f := range t.Shown() {
 			v, had := before[f.Name]
 			said := display(f, v)
-			if !had || said == "" || chat.Print(v) == chat.Print(now[f.Name]) {
+			if !had || said == "" || records.Print(v) == records.Print(now[f.Name]) {
 				continue
 			}
 			if f.Type == "ref" {
@@ -68,8 +68,8 @@ func (s *Server) activityFacts(e *store.Record) []any {
 
 	// What it took back, by that change's own words.
 	if undoes := str("undoes"); undoes != "" {
-		if u, err := s.app.Store.Get(chat.ActivityType, undoes); err == nil {
-			items = append(items, map[string]any{"label": "It took back", "value": chat.Sentence(s.app.Store, u.Fields), "href": "/t/" + chat.ActivityType + "/" + u.ID})
+		if u, err := s.app.Store.Get(records.ActivityType, undoes); err == nil {
+			items = append(items, map[string]any{"label": "It took back", "value": records.Sentence(s.app.Store, u.Fields), "href": "/t/" + records.ActivityType + "/" + u.ID})
 		}
 	}
 

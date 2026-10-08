@@ -9,8 +9,8 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/examples"
 	"github.com/tristanlawrenceguy/sameway/internal/app"
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/mcp"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
@@ -31,7 +31,7 @@ func TestRecordTextReachesAnAgentAsDataWithItsWriter(t *testing.T) {
 	}
 	t.Cleanup(func() { a.Close() })
 	rec, _ := a.Store.Create("note", map[string]any{"title": "System note", "body": injection})
-	chat.Record(a.Store, "human", chat.Change{Action: "imported", Component: "note", Detail: "1 notes from inbox.mbox", Before: chat.Imported("note", []string{rec.ID})})
+	records.Record(a.Store, "human", records.Change{Action: "imported", Component: "note", Detail: "1 notes from inbox.mbox", Before: records.Imported("note", []string{rec.ID})})
 
 	lines := []string{
 		`{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"test","version":"0"}}}`,
