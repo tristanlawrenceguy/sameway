@@ -23,7 +23,8 @@ func findRow(body, id string) (string, bool) {
 
 // TestProjectListShowsTaskCount verifies that the project list page shows a
 // task count next to each project row's title. A project with tasks shows
-// "5 tasks" (or "1 task") in its row; an empty project shows "0 tasks".
+// "5 tasks" (or "1 task") in its row; an empty project says none, as a
+// state where every record rests is not said (design/foundations/glance.md).
 // This covers acceptance items 1 and 2 of task 0267.
 func TestProjectListShowsTaskCount(t *testing.T) {
 	_, h := newApp(t)
@@ -52,7 +53,6 @@ func TestProjectListShowsTaskCount(t *testing.T) {
 	}{
 		{projWithTasks.ID, "2 tasks"},
 		{projOneTask.ID, "1 task"},
-		{projEmpty.ID, "0 tasks"},
 	} {
 		row, ok := findRow(body, tc.id)
 		if !ok {
@@ -61,6 +61,9 @@ func TestProjectListShowsTaskCount(t *testing.T) {
 		if !strings.Contains(row, tc.count) {
 			t.Errorf("project row should show %q; found in:\n%s", tc.count, truncate(row))
 		}
+	}
+	if row, _ := findRow(body, projEmpty.ID); strings.Contains(row, "0 tasks") {
+		t.Errorf("an empty project row should say no count; found in:\n%s", truncate(row))
 	}
 }
 
@@ -148,10 +151,12 @@ func TestProjectListTaskCountScreenReader(t *testing.T) {
 	}
 }
 
-// TestProjectListShowsCountForZeroTasks verifies that projects with no tasks
-// still show the count as "0 tasks" rather than hiding it entirely.
-// Acceptance item 2 of task 0267.
-func TestProjectListShowsCountForZeroTasks(t *testing.T) {
+// TestProjectListSaysNothingForZeroTasks verifies that a project with no
+// tasks says no count: the count is a glance fact (glance_count.go), and
+// none is where every project starts, so "0 tasks" on every empty project
+// (and "0 interactions" on every person) would be read and say nothing.
+// Acceptance item 2 of task 0267 asked for "0 tasks"; changed deliberately.
+func TestProjectListSaysNothingForZeroTasks(t *testing.T) {
 	_, h := newApp(t)
 
 	var proj struct{ ID string }
@@ -164,7 +169,7 @@ func TestProjectListShowsCountForZeroTasks(t *testing.T) {
 		t.Fatalf("could not find project row in page\n%s", truncate(body))
 	}
 
-	if !strings.Contains(row, "0 tasks") {
-		t.Errorf("empty project row must show \"0 tasks\"; found in:\n%s", truncate(row))
+	if strings.Contains(row, "task") {
+		t.Errorf("an empty project row should say no task count; found in:\n%s", truncate(row))
 	}
 }

@@ -29,8 +29,25 @@ row and a person can compare rows by looking down a column
 5. **What it belongs to or who it is for**, unless that is its title: the
    first reference with a value. A file it points at (a meeting's
    recording) is an attachment, not what it belongs to, and is not said.
+6. **What is in it**: how many records are in it, and how many of those
+   are done when they can be: 3 tasks, 1 done. One rule says what a
+   record holds, for its glance and its page alike: a reference the
+   schema marks `listed: true` puts its records in the one it points at,
+   which counts them here and lists them on its page under their own
+   heading. The starter marks a task's project, a task's Came up at (the
+   meeting) and an interaction's person; any other reference (a task's
+   For) says who it concerns, not what it is in. An entry's habit is not
+   marked: a habit's page says its entries by its tracker, its row and
+   its chart, and a list of every glass of water under them would bury
+   them. A type of one's own is counted and listed the moment one of its
+   references is marked, by no name of a type. None is not said, as a
+   state where every record rests is not: "0 tasks" on every new project
+   and "0 interactions" on every person would be read and say nothing.
+   It is what the record holds, not what else exists, so a page at rest
+   says it ([GOV.UK, complete multiple tasks](https://design-system.service.gov.uk/patterns/complete-multiple-tasks/)
+   counts what is done of a whole the same way).
 
-At most these five, usually two or three: enough that a person need not
+At most these six, usually two or three: enough that a person need not
 open each record to tell them apart, few enough to scan
 ([NN/g, list entries](https://www.nngroup.com/articles/list-entries/),
 [NN/g, information scent](https://www.nngroup.com/articles/information-scent/)).
@@ -51,10 +68,10 @@ still says it, though its row sits under No date.
 | note | Published, Pinned; a row says when it changed |
 | habit | Archived, Goal by Mon 4 Jan 2027 |
 | entry | Today at 8am (when it happened, never late), its habit |
-| event | Starts tomorrow at 2pm (past: neutral, never late) |
+| event | Starts tomorrow at 2pm (past: neutral, never late), 2 tasks, 1 done (the tasks that came up at it) |
 | reminder | Ringing or Done, Today at 7am |
-| person | when it changed (a person's organisation is a string the schema does not mark) |
-| project | Done |
+| person | 4 interactions; when it changed (a person's organisation is a string the schema does not mark) |
+| project | Done, 3 tasks, 1 done |
 | file | Being read, Could not be read |
 | action | On the canvas |
 
@@ -139,7 +156,12 @@ title, the box's field, a state not worth saying, so nothing is read twice
 ([GOV.UK summary list](https://design-system.service.gov.uk/components/summary-list/)).
 A reference keeps its field, a link there being a way the chip is not.
 Agents read the same words: `glance` on a record over the API and from
-`get_record`, and `look`'s text, which reads the page.
+`get_record`, and `look`'s text, which reads the page. What is in a record
+is said in its lede, not again: the list of a project's tasks under it
+names them and does not count them.
+
+A listing counts what is in its records once for all of them, one query
+for each type that can be in them (`glance_count.go`), never once a row.
 
 ## Not done, and why
 
