@@ -87,10 +87,11 @@ func RemoveBlock(st *store.Store, id string) (Change, error) {
 	if err != nil {
 		return Change{}, fmt.Errorf("could not remove block %s: %v", id, err)
 	}
-	if err := st.Delete(BlockType, id); err != nil {
+	done, err := ApplyOps(st, Op{Type: BlockType, ID: id})
+	if err != nil {
 		return Change{}, fmt.Errorf("could not remove block %s: %v", id, err)
 	}
 	c := describe(st, BlockType, rec)
-	c.Action, c.Href, c.Before = "removed", "", rec.Fields
+	c.Action, c.Href, c.Ops = "removed", "", done
 	return c, nil
 }

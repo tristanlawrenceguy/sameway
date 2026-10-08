@@ -103,10 +103,11 @@ func TakeAgentAway(st *store.Store, name string) (Change, error) {
 		}
 		return Change{}, fmt.Errorf("no agent called %q; those with keys are %s", name, strings.Join(names, ", "))
 	}
-	if err := st.Delete(AgentType, a.ID); err != nil {
+	done, err := ApplyOps(st, Op{Type: AgentType, ID: a.ID})
+	if err != nil {
 		return Change{}, err
 	}
-	return Change{Action: "deleted", Component: AgentType, ID: a.ID, Detail: fmt.Sprint(a.Fields["name"]) + "'s key", Before: a.Fields}, nil
+	return Change{Action: "deleted", Component: AgentType, ID: a.ID, Detail: fmt.Sprint(a.Fields["name"]) + "'s key", Ops: done}, nil
 }
 
 // Used notes when a key was used, at most once a minute.

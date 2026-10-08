@@ -75,14 +75,12 @@ func (s *Server) canvasKeep(w http.ResponseWriter, r *http.Request) {
 		s.failed(w, r, "Not kept", err, "/")
 		return
 	}
-	if _, err := s.app.Store.Update(records.BlockType, rec.ID,
-		s.app.Chat.BlockFields(map[string]any{"props": clean, "actor": "human"})); err != nil {
+	label := str(clean["label"], schema.Plural(t.Name))
+	undo, _, err := s.apply(r, records.Change{Action: "updated", Component: name, ID: rec.ID, Detail: label + " kept as " + said},
+		records.Op{Type: records.BlockType, ID: rec.ID, After: s.app.Chat.BlockFields(map[string]any{"props": clean, "actor": "human"})})
+	if err != nil {
 		s.failed(w, r, "Not kept", err, "/")
 		return
 	}
-	label := str(clean["label"], schema.Plural(t.Name))
-	undo := s.record(r, records.Change{
-		Action: "updated", Component: name, ID: rec.ID, Detail: label + " kept as " + said, Before: rec.Fields,
-	})
 	s.tell(w, r, outcome{Title: "Choices kept", Text: capitalize(label) + " now shows " + said + ".", Undo: undo, Of: "keeping " + said}, "/")
 }

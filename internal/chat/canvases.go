@@ -77,13 +77,14 @@ func (s *Service) createCanvas(name string) toolResult {
 		}
 	}
 	position := len(s.Canvases())
-	rec, err := s.Store.Create(records.CanvasType, map[string]any{"name": name, "position": position})
+	done, err := s.Apply(records.Op{Type: records.CanvasType, After: map[string]any{"name": name, "position": position}})
 	if err != nil {
 		return fail("could not add the canvas: %v", err)
 	}
+	id := done[0].ID
 	return toolResult{
-		text:   fmt.Sprintf("added canvas %s: %q, at %s. Blocks go on it with canvas: %q on add_component.", rec.ID, name, records.CanvasPath(rec.ID), rec.ID),
-		change: &records.Change{Action: "added", Component: records.CanvasType, ID: rec.ID, Detail: name, Href: records.CanvasPath(rec.ID)},
+		text:   fmt.Sprintf("added canvas %s: %q, at %s. Blocks go on it with canvas: %q on add_component.", id, name, records.CanvasPath(id), id),
+		change: &records.Change{Action: "added", Component: records.CanvasType, ID: id, Detail: name, Href: records.CanvasPath(id), Ops: done},
 	}
 }
 
@@ -92,9 +93,8 @@ func (s *Service) removeCanvas(id string) toolResult {
 	if err != nil {
 		return fail("%v", err)
 	}
-	blocks, _ := c.Before["blocks"].([]any)
 	return toolResult{
-		text:   fmt.Sprintf("removed canvas %s (%q) and the %d blocks on it", id, c.Detail, len(blocks)),
+		text:   fmt.Sprintf("removed canvas %s (%q) and the %d blocks on it", id, c.Detail, c.Touched(records.BlockType)),
 		change: &c,
 	}
 }

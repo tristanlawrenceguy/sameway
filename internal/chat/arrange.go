@@ -228,8 +228,8 @@ func (s *Service) layoutAfter(name string, r toolResult) toolResult {
 	if blk, err := s.Store.Get(records.BlockType, c.ID); err == nil && c.ID != "" {
 		canvas, found = blk.Fields["canvas"].(string)
 	}
-	if !found && c.Before != nil {
-		canvas, found = c.Before["canvas"].(string)
+	if was := c.Was(); !found && was != nil {
+		canvas, found = was["canvas"].(string)
 	}
 	if !found && strings.HasPrefix(c.Href, "/c/") {
 		canvas = strings.TrimPrefix(c.Href, "/c/")

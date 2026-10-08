@@ -84,92 +84,14 @@ func (b *Book) Recent(n int) []*store.Record {
 }
 
 // inverse works out what reversing an entry means, without doing it, and
-// says why when it cannot be done.
+// says why when it cannot be done. An entry keeps the ops it wrote and is
+// reversed by them (undo_ops.go); an older one is read in the shape its
+// kind kept (undo_legacy.go).
 func (b *Book) inverse(a *store.Record) (func() (Change, error), error) {
 	if hasOps(a) {
-		return b.inverseOps(a) // undo_ops.go; what follows reads older entries
+		return b.inverseOps(a, EntryOps(a))
 	}
-	action, _ := a.Fields["action"].(string)
-	target, _ := a.Fields["target"].(string)
-	id, _ := a.Fields["target_id"].(string)
-	before, _ := a.Fields["before"].(map[string]any)
-	typ := b.targetType(target)
-	// A chat cleared or deleted is put back with its messages.
-	if target == "conversation" && (action == "cleared" || action == "deleted") {
-		return b.inverseChat(id, before)
-	}
-	switch action {
-	case "added", "created":
-		if typ == "" || id == "" {
-			return nil, errors.New("the entry does not say what was added")
-		}
-		if _, err := b.Store.Get(typ, id); err != nil {
-			return nil, errors.New("it is already gone")
-		}
-		return func() (Change, error) { return b.take(typ, id) }, nil
-	case "removed", "deleted":
-		if typ == "" || id == "" || before == nil {
-			return nil, errors.New("the entry does not say what it was")
-		}
-		if _, err := b.Store.Get(typ, id); err == nil {
-			return nil, errors.New("it is already back")
-		}
-		return func() (Change, error) { return b.restore(typ, id, before) }, nil
-	case "updated", "done", "snoozed":
-		// A reminder dismissed or put off is a change like any other.
-		return b.inverseUpdate(typ, id, before)
-	case "cleared":
-		blocks := blocksIn(before)
-		if len(blocks) == 0 {
-			return nil, errors.New("the entry does not say what was cleared")
-		}
-		if b.allPresent(blocks) {
-			return nil, errors.New("they are already back")
-		}
-		return func() (Change, error) {
-			n := 0
-			for _, k := range blocks {
-				if _, err := b.Store.Get(BlockType, k.id); err == nil {
-					continue
-				}
-				if _, err := b.Store.Restore(BlockType, k.id, k.fields); err != nil {
-					return Change{}, err
-				}
-				n++
-			}
-			return Change{Action: "restored", Detail: fmt.Sprintf("%d blocks", n), Before: before}, nil
-		}, nil
-	case "restored":
-		blocks := blocksIn(before)
-		if len(blocks) == 0 || !b.anyPresent(blocks) {
-			return nil, errors.New("they are already gone")
-		}
-		return func() (Change, error) { return b.clearBlocks(blocks), nil }, nil
-	}
-	return b.inverseMore(a)
-}
-
-// inverseUpdate puts a thing back as it was before an update.
-func (b *Book) inverseUpdate(typ, id string, before map[string]any) (func() (Change, error), error) {
-	if typ == "" || id == "" || before == nil {
-		return nil, errors.New("the entry does not say what it was")
-	}
-	cur, err := b.Store.Get(typ, id)
-	if err != nil {
-		return nil, errors.New("it is gone")
-	}
-	if Same(cur.Fields, before) {
-		return nil, errors.New("it is already as it was")
-	}
-	return func() (Change, error) {
-		rec, err := b.Store.Update(typ, id, before)
-		if err != nil {
-			return Change{}, err
-		}
-		c := describe(b.Store, typ, rec)
-		c.Action, c.Before = "updated", cur.Fields
-		return c, nil
-	}, nil
+	return b.inverseLegacy(a)
 }
 
 // targetType is the content type an entry's target names: a tab, a record
@@ -185,44 +107,6 @@ func (b *Book) targetType(target string) string {
 		return target
 	}
 	return BlockType
-}
-
-// take removes a thing that was added, through the same code the tools use,
-// so the removal is logged with everything needed to put it back.
-func (b *Book) take(typ, id string) (Change, error) {
-	switch typ {
-	case CanvasType:
-		return RemoveCanvas(b.Store, id)
-	case BlockType:
-		return RemoveBlock(b.Store, id)
-	}
-	return DeleteRecord(b.Store, typ, id)
-}
-
-// restore puts back a thing that was removed, with its blocks when it was a
-// tab, and describes it the way an addition is described.
-func (b *Book) restore(typ, id string, before map[string]any) (Change, error) {
-	fields := map[string]any{}
-	for k, v := range before {
-		if k != "blocks" {
-			fields[k] = v
-		}
-	}
-	rec, err := b.Store.Restore(typ, id, fields)
-	if err != nil {
-		return Change{}, err
-	}
-	for _, k := range blocksIn(before) {
-		if _, err := b.Store.Get(BlockType, k.id); err != nil {
-			b.Store.Restore(BlockType, k.id, k.fields)
-		}
-	}
-	c := describe(b.Store, typ, rec)
-	c.Action = "added"
-	if typ != CanvasType && typ != BlockType {
-		c.Action = "created"
-	}
-	return c, nil
 }
 
 // describe names a thing the way its own tool would in a receipt.
