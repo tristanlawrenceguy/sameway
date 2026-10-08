@@ -33,7 +33,7 @@ func TestAPersonPastesAKey(t *testing.T) {
 	a, h := newApp(t)
 
 	page := get(t, h, "/chat").Body.String()
-	if !strings.Contains(page, `name="key"`) || !strings.Contains(page, `type="password"`) || !strings.Contains(page, "Or paste a key") {
+	if !strings.Contains(page, `name="key"`) || !strings.Contains(page, `type="password"`) || !strings.Contains(page, "Your Anthropic key") || !strings.Contains(page, "Your OpenRouter key") {
 		t.Errorf("the connect card offers to paste a key: %s", truncate(page))
 	}
 

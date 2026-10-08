@@ -148,14 +148,14 @@ func (s *Server) connectCard(from string) template.HTML {
 			b.WriteString(`</form><p class="sw-small sw-muted">` + esc(c.Where) + `</p></li>`)
 		}
 		b.WriteString(`</ul>`)
-	} else if !s.model.waking {
-		b.WriteString(`<p>Nothing was found on this computer yet. Either of these works:</p><ul class="sw-connect__ways">`)
-		b.WriteString(`<li><a class="sw-link" href="` + ollamaDownload() + `">Download Ollama</a>: it runs AI models on this computer, free, and nothing leaves it; slower than Claude, and it gets more wrong. Install it and this page sees it, then offers a free model for it.</li>`)
-		b.WriteString(`<li><a class="sw-link" href="https://claude.com/claude-code">Claude Code</a> uses your Claude account. Install it and sign in.</li>`)
-		b.WriteString(`</ul>`)
+	}
+	if !s.model.waking {
+		if len(choices) > 0 {
+			b.WriteString(`<p>Or something else:</p>`)
+		}
+		b.WriteString(s.modelStoriesHTML(hidden)) // connect_stories.go
 	}
 	b.WriteString(string(s.ollamaCard(hidden))) // ollama_setup.go
-	b.WriteString(string(s.keyForm(hidden)))    // model_key.go
 	b.WriteString(`<form method="post" action="/model/check">` + hidden)
 	b.WriteString(string(s.component("button", map[string]any{"label": "Check again", "type": "submit", "variant": "secondary"})))
 	b.WriteString(`</form></div>`)
