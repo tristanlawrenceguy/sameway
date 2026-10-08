@@ -56,8 +56,6 @@ func (s *Server) limitsSection(owner bool) string {
 	if owner {
 		line(s.phoneLine())                // phone.go
 		line(s.mailLine())                 // mail_in.go
-		line(s.briefLine())                // today.go
-		line(s.phoneLine())                // phone.go
 		if l := s.meaningLine(); l != "" { // search_meaning.go
 			line(l)
 		}
