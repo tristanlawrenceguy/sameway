@@ -93,11 +93,10 @@ func (s *Server) helpSet(w http.ResponseWriter, r *http.Request) {
 		s.failed(w, r, "Not changed", errors.New("that is not something this page changes"), "/help")
 		return
 	}
-	was := s.app.Workspace.Get(key)
-	if err := s.app.Workspace.Set(key, value); err != nil {
+	undo, _, err := s.apply(r, records.Change{Action: "set", Component: key, Detail: value}, records.Op{Type: records.SettingOp, ID: key, After: map[string]any{"value": value}})
+	if err != nil {
 		s.failed(w, r, "Not changed", err, "/help")
 		return
 	}
-	undo := s.record(r, records.Change{Action: "set", Component: key, Detail: value, Before: map[string]any{"value": was}})
 	s.tellAt(w, r, outcome{Title: "Changed", Text: "Now: " + name + ".", Undo: undo}, "/help")
 }

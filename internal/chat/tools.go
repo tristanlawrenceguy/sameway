@@ -129,10 +129,11 @@ func (s *Service) addComponent(name string, props map[string]any, l look) toolRe
 	if why := s.skipIfWritten(fields["canvas"].(string), withFields(&store.Record{ID: "new"}, fields)); why != "" {
 		return fail("not added: %s", why)
 	}
-	rec, err := s.Store.Create(records.BlockType, s.fields(records.BlockType, fields))
+	done, err := s.Apply(records.Op{Type: records.BlockType, After: s.fields(records.BlockType, fields)})
 	if err != nil {
 		return fail("could not save the block: %v", err)
 	}
+	rec := done[0]
 	// Say where it went, so the model confirms what really happened
 	// rather than what it asked for.
 	where := fmt.Sprintf("added %s as block %s at position %d", name, rec.ID, position)
@@ -141,7 +142,7 @@ func (s *Service) addComponent(name string, props map[string]any, l look) toolRe
 	}
 	return toolResult{
 		text:   showing(where, shows),
-		change: &records.Change{Action: "added", Component: name, ID: rec.ID, Detail: records.Summarise(name, props), Href: "/canvas/" + rec.ID},
+		change: &records.Change{Action: "added", Component: name, ID: rec.ID, Detail: records.Summarise(name, props), Href: "/canvas/" + rec.ID, Ops: done},
 	}
 }
 
@@ -182,8 +183,9 @@ func (s *Service) updateComponent(id string, props map[string]any, l look) toolR
 	if on, _ := withFields(rec, fields).Fields["canvas"].(string); s.skipIfWritten(on, withFields(rec, fields)) != "" {
 		return fail("not changed: %s", s.skipIfWritten(on, withFields(rec, fields)))
 	}
-	if _, err := s.Store.Update(records.BlockType, id, s.fields(records.BlockType, fields)); err != nil {
+	done, err := s.Apply(records.Op{Type: records.BlockType, ID: id, After: s.fields(records.BlockType, fields)})
+	if err != nil {
 		return fail("could not update block %s: %v", id, err)
 	}
-	return toolResult{text: showing("updated "+strings.Join(what, " and ")+" on block "+id, shows), change: &records.Change{Action: "updated", Component: name, ID: id, Detail: records.Summarise(name, props), Href: "/canvas/" + id, Before: rec.Fields}}
+	return toolResult{text: showing("updated "+strings.Join(what, " and ")+" on block "+id, shows), change: &records.Change{Action: "updated", Component: name, ID: id, Detail: records.Summarise(name, props), Href: "/canvas/" + id, Ops: done}}
 }

@@ -18,31 +18,37 @@ var batchVerbs = map[string]bool{"imported": true, "synced": true, "arranged": t
 // inverseOps works out the ops that take an entry back. The thing the
 // entry names must still be as the entry left it: there, if it made or
 // changed it; gone, if it removed it. Anything else in it that is already
-// as it was is let be, and one that went since is put back.
-func (b *Book) inverseOps(a *store.Record) (func() (Change, error), error) {
-	ops := EntryOps(a)
+// as it was is let be, and one that went since is put back. Only the
+// thing named is looked at before: a batch of a thousand records is not
+// read on every look at the log, only when it is undone.
+func (b *Book) inverseOps(a *store.Record, ops []Op) (func() (Change, error), error) {
 	named := primary(a, ops)
-	var back []Op
-	for i := len(ops) - 1; i >= 0; i-- {
-		strict := i == named
-		undo, reason := b.undoOp(ops[i], strict)
-		if reason != "" {
-			if strict {
-				return nil, errors.New(reason)
-			}
-			continue
+	if named >= 0 {
+		if _, reason := b.undoOp(ops[named], true); reason != "" {
+			return nil, errors.New(reason)
 		}
-		back = append(back, undo)
-	}
-	if len(back) == 0 {
-		return nil, errors.New("every record is already as it was")
+	} else if len(ops) == 0 {
+		return nil, errors.New("the entry does not say what it changed")
 	}
 	return func() (Change, error) {
+		var back []Op
+		for i := len(ops) - 1; i >= 0; i-- {
+			undo, reason := b.undoOp(ops[i], i == named)
+			if reason != "" && i == named {
+				return Change{}, errors.New(reason)
+			}
+			if reason == "" {
+				back = append(back, undo)
+			}
+		}
+		if len(back) == 0 {
+			return Change{}, errors.New("every record is already as it was")
+		}
 		done, err := b.Apply(back...)
 		if err != nil {
 			return Change{}, err
 		}
-		return b.reversal(a, done), nil
+		return b.reversal(a, ops, done), nil
 	}, nil
 }
 
@@ -84,7 +90,7 @@ func (b *Book) undoOp(op Op, strict bool) (Op, string) {
 		return Op{Type: op.Type, ID: op.ID}, ""
 	case cur == nil && strict && op.After != nil:
 		return Op{}, "it is gone"
-	case cur != nil && strict && op.After == nil:
+	case cur != nil && op.After == nil:
 		return Op{}, "it is already back"
 	case cur != nil && Same(cur, op.Before):
 		return Op{}, "it is already as it was"
@@ -95,13 +101,13 @@ func (b *Book) undoOp(op Op, strict bool) (Op, string) {
 // reversal says what undoing an entry did, the way the change itself
 // would have been said: a batch as the records put back, a setting as
 // set, the thing the entry named as removed, added or updated.
-func (b *Book) reversal(a *store.Record, done []Op) Change {
+func (b *Book) reversal(a *store.Record, ops, done []Op) Change {
 	target, _ := a.Fields["target"].(string)
-	named := primary(a, EntryOps(a))
+	named := primary(a, ops)
 	if named < 0 {
 		return Change{Action: "synced", Component: target, Detail: fmt.Sprintf("%d records put back", len(done)), Ops: done}
 	}
-	key := EntryOps(a)[named]
+	key := ops[named]
 	var c Change
 	for _, op := range done {
 		if op.ID != key.ID || op.Type != key.Type {

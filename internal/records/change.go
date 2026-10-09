@@ -1,9 +1,7 @@
 package records
 
 import (
-	"encoding/json"
 	"errors"
-	"fmt"
 
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -34,22 +32,10 @@ const SettingOp = "setting"
 // it was made, with what the thing was just before and is now, ready for
 // the log. An op with no id makes a record; one with no After removes it;
 // otherwise After is written over what is there, or put back under that
-// id when it is gone.
+// id when it is gone. A tab removed takes the blocks on it with it.
 func (b *Book) Apply(ops ...Op) ([]Op, error) {
-	done := make([]Op, 0, len(ops))
-	for _, op := range ops {
-		made, err := b.applyOne(op)
-		if err != nil {
-			for i := len(done) - 1; i >= 0; i-- {
-				back := done[i]
-				back.Before, back.After = back.After, back.Before
-				b.applyOne(back) // best effort: it was there a moment ago
-			}
-			return nil, err
-		}
-		done = append(done, made)
-	}
-	return done, nil
+	done, _, err := b.apply(ops)
+	return done, err
 }
 
 // ApplyOps is Apply for a store with no settings to change.
@@ -57,19 +43,44 @@ func ApplyOps(st *store.Store, ops ...Op) ([]Op, error) {
 	return (&Book{Store: st}).Apply(ops...)
 }
 
-func (b *Book) applyOne(op Op) (Op, error) {
+// apply is Apply, with each record as it now is (nil where it went), for
+// a writer that answers with the record.
+func (b *Book) apply(ops []Op) ([]Op, []*store.Record, error) {
+	var done []Op
+	var recs []*store.Record
+	for _, op := range b.withBlocks(ops) {
+		made, rec, err := b.applyOne(op)
+		if err != nil {
+			for i := len(done) - 1; i >= 0; i-- {
+				back := done[i]
+				back.Before, back.After = back.After, back.Before
+				b.applyOne(back) // best effort: it was there a moment ago
+			}
+			return nil, nil, err
+		}
+		done, recs = append(done, made), append(recs, rec)
+	}
+	return done, recs, nil
+}
+
+// withBlocks puts the removal of a tab's blocks before the tab's own.
+func (b *Book) withBlocks(ops []Op) []Op {
+	var out []Op
+	for _, op := range ops {
+		if op.Type == CanvasType && op.ID != "" && op.After == nil {
+			blocks, _ := b.Store.List(BlockType, store.ListOptions{})
+			for _, k := range OnCanvas(blocks, op.ID) {
+				out = append(out, Op{Type: BlockType, ID: k.ID})
+			}
+		}
+		out = append(out, op)
+	}
+	return out
+}
+
+func (b *Book) applyOne(op Op) (Op, *store.Record, error) {
 	if op.Type == SettingOp {
-		if b.SetSetting == nil {
-			return Op{}, errors.New("there are no settings to change here")
-		}
-		was, now := b.setting(op.ID), fmt.Sprint(op.After["value"])
-		if op.After["value"] == nil {
-			now = ""
-		}
-		if err := b.SetSetting(op.ID, now); err != nil {
-			return Op{}, err
-		}
-		return Op{Type: SettingOp, ID: op.ID, Before: map[string]any{"value": was}, After: map[string]any{"value": now}}, nil
+		return b.applySetting(op)
 	}
 	var cur *store.Record
 	if op.ID != "" {
@@ -79,7 +90,7 @@ func (b *Book) applyOne(op Op) (Op, error) {
 	var err error
 	switch {
 	case op.After == nil && cur == nil:
-		return Op{Type: op.Type, ID: op.ID}, nil
+		return Op{Type: op.Type, ID: op.ID}, nil, nil
 	case op.After == nil:
 		err = b.Store.Delete(op.Type, op.ID)
 	case op.ID == "":
@@ -90,7 +101,7 @@ func (b *Book) applyOne(op Op) (Op, error) {
 		rec, err = b.Store.Update(op.Type, op.ID, op.After)
 	}
 	if err != nil {
-		return Op{}, err
+		return Op{}, nil, err
 	}
 	out := Op{Type: op.Type, ID: op.ID}
 	if cur != nil {
@@ -99,7 +110,20 @@ func (b *Book) applyOne(op Op) (Op, error) {
 	if rec != nil {
 		out.ID, out.After = rec.ID, rec.Fields
 	}
-	return out, nil
+	return out, rec, nil
+}
+
+// applySetting changes one line of workspace.yaml.
+func (b *Book) applySetting(op Op) (Op, *store.Record, error) {
+	if b.SetSetting == nil {
+		return Op{}, nil, errors.New("there are no settings to change here")
+	}
+	now, _ := op.After["value"].(string)
+	was := b.setting(op.ID)
+	if err := b.SetSetting(op.ID, now); err != nil {
+		return Op{}, nil, err
+	}
+	return Op{Type: SettingOp, ID: op.ID, Before: map[string]any{"value": was}, After: map[string]any{"value": now}}, nil, nil
 }
 
 // OpsOf is a batch as ops, with each record as it is now for its after:
@@ -124,37 +148,4 @@ func Made(st *store.Store, typ string, ids []string) []Op {
 		batch = append(batch, BatchItem{Type: typ, ID: id})
 	}
 	return OpsOf(st, batch)
-}
-
-// opsField is ops as the log's json field keeps them.
-func opsField(ops []Op) any {
-	raw, _ := json.Marshal(ops)
-	var out []any
-	json.Unmarshal(raw, &out)
-	return out
-}
-
-// EntryOps is what an entry in the log changed, as ops: its own, or, for
-// an entry from before the log kept ops, the batch its before keeps, each
-// record with what it was (its after is not known).
-func EntryOps(e *store.Record) []Op {
-	if raw, ok := e.Fields["ops"].([]any); ok && len(raw) > 0 {
-		b, _ := json.Marshal(raw)
-		var ops []Op
-		if json.Unmarshal(b, &ops) == nil {
-			return ops
-		}
-	}
-	before, _ := e.Fields["before"].(map[string]any)
-	var ops []Op
-	for _, c := range BatchOf(before) {
-		ops = append(ops, Op{Type: c.Type, ID: c.ID, Before: c.Before})
-	}
-	return ops
-}
-
-// hasOps says whether an entry keeps its ops, as every new one does.
-func hasOps(e *store.Record) bool {
-	raw, _ := e.Fields["ops"].([]any)
-	return len(raw) > 0
 }

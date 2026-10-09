@@ -59,12 +59,12 @@ func (s *Server) habitLog(w http.ResponseWriter, r *http.Request) {
 	if note := strings.TrimSpace(r.PostForm.Get("note")); note != "" {
 		fields["note"] = note
 	}
-	entry, err := s.app.Store.Create(EntryType, fields)
+	undo, _, err := s.apply(r, records.Change{Action: "logged", Component: HabitType, ID: h.ID, Detail: h.Name + ": " + track.Amount(amount, h.Unit), Href: "/t/" + HabitType + "/" + h.ID},
+		records.Op{Type: EntryType, After: fields})
 	if err != nil {
 		s.failed(w, r, "Not logged", err, "/")
 		return
 	}
-	undo := s.record(r, records.Change{Action: "logged", Component: HabitType, ID: h.ID, Detail: h.Name + ": " + track.Amount(amount, h.Unit), Href: "/t/" + HabitType + "/" + h.ID, Before: map[string]any{"entry": entry.ID}})
 	// Said, with where it stands now and its Undo: "Water: 1 glass logged.
 	// Now 6 of 8 glasses."
 	sum := track.Summarise(track.Normal(h), blocks.EntriesOf(s.app.Store, h.ID), time.Now(), 1)

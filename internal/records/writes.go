@@ -101,32 +101,40 @@ func write(st *store.Store, action, typ, id string, fields map[string]any) (*sto
 	if !ok {
 		return nil, Change{}, fmt.Errorf("there is no type %q", typ)
 	}
-	var rec, was *store.Record
+	var was *store.Record
 	var err error
 	if action != "created" {
 		if was, err = st.Get(typ, id); err != nil {
 			return nil, Change{}, err
 		}
 	}
+	op := Op{Type: typ, ID: id, After: fields}
 	switch action {
 	case "created":
-		rec, err = st.Create(typ, fields)
+		op.ID = ""
+		if op.After == nil {
+			op.After = map[string]any{}
+		}
 	case "updated":
-		rec, err = st.Update(typ, id, fields)
+		if op.After == nil {
+			op.After = map[string]any{}
+		}
 	case "deleted":
-		rec, err = was, st.Delete(typ, id)
+		op.After = nil
 	default:
-		err = fmt.Errorf("no way to write %q", action)
+		return nil, Change{}, fmt.Errorf("no way to write %q", action)
 	}
+	done, recs, err := (&Book{Store: st}).apply([]Op{op})
 	if err != nil {
 		return nil, Change{}, err
 	}
-	c := Change{Action: action, Component: typ, ID: rec.ID, Detail: Title(st, t, rec)}
+	rec := recs[len(recs)-1] // a tab's blocks go first
+	if action == "deleted" {
+		rec = was
+	}
+	c := Change{Action: action, Component: typ, ID: rec.ID, Detail: Title(st, t, rec), Ops: done}
 	if action != "deleted" {
 		c.Href = "/t/" + typ + "/" + rec.ID
-	}
-	if was != nil {
-		c.Before = was.Fields
 	}
 	return rec, c, nil
 }
