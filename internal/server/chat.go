@@ -15,6 +15,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 //go:embed conversation.html
@@ -132,13 +133,13 @@ func (s *Server) conversationAbout(c *chat.Service, from, about, prompt string) 
 	// one was loaded: the page says so and, with scripts, follows it.
 	if t := s.turns.find("", c.Whose()); t != nil {
 		view.Turn = t.id
-		view.Status = s.component("status", map[string]any{"id": "chat-status", "message": "Assistant is working", "state": "working"})
+		view.Status = s.part(ui.Status{ID: "chat-status", Message: "Assistant is working", State: ui.Working})
 	}
 	// The assistant's questions are the owner's to answer.
 	if c.IsOwner() {
 		view.Proposals = s.proposals(from)
 	}
-	view.Empty = s.component("empty", map[string]any{"message": "Ask for anything."}) + template.HTML(chatStarts(from))
+	view.Empty = s.part(ui.Empty{Message: "Ask for anything."}) + template.HTML(chatStarts(from))
 	if c.IsOwner() && s.brandNew() {
 		view.Empty = s.welcome(from) // welcome.go
 	}
@@ -151,10 +152,10 @@ func (s *Server) conversationAbout(c *chat.Service, from, about, prompt string) 
 		compose["value"] = "About " + s.title(t, rec) + " (" + about + "): "
 	}
 	view.Compose = s.component("textarea", compose)
-	view.Send = s.component("button", map[string]any{"label": "Send", "type": "submit"})
+	view.Send = s.part(ui.Button{Label: "Send", Type: ui.Submit})
 	view.Record, view.Dictate, view.Talk = s.voiceFor()
-	view.Clear = s.component("button", map[string]any{"label": "Clear", "context": "conversation", "type": "submit", "variant": "quiet"})
-	view.NewChat = s.component("button", map[string]any{"label": "New chat", "type": "submit", "variant": "secondary"})
+	view.Clear = s.part(ui.Button{Label: "Clear", Context: "conversation", Type: ui.Submit, Variant: ui.Quiet})
+	view.NewChat = s.part(ui.Button{Label: "New chat", Type: ui.Submit, Variant: ui.Secondary})
 
 	var body bytes.Buffer
 	if err := conversationTmpl.Execute(&body, view); err != nil {
@@ -184,7 +185,7 @@ func (s *Server) attachment(fileID string) map[string]any {
 // assistant away.
 func (s *Server) chatPage(w http.ResponseWriter, r *http.Request) {
 	if err := s.app.Chat.Available(); err != nil {
-		s.page(w, r, "Chat", s.component("alert", map[string]any{"kind": "danger", "title": "Chat is not available", "message": err.Error()}), pageOptions{})
+		s.page(w, r, "Chat", s.part(ui.Alert{Kind: ui.Problem, Title: "Chat is not available", Message: err.Error()}), pageOptions{})
 		return
 	}
 	convo, err := s.conversationAboutFor(r, "/chat", r.URL.Query().Get("about"), r.URL.Query().Get("prompt"))

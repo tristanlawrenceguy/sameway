@@ -102,13 +102,13 @@ func (s *Server) importPreview(w http.ResponseWriter, r *http.Request, t *schema
 	}
 	tb, err := ingest.Read(name, data)
 	if err != nil {
-		s.page(w, r, "Import "+schema.Plural(t.Name), s.component("alert", map[string]any{"kind": "warning", "title": "Nothing was read", "message": err.Error()}), pageOptions{Status: http.StatusBadRequest})
+		s.page(w, r, "Import "+schema.Plural(t.Name), s.part(ui.Alert{Kind: ui.Warning, Title: "Nothing was read", Message: err.Error()}), pageOptions{Status: http.StatusBadRequest})
 		return
 	}
 	m := ingest.Guess(t, tb.Columns)
 	var b strings.Builder
 	if problem != "" {
-		b.WriteString(string(s.component("alert", map[string]any{"kind": "warning", "message": problem})))
+		b.WriteString(string(s.part(ui.Alert{Kind: ui.Warning, Message: problem})))
 	}
 	fmt.Fprintf(&b, `<p class="sw-muted">%d rows in %s. Each column below feeds the field it names; change any that landed wrong, or set it to nothing to leave it out. A column for an email, a phone or a name that feeds nothing still links each row to its person.</p>`, len(tb.Rows), template.HTMLEscapeString(name))
 	b.WriteString(ui.Form{Action: "/t/" + t.Name + "/import/" + id + "/run", Class: "sw-stack sw-import"}.Open())

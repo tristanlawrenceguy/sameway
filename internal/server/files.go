@@ -14,6 +14,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // maxUpload bounds a file sent inside a JSON body, which is held whole;
@@ -177,7 +178,7 @@ func (s *Server) fileExtras(r *http.Request, rec *store.Record) string {
 			alt = title + ", not described yet"
 			b.WriteString(`<p class="sw-muted">This picture has no description yet, so someone who cannot see it hears only its name. Press Edit to say what it shows, or ask the assistant for a draft to check.</p>`)
 			ask := "Describe this picture (/t/" + FileType + "/" + rec.ID + ") for someone who cannot see it, as a draft I will check."
-			fmt.Fprintf(&b, `<p>%s</p>`, s.component("link", map[string]any{"href": "/chat?prompt=" + url.QueryEscape(ask), "label": "Ask the assistant to describe it", "look": "button"}))
+			fmt.Fprintf(&b, `<p>%s</p>`, s.part(ui.Link{Href: "/chat?prompt=" + url.QueryEscape(ask), Label: "Ask the assistant to describe it", Look: ui.LookButton}))
 		}
 		b.WriteString(string(s.component("image", s.pictureOf(rec, alt))))
 	}
@@ -199,17 +200,17 @@ func (s *Server) fileExtras(r *http.Request, rec *store.Record) string {
 				message = note + " The transcript appears here when it is done."
 			}
 		}
-		b.WriteString(string(s.component("status", map[string]any{"id": "file-status", "message": message, "state": "working"})))
+		b.WriteString(string(s.part(ui.Status{ID: "file-status", Message: message, State: ui.Working})))
 	case "failed":
 		note, _ := rec.Fields["note"].(string)
-		b.WriteString(string(s.component("status", map[string]any{"id": "file-status", "message": "Could not read the file: " + note, "state": "error"})))
+		b.WriteString(string(s.part(ui.Status{ID: "file-status", Message: "Could not read the file: " + note, State: ui.Failed})))
 	}
 	// A calendar's events are a press from the calendar.
 	if rec.Fields["kind"] == "calendar" {
 		if t, ok := s.app.Types.Get("event"); ok && s.importable(t) {
-			fmt.Fprintf(&b, `<p>%s</p>`, s.component("link", map[string]any{"href": "/t/event/import?file=" + rec.ID, "label": "Add these events to the calendar", "look": "button"}))
+			fmt.Fprintf(&b, `<p>%s</p>`, s.part(ui.Link{Href: "/t/event/import?file=" + rec.ID, Label: "Add these events to the calendar", Look: ui.LookButton}))
 		}
 	}
-	fmt.Fprintf(&b, `<p>%s</p>`, s.component("link", map[string]any{"href": "/files/" + rec.ID, "label": "Open the original", "look": "button"}))
+	fmt.Fprintf(&b, `<p>%s</p>`, s.part(ui.Link{Href: "/files/" + rec.ID, Label: "Open the original", Look: ui.LookButton}))
 	return b.String()
 }

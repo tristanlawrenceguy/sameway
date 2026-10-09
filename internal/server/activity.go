@@ -11,6 +11,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/design"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
@@ -106,7 +107,7 @@ func (s *Server) recentActivityAbout(n int, from string, about func(target, id s
 		inner.WriteString(`<li>` + string(s.event(r, from, 3, true, told[i])) + `</li>`)
 	}
 	inner.WriteString(`</ol><p class="sw-small" style="margin:var(--sw-space-3) 0 0">`)
-	inner.WriteString(string(s.component("link", map[string]any{"href": "/activity", "label": everything, "look": "button"})))
+	inner.WriteString(string(s.part(ui.Link{Href: "/activity", Label: everything, Look: ui.LookButton})))
 	inner.WriteString(`</p>`)
 
 	body, err := s.app.Registry.RenderSlot("disclosure",
@@ -172,7 +173,7 @@ func (s *Server) hrefFor(r *store.Record) string {
 // activityPage lists every recorded action, newest first, grouped by day.
 func (s *Server) activityPage(w http.ResponseWriter, r *http.Request) {
 	if _, ok := s.app.Types.Get(records.ActivityType); !ok {
-		s.page(w, r, "Activity", s.component("alert", map[string]any{"kind": "info", "message": "This workspace keeps no log yet. Run sameway init --force to add one."}), pageOptions{})
+		s.page(w, r, "Activity", s.part(ui.Alert{Kind: ui.Info, Message: "This workspace keeps no log yet. Run sameway init --force to add one."}), pageOptions{})
 		return
 	}
 	all, err := s.app.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true})
@@ -192,13 +193,11 @@ func (s *Server) activityPage(w http.ResponseWriter, r *http.Request) {
 	}
 	switch {
 	case len(all) == 0:
-		b.WriteString(string(s.component("empty", map[string]any{
-			"message": "No activity yet. What you and the assistant change on the canvas shows up here.", "action": map[string]any{"href": "/chat", "label": "Send a message"},
-		})))
+		b.WriteString(string(s.part(ui.Empty{Message: "No activity yet. What you and the assistant change on the canvas shows up here.",
+			Action: &ui.EmptyAction{Href: "/chat", Label: "Send a message"}})))
 	case len(recs) == 0:
-		b.WriteString(string(s.component("empty", map[string]any{
-			"message": "No changes match: " + filters["showing"].(string) + ".", "action": map[string]any{"href": filters["reset"], "label": "Show every change"},
-		})))
+		b.WriteString(string(s.part(ui.Empty{Message: "No changes match: " + filters["showing"].(string) + ".",
+			Action: &ui.EmptyAction{Href: str(filters["reset"], ""), Label: "Show every change"}})))
 	}
 	recs = recs[pg.lo:pg.hi]
 	day := ""

@@ -134,7 +134,7 @@ func (s *Server) todayPage(w http.ResponseWriter, r *http.Request) {
 	mail := s.mailSection() + s.suggestedSection(s.sortingRefs()) + s.tagSection() // mail_sort.go, suggested.go, classify_today.go
 	b.WriteString(mail)
 	if l.count() == 0 && mail == "" {
-		b.WriteString(string(s.component("empty", map[string]any{"message": "Nothing is due today, and nothing is late."})))
+		b.WriteString(string(s.part(ui.Empty{Message: "Nothing is due today, and nothing is late."})))
 	}
 	b.WriteString(s.dumpBox()) // today_focus.go
 	s.page(w, r, "Today", template.HTML(b.String()), pageOptions{Lede: template.HTML(now.Format("Monday 2 January"))})

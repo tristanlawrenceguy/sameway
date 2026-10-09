@@ -7,6 +7,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // A piece of writing offers the kinds of help an editor gives, named as a
@@ -45,7 +46,7 @@ func (s *Server) writingHelp(r *http.Request, t *schema.Type, rec *store.Record)
 	var b strings.Builder
 	b.WriteString(`<section class="sw-stack" aria-labelledby="writing-help"><h2 id="writing-help">Help with the writing</h2><p class="sw-muted">The assistant suggests; nothing changes until you accept.</p><p class="sw-cluster">`)
 	for _, a := range asks {
-		b.WriteString(string(s.component("link", map[string]any{"href": "/chat?prompt=" + url.QueryEscape(a.ask), "label": a.label, "look": "button"})))
+		b.WriteString(string(s.part(ui.Link{Href: "/chat?prompt=" + url.QueryEscape(a.ask), Label: a.label, Look: ui.LookButton})))
 		b.WriteString(" ")
 	}
 	b.WriteString(`</p>`)

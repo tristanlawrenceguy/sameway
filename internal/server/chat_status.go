@@ -10,6 +10,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // A conversation's status line and its first words: what it says when a
@@ -17,41 +18,41 @@ import (
 
 // status summarises the last turn for the live region.
 func (s *Server) status(msgs []*store.Record) template.HTML {
-	props := map[string]any{"id": "chat-status", "message": "Ready.", "state": "idle"}
+	st := ui.Status{ID: "chat-status", Message: "Ready.", State: ui.Idle}
 	if len(msgs) > 0 {
 		last := msgs[len(msgs)-1]
 		switch last.Fields["role"] {
 		case "error":
 			// Where the failure is said does not depend on where the person
 			// looks: the reason is read out with it, as a reply's words are.
-			props["state"], props["message"] = "error", "The last request failed."
+			st.State, st.Message = ui.Failed, "The last request failed."
 			if words, _ := last.Fields["content"].(string); strings.TrimSpace(words) != "" {
-				props["said"] = trim.Flat(chat.SanitizeError(words), 200)
+				st.Said = trim.Flat(chat.SanitizeError(words), 200)
 			}
 		case "assistant":
 			n := 0
 			if changes, ok := last.Fields["changes"].([]any); ok {
 				n = len(changes)
 			}
-			props["state"] = "done"
+			st.State = ui.Done
 			switch n {
 			case 0:
-				props["message"] = "Assistant replied."
+				st.Message = "Assistant replied."
 			case 1:
-				props["message"] = "Assistant replied and made 1 change."
+				st.Message = "Assistant replied and made 1 change."
 			default:
-				props["message"] = fmt.Sprintf("Assistant replied and made %d changes.", n)
+				st.Message = fmt.Sprintf("Assistant replied and made %d changes.", n)
 			}
 			// The reply's first words, read out but not drawn, so a person who
 			// cannot see it arrive hears what it says; the chip stays short.
 			// Its links are said as their names, as the reply shows them,
 			// not spelled out as brackets and addresses.
 			if words, _ := last.Fields["content"].(string); strings.TrimSpace(words) != "" {
-				props["said"] = trim.Flat(render.LinkWords(words, s.linkTitle), 200)
+				st.Said = trim.Flat(render.LinkWords(words, s.linkTitle), 200)
 			}
 		}
 	}
-	return s.component("status", props)
+	return s.part(st)
 }
 
 // chatStarts are a few things to ask, for a chat with nothing in it: a

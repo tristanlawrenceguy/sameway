@@ -7,6 +7,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // Other people open the workspace over Tailscale, which says who they are;
@@ -67,7 +68,7 @@ func (s *Server) allowed(w http.ResponseWriter, r *http.Request) bool {
 	if why == "" {
 		return true
 	}
-	s.page(w, r, "Not yours to change", s.component("alert", map[string]any{"kind": "info", "message": why}), pageOptions{Status: http.StatusForbidden})
+	s.page(w, r, "Not yours to change", s.part(ui.Alert{Kind: ui.Info, Message: why}), pageOptions{Status: http.StatusForbidden})
 	return false
 }
 

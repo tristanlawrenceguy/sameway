@@ -21,7 +21,7 @@ import (
 // locks anyone out.
 func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 	if err := s.app.Chat.Available(); err != nil {
-		s.page(w, r, "Home", s.component("alert", map[string]any{"kind": "danger", "title": "This workspace is incomplete", "message": err.Error()}), pageOptions{})
+		s.page(w, r, "Home", s.part(ui.Alert{Kind: ui.Problem, Title: "This workspace is incomplete", Message: err.Error()}), pageOptions{})
 		return
 	}
 	// Which tab: Home at /, or a canvas record at /c/<id>.

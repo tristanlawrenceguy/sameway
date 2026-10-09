@@ -6,6 +6,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // chatBlock renders a chat component with the live conversation inside it.
@@ -17,7 +18,7 @@ func (s *Server) chatBlock(blk *store.Record, convo *conversation) template.HTML
 	out, err := s.app.Registry.RenderSlot(records.ComponentName, props, convo.Body)
 	if err != nil {
 		log.Printf("render chat: %v", err)
-		return s.component("alert", map[string]any{"kind": "danger", "message": "The conversation could not be shown. Reload the page to try again."})
+		return s.part(ui.Alert{Kind: ui.Problem, Message: "The conversation could not be shown. Reload the page to try again."})
 	}
 	return out
 }
