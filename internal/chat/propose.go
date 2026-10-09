@@ -29,7 +29,27 @@ func (s *Service) Proposals() []*store.Record {
 	}
 	var out []*store.Record
 	for _, r := range recs {
-		if r.Fields["state"] == "pending" {
+		if by, _ := r.Fields["by_action"].(string); r.Fields["state"] == "pending" && by == "" {
+			out = append(out, r)
+		}
+	}
+	return out
+}
+
+// Suggestions are what actions suggested and wait for the person, newest
+// first: apart from the conversation's questions, each answered on its own
+// (suggest_records.go).
+func (s *Service) Suggestions() []*store.Record {
+	if _, ok := s.Store.Types().Get(records.ProposalType); !ok {
+		return nil
+	}
+	recs, err := s.Store.List(records.ProposalType, store.ListOptions{OrderBy: "created_at", Desc: true})
+	if err != nil {
+		return nil
+	}
+	var out []*store.Record
+	for _, r := range recs {
+		if by, _ := r.Fields["by_action"].(string); r.Fields["state"] == "pending" && by != "" {
 			out = append(out, r)
 		}
 	}
@@ -114,6 +134,9 @@ var proposable = map[string]bool{
 	"accept_action": true,
 	// What cannot be taken back is asked first, by the code: see consent.go.
 	"run_action": true, "set_setting": true, "let_in": true, "change_field": true,
+	// create_record is what an action suggests (suggest_records.go), in
+	// words Sameway writes: a record made with the person's yes.
+	"create_record": true,
 }
 
 // modelProposable are the calls the model may carry in a question of its
@@ -166,7 +189,11 @@ func (s *Service) Accept(id string) error {
 	if result.isErr {
 		return errors.New(result.text)
 	}
-	if _, err := s.Store.Update(records.ProposalType, id, map[string]any{"state": "accepted"}); err != nil {
+	done := map[string]any{"state": "accepted"}
+	if c := result.change; c != nil && c.ID != "" && c.Component != "" {
+		done["made"] = c.Component + "/" + c.ID // what a suggestion became, for its action to learn from
+	}
+	if _, err := s.Store.Update(records.ProposalType, id, done); err != nil {
 		return err
 	}
 	// The assistant made the change, but the person is why it happened.
