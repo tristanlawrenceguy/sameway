@@ -132,18 +132,10 @@
   }
 
   var listening = false;
-  function init() {
-    var clocks = document.querySelectorAll(".sw-clock");
-    if (!clocks.length) return;
-    clocks.forEach(function (c) {
-      if (c._ticking) return;
-      c._ticking = true;
-      tick(c);
-      askToNotify(c);
-    });
+  // A clock a refresh brings ticks too; the ringing is listened for once.
+  sw.arm(".sw-clock", function (c) {
+    tick(c);
+    askToNotify(c);
     if (!listening) { listening = true; listen(); }
-  }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
-  // A page that refreshed part of itself may hold a new clock.
-  document.addEventListener("sw:refresh", init);
+  });
 })();

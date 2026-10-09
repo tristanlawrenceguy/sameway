@@ -49,20 +49,14 @@
 
   // A proposal's two buttons are forms that work on their own; with
   // scripts the answer is sent without leaving the page.
-  function proposeHandler() {
-    var btns = document.querySelectorAll(".sw-proposal [type=\"submit\"]");
-    if (!btns || btns.length === 0) return;
-    btns.forEach(function (btn) {
-      if (btn._proposeArmed) return;
-      btn._proposeArmed = true;
-      btn.addEventListener("click", function (e) { e.preventDefault(); answer(btn); });
-    });
-  }
+  sw.arm('.sw-proposal [type="submit"]', function (btn) {
+    btn.addEventListener("click", function (e) { e.preventDefault(); answer(btn); });
+  });
 
   // A question asked during a live turn comes with its end: put it where
   // the questions go, arm it, and say it.
-  document.addEventListener("sw:turn-done", function (e) {
-    var d = e.detail || {};
+  sw.on("turn-done", function (d) {
+    d = d || {};
     if (!d.proposals) return;
     var form = document.querySelector("form.sw-compose");
     if (!form) return;
@@ -72,14 +66,8 @@
     var fresh = t.content.firstElementChild;
     if (!fresh) return;
     if (have) have.replaceWith(fresh); else form.parentNode.insertBefore(fresh, form);
-    proposeHandler();
+    sw.scan();
     var ask = fresh.querySelector(".sw-proposal__summary");
     if (ask) say("The assistant is asking: " + ask.textContent.trim());
   });
-
-  function init() { proposeHandler(); }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
-  else init();
-  // Parts refreshed during a live turn are armed too; armed ones say so.
-  document.addEventListener("sw:refresh", init);
 })();

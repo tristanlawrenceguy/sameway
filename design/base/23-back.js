@@ -58,6 +58,5 @@
       if (had) control.setAttribute("aria-describedby", had); else control.removeAttribute("aria-describedby");
     }, { once: true });
   }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", arrive);
-  else arrive();
+  sw.ready(arrive);
 })();

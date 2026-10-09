@@ -150,6 +150,5 @@
       });
     }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-changed"] });
   }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
-  else init();
+  sw.ready(init);
 })();

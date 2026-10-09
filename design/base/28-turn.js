@@ -112,7 +112,7 @@
       held.forEach(function (li) { if (!li.isConnected && c) c.appendChild(li); });
       Object.keys(marked).forEach(function (id) { mark(id, marked[id]); });
     }
-    document.addEventListener("sw:refresh", again);
+    sw.on("refresh", again);
 
     return {
       // A step of the turn: said, and its place marked.
@@ -142,7 +142,7 @@
       // The turn is over: nothing more is said by this, and every mark goes.
       done: function () {
         clearTimeout(timer); timer = null; waiting = null;
-        document.removeEventListener("sw:refresh", again);
+        sw.off("refresh", again);
         held = []; marked = {};
         if (status) status.removeAttribute("data-still");
         document.querySelectorAll(".sw-block--pending").forEach(function (p) { p.remove(); });

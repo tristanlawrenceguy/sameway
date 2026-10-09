@@ -67,7 +67,5 @@
         .catch(function () { form.submit(); });
     });
   }
-  function init() { document.querySelectorAll("form.sw-tracker__log").forEach(arm); }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
-  document.addEventListener("sw:refresh", init);
+  sw.arm("form.sw-tracker__log", arm);
 })();

@@ -71,8 +71,6 @@
     window.swErrorSummary();
     field.focus();
   });
-  function init() { window.swErrorSummary(); }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
-  else init();
-  document.addEventListener("sw:refresh", init);
+  sw.ready(window.swErrorSummary);
+  sw.on("refresh", window.swErrorSummary);
 })();

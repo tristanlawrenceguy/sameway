@@ -42,7 +42,6 @@
     });
   };
   function init() { window.swCount(document); }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
-  else init();
-  document.addEventListener("sw:refresh", init);
+  sw.ready(init);
+  sw.on("refresh", init);
 })();

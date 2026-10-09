@@ -104,7 +104,7 @@ func TestArrivalsAreSaidOnceAndQuietly(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{`"role", "status"`, "on this page too.", "heard[n] = true", "sw:refresh"} {
+	for _, want := range []string{`"role", "status"`, "on this page too.", "heard[n] = true", `sw.on("refresh"`} {
 		if !strings.Contains(string(js), want) {
 			t.Errorf("enhance.js lacks %q", want)
 		}

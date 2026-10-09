@@ -13,28 +13,22 @@
     return "sw-disclosure:" + (el.getAttribute("data-remember") === "site" ? "" : location.pathname) + ":" + el.id;
   }
   var printing = false;
-  function init() {
-    document.querySelectorAll("details[data-component=disclosure][id]").forEach(function (el) {
-      if (el._remembered) return;
-      el._remembered = true;
-      try {
-        var was = localStorage.getItem(key(el));
-        if (was === "open") el.open = true;
-        else if (was === "closed") el.open = false;
-      } catch (e) { /* private mode or blocked storage: leave it as served */ }
-      el.addEventListener("toggle", function () {
-        if (printing) return;
-        try { localStorage.setItem(key(el), el.open ? "open" : "closed"); } catch (e) {}
-      });
+  sw.arm("details[data-component=disclosure][id]", function (el) {
+    try {
+      var was = localStorage.getItem(key(el));
+      if (was === "open") el.open = true;
+      else if (was === "closed") el.open = false;
+    } catch (e) { /* private mode or blocked storage: leave it as served */ }
+    el.addEventListener("toggle", function () {
+      if (printing) return;
+      try { localStorage.setItem(key(el), el.open ? "open" : "closed"); } catch (e) {}
     });
-    // The body moves in when a person opens it, not when a page arrives
-    // with it open: motion explains a change and never decorates a load.
-    document.querySelectorAll("details[data-component=disclosure] > summary").forEach(function (s) {
-      if (s._moves) return;
-      s._moves = true;
-      s.addEventListener("click", function () { s.parentNode.setAttribute("data-opened", ""); });
-    });
-  }
+  });
+  // The body moves in when a person opens it, not when a page arrives
+  // with it open: motion explains a change and never decorates a load.
+  sw.arm("details[data-component=disclosure] > summary", function (s) {
+    s.addEventListener("click", function () { s.parentNode.setAttribute("data-opened", ""); });
+  });
   // On paper, what is folded away is shown, then folded again after.
   var opened = [];
   window.addEventListener("beforeprint", function () {
@@ -50,9 +44,6 @@
     opened = [];
     setTimeout(function () { printing = false; }, 0);
   });
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
-  else init();
-  document.addEventListener("sw:refresh", init);
   // A reply of the assistant swaps the log in anew; it keeps how it was.
-  document.addEventListener("sw:turn-done", init);
+  sw.on("turn-done", sw.scan);
 })();

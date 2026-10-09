@@ -231,16 +231,13 @@
       else if (s === "waiting") listen();
     });
     document.addEventListener("keydown", function (e) { if (e.key === "Escape" && (active || stream)) end(); });
-    document.addEventListener("sw:turn-done", function (e) {
+    sw.on("turn-done", function (d) {
       if (!active || now() !== "answering") return;
-      var d = e.detail || {};
+      d = d || {};
       var msg = d.id && document.getElementById("msg-" + d.id);
       var body = msg && msg.querySelector(".sw-message__body");
       speak(body ? body.innerText.trim() : "");
     });
   }
-  function init() { document.querySelectorAll("[data-component=talk]").forEach(arm); }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
-  else init();
-  document.addEventListener("sw:refresh", init);
+  sw.arm("[data-component=talk]", arm);
 })();
