@@ -14,6 +14,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
+	"github.com/tristanlawrenceguy/sameway/internal/server/exchange"
 	"github.com/tristanlawrenceguy/sameway/internal/server/media"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
@@ -21,23 +22,25 @@ import (
 
 // Server serves one workspace.
 type Server struct {
-	app     *app.App
-	css, js []byte
-	mux     *http.ServeMux
-	turns   turns
-	fleet   *Fleet
-	model   modelState                    // whether the assistant can reach its model, last looked; connect.go
-	notify  func(title, text, url string) // tells a ring beyond the page; ring.go
-	changes atomic.Int64                  // changes arrived from other computers; see sync.go
-	present presence                      // who else is here just now; see presence.go
-	media   *media.Service                // files, recordings and meetings; internal/server/media
-	logged  signal                        // a change logged here, for those waiting on /api/changes; changes.go
+	app      *app.App
+	css, js  []byte
+	mux      *http.ServeMux
+	turns    turns
+	fleet    *Fleet
+	model    modelState                    // whether the assistant can reach its model, last looked; connect.go
+	notify   func(title, text, url string) // tells a ring beyond the page; ring.go
+	changes  atomic.Int64                  // changes arrived from other computers; see sync.go
+	present  presence                      // who else is here just now; see presence.go
+	media    *media.Service                // files, recordings and meetings; internal/server/media
+	exchange *exchange.Service             // imports and exports; internal/server/exchange
+	logged   signal                        // a change logged here, for those waiting on /api/changes; changes.go
 }
 
 // New builds the handler for an app.
 func New(a *app.App) *Server {
 	s := &Server{app: a, css: []byte(a.Registry.CSS()), js: []byte(a.Registry.JS()), mux: http.NewServeMux()}
 	s.media = media.New(face{s})
+	s.exchange = exchange.New(face{s})
 	s.routes()
 	s.hooks() // what the rest of the app asks of the pages; see hooks.go
 	s.mux = s.wrapNotFound(s.mux)

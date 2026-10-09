@@ -3,7 +3,6 @@ package server_test
 import (
 	"encoding/json"
 	"net/http"
-	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -11,17 +10,6 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 )
-
-func public(t *testing.T, h http.Handler, method, path, body string) *httptest.ResponseRecorder {
-	t.Helper()
-	req := httptest.NewRequest(method, path, strings.NewReader(body))
-	if body != "" {
-		req.Header.Set("Content-Type", "application/json")
-	}
-	rec := httptest.NewRecorder()
-	h.ServeHTTP(rec, req)
-	return rec
-}
 
 // The internet reads what is published, and nothing else: no other type,
 // no conversation, no log, no writing, no controls.

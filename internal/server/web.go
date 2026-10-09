@@ -32,6 +32,8 @@ const (
 var (
 	writeJSON  = web.WriteJSON
 	writeError = web.WriteError
+	readBody   = web.ReadBody
+	isPublic   = web.IsPublic
 )
 
 // face is the server as a feature's handlers are given it (web.Deps).

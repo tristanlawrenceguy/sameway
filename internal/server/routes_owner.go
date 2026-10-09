@@ -26,8 +26,6 @@ var ownerRoutes = []route{
 	{pattern: "POST /model/key", handle: (*Server).modelKey, access: owner, persons: "a key is their own secret, pasted by them; no model is handed one", reach: outward},
 	{pattern: "POST /model/ollama", handle: (*Server).ollamaFetch, access: owner, persons: "fetching gigabytes onto their computer is theirs to start", reach: outward},
 	{pattern: "POST /meaning/fetch", handle: (*Server).meaningFetch, access: owner, persons: "what is fetched to this computer is its owner's choice", reach: outward},
-	{pattern: "GET /bring", handle: (*Server).bringPage, access: owner},
-	{pattern: "POST /bring", handle: (*Server).bring, access: owner, tool: "import_records", reach: inward},
 	{pattern: "GET /calendars", handle: (*Server).calendarsPage, access: owner},
 	{pattern: "POST /calendars/add", handle: (*Server).calendarAdd, access: owner, persons: "a calendar link is their own secret, pasted by them", reach: outward},
 	{pattern: "POST /calendars/remove", handle: (*Server).calendarRemove, access: owner, persons: "a calendar link is their own secret, pasted by them", reach: outward},

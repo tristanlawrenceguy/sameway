@@ -3,10 +3,8 @@ package server
 import (
 	"bytes"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"path/filepath"
 	"strconv"
@@ -17,23 +15,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server/media"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
-	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
-
-func readBody(r *http.Request) (map[string]any, error) {
-	raw, err := io.ReadAll(io.LimitReader(r.Body, 4<<20))
-	if err != nil {
-		return nil, err
-	}
-	var fields map[string]any
-	if len(raw) == 0 {
-		return map[string]any{}, nil
-	}
-	if err := json.Unmarshal(raw, &fields); err != nil {
-		return nil, errors.New("body must be a JSON object of fields: " + web.JSONTrouble(err))
-	}
-	return fields, nil
-}
 
 // apiDescribe is the index: how to build, the routes, and a line for each
 // component and type, a few kilobytes. ?full=1 is everything, which is

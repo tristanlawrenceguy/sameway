@@ -6,9 +6,6 @@ package server
 var recordRoutes = []route{
 	{pattern: "GET /t/{type}", handle: (*Server).listPage, access: people, public: true},
 	{pattern: "POST /t/{type}/add", handle: (*Server).addRecord, access: people, tool: "create_record", reach: inward},
-	{pattern: "GET /t/{type}/import", handle: (*Server).importPage, access: owner},
-	{pattern: "POST /t/{type}/import", handle: (*Server).importUpload, access: owner, tool: "import_records", reach: inward},
-	{pattern: "POST /t/{type}/import/{file}/run", handle: (*Server).importRun, access: owner, tool: "import_records", reach: inward},
 	{pattern: "GET /t/{type}/{id}", handle: (*Server).detailPage, access: people, public: true},
 	{pattern: "GET /t/{type}/{id}/whole", handle: (*Server).wholePage, access: people, public: true},
 	{pattern: "POST /t/{type}/{id}/parts/move", handle: (*Server).moveParts, access: people, tool: "organise_writing", reach: inward},
@@ -17,12 +14,6 @@ var recordRoutes = []route{
 	{pattern: "POST /t/{type}/{id}/props", handle: (*Server).recordProps, access: people, tool: "update_record", reach: inward},
 	// A file and what is read from it are public with the page that shows
 	// it; its sound, copied out for writing it down, is not.
-	{pattern: "GET /files/{id}/transcript.srt", handle: (*Server).transcriptFile, access: people, public: true},
-	{pattern: "GET /files/{id}/transcript.txt", handle: (*Server).transcriptFile, access: people, public: true},
-	{pattern: "GET /export/workspace.zip", handle: (*Server).exportEverything, access: owner},
-	{pattern: "GET /export/all.ics", handle: (*Server).exportCalendar, access: people},
-	{pattern: "GET /export/{file}", handle: (*Server).exportFile, access: people, public: true},
-	{pattern: "GET /export/{type}/{file}", handle: (*Server).exportDocument, access: people, public: true},
 	{pattern: "POST /act/{id}", handle: (*Server).act, access: people, tool: "run_action", reach: outward},
 	{pattern: "POST /suggestions/{id}/{answer}", handle: (*Server).suggestionAnswer, access: people, persons: "a suggestion to their writing is theirs to accept or decline, never the one who suggested it", reach: inward},
 	{pattern: "POST /suggestions/accept-all", handle: (*Server).suggestionsAcceptAll, access: people, persons: "the same, for every fix or formatting change at once", reach: inward},

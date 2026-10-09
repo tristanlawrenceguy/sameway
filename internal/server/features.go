@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
+	"github.com/tristanlawrenceguy/sameway/internal/server/exchange"
 	"github.com/tristanlawrenceguy/sameway/internal/server/media"
 	"github.com/tristanlawrenceguy/sameway/internal/speech"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -39,7 +40,7 @@ func mediaRoutes() []route {
 var _ media.Deps = face{}
 
 func (f face) Title(t *schema.Type, rec *store.Record) string { return f.title(t, rec) }
-func (f face) Importable(t *schema.Type) bool                 { return f.importable(t) }
+func (f face) Importable(t *schema.Type) bool                 { return exchange.Importable(t) }
 func (f face) Shown(r *http.Request) (always, here []string)  { return f.shown(r) }
 func (f face) Fewer(page, key, what string, here []string) string {
 	return f.fewer(page, key, what, here)

@@ -1,4 +1,4 @@
-package server
+package exchange
 
 import (
 	"bytes"
@@ -7,11 +7,14 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/blocks"
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
 	"github.com/tristanlawrenceguy/sameway/internal/export"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // Whatever comes in goes out again: any list as a spreadsheet, people as
@@ -24,7 +27,7 @@ import (
 func exportable(t *schema.Type) bool { return t.Content() }
 
 // exportFile answers /export/<type>.<ext>?where=…&order=… with the file.
-func (s *Server) exportFile(w http.ResponseWriter, r *http.Request) {
+func (s *Service) exportFile(w http.ResponseWriter, r *http.Request) {
 	name, ext, _ := strings.Cut(r.PathValue("file"), ".")
 	t, ok := s.app.Types.Get(name)
 	if !ok || !exportable(t) {
@@ -43,17 +46,17 @@ func (s *Server) exportFile(w http.ResponseWriter, r *http.Request) {
 	}
 	var buf bytes.Buffer
 	if err := export.Write(&buf, f, t, recs, s.RefTitle); err != nil {
-		s.fail(w, err)
+		s.Fail(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", f.Type)
-	attachment(w, fmt.Sprintf("%s %s.%s", capitalize(schema.Plural(t.Name)), s.now().Format("2006-01-02"), f.Ext))
+	web.Attachment(w, fmt.Sprintf("%s %s.%s", blocks.Capitalize(schema.Plural(t.Name)), s.Now().Format("2006-01-02"), f.Ext))
 	w.Write(buf.Bytes())
 }
 
 // exportRecords are the records a list page with this query shows.
-func (s *Server) exportRecords(t *schema.Type, q url.Values) ([]*store.Record, error) {
-	return query.Filter(s.app.Store, t, q["where"], q.Get("order"), 0, s.now())
+func (s *Service) exportRecords(t *schema.Type, q url.Values) ([]*store.Record, error) {
+	return query.Filter(s.app.Store, t, q["where"], q.Get("order"), 0, s.Now())
 }
 
 func formatList(t *schema.Type) string {
@@ -64,10 +67,10 @@ func formatList(t *schema.Type) string {
 	return strings.Join(names, ", ")
 }
 
-// exportLinks is the list page's way out: each format the type can be,
+// ExportLinks is the list page's way out: each format the type can be,
 // with the page's own query, each saying how big it is (see the export
 // component). recs are the records the page matched, which the files hold.
-func (s *Server) exportLinks(t *schema.Type, q url.Values, recs []*store.Record) string {
+func (s *Service) ExportLinks(t *schema.Type, q url.Values, recs []*store.Record) string {
 	if !exportable(t) || len(recs) == 0 {
 		return ""
 	}
@@ -86,17 +89,17 @@ func (s *Server) exportLinks(t *schema.Type, q url.Values, recs []*store.Record)
 	if len(recs) == 1 {
 		what = "this " + schema.Words(t.Name)
 	}
-	return string(s.component("export", map[string]any{"what": what, "items": items}))
+	return string(s.Component("export", map[string]any{"what": what, "items": items}))
 }
 
 // exportSize is how big a file will be, by making it: a workspace's lists
 // are small, and a size said is a size people can decide on.
-func (s *Server) exportSize(f export.Format, t *schema.Type, recs []*store.Record) string {
+func (s *Service) exportSize(f export.Format, t *schema.Type, recs []*store.Record) string {
 	var n counter
 	if err := export.Write(&n, f, t, recs, s.RefTitle); err != nil {
 		return ""
 	}
-	return sizeWords(int64(n))
+	return blocks.SizeWords(int64(n))
 }
 
 // counter counts what is written to it.
@@ -104,31 +107,15 @@ type counter int64
 
 func (c *counter) Write(p []byte) (int, error) { *c += counter(len(p)); return len(p), nil }
 
-// attachment says a response is a file to keep, by its name: filename for
-// every browser, and filename* for a name beyond ASCII (RFC 6266).
-func attachment(w http.ResponseWriter, name string) {
-	plain := strings.Map(func(r rune) rune {
-		if r < 0x20 || r > 0x7e || r == '"' || r == '\\' || r == '/' {
-			return '_'
-		}
-		return r
-	}, name)
-	v := fmt.Sprintf(`attachment; filename="%s"`, plain)
-	if plain != name {
-		v += "; filename*=UTF-8''" + url.PathEscape(strings.ReplaceAll(name, "/", "_"))
-	}
-	w.Header().Set("Content-Disposition", v)
-}
-
 // transcriptFile answers a recording's words as subtitles (.srt) or as
 // plain text (.txt), from its text, so a correction goes out too.
-func (s *Server) transcriptFile(w http.ResponseWriter, r *http.Request) {
-	rec, err := s.app.Store.Get(FileType, r.PathValue("id"))
+func (s *Service) transcriptFile(w http.ResponseWriter, r *http.Request) {
+	rec, err := s.app.Store.Get(records.FileType, r.PathValue("id"))
 	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
-	cues := s.media.Heard(rec)
+	cues := s.Media().Heard(rec)
 	if len(cues) == 0 {
 		http.NotFound(w, r)
 		return
@@ -147,7 +134,7 @@ func (s *Server) transcriptFile(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	attachment(w, title+"."+ext)
+	web.Attachment(w, title+"."+ext)
 	w.Write([]byte(body))
 }
 

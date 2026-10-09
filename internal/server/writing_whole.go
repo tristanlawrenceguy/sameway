@@ -13,6 +13,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // A piece read as one: its own words, then each part under its title, in
@@ -71,17 +72,17 @@ func (s *Server) wholePage(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Query().Get("as") {
 	case "md":
 		w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
-		attachment(w, title+".md")
+		web.Attachment(w, title+".md")
 		fmt.Fprintf(w, "# %s\n\n%s", title, md)
 		return
 	case "docx":
 		var buf bytes.Buffer
-		if err := export.DOCX(&buf, title, s.lang(), md); err != nil {
+		if err := export.DOCX(&buf, title, s.exchange.Lang(), md); err != nil {
 			s.fail(w, err)
 			return
 		}
 		w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
-		attachment(w, title+".docx")
+		web.Attachment(w, title+".docx")
 		w.Write(buf.Bytes())
 		return
 	}
