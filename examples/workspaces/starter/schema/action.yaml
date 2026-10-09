@@ -14,8 +14,8 @@ fields:
   kind:
     label: What it does
     type: enum
-    values: [webhook, mqtt, command, arrangement, message, classify]
-    labels: {webhook: Call a web address, mqtt: Tell a device, command: Run a program on this computer, arrangement: Set up a page, message: Ask the assistant, classify: Tag what set it off}
+    values: [webhook, mqtt, command, arrangement, message, classify, suggest]
+    labels: {webhook: Call a web address, mqtt: Tell a device, command: Run a program on this computer, arrangement: Set up a page, message: Ask the assistant, classify: Tag what set it off, suggest: Suggest a record from what set it off}
     default: webhook
   url:
     label: URL
@@ -112,9 +112,13 @@ fields:
     label: Check with your past choices
     type: bool
     default: false
-    description: "For a classify action, show the assistant the latest records it gave the same tag and what you did with each (kept, removed, changed to another tag, or nothing yet), so it follows your judgement: it may keep a tag as a suggestion, confirm it when your choices are plain, drop it, or change it to the tag you chose for the same before."
+    description: "For a classify or suggest action, show the assistant the latest it tagged or suggested and what you did with each (a tag kept, taken off, changed to another, or left; a suggestion made as it was, made then changed, or turned down), newest first, so it follows your judgement rather than its own."
   examples:
     label: Past choices to show
     type: int
     default: 10
     description: For check, how many of the latest it is shown, newest first.
+  make:
+    label: Suggests a
+    type: string
+    description: "For a suggest action, the kind of record it suggests from what set it off: task, event, reminder, person, or any kind here. It is filled from the record and put to you to make, change or turn down. With check, it is shown what you did with its last suggestions."

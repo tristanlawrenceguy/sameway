@@ -191,9 +191,19 @@ func (s *Server) setUpSorting() {
 	actions, _ := s.app.Store.List(records.ActionType, store.ListOptions{})
 	for _, a := range actions {
 		if a.Fields["kind"] == "classify" && a.Fields["what"] == "email" {
-			return
+			return // set up before; what the person changed since is theirs
 		}
 	}
-	records.WriteAs(s.app.Store, who, "created", records.ActionType, "", map[string]any{
-		"title": "Sort what comes in", "kind": "classify", "when": "added", "what": "email", "tags": names, "check": true, "examples": 10})
+	// What comes in, by email or shared from a phone, is tagged, and what is
+	// tagged to do is suggested as a task: four actions the person can read,
+	// change or remove like any other.
+	for _, a := range []map[string]any{
+		{"title": "Sort what comes in", "kind": "classify", "when": "added", "what": "email", "tags": names},
+		{"title": "Suggest a task for an email to do", "kind": "suggest", "make": "task", "when": "changed", "what": "email", "only": []any{"tags=to do"}},
+		{"title": "Sort what is shared", "kind": "classify", "when": "added", "what": "note", "only": []any{"tags=shared"}, "tags": names},
+		{"title": "Suggest a task for something shared to do", "kind": "suggest", "make": "task", "when": "changed", "what": "note", "only": []any{"tags=shared", "tags=to do"}},
+	} {
+		a["check"], a["examples"] = true, 10
+		records.WriteAs(s.app.Store, who, "created", records.ActionType, "", a)
+	}
 }

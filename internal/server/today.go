@@ -130,7 +130,7 @@ func (s *Server) todayPage(w http.ResponseWriter, r *http.Request) {
 		b.WriteString(list("Late", l.Late) + list("Tasks", l.Tasks))
 	}
 	b.WriteString(list("Events", l.Events) + list("Reminders", l.Reminders))
-	mail := s.mailSection() + s.tagSection() // mail_sort.go, classify_today.go
+	mail := s.mailSection() + s.suggestedSection(s.sortingRefs()) + s.tagSection() // mail_sort.go, suggested.go, classify_today.go
 	b.WriteString(mail)
 	if l.count() == 0 && mail == "" {
 		b.WriteString(string(s.component("empty", map[string]any{"message": "Nothing is due today, and nothing is late."})))

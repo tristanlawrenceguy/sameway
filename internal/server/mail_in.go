@@ -112,7 +112,6 @@ func (s *Server) mailOff(w http.ResponseWriter, r *http.Request) {
 
 // KeepMail reads the mailbox every five minutes while Sameway runs.
 func (s *Server) KeepMail(ctx context.Context) {
-	s.KeepTriage(ctx) // what comes in, and what is shared, sorted as it comes; triage.go
 	go func() {
 		tick := time.NewTicker(5 * time.Minute)
 		defer tick.Stop()
@@ -155,9 +154,6 @@ func (s *Server) readMail(ctx context.Context) (int, error) {
 			s.app.Store.SetMeta(key, "1")
 			n++
 		}
-	}
-	if n > 0 {
-		s.triageSoon() // triage.go
 	}
 	return n, err
 }

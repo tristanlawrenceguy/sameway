@@ -1,24 +1,10 @@
 package bench
 
-import (
-	"context"
-	"fmt"
-	"os"
-	"strconv"
-	"strings"
-	"testing"
-	"time"
+import "time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
-	"github.com/tristanlawrenceguy/sameway/internal/llm"
-)
-
-// What a model makes of what comes in to sort (chat/triage.go), measured on
-// messages like a person's: bookings, bills, school, work, friends asking,
-// and the newsletters and receipts that ask nothing. Each is scored on
-// three things: whether it is a task, its day, and whether it matters.
-//
-//	SAMEWAY_BENCH_MODEL=sameway-qwen3.5:latest SAMEWAY_BENCH_BASE_URL=http://127.0.0.1:11434/v1 go test -run TestTriage ./internal/bench
+// The messages sorting is measured on: what comes to a person (bookings,
+// bills, school, work, friends asking, and the newsletters and receipts
+// that ask nothing), each with what is right for it.
 
 type triageCase struct {
 	name, text string
@@ -61,64 +47,4 @@ var triageCases = []triageCase{
 	{"council", "From: Council\nSubject: Bin collection change\n\nFrom next week, recycling is collected on Tuesdays instead of Mondays.", false, "", false},
 	{"concert tickets", "From: Tickets\nSubject: Your tickets\n\nYour e-tickets for Saturday 24 October are attached. Show them at the door.", false, "", false},
 	{"sign lease", "From: Agency\nSubject: Lease ready\n\nThe lease is ready to sign. Please sign it by 20 October so we can confirm the move.", true, "2026-10-20", true},
-}
-
-func TestTriage(t *testing.T) {
-	model, base := os.Getenv("SAMEWAY_BENCH_MODEL"), os.Getenv("SAMEWAY_BENCH_BASE_URL")
-	if model == "" || base == "" {
-		t.Skip("set SAMEWAY_BENCH_MODEL and SAMEWAY_BENCH_BASE_URL to measure triage with a model server")
-	}
-	p, err := llm.New(llm.Config{Provider: "openai", BaseURL: base, Model: model, MaxTokens: 2048})
-	if err != nil {
-		t.Fatal(err)
-	}
-	svc := &chat.Service{Provider: p}
-	runs, _ := strconv.Atoi(os.Getenv("SAMEWAY_BENCH_RUNS"))
-	if runs < 1 {
-		runs = 1
-	}
-	var tasks, days, matters, whole int
-	var secs float64
-	for run := 0; run < runs; run++ {
-		for _, c := range triageCases {
-			began := time.Now()
-			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
-			sug, err := svc.Triage(ctx, c.text, triageSent, []string{"Ana", "Joe Brown"})
-			cancel()
-			secs += time.Since(began).Seconds()
-			if err != nil {
-				t.Logf("%-20s error: %v", c.name, err)
-				continue
-			}
-			due := ""
-			if sug.Due != "" {
-				due = sug.Due[:10]
-			}
-			okTask := sug.Task == c.task
-			okDay := !c.task || due == c.due
-			okMatters := !c.task || sug.Important == c.important
-			var wrong []string
-			if okTask {
-				tasks++
-			} else {
-				wrong = append(wrong, fmt.Sprintf("task %v", sug.Task))
-			}
-			if okDay {
-				days++
-			} else {
-				wrong = append(wrong, fmt.Sprintf("due %q not %q", due, c.due))
-			}
-			if okMatters {
-				matters++
-			} else {
-				wrong = append(wrong, fmt.Sprintf("important %v", sug.Important))
-			}
-			if len(wrong) == 0 {
-				whole++
-			}
-			t.Logf("%-20s %-4s %-28q %s", c.name, map[bool]string{true: "ok", false: "FAIL"}[len(wrong) == 0], sug.Title, strings.Join(wrong, "; "))
-		}
-	}
-	n := len(triageCases) * runs
-	t.Logf("TRIAGE %s: all right %d/%d; task or not %d/%d; day %d/%d; matters %d/%d; %.1fs each", model, whole, n, tasks, n, days, n, matters, n, secs/float64(n))
 }
