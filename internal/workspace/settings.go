@@ -48,6 +48,7 @@ var Settings = []Setting{
 	{"ui.lists", "enum", []string{"filled", "all"}, "which lists the sidebar shows: filled (something in them, or made by the person) or all"},
 	{"ui.developer", "enum", []string{"hidden", "shown"}, "the design system and the guide for agents: hidden from the sidebar or shown"},
 	{"ui.show", "keys", nil, "the parts of a page that are on every time. All of them are off by default, and a page shows no trace of an off one, so this is how something earns a permanent place: fields (a record's whole field list, including the ones its heading and chips already say), remind (the field for setting a reminder about a record, on its page), ask (the way to the assistant with the record in the box), day (the way to the record's day on the calendar), writing-help (the kinds of help with a piece of writing: spelling, tightening, feedback on structure), contents, place, outline and material (for longer writing), recording and write-up (for a meeting), or a connection key from get_record's related, such as points-here:task.project. +key adds one, -key takes it back, a list replaces them all, empty is none. Each is also one address away without this (?show=<key>), so turn one on only when you have a reason the person wants it every time, and say the reason"},
+	{"ui.nest", "keys", nil, "the lists, by type name, whose records are each listed under the list's own item in the sidebar (habit puts every habit one click away; project, every project). +type adds one, -type takes it back, empty is none. Set it when the person wants those things in reach from the sidebar, or asks for the sidebar to be shorter"},
 	{"chat.history_limit", "int", nil, "how many past messages go to the model each turn"},
 	{"chat.system_prompt", "string", nil, "words put before the built-in instructions to the model"},
 	{"update.mode", "enum", update.Modes, "how a new version of sameway arrives: auto installs a release on its own and says so in the activity log, manual only says one is there and waits to be asked (either way it runs from the next start)"},
@@ -132,7 +133,7 @@ func (w *Workspace) Set(key, value string) error {
 		// A list one thing is added to or taken from, rather than resent
 		// whole: turning a part of a page on should not be able to turn
 		// another one off by forgetting it.
-		value = mergeKeys(w.Config.UI.Show, value)
+		value = mergeKeys(w.Get(key), value)
 		scalar = yamlScalar(value)
 	default:
 		if value == "" && !canBeEmpty[key] {
