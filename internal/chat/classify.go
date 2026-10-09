@@ -228,3 +228,10 @@ func (s *Service) pickTags(ctx context.Context, action *store.Record, defs []tag
 	}
 	return picks, nil
 }
+
+func clipRunes(s string, n int) string {
+	if r := []rune(s); len(r) > n {
+		return string(r[:n])
+	}
+	return s
+}

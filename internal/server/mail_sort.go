@@ -68,17 +68,14 @@ func (s *Server) mailSection() string {
 	for _, n := range notes {
 		title := s.nameOf(n)
 		b.WriteString(`<li class="sw-stack"><a class="sw-link" href="/t/` + n.Type + `/` + n.ID + `">` + esc(title) + `</a>`)
+		if p := s.suggestedFrom(n); p != nil { // suggested.go: what an action made of it
+			b.WriteString(`<p>` + esc(suggestionWords(p)) + `</p>` + s.suggestionPresses(p, title) + `</li>`)
+			continue
+		}
 		presses := []struct {
 			action, label string
 			variant       ui.Variant
 		}{{"/mail/task", "Make it a task", ui.Secondary}, {"/mail/sorted", "Done with it", ui.Quiet}}
-		if sug := s.suggestionFor(n.ID); sug != nil && sug.Task {
-			b.WriteString(`<p>` + esc(s.suggestionWords(sug)) + `</p>`) // triage_today.go
-			presses = []struct {
-				action, label string
-				variant       ui.Variant
-			}{{"/sort/keep", "Keep", ui.Secondary}, {"/sort/change", "Change", ui.Quiet}, {"/mail/sorted", "Not a task", ui.Quiet}}
-		}
 		b.WriteString(`<div class="sw-cluster">`)
 		for _, f := range presses {
 			b.WriteString(string(s.form(ui.Form{Action: f.action, Hidden: ui.Hidden("id", n.ID), Button: &ui.Button{Label: f.label, Context: title, Variant: f.variant}})))
@@ -145,4 +142,13 @@ func (s *Server) nameOf(rec *store.Record) string {
 		return rec.ID
 	}
 	return records.Name(s.app.Store, t, rec)
+}
+
+// sortingRefs are the records waiting to be sorted, as type/id.
+func (s *Server) sortingRefs() map[string]bool {
+	out := map[string]bool{}
+	for _, n := range s.mailToSort() {
+		out[n.Type+"/"+n.ID] = true
+	}
+	return out
 }
