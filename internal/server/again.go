@@ -5,6 +5,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // A turn that failed, with a provider busy or limiting for a moment, left
@@ -23,9 +24,8 @@ func (s *Server) messageShown(m *store.Record, from string, latest bool) templat
 	if asked == "" {
 		return out
 	}
-	esc := template.HTMLEscapeString
-	return out + template.HTML(`<form method="post" action="/chat" class="sw-again"><input type="hidden" name="from" value="`+esc(from)+`"><input type="hidden" name="message" value="`+esc(asked)+`">`+
-		string(s.component("button", map[string]any{"label": "Send again", "type": "submit", "variant": "secondary"}))+`</form>`)
+	return out + s.form(ui.Form{Action: "/chat", Class: "sw-again", From: from, Hidden: ui.Hidden("message", asked),
+		Button: &ui.Button{Label: "Send again", Variant: ui.Secondary}})
 }
 
 // askedBefore is what the person said last before a message, in the same

@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
@@ -173,12 +174,11 @@ func (s *Server) cloudSection() string {
 			state = "The last copy could not be made: " + e
 		}
 		b.WriteString(`<p>A whole copy of this workspace goes to ` + esc(s.cloudDir(folder)) + ` once a day, the last seven kept. ` + esc(state) + `</p>`)
-		b.WriteString(`<form method="post" action="/backup/cloud"><input type="hidden" name="folder" value="">` + string(s.component("button", map[string]any{"label": "Stop putting copies there", "type": "submit", "variant": "secondary"})) + `</form>`)
+		b.WriteString(string(s.form(ui.Form{Action: "/backup/cloud", Hidden: ui.Hidden("folder", ""), Button: &ui.Button{Label: "Stop putting copies there", Variant: ui.Secondary}})))
 	} else if clouds := workspace.CloudFolders(); len(clouds) > 0 {
 		b.WriteString(`<p>The daily copies stay on this computer. A copy in your cloud folder is kept off it too, and is there on your next computer.</p>`)
 		for _, c := range clouds {
-			b.WriteString(`<form method="post" action="/backup/cloud"><input type="hidden" name="folder" value="` + esc(c.Dir) + `">` +
-				string(s.component("button", map[string]any{"label": "Keep a daily copy in " + c.Name, "type": "submit", "variant": "secondary"})) + `</form>`)
+			b.WriteString(string(s.form(ui.Form{Action: "/backup/cloud", Hidden: ui.Hidden("folder", c.Dir), Button: &ui.Button{Label: "Keep a daily copy in " + c.Name, Variant: ui.Secondary}})))
 		}
 	} else {
 		b.WriteString(`<p>The daily copies stay on this computer. With OneDrive, Dropbox, iCloud Drive or Google Drive installed, a copy can go there too.</p>`)
