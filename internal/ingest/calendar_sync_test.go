@@ -12,6 +12,7 @@ import (
 // A sync adds what is new, changes what changed and takes away what the
 // calendar no longer has, of the events it brought; nothing else.
 func TestACalendarIsKeptInStep(t *testing.T) {
+	t.Parallel()
 	types, err := schema.LoadFS(examples.FS, filepath.ToSlash(filepath.Join(examples.StarterRoot, "schema")))
 	if err != nil {
 		t.Skip("starter schema: ", err)

@@ -11,6 +11,7 @@ import (
 // the inherited foreground colour. Without this, axe-core cannot reliably
 // compute contrast for body text and may flag the element. Follow-up to backlog 0161.
 func TestDisclosureBodyHasExplicitColor(t *testing.T) {
+	t.Parallel()
 	reg := builtins(t)
 	c, ok := reg.Get("disclosure")
 	if !ok {

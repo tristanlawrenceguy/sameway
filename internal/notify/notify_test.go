@@ -18,6 +18,7 @@ type call struct {
 // the words where its placeholders stand, a phrase in quotes staying one
 // argument. Each way is tried even when the other fails.
 func TestARingIsToldEveryWay(t *testing.T) {
+	t.Parallel()
 	var calls []call
 	n := Notifier{Desktop: true, Command: `curl -d "Reminder: {title}" -H "Click: {url}" ntfy.sh/mine`, Run: func(env []string, name string, args ...string) error {
 		calls = append(calls, call{env, name, args})
@@ -54,6 +55,7 @@ func TestARingIsToldEveryWay(t *testing.T) {
 // The Windows script travels encoded, as PowerShell takes it: UTF-16LE
 // in base64, which is the same length for the same script every time.
 func TestTheToastScriptIsEncoded(t *testing.T) {
+	t.Parallel()
 	e := encoded("Write-Host hi")
 	if e != "VwByAGkAdABlAC0ASABvAHMAdAAgAGgAaQA=" {
 		t.Errorf("UTF-16LE base64, got %s", e)

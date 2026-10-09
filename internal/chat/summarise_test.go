@@ -12,6 +12,7 @@ import (
 // truncation. This covers acceptance item 1: canvas block operations involving
 // record blocks must also show 6-word trimmed titles in receipts.
 func TestSummariseRecordUsesWordTrimming(t *testing.T) {
+	t.Parallel()
 	const longTitle = "This is a note with a very long multi-word title that exceeds six words and should be trimmed"
 	wantTrimmed := "This is a note with a…"
 
@@ -39,6 +40,7 @@ func TestSummariseRecordUsesWordTrimming(t *testing.T) {
 // TestSummariseShortRecordNotTrimmed checks that records with six or fewer
 // words in the title are not trimmed by Summarise.
 func TestSummariseShortRecordNotTrimmed(t *testing.T) {
+	t.Parallel()
 	got := records.Summarise("record", map[string]any{
 		"type":   "note",
 		"record": "Call the dentist",

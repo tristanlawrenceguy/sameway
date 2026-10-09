@@ -27,6 +27,7 @@ func findRow(body, id string) (string, bool) {
 // state where every record rests is not said (design/foundations/glance.md).
 // This covers acceptance items 1 and 2 of task 0267.
 func TestProjectListShowsTaskCount(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	var projWithTasks struct{ ID string }
@@ -72,6 +73,7 @@ func TestProjectListShowsTaskCount(t *testing.T) {
 // text. The count is plain visible text next to the project link, consistent with
 // how other list pages display counts. Acceptance item 3 of task 0267.
 func TestProjectListTaskCountIsVisible(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	var proj struct{ ID string }
@@ -115,6 +117,7 @@ func TestProjectListTaskCountIsVisible(t *testing.T) {
 // <li> and comes after the project link, with no sw-visually-hidden wrapper.
 // Acceptance item 4 of task 0267.
 func TestProjectListTaskCountScreenReader(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	var proj struct{ ID string }
@@ -157,6 +160,7 @@ func TestProjectListTaskCountScreenReader(t *testing.T) {
 // (and "0 interactions" on every person) would be read and say nothing.
 // Acceptance item 2 of task 0267 asked for "0 tasks"; changed deliberately.
 func TestProjectListSaysNothingForZeroTasks(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	var proj struct{ ID string }

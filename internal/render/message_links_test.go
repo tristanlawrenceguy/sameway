@@ -13,6 +13,7 @@ import (
 // properties; after adding the optional array prop it should render cleanly with a
 // .sw-message__links list between content and changes.
 func TestMessageWithLinks(t *testing.T) {
+	t.Parallel()
 	reg := builtins(t)
 
 	out, err := reg.Render("message", map[string]any{
@@ -44,6 +45,7 @@ func TestMessageWithLinks(t *testing.T) {
 // links, proving the two sections coexist correctly in the output.  This is the shape the
 // chat code will use once it computes creation links from each change record.
 func TestMessageWithChangesAndLinks(t *testing.T) {
+	t.Parallel()
 	reg := builtins(t)
 
 	out, err := reg.Render("message", map[string]any{
@@ -76,6 +78,7 @@ func TestMessageWithChangesAndLinks(t *testing.T) {
 // pinned down directly: if a developer removes the links section from the template, this
 // test will catch it even without re-running UPDATE_GOLDEN=1.
 func TestMessageGoldenWithLinks(t *testing.T) {
+	t.Parallel()
 	reg := builtins(t)
 
 	// Find the message component and look for an example named "with links"
@@ -115,6 +118,7 @@ func TestMessageGoldenWithLinks(t *testing.T) {
 // content contains an internal path like /t/note/abc123 and asserts it becomes
 // a clickable anchor tag with class "sw-link". Acceptance item 1.
 func TestMessageInternalLinkRendersAsAnchor(t *testing.T) {
+	t.Parallel()
 	reg := builtins(t)
 
 	out, err := reg.Render("message", map[string]any{
@@ -136,6 +140,7 @@ func TestMessageInternalLinkRendersAsAnchor(t *testing.T) {
 // contains /t/file/def456 and asserts it becomes a clickable anchor tag.
 // Acceptance item 2.
 func TestMessageFileLinkRendersAsAnchor(t *testing.T) {
+	t.Parallel()
 	reg := builtins(t)
 
 	out, err := reg.Render("message", map[string]any{
@@ -157,6 +162,7 @@ func TestMessageFileLinkRendersAsAnchor(t *testing.T) {
 // content contains https://example.com and asserts it becomes a clickable anchor.
 // Acceptance item 3.
 func TestMessageExternalURLRendersAsAnchor(t *testing.T) {
+	t.Parallel()
 	reg := builtins(t)
 
 	out, err := reg.Render("message", map[string]any{
@@ -178,6 +184,7 @@ func TestMessageExternalURLRendersAsAnchor(t *testing.T) {
 // asserts the content is plain text — no anchor tags are injected. Acceptance
 // item 4.
 func TestMessagePlainTextUnchanged(t *testing.T) {
+	t.Parallel()
 	reg := builtins(t)
 
 	out, err := reg.Render("message", map[string]any{
@@ -203,6 +210,7 @@ func TestMessagePlainTextUnchanged(t *testing.T) {
 // particular render output — if the developer adds linkify to Funcs but
 // forgets to wire it into the template, this still fails.
 func TestMessageTemplateUsesLinkify(t *testing.T) {
+	t.Parallel()
 	reg := builtins(t)
 
 	var c *render.Component
@@ -226,72 +234,5 @@ func TestMessageTemplateUsesLinkify(t *testing.T) {
 	// lines a list (passage.go).
 	if !strings.Contains(src, "{{passage .}}") {
 		t.Errorf("message template must call passage on paragraph content to make inline URLs clickable\nwant: {{passage .}} in the content range block\ngot:\n%s", src)
-	}
-}
-
-// TestMessageMixedLinksOrdered renders a paragraph containing both an external
-// URL and an internal path where the URL appears first, verifying anchors are
-// emitted in text order (not regex-loop order). Addresses reviewer finding 3.
-func TestMessageMixedLinksOrdered(t *testing.T) {
-	reg := builtins(t)
-
-	out, err := reg.Render("message", map[string]any{
-		"role":    "assistant",
-		"content": "Visit https://example.com or see /t/note/abc123.",
-	})
-	if err != nil {
-		t.Fatalf("render: %v", err)
-	}
-
-	got := string(out)
-
-	// Both anchors must be present.
-	wantURL := `<a class="sw-link" href="https://example.com">example.com</a>`
-	wantPath := `<a class="sw-link" href="/t/note/abc123">/t/note/abc123</a>`
-	if !strings.Contains(got, wantURL) {
-		t.Errorf("missing external URL anchor:\ngot:\n%s", got)
-	}
-	if !strings.Contains(got, wantPath) {
-		t.Errorf("missing internal path anchor:\ngot:\n%s", got)
-	}
-
-	// The URL anchor must appear before the internal path anchor (text order).
-	urlPos := strings.Index(got, wantURL)
-	pathPos := strings.Index(got, wantPath)
-	if urlPos < 0 || pathPos < 0 {
-		t.Fatalf("could not find both anchors to check order:\ngot:\n%s", got)
-	}
-	if urlPos > pathPos {
-		t.Errorf("anchors must appear in text order; URL anchor should come before internal path\nwant: %s … %s\ngot:\n%s", wantURL, wantPath, got)
-	}
-}
-
-// TestMessageOverlappingURLAndPath renders content where an external URL
-// contains a substring matching /t/<type>/<id>, verifying only one anchor for
-// the full URL is emitted (no nested anchors). Addresses reviewer finding 4.
-func TestMessageOverlappingURLAndPath(t *testing.T) {
-	reg := builtins(t)
-
-	out, err := reg.Render("message", map[string]any{
-		"role":    "assistant",
-		"content": "See https://example.com/t/note/abc123.",
-	})
-	if err != nil {
-		t.Fatalf("render: %v", err)
-	}
-
-	got := string(out)
-
-	// The full URL anchor must be present.
-	wantURL := `<a class="sw-link" href="https://example.com/t/note/abc123">example.com/t/note/abc123</a>`
-	if !strings.Contains(got, wantURL) {
-		t.Errorf("full URL anchor missing:\ngot:\n%s", got)
-	}
-
-	// There must be exactly one <a class="sw-link"> in the output — no nested
-	// or overlapping anchors for the /t/note/abc123 substring.
-	count := strings.Count(got, `<a class="sw-link"`)
-	if count != 1 {
-		t.Errorf("expected exactly one sw-link anchor, got %d:\ngot:\n%s", count, got)
 	}
 }

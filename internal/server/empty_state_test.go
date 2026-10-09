@@ -15,6 +15,7 @@ import (
 // one short actionable instruction with a link — not just "No notes yet."  This
 // covers Acceptance 3.
 func TestListPageEmptyStateIsActionable(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/t/note")
@@ -38,6 +39,7 @@ func TestListPageEmptyStateIsActionable(t *testing.T) {
 // one short actionable instruction — not "Nothing has happened yet."  This covers
 // Acceptance 3.
 func TestActivityEmptyStateIsActionable(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/activity")
@@ -52,6 +54,7 @@ func TestActivityEmptyStateIsActionable(t *testing.T) {
 // TestSearchEmptyStateIsTight checks that an empty search result page shows one
 // short actionable line — not the old two-part sentence.  This covers Acceptance 3.
 func TestSearchEmptyStateIsTight(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/search?q=nonexistent")

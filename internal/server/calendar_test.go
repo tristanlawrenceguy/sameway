@@ -10,6 +10,7 @@ import (
 // A calendar given a content type shows that type's records on their
 // days, as links to their pages, and never needs telling what day it is.
 func TestACalendarShowsRecordsOnTheirDays(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	now := time.Now()
 	day := func(d int) string { return now.AddDate(0, 0, d).Format("2006-01-02") + "T00:00:00Z" }
@@ -49,6 +50,7 @@ func TestACalendarShowsRecordsOnTheirDays(t *testing.T) {
 // server is; the block's own page reaches the months either side and
 // the list the calendar draws from.
 func TestACalendarMovesBetweenMonths(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/task", map[string]any{"title": "Order compost", "due": "2026-09-19T00:00:00Z"}), http.StatusCreated)
 	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/task", map[string]any{"title": "Harvest", "due": "2026-10-03T00:00:00Z"}), http.StatusCreated)

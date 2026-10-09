@@ -12,6 +12,7 @@ import (
 // cannot be reached, it opens the editor as they did and reads where Tab
 // goes, instead of guessing; its step says so on the page while it looks.
 func TestTheAssistantLooksAtThePageThePersonIsOn(t *testing.T) {
+	t.Parallel()
 	needBrowser(t)
 	a, h := newApp(t)
 	page := notePage(t, h)

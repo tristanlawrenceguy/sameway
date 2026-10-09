@@ -10,6 +10,7 @@ import (
 // shows the creation time without any label prefix such as "Started".
 // Acceptance item 3.
 func TestActionDetailLedeNoStartedLabel(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("action", map[string]any{"title": "Sync data"})
@@ -40,6 +41,7 @@ func TestActionDetailLedeNoStartedLabel(t *testing.T) {
 // TestEntryDetailLedeNoAddedLabel asserts that the entry detail page lede shows
 // the creation time without any label prefix such as "Added". Acceptance item 3.
 func TestEntryDetailLedeNoAddedLabel(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	habitRec, err := a.Store.Create("habit", map[string]any{
@@ -82,6 +84,7 @@ func TestEntryDetailLedeNoAddedLabel(t *testing.T) {
 // TestFileDetailLedeNoAddedLabel asserts that the file detail page lede shows
 // the creation time without any label prefix such as "Added". Acceptance item 3.
 func TestFileDetailLedeNoAddedLabel(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("file", map[string]any{"title": "Readme"})
@@ -112,6 +115,7 @@ func TestFileDetailLedeNoAddedLabel(t *testing.T) {
 // TestPersonDetailLedeNoAddedLabel asserts that the person detail page lede shows
 // the creation time without any label prefix such as "Added". Acceptance item 3.
 func TestPersonDetailLedeNoAddedLabel(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("person", map[string]any{"name": "Ada"})
@@ -142,6 +146,7 @@ func TestPersonDetailLedeNoAddedLabel(t *testing.T) {
 // TestProjectDetailLedeNoAddedLabel asserts that the project detail page lede shows
 // the creation time without any label prefix such as "Added". Acceptance item 3.
 func TestProjectDetailLedeNoAddedLabel(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("project", map[string]any{"title": "My Project"})

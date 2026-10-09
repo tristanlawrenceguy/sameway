@@ -12,6 +12,7 @@ import (
 )
 
 func TestOnlyAToggleButtonSaysPressed(t *testing.T) {
+	t.Parallel()
 	reg := render.New()
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		t.Fatal(err)

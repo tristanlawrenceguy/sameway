@@ -8,6 +8,7 @@ import (
 // TestDetailPageSkipsEmptyFields ensures the definition list on a detail page
 // does not emit <dt>/<dd> pairs for fields whose display value is empty.
 func TestDetailPageSkipsEmptyFields(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Create a note with only title — body, tags, status, pinned are all nil/zero.
@@ -37,6 +38,7 @@ func TestDetailPageSkipsEmptyFields(t *testing.T) {
 // render correctly when empty fields are skipped. Bool and enum types are
 // excluded from the dl as the heading; its role is said there, once.
 func TestDetailPageShowsNonEmptyFields(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{
@@ -63,6 +65,7 @@ func TestDetailPageShowsNonEmptyFields(t *testing.T) {
 // skip empty fields in their definition list. The enum actor field is excluded
 // from the dl because it appears as a chip; summary (title) and Action remain.
 func TestDetailPageSkipsEmptyFieldsActivity(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("activity", map[string]any{
@@ -95,6 +98,7 @@ func TestDetailPageSkipsEmptyFieldsActivity(t *testing.T) {
 // empty fields in their definition list. The title (content) is
 // excluded from the dl as the heading; its role is said there, once.
 func TestDetailPageSkipsEmptyFieldsMessage(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("message", map[string]any{
@@ -129,6 +133,7 @@ func TestDetailPageSkipsEmptyFieldsMessage(t *testing.T) {
 // not appear as a badge in the lede on detail pages. The status value is still
 // available in the edit-fields template for editing.
 func TestDetailPageNonEmptyStatusStillRenders(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{

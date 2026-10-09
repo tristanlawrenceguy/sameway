@@ -9,6 +9,7 @@ import (
 // TestALongListIsReadAPageAtATime: a list longer than a page shows one page
 // of it, says which page in its title, and offers the rest by number.
 func TestALongListIsReadAPageAtATime(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	for i := 0; i < 120; i++ {
 		if _, err := a.Store.Create("note", map[string]any{"title": fmt.Sprintf("Note %03d", i)}); err != nil {
@@ -43,6 +44,7 @@ func TestALongListIsReadAPageAtATime(t *testing.T) {
 
 // TestManyResultsAreReadAPageAtATime: search keeps its words on every page.
 func TestManyResultsAreReadAPageAtATime(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	for i := 0; i < 25; i++ {
 		a.Store.Create("note", map[string]any{"title": fmt.Sprintf("Fern %d", i)})
@@ -59,6 +61,7 @@ func TestManyResultsAreReadAPageAtATime(t *testing.T) {
 // TestAPictureIsTheImageComponent: a file's picture is drawn by the image
 // component, with words for someone who cannot see it.
 func TestAPictureIsTheImageComponent(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	rec, _ := a.Store.Create("file", map[string]any{"title": "IMG_4032", "kind": "image"})
 	body := get(t, h, "/t/file/"+rec.ID).Body.String()

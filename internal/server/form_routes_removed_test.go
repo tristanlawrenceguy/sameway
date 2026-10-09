@@ -8,6 +8,7 @@ import (
 // TestNewRouteReturns404 asserts that GET /t/{type}/new no longer exists —
 // it must return 404, not render a form.  Covers acceptance item 1.
 func TestNewRouteReturns404(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	rec := get(t, h, "/t/note/new")
 	wantStatus(t, rec, http.StatusNotFound)
@@ -16,6 +17,7 @@ func TestNewRouteReturns404(t *testing.T) {
 // TestEditRouteReturns404 asserts that GET /t/{type}/{id}/edit no longer
 // exists — it must return 404.  Covers acceptance item 1.
 func TestEditRouteReturns404(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	rec, _ := a.Store.Create("note", map[string]any{"title": "Seed"})
 	resp := get(t, h, "/t/note/"+rec.ID+"/edit")
@@ -25,6 +27,7 @@ func TestEditRouteReturns404(t *testing.T) {
 // TestListPageHasNewLinkOnEmpty asserts that the empty listing page contains
 // an actionable link to create content.  Covers acceptance item for empty-state actionability.
 func TestListPageHasNewLinkOnEmpty(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	rec := get(t, h, "/t/note")
 	wantStatus(t, rec, http.StatusOK)
@@ -37,6 +40,7 @@ func TestListPageHasNewLinkOnEmpty(t *testing.T) {
 // TestDetailPageHasNoEditLink asserts that the detail page does not contain
 // a link with an edit path.  Covers acceptance item 5.
 func TestDetailPageHasNoEditLink(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	rec, _ := a.Store.Create("note", map[string]any{"title": "Seed"})
 	resp := get(t, h, "/t/note/"+rec.ID)
@@ -50,6 +54,7 @@ func TestDetailPageHasNoEditLink(t *testing.T) {
 // TestDescribeHasNoHtmlNewRoute asserts that the machine-readable routes map
 // under Describe() does not include html_new.  Covers acceptance item 3.
 func TestDescribeHasNoHtmlNewRoute(t *testing.T) {
+	t.Parallel()
 	a, _ := newApp(t)
 	d := a.Describe()
 	if _, ok := d.Routes["html_new"]; ok {

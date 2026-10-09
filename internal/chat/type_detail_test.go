@@ -12,6 +12,7 @@ import (
 // not "System added type test_type". The fix lives in records/names.go where
 // Sentence() calls schema.DisplayName for type-setting detail.
 func TestSentenceResolvesTypeDetail(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct {
 		fields map[string]any
 		want   string

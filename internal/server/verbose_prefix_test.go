@@ -17,6 +17,7 @@ import (
 // conversational filler "That did not go through." — it starts directly with
 // what went wrong. Covers acceptance item 1.
 func TestNoConversationalFillerInWorkspaceError(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	// Create one workspace first so we can trigger the sibling-folder error.
@@ -42,6 +43,7 @@ func TestNoConversationalFillerInWorkspaceError(t *testing.T) {
 // filler like "That edit did not save." — it starts directly with the problem.
 // Covers acceptance item 2.
 func TestNoFillerInBlockEditError(t *testing.T) {
+	t.Parallel()
 	h, id := canvasWithABlock(t)
 
 	// Post an empty title to trigger validation failure on a required field.
@@ -72,6 +74,7 @@ func TestNoFillerInBlockEditError(t *testing.T) {
 // "invalid record:" — messages start with plain language. Covers acceptance
 // item 2.
 func TestValidationErrorNoTechnicalPrefix(t *testing.T) {
+	t.Parallel()
 	newApp(t) // app loaded only for the schema it brings; handler not needed here
 
 	// Create a type in a temp workspace schema dir and trigger validation.

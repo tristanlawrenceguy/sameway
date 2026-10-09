@@ -16,6 +16,7 @@ import (
 // get prefixed with "Error:" by the CSS. The .sw-field__error class must not use
 // a ::before pseudo-element to prepend "Error: ". Acceptance item 1.
 func TestTextFieldErrorHasNoPrefix(t *testing.T) {
+	t.Parallel()
 	reg := render.New()
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		t.Fatal(err)

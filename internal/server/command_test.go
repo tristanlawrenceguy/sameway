@@ -14,6 +14,7 @@ import (
 // press after that just runs. Something outside presses a button through
 // its trigger word, and an unaccepted command stays a question even then.
 func TestACommandButtonAsksOnceThenRuns(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	// go is a program this workspace allows; the test machine has it.
 	a.Chat.Allow = []string{"go"}

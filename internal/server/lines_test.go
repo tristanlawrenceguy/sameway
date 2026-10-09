@@ -40,6 +40,7 @@ func sentences(html string) []string {
 // because both are the one line: a setting in words, a record by its
 // kind and title with no suffix, and an undo quoting what it undid.
 func TestChangesMadeSaysWhatTheLogSays(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Chat.Provider, a.Chat.ProviderErr = &scripted{steps: []*llm.Response{
 		toolCall("set_setting", map[string]any{"key": "ui.text", "value": "large"}),
@@ -94,6 +95,7 @@ func TestChangesMadeSaysWhatTheLogSays(t *testing.T) {
 // A reply that arrives live is the same HTML as the reply on the page
 // when it is loaded: one function makes both.
 func TestAStreamedReplyIsTheRenderedReply(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Chat.Provider, a.Chat.ProviderErr = &scripted{steps: []*llm.Response{
 		toolCall("set_setting", map[string]any{"key": "ui.pace", "value": "calm"}),

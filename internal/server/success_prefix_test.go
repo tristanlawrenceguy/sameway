@@ -11,6 +11,7 @@ import (
 // styling, role="status", and text "Changes saved" communicate success without
 // a redundant label. Acceptance item 1.
 func TestRecordPropsSaveNoSuccessPrefix(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{
@@ -45,6 +46,7 @@ func TestRecordPropsSaveNoSuccessPrefix(t *testing.T) {
 // TestCanvasEditNoSuccessPrefix checks that the success alert shown after a
 // canvas inline-edit does NOT contain the "Success:" prefix. Acceptance item 1.
 func TestCanvasEditNoSuccessPrefix(t *testing.T) {
+	t.Parallel()
 	h, id := canvasWithABlock(t)
 
 	rec := postForm(t, h, "/canvas/"+id+"/props", url.Values{"prop-title": {"Groceries"}})

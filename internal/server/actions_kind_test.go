@@ -15,6 +15,7 @@ import (
 // "Call a web address". The entire page is one type of thing (action), so
 // repeating the kind descriptor is noise. (Acceptance 1.)
 func TestActionsListDoesNotShowKindBadge(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	var act struct{ ID string }
@@ -49,6 +50,7 @@ func TestActionsListDoesNotShowKindBadge(t *testing.T) {
 // TestActionDetailLedeDoesNotShowKindBadge verifies that on an action's own
 // detail page the lede line does not include a badge showing its kind. (Acceptance 1.)
 func TestActionDetailLedeDoesNotShowKindBadge(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	var act struct{ ID string }
@@ -78,6 +80,7 @@ func TestActionDetailLedeDoesNotShowKindBadge(t *testing.T) {
 // TestActionsListStillShowsUpdatedTime verifies that removing the kind badge does
 // not remove other useful facts like the "Updated …" timestamp. (Acceptance 1.)
 func TestActionsListStillShowsUpdatedTime(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	var act struct{ ID string }

@@ -10,6 +10,7 @@ import (
 // The Log button says Log, and to a reader which habit: its whole name, or
 // the name cut at a word with an ellipsis, never left hanging on "for".
 func TestHabitLogButtonSaysWhichHabit(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	for name, want := range map[string]string{
 		"Daily stretch break":                          "Daily stretch break",
@@ -31,6 +32,7 @@ func TestHabitLogButtonSaysWhichHabit(t *testing.T) {
 // "Add an" (not "Add a") when the type name starts with a vowel sound, and
 // stays at ≤3 visible words total.  This covers Acceptance 2.
 func TestAddButtonCorrectArticle(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/t/action").Body.String()
@@ -48,6 +50,7 @@ func TestAddButtonCorrectArticle(t *testing.T) {
 // pages show three words or fewer visible text (not the full schema name).
 // This covers Acceptance 3.
 func TestImportButtonLabelIsShort(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/t/note").Body.String()
@@ -61,6 +64,7 @@ func TestImportButtonLabelIsShort(t *testing.T) {
 // buttons show at most three visible words — no multi-word descriptions as
 // button labels.  This covers Acceptance 4.
 func TestHelpPageSettingLabelsAreShort(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/help").Body.String()
@@ -84,6 +88,7 @@ func TestHelpPageSettingLabelsAreShort(t *testing.T) {
 // Screen reader output should be "Run {trimmed title}" with no appended full name.
 // This covers Acceptance 5.
 func TestRunButtonNoDuplicateContext(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("action", map[string]any{

@@ -9,6 +9,7 @@ import (
 // The evaluation's MCP agent was answered "json: cannot unmarshal string
 // into Go struct field .position of type int", Go's words, not its own.
 func TestArgumentOfTheWrongKindIsSaidPlainly(t *testing.T) {
+	t.Parallel()
 	svc, _ := newService(t)
 	msg, isErr := svc.Call("add_component", []byte(`{"component": "text", "props": {"text": "Hi"}, "position": "3"}`))
 	if !isErr || !strings.Contains(msg, "position is a number; you sent a string") {

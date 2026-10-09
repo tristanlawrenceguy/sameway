@@ -12,6 +12,7 @@ import (
 // TestChatPageHasSingleActivityHeading checks that the /chat page renders
 // exactly one <h2 class="sw-visually-hidden">Activity</h2> heading (not two).
 func TestChatPageHasSingleActivityHeading(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Seed an activity so the disclosure appears.
@@ -33,6 +34,7 @@ func TestChatPageHasSingleActivityHeading(t *testing.T) {
 // TestChatPageRecentActivityHasNoDuplicateEntries checks that each logged action
 // appears exactly once in the Activity section — no duplicate text+timestamp pairs.
 func TestChatPageRecentActivityHasNoDuplicateEntries(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	records.Record(a.Store, "assistant", records.Change{Action: "created", Component: "note", ID: "aaa1", Detail: "First note"})
@@ -67,6 +69,7 @@ func noDuplicateH3(t *testing.T, body string) {
 // model makes a change via chat.Send, no duplicate entries appear in either
 // the message receipt or the recent activity section.
 func TestChatPageRecentActivityNoDuplicateAfterModelAction(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	a.Chat.Provider, a.Chat.ProviderErr = &scripted{steps: []*llm.Response{
@@ -87,6 +90,7 @@ func TestChatPageRecentActivityNoDuplicateAfterModelAction(t *testing.T) {
 // TestTaskDetailPageRecentActivityHasNoDuplicateEntries checks that task detail
 // pages show each activity entry only once. (Acceptance 3)
 func TestTaskDetailPageRecentActivityHasNoDuplicateEntries(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	taskRec, err := a.Store.Create("task", map[string]any{"title": "Test Task"})
@@ -114,6 +118,7 @@ func TestTaskDetailPageRecentActivityHasNoDuplicateEntries(t *testing.T) {
 // TestNoteDetailPageRecentActivityHasNoDuplicateEntries checks that note detail
 // pages show each activity entry only once. (Acceptance 4)
 func TestNoteDetailPageRecentActivityHasNoDuplicateEntries(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	noteRec, err := a.Store.Create("note", map[string]any{"title": "Test Note"})
@@ -141,6 +146,7 @@ func TestNoteDetailPageRecentActivityHasNoDuplicateEntries(t *testing.T) {
 // TestActivityPageNoDuplicateEntries checks that the full activity listing at
 // /activity shows each action only once. (Acceptance 2)
 func TestActivityPageNoDuplicateEntries(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	records.Record(a.Store, "assistant", records.Change{Action: "created", Component: "note", ID: "aaa1", Detail: "First note"})

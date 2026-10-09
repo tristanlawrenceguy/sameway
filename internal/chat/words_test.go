@@ -8,6 +8,7 @@ import (
 
 // One wording for a change, from a log entry or a reply's stored change.
 func TestSay(t *testing.T) {
+	t.Parallel()
 	st := newFullService(t).Store
 	for _, c := range []struct {
 		fields map[string]any

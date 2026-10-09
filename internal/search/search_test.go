@@ -15,6 +15,7 @@ import (
 // type and blocks on the canvas, title matches first, each with the words
 // around the match and its page; history stays out of it.
 func TestFindLooksThroughEverythingAPersonHas(t *testing.T) {
+	t.Parallel()
 	types, err := schema.Load(filepath.Join("..", "..", "examples", "workspaces", "starter", "schema"))
 	if err != nil {
 		t.Fatal(err)

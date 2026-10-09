@@ -21,6 +21,7 @@ type apiFileUploadRequest struct {
 // base64-encoded binary via POST /api/file/upload and gets back a created
 // record with correct metadata; the file lands on disk with decoded content.
 func TestAPIFileUploadWithBase64Content(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	plain := "Hello from base64 upload."
@@ -103,6 +104,7 @@ func TestAPIFileUploadWithBase64Content(t *testing.T) {
 // TestAPIFileUploadWithoutContent creates a stub record when no base64 field
 // is sent — the same behaviour as POST /api/file.
 func TestAPIFileUploadWithoutContent(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	body := apiFileUploadRequest{Title: "Stub.txt", Filename: "stub.txt"}
@@ -135,6 +137,7 @@ func TestAPIFileUploadWithoutContent(t *testing.T) {
 // TestAPIFileUploadInvalidBase64 returns a 400 error when the content is not
 // valid base64.
 func TestAPIFileUploadInvalidBase64(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	body := apiFileUploadRequest{Filename: "bad.txt", Content: "!!!not-valid-base64!!!"}
@@ -156,6 +159,7 @@ func TestAPIFileUploadInvalidBase64(t *testing.T) {
 
 // TestAPIFileUploadMissingContent returns a 400 error when content is absent.
 func TestAPIFileUploadMissingContent(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	body := apiFileUploadRequest{Title: "Nope.txt"}
@@ -175,6 +179,7 @@ func TestAPIFileUploadMissingContent(t *testing.T) {
 // TestAPIDescribeRoutesIncludeFileUpload checks the files route in describe
 // mentions the JSON upload endpoint alongside the multipart form.
 func TestAPIDescribeRoutesIncludeFileUpload(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	var routes map[string]string

@@ -10,6 +10,7 @@ import (
 // A person edits structured text as it is shown; what they made comes back
 // as Markdown, with headings at the level the source had.
 func TestEditedProseComesBackAsMarkdown(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	rec, err := a.Store.Create("note", map[string]any{"title": "Plan", "body": "# Beds\n\nThree of them."})
 	if err != nil {
@@ -62,6 +63,7 @@ func TestEditedProseComesBackAsMarkdown(t *testing.T) {
 // The editor switches between the rendered view and the source without
 // losing anything, through one route that converts either way.
 func TestProseConvertsEitherWay(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	var out struct{ HTML, Markdown, Error string }
 	decode(t, postJSON(t, h, http.MethodPost, "/api/prose", map[string]any{"markdown": "# Beds\n\nThree.", "level": 3}), &out)

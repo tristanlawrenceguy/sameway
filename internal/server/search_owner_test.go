@@ -12,6 +12,7 @@ import (
 // keeps for itself: not the titles of the owner's conversations, for
 // anyone, and so not for someone let in to look.
 func TestASearchDoesNotFindTheOwnersConversations(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Store.Create(records.ConversationType, map[string]any{"title": "Divorce lawyer questions"})
 	a.Store.Create("note", map[string]any{"title": "Lawyer for the house"})

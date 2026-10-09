@@ -10,6 +10,7 @@ import (
 // field names wrapped in "Amount in … for {name}". Acceptance 0607: no raw
 // schema field names visible on the habits log form.
 func TestTrackerLabelHasNoRawSchemaWrappers(t *testing.T) {
+	t.Parallel()
 	tpl, err := os.ReadFile("../../design/components/tracker/template.html")
 	if err != nil {
 		t.Fatal(err)
@@ -29,6 +30,7 @@ func TestTrackerLabelHasNoRawSchemaWrappers(t *testing.T) {
 // on amount labels; only the unit text appears. Acceptance 0607: no raw
 // schema field names visible on the habits log form.
 func TestTrackerGoldenHasNoRawSchemaWrappers(t *testing.T) {
+	t.Parallel()
 	for _, ex := range []string{
 		"../../design/components/tracker/examples/default.html",
 		"../../design/components/tracker/examples/limit.html",

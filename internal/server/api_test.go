@@ -14,6 +14,7 @@ import (
 // TestDescribeIsCompleteForAgents checks an agent can learn everything from
 // one call: types with schemas, components with contracts, routes, model state.
 func TestDescribeIsCompleteForAgents(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	rec := get(t, h, "/api/describe?full=1")
 	wantStatus(t, rec, http.StatusOK)
@@ -71,6 +72,7 @@ func TestDescribeIsCompleteForAgents(t *testing.T) {
 
 // TestAPILifecycle is the agent's CRUD path with stable error shapes.
 func TestAPILifecycle(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	bad := postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"status": "bogus", "extra": 1})
@@ -131,6 +133,7 @@ func TestAPILifecycle(t *testing.T) {
 // JSON API and checks the result shows up on the HTML page, in the block
 // API, and can be removed from the page by a person.
 func TestChatBuildsCanvasForPersonAndAgent(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	model := &scripted{steps: []*llm.Response{
 		toolCall("add_component", map[string]any{"component": "table", "props": map[string]any{"caption": "Plan", "columns": []string{"Task", "When"}, "rows": [][]string{{"Write tests", "today"}}}}),
@@ -191,6 +194,7 @@ func TestChatBuildsCanvasForPersonAndAgent(t *testing.T) {
 // TestChatFormWithoutModelRecordsAnError covers the person's path when no
 // model is reachable: the failure lands in the transcript, not a 500.
 func TestChatFormWithoutModelRecordsAnError(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	wantStatus(t, get(t, h, "/"), http.StatusOK)
 	rec := postForm(t, h, "/chat", url.Values{"message": {"hello"}, "from": {"/"}})
@@ -217,6 +221,7 @@ func TestChatFormWithoutModelRecordsAnError(t *testing.T) {
 // TestAPIListLimitParameter checks that GET /api/{type} respects the limit
 // query parameter, passes it through to the store, and rejects invalid values.
 func TestAPIListLimitParameter(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	for i := 1; i <= 3; i++ {

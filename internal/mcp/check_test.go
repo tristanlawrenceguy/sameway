@@ -15,6 +15,7 @@ import (
 // what was written (a chart by a date with no period, one field asked
 // for two values) are refused too.
 func TestABlockWrittenOverMCPIsCheckedAsItsPageWouldBe(t *testing.T) {
+	t.Parallel()
 	a, replies := drive(t,
 		`{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"add_component","arguments":{"component":"collection","props":{"type":"entry","as":"board"}}}}`,
 		`{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"add_component","arguments":{"component":"calendar","props":{"type":"tasks"}}}}`,

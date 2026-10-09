@@ -11,6 +11,7 @@ import (
 // first and always, and the others its message speaks of or the
 // conversation has used; a model elsewhere is given them all.
 func TestAModelHereIsGivenTheToolsATurnNeeds(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	all := svc.Tools()
 	names := func(ts []llm.Tool) string {

@@ -20,6 +20,7 @@ import (
 // and answers its words, keeping nothing; without speech-to-text it says
 // who can get it.
 func TestAMessageCanBeSaidInsteadOfTyped(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	srv := h.(*server.Server)
 	var ready atomic.Bool

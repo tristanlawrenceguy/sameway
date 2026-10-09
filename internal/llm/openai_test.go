@@ -14,6 +14,7 @@ import (
 // TestOpenAIRequestShape checks the wire format an Ollama or OpenAI server
 // receives: system first, tools declared, tool calls and results mapped.
 func TestOpenAIRequestShape(t *testing.T) {
+	t.Parallel()
 	var got map[string]any
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/v1/chat/completions" || r.Header.Get("Authorization") != "Bearer secret" {
@@ -64,6 +65,7 @@ func TestOpenAIRequestShape(t *testing.T) {
 }
 
 func TestOpenAIErrorsAreReadable(t *testing.T) {
+	t.Parallel()
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte(`{"error":{"message":"model 'llama9' not found, try pulling it first"}}`))
@@ -84,6 +86,7 @@ func TestOpenAIErrorsAreReadable(t *testing.T) {
 }
 
 func TestOpenAIEmptyArgumentsBecomeEmptyObject(t *testing.T) {
+	t.Parallel()
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`{"choices":[{"message":{"role":"assistant","tool_calls":[{"id":"c","type":"function","function":{"name":"clear_canvas","arguments":""}}]}}]}`))
 	}))

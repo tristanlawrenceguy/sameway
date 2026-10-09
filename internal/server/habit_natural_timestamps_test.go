@@ -11,6 +11,7 @@ import (
 // like "Wed 30 Sep 2026, 13:31" (acceptance item 1). The whenMade function
 // should produce relative phrasing such as "4 days ago at 1:31pm".
 func TestHabitDetailLedeNoMachineFormatDate(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("habit", map[string]any{

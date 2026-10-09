@@ -19,6 +19,7 @@ import (
 // a Log press, and the habit's own page with the numbers and a chart with
 // the target drawn across it.
 func TestAHabitIsTrackedOutOfTheBox(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	water, err := a.Store.Create(server.HabitType, map[string]any{"name": "Water", "cadence": "day", "target": 8, "unit": "glasses"})
 	if err != nil {

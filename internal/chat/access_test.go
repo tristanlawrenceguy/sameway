@@ -9,6 +9,7 @@ import (
 // them a person with that access; taking it away is not asked. Nobody's
 // access changes before the owner answers.
 func TestLettingSomeoneInIsAskedAndTakingItBackIsNot(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	text, isErr := use(t, svc, "let_in", map[string]any{"email": "Bob@Example.com", "name": "Bob", "access": "edit"})
 	if isErr || !strings.Contains(text, "asked the person") {
@@ -40,6 +41,7 @@ func TestLettingSomeoneInIsAskedAndTakingItBackIsNot(t *testing.T) {
 
 // Hosting a copy is the owner's gravest yes, and the question says so.
 func TestLettingSomeoneHostSaysWhatThatMeans(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	use(t, svc, "let_in", map[string]any{"email": "hana@example.com", "name": "Hana", "access": "host"})
 	_, ask, detail, yes, _ := pending(t, svc)

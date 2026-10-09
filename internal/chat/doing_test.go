@@ -34,6 +34,7 @@ func toolOf(id, name string, args map[string]any) llm.ToolCall {
 // is known. A call that changes the canvas says where, so the page can
 // mark the place while it runs.
 func TestATurnSaysWhatItIsDoingInWords(t *testing.T) {
+	t.Parallel()
 	svc, _ := newService(t)
 	svc.Provider = &rounds{next: func(n int) *llm.Response {
 		switch n {

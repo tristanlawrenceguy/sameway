@@ -8,6 +8,7 @@ import (
 // A recording's WebVTT is read into who said what and when, whatever
 // notes and tags it carries, and becomes text search and the assistant read.
 func TestAWebVTTBecomesWhoSaidWhatAndWhen(t *testing.T) {
+	t.Parallel()
 	cues := ParseVTT("WEBVTT\r\n\r\nNOTE made by whisper\r\n\r\n1\r\n00:00:00.000 --> 00:00:04.200\r\n<v Hana>Morning. <b>Two</b> things from me.\r\n\r\n00:04.200 --> 00:11,800\r\n<v.loud Hana>The compost order went in [laughter]\r\nat last.\r\n\r\n01:02:03.500 --> 01:02:09.000\r\n<v Sam>The liner comes Thursday.</v>\r\n")
 	if len(cues) != 3 {
 		t.Fatalf("three cues, got %d: %+v", len(cues), cues)
@@ -43,6 +44,7 @@ func TestAWebVTTBecomesWhoSaidWhatAndWhen(t *testing.T) {
 // the speaker when most cues do it, and left alone when one merely has a
 // colon.
 func TestZoomNamesAreReadFromTheCue(t *testing.T) {
+	t.Parallel()
 	zoom := "WEBVTT\n\n1\n00:00:01.000 --> 00:00:03.000\nAnn Lee: Morning, two things.\n\n2\n00:00:04.000 --> 00:00:06.000\nBen: We ship on Friday.\n"
 	cues := ParseVTT(zoom)
 	if len(cues) != 2 || cues[0].Speaker != "Ann Lee" || cues[0].Text != "Morning, two things." || cues[1].Speaker != "Ben" {

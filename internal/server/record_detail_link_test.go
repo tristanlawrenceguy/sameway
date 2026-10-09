@@ -12,6 +12,7 @@ import (
 // via visually-hidden text. This covers Acceptance 1 (≤3 words) and Acceptance 2
 // (no filler phrases).
 func TestRecordBlockFocusPageLinkLabelIsShort(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	// Create a note so the focus page exists.

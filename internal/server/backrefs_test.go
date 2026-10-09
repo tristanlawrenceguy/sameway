@@ -18,6 +18,7 @@ import (
 // for the same connection with ?show= does not list them twice. An older
 // workspace's task, from before the flag, still lists on its project.
 func TestAListedRefListsItsRecordsOnItsTarget(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	known := filepath.Join(t.TempDir(), "known.json")
 	os.WriteFile(known, []byte("[]"), 0o644)

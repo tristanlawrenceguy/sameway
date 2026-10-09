@@ -10,6 +10,7 @@ import (
 // it focusable so the browser can place keyboard focus on it when a person
 // navigates to it via the "Skip to latest message" anchor link.
 func TestMessageWithIdHasTabIndex(t *testing.T) {
+	t.Parallel()
 	reg := builtins(t)
 
 	out, err := reg.Render("message", map[string]any{
@@ -35,6 +36,7 @@ func TestMessageWithIdHasTabIndex(t *testing.T) {
 // an id does not get tabindex="-1" — only articles that are anchor targets need
 // to be programmatically focusable.
 func TestMessageWithoutIdHasNoTabIndex(t *testing.T) {
+	t.Parallel()
 	reg := builtins(t)
 
 	out, err := reg.Render("message", map[string]any{

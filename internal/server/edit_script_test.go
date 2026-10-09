@@ -56,6 +56,7 @@ func findRepoRoot(t *testing.T) string {
 // on note detail pages actually activates inline editing. This covers acceptance
 // item 1 of task 0096.
 func TestDetailPageNoteLoadsEditScript(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{
@@ -83,6 +84,7 @@ func TestDetailPageNoteLoadsEditScript(t *testing.T) {
 // on activity detail pages actually activates inline editing. This covers
 // acceptance item 2 of task 0096.
 func TestDetailPageActivityLoadsEditScript(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("activity", map[string]any{
@@ -111,6 +113,7 @@ func TestDetailPageActivityLoadsEditScript(t *testing.T) {
 // on proposal detail pages actually activates inline editing. This covers
 // acceptance item 3 of task 0096.
 func TestDetailPageProposalLoadsEditScript(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("proposal", map[string]any{
@@ -139,6 +142,7 @@ func TestDetailPageProposalLoadsEditScript(t *testing.T) {
 // editing on listing pages is out of scope for task 0096. This covers acceptance
 // item 4.
 func TestListingPagesDoNotLoadEditScript(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Create records so the listing pages have content and return 200.

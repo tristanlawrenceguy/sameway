@@ -12,6 +12,7 @@ import (
 // means: an agent reads describe to know what it may get back, and a code
 // it was never told of is one it cannot act on.
 func TestEveryErrorCodeIsDescribed(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	var routes map[string]any
 	decode(t, get(t, h, "/api/describe/routes"), &routes)

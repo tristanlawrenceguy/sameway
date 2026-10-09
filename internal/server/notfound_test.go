@@ -12,6 +12,7 @@ import (
 // an HTML page with a <title> containing "404" and the site name.  Covers
 // acceptance item 1 and 4.
 func TestNotFoundPageHasTitle(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	rec := get(t, h, "/nonexistent-page-12345")
 	wantStatus(t, rec, http.StatusNotFound)
@@ -42,6 +43,7 @@ func TestNotFoundPageHasTitle(t *testing.T) {
 // HTML page with an h1 element whose text reads "Page not found".  Covers
 // acceptance item 2.
 func TestNotFoundPageHasH1(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	rec := get(t, h, "/nonexistent-page-12345")
 	wantStatus(t, rec, http.StatusNotFound)
@@ -64,6 +66,7 @@ func TestNotFoundPageHasH1(t *testing.T) {
 // returns an HTML page with at least one navigation link to the home page (/)
 // that is keyboard-accessible and has a visible label.  Covers acceptance item 3.
 func TestNotFoundPageHasHomeLink(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	rec := get(t, h, "/nonexistent-page-12345")
 	wantStatus(t, rec, http.StatusNotFound)
@@ -94,6 +97,7 @@ func TestNotFoundPageHasHomeLink(t *testing.T) {
 // two nav landmarks.  This ensures screen-reader users get full context on an
 // error page too.
 func TestNotFoundPageHasLandmarks(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	rec := get(t, h, "/nonexistent-page-12345")
 	wantStatus(t, rec, http.StatusNotFound)

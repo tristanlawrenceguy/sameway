@@ -13,6 +13,7 @@ import (
 // adds a type or a field over the API, the assistant does the same with
 // its tools, and the pages and catalogue show it at once.
 func TestTheShapeOfContentCanChangeWhileRunning(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	made := postJSON(t, h, http.MethodPost, "/api/types", map[string]any{
 		"name": "ritual", "description": "Something done often.",

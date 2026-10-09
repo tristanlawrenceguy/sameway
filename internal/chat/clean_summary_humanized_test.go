@@ -12,6 +12,7 @@ import (
 // to Wide" becomes "You undid: Assistant changed spacing to Wide". This covers
 // acceptance item 2 of task 0227.
 func TestCleanSummaryHumanizedSettingUndo(t *testing.T) {
+	t.Parallel()
 	for in, want := range map[string]string{
 		"You undid: Assistant changed Room between lines and words to Wide":           "You undid: Assistant changed spacing to Wide",
 		"You undid: Assistant changed How large the words are to Large":               "You undid: Assistant changed text size to Large",

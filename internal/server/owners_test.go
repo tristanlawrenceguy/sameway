@@ -18,6 +18,7 @@ import (
 // of the schema predates saying so still keeps the owner's conversations
 // and log the owner's.
 func TestAnOlderWorkspaceKeepsTheOwnersRecordsTheirs(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	if err := workspace.Init(dir, examples.FS, examples.StarterRoot, false); err != nil {
 		t.Fatal(err)

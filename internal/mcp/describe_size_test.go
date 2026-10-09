@@ -19,6 +19,7 @@ const clientLimit = 25000 * 3
 // name alone finds the thing, where before it was taken for no argument
 // and answered with all of it.
 func TestDescribeOverMCPFitsTheClient(t *testing.T) {
+	t.Parallel()
 	calls := []string{`{}`, `{"name":"meter"}`, `{"name":"task"}`, `{"name":"block_add"}`, `{"part":"index"}`}
 	for _, p := range app.Parts {
 		if p != "full" {

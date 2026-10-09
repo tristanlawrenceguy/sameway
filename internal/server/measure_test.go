@@ -36,6 +36,7 @@ func measureOf(id, v string, height int) string {
 // only look opens, or the internet reads, is not, and the route refuses
 // them, an agent's key, and anything but numbers and ids.
 func TestTheMeasuringRouteTakesOnlyNumbersFromThoseWhoMayChange(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	srv := h.(*server.Server)
 	id := storedBlock(t, a, "collection", map[string]any{"type": "note", "label": "Reading list"})
@@ -117,6 +118,7 @@ func TestTheMeasuringRouteTakesOnlyNumbersFromThoseWhoMayChange(t *testing.T) {
 
 // With nothing measured, a look says so rather than giving nothing.
 func TestALookSaysWhenNothingIsMeasured(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	storedBlock(t, a, "text", map[string]any{"content": "hello"})
 	var looked struct {
@@ -140,6 +142,7 @@ func TestALookSaysWhenNothingIsMeasured(t *testing.T) {
 // text, no value and no label, and every field it sends is a number, an
 // id, or which page it is.
 func TestTheMeasuringScriptSendsOnlyNumbers(t *testing.T) {
+	t.Parallel()
 	raw, err := os.ReadFile("../../design/base/29-measure.js")
 	if err != nil {
 		t.Fatal(err)

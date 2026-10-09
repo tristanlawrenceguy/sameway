@@ -10,6 +10,7 @@ import (
 // TestTheDesignPageDrawsEveryComponent: an example the gallery cannot draw
 // is a component nobody can see before using it.
 func TestTheDesignPageDrawsEveryComponent(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	body := get(t, h, "/design").Body.String()
 	if i := strings.Index(body, "could not be shown"); i >= 0 {
@@ -20,6 +21,7 @@ func TestTheDesignPageDrawsEveryComponent(t *testing.T) {
 // TestConditionsReadAsWords: a list says what it holds the way a person
 // would, not in the grammar it was asked in.
 func TestConditionsReadAsWords(t *testing.T) {
+	t.Parallel()
 	a, _ := newApp(t)
 	task, _ := a.Types.Get("task")
 	for where, want := range map[string]string{
@@ -41,6 +43,7 @@ func TestConditionsReadAsWords(t *testing.T) {
 
 // TestAnEmptyListSaysWhatItLookedFor: in words, not done=false.
 func TestAnEmptyListSaysWhatItLookedFor(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	body := get(t, h, "/t/task?where=done%3Dfalse&where=due%3Ctoday").Body.String()
 	if !strings.Contains(body, "0 matching not done and due before today") {
@@ -51,6 +54,7 @@ func TestAnEmptyListSaysWhatItLookedFor(t *testing.T) {
 // TestASearchResultShowsADayNotAStoredTime: the snippet of a task found by
 // its title shows its due day in natural language, not the stored format.
 func TestASearchResultShowsADayNotAStoredTime(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Store.Create("task", map[string]any{"title": "Repot the fern", "due": "2026-09-27T00:00:00Z"})
 	body := get(t, h, "/search?q=fern").Body.String()
@@ -71,6 +75,7 @@ func TestASearchResultShowsADayNotAStoredTime(t *testing.T) {
 // component tells a person what could not be shown and what to do, not
 // the schema's own words for why.
 func TestABrokenBlockSaysSoInPlainWords(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	if _, err := a.Store.Create("block", map[string]any{"component": "button", "props": map[string]any{"text": "Go"}}); err != nil {
 		t.Skip("the store will not hold such a block:", err)

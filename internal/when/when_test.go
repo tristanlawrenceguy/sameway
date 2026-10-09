@@ -8,6 +8,7 @@ import (
 // The ways people write a day or a moment are all read, relative to a
 // Thursday in September; what is not understood is refused, not guessed.
 func TestParseReadsWhatPeopleWrite(t *testing.T) {
+	t.Parallel()
 	now := time.Date(2026, 9, 17, 10, 30, 0, 0, time.UTC) // a Thursday
 	cases := []struct {
 		in   string
@@ -102,6 +103,7 @@ func TestParseReadsWhatPeopleWrite(t *testing.T) {
 
 // A stored value reads as a person would say it, and reads back.
 func TestTextRoundTrips(t *testing.T) {
+	t.Parallel()
 	if got := Text("2026-09-19T00:00:00Z", false); got != "Sat 19 Sep 2026" {
 		t.Errorf("a day reads as its date, got %q", got)
 	}
@@ -122,6 +124,7 @@ func TestTextRoundTrips(t *testing.T) {
 
 // Words not read say why, as what they must be.
 func TestWhySaysWhatItMustBe(t *testing.T) {
+	t.Parallel()
 	now := time.Date(2026, 9, 17, 10, 30, 0, 0, time.UTC)
 	for in, want := range map[string]string{
 		"sometime":   "must be a day, like 19 Sep, next Friday or tomorrow 2pm",

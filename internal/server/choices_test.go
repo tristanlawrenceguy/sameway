@@ -16,6 +16,7 @@ import (
 // inline editor to offer as a list: the habit an entry is for by its
 // title, never its id, and an enum by its values.
 func TestAFieldWithChoicesOffersThemByName(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	water, _ := a.Store.Create(server.HabitType, map[string]any{"name": "Water", "cadence": "week", "aim": "limit"})
 	a.Store.Create(server.HabitType, map[string]any{"name": "Stretch"})

@@ -18,6 +18,7 @@ const workCalendar = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\n" +
 // it did, and on the calendar; the file itself reads as its events and
 // leads to bringing them in; bringing it in again adds nothing twice.
 func TestACalendarBecomesEvents(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	body, ct := multipartFile(t, "Work.ics", workCalendar, nil)
 	res := do(t, h, http.MethodPost, "/t/file/upload", body, ct)
@@ -53,6 +54,7 @@ func TestACalendarBecomesEvents(t *testing.T) {
 // Subtitles added beside a video of the same name, with no words yet,
 // become its words and its captions.
 func TestSubtitlesBecomeAVideosCaptions(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	body, ct := multipartFile(t, "Garden talk.mp4", "not really a video", nil)
 	video := strings.TrimPrefix(do(t, h, http.MethodPost, "/t/file/upload", body, ct).Header().Get("Location"), "/t/file/")

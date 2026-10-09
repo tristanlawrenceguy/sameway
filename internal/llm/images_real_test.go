@@ -16,6 +16,7 @@ import (
 // a real picture the way a turn gives it one, and says what it shows: the
 // folder it may read is enough for it to look.
 func TestClaudeCodeSeesAPicture(t *testing.T) {
+	t.Parallel()
 	model := os.Getenv("SAMEWAY_CLAUDE_CODE_MODEL")
 	if model == "" {
 		t.Skip("set SAMEWAY_CLAUDE_CODE_MODEL to run one real turn through Claude Code")

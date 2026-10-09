@@ -9,6 +9,7 @@ import (
 // story alone: its own steps, its own page, a key field only where a key
 // is pasted, and plainly what a ChatGPT subscription cannot do.
 func TestConnectingAModelIsAStoryForWhatYouHave(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	page := get(t, h, "/chat").Body.String()
 	at := strings.Index(page, "Which of these do you have?")

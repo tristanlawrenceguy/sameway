@@ -18,6 +18,7 @@ import (
 // closing backlog 0223. The "message" key must appear in the routes map so
 // an agent calling describe does not have to guess its existence.
 func TestDescribeRoutesContainsMessage(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	rec := get(t, h, "/api/describe?full=1")
 	wantStatus(t, rec, http.StatusOK)
@@ -36,6 +37,7 @@ func TestDescribeRoutesContainsMessage(t *testing.T) {
 // the message listing, confirming the endpoint is fully functional and not
 // just a stub in the routes map.
 func TestMessageEndpointListsRecords(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	if err := workspace.Init(dir, examples.FS, examples.StarterRoot, false); err != nil {
 		t.Fatal(err)

@@ -8,6 +8,7 @@ import (
 
 // TestSettingLabelPace checks that "ui.pace" returns "Pace".
 func TestSettingLabelPace(t *testing.T) {
+	t.Parallel()
 	got := workspace.SettingLabel("ui.pace")
 	want := "Pace"
 	if got != want {
@@ -17,6 +18,7 @@ func TestSettingLabelPace(t *testing.T) {
 
 // TestSettingLabelSpacing checks that "ui.spacing" returns "Spacing".
 func TestSettingLabelSpacing(t *testing.T) {
+	t.Parallel()
 	got := workspace.SettingLabel("ui.spacing")
 	want := "Spacing"
 	if got != want {

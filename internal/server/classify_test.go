@@ -53,6 +53,7 @@ func tagWait(t *testing.T, what string, ok func() bool) {
 // takes it off, changes it) is shown to the action next time, which then
 // follows them: changing a tag as they did, or keeping it for them.
 func TestTagsFollowThePersonsJudgement(t *testing.T) {
+	t.Parallel()
 	a, _ := newApp(t)
 	model := &tagModel{decide: "keep"}
 	a.Chat.Provider, a.Chat.ProviderErr = model, nil
@@ -148,6 +149,7 @@ func (m *fitsModel) Complete(_ context.Context, req llm.Request) (*llm.Response,
 
 // An action may give only some of the tags, and ask about each on its own.
 func TestAClassifyActionGivesItsOwnTagsEachApart(t *testing.T) {
+	t.Parallel()
 	a, _ := newApp(t)
 	m := &fitsModel{}
 	a.Chat.Provider, a.Chat.ProviderErr = m, nil

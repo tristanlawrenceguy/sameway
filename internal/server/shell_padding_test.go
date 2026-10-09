@@ -13,6 +13,7 @@ import (
 // instead of pinning itself over most of a phone, so there it covers
 // nothing and the page starts closer to the top.
 func TestShellStylesheetHasAdequateTopPadding(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/design/sameway.css")

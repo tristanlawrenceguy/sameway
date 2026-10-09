@@ -19,6 +19,7 @@ import (
 // free model through Ollama, gives it room for its prompt, and makes it the
 // assistant's model. No terminal, nothing unsigned.
 func TestAPersonFetchesAFreeModelThroughOllama(t *testing.T) {
+	t.Parallel()
 	var mu sync.Mutex
 	have, created := false, ""
 	ollama := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

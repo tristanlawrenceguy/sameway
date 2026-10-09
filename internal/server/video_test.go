@@ -13,6 +13,7 @@ import (
 // playing by itself; its transcript under it and on it as captions, made
 // from the text, so a correction shows in both.
 func TestAVideoShowsItsWordsAsCaptions(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	upload := func(name, content string) (string, map[string]any) {
 		body, ct := multipartFile(t, name, content, nil)

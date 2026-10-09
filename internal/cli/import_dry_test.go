@@ -10,6 +10,7 @@ import (
 // sameway import --dry-run says what it would make, change and remove,
 // and changes nothing; a real import is one entry in the log.
 func TestImportSaysWhatItWouldDoFirst(t *testing.T) {
+	t.Parallel()
 	dir := initWorkspace(t)
 	run(t, dir, "note", "create", "--set", "title=Keep me")
 	os.RemoveAll(filepath.Join(dir, "content", "note"))

@@ -12,6 +12,7 @@ import (
 // Today puts what is on today on one page, late first; the morning brief
 // sends the same at the time set, once a day, leading to Today.
 func TestTodayAndItsMorningBrief(t *testing.T) {
+	t.Parallel()
 	a, _ := newApp(t)
 	now := time.Now()
 	today, yesterday, tomorrow := now.Format("2006-01-02"), now.AddDate(0, 0, -1).Format("2006-01-02"), now.AddDate(0, 0, 1).Format("2006-01-02")

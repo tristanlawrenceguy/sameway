@@ -12,6 +12,7 @@ import (
 // calendar and a collection on their own pages offer what they show, with
 // the choices made on them.
 func TestACalendarAndAListGoOutAsTheyAreShown(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Store.Create("task", map[string]any{"title": "Dig the pond", "due": "2026-12-01T00:00:00Z"})
 	a.Store.Create("event", map[string]any{"title": "Harvest fair", "starts": "2026-10-12T00:00:00Z"})

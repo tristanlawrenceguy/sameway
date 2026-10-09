@@ -17,6 +17,7 @@ import (
 // at once as one change, and each answer says how many are left. Someone
 // who may only look sees none of them.
 func TestSuggestionsWaitOnTheWritingAsItReads(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	body := "Jobs\n\nWe recieve seeds in April and teh liner in May, so at the meeting it was decided by everyone that the garden opens in June when the beds are ready and the paths are laid and the water is on."
 	note, err := a.Store.Create("note", map[string]any{"title": "Garden", "body": body})
@@ -79,6 +80,7 @@ func TestSuggestionsWaitOnTheWritingAsItReads(t *testing.T) {
 // Who suggested a change is said in words beside its coloured edge: an
 // agent by the name the activity log has for it.
 func TestASuggestionSaysWhoSuggestedIt(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	note, err := a.Store.Create("note", map[string]any{"title": "Garden", "body": "The pond liner comes in May."})
 	if err != nil {

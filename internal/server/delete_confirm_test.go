@@ -9,6 +9,7 @@ import (
 // Deleting a note returns the person to the list, where a success alert
 // says the note was deleted and offers to put it back.
 func TestNoteDeletionShowsConfirmationAlert(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	created := postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Water the plants", "body": "Sunday."})
 	var note struct{ ID string }
@@ -34,6 +35,7 @@ func TestNoteDeletionShowsConfirmationAlert(t *testing.T) {
 // Deleting from the note's own page, which is gone, lands on the list;
 // deleting from anywhere else stays there.
 func TestNoteDeletionConfirmationRedirectsToListing(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	created := postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Buy milk", "body": "Check the list."})
 	var note struct{ ID string }

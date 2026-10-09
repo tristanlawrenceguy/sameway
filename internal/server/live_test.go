@@ -41,6 +41,7 @@ func (a *answered) WriteHeader(code int) {
 // the turn's id, and /chat/live tells that page the turn from its start
 // to its reply.
 func TestATurnGoesOnWhenThePersonGoesElsewhere(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	model := &gated{started: make(chan struct{}), release: make(chan struct{})}
 	a.Chat.Provider, a.Chat.ProviderErr = model, nil
@@ -114,6 +115,7 @@ func ask(h http.Handler, ctx context.Context, message string) <-chan struct{} {
 // A turn that ends with no page to hear it is told beyond the page, the
 // way a ringing reminder is: the reply's words and the way back to them.
 func TestATurnNobodyWatchedSaysItIsDone(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	told := make(chan string, 1)
 	h.(*server.Server).OnRing(func(title, text, url string) { told <- title + " | " + text + " | " + url })
@@ -136,6 +138,7 @@ func TestATurnNobodyWatchedSaysItIsDone(t *testing.T) {
 // A page that follows the turn to its end tells the person itself, so
 // the server says nothing: the news comes once.
 func TestATurnAPageWatchedIsNotToldTwice(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	told := make(chan string, 1)
 	h.(*server.Server).OnRing(func(title, text, url string) { told <- title })

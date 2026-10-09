@@ -12,6 +12,7 @@ import (
 // or body on /activity (acceptance 1–2). The event renderer should skip the
 // via span entirely for such values.
 func TestActivityPageDoesNotShowThroughTheAPI(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Seed an old-style activity record with via="through the API" and no
@@ -47,6 +48,7 @@ func TestActivityPageDoesNotShowThroughTheAPI(t *testing.T) {
 // ActivityPageDoesNotShowThroughCLI checks that via="through the command line"
 // is also stripped from rendered event text.
 func TestActivityPageDoesNotShowThroughCLI(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	_, err := a.Store.Create(records.ActivityType, map[string]any{
@@ -79,6 +81,7 @@ func TestActivityPageDoesNotShowThroughCLI(t *testing.T) {
 // ActivityPageStillShowsNonThroughVia checks that a non-"through" via value
 // (like "pixel-7") still renders as ", on pixel-7".
 func TestActivityPageStillShowsNonThroughVia(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	_, err := a.Store.Create(records.ActivityType, map[string]any{

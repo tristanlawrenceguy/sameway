@@ -16,6 +16,7 @@ import (
 // shows it was handed the prompt, the system prompt and an MCP
 // configuration.
 func TestHelperCLI(t *testing.T) {
+	t.Parallel()
 	if os.Getenv("SAMEWAY_FAKE_CLI") == "" {
 		return
 	}

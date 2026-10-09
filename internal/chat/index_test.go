@@ -11,6 +11,7 @@ import (
 // schema; a call that does not fit is refused with the whole of what it
 // takes, so there is nothing to read first.
 func TestARefusalCarriesWhatTheCallTakes(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	m := &scripted{}
 	svc.Provider = m

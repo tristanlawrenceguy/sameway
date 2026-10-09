@@ -17,6 +17,7 @@ var png1 = Image{Type: "image/png", Data: []byte("\x89PNG not really")}
 // A picture goes to an OpenAI-compatible server (OpenAI, Ollama, LM
 // Studio) as an image part of the person's turn, with the words after it.
 func TestAPictureGoesAsAnImagePart(t *testing.T) {
+	t.Parallel()
 	var body map[string]any
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		raw, _ := io.ReadAll(r.Body)
@@ -46,6 +47,7 @@ func TestAPictureGoesAsAnImagePart(t *testing.T) {
 
 // A picture goes to Anthropic as an image block before the words.
 func TestAPictureGoesToAnthropicAsAnImageBlock(t *testing.T) {
+	t.Parallel()
 	raw, _ := json.Marshal(toAnthropic(Message{Role: RoleUser, Content: "What is this?", Images: []Image{png1}}))
 	s := string(raw)
 	if !strings.Contains(s, `"type":"image"`) || !strings.Contains(s, `"media_type":"image/png"`) || strings.Index(s, `"type":"image"`) > strings.Index(s, "What is this?") {
@@ -56,6 +58,7 @@ func TestAPictureGoesToAnthropicAsAnImageBlock(t *testing.T) {
 // Claude Code reads the conversation as words: each picture is written in
 // the workspace, named in its turn, and gone with the turn.
 func TestClaudeCodeIsGivenPicturesAsFiles(t *testing.T) {
+	t.Parallel()
 	ws := t.TempDir()
 	c := &Command{Workspace: ws}
 	req, rel, err := c.pictures(Request{Messages: []Message{{Role: RoleUser, Content: "Read this", Images: []Image{png1}}}})

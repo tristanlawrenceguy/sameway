@@ -14,6 +14,7 @@ import (
 // dot. The name sits in its own bdi, so a name written right to left does
 // not carry the words and punctuation around it along with it.
 func TestPersonIsHeardByNameOnce(t *testing.T) {
+	t.Parallel()
 	reg := render.New()
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		t.Fatal(err)
@@ -53,6 +54,7 @@ func TestPersonIsHeardByNameOnce(t *testing.T) {
 // with no spaces, such as a login standing in for a name, and in a row's
 // details, where things otherwise keep to one line (WCAG 1.4.10).
 func TestPersonLongNameWraps(t *testing.T) {
+	t.Parallel()
 	style, err := os.ReadFile("../../design/components/person/style.css")
 	if err != nil {
 		t.Fatal(err)

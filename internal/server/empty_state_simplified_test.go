@@ -16,6 +16,7 @@ import (
 // Acceptance 1: every list page's empty state heading starts with "No [type]
 // yet". Covers acceptance item 1 for the note type.
 func TestListPageEmptyStateHasHeading(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/t/note")
@@ -32,6 +33,7 @@ func TestListPageEmptyStateHasHeading(t *testing.T) {
 // Acceptance 3: action prompt is at most 8 words. Acceptance 4: functional path
 // via chat link. Covers acceptance items 3-4 for the note type.
 func TestListPageEmptyStateHasActionPrompt(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/t/note")
@@ -53,6 +55,7 @@ func TestListPageEmptyStateHasActionPrompt(t *testing.T) {
 
 // TestListPageEmptyStateForActions checks the same pattern for actions.
 func TestListPageEmptyStateForActions(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/t/action")
@@ -72,6 +75,7 @@ func TestListPageEmptyStateForActions(t *testing.T) {
 
 // TestListPageEmptyStateForTasks checks the same pattern for tasks.
 func TestListPageEmptyStateForTasks(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/t/task")
@@ -91,6 +95,7 @@ func TestListPageEmptyStateForTasks(t *testing.T) {
 // brand-new workspace's welcome with its ways to start (welcome.go), and
 // Ask for anything once something is in it.
 func TestTheHomePageHasOneEmptyState(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	body := get(t, h, "/").Body.String()
 	if n := strings.Count(body, `data-component="empty"`); n != 1 || !strings.Contains(body, "Welcome to Sameway.") || !strings.Contains(body, ">Home: shopping, chores, bills<") {
@@ -110,6 +115,7 @@ func TestTheHomePageHasOneEmptyState(t *testing.T) {
 // "No activity yet" inside the paragraph. Acceptance 1: the heading equivalent
 // is at most 4 words. Covers acceptance item 1 for activity.
 func TestActivityEmptyStateHasNoHeading(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/activity")
@@ -131,6 +137,7 @@ func TestActivityEmptyStateHasNoHeading(t *testing.T) {
 // TestSearchEmptyStateHasHeading checks that empty search results have an h2
 // heading. Acceptance 1 for the search surface.
 func TestSearchEmptyStateHasHeading(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/search?q=nonexistent")
@@ -147,6 +154,7 @@ func TestSearchEmptyStateHasHeading(t *testing.T) {
 // the prompt line is tight, one sentence, and includes context. Covers acceptance
 // item for search.
 func TestSearchEmptyStateKeepsQueryTerm(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/search?q=nonexistent")
@@ -164,6 +172,7 @@ func TestSearchEmptyStateKeepsQueryTerm(t *testing.T) {
 // TestWorkspacesEmptyStateHasHeading checks that the other-workspaces listing
 // shows a heading. Acceptance 1 for the workspaces surface.
 func TestWorkspacesEmptyStateHasHeading(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/workspaces")
@@ -180,6 +189,7 @@ func TestWorkspacesEmptyStateHasHeading(t *testing.T) {
 // TestWorkspacesEmptyStateHasActionPrompt checks that the empty-state paragraph
 // is short. Acceptance 3 for the workspaces surface.
 func TestWorkspacesEmptyStateHasActionPrompt(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/workspaces")
@@ -198,6 +208,7 @@ func TestWorkspacesEmptyStateHasActionPrompt(t *testing.T) {
 // TestEmptyStateHeadingIsShort checks that no empty-state heading exceeds 4 words.
 // This covers Acceptance 1 for all surfaces in one shot.
 func TestEmptyStateHeadingIsShort(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/t/note")
@@ -232,6 +243,7 @@ func TestEmptyStateHeadingIsShort(t *testing.T) {
 // TestEmptyStateActionPromptIsShort checks that the action prompt text on each
 // empty state is at most 8 words. Acceptance 3.
 func TestEmptyStateActionPromptIsShort(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/t/note")

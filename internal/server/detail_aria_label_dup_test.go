@@ -19,6 +19,7 @@ import (
 // already announced by its label or content. This covers acceptance item 3 for
 // all types with a title field.
 func TestDetailPageAriaLabelsDoNotDuplicateVisibleLabels(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	records := []struct{ typ, id string }{}

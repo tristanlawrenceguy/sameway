@@ -8,6 +8,7 @@ import (
 // The pages shown are the first, the last and one either side of this one,
 // never more than seven with gaps, and a gap always stands for two or more.
 func TestThePageWindowIsShortAndHidesNoSinglePage(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct {
 		p, n int
 		want string

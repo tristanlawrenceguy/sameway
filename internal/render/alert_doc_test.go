@@ -13,6 +13,7 @@ import (
 // that the icon prop serves as a WCAG 1.4.1 non-colour mechanism. Acceptance
 // item 1 — README must contain the specific WCAG 1.4.1 paragraph about icons.
 func TestAlertREADMEContainsWCAG141IconProp(t *testing.T) {
+	t.Parallel()
 	reg := render.New()
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		t.Fatal(err)
@@ -49,6 +50,7 @@ func TestAlertREADMEContainsWCAG141IconProp(t *testing.T) {
 // examples (⚠ or ℹ) as shown to users. Acceptance item 1 — usage guidance
 // should include example unicode characters.
 func TestAlertREADMEIconPropExamples(t *testing.T) {
+	t.Parallel()
 	reg := render.New()
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		t.Fatal(err)
@@ -82,6 +84,7 @@ func TestAlertREADMEIconPropExamples(t *testing.T) {
 // mentions that an icon prop provides an additional non-colour mechanism.
 // Acceptance item 2 — manifest WCAG notes must document the icon as a fallback.
 func TestAlertManifestWCAGNotesMentionIconProp(t *testing.T) {
+	t.Parallel()
 	reg := render.New()
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		t.Fatal(err)

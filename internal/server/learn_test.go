@@ -13,6 +13,7 @@ import (
 // one sentence: yes turns it on and can be undone; no is not asked again;
 // and someone let in is not watched.
 func TestAPartAskedForOftenIsOffered(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	var ids []string
 	for _, title := range []string{"Call plumber", "Order compost", "Dig the pond", "Fix the gate"} {

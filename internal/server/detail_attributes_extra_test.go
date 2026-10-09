@@ -9,6 +9,7 @@ import (
 // TestDetailPageProposalDataAttributes checks that proposal detail pages also
 // get the same data attributes pattern.
 func TestDetailPageProposalDataAttributes(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("proposal", map[string]any{
@@ -61,6 +62,7 @@ func TestDetailPageProposalDataAttributes(t *testing.T) {
 // Status (enum) is excluded from the dl because it appears as a chip, so we
 // check body instead — which should still have data-prop.
 func TestDetailPageStatusFieldHasDataProp(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{
@@ -87,6 +89,7 @@ func TestDetailPageStatusFieldHasDataProp(t *testing.T) {
 // TestDetailPageDataBlockIdUniqueness checks that each record has its own
 // unique data-block-id — no cross-contamination between records.
 func TestDetailPageDataBlockIdUniqueness(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec1, err := a.Store.Create("note", map[string]any{"title": "First"})
@@ -125,6 +128,7 @@ func TestDetailPageDataBlockIdUniqueness(t *testing.T) {
 // TestDetailPageBodyFieldHasDataProp checks that the body field on a note gets
 // data-prop="body". The body is markdown but still editable.
 func TestDetailPageBodyFieldHasDataProp(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{

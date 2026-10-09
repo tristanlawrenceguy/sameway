@@ -18,6 +18,7 @@ import (
 // and its rows become records, said in the chat and logged. An agent
 // does the same through the API with a kept file.
 func TestAPersonImportsPeopleFromAFile(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	if !strings.Contains(get(t, h, "/t/person").Body.String(), "Import") {
 		t.Error("the list page offers to import from a file")

@@ -65,6 +65,7 @@ const find = `{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"fi
 
 // At the computer itself, an agent with the token may do everything.
 func TestAtTheComputerAnAgentMayChangeThings(t *testing.T) {
+	t.Parallel()
 	a, h := httpServer(t)
 	_, reply := post(t, h, "127.0.0.1:5000", "secret", nil, list)
 	if names := strings.Join(toolNames(reply), ","); !strings.Contains(names, "create_record") {
@@ -78,6 +79,7 @@ func TestAtTheComputerAnAgentMayChangeThings(t *testing.T) {
 
 // From elsewhere on the network, with the token, an agent reads only.
 func TestFromElsewhereAnAgentReadsOnly(t *testing.T) {
+	t.Parallel()
 	a, h := httpServer(t)
 	_, reply := post(t, h, "192.168.1.20:5000", "secret", nil, list)
 	names := toolNames(reply)
@@ -103,6 +105,7 @@ func TestFromElsewhereAnAgentReadsOnly(t *testing.T) {
 // only; the owner's own laptop, everything. Without a Tailscale identity,
 // the token is still needed.
 func TestTailscaleIsTheKeyAndTheRoleIsTheReach(t *testing.T) {
+	t.Parallel()
 	a, h := httpServer(t)
 	hana := &records.Visitor{Name: "Hana", Login: "hana@example.com", Access: records.Edit, Device: "laptop"}
 	code, reply := post(t, h, "100.64.0.7:5000", "", hana, list)

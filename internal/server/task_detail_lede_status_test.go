@@ -17,6 +17,7 @@ import (
 // exposes no field name (backlog 0552, acceptance item 1 & 2). The checkbox must
 // remain unchecked.
 func TestTaskDetailLedeHasNoStatusBadgeDoing(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("task", map[string]any{
@@ -69,6 +70,7 @@ func TestTaskDetailLedeHasNoStatusBadgeDoing(t *testing.T) {
 // visually (backlog 0552, acceptance item 1). The word "Done" should appear
 // only on the checkbox label.
 func TestTaskDetailLedeHasNoStatusBadgeDone(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("task", map[string]any{
@@ -120,6 +122,7 @@ func TestTaskDetailLedeHasNoStatusBadgeDone(t *testing.T) {
 // any status value like "Active", "Pending", or "To do" in the lede text
 // (backlog 0552, acceptance item 2).
 func TestTaskDetailLedeHasNoStatusBadgeForUndoneTask(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("task", map[string]any{

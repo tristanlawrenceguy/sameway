@@ -11,6 +11,7 @@ import (
 // Error in words, on a page whose window title starts Error:, and a
 // problem with no field to lead to is plain words, not a link to nowhere.
 func TestARefusedEditSaysErrorWhereItIsHeardFirst(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	rec, _ := a.Store.Create("note", map[string]any{"title": "Water the plants"})
 	r := withReferer(t, h, http.MethodPost, "/t/note/"+rec.ID+"/props", "/t/note/"+rec.ID, url.Values{"prop-title": {""}, "prop-colour": {"red"}}.Encode(), "application/x-www-form-urlencoded")

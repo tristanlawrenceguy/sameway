@@ -25,6 +25,7 @@ func reading(t *testing.T, svc *chat.Service, id string, width, height int) chat
 // Readings are kept by block and kind of screen, written down, and stand
 // only while the block is as it was drawn and for a while.
 func TestReadingsAreKeptByDeviceAndGoStaleOnChange(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	var kept string
 	svc.Measured = chat.NewMeasures("", func(s string) { kept = s })
@@ -62,6 +63,7 @@ func TestReadingsAreKeptByDeviceAndGoStaleOnChange(t *testing.T) {
 // names a block that scrolls inside with the call that gives it room;
 // where nothing is measured it says the heights are estimated.
 func TestLayoutNowUsesMeasuredHeights(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	svc.Measured = chat.NewMeasures("", nil)
 	list := idOf(run(t, svc, "add_component", map[string]any{"component": "collection", "props": map[string]any{"type": "task", "label": "Errands"}, "span": 6}))
@@ -101,6 +103,7 @@ func TestLayoutNowUsesMeasuredHeights(t *testing.T) {
 // A block in a pane taller than the pane, cut off, or running off the
 // side of the screen is said with its fix.
 func TestLayoutNowSaysWhatTheScreenCouldNotShow(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	svc.Measured = chat.NewMeasures("", nil)
 	main := idOf(run(t, svc, "add_component", map[string]any{"component": "text", "props": map[string]any{"content": "Plans"}, "span": 12}))

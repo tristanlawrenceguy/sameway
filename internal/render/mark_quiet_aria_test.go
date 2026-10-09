@@ -19,6 +19,7 @@ import (
 // the <input> — no visible label and no visually-hidden span. The aria-label
 // on the input is the sole accessible name (Acceptance 1).
 func TestAMarkQuietWithAriaLabelRendersNoAdjacentText(t *testing.T) {
+	t.Parallel()
 	reg := render.New()
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		t.Fatal(err)
@@ -65,6 +66,7 @@ func TestAMarkQuietWithAriaLabelRendersNoAdjacentText(t *testing.T) {
 // visually-hidden span as before. This is the existing behaviour for the
 // manifest example "quiet" and must not change (Acceptance 3).
 func TestAMarkQuietWithoutAriaLabelStillRendersHiddenSpan(t *testing.T) {
+	t.Parallel()
 	reg := render.New()
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		t.Fatal(err)
@@ -94,6 +96,7 @@ func TestAMarkQuietWithoutAriaLabelStillRendersHiddenSpan(t *testing.T) {
 // visually-hidden context — just like the canvas case where a record block
 // shows its checkbox (Acceptance 3).
 func TestAMarkNonQuietWithAriaLabelRendersVisibleLabel(t *testing.T) {
+	t.Parallel()
 	reg := render.New()
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		t.Fatal(err)

@@ -85,6 +85,7 @@ func seedTwins(t *testing.T, h http.Handler) (overdue, later string) {
 }
 
 func TestRepeatedTitlesAreToldApartOnTheirList(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	overdue, later := seedTwins(t, h)
 	page := get(t, h, "/t/task").Body.String()
@@ -109,6 +110,7 @@ func TestRepeatedTitlesAreToldApartOnTheirList(t *testing.T) {
 }
 
 func TestRepeatedTitlesAreToldApartInABlockAndItsControlsAreNamedAfterIt(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	overdue, _ := seedTwins(t, h)
 	for _, label := range []string{"Up next", "Everything to do"} {
@@ -134,6 +136,7 @@ func TestRepeatedTitlesAreToldApartInABlockAndItsControlsAreNamedAfterIt(t *test
 }
 
 func TestRepeatedTitlesAreToldApartInSearchAndTheLog(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	overdue, later := seedTwins(t, h)
 	results := get(t, h, "/search?q=plumber").Body.String()
@@ -162,6 +165,7 @@ func TestRepeatedTitlesAreToldApartInSearchAndTheLog(t *testing.T) {
 // Notes have no day: two made the same minute are told apart by the start
 // of their ids, the same words on their list and in the log.
 func TestUndatedTwinsAreToldApartByWhichCameFirst(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	for range 2 {
 		wantStatus(t, postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Meeting notes"}), http.StatusCreated)
@@ -190,6 +194,7 @@ func TestUndatedTwinsAreToldApartByWhichCameFirst(t *testing.T) {
 // On a board every card has a Status and a Move; each is named after its
 // card, and two cards alike after what tells them apart.
 func TestABoardNamesEachCardsChoiceAfterIt(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	for range 2 {
 		wantStatus(t, postJSON(t, h, http.MethodPost, "/api/project", map[string]any{"title": "Garden"}), http.StatusCreated)
@@ -215,6 +220,7 @@ func TestABoardNamesEachCardsChoiceAfterIt(t *testing.T) {
 // Two things alike on one month are told apart by their days; one alike
 // in another month is not met there, so needs nothing.
 func TestACalendarTellsLikeEventsApartByTheirDays(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	now := time.Now()
 	first := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)

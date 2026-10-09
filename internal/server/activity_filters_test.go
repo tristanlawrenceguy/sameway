@@ -37,6 +37,7 @@ func seedLog(t *testing.T, a *app.App, h http.Handler) {
 // The log offers who, what and when, made from what is in it, as a form
 // with Apply that needs no script, and says how many changes it holds.
 func TestActivityOffersWhoWhatAndWhen(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	seedLog(t, a, h)
 	body := get(t, h, "/activity").Body.String()
@@ -68,6 +69,7 @@ func TestActivityOffersWhoWhatAndWhen(t *testing.T) {
 // Each choice narrows, several together narrow further, what is shown is
 // said in words with Reset, and a value the log does not offer is ignored.
 func TestActivityNarrowedTogether(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	seedLog(t, a, h)
 	cases := []struct {
@@ -118,6 +120,7 @@ func TestActivityNarrowedTogether(t *testing.T) {
 // The page's other address fields are kept and Reset keeps them; Undo on
 // a narrowed log comes back to the same narrowing.
 func TestActivityKeepsItsPlace(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	seedLog(t, a, h)
 	body := get(t, h, "/activity?who=you&show=links").Body.String()
@@ -142,6 +145,7 @@ func TestActivityKeepsItsPlace(t *testing.T) {
 
 // A long log goes a page at a time, and the pages keep the choices.
 func TestActivityPagesKeepTheChoices(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	for i := range 205 {
 		records.Record(a.Store, "assistant", records.Change{Action: "added", Component: "card", ID: fmt.Sprint("c", i), Detail: fmt.Sprint("Card ", i)})
@@ -157,6 +161,7 @@ func TestActivityPagesKeepTheChoices(t *testing.T) {
 
 // An agent outside Sameway is chosen by the name it gave.
 func TestActivityNamesAgents(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	seedLog(t, a, h)
 	records.Record(a.Store, records.ActorAgent, records.Change{Action: "added", Component: "note", ID: "n2", Detail: "Seed order", By: "Claude Code", Via: records.ThroughAPI})

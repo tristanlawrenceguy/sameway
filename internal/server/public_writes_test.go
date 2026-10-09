@@ -40,6 +40,7 @@ func everything(t *testing.T, a *app.App) string {
 // with any method, with any body, as a page's form or JSON, with a key or
 // without; and the published MCP server has no tool that writes.
 func TestThePublicCannotChangeAnything(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	srv := h.(*server.Server)
 	note, _ := a.Store.Create("note", map[string]any{"title": "Sourdough"})
@@ -95,6 +96,7 @@ func TestThePublicCannotChangeAnything(t *testing.T) {
 // its sound is not copied out for anyone on the internet: that writes
 // into the workspace's folder.
 func TestThePublicPlaysARecordingButDoesNotCopyItsSound(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	srv := h.(*server.Server)
 	os.MkdirAll(a.Workspace.FilesDir(), 0o755)

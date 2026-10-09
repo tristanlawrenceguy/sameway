@@ -14,6 +14,7 @@ import (
 // fields beside type, inside a JSON string, under set. Each is taken as
 // meant.
 func TestLooseArgumentsAreTakenAsMeant(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	m := &scripted{steps: []*llm.Response{
 		call("create_record", map[string]any{"type": "note", "title": "Beside"}),
@@ -39,6 +40,7 @@ func TestLooseArgumentsAreTakenAsMeant(t *testing.T) {
 // A model is told of recording a meeting when it makes an event, not in
 // every prompt.
 func TestAnEventSaysHowToRecordIt(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	m := &scripted{steps: []*llm.Response{
 		call("create_record", map[string]any{"type": "event", "fields": map[string]any{"title": "Launch", "starts": "2026-10-05 10:00"}}),
@@ -55,6 +57,7 @@ func TestAnEventSaysHowToRecordIt(t *testing.T) {
 // A model counts days badly; Sameway says each day back with its weekday,
 // and when the person named a weekday nothing falls on, which days do.
 func TestADayIsSaidBackWithItsWeekday(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	svc.Clock = func() time.Time { return time.Date(2026, 10, 2, 9, 0, 0, 0, time.UTC) } // a Friday
 	m := &scripted{steps: []*llm.Response{
@@ -77,6 +80,7 @@ func TestADayIsSaidBackWithItsWeekday(t *testing.T) {
 
 // A model asks after words a record holds, not its exact title.
 func TestFindRecordsMatchesEveryWordAnywhere(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	svc.Store.Create("note", map[string]any{"title": "Boiler", "body": "The engineer comes on Thursday."})
 	svc.Store.Create("note", map[string]any{"title": "Garden", "body": "Plant garlic."})
@@ -88,6 +92,7 @@ func TestFindRecordsMatchesEveryWordAnywhere(t *testing.T) {
 
 // A record made with the title of one already there says so.
 func TestARecordOfTheSameTitleIsSaid(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	have, _ := svc.Store.Create("note", map[string]any{"title": "Chapter 1"})
 	raw := []byte(`{"type":"note","fields":{"title":"chapter 1"}}`)
@@ -98,6 +103,7 @@ func TestARecordOfTheSameTitleIsSaid(t *testing.T) {
 
 // A search with a word no record uses still finds what has the rest.
 func TestSearchFallsBackToSomeOfTheWords(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	svc.Store.Create("note", map[string]any{"title": "Boiler", "body": "The engineer comes on Thursday."})
 	if text, _ := svc.Call("search", []byte(`{"query":"boiler engineer visit"}`)); !strings.Contains(text, "Nothing has every word") || !strings.Contains(text, "Boiler") {
@@ -108,6 +114,7 @@ func TestSearchFallsBackToSomeOfTheWords(t *testing.T) {
 // An action that could never run is refused with how to write it: what
 // is a kind of record, and a condition goes in only.
 func TestAnActionThatCouldNeverRunIsRefused(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	raw := []byte(`{"type":"action","fields":{"title":"Tell","kind":"webhook","url":"https://example.com/h","when":"changed","what":"status=done"}}`)
 	if text, isErr := svc.Call("create_record", raw); !isErr || !strings.Contains(text, `a condition goes in only, as ["status=done"]`) {
@@ -127,6 +134,7 @@ func TestAnActionThatCouldNeverRunIsRefused(t *testing.T) {
 // tomorrow means; the result says the time went, so a model moving it
 // can put the time back.
 func TestADayAloneSaysTheTimeWent(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	ev, _ := svc.Store.Create("event", map[string]any{"title": "Team lunch", "starts": "2026-10-08 12:30"})
 	raw := []byte(`{"type":"event","id":"` + ev.ID + `","fields":{"starts":"2026-10-09"}}`)
@@ -138,6 +146,7 @@ func TestADayAloneSaysTheTimeWent(t *testing.T) {
 // Nothing found says the day searched with its weekday, so a day counted
 // wrong shows.
 func TestNothingFoundSaysTheDay(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	svc.Store.Create("task", map[string]any{"title": "Pay rent", "due": "2026-10-08"})
 	if text, _ := svc.Call("find_records", []byte(`{"type":"task","where":["due=2026-10-10"]}`)); !strings.Contains(text, "Sat 10 Oct") {

@@ -9,6 +9,7 @@ import (
 // Summaries stored in keys before setting names existed are said in words,
 // inside an undo too; every other summary is left as it was.
 func TestCleanSummary(t *testing.T) {
+	t.Parallel()
 	for in, want := range map[string]string{
 		"You set ui.text normal":                   "You changed text size to Normal",
 		"Assistant set ui.spacing wide":            "Assistant changed spacing to Wide",

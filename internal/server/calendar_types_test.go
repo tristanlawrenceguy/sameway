@@ -28,6 +28,7 @@ func typesMonth(t *testing.T, h http.Handler, props map[string]any) string {
 // A calendar of tasks and reminders shows those two kinds and nothing
 // else, offers the two to narrow to, and says no kind in its events' text.
 func TestACalendarShowsTheTypesItNames(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	id := typesMonth(t, h, map[string]any{"types": []any{"task", "reminder"}, "month": "2026-09", "detail": "page"})
 	own := "/canvas/" + id
@@ -86,6 +87,7 @@ func TestACalendarShowsTheTypesItNames(t *testing.T) {
 
 // type all still shows every listed type, entries included.
 func TestACalendarOfEverythingStillShowsAll(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	id := typesMonth(t, h, map[string]any{"type": "all", "month": "2026-09", "detail": "page"})
 	page := get(t, h, "/canvas/"+id).Body.String()
@@ -102,6 +104,7 @@ func TestACalendarOfEverythingStillShowsAll(t *testing.T) {
 // Types are checked when written: one that is not there, or has no day,
 // is refused with the page's reason; the rest say what they show.
 func TestACalendarsTypesAreCheckedWhenWritten(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	res := postJSON(t, h, http.MethodPost, "/api/block", map[string]any{"component": "calendar", "props": map[string]any{"types": []any{"task", "tasks", "reminder"}}})
 	wantStatus(t, res, http.StatusUnprocessableEntity)

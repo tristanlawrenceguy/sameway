@@ -34,6 +34,7 @@ func noPlaceholders(t *testing.T, page string) {
 // yet, in the empty component's words, and the result says what each
 // block shows: nothing is invented to fill the page.
 func TestArrangementsOnAnEmptyWorkspaceSayThereIsNothingYet(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	for name, shows := range map[string][]string{
 		"week": {"calendar: added calendar", "it shows nothing yet: no event has a starts", "todo: added collection", "it shows nothing yet: no task matches done=false and due<=+7d", "habits: added tracker", "it shows 0 habits"},
@@ -58,6 +59,7 @@ func TestArrangementsOnAnEmptyWorkspaceSayThereIsNothingYet(t *testing.T) {
 
 // On a workspace with records, the same arrangements show them.
 func TestArrangementsShowThePersonsRecords(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	tomorrow := time.Now().AddDate(0, 0, 1).Format("2006-01-02")
 	for _, r := range []struct {
@@ -100,6 +102,7 @@ func TestArrangementsShowThePersonsRecords(t *testing.T) {
 // how to make one; with a book type missing status it says which field;
 // made as it says, the arrangement goes on.
 func TestReadingSaysWhatTheWorkspaceLacks(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	before := blockCount(t, a)
 	said, isErr := call(t, a, "add_arrangement", map[string]any{"name": "reading"})

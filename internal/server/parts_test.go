@@ -22,6 +22,7 @@ import (
 // written down in turn at its place, the page is told how far it has
 // come, and the parts are put together at their times.
 func TestALongRecordingIsWrittenDownInParts(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	srv := h.(*server.Server)
 	var mu sync.Mutex

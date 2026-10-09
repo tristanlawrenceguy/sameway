@@ -12,6 +12,7 @@ import (
 // TestCancelOnARecordJustAddedTakesItBack: Add a person, then Cancel before
 // saving, and there is no new person; once saved, Cancel leaves it alone.
 func TestCancelOnARecordJustAddedTakesItBack(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	added := postForm(t, h, "/t/person/add", url.Values{})
 	where := added.Header().Get("Location")

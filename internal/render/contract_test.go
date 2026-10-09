@@ -51,6 +51,7 @@ func forEachExample(t *testing.T, fn func(c *render.Component, ex render.Example
 // TestMachineSelectorResolves checks the manifest's machine.selector finds
 // an element in every example, which is what a browser-driving agent relies on.
 func TestMachineSelectorResolves(t *testing.T) {
+	t.Parallel()
 	forEachExample(t, func(c *render.Component, ex render.Example, doc *htmltest.Doc) {
 		var machine struct{ Selector string }
 		json.Unmarshal(c.Manifest.Machine, &machine)
@@ -91,6 +92,7 @@ func resolve(doc *htmltest.Doc, selector string) []*html.Node {
 // TestStructureContract checks the invariants every rendered example must
 // hold for screen readers and agents alike.
 func TestStructureContract(t *testing.T) {
+	t.Parallel()
 	forEachExample(t, func(c *render.Component, ex render.Example, doc *htmltest.Doc) {
 		where := c.Manifest.Name + "/" + ex.Name
 		if len(doc.WithAttr("data-component", c.Manifest.Name)) == 0 {
@@ -111,6 +113,7 @@ func TestStructureContract(t *testing.T) {
 // TestKeyboardContract requires a keyboard map for any component that
 // renders something focusable.
 func TestKeyboardContract(t *testing.T) {
+	t.Parallel()
 	forEachExample(t, func(c *render.Component, ex render.Example, doc *htmltest.Doc) {
 		focusable := 0
 		doc.Walk(func(n *html.Node) {
@@ -137,6 +140,7 @@ func TestKeyboardContract(t *testing.T) {
 // TestEveryEnumValueHasAnExample makes each way a component can be used
 // visible: every enum prop value must appear in an example or be the default.
 func TestEveryEnumValueHasAnExample(t *testing.T) {
+	t.Parallel()
 	for _, c := range builtins(t).Components() {
 		var schema struct {
 			Properties map[string]struct {
@@ -170,6 +174,7 @@ func TestEveryEnumValueHasAnExample(t *testing.T) {
 
 // TestManifestSections checks the human-facing contract is filled in.
 func TestManifestSections(t *testing.T) {
+	t.Parallel()
 	for _, c := range builtins(t).Components() {
 		var a11y struct {
 			Role string
@@ -193,6 +198,7 @@ func TestManifestSections(t *testing.T) {
 
 // TestCSSUsesTokensOnly forbids raw colours in component stylesheets.
 func TestCSSUsesTokensOnly(t *testing.T) {
+	t.Parallel()
 	raw := regexp.MustCompile(`(?i)#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(`)
 	for _, c := range builtins(t).Components() {
 		if m := raw.FindString(c.CSS); m != "" {

@@ -15,6 +15,7 @@ import (
 // either side and the piece's material, a part moves as one change, and
 // Read it all gives the whole, as a page, Markdown or Word.
 func TestLongerWritingIsOrganisedOnItsPages(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	mk := func(fields map[string]any) string {
 		r, err := a.Store.Create("note", fields)
@@ -91,6 +92,7 @@ func TestLongerWritingIsOrganisedOnItsPages(t *testing.T) {
 
 // A long piece lists its headings at the top, each leading to its place.
 func TestALongPieceHasItsContents(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	n, _ := a.Store.Create("note", map[string]any{"title": "Guide", "body": "## Start\n\nText.\n\n## Middle\n\nMore.\n\n## End\n\nDone."})
 	if strings.Contains(get(t, h, "/t/note/"+n.ID).Body.String(), `id="contents"`) {
@@ -108,6 +110,7 @@ func TestALongPieceHasItsContents(t *testing.T) {
 
 // A type without the fields for it gets them the first time it is organised.
 func TestOrganisingAddsTheFieldsATypeLacks(t *testing.T) {
+	t.Parallel()
 	a, _ := newApp(t)
 	big, _ := a.Store.Create("task", map[string]any{"title": "Move house"})
 	small, _ := a.Store.Create("task", map[string]any{"title": "Pack books"})
@@ -127,6 +130,7 @@ func TestOrganisingAddsTheFieldsATypeLacks(t *testing.T) {
 // What a record's page can show is said with the record, only what it has,
 // so the assistant can decide and hand over the address.
 func TestARecordSaysWhatItsPageCanShow(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	piece, _ := a.Store.Create("note", map[string]any{"title": "Book"})
 	part, _ := a.Store.Create("note", map[string]any{"title": "One"})
@@ -152,6 +156,7 @@ func TestARecordSaysWhatItsPageCanShow(t *testing.T) {
 // were; material is for the whole; a piece cannot go inside its own part;
 // and one Undo takes an organising back.
 func TestOrganisingKeepsOrderAndUndoes(t *testing.T) {
+	t.Parallel()
 	a, _ := newApp(t)
 	note := func(title string) string {
 		r, err := a.Store.Create("note", map[string]any{"title": title})

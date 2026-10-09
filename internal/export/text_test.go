@@ -11,6 +11,7 @@ import (
 // a day in words and a ref by its title; its writing is apart; with no
 // way to name a ref, the ref is left out rather than given as an id.
 func TestTextSaysARecordAsAReaderReadsIt(t *testing.T) {
+	t.Parallel()
 	typ, err := schema.Parse([]byte("name: task\ntitle: title\nfields:\n  title: {type: string}\n  status: {type: enum, values: [to_do, in_progress]}\n  due: {type: datetime}\n  done: {type: bool}\n  project: {type: ref, to: project}\n  notes: {type: markdown}\n"))
 	if err != nil {
 		t.Fatal(err)

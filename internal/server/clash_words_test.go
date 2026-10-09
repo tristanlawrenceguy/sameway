@@ -8,6 +8,7 @@ import (
 // What differs is found word by word, a change is one run, and reading
 // the parts one way gives each version back whole.
 func TestClashPartsReadBackAsEachVersion(t *testing.T) {
+	t.Parallel()
 	for _, c := range [][2]string{
 		{"Tea and toast at nine.", "Tea and cake at nine."},
 		{"Flour, water, salt.\nBake at once.", "Flour, water, salt.\nLeave overnight."},

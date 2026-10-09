@@ -22,6 +22,7 @@ func writeComponent(t *testing.T, root, name, template string) {
 // TestWorkspaceComponentsExtendAndOverride covers the two ways a person or
 // agent adds their own component: a new name, or replacing a built-in.
 func TestWorkspaceComponentsExtendAndOverride(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	writeComponent(t, root, "callout", `<aside class="sw-callout" data-component="callout">{{.text}}</aside>`)
 	writeComponent(t, root, "button", `<button class="custom" data-component="button">{{.text}}</button>`)
@@ -52,6 +53,7 @@ func TestWorkspaceComponentsExtendAndOverride(t *testing.T) {
 }
 
 func TestLoadDirMissingIsFine(t *testing.T) {
+	t.Parallel()
 	reg := render.New()
 	if err := reg.LoadDir(filepath.Join(t.TempDir(), "nope"), "workspace"); err != nil {
 		t.Fatalf("missing components dir should not be an error: %v", err)
@@ -59,6 +61,7 @@ func TestLoadDirMissingIsFine(t *testing.T) {
 }
 
 func TestBrokenComponentReportsWhichFile(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	writeComponent(t, root, "broken", `<div>{{.text`)
 	reg := render.New()

@@ -5,6 +5,7 @@ import "testing"
 // TestValueLabel: a value reads as the schema names it, else as itself
 // made readable; an acronym stays as it is.
 func TestValueLabel(t *testing.T) {
+	t.Parallel()
 	f := Field{Type: "enum", Values: []string{"reach", "in_progress", "GET"}, Labels: map[string]string{"reach": "At least the target"}}
 	for v, want := range map[string]string{"reach": "At least the target", "in_progress": "In progress", "GET": "GET", "": ""} {
 		if got := f.ValueLabel(v); got != want {
@@ -17,6 +18,7 @@ func TestValueLabel(t *testing.T) {
 // had names gets the built-in names, for the values its copy has; a
 // workspace that named them itself keeps its own.
 func TestCompleteBringsValueLabels(t *testing.T) {
+	t.Parallel()
 	ws := &Set{byName: map[string]*Type{}}
 	old := &Type{Name: "habit", Fields: []Field{{Name: "aim", Type: "enum", Values: []string{"reach", "limit"}}, {Name: "mine", Type: "enum", Values: []string{"a"}, Labels: map[string]string{"a": "Mine"}}}}
 	ws.Types, ws.byName["habit"] = []*Type{old}, old
@@ -37,6 +39,7 @@ func TestCompleteBringsValueLabels(t *testing.T) {
 // TestCompleteBringsFieldLabels: a workspace whose copy of a provided type
 // predates its field names in a person's words gets them; its own win.
 func TestCompleteBringsFieldLabels(t *testing.T) {
+	t.Parallel()
 	ws := &Set{byName: map[string]*Type{}}
 	old := &Type{Name: "file", Fields: []Field{{Name: "name", Type: "string"}, {Name: "kind", Type: "string", Label: "Mine"}}}
 	ws.Types, ws.byName["file"] = []*Type{old}, old
@@ -58,6 +61,7 @@ func TestCompleteBringsFieldLabels(t *testing.T) {
 // change is logged there too; a provided type's values stay the
 // workspace's own.
 func TestCompleteBringsInternalEnumValues(t *testing.T) {
+	t.Parallel()
 	ws := &Set{byName: map[string]*Type{}}
 	old := &Type{Name: "activity", Internal: true, Fields: []Field{{Name: "actor", Type: "enum", Values: []string{"human", "assistant", "system"}}}}
 	mine := &Type{Name: "habit", Fields: []Field{{Name: "aim", Type: "enum", Values: []string{"reach"}}}}

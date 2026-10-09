@@ -7,6 +7,7 @@ import (
 
 // A formatting change is said in words, and different words are not one.
 func TestAFormattingChangeIsSaidInWords(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct{ from, to, want string }{
 		{"the garden opens", "the **garden** opens", "Make it bold"},
 		{"Plans", "## Plans", "Make it a heading"},
@@ -27,6 +28,7 @@ func TestAFormattingChangeIsSaidInWords(t *testing.T) {
 // The passage is highlighted in the writing as it reads, with no Markdown
 // showing; where it cannot be one stretch, the writing is shown unmarked.
 func TestThePassageIsMarkedInTheWritingAsItReads(t *testing.T) {
+	t.Parallel()
 	got := string(Marked("We **all** agreed that the garden opens.", "agreed that", "Change starts", "change ends", 3))
 	if !strings.Contains(got, `<span class="sw-prose__changed"><span class="sw-visually-hidden">Change starts: </span>agreed that<span class="sw-visually-hidden">, change ends,</span></span> the garden`) || strings.Contains(got, "**") || strings.Contains(got, "<mark") {
 		t.Errorf("marked as it reads: %s", got)

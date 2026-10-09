@@ -11,6 +11,7 @@ import (
 // A database opened again where it was keeps its name; a copy of it
 // opened in another folder takes a name of its own.
 func TestACopyElsewhereNamesItselfApart(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	first := filepath.Join(dir, "a", "data.db")
 	s, err := openAt(t, first)

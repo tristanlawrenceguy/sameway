@@ -14,6 +14,7 @@ import (
 // "Ask for anything." instead of "Ask for anything. What you ask for appears on the
 // canvas."  This covers Acceptance 3.
 func TestChatBlockEmptyStateIsOneLine(t *testing.T) {
+	t.Parallel()
 	// The template says where the empty state goes; chat.go says what it
 	// says, as the empty component.
 	goSrc, _ := os.ReadFile("chat.go")

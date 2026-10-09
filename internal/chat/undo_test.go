@@ -14,6 +14,7 @@ import (
 // was, and undoing an undo puts it back again. One tool does all of it,
 // because every entry carries what the thing was before.
 func TestUndoRunsTheLogBackwards(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	must := func(name string, args map[string]any) string {
 		t.Helper()

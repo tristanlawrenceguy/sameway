@@ -8,6 +8,7 @@ import (
 // TestUploadFormHasSubmitButton checks that the files list page renders an
 // upload form with a visible "Upload" submit button, not "Add a file".
 func TestUploadFormHasSubmitButton(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	rec := get(t, h, "/t/file")
 	wantStatus(t, rec, 200)
@@ -27,6 +28,7 @@ func TestUploadFormHasSubmitButton(t *testing.T) {
 // The upload form says what it takes before anyone chooses, and has a place
 // above the field for a problem, tied to the field and heard politely.
 func TestUploadFormSaysWhatItTakesAndWhereProblemsGo(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	body := get(t, h, "/t/file").Body.String()
 	for _, want := range []string{"Up to 4 GB.", `class="sw-upload__error" id="upload-error" aria-live="polite"`, `aria-describedby="upload-hint upload-error"`, `data-busy-target="upload-status"`} {

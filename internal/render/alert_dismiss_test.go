@@ -12,6 +12,7 @@ import (
 // TestAlertDismissPropDeclared checks the alert manifest declares an optional
 // "dismiss" boolean prop — type is boolean, not required. Acceptance item 2.
 func TestAlertDismissPropDeclared(t *testing.T) {
+	t.Parallel()
 	reg := render.New()
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		t.Fatal(err)
@@ -49,6 +50,7 @@ func TestAlertDismissPropDeclared(t *testing.T) {
 // TestAlertDismissPropRendersCloseButton checks that when the alert is rendered
 // with dismiss=true, a close button element appears in the output. Acceptance item 2.
 func TestAlertDismissPropRendersCloseButton(t *testing.T) {
+	t.Parallel()
 	reg := render.New()
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		t.Fatal(err)
@@ -78,6 +80,7 @@ func TestAlertDismissPropRendersCloseButton(t *testing.T) {
 // TestAlertDismissPropFalseRendersNoCloseButton checks that when dismiss is not
 // set or false, no close button appears. Acceptance item 2.
 func TestAlertDismissPropFalseRendersNoCloseButton(t *testing.T) {
+	t.Parallel()
 	reg := render.New()
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		t.Fatal(err)

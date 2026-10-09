@@ -9,6 +9,7 @@ import (
 // setup in Microsoft's and Zoom's consoles: it is there, closed, under
 // Transcripts from Teams or Zoom.
 func TestHelpKeepsMeetingAppSetupClosed(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	page := get(t, h, "/help").Body.String()
 	at := strings.Index(page, "Transcripts from Teams or Zoom")

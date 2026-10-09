@@ -12,6 +12,7 @@ import (
 // list below carries that information without exposing internal names.
 // Note detail pages also skip enum badges in the lede for the same reason.
 func TestAStateBadgeIsHeardWithItsFieldOnlyWhenItNeedsIt(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	habit, _ := a.Store.Create(server.HabitType, map[string]any{"name": "Read", "cadence": "day"})
 	note, _ := a.Store.Create("note", map[string]any{"title": "Plans", "status": "draft"})
@@ -33,6 +34,7 @@ func TestAStateBadgeIsHeardWithItsFieldOnlyWhenItNeedsIt(t *testing.T) {
 // A file's page calls its facts what a person would, and does not show
 // the id its original is stored under.
 func TestAFilePageNamesItsFactsInWords(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	file, _ := a.Store.Create(server.FileType, map[string]any{"title": "Notes", "name": "notes.txt", "kind": "document", "size": 11, "path": "u7qspudrpgdl2vqu"})
 
@@ -51,6 +53,7 @@ func TestAFilePageNamesItsFactsInWords(t *testing.T) {
 // display layer turns 11 into "11 bytes", 2048 into "2 KB", etc., so the
 // value reads naturally alongside the label.
 func TestAFileShowsItsSizeWithUnitsNotANumber(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Create a file with exactly 11 bytes — small enough to stay in the "bytes" range.
@@ -72,6 +75,7 @@ func TestAFileShowsItsSizeWithUnitsNotANumber(t *testing.T) {
 // The status information is still visible in the definition list below
 // but it must not be mashed into the lede paragraph as a standalone chip.
 func TestAFileDetailLedeHasNoRawStatusBadge(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// A file with default status "ready".

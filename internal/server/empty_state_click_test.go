@@ -16,6 +16,7 @@ import (
 // renders an <a href="/chat"> inside the .sw-empty paragraph. This is the
 // anchor a person clicks to create content via chat. Covers Acceptance 1.
 func TestEmptyStateAnchorLinksToChat(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/t/note")
@@ -39,6 +40,7 @@ func TestEmptyStateAnchorLinksToChat(t *testing.T) {
 // points to /chat on every content type listing page, not a dead form route.
 // Covers Acceptance 2 (all content type list pages).
 func TestEmptyStateAnchorNavigatesForAllTypes(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	for _, typ := range []string{"note", "action", "task"} {
@@ -64,6 +66,7 @@ func TestEmptyStateAnchorNavigatesForAllTypes(t *testing.T) {
 // that could prevent the empty-state link from navigating. This covers
 // Acceptance 1-2: if a script intercepts clicks on anchors, navigation breaks.
 func TestNoJSScriptInterceptsEmptyStateAnchorClicks(t *testing.T) {
+	t.Parallel()
 	baseDir := "../../design/base"
 
 	files, err := os.ReadDir(baseDir)

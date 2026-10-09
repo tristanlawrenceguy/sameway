@@ -13,6 +13,7 @@ import (
 // instead of raw lowercase prop keys or JSON pointer syntax. This covers the
 // acceptance items for readable multi-field and single-field error messages.
 func TestValidationErrorsUseReadableFieldNames(t *testing.T) {
+	t.Parallel()
 	reg := render.New()
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		t.Fatal(err)
@@ -81,6 +82,7 @@ func TestValidationErrorsUseReadableFieldNames(t *testing.T) {
 // TestValidationErrorsDoNotShowRawJSONPointer checks that error messages do
 // not expose raw JSON pointer paths like /label or /variant to the user.
 func TestValidationErrorsDoNotShowRawJSONPointer(t *testing.T) {
+	t.Parallel()
 	reg := render.New()
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		t.Fatal(err)
@@ -124,6 +126,7 @@ func TestValidationErrorsDoNotShowRawJSONPointer(t *testing.T) {
 
 // TestValidationErrorsMultiField shows all readable names when multiple props fail.
 func TestValidationErrorsMultiField(t *testing.T) {
+	t.Parallel()
 	reg := render.New()
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		t.Fatal(err)
@@ -161,6 +164,7 @@ func TestValidationErrorsMultiField(t *testing.T) {
 // like "Title is required" continue to work correctly (no regression from
 // the readable-field-name fix).
 func TestValidationErrorsSingleFieldNoRegression(t *testing.T) {
+	t.Parallel()
 	reg := render.New()
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		t.Fatal(err)

@@ -15,6 +15,7 @@ import (
 // <h3 class="sw-event__text sw-event__heading"> so a screen reader user can
 // jump between activities.
 func TestChatPageRecentActivityHasH3Headings(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Seed two distinct activity entries via records.Record (the same way chat does).
@@ -54,6 +55,7 @@ func TestChatPageRecentActivityHasH3Headings(t *testing.T) {
 // comes from the summary field (e.g., "Assistant added card Shopping") rather
 // than just repeating the action verb.
 func TestChatPageRecentActivitySummaryFromHeadingText(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Create a card block via chat so we get an assistant activity with a
@@ -80,6 +82,7 @@ func TestChatPageRecentActivitySummaryFromHeadingText(t *testing.T) {
 // TestChatPageRecentActivityEmptyStateHasNoHeading checks that when there are no
 // activities, /chat does not render an orphaned <h3>.
 func TestChatPageRecentActivityEmptyStateHasNoHeading(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	body := get(t, h, "/chat").Body.String()

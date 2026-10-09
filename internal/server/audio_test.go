@@ -12,6 +12,7 @@ import (
 // transcript under it on the same page, each line leading into the
 // recording; until there is one, the page says so.
 func TestARecordingPlaysWithItsTranscript(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	body, ct := multipartFile(t, "Stand-up.m4a", "not really audio", nil)
 	res := do(t, h, http.MethodPost, "/t/file/upload", body, ct)
@@ -55,6 +56,7 @@ func TestARecordingPlaysWithItsTranscript(t *testing.T) {
 // recording or video pauses another, and one this browser cannot play
 // says so.
 func TestThePlayerIsQuietAndSaysWhenItCannotPlay(t *testing.T) {
+	t.Parallel()
 	data, err := os.ReadFile("../../design/components/media/enhance.js")
 	if err != nil {
 		t.Fatal(err)

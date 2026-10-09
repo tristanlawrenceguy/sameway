@@ -16,6 +16,7 @@ import (
 // connect prints the exact configuration a tool needs, or writes it into
 // the tool's file keeping every other server there.
 func TestConnectPrintsOrWritesTheToolsConfig(t *testing.T) {
+	t.Parallel()
 	dir := initWorkspace(t)
 	r := run(t, dir, "connect", "cursor")
 	if r.code != 0 || !strings.Contains(r.stdout, `"mcpServers"`) || !strings.Contains(r.stdout, `"--workspace"`) || !strings.Contains(r.stdout, "mcp.json") {
@@ -62,6 +63,7 @@ func TestConnectPrintsOrWritesTheToolsConfig(t *testing.T) {
 // MCP over HTTP is the same server for a client elsewhere: off without a
 // token, refused without the right one, and the tools with it.
 func TestMCPOverHTTPNeedsTheToken(t *testing.T) {
+	t.Parallel()
 	dir := initWorkspace(t)
 	a, err := app.Load(dir, false)
 	if err != nil {

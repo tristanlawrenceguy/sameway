@@ -12,6 +12,7 @@ import (
 // in as it is and read as an upload would be; each is said, or all as
 // JSON; a folder or a missing file says what to do instead.
 func TestAddCopiesFilesOnThisComputerIn(t *testing.T) {
+	t.Parallel()
 	ws := initWorkspace(t)
 	src := t.TempDir()
 	plan := filepath.Join(src, "Plan.md")

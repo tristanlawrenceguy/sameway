@@ -14,6 +14,7 @@ import (
 // on the activity page, and they stay where they were. What they deleted
 // themselves can come back the same way.
 func TestAPersonUndoesFromWhereTheyAre(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Chat.Provider, a.Chat.ProviderErr = &scripted{steps: []*llm.Response{
 		toolCall("add_component", map[string]any{"component": "card", "props": map[string]any{"title": "Plan"}}),

@@ -13,6 +13,7 @@ import (
 // is told so and asked again; the reply the person sees is the one that
 // really made it. A reply naming a real page is left alone.
 func TestAClaimedPageThatDoesNotExistIsAskedAgain(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	m := &scripted{steps: []*llm.Response{
 		{Text: "I created the note 'Plan'. It's available at /t/note/8k3m9p5n2j7x4q6v."},
@@ -60,6 +61,7 @@ func TestAClaimedPageThatDoesNotExistIsAskedAgain(t *testing.T) {
 // listing all of them at once, not one page per round. VerifyClaims returns
 // every URL the reply mentions so the handler can build one correction.
 func TestMultipleClaimedPagesAreListedInOneCorrection(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	m := &scripted{steps: []*llm.Response{
 		{Text: "I created a note at /t/note/8k3m9p5n2j7x4q6v, a card at /t/block/1a2b3c4d5e6f7g8h and a recipe at /t/recipe/abcdef0123456789."},

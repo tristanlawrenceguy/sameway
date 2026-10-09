@@ -10,6 +10,7 @@ import (
 // speaker models, and SAMEWAY_SPEAKERS_WAV to a 16 kHz recording of two
 // voices, the real program tells them apart.
 func TestSpeakersAreToldApartForReal(t *testing.T) {
+	t.Parallel()
 	dir, wav := os.Getenv("SAMEWAY_SPEAKERS_DIR"), os.Getenv("SAMEWAY_SPEAKERS_WAV")
 	if dir == "" || wav == "" {
 		t.Skip("set SAMEWAY_SPEAKERS_DIR and SAMEWAY_SPEAKERS_WAV to run the real program")

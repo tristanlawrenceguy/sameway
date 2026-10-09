@@ -16,6 +16,7 @@ import (
 // one that arrives, and one already there when it starts; and a page does
 // not start what the host will do.
 func TestRecordingsAreWrittenDownWithNoPageOpen(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	srv := h.(*server.Server)
 	srv.UseSpeech(server.Speech{

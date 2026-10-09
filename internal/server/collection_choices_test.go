@@ -72,6 +72,7 @@ func inOrder(s string, titles ...string) bool {
 // A person narrows and sorts a collection where it is, with choices the
 // type's fields make sense for, in a GET form that needs no script.
 func TestACollectionOffersChoicesFromItsSchema(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	seedTasks(t, a)
 	id := addCollection(t, h, map[string]any{"type": "task", "label": "Tasks"})
@@ -111,6 +112,7 @@ func TestACollectionOffersChoicesFromItsSchema(t *testing.T) {
 // value the controls do not offer is ignored, so the address cannot widen
 // or add a condition of its own.
 func TestChoicesNarrowWithinWhereAndSort(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	seedTasks(t, a)
 	id := addCollection(t, h, map[string]any{"type": "task", "where": []string{"done=false"}, "label": "Open", "controls": true})
@@ -151,6 +153,7 @@ func TestChoicesNarrowWithinWhereAndSort(t *testing.T) {
 // Two collections on one canvas keep their own choices; each form keeps
 // the other's and the page's, and Reset takes away only its own.
 func TestChoicesArePerBlock(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	seedTasks(t, a)
 	one := addCollection(t, h, map[string]any{"type": "task", "label": "One", "controls": true})
@@ -178,6 +181,7 @@ func TestChoicesArePerBlock(t *testing.T) {
 // The list page link carries the choices, a list cut short says so, and
 // nothing matching says so with Reset beside it.
 func TestChoicesKeepToTheListPageAndSayWhenNothingMatches(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	seedTasks(t, a)
 	id := addCollection(t, h, map[string]any{"type": "task", "label": "Tasks", "limit": 6})
@@ -214,6 +218,7 @@ func TestChoicesKeepToTheListPageAndSayWhenNothingMatches(t *testing.T) {
 // The choices are on where they help: not for a short list, not when the
 // block turns them off, always on the block's own page.
 func TestChoicesAreOfferedWhereTheyHelp(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	seedTasks(t, a)
 	few := addCollection(t, h, map[string]any{"type": "task", "where": []string{"done=true"}, "label": "Done"})

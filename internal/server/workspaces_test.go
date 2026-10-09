@@ -156,6 +156,7 @@ func TestAWorkspaceOpensTheOthers(t *testing.T) {
 // hand off to, so deleting its workspace must refuse rather than remove the
 // folder out from under itself with nowhere to go.
 func TestDeleteWithoutAFleetRefuses(t *testing.T) {
+	t.Parallel()
 	a, _ := newApp(t)
 	known := filepath.Join(t.TempDir(), "workspaces.json")
 	a.Workspace.Machine.Known = known

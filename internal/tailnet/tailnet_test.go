@@ -12,6 +12,7 @@ import (
 // A workspace that names no machine stays off the tailnet: nothing starts
 // and nothing is said.
 func TestNoNameMeansOff(t *testing.T) {
+	t.Parallel()
 	said := []string{}
 	err := tailnet.Start(context.Background(), tailnet.Config{Name: "  "}, http.NotFoundHandler(), nil, nil,
 		func(s tailnet.Status) { said = append(said, s.String()) })
@@ -26,6 +27,7 @@ func TestNoNameMeansOff(t *testing.T) {
 // Each step is said twice: a short line for the terminal, and what to do
 // next with the link to do it, for the chat.
 func TestEachStepSaysWhatToDoNext(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		s          tailnet.Status
 		line, word string

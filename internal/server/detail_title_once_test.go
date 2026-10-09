@@ -12,6 +12,7 @@ import (
 // on its detail page — in the h1 heading, and nowhere else including crumbs.
 // This covers acceptance item 1 (title duplication) and item 4 for notes.
 func TestDetailTitleAppearsOnce(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{

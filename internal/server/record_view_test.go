@@ -12,6 +12,7 @@ import (
 // get_record (and so MCP) and GET /api/{type}/{id} give one view, with
 // the same keys and the same whole title.
 func TestARecordReadsTheSameEveryWay(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	var made map[string]any
 	decode(t, postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": strings.Repeat("A long title that goes on ", 4)}), &made)

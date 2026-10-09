@@ -16,6 +16,7 @@ import (
 // question about columns, the tasks come in with their words and days,
 // it says how many from where, and Undo takes them away again.
 func TestThingsAreBroughtFromAnotherApp(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	if page := get(t, h, "/bring").Body.String(); !strings.Contains(page, "Todoist") || !strings.Contains(page, `name="file"`) {
 		t.Fatalf("the page says how to get each export and takes the file: %s", truncate(page))

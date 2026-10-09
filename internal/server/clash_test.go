@@ -24,6 +24,7 @@ func clashOn(t *testing.T, s *store.Store, page, other string) (string, string) 
 // The offer shows what differs, marked in words as well as by shape, and
 // names the page's version rather than where it sits.
 func TestAClashShowsWhatDiffers(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	_, href := clashOn(t, a.Store, "Tea and toast at nine.", "Tea and cake at nine.")
 	page := get(t, h, href).Body.String()
@@ -45,6 +46,7 @@ func TestAClashShowsWhatDiffers(t *testing.T) {
 // Each answer returns to the record's page and says what it did, with
 // its Undo; Keep both keeps both texts.
 func TestAClashAnswerIsSaidAndCanBeUndone(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	id, href := clashOn(t, a.Store, "the later words", "the earlier words")
 	r := postForm(t, h, "/clash/c1/both", url.Values{"from": {href}})
@@ -66,6 +68,7 @@ func TestAClashAnswerIsSaidAndCanBeUndone(t *testing.T) {
 // Keeping the page's version sets the other aside, and Undo offers it
 // again: no answer loses anyone's words for good.
 func TestKeepingThePagesVersionCanBeUndone(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	_, href := clashOn(t, a.Store, "the later words", "the earlier words")
 	page := after(t, h, postForm(t, h, "/clash/c1/keep", url.Values{"from": {href}})).Body.String()
@@ -81,6 +84,7 @@ func TestKeepingThePagesVersionCanBeUndone(t *testing.T) {
 
 // Using the other version can be undone: the page's words come back.
 func TestUsingTheOtherVersionCanBeUndone(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	id, href := clashOn(t, a.Store, "the later words", "the earlier words")
 	page := after(t, h, postForm(t, h, "/clash/c1/use", url.Values{"from": {href}})).Body.String()

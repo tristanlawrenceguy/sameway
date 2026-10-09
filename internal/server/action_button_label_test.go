@@ -9,6 +9,7 @@ import (
 // long multi-word title, only three words appear after "Run" in the button's
 // visible label. No duplicate context span is rendered. (Acceptance 1.)
 func TestActionButtonLabelTrimsLongActionName(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Create an action with a title longer than three words.
@@ -56,6 +57,7 @@ func TestActionButtonLabelTrimsLongActionName(t *testing.T) {
 // three words or fewer, the full name appears after "Run" with no trimming.
 // (Acceptance 2.)
 func TestActionButtonLabelShortNameUnchanged(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Create an action whose title is exactly three words — at the limit.
@@ -89,6 +91,7 @@ func TestActionButtonLabelShortNameUnchanged(t *testing.T) {
 // TestActionButtonLabelTwoWordName verifies that an action name with two words
 // is shown in full (no trimming needed under the 3-word limit).
 func TestActionButtonLabelTwoWordName(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("action", map[string]any{
@@ -122,6 +125,7 @@ func TestActionButtonLabelTwoWordName(t *testing.T) {
 // TestActionButtonLabelVeryLongName verifies that an action name with many words
 // is trimmed to exactly three, not six or any other count. (Acceptance 1.)
 func TestActionButtonLabelVeryLongName(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("action", map[string]any{
@@ -159,6 +163,7 @@ func TestActionButtonLabelVeryLongName(t *testing.T) {
 // TestActionButtonLabelWithExtraSpaces verifies that extra whitespace between
 // words does not cause issues — strings.Fields normalizes spaces. (Acceptance 1.)
 func TestActionButtonLabelWithExtraSpaces(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("action", map[string]any{
@@ -191,6 +196,7 @@ func TestActionButtonLabelWithExtraSpaces(t *testing.T) {
 // TestActionButtonLabelOneWord verifies that a single-word action name is not
 // trimmed. (Acceptance 2.)
 func TestActionButtonLabelOneWord(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("action", map[string]any{
@@ -211,6 +217,7 @@ func TestActionButtonLabelOneWord(t *testing.T) {
 // TestActionButtonLabelExactlyThreeWords verifies that a title with exactly
 // three words is shown in full — no trimming at the boundary. (Acceptance 2.)
 func TestActionButtonLabelExactlyThreeWords(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("action", map[string]any{
@@ -231,6 +238,7 @@ func TestActionButtonLabelExactlyThreeWords(t *testing.T) {
 // TestActionButtonLabelSendEmail verifies that a two-word action name appears
 // in full. (Acceptance 2.)
 func TestActionButtonLabelSendEmail(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("action", map[string]any{

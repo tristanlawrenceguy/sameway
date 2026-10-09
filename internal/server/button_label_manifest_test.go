@@ -15,6 +15,7 @@ import (
 // every example's label is ≤3 words.  This covers Acceptance 1 for all system-level
 // button examples, including the action example "Turn on the alarm".
 func TestButtonExamplesLabelsAreShort(t *testing.T) {
+	t.Parallel()
 	data, err := design.FS.ReadFile("components/button/manifest.json")
 	if err != nil {
 		t.Fatalf("cannot read button manifest: %v", err)

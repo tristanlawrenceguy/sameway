@@ -13,6 +13,7 @@ import (
 // existing trimTitle word-count check does nothing. This test pins that the h1
 // no longer displays the full untrimmed string. (Backlog #0449; Acceptance 1.)
 func TestDetailPageH1TrimsLongSingleWordTitle(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Create a note with a single very-long word — no spaces.
@@ -53,6 +54,7 @@ func windowTitle(body string) string {
 // six words (even if the total character count is high) is displayed in full,
 // with no ellipsis. (Acceptance 5.)
 func TestDetailPageH1LeavesSixWordTitleUntouched(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Six medium-length words — well within any reasonable char limit.
@@ -81,6 +83,7 @@ func TestDetailPageH1LeavesSixWordTitleUntouched(t *testing.T) {
 // For example "verylongword word2 word3 word4 word5 word6" has 6 words but the
 // first token alone is very long. (Backlog #0449; Acceptance 1.)
 func TestDetailPageH1TrimsLongTokenWithSpaces(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	oneVeryLong := strings.Repeat("x", 120)
@@ -108,6 +111,7 @@ func TestDetailPageH1TrimsLongTokenWithSpaces(t *testing.T) {
 // TestListRowH2TrimsLongSingleWordTitle verifies that a list row h2
 // heading trims a very-long single-word title. (Acceptance 3.)
 func TestListRowH2TrimsLongSingleWordTitle(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	longWord := strings.Repeat("c", 160)

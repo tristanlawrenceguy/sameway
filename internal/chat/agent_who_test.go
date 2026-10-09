@@ -13,6 +13,7 @@ import (
 // AgentWho (directly or via Sentence/whoDid).
 
 func TestGoHttpClientIsAnAgent(t *testing.T) {
+	t.Parallel()
 	// Acceptance 1 & 2: "Go-http-client" is treated as anonymous.
 	cases := []struct {
 		name string

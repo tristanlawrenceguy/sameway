@@ -13,6 +13,7 @@ import (
 // change shape when one appears; its own title leaves the screen once it
 // holds anything; and a pane is named by what is in it.
 func TestCanvasIsAnApplicationWithOrWithoutPanes(t *testing.T) {
+	t.Parallel()
 	h, _ := canvasWithABlock(t)
 	doc := parse(t, get(t, h, "/"))
 	if shell, _ := htmltest.Attr(doc.Elements("body")[0], "data-shell"); shell != "app" {

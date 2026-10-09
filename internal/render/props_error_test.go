@@ -13,6 +13,7 @@ import (
 // line per problem by the prop's readable name and no schema words; the
 // one fixing the call gets each problem whole, and every prop there is.
 func TestPropsThatDoNotFitAreKeptWhole(t *testing.T) {
+	t.Parallel()
 	reg := render.New()
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		t.Fatal(err)

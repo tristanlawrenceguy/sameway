@@ -11,6 +11,7 @@ import (
 // and wrote an HTML page of its own in five tasks out of five. The index
 // is small, says how to build first, and documents the block routes whole.
 func TestDescribeIsASmallIndexThatSaysHowToBuild(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	rec := get(t, h, "/api/describe")
 	wantStatus(t, rec, http.StatusOK)
@@ -59,6 +60,7 @@ func TestDescribeIsASmallIndexThatSaysHowToBuild(t *testing.T) {
 // and one example, not the props the server fills in, and not the
 // accessibility and machine contract, which ?full=1 adds.
 func TestDescribeOneComponentIsCompact(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	rec := get(t, h, "/api/describe/components/collection")
 	wantStatus(t, rec, http.StatusOK)
@@ -94,6 +96,7 @@ func TestDescribeOneComponentIsCompact(t *testing.T) {
 // What the index says about adding a block holds: the body it describes
 // is written, answers with shows, and lands on the canvas it names.
 func TestTheIndexedWayToAddABlockWorks(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	rec := postJSON(t, h, http.MethodPost, "/api/block", map[string]any{
 		"component": "collection", "props": map[string]any{"type": "task", "where": []string{"done=false"}, "label": "To do"},

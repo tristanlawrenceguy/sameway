@@ -18,6 +18,7 @@ import (
 // Two versions written at once: the record's page offers the other one,
 // and using it puts it in place; keeping the page's clears the offer.
 func TestTheOtherVersionIsOfferedOnThePage(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	n, _ := a.Store.Create("note", map[string]any{"title": "Plan", "body": "the later words"})
 	now := time.Now().UTC()
@@ -40,6 +41,7 @@ func TestTheOtherVersionIsOfferedOnThePage(t *testing.T) {
 
 // Someone else here is said, with where they are; oneself never is.
 func TestWhoElseIsHere(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Records.Owner = records.Visitor{Access: records.Owner, Login: "me@example.com", Name: "Me"}
 	hana := records.Visitor{Name: "Hana", Login: "hana@example.com", Access: records.Edit}
@@ -65,6 +67,7 @@ func TestWhoElseIsHere(t *testing.T) {
 // A task made out for this computer's owner on another computer tells
 // them, once, and their assistant knows it is for them.
 func TestSomethingForYouReachesYou(t *testing.T) {
+	t.Parallel()
 	mine, hMine := newApp(t)
 	hana, hHana := newApp(t)
 	mine.Records.Owner = records.Visitor{Access: records.Owner, Login: "me@example.com", Name: "Me"}
@@ -100,6 +103,7 @@ func TestSomethingForYouReachesYou(t *testing.T) {
 // Back after a while, what the others changed meanwhile is waiting, with
 // its Undo, until Got it.
 func TestSinceYouWereLastHere(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Store.SetMeta("last:owner", time.Now().Add(-2*time.Hour).UTC().Format(time.RFC3339Nano))
 	records.Record(a.Store, "human", records.Change{Action: "deleted", Component: "note", Detail: "Shopping", By: "Hana", ByLogin: "hana@example.com"})

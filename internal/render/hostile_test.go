@@ -24,6 +24,7 @@ var payloads = []string{
 // attribute, and no javascript: URL. This is the guarantee that lets a model
 // write props straight to the page.
 func TestHostilePropsNeverBecomeMarkup(t *testing.T) {
+	t.Parallel()
 	for _, c := range builtins(t).Components() {
 		var schema struct {
 			Properties map[string]struct {
@@ -111,6 +112,7 @@ func assertInert(t *testing.T, where, payload, out string) {
 // TestRenderIgnoresExtraNesting makes sure a prop value that is an object
 // where a string is expected is rejected rather than stringified.
 func TestRenderRejectsWrongTypes(t *testing.T) {
+	t.Parallel()
 	reg := builtins(t)
 	cases := map[string]map[string]any{
 		"button":  {"label": map[string]any{"x": 1}},

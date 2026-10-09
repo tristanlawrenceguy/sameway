@@ -56,6 +56,7 @@ func fields(t *testing.T, s *store.Store, typ, id string) map[string]any {
 // A note made on one computer is on the other after a sync, under the same
 // id, with the same words.
 func TestARecordMadeOnOneHostReachesTheOther(t *testing.T) {
+	t.Parallel()
 	a, b := twoCopies(t)
 	n, err := a.Create("note", map[string]any{"title": "Shopping", "body": "milk"})
 	if err != nil {
@@ -75,6 +76,7 @@ func TestARecordMadeOnOneHostReachesTheOther(t *testing.T) {
 // both keep their change; the same field goes to the later write, and
 // both copies agree which that is.
 func TestConcurrentEditsMergeByField(t *testing.T) {
+	t.Parallel()
 	a, b := twoCopies(t)
 	n, _ := a.Create("note", map[string]any{"title": "Plan", "body": "draft"})
 	sync(t, a, b)
@@ -100,6 +102,7 @@ func TestConcurrentEditsMergeByField(t *testing.T) {
 // A deletion reaches the other copy, and an undo that puts the record back
 // afterwards wins over it everywhere.
 func TestADeletionAndItsUndoReachEveryCopy(t *testing.T) {
+	t.Parallel()
 	a, b := twoCopies(t)
 	n, _ := a.Create("note", map[string]any{"title": "Old"})
 	sync(t, a, b)
@@ -122,6 +125,7 @@ func TestADeletionAndItsUndoReachEveryCopy(t *testing.T) {
 // Stamps arriving twice, or out of order, change nothing: the copies end
 // the same whichever way round they talk.
 func TestSyncingAgainChangesNothing(t *testing.T) {
+	t.Parallel()
 	a, b := twoCopies(t)
 	n, _ := a.Create("note", map[string]any{"title": "One"})
 	a.Update("note", n.ID, map[string]any{"title": "Two"})
@@ -143,6 +147,7 @@ func TestSyncingAgainChangesNothing(t *testing.T) {
 // What stays on one computer (a chat) is never stamped, so it never
 // leaves; records from before hosting was shared are stamped by Seed.
 func TestLocalTypesStayAndOldRecordsAreSeeded(t *testing.T) {
+	t.Parallel()
 	a, b := twoCopies(t)
 	a.Local = map[string]bool{"message": true}
 	a.Create("message", map[string]any{"role": "user", "content": "private"})
@@ -169,6 +174,7 @@ func TestLocalTypesStayAndOldRecordsAreSeeded(t *testing.T) {
 // said to the assistant is never stamped, while the one saying a note was
 // deleted is.
 func TestSomeRecordsOfASharedTypeStay(t *testing.T) {
+	t.Parallel()
 	a, _ := twoCopies(t)
 	a.LocalRecord = func(typeName string, f map[string]any) bool { return typeName == "activity" && f["action"] == "said" }
 	a.Create("activity", map[string]any{"actor": "human", "action": "said", "detail": "private"})
@@ -192,6 +198,7 @@ func TestSomeRecordsOfASharedTypeStay(t *testing.T) {
 // their words: the later version stands everywhere, and the other is kept
 // as one clash, the same on both. Writing one after the other is no clash.
 func TestTextWrittenAtOnceKeepsBothVersions(t *testing.T) {
+	t.Parallel()
 	a, b := twoCopies(t)
 	n, _ := a.Create("note", map[string]any{"title": "Plan", "body": "first draft"})
 	sync(t, a, b)

@@ -11,6 +11,7 @@ import (
 // by the same Part the MCP server and the command line use, and every wrong
 // turn under /api is answered in the same JSON shape as a right one.
 func TestDescribeIsReadByPart(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	var types []struct {
@@ -76,6 +77,7 @@ func TestDescribeIsReadByPart(t *testing.T) {
 // Arrangements are published like components, with their use notes, and
 // the assistant's tool for them is on the list an agent reads.
 func TestArrangementsAreDescribed(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	var week struct {
 		Name   string

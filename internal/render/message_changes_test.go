@@ -9,6 +9,7 @@ import (
 // shows, without the actor the message's heading already says, never a
 // heading of its own, and its Undo back to the page the message is on.
 func TestMessageChangesAreCompactEvents(t *testing.T) {
+	t.Parallel()
 	reg := builtins(t)
 	out, err := reg.Render("message", map[string]any{
 		"role": "assistant", "content": "Done.", "from": "/chat",
@@ -47,6 +48,7 @@ func TestMessageChangesAreCompactEvents(t *testing.T) {
 // A message refuses a change in the stored shape: the server says it in
 // words first, so a key never reaches the page.
 func TestMessageChangesTakeEventProps(t *testing.T) {
+	t.Parallel()
 	reg := builtins(t)
 	if _, err := reg.Render("message", map[string]any{
 		"role": "assistant", "content": "Done.",

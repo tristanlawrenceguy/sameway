@@ -10,6 +10,7 @@ import (
 // chrome at all. The glow said who did what when it happened; once it has
 // faded, the page is just the person's content.
 func TestRestingCanvasIsQuiet(t *testing.T) {
+	t.Parallel()
 	h, _ := canvasWithABlock(t)
 	doc := parse(t, get(t, h, "/"))
 

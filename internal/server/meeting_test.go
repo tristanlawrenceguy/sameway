@@ -9,6 +9,7 @@ import (
 // a link can land on, and offers a write-up until there is one; a
 // recording no meeting has offers it too.
 func TestAMeetingsPageOffersItsWriteUp(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	file, err := a.Store.Create("file", map[string]any{"title": "Stand-up", "kind": "audio", "name": "standup.m4a",
 		"text": "[0:00] **Ann:** Morning.\n\n[0:12] **Ben:** We ship on Friday."})

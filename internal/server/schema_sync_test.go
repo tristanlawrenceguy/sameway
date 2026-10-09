@@ -28,6 +28,7 @@ func keepInStep(t *testing.T, a *app.App, ha http.Handler, b *app.App) {
 // other: its file in schema/, its table, its records, one pointing at
 // another type that came in the same exchange.
 func TestANewTypeTravelsWithItsRecords(t *testing.T) {
+	t.Parallel()
 	a, ha := newApp(t)
 	b, _ := newApp(t)
 	if _, err := a.AddType(&schema.Type{Name: "ingredient", Fields: []schema.Field{{Name: "name", Type: "string", Required: true}}}); err != nil {
@@ -58,6 +59,7 @@ func TestANewTypeTravelsWithItsRecords(t *testing.T) {
 // Two computers adding different fields to notes both keep both, with
 // what is written in them.
 func TestFieldsAddedOnTwoComputersBothStay(t *testing.T) {
+	t.Parallel()
 	a, ha := newApp(t)
 	b, hb := newApp(t)
 	keepInStep(t, a, ha, b)
@@ -86,6 +88,7 @@ func TestFieldsAddedOnTwoComputersBothStay(t *testing.T) {
 // A record that arrives before its type waits, and is there once the type
 // comes, whatever order the two arrive in.
 func TestARecordWaitsForItsType(t *testing.T) {
+	t.Parallel()
 	a, _ := newApp(t)
 	b, _ := newApp(t)
 	a.AddType(&schema.Type{Name: "plant", Fields: []schema.Field{{Name: "name", Type: "string"}}})

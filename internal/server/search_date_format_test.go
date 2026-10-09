@@ -16,6 +16,7 @@ import (
 // machine format with full years and 24-hour time. This covers acceptance items
 // 1 and 2 (no "2026", no ", HH:MM") for all record types with datetime fields.
 func TestSearchResultSnippetsHaveNoMachineFormatDate(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	tests := []struct {
@@ -58,6 +59,7 @@ func TestSearchResultSnippetsHaveNoMachineFormatDate(t *testing.T) {
 // reader user should never hear the word "added" or "due" as part of the link
 // name; those are database column names, not words for people.
 func TestSearchResultHeadingsHaveNoRawFieldLabels(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	tests := []struct {
@@ -96,6 +98,7 @@ func TestSearchResultHeadingsHaveNoRawFieldLabels(t *testing.T) {
 // of 2") rather than raw field labels like "(added" or "(due". This is acceptance
 // item 3 in a scenario where recordWays would normally produce disambiguation text.
 func TestSearchResultWithIdenticalTitlesHasNoRawLabels(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	// Create two tasks with the same title but different due dates — this triggers

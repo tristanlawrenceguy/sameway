@@ -13,6 +13,7 @@ import (
 // answered as it was the first time; the same key for a different change
 // is refused.
 func TestAChangeSentTwiceIsDoneOnce(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	send := func(body, key string) *httptest.ResponseRecorder {
 		req := httptest.NewRequest(http.MethodPost, "/api/note", strings.NewReader(body))

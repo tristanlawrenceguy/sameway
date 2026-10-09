@@ -58,6 +58,7 @@ func withModel(t *testing.T, steps ...*llm.Response) (*chat.Service, *scripted) 
 }
 
 func TestUpdateRemoveAndClear(t *testing.T) {
+	t.Parallel()
 	svc, _ := withModel(t, call("add_component", map[string]any{"component": "text", "props": map[string]any{"content": "v1"}}))
 	if _, err := svc.Send(context.Background(), "add text"); err != nil {
 		t.Fatal(err)
@@ -124,6 +125,7 @@ func TestUpdateRemoveAndClear(t *testing.T) {
 // TestComponentNamesAreCaseInsensitive covers what local models actually
 // send: "List" or " Table " instead of the catalogue name.
 func TestComponentNamesAreCaseInsensitive(t *testing.T) {
+	t.Parallel()
 	svc, m := withModel(t,
 		call("add_component", map[string]any{"component": "List", "props": map[string]any{"items": []string{"milk", "eggs"}}}),
 		call("add_component", map[string]any{"component": " TABLE ", "props": map[string]any{"caption": "c", "columns": []string{"a"}, "rows": [][]string{{"1"}}}}),
@@ -143,6 +145,7 @@ func TestComponentNamesAreCaseInsensitive(t *testing.T) {
 // TestToolSchemasAreStrictJSON guards what local servers choke on: llama.cpp
 // builds a grammar from each tool schema and rejects null or missing pieces.
 func TestToolSchemasAreStrictJSON(t *testing.T) {
+	t.Parallel()
 	svc, m := withModel(t)
 	svc.Send(context.Background(), "hi")
 	for _, tool := range m.seen[0].Tools {
@@ -171,6 +174,7 @@ func TestToolSchemasAreStrictJSON(t *testing.T) {
 }
 
 func TestBlocksKeepInsertionOrder(t *testing.T) {
+	t.Parallel()
 	svc, _ := withModel(t,
 		call("add_component", map[string]any{"component": "heading", "props": map[string]any{"text": "First"}}),
 		call("add_component", map[string]any{"component": "heading", "props": map[string]any{"text": "Second"}}),
@@ -188,6 +192,7 @@ func TestBlocksKeepInsertionOrder(t *testing.T) {
 }
 
 func TestToolErrorsGuideTheModel(t *testing.T) {
+	t.Parallel()
 	svc, m := withModel(t,
 		call("add_component", map[string]any{"component": "carousel", "props": map[string]any{}}),
 		call("add_component", map[string]any{"component": "button", "props": map[string]any{"label": "x", "variant": "huge"}}),
@@ -216,6 +221,7 @@ func TestToolErrorsGuideTheModel(t *testing.T) {
 }
 
 func TestSystemPromptCarriesCatalogueAndCanvas(t *testing.T) {
+	t.Parallel()
 	svc, m := withModel(t, call("add_component", map[string]any{"component": "list", "props": map[string]any{"items": []string{"a"}}}))
 	svc.ExtraPrompt = "Always answer in Dutch."
 	svc.Clock = func() time.Time { return time.Date(2026, 9, 15, 10, 0, 0, 0, time.UTC) }
@@ -239,6 +245,7 @@ func TestSystemPromptCarriesCatalogueAndCanvas(t *testing.T) {
 }
 
 func TestHistoryLimitAndErrorFiltering(t *testing.T) {
+	t.Parallel()
 	svc, m := withModel(t)
 	svc.HistoryLimit = 3
 	for _, text := range []string{"one", "two"} {
@@ -267,6 +274,7 @@ func TestHistoryLimitAndErrorFiltering(t *testing.T) {
 }
 
 func TestProviderFailureIsRecorded(t *testing.T) {
+	t.Parallel()
 	svc, _ := newService(t)
 	svc.Provider = failing{}
 	rec, err := svc.Send(context.Background(), "hi")

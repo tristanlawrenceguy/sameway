@@ -67,6 +67,7 @@ func text(t *testing.T, reply map[string]any) (string, bool) {
 // An MCP host does the handshake, lists the tools, and calls them: the
 // assistant's own verbs plus reading, all from one list.
 func TestAnAgentDrivesTheWorkspaceOverMCP(t *testing.T) {
+	t.Parallel()
 	a, replies := drive(t,
 		`{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"test","version":"0"}}}`,
 		`{"jsonrpc":"2.0","method":"notifications/initialized"}`,
@@ -131,6 +132,7 @@ func TestAnAgentDrivesTheWorkspaceOverMCP(t *testing.T) {
 // The protocol's own errors: bad JSON, a method this server lacks, and a
 // tool call that the schema refuses, each answered rather than dropped.
 func TestMCPErrorsAreAnsweredNotDropped(t *testing.T) {
+	t.Parallel()
 	_, replies := drive(t,
 		`{not json`,
 		`{"jsonrpc":"2.0","id":2,"method":"resources/list"}`,
@@ -157,6 +159,7 @@ func TestMCPErrorsAreAnsweredNotDropped(t *testing.T) {
 // The describe tool is cut by part the same way /api/describe is, so an
 // MCP client reads the fields of one type without the whole document.
 func TestDescribeOverMCPIsReadByPart(t *testing.T) {
+	t.Parallel()
 	_, replies := drive(t,
 		`{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"describe","arguments":{"part":"types","name":"note"}}}`,
 		`{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"describe","arguments":{"part":"nope"}}}`,
@@ -174,6 +177,7 @@ func TestDescribeOverMCPIsReadByPart(t *testing.T) {
 
 // The look tool reads a page through the same handler the API serves.
 func TestAnAgentLooksAtAPageOverMCP(t *testing.T) {
+	t.Parallel()
 	_, replies := drive(t,
 		`{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"look","arguments":{"path":"/t/note"}}}`,
 		`{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"look","arguments":{"component":"card","props":{"title":"Plan"}}}}`,

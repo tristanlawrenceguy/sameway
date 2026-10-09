@@ -18,6 +18,7 @@ import (
 
 // The engine's lines of what was heard become cues, and cues a WebVTT.
 func TestTheEnginesLinesBecomeCues(t *testing.T) {
+	t.Parallel()
 	out := "Started\nnum threads: 4\n0.326 -- 16.704: God as a direct consequence\n17.000 -- 18.500:  \n18.5 -- 20.25: And then.\nElapsed seconds: 1.5 s\n"
 	cues := Parse(out)
 	if len(cues) != 2 || cues[0].Start != 0.326 || cues[0].End != 16.704 || cues[0].Text != "God as a direct consequence" || cues[1].Text != "And then." {
@@ -31,6 +32,7 @@ func TestTheEnginesLinesBecomeCues(t *testing.T) {
 
 // Any PCM WAV, at any rate and in stereo, becomes the engine's 16 kHz mono.
 func TestAWAVBecomesTheSoundTheEngineReads(t *testing.T) {
+	t.Parallel()
 	// A 48 kHz stereo 16-bit WAV of one second, left at half, right silent,
 	// with a chunk before its sound that is passed over.
 	var in bytes.Buffer
@@ -69,6 +71,7 @@ func TestAWAVBecomesTheSoundTheEngineReads(t *testing.T) {
 // fingerprint is the one expected, unpacks the engine, and fetches nothing
 // again that is already here.
 func TestSpeechToTextIsFetchedCheckedAndKept(t *testing.T) {
+	t.Parallel()
 	exe := "sherpa-onnx-vad-with-offline-asr"
 	if runtime.GOOS == "windows" {
 		exe += ".exe"
@@ -130,6 +133,7 @@ func TestSpeechToTextIsFetchedCheckedAndKept(t *testing.T) {
 
 // An archive entry that would land outside the engine's folder is refused.
 func TestAnArchiveCannotWriteOutsideItself(t *testing.T) {
+	t.Parallel()
 	var arc bytes.Buffer
 	gz := gzip.NewWriter(&arc)
 	tw := tar.NewWriter(gz)
@@ -147,6 +151,7 @@ func TestAnArchiveCannotWriteOutsideItself(t *testing.T) {
 
 // Every system sameway is built for has an engine pinned by fingerprint.
 func TestEverySystemHasAPinnedEngine(t *testing.T) {
+	t.Parallel()
 	for _, sys := range []string{"windows/amd64", "windows/arm64", "darwin/arm64", "darwin/amd64", "linux/amd64", "linux/arm64"} {
 		e, ok := engines[sys]
 		if !ok || len(e.SHA256) != 64 || !strings.HasPrefix(e.URL, "https://github.com/k2-fsa/sherpa-onnx/releases/download/v"+EngineVersion+"/") {
@@ -163,6 +168,7 @@ func TestEverySystemHasAPinnedEngine(t *testing.T) {
 // The program's lines are read as turns, the voices numbered in the order
 // they are first heard.
 func TestTurnsAreNumberedAsTheyAreHeard(t *testing.T) {
+	t.Parallel()
 	out := "Started\n0.031 -- 2.039 speaker_01\n2.039 -- 3.777 speaker_00\n5.330 -- 5.971 speaker_01\nprogress 100.00%\n"
 	turns := ParseTurns(out)
 	if len(turns) != 3 || turns[0].Speaker != 1 || turns[1].Speaker != 2 || turns[2].Speaker != 1 || turns[1].Start != 2.039 {

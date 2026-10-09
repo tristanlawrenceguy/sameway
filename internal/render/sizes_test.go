@@ -25,6 +25,7 @@ func calendarProps(detail string) map[string]any {
 // what is next, a month, and a full page. Every size says the same thing to
 // a screen reader that it says on screen; none of them drops the content.
 func TestCalendarSpansItsSizes(t *testing.T) {
+	t.Parallel()
 	reg := builtins(t)
 	for _, tc := range []struct {
 		detail string
@@ -98,6 +99,7 @@ func TestCalendarSpansItsSizes(t *testing.T) {
 // TestCalendarGlanceStaysQuietWhenNothingIsComingUp: an attention dot that
 // is always lit is not an attention dot.
 func TestCalendarGlanceStaysQuietWhenNothingIsComingUp(t *testing.T) {
+	t.Parallel()
 	reg := builtins(t)
 	props := calendarProps("glance")
 	props["events"] = []any{}

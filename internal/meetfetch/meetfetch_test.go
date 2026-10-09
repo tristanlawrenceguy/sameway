@@ -14,6 +14,7 @@ import (
 // while they have not, keeps the sign-in on this computer, and finds a
 // meeting's transcript by its join link.
 func TestTeamsSignsInAndFetchesATranscript(t *testing.T) {
+	t.Parallel()
 	var polls atomic.Int32
 	join := "https://teams.microsoft.com/l/meetup-join/19%3ameeting_abc%40thread.v2/0"
 	ms := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -70,6 +71,7 @@ func TestTeamsSignsInAndFetchesATranscript(t *testing.T) {
 // Zoom signs in as the account's own app and finds a meeting's transcript
 // among its cloud recording's files; with none yet, it says so.
 func TestZoomFetchesATranscript(t *testing.T) {
+	t.Parallel()
 	ready := false
 	zoom := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {

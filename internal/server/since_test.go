@@ -26,6 +26,7 @@ func sinceSection(page string) string {
 // Back after a long while, the notice says how many and since when, lists
 // the newest five, and leads to the rest where they begin in the log.
 func TestSinceSaysHowManyAndListsAFew(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Store.SetMeta("last:owner", time.Now().Add(-2*time.Hour).UTC().Format(time.RFC3339Nano))
 	for i := range 7 {
@@ -60,6 +61,7 @@ func TestSinceSaysHowManyAndListsAFew(t *testing.T) {
 
 // Got it returns to the page it was pressed on, not Home.
 func TestSinceGotItStaysOnThePage(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Store.SetMeta("last:owner", time.Now().Add(-2*time.Hour).UTC().Format(time.RFC3339Nano))
 	records.Record(a.Store, "human", records.Change{Action: "deleted", Component: "note", Detail: "Shopping", By: "Hana", ByLogin: "hana@example.com"})
@@ -81,6 +83,7 @@ func TestSinceGotItStaysOnThePage(t *testing.T) {
 // anyone on the internet, never shows it, though nobody it knows was
 // taken for the owner.
 func TestAPublishedPageDoesNotSayWhatChanged(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Store.SetMeta("last:owner", time.Now().Add(-2*time.Hour).UTC().Format(time.RFC3339Nano))
 	records.Record(a.Store, "human", records.Change{Action: "added", Component: "note", Detail: "Private plans", By: "Hana", ByLogin: "hana@example.com"})

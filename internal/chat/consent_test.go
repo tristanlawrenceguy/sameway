@@ -49,6 +49,7 @@ func use(t *testing.T, svc *chat.Service, tool string, args map[string]any) (str
 // reminder runs is asked first, in plain words the code writes, and
 // nothing changes until the person says yes.
 func TestAProgramToRunIsAskedFirstInPlainWords(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	cfg := withSettings(svc, nil)
 
@@ -80,6 +81,7 @@ func TestAProgramToRunIsAskedFirstInPlainWords(t *testing.T) {
 // Where the conversation goes is asked, naming the place it would go and
 // the place it goes now; a reversible setting just changes.
 func TestWhereTheConversationGoesIsAskedAndThePaceIsNot(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	cfg := withSettings(svc, map[string]string{"llm.base_url": "http://127.0.0.1:8090/v1"})
 
@@ -102,6 +104,7 @@ func TestWhereTheConversationGoesIsAskedAndThePaceIsNot(t *testing.T) {
 // Sending something to an address is asked every time the assistant
 // would do it, saying what goes where; the person's own press is theirs.
 func TestSendingSomewhereIsAskedAndThePersonsOwnPressIsNot(t *testing.T) {
+	t.Parallel()
 	var calls int
 	remote := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		io.ReadAll(r.Body)
@@ -143,6 +146,7 @@ func TestSendingSomewhereIsAskedAndThePersonsOwnPressIsNot(t *testing.T) {
 // asks them: the assistant cannot write it, by making or changing an
 // action, or by importing one.
 func TestTheAssistantCannotAcceptItsOwnCommand(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	text, isErr := use(t, svc, "create_record", map[string]any{"type": records.ActionType, "fields": map[string]any{
 		"title": "Tidy", "kind": "command", "command": "rm -rf ~", "accepted": "rm -rf ~"}})
@@ -158,6 +162,7 @@ func TestTheAssistantCannotAcceptItsOwnCommand(t *testing.T) {
 // A workspace made before a field was the system's to keep still keeps
 // it: the built-in definition says so.
 func TestAnOlderWorkspaceKeepsWhatTheSystemKeeps(t *testing.T) {
+	t.Parallel()
 	builtin, err := schema.Load("../../examples/workspaces/starter/schema")
 	if err != nil {
 		t.Fatal(err)
@@ -186,6 +191,7 @@ fields:
 
 // Publishing is only ever asked, in plain words; unpublishing is not.
 func TestPublishingIsAskedAndUnpublishingIsNot(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	cfg := withSettings(svc, nil)
 	text, isErr := use(t, svc, "set_setting", map[string]any{"key": "publish.tabs", "value": "Recipes"})

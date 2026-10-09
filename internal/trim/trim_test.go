@@ -8,6 +8,7 @@ import (
 
 // A title is cut at a word with an ellipsis, or left whole when it fits.
 func TestTitleCutsAtAWordWithAnEllipsis(t *testing.T) {
+	t.Parallel()
 	long := strings.Repeat("a", 160)
 	for _, c := range []struct{ in, want string }{
 		{"Call the dentist", "Call the dentist"},
@@ -31,6 +32,7 @@ func TestTitleCutsAtAWordWithAnEllipsis(t *testing.T) {
 // Clip, Line and Flat count characters, so é and an emoji are never split,
 // and say with an ellipsis, within n, that they cut.
 func TestClipCountsCharactersNotBytes(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct{ got, want string }{
 		{Clip("café au lait", 5), "café…"},
 		{Clip("éééééé", 4), "ééé…"},

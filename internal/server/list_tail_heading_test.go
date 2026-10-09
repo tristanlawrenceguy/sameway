@@ -9,6 +9,7 @@ import (
 // have a heading of their own, so an agent or a screen reader does not
 // take them for the last record's.
 func TestAListsOwnControlsAreNotTheLastRecords(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	postForm(t, h, "/t/note/add", nil)
 	page := get(t, h, "/t/note").Body.String()

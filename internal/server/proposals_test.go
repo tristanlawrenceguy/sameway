@@ -14,6 +14,7 @@ import (
 // own page. Clearing the conversation clears its questions with it, and a
 // listing says which proposals still wait.
 func TestQuestionsAreAnsweredWhereTheyAreMet(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Chat.Provider, a.Chat.ProviderErr = &scripted{steps: []*llm.Response{
 		toolCall("add_component", map[string]any{"component": "card", "props": map[string]any{"title": "Old"}}),

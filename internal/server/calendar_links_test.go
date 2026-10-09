@@ -15,6 +15,7 @@ import (
 // in step: what changed there changes here, what went there goes here, and
 // an event the person made is never touched.
 func TestACalendarLinkKeepsItsEventsInStep(t *testing.T) {
+	t.Parallel()
 	feed := ics("a1", "Standup", "20261012T090000Z") + ics("a2", "Review", "20261013T140000Z")
 	cal := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, "BEGIN:VCALENDAR\r\nVERSION:2.0\r\n"+feed+"END:VCALENDAR\r\n")

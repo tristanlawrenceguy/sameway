@@ -25,6 +25,7 @@ func seeds(t *testing.T) http.Handler {
 // Search covers everything; the kinds found are offered as links with how
 // many each found, All first and marked as the one shown.
 func TestSearchIsEverythingWithTheKindsCounted(t *testing.T) {
+	t.Parallel()
 	h := seeds(t)
 	body := get(t, h, "/search?q=seeds").Body.String()
 	for _, want := range []string{"Order", "Sow the", "Buy", "Water", "Label", "5 things found",
@@ -57,6 +58,7 @@ func TestSearchIsEverythingWithTheKindsCounted(t *testing.T) {
 // ?type narrows the results, said once in the heading and the window title,
 // with the way back to everything first.
 func TestSearchNarrowedToAKind(t *testing.T) {
+	t.Parallel()
 	h := seeds(t)
 	body := get(t, h, "/search?q=seeds&type=task").Body.String()
 	if strings.Contains(body, "Order") || !strings.Contains(body, "Buy") || !strings.Contains(body, "Label") {
@@ -94,6 +96,7 @@ func TestSearchNarrowedToAKind(t *testing.T) {
 // From a kind's own pages, Search opens narrowed to that kind with the way
 // out first; from anywhere general it is everything.
 func TestSearchFromAKindsPlaceStartsThere(t *testing.T) {
+	t.Parallel()
 	h := seeds(t)
 	var out struct{ Hits []struct{ Href string } }
 	decode(t, get(t, h, "/api/search?q=buy"), &out)
@@ -118,6 +121,7 @@ func TestSearchFromAKindsPlaceStartsThere(t *testing.T) {
 
 // Paging keeps the kind, and the kinds keep the words and start at page 1.
 func TestSearchPagesKeepTheKind(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	for i := range 25 {
 		wantStatus(t, postJSON(t, h, http.MethodPost, "/api/task", map[string]any{"title": fmt.Sprintf("Seeds %d", i)}), http.StatusCreated)
@@ -138,6 +142,7 @@ func TestSearchPagesKeepTheKind(t *testing.T) {
 
 // A kind there is none of, or one the system keeps, is refused plainly.
 func TestSearchRefusesAKindItCannotNarrowTo(t *testing.T) {
+	t.Parallel()
 	h := seeds(t)
 	for _, kind := range []string{"zebra", "message", "block", "activity"} {
 		page := get(t, h, "/search?q=seeds&type="+kind)

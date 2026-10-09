@@ -14,6 +14,7 @@ import (
 // by a person, read as names, refused when a name is nobody or two people,
 // and a person's page connects to the meetings they are in.
 func TestAMeetingsPeopleAreThePeople(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	ann, _ := a.Store.Create("person", map[string]any{"name": "Ann Lee", "email": "ann@example.com"})
 	ben, _ := a.Store.Create("person", map[string]any{"name": "Ben Ortiz"})
@@ -57,6 +58,7 @@ func TestAMeetingsPeopleAreThePeople(t *testing.T) {
 
 // A calendar's invitations bring their people: found by email, or made.
 func TestACalendarsPeopleComeWithIt(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	ann, _ := a.Store.Create("person", map[string]any{"name": "Ann Lee", "email": "ann@example.com"})
 	ics := "BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nUID:1@x\r\nSUMMARY:Planning\r\nDTSTART:20261005T090000Z\r\nORGANIZER;CN=Ann Lee:mailto:ann@example.com\r\nATTENDEE;CN=\"Cara Diaz\";ROLE=REQ-PARTICIPANT:mailto:cara@example.com\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"

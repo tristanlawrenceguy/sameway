@@ -25,6 +25,7 @@ func bodyText(t *testing.T, doc *htmltest.Doc) string {
 // the count, the new record's title, its Delete button, its crumb and its
 // line in the activity log (backlog 0544).
 func TestTypeNamesReadInWords(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	postJSON(t, h, http.MethodPost, "/api/types", map[string]any{
 		"name": "test_type", "description": "A test type.", "title": "title",
@@ -64,6 +65,7 @@ func TestTypeNamesReadInWords(t *testing.T) {
 // shows its title, not a list of its type's field kinds as if they were
 // its values; there is no special page for a type called test_type.
 func TestEmptyRecordShowsNoFieldKinds(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	postJSON(t, h, http.MethodPost, "/api/types", map[string]any{
 		"name": "test_type", "description": "A test type.", "title": "title",
@@ -94,6 +96,7 @@ func TestEmptyRecordShowsNoFieldKinds(t *testing.T) {
 // inline editor arms carries the title, as a canvas block does (backlog
 // 0550). The name is heard, not seen, so the page still says the title once.
 func TestDetailEditNamedForRecord(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	rec, err := a.Store.Create("note", map[string]any{"title": "Buy milk", "body": "Two litres."})
 	if err != nil {
@@ -116,6 +119,7 @@ func TestDetailEditNamedForRecord(t *testing.T) {
 // as words; an agent finds the log from the page's alternate link
 // (backlog 0555).
 func TestActivityPageSaysNoAddress(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	doc := parse(t, get(t, h, "/activity"))
 	if text := bodyText(t, doc); strings.Contains(text, "/api/") {
@@ -138,6 +142,7 @@ func TestActivityPageSaysNoAddress(t *testing.T) {
 // in words, How much and Counted in, not target and unit made capital,
 // and a goal of 0 is no goal, so it says nothing of one (backlog 0551).
 func TestHabitPageSaysItsSettingsInWords(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	rec, err := a.Store.Create("habit", map[string]any{"name": "Water", "target": 8.0, "unit": "glasses", "goal": 0.0})
 	if err != nil {

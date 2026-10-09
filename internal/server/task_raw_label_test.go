@@ -9,6 +9,7 @@ import (
 // show the raw schema field name "due" as a visible label on its datetime chip,
 // and instead shows only the date text (acceptance items 1 & 4).
 func TestTaskDetailLedeNoRawDueLabel(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	_, err := a.Store.Create("task", map[string]any{
@@ -49,6 +50,7 @@ func TestTaskDetailLedeNoRawDueLabel(t *testing.T) {
 // display the raw schema column name "Due" in their dayFact cells (acceptance
 // items 3 & 4). This covers both chip mode (detail lede) and row mode.
 func TestTaskListRowNoRawDatetimeLabel(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	_, err := a.Store.Create("task", map[string]any{

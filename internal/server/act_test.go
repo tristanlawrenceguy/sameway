@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
@@ -17,9 +18,19 @@ import (
 // runs the webhook, lands the person back where they were, and the log
 // says so.
 func TestAnActionIsAButtonEverywhere(t *testing.T) {
+	t.Parallel()
+	// What the webhook was sent, by method and address: a stray request
+	// from another test running beside this one says where it came from.
+	var mu sync.Mutex
+	var sent []string
 	calls := 0
 	remote := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		calls++
+		mu.Lock()
+		defer mu.Unlock()
+		sent = append(sent, r.Method+" "+r.URL.String())
+		if r.Method == http.MethodPost && r.URL.Path == "/alarm" {
+			calls++
+		}
 		io.WriteString(w, "alarm on")
 	}))
 	defer remote.Close()
@@ -37,7 +48,7 @@ func TestAnActionIsAButtonEverywhere(t *testing.T) {
 	rec := postForm(t, h, "/act/"+action.ID, url.Values{"from": {"/t/action/" + action.ID}})
 	wantStatus(t, rec, http.StatusSeeOther)
 	if loc := rec.Header().Get("Location"); loc != "/t/action/"+action.ID || calls != 1 {
-		t.Errorf("pressing Run should call the webhook once and return to the page, got %q after %d calls", loc, calls)
+		t.Errorf("pressing Run should call the webhook once and return to the page, got %q after %d calls: %v", loc, calls, sent)
 	}
 	if !logged(t, h, "You ran action Turn on the alarm (200)") {
 		t.Error("the run should be in the log under the person's name")
@@ -59,7 +70,7 @@ func TestAnActionIsAButtonEverywhere(t *testing.T) {
 	rec = postJSON(t, h, http.MethodPost, "/api/act/"+action.ID, nil)
 	wantStatus(t, rec, http.StatusOK)
 	if !strings.Contains(rec.Body.String(), "alarm on") || calls != 2 {
-		t.Errorf("the API should run it and answer with the result, got %s after %d calls", rec.Body.String(), calls)
+		t.Errorf("the API should run it and answer with the result, got %s after %d calls: %v", rec.Body.String(), calls, sent)
 	}
 	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/act/nope", nil), http.StatusBadRequest)
 }

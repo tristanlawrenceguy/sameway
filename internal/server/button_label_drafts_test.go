@@ -14,6 +14,7 @@ import (
 // a short, plain-verb button label — not "Continue editing".  After the change it
 // should say just "Edit".  This covers Acceptance 2 (active verb only).
 func TestDraftsButtonLabelIsShort(t *testing.T) {
+	t.Parallel()
 	data, err := design.FS.ReadFile("base/18-drafts.js")
 	if err != nil {
 		t.Fatalf("cannot read drafts.js: %v", err)

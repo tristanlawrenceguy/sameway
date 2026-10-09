@@ -47,6 +47,7 @@ func title(b *records.Book, typ, id string) any {
 // A change is written all or none: when one op cannot be, those before it
 // are put back, so nothing is left half made.
 func TestApplyIsAllOrNone(t *testing.T) {
+	t.Parallel()
 	b := newBook(t)
 	kept, _ := b.Store.Create("note", map[string]any{"title": "Kept"})
 	_, err := b.Apply(
@@ -73,6 +74,7 @@ func TestApplyIsAllOrNone(t *testing.T) {
 // A batch that keeps its ops is undone as the same ops the other way, and
 // the undo undone again, whatever the batch was called.
 func TestABatchOfOpsIsUndoneAndRedone(t *testing.T) {
+	t.Parallel()
 	b := newBook(t)
 	changed, _ := b.Store.Create("note", map[string]any{"title": "Before"})
 	gone, _ := b.Store.Create("note", map[string]any{"title": "Gone"})
@@ -110,6 +112,7 @@ func TestABatchOfOpsIsUndoneAndRedone(t *testing.T) {
 // An entry for one thing names it, and it must still be as the entry left
 // it: an update to a note since deleted is not undone over the deletion.
 func TestOneThingMustBeAsTheEntryLeftIt(t *testing.T) {
+	t.Parallel()
 	b := newBook(t)
 	n, _ := b.Store.Create("note", map[string]any{"title": "One"})
 	done, _ := b.Apply(records.Op{Type: "note", ID: n.ID, After: map[string]any{"title": "Two"}})
@@ -138,6 +141,7 @@ func TestOneThingMustBeAsTheEntryLeftIt(t *testing.T) {
 // What a writer logs keeps its ops and no before of its own shape: made,
 // changed and deleted through WriteAs, each undone by them.
 func TestWritesKeepTheirOps(t *testing.T) {
+	t.Parallel()
 	b := newBook(t)
 	who := records.Who{Actor: "human"}
 	rec, _, err := records.WriteAs(b.Store, who, "created", "note", "", map[string]any{"title": "One"})
@@ -166,6 +170,7 @@ func TestWritesKeepTheirOps(t *testing.T) {
 // A change logged is heard once, whole, by each listener, however many
 // records it wrote; each record written is heard by the store's own.
 func TestListenersHearEachChangeOnce(t *testing.T) {
+	t.Parallel()
 	b := newBook(t)
 	var heard, also []records.Change
 	records.Listen(b.Store, func(actor string, c records.Change) { heard = append(heard, c) })

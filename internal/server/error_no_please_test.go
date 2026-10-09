@@ -15,6 +15,7 @@ import (
 // validation script does not use "Please select a file." but instead says just
 // "Select a file.". Acceptance item 1.
 func TestUploadFormErrorHasNoPleasePrefix(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/t/file")
@@ -36,6 +37,7 @@ func TestUploadFormErrorHasNoPleasePrefix(t *testing.T) {
 // validation script does not use "Please select a file." but instead says just
 // "Select a file.". Acceptance item 1.
 func TestImportFormErrorHasNoPleasePrefix(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	for _, typ := range []string{"note", "action", "task"} {

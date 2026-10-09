@@ -28,6 +28,7 @@ func renderAlert(t *testing.T, props map[string]any) string {
 // first; the mark, a shape of its own per kind, is silent; nothing is added
 // to what is seen.
 func TestAnAlertSaysItsKindInWords(t *testing.T) {
+	t.Parallel()
 	for kind, want := range map[string][2]string{
 		"info": {"Information: ", "ℹ"}, "success": {"Success: ", "✓"}, "warning": {"Warning: ", "⚠"}, "danger": {"Error: ", "!"},
 	} {
@@ -46,6 +47,7 @@ func TestAnAlertSaysItsKindInWords(t *testing.T) {
 
 // TestAnAlertTitleIsAHeading: a person moving by headings finds it.
 func TestAnAlertTitleIsAHeading(t *testing.T) {
+	t.Parallel()
 	if out := renderAlert(t, map[string]any{"kind": "danger", "title": "Not saved", "message": "The title is needed."}); !strings.Contains(out, `<h2 class="sw-alert__title">`) {
 		t.Errorf("a title should be an h2:\n%s", out)
 	}
@@ -58,6 +60,7 @@ func TestAnAlertTitleIsAHeading(t *testing.T) {
 // whatever its role, so only one put on the page later, or an outcome,
 // takes one: alert for a warning or error, status otherwise.
 func TestOnlyALiveAlertTakesARole(t *testing.T) {
+	t.Parallel()
 	if out := renderAlert(t, map[string]any{"kind": "danger", "message": "x"}); strings.Contains(out, "role=") || strings.Contains(out, "aria-live") {
 		t.Errorf("an alert on the page at load should take no live role:\n%s", out)
 	}
@@ -71,6 +74,7 @@ func TestOnlyALiveAlertTakesARole(t *testing.T) {
 // TestAnAlertCloseButtonIsNamedAndReachable: a native button, named for what
 // it closes, never taken out of the Tab order.
 func TestAnAlertCloseButtonIsNamedAndReachable(t *testing.T) {
+	t.Parallel()
 	out := renderAlert(t, map[string]any{"kind": "success", "message": "Changes made.", "dismiss": true})
 	for _, want := range []string{`<button type="button" class="sw-alert__close" data-dismiss aria-label="Close message">`, "sw-alert--dismissible"} {
 		if !strings.Contains(out, want) {

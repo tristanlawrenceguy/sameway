@@ -13,6 +13,7 @@ import (
 // panes, search starts in the header, and a block can be shown whole, in
 // less room, or as a glyph with its name that opens the whole thing.
 func TestAnythingCanGoAnywhereAtAnySize(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	page := get(t, h, "/").Body.String()
 	if !strings.Contains(page, `class="sw-strip sw-strip--header"`) || !strings.Contains(page, `data-component="search"`) {

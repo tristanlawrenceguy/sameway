@@ -45,6 +45,7 @@ func there(b *records.Book, typ, id string) bool {
 // off, a tab removed with its blocks, a setting set, an amount logged, a
 // canvas cleared and put back, a batch, and a chat deleted.
 func TestOldEntriesAreStillUndone(t *testing.T) {
+	t.Parallel()
 	b := newBook(t)
 	st := b.Store
 

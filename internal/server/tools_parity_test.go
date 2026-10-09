@@ -15,6 +15,7 @@ import (
 // assistant has a tool for it or the reason it should not is said. (A tool
 // it names that the assistant does not have stops the server starting.)
 func TestEveryPageActionIsTheAssistantsOrSaysWhyNot(t *testing.T) {
+	t.Parallel()
 	for _, r := range pageActions() {
 		switch {
 		case r.Tool == "" && r.Persons == "":
@@ -48,6 +49,7 @@ var narrowerForTheAssistant = map[string]string{
 }
 
 func TestTheAssistantIsNoWiderThanThePages(t *testing.T) {
+	t.Parallel()
 	for _, r := range pageActions() {
 		if r.Tool == "" {
 			continue

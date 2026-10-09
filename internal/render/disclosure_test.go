@@ -12,6 +12,7 @@ import (
 // matching var(--sw-color-bg), so axe-core never sees a transparent summary
 // element with insufficient contrast against its parent (backlog 0161).
 func TestDisclosureSummaryHasExplicitBackground(t *testing.T) {
+	t.Parallel()
 	reg := builtins(t)
 	c, ok := reg.Get("disclosure")
 	if !ok {
@@ -42,6 +43,7 @@ func TestDisclosureSummaryHasExplicitBackground(t *testing.T) {
 // var(--sw-color-fg-muted), so axe-core has a stable reference for contrast
 // calculations on child elements (backlog 0161).
 func TestDisclosureSummaryHasExplicitColor(t *testing.T) {
+	t.Parallel()
 	reg := builtins(t)
 	c, ok := reg.Get("disclosure")
 	if !ok {
@@ -67,6 +69,7 @@ func TestDisclosureSummaryHasExplicitColor(t *testing.T) {
 // flag a colour-contrast failure because computed contrast depends on
 // inherited color at hover state or browser-specific rendering (backlog 0161).
 func TestDisclosurePseudoElementUsesToken(t *testing.T) {
+	t.Parallel()
 	css, err := os.ReadFile("../../design/base/27-twisty.css")
 	if err != nil {
 		t.Fatal(err)
@@ -97,6 +100,7 @@ func TestDisclosurePseudoElementUsesToken(t *testing.T) {
 // both an explicit color and a background declared with token values, so the
 // count badge text always meets contrast requirements against its background.
 func TestDisclosureCountContrast(t *testing.T) {
+	t.Parallel()
 	reg := builtins(t)
 	c, ok := reg.Get("disclosure")
 	if !ok {
@@ -127,6 +131,7 @@ func TestDisclosureCountContrast(t *testing.T) {
 // var(--sw-color-bg), so axe-core never sees a transparent body with insufficient
 // contrast when nested inside other elements.
 func TestDisclosureBodyHasExplicitBackground(t *testing.T) {
+	t.Parallel()
 	reg := builtins(t)
 	c, ok := reg.Get("disclosure")
 	if !ok {

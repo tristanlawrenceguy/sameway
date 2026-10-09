@@ -9,6 +9,7 @@ import (
 // description copy appropriate for its kind. The person type should mention
 // vCard and mailbox formats; all others must not — they accept CSV/TSV/TXT.
 func TestImportPageDescriptionsAreTypeSpecific(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	// "person" is the only built-in format that legitimately supports vCard/mbox,

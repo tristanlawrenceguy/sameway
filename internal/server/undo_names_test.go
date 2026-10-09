@@ -11,6 +11,7 @@ import (
 // words on the log, with one colon: "You undid: You changed text size to
 // Large", not "You undid:: You set ui.text large".
 func TestOldSettingUndoReadsInWords(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	old, err := a.Store.Create(records.ActivityType, map[string]any{
 		"summary": "You set ui.text large", "actor": "human", "action": "set", "target": "ui.text", "detail": "large",

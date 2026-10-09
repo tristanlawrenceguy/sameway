@@ -50,6 +50,7 @@ func pngOf(t *testing.T, w, h int) []byte {
 // 1568 pixels; only the three newest go each turn; a model that cannot
 // see answers again, told a picture was there.
 func TestPicturesAreShownToTheAssistant(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	model := &sees{}
 	a.Chat.Provider = model
@@ -110,6 +111,7 @@ func TestPicturesAreShownToTheAssistant(t *testing.T) {
 // A picture with no description leads to asking the assistant for one,
 // the picture named so it goes with the question.
 func TestAPictureWithNoDescriptionLeadsToADraft(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	body, ct := multipartFile(t, "Fern.png", string(pngOf(t, 20, 20)), nil)
 	id := strings.TrimPrefix(do(t, h, http.MethodPost, "/t/file/upload", body, ct).Header().Get("Location"), "/t/file/")

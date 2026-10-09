@@ -17,6 +17,7 @@ import (
 // reduced motion or the still pace it is a cross-fade where things land:
 // nothing moves, grows or slides.
 func TestTravelIsShortAndStillWhenAskedTo(t *testing.T) {
+	t.Parallel()
 	data, err := os.ReadFile("../../design/base/30-travel.css")
 	if err != nil {
 		t.Fatal(err)
@@ -54,6 +55,7 @@ func TestTravelIsShortAndStillWhenAskedTo(t *testing.T) {
 // The page's script runs before the page is first drawn, so a page that
 // arrives by a view transition names its items in time.
 func TestScriptIsReadyBeforeTheFirstDraw(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	res := get(t, h, "/")
 	wantStatus(t, res, http.StatusOK)

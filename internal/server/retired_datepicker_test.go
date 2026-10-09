@@ -13,6 +13,7 @@ import (
 // when-field that replaced it, on the canvas and on the block's own page,
 // and that the assistant is no longer offered a datepicker.
 func TestRetiredDatepickerBlockShowsAsWhenField(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	blk, err := a.Store.Create(records.BlockType, a.Chat.BlockFields(map[string]any{
 		"component": "datepicker",

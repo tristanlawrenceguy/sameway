@@ -9,6 +9,7 @@ import (
 // A list filtered to nothing says nothing matched and the way back to all
 // of them, not that there are none yet, when there are.
 func TestAFilteredListWithNoMatchesIsNotAFirstUse(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/task", map[string]any{"title": "Order compost", "done": true}), http.StatusCreated)
 	body := get(t, h, "/t/task?where=done%3Dfalse").Body.String()

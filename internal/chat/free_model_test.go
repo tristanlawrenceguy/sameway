@@ -23,6 +23,7 @@ func ask(t *testing.T, svc *chat.Service, tool string, args map[string]any) (str
 // fit no better than another's is stopped once, to ask; a record's days
 // are said in this computer's time.
 func TestWhatASmallModelIsToldNow(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	now := time.Now()
 	thursday := now.AddDate(0, 0, (int(time.Thursday)-int(now.Weekday())+7)%7)
@@ -76,6 +77,7 @@ func TestWhatASmallModelIsToldNow(t *testing.T) {
 // An action made after the person said when it runs, without when, says
 // how; one sending a name the record does not have says what it has.
 func TestAnActionSaysWhenItShouldRun(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	svc.Store.Create(records.MessageType, map[string]any{"role": "user", "content": "When a task tagged client is marked done, send its title to https://example.com/hook"})
 	text, _ := ask(t, svc, "create_record", map[string]any{"type": "action", "fields": map[string]any{"title": "Tell the hook", "kind": "webhook", "url": "https://example.com/hook", "body": "{{name}} for {{for}}"}})
