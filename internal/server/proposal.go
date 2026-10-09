@@ -7,6 +7,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // Proposals are the assistant asking rather than acting. They sit at the end
@@ -141,7 +142,7 @@ func (s *Server) answer(w http.ResponseWriter, r *http.Request, apply func(strin
 	for _, p := range s.app.Chat.Proposals() {
 		s.app.Chat.Dismiss(p.ID)
 	}
-	http.Redirect(w, r, backOf(r, "/"), http.StatusSeeOther)
+	http.Redirect(w, r, web.BackOf(r, "/"), http.StatusSeeOther)
 }
 
 // proposalsHTML is the questions waiting, as the conversation shows them,

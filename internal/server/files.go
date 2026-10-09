@@ -15,6 +15,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // maxUpload bounds a file sent inside a JSON body, which is held whole;
@@ -39,11 +40,11 @@ func (s *Server) upload(w http.ResponseWriter, r *http.Request) {
 	// Added from a meeting's page, it is that meeting's (meeting.go).
 	if m := r.FormValue("meeting"); m != "" {
 		said := s.toMeeting(r, m, rec)
-		s.tellAt(w, r, outcome{Title: "Added", Text: title + " is added." + said}, backOf(r, "/t/"+records.EventType+"/"+m))
+		s.tellAt(w, r, outcome{Title: "Added", Text: title + " is added." + said}, web.BackOf(r, "/t/"+records.EventType+"/"+m))
 		return
 	}
 	// The file's own page shows it; anywhere else, the message does.
-	if from := r.FormValue("from"); local(from) {
+	if from := r.FormValue("from"); web.Local(from) {
 		s.tellAt(w, r, outcome{Title: "Added", Text: title + " is in your files."}, from)
 		return
 	}

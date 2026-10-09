@@ -3,6 +3,8 @@ package server
 import (
 	"net/http"
 	"strings"
+
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // Who may use each route, said for every route in the route table
@@ -12,19 +14,6 @@ import (
 // the other workspaces on this machine, was one until it was added to the
 // list by hand. Now a route nobody said anything about is the owner's
 // alone, and TestEveryRouteSaysWhoMayUseIt fails until it is said.
-
-// routeFor says who may use a route.
-type routeFor int
-
-const (
-	// unsaid is a route nobody said anything about: the owner's alone.
-	unsaid routeFor = iota
-	// people are everyone let in: those who may look read, and those who
-	// may change it change, except the owner's own kinds of record.
-	people
-	// owner is the workspace's owner alone.
-	owner
-)
 
 // routeOf is the route a request goes to, as it was registered: "GET
 // /t/{type}", or "" when there is none.
@@ -90,8 +79,8 @@ type Route struct {
 func Routes() []Route {
 	var out []Route
 	for _, rt := range routeTable {
-		out = append(out, Route{Pattern: rt.pattern, Access: map[routeFor]string{people: "people", owner: "owner"}[rt.access],
-			Tool: rt.tool, Persons: rt.persons, Public: rt.public, Reach: map[reach]string{inward: "inward", outward: "outward", byTool: "tool"}[rt.reach]})
+		out = append(out, Route{Pattern: rt.pattern, Access: map[web.Access]string{people: "people", owner: "owner"}[rt.access],
+			Tool: rt.tool, Persons: rt.persons, Public: rt.public, Reach: map[reach]string{inward: "inward", outward: "outward", web.ByTool: "tool"}[rt.reach]})
 	}
 	return out
 }

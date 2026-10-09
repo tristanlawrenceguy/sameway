@@ -11,6 +11,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // act runs one of the person's actions from a button and returns them to
@@ -21,7 +22,7 @@ import (
 // them and the two answers.
 func (s *Server) act(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	back := backOf(r, "/")
+	back := web.BackOf(r, "/")
 	// The tab the button was on is where a message action's reply lands.
 	canvas := strings.TrimPrefix(back, "/c/")
 	if !strings.HasPrefix(back, "/c/") {

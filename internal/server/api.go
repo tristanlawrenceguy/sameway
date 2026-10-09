@@ -15,37 +15,9 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
-	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
-
-// apiError is the JSON error shape. code is stable, message is for people,
-// fields lists per-field validation problems when there are any.
-type apiError struct {
-	Code    string            `json:"code"`
-	Message string            `json:"message"`
-	Fields  map[string]string `json:"fields,omitempty"`
-}
-
-func writeJSON(w http.ResponseWriter, status int, v any) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(status)
-	enc := json.NewEncoder(w)
-	enc.SetIndent("", "  ")
-	enc.Encode(v)
-}
-
-func writeError(w http.ResponseWriter, err error) {
-	var ve *schema.ValidationError
-	switch {
-	case errors.As(err, &ve):
-		writeJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": apiError{Code: "invalid", Message: "some fields are invalid", Fields: ve.Problems}})
-	case errors.Is(err, store.ErrNotFound):
-		writeJSON(w, http.StatusNotFound, map[string]any{"error": apiError{Code: "not_found", Message: err.Error()}})
-	default:
-		writeJSON(w, http.StatusBadRequest, map[string]any{"error": apiError{Code: "bad_request", Message: err.Error()}})
-	}
-}
 
 func readBody(r *http.Request) (map[string]any, error) {
 	raw, err := io.ReadAll(io.LimitReader(r.Body, 4<<20))
@@ -57,7 +29,7 @@ func readBody(r *http.Request) (map[string]any, error) {
 		return map[string]any{}, nil
 	}
 	if err := json.Unmarshal(raw, &fields); err != nil {
-		return nil, errors.New("body must be a JSON object of fields: " + jsonTrouble(err))
+		return nil, errors.New("body must be a JSON object of fields: " + web.JSONTrouble(err))
 	}
 	return fields, nil
 }

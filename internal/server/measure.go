@@ -14,6 +14,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // The page measures its blocks where it is drawn and says how they came
@@ -106,7 +107,7 @@ func (s *Server) measurePost(w http.ResponseWriter, r *http.Request) {
 	dec := json.NewDecoder(bytes.NewReader(raw))
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(&body); err != nil {
-		writeError(w, errors.New("a measurement is numbers and ids only: "+jsonTrouble(err)))
+		writeError(w, errors.New("a measurement is numbers and ids only: "+web.JSONTrouble(err)))
 		return
 	}
 	if err := body.check(); err != nil {

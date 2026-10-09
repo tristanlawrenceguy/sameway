@@ -1,4 +1,4 @@
-package server
+package web
 
 import (
 	"net/http"
@@ -14,13 +14,13 @@ import (
 // scrolls there. A block on the canvas gives its forms its own id, with
 // no script; 26-back.js narrows it to the row or card the form is in.
 
-// backField is the form field that says where an action was taken.
-const backField = "back"
+// BackField is the form field that says where an action was taken.
+const BackField = "back"
 
-// cameFrom is the place on the page an action was taken, as the part of
+// CameFrom is the place on the page an action was taken, as the part of
 // an address after #, for the page to come back to it. Only an id is
 // taken, so nothing else can be put into the address.
-func cameFrom(back string) string {
+func CameFrom(back string) string {
 	if back == "" || len(back) > 200 {
 		return ""
 	}
@@ -32,23 +32,23 @@ func cameFrom(back string) string {
 	return "#" + back
 }
 
-// withBack is where an action returns to with the place it was taken, when
+// WithBack is where an action returns to with the place it was taken, when
 // the form said one and the address has no place of its own.
-func withBack(to, back string) string {
+func WithBack(to, back string) string {
 	if strings.Contains(to, "#") {
 		return to
 	}
-	return to + cameFrom(back)
+	return to + CameFrom(back)
 }
 
-// placeOf is where a posted form says it was taken: the last back it
+// PlaceOf is where a posted form says it was taken: the last back it
 // sent, the closest, as a script or a card adds its own after the block's.
-func placeOf(r *http.Request) string {
+func PlaceOf(r *http.Request) string {
 	if r.Method != http.MethodPost {
 		return ""
 	}
-	r.PostFormValue(backField) // parses the form, of either kind
-	if all := r.PostForm[backField]; len(all) > 0 {
+	r.PostFormValue(BackField) // parses the form, of either kind
+	if all := r.PostForm[BackField]; len(all) > 0 {
 		return all[len(all)-1]
 	}
 	return ""
@@ -56,9 +56,9 @@ func placeOf(r *http.Request) string {
 
 var postForm = regexp.MustCompile(`(?i)<form\b[^>]*\bmethod="post"[^>]*>`)
 
-// withBlock gives every form in a block's HTML the block to come back to.
-func withBlock(html, id string) string {
+// WithBlock gives every form in a block's HTML the block to come back to.
+func WithBlock(html, id string) string {
 	return postForm.ReplaceAllStringFunc(html, func(tag string) string {
-		return tag + `<input type="hidden" name="` + backField + `" value="` + id + `">`
+		return tag + `<input type="hidden" name="` + BackField + `" value="` + id + `">`
 	})
 }

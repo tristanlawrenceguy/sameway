@@ -1,10 +1,10 @@
-package server
+package web
 
 import "html/template"
 
-// pageOptions is what a page adds around its body: the parts of the shell
+// PageOptions is what a page adds around its body: the parts of the shell
 // it fills, how its heading and window title read, and its status.
-type pageOptions struct {
+type PageOptions struct {
 	QuietTitle bool
 	// Said is the window's title when it says more than the heading: the
 	// outcome of a search, heard first when the page arrives.

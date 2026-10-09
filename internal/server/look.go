@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/look"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // Looked is a page as an agent sees it: what was asked for, what came back,
@@ -83,7 +84,7 @@ func (s *Server) apiLook(w http.ResponseWriter, r *http.Request) {
 			dec := json.NewDecoder(bytes.NewReader(raw))
 			dec.DisallowUnknownFields()
 			if err := dec.Decode(&ask); err != nil {
-				writeError(w, errors.New("body must be a JSON object of path, method, form, component, props, scripts, steps, only, kind and name: "+jsonTrouble(err)))
+				writeError(w, errors.New("body must be a JSON object of path, method, form, component, props, scripts, steps, only, kind and name: "+web.JSONTrouble(err)))
 				return
 			}
 		}

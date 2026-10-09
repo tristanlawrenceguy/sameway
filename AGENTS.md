@@ -37,6 +37,7 @@ runner in tools/a11y-runner.
 | `internal/chat/` | the tool loop, and every operation the assistant, MCP and `POST /api/tools/{name}` offer, one `Op` each in one registry | `chat.go`, `op.go` |
 | `internal/mcp/` | the Model Context Protocol server: the chat tools plus reading, over stdio | `server.go` |
 | `internal/server/` | HTML pages and JSON API | `server.go`, `canvas.go` |
+| `internal/web/` | what every handler shares: the route (who may use it, where what it changes is), the outcome a person is told and the way back to where they acted, a page's options, JSON answers, and `Deps`, the narrow face of the server a feature package's handlers are given | `route.go`, `deps.go` |
 | `internal/cli/` | the sameway command | `root.go` |
 | `internal/update/` | finding, checking and installing a release of sameway itself | `update.go` |
 | `internal/bench/` | the assistant measured with a real model on everyday requests, each in a fresh workspace | `assistant_test.go` |

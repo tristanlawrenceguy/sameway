@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // POST /api/tools/{name} is any of the assistant's tools for an agent over
@@ -36,7 +37,7 @@ func (s *Server) apiTool(w http.ResponseWriter, r *http.Request) {
 	var args map[string]any
 	if err := json.Unmarshal(raw, &args); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"error": apiError{Code: "bad_request",
-			Message: "the body is the tool's arguments as a JSON object: " + jsonTrouble(err)}})
+			Message: "the body is the tool's arguments as a JSON object: " + web.JSONTrouble(err)}})
 		return
 	}
 	text, isErr := svc.ByAgent(apiAgent(r)).Call(name, raw)

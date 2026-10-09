@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // Every address the server answers is one table, by area across the
@@ -18,7 +19,7 @@ import (
 type route struct {
 	pattern string
 	handle  func(*Server, http.ResponseWriter, *http.Request)
-	access  routeFor
+	access  web.Access
 	// tool is a page action's op (chat/op.go): what the assistant does to
 	// do the same. persons is instead why it is a person's alone.
 	tool, persons string

@@ -8,6 +8,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
@@ -118,7 +119,7 @@ func (s *Server) sinceSeen(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	s.app.Store.SetMeta("since:"+s.whoKey(r), "")
 	// Back to the page it was on, whichever that was.
-	http.Redirect(w, r, backOf(r, "/"), http.StatusSeeOther)
+	http.Redirect(w, r, web.BackOf(r, "/"), http.StatusSeeOther)
 }
 
 // byOther says whether a person other than the one asking made a change:
