@@ -10,6 +10,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // A tag a classify action gave waits on Today as a suggestion: kept with a
@@ -63,14 +64,14 @@ func (s *Server) tagSection() string {
 			b.WriteString(`, ` + esc(strings.TrimSuffix(why, ".")))
 		}
 		b.WriteString(`.</p><div class="sw-cluster">`)
-		hidden := `<input type="hidden" name="id" value="` + c.ID + `">`
+		id := ui.Hidden("id", c.ID)
 		context := tag + " on " + name
-		b.WriteString(`<form method="post" action="/tags/keep">` + hidden + string(s.component("button", map[string]any{"label": "Keep", "context": context, "type": "submit", "variant": "secondary"})) + `</form>`)
-		b.WriteString(`<form method="post" action="/tags/off">` + hidden + string(s.component("button", map[string]any{"label": "Take it off", "context": context, "type": "submit", "variant": "quiet"})) + `</form>`)
+		b.WriteString(string(s.form(ui.Form{Action: "/tags/keep", Hidden: id, Button: &ui.Button{Label: "Keep", Context: context, Variant: ui.Secondary}})))
+		b.WriteString(string(s.form(ui.Form{Action: "/tags/off", Hidden: id, Button: &ui.Button{Label: "Take it off", Context: context, Variant: ui.Quiet}})))
 		if len(other) > 1 {
-			b.WriteString(`<form method="post" action="/tags/change" class="sw-cluster">` + hidden +
-				string(s.component("select", map[string]any{"label": "Change to", "context": context, "name": "to", "as": "dropdown", "options": other, "value": tag})) +
-				string(s.component("button", map[string]any{"label": "Change", "context": context, "type": "submit", "variant": "quiet"})) + `</form>`)
+			b.WriteString(string(s.form(ui.Form{Action: "/tags/change", Class: "sw-cluster", Hidden: id,
+				Body:   s.component("select", map[string]any{"label": "Change to", "context": context, "name": "to", "as": "dropdown", "options": other, "value": tag}),
+				Button: &ui.Button{Label: "Change", Context: context, Variant: ui.Quiet}})))
 		}
 		b.WriteString(`</div></li>`)
 	}

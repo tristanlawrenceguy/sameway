@@ -38,7 +38,7 @@ func manifest(t *testing.T, name string) schema {
 // prop the manifest requires has a field. A prop the builder leaves out is
 // allowed: the map stays the way to give it.
 func TestBuildersMatchManifests(t *testing.T) {
-	for _, p := range []Part{Button{}, Link{}, Alert{}, TextField{}, Empty{}, Status{}, Mark{}} {
+	for _, p := range []Part{Button{}, Link{}, Alert{}, TextField{}, Empty{}, Status{}} {
 		checkFields(t, p.Component(), reflect.TypeOf(p), manifest(t, p.Component()))
 	}
 }
@@ -94,7 +94,7 @@ func TestEnumsMatchManifests(t *testing.T) {
 			t.Errorf("%s %s: Enums says %v, the manifest %v", key[0], key[1], words, def.Enum)
 		}
 	}
-	for _, p := range []Part{Button{}, Link{}, Alert{}, TextField{}, Empty{}, Status{}, Mark{}} {
+	for _, p := range []Part{Button{}, Link{}, Alert{}, TextField{}, Empty{}, Status{}} {
 		for name, def := range manifest(t, p.Component()).Properties {
 			if _, ok := Enums[[2]string{p.Component(), name}]; len(def.Enum) > 0 && !ok {
 				t.Errorf("%s %s has an enum the builder does not list in Enums", p.Component(), name)

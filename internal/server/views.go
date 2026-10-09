@@ -35,11 +35,11 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	recs, err := query.Filter(s.app.Store, t, where, order, 0, s.now())
 	if len(where) > 0 || order != "" {
 		if err != nil {
-			fmt.Fprintf(&b, `<p class="sw-muted">%s</p><p>%s</p>`, template.HTMLEscapeString(err.Error()), s.component("link", map[string]any{"href": "/t/" + t.Name, "label": "See all " + schema.Plural(t.Name), "look": "button"}))
+			fmt.Fprintf(&b, `<p class="sw-muted">%s</p><p>%s</p>`, template.HTMLEscapeString(err.Error()), s.part(ui.Link{Href: "/t/" + t.Name, Label: "See all " + schema.Plural(t.Name), Look: ui.LookButton}))
 			s.page(w, r, schema.Plural(t.Name), template.HTML(b.String()), pageOptions{Status: http.StatusBadRequest})
 			return
 		}
-		fmt.Fprintf(&b, `<p class="sw-muted">%d matching %s%s. %s</p>`, len(recs), template.HTMLEscapeString(query.Words(t, where)), template.HTMLEscapeString(orderWords(t, order)), s.component("link", map[string]any{"href": "/t/" + t.Name, "label": "See all " + schema.Plural(t.Name), "look": "button"}))
+		fmt.Fprintf(&b, `<p class="sw-muted">%d matching %s%s. %s</p>`, len(recs), template.HTMLEscapeString(query.Words(t, where)), template.HTMLEscapeString(orderWords(t, order)), s.part(ui.Link{Href: "/t/" + t.Name, Label: "See all " + schema.Plural(t.Name), Look: ui.LookButton}))
 	}
 	if err != nil {
 		s.fail(w, err)
@@ -56,15 +56,12 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	if len(recs) == 0 && (len(where) > 0 || order != "") {
 		// Some exist and none matched: not the first-use words, which would
 		// say there are none, but what was looked for and the way back.
-		b.WriteString(string(s.component("empty", map[string]any{
-			"title": "No matching " + schema.Plural(t.Name), "message": "Nothing is " + query.Words(t, where) + ". Try fewer conditions, or",
-			"action": map[string]any{"href": "/t/" + t.Name, "label": "see all " + schema.Plural(t.Name)},
-		})))
+		b.WriteString(string(s.part(ui.Empty{Title: "No matching " + schema.Plural(t.Name), Message: "Nothing is " + query.Words(t, where) + ". Try fewer conditions, or",
+			Action: &ui.EmptyAction{Href: "/t/" + t.Name, Label: "see all " + schema.Plural(t.Name)}})))
 	} else if len(recs) == 0 {
 		prompt := "Create a " + schema.Words(t.Name) + "."
-		b.WriteString(string(s.component("empty", map[string]any{
-			"title": "No " + schema.Plural(t.Name) + " yet", "message": "Add one yourself, or", "action": map[string]any{"href": "/chat?prompt=" + url.PathEscape(prompt), "label": "ask the assistant"},
-		})))
+		b.WriteString(string(s.part(ui.Empty{Title: "No " + schema.Plural(t.Name) + " yet", Message: "Add one yourself, or",
+			Action: &ui.EmptyAction{Href: "/chat?prompt=" + url.PathEscape(prompt), Label: "ask the assistant"}})))
 	} else if t.Name == HabitType && len(where) == 0 && order == "" {
 		// Habits are where each stands this period, and a press to log:
 		// the tracker, not rows of names. Archived ones follow, as rows.

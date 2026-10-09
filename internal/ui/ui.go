@@ -1,14 +1,16 @@
 // Package ui is the components the pages use most, as Go types: a button,
-// a link, an alert, a text field, an empty state, a status and a mark, and
-// a form that posts an action. Each is written here by hand, not generated:
-// its fields carry the prop names of the component's manifest, and a test
+// a link, an alert, a text field, an empty state and a status, and a form
+// that posts an action. Each is written here by hand, not generated: its
+// fields carry the prop names of the component's manifest, and a test
 // holds every field to that manifest (names, required props, enums), so
 // the two cannot drift apart. The manifest stays the one definition of the
 // props: what a builder gives is still a map, validated and given its
 // defaults when it is rendered (internal/render).
 //
 // A builder is for what a page says often. A component a page shows once,
-// with props no other page shares, stays a map where it is used.
+// with props no other page shares, stays a map where it is used; so does
+// a mark, whose props internal/blocks works out for the canvas and the
+// pages alike.
 package ui
 
 import (

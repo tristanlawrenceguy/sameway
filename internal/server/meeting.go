@@ -11,6 +11,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // A meeting is an event with its recording: its page plays the recording
@@ -65,7 +66,7 @@ func (s *Server) recordingOffer(r *http.Request, file *store.Record) string {
 
 func writeUpOffer(ask, label string, s *Server) string {
 	return `<p class="sw-muted">The assistant writes up a meeting from what was said: a summary, what was decided and the tasks that came up, each linked to where it was said, for you to check. One Undo takes it back.</p><p>` +
-		string(s.component("link", map[string]any{"href": "/chat?prompt=" + url.QueryEscape(ask+": a short summary, what was decided and the tasks that came up."), "label": label, "look": "button"})) + `</p>`
+		string(s.part(ui.Link{Href: "/chat?prompt=" + url.QueryEscape(ask+": a short summary, what was decided and the tasks that came up."), Label: label, Look: ui.LookButton})) + `</p>`
 }
 
 // changes says whether whoever asked may change the workspace.

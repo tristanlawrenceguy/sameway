@@ -3,6 +3,8 @@ package server
 import (
 	"net/http"
 	"strings"
+
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // The parts of a page that are off until there is a reason.
@@ -82,7 +84,5 @@ func (s *Server) fewer(page, key, what string, here []string) string {
 	if !has(here, key) {
 		return ""
 	}
-	return `<p class="sw-quiet sw-related__hide">` + string(s.component("link", map[string]any{
-		"href": showURL(page, without(here, key)), "label": "Fewer", "context": what, "look": "button",
-	})) + `</p>`
+	return `<p class="sw-quiet sw-related__hide">` + string(s.part(ui.Link{Href: showURL(page, without(here, key)), Label: "Fewer", Context: what, Look: ui.LookButton})) + `</p>`
 }

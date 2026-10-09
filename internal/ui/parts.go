@@ -83,26 +83,12 @@ type Status struct {
 	ID      string      `prop:"id"`
 }
 
-// Mark is design/components/mark: a record's yes-or-no field, ticked in place.
-type Mark struct {
-	Type      string `prop:"type"`
-	Record    string `prop:"record"`
-	Field     string `prop:"field"`
-	Label     string `prop:"label"`
-	Context   string `prop:"context"`
-	ID        string `prop:"id"`
-	Checked   bool   `prop:"checked"`
-	Quiet     bool   `prop:"quiet"`
-	AriaLabel string `prop:"ariaLabel"`
-}
-
 func (Button) Component() string    { return "button" }
 func (Link) Component() string      { return "link" }
 func (Alert) Component() string     { return "alert" }
 func (TextField) Component() string { return "text-field" }
 func (Empty) Component() string     { return "empty" }
 func (Status) Component() string    { return "status" }
-func (Mark) Component() string      { return "mark" }
 
 func (p Button) Props() map[string]any    { return props(p) }
 func (p Link) Props() map[string]any      { return props(p) }
@@ -110,4 +96,3 @@ func (p Alert) Props() map[string]any     { return props(p) }
 func (p TextField) Props() map[string]any { return props(p) }
 func (p Empty) Props() map[string]any     { return props(p) }
 func (p Status) Props() map[string]any    { return props(p) }
-func (p Mark) Props() map[string]any      { return props(p) }
