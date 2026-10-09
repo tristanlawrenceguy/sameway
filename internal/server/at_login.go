@@ -1,10 +1,12 @@
 package server
 
 import (
+	"html/template"
 	"net/http"
 	"os"
 
 	"github.com/tristanlawrenceguy/sameway/internal/atlogin"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // Reminders ring and scheduled actions run only while Sameway runs. The
@@ -21,9 +23,9 @@ func (s *Server) atLoginSection() string {
 	if atlogin.On() {
 		label, value, said = "Stop opening Sameway when I sign in", "off", "Sameway opens when you sign in to this computer, without a browser tab, so reminders ring all day."
 	}
-	return `<form method="post" action="/at-login" class="sw-stack"><input type="hidden" name="set" value="` + value + `">` +
-		string(s.component("button", map[string]any{"label": label, "type": "submit", "variant": "secondary"})) +
-		`<p class="sw-small sw-muted">` + said + `</p></form>`
+	return string(s.form(ui.Form{Action: "/at-login", Class: "sw-stack", Hidden: ui.Hidden("set", value),
+		Button: &ui.Button{Label: label, Variant: ui.Secondary},
+		After:  template.HTML(`<p class="sw-small sw-muted">` + said + `</p>`)}))
 }
 
 // atLoginSet turns opening at sign-in on or off for this workspace.

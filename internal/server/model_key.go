@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // A person with no model on their computer could only install one and run
@@ -30,18 +31,15 @@ var keyKinds = []struct {
 }
 
 // keyForm is where a story's key is pasted: one company's, in its words.
-func (s *Server) keyForm(hidden, prefix string) template.HTML {
+func (s *Server) keyForm(from, prefix string) template.HTML {
 	company := "Anthropic"
 	if prefix == "sk-or-" {
 		company = "OpenRouter"
 	}
-	var b strings.Builder
-	b.WriteString(`<form method="post" action="/model/key" class="sw-stack">` + hidden)
-	b.WriteString(string(s.component("text-field", map[string]any{"label": "Your " + company + " key", "name": "key", "id": "key-" + strings.ToLower(company), "type": "password", "autocomplete": "off",
-		"hint": "It begins " + prefix + ". It is kept in your own settings on this computer, not in the workspace; your conversations then go to " + company + "."})))
-	b.WriteString(string(s.component("button", map[string]any{"label": "Use this key", "context": company, "type": "submit", "variant": "secondary"})))
-	b.WriteString(`</form>`)
-	return template.HTML(b.String())
+	return s.form(ui.Form{Action: "/model/key", Class: "sw-stack", From: from,
+		Body: s.part(ui.TextField{Label: "Your " + company + " key", Name: "key", ID: "key-" + strings.ToLower(company), Type: ui.Password, Autocomplete: "off",
+			Hint: "It begins " + prefix + ". It is kept in your own settings on this computer, not in the workspace; your conversations then go to " + company + "."}),
+		Button: &ui.Button{Label: "Use this key", Context: company, Variant: ui.Secondary}})
 }
 
 // modelKey is a person pasting a key: kept, and the model set to it.

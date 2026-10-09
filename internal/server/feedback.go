@@ -10,6 +10,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 	"github.com/tristanlawrenceguy/sameway/internal/update"
 )
 
@@ -51,9 +52,9 @@ func (s *Server) feedbackFacts() string {
 func (s *Server) feedbackSection() string {
 	return `<section class="sw-stack" aria-labelledby="help-tell"><h2 id="help-tell">Something not right?</h2>
 <p>Tell the makers what happened or what you wished it did. You see everything that would go before it goes, and you send it yourself.</p>
-<form method="post" action="/feedback" class="sw-stack">` +
-		string(s.component("textarea", map[string]any{"label": "What happened", "name": "what", "rows": 4, "required": true, "hint": "What you did, what you expected, and what Sameway did instead."})) +
-		string(s.component("button", map[string]any{"label": "See what would go", "type": "submit", "variant": "secondary"})) + `</form></section>`
+` + string(s.form(ui.Form{Action: "/feedback", Class: "sw-stack",
+		Body:   s.component("textarea", map[string]any{"label": "What happened", "name": "what", "rows": 4, "required": true, "hint": "What you did, what you expected, and what Sameway did instead."}),
+		Button: &ui.Button{Label: "See what would go", Variant: ui.Secondary}})) + `</section>`
 }
 
 // feedback shows what would go, in a form that opens the makers' page
@@ -74,11 +75,10 @@ func (s *Server) feedback(w http.ResponseWriter, r *http.Request) {
 		tellJSON(w, outcome{Title: "What would go to the makers", Text: body}, issuesNew+"?title="+url.QueryEscape(title)+"&body="+url.QueryEscape(body))
 		return
 	}
-	esc := template.HTMLEscapeString
 	page := `<p>This is all that would go, to the makers' page on GitHub, where you can change it and send it, which needs a GitHub account. Nothing has been sent.</p>
-<form method="get" action="` + issuesNew + `" target="_blank" rel="noopener" class="sw-stack">` +
-		string(s.component("text-field", map[string]any{"label": "Title", "name": "title", "value": title})) +
-		`<label for="feedback-body">What goes</label><textarea id="feedback-body" name="body" rows="14" class="sw-textarea">` + esc(body) + `</textarea>` +
-		string(s.component("button", map[string]any{"label": "Open it on GitHub", "type": "submit"})) + `</form>`
+` + string(s.form(ui.Form{Action: issuesNew, Get: true, Target: "_blank", Class: "sw-stack",
+		Body: s.part(ui.TextField{Label: "Title", Name: "title", Value: title}) +
+			template.HTML(`<label for="feedback-body">What goes</label><textarea id="feedback-body" name="body" rows="14" class="sw-textarea">`+template.HTMLEscapeString(body)+`</textarea>`),
+		Button: &ui.Button{Label: "Open it on GitHub"}}))
 	s.page(w, r, "Tell the makers", template.HTML(page), pageOptions{})
 }

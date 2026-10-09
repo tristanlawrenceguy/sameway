@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/cloudsync"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
@@ -91,12 +92,11 @@ func (s *Server) cloudSyncSection() string {
 			state = "Not in step just now: " + e
 		}
 		b.WriteString(`<p>This workspace is kept in step through ` + esc(s.app.Store.Meta("cloudsync:cloud")) + `. ` + state + `</p>`)
-		b.WriteString(`<form method="post" action="/cloud-sync/off">` + string(s.component("button", map[string]any{"label": "Stop keeping it in step", "type": "submit", "variant": "secondary"})) + `</form>`)
+		b.WriteString(string(s.form(ui.Form{Action: "/cloud-sync/off", Button: &ui.Button{Label: "Stop keeping it in step", Variant: ui.Secondary}})))
 	} else if clouds := cloudFolders(); len(clouds) > 0 {
 		b.WriteString(`<p>Use this workspace on another computer too, such as a laptop and a desktop, or a partner's computer that shares your cloud folder: each keeps a whole copy, and changes pass between them through the cloud folder.</p>`)
 		for _, c := range clouds {
-			b.WriteString(`<form method="post" action="/cloud-sync"><input type="hidden" name="cloud" value="` + esc(c.Name) + `">` +
-				string(s.component("button", map[string]any{"label": "Keep it in step through " + c.Name, "type": "submit", "variant": "secondary"})) + `</form>`)
+			b.WriteString(string(s.form(ui.Form{Action: "/cloud-sync", Hidden: ui.Hidden("cloud", c.Name), Button: &ui.Button{Label: "Keep it in step through " + c.Name, Variant: ui.Secondary}})))
 		}
 	} else {
 		b.WriteString(`<p>With OneDrive, Dropbox, iCloud Drive or Google Drive on this computer, this workspace can be kept in step with your other computers through it.</p>`)
@@ -106,8 +106,7 @@ func (s *Server) cloudSyncSection() string {
 		if name == "" {
 			name = "A workspace"
 		}
-		b.WriteString(`<form method="post" action="/workspaces/join"><input type="hidden" name="cloud" value="` + esc(j.Cloud) + `"><input type="hidden" name="id" value="` + esc(j.ID) + `">` +
-			string(s.component("button", map[string]any{"label": "Open " + name + " from " + j.Cloud, "type": "submit"})) + `</form>`)
+		b.WriteString(string(s.form(ui.Form{Action: "/workspaces/join", Hidden: ui.Hidden("cloud", j.Cloud, "id", j.ID), Button: &ui.Button{Label: "Open " + name + " from " + j.Cloud}})))
 	}
 	b.WriteString(`</section>`)
 	return b.String()
