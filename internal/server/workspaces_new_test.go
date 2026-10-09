@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/tristanlawrenceguy/sameway/internal/server"
-	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
 // TestWorkspacesNewGETPage checks that GET /workspaces/new returns a full
@@ -45,13 +44,10 @@ func TestWorkspacesNewGETPage(t *testing.T) {
 // POST /workspaces/new the response redirects back to /workspaces, not to
 // /workspaces/new or the new workspace URL.
 func TestWorkspacesNewPOSTRedirect(t *testing.T) {
-	known := filepath.Join(t.TempDir(), "workspaces.json")
-	t.Setenv("SAMEWAY_KNOWN", known)
-
 	a, h := newApp(t)
 	f := &fleet{t: t}
 	h = server.New(a).WithFleet(&server.Fleet{Launch: f.launch})
-	workspace.Remember(a.Workspace.Dir, "")
+	a.Workspace.Machine.Remember(a.Workspace.Dir, "")
 	a.Workspace.Set("name", "Base")
 
 	res := postForm(t, h, "/workspaces/new", url.Values{"name": {"Test redirect"}})

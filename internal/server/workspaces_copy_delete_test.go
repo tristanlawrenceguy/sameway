@@ -263,13 +263,12 @@ func TestWorkspacesDeleteWrongNameShowsWarning(t *testing.T) {
 // error message specific to deletion, not copy/start language. Covers acceptance 1.
 func TestWorkspacesDeleteNoFleetShowsDeletionError(t *testing.T) {
 	known := filepath.Join(t.TempDir(), "workspaces.json")
-	t.Setenv("SAMEWAY_KNOWN", known)
 
 	dir := t.TempDir()
 	if err := workspace.Init(dir, examples.FS, examples.StarterRoot, false); err != nil {
 		t.Fatal(err)
 	}
-	a, err := app.Load(dir, false)
+	a, err := app.Open(dir, app.Options{Machine: workspace.Machine{Known: known}})
 	if err != nil {
 		t.Fatal(err)
 	}

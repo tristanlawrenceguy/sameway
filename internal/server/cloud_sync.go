@@ -54,7 +54,7 @@ func (s *Server) joinables() []joinable {
 	// A workspace kept in step has a mark in its folder with its id, so
 	// one any workspace here already holds is not offered again.
 	have := map[string]bool{s.app.Store.Meta("cloudsync:id"): true}
-	for _, k := range workspace.KnownWorkspaces() {
+	for _, k := range s.machine().KnownWorkspaces() {
 		if id, err := os.ReadFile(filepath.Join(k.Dir, syncMark)); err == nil {
 			have[strings.TrimSpace(string(id))] = true
 		}
@@ -216,7 +216,7 @@ func (s *Server) cloudJoin(w http.ResponseWriter, r *http.Request) {
 		s.showWorkspaces(w, r, err.Error())
 		return
 	}
-	workspace.Remember(dir, "")
+	s.machine().Remember(dir, "")
 	if _, notStarted := s.start(dir); notStarted != nil {
 		s.showWorkspaceCreated(w, r, name, dir, "copy", notStarted)
 		return

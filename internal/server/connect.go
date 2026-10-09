@@ -79,12 +79,12 @@ func (s *Server) modelProblem() (string, []modelChoice) {
 	case s.app.Chat.Provider == nil:
 		why = "The AI model is not set up right (" + err.Error() + ")."
 	default:
-		ok, why = llm.Answers(ctx, s.app.Workspace.Config.LLM)
+		ok, why = llm.Answers(ctx, s.app.LLMConfig())
 		why = s.wakeOllama(ok, why)
 	}
 	s.model.at, s.model.ok, s.model.why, s.model.choices = time.Now(), ok, why, nil
 	if !ok {
-		s.model.choices = modelChoices(ctx)
+		s.model.choices = s.modelChoices(ctx)
 	}
 	return s.model.why, s.model.choices
 }
@@ -98,7 +98,7 @@ func (s *Server) forgetModel() {
 
 // modelChoices is every way to a model found on this computer, the ones
 // that keep the conversation here first.
-func modelChoices(ctx context.Context) []modelChoice {
+func (s *Server) modelChoices(ctx context.Context) []modelChoice {
 	var out []modelChoice
 	for _, d := range llm.Detect(ctx, llm.DefaultCandidates) {
 		out = append(out, modelChoice{
@@ -116,7 +116,7 @@ func modelChoices(ctx context.Context) []modelChoice {
 			Settings: [][2]string{{"llm.model", "sonnet"}, {"llm.provider", "claude-code"}},
 		})
 	}
-	if llm.Key("ANTHROPIC_API_KEY") != "" {
+	if s.keys().Get("ANTHROPIC_API_KEY") != "" {
 		out = append(out, modelChoice{
 			ID:       "anthropic",
 			Label:    "Use Claude with your saved key",
@@ -167,7 +167,7 @@ func (s *Server) modelUse(w http.ResponseWriter, r *http.Request) {
 	want := r.PostForm.Get("choice")
 	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
 	defer cancel()
-	for _, c := range modelChoices(ctx) {
+	for _, c := range s.modelChoices(ctx) {
 		if c.ID != want {
 			continue
 		}

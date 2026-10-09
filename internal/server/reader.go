@@ -4,9 +4,11 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/blocks"
+	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/search"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
 // A page is said to the person reading it: the time it is for them, from
@@ -35,3 +37,10 @@ func (s *Server) recordWays(t *schema.Type, rec *store.Record) []string {
 }
 func (s *Server) momentWords(at time.Time) string { return s.app.Blocks.MomentWords(at) }
 func (s *Server) secondWords(at time.Time) string { return s.app.Blocks.SecondWords(at) }
+
+// machine is where this computer keeps what is no one workspace's: the
+// known list, copies, deleted workspaces (workspace.Machine).
+func (s *Server) machine() workspace.Machine { return s.app.Workspace.Machine }
+
+// keys is the file a pasted key is kept in (workspace.Machine).
+func (s *Server) keys() llm.Keys { return llm.Keys(s.app.Workspace.Machine.Keys) }

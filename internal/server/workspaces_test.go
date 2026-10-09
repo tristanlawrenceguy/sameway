@@ -49,11 +49,11 @@ func (f *fleet) launch(dir, addr string) error {
 func TestAWorkspaceOpensTheOthers(t *testing.T) {
 	a, _ := newApp(t)
 	known := filepath.Join(t.TempDir(), "workspaces.json")
-	t.Setenv("SAMEWAY_KNOWN", known)
+	a.Workspace.Machine.Known = known
 	os.WriteFile(known, []byte("[]"), 0o644)
 	f := &fleet{t: t}
 	h := server.New(a).WithFleet(&server.Fleet{Launch: f.launch, Exit: func() { f.exited = true }})
-	workspace.Remember(a.Workspace.Dir, "")
+	a.Workspace.Machine.Remember(a.Workspace.Dir, "")
 	a.Workspace.Set("name", "Home base")
 
 	other := filepath.Join(filepath.Dir(a.Workspace.Dir), "garden")
@@ -62,7 +62,7 @@ func TestAWorkspaceOpensTheOthers(t *testing.T) {
 	}
 	ws, _ := workspace.Load(other)
 	ws.Set("name", "Garden")
-	workspace.Remember(other, "")
+	a.Workspace.Machine.Remember(other, "")
 
 	page := get(t, h, "/workspaces").Body.String()
 	if !strings.Contains(page, "Home base") || !strings.Contains(page, ">Garden<") || !strings.Contains(page, ">Start<") {
@@ -145,7 +145,7 @@ func TestAWorkspaceOpensTheOthers(t *testing.T) {
 	if !f.exited || !strings.Contains(res.Header().Get("Refresh"), "http://127.0.0.1:") {
 		t.Errorf("the person is sent to another workspace and this server stops, got refresh %q exited %v", res.Header().Get("Refresh"), f.exited)
 	}
-	for _, k := range workspace.KnownWorkspaces() {
+	for _, k := range a.Workspace.Machine.KnownWorkspaces() {
 		if k.Dir == a.Workspace.Dir {
 			t.Error("a deleted workspace is forgotten")
 		}
@@ -158,7 +158,7 @@ func TestAWorkspaceOpensTheOthers(t *testing.T) {
 func TestDeleteWithoutAFleetRefuses(t *testing.T) {
 	a, _ := newApp(t)
 	known := filepath.Join(t.TempDir(), "workspaces.json")
-	t.Setenv("SAMEWAY_KNOWN", known)
+	a.Workspace.Machine.Known = known
 	os.WriteFile(known, []byte("[]"), 0o644)
 	h := server.New(a)
 	a.Workspace.Set("name", "Solo")
@@ -179,7 +179,7 @@ func TestDeleteWithoutAFleetRefuses(t *testing.T) {
 	}
 	t.Cleanup(func() { ol.Close(); oa.Close() })
 	go http.Serve(ol, server.New(oa))
-	workspace.Remember(other, ol.Addr().String())
+	a.Workspace.Machine.Remember(other, ol.Addr().String())
 
 	res := postForm(t, h, "/workspaces/delete", url.Values{"confirm": {"Solo"}})
 	if res.Code != http.StatusOK || !strings.Contains(res.Body.String(), "sameway open") {

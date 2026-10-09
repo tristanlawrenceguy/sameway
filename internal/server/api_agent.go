@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
-	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
 // What pages show that /api did not: a chat turn with a file, and the
@@ -68,7 +67,7 @@ type workspaceOut struct {
 func (s *Server) apiWorkspaces(w http.ResponseWriter, r *http.Request) {
 	cur := s.app.Workspace
 	this := workspaceOut{Name: cur.Config.Name, Dir: cur.Dir, Running: true, This: true}
-	for _, k := range workspace.KnownWorkspaces() {
+	for _, k := range s.machine().KnownWorkspaces() {
 		if sameDir(k.Dir, cur.Dir) && k.Addr != "" {
 			this.URL = "http://" + k.Addr + "/"
 		}

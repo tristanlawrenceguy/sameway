@@ -5,8 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 )
 
 // CopyTo makes dir a workspace with everything this one has: its shape,
@@ -62,13 +60,14 @@ func (a *App) Sandbox() (sb *App, done func(), err error) {
 		gone()
 		return nil, nil, err
 	}
-	// Loading names the folder commands run in, for the one program; it
-	// stays this workspace's.
-	defer func(w string) { chat.Workdir = w }(chat.Workdir)
-	sb, err = Load(dir, false)
+	o := a.opts
+	o.MemoryDB = false
+	sb, err = Open(dir, o)
 	if err != nil {
 		gone()
 		return nil, nil, err
 	}
+	// Commands tried on the copy run where this workspace's do.
+	sb.Chat.Workdir = a.Chat.Workdir
 	return sb, func() { sb.Close(); gone() }, nil
 }

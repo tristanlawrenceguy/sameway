@@ -63,7 +63,7 @@ func (s *Server) settle(dir, name string) error {
 			ws.Set(key, value)
 		}
 	}
-	return workspace.Remember(dir, "")
+	return s.machine().Remember(dir, "")
 }
 
 // copy makes a workspace beside this one with everything this one has:
@@ -98,7 +98,7 @@ func (s *Server) showWorkspaces(w http.ResponseWriter, r *http.Request, problem 
 		b.WriteString(string(s.component("alert", map[string]any{"kind": "warning", "message": problem})))
 	}
 	own := ""
-	for _, k := range workspace.KnownWorkspaces() {
+	for _, k := range s.machine().KnownWorkspaces() {
 		if sameDir(k.Dir, cur.Dir) && k.Addr != "" {
 			own = "http://" + k.Addr + "/"
 		}
@@ -148,7 +148,7 @@ func (s *Server) workspacesStart(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	dir := r.PostForm.Get("dir")
 	known := false
-	for _, k := range workspace.KnownWorkspaces() {
+	for _, k := range s.machine().KnownWorkspaces() {
 		known = known || sameDir(k.Dir, dir)
 	}
 	if !known {

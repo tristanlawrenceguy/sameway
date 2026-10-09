@@ -140,7 +140,6 @@ func TestAnOlderWorkspaceGetsRepeat(t *testing.T) {
 	dir := t.TempDir()
 	known := filepath.Join(t.TempDir(), "known.json")
 	os.WriteFile(known, []byte("[]"), 0o644)
-	t.Setenv("SAMEWAY_KNOWN", known)
 	if err := workspace.Init(dir, examples.FS, examples.StarterRoot, false); err != nil {
 		t.Fatal(err)
 	}
@@ -148,7 +147,7 @@ func TestAnOlderWorkspaceGetsRepeat(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "schema", "task.yaml"), []byte(old), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	a, err := app.Load(dir, false)
+	a, err := app.Open(dir, app.Options{Machine: workspace.Machine{Known: known}})
 	if err != nil {
 		t.Fatal(err)
 	}

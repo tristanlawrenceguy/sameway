@@ -16,8 +16,8 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
-// HTTPClient sends webhook actions. Tests point it at a local server.
-var HTTPClient = &http.Client{Timeout: 10 * time.Second}
+// webhooks sends webhook actions where the service names no client.
+var webhooks = &http.Client{Timeout: 10 * time.Second}
 
 var actionOp = Op{Title: "Run an action", Traits: Traits{OpenWorld: true},
 	Words: []string{"run", "press", "button", "action", "webhook", "send to"},
@@ -105,7 +105,7 @@ func (s *Service) webhook(ctx context.Context, rec *store.Record, title string) 
 		}
 		req.Header.Set("Content-Type", ct)
 	}
-	resp, err := HTTPClient.Do(req)
+	resp, err := s.httpClient().Do(req)
 	if err != nil {
 		return fail("%s failed: %v", title, err)
 	}
@@ -198,4 +198,13 @@ func (s *Service) logRun(ctx context.Context, actor string, r toolResult) (text,
 		return r.text, proposal, errors.New(r.text)
 	}
 	return r.text, proposal, nil
+}
+
+// httpClient is the client webhook actions are sent with: the service's
+// own (a test points it at a server of its own), else webhooks.
+func (s *Service) httpClient() *http.Client {
+	if s.HTTP != nil {
+		return s.HTTP
+	}
+	return webhooks
 }

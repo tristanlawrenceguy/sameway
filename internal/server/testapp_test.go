@@ -32,12 +32,11 @@ func newApp(t *testing.T) (*app.App, http.Handler) {
 func newAppWith(t *testing.T, o app.Options) (*app.App, http.Handler) {
 	t.Helper()
 	dir := t.TempDir()
-	// Always isolate the known-workspaces list so pre-existing workspaces on this
-	// machine do not pollute the "other workspaces" section. Tests that need a
-	// custom path set it AFTER calling newApp via t.Setenv (which overrides).
-	known := filepath.Join(t.TempDir(), "known.json")
-	os.WriteFile(known, []byte("[]"), 0o644)
-	t.Setenv("SAMEWAY_KNOWN", known)
+	// A machine of its own, so the workspaces this computer has opened, its
+	// copies and its pasted keys are never read or written by a test.
+	if o.Machine == (workspace.Machine{}) {
+		o.Machine = testMachine(t)
+	}
 	if err := workspace.Init(dir, examples.FS, examples.StarterRoot, false); err != nil {
 		t.Fatal(err)
 	}
@@ -141,4 +140,13 @@ func assertAllComponentsKnown(t *testing.T, doc *htmltest.Doc, names []string) {
 			t.Errorf("%s: data-component=%q is not a registered component (known: %v)", n.Data, c, names)
 		}
 	})
+}
+
+// testMachine is a computer's folders for one test: an empty known list,
+// no keys, no copies (workspace.Machine).
+func testMachine(t *testing.T) workspace.Machine {
+	dir := t.TempDir()
+	m := workspace.Machine{Known: filepath.Join(dir, "known.json"), Keys: filepath.Join(dir, "keys.json")}
+	os.WriteFile(m.Known, []byte("[]"), 0o644)
+	return m
 }

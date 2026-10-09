@@ -15,8 +15,9 @@ import (
 // what keeps it the person's: whoever knows it can read what is sent. A link to this
 // computer leads nowhere from a phone, so only a link elsewhere is sent.
 
-// NtfyServer is where topics are made; tests point it elsewhere.
-var NtfyServer = "https://ntfy.sh"
+// NtfyServer is where topics are made, unless the app names another
+// (app.Options.Ntfy: a test's own server).
+const NtfyServer = "https://ntfy.sh"
 
 // toPhone posts a ring to an ntfy topic address.
 func toPhone(topic, title, text, link string) error {

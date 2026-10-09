@@ -241,10 +241,10 @@ func (s *Service) importRecords(typeName, fileID string, mapping map[string]any)
 	}
 	stored, _ := file.Fields["path"].(string)
 	name, _ := file.Fields["name"].(string)
-	if stored == "" || strings.ContainsAny(stored, `/\`) || Workdir == "" {
+	if stored == "" || strings.ContainsAny(stored, `/\`) || s.Workdir == "" {
 		return fail("the file %s has no original kept to read", fileID)
 	}
-	data, err := os.ReadFile(filepath.Join(Workdir, "files", stored))
+	data, err := os.ReadFile(filepath.Join(s.Workdir, "files", stored))
 	if err != nil {
 		return fail("could not read the file: %v", err)
 	}

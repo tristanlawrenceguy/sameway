@@ -7,7 +7,6 @@ package server_test
 
 import (
 	"net/http"
-	"os"
 	"strings"
 	"testing"
 )
@@ -166,12 +165,6 @@ func TestSearchEmptyStateKeepsQueryTerm(t *testing.T) {
 // shows a heading. Acceptance 1 for the workspaces surface.
 func TestWorkspacesEmptyStateHasHeading(t *testing.T) {
 	_, h := newApp(t)
-
-	t.Logf("SAMEWAY_KNOWN=%q", os.Getenv("SAMEWAY_KNOWN"))
-	if p := os.Getenv("SAMEWAY_KNOWN"); p != "" {
-		raw, _ := os.ReadFile(p)
-		t.Logf("known file content: %s", string(raw))
-	}
 
 	rec := get(t, h, "/workspaces")
 	wantStatus(t, rec, http.StatusOK)

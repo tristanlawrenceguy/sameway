@@ -30,11 +30,7 @@ import (
 // person's, kept where only they and their agents write.
 
 // CommandTimeout bounds one run, so a hung command cannot hold a turn.
-var CommandTimeout = 60 * time.Second
-
-// Workdir is where commands run when the action names no folder: the
-// workspace, set by the app.
-var Workdir string
+const CommandTimeout = 60 * time.Second
 
 // command runs an accepted command, or asks the person to accept it.
 func (s *Service) command(ctx context.Context, rec *store.Record, title string) toolResult {
@@ -139,15 +135,15 @@ func (s *Service) folderFor(rec *store.Record) (string, error) {
 	folder, _ := rec.Fields["folder"].(string)
 	folder = strings.TrimSpace(folder)
 	if folder == "" {
-		return Workdir, nil
+		return s.Workdir, nil
 	}
-	if Workdir == "" {
+	if s.Workdir == "" {
 		return folder, nil
 	}
 	if !filepath.IsAbs(folder) {
-		folder = filepath.Join(Workdir, folder)
+		folder = filepath.Join(s.Workdir, folder)
 	}
-	rel, err := filepath.Rel(Workdir, folder)
+	rel, err := filepath.Rel(s.Workdir, folder)
 	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
 		return "", fmt.Errorf("the folder %s is outside the workspace; a command runs in the workspace or a folder under it", folder)
 	}

@@ -10,8 +10,23 @@ import (
 // Known workspaces: every workspace this machine has opened, with the
 // address its server last listened on, kept in one small file in the
 // person's config folder. A workspace can then offer the others: open
-// one that is running, or start one that is not. SAMEWAY_KNOWN names a
-// different file, for tests and for keeping the list somewhere else.
+// one that is running, or start one that is not.
+
+// Machine is where this computer keeps what is no one workspace's: the
+// list of workspaces it has opened (Known), and beside it their daily
+// copies (snapshots.go) and the deleted ones (trash.go). A workspace
+// carries the one it was opened with, so a test gives it a folder of its
+// own and never reads or writes the person's.
+type Machine struct {
+	Known string // the known list's file
+	// Keys is the file pasted keys are kept in; "" is the person's
+	// (llm.KeysPath).
+	Keys string
+}
+
+// ThisMachine is the person's own: the known list in their config
+// folder, or the file SAMEWAY_KNOWN names, for keeping it elsewhere.
+func ThisMachine() Machine { return Machine{Known: KnownPath()} }
 
 // Known is one workspace this machine has opened.
 type Known struct {
@@ -33,9 +48,9 @@ func KnownPath() string {
 
 // KnownWorkspaces lists the workspaces this machine has opened that are
 // still there, most recently remembered first.
-func KnownWorkspaces() []Known {
+func (m Machine) KnownWorkspaces() []Known {
 	var out []Known
-	for _, k := range readKnown() {
+	for _, k := range m.readKnown() {
 		if _, err := os.Stat(filepath.Join(k.Dir, ConfigFile)); err == nil {
 			out = append(out, k)
 		}
@@ -46,14 +61,14 @@ func KnownWorkspaces() []Known {
 // Remember puts a workspace at the front of the list, with the address
 // its server listens on when one is given; an empty addr keeps the one
 // already known.
-func Remember(dir, addr string) error {
+func (m Machine) Remember(dir, addr string) error {
 	abs, err := filepath.Abs(dir)
 	if err != nil {
 		return err
 	}
 	entry := Known{Dir: abs, Addr: addr}
 	rest := []Known{}
-	for _, k := range readKnown() {
+	for _, k := range m.readKnown() {
 		if k.Dir == abs {
 			if addr == "" {
 				entry.Addr = k.Addr
@@ -62,26 +77,26 @@ func Remember(dir, addr string) error {
 		}
 		rest = append(rest, k)
 	}
-	return writeKnown(append([]Known{entry}, rest...))
+	return m.writeKnown(append([]Known{entry}, rest...))
 }
 
 // Forget drops a workspace from the list.
-func Forget(dir string) error {
+func (m Machine) Forget(dir string) error {
 	abs, err := filepath.Abs(dir)
 	if err != nil {
 		return err
 	}
 	kept := []Known{}
-	for _, k := range readKnown() {
+	for _, k := range m.readKnown() {
 		if k.Dir != abs {
 			kept = append(kept, k)
 		}
 	}
-	return writeKnown(kept)
+	return m.writeKnown(kept)
 }
 
-func readKnown() []Known {
-	raw, err := os.ReadFile(KnownPath())
+func (m Machine) readKnown() []Known {
+	raw, err := os.ReadFile(m.Known)
 	if err != nil {
 		return nil
 	}
@@ -92,8 +107,8 @@ func readKnown() []Known {
 	return out
 }
 
-func writeKnown(list []Known) error {
-	path := KnownPath()
+func (m Machine) writeKnown(list []Known) error {
+	path := m.Known
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil && !errors.Is(err, os.ErrExist) {
 		return err
 	}

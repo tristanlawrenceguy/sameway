@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 	"time"
 
@@ -42,6 +43,11 @@ type Service struct {
 	// Allow names the programs a command action may run, by name (curl,
 	// python). Empty means none; see command.go for the boundary.
 	Allow []string
+	// Workdir is where commands run when an action names no folder, and
+	// where kept files are read from: the workspace, set by the app.
+	Workdir string
+	// HTTP sends webhook actions; nil is a client with a ten second limit.
+	HTTP *http.Client
 	// Look reads a page of the workspace the way the person gets it, with
 	// its scripts run where a browser is at hand; set by the server, nil
 	// where there is none. See look.go.

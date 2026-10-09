@@ -8,8 +8,6 @@ import (
 	"regexp"
 	"strings"
 	"testing"
-
-	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
 // Everything reversible. A delete through the API is logged, as an
@@ -65,19 +63,19 @@ func TestTheActivityLogCannotBeChangedThroughTheAPI(t *testing.T) {
 // folder, and comes back from the Workspaces page.
 func TestADeletedWorkspaceGoesToTheTrashAndComesBack(t *testing.T) {
 	// The test app keeps its own list of workspaces, and so its own trash.
-	_, h := newApp(t)
+	a, h := newApp(t)
 	dir := filepath.Join(t.TempDir(), "garden")
 	os.MkdirAll(filepath.Join(dir, "content"), 0o755)
 	os.WriteFile(filepath.Join(dir, "my-own-notes.txt"), []byte("kept"), 0o644)
 
-	gone, err := workspace.Trash(dir, "Garden")
+	gone, err := a.Workspace.Machine.Trash(dir, "Garden")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if _, err := os.Stat(dir); !os.IsNotExist(err) {
 		t.Fatal("the folder has left where it was")
 	}
-	list := workspace.TrashedWorkspaces()
+	list := a.Workspace.Machine.TrashedWorkspaces()
 	if len(list) != 1 || list[0].Name != "Garden" {
 		t.Fatalf("the trash lists it, got %v", list)
 	}

@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
@@ -14,7 +13,7 @@ import (
 // and the workspace is as it was.
 func TestADryRunAnswersAndChangesNothing(t *testing.T) {
 	a, h := newApp(t)
-	workdir := chat.Workdir
+	workdir := a.Chat.Workdir
 	try := func(method, path, body string) *httptest.ResponseRecorder {
 		req := httptest.NewRequest(method, path, strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
@@ -42,7 +41,7 @@ func TestADryRunAnswersAndChangesNothing(t *testing.T) {
 	if now, _ := a.Store.Count(records.ActivityType); now != logged {
 		t.Errorf("a dry run was logged: %d, was %d", now, logged)
 	}
-	if chat.Workdir != workdir {
-		t.Errorf("trying on a copy moved where commands run to %q", chat.Workdir)
+	if a.Chat.Workdir != workdir {
+		t.Errorf("trying on a copy moved where commands run to %q", a.Chat.Workdir)
 	}
 }
