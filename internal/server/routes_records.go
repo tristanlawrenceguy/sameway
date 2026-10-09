@@ -15,15 +15,8 @@ var recordRoutes = []route{
 	{pattern: "POST /t/{type}/{id}/delete", handle: (*Server).deleteForm, access: people, persons: "a record goes when a person deletes it, or when its making is undone", reach: inward},
 	{pattern: "POST /t/{type}/{id}/discard", handle: (*Server).discard, access: people, tool: "undo_change", reach: inward},
 	{pattern: "POST /t/{type}/{id}/props", handle: (*Server).recordProps, access: people, tool: "update_record", reach: inward},
-	{pattern: "POST /t/file/upload", handle: (*Server).upload, access: people, persons: "a file comes from their computer; the assistant reads files already added", reach: inward},
 	// A file and what is read from it are public with the page that shows
 	// it; its sound, copied out for writing it down, is not.
-	{pattern: "GET /files/{id}", handle: (*Server).serveFile, access: people, public: true},
-	{pattern: "GET /files/{id}/still", handle: (*Server).serveStill, access: people, public: true},
-	{pattern: "GET /files/{id}/captions.vtt", handle: (*Server).captions, access: people, public: true},
-	{pattern: "GET /files/{id}/sound", handle: (*Server).soundPlan, access: people},
-	{pattern: "GET /files/{id}/sound/{n}", handle: (*Server).soundChunk, access: people},
-	{pattern: "POST /files/{id}/transcribe", handle: (*Server).transcribeFile, access: people, tool: "write_down", reach: outward},
 	{pattern: "GET /files/{id}/transcript.srt", handle: (*Server).transcriptFile, access: people, public: true},
 	{pattern: "GET /files/{id}/transcript.txt", handle: (*Server).transcriptFile, access: people, public: true},
 	{pattern: "GET /export/workspace.zip", handle: (*Server).exportEverything, access: owner},

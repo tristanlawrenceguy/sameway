@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
+	"github.com/tristanlawrenceguy/sameway/internal/server/media"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
@@ -59,7 +60,7 @@ func (s *Server) shareSave(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/") {
-		r.Body = http.MaxBytesReader(w, r.Body, maxFile+(1<<20))
+		r.Body = http.MaxBytesReader(w, r.Body, media.MaxFile+(1<<20))
 		r.ParseMultipartForm(8 << 20)
 	} else {
 		r.ParseForm()
@@ -148,12 +149,12 @@ func (s *Server) shareFiles(r *http.Request) ([]sharedFile, error) {
 		if err != nil {
 			return nil, fmt.Errorf("%s did not arrive whole", h.Filename)
 		}
-		rec, path, err := s.keepFile(s.who(r), f, h.Filename, "", "")
+		rec, path, err := s.media.KeepFile(s.who(r), f, h.Filename, "", "")
 		f.Close()
 		if err != nil {
 			return nil, err
 		}
-		s.readKept(rec.ID, h.Filename, path, false)
+		s.media.ReadKept(rec.ID, h.Filename, path, false)
 		name, _ := rec.Fields["title"].(string)
 		out = append(out, sharedFile{rec.ID, name})
 	}

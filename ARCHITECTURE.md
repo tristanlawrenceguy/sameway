@@ -288,7 +288,8 @@ nothing is written. The tailnet still gets the whole workspace at the same
 address. Publishing is always a question; unpublishing is immediate.
 
 Every address the server answers is one route table
-(`internal/server/routes*.go`): each route's handler, who may use it
+(`internal/server/routes*.go`, with a feature package's `Routes` added to it, as
+`internal/server/media`'s are): each route's handler, who may use it
 (people or the owner; one that says nothing is the owner's alone), for a
 page action the op the assistant does the same with or why it is a
 person's alone, and whether the internet may read it when what it shows is

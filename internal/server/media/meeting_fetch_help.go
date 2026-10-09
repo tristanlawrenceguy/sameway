@@ -1,4 +1,4 @@
-package server
+package media
 
 import (
 	"html/template"
@@ -12,7 +12,7 @@ import (
 // waiting for a code to be typed, or ready to connect, in out; what to set
 // up, which is an administrator's work in Microsoft's and Zoom's own
 // consoles, in setup, which the page keeps closed until asked.
-func (s *Server) appLines() (out, setup []string) {
+func (s *Service) AppLines() (out, setup []string) {
 	esc := template.HTMLEscapeString
 	s.apps.mu.Lock()
 	code, failed := s.apps.code, s.apps.failed
@@ -30,7 +30,7 @@ func (s *Server) appLines() (out, setup []string) {
 			why = " The last try ended: " + esc(failed) + "."
 		}
 		out = append(out, "Teams: ready to connect."+why+" "+
-			string(s.form(ui.Form{Action: "/meetings/teams/connect", Button: &ui.Button{Label: "Connect Teams", Variant: ui.Secondary}})))
+			string(s.Form(ui.Form{Action: "/meetings/teams/connect", Button: &ui.Button{Label: "Connect Teams", Variant: ui.Secondary}})))
 	}
 	c := s.app.Workspace.Config.Meetings
 	switch {
@@ -46,7 +46,7 @@ func (s *Server) appLines() (out, setup []string) {
 
 // fetchSaid is what an ended meeting's page says when its app will bring
 // the transcript: which app, and that it comes by itself.
-func (s *Server) fetchSaid(ev *store.Record) string {
+func (s *Service) fetchSaid(ev *store.Record) string {
 	where := str(ev.Fields["where"], "")
 	switch {
 	case strings.Contains(where, "teams.microsoft.com/l/meetup-join/") && s.teamsConnected():

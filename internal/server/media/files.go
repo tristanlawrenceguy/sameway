@@ -1,4 +1,4 @@
-package server
+package media
 
 import (
 	"context"
@@ -18,49 +18,49 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
-// maxUpload bounds a file sent inside a JSON body, which is held whole;
+// MaxUpload bounds a file sent inside a JSON body, which is held whole;
 // a file sent as a form streams to disk and may be far larger (keep.go).
-const maxUpload = 64 << 20
+const MaxUpload = 64 << 20
 
 // upload takes a file from the form, keeps the original under files/,
 // makes the record, and reads the contents into text: at once for the
 // formats the binary reads, and in the background when the workspace
 // names a converter, with the record saying "converting" meanwhile.
-func (s *Server) upload(w http.ResponseWriter, r *http.Request) {
-	rec, err := s.storeUpload(r)
+func (s *Service) upload(w http.ResponseWriter, r *http.Request) {
+	rec, err := s.StoreUpload(r)
 	if err != nil {
 		if errors.Is(err, http.ErrMissingFile) || strings.Contains(err.Error(), "select a file") {
 			err = errors.New("choose a file first")
 		}
-		s.failed(w, r, "Not added", err, "/t/"+FileType)
+		s.Failed(w, r, "Not added", err, "/t/"+records.FileType)
 		return
 	}
-	own := "/t/" + FileType + "/" + rec.ID
+	own := "/t/" + records.FileType + "/" + rec.ID
 	title, _ := rec.Fields["title"].(string)
 	// Added from a meeting's page, it is that meeting's (meeting.go).
 	if m := r.FormValue("meeting"); m != "" {
 		said := s.toMeeting(r, m, rec)
-		s.tellAt(w, r, outcome{Title: "Added", Text: title + " is added." + said}, web.BackOf(r, "/t/"+records.EventType+"/"+m))
+		s.TellAt(w, r, web.Outcome{Title: "Added", Text: title + " is added." + said}, web.BackOf(r, "/t/"+records.EventType+"/"+m))
 		return
 	}
 	// The file's own page shows it; anywhere else, the message does.
 	if from := r.FormValue("from"); web.Local(from) {
-		s.tellAt(w, r, outcome{Title: "Added", Text: title + " is in your files."}, from)
+		s.TellAt(w, r, web.Outcome{Title: "Added", Text: title + " is in your files."}, from)
 		return
 	}
 	http.Redirect(w, r, own, http.StatusSeeOther)
 }
 
-// storeUpload does the work of upload for any form with a file part: the
+// StoreUpload does the work of upload for any form with a file part: the
 // chat composer uses it too. It answers http.ErrMissingFile when the form
 // has no file, so a message without one is not a mistake. The file goes
 // to disk as it arrives (keep.go), however large, up to 4 GB.
-func (s *Server) storeUpload(r *http.Request) (*store.Record, error) {
-	if _, ok := s.app.Types.Get(FileType); !ok {
+func (s *Service) StoreUpload(r *http.Request) (*store.Record, error) {
+	if _, ok := s.app.Types.Get(records.FileType); !ok {
 		return nil, errors.New("this workspace has no file type; run sameway init --force to add it")
 	}
 	if r.MultipartForm == nil {
-		r.Body = http.MaxBytesReader(nil, r.Body, maxFile+(1<<20))
+		r.Body = http.MaxBytesReader(nil, r.Body, MaxFile+(1<<20))
 	}
 	if err := r.ParseMultipartForm(8 << 20); err != nil {
 		var tooBig *http.MaxBytesError
@@ -77,17 +77,17 @@ func (s *Server) storeUpload(r *http.Request) (*store.Record, error) {
 		return nil, err
 	}
 	defer part.Close()
-	rec, path, err := s.keepFile(s.who(r), part, header.Filename, r.FormValue("title"), r.FormValue("description"))
+	rec, path, err := s.KeepFile(s.Who(r), part, header.Filename, r.FormValue("title"), r.FormValue("description"))
 	if err != nil {
 		return nil, err
 	}
 	s.keepVoices(r, rec) // who was heard each second, for a call; voices.go
-	s.readKept(rec.ID, filepath.Base(header.Filename), path, false)
-	return s.app.Store.Get(FileType, rec.ID)
+	s.ReadKept(rec.ID, filepath.Base(header.Filename), path, false)
+	return s.app.Store.Get(records.FileType, rec.ID)
 }
 
 // readNow reads a file the binary understands and finishes the record.
-func (s *Server) readNow(id, name string, data []byte) {
+func (s *Service) readNow(id, name string, data []byte) {
 	res, err := convert.Read(name, data)
 	fields := map[string]any{"status": "ready", "kind": res.Kind}
 	switch {
@@ -109,19 +109,19 @@ func (s *Server) readNow(id, name string, data []byte) {
 // text. It goes through Apply like every write, but it is the file's own
 // bookkeeping, not anyone's change, so it is not logged; and a file gone
 // meanwhile stays gone.
-func (s *Server) fileSays(id string, fields map[string]any) (*store.Record, error) {
-	if _, err := s.app.Store.Get(FileType, id); err != nil {
+func (s *Service) fileSays(id string, fields map[string]any) (*store.Record, error) {
+	if _, err := s.app.Store.Get(records.FileType, id); err != nil {
 		return nil, err
 	}
-	if _, err := records.ApplyOps(s.app.Store, records.Op{Type: FileType, ID: id, After: fields}); err != nil {
+	if _, err := records.ApplyOps(s.app.Store, records.Op{Type: records.FileType, ID: id, After: fields}); err != nil {
 		return nil, err
 	}
-	return s.app.Store.Get(FileType, id)
+	return s.app.Store.Get(records.FileType, id)
 }
 
 // convertLater hands a file to the workspace's converter and finishes the
 // record when it answers, however long that takes; the log says how it went.
-func (s *Server) convertLater(id, converter, name, path string) {
+func (s *Service) convertLater(id, converter, name, path string) {
 	md, err := convert.External(context.Background(), converter, name, path)
 	if err != nil {
 		s.fileSays(id, map[string]any{"status": "failed", "note": err.Error()})
@@ -135,13 +135,13 @@ func (s *Server) convertLater(id, converter, name, path string) {
 		return
 	}
 	title, _ := rec.Fields["title"].(string)
-	records.Record(s.app.Store, "system", records.Change{Action: "updated", Component: FileType, ID: id, Detail: title + " (converted)", Href: "/t/" + FileType + "/" + id})
+	records.Record(s.app.Store, "system", records.Change{Action: "updated", Component: records.FileType, ID: id, Detail: title + " (converted)", Href: "/t/" + records.FileType + "/" + id})
 	s.Changed()
 }
 
 // serveFile gives back the original, as the type it is.
-func (s *Server) serveFile(w http.ResponseWriter, r *http.Request) {
-	rec, err := s.app.Store.Get(FileType, r.PathValue("id"))
+func (s *Service) serveFile(w http.ResponseWriter, r *http.Request) {
+	rec, err := s.app.Store.Get(records.FileType, r.PathValue("id"))
 	if err != nil {
 		http.NotFound(w, r)
 		return
@@ -165,9 +165,9 @@ func (s *Server) serveFile(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, filepath.Join(s.app.Workspace.FilesDir(), stored))
 }
 
-// fileExtras is what a file's own page shows beyond its fields: the
+// FileExtras is what a file's own page shows beyond its fields: the
 // picture itself when it is one, and the way to the original.
-func (s *Server) fileExtras(r *http.Request, rec *store.Record) string {
+func (s *Service) FileExtras(r *http.Request, rec *store.Record) string {
 	var b strings.Builder
 	if kind, _ := rec.Fields["kind"].(string); kind == "image" {
 		alt, _ := rec.Fields["description"].(string)
@@ -178,17 +178,17 @@ func (s *Server) fileExtras(r *http.Request, rec *store.Record) string {
 			title, _ := rec.Fields["title"].(string)
 			alt = title + ", not described yet"
 			b.WriteString(`<p class="sw-muted">This picture has no description yet, so someone who cannot see it hears only its name. Press Edit to say what it shows, or ask the assistant for a draft to check.</p>`)
-			ask := "Describe this picture (/t/" + FileType + "/" + rec.ID + ") for someone who cannot see it, as a draft I will check."
-			fmt.Fprintf(&b, `<p>%s</p>`, s.part(ui.Link{Href: "/chat?prompt=" + url.QueryEscape(ask), Label: "Ask the assistant to describe it", Look: ui.LookButton}))
+			ask := "Describe this picture (/t/" + records.FileType + "/" + rec.ID + ") for someone who cannot see it, as a draft I will check."
+			fmt.Fprintf(&b, `<p>%s</p>`, s.Part(ui.Link{Href: "/chat?prompt=" + url.QueryEscape(ask), Label: "Ask the assistant to describe it", Look: ui.LookButton}))
 		}
-		b.WriteString(string(s.component("image", s.pictureOf(rec, alt))))
+		b.WriteString(string(s.Component("image", s.pictureOf(rec, alt))))
 	}
 	audio := isRecording(rec)
 	if audio {
 		props := s.recordingOf(rec)
 		b.WriteString(s.speechOffer(r, rec, props))
 		b.WriteString(s.recordingOffer(r, rec)) // meeting.go
-		b.WriteString(string(s.component("media", props)))
+		b.WriteString(string(s.Component("media", props)))
 	}
 	// Reading a file through a converter says so, and says how it ended:
 	// the page follows when it does (convertLater calls Changed).
@@ -201,17 +201,17 @@ func (s *Server) fileExtras(r *http.Request, rec *store.Record) string {
 				message = note + " The transcript appears here when it is done."
 			}
 		}
-		b.WriteString(string(s.part(ui.Status{ID: "file-status", Message: message, State: ui.Working})))
+		b.WriteString(string(s.Part(ui.Status{ID: "file-status", Message: message, State: ui.Working})))
 	case "failed":
 		note, _ := rec.Fields["note"].(string)
-		b.WriteString(string(s.part(ui.Status{ID: "file-status", Message: "Could not read the file: " + note, State: ui.Failed})))
+		b.WriteString(string(s.Part(ui.Status{ID: "file-status", Message: "Could not read the file: " + note, State: ui.Failed})))
 	}
 	// A calendar's events are a press from the calendar.
 	if rec.Fields["kind"] == "calendar" {
-		if t, ok := s.app.Types.Get("event"); ok && s.importable(t) {
-			fmt.Fprintf(&b, `<p>%s</p>`, s.part(ui.Link{Href: "/t/event/import?file=" + rec.ID, Label: "Add these events to the calendar", Look: ui.LookButton}))
+		if t, ok := s.app.Types.Get("event"); ok && s.Importable(t) {
+			fmt.Fprintf(&b, `<p>%s</p>`, s.Part(ui.Link{Href: "/t/event/import?file=" + rec.ID, Label: "Add these events to the calendar", Look: ui.LookButton}))
 		}
 	}
-	fmt.Fprintf(&b, `<p>%s</p>`, s.part(ui.Link{Href: "/files/" + rec.ID, Label: "Open the original", Look: ui.LookButton}))
+	fmt.Fprintf(&b, `<p>%s</p>`, s.Part(ui.Link{Href: "/files/" + rec.ID, Label: "Open the original", Look: ui.LookButton}))
 	return b.String()
 }

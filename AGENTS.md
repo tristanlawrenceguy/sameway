@@ -38,6 +38,8 @@ runner in tools/a11y-runner.
 | `internal/mcp/` | the Model Context Protocol server: the chat tools plus reading, over stdio | `server.go` |
 | `internal/server/` | HTML pages and JSON API | `server.go`, `canvas.go` |
 | `internal/web/` | what every handler shares: the route (who may use it, where what it changes is), the outcome a person is told and the way back to where they acted, a page's options, JSON answers, and `Deps`, the narrow face of the server a feature package's handlers are given | `route.go`, `deps.go` |
+| `internal/server/media/` | files, recordings and meetings: a file kept and read, a picture and a recording on their pages, writing a recording down on this computer and telling its speakers apart, transcripts from Teams and Zoom. A feature package: its `Service` holds its state, its handlers get `media.Deps` (web.Deps and a few seams), its `Routes` go into the server's one route table (`server/features.go`) | `media.go`, `routes.go` |
+| `internal/server/servertest/` | what the server's tests and its feature packages' tests share: `New`/`NewWith` (an app on a fresh starter workspace and the server serving it), requests (`Get`, `PostForm`, `As`, `After`...), `Said`, and `Main` for a test package's TestMain | `servertest.go` |
 | `internal/cli/` | the sameway command | `root.go` |
 | `internal/update/` | finding, checking and installing a release of sameway itself | `update.go` |
 | `internal/bench/` | the assistant measured with a real model on everyday requests, each in a fresh workspace | `assistant_test.go` |
@@ -101,7 +103,7 @@ area it belongs to, or a new file in `docs/tests/` linked here.
 - Tests run side by side: a new test starts with `t.Parallel()`. What an
   app takes from where it runs (the clock, this computer's folders, the
   webhook client, ntfy) comes in through `app.Options`
-  (`newAppWith(t, app.Options{...})` in internal/server), never a package
+  (`newAppWith(t, app.Options{...})` in internal/server, `servertest.NewWith`), never a package
   variable or an environment variable. A test that must set one anyway
   leaves out `t.Parallel()` and puts it back before it ends.
 - Motion explains a change and never moves focus. A person's own action

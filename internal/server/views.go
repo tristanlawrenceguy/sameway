@@ -123,10 +123,10 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	// A file's page shows the picture when it is one, and the way to the
 	// original, above the fields read from it.
 	if t.Name == FileType {
-		b.WriteString(s.fileExtras(r, rec))
+		b.WriteString(s.media.FileExtras(r, rec))
 	}
 	if t.Name == records.EventType {
-		b.WriteString(s.meetingExtras(r, rec)) // meeting.go
+		b.WriteString(s.media.MeetingExtras(r, rec)) // meeting.go
 	}
 	b.WriteString(s.writingOn(r, t, rec))     // writing.go
 	b.WriteString(s.suggestionsOn(r, t, rec)) // suggestions.go
@@ -160,7 +160,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	if f, ok := t.Field(textField); ok {
 		// A recording's transcript is shown once, under its player, at
 		// its times; Edit still opens it as text.
-		if val := s.display(*f, rec.Fields[f.Name]); t.Name != FileType || len(s.heard(rec)) == 0 {
+		if val := s.display(*f, rec.Fields[f.Name]); t.Name != FileType || len(s.media.Heard(rec)) == 0 {
 			fmt.Fprintf(&b, `<div class="sw-prose sw-detail__body" data-prop="%s" data-source="%s" data-prose-level="2">%s</div>`, f.Name, template.HTMLEscapeString(val), bodyHTML(rec, val))
 		}
 	}

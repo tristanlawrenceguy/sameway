@@ -1,4 +1,4 @@
-package server
+package media
 
 import (
 	"net/http"
@@ -28,7 +28,7 @@ var voicesShape = regexp.MustCompile(`^[mt.]+$`)
 const mostVoices = 86400
 
 // keepVoices puts who was heard beside a recording just added.
-func (s *Server) keepVoices(r *http.Request, rec *store.Record) {
+func (s *Service) keepVoices(r *http.Request, rec *store.Record) {
 	v := r.FormValue("voices")
 	if len(v) > mostVoices || !voicesShape.MatchString(v) || !strings.ContainsAny(v, "mt") {
 		return
@@ -38,8 +38,8 @@ func (s *Server) keepVoices(r *http.Request, rec *store.Record) {
 	}
 }
 
-func (s *Server) voicesPath(rec *store.Record) (string, bool) {
-	path, ok := s.storedPath(rec)
+func (s *Service) voicesPath(rec *store.Record) (string, bool) {
+	path, ok := s.StoredPath(rec)
 	if !ok {
 		return "", false
 	}
@@ -48,7 +48,7 @@ func (s *Server) voicesPath(rec *store.Record) (string, bool) {
 
 // namedVoices gives each line that names nobody the one heard most while
 // it was spoken, when the recording knows.
-func (s *Server) namedVoices(rec *store.Record, cues []convert.Cue) []convert.Cue {
+func (s *Service) namedVoices(rec *store.Record, cues []convert.Cue) []convert.Cue {
 	path, ok := s.voicesPath(rec)
 	if !ok {
 		return cues
@@ -90,7 +90,7 @@ func (s *Server) namedVoices(rec *store.Record, cues []convert.Cue) []convert.Cu
 
 // voiceNames are what me and them are called: the owner's name, when a
 // person has their address, and the meeting's one other person.
-func (s *Server) voiceNames(rec *store.Record) (me, them string) {
+func (s *Service) voiceNames(rec *store.Record) (me, them string) {
 	me, them = "Me", "Them"
 	pt, ok := s.app.Types.Get("person")
 	if !ok {
@@ -98,8 +98,8 @@ func (s *Server) voiceNames(rec *store.Record) (me, them string) {
 	}
 	ownerID := ""
 	if login := s.app.Records.Owner.Login; login != "" {
-		if found, _ := query.Filter(s.app.Store, pt, []string{"email=" + login}, "", 1, s.now()); len(found) == 1 {
-			me, ownerID = s.title(pt, found[0]), found[0].ID
+		if found, _ := query.Filter(s.app.Store, pt, []string{"email=" + login}, "", 1, s.Now()); len(found) == 1 {
+			me, ownerID = s.Title(pt, found[0]), found[0].ID
 		}
 	}
 	et, ok := s.app.Types.Get(records.EventType)
@@ -109,7 +109,7 @@ func (s *Server) voiceNames(rec *store.Record) (me, them string) {
 	if f, has := et.Field("people"); !has || !f.RefList() {
 		return
 	}
-	meetings, _ := query.Filter(s.app.Store, et, []string{"recording=" + rec.ID}, "", 1, s.now())
+	meetings, _ := query.Filter(s.app.Store, et, []string{"recording=" + rec.ID}, "", 1, s.Now())
 	if len(meetings) != 1 {
 		return
 	}
@@ -122,7 +122,7 @@ func (s *Server) voiceNames(rec *store.Record) (me, them string) {
 	}
 	if len(others) == 1 {
 		if p, err := s.app.Store.Get("person", others[0]); err == nil {
-			them = s.title(pt, p)
+			them = s.Title(pt, p)
 		}
 	}
 	return

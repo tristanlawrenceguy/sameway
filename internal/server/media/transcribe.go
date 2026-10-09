@@ -1,4 +1,4 @@
-package server
+package media
 
 import (
 	"bytes"
@@ -11,11 +11,13 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/tristanlawrenceguy/sameway/internal/blocks"
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/speech"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // A recording is written down on the computer that hosts the workspace,
@@ -43,19 +45,19 @@ type speechState struct {
 	done, total int64
 	failed      string
 	once        sync.Once    // starts the worker that writes parts down
-	speakers    *speakersKit // telling speakers apart; speakers.go
+	speakers    *SpeakersKit // telling speakers apart; speakers.go
 	jobs        chan partJob // the parts waiting, one at a time
 }
 
 // UseSpeech sets how this server writes recordings down.
-func (s *Server) UseSpeech(k Speech) {
+func (s *Service) UseSpeech(k Speech) {
 	s.speech.mu.Lock()
 	s.speech.kit, s.speech.given = &k, true
 	s.speech.mu.Unlock()
 }
 
-// speechKit is the Speech in use: the downloaded engine, unless set.
-func (s *Server) speechKit() *Speech {
+// SpeechKit is the Speech in use: the downloaded engine, unless set.
+func (s *Service) SpeechKit() *Speech {
 	s.speech.mu.Lock()
 	defer s.speech.mu.Unlock()
 	if s.speech.kit == nil {
@@ -72,14 +74,14 @@ func (s *Server) speechKit() *Speech {
 }
 
 // speechGet is the owner's press that gets speech-to-text for this computer.
-func (s *Server) speechGet(w http.ResponseWriter, r *http.Request) {
-	kit := s.speechKit()
+func (s *Service) speechGet(w http.ResponseWriter, r *http.Request) {
+	kit := s.SpeechKit()
 	if kit.Ready() {
-		s.tell(w, r, outcome{Title: "Speech-to-text is already on this computer"}, "/t/"+FileType)
+		s.Tell(w, r, web.Outcome{Title: "Speech-to-text is already on this computer"}, "/t/"+records.FileType)
 		return
 	}
 	if !speech.Supported() && !s.speech.given {
-		s.tell(w, r, outcome{Failed: true, Title: "No speech-to-text for this computer", Text: "Its makers publish none for this kind of computer. A transcript can still be written by hand."}, "/t/"+FileType)
+		s.Tell(w, r, web.Outcome{Failed: true, Title: "No speech-to-text for this computer", Text: "Its makers publish none for this kind of computer. A transcript can still be written by hand."}, "/t/"+records.FileType)
 		return
 	}
 	s.speech.mu.Lock()
@@ -89,15 +91,15 @@ func (s *Server) speechGet(w http.ResponseWriter, r *http.Request) {
 	}
 	s.speech.mu.Unlock()
 	if !already {
-		s.record(r, records.Change{Action: "started", Detail: "getting speech-to-text for this computer (" + sizeWords(speech.DownloadSize()) + ")"})
+		s.Record(r, records.Change{Action: "started", Detail: "getting speech-to-text for this computer (" + blocks.SizeWords(speech.DownloadSize()) + ")"})
 		go s.getSpeech(kit)
 	}
-	s.tell(w, r, outcome{Title: "Getting speech-to-text", Text: "It downloads once, about " + sizeWords(speech.DownloadSize()) + ". Recordings are written down as soon as it is here."}, "/t/"+FileType)
+	s.Tell(w, r, web.Outcome{Title: "Getting speech-to-text", Text: "It downloads once, about " + blocks.SizeWords(speech.DownloadSize()) + ". Recordings are written down as soon as it is here."}, "/t/"+records.FileType)
 }
 
 // getSpeech downloads and unpacks, saying how far it has got, and then
 // writes down the recordings that were waiting for it.
-func (s *Server) getSpeech(kit *Speech) {
+func (s *Service) getSpeech(kit *Speech) {
 	last := int64(0)
 	err := kit.Install(context.Background(), func(done, total int64) {
 		s.speech.mu.Lock()
@@ -128,28 +130,28 @@ func (s *Server) getSpeech(kit *Speech) {
 // saying which and where (one part of one when they are left out). With
 // no sound sent, a WAV is written down here from the original, a chunk
 // at a time; anything else needs the page's script to read it.
-func (s *Server) transcribeFile(w http.ResponseWriter, r *http.Request) {
-	rec, err := s.app.Store.Get(FileType, r.PathValue("id"))
+func (s *Service) transcribeFile(w http.ResponseWriter, r *http.Request) {
+	rec, err := s.app.Store.Get(records.FileType, r.PathValue("id"))
 	if err != nil || !isRecording(rec) {
 		http.NotFound(w, r)
 		return
 	}
-	back := "/t/" + FileType + "/" + rec.ID
-	if !s.speechKit().Ready() {
-		s.tell(w, r, outcome{Failed: true, Title: "Not written down", Text: "Speech-to-text is not on this computer yet."}, back)
+	back := "/t/" + records.FileType + "/" + rec.ID
+	if !s.SpeechKit().Ready() {
+		s.Tell(w, r, web.Outcome{Failed: true, Title: "Not written down", Text: "Speech-to-text is not on this computer yet."}, back)
 		return
 	}
 	if !strings.HasPrefix(r.Header.Get("Content-Type"), "audio/wav") {
-		path, ok := s.storedPath(rec)
+		path, ok := s.StoredPath(rec)
 		if !ok || !strings.EqualFold(filepath.Ext(path), ".wav") {
-			s.tell(w, r, outcome{Failed: true, Title: "Not written down", Text: "A " + strings.ToUpper(convert.Ext(fmt.Sprint(rec.Fields["name"]))) + " recording is read by this page's script, which is off. Turn scripts on, or add it as a WAV."}, back)
+			s.Tell(w, r, web.Outcome{Failed: true, Title: "Not written down", Text: "A " + strings.ToUpper(convert.Ext(fmt.Sprint(rec.Fields["name"]))) + " recording is read by this page's script, which is off. Turn scripts on, or add it as a WAV."}, back)
 			return
 		}
 		if err := s.writeWAVHere(rec, path); err != nil {
-			s.tell(w, r, outcome{Failed: true, Title: "Not written down", Text: err.Error()}, back)
+			s.Tell(w, r, web.Outcome{Failed: true, Title: "Not written down", Text: err.Error()}, back)
 			return
 		}
-		s.tellAt(w, r, outcome{Title: "Writing it down", Text: "The transcript appears here when it is done."}, back)
+		s.TellAt(w, r, web.Outcome{Title: "Writing it down", Text: "The transcript appears here when it is done."}, back)
 		return
 	}
 	q := r.URL.Query()
@@ -161,7 +163,7 @@ func (s *Server) transcribeFile(w http.ResponseWriter, r *http.Request) {
 	}
 	samples, rate, err := speech.ReadWAV(http.MaxBytesReader(w, r.Body, 256<<20))
 	if err != nil {
-		s.tell(w, r, outcome{Failed: true, Title: "Not written down", Text: err.Error()}, back)
+		s.Tell(w, r, web.Outcome{Failed: true, Title: "Not written down", Text: err.Error()}, back)
 		return
 	}
 	if index == 0 {
@@ -172,7 +174,7 @@ func (s *Server) transcribeFile(w http.ResponseWriter, r *http.Request) {
 	os.MkdirAll(s.partsDir(rec.ID), 0o755)
 	wav := filepath.Join(s.partsDir(rec.ID), strconv.Itoa(index)+".wav")
 	if err := os.WriteFile(wav, buf.Bytes(), 0o644); err != nil {
-		s.failed(w, r, "Not written down", err, back)
+		s.Failed(w, r, "Not written down", err, back)
 		return
 	}
 	s.fileSays(rec.ID, map[string]any{"status": "converting", "note": "Being written down on this computer."})
@@ -183,17 +185,17 @@ func (s *Server) transcribeFile(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `{"part":%d,"of":%d}`, index, of)
 		return
 	}
-	s.tellAt(w, r, outcome{Title: "Writing it down", Text: "The transcript appears here when it is done."}, back)
+	s.TellAt(w, r, web.Outcome{Title: "Writing it down", Text: "The transcript appears here when it is done."}, back)
 }
 
 // speechOffer is what a recording's page offers about writing it down: to
 // get speech-to-text (its owner), to write it down now, or how far the
 // getting has come.
-func (s *Server) speechOffer(r *http.Request, rec *store.Record, props map[string]any) string {
+func (s *Service) speechOffer(r *http.Request, rec *store.Record, props map[string]any) string {
 	if _, has := props["cues"]; has || rec.Fields["status"] == "converting" {
 		return ""
 	}
-	kit := s.speechKit()
+	kit := s.SpeechKit()
 	s.speech.mu.Lock()
 	getting, done, total, failed := s.speech.getting, s.speech.done, s.speech.total, s.speech.failed
 	s.speech.mu.Unlock()
@@ -205,13 +207,13 @@ func (s *Server) speechOffer(r *http.Request, rec *store.Record, props map[strin
 			props["none"] = "No transcript yet. It is waiting to be written down on this computer."
 		}
 	case getting:
-		return string(s.part(ui.Status{ID: "speech-status", State: ui.Working,
-			Message: fmt.Sprintf("Getting speech-to-text for this computer: %s of %s.", sizeWords(done), sizeWords(total))}))
+		return string(s.Part(ui.Status{ID: "speech-status", State: ui.Working,
+			Message: fmt.Sprintf("Getting speech-to-text for this computer: %s of %s.", blocks.SizeWords(done), blocks.SizeWords(total))}))
 	case records.VisitorOf(r.Context()).Owner() && (speech.Supported() || s.speech.given):
 		if failed != "" {
 			props["none"] = "No transcript yet. Getting speech-to-text did not work: " + failed
 		}
-		props["get"] = map[string]any{"action": "/speech/get", "size": sizeWords(speech.DownloadSize())}
+		props["get"] = map[string]any{"action": "/speech/get", "size": blocks.SizeWords(speech.DownloadSize())}
 	default:
 		props["none"] = "No transcript yet. Until there is one, someone who cannot hear it gets only its title. The owner of this workspace can get speech-to-text for this computer."
 	}

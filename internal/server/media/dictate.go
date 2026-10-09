@@ -1,4 +1,4 @@
-package server
+package media
 
 import (
 	"bytes"
@@ -20,26 +20,26 @@ import (
 // this computer, as recordings are, and the words go back into the
 // message to be read before they are sent. Nothing is kept.
 
-// voiceFor is the chat's microphone: Record for a voice note to attach,
+// VoiceFor is the chat's microphone: Record for a voice note to attach,
 // always, and Dictate and voice mode once speech-to-text is on this
 // computer.
-func (s *Server) voiceFor() (record, dictate, talk template.HTML) {
-	record = s.component("voice", map[string]any{"mode": "record", "target": "attach", "context": "a voice note to attach"})
-	if s.speechKit().Ready() {
-		dictate = s.component("voice", map[string]any{"mode": "dictate", "target": "message", "action": "/dictate"})
-		talk = s.component("talk", map[string]any{"message": "message", "action": "/dictate"})
+func (s *Service) VoiceFor() (record, dictate, talk template.HTML) {
+	record = s.Component("voice", map[string]any{"mode": "record", "target": "attach", "context": "a voice note to attach"})
+	if s.SpeechKit().Ready() {
+		dictate = s.Component("voice", map[string]any{"mode": "dictate", "target": "message", "action": "/dictate"})
+		talk = s.Component("talk", map[string]any{"message": "message", "action": "/dictate"})
 	}
 	return record, dictate, talk
 }
 
 // dictate writes down a short recording sent as WAV and answers its words.
-func (s *Server) dictate(w http.ResponseWriter, r *http.Request) {
+func (s *Service) dictate(w http.ResponseWriter, r *http.Request) {
 	answer := func(code int, body map[string]string) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(code)
 		json.NewEncoder(w).Encode(body)
 	}
-	if !s.speechKit().Ready() {
+	if !s.SpeechKit().Ready() {
 		answer(http.StatusConflict, map[string]string{"error": "Speech-to-text is not on this computer yet. Its owner can get it from any recording's page."})
 		return
 	}
@@ -63,7 +63,7 @@ func (s *Server) dictate(w http.ResponseWriter, r *http.Request) {
 	f.Close()
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Minute)
 	defer cancel()
-	cues, err := s.speechKit().Transcribe(ctx, filepath.Clean(path))
+	cues, err := s.SpeechKit().Transcribe(ctx, filepath.Clean(path))
 	if err != nil {
 		log.Printf("dictate: %v", err)
 		answer(http.StatusInternalServerError, map[string]string{"error": "It could not be written down on this computer."})

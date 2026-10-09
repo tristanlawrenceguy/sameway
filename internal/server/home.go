@@ -3,38 +3,12 @@ package server
 import (
 	"errors"
 	"fmt"
-	"path/filepath"
 	"strings"
-
-	"github.com/tristanlawrenceguy/sameway/internal/convert"
 )
 
 // The machine's side of the assistant's tools (chat/home_tools.go): the
 // same as a recording's Write it down and the workspaces page's buttons,
 // said in words for the assistant to pass on.
-
-// WriteDown has a recording written down on this computer.
-func (s *Server) WriteDown(id string) (string, error) {
-	rec, err := s.app.Store.Get(FileType, id)
-	if err != nil || !isRecording(rec) {
-		return "", fmt.Errorf("there is no recording %s; find_records on file lists them", id)
-	}
-	page := "/t/" + FileType + "/" + rec.ID
-	if !s.speechKit().Ready() {
-		return "", fmt.Errorf("speech-to-text is not on this computer yet; the person gets it from the recording's page, %s", page)
-	}
-	if path, ok := s.storedPath(rec); ok && strings.EqualFold(filepath.Ext(path), ".wav") {
-		if err := s.writeWAVHere(rec, path); err != nil {
-			return "", err
-		}
-		return "it is being written down; the words arrive in its text at " + page, nil
-	}
-	if s.hostWrites(rec) {
-		s.writeLater(rec.ID)
-		return "it is being written down on this computer in the background; the words arrive in its text at " + page, nil
-	}
-	return "", fmt.Errorf("a %s recording is read by its page's script here: the person presses Write it down at %s", strings.ToUpper(convert.Ext(fmt.Sprint(rec.Fields["name"]))), page)
-}
 
 // MakeWorkspace makes a workspace beside this one and starts it.
 func (s *Server) MakeWorkspace(name string, copy bool) (string, error) {

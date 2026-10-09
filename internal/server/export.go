@@ -128,7 +128,7 @@ func (s *Server) transcriptFile(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	cues := s.heard(rec)
+	cues := s.media.Heard(rec)
 	if len(cues) == 0 {
 		http.NotFound(w, r)
 		return

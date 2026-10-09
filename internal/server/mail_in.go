@@ -177,11 +177,11 @@ func (s *Server) mailNote(m mailin.Mail) error {
 			parts = append(parts, f.Name+" (too large to keep)")
 			continue
 		}
-		rec, path, err := s.keepFile(who, bytes.NewReader(f.Data), f.Name, "", "")
+		rec, path, err := s.media.KeepFile(who, bytes.NewReader(f.Data), f.Name, "", "")
 		if err != nil {
 			continue
 		}
-		s.readKept(rec.ID, f.Name, path, false)
+		s.media.ReadKept(rec.ID, f.Name, path, false)
 		name, _ := rec.Fields["title"].(string)
 		parts = append(parts, "["+name+"](/t/"+FileType+"/"+rec.ID+")")
 	}
