@@ -107,6 +107,8 @@ func RenderPage(p Page) ([]byte, error) {
 type NavItem struct {
 	HTML template.HTML
 	Dot  int
+	// Sub is the list's own records, listed under it (ui.nest).
+	Sub []template.HTML
 }
 
 // Failed is a page that says something went wrong: its window title starts

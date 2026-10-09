@@ -22,7 +22,7 @@
 <div class="sw-header__inner">
 <a class="sw-header__brand" href="/"><span class="sw-header__mark" aria-hidden="true"></span>{{.Site}}</a>
 {{if .Nav}}<nav class="sw-nav" aria-label="Main">
-<ul>{{range .Nav}}<li{{if .Dot}} data-dot="{{.Dot}}"{{end}}>{{.HTML}}</li>{{end}}</ul>
+<ul>{{range .Nav}}<li{{if .Dot}} data-dot="{{.Dot}}"{{end}}>{{.HTML}}{{if .Sub}}<ul class="sw-nav__sub">{{range .Sub}}<li>{{.}}</li>{{end}}</ul>{{end}}</li>{{end}}</ul>
 </nav>
 {{end}}{{if .Present}}{{.Present}}
 {{end}}{{if .Header}}<div class="sw-strip sw-strip--header">{{.Header}}</div>

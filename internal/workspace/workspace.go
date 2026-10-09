@@ -72,6 +72,10 @@ type Config struct {
 		// set_setting ui.show +<key> when it has a reason the person
 		// would want it there always, and takes it back with -<key>.
 		Show string `yaml:"show"`
+		// Nest names the lists, by type, comma separated, whose records are
+		// each under the list's item in the sidebar (habit: every habit one
+		// click away). Empty nests none. Set by asking: ui.nest +<type>.
+		Nest string `yaml:"nest"`
 		// Text is how large the words are: "normal" (the default),
 		// "large" or "larger". Spacing is "normal" or "wide": more room
 		// between lines, words and paragraphs, for people who read more

@@ -41,6 +41,12 @@
 .sw-header__brand + .sw-nav { flex: 1 1 0; }
 .sw-nav ul { list-style: none; display: flex; flex-wrap: nowrap; overflow-x: auto; gap: var(--sw-space-1); margin: 0; padding: 0; }
 .sw-nav li { flex: none; }
+/* A list's own records under its item (ui.nest), in the sidebar only: the
+   bar along the top has no room, and the list's page names them all. */
+.sw-nav .sw-nav__sub { display: none; }
+.sw-nav .sw-nav__sub li .sw-link::before { display: none; }
+.sw-nav .sw-nav__sub .sw-link { font-weight: 400; color: var(--sw-color-fg-muted); }
+.sw-nav .sw-nav__sub .sw-link[aria-current="page"] { color: var(--sw-color-fg); font-weight: 600; }
 .sw-nav .sw-link {
     display: inline-flex; align-items: center; gap: var(--sw-space-3); min-height: var(--sw-size-target);
     padding: 0 var(--sw-space-3); border-radius: var(--sw-radius-md);
@@ -120,6 +126,7 @@ h1.sw-dotted::before { width: 1.125rem; height: 1.125rem; margin-right: var(--sw
   .sw-header__brand { padding-inline: var(--sw-space-3); }
   .sw-nav ul { flex-direction: column; flex-wrap: nowrap; overflow-x: visible; gap: 2px; }
   .sw-nav--more { margin-top: auto; }
+  .sw-nav .sw-nav__sub { display: flex; margin-top: 2px; padding-left: var(--sw-space-6); }
   .sw-strip--header { justify-content: flex-start; align-self: stretch; }
   .sw-shell { grid-column: 2; min-width: 0; }
   .sw-footer { grid-column: 2; }

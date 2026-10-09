@@ -13,6 +13,7 @@ var settingNames = map[string]string{
 	"ui.controls":  "Item buttons",
 	"ui.lists":     "Lists shown",
 	"ui.developer": "Developer pages",
+	"ui.nest":      "Nested in the sidebar",
 	"ui.language":  "Language",
 	"ui.clock":     "Clock",
 	"llm.provider": "Model provider",
