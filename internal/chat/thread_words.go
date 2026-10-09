@@ -59,5 +59,5 @@ func threadWords(st *store.Store, t *schema.Type, rec *store.Record) string {
 		body, _ := r.Fields["body"].(string)
 		lines = append(lines, fmt.Sprintf("- %s, from %s: %s", sentOf(r).Format("Mon 2 Jan"), who, clipRunes(strings.Join(strings.Fields(body), " "), 400)))
 	}
-	return "\n\nEarlier in this conversation, oldest first:\n" + strings.Join(lines, "\n")
+	return "\n\nThis record is the latest message of a conversation. What came before it, oldest first, is only to understand it: decide by what the latest message asks of the person now. A question to them, or something left for them to answer, is theirs to reply to; what answers or closes what they asked is not.\n" + strings.Join(lines, "\n")
 }
