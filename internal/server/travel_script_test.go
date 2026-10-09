@@ -8,35 +8,10 @@ import (
 	"testing"
 )
 
-// What a person does moves where it goes (31-travel.js): items are named
-// only for the moment of a transition, so the page at rest is the server's
-// and a refresh still compares blocks as sent; nothing here moves focus.
-func TestTravelNamesOnlyForTheTransition(t *testing.T) {
-	data, err := os.ReadFile("../../design/base/31-travel.js")
-	if err != nil {
-		t.Fatal(err)
-	}
-	src := string(data)
-	for _, want := range []string{
-		`removeProperty("view-transition-name")`, // names come off again
-		`addEventListener("pageswap"`,            // the page left names its items
-		`addEventListener("pagereveal"`,          // and the page arrived names them too
-		"e.viewTransition.finished",              // until the transition is over
-		"e.persisted",                            // a page back from the cache is as sent
-		"MOST",                                   // a long list is not all lifted at once
-	} {
-		if !strings.Contains(src, want) {
-			t.Errorf("31-travel.js must have %s", want)
-		}
-	}
-	if strings.Contains(src, ".focus(") {
-		t.Error("travel must never move focus")
-	}
-	refresh, _ := os.ReadFile("../../design/base/19-refresh.js")
-	if !strings.Contains(string(refresh), "travel.clear(); merge(doc); if (travel) travel.name();") {
-		t.Error("a refresh unnames items before it compares blocks, and names the new ones after")
-	}
-}
+// What a person does moves where it goes (31-travel.js): that items are
+// named only for a transition and a refresh compares blocks unnamed is
+// checked in a browser (behave-refresh.mjs, and motion.mjs against a
+// server, which watches every transition travel or not).
 
 // Travel is transform and opacity only, short, in tokens, and under
 // reduced motion or the still pace it is a cross-fade where things land:
