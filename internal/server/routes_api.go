@@ -20,7 +20,6 @@ var apiRoutes = []route{
 	{pattern: "POST /api/chat", handle: (*Server).apiChat, access: people, reach: outward},
 	{pattern: "POST /api/chat/clear", handle: (*Server).apiChatClear, access: people, reach: inward},
 	{pattern: "POST /api/file/upload", handle: (*Server).apiFileUpload, access: people, reach: inward},
-	{pattern: "POST /api/import/{type}", handle: (*Server).apiImport, access: owner, reach: inward},
 	{pattern: "GET /api/workspaces", handle: (*Server).apiWorkspaces, access: owner},
 	{pattern: "GET /api/changes", handle: (*Server).apiChanges, access: people},
 	{pattern: "POST /api/arrange", handle: (*Server).apiArrange, access: people, reach: inward},

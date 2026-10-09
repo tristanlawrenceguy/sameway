@@ -12,3 +12,6 @@ func MayChange(r *http.Request) bool {
 	a := records.VisitorOf(r.Context()).Access
 	return a != records.View && a != records.Public
 }
+
+// IsPublic says whether a request came from the internet.
+func IsPublic(r *http.Request) bool { return records.VisitorOf(r.Context()).Access == records.Public }

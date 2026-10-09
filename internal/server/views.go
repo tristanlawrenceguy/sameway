@@ -89,8 +89,8 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	// they were read as the last record's ("Morning walk: Import events").
 	b.WriteString(`<h2 class="sw-visually-hidden">Add and download</h2>`)
 	b.WriteString(string(s.addButton(t)))
-	b.WriteString(s.importLinks(t))                      // bring.go
-	b.WriteString(s.exportLinks(t, r.URL.Query(), recs)) // and they go out again, as the page has them; see export.go
+	b.WriteString(s.exchange.ImportLinks(t))                      // bring.go
+	b.WriteString(s.exchange.ExportLinks(t, r.URL.Query(), recs)) // and they go out again, as the page has them; see export.go
 	// What just happened to these records is here too, so a deletion can be
 	// taken back where the person lands.
 	// The log names who changed what: the people let in read it here, the
@@ -205,7 +205,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 		b.WriteString(s.editFields(t, rec))
 	}
 	b.WriteString(`</div>`)
-	b.WriteString(s.documentLinks(r, t, rec)) // the record as a file, after it; see export_docs.go
+	b.WriteString(s.exchange.DocumentLinks(r, t, rec)) // the record as a file, after it; see export_docs.go
 	// What the schema lists here, such as a project's tasks (backrefs.go).
 	listed, keys := s.backrefs(t, rec)
 	b.WriteString(listed)

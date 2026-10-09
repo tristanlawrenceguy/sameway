@@ -1,4 +1,4 @@
-package server
+package exchange
 
 import (
 	"bytes"
@@ -14,15 +14,18 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/blocks"
 	"github.com/tristanlawrenceguy/sameway/internal/content"
 	"github.com/tristanlawrenceguy/sameway/internal/export"
 	"github.com/tristanlawrenceguy/sameway/internal/look"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // A record goes out as a document: Markdown, a web page, Word or PDF. The
@@ -54,10 +57,10 @@ func recordFormats(t *schema.Type, rec *store.Record) []string {
 	return out
 }
 
-// documentLinks is a record page's way out, after the record: the export
+// DocumentLinks is a record page's way out, after the record: the export
 // component, with a size where making the file is cheap. The web page and
 // the PDF are made by rendering and printing, so they say none.
-func (s *Server) documentLinks(r *http.Request, t *schema.Type, rec *store.Record) string {
+func (s *Service) DocumentLinks(r *http.Request, t *schema.Type, rec *store.Record) string {
 	if !exportable(t) {
 		return ""
 	}
@@ -66,17 +69,17 @@ func (s *Server) documentLinks(r *http.Request, t *schema.Type, rec *store.Recor
 		item := map[string]any{"href": "/export/" + t.Name + "/" + rec.ID + "." + ext, "format": ext}
 		if ext != "html" && ext != "pdf" {
 			if body, _, err := s.recordFile(r, t, rec, ext); err == nil {
-				item["size"] = sizeWords(int64(len(body)))
+				item["size"] = blocks.SizeWords(int64(len(body)))
 			}
 		}
 		items = append(items, item)
 	}
 	// Named by what it is of, not its title, which the heading says once.
-	return string(s.component("export", map[string]any{"what": "this " + schema.Words(t.Name), "items": items}))
+	return string(s.Component("export", map[string]any{"what": "this " + schema.Words(t.Name), "items": items}))
 }
 
 // exportDocument answers /export/<type>/<id>.<ext>.
-func (s *Server) exportDocument(w http.ResponseWriter, r *http.Request) {
+func (s *Service) exportDocument(w http.ResponseWriter, r *http.Request) {
 	t, ok := s.app.Types.Get(r.PathValue("type"))
 	id, ext, _ := strings.Cut(r.PathValue("file"), ".")
 	if !ok || !exportable(t) {
@@ -88,7 +91,7 @@ func (s *Server) exportDocument(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	if !has(recordFormats(t, rec), ext) {
+	if !slices.Contains(recordFormats(t, rec), ext) {
 		http.Error(w, "this "+schema.Words(t.Name)+" can be taken out as ."+strings.Join(recordFormats(t, rec), ", ."), http.StatusNotFound)
 		return
 	}
@@ -98,18 +101,18 @@ func (s *Server) exportDocument(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		s.fail(w, err)
+		s.Fail(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", typ)
-	attachment(w, s.title(t, rec)+"."+ext)
+	web.Attachment(w, s.Title(t, rec)+"."+ext)
 	w.Write(body)
 }
 
 // recordFile makes one record's file and says its type. The internet is
 // given only the fields a published page shows.
-func (s *Server) recordFile(r *http.Request, t *schema.Type, rec *store.Record, ext string) ([]byte, string, error) {
-	if isPublic(r) {
+func (s *Service) recordFile(r *http.Request, t *schema.Type, rec *store.Record, ext string) ([]byte, string, error) {
+	if web.IsPublic(r) {
 		shown := &store.Record{ID: rec.ID, Type: rec.Type, CreatedAt: rec.CreatedAt, UpdatedAt: rec.UpdatedAt, Fields: map[string]any{}}
 		for _, f := range t.Shown() {
 			if v, ok := rec.Fields[f.Name]; ok {
@@ -130,7 +133,7 @@ func (s *Server) recordFile(r *http.Request, t *schema.Type, rec *store.Record, 
 			return body, f.typ, err
 		case "docx":
 			var buf bytes.Buffer
-			err := export.DOCX(&buf, s.title(t, rec), s.lang(), s.recordMarkdown(t, rec, false))
+			err := export.DOCX(&buf, s.Title(t, rec), s.Lang(), s.recordMarkdown(t, rec, false))
 			return buf.Bytes(), f.typ, err
 		case "pdf":
 			body, err := s.recordPDF(r.Context(), t, rec)
@@ -143,7 +146,7 @@ func (s *Server) recordFile(r *http.Request, t *schema.Type, rec *store.Record, 
 	return buf.Bytes(), f.Type, err
 }
 
-func (s *Server) lang() string {
+func (s *Service) Lang() string {
 	if l := strings.TrimSpace(s.app.Workspace.Config.UI.Language); l != "" {
 		return l
 	}
@@ -153,12 +156,12 @@ func (s *Server) lang() string {
 // recordMarkdown is a record as Markdown: its title (when heading says),
 // its facts as a list of names and values, then its writing, as every
 // record taken out as text says them (export.Text).
-func (s *Server) recordMarkdown(t *schema.Type, rec *store.Record, heading bool) string {
+func (s *Service) recordMarkdown(t *schema.Type, rec *store.Record, heading bool) string {
 	var b strings.Builder
 	if heading {
-		b.WriteString("# " + s.title(t, rec) + "\n\n")
+		b.WriteString("# " + s.Title(t, rec) + "\n\n")
 	}
-	facts, body := export.Text(t, rec.Fields, s.RefTitle, s.h24())
+	facts, body := export.Text(t, rec.Fields, s.RefTitle, s.H24())
 	for _, f := range facts {
 		fmt.Fprintf(&b, "- **%s:** %s\n", f.Name, f.Value)
 	}
@@ -172,23 +175,23 @@ var mainPart = regexp.MustCompile(`(?s)<main\b[^>]*>(.*)</main>`)
 var picture = regexp.MustCompile(`src="/files/([A-Za-z0-9]+)"`)
 
 // recordHTML is the record's page as a reader has it, whole in one file.
-func (s *Server) recordHTML(t *schema.Type, rec *store.Record) ([]byte, error) {
-	page := s.request(http.MethodGet, "/t/"+t.Name+"/"+rec.ID, nil)
+func (s *Service) recordHTML(t *schema.Type, rec *store.Record) ([]byte, error) {
+	page := s.Request(http.MethodGet, "/t/"+t.Name+"/"+rec.ID, nil)
 	if page.Code != http.StatusOK {
 		return nil, fmt.Errorf("the page could not be read (%d)", page.Code)
 	}
-	clean := forReaders(page.Body.Bytes(), func(string) bool { return false })
+	clean := s.ForReaders(page.Body.Bytes(), func(string) bool { return false })
 	m := mainPart.FindSubmatch(clean)
 	if m == nil {
 		return nil, errors.New("the page has no main part")
 	}
 	body := picture.ReplaceAllFunc(m[1], func(src []byte) []byte {
 		id := string(picture.FindSubmatch(src)[1])
-		f, err := s.app.Store.Get(FileType, id)
+		f, err := s.app.Store.Get(records.FileType, id)
 		if err != nil {
 			return src
 		}
-		path, ok := s.media.StoredPath(f)
+		path, ok := s.Media().StoredPath(f)
 		st, err := os.Stat(path)
 		if !ok || err != nil || st.Size() > 8<<20 {
 			return src
@@ -198,13 +201,13 @@ func (s *Server) recordHTML(t *schema.Type, rec *store.Record) ([]byte, error) {
 	})
 	var out bytes.Buffer
 	fmt.Fprintf(&out, "<!doctype html>\n<html lang=\"%s\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>%s</title>\n<style>\n%s\n</style>\n</head>\n<body>\n<main class=\"sw-main\">%s</main>\n</body>\n</html>\n",
-		template.HTMLEscapeString(s.lang()), template.HTMLEscapeString(s.title(t, rec)), s.css, body)
+		template.HTMLEscapeString(s.Lang()), template.HTMLEscapeString(s.Title(t, rec)), s.CSS(), body)
 	return out.Bytes(), nil
 }
 
 // recordPDF prints the record's web page in the headless browser, from a
 // port of this computer's own, for as long as it takes.
-func (s *Server) recordPDF(ctx context.Context, t *schema.Type, rec *store.Record) ([]byte, error) {
+func (s *Service) recordPDF(ctx context.Context, t *schema.Type, rec *store.Record) ([]byte, error) {
 	doc, err := s.recordHTML(t, rec)
 	if err != nil {
 		return nil, err
@@ -226,19 +229,19 @@ func (s *Server) recordPDF(ctx context.Context, t *schema.Type, rec *store.Recor
 
 // exportEverything answers /export/workspace.zip: the whole workspace, its
 // owner's to take.
-func (s *Server) exportEverything(w http.ResponseWriter, r *http.Request) {
+func (s *Service) exportEverything(w http.ResponseWriter, r *http.Request) {
 	name := s.app.Workspace.Config.Name
 	w.Header().Set("Content-Type", "application/zip")
-	attachment(w, name+" "+s.now().Format("2006-01-02")+".zip")
+	web.Attachment(w, name+" "+s.Now().Format("2006-01-02")+".zip")
 	if err := export.Everything(w, name, s.app.Store, s.app.Types, s.app.Mirror, s.app.Workspace.FilesDir(), s.RefTitle); err != nil {
 		log.Printf("export: %v", err)
 	}
 }
 
-// takeEverything is the owner's way to take the whole workspace, with
+// TakeEverything is the owner's way to take the whole workspace, with
 // about how big it is before it is packed: the files as kept and each
 // record's Markdown.
-func (s *Server) takeEverything(r *http.Request) string {
+func (s *Service) TakeEverything(r *http.Request) string {
 	if !records.VisitorOf(r.Context()).Owner() {
 		return ""
 	}
@@ -259,7 +262,7 @@ func (s *Server) takeEverything(r *http.Request) string {
 			}
 		}
 	}
-	return string(s.component("export", map[string]any{"what": "everything in " + s.app.Workspace.Config.Name,
+	return string(s.Component("export", map[string]any{"what": "everything in " + s.app.Workspace.Config.Name,
 		"note":  "Every record as Markdown, every file as it was added, and a spreadsheet of each kind of record. Conversations and the log stay here.",
-		"items": []any{map[string]any{"href": "/export/workspace.zip", "format": "zip", "size": "about " + sizeWords(n)}}}))
+		"items": []any{map[string]any{"href": "/export/workspace.zip", "format": "zip", "size": "about " + blocks.SizeWords(n)}}}))
 }

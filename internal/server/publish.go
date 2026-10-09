@@ -57,9 +57,6 @@ func splitList(list string) []string {
 	return out
 }
 
-// isPublic says whether a request came from the internet.
-func isPublic(r *http.Request) bool { return records.VisitorOf(r.Context()).Access == records.Public }
-
 // Public is the workspace as the internet has it.
 func (s *Server) Public(mcp http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

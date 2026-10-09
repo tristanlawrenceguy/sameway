@@ -1,49 +1,10 @@
 package server_test
 
 import (
-	"net/http"
 	"net/url"
 	"strings"
 	"testing"
-	"time"
-
-	"github.com/tristanlawrenceguy/sameway/internal/app"
 )
-
-// seedTasks makes eight tasks: six not done, due from two days ago to a
-// month on, and two done.
-func seedTasks(t *testing.T, a *app.App) {
-	t.Helper()
-	day := func(d int) string { return time.Now().AddDate(0, 0, d).UTC().Format(time.RFC3339) }
-	for _, task := range []map[string]any{
-		{"title": "Dig the pond", "due": day(-2)},
-		{"title": "Order compost", "due": day(2)},
-		{"title": "Plant garlic", "due": day(5)},
-		{"title": "Buy seeds", "due": day(30)},
-		{"title": "Empty the water butt"},
-		{"title": "Mend the fence", "due": day(-1)},
-		{"title": "Call the dentist", "due": day(-3), "done": true},
-		{"title": "Wash the car", "due": day(3), "done": true},
-	} {
-		if _, err := a.Store.Create("task", task); err != nil {
-			t.Fatal(err)
-		}
-	}
-}
-
-// addCollection puts a collection on the canvas and says its block's id.
-func addCollection(t *testing.T, h http.Handler, props map[string]any) string {
-	t.Helper()
-	rec := postJSON(t, h, http.MethodPost, "/api/block", map[string]any{"component": "collection", "props": props})
-	wantStatus(t, rec, http.StatusCreated)
-	var out map[string]any
-	decode(t, rec, &out)
-	id, _ := out["id"].(string)
-	if id == "" {
-		t.Fatalf("no block id: %s", rec.Body.String())
-	}
-	return id
-}
 
 // section is one collection block's part of a page.
 func section(t *testing.T, page, id string) string {

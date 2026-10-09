@@ -70,3 +70,10 @@ var (
 	multipartFile = servertest.MultipartFile
 	said          = servertest.Said
 )
+
+// More the server's tests share with its features' (servertest).
+var (
+	public        = servertest.Public
+	seedTasks     = servertest.SeedTasks
+	addCollection = servertest.AddCollection
+)
