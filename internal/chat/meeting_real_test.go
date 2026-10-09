@@ -16,6 +16,7 @@ import (
 // asked what the recording page's press asks, and writes the meeting up
 // with the tool: a decision and a task, linked to where they were said.
 func TestARealModelWritesUpAMeeting(t *testing.T) {
+	t.Parallel()
 	model := os.Getenv("SAMEWAY_CLAUDE_CODE_MODEL")
 	if model == "" {
 		t.Skip("set SAMEWAY_CLAUDE_CODE_MODEL to run one real turn through Claude Code")

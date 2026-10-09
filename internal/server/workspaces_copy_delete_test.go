@@ -17,6 +17,7 @@ import (
 // TestWorkspacesCopyGETPage checks that GET /workspaces/copy returns a full
 // accessible page with the "copy workspace" form, not an HTTP 405 error.
 func TestWorkspacesCopyGETPage(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/workspaces/copy")
@@ -47,6 +48,7 @@ func TestWorkspacesCopyGETPage(t *testing.T) {
 // TestWorkspacesDeleteGETPage checks that GET /workspaces/delete returns a full
 // accessible page with the "delete workspace" confirmation form, not an HTTP 405 error.
 func TestWorkspacesDeleteGETPage(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	if err := workspace.Init(dir, examples.FS, examples.StarterRoot, false); err != nil {
 		t.Fatal(err)
@@ -88,6 +90,7 @@ func TestWorkspacesDeleteGETPage(t *testing.T) {
 // TestWorkspacesCopyGETPageWithTitle checks that the copy page has a proper
 // <title> element containing the page name and site. Covers acceptance item 3.
 func TestWorkspacesCopyGETPageWithTitle(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/workspaces/copy")
@@ -116,6 +119,7 @@ func TestWorkspacesCopyGETPageWithTitle(t *testing.T) {
 // TestWorkspacesDeleteGETPageWithTitle checks that the delete page has a proper
 // <title> element containing the page name and site. Covers acceptance item 3.
 func TestWorkspacesDeleteGETPageWithTitle(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	if err := workspace.Init(dir, examples.FS, examples.StarterRoot, false); err != nil {
 		t.Fatal(err)
@@ -155,6 +159,7 @@ func TestWorkspacesDeleteGETPageWithTitle(t *testing.T) {
 // TestWorkspacesCopyGETPageHasLayout checks that the copy page has full Sameway
 // layout: main, header, footer, and nav landmarks. Covers acceptance item 1.
 func TestWorkspacesCopyGETPageHasLayout(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/workspaces/copy")
@@ -188,6 +193,7 @@ func TestWorkspacesCopyGETPageHasLayout(t *testing.T) {
 // TestWorkspacesDeleteGETPageHasLayout checks that the delete page has full
 // Sameway layout: main, header, footer, and nav landmarks. Covers acceptance item 2.
 func TestWorkspacesDeleteGETPageHasLayout(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	if err := workspace.Init(dir, examples.FS, examples.StarterRoot, false); err != nil {
 		t.Fatal(err)
@@ -233,6 +239,7 @@ func TestWorkspacesDeleteGETPageHasLayout(t *testing.T) {
 // with a wrong confirm value shows an alert mentioning "delete" and does NOT
 // contain copy/start language ("could not be started", "this one stays").
 func TestWorkspacesDeleteWrongNameShowsWarning(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	if err := workspace.Init(dir, examples.FS, examples.StarterRoot, false); err != nil {
 		t.Fatal(err)
@@ -262,6 +269,7 @@ func TestWorkspacesDeleteWrongNameShowsWarning(t *testing.T) {
 // with the correct name but no fleet (so starting a replacement fails) shows an
 // error message specific to deletion, not copy/start language. Covers acceptance 1.
 func TestWorkspacesDeleteNoFleetShowsDeletionError(t *testing.T) {
+	t.Parallel()
 	known := filepath.Join(t.TempDir(), "workspaces.json")
 
 	dir := t.TempDir()

@@ -15,6 +15,7 @@ import (
 // should say just "Back" with context for screen readers.  This covers Acceptance 1
 // (≤3 words) and Acceptance 2 (no filler phrases).
 func TestFocusPageBackLinkIsShort(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	// Create a canvas block so the focus page exists.
@@ -38,6 +39,7 @@ func TestFocusPageBackLinkIsShort(t *testing.T) {
 // a label of ≤3 words.  After the change it should say just "Import" with
 // context carrying the type name.  This covers Acceptance 1 and 2.
 func TestImportLinkLabelIsShort(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	// Create a note so the listing page shows records (not empty state).

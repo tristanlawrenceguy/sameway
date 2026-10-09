@@ -40,6 +40,7 @@ func (m *sortModel) Complete(_ context.Context, req llm.Request) (*llm.Response,
 // with a press, which sorts the email; the next suggestion is shown what
 // the person did with the last ones.
 func TestAnEmailToDoIsSuggestedAsATask(t *testing.T) {
+	t.Parallel()
 	a, _ := newApp(t)
 	model := &sortModel{}
 	a.Chat.Provider, a.Chat.ProviderErr = model, nil

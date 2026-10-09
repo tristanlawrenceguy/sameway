@@ -8,6 +8,7 @@ import (
 // A key spends its changes and earns them back over the minute; another
 // key's budget is its own.
 func TestAKeysChangesComeBackOverTheMinute(t *testing.T) {
+	t.Parallel()
 	now := time.Unix(0, 0)
 	p := newPacer(3, time.Minute)
 	p.now = func() time.Time { return now }

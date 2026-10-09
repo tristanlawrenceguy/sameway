@@ -18,6 +18,7 @@ import (
 // says what is left or over, a record has no bar, and the habit's page
 // logs for an earlier day and draws the limit on a monthly chart.
 func TestALimitAndARecordAreTracked(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	hours, err := a.Store.Create(server.HabitType, map[string]any{"name": "Hours", "cadence": "month", "aim": "limit", "target": 21, "unit": "hours"})
 	if err != nil {

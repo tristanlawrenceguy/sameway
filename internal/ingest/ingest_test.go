@@ -29,6 +29,7 @@ func starter(t *testing.T) *store.Store {
 // type by name and by what they plainly are, and one record made per row;
 // a person already here by email is not made twice.
 func TestACSVBecomesPeople(t *testing.T) {
+	t.Parallel()
 	st := starter(t)
 	person, _ := st.Types().Get("person")
 	tb, err := ingest.Read("contacts.csv", []byte("Full name;E-mail;Mobile;Company;Job title;Tags\nSandra Lee;sandra@example.com;+44 7700 900123;Acme;Ops;client, north\nTom Ash;tom@example.com;;Bee Ltd;;\n;;;;;\n"))
@@ -64,6 +65,7 @@ func TestACSVBecomesPeople(t *testing.T) {
 // first email and phone, the organisation, the title, the note, folded
 // lines unfolded.
 func TestAVCardBecomesPeople(t *testing.T) {
+	t.Parallel()
 	vcf := "BEGIN:VCARD\r\nVERSION:3.0\r\nN:Lee;Sandra;;;\r\nFN:Sandra Lee\r\nORG:Acme;Ops\r\nTITLE:Head of Ops\r\nEMAIL;TYPE=INTERNET:sandra@example.com\r\nTEL;TYPE=CELL:+44 7700 900123\r\nNOTE:Met at the\r\n  garden show\\, likes tea\r\nEND:VCARD\r\nBEGIN:VCARD\r\nVERSION:2.1\r\nN:Ash;Tom\r\nTEL:0117 496 0000\r\nEND:VCARD\r\n"
 	tb, err := ingest.Read("contacts.vcf", []byte(vcf))
 	if err != nil {
@@ -84,6 +86,7 @@ func TestAVCardBecomesPeople(t *testing.T) {
 // sent, its subject and the start of its text, each linked to the person
 // it was from, made when new and found by email when not.
 func TestAMailboxBecomesInteractionsWithPeople(t *testing.T) {
+	t.Parallel()
 	mbox, _ := os.ReadFile(filepath.Join("testdata", "two.mbox"))
 	st := starter(t)
 	st.Create("person", map[string]any{"name": "Sandra Lee", "email": "Sandra@example.com"})
@@ -116,6 +119,7 @@ func TestAMailboxBecomesInteractionsWithPeople(t *testing.T) {
 // A call log is a CSV of numbers and times; each row becomes a call with
 // the person the number belongs to.
 func TestACallLogBecomesCalls(t *testing.T) {
+	t.Parallel()
 	st := starter(t)
 	st.Create("person", map[string]any{"name": "Sandra Lee", "phone": "07700 900123"})
 	tb, _ := ingest.Read("calls.csv", []byte("Number,Name,Date,Duration,Type\n+447700900123,Sandra,2026-09-18 14:02,00:05:12,Incoming\n01174960000,,2026-09-19 09:30,00:01:00,Outgoing\n"))

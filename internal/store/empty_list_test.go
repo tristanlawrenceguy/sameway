@@ -10,6 +10,7 @@ import (
 // TestListReturnsNonNilEmptySlice covers the bug where an empty result set
 // was returned as nil, causing JSON marshalling to produce null instead of [].
 func TestListReturnsNonNilEmptySlice(t *testing.T) {
+	t.Parallel()
 	st := open(t)
 
 	// No records created — list should return a non-nil empty slice.
@@ -64,6 +65,7 @@ func TestListReturnsNonNilEmptySlice(t *testing.T) {
 // TestListWithFilterReturnsNonNilEmptySlice covers the case where records
 // exist but all are deleted — List must still return a non-nil slice.
 func TestListWithFilterReturnsNonNilEmptySlice(t *testing.T) {
+	t.Parallel()
 	st := open(t)
 
 	// Create one note then delete it so we test an empty-after-populated path.

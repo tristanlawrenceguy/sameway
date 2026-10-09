@@ -15,6 +15,7 @@ import (
 // TestPeopleEditContentInPlace covers the whole of what a person can change
 // about a block: the words it shows. No page to visit, no layout controls.
 func TestPeopleEditContentInPlace(t *testing.T) {
+	t.Parallel()
 	h, id := canvasWithABlock(t)
 
 	rec := postForm(t, h, "/canvas/"+id+"/props", url.Values{"prop-title": {"Groceries"}})
@@ -49,6 +50,7 @@ func TestPeopleEditContentInPlace(t *testing.T) {
 // TestEditableTextIsMarkedForTheEditor checks the contract the inline editor
 // relies on: a component says which element carries which prop.
 func TestEditableTextIsMarkedForTheEditor(t *testing.T) {
+	t.Parallel()
 	h, _ := canvasWithABlock(t)
 	doc := parse(t, get(t, h, "/"))
 	marked := doc.WithAttr("data-prop", "")
@@ -76,6 +78,7 @@ func TestEditableTextIsMarkedForTheEditor(t *testing.T) {
 // TestBadEditIsReportedNotSwallowed checks a rejected edit says so where the
 // person is looking, rather than failing silently or throwing a 500.
 func TestBadEditIsReportedNotSwallowed(t *testing.T) {
+	t.Parallel()
 	h, id := canvasWithABlock(t)
 	rec := postForm(t, h, "/canvas/"+id+"/props", url.Values{"prop-title": {""}})
 	said := after(t, h, rec).Body.String()
@@ -93,6 +96,7 @@ func TestBadEditIsReportedNotSwallowed(t *testing.T) {
 // TestPeopleGetNoDesignControls is the other half of the line: layout is the
 // assistant's to set, so none of it is reachable from the page.
 func TestPeopleGetNoDesignControls(t *testing.T) {
+	t.Parallel()
 	h, id := canvasWithABlock(t)
 	doc := parse(t, get(t, h, "/"))
 	for _, n := range doc.Elements("select") {

@@ -20,6 +20,7 @@ import (
 // clock is fixed at a quarter to midnight: a timer set then rings
 // tomorrow, and says so, which once failed this test only near midnight.
 func TestTheClockSaysWhatItSet(t *testing.T) {
+	t.Parallel()
 	now := time.Date(2026, 10, 7, 23, 45, 0, 0, time.Local)
 	a, h := newAppWith(t, app.Options{Clock: func() time.Time { return now }})
 	page := after(t, h, postForm(t, h, "/clock/set", url.Values{"at": {"tomorrow 7am"}, "title": {"Call the vet"}})).Body.String()
@@ -54,6 +55,7 @@ func TestTheClockSaysWhatItSet(t *testing.T) {
 // part of the day sit side by side whatever they are, and a reminder on
 // another day has its day above its time.
 func TestComingUpIsOneListInTimeOrder(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	if _, err := a.Store.Create(records.BlockType, a.Chat.BlockFields(map[string]any{"component": "clock", "props": map[string]any{}})); err != nil {
 		t.Fatal(err)

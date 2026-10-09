@@ -8,6 +8,7 @@ import (
 // Logging says what was logged and where it stands now, with Undo there,
 // not only in the activity log.
 func TestLoggingSaysWhatAndWhereItStands(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	habit, err := a.Store.Create("habit", map[string]any{"name": "Water", "cadence": "day", "target": 8, "unit": "glasses"})
 	if err != nil {

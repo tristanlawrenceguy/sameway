@@ -11,6 +11,7 @@ import (
 )
 
 func TestASearchThatFindsNothingSaysSoAndOffersTheAssistant(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	body := get(t, h, "/search?q=plumber").Body.String()
@@ -32,6 +33,7 @@ func TestASearchThatFindsNothingSaysSoAndOffersTheAssistant(t *testing.T) {
 }
 
 func TestASearchThatFindsSomethingSaysHowManyInItsTitle(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Call the plumber"}), http.StatusCreated)
 	body := get(t, h, "/search?q=plumber").Body.String()

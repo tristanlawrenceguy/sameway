@@ -14,6 +14,7 @@ import (
 // laid out by the hour, all-day things first, with the days either side
 // and the month a link away.
 func TestACalendarShowsOneDayByTheHour(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	blk, err := a.Store.Create(records.BlockType, a.Chat.BlockFields(map[string]any{"component": "calendar", "props": map[string]any{"type": "task"}}))
 	if err != nil {

@@ -10,6 +10,7 @@ import (
 // These are functional routes registered in server.go but were missing from the
 // describe map, so agents had no way to find them programmatically.
 func TestProposalRoutesAreDescribed(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	var routes map[string]string

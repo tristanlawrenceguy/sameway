@@ -17,6 +17,7 @@ import (
 // And every route is in the table: one registered beside it would say
 // nothing of who may use it.
 func TestEveryRouteSaysWhoMayUseIt(t *testing.T) {
+	t.Parallel()
 	for _, r := range server.Routes() {
 		if r.Access == "" {
 			t.Errorf("%s: who may use it? Say so in its route (routes*.go): people, or owner", r.Pattern)
@@ -42,6 +43,7 @@ func TestEveryRouteSaysWhoMayUseIt(t *testing.T) {
 // them is refused here too, not only by the export's own rule that
 // internal kinds are not taken out.
 func TestAVisitorCannotTakeTheOwnersRecordsAway(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	viewer := records.Visitor{Name: "Vi", Login: "vi@example.com", Access: records.View}
 	for _, path := range []string{"/export/activity.csv", "/export/message.xlsx", "/export/conversation.csv", "/t/activity", "/api/activity", "/api/workspaces", "/workspaces"} {
@@ -58,6 +60,7 @@ func TestAVisitorCannotTakeTheOwnersRecordsAway(t *testing.T) {
 // same over the API as through the assistant and MCP, which offer an
 // editor add_type and add_field and a viewer neither.
 func TestTheShapeIsAnEditorsOverEveryWayIn(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	editor := records.Visitor{Name: "Bob", Login: "bob@example.com", Access: records.Edit}
 	viewer := records.Visitor{Name: "Vi", Login: "vi@example.com", Access: records.View}

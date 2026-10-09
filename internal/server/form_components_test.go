@@ -11,6 +11,7 @@ import (
 // as an error summary at the top, one problem per field, each leading to its
 // field, rather than one run-on sentence.
 func TestARefusedEditListsEachProblem(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	habit, _ := a.Store.Create("habit", map[string]any{"name": "Water"})
 	res := postForm(t, h, "/t/habit/"+habit.ID+"/props", url.Values{"prop-target": {"lots"}, "prop-cadence": {"fortnight"}})
@@ -26,6 +27,7 @@ func TestARefusedEditListsEachProblem(t *testing.T) {
 // TestAFieldWithAMostSaysSo: a field the schema caps is marked for the
 // editor to count down.
 func TestAFieldWithAMostSaysSo(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	note, _ := a.Store.Create("note", map[string]any{"title": "Beds"})
 	if body := get(t, h, "/t/note/"+note.ID).Body.String(); !strings.Contains(body, `data-prop="title" data-label="Title" data-max="200"`) {
@@ -36,6 +38,7 @@ func TestAFieldWithAMostSaysSo(t *testing.T) {
 // TestALinkToOneOfManyIsLookedUp: past the most a list can hold, a link to
 // another record is looked up by name, not dropped from the editor.
 func TestALinkToOneOfManyIsLookedUp(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	var first string
 	for i := 0; i < 501; i++ {

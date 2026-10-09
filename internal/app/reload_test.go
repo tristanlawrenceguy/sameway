@@ -18,6 +18,7 @@ import (
 // read is left until it does, and a file taken away takes its type off
 // the pages but keeps its records.
 func TestSchemaChangedElsewhereIsTakenWhileRunning(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	if err := workspace.Init(dir, examples.FS, examples.StarterRoot, false); err != nil {
 		t.Fatal(err)

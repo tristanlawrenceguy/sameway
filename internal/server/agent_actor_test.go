@@ -38,6 +38,7 @@ func newestEntry(t *testing.T, st *store.Store) *store.Record {
 // A program calling the API is an agent, named by its X-Sameway-Agent
 // header, or else "An agent": a User-Agent names a library, not who called.
 func TestAnAPIWriteIsLoggedByTheAgentsName(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	cases := []struct {
 		header map[string]string
@@ -60,6 +61,7 @@ func TestAnAPIWriteIsLoggedByTheAgentsName(t *testing.T) {
 // A record and a block written through the API by the same caller say
 // the same who: the agent, by its name.
 func TestAPIRecordAndBlockWritesAgree(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	who := map[string]string{"X-Sameway-Agent": "backup"}
 	wantStatus(t, apiAs(t, h, http.MethodPost, "/api/note", `{"title":"Plan"}`, who), http.StatusCreated)
@@ -88,6 +90,7 @@ func TestAPIRecordAndBlockWritesAgree(t *testing.T) {
 // An agent's entry in the log reads with its name and way in first, as a
 // word, with an agent's mark, and offers Undo like any other.
 func TestTheLogShowsAnAgentsChange(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	task, _ := a.Store.Create("task", map[string]any{"title": "Call plumber"})
 	wantStatus(t, apiAs(t, h, http.MethodPut, "/api/task/"+task.ID, `{"done":true}`, map[string]string{"X-Sameway-Agent": "Claude Code"}), http.StatusOK)
@@ -130,6 +133,7 @@ func TestTheLogShowsAnAgentsChange(t *testing.T) {
 
 // The assistant in the app still reads as the assistant.
 func TestTheAssistantStillReadsAsTheAssistant(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	records.Record(a.Store, "assistant", records.Change{Action: "added", Component: "card", Detail: "Shopping"})
 	log := get(t, h, "/activity").Body.String()
@@ -140,6 +144,7 @@ func TestTheAssistantStillReadsAsTheAssistant(t *testing.T) {
 
 // Back after a while, what an agent did meanwhile is news, with its name.
 func TestSinceCountsWhatAgentsDid(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Store.SetMeta("last:owner", time.Now().Add(-2*time.Hour).UTC().Format(time.RFC3339Nano))
 	records.Record(a.Store, records.ActorAgent, records.Change{Action: "updated", Component: "task", Detail: "Call plumber", By: "Claude Code", Via: records.ThroughMCP})

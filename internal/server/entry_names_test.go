@@ -14,6 +14,7 @@ import (
 // is when it happened, not a day it "was" due; and a long habit name is
 // cut rather than the amount.
 func TestAnEntryIsNamedByItsHabit(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	water, err := a.Store.Create(server.HabitType, map[string]any{"name": "8 glasses of water a day", "unit": "glasses", "target": 8})
 	if err != nil {

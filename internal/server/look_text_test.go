@@ -13,6 +13,7 @@ import (
 // words as the person reads them. The crew's checking roles asked for this
 // fourteen times, one surface at a time.
 func TestLookReadsWhatAPageSays(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	seedLikeAPerson(t, a, h) // machine_seed_test.go
 	paint := ""

@@ -12,6 +12,7 @@ import (
 )
 
 func TestUpdateSamewayAsksTheUpdaterAndSaysWhatItSaid(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct {
 		what    string
 		install bool
@@ -45,6 +46,7 @@ func TestUpdateSamewayAsksTheUpdaterAndSaysWhatItSaid(t *testing.T) {
 }
 
 func TestAnInstallGoesOnTheReceiptAndInTheLog(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	svc.Provider = &scripted{steps: []*llm.Response{call("update_sameway", map[string]any{"install": true})}}
 	svc.Update = func(_ context.Context, install bool) (update.Outcome, error) {
@@ -74,6 +76,7 @@ func TestAnInstallGoesOnTheReceiptAndInTheLog(t *testing.T) {
 }
 
 func TestWithoutAnUpdaterTheToolSaysSo(t *testing.T) {
+	t.Parallel()
 	svc, m := withModel(t, call("update_sameway", map[string]any{"install": true}))
 	svc.Update = nil
 	if _, err := svc.Send(context.Background(), "update"); err != nil {

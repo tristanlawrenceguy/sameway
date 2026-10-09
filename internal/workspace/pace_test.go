@@ -13,6 +13,7 @@ import (
 // The pace is kept in workspace.yaml, edited as one line so the comments a
 // person reads there survive, and read back with a safe default.
 func TestPaceIsKeptInTheWorkspaceFile(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	if err := workspace.Init(dir, examples.FS, examples.StarterRoot, false); err != nil {
 		t.Fatal(err)

@@ -32,6 +32,7 @@ func change(t *testing.T, a *app.App, args map[string]any) string {
 // field is hidden: off the pages, out of the assistant's hands, no longer
 // asked for, with everything it held kept and back when it is shown.
 func TestAFieldChangesWithoutLosingAnything(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	withPhase(t, a)
 	change(t, a, map[string]any{"type": "note", "field": "phase", "change": "add_choice", "value": "blocked", "label": "Waiting on someone"})
@@ -65,6 +66,7 @@ func TestAFieldChangesWithoutLosingAnything(t *testing.T) {
 // Deleting is asked, with hiding offered first; hiding instead keeps
 // everything, and deleting clears it. What Sameway relies on is refused.
 func TestDeletingIsAskedWithHidingOfferedFirst(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	withPhase(t, a)
 	n, _ := a.Store.Create("note", map[string]any{"title": "Plan", "phase": "draft"})
@@ -115,6 +117,7 @@ func TestDeletingIsAskedWithHidingOfferedFirst(t *testing.T) {
 // Choices added on two computers both stay; a label, hiding and a
 // deletion made on one reach the other.
 func TestSchemaChangesTravelBetweenHosts(t *testing.T) {
+	t.Parallel()
 	a, ha := newApp(t)
 	b, hb := newApp(t)
 	withPhase(t, a)

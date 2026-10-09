@@ -12,6 +12,7 @@ import (
 // the page, the API and the assistant all give what has some of them and
 // say so in the same words.
 func TestSearchIsOneWayEverywhere(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Store.Create("note", map[string]any{"title": "Boiler", "body": "The engineer comes on Thursday."})
 	if page := get(t, h, "/search?q=boiler+visit").Body.String(); !strings.Contains(page, search.SomeWords) || !strings.Contains(page, "Boiler") {

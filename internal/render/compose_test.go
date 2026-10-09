@@ -13,6 +13,7 @@ import (
 // a calendar is a real button: the same template, the same classes, the same
 // accessibility contract, not a copy made by the calendar.
 func TestComponentsNestInsideComponents(t *testing.T) {
+	t.Parallel()
 	reg := builtins(t)
 	out, err := reg.Render("calendar", map[string]any{
 		"month": "2026-09", "today": "2026-09-11", "detail": "page",
@@ -47,6 +48,7 @@ func TestComponentsNestInsideComponents(t *testing.T) {
 // in its own manifest which components may sit inside it, so a model cannot
 // drop a form into a calendar cell and trap someone there.
 func TestNestedComponentsAreLimitedByTheHostComponent(t *testing.T) {
+	t.Parallel()
 	reg := builtins(t)
 	_, err := reg.Render("calendar", map[string]any{
 		"month": "2026-09", "today": "2026-09-11", "detail": "page",
@@ -65,6 +67,7 @@ func TestNestedComponentsAreLimitedByTheHostComponent(t *testing.T) {
 // with a note on the page, rather than recursing until the process dies.
 // The built-in components cannot express this, so the test builds one.
 func TestNestingIsBounded(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	nest := filepath.Join(dir, "nest")
 	if err := os.MkdirAll(filepath.Join(nest, "examples"), 0o755); err != nil {
@@ -104,6 +107,7 @@ func TestNestingIsBounded(t *testing.T) {
 // TestNestingRejectsUnknownComponents keeps a bad spec from a model to a
 // readable note instead of a broken page or a template error.
 func TestNestingRejectsUnknownComponents(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	nest := filepath.Join(dir, "nest")
 	os.MkdirAll(nest, 0o755)

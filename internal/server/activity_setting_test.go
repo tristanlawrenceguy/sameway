@@ -13,6 +13,7 @@ import (
 // "Assistant set ui.pace calm" becomes "Assistant changed pace to Calm".
 // This covers acceptance item 1.
 func TestActivityLogSettingChangeIsHumanReadable(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	a.Chat.Provider, a.Chat.ProviderErr = &scripted{steps: []*llm.Response{
@@ -37,6 +38,7 @@ func TestActivityLogSettingChangeIsHumanReadable(t *testing.T) {
 // Undo button accessible name on a setting-change entry uses plain words,
 // not field paths. This covers acceptance item 3.
 func TestActivityLogUndoButtonOnSettingChangeIsHumanReadable(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	a.Chat.Provider, a.Chat.ProviderErr = &scripted{steps: []*llm.Response{
@@ -64,6 +66,7 @@ func TestActivityLogUndoButtonOnSettingChangeIsHumanReadable(t *testing.T) {
 // "set calm (ui.spacing)" becomes "changed spacing to Wide". This covers
 // acceptance item 2.
 func TestChatChangesMadeSettingChangeIsHumanReadable(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	a.Chat.Provider, a.Chat.ProviderErr = &scripted{steps: []*llm.Response{

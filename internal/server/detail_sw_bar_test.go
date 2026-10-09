@@ -11,6 +11,7 @@ import (
 // line 117 (block.querySelector(".sw-bar")) before inserting its Edit button.
 // Acceptance items 1–3: without this bar, clicking "Edit note" does nothing.
 func TestDetailPageHasSwBarInsideBlock(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{"title": "Test note"})
@@ -35,6 +36,7 @@ func TestDetailPageHasSwBarInsideBlock(t *testing.T) {
 // Edit anchor and the existing Delete control within the same block. Acceptance
 // item 4: the Delete link must still work after being moved into the bar.
 func TestDetailPageSwBarContainsDeleteLink(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{"title": "Test note"})
@@ -71,6 +73,7 @@ func TestDetailPageSwBarContainsDeleteLink(t *testing.T) {
 // TestDetailPageProposalHasSwBarInsideBlock checks that proposal detail pages
 // also render a div.sw-bar.sw-quiet inside their data-block-id wrapper.
 func TestDetailPageProposalHasSwBarInsideBlock(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("proposal", map[string]any{
@@ -97,6 +100,7 @@ func TestDetailPageProposalHasSwBarInsideBlock(t *testing.T) {
 // exact structure 09-edit.js expects to find when it scans for [data-prop] elements
 // and builds its inline form.
 func TestDetailPageSwBarStructure(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{"title": "Test note", "tags": []any{"a"}})

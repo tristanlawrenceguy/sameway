@@ -11,6 +11,7 @@ import (
 // derived from the chart's caption, not the hardcoded word "Numbers". This
 // prevents duplicate accessible names when multiple charts appear on one page.
 func TestChartSummaryHasDescriptiveLabel(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	var garden struct{ ID string }
 	decode(t, postJSON(t, h, http.MethodPost, "/api/project", map[string]any{"title": "Garden"}), &garden)

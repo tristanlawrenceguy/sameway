@@ -24,6 +24,7 @@ import (
 // its script sends, and the transcript becomes the recording's words on
 // its page and the file's text.
 func TestARecordingIsWrittenDownOnThisComputer(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	srv := h.(*server.Server)
 	var ready atomic.Bool

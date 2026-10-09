@@ -11,6 +11,7 @@ import (
 // once, and it is what the assistant builds from; a component without it
 // would be a shape the model has to guess the use of.
 func TestEveryComponentSaysWhenItServesAPerson(t *testing.T) {
+	t.Parallel()
 	reg := builtins(t)
 	for _, c := range reg.Components() {
 		u := c.Manifest.Use

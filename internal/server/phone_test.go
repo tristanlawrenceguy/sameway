@@ -15,6 +15,7 @@ import (
 // Help offers to send reminders to a phone: one press makes a topic of its
 // own, sends a first message there, and keeps it; another stops.
 func TestRemindersCanGoToAPhone(t *testing.T) {
+	t.Parallel()
 	var got []string
 	ntfy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, _ := io.ReadAll(r.Body)

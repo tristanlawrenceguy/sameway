@@ -12,6 +12,7 @@ import (
 // The assistant finds records with the same conditions a collection block
 // takes, and a wrong condition comes back saying what the type has.
 func TestFindRecordsTakesTheSameQuery(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	day := func(d int) string { return time.Now().AddDate(0, 0, d).UTC().Format(time.RFC3339) }
 	svc.Store.Create("task", map[string]any{"title": "Dig the pond", "due": day(-2)})

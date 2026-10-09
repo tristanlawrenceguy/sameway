@@ -15,6 +15,7 @@ import (
 // violations (the disclosure CSS fix resolved backlog 0161), making a purely
 // black-box stdout test non-deterministic about whether diagnostics are tested.
 func TestA11yRunnerHasDiagnostics(t *testing.T) {
+	t.Parallel()
 	repoRoot := findRepoRootForTest()
 	runnerPath := filepath.Join(repoRoot, "tools", "a11y-runner", "run.mjs")
 
@@ -106,6 +107,7 @@ func findRepoRootForTest() string {
 // inline-edit migration (backlog 0149). The server no longer serves /t/note/new
 // or /t/note/{id}/edit — they return 404 — so pages.mjs must not visit them.
 func TestPagesMjsNoRemovedRoutes(t *testing.T) {
+	t.Parallel()
 	repoRoot := findRepoRootForTest()
 	pathsPath := filepath.Join(repoRoot, "tools", "a11y-runner", "pages.mjs")
 

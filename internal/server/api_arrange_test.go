@@ -12,6 +12,7 @@ import (
 // Over REST, a block write answers with the layout line, and POST
 // /api/arrange lays out the tab in one logged, undoable change.
 func TestTheAPIArrangesATabInOneChange(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	agent := map[string]string{"X-Sameway-Agent": "layout-test"}
 	var ids []string

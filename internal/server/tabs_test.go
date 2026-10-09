@@ -15,6 +15,7 @@ import (
 // chat; what is said on a tab is built on that tab; and a block's own page
 // leads back to the tab it lives on.
 func TestTabsAreSeparateCanvases(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	if page := get(t, h, "/").Body.String(); strings.Contains(page, `aria-label="Canvases"`) {
 		t.Error("with only Home there is no tab bar to show")

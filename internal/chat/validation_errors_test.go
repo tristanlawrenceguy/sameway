@@ -18,6 +18,7 @@ import (
 // in chat must not contain internal field names or schema syntax.
 
 func TestComponentValidationErrorsAreHumanised(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	m := &scripted{steps: []*llm.Response{
 		call("add_component", map[string]any{"component": "button", "props": map[string]any{"label": "x", "bogus_prop": 1}}),
@@ -50,6 +51,7 @@ func TestComponentValidationErrorsAreHumanised(t *testing.T) {
 }
 
 func TestUpdateComponentValidationErrorsAreHumanised(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	m := &scripted{steps: []*llm.Response{
 		call("add_component", map[string]any{"component": "heading", "props": map[string]any{"text": "Hello"}}),
@@ -99,6 +101,7 @@ func TestUpdateComponentValidationErrorsAreHumanised(t *testing.T) {
 }
 
 func TestRecordValidationErrorsAreHumanised(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	m := &scripted{steps: []*llm.Response{
 		call("create_record", map[string]any{"type": "note", "fields": map[string]any{"body": "no title"}}),

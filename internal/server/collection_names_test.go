@@ -10,6 +10,7 @@ import (
 // Two lists of one type on a canvas are each named by their own heading,
 // and a list cut short by its limit says so and says its link has them all.
 func TestTwoListsOfATypeAreNamedByTheirOwnHeadings(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	for _, title := range []string{"Order compost", "Dig the pond", "Plant garlic"} {
 		wantStatus(t, postJSON(t, h, http.MethodPost, "/api/task", map[string]any{"title": title}), http.StatusCreated)

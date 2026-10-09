@@ -8,6 +8,7 @@ import (
 
 // The search page wraps its input and button in a <form> element.
 func TestSearchPageHasFormElement(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Call the plumber", "body": "About the kitchen tap."})
 

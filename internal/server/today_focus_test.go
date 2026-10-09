@@ -13,6 +13,7 @@ import (
 // away; a short one is shown whole. Everything in the person's head, put
 // in the box, goes to the assistant to sort.
 func TestALongTodayStartsWithThree(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	now := time.Now()
 	day := func(n int) string { return now.AddDate(0, 0, n).Format("2006-01-02") }

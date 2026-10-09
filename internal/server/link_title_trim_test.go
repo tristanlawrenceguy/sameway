@@ -15,6 +15,7 @@ import (
 // This pins acceptance item 1: when the assistant creates a record, every
 // inline link to it shows the trimmed title as visible link text.
 func TestLinkTitleShowsTrimmedTitle(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Create a note with a long title — more than six words.
@@ -77,6 +78,7 @@ func TestLinkTitleShowsTrimmedTitle(t *testing.T) {
 // assistant reply matches the record title stated in surrounding prose. This
 // pins acceptance item 2: link text matches the record title from the same reply.
 func TestLinkTitleMatchesProseStatedTitle(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Create a note with a long title.
@@ -122,6 +124,7 @@ func TestLinkTitleMatchesProseStatedTitle(t *testing.T) {
 // the six-word limit are not altered in link text. This pins acceptance item 1
 // (no regression for normal-length titles).
 func TestLinkTitleForShortTitleIsUnchanged(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{
@@ -163,6 +166,7 @@ func TestLinkTitleForShortTitleIsUnchanged(t *testing.T) {
 // deleted and cannot be resolved, the raw URL path remains as fallback. This is
 // an edge case from the plan: unresolved paths fall back to showing the address.
 func TestLinkTitleForDeletedRecordShowsRawURL(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	// The assistant references a /t/note/<id> that does not exist.
@@ -187,6 +191,7 @@ func TestLinkTitleForDeletedRecordShowsRawURL(t *testing.T) {
 // acceptance item 3: receipts continue to work correctly with links showing
 // trimmed titles (the .detail field, not linkTitle, names them).
 func TestReceiptSectionExistsAfterModelAction(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Use a scripted model that adds a canvas card.
@@ -213,6 +218,7 @@ func TestReceiptSectionExistsAfterModelAction(t *testing.T) {
 // the Markdown way, as the prompt asks for, shows the thing's title as its
 // words and no brackets or path, on /chat (backlog 0548).
 func TestMarkdownLinkInReplyShowsItsWords(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	rec, err := a.Store.Create("note", map[string]any{"title": "Seeds to buy"})
 	if err != nil {

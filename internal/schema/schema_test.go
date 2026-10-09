@@ -37,6 +37,7 @@ func parse(t *testing.T, src string) *schema.Type {
 }
 
 func TestParsePreservesFieldOrderAndTitle(t *testing.T) {
+	t.Parallel()
 	typ := parse(t, everyType)
 	var names []string
 	for _, f := range typ.Fields {
@@ -51,6 +52,7 @@ func TestParsePreservesFieldOrderAndTitle(t *testing.T) {
 }
 
 func TestParseRejectsBadDefinitions(t *testing.T) {
+	t.Parallel()
 	cases := map[string]string{
 		"name: Bad Name\nfields:\n  a: {type: string}":                        "lowercase",
 		"name: ok\nfields: {}":                                                "no fields",
@@ -71,6 +73,7 @@ func TestParseRejectsBadDefinitions(t *testing.T) {
 // TestNormalizeAcceptsFormsCLIAndJSON feeds each field the shapes it gets
 // from a browser form (strings), the CLI (strings), and the API (JSON types).
 func TestNormalizeAcceptsFormsCLIAndJSON(t *testing.T) {
+	t.Parallel()
 	typ := parse(t, everyType)
 	fromStrings := map[string]any{
 		"name": "abc", "count": "7", "ratio": "1.5", "on": "yes", "kind": "b",
@@ -105,6 +108,7 @@ func TestNormalizeAcceptsFormsCLIAndJSON(t *testing.T) {
 }
 
 func TestNormalizeReportsEveryProblemAtOnce(t *testing.T) {
+	t.Parallel()
 	typ := parse(t, everyType)
 	_, err := typ.Normalize(map[string]any{
 		"name": "too long", "count": "x", "ratio": "y", "on": "maybe", "kind": "z",
@@ -125,6 +129,7 @@ func TestNormalizeReportsEveryProblemAtOnce(t *testing.T) {
 }
 
 func TestJSONSchemaMirrorsFields(t *testing.T) {
+	t.Parallel()
 	s := parse(t, everyType).JSONSchema()
 	props := s["properties"].(map[string]any)
 	if props["count"].(map[string]any)["type"] != "integer" || props["on"].(map[string]any)["type"] != "boolean" {
@@ -145,6 +150,7 @@ func TestJSONSchemaMirrorsFields(t *testing.T) {
 }
 
 func TestLoadDirectory(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	write := func(name, src string) {
 		if err := os.WriteFile(filepath.Join(dir, name), []byte(src), 0o644); err != nil {
@@ -175,6 +181,7 @@ func TestLoadDirectory(t *testing.T) {
 // a later release adds a field to that type, Complete gives the workspace's
 // copy that field too, without touching what the workspace wrote itself.
 func TestCompleteAddsBuiltinFieldsToInternalTypes(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	old := "name: block\ninternal: true\nfields:\n  component: {type: string, required: true, description: mine}\n  position: {type: int}\n"
 	mine := "name: note\nfields:\n  title: {type: string}\n"
@@ -233,6 +240,7 @@ func TestCompleteAddsBuiltinFieldsToInternalTypes(t *testing.T) {
 }
 
 func TestLoadFSMissingDirIsEmpty(t *testing.T) {
+	t.Parallel()
 	set, err := schema.LoadFS(fstest.MapFS{}, "schema")
 	if err != nil || len(set.Types) != 0 {
 		t.Fatalf("missing dir should be an empty set, got %v %v", set.Types, err)
@@ -242,6 +250,7 @@ func TestLoadFSMissingDirIsEmpty(t *testing.T) {
 // A ref field names the type it points at, and a workspace whose refs
 // point at a type it does not have is told so before it starts.
 func TestARefNamesWhatItPointsAt(t *testing.T) {
+	t.Parallel()
 	if _, err := schema.Parse([]byte("name: task\nfields:\n  title: {type: string}\n  project: {type: ref}\n")); err == nil || !strings.Contains(err.Error(), "needs to") {
 		t.Errorf("a ref without to is refused: %v", err)
 	}

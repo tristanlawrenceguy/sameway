@@ -11,6 +11,7 @@ import (
 // works smoothly within the scroll container. Without this, clicking "Skip to
 // latest message" may jump or fail entirely on long conversations.
 func TestChatLogHasSmoothScroll(t *testing.T) {
+	t.Parallel()
 	data, err := os.ReadFile("../../design/components/chat/style.css")
 	if err != nil {
 		t.Fatalf("read chat style.css: %v", err)

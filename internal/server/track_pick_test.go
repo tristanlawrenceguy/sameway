@@ -14,6 +14,7 @@ import (
 // agent evaluation a reading tracker showed every habit, its label was
 // nowhere to be seen, and its field read "Amount in pages pages".
 func TestATrackerShowsTheHabitsItNames(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	water, _ := a.Store.Create(server.HabitType, map[string]any{"name": "Drink water", "cadence": "day", "target": 8, "unit": "glasses"})
 	pages, _ := a.Store.Create(server.HabitType, map[string]any{"name": "Pages per day", "cadence": "day", "target": 30, "unit": "pages"})

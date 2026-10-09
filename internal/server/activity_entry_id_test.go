@@ -15,6 +15,7 @@ import (
 // was fixed for EntryType), verifies that /activity shows "Reading: 30 minutes"
 // instead of the bare ID, and checks the link text is human-readable.
 func TestOldEntryActivityShowsReadableTitle(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Seed a habit so we have something to name the entry after.

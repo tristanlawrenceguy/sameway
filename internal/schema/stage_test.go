@@ -31,6 +31,7 @@ fields:
 
 // A task's tick and status say one thing, whichever was changed.
 func TestATasksTickAndStatusKeepInStep(t *testing.T) {
+	t.Parallel()
 	typ := taskType(t)
 	if typ.Stage() != "status" {
 		t.Fatalf("a task's stage is its status, got %q", typ.Stage())
@@ -59,6 +60,7 @@ func TestATasksTickAndStatusKeepInStep(t *testing.T) {
 
 // Given only one of the two, a record gets the other from it.
 func TestATaskGivenOneGetsTheOther(t *testing.T) {
+	t.Parallel()
 	typ := taskType(t)
 	for _, c := range []struct {
 		in     map[string]any
@@ -87,6 +89,7 @@ func TestATaskGivenOneGetsTheOther(t *testing.T) {
 
 // Finished, a repeating task is due again and To do.
 func TestARepeatingTaskFinishedIsToDoAgain(t *testing.T) {
+	t.Parallel()
 	typ := taskType(t)
 	before := map[string]any{"done": false, "status": "doing", "due": "2026-10-06T00:00:00Z", "repeat": "FREQ=WEEKLY"}
 	clean := map[string]any{"done": false, "status": "done", "due": "2026-10-06T00:00:00Z", "repeat": "FREQ=WEEKLY"}

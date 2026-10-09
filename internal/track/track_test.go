@@ -14,6 +14,7 @@ func at(day string, hour int) time.Time {
 // today is done, and from yesterday when it is not, since a day still
 // going is not a day missed; the best run is the longest there has been.
 func TestADailyStreak(t *testing.T) {
+	t.Parallel()
 	h := Habit{Name: "Stretch", Cadence: "day"}
 	entries := []Entry{
 		{at("2026-09-15", 8), 1}, {at("2026-09-16", 8), 1}, {at("2026-09-17", 8), 1}, {at("2026-09-18", 8), 1},
@@ -39,6 +40,7 @@ func TestADailyStreak(t *testing.T) {
 // A measured habit with a target and a unit: the period adds up, the
 // target decides met, and a goal shows how far it has come.
 func TestAMeasuredHabitWithATargetAndAGoal(t *testing.T) {
+	t.Parallel()
 	h := Habit{Name: "Run", Cadence: "week", Target: 15, Unit: "km", Goal: 100}
 	entries := []Entry{
 		{at("2026-09-08", 7), 5}, {at("2026-09-10", 7), 5}, {at("2026-09-12", 7), 6},

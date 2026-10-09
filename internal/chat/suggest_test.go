@@ -13,6 +13,7 @@ import (
 // waits until accepted, which is an ordinary change undone like any other;
 // a passage that has changed since is not guessed at.
 func TestSuggestedEditsWaitForTheWriter(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	note, err := svc.Store.Create("note", map[string]any{"title": "Garden", "body": "At the meeting it was decided by everyone that the garden opens in May. We recieve seeds in April."})
 	if err != nil {
@@ -61,6 +62,7 @@ func TestSuggestedEditsWaitForTheWriter(t *testing.T) {
 // A passage not there, there twice, or overlapping another is refused
 // with what to do, and nothing is suggested.
 func TestASuggestionMustFindItsWords(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	note, _ := svc.Store.Create("note", map[string]any{"title": "N", "body": "the cat sat on the mat"})
 	refused(t, svc, "suggest_edits", map[string]any{"type": "note", "id": note.ID, "edits": []any{
@@ -79,6 +81,7 @@ func TestASuggestionMustFindItsWords(t *testing.T) {
 // called it; several accepted together are one change and one Undo; and
 // more than a writer can weigh in one go is refused.
 func TestSuggestionsAreKindedAndTakenTogether(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	note, _ := svc.Store.Create("note", map[string]any{"title": "N", "body": "Plans\n\nWe recieve seeds and teh pond liner."})
 	run(t, svc, "suggest_edits", map[string]any{"type": "note", "id": note.ID, "edits": []any{
@@ -116,6 +119,7 @@ func TestSuggestionsAreKindedAndTakenTogether(t *testing.T) {
 // A suggestion card is Sameway's to place on the page it belongs to: it
 // is refused as a block (and left out of the catalogue: prompt_budget_test).
 func TestASuggestionIsNotABlock(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	refused(t, svc, "add_component", map[string]any{"component": "suggestion", "props": map[string]any{
 		"label": "1 of 1", "why": "x", "now": "a", "nowMark": "a", "accept": "/a", "decline": "/d"}}, "not a block")

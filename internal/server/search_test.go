@@ -11,6 +11,7 @@ import (
 // A person searches on one page and lands on what they found; an agent
 // gets the same hits as JSON; the page reads cleanly to a screen reader.
 func TestOneSearchOverEverything(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Call the plumber", "body": "About the kitchen tap."}), http.StatusCreated)
 	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Garden", "body": "Weed the beds."}), http.StatusCreated)
@@ -47,6 +48,7 @@ func TestOneSearchOverEverything(t *testing.T) {
 // Empty state for zero-result searches shows an h2 heading and a helpful
 // message that explains nothing matched and suggests trying different words.
 func TestSearchEmptyStateHasH2AndSuggestion(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	page := get(t, h, "/search?q=nonexistent")
@@ -70,6 +72,7 @@ func TestSearchEmptyStateHasH2AndSuggestion(t *testing.T) {
 // Search result links include the content type in their accessible name so a
 // screen reader user knows what kind of thing they are clicking before navigating.
 func TestSearchResultLinksIncludeContentTypeInAccessibleName(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Call the plumber", "body": "About the kitchen tap."}), http.StatusCreated)
 
@@ -93,6 +96,7 @@ func TestSearchResultLinksIncludeContentTypeInAccessibleName(t *testing.T) {
 // Search results page has proper heading structure: h1 for the page title,
 // h2 for the "Results" section before the list of hits.
 func TestSearchResultsPageHeadingStructure(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Call the plumber", "body": "About the kitchen tap."}), http.StatusCreated)
 

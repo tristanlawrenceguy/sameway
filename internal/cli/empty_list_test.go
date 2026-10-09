@@ -8,6 +8,7 @@ import (
 // TestListJSONEmptyProducesArray covers the bug where `sameway <type> list --json`
 // with zero records produced JSON null instead of an empty array [].
 func TestListJSONEmptyProducesArray(t *testing.T) {
+	t.Parallel()
 	dir := initWorkspace(t)
 
 	r := run(t, dir, "note", "list", "--json")
@@ -45,6 +46,7 @@ func TestListJSONEmptyProducesArray(t *testing.T) {
 // TestListJSONEmptyAfterDelete covers the case where records existed but were
 // all deleted — the list --json must still return [].
 func TestListJSONEmptyAfterDelete(t *testing.T) {
+	t.Parallel()
 	dir := initWorkspace(t)
 
 	// Create a record.

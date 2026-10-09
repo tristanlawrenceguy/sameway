@@ -15,6 +15,7 @@ import (
 // same op, so a record made lands in the store and the log, named for the
 // agent, and what is asked first is asked.
 func TestAnAgentCallsATool(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	req := httptest.NewRequest(http.MethodPost, "/api/tools/create_record", strings.NewReader(`{"type":"note","fields":{"title":"Made over REST"}}`))
 	req.Header.Set("X-Sameway-Agent", "helper")
@@ -69,6 +70,7 @@ func TestAnAgentCallsATool(t *testing.T) {
 // editor the tools that are not the owner's, someone who may look nothing
 // that is sent, as with every change.
 func TestAToolOverRESTIsWhoeverMayHaveIt(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	editor := records.Visitor{Name: "Bob", Login: "bob@example.com", Access: records.Edit}
 	viewer := records.Visitor{Name: "Vi", Login: "vi@example.com", Access: records.View}
@@ -85,6 +87,7 @@ func TestAToolOverRESTIsWhoeverMayHaveIt(t *testing.T) {
 
 // describe says of each tool who may call it, what it is like, and where.
 func TestDescribeSaysHowToCallATool(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	res := do(t, h, http.MethodGet, "/api/describe/tools/set_setting", nil, "")
 	var tool map[string]any

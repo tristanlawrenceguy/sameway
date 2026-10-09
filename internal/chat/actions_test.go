@@ -17,6 +17,7 @@ import (
 // is called with what they wrote, its answer is logged, and with show set
 // it lives on the canvas as one block that stays current.
 func TestAWebhookActionCallsOutAndShowsItsAnswer(t *testing.T) {
+	t.Parallel()
 	var got struct {
 		method, body, ct string
 		calls            int

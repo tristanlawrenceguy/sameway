@@ -18,6 +18,7 @@ import (
 // it, with no aria-label.  Regression guard for backlog item 0297,
 // acceptance items 1 and 2.
 func TestCalendarNoAriaHiddenWeekdayHeaders(t *testing.T) {
+	t.Parallel()
 	reg := render.New()
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		t.Fatal(err)
@@ -110,6 +111,7 @@ func walkChildren(n *html.Node, fn func(*html.Node)) {
 // users seeing the number badge also have it accessible to screen readers.
 // Regression guard for backlog item 0297, acceptance items 1 and 3.
 func TestCalendarGlanceCountNotAriaHidden(t *testing.T) {
+	t.Parallel()
 	reg := render.New()
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		t.Fatal(err)

@@ -12,6 +12,7 @@ import (
 // TestConversationNoPhrasalVerb checks the rendered page does not contain "Pop out".
 // After the change this button should say "Open" with context for screen readers.
 func TestConversationNoPhrasalVerb(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	// The pop-out link appears on pages that embed a chat block but are NOT /chat itself.

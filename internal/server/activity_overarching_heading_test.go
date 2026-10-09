@@ -13,6 +13,7 @@ import (
 // reader duplication. Date-grouped headings come after, and no other visible
 // heading repeats "Activity". (Acceptance 1)
 func TestActivityPageHasOverarchingHeading(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	records.Record(a.Store, "assistant", records.Change{Action: "created", Component: "note", ID: "aaa1", Detail: "First note"})
@@ -48,6 +49,7 @@ func TestActivityPageHasOverarchingHeading(t *testing.T) {
 // still has the layout h1 "Activity" even when there are no activity records,
 // and that no duplicate <h2>Activity</h2> was introduced. (Acceptance 1)
 func TestActivityPageOverarchingHeadingEmptyState(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	body := get(t, h, "/activity").Body.String()

@@ -13,6 +13,7 @@ import (
 // from, including the title, the chips and the fields still empty. An
 // empty record can be edited too.
 func TestARecordCarriesEveryFieldAPersonMayEdit(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	project, _ := a.Store.Create("project", map[string]any{"title": "Garden"})
 	task, _ := a.Store.Create("task", map[string]any{"title": "Repot the fern"})
@@ -45,6 +46,7 @@ func TestARecordCarriesEveryFieldAPersonMayEdit(t *testing.T) {
 
 // A system-kept field sent by hand is refused by name, and nothing moves.
 func TestAFieldTheSystemKeepsIsNotChangedByHand(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	file, _ := a.Store.Create("file", map[string]any{"title": "Plan", "path": "plan.pdf", "name": "plan.pdf"})
 	r := postForm(t, h, "/t/file/"+file.ID+"/props", url.Values{"prop-path": {"../elsewhere"}})
@@ -60,6 +62,7 @@ func TestAFieldTheSystemKeepsIsNotChangedByHand(t *testing.T) {
 // though the Markdown box behind it goes with the form holding the old
 // words: which of the two came first used to be chance.
 func TestRichTextWinsOverTheMarkdownBehindIt(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	note, _ := a.Store.Create("note", map[string]any{"title": "Beds", "body": "Old words."})
 	for i := 0; i < 40; i++ {
@@ -76,6 +79,7 @@ func TestRichTextWinsOverTheMarkdownBehindIt(t *testing.T) {
 // each field, then an Add button for each field it has nothing in yet,
 // then Save.
 func TestEveryFieldOfARecordIsReachedByTab(t *testing.T) {
+	t.Parallel()
 	needBrowser(t)
 	a, h := newApp(t)
 	a.Store.Create("project", map[string]any{"title": "Garden"})

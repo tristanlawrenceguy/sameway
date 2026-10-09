@@ -12,6 +12,7 @@ import (
 // Tab order, which kept Body first but left the toolbar unreachable by
 // keyboard at all (WCAG 2.1.1).
 func TestProseToolbarButtonsAreNonTabbable(t *testing.T) {
+	t.Parallel()
 	tools, err := os.ReadFile("../../design/base/16-prose-tools.js")
 	if err != nil {
 		t.Fatal(err)

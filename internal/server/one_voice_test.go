@@ -16,6 +16,7 @@ import (
 // arrive"), which the log cleaned and the entry's page and the API did
 // not (crew findings 0566, 0571, 0572, 0574, 0582, 0583).
 func TestAChangeIsSaidOneWayEverywhere(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	old, err := a.Store.Create("activity", map[string]any{
 		"actor": "assistant", "action": "set", "target": "ui.pace", "detail": "calm",
@@ -65,6 +66,7 @@ func TestAChangeIsSaidOneWayEverywhere(t *testing.T) {
 // raised them: a type named as stored (test_type), entries alike in one
 // second, and an update's page that read out its stored fields.
 func TestTheLogSaysEverythingInWords(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Store.Create("activity", map[string]any{"actor": "system", "action": "added", "target": "type", "detail": "test_type", "summary": "System added type test_type"})
 	a.Store.Create("activity", map[string]any{"actor": "system", "action": "added", "target": "field", "detail": "test_field on test_type", "summary": "System added field test_field on test_type"})

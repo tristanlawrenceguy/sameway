@@ -20,6 +20,7 @@ const promptBudget = 40 * 1024
 // prompt is held to a budget, and among the rules is the one the haiku
 // runs broke: it never makes up records to have something to show.
 func TestPromptStaysInBudgetAndForbidsInventedData(t *testing.T) {
+	t.Parallel()
 	a, _ := newApp(t)
 	model := &scripted{steps: []*llm.Response{{Text: "ok"}}}
 	a.Chat.Provider, a.Chat.ProviderErr = model, nil

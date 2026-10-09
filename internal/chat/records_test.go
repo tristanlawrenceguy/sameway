@@ -14,6 +14,7 @@ import (
 // card on the canvas. The tools for that are generated from the workspace's
 // schema, so the starter's note type is enough to prove all three.
 func TestModelMakesAndChangesRecords(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	m := &scripted{steps: []*llm.Response{
 		call("create_record", map[string]any{"type": "note", "fields": map[string]any{"title": "Call the dentist", "body": "Ask about Thursday.", "tags": []string{"health"}}}),
@@ -72,6 +73,7 @@ func TestModelMakesAndChangesRecords(t *testing.T) {
 // The schema is the contract: a bad field comes back as an error that says
 // what to fix, and nothing is saved.
 func TestRecordToolsRefuseWhatTheSchemaRefuses(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	m := &scripted{steps: []*llm.Response{
 		call("create_record", map[string]any{"type": "note", "fields": map[string]any{"body": "no title", "colour": "red"}}),
@@ -104,6 +106,7 @@ func TestRecordToolsRefuseWhatTheSchemaRefuses(t *testing.T) {
 // content types with their fields, and the tools are offered only when
 // there is a type to write to.
 func TestPromptAndToolsFollowTheSchema(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	m := &scripted{}
 	svc.Provider = m

@@ -16,6 +16,7 @@ import (
 // should be just "Delete", with context: "note" for screen readers.  This covers
 // Acceptance 2 (active verb only).
 func TestButtonDangerExampleLabelIsShort(t *testing.T) {
+	t.Parallel()
 	data, err := design.FS.ReadFile("components/button/manifest.json")
 	if err != nil {
 		t.Fatalf("cannot read button manifest: %v", err)

@@ -8,6 +8,7 @@ import (
 // An agent over MCP has arrange_canvas and gets the layout line, from the
 // same list and the same code as the assistant.
 func TestAnAgentOverMCPArrangesAndIsToldTheLayout(t *testing.T) {
+	t.Parallel()
 	_, replies := drive(t,
 		`{"jsonrpc":"2.0","id":1,"method":"tools/list"}`,
 		`{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"add_component","arguments":{"component":"heading","props":{"text":"Week"},"span":6}}}`,

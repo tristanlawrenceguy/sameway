@@ -13,6 +13,7 @@ import (
 // This covers acceptance items 1 and 4: the stored summary on /activity
 // must not contain machine-language identifiers.
 func TestSummariseSettingChangeIsHumanReadable(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 
 	id := records.Record(svc.Store, "assistant", records.Change{
@@ -46,6 +47,7 @@ func TestSummariseSettingChangeIsHumanReadable(t *testing.T) {
 // path like ui.pace, ui.spacing, or ui.text appears in any setting-change
 // summary. This covers acceptance item 4.
 func TestSummariseSettingChangeNoInternalFieldNames(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 
 	tests := []struct {
@@ -79,6 +81,7 @@ func TestSummariseSettingChangeNoInternalFieldNames(t *testing.T) {
 // TestSummariseSettingChangeHumanActor checks that a human actor is shown as
 // "You" in the setting-change summary.
 func TestSummariseSettingChangeHumanActor(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 
 	id := records.Record(svc.Store, "human", records.Change{
@@ -101,6 +104,7 @@ func TestSummariseSettingChangeHumanActor(t *testing.T) {
 // readable transformation. The actor, action, component and detail should be
 // joined as before.
 func TestSummariseNonSettingChangeIsUnchanged(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 
 	id := records.Record(svc.Store, "assistant", records.Change{

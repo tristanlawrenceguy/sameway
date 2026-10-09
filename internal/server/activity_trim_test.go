@@ -17,6 +17,7 @@ import (
 // items 1 and 3: the same trimmed version must appear in both the detail
 // page heading and the activity log entry's h3 on /activity.
 func TestLongRecordTitleIsWordTrimmedInActivity(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// The long title from the backlog reproduction. trimTitle produces:
@@ -77,6 +78,7 @@ func TestLongRecordTitleIsWordTrimmedInActivity(t *testing.T) {
 // other surfaces, covering acceptance item 2. The event component template puts
 // {{.detail}} inside a sw-visually-hidden span within the Undo button's label.
 func TestLongRecordTitleTrimmedInUndoButtonAccessibleName(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	const longTitle = "This is a note with a very long multi-word title that exceeds six words and should be trimmed"
@@ -117,6 +119,7 @@ func TestLongRecordTitleTrimmedInUndoButtonAccessibleName(t *testing.T) {
 // titles exceeding six words. Acceptance item 4: trimTitle itself is unchanged,
 // so short titles pass through intact.
 func TestShortRecordTitleIsNotTrimmedInActivity(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	const shortTitle = "Call the dentist"

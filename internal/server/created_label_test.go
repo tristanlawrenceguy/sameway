@@ -10,6 +10,7 @@ import (
 // "Added", "Created" or any other label prefix before the creation timestamp in
 // its lede paragraph. The span still exists with just the relative time text.
 func TestFileDetailLedeSaysAddedNotCreated(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("file", map[string]any{"title": "Readme"})
@@ -38,6 +39,7 @@ func TestFileDetailLedeSaysAddedNotCreated(t *testing.T) {
 // TestPersonDetailLedeNoAddedLabel asserts that a person detail page does not
 // show "Added" or "Created" as a label prefix before the creation timestamp.
 func TestPersonDetailLedeSaysAddedNotCreated(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("person", map[string]any{"name": "Ada"})
@@ -65,6 +67,7 @@ func TestPersonDetailLedeSaysAddedNotCreated(t *testing.T) {
 // TestActionDetailLedeNoStartedLabel asserts that an action detail page does
 // not show "Started" or "Created" as a label prefix before the creation timestamp.
 func TestActionDetailLedeSaysStartedNotCreated(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("action", map[string]any{"title": "Sync data"})
@@ -92,6 +95,7 @@ func TestActionDetailLedeSaysStartedNotCreated(t *testing.T) {
 // TestTaskDetailLedeNoAddedLabel asserts that a task detail page does not show
 // "Added" or "Created" as a label prefix before the creation timestamp.
 func TestTaskDetailLedeSaysAddedNotCreated(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("task", map[string]any{"title": "Buy milk"})
@@ -119,6 +123,7 @@ func TestTaskDetailLedeSaysAddedNotCreated(t *testing.T) {
 // TestNoteDetailLedeNoAddedLabel asserts that a note detail page does not show
 // "Added" or any other label prefix before the creation timestamp.
 func TestNoteDetailLedeSaysAddedNotCreated(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{"title": "Plans"})
@@ -146,6 +151,7 @@ func TestNoteDetailLedeSaysAddedNotCreated(t *testing.T) {
 // TestProjectDetailLedeNoAddedLabel asserts that a project detail page does not
 // show "Added" or "Created" as a label prefix before the creation timestamp.
 func TestProjectDetailLedeSaysAddedNotCreated(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("project", map[string]any{"title": "My Project"})

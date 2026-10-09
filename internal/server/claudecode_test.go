@@ -25,6 +25,7 @@ import (
 // the whole path: the prompt, the program, the tools landing in the
 // store, the changes watched as they land, and the reply.
 func TestARealTurnThroughClaudeCode(t *testing.T) {
+	t.Parallel()
 	model := os.Getenv("SAMEWAY_CLAUDE_CODE_MODEL")
 	if model == "" {
 		t.Skip("set SAMEWAY_CLAUDE_CODE_MODEL=haiku to run one real turn through Claude Code")

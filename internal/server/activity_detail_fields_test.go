@@ -12,6 +12,7 @@ import (
 // not raw JSON like { "value": "medium" }. It should show just "Medium".
 // This covers acceptance item 1.
 func TestActivityDetailBeforeFieldIsReadable(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("activity", map[string]any{
@@ -44,6 +45,7 @@ func TestActivityDetailBeforeFieldIsReadable(t *testing.T) {
 // its detail page, not the internal path like "ui.text". This covers acceptance
 // item 2.
 func TestActivityDetailTargetFieldIsReadable(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("activity", map[string]any{
@@ -75,6 +77,7 @@ func TestActivityDetailTargetFieldIsReadable(t *testing.T) {
 // set-type activity entry is capitalised (e.g. "Large" instead of "large"). This
 // is part of acceptance item 2 — the detail field should be readable.
 func TestActivityDetailAfterFieldIsReadable(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("activity", map[string]any{
@@ -107,6 +110,7 @@ func TestActivityDetailAfterFieldIsReadable(t *testing.T) {
 // act on (undo reads before as it is); what the entry says, in words, is
 // beside them as said, the very words its page shows.
 func TestAPIActivityKeepsItsDataAndSaysItAsThePageDoes(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	rec, err := a.Store.Create("activity", map[string]any{
 		"summary": "Assistant changed text size to Large",

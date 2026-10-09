@@ -10,6 +10,7 @@ import (
 // not an alert (it read the title with every button), a small one beside
 // it is, and only the first clock on a page speaks.
 func TestAReminderIsSaidOnce(t *testing.T) {
+	t.Parallel()
 	tpl, _ := os.ReadFile("../../design/components/clock/template.html")
 	if strings.Contains(string(tpl), `class="sw-clock__ringing" role="alert"`) || !strings.Contains(string(tpl), `sw-clock__said" role="alert"`) {
 		t.Error("the ringing list is not the alert; a small one beside it is")
@@ -22,6 +23,7 @@ func TestAReminderIsSaidOnce(t *testing.T) {
 
 // Nothing pulses on its own for more than about five seconds.
 func TestNothingPulsesForEver(t *testing.T) {
+	t.Parallel()
 	for _, p := range []string{"chat", "clock", "status"} {
 		css, _ := os.ReadFile("../../design/components/" + p + "/style.css")
 		if strings.Contains(string(css), "sw-pulse 1.2s var(--sw-motion-ease) infinite") {
@@ -32,6 +34,7 @@ func TestNothingPulsesForEver(t *testing.T) {
 
 // Escape puts away controls a pointer revealed.
 func TestEscapePutsAwayRevealedControls(t *testing.T) {
+	t.Parallel()
 	css, _ := os.ReadFile("../../design/base/05-quiet.css")
 	js, _ := os.ReadFile("../../design/base/25-quiet.js")
 	if !strings.Contains(string(css), `[data-quiet-away]`) || !strings.Contains(string(js), `e.key !== "Escape"`) {
@@ -41,6 +44,7 @@ func TestEscapePutsAwayRevealedControls(t *testing.T) {
 
 // A note in another language than the workspace's says so on its page.
 func TestANoteSaysItsLanguage(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	note, err := a.Store.Create("note", map[string]any{"title": "Einkauf", "body": "Milch und Brot.", "language": "de"})
 	if err != nil {

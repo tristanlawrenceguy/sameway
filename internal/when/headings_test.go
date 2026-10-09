@@ -8,6 +8,7 @@ import (
 // A month, a day's heading, a short date and when a message was sent are
 // said one way, the year only when it is not this one.
 func TestHeadingsAndShortDates(t *testing.T) {
+	t.Parallel()
 	now := time.Date(2026, 10, 7, 15, 0, 0, 0, time.Local)
 	for _, c := range []struct{ got, want string }{
 		{Month("2026-09"), "September 2026"},

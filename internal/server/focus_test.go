@@ -45,6 +45,7 @@ func canvasWithACalendar(t *testing.T) (http.Handler, string) {
 // over the middle of the page, at its own URL, so a person can bookmark it
 // and an agent can ask for exactly that one thing.
 func TestBlockCanBePoppedOut(t *testing.T) {
+	t.Parallel()
 	h, id := canvasWithACalendar(t)
 	canvas := parse(t, get(t, h, "/"))
 
@@ -86,6 +87,7 @@ func TestBlockCanBePoppedOut(t *testing.T) {
 // glanceable size, and the same block expanded is the whole month with room
 // for actions. Nothing is copied or moved to do it.
 func TestExpandingAsksAComponentForItsFullestForm(t *testing.T) {
+	t.Parallel()
 	h, id := canvasWithACalendar(t)
 	if len(parse(t, get(t, h, "/")).WithAttr("data-detail", "brief")) != 1 {
 		t.Errorf("on the canvas the calendar should still be the size it was asked for")
@@ -108,6 +110,7 @@ func TestExpandingAsksAComponentForItsFullestForm(t *testing.T) {
 // other, so it expands too, and it has to bring the actual conversation
 // with it rather than an empty shell.
 func TestExpandingTheConversationKeepsItLive(t *testing.T) {
+	t.Parallel()
 	h, _ := canvasWithACalendar(t)
 	var blocks struct {
 		Records []struct {
@@ -137,6 +140,7 @@ func TestExpandingTheConversationKeepsItLive(t *testing.T) {
 // TestExpandingSomethingThatIsNotThere is the plain 404, so a stale link
 // from a bookmark or an agent says so instead of showing an empty page.
 func TestExpandingSomethingThatIsNotThere(t *testing.T) {
+	t.Parallel()
 	h, _ := canvasWithACalendar(t)
 	wantStatus(t, get(t, h, "/canvas/nope"), http.StatusNotFound)
 }
@@ -146,6 +150,7 @@ func TestExpandingSomethingThatIsNotThere(t *testing.T) {
 // landmarks with one name, and a heading-by-heading reader would meet it
 // twice.
 func TestExpandedBlockIsNotAlsoInThePane(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	var blk struct{ ID string }
 	decode(t, postJSON(t, h, "POST", "/api/block", map[string]any{
@@ -162,6 +167,7 @@ func TestExpandedBlockIsNotAlsoInThePane(t *testing.T) {
 // label sits directly under the page's h1, as an h2, not an h3 that skips
 // a level.
 func TestExpandedCollectionHeadingFollowsThePage(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	var blk struct{ ID string }
 	decode(t, postJSON(t, h, "POST", "/api/block", map[string]any{

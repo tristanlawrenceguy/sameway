@@ -12,6 +12,7 @@ import (
 // wrapped in an sw-example div that contains its own <h4> heading, giving
 // screen reader users a distinguishing context for inputs with identical labels.
 func TestDesignPageExampleHeadings(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	rec := get(t, h, "/design")
 	wantStatus(t, rec, http.StatusOK)
@@ -45,6 +46,7 @@ func TestDesignPageExampleHeadings(t *testing.T) {
 // others, so screen reader users can tell "Due" from "Starts" from
 // "Deadline (required)".
 func TestDesignPageWhenFieldExamplesHaveHeadings(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	rec := get(t, h, "/design")
 	wantStatus(t, rec, http.StatusOK)

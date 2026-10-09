@@ -14,6 +14,7 @@ const fieldsView = "?show=fields"
 // TestDetailPageHasDataBlockID checks that a note detail page wraps its
 // definition list in a div with data-block-id set to the record ID.
 func TestDetailPageHasDataBlockID(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{"title": "Test note"})
@@ -31,6 +32,7 @@ func TestDetailPageHasDataBlockID(t *testing.T) {
 // TestDetailPageHasDataEditAction checks that the wrapping div on a note
 // detail page carries data-edit-action pointing to the inline edit endpoint.
 func TestDetailPageHasDataEditAction(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{"title": "Test note"})
@@ -59,6 +61,7 @@ func TestDetailPageHasDataEditAction(t *testing.T) {
 // are excluded from the dl (they appear as chips/heading) so only body and
 // tags should have data-prop attributes on this view.
 func TestDetailPageDataPropOnEditableFields(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{
@@ -92,6 +95,7 @@ func TestDetailPageDataPropOnEditableFields(t *testing.T) {
 // TestDetailPageNoDataPropOnTimestamps checks that Created and Updated do NOT
 // have data-prop attributes — they are not editable.
 func TestDetailPageNoDataPropOnTimestamps(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{"title": "Test note"})

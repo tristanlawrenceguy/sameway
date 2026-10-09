@@ -11,6 +11,7 @@ import (
 // when a time it shows passes, and waits while hidden. The zone said when
 // the reader's differs is checked in a browser: behave-page.mjs.
 func TestAPageLeftOpenKeepsItsDaysTrue(t *testing.T) {
+	t.Parallel()
 	data, err := os.ReadFile("../../design/base/36-days.js")
 	if err != nil {
 		t.Fatal(err)

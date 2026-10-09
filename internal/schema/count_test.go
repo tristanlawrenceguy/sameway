@@ -4,6 +4,7 @@ import "testing"
 
 // A count says what it counts, one or many.
 func TestCount(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct {
 		n          int
 		name, want string

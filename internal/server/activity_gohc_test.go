@@ -13,6 +13,7 @@ import (
 // lists "Go-http-client" as an option.
 
 func TestActivityFilterHidesGoHttpClient(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	seedLog(t, a, h)
 	// Create an activity entry with Go-http-client as the agent name.

@@ -15,6 +15,7 @@ import (
 // its arrival plays on from there; nothing travels, and under reduced
 // motion and the still pace nothing waits.
 func TestATurnIsSaidOnceAndMarkedInPlace(t *testing.T) {
+	t.Parallel()
 	read := func(name string) string {
 		data, err := os.ReadFile("../../design/base/" + name)
 		if err != nil {

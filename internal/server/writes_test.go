@@ -30,6 +30,7 @@ var writesTheStoreItself = map[string]string{
 }
 
 func TestRecordsAreWrittenOneWay(t *testing.T) {
+	t.Parallel()
 	found := map[string]bool{}
 	for _, dir := range []string{".", "../cli", "../mcp", "../app"} {
 		files, _ := filepath.Glob(filepath.Join(dir, "*.go"))
@@ -81,6 +82,7 @@ func TestRecordsAreWrittenOneWay(t *testing.T) {
 // assistant, a record leaves the same trail each time: an entry in the
 // log, by whoever did it, that can be undone.
 func TestEveryWayInLeavesTheSameTrail(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	trail := func(way, id, action, actor string) {
 		t.Helper()

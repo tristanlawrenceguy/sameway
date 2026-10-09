@@ -14,6 +14,7 @@ import (
 // after the first thing said in it, and opening an old one brings its
 // messages back.
 func TestChatsKeepTheirOwnHistory(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	m := &scripted{}
 	svc.Provider = m
@@ -73,6 +74,7 @@ func TestChatsKeepTheirOwnHistory(t *testing.T) {
 // Messages from before there were several chats name none; they belong to
 // the first chat, so nothing said earlier is lost.
 func TestOlderMessagesBelongToTheFirstChat(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	svc.Provider = &scripted{}
 	svc.Store.Create(records.MessageType, map[string]any{"role": "user", "content": "from before"})
@@ -90,6 +92,7 @@ func TestOlderMessagesBelongToTheFirstChat(t *testing.T) {
 
 // Clearing a chat empties only that chat.
 func TestClearEmptiesOnlyTheCurrentChat(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	svc.Provider = &scripted{steps: []*llm.Response{{Text: "ok"}, {Text: "ok"}}}
 	svc.Send(context.Background(), "one")
@@ -109,6 +112,7 @@ func TestClearEmptiesOnlyTheCurrentChat(t *testing.T) {
 // New chat on a chat with nothing said in it keeps that one, so pressing it
 // twice, or leaving without writing, does not fill the list with empties.
 func TestNewChatOnAnEmptyChatKeepsIt(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	first := svc.Current()
 	again, err := svc.NewChat()
@@ -124,6 +128,7 @@ func TestNewChatOnAnEmptyChatKeepsIt(t *testing.T) {
 // Deleting a chat, or clearing one, can be taken back: the chat and every
 // message in it come back as they were.
 func TestADeletedOrClearedChatComesBack(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	svc.Provider = &scripted{steps: []*llm.Response{{Text: "ok"}}}
 	if _, err := svc.Send(context.Background(), "plan the garden"); err != nil {

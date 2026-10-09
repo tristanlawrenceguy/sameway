@@ -14,6 +14,7 @@ import (
 // person is looking at unless the call says otherwise, the prompt says
 // which tab that is, and clearing a tab leaves the others alone.
 func TestTabsAreCanvases(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	m := &scripted{steps: []*llm.Response{
 		call("create_canvas", map[string]any{"name": "Garden"}),
@@ -90,6 +91,7 @@ func TestTabsAreCanvases(t *testing.T) {
 }
 
 func TestCanvasToolsRefuseWhatDoesNotExist(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	m := &scripted{steps: []*llm.Response{
 		call("add_component", map[string]any{"component": "heading", "props": map[string]any{"text": "x"}, "canvas": "nope"}),

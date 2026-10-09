@@ -16,6 +16,7 @@ import (
 // their colour on the canvas; what was said to the assistant there does
 // not come at all.
 func TestAChangeFromAnotherHostIsTheirs(t *testing.T) {
+	t.Parallel()
 	mine, hMine := newApp(t)
 	hana, hHana := newApp(t)
 	mine.Records.Owner = records.Visitor{Access: records.Owner, Login: "tristan@example.com", Name: "Tristan"}
@@ -46,6 +47,7 @@ func TestAChangeFromAnotherHostIsTheirs(t *testing.T) {
 
 // Someone else's latest change to a block makes it glow in their colour.
 func TestABlockGlowsInTheColourOfWhoChangedIt(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	blk, err := a.Store.Create(records.BlockType, a.Chat.BlockFields(map[string]any{"component": "heading", "props": map[string]any{"text": "Plan"}, "actor": "human"}))
 	if err != nil {
@@ -64,6 +66,7 @@ func TestABlockGlowsInTheColourOfWhoChangedIt(t *testing.T) {
 }
 
 func TestEveryoneHasOneColourEverywhere(t *testing.T) {
+	t.Parallel()
 	c := records.PersonColour("Bob@Example.com")
 	if c < 1 || c > 6 || c != records.PersonColour("bob@example.com") {
 		t.Errorf("a person's colour is one of six and does not depend on case: %d", c)

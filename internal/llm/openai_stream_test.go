@@ -13,6 +13,7 @@ import (
 // A streamed completion arrives in pieces: the words are handed on as they
 // come, and a tool call split across chunks is put back together.
 func TestOpenAIStreamsWordsAndReassemblesToolCalls(t *testing.T) {
+	t.Parallel()
 	chunks := []string{
 		`{"choices":[{"delta":{"content":"Let me "}}]}`,
 		`{"choices":[{"delta":{"content":"add that."}}]}`,
@@ -64,6 +65,7 @@ func TestOpenAIStreamsWordsAndReassemblesToolCalls(t *testing.T) {
 // A refusal from the model server is said in words, not read as a stream:
 // what it means and what to do, the server's own words kept beside it.
 func TestOpenAIStreamSaysWhatWentWrong(t *testing.T) {
+	t.Parallel()
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 		fmt.Fprint(w, `{"error":{"message":"bad key"}}`)

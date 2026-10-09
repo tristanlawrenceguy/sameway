@@ -15,6 +15,7 @@ import (
 // recordTitle fallback. This covers acceptance item 3: no raw 16-char hex IDs
 // in entry headings on /activity and /t/entry pages.
 func TestOldEntryActivityShowsReadableFallback(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Seed a habit so the entry has something to name it after.

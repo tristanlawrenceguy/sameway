@@ -15,6 +15,7 @@ import (
 // from data-block-label, not from data-block-component.  The server adds the
 // attribute and the script reads it; this test verifies both pieces.
 func TestEditButtonUsesBlockLabel(t *testing.T) {
+	t.Parallel()
 	h, _ := canvasWithABlock(t)
 
 	// Step A: the block element must carry a data-block-label with the title.
@@ -39,6 +40,7 @@ func TestEditButtonUsesBlockLabel(t *testing.T) {
 // TestExpandLinkAccessibleNameIncludesTitle checks that the Expand link on each
 // canvas card carries the note title in its accessible name, not "card".
 func TestExpandLinkAccessibleNameIncludesTitle(t *testing.T) {
+	t.Parallel()
 	h, _ := canvasWithABlock(t)
 	doc := parse(t, get(t, h, "/"))
 
@@ -80,6 +82,7 @@ func TestExpandLinkAccessibleNameIncludesTitle(t *testing.T) {
 // TestRemoveButtonAccessibleNameIncludesTitle checks that the Remove button on
 // each canvas card carries the note title in its accessible name.
 func TestRemoveButtonAccessibleNameIncludesTitle(t *testing.T) {
+	t.Parallel()
 	h, _ := canvasWithABlock(t)
 	doc := parse(t, get(t, h, "/"))
 
@@ -118,6 +121,7 @@ func TestRemoveButtonAccessibleNameIncludesTitle(t *testing.T) {
 // TestExpandLinkAccessibleNameForCalendar checks that a calendar block's expand
 // link uses its caption as context rather than "calendar".
 func TestExpandLinkAccessibleNameForCalendar(t *testing.T) {
+	t.Parallel()
 	h, id := canvasWithACalendar(t)
 	doc := parse(t, get(t, h, "/"))
 
@@ -149,6 +153,7 @@ func TestExpandLinkAccessibleNameForCalendar(t *testing.T) {
 // TestBlockItemHasDataBlockLabel asserts that every canvas block element carries
 // a data-block-label attribute with its summarised title.
 func TestBlockItemHasDataBlockLabel(t *testing.T) {
+	t.Parallel()
 	h, id := canvasWithABlock(t)
 	doc := parse(t, get(t, h, "/"))
 
@@ -173,6 +178,7 @@ func TestBlockItemHasDataBlockLabel(t *testing.T) {
 // TestCanvasControlsAreDistinguishable asserts that on a page with multiple
 // canvas blocks, each control's accessible name is unique — the core bug fix.
 func TestCanvasControlsAreDistinguishable(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Chat.Provider, a.Chat.ProviderErr = &scripted{steps: []*llm.Response{
 		toolCall("add_component", map[string]any{"component": "card", "props": map[string]any{"title": "First Card"}}),

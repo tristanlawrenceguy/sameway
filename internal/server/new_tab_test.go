@@ -10,6 +10,7 @@ import (
 // written: the key page offered with no model, and a link in a note; a
 // link inside Sameway stays in its tab.
 func TestLinksToOtherSitesOpenInANewTab(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	note, _ := a.Store.Create("note", map[string]any{"title": "Recipe", "body": "From [the blog](https://example.com/pancakes), see also [my list](/t/note)."})
 	for _, path := range []string{"/", "/t/note/" + note.ID} {

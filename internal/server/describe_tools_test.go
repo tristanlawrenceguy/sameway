@@ -9,6 +9,7 @@ import (
 // agent reads what the model can do without anyone writing it up twice: a
 // tool added to the chat service is on /api/describe the same moment.
 func TestDescribeListsTheAssistantTools(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	rec := get(t, h, "/api/describe?full=1")
 	wantStatus(t, rec, http.StatusOK)

@@ -11,6 +11,7 @@ import (
 // order the field lists them, each saying how many it holds, every choice
 // there even when empty; a type with no pick-list says so in words.
 func TestACollectionAsABoardHasAColumnPerChoice(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	ids := map[string]string{}
 	for _, p := range []map[string]any{

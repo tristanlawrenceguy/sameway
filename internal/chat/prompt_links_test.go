@@ -12,6 +12,7 @@ import (
 // path as words: a path in a reply is machine language on the page
 // (backlog 0548).
 func TestPromptAsksForNamedLinks(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	m := &scripted{steps: []*llm.Response{}}
 	svc.Provider = m

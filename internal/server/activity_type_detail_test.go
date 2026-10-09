@@ -14,6 +14,7 @@ import (
 // API list must show "Test Type", and the HTML log must also say it — both
 // read from the same stored data through Sentence() / Say().
 func TestActivityDetailIsReadableInAPIAndHTML(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Create a type-setting entry with raw identifiers.
@@ -126,6 +127,7 @@ func TestActivityDetailIsReadableInAPIAndHTML(t *testing.T) {
 // Acceptance item 1: the JSON response must show display-form names, not
 // raw identifiers like test_type.
 func TestAPIActivityDetailFieldResolvesTypeIdentifier(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Create a type-setting entry with raw identifiers.

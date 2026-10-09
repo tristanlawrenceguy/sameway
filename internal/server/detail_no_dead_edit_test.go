@@ -10,6 +10,7 @@ import (
 // created client-side by 09-edit.js via progressive enhancement. Acceptance item
 // 1: views.go must not contain data-inline-edit in detailPage().
 func TestDetailPageHasNoDeadEditButton(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{"title": "Test note"})
@@ -26,6 +27,7 @@ func TestDetailPageHasNoDeadEditButton(t *testing.T) {
 // TestDetailPageActivityHasNoDeadEditButton checks that activity detail pages
 // also do not render a server-side <button data-inline-edit>. Acceptance item 1.
 func TestDetailPageActivityHasNoDeadEditButton(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("activity", map[string]any{
@@ -44,6 +46,7 @@ func TestDetailPageActivityHasNoDeadEditButton(t *testing.T) {
 // TestDetailPageProposalHasNoDeadEditButton checks that proposal detail pages
 // also do not render a server-side <button data-inline-edit>. Acceptance item 1.
 func TestDetailPageProposalHasNoDeadEditButton(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("proposal", map[string]any{
@@ -63,6 +66,7 @@ func TestDetailPageProposalHasNoDeadEditButton(t *testing.T) {
 // sw-cluster div that existed solely to hold the dead Edit button is also gone.
 // Acceptance item 1: after removing the button, no orphan cluster should remain.
 func TestDetailPageHasNoSwClusterAfterEditButtonRemoval(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{"title": "Test note"})

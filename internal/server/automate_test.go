@@ -62,6 +62,7 @@ func (h *heard) quiet(t *testing.T) {
 // the record's words filled into what it sends; what it leads to runs
 // after it with its answer; and it is logged as the automation.
 func TestAnActionRunsWhenARecordComesToMatch(t *testing.T) {
+	t.Parallel()
 	a, _ := newApp(t)
 	a.Chat.StartAutomating()
 	h, url := listen(t)
@@ -98,6 +99,7 @@ func TestAnActionRunsWhenARecordComesToMatch(t *testing.T) {
 // Added and removed are watched too, and an action never sets itself off
 // for the same record within a minute.
 func TestAnActionRunsWhenARecordIsAddedOrRemoved(t *testing.T) {
+	t.Parallel()
 	a, _ := newApp(t)
 	a.Chat.StartAutomating()
 	h, url := listen(t)
@@ -113,6 +115,7 @@ func TestAnActionRunsWhenARecordIsAddedOrRemoved(t *testing.T) {
 
 // A hook's request fills the action it runs.
 func TestAHooksRequestFillsItsAction(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	got, url := listen(t)
 	a.Store.Create("action", map[string]any{"title": "Doorbell", "kind": "webhook", "url": url + "/ring", "method": "POST",
@@ -129,6 +132,7 @@ func TestAHooksRequestFillsItsAction(t *testing.T) {
 // the person, is told what filled its message is data, and the person
 // hears what it did.
 func TestTheAssistantAskedByAnAutomationSaysSo(t *testing.T) {
+	t.Parallel()
 	a, _ := newApp(t)
 	model := &scripted{steps: []*llm.Response{{Text: "Filed it."}}}
 	a.Chat.Provider, a.Chat.ProviderErr = model, nil

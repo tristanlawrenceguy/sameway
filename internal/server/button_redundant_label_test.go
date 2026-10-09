@@ -21,6 +21,7 @@ import (
 // name, "Delete chat <title>", from its content alone: no aria-label beside
 // it, so nothing is named twice and the visible word is part of the name.
 func TestDeleteChatButtonNamesItselfOnce(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Chat.Provider, a.Chat.ProviderErr = &scripted{steps: []*llm.Response{{Text: "Planned."}, {Text: "Noted."}}}, nil
 
@@ -43,6 +44,7 @@ func TestDeleteChatButtonNamesItselfOnce(t *testing.T) {
 // also have visible text containing words from their own aria-label. This covers
 // Acceptance 1 globally across surfaces.
 func TestNoButtonHasVisibleTextMatchingAriaLabel(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	// Create two chats so the delete button appears in conversation.html.

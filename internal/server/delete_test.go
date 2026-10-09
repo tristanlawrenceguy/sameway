@@ -12,6 +12,7 @@ import (
 // you sure"; the listing the person lands on says what happened and
 // offers to put it back.
 func TestDeletingIsOneStepAndReversible(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	created := postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Water the plants", "body": "Sunday."})
 	var note struct{ ID string }

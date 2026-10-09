@@ -13,6 +13,7 @@ import (
 // a list has Mark as done, pressing it works without JavaScript, comes
 // back to the page it was pressed on, glows, and can be undone.
 func TestARecordsStateIsOnePressAway(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	var task struct{ ID string }
 	decode(t, postJSON(t, h, http.MethodPost, "/api/task", map[string]any{"title": "Order compost"}), &task)

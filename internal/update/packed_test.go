@@ -15,6 +15,7 @@ import (
 // person (Sameway-Linux-x64.tar.gz); an update takes the program, even
 // when the packed one comes first.
 func TestAnUpdateTakesTheProgramNotTheOnePackedForAPerson(t *testing.T) {
+	t.Parallel()
 	packed := "Sameway-" + runtime.GOOS + "-" + runtime.GOARCH + ".zip"
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]any{"tag_name": "v0.9.0", "assets": []map[string]any{

@@ -31,6 +31,7 @@ func notePage(t *testing.T, h http.Handler) string {
 // can be asked for only what is wanted. What look is not asked in its own
 // words is refused, not ignored.
 func TestALookSaysValuesFormsAndOnlyWhatIsAsked(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	var seen looked
 	rec := get(t, h, "/api/look?"+url.Values{"path": {"/chat?prompt=Create a note."}, "only": {"controls"}, "kind": {"textbox"}}.Encode())
@@ -74,6 +75,7 @@ func needBrowser(t *testing.T) {
 // is pressed for real to say where focus goes, and whatever went wrong
 // on the page is said.
 func TestALookRunsThePageScriptsAndDoesWhatAPersonDoes(t *testing.T) {
+	t.Parallel()
 	needBrowser(t)
 	_, h := newApp(t)
 	page := notePage(t, h)

@@ -14,6 +14,7 @@ const standup = "[0:00] **Ann:** Morning, two things.\n\n[0:12] **Ben:** We ship
 // summary and decisions, and its tasks, each linked to the line where it
 // was said. It is one entry in the log, and one Undo takes it all back.
 func TestAMeetingIsWrittenUpFromItsRecording(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	file, err := svc.Store.Create(records.FileType, map[string]any{"title": "Monday stand-up", "kind": "audio", "text": standup})
 	if err != nil {
@@ -67,6 +68,7 @@ func TestAMeetingIsWrittenUpFromItsRecording(t *testing.T) {
 // A meeting that is an event already is written up in place, and Undo
 // puts it back as it was.
 func TestAnEventIsWrittenUpInPlace(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	file, _ := svc.Store.Create(records.FileType, map[string]any{"title": "Call", "kind": "audio", "text": standup})
 	ev, err := svc.Store.Create(records.EventType, map[string]any{"title": "Weekly call", "recording": file.ID})

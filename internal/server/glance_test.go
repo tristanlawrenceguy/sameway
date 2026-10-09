@@ -17,6 +17,7 @@ import (
 // three ways, and the same task read "Due Fri 9 Oct 2026, 14:00" on the
 // canvas and "In 4 days at 2:00pm" in its list.
 func TestARecordSaysTheSameEverywhere(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	ana, _ := a.Store.Create("person", map[string]any{"name": "Ana Silva"})
 	due := time.Now().AddDate(0, 0, 3).Format("2006-01-02") + " 14:00"
@@ -56,6 +57,7 @@ func TestARecordSaysTheSameEverywhere(t *testing.T) {
 // Late is said in words, not in amber alone, and only of what can be
 // done: a meeting that happened yesterday is past, not overdue.
 func TestLateIsSaidInWordsAndOnlyOfWhatCanBeDone(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	yesterday := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
 	task, _ := a.Store.Create("task", map[string]any{"title": "Pay rent", "due": yesterday})
@@ -81,6 +83,7 @@ func TestLateIsSaidInWordsAndOnlyOfWhatCanBeDone(t *testing.T) {
 // holds its value for a machine; the words leave the date out only with
 // the date in full beside them for a pointer.
 func TestDaysAreHeldInTimeElements(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	today := time.Now().Format("2006-01-02")
 	task, _ := a.Store.Create("task", map[string]any{"title": "Water plants", "due": today})
@@ -104,6 +107,7 @@ func TestDaysAreHeldInTimeElements(t *testing.T) {
 // Each provided type says what its rules give it, and nothing a type's
 // name was patched in for: the table in design/foundations/glance.md.
 func TestEveryProvidedTypeSaysItsGlance(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	tomorrow := time.Now().AddDate(0, 0, 1).Format("2006-01-02")
 	rec := func(typ string, fields map[string]any) string {
@@ -141,6 +145,7 @@ func TestEveryProvidedTypeSaysItsGlance(t *testing.T) {
 
 // The clock is the person's: 12-hour the GOV.UK way unless they choose 24.
 func TestTimesFollowThePersonsClock(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	tomorrow := time.Now().AddDate(0, 0, 1).Format("2006-01-02")
 	a.Store.Create("task", map[string]any{"title": "Dentist", "due": tomorrow + " 14:30"})
@@ -161,6 +166,7 @@ func TestTimesFollowThePersonsClock(t *testing.T) {
 // the choice was once kept on the program, and the last workspace opened
 // set it for both.
 func TestTwoWorkspacesKeepTheirOwnClocks(t *testing.T) {
+	t.Parallel()
 	a12, h12 := newApp(t)
 	a24, h24 := newApp(t)
 	if err := a24.Workspace.Set("ui.clock", "24"); err != nil {
@@ -181,6 +187,7 @@ func TestTwoWorkspacesKeepTheirOwnClocks(t *testing.T) {
 // A page tells its scripts this computer's zone and today, so its days
 // stay true while it is open and a reader elsewhere is told the zone.
 func TestAPageSaysItsZoneAndDay(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	page := get(t, h, "/t/task").Body.String()
 	if !strings.Contains(page, ` data-today="`+time.Now().Format("2006-01-02")+`"`) || !strings.Contains(page, ` data-zone="`) {

@@ -17,6 +17,7 @@ type changesOut struct {
 // An agent follows what changes as a page does: from a cursor, oldest
 // first, waiting when asked until there is something.
 func TestAnAgentFollowsChanges(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	read := func(path string) changesOut {
 		t.Helper()

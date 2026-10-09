@@ -42,6 +42,7 @@ func open(t *testing.T) *store.Store {
 }
 
 func TestRoundTrip(t *testing.T) {
+	t.Parallel()
 	st := open(t)
 	rec, err := st.Create("note", map[string]any{"title": "Hello", "tags": "a, b", "pinned": "yes", "rank": "3", "extra": map[string]any{"k": "v"}})
 	if err != nil {
@@ -86,6 +87,7 @@ func TestRoundTrip(t *testing.T) {
 // added to an existing table is NULL for old rows, and must read back as the
 // schema's default rather than as a null the schema does not admit.
 func TestFieldAddedLaterReadsAsItsDefault(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	db := filepath.Join(dir, "data.db")
 	before := "name: note\nfields:\n  title: {type: string, required: true}\n"
@@ -137,6 +139,7 @@ func TestFieldAddedLaterReadsAsItsDefault(t *testing.T) {
 }
 
 func TestValidation(t *testing.T) {
+	t.Parallel()
 	st := open(t)
 	_, err := st.Create("note", map[string]any{"body": "no title", "status": "bogus", "nope": 1})
 	var ve *schema.ValidationError

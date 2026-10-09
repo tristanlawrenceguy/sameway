@@ -14,6 +14,7 @@ import (
 // page links to /chat with a prompt query parameter, so clicking navigates
 // to the chat page with context for creating a note. Covers Acceptance 2.
 func TestEmptyStateLinkIncludesPromptParam(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/t/note")
@@ -40,6 +41,7 @@ func TestEmptyStateLinkIncludesPromptParam(t *testing.T) {
 // puts a prompt parameter on the empty-state chat link, with text matching its
 // own name. Covers Acceptance 2 for all types.
 func TestEmptyStatePromptForAllTypes(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	cases := []struct {
@@ -78,6 +80,7 @@ func TestEmptyStatePromptForAllTypes(t *testing.T) {
 // TestChatPagePreFillsFromPrompt checks that navigating to /chat?prompt=...
 // puts the prompt text into the compose textarea's value. Covers Acceptance 2.
 func TestChatPagePreFillsFromPrompt(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/chat?prompt="+url.PathEscape("Create a note."))
@@ -94,6 +97,7 @@ func TestChatPagePreFillsFromPrompt(t *testing.T) {
 // Acceptance 2 — a person coming from an empty-state link should see their
 // prompt text, not a record context.
 func TestChatPagePromptOverridesAbout(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/chat?prompt="+url.PathEscape("Create a note.")+"&about=note")
@@ -115,6 +119,7 @@ func TestChatPagePromptOverridesAbout(t *testing.T) {
 // the change doesn't break normal chat page usage. Covers Acceptance 2 — only
 // explicit prompts should pre-fill.
 func TestChatPageNoPromptMeansEmptyTextarea(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/chat")

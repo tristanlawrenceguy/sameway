@@ -14,6 +14,7 @@ import (
 // as such; the result says which Saturday is the coming one, and a day
 // that is the coming one is only said back.
 func TestADayAWeekOutSaysWhichIsTheComingOne(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	svc.Clock = func() time.Time { return time.Date(2026, 10, 6, 19, 0, 0, 0, time.UTC) } // a Tuesday
 	m := &scripted{steps: []*llm.Response{

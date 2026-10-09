@@ -10,6 +10,7 @@ import (
 // back in words that read as the same repeat; what is not understood is
 // refused with what it must be.
 func TestParseRepeatReadsWhatPeopleSay(t *testing.T) {
+	t.Parallel()
 	now := time.Date(2026, 9, 17, 10, 30, 0, 0, time.UTC) // a Thursday
 	cases := []struct{ in, stored, said string }{
 		{"every day", "FREQ=DAILY", "every day"},
@@ -66,6 +67,7 @@ func TestParseRepeatReadsWhatPeopleSay(t *testing.T) {
 }
 
 func TestParseRepeatRefusesWithWhatItMustBe(t *testing.T) {
+	t.Parallel()
 	now := time.Date(2026, 9, 17, 10, 30, 0, 0, time.UTC)
 	cases := map[string]string{
 		"sometimes":                    "must say how often",
@@ -94,6 +96,7 @@ func TestParseRepeatRefusesWithWhatItMustBe(t *testing.T) {
 // the 31st on the last day of shorter months, 29 Feb on 28 Feb in other
 // years, weekdays over the weekend, and not after it ends.
 func TestNextKeepsTheSchedule(t *testing.T) {
+	t.Parallel()
 	now := time.Date(2026, 1, 10, 9, 0, 0, 0, time.UTC)
 	cases := []struct {
 		repeat, from, want string
@@ -132,6 +135,7 @@ func TestNextKeepsTheSchedule(t *testing.T) {
 
 // A time of day stays the time on the wall across a change of clocks.
 func TestNextKeepsTheTimeAcrossSummerTime(t *testing.T) {
+	t.Parallel()
 	london, err := time.LoadLocation("Europe/London")
 	if err != nil {
 		t.Skip("no time zone data here")
@@ -148,6 +152,7 @@ func TestNextKeepsTheTimeAcrossSummerTime(t *testing.T) {
 // A monthly or yearly repeat without its day takes the day it was due, so
 // the 31st does not become the 28th for good after February.
 func TestPinKeepsTheDay(t *testing.T) {
+	t.Parallel()
 	if got := Pin("FREQ=MONTHLY", "2026-01-31T00:00:00Z"); got != "FREQ=MONTHLY;BYMONTHDAY=31" {
 		t.Errorf("monthly from the 31st: %q", got)
 	}
@@ -162,6 +167,7 @@ func TestPinKeepsTheDay(t *testing.T) {
 // Put off by five minutes, a repeat keeps to its own time of day, and
 // lets it go once the next time is set.
 func TestKeepTimeHoldsTheTimeWhilePutOff(t *testing.T) {
+	t.Parallel()
 	now := time.Date(2026, 1, 10, 7, 1, 0, 0, time.Local)
 	held := KeepTime("FREQ=DAILY", Store(time.Date(2026, 1, 10, 7, 0, 0, 0, time.Local), false))
 	if RepeatText(held) != "every day" {

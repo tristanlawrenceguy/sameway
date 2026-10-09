@@ -8,6 +8,7 @@ import (
 // apart adds words only to names that repeat, with the first way that
 // differs across all of them; one left without words is the plain one.
 func TestApartTellsOnlyRepeatsApart(t *testing.T) {
+	t.Parallel()
 	names := []string{"Call plumber", "Pay bill", "call  plumber", "Call plumber"}
 	ways := [][]string{{"due Fri", "added 1"}, {"due Sat"}, {"due Fri", "added 2"}, {"", "added 3"}}
 	got := apart(names, func(i int) []string { return ways[i] })
@@ -27,6 +28,7 @@ func TestApartTellsOnlyRepeatsApart(t *testing.T) {
 
 // A block's controls are named after its label, else its component.
 func TestBlockNameIsItsLabel(t *testing.T) {
+	t.Parallel()
 	if got := blockName("collection", map[string]any{"type": "task", "label": "Up next"}); got != "Up next" {
 		t.Errorf("blockName = %q, want Up next", got)
 	}

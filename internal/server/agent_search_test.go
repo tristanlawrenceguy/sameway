@@ -35,6 +35,7 @@ func searchCall(a *app.App, args map[string]any) (string, bool) {
 // The assistant's search counts what it found by kind, narrows with type
 // in the same words as the page, and refuses a kind it cannot search in.
 func TestTheAssistantsSearchCountsAndNarrows(t *testing.T) {
+	t.Parallel()
 	a, _ := seedsEverywhere(t)
 	text, isErr := searchCall(a, map[string]any{"query": "seeds"})
 	if isErr || !strings.HasPrefix(text, "6 found: 3 tasks, 2 notes, 1 block (") || !strings.Contains(text, "Order seeds") {
@@ -60,6 +61,7 @@ func TestTheAssistantsSearchCountsAndNarrows(t *testing.T) {
 
 // Past fifty the answer says which these are and how to ask for more.
 func TestTheAssistantsSearchSaysThereIsMore(t *testing.T) {
+	t.Parallel()
 	a, _ := newApp(t)
 	for i := range 55 {
 		a.Store.Create("task", map[string]any{"title": fmt.Sprintf("Fern %d", i)})
@@ -77,6 +79,7 @@ func TestTheAssistantsSearchSaysThereIsMore(t *testing.T) {
 // /api/search gives the counts and the total, narrows with type, pages,
 // and refuses a kind it cannot search in with a 400.
 func TestTheAPISearchCountsNarrowsAndPages(t *testing.T) {
+	t.Parallel()
 	_, h := seedsEverywhere(t)
 	var out struct {
 		Count, Total, Found, Page, Pages int
@@ -119,6 +122,7 @@ func TestTheAPISearchCountsNarrowsAndPages(t *testing.T) {
 // The internet's search counts only what is published, narrows only to a
 // published kind, and keeps results as ChatGPT's connectors read them.
 func TestPublishedSearchCountsAndNarrows(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	srv := h.(*server.Server)
 	n, _ := a.Store.Create("note", map[string]any{"title": "Sourdough", "body": "Flour, water and salt."})

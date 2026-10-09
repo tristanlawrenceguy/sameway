@@ -10,6 +10,7 @@ import (
 // A question is a plain mDNS query; an instance name is read back into a
 // service with its type and its name, spaces and all.
 func TestQuestionsAndNames(t *testing.T) {
+	t.Parallel()
 	q, err := question("_services._dns-sd._udp.local.", dnsmessage.TypePTR)
 	if err != nil || len(q) == 0 {
 		t.Fatalf("a query is built: %v", err)

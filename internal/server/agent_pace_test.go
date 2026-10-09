@@ -12,6 +12,7 @@ import (
 // is told how long to wait, it can still read, and the owner at this
 // computer is not held back.
 func TestAnAgentsChangesArePaced(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	key, _, err := records.LetAgentIn(a.Store, records.Who{Actor: "human", Via: records.ThroughCLI}, "Busy", "edit")
 	if err != nil {

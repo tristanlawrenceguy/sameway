@@ -11,6 +11,7 @@ import (
 // TestNoFillerInReminderEditError checks that when a reminder creation fails,
 // the Chat.Notice message does not use "That reminder did not save." as filler.
 func TestNoFillerInReminderEditError(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	// Post an invalid reminder creation request (missing required "at" field).
@@ -39,6 +40,7 @@ func TestNoFillerInReminderEditError(t *testing.T) {
 // TestNoFillerInProposalError checks that when a proposal accept/dismiss fails,
 // the Chat.Notice message does not use "That did not go through." as filler.
 func TestNoFillerInProposalError(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	// Post to an invalid proposal ID — this will trigger the error path in answer().
@@ -60,6 +62,7 @@ func TestNoFillerInProposalError(t *testing.T) {
 // TestNoFillerInChatOperations checks that chat operations (open, delete) do not
 // use conversational filler phrases in their error messages.
 func TestNoFillerInChatOperations(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Try to open a non-existent chat — this hits the "That chat is not here any more." path.
@@ -94,6 +97,7 @@ func TestNoFillerInChatOperations(t *testing.T) {
 // TestNoFillerInHabitLogError checks that when habit logging fails, the error
 // message does not use "That did not log." as filler.
 func TestNoFillerInHabitLogError(t *testing.T) {
+	t.Parallel()
 	h, _ := canvasWithABlock(t)
 
 	// Post an invalid amount to trigger validation path.
@@ -121,6 +125,7 @@ func TestNoFillerInHabitLogError(t *testing.T) {
 // TestNoConversationalFillerInActionResult checks that chat tool results do not
 // use filler phrases like "action X did not go through." — they start directly.
 func TestNoConversationalFillerInActionResult(t *testing.T) {
+	t.Parallel()
 	h, _ := canvasWithABlock(t)
 
 	// Try to run a non-existent action via the API (which is what chat tools use).
@@ -141,6 +146,7 @@ func TestNoConversationalFillerInActionResult(t *testing.T) {
 // TestNoFillerInChatWithScriptedModel checks that when using the chat with a
 // scripted model, error messages from tool calls do not contain filler phrases.
 func TestNoFillerInChatWithScriptedModel(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Chat.Provider, a.Chat.ProviderErr = &scripted{steps: []*llm.Response{
 		toolCall("run_action", map[string]any{"id": "nonexistent-action"}),

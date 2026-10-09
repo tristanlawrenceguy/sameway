@@ -8,6 +8,7 @@ import (
 // A reply's dash lines reach a screen reader and an agent as a list, not
 // as one paragraph with the items run together.
 func TestAReplysDashLinesAreAList(t *testing.T) {
+	t.Parallel()
 	got := string(passage("I can help with:\n- tasks for [tomorrow](/t/task)\n- a shopping list", nil))
 	want := `<p>I can help with:</p><ul><li>tasks for <a class="sw-link" href="/t/task">tomorrow</a></li><li>a shopping list</li></ul>`
 	if got != want {
@@ -26,6 +27,7 @@ func TestAReplysDashLinesAreAList(t *testing.T) {
 
 // Words a model made **bold** are bold, without their stars.
 func TestBoldWordsAreBold(t *testing.T) {
+	t.Parallel()
 	got := string(passage("**Saturday walk** at 9am\n- **Call** grandma", nil))
 	want := "<p><strong>Saturday walk</strong> at 9am</p><ul><li><strong>Call</strong> grandma</li></ul>"
 	if got != want {

@@ -38,6 +38,7 @@ func initWorkspace(t *testing.T) string {
 }
 
 func TestHelpAndVersion(t *testing.T) {
+	t.Parallel()
 	if r := run(t, "", "help"); r.code != 0 || !strings.Contains(r.stdout, "Usage:") {
 		t.Errorf("help: %+v", r)
 	}
@@ -48,6 +49,7 @@ func TestHelpAndVersion(t *testing.T) {
 }
 
 func TestNoWorkspaceIsAClearError(t *testing.T) {
+	t.Parallel()
 	r := run(t, t.TempDir(), "describe")
 	if r.code != 1 || !strings.Contains(r.stderr, "sameway init") {
 		t.Errorf("expected a hint to run init, got %+v", r)
@@ -55,6 +57,7 @@ func TestNoWorkspaceIsAClearError(t *testing.T) {
 }
 
 func TestInitRefusesToOverwrite(t *testing.T) {
+	t.Parallel()
 	dir := initWorkspace(t)
 	if r := run(t, dir, "init", dir, "--no-detect"); r.code == 0 || !strings.Contains(r.stderr, "--force") {
 		t.Errorf("second init should fail and mention --force: %+v", r)
@@ -66,6 +69,7 @@ func TestInitRefusesToOverwrite(t *testing.T) {
 
 // TestDescribeJSON is what an agent reads first.
 func TestDescribeJSON(t *testing.T) {
+	t.Parallel()
 	dir := initWorkspace(t)
 	r := run(t, dir, "describe", "--json")
 	if r.code != 0 {
@@ -97,6 +101,7 @@ func TestDescribeJSON(t *testing.T) {
 // TestContentCommands covers create, list, get, update, delete in both
 // human and JSON modes, with flags in the positions people actually type.
 func TestContentCommands(t *testing.T) {
+	t.Parallel()
 	dir := initWorkspace(t)
 
 	created := run(t, dir, "note", "create", "--set", "title=Hello", "--set", "tags=a, b", "--json")
@@ -152,6 +157,7 @@ func TestContentCommands(t *testing.T) {
 // TestErrorsSayHowToFix checks the failure paths an agent must be able to
 // recover from without human help.
 func TestErrorsSayHowToFix(t *testing.T) {
+	t.Parallel()
 	dir := initWorkspace(t)
 	cases := []struct {
 		args []string
@@ -183,6 +189,7 @@ func TestErrorsSayHowToFix(t *testing.T) {
 // TestComponentScaffoldIsValid checks a scaffolded component loads, renders,
 // and shows up as a workspace component.
 func TestComponentScaffoldIsValid(t *testing.T) {
+	t.Parallel()
 	dir := initWorkspace(t)
 	r := run(t, dir, "component", "new", "callout")
 	if r.code != 0 {
@@ -207,6 +214,7 @@ func TestComponentScaffoldIsValid(t *testing.T) {
 }
 
 func TestCheckReportsBrokenExamples(t *testing.T) {
+	t.Parallel()
 	dir := initWorkspace(t)
 	run(t, dir, "component", "new", "bad")
 	manifest := filepath.Join(dir, "components", "bad", "manifest.json")
@@ -221,6 +229,7 @@ func TestCheckReportsBrokenExamples(t *testing.T) {
 // One part of the description is read from the command line the same way an
 // agent reads it over HTTP, and is JSON either way.
 func TestDescribeOnePart(t *testing.T) {
+	t.Parallel()
 	dir := initWorkspace(t)
 	r := run(t, dir, "describe", "types", "note")
 	if r.code != 0 || !strings.Contains(r.stdout, `"body"`) || strings.Contains(r.stdout, `"components"`) {
@@ -234,6 +243,7 @@ func TestDescribeOnePart(t *testing.T) {
 // The content folder is the portable form: written as records change, read
 // back with import after a pull, rewritten whole with export.
 func TestContentIsThePortableForm(t *testing.T) {
+	t.Parallel()
 	dir := initWorkspace(t)
 	r := run(t, dir, "note", "create", "--set", "title=Hello", "--set", "body=Every Sunday.", "--json")
 	if r.code != 0 {
@@ -275,6 +285,7 @@ func TestContentIsThePortableForm(t *testing.T) {
 
 // A page reads the same from the command line as over the API.
 func TestLookFromTheCommandLine(t *testing.T) {
+	t.Parallel()
 	dir := initWorkspace(t)
 	r := run(t, dir, "look", "/t/note")
 	if r.code != 0 || !strings.Contains(r.stdout, `"headings"`) || !strings.Contains(r.stdout, `"problems": []`) {

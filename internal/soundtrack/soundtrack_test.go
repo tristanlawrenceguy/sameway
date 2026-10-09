@@ -94,6 +94,7 @@ func ebmlEl(id uint32, body []byte) []byte {
 // clusters of unknown size, and copied out as Ogg Opus that a decoder
 // reads: its head first, each packet a page with a true checksum.
 func TestAWebMsSoundIsCopiedOutAsOggOpus(t *testing.T) {
+	t.Parallel()
 	head := append([]byte("OpusHead"), 1, 2, 0x38, 1, 0x80, 0xBB, 0, 0, 0, 0, 0)
 	tracks := ebmlEl(idTracks, append(
 		ebmlEl(idTrackEntry, append(append(ebmlEl(idTrackNumber, []byte{1}), ebmlEl(idTrackType, []byte{1})...), ebmlEl(idCodecID, []byte("V_VP8"))...)),
@@ -190,6 +191,7 @@ func TestAnMP3IsCutAtItsFrames(t *testing.T) {
 
 // Anything else is not copied out here, and says so.
 func TestOtherFilesAreNotCopiedOut(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	src := filepath.Join(dir, "notes.bin")
 	os.WriteFile(src, []byte("just some bytes, not a recording"), 0o644)

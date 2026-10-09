@@ -13,6 +13,7 @@ import (
 // From the page, a person starts a new chat, goes back to an earlier one,
 // and deletes one, from the menu at the top of the chat.
 func TestAPersonMovesBetweenChats(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Chat.Provider, a.Chat.ProviderErr = &scripted{steps: []*llm.Response{{Text: "Planned."}, {Text: "Noted."}}}, nil
 	wantStatus(t, postForm(t, h, "/chat", url.Values{"message": {"plan the garden"}, "from": {"/chat"}}), http.StatusSeeOther)
@@ -57,6 +58,7 @@ func TestAPersonMovesBetweenChats(t *testing.T) {
 // person asks, and the chat's menu has no Place of its own. Pop out stays
 // on the canvas, and the chat page itself has neither.
 func TestTheChatIsPlacedByAsking(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	page := get(t, h, "/").Body.String()
 	if strings.Contains(page, ">Place<") || strings.Contains(page, "/place\"") || !strings.Contains(page, `data-popout`) {

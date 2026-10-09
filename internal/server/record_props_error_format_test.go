@@ -11,6 +11,7 @@ import (
 // rather than the old colon-separated technical format ("<strong>title</strong>:
 // is required"). This covers acceptance item 1.
 func TestRecordPropsValidationErrorFormatIsPlainSentence(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{
@@ -45,6 +46,7 @@ func TestRecordPropsValidationErrorFormatIsPlainSentence(t *testing.T) {
 // field") rather than "<strong>bogus_field</strong>: ...". This covers
 // acceptance item 2.
 func TestRecordPropsValidationErrorUnknownFieldFormatIsPlainSentence(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{
@@ -78,6 +80,7 @@ func TestRecordPropsValidationErrorUnknownFieldFormatIsPlainSentence(t *testing.
 // validation errors also use the plain-sentence format ("Status must be one of")
 // rather than "<strong>status</strong>: ...". This covers acceptance item 2.
 func TestRecordPropsValidationErrorEnumFormatIsPlainSentence(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{

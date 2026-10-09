@@ -9,6 +9,7 @@ import (
 // its page is headed with: an entry's habit and how much, a note's title
 // (crew findings 0562 and 0564).
 func TestGetRecordSaysItsTitle(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	habit, err := svc.Store.Create("habit", map[string]any{"name": "Read", "unit": "minutes", "cadence": "day"})
 	if err != nil {

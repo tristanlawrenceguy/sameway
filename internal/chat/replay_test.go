@@ -15,6 +15,7 @@ import (
 // was, calls then results then words, so the conversation keeps showing
 // tools being used rather than replies that only mention them.
 func TestHistoryReplaysTheToolsAReplyUsed(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	svc.Provider = &scripted{steps: []*llm.Response{
 		call("create_record", map[string]any{"type": "note", "fields": map[string]any{"title": "Plan"}}),

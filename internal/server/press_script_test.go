@@ -11,6 +11,7 @@ import (
 // a ring and a slight give, never a change of place or size, and under
 // reduced motion with no give at all; forced colours still show it.
 func TestPressAnswersAtOnceAndMovesNothing(t *testing.T) {
+	t.Parallel()
 	data, err := os.ReadFile("../../design/base/32-press.css")
 	if err != nil {
 		t.Fatal(err)
@@ -41,6 +42,7 @@ func TestPressAnswersAtOnceAndMovesNothing(t *testing.T) {
 // on colours the system has taken away. (The browser's own box would have
 // no edge of its own to show in the page's terms.)
 func TestMarkTickDrawsAndFallsBack(t *testing.T) {
+	t.Parallel()
 	data, err := os.ReadFile("../../design/components/mark/style.css")
 	if err != nil {
 		t.Fatal(err)

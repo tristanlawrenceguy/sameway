@@ -34,6 +34,7 @@ func other(t *testing.T, a *app.App) *app.App {
 // right after the assistant said it was done. Records the other process
 // wrote were always there: both open the same data.db.
 func TestATypeMadeByAnotherProcessIsServedWithoutARestart(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	b := other(t, a)
 	if _, err := b.AddType(&schema.Type{Name: "recipe", Description: "A recipe.", Fields: []schema.Field{{Name: "title", Type: "string"}}}); err != nil {
@@ -73,6 +74,7 @@ func TestATypeMadeByAnotherProcessIsServedWithoutARestart(t *testing.T) {
 // The server looks every second (serve starts WatchSchema); a request
 // that comes first takes the change itself.
 func TestOpenPagesFollowATypeMadeElsewhere(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	ctx, stop := context.WithCancel(context.Background())
 	defer stop()

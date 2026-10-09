@@ -28,6 +28,7 @@ func blockPropsOf(t *testing.T, s *store.Store, id string) map[string]any {
 // call it Up next". A person narrows and sorts with Show and sort, keeps
 // the choices, and renames the list; each is undone from its outcome.
 func TestKeepTheseChoicesMakesThemTheSetup(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	seedTasks(t, a)
 	id := addCollection(t, h, map[string]any{"type": "task", "label": "Tasks", "controls": true})
@@ -86,6 +87,7 @@ func TestKeepTheseChoicesMakesThemTheSetup(t *testing.T) {
 
 // Keep with no choice made says so, rather than saving nothing.
 func TestKeepWithNothingChosenSaysSo(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	seedTasks(t, a)
 	id := addCollection(t, h, map[string]any{"type": "task", "label": "Tasks", "controls": true})
@@ -99,6 +101,7 @@ func TestKeepWithNothingChosenSaysSo(t *testing.T) {
 // as Name, for the inline editor; saving it renames the block, logged and
 // undone like any edit.
 func TestABlockIsRenamedFromThePage(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	seedTasks(t, a)
 	id := addCollection(t, h, map[string]any{"type": "task", "label": "Tasks"})
@@ -132,6 +135,7 @@ func TestABlockIsRenamedFromThePage(t *testing.T) {
 // a JSON body is read as the form whatever the Accept header says. In the
 // agent evaluation (C-t5) both got an empty 303 and nothing done.
 func TestAPropsPostIsNeverSilent(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	id := addCollection(t, h, map[string]any{"type": "task", "label": "Tasks"})
 
@@ -167,6 +171,7 @@ func TestAPropsPostIsNeverSilent(t *testing.T) {
 // with the chat block gone from Home, the link led nowhere (axe
 // skip-link, in every in-app run of the agent evaluation).
 func TestHomeSkipLinkTargetExists(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Chat.Provider, a.Chat.ProviderErr = &scripted{steps: []*llm.Response{{Text: "Hello."}}}, nil
 	get(t, h, "/")
@@ -199,6 +204,7 @@ func TestHomeSkipLinkTargetExists(t *testing.T) {
 
 // Someone who may only look is not offered what only changes things.
 func TestALookerIsNotOfferedKeepOrRename(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	seedTasks(t, a)
 	id := addCollection(t, h, map[string]any{"type": "task", "label": "Tasks", "controls": true})

@@ -12,6 +12,7 @@ import (
 // like "activitys".  This test ensures the consonant+y → ies rule is applied
 // while preserving words ending in "s" and vowel+y forms.
 func TestPlural(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		in   string
 		want string

@@ -16,6 +16,7 @@ import (
 // It was once added to project rows alone, by the type's name, and said
 // nowhere else.
 func TestWhatIsInARecordIsSaidTheSameEverywhere(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	var garden struct{ ID string }
 	decode(t, postJSON(t, h, http.MethodPost, "/api/project", map[string]any{"title": "Garden"}), &garden)
@@ -78,6 +79,7 @@ func TestWhatIsInARecordIsSaidTheSameEverywhere(t *testing.T) {
 // their interactions and not the tasks for them; a meeting counts the
 // tasks that came up at it; a habit's entries are its tracker's to say.
 func TestWhatIsInARecordIsReadFromTheSchema(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	var ana, standup struct{ ID string }
 	decode(t, postJSON(t, h, http.MethodPost, "/api/person", map[string]any{"name": "Ana Silva"}), &ana)

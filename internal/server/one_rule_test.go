@@ -8,6 +8,7 @@ import (
 
 // What differed by way in, now one rule each.
 func TestOneRuleWhereThereWereSeveral(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// A field Sameway keeps is refused to the owner over the API as on

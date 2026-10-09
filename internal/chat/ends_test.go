@@ -14,6 +14,7 @@ import (
 // There is no count of rounds: a model that makes one call per round
 // may take as many rounds as the work takes.
 func TestALongTurnMayGoOn(t *testing.T) {
+	t.Parallel()
 	var steps []*llm.Response
 	for i := 0; i < 40; i++ {
 		steps = append(steps, call("add_component", map[string]any{"component": "text", "props": map[string]any{"content": fmt.Sprintf("item %d", i)}}))
@@ -39,6 +40,7 @@ func TestALongTurnMayGoOn(t *testing.T) {
 // say where things stand, and its words are the reply, with what the
 // turn did.
 func TestARepeatedCallEndsTheTurnInWords(t *testing.T) {
+	t.Parallel()
 	same := func() *llm.Response {
 		return call("add_component", map[string]any{"component": "text", "props": map[string]any{"content": "again"}})
 	}
@@ -64,6 +66,7 @@ func TestARepeatedCallEndsTheTurnInWords(t *testing.T) {
 // turn ends the same way. Different failures are not: each error tells
 // the model something, and it may keep trying.
 func TestTheSameFailureThreeTimesEndsTheTurn(t *testing.T) {
+	t.Parallel()
 	bad := func(n int) *llm.Response { return call("frobnicate", map[string]any{"try": n}) }
 	svc := newFullService(t)
 	m := &scripted{steps: []*llm.Response{bad(1), bad(2), bad(3), bad(4), bad(5)}}
@@ -106,6 +109,7 @@ func (s *stopping) Complete(ctx context.Context, _ llm.Request) (*llm.Response, 
 // The person can stop a turn. What it did stays, and the reply says it
 // was stopped rather than reporting an error.
 func TestAStoppedTurnKeepsWhatItDid(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	records.Record(svc.Store, "assistant", records.Change{Action: "created", Component: "note", Detail: "earlier"})
 	p := &stopping{started: make(chan struct{})}

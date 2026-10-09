@@ -10,6 +10,7 @@ import (
 // Hearing you is shown and not said, so a screen reader is not recorded
 // over the person; and a hint says headphones help.
 func TestVoiceModeTurnButtonAndHearing(t *testing.T) {
+	t.Parallel()
 	tpl, _ := os.ReadFile("../../design/components/talk/template.html")
 	s := string(tpl)
 	if strings.Count(s, "<button") != 2 || !strings.Contains(s, `sw-talk__turn" hidden>Done speaking</button>`) {
@@ -38,6 +39,7 @@ func TestVoiceModeTurnButtonAndHearing(t *testing.T) {
 // waits for Speak; pausing lets it go too and says so; what was heard is
 // said back as it is sent.
 func TestVoiceModeLetsTheMicrophoneGo(t *testing.T) {
+	t.Parallel()
 	js, _ := os.ReadFile("../../design/components/talk/enhance.js")
 	j := string(js)
 	if !strings.Contains(j, "if (!aloud.checked || !voice || !text) { wait(); return; }") {

@@ -13,6 +13,7 @@ import (
 // still shows the raw ID in visible text until resolution is generalised to all
 // content types. This covers acceptance item 1 (no raw IDs in headings).
 func TestUnresolvedNoteDetailShowsRawID(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Seed a note with a title so we can later verify the resolved title appears.
@@ -56,6 +57,7 @@ func TestUnresolvedNoteDetailShowsRawID(t *testing.T) {
 // Validation" (the word "record" is replaced by the content type name and the
 // id resolves to a title). This covers acceptance items 1 and 2.
 func TestUnresolvedRecordComponentShowsLabelAndID(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Seed a note with a title so we can verify it appears after resolution.
@@ -107,6 +109,7 @@ func TestUnresolvedRecordComponentShowsLabelAndID(t *testing.T) {
 // does not break records that were created with titles — they should render as
 // before: "Assistant created note Seeds to buy".
 func TestResolvedRecordWithExistingTitleStillWorks(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	note, err := a.Store.Create("note", map[string]any{

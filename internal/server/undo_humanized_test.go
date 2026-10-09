@@ -12,6 +12,7 @@ import (
 // "You undid:: Assistant changed Room between lines and words to Wide".
 // This covers acceptance items 1–3 of task 0227.
 func TestUndoHumanizedSettingReadsInPlainWords(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Seed an original setting-change entry with already-humanized text

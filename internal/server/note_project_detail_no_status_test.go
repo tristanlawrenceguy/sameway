@@ -12,6 +12,7 @@ import (
 // readers (backlog 0514). After the fix, no such badge should appear in the
 // lede for note detail pages. Creation time is still shown.
 func TestNoteDetailPageHasNoStatusLabelInLede(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{
@@ -41,6 +42,7 @@ func TestNoteDetailPageHasNoStatusLabelInLede(t *testing.T) {
 // no such badge should appear in the lede for project detail pages. Creation/
 // update times are still shown.
 func TestProjectDetailPageHasNoStatusLabelInLede(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("project", map[string]any{
@@ -68,6 +70,7 @@ func TestProjectDetailPageHasNoStatusLabelInLede(t *testing.T) {
 // text under the heading (backlog 0514). After the fix, no such badge should
 // appear for any project detail page regardless of status value.
 func TestProjectDetailPageDoneStatusHasNoStatusLabelInLede(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("project", map[string]any{

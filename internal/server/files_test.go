@@ -40,6 +40,7 @@ func multipartFile(t *testing.T, name, content string, fields url.Values) (io.Re
 // A person adds a file: it becomes a record with its contents as Markdown,
 // the original stays reachable, and the files page offers the upload.
 func TestAFileBecomesARecordWithItsText(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	body, ct := multipartFile(t, "Plan.md", "# The plan\n\nDig the pond.", nil)
 	rec := do(t, h, http.MethodPost, "/t/file/upload", body, ct)
@@ -76,6 +77,7 @@ func TestAFileBecomesARecordWithItsText(t *testing.T) {
 // A workspace that names a converter hands the file to it and the record
 // says it is converting until the answer comes back.
 func TestAConverterFillsInTheTextLater(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	remote := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if _, _, err := r.FormFile("files"); err != nil {
@@ -108,6 +110,7 @@ func TestAConverterFillsInTheTextLater(t *testing.T) {
 // A file sent with a message is filed as a record, its words go to the
 // model with the message, and the transcript shows which file went along.
 func TestChatTakesAFileWithTheMessage(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	model := &scripted{steps: []*llm.Response{{Text: "It is about the pond. I filed it at /t/file."}}}
 	a.Chat.Provider, a.Chat.ProviderErr = model, nil
@@ -146,6 +149,7 @@ func TestChatTakesAFileWithTheMessage(t *testing.T) {
 // it, as a page, with an alert saying what to do and the upload there to
 // try again; nothing is filed.
 func TestUploadWithWrongContentTypeReturnsHTMLPage(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	rec := postForm(t, h, "/t/file/upload", url.Values{"from": {"/t/file"}})
 	page, at := landed(t, h, rec)
@@ -159,6 +163,7 @@ func TestUploadWithWrongContentTypeReturnsHTMLPage(t *testing.T) {
 }
 
 func TestUploadWithNoFileShowsAccessibleError(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	body, ct := multipartFile(t, "", "", url.Values{"from": {"/t/file"}})
 	rec := do(t, h, http.MethodPost, "/t/file/upload", body, ct)

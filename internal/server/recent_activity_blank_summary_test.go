@@ -11,6 +11,7 @@ import (
 // section on any page still reads a blank-summary record as a sentence built
 // from actor + action + detail, rather than rendering an empty h3.
 func TestRecentActivityBlankSummaryShowsFallback(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Seed a human activity with an empty summary directly into the store.
@@ -41,6 +42,7 @@ func TestRecentActivityBlankSummaryShowsFallback(t *testing.T) {
 // TestRecentActivityBlankSummaryAssistantFallback checks that assistant actor
 // also gets a fallback in the recent activity section.
 func TestRecentActivityBlankSummaryAssistantFallback(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	_, err := a.Store.Create(records.ActivityType, map[string]any{

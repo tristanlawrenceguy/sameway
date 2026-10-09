@@ -5,6 +5,7 @@ import "testing"
 // A model is named for a person by what it is and where the conversation
 // goes, never by the protocol and an address.
 func TestAModelIsNamedForAPerson(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct {
 		p    Provider
 		want string

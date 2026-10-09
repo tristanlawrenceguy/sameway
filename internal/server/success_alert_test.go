@@ -11,6 +11,7 @@ import (
 // props endpoint, the redirect target page contains a green .sw-alert with
 // "Changes saved" text and a close button. Acceptance items 1 and 3.
 func TestRecordPropsSaveShowsSuccessAlert(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{
@@ -61,6 +62,7 @@ func TestRecordPropsSaveShowsSuccessAlert(t *testing.T) {
 // without ?saved does not show the success alert. This ensures ?saved is
 // required for the alert to appear and it doesn't leak on unrelated requests.
 func TestRecordPropsSaveWithoutQueryParamShowsNoAlert(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{

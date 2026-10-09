@@ -17,6 +17,7 @@ import (
 // block as it lands with its HTML, and the reply as recorded, as
 // server-sent events. The page can then show all of it without waiting.
 func TestATurnIsToldAsItHappens(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Chat.Provider, a.Chat.ProviderErr = &scripted{steps: []*llm.Response{
 		toolCall("add_component", map[string]any{"component": "card", "props": map[string]any{"title": "Shopping"}}),
@@ -84,6 +85,7 @@ func (s *streamed) Stream(ctx context.Context, req llm.Request, on func(llm.Delt
 // the page can show the step while the arguments are still being written;
 // the same step is told again, in full, when the call runs.
 func TestAToolIsNamedBeforeItsCallIsWhole(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Chat.Provider, a.Chat.ProviderErr = &streamed{scripted{steps: []*llm.Response{
 		toolCall("add_component", map[string]any{"component": "card", "props": map[string]any{"title": "Shopping"}}),

@@ -14,6 +14,7 @@ import (
 // the hierarchy would skip from h1 (the page heading) directly to h3. This is
 // acceptance item 1 and 2 of task: heading hierarchy must be sequential H1 → H2.
 func TestCanvasCardDetailHeadingH2(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Add a card block via the assistant so it lands on the canvas like real usage.

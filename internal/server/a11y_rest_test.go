@@ -14,6 +14,7 @@ import (
 
 // A link to a record in a reply reads as the record's name, not its address.
 func TestALinkInAReplyReadsAsTheRecordsName(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	note, _ := a.Store.Create("note", map[string]any{"title": "Water the plants"})
 	a.Store.Create(records.MessageType, map[string]any{"role": "assistant", "content": "Done: it is at /t/note/" + note.ID + "."})
@@ -25,6 +26,7 @@ func TestALinkInAReplyReadsAsTheRecordsName(t *testing.T) {
 
 // A block's tone is said in words, not only tinted.
 func TestAToneIsSaidInWords(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Store.Create("block", map[string]any{"component": "heading", "props": map[string]any{"text": "Rent is due"}, "tone": "danger"})
 	if page := get(t, h, "/").Body.String(); !strings.Contains(page, `<p class="sw-visually-hidden">Important.</p>`) {
@@ -40,6 +42,7 @@ func TestAToneIsSaidInWords(t *testing.T) {
 // described yet says that, not its file name, and asks for words. look
 // flags a file name as a description.
 func TestAPictureIsDescribedNotNamedByItsFile(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	pic, _ := a.Store.Create("file", map[string]any{"title": "IMG_4032", "name": "IMG_4032.jpg", "kind": "image"})
 	page := get(t, h, "/t/file/"+pic.ID).Body.String()
@@ -58,6 +61,7 @@ func TestAPictureIsDescribedNotNamedByItsFile(t *testing.T) {
 // Help is in the same place on every page, and makes Sameway easier to
 // use without the assistant: larger words, in one press, undone in one.
 func TestHelpIsEverywhereAndChangesTheTextSize(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	for _, path := range []string{"/", "/chat", "/t/note"} {
 		if !strings.Contains(get(t, h, path).Body.String(), `href="/help"`) {
@@ -90,6 +94,7 @@ func TestHelpIsEverywhereAndChangesTheTextSize(t *testing.T) {
 
 // The workspace's language is the pages' language.
 func TestThePagesSayTheWorkspacesLanguage(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Workspace.Config.UI.Language = "de"
 	if page := get(t, h, "/").Body.String(); !strings.Contains(page, `<html lang="de"`) {
@@ -99,6 +104,7 @@ func TestThePagesSayTheWorkspacesLanguage(t *testing.T) {
 
 // An arriving block is never out of the accessibility tree.
 func TestArrivalAndRefreshKeepThingsReachable(t *testing.T) {
+	t.Parallel()
 	motion, _ := os.ReadFile("../../design/base/04-motion.css")
 	if m := regexp.MustCompile(`@keyframes sw-arrive-content[^\n]*`).Find(motion); m == nil || strings.Contains(string(m), "visibility") {
 		t.Errorf("arrival fades with opacity only: %s", m)

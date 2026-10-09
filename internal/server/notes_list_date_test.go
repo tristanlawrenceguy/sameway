@@ -19,6 +19,7 @@ import (
 // instead of machine format. It creates a note via the API, fetches /t/note,
 // extracts the row, and asserts on the date text inside it. (Acceptance 1.)
 func TestNoteListShowsNaturalDate(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	var rec struct{ ID string }
@@ -99,6 +100,7 @@ func TestNoteListShowsNaturalDate(t *testing.T) {
 // display machine-format timestamps such as "Sat 26 Sep" or "Mon 15 Sep". The
 // developer must use natural language like "Two days ago" instead. (Acceptance 1.)
 func TestNoteListNoMachineFormatDatePattern(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	var rec struct{ ID string }
@@ -135,6 +137,7 @@ func TestNoteListNoMachineFormatDatePattern(t *testing.T) {
 // instead of machine format. It creates an entry via the API, fetches /t/entry,
 // extracts the row, and asserts on the date text inside it. (Acceptance 1 of task 0260.)
 func TestEntryListShowsNaturalDate(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	// Create a habit first (entries require a habit ref).
@@ -213,6 +216,7 @@ func TestEntryListShowsNaturalDate(t *testing.T) {
 // types without datetime fields (notes, actions, projects, people, files) show
 // dates in natural language without "Updated" as a label prefix. (Acceptance 2–4.)
 func TestAllListPagesNoMachineFormatDate(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	tests := []struct {

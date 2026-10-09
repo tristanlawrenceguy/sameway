@@ -13,6 +13,7 @@ import (
 // /t/note/{id}/props updates the record and returns a 303 redirect back to
 // the detail page. This is acceptance item 1.
 func TestRecordPropsUpdateSucceeds(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{
@@ -51,6 +52,7 @@ func TestRecordPropsUpdateSucceeds(t *testing.T) {
 // TestRecordPropsPartialUpdate checks that POSTing only one field updates
 // just that field while preserving the others — acceptance item 2.
 func TestRecordPropsPartialUpdate(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{
@@ -92,6 +94,7 @@ func TestRecordPropsPartialUpdate(t *testing.T) {
 // refused, and the page the person is back on names the field and the
 // values it takes. This is acceptance item 3.
 func TestRecordPropsInvalidEnumReturns422(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{
@@ -120,6 +123,7 @@ func TestRecordPropsInvalidEnumReturns422(t *testing.T) {
 // TestRecordPropsInvalidRequiredFieldReturns422 checks that POSTing an empty
 // value for a required field returns HTTP 422.
 func TestRecordPropsInvalidRequiredFieldReturns422(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{
@@ -142,6 +146,7 @@ func TestRecordPropsInvalidRequiredFieldReturns422(t *testing.T) {
 // TestRecordPropsUnknownTypeReturns404 checks that POSTing to an unknown
 // content type returns 404.
 func TestRecordPropsUnknownTypeReturns404(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	r := postForm(t, h, "/t/unknowntype/someid/props", url.Values{})
 	wantStatus(t, r, http.StatusNotFound)
@@ -151,6 +156,7 @@ func TestRecordPropsUnknownTypeReturns404(t *testing.T) {
 // that is gone says so on a page the person can go on from, not on a bare
 // error page.
 func TestRecordPropsNonExistentRecordReturns404(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	r := postForm(t, h, "/t/note/does-not-exist/props", url.Values{})
 	page, at := landed(t, h, r)
@@ -162,6 +168,7 @@ func TestRecordPropsNonExistentRecordReturns404(t *testing.T) {
 // The log is kept by Sameway: an entry's page is not a way to edit it,
 // as the API and the command line are not. It is undone instead.
 func TestRecordPropsKeepsTheLog(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	rec, err := a.Store.Create("activity", map[string]any{"actor": "human", "action": "updated"})
 	if err != nil {
@@ -183,6 +190,7 @@ func TestRecordPropsKeepsTheLog(t *testing.T) {
 // prefixed values is refused in words, not passed over with an empty
 // redirect: an agent that sent title=... got a 303 and nothing done.
 func TestRecordPropsNoFieldsSaysSo(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{
@@ -210,6 +218,7 @@ func TestRecordPropsNoFieldsSaysSo(t *testing.T) {
 // TestRecordPropsUnknownFieldReturns422 checks that POSTing an unknown field
 // name returns 422 with the field flagged as unknown.
 func TestRecordPropsUnknownFieldReturns422(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{

@@ -10,6 +10,7 @@ import (
 // not its name, its exit status or a file's path, and never cut short of
 // what to do.
 func TestAProgramsErrorInAPersonsWords(t *testing.T) {
+	t.Parallel()
 	for in, want := range map[string]string{
 		"claude: exit status 1: Invalid API key · Please run /login": "Invalid API key · Please run /login",
 		"exec: exit status 2": "The assistant could not reach the model. Try again.",

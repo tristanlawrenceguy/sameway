@@ -10,6 +10,7 @@ import (
 // block edited once would keep glowing on every load until the next message,
 // which would turn a transient signal back into permanent chrome.
 func TestInLastTurn(t *testing.T) {
+	t.Parallel()
 	now := time.Now()
 	// A slow local model can take minutes to build a page, so the whole
 	// exchange counts, not just the instant the reply landed.

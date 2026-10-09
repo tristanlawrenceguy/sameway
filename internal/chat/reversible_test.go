@@ -32,6 +32,7 @@ func undo(t *testing.T, svc *chat.Service, id string) {
 // A setting changed goes back to what it was, even to nothing, and the
 // undo can itself be undone.
 func TestASettingChangeCanBeUndone(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	cfg := withSettings(svc, map[string]string{"ui.pace": "calm"})
 	use(t, svc, "set_setting", map[string]any{"key": "ui.pace", "value": "quick"})
@@ -49,6 +50,7 @@ func TestASettingChangeCanBeUndone(t *testing.T) {
 // Records made from a file go together, in one undo, and come back
 // together when that is undone.
 func TestAnImportIsUndoneInOneGo(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	var ids []string
 	for _, name := range []string{"Sandra", "Lee", "Priya"} {
@@ -69,6 +71,7 @@ func TestAnImportIsUndoneInOneGo(t *testing.T) {
 // A turn that fails after changing things keeps its receipt: the change
 // happened, and it can be undone from the reply.
 func TestAFailedTurnKeepsWhatItDid(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	raw, _ := json.Marshal(map[string]any{"component": "heading", "props": map[string]any{"text": "Garden"}})
 	svc.Provider = &failingAfter{first: raw}
@@ -100,6 +103,7 @@ func (f *failingAfter) Complete(_ context.Context, _ llm.Request) (*llm.Response
 // What the person says they need, and the workspace's language, are in
 // every prompt; and the prompt asks for everyday words.
 func TestTheAssistantHearsNeedsAndLanguage(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	svc.Needs, svc.Language = "I use a screen reader; keep things simple", "de"
 	m := &scripted{}

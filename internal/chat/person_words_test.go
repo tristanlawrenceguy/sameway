@@ -9,6 +9,7 @@ import (
 // A change is said in a person's words: a canvas is a tab, and a piece of
 // text that began with a list's dash is named by its words.
 func TestAChangeIsSaidInAPersonsWords(t *testing.T) {
+	t.Parallel()
 	w := records.Say(nil, map[string]any{"action": "added", "target": "canvas", "detail": "Weekend"})
 	if w.Target != "tab" {
 		t.Errorf("a canvas is a tab: %+v", w)

@@ -12,6 +12,7 @@ import (
 // detail="page" and asserts its visible label text is ≤3 words. This pins
 // Acceptance 1 (≤3 words) through the render surface, not just the server page.
 func TestRecordComponentPageLabelIsShort(t *testing.T) {
+	t.Parallel()
 	reg := render.New()
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		t.Fatal(err)

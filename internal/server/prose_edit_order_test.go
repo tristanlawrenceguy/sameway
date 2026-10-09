@@ -12,6 +12,7 @@ import (
 // with the toolbar at its left and the switch to Markdown at its right,
 // in that order, and the hidden inputs last.
 func TestProseEditDOMOrderReachesBodyFirst(t *testing.T) {
+	t.Parallel()
 	data, err := os.ReadFile("../../design/base/14-prose-edit.js")
 	if err != nil {
 		t.Fatalf("read 14-prose-edit.js: %v", err)

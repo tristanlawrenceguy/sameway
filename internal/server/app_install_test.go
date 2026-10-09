@@ -11,6 +11,7 @@ import (
 // icons, the manifest and icons are served, and Help offers Install where
 // the browser can (38-install.js) and says the other ways.
 func TestSamewayInstallsAsAnApp(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	page := get(t, h, "/").Body.String()
 	for _, want := range []string{`<link rel="manifest" href="/manifest.webmanifest">`, `<link rel="apple-touch-icon" href="/icon-square-180.png">`} {

@@ -17,6 +17,7 @@ import (
 // a task detail page reads in natural language (e.g., "Tomorrow at 10am")
 // rather than machine format like "Mon 5 Oct 2026, 10:00" (acceptance item 1).
 func TestTaskDetailLedeDueDateNaturalLanguage(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	now := time.Now()

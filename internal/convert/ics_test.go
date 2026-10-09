@@ -22,6 +22,7 @@ const calendar = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Google Inc//Google
 // escapes and folded lines undone; cancelled ones and single changes to a
 // repeating one are left out.
 func TestACalendarIsReadIntoItsEvents(t *testing.T) {
+	t.Parallel()
 	events := ParseICS([]byte(calendar), time.UTC)
 	if len(events) != 4 {
 		t.Fatalf("four events, got %d: %+v", len(events), events)
@@ -55,6 +56,7 @@ func TestACalendarIsReadIntoItsEvents(t *testing.T) {
 // one block even when they hold a fence; a .env is kept, not read; and
 // subtitles are read as a transcript.
 func TestCodeAndSubtitlesAreRead(t *testing.T) {
+	t.Parallel()
 	res, err := Read("tidy.py", []byte("def tidy():\n    \"\"\"```not a fence```\"\"\"\n    return 1\n"))
 	if err != nil || res.Kind != "code" || !strings.HasPrefix(res.Markdown, "````python\ndef tidy():") || !strings.HasSuffix(res.Markdown, "\n````") {
 		t.Errorf("a Python file as one python block: %q %v", res.Markdown, err)

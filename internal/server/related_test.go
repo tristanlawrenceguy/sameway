@@ -16,6 +16,7 @@ import (
 // keeps one on, and the API hands the whole graph to the assistant, which
 // is the thing that knows to offer.
 func TestAPageAtRestSaysNothingAboutWhatElseExists(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	var garden, pond, garlic, liner struct{ ID string }
 	decode(t, postJSON(t, h, http.MethodPost, "/api/project", map[string]any{"title": "Garden"}), &garden)
@@ -69,6 +70,7 @@ func TestAPageAtRestSaysNothingAboutWhatElseExists(t *testing.T) {
 // the assistant is the way in, so it is given the whole graph, with the
 // query that follows each connection and the count on the other end.
 func TestTheAPICarriesEveryConnectionWhole(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	garden, _ := a.Store.Create("project", map[string]any{"title": "Garden"})
 	pond, _ := a.Store.Create("task", map[string]any{"title": "Dig the pond", "project": garden.ID})
@@ -107,6 +109,7 @@ func TestTheAPICarriesEveryConnectionWhole(t *testing.T) {
 // What the assistant turns on stays on, and carries no control for
 // turning it off: it goes the way it came, by asking.
 func TestTheAssistantTurnsAPartOnForGood(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	var garden, pond struct{ ID string }
 	decode(t, postJSON(t, h, http.MethodPost, "/api/project", map[string]any{"title": "Garden"}), &garden)
@@ -145,6 +148,7 @@ func TestTheAssistantTurnsAPartOnForGood(t *testing.T) {
 
 // A record with nothing joined to it and nothing asked for is just itself.
 func TestARecordWithNoConnectionsSaysNothing(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	var note struct{ ID string }
 	decode(t, postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "On its own", "body": "Some words."}), &note)
