@@ -1,5 +1,7 @@
 package server
 
+import "github.com/tristanlawrenceguy/sameway/internal/web"
+
 // apiRoutes are the JSON API, for agents: what pages do, as JSON. A page
 // action of the API's is no person's and no tool's of its own; it is the
 // tool, or the record, it names.
@@ -23,7 +25,7 @@ var apiRoutes = []route{
 	{pattern: "GET /api/changes", handle: (*Server).apiChanges, access: people},
 	{pattern: "POST /api/arrange", handle: (*Server).apiArrange, access: people, reach: inward},
 	// And the tools the one asking may have: api_tools.go.
-	{pattern: "POST /api/tools/{name}", handle: (*Server).apiTool, access: people, reach: byTool},
+	{pattern: "POST /api/tools/{name}", handle: (*Server).apiTool, access: people, reach: web.ByTool},
 	{pattern: "GET /api/{type}", handle: (*Server).apiList, access: people},
 	{pattern: "POST /api/{type}", handle: (*Server).apiCreate, access: people, reach: inward},
 	{pattern: "GET /api/{type}/{id}", handle: (*Server).apiGet, access: people},

@@ -8,6 +8,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // returnTo is where a person goes after an edit: the page they edited from,
@@ -135,7 +136,7 @@ func (s *Server) refused(w http.ResponseWriter, r *http.Request, t *schema.Type,
 	}
 	text := strings.Join(said, " ")
 	if text == "" {
-		text = plainError(err)
+		text = web.PlainError(err)
 	}
 	s.tellAt(w, r, outcome{Failed: true, Title: "Not saved", Text: text, Problems: problems}, returnTo(r, detail))
 }

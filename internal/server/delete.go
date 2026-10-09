@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // Deleting a record. One step, because it can be taken back: what it was
@@ -33,7 +34,7 @@ func (s *Server) deleteForm(w http.ResponseWriter, r *http.Request) {
 	}
 	// Back where the person was, unless that was the record's own page,
 	// which is gone: then its list.
-	back := backOf(r, list)
+	back := web.BackOf(r, list)
 	if own := list + "/" + rec.ID; back == own || strings.HasPrefix(back, own+"/") || strings.HasPrefix(back, own+"?") {
 		back = list
 	}

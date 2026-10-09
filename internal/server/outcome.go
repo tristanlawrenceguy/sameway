@@ -3,15 +3,13 @@ package server
 import (
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"html/template"
 	"io"
 	"net/http"
-	"net/url"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // Every action a person takes from a page ends the same way: they are back
@@ -22,40 +20,14 @@ import (
 // action had its own way, or none: a flag left in the address, a message
 // in the chat on a page with no chat, a line in the activity log, a bare
 // error page. The crew's person-facing findings were mostly those.
-
-// An outcome is what happened, said once on the next page.
-type outcome struct {
-	// Failed is a failure, announced as an alert; otherwise it is a
-	// status, announced politely.
-	Failed bool   `json:"f,omitempty"`
-	Title  string `json:"t"`
-	Text   string `json:"x,omitempty"`
-	// For is the form the outcome answers, by its action, so the page
-	// knows which draft is now saved and can let it go.
-	For string `json:"o,omitempty"`
-	// Undo is the activity entry that takes it back, when it can be: the
-	// message carries the Undo, where the person is looking.
-	Undo string `json:"u,omitempty"`
-	// Of is what the Undo takes back, when the text says more than that:
-	// "Undo Tea", not "Undo Tea rings at 19:00".
-	Of string `json:"w,omitempty"`
-	// Problems are what stopped a form, each about one field: the message
-	// is then an error summary, each problem leading to its field.
-	Problems []problem `json:"p,omitempty"`
-}
-
-// A problem is one answer a form could not take.
-type problem struct {
-	Field string `json:"f"`
-	Text  string `json:"t"`
-}
+// What is said is a web.Outcome.
 
 const outcomeCookie = "sw-outcome"
 
 // tell returns the person to the page they were on, or fallback, with
 // the outcome to show there.
 func (s *Server) tell(w http.ResponseWriter, r *http.Request, o outcome, fallback string) {
-	s.tellAt(w, r, o, backOf(r, fallback))
+	s.tellAt(w, r, o, web.BackOf(r, fallback))
 }
 
 // tellAt sends the person to one page with the outcome: where they were
@@ -72,7 +44,7 @@ func (s *Server) tellAt(w http.ResponseWriter, r *http.Request, o outcome, to st
 		io.WriteString(w, string(s.renderOutcome(o, to)))
 		return
 	}
-	to = withBack(to, placeOf(r))
+	to = web.WithBack(to, web.PlaceOf(r))
 	if pageAction(r) {
 		tellJSON(w, o, to)
 		return
@@ -87,27 +59,9 @@ func (s *Server) tellAt(w http.ResponseWriter, r *http.Request, o outcome, to st
 func (s *Server) failed(w http.ResponseWriter, r *http.Request, title string, err error, fallback string) {
 	text := ""
 	if err != nil {
-		text = plainError(err)
+		text = web.PlainError(err)
 	}
 	s.tell(w, r, outcome{Failed: true, Title: title, Text: text}, fallback)
-}
-
-// plainError is an error as a person reads it.
-func plainError(err error) string {
-	if errors.Is(err, store.ErrNotFound) {
-		return "It is not there any more; it may have been deleted."
-	}
-	text := err.Error()
-	for _, prefix := range []string{"invalid: ", "validation failed: ", "bad request: "} {
-		text = strings.TrimPrefix(text, prefix)
-	}
-	if text != "" {
-		text = strings.ToUpper(text[:1]) + text[1:]
-		if !strings.HasSuffix(text, ".") {
-			text += "."
-		}
-	}
-	return text
 }
 
 // told is the outcome waiting for this page, rendered, and gone once
@@ -163,25 +117,4 @@ func (s *Server) renderOutcome(o outcome, from string) template.HTML {
 			Button: &ui.Button{Label: "Undo", Context: strings.TrimSuffix(what, "."), Variant: ui.Secondary}}))
 	}
 	return template.HTML(`<div class="sw-outcome" id="outcome" tabindex="-1" data-outcome="` + state + `" data-outcome-for="` + template.HTMLEscapeString(o.For) + `">` + alert + `</div>`)
-}
-
-// backOf is the page a person acted from: the from the form carries, or
-// the page the request came from, on this server; fallback otherwise.
-// Only a path here is ever a way back.
-func backOf(r *http.Request, fallback string) string {
-	if from := r.FormValue("from"); local(from) {
-		return from
-	}
-	if ref, err := url.Parse(r.Referer()); err == nil && ref.Host == r.Host && local(ref.Path) {
-		q := ref.Query()
-		q.Del("saved")
-		ref.RawQuery = q.Encode()
-		return ref.RequestURI()
-	}
-	return fallback
-}
-
-// local says a path is a page on this server, not somewhere else.
-func local(path string) bool {
-	return strings.HasPrefix(path, "/") && !strings.HasPrefix(path, "//") && !strings.HasPrefix(path, "/\\")
 }

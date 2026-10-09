@@ -2,6 +2,8 @@ package server
 
 import (
 	"net/http"
+
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // A change sent with Sameway-Dry-Run: 1 is made on a throwaway copy of the
@@ -16,24 +18,6 @@ import (
 
 // DryRun is the header that asks for it, and is answered with what was done.
 const DryRun = "Sameway-Dry-Run"
-
-// reach says where what a route changes is, so whether a copy can try it.
-type reach int
-
-const (
-	// unreached is a route nobody said anything about: not tried.
-	unreached reach = iota
-	// inward changes only this workspace's own records, files and settings.
-	inward
-	// outward reaches beyond them: the network, a notification, a
-	// command, another workspace, this computer, the assistant's model,
-	// another computer, or work that goes on after the answer (writing a
-	// recording down), on a copy that is gone by then.
-	outward
-	// byTool is /api/tools/{name}: the tool it names says, by its
-	// Traits.OpenWorld (chat/op.go).
-	byTool
-)
 
 // tried answers a dry run, and says whether the request was one.
 func (s *Server) tried(w http.ResponseWriter, r *http.Request) bool {
@@ -69,7 +53,7 @@ func (s *Server) mayTry(r *http.Request) bool {
 	switch rt.reach {
 	case inward:
 		return true
-	case byTool:
+	case web.ByTool:
 		return !toolOutward(r.URL.Path)
 	}
 	return false

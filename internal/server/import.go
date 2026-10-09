@@ -15,6 +15,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // Records from a file. Every list page offers to import from a file: a
@@ -71,7 +72,7 @@ func (s *Server) importUpload(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, http.ErrMissingFile) || strings.Contains(err.Error(), "select a file") {
 			err = errors.New("choose a file first")
 		}
-		s.tellAt(w, r, outcome{Failed: true, Title: "Nothing was read", Text: plainError(err)}, "/t/"+t.Name+"/import")
+		s.tellAt(w, r, outcome{Failed: true, Title: "Nothing was read", Text: web.PlainError(err)}, "/t/"+t.Name+"/import")
 		return
 	}
 	http.Redirect(w, r, "/t/"+t.Name+"/import?file="+rec.ID, http.StatusSeeOther)

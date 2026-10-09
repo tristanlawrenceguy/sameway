@@ -14,6 +14,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // The assistant is how most of Sameway is done, and it needs an AI model
@@ -210,7 +211,7 @@ func (s *Server) modelCheck(w http.ResponseWriter, r *http.Request) {
 		s.tell(w, r, outcome{Title: "The assistant can reach its model", Text: "Say hello."}, "/")
 		return
 	}
-	http.Redirect(w, r, backOf(r, "/"), http.StatusSeeOther)
+	http.Redirect(w, r, web.BackOf(r, "/"), http.StatusSeeOther)
 }
 
 // ollamaDownload is Ollama's installer for this computer, so the person

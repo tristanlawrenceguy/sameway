@@ -1,4 +1,4 @@
-package server
+package web
 
 import (
 	"encoding/json"
@@ -9,9 +9,9 @@ import (
 	"strings"
 )
 
-// jsonTrouble says what is wrong with a JSON body in the caller's terms,
+// JSONTrouble says what is wrong with a JSON body in the caller's terms,
 // never the decoder's: no Go type names, no "invalid character" puzzles.
-func jsonTrouble(err error) string {
+func JSONTrouble(err error) string {
 	var syntax *json.SyntaxError
 	var kind *json.UnmarshalTypeError
 	switch {

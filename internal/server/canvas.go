@@ -13,6 +13,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // canvasPage is the home page: the canvas, full width. Everything on it is a
@@ -139,7 +140,7 @@ func (s *Server) blockItem(blk *store.Record, convo *conversation) string {
 	if word := toneWords[v.Tone]; word != "" {
 		fmt.Fprintf(&b, `<p class="sw-visually-hidden">%s</p>`, word)
 	}
-	b.WriteString(withBlock(string(body), "block-"+v.ID))
+	b.WriteString(web.WithBlock(string(body), "block-"+v.ID))
 	fmt.Fprintf(&b, `<div class="sw-bar sw-quiet">%s%s</div></li>`, v.Expand, v.Remove)
 	return b.String()
 }
@@ -276,7 +277,7 @@ func (s *Server) canvasDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Its own page is gone with it.
-	back := backOf(r, "/")
+	back := web.BackOf(r, "/")
 	if strings.HasPrefix(back, "/canvas/"+id) {
 		back = "/"
 	}
