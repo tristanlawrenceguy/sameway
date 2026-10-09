@@ -157,13 +157,12 @@ func TestACommandStaysInsideTheBoundary(t *testing.T) {
 	}
 
 	// The folder must be the workspace or under it.
-	chat.Workdir = t.TempDir()
-	defer func() { chat.Workdir = "" }()
-	svc.Store.Update(records.ActionType, action.ID, map[string]any{"folder": filepath.Dir(chat.Workdir)})
+	svc.Workdir = t.TempDir()
+	svc.Store.Update(records.ActionType, action.ID, map[string]any{"folder": filepath.Dir(svc.Workdir)})
 	if text, isErr := press(svc, action.ID); !isErr || !strings.Contains(text, "outside the workspace") {
 		t.Errorf("a folder outside the workspace is refused, got err=%v %q", isErr, text)
 	}
-	os.MkdirAll(filepath.Join(chat.Workdir, "sub"), 0o755)
+	os.MkdirAll(filepath.Join(svc.Workdir, "sub"), 0o755)
 	svc.Store.Update(records.ActionType, action.ID, map[string]any{"folder": "sub"})
 	if text, isErr := press(svc, action.ID); isErr || !strings.Contains(text, "exit code 0") {
 		t.Errorf("a folder under the workspace is fine, got err=%v %q", isErr, text)

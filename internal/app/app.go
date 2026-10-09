@@ -5,13 +5,13 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/blocks"
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/content"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/notify"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
@@ -37,6 +37,7 @@ type App struct {
 	Blocks *blocks.Workspace
 
 	schemaSeen schemaWatch // what schema/ held when last read; see reload.go
+	opts       Options     // what it was opened with; options.go
 }
 
 // Open opens the workspace at dir, as o says (options.go).
@@ -44,6 +45,12 @@ func Open(dir string, o Options) (*App, error) {
 	ws, err := workspace.Load(dir)
 	if err != nil {
 		return nil, err
+	}
+	if o.Ntfy == "" {
+		o.Ntfy = notify.NtfyServer
+	}
+	if o.Machine != (workspace.Machine{}) {
+		ws.Machine = o.Machine
 	}
 	types, err := loadTypes(ws.SchemaDir())
 	if err != nil {
@@ -66,7 +73,7 @@ func Open(dir string, o Options) (*App, error) {
 	reg.Hours24 = ws.Hours24
 	a := &App{Workspace: ws, Types: types, Store: st, Registry: reg,
 		Records: &records.Book{Store: st, Setting: ws.Get, Clock: o.Clock, Hours24: ws.Hours24},
-		Blocks:  &blocks.Workspace{Store: st, Settings: ws, Clock: o.Clock}}
+		Blocks:  &blocks.Workspace{Store: st, Settings: ws, Clock: o.Clock}, opts: o}
 	// The conversation, its questions and the log are history, not content;
 	// everything else is written to content/ as it changes.
 	a.Mirror = content.Mirror{Dir: ws.ContentDir(), Types: types, Skip: ownersTypes(types)}
@@ -83,10 +90,7 @@ func Open(dir string, o Options) (*App, error) {
 		Language:     ws.Config.UI.Language,
 		Measured:     chat.MeasuresIn(st),
 	}
-	llmCfg := ws.Config.LLM
-	llmCfg.Workspace = ws.Dir
-	llmCfg.Executable, _ = os.Executable()
-	a.Chat.Provider, a.Chat.ProviderErr = llm.New(llmCfg)
+	a.Chat.Provider, a.Chat.ProviderErr = llm.New(a.LLMConfig())
 	a.Chat.Allow = allowList(ws.Config.Actions.Allow)
 	a.Records.SetSetting = func(key, value string) error {
 		if err := ws.Set(key, value); err != nil {
@@ -98,10 +102,7 @@ func Open(dir string, o Options) (*App, error) {
 		}
 		// A new model setting is a new model: the next message goes to it.
 		if strings.HasPrefix(key, "llm.") {
-			cfg := ws.Config.LLM
-			cfg.Workspace = ws.Dir
-			cfg.Executable, _ = os.Executable()
-			a.Chat.Provider, a.Chat.ProviderErr = llm.New(cfg)
+			a.Chat.Provider, a.Chat.ProviderErr = llm.New(a.LLMConfig())
 		}
 		return nil
 	}
@@ -109,7 +110,7 @@ func Open(dir string, o Options) (*App, error) {
 	// Keeping the program current is the program's own business, not the
 	// workspace's: the updater needs nothing from here.
 	a.Chat.Update = update.Updater{}.Run
-	chat.Workdir = ws.Dir
+	a.Chat.Workdir, a.Chat.HTTP = ws.Dir, o.HTTP
 	return a, nil
 }
 

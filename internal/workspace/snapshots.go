@@ -34,7 +34,7 @@ type Snapshot struct {
 func (w *Workspace) SnapshotDir() string {
 	abs, _ := filepath.Abs(w.Dir)
 	sum := sha256.Sum256([]byte(strings.ToLower(abs)))
-	return filepath.Join(filepath.Dir(KnownPath()), "snapshots", filepath.Base(abs)+"-"+hex.EncodeToString(sum[:4]))
+	return filepath.Join(filepath.Dir(w.Machine.Known), "snapshots", filepath.Base(abs)+"-"+hex.EncodeToString(sum[:4]))
 }
 
 // Snapshots lists the copies, newest first.

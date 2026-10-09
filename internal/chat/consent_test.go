@@ -109,9 +109,9 @@ func TestSendingSomewhereIsAskedAndThePersonsOwnPressIsNot(t *testing.T) {
 		io.WriteString(w, "ok")
 	}))
 	defer remote.Close()
-	chat.HTTPClient = remote.Client()
 
 	svc := newFullService(t)
+	svc.HTTP = remote.Client()
 	withSettings(svc, nil)
 	hook, err := svc.Store.Create(records.ActionType, map[string]any{"title": "Share notes", "kind": "webhook", "url": remote.URL + "/in", "body": "all my notes"})
 	if err != nil {

@@ -10,8 +10,8 @@ import (
 // A workspace is copied once a day, the last seven are kept, and a copy
 // put back keeps the data from before, so the restore can be undone too.
 func TestSnapshotsAreDailyKeptForAWeekAndRestoreKeepsWhatWasThere(t *testing.T) {
-	t.Setenv("SAMEWAY_KNOWN", filepath.Join(t.TempDir(), "known.json"))
-	w := &Workspace{Dir: t.TempDir()}
+	t.Parallel()
+	w := &Workspace{Dir: t.TempDir(), Machine: Machine{Known: filepath.Join(t.TempDir(), "known.json")}}
 	os.WriteFile(w.DBPath(), []byte("today"), 0o644)
 	copyDB := func(path string) error { return copyFile(w.DBPath(), path) }
 

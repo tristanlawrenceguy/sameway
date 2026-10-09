@@ -7,8 +7,6 @@ import (
 	"net/url"
 	"strings"
 	"testing"
-
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 )
 
 // Pressing a command button before it is accepted takes the person to the
@@ -68,7 +66,7 @@ func TestACommandButtonAsksOnceThenRuns(t *testing.T) {
 	calls := 0
 	remote := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { calls++; io.WriteString(w, "on") }))
 	defer remote.Close()
-	chat.HTTPClient = remote.Client()
+	a.Chat.HTTP = remote.Client()
 	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/action", map[string]any{"title": "Alarm", "url": remote.URL, "trigger": "alarm-word"}), http.StatusCreated)
 	wantStatus(t, postJSON(t, h, http.MethodPost, "/hook/alarm-word", nil), http.StatusOK)
 	if calls != 1 {

@@ -135,7 +135,6 @@ func TestAnOlderWorkspaceBoardsItsTasksByStatus(t *testing.T) {
 	dir := t.TempDir()
 	known := filepath.Join(t.TempDir(), "known.json")
 	os.WriteFile(known, []byte("[]"), 0o644)
-	t.Setenv("SAMEWAY_KNOWN", known)
 	if err := workspace.Init(dir, examples.FS, examples.StarterRoot, false); err != nil {
 		t.Fatal(err)
 	}
@@ -159,7 +158,7 @@ func TestAnOlderWorkspaceBoardsItsTasksByStatus(t *testing.T) {
 	open, _ := st.Create("task", map[string]any{"title": "Order compost"})
 	st.Close()
 
-	a, err := app.Load(dir, false)
+	a, err := app.Open(dir, app.Options{Machine: workspace.Machine{Known: known}})
 	if err != nil {
 		t.Fatal(err)
 	}

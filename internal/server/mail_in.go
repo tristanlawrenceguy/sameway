@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
-	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/mailin"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
@@ -40,7 +39,7 @@ func (s *Server) mailAccount() (mailin.Account, bool) {
 	if json.Unmarshal([]byte(s.app.Store.Meta("mail:account")), &a) != nil || a.User == "" {
 		return a, false
 	}
-	a.Password = llm.Key(mailKey(a.User))
+	a.Password = s.keys().Get(mailKey(a.User))
 	a.Insecure = mailInsecure
 	return a, a.Password != ""
 }
@@ -83,7 +82,7 @@ func (s *Server) mailConnect(w http.ResponseWriter, r *http.Request) {
 		s.failed(w, r, "Not connected", err, "/mail")
 		return
 	}
-	if err := llm.SaveKey(mailKey(user), pass); err != nil {
+	if err := s.keys().Save(mailKey(user), pass); err != nil {
 		s.failed(w, r, "Not connected", errors.New("the password could not be kept: "+err.Error()), "/mail")
 		return
 	}
@@ -103,7 +102,7 @@ func (s *Server) mailConnect(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) mailOff(w http.ResponseWriter, r *http.Request) {
 	if a, ok := s.mailAccount(); ok {
-		llm.SaveKey(mailKey(a.User), "")
+		s.keys().Save(mailKey(a.User), "")
 	}
 	s.app.Store.SetMeta("mail:account", "")
 	s.tell(w, r, outcome{Title: "Email no longer read", Text: "The notes that came in stay."}, "/mail")

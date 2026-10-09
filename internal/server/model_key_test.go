@@ -19,7 +19,6 @@ import (
 // paste instead.
 func TestAPersonPastesAKey(t *testing.T) {
 	keys := filepath.Join(t.TempDir(), "keys.json")
-	t.Setenv("SAMEWAY_KEYS", keys)
 	was := llm.DefaultCandidates
 	llm.DefaultCandidates = nil
 	defer func() { llm.DefaultCandidates = was }()
@@ -31,6 +30,7 @@ func TestAPersonPastesAKey(t *testing.T) {
 	llm.OpenRouterKeyURL = openrouter.URL
 	defer func() { llm.OpenRouterKeyURL = wasURL }()
 	a, h := newApp(t)
+	a.Workspace.Machine.Keys = keys
 
 	page := get(t, h, "/chat").Body.String()
 	if !strings.Contains(page, `name="key"`) || !strings.Contains(page, `type="password"`) || !strings.Contains(page, "Your Anthropic key") || !strings.Contains(page, "Your OpenRouter key") {
@@ -50,7 +50,7 @@ func TestAPersonPastesAKey(t *testing.T) {
 	if strings.Contains(string(yaml), "sk-or-v1-abc123") || !strings.Contains(string(yaml), "openrouter.ai") {
 		t.Errorf("the workspace names the service, never the key:\n%s", yaml)
 	}
-	if kept, _ := os.ReadFile(keys); !strings.Contains(string(kept), "sk-or-v1-abc123") || llm.Key("OPENROUTER_API_KEY") != "sk-or-v1-abc123" {
+	if kept, _ := os.ReadFile(keys); !strings.Contains(string(kept), "sk-or-v1-abc123") || llm.Keys(keys).Get("OPENROUTER_API_KEY") != "sk-or-v1-abc123" {
 		t.Error("the key is kept in the person's own settings and read from there")
 	}
 }

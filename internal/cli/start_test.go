@@ -37,7 +37,7 @@ func TestADoubleClickOpensYourWorkspace(t *testing.T) {
 	running := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	defer running.Close()
 	addr := strings.TrimPrefix(running.URL, "http://")
-	workspace.Remember(dir, addr)
+	workspace.ThisMachine().Remember(dir, addr)
 	opened := ""
 	openInBrowser = func(url string) error { opened = url; return nil }
 	c = &ctx{Env: Env{Stdout: &out, Stderr: &out, Dir: t.TempDir()}}
@@ -69,7 +69,7 @@ func TestOpeningAgainShowsTheRunningOne(t *testing.T) {
 	os.WriteFile(filepath.Join(dir, workspace.ConfigFile), []byte("name: Home\n"), 0o644)
 	slow := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { time.Sleep(1500 * time.Millisecond) }))
 	defer slow.Close()
-	workspace.Remember(dir, strings.TrimPrefix(slow.URL, "http://"))
+	workspace.ThisMachine().Remember(dir, strings.TrimPrefix(slow.URL, "http://"))
 	opened := ""
 	openInBrowser = func(url string) error { opened = url; return nil }
 	var out bytes.Buffer

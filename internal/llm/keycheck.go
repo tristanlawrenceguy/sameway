@@ -98,8 +98,8 @@ type keyAsked struct {
 // keyStillGood is Answers for a saved key: refused or out of credit is not
 // answering, said by company; a key that could not be asked about is taken
 // to be good. A key the provider cannot be asked about is never asked.
-func keyStillGood(ctx context.Context, env, company string) (bool, string) {
-	key := Key(env)
+func keyStillGood(ctx context.Context, keys Keys, env, company string) (bool, string) {
+	key := keys.Get(env)
 	if env != "ANTHROPIC_API_KEY" && env != "OPENROUTER_API_KEY" || key == "" {
 		return true, ""
 	}

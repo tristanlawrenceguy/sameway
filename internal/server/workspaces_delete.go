@@ -43,12 +43,12 @@ func (s *Server) workspacesDelete(w http.ResponseWriter, r *http.Request) {
 	}
 	s.app.Close()
 	// Into the trash, not gone: the Workspaces page can put it back.
-	trashed, err := workspace.Trash(cur.Dir, cur.Config.Name)
+	trashed, err := s.machine().Trash(cur.Dir, cur.Config.Name)
 	if err != nil {
 		s.showWorkspaces(w, r, err.Error())
 		return
 	}
-	workspace.Forget(cur.Dir)
+	s.machine().Forget(cur.Dir)
 
 	ws, _ := workspace.Load(next)
 	nextName := ""

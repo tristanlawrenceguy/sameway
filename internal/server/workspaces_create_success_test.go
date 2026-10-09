@@ -4,12 +4,10 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/tristanlawrenceguy/sameway/internal/server"
-	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
 // TestWorkspacesNewStartFailsShowsSuccessAlert checks that when a new workspace
@@ -17,14 +15,11 @@ import (
 // a success alert and separately notes the start failure — it does not show
 // "That did not go through". Covers acceptance item 1.
 func TestWorkspacesNewStartFailsShowsSuccessAlert(t *testing.T) {
-	known := filepath.Join(t.TempDir(), "workspaces.json")
-	t.Setenv("SAMEWAY_KNOWN", known)
-
 	a, h := newApp(t)
 	h = server.New(a).WithFleet(&server.Fleet{Launch: func(dir, addr string) error {
 		return fmt.Errorf("simulated start failure") // fleet refuses to launch
 	}})
-	workspace.Remember(a.Workspace.Dir, "")
+	a.Workspace.Machine.Remember(a.Workspace.Dir, "")
 	a.Workspace.Set("name", "Base")
 
 	res := postForm(t, h, "/workspaces/new", url.Values{"name": {"New workspace"}})
@@ -53,14 +48,11 @@ func TestWorkspacesNewStartFailsShowsSuccessAlert(t *testing.T) {
 // a success alert and separately notes the start failure — it does not show
 // "That did not go through". Covers acceptance item 2.
 func TestWorkspacesCopyStartFailsShowsSuccessAlert(t *testing.T) {
-	known := filepath.Join(t.TempDir(), "workspaces.json")
-	t.Setenv("SAMEWAY_KNOWN", known)
-
 	a, h := newApp(t)
 	h = server.New(a).WithFleet(&server.Fleet{Launch: func(dir, addr string) error {
 		return fmt.Errorf("simulated start failure") // fleet refuses to launch
 	}})
-	workspace.Remember(a.Workspace.Dir, "")
+	a.Workspace.Machine.Remember(a.Workspace.Dir, "")
 	a.Workspace.Set("name", "Base")
 
 	res := postForm(t, h, "/workspaces/copy", url.Values{"name": {"Base copy"}})

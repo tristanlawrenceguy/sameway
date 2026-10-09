@@ -52,8 +52,8 @@ func TestActionsRunOnTheirOwnAtTheirTime(t *testing.T) {
 		io.WriteString(w, "sunny")
 	}))
 	defer remote.Close()
-	chat.HTTPClient = remote.Client()
 	svc := newFullService(t)
+	svc.HTTP = remote.Client()
 	weather, _ := svc.Store.Create(records.ActionType, map[string]any{"title": "Weather", "url": remote.URL, "every": "hour", "show": true})
 	svc.Store.Create(records.ActionType, map[string]any{"title": "Alarm", "url": remote.URL, "every": "never"})
 

@@ -108,10 +108,10 @@ func Answers(ctx context.Context, cfg Config) (bool, string) {
 		// A cloud service lists its models only to a key; a local one to
 		// anyone. Only a local one can be asked without the key.
 		if !local(base) {
-			if cfg.APIKeyEnv != "" && Key(cfg.APIKeyEnv) == "" {
+			if cfg.APIKeyEnv != "" && cfg.Keys.Get(cfg.APIKeyEnv) == "" {
 				return false, "The key for the AI service at " + base + " is not saved on this computer (" + cfg.APIKeyEnv + ")."
 			}
-			return keyStillGood(ctx, cfg.APIKeyEnv, "OpenRouter")
+			return keyStillGood(ctx, cfg.Keys, cfg.APIKeyEnv, "OpenRouter")
 		}
 		if models := listModels(ctx, base); len(models) > 0 {
 			// The model chosen, deleted since or never fetched, is said: its
@@ -123,10 +123,10 @@ func Answers(ctx context.Context, cfg Config) (bool, string) {
 		}
 		return false, "The AI model at " + base + " isn't answering. It may not be running."
 	case "anthropic":
-		if cfg.APIKeyEnv == "" || Key(cfg.APIKeyEnv) == "" {
+		if cfg.APIKeyEnv == "" || cfg.Keys.Get(cfg.APIKeyEnv) == "" {
 			return false, "The key for Claude is not saved on this computer."
 		}
-		return keyStillGood(ctx, cfg.APIKeyEnv, "Anthropic")
+		return keyStillGood(ctx, cfg.Keys, cfg.APIKeyEnv, "Anthropic")
 	case "claude-code":
 		if _, err := exec.LookPath("claude"); err != nil {
 			return false, "Claude Code is not installed on this computer."
