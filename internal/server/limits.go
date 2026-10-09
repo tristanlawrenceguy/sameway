@@ -6,6 +6,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/server/connect"
 	"github.com/tristanlawrenceguy/sameway/internal/speech"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
@@ -57,7 +58,7 @@ func (s *Server) limitsSection(owner bool) string {
 	if owner {
 		line(s.phoneLine())                // phone.go
 		line(s.mailLine())                 // mail_in.go
-		line(appsLine())                   // apps_page.go
+		line(connect.AppsLine())           // apps_page.go
 		if l := s.meaningLine(); l != "" { // search_meaning.go
 			line(l)
 		}

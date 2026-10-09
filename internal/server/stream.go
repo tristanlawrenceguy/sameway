@@ -69,7 +69,7 @@ func (s *Server) chatStream(w http.ResponseWriter, r *http.Request) {
 		defer s.turns.end(t)
 		rec, err := c.SendLive(ctx, canvas, text, fileID, t.add)
 		if err != nil {
-			s.forgetModel() // a key refused or a model gone shows the connect card now
+			s.connect.ForgetModel() // a key refused or a model gone shows the connect card now
 		}
 		if rec == nil && err != nil {
 			log.Printf("chat: %v", err)

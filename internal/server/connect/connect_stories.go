@@ -1,4 +1,4 @@
-package server
+package connect
 
 import (
 	"html/template"
@@ -50,7 +50,7 @@ func modelStories() []modelStory {
 
 // modelStoriesHTML is the question and its stories, each a disclosure
 // opened alone.
-func (s *Server) modelStoriesHTML(from string) string {
+func (s *Service) modelStoriesHTML(from string) string {
 	var b strings.Builder
 	b.WriteString(`<p>Which of these do you have?</p>`)
 	for _, st := range modelStories() {

@@ -97,7 +97,7 @@ func (s *Server) todaySort(w http.ResponseWriter, r *http.Request) {
 	}
 	ask := fmt.Sprintf("Sort this out for me: make each thing to do a task, with its day when I said one, tag the ones that matter most important, and tell me the three to start with. Ask me only if something cannot be guessed.\n\n%s", words)
 	if _, err := s.chatFor(r).SendFile(context.WithoutCancel(r.Context()), "", ask, ""); err != nil {
-		s.forgetModel()
+		s.connect.ForgetModel()
 		s.failed(w, r, "Not sorted", err, "/today")
 		return
 	}

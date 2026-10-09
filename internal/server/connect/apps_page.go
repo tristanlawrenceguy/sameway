@@ -1,4 +1,4 @@
-package server
+package connect
 
 import (
 	"errors"
@@ -10,6 +10,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/apps"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // The AI apps a person already uses (Claude Desktop, Cursor, VS Code) could
@@ -38,7 +39,7 @@ func appNames() []string {
 	return out
 }
 
-func (s *Server) appsPage(w http.ResponseWriter, r *http.Request) {
+func (s *Service) appsPage(w http.ResponseWriter, r *http.Request) {
 	esc := template.HTMLEscapeString
 	ws := s.app.Workspace.Dir
 	var found, elsewhere strings.Builder
@@ -55,7 +56,7 @@ func (s *Server) appsPage(w http.ResponseWriter, r *http.Request) {
 		if apps.Connected(a, ws) {
 			found.WriteString(`<p>Connected. ` + esc(a.Note) + `</p>`)
 		} else {
-			found.WriteString(string(s.form(ui.Form{Action: "/apps/connect", Hidden: ui.Hidden("app", key),
+			found.WriteString(string(s.Form(ui.Form{Action: "/apps/connect", Hidden: ui.Hidden("app", key),
 				Button: &ui.Button{Label: "Connect " + a.Name}})))
 		}
 		found.WriteString(`</li>`)
@@ -67,18 +68,18 @@ func (s *Server) appsPage(w http.ResponseWriter, r *http.Request) {
 	if elsewhere.Len() > 0 {
 		b.WriteString(`<h2>Another app</h2>` + elsewhere.String())
 	}
-	web := `<p>ChatGPT, and Claude in a browser or on a phone, run on their makers' computers, not yours, so they can only reach Sameway over the internet, which it does not open on its own. Claude Desktop, above, is the same Claude on this computer and needs nothing more. To share something with ChatGPT or a phone app now, use <a class="sw-link" href="/share">Save to Sameway</a> the other way round: copy what it said into a note.</p>`
-	if body, err := s.app.Registry.RenderSlot("disclosure", map[string]any{"label": "ChatGPT, or Claude in a browser or on a phone"}, template.HTML(web)); err == nil {
+	online := `<p>ChatGPT, and Claude in a browser or on a phone, run on their makers' computers, not yours, so they can only reach Sameway over the internet, which it does not open on its own. Claude Desktop, above, is the same Claude on this computer and needs nothing more. To share something with ChatGPT or a phone app now, use <a class="sw-link" href="/share">Save to Sameway</a> the other way round: copy what it said into a note.</p>`
+	if body, err := s.app.Registry.RenderSlot("disclosure", map[string]any{"label": "ChatGPT, or Claude in a browser or on a phone"}, template.HTML(online)); err == nil {
 		b.WriteString(string(body))
 	}
-	s.page(w, r, "Your AI apps", template.HTML(b.String()), pageOptions{Lede: "Ask the AI app you already use about your lists and notes, and have it change them, as the assistant here does."})
+	s.Page(w, r, "Your AI apps", template.HTML(b.String()), web.PageOptions{Lede: "Ask the AI app you already use about your lists and notes, and have it change them, as the assistant here does."})
 }
 
-func (s *Server) appsConnect(w http.ResponseWriter, r *http.Request) {
+func (s *Service) appsConnect(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	a, ok := apps.Apps[r.PostForm.Get("app")]
 	if !ok {
-		s.failed(w, r, "Not connected", errors.New("that is not an app Sameway knows"), "/apps")
+		s.Failed(w, r, "Not connected", errors.New("that is not an app Sameway knows"), "/apps")
 		return
 	}
 	exe, err := os.Executable()
@@ -87,13 +88,13 @@ func (s *Server) appsConnect(w http.ResponseWriter, r *http.Request) {
 	}
 	ws := s.app.Workspace.Dir
 	if err := apps.Write(a.Path(ws), a, apps.Server(a, exe, ws)); err != nil {
-		s.failed(w, r, "Not connected", err, "/apps")
+		s.Failed(w, r, "Not connected", err, "/apps")
 		return
 	}
-	s.tellAt(w, r, outcome{Title: a.Name + " is connected", Text: a.Note}, "/apps")
+	s.TellAt(w, r, web.Outcome{Title: a.Name + " is connected", Text: a.Note}, "/apps")
 }
 
-// appsLine is Your AI apps on Help.
-func appsLine() string {
+// AppsLine is Your AI apps on Help.
+func AppsLine() string {
 	return `AI apps: Claude Desktop, Cursor, VS Code and others can use this workspace too, a press each, on <a class="sw-link" href="/apps">Your AI apps</a>.`
 }

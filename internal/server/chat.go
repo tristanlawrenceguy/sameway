@@ -102,7 +102,7 @@ func (s *Server) conversationAbout(c *chat.Service, from, about, prompt string) 
 	// When the assistant cannot reach a model, the conversation says so
 	// and offers what is on this computer; see connect.go.
 	if c.IsOwner() {
-		out.Notice = s.connectCard(from)
+		out.Notice = s.connect.ConnectCard(from)
 	}
 	// A model on this computer is readied for the next message while the
 	// person reads the page (chat/warm.go), when it answers and is not
@@ -255,7 +255,7 @@ func (s *Server) chatSend(w http.ResponseWriter, r *http.Request) {
 	// chatStream.
 	rec, err := s.chatFor(r).SendFile(context.WithoutCancel(r.Context()), canvas, r.PostForm.Get("message"), fileID)
 	if err != nil {
-		s.forgetModel() // a key refused or a model gone shows the connect card now
+		s.connect.ForgetModel() // a key refused or a model gone shows the connect card now
 	}
 	if rec == nil {
 		// Nothing was recorded (empty message, or chat unavailable). The page
