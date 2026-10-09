@@ -29,7 +29,7 @@ func (s *Service) Proposals() []*store.Record {
 	}
 	var out []*store.Record
 	for _, r := range recs {
-		if r.Fields["state"] == "pending" && r.Fields["by_action"] == nil {
+		if by, _ := r.Fields["by_action"].(string); r.Fields["state"] == "pending" && by == "" {
 			out = append(out, r)
 		}
 	}
@@ -49,7 +49,7 @@ func (s *Service) Suggestions() []*store.Record {
 	}
 	var out []*store.Record
 	for _, r := range recs {
-		if r.Fields["state"] == "pending" && r.Fields["by_action"] != nil {
+		if by, _ := r.Fields["by_action"].(string); r.Fields["state"] == "pending" && by != "" {
 			out = append(out, r)
 		}
 	}
