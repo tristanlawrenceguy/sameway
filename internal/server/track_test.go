@@ -78,9 +78,13 @@ func TestAHabitIsTrackedOutOfTheBox(t *testing.T) {
 
 	// The habit's own page: its row, the best run, and a chart with the target.
 	page = get(t, h, "/t/"+server.HabitType+"/"+water.ID).Body.String()
-	for _, want := range []string{`id="habit-standing"`, `Best run: 3 days in a row.`, `data-component="chart"`, `class="sw-chart__target"`, `target 8 glasses`, `The last 30 days`} {
+	for _, want := range []string{`id="habit-standing"`, `Best run: 3 days in a row.`, `data-component="chart"`, `class="sw-chart__target"`, `target 8 glasses`, `The last 30 days`, `id="habit-entries"`} {
 		if !strings.Contains(page, want) {
-			t.Errorf("a habit's page has where it stands and a chart with the target drawn, missing %q\n%s", want, page)
+			t.Errorf("a habit's page has where it stands, a chart with the target drawn and its entries, missing %q\n%s", want, page)
 		}
+	}
+	// Its entries are on its page, and not a list of their own in the menu.
+	if strings.Contains(page, `href="/t/`+server.EntryType+`"`) {
+		t.Error("entries are kept under their habit, not in the menu")
 	}
 }

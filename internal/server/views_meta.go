@@ -137,7 +137,7 @@ func (s *Server) from(r *http.Request, t *schema.Type, rec *store.Record) string
 func (s *Server) dotOf(typeName string) int {
 	n := 0
 	for _, t := range s.app.Types.Types {
-		if t.Internal || (t.Name != typeName && !s.listed(t)) {
+		if t.Internal || t.Name == EntryType || (t.Name != typeName && !s.listed(t)) {
 			continue
 		}
 		n++
