@@ -30,7 +30,7 @@ func TestAToneIsSaidInWords(t *testing.T) {
 	if page := get(t, h, "/").Body.String(); !strings.Contains(page, `<p class="sw-visually-hidden">Important.</p>`) {
 		t.Errorf("a danger tone says Important; body: %s", truncate(page))
 	}
-	css, _ := os.ReadFile("../../design/base/06-layout.css")
+	css, _ := os.ReadFile("../../design/base/07-layout.css")
 	if !strings.Contains(string(css), `.sw-block[data-tone="danger"]  { border-inline-start: 4px solid`) {
 		t.Error("a tone is also an edge, which survives forced colours")
 	}
@@ -100,11 +100,11 @@ func TestThePagesSayTheWorkspacesLanguage(t *testing.T) {
 // Scripts: an arriving block is never out of the accessibility tree, and
 // a refresh keeps focus on a control with no id.
 func TestArrivalAndRefreshKeepThingsReachable(t *testing.T) {
-	motion, _ := os.ReadFile("../../design/base/03-motion.css")
+	motion, _ := os.ReadFile("../../design/base/04-motion.css")
 	if m := regexp.MustCompile(`@keyframes sw-arrive-content[^\n]*`).Find(motion); m == nil || strings.Contains(string(m), "visibility") {
 		t.Errorf("arrival fades with opacity only: %s", m)
 	}
-	refresh, _ := os.ReadFile("../../design/base/17-refresh.js")
+	refresh, _ := os.ReadFile("../../design/base/19-refresh.js")
 	if !strings.Contains(string(refresh), "var focusMark = mark(focused);") || !strings.Contains(string(refresh), "find(focusMark)") {
 		t.Error("a refresh finds a focused control with no id again")
 	}

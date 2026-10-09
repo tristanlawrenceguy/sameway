@@ -29,7 +29,7 @@
 .sw-reveal:hover, .sw-reveal:not(.sw-block):focus-within,
 .sw-quiet:focus-within, .sw-quiet:focus-visible { --sw-quiet-opacity: 1; }
 /* Escape puts away what the pointer revealed, until it leaves and comes
-   back (WCAG 1.4.13; 22-quiet.js). Focus inside still shows it. */
+   back (WCAG 1.4.13; 25-quiet.js). Focus inside still shows it. */
 .sw-reveal[data-quiet-away]:hover:not(:focus-within) { --sw-quiet-opacity: 0; }
 
 /* Always on where fading would strand someone:
@@ -75,7 +75,7 @@
 .sw-bar .sw-link:hover, .sw-bar .sw-button--quiet:hover { background: var(--sw-color-bg-muted); color: var(--sw-color-fg); text-decoration: none; }
 
 /* Inline editing: fields appear where the text was, so nothing moves and
-   nobody leaves the page. Added by 08-edit.js, which only runs where it can. */
+   nobody leaves the page. Added by 09-edit.js, which only runs where it can. */
 .sw-inline-form { margin-bottom: var(--sw-space-3); }
 .sw-inline-field + .sw-inline-field { margin-top: var(--sw-space-3); }
 /* A field the record has nothing in waits behind its Add button. */

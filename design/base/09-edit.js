@@ -52,9 +52,9 @@
   // control it is comes from the mark: a yes or no, a day, a choice, a
   // number, a paragraph or a line.
   function field(el, blockId) {
-    // Structured text is edited as it is shown, by 11-prose-edit.js, when
+    // Structured text is edited as it is shown, by 14-prose-edit.js, when
     // that is here; otherwise as the Markdown it was written in.
-    if (el.classList.contains("sw-prose") && el.hasAttribute("data-source") && window.swProseField) return window.swProseField(el, blockId);
+    if (el.classList.contains("sw-prose") && el.hasAttribute("data-source") && sw.proseField) return sw.proseField(el, blockId);
     var name = el.getAttribute("data-prop");
     var id = "edit-" + blockId + "-" + name;
     var kind = el.getAttribute("data-kind");
@@ -85,7 +85,7 @@
       var read = built.wrap.querySelector(".sw-when-field__read");
       if (read) { read.id = id + "-read"; read.htmlFor = id; }
       if (pick && /^\d{4}-\d{2}-\d{2}/.test(source || "")) pick.value = source.slice(0, 10);
-      if (window.swWhenField) window.swWhenField(built.wrap);
+      if (sw.whenField) sw.whenField(built.wrap);
       return built;
     }
     if (el.hasAttribute("data-options")) return choose(el, id, name, source !== null ? source : el.textContent.trim());
@@ -101,7 +101,7 @@
       built.wrap.setAttribute("data-to", el.getAttribute("data-to"));
       built.wrap.querySelector("datalist").id = id + "-list";
       box.setAttribute("list", id + "-list");
-      if (window.swLookup) window.swLookup(built.wrap);
+      if (sw.lookup) sw.lookup(built.wrap);
       return built;
     }
     if (kind === "number") {
@@ -135,7 +135,7 @@
     built.input.setAttribute("data-max", max);
     var by = (built.input.getAttribute("aria-describedby") || "").split(" ").filter(function (x) { return x && !/-count$/.test(x); });
     built.input.setAttribute("aria-describedby", by.concat(count.id).join(" "));
-    if (window.swCount) window.swCount(built.wrap);
+    if (sw.count) sw.count(built.wrap);
     return built;
   }
 
@@ -185,7 +185,7 @@
   // edit replaces the marked elements of one block with a small form.
   function edit(block) {
     if (block.querySelector(".sw-inline-form")) return;
-    var marked = (window.swEditFields && window.swEditFields(block)) || block.querySelectorAll("[data-prop]");
+    var marked = (sw.editFields && sw.editFields(block)) || block.querySelectorAll("[data-prop]");
     if (!marked.length) return;
     var id = block.getAttribute("data-block-id");
 
@@ -249,12 +249,12 @@
     });
 
     if (first) first.focus();
-    // 09-edit-fields.js tidies the form: empty fields behind Add buttons.
+    // 10-edit-fields.js tidies the form: empty fields behind Add buttons.
     document.dispatchEvent(new CustomEvent("sw:edit-open", { detail: { block: block, form: form } }));
   }
 
   function cancel(block, form, covered) {
-    // A record made a moment ago and never saved goes back to the list instead (09-edit-fields.js).
+    // A record made a moment ago and never saved goes back to the list instead (10-edit-fields.js).
     if (!document.dispatchEvent(new CustomEvent("sw:edit-cancel", { cancelable: true, detail: { block: block, form: form } }))) return;
     for (var i = 0; i < covered.length; i++) {
       covered[i].style.display = "";

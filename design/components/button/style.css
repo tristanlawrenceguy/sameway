@@ -20,7 +20,7 @@
 /* Quiet: little chrome of its own. Contrast and target size are unchanged;
    the background is dropped, and the edge is the strong border colour, so
    standing on its own (Cancel beside Save) it still reads as a button. In a
-   control bar the bar is the frame and the edge goes (04-quiet.css). */
+   control bar the bar is the frame and the edge goes (05-quiet.css). */
 .sw-button--quiet {
   background: transparent; color: var(--sw-color-fg-muted);
   border-color: var(--sw-color-border-strong); padding: 0 var(--sw-space-3);

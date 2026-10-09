@@ -18,7 +18,7 @@ import (
 // text size and spacing (ui.text, ui.spacing), their fonts and their
 // phone, and only there is it known how tall a block really is, and
 // whether it scrolls inside a box too small for it. So the page measures
-// its blocks where it is drawn (design/base/25-measure.js) and sends the
+// its blocks where it is drawn (design/base/29-measure.js) and sends the
 // numbers here: sizes and block ids, never what the blocks say.
 // design/foundations/layout.md has the rules.
 

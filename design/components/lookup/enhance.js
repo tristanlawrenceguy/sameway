@@ -31,7 +31,7 @@
     var list = el("ul", "sw-plain sw-lookup__list");
     list.id = box.id + "-options";
     list.setAttribute("role", "listbox");
-    list.setAttribute("data-scrolls", ""); // a list of choices scrolls by design (25-measure.js)
+    list.setAttribute("data-scrolls", ""); // a list of choices scrolls by design (29-measure.js)
     list.hidden = true;
     if (label) { label.id = label.id || box.id + "-label"; list.setAttribute("aria-labelledby", label.id); }
     var status = el("p", "sw-visually-hidden");
@@ -156,13 +156,13 @@
     field.setAttribute("data-lookup", String(n));
   }
 
-  // swLookup arms every lookup in root; the inline editor calls it on a
+  // sw.lookup arms every lookup in root; the inline editor calls it on a
   // field it has just made.
-  window.swLookup = function (root) {
+  sw.lookup = function (root) {
     root = root || document;
     var all = Array.prototype.slice.call(root.querySelectorAll("[data-component=lookup]"));
     if (root.matches && root.matches("[data-component=lookup]")) all.unshift(root);
     all.forEach(arm);
   };
-  sw.arm("[data-component=lookup]", window.swLookup);
+  sw.arm("[data-component=lookup]", sw.lookup);
 })();

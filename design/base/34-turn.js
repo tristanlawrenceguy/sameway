@@ -1,4 +1,4 @@
-// A turn you can watch, without noise (14-live.js shows the turn; this is
+// A turn you can watch, without noise (17-live.js shows the turn; this is
 // how it is said, how its words grow and where it is marked).
 //
 // The status line says what the assistant is doing in words its calls
@@ -13,7 +13,7 @@
 // while the call runs: a new block as an outline in the assistant's colour
 // where it will land (the first stage of its arrival, held), a block being
 // changed with an outline round it. When the block lands, its staged
-// arrival plays from that outline (03-motion.css). Nothing moves: the
+// arrival plays from that outline (04-motion.css). Nothing moves: the
 // outline fades in, and under the still pace it is simply there.
 (function () {
   "use strict";
@@ -43,7 +43,7 @@
   // piece arrives: the text grows calmly, with no caret and nothing drawn
   // letter by letter, and the log is not scrolled for every word. The
   // words are not in a live region: a screen reader hears the finished
-  // reply once, when the turn ends (19-live-join.js, sw.say).
+  // reply once, when the turn ends (20-live-join.js, sw.say).
   sw.writer = function (words, follow, watch) {
     var queued = "", timer = null;
     function flush() { timer = null; words.data += queued; queued = ""; follow(); }
@@ -84,7 +84,7 @@
 
     // A new block's place: where the lander will put it, at the end of the
     // main canvas, as wide as it will be. A refresh of the page while the
-    // turn runs (17-refresh.js) brings the server's page, which has no such
+    // turn runs (19-refresh.js) brings the server's page, which has no such
     // place and no marks, so they are put back after it.
     var held = [], marked = {};
     function hold(d) {
@@ -94,7 +94,7 @@
       li.className = "sw-block sw-block--pending";
       li.setAttribute("data-actor", "assistant");
       li.style.setProperty("--sw-span", d.span || 6);
-      // Its shape, in grey bars, rather than empty space (29-skeleton.css);
+      // Its shape, in grey bars, rather than empty space (35-skeleton.css);
       // busy, and saying in words what is coming, until it lands.
       li.setAttribute("aria-busy", "true");
       li.innerHTML = '<p class="sw-visually-hidden"></p><div class="sw-skeleton" aria-hidden="true"><span></span><span></span><span></span></div>';

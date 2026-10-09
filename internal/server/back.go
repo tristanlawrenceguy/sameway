@@ -12,7 +12,7 @@ import (
 // says where it sits with a back field, the id of the thing it belongs
 // to; the server adds it to the page it returns to, and the browser
 // scrolls there. A block on the canvas gives its forms its own id, with
-// no script; 23-back.js narrows it to the row or card the form is in.
+// no script; 26-back.js narrows it to the row or card the form is in.
 
 // backField is the form field that says where an action was taken.
 const backField = "back"

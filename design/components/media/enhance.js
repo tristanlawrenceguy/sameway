@@ -197,7 +197,7 @@
           var c = chunks[i];
           if (chunks.length > 1) said.textContent = "Reading part " + (i + 1) + " of " + chunks.length + ".";
           var to = action + (chunks.length > 1 ? "?part=" + i + "&of=" + chunks.length + "&start=" + c.start : "");
-          return window.swSpeech.toWav(c.url).then(function (wav) {
+          return sw.speech.toWav(c.url).then(function (wav) {
             return fetch(to, { method: "POST", body: wav, headers: { "Content-Type": "audio/wav" }, credentials: "same-origin" });
           }).then(function (r) {
             if (!r.ok) throw new Error("refused");

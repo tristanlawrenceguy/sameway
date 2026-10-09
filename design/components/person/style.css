@@ -1,5 +1,5 @@
 /* A person: their dot in their colour (data-person sets --sw-actor, see
-   base/02-feedback.css), their name in the text colour. Inline, so a long
+   base/03-feedback.css), their name in the text colour. Inline, so a long
    name wraps like the words around it, even one with no spaces. */
 .sw-person { color: var(--sw-color-fg); overflow-wrap: anywhere; }
 .sw-person__dot {

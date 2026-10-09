@@ -4,7 +4,7 @@
 // to press Check again; a model being fetched said how far it had come only
 // when asked. Now, while the card is up, the page asks the server every few
 // seconds what the card would say (GET /model/wait, connect.go) and, when
-// that changes, follows (17-refresh.js): Ollama found, a free model offered,
+// that changes, follows (19-refresh.js): Ollama found, a free model offered,
 // the fetch's progress, the assistant ready. Not while a key is being
 // typed into the card, which a fresh card would empty. Check again stays,
 // for a page without scripts.

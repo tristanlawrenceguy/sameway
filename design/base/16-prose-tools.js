@@ -1,4 +1,4 @@
-// The toolbar of the prose editor (11-prose-edit.js): what a person can
+// The toolbar of the prose editor (14-prose-edit.js): what a person can
 // make of their words without knowing any syntax. Everything here is a
 // browser editing command or a small piece of HTML dropped in; the server
 // turns the result into Markdown on save, so this file only has to make
@@ -209,7 +209,7 @@
 
   // toolbar is one strip of buttons the arrow keys move between, as a
   // toolbar should, so Tab passes over it in one step.
-  window.swProseToolbar = function (editor, level) {
+  sw.proseToolbar = function (editor, level) {
     // A new line is a paragraph, as the server reads it, not a bare div.
     try { document.execCommand("defaultParagraphSeparator", false, "p"); } catch (e) { /* older browsers keep theirs */ }
     var bar = document.createElement("div");
@@ -222,8 +222,8 @@
       b.type = "button";
       b.className = "sw-button sw-button--quiet sw-pressable sw-prose-tools__" + t[1];
       // A familiar icon beside the word, and the word in the style it makes
-      // where it can show it: Bold in bold, Italic in italic (12-prose-icons.js).
-      window.swProseLabel(b, t[1], t[0]);
+      // where it can show it: Bold in bold, Italic in italic (15-prose-icons.js).
+      sw.proseLabel(b, t[1], t[0]);
       var name = t[0];
       if (KEYS[t[1]]) { b.title = name + " (" + KEYS[t[1]] + ")"; b.setAttribute("aria-keyshortcuts", KEYS[t[1]]); }
       b.tabIndex = buttons.length ? -1 : 0;
@@ -247,7 +247,7 @@
     var more = document.createElement("button");
     more.type = "button";
     more.className = "sw-button sw-button--quiet sw-pressable";
-    window.swProseLabel(more, "more", "More");
+    sw.proseLabel(more, "more", "More");
     more.tabIndex = -1;
     more.setAttribute("aria-expanded", "false");
     more.setAttribute("aria-controls", extra.id);

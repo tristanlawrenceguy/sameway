@@ -7,9 +7,9 @@
 // (html-<name>, with level-<name> saying what level a # line was shown at).
 //
 // The raw Markdown stays one button away until the editor does everything
-// a person needs; then that button can go. 08-edit.js hands any element
-// with data-source to swProseField, and without this file it falls back
-// to a textarea of the source. The toolbar itself is 12-prose-tools.js.
+// a person needs; then that button can go. 09-edit.js hands any element
+// with data-source to sw.proseField, and without this file it falls back
+// to a textarea of the source. The toolbar itself is 16-prose-tools.js.
 (function () {
   "use strict";
 
@@ -27,9 +27,9 @@
       .catch(function () { if (said) said.textContent = "Could not switch views. Your words are unchanged."; });
   }
 
-  // swProseField builds the editor for one rendered field: the prose
+  // sw.proseField builds the editor for one rendered field: the prose
   // itself, editable, with its toolbar, and the Markdown behind a button.
-  window.swProseField = function (el, blockId) {
+  sw.proseField = function (el, blockId) {
     var name = el.getAttribute("data-prop");
     var level = parseInt(el.getAttribute("data-prose-level"), 10) || 2;
     var id = "edit-" + blockId + "-" + name;
@@ -69,7 +69,7 @@
     source.value = el.getAttribute("data-source") || "";
     source.hidden = true;
 
-    var bar = window.swProseToolbar ? window.swProseToolbar(editor, level) : document.createElement("div");
+    var bar = sw.proseToolbar ? sw.proseToolbar(editor, level) : document.createElement("div");
     var toggle = document.createElement("button");
     toggle.type = "button";
     toggle.className = "sw-button sw-button--quiet sw-pressable";

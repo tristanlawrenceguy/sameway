@@ -20,7 +20,7 @@
 // history, a wide table's own region), as fields and code do by being
 // what they are; it is counted apart and never flagged.
 //
-// window.swMeasure.read() gives what would be sent, so the accessibility
+// sw.measure.read() gives what would be sent, so the accessibility
 // runner checks pages with the same measuring the person's browser does.
 (function () {
   "use strict";
@@ -134,7 +134,7 @@
     }, QUIET);
   }
 
-  window.swMeasure = { read: read, send: function () { return send(true); } };
+  sw.measure = { read: read, send: function () { return send(true); } };
 
   var driven = navigator.webdriver || /HeadlessChrome/.test(navigator.userAgent || "");
   var saving = navigator.connection && navigator.connection.saveData;

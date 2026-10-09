@@ -1,6 +1,6 @@
 /* A change out of sight: a sign at the edge of the screen, in the colour
    of whoever made the change, that leads to it and goes once it is seen.
-   See 19-offscreen.js. It is for eyes only (aria-hidden), so it carries
+   See 22-offscreen.js. It is for eyes only (aria-hidden), so it carries
    no focus style of its own and never takes a place in the tab order. */
 
 .sw-offscreen {

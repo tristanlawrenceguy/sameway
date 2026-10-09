@@ -67,7 +67,7 @@ func TestDisclosureSummaryHasExplicitColor(t *testing.T) {
 // flag a colour-contrast failure because computed contrast depends on
 // inherited color at hover state or browser-specific rendering (backlog 0161).
 func TestDisclosurePseudoElementUsesToken(t *testing.T) {
-	css, err := os.ReadFile("../../design/base/23-twisty.css")
+	css, err := os.ReadFile("../../design/base/27-twisty.css")
 	if err != nil {
 		t.Fatal(err)
 	}

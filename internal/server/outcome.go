@@ -17,7 +17,7 @@ import (
 // on the page they were on, and one message says what happened, in the
 // same place on every page, once. A failure says what went wrong in plain
 // words, and what they typed is not lost: the draft of an edit is kept
-// until the edit is said to be saved (16-drafts.js). Before this, each
+// until the edit is said to be saved (18-drafts.js). Before this, each
 // action had its own way, or none: a flag left in the address, a message
 // in the chat on a page with no chat, a line in the activity log, a bare
 // error page. The crew's person-facing findings were mostly those.
@@ -65,7 +65,7 @@ func (s *Server) tellAt(w http.ResponseWriter, r *http.Request, o outcome, to st
 	}
 	// A mark saved by its script stays on its page: the outcome comes back
 	// as the message itself, for the page to show where it is, and nothing
-	// is left in a cookie for the next page to say again (13-mark.js).
+	// is left in a cookie for the next page to say again (mark/enhance.js).
 	if r.Header.Get("X-Requested-With") == "sameway-mark" {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		io.WriteString(w, string(s.renderOutcome(o, to)))

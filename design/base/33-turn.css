@@ -1,7 +1,7 @@
-/* A turn you can watch (28-turn.js): the place a call is about to change,
+/* A turn you can watch (34-turn.js): the place a call is about to change,
    marked while it runs, in the assistant's colour.
 
-   A new block's place is the first stage of its arrival held (03-motion.css,
+   A new block's place is the first stage of its arrival held (04-motion.css,
    sw-arrive-place): a dashed outline over an empty slot as wide as the block
    will be. When the block lands it takes the slot and its arrival plays on
    from that outline. A block being changed is outlined, as the first stage
@@ -32,7 +32,7 @@
 }
 
 /* The still pace: the place is simply marked, and what lands is just there
-   (03-motion.css makes its arrival instant). */
+   (04-motion.css makes its arrival instant). */
 :root[data-pace="still"] .sw-block--pending { animation: none; }
 
 /* Forced colours keep outlines but take their colour: the system's. */

@@ -1,7 +1,7 @@
 // The page's one connection to the server, and the reading of a turn.
 //
 // Several scripts want to hear from the server as things happen: the page
-// follows a change made elsewhere (17-refresh.js), the clock rings (the
+// follows a change made elsewhere (19-refresh.js), the clock rings (the
 // clock component), and the server knows who is here by the page holding
 // /events open (the presence component). Each used to open its own
 // EventSource; now they share one:
@@ -12,8 +12,8 @@
 //               keep: the event matters while the tab is hidden (a ring
 //               does), so the connection stays open then, said idle.
 //   sw.stream(response, fn)
-//               reads a turn's server-sent events from a fetch (14-live.js,
-//               19-live-join.js), fn({event, data}) for each, a slip in one
+//               reads a turn's server-sent events from a fetch (17-live.js,
+//               20-live-join.js), fn({event, data}) for each, a slip in one
 //               not losing the rest; resolves when the stream ends.
 //
 // The connection says ?idle=1 after ten minutes with no key, pointer or
@@ -23,7 +23,7 @@
 // at again ("back" on the bus). A connection the server ends is opened
 // again, after one second, then two, four, up to a minute; one refused
 // from the start (a published page has no /events) is left closed.
-// Measuring (25-measure.js) sends its own beacons and is not this.
+// Measuring (29-measure.js) sends its own beacons and is not this.
 (function () {
   "use strict";
   var IDLE = 10 * 60 * 1000, MOST = 60 * 1000;

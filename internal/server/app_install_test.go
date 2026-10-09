@@ -9,7 +9,7 @@ import (
 
 // Sameway can be installed as an app: every page names a manifest with its
 // icons, the manifest and icons are served, and Help offers Install where
-// the browser can (32-install.js) and says the other ways.
+// the browser can (38-install.js) and says the other ways.
 func TestSamewayInstallsAsAnApp(t *testing.T) {
 	_, h := newApp(t)
 	page := get(t, h, "/").Body.String()
@@ -37,7 +37,7 @@ func TestSamewayInstallsAsAnApp(t *testing.T) {
 	if !strings.Contains(help, "data-install hidden") || !strings.Contains(help, "Add to Home Screen") {
 		t.Errorf("Help offers it: %s", truncate(help))
 	}
-	js, _ := os.ReadFile("../../design/base/32-install.js")
+	js, _ := os.ReadFile("../../design/base/38-install.js")
 	if !strings.Contains(string(js), "beforeinstallprompt") || !strings.Contains(string(js), "asked.prompt()") {
 		t.Error("the button asks the browser to install")
 	}

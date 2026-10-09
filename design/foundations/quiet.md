@@ -88,7 +88,7 @@ There is no edit page and no settings form. A person changes the words where
 the words are: the Edit control in the quiet bar swaps the block's text for
 real, labelled form fields in place, and Save posts them.
 
-That control is added by `base/08-edit.js`, never rendered by the server, so
+That control is added by `base/09-edit.js`, never rendered by the server, so
 it cannot exist in a browser that could not honour it. Where it is missing,
 the way to change something is to ask the assistant, which is the way to
 change everything else anyway.

@@ -7,7 +7,7 @@ import (
 
 // TestDetailPageHasNoDeadEditButton checks that note detail pages no longer
 // render a server-side <button data-inline-edit> — the working Edit button is
-// created client-side by 08-edit.js via progressive enhancement. Acceptance item
+// created client-side by 09-edit.js via progressive enhancement. Acceptance item
 // 1: views.go must not contain data-inline-edit in detailPage().
 func TestDetailPageHasNoDeadEditButton(t *testing.T) {
 	a, h := newApp(t)
@@ -19,7 +19,7 @@ func TestDetailPageHasNoDeadEditButton(t *testing.T) {
 	body := get(t, h, "/t/note/"+rec.ID).Body.String()
 
 	if strings.Contains(body, `data-inline-edit`) {
-		t.Errorf("note detail page should not contain a data-inline-edit button (dead UI — 08-edit.js creates the real one)\n%s", truncate(body))
+		t.Errorf("note detail page should not contain a data-inline-edit button (dead UI — 09-edit.js creates the real one)\n%s", truncate(body))
 	}
 }
 

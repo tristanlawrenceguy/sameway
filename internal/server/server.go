@@ -123,9 +123,9 @@ func (s *Server) notFoundPage(w http.ResponseWriter, r *http.Request) {
 }
 
 // detailPageExtraScripts are additional <script> tags rendered in the head on
-// content-type record detail pages, enabling inline editing via 08-edit.js.
+// content-type record detail pages, enabling inline editing via 09-edit.js.
 var detailPageExtraScripts = []template.HTML{
-	`<script defer src="/design/base/08-edit.js"></script>`,
+	`<script defer src="/design/base/09-edit.js"></script>`,
 }
 
 func (s *Server) navLink(href, label string, current bool) template.HTML {

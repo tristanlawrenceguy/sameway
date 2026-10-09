@@ -1,7 +1,7 @@
 // Log saves itself, where it is. With scripts, pressing Log sends the
 // amount in the background: focus stays on Log, to press it again for the
 // next glass, instead of the page reloading to its top; what was logged and
-// where it stands now are said, with Undo, where outcomes are (13-mark.js
+// where it stands now are said, with Undo, where outcomes are (mark/enhance.js
 // does the same for a box ticked); the list catches up when focus leaves
 // it. Without scripts, or if the send fails, the form is sent as a form.
 (function () {

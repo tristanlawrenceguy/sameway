@@ -8,7 +8,7 @@
 (function () {
   "use strict";
   function said(n) { return n === 1 ? "1 character" : n + " characters"; }
-  window.swCount = function (root) {
+  sw.count = function (root) {
     root = root || document;
     root.querySelectorAll("[data-max]").forEach(function (field) {
       if (field._counted) return;
@@ -41,7 +41,7 @@
       count.textContent = words();
     });
   };
-  function init() { window.swCount(document); }
+  function init() { sw.count(document); }
   sw.ready(init);
   sw.on("refresh", init);
 })();

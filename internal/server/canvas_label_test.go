@@ -34,15 +34,15 @@ func TestEditButtonUsesBlockLabel(t *testing.T) {
 	}
 
 	// Step B: the Edit button script must read that attribute.
-	script := get(t, h, "/design/base/08-edit.js")
+	script := get(t, h, "/design/base/09-edit.js")
 	body := script.Body.String()
 	if !strings.Contains(body, `getAttribute("data-block-label")`) {
-		t.Errorf("08-edit.js must read data-block-label for the Edit button's accessible name\nbody: %s", truncate(body))
+		t.Errorf("09-edit.js must read data-block-label for the Edit button's accessible name\nbody: %s", truncate(body))
 	}
 
 	// Step C: it must fall back to data-block-component if data-block-label is absent.
 	if !strings.Contains(body, "data-block-component") {
-		t.Errorf("08-edit.js must still reference data-block-component as a fallback\nbody: %s", truncate(body))
+		t.Errorf("09-edit.js must still reference data-block-component as a fallback\nbody: %s", truncate(body))
 	}
 }
 

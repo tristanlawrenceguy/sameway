@@ -4,7 +4,7 @@
 // task Overdue once its time has gone (design/foundations/glance.md).
 // Words like those go stale on a page left open overnight, or past a
 // task's time: Today becomes yesterday's, and an overdue task still reads
-// as due. So the page follows itself (sw.refresh, 17-refresh.js, which
+// as due. So the page follows itself (sw.refresh, 19-refresh.js, which
 // keeps scroll, focus and what is being typed) at the moments its words
 // change: when this workspace's day turns, and when a time the page shows
 // passes. A hidden tab waits until it is looked at again.

@@ -4,7 +4,7 @@
 // returns to: a message already on the page when it loads is not read out
 // by screen readers, so without focus a person heard nothing of "Changes
 // saved" or "Not saved". An edit reopened to fix a refusal takes focus
-// itself (16-drafts.js) and points its field at the outcome instead.
+// itself (18-drafts.js) and points its field at the outcome instead.
 // Closing an alert puts focus back in the page, not nowhere.
 (function () {
   "use strict";
@@ -24,7 +24,7 @@
     var outcome = document.getElementById("outcome");
     if (!outcome) return;
     setTimeout(function () {
-      // Told where the person came back to (23-back.js), it keeps its place.
+      // Told where the person came back to (26-back.js), it keeps its place.
       if (document.querySelector(".sw-inline-form") || outcome.hasAttribute("data-outcome-told")) return;
       // Problems with a form are heard as their list, each leading to its field.
       (outcome.querySelector("[data-component=error-summary]") || outcome).focus();

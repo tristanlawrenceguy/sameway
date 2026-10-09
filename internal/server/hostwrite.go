@@ -166,13 +166,13 @@ func (s *Server) readInBackground(id string) error {
 }
 
 // readScript is what the background browser runs: the page's own way of
-// reading a recording (swSpeech, 24-speech.js), chunk by chunk.
+// reading a recording (sw.speech, 28-speech.js), chunk by chunk.
 const readScript = `(async () => {
   const id = %q, at = '/files/' + id;
   const plan = await (await fetch(at + '/sound')).json();
   const chunks = plan.whole ? [{ url: at, start: 0 }] : plan.chunks;
   for (let i = 0; i < chunks.length; i++) {
-    const wav = await window.swSpeech.toWav(chunks[i].url);
+    const wav = await sw.speech.toWav(chunks[i].url);
     const q = chunks.length > 1 ? '?part=' + i + '&of=' + chunks.length + '&start=' + chunks[i].start : '';
     const r = await fetch(at + '/transcribe' + q, { method: 'POST', body: wav, headers: { 'Content-Type': 'audio/wav' } });
     if (!r.ok) throw new Error('the host refused part ' + (i + 1) + ': ' + r.status);

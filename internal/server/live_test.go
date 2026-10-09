@@ -70,7 +70,7 @@ func TestATurnGoesOnWhenThePersonGoesElsewhere(t *testing.T) {
 
 	// The reply waits until the page has found the turn: let go sooner,
 	// the turn could end before the page asks, and the page would rightly
-	// be told there is nothing to follow (it then reloads, 14-live.js).
+	// be told there is nothing to follow (it then reloads, 17-live.js).
 	live := &answered{ResponseRecorder: httptest.NewRecorder(), found: make(chan struct{})}
 	followed := make(chan struct{})
 	go func() {
