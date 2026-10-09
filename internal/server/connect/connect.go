@@ -1,4 +1,4 @@
-package server
+package connect
 
 import (
 	"context"
@@ -57,7 +57,7 @@ const modelStateFor = 15 * time.Second
 
 // modelProblem says why the assistant cannot reach a model now, or ""
 // when it can, with what could be used instead.
-func (s *Server) modelProblem() (string, []modelChoice) {
+func (s *Service) modelProblem() (string, []modelChoice) {
 	s.model.mu.Lock()
 	defer s.model.mu.Unlock()
 	fresh := modelStateFor
@@ -90,8 +90,8 @@ func (s *Server) modelProblem() (string, []modelChoice) {
 	return s.model.why, s.model.choices
 }
 
-// forgetModel makes the next page look again.
-func (s *Server) forgetModel() {
+// ForgetModel makes the next page look again.
+func (s *Service) ForgetModel() {
 	s.model.mu.Lock()
 	s.model.at = time.Time{}
 	s.model.mu.Unlock()
@@ -99,7 +99,7 @@ func (s *Server) forgetModel() {
 
 // modelChoices is every way to a model found on this computer, the ones
 // that keep the conversation here first.
-func (s *Server) modelChoices(ctx context.Context) []modelChoice {
+func (s *Service) modelChoices(ctx context.Context) []modelChoice {
 	var out []modelChoice
 	for _, d := range llm.Detect(ctx, llm.DefaultCandidates) {
 		out = append(out, modelChoice{
@@ -128,9 +128,9 @@ func (s *Server) modelChoices(ctx context.Context) []modelChoice {
 	return out
 }
 
-// connectCard is the conversation saying the assistant cannot reach a
+// ConnectCard is the conversation saying the assistant cannot reach a
 // model, and what the person can do about it here and now.
-func (s *Server) connectCard(from string) template.HTML {
+func (s *Service) ConnectCard(from string) template.HTML {
 	why, choices := s.modelProblem()
 	if why == "" {
 		return ""
@@ -139,12 +139,12 @@ func (s *Server) connectCard(from string) template.HTML {
 	var b strings.Builder
 	b.WriteString(`<div class="sw-connect sw-stack" data-wait="` + esc(s.modelWait()) + `"><h2 class="sw-visually-hidden">Connect the assistant</h2>`)
 	// A status message, and a heading to find it by from the page's outline.
-	b.WriteString(string(s.part(ui.Alert{Kind: ui.Info, Title: "Connect the assistant to an AI model",
+	b.WriteString(string(s.Part(ui.Alert{Kind: ui.Info, Title: "Connect the assistant to an AI model",
 		Message: why + " The assistant needs an AI model to think with. Everything else in Sameway works without one."})))
 	if len(choices) > 0 {
 		b.WriteString(`<p>Found on this computer:</p><ul class="sw-plain sw-stack sw-connect__choices">`)
 		for _, c := range choices {
-			b.WriteString(`<li>` + string(s.form(ui.Form{Action: "/model/use", From: from, Hidden: ui.Hidden("choice", c.ID), Button: &ui.Button{Label: c.Label, Variant: ui.Primary}})))
+			b.WriteString(`<li>` + string(s.Form(ui.Form{Action: "/model/use", From: from, Hidden: ui.Hidden("choice", c.ID), Button: &ui.Button{Label: c.Label, Variant: ui.Primary}})))
 			b.WriteString(`<p class="sw-small sw-muted">` + esc(c.Where) + `</p></li>`)
 		}
 		b.WriteString(`</ul>`)
@@ -156,14 +156,14 @@ func (s *Server) connectCard(from string) template.HTML {
 		b.WriteString(s.modelStoriesHTML(from)) // connect_stories.go
 	}
 	b.WriteString(string(s.ollamaCard(from))) // ollama_setup.go
-	b.WriteString(string(s.form(ui.Form{Action: "/model/check", From: from, Button: &ui.Button{Label: "Check again", Variant: ui.Secondary}})))
+	b.WriteString(string(s.Form(ui.Form{Action: "/model/check", From: from, Button: &ui.Button{Label: "Check again", Variant: ui.Secondary}})))
 	b.WriteString(`</div>`)
 	return template.HTML(b.String())
 }
 
 // modelUse is the person pressing one of the choices: the model is set,
 // and the next message goes to it.
-func (s *Server) modelUse(w http.ResponseWriter, r *http.Request) {
+func (s *Service) modelUse(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	want := r.PostForm.Get("choice")
 	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
@@ -173,7 +173,7 @@ func (s *Server) modelUse(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		if s.app.Records.SetSetting == nil {
-			s.failed(w, r, "Not connected", errors.New("this workspace has no settings file"), "/")
+			s.Failed(w, r, "Not connected", errors.New("this workspace has no settings file"), "/")
 			return
 		}
 		// An Ollama model is used through Sameway's copy of it, with room
@@ -182,33 +182,33 @@ func (s *Server) modelUse(w http.ResponseWriter, r *http.Request) {
 			slow, done := context.WithTimeout(r.Context(), time.Minute)
 			defer done()
 			if err := s.useOllama(slow, model); err != nil {
-				s.failed(w, r, "Not connected", err, "/")
+				s.Failed(w, r, "Not connected", err, "/")
 				return
 			}
-			s.forgetModel()
-			s.tell(w, r, outcome{Title: "Connected", Text: strings.TrimPrefix(c.Label, "Use ") + " is the assistant's model now. Say hello."}, "/")
+			s.ForgetModel()
+			s.Tell(w, r, web.Outcome{Title: "Connected", Text: strings.TrimPrefix(c.Label, "Use ") + " is the assistant's model now. Say hello."}, "/")
 			return
 		}
 		for _, kv := range c.Settings {
 			if err := s.app.Records.SetSetting(kv[0], kv[1]); err != nil {
-				s.failed(w, r, "Not connected", err, "/")
+				s.Failed(w, r, "Not connected", err, "/")
 				return
 			}
 		}
-		s.forgetModel()
-		s.tell(w, r, outcome{Title: "Connected", Text: strings.TrimPrefix(c.Label, "Use ") + " is the assistant's model now. Say hello."}, "/")
+		s.ForgetModel()
+		s.Tell(w, r, web.Outcome{Title: "Connected", Text: strings.TrimPrefix(c.Label, "Use ") + " is the assistant's model now. Say hello."}, "/")
 		return
 	}
-	s.forgetModel()
-	s.failed(w, r, "Not connected", errors.New("that is no longer on this computer; the choices have been looked for again"), "/")
+	s.ForgetModel()
+	s.Failed(w, r, "Not connected", errors.New("that is no longer on this computer; the choices have been looked for again"), "/")
 }
 
 // modelCheck looks again, after the person installed or started something.
-func (s *Server) modelCheck(w http.ResponseWriter, r *http.Request) {
+func (s *Service) modelCheck(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	s.forgetModel()
+	s.ForgetModel()
 	if why, _ := s.modelProblem(); why == "" {
-		s.tell(w, r, outcome{Title: "The assistant can reach its model", Text: "Say hello."}, "/")
+		s.Tell(w, r, web.Outcome{Title: "The assistant can reach its model", Text: "Say hello."}, "/")
 		return
 	}
 	http.Redirect(w, r, web.BackOf(r, "/"), http.StatusSeeOther)
@@ -231,7 +231,7 @@ func ollamaDownload() string {
 // what was found, and how far a fetch has come. The page asks for them
 // while the card is up and follows when they change (37-connect-wait.js),
 // so Ollama installed, or a model fetched, shows without Check again.
-func (s *Server) modelWait() string {
+func (s *Service) modelWait() string {
 	why, choices := s.modelProblem()
 	if why == "" {
 		return "ready"
@@ -261,7 +261,7 @@ func percent(done, total int64) int64 {
 }
 
 // modelWaitState is modelWait for the page that is waiting.
-func (s *Server) modelWaitState(w http.ResponseWriter, r *http.Request) {
+func (s *Service) modelWaitState(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-store")
 	fmt.Fprint(w, s.modelWait())
@@ -270,7 +270,7 @@ func (s *Server) modelWaitState(w http.ResponseWriter, r *http.Request) {
 // wakeOllama starts Ollama when the workspace uses it and it is installed
 // but not answering, at most once a minute, and says so in place of an
 // address that is not answering. Called with s.model held.
-func (s *Server) wakeOllama(ok bool, why string) string {
+func (s *Service) wakeOllama(ok bool, why string) string {
 	s.model.waking = false
 	if ok || !llm.IsOllama(s.app.Workspace.Config.LLM.BaseURL) {
 		return why

@@ -1,4 +1,4 @@
-package server
+package connect
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // A person with Ollama and no model was told to open a terminal and type
@@ -28,16 +29,16 @@ type fetchState struct {
 
 // fetches are each workspace server's own fetch, so one workspace never
 // shows another's.
-var fetches sync.Map // *Server -> *fetchState
+var fetches sync.Map // *Service -> *fetchState
 
-func (s *Server) fetching() *fetchState {
+func (s *Service) fetching() *fetchState {
 	f, _ := fetches.LoadOrStore(s, &fetchState{})
 	return f.(*fetchState)
 }
 
 // ollamaCard is the fetch offered, or how far it has come; "" when Ollama
 // is not here or already has a model.
-func (s *Server) ollamaCard(from string) template.HTML {
+func (s *Service) ollamaCard(from string) template.HTML {
 	f := s.fetching()
 	f.Lock()
 	running, done, total, failed := f.running, f.done, f.total, f.err
@@ -58,19 +59,19 @@ func (s *Server) ollamaCard(from string) template.HTML {
 	if failed != "" {
 		said = template.HTML(`<p>` + template.HTMLEscapeString(failed) + `</p>`)
 	}
-	return s.form(ui.Form{Action: "/model/ollama", Class: "sw-stack", From: from, Body: said,
+	return s.Form(ui.Form{Action: "/model/ollama", Class: "sw-stack", From: from, Body: said,
 		Button: &ui.Button{Label: "Fetch a free model (" + llm.FreeModelWords + ")", Variant: ui.Primary},
 		After:  `<p class="sw-small sw-muted">Ollama is here with no model yet. This one runs on this computer; your conversations and notes stay here.</p>`})
 }
 
 // ollamaFetch starts fetching the free model, in the background: a few
 // gigabytes take minutes, and the page is not held while they come.
-func (s *Server) ollamaFetch(w http.ResponseWriter, r *http.Request) {
+func (s *Service) ollamaFetch(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
 	defer cancel()
 	if !ollamaWithoutModel(ctx) {
-		s.failed(w, r, "Nothing fetched", fmt.Errorf("a model is fetched only for Ollama with none: choose the one it has, or install Ollama first"), "/")
+		s.Failed(w, r, "Nothing fetched", fmt.Errorf("a model is fetched only for Ollama with none: choose the one it has, or install Ollama first"), "/")
 		return
 	}
 	f := s.fetching()
@@ -80,10 +81,10 @@ func (s *Server) ollamaFetch(w http.ResponseWriter, r *http.Request) {
 		go s.fetchFreeModel()
 	}
 	f.Unlock()
-	s.tell(w, r, outcome{Title: "Fetching the free model", Text: llm.FreeModelWords + ", through Ollama. It takes a few minutes; the page says how far it has come."}, "/")
+	s.Tell(w, r, web.Outcome{Title: "Fetching the free model", Text: llm.FreeModelWords + ", through Ollama. It takes a few minutes; the page says how far it has come."}, "/")
 }
 
-func (s *Server) fetchFreeModel() {
+func (s *Service) fetchFreeModel() {
 	f := s.fetching()
 	ctx := context.Background()
 	err := llm.OllamaPull(ctx, llm.FreeModel, func(done, total int64) {
@@ -100,12 +101,12 @@ func (s *Server) fetchFreeModel() {
 		f.err = err.Error()
 	}
 	f.Unlock()
-	s.forgetModel()
+	s.ForgetModel()
 }
 
 // useOllama makes an Ollama model the assistant's, through Sameway's copy
 // of it with room for the prompt.
-func (s *Server) useOllama(ctx context.Context, model string) error {
+func (s *Service) useOllama(ctx context.Context, model string) error {
 	name, err := llm.OllamaRoomy(ctx, model)
 	if err != nil {
 		return err

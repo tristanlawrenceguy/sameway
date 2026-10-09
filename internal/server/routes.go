@@ -38,7 +38,7 @@ var routeTable []route
 var routeIndex = map[string]int{}
 
 func init() {
-	for _, area := range [][]route{pageRoutes, recordRoutes, ownerRoutes, apiRoutes, mediaRoutes(), exchangeRoutes()} {
+	for _, area := range [][]route{pageRoutes, recordRoutes, ownerRoutes, apiRoutes, mediaRoutes(), exchangeRoutes(), connectRoutes()} {
 		routeTable = append(routeTable, area...)
 	}
 	for i, rt := range routeTable {
