@@ -35,3 +35,12 @@ fields:
     type: enum
     values: [pending, accepted, dismissed]
     default: pending
+  from:
+    type: string
+    description: For a suggestion an action made, the record it was made from, as type/id.
+  by_action:
+    type: string
+    description: The action that made the suggestion; empty for the assistant's own questions.
+  made:
+    type: string
+    description: What accepting made, as type/id.
