@@ -32,8 +32,8 @@ func TestNothingPulsesForEver(t *testing.T) {
 
 // Escape puts away controls a pointer revealed.
 func TestEscapePutsAwayRevealedControls(t *testing.T) {
-	css, _ := os.ReadFile("../../design/base/04-quiet.css")
-	js, _ := os.ReadFile("../../design/base/22-quiet.js")
+	css, _ := os.ReadFile("../../design/base/05-quiet.css")
+	js, _ := os.ReadFile("../../design/base/25-quiet.js")
 	if !strings.Contains(string(css), `[data-quiet-away]`) || !strings.Contains(string(js), `e.key !== "Escape"`) {
 		t.Error("Escape hides what hover revealed")
 	}

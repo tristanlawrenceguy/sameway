@@ -98,7 +98,7 @@ func (s *Server) chatLive(w http.ResponseWriter, r *http.Request) {
 
 // tellDone tells the person a turn is over when no page heard it end:
 // the tab was closed, or every page on it went away. A page that is
-// following says so itself (19-live-join.js), so the news comes once.
+// following says so itself (20-live-join.js), so the news comes once.
 // It goes the way a ringing reminder does, through notify.
 func (s *Server) tellDone(t *liveTurn, rec *store.Record, err error, back string) {
 	// Someone else's turn is theirs to hear about, not the owner's desktop.

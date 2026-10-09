@@ -18,19 +18,19 @@ func TestEditScriptReadsDataEditAction(t *testing.T) {
 	// Acceptance item 1: the script must look up data-edit-action on the block.
 	if !strings.Contains(script, `block.getAttribute("data-edit-action")`) &&
 		!strings.Contains(script, "block.getAttribute('data-edit-action')") {
-		t.Error("08-edit.js: expected block.getAttribute(\"data-edit-action\") to read a custom edit endpoint from the block element")
+		t.Error("09-edit.js: expected block.getAttribute(\"data-edit-action\") to read a custom edit endpoint from the block element")
 	}
 
 	// Acceptance item 2: when no data-edit-action is set, it must fall back to /canvas/{id}/props.
 	if !strings.Contains(script, "/canvas/"+"+ id + "+"/props") &&
 		!strings.Contains(script, "\"/canvas/\"+id+\"/props\"") {
-		t.Error("08-edit.js: expected a fallback to /canvas/{id}/props when data-edit-action is absent")
+		t.Error("09-edit.js: expected a fallback to /canvas/{id}/props when data-edit-action is absent")
 	}
 
 	// The form action must be set from the resolved variable (not hardcoded).
 	if !strings.Contains(script, "form.action = action") &&
 		!strings.Contains(script, `form.action = action`) {
-		t.Error("08-edit.js: expected form.action to be set from a variable, not hardcoded")
+		t.Error("09-edit.js: expected form.action to be set from a variable, not hardcoded")
 	}
 }
 
@@ -43,17 +43,17 @@ func TestEditScriptDoesNotRemoveCanvasFallback(t *testing.T) {
 	// The fallback path string must still appear in the script body, because
 	// when data-edit-action is absent the script falls back to /canvas/{id}/props.
 	if !strings.Contains(script, "/canvas/") || !strings.Contains(script, "props") {
-		t.Error("08-edit.js: the /canvas/.../props fallback path must still be present for canvas blocks that do not set data-edit-action")
+		t.Error("09-edit.js: the /canvas/.../props fallback path must still be present for canvas blocks that do not set data-edit-action")
 	}
 
 	// The form action must now come from a variable, not hardcoded on one line.
 	if !strings.Contains(script, "form.action = action") {
-		t.Error("08-edit.js: the hardcoded form.action should have been replaced with an 'action' variable that reads data-edit-action and falls back to /canvas/{id}/props")
+		t.Error("09-edit.js: the hardcoded form.action should have been replaced with an 'action' variable that reads data-edit-action and falls back to /canvas/{id}/props")
 	}
 
 	// The fallback must explicitly set action when no attribute is found.
 	if !strings.Contains(script, `!action`) {
-		t.Error("08-edit.js: expected a check for missing data-edit-action (e.g., if (!action)) before falling back to the /canvas/ default")
+		t.Error("09-edit.js: expected a check for missing data-edit-action (e.g., if (!action)) before falling back to the /canvas/ default")
 	}
 }
 
@@ -98,7 +98,7 @@ func findRepoRoot(t *testing.T) string {
 }
 
 // TestDetailPageNoteLoadsEditScript checks that GET /t/note/{id} returns HTML
-// containing <script defer src="/design/base/08-edit.js"> so the Edit button
+// containing <script defer src="/design/base/09-edit.js"> so the Edit button
 // on note detail pages actually activates inline editing. This covers acceptance
 // item 1 of task 0096.
 func TestDetailPageNoteLoadsEditScript(t *testing.T) {
@@ -115,7 +115,7 @@ func TestDetailPageNoteLoadsEditScript(t *testing.T) {
 	wantStatus(t, r, http.StatusOK)
 
 	body := r.Body.String()
-	const tag = `<script defer src="/design/base/08-edit.js">`
+	const tag = `<script defer src="/design/base/09-edit.js">`
 	if !strings.Contains(body, tag) {
 		t.Errorf("GET /t/note/{id} should contain %q in the HTML head\nbody starts with: %s", tag, truncate(body))
 	}
@@ -125,7 +125,7 @@ func TestDetailPageNoteLoadsEditScript(t *testing.T) {
 }
 
 // TestDetailPageActivityLoadsEditScript checks that GET /t/activity/{id} returns
-// HTML containing <script defer src="/design/base/08-edit.js"> so the Edit button
+// HTML containing <script defer src="/design/base/09-edit.js"> so the Edit button
 // on activity detail pages actually activates inline editing. This covers
 // acceptance item 2 of task 0096.
 func TestDetailPageActivityLoadsEditScript(t *testing.T) {
@@ -143,7 +143,7 @@ func TestDetailPageActivityLoadsEditScript(t *testing.T) {
 	wantStatus(t, r, http.StatusOK)
 
 	body := r.Body.String()
-	const tag = `<script defer src="/design/base/08-edit.js">`
+	const tag = `<script defer src="/design/base/09-edit.js">`
 	if !strings.Contains(body, tag) {
 		t.Errorf("GET /t/activity/{id} should contain %q in the HTML head\nbody starts with: %s", tag, truncate(body))
 	}
@@ -153,7 +153,7 @@ func TestDetailPageActivityLoadsEditScript(t *testing.T) {
 }
 
 // TestDetailPageProposalLoadsEditScript checks that GET /t/proposal/{id} returns
-// HTML containing <script defer src="/design/base/08-edit.js"> so the Edit button
+// HTML containing <script defer src="/design/base/09-edit.js"> so the Edit button
 // on proposal detail pages actually activates inline editing. This covers
 // acceptance item 3 of task 0096.
 func TestDetailPageProposalLoadsEditScript(t *testing.T) {
@@ -171,7 +171,7 @@ func TestDetailPageProposalLoadsEditScript(t *testing.T) {
 	wantStatus(t, r, http.StatusOK)
 
 	body := r.Body.String()
-	const tag = `<script defer src="/design/base/08-edit.js">`
+	const tag = `<script defer src="/design/base/09-edit.js">`
 	if !strings.Contains(body, tag) {
 		t.Errorf("GET /t/proposal/{id} should contain %q in the HTML head\nbody starts with: %s", tag, truncate(body))
 	}
@@ -181,7 +181,7 @@ func TestDetailPageProposalLoadsEditScript(t *testing.T) {
 }
 
 // TestListingPagesDoNotLoadEditScript checks that listing pages (/t/note,
-// /t/activity, /t/proposal) do NOT contain the 08-edit.js script tag. Inline
+// /t/activity, /t/proposal) do NOT contain the 09-edit.js script tag. Inline
 // editing on listing pages is out of scope for task 0096. This covers acceptance
 // item 4.
 func TestListingPagesDoNotLoadEditScript(t *testing.T) {
@@ -197,7 +197,7 @@ func TestListingPagesDoNotLoadEditScript(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	const tag = `<script defer src="/design/base/08-edit.js">`
+	const tag = `<script defer src="/design/base/09-edit.js">`
 
 	for _, path := range []string{"/t/note", "/t/activity"} {
 		r := get(t, h, path)
@@ -205,7 +205,7 @@ func TestListingPagesDoNotLoadEditScript(t *testing.T) {
 
 		body := r.Body.String()
 		if strings.Contains(body, tag) {
-			t.Errorf("GET %s should NOT contain the 08-edit.js script tag\nbody starts with: %s", path, truncate(body))
+			t.Errorf("GET %s should NOT contain the 09-edit.js script tag\nbody starts with: %s", path, truncate(body))
 		}
 	}
 }

@@ -18,13 +18,13 @@ func TestEditScriptHidesSwBarOnActivate(t *testing.T) {
 	// buggy code had: if (c.classList.contains("sw-bar") || ...) continue; — this
 	// test asserts that the sw-bar skip is gone, so .sw-bar elements are now hidden.
 	if strings.Contains(script, `c.classList.contains("sw-bar")`) {
-		t.Error(`08-edit.js edit(): expected .sw-bar to be hidden (not skipped) when editing starts — removing the "sw-bar" skip condition fixes backlog 0338`)
+		t.Error(`09-edit.js edit(): expected .sw-bar to be hidden (not skipped) when editing starts — removing the "sw-bar" skip condition fixes backlog 0338`)
 	}
 
 	// The loop must still skip sw-visually-hidden elements, so they are not double-
 	// handled. Verify that only sw-visually-hidden remains in the skip condition.
 	if !strings.Contains(script, `c.classList.contains("sw-visually-hidden")`) {
-		t.Error(`08-edit.js edit(): expected sw-visually-hidden to still be skipped in the sibling-hiding loop`)
+		t.Error(`09-edit.js edit(): expected sw-visually-hidden to still be skipped in the sibling-hiding loop`)
 	}
 
 	// The .sw-bar elements must end up in the covered array so cancel() restores them.
@@ -33,7 +33,7 @@ func TestEditScriptHidesSwBarOnActivate(t *testing.T) {
 	// This is already asserted indirectly by the covered.push pattern below, but we make
 	// it explicit: the loop body must push every non-skipped sibling into covered.
 	if !strings.Contains(script, `covered.push(c)`) {
-		t.Error(`08-edit.js edit(): expected covered.push(c) in the sibling-hiding loop so all hidden elements are tracked for restoration by cancel()`)
+		t.Error(`09-edit.js edit(): expected covered.push(c) in the sibling-hiding loop so all hidden elements are tracked for restoration by cancel()`)
 	}
 }
 
@@ -49,11 +49,11 @@ func TestEditScriptRestoresSwBarOnCancel(t *testing.T) {
 	// Assert that both properties are cleared so the bar becomes visible again.
 	if !strings.Contains(script, `covered[i].style.display = ""`) &&
 		!strings.Contains(script, "covered[i].style.display=\"\"") {
-		t.Error(`08-edit.js cancel(): expected covered[i].style.display = "" to restore hidden elements like .sw-bar when cancelling`)
+		t.Error(`09-edit.js cancel(): expected covered[i].style.display = "" to restore hidden elements like .sw-bar when cancelling`)
 	}
 
 	if !strings.Contains(script, `covered[i].hidden = false`) &&
 		!strings.Contains(script, "covered[i].hidden=false") {
-		t.Error(`08-edit.js cancel(): expected covered[i].hidden = false to restore hidden elements like .sw-bar when cancelling`)
+		t.Error(`09-edit.js cancel(): expected covered[i].hidden = false to restore hidden elements like .sw-bar when cancelling`)
 	}
 }

@@ -16,7 +16,7 @@ import (
 
 // A call recorded with the computer's sound knows, second by second, who
 // was heard: the call (them) or only the microphone (me). The page says
-// it as a letter a second (24-speech.js), kept beside the recording as
+// it as a letter a second (28-speech.js), kept beside the recording as
 // its .voices file, the way its transcript is kept as its .vtt; and when
 // the recording is written down, each line is said by whoever was heard
 // most while it was spoken. Me is the owner's name when a person has

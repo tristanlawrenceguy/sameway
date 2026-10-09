@@ -6,12 +6,12 @@ import (
 	"testing"
 )
 
-// A page left open keeps its days true (30-days.js): it follows itself
+// A page left open keeps its days true (36-days.js): it follows itself
 // through the same refresh a change uses, at the workspace's midnight and
 // when a time it shows passes, waits while hidden, and says the
 // workspace's zone, again after a refresh, when the reader's differs.
 func TestAPageLeftOpenKeepsItsDaysTrue(t *testing.T) {
-	data, err := os.ReadFile("../../design/base/30-days.js")
+	data, err := os.ReadFile("../../design/base/36-days.js")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -27,7 +27,7 @@ func TestAPageLeftOpenKeepsItsDaysTrue(t *testing.T) {
 		`sw.on("refresh", say)`,           // and again after a refresh
 	} {
 		if !strings.Contains(js, want) {
-			t.Errorf("30-days.js does not have %s", want)
+			t.Errorf("36-days.js does not have %s", want)
 		}
 	}
 }

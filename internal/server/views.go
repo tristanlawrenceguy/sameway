@@ -149,7 +149,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 		discard = ` data-discard="/t/` + t.Name + `/` + rec.ID + `/discard?added=` + template.URLQueryEscaper(added) + `"`
 	}
 	// The Edit button the inline editor adds is named for what it edits,
-	// the record by its title, as a block on the canvas is (08-edit.js).
+	// the record by its title, as a block on the canvas is (09-edit.js).
 	editable := editing(t, rec) // see versions.go
 	if t.Name == records.ActivityType {
 		editable = langOf(rec)

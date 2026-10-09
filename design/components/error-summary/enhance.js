@@ -2,7 +2,7 @@
 //
 // A problem's link names a field; pressing it moves focus to that field
 // (a link to an input only scrolls there on its own), opening the record's
-// editor first when it is closed. swErrorSummary marks each field a summary
+// editor first when it is closed. sw.errorSummary marks each field a summary
 // names as invalid and puts its problem beside it, in words, where it can be
 // seen, not only in a red edge; the field is described by that. Then focus
 // goes to the summary, once, so the whole list is heard first and each link
@@ -43,7 +43,7 @@
     (before || field).parentNode.insertBefore(p, before || field);
     return id;
   }
-  window.swErrorSummary = function () {
+  sw.errorSummary = function () {
     document.querySelectorAll("[data-component=error-summary]").forEach(function (summary) {
       var marked = 0;
       summary.querySelectorAll("[data-field]").forEach(function (link) {
@@ -68,9 +68,9 @@
     var field = openFor(link.getAttribute("data-field"));
     if (!field) return;
     e.preventDefault();
-    window.swErrorSummary();
+    sw.errorSummary();
     field.focus();
   });
-  sw.ready(window.swErrorSummary);
-  sw.on("refresh", window.swErrorSummary);
+  sw.ready(sw.errorSummary);
+  sw.on("refresh", sw.errorSummary);
 })();

@@ -230,7 +230,7 @@ func ollamaDownload() string {
 
 // modelWait is the connect card in a few words that change when it would:
 // what was found, and how far a fetch has come. The page asks for them
-// while the card is up and follows when they change (31-connect-wait.js),
+// while the card is up and follows when they change (37-connect-wait.js),
 // so Ollama installed, or a model fetched, shows without Check again.
 func (s *Server) modelWait() string {
 	why, choices := s.modelProblem()

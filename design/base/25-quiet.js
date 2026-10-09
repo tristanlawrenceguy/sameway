@@ -1,7 +1,7 @@
 // Controls a pointer reveals can be put away (WCAG 1.4.13).
 //
 // A block's buttons fade in under it when the pointer is on it
-// (04-quiet.css). Escape puts them away again, for someone who wants the
+// (05-quiet.css). Escape puts them away again, for someone who wants the
 // block without them; they come back when the pointer leaves and
 // returns. Escape inside an edit is the edit's, and left alone.
 (function () {

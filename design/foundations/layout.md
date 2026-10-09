@@ -18,7 +18,7 @@ Sameway tells it after every write how the page now reads.
 | Related things sit together | Things near each other are seen as one group, more strongly than by look | [NN/g, proximity](https://www.nngroup.com/articles/gestalt-proximity/) |
 | Rows of twelve are filled; a wide main column with a narrower one beside it | Holes read as missing content; two-thirds and one-third is the common, readable split | [GOV.UK layout](https://design-system.service.gov.uk/styles/layout/), [Material responsive grid](https://m2.material.io/design/layout/responsive-layout-grid.html) |
 | Order on the page is order in the source | The grid places blocks by position, so what is seen first is heard first, and one column on a phone keeps the order | [WCAG 1.3.2](https://www.w3.org/WAI/WCAG22/Understanding/meaningful-sequence.html), [Source order matters](https://adrianroselli.com/2015/09/source-order-matters.html), [WCAG 1.4.10](https://www.w3.org/WAI/WCAG22/Understanding/reflow.html) |
-| Tall things get a row or a pane of their own; glance and brief sizes go in panes | A short card beside a tall calendar leaves a hole under the card | this design system's grid (`design/base/06-layout.css`) |
+| Tall things get a row or a pane of their own; glance and brief sizes go in panes | A short card beside a tall calendar leaves a hole under the card | this design system's grid (`design/base/07-layout.css`) |
 
 ## How it is built
 
@@ -44,7 +44,7 @@ Sameway tells it after every write how the page now reads.
 How tall a block is depends on things only the person's own browser knows:
 the window's width, the zoom, the text size and spacing they chose
 (`ui.text`, `ui.spacing`), the fonts, and whether it is a phone. So the page
-measures itself where it is drawn (`design/base/25-measure.js`) and says
+measures itself where it is drawn (`design/base/29-measure.js`) and says
 how it came out:
 
 - each block's height, width and where its row starts;

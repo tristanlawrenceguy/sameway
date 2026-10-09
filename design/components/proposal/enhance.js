@@ -2,7 +2,7 @@
 //
 // The two buttons are forms that work on their own. With scripts, the
 // answer is sent where the person is: what it did is said through the
-// chat's status, the page follows the change (17-refresh.js), and focus
+// chat's status, the page follows the change (19-refresh.js), and focus
 // goes to the message box, the next thing to do, since the button that
 // had it is gone. A failure says why. Every pending question goes with
 // the answer, here and on the server, so at most one is ever waiting. A

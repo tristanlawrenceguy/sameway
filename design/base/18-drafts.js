@@ -31,7 +31,7 @@
     form.addEventListener("submit", function () { del(k); });
   }
 
-  // An inline edit: the fields of the form 08-edit.js builds, saved as
+  // An inline edit: the fields of the form 09-edit.js builds, saved as
   // they change, put back when the same edit is opened again, and dropped
   // on Cancel, or once the page says the save went through. Pressing Save
   // is not enough: a save can be refused, and the words must be there to
@@ -110,7 +110,7 @@
           // With a list of problems, each field is told its own instead.
           if (field && field.closest(".sw-inline-form") && !o.querySelector("[data-component=error-summary]")) field.setAttribute("aria-describedby", "outcome");
           // Each field an error summary names is marked with its problem.
-          if (window.swErrorSummary) window.swErrorSummary();
+          if (sw.errorSummary) sw.errorSummary();
         }, 0);
         return;
       }
@@ -120,7 +120,7 @@
   sw.ready(settle);
   sw.arm("form.sw-compose", compose);
   sw.arm("[data-block-id]", offer);
-  // An edit's form is made by a press (08-edit.js), not brought by a
+  // An edit's form is made by a press (09-edit.js), not brought by a
   // refresh: it is watched for as it is put in.
   sw.ready(function () {
     document.querySelectorAll("form.sw-inline-form").forEach(watch);

@@ -1,7 +1,7 @@
 // Sound from this device: recording from its microphone, and any sound
 // its browser can play turned into the plain sound speech-to-text reads.
 //
-// window.swSpeech is shared by the voice component (record and dictate)
+// sw.speech is shared by the voice component (record and dictate)
 // and the audio component (writing a recording down). Recording needs a
 // secure page (https, or this computer) and a browser that records; where
 // either is missing, supported() says so and nothing offers to record.
@@ -167,5 +167,5 @@
       return new Blob([bytes.buffer], { type: "audio/wav" });
     });
   }
-  window.swSpeech = { supported: supported, canHearComputer: canHearComputer, record: record, toWav: toWav, ext: ext };
+  sw.speech = { supported: supported, canHearComputer: canHearComputer, record: record, toWav: toWav, ext: ext };
 })();

@@ -1,4 +1,4 @@
-// Icons for the prose editor's toolbar (12-prose-tools.js). Each button
+// Icons for the prose editor's toolbar (16-prose-tools.js). Each button
 // shows a familiar icon beside its word, never the icon alone: only a few
 // icons are understood by nearly everyone, and a word next to one is what
 // makes the rest quick to find and hard to mistake (NN/g "Icon Usability";
@@ -27,17 +27,17 @@
     table: "M3 4h18v16H3zM3 10h18M3 15h18M9 4v16M15 4v16",
     insertHorizontalRule: "M3 12h18"
   };
-  // swProseLabel puts a command's icon and its word in a button.
-  window.swProseLabel = function (b, cmd, word) {
-    b.innerHTML = window.swProseIcon(cmd);
+  // sw.proseLabel puts a command's icon and its word in a button.
+  sw.proseLabel = function (b, cmd, word) {
+    b.innerHTML = sw.proseIcon(cmd);
     var span = document.createElement("span");
     span.className = "sw-prose-tools__word";
     span.textContent = word;
     b.appendChild(span);
   };
 
-  // swProseIcon is the icon for a command, as markup, or nothing.
-  window.swProseIcon = function (cmd) {
+  // sw.proseIcon is the icon for a command, as markup, or nothing.
+  sw.proseIcon = function (cmd) {
     var d = PATHS[cmd];
     if (!d) return "";
     var heavy = cmd === "more" ? 3 : 2;

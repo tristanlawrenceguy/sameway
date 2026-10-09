@@ -65,6 +65,7 @@ with one field belongs next to that field, or in an error summary.
   the words ([WCAG 2.5.5](https://www.w3.org/WAI/WCAG22/Understanding/target-size-enhanced.html)).
 - **Plain words, no raw errors.** Say what happened and what to do
   ([NN/g error messages](https://www.nngroup.com/articles/error-message-guidelines/)).
+- **Its script is its own.** Closing, and focus on the outcome when a page arrives with one, lives in this component's enhance.js (it was design/base/18-alert-dismiss.js); tools/a11y-runner/behave-components.mjs checks both.
 
 Not done, and why: messages that close themselves (a person who reads
 slowly or looked away misses them); `role=alert` on every message (it is

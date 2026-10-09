@@ -6,7 +6,7 @@
 // went to or the one they came back to, says the assistant is working and
 // names the turn on its composer; this follows that turn from
 // /chat/live, from its start to its reply, busy as the page that asked
-// for it would be. See 14-live.js, which shows it.
+// for it would be. See 17-live.js, which shows it.
 (function () {
   "use strict";
   // Stop, beside the status while the turn runs: the turn ends where it
