@@ -219,8 +219,5 @@
     try { tried = sessionStorage.getItem(key) === "1"; sessionStorage.setItem(key, "1"); } catch (e) {}
     if (form.hasAttribute("data-auto") && !tried) go();
   }
-  function init(root) { (root || document).querySelectorAll("[data-component=media]").forEach(function (f) { arm(f); armMake(f); }); }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", function () { init(); });
-  else init();
-  document.addEventListener("sw:refresh", function () { init(); });
+  sw.arm("[data-component=media]", function (f) { arm(f); armMake(f); });
 })();

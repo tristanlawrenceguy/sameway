@@ -77,8 +77,8 @@
   // system's notification with the reply's first words, and a mark on the
   // tab until they look again. Someone watching the page needs neither.
   // With no page left to follow the turn, the server tells it instead.
-  document.addEventListener("sw:turn-done", function (e) {
-    var d = e.detail || {};
+  sw.on("turn-done", function (d) {
+    d = d || {};
     // A stream that broke with no reply has nothing to tell.
     if (!document.hidden || (!d.id && !d.text)) return;
     var failed = !!d.text, words = d.text || "";
@@ -110,5 +110,5 @@
   }, true);
 
   function init() { document.querySelectorAll("form.sw-compose[data-turn]").forEach(join); }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
+  sw.ready(init);
 })();

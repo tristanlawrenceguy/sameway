@@ -52,7 +52,7 @@
     if (document.visibilityState !== "visible") return;
     if (today() !== shown) follow(); else arm();
   });
-  document.addEventListener("sw:refresh", arm);
+  sw.on("refresh", arm);
   arm();
 
   // The zone, said once when the reader's differs from the workspace's.
@@ -79,5 +79,5 @@
   }
   say();
   // A page that follows itself comes back without it.
-  document.addEventListener("sw:refresh", say);
+  sw.on("refresh", say);
 })();

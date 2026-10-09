@@ -1,7 +1,6 @@
 package server_test
 
 import (
-	"os"
 	"strings"
 	"testing"
 )
@@ -40,16 +39,5 @@ func TestUploadFormSaysWhatItTakesAndWhereProblemsGo(t *testing.T) {
 	}
 }
 
-// Every upload form, the list's or a block's, is checked by the
-// component's own script, in the same words as the server's.
-func TestUploadScriptSaysWhatIsWrong(t *testing.T) {
-	js, err := os.ReadFile("../../design/components/upload/enhance.js")
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, want := range []string{"Select a file to add", "The selected file must be smaller than 4 GB", "The selected file is empty", "setCustomValidity", `querySelectorAll("[data-component=upload]")`} {
-		if !strings.Contains(string(js), want) {
-			t.Errorf("the upload script should carry %q", want)
-		}
-	}
-}
+// What the upload script says of a missing, empty or picture file is
+// checked in a browser: tools/a11y-runner/behave-arm.mjs.

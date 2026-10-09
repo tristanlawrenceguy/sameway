@@ -32,7 +32,7 @@
       if (name && name.select) name.select();
     }, 0);
   }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", openNew); else openNew();
+  sw.ready(openNew);
 
   // Cancel on a record added a moment ago and never saved takes the adding
   // back: the person changed their mind, and the list should not keep a

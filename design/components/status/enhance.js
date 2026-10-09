@@ -29,9 +29,7 @@
       document.title = "⏳ " + document.title;
     });
   }
-  function init() { document.querySelectorAll("form[data-busy-target]").forEach(upgrade); }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
-  document.addEventListener("sw:refresh", init);
+  sw.arm("form[data-busy-target]", upgrade);
   // A page brought back from the back/forward cache mid-request is whatever
   // it was when left: the server knows how it ended, so ask it again.
   window.addEventListener("pageshow", function (e) {

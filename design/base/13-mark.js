@@ -98,8 +98,5 @@
       send();
     });
   }
-  function init() { document.querySelectorAll("form.sw-mark").forEach(arm); }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
-  else init();
-  document.addEventListener("sw:refresh", init);
+  sw.arm("form.sw-mark", arm);
 })();

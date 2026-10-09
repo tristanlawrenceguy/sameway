@@ -46,5 +46,5 @@
     document.querySelectorAll("a[data-popout]").forEach(popout);
     document.querySelectorAll(".sw-chat__log").forEach(remember);
   }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
+  sw.ready(init);
 })();
