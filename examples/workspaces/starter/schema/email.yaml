@@ -22,3 +22,21 @@ fields:
     type: list
     of: string
     description: Tags, by you or by a classify action.
+  message_id:
+    label: Message ID
+    type: string
+    description: The email's own Message-Id, kept by the system, which replies name to say what they answer.
+    readonly: true
+  thread:
+    label: Thread
+    type: ref
+    to: email
+    listed: true
+    description: The email that started the conversation this one is part of, kept by the system from what the email says it answers. That email's page lists the conversation in order.
+    readonly: true
+  from_me:
+    label: Sent by me
+    type: bool
+    default: false
+    description: Whether you sent it (read from your Sent folder because it answers a conversation here), kept by the system.
+    readonly: true

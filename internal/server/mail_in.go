@@ -8,6 +8,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -141,7 +142,8 @@ func (s *Server) readMail(ctx context.Context) (int, error) {
 	defer mailMu.Unlock()
 	marks := map[string]mailin.Mark{}
 	json.Unmarshal([]byte(s.app.Store.Meta("mail:marks")), &marks)
-	mails, marks, err := mailin.New(ctx, a, marks)
+	mails, marks, err := mailin.New(ctx, a, marks, func(refs []string) bool { return s.threadOf(refs) != "" })
+	sort.SliceStable(mails, func(i, j int) bool { return mails[i].Date.Before(mails[j].Date) }) // a reply after what it answers
 	raw, _ := json.Marshal(marks)
 	s.app.Store.SetMeta("mail:marks", string(raw))
 	s.app.Store.SetMeta("mail:checked", time.Now().Format("2 Jan 15:04"))
@@ -189,9 +191,22 @@ func (s *Server) mailNote(m mailin.Mail) error {
 	}
 	// An email is a record of its own, so one coming in can set off any
 	// action (when added, what email); a workspace from before has notes.
-	if _, ok := s.app.Types.Get("email"); ok {
-		_, _, err := records.WriteAs(s.app.Store, who, "created", "email", "", map[string]any{
-			"subject": clipMail(title, 300), "from": m.From, "received": when.Store(m.Date, false), "body": strings.Join(parts[1:], "\n\n"), "tags": []any{toSort}})
+	if t, ok := s.app.Types.Get("email"); ok {
+		sent := m.Date
+		if sent.IsZero() {
+			sent = time.Now() // no Date header: when it came
+		}
+		fields := map[string]any{"subject": clipMail(title, 300), "from": m.From, "received": when.Store(sent, false), "body": strings.Join(parts[1:], "\n\n")}
+		if !m.Sent {
+			fields["tags"] = []any{toSort} // what the person sent is theirs, not to sort
+		}
+		if _, ok := t.Field("thread"); ok { // mail_threads.go
+			fields["message_id"], fields["from_me"] = m.ID, m.Sent
+			if root := s.threadOf(m.Refs); root != "" {
+				fields["thread"] = root
+			}
+		}
+		_, _, err := records.WriteKept(s.app.Store, who, "created", "email", "", fields)
 		return err
 	}
 	_, _, err := records.WriteAs(s.app.Store, who, "created", "note", "", map[string]any{
