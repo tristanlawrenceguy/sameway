@@ -15,3 +15,8 @@ fields:
     label: What it means
     type: text
     description: "When a record has it, in plain words: \"something I have to do: pay, reply, book, sign, bring\". The assistant reads this and nothing else to decide."
+  alone:
+    label: Only when no other tag fits
+    type: bool
+    default: false
+    description: "For a tag such as nothing to do: Sameway gives it when none of the others fits, rather than the assistant deciding it, so a record looked at and found to need nothing says so. Changing it to another tag is what teaches the action what it missed."

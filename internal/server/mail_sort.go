@@ -58,8 +58,20 @@ func taggedWith(r *store.Record, tag string) bool {
 // the model made of it (triage.go), kept, changed or set aside with a press;
 // before it has, or with no model, made a task or set aside by hand.
 func (s *Server) mailSection() string {
-	notes := s.mailToSort()
+	alone := s.aloneTags() // classify_today.go: what needs nothing is folded away
+	var notes, nothing []*store.Record
+	for _, n := range s.mailToSort() {
+		if s.hasAlone(n, alone) != "" {
+			nothing = append(nothing, n)
+		} else {
+			notes = append(notes, n)
+		}
+	}
+	folded := s.foldedNothing(nothing, alone)
 	if len(notes) == 0 {
+		if folded != "" {
+			return `<h2>To sort</h2>` + folded
+		}
 		return ""
 	}
 	esc := template.HTMLEscapeString
@@ -82,7 +94,7 @@ func (s *Server) mailSection() string {
 		}
 		b.WriteString(`</div></li>`)
 	}
-	b.WriteString(`</ul>`)
+	b.WriteString(`</ul>` + folded)
 	return b.String()
 }
 

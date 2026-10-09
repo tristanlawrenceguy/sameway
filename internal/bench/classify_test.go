@@ -98,21 +98,29 @@ func TestClassifyFollowsJudgement(t *testing.T) {
 		}
 		a.Chat.ProviderErr = nil
 		a.Store.Create("tag", map[string]any{"name": "to do", "means": "Something I have to do: pay, reply, book, bring, send, sign, renew, attend, buy or call. Not newsletters, adverts, receipts for what is paid, or notices that need nothing from me."})
-		learn, _ := a.Store.Create("action", map[string]any{"title": "Sort", "kind": "classify", "tags": []any{"to do"}})
-		checked, _ := a.Store.Create("action", map[string]any{"title": "Sort, checked", "kind": "classify", "tags": []any{"to do"}, "check": true, "examples": 10})
+		a.Store.Create("tag", map[string]any{"name": "nothing to do", "means": "Needs nothing from me. Given when no other tag fits.", "alone": true})
+		learn, _ := a.Store.Create("action", map[string]any{"title": "Sort", "kind": "classify", "tags": []any{"to do", "nothing to do"}})
+		checked, _ := a.Store.Create("action", map[string]any{"title": "Sort, checked", "kind": "classify", "tags": []any{"to do", "nothing to do"}, "check": true, "examples": 10})
 		taught, test := triageCases[:15], triageCases[15:]
 		for _, c := range taught {
 			rec, _ := a.Store.Create("email", map[string]any{"subject": strings.SplitN(c.text, "\n", 2)[0], "body": c.text})
 			_ = a.Chat.Classify(context.Background(), learn, "email", rec.ID)
 			cls, _ := a.Store.List("classification", store.ListOptions{})
 			for _, cl := range cls {
-				if cl.Fields["record"] == "email/"+rec.ID {
-					state := "removed"
-					if c.task {
-						state = "confirmed"
-					}
-					a.Store.Update("classification", cl.ID, map[string]any{"state": state, "confirmed_by": map[bool]string{true: "person", false: ""}[c.task]})
+				if cl.Fields["record"] != "email/"+rec.ID {
+					continue
 				}
+				// The person: a right tag kept, a wrong one changed to the other.
+				right := (cl.Fields["tag"] == "to do") == c.task
+				change := map[string]any{"state": "confirmed", "confirmed_by": "person"}
+				if !right {
+					to := "nothing to do"
+					if c.task {
+						to = "to do"
+					}
+					change = map[string]any{"state": "changed", "to": to}
+				}
+				a.Store.Update("classification", cl.ID, change)
 			}
 		}
 		for _, act := range []struct {
@@ -125,7 +133,7 @@ func TestClassifyFollowsJudgement(t *testing.T) {
 				rec, _ := a.Store.Create("email", map[string]any{"subject": strings.SplitN(c.text, "\n", 2)[0], "body": c.text})
 				_ = a.Chat.Classify(context.Background(), action, "email", rec.ID)
 				got, _ := a.Store.Get("email", rec.ID)
-				has := strings.Contains(fmtTags(got.Fields["tags"]), "to do")
+				has := strings.Contains(","+fmtTags(got.Fields["tags"])+",", ",to do,")
 				if has == c.task {
 					right++
 				}
