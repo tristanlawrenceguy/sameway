@@ -88,10 +88,12 @@ func (s *Service) askJSON(ctx context.Context, system, question string, out any)
 	return json.Unmarshal([]byte(raw), out)
 }
 
-const classifySystem = `You give a record the tags that fit it, from the person's own tags, each defined in their words. Use only these tags, as written, and only when the definition plainly fits; none may fit.
+const classifySystem = `You tag a record for a person: an email or a message that came to them, or something they wrote. Each tag is defined by the person in their own words, where "I", "me" and "my" are the person, never you.
+Read what the record asks of the person or is about, then give each tag whose definition is true of it, as written; none may be.
 Answer with JSON only: {"tags": [{"tag": "...", "why": "four to eight words"}]}`
 
-const oneTagSystem = `You decide whether one tag, defined in the person's words, fits a record. Only when the definition plainly fits.
+const oneTagSystem = `You decide whether one tag fits a record for a person: an email or a message that came to them, or something they wrote. The tag is defined by the person in their own words, where "I", "me" and "my" are the person, never you.
+Read what the record asks of the person or is about, then say whether the definition is true of it.
 Answer with JSON only: {"fits": true or false, "why": "four to eight words"}`
 
 // chosen is a tag the model gave, and why.
