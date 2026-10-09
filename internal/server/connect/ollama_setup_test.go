@@ -18,8 +18,9 @@ import (
 // A person with Ollama and no model presses one button: Sameway fetches the
 // free model through Ollama, gives it room for its prompt, and makes it the
 // assistant's model. No terminal, nothing unsigned.
+// Not parallel: it points llm.OllamaURL and DefaultCandidates at a fake
+// Ollama, which other tests read.
 func TestAPersonFetchesAFreeModelThroughOllama(t *testing.T) {
-	t.Parallel()
 	var mu sync.Mutex
 	have, created := false, ""
 	ollama := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
