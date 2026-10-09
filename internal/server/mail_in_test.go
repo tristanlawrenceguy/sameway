@@ -41,7 +41,7 @@ func TestEmailComesInAsNotesToSort(t *testing.T) {
 	}
 	n := notes[0]
 	body, _ := n.Fields["body"].(string)
-	if n.Fields["title"] != "Dentist on Friday" || !strings.Contains(body, "From Clinic <desk@clinic.example>") || !strings.Contains(body, "bring the form") || !strings.Contains(body, "[form](/t/file/") {
+	if n.Fields["subject"] != "Dentist on Friday" || n.Fields["from"] != "Clinic <desk@clinic.example>" || n.Fields["received"] == nil || !strings.Contains(body, "bring the form") || !strings.Contains(body, "[form](/t/file/") {
 		t.Errorf("subject, sender, words and file: %v", n.Fields)
 	}
 	if strings.Contains(a.Store.Meta("mail:account"), "abcdefghijklmnop") {
@@ -72,12 +72,6 @@ func TestEmailComesInAsNotesToSort(t *testing.T) {
 }
 
 func emailNotes(t *testing.T, st *store.Store) []*store.Record {
-	recs, _ := st.List("note", store.ListOptions{})
-	var out []*store.Record
-	for _, r := range recs {
-		if tags, _ := r.Fields["tags"].([]any); len(tags) > 0 && tags[0] == "email" {
-			out = append(out, r)
-		}
-	}
-	return out
+	recs, _ := st.List("email", store.ListOptions{})
+	return recs
 }

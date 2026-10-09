@@ -1,0 +1,24 @@
+# An email that came in: what you sent or forwarded to your workspace.
+# One coming in can set off any action, as any record can.
+name: email
+description: An email that came in to your workspace, with who it was from and when.
+title: subject
+provided: true
+fields:
+  subject:
+    type: string
+    required: true
+    maxLength: 300
+  from:
+    type: string
+    description: Who sent it, as the email says.
+  received:
+    type: datetime
+    description: When it was sent.
+  body:
+    type: markdown
+    description: What it says, with links to the files that came with it.
+  tags:
+    type: list
+    of: string
+    description: Tags, by you or by a classify action.

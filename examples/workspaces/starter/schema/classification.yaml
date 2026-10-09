@@ -1,0 +1,33 @@
+# A tag a classify action gave a record, and what became of it: whether
+# the person kept it, took it off, changed it to another, or left it. The
+# next time the action gives that tag it can be shown these, newest
+# first, to follow the person's judgement rather than its own.
+name: classification
+description: A tag an action gave a record, and what the person did with it.
+internal: true
+title: tag
+fields:
+  record:
+    type: string
+    required: true
+    description: The record tagged, as type/id.
+  tag:
+    type: string
+    required: true
+  why:
+    type: text
+  action:
+    type: string
+    description: The action that gave it.
+  state:
+    type: enum
+    values: [suggested, confirmed, removed, changed]
+    labels: {suggested: Suggested, confirmed: Kept, removed: Taken off, changed: Changed}
+    default: suggested
+  to:
+    type: string
+    description: The tag it was changed to, when changed.
+  confirmed_by:
+    type: enum
+    values: [person, judgement]
+    labels: {person: You, judgement: Your past choices}

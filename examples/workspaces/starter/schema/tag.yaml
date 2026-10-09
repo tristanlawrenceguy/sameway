@@ -1,0 +1,17 @@
+# A tag and what it means: what a classify action decides by, and what
+# you read when you wonder why something has it. Edit the meaning to
+# change what gets it from now on.
+name: tag
+description: "A tag and what it means, which classify actions decide by: to do, important, waiting on someone, or any of your own."
+title: name
+provided: true
+fields:
+  name:
+    type: string
+    required: true
+    maxLength: 60
+    description: The tag as it is written on a record, such as to do.
+  means:
+    label: What it means
+    type: text
+    description: "When a record has it, in plain words: \"something I have to do: pay, reply, book, sign, bring\". The assistant reads this and nothing else to decide."

@@ -54,6 +54,7 @@ func (s *Service) StartAutomating() {
 	}
 	s.auto = &automation{jobs: make(chan automationJob, 256), last: map[string]time.Time{}}
 	s.Store.Listen(s.recordChanged)
+	s.Store.Listen(s.tagsChanged) // what the person did with a tag an action gave; judgement.go
 	go func() {
 		for j := range s.auto.jobs {
 			s.runAutomation(j)
@@ -133,7 +134,7 @@ func (s *Service) runAutomation(j automationJob) {
 		return
 	}
 	title, _ := rec.Fields["title"].(string)
-	ctx := context.WithValue(context.Background(), automationKey{}, title)
+	ctx := context.WithValue(context.WithValue(context.Background(), automationKey{}, title), triggerKey{}, j.vars)
 	r := s.runRecord(ctx, filled(rec, j.vars), "")
 	for i := range r.changes {
 		r.changes[i].By, r.changes[i].Via = title, "because "+j.why
@@ -169,6 +170,10 @@ func (s *Service) runAutomation(j automationJob) {
 }
 
 type automationKey struct{}
+
+// triggerKey carries what set an action off, for one that acts on the
+// record itself (classify).
+type triggerKey struct{}
 
 // automatedBy is the action a turn was asked for by, or "".
 func automatedBy(ctx context.Context) string {

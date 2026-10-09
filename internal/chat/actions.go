@@ -60,6 +60,9 @@ func (s *Service) runRecord(ctx context.Context, rec *store.Record, canvas strin
 		return r
 	case "command":
 		return s.command(ctx, rec, title)
+	case "classify":
+		vars, _ := ctx.Value(triggerKey{}).(map[string]string)
+		return s.Classify(ctx, rec, vars["type"], vars["id"]) // classify.go
 	case "mqtt":
 		return s.mqttAction(ctx, rec, title)
 	case "message":

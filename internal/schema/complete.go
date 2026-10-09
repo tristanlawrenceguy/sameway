@@ -110,7 +110,7 @@ func (s *Set) Complete(builtin *Set) {
 			// A value the system gives an enum of its own reaches a copy
 			// made before it: without it, an older workspace's log could
 			// not say an agent made a change, and dropped the entry.
-			if b.Internal && f.Type == "enum" {
+			if (b.Internal || b.Provided) && f.Type == "enum" { // an action's new kinds too
 				for i := range t.Fields {
 					if t.Fields[i].Name != f.Name || t.Fields[i].Type != "enum" {
 						continue
