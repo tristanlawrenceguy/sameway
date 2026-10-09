@@ -3,8 +3,8 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
-	"net/http"
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/blocks"
@@ -15,50 +15,26 @@ import (
 
 // The clock: the time, and reminders. A reminder is a record (an alarm
 // at a time, or a timer that ends at one) that the clock sets, lists,
-// and rings when its time comes. Ringing happens here: a page with a
-// clock listens on /clock/stream, and every few seconds the server marks
-// what is due as rung and tells the page, which shows it, sounds, and
-// notifies. A rung reminder stays until dismissed or given five more
-// minutes, and it shows on the calendar like anything with a day.
+// and rings when its time comes. Ringing happens here: every few seconds
+// the server marks what is due as rung (ring.go), and a page with a clock
+// hears of it on its one connection, /events?ring=1 (sync.go), and shows
+// it, sounds, and notifies. A rung reminder stays until dismissed or given
+// five more minutes, and it shows on the calendar like anything with a day.
 
-// clockStream tells an open page about reminders as they ring, as
-// server-sent events: every few seconds, whatever has rung and this page
-// has not been told of yet. The ringing itself is the server's, in
-// ring.go, whether or not a page is open.
-func (s *Server) clockStream(w http.ResponseWriter, r *http.Request) {
-	flusher, ok := w.(http.Flusher)
-	if !ok {
-		http.Error(w, "streaming is not possible here", http.StatusNotImplemented)
-		return
-	}
-	w.Header().Set("Content-Type", "text/event-stream; charset=utf-8")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("X-Accel-Buffering", "no")
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprint(w, "event: hello\ndata: {}\n\n")
-	flusher.Flush()
-	tick := time.NewTicker(5 * time.Second)
-	defer tick.Stop()
-	told := map[string]bool{}
-	for {
-		for _, rec := range s.ringing() {
-			if told[rec.ID] {
-				continue
-			}
-			told[rec.ID] = true
-			t, _ := s.app.Types.Get(ReminderType)
-			// What it is about, in words and as a link, as the machine's own
-			// notification says it: Water, 3 of 8 glasses so far.
-			text, link := blocks.RingWords(s.app.Store, rec)
-			body, _ := json.Marshal(map[string]any{"id": rec.ID, "title": s.title(t, rec), "href": "/t/" + ReminderType + "/" + rec.ID, "text": text, "url": link})
-			fmt.Fprintf(w, "event: ring\ndata: %s\n\n", body)
-			flusher.Flush()
+// tellRings tells an open page, as server-sent events, each reminder that
+// has rung and it has not been told of yet.
+func (s *Server) tellRings(w io.Writer, told map[string]bool) {
+	for _, rec := range s.ringing() {
+		if told[rec.ID] {
+			continue
 		}
-		select {
-		case <-r.Context().Done():
-			return
-		case <-tick.C:
-		}
+		told[rec.ID] = true
+		t, _ := s.app.Types.Get(ReminderType)
+		// What it is about, in words and as a link, as the machine's own
+		// notification says it: Water, 3 of 8 glasses so far.
+		text, link := blocks.RingWords(s.app.Store, rec)
+		body, _ := json.Marshal(map[string]any{"id": rec.ID, "title": s.title(t, rec), "href": "/t/" + ReminderType + "/" + rec.ID, "text": text, "url": link})
+		fmt.Fprintf(w, "event: ring\ndata: %s\n\n", body)
 	}
 }
 

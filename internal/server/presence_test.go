@@ -112,8 +112,5 @@ func TestArrivalsAreSaidOnceAndQuietly(t *testing.T) {
 	if strings.Contains(string(js), "assertive") || strings.Contains(string(js), "left") {
 		t.Error("nothing interrupts, and leaving is not said")
 	}
-	follow, _ := os.ReadFile("../../design/base/20-follow.js")
-	if !strings.Contains(string(follow), "/events?idle=1") || !strings.Contains(string(follow), "10 * 60 * 1000") {
-		t.Error("a page untouched for ten minutes says so")
-	}
+	// A page untouched for ten minutes says so: behave-connect.mjs.
 }

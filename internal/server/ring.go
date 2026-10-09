@@ -15,7 +15,7 @@ import (
 // rung, logged, and told beyond the page through notify, which the
 // command line provides: the machine's own notification, and a command
 // that can reach a phone or an inbox. An open page hears about it over
-// /clock/stream and rings too.
+// /events (sync.go) and rings too.
 
 // StartRinging rings what is due for as long as ctx lasts. notify may be
 // nil, in which case a ring shows only on open pages.

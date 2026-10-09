@@ -57,9 +57,12 @@ func (s *Server) fresh() {
 	}
 }
 
-// events tells an open page, as a server-sent event, each time the
-// workspace changes from elsewhere. The page fetches itself and moves what
-// changed into place (17-refresh.js), as it does after a turn.
+// events is an open page's one connection (01-connect.js). It tells the
+// page, as a server-sent event, each time the workspace changes from
+// elsewhere: the page fetches itself and moves what changed into place
+// (17-refresh.js), as it does after a turn. With ?ring=1, a page with a
+// clock, it also tells each reminder as it rings (clock.go), checked every
+// few seconds.
 func (s *Server) events(w http.ResponseWriter, r *http.Request) {
 	if isPublic(r) {
 		http.NotFound(w, r) // a published page follows by being read again
@@ -77,17 +80,22 @@ func (s *Server) events(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "event: hello\ndata: {}\n\n")
 	flusher.Flush()
 	last, others := s.changes.Load(), s.presentFor(r)
-	idle := r.URL.Query().Get("idle") != ""
+	idle, rings := r.URL.Query().Get("idle") != "", r.URL.Query().Get("ring") != ""
+	told := map[string]bool{}
 	tick := time.NewTicker(time.Second)
 	defer tick.Stop()
-	for {
+	for n := 0; ; n++ {
+		if rings && n%5 == 0 {
+			s.tellRings(w, told)
+			flusher.Flush()
+		}
 		select {
 		case <-r.Context().Done():
 			return
 		case <-tick.C:
 		}
 		// An open page is someone here, unless it says its person has
-		// been idle a while (20-follow.js); who else is here changing is
+		// been idle a while (01-connect.js); who else is here changing is
 		// news to the page, like a change.
 		if !idle {
 			s.seen(r, refererPath(r))

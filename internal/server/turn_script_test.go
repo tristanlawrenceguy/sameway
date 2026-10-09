@@ -44,7 +44,7 @@ func TestATurnIsSaidOnceAndMarkedInPlace(t *testing.T) {
 		t.Error("28-turn.js must say things through the status already there, not a region of its own")
 	}
 	for _, want := range []string{
-		`window.swWatchTurn ? window.swWatchTurn(form)`,
+		`sw.watchTurn(form)`,
 		"watch.step(d, label)",
 		"watch.done()",
 		`canvas.querySelector(".sw-block--pending")`, // the block lands where its place was held

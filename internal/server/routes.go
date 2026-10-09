@@ -93,7 +93,6 @@ var pageRoutes = []route{
 	{pattern: "POST /clock/set", handle: (*Server).clockSet, access: people, tool: "create_record", reach: inward},
 	{pattern: "POST /clock/{id}/done", handle: (*Server).clockDone, access: people, tool: "update_record", reach: inward},
 	{pattern: "POST /clock/{id}/snooze", handle: (*Server).clockSnooze, access: people, tool: "update_record", reach: inward},
-	{pattern: "GET /clock/stream", handle: (*Server).clockStream, access: people},
 	{pattern: "POST /habit/{id}/log", handle: (*Server).habitLog, access: people, tool: "create_record", reach: inward},
 	{pattern: "GET /events", handle: (*Server).events, access: people},
 	{pattern: "GET /search", handle: (*Server).searchPage, access: people},
