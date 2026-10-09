@@ -48,7 +48,7 @@ func (s *Server) fromCopy(w http.ResponseWriter, r *http.Request) {
 		s.showWorkspaces(w, r, err.Error())
 		return
 	}
-	workspace.Remember(dir, "")
+	s.machine().Remember(dir, "")
 	if _, notStarted := s.start(dir); notStarted != nil {
 		s.showWorkspaceCreated(w, r, name, dir, "copy", notStarted)
 		return

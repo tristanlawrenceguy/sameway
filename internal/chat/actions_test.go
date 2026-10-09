@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -30,9 +29,9 @@ func TestAWebhookActionCallsOutAndShowsItsAnswer(t *testing.T) {
 		got.calls++
 	}))
 	defer remote.Close()
-	chat.HTTPClient = remote.Client()
 
 	svc := newFullService(t)
+	svc.HTTP = remote.Client()
 	weather, err := svc.Store.Create(records.ActionType, map[string]any{
 		"title": "Update the weather", "kind": "webhook", "url": remote.URL + "/weather",
 		"body": `{"city": "Bristol"}`, "show": true,

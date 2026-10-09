@@ -26,21 +26,21 @@ type Trashed struct {
 }
 
 // TrashDir is where deleted workspaces go, beside the known list.
-func TrashDir() string { return filepath.Join(filepath.Dir(KnownPath()), "trash") }
+func (m Machine) TrashDir() string { return filepath.Join(filepath.Dir(m.Known), "trash") }
 
-func trashIndex() string { return filepath.Join(TrashDir(), "trash.json") }
+func (m Machine) trashIndex() string { return filepath.Join(m.TrashDir(), "trash.json") }
 
 // Trash moves a workspace folder to the trash and says where it went.
 // When the trash is on another drive, it goes into a hidden folder beside
 // where it was instead, which a rename can always reach.
-func Trash(dir, name string) (Trashed, error) {
+func (m Machine) Trash(dir, name string) (Trashed, error) {
 	abs, err := filepath.Abs(dir)
 	if err != nil {
 		return Trashed{}, err
 	}
 	stamp := time.Now().Format("20060102-150405")
 	base := filepath.Base(abs) + "-" + stamp
-	places := []string{filepath.Join(TrashDir(), base), filepath.Join(filepath.Dir(abs), ".sameway-trash", base)}
+	places := []string{filepath.Join(m.TrashDir(), base), filepath.Join(filepath.Dir(abs), ".sameway-trash", base)}
 	var last error
 	for _, to := range places {
 		if err := os.MkdirAll(filepath.Dir(to), 0o755); err != nil {
@@ -52,9 +52,9 @@ func Trash(dir, name string) (Trashed, error) {
 		for try := 0; try < 10; try++ {
 			if last = os.Rename(abs, to); last == nil {
 				t := Trashed{Name: name, From: abs, Now: to, At: time.Now()}
-				list := TrashedWorkspaces()
+				list := m.TrashedWorkspaces()
 				list = append(list, t)
-				return t, writeTrash(list)
+				return t, m.writeTrash(list)
 			}
 			time.Sleep(200 * time.Millisecond)
 		}
@@ -64,8 +64,8 @@ func Trash(dir, name string) (Trashed, error) {
 
 // TrashedWorkspaces lists what is in the trash, newest first, leaving out
 // anything that is no longer where the trash put it.
-func TrashedWorkspaces() []Trashed {
-	raw, err := os.ReadFile(trashIndex())
+func (m Machine) TrashedWorkspaces() []Trashed {
+	raw, err := os.ReadFile(m.trashIndex())
 	if err != nil {
 		return nil
 	}
@@ -82,8 +82,8 @@ func TrashedWorkspaces() []Trashed {
 }
 
 // Untrash puts a workspace back where it was, and among the known ones.
-func Untrash(now string) (Trashed, error) {
-	list := TrashedWorkspaces()
+func (m Machine) Untrash(now string) (Trashed, error) {
+	list := m.TrashedWorkspaces()
 	for i, t := range list {
 		if t.Now != now {
 			continue
@@ -97,16 +97,16 @@ func Untrash(now string) (Trashed, error) {
 		if err := os.Rename(t.Now, t.From); err != nil {
 			return t, err
 		}
-		Remember(t.From, "")
-		return t, writeTrash(append(list[:i], list[i+1:]...))
+		m.Remember(t.From, "")
+		return t, m.writeTrash(append(list[:i], list[i+1:]...))
 	}
 	return Trashed{}, errors.New("that workspace is not in the trash")
 }
 
-func writeTrash(list []Trashed) error {
-	if err := os.MkdirAll(TrashDir(), 0o755); err != nil {
+func (m Machine) writeTrash(list []Trashed) error {
+	if err := os.MkdirAll(m.TrashDir(), 0o755); err != nil {
 		return err
 	}
 	raw, _ := json.MarshalIndent(list, "", "  ")
-	return os.WriteFile(trashIndex(), raw, 0o644)
+	return os.WriteFile(m.trashIndex(), raw, 0o644)
 }

@@ -18,7 +18,6 @@ import (
 // A whole copy goes to the cloud folder chosen, at once and then daily,
 // and Start from a copy brings it back as a workspace with what it had.
 func TestACopyInTheCloudBringsTheWorkspaceBack(t *testing.T) {
-	t.Setenv("SAMEWAY_KNOWN", filepath.Join(t.TempDir(), "known.json"))
 	a, _ := newApp(t)
 	h := server.New(a).WithFleet(&server.Fleet{Launch: func(dir, addr string) error { return nil }, Exit: func() {}})
 	if _, err := a.Store.Create("note", map[string]any{"title": "Passport number is in the drawer"}); err != nil {

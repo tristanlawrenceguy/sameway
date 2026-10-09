@@ -54,7 +54,7 @@ type place struct {
 // is running and where.
 func (s *Server) others() []place {
 	var out []place
-	for _, k := range workspace.KnownWorkspaces() {
+	for _, k := range s.machine().KnownWorkspaces() {
 		if sameDir(k.Dir, s.app.Workspace.Dir) {
 			continue
 		}
@@ -105,7 +105,7 @@ func sameDir(a, b string) bool {
 // start opens the workspace at dir: its running server, or a new one on
 // its own address, waited for until it answers.
 func (s *Server) start(dir string) (string, error) {
-	for _, k := range workspace.KnownWorkspaces() {
+	for _, k := range s.machine().KnownWorkspaces() {
 		if sameDir(k.Dir, dir) {
 			if url, ok := running(k); ok {
 				return url, nil
@@ -122,7 +122,7 @@ func (s *Server) start(dir string) (string, error) {
 	if err := s.fleet.Launch(dir, addr); err != nil {
 		return "", err
 	}
-	if err := workspace.Remember(dir, addr); err != nil {
+	if err := s.machine().Remember(dir, addr); err != nil {
 		return "", err
 	}
 	deadline := time.Now().Add(15 * time.Second)

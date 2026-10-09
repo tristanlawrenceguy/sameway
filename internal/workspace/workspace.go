@@ -171,6 +171,9 @@ func (w *Workspace) FilesDir() string { return filepath.Join(w.Dir, "files") }
 type Workspace struct {
 	Dir    string
 	Config Config
+	// Machine is where this computer keeps what is no one workspace's
+	// (known.go); Load gives ThisMachine.
+	Machine Machine
 }
 
 // ErrNotFound is returned when no workspace.yaml is found.
@@ -207,7 +210,7 @@ func Load(dir string) (*Workspace, error) {
 		}
 		return nil, err
 	}
-	w := &Workspace{Dir: abs}
+	w := &Workspace{Dir: abs, Machine: ThisMachine()}
 	if err := yaml.Unmarshal(src, &w.Config); err != nil {
 		return nil, fmt.Errorf("%s: %w", filepath.Join(abs, ConfigFile), err)
 	}

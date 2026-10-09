@@ -57,7 +57,7 @@ func (c *ctx) waitApart(cmd *exec.Cmd, dir, logPath string) error {
 			return fmt.Errorf("Sameway stopped as it started:\n%s", tail(logPath, 12))
 		case <-time.After(500 * time.Millisecond):
 		}
-		for _, k := range workspace.KnownWorkspaces() {
+		for _, k := range workspace.ThisMachine().KnownWorkspaces() {
 			if sameDir(k.Dir, dir) && k.Addr != "" && answers("http://"+k.Addr) {
 				fmt.Fprintf(c.Stdout, "Sameway is open at http://%s/\nIt runs in the background, so this window can close.\nTo stop it, choose Quit Sameway on the Workspaces page.\n", k.Addr)
 				time.Sleep(4 * time.Second)

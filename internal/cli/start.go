@@ -36,7 +36,7 @@ func (c *ctx) startCmd() error {
 	// and a person who opened it again, its tab out of sight, met that
 	// error instead of their workspace. So the same folder however it is
 	// written, and a server slow to answer (busy warming a model) counts.
-	for _, k := range workspace.KnownWorkspaces() {
+	for _, k := range workspace.ThisMachine().KnownWorkspaces() {
 		if sameDir(k.Dir, dir) && k.Addr != "" && answersWithin("http://"+k.Addr, 5*time.Second) {
 			fmt.Fprintf(c.Stdout, "Sameway is already open at http://%s/\n", k.Addr)
 			if err := openInBrowser("http://" + k.Addr + "/"); err != nil {
@@ -67,7 +67,7 @@ func (c *ctx) yourWorkspace() (dir string, made bool, err error) {
 	if found, err := workspace.Find(here); err == nil {
 		return found, false, nil
 	}
-	if known := workspace.KnownWorkspaces(); len(known) > 0 {
+	if known := workspace.ThisMachine().KnownWorkspaces(); len(known) > 0 {
 		return known[0].Dir, false, nil
 	}
 	dir = defaultHome()

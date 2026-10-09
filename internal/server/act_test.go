@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 )
 
@@ -23,9 +23,7 @@ func TestAnActionIsAButtonEverywhere(t *testing.T) {
 		io.WriteString(w, "alarm on")
 	}))
 	defer remote.Close()
-	chat.HTTPClient = remote.Client()
-
-	a, h := newApp(t)
+	a, h := newAppWith(t, app.Options{HTTP: remote.Client()})
 	created := postJSON(t, h, http.MethodPost, "/api/action", map[string]any{"title": "Turn on the alarm", "url": remote.URL + "/alarm"})
 	wantStatus(t, created, http.StatusCreated)
 	var action struct{ ID string }

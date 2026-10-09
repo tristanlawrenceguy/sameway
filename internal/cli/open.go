@@ -19,7 +19,6 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/devices"
 	"github.com/tristanlawrenceguy/sameway/internal/notify"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
-	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
 // openCmd is serve with the last step done for you: it starts the workspace
@@ -81,7 +80,7 @@ func (c *ctx) openCmd() error {
 	// This workspace is now one this machine knows, at this address, so
 	// any other workspace can offer to open it. The page can start other
 	// workspaces as servers of their own, and stop this one.
-	workspace.Remember(a.Workspace.Dir, listener.Addr().String())
+	a.Workspace.Machine.Remember(a.Workspace.Dir, listener.Addr().String())
 	ctx, stop := context.WithCancel(context.Background())
 	defer stop()
 	h := server.New(a)

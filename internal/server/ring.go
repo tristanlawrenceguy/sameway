@@ -6,7 +6,6 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/blocks"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
-	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
 // Ringing belongs to the server, not to a page. A reminder rings when its
@@ -58,7 +57,7 @@ func (s *Server) Ring(now time.Time) []*store.Record {
 // linkTo is a page of this workspace as a whole address, when the
 // address this server listens on is known; the path alone otherwise.
 func (s *Server) linkTo(path string) string {
-	for _, k := range workspace.KnownWorkspaces() {
+	for _, k := range s.machine().KnownWorkspaces() {
 		if sameDir(k.Dir, s.app.Workspace.Dir) && k.Addr != "" {
 			return "http://" + k.Addr + path
 		}

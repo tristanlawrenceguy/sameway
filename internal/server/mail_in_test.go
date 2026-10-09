@@ -3,7 +3,6 @@ package server_test
 import (
 	"net/http"
 	"net/url"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -16,7 +15,6 @@ import (
 // to sort, files and all; Today lists them, each a press from a task or
 // done with; the password stays out of the workspace.
 func TestEmailComesInAsNotesToSort(t *testing.T) {
-	t.Setenv("SAMEWAY_KEYS", filepath.Join(t.TempDir(), "keys.json"))
 	server.MailInsecure(true)
 	defer server.MailInsecure(false)
 	mail := mailintest.Start(t, "me@example.com", "abcdefghijklmnop")

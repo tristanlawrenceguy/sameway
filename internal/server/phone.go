@@ -46,7 +46,7 @@ func (s *Server) phoneSet(w http.ResponseWriter, r *http.Request) {
 	}
 	b := make([]byte, 12)
 	rand.Read(b)
-	topic := notify.NtfyServer + "/sameway-" + hex.EncodeToString(b)
+	topic := s.app.Options().Ntfy + "/sameway-" + hex.EncodeToString(b)
 	if err := notify.Phone(topic, "Sameway", "Reminders from "+s.app.Workspace.Config.Name+" arrive here."); err != nil {
 		s.failed(w, r, "Not set up", errors.New("ntfy could not be reached ("+err.Error()+"); try again when this computer is online"), "/help")
 		return

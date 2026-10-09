@@ -65,7 +65,7 @@ func (s *Server) modelKey(w http.ResponseWriter, r *http.Request) {
 			s.failed(w, r, "Not connected", fmt.Errorf("this key has no credit left. Add some on %s, then paste it again", k.page), "/")
 			return
 		}
-		if err := llm.SaveKey(k.env, key); err != nil {
+		if err := s.keys().Save(k.env, key); err != nil {
 			s.failed(w, r, "Not connected", errors.New("the key could not be kept: "+err.Error()), "/")
 			return
 		}

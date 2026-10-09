@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
-	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
 // The machine's side of the assistant's tools (chat/home_tools.go): the
@@ -92,9 +91,9 @@ func (s *Server) OpenWorkspace(name string) (string, error) {
 // RestoreWorkspace puts a deleted workspace back from the trash.
 func (s *Server) RestoreWorkspace(name string) (string, error) {
 	var names []string
-	for _, t := range workspace.TrashedWorkspaces() {
+	for _, t := range s.machine().TrashedWorkspaces() {
 		if strings.EqualFold(t.Name, strings.TrimSpace(name)) {
-			back, err := workspace.Untrash(t.Now)
+			back, err := s.machine().Untrash(t.Now)
 			if err != nil {
 				return "", err
 			}

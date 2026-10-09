@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/notify"
 )
 
@@ -20,10 +21,7 @@ func TestRemindersCanGoToAPhone(t *testing.T) {
 		got = append(got, r.URL.Path+" "+r.Header.Get("Title")+": "+string(body))
 	}))
 	defer ntfy.Close()
-	was := notify.NtfyServer
-	notify.NtfyServer = ntfy.URL
-	defer func() { notify.NtfyServer = was }()
-	a, h := newApp(t)
+	a, h := newAppWith(t, app.Options{Ntfy: ntfy.URL})
 
 	if page := get(t, h, "/help").Body.String(); !strings.Contains(page, ">Send reminders to my phone<") || !strings.Contains(page, "pass through ntfy.sh") {
 		t.Fatalf("Help offers it, saying where the words go: %s", truncate(page))
