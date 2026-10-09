@@ -36,27 +36,35 @@ var Skip = map[string]bool{"message": true, "activity": true, "proposal": true, 
 // Limit caps how many hits come back.
 const Limit = 50
 
+// Reader is who a search is for: the moment it is for them, which says
+// what "today" and "Friday" are, and whether they read times on the
+// 24-hour clock, so the days found are said as they read them.
+type Reader struct {
+	Now time.Time
+	H24 bool
+}
+
 // Matches is what a search finds, the one way for the search page, the
 // assistant, the API, the command line and AI services: everything with
 // every word, or, when nothing has them all and there are several, what
 // has some of them, most first, with some true so it is said.
-func Matches(st *store.Store, types *schema.Set, q string) (hits []Hit, some bool) {
-	if days := daysAsked(q, time.Now()); len(days) > 0 { // days.go
-		on := onDays(st, types, days, time.Now())
+func Matches(st *store.Store, types *schema.Set, q string, r Reader) (hits []Hit, some bool) {
+	if days := daysAsked(q, r.Now); len(days) > 0 { // days.go
+		on := onDays(st, types, days, r)
 		if len(on) == 0 && namesWeekday(q) {
-			on = onDays(st, types, weekLater(days), time.Now()) // that weekday, the week after
+			on = onDays(st, types, weekLater(days), r) // that weekday, the week after
 		}
 		if len(on) > 0 {
-			return withWords(on, find(st, types, q, "", false)), false
+			return withWords(on, find(st, types, q, "", false, r)), false
 		}
 	}
-	if hits = find(st, types, q, "", false); len(hits) > 0 || len(Words(q)) < 2 {
-		return near(st, types, q, hits), false
+	if hits = find(st, types, q, "", false, r); len(hits) > 0 || len(Words(q)) < 2 {
+		return near(st, types, q, hits, r), false
 	}
 	// Some of the words is a weak match ("the plumber" has "the" in "Renew
 	// the passport"); what is near in meaning goes before it.
-	partial := find(st, types, q, "", true)
-	nearOnly := near(st, types, q, nil)
+	partial := find(st, types, q, "", true, r)
+	nearOnly := near(st, types, q, nil, r)
 	have := map[string]bool{}
 	for _, h := range nearOnly {
 		have[h.Type+"/"+h.ID] = true
@@ -105,7 +113,7 @@ func Of(hits []Hit, only string) []Hit {
 	return out
 }
 
-func find(st *store.Store, types *schema.Set, q, only string, some bool) []Hit {
+func find(st *store.Store, types *schema.Set, q, only string, some bool, r Reader) []Hit {
 	words := Words(q)
 	if len(words) == 0 {
 		return nil
@@ -125,7 +133,7 @@ func find(st *store.Store, types *schema.Set, q, only string, some bool) []Hit {
 			continue
 		}
 		for _, rec := range recs {
-			if h, ok := match(t, rec, words, some); ok {
+			if h, ok := match(t, rec, words, some, r); ok {
 				hits = append(hits, h)
 			}
 		}
@@ -134,8 +142,8 @@ func find(st *store.Store, types *schema.Set, q, only string, some bool) []Hit {
 	return hits
 }
 
-func match(t *schema.Type, rec *store.Record, words []string, some bool) (Hit, bool) {
-	title, body := texts(t, rec)
+func match(t *schema.Type, rec *store.Record, words []string, some bool, r Reader) (Hit, bool) {
+	title, body := texts(t, rec, r)
 	lt, lb := fold(title), fold(body)
 	score, found := 0, 0
 	for _, w := range words {
@@ -164,7 +172,7 @@ func match(t *schema.Type, rec *store.Record, words []string, some bool) (Hit, b
 
 // texts is a record as words: its title, and everything else it says. A
 // block's title is its component; its words are its props.
-func texts(t *schema.Type, rec *store.Record) (title, body string) {
+func texts(t *schema.Type, rec *store.Record, r Reader) (title, body string) {
 	if t.Name == "block" {
 		name, _ := rec.Fields["component"].(string)
 		return name, flatten(rec.Fields["props"])
@@ -186,7 +194,7 @@ func texts(t *schema.Type, rec *store.Record) (title, body string) {
 		case "bool":
 			continue
 		case "datetime":
-			s = when.Relative(flatten(v), time.Now())
+			s = when.Relative(flatten(v), r.Now, r.H24)
 		case "enum":
 			s = f.ValueLabel(flatten(v))
 		default:

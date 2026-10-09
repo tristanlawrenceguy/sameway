@@ -54,7 +54,7 @@ func (s *Server) mailSection() string {
 		b.WriteString(`<li class="sw-stack"><a class="sw-link" href="/t/note/` + n.ID + `">` + esc(title) + `</a>`)
 		presses := []struct{ action, label, variant string }{{"/mail/task", "Make it a task", "secondary"}, {"/mail/sorted", "Done with it", "quiet"}}
 		if sug := s.suggestionFor(n.ID); sug != nil && sug.Task {
-			b.WriteString(`<p>` + esc(suggestionWords(sug)) + `</p>`) // triage_today.go
+			b.WriteString(`<p>` + esc(s.suggestionWords(sug)) + `</p>`) // triage_today.go
 			presses = []struct{ action, label, variant string }{{"/sort/keep", "Keep", "secondary"}, {"/sort/change", "Change", "quiet"}, {"/mail/sorted", "Not a task", "quiet"}}
 		}
 		b.WriteString(`<div class="sw-cluster">`)

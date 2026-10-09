@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
@@ -32,7 +31,7 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	where, order := r.URL.Query()["where"], r.URL.Query().Get("order")
 	// One way to list, for the page, the API, an export and the command
 	// line: query.Filter, which with no query is every record.
-	recs, err := query.Filter(s.app.Store, t, where, order, 0, time.Now())
+	recs, err := query.Filter(s.app.Store, t, where, order, 0, s.now())
 	if len(where) > 0 || order != "" {
 		if err != nil {
 			fmt.Fprintf(&b, `<p class="sw-muted">%s</p><p>%s</p>`, template.HTMLEscapeString(err.Error()), s.component("link", map[string]any{"href": "/t/" + t.Name, "label": "See all " + schema.Plural(t.Name), "look": "button"}))
@@ -77,11 +76,11 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 		}
 		if len(archived) > 0 {
 			b.WriteString(`<h2 class="sw-group">Archived <span class="sw-group__count">` + fmt.Sprint(len(archived)) + `<span class="sw-visually-hidden"> ` + oneOrMany(len(archived), schema.Words(t.Name), schema.Words(schema.Plural(t.Name))) + `</span></span></h2>`)
-			b.WriteString(s.rows(t, archived, time.Now()))
+			b.WriteString(s.rows(t, archived, s.now()))
 		}
 	} else {
 		pg = pageOf(r, len(recs), listPageSize)
-		b.WriteString(s.rows(t, recs[pg.lo:pg.hi], time.Now()))
+		b.WriteString(s.rows(t, recs[pg.lo:pg.hi], s.now()))
 		b.WriteString(string(s.pageNav(r, pg, "Pages of "+schema.Plural(t.Name))))
 	}
 	// A new one by hand, and records from a file a person already has,
@@ -163,7 +162,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	if f, ok := t.Field(textField); ok {
 		// A recording's transcript is shown once, under its player, at
 		// its times; Edit still opens it as text.
-		if val := display(*f, rec.Fields[f.Name]); t.Name != FileType || len(s.heard(rec)) == 0 {
+		if val := s.display(*f, rec.Fields[f.Name]); t.Name != FileType || len(s.heard(rec)) == 0 {
 			fmt.Fprintf(&b, `<div class="sw-prose sw-detail__body" data-prop="%s" data-source="%s" data-prose-level="2">%s</div>`, f.Name, template.HTMLEscapeString(val), bodyHTML(rec, val))
 		}
 	}
@@ -172,7 +171,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	// the whole record back except for those already-in-chips fields.
 	var items []any
 	for _, f := range shownFields {
-		items = append(items, s.fieldItem(t, f, rec.Fields[f.Name], display(f, rec.Fields[f.Name])))
+		items = append(items, s.fieldItem(t, f, rec.Fields[f.Name], s.display(f, rec.Fields[f.Name])))
 	}
 	// An entry in the log says what happened, not what it stores.
 	if t.Name == records.ActivityType {

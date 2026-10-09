@@ -80,7 +80,7 @@ func (s *Server) dueOf(id string, now time.Time) (title string, at time.Time, al
 func (s *Server) todayDone(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	id := r.PostForm.Get("id")
-	title, _, _, err := s.dueOf(id, time.Now())
+	title, _, _, err := s.dueOf(id, s.now())
 	if err == nil {
 		var act string
 		_, act, err = records.WriteAs(s.app.Store, s.who(r), "updated", "task", id, map[string]any{"done": true})
@@ -94,7 +94,7 @@ func (s *Server) todayDone(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) todayMove(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	now := time.Now()
+	now := s.now()
 	id := r.PostForm.Get("id")
 	day, word := now, "today"
 	if r.PostForm.Get("to") == "tomorrow" {
@@ -114,7 +114,7 @@ func (s *Server) todayMove(w http.ResponseWriter, r *http.Request) {
 
 // todayLate moves every late task to today, as one change.
 func (s *Server) todayLate(w http.ResponseWriter, r *http.Request) {
-	now := time.Now()
+	now := s.now()
 	var ops []records.Op
 	for _, it := range s.today(now).Late {
 		if _, err := s.app.Store.Get("task", it.ID); err == nil && it.Type == "task" {

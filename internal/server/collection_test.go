@@ -48,7 +48,7 @@ func TestACollectionIsTheRecordsThatMatch(t *testing.T) {
 	if strings.Index(page, "Order compost") > strings.Index(page, "Plant garlic") {
 		t.Error("the tasks come in due order")
 	}
-	if !strings.Contains(page, when.Relative(compost, time.Now())) {
+	if !strings.Contains(page, when.Relative(compost, time.Now(), false)) {
 		t.Error("each task shows the day it is due, as its list says it")
 	}
 

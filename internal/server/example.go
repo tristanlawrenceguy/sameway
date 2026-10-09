@@ -24,13 +24,13 @@ const exampleName = "Example"
 func (s *Server) tryExample(w http.ResponseWriter, r *http.Request) {
 	dir, err := s.blank(exampleName)
 	if err != nil {
-		dir, err = s.blank(exampleName + " " + time.Now().Format("2 Jan 15.04"))
+		dir, err = s.blank(exampleName + " " + s.now().Format("2 Jan 15.04"))
 	}
 	if err != nil {
 		s.showWorkspaces(w, r, err.Error())
 		return
 	}
-	if err := fillExample(dir, time.Now()); err != nil {
+	if err := fillExample(dir, s.now()); err != nil {
 		s.showWorkspaces(w, r, "The example could not be filled: "+err.Error())
 		return
 	}

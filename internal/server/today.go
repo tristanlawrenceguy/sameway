@@ -62,7 +62,7 @@ func (s *Server) today(now time.Time) todayLists {
 			}
 			it := todayItem{Title: s.title(t, r), Href: "/t/" + typ + "/" + r.ID, At: at, Type: typ, ID: r.ID, AllDay: allDay}
 			if !allDay {
-				it.When = when.Clock(at)
+				it.When = when.Clock(at, s.h24())
 			} else if at.Format("2006-01-02") < day {
 				it.When = when.Day(at, now)
 			}
@@ -100,7 +100,7 @@ func (s *Server) today(now time.Time) todayLists {
 }
 
 func (s *Server) todayPage(w http.ResponseWriter, r *http.Request) {
-	now := time.Now()
+	now := s.now()
 	l := s.today(now)
 	dayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 	list := func(title string, items []todayItem) string {
@@ -173,7 +173,7 @@ func (s *Server) KeepBrief(ctx context.Context) {
 		tick := time.NewTicker(30 * time.Second)
 		defer tick.Stop()
 		for {
-			s.briefIfDue(time.Now())
+			s.briefIfDue(s.now())
 			select {
 			case <-ctx.Done():
 				return

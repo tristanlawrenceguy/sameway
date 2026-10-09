@@ -141,7 +141,7 @@ func (s *Server) calendarsPage(w http.ResponseWriter, r *http.Request) {
 	if len(links) > 0 {
 		b.WriteString(`<h2>Kept in step</h2><ul class="sw-plain sw-rows">`)
 		for _, l := range links {
-			state := schema.Count(len(l.UIDs), records.EventType) + ", checked " + when.Sent(l.At, time.Now())
+			state := schema.Count(len(l.UIDs), records.EventType) + ", checked " + when.Sent(l.At, s.now(), s.h24())
 			if l.Err != "" {
 				state = "Not up to date: " + l.Err
 			}

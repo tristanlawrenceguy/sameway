@@ -102,20 +102,20 @@ func TestParseReadsWhatPeopleWrite(t *testing.T) {
 
 // A stored value reads as a person would say it, and reads back.
 func TestTextRoundTrips(t *testing.T) {
-	if got := Text("2026-09-19T00:00:00Z"); got != "Sat 19 Sep 2026" {
+	if got := Text("2026-09-19T00:00:00Z", false); got != "Sat 19 Sep 2026" {
 		t.Errorf("a day reads as its date, got %q", got)
 	}
 	moment := time.Date(2026, 9, 19, 14, 0, 0, 0, time.UTC)
-	if got, want := Text("2026-09-19T14:00:00Z"), moment.Local().Format("Mon 2 Jan 2006")+" at "+Clock(moment.Local()); got != want {
+	if got, want := Text("2026-09-19T14:00:00Z", false), moment.Local().Format("Mon 2 Jan 2006")+" at "+Clock(moment.Local(), false); got != want {
 		t.Errorf("a moment reads in local time, got %q want %q", got, want)
 	}
-	if got := Text("whatever was typed"); got != "whatever was typed" {
+	if got := Text("whatever was typed", false); got != "whatever was typed" {
 		t.Errorf("words that are not a value come back as they are, got %q", got)
 	}
 	for _, v := range []string{"2026-09-19T00:00:00Z", "2026-09-19T14:00:00Z"} {
-		ts, day, ok := Parse(Text(v), time.Now())
+		ts, day, ok := Parse(Text(v, false), time.Now())
 		if !ok || Store(ts, day) != v {
-			t.Errorf("Text(%s) = %q should read back as itself, got %s", v, Text(v), Store(ts, day))
+			t.Errorf("Text(%s) = %q should read back as itself, got %s", v, Text(v, false), Store(ts, day))
 		}
 	}
 }

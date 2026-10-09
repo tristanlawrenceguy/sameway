@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
@@ -21,7 +22,7 @@ func TestARecordSaysTheSameEverywhere(t *testing.T) {
 	due := time.Now().AddDate(0, 0, 3).Format("2006-01-02") + " 14:00"
 	task, _ := a.Store.Create("task", map[string]any{"title": "Buy paint", "status": "doing", "due": due, "for": ana.ID})
 	a.Store.Create(records.BlockType, a.Chat.BlockFields(map[string]any{"component": "collection", "props": map[string]any{"type": "task", "label": "Tasks"}}))
-	day := when.Relative(task.Fields["due"].(string), time.Now())
+	day := when.Relative(task.Fields["due"].(string), time.Now(), false)
 
 	pages := map[string]string{
 		"its row":    read(get(t, h, "/t/task").Body.String()),
@@ -122,10 +123,10 @@ func TestEveryProvidedTypeSaysItsGlance(t *testing.T) {
 		fields map[string]any
 		want   string
 	}{
-		{"task", map[string]any{"title": "Buy paint", "status": "doing", "due": tomorrow + " 14:00"}, "Doing · Due tomorrow at " + when.Clock(time.Date(1, 1, 1, 14, 0, 0, 0, time.UTC))},
+		{"task", map[string]any{"title": "Buy paint", "status": "doing", "due": tomorrow + " 14:00"}, "Doing · Due tomorrow at " + when.Clock(time.Date(1, 1, 1, 14, 0, 0, 0, time.UTC), false)},
 		{"note", map[string]any{"title": "Seeds", "status": "published", "pinned": true}, "Published · Pinned"},
 		{"event", map[string]any{"title": "Standup", "starts": tomorrow}, "Starts tomorrow"},
-		{"reminder", map[string]any{"title": "Call", "at": tomorrow + " 07:00"}, "Tomorrow at " + when.Clock(time.Date(1, 1, 1, 7, 0, 0, 0, time.UTC))},
+		{"reminder", map[string]any{"title": "Call", "at": tomorrow + " 07:00"}, "Tomorrow at " + when.Clock(time.Date(1, 1, 1, 7, 0, 0, 0, time.UTC), false)},
 		{"project", map[string]any{"title": "House", "status": "done"}, "Done"},
 		{"project", map[string]any{"title": "Garden"}, ""},
 		{"person", map[string]any{"name": "Ana Silva"}, ""},
@@ -153,6 +154,27 @@ func TestTimesFollowThePersonsClock(t *testing.T) {
 	}
 	if !strings.Contains(get(t, h, "/t/task").Body.String(), ` data-clock="24"`) {
 		t.Error("the page does not tell its scripts the clock")
+	}
+}
+
+// Two workspaces open in one program each say times on their own clock:
+// the choice was once kept on the program, and the last workspace opened
+// set it for both.
+func TestTwoWorkspacesKeepTheirOwnClocks(t *testing.T) {
+	a12, h12 := newApp(t)
+	a24, h24 := newApp(t)
+	if err := a24.Workspace.Set("ui.clock", "24"); err != nil {
+		t.Fatal(err)
+	}
+	tomorrow := time.Now().AddDate(0, 0, 1).Format("2006-01-02")
+	for _, a := range []*app.App{a12, a24} {
+		a.Store.Create("task", map[string]any{"title": "Dentist", "due": tomorrow + " 14:30"})
+	}
+	if page := read(get(t, h12, "/t/task").Body.String()); !strings.Contains(page, "Tomorrow at 2:30pm") {
+		t.Errorf("the other workspace's 24-hour clock is used here:\n%s", page)
+	}
+	if page := read(get(t, h24, "/t/task").Body.String()); !strings.Contains(page, "Tomorrow at 14:30") {
+		t.Errorf("the 24-hour clock chosen is not used:\n%s", page)
 	}
 }
 

@@ -50,7 +50,7 @@ func (s *Service) Triage(ctx context.Context, message string, sent time.Time, pe
 		return Suggestion{}, errors.New("no model is connected")
 	}
 	if sent.IsZero() {
-		sent = s.clock()
+		sent = s.Now()
 	}
 	names := "none"
 	if len(people) > 0 {

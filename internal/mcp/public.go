@@ -131,7 +131,7 @@ func (s *Server) document(ctx context.Context, typ string, r *store.Record, w *r
 	title := t.Called(r.ID, r.Fields)
 	// Its writing comes first, as a search result's snippet is read.
 	meta := map[string]any{"type": typ, "updated": r.UpdatedAt.Format("2006-01-02")}
-	facts, lines := export.Text(t, r.Fields, nil)
+	facts, lines := export.Text(t, r.Fields, nil, s.App.Workspace.Hours24())
 	for _, f := range facts {
 		lines = append(lines, f.Name+": "+f.Value)
 		meta[f.Field.Name] = r.Fields[f.Field.Name]
@@ -161,7 +161,7 @@ func (s *Server) searchPublished(ctx context.Context, types map[string]bool, que
 	}
 	var hits []search.Hit
 	w := s.writers()
-	found, some := search.Matches(s.App.Store, s.App.Types, query)
+	found, some := search.Matches(s.App.Store, s.App.Types, query, search.Reader{Now: s.App.Records.Now(), H24: s.App.Workspace.Hours24()})
 	for _, h := range found {
 		if types[h.Type] && s.shows(ctx, h, search.Words(query), some, w) {
 			hits = append(hits, h)

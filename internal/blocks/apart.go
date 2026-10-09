@@ -98,13 +98,13 @@ func Apart(names []string, ways func(i int) []string, rank ...func(i int) string
 
 // RecordWays is what tells one record from another with its title: the
 // day that matters to it (due tomorrow), when it was added, its id.
-func RecordWays(t *schema.Type, rec *store.Record) []string {
-	return []string{dayWords(t, rec), "added " + MomentWords(rec.CreatedAt), "added " + SecondWords(rec.CreatedAt)}
+func (ws *Workspace) RecordWays(t *schema.Type, rec *store.Record) []string {
+	return []string{ws.dayWords(t, rec), "added " + ws.MomentWords(rec.CreatedAt), "added " + ws.SecondWords(rec.CreatedAt)}
 }
 
 // SecondWords is a moment to the second, for two added in one minute.
-func SecondWords(at time.Time) string {
-	return shortDay(at.Local()) + ", " + at.Local().Format("15:04:05")
+func (ws *Workspace) SecondWords(at time.Time) string {
+	return ws.shortDay(at.Local()) + ", " + at.Local().Format("15:04:05")
 }
 
 // ordinal is a place in a list in words: first, second, … 11th.
@@ -129,7 +129,7 @@ func (ws *Workspace) RecordsApart(t *schema.Type, recs []*store.Record) map[stri
 	for i, rec := range recs {
 		names[i] = ws.title(t, rec)
 	}
-	said := Apart(names, func(i int) []string { return RecordWays(t, recs[i]) }, func(i int) string { return AddedRank(recs[i]) })
+	said := Apart(names, func(i int) []string { return ws.RecordWays(t, recs[i]) }, func(i int) string { return AddedRank(recs[i]) })
 	out := map[string]string{}
 	for i, rec := range recs {
 		if said[i] != "" {
@@ -168,7 +168,7 @@ func markApart(actions []any, context string) {
 // Call plumber, by their kind, their day and time, then by the record
 // they lead to.
 // Only those in the month shown are met together; month "" is them all.
-func eventsApart(events []any, month string) []any {
+func (ws *Workspace) eventsApart(events []any, month string) []any {
 	names := make([]string, len(events))
 	for i, e := range events {
 		ev, _ := e.(map[string]any)
@@ -181,7 +181,7 @@ func eventsApart(events []any, month string) []any {
 		ev, _ := events[i].(map[string]any)
 		on := ""
 		if d, err := time.Parse("2006-01-02", str(ev["date"], "")); err == nil {
-			on = "on " + shortDay(d)
+			on = "on " + ws.shortDay(d)
 			if at := str(ev["time"], ""); at != "" {
 				on += ", " + at
 			}

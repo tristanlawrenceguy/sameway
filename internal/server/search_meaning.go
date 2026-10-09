@@ -108,7 +108,7 @@ func (s *Server) refreshMeaning(ctx context.Context) {
 	}
 	idx := st.idx
 	st.Unlock()
-	docs := search.Docs(s.app.Store, s.app.Types)
+	docs := search.Docs(s.app.Store, s.app.Types, s.reader())
 	var in []meaning.Doc
 	for _, d := range docs {
 		in = append(in, meaning.Doc{Key: d.Key, Text: d.Text})

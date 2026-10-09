@@ -111,7 +111,7 @@ func (s *Server) apiSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-	found, some := search.Matches(s.app.Store, s.app.Types, q)
+	found, some := search.Matches(s.app.Store, s.app.Types, q, s.reader())
 	res := search.Narrow(found, q, only, page)
 	res.Some = some
 	// Each hit as it always was, with who wrote it beside it.

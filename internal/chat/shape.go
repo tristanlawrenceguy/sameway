@@ -84,7 +84,7 @@ func (s *Service) addField(typeName string, d fieldDef) toolResult {
 		return fail("%v", err)
 	}
 	gets := ""
-	if said := FieldGets(s.Store, t, d.Name); said != "" {
+	if said := FieldGets(s.Store, t, d.Name, s.H24()); said != "" {
 		gets = " (" + said + ")"
 	}
 	return toolResult{

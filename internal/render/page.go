@@ -8,8 +8,6 @@ import (
 	"html/template"
 	"strings"
 	"time"
-
-	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 //go:embed layout.html
@@ -33,6 +31,9 @@ type Page struct {
 	// Pace is how changes arrive, from the workspace: calm, quick or still.
 	// It lands on the root element, where the motion rules read it.
 	Pace string
+	// Hours24 is whether the person reads times on the 24-hour clock
+	// (when.TwentyFour), for the script that keeps times true.
+	Hours24 bool
 	// Nav holds the main navigation: the person's own content, and nothing
 	// else, each list with the colour of its dot.
 	Nav []NavItem
@@ -122,7 +123,7 @@ func (p Page) TimeAttrs() template.HTMLAttr {
 	now := time.Now()
 	_, off := now.Zone()
 	a := fmt.Sprintf(` data-zone="%d" data-today="%s"`, off/60, now.Format("2006-01-02"))
-	if when.Hours24 != nil && when.Hours24() {
+	if p.Hours24 {
 		a += ` data-clock="24"`
 	}
 	return template.HTMLAttr(a)

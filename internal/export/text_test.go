@@ -16,7 +16,7 @@ func TestTextSaysARecordAsAReaderReadsIt(t *testing.T) {
 		t.Fatal(err)
 	}
 	fields := map[string]any{"title": "Café", "status": "in_progress", "due": "2026-10-09T00:00:00Z", "done": false, "project": "p1", "notes": " Bring 🎉 \n"}
-	facts, body := Text(typ, fields, func(schema.Field, string) string { return "Garden" })
+	facts, body := Text(typ, fields, func(schema.Field, string) string { return "Garden" }, false)
 	var said []string
 	for _, f := range facts {
 		said = append(said, f.Name+": "+f.Value)
@@ -27,7 +27,7 @@ func TestTextSaysARecordAsAReaderReadsIt(t *testing.T) {
 	if len(body) != 1 || body[0] != "Bring 🎉" {
 		t.Errorf("body = %q", body)
 	}
-	facts, _ = Text(typ, fields, nil)
+	facts, _ = Text(typ, fields, nil, false)
 	for _, f := range facts {
 		if f.Field.Name == "project" {
 			t.Errorf("with no titles a ref is left out, got %v", f)

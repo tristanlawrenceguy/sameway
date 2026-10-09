@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/blocks"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
@@ -43,9 +42,9 @@ func (s *Server) habitLog(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	at := when.Store(time.Now(), false)
+	at := when.Store(s.now(), false)
 	if v := strings.TrimSpace(r.PostForm.Get("on")); v != "" {
-		now := time.Now()
+		now := s.now()
 		t, day, ok := when.Parse(v, now)
 		if !ok {
 			s.tell(w, r, outcome{Failed: true, Title: h.Name + " not logged", Problems: []problem{{Field: "on-" + h.ID, Text: "The day it was done reads as a date, such as " + now.AddDate(0, 0, -1).Format("2006-01-02") + " or yesterday."}}}, "/")
@@ -67,7 +66,7 @@ func (s *Server) habitLog(w http.ResponseWriter, r *http.Request) {
 	}
 	// Said, with where it stands now and its Undo: "Water: 1 glass logged.
 	// Now 6 of 8 glasses."
-	sum := track.Summarise(track.Normal(h), blocks.EntriesOf(s.app.Store, h.ID), time.Now(), 1)
+	sum := track.Summarise(track.Normal(h), blocks.EntriesOf(s.app.Store, h.ID), s.now(), 1)
 	s.tellAt(w, r, outcome{Title: h.Name + ": " + track.Amount(amount, h.Unit) + " logged.", Text: "Now " + track.Progress(track.Normal(h), sum) + ".", Undo: undo, Of: h.Name + " " + track.Amount(amount, h.Unit)}, backFrom(r))
 }
 
@@ -75,7 +74,7 @@ func (s *Server) habitLog(w http.ResponseWriter, r *http.Request) {
 // tracker row with a day to log for, and the last periods as a chart with
 // the target (or the limit) drawn.
 func (s *Server) habitSection(rec *store.Record) template.HTML {
-	now := time.Now()
+	now := s.now()
 	h := track.Normal(blocks.HabitOf(rec))
 	item := blocks.Standing(s.app.Store, rec, now)
 	item["dated"] = true

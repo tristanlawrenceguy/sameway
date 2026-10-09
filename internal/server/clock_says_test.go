@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
@@ -15,20 +16,22 @@ import (
 // Setting a reminder says back what the server understood, and when it
 // rings: the time was typed the way a person says it, so a wrong reading
 // is caught here, not when the alarm fails to ring. Putting one off says
-// when it rings again, and each can be undone from the message.
+// when it rings again, and each can be undone from the message. The app's
+// clock is fixed at a quarter to midnight: a timer set then rings
+// tomorrow, and says so, which once failed this test only near midnight.
 func TestTheClockSaysWhatItSet(t *testing.T) {
-	a, h := newApp(t)
+	now := time.Date(2026, 10, 7, 23, 45, 0, 0, time.Local)
+	a, h := newAppWith(t, app.Options{Clock: func() time.Time { return now }})
 	page := after(t, h, postForm(t, h, "/clock/set", url.Values{"at": {"tomorrow 7am"}, "title": {"Call the vet"}})).Body.String()
 	if !strings.Contains(page, "Alarm set") || !strings.Contains(page, "Call the vet rings tomorrow at 7am.") {
 		t.Errorf("setting an alarm says what and when\n%s", truncate(page))
 	}
-	page = after(t, h, postForm(t, h, "/clock/set", url.Values{"minutes": {"10"}})).Body.String()
-	at := when.Clock(time.Now().Add(10 * time.Minute))
-	if !strings.Contains(page, "Timer set") || !strings.Contains(page, "10 minute timer rings ") || !strings.Contains(page, at) {
-		t.Errorf("setting a timer says when it rings, about %s\n%s", at, truncate(page))
+	page = after(t, h, postForm(t, h, "/clock/set", url.Values{"minutes": {"30"}})).Body.String()
+	if !strings.Contains(page, "Timer set") || !strings.Contains(page, "30 minute timer rings tomorrow at 12:15am.") {
+		t.Errorf("setting a timer says when it rings, tomorrow at 12:15am\n%s", truncate(page))
 	}
 
-	due, _ := a.Store.Create(server.ReminderType, map[string]any{"title": "Tea", "at": when.Store(time.Now().Add(-time.Minute), false), "state": "rang"})
+	due, _ := a.Store.Create(server.ReminderType, map[string]any{"title": "Tea", "at": when.Store(now.Add(-time.Minute), false), "state": "rang"})
 	page = after(t, h, postForm(t, h, "/clock/"+due.ID+"/snooze", nil)).Body.String()
 	if !strings.Contains(page, "Tea: 5 more minutes") || !strings.Contains(page, "Rings again at ") {
 		t.Errorf("five more minutes says when it rings again\n%s", truncate(page))

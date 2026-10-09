@@ -66,6 +66,7 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 		Said:       opts.Said,
 		Controls:   s.controlsFor(r),
 		Pace:       s.app.Workspace.Config.UI.Pace,
+		Hours24:    s.h24(),
 		Lang:       s.app.Workspace.Config.UI.Language,
 		Text:       s.app.Workspace.Config.UI.Text,
 		Spacing:    s.app.Workspace.Config.UI.Spacing,

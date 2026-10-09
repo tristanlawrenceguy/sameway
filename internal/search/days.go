@@ -87,7 +87,7 @@ func FallsOn(t *schema.Type, rec *store.Record, days map[string]bool, now time.T
 }
 
 // onDays is every record with a date on one of the days, the day said.
-func onDays(st *store.Store, types *schema.Set, days []time.Time, now time.Time) []Hit {
+func onDays(st *store.Store, types *schema.Set, days []time.Time, r Reader) []Hit {
 	want := map[string]bool{}
 	for _, d := range days {
 		want[d.Format("2006-01-02")] = true
@@ -102,8 +102,8 @@ func onDays(st *store.Store, types *schema.Set, days []time.Time, now time.Time)
 			continue
 		}
 		for _, rec := range recs {
-			if said, ok := FallsOn(t, rec, want, now); ok {
-				title, _ := texts(t, rec)
+			if said, ok := FallsOn(t, rec, want, r.Now); ok {
+				title, _ := texts(t, rec, r)
 				hits = append(hits, Hit{Type: t.Name, ID: rec.ID, Title: title, Snippet: said, Href: "/t/" + t.Name + "/" + rec.ID})
 			}
 		}

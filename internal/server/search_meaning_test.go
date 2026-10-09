@@ -23,7 +23,7 @@ func TestASearchFindsByMeaning(t *testing.T) {
 	if !h.RefreshMeaning(context.Background()) {
 		t.Skip("no Ollama with an embedding model on this computer")
 	}
-	hits, _ := search.Matches(a.Store, a.Types, "the plumber")
+	hits, _ := search.Matches(a.Store, a.Types, "the plumber", search.Reader{Now: a.Now()})
 	if len(hits) == 0 || hits[0].Title != "Boiler repair, call Marek" || !hits[0].Near {
 		t.Fatalf("the plumber finds the boiler, by meaning: %+v", hits)
 	}

@@ -3,7 +3,6 @@ package blocks
 import (
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
@@ -46,7 +45,7 @@ func resolveCollection(ws *Workspace, props map[string]any, at Place) map[string
 	}
 	// All of them, to know how many and whether there are more than are
 	// shown: a list cut short says so, not only the whole list's page.
-	recs, err := query.Filter(ws.Store, t, where, order, 0, time.Now())
+	recs, err := query.Filter(ws.Store, t, where, order, 0, ws.now())
 	if err == nil && offered(props, at.Page, block, limit, len(recs)) {
 		recs, where, order, err = ws.narrowed(out, t, props, at, recs, where, order)
 	}
@@ -89,7 +88,7 @@ func (ws *Workspace) narrowed(out map[string]any, t *schema.Type, props map[stri
 	setup := setupWords(t, where, order, choices) // collection_keep.go
 	if w, o, active := applyChoices(out, choices, at.Page, at.Block, where, order); active {
 		var err error
-		if recs, err = query.Filter(ws.Store, t, w, o, 0, time.Now()); err != nil {
+		if recs, err = query.Filter(ws.Store, t, w, o, 0, ws.now()); err != nil {
 			return nil, nil, "", err
 		}
 		where, order, setup = w, o, ""
@@ -118,7 +117,7 @@ func (ws *Workspace) collectionItems(out map[string]any, t *schema.Type, recs []
 		}
 		if len(show) > 0 {
 			item["fields"] = ws.fieldsOf(t, rec, show)
-		} else if meta := records.GlanceText(ws.Store, t, rec, in); meta != "" && by == nil {
+		} else if meta := records.GlanceText(ws.Store, t, rec, ws.now(), ws.H24(), in); meta != "" && by == nil {
 			item["meta"] = meta
 		}
 		if full {
@@ -165,7 +164,7 @@ func listPath(typeName string, where []string, order string) string {
 func TextOf(t *schema.Type, rec *store.Record) string {
 	for _, f := range t.Shown() {
 		if f.Name != t.Title && IsText(f) {
-			if v := Display(f, rec.Fields[f.Name]); v != "" {
+			if v := Display(f, rec.Fields[f.Name], false); v != "" {
 				return v
 			}
 		}
@@ -195,7 +194,7 @@ func (ws *Workspace) fieldsOf(t *schema.Type, rec *store.Record, names []string)
 		if !ok {
 			continue
 		}
-		v := Display(*f, rec.Fields[name])
+		v := Display(*f, rec.Fields[name], ws.H24())
 		item := map[string]any{"label": f.Display(), "value": v}
 		if f.Type == "ref" && v != "" {
 			if _, err := ws.Store.Get(f.To, v); err == nil {

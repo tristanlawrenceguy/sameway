@@ -32,7 +32,7 @@ type Doc struct {
 }
 
 // Docs are every searchable record's words, keyed type/id.
-func Docs(st *store.Store, types *schema.Set) []Doc {
+func Docs(st *store.Store, types *schema.Set, r Reader) []Doc {
 	var out []Doc
 	for _, t := range types.Types {
 		if Skip[t.Name] || t.Internal {
@@ -43,7 +43,7 @@ func Docs(st *store.Store, types *schema.Set) []Doc {
 			continue
 		}
 		for _, rec := range recs {
-			title, body := texts(t, rec)
+			title, body := texts(t, rec, r)
 			if text := strings.TrimSpace(title + "\n" + body); text != "" {
 				out = append(out, Doc{Key: t.Name + "/" + rec.ID, Text: clipText(text, 2000)})
 			}
@@ -60,7 +60,7 @@ func clipText(s string, n int) string {
 }
 
 // near adds a workspace's matches by meaning to its matches by word.
-func near(st *store.Store, types *schema.Set, q string, hits []Hit) []Hit {
+func near(st *store.Store, types *schema.Set, q string, hits []Hit, r Reader) []Hit {
 	f, ok := nearFor.Load(st)
 	if !ok {
 		return hits
@@ -82,7 +82,7 @@ func near(st *store.Store, types *schema.Set, q string, hits []Hit) []Hit {
 		if err != nil {
 			continue
 		}
-		title, body := texts(t, rec)
+		title, body := texts(t, rec, r)
 		hits = append(hits, Hit{Type: typ, ID: id, Title: title, Snippet: clipText(strings.TrimSpace(body), 140), Href: "/t/" + typ + "/" + id, Near: true})
 	}
 	return hits

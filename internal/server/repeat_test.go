@@ -67,7 +67,7 @@ func TestARepeatingTaskDoneIsDueAgain(t *testing.T) {
 	if rec.Fields["done"] != false || rec.Fields["due"] != want {
 		t.Errorf("done, it is due again two weeks after it was due (%s), got %v %v", want, rec.Fields["done"], rec.Fields["due"])
 	}
-	if !strings.Contains(page, "Water the ferns is done.") || !strings.Contains(page, "It repeats every 2 weeks, so it is due again "+when.Text(want)+".") {
+	if !strings.Contains(page, "Water the ferns is done.") || !strings.Contains(page, "It repeats every 2 weeks, so it is due again "+when.Text(want, false)+".") {
 		t.Errorf("ticking says it is done and when it is due again\n%s", truncate(page))
 	}
 	undo := regexp.MustCompile(`action="(/activity/[^"]+/undo)"`).FindStringSubmatch(page)
@@ -115,7 +115,7 @@ func TestARepeatingReminderRingsAgain(t *testing.T) {
 	if rec.Fields["state"] != "set" || rec.Fields["at"] != next || rec.Fields["repeat"] != "FREQ=DAILY" {
 		t.Errorf("dismissed, it is set for tomorrow at its own time (%s), got %v", next, rec.Fields)
 	}
-	if !strings.Contains(page, "Stretch: this time skipped") || !strings.Contains(page, "It repeats every day, so it rings again tomorrow at "+when.Clock(at)+".") {
+	if !strings.Contains(page, "Stretch: this time skipped") || !strings.Contains(page, "It repeats every day, so it rings again tomorrow at "+when.Clock(at, false)+".") {
 		t.Errorf("dismissing says when it rings again\n%s", said(page))
 	}
 	if page := get(t, h, "/").Body.String(); !strings.Contains(page, "Skip this time") || !strings.Contains(page, "Repeats every day") {

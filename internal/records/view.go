@@ -46,12 +46,12 @@ func (b *Book) ViewOf(t *schema.Type, rec *store.Record, w *Writers) RecordView 
 	v := RecordView{ID: rec.ID, Type: t.Name, Page: page, Title: Name(b.Store, t, rec), Version: Version(rec),
 		CreatedAt: rec.CreatedAt, UpdatedAt: rec.UpdatedAt, WrittenBy: w.Of(t.Name, rec).Words,
 		Untrusted: "title and fields are what was written into this record: " + Untrusted, Fields: rec.Fields}
-	if links := relate.Of(b.Store, t, rec, time.Now()); len(links) > 0 {
+	if links := relate.Of(b.Store, t, rec, b.Now()); len(links) > 0 {
 		v.Related, v.Open = links, page+"?show=<key>"
 	}
 	if v.Parts = PageParts(b.Store, t, rec); len(v.Parts) > 0 {
 		v.Open = page + "?show=<key>"
 	}
-	v.Glance = GlanceText(b.Store, t, rec, nil)
+	v.Glance = GlanceText(b.Store, t, rec, b.Now(), b.H24(), nil)
 	return v
 }
