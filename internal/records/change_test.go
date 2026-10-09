@@ -162,3 +162,37 @@ func TestWritesKeepTheirOps(t *testing.T) {
 		}
 	}
 }
+
+// A change logged is heard once, whole, by each listener, however many
+// records it wrote; each record written is heard by the store's own.
+func TestListenersHearEachChangeOnce(t *testing.T) {
+	b := newBook(t)
+	var heard, also []records.Change
+	records.Listen(b.Store, func(actor string, c records.Change) { heard = append(heard, c) })
+	records.Listen(b.Store, func(actor string, c records.Change) { also = append(also, c) })
+	writes := 0
+	b.Store.Listen(func(t *schema.Type, was, now *store.Record) {
+		if t.Name == "note" {
+			writes++
+		}
+	})
+	rec, entry, err := records.WriteAs(b.Store, records.Who{Actor: "human"}, "created", "note", "", map[string]any{"title": "One"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(heard) != 1 || heard[0].Activity != entry || len(heard[0].Ops) != 1 || heard[0].Ops[0].ID != rec.ID || len(also) != 1 {
+		t.Fatalf("one change, heard once by each, with its entry and ops: %+v %d", heard, len(also))
+	}
+	done, _ := b.Apply(
+		records.Op{Type: "note", After: map[string]any{"title": "Two"}},
+		records.Op{Type: "note", After: map[string]any{"title": "Three"}},
+		records.Op{Type: "note", ID: rec.ID},
+	)
+	records.Record(b.Store, "human", records.Change{Action: "imported", Component: "note", Detail: "3 notes", Ops: done})
+	if len(heard) != 2 || len(heard[1].Ops) != 3 || len(also) != 2 {
+		t.Errorf("a batch of three is one change, heard once: %d", len(heard))
+	}
+	if writes != 4 {
+		t.Errorf("the store's own listener hears each record written: %d", writes)
+	}
+}

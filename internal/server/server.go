@@ -32,6 +32,7 @@ type Server struct {
 	speech  speechState                   // speech-to-text on this computer; see transcribe.go
 	host    hostState                     // recordings written down with no page; see hostwrite.go
 	apps    meetingApps                   // transcripts brought from Teams and Zoom; meeting_fetch.go
+	logged  signal                        // a change logged here, for those waiting on /api/changes; changes.go
 }
 
 // New builds the handler for an app.

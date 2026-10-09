@@ -97,6 +97,8 @@ func Record(st *store.Store, actor string, c Change) string {
 	if err != nil {
 		return ""
 	}
+	c.Activity = rec.ID
+	tell(st, actor, c) // listen.go
 	return rec.ID
 }
 

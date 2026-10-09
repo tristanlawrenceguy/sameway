@@ -53,7 +53,7 @@ func (s *Service) StartAutomating() {
 		return
 	}
 	s.auto = &automation{jobs: make(chan automationJob, 256), last: map[string]time.Time{}}
-	s.Store.OnChange = s.recordChanged
+	s.Store.Listen(s.recordChanged)
 	go func() {
 		for j := range s.auto.jobs {
 			s.runAutomation(j)
