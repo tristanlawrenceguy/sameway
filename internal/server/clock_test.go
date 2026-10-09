@@ -81,7 +81,7 @@ func TestTheClockSetsListsAndRings(t *testing.T) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-	sreq := httptest.NewRequest(http.MethodGet, "/clock/stream", nil).WithContext(ctx)
+	sreq := httptest.NewRequest(http.MethodGet, "/events?ring=1", nil).WithContext(ctx)
 	srec := httptest.NewRecorder()
 	h.ServeHTTP(srec, sreq)
 	if out := srec.Body.String(); !strings.Contains(out, "event: ring") || !strings.Contains(out, `"title":"Tea"`) || strings.Count(out, "event: ring") != 1 {

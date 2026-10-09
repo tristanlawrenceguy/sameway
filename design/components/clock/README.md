@@ -24,7 +24,7 @@ page is open: it shows the machine's own notification (a toast, a
 banner), and runs the `notify.command` in workspace.yaml if there is
 one, with `{title}`, `{text}` and `{url}` in its arguments, which is how
 a ring reaches a phone through a push service such as ntfy, or an inbox.
-It also tells every open page over `/clock/stream`; the clock shows it in an alert region,
+It also tells every open page with a clock over its one connection (`/events?ring=1`, design/base/01-connect.js), kept open while the tab is hidden; the clock shows it in an alert region,
 sounds (unless `sound` is false), and raises a browser notification when
 the person has allowed them. A ring about something says what, on the
 page and in the notification (Water: 3 of 8 glasses so far), and the

@@ -248,7 +248,7 @@ seconds over the tailnet, with the machines in `tailnet.peers`. Only the
 owner's computers and people with `access: host` may, because a copy can
 change anything. Chats, the assistant's questions, actions, devices, files
 and the log stay on the computer that made them. Open pages follow what
-arrives (`/events`, 20-follow.js). Content types travel too: each is stamped
+arrives (`/events`, the page's one connection in design/base/01-connect.js). Content types travel too: each is stamped
 like a record (`_schema`), with every part that can change on its own as
 its own field: a field's definition, its label, whether it is hidden,
 whether it was deleted, and each choice of a pick-list, so choices added on

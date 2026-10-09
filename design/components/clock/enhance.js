@@ -110,15 +110,9 @@
     }
   }
 
-  function listen() {
-    if (!window.EventSource) return;
-    var es = new EventSource("/clock/stream");
-    es.addEventListener("ring", function (e) {
-      var d = {};
-      try { d = JSON.parse(e.data); } catch (err) { return; }
-      if (d.id) ring(d);
-    });
-  }
+  // Rings come on the page's one connection (01-connect.js), kept open
+  // while the tab is hidden: a reminder rings when nobody is looking.
+  function listen() { sw.listen("ring", function (d) { if (d.id) ring(d); }, true); }
 
   // The way to allow notifications, only where they are possible and not
   // yet decided; a button that would do nothing is not shown.

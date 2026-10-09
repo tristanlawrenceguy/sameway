@@ -22,7 +22,7 @@
   // The log follows the turn only while the person is reading its end.
   // Someone who has scrolled up, or is selecting text, is left where they
   // are: text that moves under the pointer cannot be selected.
-  window.swFollower = function (log) {
+  sw.follower = function (log) {
     var stick = true, pressed = false;
     function nearEnd() { return log.scrollHeight - log.scrollTop - log.clientHeight < 48; }
     log.addEventListener("scroll", function () { stick = nearEnd(); });
@@ -43,8 +43,8 @@
   // piece arrives: the text grows calmly, with no caret and nothing drawn
   // letter by letter, and the log is not scrolled for every word. The
   // words are not in a live region: a screen reader hears the finished
-  // reply once, when the turn ends (19-live-join.js, swSay).
-  window.swWriter = function (words, follow, watch) {
+  // reply once, when the turn ends (19-live-join.js, sw.say).
+  sw.writer = function (words, follow, watch) {
     var queued = "", timer = null;
     function flush() { timer = null; words.data += queued; queued = ""; follow(); }
     function write(text) {
@@ -61,7 +61,7 @@
 
   function canvas() { return document.querySelector(".sw-main .sw-canvas:not(.sw-canvas--strip)"); }
 
-  window.swWatchTurn = function (form) {
+  sw.watchTurn = function (form) {
     var status = document.getElementById(form.getAttribute("data-busy-target"));
     var said = {}, last = 0, waiting = null, timer = null, early = 0;
 

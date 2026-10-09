@@ -69,7 +69,7 @@ async function watchTurn(page, mode, reduced) {
     window.__send = (event, data) => push.enqueue(enc.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
     window.__end = () => push.close();
     sw.refresh = () => {}; // the server knows nothing of this turn: the page stays as fed
-    window.swFollowTurn(document.querySelector("form.sw-compose"), Promise.resolve(new Response(body, { headers: { "Content-Type": "text/event-stream" } })));
+    sw.followTurn(document.querySelector("form.sw-compose"), Promise.resolve(new Response(body, { headers: { "Content-Type": "text/event-stream" } })));
   });
   const send = (event, data) => page.evaluate(([e, d]) => window.__send(e, d), [event, data]);
   const other = await page.locator(".sw-main .sw-canvas > li[data-block-id]").first().getAttribute("data-block-id");

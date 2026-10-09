@@ -29,6 +29,13 @@
     timer = setTimeout(refresh, delay === undefined ? 400 : delay);
   };
 
+  // Changes made elsewhere: when another computer that hosts this
+  // workspace changes it, the server says so on /events (01-connect.js)
+  // and the page follows, glowing where it changed; a tab looked at again
+  // catches up. Without scripts the page shows the change on the next load.
+  sw.listen("changed", function () { if (!document.hidden) sw.refresh(300); });
+  sw.on("back", function () { sw.refresh(0); });
+
   function refresh() {
     if (running) { again = true; return; }
     running = true;

@@ -11,7 +11,7 @@
   "use strict";
   // Stop, beside the status while the turn runs: the turn ends where it
   // is, the reply says so, and what it did stays.
-  window.swStopControl = function (form, turn) {
+  sw.stopControl = function (form, turn) {
     var status = document.getElementById(form.getAttribute("data-busy-target"));
     if (!status || !turn) return null;
     var btn = document.createElement("button");
@@ -27,12 +27,12 @@
     return btn;
   };
 
-  // swSay tells the end of a turn through the status that is already on
+  // sw.say tells the end of a turn through the status that is already on
   // the page, by changing its words: a region put in whole, as the old
   // code did, is not read out by screen readers, so a person who cannot
   // see the reply arrive heard "Assistant is working" and then nothing.
   // It says the status the server gave, with the reply's first words.
-  window.swSay = function (statusHTML, replyHTML, errorText) {
+  sw.say = function (statusHTML, replyHTML, errorText) {
     var status = document.getElementById("chat-status");
     if (!status) return;
     var t = document.createElement("template");
@@ -62,7 +62,7 @@
 
   function join(form) {
     var turn = form.getAttribute("data-turn");
-    if (!turn || !window.swFollowTurn || form._sending) return;
+    if (!turn || form._sending) return;
     form._sending = true;
     form.setAttribute("aria-busy", "true");
     form.querySelectorAll("button[type=submit]").forEach(function (b) { b.setAttribute("aria-disabled", "true"); });
@@ -71,7 +71,7 @@
     if (document.title.indexOf("⏳ ") !== 0) document.title = "⏳ " + document.title;
     var from = form.querySelector('input[name="from"]');
     var url = form.action.replace(/\/chat$/, "/chat/live") + "?" + new URLSearchParams({ turn: turn, from: from ? from.value : "/" });
-    window.swFollowTurn(form, fetch(url, { headers: { Accept: "text/event-stream" }, credentials: "same-origin" }));
+    sw.followTurn(form, fetch(url, { headers: { Accept: "text/event-stream" }, credentials: "same-origin" }));
   }
   // The end of a turn, for a person who looked away while it ran: the
   // system's notification with the reply's first words, and a mark on the

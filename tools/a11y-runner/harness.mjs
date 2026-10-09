@@ -24,9 +24,11 @@ export function page(body, attrs = "") {
 // open loads a case: html is the page, or a function of how many times the
 // page has been asked for (1 on load, 2 on its first refresh...); routes
 // answer other paths, each (route, url, request) => fulfilled. Anything
-// else is answered 204, so an EventSource that is not wanted closes.
-export async function open(browser, html, routes = {}) {
+// else is answered 204, so an EventSource that is not wanted closes. init,
+// if given, runs in the page before its scripts.
+export async function open(browser, html, routes = {}, init = null) {
   const tab = await browser.newPage();
+  if (init) await tab.addInitScript(init);
   let asked = 0;
   const errors = [];
   tab.on("pageerror", (e) => errors.push(String(e)));
