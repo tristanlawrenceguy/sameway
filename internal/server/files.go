@@ -100,7 +100,21 @@ func (s *Server) readNow(id, name string, data []byte) {
 	default:
 		fields["text"] = res.Markdown
 	}
-	s.app.Store.Update(FileType, id, fields)
+	s.fileSays(id, fields)
+}
+
+// fileSays writes what reading a file found: its status, its note, its
+// text. It goes through Apply like every write, but it is the file's own
+// bookkeeping, not anyone's change, so it is not logged; and a file gone
+// meanwhile stays gone.
+func (s *Server) fileSays(id string, fields map[string]any) (*store.Record, error) {
+	if _, err := s.app.Store.Get(FileType, id); err != nil {
+		return nil, err
+	}
+	if _, err := records.ApplyOps(s.app.Store, records.Op{Type: FileType, ID: id, After: fields}); err != nil {
+		return nil, err
+	}
+	return s.app.Store.Get(FileType, id)
 }
 
 // convertLater hands a file to the workspace's converter and finishes the
@@ -108,13 +122,13 @@ func (s *Server) readNow(id, name string, data []byte) {
 func (s *Server) convertLater(id, converter, name, path string) {
 	md, err := convert.External(context.Background(), converter, name, path)
 	if err != nil {
-		s.app.Store.Update(FileType, id, map[string]any{"status": "failed", "note": err.Error()})
+		s.fileSays(id, map[string]any{"status": "failed", "note": err.Error()})
 		records.Record(s.app.Store, "system", records.Change{Action: "failed", Detail: "converting " + name + ": " + err.Error()})
 		s.Changed()
 		log.Printf("files: %s: %v", name, err)
 		return
 	}
-	rec, err := s.app.Store.Update(FileType, id, map[string]any{"status": "ready", "text": md, "note": "converted by " + converter})
+	rec, err := s.fileSays(id, map[string]any{"status": "ready", "text": md, "note": "converted by " + converter})
 	if err != nil {
 		return
 	}

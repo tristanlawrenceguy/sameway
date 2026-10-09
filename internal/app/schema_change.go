@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"slices"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -161,11 +162,15 @@ func (a *App) RemoveField(typeName, field string) (*schema.Type, error) {
 	if err != nil {
 		return nil, err
 	}
+	// What each record held goes as part of the schema change, which is
+	// what is logged.
+	var ops []records.Op
 	for _, r := range recs {
 		if r.Fields[field] != nil {
-			a.Store.Update(t.Name, r.ID, map[string]any{field: nil})
+			ops = append(ops, records.Op{Type: t.Name, ID: r.ID, After: map[string]any{field: nil}})
 		}
 	}
+	records.ApplyOps(a.Store, ops...)
 	a.Store.StampDeleted(t.Name, field)
 	return a.rewrite(t, func(src []byte) ([]byte, error) { return schema.RemoveFieldYAML(src, field) })
 }

@@ -46,17 +46,19 @@ func (s *Server) seedChat(canvas string) {
 	if len(blocks) > 0 {
 		return
 	}
-	s.app.Store.Create(records.BlockType, s.app.Chat.BlockFields(map[string]any{
+	ops := []records.Op{{Type: records.BlockType, After: s.app.Chat.BlockFields(map[string]any{
 		"component": records.ComponentName, "props": map[string]any{}, "position": 0, "span": 12, "canvas": canvas, "actor": "system", "created_by": "system",
-	}))
+	})}}
 	// Search starts in the header of the first tab, where a person reaches
 	// for it on every page. It is a block like any other: move it, shrink
 	// it to an icon, or remove it, and the search page is still there.
 	if canvas == "" {
-		s.app.Store.Create(records.BlockType, s.app.Chat.BlockFields(map[string]any{
+		ops = append(ops, records.Op{Type: records.BlockType, After: s.app.Chat.BlockFields(map[string]any{
 			"component": "search", "props": map[string]any{}, "position": 0, "span": 4, "region": "header", "frame": "bare", "canvas": canvas, "actor": "system", "created_by": "system",
-		}))
+		})})
 	}
+	// Part of making the tab, which is what is logged.
+	records.ApplyOps(s.app.Store, ops...)
 }
 
 // canvasOf is the tab a block is on.

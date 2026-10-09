@@ -164,8 +164,8 @@ func (s *Server) pairCaptions(id string, data []byte) {
 			os.WriteFile(path, []byte(speech.VTT(cues)), 0o644)
 		}
 		name, _ := sub.Fields["name"].(string)
-		s.app.Store.Update(FileType, rec.ID, map[string]any{"text": convert.Transcript(cues), "note": "Its words are from " + name + ". Edit the text if they are wrong."})
-		s.app.Store.Update(FileType, id, map[string]any{"note": "These are the words of " + other + ", given to it."})
+		s.fileSays(rec.ID, map[string]any{"text": convert.Transcript(cues), "note": "Its words are from " + name + ". Edit the text if they are wrong."})
+		s.fileSays(id, map[string]any{"note": "These are the words of " + other + ", given to it."})
 		s.Changed()
 		return
 	}

@@ -139,7 +139,11 @@ func (s *Server) nudges(now time.Time) []*store.Record {
 			continue
 		}
 		fields := map[string]any{"title": h.Name, "at": when.Store(now, false), "kind": "alarm", "state": "rang", "about": about}
-		rec, err := s.app.Store.Create(ReminderType, fields)
+		made, err := records.ApplyOps(s.app.Store, records.Op{Type: ReminderType, After: fields})
+		if err != nil {
+			continue
+		}
+		rec, err := s.app.Store.Get(ReminderType, made[0].ID)
 		if err != nil {
 			continue
 		}

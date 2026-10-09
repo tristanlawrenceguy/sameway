@@ -115,28 +115,22 @@ func (s *Server) todayMove(w http.ResponseWriter, r *http.Request) {
 // todayLate moves every late task to today, as one change.
 func (s *Server) todayLate(w http.ResponseWriter, r *http.Request) {
 	now := time.Now()
-	var batch []records.BatchItem
+	var ops []records.Op
 	for _, it := range s.today(now).Late {
-		if it.Type != "task" {
-			continue
+		if _, err := s.app.Store.Get("task", it.ID); err == nil && it.Type == "task" {
+			ops = append(ops, records.Op{Type: "task", ID: it.ID, After: map[string]any{"due": dayFor(it.At, it.AllDay, now)}})
 		}
-		rec, err := s.app.Store.Get("task", it.ID)
-		if err != nil {
-			continue
-		}
-		before := rec.Fields
-		if _, err := s.app.Store.Update("task", it.ID, map[string]any{"due": dayFor(it.At, it.AllDay, now)}); err != nil {
-			s.failed(w, r, "Not all moved", err, "/today")
-			return
-		}
-		batch = append(batch, records.BatchItem{Type: "task", ID: it.ID, Before: before})
 	}
-	if len(batch) == 0 {
+	if len(ops) == 0 {
 		s.tellAt(w, r, outcome{Title: "Nothing to move", Text: "No task is late."}, "/today")
 		return
 	}
-	detail := fmt.Sprintf("%d late tasks to today", len(batch))
-	who := s.who(r)
-	act := records.Record(s.app.Store, who.Actor, records.Change{Action: "rescheduled", Component: "task", Detail: detail, Ops: records.OpsOf(s.app.Store, batch), By: who.By, Via: who.Via, ByLogin: who.ByLogin})
-	s.tellAt(w, r, outcome{Title: "Moved", Text: fmt.Sprintf("%d tasks are due today.", len(batch)), Undo: act, Of: detail}, "/today")
+	// All or none: one that cannot move leaves them all where they were.
+	detail := fmt.Sprintf("%d late tasks to today", len(ops))
+	act, _, err := s.apply(r, records.Change{Action: "rescheduled", Component: "task", Detail: detail}, ops...)
+	if err != nil {
+		s.failed(w, r, "Not moved", err, "/today")
+		return
+	}
+	s.tellAt(w, r, outcome{Title: "Moved", Text: fmt.Sprintf("%d tasks are due today.", len(ops)), Undo: act, Of: detail}, "/today")
 }
