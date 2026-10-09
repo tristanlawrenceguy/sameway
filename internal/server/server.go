@@ -87,7 +87,8 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 		EditControls: s.editControls(body, opts.Left, opts.Right, opts.Header, opts.Footer),
 	}
 	for _, t := range s.app.Types.Types {
-		if t.Internal || !s.listedFor(r, t) {
+		// Entries are listed on their habit's page, not as a list of their own.
+		if t.Internal || t.Name == EntryType || !s.listedFor(r, t) {
 			continue
 		}
 		href := "/t/" + t.Name

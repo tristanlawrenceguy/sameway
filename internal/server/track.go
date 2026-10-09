@@ -71,8 +71,8 @@ func (s *Server) habitLog(w http.ResponseWriter, r *http.Request) {
 }
 
 // habitSection is what a habit's own page adds: where it stands, its own
-// tracker row with a day to log for, and the last periods as a chart with
-// the target (or the limit) drawn.
+// tracker row with a day to log for, the last periods as a chart with
+// the target (or the limit) drawn, and its latest entries.
 func (s *Server) habitSection(rec *store.Record) template.HTML {
 	now := s.now()
 	h := track.Normal(blocks.HabitOf(rec))
@@ -114,6 +114,12 @@ func (s *Server) habitSection(rec *store.Record) template.HTML {
 		props["unit"] = h.Unit
 	}
 	b.WriteString(string(s.component("chart", props)))
+	// Each log, newest first: the entries live under their habit, not as
+	// a list of their own in the menu.
+	b.WriteString(string(s.component(collectionComponent, s.resolve(collectionComponent, map[string]any{
+		"type": EntryType, "where": []string{"habit=" + h.ID}, "order": "-at", "limit": 10,
+		"label": "Entries", "level": 2, "id": "habit-entries",
+	}, "", nil))))
 	b.WriteString(`</div>`)
 	return template.HTML(b.String())
 }
