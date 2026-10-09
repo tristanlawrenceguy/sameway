@@ -7,6 +7,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/speech"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // What this computer and its model cannot do is said before a person
@@ -41,14 +42,14 @@ func (s *Server) limitsSection(owner bool) string {
 		case s.speakers().Ready():
 			line("Speakers: told apart in a recording written down whole, as Speaker 1, Speaker 2; edit the text to name them. A call recorded with this computer's sound says you and them instead.")
 		case owner:
-			line(`Speakers: not told apart yet, so a transcript says who spoke only for a call recorded with this computer's sound. Telling them apart is a ` + sizeWords(speech.SpeakersSize()) + ` download, and recordings never leave this computer. <form method="post" action="/speech/speakers/get">` +
-				string(s.component("button", map[string]any{"label": "Get speaker separation", "type": "submit", "variant": "secondary"})) + `</form>`)
+			line(`Speakers: not told apart yet, so a transcript says who spoke only for a call recorded with this computer's sound. Telling them apart is a ` + sizeWords(speech.SpeakersSize()) + ` download, and recordings never leave this computer. ` +
+				string(s.form(ui.Form{Action: "/speech/speakers/get", Button: &ui.Button{Label: "Get speaker separation", Variant: ui.Secondary}})))
 		}
 	case !speech.Supported() && !s.speech.given:
 		line("Recordings: there is no speech-to-text for this kind of computer, so a recording keeps a transcript only when one is written by hand.")
 	case owner:
-		line(`Recordings: speech-to-text is not on this computer yet, so a recording keeps a transcript only when one is written by hand. Getting it is a ` + sizeWords(speech.DownloadSize()) + ` download. <form method="post" action="/speech/get">` +
-			string(s.component("button", map[string]any{"label": "Get speech-to-text", "type": "submit", "variant": "secondary"})) + `</form>`)
+		line(`Recordings: speech-to-text is not on this computer yet, so a recording keeps a transcript only when one is written by hand. Getting it is a ` + sizeWords(speech.DownloadSize()) + ` download. ` +
+			string(s.form(ui.Form{Action: "/speech/get", Button: &ui.Button{Label: "Get speech-to-text", Variant: ui.Secondary}})))
 	default:
 		line("Recordings: speech-to-text is not on this computer yet, so a recording keeps a transcript only when one is written by hand. The owner can get it.")
 	}

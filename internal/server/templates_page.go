@@ -7,6 +7,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // Templates: ready-made pages for a job (a job search, clients, a house
@@ -29,8 +30,7 @@ func (s *Server) templatesPage(w http.ResponseWriter, r *http.Request) {
 			}
 			b.WriteString(`<p class="sw-small sw-muted">Adds a kind of thing to keep: ` + esc(strings.Join(kinds, ", ")) + `.</p>`)
 		}
-		b.WriteString(`<form method="post" action="/templates/use"><input type="hidden" name="name" value="` + esc(t.Name) + `">` +
-			string(s.component("button", map[string]any{"label": "Use this template", "context": t.Title, "type": "submit", "variant": "secondary"})) + `</form></li>`)
+		b.WriteString(string(s.form(ui.Form{Action: "/templates/use", Hidden: ui.Hidden("name", t.Name), Button: &ui.Button{Label: "Use this template", Context: t.Title, Variant: ui.Secondary}})) + `</li>`)
 	}
 	b.WriteString(`</ul>`)
 	s.page(w, r, "Templates", template.HTML(b.String()), pageOptions{Lede: "Ready-made pages for a job, each a press away."})

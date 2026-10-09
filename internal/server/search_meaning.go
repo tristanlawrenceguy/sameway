@@ -14,6 +14,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/meaning"
 	"github.com/tristanlawrenceguy/sameway/internal/search"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // Search by meaning, for a workspace on a computer with Ollama and an
@@ -155,7 +156,7 @@ func (s *Server) meaningLine() string {
 	if failed != "" {
 		out += " The last try said: " + template.HTMLEscapeString(failed) + "."
 	}
-	return out + ` <form method="post" action="/meaning/fetch">` + string(s.component("button", map[string]any{"label": "Turn on search by meaning", "type": "submit", "variant": "secondary"})) + `</form>`
+	return out + " " + string(s.form(ui.Form{Action: "/meaning/fetch", Button: &ui.Button{Label: "Turn on search by meaning", Variant: ui.Secondary}}))
 }
 
 func (s *Server) meaningFetch(w http.ResponseWriter, r *http.Request) {

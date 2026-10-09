@@ -16,6 +16,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/mailin"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
@@ -56,7 +57,7 @@ func (s *Server) mailPage(w http.ResponseWriter, r *http.Request) {
 		if at := s.app.Store.Meta("mail:checked"); at != "" {
 			b.WriteString(`<p class="sw-small sw-muted">Last looked: ` + esc(at) + `</p>`)
 		}
-		b.WriteString(`<form method="post" action="/mail/off">` + string(s.component("button", map[string]any{"label": "Stop reading my email", "type": "submit", "variant": "secondary"})) + `</form>`)
+		b.WriteString(string(s.form(ui.Form{Action: "/mail/off", Button: &ui.Button{Label: "Stop reading my email", Variant: ui.Secondary}})))
 		s.page(w, r, "Email in", template.HTML(b.String()), pageOptions{})
 		return
 	}

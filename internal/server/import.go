@@ -14,6 +14,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // Records from a file. Every list page offers to import from a file: a
@@ -51,8 +52,9 @@ func (s *Server) importPage(w http.ResponseWriter, r *http.Request) {
 	default:
 		b.WriteString(`<p class="sw-muted">A CSV with a header row, a tab-separated file (.tsv), or plain text (.txt). The file is kept with your files; its rows become ` + template.HTMLEscapeString(schema.Plural(t.Name)) + `, and you see how each column lands before anything is made.</p>`)
 	}
-	fmt.Fprintf(&b, `<form method="post" action="/t/%s/import" enctype="multipart/form-data" class="sw-stack sw-import"><div class="sw-field"><label class="sw-field__label" for="import-file">File</label><input class="sw-field__input" id="import-file" type="file" name="file" accept=".csv,.tsv,.txt,.vcf,.vcard,.mbox,.eml,.ics" required aria-describedby="import-error"><span class="sw-visually-hidden" id="import-error" role="status" aria-live="assertive"></span></div>%s</form>`,
-		t.Name, s.component("button", map[string]any{"label": "Read the file", "type": "submit"}))
+	b.WriteString(string(s.form(ui.Form{Action: "/t/" + t.Name + "/import", Enctype: "multipart/form-data", Class: "sw-stack sw-import",
+		Body:   `<div class="sw-field"><label class="sw-field__label" for="import-file">File</label><input class="sw-field__input" id="import-file" type="file" name="file" accept=".csv,.tsv,.txt,.vcf,.vcard,.mbox,.eml,.ics" required aria-describedby="import-error"><span class="sw-visually-hidden" id="import-error" role="status" aria-live="assertive"></span></div>`,
+		Button: &ui.Button{Label: "Read the file"}})))
 	b.WriteString(`<script>(function(){var f=document.getElementById("import-file");var err=document.getElementById("import-error");f.addEventListener('invalid',function(e){err.textContent="select a file."},false);document.querySelector(".sw-import").addEventListener('submit',function(e){if(!f.value){e.preventDefault();err.textContent="select a file.";f.reportValidity()}},{once:true});f.addEventListener('change',function(){err.textContent=""})})();</script>`)
 	s.page(w, r, "Import "+schema.Plural(t.Name), template.HTML(b.String()), pageOptions{Kicker: s.crumbs("/t/"+t.Name, capitalize(schema.Plural(t.Name)), "", s.dotOf(t.Name)), Dot: s.dotOf(t.Name)})
 }
@@ -109,7 +111,7 @@ func (s *Server) importPreview(w http.ResponseWriter, r *http.Request, t *schema
 		b.WriteString(string(s.component("alert", map[string]any{"kind": "warning", "message": problem})))
 	}
 	fmt.Fprintf(&b, `<p class="sw-muted">%d rows in %s. Each column below feeds the field it names; change any that landed wrong, or set it to nothing to leave it out. A column for an email, a phone or a name that feeds nothing still links each row to its person.</p>`, len(tb.Rows), template.HTMLEscapeString(name))
-	fmt.Fprintf(&b, `<form method="post" action="/t/%s/import/%s/run" class="sw-stack sw-import">`, t.Name, id)
+	b.WriteString(ui.Form{Action: "/t/" + t.Name + "/import/" + id + "/run", Class: "sw-stack sw-import"}.Open())
 	b.WriteString(`<div class="sw-table-wrap" role="region" tabindex="0" aria-label="The first rows, with the field each column feeds"><table class="sw-table sw-import__table"><caption class="sw-visually-hidden">The first rows, with the field each column feeds</caption><thead><tr>`)
 	for _, col := range tb.Columns {
 		fmt.Fprintf(&b, `<th scope="col">%s</th>`, template.HTMLEscapeString(col))
@@ -140,7 +142,7 @@ func (s *Server) importPreview(w http.ResponseWriter, r *http.Request, t *schema
 		b.WriteString(`</tr>`)
 	}
 	b.WriteString(`</tbody></table></div>`)
-	b.WriteString(string(s.component("button", map[string]any{"label": fmt.Sprintf("Import %d %s", len(tb.Rows), schema.Plural(t.Name)), "type": "submit"})))
+	b.WriteString(string(s.part(ui.Button{Label: fmt.Sprintf("Import %d %s", len(tb.Rows), schema.Plural(t.Name)), Type: ui.Submit})))
 	b.WriteString(`</form>`)
 	s.page(w, r, "Import "+schema.Plural(t.Name), template.HTML(b.String()), pageOptions{Kicker: s.crumbs("/t/"+t.Name, capitalize(schema.Plural(t.Name)), "", s.dotOf(t.Name)), Dot: s.dotOf(t.Name)})
 }

@@ -5,6 +5,8 @@ import (
 	"html/template"
 	"net/http"
 	"runtime"
+
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 var errNoFleet = errors.New("this Sameway was not started to be stopped from its page; stop it where it was started")
@@ -20,9 +22,8 @@ func (s *Server) quitSection() string {
 	if s.fleet == nil || s.fleet.Exit == nil {
 		return ""
 	}
-	return `<form method="post" action="/quit" class="sw-stack">` +
-		string(s.component("button", map[string]any{"label": "Quit Sameway", "type": "submit", "variant": "secondary"})) +
-		`<p class="sw-small sw-muted">Stops Sameway on this computer until you open it again ` + reopenWhere() + `. Reminders do not ring while it is stopped.</p></form>`
+	return string(s.form(ui.Form{Action: "/quit", Class: "sw-stack", Button: &ui.Button{Label: "Quit Sameway", Variant: ui.Secondary},
+		After: template.HTML(`<p class="sw-small sw-muted">Stops Sameway on this computer until you open it again ` + reopenWhere() + `. Reminders do not ring while it is stopped.</p>`)}))
 }
 
 // reopenWhere is where a person opens Sameway again on this computer.

@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // Every action a person takes from a page ends the same way: they are back
@@ -138,11 +139,11 @@ func (s *Server) renderOutcome(o outcome, from string) template.HTML {
 		kind, state = "danger", "failed"
 	}
 	// A short outcome is its title alone, said as the message.
-	props := map[string]any{"kind": kind, "title": o.Title, "message": o.Text, "dismiss": true, "live": true}
+	a := ui.Alert{Kind: ui.AlertKind(kind), Title: o.Title, Message: o.Text, Dismiss: true, Live: true}
 	if o.Text == "" {
-		props["title"], props["message"] = "", o.Title
+		a.Title, a.Message = "", o.Title
 	}
-	alert := string(s.component("alert", props))
+	alert := string(s.part(a))
 	if o.Failed && len(o.Problems) > 0 {
 		var items []any
 		for _, p := range o.Problems {
@@ -158,9 +159,8 @@ func (s *Server) renderOutcome(o outcome, from string) template.HTML {
 		if what == "" {
 			what = o.Title
 		}
-		alert += `<form method="post" action="/activity/` + template.HTMLEscapeString(o.Undo) + `/undo" class="sw-outcome__undo">` +
-			`<input type="hidden" name="from" value="` + template.HTMLEscapeString(from) + `">` +
-			string(s.component("button", map[string]any{"label": "Undo", "context": strings.TrimSuffix(what, "."), "type": "submit", "variant": "secondary"})) + `</form>`
+		alert += string(s.form(ui.Form{Action: "/activity/" + o.Undo + "/undo", Class: "sw-outcome__undo", From: from,
+			Button: &ui.Button{Label: "Undo", Context: strings.TrimSuffix(what, "."), Variant: ui.Secondary}}))
 	}
 	return template.HTML(`<div class="sw-outcome" id="outcome" tabindex="-1" data-outcome="` + state + `" data-outcome-for="` + template.HTMLEscapeString(o.For) + `">` + alert + `</div>`)
 }

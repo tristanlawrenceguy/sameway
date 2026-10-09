@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // What the help page says of the meeting apps, for the owner: connected,
@@ -28,8 +29,8 @@ func (s *Server) appLines() (out, setup []string) {
 		if failed != "" {
 			why = " The last try ended: " + esc(failed) + "."
 		}
-		out = append(out, "Teams: ready to connect."+why+` <form method="post" action="/meetings/teams/connect">`+
-			string(s.component("button", map[string]any{"label": "Connect Teams", "type": "submit", "variant": "secondary"}))+`</form>`)
+		out = append(out, "Teams: ready to connect."+why+" "+
+			string(s.form(ui.Form{Action: "/meetings/teams/connect", Button: &ui.Button{Label: "Connect Teams", Variant: ui.Secondary}})))
 	}
 	c := s.app.Workspace.Config.Meetings
 	switch {
