@@ -13,6 +13,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // The changes suggested to a record's words wait on its page, above its
@@ -35,7 +36,7 @@ var suggestionKinds = []struct{ key, name, all string }{
 // suggestionsOn is the section of what waits on a record.
 func (s *Server) suggestionsOn(r *http.Request, t *schema.Type, rec *store.Record) string {
 	waiting := chat.Suggestions(s.app.Store, t.Name, rec.ID)
-	if len(waiting) == 0 || !changes(r) {
+	if len(waiting) == 0 || !web.MayChange(r) {
 		return ""
 	}
 	from := "/t/" + t.Name + "/" + rec.ID

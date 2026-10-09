@@ -67,7 +67,7 @@ func (s *Server) importUpload(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	rec, err := s.storeUpload(r)
+	rec, err := s.media.StoreUpload(r)
 	if err != nil {
 		if errors.Is(err, http.ErrMissingFile) || strings.Contains(err.Error(), "select a file") {
 			err = errors.New("choose a file first")

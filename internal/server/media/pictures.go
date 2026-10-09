@@ -1,4 +1,4 @@
-package server
+package media
 
 import (
 	"bytes"
@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // A picture goes to a model that can see as it is when it is small, and
@@ -27,13 +28,13 @@ const (
 
 var pictureTypes = map[string]string{".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".gif": "image/gif", ".webp": "image/webp"}
 
-// pictureFor is a picture file ready for a model to see.
-func (s *Server) pictureFor(id string) (llm.Image, bool) {
-	rec, err := s.app.Store.Get(FileType, id)
+// PictureFor is a picture file ready for a model to see.
+func (s *Service) PictureFor(id string) (llm.Image, bool) {
+	rec, err := s.app.Store.Get(records.FileType, id)
 	if err != nil || rec.Fields["kind"] != "image" {
 		return llm.Image{}, false
 	}
-	path, ok := s.storedPath(rec)
+	path, ok := s.StoredPath(rec)
 	if !ok {
 		return llm.Image{}, false
 	}

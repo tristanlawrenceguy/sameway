@@ -13,6 +13,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // Longer writing on its pages (records/pieces.go): a piece shows its outline
@@ -87,7 +88,7 @@ func (s *Server) outline(r *http.Request, t *schema.Type, piece *store.Record, p
 			fmt.Fprintf(&b, `<p>%s</p>`, template.HTMLEscapeString(syn))
 		}
 		fmt.Fprintf(&b, `<p class="sw-muted">%s</p>`, strings.Join(facts, " · "))
-		if changes(r) && len(parts) > 1 {
+		if web.MayChange(r) && len(parts) > 1 {
 			b.WriteString(`<p class="sw-cluster">`)
 			for _, mv := range []struct{ dir, label string }{{"up", "Move up"}, {"down", "Move down"}} {
 				if mv.dir == "up" && i == 0 || mv.dir == "down" && i == len(parts)-1 {

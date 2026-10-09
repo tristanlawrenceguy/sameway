@@ -29,7 +29,7 @@ import (
 // chatInput reads the composer's form, with the file it may carry.
 func (s *Server) chatInput(r *http.Request) (canvas, text, fileID, back string, err error) {
 	if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/") {
-		file, uerr := s.storeUpload(r)
+		file, uerr := s.media.StoreUpload(r)
 		if uerr != nil && uerr != http.ErrMissingFile {
 			return "", "", "", "", uerr
 		}

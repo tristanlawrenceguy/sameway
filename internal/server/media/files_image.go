@@ -1,4 +1,4 @@
-package server
+package media
 
 import (
 	"bytes"
@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -19,9 +20,9 @@ import (
 // and, when it moves, still until someone asks it to play (WCAG 2.2.2).
 
 // pictureOf is the image component's props for a file that is a picture.
-func (s *Server) pictureOf(rec *store.Record, alt string) map[string]any {
+func (s *Service) pictureOf(rec *store.Record, alt string) map[string]any {
 	props := map[string]any{"src": "/files/" + rec.ID, "alt": alt, "loading": "eager"}
-	path, ok := s.storedPath(rec)
+	path, ok := s.StoredPath(rec)
 	if !ok {
 		return props
 	}
@@ -40,8 +41,8 @@ func (s *Server) pictureOf(rec *store.Record, alt string) map[string]any {
 	return props
 }
 
-// storedPath is where a file's original is kept, when it is.
-func (s *Server) storedPath(rec *store.Record) (string, bool) {
+// StoredPath is where a file's original is kept, when it is.
+func (s *Service) StoredPath(rec *store.Record) (string, bool) {
 	stored, _ := rec.Fields["path"].(string)
 	if stored == "" || strings.ContainsAny(stored, `/\`) {
 		return "", false
@@ -60,13 +61,13 @@ func moving(path string) bool {
 }
 
 // serveStill is a moving GIF's first frame, as a PNG: the picture at rest.
-func (s *Server) serveStill(w http.ResponseWriter, r *http.Request) {
-	rec, err := s.app.Store.Get(FileType, r.PathValue("id"))
+func (s *Service) serveStill(w http.ResponseWriter, r *http.Request) {
+	rec, err := s.app.Store.Get(records.FileType, r.PathValue("id"))
 	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
-	path, ok := s.storedPath(rec)
+	path, ok := s.StoredPath(rec)
 	if !ok {
 		http.NotFound(w, r)
 		return

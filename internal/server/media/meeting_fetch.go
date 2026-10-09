@@ -1,4 +1,4 @@
-package server
+package media
 
 import (
 	"bytes"
@@ -16,6 +16,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // A meeting the app records (record_meeting, how app) has its transcript
@@ -41,7 +42,7 @@ const (
 	fetchFor   = 24 * time.Hour
 )
 
-func (s *Server) appTokens() *meetfetch.Tokens {
+func (s *Service) appTokens() *meetfetch.Tokens {
 	s.apps.mu.Lock()
 	defer s.apps.mu.Unlock()
 	if s.apps.tokens == nil {
@@ -51,14 +52,14 @@ func (s *Server) appTokens() *meetfetch.Tokens {
 }
 
 // UseAppTokens keeps the meeting apps' sign-ins at path, for tests.
-func (s *Server) UseAppTokens(path string) { s.apps.tokens = &meetfetch.Tokens{Path: path} }
+func (s *Service) UseAppTokens(path string) { s.apps.tokens = &meetfetch.Tokens{Path: path} }
 
-func (s *Server) teams() *meetfetch.Teams {
+func (s *Service) teams() *meetfetch.Teams {
 	c := s.app.Workspace.Config.Meetings
 	return &meetfetch.Teams{ClientID: c.TeamsClientID, Tenant: c.TeamsTenant, Tokens: s.appTokens()}
 }
 
-func (s *Server) zoom() *meetfetch.Zoom {
+func (s *Service) zoom() *meetfetch.Zoom {
 	c := s.app.Workspace.Config.Meetings
 	secret := ""
 	if c.ZoomSecretEnv != "" {
@@ -67,14 +68,14 @@ func (s *Server) zoom() *meetfetch.Zoom {
 	return &meetfetch.Zoom{AccountID: c.ZoomAccountID, ClientID: c.ZoomClientID, Secret: secret}
 }
 
-func (s *Server) teamsConnected() bool {
+func (s *Service) teamsConnected() bool {
 	_, ok := s.appTokens().Get("teams")
 	return ok && s.app.Workspace.Config.Meetings.TeamsClientID != ""
 }
 
 // FetchMeetings looks, at most every few minutes, for meetings over without
 // their transcript that an app may now have.
-func (s *Server) FetchMeetings(now time.Time) {
+func (s *Service) FetchMeetings(now time.Time) {
 	s.apps.mu.Lock()
 	if now.Sub(s.apps.last) < fetchEvery {
 		s.apps.mu.Unlock()
@@ -125,7 +126,7 @@ func (s *Server) FetchMeetings(now time.Time) {
 
 // wantsApp says whether a meeting is over, recently, without a recording,
 // and was asked to have the app's brought.
-func (s *Server) wantsApp(ev *store.Record, now time.Time) bool {
+func (s *Service) wantsApp(ev *store.Record, now time.Time) bool {
 	if r, _ := ev.Fields["recording"].(string); r != "" {
 		return false
 	}
@@ -147,19 +148,19 @@ func (s *Server) wantsApp(ev *store.Record, now time.Time) bool {
 
 // keepFetched keeps a transcript brought from an app and gives it to its
 // meeting, as the system's change, logged and undone like any other.
-func (s *Server) keepFetched(ev *store.Record, vtt []byte, teams bool) {
+func (s *Service) keepFetched(ev *store.Record, vtt []byte, teams bool) {
 	et, _ := s.app.Types.Get(records.EventType)
-	title, from := s.title(et, ev), "Zoom"
+	title, from := s.Title(et, ev), "Zoom"
 	if teams {
 		from = "Teams"
 	}
 	who := records.Who{Actor: "system", Via: "from " + from}
-	rec, path, err := s.keepFile(who, bytes.NewReader(vtt), title+" transcript.vtt", "Transcript of "+title, "")
+	rec, path, err := s.KeepFile(who, bytes.NewReader(vtt), title+" transcript.vtt", "Transcript of "+title, "")
 	if err != nil {
 		log.Printf("meetings: keeping %s: %v", title, err)
 		return
 	}
-	s.readKept(rec.ID, title+" transcript.vtt", path, true)
+	s.ReadKept(rec.ID, title+" transcript.vtt", path, true)
 	if _, _, err := records.WriteAs(s.app.Store, who, "updated", records.EventType, ev.ID, map[string]any{"recording": rec.ID}); err != nil {
 		log.Printf("meetings: giving %s its transcript: %v", title, err)
 	}
@@ -169,11 +170,11 @@ func (s *Server) keepFetched(ev *store.Record, vtt []byte, teams bool) {
 // teamsConnect is the owner's press that signs in to Teams: Microsoft
 // gives a code, the page shows it, and the person types it at Microsoft
 // while this waits for them.
-func (s *Server) teamsConnect(w http.ResponseWriter, r *http.Request) {
+func (s *Service) teamsConnect(w http.ResponseWriter, r *http.Request) {
 	teams := s.teams()
 	code, err := teams.Begin(r.Context())
 	if err != nil {
-		s.tell(w, r, outcome{Failed: true, Title: "Teams not connected", Text: err.Error()}, "/help")
+		s.Tell(w, r, web.Outcome{Failed: true, Title: "Teams not connected", Text: err.Error()}, "/help")
 		return
 	}
 	s.apps.mu.Lock()
@@ -192,5 +193,5 @@ func (s *Server) teamsConnect(w http.ResponseWriter, r *http.Request) {
 		}
 		s.Changed()
 	}()
-	s.tell(w, r, outcome{Title: "Type " + code.UserCode + " at " + code.VerificationURI, Text: "Sign in there with your work account; this page says when Teams is connected. Your password goes to Microsoft, never here."}, "/help")
+	s.Tell(w, r, web.Outcome{Title: "Type " + code.UserCode + " at " + code.VerificationURI, Text: "Sign in there with your work account; this page says when Teams is connected. Your password goes to Microsoft, never here."}, "/help")
 }

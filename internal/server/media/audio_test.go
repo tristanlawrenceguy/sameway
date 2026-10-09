@@ -1,4 +1,4 @@
-package server_test
+package media_test
 
 import (
 	"net/http"
@@ -57,7 +57,7 @@ func TestARecordingPlaysWithItsTranscript(t *testing.T) {
 // says so.
 func TestThePlayerIsQuietAndSaysWhenItCannotPlay(t *testing.T) {
 	t.Parallel()
-	data, err := os.ReadFile("../../design/components/media/enhance.js")
+	data, err := os.ReadFile("../../../design/components/media/enhance.js")
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -38,7 +38,7 @@ var routeTable []route
 var routeIndex = map[string]int{}
 
 func init() {
-	for _, area := range [][]route{pageRoutes, recordRoutes, ownerRoutes, apiRoutes} {
+	for _, area := range [][]route{pageRoutes, recordRoutes, ownerRoutes, apiRoutes, mediaRoutes()} {
 		routeTable = append(routeTable, area...)
 	}
 	for i, rt := range routeTable {
@@ -98,7 +98,6 @@ var pageRoutes = []route{
 	{pattern: "GET /events", handle: (*Server).events, access: people},
 	{pattern: "GET /search", handle: (*Server).searchPage, access: people},
 	{pattern: "GET /when", handle: (*Server).whenRead, access: people},
-	{pattern: "POST /dictate", handle: (*Server).dictate, access: people, persons: "their voice", reach: inward},
 	{pattern: "POST /sync", handle: (*Server).syncExchange, access: people, persons: "computers exchanging changes, not a change", reach: outward},
 	// Working together: choosing between two versions written at once
 	// (clash.go), and saying they have caught up on what others did (since.go).

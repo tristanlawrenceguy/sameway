@@ -188,7 +188,7 @@ func (s *Server) recordHTML(t *schema.Type, rec *store.Record) ([]byte, error) {
 		if err != nil {
 			return src
 		}
-		path, ok := s.storedPath(f)
+		path, ok := s.media.StoredPath(f)
 		st, err := os.Stat(path)
 		if !ok || err != nil || st.Size() > 8<<20 {
 			return src

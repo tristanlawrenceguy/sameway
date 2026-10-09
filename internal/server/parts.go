@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/server/media"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
@@ -49,8 +50,8 @@ const (
 	MaterialPart = "material"
 	// A meeting (meeting.go): its recording played on its page, and the
 	// offer to write it up from the transcript.
-	RecordingPart = "recording"
-	WriteUpPart   = "write-up"
+	RecordingPart = media.RecordingPart
+	WriteUpPart   = media.WriteUpPart
 	// WritingHelpPart offers the kinds of help an editor gives with a
 	// piece of writing (writing_help.go).
 	WritingHelpPart = "writing-help"

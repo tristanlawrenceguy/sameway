@@ -15,6 +15,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/server/media"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
@@ -171,7 +172,7 @@ func (s *Server) apiFileUpload(w http.ResponseWriter, r *http.Request) {
 			writeError(w, fmt.Errorf("invalid base64 content: %w", err))
 			return
 		}
-		if len(data) > maxUpload {
+		if len(data) > media.MaxUpload {
 			writeError(w, errors.New("the file is too large to send inside JSON: 64 MB is the most; send it as a form (multipart, up to 4 GB) instead"))
 			return
 		}
@@ -185,7 +186,7 @@ func (s *Server) apiFileUpload(w http.ResponseWriter, r *http.Request) {
 		if title == "" {
 			title = strings.TrimSuffix(name, filepath.Ext(name))
 		}
-		rec, path, err := s.keepFile(apiAgent(r).As(), bytes.NewReader(data), name, title, "")
+		rec, path, err := s.media.KeepFile(apiAgent(r).As(), bytes.NewReader(data), name, title, "")
 		if err != nil {
 			writeError(w, err)
 			return
@@ -193,7 +194,7 @@ func (s *Server) apiFileUpload(w http.ResponseWriter, r *http.Request) {
 		// wait: true answers once the text is read, even by a converter
 		// that takes a while; without it status says converting until then.
 		wait, _ := fields["wait"].(bool)
-		s.readKept(rec.ID, name, path, wait)
+		s.media.ReadKept(rec.ID, name, path, wait)
 		rec, _ = s.app.Store.Get(FileType, rec.ID)
 
 		w.Header().Set("Location", "/api/"+FileType+"/"+rec.ID)

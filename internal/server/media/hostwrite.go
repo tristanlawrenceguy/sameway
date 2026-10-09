@@ -1,4 +1,4 @@
-package server
+package media
 
 import (
 	"context"
@@ -12,7 +12,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/convert"
 	"github.com/tristanlawrenceguy/sameway/internal/look"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -37,7 +39,7 @@ type hostState struct {
 // sweep a minute for any that arrived without it (the command line, a
 // copy synced from another computer). A running workspace turns it on;
 // tests do not, so nothing starts a browser behind them.
-func (s *Server) WriteDownInBackground() {
+func (s *Service) WriteDownInBackground() {
 	s.host.mu.Lock()
 	if s.host.on {
 		s.host.mu.Unlock()
@@ -62,22 +64,22 @@ func (s *Server) WriteDownInBackground() {
 
 // hostWrites says whether this server will write a recording down itself,
 // so its page need not.
-func (s *Server) hostWrites(rec *store.Record) bool {
+func (s *Service) hostWrites(rec *store.Record) bool {
 	s.host.mu.Lock()
 	defer s.host.mu.Unlock()
 	return s.host.on && !s.host.failed[rec.ID]
 }
 
 // hostWaiting says a recording is waiting to be written down here.
-func (s *Server) hostWaiting(id string) bool {
+func (s *Service) hostWaiting(id string) bool {
 	s.host.mu.Lock()
 	defer s.host.mu.Unlock()
 	return s.host.waiting[id]
 }
 
 // writeLater queues a recording to be written down here, once.
-func (s *Server) writeLater(id string) {
-	if !s.speechKit().Ready() {
+func (s *Service) writeLater(id string) {
+	if !s.SpeechKit().Ready() {
 		return
 	}
 	s.host.mu.Lock()
@@ -91,17 +93,17 @@ func (s *Server) writeLater(id string) {
 
 // sweep queues every recording that has no words yet and is not being
 // written down, once speech-to-text is here.
-func (s *Server) sweep() {
-	if !s.speechKit().Ready() {
+func (s *Service) sweep() {
+	if !s.SpeechKit().Ready() {
 		return
 	}
-	recs, err := s.app.Store.List(FileType, store.ListOptions{})
+	recs, err := s.app.Store.List(records.FileType, store.ListOptions{})
 	if err != nil {
 		return
 	}
 	for _, rec := range recs {
 		note, _ := rec.Fields["note"].(string)
-		if isRecording(rec) && rec.Fields["status"] == "ready" && len(s.heard(rec)) == 0 && !strings.HasPrefix(note, "No speech was heard") {
+		if isRecording(rec) && rec.Fields["status"] == "ready" && len(s.Heard(rec)) == 0 && !strings.HasPrefix(note, "No speech was heard") {
 			s.writeLater(rec.ID)
 		}
 	}
@@ -110,17 +112,17 @@ func (s *Server) sweep() {
 // hostWrite writes one recording down here: a WAV by cutting it up, and
 // anything else by reading its sound in the background browser, sending
 // each part as a page would. When the host cannot, the page is let do it.
-func (s *Server) hostWrite(id string) {
+func (s *Service) hostWrite(id string) {
 	defer func() {
 		s.host.mu.Lock()
 		delete(s.host.waiting, id)
 		s.host.mu.Unlock()
 	}()
-	rec, err := s.app.Store.Get(FileType, id)
-	if err != nil || !isRecording(rec) || len(s.heard(rec)) > 0 {
+	rec, err := s.app.Store.Get(records.FileType, id)
+	if err != nil || !isRecording(rec) || len(s.Heard(rec)) > 0 {
 		return
 	}
-	path, ok := s.storedPath(rec)
+	path, ok := s.StoredPath(rec)
 	if !ok {
 		return
 	}
@@ -141,12 +143,12 @@ func (s *Server) hostWrite(id string) {
 // readInBackground has the background browser read a recording's sound a
 // chunk at a time and send each part to be written down, on a port of
 // this computer's own for as long as it takes.
-func (s *Server) readInBackground(id string) error {
+func (s *Service) readInBackground(id string) error {
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		return err
 	}
-	srv := &http.Server{Handler: s.mux}
+	srv := &http.Server{Handler: s.Handler()}
 	go srv.Serve(ln)
 	defer srv.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Hour)
@@ -179,3 +181,26 @@ const readScript = `(async () => {
   }
   return 'sent ' + chunks.length + ' part(s)';
 })()`
+
+// WriteDown has a recording written down on this computer.
+func (s *Service) WriteDown(id string) (string, error) {
+	rec, err := s.app.Store.Get(records.FileType, id)
+	if err != nil || !isRecording(rec) {
+		return "", fmt.Errorf("there is no recording %s; find_records on file lists them", id)
+	}
+	page := "/t/" + records.FileType + "/" + rec.ID
+	if !s.SpeechKit().Ready() {
+		return "", fmt.Errorf("speech-to-text is not on this computer yet; the person gets it from the recording's page, %s", page)
+	}
+	if path, ok := s.StoredPath(rec); ok && strings.EqualFold(filepath.Ext(path), ".wav") {
+		if err := s.writeWAVHere(rec, path); err != nil {
+			return "", err
+		}
+		return "it is being written down; the words arrive in its text at " + page, nil
+	}
+	if s.hostWrites(rec) {
+		s.writeLater(rec.ID)
+		return "it is being written down on this computer in the background; the words arrive in its text at " + page, nil
+	}
+	return "", fmt.Errorf("a %s recording is read by its page's script here: the person presses Write it down at %s", strings.ToUpper(convert.Ext(fmt.Sprint(rec.Fields["name"]))), page)
+}

@@ -1,7 +1,6 @@
 package server_test
 
 import (
-	"html"
 	"regexp"
 	"strings"
 )
@@ -11,20 +10,8 @@ import (
 const eventHeading = `<h3 class="sw-event__text sw-event__heading"`
 
 var (
-	scriptOrStyle = regexp.MustCompile(`(?is)<(script|style)\b.*?</(script|style)>`)
-	anyTag        = regexp.MustCompile(`(?s)<[^>]*>`)
-	h3Element     = regexp.MustCompile(`(?s)<h3\b[^>]*>(.*?)</h3>`)
-	spaces        = regexp.MustCompile(`\s+`)
+	h3Element = regexp.MustCompile(`(?s)<h3\b[^>]*>(.*?)</h3>`)
 )
-
-// said is the text a page says, as a person reads it: no tags, entities
-// read as their characters, and whitespace collapsed to single spaces.
-func said(page string) string {
-	page = scriptOrStyle.ReplaceAllString(page, " ")
-	page = anyTag.ReplaceAllString(page, "")
-	page = html.UnescapeString(page)
-	return strings.TrimSpace(spaces.ReplaceAllString(page, " "))
-}
 
 // saidTimes counts how often a sentence is said on a page.
 func saidTimes(page, sentence string) int {

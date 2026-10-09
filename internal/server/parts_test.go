@@ -10,7 +10,6 @@ import (
 	"strings"
 	"sync"
 	"testing"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
@@ -117,15 +116,4 @@ func TestALongRecordingIsWrittenDownInParts(t *testing.T) {
 		s, _ := f.Fields["text"].(string)
 		return strings.Contains(s, "The first part.")
 	})
-}
-
-func waitFor(t *testing.T, ok func() bool) {
-	t.Helper()
-	for i := 0; i < 300; i++ {
-		if ok() {
-			return
-		}
-		time.Sleep(10 * time.Millisecond)
-	}
-	t.Fatal("it did not happen in time")
 }

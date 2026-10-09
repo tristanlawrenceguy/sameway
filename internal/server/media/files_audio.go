@@ -1,4 +1,4 @@
-package server
+package media
 
 import (
 	"fmt"
@@ -8,7 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/blocks"
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/speech"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -26,12 +28,12 @@ func isRecording(rec *store.Record) bool {
 }
 
 // headOf is the first 64 KB of a kept file, enough to tell what is in it.
-func (s *Server) headOf(id string) []byte {
-	rec, err := s.app.Store.Get(FileType, id)
+func (s *Service) headOf(id string) []byte {
+	rec, err := s.app.Store.Get(records.FileType, id)
 	if err != nil {
 		return nil
 	}
-	path, ok := s.storedPath(rec)
+	path, ok := s.StoredPath(rec)
 	if !ok {
 		return nil
 	}
@@ -46,8 +48,8 @@ func (s *Server) headOf(id string) []byte {
 }
 
 // transcriptPath is where a recording's transcript is kept, when it has one.
-func (s *Server) transcriptPath(rec *store.Record) (string, bool) {
-	path, ok := s.storedPath(rec)
+func (s *Service) transcriptPath(rec *store.Record) (string, bool) {
+	path, ok := s.StoredPath(rec)
 	if !ok {
 		return "", false
 	}
@@ -55,7 +57,7 @@ func (s *Server) transcriptPath(rec *store.Record) (string, bool) {
 }
 
 // recordingOf is the media component's props for a recording or a video.
-func (s *Server) recordingOf(rec *store.Record) map[string]any {
+func (s *Service) recordingOf(rec *store.Record) map[string]any {
 	title, _ := rec.Fields["title"].(string)
 	name, _ := rec.Fields["name"].(string)
 	src := "/files/" + rec.ID
@@ -63,12 +65,12 @@ func (s *Server) recordingOf(rec *store.Record) map[string]any {
 	props := map[string]any{"id": "media-" + rec.ID, "kind": kind, "title": title, "src": src, "type": convert.MediaType(name, kind)}
 	about := strings.ToUpper(convert.Ext(name))
 	if n, ok := rec.Fields["size"].(int64); ok && n > 0 {
-		about += " · " + sizeWords(n)
+		about += " · " + blocks.SizeWords(n)
 	} else if n, ok := rec.Fields["size"].(int); ok && n > 0 {
-		about += " · " + sizeWords(int64(n))
+		about += " · " + blocks.SizeWords(int64(n))
 	}
 	props["about"] = about
-	if cues := s.heard(rec); len(cues) > 0 {
+	if cues := s.Heard(rec); len(cues) > 0 {
 		list := make([]any, 0, len(cues))
 		anchored := map[int]bool{}
 		for _, c := range cues {
@@ -95,10 +97,10 @@ func (s *Server) recordingOf(rec *store.Record) map[string]any {
 	return props
 }
 
-// heard is a recording's transcript: its text, which people and the
+// Heard is a recording's transcript: its text, which people and the
 // assistant correct, when it reads as one, else the WebVTT beside it as
 // it was first written down.
-func (s *Server) heard(rec *store.Record) []convert.Cue {
+func (s *Service) Heard(rec *store.Record) []convert.Cue {
 	if !isRecording(rec) {
 		return nil
 	}
@@ -118,13 +120,13 @@ func (s *Server) heard(rec *store.Record) []convert.Cue {
 // captions is a recording's transcript as WebVTT, made from its text so a
 // correction shows on the picture too: each line until the next begins,
 // the last for a few seconds.
-func (s *Server) captions(w http.ResponseWriter, r *http.Request) {
-	rec, err := s.app.Store.Get(FileType, r.PathValue("id"))
+func (s *Service) captions(w http.ResponseWriter, r *http.Request) {
+	rec, err := s.app.Store.Get(records.FileType, r.PathValue("id"))
 	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
-	cues := s.heard(rec)
+	cues := s.Heard(rec)
 	if len(cues) == 0 {
 		http.NotFound(w, r)
 		return
@@ -144,8 +146,8 @@ func (s *Server) captions(w http.ResponseWriter, r *http.Request) {
 // pairCaptions gives subtitles to the recording they belong to: one of the
 // same name with no words yet, as its transcript and, for a video, its
 // captions. Subtitles for none stay a file of their own.
-func (s *Server) pairCaptions(id string, data []byte) {
-	sub, err := s.app.Store.Get(FileType, id)
+func (s *Service) pairCaptions(id string, data []byte) {
+	sub, err := s.app.Store.Get(records.FileType, id)
 	if err != nil {
 		return
 	}
@@ -154,10 +156,10 @@ func (s *Server) pairCaptions(id string, data []byte) {
 	if len(cues) == 0 || title == "" {
 		return
 	}
-	recs, _ := s.app.Store.List(FileType, store.ListOptions{})
+	recs, _ := s.app.Store.List(records.FileType, store.ListOptions{})
 	for _, rec := range recs {
 		other, _ := rec.Fields["title"].(string)
-		if rec.ID == id || !isRecording(rec) || !strings.EqualFold(other, title) || len(s.heard(rec)) > 0 {
+		if rec.ID == id || !isRecording(rec) || !strings.EqualFold(other, title) || len(s.Heard(rec)) > 0 {
 			continue
 		}
 		if path, ok := s.transcriptPath(rec); ok {

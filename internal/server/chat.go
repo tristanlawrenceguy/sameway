@@ -153,7 +153,7 @@ func (s *Server) conversationAbout(c *chat.Service, from, about, prompt string) 
 	}
 	view.Compose = s.component("textarea", compose)
 	view.Send = s.part(ui.Button{Label: "Send", Type: ui.Submit})
-	view.Record, view.Dictate, view.Talk = s.voiceFor()
+	view.Record, view.Dictate, view.Talk = s.media.VoiceFor()
 	view.Clear = s.part(ui.Button{Label: "Clear", Context: "conversation", Type: ui.Submit, Variant: ui.Quiet})
 	view.NewChat = s.part(ui.Button{Label: "New chat", Type: ui.Submit, Variant: ui.Secondary})
 
@@ -232,7 +232,7 @@ func (s *Server) chatSend(w http.ResponseWriter, r *http.Request) {
 	// a plain form still works for anything that posts without a file.
 	fileID := ""
 	if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/") {
-		file, err := s.storeUpload(r)
+		file, err := s.media.StoreUpload(r)
 		if err != nil && err != http.ErrMissingFile {
 			s.failed(w, r, "Not sent", err, "/")
 			return

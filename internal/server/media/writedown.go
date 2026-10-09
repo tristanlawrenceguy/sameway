@@ -1,4 +1,4 @@
-package server
+package media
 
 import (
 	"context"
@@ -35,7 +35,7 @@ type partJob struct {
 }
 
 // enqueue hands a part to the worker, starting it the first time.
-func (s *Server) enqueue(j partJob) {
+func (s *Service) enqueue(j partJob) {
 	s.speech.once.Do(func() {
 		s.speech.jobs = make(chan partJob, 1024)
 		go func() {
@@ -48,21 +48,21 @@ func (s *Server) enqueue(j partJob) {
 }
 
 // partsDir is where a recording's parts are gathered as they are written.
-func (s *Server) partsDir(id string) string {
+func (s *Service) partsDir(id string) string {
 	return filepath.Join(s.app.Workspace.FilesDir(), id+".parts")
 }
 
 // soundDir is where a recording's sound is copied out, in chunks.
-func (s *Server) soundDir(id string) string {
+func (s *Service) soundDir(id string) string {
 	return filepath.Join(s.app.Workspace.FilesDir(), id+".sound")
 }
 
 // writePart writes one part down, at its place in the recording, and puts
 // the recording together when it was the last.
-func (s *Server) writePart(j partJob) {
+func (s *Service) writePart(j partJob) {
 	defer os.Remove(j.wav)
-	cues, err := s.speechKit().Transcribe(context.Background(), j.wav)
-	rec, gerr := s.app.Store.Get(FileType, j.id)
+	cues, err := s.SpeechKit().Transcribe(context.Background(), j.wav)
+	rec, gerr := s.app.Store.Get(records.FileType, j.id)
 	if gerr != nil {
 		return
 	}
@@ -108,7 +108,7 @@ func partNumber(path string) int {
 
 // finishWriting keeps what was heard in a recording: its WebVTT beside it
 // and its text, or a note that nothing was.
-func (s *Server) finishWriting(rec *store.Record, cues []convert.Cue) {
+func (s *Service) finishWriting(rec *store.Record, cues []convert.Cue) {
 	title, _ := rec.Fields["title"].(string)
 	if len(cues) == 0 {
 		s.fileSays(rec.ID, map[string]any{"status": "ready", "note": "No speech was heard in it."})
@@ -120,13 +120,13 @@ func (s *Server) finishWriting(rec *store.Record, cues []convert.Cue) {
 		os.WriteFile(path, []byte(speech.VTT(cues)), 0o644)
 	}
 	s.fileSays(rec.ID, map[string]any{"status": "ready", "text": convert.Transcript(cues), "note": "Written down on this computer by " + speech.ModelName + ". Edit the text if it misheard."})
-	records.Record(s.app.Store, "system", records.Change{Action: "updated", Component: FileType, ID: rec.ID, Detail: title + ", written down", Href: "/t/" + FileType + "/" + rec.ID})
+	records.Record(s.app.Store, "system", records.Change{Action: "updated", Component: records.FileType, ID: rec.ID, Detail: title + ", written down", Href: "/t/" + records.FileType + "/" + rec.ID})
 	s.Changed()
 }
 
 // writeWAVHere writes down a recording that is already plain sound, all on
 // this computer: cut into 16 kHz chunks and queued, with no browser.
-func (s *Server) writeWAVHere(rec *store.Record, path string) error {
+func (s *Service) writeWAVHere(rec *store.Record, path string) error {
 	os.RemoveAll(s.partsDir(rec.ID))
 	parts, err := speech.SplitWAV(path, s.soundDir(rec.ID), soundtrack.Every)
 	if err != nil {
@@ -142,13 +142,13 @@ func (s *Server) writeWAVHere(rec *store.Record, path string) error {
 // soundPlan tells the page how a recording's sound comes to be written
 // down: here, for a WAV; in chunks copied out here, each a small stream to
 // decode; or whole, for what cannot be copied out.
-func (s *Server) soundPlan(w http.ResponseWriter, r *http.Request) {
-	rec, err := s.app.Store.Get(FileType, r.PathValue("id"))
+func (s *Service) soundPlan(w http.ResponseWriter, r *http.Request) {
+	rec, err := s.app.Store.Get(records.FileType, r.PathValue("id"))
 	if err != nil || !isRecording(rec) {
 		http.NotFound(w, r)
 		return
 	}
-	path, ok := s.storedPath(rec)
+	path, ok := s.StoredPath(rec)
 	if !ok {
 		http.NotFound(w, r)
 		return
@@ -171,7 +171,7 @@ func (s *Server) soundPlan(w http.ResponseWriter, r *http.Request) {
 }
 
 // soundChunk serves one chunk of a recording's sound, copied out.
-func (s *Server) soundChunk(w http.ResponseWriter, r *http.Request) {
+func (s *Service) soundChunk(w http.ResponseWriter, r *http.Request) {
 	id, n := r.PathValue("id"), r.PathValue("n")
 	if _, err := strconv.Atoi(n); err != nil || strings.ContainsAny(id, `/\.`) {
 		http.NotFound(w, r)
