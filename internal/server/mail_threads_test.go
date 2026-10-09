@@ -88,7 +88,7 @@ func TestAnEmailConversationIsAThread(t *testing.T) {
 	m.mu.Lock()
 	q := m.asked[len(m.asked)-1]
 	m.mu.Unlock()
-	if !strings.Contains(q, "Earlier in this conversation") || !strings.Contains(q, "Can you send the quote") || !strings.Contains(q, "from the person themselves: Here it is") {
+	if !strings.Contains(q, "This record is the latest message") || !strings.Contains(q, "Can you send the quote") || !strings.Contains(q, "from the person themselves: Here it is") {
 		t.Errorf("a reply is read with what came before it, saying who wrote it: %s", q)
 	}
 }
