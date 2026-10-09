@@ -94,9 +94,9 @@ func (s *Server) importLinks(t *schema.Type) string {
 	if !s.importable(t) {
 		return ""
 	}
-	out := `<p class="sw-quiet-row">` + string(s.component("link", map[string]any{"href": "/t/" + t.Name + "/import", "label": "Import", "context": schema.Plural(t.Name), "look": "button"}))
+	out := `<p class="sw-quiet-row">` + string(s.part(ui.Link{Href: "/t/" + t.Name + "/import", Label: "Import", Context: schema.Plural(t.Name), Look: ui.LookButton}))
 	if t.Name == "task" || t.Name == "note" {
-		out += " " + string(s.component("link", map[string]any{"href": "/bring", "label": "Bring yours from another app"}))
+		out += " " + string(s.part(ui.Link{Href: "/bring", Label: "Bring yours from another app"}))
 	}
 	return out + `</p>`
 }

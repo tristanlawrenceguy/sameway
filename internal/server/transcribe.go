@@ -15,6 +15,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/speech"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // A recording is written down on the computer that hosts the workspace,
@@ -204,8 +205,8 @@ func (s *Server) speechOffer(r *http.Request, rec *store.Record, props map[strin
 			props["none"] = "No transcript yet. It is waiting to be written down on this computer."
 		}
 	case getting:
-		return string(s.component("status", map[string]any{"id": "speech-status", "state": "working",
-			"message": fmt.Sprintf("Getting speech-to-text for this computer: %s of %s.", sizeWords(done), sizeWords(total))}))
+		return string(s.part(ui.Status{ID: "speech-status", State: ui.Working,
+			Message: fmt.Sprintf("Getting speech-to-text for this computer: %s of %s.", sizeWords(done), sizeWords(total))}))
 	case records.VisitorOf(r.Context()).Owner() && (speech.Supported() || s.speech.given):
 		if failed != "" {
 			props["none"] = "No transcript yet. Getting speech-to-text did not work: " + failed

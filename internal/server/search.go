@@ -72,15 +72,11 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 			if only != "" {
 				where = ", in " + schema.Plural(only) + " or anywhere else"
 			}
-			b.WriteString(string(s.component("empty", map[string]any{
-				"title": "No results", "message": fmt.Sprintf("Nothing matches “%s”%s. Try different words, or", q, where),
-				"action": map[string]any{"href": "/chat?prompt=" + url.QueryEscape("Find "+q), "label": "ask the assistant"},
-			})))
+			b.WriteString(string(s.part(ui.Empty{Title: "No results", Message: fmt.Sprintf("Nothing matches “%s”%s. Try different words, or", q, where),
+				Action: &ui.EmptyAction{Href: "/chat?prompt=" + url.QueryEscape("Find "+q), Label: "ask the assistant"}})))
 		case len(hits) == 0:
-			b.WriteString(string(s.component("empty", map[string]any{
-				"title": "No " + schema.Plural(only) + " match", "message": fmt.Sprintf("Nothing in %s matches “%s”, but %s. You can", schema.Plural(only), q, elsewhere(len(all))),
-				"action": map[string]any{"href": searchURL(q, ""), "label": "search everything"},
-			})))
+			b.WriteString(string(s.part(ui.Empty{Title: "No " + schema.Plural(only) + " match", Message: fmt.Sprintf("Nothing in %s matches “%s”, but %s. You can", schema.Plural(only), q, elsewhere(len(all))),
+				Action: &ui.EmptyAction{Href: searchURL(q, ""), Label: "search everything"}})))
 		default:
 			if only == "" {
 				fmt.Fprintf(&b, `<p class="sw-muted sw-small">%s</p>`, template.HTMLEscapeString(count(len(hits))))

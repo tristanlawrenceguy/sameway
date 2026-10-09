@@ -6,6 +6,7 @@ import (
 	"net/url"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // A new workspace opened on an empty page with "Ask for anything" and four
@@ -42,7 +43,7 @@ func (s *Server) brandNew() bool {
 // welcome is what an empty conversation in a brand-new workspace shows.
 func (s *Server) welcome(from string) template.HTML {
 	esc := template.HTMLEscapeString
-	b := string(s.component("empty", map[string]any{"message": "Welcome to Sameway. Tell the assistant what you want to keep track of and it sets Sameway up around it. Start from one of these, or say it in your own words."})) +
+	b := string(s.part(ui.Empty{Message: "Welcome to Sameway. Tell the assistant what you want to keep track of and it sets Sameway up around it. Start from one of these, or say it in your own words."})) +
 		`<ul class="sw-plain sw-chat__starts" aria-label="Ways to start">`
 	for _, st := range setups {
 		b += fmt.Sprintf(`<li><a class="sw-link sw-link--button sw-chat__start" href="%s?prompt=%s">%s</a></li>`, esc(from), url.QueryEscape(st.ask), esc(st.label))

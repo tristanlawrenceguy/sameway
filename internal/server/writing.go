@@ -111,7 +111,7 @@ func (s *Server) outline(r *http.Request, t *schema.Type, piece *store.Record, p
 	} else {
 		fmt.Fprintf(&b, `<p>%s in all.</p>`, inWords(total, "word"))
 	}
-	fmt.Fprintf(&b, `<p>%s</p></section>`, s.component("link", map[string]any{"href": "/t/" + t.Name + "/" + piece.ID + "/whole", "label": "Read it all", "look": "button"}))
+	fmt.Fprintf(&b, `<p>%s</p></section>`, s.part(ui.Link{Href: "/t/" + t.Name + "/" + piece.ID + "/whole", Label: "Read it all", Look: ui.LookButton}))
 	return b.String()
 }
 

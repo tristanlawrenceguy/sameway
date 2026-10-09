@@ -9,6 +9,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // What an action suggests (chat/suggest_records.go) waits on Today: a
@@ -29,12 +30,13 @@ func (s *Server) suggestedFrom(rec *store.Record) *store.Record {
 
 // suggestionPresses are a suggestion's three answers.
 func (s *Server) suggestionPresses(p *store.Record, context string) string {
-	hidden := `<input type="hidden" name="id" value="` + p.ID + `">`
 	var b strings.Builder
 	b.WriteString(`<div class="sw-cluster">`)
-	for _, f := range []struct{ action, label, variant string }{{"/suggested/yes", "Make it", "secondary"}, {"/suggested/change", "Change", "quiet"}, {"/suggested/no", "No", "quiet"}} {
-		b.WriteString(`<form method="post" action="` + f.action + `">` + hidden +
-			string(s.component("button", map[string]any{"label": f.label, "context": context, "type": "submit", "variant": f.variant})) + `</form>`)
+	for _, f := range []struct {
+		action, label string
+		variant       ui.Variant
+	}{{"/suggested/yes", "Make it", ui.Secondary}, {"/suggested/change", "Change", ui.Quiet}, {"/suggested/no", "No", ui.Quiet}} {
+		b.WriteString(string(s.form(ui.Form{Action: f.action, Hidden: ui.Hidden("id", p.ID), Button: &ui.Button{Label: f.label, Context: context, Variant: f.variant}})))
 	}
 	b.WriteString(`</div>`)
 	return b.String()

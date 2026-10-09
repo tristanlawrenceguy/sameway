@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
@@ -64,8 +65,7 @@ func (s *Server) workspacesDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var b strings.Builder
-	b.WriteString(string(s.component("alert", map[string]any{"kind": "success", "live": true, "title": cur.Config.Name + " deleted",
-		"message": said})))
+	b.WriteString(string(s.part(ui.Alert{Kind: ui.Success, Live: true, Title: cur.Config.Name + " deleted", Message: said})))
 	b.WriteString(fmt.Sprintf(`<p class="sw-muted">Opening <a href="%s">%s</a>…</p>`, template.HTMLEscapeString(url), template.HTMLEscapeString(nextName)))
 
 	w.Header().Set("Refresh", fmt.Sprintf("3; url=%s", template.HTMLEscapeString(url)))

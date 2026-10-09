@@ -96,7 +96,7 @@ func (s *Server) showWorkspaces(w http.ResponseWriter, r *http.Request, problem 
 	cur := s.app.Workspace
 	var b strings.Builder
 	if problem != "" {
-		b.WriteString(string(s.component("alert", map[string]any{"kind": "warning", "message": problem})))
+		b.WriteString(string(s.part(ui.Alert{Kind: ui.Warning, Message: problem})))
 	}
 	own := ""
 	for _, k := range s.machine().KnownWorkspaces() {
@@ -121,7 +121,7 @@ func (s *Server) showWorkspaces(w http.ResponseWriter, r *http.Request, problem 
 	if len(others) == 0 {
 		// This one is a workspace, so not "none yet"; and the way to make
 		// another is a link to its field, not a direction to look below.
-		b.WriteString(string(s.component("empty", map[string]any{"message": "Only this one so far.", "action": map[string]any{"href": "#new-name", "label": "Create a workspace"}})))
+		b.WriteString(string(s.part(ui.Empty{Message: "Only this one so far.", Action: &ui.EmptyAction{Href: "#new-name", Label: "Create a workspace"}})))
 	} else {
 		b.WriteString(`<ul class="sw-plain sw-rows">`)
 		for _, o := range others {
@@ -211,15 +211,9 @@ func (s *Server) showWorkspaceCreated(w http.ResponseWriter, r *http.Request, na
 		tellJSON(w, outcome{Title: "Workspace " + name + " " + opPast, Text: "It is at " + dir + ", but could not be started from here: " + err.Error()}, "/workspaces")
 		return
 	}
-	b.WriteString(string(s.component("alert", map[string]any{
-		"kind":    "success",
-		"message": "Workspace " + name + " " + opPast + ".",
-	})))
-	b.WriteString(string(s.component("alert", map[string]any{
-		"kind":    "warning",
-		"title":   "Auto-start failed",
-		"message": "The workspace is at " + dir + ", but could not be started from here: " + err.Error(),
-	})))
+	b.WriteString(string(s.part(ui.Alert{Kind: ui.Success, Message: "Workspace " + name + " " + opPast + "."})))
+	b.WriteString(string(s.part(ui.Alert{Kind: ui.Warning, Title: "Auto-start failed",
+		Message: "The workspace is at " + dir + ", but could not be started from here: " + err.Error()})))
 	s.page(w, r, "Workspaces", template.HTML(b.String()), pageOptions{})
 }
 

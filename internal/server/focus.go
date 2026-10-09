@@ -10,6 +10,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // Popping a block out: the same block, given the whole middle of the page.
@@ -62,7 +63,7 @@ func (s *Server) focusPage(w http.ResponseWriter, r *http.Request) {
 
 	var b strings.Builder
 	b.WriteString(`<div class="sw-focus"` + measurePage(r, "focus", "") + `>`)
-	b.WriteString(string(s.component("link", map[string]any{"href": records.CanvasPath(canvasOf(rec.Fields)), "label": "Back", "context": "canvas", "look": "button"})))
+	b.WriteString(string(s.part(ui.Link{Href: records.CanvasPath(canvasOf(rec.Fields)), Label: "Back", Context: "canvas", Look: ui.LookButton})))
 	// The block's own page wears its list's colour, as the block does on
 	// the canvas.
 	dot := ""
