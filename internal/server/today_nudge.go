@@ -3,11 +3,13 @@ package server
 import (
 	"errors"
 	"fmt"
+	"html/template"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
@@ -24,16 +26,20 @@ func (s *Server) taskPresses(it todayItem, late bool) string {
 	}
 	var b strings.Builder
 	b.WriteString(`<div class="sw-cluster">`)
-	presses := []struct{ action, label, to, variant string }{{"/today/done", "Done", "", "secondary"}, {"/today/move", "Tomorrow", "tomorrow", "quiet"}}
+	type press struct {
+		action, label, to string
+		variant           ui.Variant
+	}
+	presses := []press{{"/today/done", "Done", "", ui.Secondary}, {"/today/move", "Tomorrow", "tomorrow", ui.Quiet}}
 	if late {
-		presses = append(presses, struct{ action, label, to, variant string }{"/today/move", "Today", "today", "quiet"})
+		presses = append(presses, press{"/today/move", "Today", "today", ui.Quiet})
 	}
 	for _, p := range presses {
-		b.WriteString(`<form method="post" action="` + p.action + `"><input type="hidden" name="id" value="` + it.ID + `">`)
+		hidden := ui.Hidden("id", it.ID)
 		if p.to != "" {
-			b.WriteString(`<input type="hidden" name="to" value="` + p.to + `">`)
+			hidden = append(hidden, ui.Field{Name: "to", Value: p.to})
 		}
-		b.WriteString(string(s.component("button", map[string]any{"label": p.label, "context": it.Title, "type": "submit", "variant": p.variant})) + `</form>`)
+		b.WriteString(string(s.form(ui.Form{Action: p.action, Hidden: hidden, Button: &ui.Button{Label: p.label, Context: it.Title, Variant: p.variant}})))
 	}
 	b.WriteString(`</div>`)
 	return b.String()
@@ -52,8 +58,9 @@ func (s *Server) lateNudge(late []todayItem, now time.Time) string {
 		return ""
 	}
 	oldest := when.Day(late[0].At, now)
-	return `<form method="post" action="/today/late" class="sw-stack"><p>` + fmt.Sprintf("%d tasks are late, the oldest from %s.", n, oldest) + `</p>` +
-		string(s.component("button", map[string]any{"label": fmt.Sprintf("Move all %d to today", n), "type": "submit", "variant": "secondary"})) + `</form>`
+	return string(s.form(ui.Form{Action: "/today/late", Class: "sw-stack",
+		Body:   template.HTML(`<p>` + fmt.Sprintf("%d tasks are late, the oldest from %s.", n, oldest) + `</p>`),
+		Button: &ui.Button{Label: fmt.Sprintf("Move all %d to today", n), Variant: ui.Secondary}}))
 }
 
 // dayFor is a task's due moved to day: the same time on that day, or the

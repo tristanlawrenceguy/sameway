@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
@@ -203,9 +204,9 @@ func (s *Server) briefLine() string {
 	if at != "" {
 		said = "Morning brief: what is on today is sent at " + at + ", leading to Today."
 	}
-	return template.HTMLEscapeString(said) + ` <form method="post" action="/brief" class="sw-stack">` +
-		string(s.component("text-field", map[string]any{"label": "Time of the brief", "name": "at", "id": "brief-at", "value": at, "hint": "Hours and minutes, such as 07:30. Empty sends none."})) +
-		string(s.component("button", map[string]any{"label": "Set the morning brief", "type": "submit", "variant": "secondary"})) + `</form>`
+	return template.HTMLEscapeString(said) + " " + string(s.form(ui.Form{Action: "/brief", Class: "sw-stack",
+		Body:   s.part(ui.TextField{Label: "Time of the brief", Name: "at", ID: "brief-at", Value: at, Hint: "Hours and minutes, such as 07:30. Empty sends none."}),
+		Button: &ui.Button{Label: "Set the morning brief", Variant: ui.Secondary}}))
 }
 
 func (s *Server) briefSet(w http.ResponseWriter, r *http.Request) {

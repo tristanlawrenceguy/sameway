@@ -12,6 +12,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
@@ -75,8 +76,7 @@ func (s *Server) reviewPage(w http.ResponseWriter, r *http.Request) {
 			}
 			if actions {
 				for _, a := range []struct{ to, label string }{{"next", "Move to next week"}, {"done", "Done"}} {
-					b.WriteString(`<form method="post" action="/review/` + a.to + `"><input type="hidden" name="id" value="` + it.ID + `">` +
-						string(s.component("button", map[string]any{"label": a.label, "context": it.Title, "type": "submit", "variant": "quiet"})) + `</form>`)
+					b.WriteString(string(s.form(ui.Form{Action: "/review/" + a.to, Hidden: ui.Hidden("id", it.ID), Button: &ui.Button{Label: a.label, Context: it.Title, Variant: ui.Quiet}})))
 				}
 			}
 			b.WriteString(`</li>`)
@@ -174,10 +174,10 @@ func (s *Server) reviewLine() string {
 	if on != "" {
 		said += " It says it is ready each " + template.HTMLEscapeString(capitalize(on)) + " evening."
 	}
-	return said + ` <form method="post" action="/review/on" class="sw-stack">` +
-		string(s.component("select", map[string]any{"label": "Remind me to review on", "name": "on", "id": "review-on", "as": "dropdown", "value": on,
-			"options": reviewDays()})) +
-		string(s.component("button", map[string]any{"label": "Set the review day", "type": "submit", "variant": "secondary"})) + `</form>`
+	return said + " " + string(s.form(ui.Form{Action: "/review/on", Class: "sw-stack",
+		Body: s.component("select", map[string]any{"label": "Remind me to review on", "name": "on", "id": "review-on", "as": "dropdown", "value": on,
+			"options": reviewDays()}),
+		Button: &ui.Button{Label: "Set the review day", Variant: ui.Secondary}}))
 }
 
 func (s *Server) reviewOn(w http.ResponseWriter, r *http.Request) {

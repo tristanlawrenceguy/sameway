@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"net/http"
 
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 	"github.com/tristanlawrenceguy/sameway/internal/update"
 )
 
@@ -19,9 +20,9 @@ func (s *Server) updateNotice(r *http.Request) template.HTML {
 	if v == "" || s.fleet == nil || s.fleet.Restart == nil || !s.chatFor(r).IsOwner() || r.URL.Path == "/restart" {
 		return ""
 	}
-	form := `<form method="post" action="/restart">` + string(s.component("button", map[string]any{"label": "Restart Sameway", "type": "submit", "variant": "secondary"})) + `</form>`
-	return s.component("alert", map[string]any{"kind": "info", "title": "Sameway " + v + " is installed",
-		"message": "It runs once Sameway restarts, which takes a few seconds; your workspace is as you left it."}) + template.HTML(form)
+	return s.part(ui.Alert{Kind: ui.Info, Title: "Sameway " + v + " is installed",
+		Message: "It runs once Sameway restarts, which takes a few seconds; your workspace is as you left it."}) +
+		s.form(ui.Form{Action: "/restart", Button: &ui.Button{Label: "Restart Sameway", Variant: ui.Secondary}})
 }
 
 // restart starts the new version and stops this one; the page it answers

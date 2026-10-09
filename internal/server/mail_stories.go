@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/mailin"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // Connecting email is a hundred little stories, one per mail service, and
@@ -79,9 +80,9 @@ func (s *Server) mailStoryPage(r *http.Request) string {
 	var b strings.Builder
 	if !strings.Contains(user, "@") {
 		b.WriteString(`<p>Anything you forward to Sameway comes in as a note and is sorted for you on Today: a booking, a bill, a note to self. First, which email do you use?</p>`)
-		b.WriteString(`<form method="get" action="/mail" class="sw-stack">`)
-		b.WriteString(string(s.component("text-field", map[string]any{"label": "Your email address", "name": "user", "type": "email", "required": true, "autocomplete": "email", "spellcheck": false})))
-		b.WriteString(string(s.component("button", map[string]any{"label": "Next", "type": "submit"})) + `</form>`)
+		b.WriteString(string(s.form(ui.Form{Action: "/mail", Get: true, Class: "sw-stack",
+			Body:   s.part(ui.TextField{Label: "Your email address", Name: "user", Type: ui.Email, Required: true, Autocomplete: "email", Spellcheck: ui.Bool(false)}),
+			Button: &ui.Button{Label: "Next"}})))
 		return b.String()
 	}
 	st := storyFor(user)
@@ -93,12 +94,12 @@ func (s *Server) mailStoryPage(r *http.Request) string {
 	for _, step := range st.Steps {
 		b.WriteString(`<li>` + step + `</li>`)
 	}
-	b.WriteString(`</ol><form method="post" action="/mail/connect" class="sw-stack"><input type="hidden" name="user" value="` + esc(user) + `">`)
-	b.WriteString(string(s.component("text-field", map[string]any{"label": "Password for Sameway", "name": "password", "type": "password", "required": true, "autocomplete": "off", "spellcheck": false, "hint": "Kept on this computer only, outside the workspace."})))
+	b.WriteString(`</ol>`)
+	fields := s.part(ui.TextField{Label: "Password for Sameway", Name: "password", Type: ui.Password, Required: true, Autocomplete: "off", Spellcheck: ui.Bool(false), Hint: "Kept on this computer only, outside the workspace."})
 	if st.AskHost {
-		b.WriteString(string(s.component("text-field", map[string]any{"label": "Mail server", "name": "host", "value": mailin.Host(user), "spellcheck": false, "hint": "Its IMAP address and port, such as imap.example.com:993."})))
+		fields += s.part(ui.TextField{Label: "Mail server", Name: "host", Value: mailin.Host(user), Spellcheck: ui.Bool(false), Hint: "Its IMAP address and port, such as imap.example.com:993."})
 	}
-	b.WriteString(string(s.component("button", map[string]any{"label": "Connect " + st.Service, "type": "submit"})) + `</form>`)
+	b.WriteString(string(s.form(ui.Form{Action: "/mail/connect", Class: "sw-stack", Hidden: ui.Hidden("user", user), Body: fields, Button: &ui.Button{Label: "Connect " + st.Service}})))
 	b.WriteString(`<p class="sw-small">` + outLink("/mail", "Not "+esc(user)+"?") + `</p>`)
 	return b.String()
 }

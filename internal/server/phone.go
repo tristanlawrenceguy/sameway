@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/tristanlawrenceguy/sameway/internal/notify"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // A reminder reached the person only at this computer; sending it to a
@@ -21,11 +22,11 @@ import (
 func (s *Server) phoneLine() string {
 	esc := template.HTMLEscapeString
 	if topic := s.app.Workspace.Config.Notify.Phone; topic != "" {
-		return `Your phone: reminders are also sent to <a class="sw-link" href="` + esc(topic) + `">` + esc(topic) + `</a>; subscribe to it in the free ntfy app to have them there. <form method="post" action="/notify/phone"><input type="hidden" name="set" value="off">` +
-			string(s.component("button", map[string]any{"label": "Stop sending reminders to my phone", "type": "submit", "variant": "secondary"})) + `</form>`
+		return `Your phone: reminders are also sent to <a class="sw-link" href="` + esc(topic) + `">` + esc(topic) + `</a>; subscribe to it in the free ntfy app to have them there. ` +
+			string(s.form(ui.Form{Action: "/notify/phone", Hidden: ui.Hidden("set", "off"), Button: &ui.Button{Label: "Stop sending reminders to my phone", Variant: ui.Secondary}}))
 	}
-	return `Your phone: reminders ring only on this computer. They can also go to your phone through ntfy, a free notification service with an app for every phone; the words of each reminder then pass through ntfy.sh. <form method="post" action="/notify/phone"><input type="hidden" name="set" value="on">` +
-		string(s.component("button", map[string]any{"label": "Send reminders to my phone", "type": "submit", "variant": "secondary"})) + `</form>`
+	return `Your phone: reminders ring only on this computer. They can also go to your phone through ntfy, a free notification service with an app for every phone; the words of each reminder then pass through ntfy.sh. ` +
+		string(s.form(ui.Form{Action: "/notify/phone", Hidden: ui.Hidden("set", "on"), Button: &ui.Button{Label: "Send reminders to my phone", Variant: ui.Secondary}}))
 }
 
 // phoneSet makes a topic and sends the first message to it, or stops.

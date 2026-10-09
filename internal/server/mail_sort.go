@@ -8,6 +8,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // Email that came in waits on Today until it is dealt with: made a task,
@@ -52,15 +53,20 @@ func (s *Server) mailSection() string {
 	for _, n := range notes {
 		title, _ := n.Fields["title"].(string)
 		b.WriteString(`<li class="sw-stack"><a class="sw-link" href="/t/note/` + n.ID + `">` + esc(title) + `</a>`)
-		presses := []struct{ action, label, variant string }{{"/mail/task", "Make it a task", "secondary"}, {"/mail/sorted", "Done with it", "quiet"}}
+		presses := []struct {
+			action, label string
+			variant       ui.Variant
+		}{{"/mail/task", "Make it a task", ui.Secondary}, {"/mail/sorted", "Done with it", ui.Quiet}}
 		if sug := s.suggestionFor(n.ID); sug != nil && sug.Task {
 			b.WriteString(`<p>` + esc(s.suggestionWords(sug)) + `</p>`) // triage_today.go
-			presses = []struct{ action, label, variant string }{{"/sort/keep", "Keep", "secondary"}, {"/sort/change", "Change", "quiet"}, {"/mail/sorted", "Not a task", "quiet"}}
+			presses = []struct {
+				action, label string
+				variant       ui.Variant
+			}{{"/sort/keep", "Keep", ui.Secondary}, {"/sort/change", "Change", ui.Quiet}, {"/mail/sorted", "Not a task", ui.Quiet}}
 		}
 		b.WriteString(`<div class="sw-cluster">`)
 		for _, f := range presses {
-			b.WriteString(`<form method="post" action="` + f.action + `"><input type="hidden" name="id" value="` + n.ID + `">` +
-				string(s.component("button", map[string]any{"label": f.label, "context": title, "type": "submit", "variant": f.variant})) + `</form>`)
+			b.WriteString(string(s.form(ui.Form{Action: f.action, Hidden: ui.Hidden("id", n.ID), Button: &ui.Button{Label: f.label, Context: title, Variant: f.variant}})))
 		}
 		b.WriteString(`</div></li>`)
 	}
