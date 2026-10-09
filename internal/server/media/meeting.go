@@ -1,4 +1,4 @@
-package server
+package media
 
 import (
 	"html/template"
@@ -12,6 +12,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // A meeting is an event with its recording: its page plays the recording
@@ -21,34 +22,34 @@ import (
 // (parts.go), recording and write-up, off until the assistant sees a
 // reason or the person keeps them on.
 
-// meetingExtras is what an event's page shows of its recording.
-func (s *Server) meetingExtras(r *http.Request, rec *store.Record) string {
+// MeetingExtras is what an event's page shows of its recording.
+func (s *Service) MeetingExtras(r *http.Request, rec *store.Record) string {
 	id, _ := rec.Fields["recording"].(string)
 	if id == "" {
 		return s.recordingToAdd(r, rec)
 	}
-	file, err := s.app.Store.Get(FileType, id)
+	file, err := s.app.Store.Get(records.FileType, id)
 	if err != nil || !isRecording(file) {
 		return ""
 	}
-	_, here := s.shown(r)
+	_, here := s.Shown(r)
 	page := "/t/" + records.EventType + "/" + rec.ID
 	var b strings.Builder
-	if summary, _ := rec.Fields["summary"].(string); strings.TrimSpace(summary) == "" && len(s.heard(file)) > 0 && changes(r) && s.showing(r, WriteUpPart) {
-		b.WriteString(writeUpOffer("Write up this meeting (/t/"+records.EventType+"/"+rec.ID+") from its recording (/t/"+FileType+"/"+id+")", "Ask the assistant to write it up", s))
-		b.WriteString(s.fewer(page, WriteUpPart, "the offer to write it up", here))
+	if summary, _ := rec.Fields["summary"].(string); strings.TrimSpace(summary) == "" && len(s.Heard(file)) > 0 && web.MayChange(r) && s.Showing(r, WriteUpPart) {
+		b.WriteString(writeUpOffer("Write up this meeting (/t/"+records.EventType+"/"+rec.ID+") from its recording (/t/"+records.FileType+"/"+id+")", "Ask the assistant to write it up", s))
+		b.WriteString(s.Fewer(page, WriteUpPart, "the offer to write it up", here))
 	}
-	if s.showing(r, RecordingPart) {
-		b.WriteString(string(s.component("media", s.recordingOf(file))))
-		b.WriteString(s.fewer(page, RecordingPart, "the recording", here))
+	if s.Showing(r, RecordingPart) {
+		b.WriteString(string(s.Component("media", s.recordingOf(file))))
+		b.WriteString(s.Fewer(page, RecordingPart, "the recording", here))
 	}
 	return b.String()
 }
 
 // recordingOffer is a recording's page offering a write-up, when it has a
 // transcript and no meeting has it yet.
-func (s *Server) recordingOffer(r *http.Request, file *store.Record) string {
-	if !changes(r) || !s.showing(r, WriteUpPart) || len(s.heard(file)) == 0 {
+func (s *Service) recordingOffer(r *http.Request, file *store.Record) string {
+	if !web.MayChange(r) || !s.Showing(r, WriteUpPart) || len(s.Heard(file)) == 0 {
 		return ""
 	}
 	t, ok := s.app.Types.Get(records.EventType)
@@ -58,21 +59,15 @@ func (s *Server) recordingOffer(r *http.Request, file *store.Record) string {
 	if _, has := t.Field("recording"); !has {
 		return ""
 	}
-	if had, _ := query.Filter(s.app.Store, t, []string{"recording=" + file.ID}, "", 1, s.now()); len(had) > 0 {
+	if had, _ := query.Filter(s.app.Store, t, []string{"recording=" + file.ID}, "", 1, s.Now()); len(had) > 0 {
 		return ""
 	}
-	return writeUpOffer("Write up the meeting in this recording (/t/"+FileType+"/"+file.ID+")", "Write up the meeting", s)
+	return writeUpOffer("Write up the meeting in this recording (/t/"+records.FileType+"/"+file.ID+")", "Write up the meeting", s)
 }
 
-func writeUpOffer(ask, label string, s *Server) string {
+func writeUpOffer(ask, label string, s *Service) string {
 	return `<p class="sw-muted">The assistant writes up a meeting from what was said: a summary, what was decided and the tasks that came up, each linked to where it was said, for you to check. One Undo takes it back.</p><p>` +
-		string(s.part(ui.Link{Href: "/chat?prompt=" + url.QueryEscape(ask+": a short summary, what was decided and the tasks that came up."), Label: label, Look: ui.LookButton})) + `</p>`
-}
-
-// changes says whether whoever asked may change the workspace.
-func changes(r *http.Request) bool {
-	a := records.VisitorOf(r.Context()).Access
-	return a != records.View && a != records.Public
+		string(s.Part(ui.Link{Href: "/chat?prompt=" + url.QueryEscape(ask+": a short summary, what was decided and the tasks that came up."), Label: label, Look: ui.LookButton})) + `</p>`
 }
 
 // recordingToAdd is a meeting with no recording yet: record it here, the
@@ -80,36 +75,36 @@ func changes(r *http.Request) bool {
 // meeting app made. It is the recording part, off at rest; but once a
 // meeting someone asked to have recorded is over without one, the page
 // says so by itself, since that is the moment it is wanted.
-func (s *Server) recordingToAdd(r *http.Request, ev *store.Record) string {
-	if !changes(r) {
+func (s *Service) recordingToAdd(r *http.Request, ev *store.Record) string {
+	if !web.MayChange(r) {
 		return ""
 	}
 	page := "/t/" + records.EventType + "/" + ev.ID
 	over := false
 	if st, err := time.Parse(time.RFC3339, str(ev.Fields["starts"], "")); err == nil {
-		over = s.now().After(st.Add(chat.MeetingLength(ev)))
+		over = s.Now().After(st.Add(chat.MeetingLength(ev)))
 	}
 	wanted := over && len(chat.RemindersAbout(s.app.Store, chat.RecordAbout(ev.ID))) > 0
-	if !s.showing(r, RecordingPart) && !wanted {
+	if !s.Showing(r, RecordingPart) && !wanted {
 		return ""
 	}
 	say := "Record it here: the microphone, and with the box ticked this computer's sound, the other people on a call (share the call's tab, or the entire screen for an app such as Teams or Zoom, with its sound). Headphones keep the call out of the microphone. Or add the recording or transcript the meeting app makes, afterwards."
 	if over {
 		say = "It has ended with no recording. Add the recording or transcript the meeting app made, a .vtt from Teams or Zoom or the audio, or one made on another device." + s.fetchSaid(ev)
 	}
-	_, here := s.shown(r)
+	_, here := s.Shown(r)
 	var b strings.Builder
 	b.WriteString(`<section class="sw-stack" aria-labelledby="meeting-recording-title"><h2 id="meeting-recording-title">Recording</h2><p>` + template.HTMLEscapeString(say) + `</p>`)
-	b.WriteString(string(s.component("upload", map[string]any{"label": "Add the recording", "action": "/t/file/upload?meeting=" + ev.ID,
+	b.WriteString(string(s.Component("upload", map[string]any{"label": "Add the recording", "action": "/t/file/upload?meeting=" + ev.ID,
 		"from": page + "?show=recording", "id": "meeting-recording", "sound": "computer",
 		"hint": "A recording, or a transcript as a .vtt or .srt file. Up to 4 GB."})))
-	b.WriteString(s.fewer(page, RecordingPart, "the recording", here) + `</section>`)
+	b.WriteString(s.Fewer(page, RecordingPart, "the recording", here) + `</section>`)
 	return b.String()
 }
 
 // toMeeting gives a meeting the file just added as its recording, as the
 // person's own change, when it has none; it says what it did.
-func (s *Server) toMeeting(r *http.Request, eventID string, file *store.Record) string {
+func (s *Service) toMeeting(r *http.Request, eventID string, file *store.Record) string {
 	ev, err := s.app.Store.Get(records.EventType, eventID)
 	if err != nil {
 		return ""
@@ -117,7 +112,7 @@ func (s *Server) toMeeting(r *http.Request, eventID string, file *store.Record) 
 	if had, _ := ev.Fields["recording"].(string); had != "" {
 		return " The meeting has a recording already, so this one is in your files."
 	}
-	if _, _, err := records.WriteAs(s.app.Store, s.who(r), "updated", records.EventType, eventID, map[string]any{"recording": file.ID}); err != nil {
+	if _, _, err := records.WriteAs(s.app.Store, s.Who(r), "updated", records.EventType, eventID, map[string]any{"recording": file.ID}); err != nil {
 		return " It could not be given to the meeting: " + err.Error()
 	}
 	return " It is the meeting's recording now."

@@ -36,16 +36,16 @@ func (s *Server) limitsSection(owner bool) string {
 	}
 
 	switch {
-	case s.speechKit().Ready():
+	case s.media.SpeechKit().Ready():
 		line("Recordings: speech-to-text is on this computer, so a recording you add is written down.")
 		switch {
-		case s.speakers().Ready():
+		case s.media.Speakers().Ready():
 			line("Speakers: told apart in a recording written down whole, as Speaker 1, Speaker 2; edit the text to name them. A call recorded with this computer's sound says you and them instead.")
 		case owner:
 			line(`Speakers: not told apart yet, so a transcript says who spoke only for a call recorded with this computer's sound. Telling them apart is a ` + sizeWords(speech.SpeakersSize()) + ` download, and recordings never leave this computer. ` +
 				string(s.form(ui.Form{Action: "/speech/speakers/get", Button: &ui.Button{Label: "Get speaker separation", Variant: ui.Secondary}})))
 		}
-	case !speech.Supported() && !s.speech.given:
+	case !speech.Supported() && !s.media.SpeechGiven():
 		line("Recordings: there is no speech-to-text for this kind of computer, so a recording keeps a transcript only when one is written by hand.")
 	case owner:
 		line(`Recordings: speech-to-text is not on this computer yet, so a recording keeps a transcript only when one is written by hand. Getting it is a ` + sizeWords(speech.DownloadSize()) + ` download. ` +
@@ -62,8 +62,8 @@ func (s *Server) limitsSection(owner bool) string {
 			line(l)
 		}
 		line(s.briefLine())
-		line(s.reviewLine())         // review.go          // today.go
-		lines, setup := s.appLines() // meeting_fetch_help.go
+		line(s.reviewLine())               // review.go          // today.go
+		lines, setup := s.media.AppLines() // meeting_fetch_help.go
 		for _, l := range lines {
 			line(l)
 		}

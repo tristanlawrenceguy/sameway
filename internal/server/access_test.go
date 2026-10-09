@@ -3,7 +3,6 @@ package server_test
 import (
 	"context"
 	"net/http"
-	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
@@ -13,20 +12,6 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
-
-// as makes a request as someone on another device, the way the tailnet
-// marks one it has let in.
-func as(t *testing.T, h http.Handler, v records.Visitor, method, path string, body string, contentType string) *httptest.ResponseRecorder {
-	t.Helper()
-	req := httptest.NewRequest(method, path, strings.NewReader(body))
-	if contentType != "" {
-		req.Header.Set("Content-Type", contentType)
-	}
-	req = req.WithContext(records.WithVisitor(req.Context(), v))
-	rec := httptest.NewRecorder()
-	h.ServeHTTP(rec, req)
-	return rec
-}
 
 // Someone Tailscale says is bob@example.com gets in as the person with
 // that email and the access the owner gave them; someone nobody let in is

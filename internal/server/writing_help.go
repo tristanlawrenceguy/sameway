@@ -8,6 +8,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // A piece of writing offers the kinds of help an editor gives, named as a
@@ -23,7 +24,7 @@ import (
 const writingHelpWords = 30
 
 func (s *Server) writingHelp(r *http.Request, t *schema.Type, rec *store.Record) string {
-	if !changes(r) || t.Internal || !s.showing(r, WritingHelpPart) {
+	if !web.MayChange(r) || t.Internal || !s.showing(r, WritingHelpPart) {
 		return ""
 	}
 	field := ""

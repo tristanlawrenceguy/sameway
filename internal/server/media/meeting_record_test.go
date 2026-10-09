@@ -1,4 +1,4 @@
-package server_test
+package media_test
 
 import (
 	"encoding/json"

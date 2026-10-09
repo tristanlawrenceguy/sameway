@@ -1,4 +1,4 @@
-package server
+package media
 
 import (
 	"context"
@@ -6,11 +6,13 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/tristanlawrenceguy/sameway/internal/blocks"
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/speech"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // Telling speakers apart (speech/speakers.go): once the owner has it, a
@@ -22,19 +24,19 @@ import (
 // parts is left as it is, since a voice cannot be followed from one part
 // to the next.
 
-// speakersKit is how speakers are told apart here, or nil.
-type speakersKit struct {
+// SpeakersKit is how speakers are told apart here, or nil.
+type SpeakersKit struct {
 	Ready   func() bool
 	Install func(ctx context.Context, p speech.Progress) error
 	Diarize func(ctx context.Context, wav string, speakers int) ([]speech.Turn, error)
 }
 
-func (s *Server) speakers() *speakersKit {
+func (s *Service) Speakers() *SpeakersKit {
 	s.speech.mu.Lock()
 	defer s.speech.mu.Unlock()
 	if s.speech.speakers == nil {
 		dir, _ := speech.Dir()
-		s.speech.speakers = &speakersKit{
+		s.speech.speakers = &SpeakersKit{
 			Ready:   func() bool { return dir != "" && speech.SpeakersReady(dir) },
 			Install: func(ctx context.Context, p speech.Progress) error { return speech.InstallSpeakers(ctx, nil, dir, p) },
 			Diarize: func(ctx context.Context, wav string, n int) ([]speech.Turn, error) {
@@ -46,16 +48,16 @@ func (s *Server) speakers() *speakersKit {
 }
 
 // UseSpeakers sets how speakers are told apart, for tests.
-func (s *Server) UseSpeakers(ready func() bool, diarize func(ctx context.Context, wav string, n int) ([]speech.Turn, error)) {
+func (s *Service) UseSpeakers(ready func() bool, diarize func(ctx context.Context, wav string, n int) ([]speech.Turn, error)) {
 	s.speech.mu.Lock()
-	s.speech.speakers = &speakersKit{Ready: ready, Diarize: diarize, Install: func(context.Context, speech.Progress) error { return nil }}
+	s.speech.speakers = &SpeakersKit{Ready: ready, Diarize: diarize, Install: func(context.Context, speech.Progress) error { return nil }}
 	s.speech.mu.Unlock()
 }
 
 // whoSpoke names each line of a recording written down whole, when
-// speakers can be told apart here and nothing better says who spoke.
-func (s *Server) whoSpoke(rec *store.Record, wav string, start float64, cues []convert.Cue) []convert.Cue {
-	kit := s.speakers()
+// Speakers can be told apart here and nothing better says who spoke.
+func (s *Service) whoSpoke(rec *store.Record, wav string, start float64, cues []convert.Cue) []convert.Cue {
+	kit := s.Speakers()
 	if kit == nil || kit.Ready == nil || !kit.Ready() || len(cues) == 0 {
 		return cues
 	}
@@ -97,7 +99,7 @@ func (s *Server) whoSpoke(rec *store.Record, wav string, start float64, cues []c
 
 // howManySpeak is how many people are in the recording's meeting, the
 // owner among them, or 0 when nobody says.
-func (s *Server) howManySpeak(rec *store.Record) int {
+func (s *Service) howManySpeak(rec *store.Record) int {
 	et, ok := s.app.Types.Get(records.EventType)
 	if !ok {
 		return 0
@@ -105,7 +107,7 @@ func (s *Server) howManySpeak(rec *store.Record) int {
 	if f, has := et.Field("people"); !has || !f.RefList() {
 		return 0
 	}
-	meetings, _ := query.Filter(s.app.Store, et, []string{"recording=" + rec.ID}, "", 1, s.now())
+	meetings, _ := query.Filter(s.app.Store, et, []string{"recording=" + rec.ID}, "", 1, s.Now())
 	if len(meetings) != 1 {
 		return 0
 	}
@@ -117,17 +119,17 @@ func (s *Server) howManySpeak(rec *store.Record) int {
 }
 
 // speakersGet is the owner's press that gets telling speakers apart.
-func (s *Server) speakersGet(w http.ResponseWriter, r *http.Request) {
-	kit := s.speakers()
+func (s *Service) speakersGet(w http.ResponseWriter, r *http.Request) {
+	kit := s.Speakers()
 	if kit.Ready() {
-		s.tell(w, r, outcome{Title: "Telling speakers apart is already on this computer"}, "/help")
+		s.Tell(w, r, web.Outcome{Title: "Telling speakers apart is already on this computer"}, "/help")
 		return
 	}
-	if !s.speechKit().Ready() {
-		s.tell(w, r, outcome{Failed: true, Title: "Speech-to-text first", Text: "Telling speakers apart works on what speech-to-text writes down, so it needs that on this computer first."}, "/help")
+	if !s.SpeechKit().Ready() {
+		s.Tell(w, r, web.Outcome{Failed: true, Title: "Speech-to-text first", Text: "Telling speakers apart works on what speech-to-text writes down, so it needs that on this computer first."}, "/help")
 		return
 	}
-	s.record(r, records.Change{Action: "started", Detail: "getting speaker separation for this computer (" + sizeWords(speech.SpeakersSize()) + ")"})
+	s.Record(r, records.Change{Action: "started", Detail: "getting speaker separation for this computer (" + blocks.SizeWords(speech.SpeakersSize()) + ")"})
 	go func() {
 		err := kit.Install(context.Background(), nil)
 		if err != nil {
@@ -137,5 +139,5 @@ func (s *Server) speakersGet(w http.ResponseWriter, r *http.Request) {
 		}
 		s.Changed()
 	}()
-	s.tell(w, r, outcome{Title: "Getting it", Text: "It downloads once, about " + sizeWords(speech.SpeakersSize()) + ". Recordings written down after it is here say who spoke."}, "/help")
+	s.Tell(w, r, web.Outcome{Title: "Getting it", Text: "It downloads once, about " + blocks.SizeWords(speech.SpeakersSize()) + ". Recordings written down after it is here say who spoke."}, "/help")
 }

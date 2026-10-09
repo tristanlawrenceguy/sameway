@@ -10,7 +10,7 @@ import "github.com/tristanlawrenceguy/sameway/internal/records"
 func (s *Server) hooks() {
 	s.app.Registry.LinkTitle = s.linkTitle
 	s.app.Chat.Look = s.lookFor
-	s.app.Chat.Picture = s.pictureFor
+	s.app.Chat.Picture = s.media.PictureFor
 	s.app.Chat.Home = s // recordings and workspaces; see home.go
 	// A record arriving from another computer made out for this one's
 	// owner tells them (foryou.go).
