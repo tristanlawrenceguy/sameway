@@ -39,7 +39,7 @@ func TestADateIsWrittenAsPeopleSayIt(t *testing.T) {
 	}
 
 	// The date chip updates after editing.
-	if page := get(t, h, "/t/task/"+task.ID+fieldsView).Body.String(); !strings.Contains(page, when.Text(when.Store(ts, day))) {
+	if page := get(t, h, "/t/task/"+task.ID+fieldsView).Body.String(); !strings.Contains(page, when.Text(when.Store(ts, day), false)) {
 		t.Error("the page shows the moment as a person reads it")
 	}
 

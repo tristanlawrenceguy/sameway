@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
@@ -99,7 +98,7 @@ func (s *Server) voiceNames(rec *store.Record) (me, them string) {
 	}
 	ownerID := ""
 	if login := s.app.Records.Owner.Login; login != "" {
-		if found, _ := query.Filter(s.app.Store, pt, []string{"email=" + login}, "", 1, time.Now()); len(found) == 1 {
+		if found, _ := query.Filter(s.app.Store, pt, []string{"email=" + login}, "", 1, s.now()); len(found) == 1 {
 			me, ownerID = s.title(pt, found[0]), found[0].ID
 		}
 	}
@@ -110,7 +109,7 @@ func (s *Server) voiceNames(rec *store.Record) (me, them string) {
 	if f, has := et.Field("people"); !has || !f.RefList() {
 		return
 	}
-	meetings, _ := query.Filter(s.app.Store, et, []string{"recording=" + rec.ID}, "", 1, time.Now())
+	meetings, _ := query.Filter(s.app.Store, et, []string{"recording=" + rec.ID}, "", 1, s.now())
 	if len(meetings) != 1 {
 		return
 	}

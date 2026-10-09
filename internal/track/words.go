@@ -54,7 +54,7 @@ func EntryName(habit, unit string, fields map[string]any) string {
 		return note
 	}
 	if at, _ := fields["at"].(string); at != "" {
-		return "Entry, " + when.Text(at)
+		return "Entry, " + when.Text(at, false) // a name is kept in the log: said one way, the house way, whatever the clock
 	}
 	return "Entry"
 }

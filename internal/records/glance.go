@@ -49,9 +49,12 @@ type Fact struct {
 //     for all its rows at once, or counted for this one when in is nil
 //     (glance_count.go).
 //
+// A day is said to the reader: as it is for them at now, on the 24-hour
+// clock when h24.
+//
 // The order is always this one, so the same fact sits in the same place
 // on every row (design/foundations/glance.md).
-func Glance(st *store.Store, t *schema.Type, rec *store.Record, now time.Time, in Counts) []Fact {
+func Glance(st *store.Store, t *schema.Type, rec *store.Record, now time.Time, h24 bool, in Counts) []Fact {
 	var out []Fact
 	done := false
 	if f := t.DoneField(); f != nil {
@@ -76,7 +79,7 @@ func Glance(st *store.Store, t *schema.Type, rec *store.Record, now time.Time, i
 			}
 		}
 	}
-	if d, ok := dayGlance(t, rec, done, now); ok {
+	if d, ok := dayGlance(t, rec, done, now, h24); ok {
 		out = append(out, d)
 	}
 	if f, ok := belongsTo(st, t, rec); ok {
@@ -115,9 +118,9 @@ func belongsTo(st *store.Store, t *schema.Type, rec *store.Record) (Fact, bool) 
 // GlanceText is the facts as plain words, for a block's list, for the
 // API's and the assistant's view of a record, and for an agent; in is as
 // Glance takes it.
-func GlanceText(st *store.Store, t *schema.Type, rec *store.Record, in Counts) string {
+func GlanceText(st *store.Store, t *schema.Type, rec *store.Record, now time.Time, h24 bool, in Counts) string {
 	var words []string
-	for _, f := range Glance(st, t, rec, time.Now(), in) {
+	for _, f := range Glance(st, t, rec, now, h24, in) {
 		words = append(words, f.Text)
 	}
 	return strings.Join(words, " · ")

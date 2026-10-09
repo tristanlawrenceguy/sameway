@@ -6,7 +6,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
@@ -22,7 +21,7 @@ func (ws *Workspace) collectionShows(props map[string]any) string {
 	t, _ := ws.Store.Types().Get(typeName)
 	where := Strs(props["where"])
 	order, _ := props["order"].(string)
-	recs, _ := query.Filter(ws.Store, t, where, order, 0, time.Now())
+	recs, _ := query.Filter(ws.Store, t, where, order, 0, ws.now())
 	if len(recs) == 0 {
 		return NothingYet(t.Name, where, "")
 	}
@@ -64,7 +63,7 @@ func (ws *Workspace) calendarShows(props, out map[string]any) string {
 	t, _ := ws.Store.Types().Get(typeName)
 	field := dateField(t, props["date"])
 	where := Strs(props["where"])
-	recs, _ := query.Filter(ws.Store, t, where, field, 0, time.Now())
+	recs, _ := query.Filter(ws.Store, t, where, field, 0, ws.now())
 	n := 0
 	for _, rec := range recs {
 		if v, _ := rec.Fields[field].(string); v != "" {

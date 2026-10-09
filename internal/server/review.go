@@ -62,7 +62,7 @@ func (s *Server) reviewTasks(now time.Time) (done, slipped, ahead []reviewTask) 
 }
 
 func (s *Server) reviewPage(w http.ResponseWriter, r *http.Request) {
-	now := time.Now()
+	now := s.now()
 	done, slipped, ahead := s.reviewTasks(now)
 	esc := template.HTMLEscapeString
 	var b strings.Builder
@@ -119,7 +119,7 @@ func countWords(n int, one, many string) string {
 // it. Both are the person's change, with its Undo.
 func (s *Server) reviewMove(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	next := time.Now().AddDate(0, 0, 7).Format("2006-01-02")
+	next := s.now().AddDate(0, 0, 7).Format("2006-01-02")
 	s.reviewWrite(w, r, map[string]any{"due": next}, "Moved to next week")
 }
 
@@ -146,7 +146,7 @@ func (s *Server) KeepReview(ctx context.Context) {
 		tick := time.NewTicker(time.Minute)
 		defer tick.Stop()
 		for {
-			s.reviewIfDue(time.Now())
+			s.reviewIfDue(s.now())
 			select {
 			case <-ctx.Done():
 				return

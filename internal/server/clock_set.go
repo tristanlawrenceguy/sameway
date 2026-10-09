@@ -25,7 +25,7 @@ import (
 // alarm, named for what it is for.
 func (s *Server) clockSet(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	now := time.Now()
+	now := s.now()
 	fields := map[string]any{"state": "set"}
 	var at time.Time
 	if minutes, err := strconv.Atoi(r.PostForm.Get("minutes")); err == nil && r.PostForm.Get("at") == "" {
@@ -73,7 +73,7 @@ func (s *Server) clockSet(w http.ResponseWriter, r *http.Request) {
 	if fields["kind"] == "timer" {
 		what = "Timer set"
 	}
-	s.tellAt(w, r, outcome{Title: what, Text: title + " rings " + ringsWhen(at, now) + ".", Undo: undo, Of: title}, backFrom(r))
+	s.tellAt(w, r, outcome{Title: what, Text: title + " rings " + s.ringsWhen(at, now) + ".", Undo: undo, Of: title}, backFrom(r))
 }
 
 // clockDone dismisses a reminder, rung or not.
@@ -84,7 +84,7 @@ func (s *Server) clockDone(w http.ResponseWriter, r *http.Request) {
 // clockSnooze gives a reminder five more minutes. One that repeats keeps
 // to its own time of day for the times after (when.KeepTime).
 func (s *Server) clockSnooze(w http.ResponseWriter, r *http.Request) {
-	fields := map[string]any{"state": "set", "at": when.Store(time.Now().Add(5*time.Minute), false)}
+	fields := map[string]any{"state": "set", "at": when.Store(s.now().Add(5*time.Minute), false)}
 	if rec, err := s.app.Store.Get(ReminderType, r.PathValue("id")); err == nil {
 		if rule, _ := rec.Fields["repeat"].(string); rule != "" {
 			at, _ := rec.Fields["at"].(string)
@@ -111,12 +111,12 @@ func (s *Server) setReminder(w http.ResponseWriter, r *http.Request, fields map[
 	o := outcome{Title: title + " dismissed", Undo: undo}
 	switch {
 	case action == "snoozed":
-		now := time.Now()
-		o.Title, o.Text = title+": 5 more minutes", "Rings again "+ringsWhen(now.Add(5*time.Minute), now)+"."
+		now := s.now()
+		o.Title, o.Text = title+": 5 more minutes", "Rings again "+s.ringsWhen(now.Add(5*time.Minute), now)+"."
 		o.Of = o.Title
 	case saved.Fields["state"] == "set" && action == "done":
 		// One that repeats is set for its next time, not done with.
-		o.Text = "It " + strings.ToLower(blocks.RepeatsOf(saved)) + ", so it rings again " + ringsWhen(ringsAt(saved), time.Now()) + "."
+		o.Text = "It " + strings.ToLower(blocks.RepeatsOf(saved)) + ", so it rings again " + s.ringsWhen(ringsAt(saved), s.now()) + "."
 		if rec.Fields["state"] == "set" {
 			o.Title = title + ": this time skipped"
 		}
@@ -137,8 +137,8 @@ func backFrom(r *http.Request) string {
 
 // ringsWhen is when a reminder rings, as it ends a sentence: at 14:30,
 // tomorrow at 07:00, on Monday at 09:00.
-func ringsWhen(at, now time.Time) string {
-	clock := "at " + when.Clock(at.In(now.Location()))
+func (s *Server) ringsWhen(at, now time.Time) string {
+	clock := "at " + when.Clock(at.In(now.Location()), s.h24())
 	switch day := blocks.DayOf(at, now); day {
 	case "":
 		return clock

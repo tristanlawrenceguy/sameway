@@ -15,7 +15,7 @@ import (
 // 9 To do, 3 Done" where they differ. Without it an agent that added a
 // field with a default was surprised to find every old record had it,
 // even the one that said otherwise. add_field and its REST route say it.
-func FieldGets(st *store.Store, t *schema.Type, name string) string {
+func FieldGets(st *store.Store, t *schema.Type, name string, h24 bool) string {
 	f, ok := t.Field(name)
 	if !ok || st == nil {
 		return ""
@@ -30,7 +30,7 @@ func FieldGets(st *store.Store, t *schema.Type, name string) string {
 	var order []string
 	count := map[string]int{}
 	for _, r := range recs {
-		v := valueWords(*f, r.Fields[name])
+		v := valueWords(*f, r.Fields[name], h24)
 		if count[v] == 0 {
 			order = append(order, v)
 		}
@@ -57,9 +57,9 @@ func FieldGets(st *store.Store, t *schema.Type, name string) string {
 
 // valueWords is a stored value as a person reads it (export.Said): a
 // choice by its label, yes or no, a day in words, and empty for nothing.
-func valueWords(f schema.Field, v any) string {
+func valueWords(f schema.Field, v any, h24 bool) string {
 	if l, ok := v.([]any); v == nil || v == "" || ok && len(l) == 0 {
 		return "empty"
 	}
-	return export.Said(f, v, nil)
+	return export.Said(f, v, nil, h24)
 }

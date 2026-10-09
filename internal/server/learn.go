@@ -103,7 +103,7 @@ func partWords(s *Server, t *schema.Type, rec *store.Record, key string) string 
 	case WriteUpPart:
 		return "the offer to write it up"
 	}
-	for _, l := range relate.Of(s.app.Store, t, rec, time.Now()) {
+	for _, l := range relate.Of(s.app.Store, t, rec, s.now()) {
 		if l.Key == key {
 			return strings.ToLower(schema.Plural(l.Type)) + " " + l.Why
 		}

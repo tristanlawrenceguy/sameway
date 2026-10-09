@@ -15,8 +15,9 @@ import (
 // Words a block and a page say alike: a stored value as text, a list as
 // said, why a type is not there.
 
-// Display renders a stored value as the text a form or page shows.
-func Display(f schema.Field, v any) string {
+// Display renders a stored value as the text a form or page shows, a time
+// on the 24-hour clock when h24 is the reader's.
+func Display(f schema.Field, v any, h24 bool) string {
 	if v == nil {
 		return ""
 	}
@@ -46,7 +47,7 @@ func Display(f schema.Field, v any) string {
 		}
 		return "no"
 	case "datetime":
-		return when.Text(fmt.Sprint(v))
+		return when.Text(fmt.Sprint(v), h24)
 	case "repeat":
 		if said := when.RepeatText(fmt.Sprint(v)); said != "" {
 			return Capitalize(said)

@@ -17,10 +17,11 @@ import (
 // (when.Full) and a ref by its title.
 
 // Said is one field's value as a reader reads it: Value, but a day or a
-// moment in full words, Monday 5 October 2026 at 2pm, not 2026-10-05 14:00.
-func Said(f schema.Field, v any, titles Titles) string {
+// moment in full words, Monday 5 October 2026 at 2pm, not 2026-10-05 14:00,
+// on the 24-hour clock when h24 is the reader's (when.TwentyFour).
+func Said(f schema.Field, v any, titles Titles, h24 bool) string {
 	if f.Type == "datetime" && v != nil {
-		return when.Full(fmt.Sprint(v))
+		return when.Full(fmt.Sprint(v), h24)
 	}
 	return Value(f, v, titles)
 }
@@ -37,7 +38,7 @@ type Fact struct {
 // and not a plain no, and body, its writing (text and markdown fields),
 // whole, in field order. With titles nil a ref is left out, not given as
 // an id that means nothing to a reader.
-func Text(t *schema.Type, fields map[string]any, titles Titles) (facts []Fact, body []string) {
+func Text(t *schema.Type, fields map[string]any, titles Titles, h24 bool) (facts []Fact, body []string) {
 	for _, f := range t.Shown() {
 		v := fields[f.Name]
 		if f.Name == t.Title || v == nil || v == "" || (titles == nil && (f.Type == "ref" || f.RefList())) {
@@ -49,7 +50,7 @@ func Text(t *schema.Type, fields map[string]any, titles Titles) (facts []Fact, b
 			}
 			continue
 		}
-		if said := Said(f, v, titles); said != "" && said != "no" {
+		if said := Said(f, v, titles, h24); said != "" && said != "no" {
 			facts = append(facts, Fact{Field: f, Name: f.Display(), Value: said})
 		}
 	}

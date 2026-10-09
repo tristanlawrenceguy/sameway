@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
@@ -116,7 +115,7 @@ func (s *Server) apiList(w http.ResponseWriter, r *http.Request) {
 		writeError(w, fmt.Errorf("no content type %q", r.PathValue("type")))
 		return
 	}
-	recs, err := query.Filter(s.app.Store, t, r.URL.Query()["where"], order, limit, time.Now())
+	recs, err := query.Filter(s.app.Store, t, r.URL.Query()["where"], order, limit, s.now())
 	if err != nil {
 		writeError(w, err)
 		return

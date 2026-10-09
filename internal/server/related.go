@@ -5,7 +5,6 @@ import (
 	"html/template"
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
@@ -40,7 +39,7 @@ func (s *Server) related(t *schema.Type, rec *store.Record, always, here []strin
 	if len(always) == 0 && len(here) == 0 {
 		return ""
 	}
-	links := relate.Of(s.app.Store, t, rec, time.Now())
+	links := relate.Of(s.app.Store, t, rec, s.now())
 	page := "/t/" + t.Name + "/" + rec.ID
 	here = opened(links, here)
 	var lists strings.Builder
@@ -94,7 +93,7 @@ func (s *Server) words(l relate.Link) string {
 		}
 		return other
 	case relate.SameDay:
-		return count + " on " + when.Text(l.Day+"T00:00:00Z")
+		return count + " on " + when.Text(l.Day+"T00:00:00Z", false)
 	}
 	return count
 }

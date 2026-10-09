@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/search"
@@ -30,7 +31,7 @@ func TestFindLooksThroughEverythingAPersonHas(t *testing.T) {
 	st.Create("message", map[string]any{"role": "user", "content": "plumber plumber plumber"})
 	st.Create("activity", map[string]any{"summary": "You said plumber", "actor": "human", "action": "said"})
 
-	hits, _ := search.Matches(st, types, "plumber")
+	hits, _ := search.Matches(st, types, "plumber", search.Reader{Now: time.Now()})
 	if len(hits) != 3 {
 		t.Fatalf("three things mention the plumber, got %d: %+v", len(hits), hits)
 	}
@@ -53,10 +54,10 @@ func TestFindLooksThroughEverythingAPersonHas(t *testing.T) {
 	}
 
 	// Every word must appear; case does not matter; blank finds nothing.
-	if two, _ := search.Matches(st, types, "Plumber Tuesday"); len(two) != 1 || two[0].Title != "Garden" {
+	if two, _ := search.Matches(st, types, "Plumber Tuesday", search.Reader{Now: time.Now()}); len(two) != 1 || two[0].Title != "Garden" {
 		t.Errorf("all words must match, got %+v", two)
 	}
-	if none, _ := search.Matches(st, types, "   "); none != nil {
+	if none, _ := search.Matches(st, types, "   ", search.Reader{Now: time.Now()}); none != nil {
 		t.Errorf("a blank search finds nothing, got %+v", none)
 	}
 }

@@ -22,9 +22,9 @@ const ClockComponent = "clock"
 // is ringing, and what is coming.
 func resolveClock(w *Workspace, props map[string]any, _ Place) map[string]any {
 	out := copyProps(props)
-	now := time.Now()
+	now := w.now()
 	out["now"] = now.Format(time.RFC3339)
-	out["time"] = when.Face(now)
+	out["time"] = when.Face(now, w.H24())
 	out["date"] = now.Format("Monday 2 January")
 	ringing := []any{}
 	var next []coming
@@ -47,7 +47,7 @@ func resolveClock(w *Workspace, props map[string]any, _ Place) map[string]any {
 				if err != nil {
 					continue
 				}
-				item["day"], item["time"] = DayOf(at, now), when.Clock(at.In(now.Location()))
+				item["day"], item["time"] = DayOf(at, now), when.Clock(at.In(now.Location()), w.H24())
 				item["kind"], _ = rec.Fields["kind"].(string)
 				next = append(next, coming{at, item})
 			}
@@ -114,7 +114,7 @@ func (w *Workspace) onToday(now time.Time) []coming {
 					continue
 				}
 				at = ts.Local()
-				item["time"] = when.Clock(at)
+				item["time"] = when.Clock(at, w.H24())
 			}
 			items = append(items, coming{at, item})
 		}

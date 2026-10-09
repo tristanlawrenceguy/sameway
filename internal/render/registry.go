@@ -84,6 +84,9 @@ type Registry struct {
 	// LinkTitle names the record at a page address, for links in words
 	// such as the assistant's replies; set by the server.
 	LinkTitle func(path string) string
+	// Hours24 is whether the person reads times on the 24-hour clock, for
+	// a day's hours (calendar.go); set by the app, nil reads as 12-hour.
+	Hours24 func() bool
 }
 
 // New returns an empty registry.

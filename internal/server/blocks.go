@@ -23,7 +23,6 @@ const (
 
 // Words the pages say as a block does (blocks/words.go).
 var (
-	display    = blocks.Display
 	sizeWords  = blocks.SizeWords
 	capitalize = blocks.Capitalize
 	strs       = blocks.Strs
@@ -38,9 +37,6 @@ var (
 var (
 	apart       = blocks.Apart
 	withContext = blocks.WithContext
-	recordWays  = blocks.RecordWays
-	momentWords = blocks.MomentWords
-	secondWords = blocks.SecondWords
 	addedRank   = blocks.AddedRank
 )
 

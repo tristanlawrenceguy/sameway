@@ -33,7 +33,7 @@ func (s *Server) changedWords(f schema.Field, before, after any) string {
 // shownAs is a value as a page shows it: a ref by the title it points at,
 // a choice by its label.
 func (s *Server) shownAs(f schema.Field, v any) string {
-	text := strings.TrimSpace(display(f, v))
+	text := strings.TrimSpace(s.display(f, v))
 	switch f.Type {
 	case "ref":
 		return s.RefTitle(f, text)

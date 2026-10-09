@@ -56,7 +56,7 @@ func TestAnEventSaysHowToRecordIt(t *testing.T) {
 // and when the person named a weekday nothing falls on, which days do.
 func TestADayIsSaidBackWithItsWeekday(t *testing.T) {
 	svc := newFullService(t)
-	svc.Now = func() time.Time { return time.Date(2026, 10, 2, 9, 0, 0, 0, time.UTC) } // a Friday
+	svc.Clock = func() time.Time { return time.Date(2026, 10, 2, 9, 0, 0, 0, time.UTC) } // a Friday
 	m := &scripted{steps: []*llm.Response{
 		call("create_record", map[string]any{"type": "event", "fields": map[string]any{"title": "Pricing", "starts": "2026-10-07 14:00"}}),
 		call("create_record", map[string]any{"type": "event", "fields": map[string]any{"title": "Pricing again", "starts": "2026-10-06 14:00"}}),

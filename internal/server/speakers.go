@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
@@ -106,7 +105,7 @@ func (s *Server) howManySpeak(rec *store.Record) int {
 	if f, has := et.Field("people"); !has || !f.RefList() {
 		return 0
 	}
-	meetings, _ := query.Filter(s.app.Store, et, []string{"recording=" + rec.ID}, "", 1, time.Now())
+	meetings, _ := query.Filter(s.app.Store, et, []string{"recording=" + rec.ID}, "", 1, s.now())
 	if len(meetings) != 1 {
 		return 0
 	}

@@ -14,7 +14,7 @@ import (
 func (s *Server) says(t *schema.Type, rec *store.Record) (text string, fields []schema.Field) {
 	for _, f := range t.Shown() {
 		if f.Type == "markdown" {
-			if display(f, rec.Fields[f.Name]) != "" {
+			if s.display(f, rec.Fields[f.Name]) != "" {
 				text = f.Name
 			}
 			break
@@ -22,7 +22,7 @@ func (s *Server) says(t *schema.Type, rec *store.Record) (text string, fields []
 	}
 	head := s.headFields(t, rec) // glance.go
 	for _, f := range t.Shown() {
-		if f.Name == text || head[f.Name] || display(f, rec.Fields[f.Name]) == "" || noGoal(t.Name, f.Name, rec.Fields[f.Name]) {
+		if f.Name == text || head[f.Name] || s.display(f, rec.Fields[f.Name]) == "" || noGoal(t.Name, f.Name, rec.Fields[f.Name]) {
 			continue
 		}
 		fields = append(fields, f)

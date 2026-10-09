@@ -2,6 +2,7 @@ package blocks
 
 import (
 	"net/url"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
@@ -14,6 +15,9 @@ type Workspace struct {
 	// Settings is the workspace's, read as they are now; nil reads as the
 	// defaults, as for a store opened on its own.
 	Settings *workspace.Workspace
+	// Clock is the time it is for the person; nil reads as this
+	// computer's (reader.go).
+	Clock func() time.Time
 }
 
 // Place is where a block is shown: its id, and the page it is on with

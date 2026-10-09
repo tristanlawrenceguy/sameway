@@ -39,9 +39,8 @@ type App struct {
 	schemaSeen schemaWatch // what schema/ held when last read; see reload.go
 }
 
-// Load opens the workspace at dir. Pass memoryDB to use an in-memory store
-// (tests and read-only commands).
-func Load(dir string, memoryDB bool) (*App, error) {
+// Open opens the workspace at dir, as o says (options.go).
+func Open(dir string, o Options) (*App, error) {
 	ws, err := workspace.Load(dir)
 	if err != nil {
 		return nil, err
@@ -51,7 +50,7 @@ func Load(dir string, memoryDB bool) (*App, error) {
 		return nil, err
 	}
 	dbPath := ws.DBPath()
-	if memoryDB {
+	if o.MemoryDB {
 		dbPath = ":memory:"
 	}
 	st, err := store.Open(dbPath, types)
@@ -63,14 +62,17 @@ func Load(dir string, memoryDB bool) (*App, error) {
 		st.Close()
 		return nil, err
 	}
-	a := &App{Workspace: ws, Types: types, Store: st, Registry: reg, Records: &records.Book{Store: st, Setting: ws.Get}, Blocks: &blocks.Workspace{Store: st, Settings: ws}}
+	// The time and the clock face are this app's, said by everything below.
+	reg.Hours24 = ws.Hours24
+	a := &App{Workspace: ws, Types: types, Store: st, Registry: reg,
+		Records: &records.Book{Store: st, Setting: ws.Get, Clock: o.Clock, Hours24: ws.Hours24},
+		Blocks:  &blocks.Workspace{Store: st, Settings: ws, Clock: o.Clock}}
 	// The conversation, its questions and the log are history, not content;
 	// everything else is written to content/ as it changes.
 	a.Mirror = content.Mirror{Dir: ws.ContentDir(), Types: types, Skip: ownersTypes(types)}
 	st.AfterWrite = a.Mirror.Changed
 	a.share()
 	records.Resay(st) // the log in today's words; see records/names.go
-	sayTimes(ws)      // on the person's clock; clock.go
 	a.Chat = &chat.Service{
 		Book:         a.Records,
 		Blocks:       a.Blocks,

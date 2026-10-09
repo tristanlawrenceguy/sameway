@@ -23,19 +23,16 @@ func TestClockSaysATimeAsPeopleDo(t *testing.T) {
 		{at(0, 30), "12:30am", "00:30", "12:30am"},
 		{at(12, 15), "12:15pm", "12:15", "12:15pm"},
 	} {
-		Hours24 = nil
-		if got := Clock(c.t); got != c.twelve {
+		if got := Clock(c.t, false); got != c.twelve {
 			t.Errorf("Clock(%s) = %q, want %q", c.t.Format("15:04"), got, c.twelve)
 		}
-		if got := Face(c.t); got != c.faceTwel {
+		if got := Face(c.t, false); got != c.faceTwel {
 			t.Errorf("Face(%s) = %q, want %q", c.t.Format("15:04"), got, c.faceTwel)
 		}
-		Hours24 = func() bool { return true }
-		if got := Clock(c.t); got != c.twenty4 {
+		if got := Clock(c.t, true); got != c.twenty4 {
 			t.Errorf("on the 24-hour clock, Clock(%s) = %q, want %q", c.t.Format("15:04"), got, c.twenty4)
 		}
 	}
-	Hours24 = nil
 }
 
 // The clock is the person's choice, else their language's: English the
@@ -58,7 +55,6 @@ func TestTwentyFourFollowsTheChoiceThenTheLanguage(t *testing.T) {
 // Yesterday, else its weekday and date, the year only when another.
 // Nothing makes a person count days ("In 4 days").
 func TestRelativeSaysADayToPlanBy(t *testing.T) {
-	Hours24 = nil
 	now := time.Date(2026, 9, 17, 10, 30, 0, 0, time.UTC) // a Thursday
 	for _, c := range []struct{ v, want string }{
 		{"2026-09-17T08:00:00Z", "Today at 8am"},
@@ -76,7 +72,7 @@ func TestRelativeSaysADayToPlanBy(t *testing.T) {
 		{"not a date", "not a date"},
 		{"", ""},
 	} {
-		if got := Relative(c.v, now); got != c.want {
+		if got := Relative(c.v, now, false); got != c.want {
 			t.Errorf("Relative(%q) = %q, want %q", c.v, got, c.want)
 		}
 	}
@@ -85,13 +81,12 @@ func TestRelativeSaysADayToPlanBy(t *testing.T) {
 // A moment is said in the reader's zone: late on the 17th in UTC is
 // already the 18th in Tokyo, and a day alone is the same day everywhere.
 func TestRelativeIsSaidInTheReadersZone(t *testing.T) {
-	Hours24 = nil
 	tokyo := time.FixedZone("Tokyo", 9*3600)
 	now := time.Date(2026, 9, 17, 12, 0, 0, 0, tokyo)
-	if got := Relative("2026-09-17T20:00:00Z", now); got != "Tomorrow at 5am" {
+	if got := Relative("2026-09-17T20:00:00Z", now, false); got != "Tomorrow at 5am" {
 		t.Errorf("got %q, want Tomorrow at 5am", got)
 	}
-	if got := Relative("2026-09-18T00:00:00Z", now); got != "Tomorrow" {
+	if got := Relative("2026-09-18T00:00:00Z", now, false); got != "Tomorrow" {
 		t.Errorf("a day alone is the day it is, got %q", got)
 	}
 }
@@ -99,7 +94,6 @@ func TestRelativeIsSaidInTheReadersZone(t *testing.T) {
 // When something happened is said by how long ago while that is short,
 // then by its date.
 func TestAgoSaysWhenSomethingHappened(t *testing.T) {
-	Hours24 = nil
 	now := time.Date(2026, 9, 17, 10, 30, 0, 0, time.UTC)
 	for _, c := range []struct {
 		t    time.Time
@@ -112,7 +106,7 @@ func TestAgoSaysWhenSomethingHappened(t *testing.T) {
 		{time.Date(2026, 9, 1, 6, 0, 0, 0, time.UTC), "1 Sep"},
 		{time.Date(2025, 9, 1, 6, 0, 0, 0, time.UTC), "1 Sep 2025"},
 	} {
-		if got := Ago(c.t, now); got != c.want {
+		if got := Ago(c.t, now, false); got != c.want {
 			t.Errorf("Ago(%s) = %q, want %q", c.t, got, c.want)
 		}
 	}
@@ -121,8 +115,7 @@ func TestAgoSaysWhenSomethingHappened(t *testing.T) {
 // The full date is there for words that leave it out, and a <time> holds
 // the value a machine reads: the date alone for a day.
 func TestFullAndMachine(t *testing.T) {
-	Hours24 = nil
-	if got := Full("2026-10-05T00:00:00Z"); got != "Monday 5 October 2026" {
+	if got := Full("2026-10-05T00:00:00Z", false); got != "Monday 5 October 2026" {
 		t.Errorf("Full of a day = %q", got)
 	}
 	if got := Machine("2026-10-05T00:00:00Z"); got != "2026-10-05" {
@@ -140,13 +133,11 @@ func TestFullAndMachine(t *testing.T) {
 
 // What Text says reads back as the same value on either clock.
 func TestTextReadsBackOnEitherClock(t *testing.T) {
-	defer func() { Hours24 = nil }()
 	for _, h24 := range []bool{false, true} {
-		Hours24 = func() bool { return h24 }
 		for _, v := range []string{"2026-09-19T14:00:00Z", "2026-09-19T11:30:00Z", "2026-09-19T00:00:00Z"} {
-			ts, day, ok := Parse(Text(v), time.Now())
+			ts, day, ok := Parse(Text(v, h24), time.Now())
 			if !ok || Store(ts, day) != v {
-				t.Errorf("24-hour %v: Text(%s) = %q reads back as %s", h24, v, Text(v), Store(ts, day))
+				t.Errorf("24-hour %v: Text(%s) = %q reads back as %s", h24, v, Text(v, h24), Store(ts, day))
 			}
 		}
 	}

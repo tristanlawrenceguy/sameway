@@ -25,7 +25,7 @@ var weekdayNames = map[string]time.Weekday{"sunday": time.Sunday, "monday": time
 // moved says the record had days before, which a weekday the person named
 // is counted from ("move Thursday's to Friday"), not from today.
 func (s *Service) datesSaid(t *schema.Type, given map[string]any, rec *store.Record, moved bool) string {
-	now := s.clock()
+	now := s.Now()
 	var said []string
 	var ats []time.Time
 	on := map[time.Weekday]bool{}
@@ -118,13 +118,6 @@ func (s *Service) weekdaysSaid() []time.Weekday {
 		return out
 	}
 	return nil
-}
-
-func (s *Service) clock() time.Time {
-	if s.Now != nil {
-		return s.Now()
-	}
-	return time.Now()
 }
 
 // timeLost says when a change gave a timed field a day alone, so its time

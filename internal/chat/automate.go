@@ -86,7 +86,7 @@ func (s *Service) recordChanged(t *schema.Type, was, now *store.Record) {
 		if err != nil {
 			continue
 		}
-		match := func(r *store.Record) bool { return r != nil && query.Match(t, r, conds, time.Now()) }
+		match := func(r *store.Record) bool { return r != nil && query.Match(t, r, conds, s.Now()) }
 		var rec *store.Record
 		switch {
 		case when == "added" && was == nil && match(now):

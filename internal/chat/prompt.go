@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -74,11 +73,7 @@ How to work:
 func (s *Service) systemPrompt() string {
 	var b strings.Builder
 	b.WriteString(basePrompt)
-	now := time.Now
-	if s.Now != nil {
-		now = s.Now
-	}
-	fmt.Fprintf(&b, "\n\nToday is %s. Give a day or a time in the person's words (next Tuesday 2pm, tomorrow, 20 December): Sameway reads them against today, where a date worked out by hand can be a day out.", now().Format("Monday 2 January 2006"))
+	fmt.Fprintf(&b, "\n\nToday is %s. Give a day or a time in the person's words (next Tuesday 2pm, tomorrow, 20 December): Sameway reads them against today, where a date worked out by hand can be a day out.", s.Now().Format("Monday 2 January 2006"))
 	b.WriteString(s.whoPrompt())
 	b.WriteString(s.forYouPrompt())
 	if strings.TrimSpace(s.Needs) != "" {

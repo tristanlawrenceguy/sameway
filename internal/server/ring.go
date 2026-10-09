@@ -25,7 +25,7 @@ func (s *Server) StartRinging(ctx context.Context, notify func(title, text, url 
 		tick := time.NewTicker(5 * time.Second)
 		defer tick.Stop()
 		for {
-			s.Ring(time.Now())
+			s.Ring(s.now())
 			go s.FetchMeetings(time.Now()) // transcripts from Teams and Zoom; meeting_fetch.go
 			select {
 			case <-ctx.Done():

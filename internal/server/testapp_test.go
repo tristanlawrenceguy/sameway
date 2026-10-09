@@ -25,6 +25,12 @@ import (
 // newApp builds a real starter workspace in a temp dir with no model attached.
 func newApp(t *testing.T) (*app.App, http.Handler) {
 	t.Helper()
+	return newAppWith(t, app.Options{})
+}
+
+// newAppWith is newApp opened with options: a fixed clock, say.
+func newAppWith(t *testing.T, o app.Options) (*app.App, http.Handler) {
+	t.Helper()
 	dir := t.TempDir()
 	// Always isolate the known-workspaces list so pre-existing workspaces on this
 	// machine do not pollute the "other workspaces" section. Tests that need a
@@ -35,7 +41,7 @@ func newApp(t *testing.T) (*app.App, http.Handler) {
 	if err := workspace.Init(dir, examples.FS, examples.StarterRoot, false); err != nil {
 		t.Fatal(err)
 	}
-	a, err := app.Load(dir, false)
+	a, err := app.Open(dir, o)
 	if err != nil {
 		t.Fatal(err)
 	}

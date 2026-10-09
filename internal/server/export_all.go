@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"slices"
 	"strings"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/export"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
@@ -67,7 +66,7 @@ func (s *Server) blockExport(name string, props map[string]any) template.HTML {
 	if _, raw, ok := strings.Cut(all, "?"); ok {
 		q, _ = url.ParseQuery(raw)
 	}
-	recs, err := query.Filter(s.app.Store, t, q["where"], q.Get("order"), 0, time.Now())
+	recs, err := query.Filter(s.app.Store, t, q["where"], q.Get("order"), 0, s.now())
 	if err != nil || len(recs) == 0 {
 		return ""
 	}

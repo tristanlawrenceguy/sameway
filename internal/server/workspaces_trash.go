@@ -5,7 +5,6 @@ import (
 	"html/template"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
@@ -24,7 +23,7 @@ func (s *Server) trashSection() string {
 	b.WriteString(`<section class="sw-stack" aria-labelledby="ws-trash"><h2 id="ws-trash">Recently deleted</h2><p class="sw-muted">Deleted workspaces are kept here, with everything that was in their folder, until you remove them from ` + template.HTMLEscapeString(workspace.TrashDir()) + `.</p><ul class="sw-plain sw-rows">`)
 	for _, t := range list {
 		fmt.Fprintf(&b, `<li class="sw-row sw-ws"><div class="sw-ws__who"><span class="sw-row__title">%s</span><span class="sw-muted sw-small">was %s · deleted %s</span></div>`,
-			template.HTMLEscapeString(t.Name), template.HTMLEscapeString(t.From), happenedAfter("", t.At, time.Now()))
+			template.HTMLEscapeString(t.Name), template.HTMLEscapeString(t.From), s.happenedAfter("", t.At, s.now()))
 		fmt.Fprintf(&b, `<form method="post" action="/workspaces/restore"><input type="hidden" name="now" value="%s">%s</form></li>`,
 			template.HTMLEscapeString(t.Now), s.component("button", map[string]any{"label": "Restore", "context": t.Name, "type": "submit", "variant": "secondary"}))
 	}

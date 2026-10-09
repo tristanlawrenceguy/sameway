@@ -46,7 +46,7 @@ func (s *Server) editFields(t *schema.Type, rec *store.Record) string {
 // editField is one field as the inline editor reads it: the name, what is
 // in it now as written, and for a field with set values, the values.
 func (s *Server) editField(f schema.Field, v any) string {
-	val := display(f, v)
+	val := s.display(f, v)
 	if f.RefList() {
 		val = s.refNames(f, v) // edited as names, matched again on save
 	}

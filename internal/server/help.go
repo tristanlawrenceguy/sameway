@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
-	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // Help is one page, in the same place on every page (the footer), that
@@ -54,7 +53,7 @@ func (s *Server) helpPage(w http.ResponseWriter, r *http.Request) {
 	b.WriteString(`<section class="sw-stack" aria-labelledby="help-comfort"><h2 id="help-comfort">Making Sameway easier to use</h2>`)
 	for _, c := range comfort {
 		now := s.app.Workspace.Get(c.key)
-		if c.key == "ui.clock" && now == "" && when.Hours24 != nil && when.Hours24() {
+		if c.key == "ui.clock" && now == "" && s.h24() {
 			now = "24" // what the language uses, until chosen
 		}
 		b.WriteString(`<div class="sw-stack--tight"><h3>` + template.HTMLEscapeString(c.heading) + `</h3><ul class="sw-plain sw-cluster">`)

@@ -2,7 +2,6 @@ package server
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
@@ -13,7 +12,7 @@ import (
 // instead of words it reads how often: {text, rule}, "every Tuesday" and
 // what is kept, or {error}; never is no repeat, "once, not again".
 func (s *Server) whenRead(w http.ResponseWriter, r *http.Request) {
-	now := time.Now()
+	now := s.now()
 	if r.URL.Query().Has("repeat") {
 		words := r.URL.Query().Get("repeat")
 		rule, ok := when.ParseRepeat(words, now)
@@ -35,5 +34,5 @@ func (s *Server) whenRead(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	stored := when.Store(t, day)
-	writeJSON(w, http.StatusOK, map[string]any{"text": when.Text(stored), "day": stored[:10]})
+	writeJSON(w, http.StatusOK, map[string]any{"text": when.Text(stored, s.h24()), "day": stored[:10]})
 }

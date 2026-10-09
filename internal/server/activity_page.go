@@ -55,7 +55,7 @@ func (s *Server) activityFacts(e *store.Record) []any {
 		}
 		for _, f := range t.Shown() {
 			v, had := before[f.Name]
-			said := display(f, v)
+			said := s.display(f, v)
 			if !had || said == "" || records.Print(v) == records.Print(now[f.Name]) {
 				continue
 			}

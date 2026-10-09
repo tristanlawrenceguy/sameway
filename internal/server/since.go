@@ -91,7 +91,7 @@ func (s *Server) sinceNotice(r *http.Request) template.HTML {
 	}
 	// A few to read here; the rest wait in the log, from where these end.
 	props := map[string]any{"seen": "/since/seen", "from": from, "count": len(theirs),
-		"at": when.Sent(since, time.Now()), "datetime": since.UTC().Format(time.RFC3339)}
+		"at": when.Sent(since, s.now(), s.h24()), "datetime": since.UTC().Format(time.RFC3339)}
 	shown := theirs
 	if len(theirs) > sinceShown {
 		shown = theirs[:sinceShown]

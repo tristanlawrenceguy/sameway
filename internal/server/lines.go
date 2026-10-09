@@ -155,7 +155,7 @@ func (s *Server) messageProps(m *store.Record, from string, latest bool) map[str
 	}
 	props := map[string]any{
 		"role": m.Fields["role"], "content": content, "id": "msg-" + m.ID, "from": from,
-		"time": when.Sent(m.CreatedAt, time.Now()), "datetime": m.CreatedAt.UTC().Format(time.RFC3339),
+		"time": when.Sent(m.CreatedAt, s.now(), s.h24()), "datetime": m.CreatedAt.UTC().Format(time.RFC3339),
 		"changes": s.receipt(m.Fields["changes"], latest),
 	}
 	if fileID, _ := m.Fields["file"].(string); fileID != "" {

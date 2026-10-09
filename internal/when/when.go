@@ -25,7 +25,7 @@ const Hint = "A day, like 19 Sep or next Friday, with a time if there is one, li
 // for a day, "Sat 19 Sep 2026 at 2pm" for a moment, in local time, which
 // Parse reads back as the same value. Anything that is not a stored value
 // comes back as it is.
-func Text(v string) string {
+func Text(v string, h24 bool) string {
 	ts, err := time.Parse(time.RFC3339, v)
 	if err != nil {
 		return v
@@ -33,7 +33,7 @@ func Text(v string) string {
 	if IsDay(v) {
 		return ts.UTC().Format("Mon 2 Jan 2006")
 	}
-	return ts.Local().Format("Mon 2 Jan 2006") + " at " + Clock(ts.Local())
+	return ts.Local().Format("Mon 2 Jan 2006") + " at " + Clock(ts.Local(), h24)
 }
 
 // Store is a parsed value as it is kept: a day as midnight UTC on that
@@ -146,9 +146,6 @@ func atoi(s string) int {
 	n, _ := strconv.Atoi(s)
 	return n
 }
-
-// Short is Relative, by the name it had when rows said a day their own way.
-func Short(v string, now time.Time) string { return Relative(v, now) }
 
 // setReal sets the day when it exists, and marks the reading bad when it
 // does not.

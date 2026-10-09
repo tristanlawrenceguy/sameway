@@ -50,10 +50,10 @@ func Date(at, now time.Time) string {
 
 // Sent is when a message was sent, as its chat shows it: the time alone
 // today, its Date and time before, so an old chat reads true.
-func Sent(at, now time.Time) string {
+func Sent(at, now time.Time, h24 bool) string {
 	at = at.In(now.Location())
 	if daysFrom(at, now) == 0 {
-		return Clock(at)
+		return Clock(at, h24)
 	}
-	return Date(at, now) + " at " + Clock(at)
+	return Date(at, now) + " at " + Clock(at, h24)
 }

@@ -121,7 +121,7 @@ func (s *Server) shareSave(w http.ResponseWriter, r *http.Request) {
 		title = files[0].name
 	}
 	if title == "" {
-		title = "Saved " + time.Now().Format("2 Jan 15:04")
+		title = "Saved " + s.now().Format("2 Jan 15:04")
 	}
 	rec, act, err := s.writeShare(r, clipRunes(title, 200), strings.Join(parts, "\n\n"), link == "")
 	if err != nil {

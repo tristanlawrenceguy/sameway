@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/atlogin"
 	"github.com/tristanlawrenceguy/sameway/internal/ingest"
@@ -155,7 +154,7 @@ func (s *Service) updateRecord(typeName, id string, fields map[string]any, versi
 		again = fmt.Sprintf(" It repeats (%s), so it is not finished but due again at %v.", when.RepeatText(fmt.Sprint(rec.Fields[repeat])), rec.Fields[day])
 	}
 	return toolResult{
-		text:   fmt.Sprintf("updated %s %s: %q, at /t/%s/%s.%s", t.Name, rec.ID, title, t.Name, rec.ID, again) + s.datesSaid(t, fields, rec, len(daysOf(t, was, s.clock())) > 0) + timeLost(t, fields, was, rec),
+		text:   fmt.Sprintf("updated %s %s: %q, at /t/%s/%s.%s", t.Name, rec.ID, title, t.Name, rec.ID, again) + s.datesSaid(t, fields, rec, len(daysOf(t, was, s.Now())) > 0) + timeLost(t, fields, was, rec),
 		change: &c,
 	}
 }
@@ -168,23 +167,23 @@ func (s *Service) findRecords(typeName, words string, where []string, order stri
 	if limit <= 0 {
 		limit = 10
 	}
-	recs, err := query.Filter(s.Store, t, where, order, 0, time.Now())
+	recs, err := query.Filter(s.Store, t, where, order, 0, s.Now())
 	if err != nil {
 		return fail("%v", err)
 	}
 	words = strings.ToLower(strings.TrimSpace(words))
-	days := search.DaysAsked(words, s.clock()) // a day asked for finds what falls on it
+	days := search.DaysAsked(words, s.Now()) // a day asked for finds what falls on it
 	writers := s.Writers()
 	var lines []string
 	for _, rec := range recs {
 		title := records.Title(s.Store, t, rec)
 		if words != "" && !holdsAll(title, rec, words) {
-			if _, on := search.FallsOn(t, rec, days, s.clock()); !on {
+			if _, on := search.FallsOn(t, rec, days, s.Now()); !on {
 				continue
 			}
 		}
 		line := fmt.Sprintf("%s\t%s\t%s", rec.ID, oneLine(title), writers.Of(t.Name, rec).Words)
-		if days := daysOf(t, rec, s.clock()); len(days) > 0 { // days_shown.go
+		if days := daysOf(t, rec, s.Now()); len(days) > 0 { // days_shown.go
 			line += "\t" + strings.Join(days, "; ")
 		}
 		lines = append(lines, line)
