@@ -12,7 +12,7 @@ import (
 // the activity log, so the sign stays out of the accessibility tree and
 // the tab order, and is never a button.
 func TestOffscreenSignIsSilentToScreenReaders(t *testing.T) {
-	data, err := os.ReadFile("../../design/base/19-offscreen.js")
+	data, err := os.ReadFile("../../design/base/22-offscreen.js")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -35,12 +35,12 @@ func TestOffscreenSignIsBundled(t *testing.T) {
 	js := get(t, h, "/design/sameway.js")
 	wantStatus(t, js, http.StatusOK)
 	if !strings.Contains(js.Body.String(), "sw-offscreen") {
-		t.Error("sameway.js must carry 19-offscreen.js")
+		t.Error("sameway.js must carry 22-offscreen.js")
 	}
 	css := get(t, h, "/design/sameway.css")
 	wantStatus(t, css, http.StatusOK)
 	if !strings.Contains(css.Body.String(), ".sw-offscreen") {
-		t.Error("sameway.css must carry 19-offscreen.css")
+		t.Error("sameway.css must carry 21-offscreen.css")
 	}
 }
 
@@ -48,7 +48,7 @@ func TestOffscreenSignIsBundled(t *testing.T) {
 // one step: the page scrolls smoothly, and a smooth correction is seen as
 // the page drifting.
 func TestRefreshPutsThePageBackInstantly(t *testing.T) {
-	data, err := os.ReadFile("../../design/base/17-refresh.js")
+	data, err := os.ReadFile("../../design/base/19-refresh.js")
 	if err != nil {
 		t.Fatal(err)
 	}

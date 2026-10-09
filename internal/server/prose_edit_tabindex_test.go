@@ -12,7 +12,7 @@ import (
 // Tab order, which kept Body first but left the toolbar unreachable by
 // keyboard at all (WCAG 2.1.1).
 func TestProseToolbarButtonsAreNonTabbable(t *testing.T) {
-	tools, err := os.ReadFile("../../design/base/12-prose-tools.js")
+	tools, err := os.ReadFile("../../design/base/16-prose-tools.js")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -23,7 +23,7 @@ func TestProseToolbarButtonsAreNonTabbable(t *testing.T) {
 	if !strings.Contains(src, "next.tabIndex = 0") || !strings.Contains(src, "b.tabIndex = -1; });") {
 		t.Error("the arrow keys move the one stop between the buttons")
 	}
-	edit, err := os.ReadFile("../../design/base/11-prose-edit.js")
+	edit, err := os.ReadFile("../../design/base/14-prose-edit.js")
 	if err != nil {
 		t.Fatal(err)
 	}

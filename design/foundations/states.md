@@ -81,4 +81,4 @@ composer or edit is opened again: the composer fills itself, and a block
 with an unfinished edit says so at the top with Continue editing and
 Discard. A draft goes the moment the message is sent or the edit is
 saved, or cancelled on purpose. Nothing about a draft is sent to the
-server; see `design/base/16-drafts.js`.
+server; see `design/base/18-drafts.js`.

@@ -8,6 +8,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // A person can make a record by hand. Everything else about a record is
@@ -22,8 +23,8 @@ func (s *Server) addButton(t *schema.Type) template.HTML {
 	if t.Internal || t.Name == FileType {
 		return ""
 	}
-	return template.HTML(`<form method="post" action="/t/` + template.HTMLEscapeString(t.Name) + `/add" class="sw-add">` +
-		string(s.component("button", map[string]any{"label": addLabel(schema.Words(t.Name)), "type": "submit", "variant": "secondary"})) + `</form>`)
+	return s.form(ui.Form{Action: "/t/" + t.Name + "/add", Class: "sw-add",
+		Button: &ui.Button{Label: addLabel(schema.Words(t.Name)), Variant: ui.Secondary}})
 }
 
 // addRecord makes a new record with its name to change, and opens it for
@@ -45,7 +46,7 @@ func (s *Server) addRecord(w http.ResponseWriter, r *http.Request) {
 		s.failed(w, r, "Not added", err, list)
 		return
 	}
-	// #edit opens the editor on arrival (09-edit-fields.js); added names the
+	// #edit opens the editor on arrival (10-edit-fields.js); added names the
 	// entry that made it, so Cancel before a first Save can take it back.
 	http.Redirect(w, r, list+"/"+rec.ID+"?added="+url.QueryEscape(act)+"#edit", http.StatusSeeOther)
 }

@@ -40,6 +40,7 @@ either way.
   on the canvas in the assistant's colour
   ([WCAG 4.1.3](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html);
   design/foundations/motion.md).
+- **Its scripts are its own.** Pop out, the log's remembered height and Enter to send live in this component's enhance.js (they were design/base/15-chat-shape.js and 20-compose-enter.js). The turn shown as it happens stays in design/base (17-live.js, 34-turn.js): it reaches the canvas and the status, not only the chat.
 
 Not done, and why: a confirmation before deleting (Undo does the same
 without a question each time); sending on Enter on a phone (there is then

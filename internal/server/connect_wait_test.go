@@ -16,7 +16,7 @@ import (
 
 // A person installing a model server does not have to come back and press
 // Check again: the card carries what it says in a few words, the page asks
-// for them again (31-connect-wait.js), and they change when what is on this
+// for them again (37-connect-wait.js), and they change when what is on this
 // computer does, so the page follows.
 func TestTheConnectCardNoticesWhatIsInstalled(t *testing.T) {
 	was := llm.DefaultCandidates
@@ -47,13 +47,13 @@ func TestTheConnectCardNoticesWhatIsInstalled(t *testing.T) {
 		t.Errorf("a model server installed changes the words, so the page follows: still %q", now)
 	}
 
-	js, err := os.ReadFile("../../design/base/31-connect-wait.js")
+	js, err := os.ReadFile("../../design/base/37-connect-wait.js")
 	if err != nil {
 		t.Fatal(err)
 	}
 	for _, want := range []string{`fetch("/model/wait"`, `getAttribute("data-wait")`, "sw.refresh(0)", "typing(card)"} {
 		if !strings.Contains(string(js), want) {
-			t.Errorf("31-connect-wait.js does not have %s", want)
+			t.Errorf("37-connect-wait.js does not have %s", want)
 		}
 	}
 }

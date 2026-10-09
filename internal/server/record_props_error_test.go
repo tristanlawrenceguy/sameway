@@ -51,7 +51,7 @@ func TestValidationErrorPageHasEditBlockWrapper(t *testing.T) {
 	if !strings.Contains(body, `data-outcome-for="`+action+`"`) || !strings.Contains(body, `data-edit-action="`+action+`"`) {
 		t.Errorf("the outcome and the block both name %s; body starts with %q", action, truncate(body))
 	}
-	if !strings.Contains(body, `<script defer src="/design/base/08-edit.js"></script>`) {
+	if !strings.Contains(body, `<script defer src="/design/base/09-edit.js"></script>`) {
 		t.Error("the page carries the editor, to open again")
 	}
 }
@@ -60,7 +60,7 @@ func TestValidationErrorPageHasEditBlockWrapper(t *testing.T) {
 // when Save is pressed, only when the page says the edit was saved, and
 // a refused edit opens again.
 func TestValidationErrorPageShowsEmptyTitleField(t *testing.T) {
-	src, err := os.ReadFile("../../design/base/16-drafts.js")
+	src, err := os.ReadFile("../../design/base/18-drafts.js")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -70,7 +70,7 @@ func TestValidationErrorPageShowsEmptyTitleField(t *testing.T) {
 	}
 	for _, want := range []string{`.sw-outcome[data-outcome-for]`, `getAttribute("data-outcome") === "done"`, `edit.click()`} {
 		if !strings.Contains(js, want) {
-			t.Errorf("16-drafts.js should settle drafts by the outcome: missing %s", want)
+			t.Errorf("18-drafts.js should settle drafts by the outcome: missing %s", want)
 		}
 	}
 }

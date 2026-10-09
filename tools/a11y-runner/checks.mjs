@@ -38,7 +38,7 @@ export async function finished(page) {
 }
 
 // A turn ends with the page fetching itself and moving what changed into
-// place (17-refresh.js), a moment after the reply shows. Measured before
+// place (19-refresh.js), a moment after the reply shows. Measured before
 // that lands, the page is swapped under axe, and under the pointer the last
 // press left: the browser finds the hover again only on a later frame or
 // timer, and a block's bar fades in while its contrast is read (CI on PR

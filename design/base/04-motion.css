@@ -1,0 +1,136 @@
+/* Motion: every animation in the system is defined here, so it can all be
+   switched off in one place. Motion explains change; it never decorates.
+
+   The glow is the system's main signal for "this just changed, and this is
+   who changed it". It is the reason the resting interface carries no
+   provenance labels: the fact is delivered at the moment it is true, then
+   gets out of the way. */
+
+@keyframes sw-enter { from { opacity: 0; transform: translateY(8px) scale(0.985); } to { opacity: 1; transform: none; } }
+@keyframes sw-exit  { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(-6px) scale(0.985); } }
+@keyframes sw-pulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+
+/* Blooms in the actor's colour, holds long enough to be found, then leaves
+   nothing behind. */
+@keyframes sw-glow {
+  0%   { box-shadow: 0 0 0 0 var(--sw-glow-strong), 0 0 0 0 transparent; }
+  18%  { box-shadow: 0 0 0 2px var(--sw-glow-strong), 0 0 28px 8px var(--sw-glow-soft); }
+  55%  { box-shadow: 0 0 0 2px var(--sw-glow-strong), 0 0 22px 6px var(--sw-glow-soft); }
+  100% { box-shadow: 0 0 0 0 transparent, 0 0 0 0 transparent; }
+}
+
+/* Cross-document view transitions: full-page navigations morph what stayed
+   and animate what arrived or left. */
+@view-transition { navigation: auto; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: var(--sw-motion-base); }
+::view-transition-new(.sw-vt-item):only-child { animation: sw-enter var(--sw-motion-slow) var(--sw-motion-ease) both; }
+::view-transition-old(.sw-vt-item):only-child { animation: sw-exit var(--sw-motion-base) var(--sw-motion-ease) both; }
+::view-transition-group(.sw-vt-item) { animation-duration: var(--sw-motion-slow); animation-timing-function: var(--sw-motion-ease); }
+
+/* Change markers, set by the server for the duration of one page view. */
+[data-changed] {
+  --sw-glow-strong: color-mix(in srgb, var(--sw-actor, var(--sw-color-accent)) 70%, transparent);
+  --sw-glow-soft: color-mix(in srgb, var(--sw-actor, var(--sw-color-accent)) 38%, transparent);
+  animation: sw-glow var(--sw-motion-glow) var(--sw-motion-ease-out) 1 both;
+  animation-delay: 140ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  /* View transitions stay on, as quick cross-fades with no travel
+     (30-travel.css): a change is still seen to happen. */
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  /* No bloom, but the change must still be findable, so the ring stays for
+     the life of the page view instead of fading. */
+  [data-changed] { box-shadow: 0 0 0 3px var(--sw-actor, var(--sw-color-accent)); }
+}
+
+/* Arrival: a person is eased into new information. A block added in the
+   last turn shows first where it will be (a dashed outline in the actor's
+   colour over an empty slot), then what it is (the frame is uncovered),
+   then what it says (the content fades in), and only then glows. Several
+   changes arrive one after another, in the order they were made, with a
+   pause between, so there is time to take each one in. The server sets
+   data-arrival to the order; the stages are CSS only, so nothing depends
+   on a script, and a browser that cannot animate shows the finished page. */
+/* While a block waits its turn the cover has no outline, so the slot is
+   plain page: nothing is there until it is that block's turn to arrive. */
+@keyframes sw-arrive-place {
+  0% { opacity: 1; outline-color: transparent; }
+  2%, 38% { opacity: 1; outline-color: var(--sw-actor, var(--sw-color-accent)); }
+  55%, 100% { opacity: 0; outline-color: transparent; }
+}
+/* Opacity only: visibility would take the block out of the accessibility
+   tree while it arrives, and a screen reader would not find it for seconds. */
+@keyframes sw-arrive-content { 0%, 72% { opacity: 0; } 100% { opacity: 1; } }
+
+[data-arrival] { --sw-arrival-delay: calc((var(--sw-arrival, 1) - 1) * var(--sw-motion-between)); }
+[data-arrival="1"] { --sw-arrival: 1; } [data-arrival="2"] { --sw-arrival: 2; } [data-arrival="3"] { --sw-arrival: 3; }
+[data-arrival="4"] { --sw-arrival: 4; } [data-arrival="5"] { --sw-arrival: 5; } [data-arrival="6"] { --sw-arrival: 6; }
+[data-arrival="7"] { --sw-arrival: 7; } [data-arrival="8"] { --sw-arrival: 8; } [data-arrival="9"] { --sw-arrival: 9; }
+
+/* The glow waits its turn, after the block has fully arrived. */
+[data-changed][data-arrival] { animation-delay: var(--sw-arrival-delay); }
+[data-changed="added"][data-arrival] { position: relative; animation-delay: calc(var(--sw-arrival-delay) + var(--sw-motion-arrive)); }
+[data-changed="added"][data-arrival]::before {
+  content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  border-radius: inherit; background: var(--sw-color-bg);
+  outline: 2px dashed var(--sw-actor, var(--sw-color-accent)); outline-offset: -2px;
+  animation: sw-arrive-place var(--sw-motion-arrive) var(--sw-motion-ease) both;
+  animation-delay: var(--sw-arrival-delay);
+}
+[data-changed="added"][data-arrival] > :not(.sw-visually-hidden) {
+  animation: sw-arrive-content var(--sw-motion-arrive) var(--sw-motion-ease) both;
+  animation-delay: var(--sw-arrival-delay);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* No stages and no waiting: everything is there at once, with the ring. */
+  [data-changed][data-arrival], [data-changed="added"][data-arrival] > * { animation-delay: 0s !important; }
+  [data-changed="added"][data-arrival]::before { display: none; }
+}
+
+/* An edit is eased in too, in two stages rather than three: the block is
+   already there, so first the place is marked (an outline in the actor's
+   colour draws attention to what is about to change), then the content
+   crosses over (the old words dim and the new ones settle), and then it
+   glows. Edits take their turn in the same sequence as additions. */
+@keyframes sw-edit-mark { 0% { outline-color: transparent; } 4%, 45% { outline-color: var(--sw-actor, var(--sw-color-accent)); } 70%, 100% { outline-color: transparent; } }
+@keyframes sw-edit-content { 0%, 35% { opacity: 1; } 55% { opacity: 0.15; } 100% { opacity: 1; } }
+
+[data-changed="updated"][data-arrival] {
+  outline: 2px solid transparent; outline-offset: 2px;
+  animation: sw-edit-mark var(--sw-motion-arrive) var(--sw-motion-ease) both,
+    sw-glow var(--sw-motion-glow) var(--sw-motion-ease-out) 1 both;
+  animation-delay: var(--sw-arrival-delay), calc(var(--sw-arrival-delay) + var(--sw-motion-arrive));
+}
+[data-changed="updated"][data-arrival] > :not(.sw-visually-hidden) {
+  animation: sw-edit-content var(--sw-motion-arrive) var(--sw-motion-ease) both;
+  animation-delay: var(--sw-arrival-delay);
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-changed="updated"][data-arrival], [data-changed="updated"][data-arrival] > * { animation-delay: 0s !important; }
+}
+
+/* Pace: how changes arrive, set on the root by the workspace. A person
+   sets it by asking the assistant. quick keeps the stages in a third of the
+   time; still shows everything at once, the way reduced motion does. */
+:root[data-pace="quick"] { --sw-motion-arrive: 900ms; --sw-motion-between: 1000ms; --sw-motion-glow: 900ms; }
+:root[data-pace="still"] [data-changed][data-arrival],
+:root[data-pace="still"] [data-changed="added"][data-arrival] > *,
+:root[data-pace="still"] [data-changed="updated"][data-arrival] > * { animation-delay: 0s !important; animation-duration: 0.01ms !important; }
+:root[data-pace="still"] [data-changed="added"][data-arrival]::before { display: none; }
+:root[data-pace="still"] [data-changed] { box-shadow: 0 0 0 3px var(--sw-actor, var(--sw-color-accent)); }
+
+/* Forced colours (Windows high contrast) drop box shadows and custom
+   colours: the change marker becomes a system-coloured outline, and the
+   cover that shows where a block will be draws in the same colours. */
+@media (forced-colors: active) {
+  [data-changed] { outline: 3px solid Highlight; outline-offset: 2px; }
+  [data-changed="added"][data-arrival]::before { background: Canvas; outline-color: Highlight; forced-color-adjust: none; }
+  [data-changed="updated"][data-arrival] { outline-color: Highlight; }
+}

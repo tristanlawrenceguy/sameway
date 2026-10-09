@@ -1,5 +1,5 @@
 // What a person does moves where it goes, and under reduced motion it does
-// not travel (design/base/26-travel.js and .css), in a real browser against
+// not travel (design/base/31-travel.js and .css), in a real browser against
 // a running server (SAMEWAY_URL). Four everyday actions, each done by
 // keyboard, once with motion and once with prefers-reduced-motion:
 //   - tick a task on its type's page, then move on: the row goes to Done
@@ -12,7 +12,7 @@
 // With motion, the tick, the move and the month must travel, so the check
 // is seen to be checking something. Focus stays on the control acted on
 // where the page stays (the tick) and comes back to it where the page
-// comes back (Move). And a press answers at once (27-press.css, 13-mark.js):
+// comes back (Move). And a press answers at once (32-press.css, mark/enhance.js):
 // a tick strikes its row through before the server answers, and one the
 // server refuses goes back and is said once; a pressed row is ringed in
 // place, and a pressed button gives a little, except under reduced motion.
@@ -51,7 +51,7 @@ const settle = (page, ms = 700) => page.waitForTimeout(ms);
 const record = (page) => page.evaluate(() => window.__swVT.splice(0));
 const travels = (vt, part) => vt.filter((a) => a.travels && (!part || a.pe.includes(part)));
 
-// A turn you can watch (28-turn.js), fed to the page as the server would
+// A turn you can watch (34-turn.js), fed to the page as the server would
 // send it: the status says each step in words, no more often than one can
 // be heard and each once; a new block's place is held in the assistant's
 // colour and the block lands there; a block being changed is outlined;

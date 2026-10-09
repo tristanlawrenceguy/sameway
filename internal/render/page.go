@@ -26,7 +26,7 @@ type Page struct {
 	// the quiet layer reads it. See design/foundations/quiet.md.
 	Controls string
 	// Text and Spacing are the person's reading comfort, from the
-	// workspace: larger words, wider spacing (21-comfort.css).
+	// workspace: larger words, wider spacing (23-comfort.css).
 	Text, Spacing string
 	// Pace is how changes arrive, from the workspace: calm, quick or still.
 	// It lands on the root element, where the motion rules read it.
@@ -83,7 +83,7 @@ type Page struct {
 	// and empty for an ordinary document that scrolls as a whole.
 	Shell string
 	// ExtraScripts are additional <script> tags rendered in the head after
-	// sameway.js. Used by detail pages to load per-page scripts like 08-edit.js.
+	// sameway.js. Used by detail pages to load per-page scripts like 09-edit.js.
 	ExtraScripts []template.HTML
 }
 
@@ -117,7 +117,7 @@ func (p Page) Failed() bool {
 
 // TimeAttrs says on the root element how this computer tells the time, for
 // the script that keeps a page's days true while it is open
-// (30-days.js): its offset from UTC in minutes, its today, and the 24-hour
+// (36-days.js): its offset from UTC in minutes, its today, and the 24-hour
 // clock when that is the person's.
 func (p Page) TimeAttrs() template.HTMLAttr {
 	now := time.Now()

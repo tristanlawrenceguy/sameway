@@ -12,13 +12,13 @@
 //   sw.ready(fn)          fn once the page is parsed.
 //   sw.on / sw.off / sw.emit(name, detail)
 //                         a tiny bus: "refresh" when the page has followed
-//                         a change (17-refresh.js), "turn-done" when a turn
-//                         ends (14-live.js). Each is also dispatched on the
+//                         a change (19-refresh.js), "turn-done" when a turn
+//                         ends (17-live.js). Each is also dispatched on the
 //                         document as "sw:<name>", for a workspace's own
 //                         scripts and the browser tests.
 //   sw.status(el, state, words, said)
 //                         the one way a status changes (the status component).
-//   sw.refresh(delay)     ask the page to follow, soon (17-refresh.js); does
+//   sw.refresh(delay)     ask the page to follow, soon (19-refresh.js); does
 //                         nothing in a browser that cannot.
 //
 // No framework and no build: this is a plain script, first in the bundle,
@@ -67,7 +67,7 @@
 
   sw.refresh = function () {};
 
-  // swStatus was the status component's: state, look, words and what is
+  // sw.status was the status component's: state, look, words and what is
   // read out after them but not drawn, all at once, in the region already
   // on the page, so it is heard and never shows one state's mark beside
   // another's words. A wait still going after fifteen seconds says so once.

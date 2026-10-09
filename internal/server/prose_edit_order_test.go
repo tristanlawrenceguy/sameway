@@ -12,9 +12,9 @@ import (
 // with the toolbar at its left and the switch to Markdown at its right,
 // in that order, and the hidden inputs last.
 func TestProseEditDOMOrderReachesBodyFirst(t *testing.T) {
-	data, err := os.ReadFile("../../design/base/11-prose-edit.js")
+	data, err := os.ReadFile("../../design/base/14-prose-edit.js")
 	if err != nil {
-		t.Fatalf("read 11-prose-edit.js: %v", err)
+		t.Fatalf("read 14-prose-edit.js: %v", err)
 	}
 	src := string(data)
 	order := []string{
@@ -25,7 +25,7 @@ func TestProseEditDOMOrderReachesBodyFirst(t *testing.T) {
 	for _, step := range order {
 		at := strings.Index(src, step)
 		if at < 0 {
-			t.Fatalf("swProseField must do %s", step)
+			t.Fatalf("sw.proseField must do %s", step)
 		}
 		if at < last {
 			t.Errorf("%s comes too early: the order is %s", step, strings.Join(order, ", "))

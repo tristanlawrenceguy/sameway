@@ -11,6 +11,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/ingest"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // Bring your things: one page for what a person has in another app. It
@@ -36,9 +37,10 @@ func (s *Server) bringPage(w http.ResponseWriter, r *http.Request) {
 	for _, h := range bringHow {
 		b.WriteString(`<dt><strong>` + template.HTMLEscapeString(h.app) + `</strong></dt><dd>` + template.HTMLEscapeString(h.how) + `</dd>`)
 	}
-	b.WriteString(`</dl><h2>Bringing it in</h2><form method="post" action="/bring" enctype="multipart/form-data" class="sw-stack">`)
-	b.WriteString(`<label for="bring-file">The file from the app</label><input type="file" id="bring-file" name="file" accept=".csv,.json,.enex,.zip" required>`)
-	b.WriteString(string(s.component("button", map[string]any{"label": "Bring them in", "type": "submit"})) + `</form>`)
+	b.WriteString(`</dl><h2>Bringing it in</h2>`)
+	b.WriteString(string(s.form(ui.Form{Action: "/bring", Enctype: "multipart/form-data", Class: "sw-stack",
+		Body:   `<label for="bring-file">The file from the app</label><input type="file" id="bring-file" name="file" accept=".csv,.json,.enex,.zip" required>`,
+		Button: &ui.Button{Label: "Bring them in"}})))
 	s.page(w, r, "Bring your things", template.HTML(b.String()), pageOptions{Lede: "From Todoist, Google, Evernote, Notion or Obsidian."})
 }
 

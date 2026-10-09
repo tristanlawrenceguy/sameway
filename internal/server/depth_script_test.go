@@ -23,7 +23,7 @@ func TestDepthLiftsAndWaitsQuietly(t *testing.T) {
 		}
 		return string(data)
 	}
-	card, skeleton, turn, tokens := read("components/card/style.css"), read("base/29-skeleton.css"), read("base/28-turn.js"), read("tokens/tokens.css")
+	card, skeleton, turn, tokens := read("components/card/style.css"), read("base/35-skeleton.css"), read("base/34-turn.js"), read("tokens/tokens.css")
 
 	for _, want := range []string{"background: var(--sw-color-bg-lift)", "border-color: var(--sw-color-border-lift)", "box-shadow: var(--sw-shadow-2)", "transform: translateY(-1px)"} {
 		if !strings.Contains(card, want) {
@@ -40,7 +40,7 @@ func TestDepthLiftsAndWaitsQuietly(t *testing.T) {
 	// The shimmer: duration times count stays under WCAG 2.2.2's 5 s.
 	m := regexp.MustCompile(`animation: sw-shimmer (\d+)ms linear (\d+)`).FindStringSubmatch(skeleton)
 	if m == nil {
-		t.Fatal("29-skeleton.css: the shimmer must say its duration and a finite count")
+		t.Fatal("35-skeleton.css: the shimmer must say its duration and a finite count")
 	}
 	ms, _ := strconv.Atoi(m[1])
 	n, _ := strconv.Atoi(m[2])
@@ -53,7 +53,7 @@ func TestDepthLiftsAndWaitsQuietly(t *testing.T) {
 		"background: GrayText",
 	} {
 		if !strings.Contains(skeleton, want) {
-			t.Errorf("29-skeleton.css must have %s", want)
+			t.Errorf("35-skeleton.css must have %s", want)
 		}
 	}
 	if regexp.MustCompile(`@keyframes sw-shimmer[^}]*(transform|translate|width|height)`).MatchString(skeleton) {
@@ -66,7 +66,7 @@ func TestDepthLiftsAndWaitsQuietly(t *testing.T) {
 		`b.removeAttribute("aria-busy")`,
 	} {
 		if !strings.Contains(turn, want) {
-			t.Errorf("28-turn.js must have %s", want)
+			t.Errorf("34-turn.js must have %s", want)
 		}
 	}
 	for _, want := range []string{"--sw-shadow-3:", "--sw-color-bg-lift:", "--sw-color-border-lift:"} {

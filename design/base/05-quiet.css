@@ -1,0 +1,83 @@
+/* The quiet layer.
+ *
+ * Chrome (per-item controls, provenance labels, an idle status) is present
+ * for everyone at all times: in the DOM, in the tab order, and in the
+ * accessibility tree. It is only visually faded, so the page reads as
+ * content rather than controls.
+ *
+ * It is never display:none or visibility:hidden and never aria-hidden.
+ * Those would take it away from screen reader users and from agents as
+ * well as from sighted users, which is the opposite of the goal. Opacity
+ * alone keeps it announced, focusable, hittable, and reported as visible
+ * by browser automation, while a person only sees it when they need it.
+ *
+ * It reveals when the enclosing .sw-reveal group is hovered, when anything
+ * inside that group takes focus (except in a canvas block, see below), or
+ * when the element itself is focused.
+ * Layout never shifts, because the space is always reserved.
+ */
+
+.sw-quiet, .sw-status--idle {
+  opacity: var(--sw-quiet-opacity, 0);
+  transition: opacity var(--sw-motion-base) var(--sw-motion-ease);
+}
+
+/* A block is the exception to focus inside the group: focus in its content
+   leaves the bar faded, so moving through a block's controls does not
+   flicker its chrome. The bar shows once focus reaches it, which is the
+   next Tab. */
+.sw-reveal:hover, .sw-reveal:not(.sw-block):focus-within,
+.sw-quiet:focus-within, .sw-quiet:focus-visible { --sw-quiet-opacity: 1; }
+/* Escape puts away what the pointer revealed, until it leaves and comes
+   back (WCAG 1.4.13; 25-quiet.js). Focus inside still shows it. */
+.sw-reveal[data-quiet-away]:hover:not(:focus-within) { --sw-quiet-opacity: 0; }
+
+/* Always on where fading would strand someone:
+   - coarse pointers and touch screens, which have no hover
+   - people who asked for more contrast
+   - forced-colours modes, where opacity is unreliable
+   - workspaces set to ui.controls: visible */
+@media (hover: none), (pointer: coarse) { :root { --sw-quiet-opacity: 1; } }
+@media (prefers-contrast: more), (forced-colors: active) { :root { --sw-quiet-opacity: 1; } }
+:root[data-controls="visible"] { --sw-quiet-opacity: 1; }
+/* A block's bar never floats over the block: shown by the pointer on the
+   block, it would lie on whatever sits in the corner under it (a search's
+   button, Start voice mode in a narrow pane, a select), and the press meant
+   for that control would land on Expand or Remove. So it takes its own row
+   under the content, faded at rest like any quiet chrome. */
+.sw-block > .sw-bar { position: static; width: fit-content; max-width: 100%; margin: var(--sw-space-3) 0 0 auto; }
+
+/* A control bar outside a block floats over the top-right corner of its
+   item and reserves no space. */
+.sw-bar {
+  position: absolute; right: var(--sw-space-2); top: var(--sw-space-2); z-index: 3;
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--sw-space-1);
+  padding: 0.1875rem;
+  /* Opaque, not translucent: the bar floats over a surface that is often
+     the same colour it is, and a see-through toolbar reads as text printed
+     on the content instead of a control. */
+  background: var(--sw-color-bg-raised);
+  border: 1px solid var(--sw-color-border-strong);
+  border-radius: var(--sw-radius-md);
+  box-shadow: var(--sw-shadow-2);
+  max-width: calc(100% - var(--sw-space-4));
+}
+.sw-bar form { display: contents; }
+/* Compact inside the bar, without dropping below the 44px target. */
+.sw-bar .sw-button, .sw-bar .sw-link {
+  padding: 0 var(--sw-space-3); border-radius: var(--sw-radius-sm);
+  font-size: var(--sw-size-text-sm); text-decoration: none; white-space: nowrap;
+}
+/* The bar is the frame: a quiet button's own light border would draw a
+   box inside a box. */
+.sw-bar .sw-button--quiet { border-color: transparent; }
+.sw-bar .sw-link { display: inline-flex; align-items: center; min-height: var(--sw-size-target); color: var(--sw-color-fg-muted); }
+.sw-bar .sw-link:hover, .sw-bar .sw-button--quiet:hover { background: var(--sw-color-bg-muted); color: var(--sw-color-fg); text-decoration: none; }
+
+/* Inline editing: fields appear where the text was, so nothing moves and
+   nobody leaves the page. Added by 09-edit.js, which only runs where it can. */
+.sw-inline-form { margin-bottom: var(--sw-space-3); }
+.sw-inline-field + .sw-inline-field { margin-top: var(--sw-space-3); }
+/* A field the record has nothing in waits behind its Add button. */
+.sw-inline-field[hidden] { display: none; }
+.sw-edit-more { align-items: center; gap: var(--sw-space-2); }

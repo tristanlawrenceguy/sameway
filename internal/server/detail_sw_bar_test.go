@@ -7,7 +7,7 @@ import (
 
 // TestDetailPageHasSwBarInsideBlock checks that every content type record
 // detail page renders a <div class="sw-bar sw-quiet"> inside the wrapping
-// div with data-block-id. This is the anchor point 08-edit.js looks for on
+// div with data-block-id. This is the anchor point 09-edit.js looks for on
 // line 117 (block.querySelector(".sw-bar")) before inserting its Edit button.
 // Acceptance items 1–3: without this bar, clicking "Edit note" does nothing.
 func TestDetailPageHasSwBarInsideBlock(t *testing.T) {
@@ -31,7 +31,7 @@ func TestDetailPageHasSwBarInsideBlock(t *testing.T) {
 }
 
 // TestDetailPageSwBarContainsDeleteLink checks that the Delete link is rendered
-// inside the sw-bar (not in a separate cluster), so 08-edit.js finds both the
+// inside the sw-bar (not in a separate cluster), so 09-edit.js finds both the
 // Edit anchor and the existing Delete control within the same block. Acceptance
 // item 4: the Delete link must still work after being moved into the bar.
 func TestDetailPageSwBarContainsDeleteLink(t *testing.T) {
@@ -94,7 +94,7 @@ func TestDetailPageProposalHasSwBarInsideBlock(t *testing.T) {
 
 // TestDetailPageSwBarStructure checks that the definition list comes before the
 // sw-bar within the same data-block-id wrapper — dl first, then bar. This is the
-// exact structure 08-edit.js expects to find when it scans for [data-prop] elements
+// exact structure 09-edit.js expects to find when it scans for [data-prop] elements
 // and builds its inline form.
 func TestDetailPageSwBarStructure(t *testing.T) {
 	a, h := newApp(t)

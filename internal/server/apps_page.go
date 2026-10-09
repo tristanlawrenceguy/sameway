@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/apps"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // The AI apps a person already uses (Claude Desktop, Cursor, VS Code) could
@@ -54,8 +55,8 @@ func (s *Server) appsPage(w http.ResponseWriter, r *http.Request) {
 		if apps.Connected(a, ws) {
 			found.WriteString(`<p>Connected. ` + esc(a.Note) + `</p>`)
 		} else {
-			found.WriteString(`<form method="post" action="/apps/connect"><input type="hidden" name="app" value="` + key + `">` +
-				string(s.component("button", map[string]any{"label": "Connect " + a.Name, "type": "submit"})) + `</form>`)
+			found.WriteString(string(s.form(ui.Form{Action: "/apps/connect", Hidden: ui.Hidden("app", key),
+				Button: &ui.Button{Label: "Connect " + a.Name}})))
 		}
 		found.WriteString(`</li>`)
 	}

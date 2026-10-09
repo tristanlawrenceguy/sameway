@@ -1,8 +1,6 @@
 package server
 
 import (
-	"fmt"
-	"html/template"
 	"strings"
 	"time"
 
@@ -12,6 +10,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/track"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
@@ -62,17 +61,16 @@ func (s *Server) nextThings(t *schema.Type, rec *store.Record, on []string) stri
 	title := s.title(t, rec)
 	var b strings.Builder
 	if _, ok := s.app.Types.Get(ReminderType); ok && has(on, RemindPart) {
-		fmt.Fprintf(&b, `<form method="post" action="/clock/set" class="sw-next__remind"><input type="hidden" name="about" value="%s"><input type="hidden" name="title" value="%s">%s%s</form>`,
-			template.HTMLEscapeString(path), template.HTMLEscapeString(title),
-			s.component("text-field", map[string]any{"label": "Remind me at", "name": "at", "id": "remind-at", "hint": "7pm, tomorrow 9am", "autocomplete": "off"}),
-			s.component("button", map[string]any{"label": "Remind me", "context": "about " + title, "type": "submit", "variant": "secondary"}))
+		b.WriteString(string(s.form(ui.Form{Action: "/clock/set", Class: "sw-next__remind", Hidden: ui.Hidden("about", path, "title", title),
+			Body:   s.part(ui.TextField{Label: "Remind me at", Name: "at", ID: "remind-at", Hint: "7pm, tomorrow 9am", Autocomplete: "off"}),
+			Button: &ui.Button{Label: "Remind me", Context: "about " + title, Variant: ui.Secondary}})))
 	}
 	if has(on, AskPart) {
-		b.WriteString(string(s.component("link", map[string]any{"href": "/chat?about=" + path, "label": "Ask the assistant", "look": "button"})))
+		b.WriteString(string(s.part(ui.Link{Href: "/chat?about=" + path, Label: "Ask the assistant", Look: ui.LookButton})))
 	}
 	if day := s.dayOf(t, rec); day != "" && has(on, DayPart) {
 		if cal := s.firstBlock("calendar"); cal != nil {
-			b.WriteString(string(s.component("link", map[string]any{"href": "/canvas/" + cal.ID + "?day=" + day, "label": "See that day", "look": "button"})))
+			b.WriteString(string(s.part(ui.Link{Href: "/canvas/" + cal.ID + "?day=" + day, Label: "See that day", Look: ui.LookButton})))
 		}
 	}
 	if b.Len() == 0 {

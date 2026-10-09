@@ -144,7 +144,7 @@ still says it, though its row sits under No date.
   in full, for a pointer.
 - **Days stay true on a page left open.** At the workspace's midnight, and
   when a time the page shows passes (a task falls due), the page follows
-  itself as it does after a change (`30-days.js`, `17-refresh.js`),
+  itself as it does after a change (`36-days.js`, `19-refresh.js`),
   keeping scroll, focus and typing; a hidden tab waits until it is seen
   ([Primer](https://primer.style/components/relative-time),
   [UX Movement](https://uxmovement.com/content/absolute-vs-relative-timestamps-when-to-use-which/)).

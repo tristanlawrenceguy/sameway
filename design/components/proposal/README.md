@@ -32,6 +32,7 @@ there is no second code path that could behave differently.
 - **Answers say what they do** ("Send it", "Hide it instead"), and after
   answering the page says what was done, "Done: Hide it instead."
   ([NN/g on confirmation dialogs](https://www.nngroup.com/articles/confirmation-dialog/)).
+- **Its script is its own.** Answering in place, and a question that arrives with a turn's end, lives in this component's enhance.js (it was design/base/21-proposal-answer.js); the browser tests in tools/a11y-runner/behave-arm.mjs press it.
 
 Not done, and why: typing a word to confirm (a real burden for people with
 cognitive disabilities, and the question is already plain); a modal dialog

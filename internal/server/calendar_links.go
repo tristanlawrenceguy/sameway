@@ -16,6 +16,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/ingest"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
@@ -145,8 +146,8 @@ func (s *Server) calendarsPage(w http.ResponseWriter, r *http.Request) {
 			if l.Err != "" {
 				state = "Not up to date: " + l.Err
 			}
-			b.WriteString(`<li class="sw-stack"><strong>` + esc(l.Name) + `</strong> <span class="sw-small sw-muted">` + esc(state) + `</span><form method="post" action="/calendars/remove"><input type="hidden" name="id" value="` + l.ID + `">` +
-				string(s.component("button", map[string]any{"label": "Stop keeping it", "context": l.Name, "type": "submit", "variant": "quiet"})) + `</form></li>`)
+			b.WriteString(`<li class="sw-stack"><strong>` + esc(l.Name) + `</strong> <span class="sw-small sw-muted">` + esc(state) + `</span>` +
+				string(s.form(ui.Form{Action: "/calendars/remove", Hidden: ui.Hidden("id", l.ID), Button: &ui.Button{Label: "Stop keeping it", Context: l.Name, Variant: ui.Quiet}})) + `</li>`)
 		}
 		b.WriteString(`</ul>`)
 	}
@@ -154,10 +155,11 @@ func (s *Server) calendarsPage(w http.ResponseWriter, r *http.Request) {
 	for _, h := range calendarHow {
 		b.WriteString(`<dt><strong>` + esc(h.app) + `</strong></dt><dd>` + esc(h.how) + `</dd>`)
 	}
-	b.WriteString(`</dl><form method="post" action="/calendars/add" class="sw-stack">`)
-	b.WriteString(string(s.component("text-field", map[string]any{"label": "The calendar's link", "name": "url", "type": "url", "required": true, "hint": "It begins https:// or webcal://. Keep it to yourself: whoever has it can read the calendar."})))
-	b.WriteString(string(s.component("text-field", map[string]any{"label": "A name for it", "name": "name", "hint": "Such as Work or Family."})))
-	b.WriteString(string(s.component("button", map[string]any{"label": "Keep it in step", "type": "submit"})) + `</form>`)
+	b.WriteString(`</dl>`)
+	b.WriteString(string(s.form(ui.Form{Action: "/calendars/add", Class: "sw-stack",
+		Body: s.part(ui.TextField{Label: "The calendar's link", Name: "url", Type: ui.URL, Required: true, Hint: "It begins https:// or webcal://. Keep it to yourself: whoever has it can read the calendar."}) +
+			s.part(ui.TextField{Label: "A name for it", Name: "name", Hint: "Such as Work or Family."}),
+		Button: &ui.Button{Label: "Keep it in step"}})))
 	s.page(w, r, "Calendars", template.HTML(b.String()), pageOptions{Lede: "Your calendars from Google, Outlook or iCloud, kept in step."})
 }
 

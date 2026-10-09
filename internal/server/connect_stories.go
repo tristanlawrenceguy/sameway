@@ -50,7 +50,7 @@ func modelStories() []modelStory {
 
 // modelStoriesHTML is the question and its stories, each a disclosure
 // opened alone.
-func (s *Server) modelStoriesHTML(hidden string) string {
+func (s *Server) modelStoriesHTML(from string) string {
 	var b strings.Builder
 	b.WriteString(`<p>Which of these do you have?</p>`)
 	for _, st := range modelStories() {
@@ -61,7 +61,7 @@ func (s *Server) modelStoriesHTML(hidden string) string {
 		}
 		inner.WriteString(`</ol>`)
 		if st.key != "" {
-			inner.WriteString(string(s.keyForm(hidden, st.key))) // model_key.go
+			inner.WriteString(string(s.keyForm(from, st.key))) // model_key.go
 		}
 		if body, err := s.app.Registry.RenderSlot("disclosure", map[string]any{"label": st.have}, template.HTML(inner.String())); err == nil {
 			b.WriteString(string(body))

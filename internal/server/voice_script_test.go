@@ -46,8 +46,8 @@ func TestVoiceSaysWhatHappenedInWords(t *testing.T) {
 	if strings.Contains(js, "Press Stop recording to finish") || strings.Contains(js, "Press Stop dictating when") {
 		t.Error("the start is said briefly: the microphone would catch a long announcement")
 	}
-	speech := read("../../design/base/24-speech.js")
+	speech := read("../../design/base/28-speech.js")
 	if !strings.Contains(speech, `addEventListener("ended"`) || !strings.Contains(speech, `rec.state === "inactive"`) {
-		t.Error("24-speech.js notices a microphone that stops by itself and still gives what was heard")
+		t.Error("28-speech.js notices a microphone that stops by itself and still gives what was heard")
 	}
 }

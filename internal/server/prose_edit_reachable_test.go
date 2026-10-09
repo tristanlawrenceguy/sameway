@@ -25,26 +25,26 @@ func TestProseToggleUsesHiddenOnly(t *testing.T) {
 	// In the click handler, switching TO markdown mode should only set hidden=false.
 	toggleToMarkdown := strings.Index(src, "source.hidden = source.disabled")
 	if toggleToMarkdown >= 0 {
-		t.Errorf("11-prose-edit.js: the toggle handlers still reference source.disabled;\n" +
+		t.Errorf("14-prose-edit.js: the toggle handlers still reference source.disabled;\n" +
 			"since source is no longer disabled at startup, use source.hidden only.\n" +
 			"This assignment should read just: source.hidden = false; (for markdown mode)\nor:  source.hidden = true; (for rich text mode)")
 	}
 
 	// When switching TO markdown mode (source becomes visible), hidden must go to false.
 	if !strings.Contains(src, "source.hidden = false") {
-		t.Error("11-prose-edit.js: when toggling to Markdown view, source.hidden must be set to false\n" +
+		t.Error("14-prose-edit.js: when toggling to Markdown view, source.hidden must be set to false\n" +
 			"so the textarea becomes visible and Tab-reachable")
 	}
 
 	// When switching TO rich text mode (source is hidden again), hidden must go to true.
 	if !strings.Contains(src, "source.hidden = true") {
-		t.Error("11-prose-edit.js: when toggling back to rich text view, source.hidden must be set to true\n" +
+		t.Error("14-prose-edit.js: when toggling back to rich text view, source.hidden must be set to true\n" +
 			"so the textarea is hidden but remains enabled for next time")
 	}
 
 	// The check on whether we're in markdown mode should use hidden (not disabled).
 	if strings.Contains(src, "if (source.disabled)") {
-		t.Error("11-prose-edit.js: the toggle click handler must check source.hidden instead of\n" +
+		t.Error("14-prose-edit.js: the toggle click handler must check source.hidden instead of\n" +
 			"source.disabled to decide which direction to switch; disabled is no longer used")
 	}
 }
@@ -52,10 +52,10 @@ func TestProseToggleUsesHiddenOnly(t *testing.T) {
 func readProseEditScript(t *testing.T) string {
 	t.Helper()
 	root := findRepoRoot(t)
-	path := filepath.Join(root, "design", "base", "11-prose-edit.js")
+	path := filepath.Join(root, "design", "base", "14-prose-edit.js")
 	data, err := os.ReadFile(path)
 	if err != nil {
-		t.Fatalf("cannot read 11-prose-edit.js: %v", err)
+		t.Fatalf("cannot read 14-prose-edit.js: %v", err)
 	}
 	return string(data)
 }
@@ -70,7 +70,7 @@ func TestInlineEditFormBodyTextareaReachable(t *testing.T) {
 
 	if !strings.Contains(editorSrc, `editor.setAttribute("tabindex", "0")`) &&
 		!strings.Contains(editorSrc, `editor.setAttribute('tabindex', '0')`) {
-		t.Error("11-prose-edit.js: the contentEditable editor div must have tabindex=\"0\" set explicitly\n" +
+		t.Error("14-prose-edit.js: the contentEditable editor div must have tabindex=\"0\" set explicitly\n" +
 			"so keyboard Tab navigation reaches the Body field in the inline edit form.\n" +
 			"Add: editor.setAttribute(\"tabindex\", \"0\") after setting aria-label")
 	}
@@ -81,14 +81,14 @@ func TestInlineEditFormBodyTextareaReachable(t *testing.T) {
 
 	if !strings.Contains(editSrc, "input.setAttribute(\"tabindex\", \"0\")") &&
 		!strings.Contains(editSrc, `input.setAttribute('tabindex', '0')`) {
-		t.Error("08-edit.js: multiline textareas created by field() must have tabindex=\"0\" set explicitly\n" +
+		t.Error("09-edit.js: multiline textareas created by field() must have tabindex=\"0\" set explicitly\n" +
 			"so keyboard Tab navigation reaches non-markdown Body fields (action body, payload, etc.).\n" +
 			"Add: input.setAttribute(\"tabindex\", \"0\") inside the if (multiline) block")
 	}
 
 	// The textarea must get tabindex="0" only when multiline is true — single-line inputs should be left alone.
 	if !strings.Contains(editSrc, "if (multiline)") {
-		t.Error("08-edit.js: field() must check for multiline to create textareas; without it non-markdown fields are not editable")
+		t.Error("09-edit.js: field() must check for multiline to create textareas; without it non-markdown fields are not editable")
 	}
 
 	// The tabindex attribute must be set inside the multiline branch (after the textarea is created).

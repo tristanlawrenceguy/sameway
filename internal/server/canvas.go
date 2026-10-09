@@ -12,6 +12,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // canvasPage is the home page: the canvas, full width. Everything on it is a
@@ -139,8 +140,7 @@ func (s *Server) blockItem(blk *store.Record, convo *conversation) string {
 		fmt.Fprintf(&b, `<p class="sw-visually-hidden">%s</p>`, word)
 	}
 	b.WriteString(withBlock(string(body), "block-"+v.ID))
-	fmt.Fprintf(&b, `<div class="sw-bar sw-quiet">%s<form method="post" action="/canvas/%s/delete">%s</form></div></li>`,
-		v.Expand, v.ID, v.Remove)
+	fmt.Fprintf(&b, `<div class="sw-bar sw-quiet">%s%s</div></li>`, v.Expand, v.Remove)
 	return b.String()
 }
 
@@ -202,12 +202,9 @@ func (s *Server) canvasBlock(b *store.Record, convo *conversation) canvasBlock {
 		Frame: str(b.Fields["frame"], "card"), Tone: str(b.Fields["tone"], "none"),
 		Size: str(b.Fields["size"], "full"), Label: label, Icon: icon,
 		Provenance: provenance, Editing: editing,
-		HTML: s.component(name, props) + s.recordEditFields(name, props) + nameEdit(name, props, convo),
-		Expand: s.component("link", map[string]any{
-			"href": "/canvas/" + b.ID, "label": "Expand", "context": label,
-			"current": convo != nil && convo.FocusID == b.ID,
-		}),
-		Remove: s.component("button", map[string]any{"label": "Remove", "context": label, "type": "submit", "variant": "quiet"}),
+		HTML:   s.component(name, props) + s.recordEditFields(name, props) + nameEdit(name, props, convo),
+		Expand: s.part(ui.Link{Href: "/canvas/" + b.ID, Label: "Expand", Context: label, Current: convo != nil && convo.FocusID == b.ID}),
+		Remove: s.form(ui.Form{Action: "/canvas/" + b.ID + "/delete", Button: &ui.Button{Label: "Remove", Context: label, Variant: ui.Quiet}}),
 	}
 }
 

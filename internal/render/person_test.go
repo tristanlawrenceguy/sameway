@@ -60,7 +60,7 @@ func TestPersonLongNameWraps(t *testing.T) {
 	if !strings.Contains(string(style), "overflow-wrap: anywhere") {
 		t.Error("a person's name may break anywhere")
 	}
-	layout, err := os.ReadFile("../../design/base/06-layout.css")
+	layout, err := os.ReadFile("../../design/base/07-layout.css")
 	if err != nil {
 		t.Fatal(err)
 	}

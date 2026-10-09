@@ -39,14 +39,14 @@ Most motion follows the assistant's changes. A person's own actions used
 to snap: a ticked task vanished from its group, a moved card reappeared
 in another column, a filtered list was simply a new list. Now each is a
 view transition that shows where the thing went
-(`design/base/26-travel.js` and `26-travel.css`):
+(`design/base/31-travel.js` and `30-travel.css`):
 
 - **A tick** strikes the row through at once, its title greying over
   `motion-fast`. The row moves to Done when focus leaves the list, not
-  under the person's hands (`13-mark.js`), and when it does it slides
+  under the person's hands (`mark/enhance.js`), and when it does it slides
   there, the groups and their counts settling around it. The same holds
   for a mark in a collection, and for whatever the assistant changes
-  while the page follows a turn (`17-refresh.js`).
+  while the page follows a turn (`19-refresh.js`).
 - **A board Move** glides the card to its new column across the reload,
   and focus comes back to its Move button as before.
 - **Applying a list's filters or sort**, on a collection, the activity
@@ -83,7 +83,7 @@ stay short; nothing moves before the person has acted.
 Within a tenth of a second a response reads as caused by the press
 (NN/g); later, as a press that did nothing. So every control answers in
 the frame it is pressed, before any server has spoken
-(`design/base/27-press.css`, `02-feedback.css`):
+(`design/base/32-press.css`, `03-feedback.css`):
 
 - **A button**, and a link shaped as one, rings and gives a little
   (scale 0.97) the moment it is pressed, and lets go over `motion-fast`.
@@ -96,7 +96,7 @@ the frame it is pressed, before any server has spoken
   the shape of the tick as well as the fill; the box's edge is
   `border-strong`, 3:1.
 - **A tick shows on the press.** The row is struck through at once, not
-  when the server answers (`13-mark.js`); a refusal puts the box and the
+  when the server answers (`mark/enhance.js`); a refusal puts the box and the
   row back and says why as an alert. What is said is still the server's
   outcome, once, through the region there from the start: the box and
   the row show what was pressed, the words what happened.
@@ -136,7 +136,7 @@ in the accessibility tree from the first moment.
 
 Someone who has already caught up should not have to wait. Any key or
 click on the page ends the sequence and shows everything at once, and while
-it runs a Show all button says so (`base/10-arrival.js`, an enhancement that
+it runs a Show all button says so (`base/12-arrival.js`, an enhancement that
 adds its own control and removes it when there is nothing left to show).
 That keeps a sequence longer than five seconds within WCAG 2.2.2, which asks
 for a way to stop content that updates on its own.
@@ -231,7 +231,7 @@ and moves what changed into place inside a view transition, so a block
 that moved slides, a new one arrives and one that has gone leaves, with
 the same motion as between navigations; the chat and every unchanged
 block stay as they are, and the person keeps their scroll, focus and
-caret (`design/base/17-refresh.js`). A closed tab never leaves a change half made;
+caret (`design/base/19-refresh.js`). A closed tab never leaves a change half made;
 a Stop control beside the status ends it on purpose, and the reply then
 says it was stopped, with what was done kept. There is no limit on how
 many tools a turn may use: it ends early only when it is plainly getting
@@ -241,12 +241,12 @@ one at a time with a breath between (`motion-between` scaled to the
 pace: none under `still` or reduced motion), so there is time to take
 each in; a single change is not delayed. Without scripts the form posts
 to `/chat` and the page comes back whole, as before. See
-`design/base/14-live.js` and `internal/server/stream.go`.
+`design/base/17-live.js` and `internal/server/stream.go`.
 
 ## A turn you can watch
 
 A turn is the longest wait in Sameway, and the page should show it is
-alive without making noise (`design/base/28-turn.js`, `28-turn.css`):
+alive without making noise (`design/base/34-turn.js`, `33-turn.css`):
 
 - **The status line says what the assistant is doing**, in words its
   calls give: "Adding a chart of water…", "Looking up your tasks…",
@@ -264,7 +264,7 @@ alive without making noise (`design/base/28-turn.js`, `28-turn.css`):
   second (every 80 ms), not letter by letter and with no caret, and the
   log follows the end at once rather than gliding after every word. The
   words are not in a live region: a screen reader hears the finished
-  reply once, at the end, with the status (`swSay`).
+  reply once, at the end, with the status (`sw.say`).
 - **A block about to be added holds its place**: as soon as the model
   starts the call, a dashed outline in the assistant's colour stands where
   the block will land, as wide as it will be. It is the first stage of the

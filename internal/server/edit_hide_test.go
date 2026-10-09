@@ -18,20 +18,20 @@ func TestEditScriptHidesDefinitionListOnActivate(t *testing.T) {
 	// view when editing begins. Acceptance item 1: clicking Edit hides the dl.
 	if !strings.Contains(script, `querySelector("dl.sw-fields")`) &&
 		!strings.Contains(script, "querySelector('dl.sw-fields')") {
-		t.Error(`08-edit.js edit(): expected querySelector("dl.sw-fields") to find and hide the read-only definition list when editing starts (acceptance 1)`)
+		t.Error(`09-edit.js edit(): expected querySelector("dl.sw-fields") to find and hide the read-only definition list when editing starts (acceptance 1)`)
 	}
 
 	// The found <dl> must have its hidden property set to true. Acceptance item 2:
 	// .sw-dl-block remains in DOM but dl children are hidden while form is active.
 	if !strings.Contains(script, `dl.hidden = true`) &&
 		!strings.Contains(script, "dl.hidden=true") {
-		t.Error(`08-edit.js edit(): expected dl.hidden = true to hide the definition list (acceptance 2)`)
+		t.Error(`09-edit.js edit(): expected dl.hidden = true to hide the definition list (acceptance 2)`)
 	}
 
 	// The hidden <dl> must be added to the covered array so cancel() can restore it.
 	if !strings.Contains(script, `covered.push(dl)`) &&
 		!strings.Contains(script, "covered.push(dl)") {
-		t.Error(`08-edit.js edit(): expected covered.push(dl) so the definition list is tracked for restoration by cancel() (acceptance 3)`)
+		t.Error(`09-edit.js edit(): expected covered.push(dl) so the definition list is tracked for restoration by cancel() (acceptance 3)`)
 	}
 }
 
@@ -46,6 +46,6 @@ func TestEditScriptRestoresDefinitionListOnCancel(t *testing.T) {
 	// ensuring the definition list becomes visible again after Cancel.
 	if !strings.Contains(script, `dl.hidden = false`) &&
 		!strings.Contains(script, "dl.hidden=false") {
-		t.Error(`08-edit.js cancel(): expected dl.hidden = false to restore the definition list when cancelling (acceptance 3)`)
+		t.Error(`09-edit.js cancel(): expected dl.hidden = false to restore the definition list when cancelling (acceptance 3)`)
 	}
 }

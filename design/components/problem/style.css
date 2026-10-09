@@ -2,7 +2,7 @@
    set up wrong must not read as one with nothing in it. */
 .sw-problem__said { margin: 0; max-width: var(--sw-size-measure); }
 .sw-problem__why { margin-top: var(--sw-space-1); }
-/* The twisty (design/base/23-twisty.css) says it opens, as every fold does. */
+/* The twisty (design/base/27-twisty.css) says it opens, as every fold does. */
 .sw-problem__summary { cursor: pointer; min-height: var(--sw-size-target); display: inline-flex; align-items: center; padding: 0 var(--sw-space-2); border-radius: var(--sw-radius-md); color: var(--sw-color-fg-muted); }
 .sw-problem__summary:hover { background: var(--sw-color-bg-muted); color: var(--sw-color-fg); }
 /* Word for word what the server found, with a capital to start it on

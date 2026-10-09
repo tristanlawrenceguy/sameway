@@ -29,6 +29,7 @@ runner in tools/a11y-runner.
 | `internal/schema/` | content type files to Go types, validation, JSON Schema | `schema.go` |
 | `internal/store/` | SQLite, one table per type | `store.go` |
 | `internal/render/` | component registry, props validation, page layout | `registry.go` |
+| `internal/ui/` | the components the pages use most as Go types (`ui.Button`, `ui.Link`, `ui.Alert`, `ui.TextField`, `ui.Empty`, `ui.Status`, `ui.Mark`), rendered in the server with `s.part(...)`, and `ui.Form`, `s.form(...)`, the one way to write a form that does an action: hidden fields escaped, `from` and `back` under the names the server reads, its button a submit button. A test holds each type's fields to its manifest. Any other component stays a map with `s.component` | `ui.go`, `form.go` |
 | `internal/blocks/` | the page model without HTTP: what a block shows, resolved from its props, the records and where it is shown; one Kind per component (resolve, what it shows, its noun, height, heading), used by the pages, the assistant and MCP alike | `kind.go`, `kinds.go` |
 | `internal/relate/` | how one record connects to the others, worked out from the schema | `relate.go` |
 | `internal/server/parts.go` | the parts of a page that are off until somebody asks: the keys, and who turned one on | `parts.go` |
@@ -40,7 +41,7 @@ runner in tools/a11y-runner.
 | `internal/update/` | finding, checking and installing a release of sameway itself | `update.go` |
 | `internal/bench/` | the assistant measured with a real model on everyday requests, each in a fresh workspace | `assistant_test.go` |
 | `examples/workspaces/starter/` | what `sameway init` copies | |
-| `design/brand/` | Sameway's icon in every form (svg, png, ico, icns, and the app's 192, 512 and square sizes); redraw with `go run ./tools/icons`; every page names /manifest.webmanifest (a standalone window, its icons) and a touch icon, so a browser installs Sameway as an app, which Help offers where it can (32-install.js) | `tools/icons/main.go`, `internal/server/app_install_test.go` |
+| `design/brand/` | Sameway's icon in every form (svg, png, ico, icns, and the app's 192, 512 and square sizes); redraw with `go run ./tools/icons`; every page names /manifest.webmanifest (a standalone window, its icons) and a touch icon, so a browser installs Sameway as an app, which Help offers where it can (38-install.js) | `tools/icons/main.go`, `internal/server/app_install_test.go` |
 
 ## What the tests cover
 
@@ -89,8 +90,12 @@ area it belongs to, or a new file in `docs/tests/` linked here.
   The browser suites in tools/a11y-runner enforce all five; a component
   that truly cannot meet one says why in `examples/a11y-waivers.json`.
 - Do not add a frontend framework or client-side rendering. Pages are
-  server-rendered HTML; progressive enhancement only, and only in a
-  component's own `enhance.js`.
+  server-rendered HTML; progressive enhancement only, in a component's
+  own `enhance.js`. Only what is not one component's (the core, the
+  connection, following, the turn, editing) is in `design/base/*.js`,
+  each file with a number of its own, in load order. Arm with `sw.arm`,
+  never a listener for the refresh, and test what a script does in
+  `tools/a11y-runner/behave-*.mjs`, not by reading its source.
 - Do not add a dependency for something the standard library does.
 - Motion explains a change and never moves focus. A person's own action
   moves in `motion-base` or less, transform and opacity only; under

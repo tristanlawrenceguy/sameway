@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // The assistant is how most of Sameway is done, and it needs an AI model
@@ -134,18 +135,16 @@ func (s *Server) connectCard(from string) template.HTML {
 		return ""
 	}
 	esc := template.HTMLEscapeString
-	hidden := `<input type="hidden" name="from" value="` + esc(from) + `">`
 	var b strings.Builder
 	b.WriteString(`<div class="sw-connect sw-stack" data-wait="` + esc(s.modelWait()) + `"><h2 class="sw-visually-hidden">Connect the assistant</h2>`)
 	// A status message, and a heading to find it by from the page's outline.
-	b.WriteString(string(s.component("alert", map[string]any{"kind": "info", "title": "Connect the assistant to an AI model",
-		"message": why + " The assistant needs an AI model to think with. Everything else in Sameway works without one."})))
+	b.WriteString(string(s.part(ui.Alert{Kind: ui.Info, Title: "Connect the assistant to an AI model",
+		Message: why + " The assistant needs an AI model to think with. Everything else in Sameway works without one."})))
 	if len(choices) > 0 {
 		b.WriteString(`<p>Found on this computer:</p><ul class="sw-plain sw-stack sw-connect__choices">`)
 		for _, c := range choices {
-			b.WriteString(`<li><form method="post" action="/model/use">` + hidden + `<input type="hidden" name="choice" value="` + esc(c.ID) + `">`)
-			b.WriteString(string(s.component("button", map[string]any{"label": c.Label, "type": "submit", "variant": "primary"})))
-			b.WriteString(`</form><p class="sw-small sw-muted">` + esc(c.Where) + `</p></li>`)
+			b.WriteString(`<li>` + string(s.form(ui.Form{Action: "/model/use", From: from, Hidden: ui.Hidden("choice", c.ID), Button: &ui.Button{Label: c.Label, Variant: ui.Primary}})))
+			b.WriteString(`<p class="sw-small sw-muted">` + esc(c.Where) + `</p></li>`)
 		}
 		b.WriteString(`</ul>`)
 	}
@@ -153,12 +152,11 @@ func (s *Server) connectCard(from string) template.HTML {
 		if len(choices) > 0 {
 			b.WriteString(`<p>Or something else:</p>`)
 		}
-		b.WriteString(s.modelStoriesHTML(hidden)) // connect_stories.go
+		b.WriteString(s.modelStoriesHTML(from)) // connect_stories.go
 	}
-	b.WriteString(string(s.ollamaCard(hidden))) // ollama_setup.go
-	b.WriteString(`<form method="post" action="/model/check">` + hidden)
-	b.WriteString(string(s.component("button", map[string]any{"label": "Check again", "type": "submit", "variant": "secondary"})))
-	b.WriteString(`</form></div>`)
+	b.WriteString(string(s.ollamaCard(from))) // ollama_setup.go
+	b.WriteString(string(s.form(ui.Form{Action: "/model/check", From: from, Button: &ui.Button{Label: "Check again", Variant: ui.Secondary}})))
+	b.WriteString(`</div>`)
 	return template.HTML(b.String())
 }
 
@@ -230,7 +228,7 @@ func ollamaDownload() string {
 
 // modelWait is the connect card in a few words that change when it would:
 // what was found, and how far a fetch has come. The page asks for them
-// while the card is up and follows when they change (31-connect-wait.js),
+// while the card is up and follows when they change (37-connect-wait.js),
 // so Ollama installed, or a model fetched, shows without Check again.
 func (s *Server) modelWait() string {
 	why, choices := s.modelProblem()

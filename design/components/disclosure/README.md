@@ -27,7 +27,7 @@ printed too.
 
 The twisty is the one sign, across the design system, that a summary opens
 something in place: the folds in a chart and a collection draw the same one
-(`design/base/23-twisty.css`). It is drawn with borders, so a screen reader
+(`design/base/27-twisty.css`). It is drawn with borders, so a screen reader
 reads nothing for it.
 
 ## Why it works this way

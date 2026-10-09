@@ -36,7 +36,7 @@
   }
 
   function arm(el) {
-    if (el._armed || !window.swSpeech || !window.swSpeech.supported() || !(window.AudioContext || window.webkitAudioContext)) return;
+    if (el._armed || !sw.speech || !sw.speech.supported() || !(window.AudioContext || window.webkitAudioContext)) return;
     var ta = document.getElementById(el.getAttribute("data-message"));
     var form = ta && ta.form;
     if (!form) return;
@@ -154,7 +154,7 @@
       stopRecorder().then(function (blob) {
         if (!blob || !active) return;
         state("writing", "Writing down what you said.");
-        return window.swSpeech.toWav(blob).then(function (wav) {
+        return sw.speech.toWav(blob).then(function (wav) {
           return fetch(el.getAttribute("data-action"), { method: "POST", body: wav, headers: { "Content-Type": "audio/wav" }, credentials: "same-origin" });
         }).then(function (r) {
           return r.json().then(function (b) { if (!r.ok) throw new Error(b.error || "It could not be written down."); return (b.text || "").trim(); });
