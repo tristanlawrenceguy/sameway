@@ -10,6 +10,7 @@ import (
 // aria-describedby so a screen reader announces "select a file."
 // when the user submits without choosing anything.  Covers backlog 0433.
 func TestImportPageHasAccessibleErrorRegion(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	for _, typ := range []string{"note", "action", "task"} {

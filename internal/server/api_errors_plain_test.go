@@ -11,6 +11,7 @@ import (
 // 0342). Go type names and "invalid character" puzzles tell an agent or a
 // person nothing they can act on.
 func TestAPIErrorsSayWhatIsWrongInPlainWords(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	leaks := []string{"Go value", "Go struct", "interface {}", "json:", "invalid character", "unexpected end of JSON", "map[string]"}
 	for _, c := range []struct{ method, path, body, want string }{

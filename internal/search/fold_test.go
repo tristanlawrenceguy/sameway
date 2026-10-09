@@ -8,6 +8,7 @@ import (
 // A search is read the way a person means it: case and accents do not
 // matter, and a plural finds its one.
 func TestWordsAreForgiving(t *testing.T) {
+	t.Parallel()
 	if got := Words("Plumbers CAFÉ glass"); !reflect.DeepEqual(got, []string{"plumber", "cafe", "glass"}) {
 		t.Errorf("Words = %v", got)
 	}
@@ -19,6 +20,7 @@ func TestWordsAreForgiving(t *testing.T) {
 // Where words are found is a place in the text as it is, even where
 // folding changed a letter's length, so marking them never cuts a letter.
 func TestSpansAreInTheTextAsItIs(t *testing.T) {
+	t.Parallel()
 	text := "İstanbul café, and the Café"
 	spans := Spans(text, Words("cafe"))
 	if len(spans) != 2 {
@@ -34,6 +36,7 @@ func TestSpansAreInTheTextAsItIs(t *testing.T) {
 // A plural is looked for as its one, but marked as the word it is: the
 // whole of groceries, not grocerie with its s left out (backlog 0547).
 func TestSpansMarkWholeWords(t *testing.T) {
+	t.Parallel()
 	marks := func(text, q string) []string {
 		var out []string
 		for _, sp := range Spans(text, Words(q)) {

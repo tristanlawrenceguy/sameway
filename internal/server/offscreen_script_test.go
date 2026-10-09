@@ -12,6 +12,7 @@ import (
 // the activity log, so the sign stays out of the accessibility tree and
 // the tab order, and is never a button.
 func TestOffscreenSignIsSilentToScreenReaders(t *testing.T) {
+	t.Parallel()
 	data, err := os.ReadFile("../../design/base/22-offscreen.js")
 	if err != nil {
 		t.Fatal(err)
@@ -31,6 +32,7 @@ func TestOffscreenSignIsSilentToScreenReaders(t *testing.T) {
 }
 
 func TestOffscreenSignIsBundled(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	js := get(t, h, "/design/sameway.js")
 	wantStatus(t, js, http.StatusOK)

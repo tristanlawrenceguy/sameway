@@ -31,6 +31,7 @@ func renderProblem(t *testing.T, props map[string]any) string {
 // sign here that a summary opens something; without it the summary was
 // grey words that did not look pressable.
 func TestAProblemFoldShowsItOpens(t *testing.T) {
+	t.Parallel()
 	out := renderProblem(t, map[string]any{"what": "This list", "text": `task has no field "owner"`})
 	if !regexp.MustCompile(`<summary class="[^"]*\bsw-twisty\b[^"]*">What is wrong</summary>`).MatchString(out) {
 		t.Errorf("What is wrong should carry the twisty:\n%s", out)
@@ -50,6 +51,7 @@ func TestAProblemFoldShowsItOpens(t *testing.T) {
 // sentence that says a block is set up wrong is in the text colour, so the
 // two never look the same.
 func TestAProblemIsNotMutedLikeAnEmptyLine(t *testing.T) {
+	t.Parallel()
 	css, err := fs.ReadFile(design.FS, "components/problem/style.css")
 	if err != nil {
 		t.Fatal(err)

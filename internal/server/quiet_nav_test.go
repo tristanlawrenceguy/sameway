@@ -10,6 +10,7 @@ import (
 // made themselves; an empty list the system provides stays out of the
 // way, and so do the links meant for builders, unless the workspace asks.
 func TestASidebarShowsWhatHasSomethingInIt(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	page := get(t, h, "/").Body.String()
 	for _, empty := range []string{`href="/t/file"`, `href="/t/action"`, `href="/t/task"`} {

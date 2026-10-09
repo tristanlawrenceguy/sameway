@@ -35,6 +35,7 @@ func zipOf(t *testing.T, files map[string]string) []byte {
 // Every structured format Go can read becomes Markdown with its structure
 // kept: headings, lists, captioned tables, code; an image is an image.
 func TestFilesBecomeStructuredText(t *testing.T) {
+	t.Parallel()
 	docx := zipOf(t, map[string]string{"word/document.xml": `<?xml version="1.0"?>
 <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>
 <w:p><w:pPr><w:pStyle w:val="Heading1"/></w:pPr><w:r><w:t>The plan</w:t></w:r></w:p>

@@ -11,6 +11,7 @@ import (
 // so the whole of it is shown, a heading under Results, not cut to six
 // words with the rest in a tooltip a keyboard or a finger cannot reach.
 func TestASearchResultShowsItsWholeTitle(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	title := "Ask the fontanero about the cistern upstairs before Friday afternoon"
 	a.Store.Create("note", map[string]any{"title": title})

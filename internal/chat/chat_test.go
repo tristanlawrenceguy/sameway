@@ -64,6 +64,7 @@ func newService(t *testing.T) (*chat.Service, *fakeProvider) {
 }
 
 func TestSendRunsToolLoop(t *testing.T) {
+	t.Parallel()
 	svc, fp := newService(t)
 	reply, err := svc.Send(context.Background(), "add a grocery list")
 	if err != nil {
@@ -95,6 +96,7 @@ func TestSendRunsToolLoop(t *testing.T) {
 }
 
 func TestSendWithoutProviderRecordsError(t *testing.T) {
+	t.Parallel()
 	svc, _ := newService(t)
 	svc.Provider = nil
 	rec, err := svc.Send(context.Background(), "hello")

@@ -13,6 +13,7 @@ import (
 // A late task is a press from done, tomorrow or today; several late are
 // one press from today, and one Undo takes them all back.
 func TestLateTasksAreAPressFromDealtWith(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	now := time.Now()
 	day := func(n int) string { return now.AddDate(0, 0, n).Format("2006-01-02") }

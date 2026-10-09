@@ -11,6 +11,7 @@ import (
 // lists its tasks by itself, and a ref to nothing is refused with the
 // field named.
 func TestARefIsARecordPointingAtAnother(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	// Seeded straight into the store: what is under test is the pages.
 	garden, _ := a.Store.Create("project", map[string]any{"title": "Garden", "notes": "The back garden this autumn."})

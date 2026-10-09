@@ -29,6 +29,7 @@ var componentNames = func() []string {
 // TestHomePageShell checks what a person with a screen reader or keyboard
 // meets first: skip link, landmarks, one h1, and the two labelled regions.
 func TestHomePageShell(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Workspace.Config.UI.Developer = "shown" // this test walks the builder links too
 	rec := get(t, h, "/")
@@ -132,6 +133,7 @@ func TestHomePageShell(t *testing.T) {
 // TestFormValidationIsStillTested verifies that the form-validation test
 // helper still works (the validation logic itself is unchanged).
 func TestFormValidationIsStillTested(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	rec := get(t, h, "/t/note")
 	wantStatus(t, rec, http.StatusOK)
@@ -147,6 +149,7 @@ func TestFormValidationIsStillTested(t *testing.T) {
 
 // TestContentPagesLifecycle exercises the full CRUD lifecycle through the JSON API.
 func TestContentPagesLifecycle(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	list := get(t, h, "/t/note")
 	wantStatus(t, list, http.StatusOK)
@@ -193,6 +196,7 @@ func TestContentPagesLifecycle(t *testing.T) {
 
 // TestEveryPageHasOneH1AndLabelledControls runs the shell invariants on each page kind.
 func TestEveryPageHasOneH1AndLabelledControls(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	rec, _ := a.Store.Create("note", map[string]any{"title": "Seed"})
 	for _, path := range []string{"/", "/chat", "/activity", "/design", "/t/note", "/t/note/" + rec.ID, "/t/file", "/t/task", "/t/project"} {
@@ -210,6 +214,7 @@ func TestEveryPageHasOneH1AndLabelledControls(t *testing.T) {
 }
 
 func TestStylesheetRoute(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	rec := get(t, h, "/design/sameway.css")
 	wantStatus(t, rec, http.StatusOK)
@@ -227,6 +232,7 @@ func TestStylesheetRoute(t *testing.T) {
 // TestListingPageHeadingsAreCapitalized checks that every listing page shows
 // a title-cased h1 — "Notes", "Activities", "Messages" — not lowercase.
 func TestListingPageHeadingsAreCapitalized(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	for _, path := range []string{"/t/note", "/t/activity"} {
 		rec := get(t, h, path)
@@ -255,6 +261,7 @@ func TestListingPageHeadingsAreCapitalized(t *testing.T) {
 // TestNavLinksStayLowercase ensures that only the page heading is capitalized;
 // nav link labels remain lowercase as they call schema.Plural() directly.
 func TestNavLinksStayLowercase(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	doc := parse(t, get(t, h, "/t/note"))
 
@@ -278,6 +285,7 @@ func TestNavLinksStayLowercase(t *testing.T) {
 // TestEmptyStateBodyStaysLowercase verifies that the empty-state paragraph is
 // actionable and uses <p class="sw-empty"> — e.g. "Ask the assistant to add your first notes."
 func TestEmptyStateBodyStaysLowercase(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	rec := get(t, h, "/t/note")
 	wantStatus(t, rec, http.StatusOK)

@@ -13,6 +13,7 @@ import (
 // a record is about: the plumber finds the boiler repair, after any match
 // by words, marked as found by meaning. Skipped where there is no model.
 func TestASearchFindsByMeaning(t *testing.T) {
+	t.Parallel()
 	a, _ := newApp(t)
 	for _, title := range []string{"Boiler repair, call Marek", "Renew the passport", "Pancakes: flour, eggs, milk", "Holiday ideas: Lisbon in May"} {
 		if _, err := a.Store.Create("note", map[string]any{"title": title}); err != nil {

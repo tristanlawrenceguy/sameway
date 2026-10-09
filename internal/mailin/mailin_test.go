@@ -16,6 +16,7 @@ func email(to, subject, body string) string {
 // Sameway folder's from when it was first seen, and nothing twice; a
 // wrong password is said plainly.
 func TestOnlyMailForTheWorkspaceIsRead(t *testing.T) {
+	t.Parallel()
 	srv := mailintest.Start(t, "me@example.com", "app-pass")
 	srv.Folder(Folder)
 	srv.Put(t, "INBOX", email("me+sameway@example.com", "Dentist on Friday", "At 10."))
@@ -55,6 +56,7 @@ func TestOnlyMailForTheWorkspaceIsRead(t *testing.T) {
 
 // An email's words are its plain text, or its HTML's; files come along.
 func TestAnEmailIsReadIntoWordsAndFiles(t *testing.T) {
+	t.Parallel()
 	raw := "From: shop@example.com\r\nSubject: Your order\r\nMIME-Version: 1.0\r\nContent-Type: multipart/mixed; boundary=b\r\n\r\n" +
 		"--b\r\nContent-Type: text/html; charset=utf-8\r\n\r\n<p>Order <b>42</b> ships Monday.</p>\r\n" +
 		"--b\r\nContent-Type: application/pdf\r\nContent-Disposition: attachment; filename=\"invoice.pdf\"\r\nContent-Transfer-Encoding: base64\r\n\r\nJVBERi0xLjQ=\r\n--b--\r\n"

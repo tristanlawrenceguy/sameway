@@ -15,6 +15,7 @@ import (
 // detail pages show "From: an agent" for API-attributed entries.
 
 func TestGoHttpClientDetailLedeSaysAnAgent(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	seedLog(t, a, h)
 

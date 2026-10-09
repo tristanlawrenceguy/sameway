@@ -16,6 +16,7 @@ import (
 // however it comes; a recording that size is kept to be written down,
 // and a document that size is kept as it is, saying so.
 func TestAFileBeyondReadingSizeIsKeptWhole(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	size := 65 << 20
 	send := func(name string) (string, map[string]any) {

@@ -14,6 +14,7 @@ import (
 // status, which screen readers announce, carries the reply's first words.
 // They are read out but not drawn, so the chip stays a few words long.
 func TestTheStatusSaysWhatTheReplySays(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Chat.Provider, a.Chat.ProviderErr = &scripted{steps: []*llm.Response{{Text: "Your garden list has three things on it."}}}, nil
 	postForm(t, h, "/chat", url.Values{"message": {"what is on my garden list?"}, "from": {"/chat"}})
@@ -27,6 +28,7 @@ func TestTheStatusSaysWhatTheReplySays(t *testing.T) {
 // Answering one question sets the others aside, on the server as on the
 // page, so none is left waiting where nobody can see it.
 func TestAnsweringOneQuestionSetsTheOthersAside(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	one, _ := a.Store.Create(records.ProposalType, map[string]any{"summary": "Remove the first?", "action": map[string]any{"tool": "remove_component", "id": "x"}, "state": "pending"})
 	a.Store.Create(records.ProposalType, map[string]any{"summary": "Remove the second?", "action": map[string]any{"tool": "remove_component", "id": "y"}, "state": "pending"})
@@ -39,6 +41,7 @@ func TestAnsweringOneQuestionSetsTheOthersAside(t *testing.T) {
 // The outcome of an action can take focus, and has an id a reopened
 // field points at, so it is read when the page the person returns to opens.
 func TestTheOutcomeCanTakeFocus(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	note, _ := a.Store.Create("note", map[string]any{"title": "Seeds"})
 	r := postForm(t, h, "/t/note/"+note.ID+"/props", url.Values{"prop-title": {"Seeds and peas"}})

@@ -16,6 +16,7 @@ import (
 // lets their device in as them, with what they may do; one who may look
 // cannot change anything; taking their access away shuts the device out.
 func TestSomeoneOnTheWiFiIsInvitedByName(t *testing.T) {
+	t.Parallel()
 	a, _ := newApp(t)
 	srv := server.New(a)
 	h := srv.WithFleet(&server.Fleet{Launch: func(dir, addr string) error { return nil }, Exit: func() {},

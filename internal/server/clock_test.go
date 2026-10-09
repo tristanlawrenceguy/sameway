@@ -20,6 +20,7 @@ import (
 // over the stream an open page listens on, and lets the person dismiss it
 // or have five more minutes.
 func TestTheClockSetsListsAndRings(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	blk, err := a.Store.Create(records.BlockType, a.Chat.BlockFields(map[string]any{"component": "clock", "props": map[string]any{}}))
 	if err != nil {

@@ -15,6 +15,7 @@ import (
 // quoting gets it, and a secret is never written, only the name of the
 // environment variable that holds it.
 func TestAnySettingCanBeChangedByName(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	if err := workspace.Init(dir, examples.FS, examples.StarterRoot, false); err != nil {
 		t.Fatal(err)

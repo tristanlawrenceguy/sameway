@@ -12,6 +12,7 @@ import (
 // being visible at startup. Hiding the source textarea initially gives the user
 // exactly one editable field (the rich text editor).
 func TestProseSourceTextareaStartsHidden(t *testing.T) {
+	t.Parallel()
 	src := readProseEditScript(t)
 
 	// The source textarea must be set to hidden=true right after creation so that

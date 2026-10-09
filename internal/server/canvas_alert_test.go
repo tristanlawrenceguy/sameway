@@ -10,6 +10,7 @@ import (
 // canvas block, the reloaded home page shows a green .sw-alert with "Changes
 // saved" text and a close button. Acceptance items 1 and 3.
 func TestCanvasEditShowsSuccessAlert(t *testing.T) {
+	t.Parallel()
 	h, id := canvasWithABlock(t)
 
 	rec := postForm(t, h, "/canvas/"+id+"/props", url.Values{"prop-title": {"Groceries"}})
@@ -41,6 +42,7 @@ func TestCanvasEditShowsSuccessAlert(t *testing.T) {
 // ?saved does not show the success alert. This ensures ?saved is required for
 // the alert to appear and it doesn't leak on unrelated requests.
 func TestCanvasEditWithoutSavedParamShowsNoAlert(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	page := get(t, h, "/")

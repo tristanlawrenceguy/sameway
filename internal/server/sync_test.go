@@ -14,6 +14,7 @@ import (
 // Two computers host one workspace: a note made on one is on the other
 // after they keep in step, and a change to it there comes back.
 func TestTwoHostsKeepOneWorkspace(t *testing.T) {
+	t.Parallel()
 	a, ha := newApp(t)
 	b, hb := newApp(t)
 	sa, sb := httptest.NewServer(ha), httptest.NewServer(hb)
@@ -48,6 +49,7 @@ func TestTwoHostsKeepOneWorkspace(t *testing.T) {
 // Only the owner's own computers and people made hosts keep in step: an
 // editor's device cannot pull the whole workspace or push into it.
 func TestOnlyHostsMayKeepInStep(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	body := `{"seen":{},"stamps":[]}`
 	if rec := as(t, h, records.Visitor{Name: "Bob", Login: "bob@example.com", Access: records.Edit}, http.MethodPost, "/sync", body, "application/json"); rec.Code != http.StatusForbidden {

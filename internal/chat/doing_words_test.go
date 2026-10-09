@@ -12,6 +12,7 @@ import (
 // runs: "Create canvas" went by on the page, a tool's own name with the
 // word canvas the assistant is told never to use with people.
 func TestEveryToolIsSaidInWords(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	for _, tool := range svc.Tools() {
 		got := chat.Describe(llm.ToolCall{Name: tool.Name, Args: []byte("{}")})

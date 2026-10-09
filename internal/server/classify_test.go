@@ -17,9 +17,9 @@ import (
 // tagModel answers a classify action's questions: the tag it suggests, and
 // what it decides when shown the person's past choices.
 type tagModel struct {
-	mu      sync.Mutex
-	decide  string // keep, confirm, change
-	checked []string
+	mu     sync.Mutex
+	decide string   // keep or confirm
+	tagged []string // each tagging question
 }
 
 func (m *tagModel) Name() string { return "tags" }
@@ -29,8 +29,11 @@ func (m *tagModel) Complete(_ context.Context, req llm.Request) (*llm.Response, 
 	defer m.mu.Unlock()
 	q := req.Messages[0].Content
 	if strings.Contains(req.System, "against what the person did") {
-		m.checked = append(m.checked, q)
-		return &llm.Response{Text: `{"decide": "` + m.decide + `", "to": "important", "why": "as you chose before"}`}, nil
+		return &llm.Response{Text: `{"decide": "` + m.decide + `", "why": "as you chose before"}`}, nil
+	}
+	m.tagged = append(m.tagged, q)
+	if strings.Contains(q, "Phone bill") && strings.Contains(q, `Gas bill`) && strings.Contains(q, ": important") {
+		return &llm.Response{Text: `{"tags": [{"tag": "important", "why": "as the gas bill"}]}`}, nil // tagged as the person did
 	}
 	return &llm.Response{Text: `{"tags": [{"tag": "to do", "why": "asks for a payment"}]}`}, nil
 }
@@ -50,6 +53,7 @@ func tagWait(t *testing.T, what string, ok func() bool) {
 // takes it off, changes it) is shown to the action next time, which then
 // follows them: changing a tag as they did, or keeping it for them.
 func TestTagsFollowThePersonsJudgement(t *testing.T) {
+	t.Parallel()
 	a, _ := newApp(t)
 	model := &tagModel{decide: "keep"}
 	a.Chat.Provider, a.Chat.ProviderErr = model, nil
@@ -96,21 +100,18 @@ func TestTagsFollowThePersonsJudgement(t *testing.T) {
 		t.Errorf("the record carries the tag it was changed to: %v", got.Fields["tags"])
 	}
 
-	model.mu.Lock()
-	model.decide = "change"
-	model.mu.Unlock()
 	third := arrive("Phone bill")
 	model.mu.Lock()
-	last := model.checked[len(model.checked)-1]
+	last := model.tagged[len(model.tagged)-1]
 	model.mu.Unlock()
-	if !strings.Contains(last, "Gas bill") || !strings.Contains(last, "changed it to important") || !strings.Contains(last, "took the tag off") {
-		t.Errorf("the check is shown the person's choices, newest first: %s", last)
+	if !strings.Contains(last, "How the person tagged") || !strings.Contains(last, "Gas bill") || !strings.Contains(last, ": important") || !strings.Contains(last, ": no tag") {
+		t.Errorf("the tagging is shown how the person tagged before: %s", last)
 	}
 	if strings.Index(last, "Gas bill") > strings.Index(last, "Water bill") {
 		t.Error("newest first")
 	}
 	if c := classOf(third.ID); c.Fields["tag"] != "important" {
-		t.Errorf("it follows the person, changing the tag as they did: %v", c.Fields)
+		t.Errorf("it tags as the person did: %v", c.Fields)
 	}
 
 	model.mu.Lock()
@@ -148,6 +149,7 @@ func (m *fitsModel) Complete(_ context.Context, req llm.Request) (*llm.Response,
 
 // An action may give only some of the tags, and ask about each on its own.
 func TestAClassifyActionGivesItsOwnTagsEachApart(t *testing.T) {
+	t.Parallel()
 	a, _ := newApp(t)
 	m := &fitsModel{}
 	a.Chat.Provider, a.Chat.ProviderErr = m, nil

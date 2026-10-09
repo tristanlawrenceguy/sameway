@@ -12,6 +12,7 @@ import (
 // when the microphone goes away; is unavailable, not silent, while words
 // are written down; and passes on no program's own error text.
 func TestVoiceSaysWhatHappenedInWords(t *testing.T) {
+	t.Parallel()
 	read := func(p string) string {
 		b, err := os.ReadFile(p)
 		if err != nil {

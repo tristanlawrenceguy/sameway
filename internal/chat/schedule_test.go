@@ -16,6 +16,7 @@ import (
 // An action runs on its own at the times a person gave it, once per period,
 // and remembers when, so a restart does not run it again.
 func TestActionsRunOnTheirOwnAtTheirTime(t *testing.T) {
+	t.Parallel()
 	at := func(every, at, on, last string) *store.Record {
 		f := map[string]any{"every": every, "at": at, "on": on}
 		if last != "" {

@@ -31,6 +31,7 @@ func starter(t *testing.T) (*schema.Set, *store.Store) {
 // body, everything else is front matter, and reading the file back gives
 // the record again, times included.
 func TestARecordRoundTripsThroughItsFile(t *testing.T) {
+	t.Parallel()
 	types, _ := starter(t)
 	note, _ := types.Get("note")
 	created := time.Date(2026, 9, 16, 15, 4, 5, 0, time.UTC)
@@ -73,6 +74,7 @@ func TestARecordRoundTripsThroughItsFile(t *testing.T) {
 // The folder follows the database: written as records change, exported
 // whole on demand, and imported back with every change logged.
 func TestTheFolderFollowsTheDatabaseAndBack(t *testing.T) {
+	t.Parallel()
 	types, st := starter(t)
 	m := content.Mirror{Dir: t.TempDir(), Types: types, Skip: []string{"message", "activity", "proposal"}}
 	st.AfterWrite = m.Changed

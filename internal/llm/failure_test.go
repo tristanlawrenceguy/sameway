@@ -11,6 +11,7 @@ import (
 
 // What providers answer is sorted into what a person can do about it.
 func TestAFailureIsSortedForAPerson(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct {
 		status int
 		said   string

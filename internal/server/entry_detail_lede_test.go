@@ -11,6 +11,7 @@ import (
 // The date value is still present via s.whenMade() at the end of the lede
 // (acceptance item 1 and 3).
 func TestEntryDetailLedeNoAtLabel(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	habitRec, err := a.Store.Create("habit", map[string]any{

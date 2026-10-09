@@ -112,7 +112,7 @@ fields:
     label: Check with your past choices
     type: bool
     default: false
-    description: "For a classify or suggest action, show the assistant the latest it tagged or suggested and what you did with each (a tag kept, taken off, changed to another, or left; a suggestion made as it was, made then changed, or turned down), newest first, so it follows your judgement rather than its own."
+    description: "For a classify or suggest action, show the assistant how you dealt with the latest it tagged or suggested, newest first, as examples to follow: the tags you kept, changed to or took off; the suggestions you made, changed or turned down. A tag your choices plainly settle is kept for you."
   examples:
     label: Past choices to show
     type: int

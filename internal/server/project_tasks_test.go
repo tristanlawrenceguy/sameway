@@ -16,6 +16,7 @@ import (
 // 5. A screen reader hears "Tasks — [count]" as the section heading
 
 func TestProjectDetailShowsAssociatedTasks(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	// Seed a project and two tasks that belong to it via chat-style API writes.
@@ -60,6 +61,7 @@ func TestProjectDetailShowsAssociatedTasks(t *testing.T) {
 }
 
 func TestProjectDetailShowsEmptyMessageWhenNoTasks(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	var proj struct{ ID string }
@@ -86,6 +88,7 @@ func TestProjectDetailShowsEmptyMessageWhenNoTasks(t *testing.T) {
 }
 
 func TestProjectDetailShowsOnlyItsOwnTasks(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	var proj1, proj2 struct{ ID string }

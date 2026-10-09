@@ -14,6 +14,7 @@ import (
 // A new version arrives on its own unless a person says otherwise, and
 // saying otherwise is one line of workspace.yaml, changed by asking.
 func TestUpdatesArriveOnTheirOwnUntilTurnedToManual(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	if err := workspace.Init(dir, examples.FS, examples.StarterRoot, false); err != nil {
 		t.Fatal(err)
@@ -57,6 +58,7 @@ func TestUpdatesArriveOnTheirOwnUntilTurnedToManual(t *testing.T) {
 // The assistant is told about every setting, so the one that turns
 // updates to manual has to be in the list it reads.
 func TestTheSettingIsOfferedToTheAssistant(t *testing.T) {
+	t.Parallel()
 	var found bool
 	for _, key := range workspace.SettingKeys() {
 		if key == "update.mode" {

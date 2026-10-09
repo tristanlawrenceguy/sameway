@@ -70,6 +70,7 @@ var pairs = []pair{
 }
 
 func TestPaletteMeetsAAAInBothThemes(t *testing.T) {
+	t.Parallel()
 	src, err := os.ReadFile("../../design/tokens/tokens.json")
 	if err != nil {
 		t.Fatal(err)
@@ -97,6 +98,7 @@ func TestPaletteMeetsAAAInBothThemes(t *testing.T) {
 }
 
 func TestEveryColourHasBothThemes(t *testing.T) {
+	t.Parallel()
 	src, _ := os.ReadFile("../../design/tokens/tokens.json")
 	var doc struct {
 		Color map[string]map[string]string `json:"color"`

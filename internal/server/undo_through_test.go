@@ -13,6 +13,7 @@ import (
 // not show ", through the API" even for old entries stored with that suffix
 // in their summary (acceptance 1–4). The undo handler should strip it.
 func TestUndoPageStripsThroughTheAPISuffix(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Seed an old-style activity record with the "through the API" suffix
@@ -62,6 +63,7 @@ func TestUndoPageStripsThroughTheAPISuffix(t *testing.T) {
 
 // UndoPageStripsThroughCLISuffix checks that CLI suffixes are also stripped.
 func TestUndoPageStripsThroughCLISuffix(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	oldID := "old-undo-cli"

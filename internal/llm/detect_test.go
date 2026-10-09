@@ -10,6 +10,7 @@ import (
 )
 
 func TestDetectFindsServersWithModels(t *testing.T) {
+	t.Parallel()
 	good := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/v1/models" {
 			http.NotFound(w, r)
@@ -42,6 +43,7 @@ func TestDetectFindsServersWithModels(t *testing.T) {
 }
 
 func TestDetectWithNothingRunning(t *testing.T) {
+	t.Parallel()
 	if found := llm.Detect(context.Background(), []llm.Candidate{{"dead", "http://127.0.0.1:1/v1"}}); len(found) != 0 {
 		t.Errorf("expected nothing, got %+v", found)
 	}

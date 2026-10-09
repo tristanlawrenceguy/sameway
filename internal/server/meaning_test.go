@@ -33,6 +33,7 @@ func entries(t *testing.T, a *app.App, n int) string {
 // which a model called daily), and one field asked for two values (a
 // list that could never show a book).
 func TestABlockThatCouldNotMeanWhatWasWrittenIsRefused(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	entries(t, a, 30)
 	first := time.Now().AddDate(0, 0, -29).Format("2006-01-02")
@@ -75,6 +76,7 @@ func TestABlockThatCouldNotMeanWhatWasWrittenIsRefused(t *testing.T) {
 // but its line says so loudly, with what it waits for, so a model cannot
 // read "0 books" as done.
 func TestABlockThatShowsNothingSaysSoLoudly(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	for _, c := range []struct {
 		component string
@@ -103,6 +105,7 @@ func TestABlockThatShowsNothingSaysSoLoudly(t *testing.T) {
 // A calendar of everything says how many of each kind it shows, most
 // first, and when one kind floods the rest, says so and how to show one.
 func TestACalendarOfEverythingSaysWhatItShowsByKind(t *testing.T) {
+	t.Parallel()
 	a, _ := newApp(t)
 	entries(t, a, 8)
 	for _, title := range []string{"Dig", "Weed"} {

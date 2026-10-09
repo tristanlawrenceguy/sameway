@@ -14,6 +14,7 @@ func parsed(t *testing.T, src string) *Type {
 // A type's day is starts when it has one, else its first shown datetime;
 // a hidden datetime is never it.
 func TestDayFieldPrefersStartsAndSkipsHidden(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct{ src, want string }{
 		{"name: meeting\nfields:\n  title: {type: string}\n  ends: {type: datetime}\n  starts: {type: datetime}\n", "starts"},
 		{"name: task\nfields:\n  title: {type: string}\n  seen: {type: datetime, hidden: true}\n  due: {type: datetime}\n", "due"},
@@ -37,6 +38,7 @@ func TestDayFieldPrefersStartsAndSkipsHidden(t *testing.T) {
 
 // Done is a tick by any of its names, or a pick-list at done; pinned is not.
 func TestDoneFieldAndDone(t *testing.T) {
+	t.Parallel()
 	task := parsed(t, "name: task\nfields:\n  pinned: {type: bool}\n  completed: {type: bool}\n")
 	if f := task.DoneField(); f == nil || f.Name != "completed" {
 		t.Fatalf("DoneField = %v, want completed", f)
@@ -60,6 +62,7 @@ func TestDoneFieldAndDone(t *testing.T) {
 // A field is named by its label, else its name with spaces; in a sentence
 // it is lower case, an acronym kept.
 func TestFieldDisplayAndWords(t *testing.T) {
+	t.Parallel()
 	typ := parsed(t, "name: link\nfields:\n  follow_up: {type: datetime}\n  by: {type: datetime, label: Goal by}\n  url: {type: string, label: URL}\n")
 	for _, c := range []struct{ name, display, words string }{
 		{"follow_up", "Follow up", "follow up"},
@@ -79,6 +82,7 @@ func TestFieldDisplayAndWords(t *testing.T) {
 // A record is called by its title, else the first thing it says, else its
 // kind and id.
 func TestCalled(t *testing.T) {
+	t.Parallel()
 	typ := parsed(t, "name: call_log\ntitle: subject\nfields:\n  subject: {type: string}\n  kind: {type: enum, values: [in_person, phone]}\n")
 	for _, c := range []struct {
 		fields map[string]any

@@ -97,6 +97,12 @@ area it belongs to, or a new file in `docs/tests/` linked here.
   never a listener for the refresh, and test what a script does in
   `tools/a11y-runner/behave-*.mjs`, not by reading its source.
 - Do not add a dependency for something the standard library does.
+- Tests run side by side: a new test starts with `t.Parallel()`. What an
+  app takes from where it runs (the clock, this computer's folders, the
+  webhook client, ntfy) comes in through `app.Options`
+  (`newAppWith(t, app.Options{...})` in internal/server), never a package
+  variable or an environment variable. A test that must set one anyway
+  leaves out `t.Parallel()` and puts it back before it ends.
 - Motion explains a change and never moves focus. A person's own action
   moves in `motion-base` or less, transform and opacity only; under
   reduced motion and the still pace it may cross-fade but not travel

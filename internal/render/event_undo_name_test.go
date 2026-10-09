@@ -9,6 +9,7 @@ import (
 )
 
 func TestUndoOfAnUndoSaysWhatItUndoes(t *testing.T) {
+	t.Parallel()
 	reg := builtins(t)
 	for action, want := range map[string]string{
 		"undid":    "Undo<span class=\"sw-visually-hidden\"> the undo of Assistant changed pace to Calm",

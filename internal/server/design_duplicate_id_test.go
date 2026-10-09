@@ -12,6 +12,7 @@ import (
 // chart-desc at least 3 times, and collection-task-title appeared multiple
 // times because component templates render without a unique id prop on /design.
 func TestDesignPageHasNoDuplicateIDs(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	var seen struct {

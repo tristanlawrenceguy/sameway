@@ -16,6 +16,7 @@ import (
 // A file opened on its own cannot act as the site: an SVG or HTML page
 // carrying a script runs nothing, served from here.
 func TestAnUploadedFileRunsNothingWhenOpened(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	dir := a.Workspace.FilesDir()
 	os.MkdirAll(dir, 0o755)
@@ -33,6 +34,7 @@ func TestAnUploadedFileRunsNothingWhenOpened(t *testing.T) {
 // A picture's size is known before it loads, so the page does not jump;
 // one that moves starts still, its first frame served as a picture.
 func TestAPictureKeepsItsPlaceAndAMovingOneStartsStill(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	dir := a.Workspace.FilesDir()
 	os.MkdirAll(dir, 0o755)

@@ -13,6 +13,7 @@ import (
 // its title, language, headings, lists, links and table header as Word
 // knows them, and a tagged PDF where a browser can print one.
 func TestARecordGoesOutAsADocument(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	note, err := a.Store.Create("note", map[string]any{"title": "Pond plan", "tags": []any{"garden"}, "body": "## Steps\n\n1. Dig\n2. Line it\n   - with sand\n\nSee [the guide](https://example.com/pond).\n\n| Job | Who |\n|---|---|\n| Dig | Hana |\n"})
 	if err != nil {

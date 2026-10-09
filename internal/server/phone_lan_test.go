@@ -15,6 +15,7 @@ import (
 // owner; anything else on the Wi-Fi sees how to pair, and a phone taken
 // away is out.
 func TestAPhoneOnTheWiFiPairsByACode(t *testing.T) {
+	t.Parallel()
 	a, _ := newApp(t)
 	on := false
 	srv := server.New(a)

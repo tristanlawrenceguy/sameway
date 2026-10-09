@@ -16,6 +16,7 @@ import (
 // home page after the assistant edits the canvas: provenance attributes,
 // change markers, the status live region, the receipt, and the activity log.
 func TestStateLanguageAfterATurn(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Chat.Provider, a.Chat.ProviderErr = &scripted{steps: []*llm.Response{
 		toolCall("add_component", map[string]any{"component": "heading", "props": map[string]any{"text": "Shopping"}}),
@@ -111,6 +112,7 @@ func TestStateLanguageAfterATurn(t *testing.T) {
 // TestHumanActionsAreAttributed checks a person's removal and edit of a
 // block show up as human activity and human provenance.
 func TestHumanActionsAreAttributed(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	wantStatus(t, get(t, h, "/"), http.StatusOK)
 	rec, err := a.Store.Create("block", map[string]any{"component": "text", "props": map[string]any{"content": "hi"}})
@@ -148,6 +150,7 @@ func TestHumanActionsAreAttributed(t *testing.T) {
 }
 
 func TestDesignPageRendersEveryComponent(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	rec := get(t, h, "/design")
 	wantStatus(t, rec, http.StatusOK)

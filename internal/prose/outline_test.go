@@ -8,6 +8,7 @@ import (
 // Headings take their place in the page's outline: the shallowest written
 // is at the base, whatever it was written as, and none skips a level.
 func TestHeadingsNeverSkipALevel(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct {
 		in   string
 		want []string

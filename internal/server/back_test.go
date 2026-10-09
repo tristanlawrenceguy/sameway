@@ -11,6 +11,7 @@ import (
 // says its block with no script, a closer place sent after it wins, only
 // an id is taken, and the page returns there.
 func TestAnActionComesBackWhereItWasTaken(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	task, err := a.Store.Create("task", map[string]any{"title": "Order compost"})
 	if err != nil {
@@ -48,6 +49,7 @@ func TestAnActionComesBackWhereItWasTaken(t *testing.T) {
 // A saved edit says what changed, from what to what, by what a page shows
 // for it: a ref by its title, a long text only that it changed.
 func TestASavedEditSaysWhatChanged(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	garden, _ := a.Store.Create("project", map[string]any{"title": "Garden"})
 	house, _ := a.Store.Create("project", map[string]any{"title": "House"})

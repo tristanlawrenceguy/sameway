@@ -18,6 +18,7 @@ func (*blinkered) Name() string { return "blinkered" }
 // person finds out by trying: pictures, once the model has been sent one,
 // and speech-to-text, with the owner's press to get it.
 func TestTheHelpPageSaysWhatThisComputerCannotDo(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	model := &blinkered{sees{blind: true}}
 	a.Chat.Provider, a.Chat.ProviderErr = model, nil

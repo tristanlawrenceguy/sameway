@@ -25,8 +25,9 @@ func (s *Server) tagsToCheck() []*store.Record {
 	}
 	recs, _ := s.app.Store.List(chat.ClassificationType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 100})
 	var out []*store.Record
+	alone := s.aloneTags()
 	for _, c := range recs {
-		if c.Fields["state"] == "suggested" && len(out) < 20 {
+		if c.Fields["state"] == "suggested" && !alone[strings.ToLower(fmt.Sprint(c.Fields["tag"]))] && len(out) < 20 {
 			out = append(out, c)
 		}
 	}
@@ -94,7 +95,7 @@ func (s *Server) tagNames() []string {
 func (s *Server) suggestion(r *http.Request) (*store.Record, *store.Record, error) {
 	r.ParseForm()
 	c, err := s.app.Store.Get(chat.ClassificationType, r.PostForm.Get("id"))
-	if err != nil || c.Fields["state"] != "suggested" {
+	if err != nil || c.Fields["state"] != "suggested" && c.Fields["confirmed_by"] != "judgement" {
 		return nil, nil, errors.New("that tag has been dealt with already")
 	}
 	rec, err := s.taggedRecord(c)
@@ -161,9 +162,13 @@ func (s *Server) tagChange(w http.ResponseWriter, r *http.Request) {
 
 // starterTags are the tags sorting begins with; the person changes what
 // each means, or adds their own, on the tags' page.
-var starterTags = [][2]string{
-	{"to do", "Something I have to do: pay, reply, book, bring, send, sign, renew, attend, buy or call. Not newsletters, adverts, receipts for what is paid, or notices that need nothing from me."},
-	{"important", "Money owed, health, an official or legal deadline (tax, passport, insurance, a lease), school, a work deadline, or someone waiting on my answer. Not plans with friends, errands or reminders of habit."},
+var starterTags = []struct {
+	name, means string
+	alone       bool
+}{
+	{"to do", "Something I have to do: pay, reply, book, bring, send, sign, renew, attend, buy or call. Not newsletters, adverts, receipts for what is paid, or notices that need nothing from me.", false},
+	{"important", "Money owed, health, an official or legal deadline (tax, passport, insurance, a lease), school, a work deadline, or someone waiting on my answer. Not plans with friends, errands or reminders of habit.", false},
+	{"nothing to do", "Needs nothing from me: newsletters, adverts, receipts, notices and confirmations. Given when no other tag fits.", true},
 }
 
 // setUpSorting, the first time email is connected, makes the starter tags
@@ -184,9 +189,9 @@ func (s *Server) setUpSorting() {
 	}
 	var names []any
 	for _, t := range starterTags {
-		names = append(names, t[0])
-		if !have[t[0]] {
-			records.WriteAs(s.app.Store, who, "created", chat.TagType, "", map[string]any{"name": t[0], "means": t[1]})
+		names = append(names, t.name)
+		if !have[t.name] {
+			records.WriteAs(s.app.Store, who, "created", chat.TagType, "", map[string]any{"name": t.name, "means": t.means, "alone": t.alone})
 		}
 	}
 	actions, _ := s.app.Store.List(records.ActionType, store.ListOptions{})
@@ -207,4 +212,77 @@ func (s *Server) setUpSorting() {
 		a["check"], a["examples"] = true, 10
 		records.WriteAs(s.app.Store, who, "created", records.ActionType, "", a)
 	}
+}
+
+// aloneTags are the tags given only when no other fits, by name.
+func (s *Server) aloneTags() map[string]bool {
+	recs, _ := s.app.Store.List(chat.TagType, store.ListOptions{})
+	out := map[string]bool{}
+	for _, r := range recs {
+		if alone, _ := r.Fields["alone"].(bool); alone {
+			out[strings.ToLower(fmt.Sprint(r.Fields["name"]))] = true
+		}
+	}
+	return out
+}
+
+// hasAlone is the tag a record has that is given only when no other fits.
+func (s *Server) hasAlone(rec *store.Record, alone map[string]bool) string {
+	for _, t := range records.StringList(rec.Fields["tags"]) {
+		if alone[strings.ToLower(t)] {
+			return t
+		}
+	}
+	return ""
+}
+
+// latestTag is the newest classification of a tag on a record, to change.
+func (s *Server) latestTag(rec *store.Record, tag string) *store.Record {
+	cls, _ := s.app.Store.List(chat.ClassificationType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 200})
+	for _, c := range cls {
+		if c.Fields["record"] == rec.Type+"/"+rec.ID && strings.EqualFold(fmt.Sprint(c.Fields["tag"]), tag) {
+			return c
+		}
+	}
+	return nil
+}
+
+// foldedNothing is what was looked at and needs nothing, folded away as a
+// count on Today: newsletters and receipts do not compete for attention,
+// and one changed to another tag teaches the action what it missed.
+func (s *Server) foldedNothing(items []*store.Record, alone map[string]bool) string {
+	esc := template.HTMLEscapeString
+	var other []any
+	for _, t := range s.tagNames() {
+		if !alone[strings.ToLower(t)] {
+			other = append(other, t)
+		}
+	}
+	var b strings.Builder
+	n, tag := 0, ""
+	for _, rec := range items {
+		t := s.hasAlone(rec, alone)
+		c := s.latestTag(rec, t)
+		if t == "" || c == nil || len(other) == 0 {
+			continue
+		}
+		n, tag = n+1, t
+		name := s.nameOf(rec)
+		why, _ := c.Fields["why"].(string)
+		b.WriteString(`<li class="sw-stack"><p><a class="sw-link" href="/t/` + rec.Type + `/` + rec.ID + `">` + esc(name) + `</a>`)
+		if why != "" && why != "no other tag fits" {
+			b.WriteString(`: ` + esc(why))
+		}
+		b.WriteString(`</p><form method="post" action="/tags/change" class="sw-cluster"><input type="hidden" name="id" value="` + c.ID + `">` +
+			string(s.component("select", map[string]any{"label": "Change to", "context": name, "name": "to", "as": "dropdown", "options": other, "value": other[0]})) +
+			string(s.component("button", map[string]any{"label": "Change", "context": name, "type": "submit", "variant": "quiet"})) + `</form></li>`)
+	}
+	if n == 0 {
+		return ""
+	}
+	body, err := s.app.Registry.RenderSlot("disclosure", map[string]any{"label": strings.ToUpper(tag[:1]) + tag[1:], "count": n, "of": "item"}, template.HTML(`<ul class="sw-plain sw-rows">`+b.String()+`</ul>`))
+	if err != nil {
+		return ""
+	}
+	return string(body)
 }

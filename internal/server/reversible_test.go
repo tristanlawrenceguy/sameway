@@ -14,6 +14,7 @@ import (
 // agent's, with how it came and everything the record had, so it can be
 // put back like any other.
 func TestADeleteThroughTheAPICanBeUndone(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	note, _ := a.Store.Create("note", map[string]any{"title": "Water the plants", "body": "Every Sunday."})
 	wantStatus(t, do(t, h, http.MethodDelete, "/api/note/"+note.ID, nil, ""), http.StatusOK)
@@ -35,6 +36,7 @@ func TestADeleteThroughTheAPICanBeUndone(t *testing.T) {
 // The activity log is what makes every change reversible: it is read by
 // anyone and changed by nobody.
 func TestTheActivityLogCannotBeChangedThroughTheAPI(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Store.Create("note", map[string]any{"title": "Seed"})
 	var log struct{ Records []struct{ ID string } }
@@ -62,6 +64,7 @@ func TestTheActivityLogCannotBeChangedThroughTheAPI(t *testing.T) {
 // A deleted workspace goes to Sameway's trash with everything in its
 // folder, and comes back from the Workspaces page.
 func TestADeletedWorkspaceGoesToTheTrashAndComesBack(t *testing.T) {
+	t.Parallel()
 	// The test app keeps its own list of workspaces, and so its own trash.
 	a, h := newApp(t)
 	dir := filepath.Join(t.TempDir(), "garden")
@@ -95,6 +98,7 @@ func TestADeletedWorkspaceGoesToTheTrashAndComesBack(t *testing.T) {
 
 // Logging a habit can be taken back: the entry it made goes.
 func TestLoggingAHabitCanBeUndone(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	habit, err := a.Store.Create("habit", map[string]any{"name": "Water", "cadence": "day", "target": 1})
 	if err != nil {

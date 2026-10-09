@@ -14,6 +14,7 @@ import (
 // query on the canvas, on the list page and over the API, and a wrong
 // condition explained rather than rendered as nothing.
 func TestACollectionIsTheRecordsThatMatch(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	day := func(d int) string { return time.Now().AddDate(0, 0, d).UTC().Format(time.RFC3339) }
 	// Shown to the minute, so the day due is taken once: worked out again
@@ -89,6 +90,7 @@ func TestACollectionIsTheRecordsThatMatch(t *testing.T) {
 // cards with the fields under each title; a ref shows the title it
 // points at and a date its day.
 func TestACollectionCanBeATableOrCards(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	var garden struct{ ID string }
 	decode(t, postJSON(t, h, http.MethodPost, "/api/project", map[string]any{"title": "Garden"}), &garden)

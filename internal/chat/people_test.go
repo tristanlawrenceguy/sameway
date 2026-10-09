@@ -13,6 +13,7 @@ var bob = records.Visitor{Name: "Bob", Login: "Bob@Example.com", Access: records
 // Bob has his own conversations with the assistant: he sees none of the
 // owner's, the owner sees none of his, and he cannot open the owner's.
 func TestEachPersonHasTheirOwnChats(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	svc.Say("the owner's words")
 	ownerChat := svc.Current()
@@ -39,6 +40,7 @@ func TestEachPersonHasTheirOwnChats(t *testing.T) {
 // What only the owner may have done is neither offered to Bob's assistant
 // nor done if it tries, and it knows whom it is talking to.
 func TestSomeoneElsesAssistantKeepsToTheirAccess(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	cfg := withSettings(svc, map[string]string{"ui.pace": "calm"})
 	b := svc.For(bob)
@@ -66,6 +68,7 @@ func TestSomeoneElsesAssistantKeepsToTheirAccess(t *testing.T) {
 // When the owner lets someone in, the chat says the one step that is
 // theirs in Tailscale: sharing this computer with them.
 func TestLettingSomeoneInSaysHowToShareTheMachine(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	withSettings(svc, map[string]string{"tailnet.name": "home"})
 	use(t, svc, "let_in", map[string]any{"email": "carol@example.com", "name": "Carol", "access": "view"})

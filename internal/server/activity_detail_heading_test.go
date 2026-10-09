@@ -13,6 +13,7 @@ import (
 // em-dash descriptions. "Assistant changed Pace — how changes arrive to Calmly"
 // becomes "Assistant changed pace to Calmly". This covers acceptance items 1 and 3.
 func TestActivityDetailHeadingUsesCleanSummary(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Seed an undo entry with a raw em-dash description in the summary field
@@ -60,6 +61,7 @@ func TestActivityDetailHeadingUsesCleanSummary(t *testing.T) {
 // Raw em-dash descriptions like "how changes arrive" should not appear in the
 // API title, and must match the heading on the HTML page for the same record.
 func TestAPIActivityTitleUsesCleanSummary(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Seed an undo entry with a raw em-dash description.

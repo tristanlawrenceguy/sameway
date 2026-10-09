@@ -17,6 +17,7 @@ import (
 // and no tabindex="-1" appears in the output. This ensures a keyboard user
 // can reach the link via Tab and activate it natively.
 func TestCardKeyboard(t *testing.T) {
+	t.Parallel()
 	reg := render.New()
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		t.Fatal(err)

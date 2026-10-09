@@ -12,6 +12,7 @@ import (
 // Try it with an example makes a workspace of its own with a week in it,
 // and its home page shows every block it was given, none set up wrong.
 func TestAnExampleWorkspaceShowsAWeek(t *testing.T) {
+	t.Parallel()
 	a, _ := newApp(t)
 	h := server.New(a).WithFleet(&server.Fleet{Launch: func(dir, addr string) error { return nil }, Exit: func() {}})
 	if page := get(t, h, "/workspaces").Body.String(); !strings.Contains(page, ">Open an example<") {

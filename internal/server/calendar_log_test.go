@@ -17,6 +17,7 @@ import (
 // A calendar of one habit's entries shows each as a link to its page, and
 // its day view logs that habit for the day shown, back on the same day.
 func TestACalendarOfEntriesLogsForTheDayShown(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	hours, _ := a.Store.Create(server.HabitType, map[string]any{"name": "Hours", "cadence": "month", "aim": "limit", "target": 21, "unit": "hours"})
 	water, _ := a.Store.Create(server.HabitType, map[string]any{"name": "Water", "target": 8, "unit": "glasses"})

@@ -16,6 +16,7 @@ import (
 // table and in every record from then on, and is still there after a
 // restart. A provided type without a file of its own gets one.
 func TestAFieldOrATypeCanBeAddedWhileRunning(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	if err := workspace.Init(dir, examples.FS, examples.StarterRoot, false); err != nil {
 		t.Fatal(err)

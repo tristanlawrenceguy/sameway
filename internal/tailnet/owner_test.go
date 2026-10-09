@@ -10,6 +10,7 @@ import (
 // server on the same tailnet, does not. A node signed in with a tagged
 // key belongs to nobody, so the tailnet's own rules decide.
 func TestOnlyTheOwnersDevicesGetIn(t *testing.T) {
+	t.Parallel()
 	const me, them tailcfg.UserID = 1, 2
 	mine := &tailcfg.Node{User: me}
 	theirs := &tailcfg.Node{User: them}
@@ -30,6 +31,7 @@ func TestOnlyTheOwnersDevicesGetIn(t *testing.T) {
 
 // A device is named the way the tailnet names it, without the domain.
 func TestADeviceIsCalledByItsTailnetName(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		node *tailcfg.Node
 		want string

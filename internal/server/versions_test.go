@@ -19,6 +19,7 @@ import (
 // left alone keeps the agent's change; what they both changed is the
 // person's, and they are told.
 func TestASaveFromAnOldPageKeepsWhatOthersChanged(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	var made map[string]any
 	decode(t, postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Seeds", "body": "Kale", "status": "draft"}), &made)
@@ -70,6 +71,7 @@ func TestASaveFromAnOldPageKeepsWhatOthersChanged(t *testing.T) {
 // as it is, when that version is out of date: over the API with If-Match,
 // and through the assistant's update_record.
 func TestAnAgentsChangeFromAnOldVersionIsRefused(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	var made map[string]any
 	decode(t, postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Plan"}), &made)
@@ -120,6 +122,7 @@ func TestAnAgentsChangeFromAnOldVersionIsRefused(t *testing.T) {
 // what its own page does, where a save goes, what it showed and its
 // language, so an edit made there loses nobody's work either.
 func TestARecordOnTheCanvasEditsAsItsPageDoes(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	var made map[string]any
 	decode(t, postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Einkauf", "language": "de"}), &made)

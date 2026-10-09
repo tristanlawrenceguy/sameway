@@ -12,6 +12,7 @@ import (
 // This is the real fix for backlog 0252, complementing the top padding
 // added in TestShellStylesheetHasAdequateTopPadding.
 func TestStickyHeaderHasPointerEventsNone(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/design/sameway.css")
@@ -30,6 +31,7 @@ func TestStickyHeaderHasPointerEventsNone(t *testing.T) {
 // still receive pointer events (pointer-events: auto), because they must remain
 // clickable even though the header itself is transparent to clicks.
 func TestStickyHeaderInteractiveChildrenHavePointerEventsAuto(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/design/sameway.css")
@@ -52,6 +54,7 @@ func TestStickyHeaderInteractiveChildrenHavePointerEventsAuto(t *testing.T) {
 // pointer-events to the header does not remove its sticky positioning.
 // The header must still be visible when scrolling.
 func TestStickyHeaderRemainsStickyAfterPointerEventsFix(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/design/sameway.css")

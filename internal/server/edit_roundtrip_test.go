@@ -17,6 +17,7 @@ import (
 // midnight and a minute either side of it. The day field's words changed
 // (Sat 19 Sep 2026 at 2pm, midday), and they must still read back.
 func TestTheEditFormReadsBackWhatItShows(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	project, _ := a.Store.Create("project", map[string]any{"title": "Garden"})
 	day := time.Date(2026, 9, 19, 0, 0, 0, 0, time.Local)

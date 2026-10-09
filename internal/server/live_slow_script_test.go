@@ -10,6 +10,7 @@ import (
 // word; the turn's Thinking says, after a while, that this is how it goes,
 // so the page does not read as stuck (17-live.js).
 func TestALongThinkSaysItIsStillGoing(t *testing.T) {
+	t.Parallel()
 	data, err := os.ReadFile("../../design/base/17-live.js")
 	if err != nil {
 		t.Fatal(err)

@@ -11,6 +11,7 @@ import (
 // import, the assistant; and "not known" when the log is silent.
 // Only what came from beyond the owner and their assistant is outside.
 func TestWrittenBySaysWhoInPlainWords(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	svc.Owner = records.Visitor{Login: "me@example.com"}
 	note := func(title string) string {

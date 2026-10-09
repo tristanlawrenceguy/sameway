@@ -64,6 +64,7 @@ func withHabit(t *testing.T, a *app.App) {
 // resolve it: one that could only say it is set up wrong is refused with
 // the page's own reason and what to do, and nothing is written.
 func TestTheAssistantsBlockToolsRefuseWhatCouldNotBeShown(t *testing.T) {
+	t.Parallel()
 	a, _ := newApp(t)
 	withHabit(t, a)
 	before := blockCount(t, a)
@@ -121,6 +122,7 @@ func TestTheAssistantsBlockToolsRefuseWhatCouldNotBeShown(t *testing.T) {
 // is added; a block moved without new props is left alone, as is one
 // stored before blocks were checked, which still says what is wrong.
 func TestTheAPIRefusesABlockThatCouldNotBeShown(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	withHabit(t, a)
 	before := blockCount(t, a)
@@ -167,6 +169,7 @@ func jsonText(s string) string {
 // A block written says what it shows, so a model has something to notice:
 // how many, which and in what order; what a chart draws and over what.
 func TestABlockWrittenSaysWhatItShows(t *testing.T) {
+	t.Parallel()
 	a, _ := newApp(t)
 	withHabit(t, a)
 	for _, task := range []map[string]any{{"title": "a", "due": "2026-10-01T00:00:00Z"}, {"title": "b"}, {"title": "c"}, {"title": "d", "done": true}} {
@@ -202,6 +205,7 @@ func TestABlockWrittenSaysWhatItShows(t *testing.T) {
 // A look at a page lists each block on it that could only say it is set
 // up wrong, and a look at a component before it is added says so too.
 func TestALookListsBlocksSetUpWrong(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	id := storedBlock(t, a, "collection", setUpWrong[0].props)
 	var seen struct {
@@ -225,6 +229,7 @@ func TestALookListsBlocksSetUpWrong(t *testing.T) {
 // Through the API, props that do not fit are said as a model or program
 // needs them, with the prop likely meant and every one there is.
 func TestTheAPISaysPropsThatDoNotFitForWhoeverFixesThem(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	for _, path := range []string{"/api/block", "/api/look"} {
 		res := postJSON(t, h, http.MethodPost, path, map[string]any{"component": "button", "props": map[string]any{"text": "Go", "tone": "info"}})

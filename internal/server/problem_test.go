@@ -9,6 +9,7 @@ import (
 // A block set up wrong says so, in one way everywhere, rather than show
 // an empty month or "Nothing tracked yet", which read as nothing there.
 func TestABlockSetUpWrongSaysWhatIsWrong(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	if _, err := a.Store.Create("habit", map[string]any{"name": "Walk", "tags": []any{"health"}}); err != nil {
 		t.Fatal(err)

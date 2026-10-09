@@ -17,6 +17,7 @@ import (
 // does not display "Url" as a visible field label when the url field has a value.
 // The schema should provide a plain-language label such as "URL". (Acceptance 2.)
 func TestActionDetailDoesNotShowRawUrlLabel(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("action", map[string]any{
@@ -39,6 +40,7 @@ func TestActionDetailDoesNotShowRawUrlLabel(t *testing.T) {
 // term should be readable and clearly associated with its HTTP method value.
 // (Acceptance 3.)
 func TestActionDetailDoesNotShowRawMethodLabel(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("action", map[string]any{
@@ -59,6 +61,7 @@ func TestActionDetailDoesNotShowRawMethodLabel(t *testing.T) {
 // does not display "Every" as a visible field label in its definition list. The
 // field should use plain language such as "Schedule". (Acceptance 5.)
 func TestActionDetailDoesNotShowRawEveryLabel(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("action", map[string]any{
@@ -79,6 +82,7 @@ func TestActionDetailDoesNotShowRawEveryLabel(t *testing.T) {
 // lede does not contain "Created" as a visible label (Acceptance 4). The text
 // should read naturally, e.g. "Started …".
 func TestActionDetailLedeDoesNotShowCreatedLabel(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("action", map[string]any{
@@ -98,6 +102,7 @@ func TestActionDetailLedeDoesNotShowCreatedLabel(t *testing.T) {
 // TestActionDetailLedeSpacing ensures the status checkbox and its timestamp are
 // separated by whitespace so they do not merge into one accessibility name.
 func TestActionDetailLedeSpacing(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("action", map[string]any{
@@ -120,6 +125,7 @@ func TestActionDetailLedeSpacing(t *testing.T) {
 // value (e.g. "Show" or "Done") does not run directly into the timestamp in the
 // action detail page lede. This confirms the spacing fix between box and facts.
 func TestActionDetailShowLabelDoesNotRunIntoTimestamp(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("action", map[string]any{
@@ -144,6 +150,7 @@ func TestActionDetailShowLabelDoesNotRunIntoTimestamp(t *testing.T) {
 // human-readable labels for all three schema fields: URL, HTTP method, and
 // Schedule. (Acceptance 2–3, 5.)
 func TestActionDetailShowsCorrectLabels(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("action", map[string]any{
@@ -175,6 +182,7 @@ func TestActionDetailShowsCorrectLabels(t *testing.T) {
 // assertions hold simultaneously: no raw labels appear and all correct labels
 // do. This is the comprehensive acceptance test for backlog 0620.
 func TestActionDetailLabelCombination(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("action", map[string]any{
@@ -211,6 +219,7 @@ func TestActionDetailLabelCombination(t *testing.T) {
 // TestActionDetailAcceptsUrlAndMethodFields verifies that creating an action with
 // url and method fields via the API succeeds and those values appear on the page.
 func TestActionDetailAcceptsUrlAndMethodFields(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	var act struct{ ID string }
@@ -242,6 +251,7 @@ func TestActionDetailAcceptsUrlAndMethodFields(t *testing.T) {
 // TestActionDetailDumpDtLabels is a debug-only test that prints all <dt> elements
 // from an action detail page to verify what labels are actually rendered.
 func TestActionDetailDumpDtLabels(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("action", map[string]any{"title": "Debug"})

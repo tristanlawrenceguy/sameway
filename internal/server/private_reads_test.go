@@ -23,6 +23,7 @@ import (
 // it, is read as someone let in to look and as anyone on the internet; no
 // marked word may come back.
 func TestNothingOfTheOwnersIsReadByOthers(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	srv := h.(*server.Server)
 

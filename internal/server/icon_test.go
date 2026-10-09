@@ -8,6 +8,7 @@ import (
 // Sameway's tab has its icon: every page names it, and it is served, the
 // .ico a browser asks for by itself too.
 func TestEveryPageHasSamewaysIcon(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	if page := get(t, h, "/").Body.String(); !strings.Contains(page, `<link rel="icon" href="/favicon.svg" type="image/svg+xml">`) {
 		t.Errorf("the page names its icon: %s", truncate(page))

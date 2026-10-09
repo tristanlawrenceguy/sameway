@@ -12,6 +12,7 @@ import (
 // person does and reads where they land, and reads one component from
 // props before adding it, all without a browser.
 func TestAnAgentLooksAtAPageWithoutABrowser(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	created := postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Water the plants", "body": "Every Sunday."})
 	wantStatus(t, created, http.StatusCreated)
@@ -90,6 +91,7 @@ func TestAnAgentLooksAtAPageWithoutABrowser(t *testing.T) {
 // via POST /api/look, the rendered HTML shows the transformed action
 // "changed" rather than the raw word "set". This covers acceptance item 1.
 func TestLookAtComponentRawSettingChangeTransformsAction(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := postJSON(t, h, http.MethodPost, "/api/look", map[string]any{
@@ -126,6 +128,7 @@ func TestLookAtComponentRawSettingChangeTransformsAction(t *testing.T) {
 // such as "(text size)" instead of the internal key "(ui.text)". This covers
 // acceptance item 2.
 func TestLookAtComponentRawSettingChangeShowsReadableTarget(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := postJSON(t, h, http.MethodPost, "/api/look", map[string]any{
@@ -163,6 +166,7 @@ func TestLookAtComponentRawSettingChangeShowsReadableTarget(t *testing.T) {
 // internal keys. For example "changed text size to Large" rather than
 // "set ui.text large". This covers acceptance item 3.
 func TestLookAtComponentRawSettingChangeReadableUndoName(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := postJSON(t, h, http.MethodPost, "/api/look", map[string]any{
@@ -201,6 +205,7 @@ func TestLookAtComponentRawSettingChangeReadableUndoName(t *testing.T) {
 // changes (e.g. action "added", component "card") are not transformed and pass
 // through unchanged. This ensures we do not break non-setting change rendering.
 func TestLookAtComponentNonSettingChangePassesThrough(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := postJSON(t, h, http.MethodPost, "/api/look", map[string]any{
@@ -233,6 +238,7 @@ func TestLookAtComponentNonSettingChangePassesThrough(t *testing.T) {
 // message has both setting-change and non-setting changes, only the setting
 // changes are transformed while non-setting ones pass through unchanged.
 func TestLookAtComponentMixedChangesTransformsOnlySetting(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := postJSON(t, h, http.MethodPost, "/api/look", map[string]any{

@@ -14,6 +14,7 @@ import (
 // method. A route added without a line in describe is one no agent finds
 // (backlog 0190, 0402).
 func TestEveryAPIRouteIsDescribed(t *testing.T) {
+	t.Parallel()
 	pattern := regexp.MustCompile(`^([A-Z]+) (/api/.*)$`)
 	var routes [][]string
 	for _, r := range server.Routes() {

@@ -51,6 +51,7 @@ func TestADoubleClickOpensYourWorkspace(t *testing.T) {
 
 // An error waits to be read before the window closes.
 func TestADoubleClickWaitsOnAnError(t *testing.T) {
+	t.Parallel()
 	var out bytes.Buffer
 	c := &ctx{Env: Env{Stdout: &out, Stderr: &out, Stdin: strings.NewReader("\n")}}
 	c.holdOpen(os.ErrPermission)

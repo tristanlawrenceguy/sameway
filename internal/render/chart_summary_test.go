@@ -15,6 +15,7 @@ import (
 // the disclosure must use it (or an explicit summary prop), so screen
 // reader users can distinguish between multiple charts on /design.
 func TestChartSummaryUsesCaption(t *testing.T) {
+	t.Parallel()
 	reg := render.New()
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		t.Fatal(err)
@@ -54,6 +55,7 @@ func TestChartSummaryUsesCaption(t *testing.T) {
 // explicit summary prop, it uses that instead of the caption. This allows
 // special cases where the disclosure label needs to differ from the title.
 func TestChartSummaryPropOverridesCaption(t *testing.T) {
+	t.Parallel()
 	reg := render.New()
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		t.Fatal(err)

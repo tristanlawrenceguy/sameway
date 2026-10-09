@@ -14,6 +14,7 @@ import (
 // exists, a receipt under a reply leads to what the assistant made, and a
 // list of activities reads as sentences rather than a column of verbs.
 func TestEverythingLeadsSomewhere(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// A detail page carries the way back to its listing.

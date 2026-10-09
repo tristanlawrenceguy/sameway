@@ -12,6 +12,7 @@ import (
 // side rendering is correct; the client-side fix (hiding the source textarea) ensures
 // only one of the two created editors is visible at startup.
 func TestNoteDetailPageBodyDataProp(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{

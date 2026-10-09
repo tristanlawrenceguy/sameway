@@ -25,6 +25,7 @@ func (w *waiting) Complete(ctx context.Context, _ llm.Request) (*llm.Response, e
 // A person can stop a turn from the page. The stream ends with a reply
 // that says so, recorded like any other, and the turn is not an error.
 func TestAPersonCanStopATurn(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	model := &waiting{started: make(chan struct{})}
 	a.Chat.Provider, a.Chat.ProviderErr = model, nil

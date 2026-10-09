@@ -10,6 +10,7 @@ import (
 // Each export a person has is read as the app wrote it, into tasks and
 // notes with their fields already named.
 func TestTheExportsPeopleHaveAreRecognised(t *testing.T) {
+	t.Parallel()
 	todo := "TYPE,CONTENT,DESCRIPTION,PRIORITY,INDENT,AUTHOR,RESPONSIBLE,DATE,DATE_LANG,TIMEZONE\n" +
 		"section,Errands,,,,,,,,\n" +
 		"task,Call the bank,About the card,4,1,Me,,tomorrow,en,Europe/Berlin\n" +

@@ -19,6 +19,7 @@ import (
 // second; written down, each line is said by me or by them, and them is
 // the other person by name when the meeting has one.
 func TestACallIsWrittenDownAsMeAndThem(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	h.(*server.Server).UseSpeech(server.Speech{
 		Ready: func() bool { return true },

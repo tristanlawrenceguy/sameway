@@ -12,6 +12,7 @@ import (
 // TestRecordPropsWorksForProposal checks that the handler works for proposal
 // records — acceptance item 5.
 func TestRecordPropsWorksForProposal(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("proposal", map[string]any{
@@ -41,6 +42,7 @@ func TestRecordPropsWorksForProposal(t *testing.T) {
 // TestRecordPropsPreservesExistingFields checks that fields not included in the
 // POST body keep their original values after a successful update.
 func TestRecordPropsPreservesExistingFields(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{
@@ -80,6 +82,7 @@ func TestRecordPropsPreservesExistingFields(t *testing.T) {
 // type that was requested — e.g. POST /t/activity/... returns 303 to
 // /t/activity/{id}. This ensures cross-type correctness.
 func TestRecordPropsRedirectsToCorrectType(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("activity", map[string]any{

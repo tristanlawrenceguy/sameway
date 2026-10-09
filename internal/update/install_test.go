@@ -28,6 +28,7 @@ func binary(t *testing.T, body string) string {
 }
 
 func TestInstallPutsTheNewProgramWhereTheOldOneWas(t *testing.T) {
+	t.Parallel()
 	srv := releases(t, release{version: "0.4.0", body: []byte("new program")})
 	exe := binary(t, "old program")
 	out, err := update.Updater{Current: "0.3.0", Repo: "o/r", API: srv.URL, Exe: exe}.Run(context.Background(), true)
@@ -52,6 +53,7 @@ func TestInstallPutsTheNewProgramWhereTheOldOneWas(t *testing.T) {
 }
 
 func TestInstallRefusesADownloadThatDoesNotMatchItsSum(t *testing.T) {
+	t.Parallel()
 	srv := releases(t, release{version: "0.4.0", body: []byte("tampered"), sums: []byte("0000000000000000000000000000000000000000000000000000000000000000  sameway\n")})
 	exe := binary(t, "old program")
 	_, err := update.Updater{Current: "0.3.0", Repo: "o/r", API: srv.URL, Exe: exe}.Run(context.Background(), true)
@@ -67,6 +69,7 @@ func TestInstallRefusesADownloadThatDoesNotMatchItsSum(t *testing.T) {
 }
 
 func TestInstallRefusesASumThatDisagrees(t *testing.T) {
+	t.Parallel()
 	name := update.AssetName("0.4.0")
 	srv := releases(t, release{version: "0.4.0", body: []byte("tampered"),
 		sums: []byte("0000000000000000000000000000000000000000000000000000000000000000  " + name + "\n")})
@@ -81,6 +84,7 @@ func TestInstallRefusesASumThatDisagrees(t *testing.T) {
 }
 
 func TestInstallRefusesARelaseWithNoChecksumsAtAll(t *testing.T) {
+	t.Parallel()
 	srv := releases(t, release{version: "0.4.0", noSums: true})
 	exe := binary(t, "old program")
 	_, err := update.Updater{Current: "0.3.0", Repo: "o/r", API: srv.URL, Exe: exe}.Run(context.Background(), true)
@@ -90,6 +94,7 @@ func TestInstallRefusesARelaseWithNoChecksumsAtAll(t *testing.T) {
 }
 
 func TestADevBuildNeverReplacesItself(t *testing.T) {
+	t.Parallel()
 	srv := releases(t, release{version: "0.4.0"})
 	exe := binary(t, "built from source")
 	out, err := update.Updater{Current: "dev", Repo: "o/r", API: srv.URL, Exe: exe}.Run(context.Background(), true)
@@ -108,6 +113,7 @@ func TestADevBuildNeverReplacesItself(t *testing.T) {
 }
 
 func TestInstallTakesTheProgramOutOfAnArchive(t *testing.T) {
+	t.Parallel()
 	program := []byte("new program")
 	for _, c := range []struct {
 		name string
@@ -132,6 +138,7 @@ func TestInstallTakesTheProgramOutOfAnArchive(t *testing.T) {
 }
 
 func TestTidyClearsWhatAnInstallLeftBehind(t *testing.T) {
+	t.Parallel()
 	exe := binary(t, "program")
 	for _, suffix := range []string{".old", ".new"} {
 		if err := os.WriteFile(exe+suffix, []byte("leftover"), 0o644); err != nil {
@@ -150,6 +157,7 @@ func TestTidyClearsWhatAnInstallLeftBehind(t *testing.T) {
 }
 
 func TestWatchInstallsInAutoAndOnlyTellsInManual(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct {
 		mode    string
 		install bool
@@ -185,6 +193,7 @@ func TestWatchInstallsInAutoAndOnlyTellsInManual(t *testing.T) {
 }
 
 func TestADevBuildDoesNotWatch(t *testing.T) {
+	t.Parallel()
 	srv := releases(t, release{version: "0.4.0"})
 	told := make(chan update.Outcome, 1)
 	ctx, stop := context.WithCancel(context.Background())

@@ -12,6 +12,7 @@ import (
 // A change sent as a dry run is answered as it would be, refusal and all,
 // and the workspace is as it was.
 func TestADryRunAnswersAndChangesNothing(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	workdir := a.Chat.Workdir
 	try := func(method, path, body string) *httptest.ResponseRecorder {

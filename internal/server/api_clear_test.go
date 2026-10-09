@@ -13,6 +13,7 @@ import (
 // creates messages, calls clear via the API, and verifies that messages are
 // gone and an activity entry was logged. It covers acceptance items 1–3.
 func TestAPIClearConversation(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Send a message to create data in the conversation.
@@ -86,6 +87,7 @@ func TestAPIClearConversation(t *testing.T) {
 // conversation succeeds without error. This covers the edge case where there
 // are no messages to delete.
 func TestAPIClearConversationEmpty(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	clear := postJSON(t, h, http.MethodPost, "/api/chat/clear", nil)

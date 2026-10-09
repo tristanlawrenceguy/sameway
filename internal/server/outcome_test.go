@@ -13,6 +13,7 @@ import (
 // were on, told once what happened, with Undo in the message when it can
 // be taken back.
 func TestEveryActionSaysWhatHappenedWhereThePersonIs(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	rec, _ := a.Store.Create("note", map[string]any{"title": "Water the plants"})
 
@@ -60,6 +61,7 @@ func TestEveryActionSaysWhatHappenedWhereThePersonIs(t *testing.T) {
 // A block whose component the workspace no longer has is refused in
 // words, not with a crash.
 func TestABlockWithAGoneComponentIsRefusedInWords(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	blk, err := a.Store.Create("block", map[string]any{"component": "nothing-like-it", "props": map[string]any{}})
 	if err != nil {

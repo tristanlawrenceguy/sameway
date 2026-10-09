@@ -13,6 +13,7 @@ import (
 // month shown, each saying in words that it repeats, once; only the one
 // due now carries its tick, and the month shown is all that is worked out.
 func TestACalendarShowsARepeatOnEachDay(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	ferns, _ := a.Store.Create("task", map[string]any{"title": "Water the ferns", "due": "2026-09-01", "repeat": "every Tuesday"})
 	a.Store.Create(server.ReminderType, map[string]any{"title": "Stretch", "at": "2026-09-28T07:00:00Z", "repeat": "every day until 30 Sep 2026"})

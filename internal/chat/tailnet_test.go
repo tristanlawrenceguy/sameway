@@ -11,6 +11,7 @@ import (
 // it on and the next step (signing in) is in the chat for them to follow;
 // turning it off sends nothing anywhere and is not asked.
 func TestOpeningToThePhoneIsAskedAndTheNextStepIsInTheChat(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	cfg := withSettings(svc, nil)
 	svc.Tailnet = func(time.Duration) string {

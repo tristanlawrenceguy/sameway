@@ -5,6 +5,7 @@ import "testing"
 // A monthly allowance: hours worked add up over the month, the limit is
 // kept while they stay under it, and what goes past it is the over.
 func TestAMonthlyLimit(t *testing.T) {
+	t.Parallel()
 	h := Habit{Name: "Hours", Cadence: "month", Target: 21, Aim: Limit, Unit: "hours"}
 	entries := []Entry{
 		{at("2026-07-06", 9), 2}, {at("2026-07-09", 9), 2},
@@ -40,6 +41,7 @@ func TestAMonthlyLimit(t *testing.T) {
 // A measure that is only recorded, where a period is its latest reading:
 // no target, no streak, and a period with nothing in it says so.
 func TestARecordOfTheLatest(t *testing.T) {
+	t.Parallel()
 	h := Habit{Name: "Weight", Aim: Record, Combine: Latest, Unit: "kg"}
 	entries := []Entry{{at("2026-09-21", 7), 73.1}, {at("2026-09-22", 7), 72.8}, {at("2026-09-22", 21), 73.4}}
 	s := Summarise(h, entries, at("2026-09-22", 22), 3)
@@ -57,6 +59,7 @@ func TestARecordOfTheLatest(t *testing.T) {
 
 // An average to reach over a week, and a yearly count.
 func TestAnAverageAndAYear(t *testing.T) {
+	t.Parallel()
 	sleep := Habit{Name: "Sleep", Cadence: "week", Target: 7, Aim: Reach, Combine: Average, Unit: "hours"}
 	s := Summarise(sleep, []Entry{{at("2026-09-21", 7), 6}, {at("2026-09-22", 7), 8}, {at("2026-09-23", 7), 7.6}}, at("2026-09-23", 12), 2)
 	if s.Now != 7.2 || !s.Met || s.Total != 21.6 {

@@ -10,6 +10,7 @@ import (
 // fresh workspace: the kinds it needs are made, a tab of its own holds
 // it, and that tab shows every block it was given, none set up wrong.
 func TestEveryTemplateAppliesWithOnePress(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	page := get(t, h, "/templates").Body.String()
 	var names []string

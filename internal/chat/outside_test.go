@@ -27,6 +27,7 @@ func (o *outside) Complete(_ context.Context, _ llm.Request) (*llm.Response, err
 // receipt: what the log says the assistant did during the turn, each
 // entry undoable, and nothing from before the turn.
 func TestAReplyFromOutsideToolsCarriesTheReceiptFromTheLog(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	records.Record(svc.Store, "assistant", records.Change{Action: "created", Component: "note", Detail: "earlier"})
 	svc.Provider = &outside{svc: svc}
@@ -49,6 +50,7 @@ func TestAReplyFromOutsideToolsCarriesTheReceiptFromTheLog(t *testing.T) {
 // as they land in the log, each as a step and a change, before the turn
 // is done, so a page can show that turn as it happens too.
 func TestChangesMadeOutsideAreToldAsTheyLand(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	svc.Provider = &outside{svc: svc}
 	var events []string

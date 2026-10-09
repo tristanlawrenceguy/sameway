@@ -10,6 +10,7 @@ import (
 // a date, in an order a person expects, with the numbers as a table too;
 // a wrong field is said in words.
 func TestAChartCountsRecords(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	var garden struct{ ID string }
 	decode(t, postJSON(t, h, http.MethodPost, "/api/project", map[string]any{"title": "Garden"}), &garden)

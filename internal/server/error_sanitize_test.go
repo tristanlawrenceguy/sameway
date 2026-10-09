@@ -16,6 +16,7 @@ import (
 // item 1: opening /chat shows no paragraph containing "claude:" or "exit status".
 
 func TestChatPageShowsPlainErrorMessages(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Seed an error-role message with a raw diagnostic string the way the
@@ -63,6 +64,7 @@ func TestChatPageShowsPlainErrorMessages(t *testing.T) {
 // must not leak filesystem paths to the user.
 
 func TestChatPagePlainErrorWithFilePath(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	_, _ = a.Store.Create("message", map[string]any{
@@ -96,6 +98,7 @@ func TestChatPagePlainErrorWithFilePath(t *testing.T) {
 // removed from error messages on /chat.
 
 func TestChatPagePlainErrorAnthropic(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	_, _ = a.Store.Create("message", map[string]any{
@@ -126,6 +129,7 @@ func TestChatPagePlainErrorAnthropic(t *testing.T) {
 // (/) canvas chat section contains no raw error strings in failure messages.
 
 func TestHomePageCanvasPlainErrorMessages(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	_, _ = a.Store.Create("message", map[string]any{

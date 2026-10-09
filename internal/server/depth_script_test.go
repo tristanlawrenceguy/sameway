@@ -16,6 +16,7 @@ import (
 // what is coming; under forced colours the edges carry what the shadows
 // did.
 func TestDepthLiftsAndWaitsQuietly(t *testing.T) {
+	t.Parallel()
 	read := func(name string) string {
 		data, err := os.ReadFile("../../design/" + name)
 		if err != nil {

@@ -17,6 +17,7 @@ import (
 // aria-checked. The test renders the component via Render("mark", props) and
 // asserts on the HTML output string for four keyboard-relevant properties.
 func TestMarkKeyboard(t *testing.T) {
+	t.Parallel()
 	reg := render.New()
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		t.Fatal(err)

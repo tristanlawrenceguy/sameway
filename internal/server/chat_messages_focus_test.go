@@ -14,6 +14,7 @@ import (
 // tabindex is -1), so it takes Tab once, as a whole, and the messages in
 // it stay plain articles.
 func TestChatMessagesListIsNotFocusable(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Create at least two messages via the assistant so the ol is rendered.

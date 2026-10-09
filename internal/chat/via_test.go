@@ -13,6 +13,7 @@ import (
 // the activity log says where it came from; said on this machine, it says
 // nothing extra.
 func TestSaidFromAnotherDeviceSaysWhich(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	svc.Provider = &scripted{steps: []*llm.Response{}}
 	ctx := records.WithVia(context.Background(), "pixel-7")

@@ -9,6 +9,7 @@ import (
 // a bare address to a record reads as the record's title, and only an
 // address nothing can name shows where it goes (backlog 0548).
 func TestLinkifyNamesThings(t *testing.T) {
+	t.Parallel()
 	titles := map[string]string{"/t/note/seeds1": "Seeds to buy"}
 	name := func(p string) string { return titles[p] }
 	cases := []struct{ in, want string }{
@@ -51,6 +52,7 @@ func TestLinkifyNamesThings(t *testing.T) {
 
 // Where a reply is read out rather than drawn, its links are their words.
 func TestLinkWords(t *testing.T) {
+	t.Parallel()
 	name := func(p string) string {
 		if p == "/t/note/seeds1" {
 			return "Seeds to buy"

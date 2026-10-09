@@ -12,6 +12,7 @@ import (
 // them for a file type rejects the program on the machines whose programs
 // have no suffix.
 func TestFileTypeTellsAVersionFromASuffix(t *testing.T) {
+	t.Parallel()
 	for name, want := range map[string]string{
 		"sameway_0.4.0_linux_amd64":        "",
 		"sameway_0.4.0_darwin_arm64":       "",
@@ -35,6 +36,7 @@ func TestFileTypeTellsAVersionFromASuffix(t *testing.T) {
 // The name this machine's release file has is the one the updater picks,
 // and what is published beside it is left alone.
 func TestTheProgramForThisMachineIsPicked(t *testing.T) {
+	t.Parallel()
 	plain := AssetName("0.4.0")
 	for name, want := range map[string]bool{
 		plain:                       true,

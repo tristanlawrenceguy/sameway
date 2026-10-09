@@ -33,6 +33,7 @@ func tasks(t *testing.T) (*store.Store, *schema.Type) {
 // words in a field, by a tag, and by what is empty; the order and the
 // limit are part of the ask.
 func TestOneGrammarPicksRecords(t *testing.T) {
+	t.Parallel()
 	st, typ := tasks(t)
 	now := time.Date(2026, 9, 17, 12, 0, 0, 0, time.UTC)
 	day := func(d int) string { return now.AddDate(0, 0, d).Format(time.RFC3339) }
@@ -82,6 +83,7 @@ func TestOneGrammarPicksRecords(t *testing.T) {
 // A wrong field or a shapeless condition is an error that names what the
 // type has, so whoever typed it can fix it without guessing.
 func TestAWrongConditionSaysWhatItCouldBe(t *testing.T) {
+	t.Parallel()
 	st, typ := tasks(t)
 	if _, err := query.Filter(st, typ, []string{"owner=me"}, "", 0, time.Now()); err == nil || !strings.Contains(err.Error(), `no field "owner"`) || !strings.Contains(err.Error(), "title, done, due") {
 		t.Errorf("an unknown field lists the fields: %v", err)
@@ -96,6 +98,7 @@ func TestAWrongConditionSaysWhatItCouldBe(t *testing.T) {
 
 // A ref is picked by the id it holds or by the title of what it points at.
 func TestARefMatchesByIdOrByTitle(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	os.WriteFile(filepath.Join(dir, "project.yaml"), []byte("name: project\ntitle: title\nfields:\n  title: {type: string, required: true}\n"), 0o644)
 	os.WriteFile(filepath.Join(dir, "task.yaml"), []byte("name: task\ntitle: title\nfields:\n  title: {type: string, required: true}\n  project: {type: ref, to: project}\n"), 0o644)

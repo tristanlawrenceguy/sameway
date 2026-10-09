@@ -14,6 +14,7 @@ const sample = `{
 }`
 
 func TestGenerateEmitsLightDarkAndToggle(t *testing.T) {
+	t.Parallel()
 	css, err := tokens.Generate([]byte(sample))
 	if err != nil {
 		t.Fatal(err)
@@ -37,6 +38,7 @@ func TestGenerateEmitsLightDarkAndToggle(t *testing.T) {
 }
 
 func TestGenerateRejectsHalfThemedColours(t *testing.T) {
+	t.Parallel()
 	_, err := tokens.Generate([]byte(`{"color":{"bg":{"light":"#fff"}}}`))
 	if err == nil || !strings.Contains(err.Error(), "needs light and dark") {
 		t.Errorf("expected light/dark error, got %v", err)

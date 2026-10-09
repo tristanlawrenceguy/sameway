@@ -21,6 +21,7 @@ func noEmptyH3(t *testing.T, body string) {
 // record has a blank summary, the /activity page still reads it as a
 // sentence built from actor + action + detail, rather than an empty h3.
 func TestActivityPageBlankSummaryShowsFallback(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Seed one normal and one blank-summary activity so we can verify both.
@@ -67,6 +68,7 @@ func TestActivityPageBlankSummaryShowsFallback(t *testing.T) {
 // TestActivityPageBlankSummaryAssistantFallback checks that assistant and
 // system actors also get a fallback when summary is blank.
 func TestActivityPageBlankSummaryAssistantFallback(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Seed an assistant activity with empty summary and no detail.
@@ -94,6 +96,7 @@ func TestActivityPageBlankSummaryAssistantFallback(t *testing.T) {
 // TestActivityPageBlankSummarySystemFallback checks that system actors get a
 // fallback when summary is blank.
 func TestActivityPageBlankSummarySystemFallback(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	_, err := a.Store.Create(records.ActivityType, map[string]any{

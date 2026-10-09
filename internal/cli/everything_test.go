@@ -12,6 +12,7 @@ import (
 // A whole workspace goes out in one zip and comes back into another: its
 // records by `sameway import`, its files as they were added.
 func TestAWholeWorkspaceGoesElsewhere(t *testing.T) {
+	t.Parallel()
 	from := initWorkspace(t)
 	run(t, from, "task", "create", "--set", "title=Order compost", "--set", "due=2026-10-05")
 	run(t, from, "note", "create", "--set", "title=Pond plan", "--set", "body=Dig it.")

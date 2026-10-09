@@ -11,6 +11,7 @@ import (
 // Quit Sameway on Workspaces says it has stopped and how to open it again,
 // then stops.
 func TestQuitSamewayFromThePage(t *testing.T) {
+	t.Parallel()
 	a, _ := newApp(t)
 	stopped := 0
 	h := server.New(a).WithFleet(&server.Fleet{Launch: func(dir, addr string) error { return nil }, Exit: func() { stopped++ }})

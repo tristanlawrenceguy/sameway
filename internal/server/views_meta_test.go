@@ -19,6 +19,7 @@ import (
 // (backlog 0627, acceptance item 1 & 4). The type is created dynamically via
 // the API so it mimics an agent-created type.
 func TestDayFactNoRawLabelOnDateField(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	// Create a meeting_notes_template-like type with a datetime field named

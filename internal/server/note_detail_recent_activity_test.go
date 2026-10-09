@@ -13,6 +13,7 @@ import (
 // <h3 class="sw-event__text sw-event__heading"> so a screen reader user can
 // jump between activities.
 func TestNoteDetailPageRecentActivityHasH3Headings(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Create a real note so the detail page exists and has content.
@@ -57,6 +58,7 @@ func TestNoteDetailPageRecentActivityHasH3Headings(t *testing.T) {
 // TestNoteDetailPageRecentActivitySummaryFromHeadingText checks that the heading text
 // comes from the summary field rather than just repeating the action verb.
 func TestNoteDetailPageRecentActivitySummaryFromHeadingText(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Create a real note so we have something to visit on its detail page.
@@ -84,6 +86,7 @@ func TestNoteDetailPageRecentActivitySummaryFromHeadingText(t *testing.T) {
 // TestNoteDetailPageRecentActivityEmptyStateHasNoHeading checks that when there are no
 // activities on a note detail page, it does not render an orphaned <h3>.
 func TestNoteDetailPageRecentActivityEmptyStateHasNoHeading(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Create a note so we have something to visit.

@@ -9,6 +9,7 @@ import (
 // the time it is due, not a day outside the month, not past its end, and
 // never more than asked, however long it goes on.
 func TestOccurrencesAreTheMonthsAndNoMore(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		repeat, from, first, last string
 		most                      int

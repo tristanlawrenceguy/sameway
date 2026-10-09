@@ -28,7 +28,13 @@ const ClassificationType = "classification"
 // TagType is a tag and what it means.
 const TagType = "tag"
 
-type tagDef struct{ name, means string }
+type tagDef struct {
+	name, means string
+	// alone is a tag given only when no other fits ("nothing to do"):
+	// Sameway gives it, not the model, so "looked and found nothing" is
+	// said, and the person correcting it is a choice the action learns from.
+	alone bool
+}
 
 // tagDefs are the tags an action may give: those it names, else all.
 func (s *Service) tagDefs(only []string) []tagDef {
@@ -44,11 +50,12 @@ func (s *Service) tagDefs(only []string) []tagDef {
 	for _, r := range recs {
 		name, _ := r.Fields["name"].(string)
 		means, _ := r.Fields["means"].(string)
+		alone, _ := r.Fields["alone"].(bool)
 		name = strings.TrimSpace(name)
 		if name == "" || len(want) > 0 && !want[strings.ToLower(name)] {
 			continue
 		}
-		out = append(out, tagDef{name, strings.TrimSpace(means)})
+		out = append(out, tagDef{name, strings.TrimSpace(means), alone})
 	}
 	return out
 }
@@ -116,46 +123,42 @@ func (s *Service) Classify(ctx context.Context, action *store.Record, typeName, 
 		return fail("there are no tags to give: add some, each with what it means, at /t/%s", TagType)
 	}
 	words := recordWords(s.Store, t, rec)
-	picks, err := s.pickTags(ctx, action, defs, words)
-	if err != nil {
-		return fail("could not tag %s: %v", records.Name(s.Store, t, rec), err)
-	}
-	check, _ := action.Fields["check"].(bool)
-	most := 10
-	switch n := action.Fields["examples"].(type) {
-	case float64:
-		most = int(n)
-	case int64:
-		most = int(n)
-	case int:
-		most = n
-	}
-	if most < 1 {
-		most = 10
-	}
-	var said, given []string
-	for _, p := range picks {
-		state, confirmedBy, tag, why := "suggested", "", p.Tag, p.Why
-		if check {
-			v := s.judge(ctx, t, rec, words, p, defs, most) // judgement.go
-			switch v.Decide {
-			case "drop":
-				said = append(said, tag+" (not given: "+v.Why+")")
-				continue
-			case "confirm":
-				state, confirmedBy, why = "confirmed", "judgement", v.Why
-			case "change":
-				tag, why = v.To, v.Why
-			}
+	var asked, alone []tagDef
+	for _, d := range defs {
+		if d.alone {
+			alone = append(alone, d)
+		} else {
+			asked = append(asked, d)
 		}
-		s.giveTag(t, rec, tag)
-		given = append(given, tag)
-		cl := map[string]any{"record": t.Name + "/" + rec.ID, "tag": tag, "why": why, "action": action.ID, "state": state}
-		if confirmedBy != "" {
-			cl["confirmed_by"] = confirmedBy
+	}
+	var picks []chosen
+	question := words
+	if check, _ := action.Fields["check"].(bool); check {
+		question += s.personTagged(defs, t.Name+"/"+rec.ID, examplesOf(action)) // judgement.go
+	}
+	if len(asked) > 0 {
+		if picks, err = s.pickTags(ctx, action, asked, question); err != nil {
+			return fail("could not tag %s: %v", records.Name(s.Store, t, rec), err)
+		}
+	}
+	if len(picks) == 0 && len(alone) > 0 {
+		picks = []chosen{{alone[0].name, "no other tag fits"}}
+	}
+	outs := s.checked(ctx, action, t, rec, words, picks, defs)
+	var said, given []string
+	for _, o := range keepAlone(outs, defs) {
+		if o.dropped != "" {
+			said = append(said, o.tag+" (not given: "+o.dropped+")")
+			continue
+		}
+		s.giveTag(t, rec, o.tag)
+		given = append(given, o.tag)
+		cl := map[string]any{"record": t.Name + "/" + rec.ID, "tag": o.tag, "why": o.why, "action": action.ID, "state": o.state}
+		if o.state == "confirmed" {
+			cl["confirmed_by"] = "judgement"
 		}
 		records.ApplyOps(s.Store, records.Op{Type: ClassificationType, After: cl})
-		said = append(said, tag+" ("+map[string]string{"suggested": "suggested", "confirmed": "kept, as you chose before"}[state]+": "+why+")")
+		said = append(said, o.tag+" ("+map[string]string{"suggested": "suggested", "confirmed": "kept, as you chose before"}[o.state]+": "+o.why+")")
 	}
 	title, _ := action.Fields["title"].(string)
 	name := records.Name(s.Store, t, rec)
@@ -234,4 +237,59 @@ func clipRunes(s string, n int) string {
 		return string(r[:n])
 	}
 	return s
+}
+
+// outcome is what becomes of one tag picked, after the check.
+type outcome struct {
+	tag, why, state, dropped string
+}
+
+// checked is each tag picked as the check with the person's past choices
+// leaves it, when the action asks for the check (judgement.go).
+func (s *Service) checked(ctx context.Context, action *store.Record, t *schema.Type, rec *store.Record, words string, picks []chosen, defs []tagDef) []outcome {
+	check, _ := action.Fields["check"].(bool)
+	var outs []outcome
+	for _, p := range picks {
+		o := outcome{tag: p.Tag, why: p.Why, state: "suggested"}
+		if check && !aloneTag(defs, p.Tag) {
+			v := s.judge(ctx, t, rec, words, p, defs, examplesOf(action))
+			if v.Decide == "confirm" { // the check only keeps a tag for them; examples steer the rest
+				o.state, o.why = "confirmed", v.Why
+			}
+		}
+		outs = append(outs, o)
+	}
+	return outs
+}
+
+// keepAlone drops a tag given only when no other fits, when another is
+// given: the check may have changed one into the other.
+func keepAlone(outs []outcome, defs []tagDef) []outcome {
+	isAlone := map[string]bool{}
+	for _, d := range defs {
+		isAlone[strings.ToLower(d.name)] = d.alone
+	}
+	other := false
+	for _, o := range outs {
+		other = other || o.dropped == "" && !isAlone[strings.ToLower(o.tag)]
+	}
+	if !other {
+		return outs
+	}
+	var kept []outcome
+	for _, o := range outs {
+		if !isAlone[strings.ToLower(o.tag)] {
+			kept = append(kept, o)
+		}
+	}
+	return kept
+}
+
+func aloneTag(defs []tagDef, tag string) bool {
+	for _, d := range defs {
+		if d.alone && strings.EqualFold(d.name, tag) {
+			return true
+		}
+	}
+	return false
 }

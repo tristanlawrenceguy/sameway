@@ -28,6 +28,7 @@ func column(label, n string) string {
 }
 
 func TestTasksMakeABoardByStatus(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	ids := map[string]string{}
 	for _, task := range []map[string]any{
@@ -109,6 +110,7 @@ func TestTasksMakeABoardByStatus(t *testing.T) {
 // A repeating task moved to Done, like one ticked, is due again at once,
 // back in To do, and says so.
 func TestARepeatingTaskMovedToDoneIsToDoAgain(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	fern, err := a.Store.Create("task", map[string]any{"title": "Water the fern", "due": "2026-10-06T00:00:00Z", "repeat": "every Tuesday"})
 	if err != nil {
@@ -132,6 +134,7 @@ func TestARepeatingTaskMovedToDoneIsToDoAgain(t *testing.T) {
 // task it already had reads its status from its tick, the same on the
 // board, in a filter and through the API, with nothing rewritten.
 func TestAnOlderWorkspaceBoardsItsTasksByStatus(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	known := filepath.Join(t.TempDir(), "known.json")
 	os.WriteFile(known, []byte("[]"), 0o644)
@@ -189,6 +192,7 @@ func TestAnOlderWorkspaceBoardsItsTasksByStatus(t *testing.T) {
 // Adding a field says what the records already there got, over the API
 // and from the assistant's tool.
 func TestAddingAFieldSaysWhatExistingRecordsGet(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	for _, title := range []string{"Order compost", "Dig the pond", "Sow beans"} {
 		a.Store.Create("task", map[string]any{"title": title})

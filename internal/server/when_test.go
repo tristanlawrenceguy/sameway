@@ -17,6 +17,7 @@ import (
 // already stated by the heading + chips, but its data-prop still works
 // when we check the fields view for the non-headField "body" instead.
 func TestADateIsWrittenAsPeopleSayIt(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	var task struct{ ID string }
 	decode(t, postJSON(t, h, http.MethodPost, "/api/task", map[string]any{"title": "Order compost", "due": "2026-09-19T00:00:00Z"}), &task)

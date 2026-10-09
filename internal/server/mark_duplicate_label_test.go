@@ -20,6 +20,7 @@ import (
 // adjacent text node. The fix suppresses the visually-hidden span when both
 // quiet and ariaLabel are set (Acceptance 1).
 func TestAMarkCheckboxOnTaskListHasNoDuplicateLabel(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	// Create a task so it appears on the /t/task listing.

@@ -85,6 +85,7 @@ func TestAModelThatStoppedAnsweringIsSaidPlainly(t *testing.T) {
 // With no model yet, a person can still make their first note: one press
 // makes it and opens its editor, its name ready to change.
 func TestAFirstNoteCanBeMadeByHand(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	r := postForm(t, h, "/t/note/add", url.Values{})
 	if r.Code != http.StatusSeeOther || !strings.HasSuffix(r.Header().Get("Location"), "#edit") {

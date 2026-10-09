@@ -9,6 +9,7 @@ import (
 // alone: its own page, opened in a new tab, and nothing of the others; a
 // service that cannot be read says so and its way round.
 func TestEachMailServiceHasItsOwnStory(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	first := get(t, h, "/mail").Body.String()
 	if !strings.Contains(first, "which email do you use") || strings.Contains(first, "Gmail") || strings.Contains(first, "iCloud") {

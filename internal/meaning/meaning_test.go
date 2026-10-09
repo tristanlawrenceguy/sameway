@@ -21,6 +21,7 @@ func (k *keep) SetMeta(key, v string)  { k.Lock(); k.m[key] = v; k.Unlock() }
 // Records are read again only when their words change, and a search finds
 // the nearest few, within a margin of the nearest, above a floor.
 func TestTheNearestInMeaningAreFound(t *testing.T) {
+	t.Parallel()
 	embedded := 0
 	// A stand-in model: each text is a vector of which topic words it has.
 	topics := []string{"plumb boiler pipe", "passport travel", "flour egg pancake"}

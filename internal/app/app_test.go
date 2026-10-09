@@ -14,6 +14,7 @@ import (
 // region was dropped on save and the block landed in the main column while
 // the assistant reported it had gone to the pane.
 func TestOldWorkspaceStillPlacesBlocksInPanes(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	os.WriteFile(filepath.Join(dir, "workspace.yaml"), []byte("name: old\n"), 0o644)
 	os.MkdirAll(filepath.Join(dir, "schema"), 0o755)

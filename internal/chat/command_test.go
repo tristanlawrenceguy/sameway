@@ -18,6 +18,7 @@ import (
 // when SAMEWAY_FAKE_ECHO is set: it prints its arguments and exits with
 // the code SAMEWAY_FAKE_EXIT names.
 func TestHelperEcho(t *testing.T) {
+	t.Parallel()
 	if os.Getenv("SAMEWAY_FAKE_ECHO") == "" {
 		return
 	}

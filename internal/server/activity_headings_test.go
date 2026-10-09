@@ -14,6 +14,7 @@ import (
 // /activity is wrapped in its own <h3> element containing the summary text,
 // so a screen reader user can jump directly between activities.
 func TestActivityPageHasIndividualHeadings(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Seed two distinct activity entries via records.Record (the same way chat does).
@@ -52,6 +53,7 @@ func TestActivityPageHasIndividualHeadings(t *testing.T) {
 // comes from the summary field (e.g., "Assistant created note X") rather
 // than just repeating the action verb.
 func TestActivityPageHeadingUsesSummaryNotVerb(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Create a card block via chat so we get an assistant activity with a
@@ -79,6 +81,7 @@ func TestActivityPageHeadingUsesSummaryNotVerb(t *testing.T) {
 // activities, the page does not render an orphaned <h3> — only a paragraph
 // saying nothing has happened yet.
 func TestActivityPageEmptyStateHasNoHeading(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	body := get(t, h, "/activity").Body.String()

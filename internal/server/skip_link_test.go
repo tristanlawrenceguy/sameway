@@ -13,6 +13,7 @@ import (
 // message article (the one with id="msg-<id>"). A person clicking it should
 // be taken directly to their latest reply, not a dead anchor.
 func TestSkipLinkTargetsLatestMessage(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Create two messages so we can identify the latest one.
@@ -72,6 +73,7 @@ func TestSkipLinkTargetsLatestMessage(t *testing.T) {
 // on /chat, the "Skip to latest message" skip link is not rendered — it has no
 // target to point to.
 func TestSkipLinkAbsentWhenNoMessages(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	doc := parse(t, get(t, h, "/chat"))

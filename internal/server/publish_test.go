@@ -26,6 +26,7 @@ func public(t *testing.T, h http.Handler, method, path, body string) *httptest.R
 // The internet reads what is published, and nothing else: no other type,
 // no conversation, no log, no writing, no controls.
 func TestTheInternetReadsOnlyWhatIsPublished(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	srv := h.(*server.Server)
 	a.Records.Owner = records.Visitor{Access: records.Owner, Login: "me@example.com", Name: "Me"}
@@ -74,6 +75,7 @@ func TestTheInternetReadsOnlyWhatIsPublished(t *testing.T) {
 // A published tab is its page, as it is shown, without the conversation;
 // the front page lists what is published.
 func TestAPublishedTabIsReadableWithoutTheConversation(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	srv := h.(*server.Server)
 	a.Chat.Say("the owner's private words")
@@ -98,6 +100,7 @@ func TestAPublishedTabIsReadableWithoutTheConversation(t *testing.T) {
 // What is published to people is published to AI services the same way,
 // over MCP with no login: only the published types, only reading.
 func TestAIServicesReadWhatPeopleCan(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	srv := h.(*server.Server)
 	a.Store.Create("note", map[string]any{"title": "Sourdough"})
@@ -123,6 +126,7 @@ func TestAIServicesReadWhatPeopleCan(t *testing.T) {
 // and for anything reading the HTML alike: no control, no conversation,
 // no log, no way to anything unpublished, only its words.
 func TestPublishedPagesCarryNothingButWhatCanBeRead(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	srv := h.(*server.Server)
 	n, _ := a.Store.Create("note", map[string]any{"title": "Sourdough", "body": "flour, water, salt"})
@@ -147,6 +151,7 @@ func TestPublishedPagesCarryNothingButWhatCanBeRead(t *testing.T) {
 // A picture on a published tab is served to the internet; a file nobody
 // published is not.
 func TestOnlyPublishedFilesAreServed(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	srv := h.(*server.Server)
 	shown, _ := a.Store.Create("file", map[string]any{"title": "Fern"})
@@ -166,6 +171,7 @@ func TestOnlyPublishedFilesAreServed(t *testing.T) {
 // them, over what is published: a published note is found, cited by its
 // page and read in full; a task, not published, is neither.
 func TestSearchAndFetchWhatIsPublished(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	srv := h.(*server.Server)
 	n, _ := a.Store.Create("note", map[string]any{"title": "Sourdough", "body": "Flour, water and salt, and patience."})

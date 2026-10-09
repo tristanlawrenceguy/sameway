@@ -23,6 +23,7 @@ import (
 // habit nudges through the clock when its time is past and it is not yet
 // met; an entry is titled by its habit.
 func TestThingsKnowWhatTheyAreAbout(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	srv := h.(*server.Server)
 	now := time.Now()

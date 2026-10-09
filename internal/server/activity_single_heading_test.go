@@ -13,6 +13,7 @@ import (
 // screen reader user does not hear it twice. The h1 from the layout template
 // is the single authoritative heading for this page. (Acceptance 1, 2)
 func TestActivityPageHasSingleActivityHeading(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	records.Record(a.Store, "assistant", records.Change{Action: "created", Component: "note", ID: "aaa1", Detail: "First note"})
@@ -53,6 +54,7 @@ func TestActivityPageHasSingleActivityHeading(t *testing.T) {
 // records, the /activity page has exactly one heading "Activity" (from the
 // layout h1) and no duplicate body heading. (Acceptance 1, 2)
 func TestActivityPageEmptyStateSingleHeading(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/activity")

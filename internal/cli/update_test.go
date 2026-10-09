@@ -9,6 +9,7 @@ import (
 // from source says so instead of comparing itself to a release, which is
 // the only path a test can take without reaching the network.
 func TestUpdateSaysWhatABuildFromSourceCanDo(t *testing.T) {
+	t.Parallel()
 	r := run(t, "", "update", "--check")
 	if r.code != 1 || !strings.Contains(r.stderr, "rather than a version") || !strings.Contains(r.stderr, "make build") {
 		t.Errorf("expected a clear refusal that says how to get a versioned build, got %+v", r)

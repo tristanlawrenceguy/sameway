@@ -18,6 +18,7 @@ import (
 // with, and comes back in as it was: tasks as a spreadsheet, events as a
 // calendar, people as contacts; the system's own records never go out.
 func TestWhatComesInGoesOutAgain(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Store.Create("task", map[string]any{"title": "Order compost", "due": "2026-10-05T09:30:00Z", "repeat": "FREQ=WEEKLY;BYDAY=MO", "tags": []any{"garden", "soil"}})
 	a.Store.Create("task", map[string]any{"title": "Dig the pond", "done": true})
@@ -108,6 +109,7 @@ func TestWhatComesInGoesOutAgain(t *testing.T) {
 
 // A recording's words go out as subtitles and as text, from its text.
 func TestATranscriptGoesOutAsSubtitlesAndText(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	body, ct := multipartFile(t, "Talk.m4a", "not really audio", nil)
 	id := strings.TrimPrefix(do(t, h, http.MethodPost, "/t/file/upload", body, ct).Header().Get("Location"), "/t/file/")

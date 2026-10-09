@@ -136,6 +136,7 @@ func der(ref []span, hyp []Turn) float64 {
 // Speakers are told apart in a real four-person meeting, and how well is
 // said as its diarization error rate.
 func TestSpeakersOnAMI(t *testing.T) {
+	t.Parallel()
 	dir, meeting, ref := amiFiles(t)
 	kit := os.Getenv("SAMEWAY_SPEAKERS_DIR")
 	if kit == "" {
@@ -203,6 +204,7 @@ func meThem(me, them []float32) string {
 // person, or only the others, spoke is checked, with the microphone clean
 // (headphones) and hearing the call (speakers).
 func TestMeAndThemOnAMI(t *testing.T) {
+	t.Parallel()
 	dir, meeting, ref := amiFiles(t)
 	var heads [4][]float32
 	for i := range heads {

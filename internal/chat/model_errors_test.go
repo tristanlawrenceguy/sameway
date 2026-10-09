@@ -12,6 +12,7 @@ import (
 // crew's own: tone inside props ~350 times in its logs, a button's text
 // for its label ~40, an alert's kind outside its choices.
 func TestPropsThatDoNotFitAreSaidForTheModelFixingThem(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	for _, c := range []struct {
 		name string

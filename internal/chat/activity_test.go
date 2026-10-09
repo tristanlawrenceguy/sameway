@@ -34,6 +34,7 @@ func newFullService(t *testing.T) *chat.Service {
 }
 
 func TestTurnLeavesReceiptProvenanceAndActivity(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	svc.Provider = &scripted{steps: []*llm.Response{
 		call("add_component", map[string]any{"component": "heading", "props": map[string]any{"text": "Shopping"}}),
@@ -74,6 +75,7 @@ func TestTurnLeavesReceiptProvenanceAndActivity(t *testing.T) {
 }
 
 func TestFailureIsLoggedAsSystem(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	svc.Provider = failing{}
 	svc.Send(context.Background(), "hi")
@@ -84,6 +86,7 @@ func TestFailureIsLoggedAsSystem(t *testing.T) {
 }
 
 func TestOlderWorkspacesWithoutActivityStillWork(t *testing.T) {
+	t.Parallel()
 	// The minimal schema in newService has no activity type and no
 	// provenance fields; a turn must still succeed.
 	svc, _ := newService(t)

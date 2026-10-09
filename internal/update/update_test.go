@@ -15,6 +15,7 @@ import (
 )
 
 func TestNewerComparesVersionsAndRefusesWhatItCannotRead(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		have, want string
 		newer      bool
@@ -47,6 +48,7 @@ func TestNewerComparesVersionsAndRefusesWhatItCannotRead(t *testing.T) {
 }
 
 func TestCheckSaysWhereThisBuildStands(t *testing.T) {
+	t.Parallel()
 	srv := releases(t, release{version: "0.4.0", notes: "Habits."})
 	for _, c := range []struct {
 		have, contains string
@@ -74,6 +76,7 @@ func TestCheckSaysWhereThisBuildStands(t *testing.T) {
 }
 
 func TestNoReleasesYetSaysSo(t *testing.T) {
+	t.Parallel()
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 	}))

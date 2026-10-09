@@ -80,7 +80,8 @@ func (s *Service) pastChoices(tag, not string, most int) []string {
 		if len(out) == most {
 			break
 		}
-		if !strings.EqualFold(fmt.Sprint(c.Fields["tag"]), tag) || c.Fields["record"] == not || c.Fields["confirmed_by"] == "judgement" {
+		movedIn := c.Fields["state"] == "changed" && strings.EqualFold(fmt.Sprint(c.Fields["to"]), tag)
+		if !strings.EqualFold(fmt.Sprint(c.Fields["tag"]), tag) && !movedIn || c.Fields["record"] == not || c.Fields["confirmed_by"] == "judgement" {
 			continue
 		}
 		typ, id, _ := strings.Cut(fmt.Sprint(c.Fields["record"]), "/")
@@ -90,6 +91,9 @@ func (s *Service) pastChoices(tag, not string, most int) []string {
 			continue
 		}
 		did := map[string]string{"confirmed": "kept it", "removed": "took the tag off", "changed": "changed it to " + fmt.Sprint(c.Fields["to"]), "suggested": "has done nothing with it yet"}[fmt.Sprint(c.Fields["state"])]
+		if movedIn {
+			did = fmt.Sprintf("gave it %s in place of %s, which you had given", tag, c.Fields["tag"])
+		}
 		out = append(out, fmt.Sprintf("- %q: the person %s", clipRunes(strings.ReplaceAll(recordWords(s.Store, t, rec), "\n", " "), 240), did))
 	}
 	return out
@@ -124,7 +128,7 @@ func (s *Service) tagsChanged(t *schema.Type, was, now *store.Record) {
 	}
 	for _, c := range cls {
 		tag := strings.ToLower(fmt.Sprint(c.Fields["tag"]))
-		if c.Fields["record"] != t.Name+"/"+now.ID || c.Fields["state"] != "suggested" || after[tag] || !before[tag] {
+		if c.Fields["record"] != t.Name+"/"+now.ID || !undecided(c) || after[tag] || !before[tag] {
 			continue
 		}
 		change := map[string]any{"state": "removed"}
@@ -133,4 +137,72 @@ func (s *Service) tagsChanged(t *schema.Type, was, now *store.Record) {
 		}
 		records.ApplyOps(s.Store, records.Op{Type: ClassificationType, ID: c.ID, After: change})
 	}
+}
+
+// undecided is a tag the person has not decided on: suggested, or kept by
+// the assistant from their past choices, which is still theirs to change.
+func undecided(c *store.Record) bool {
+	return c.Fields["state"] == "suggested" || c.Fields["state"] == "confirmed" && c.Fields["confirmed_by"] == "judgement"
+}
+
+// personTagged is how the person tagged the latest records given the
+// action's tags, newest first, at most most: each record's words and the
+// tags they left on it (kept, changed to, or taken off), for the model to
+// tag like them. Only the person's own choices, never one the assistant
+// kept for them.
+func (s *Service) personTagged(defs []tagDef, not string, most int) string {
+	ours := map[string]bool{}
+	for _, d := range defs {
+		ours[strings.ToLower(d.name)] = true
+	}
+	cls, err := s.Store.List(ClassificationType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 300})
+	if err != nil {
+		return ""
+	}
+	final := map[string][]string{}
+	var order []string
+	for _, c := range cls {
+		ref, tag := fmt.Sprint(c.Fields["record"]), strings.ToLower(fmt.Sprint(c.Fields["tag"]))
+		if ref == not || !ours[tag] || c.Fields["confirmed_by"] == "judgement" {
+			continue
+		}
+		var kept string
+		switch c.Fields["state"] {
+		case "confirmed":
+			kept = fmt.Sprint(c.Fields["tag"])
+		case "changed":
+			kept = fmt.Sprint(c.Fields["to"])
+		case "removed":
+		default:
+			continue // not decided yet: no choice of theirs to follow
+		}
+		if _, seen := final[ref]; !seen {
+			if len(order) == most {
+				continue
+			}
+			order = append(order, ref)
+			final[ref] = []string{}
+		}
+		if kept != "" {
+			final[ref] = append(final[ref], kept)
+		}
+	}
+	var lines []string
+	for _, ref := range order {
+		typ, id, _ := strings.Cut(ref, "/")
+		t, ok := s.Store.Types().Get(typ)
+		rec, err := s.Store.Get(typ, id)
+		if !ok || err != nil {
+			continue
+		}
+		tags := "no tag"
+		if len(final[ref]) > 0 {
+			tags = strings.Join(final[ref], ", ")
+		}
+		lines = append(lines, fmt.Sprintf("- %q: %s", clipRunes(strings.ReplaceAll(recordWords(s.Store, t, rec), "\n", " "), 200), tags))
+	}
+	if len(lines) == 0 {
+		return ""
+	}
+	return "\n\nHow the person tagged their latest records, newest first. Tag as they would:\n" + strings.Join(lines, "\n")
 }

@@ -15,6 +15,7 @@ import (
 // Over MCP too an agent's key changes things at its pace, and a tool that
 // only reads is never held back.
 func TestAnAgentsToolCallsArePaced(t *testing.T) {
+	t.Parallel()
 	a, id := starter(t)
 	key, _, err := records.LetAgentIn(a.Store, records.Who{Actor: "human", Via: records.ThroughCLI}, "Busy", "edit")
 	if err != nil {

@@ -13,6 +13,7 @@ import (
 // week or ticked in one press) and the week ahead; on the day set, in the
 // evening, it says once that it is ready.
 func TestTheWeeklyReview(t *testing.T) {
+	t.Parallel()
 	a, _ := newApp(t)
 	now := time.Now()
 	day := func(d int) string { return now.AddDate(0, 0, d).Format("2006-01-02") }

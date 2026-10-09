@@ -13,6 +13,7 @@ import (
 // /chat is wrapped in <div class="sw-activity"> so JS settle() can find it
 // and update in-place instead of creating a duplicate. (Acceptance 1.)
 func TestChatActivityHasSwActivityWrapper(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	records.Record(a.Store, "assistant", records.Change{Action: "created", Component: "note", ID: "aaa1", Detail: "First note"})
@@ -43,6 +44,7 @@ func TestChatActivityHasSwActivityWrapper(t *testing.T) {
 // TestChatActivityWrapperIsEmptyWhenNoActivity checks that when there are no
 // activity records, /chat does not render a stray empty <div class="sw-activity">.
 func TestChatActivityWrapperIsEmptyWhenNoActivity(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	body := get(t, h, "/chat").Body.String()
@@ -56,6 +58,7 @@ func TestChatActivityWrapperIsEmptyWhenNoActivity(t *testing.T) {
 // TestChatActivityWrapperAfterModelAction checks that after the model makes a
 // change through chat.Send, the page still has the .sw-activity wrapper.
 func TestChatActivityWrapperAfterModelAction(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	a.Chat.Provider, a.Chat.ProviderErr = &scripted{steps: []*llm.Response{

@@ -10,6 +10,7 @@ import (
 // An agent reads a long list a page at a time and only the fields it
 // needs, and is told the fields there are when it names one that is not.
 func TestAnAgentReadsLess(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	for i := 1; i <= 7; i++ {
 		postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": fmt.Sprintf("Note %d", i), "body": strings.Repeat("words ", 50)})

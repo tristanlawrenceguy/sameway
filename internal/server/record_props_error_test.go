@@ -30,6 +30,7 @@ func refusedEdit(t *testing.T) (h http.Handler, id string, page string, at strin
 // TestValidationErrorPageShowsSubmittedValues: the person is back on the
 // page they edited, told why, as an alert, and nothing was stored.
 func TestValidationErrorPageShowsSubmittedValues(t *testing.T) {
+	t.Parallel()
 	h, id, body, at := refusedEdit(t)
 	if at != "/t/note/"+id {
 		t.Errorf("a refused edit returns to the page it was made on, not an internal address, got %q", at)
@@ -46,6 +47,7 @@ func TestValidationErrorPageShowsSubmittedValues(t *testing.T) {
 // it answers exactly as the page's editable block does, which is how the
 // page finds the draft to give back.
 func TestValidationErrorPageHasEditBlockWrapper(t *testing.T) {
+	t.Parallel()
 	_, id, body, _ := refusedEdit(t)
 	action := "/t/note/" + id + "/props"
 	if !strings.Contains(body, `data-outcome-for="`+action+`"`) || !strings.Contains(body, `data-edit-action="`+action+`"`) {
@@ -60,6 +62,7 @@ func TestValidationErrorPageHasEditBlockWrapper(t *testing.T) {
 // when Save is pressed, only when the page says the edit was saved, and
 // a refused edit opens again.
 func TestValidationErrorPageShowsEmptyTitleField(t *testing.T) {
+	t.Parallel()
 	src, err := os.ReadFile("../../design/base/18-drafts.js")
 	if err != nil {
 		t.Fatal(err)

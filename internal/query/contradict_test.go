@@ -10,6 +10,7 @@ import (
 // Conditions that ask one field for two values can never all hold, and
 // say so with a fix; ones that can hold together are left alone.
 func TestConditionsThatCanNeverAllHoldAreSaid(t *testing.T) {
+	t.Parallel()
 	_, typ := tasks(t)
 	for _, c := range []struct {
 		where []string

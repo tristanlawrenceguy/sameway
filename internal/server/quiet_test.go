@@ -37,6 +37,7 @@ func canvasWithABlock(t *testing.T) (http.Handler, string) {
 // users and agents keep it. Fading is done with opacity, never display,
 // visibility, hidden, or aria-hidden.
 func TestQuietControlsStayAvailableToEveryone(t *testing.T) {
+	t.Parallel()
 	h, id := canvasWithABlock(t)
 	doc := parse(t, get(t, h, "/"))
 
@@ -133,6 +134,7 @@ func findByName(t *testing.T, doc *htmltest.Doc, tag, name string) *html.Node {
 // TestCompactLabelsKeepFullAccessibleNames checks the context prop: short
 // visible text, complete accessible name.
 func TestCompactLabelsKeepFullAccessibleNames(t *testing.T) {
+	t.Parallel()
 	h, _ := canvasWithABlock(t)
 	doc := parse(t, get(t, h, "/"))
 	remove := findByName(t, doc, "button", "Remove Shopping")
@@ -155,6 +157,7 @@ func TestCompactLabelsKeepFullAccessibleNames(t *testing.T) {
 // TestActivityIsHiddenButNotLost checks the log is collapsed by default and
 // still reachable in full for anyone who does not want to open it.
 func TestActivityIsHiddenButNotLost(t *testing.T) {
+	t.Parallel()
 	h, _ := canvasWithABlock(t)
 	doc := parse(t, get(t, h, "/"))
 
@@ -197,6 +200,7 @@ func TestActivityIsHiddenButNotLost(t *testing.T) {
 // TestControlsVisibleSetting checks a workspace can pin the chrome on for
 // people who do not want it to fade.
 func TestControlsVisibleSetting(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	doc := parse(t, get(t, h, "/"))
 	if v, _ := htmltest.Attr(doc.Elements("html")[0], "data-controls"); v != "auto" {

@@ -13,6 +13,7 @@ import (
 // TestGolden renders every manifest example and compares it with the checked
 // in example file. Run with UPDATE_GOLDEN=1 to rewrite the example files.
 func TestGolden(t *testing.T) {
+	t.Parallel()
 	reg := render.New()
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		t.Fatal(err)
@@ -52,6 +53,7 @@ func TestGolden(t *testing.T) {
 }
 
 func TestRenderRejectsBadProps(t *testing.T) {
+	t.Parallel()
 	reg := render.New()
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		t.Fatal(err)
@@ -71,6 +73,7 @@ func TestRenderRejectsBadProps(t *testing.T) {
 }
 
 func TestRenderEscapes(t *testing.T) {
+	t.Parallel()
 	reg := render.New()
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		t.Fatal(err)

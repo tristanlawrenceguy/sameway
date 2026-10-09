@@ -32,6 +32,7 @@ func agentPost(t *testing.T, h http.Handler, path string, body any) (*httptest.R
 // a person reads, never with a page to pick apart. A route added as a page
 // alone fails here, not weeks later when an agent goes looking.
 func TestEveryPageActionAnswersAnAgent(t *testing.T) {
+	t.Parallel()
 	// Answered otherwise, for a reason: a stream of words as they come
 	// (the same turn is POST /api/chat), and files sent as multipart (an
 	// agent sends them to POST /api/file/upload).
@@ -58,6 +59,7 @@ func TestEveryPageActionAnswersAnAgent(t *testing.T) {
 // Taking a change back, as an agent: the Undo button's own address, a
 // JSON body, and an answer saying what happened and where.
 func TestAnAgentUsesTheSameFormsAsAPerson(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	rec, out := agentPost(t, h, "/t/note/add", map[string]any{})
 	loc, _ := out["location"].(string)
@@ -96,6 +98,7 @@ func TestAnAgentUsesTheSameFormsAsAPerson(t *testing.T) {
 // A chat turn from an agent can carry a file it added, as a person's can,
 // and what chat does not take is refused with the field that is wrong.
 func TestAnAgentsChatTurnCarriesAFile(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	model := &sees{}
 	a.Chat.Provider = model
@@ -126,6 +129,7 @@ func TestAnAgentsChatTurnCarriesAFile(t *testing.T) {
 
 // A change in the log is taken back from its own page too.
 func TestAnActivityEntrysPageOffersUndo(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Plan"})
 	entries, _ := a.Store.List("activity", store.ListOptions{})

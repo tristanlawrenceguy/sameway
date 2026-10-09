@@ -12,6 +12,7 @@ import (
 // TestNoteListDoesNotShowStatusBadge verifies that the notes listing page
 // does not render a badge showing the note's status enum value such as "Draft".
 func TestNoteListDoesNotShowStatusBadge(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	var rec struct{ ID string }
@@ -43,6 +44,7 @@ func TestNoteListDoesNotShowStatusBadge(t *testing.T) {
 // TestProjectListDoesNotShowStatusBadge verifies that the projects listing page
 // does not render a badge showing the project's status enum value such as "Active".
 func TestProjectListDoesNotShowStatusBadge(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	var rec struct{ ID string }
@@ -75,6 +77,7 @@ func TestProjectListDoesNotShowStatusBadge(t *testing.T) {
 // render a badge showing the file's status enum value such as "Ready" or
 // "Could not be read".
 func TestFileListDoesNotShowStatusBadge(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	var rec struct{ ID string }

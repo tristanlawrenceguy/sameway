@@ -13,6 +13,7 @@ import (
 // agent" instead of "From: Go-http-client".
 
 func TestGoHttpClientProvenanceSaysAnAgent(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	noteID := func(title string) string {
 		rec, err := svc.Store.Create("note", map[string]any{"title": title})

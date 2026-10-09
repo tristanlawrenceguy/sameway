@@ -15,6 +15,7 @@ import (
 // Clear button does: the messages go, the log keeps them, and undo puts
 // them back.
 func TestTheAssistantClearsTheConversation(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Chat.Provider, a.Chat.ProviderErr = &scripted{steps: []*llm.Response{
 		{Text: "Noted."},
@@ -42,6 +43,7 @@ func TestTheAssistantClearsTheConversation(t *testing.T) {
 // Asked for a workspace, the assistant makes one beside this one, as the
 // workspaces page does; someone let in to change this one cannot.
 func TestTheAssistantMakesAWorkspace(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Chat.Provider, a.Chat.ProviderErr = &scripted{steps: []*llm.Response{
 		toolCall("add_workspace", map[string]any{"name": "Garden"}),

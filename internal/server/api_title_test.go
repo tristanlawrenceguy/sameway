@@ -15,6 +15,7 @@ import (
 // much, a note by its title, in the list, the single record, and what a
 // write answers with; the fields are where they always were.
 func TestAPIRecordSaysItsTitle(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	habit, err := a.Store.Create(server.HabitType, map[string]any{"name": "Read", "unit": "minutes", "cadence": "day"})
 	if err != nil {

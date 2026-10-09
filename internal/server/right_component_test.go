@@ -9,6 +9,7 @@ import (
 // TestTheHabitsPageIsTheTracker: habits are where each one stands and a
 // press to log, not rows of names with a box that reads as done.
 func TestTheHabitsPageIsTheTracker(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Store.Create("habit", map[string]any{"name": "Water", "target": 8, "unit": "glasses"})
 	a.Store.Create("habit", map[string]any{"name": "Old one", "archived": true})
@@ -26,6 +27,7 @@ func TestTheHabitsPageIsTheTracker(t *testing.T) {
 // TestATaskWithNoDayDoesNotSayWhenItChanged: a row says what matters; a
 // task's missing due day is not made up for with an edit time.
 func TestATaskWithNoDayDoesNotSayWhenItChanged(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Store.Create("task", map[string]any{"title": "Order compost"})
 	a.Store.Create("note", map[string]any{"title": "Garden plan"})
@@ -40,6 +42,7 @@ func TestATaskWithNoDayDoesNotSayWhenItChanged(t *testing.T) {
 // TestTheListsOnShowHaveTheirOwnColours: the lists in the navigation each
 // get a colour of their own.
 func TestTheListsOnShowHaveTheirOwnColours(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Store.Create("habit", map[string]any{"name": "Water"})
 	a.Store.Create("note", map[string]any{"title": "Beds"})

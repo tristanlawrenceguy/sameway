@@ -15,6 +15,7 @@ import (
 // reads as a short, plain verb — not "Create and open".  This covers Acceptance 1
 // (≤4 words) and Acceptance 2 (active verb only).
 func TestWorkspaceNewPageButtonLabel(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/workspaces/new")
@@ -32,6 +33,7 @@ func TestWorkspaceNewPageButtonLabel(t *testing.T) {
 // TestWorkspaceCopyPageButtonLabel checks that the copy-workspace form button
 // reads as a short verb — not "Copy and open".
 func TestWorkspaceCopyPageButtonLabel(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Workspace.Set("name", "Test workspace")
 
@@ -52,6 +54,7 @@ func TestWorkspaceCopyPageButtonLabel(t *testing.T) {
 // TestWorkspaceStartButtonLabel checks that the workspace-list row "start" button
 // is a short verb — not "Start and open".
 func TestWorkspaceStartButtonLabel(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Workspace.Set("name", "Test workspace")
 
@@ -71,6 +74,7 @@ func TestWorkspaceStartButtonLabel(t *testing.T) {
 // reads as a short verb — not "Delete this workspace".  After the change it
 // should be just "Delete", with optional context for screen readers.
 func TestWorkspaceDeleteButtonLabel(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Workspace.Set("name", "Test workspace")
 

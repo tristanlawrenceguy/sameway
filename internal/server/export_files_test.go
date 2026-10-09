@@ -15,6 +15,7 @@ import (
 // A spreadsheet is RFC 4180 with a byte-order mark, a text that looks
 // like a formula never runs, and the same text comes back through Import.
 func TestASpreadsheetNeverRunsWhatItHolds(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Store.Create("task", map[string]any{"title": `=HYPERLINK("http://evil.example","Click")`, "notes": "one, \"two\"\nthree"})
 	a.Store.Create("task", map[string]any{"title": "@SUM(A1:A2)"})
@@ -58,6 +59,7 @@ func TestASpreadsheetNeverRunsWhatItHolds(t *testing.T) {
 // last, and a repeat's last day in the kind of value its start is; read
 // back, it is the same days.
 func TestACalendarSaysDaysAsCalendarsDo(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Store.Create("event", map[string]any{"title": "Harvest fair", "starts": "2026-10-12T00:00:00Z", "ends": "2026-10-13T00:00:00Z", "repeat": "FREQ=YEARLY;UNTIL=20300101"})
 	a.Store.Create("event", map[string]any{"title": "Birthday", "starts": "2026-11-02T00:00:00Z"})
@@ -84,6 +86,7 @@ func TestACalendarSaysDaysAsCalendarsDo(t *testing.T) {
 // record, each link saying the kind of file, its format and its size
 // where making it is cheap.
 func TestARecordGoesOutOnItsOwn(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	task, _ := a.Store.Create("task", map[string]any{"title": "Dig the pond", "due": "2026-10-01T00:00:00Z", "notes": "Mind the roots."})
 	undated, _ := a.Store.Create("task", map[string]any{"title": "Someday"})
@@ -134,6 +137,7 @@ func TestARecordGoesOutOnItsOwn(t *testing.T) {
 // The internet takes away what is published, and only that: a published
 // list and record as files, without the fields kept out of sight.
 func TestTheInternetTakesAwayOnlyWhatIsPublished(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	pub := h.(*server.Server).Public(nil)
 	ev, _ := a.Store.Create("event", map[string]any{"title": "Open garden", "starts": "2026-10-10T00:00:00Z", "uid": "private-calendar-id"})

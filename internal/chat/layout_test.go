@@ -13,6 +13,7 @@ import (
 // TestModelLaysOutTheCanvas covers span and position: the model decides how
 // wide a block is and where it sits, without touching its props.
 func TestModelLaysOutTheCanvas(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	svc.Provider = &scripted{steps: []*llm.Response{
 		call("add_component", map[string]any{"component": "heading", "props": map[string]any{"text": "Week"}, "span": 12}),
@@ -53,6 +54,7 @@ func TestModelLaysOutTheCanvas(t *testing.T) {
 }
 
 func TestLayoutToolsRejectNonsense(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	svc.Provider = &scripted{steps: []*llm.Response{
 		call("add_component", map[string]any{"component": "text", "props": map[string]any{"content": "hi"}, "span": 99}),
@@ -82,6 +84,7 @@ func TestLayoutToolsRejectNonsense(t *testing.T) {
 // TestChatIsABlockLikeAnyOther checks the conversation can be placed,
 // restyled, and removed, and that only one may exist.
 func TestChatIsABlockLikeAnyOther(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	svc.Provider = &scripted{steps: []*llm.Response{
 		call("add_component", map[string]any{"component": "chat", "props": map[string]any{}, "span": 12}),
@@ -124,6 +127,7 @@ func TestChatIsABlockLikeAnyOther(t *testing.T) {
 // side pane, the tool result says so, and the block stays there until it
 // is moved.
 func TestModelPlacesBlocksInPanes(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	m := &scripted{steps: []*llm.Response{
 		call("add_component", map[string]any{"component": "calendar", "props": map[string]any{"month": "2026-09", "detail": "brief"}, "region": "left", "span": 12}),
@@ -155,6 +159,7 @@ func TestModelPlacesBlocksInPanes(t *testing.T) {
 // TestPromptListsRows: the model is told how its spans fall into rows of
 // twelve, holes included, so it can see a bad layout instead of guessing.
 func TestPromptListsRows(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	m := &scripted{steps: []*llm.Response{
 		call("add_component", map[string]any{"component": "heading", "props": map[string]any{"text": "Week"}, "span": 12}),

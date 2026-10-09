@@ -13,6 +13,7 @@ import (
 // TestWorkspacesNewGETPage checks that GET /workspaces/new returns a full
 // accessible page with the "new workspace" form, not an HTTP 405 error.
 func TestWorkspacesNewGETPage(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/workspaces/new")

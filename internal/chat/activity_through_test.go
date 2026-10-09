@@ -11,6 +11,7 @@ import (
 // written through WriteAs never contain ", through the API" or "through the
 // command line", so headings and body text on /activity read in plain words.
 func TestActivitySummariesNeverReferenceTheAPI(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 
 	rec, err := svc.Store.Create("note", map[string]any{"title": "Plan"})
@@ -45,6 +46,7 @@ func TestActivitySummariesNeverReferenceTheAPI(t *testing.T) {
 // ActivitySummariesNeverReferenceTheCLI checks that CLI writes also drop the
 // machine-language suffix from new summaries.
 func TestActivitySummariesNeverReferenceTheCLI(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 
 	rec, err := svc.Store.Create("note", map[string]any{"title": "Seed"})
@@ -71,6 +73,7 @@ func TestActivitySummariesNeverReferenceTheCLI(t *testing.T) {
 // NonThroughViaStillSaysOn checks that a non-"through" via value still gets
 // rendered as ", on <device>".
 func TestNonThroughViaStillSaysOn(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 
 	rec, err := svc.Store.Create("note", map[string]any{"title": "Test"})

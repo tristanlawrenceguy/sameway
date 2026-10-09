@@ -14,6 +14,7 @@ import (
 // user can tell one row's box from the next, and the name stays put when it
 // is ticked: the checked state is the box's own to say.
 func TestAMarkCheckboxAccessibleNameReflectsState(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	// Create an unchecked task so the done checkbox is unchecked.
@@ -64,6 +65,7 @@ func TestAMarkCheckboxAccessibleNameReflectsState(t *testing.T) {
 // A note's pin is a setting, not something done: its row has no box that
 // reads as done, and a pinned note says Pinned in words.
 func TestAPinnedNoteSaysSoWithoutACheckbox(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	var note struct{ ID string }
 	decode(t, postJSON(t, h, http.MethodPost, "/api/note",
@@ -80,6 +82,7 @@ func TestAPinnedNoteSaysSoWithoutACheckbox(t *testing.T) {
 // The mark component renders an aria-label on its input when given one,
 // overriding the implicit label-based accessible name for screen readers.
 func TestAMarkComponentRendersAriaLabel(t *testing.T) {
+	t.Parallel()
 	reg := render.New()
 	if err := reg.LoadFS(design.FS, "components", "builtin"); err != nil {
 		t.Fatal(err)

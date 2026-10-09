@@ -16,6 +16,7 @@ import (
 // one as it ends to add what the app made. Before, the page is the
 // meeting; once it is over with no recording, the page asks for one.
 func TestAMeetingAsksForItsRecording(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	soon := time.Now().Add(2 * time.Hour).UTC().Truncate(time.Minute)
 	ev, err := a.Store.Create("event", map[string]any{"title": "Stand-up", "starts": soon.Format(time.RFC3339), "ends": soon.Add(30 * time.Minute).Format(time.RFC3339)})

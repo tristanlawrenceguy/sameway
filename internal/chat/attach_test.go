@@ -48,6 +48,7 @@ func withFiles(t *testing.T, steps ...*llm.Response) (*chat.Service, *scripted) 
 // The model gets what a file says with the message it came with, and is
 // told what it cannot get: a picture's description, or text still on its way.
 func TestTheModelReadsWhatCameWithTheMessage(t *testing.T) {
+	t.Parallel()
 	svc, m := withFiles(t)
 	ready, _ := svc.Store.Create("file", map[string]any{"title": "Lease", "kind": "document", "text": "# Lease\n\nRent is due on the first."})
 	if _, err := svc.SendFile(context.Background(), "", "", ready.ID); err != nil {

@@ -24,6 +24,7 @@ import (
 // related things and the list took the first datetime, ends, and the
 // export took starts, so one meeting sat on two days.
 func TestEverySurfaceAgreesOnARecordsDay(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	known := filepath.Join(t.TempDir(), "known.json")
 	os.WriteFile(known, []byte("[]"), 0o644)

@@ -12,6 +12,7 @@ import (
 // valid props; a workspace can add its own; a wrong one is refused when
 // it is loaded, not when it is asked for.
 func TestArrangementsAreCheckedWhenLoaded(t *testing.T) {
+	t.Parallel()
 	reg := builtins(t)
 	arrangements := reg.Arrangements()
 	if len(arrangements) < 4 {

@@ -21,6 +21,7 @@ import (
 // Every tool a client is offered says what it is like, so the client can
 // ask its person before what changes or reaches outside the workspace.
 func TestEveryToolSaysWhatItIs(t *testing.T) {
+	t.Parallel()
 	_, replies := drive(t, `{"jsonrpc":"2.0","id":1,"method":"tools/list"}`)
 	tools, _ := result(t, replies[0])["tools"].([]any)
 	if len(tools) == 0 {
@@ -42,6 +43,7 @@ func TestEveryToolSaysWhatItIs(t *testing.T) {
 // What says it only reads is called, and the workspace on disk is the same
 // afterwards, byte for byte.
 func TestReadOnlyToolsChangeNothing(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	if err := workspace.Init(dir, examples.FS, examples.StarterRoot, false); err != nil {
 		t.Fatal(err)

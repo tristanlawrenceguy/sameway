@@ -10,6 +10,7 @@ import (
 // does not show "Started", "Created" or any label prefix before the creation
 // timestamp in its lede paragraph. The span still exists with just relative time text.
 func TestHabitDetailLedeSaysStartedNotCreated(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("habit", map[string]any{
@@ -45,6 +46,7 @@ func TestHabitDetailLedeSaysStartedNotCreated(t *testing.T) {
 // show any label prefix ("Added") before the creation timestamp. All record
 // types now show just relative time text in the lede (acceptance item 3).
 func TestNonHabitDetailPagesUseAdded(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// A note page should not have a label prefix.
@@ -104,6 +106,7 @@ func TestNonHabitDetailPagesUseAdded(t *testing.T) {
 // prefix does not remove any date or value information from a habit's lede
 // (acceptance item 2). The lede should still contain the creation time.
 func TestHabitDetailLedeStillShowsAllInformation(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("habit", map[string]any{
@@ -148,6 +151,7 @@ func TestHabitDetailLedeStillShowsAllInformation(t *testing.T) {
 // The creation time is still present via s.whenMade() at the end of the lede
 // (acceptance item 2 and 3).
 func TestHabitDetailLedeNoCadenceBadge(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("habit", map[string]any{

@@ -14,6 +14,7 @@ import (
 // /chat (the working surface for creating content), not the dead /t/note/new.
 // Covers Acceptance 1 and 2 of task 0395.
 func TestEmptyStateLinksToChat(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/t/note")
@@ -35,6 +36,7 @@ func TestEmptyStateLinksToChat(t *testing.T) {
 // "Ask the assistant" rather than just "Add your first", matching the product's
 // design language of directing people to the chat. Covers Acceptance 3.
 func TestEmptyStateSaysAskTheAssistant(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/t/note")
@@ -55,6 +57,7 @@ func TestEmptyStateSaysAskTheAssistant(t *testing.T) {
 // TestEmptyStateLinksToChatForActions checks that the actions listing also
 // links to /chat (not a dead form route). Covers Acceptance 1 for the action type.
 func TestEmptyStateLinksToChatForActions(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/t/action")
@@ -73,6 +76,7 @@ func TestEmptyStateLinksToChatForActions(t *testing.T) {
 // TestEmptyStateLinksToChatForTasks checks that the tasks listing also links
 // to /chat (not a dead form route). Covers Acceptance 1 for the task type.
 func TestEmptyStateLinksToChatForTasks(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/t/task")

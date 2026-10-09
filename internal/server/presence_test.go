@@ -27,6 +27,7 @@ func presenceLine(page string) string {
 // Someone on the page the reader is on is "on this page", marked so the
 // page can say so once when they arrive; elsewhere, where they are.
 func TestSomeoneOnThisPageIsSaidToBe(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Records.Owner = records.Visitor{Access: records.Owner, Login: "me@example.com", Name: "Me"}
 	as(t, h, hana, http.MethodGet, "/t/note", "", "")
@@ -43,6 +44,7 @@ func TestSomeoneOnThisPageIsSaidToBe(t *testing.T) {
 // Where the owner is on a part of the workspace that is theirs alone is
 // not said: its title is not the others' to read.
 func TestWhereTheOwnerIsAloneIsNotSaid(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Records.Owner = records.Visitor{Access: records.Owner, Login: "me@example.com", Name: "Me"}
 	c, err := a.Store.Create(records.ConversationType, map[string]any{"title": "A surprise for Hana"})
@@ -61,6 +63,7 @@ func TestWhereTheOwnerIsAloneIsNotSaid(t *testing.T) {
 
 // A published page does not carry who is in the workspace, even hidden.
 func TestAPublishedPageSaysNothingOfWhoIsHere(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Records.Owner = records.Visitor{Access: records.Owner, Login: "me@example.com", Name: "Me"}
 	n, _ := a.Store.Create("note", map[string]any{"title": "Sourdough"})
@@ -75,6 +78,7 @@ func TestAPublishedPageSaysNothingOfWhoIsHere(t *testing.T) {
 // A page that says its person has been idle keeps following but no longer
 // makes them here; nor does a page fetching itself to follow a change.
 func TestIdleIsNotHere(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Records.Owner = records.Visitor{Access: records.Owner, Login: "me@example.com", Name: "Me"}
 	follow := func(path string) {
@@ -100,6 +104,7 @@ func TestIdleIsNotHere(t *testing.T) {
 // The page says an arrival on this page once, through a status there from
 // the start, and never a departure; it goes idle after ten minutes.
 func TestArrivalsAreSaidOnceAndQuietly(t *testing.T) {
+	t.Parallel()
 	js, err := os.ReadFile("../../design/components/presence/enhance.js")
 	if err != nil {
 		t.Fatal(err)

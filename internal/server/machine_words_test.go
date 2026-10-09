@@ -21,6 +21,7 @@ import (
 // reader meet it (the text, and the names, labels and descriptions read
 // out), and fails on any of them, so the next one is found here.
 func TestNoMachineWordsReachAPerson(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	seedLikeAPerson(t, a, h) // machine_seed_test.go
 

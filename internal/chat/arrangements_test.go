@@ -13,6 +13,7 @@ import (
 // block in its region at its width, in order, with the props given in
 // fills, each logged and undoable on its own.
 func TestAnArrangementIsAPageInOneCall(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	raw, _ := json.Marshal(map[string]any{"name": "week", "fills": map[string]any{
 		"todo": map[string]any{"label": "Due soon"},
@@ -65,6 +66,7 @@ func TestAnArrangementIsAPageInOneCall(t *testing.T) {
 // What a block lists comes from records: items given in fills would be
 // thrown away when it is drawn, so they are refused with what to do.
 func TestAnArrangementsListsAreNotFilledIn(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	raw, _ := json.Marshal(map[string]any{"name": "week", "fills": map[string]any{
 		"todo": map[string]any{"items": []any{map[string]any{"title": "Call Sam", "href": "/t/task/x"}}},

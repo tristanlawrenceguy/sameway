@@ -70,6 +70,7 @@ func entries(t *testing.T, svc *chat.Service, action string) []*store.Record {
 
 // The layout line names what the evaluations found wrong, each with a fix.
 func TestEveryBlockWriteSaysHowThePageReads(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	weekPage(t, svc)
 	text := run(t, svc, "add_component", map[string]any{"component": "calendar", "props": map[string]any{"type": "task", "detail": "brief"}, "span": 4})
@@ -103,6 +104,7 @@ func TestEveryBlockWriteSaysHowThePageReads(t *testing.T) {
 // The suggested call is one the tool takes, and it leaves the page with
 // full rows, what is late first and related things together.
 func TestTheSuggestedArrangementFixesThePage(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	heading, due, tracker, overdue := weekPage(t, svc)
 	text := svc.LayoutNow("")
@@ -130,6 +132,7 @@ func TestTheSuggestedArrangementFixesThePage(t *testing.T) {
 
 // One arrangement is one entry and one Undo; undoing the undo puts it back.
 func TestArrangeIsOneChangeAndOneUndo(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	heading, due, tracker, overdue := weekPage(t, svc)
 	was := layout(t, svc)
@@ -162,6 +165,7 @@ func TestArrangeIsOneChangeAndOneUndo(t *testing.T) {
 
 // What would lose a block or break the outline is refused whole.
 func TestArrangeRefusesWhatLosesABlockOrSkipsAHeading(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	heading, due, tracker, overdue := weekPage(t, svc)
 	was := layout(t, svc)
@@ -185,6 +189,7 @@ func TestArrangeRefusesWhatLosesABlockOrSkipsAHeading(t *testing.T) {
 
 // A skipped heading level is refused when a block is written, too.
 func TestAHeadingThatSkipsALevelIsRefusedWithTheFix(t *testing.T) {
+	t.Parallel()
 	svc := newFullService(t)
 	refused(t, svc, "add_component", map[string]any{"component": "list", "props": map[string]any{"label": "Packing", "items": []string{"a"}, "level": 3}}, "Give it level 2, or put a level 2 heading before it")
 	id := idOf(run(t, svc, "add_component", map[string]any{"component": "list", "props": map[string]any{"label": "Packing", "items": []string{"a"}, "level": 2}}))

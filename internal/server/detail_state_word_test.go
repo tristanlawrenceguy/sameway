@@ -48,6 +48,7 @@ func wantBoxWord(t *testing.T, lede, field, word string, checked bool) {
 }
 
 func TestAPinnedNoteBoxSaysPinned(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	var note struct{ ID string }
 	decode(t, postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Buy tomatoes", "pinned": true}), &note)
@@ -55,6 +56,7 @@ func TestAPinnedNoteBoxSaysPinned(t *testing.T) {
 }
 
 func TestAnUnpinnedNoteBoxSaysPinnedUnchecked(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	var note struct{ ID string }
 	decode(t, postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Meeting notes"}), &note)
@@ -62,6 +64,7 @@ func TestAnUnpinnedNoteBoxSaysPinnedUnchecked(t *testing.T) {
 }
 
 func TestADoneTaskBoxSaysDone(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	var task struct{ ID string }
 	decode(t, postJSON(t, h, http.MethodPost, "/api/task", map[string]any{"title": "Water the plants", "done": true}), &task)
@@ -69,6 +72,7 @@ func TestADoneTaskBoxSaysDone(t *testing.T) {
 }
 
 func TestAnUndoneTaskBoxSaysDoneUnchecked(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	var task struct{ ID string }
 	decode(t, postJSON(t, h, http.MethodPost, "/api/task", map[string]any{"title": "Water the plants"}), &task)
@@ -76,6 +80,7 @@ func TestAnUndoneTaskBoxSaysDoneUnchecked(t *testing.T) {
 }
 
 func TestAnActionBoxSaysItsLabel(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	var act struct{ ID string }
 	decode(t, postJSON(t, h, http.MethodPost, "/api/action", map[string]any{"title": "Ping me", "show": true}), &act)
@@ -86,6 +91,7 @@ func TestAnActionBoxSaysItsLabel(t *testing.T) {
 // detail page still posts correctly and updates the checked state.
 // Acceptance item 4 of task 0195.
 func TestPinningNoteStillWorks(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	var note struct{ ID string }

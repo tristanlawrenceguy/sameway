@@ -8,6 +8,7 @@ import (
 // A time of day is said the GOV.UK way on the 12-hour clock: 2pm, not
 // 2:00pm or 14:00hrs; midday and midnight, never 12pm.
 func TestClockSaysATimeAsPeopleDo(t *testing.T) {
+	t.Parallel()
 	at := func(h, m int) time.Time { return time.Date(2026, 9, 17, h, m, 0, 0, time.UTC) }
 	for _, c := range []struct {
 		t        time.Time
@@ -38,6 +39,7 @@ func TestClockSaysATimeAsPeopleDo(t *testing.T) {
 // The clock is the person's choice, else their language's: English the
 // 12-hour way, German and French the 24-hour way.
 func TestTwentyFourFollowsTheChoiceThenTheLanguage(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct {
 		clock, lang string
 		want        bool
@@ -55,6 +57,7 @@ func TestTwentyFourFollowsTheChoiceThenTheLanguage(t *testing.T) {
 // Yesterday, else its weekday and date, the year only when another.
 // Nothing makes a person count days ("In 4 days").
 func TestRelativeSaysADayToPlanBy(t *testing.T) {
+	t.Parallel()
 	now := time.Date(2026, 9, 17, 10, 30, 0, 0, time.UTC) // a Thursday
 	for _, c := range []struct{ v, want string }{
 		{"2026-09-17T08:00:00Z", "Today at 8am"},
@@ -81,6 +84,7 @@ func TestRelativeSaysADayToPlanBy(t *testing.T) {
 // A moment is said in the reader's zone: late on the 17th in UTC is
 // already the 18th in Tokyo, and a day alone is the same day everywhere.
 func TestRelativeIsSaidInTheReadersZone(t *testing.T) {
+	t.Parallel()
 	tokyo := time.FixedZone("Tokyo", 9*3600)
 	now := time.Date(2026, 9, 17, 12, 0, 0, 0, tokyo)
 	if got := Relative("2026-09-17T20:00:00Z", now, false); got != "Tomorrow at 5am" {
@@ -94,6 +98,7 @@ func TestRelativeIsSaidInTheReadersZone(t *testing.T) {
 // When something happened is said by how long ago while that is short,
 // then by its date.
 func TestAgoSaysWhenSomethingHappened(t *testing.T) {
+	t.Parallel()
 	now := time.Date(2026, 9, 17, 10, 30, 0, 0, time.UTC)
 	for _, c := range []struct {
 		t    time.Time
@@ -115,6 +120,7 @@ func TestAgoSaysWhenSomethingHappened(t *testing.T) {
 // The full date is there for words that leave it out, and a <time> holds
 // the value a machine reads: the date alone for a day.
 func TestFullAndMachine(t *testing.T) {
+	t.Parallel()
 	if got := Full("2026-10-05T00:00:00Z", false); got != "Monday 5 October 2026" {
 		t.Errorf("Full of a day = %q", got)
 	}
@@ -133,6 +139,7 @@ func TestFullAndMachine(t *testing.T) {
 
 // What Text says reads back as the same value on either clock.
 func TestTextReadsBackOnEitherClock(t *testing.T) {
+	t.Parallel()
 	for _, h24 := range []bool{false, true} {
 		for _, v := range []string{"2026-09-19T14:00:00Z", "2026-09-19T11:30:00Z", "2026-09-19T00:00:00Z"} {
 			ts, day, ok := Parse(Text(v, h24), time.Now())

@@ -13,6 +13,7 @@ import (
 // Expand or Remove. It takes its own row under the content for everyone,
 // not only where it is always shown.
 func TestBlockBarNeverCoversTheBlock(t *testing.T) {
+	t.Parallel()
 	data, err := os.ReadFile("../../design/base/05-quiet.css")
 	if err != nil {
 		t.Fatal(err)

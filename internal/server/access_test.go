@@ -32,6 +32,7 @@ func as(t *testing.T, h http.Handler, v records.Visitor, method, path string, bo
 // that email and the access the owner gave them; someone nobody let in is
 // told they have asked, and the owner is asked, once.
 func TestWhoGetsInIsWhoTheOwnerLetIn(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	srv := h.(*server.Server)
 	if _, err := a.Store.Create("person", map[string]any{"name": "Bob", "email": "Bob@Example.com", "access": "edit"}); err != nil {
@@ -68,6 +69,7 @@ func TestWhoGetsInIsWhoTheOwnerLetIn(t *testing.T) {
 // change content but not reach what is the owner's alone, nor give
 // themselves more access through the API.
 func TestWhatEachLevelMayDo(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	bob, err := a.Store.Create("person", map[string]any{"name": "Bob", "email": "bob@example.com", "access": "edit"})
 	if err != nil {
@@ -112,6 +114,7 @@ func TestWhatEachLevelMayDo(t *testing.T) {
 // What the owner said to the assistant stays theirs: someone who may only
 // look sees the canvas without the conversation.
 func TestAVisitorDoesNotSeeTheOwnersConversation(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Chat.Say("the owner's private words")
 	if !strings.Contains(get(t, h, "/").Body.String(), "the owner&#39;s private words") {
@@ -128,6 +131,7 @@ func TestAVisitorDoesNotSeeTheOwnersConversation(t *testing.T) {
 
 // A change someone else makes is theirs in the log, by name and device.
 func TestTheLogSaysWhoElseMadeAChange(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	editor := records.Visitor{Name: "Bob", Access: records.Edit, Device: "pixel-7"}
 	rec, _ := a.Store.Create("note", map[string]any{"title": "Shopping"})
@@ -149,6 +153,7 @@ func TestTheLogSaysWhoElseMadeAChange(t *testing.T) {
 // Bob, who may edit, has his own chat with the assistant, with nothing of
 // the owner's in it; someone who may only look has none.
 func TestAnEditorHasTheirOwnChat(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Chat.Say("the owner's private words")
 	bob := records.Visitor{Name: "Bob", Login: "bob@example.com", Access: records.Edit}
@@ -167,6 +172,7 @@ func TestAnEditorHasTheirOwnChat(t *testing.T) {
 
 // Someone asking to come in reaches the owner where they are, once.
 func TestAKnockRingsTheOwnerOnce(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	srv := h.(*server.Server)
 	rang := make(chan string, 4)

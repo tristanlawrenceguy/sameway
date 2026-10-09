@@ -13,6 +13,7 @@ import (
 // read. The page invites questions, and carries the script that lets a
 // person who has caught up show everything at once.
 func TestPaceIsSetByAskingAndReadByThePage(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	if page := get(t, h, "/").Body.String(); !strings.Contains(page, `data-pace="calm"`) {
 		t.Error("the default pace is calm and is on the root element")

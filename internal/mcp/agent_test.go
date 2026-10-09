@@ -69,6 +69,7 @@ const addCard = `{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":
 // the log, as an agent, and on the blocks it places. And what it did is
 // undone like anything else.
 func TestAnMCPClientsChangesAreLoggedByItsName(t *testing.T) {
+	t.Parallel()
 	a, id := starter(t)
 	serve(t, a, false, initialize(`{"name":"claude-code","version":"2.1.0"}`), tick(id), addCard)
 
@@ -106,6 +107,7 @@ func TestAnMCPClientsChangesAreLoggedByItsName(t *testing.T) {
 
 // A client that gives no name is an agent all the same.
 func TestAnUnnamedClientIsAnAgent(t *testing.T) {
+	t.Parallel()
 	a, id := starter(t)
 	serve(t, a, false, tick(id))
 	e := latest(t, a)
@@ -117,6 +119,7 @@ func TestAnUnnamedClientIsAnAgent(t *testing.T) {
 // The assistant in the app, whose model runs its tools over MCP in
 // another program, stays the assistant whatever that program calls itself.
 func TestTheAssistantInTheAppStaysTheAssistant(t *testing.T) {
+	t.Parallel()
 	a, id := starter(t)
 	serve(t, a, true, initialize(`{"name":"claude-code"}`), tick(id), addCard)
 	e := latest(t, a)
@@ -132,6 +135,7 @@ func TestTheAssistantInTheAppStaysTheAssistant(t *testing.T) {
 // Over HTTP each POST stands alone: the client is given a session on
 // initialize, and is known by it after; a header can name it instead.
 func TestAnHTTPClientIsKnownByItsSession(t *testing.T) {
+	t.Parallel()
 	a, id := starter(t)
 	h := mcp.Bearer("secret", &mcp.Server{App: a, Version: "test"})
 	send := func(body string, header map[string]string) *httptest.ResponseRecorder {

@@ -12,6 +12,7 @@ import (
 // are trimmed to exactly six words, so no h1 on any record detail page
 // exceeds the limit. (Acceptance 1: no h1 heading exceeds 6 words.)
 func TestTrimTitleCutsLongTitles(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Create a note with an extremely long title — more than 6 words.
@@ -43,6 +44,7 @@ func TestTrimTitleCutsLongTitles(t *testing.T) {
 // TestTrimTitleLeavesShortTitlesUntouched verifies that titles already within
 // the six-word limit are not altered. (Acceptance 1.)
 func TestTrimTitleLeavesShortTitlesUntouched(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{
@@ -68,6 +70,7 @@ func TestTrimTitleLeavesShortTitlesUntouched(t *testing.T) {
 // TestSearchTitleTrimsLongQueries verifies that the search page h1 is trimmed
 // when a long query makes it exceed six words. (Acceptance 1.)
 func TestSearchTitleTrimsLongQueries(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	page := get(t, h, "/search?q=this+is+a+very+long+search+query+that+exceeds+six")
@@ -88,6 +91,7 @@ func TestSearchTitleTrimsLongQueries(t *testing.T) {
 // TestSearchTitleWithShortQueryIsUnchanged verifies that a short query does not
 // get truncated. (Acceptance 1.)
 func TestSearchTitleWithShortQueryIsUnchanged(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	page := get(t, h, "/search?q=plumber")
@@ -109,6 +113,7 @@ func TestSearchTitleWithShortQueryIsUnchanged(t *testing.T) {
 // /design are not trimmed — they are developer-authored manifest examples and
 // out of scope. (Acceptance 4.)
 func TestDesignPageHeadingsUnchanged(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	rec := get(t, h, "/design")
@@ -130,6 +135,7 @@ func TestDesignPageHeadingsUnchanged(t *testing.T) {
 // TestBlockFocusPageTrimsLongTitles verifies that pop-out block pages (canvas
 // focus) trim long captions/titles to 6 words. (Acceptance 1.)
 func TestBlockFocusPageTrimsLongTitles(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 
 	// Use a calendar block with an extremely long caption.

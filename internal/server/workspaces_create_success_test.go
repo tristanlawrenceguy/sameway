@@ -15,6 +15,7 @@ import (
 // a success alert and separately notes the start failure — it does not show
 // "That did not go through". Covers acceptance item 1.
 func TestWorkspacesNewStartFailsShowsSuccessAlert(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	h = server.New(a).WithFleet(&server.Fleet{Launch: func(dir, addr string) error {
 		return fmt.Errorf("simulated start failure") // fleet refuses to launch
@@ -48,6 +49,7 @@ func TestWorkspacesNewStartFailsShowsSuccessAlert(t *testing.T) {
 // a success alert and separately notes the start failure — it does not show
 // "That did not go through". Covers acceptance item 2.
 func TestWorkspacesCopyStartFailsShowsSuccessAlert(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	h = server.New(a).WithFleet(&server.Fleet{Launch: func(dir, addr string) error {
 		return fmt.Errorf("simulated start failure") // fleet refuses to launch

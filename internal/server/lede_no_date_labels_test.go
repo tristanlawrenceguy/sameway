@@ -10,6 +10,7 @@ import (
 // the creation time as natural language without any field-name label prefix
 // such as "Added". Acceptance item 1.
 func TestNoteDetailLedeNoAddedLabel(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{"title": "Plans"})
@@ -41,6 +42,7 @@ func TestNoteDetailLedeNoAddedLabel(t *testing.T) {
 // dates in natural language without any field-name label prefix such as
 // "Created". Acceptance item 2.
 func TestTaskDetailLedeNoCreatedLabel(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("task", map[string]any{"title": "Buy milk"})
@@ -73,6 +75,7 @@ func TestTaskDetailLedeNoCreatedLabel(t *testing.T) {
 // not include an " · Updated ..." suffix — the last-change time always appeared
 // with a field-name label ("Updated") and must be removed too. Acceptance item 2.
 func TestTaskDetailLedeNoUpdatedLabel(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("task", map[string]any{
@@ -106,6 +109,7 @@ func TestTaskDetailLedeNoUpdatedLabel(t *testing.T) {
 // the creation time without any field-name label prefix such as "Started".
 // Acceptance item 3.
 func TestHabitDetailLedeNoStartedLabel(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("habit", map[string]any{

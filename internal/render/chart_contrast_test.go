@@ -14,6 +14,7 @@ import (
 // page and the card, in light and in dark (WCAG 1.4.11). They take a
 // list's colour, the accent, or the warning for a target.
 func TestChartColoursStandOutFromThePage(t *testing.T) {
+	t.Parallel()
 	raw, err := os.ReadFile("../../design/tokens/tokens.css")
 	if err != nil {
 		t.Fatal(err)

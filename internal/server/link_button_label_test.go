@@ -16,6 +16,7 @@ import (
 // every example with look="button" has a label of ≤3 words.  This covers Acceptance 1
 // for all system-level link-button examples, including "Back to the canvas".
 func TestLinkButtonExamplesLabelsAreShort(t *testing.T) {
+	t.Parallel()
 	data, err := design.FS.ReadFile("components/link/manifest.json")
 	if err != nil {
 		t.Fatalf("cannot read link manifest: %v", err)

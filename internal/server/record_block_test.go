@@ -13,6 +13,7 @@ import (
 // endpoint, and the person lands back on the canvas afterwards. When the
 // record goes, the block says so instead of vanishing or breaking.
 func TestARecordBlockIsTheRecordOnTheCanvas(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	var note struct{ ID string }
 	decode(t, postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Call the dentist", "body": "Ask about Thursday.", "tags": []string{"health"}}), &note)

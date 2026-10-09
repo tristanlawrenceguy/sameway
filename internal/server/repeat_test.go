@@ -22,6 +22,7 @@ import (
 // read, on the page and when it is saved; words that are not a repeat are
 // refused with what they must be.
 func TestARepeatIsWrittenInWordsAndSaidBack(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	task, _ := a.Store.Create("task", map[string]any{"title": "Water the ferns", "due": "2026-10-06T00:00:00Z"})
 
@@ -57,6 +58,7 @@ func TestARepeatIsWrittenInWordsAndSaidBack(t *testing.T) {
 // A repeating task ticked done is due again on its next day, counted from
 // the day it was due, in one change the log has and Undo takes back.
 func TestARepeatingTaskDoneIsDueAgain(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	due := time.Now().AddDate(0, 0, 1).Format("2006-01-02") + "T00:00:00Z"
 	task, _ := a.Store.Create("task", map[string]any{"title": "Water the ferns", "due": due, "repeat": "every 2 weeks"})
@@ -99,6 +101,7 @@ func TestARepeatingTaskDoneIsDueAgain(t *testing.T) {
 // of day, even after five more minutes; the clock says that it repeats, in
 // words, and Cancel on one that repeats skips only this time.
 func TestARepeatingReminderRingsAgain(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Store.Create(records.BlockType, a.Chat.BlockFields(map[string]any{"component": "clock", "props": map[string]any{}}))
 	now := time.Now()
@@ -137,6 +140,7 @@ func TestARepeatingReminderRingsAgain(t *testing.T) {
 // A workspace made before repeats gets the field on its tasks and
 // reminders, as it gets any field of a type Sameway provides.
 func TestAnOlderWorkspaceGetsRepeat(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	known := filepath.Join(t.TempDir(), "known.json")
 	os.WriteFile(known, []byte("[]"), 0o644)

@@ -13,6 +13,7 @@ import (
 // template.html, style.css) must have been removed — otherwise LoadDir fails
 // and blocks every agent workflow on a fresh init.
 func TestStarterWorkspaceLoads(t *testing.T) {
+	t.Parallel()
 	reg := render.New()
 	starterComponents := filepath.Join("..", "..", "examples", "workspaces", "starter", "components")
 	if err := reg.LoadDir(starterComponents, "workspace"); err != nil {

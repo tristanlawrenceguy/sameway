@@ -30,6 +30,7 @@ func refusedToTry(res *httptest.ResponseRecorder) bool {
 // workspace, so a new one cannot be tried on a copy while it reaches out;
 // and a route whose tool reaches outside is outward too.
 func TestEveryChangeSaysWhereItReaches(t *testing.T) {
+	t.Parallel()
 	for _, rt := range server.Routes() {
 		if strings.HasPrefix(rt.Pattern, "GET ") {
 			continue
@@ -47,6 +48,7 @@ var pathValue = regexp.MustCompile(`\{[^}]+\}`)
 
 // No route that reaches outside the workspace is tried on a copy.
 func TestADryRunTriesNothingOutward(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	n := 0
 	for _, rt := range server.Routes() {
@@ -73,6 +75,7 @@ func TestADryRunTriesNothingOutward(t *testing.T) {
 // Running an action from the API and sending reminders to a phone were
 // tried on a copy, which ran the action and reached ntfy for real.
 func TestADryRunDoesNotRunAnActionOrReachAPhone(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	if res := dryRun(h, http.MethodPost, "/api/act/anything", "", "application/json"); !refusedToTry(res) {
 		t.Errorf("POST /api/act/{id} was tried: %d %s", res.Code, res.Body.String())
@@ -88,6 +91,7 @@ func TestADryRunDoesNotRunAnActionOrReachAPhone(t *testing.T) {
 
 // What stays in the workspace is still tried, from a page as from the API.
 func TestADryRunStillTriesWhatStaysInside(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	before, _ := a.Store.Count("note")
 	res := dryRun(h, http.MethodPost, "/t/note/add", url.Values{"title": {"Only tried"}}.Encode(), "application/x-www-form-urlencoded")

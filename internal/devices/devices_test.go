@@ -15,6 +15,7 @@ import (
 // time with a name a person would use, and from then on its state and
 // when it was seen. JSON is kept readable.
 func TestAMessageBecomesADeviceAndKeepsItCurrent(t *testing.T) {
+	t.Parallel()
 	types, err := schema.Load(filepath.Join("..", "..", "examples", "workspaces", "starter", "schema"))
 	if err != nil {
 		t.Fatal(err)
@@ -58,6 +59,7 @@ func TestAMessageBecomesADeviceAndKeepsItCurrent(t *testing.T) {
 
 // Without a broker there is no bus, and publishing says what to set.
 func TestNoBrokerIsNoBus(t *testing.T) {
+	t.Parallel()
 	var b *devices.Bus
 	if err := b.Publish("a/b", "on"); err == nil || !strings.Contains(err.Error(), "mqtt.broker") {
 		t.Errorf("publishing with no broker says how to set one: %v", err)

@@ -13,6 +13,7 @@ import (
 // to switch between rich text and Markdown source views. This test remains as a
 // no-op placeholder since its original assertions conflict with task 0424's fix.
 func TestProseSourceNotHiddenOrDisabledAtStartup(t *testing.T) {
+	t.Parallel()
 	// Superseded by task 0424: source now starts hidden to prevent duplicate Body textboxes.
 }
 
@@ -20,6 +21,7 @@ func TestProseSourceNotHiddenOrDisabledAtStartup(t *testing.T) {
 // handlers only use source.hidden (not source.disabled) for visibility, because
 // source.disabled is no longer set at startup and must not be used to hide.
 func TestProseToggleUsesHiddenOnly(t *testing.T) {
+	t.Parallel()
 	src := readProseEditScript(t)
 
 	// In the click handler, switching TO markdown mode should only set hidden=false.
@@ -64,6 +66,7 @@ func readProseEditScript(t *testing.T) string {
 // task 0435: the Body textarea (contentEditable editor) in the inline edit form
 // must have tabindex="0" set explicitly so keyboard Tab navigation reaches it.
 func TestInlineEditFormBodyTextareaReachable(t *testing.T) {
+	t.Parallel()
 	// --- Acceptance item 1: contentEditable editor div has tabindex="0" ---
 
 	editorSrc := readProseEditScript(t)

@@ -12,6 +12,7 @@ import (
 // were made, so a person has time to take each in. The conversation block
 // is the person's own tool and never arrives.
 func TestChangesArriveInTheOrderTheyWereMade(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	a.Chat.Provider, a.Chat.ProviderErr = &scripted{steps: []*llm.Response{
 		toolCall("add_component", map[string]any{"component": "heading", "props": map[string]any{"text": "Shopping"}}),

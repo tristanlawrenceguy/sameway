@@ -25,6 +25,7 @@ func withKey(h http.Handler, key, method, path, body string) *httptest.ResponseR
 // An agent let in with a key is who its key says, may do what its key
 // says, and is gone when the key is taken away, until that is undone.
 func TestAnAgentsKeyIsWhoItIs(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	me := records.Who{Actor: "human", Via: records.ThroughCLI}
 	editKey, _, err := records.LetAgentIn(a.Store, me, "Claude Code", "edit")
@@ -93,6 +94,7 @@ func TestAnAgentsKeyIsWhoItIs(t *testing.T) {
 // Taken away from its own page, an agent's key is in the log and can be
 // given back, as it can from the command line or the assistant.
 func TestAKeyTakenAwayFromItsPageCanBeGivenBack(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	key, rec, _ := records.LetAgentIn(a.Store, records.Who{Actor: "human", Via: records.ThroughCLI}, "Script", "edit")
 	postForm(t, h, "/t/agent/"+rec.ID+"/delete", nil)

@@ -13,6 +13,7 @@ import (
 // GETs /chat, and verifies each entry appears exactly once — no duplicate
 // text+timestamp pairs in the Activity section. (Backlog 0371; acceptance 2.)
 func TestNoDuplicateActivityEntries(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	records.Record(a.Store, "assistant", records.Change{Action: "created", Component: "note", ID: "aaa1", Detail: "First note"})
@@ -45,6 +46,7 @@ func TestNoDuplicateActivityEntries(t *testing.T) {
 // TestNoDuplicateActivityEntriesAfterModelAction seeds data via a simulated
 // model action through chat.Send, then verifies no duplicate entries appear.
 func TestNoDuplicateActivityEntriesAfterModelAction(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	a.Chat.Provider, a.Chat.ProviderErr = &scripted{steps: []*llm.Response{

@@ -17,6 +17,7 @@ import (
 // With speakers told apart here, a recording written down whole has each
 // line said by Speaker 1, Speaker 2, in the order they are first heard.
 func TestARecordingSaysWhoSpoke(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 	srv := h.(*server.Server)
 	srv.UseSpeech(server.Speech{

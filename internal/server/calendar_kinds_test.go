@@ -29,6 +29,7 @@ func addCalendar(t *testing.T, h http.Handler, props map[string]any) string {
 // A month of everything with more than one kind offers each kind as a
 // link with its count in the month, All first and shown; a link narrows.
 func TestACalendarOfEverythingIsNarrowedByKind(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	id := kindsMonth(t, h, map[string]any{"type": "all", "month": "2026-09", "detail": "page"})
 	own := "/canvas/" + id
@@ -78,6 +79,7 @@ func TestACalendarOfEverythingIsNarrowedByKind(t *testing.T) {
 // A calendar of one type is never offered another, nor widened by the
 // address; one kind in the month needs no choice.
 func TestACalendarsKindNeverWidens(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	id := kindsMonth(t, h, map[string]any{"type": "task", "where": []string{"title~garlic"}, "month": "2026-09", "detail": "page"})
 	page := get(t, h, "/canvas/"+id+"?c-"+id+"-type=reminder").Body.String()
@@ -93,6 +95,7 @@ func TestACalendarsKindNeverWidens(t *testing.T) {
 // Two calendars on a canvas keep their own kind, each link comes back to
 // its block, and the page's other fields are kept.
 func TestCalendarKindsArePerBlock(t *testing.T) {
+	t.Parallel()
 	_, h := newApp(t)
 	first := kindsMonth(t, h, map[string]any{"type": "all", "month": "2026-09"})
 	second := addCalendar(t, h, map[string]any{"type": "all", "month": "2026-09"})

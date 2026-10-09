@@ -12,6 +12,7 @@ import (
 // A long WAV is cut into 16 kHz mono chunks on this computer, a second at
 // a time, each a WAV the engine reads, with the sound carried across.
 func TestAWAVIsCutIntoChunksAtHome(t *testing.T) {
+	t.Parallel()
 	rate, secs := 44100, 3
 	var data bytes.Buffer
 	for i := 0; i < rate*secs; i++ {

@@ -15,6 +15,7 @@ import (
 // and a due date does not repeat those facts in the dl on normal pages
 // or even on ?show=fields pages — because chips + heading already said them.
 func TestDetailChipsNotRepeatedInFields(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Create a task with done=true and a due date in the future.
@@ -63,6 +64,7 @@ func TestDetailChipsNotRepeatedInFields(t *testing.T) {
 // TestDetailNormalPageNoChipsRepeatedInFields checks that on a normal page
 // (without ?show=fields), state and date chips are excluded from the dl.
 func TestDetailNormalPageNoChipsRepeated(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{
@@ -100,6 +102,7 @@ func TestDetailNormalPageNoChipsRepeated(t *testing.T) {
 // chips facts are not repeated in the dl. This is the key fix: previously
 // ?show=fields would show all fields including title/bool/enum/datetime.
 func TestDetailFieldsViewNoChipsRepeated(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Create a task with done=true and due date to hit all headFields types.
@@ -132,6 +135,7 @@ func TestDetailFieldsViewNoChipsRepeated(t *testing.T) {
 // TestAllRecordTypesNoTitleInCrumbs checks that every record type's detail
 // page crumb does not repeat the title, covering acceptance item 4 for all types.
 func TestAllRecordTypesNoTitleInCrumbs(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Create one record of each schema type that has a title field.
@@ -190,6 +194,7 @@ func TestAllRecordTypesNoTitleInCrumbs(t *testing.T) {
 // TestDetailPageHasCrumbs checks that every detail page still has a crumb
 // navigation even after removing the title from it.
 func TestDetailPageHasCrumbs(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	rec, err := a.Store.Create("note", map[string]any{"title": "Epsilon note"})

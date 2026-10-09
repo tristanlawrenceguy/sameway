@@ -11,6 +11,7 @@ import (
 // TestListRowH2TrimsLongTitle verifies that a listing page's row h2 heading is
 // trimmed to at most six words when the note title exceeds them. (Acceptance 2.)
 func TestListRowH2TrimsLongTitle(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	// Create a note with a long title — more than six words.
@@ -55,6 +56,7 @@ func TestListRowH2TrimsLongTitle(t *testing.T) {
 // are also trimmed to at most six words. Grouped rows appear when the type has a
 // datetime field and records fall into time-based groups like "Today". (Acceptance 2.)
 func TestListRowH3TrimsLongTitle(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	_, err := a.Store.Create("task", map[string]any{
@@ -97,6 +99,7 @@ func TestListRowH3TrimsLongTitle(t *testing.T) {
 // TestListRowH2LeavesShortTitleUntouched verifies that a listing page's row h2 is
 // unchanged when the title is within the six-word limit. (Acceptance 2.)
 func TestListRowH2LeavesShortTitleUntouched(t *testing.T) {
+	t.Parallel()
 	a, h := newApp(t)
 
 	want := "Three words only"

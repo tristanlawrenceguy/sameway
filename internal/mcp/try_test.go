@@ -8,6 +8,7 @@ import (
 // try runs a tool on a copy: it answers as the tool would and the
 // workspace is as it was; what reaches outside is not tried.
 func TestTryAnswersAsTheToolWouldAndChangesNothing(t *testing.T) {
+	t.Parallel()
 	a, replies := drive(t,
 		`{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"try","arguments":{"name":"create_record","arguments":{"type":"note","fields":{"title":"Only tried"}}}}}`,
 		`{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"try","arguments":{"name":"create_record","arguments":{"type":"note","fields":{"colour":"red"}}}}}`,
