@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
 	"regexp"
 	"strings"
 	"testing"
@@ -47,13 +46,6 @@ func TestTheConnectCardNoticesWhatIsInstalled(t *testing.T) {
 		t.Errorf("a model server installed changes the words, so the page follows: still %q", now)
 	}
 
-	js, err := os.ReadFile("../../design/base/37-connect-wait.js")
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, want := range []string{`fetch("/model/wait"`, `getAttribute("data-wait")`, "sw.refresh(0)", "typing(card)"} {
-		if !strings.Contains(string(js), want) {
-			t.Errorf("37-connect-wait.js does not have %s", want)
-		}
-	}
+	// That the page asks and follows, but not while a key is typed in the
+	// card, is checked in a browser: tools/a11y-runner/behave-page.mjs.
 }

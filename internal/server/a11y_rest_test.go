@@ -97,16 +97,12 @@ func TestThePagesSayTheWorkspacesLanguage(t *testing.T) {
 	}
 }
 
-// Scripts: an arriving block is never out of the accessibility tree, and
-// a refresh keeps focus on a control with no id.
+// An arriving block is never out of the accessibility tree.
 func TestArrivalAndRefreshKeepThingsReachable(t *testing.T) {
 	motion, _ := os.ReadFile("../../design/base/04-motion.css")
 	if m := regexp.MustCompile(`@keyframes sw-arrive-content[^\n]*`).Find(motion); m == nil || strings.Contains(string(m), "visibility") {
 		t.Errorf("arrival fades with opacity only: %s", m)
 	}
-	refresh, _ := os.ReadFile("../../design/base/19-refresh.js")
-	if !strings.Contains(string(refresh), "var focusMark = mark(focused);") || !strings.Contains(string(refresh), "find(focusMark)") {
-		t.Error("a refresh finds a focused control with no id again")
-	}
+	// A refresh finding focus again: behave-refresh.mjs.
 	_ = http.StatusOK
 }
