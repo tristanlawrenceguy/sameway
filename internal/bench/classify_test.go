@@ -59,6 +59,8 @@ func TestClassify(t *testing.T) {
 				n++
 				if tags["to do"] == c.task {
 					todo++
+				} else {
+					t.Logf("apart=%v %-20s to do: gave %v, want %v", apart, c.name, tags["to do"], c.task)
 				}
 				if tags["important"] == (c.task && c.important) {
 					matters++
