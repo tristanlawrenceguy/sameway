@@ -4,6 +4,7 @@ import (
 	"errors"
 	"html/template"
 	"net/http"
+	"sort"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
@@ -13,19 +14,33 @@ import (
 // Email that came in waits on Today until it is dealt with: made a task,
 // or marked sorted. Both are a press, logged, and undone like any change.
 
-// mailToSort are the notes from email not yet dealt with, oldest first.
+// mailToSort are the emails and shared notes not yet dealt with, oldest
+// first. An email is a record of its own; one from before was a note.
 func (s *Server) mailToSort() []*store.Record {
-	if _, ok := s.app.Types.Get("note"); !ok {
-		return nil
-	}
-	recs, _ := s.app.Store.List("note", store.ListOptions{OrderBy: "created_at"})
 	var out []*store.Record
-	for _, r := range recs {
-		if taggedWith(r, toSort) && (taggedWith(r, "email") || taggedWith(r, "shared")) {
-			out = append(out, r)
+	for _, typ := range []string{"email", "note"} {
+		if _, ok := s.app.Types.Get(typ); !ok {
+			continue
+		}
+		recs, _ := s.app.Store.List(typ, store.ListOptions{OrderBy: "created_at"})
+		for _, r := range recs {
+			if taggedWith(r, toSort) && (typ == "email" || taggedWith(r, "email") || taggedWith(r, "shared")) {
+				out = append(out, r)
+			}
 		}
 	}
+	sort.SliceStable(out, func(i, j int) bool { return out[i].CreatedAt.Before(out[j].CreatedAt) })
 	return out
+}
+
+// toSortItem is an email or a note waiting to be sorted, by id.
+func (s *Server) toSortItem(id string) (*store.Record, error) {
+	for _, typ := range []string{"email", "note"} {
+		if rec, err := s.app.Store.Get(typ, id); err == nil {
+			return rec, nil
+		}
+	}
+	return nil, errors.New("that is gone")
 }
 
 func taggedWith(r *store.Record, tag string) bool {
@@ -50,8 +65,8 @@ func (s *Server) mailSection() string {
 	var b strings.Builder
 	b.WriteString(`<h2>To sort</h2><ul class="sw-plain sw-rows">`)
 	for _, n := range notes {
-		title, _ := n.Fields["title"].(string)
-		b.WriteString(`<li class="sw-stack"><a class="sw-link" href="/t/note/` + n.ID + `">` + esc(title) + `</a>`)
+		title := s.nameOf(n)
+		b.WriteString(`<li class="sw-stack"><a class="sw-link" href="/t/` + n.Type + `/` + n.ID + `">` + esc(title) + `</a>`)
 		presses := []struct{ action, label, variant string }{{"/mail/task", "Make it a task", "secondary"}, {"/mail/sorted", "Done with it", "quiet"}}
 		if sug := s.suggestionFor(n.ID); sug != nil && sug.Task {
 			b.WriteString(`<p>` + esc(s.suggestionWords(sug)) + `</p>`) // triage_today.go
@@ -70,7 +85,7 @@ func (s *Server) mailSection() string {
 
 // sortedNote takes the to sort tag off a note from email.
 func (s *Server) sortedNote(r *http.Request, id string) (*store.Record, string, error) {
-	n, err := s.app.Store.Get("note", id)
+	n, err := s.toSortItem(id)
 	if err != nil || !taggedWith(n, toSort) {
 		return nil, "", errors.New("that has been dealt with already")
 	}
@@ -80,7 +95,7 @@ func (s *Server) sortedNote(r *http.Request, id string) (*store.Record, string, 
 			tags = append(tags, t)
 		}
 	}
-	_, act, err := records.WriteAs(s.app.Store, s.who(r), "updated", "note", id, map[string]any{"tags": tags})
+	_, act, err := records.WriteAs(s.app.Store, s.who(r), "updated", n.Type, id, map[string]any{"tags": tags})
 	return n, act, err
 }
 
@@ -91,11 +106,11 @@ func (s *Server) mailTask(w http.ResponseWriter, r *http.Request) {
 		s.failed(w, r, "Not made", err, "/today")
 		return
 	}
-	title, _ := n.Fields["title"].(string)
+	title := s.nameOf(n)
 	fields := map[string]any{"title": title}
 	if t, ok := s.app.Types.Get("task"); ok {
 		if _, ok := t.Field("notes"); ok {
-			fields["notes"] = "From the email [" + title + "](/t/note/" + n.ID + ")."
+			fields["notes"] = "From the email [" + title + "](/t/" + n.Type + "/" + n.ID + ")."
 		}
 	}
 	task, act, err := records.WriteAs(s.app.Store, s.who(r), "created", "task", "", fields)
@@ -113,6 +128,15 @@ func (s *Server) mailSorted(w http.ResponseWriter, r *http.Request) {
 		s.failed(w, r, "Not changed", err, "/today")
 		return
 	}
-	title, _ := n.Fields["title"].(string)
+	title := s.nameOf(n)
 	s.tellAt(w, r, outcome{Title: "Done with", Text: title + " stays in your notes.", Undo: act, Of: title}, "/today")
+}
+
+// nameOf is what a record is called, whatever its type.
+func (s *Server) nameOf(rec *store.Record) string {
+	t, ok := s.app.Types.Get(rec.Type)
+	if !ok {
+		return rec.ID
+	}
+	return records.Name(s.app.Store, t, rec)
 }

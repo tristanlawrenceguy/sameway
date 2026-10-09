@@ -14,8 +14,8 @@ fields:
   kind:
     label: What it does
     type: enum
-    values: [webhook, mqtt, command, arrangement, message]
-    labels: {webhook: Call a web address, mqtt: Tell a device, command: Run a program on this computer, arrangement: Set up a page, message: Ask the assistant}
+    values: [webhook, mqtt, command, arrangement, message, classify]
+    labels: {webhook: Call a web address, mqtt: Tell a device, command: Run a program on this computer, arrangement: Set up a page, message: Ask the assistant, classify: Tag what set it off}
     default: webhook
   url:
     label: URL
@@ -99,3 +99,22 @@ fields:
     type: string
     description: When it last ran on its own, kept by the system.
     readonly: true
+  tags:
+    type: list
+    of: string
+    description: "For a classify action, the tags it may give, by name; empty is every tag there is. Each tag says what it means on its own page."
+  apart:
+    label: Each tag on its own
+    type: bool
+    default: false
+    description: For a classify action, ask about each tag separately rather than all at once; slower, and steadier with many tags.
+  check:
+    label: Check with your past choices
+    type: bool
+    default: false
+    description: "For a classify action, show the assistant the latest records it gave the same tag and what you did with each (kept, removed, changed to another tag, or nothing yet), so it follows your judgement: it may keep a tag as a suggestion, confirm it when your choices are plain, drop it, or change it to the tag you chose for the same before."
+  examples:
+    label: Past choices to show
+    type: int
+    default: 10
+    description: For check, how many of the latest it is shown, newest first.

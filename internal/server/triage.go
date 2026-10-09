@@ -12,6 +12,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // What comes in to sort (email, a message shared from a phone) is put to
@@ -77,10 +78,16 @@ var sentLine = regexp.MustCompile(`^From .*, (\w{3} \d{1,2} \w{3} \d{4} \d{2}:\d
 // triageNote asks what one note asks of the person and keeps the answer;
 // one that asks nothing is filed away.
 func (s *Server) triageNote(ctx context.Context, note *store.Record) error {
-	title, _ := note.Fields["title"].(string)
+	title := s.nameOf(note)
 	body, _ := note.Fields["body"].(string)
 	sent := note.CreatedAt.Local()
-	if m := sentLine.FindStringSubmatch(body); m != nil {
+	if v, _ := note.Fields["received"].(string); v != "" { // an email says when it was sent
+		if at, _, ok := when.Parse(v, sent); ok {
+			sent = at.Local()
+		}
+		from, _ := note.Fields["from"].(string)
+		body = "From " + from + "\n\n" + body
+	} else if m := sentLine.FindStringSubmatch(body); m != nil {
 		if at, err := time.ParseInLocation("Mon 2 Jan 2006 15:04", m[1], time.Local); err == nil {
 			sent = at
 		}
@@ -94,7 +101,7 @@ func (s *Server) triageNote(ctx context.Context, note *store.Record) error {
 	if sug.Task {
 		return nil
 	}
-	_, _, err = records.WriteAs(s.app.Store, records.Who{Actor: "assistant", Via: "sorting what came in"}, "updated", "note", note.ID, map[string]any{"tags": withoutTag(note, toSort)})
+	_, _, err = records.WriteAs(s.app.Store, records.Who{Actor: "assistant", Via: "sorting what came in"}, "updated", note.Type, note.ID, map[string]any{"tags": withoutTag(note, toSort)})
 	return err
 }
 
