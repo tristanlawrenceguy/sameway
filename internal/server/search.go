@@ -10,6 +10,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/search"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // searchPage is one search over everything the person has: every record
@@ -111,11 +112,11 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 func searchForm(s *Server, label, hint, q, only string) string {
 	var b strings.Builder
 	b.WriteString(`<form method="get" action="/search" role="search" class="sw-stack sw-compose">`)
-	b.WriteString(string(s.component("text-field", map[string]any{"label": label, "name": "q", "value": q, "type": "search", "hint": hint})))
+	b.WriteString(string(s.part(ui.TextField{Label: label, Name: "q", Value: q, Type: ui.Search, Hint: hint})))
 	if only != "" {
 		fmt.Fprintf(&b, `<input type="hidden" name="type" value="%s">`, template.HTMLEscapeString(only))
 	}
-	b.WriteString(string(s.component("button", map[string]any{"label": "Search", "type": "submit"})))
+	b.WriteString(string(s.part(ui.Button{Label: "Search", Type: ui.Submit})))
 	b.WriteString(`</form>`)
 	return b.String()
 }

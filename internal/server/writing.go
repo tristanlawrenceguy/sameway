@@ -12,6 +12,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // Longer writing on its pages (records/pieces.go): a piece shows its outline
@@ -92,8 +93,8 @@ func (s *Server) outline(r *http.Request, t *schema.Type, piece *store.Record, p
 				if mv.dir == "up" && i == 0 || mv.dir == "down" && i == len(parts)-1 {
 					continue
 				}
-				fmt.Fprintf(&b, `<form method="post" action="/t/%s/%s/parts/move"><input type="hidden" name="part" value="%s"><input type="hidden" name="dir" value="%s">%s</form>`,
-					t.Name, piece.ID, p.ID, mv.dir, s.component("button", map[string]any{"label": mv.label, "context": ": " + title, "type": "submit", "variant": "secondary"}))
+				b.WriteString(string(s.form(ui.Form{Action: "/t/" + t.Name + "/" + piece.ID + "/parts/move", Hidden: ui.Hidden("part", p.ID, "dir", mv.dir),
+					Button: &ui.Button{Label: mv.label, Context: ": " + title, Variant: ui.Secondary}})))
 			}
 			b.WriteString(`</p>`)
 		}

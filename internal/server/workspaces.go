@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/examples"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
@@ -128,7 +129,7 @@ func (s *Server) showWorkspaces(w http.ResponseWriter, r *http.Request, problem 
 			if o.Running {
 				fmt.Fprintf(&b, `<a class="sw-button sw-button--secondary sw-pressable" href="%s" target="_blank" rel="opener">Open<span class="sw-visually-hidden"> %s</span> (new tab)</a>`, template.HTMLEscapeString(o.URL), template.HTMLEscapeString(o.Name))
 			} else {
-				fmt.Fprintf(&b, `<form method="post" action="/workspaces/start"><input type="hidden" name="dir" value="%s"><button type="submit" class="sw-button sw-button--secondary sw-pressable">Start<span class="sw-visually-hidden"> %s</span></button></form>`, template.HTMLEscapeString(o.Dir), template.HTMLEscapeString(o.Name))
+				b.WriteString(string(s.form(ui.Form{Action: "/workspaces/start", Hidden: ui.Hidden("dir", o.Dir), Button: &ui.Button{Label: "Start", Context: o.Name, Variant: ui.Secondary}})))
 			}
 			b.WriteString(`</li>`)
 		}
@@ -225,31 +226,34 @@ func (s *Server) showWorkspaceCreated(w http.ResponseWriter, r *http.Request, na
 // newSection is the form that makes a blank workspace, on the workspaces page and on its own.
 func (s *Server) newSection() string {
 	var b strings.Builder
-	b.WriteString(`<section class="sw-stack" aria-labelledby="ws-example"><h2 id="ws-example">Try it with an example</h2><p class="sw-muted">A workspace of its own, beside this one, with a week of tasks, events, a habit and notes in it, to see what Sameway does before yours is full. Delete it here when you are done.</p><form method="post" action="/workspaces/example">` +
-		string(s.component("button", map[string]any{"label": "Open an example", "type": "submit", "variant": "secondary"})) + `</form></section>`)
-	b.WriteString(`<section class="sw-stack" aria-labelledby="ws-new"><h2 id="ws-new">New workspace</h2><p class="sw-muted">A blank workspace beside this one, with the same model, in a window of its own.</p><form method="post" action="/workspaces/new" class="sw-stack">`)
-	b.WriteString(string(s.component("text-field", map[string]any{"label": "Name", "name": "name", "required": true, "id": "new-name", "autocomplete": "off"})))
-	b.WriteString(string(s.component("button", map[string]any{"label": "Create", "type": "submit"})))
-	b.WriteString(`</form></section>`)
+	b.WriteString(`<section class="sw-stack" aria-labelledby="ws-example"><h2 id="ws-example">Try it with an example</h2><p class="sw-muted">A workspace of its own, beside this one, with a week of tasks, events, a habit and notes in it, to see what Sameway does before yours is full. Delete it here when you are done.</p>` +
+		string(s.form(ui.Form{Action: "/workspaces/example", Button: &ui.Button{Label: "Open an example", Variant: ui.Secondary}})) + `</section>`)
+	b.WriteString(`<section class="sw-stack" aria-labelledby="ws-new"><h2 id="ws-new">New workspace</h2><p class="sw-muted">A blank workspace beside this one, with the same model, in a window of its own.</p>`)
+	b.WriteString(string(s.form(ui.Form{Action: "/workspaces/new", Class: "sw-stack",
+		Body:   s.part(ui.TextField{Label: "Name", Name: "name", Required: true, ID: "new-name", Autocomplete: "off"}),
+		Button: &ui.Button{Label: "Create"}})))
+	b.WriteString(`</section>`)
 	return b.String()
 }
 
 // copySection is the form that copies this workspace, on the workspaces page and on its own.
 func (s *Server) copySection() string {
 	var b strings.Builder
-	b.WriteString(`<section class="sw-stack" aria-labelledby="ws-copy"><h2 id="ws-copy">Copy this workspace</h2><p class="sw-muted">Everything here, as a second workspace beside this one.</p><form method="post" action="/workspaces/copy" class="sw-stack">`)
-	b.WriteString(string(s.component("text-field", map[string]any{"label": "Name for the copy", "name": "name", "required": true, "id": "copy-name", "autocomplete": "off", "value": s.app.Workspace.Config.Name + " copy"})))
-	b.WriteString(string(s.component("button", map[string]any{"label": "Copy", "type": "submit", "variant": "secondary"})))
-	b.WriteString(`</form></section>`)
+	b.WriteString(`<section class="sw-stack" aria-labelledby="ws-copy"><h2 id="ws-copy">Copy this workspace</h2><p class="sw-muted">Everything here, as a second workspace beside this one.</p>`)
+	b.WriteString(string(s.form(ui.Form{Action: "/workspaces/copy", Class: "sw-stack",
+		Body:   s.part(ui.TextField{Label: "Name for the copy", Name: "name", Required: true, ID: "copy-name", Autocomplete: "off", Value: s.app.Workspace.Config.Name + " copy"}),
+		Button: &ui.Button{Label: "Copy", Variant: ui.Secondary}})))
+	b.WriteString(`</section>`)
 	return b.String()
 }
 
 // deleteSection is the form that deletes this workspace, on the workspaces page and on its own.
 func (s *Server) deleteSection() string {
 	var b strings.Builder
-	b.WriteString(`<section class="sw-stack" aria-labelledby="ws-delete"><h2 id="ws-delete">Delete this workspace</h2><p class="sw-muted">The folder, with everything in it, moves to Sameway's trash, and this server stops. You can restore it from this page. Type the name to be sure.</p><form method="post" action="/workspaces/delete" class="sw-stack">`)
-	b.WriteString(string(s.component("text-field", map[string]any{"label": "Type " + s.app.Workspace.Config.Name + " to delete it", "name": "confirm", "required": true, "autocomplete": "off", "spellcheck": false, "id": "delete-confirm"})))
-	b.WriteString(string(s.component("button", map[string]any{"label": "Delete", "context": "workspace", "type": "submit", "variant": "danger"})))
-	b.WriteString(`</form></section>`)
+	b.WriteString(`<section class="sw-stack" aria-labelledby="ws-delete"><h2 id="ws-delete">Delete this workspace</h2><p class="sw-muted">The folder, with everything in it, moves to Sameway's trash, and this server stops. You can restore it from this page. Type the name to be sure.</p>`)
+	b.WriteString(string(s.form(ui.Form{Action: "/workspaces/delete", Class: "sw-stack",
+		Body:   s.part(ui.TextField{Label: "Type " + s.app.Workspace.Config.Name + " to delete it", Name: "confirm", Required: true, Autocomplete: "off", Spellcheck: ui.Bool(false), ID: "delete-confirm"}),
+		Button: &ui.Button{Label: "Delete", Context: "workspace", Variant: ui.Danger}})))
+	b.WriteString(`</section>`)
 	return b.String()
 }

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // Saving from anywhere: a phone's Share button (the installed app is a
@@ -30,11 +31,11 @@ func (s *Server) sharePage(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	esc := template.HTMLEscapeString
 	var b strings.Builder
-	b.WriteString(`<form method="post" action="/share" enctype="multipart/form-data" class="sw-stack">`)
-	b.WriteString(string(s.component("text-field", map[string]any{"label": "Title", "name": "title", "value": q.Get("title"), "hint": "Left empty, the page's own title is used."})))
-	b.WriteString(string(s.component("text-field", map[string]any{"label": "Link", "name": "url", "type": "url", "value": q.Get("url"), "spellcheck": false, "hint": "A web page's words are read and kept with it, so it can be found and read later even if the page goes."})))
-	b.WriteString(string(s.component("textarea", map[string]any{"label": "Words", "name": "text", "value": q.Get("text"), "rows": 4})))
-	b.WriteString(string(s.component("button", map[string]any{"label": "Save as a note", "type": "submit"})) + `</form>`)
+	b.WriteString(string(s.form(ui.Form{Action: "/share", Enctype: "multipart/form-data", Class: "sw-stack",
+		Body: s.part(ui.TextField{Label: "Title", Name: "title", Value: q.Get("title"), Hint: "Left empty, the page's own title is used."}) +
+			s.part(ui.TextField{Label: "Link", Name: "url", Type: ui.URL, Value: q.Get("url"), Spellcheck: ui.Bool(false), Hint: "A web page's words are read and kept with it, so it can be found and read later even if the page goes."}) +
+			s.component("textarea", map[string]any{"label": "Words", "name": "text", "value": q.Get("text"), "rows": 4}),
+		Button: &ui.Button{Label: "Save as a note"}})))
 	bookmark := "javascript:(()=>{const e=encodeURIComponent;open('" + s.origin(r) + "/share?url='+e(location.href)+'&title='+e(document.title)+'&text='+e(getSelection().toString()),'_blank')})()"
 	b.WriteString(`<h2>From your browser</h2><p>Drag this link to your bookmarks bar: <a class="sw-link" href="` + esc(bookmark) + `">Save to Sameway</a>. On any page, press it to save the page here, with any words you selected.</p>`)
 	b.WriteString(`<h2>From your phone</h2><p>Open Sameway on an Android phone and install it (<a class="sw-link" href="/help#help-app">how</a>): it is then in the Share menu of every app, so a page, a photo or some words shared to Sameway are saved as a note. On an iPhone, the bookmark above works in Safari.</p>`)

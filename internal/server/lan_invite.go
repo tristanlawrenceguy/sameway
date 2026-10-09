@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 	"html/template"
 	"net/http"
 	"time"
@@ -45,11 +46,11 @@ func (s *Server) saveLanInvites(in []lanInvite) {
 // inviteForm is Invite someone, under the phone's code on Workspaces.
 func (s *Server) inviteForm() string {
 	return `<h3>Someone else on this Wi-Fi</h3><p>Invite someone in your home or office to open this workspace from their own phone or computer. They see only what you let them: to look, or to edit. Your conversations with the assistant stay yours.</p>` +
-		`<form method="post" action="/phone/invite" class="sw-stack">` +
-		string(s.component("text-field", map[string]any{"label": "Their name", "name": "name", "required": true, "autocomplete": "off"})) +
-		string(s.component("select", map[string]any{"label": "They may", "name": "access", "value": records.Edit, "as": "radios",
-			"options": []any{map[string]any{"value": records.Edit, "label": "Edit: add and change things"}, map[string]any{"value": records.View, "label": "Look: read only"}}})) +
-		string(s.component("button", map[string]any{"label": "Make an invite", "type": "submit", "variant": "secondary"})) + `</form>`
+		string(s.form(ui.Form{Action: "/phone/invite", Class: "sw-stack",
+			Body: s.part(ui.TextField{Label: "Their name", Name: "name", Required: true, Autocomplete: "off"}) +
+				s.component("select", map[string]any{"label": "They may", "name": "access", "value": records.Edit, "as": "radios",
+					"options": []any{map[string]any{"value": records.Edit, "label": "Edit: add and change things"}, map[string]any{"value": records.View, "label": "Look: read only"}}}),
+			Button: &ui.Button{Label: "Make an invite", Variant: ui.Secondary}}))
 }
 
 // phoneInvite makes the person's access and the link that lets them in.

@@ -12,6 +12,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // The changes suggested to a record's words wait on its page, above its
@@ -54,8 +55,8 @@ func (s *Server) suggestionsOn(r *http.Request, t *schema.Type, rec *store.Recor
 		}
 		fmt.Fprintf(&b, `<h3>%s</h3>`, k.name)
 		if k.all != "" && len(group) > 1 {
-			fmt.Fprintf(&b, `<form method="post" action="/suggestions/accept-all"><input type="hidden" name="about" value="%s"><input type="hidden" name="kind" value="%s"><input type="hidden" name="from" value="%s">%s</form>`,
-				t.Name+"/"+rec.ID, k.key, from, s.component("button", map[string]any{"label": fmt.Sprintf("Accept all %d %s", len(group), k.all), "type": "submit", "variant": "secondary"}))
+			b.WriteString(string(s.form(ui.Form{Action: "/suggestions/accept-all", From: from, Hidden: ui.Hidden("about", t.Name+"/"+rec.ID, "kind", k.key),
+				Button: &ui.Button{Label: fmt.Sprintf("Accept all %d %s", len(group), k.all), Variant: ui.Secondary}})))
 		}
 		for _, sg := range group {
 			n++

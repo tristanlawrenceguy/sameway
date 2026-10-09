@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // "In those moments my reminder app doesn't help, because I get worse at
@@ -80,10 +81,10 @@ func (s *Server) focus(l todayLists) (first, rest []todayItem) {
 
 // dumpBox is the box for everything in the person's head.
 func (s *Server) dumpBox() string {
-	return `<form method="post" action="/today/sort" class="sw-stack">` +
-		string(s.component("textarea", map[string]any{"label": "Too much in your head? Put it all here", "name": "words", "rows": 4,
-			"hint": "As it comes, in any order: things to do, to remember, to reply to. The assistant makes them tasks with their days and says which three to start with."})) +
-		string(s.component("button", map[string]any{"label": "Sort it out for me", "type": "submit", "variant": "secondary"})) + `</form>`
+	return string(s.form(ui.Form{Action: "/today/sort", Class: "sw-stack",
+		Body: s.component("textarea", map[string]any{"label": "Too much in your head? Put it all here", "name": "words", "rows": 4,
+			"hint": "As it comes, in any order: things to do, to remember, to reply to. The assistant makes them tasks with their days and says which three to start with."}),
+		Button: &ui.Button{Label: "Sort it out for me", Variant: ui.Secondary}}))
 }
 
 // todaySort hands what the person wrote to the assistant, to sort.

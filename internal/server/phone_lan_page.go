@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 	"rsc.io/qr"
 )
 
@@ -22,7 +23,7 @@ func (s *Server) phoneSection(r *http.Request) string {
 	base := s.fleet.LANBase()
 	if base == "" {
 		b.WriteString(`<p>Use Sameway on a phone or tablet on the same Wi-Fi as this computer. Nothing on the Wi-Fi reaches your workspace unless you pair it here; Windows may ask whether Sameway may use the network: choose Allow.</p>`)
-		b.WriteString(`<form method="post" action="/phone/on">` + string(s.component("button", map[string]any{"label": "Use Sameway on your phone", "type": "submit", "variant": "secondary"})) + `</form></section>`)
+		b.WriteString(string(s.form(ui.Form{Action: "/phone/on", Button: &ui.Button{Label: "Use Sameway on your phone", Variant: ui.Secondary}})) + `</section>`)
 		return b.String()
 	}
 	link := base + "/pair?code=" + lanPairCode()
@@ -32,12 +33,12 @@ func (s *Server) phoneSection(r *http.Request) string {
 	if devices := s.lanDevices(); len(devices) > 0 {
 		b.WriteString(`<h3>Paired</h3><ul class="sw-plain sw-rows">`)
 		for _, d := range devices {
-			b.WriteString(`<li class="sw-cluster">` + template.HTMLEscapeString(d.Name) + s.mayWords(d) + ` <span class="sw-muted sw-small">since ` + d.Added.Format("2 Jan") + `</span><form method="post" action="/phone/forget"><input type="hidden" name="id" value="` + d.ID + `">` +
-				string(s.component("button", map[string]any{"label": "Remove", "context": d.Name + " paired " + d.Added.Format("2 Jan 15:04"), "type": "submit", "variant": "quiet"})) + `</form></li>`)
+			b.WriteString(`<li class="sw-cluster">` + template.HTMLEscapeString(d.Name) + s.mayWords(d) + ` <span class="sw-muted sw-small">since ` + d.Added.Format("2 Jan") + `</span>` +
+				string(s.form(ui.Form{Action: "/phone/forget", Hidden: ui.Hidden("id", d.ID), Button: &ui.Button{Label: "Remove", Context: d.Name + " paired " + d.Added.Format("2 Jan 15:04"), Variant: ui.Quiet}})) + `</li>`)
 		}
 		b.WriteString(`</ul>`)
 	}
-	b.WriteString(`<form method="post" action="/phone/off">` + string(s.component("button", map[string]any{"label": "Stop answering on the Wi-Fi", "type": "submit", "variant": "secondary"})) + `</form></section>`)
+	b.WriteString(string(s.form(ui.Form{Action: "/phone/off", Button: &ui.Button{Label: "Stop answering on the Wi-Fi", Variant: ui.Secondary}})) + `</section>`)
 	return b.String()
 }
 

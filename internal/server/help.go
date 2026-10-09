@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // Help is one page, in the same place on every page (the footer), that
@@ -59,14 +60,13 @@ func (s *Server) helpPage(w http.ResponseWriter, r *http.Request) {
 		b.WriteString(`<div class="sw-stack--tight"><h3>` + template.HTMLEscapeString(c.heading) + `</h3><ul class="sw-plain sw-cluster">`)
 		for _, v := range c.values {
 			current := now == v[0] || (now == "" && v[0] == c.values[0][0])
-			b.WriteString(`<li><form method="post" action="/help/set"><input type="hidden" name="key" value="` + c.key + `"><input type="hidden" name="value" value="` + v[0] + `">`)
 			// Each says which setting it is for, so two called Normal are
 			// told apart by a screen reader (WCAG 2.4.6).
-			props := map[string]any{"label": v[1], "type": "submit", "variant": "secondary", "context": ", " + strings.ToLower(c.heading)}
+			btn := ui.Button{Label: v[1], Variant: ui.Secondary, Context: ", " + strings.ToLower(c.heading)}
 			if current {
-				props["variant"], props["context"] = "primary", ", "+strings.ToLower(c.heading)+", chosen"
+				btn.Variant, btn.Context = ui.Primary, ", "+strings.ToLower(c.heading)+", chosen"
 			}
-			b.WriteString(string(s.component("button", props)) + `</form></li>`)
+			b.WriteString(`<li>` + string(s.form(ui.Form{Action: "/help/set", Hidden: ui.Hidden("key", c.key, "value", v[0]), Button: &btn})) + `</li>`)
 		}
 		b.WriteString(`</ul></div>`)
 	}
