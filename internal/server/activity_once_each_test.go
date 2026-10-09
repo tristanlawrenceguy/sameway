@@ -9,6 +9,9 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
+// Each change is listed once wherever the log is shown: the chat, a
+// record's page and the activity page, after a model's turn too.
+
 // TestChatPageHasSingleActivityHeading checks that the /chat page renders
 // exactly one <h2 class="sw-visually-hidden">Activity</h2> heading (not two).
 func TestChatPageHasSingleActivityHeading(t *testing.T) {
@@ -164,5 +167,61 @@ func TestActivityPageNoDuplicateEntries(t *testing.T) {
 	h3Count := strings.Count(body, eventHeading)
 	if h3Count != 2 {
 		t.Errorf("expected 2 <h3> activity headings on /activity page, got %d\n%s", h3Count, truncate(body))
+	}
+}
+
+// TestNoDuplicateActivityEntries seeds two activity entries via records.Record(),
+// GETs /chat, and verifies each entry appears exactly once — no duplicate
+// text+timestamp pairs in the Activity section. (Backlog 0371; acceptance 2.)
+func TestNoDuplicateActivityEntries(t *testing.T) {
+	t.Parallel()
+	a, h := newApp(t)
+
+	records.Record(a.Store, "assistant", records.Change{Action: "created", Component: "note", ID: "aaa1", Detail: "First note"})
+	records.Record(a.Store, "assistant", records.Change{Action: "updated", Component: "note", ID: "aaa1", Detail: "Updated content"})
+
+	body := get(t, h, "/chat").Body.String()
+
+	for _, summary := range []string{"Assistant created note First note", "Assistant updated note Updated content"} {
+		count := saidTimes(body, summary)
+		if count != 1 {
+			t.Errorf("activity entry %q should appear exactly once on /chat, got %d\n%s", summary, count, truncate(body))
+		}
+	}
+
+	// Also check that no two h3 headings say the same thing.
+	noDuplicateH3(t, body)
+
+	// Also verify there is exactly one <h2 class="sw-visually-hidden">Activity</h2> heading.
+	h2Count := strings.Count(body, `<h2 class="sw-visually-hidden">Activity</h2>`)
+	if h2Count != 1 {
+		t.Errorf("expected exactly 1 <h2 class=\"sw-visually-hidden\">Activity</h2> on /chat, got %d\n%s", h2Count, body)
+	}
+
+	// No visible (non-visually hidden) Activity heading should appear.
+	if strings.Contains(body, `<h2>Activity</h2>`) {
+		t.Errorf("no visible <h2>Activity</h2> should appear on /chat\n%s", body)
+	}
+}
+
+// TestNoDuplicateActivityEntriesAfterModelAction seeds data via a simulated
+// model action through chat.Send, then verifies no duplicate entries appear.
+func TestNoDuplicateActivityEntriesAfterModelAction(t *testing.T) {
+	t.Parallel()
+	a, h := newApp(t)
+
+	a.Chat.Provider, a.Chat.ProviderErr = &scripted{steps: []*llm.Response{
+		toolCall("add_component", map[string]any{"component": "card", "props": map[string]any{"title": "Shopping"}}),
+		{Text: "Done."},
+	}}, nil
+
+	postForm(t, h, "/chat", url.Values{"message": {"add a card"}, "from": {"/"}})
+
+	body := get(t, h, "/chat").Body.String()
+
+	cardSummary := "Assistant added card Shopping"
+	count := saidTimes(body, cardSummary)
+	if count != 1 {
+		t.Errorf("activity entry %q should appear exactly once on /chat after model action, got %d\n%s", cardSummary, count, truncate(body))
 	}
 }

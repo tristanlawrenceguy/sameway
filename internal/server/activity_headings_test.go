@@ -1,6 +1,7 @@
 package server_test
 
 import (
+	"net/http"
 	"net/url"
 	"slices"
 	"strings"
@@ -9,6 +10,9 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
+
+// The activity page's headings: one for the page, one for the log, one
+// for each entry, said by its summary, and none for a log with nothing in it.
 
 // TestActivityPageHasIndividualHeadings checks that each activity entry on
 // /activity is wrapped in its own <h3> element containing the summary text,
@@ -99,5 +103,140 @@ func TestActivityPageEmptyStateHasNoHeading(t *testing.T) {
 	// The empty state tells the person what creates activity.
 	if !strings.Contains(body, "Send a message") || !strings.Contains(body, "canvas") {
 		t.Errorf("empty state should tell the person what creates activity:\n%s", truncate(body))
+	}
+}
+
+// TestActivityPageHasOverarchingHeading checks that the /activity listing page
+// has exactly one visible heading "Activity" — the h1 from the layout template.
+// The duplicate <h2>Activity</h2> in body content was removed to avoid screen
+// reader duplication. Date-grouped headings come after, and no other visible
+// heading repeats "Activity". (Acceptance 1)
+func TestActivityPageHasOverarchingHeading(t *testing.T) {
+	t.Parallel()
+	a, h := newApp(t)
+
+	records.Record(a.Store, "assistant", records.Change{Action: "created", Component: "note", ID: "aaa1", Detail: "First note"})
+
+	body := get(t, h, "/activity").Body.String()
+
+	// The overarching heading is the layout h1, not a body-level duplicate.
+	if !strings.Contains(body, ">Activity</h1>") {
+		t.Errorf("the /activity page should contain an <h1>Activity</h1> from the layout\n%s", truncate(body))
+	}
+
+	// No duplicate <h2>Activity</h2> in body content.
+	if strings.Count(body, `<h2>Activity</h2>`) > 0 {
+		t.Errorf("the /activity page should NOT contain a duplicate <h2>Activity</h2>\n%s", truncate(body))
+	}
+
+	// The h1 must come before any date-heading like "Monday 5 January".
+	idxH1 := strings.Index(body, `<h1`)
+	if idxH1 >= 0 {
+		idxDateHeading := strings.Index(body, `<h2 class="sw-small sw-muted"`)
+		if idxDateHeading >= 0 && idxH1 > idxDateHeading {
+			t.Errorf("the <h1>Activity</h1> must appear before any date-heading\n%s", truncate(body))
+		}
+	}
+
+	// The heading should be visible (not visually hidden).
+	if strings.Contains(body, `<h2 class="sw-visually-hidden">Activity</h2>`) {
+		t.Errorf("the overarching Activity heading on /activity should not be visually hidden\n%s", truncate(body))
+	}
+}
+
+// TestActivityPageOverarchingHeadingEmptyState checks that the /activity page
+// still has the layout h1 "Activity" even when there are no activity records,
+// and that no duplicate <h2>Activity</h2> was introduced. (Acceptance 1)
+func TestActivityPageOverarchingHeadingEmptyState(t *testing.T) {
+	t.Parallel()
+	_, h := newApp(t)
+
+	body := get(t, h, "/activity").Body.String()
+
+	if !strings.Contains(body, ">Activity</h1>") {
+		t.Errorf("the empty /activity page should still contain <h1>Activity</h1>\n%s", truncate(body))
+	}
+
+	// No duplicate heading in body content.
+	if strings.Count(body, `<h2>Activity</h2>`) > 0 {
+		t.Errorf("the empty /activity page should NOT contain a duplicate <h2>Activity</h2>\n%s", truncate(body))
+	}
+
+	if !strings.Contains(body, `data-component="empty"`) || !strings.Contains(body, "Send a message") {
+		t.Errorf("empty state should use the empty component and tell the person what creates activity\n%s", truncate(body))
+	}
+}
+
+// TestActivityPageHasSingleActivityHeading checks that the /activity listing
+// page has exactly one heading element containing the word "Activity", so a
+// screen reader user does not hear it twice. The h1 from the layout template
+// is the single authoritative heading for this page. (Acceptance 1, 2)
+func TestActivityPageHasSingleActivityHeading(t *testing.T) {
+	t.Parallel()
+	a, h := newApp(t)
+
+	records.Record(a.Store, "assistant", records.Change{Action: "created", Component: "note", ID: "aaa1", Detail: "First note"})
+
+	rec := get(t, h, "/activity")
+	wantStatus(t, rec, http.StatusOK)
+	body := rec.Body.String()
+
+	// The body content must not contain <h2>Activity</h2>.
+	if strings.Contains(body, `<h2>Activity</h2>`) {
+		t.Errorf("the /activity page body should NOT contain <h2>Activity</h2>; only the layout h1 provides the heading\n%s", truncate(body))
+	}
+
+	// The h1 from layout says "Activity"; no other visible heading should repeat it.
+	h2Activity := strings.Count(body, `<h2>Activity</h2>`)
+	if h2Activity > 0 {
+		t.Errorf("expected 0 <h2>Activity</h2> in body content, got %d (the layout h1 is the only heading)\n%s", h2Activity, truncate(body))
+	}
+
+	// The page must still have its h1 with "Activity".
+	if !strings.Contains(body, `<h1`) || !strings.Contains(body, ">Activity</h1>") {
+		t.Errorf("the /activity page should contain <h1>Activity</h1> from the layout\n%s", truncate(body))
+	}
+
+	// The h2 date headings (e.g. "Monday 5 January") must still exist after the
+	// overarching heading, confirming we only removed the duplicate.
+	if !strings.Contains(body, `<h2 class="sw-small sw-muted"`) {
+		t.Errorf("the /activity page should still contain date-grouped h2 headings\n%s", truncate(body))
+	}
+
+	// The individual entry h3s must still exist.
+	if strings.Count(body, "<h3") != 1 {
+		t.Errorf("expected exactly one <h3> for the single activity entry, got %d\n%s", strings.Count(body, "<h3"), truncate(body))
+	}
+}
+
+// TestActivityPageEmptyStateSingleHeading checks that even with no activity
+// records, the /activity page has exactly one heading "Activity" (from the
+// layout h1) and no duplicate body heading. (Acceptance 1, 2)
+func TestActivityPageEmptyStateSingleHeading(t *testing.T) {
+	t.Parallel()
+	_, h := newApp(t)
+
+	rec := get(t, h, "/activity")
+	wantStatus(t, rec, http.StatusOK)
+	body := rec.Body.String()
+
+	// The body content must not contain <h2>Activity</h2>.
+	if strings.Contains(body, `<h2>Activity</h2>`) {
+		t.Errorf("the empty /activity page should NOT contain <h2>Activity</h2>\n%s", truncate(body))
+	}
+
+	// The h1 "Activity" from the layout must still be present.
+	if !strings.Contains(body, ">Activity</h1>") {
+		t.Errorf("the empty /activity page should contain <h1>Activity</h1> from the layout\n%s", truncate(body))
+	}
+
+	// Empty-state paragraph must still be present.
+	if !strings.Contains(body, `data-component="empty"`) || !strings.Contains(body, "Send a message") {
+		t.Errorf("empty state should use the empty component and tell the person what creates activity\n%s", truncate(body))
+	}
+
+	// No h2 headings at all when there are no activities.
+	if strings.Count(body, `<h2`) > 0 {
+		t.Errorf("the empty /activity page body should have no <h2> elements, got %d\n%s", strings.Count(body, "<h2"), truncate(body))
 	}
 }
