@@ -39,8 +39,8 @@ func TestClassify(t *testing.T) {
 		t.Fatal(err)
 	}
 	a.Chat.ProviderErr = nil
-	a.Store.Create("tag", map[string]any{"name": "to do", "means": "Something I have to do: pay, reply, book, bring, send, sign, renew, attend, buy or call."})
-	a.Store.Create("tag", map[string]any{"name": "important", "means": "Money owed, health, an official or legal deadline (tax, passport, insurance), school, a work deadline, or someone waiting on my answer."})
+	a.Store.Create("tag", map[string]any{"name": "to do", "means": "Something I have to do: pay, reply, book, bring, send, sign, renew, attend, buy or call. Not newsletters, adverts, receipts for what is paid, or notices that need nothing from me."})
+	a.Store.Create("tag", map[string]any{"name": "important", "means": "Money owed, health, an official or legal deadline (tax, passport, insurance, a lease), school, a work deadline, or someone waiting on my answer. Not plans with friends, errands or reminders of habit."})
 	for _, apart := range []bool{false, true} {
 		act, _ := a.Store.Create("action", map[string]any{"title": "Sort", "kind": "classify", "apart": apart})
 		var todo, matters, n int

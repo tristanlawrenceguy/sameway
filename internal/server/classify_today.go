@@ -161,8 +161,8 @@ func (s *Server) tagChange(w http.ResponseWriter, r *http.Request) {
 // starterTags are the tags sorting begins with; the person changes what
 // each means, or adds their own, on the tags' page.
 var starterTags = [][2]string{
-	{"to do", "Something I have to do: pay, reply, book, bring, send, sign, renew, attend, buy or call."},
-	{"important", "Money owed, health, an official or legal deadline (tax, passport, insurance), school, a work deadline, or someone waiting on my answer."},
+	{"to do", "Something I have to do: pay, reply, book, bring, send, sign, renew, attend, buy or call. Not newsletters, adverts, receipts for what is paid, or notices that need nothing from me."},
+	{"important", "Money owed, health, an official or legal deadline (tax, passport, insurance, a lease), school, a work deadline, or someone waiting on my answer. Not plans with friends, errands or reminders of habit."},
 }
 
 // setUpSorting, the first time email is connected, makes the starter tags
