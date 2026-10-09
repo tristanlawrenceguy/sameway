@@ -40,3 +40,10 @@ fields:
     default: false
     description: Whether you sent it (read from your Sent folder because it answers a conversation here), kept by the system.
     readonly: true
+  turn:
+    label: Whose turn
+    type: enum
+    values: [yours, theirs]
+    labels: {yours: Your turn to reply, theirs: Waiting on them}
+    description: "On the latest email of a conversation, kept by the system, whose move it is: yours when they wrote last and asked you something, theirs when you wrote last. Empty when nobody owes an answer."
+    readonly: true

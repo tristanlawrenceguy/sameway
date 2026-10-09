@@ -213,19 +213,7 @@ func New(ctx context.Context, a Account, marks map[string]Mark, wanted func(refs
 		out[box] = next
 	}
 	if wanted != nil {
-		// A reply to mail that came in just now answers a thread too.
-		now := map[string]bool{}
-		for _, m := range mails {
-			now[strings.Trim(m.ID, "<> ")] = true
-		}
-		sent, err := readSent(c, out, func(refs []string) bool {
-			for _, r := range refs {
-				if now[strings.Trim(r, "<> ")] {
-					return true
-				}
-			}
-			return wanted(refs)
-		})
+		sent, err := readSent(c, out, alsoNow(mails, wanted))
 		mails = append(mails, sent...)
 		if err != nil {
 			return mails, out, err
@@ -256,4 +244,21 @@ func fetch(c *imapclient.Client, box string, uids []imap.UID) ([]Mail, error) {
 		out = append(out, mm)
 	}
 	return out, nil
+}
+
+// alsoNow is wanted, and a reply to mail that came in just now, which
+// answers a thread too.
+func alsoNow(mails []Mail, wanted func([]string) bool) func([]string) bool {
+	now := map[string]bool{}
+	for _, m := range mails {
+		now[strings.Trim(m.ID, "<> ")] = true
+	}
+	return func(refs []string) bool {
+		for _, r := range refs {
+			if now[strings.Trim(r, "<> ")] {
+				return true
+			}
+		}
+		return wanted(refs)
+	}
 }

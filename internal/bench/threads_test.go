@@ -70,6 +70,14 @@ func TestThreads(t *testing.T) {
 	a.Store.Create("tag", map[string]any{"name": "to do", "means": "Something I have to do: pay, reply, book, bring, send, sign, renew, attend, buy or call. Not newsletters, adverts, receipts for what is paid, or notices that need nothing from me."})
 	a.Store.Create("tag", map[string]any{"name": "nothing to do", "means": "Needs nothing from me.", "alone": true})
 	act, _ := a.Store.Create("action", map[string]any{"title": "Sort", "kind": "classify"})
+	rule := 0
+	for _, c := range threadCases {
+		last := c.says[len(c.says)-1]
+		if (records.Turn(last.mine, last.text) == "yours") == c.todo {
+			rule++
+		}
+	}
+	t.Logf("THREADS whose turn, worked out (no model): to reply right %d/%d", rule, len(threadCases))
 	for _, withThread := range []bool{false, true} {
 		right, n := 0, 0
 		for run := 0; run < runs; run++ {

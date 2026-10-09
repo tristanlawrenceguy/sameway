@@ -43,7 +43,7 @@ func (m *heardModel) Complete(_ context.Context, req llm.Request) (*llm.Response
 // An email answering another is tied to the conversation it is in by what
 // it says it answers; the person's own reply, from their Sent folder, is
 // part of it and says they sent it; the first email's page lists the
-// conversation; and a reply is read with what came before it.
+// conversation; and its latest email says whose turn it is, on Today too.
 func TestAnEmailConversationIsAThread(t *testing.T) {
 	t.Setenv("SAMEWAY_KEYS", filepath.Join(t.TempDir(), "keys.json"))
 	server.MailInsecure(true)
@@ -54,6 +54,10 @@ func TestAnEmailConversationIsAThread(t *testing.T) {
 	mail.Put(t, "Sent", message("r1@me.example", "q1@joe.example", "Me <me@example.com>", "joe@joe.example", "Re: Quote", "Here it is, attached."))
 	mail.Put(t, "Sent", message("other@me.example", "", "Me <me@example.com>", "ann@x.example", "Lunch", "Lunch Tuesday?"))
 	mail.Put(t, "INBOX", message("q2@joe.example", "r1@me.example", "Joe <joe@joe.example>", "me+sameway@example.com", "Re: Quote", "Thanks, got it!"))
+	mail.Put(t, "INBOX", message("w1@ann.example", "", "Ann <ann@ann.example>", "me+sameway@example.com", "Plans", "Dinner soon."))
+	mail.Put(t, "Sent", message("w2@me.example", "w1@ann.example", "Me <me@example.com>", "ann@ann.example", "Re: Plans", "Yes! Which day suits you?"))
+	mail.Put(t, "INBOX", message("v1@bo.example", "", "Bo <bo@bo.example>", "me+sameway@example.com", "Room", "I booked the room."))
+	mail.Put(t, "INBOX", message("v2@bo.example", "v1@bo.example", "Bo <bo@bo.example>", "me+sameway@example.com", "Re: Room", "The big one or the small one?"))
 	a, h := newApp(t)
 	postForm(t, h, "/mail/connect", url.Values{"user": {"me@example.com"}, "password": {"pw"}, "host": {mail.Addr}})
 
@@ -80,15 +84,18 @@ func TestAnEmailConversationIsAThread(t *testing.T) {
 		t.Errorf("the first email's page lists the conversation: %s", truncate(page))
 	}
 
-	m := &heardModel{}
-	a.Chat.Provider, a.Chat.ProviderErr = m, nil
-	act, _ := a.Store.Create("action", map[string]any{"title": "Sort", "kind": "classify"})
-	a.Store.Create("tag", map[string]any{"name": "to do", "means": "Something I have to do."})
-	_ = a.Chat.Classify(context.Background(), act, "email", thanks.ID)
-	m.mu.Lock()
-	q := m.asked[len(m.asked)-1]
-	m.mu.Unlock()
-	if !strings.Contains(q, "This record is the latest message") || !strings.Contains(q, "Can you send the quote") || !strings.Contains(q, "from the person themselves: Here it is") {
-		t.Errorf("a reply is read with what came before it, saying who wrote it: %s", q)
+	turns := map[string]any{}
+	for _, e := range func() []*store.Record { r, _ := a.Store.List("email", store.ListOptions{}); return r }() {
+		turns[e.Fields["body"].(string)] = e.Fields["turn"]
+	}
+	if turns["Thanks, got it!"] != "" && turns["Thanks, got it!"] != nil || turns["Here it is, attached."] != "" && turns["Here it is, attached."] != nil {
+		t.Errorf("a conversation closed with thanks owes nothing, and only its latest says: %v", turns)
+	}
+	if turns["Yes! Which day suits you?"] != "theirs" || turns["The big one or the small one?"] != "yours" {
+		t.Errorf("whose turn: you wrote last, theirs; they asked last, yours: %v", turns)
+	}
+	today := get(t, h, "/today").Body.String()
+	if !strings.Contains(today, "Your turn to reply") || !strings.Contains(today, "The big one or the small one?") || !strings.Contains(today, "Waiting on them") {
+		t.Errorf("Today says whose turn: %s", truncate(today))
 	}
 }

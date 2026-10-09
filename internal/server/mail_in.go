@@ -206,7 +206,10 @@ func (s *Server) mailNote(m mailin.Mail) error {
 				fields["thread"] = root
 			}
 		}
-		_, _, err := records.WriteKept(s.app.Store, who, "created", "email", "", fields)
+		rec, _, err := records.WriteKept(s.app.Store, who, "created", "email", "", fields)
+		if root, _ := fields["thread"].(string); err == nil && root != "" {
+			s.takeTurn(root, rec) // mail_threads.go
+		}
 		return err
 	}
 	_, _, err := records.WriteAs(s.app.Store, who, "created", "note", "", map[string]any{

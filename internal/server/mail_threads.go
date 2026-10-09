@@ -3,6 +3,7 @@ package server
 import (
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -35,4 +36,23 @@ func (s *Server) threadOf(refs []string) string {
 		return e.ID
 	}
 	return ""
+}
+
+// takeTurn keeps whose turn it is on the latest email of a thread, and
+// clears it on the ones before: the conversation's state is its latest.
+func (s *Server) takeTurn(root string, latest *store.Record) {
+	emails, err := s.app.Store.List("email", store.ListOptions{})
+	if err != nil {
+		return
+	}
+	for _, e := range emails {
+		if e.ID != latest.ID && (e.ID == root || e.Fields["thread"] == root) && e.Fields["turn"] != nil && e.Fields["turn"] != "" {
+			records.ApplyOps(s.app.Store, records.Op{Type: "email", ID: e.ID, After: map[string]any{"turn": ""}})
+		}
+	}
+	mine, _ := latest.Fields["from_me"].(bool)
+	body, _ := latest.Fields["body"].(string)
+	if turn := records.Turn(mine, body); turn != "" {
+		records.ApplyOps(s.app.Store, records.Op{Type: "email", ID: latest.ID, After: map[string]any{"turn": turn}})
+	}
 }
