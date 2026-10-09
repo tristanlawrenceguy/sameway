@@ -44,19 +44,5 @@ func TestOffscreenSignIsBundled(t *testing.T) {
 	}
 }
 
-// When the page follows a turn it puts the person back where they were in
-// one step: the page scrolls smoothly, and a smooth correction is seen as
-// the page drifting.
-func TestRefreshPutsThePageBackInstantly(t *testing.T) {
-	data, err := os.ReadFile("../../design/base/19-refresh.js")
-	if err != nil {
-		t.Fatal(err)
-	}
-	src := string(data)
-	if strings.Count(src, `behavior: "instant"`) < 3 {
-		t.Error("the page's and the chat log's scroll must be restored instantly")
-	}
-	if !strings.Contains(src, "moveBefore") {
-		t.Error("a kept block should move without leaving the page where the browser allows")
-	}
-}
+// The page put back where it was at once when it follows a turn, and a
+// kept block kept as the same node: behave-refresh.mjs.
