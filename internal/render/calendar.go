@@ -189,7 +189,7 @@ type Hour struct {
 // dayHours lays the timed events of a day out by the hour: from eight to
 // six at least, and wider when something falls earlier or later, so the
 // shape of the day is there even when little is on.
-func dayHours(events []map[string]any) []Hour {
+func dayHours(events []map[string]any, h24 bool) []Hour {
 	first, last := 8, 18
 	byHour := map[int][]map[string]any{}
 	for _, e := range events {
@@ -209,7 +209,7 @@ func dayHours(events []map[string]any) []Hour {
 	}
 	var out []Hour
 	for h := first; h <= last; h++ {
-		out = append(out, Hour{Label: when.Clock(time.Date(2000, 1, 1, h, 0, 0, 0, time.UTC)), Events: byHour[h]})
+		out = append(out, Hour{Label: when.Clock(time.Date(2000, 1, 1, h, 0, 0, 0, time.UTC), h24), Events: byHour[h]})
 	}
 	return out
 }

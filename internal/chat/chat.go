@@ -77,9 +77,6 @@ type Service struct {
 	// convo is the chat that is open, once known; see Current.
 	convo       string
 	ExtraPrompt string
-	// Now tells the model what day it is, so a calendar for "this month"
-	// is this month. Defaults to time.Now; tests pin it.
-	Now func() time.Time
 
 	// who is the one this service speaks for, when it is not the owner;
 	// see people.go.

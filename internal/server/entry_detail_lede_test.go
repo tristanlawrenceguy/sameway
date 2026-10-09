@@ -8,7 +8,7 @@ import (
 
 // TestEntryDetailLedeNoAtLabel asserts that an entry detail page does not show
 // the raw database column name "At" as a visible label in its lede paragraph.
-// The date value is still present via whenMade() at the end of the lede
+// The date value is still present via s.whenMade() at the end of the lede
 // (acceptance item 1 and 3).
 func TestEntryDetailLedeNoAtLabel(t *testing.T) {
 	a, h := newApp(t)

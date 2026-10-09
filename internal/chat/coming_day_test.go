@@ -15,7 +15,7 @@ import (
 // that is the coming one is only said back.
 func TestADayAWeekOutSaysWhichIsTheComingOne(t *testing.T) {
 	svc := newFullService(t)
-	svc.Now = func() time.Time { return time.Date(2026, 10, 6, 19, 0, 0, 0, time.UTC) } // a Tuesday
+	svc.Clock = func() time.Time { return time.Date(2026, 10, 6, 19, 0, 0, 0, time.UTC) } // a Tuesday
 	m := &scripted{steps: []*llm.Response{
 		call("create_record", map[string]any{"type": "event", "fields": map[string]any{"title": "Walk", "starts": "2026-10-17 09:00"}}),
 		call("create_record", map[string]any{"type": "event", "fields": map[string]any{"title": "Walk again", "starts": "2026-10-10 09:00"}}),

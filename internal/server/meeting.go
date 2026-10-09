@@ -57,7 +57,7 @@ func (s *Server) recordingOffer(r *http.Request, file *store.Record) string {
 	if _, has := t.Field("recording"); !has {
 		return ""
 	}
-	if had, _ := query.Filter(s.app.Store, t, []string{"recording=" + file.ID}, "", 1, time.Now()); len(had) > 0 {
+	if had, _ := query.Filter(s.app.Store, t, []string{"recording=" + file.ID}, "", 1, s.now()); len(had) > 0 {
 		return ""
 	}
 	return writeUpOffer("Write up the meeting in this recording (/t/"+FileType+"/"+file.ID+")", "Write up the meeting", s)
@@ -86,7 +86,7 @@ func (s *Server) recordingToAdd(r *http.Request, ev *store.Record) string {
 	page := "/t/" + records.EventType + "/" + ev.ID
 	over := false
 	if st, err := time.Parse(time.RFC3339, str(ev.Fields["starts"], "")); err == nil {
-		over = time.Now().After(st.Add(chat.MeetingLength(ev)))
+		over = s.now().After(st.Add(chat.MeetingLength(ev)))
 	}
 	wanted := over && len(chat.RemindersAbout(s.app.Store, chat.RecordAbout(ev.ID))) > 0
 	if !s.showing(r, RecordingPart) && !wanted {

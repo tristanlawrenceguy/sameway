@@ -21,10 +21,10 @@ import (
 //     "midday", "midnight"; or "14:00" on the 24-hour clock.
 //   - Day, month, year, in that order, the month a word, no commas.
 
-// Hours24 says whether times of day are said on the 24-hour clock. The
-// app sets it from the person's setting (ui.clock) and language; unset,
-// the 12-hour clock is used.
-var Hours24 func() bool
+// Whether a time of day is said on the 24-hour clock is the reader's, so
+// it is passed in (h24), never kept here: two workspaces open in one
+// program, or two tests at once, each say times on their own person's
+// clock. An app works it out with TwentyFour from its settings.
 
 // TwentyFour is whether a person who chose clock ("12", "24" or nothing)
 // and writes in language reads times on the 24-hour clock: what they
@@ -44,14 +44,12 @@ func TwentyFour(clock, language string) bool {
 // twelve are the languages whose clock is the 12-hour one.
 var twelve = map[string]bool{"": true, "en": true, "hi": true, "bn": true, "ur": true, "ar": true, "ko": true, "fil": true, "tl": true, "ml": true, "ta": true, "te": true, "mr": true, "gu": true, "pa": true}
 
-func use24() bool { return Hours24 != nil && Hours24() }
-
 // Clock is a time of day as a person says it: "2pm", "5:30pm", "midday",
 // "midnight" (GOV.UK's style: never 12pm, never 14:00hrs), or "14:00" and
 // "09:30" on the 24-hour clock.
-func Clock(t time.Time) string {
+func Clock(t time.Time, h24 bool) string {
 	h, m := t.Hour(), t.Minute()
-	if use24() {
+	if h24 {
 		return fmt.Sprintf("%02d:%02d", h, m)
 	}
 	switch {
@@ -75,8 +73,8 @@ func Clock(t time.Time) string {
 
 // Face is the time on a clock's face, always with its minutes: "2:05pm",
 // "2:00pm" or "14:05". A face ticks, and "2pm" then "2:01pm" would jump.
-func Face(t time.Time) string {
-	if use24() {
+func Face(t time.Time, h24 bool) string {
+	if h24 {
 		return t.Format("15:04")
 	}
 	return strings.ToLower(t.Format("3:04pm"))
@@ -86,7 +84,7 @@ func Face(t time.Time) string {
 // (see above): "Today", "Tomorrow at 2pm", "Fri 9 Oct at 5:30pm",
 // "Mon 4 Jan 2027". A moment is said in the reader's zone, the one now
 // is in. Anything that is not a stored value comes back as it is.
-func Relative(v string, now time.Time) string {
+func Relative(v string, now time.Time, h24 bool) string {
 	ts, err := time.Parse(time.RFC3339, v)
 	if err != nil {
 		return v
@@ -94,13 +92,13 @@ func Relative(v string, now time.Time) string {
 	if IsDay(v) {
 		return dayWords(ts.UTC(), now)
 	}
-	return At(ts, now)
+	return At(ts, now, h24)
 }
 
 // At is a moment planned for, in the reader's zone: "Tomorrow at 2pm".
-func At(t, now time.Time) string {
+func At(t, now time.Time, h24 bool) string {
 	local := t.In(now.Location())
-	return dayWords(local, now) + " at " + Clock(local)
+	return dayWords(local, now) + " at " + Clock(local, h24)
 }
 
 // Day is a date as a person plans by it: Today, Tomorrow, Yesterday, or
@@ -136,14 +134,14 @@ func daysFrom(d, now time.Time) int {
 // short: "Today at 2pm", "Yesterday at 9:30am", "3 days ago", then its
 // date, "2 Oct", "2 Oct 2025". A time from a clock a little ahead is
 // today, not tomorrow.
-func Ago(t, now time.Time) string {
+func Ago(t, now time.Time, h24 bool) string {
 	local := t.In(now.Location())
 	n := daysFrom(local, now)
 	switch {
 	case n >= 0:
-		return "Today at " + Clock(local)
+		return "Today at " + Clock(local, h24)
 	case n == -1:
-		return "Yesterday at " + Clock(local)
+		return "Yesterday at " + Clock(local, h24)
 	case n > -7:
 		return fmt.Sprintf("%d days ago", -n)
 	}
@@ -152,7 +150,7 @@ func Ago(t, now time.Time) string {
 
 // Full is a stored day or moment in full, for when the words above leave
 // the date out (Today, 3 days ago): "Monday 5 October 2026 at 2pm".
-func Full(v string) string {
+func Full(v string, h24 bool) string {
 	ts, err := time.Parse(time.RFC3339, v)
 	if err != nil {
 		return v
@@ -160,7 +158,7 @@ func Full(v string) string {
 	if IsDay(v) {
 		return ts.UTC().Format("Monday 2 January 2006")
 	}
-	return ts.Local().Format("Monday 2 January 2006") + " at " + Clock(ts.Local())
+	return ts.Local().Format("Monday 2 January 2006") + " at " + Clock(ts.Local(), h24)
 }
 
 // Machine is a stored value as a <time datetime> holds it: the date alone

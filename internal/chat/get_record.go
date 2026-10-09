@@ -26,7 +26,7 @@ func (s *Service) getRecord(typeName, id string) toolResult {
 	out := struct {
 		records.RecordView
 		Days string `json:"days_here,omitempty"`
-	}{s.RecordView(t, rec), daysLine(t, rec, s.clock())}
+	}{s.RecordView(t, rec), daysLine(t, rec, s.Now())}
 	raw, err := json.MarshalIndent(out, "", "  ")
 	if err != nil {
 		return fail("%v", err)

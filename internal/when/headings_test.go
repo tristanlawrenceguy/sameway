@@ -18,8 +18,8 @@ func TestHeadingsAndShortDates(t *testing.T) {
 		{DayHeading(now.AddDate(-1, 0, 0), now), "Tuesday 7 October 2025"},
 		{Date(now.AddDate(0, -1, 0), now), "7 Sep"},
 		{Date(now.AddDate(-1, 0, 0), now), "7 Oct 2025"},
-		{Sent(now.Add(-time.Hour), now), Clock(now.Add(-time.Hour))},
-		{Sent(now.AddDate(0, 0, -2), now), "5 Oct at " + Clock(now)},
+		{Sent(now.Add(-time.Hour), now, false), Clock(now.Add(-time.Hour), false)},
+		{Sent(now.AddDate(0, 0, -2), now, false), "5 Oct at " + Clock(now, false)},
 	} {
 		if c.got != c.want {
 			t.Errorf("got %q, want %q", c.got, c.want)

@@ -69,8 +69,8 @@ type factOpts struct {
 // its list. With no day to say, a row says when the record last changed;
 // the record's own page says when it was made.
 func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
-	now := time.Now()
-	facts := records.Glance(s.app.Store, t, rec, now, o.Counts)
+	now := s.now()
+	facts := records.Glance(s.app.Store, t, rec, now, s.h24(), o.Counts)
 	day := false
 	for _, f := range facts {
 		day = day || f.Kind == "day"
@@ -81,10 +81,10 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 	}
 	out := s.glanceHTML(facts, o.Chips, boxed)
 	if !day && !o.Made && !t.HasDay() {
-		out = strings.TrimSpace(out + " " + happened("sw-muted", rec.UpdatedAt, now))
+		out = strings.TrimSpace(out + " " + s.happened("sw-muted", rec.UpdatedAt, now))
 	}
 	if o.Made {
-		out = strings.TrimSpace(out + " " + whenMade(t, rec, o.From))
+		out = strings.TrimSpace(out + " " + s.whenMade(t, rec, o.From))
 	}
 	return out
 }
@@ -94,8 +94,8 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 // its fields. No field-name label prefix: just the relative timestamp text so
 // dates read naturally without "Added" or "Started" before them. Rendered
 // output: <span class="sw-detail__when sw-muted sw-small"><time datetime="…">3 days ago</time></span>
-func whenMade(t *schema.Type, rec *store.Record, from string) string {
-	line := happened("", rec.CreatedAt, time.Now())
+func (s *Server) whenMade(t *schema.Type, rec *store.Record, from string) string {
+	line := s.happened("", rec.CreatedAt, s.now())
 	if from != "" {
 		line += " · From: " + template.HTMLEscapeString(from)
 	}
@@ -105,11 +105,11 @@ func whenMade(t *schema.Type, rec *store.Record, from string) string {
 // happened is when something happened, as a person reads it (3 days ago),
 // in a <time> holding the moment, with the date in full for a pointer
 // when the words leave it out.
-func happened(class string, at, now time.Time) string {
-	words := when.Ago(at, now)
+func (s *Server) happened(class string, at, now time.Time) string {
+	words := when.Ago(at, now, s.h24())
 	full := ""
 	if when.LeavesDateOut(words) {
-		full = when.Full(at.UTC().Format(time.RFC3339))
+		full = when.Full(at.UTC().Format(time.RFC3339), s.h24())
 	}
 	return timeHTML(class, at.UTC().Format(time.RFC3339), full, template.HTML(template.HTMLEscapeString(words)))
 }
@@ -150,8 +150,8 @@ func (s *Server) dotOf(typeName string) int {
 
 // happenedAfter is happened after a word such as deleted: deleted today at
 // 2pm, not deleted Today at 2pm.
-func happenedAfter(class string, at, now time.Time) string {
-	h := happened(class, at, now)
+func (s *Server) happenedAfter(class string, at, now time.Time) string {
+	h := s.happened(class, at, now)
 	for _, w := range []string{">Today", ">Yesterday"} {
 		h = strings.Replace(h, w, ">"+strings.ToLower(w[1:2])+w[2:], 1)
 	}

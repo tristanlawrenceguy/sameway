@@ -139,7 +139,7 @@ func resolveTracker(w *Workspace, props map[string]any, _ Place) map[string]any 
 				return out
 			}
 		}
-		now := time.Now()
+		now := w.now()
 		for _, rec := range recs {
 			if archived, _ := rec.Fields["archived"].(bool); archived && len(named) == 0 {
 				continue

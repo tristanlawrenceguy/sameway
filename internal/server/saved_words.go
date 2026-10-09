@@ -23,7 +23,7 @@ func (s *Server) savedWords(t *schema.Type, rec *store.Record, fields, clean map
 		// Oct 2026, 14:00." The words were the person's; this is Sameway's.
 		if f, ok := t.Field(name); ok && f.Type == "datetime" {
 			if v, _ := clean[name].(string); v != "" {
-				o.Text = f.Display() + " is " + when.Text(v) + "."
+				o.Text = f.Display() + " is " + when.Text(v, s.h24()) + "."
 			}
 			return o
 		}
@@ -37,7 +37,7 @@ func (s *Server) savedWords(t *schema.Type, rec *store.Record, fields, clean map
 		if f, ok := t.Field(name); ok && f.Type == "enum" {
 			// Moved to Done, a task that repeats is due again at once.
 			if title := strings.TrimSpace(s.title(t, rec)); title != "" && t.Advanced(fields, clean) {
-				o.Title, o.Text, o.Of = title+" is done.", dueAgain(t, clean), title
+				o.Title, o.Text, o.Of = title+" is done.", s.dueAgain(t, clean), title
 				return o
 			}
 			was, _ := rec.Fields[name].(string)
@@ -63,7 +63,7 @@ func (s *Server) savedWords(t *schema.Type, rec *store.Record, fields, clean map
 		// "Water the ferns is done. It repeats every Tuesday, so it is due
 		// again Tue 6 Oct 2026."
 		if t.Advanced(fields, clean) {
-			o.Title, o.Text, o.Of = title+" is done.", dueAgain(t, clean), title
+			o.Title, o.Text, o.Of = title+" is done.", s.dueAgain(t, clean), title
 			return o
 		}
 		word := t.FieldWords(name)
@@ -109,12 +109,12 @@ func repeatSaid(v any) string {
 
 // dueAgain says when a record that repeats is due again, as a sentence;
 // nothing for one that does not repeat.
-func dueAgain(t *schema.Type, fields map[string]any) string {
+func (s *Server) dueAgain(t *schema.Type, fields map[string]any) string {
 	repeat, day, ok := t.Repeats()
 	rule, _ := fields[repeat].(string)
 	next, _ := fields[day].(string)
 	if !ok || rule == "" || next == "" {
 		return ""
 	}
-	return "It repeats " + when.RepeatText(rule) + ", so it is due again " + when.Text(next) + "."
+	return "It repeats " + when.RepeatText(rule) + ", so it is due again " + when.Text(next, s.h24()) + "."
 }

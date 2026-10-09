@@ -30,7 +30,7 @@ func (s *Server) apiAddField(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, struct {
 		*schema.Type
 		Existing string `json:"existing"`
-	}{t, chat.FieldGets(s.app.Store, t, f.Name)})
+	}{t, chat.FieldGets(s.app.Store, t, f.Name, s.app.Workspace.Hours24())})
 }
 
 // apiAddType makes a content type: POST /api/types with {name,

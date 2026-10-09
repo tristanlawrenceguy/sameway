@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"html/template"
 	"strings"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
@@ -56,7 +55,7 @@ func (s *Server) headFields(t *schema.Type, rec *store.Record) map[string]bool {
 	// What the line above says is not said again; a link to what it
 	// belongs to is, being a way there the chip is not. What is in it has
 	// no field of its own, so it is not counted for this.
-	for _, f := range records.Glance(s.app.Store, t, rec, time.Now(), records.Counts{}) {
+	for _, f := range records.Glance(s.app.Store, t, rec, s.now(), s.h24(), records.Counts{}) {
 		if f.Kind != "ref" && f.Kind != "person" {
 			out[f.Field] = true
 		}

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // A person with Ollama and no model was told to open a terminal and type
@@ -36,7 +37,7 @@ func (s *Server) fetching() *fetchState {
 
 // ollamaCard is the fetch offered, or how far it has come; "" when Ollama
 // is not here or already has a model.
-func (s *Server) ollamaCard(hidden string) template.HTML {
+func (s *Server) ollamaCard(from string) template.HTML {
 	f := s.fetching()
 	f.Lock()
 	running, done, total, failed := f.running, f.done, f.total, f.err
@@ -53,13 +54,13 @@ func (s *Server) ollamaCard(hidden string) template.HTML {
 	if !ollamaWithoutModel(ctx) {
 		return ""
 	}
-	out := `<form method="post" action="/model/ollama" class="sw-stack">` + hidden
+	var said template.HTML
 	if failed != "" {
-		out += `<p>` + template.HTMLEscapeString(failed) + `</p>`
+		said = template.HTML(`<p>` + template.HTMLEscapeString(failed) + `</p>`)
 	}
-	out += string(s.component("button", map[string]any{"label": "Fetch a free model (" + llm.FreeModelWords + ")", "type": "submit", "variant": "primary"}))
-	out += `<p class="sw-small sw-muted">Ollama is here with no model yet. This one runs on this computer; your conversations and notes stay here.</p></form>`
-	return template.HTML(out)
+	return s.form(ui.Form{Action: "/model/ollama", Class: "sw-stack", From: from, Body: said,
+		Button: &ui.Button{Label: "Fetch a free model (" + llm.FreeModelWords + ")", Variant: ui.Primary},
+		After:  `<p class="sw-small sw-muted">Ollama is here with no model yet. This one runs on this computer; your conversations and notes stay here.</p>`})
 }
 
 // ollamaFetch starts fetching the free model, in the background: a few

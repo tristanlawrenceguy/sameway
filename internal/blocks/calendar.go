@@ -27,7 +27,7 @@ const CalendarComponent = "calendar"
 func resolveCalendar(ws *Workspace, props map[string]any, at Place) map[string]any {
 	out := copyProps(props)
 	delete(out, "filter") // the server's to fill, never the block's
-	now := time.Now()
+	now := ws.now()
 	month, day, shownDay := shownMonth(out, now)
 	if at.Block != "" {
 		calendarNav(out, at.Block, month, day, shownDay, now)
@@ -53,7 +53,7 @@ func resolveCalendar(ws *Workspace, props map[string]any, at Place) map[string]a
 		calendarKinds(out, at.Page, at.Block)
 		// Told apart among what is shown, once narrowed to its kinds.
 		if events, ok := out["events"].([]any); ok {
-			out["events"] = eventsApart(events, month)
+			out["events"] = ws.eventsApart(events, month)
 		}
 		return out
 	}
@@ -92,7 +92,7 @@ func (ws *Workspace) typeEvents(out, props map[string]any, typeName, month strin
 		events = append(events, ev)
 		events = append(events, ws.repeatedIn(t, rec, field, ev, month)...)
 	}
-	out["events"] = eventsApart(events, month)
+	out["events"] = ws.eventsApart(events, month)
 	out["all"] = listPath(t.Name, Strs(props["where"]), field)
 }
 
@@ -133,7 +133,7 @@ func (ws *Workspace) eventOf(t *schema.Type, rec *store.Record, field string) ma
 	day, clock := ts.UTC().Format("2006-01-02"), ""
 	if !strings.HasSuffix(v, "T00:00:00Z") {
 		local := ts.Local()
-		day, clock = local.Format("2006-01-02"), when.Clock(local)
+		day, clock = local.Format("2006-01-02"), when.Clock(local, ws.H24())
 	}
 	ev := map[string]any{"date": day, "label": ws.title(t, rec), "href": "/t/" + t.Name + "/" + rec.ID}
 	if clock != "" {
@@ -185,7 +185,7 @@ func (ws *Workspace) showFields(t *schema.Type, rec *store.Record, names []strin
 		if !ok {
 			continue
 		}
-		v := Display(*f, rec.Fields[name])
+		v := Display(*f, rec.Fields[name], ws.H24())
 		if f.Type == "ref" {
 			v = ws.refTitle(*f, v)
 		}

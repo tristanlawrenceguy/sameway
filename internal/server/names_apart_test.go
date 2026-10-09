@@ -80,7 +80,7 @@ func seedTwins(t *testing.T, h http.Handler) (overdue, later string) {
 	}
 	// The day as every page says it (internal/when), from the date the task
 	// was given: its UTC date read back near midnight was a day out.
-	day := func(d time.Time) string { return when.Relative(when.Store(d, true), time.Now()) }
+	day := func(d time.Time) string { return when.Relative(when.Store(d, true), time.Now(), false) }
 	return "due " + day(a), "due " + day(b)
 }
 
@@ -228,7 +228,7 @@ func TestACalendarTellsLikeEventsApartByTheirDays(t *testing.T) {
 	}
 	// The day as every page says it (internal/when), from the date the task
 	// was given: its UTC date read back near midnight was a day out.
-	day := func(d time.Time) string { return when.Relative(when.Store(d, true), time.Now()) }
+	day := func(d time.Time) string { return when.Relative(when.Store(d, true), time.Now(), false) }
 	links := names(t, page, "link")
 	for _, d := range []time.Time{first, first.AddDate(0, 0, 1)} {
 		if !has(links, "Water ferns (on "+day(d)+")") {

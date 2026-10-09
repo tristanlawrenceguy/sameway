@@ -123,9 +123,9 @@ func (s *Server) recentActivityAbout(n int, from string, about func(target, id s
 // dated gives its time the day, where no day's heading above says it.
 // told tells it from another entry shown that says the same, or is "".
 func (s *Server) event(r *store.Record, from string, level int, dated bool, told string) template.HTML {
-	at := when.Clock(r.CreatedAt.Local())
+	at := when.Clock(r.CreatedAt.Local(), s.h24())
 	if dated {
-		at = when.Sent(r.CreatedAt, time.Now())
+		at = when.Sent(r.CreatedAt, s.now(), s.h24())
 	}
 	props := s.line(r, true)
 	if props["undo"] != nil {
@@ -182,7 +182,7 @@ func (s *Server) activityPage(w http.ResponseWriter, r *http.Request) {
 	}
 	// Narrowed by who, what and when, as the address says, a page at a
 	// time; Undo on an entry comes back to this same narrowing.
-	recs, filters, f := s.narrowLog(all, r.URL.Query(), time.Now())
+	recs, filters, f := s.narrowLog(all, r.URL.Query(), s.now())
 	pg := pageOf(r, len(recs), activityPageSize)
 	from := r.URL.RequestURI()
 	var b strings.Builder
@@ -205,7 +205,7 @@ func (s *Server) activityPage(w http.ResponseWriter, r *http.Request) {
 	open := false
 	told := s.entriesApart(recs)
 	for i, rec := range recs {
-		d := when.DayHeading(rec.CreatedAt, time.Now())
+		d := when.DayHeading(rec.CreatedAt, s.now())
 		if d != day {
 			if open {
 				b.WriteString("</ol>")

@@ -16,13 +16,13 @@ import (
 
 // dayGlance is a record's first day as a person reads it. done is whether
 // it is ticked.
-func dayGlance(t *schema.Type, rec *store.Record, done bool, now time.Time) (Fact, bool) {
+func dayGlance(t *schema.Type, rec *store.Record, done bool, now time.Time, h24 bool) (Fact, bool) {
 	for _, f := range t.Shown() {
 		v, _ := rec.Fields[f.Name].(string)
 		if f.Type != "datetime" || v == "" {
 			continue
 		}
-		words := when.Relative(v, now)
+		words := when.Relative(v, now, h24)
 		text, tone, class := words, "info", "sw-when"
 		name := dayName(f)
 		if name != "" {
@@ -44,7 +44,7 @@ func dayGlance(t *schema.Type, rec *store.Record, done bool, now time.Time) (Fac
 		}
 		full := ""
 		if when.LeavesDateOut(words) {
-			full = when.Full(v)
+			full = when.Full(v, h24)
 		}
 		return Fact{Kind: "day", Field: f.Name, Text: text, Tone: tone, Short: words, Class: class, When: when.Machine(v), Full: full}, true
 	}

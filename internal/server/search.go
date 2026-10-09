@@ -43,7 +43,7 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 	title, said := label, label
 	pg := paged{page: 1, pages: 1}
 	if q != "" {
-		all, some := search.Matches(s.app.Store, s.app.Types, q)
+		all, some := search.Matches(s.app.Store, s.app.Types, q, s.reader())
 		hits := all
 		if only != "" {
 			hits = search.Of(all, only)

@@ -19,7 +19,7 @@ func (c *ctx) searchCmd() error {
 	}
 	defer a.Close()
 	q := strings.Join(c.args, " ")
-	hits, some := search.Matches(a.Store, a.Types, q)
+	hits, some := search.Matches(a.Store, a.Types, q, search.Reader{Now: a.Records.Now(), H24: a.Workspace.Hours24()})
 	if len(hits) > search.Limit {
 		hits = hits[:search.Limit]
 	}

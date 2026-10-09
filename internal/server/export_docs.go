@@ -158,7 +158,7 @@ func (s *Server) recordMarkdown(t *schema.Type, rec *store.Record, heading bool)
 	if heading {
 		b.WriteString("# " + s.title(t, rec) + "\n\n")
 	}
-	facts, body := export.Text(t, rec.Fields, s.RefTitle)
+	facts, body := export.Text(t, rec.Fields, s.RefTitle, s.h24())
 	for _, f := range facts {
 		fmt.Fprintf(&b, "- **%s:** %s\n", f.Name, f.Value)
 	}
@@ -229,7 +229,7 @@ func (s *Server) recordPDF(ctx context.Context, t *schema.Type, rec *store.Recor
 func (s *Server) exportEverything(w http.ResponseWriter, r *http.Request) {
 	name := s.app.Workspace.Config.Name
 	w.Header().Set("Content-Type", "application/zip")
-	attachment(w, name+" "+time.Now().Format("2006-01-02")+".zip")
+	attachment(w, name+" "+s.now().Format("2006-01-02")+".zip")
 	if err := export.Everything(w, name, s.app.Store, s.app.Types, s.app.Mirror, s.app.Workspace.FilesDir(), s.RefTitle); err != nil {
 		log.Printf("export: %v", err)
 	}

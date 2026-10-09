@@ -3,7 +3,6 @@ package server
 import (
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
@@ -16,10 +15,10 @@ import (
 
 // suggestionWords is a suggestion as Today says it: "Pay the water bill,
 // due Fri 16 Oct, important, for Ana. Bill due, late fee after."
-func suggestionWords(sug *chat.Suggestion) string {
+func (s *Server) suggestionWords(sug *chat.Suggestion) string {
 	parts := []string{"Suggested task: " + sug.Title}
 	if sug.Due != "" {
-		parts = append(parts, "due "+when.Relative(sug.Due, time.Now()))
+		parts = append(parts, "due "+when.Relative(sug.Due, s.now(), s.h24()))
 	}
 	if sug.Important {
 		parts = append(parts, "important")

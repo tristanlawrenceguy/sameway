@@ -51,10 +51,10 @@ func (s *Server) entriesApart(recs []*store.Record) []string {
 				// Said as its row is, number and all: a time here once
 				// named two notes made a second apart differently from
 				// their list.
-				return recordWays(t, rec)
+				return s.recordWays(t, rec)
 			}
 		}
-		return append(ways, "at "+momentWords(r.CreatedAt), "at "+secondWords(r.CreatedAt))
+		return append(ways, "at "+s.momentWords(r.CreatedAt), "at "+s.secondWords(r.CreatedAt))
 	}, func(i int) string {
 		// Numbered as the records they are about are, so an entry and
 		// its record's row say the same.

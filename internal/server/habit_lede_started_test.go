@@ -145,7 +145,7 @@ func TestHabitDetailLedeStillShowsAllInformation(t *testing.T) {
 
 // TestHabitDetailLedeNoCadenceBadge asserts that a habit detail page does not
 // show the raw cadence value "Each day" as a visible badge chip in its lede.
-// The creation time is still present via whenMade() at the end of the lede
+// The creation time is still present via s.whenMade() at the end of the lede
 // (acceptance item 2 and 3).
 func TestHabitDetailLedeNoCadenceBadge(t *testing.T) {
 	a, h := newApp(t)

@@ -40,7 +40,7 @@ func (s *Service) search(query, only string, page int) toolResult {
 	if _, ok := search.Searchable(types, only); only != "" && !ok {
 		return fail("%s", search.Refusal(only, search.Kinds(types)))
 	}
-	hits, some := search.Matches(s.Store, types, query)
+	hits, some := search.Matches(s.Store, types, query, search.Reader{Now: s.Now(), H24: s.H24()})
 	res := search.Narrow(hits, query, only, page)
 	res.Some = some
 	if res.Total == 0 {

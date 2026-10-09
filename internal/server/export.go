@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
 	"github.com/tristanlawrenceguy/sameway/internal/export"
@@ -48,13 +47,13 @@ func (s *Server) exportFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", f.Type)
-	attachment(w, fmt.Sprintf("%s %s.%s", capitalize(schema.Plural(t.Name)), time.Now().Format("2006-01-02"), f.Ext))
+	attachment(w, fmt.Sprintf("%s %s.%s", capitalize(schema.Plural(t.Name)), s.now().Format("2006-01-02"), f.Ext))
 	w.Write(buf.Bytes())
 }
 
 // exportRecords are the records a list page with this query shows.
 func (s *Server) exportRecords(t *schema.Type, q url.Values) ([]*store.Record, error) {
-	return query.Filter(s.app.Store, t, q["where"], q.Get("order"), 0, time.Now())
+	return query.Filter(s.app.Store, t, q["where"], q.Get("order"), 0, s.now())
 }
 
 func formatList(t *schema.Type) string {

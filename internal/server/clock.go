@@ -44,7 +44,7 @@ func (s *Server) ringing() []*store.Record {
 	if !ok {
 		return nil
 	}
-	recs, err := query.Filter(s.app.Store, t, []string{"state=rang"}, "at", 0, time.Now())
+	recs, err := query.Filter(s.app.Store, t, []string{"state=rang"}, "at", 0, s.now())
 	if err != nil {
 		return nil
 	}

@@ -36,7 +36,7 @@ func resolveChart(w *Workspace, props map[string]any, _ Place) map[string]any {
 		out["problem"] = problem
 		return out
 	}
-	recs, err := query.Filter(w.Store, t, Strs(props["where"]), "", 0, time.Now())
+	recs, err := query.Filter(w.Store, t, Strs(props["where"]), "", 0, w.now())
 	if err != nil {
 		out["problem"] = err.Error()
 		return out
@@ -175,7 +175,7 @@ func bucket(st *store.Store, t *schema.Type, f *schema.Field, kind string, rec *
 	if f == nil {
 		return ""
 	}
-	v := Display(*f, rec.Fields[by])
+	v := Display(*f, rec.Fields[by], false) // never a day: those are bucketed by period above
 	if f.Type == "ref" {
 		v = records.RefTitle(st, *f, v)
 	}

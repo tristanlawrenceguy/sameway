@@ -20,7 +20,7 @@ travels through git.
 |---|---|---|
 | Backend language | Go | 1 to 3 second compile loop, one idiomatic style, gofmt/vet keep AI-written code uniform, pure-Go SQLite means no C toolchain, single binary. |
 | Rendering | Server-rendered HTML, progressive enhancement, no frontend framework | Best accessibility by default. Output is plain HTML an agent can read as easily as a screen reader. Fits "documents, forms, lists". |
-| Templates | Go `html/template`; props are a JSON object (`map[string]any`) | Stdlib, auto-escaping, no code generator. Every render validates the props against the manifest's JSON Schema and applies its defaults before the template runs (`internal/render`), so the manifest is the only definition of a component's props. |
+| Templates | Go `html/template`; props are a JSON object (`map[string]any`) | Stdlib, auto-escaping, no code generator. Every render validates the props against the manifest's JSON Schema and applies its defaults before the template runs (`internal/render`), so the manifest is the only definition of a component's props. The components the server's pages use most also have a hand-written Go type in `internal/ui` (a button, a link, an alert, a text field, an empty state, a status, a mark, and a form that does one action), whose fields a test holds to the manifest; it still renders through the same map and the same validation. |
 | Storage | SQLite (modernc.org/sqlite) as live store, Markdown/JSON files as portable form | Zero setup. Files make the workspace git-friendly and AI-readable. `sameway export` and `sameway import` move between them. |
 | CMS scope | Structured content types only, no page builder | Keep the core small. Rendering is done by components; if a view does not exist, create a component. |
 | Connections | Worked out from the schema in `internal/relate`; a page shows none of them, an agent is given all of them | A connection is real in the data whether or not it is drawn. A page that opens every one is a page of other records with the one you came for at the top; a row of links to them is the same page in miniature, there every time for the once it is wanted. So the page shows what the record is, the whole graph goes to the API and the assistant, and `?show=<key>` opens the one there is a reason to open. |
@@ -141,6 +141,7 @@ surface decides for itself:
     store/                    # SQLite, one table per type, field stamps for sync
     records/                  # writes, the activity log, undo, names, who asks and who wrote what
     render/                   # component registry, props validation, page layout
+    ui/                       # typed builders for the most-used components, and one action's form
     relate/  query/  search/  # connections, the "which records" grammar, search
     when/  track/  trim/      # days and repeats, habit arithmetic, short titles
     prose/                    # Markdown rendered for the design system

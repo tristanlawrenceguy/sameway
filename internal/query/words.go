@@ -124,5 +124,5 @@ func dateWords(s string) string {
 	if d, err := time.Parse("2006-01-02", s); err == nil {
 		return d.Format("Mon 2 Jan 2006")
 	}
-	return when.Text(s)
+	return when.Text(s, false) // kept as a view's words: said one way, the house way, whatever the clock
 }
