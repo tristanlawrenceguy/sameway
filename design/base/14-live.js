@@ -87,17 +87,6 @@
   // above; this brings the rest.
   function refreshSoon(delay) { sw.refresh(delay); }
 
-  function parse(frame) {
-    var event = "message", data = "";
-    frame.split("\n").forEach(function (line) {
-      if (line.indexOf("event:") === 0) event = line.slice(6).trim();
-      else if (line.indexOf("data:") === 0) data += line.slice(5).trim();
-    });
-    var body = {};
-    try { body = JSON.parse(data); } catch (e) { body = {}; }
-    return { event: event, data: body };
-  }
-
   function statusText(form, message) {
     sw.status(document.getElementById(form.getAttribute("data-busy-target")), null, message, "");
   }
@@ -108,12 +97,12 @@
     var log = logFor(form);
     var live = liveMessage(log);
     var land = lander();
-    var follow = window.swFollower(log);
+    var follow = sw.follower(log);
     var ta = form.querySelector("textarea");
     var asked = ta ? ta.value : "";
     var settled = false, heard = false, stop = null;
-    var watch = window.swWatchTurn ? window.swWatchTurn(form) : null;
-    var write = window.swWriter(live.words, follow, watch);
+    var watch = sw.watchTurn(form);
+    var write = sw.writer(live.words, follow, watch);
     // The steps: what the assistant is doing, one dot each. A step is
     // early while the model is still saying what it wants; the same tool
     // fills the step in when it runs. Until anything arrives, a dot says
@@ -159,7 +148,7 @@
       live.li.classList.remove("sw-live");
       if (d.html) live.li.innerHTML = d.html; else live.li.remove();
       var status = document.getElementById("chat-status");
-      if (status && d.status && window.swSay) window.swSay(d.status, d.html, d.text); else if (status && d.status) status.outerHTML = d.status;
+      if (status && d.status) sw.say(d.status, d.html, d.text);
       // What a reload would have brought: the recent activity, the skip
       // link to the newest message, and the address naming it.
       var activity = document.querySelector(".sw-activity");
@@ -206,14 +195,14 @@
         case "said":
           // A page joining late already shows the message, and the box
           // may hold something new.
-          if (joining && document.getElementById("msg-" + d.id)) { thinking(true); stop = window.swStopControl(form, d.turn); break; }
+          if (joining && document.getElementById("msg-" + d.id)) { thinking(true); stop = sw.stopControl(form, d.turn); break; }
           if (d.html) live.li.before(el("<li>" + d.html + "</li>"));
           // The message is recorded; the box is ready for the next one.
           if (ta && !joining) ta.value = "";
           var file = form.querySelector('input[type="file"]');
           if (file && !joining) file.value = "";
           thinking(true);
-          stop = window.swStopControl(form, d.turn);
+          stop = sw.stopControl(form, d.turn);
           break;
         case "delta": thinking(false); write(d.text); break;
         case "text": thinking(false); write.all(d.text); break;
@@ -236,22 +225,9 @@
         // has the reply.
         if (res.status === 204) { settle({}); refreshSoon(0); return; }
         if (!res.ok || !res.body) throw new Error("no stream");
-        var reader = res.body.getReader(), decoder = new TextDecoder(), buffer = "";
-        function pump() {
-          return reader.read().then(function (r) {
-            if (r.done) { if (!settled) settle({}); return; }
-            buffer += decoder.decode(r.value, { stream: true });
-            var frames = buffer.split("\n\n");
-            buffer = frames.pop();
-            frames.forEach(function (f) {
-              if (!f.trim()) return;
-              // A slip in showing one event must not lose the rest.
-              try { handle(parse(f)); } catch (err) { if (window.console) console.error("live turn:", err); }
-            });
-            return pump();
-          });
-        }
-        return pump();
+        // Read through the page's connection (01-connect.js), a slip in
+        // showing one event not losing the rest.
+        return sw.stream(res, handle).then(function () { if (!settled) settle({}); });
       })
       .catch(function (err) {
         if (window.console) console.error("live turn:", err);
@@ -289,6 +265,6 @@
   }
   // A turn already under way, for 19-live-join.js: joining is the request
   // for what it has done and does next.
-  window.swFollowTurn = send;
+  sw.followTurn = send;
   sw.arm("form.sw-compose", arm);
 })();

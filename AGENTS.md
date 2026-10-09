@@ -25,7 +25,7 @@ runner in tools/a11y-runner.
 | `design/components/<name>/` | one component: manifest, template, css, examples, README | `design/README.md` |
 | `design/tokens/tokens.json` | design tokens; regenerate css with `go run ./tools/tokens` | |
 | `design/base/*.css` | foundation, one concern per file, loaded in filename order | `design/foundations/` |
-| `design/base/*.js` | the page scripts every page needs, joined in filename order before the components' enhance.js; `00-sw.js` is the core they share: `sw.arm(selector, fn)` instead of listening for the refresh, `sw.on`/`sw.emit`, `sw.status`, `sw.refresh`. What they do is tested in a browser by `tools/a11y-runner/behave.mjs` | `design/base/00-sw.js` |
+| `design/base/*.js` | the page scripts every page needs, joined in filename order before the components' enhance.js; `00-sw.js` is the core they share: `sw.arm(selector, fn)` instead of listening for the refresh, `sw.on`/`sw.emit`, `sw.status`, `sw.refresh`; `01-connect.js` is the one connection to the server, `sw.listen` for /events and `sw.stream` for a turn. What they do is tested in a browser by `tools/a11y-runner/behave.mjs` | `design/base/00-sw.js` |
 | `internal/schema/` | content type files to Go types, validation, JSON Schema | `schema.go` |
 | `internal/store/` | SQLite, one table per type | `store.go` |
 | `internal/render/` | component registry, props validation, page layout | `registry.go` |
