@@ -10,7 +10,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"io"
 	"net"
 	"strings"
 	"time"
@@ -18,7 +17,6 @@ import (
 	"github.com/emersion/go-imap/v2"
 	"github.com/emersion/go-imap/v2/imapclient"
 	_ "github.com/emersion/go-message/charset" // mail in any charset
-	"github.com/emersion/go-message/mail"
 )
 
 // Folder is the folder whose mail is all for the workspace.
@@ -45,7 +43,13 @@ type Mark struct {
 
 // Mail is one email, as words and files.
 type Mail struct {
-	ID      string // the Message-Id, or folder and UID
+	ID string // the Message-Id, or folder and UID
+	// Refs are the messages it answers, from its In-Reply-To and
+	// References, oldest first: the thread it is in.
+	Refs []string
+	// Sent is one the person sent, read from their Sent folder because it
+	// answers a thread the workspace has.
+	Sent    bool
 	From    string
 	Subject string
 	Date    time.Time
@@ -139,7 +143,11 @@ func Check(ctx context.Context, a Account) error {
 // sent to the +sameway address; in the Sameway folder, everything. A
 // folder read for the first time starts from now, apart from the last
 // week's +sameway mail, which was sent to be kept.
-func New(ctx context.Context, a Account, marks map[string]Mark) ([]Mail, map[string]Mark, error) {
+//
+// wanted says whether a message the person sent answers a thread the
+// workspace has; those are read from their Sent folder too, so a thread
+// says who wrote last. Nil reads none.
+func New(ctx context.Context, a Account, marks map[string]Mark, wanted func(refs []string) bool) ([]Mail, map[string]Mark, error) {
 	c, err := dial(ctx, a)
 	if err != nil {
 		return nil, marks, err
@@ -204,6 +212,13 @@ func New(ctx context.Context, a Account, marks map[string]Mark) ([]Mail, map[str
 		}
 		out[box] = next
 	}
+	if wanted != nil {
+		sent, err := readSent(c, out, alsoNow(mails, wanted))
+		mails = append(mails, sent...)
+		if err != nil {
+			return mails, out, err
+		}
+	}
 	return mails, out, nil
 }
 
@@ -231,66 +246,19 @@ func fetch(c *imapclient.Client, box string, uids []imap.UID) ([]Mail, error) {
 	return out, nil
 }
 
-// Parse reads an email: who from, the subject, the words (plain text, or
-// the HTML's text when there is no plain), and the files attached.
-func Parse(r io.Reader) (Mail, error) {
-	mr, err := mail.CreateReader(r)
-	if err != nil && mr == nil {
-		return Mail{}, err
+// alsoNow is wanted, and a reply to mail that came in just now, which
+// answers a thread too.
+func alsoNow(mails []Mail, wanted func([]string) bool) func([]string) bool {
+	now := map[string]bool{}
+	for _, m := range mails {
+		now[strings.Trim(m.ID, "<> ")] = true
 	}
-	h := mr.Header
-	var m Mail
-	m.Subject, _ = h.Subject()
-	m.Date, _ = h.Date()
-	m.ID, _ = h.MessageID()
-	if from, err := h.AddressList("From"); err == nil && len(from) > 0 {
-		m.From = from[0].Address
-		if from[0].Name != "" {
-			m.From = from[0].Name + " <" + from[0].Address + ">"
-		}
-	}
-	var plain, html string
-	for {
-		p, err := mr.NextPart()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			break
-		}
-		switch ph := p.Header.(type) {
-		case *mail.InlineHeader:
-			kind, _, _ := ph.ContentType()
-			b, _ := io.ReadAll(io.LimitReader(p.Body, 2<<20))
-			switch {
-			case kind == "text/plain" && plain == "":
-				plain = string(b)
-			case kind == "text/html" && html == "":
-				html = string(b)
+	return func(refs []string) bool {
+		for _, r := range refs {
+			if now[strings.Trim(r, "<> ")] {
+				return true
 			}
-		case *mail.AttachmentHeader:
-			name, _ := ph.Filename()
-			if name == "" {
-				name = "attachment"
-			}
-			b, _ := io.ReadAll(io.LimitReader(p.Body, filesMost+1))
-			if len(b) > filesMost {
-				b = nil
-			}
-			m.Files = append(m.Files, File{Name: name, Data: b})
 		}
+		return wanted(refs)
 	}
-	m.Text = strings.TrimSpace(plain)
-	if m.Text == "" && html != "" {
-		m.Text = "\x00html\x00" + html // the caller turns HTML into words
-	}
-	return m, nil
-}
-
-// HTML is the HTML of a mail with no plain words, or "".
-func (m Mail) HTML() string {
-	if h, ok := strings.CutPrefix(m.Text, "\x00html\x00"); ok {
-		return h
-	}
-	return ""
 }

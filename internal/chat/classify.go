@@ -66,7 +66,7 @@ func recordWords(st *store.Store, t *schema.Type, rec *store.Record) string {
 	var b strings.Builder
 	b.WriteString(records.Name(st, t, rec))
 	for _, f := range t.Fields {
-		if f.Name == "tags" || f.Name == t.Title {
+		if f.Name == "tags" || f.Name == t.Title || f.ReadOnly { // what Sameway keeps is not what the record says
 			continue
 		}
 		if v, ok := rec.Fields[f.Name].(string); ok && strings.TrimSpace(v) != "" && (f.Type == "string" || f.Type == "text" || f.Type == "markdown" || f.Type == "datetime") {
@@ -132,6 +132,9 @@ func (s *Service) Classify(ctx context.Context, action *store.Record, typeName, 
 		}
 	}
 	var picks []chosen
+	// Not the conversation before it: measured on twelve threads, a small
+	// model tagged worse with it (19 of 48 to do right, against 23 alone).
+	// Whose turn it is is worked out instead (records/turn.go).
 	question := words
 	if check, _ := action.Fields["check"].(bool); check {
 		question += s.personTagged(defs, t.Name+"/"+rec.ID, examplesOf(action)) // judgement.go

@@ -35,13 +35,13 @@ func TestOnlyMailForTheWorkspaceIsRead(t *testing.T) {
 	if !plain.Has(Folder) {
 		t.Error("connecting makes the Sameway folder, so there is somewhere to move mail")
 	}
-	mails, marks, err := New(ctx, a, nil)
+	mails, marks, err := New(ctx, a, nil, nil)
 	if err != nil || len(mails) != 1 || mails[0].Subject != "Dentist on Friday" || mails[0].Text != "At 10." || !strings.Contains(mails[0].From, "Ana Silva") {
 		t.Fatalf("the +sameway mail, alone: %+v %v", mails, err)
 	}
 	srv.Put(t, Folder, email("me@example.com", "Moved here", "Keep this."))
 	srv.Put(t, "INBOX", email("Me <me+sameway@example.com>", "Bill", "Pay by the 20th."))
-	mails, marks, err = New(ctx, a, marks)
+	mails, marks, err = New(ctx, a, marks, nil)
 	var got []string
 	for _, m := range mails {
 		got = append(got, m.Subject)
@@ -49,7 +49,7 @@ func TestOnlyMailForTheWorkspaceIsRead(t *testing.T) {
 	if err != nil || strings.Join(got, ",") != "Bill,Moved here" {
 		t.Fatalf("what came since, in both: %v %v", got, err)
 	}
-	if mails, _, _ = New(ctx, a, marks); len(mails) != 0 {
+	if mails, _, _ = New(ctx, a, marks, nil); len(mails) != 0 {
 		t.Errorf("nothing twice: %+v", mails)
 	}
 }

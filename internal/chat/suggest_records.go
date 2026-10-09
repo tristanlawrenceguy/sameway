@@ -81,7 +81,7 @@ func (s *Service) Suggest(ctx context.Context, action *store.Record, typeName, i
 		return fail("a suggest action says what it makes: one of %s", strings.Join(kinds, ", "))
 	}
 	words := recordWords(s.Store, from, rec)
-	q := "The record:\n" + words
+	q := "The record:\n" + words + threadWords(s.Store, from, rec) // thread_words.go
 	if check, _ := action.Fields["check"].(bool); check {
 		if past := s.pastSuggestions(action.ID, examplesOf(action)); len(past) > 0 {
 			q += "\n\nWhat the person did with your last suggestions from this action, newest first. Follow their choices: what they turned down, do not suggest again for records like it; what they changed, write as they changed it.\n" + strings.Join(past, "\n")
