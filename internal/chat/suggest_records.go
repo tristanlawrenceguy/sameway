@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -122,6 +123,9 @@ func (s *Service) fillSuggested(t *schema.Type, given map[string]any, sent time.
 		switch {
 		case f.Type == "datetime" && isStr:
 			if at, day, ok := when.Parse(dayWords(str), sent); ok && (at.Format("2006-01-02") != sent.Format("2006-01-02") || saysToday(str)) {
+				if at.Before(sent.AddDate(0, 0, -1)) && !yearSaid.MatchString(str) {
+					at = at.AddDate(1, 0, 0) // "by 31 January", sent in October: the coming one
+				}
 				out[name] = when.Store(at, day)
 			}
 		case f.Type == "ref" && f.To == records.PersonType && isStr:
@@ -232,6 +236,8 @@ func (s *Service) changedSince(p *store.Record, act map[string]any) string {
 	}
 	return ", then changed " + strings.Join(diffs, ", ")
 }
+
+var yearSaid = regexp.MustCompile(`(19|20)\d\d`)
 
 // saysToday is whether words name the day they were written on: "now" and
 // "when you can" are no day, and a small model gave them as one.
