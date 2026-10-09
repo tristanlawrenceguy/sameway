@@ -114,12 +114,12 @@ func (s *Server) readKept(id, name, path string, wait bool) {
 		return
 	}
 	if st, err := os.Stat(path); err == nil && st.Size() > maxRead {
-		s.app.Store.Update(FileType, id, map[string]any{"status": "ready", "note": "It is kept as it is: its text is read only from files up to 64 MB."})
+		s.fileSays(id, map[string]any{"status": "ready", "note": "It is kept as it is: its text is read only from files up to 64 MB."})
 		return
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {
-		s.app.Store.Update(FileType, id, map[string]any{"status": "failed", "note": err.Error()})
+		s.fileSays(id, map[string]any{"status": "failed", "note": err.Error()})
 		return
 	}
 	s.readNow(id, name, data)

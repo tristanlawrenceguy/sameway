@@ -68,7 +68,7 @@ func (s *Server) writePart(j partJob) {
 	}
 	title, _ := rec.Fields["title"].(string)
 	if err != nil {
-		s.app.Store.Update(FileType, j.id, map[string]any{"status": "failed", "note": "Could not write it down: " + err.Error()})
+		s.fileSays(j.id, map[string]any{"status": "failed", "note": "Could not write it down: " + err.Error()})
 		records.Record(s.app.Store, "system", records.Change{Action: "failed", Detail: "writing down " + title + ": " + err.Error()})
 		os.RemoveAll(s.partsDir(j.id))
 		s.Changed()
@@ -86,7 +86,7 @@ func (s *Server) writePart(j partJob) {
 	os.WriteFile(filepath.Join(dir, strconv.Itoa(j.index)+".vtt"), []byte(speech.VTT(cues)), 0o644)
 	done, _ := filepath.Glob(filepath.Join(dir, "*.vtt"))
 	if len(done) < j.of {
-		s.app.Store.Update(FileType, j.id, map[string]any{"status": "converting", "note": fmt.Sprintf("Being written down on this computer: %d of %d parts done.", len(done), j.of)})
+		s.fileSays(j.id, map[string]any{"status": "converting", "note": fmt.Sprintf("Being written down on this computer: %d of %d parts done.", len(done), j.of)})
 		s.Changed()
 		return
 	}
@@ -111,7 +111,7 @@ func partNumber(path string) int {
 func (s *Server) finishWriting(rec *store.Record, cues []convert.Cue) {
 	title, _ := rec.Fields["title"].(string)
 	if len(cues) == 0 {
-		s.app.Store.Update(FileType, rec.ID, map[string]any{"status": "ready", "note": "No speech was heard in it."})
+		s.fileSays(rec.ID, map[string]any{"status": "ready", "note": "No speech was heard in it."})
 		s.Changed()
 		return
 	}
@@ -119,7 +119,7 @@ func (s *Server) finishWriting(rec *store.Record, cues []convert.Cue) {
 	if path, ok := s.transcriptPath(rec); ok {
 		os.WriteFile(path, []byte(speech.VTT(cues)), 0o644)
 	}
-	s.app.Store.Update(FileType, rec.ID, map[string]any{"status": "ready", "text": convert.Transcript(cues), "note": "Written down on this computer by " + speech.ModelName + ". Edit the text if it misheard."})
+	s.fileSays(rec.ID, map[string]any{"status": "ready", "text": convert.Transcript(cues), "note": "Written down on this computer by " + speech.ModelName + ". Edit the text if it misheard."})
 	records.Record(s.app.Store, "system", records.Change{Action: "updated", Component: FileType, ID: rec.ID, Detail: title + ", written down", Href: "/t/" + FileType + "/" + rec.ID})
 	s.Changed()
 }
@@ -132,7 +132,7 @@ func (s *Server) writeWAVHere(rec *store.Record, path string) error {
 	if err != nil {
 		return err
 	}
-	s.app.Store.Update(FileType, rec.ID, map[string]any{"status": "converting", "note": "Being written down on this computer."})
+	s.fileSays(rec.ID, map[string]any{"status": "converting", "note": "Being written down on this computer."})
 	for i, p := range parts {
 		s.enqueue(partJob{id: rec.ID, wav: p.Path, index: i, of: len(parts), start: p.Start})
 	}

@@ -20,26 +20,13 @@ import (
 // records.WriteAs or Apply (s.apply on a page), which write, keep what was
 // there and log it as whoever did it. A handler that writes the store
 // itself has to do all three and can forget one, as the API's file without
-// content once forgot the log, so it could never be undone. These write
-// the store directly for a reason, said here; a new one fails until it
-// goes through Apply or says why it does not.
+// content once forgot the log, so it could never be undone. The system's
+// own bookkeeping (a file's reading, a reminder ringing, a new tab's chat,
+// the example's blocks) goes through records.ApplyOps too, unlogged. What
+// still writes the store directly does so for a reason, said here; a new
+// one fails until it goes through Apply or says why it does not.
 var writesTheStoreItself = map[string]string{
-	"about.go nudges":               "a reminder ringing is the system's, logged as rang",
-	"clock.go ring":                 "the same",
-	"tabs.go seedChat":              "a new tab's chat block, part of making the tab",
-	"example.go fillExample":        "the example's Home blocks, part of making the example, in a workspace of its own",
-	"keep.go readKept":              "a file's reading: its status and text, not anyone's change",
-	"files.go readNow":              "the same",
-	"files.go convertLater":         "the same",
-	"files_audio.go pairCaptions":   "the same",
-	"hostwrite.go readInBackground": "the same",
-	"transcribe.go transcribeFile":  "the same",
-	"writedown.go writePart":        "the same",
-	"writedown.go finishWriting":    "the same",
-	"writedown.go writeWAVHere":     "the same",
-	"schema_change.go RemoveField":  "a type's shape changing, logged as the schema change",
-	"schema_change.go RemoveType":   "the same",
-	"today_nudge.go todayLate":      "every late task moved as one change, a batch, so one Undo takes them all back",
+	"schema_change.go RemoveType": "a type deleted drops its whole table in one statement as the type goes, logged as the schema change; its records go with their type, not one by one",
 }
 
 func TestRecordsAreWrittenOneWay(t *testing.T) {
