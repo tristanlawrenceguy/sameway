@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/tristanlawrenceguy/sameway/internal/testkit"
 )
 
 // TestMain points this computer's folders (the known list, copies,
@@ -18,6 +20,7 @@ func TestMain(m *testing.M) {
 	os.Setenv("SAMEWAY_KNOWN", filepath.Join(dir, "known.json"))
 	os.Setenv("SAMEWAY_KEYS", filepath.Join(dir, "keys.json"))
 	code := m.Run()
+	testkit.Remove()
 	os.RemoveAll(dir)
 	os.Exit(code)
 }

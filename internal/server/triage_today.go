@@ -42,7 +42,7 @@ func (s *Server) keepSuggestion(r *http.Request) (id, title, act string, err err
 	}
 	sug := s.suggestionFor(note.ID)
 	if sug == nil || !sug.Task {
-		sug = &chat.Suggestion{Title: note.Fields["title"].(string)}
+		sug = &chat.Suggestion{Title: s.nameOf(note)}
 	}
 	fields := map[string]any{"title": sug.Title}
 	if sug.Due != "" {
@@ -58,7 +58,7 @@ func (s *Server) keepSuggestion(r *http.Request) (id, title, act string, err err
 	}
 	if t, ok := s.app.Types.Get("task"); ok {
 		if _, ok := t.Field("notes"); ok {
-			fields["notes"] = "From [" + note.Fields["title"].(string) + "](/t/note/" + note.ID + ")."
+			fields["notes"] = "From [" + s.nameOf(note) + "](/t/" + note.Type + "/" + note.ID + ")."
 		}
 	}
 	rec, act, err := records.WriteAs(s.app.Store, s.who(r), "created", "task", "", fields)

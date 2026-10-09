@@ -139,7 +139,7 @@ func (r *Registry) load(fsys fs.FS, dir, source string) (*Component, error) {
 	if c.Manifest.Name == "" || c.Manifest.Name != path.Base(dir) {
 		return nil, fmt.Errorf("component %s: manifest name %q must match the folder name", dir, c.Manifest.Name)
 	}
-	if c.props, err = compileProps(c.Manifest.Name, c.Manifest.Props); err != nil {
+	if c.props, err = propsOnce(c.Manifest.Name, c.Manifest.Props); err != nil {
 		return nil, fmt.Errorf("component %s: props schema: %w", dir, err)
 	}
 	src, err := fs.ReadFile(fsys, path.Join(dir, "template.html"))
@@ -148,7 +148,7 @@ func (r *Registry) load(fsys fs.FS, dir, source string) (*Component, error) {
 	}
 	body := strings.TrimRight(string(src), "\n")
 	for depth := 0; depth < maxNesting; depth++ {
-		t, err := template.New(c.Manifest.Name).Funcs(r.funcsAt(depth)).Option("missingkey=zero").Parse(body)
+		t, err := templateOnce(c.Manifest.Name, body, r.funcsAt(depth))
 		if err != nil {
 			return nil, fmt.Errorf("component %s: template.html: %w", dir, err)
 		}

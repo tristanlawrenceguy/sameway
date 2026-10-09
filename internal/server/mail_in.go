@@ -17,6 +17,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
+	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // Email in: what comes by email (a booking, a bill, a note to self) was
@@ -89,6 +90,7 @@ func (s *Server) mailConnect(w http.ResponseWriter, r *http.Request) {
 	}
 	raw, _ := json.Marshal(a)
 	s.app.Store.SetMeta("mail:account", string(raw))
+	s.setUpSorting() // classify_today.go
 	s.app.Store.SetMeta("mail:marks", "")
 	n, _ := s.readMail(ctx)
 	said := "Move mail to the Sameway folder, made in your mailbox just now, and it comes in as a note."
@@ -188,6 +190,13 @@ func (s *Server) mailNote(m mailin.Mail) error {
 	title := strings.Join(strings.Fields(m.Subject), " ")
 	if title == "" {
 		title = "Email from " + m.From
+	}
+	// An email is a record of its own, so one coming in can set off any
+	// action (when added, what email); a workspace from before has notes.
+	if _, ok := s.app.Types.Get("email"); ok {
+		_, _, err := records.WriteAs(s.app.Store, who, "created", "email", "", map[string]any{
+			"subject": clipMail(title, 300), "from": m.From, "received": when.Store(m.Date, false), "body": strings.Join(parts[1:], "\n\n"), "tags": []any{toSort}})
+		return err
 	}
 	_, _, err := records.WriteAs(s.app.Store, who, "created", "note", "", map[string]any{
 		"title": clipMail(title, 200), "body": strings.Join(parts, "\n\n"), "tags": []any{"email", toSort}})

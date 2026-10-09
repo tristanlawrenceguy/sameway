@@ -14,15 +14,16 @@ import (
 
 	"golang.org/x/net/html"
 
-	"github.com/tristanlawrenceguy/sameway/examples"
 	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/render/htmltest"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
+	"github.com/tristanlawrenceguy/sameway/internal/testkit"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
-// newApp builds a real starter workspace in a temp dir with no model attached.
+// newApp is an app on a fresh copy of the starter workspace (testkit), in
+// a temp dir of its own, with no model attached.
 func newApp(t *testing.T) (*app.App, http.Handler) {
 	t.Helper()
 	return newAppWith(t, app.Options{})
@@ -31,16 +32,12 @@ func newApp(t *testing.T) (*app.App, http.Handler) {
 // newAppWith is newApp opened with options: a fixed clock, say.
 func newAppWith(t *testing.T, o app.Options) (*app.App, http.Handler) {
 	t.Helper()
-	dir := t.TempDir()
 	// A machine of its own, so the workspaces this computer has opened, its
 	// copies and its pasted keys are never read or written by a test.
 	if o.Machine == (workspace.Machine{}) {
 		o.Machine = testMachine(t)
 	}
-	if err := workspace.Init(dir, examples.FS, examples.StarterRoot, false); err != nil {
-		t.Fatal(err)
-	}
-	a, err := app.Open(dir, o)
+	a, err := app.Open(testkit.Starter(t), o)
 	if err != nil {
 		t.Fatal(err)
 	}
