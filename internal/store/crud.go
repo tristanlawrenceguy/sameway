@@ -125,7 +125,7 @@ func (s *Store) Update(typeName, id string, fields map[string]any) (*Record, err
 	if err != nil {
 		return nil, err
 	}
-	was := *current // as it was, for OnChange
+	was := *current // as it was, for the listeners
 	merged := map[string]any{}
 	for k, v := range current.Fields {
 		merged[k] = v

@@ -3,6 +3,7 @@ package server
 import (
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
@@ -51,11 +52,39 @@ func (s *Server) apiChanges(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
+		// A change logged here wakes the wait at once; one that arrives
+		// from another computer is not logged here, and is seen on the
+		// next look.
 		select {
 		case <-r.Context().Done():
 			return
+		case <-s.logged.wait():
 		case <-time.After(300 * time.Millisecond):
 		}
+	}
+}
+
+// signal wakes everyone waiting on it, each time it fires.
+type signal struct {
+	mu sync.Mutex
+	ch chan struct{}
+}
+
+func (g *signal) wait() <-chan struct{} {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if g.ch == nil {
+		g.ch = make(chan struct{})
+	}
+	return g.ch
+}
+
+func (g *signal) fire() {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if g.ch != nil {
+		close(g.ch)
+		g.ch = nil
 	}
 }
 

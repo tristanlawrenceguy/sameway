@@ -1,5 +1,7 @@
 package server
 
+import "github.com/tristanlawrenceguy/sameway/internal/records"
+
 // hooks are what the rest of the app asks of the server: a link to a
 // record in a reply reads as the record's name, the assistant can look at
 // a page, and it is shown a picture when its model can see (pictures.go).
@@ -13,6 +15,9 @@ func (s *Server) hooks() {
 	// A record arriving from another computer made out for this one's
 	// owner tells them (foryou.go).
 	s.app.Store.AfterSync = s.forYou
+	// An agent waiting on /api/changes hears a change logged here at once
+	// (changes.go).
+	records.Listen(s.app.Store, func(string, records.Change) { s.logged.fire() })
 	// What an automation did on its own is told like a ring (ring.go).
 	s.app.Chat.Tell = func(title, text, url string) {
 		if s.notify != nil {
