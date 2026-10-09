@@ -10,7 +10,7 @@
 // is time to take each in. A message sent while the assistant is working
 // waits and goes when the turn is done. If anything about the stream
 // fails, the form is sent the ordinary way and the page comes back whole.
-// Stopping a turn, and following one from another page: 19-live-join.js.
+// Stopping a turn, and following one from another page: 20-live-join.js.
 (function () {
   "use strict";
   if (!window.fetch || !window.ReadableStream || !window.TextDecoder) return;
@@ -66,8 +66,8 @@
         return;
       }
       var node = el(item.html);
-      node.classList.add("sw-landed"); // under reduced motion it fades in (28-turn.css)
-      // A new block takes the place held for it while its call ran (28-turn.js).
+      node.classList.add("sw-landed"); // under reduced motion it fades in (33-turn.css)
+      // A new block takes the place held for it while its call ran (34-turn.js).
       have = have || canvas.querySelector(".sw-block--pending");
       if (have) { have._landed = true; have.replaceWith(node); } else canvas.appendChild(node);
       var page = canvas.closest(".sw-page");
@@ -81,7 +81,7 @@
     return function (item) { queue.push(item); next(); };
   }
 
-  // The rest of the page follows the turn too: see 17-refresh.js, which
+  // The rest of the page follows the turn too: see 19-refresh.js, which
   // fetches the page as it now is and moves what changed into place, with
   // a transition. A block landing on the main canvas is shown at once,
   // above; this brings the rest.
@@ -180,7 +180,7 @@
       // A turn that failed gives the words back, so they can be sent again.
       if (ta && d.text && ta.value === "" && !joining) ta.value = asked;
       follow();
-      // The turn is over: 19-live-join.js tells a person who looked away.
+      // The turn is over: 20-live-join.js tells a person who looked away.
       sw.emit("turn-done", d);
       // A message written while the assistant was working goes now.
       if (form._queued) {
@@ -263,7 +263,7 @@
       send(form);
     });
   }
-  // A turn already under way, for 19-live-join.js: joining is the request
+  // A turn already under way, for 20-live-join.js: joining is the request
   // for what it has done and does next.
   sw.followTurn = send;
   sw.arm("form.sw-compose", arm);

@@ -164,7 +164,7 @@ func TestSpeakersOnAMI(t *testing.T) {
 	}
 }
 
-// meThem is the page's rule (design/base/24-speech.js), second by second:
+// meThem is the page's rule (design/base/28-speech.js), second by second:
 // t when the call sounds, m when only the microphone does.
 func meThem(me, them []float32) string {
 	const window = Rate / 4 // 250 ms

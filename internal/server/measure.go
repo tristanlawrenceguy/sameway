@@ -17,7 +17,7 @@ import (
 )
 
 // The page measures its blocks where it is drawn and says how they came
-// out: design/base/25-measure.js sends, this keeps, chat.LayoutNow and
+// out: design/base/29-measure.js sends, this keeps, chat.LayoutNow and
 // /api/look read. Only numbers and ids travel, never what a block says,
 // and only from the people who may change the page: a published page and
 // someone who may only look are never measured, since nothing they could

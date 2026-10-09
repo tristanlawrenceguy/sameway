@@ -7,7 +7,7 @@ import "html/template"
 // is written for it when left out), so it is not marked where it shows;
 // and a collection's cards carry the card's own marks, which are not the
 // block's. So the block says what can be edited in the template the
-// inline editor reads first (09-edit-fields.js): its name alone, as Name.
+// inline editor reads first (10-edit-fields.js): its name alone, as Name.
 // Edit then opens one field, Save posts prop-<name> to the block's props,
 // and the change is logged and undone like any other. In the agent
 // evaluation (T5, "call it Up next") a person-shaped agent looked for a

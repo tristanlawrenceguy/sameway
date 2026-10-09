@@ -1,7 +1,7 @@
 // The page follows the turn.
 //
 // A block landing on the main canvas is shown the moment it exists, by
-// 14-live.js. Everything else the assistant changes (a record a
+// 17-live.js. Everything else the assistant changes (a record a
 // collection or a calendar shows, a block in a pane, a list that appears
 // in the sidebar, the activity) used to wait for a reload. Now the page
 // fetches itself as it is and moves what changed into place, inside a
@@ -17,7 +17,7 @@
   // On a narrow screen the whole page scrolls, under a browser bar that
   // comes and goes, and blocks sliding across it read as a glitch rather
   // than as motion; there the changes cross-fade where they land, as they
-  // do under reduced motion and the still pace (26-travel.css).
+  // do under reduced motion and the still pace (30-travel.css).
   var wide = window.matchMedia ? matchMedia("(min-width: 64rem)") : { matches: true };
 
   var timer = null, running = false, again = false;
@@ -49,9 +49,9 @@
           // refresh after it would wait for ever. So the page is swapped
           // once, by the transition or, if it has not in a moment, here.
           // Items are named for it on both sides, so a ticked row slides
-          // into Done (26-travel.js), and unnamed before the merge, which
+          // into Done (31-travel.js), and unnamed before the merge, which
           // compares blocks as the server sends them.
-          var travel = window.swTravel, done = false;
+          var travel = sw.travel, done = false;
           var swap = function () { if (!done) { done = true; if (travel) travel.clear(); merge(doc); if (travel) travel.name(); } };
           if (!wide.matches) root.setAttribute("data-motion", "fade");
           if (travel) travel.name();
@@ -145,7 +145,7 @@
       fresh.querySelectorAll('[data-component="status"][id]').forEach(function (st) {
         var have = old.querySelector("#" + st.id);
         if (!have) return;
-        // A turn under way on this page says its own steps (28-turn.js):
+        // A turn under way on this page says its own steps (34-turn.js):
         // the page's words would only be said over them.
         var busy = document.querySelector('form[data-busy-target="' + st.id + '"]');
         if (busy && busy._sending) { st.replaceWith(have); return; }

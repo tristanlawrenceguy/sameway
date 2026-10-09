@@ -51,6 +51,7 @@ button says an action, and its label must not change with its state.
 - **Ticked twice quickly, saved as it ends up**, not in whichever order the
   two saves arrive; the box is never disabled while it saves
   ([Adrian Roselli on disabled controls](https://adrianroselli.com/2024/02/dont-disable-form-controls.html)).
+- **Its script is its own.** Saving in place, the press shown at once and put back on a refusal, lives in this component's enhance.js (it was design/base/13-mark.js), armed with sw.arm, so a mark a refresh brings saves in place too.
 
 - **Something that repeats, ticked, is due again.** A task with a Repeat
   stays one task: ticked, it is done and at once not done, due on its next

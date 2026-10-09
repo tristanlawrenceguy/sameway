@@ -46,7 +46,7 @@ func (s *Server) addRecord(w http.ResponseWriter, r *http.Request) {
 		s.failed(w, r, "Not added", err, list)
 		return
 	}
-	// #edit opens the editor on arrival (09-edit-fields.js); added names the
+	// #edit opens the editor on arrival (10-edit-fields.js); added names the
 	// entry that made it, so Cancel before a first Save can take it back.
 	http.Redirect(w, r, list+"/"+rec.ID+"?added="+url.QueryEscape(act)+"#edit", http.StatusSeeOther)
 }

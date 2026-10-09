@@ -60,7 +60,7 @@ func (s *Server) fresh() {
 // events is an open page's one connection (01-connect.js). It tells the
 // page, as a server-sent event, each time the workspace changes from
 // elsewhere: the page fetches itself and moves what changed into place
-// (17-refresh.js), as it does after a turn. With ?ring=1, a page with a
+// (19-refresh.js), as it does after a turn. With ?ring=1, a page with a
 // clock, it also tells each reminder as it rings (clock.go), checked every
 // few seconds.
 func (s *Server) events(w http.ResponseWriter, r *http.Request) {

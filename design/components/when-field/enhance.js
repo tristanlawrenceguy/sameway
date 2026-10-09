@@ -14,9 +14,9 @@
   // noon, midnight; not the dots of a date such as 19.09.2026.
   var TIME = /(^|\s)(\d{1,2}([:.]\d{2})?\s*(am|pm)|\d{1,2}[:.]\d{2}|noon|midday|midnight)(?=[\s,]|$)/i;
 
-  // swWhenField arms every when-field in root; the inline editor calls it on
+  // sw.whenField arms every when-field in root; the inline editor calls it on
   // a form it has just built.
-  window.swWhenField = function (root) {
+  sw.whenField = function (root) {
     root = root || document;
     var fields = Array.prototype.slice.call(root.querySelectorAll("[data-component=when-field]"));
     if (root.matches && root.matches("[data-component=when-field]")) fields.unshift(root);
@@ -60,5 +60,5 @@
       words.addEventListener("change", tell);
     });
   };
-  sw.arm("[data-component=when-field]", window.swWhenField);
+  sw.arm("[data-component=when-field]", sw.whenField);
 })();

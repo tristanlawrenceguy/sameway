@@ -49,7 +49,7 @@
     return "The microphone could not be used, so nothing was recorded." + still;
   }
   function arm(el) {
-    if (el._armed || !window.swSpeech || !window.swSpeech.supported()) return;
+    if (el._armed || !sw.speech || !sw.speech.supported()) return;
     var target = document.getElementById(el.getAttribute("data-target"));
     if (!target) return;
     el._armed = true;
@@ -60,14 +60,14 @@
     var idle = word.textContent, rec = null, started = 0, tick = null;
     // The computer's sound, offered where the browser can give it.
     var also = el.querySelector(".sw-voice__also");
-    if (also && window.swSpeech.canHearComputer && window.swSpeech.canHearComputer()) also.hidden = false;
+    if (also && sw.speech.canHearComputer && sw.speech.canHearComputer()) also.hidden = false;
     var failed = "It could not be written down, so nothing was put in the message. Press Dictate to try again, or type it.";
     function state(s) {
       el.setAttribute("data-state", s);
       if (s === "writing") btn.setAttribute("aria-disabled", "true"); else btn.removeAttribute("aria-disabled");
     }
     function fill(blob, seconds, why, voices) {
-      var file = new File([blob], "Recording " + stamp(new Date()) + "." + window.swSpeech.ext(blob.type), { type: blob.type });
+      var file = new File([blob], "Recording " + stamp(new Date()) + "." + sw.speech.ext(blob.type), { type: blob.type });
       // Who was heard each second goes with it, for naming the transcript.
       if (target.form) {
         var v = target.form.querySelector("input[name=voices]");
@@ -86,7 +86,7 @@
       if (!blob.size) { said.textContent = why + "No words were heard, so nothing was put in the message."; return; }
       state("writing");
       said.textContent = why + "Writing down what you said.";
-      window.swSpeech.toWav(blob).then(function (wav) {
+      sw.speech.toWav(blob).then(function (wav) {
         return fetch(el.getAttribute("data-action"), { method: "POST", body: wav, headers: { "Content-Type": "audio/wav" }, credentials: "same-origin" });
       }).then(function (r) {
         return r.json().catch(function () { return {}; }).then(function (body) {
@@ -130,7 +130,7 @@
       if (rec) { finish(""); return; }
       said.textContent = "";
       var computer = !!(also && !also.hidden && also.querySelector("input").checked);
-      window.swSpeech.record({ computer: computer }).then(function (r) {
+      sw.speech.record({ computer: computer }).then(function (r) {
         rec = r;
         r.onend = function () { finish(computer ? "The microphone or the shared sound stopped, so the recording ended. " : "The microphone stopped, so the recording ended. "); };
         started = Date.now();

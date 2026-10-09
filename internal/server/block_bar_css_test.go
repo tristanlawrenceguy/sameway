@@ -13,7 +13,7 @@ import (
 // Expand or Remove. It takes its own row under the content for everyone,
 // not only where it is always shown.
 func TestBlockBarNeverCoversTheBlock(t *testing.T) {
-	data, err := os.ReadFile("../../design/base/04-quiet.css")
+	data, err := os.ReadFile("../../design/base/05-quiet.css")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -28,6 +28,6 @@ func TestBlockBarNeverCoversTheBlock(t *testing.T) {
 		}
 	}
 	if !found {
-		t.Errorf("04-quiet.css has no top-level `.sw-block > .sw-bar { position: static ... }` rule; a block's bar would float over its controls")
+		t.Errorf("05-quiet.css has no top-level `.sw-block > .sw-bar { position: static ... }` rule; a block's bar would float over its controls")
 	}
 }

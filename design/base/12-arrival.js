@@ -1,7 +1,7 @@
 // Arrival, for a person who has already caught up.
 //
 // Changes arrive on the page one after another, with time to take each in
-// (see 03-motion.css). Someone who has understood should not have to wait:
+// (see 04-motion.css). Someone who has understood should not have to wait:
 // any key or click on the page ends the sequence and shows everything at
 // once, and while it runs a Show all button says so. The sequence is CSS,
 // so without this script it simply plays out; the script only shortens it.

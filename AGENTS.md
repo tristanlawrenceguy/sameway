@@ -41,7 +41,7 @@ runner in tools/a11y-runner.
 | `internal/update/` | finding, checking and installing a release of sameway itself | `update.go` |
 | `internal/bench/` | the assistant measured with a real model on everyday requests, each in a fresh workspace | `assistant_test.go` |
 | `examples/workspaces/starter/` | what `sameway init` copies | |
-| `design/brand/` | Sameway's icon in every form (svg, png, ico, icns, and the app's 192, 512 and square sizes); redraw with `go run ./tools/icons`; every page names /manifest.webmanifest (a standalone window, its icons) and a touch icon, so a browser installs Sameway as an app, which Help offers where it can (32-install.js) | `tools/icons/main.go`, `internal/server/app_install_test.go` |
+| `design/brand/` | Sameway's icon in every form (svg, png, ico, icns, and the app's 192, 512 and square sizes); redraw with `go run ./tools/icons`; every page names /manifest.webmanifest (a standalone window, its icons) and a touch icon, so a browser installs Sameway as an app, which Help offers where it can (38-install.js) | `tools/icons/main.go`, `internal/server/app_install_test.go` |
 
 ## What the tests cover
 
@@ -90,8 +90,12 @@ area it belongs to, or a new file in `docs/tests/` linked here.
   The browser suites in tools/a11y-runner enforce all five; a component
   that truly cannot meet one says why in `examples/a11y-waivers.json`.
 - Do not add a frontend framework or client-side rendering. Pages are
-  server-rendered HTML; progressive enhancement only, and only in a
-  component's own `enhance.js`.
+  server-rendered HTML; progressive enhancement only, in a component's
+  own `enhance.js`. Only what is not one component's (the core, the
+  connection, following, the turn, editing) is in `design/base/*.js`,
+  each file with a number of its own, in load order. Arm with `sw.arm`,
+  never a listener for the refresh, and test what a script does in
+  `tools/a11y-runner/behave-*.mjs`, not by reading its source.
 - Do not add a dependency for something the standard library does.
 - Motion explains a change and never moves focus. A person's own action
   moves in `motion-base` or less, transform and opacity only; under

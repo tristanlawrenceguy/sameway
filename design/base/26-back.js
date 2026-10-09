@@ -45,7 +45,7 @@
 
   // A control come back to hears what its action came to as its
   // description, once: the outcome keeps its place, and its Undo, at the
-  // top (18-alert-dismiss.js leaves focus here when told).
+  // top (alert/enhance.js leaves focus here when told).
   function tell(control) {
     var outcome = document.getElementById("outcome");
     var words = outcome && outcome.getAttribute("data-outcome") === "done" && outcome.querySelector(".sw-alert__message");

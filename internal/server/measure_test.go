@@ -140,7 +140,7 @@ func TestALookSaysWhenNothingIsMeasured(t *testing.T) {
 // text, no value and no label, and every field it sends is a number, an
 // id, or which page it is.
 func TestTheMeasuringScriptSendsOnlyNumbers(t *testing.T) {
-	raw, err := os.ReadFile("../../design/base/25-measure.js")
+	raw, err := os.ReadFile("../../design/base/29-measure.js")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -176,7 +176,7 @@ func TestTheMeasuringScriptSendsOnlyNumbers(t *testing.T) {
 		}
 	}
 	jsBody := get(t, mustHandler(t), "/design/sameway.js").Body.String()
-	if !strings.Contains(jsBody, "25-measure.js") {
+	if !strings.Contains(jsBody, "29-measure.js") {
 		t.Error("the measuring script should be in sameway.js")
 	}
 }

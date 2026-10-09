@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-// A turn you can watch, without noise (28-turn.js and .css). The status
+// A turn you can watch, without noise (34-turn.js and .css). The status
 // line says each step in words, politely, no more often than it can be
 // heard and each thing once; the reply's words grow a few times a second
 // outside any live region and are heard once, whole; a block about to be
@@ -22,7 +22,7 @@ func TestATurnIsSaidOnceAndMarkedInPlace(t *testing.T) {
 		}
 		return string(data)
 	}
-	js, css, live := read("28-turn.js"), read("28-turn.css"), read("14-live.js")
+	js, css, live := read("34-turn.js"), read("33-turn.css"), read("17-live.js")
 	for _, want := range []string{
 		"var GAP = 2500",                          // one thing said at a time, with time to hear it
 		"if (said[words]) return",                 // each thing once a turn
@@ -37,11 +37,11 @@ func TestATurnIsSaidOnceAndMarkedInPlace(t *testing.T) {
 		"sw-visually-hidden",                      // the held place says what is coming
 	} {
 		if !strings.Contains(js, want) {
-			t.Errorf("28-turn.js must have %s", want)
+			t.Errorf("34-turn.js must have %s", want)
 		}
 	}
 	if strings.Contains(js, "aria-live") || strings.Contains(js, "role=\"alert\"") {
-		t.Error("28-turn.js must say things through the status already there, not a region of its own")
+		t.Error("34-turn.js must say things through the status already there, not a region of its own")
 	}
 	for _, want := range []string{
 		`sw.watchTurn(form)`,
@@ -51,11 +51,11 @@ func TestATurnIsSaidOnceAndMarkedInPlace(t *testing.T) {
 		`"sw-landed"`,
 	} {
 		if !strings.Contains(live, want) {
-			t.Errorf("14-live.js must have %s", want)
+			t.Errorf("17-live.js must have %s", want)
 		}
 	}
 	if regexp.MustCompile(`live\.words\.data \+=`).MatchString(live) {
-		t.Error("14-live.js must not put each piece of the reply on the page as it comes")
+		t.Error("17-live.js must not put each piece of the reply on the page as it comes")
 	}
 	for _, moves := range []string{"transform", "translate", "scale(", "width:", "height:"} {
 		for _, rule := range regexp.MustCompile(`@keyframes[^{]*\{[^}]*\}`).FindAllString(css, -1) {
@@ -73,7 +73,7 @@ func TestATurnIsSaidOnceAndMarkedInPlace(t *testing.T) {
 		"@media (forced-colors: active)",
 	} {
 		if !strings.Contains(css, want) {
-			t.Errorf("28-turn.css must have %s", want)
+			t.Errorf("33-turn.css must have %s", want)
 		}
 	}
 }

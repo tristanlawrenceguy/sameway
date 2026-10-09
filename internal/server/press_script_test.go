@@ -7,11 +7,11 @@ import (
 	"testing"
 )
 
-// A press answers at once (27-press.css): in the same frame, with colour,
+// A press answers at once (32-press.css): in the same frame, with colour,
 // a ring and a slight give, never a change of place or size, and under
 // reduced motion with no give at all; forced colours still show it.
 func TestPressAnswersAtOnceAndMovesNothing(t *testing.T) {
-	data, err := os.ReadFile("../../design/base/27-press.css")
+	data, err := os.ReadFile("../../design/base/32-press.css")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -61,22 +61,5 @@ func TestMarkTickDrawsAndFallsBack(t *testing.T) {
 	}
 }
 
-// A tick is shown on the press, before the server answers, and a refusal
-// puts the box and the row back; the words said are still the server's.
-func TestMarkShowsThePressAndRollsBack(t *testing.T) {
-	data, err := os.ReadFile("../../design/base/13-mark.js")
-	if err != nil {
-		t.Fatal(err)
-	}
-	src := string(data)
-	change := src[strings.Index(src, `box.addEventListener("change"`):]
-	if strings.Index(change, "shown();") > strings.Index(change, "send();") {
-		t.Error("the row is struck through on the press, before the save is sent")
-	}
-	if !strings.Contains(src, "if (failed) box.checked = !sent;\n          shown();") {
-		t.Error("a refused save puts the box and the row back")
-	}
-	if !strings.Contains(src, "say(fresh, failed)") {
-		t.Error("what is said is the server's outcome")
-	}
-}
+// A tick shown on the press and put back on a refusal is checked in a
+// browser against a server: tools/a11y-runner/motion.mjs.

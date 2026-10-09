@@ -7,15 +7,15 @@ import (
 )
 
 // TestEditJSDoesNotInterceptHashAnchors verifies acceptance item 3 of task
-// 0303: design/base/08-edit.js must not intercept hash anchor clicks for scroll
+// 0303: design/base/09-edit.js must not intercept hash anchor clicks for scroll
 // behavior. The browser handles native anchor navigation on its own; adding JS
 // to prevent default or manually scrolling would break the skip link and
 // duplicate work the browser already does correctly (once tabindex="-1" is
 // present on target articles).
 func TestEditJSDoesNotInterceptHashAnchors(t *testing.T) {
-	data, err := os.ReadFile("../../design/base/08-edit.js")
+	data, err := os.ReadFile("../../design/base/09-edit.js")
 	if err != nil {
-		t.Fatalf("read 08-edit.js: %v", err)
+		t.Fatalf("read 09-edit.js: %v", err)
 	}
 
 	src := string(data)
@@ -23,7 +23,7 @@ func TestEditJSDoesNotInterceptHashAnchors(t *testing.T) {
 	// These patterns would indicate the script intercepts hash navigation.
 	for _, pattern := range []string{"hashchange", "scrollIntoView"} {
 		if strings.Contains(src, pattern) {
-			t.Errorf("08-edit.js must not contain %q — it should not interfere with native anchor scrolling;\nthe browser handles scroll-to-anchor natively when tabindex=\"-1\" is on the target", pattern)
+			t.Errorf("09-edit.js must not contain %q — it should not interfere with native anchor scrolling;\nthe browser handles scroll-to-anchor natively when tabindex=\"-1\" is on the target", pattern)
 		}
 	}
 
@@ -45,7 +45,7 @@ func TestEditJSDoesNotInterceptHashAnchors(t *testing.T) {
 			strings.Contains(context, "window.location.hash") ||
 			strings.Contains(context, `getAttribute("href")`) ||
 			strings.Contains(context, `querySelector("a`) {
-			t.Errorf("08-edit.js line %d: preventDefault near anchor/hash navigation — may intercept skip-link behavior;\nline %d: %s", i+1, i+1, lines[i])
+			t.Errorf("09-edit.js line %d: preventDefault near anchor/hash navigation — may intercept skip-link behavior;\nline %d: %s", i+1, i+1, lines[i])
 		}
 	}
 }

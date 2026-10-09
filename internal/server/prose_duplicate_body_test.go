@@ -8,7 +8,7 @@ import (
 
 // TestNoteDetailPageBodyDataProp verifies acceptance items 1 and 2 of task 0424.
 // The rendered note detail page must have exactly one element with data-prop="body"
-// so that swProseField creates only one editor wrapper. This test checks the server-
+// so that sw.proseField creates only one editor wrapper. This test checks the server-
 // side rendering is correct; the client-side fix (hiding the source textarea) ensures
 // only one of the two created editors is visible at startup.
 func TestNoteDetailPageBodyDataProp(t *testing.T) {
@@ -40,14 +40,14 @@ func TestNoteDetailPageBodyDataProp(t *testing.T) {
 
 	if !strings.Contains(body, `data-source="Some body content for testing."`) {
 		t.Error("note detail page should have data-source=\"...\" on the body element\n" +
-			"so swProseField can populate the Markdown source textarea")
+			"so sw.proseField can populate the Markdown source textarea")
 	}
 
 	doc := parse(t, r)
 	bodies := doc.WithAttr("data-prop", "body")
 	if len(bodies) != 1 {
 		t.Errorf("note detail page should have exactly one element with data-prop=\"body\", got %d\n"+
-			"this causes swProseField to create %d editor wrappers (one per data-prop element)",
+			"this causes sw.proseField to create %d editor wrappers (one per data-prop element)",
 			len(bodies), len(bodies))
 	}
 }

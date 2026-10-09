@@ -25,7 +25,7 @@ func editing(t *schema.Type, rec *store.Record) string {
 
 // versionAttrs is what a record's page says it showed: the version, and
 // a fingerprint of each field. The editor sends both back with a save
-// (08-edit.js).
+// (09-edit.js).
 func versionAttrs(rec *store.Record) string {
 	prints, _ := json.Marshal(records.Prints(rec.Fields))
 	return ` data-version="` + records.Version(rec) + `" data-was="` + template.HTMLEscapeString(string(prints)) + `"`

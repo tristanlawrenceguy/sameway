@@ -27,7 +27,7 @@ page simply reloads with the result.
 - **The assistant's turn says what it is doing**, in words from its calls
   ("Looking up your tasks…"), through this same region: at most once
   every 2.5 seconds, the newest words winning, nothing said twice in one
-  turn (`design/base/28-turn.js`). Words, not a spinner: what is drawn is
+  turn (`design/base/34-turn.js`). Words, not a spinner: what is drawn is
   what is heard.
 - **A file being read says how it ended**, failure included, and the page
   follows when it does, instead of working for ever.

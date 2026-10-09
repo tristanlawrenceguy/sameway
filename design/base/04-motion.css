@@ -38,7 +38,7 @@
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   /* View transitions stay on, as quick cross-fades with no travel
-     (26-travel.css): a change is still seen to happen. */
+     (30-travel.css): a change is still seen to happen. */
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;

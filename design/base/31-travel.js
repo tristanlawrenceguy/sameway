@@ -9,7 +9,7 @@
 // thing on both: each item of a list is named by its block and its record
 // for the moment of the transition, and loses the name after, so the page
 // at rest is the page the server sent. How things move is CSS
-// (26-travel.css): a glide well under a quarter of a second, a quicker one
+// (30-travel.css): a glide well under a quarter of a second, a quicker one
 // at the quick pace, and a cross-fade with no travel under reduced motion
 // or the still pace. A browser without view transitions shows the
 // finished page, as it always did; nothing here moves focus.
@@ -133,7 +133,7 @@
     if (e.persisted) { clear(); root.removeAttribute("data-travel"); }
   });
 
-  // For changes made in the page itself (17-refresh.js): name what is
+  // For changes made in the page itself (19-refresh.js): name what is
   // there, change it inside the transition, name what is there now.
-  window.swTravel = { name: name, clear: clear };
+  sw.travel = { name: name, clear: clear };
 })();

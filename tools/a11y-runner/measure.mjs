@@ -1,5 +1,5 @@
 // Measured, not guessed: pages of blocks checked with the page's own
-// measuring (design/base/25-measure.js, window.swMeasure), the same the
+// measuring (design/base/29-measure.js, sw.measure), the same the
 // person's browser sends, at a desktop and a phone width.
 //
 // - innerScrollProblems: on the seeded tabs, no block scrolls inside when
@@ -17,7 +17,7 @@ async function measured(page) {
   await page.evaluate(() => document.fonts && document.fonts.ready);
   await settle(page);
   return page.evaluate(() => ({
-    reading: window.swMeasure ? window.swMeasure.read() : null,
+    reading: window.sw && sw.measure ? sw.measure.read() : null,
     names: Object.fromEntries([...document.querySelectorAll("[data-block-id]")].map((e) => [e.dataset.blockId, e.dataset.blockLabel || e.dataset.blockComponent])),
   }));
 }
@@ -58,7 +58,7 @@ export async function scrollFlagProblems(page, base, post) {
   const { reading } = await measured(page);
   const mine = reading && reading.blocks.find((b) => b.id === list.id);
   if (!mine || !(mine.sh > mine.sb && mine.sb > 0)) out.push(`the long list in a 240px box on a phone should measure as scrolling inside, got ${JSON.stringify(mine)}`);
-  if (!(await page.evaluate(() => window.swMeasure.send()))) out.push("the page did not send its measurements");
+  if (!(await page.evaluate(() => sw.measure.send()))) out.push("the page did not send its measurements");
 
   let person = [];
   for (let i = 0; i < 30 && !person.some((r) => r.block === list.id); i++) {

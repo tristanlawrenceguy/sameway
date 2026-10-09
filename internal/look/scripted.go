@@ -45,7 +45,7 @@ type Run struct {
 	// Errors is what went wrong on the page: exceptions, console errors,
 	// failed requests.
 	Errors []string
-	// Measured is what the page's own measuring (25-measure.js) gives in
+	// Measured is what the page's own measuring (29-measure.js) gives in
 	// this browser's window, on a page of blocks; null elsewhere.
 	Measured json.RawMessage
 }
@@ -96,7 +96,7 @@ func Scripted(ctx context.Context, url string, steps []Step) (*Run, error) {
 	if err := b.eval(ctx, "__look.snapshot()", &run.HTML); err != nil {
 		return nil, err
 	}
-	if err := b.eval(ctx, "window.swMeasure ? window.swMeasure.read() : null", &run.Measured); err != nil {
+	if err := b.eval(ctx, "window.sw && sw.measure ? sw.measure.read() : null", &run.Measured); err != nil {
 		return nil, err
 	}
 	if run.FocusOrder, err = b.focusOrder(ctx); err != nil {

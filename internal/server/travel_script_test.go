@@ -8,11 +8,11 @@ import (
 	"testing"
 )
 
-// What a person does moves where it goes (26-travel.js): items are named
+// What a person does moves where it goes (31-travel.js): items are named
 // only for the moment of a transition, so the page at rest is the server's
 // and a refresh still compares blocks as sent; nothing here moves focus.
 func TestTravelNamesOnlyForTheTransition(t *testing.T) {
-	data, err := os.ReadFile("../../design/base/26-travel.js")
+	data, err := os.ReadFile("../../design/base/31-travel.js")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -26,13 +26,13 @@ func TestTravelNamesOnlyForTheTransition(t *testing.T) {
 		"MOST",                                   // a long list is not all lifted at once
 	} {
 		if !strings.Contains(src, want) {
-			t.Errorf("26-travel.js must have %s", want)
+			t.Errorf("31-travel.js must have %s", want)
 		}
 	}
 	if strings.Contains(src, ".focus(") {
 		t.Error("travel must never move focus")
 	}
-	refresh, _ := os.ReadFile("../../design/base/17-refresh.js")
+	refresh, _ := os.ReadFile("../../design/base/19-refresh.js")
 	if !strings.Contains(string(refresh), "travel.clear(); merge(doc); if (travel) travel.name();") {
 		t.Error("a refresh unnames items before it compares blocks, and names the new ones after")
 	}
@@ -42,13 +42,13 @@ func TestTravelNamesOnlyForTheTransition(t *testing.T) {
 // reduced motion or the still pace it is a cross-fade where things land:
 // nothing moves, grows or slides.
 func TestTravelIsShortAndStillWhenAskedTo(t *testing.T) {
-	data, err := os.ReadFile("../../design/base/26-travel.css")
+	data, err := os.ReadFile("../../design/base/30-travel.css")
 	if err != nil {
 		t.Fatal(err)
 	}
 	css := string(data)
 	if regexp.MustCompile(`\d+m?s\b`).MatchString(regexp.MustCompile(`/\*[\s\S]*?\*/`).ReplaceAllString(css, "")) {
-		t.Error("durations in 26-travel.css come from the motion tokens")
+		t.Error("durations in 30-travel.css come from the motion tokens")
 	}
 	for _, kf := range regexp.MustCompile(`@keyframes [^{]+\{[^}]*\}[^}]*\}|@keyframes [^{]+\{[^}]*\}`).FindAllString(css, -1) {
 		for _, prop := range regexp.MustCompile(`([a-z-]+):`).FindAllStringSubmatch(kf, -1) {
@@ -67,7 +67,7 @@ func TestTravelIsShortAndStillWhenAskedTo(t *testing.T) {
 		`:root[data-pace="quick"] { --sw-travel: var(--sw-motion-fast); }`,
 	} {
 		if !strings.Contains(css, want) {
-			t.Errorf("26-travel.css must have %s", want)
+			t.Errorf("30-travel.css must have %s", want)
 		}
 	}
 	tokens, _ := os.ReadFile("../../design/tokens/tokens.json")
