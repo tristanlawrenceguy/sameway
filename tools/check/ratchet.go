@@ -34,7 +34,7 @@ func checkDebtAgainst(base string) report {
 	if err != nil {
 		return report{notes: []string{fmt.Sprintf("cannot parse %s at %s (%v); the debt list was not compared with it", debtPath, base, err)}}
 	}
-	now := map[string]map[string]int{"longFuncs": longFuncs, "splitByName": {}}
+	now := map[string]map[string]int{"longFuncs": longFuncs, "splitByName": {}, "wallClock": wallClock}
 	for k := range splitByName {
 		now["splitByName"][k] = 1
 	}
@@ -42,18 +42,25 @@ func checkDebtAgainst(base string) report {
 }
 
 // compareDebt fails each entry of now that is not in was, or whose length
-// is greater than in was.
+// is greater than in was. A list base did not have yet is its first.
 func compareDebt(was, now map[string]map[string]int) report {
 	var r report
 	for _, list := range sortedKeys(now) {
+		if _, had := was[list]; !had {
+			continue // a list new since base starts where it is
+		}
 		for _, key := range sortedKeys(now[list]) {
 			n := now[list][key]
 			old, ok := was[list][key]
 			switch {
+			case !ok && list == "wallClock":
+				r.problems = append(r.problems, fmt.Sprintf("%s: added to wallClock in %s; the list only goes down: use the app's clock, or mark real time `// wall clock: <reason>`", key, debtPath))
 			case !ok && list == "longFuncs":
 				r.problems = append(r.problems, fmt.Sprintf("%s: added to longFuncs in %s at %d lines; the list only goes down: shorten or split the function instead", key, debtPath, n))
 			case !ok:
 				r.problems = append(r.problems, fmt.Sprintf("%s: added to %s in %s; the list only goes down: name the file for what it does instead", key, list, debtPath))
+			case n > old && list == "wallClock":
+				r.problems = append(r.problems, fmt.Sprintf("%s: raised from %d to %d in wallClock in %s; use the app's clock instead", key, old, n, debtPath))
 			case n > old:
 				r.problems = append(r.problems, fmt.Sprintf("%s: raised from %d to %d in %s; shorten or split it instead", key, old, n, debtPath))
 			}
@@ -63,13 +70,14 @@ func compareDebt(was, now map[string]map[string]int) report {
 }
 
 // parseDebt reads the map literals of debt.go: longFuncs with their
-// lengths, splitByName with 1 for each file.
+// lengths, splitByName with 1 for each file, wallClock with its counts.
 func parseDebt(src []byte) (map[string]map[string]int, error) {
 	f, err := parser.ParseFile(token.NewFileSet(), debtPath, src, parser.SkipObjectResolution)
 	if err != nil {
 		return nil, err
 	}
-	lists := map[string]map[string]int{"longFuncs": {}, "splitByName": {}}
+	lists := map[string]map[string]int{"longFuncs": {}, "splitByName": {}, "wallClock": {}}
+	found := map[string]bool{}
 	ast.Inspect(f, func(n ast.Node) bool {
 		spec, ok := n.(*ast.ValueSpec)
 		if !ok || len(spec.Names) != 1 || len(spec.Values) != 1 {
@@ -80,6 +88,7 @@ func parseDebt(src []byte) (map[string]map[string]int, error) {
 		if !ok || !isLit {
 			return true
 		}
+		found[spec.Names[0].Name] = true
 		for _, e := range lit.Elts {
 			kv, ok := e.(*ast.KeyValueExpr)
 			if !ok {
@@ -100,5 +109,10 @@ func parseDebt(src []byte) (map[string]map[string]int, error) {
 		}
 		return false
 	})
+	for name := range lists {
+		if !found[name] {
+			delete(lists, name)
+		}
+	}
 	return lists, nil
 }

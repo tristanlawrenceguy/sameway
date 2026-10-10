@@ -79,6 +79,12 @@ area it belongs to, or a new file in `docs/tests/` linked here.
   `*_more.go`, `*_extra.go` or `*_helpers.go` fails: when a file grows,
   split by topic, moving a group of related functions into a file named
   after what it holds. Read the whole file before editing.
+- **The app's clock.** In `internal/server`, `chat`, `records` and
+  `blocks`, the time comes from the app's clock (`s.now()`, `Book.Now`),
+  which a test fixes. `tools/check` fails a `time.Now()` there unless its
+  line says why it must be real time (`// wall clock: how long a request
+  waits`). The files from before the rule are in `wallClock` in
+  `tools/check/debt.go`, a list that only goes down.
 - **Golden examples.** A component template must reproduce every example in
   its manifest byte for byte. After changing a template or manifest run
   `UPDATE_GOLDEN=1 go test ./internal/render/` and commit the example files.
@@ -107,7 +113,10 @@ area it belongs to, or a new file in `docs/tests/` linked here.
   webhook client, ntfy) comes in through `app.Options`
   (`newAppWith(t, app.Options{...})` in internal/server, `servertest.NewWith`), never a package
   variable or an environment variable. A test that must set one anyway
-  leaves out `t.Parallel()` and puts it back before it ends.
+  leaves out `t.Parallel()` and puts it back before it ends. What a
+  package keeps for one open workspace lives on its store (`store.Keep`)
+  or its server, never in a package map keyed by it, so two open side by
+  side share nothing and it goes when the store closes.
 - Motion explains a change and never moves focus. A person's own action
   moves in `motion-base` or less, transform and opacity only; under
   reduced motion and the still pace it may cross-fade but not travel

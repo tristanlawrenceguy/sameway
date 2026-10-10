@@ -50,7 +50,7 @@ func (s *Server) saveCalendarLinks(l []calendarLink) {
 
 // syncCalendar fetches one calendar and keeps its events in step.
 func (s *Server) syncCalendar(ctx context.Context, l *calendarLink) {
-	l.At, l.Err = time.Now(), ""
+	l.At, l.Err = s.now(), ""
 	t, ok := s.app.Types.Get(records.EventType)
 	if !ok {
 		l.Err = "this workspace has no events"
