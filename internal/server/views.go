@@ -120,14 +120,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	if t.Name == records.ProposalType && rec.Fields["state"] == "pending" {
 		b.WriteString(string(s.proposalCard(rec, "/t/"+t.Name+"/"+rec.ID)))
 	}
-	// A file's page shows the picture when it is one, and the way to the
-	// original, above the fields read from it.
-	if t.Name == FileType {
-		b.WriteString(s.media.FileExtras(r, rec))
-	}
-	if t.Name == records.EventType {
-		b.WriteString(s.media.MeetingExtras(r, rec)) // meeting.go
-	}
+	b.WriteString(s.extrasOf(r, t, rec))
 	b.WriteString(s.writingOn(r, t, rec))     // writing.go
 	b.WriteString(s.suggestionsOn(r, t, rec)) // suggestions.go
 	b.WriteString(s.writingHelp(r, t, rec))   // writing_help.go
@@ -206,6 +199,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	}
 	b.WriteString(`</div>`)
 	b.WriteString(s.exchange.DocumentLinks(r, t, rec)) // the record as a file, after it; see export_docs.go
+	b.WriteString(s.conversationOn(r, t, rec))         // mail_conversation.go
 	// What the schema lists here, such as a project's tasks (backrefs.go).
 	listed, keys := s.backrefs(t, rec)
 	b.WriteString(listed)
@@ -275,4 +269,16 @@ func (s *Server) fieldItem(t *schema.Type, f schema.Field, v any, val string) ma
 		item["options"] = s.choiceList(f, fmt.Sprint(v))
 	}
 	return item
+}
+
+// extrasOf is what a file's or a meeting's page shows above its fields:
+// a file's picture and the way to its original, a meeting's recording.
+func (s *Server) extrasOf(r *http.Request, t *schema.Type, rec *store.Record) string {
+	switch t.Name {
+	case FileType:
+		return s.media.FileExtras(r, rec)
+	case records.EventType:
+		return s.media.MeetingExtras(r, rec) // meeting.go
+	}
+	return ""
 }
