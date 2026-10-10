@@ -3,7 +3,9 @@
 Use a link to go somewhere: another page, a record, an anchor. Use `button`
 for an action that stays on the page. The label should make sense read on its
 own, because screen reader users often list links out of context. Set
-`current` on the link that points at the page being viewed.
+`current` on the link that points at the page being viewed, and `within` on
+one that leads to a place the page is inside (a list, on one of its
+records).
 
 Never open a new tab. Where one must, say so in the visible words: "Open
 (new tab)". An address shown as a link reads as where it goes
@@ -19,6 +21,11 @@ Never open a new tab. Where one must, say so in the visible words: "Open
 - **Here, not only by colour.** The current page is bold with a thick
   underline, in the navigation with a bar at its edge
   ([WCAG 1.4.1](https://www.w3.org/WAI/WCAG22/Understanding/use-of-color.html)).
+- **The page, or the place it is in.** `current` is `aria-current="page"`;
+  `within` is `aria-current="true"`, so a list is not called the current
+  page while one of its records is open
+  ([GOV.UK service navigation](https://design-system.service.gov.uk/components/service-navigation/)).
+  They look the same: the person is there either way.
 - **A hit area that fills its line.** A link in a sentence can be pressed
   anywhere on its line, never on the line above or the next link; links on
   their own are 44px ([WCAG 2.5.5](https://www.w3.org/WAI/WCAG22/Understanding/target-size-enhanced.html)).

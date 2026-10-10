@@ -15,7 +15,7 @@
 }
 .sw-link::after { content: ""; position: absolute; inset: calc(0.5em - 0.5lh) 0; }
 .sw-link:hover { text-decoration-thickness: 2px; }
-.sw-link[aria-current="page"] { font-weight: 700; text-decoration-thickness: 3px; }
+.sw-link[aria-current] { font-weight: 700; text-decoration-thickness: 3px; }
 
 /* Where a link already has a target's size or fills its row, the extra
    reach would only overlap its neighbours. */
@@ -37,7 +37,7 @@
 }
 .sw-link--button:hover { background: var(--sw-color-bg-muted); color: var(--sw-color-fg); text-decoration-thickness: 2px; }
 /* Here, said by weight and a thick underline as well as colour. */
-.sw-link--button[aria-current="page"] { color: var(--sw-color-fg); background: var(--sw-color-bg-muted); font-weight: 700; text-decoration-thickness: 3px; }
+.sw-link--button[aria-current] { color: var(--sw-color-fg); background: var(--sw-color-bg-muted); font-weight: 700; text-decoration-thickness: 3px; }
 
 /* In a row or a chip: the container is the target. Put sw-link--fill on
    the link and position: relative on the container; anything else in the
