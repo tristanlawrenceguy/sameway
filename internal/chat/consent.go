@@ -209,7 +209,7 @@ func (s *Service) ask(q question, action map[string]any) toolResult {
 	if r.isErr || r.change == nil {
 		return r
 	}
-	s.Store.Update(records.ProposalType, r.change.ID, map[string]any{"detail": q.detail, "yes": q.yes, "no": q.no})
+	s.Apply(records.Op{Type: records.ProposalType, ID: r.change.ID, After: map[string]any{"detail": q.detail, "yes": q.yes, "no": q.no}})
 	r.text += ". It was put to them as: " + q.ask + " " + q.detail
 	return r
 }
