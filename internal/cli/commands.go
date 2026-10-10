@@ -6,6 +6,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -36,31 +37,21 @@ func (c *ctx) serveCmd() error {
 	if a.Chat.Provider == nil && a.Chat.ProviderErr != nil {
 		fmt.Fprintf(c.Stdout, "  chat    disabled: %v\n", a.Chat.ProviderErr)
 	}
-	// Actions with a schedule run, and reminders ring, while the server does.
-	ctx, stop := context.WithCancel(context.Background())
-	defer stop()
-	a.Chat.StartSchedule(ctx)
-	a.Chat.StartAutomating() // actions that run when something happens; chat/automate.go
-	h := server.New(a)
-	a.WatchSchema(ctx, app.SchemaEvery, h.Changed)
-	h.StartRinging(ctx, notifier(a))
-	h.KeepCalendars(ctx)
-	h.KeepMeaning(ctx)   // search by meaning, when an embedding model is here
-	h.KeepReview(ctx)    // the weekly review, on the day set
-	h.KeepBrief(ctx)     // the morning brief, when one is set
-	h.KeepMail(ctx)      // email sent to the workspace, when connected
-	h.KeepCloudCopy(ctx) // a daily copy in the cloud folder, when one is chosen
-	h.WriteDownInBackground()
-	keepSnapshots(ctx, c.Stdout, a)
-	connectDevices(ctx, c.Stdout, a)
-	watchUpdates(ctx, c.Stdout, a)
 	token := os.Getenv(a.Workspace.Config.MCP.TokenEnv)
 	if token != "" {
 		fmt.Fprintf(c.Stdout, "  mcp     http://%s/mcp with Authorization: Bearer <%s>\n", *addr, a.Workspace.Config.MCP.TokenEnv)
 	}
+	ln, err := net.Listen("tcp", *addr)
+	if err != nil {
+		return err
+	}
+	// Actions with a schedule run, and reminders ring, while the server does.
+	ctx, stop := stopContext()
+	defer stop()
+	h := server.New(a)
 	all := HandlerFor(a, token, h)
-	joinTailnet(ctx, c.Stdout, a, all, h)
-	return http.ListenAndServe(*addr, all)
+	startBackground(ctx, a, h, all, c.Stdout, c.Stdout)
+	return serveUntilStopped(ctx, stop, c.Stdout, a, &http.Server{Handler: all}, ln)
 }
 
 func (c *ctx) describeCmd() error {

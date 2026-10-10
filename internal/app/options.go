@@ -31,6 +31,9 @@ type Options struct {
 	HTTP *http.Client
 	// Ntfy is where phone topics are made; "" is notify.NtfyServer.
 	Ntfy string
+	// After is how the background jobs wait (App.Jobs); nil is
+	// time.After. A test gives a runner.Fake's, so nothing sleeps.
+	After func(time.Duration) <-chan time.Time
 }
 
 // Load opens the workspace at dir. Pass memoryDB to use an in-memory store
