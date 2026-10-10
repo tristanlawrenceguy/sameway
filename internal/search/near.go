@@ -87,3 +87,47 @@ func near(st *store.Store, types *schema.Set, q string, hits []Hit, r Reader) []
 	}
 	return hits
 }
+
+// ByMeaning says whether a workspace's searches also find by meaning, so
+// the search box and the assistant's tool say so only when it is true.
+func ByMeaning(st *store.Store) bool {
+	_, ok := nearFor.Load(st)
+	return ok
+}
+
+// Close is how a hit found by meaning is marked, on every surface alike.
+const Close = "close in meaning"
+
+// Order says how a search's hits are ranked, when some are close in
+// meaning, so a person and an agent read why the boiler repair is there
+// with none of their words, and in which order; or, with none by meaning,
+// SomeWords when only some words were found. "" when there is nothing to say.
+func Order(hits []Hit, some bool) string {
+	return order(some, nearIn(hits), len(hits))
+}
+
+func nearIn(hits []Hit) int {
+	n := 0
+	for _, h := range hits {
+		if h.Near {
+			n++
+		}
+	}
+	return n
+}
+
+func order(some bool, near, total int) string {
+	switch {
+	case total == 0:
+		return ""
+	case near == 0 && some:
+		return SomeWords
+	case near == 0:
+		return ""
+	case near == total:
+		return "Nothing has all your words; these are " + Close + "."
+	case some:
+		return "Nothing has every word. First what is " + Close + ", then what has some of the words."
+	}
+	return "First what has your words, then what is " + Close + "."
+}
