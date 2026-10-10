@@ -114,11 +114,8 @@ func Open(dir string, o Options) (*App, error) {
 	return a, nil
 }
 
-// Close releases the store.
-func (a *App) Close() error {
-	records.Forget(a.Store)
-	return a.Store.Close()
-}
+// Close releases the store, and with it what was kept for it.
+func (a *App) Close() error { return a.Store.Close() }
 
 // Description is the machine-readable summary served at /api/describe and
 // printed by `sameway describe --json`.
