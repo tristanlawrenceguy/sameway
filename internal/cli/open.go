@@ -2,7 +2,6 @@ package cli
 
 import (
 	"context"
-	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -57,34 +56,14 @@ func (c *ctx) openCmd() error {
 	}
 	where := "http://" + listener.Addr().String()
 
-	// A double-click's window is read by a person who did not type a
-	// command: where Sameway is and how to stop it, nothing for agents.
-	if c.plain {
-		fmt.Fprintf(c.Stdout, "Sameway is open at %s/\nYour workspace is in %s.\n\nKeep this window open while you use Sameway. Close it to stop Sameway.\n", where, a.Workspace.Dir)
-	} else {
-		fmt.Fprintf(c.Stdout, "sameway serving %q from %s\n  open    %s/\n  agents  %s/api/describe\n",
-			a.Workspace.Config.Name, a.Workspace.Dir, where, where)
-		if a.Chat.Provider == nil && a.Chat.ProviderErr != nil {
-			fmt.Fprintf(c.Stdout, "  chat    disabled: %v\n", a.Chat.ProviderErr)
-		}
-	}
-	if !*stay {
-		target := where + "/" + strings.TrimPrefix(*page, "/")
-		if err := openInBrowser(target); err != nil {
-			fmt.Fprintf(c.Stdout, "  (could not open a browser: %v — visit %s yourself)\n", err, target)
-		}
-	}
-	if !c.plain {
-		fmt.Fprintln(c.Stdout, "\nPress Ctrl-C to stop.")
-	}
+	c.sayOpen(a, where, *page, *stay)
 	// This workspace is now one this machine knows, at this address, so
 	// any other workspace can offer to open it. The page can start other
 	// workspaces as servers of their own, and stop this one.
 	a.Workspace.Machine.Remember(a.Workspace.Dir, listener.Addr().String())
-	ctx, stop := context.WithCancel(context.Background())
+	ctx, stop := stopContext() // background.go
 	defer stop()
 	h := server.New(a)
-	h.WriteDownInBackground()
 	// MCP over HTTP too, as serve has it: at /mcp, for agents on this
 	// computer with the workspace's token, and from the tailnet by who
 	// Tailscale says they are, reading only.
@@ -107,36 +86,44 @@ func (c *ctx) openCmd() error {
 		return nil
 	}})
 	// Reminders ring, scheduled actions run and the broker stays connected
-	// for as long as the server does, with or without a page open.
-	h.StartRinging(ctx, notifier(a))
-	h.KeepCalendars(ctx) // calendars kept in step every hour
-	h.KeepMeaning(ctx)   // search by meaning, when an embedding model is here
-	h.KeepReview(ctx)    // the weekly review, on the day set
-	h.KeepBrief(ctx)     // the morning brief, when one is set
-	h.KeepMail(ctx)      // email sent to the workspace, when connected
-	h.KeepCloudCopy(ctx) // a daily copy in the cloud folder, when one is chosen
-	a.Chat.StartSchedule(ctx)
-	a.Chat.StartAutomating() // actions that run when something happens; chat/automate.go
-	// Daily copies are kept either way; a double-click's window does not list them.
+	// for as long as the server does, with or without a page open. Daily
+	// copies and new versions are kept either way; a double-click's window
+	// does not list them.
 	notes := io.Writer(c.Stdout)
 	if c.plain {
 		notes = io.Discard
 	}
-	keepSnapshots(ctx, notes, a)
-	// Kept current as serve is: a double-clicked Sameway, or one opened at
-	// sign-in, never looked for a new version at all.
-	watchUpdates(ctx, notes, a)
-	connectDevices(ctx, c.Stdout, a)
+	startBackground(ctx, a, h, all, c.Stdout, notes)
 	if a.Workspace.Config.Server.LAN == "on" {
 		if err := lan.set(true); err != nil {
 			fmt.Fprintf(c.Stdout, "  wi-fi   %v\n", err)
 		}
 	}
-	joinTailnet(ctx, c.Stdout, a, all, h)
-	if err := srv.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		return err
+	return serveUntilStopped(ctx, stop, c.Stdout, a, srv, listener)
+}
+
+// sayOpen says where the workspace is, and opens it in a browser unless
+// stay. A double-click's window is read by a person who did not type a
+// command: where Sameway is and how to stop it, nothing for agents.
+func (c *ctx) sayOpen(a *app.App, where, page string, stay bool) {
+	if c.plain {
+		fmt.Fprintf(c.Stdout, "Sameway is open at %s/\nYour workspace is in %s.\n\nKeep this window open while you use Sameway. Close it to stop Sameway.\n", where, a.Workspace.Dir)
+	} else {
+		fmt.Fprintf(c.Stdout, "sameway serving %q from %s\n  open    %s/\n  agents  %s/api/describe\n",
+			a.Workspace.Config.Name, a.Workspace.Dir, where, where)
+		if a.Chat.Provider == nil && a.Chat.ProviderErr != nil {
+			fmt.Fprintf(c.Stdout, "  chat    disabled: %v\n", a.Chat.ProviderErr)
+		}
 	}
-	return nil
+	if !stay {
+		target := where + "/" + strings.TrimPrefix(page, "/")
+		if err := openInBrowser(target); err != nil {
+			fmt.Fprintf(c.Stdout, "  (could not open a browser: %v — visit %s yourself)\n", err, target)
+		}
+	}
+	if !c.plain {
+		fmt.Fprintln(c.Stdout, "\nPress Ctrl-C to stop.")
+	}
 }
 
 // notifier tells a ring beyond the page the way workspace.yaml says,
