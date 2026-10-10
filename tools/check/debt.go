@@ -24,7 +24,7 @@ var longFuncs = map[string]int{
 	"internal/schema.Set.Complete":         92,
 	"internal/schema.coerce":               104,
 	"internal/server.Server.apiList":       83,
-	"internal/server.Server.detailPage":    126,
+	"internal/server.Server.detailPage":    120,
 	"internal/server.Server.narrowLog":     112,
 	"internal/server.Server.shareSave":     81,
 	"internal/soundtrack.readMKV":          83,
