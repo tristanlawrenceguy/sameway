@@ -68,3 +68,24 @@ func TestAnEmailIsReadIntoWordsAndFiles(t *testing.T) {
 		t.Error("the address and the server are known from the email address")
 	}
 }
+
+// A picture from the sender's server is not fetched when the email is
+// read (a spy pixel says when and where it was opened): it is said by what
+// it shows, or left out when it shows nothing; links stay.
+func TestNoPictureIsFetchedFromTheSender(t *testing.T) {
+	t.Parallel()
+	md := "Your order ships Monday.\n\n![](https://track.example/open.gif?u=7)\n\n" +
+		"[![Track parcel](https://cdn.example/btn.png)](https://shop.example/track)\n\n" +
+		"[![](https://cdn.example/logo.png)](https://shop.example)\n\n![Logo](cid:logo@x) ![](data:image/png;base64,AAAA)"
+	got := NoRemotePictures(md)
+	for _, gone := range []string{"track.example", "cdn.example", "cid:", "[](https://shop.example)"} {
+		if strings.Contains(got, gone) {
+			t.Errorf("no %s left: %s", gone, got)
+		}
+	}
+	for _, kept := range []string{"ships Monday", "[(picture: Track parcel)](https://shop.example/track)", "(picture: Logo)", "data:image/png"} {
+		if !strings.Contains(got, kept) {
+			t.Errorf("%s kept: %s", kept, got)
+		}
+	}
+}

@@ -77,9 +77,13 @@ func (s *Server) mailSection() string {
 	esc := template.HTMLEscapeString
 	var b strings.Builder
 	b.WriteString(`<h2>To sort</h2><ul class="sw-plain sw-rows">`)
+	tags, other := s.tagsOn(), s.otherTags(nil) // tags_today.go: a tag to check sits beside its record
 	for _, n := range notes {
 		title := s.nameOf(n)
 		b.WriteString(`<li class="sw-stack"><a class="sw-link" href="/t/` + n.Type + `/` + n.ID + `">` + esc(title) + `</a>`)
+		for _, c := range tags[n.Type+"/"+n.ID] {
+			b.WriteString(s.tagCheck(c, n, other))
+		}
 		if p := s.suggestedFrom(n); p != nil { // suggested.go: what an action made of it
 			b.WriteString(`<p>` + esc(suggestionWords(p)) + `</p>` + s.suggestionPresses(p, title) + `</li>`)
 			continue

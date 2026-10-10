@@ -27,6 +27,7 @@ type Link struct {
 	Label   string   `prop:"label"`
 	Context string   `prop:"context"`
 	Current bool     `prop:"current"`
+	Within  bool     `prop:"within"`
 	Look    LinkLook `prop:"look"`
 	ID      string   `prop:"id"`
 }
