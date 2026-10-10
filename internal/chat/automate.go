@@ -12,6 +12,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/runner"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -46,20 +47,40 @@ type automation struct {
 	last map[string]time.Time // action and record → when it last ran for it
 }
 
-// StartAutomating listens for what happens to records and runs the
-// actions waiting for it, until the program stops.
+// AutomateJob listens for what happens to records and is the worker that
+// runs the actions waiting for it, one at a time, until the runner stops.
+func (s *Service) AutomateJob() runner.Job {
+	s.listen()
+	return runner.Job{Name: "Actions run when something happens", Run: func(ctx context.Context, _ time.Time) error {
+		for {
+			select {
+			case <-ctx.Done():
+				return nil
+			case j := <-s.auto.jobs:
+				s.runAutomation(ctx, j)
+			}
+		}
+	}}
+}
+
+// StartAutomating is AutomateJob for a test, whose worker lasts as long
+// as the test program does.
 func (s *Service) StartAutomating() {
+	if s.auto != nil {
+		return
+	}
+	job := s.AutomateJob() // listening from here on
+	go job.Run(context.Background(), time.Time{})
+}
+
+// listen has what happens to records heard, once.
+func (s *Service) listen() {
 	if s.auto != nil {
 		return
 	}
 	s.auto = &automation{jobs: make(chan automationJob, 256), last: map[string]time.Time{}}
 	s.Store.Listen(s.recordChanged)
 	s.Store.Listen(s.tagsChanged) // what the person did with a tag an action gave; judgement.go
-	go func() {
-		for j := range s.auto.jobs {
-			s.runAutomation(j)
-		}
-	}()
 }
 
 // recordChanged finds the actions waiting for what just happened.
@@ -128,13 +149,13 @@ func whenWords(when string, t *schema.Type, title string) string {
 }
 
 // runAutomation runs one action, as the automation, and what it leads to.
-func (s *Service) runAutomation(j automationJob) {
+func (s *Service) runAutomation(ctx context.Context, j automationJob) {
 	rec, err := s.Store.Get(records.ActionType, j.action)
 	if err != nil {
 		return
 	}
 	title, _ := rec.Fields["title"].(string)
-	ctx := context.WithValue(context.WithValue(context.Background(), automationKey{}, title), triggerKey{}, j.vars)
+	ctx = context.WithValue(context.WithValue(ctx, automationKey{}, title), triggerKey{}, j.vars)
 	r := s.runRecord(ctx, filled(rec, j.vars), "")
 	for i := range r.changes {
 		r.changes[i].By, r.changes[i].Via = title, "because "+j.why
