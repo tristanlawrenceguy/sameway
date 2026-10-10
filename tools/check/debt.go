@@ -26,7 +26,6 @@ var longFuncs = map[string]int{
 	"internal/server.Server.apiList":       83,
 	"internal/server.Server.detailPage":    126,
 	"internal/server.Server.narrowLog":     112,
-	"internal/server.Server.shareSave":     81,
 	"internal/soundtrack.readMKV":          83,
 	"internal/speech.SplitWAV":             110,
 	"internal/track.Summarise":             87,
