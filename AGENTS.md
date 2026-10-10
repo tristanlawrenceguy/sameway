@@ -79,6 +79,12 @@ area it belongs to, or a new file in `docs/tests/` linked here.
   `*_more.go`, `*_extra.go` or `*_helpers.go` fails: when a file grows,
   split by topic, moving a group of related functions into a file named
   after what it holds. Read the whole file before editing.
+- **Records are written one way.** `tools/check` fails a call that writes
+  the store directly (Create, Update, Delete, Restore, Put) anywhere under
+  internal, cmd or tools but store and records themselves: write through
+  `records.Apply`, `ApplyOps` or `WriteAs`. The few that still do are in
+  `storeWrites` in `tools/check/debt.go`, each with why, and that list
+  only goes down.
 - **Golden examples.** A component template must reproduce every example in
   its manifest byte for byte. After changing a template or manifest run
   `UPDATE_GOLDEN=1 go test ./internal/render/` and commit the example files.

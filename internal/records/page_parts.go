@@ -61,6 +61,9 @@ func PageParts(st *store.Store, t *schema.Type, rec *store.Record) []PagePart {
 			}
 		}
 	}
+	if t.Name == EmailType && len(Conversation(st, rec)) > 0 {
+		add("conversation", "the whole conversation it is part of, oldest first, each email in its own words")
+	}
 	if t.Name == FileType && (rec.Fields["kind"] == "audio" || rec.Fields["kind"] == "video") && rec.Fields["text"] != "" {
 		if et, ok := st.Types().Get(EventType); ok {
 			if _, has := et.Field("recording"); has {
