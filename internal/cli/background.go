@@ -37,14 +37,13 @@ func startBackground(ctx context.Context, a *app.App, h *server.Server, all http
 	h.KeepMail(ctx)    // email sent to the workspace, when connected
 
 	a.WatchSchema(ctx, app.SchemaEvery, h.Changed) // types changed by hand, so open pages follow
-	h.StartRinging(ctx, notifier(a))
-	h.KeepCalendars(ctx) // calendars kept in step every hour
-	h.KeepCloudCopy(ctx) // a daily copy in the cloud folder, when one is chosen
+	h.OnRing(notifier(a))                          // a ring told beyond the page
 	h.WriteDownInBackground()
 	a.Chat.StartSchedule(ctx)
 	a.Chat.StartAutomating() // actions that run when something happens; chat/automate.go
 	connectDevices(ctx, out, a)
 	joinTailnet(ctx, out, a, all, h)
+	a.Jobs.Add(h.BackgroundJobs()...) // server/jobs.go: rings, calendars, the cloud folder
 	a.Jobs.Add(backgroundJobs(a, notes)...)
 	a.Jobs.Start(ctx)
 }
