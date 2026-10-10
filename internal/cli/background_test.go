@@ -60,3 +60,22 @@ func TestBackgroundJobsRunOnTheAppsRunner(t *testing.T) {
 		t.Fatal("the jobs did not stop when the server did")
 	}
 }
+
+// Tailscale is followed every two seconds and the peers kept in step every
+// three, as their loops did; with no name set, neither does anything.
+func TestTailnetJobsKeepTheirIntervals(t *testing.T) {
+	t.Parallel()
+	a, h := servertest.New(t)
+	jobs := joinTailnet(io.Discard, a, h, h.(*server.Server))
+	if len(jobs) != 2 || jobs[0].Every != 2*time.Second || jobs[0].Wait || jobs[1].Every != 3*time.Second || !jobs[1].Wait {
+		t.Fatalf("jobs = %+v", jobs)
+	}
+	for _, j := range jobs {
+		if err := j.Run(context.Background(), time.Now()); err != nil {
+			t.Errorf("%s with no tailnet: %v", j.Name, err)
+		}
+	}
+	if a.Chat.Tailnet == nil {
+		t.Error("the assistant can still wait for the next Tailscale step")
+	}
+}

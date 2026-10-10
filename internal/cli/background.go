@@ -38,8 +38,8 @@ func startBackground(ctx context.Context, a *app.App, h *server.Server, all http
 
 	h.OnRing(notifier(a)) // a ring told beyond the page
 	connectDevices(ctx, out, a)
-	joinTailnet(ctx, out, a, all, h)
 	a.Jobs.Add(backgroundJobs(a, h, notes)...)
+	a.Jobs.Add(joinTailnet(out, a, all, h)...) // tailnet.go
 	a.Jobs.Start(ctx)
 }
 
