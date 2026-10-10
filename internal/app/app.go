@@ -14,6 +14,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/notify"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
+	"github.com/tristanlawrenceguy/sameway/internal/runner"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/update"
@@ -35,6 +36,9 @@ type App struct {
 	// Blocks is what a block is worked out from, for the pages, the
 	// assistant and MCP alike. See internal/blocks.
 	Blocks *blocks.Workspace
+	// Jobs is the work done in the background while the workspace is
+	// served, on this app's clock. See internal/runner.
+	Jobs *runner.Runner
 
 	schemaSeen schemaWatch // what schema/ held when last read; see reload.go
 	opts       Options     // what it was opened with; options.go
@@ -111,6 +115,7 @@ func Open(dir string, o Options) (*App, error) {
 	// workspace's: the updater needs nothing from here.
 	a.Chat.Update = update.Updater{}.Run
 	a.Chat.Workdir, a.Chat.HTTP = ws.Dir, o.HTTP
+	a.Jobs = runner.New(runner.Clock{Now: a.Now, After: o.After})
 	return a, nil
 }
 
