@@ -46,10 +46,6 @@ var splitByName = map[string]bool{
 var storeWrites = map[string]string{
 	"internal/app/schema_change.go App.RemoveType":     "a type deleted drops its whole table in one statement, logged as the schema change; its records go with their type, not one by one",
 	"internal/content/mirror.go Mirror.Import":         "a record read back from its file keeps the created and updated times the file says, which Apply cannot set; the caller logs the whole import as one change with its ops (cli/portable.go)",
-	"internal/devices/devices.go Apply":                "devices cannot import records (records imports workspace, which imports devices); to take a writer from the caller",
-	"internal/ingest/calendar_sync.go SyncCalendar":    "to move onto records.ApplyOps: written before ingest went through records",
-	"internal/ingest/import.go Import":                 "to move onto records: written before ingest went through records; its callers log the import with its ops",
-	"internal/ingest/people.go linker.find":            "to move onto records.ApplyOps: a person made while importing, written before ingest went through records",
 	"internal/server/servertest/fixtures.go SeedTasks": "a test fixture seeding a fresh workspace; nothing to log or undo",
 	"internal/chat/access.go Service.letIn":            "person access, logged by hand: to move after the invite dive, which owns this file now",
 	"internal/chat/invite.go Service.GiveAccess":       "person access, logged by hand as human: to move after the invite dive, which owns this file now",

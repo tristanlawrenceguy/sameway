@@ -71,10 +71,7 @@ func TestTagsFollowThePersonsJudgement(t *testing.T) {
 		return nil
 	}
 	arrive := func(subject string) *store.Record {
-		rec, err := a.Store.Create("email", map[string]any{"subject": subject, "from": "Water Co", "body": "Please pay by Friday."})
-		if err != nil {
-			t.Fatal(err)
-		}
+		rec := written(t, a.Store, "created", "email", "", map[string]any{"subject": subject, "from": "Water Co", "body": "Please pay by Friday."})
 		tagWait(t, "the tag for "+subject, func() bool { return classOf(rec.ID) != nil })
 		return rec
 	}

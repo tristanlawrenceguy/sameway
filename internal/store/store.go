@@ -11,7 +11,6 @@ import (
 	"encoding/base32"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	_ "modernc.org/sqlite"
@@ -52,9 +51,6 @@ type Store struct {
 
 	origin string
 	clock  hlc
-	// listeners are told what each record was and is; see onchange.go.
-	listeners []func(t *schema.Type, was, now *Record)
-	listening sync.Mutex
 }
 
 // Open opens (or creates) the database at path and migrates it to match types.

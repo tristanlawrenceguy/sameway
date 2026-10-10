@@ -177,8 +177,10 @@ record is written and logged (`WriteAs`, `Change`, `Record`), a change
 as the ops it wrote, each thing as it was and became, written all or
 none (`Op`, `Book.Apply`), undoing a change (`Book.Undo`: its ops the
 other way; entries from before ops are read in undo_legacy.go), who
-hears of a change (`records.Listen`, once per change logged;
-`store.Listen`, once per record written, which automations use), what a
+hears of a change (`records.Listen`, once per change, with who made it
+and its ops: a change logged when it is logged, the system's own
+bookkeeping written by `ApplyOps` as it is written; the store has no
+listeners of its own), what a
 record and a change are called (`Name`,
 `Sentence`), who wrote a record's words (`Writers`, `RecordView`) and an
 agent key's pace. It sits on `store` and `schema`; the server, MCP, the
