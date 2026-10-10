@@ -23,6 +23,7 @@ the `sameway` binary, which serves a living styleguide at `/design`.
 | [foundations/style.md](foundations/style.md) | What the product looks like, in words: air and one blue |
 | [foundations/layout.md](foundations/layout.md) | The page as a whole: rows, panes, heading order, and the Layout now line |
 | [foundations/glance.md](foundations/glance.md) | What a record says beside its title, and how a day is said |
+| [foundations/today.md](foundations/today.md) | Today and the morning brief: what comes first, how a late day is said, when the brief stays quiet |
 
 ## What is in this folder
 

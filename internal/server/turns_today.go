@@ -41,7 +41,7 @@ func (s *Server) turnSection() string {
 		b.WriteString(`<h2>Your turn to reply</h2><ul class="sw-plain sw-rows">` + yours.String() + `</ul>`)
 	}
 	if waiting > 0 {
-		if body, err := s.app.Registry.RenderSlot("disclosure", map[string]any{"label": "Waiting on them", "count": waiting, "of": "conversation"}, template.HTML(`<ul class="sw-plain sw-rows">`+theirs.String()+`</ul>`)); err == nil {
+		if body, err := s.app.Registry.RenderSlot("disclosure", map[string]any{"label": "Waiting on them", "count": waiting, "of": countsOf(waiting, "conversation")}, template.HTML(`<ul class="sw-plain sw-rows">`+theirs.String()+`</ul>`)); err == nil {
 			b.WriteString(string(body))
 		}
 	}

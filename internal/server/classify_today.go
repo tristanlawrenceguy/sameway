@@ -280,7 +280,7 @@ func (s *Server) foldedNothing(items []*store.Record, alone map[string]bool) str
 	if n == 0 {
 		return ""
 	}
-	body, err := s.app.Registry.RenderSlot("disclosure", map[string]any{"label": strings.ToUpper(tag[:1]) + tag[1:], "count": n, "of": "item"}, template.HTML(`<ul class="sw-plain sw-rows">`+b.String()+`</ul>`))
+	body, err := s.app.Registry.RenderSlot("disclosure", map[string]any{"label": strings.ToUpper(tag[:1]) + tag[1:], "count": n, "of": countsOf(n, "item")}, template.HTML(`<ul class="sw-plain sw-rows">`+b.String()+`</ul>`))
 	if err != nil {
 		return ""
 	}

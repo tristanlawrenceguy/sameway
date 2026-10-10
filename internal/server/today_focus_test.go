@@ -20,7 +20,7 @@ func TestALongTodayStartsWithThree(t *testing.T) {
 	for i, title := range []string{"Renew passport", "Pay rent", "Call the bank", "Book dentist"} {
 		a.Store.Create("task", map[string]any{"title": title, "due": day(-1 - i)})
 	}
-	if page := get(t, h, "/today").Body.String(); strings.Contains(page, "Start with these") || !strings.Contains(page, "Too much in your head") {
+	if page := get(t, h, "/today").Body.String(); strings.Contains(page, "Start with these") || !strings.Contains(page, "Too much in your head?</h2>") {
 		t.Fatalf("four is read whole, with the box: %s", truncate(page))
 	}
 	a.Store.Create("task", map[string]any{"title": "Reply to the school", "due": day(0)})
