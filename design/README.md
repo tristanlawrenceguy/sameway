@@ -22,7 +22,9 @@ the `sameway` binary, which serves a living styleguide at `/design`.
 | [foundations/quiet.md](foundations/quiet.md) | How chrome stays available to everyone while being visible only on demand |
 | [foundations/style.md](foundations/style.md) | What the product looks like, in words: air and one blue |
 | [foundations/layout.md](foundations/layout.md) | The page as a whole: rows, panes, heading order, and the Layout now line |
+| [foundations/navigation.md](foundations/navigation.md) | The sidebar: links in lists not a tree, where you are (page or section), records nested when asked, a cut list that says so |
 | [foundations/glance.md](foundations/glance.md) | What a record says beside its title, and how a day is said |
+| [foundations/sorting.md](foundations/sorting.md) | Tags and suggestions an action gives: one place each, never silent, every answer teaching |
 
 ## What is in this folder
 

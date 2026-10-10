@@ -96,11 +96,7 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 		if t.Internal || t.Name == EntryType || !s.listedFor(r, t) {
 			continue
 		}
-		href := "/t/" + t.Name
-		// The record's own item, when it is nested, is the current one.
-		sub, here := s.nested(r, t)
-		current := strings.HasPrefix(r.URL.Path, href) && !here
-		p.Nav = append(p.Nav, render.NavItem{HTML: s.navLink(href, schema.Plural(t.Name), current), Dot: s.dotOf(t.Name), Sub: sub})
+		p.Nav = append(p.Nav, s.navList(r, t)) // nav_nest.go
 	}
 	more := []struct{ href, label string }{{"/search", "Search"}, {"/chat", "Chat"}, {"/activity", "Activity"}, {"/workspaces", "Workspaces"}, {"/help", "Help"}}
 	if s.app.Workspace.Config.UI.Developer == "shown" {
