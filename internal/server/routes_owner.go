@@ -26,7 +26,8 @@ var ownerRoutes = []route{
 	{pattern: "POST /phone/on", handle: (*Server).phoneOn, access: owner, persons: "letting other devices reach the workspace is its owner's choice", reach: outward},
 	{pattern: "POST /phone/off", handle: (*Server).phoneOff, access: owner, persons: "letting other devices reach the workspace is its owner's choice", reach: outward},
 	{pattern: "POST /phone/forget", handle: (*Server).phoneForget, access: owner, persons: "letting other devices reach the workspace is its owner's choice", reach: outward},
-	{pattern: "POST /phone/invite", handle: (*Server).phoneInvite, access: owner, persons: "who may come in is the owner's to say, face to face", reach: outward}, // lan_invite.go
+	{pattern: "POST /access/take", handle: (*Server).accessTake, access: owner, persons: "taking access away is the owner's; the assistant does the same with let_in and access none, which only the owner's may", reach: inward}, // access_list.go
+	{pattern: "POST /phone/invite", handle: (*Server).phoneInvite, access: owner, persons: "who may come in is the owner's to say, face to face", reach: outward},                                                                 // lan_invite.go
 	{pattern: "POST /feedback", handle: (*Server).feedback, access: owner, persons: "what goes to the makers is theirs to read and send", reach: inward},
 	{pattern: "POST /at-login", handle: (*Server).atLoginSet, access: owner, persons: "what starts when this computer does is its owner's choice", reach: outward},
 	{pattern: "POST /quit", handle: (*Server).quit, access: owner, persons: "stopping Sameway ends the assistant's own turn", reach: outward},
