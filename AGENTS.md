@@ -43,6 +43,7 @@ runner in tools/a11y-runner.
 | `internal/server/connect/` | connecting the assistant to an AI model: the card on the chat when there is none, each way of having one told as its own story, a pasted key checked and kept in the person's settings, a free model fetched through Ollama, the AI apps a person uses connected. A feature package that needs only `web.Deps` | `connect.go`, `routes.go` |
 | `internal/server/servertest/` | what the server's tests and its feature packages' tests share: `New`/`NewWith` (an app on a fresh starter workspace and the server serving it), requests (`Get`, `PostForm`, `As`, `After`...), `Said`, and `Main` for a test package's TestMain | `servertest.go` |
 | `internal/cli/` | the sameway command | `root.go` |
+| `internal/runner/` | the work done in the background while a workspace is served: one `Runner` per app (`App.Jobs`), each `Job` a name, a schedule and a `Run(ctx, now)`; it waits on the injected clock, keeps each job's last run, last error and next run, recovers a panic, and waits for the jobs at shutdown. `cli/background.go` starts it for serve and open alike | `runner.go` |
 | `internal/update/` | finding, checking and installing a release of sameway itself | `update.go` |
 | `internal/bench/` | the assistant measured with a real model on everyday requests, each in a fresh workspace | `assistant_test.go` |
 | `examples/workspaces/starter/` | what `sameway init` copies | |
