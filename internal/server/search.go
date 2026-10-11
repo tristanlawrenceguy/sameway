@@ -34,12 +34,9 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 	// lead is said above the box: the scope, and the way to everything.
 	var b strings.Builder
 	lead := ""
-	label, hint, in := "Search", "Any words in a note, an event, an action, or a block on the canvas.", ""
-	if only != "" {
-		label, hint, in = "Search "+schema.Plural(only), "Any words in your "+schema.Plural(only)+".", " in "+schema.Plural(only)
-		if q == "" {
-			lead = fmt.Sprintf(`<p class="sw-search__scope">Searching %s only. %s</p>`, template.HTMLEscapeString(schema.Plural(only)), widen(q))
-		}
+	label, hint, in := s.searchWords(only)
+	if only != "" && q == "" {
+		lead = fmt.Sprintf(`<p class="sw-search__scope">Searching %s only. %s</p>`, template.HTMLEscapeString(schema.Plural(only)), widen(q))
 	}
 	title, said := label, label
 	pg := paged{page: 1, pages: 1}
@@ -62,8 +59,8 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 			lead = fmt.Sprintf(`<p class="sw-search__scope">Showing %s only, %d of %d found. %s</p>`,
 				template.HTMLEscapeString(schema.Plural(only)), len(hits), len(all), widen(q))
 		}
-		if some && len(all) > 0 {
-			b.WriteString(`<p class="sw-muted">` + search.SomeWords + `</p>`)
+		if o := search.Order(all, some); o != "" { // how they are ranked, near.go
+			b.WriteString(`<p class="sw-muted">` + o + `</p>`)
 		}
 		b.WriteString(string(s.kinds(q, only, all)))
 		switch {
@@ -103,6 +100,20 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 	s.page(w, r, title, template.HTML(body), pageOptions{JSONURL: jsonURL, Said: pg.title(said)})
 }
 
+// searchWords is the box's label and hint, and the words a title adds,
+// for everything or one kind; the hint says it finds by meaning only when
+// it does.
+func (s *Server) searchWords(only string) (label, hint, in string) {
+	label, hint = "Search", "Any words in a note, an event, an action, or a block on the canvas."
+	if only != "" {
+		label, hint, in = "Search "+schema.Plural(only), "Any words in your "+schema.Plural(only)+".", " in "+schema.Plural(only)
+	}
+	if search.ByMeaning(s.app.Store) {
+		hint += " It also finds what is " + search.Close + "."
+	}
+	return label, hint, in
+}
+
 // searchForm is the page's own search: a labelled field, the kind it is
 // narrowed to carried along unseen, and the button.
 func searchForm(s *Server, label, hint, q, only string) string {
@@ -123,7 +134,7 @@ func searchForm(s *Server, label, hint, q, only string) string {
 func (s *Server) hitItem(h search.Hit, words []string, told string) string {
 	typeEsc := template.HTMLEscapeString(capitalize(schema.Words(h.Type)))
 	if h.Near {
-		typeEsc += ", close in meaning" // found by what it is about (search_meaning.go)
+		typeEsc += ", " + search.Close // found by what it is about (search_meaning.go)
 	}
 	bodyHTML := ""
 	if snippet := string(marked(h.Snippet, words)); snippet != "" {

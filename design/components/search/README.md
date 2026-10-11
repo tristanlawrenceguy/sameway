@@ -63,6 +63,43 @@ Search tasks.
   widening is one link and first, and when the kind has none, the empty
   state says how many things elsewhere match and links to them.
 
+- **By meaning, said so.** With an embedding model on this computer,
+  search also finds what a record is about: the plumber finds "Boiler
+  repair, call Marek". Such a result is marked close in meaning in its
+  kind line, which a screen reader hears with the link, and a sentence
+  above the results says the order once: First what has your words, then
+  what is close in meaning. The words come first, because a person who
+  typed a word expects it; a partial match of "the" is weaker than a
+  meaning, so meaning goes before some words. The box's hint says it finds
+  by meaning only when it does. This is the local explanation that
+  [Microsoft's HAX G11](https://www.microsoft.com/en-us/haxtoolkit/guideline/make-clear-why-the-system-did-what-it-did/)
+  asks for, in words, not a score: [Google PAIR](https://pair.withgoogle.com/chapter/explainability-trust/)
+  warns that numbers presume a feel for probability, and to explain only
+  what changes what a person does. Google's own Missing words on a result
+  is the same idea: say when a word is not there.
+- **The same words for an agent.** The assistant's tool, the API's said,
+  MCP and `sameway search` begin with the same order sentence and mark the
+  same results, close in meaning; the tool's description says it finds by
+  meaning only when it does.
+- **Fetched only when asked, size first, and how far.** Help offers the
+  model to the owner with its size (274 MB) and that nothing leaves this
+  computer, and fetches it only on Turn on search by meaning. While it
+  comes, Help says how far, 40% of 274 MB, then that it is reading what
+  you have, then on, or not working with what Ollama said
+  ([NN/g, response times](https://www.nngroup.com/articles/response-times-3-important-limits/):
+  past ten seconds, say how far). Help is a page read when opened, so
+  these are not a live region ([WCAG 2.2, status messages](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html)).
+
+Not done for meaning, and why: a sentence on each result saying what it is about
+(about boiler repairs): it would need a language model on every search,
+seconds per result, and it could say something the record does not; a
+likeness score or a Best match label (a number reads as precise when it
+is not, PAIR above, and on a little data the scores overlap, see
+internal/meaning); results by meaning in a section of their own (the
+order sentence and the mark say it with no second list to page through);
+a way to turn it off other than removing the model (it never leaves this
+computer and only adds results after the words).
+
 Not done, and why: suggestions as a person types (a combobox for small
 personal data; a lookup already finds records by name); guessing at
 misspellings (too many wrong matches on a little data); a scope picker by
