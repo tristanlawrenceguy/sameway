@@ -52,9 +52,6 @@ type Store struct {
 
 	origin string
 	clock  hlc
-	// listeners are told what each record was and is; see onchange.go.
-	listeners []func(t *schema.Type, was, now *Record)
-	listening sync.Mutex
 	// kept is what other packages keep for this store; see keep.go.
 	kept    map[any]any
 	keeping sync.Mutex

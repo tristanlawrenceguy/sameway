@@ -167,37 +167,45 @@ func TestWritesKeepTheirOps(t *testing.T) {
 	}
 }
 
-// A change logged is heard once, whole, by each listener, however many
-// records it wrote; each record written is heard by the store's own.
+// A change is heard once, whole, by each listener, however many records
+// it wrote: a change logged when it is logged, with who made it and its
+// entry; the system's own bookkeeping (ApplyOps) when it is written, as
+// the system's; ops applied to be logged after, only when they are.
 func TestListenersHearEachChangeOnce(t *testing.T) {
 	t.Parallel()
 	b := newBook(t)
 	var heard, also []records.Change
-	records.Listen(b.Store, func(actor string, c records.Change) { heard = append(heard, c) })
-	records.Listen(b.Store, func(actor string, c records.Change) { also = append(also, c) })
-	writes := 0
-	b.Store.Listen(func(t *schema.Type, was, now *store.Record) {
-		if t.Name == "note" {
-			writes++
-		}
-	})
+	var actors []string
+	records.Listen(b.Store, func(actor string, c records.Change) { heard, actors = append(heard, c), append(actors, actor) })
+	stop := records.Listen(b.Store, func(actor string, c records.Change) { also = append(also, c) })
 	rec, entry, err := records.WriteAs(b.Store, records.Who{Actor: "human"}, "created", "note", "", map[string]any{"title": "One"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(heard) != 1 || heard[0].Activity != entry || len(heard[0].Ops) != 1 || heard[0].Ops[0].ID != rec.ID || len(also) != 1 {
-		t.Fatalf("one change, heard once by each, with its entry and ops: %+v %d", heard, len(also))
+	if len(heard) != 1 || heard[0].Activity != entry || len(heard[0].Ops) != 1 || heard[0].Ops[0].ID != rec.ID || actors[0] != "human" || len(also) != 1 {
+		t.Fatalf("one change, heard once by each, with its entry, ops and who: %+v %v %d", heard, actors, len(also))
 	}
 	done, _ := b.Apply(
 		records.Op{Type: "note", After: map[string]any{"title": "Two"}},
 		records.Op{Type: "note", After: map[string]any{"title": "Three"}},
 		records.Op{Type: "note", ID: rec.ID},
 	)
+	if len(heard) != 1 {
+		t.Fatalf("ops applied to be logged are not heard until they are: %d", len(heard))
+	}
 	records.Record(b.Store, "human", records.Change{Action: "imported", Component: "note", Detail: "3 notes", Ops: done})
 	if len(heard) != 2 || len(heard[1].Ops) != 3 || len(also) != 2 {
 		t.Errorf("a batch of three is one change, heard once: %d", len(heard))
 	}
-	if writes != 4 {
-		t.Errorf("the store's own listener hears each record written: %d", writes)
+	stop()
+	kept, err := records.ApplyOps(b.Store, records.Op{Type: "note", ID: done[0].ID, After: map[string]any{"title": "Two, read"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(heard) != 3 || heard[2].Activity != "" || actors[2] != "system" || heard[2].Ops[0].Before["title"] != "Two" || heard[2].Ops[0].After["title"] != kept[0].After["title"] {
+		t.Errorf("bookkeeping is heard once as it is written, as the system's, with what it was: %+v %v", heard, actors)
+	}
+	if len(also) != 2 {
+		t.Errorf("a listener stopped hears nothing more: %d", len(also))
 	}
 }
