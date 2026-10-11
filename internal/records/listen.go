@@ -23,7 +23,8 @@ import (
 // another computer sends is left to that computer, and what another
 // process writes to the same workspace (the MCP server a model runs its
 // tools through) is read from the log instead (chat/outside.go). This is
-// the one way to hear a change; the store has none of its own.
+// the one way to hear a change; the store has none of its own. A store's
+// listeners are kept on it (store.Keep), so they go when it closes.
 
 type feed struct {
 	mu        sync.Mutex
@@ -36,14 +37,13 @@ type listener struct {
 	fn func(actor string, c Change)
 }
 
-// feeds are each open store's listeners.
-var feeds sync.Map // *store.Store → *feed
+// feedKey is where a store keeps its feed.
+type feedKey struct{}
 
 // Listen adds fn to what is told of each change in st, once per change,
 // with who made it, until stop is called.
 func Listen(st *store.Store, fn func(actor string, c Change)) (stop func()) {
-	v, _ := feeds.LoadOrStore(st, &feed{})
-	f := v.(*feed)
+	f := st.Keep(feedKey{}, func() any { return &feed{} }).(*feed)
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	id := f.next
@@ -64,11 +64,10 @@ func Listen(st *store.Store, fn func(actor string, c Change)) (stop func()) {
 
 // tell tells st's listeners of one change, in the order they listened.
 func tell(st *store.Store, actor string, c Change) {
-	v, ok := feeds.Load(st)
+	f, ok := st.Kept(feedKey{}).(*feed)
 	if !ok {
 		return
 	}
-	f := v.(*feed)
 	f.mu.Lock()
 	ls := f.listeners
 	f.mu.Unlock()
@@ -76,6 +75,3 @@ func tell(st *store.Store, actor string, c Change) {
 		l.fn(actor, c)
 	}
 }
-
-// Forget lets go of st's listeners, when it closes.
-func Forget(st *store.Store) { feeds.Delete(st) }

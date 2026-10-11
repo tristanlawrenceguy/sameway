@@ -62,7 +62,7 @@ func (s *Server) KeepCloudCopy(ctx context.Context) {
 		defer tick.Stop()
 		for {
 			if folder := s.app.Workspace.Config.Backup.Folder; folder != "" {
-				if err := s.cloudCopy(folder, time.Now()); err != nil {
+				if err := s.cloudCopy(folder, s.now()); err != nil {
 					s.app.Store.SetMeta("backup:err", err.Error())
 				}
 			}
@@ -203,7 +203,7 @@ func (s *Server) cloudSet(w http.ResponseWriter, r *http.Request) {
 		s.tell(w, r, outcome{Title: "Copies stay on this computer", Text: "The copies already in the cloud folder are left there."}, "/workspaces#ws-cloud")
 		return
 	}
-	err := s.cloudCopy(folder, time.Now())
+	err := s.cloudCopy(folder, s.now())
 	if err != nil {
 		s.failed(w, r, "No copy made yet", err, "/workspaces#ws-cloud")
 		return

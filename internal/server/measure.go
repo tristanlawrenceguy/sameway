@@ -9,7 +9,6 @@ import (
 	"io"
 	"net/http"
 	"regexp"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
@@ -158,7 +157,7 @@ func (s *Server) readings(b measureBody) []chat.Reading {
 		panes = chat.Panes(blocks)
 	}
 	ui := s.app.Workspace.Config.UI
-	now := time.Now()
+	now := s.now()
 	var out []chat.Reading
 	for _, m := range b.Blocks {
 		blk, err := s.app.Store.Get(records.BlockType, m.ID)

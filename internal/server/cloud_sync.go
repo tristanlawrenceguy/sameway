@@ -161,7 +161,7 @@ func (s *Server) syncStart(folder string) error {
 		os.Remove(tmp)
 		return err
 	}
-	s.app.Store.SetMeta("cloudsync:started", time.Now().Format(time.RFC3339))
+	s.app.Store.SetMeta("cloudsync:started", s.now().Format(time.RFC3339))
 	return os.Rename(tmp, filepath.Join(folder, cloudsync.Start))
 }
 
@@ -261,7 +261,7 @@ func (s *Server) syncRound() {
 		log.Printf("cloud sync: %v", err)
 	}
 	s.app.Store.SetMeta("cloudsync:err", said)
-	if at, _ := time.Parse(time.RFC3339, s.app.Store.Meta("cloudsync:started")); time.Since(at) > 24*time.Hour {
+	if at, _ := time.Parse(time.RFC3339, s.app.Store.Meta("cloudsync:started")); s.now().Sub(at) > 24*time.Hour {
 		s.syncStart(folder)
 	}
 }
