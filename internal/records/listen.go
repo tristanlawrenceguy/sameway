@@ -12,21 +12,21 @@ import (
 // however many records it wrote; a single record written, whichever way
 // it came, is heard by store.Listen instead (automations listen there, as
 // they must hear a record imported or read back from the content folder
-// too, which no change logs).
+// too, which no change logs). A store's listeners are kept on it
+// (store.Keep), so they go when it closes.
 
 type feed struct {
 	mu  sync.Mutex
 	fns []func(actor string, c Change)
 }
 
-// feeds are each open store's listeners.
-var feeds sync.Map // *store.Store → *feed
+// feedKey is where a store keeps its feed.
+type feedKey struct{}
 
 // Listen adds fn to what is told of each change logged in st, once per
 // change, with who made it; c.Activity is its entry in the log.
 func Listen(st *store.Store, fn func(actor string, c Change)) {
-	v, _ := feeds.LoadOrStore(st, &feed{})
-	f := v.(*feed)
+	f := st.Keep(feedKey{}, func() any { return &feed{} }).(*feed)
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.fns = append(f.fns, fn)
@@ -34,11 +34,10 @@ func Listen(st *store.Store, fn func(actor string, c Change)) {
 
 // tell tells st's listeners of one change logged.
 func tell(st *store.Store, actor string, c Change) {
-	v, ok := feeds.Load(st)
+	f, ok := st.Kept(feedKey{}).(*feed)
 	if !ok {
 		return
 	}
-	f := v.(*feed)
 	f.mu.Lock()
 	fns := f.fns
 	f.mu.Unlock()
@@ -46,6 +45,3 @@ func tell(st *store.Store, actor string, c Change) {
 		fn(actor, c)
 	}
 }
-
-// Forget lets go of st's listeners, when it closes.
-func Forget(st *store.Store) { feeds.Delete(st) }

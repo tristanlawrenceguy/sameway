@@ -40,6 +40,32 @@ var splitByName = map[string]bool{
 	"internal/server/said_test_helpers_test.go":       true,
 }
 
+// wallClock are files under clockDirs that read time.Now() where the app's
+// clock belongs, with how many times, when the rule came in (2026-10-10).
+// Some are being reworked elsewhere at the time (mail in, invites on the
+// network, a phone paired, connecting a model). Move each to the app's
+// clock, or mark a use that must be real time `// wall clock: <reason>`,
+// and lower or remove its entry.
+var wallClock = map[string]int{
+	"internal/blocks/rings.go":           1,
+	"internal/blocks/track_words.go":     1,
+	"internal/chat/automate.go":          1,
+	"internal/chat/conversations.go":     1,
+	"internal/chat/measured.go":          1,
+	"internal/chat/tool_log.go":          1,
+	"internal/chat/warm.go":              1,
+	"internal/records/agent_keys.go":     1,
+	"internal/records/conversation.go":   1,
+	"internal/records/glance_count.go":   1,
+	"internal/records/pace.go":           1,
+	"internal/records/page_parts.go":     1,
+	"internal/records/pieces.go":         2,
+	"internal/server/connect/connect.go": 2,
+	"internal/server/lan_invite.go":      4,
+	"internal/server/mail_in.go":         2,
+	"internal/server/phone_lan.go":       3,
+}
+
 // storeWrites are the functions that write the store directly rather than
 // through records.Apply, ApplyOps or WriteAs, each with why (writes.go).
 // Keyed by file and function. Like the lists above it only goes down.

@@ -34,7 +34,7 @@ func checkDebtAgainst(base string) report {
 	if err != nil {
 		return report{notes: []string{fmt.Sprintf("cannot parse %s at %s (%v); the debt list was not compared with it", debtPath, base, err)}}
 	}
-	now := map[string]map[string]int{"longFuncs": longFuncs, "splitByName": {}, "storeWrites": {}}
+	now := map[string]map[string]int{"longFuncs": longFuncs, "splitByName": {}, "storeWrites": {}, "wallClock": wallClock}
 	for k := range splitByName {
 		now["splitByName"][k] = 1
 	}
@@ -63,10 +63,14 @@ func compareDebt(was, now map[string]map[string]int) report {
 			switch {
 			case !ok && list == "longFuncs":
 				r.problems = append(r.problems, fmt.Sprintf("%s: added to longFuncs in %s at %d lines; the list only goes down: shorten or split the function instead", key, debtPath, n))
+			case !ok && list == "wallClock":
+				r.problems = append(r.problems, fmt.Sprintf("%s: added to wallClock in %s; the list only goes down: use the app's clock, or mark real time `// wall clock: <reason>`", key, debtPath))
 			case !ok && list == "storeWrites":
 				r.problems = append(r.problems, fmt.Sprintf("%s: added to storeWrites in %s; the list only goes down: write through records.Apply, ApplyOps or WriteAs instead", key, debtPath))
 			case !ok:
 				r.problems = append(r.problems, fmt.Sprintf("%s: added to %s in %s; the list only goes down: name the file for what it does instead", key, list, debtPath))
+			case n > old && list == "wallClock":
+				r.problems = append(r.problems, fmt.Sprintf("%s: raised from %d to %d in wallClock in %s; use the app's clock instead", key, old, n, debtPath))
 			case n > old:
 				r.problems = append(r.problems, fmt.Sprintf("%s: raised from %d to %d in %s; shorten or split it instead", key, old, n, debtPath))
 			}
@@ -76,14 +80,15 @@ func compareDebt(was, now map[string]map[string]int) report {
 }
 
 // parseDebt reads the map literals of debt.go: longFuncs with their
-// lengths, splitByName and storeWrites with 1 for each entry. A list not
+// lengths, wallClock with its counts, splitByName and storeWrites with 1
+// for each entry. A list not
 // in src is not in what it returns.
 func parseDebt(src []byte) (map[string]map[string]int, error) {
 	f, err := parser.ParseFile(token.NewFileSet(), debtPath, src, parser.SkipObjectResolution)
 	if err != nil {
 		return nil, err
 	}
-	known := map[string]bool{"longFuncs": true, "splitByName": true, "storeWrites": true}
+	known := map[string]bool{"longFuncs": true, "splitByName": true, "storeWrites": true, "wallClock": true}
 	lists := map[string]map[string]int{}
 	ast.Inspect(f, func(n ast.Node) bool {
 		spec, ok := n.(*ast.ValueSpec)

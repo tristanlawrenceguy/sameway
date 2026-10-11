@@ -211,7 +211,7 @@ func (s *Server) liveBlock(c *records.Change, started time.Time) (id, region, ht
 	if region == "" {
 		region = "main"
 	}
-	convo := &conversation{LastTurn: started, TurnEnd: time.Now(), Arrival: map[string]int{blk.ID: 1}}
+	convo := &conversation{LastTurn: started, TurnEnd: time.Now(), Arrival: map[string]int{blk.ID: 1}} // wall clock: a turn's own timing, measured in real time
 	return blk.ID, region, s.blockItem(blk, convo)
 }
 
