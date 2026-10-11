@@ -55,6 +55,7 @@ const (
 	// WritingHelpPart offers the kinds of help an editor gives with a
 	// piece of writing (writing_help.go).
 	WritingHelpPart = "writing-help"
+	// An email's conversation is ConversationPart (mail_conversation.go).
 )
 
 // shown is what this view has been asked to show: always, from the

@@ -11,7 +11,6 @@ import (
 	"runtime"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/update"
 )
@@ -164,21 +163,22 @@ func TestWatchInstallsInAutoAndOnlyTellsInManual(t *testing.T) {
 	}{{update.Auto, true}, {update.Manual, false}} {
 		srv := releases(t, release{version: "0.4.0", body: []byte("new program")})
 		exe := binary(t, "old program")
-		ctx, stop := context.WithCancel(context.Background())
-		told := make(chan update.Outcome, 4)
-		update.Updater{Current: "0.3.0", Repo: "o/r", API: srv.URL, Exe: exe}.Watch(ctx, func() string { return c.mode }, time.Hour, func(o update.Outcome, err error) {
+		var told []update.Outcome
+		w := update.Updater{Current: "0.3.0", Repo: "o/r", API: srv.URL, Exe: exe}.Watcher(func() string { return c.mode }, func(o update.Outcome, err error) {
 			if err != nil {
 				t.Errorf("%s: %v", c.mode, err)
 			}
-			told <- o
+			told = append(told, o)
 		})
-		var out update.Outcome
-		select {
-		case out = <-told:
-		case <-time.After(10 * time.Second):
-			t.Fatalf("%s: nothing was said about the new version", c.mode)
+		for range 2 { // a second look says nothing new and installs nothing again
+			if err := w.Check(context.Background()); err != nil {
+				t.Fatalf("%s: %v", c.mode, err)
+			}
 		}
-		stop()
+		if len(told) != 1 {
+			t.Fatalf("%s: told %d times, want once", c.mode, len(told))
+		}
+		out := told[0]
 		if out.Latest != "0.4.0" || out.Installed != c.install {
 			t.Errorf("%s: latest=%q installed=%v, want 0.4.0 and %v", c.mode, out.Latest, out.Installed, c.install)
 		}
@@ -194,15 +194,8 @@ func TestWatchInstallsInAutoAndOnlyTellsInManual(t *testing.T) {
 
 func TestADevBuildDoesNotWatch(t *testing.T) {
 	t.Parallel()
-	srv := releases(t, release{version: "0.4.0"})
-	told := make(chan update.Outcome, 1)
-	ctx, stop := context.WithCancel(context.Background())
-	defer stop()
-	update.Updater{Current: "dev", Repo: "o/r", API: srv.URL, Exe: binary(t, "x")}.Watch(ctx, func() string { return update.Auto }, time.Hour, func(o update.Outcome, err error) { told <- o })
-	select {
-	case o := <-told:
-		t.Errorf("a dev build watched and said %q", o.Says)
-	case <-time.After(300 * time.Millisecond):
+	if w := (update.Updater{Current: "dev"}).Watcher(func() string { return update.Auto }, nil); w != nil {
+		t.Error("a dev build has a watcher; it cannot say which version it is, so it must not look")
 	}
 }
 

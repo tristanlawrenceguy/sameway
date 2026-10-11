@@ -121,8 +121,8 @@ func TestTagsFollowThePersonsJudgement(t *testing.T) {
 	if c := classOf(fourth.ID); c.Fields["state"] != "confirmed" || c.Fields["confirmed_by"] != "judgement" {
 		t.Errorf("kept for the person when their choices are plain: %v", c.Fields)
 	}
-	if strings.Contains(get(t, srv, "/today").Body.String(), "Council tax") {
-		t.Error("a tag kept from their choices is not asked again")
+	if page := said(get(t, srv, "/today").Body.String()); strings.Contains(page, "Keep important on Council tax") || !strings.Contains(page, "Kept for you from your choices") {
+		t.Error("a tag kept from their choices is not asked again, only shown folded")
 	}
 }
 

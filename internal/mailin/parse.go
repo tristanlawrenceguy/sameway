@@ -2,6 +2,7 @@ package mailin
 
 import (
 	"io"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -75,4 +76,29 @@ func (m Mail) HTML() string {
 		return h
 	}
 	return ""
+}
+
+// A picture in an email is fetched from the sender's server when the
+// email is opened, and that fetch is how a sender learns it was read, when
+// and from where: a spy pixel, in most mail sent by a business. HEY strips
+// them, Apple Mail fetches through a proxy. Sameway keeps the words: a
+// picture from elsewhere is said by what it shows, and one that says
+// nothing (the pixel) is left out. Links stay; following one is a choice.
+var (
+	remotePicture = regexp.MustCompile(`!\[([^\]]*)\]\(\s*<?(?:https?:|cid:|//)[^)]*\)`)
+	emptyLink     = regexp.MustCompile(`(^|[^!])\[\s*\]\([^)]*\)`)
+	blankLines    = regexp.MustCompile(`\n{3,}`)
+)
+
+// NoRemotePictures is an email's Markdown with each picture from another
+// server turned into what it shows, or taken out when it says nothing.
+func NoRemotePictures(markdown string) string {
+	out := remotePicture.ReplaceAllStringFunc(markdown, func(img string) string {
+		alt := strings.TrimSpace(remotePicture.FindStringSubmatch(img)[1])
+		if alt == "" {
+			return ""
+		}
+		return "(picture: " + alt + ")"
+	})
+	return blankLines.ReplaceAllString(emptyLink.ReplaceAllString(out, "$1"), "\n\n")
 }

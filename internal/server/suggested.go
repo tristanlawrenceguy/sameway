@@ -98,6 +98,7 @@ func (s *Server) suggestedYes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.sortSource(r, p)
+	s.tagsAgreed(p) // classify_today.go
 	s.tellAt(w, r, outcome{Title: "Made", Text: "Made, as suggested."}, "/today")
 }
 
@@ -111,6 +112,7 @@ func (s *Server) suggestedChange(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.sortSource(r, p)
+	s.tagsAgreed(p)
 	done, _ := s.app.Store.Get(records.ProposalType, p.ID)
 	to := "/today"
 	if made, _ := done.Fields["made"].(string); made != "" {
