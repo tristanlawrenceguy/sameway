@@ -61,11 +61,7 @@ func TestAnEmailToDoIsSuggestedAsATask(t *testing.T) {
 		return found
 	}
 	arrive := func(subject string) *store.Record {
-		rec, err := a.Store.Create("email", map[string]any{"subject": subject, "from": "Water Co", "received": "2026-10-12T09:00:00Z", "body": "Please pay by Friday.", "tags": []any{"to sort"}})
-		if err != nil {
-			t.Fatal(err)
-		}
-		return rec
+		return written(t, a.Store, "created", "email", "", map[string]any{"subject": subject, "from": "Water Co", "received": "2026-10-12T09:00:00Z", "body": "Please pay by Friday.", "tags": []any{"to sort"}})
 	}
 
 	first := arrive("Water bill")
@@ -87,7 +83,7 @@ func TestAnEmailToDoIsSuggestedAsATask(t *testing.T) {
 	if got, _ := a.Store.Get("email", first.ID); strings.Contains(strings.Join(anyStrings(got.Fields["tags"]), ","), "to sort") {
 		t.Error("the email is sorted")
 	}
-	a.Store.Update("task", strings.TrimPrefix(made, "task/"), map[string]any{"title": "Pay the water bill"})
+	written(t, a.Store, "updated", "task", strings.TrimPrefix(made, "task/"), map[string]any{"title": "Pay the water bill"})
 
 	arrive("Gas bill")
 	p = waiting("Gas bill")

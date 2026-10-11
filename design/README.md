@@ -25,6 +25,7 @@ the `sameway` binary, which serves a living styleguide at `/design`.
 | [foundations/navigation.md](foundations/navigation.md) | The sidebar: links in lists not a tree, where you are (page or section), records nested when asked, a cut list that says so |
 | [foundations/glance.md](foundations/glance.md) | What a record says beside its title, and how a day is said |
 | [foundations/review.md](foundations/review.md) | The weekly review: done first, overdue without blame, the week ahead, the notice |
+| [foundations/connecting.md](foundations/connecting.md) | AI apps, agents with keys and a model: said once, read exactly, taken back with one press |
 | [foundations/sorting.md](foundations/sorting.md) | Tags and suggestions an action gives: one place each, never silent, every answer teaching |
 
 ## What is in this folder

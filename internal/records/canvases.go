@@ -43,7 +43,7 @@ func RemoveCanvas(st *store.Store, id string) (Change, error) {
 	name, _ := rec.Fields["name"].(string)
 	// The tab and its blocks go into the log together, so undoing this
 	// puts the whole tab back.
-	done, err := ApplyOps(st, Op{Type: CanvasType, ID: id})
+	done, err := (&Book{Store: st}).Apply(Op{Type: CanvasType, ID: id})
 	if err != nil {
 		return Change{}, fmt.Errorf("could not remove the canvas: %v", err)
 	}

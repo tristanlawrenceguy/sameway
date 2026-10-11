@@ -1,6 +1,6 @@
 {
   "name": "reading",
-  "description": "A reading list from the person's book records: what they are reading now, and what is next.",
+  "description": "A reading list: the books being read now, and the ones to read next.",
   "use": {
     "when": "the person keeps a list of books to read and wants the current ones in view.",
     "not": "a single recommendation, which is a record, or notes on a book, which are a note record.",

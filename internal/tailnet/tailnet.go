@@ -39,7 +39,8 @@ type Config struct {
 // once the tailnet has certificates turned on and on plain HTTP for
 // anything that is not a browser. admit decides who gets in (nil: only
 // the person who signed it in) and marks each request with who they are. say is told each step (see Status); serving here never stops
-// the workspace serving on this machine. It ends when ctx does.
+// the workspace serving on this machine. It ends when ctx does. h already
+// refuses other sites' writes (cli.HandlerFor), as every way of serving does.
 func Start(ctx context.Context, cfg Config, h http.Handler, admit Admit, pub *Funnel, say func(Status)) error {
 	name := strings.TrimSpace(cfg.Name)
 	if name == "" {
@@ -67,9 +68,6 @@ func Start(ctx context.Context, cfg Config, h http.Handler, admit Admit, pub *Fu
 	if cfg.AuthKeyEnv != "" {
 		srv.AuthKey = os.Getenv(cfg.AuthKeyEnv)
 	}
-	// A browser on the tailnet also visits other sites, and a page on one
-	// of them must not be able to post forms here.
-	h = http.NewCrossOriginProtection().Handler(h)
 	go func() {
 		<-ctx.Done()
 		srv.Close()

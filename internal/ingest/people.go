@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -132,7 +133,7 @@ func (l *linker) find(name, rawEmail, rawPhone string) (id, who string) {
 	if l.phone != "" && phone != "" {
 		fields[l.phone] = rawPhone
 	}
-	rec, err := l.st.Create(l.to.Name, fields)
+	rec, err := kept(l.st, records.Op{Type: l.to.Name, After: fields})
 	if err != nil {
 		return "", ""
 	}

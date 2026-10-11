@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/devices"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -25,20 +26,32 @@ func TestAMessageBecomesADeviceAndKeepsItCurrent(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer st.Close()
+	// Written through records, so each message is heard, as the system's,
+	// by what waits on a device: an automation for a light switched on.
+	write := (&records.Book{Store: st}).Keeper(devices.DeviceType)
+	var heard []string
+	records.Listen(st, func(actor string, c records.Change) {
+		for _, op := range c.Ops {
+			heard = append(heard, actor+" "+op.Type)
+		}
+	})
 
 	first := time.Date(2026, 9, 21, 8, 0, 0, 0, time.UTC)
-	if err := devices.Apply(st, "zigbee2mqtt/kitchen_light", `{"state":"ON","brightness":200}`, first); err != nil {
+	if err := devices.Apply(st, write, "zigbee2mqtt/kitchen_light", `{"state":"ON","brightness":200}`, first); err != nil {
 		t.Fatal(err)
 	}
-	if err := devices.Apply(st, "home/upstairs/temp", "21.5", first); err != nil {
+	if err := devices.Apply(st, write, "home/upstairs/temp", "21.5", first); err != nil {
 		t.Fatal(err)
 	}
-	if err := devices.Apply(st, "zigbee2mqtt/kitchen_light", `{"state":"OFF"}`, first.Add(time.Minute)); err != nil {
+	if err := devices.Apply(st, write, "zigbee2mqtt/kitchen_light", `{"state":"OFF"}`, first.Add(time.Minute)); err != nil {
 		t.Fatal(err)
 	}
 	recs, _ := st.List(devices.DeviceType, store.ListOptions{})
 	if len(recs) != 2 {
 		t.Fatalf("one device per topic, got %d", len(recs))
+	}
+	if strings.Join(heard, ",") != "system device,system device,system device" {
+		t.Errorf("each message is heard once, as the system's: %q", heard)
 	}
 	var light, temp map[string]any
 	for _, r := range recs {

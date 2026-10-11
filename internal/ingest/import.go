@@ -166,7 +166,7 @@ func Import(st *store.Store, t *schema.Type, tb *Table, m Mapping) Report {
 			}
 		}
 		linkLists(st, t, fields) // a meeting's people, found or made; people.go
-		rec, err := st.Create(t.Name, fields)
+		id, err := imported(st, t.Name, fields)
 		if err != nil {
 			r.Skipped++
 			r.problem(err.Error())
@@ -178,7 +178,7 @@ func Import(st *store.Store, t *schema.Type, tb *Table, m Mapping) Report {
 			}
 		}
 		r.Made++
-		r.IDs = append(r.IDs, rec.ID)
+		r.IDs = append(r.IDs, id)
 	}
 	return r
 }

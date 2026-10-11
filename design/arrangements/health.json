@@ -20,7 +20,9 @@
     {
       "key": "habits",
       "component": "tracker",
-      "props": {},
+      "props": {
+        "label": "Habits"
+      },
       "span": 12
     },
     {
