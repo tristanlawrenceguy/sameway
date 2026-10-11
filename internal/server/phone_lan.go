@@ -94,7 +94,7 @@ func (s *Server) LAN(next http.Handler) http.Handler {
 // code that works keeps the phone paired; one used, out of date or mistyped
 // says to try the one shown now.
 func (s *Server) lanPair(w http.ResponseWriter, r *http.Request) {
-	if !s.pairing.use(r.URL.Query().Get("code"), time.Now()) {
+	if !s.pairing.use(r.URL.Query().Get("code"), s.now()) {
 		lanPairPage(w, "Those letters do not work: the code has been used, is more than ten minutes old, or was mistyped. Try the one Sameway shows now on the computer, under Workspaces.")
 		return
 	}

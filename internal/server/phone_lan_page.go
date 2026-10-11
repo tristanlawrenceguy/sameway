@@ -6,7 +6,6 @@ import (
 	"html/template"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
@@ -28,7 +27,7 @@ func (s *Server) phoneSection(r *http.Request) string {
 		b.WriteString(string(s.form(ui.Form{Action: "/phone/on", Button: &ui.Button{Label: "Use Sameway on your phone", Variant: ui.Secondary}})) + `</section>`)
 		return b.String()
 	}
-	code := s.pairing.fresh(time.Now()) // phone_pair.go
+	code := s.pairing.fresh(s.now()) // phone_pair.go
 	link := base + "/pair?code=" + code
 	b.WriteString(`<p>Scan this with your phone's camera, on the same Wi-Fi as this computer. It works once, for ten minutes; reload this page for another.</p>`)
 	b.WriteString(`<figure class="sw-stack">` + qrSVG(link) + `<figcaption>No camera, or it will not scan? On the phone, open ` + template.HTMLEscapeString(base) + ` and type <strong>` + code + `</strong>.</figcaption></figure>`)
