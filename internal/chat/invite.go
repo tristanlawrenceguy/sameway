@@ -55,3 +55,53 @@ func (s *Service) PersonByName(name string) *store.Record {
 	}
 	return nil
 }
+
+// letOut is let_in taking access away, by email or, for someone invited
+// on the Wi-Fi with none, by name.
+func (s *Service) letOut(a letInArgs, p *store.Record) toolResult {
+	if p == nil && a.Email == "" {
+		p = s.PersonByName(strings.Join(strings.Fields(a.Name), " "))
+	}
+	who := a.Email
+	if who == "" {
+		who = a.Name
+	}
+	if p == nil || p.Fields["access"] == nil || p.Fields["access"] == "" {
+		return toolResult{text: who + " had no access"}
+	}
+	c, err := s.takeAccess(p)
+	if err != nil {
+		return fail("could not take their access away: %v", err)
+	}
+	return toolResult{text: c.Detail + " can now " + verb(""), change: &c}
+}
+
+// takeAccess takes a person's access away, as a change to log: their
+// Tailscale login and their devices on the Wi-Fi stop opening the
+// workspace at once, and Undo puts it back.
+func (s *Service) takeAccess(p *store.Record) (records.Change, error) {
+	name, _ := p.Fields["name"].(string)
+	done, err := records.ApplyOps(s.Store, records.Op{Type: records.PersonType, ID: p.ID, After: map[string]any{"access": ""}})
+	if err != nil {
+		return records.Change{}, err
+	}
+	return records.Change{Action: "took access from", Component: records.PersonType, ID: p.ID, Detail: name, Ops: done}, nil
+}
+
+// TakeAccess is Take away access on Workspaces: the owner's, logged as
+// theirs. It says who it was and the log entry, for Undo.
+func (s *Service) TakeAccess(id string) (name, entry string, err error) {
+	p, err := s.Store.Get(records.PersonType, id)
+	if err != nil {
+		return "", "", errors.New("that person is no longer in this workspace")
+	}
+	name, _ = p.Fields["name"].(string)
+	if a, _ := p.Fields["access"].(string); a == "" {
+		return name, "", errors.New(name + " could not open it anyway")
+	}
+	c, err := s.takeAccess(p)
+	if err != nil {
+		return name, "", err
+	}
+	return name, records.Record(s.Store, "human", c), nil
+}

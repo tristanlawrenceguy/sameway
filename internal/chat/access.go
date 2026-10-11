@@ -22,12 +22,12 @@ var letInOp = Op{Title: "Let a person in",
 	Run:   func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.letIn(letInOf(call.Args)) },
 	Tool: llm.Tool{
 		Name:        "let_in",
-		Description: "Give someone access to this workspace from their own devices over Tailscale, or take it away, when the owner asks: \"let Bob edit\", \"Carol can look\", \"stop Bob\". They are matched by the email they sign in to Tailscale with, and reach the workspace once the owner shares this machine with them in Tailscale (or they are on the same tailnet). view reads only; edit changes content and the canvas and presses buttons; host is edit, and their own computer keeps a full copy of the workspace in step with this one (for when they host it too, with their own assistant); none takes access away. Giving access is put to the owner as a question for you, and nothing changes until they say yes; taking it away happens at once.",
+		Description: "Give someone access to this workspace from their own devices over Tailscale, or take it away, when the owner asks: \"let Bob edit\", \"Carol can look\", \"stop Bob\". They are matched by the email they sign in to Tailscale with (to take access from someone invited on the Wi-Fi, who has no email, give their name instead), and reach the workspace once the owner shares this machine with them in Tailscale (or they are on the same tailnet). view reads only; edit changes content and the canvas and presses buttons; host is edit, and their own computer keeps a full copy of the workspace in step with this one (for when they host it too, with their own assistant); none takes access away. Giving access is put to the owner as a question for you, and nothing changes until they say yes; taking it away happens at once.",
 		Schema: obj(map[string]any{
 			"email":  map[string]any{"type": "string"},
 			"name":   map[string]any{"type": "string"},
 			"access": map[string]any{"type": "string", "enum": []string{records.View, records.Edit, records.Host, "none"}},
-		}, "email", "access"),
+		}, "access"),
 	}, Offered: has(records.PersonType)}
 
 // accessOps are offered only where the workspace can do what they do:
@@ -53,15 +53,19 @@ func letInOf(raw json.RawMessage) letInArgs {
 // is done, by the owner alone.
 func (s *Service) letInAsks(_ toolArgs, call llm.ToolCall) (toolResult, bool) {
 	a := letInOf(call.Args)
+	if a.Access == "none" {
+		switch {
+		case !s.owner():
+			return fail("only the workspace's owner can take someone's access away"), true
+		case !strings.Contains(a.Email, "@") && strings.TrimSpace(a.Name) == "":
+			return fail("say whose access to take away: the email they sign in to Tailscale with, or their name"), true
+		}
+		return toolResult{}, false
+	}
 	if !strings.Contains(a.Email, "@") {
 		return fail("let_in needs the email they sign in to Tailscale with, such as bob@example.com"), true
 	}
 	switch a.Access {
-	case "none":
-		if !s.owner() {
-			return fail("only the workspace's owner can take someone's access away"), true
-		}
-		return toolResult{}, false
 	case records.View, records.Edit, records.Host:
 		q := letInQuestion(a)
 		return s.ask(q, map[string]any{"tool": "let_in", "email": a.Email, "name": a.Name, "access": a.Access}), true
@@ -98,10 +102,10 @@ func (s *Service) letIn(a letInArgs) toolResult {
 		access = ""
 	}
 	p := s.PersonByEmail(a.Email)
+	if access == "" {
+		return s.letOut(a, p) // invite.go
+	}
 	if p == nil {
-		if access == "" {
-			return toolResult{text: a.Email + " had no access"}
-		}
 		name := a.Name
 		if name == "" {
 			name, _, _ = strings.Cut(a.Email, "@")
@@ -119,14 +123,10 @@ func (s *Service) letIn(a letInArgs) toolResult {
 	}
 	name, _ := p.Fields["name"].(string)
 	// Someone who had no access has not been shared this machine yet.
-	if access != "" && (before == nil || before == "") {
+	if before == nil || before == "" {
 		s.Say(s.shareWords(name, a.Email))
 	}
-	action, detail := "let in", name+" to "+access
-	if access == "" {
-		action, detail = "took access from", name
-	}
-	return toolResult{text: name + " can now " + verb(access), change: &records.Change{Action: action, Component: records.PersonType, ID: p.ID, Detail: detail, Before: map[string]any{"access": before}}}
+	return toolResult{text: name + " can now " + verb(access), change: &records.Change{Action: "let in", Component: records.PersonType, ID: p.ID, Detail: name + " to " + access, Before: map[string]any{"access": before}}}
 }
 
 func verb(access string) string {
