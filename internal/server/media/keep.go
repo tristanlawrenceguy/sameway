@@ -47,7 +47,7 @@ func (s *Service) KeepFile(who records.Who, src io.Reader, name, title, descript
 	if d := strings.TrimSpace(description); d != "" {
 		fields["description"] = d
 	}
-	made, err := records.ApplyOps(s.app.Store, records.Op{Type: records.FileType, After: fields})
+	made, err := s.app.Records.Apply(records.Op{Type: records.FileType, After: fields})
 	if err != nil {
 		return nil, "", err
 	}
@@ -77,13 +77,13 @@ func (s *Service) KeepFile(who records.Who, src io.Reader, name, title, descript
 	}
 	if err != nil {
 		os.Remove(path)
-		records.ApplyOps(s.app.Store, records.Op{Type: records.FileType, ID: rec.ID})
+		s.app.Records.Apply(records.Op{Type: records.FileType, ID: rec.ID})
 		if strings.Contains(err.Error(), "4 GB") || strings.Contains(err.Error(), "empty") {
 			return nil, "", err
 		}
 		return nil, "", fmt.Errorf("could not keep the file: %w", err)
 	}
-	kept, err := records.ApplyOps(s.app.Store, records.Op{Type: records.FileType, ID: rec.ID, After: map[string]any{"path": stored, "size": n}})
+	kept, err := s.app.Records.Apply(records.Op{Type: records.FileType, ID: rec.ID, After: map[string]any{"path": stored, "size": n}})
 	if err != nil {
 		return rec, path, err
 	}

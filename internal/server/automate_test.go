@@ -71,10 +71,10 @@ func TestAnActionRunsWhenARecordComesToMatch(t *testing.T) {
 		"body": `{"text": "{{title}} is done ({{page}})"}`, "when": "changed", "what": "task", "only": []any{"status=done"}, "then": second.ID}); err != nil {
 		t.Fatal(err)
 	}
-	task, _ := a.Store.Create("task", map[string]any{"title": `Fix the "gate"`})
-	a.Store.Update("task", task.ID, map[string]any{"notes": "not done yet"})
+	task := written(t, a.Store, "created", "task", "", map[string]any{"title": `Fix the "gate"`})
+	written(t, a.Store, "updated", "task", task.ID, map[string]any{"notes": "not done yet"})
 	h.quiet(t)
-	a.Store.Update("task", task.ID, map[string]any{"status": "done"})
+	written(t, a.Store, "updated", "task", task.ID, map[string]any{"status": "done"})
 	got := h.wait(t, 2)
 	if !strings.Contains(got[0], `{"text": "Fix the \"gate\" is done (/t/task/`+task.ID+`)"}`) {
 		t.Errorf("the record fills the body, as JSON: %q", got[0])
@@ -82,7 +82,7 @@ func TestAnActionRunsWhenARecordComesToMatch(t *testing.T) {
 	if !strings.Contains(got[1], "said=ok+from+%2Fdone") {
 		t.Errorf("then runs with the first one's answer: %q", got[1])
 	}
-	a.Store.Update("task", task.ID, map[string]any{"notes": "edited while done"})
+	written(t, a.Store, "updated", "task", task.ID, map[string]any{"notes": "edited while done"})
 	h.quiet(t)
 	log, _ := a.Store.List(records.ActivityType, store.ListOptions{})
 	ran := 0
@@ -105,11 +105,11 @@ func TestAnActionRunsWhenARecordIsAddedOrRemoved(t *testing.T) {
 	h, url := listen(t)
 	a.Store.Create("action", map[string]any{"title": "New note", "kind": "webhook", "url": url + "/new?t={{title}}", "when": "added", "what": "note"})
 	a.Store.Create("action", map[string]any{"title": "Gone", "kind": "webhook", "url": url + "/gone?t={{title}}", "when": "removed", "what": "note"})
-	n, _ := a.Store.Create("note", map[string]any{"title": "Plants & seeds"})
+	n := written(t, a.Store, "created", "note", "", map[string]any{"title": "Plants & seeds"})
 	if got := h.wait(t, 1); !strings.Contains(got[0], "t=Plants+%26+seeds") {
 		t.Errorf("an address is filled escaped: %q", got[0])
 	}
-	a.Store.Delete("note", n.ID)
+	written(t, a.Store, "deleted", "note", n.ID, nil)
 	h.wait(t, 1)
 }
 
@@ -140,7 +140,7 @@ func TestTheAssistantAskedByAnAutomationSaysSo(t *testing.T) {
 	a.Chat.Tell = func(title, text, url string) { told <- title + ": " + text }
 	a.Chat.StartAutomating()
 	a.Store.Create("action", map[string]any{"title": "File new mail", "kind": "message", "message": "File the note {{title}}.", "when": "added", "what": "note"})
-	a.Store.Create("note", map[string]any{"title": "Invoice 42"})
+	written(t, a.Store, "created", "note", "", map[string]any{"title": "Invoice 42"})
 	select {
 	case msg := <-told:
 		if !strings.Contains(msg, "File new mail") || !strings.Contains(msg, "on its own because note Invoice 42 was added") {

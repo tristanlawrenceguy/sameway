@@ -52,9 +52,9 @@ type Store struct {
 
 	origin string
 	clock  hlc
-	// listeners are told what each record was and is; see onchange.go.
-	listeners []func(t *schema.Type, was, now *Record)
-	listening sync.Mutex
+	// kept is what other packages keep for this store; see keep.go.
+	kept    map[any]any
+	keeping sync.Mutex
 }
 
 // Open opens (or creates) the database at path and migrates it to match types.
@@ -83,8 +83,11 @@ func Open(path string, types *schema.Set) (*Store, error) {
 	return s, nil
 }
 
-// Close releases the database.
-func (s *Store) Close() error { return s.db.Close() }
+// Close releases the database, and lets go of what was kept for it.
+func (s *Store) Close() error {
+	s.letGo()
+	return s.db.Close()
+}
 
 // Backup writes a whole, consistent copy of the database to path, while
 // this one stays open: how a workspace is copied.

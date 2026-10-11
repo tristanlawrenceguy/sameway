@@ -78,7 +78,7 @@ func (s *Service) RunDue(ctx context.Context, now time.Time) []string {
 		}
 		// Stamp first, so a slow or failing run is not tried again every
 		// minute; the log says what happened either way.
-		s.Store.Update(records.ActionType, rec.ID, map[string]any{"last_run": now.UTC().Format(time.RFC3339)})
+		s.Apply(records.Op{Type: records.ActionType, ID: rec.ID, After: map[string]any{"last_run": now.UTC().Format(time.RFC3339)}})
 		if _, _, err := s.RunAs(ctx, "system", rec.ID, ""); err != nil {
 			records.Record(s.Store, "system", records.Change{Action: "failed", Detail: "scheduled action: " + err.Error()})
 		}

@@ -26,7 +26,7 @@ func (s *Server) apiChanges(w http.ResponseWriter, r *http.Request) {
 	if c := q.Get("since"); c != "" {
 		t, err := time.Parse(time.RFC3339Nano, c)
 		if err != nil {
-			writeError(w, &badRequest{"since is the cursor a previous answer gave, such as " + time.Now().UTC().Format(time.RFC3339Nano)})
+			writeError(w, &badRequest{"since is the cursor a previous answer gave, such as " + time.Now().UTC().Format(time.RFC3339Nano)}) // wall clock: a cursor is a log entry's own time, which the store stamps
 			return
 		}
 		since = t
@@ -36,16 +36,16 @@ func (s *Server) apiChanges(w http.ResponseWriter, r *http.Request) {
 		limit = min(n, changesMax)
 	}
 	wait, _ := strconv.Atoi(q.Get("wait"))
-	deadline := time.Now().Add(time.Duration(min(max(wait, 0), 60)) * time.Second)
+	deadline := time.Now().Add(time.Duration(min(max(wait, 0), 60)) * time.Second) // wall clock: how long a request waits
 	owner := records.VisitorOf(r.Context()).Owner()
 	seen := -1
 	for {
 		// Counting the log is cheap; reading it only when it grew is not
 		// a scan every moment of a wait.
-		if n, _ := s.app.Store.Count(records.ActivityType); n != seen || !time.Now().Before(deadline) {
+		if n, _ := s.app.Store.Count(records.ActivityType); n != seen || !time.Now().Before(deadline) { // wall clock: how long a request waits
 			seen = n
 			out, cursor, more := s.changesSince(since, limit, owner, q.Get("since") == "")
-			if len(out) > 0 || !time.Now().Before(deadline) {
+			if len(out) > 0 || !time.Now().Before(deadline) { // wall clock: how long a request waits
 				writeJSON(w, http.StatusOK, map[string]any{"changes": out, "cursor": cursor, "more": more,
 					"next":      "/api/changes?since=" + cursor,
 					"untrusted": "each change's title was written by its written_by: " + records.Untrusted})
@@ -111,7 +111,7 @@ func (s *Server) changesSince(since time.Time, limit int, owner, start bool) ([]
 	}
 	cursor := since.UTC().Format(time.RFC3339Nano)
 	if since.IsZero() {
-		cursor = time.Now().UTC().Format(time.RFC3339Nano)
+		cursor = time.Now().UTC().Format(time.RFC3339Nano) // wall clock: a cursor is a log entry's own time, which the store stamps
 	}
 	var out []map[string]any
 	writers := s.app.Records.WritersFor(false)

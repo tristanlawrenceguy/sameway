@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/blocks"
@@ -14,26 +13,8 @@ import (
 // rung, logged, and told beyond the page through notify, which the
 // command line provides: the machine's own notification, and a command
 // that can reach a phone or an inbox. An open page hears about it over
-// /events (sync.go) and rings too.
-
-// StartRinging rings what is due for as long as ctx lasts. notify may be
-// nil, in which case a ring shows only on open pages.
-func (s *Server) StartRinging(ctx context.Context, notify func(title, text, url string)) {
-	s.OnRing(notify)
-	go func() {
-		tick := time.NewTicker(5 * time.Second)
-		defer tick.Stop()
-		for {
-			s.Ring(s.now())
-			go s.FetchMeetings(time.Now()) // transcripts from Teams and Zoom; meeting_fetch.go
-			select {
-			case <-ctx.Done():
-				return
-			case <-tick.C:
-			}
-		}
-	}()
-}
+// /events (sync.go) and rings too. The ring is one of the server's
+// background jobs (jobs.go).
 
 // OnRing sets what a ring is told to, without starting the loop. A turn
 // that ends with no page to hear it is told the same way; see tellDone.
