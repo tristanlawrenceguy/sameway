@@ -24,14 +24,18 @@ func (c *ctx) searchCmd() error {
 		hits = hits[:search.Limit]
 	}
 	c.print(map[string]any{"query": q, "count": len(hits), "hits": hits, "some": some}, func() {
-		if some && len(hits) > 0 {
-			fmt.Fprintln(c.Stdout, search.SomeWords)
+		if o := search.Order(hits, some); o != "" {
+			fmt.Fprintln(c.Stdout, o)
 		}
 		if len(hits) == 0 {
 			fmt.Fprintf(c.Stdout, "nothing has %q in it\n", q)
 		}
 		for _, h := range hits {
-			fmt.Fprintf(c.Stdout, "%-8s %s  %s\n", h.Type, h.Href, h.Title)
+			close := ""
+			if h.Near {
+				close = "  (" + search.Close + ")"
+			}
+			fmt.Fprintf(c.Stdout, "%-8s %s  %s%s\n", h.Type, h.Href, h.Title, close)
 			if h.Snippet != "" {
 				fmt.Fprintf(c.Stdout, "         %s\n", h.Snippet)
 			}

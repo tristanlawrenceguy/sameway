@@ -5,9 +5,11 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/runner"
 	"github.com/tristanlawrenceguy/sameway/internal/update"
 )
 
@@ -46,16 +48,17 @@ func (c *ctx) updateCmd() error {
 	return nil
 }
 
-// watchUpdates keeps sameway current while the server runs, in the way
+// updateJob keeps sameway current while the server runs, in the way
 // update.mode says: auto installs a release on its own, manual only says
 // one is there. Either way it goes in the activity log, where the person
 // reads what has happened, and on the terminal the server was started in.
-func watchUpdates(ctx context.Context, out io.Writer, a *app.App) {
+// A build that cannot say its version has no such job.
+func updateJob(out io.Writer, a *app.App) []runner.Job {
 	// An install before this start left the program it replaced behind,
 	// because Windows will not delete one that is running.
 	update.Tidy("")
 	mode := func() string { return a.Workspace.Config.Update.Mode }
-	update.Updater{}.Watch(ctx, mode, update.Every, func(o update.Outcome, err error) {
+	w := update.Updater{}.Watcher(mode, func(o update.Outcome, err error) {
 		if err != nil {
 			fmt.Fprintf(out, "  update  %v\n", err)
 			return
@@ -67,4 +70,9 @@ func watchUpdates(ctx context.Context, out io.Writer, a *app.App) {
 		}
 		records.Record(a.Store, "system", records.Change{Action: action, Component: "sameway " + o.Latest})
 	})
+	if w == nil {
+		return nil
+	}
+	return []runner.Job{{Name: "Look for a new version of Sameway", Every: update.Every,
+		Run: func(ctx context.Context, _ time.Time) error { return w.Check(ctx) }}}
 }

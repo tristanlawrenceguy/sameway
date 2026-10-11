@@ -22,15 +22,22 @@ var searchOp = Op{Title: "Search everything", Traits: Traits{ReadOnly: true, Ide
 			"Search everything first: the answer begins with how many were found of each kind, 12 found: 7 notes, 3 tasks, 2 blocks. Then, if the counts show where it is, search again with type to see only that kind. " +
 			fmt.Sprintf("At most %d come back at a time; the answer says when there are more, and page asks for them.", search.Limit),
 		Schema: map[string]any{"type": "object", "properties": map[string]any{
-			"query": map[string]any{"type": "string", "description": "Words that must all appear."},
+			"query": map[string]any{"type": "string", "description": "Words to find; what has all of them comes first."},
 			"type":  map[string]any{"type": "string", "description": "Only this kind of thing. Leave it out to search everything."},
 			"page":  map[string]any{"type": "integer", "minimum": 1, "description": "Which page of results, from 1; only when the answer says there are more."},
 		}, "required": []string{"query"}, "additionalProperties": false},
 	}, Offered: func(s *Service, t *llm.Tool) bool {
 		kinds := strings.Join(search.Kinds(s.Store.Types()), ", ")
 		withProp(t, "type", map[string]any{"type": "string", "description": "Only this kind of thing, one of: " + kinds + ". Leave it out to search everything."})
+		if search.ByMeaning(s.Store) {
+			t.Description += " " + byMeaning
+		}
 		return true
 	}}
+
+// byMeaning tells a model that search also finds what a record is about,
+// said only when it is on, so it does not search again in other words.
+const byMeaning = "It also finds what is " + search.Close + " with none of the words (the plumber finds the boiler repair), after what has them, each such line marked so."
 
 // search is one search over everything, the same one the page and the API
 // use: counted by kind, narrowed when a type is named, a page at a time.
@@ -61,7 +68,7 @@ func (s *Service) search(query, only string, page int) toolResult {
 			line += "\t" + oneLine(h.Snippet)
 		}
 		if h.Near {
-			line += "\t(found by meaning, not its words)"
+			line += "\t(" + search.Close + ", not by its words)"
 		}
 		lines = append(lines, line)
 	}
