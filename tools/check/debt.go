@@ -15,7 +15,6 @@ var longFuncs = map[string]int{
 	"internal/chat.Service.sendTurn":       131,
 	"internal/chat.Service.writeUpMeeting": 84,
 	"internal/cli.ctx.contentCmd":          106,
-	"internal/cli.ctx.openCmd":             114,
 	"internal/convert.pptx":                91,
 	"internal/discover.Browse":             115,
 	"internal/llm.OpenAI.Stream":           86,
@@ -24,9 +23,8 @@ var longFuncs = map[string]int{
 	"internal/schema.Set.Complete":         92,
 	"internal/schema.coerce":               104,
 	"internal/server.Server.apiList":       83,
-	"internal/server.Server.detailPage":    126,
+	"internal/server.Server.detailPage":    120,
 	"internal/server.Server.narrowLog":     112,
-	"internal/server.Server.shareSave":     81,
 	"internal/soundtrack.readMKV":          83,
 	"internal/speech.SplitWAV":             110,
 	"internal/track.Summarise":             87,
@@ -40,4 +38,42 @@ var splitByName = map[string]bool{
 	"internal/server/outcome_helpers_test.go":         true,
 	"internal/server/record_props_extra_test.go":      true,
 	"internal/server/said_test_helpers_test.go":       true,
+}
+
+// wallClock are files under clockDirs that read time.Now() where the app's
+// clock belongs, with how many times, when the rule came in (2026-10-10).
+// Some are being reworked elsewhere at the time (mail in, invites on the
+// network, a phone paired, connecting a model). Move each to the app's
+// clock, or mark a use that must be real time `// wall clock: <reason>`,
+// and lower or remove its entry.
+var wallClock = map[string]int{
+	"internal/blocks/rings.go":           1,
+	"internal/blocks/track_words.go":     1,
+	"internal/chat/automate.go":          1,
+	"internal/chat/conversations.go":     1,
+	"internal/chat/measured.go":          1,
+	"internal/chat/tool_log.go":          1,
+	"internal/chat/warm.go":              1,
+	"internal/records/agent_keys.go":     1,
+	"internal/records/conversation.go":   1,
+	"internal/records/glance_count.go":   1,
+	"internal/records/pace.go":           1,
+	"internal/records/page_parts.go":     1,
+	"internal/records/pieces.go":         2,
+	"internal/server/connect/connect.go": 2,
+	"internal/server/lan_invite.go":      4,
+	"internal/server/mail_in.go":         2,
+	"internal/server/phone_lan.go":       3,
+}
+
+// storeWrites are the functions that write the store directly rather than
+// through records.Apply, ApplyOps or WriteAs, each with why (writes.go).
+// Keyed by file and function. Like the lists above it only goes down.
+var storeWrites = map[string]string{
+	"internal/app/schema_change.go App.RemoveType":     "a type deleted drops its whole table in one statement, logged as the schema change; its records go with their type, not one by one",
+	"internal/content/mirror.go Mirror.Import":         "a record read back from its file keeps the created and updated times the file says, which Apply cannot set; the caller logs the whole import as one change with its ops (cli/portable.go)",
+	"internal/server/servertest/fixtures.go SeedTasks": "a test fixture seeding a fresh workspace; nothing to log or undo",
+	"internal/chat/access.go Service.letIn":            "person access, logged by hand: to move after the invite dive, which owns this file now",
+	"internal/chat/invite.go Service.GiveAccess":       "person access, logged by hand as human: to move after the invite dive, which owns this file now",
+	"internal/chat/suggest_records.go Service.Suggest": "a suggestion's question: to move after the tagging dive, which owns this file now",
 }

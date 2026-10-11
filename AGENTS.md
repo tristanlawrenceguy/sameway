@@ -43,6 +43,7 @@ runner in tools/a11y-runner.
 | `internal/server/connect/` | connecting the assistant to an AI model: the card on the chat when there is none, each way of having one told as its own story, a pasted key checked and kept in the person's settings, a free model fetched through Ollama, the AI apps a person uses connected. A feature package that needs only `web.Deps` | `connect.go`, `routes.go` |
 | `internal/server/servertest/` | what the server's tests and its feature packages' tests share: `New`/`NewWith` (an app on a fresh starter workspace and the server serving it), requests (`Get`, `PostForm`, `As`, `After`...), `Said`, and `Main` for a test package's TestMain | `servertest.go` |
 | `internal/cli/` | the sameway command | `root.go` |
+| `internal/runner/` | the work done in the background while a workspace is served: one `Runner` per app (`App.Jobs`), each `Job` a name, a schedule and a `Run(ctx, now)`; it waits on the injected clock, keeps each job's last run, last error and next run, recovers a panic, and waits for the jobs at shutdown. `cli/background.go` starts it for serve and open alike | `runner.go` |
 | `internal/update/` | finding, checking and installing a release of sameway itself | `update.go` |
 | `internal/bench/` | the assistant measured with a real model on everyday requests, each in a fresh workspace | `assistant_test.go` |
 | `examples/workspaces/starter/` | what `sameway init` copies | |
@@ -79,6 +80,18 @@ area it belongs to, or a new file in `docs/tests/` linked here.
   `*_more.go`, `*_extra.go` or `*_helpers.go` fails: when a file grows,
   split by topic, moving a group of related functions into a file named
   after what it holds. Read the whole file before editing.
+- **The app's clock.** In `internal/server`, `chat`, `records` and
+  `blocks`, the time comes from the app's clock (`s.now()`, `Book.Now`),
+  which a test fixes. `tools/check` fails a `time.Now()` there unless its
+  line says why it must be real time (`// wall clock: how long a request
+  waits`). The files from before the rule are in `wallClock` in
+  `tools/check/debt.go`, a list that only goes down.
+- **Records are written one way.** `tools/check` fails a call that writes
+  the store directly (Create, Update, Delete, Restore, Put) anywhere under
+  internal, cmd or tools but store and records themselves: write through
+  `records.Apply`, `ApplyOps` or `WriteAs`. The few that still do are in
+  `storeWrites` in `tools/check/debt.go`, each with why, and that list
+  only goes down.
 - **Golden examples.** A component template must reproduce every example in
   its manifest byte for byte. After changing a template or manifest run
   `UPDATE_GOLDEN=1 go test ./internal/render/` and commit the example files.
@@ -107,7 +120,10 @@ area it belongs to, or a new file in `docs/tests/` linked here.
   webhook client, ntfy) comes in through `app.Options`
   (`newAppWith(t, app.Options{...})` in internal/server, `servertest.NewWith`), never a package
   variable or an environment variable. A test that must set one anyway
-  leaves out `t.Parallel()` and puts it back before it ends.
+  leaves out `t.Parallel()` and puts it back before it ends. What a
+  package keeps for one open workspace lives on its store (`store.Keep`)
+  or its server, never in a package map keyed by it, so two open side by
+  side share nothing and it goes when the store closes.
 - Motion explains a change and never moves focus. A person's own action
   moves in `motion-base` or less, transform and opacity only; under
   reduced motion and the still pace it may cross-fade but not travel

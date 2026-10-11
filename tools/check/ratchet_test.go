@@ -78,6 +78,9 @@ func TestParseDebtReadsTheRealList(t *testing.T) {
 	if !reflect.DeepEqual(got["longFuncs"], longFuncs) {
 		t.Errorf("parsed longFuncs = %v, want %v", got["longFuncs"], longFuncs)
 	}
+	if !reflect.DeepEqual(got["wallClock"], wallClock) {
+		t.Errorf("parsed wallClock = %v, want %v", got["wallClock"], wallClock)
+	}
 	if len(got["splitByName"]) != len(splitByName) {
 		t.Errorf("parsed splitByName = %v, want %v", got["splitByName"], splitByName)
 	}

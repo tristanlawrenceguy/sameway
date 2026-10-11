@@ -10,7 +10,7 @@ import "time"
 // now is the time it is for the person.
 func (w *Workspace) now() time.Time {
 	if w.Clock == nil {
-		return time.Now()
+		return time.Now() // wall clock: the clock when none is given
 	}
 	return w.Clock()
 }

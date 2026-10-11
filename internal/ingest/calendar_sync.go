@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -73,7 +74,7 @@ func SyncCalendar(st *store.Store, t *schema.Type, tb *Table, had []string) (Syn
 		}
 		was := byUID[uid]
 		if was == nil {
-			if _, err := st.Create(t.Name, fields); err == nil {
+			if _, err := kept(st, records.Op{Type: t.Name, After: fields}); err == nil {
 				out.Added++
 			}
 			continue
@@ -85,14 +86,14 @@ func SyncCalendar(st *store.Store, t *schema.Type, tb *Table, had []string) (Syn
 			}
 		}
 		if len(changed) > 0 {
-			if _, err := st.Update(t.Name, was.ID, changed); err == nil {
+			if _, err := kept(st, records.Op{Type: t.Name, ID: was.ID, After: changed}); err == nil {
 				out.Changed++
 			}
 		}
 	}
 	for _, uid := range had {
 		if r := byUID[uid]; r != nil && !now[uid] {
-			if err := st.Delete(t.Name, r.ID); err == nil {
+			if _, err := kept(st, records.Op{Type: t.Name, ID: r.ID}); err == nil {
 				out.Removed++
 			}
 		}

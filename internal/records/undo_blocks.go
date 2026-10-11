@@ -87,7 +87,7 @@ func RemoveBlock(st *store.Store, id string) (Change, error) {
 	if err != nil {
 		return Change{}, fmt.Errorf("could not remove block %s: %v", id, err)
 	}
-	done, err := ApplyOps(st, Op{Type: BlockType, ID: id})
+	done, err := (&Book{Store: st}).Apply(Op{Type: BlockType, ID: id})
 	if err != nil {
 		return Change{}, fmt.Errorf("could not remove block %s: %v", id, err)
 	}

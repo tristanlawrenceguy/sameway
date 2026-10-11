@@ -55,7 +55,7 @@ func (s *Server) noticeUse(r *http.Request, t *schema.Type, rec *store.Record, a
 			continue
 		}
 		// Asked once: a No is an answer, and a Yes is in the log.
-		s.app.Store.SetMeta("offered:show:"+key, time.Now().UTC().Format(time.RFC3339))
+		s.app.Store.SetMeta("offered:show:"+key, s.now().UTC().Format(time.RFC3339))
 		offered = p
 	}
 	return offered
@@ -67,7 +67,7 @@ func (s *Server) askedFor(key, typ string) []time.Time {
 	metaKey := "use:show:" + key + ":" + typ
 	var times []time.Time
 	json.Unmarshal([]byte(s.app.Store.Meta(metaKey)), &times)
-	now := time.Now().UTC()
+	now := s.now().UTC()
 	kept := []time.Time{now}
 	for _, at := range times {
 		if now.Sub(at) < offerWithin {
@@ -102,6 +102,8 @@ func partWords(s *Server, t *schema.Type, rec *store.Record, key string) string 
 		return "its recording"
 	case WriteUpPart:
 		return "the offer to write it up"
+	case ConversationPart:
+		return "its whole conversation"
 	}
 	for _, l := range relate.Of(s.app.Store, t, rec, s.now()) {
 		if l.Key == key {

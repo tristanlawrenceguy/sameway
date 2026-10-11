@@ -18,9 +18,16 @@ func Handler(a *app.App, token string) http.Handler {
 
 // HandlerFor is Handler around a server already made, so the command
 // line can start its ringing first.
+//
+// Every way of serving (serve, open, the Wi-Fi and the tailnet) goes
+// through here, so this is where another site's page is stopped: a
+// browser visiting it could otherwise post forms to this computer
+// (CSRF). A write from a browser must come from Sameway's own pages; the
+// command line, MCP and API clients send neither Origin nor
+// Sec-Fetch-Site and pass, as does a phone's share (the browser's own).
 func HandlerFor(a *app.App, token string, s *server.Server) http.Handler {
 	mux := http.NewServeMux()
 	mux.Handle("/mcp", server.WithAgentKeys(a, mcp.Bearer(token, &mcp.Server{App: a, Version: update.Version})))
 	mux.Handle("/", s)
-	return mux
+	return http.NewCrossOriginProtection().Handler(mux)
 }

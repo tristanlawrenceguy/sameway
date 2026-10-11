@@ -12,18 +12,37 @@ import (
 // page, the assistant, the API and AI services all find "Boiler repair,
 // call Marek" when asked for the plumber. A workspace that has it says so
 // with UseMeaning; its matches by meaning come after the matches by word,
-// those already found left out, each marked Near.
+// those already found left out, each marked Near. The way to find by
+// meaning is kept on the workspace's store (store.Keep), so it goes when
+// the store closes.
 
-var nearFor sync.Map // *store.Store -> func(q string) []string
+// nearby is a store's way of finding by meaning, nil when it has none.
+type nearby struct {
+	mu   sync.Mutex
+	find func(q string) []string
+}
+
+// nearKey is where a store keeps its nearby.
+type nearKey struct{}
 
 // UseMeaning has a workspace's searches also find records near in meaning:
 // find answers type/id keys, nearest first. Nil stops it.
 func UseMeaning(st *store.Store, find func(q string) []string) {
-	if find == nil {
-		nearFor.Delete(st)
-		return
+	n := st.Keep(nearKey{}, func() any { return &nearby{} }).(*nearby)
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	n.find = find
+}
+
+// nearFinder is st's way of finding by meaning, or nil.
+func nearFinder(st *store.Store) func(q string) []string {
+	n, ok := st.Kept(nearKey{}).(*nearby)
+	if !ok {
+		return nil
 	}
-	nearFor.Store(st, find)
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	return n.find
 }
 
 // Doc is a record as words, for meaning to read.
@@ -61,15 +80,15 @@ func clipText(s string, n int) string {
 
 // near adds a workspace's matches by meaning to its matches by word.
 func near(st *store.Store, types *schema.Set, q string, hits []Hit, r Reader) []Hit {
-	f, ok := nearFor.Load(st)
-	if !ok {
+	find := nearFinder(st)
+	if find == nil {
 		return hits
 	}
 	have := map[string]bool{}
 	for _, h := range hits {
 		have[h.Type+"/"+h.ID] = true
 	}
-	for _, key := range f.(func(string) []string)(q) {
+	for _, key := range find(q) {
 		typ, id, ok := strings.Cut(key, "/")
 		if !ok || have[key] {
 			continue
@@ -86,4 +105,45 @@ func near(st *store.Store, types *schema.Set, q string, hits []Hit, r Reader) []
 		hits = append(hits, Hit{Type: typ, ID: id, Title: title, Snippet: clipText(strings.TrimSpace(body), 140), Href: "/t/" + typ + "/" + id, Near: true})
 	}
 	return hits
+}
+
+// ByMeaning says whether a workspace's searches also find by meaning, so
+// the search box and the assistant's tool say so only when it is true.
+func ByMeaning(st *store.Store) bool { return nearFinder(st) != nil }
+
+// Close is how a hit found by meaning is marked, on every surface alike.
+const Close = "close in meaning"
+
+// Order says how a search's hits are ranked, when some are close in
+// meaning, so a person and an agent read why the boiler repair is there
+// with none of their words, and in which order; or, with none by meaning,
+// SomeWords when only some words were found. "" when there is nothing to say.
+func Order(hits []Hit, some bool) string {
+	return order(some, nearIn(hits), len(hits))
+}
+
+func nearIn(hits []Hit) int {
+	n := 0
+	for _, h := range hits {
+		if h.Near {
+			n++
+		}
+	}
+	return n
+}
+
+func order(some bool, near, total int) string {
+	switch {
+	case total == 0:
+		return ""
+	case near == 0 && some:
+		return SomeWords
+	case near == 0:
+		return ""
+	case near == total:
+		return "Nothing has all your words; these are " + Close + "."
+	case some:
+		return "Nothing has every word. First what is " + Close + ", then what has some of the words."
+	}
+	return "First what has your words, then what is " + Close + "."
 }

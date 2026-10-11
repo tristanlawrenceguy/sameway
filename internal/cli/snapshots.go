@@ -5,41 +5,29 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
+	"github.com/tristanlawrenceguy/sameway/internal/runner"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
-// keepSnapshots copies the workspace's database once a day for as long as
-// the server runs, keeping the last seven: see workspace/snapshots.go.
-func keepSnapshots(ctx context.Context, out io.Writer, a *app.App) {
-	take := func() {
-		path, err := a.Workspace.DailySnapshot(time.Now(), a.Store.Backup)
+// snapshotJob copies the workspace's database once a day for as long as
+// the server runs, keeping the last seven: see workspace/snapshots.go. It
+// looks every hour, so a day that starts while it runs gets its copy.
+func snapshotJob(out io.Writer, a *app.App) runner.Job {
+	return runner.Job{Name: "Daily copy of the data", Every: time.Hour, Run: func(_ context.Context, now time.Time) error {
+		path, err := a.Workspace.DailySnapshot(now, a.Store.Backup)
 		if err != nil {
-			log.Printf("snapshot: %v", err)
-			return
+			return err
 		}
 		if path != "" {
 			fmt.Fprintf(out, "  saved   a copy of today's data in %s\n", filepath.Dir(path))
 		}
-	}
-	take()
-	go func() {
-		tick := time.NewTicker(time.Hour)
-		defer tick.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-tick.C:
-				take()
-			}
-		}
-	}()
+		return nil
+	}}
 }
 
 // snapshotsCmd lists the copies of this workspace's data, newest first.

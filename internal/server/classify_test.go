@@ -71,10 +71,7 @@ func TestTagsFollowThePersonsJudgement(t *testing.T) {
 		return nil
 	}
 	arrive := func(subject string) *store.Record {
-		rec, err := a.Store.Create("email", map[string]any{"subject": subject, "from": "Water Co", "body": "Please pay by Friday."})
-		if err != nil {
-			t.Fatal(err)
-		}
+		rec := written(t, a.Store, "created", "email", "", map[string]any{"subject": subject, "from": "Water Co", "body": "Please pay by Friday."})
 		tagWait(t, "the tag for "+subject, func() bool { return classOf(rec.ID) != nil })
 		return rec
 	}
@@ -121,8 +118,8 @@ func TestTagsFollowThePersonsJudgement(t *testing.T) {
 	if c := classOf(fourth.ID); c.Fields["state"] != "confirmed" || c.Fields["confirmed_by"] != "judgement" {
 		t.Errorf("kept for the person when their choices are plain: %v", c.Fields)
 	}
-	if strings.Contains(get(t, srv, "/today").Body.String(), "Council tax") {
-		t.Error("a tag kept from their choices is not asked again")
+	if page := said(get(t, srv, "/today").Body.String()); strings.Contains(page, "Keep important on Council tax") || !strings.Contains(page, "Kept for you from your choices") {
+		t.Error("a tag kept from their choices is not asked again, only shown folded")
 	}
 }
 
