@@ -167,6 +167,7 @@ func (s *Server) mailNote(m mailin.Mail) error {
 	text := m.Text
 	if h := m.HTML(); h != "" {
 		text, _ = convert.HTMLToMarkdown(h)
+		text = mailin.NoRemotePictures(text) // parse.go: no spy pixels
 	}
 	parts := []string{"From " + m.From + ", " + m.Date.Local().Format("Mon 2 Jan 2006 15:04")}
 	if t := strings.TrimSpace(text); t != "" {

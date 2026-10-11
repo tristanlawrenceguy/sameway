@@ -34,11 +34,22 @@ func checkDebtAgainst(base string) report {
 	if err != nil {
 		return report{notes: []string{fmt.Sprintf("cannot parse %s at %s (%v); the debt list was not compared with it", debtPath, base, err)}}
 	}
-	now := map[string]map[string]int{"longFuncs": longFuncs, "splitByName": {}}
+	now := map[string]map[string]int{"longFuncs": longFuncs, "splitByName": {}, "storeWrites": {}}
 	for k := range splitByName {
 		now["splitByName"][k] = 1
 	}
-	return compareDebt(was, now)
+	for k := range storeWrites {
+		now["storeWrites"][k] = 1
+	}
+	var r report
+	for list := range now {
+		if _, ok := was[list]; !ok {
+			delete(now, list) // a list new since base has nothing to go down from
+			r.notes = append(r.notes, fmt.Sprintf("%s is not in %s at %s; it was not compared", list, debtPath, base))
+		}
+	}
+	r.add(compareDebt(was, now))
+	return r
 }
 
 // compareDebt fails each entry of now that is not in was, or whose length
@@ -52,6 +63,8 @@ func compareDebt(was, now map[string]map[string]int) report {
 			switch {
 			case !ok && list == "longFuncs":
 				r.problems = append(r.problems, fmt.Sprintf("%s: added to longFuncs in %s at %d lines; the list only goes down: shorten or split the function instead", key, debtPath, n))
+			case !ok && list == "storeWrites":
+				r.problems = append(r.problems, fmt.Sprintf("%s: added to storeWrites in %s; the list only goes down: write through records.Apply, ApplyOps or WriteAs instead", key, debtPath))
 			case !ok:
 				r.problems = append(r.problems, fmt.Sprintf("%s: added to %s in %s; the list only goes down: name the file for what it does instead", key, list, debtPath))
 			case n > old:
@@ -63,23 +76,27 @@ func compareDebt(was, now map[string]map[string]int) report {
 }
 
 // parseDebt reads the map literals of debt.go: longFuncs with their
-// lengths, splitByName with 1 for each file.
+// lengths, splitByName and storeWrites with 1 for each entry. A list not
+// in src is not in what it returns.
 func parseDebt(src []byte) (map[string]map[string]int, error) {
 	f, err := parser.ParseFile(token.NewFileSet(), debtPath, src, parser.SkipObjectResolution)
 	if err != nil {
 		return nil, err
 	}
-	lists := map[string]map[string]int{"longFuncs": {}, "splitByName": {}}
+	known := map[string]bool{"longFuncs": true, "splitByName": true, "storeWrites": true}
+	lists := map[string]map[string]int{}
 	ast.Inspect(f, func(n ast.Node) bool {
 		spec, ok := n.(*ast.ValueSpec)
 		if !ok || len(spec.Names) != 1 || len(spec.Values) != 1 {
 			return true
 		}
-		list, ok := lists[spec.Names[0].Name]
+		name := spec.Names[0].Name
 		lit, isLit := spec.Values[0].(*ast.CompositeLit)
-		if !ok || !isLit {
+		if !known[name] || !isLit {
 			return true
 		}
+		list := map[string]int{}
+		lists[name] = list
 		for _, e := range lit.Elts {
 			kv, ok := e.(*ast.KeyValueExpr)
 			if !ok {
