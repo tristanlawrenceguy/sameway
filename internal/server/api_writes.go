@@ -30,6 +30,12 @@ func (s *Server) apiCreate(w http.ResponseWriter, r *http.Request) {
 	agent := apiAgent(r)
 	if r.PathValue("type") == records.BlockType {
 		byAgent(fields, agent, true)
+		// A tab no one has opened yet is still empty: give it its
+		// conversation first, as opening it would, or the first block an
+		// agent adds leaves it with none.
+		if c := canvasOf(fields); s.app.Chat.HasCanvas(c) {
+			s.seedChat(c)
+		}
 	}
 	rec, _, err := records.WriteAs(s.app.Store, agent.As(), "created", r.PathValue("type"), "", fields)
 	if err != nil {

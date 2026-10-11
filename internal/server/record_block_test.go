@@ -17,9 +17,12 @@ func TestARecordBlockIsTheRecordOnTheCanvas(t *testing.T) {
 	_, h := newApp(t)
 	var note struct{ ID string }
 	decode(t, postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Call the dentist", "body": "Ask about Thursday.", "tags": []string{"health"}}), &note)
-	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/block", map[string]any{
+	added := postJSON(t, h, http.MethodPost, "/api/block", map[string]any{
 		"component": "record", "props": map[string]any{"type": "note", "record": note.ID}, "span": 6,
-	}), http.StatusCreated)
+	})
+	wantStatus(t, added, http.StatusCreated)
+	var block struct{ ID string }
+	decode(t, added, &block)
 
 	page := get(t, h, "/").Body.String()
 	for _, want := range []string{
@@ -56,9 +59,7 @@ func TestARecordBlockIsTheRecordOnTheCanvas(t *testing.T) {
 	}
 
 	// Expanded, the block is the record at page size, named after it.
-	var blocks struct{ Records []struct{ ID string } }
-	decode(t, get(t, h, "/api/block"), &blocks)
-	focus := get(t, h, "/canvas/"+blocks.Records[len(blocks.Records)-1].ID).Body.String()
+	focus := get(t, h, "/canvas/"+block.ID).Body.String()
 	if !strings.Contains(focus, "View full") || !strings.Contains(focus, "<title>Call the dentist at nine") {
 		t.Error("the expanded block should be the note at page size, under its own name")
 	}

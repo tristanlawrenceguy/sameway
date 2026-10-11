@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 // Over REST, a block write answers with the layout line, and POST
@@ -37,7 +38,16 @@ func TestTheAPIArrangesATabInOneChange(t *testing.T) {
 	if !strings.Contains(rec.Body.String(), "is missing") {
 		t.Errorf("leaving a block out is refused: %s", rec.Body.String())
 	}
-	rec = apiAs(t, h, http.MethodPost, "/api/arrange", `{"canvas":"","blocks":[{"id":"`+ids[0]+`","span":12,"frame":"bare"},{"id":"`+ids[1]+`","span":12}]}`, agent)
+	// The tab's conversation came with its first block, and is listed too.
+	var talk string
+	if all, err := a.Store.List(records.BlockType, store.ListOptions{}); err == nil {
+		for _, b := range all {
+			if b.Fields["component"] == records.ComponentName {
+				talk = b.ID
+			}
+		}
+	}
+	rec = apiAs(t, h, http.MethodPost, "/api/arrange", `{"canvas":"","blocks":[{"id":"`+talk+`","span":12},{"id":"`+ids[0]+`","span":12,"frame":"bare"},{"id":"`+ids[1]+`","span":12}]}`, agent)
 	wantStatus(t, rec, http.StatusOK)
 	if !strings.Contains(rec.Body.String(), "It reads in order with full rows.") {
 		t.Errorf("the answer should say how the page reads now: %s", rec.Body.String())
