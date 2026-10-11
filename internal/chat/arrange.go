@@ -110,20 +110,19 @@ func (s *Service) arrange(canvas string, items []arrangeItem) toolResult {
 	if why := newSkip(before, after); why != "" {
 		return fail("nothing was arranged: %s", why)
 	}
-	var batch []records.BatchItem
+	var ops []records.Op
 	for _, it := range items {
-		was := byID[it.ID]
-		if !moves(was, next[it.ID]) {
-			continue
+		if moves(byID[it.ID], next[it.ID]) {
+			ops = append(ops, records.Op{Type: records.BlockType, ID: it.ID, After: s.fields(records.BlockType, next[it.ID])})
 		}
-		if _, err := s.Store.Update(records.BlockType, it.ID, s.fields(records.BlockType, next[it.ID])); err != nil {
-			s.putBack(batch)
-			return fail("nothing was arranged: could not move %s: %v", it.ID, err)
-		}
-		batch = append(batch, records.BatchItem{Type: records.BlockType, ID: it.ID, Before: was.Fields})
 	}
-	if len(batch) == 0 {
+	if len(ops) == 0 {
 		return toolResult{text: "the tab is already arranged that way; nothing changed"}
+	}
+	// All or none: a block that cannot be moved puts back those before it.
+	done, err := s.Apply(ops...)
+	if err != nil {
+		return fail("nothing was arranged: %v", err)
 	}
 	name, href := "Home", "/"
 	for _, c := range s.Canvases() {
@@ -131,8 +130,8 @@ func (s *Service) arrange(canvas string, items []arrangeItem) toolResult {
 			name, href = c.Name, records.CanvasPath(canvas)
 		}
 	}
-	c := records.Change{Action: "arranged", Detail: fmt.Sprintf("%s, %d blocks", name, len(batch)), Href: href, Ops: records.OpsOf(s.Store, batch)}
-	return toolResult{text: fmt.Sprintf("arranged %s: %d blocks moved or reshaped, in one change that one Undo takes back", name, len(batch)), change: &c}
+	c := records.Change{Action: "arranged", Detail: fmt.Sprintf("%s, %d blocks", name, len(done)), Href: href, Ops: done}
+	return toolResult{text: fmt.Sprintf("arranged %s: %d blocks moved or reshaped, in one change that one Undo takes back", name, len(done)), change: &c}
 }
 
 // moves says whether new layout fields would change a block; who last
@@ -144,14 +143,6 @@ func moves(b *store.Record, fields map[string]any) bool {
 		}
 	}
 	return false
-}
-
-// putBack undoes the part of an arrangement already written, when a later
-// block could not be.
-func (s *Service) putBack(done []records.BatchItem) {
-	for _, d := range done {
-		s.Store.Update(records.BlockType, d.ID, d.Before)
-	}
 }
 
 // withFields is a copy of a block with some fields changed, to see a

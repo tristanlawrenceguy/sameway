@@ -55,7 +55,7 @@ func (s *Server) seen(r *http.Request, path string) {
 	if s.present.here == nil {
 		s.present.here = map[string]seenAt{}
 	}
-	s.present.here[login] = seenAt{p, time.Now()}
+	s.present.here[login] = seenAt{p, time.Now()} // wall clock: who is here just now is real time
 }
 
 // whoAsks is the login and name of who makes a request: a visitor, or the
@@ -96,7 +96,7 @@ func (s *Server) HearPresence(ps []peers.Presence) {
 		s.present.away = map[string]seenAt{}
 	}
 	for _, p := range ps {
-		s.present.away[strings.ToLower(p.Login)] = seenAt{p, time.Now()}
+		s.present.away[strings.ToLower(p.Login)] = seenAt{p, time.Now()} // wall clock: who is here just now is real time
 	}
 }
 

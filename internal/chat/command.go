@@ -197,7 +197,7 @@ func (s *Service) acceptAction(ctx context.Context, id string) toolResult {
 	}
 	line, _ := rec.Fields["command"].(string)
 	line = strings.TrimSpace(line)
-	if _, err := s.Store.Update(records.ActionType, id, map[string]any{"accepted": line}); err != nil {
+	if _, err := s.Apply(records.Op{Type: records.ActionType, ID: id, After: map[string]any{"accepted": line}}); err != nil {
 		return fail("could not accept action %s: %v", id, err)
 	}
 	rec.Fields["accepted"] = line

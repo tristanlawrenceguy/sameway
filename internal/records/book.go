@@ -40,7 +40,7 @@ func (b *Book) setting(key string) string {
 // Now is the time it is for the person (Clock).
 func (b *Book) Now() time.Time {
 	if b == nil || b.Clock == nil {
-		return time.Now()
+		return time.Now() // wall clock: the clock when none is given
 	}
 	return b.Clock()
 }
