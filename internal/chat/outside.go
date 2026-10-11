@@ -57,6 +57,11 @@ func (s *Service) changesAfter(saidID string) []records.Change {
 // turn run in another program, so a page can show that turn as it
 // happens too: each change as a step, then the change itself. The
 // function returned ends the watch and tells whatever landed last.
+//
+// It reads the log rather than listening (records.Listen): the tools run
+// in the MCP server, another process with its own store on the same
+// database (llm.Command), and nothing written there is told to this
+// process. outside_elsewhere_test.go holds it to that.
 func (s *Service) watch(ctx context.Context, saidID string, on func(Event)) (stop func()) {
 	seen := map[string]bool{}
 	tell := func() {
