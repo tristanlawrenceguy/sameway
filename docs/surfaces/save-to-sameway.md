@@ -70,7 +70,9 @@ are `share_test.go` and `share_guard_test.go`.
 
 - **Saving the moment the bookmark is pressed.** Any site could open
   /share with a link of its choosing, so the bookmark only fills the form,
-  and the person presses Save.
+  and the person presses Save. Another site's page cannot post to /share either:
+  the server refuses a browser's write that is not from Sameway's own
+  pages (ARCHITECTURE.md, "Other sites").
 - **Reading the page later, in the background.** Pocket saves at once and
   reads after. Here the person waits up to ten seconds, which keeps one
   note, one message and one Undo; a slow page is kept as its link.
