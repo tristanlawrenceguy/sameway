@@ -23,8 +23,11 @@ func TestTheServersJobsRunOnTheRunner(t *testing.T) {
 	a, h := newAppWith(t, app.Options{Clock: f.Now, After: f.After})
 	srv := h.(*server.Server)
 	jobs := srv.BackgroundJobs()
-	every := map[string]time.Duration{}
+	every, sleepers := map[string]time.Duration{}, 0
 	for _, j := range jobs {
+		if j.Every > 0 {
+			sleepers++
+		}
 		every[j.Name] = j.Every
 		if j.Name == "Changes passed through the cloud folder" && !j.Wait {
 			t.Error("the cloud folder's sync waits one round before its first, as its loop did")
@@ -53,7 +56,7 @@ func TestTheServersJobsRunOnTheRunner(t *testing.T) {
 	if got := <-rang; got != "Tea" {
 		t.Fatalf("what is due rings at the start: %q", got)
 	}
-	f.BlockUntil(len(jobs))
+	f.BlockUntil(sleepers)
 	f.Advance(5 * time.Second)
 	if got := <-rang; got != "Stretch" {
 		t.Fatalf("five seconds on, the next rings: %q", got)

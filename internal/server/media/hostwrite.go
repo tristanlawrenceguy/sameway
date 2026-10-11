@@ -15,6 +15,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
 	"github.com/tristanlawrenceguy/sameway/internal/look"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/runner"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -35,31 +36,36 @@ type hostState struct {
 	queue   chan string
 }
 
-// WriteDownInBackground has this server write recordings down itself, a
-// sweep a minute for any that arrived without it (the command line, a
-// copy synced from another computer). A running workspace turns it on;
+// WriteDownJobs has this server write recordings down itself: a worker
+// that writes down each one queued, and a sweep a minute for any that
+// arrived without it (the command line, a copy synced from another
+// computer), for the app's runner. A running workspace asks for them;
 // tests do not, so nothing starts a browser behind them.
-func (s *Service) WriteDownInBackground() {
+func (s *Service) WriteDownJobs() []runner.Job {
 	s.host.mu.Lock()
-	if s.host.on {
-		s.host.mu.Unlock()
-		return
+	if !s.host.on {
+		s.host.on = true
+		s.host.waiting, s.host.failed = map[string]bool{}, map[string]bool{}
+		s.host.queue = make(chan string, 4096)
 	}
-	s.host.on = true
-	s.host.waiting, s.host.failed = map[string]bool{}, map[string]bool{}
-	s.host.queue = make(chan string, 4096)
+	queue := s.host.queue
 	s.host.mu.Unlock()
-	go func() {
-		for id := range s.host.queue {
-			s.hostWrite(id)
-		}
-	}()
-	go func() {
-		for {
+	return []runner.Job{
+		{Name: "Recordings written down on this computer", Run: func(ctx context.Context, _ time.Time) error {
+			for {
+				select {
+				case <-ctx.Done():
+					return nil
+				case id := <-queue:
+					s.hostWrite(id)
+				}
+			}
+		}},
+		{Name: "Recordings looked for to write down", Every: time.Minute, Run: func(context.Context, time.Time) error {
 			s.sweep()
-			time.Sleep(time.Minute)
-		}
-	}()
+			return nil
+		}},
+	}
 }
 
 // hostWrites says whether this server will write a recording down itself,
