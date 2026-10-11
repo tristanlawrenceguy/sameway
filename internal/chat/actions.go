@@ -159,7 +159,7 @@ func (s *Service) show(rec *store.Record, title, answer string) (records.Change,
 	if r.isErr || r.change == nil {
 		return records.Change{}, errors.New(r.text)
 	}
-	s.Store.Update(records.ActionType, rec.ID, map[string]any{"block": r.change.ID})
+	s.Apply(records.Op{Type: records.ActionType, ID: rec.ID, After: map[string]any{"block": r.change.ID}})
 	return *r.change, nil
 }
 

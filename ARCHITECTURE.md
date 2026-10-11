@@ -27,6 +27,7 @@ travels through git.
 | Design system | Standalone package (tokens, CSS, HTML patterns, manifests) | Usable in any stack. The Go binary is one consumer. |
 | Accessibility bar | WCAG 2.2 AAA where feasible, AA as hard gate in CI | Every component ships with automated and keyboard tests. |
 | Users | One owner, local first; other people by who Tailscale says they are | No accounts or passwords: the owner is whoever is at the computer or signed the node in, and other people get the access their `person` record gives (section 4). |
+| Other sites | A browser's write must come from Sameway's own pages (`http.NewCrossOriginProtection`, in `cli.HandlerFor`, which every way of serving goes through) | A page on any site the person visits could otherwise post forms to the workspace on this computer, the Wi-Fi or the tailnet ([OWASP CSRF prevention](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)). No tokens are needed: browsers say where a request came from in `Sec-Fetch-Site` and `Origin`, which Go 1.25's check reads ([Go net/http](https://pkg.go.dev/net/http#CrossOriginProtection)). The command line, MCP and API clients send neither and pass; reading (GET) is never stopped, so the Save bookmark still opens /share and the person presses Save there. |
 | Sharing | Workspace = git-friendly folder | Push a repo or sync a folder. Presets are just repos. |
 
 ## 2. The one contract
@@ -177,8 +178,10 @@ record is written and logged (`WriteAs`, `Change`, `Record`), a change
 as the ops it wrote, each thing as it was and became, written all or
 none (`Op`, `Book.Apply`), undoing a change (`Book.Undo`: its ops the
 other way; entries from before ops are read in undo_legacy.go), who
-hears of a change (`records.Listen`, once per change logged;
-`store.Listen`, once per record written, which automations use), what a
+hears of a change (`records.Listen`, once per change, with who made it
+and its ops: a change logged when it is logged, the system's own
+bookkeeping written by `ApplyOps` as it is written; the store has no
+listeners of its own), what a
 record and a change are called (`Name`,
 `Sentence`), who wrote a record's words (`Writers`, `RecordView`) and an
 agent key's pace. It sits on `store` and `schema`; the server, MCP, the

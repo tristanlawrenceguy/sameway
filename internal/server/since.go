@@ -37,7 +37,7 @@ func (s *Server) whoKey(r *http.Request) string {
 // cameBack notes that someone is about. Back after being away, what the
 // others did since they left is theirs to catch up on.
 func (s *Server) cameBack(key string) {
-	now := time.Now().UTC()
+	now := s.now().UTC()
 	s.present.mu.Lock()
 	if s.present.last == nil {
 		s.present.last = map[string]time.Time{}

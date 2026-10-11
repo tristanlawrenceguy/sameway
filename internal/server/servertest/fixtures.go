@@ -27,7 +27,7 @@ func Public(t *testing.T, h http.Handler, method, path, body string) *httptest.R
 // month on, and two done.
 func SeedTasks(t *testing.T, a *app.App) {
 	t.Helper()
-	day := func(d int) string { return time.Now().AddDate(0, 0, d).UTC().Format(time.RFC3339) }
+	day := func(d int) string { return time.Now().AddDate(0, 0, d).UTC().Format(time.RFC3339) } // wall clock: records dated around the real today, for apps on the real clock
 	for _, task := range []map[string]any{
 		{"title": "Dig the pond", "due": day(-2)},
 		{"title": "Order compost", "due": day(2)},

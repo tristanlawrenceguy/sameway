@@ -45,7 +45,7 @@ func TestNothingToDoIsFoldedAndTeachesWhatWasMissed(t *testing.T) {
 	a.Chat.StartAutomating()
 	srv.SetUpSorting()
 
-	rec, _ := a.Store.Create("email", map[string]any{"subject": "School newsletter", "body": "Please reply about the trip.", "tags": []any{"to sort"}})
+	rec := written(t, a.Store, "created", "email", "", map[string]any{"subject": "School newsletter", "body": "Please reply about the trip.", "tags": []any{"to sort"}})
 	var cl *store.Record
 	tagWait(t, "nothing to do", func() bool {
 		cls, _ := a.Store.List(chat.ClassificationType, store.ListOptions{})

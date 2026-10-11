@@ -39,6 +39,12 @@ type Config struct {
 	Subscribe []string `yaml:"subscribe"`
 }
 
+// Write keeps a device's fields: made when id is "", changed otherwise.
+// The program gives records' (records.Book.Keeper), so a device's state
+// is written and heard like every other record; devices cannot import
+// records, which imports workspace, which imports devices.
+type Write func(id string, fields map[string]any) error
+
 // Bus is a connection to the broker.
 type Bus struct {
 	client mqtt.Client
@@ -48,7 +54,7 @@ type Bus struct {
 // Start connects to the broker and subscribes, when the workspace names
 // one; otherwise it returns nil and nothing else changes. The connection
 // is kept up for as long as ctx lasts.
-func Start(ctx context.Context, cfg Config, st *store.Store) (*Bus, error) {
+func Start(ctx context.Context, cfg Config, st *store.Store, write Write) (*Bus, error) {
 	if strings.TrimSpace(cfg.Broker) == "" {
 		return nil, nil
 	}
@@ -68,7 +74,7 @@ func Start(ctx context.Context, cfg Config, st *store.Store) (*Bus, error) {
 	opts.SetOnConnectHandler(func(c mqtt.Client) {
 		for _, topic := range cfg.Subscribe {
 			if token := c.Subscribe(topic, 0, func(_ mqtt.Client, m mqtt.Message) {
-				if err := Apply(st, m.Topic(), string(m.Payload()), time.Now()); err != nil {
+				if err := Apply(st, write, m.Topic(), string(m.Payload()), time.Now()); err != nil {
 					log.Printf("devices: %s: %v", m.Topic(), err)
 				}
 			}); token.Wait() && token.Error() != nil {
@@ -104,7 +110,7 @@ func (b *Bus) Publish(topic, payload string) error {
 // its state and now as when it was seen, made if it is new. A JSON
 // payload is kept as written, so a page and the assistant can read its
 // fields.
-func Apply(st *store.Store, topic, payload string, now time.Time) error {
+func Apply(st *store.Store, write Write, topic, payload string, now time.Time) error {
 	if _, ok := st.Types().Get(DeviceType); !ok {
 		return fmt.Errorf("this workspace has no %s type", DeviceType)
 	}
@@ -122,14 +128,12 @@ func Apply(st *store.Store, topic, payload string, now time.Time) error {
 	}
 	for _, rec := range recs {
 		if t, _ := rec.Fields["topic"].(string); t == topic {
-			_, err := st.Update(DeviceType, rec.ID, fields)
-			return err
+			return write(rec.ID, fields)
 		}
 	}
 	fields["topic"] = topic
 	fields["name"] = nameOf(topic)
-	_, err = st.Create(DeviceType, fields)
-	return err
+	return write("", fields)
 }
 
 // nameOf is a device named for its topic: the last meaningful part,

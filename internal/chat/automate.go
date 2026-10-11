@@ -53,13 +53,37 @@ func (s *Service) StartAutomating() {
 		return
 	}
 	s.auto = &automation{jobs: make(chan automationJob, 256), last: map[string]time.Time{}}
-	s.Store.Listen(s.recordChanged)
-	s.Store.Listen(s.tagsChanged) // what the person did with a tag an action gave; judgement.go
+	records.Listen(s.Store, s.heard)
 	go func() {
 		for j := range s.auto.jobs {
 			s.runAutomation(j)
 		}
 	}()
+}
+
+// heard is one change, logged or the system's own (records/listen.go):
+// each record it wrote, as it was and as it is now, goes to the actions
+// waiting for it and to the tags an action gave (judgement.go). Every way
+// a record is written is heard here, from a page, the API, the
+// assistant, an import or the content folder, since each goes through
+// records.
+func (s *Service) heard(_ string, c records.Change) {
+	for _, op := range c.Ops {
+		t, ok := s.Store.Types().Get(op.Type)
+		if !ok {
+			continue // a setting, or a type since gone
+		}
+		was, now := opRecord(op, op.Before), opRecord(op, op.After)
+		s.recordChanged(t, was, now)
+		s.tagsChanged(t, was, now)
+	}
+}
+
+func opRecord(op records.Op, fields map[string]any) *store.Record {
+	if fields == nil {
+		return nil
+	}
+	return &store.Record{ID: op.ID, Type: op.Type, Fields: fields}
 }
 
 // recordChanged finds the actions waiting for what just happened.

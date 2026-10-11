@@ -103,7 +103,7 @@ func TakeAgentAway(st *store.Store, name string) (Change, error) {
 		}
 		return Change{}, fmt.Errorf("no agent called %q; those with keys are %s", name, strings.Join(names, ", "))
 	}
-	done, err := ApplyOps(st, Op{Type: AgentType, ID: a.ID})
+	done, err := (&Book{Store: st}).Apply(Op{Type: AgentType, ID: a.ID})
 	if err != nil {
 		return Change{}, err
 	}

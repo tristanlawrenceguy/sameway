@@ -38,9 +38,17 @@ func (b *Book) Apply(ops ...Op) ([]Op, error) {
 	return done, err
 }
 
-// ApplyOps is Apply for a store with no settings to change.
+// ApplyOps is the system's own bookkeeping, which is never logged: a
+// reminder ringing, a file read, a device's state, the chat's own
+// records. It applies ops as Apply does, with no settings to change, and
+// tells the listeners once, as the system's (listen.go). Ops that will be
+// logged go through Book.Apply instead, and are told when logged.
 func ApplyOps(st *store.Store, ops ...Op) ([]Op, error) {
-	return (&Book{Store: st}).Apply(ops...)
+	done, err := (&Book{Store: st}).Apply(ops...)
+	if err == nil && len(done) > 0 {
+		tell(st, "system", Change{Action: "kept", Ops: done})
+	}
+	return done, err
 }
 
 // apply is Apply, with each record as it now is (nil where it went), for
@@ -148,4 +156,15 @@ func Made(st *store.Store, typ string, ids []string) []Op {
 		batch = append(batch, BatchItem{Type: typ, ID: id})
 	}
 	return OpsOf(st, batch)
+}
+
+// Keeper writes records of one type as the system's own bookkeeping
+// (ApplyOps), for a package that cannot import records itself, such as
+// devices, which workspace imports: a record made when id is "", changed
+// otherwise.
+func (b *Book) Keeper(typ string) func(id string, fields map[string]any) error {
+	return func(id string, fields map[string]any) error {
+		_, err := ApplyOps(b.Store, Op{Type: typ, ID: id, After: fields})
+		return err
+	}
 }

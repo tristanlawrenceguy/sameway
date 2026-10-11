@@ -69,7 +69,7 @@ func (s *Service) propose(summary string, action map[string]any) toolResult {
 	if !proposable[tool] {
 		return fail("proposals can only carry %s", strings.Join(proposableNames(), ", "))
 	}
-	rec, err := s.Store.Create(records.ProposalType, map[string]any{"summary": summary, "action": action, "state": "pending"})
+	rec, err := s.put(records.Op{Type: records.ProposalType, After: map[string]any{"summary": summary, "action": action, "state": "pending"}})
 	if err != nil {
 		return fail("could not save the proposal: %v", err)
 	}
@@ -193,19 +193,19 @@ func (s *Service) Accept(id string) error {
 	if c := result.change; c != nil && c.ID != "" && c.Component != "" {
 		done["made"] = c.Component + "/" + c.ID // what a suggestion became, for its action to learn from
 	}
-	if _, err := s.Store.Update(records.ProposalType, id, done); err != nil {
+	if _, err := s.Apply(records.Op{Type: records.ProposalType, ID: id, After: done}); err != nil {
 		return err
 	}
 	// The assistant made the change, but the person is why it happened.
 	summary, _ := rec.Fields["summary"].(string)
-	records.Record(s.Store, "human", records.Change{Action: "agreed to", Detail: trim.Line(summary, 80)})
+	s.byPerson(records.Change{Action: "agreed to", Detail: trim.Line(summary, 80)})
 	if result.change != nil {
 		records.Record(s.Store, "assistant", *result.change)
 	}
 	// A tool that made several changes, such as a command that also put
 	// its answer on the canvas, is logged as the person's: they said yes.
 	for i := range result.changes {
-		records.Record(s.Store, "human", result.changes[i])
+		s.byPerson(result.changes[i])
 	}
 	return nil
 }
@@ -221,10 +221,10 @@ func (s *Service) Dismiss(id string) error {
 	if rec.Fields["state"] != "pending" {
 		return errors.New("that question has already been answered")
 	}
-	if _, err := s.Store.Update(records.ProposalType, id, map[string]any{"state": "dismissed"}); err != nil {
+	if _, err := s.Apply(records.Op{Type: records.ProposalType, ID: id, After: map[string]any{"state": "dismissed"}}); err != nil {
 		return err
 	}
 	summary, _ := rec.Fields["summary"].(string)
-	records.Record(s.Store, "human", records.Change{Action: "declined", Detail: trim.Line(summary, 80)})
+	s.byPerson(records.Change{Action: "declined", Detail: trim.Line(summary, 80)})
 	return nil
 }

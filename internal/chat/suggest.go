@@ -124,23 +124,23 @@ func (s *Service) suggestEdits(typeName, id, field string, edits []suggested) to
 		return fail("nothing suggested: %s", strings.Join(problems, "; "))
 	}
 	about := t.Name + "/" + rec.ID
-	var batch []records.BatchItem
+	var ops []records.Op
 	for _, e := range edits {
 		kind := e.Kind
 		if _, only := prose.FormatChange(e.Passage, e.Replacement); only {
 			kind = "format"
 		}
-		made, err := s.Store.Create(records.SuggestionType, map[string]any{"about": about, "field": field, "kind": kind, "meaning": e.Meaning,
-			"passage": e.Passage, "replacement": e.Replacement, "why": strings.TrimSpace(e.Why)})
-		if err != nil {
-			return fail("could not suggest: %v", err)
-		}
-		batch = append(batch, records.BatchItem{Type: records.SuggestionType, ID: made.ID})
+		ops = append(ops, records.Op{Type: records.SuggestionType, After: map[string]any{"about": about, "field": field, "kind": kind, "meaning": e.Meaning,
+			"passage": e.Passage, "replacement": e.Replacement, "why": strings.TrimSpace(e.Why)}})
+	}
+	done, err := s.Apply(ops...)
+	if err != nil {
+		return fail("could not suggest: %v", err)
 	}
 	title := records.Name(s.Store, t, rec)
 	page := "/t/" + t.Name + "/" + rec.ID
 	c := records.Change{Action: "suggested", Component: t.Name, ID: rec.ID, Href: page,
-		Detail: fmt.Sprintf("%s, %s", title, schema.Count(len(edits), "change")), Ops: records.OpsOf(s.Store, batch)}
+		Detail: fmt.Sprintf("%s, %s", title, schema.Count(len(edits), "change")), Ops: done}
 	return toolResult{text: fmt.Sprintf("suggested %s to %s %s; they wait on its page, %s, for the person to accept or decline each. Nothing is changed until they do.",
 		schema.Count(len(edits), "change"), t.Name, title, page), change: &c}
 }
@@ -210,15 +210,17 @@ func AcceptSuggestions(st *store.Store, who records.Who, ids []string) (rec *sto
 	if rec, entry, err = records.WriteAs(st, who, "updated", typ, recID, fields); err != nil {
 		return nil, "", 0, outdated, err
 	}
+	var ops []records.Op
 	for _, id := range took {
-		st.Update(records.SuggestionType, id, map[string]any{"state": "accepted"})
+		ops = append(ops, records.Op{Type: records.SuggestionType, ID: id, After: map[string]any{"state": "accepted"}})
 	}
+	records.ApplyOps(st, ops...)
 	return rec, entry, len(took), outdated, nil
 }
 
 // DeclineSuggestion sets a suggestion aside, changing nothing else.
 func DeclineSuggestion(st *store.Store, id string) error {
-	_, err := st.Update(records.SuggestionType, id, map[string]any{"state": "declined"})
+	_, err := records.ApplyOps(st, records.Op{Type: records.SuggestionType, ID: id, After: map[string]any{"state": "declined"}})
 	return err
 }
 

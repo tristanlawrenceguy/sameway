@@ -171,7 +171,7 @@ func connectDevices(ctx context.Context, out io.Writer, a *app.App) {
 	if strings.TrimSpace(cfg.Broker) == "" {
 		return
 	}
-	bus, err := devices.Start(ctx, cfg, a.Store)
+	bus, err := devices.Start(ctx, cfg, a.Store, a.Records.Keeper(devices.DeviceType))
 	if err != nil {
 		fmt.Fprintf(out, "  mqtt    not connected: %v\n", err)
 		log.Printf("devices: %v", err)

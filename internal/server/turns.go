@@ -78,7 +78,7 @@ func (ts *turns) start(parent context.Context, who string) (*liveTurn, context.C
 		ts.live = map[string]*liveTurn{}
 	}
 	ts.n++
-	t := &liveTurn{id: fmt.Sprintf("turn-%d", ts.n), started: time.Now(), who: who, cancel: cancel, changed: make(chan struct{})}
+	t := &liveTurn{id: fmt.Sprintf("turn-%d", ts.n), started: time.Now(), who: who, cancel: cancel, changed: make(chan struct{})} // wall clock: how long a turn has run
 	ts.live[t.id] = t
 	return t, ctx
 }
