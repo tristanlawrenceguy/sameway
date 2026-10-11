@@ -25,6 +25,7 @@ var recordRoutes = []route{
 	{pattern: "POST /brief", handle: (*Server).briefSet, access: owner, tool: "set_setting", reach: inward},
 	{pattern: "GET /review", handle: (*Server).reviewPage, access: people},
 	{pattern: "POST /review/next", handle: (*Server).reviewMove, access: people, tool: "update_record", reach: inward},
+	{pattern: "POST /review/undate", handle: (*Server).reviewUndate, access: people, tool: "update_record", reach: inward},
 	{pattern: "POST /review/done", handle: (*Server).reviewDone, access: people, tool: "update_record", reach: inward},
 	{pattern: "POST /review/on", handle: (*Server).reviewOn, access: owner, tool: "set_setting", reach: inward},
 	{pattern: "GET /mail", handle: (*Server).mailPage, access: owner},

@@ -41,6 +41,8 @@ const post = (path, body) => fetch(base + path, { method: "POST", headers: { "co
 
 const note = await (await post("/api/note", { title: "A note for every page", tags: ["a11y"] })).json();
 const canvas = await (await post("/api/canvas", { name: "Everything" })).json();
+// An overdue task, so the weekly review shows its three presses.
+await post("/api/task", { title: "A task for the review", due: "2026-01-05" });
 const placings = [{ region: "main", size: "full", span: 12 }, { region: "right", size: "compact", span: 12 }, { region: "main", size: "icon", span: 4 }];
 const blocks = [];
 const waivedTargets = [];
@@ -61,7 +63,7 @@ for (const name of readdirSync(componentsDir).sort()) {
 if (!blocks.length) fail("no examples could be placed on a canvas");
 
 const sitePages = ["/", "/chat", "/design", "/search", "/search?q=keyboard", "/activity", "/t/note", `/t/note/${note.id}`, "/t/note/import",
-  "/help", "/share", "/apps", "/workspaces", "/workspaces/new", "/workspaces/copy", "/workspaces/delete", "/t/nothing-here", `/c/${canvas.id}`];
+  "/help", "/share", "/apps", "/workspaces", "/workspaces/new", "/workspaces/copy", "/workspaces/delete", "/t/nothing-here", "/review", `/c/${canvas.id}`];
 const blockLabel = Object.fromEntries(blocks.map((b) => [`/canvas/${b.id}`, b.label]));
 
 // ---- one page -------------------------------------------------------------
