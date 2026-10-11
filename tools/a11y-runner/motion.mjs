@@ -115,13 +115,24 @@ async function watchTurn(page, mode, reduced) {
   check(await page.evaluate(() => !document.querySelector(".sw-block--pending, [data-pending]")), `${mode}: every mark goes when the turn ends`);
 }
 
+// What a run made goes even when a step throws, so a second run on the same
+// workspace finds only its own records and blocks.
 async function run(reduced) {
-  const mode = reduced ? "reduced motion" : "motion";
   const browser = await chromium.launch();
+  const made = [];
+  try {
+    await actions(browser, reduced, made);
+  } finally {
+    await browser.close();
+    for (const path of made) await fetch(base + path, { method: "DELETE" });
+  }
+}
+
+async function actions(browser, reduced, made) {
+  const mode = reduced ? "reduced motion" : "motion";
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: reduced ? "reduce" : "no-preference" });
   await context.addInitScript(recorder);
   const page = await context.newPage();
-  const made = [];
 
   // Tick, then move on.
   const task = await post("/api/task", { title: `Motion tick ${mode} ${stamp}`, due: today + "T00:00:00Z" });
@@ -167,8 +178,10 @@ async function run(reduced) {
   check(await page.evaluate(() => !!document.getElementById("outcome") && !document.querySelector("#outcome [role=alert], #outcome[role=alert]")), `${mode}: the refusal is shown, and said once, by its region, not again by the copy on the page`);
   await page.unroute(`**/t/task/${refused.id}/props`);
 
-  // A press answers in the same frame and moves nothing around it.
+  // A press answers in the same frame and moves nothing around it. The
+  // mouse presses only what is in view, and more tasks push it down.
   const link = page.locator(".sw-row__link").first();
+  await link.scrollIntoViewIfNeeded();
   const before = await link.evaluate((a) => { const r = a.closest(".sw-row"); return { bg: getComputedStyle(r).backgroundColor, box: JSON.stringify(r.getBoundingClientRect()) }; });
   const lb = await link.boundingBox();
   await page.mouse.move(lb.x + lb.width / 2, lb.y + lb.height / 2);
@@ -179,7 +192,9 @@ async function run(reduced) {
   await page.mouse.move(0, 0);
   await page.mouse.up();
   const press = page.locator("main button.sw-pressable:visible").first();
+  check(await press.count(), `${mode}: the page has a button to press`);
   if (await press.count()) {
+    await press.scrollIntoViewIfNeeded();
     const bb = await press.boundingBox();
     await page.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2);
     await page.mouse.down();
@@ -194,8 +209,9 @@ async function run(reduced) {
   const board = await post("/api/block", { component: "collection", props: { type: "project", as: "board", label: `Board ${mode}` } });
   made.push(`/api/project/${proj.id}`, `/api/block/${board.id}`);
   await page.goto(base + "/");
+  // This board's Move only: every board of projects shows the card.
   const button = page.locator(`button:has-text("Move Motion move ${mode} ${stamp}")`);
-  const select = page.locator("form.sw-move", { has: button }).locator("select");
+  const select = page.locator(`[data-block-id="${board.id}"] form.sw-move`, { has: button }).locator("select");
   await select.focus();
   await select.selectOption("done");
   await page.keyboard.press("Tab");
@@ -239,9 +255,6 @@ async function run(reduced) {
   } else check(travels(vt, "sw-days-").length > 0, `${mode}: the next month slides in (${vt.length} animations, none travel)`);
 
   await watchTurn(page, mode, reduced);
-
-  await browser.close();
-  for (const path of made) await fetch(base + path, { method: "DELETE" });
 }
 
 await run(false);

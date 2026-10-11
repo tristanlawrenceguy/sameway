@@ -17,15 +17,17 @@ func TestAnActionComesBackWhereItWasTaken(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/block", map[string]any{
+	added := postJSON(t, h, http.MethodPost, "/api/block", map[string]any{
 		"component": "collection", "props": map[string]any{"type": "task", "label": "Tasks"},
-	}), http.StatusCreated)
+	})
+	wantStatus(t, added, http.StatusCreated)
+	var made struct{ ID string }
+	decode(t, added, &made)
 	page := get(t, h, "/").Body.String()
-	i := strings.Index(page, `id="block-`)
-	if i < 0 {
+	block := "block-" + made.ID
+	if !strings.Contains(page, `id="`+block+`"`) {
 		t.Fatal("each block on the canvas has an id to come back to")
 	}
-	block := page[i+len(`id="`) : i+strings.Index(page[i+4:], `"`)+4]
 	if !strings.Contains(page, `<input type="hidden" name="back" value="`+block+`">`) {
 		t.Errorf("the block's forms say they are in %s", block)
 	}
