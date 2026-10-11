@@ -29,6 +29,9 @@ type Options struct {
 	// HTTP sends what the assistant's webhook actions send; nil is a
 	// client with a ten second limit. A test points it at its own server.
 	HTTP *http.Client
+	// Pages reads a page someone saves to Sameway; nil is one that never
+	// reaches this computer or its network. A test reads its own server.
+	Pages *http.Client
 	// Ntfy is where phone topics are made; "" is notify.NtfyServer.
 	Ntfy string
 	// After is how the background jobs wait (App.Jobs); nil is

@@ -27,7 +27,11 @@ type meaningState struct {
 	sync.Mutex
 	idx      *meaning.Index
 	fetching bool
-	err      string
+	// done and total are how far a fetch has come, in bytes.
+	done, total int64
+	err         string
+	// read says the records have been read once, by the model there is now.
+	read bool
 }
 
 var meanings sync.Map // *Server -> *meaningState
@@ -106,6 +110,7 @@ func (s *Server) refreshMeaning(ctx context.Context) {
 	st.Lock()
 	if st.idx == nil || st.idx.Model != model {
 		st.idx = &meaning.Index{Base: llm.OllamaURL, Model: model, Keep: s.app.Store}
+		st.read = false
 	}
 	idx := st.idx
 	st.Unlock()
@@ -114,10 +119,14 @@ func (s *Server) refreshMeaning(ctx context.Context) {
 	for _, d := range docs {
 		in = append(in, meaning.Doc{Key: d.Key, Text: d.Text})
 	}
-	if _, err := idx.Refresh(ctx, in); err != nil {
-		st.Lock()
+	_, err := idx.Refresh(ctx, in)
+	st.Lock()
+	st.err, st.read = "", err == nil
+	if err != nil {
 		st.err = err.Error()
-		st.Unlock()
+	}
+	st.Unlock()
+	if err != nil {
 		return
 	}
 	search.UseMeaning(s.app.Store, func(q string) []string {
@@ -135,20 +144,32 @@ func (s *Server) refreshMeaning(ctx context.Context) {
 	})
 }
 
-// meaningLine is search by meaning on Help, for the owner: on, offered,
-// being fetched, or nothing when there is no Ollama.
+// meaningLine is search by meaning on Help, for the owner: being fetched
+// and how far, reading the records, on, not working and why, offered, or
+// nothing when there is no Ollama. Help is read when it is opened, so each
+// state is said as it is then, once; nothing changes in place.
 func (s *Server) meaningLine() string {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
 	st := s.meaningState()
 	st.Lock()
-	fetching, failed := st.fetching, st.err
+	fetching, done, total, failed := st.fetching, st.done, st.total, st.err
+	ready := st.read
 	st.Unlock()
-	switch {
-	case embedModel(ctx) != "":
+	if fetching {
+		how := meaning.FetchWords
+		if total > 0 {
+			how = fmt.Sprintf("%d%% of %s", done*100/total, meaning.FetchWords)
+		}
+		return "Search by meaning: fetching " + how + ". Searches find by meaning a few minutes after it is here."
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	switch on := embedModel(ctx) != ""; {
+	case on && failed != "":
+		return "Search by meaning: not working, so searches find by words only. The last try said: " + template.HTMLEscapeString(failed) + ". It tries again every few minutes."
+	case on && !ready:
+		return "Search by meaning: reading what you have, on this computer. Searches find by meaning once that is done."
+	case on:
 		return "Search by meaning: on. Searching finds what something is about, not only its words, on this computer."
-	case fetching:
-		return "Search by meaning: fetching " + meaning.FetchWords + "."
 	case !llm.OllamaRunning(ctx):
 		return ""
 	}
@@ -169,9 +190,13 @@ func (s *Server) meaningFetch(w http.ResponseWriter, r *http.Request) {
 	st := s.meaningState()
 	st.Lock()
 	if !st.fetching {
-		st.fetching, st.err = true, ""
+		st.fetching, st.done, st.total, st.err = true, 0, 0, ""
 		go func() {
-			err := llm.OllamaPull(context.Background(), meaning.FetchModel, func(int64, int64) {})
+			err := llm.OllamaPull(context.Background(), meaning.FetchModel, func(done, total int64) {
+				st.Lock()
+				st.done, st.total = done, total
+				st.Unlock()
+			})
 			st.Lock()
 			st.fetching = false
 			if err != nil {
@@ -182,5 +207,5 @@ func (s *Server) meaningFetch(w http.ResponseWriter, r *http.Request) {
 		}()
 	}
 	st.Unlock()
-	s.tell(w, r, outcome{Title: "Fetching search by meaning", Text: fmt.Sprintf("%s, through Ollama. Searches find by meaning a few minutes after it is here.", meaning.FetchWords)}, "/help")
+	s.tell(w, r, outcome{Title: "Fetching search by meaning", Text: fmt.Sprintf("%s, through Ollama. Help says how far it has come.", meaning.FetchWords)}, "/help")
 }

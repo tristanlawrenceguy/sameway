@@ -65,6 +65,8 @@ type Result struct {
 	Hits []Hit `json:"hits"`
 	// Some is true when nothing had every word and these have some (Find).
 	Some bool `json:"some,omitempty"`
+	// Near is how many of everything found are close in meaning.
+	Near int `json:"-"`
 }
 
 // Narrow is the hits of everything, counted by kind, narrowed to only when
@@ -80,7 +82,7 @@ func Narrow(all []Hit, q, only string, page int) Result {
 	lo, hi := (page-1)*Limit, min(page*Limit, len(hits))
 	shown := append([]Hit{}, hits[lo:hi]...)
 	return Result{Query: strings.TrimSpace(q), Type: only, Total: len(all), Counts: Counts(all),
-		Found: len(hits), Page: page, Pages: pages, From: lo, Hits: shown}
+		Found: len(hits), Page: page, Pages: pages, From: lo, Hits: shown, Near: nearIn(all)}
 }
 
 // Said is what the search found, in words: 12 found: 7 notes, 3 tasks,
@@ -89,8 +91,8 @@ func Narrow(all []Hit, q, only string, page int) Result {
 // them these are and how to ask for the next.
 func (r Result) Said() string {
 	var b strings.Builder
-	if r.Some && r.Total > 0 {
-		b.WriteString(SomeWords + " ")
+	if o := order(r.Some, r.Near, r.Total); o != "" { // near.go
+		b.WriteString(o + " ")
 	}
 	switch {
 	case r.Total == 0:
