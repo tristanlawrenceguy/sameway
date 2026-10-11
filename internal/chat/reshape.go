@@ -125,7 +125,7 @@ func (s *Service) askDelete(a reshapeArgs) toolResult {
 	hide := map[string]any{"tool": "change_field", "type": a.Type, "field": a.Field, "change": "hide"}
 	r := s.ask(q, del)
 	if !r.isErr && r.change != nil {
-		s.Store.Update(records.ProposalType, r.change.ID, map[string]any{"instead": "Hide it instead", "instead_action": hide})
+		s.Apply(records.Op{Type: records.ProposalType, ID: r.change.ID, After: map[string]any{"instead": "Hide it instead", "instead_action": hide}})
 		r.text += " They can also hide it instead."
 	}
 	return r
@@ -153,9 +153,9 @@ func (s *Service) Instead(id string) error {
 	if result.isErr {
 		return fmt.Errorf("%s", result.text)
 	}
-	s.Store.Update(records.ProposalType, id, map[string]any{"state": "accepted"})
+	s.Apply(records.Op{Type: records.ProposalType, ID: id, After: map[string]any{"state": "accepted"}})
 	label, _ := rec.Fields["instead"].(string)
-	records.Record(s.Store, "human", records.Change{Action: "chose", Detail: trim.Line(label, 80)})
+	s.byPerson(records.Change{Action: "chose", Detail: trim.Line(label, 80)})
 	if result.change != nil {
 		records.Record(s.Store, "assistant", *result.change)
 	}
