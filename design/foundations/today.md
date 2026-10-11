@@ -2,8 +2,8 @@
 
 Today (`/today`) is the one page a person opens to know what to do now:
 what is late, the tasks due today, the day's events and reminders, then
-what came in and waits to be sorted. The morning brief says the same as
-one notification. Both are read from the records, with no model asked.
+what came in and waits to be sorted ([sorting.md](sorting.md)). The
+morning brief says the same as one notification. Both are read from the records, with no model asked.
 
 ## Why it works this way
 

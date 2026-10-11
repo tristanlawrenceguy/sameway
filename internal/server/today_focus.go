@@ -9,7 +9,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
@@ -113,17 +112,8 @@ func (s *Server) focusSection(l todayLists, list func(string, []todayItem) strin
 		return ""
 	}
 	out := `<p>` + template.HTMLEscapeString(fmt.Sprintf("%d tasks are late or due. Start with these three; the rest wait below.", len(first)+len(rest))) + `</p>` + list("Start with these", first)
-	if body, err := s.app.Registry.RenderSlot("disclosure", map[string]any{"label": "The rest", "count": len(rest), "of": countsOf(len(rest), "task")}, template.HTML(list("", rest))); err == nil {
+	if body, err := s.app.Registry.RenderSlot("disclosure", map[string]any{"label": "The rest", "count": len(rest), "of": oneOrMany(len(rest), "task", "tasks")}, template.HTML(list("", rest))); err == nil {
 		out += string(body)
 	}
 	return out
-}
-
-// countsOf is what a folded count counts, said after it to a screen
-// reader: The rest, 1 task; The rest, 3 tasks.
-func countsOf(n int, one string) string {
-	if n == 1 {
-		return one
-	}
-	return schema.Plural(one)
 }
