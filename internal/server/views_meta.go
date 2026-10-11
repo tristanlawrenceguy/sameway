@@ -116,10 +116,10 @@ func (s *Server) happened(class string, at, now time.Time) string {
 
 // from is who wrote a record's words, said once on its page, when that
 // was someone other than the owner and their assistant: an import, another
-// person, an agent, an action. A file's or a device's page already says
-// what it is. A reader from the internet is not told anyone's name.
+// person, an agent, an action. A file's, a device's or an email's page
+// already says what it is and who sent it. A reader from the internet is not told anyone's name.
 func (s *Server) from(r *http.Request, t *schema.Type, rec *store.Record) string {
-	if t.Name == FileType || t.Name == devices.DeviceType {
+	if t.Name == FileType || t.Name == devices.DeviceType || t.Name == records.EmailType {
 		return ""
 	}
 	if w := s.app.Chat.For(records.VisitorOf(r.Context())).Writers().Of(t.Name, rec); w.Outside {
