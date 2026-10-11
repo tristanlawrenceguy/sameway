@@ -22,7 +22,7 @@ func (s *Service) Current() string {
 	}
 	all := s.Conversations()
 	if len(all) == 0 {
-		rec, err := s.Store.Create(records.ConversationType, map[string]any{"opened": now(), "person": s.whose()})
+		rec, err := s.put(records.Op{Type: records.ConversationType, After: map[string]any{"opened": now(), "person": s.whose()}})
 		if err != nil {
 			return ""
 		}
@@ -63,10 +63,10 @@ func (s *Service) NewChat() (*store.Record, error) {
 	// again keeps it rather than leaving empty chats behind in the list.
 	if id := s.Current(); id != "" {
 		if msgs, err := s.MessagesIn(id); err == nil && len(msgs) == 0 {
-			return s.Store.Update(records.ConversationType, id, map[string]any{"opened": now()})
+			return s.put(records.Op{Type: records.ConversationType, ID: id, After: map[string]any{"opened": now()}})
 		}
 	}
-	rec, err := s.Store.Create(records.ConversationType, map[string]any{"opened": now(), "person": s.whose()})
+	rec, err := s.put(records.Op{Type: records.ConversationType, After: map[string]any{"opened": now(), "person": s.whose()}})
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func (s *Service) OpenChat(id string) error {
 	if !s.theirs(id) {
 		return fmt.Errorf("there is no chat %q of yours", id)
 	}
-	if _, err := s.Store.Update(records.ConversationType, id, map[string]any{"opened": now()}); err != nil {
+	if _, err := s.Apply(records.Op{Type: records.ConversationType, ID: id, After: map[string]any{"opened": now()}}); err != nil {
 		return err
 	}
 	s.convo = id
@@ -104,13 +104,14 @@ func (s *Service) DeleteChat(id string) error {
 		before["conversation"] = conv.Fields
 		title, _ = conv.Fields["title"].(string)
 	}
+	var ops []records.Op
 	for _, m := range msgs {
-		s.Store.Delete(records.MessageType, m.ID)
+		ops = append(ops, records.Op{Type: records.MessageType, ID: m.ID})
 	}
-	if err := s.Store.Delete(records.ConversationType, id); err != nil {
+	if _, err := s.Apply(append(ops, records.Op{Type: records.ConversationType, ID: id})...); err != nil {
 		return err
 	}
-	records.Record(s.Store, "human", records.Change{Action: "deleted", Component: "conversation", ID: id, Detail: title, Before: before})
+	s.byPerson(records.Change{Action: "deleted", Component: "conversation", ID: id, Detail: title, Before: before})
 	if s.convo == id {
 		s.convo = ""
 	}
@@ -170,7 +171,7 @@ func (s *Service) MessagesIn(id string) ([]*store.Record, error) {
 func (s *Service) message(fields map[string]any) (*store.Record, error) {
 	id := s.Current()
 	fields["conversation"] = id
-	rec, err := s.Store.Create(records.MessageType, s.fields(records.MessageType, fields))
+	rec, err := s.put(records.Op{Type: records.MessageType, After: s.fields(records.MessageType, fields)})
 	if err != nil {
 		return nil, err
 	}
@@ -178,7 +179,7 @@ func (s *Service) message(fields map[string]any) (*store.Record, error) {
 		if c, err := s.Store.Get(records.ConversationType, id); err == nil {
 			if title, _ := c.Fields["title"].(string); title == "" {
 				content, _ := fields["content"].(string)
-				s.Store.Update(records.ConversationType, id, map[string]any{"title": trim.Title(content), "opened": now()})
+				s.Apply(records.Op{Type: records.ConversationType, ID: id, After: map[string]any{"title": trim.Title(content), "opened": now()}})
 			}
 		}
 	}
@@ -209,7 +210,7 @@ func (s *Service) Clear() error {
 		return err
 	}
 	// Kept in the log, so the messages can be put back.
-	records.Record(s.Store, "human", c)
+	s.byPerson(c)
 	return nil
 }
 
@@ -223,13 +224,15 @@ func (s *Service) clearing() (records.Change, error) {
 	c := records.Change{Action: "cleared", Component: "conversation", ID: s.Current(), Before: map[string]any{"messages": records.Keep(msgs)}}
 	// The questions the assistant asked were part of the conversation; a
 	// cleared one has no questions still waiting under it.
+	var ops []records.Op
 	for _, p := range s.Proposals() {
-		s.Store.Update(records.ProposalType, p.ID, map[string]any{"state": "dismissed"})
+		ops = append(ops, records.Op{Type: records.ProposalType, ID: p.ID, After: map[string]any{"state": "dismissed"}})
 	}
 	for _, m := range msgs {
-		if err := s.Store.Delete(records.MessageType, m.ID); err != nil {
-			return records.Change{}, err
-		}
+		ops = append(ops, records.Op{Type: records.MessageType, ID: m.ID})
+	}
+	if _, err := s.Apply(ops...); err != nil {
+		return records.Change{}, err
 	}
 	return c, nil
 }

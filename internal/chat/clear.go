@@ -16,6 +16,7 @@ func (s *Service) clearCanvas() toolResult {
 		return fail("could not read the canvas: %v", err)
 	}
 	var gone []*store.Record
+	var ops []records.Op
 	for _, b := range blocks {
 		if b.Fields["component"] == records.ComponentName {
 			continue
@@ -24,13 +25,14 @@ func (s *Service) clearCanvas() toolResult {
 		if on, _ := b.Fields["canvas"].(string); on != s.current {
 			continue
 		}
-		if err := s.Store.Delete(records.BlockType, b.ID); err != nil {
-			return fail("could not clear the canvas: %v", err)
-		}
+		ops = append(ops, records.Op{Type: records.BlockType, ID: b.ID})
 		gone = append(gone, b)
 	}
 	if len(gone) == 0 {
 		return toolResult{text: "the canvas was already empty"}
+	}
+	if _, err := s.Apply(ops...); err != nil {
+		return fail("could not clear the canvas: %v", err)
 	}
 	// What was cleared goes in the log, so it can be put back whole.
 	return toolResult{text: fmt.Sprintf("cleared %d blocks; the chat stayed", len(gone)), change: &records.Change{Action: "cleared", Detail: fmt.Sprintf("%d blocks", len(gone)), Before: map[string]any{"blocks": records.Keep(gone)}}}

@@ -125,8 +125,8 @@ func (s *Server) start(dir string) (string, error) {
 	if err := s.machine().Remember(dir, addr); err != nil {
 		return "", err
 	}
-	deadline := time.Now().Add(15 * time.Second)
-	for time.Now().Before(deadline) {
+	deadline := time.Now().Add(15 * time.Second) // wall clock: how long to wait for a server to start
+	for time.Now().Before(deadline) {            // wall clock: how long to wait for a server to start
 		if url, ok := running(workspace.Known{Dir: dir, Addr: addr}); ok {
 			return url, nil
 		}

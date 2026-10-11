@@ -65,7 +65,7 @@ func (s *Server) doOnce(w http.ResponseWriter, r *http.Request, next func(http.R
 	}
 	first, seen := once.seen[id]
 	if !seen {
-		first = &onceAnswer{sum: sum, at: time.Now(), done: make(chan struct{})}
+		first = &onceAnswer{sum: sum, at: time.Now(), done: make(chan struct{})} // wall clock: how long a repeated request is answered the same
 		once.seen[id] = first
 	}
 	once.mu.Unlock()

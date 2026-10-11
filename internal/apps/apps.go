@@ -79,15 +79,14 @@ func Write(path string, app App, server map[string]any) error {
 		return err
 	}
 	if app.Shape == "toml" {
-		text := string(existing)
-		head := "[" + app.Key + ".sameway]"
-		if strings.Contains(text, head) {
-			return fmt.Errorf("%s already has a %s section; edit it by hand or remove it and run again", path, head)
-		}
-		if text != "" && !strings.HasSuffix(text, "\n") {
+		// An entry there already, for another workspace, is replaced.
+		text, _ := withoutSection(string(existing), "["+app.Key+".sameway]")
+		if strings.TrimSpace(text) == "" {
+			text = ""
+		} else {
 			text += "\n"
 		}
-		return os.WriteFile(path, []byte(text+"\n"+Snippet(app, server)), 0o644)
+		return os.WriteFile(path, []byte(text+Snippet(app, server)), 0o644)
 	}
 	doc := map[string]any{}
 	if strings.TrimSpace(string(existing)) != "" {
@@ -108,10 +107,9 @@ func Write(path string, app App, server map[string]any) error {
 	return os.WriteFile(path, append(raw, '\n'), 0o644)
 }
 
-// Connected says whether an app's file already starts Sameway.
+// Connected says whether an app's file starts Sameway for this workspace.
 func Connected(app App, workspace string) bool {
-	raw, err := os.ReadFile(app.Path(workspace))
-	return err == nil && strings.Contains(string(raw), "sameway")
+	return Same(Entry(app, workspace), workspace)
 }
 
 func isDir(p string) bool {
