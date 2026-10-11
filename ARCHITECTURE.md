@@ -27,6 +27,7 @@ travels through git.
 | Design system | Standalone package (tokens, CSS, HTML patterns, manifests) | Usable in any stack. The Go binary is one consumer. |
 | Accessibility bar | WCAG 2.2 AAA where feasible, AA as hard gate in CI | Every component ships with automated and keyboard tests. |
 | Users | One owner, local first; other people by who Tailscale says they are | No accounts or passwords: the owner is whoever is at the computer or signed the node in, and other people get the access their `person` record gives (section 4). |
+| Other sites | A browser's write must come from Sameway's own pages (`http.NewCrossOriginProtection`, in `cli.HandlerFor`, which every way of serving goes through) | A page on any site the person visits could otherwise post forms to the workspace on this computer, the Wi-Fi or the tailnet ([OWASP CSRF prevention](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)). No tokens are needed: browsers say where a request came from in `Sec-Fetch-Site` and `Origin`, which Go 1.25's check reads ([Go net/http](https://pkg.go.dev/net/http#CrossOriginProtection)). The command line, MCP and API clients send neither and pass; reading (GET) is never stopped, so the Save bookmark still opens /share and the person presses Save there. |
 | Sharing | Workspace = git-friendly folder | Push a repo or sync a folder. Presets are just repos. |
 
 ## 2. The one contract

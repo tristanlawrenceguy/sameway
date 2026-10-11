@@ -1,10 +1,8 @@
 package server
 
 import (
-	"context"
 	"errors"
 	"html/template"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -224,28 +222,13 @@ func (s *Server) cloudJoin(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/workspaces", http.StatusSeeOther)
 }
 
-// KeepCloudSync passes changes through the cloud folder every fifteen
-// seconds, and leaves a fresh copy to start from once a day.
-func (s *Server) KeepCloudSync(ctx context.Context) {
-	go func() {
-		tick := time.NewTicker(15 * time.Second)
-		defer tick.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-tick.C:
-				s.syncRound()
-			}
-		}
-	}()
-}
-
 // syncRound reads what the others wrote, then writes what this copy did.
-func (s *Server) syncRound() {
+// It is a background job every fifteen seconds (jobs.go); what went
+// wrong stays in cloudsync:err for the Workspaces page as well.
+func (s *Server) syncRound() error {
 	folder := s.syncFolder()
 	if folder == "" {
-		return
+		return nil
 	}
 	files := s.app.Workspace.FilesDir()
 	n, err := cloudsync.In(s.app.Store, folder, files)
@@ -258,10 +241,10 @@ func (s *Server) syncRound() {
 	said := ""
 	if err != nil {
 		said = err.Error()
-		log.Printf("cloud sync: %v", err)
 	}
 	s.app.Store.SetMeta("cloudsync:err", said)
 	if at, _ := time.Parse(time.RFC3339, s.app.Store.Meta("cloudsync:started")); s.now().Sub(at) > 24*time.Hour {
 		s.syncStart(folder)
 	}
+	return err
 }

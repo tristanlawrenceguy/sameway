@@ -53,26 +53,19 @@ func (s *Server) cloudCopies(folder string) []string {
 	return found
 }
 
-// KeepCloudCopy puts today's copy in the cloud folder, once a day, while
-// ctx lasts.
-func (s *Server) KeepCloudCopy(ctx context.Context) {
-	s.KeepCloudSync(ctx) // and other computers kept in step through it; cloud_sync.go
-	go func() {
-		tick := time.NewTicker(time.Hour)
-		defer tick.Stop()
-		for {
-			if folder := s.app.Workspace.Config.Backup.Folder; folder != "" {
-				if err := s.cloudCopy(folder, s.now()); err != nil {
-					s.app.Store.SetMeta("backup:err", err.Error())
-				}
-			}
-			select {
-			case <-ctx.Done():
-				return
-			case <-tick.C:
-			}
-		}
-	}()
+// keepCloudCopy puts today's copy in the cloud folder, when one is
+// chosen: a background job, every hour (jobs.go). What went wrong stays
+// in backup:err for the Workspaces page as well.
+func (s *Server) keepCloudCopy(_ context.Context, now time.Time) error {
+	folder := s.app.Workspace.Config.Backup.Folder
+	if folder == "" {
+		return nil
+	}
+	err := s.cloudCopy(folder, now)
+	if err != nil {
+		s.app.Store.SetMeta("backup:err", err.Error())
+	}
+	return err
 }
 
 // cloudCopy makes the day's copy unless there is one, and lets go of the
