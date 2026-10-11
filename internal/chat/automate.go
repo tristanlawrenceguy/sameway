@@ -46,46 +46,6 @@ type automation struct {
 	last map[string]time.Time // action and record → when it last ran for it
 }
 
-// StartAutomating listens for what happens to records and runs the
-// actions waiting for it, until the program stops.
-func (s *Service) StartAutomating() {
-	if s.auto != nil {
-		return
-	}
-	s.auto = &automation{jobs: make(chan automationJob, 256), last: map[string]time.Time{}}
-	records.Listen(s.Store, s.heard)
-	go func() {
-		for j := range s.auto.jobs {
-			s.runAutomation(j)
-		}
-	}()
-}
-
-// heard is one change, logged or the system's own (records/listen.go):
-// each record it wrote, as it was and as it is now, goes to the actions
-// waiting for it and to the tags an action gave (judgement.go). Every way
-// a record is written is heard here, from a page, the API, the
-// assistant, an import or the content folder, since each goes through
-// records.
-func (s *Service) heard(_ string, c records.Change) {
-	for _, op := range c.Ops {
-		t, ok := s.Store.Types().Get(op.Type)
-		if !ok {
-			continue // a setting, or a type since gone
-		}
-		was, now := opRecord(op, op.Before), opRecord(op, op.After)
-		s.recordChanged(t, was, now)
-		s.tagsChanged(t, was, now)
-	}
-}
-
-func opRecord(op records.Op, fields map[string]any) *store.Record {
-	if fields == nil {
-		return nil
-	}
-	return &store.Record{ID: op.ID, Type: op.Type, Fields: fields}
-}
-
 // recordChanged finds the actions waiting for what just happened.
 func (s *Service) recordChanged(t *schema.Type, was, now *store.Record) {
 	if s.auto == nil || t.Internal || t.Name == records.ActionType {
@@ -152,13 +112,13 @@ func whenWords(when string, t *schema.Type, title string) string {
 }
 
 // runAutomation runs one action, as the automation, and what it leads to.
-func (s *Service) runAutomation(j automationJob) {
+func (s *Service) runAutomation(ctx context.Context, j automationJob) {
 	rec, err := s.Store.Get(records.ActionType, j.action)
 	if err != nil {
 		return
 	}
 	title, _ := rec.Fields["title"].(string)
-	ctx := context.WithValue(context.WithValue(context.Background(), automationKey{}, title), triggerKey{}, j.vars)
+	ctx = context.WithValue(context.WithValue(ctx, automationKey{}, title), triggerKey{}, j.vars)
 	r := s.runRecord(ctx, filled(rec, j.vars), "")
 	for i := range r.changes {
 		r.changes[i].By, r.changes[i].Via = title, "because "+j.why

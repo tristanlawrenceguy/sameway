@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -13,6 +12,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/examples"
+	"github.com/tristanlawrenceguy/sameway/internal/runner"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
 
@@ -125,28 +125,24 @@ func (a *App) ReloadSchema() (bool, error) {
 	return true, nil
 }
 
-// WatchSchema looks at schema/ every so often until ctx ends, and tells
-// changed (when given) each time the content types changed, so open
-// pages follow.
-func (a *App) WatchSchema(ctx context.Context, every time.Duration, changed func()) {
-	go func() {
-		tick := time.NewTicker(every)
-		defer tick.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-tick.C:
-			}
-			ok, err := a.ReloadSchema()
-			if err != nil {
-				log.Printf("schema: %v", err)
-			}
-			if ok && changed != nil {
-				changed()
-			}
+// SchemaJob looks at schema/ every so often, and tells changed (when
+// given) each time the content types changed, so open pages follow: a
+// job for the app's runner.
+func (a *App) SchemaJob(every time.Duration, changed func()) runner.Job {
+	return runner.Job{Name: "Kinds of record changed by hand", Every: every, Wait: true, Run: func(context.Context, time.Time) error {
+		ok, err := a.ReloadSchema()
+		if ok && changed != nil {
+			changed()
 		}
-	}()
+		return err
+	}}
+}
+
+// WatchSchema runs SchemaJob on the app's runner until ctx ends: what a
+// command with no other background work (sameway mcp) uses.
+func (a *App) WatchSchema(ctx context.Context, every time.Duration, changed func()) {
+	a.Jobs.Add(a.SchemaJob(every, changed))
+	a.Jobs.Start(ctx)
 }
 
 // writeSchema writes a type's file whole or not at all: to a file beside

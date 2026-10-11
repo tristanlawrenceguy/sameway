@@ -23,12 +23,14 @@ func (s *Server) phoneSection(r *http.Request) string {
 	base := s.fleet.LANBase()
 	if base == "" {
 		b.WriteString(`<p>Use Sameway on a phone or tablet on the same Wi-Fi as this computer. Nothing on the Wi-Fi reaches your workspace unless you pair it here; Windows may ask whether Sameway may use the network: choose Allow.</p>`)
+		b.WriteString(`<p>Do this only on a Wi-Fi you trust, at home or at work, not in a café or a hotel: someone else on the same Wi-Fi could read what passes between a phone and this computer.</p>`)
 		b.WriteString(string(s.form(ui.Form{Action: "/phone/on", Button: &ui.Button{Label: "Use Sameway on your phone", Variant: ui.Secondary}})) + `</section>`)
 		return b.String()
 	}
-	link := base + "/pair?code=" + lanPairCode()
+	code := s.pairing.fresh(s.now()) // phone_pair.go
+	link := base + "/pair?code=" + code
 	b.WriteString(`<p>Scan this with your phone's camera, on the same Wi-Fi as this computer. It works once, for ten minutes; reload this page for another.</p>`)
-	b.WriteString(`<figure class="sw-stack">` + qrSVG(link) + `<figcaption class="sw-small sw-muted">Or open ` + template.HTMLEscapeString(link) + ` on the phone.</figcaption></figure>`)
+	b.WriteString(`<figure class="sw-stack">` + qrSVG(link) + `<figcaption>No camera, or it will not scan? On the phone, open ` + template.HTMLEscapeString(base) + ` and type <strong>` + code + `</strong>.</figcaption></figure>`)
 	b.WriteString(s.inviteForm()) // lan_invite.go
 	if devices := s.lanDevices(); len(devices) > 0 {
 		b.WriteString(`<h3>Paired</h3><ul class="sw-plain sw-rows">`)

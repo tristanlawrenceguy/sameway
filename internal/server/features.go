@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/runner"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/server/exchange"
 	"github.com/tristanlawrenceguy/sameway/internal/server/media"
@@ -58,9 +59,9 @@ func (s *Server) UseSpeakers(ready func() bool, diarize func(ctx context.Context
 	s.media.UseSpeakers(ready, diarize)
 }
 
-// WriteDownInBackground has this server write recordings down itself
-// (media/hostwrite.go).
-func (s *Server) WriteDownInBackground() { s.media.WriteDownInBackground() }
+// WriteDownJobs has this server write recordings down itself, as jobs
+// for the app's runner (media/hostwrite.go).
+func (s *Server) WriteDownJobs() []runner.Job { return s.media.WriteDownJobs() }
 
 // WriteDown has a recording written down on this computer: the
 // assistant's write_down (chat/home_tools.go).

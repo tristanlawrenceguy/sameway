@@ -81,8 +81,8 @@ func (s *Server) focus(l todayLists) (first, rest []todayItem) {
 
 // dumpBox is the box for everything in the person's head.
 func (s *Server) dumpBox() string {
-	return string(s.form(ui.Form{Action: "/today/sort", Class: "sw-stack",
-		Body: s.component("textarea", map[string]any{"label": "Too much in your head? Put it all here", "name": "words", "rows": 4,
+	return `<h2>Too much in your head?</h2>` + string(s.form(ui.Form{Action: "/today/sort", Class: "sw-stack",
+		Body: s.component("textarea", map[string]any{"label": "Everything on your mind", "name": "words", "rows": 4,
 			"hint": "As it comes, in any order: things to do, to remember, to reply to. The assistant makes them tasks with their days and says which three to start with."}),
 		Button: &ui.Button{Label: "Sort it out for me", Variant: ui.Secondary}}))
 }
@@ -112,7 +112,7 @@ func (s *Server) focusSection(l todayLists, list func(string, []todayItem) strin
 		return ""
 	}
 	out := `<p>` + template.HTMLEscapeString(fmt.Sprintf("%d tasks are late or due. Start with these three; the rest wait below.", len(first)+len(rest))) + `</p>` + list("Start with these", first)
-	if body, err := s.app.Registry.RenderSlot("disclosure", map[string]any{"label": "The rest", "count": len(rest), "of": "task"}, template.HTML(list("", rest))); err == nil {
+	if body, err := s.app.Registry.RenderSlot("disclosure", map[string]any{"label": "The rest", "count": len(rest), "of": oneOrMany(len(rest), "task", "tasks")}, template.HTML(list("", rest))); err == nil {
 		out += string(body)
 	}
 	return out

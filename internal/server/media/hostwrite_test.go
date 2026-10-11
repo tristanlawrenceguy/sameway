@@ -47,7 +47,10 @@ func TestRecordingsAreWrittenDownWithNoPageOpen(t *testing.T) {
 		t.Error("until then, the page writes it down itself")
 	}
 
-	srv.WriteDownInBackground()
+	a.Jobs.Add(srv.WriteDownJobs()...)
+	ctx, stop := context.WithCancel(context.Background())
+	defer stop()
+	a.Jobs.Start(ctx)
 	waitFor(t, heard(before))
 	after := upload("After.wav", wav.Bytes())
 	waitFor(t, heard(after))

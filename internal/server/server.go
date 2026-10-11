@@ -35,6 +35,7 @@ type Server struct {
 	exchange *exchange.Service             // imports and exports; internal/server/exchange
 	connect  *connect.Service              // connecting the assistant to a model; internal/server/connect
 	logged   signal                        // a change logged here, for those waiting on /api/changes; changes.go
+	pairing  pairing                       // the codes a phone on the Wi-Fi pairs with; phone_pair.go
 }
 
 // New builds the handler for an app.
@@ -99,6 +100,9 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 		p.Nav = append(p.Nav, s.navList(r, t)) // nav_nest.go
 	}
 	more := []struct{ href, label string }{{"/search", "Search"}, {"/chat", "Chat"}, {"/activity", "Activity"}, {"/workspaces", "Workspaces"}, {"/help", "Help"}}
+	if s.todayListed() { // today.go: the day's page, first, as it is the one opened most
+		more = append([]struct{ href, label string }{{"/today", "Today"}}, more...)
+	}
 	if s.app.Workspace.Config.UI.Developer == "shown" {
 		more = append(more, struct{ href, label string }{"/design", "Design system"})
 	}

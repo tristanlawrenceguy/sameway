@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
@@ -38,8 +37,6 @@ type lanDevice struct {
 	Person string `json:"person,omitempty"`
 }
 
-var lanCodes sync.Map // code -> expiry time.Time
-
 func token(n int) string {
 	b := make([]byte, n)
 	rand.Read(b)
@@ -60,13 +57,6 @@ func (s *Server) lanDevices() []lanDevice {
 func (s *Server) saveLanDevices(d []lanDevice) {
 	b, _ := json.Marshal(d)
 	s.app.Store.SetMeta("lan:devices", string(b))
-}
-
-// lanPairCode is a fresh pairing code, working once for ten minutes.
-func lanPairCode() string {
-	code := token(16)
-	lanCodes.Store(code, time.Now().Add(lanPairFor))
-	return code
 }
 
 // LAN is the handler the Wi-Fi listener serves: pairing, and the rest for
@@ -96,21 +86,16 @@ func (s *Server) LAN(next http.Handler) http.Handler {
 				return
 			}
 		}
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.WriteHeader(http.StatusForbidden)
-		w.Write([]byte(`<!doctype html><meta name="viewport" content="width=device-width"><title>Sameway</title><p style="font:1.1rem system-ui;max-width:30rem;margin:2rem auto;padding:0 1rem">This Sameway is private. To use it on this phone, open <strong>Workspaces</strong> in Sameway on the computer, choose <strong>Use Sameway on your phone</strong>, and scan the code it shows.</p>`))
+		lanPairPage(w, "This Sameway is private. To use it on this phone, open Workspaces in Sameway on the computer and choose Use Sameway on your phone. Then scan the code it shows, or type its letters here.") // phone_pair.go
 	})
 }
 
-// lanPair is a phone opening a pairing link: a code that works keeps the
-// phone paired; one used or out of date says to scan a new one.
+// lanPair is a phone opening a pairing link, or typing the letters: a
+// code that works keeps the phone paired; one used, out of date or mistyped
+// says to try the one shown now.
 func (s *Server) lanPair(w http.ResponseWriter, r *http.Request) {
-	code := r.URL.Query().Get("code")
-	exp, ok := lanCodes.LoadAndDelete(code)
-	if !ok || time.Now().After(exp.(time.Time)) {
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.WriteHeader(http.StatusForbidden)
-		w.Write([]byte(`<!doctype html><meta name="viewport" content="width=device-width"><title>Sameway</title><p style="font:1.1rem system-ui;max-width:30rem;margin:2rem auto;padding:0 1rem">This code has been used or is more than ten minutes old. Scan the one Sameway shows now on the computer, under Workspaces.</p>`))
+	if !s.pairing.use(r.URL.Query().Get("code"), s.now()) {
+		lanPairPage(w, "Those letters do not work: the code has been used, is more than ten minutes old, or was mistyped. Try the one Sameway shows now on the computer, under Workspaces.")
 		return
 	}
 	secret := token(32)

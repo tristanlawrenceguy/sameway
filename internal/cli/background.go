@@ -36,21 +36,24 @@ func startBackground(ctx context.Context, a *app.App, h *server.Server, all http
 	h.KeepBrief(ctx)   // the morning brief, when one is set
 	h.KeepMail(ctx)    // email sent to the workspace, when connected
 
-	a.WatchSchema(ctx, app.SchemaEvery, h.Changed) // types changed by hand, so open pages follow
-	h.OnRing(notifier(a))                          // a ring told beyond the page
-	h.WriteDownInBackground()
-	a.Chat.StartSchedule(ctx)
-	a.Chat.StartAutomating() // actions that run when something happens; chat/automate.go
+	h.OnRing(notifier(a)) // a ring told beyond the page
 	connectDevices(ctx, out, a)
-	joinTailnet(ctx, out, a, all, h)
-	a.Jobs.Add(h.BackgroundJobs()...) // server/jobs.go: rings, calendars, the cloud folder
-	a.Jobs.Add(backgroundJobs(a, notes)...)
+	a.Jobs.Add(backgroundJobs(a, h, notes)...)
+	a.Jobs.Add(joinTailnet(out, a, all, h)...) // tailnet.go
 	a.Jobs.Start(ctx)
 }
 
-// backgroundJobs are the jobs the runner does, each on its own schedule.
-func backgroundJobs(a *app.App, notes io.Writer) []runner.Job {
-	jobs := []runner.Job{snapshotJob(notes, a)}
+// backgroundJobs are the jobs the runner does, each on its own schedule:
+// the server's (server/jobs.go: rings, calendars, the cloud folder,
+// writing recordings down), the chat's and the program's.
+func backgroundJobs(a *app.App, h *server.Server, notes io.Writer) []runner.Job {
+	jobs := []runner.Job{
+		a.SchemaJob(app.SchemaEvery, h.Changed), // types changed by hand, so open pages follow
+		a.Chat.ScheduleJob(),                    // actions with a schedule; chat/schedule.go
+		a.Chat.AutomateJob(),                    // actions that run when something happens; chat/automate.go
+		snapshotJob(notes, a),
+	}
+	jobs = append(h.BackgroundJobs(), jobs...)
 	// Kept current: a double-clicked Sameway, or one opened at sign-in,
 	// looks for a new version as serve does.
 	jobs = append(jobs, updateJob(notes, a)...)

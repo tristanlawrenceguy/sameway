@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/runner"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -87,21 +88,14 @@ func (s *Service) RunDue(ctx context.Context, now time.Time) []string {
 	return ran
 }
 
-// StartSchedule checks once a minute, until ctx ends, for actions whose
-// time has come. The server starts it; tests call RunDue directly.
-func (s *Service) StartSchedule(ctx context.Context) {
-	go func() {
-		tick := time.NewTicker(time.Minute)
-		defer tick.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case now := <-tick.C:
-				if ran := s.RunDue(ctx, now); len(ran) > 0 {
-					log.Printf("schedule: ran %s", strings.Join(ran, ", "))
-				}
-			}
+// ScheduleJob checks once a minute for actions whose time has come: a
+// job for the app's runner, which the server starts; tests call RunDue
+// directly.
+func (s *Service) ScheduleJob() runner.Job {
+	return runner.Job{Name: "Actions run on their schedule", Every: time.Minute, Wait: true, Run: func(ctx context.Context, now time.Time) error {
+		if ran := s.RunDue(ctx, now); len(ran) > 0 {
+			log.Printf("schedule: ran %s", strings.Join(ran, ", "))
 		}
-	}()
+		return nil
+	}}
 }

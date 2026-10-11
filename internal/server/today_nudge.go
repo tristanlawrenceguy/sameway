@@ -80,7 +80,7 @@ func (s *Server) dueOf(id string, now time.Time) (title string, at time.Time, al
 	}
 	title, _ = rec.Fields["title"].(string)
 	v, _ := rec.Fields["due"].(string)
-	at, allDay, _ = when.Parse(v, now)
+	at, allDay, _ = when.Stored(v, now.In(time.Local))
 	return title, at.In(time.Local), allDay, nil
 }
 
