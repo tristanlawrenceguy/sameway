@@ -43,6 +43,7 @@ func (s *Server) helpPage(w http.ResponseWriter, r *http.Request) {
 	b.WriteString(appSection) // app_install.go
 	if records.VisitorOf(r.Context()).Owner() {
 		b.WriteString(s.feedbackSection()) // feedback.go
+		b.WriteString(s.jobsSection())     // jobs_page.go
 	}
 	b.WriteString(`<section class="sw-stack" aria-labelledby="help-undo"><h2 id="help-undo">Taking things back</h2>
 <p>Almost everything can be undone: the message after a change has an Undo button, and <a class="sw-link" href="/activity">Activity</a> lists every change with its own Undo. A deleted workspace goes to the trash, and <a class="sw-link" href="/workspaces">Workspaces</a> can bring it back.</p></section>`)

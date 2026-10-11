@@ -11,7 +11,7 @@ import (
 // does.
 type Status struct {
 	Name  string        `json:"name"`
-	Every time.Duration `json:"every,omitempty"`
+	Every time.Duration `json:"-"` // an API says it in its own unit
 	// Runs is how many times it has run since the program started.
 	Runs int `json:"runs"`
 	// Running is true while a run is under way, and for the whole life of

@@ -21,6 +21,7 @@ var apiRoutes = []route{
 	{pattern: "POST /api/chat/clear", handle: (*Server).apiChatClear, access: people, reach: inward},
 	{pattern: "POST /api/file/upload", handle: (*Server).apiFileUpload, access: people, reach: inward},
 	{pattern: "GET /api/workspaces", handle: (*Server).apiWorkspaces, access: owner},
+	{pattern: "GET /api/jobs", handle: (*Server).apiJobs, access: owner},
 	{pattern: "GET /api/changes", handle: (*Server).apiChanges, access: people},
 	{pattern: "POST /api/arrange", handle: (*Server).apiArrange, access: people, reach: inward},
 	// And the tools the one asking may have: api_tools.go.
