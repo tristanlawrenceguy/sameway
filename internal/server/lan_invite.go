@@ -81,7 +81,7 @@ func (s *Server) phoneInvite(w http.ResponseWriter, r *http.Request) {
 	esc := template.HTMLEscapeString
 	body := `<p>Send ` + esc(name) + ` this link by message or email, or let them scan the code. It works once, within a week, on a device on the same Wi-Fi as this computer.</p>` +
 		`<p><code>` + esc(link) + `</code></p><figure class="sw-stack">` + qrSVG(link) + `</figure>` +
-		`<p>To shut them out, remove their device under Workspaces. To change what they may do, make them another invite. <a class="sw-link" href="/workspaces#ws-phone">Back to Workspaces</a></p>`
+		`<p>To shut them out, choose Take away access beside their name under Who can open this, on Workspaces. To change what they may do, invite them again by the same name. <a class="sw-link" href="/workspaces#ws-phone">Back to Workspaces</a></p>`
 	s.page(w, r, "Invite for "+name, template.HTML(body), pageOptions{})
 }
 
@@ -99,13 +99,17 @@ func (s *Server) lanJoin(w http.ResponseWriter, r *http.Request) {
 		kept = append(kept, i)
 	}
 	if found == nil || time.Now().After(found.Until) {
-		lanSay(w, "This invite has been used or is more than a week old. Ask for a new one.")
+		lanSay(w, "This invite does not work: it has been used, taken back, or is more than a week old. Ask for a new one.")
 		return
 	}
 	s.saveLanInvites(kept)
 	p, err := s.app.Store.Get(records.PersonType, found.Person)
 	if err != nil {
 		lanSay(w, "The one this invite was for is no longer in this workspace.")
+		return
+	}
+	if a, _ := p.Fields["access"].(string); a != records.View && a != records.Edit {
+		lanSay(w, "The owner has taken this invite back. Ask them for a new one if you still need it.")
 		return
 	}
 	name, _ := p.Fields["name"].(string)
