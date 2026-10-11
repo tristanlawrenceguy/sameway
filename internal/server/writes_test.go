@@ -1,13 +1,8 @@
 package server_test
 
 import (
-	"go/ast"
-	"go/parser"
-	"go/token"
 	"net/http"
 	"net/url"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -16,67 +11,8 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
-// A record is written one way from every way in: as a change's ops, by
-// records.WriteAs or Apply (s.apply on a page), which write, keep what was
-// there and log it as whoever did it. A handler that writes the store
-// itself has to do all three and can forget one, as the API's file without
-// content once forgot the log, so it could never be undone. The system's
-// own bookkeeping (a file's reading, a reminder ringing, a new tab's chat,
-// the example's blocks) goes through records.ApplyOps too, unlogged. What
-// still writes the store directly does so for a reason, said here; a new
-// one fails until it goes through Apply or says why it does not.
-var writesTheStoreItself = map[string]string{
-	"schema_change.go RemoveType": "a type deleted drops its whole table in one statement as the type goes, logged as the schema change; its records go with their type, not one by one",
-}
-
-func TestRecordsAreWrittenOneWay(t *testing.T) {
-	t.Parallel()
-	found := map[string]bool{}
-	for _, dir := range []string{".", "../cli", "../mcp", "../app"} {
-		files, _ := filepath.Glob(filepath.Join(dir, "*.go"))
-		for _, f := range files {
-			if strings.HasSuffix(f, "_test.go") {
-				continue
-			}
-			src, err := os.ReadFile(f)
-			if err != nil {
-				t.Fatal(err)
-			}
-			file, err := parser.ParseFile(token.NewFileSet(), f, src, 0)
-			if err != nil {
-				t.Fatal(err)
-			}
-			for _, d := range file.Decls {
-				fn, ok := d.(*ast.FuncDecl)
-				if !ok || fn.Body == nil {
-					continue
-				}
-				ast.Inspect(fn.Body, func(n ast.Node) bool {
-					sel, ok := n.(*ast.SelectorExpr)
-					if !ok {
-						return true
-					}
-					if x, ok := sel.X.(*ast.SelectorExpr); ok && x.Sel.Name == "Store" {
-						switch sel.Sel.Name {
-						case "Create", "Update", "Delete", "DeleteAll":
-							key := filepath.Base(f) + " " + fn.Name.Name
-							found[key] = true
-							if writesTheStoreItself[key] == "" {
-								t.Errorf("%s writes the store itself: write records through records.WriteAs or Apply, or say here why it does not", key)
-							}
-						}
-					}
-					return true
-				})
-			}
-		}
-	}
-	for key := range writesTheStoreItself {
-		if !found[key] {
-			t.Errorf("%s no longer writes the store itself; take it off the list", key)
-		}
-	}
-}
+// That every way in writes through records at all is checked by
+// tools/check (writes.go), across every package.
 
 // Made, changed and deleted from a page, over the API and by the
 // assistant, a record leaves the same trail each time: an entry in the

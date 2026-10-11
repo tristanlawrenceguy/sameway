@@ -10,60 +10,43 @@ import (
 	"net"
 	"net/http"
 	"strings"
-	"syscall"
 	"time"
 
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
+	"golang.org/x/net/html/charset"
 
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
 )
 
-// pageReader fetches a shared page from the internet, never from this
-// computer itself: a link to localhost would have Sameway read what only
-// this computer should see, for whoever shared it.
-var pageReader = &http.Client{
-	Timeout: 20 * time.Second,
-	Transport: &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
-		DialContext: (&net.Dialer{Timeout: 10 * time.Second, Control: func(_, address string, _ syscall.RawConn) error {
-			host, _, _ := net.SplitHostPort(address)
-			if ip := net.ParseIP(host); ip != nil && (ip.IsLoopback() || ip.IsUnspecified() || ip.IsLinkLocalUnicast()) && !readLocal {
-				return errors.New("a page on this computer is not read")
-			}
-			return nil
-		}}).DialContext,
-	},
-}
-
-// readLocal lets a test read a page it serves on this computer.
-var readLocal = false
-
 // pageMost is how much of a page is read, and how many characters of its
-// words are kept: a long article whole, a book not.
+// words are kept: a long article whole, a book not. pageWait is how long
+// the person waits for it: past ten seconds attention goes (NN/g), and a
+// page that slow is kept as its link.
 const (
 	pageMost  = 5 << 20
 	wordsMost = 40000
+	pageWait  = 10 * time.Second
 )
 
 // readPage is a web page's title and its main words as Markdown: the
 // article, or the main part, or the body, without its menus, headers,
 // footers, scripts and forms.
-func readPage(ctx context.Context, link string) (title, words string, err error) {
+func readPage(ctx context.Context, client *http.Client, link string) (title, words string, err error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, link, nil)
 	if err != nil {
 		return "", "", err
 	}
 	req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; Sameway; saving a page someone shared)")
 	req.Header.Set("Accept", "text/html,application/xhtml+xml")
-	res, err := pageReader.Do(req)
+	res, err := client.Do(req)
 	if err != nil {
 		var ne net.Error
 		if errors.As(err, &ne) && ne.Timeout() {
 			return "", "", errors.New("it took too long to answer")
 		}
-		if strings.Contains(err.Error(), "not read") {
-			return "", "", errors.New("a page on this computer is not read")
+		if errors.Is(err, errNearby) {
+			return "", "", errNearby
 		}
 		return "", "", errors.New("it could not be reached")
 	}
@@ -74,11 +57,13 @@ func readPage(ctx context.Context, link string) (title, words string, err error)
 	if kind, _, _ := mime.ParseMediaType(res.Header.Get("Content-Type")); kind != "text/html" && kind != "application/xhtml+xml" {
 		return "", "", errors.New("it is not a web page")
 	}
-	raw, err := io.ReadAll(io.LimitReader(res.Body, pageMost))
+	// A page in another encoding than UTF-8 says so, in its header or
+	// its head, and is read in it.
+	body, err := charset.NewReader(io.LimitReader(res.Body, pageMost), res.Header.Get("Content-Type"))
 	if err != nil {
-		return "", "", errors.New("it did not arrive whole")
+		return "", "", errors.New("its words are in an encoding not known here")
 	}
-	doc, err := html.Parse(bytes.NewReader(raw))
+	doc, err := html.Parse(body)
 	if err != nil {
 		return "", "", errors.New("its words could not be read")
 	}
@@ -162,16 +147,39 @@ func metaContent(doc *html.Node, property string) string {
 	return out
 }
 
-// noise is what a page has around its words.
+// noise is what a page has around its words: these elements, and any
+// the page itself marks as around them, by its landmark role, or as
+// hidden from sight and from screen readers.
 var noise = map[atom.Atom]bool{atom.Script: true, atom.Style: true, atom.Noscript: true, atom.Nav: true, atom.Header: true,
-	atom.Footer: true, atom.Aside: true, atom.Form: true, atom.Iframe: true, atom.Svg: true, atom.Button: true, atom.Template: true}
+	atom.Footer: true, atom.Aside: true, atom.Form: true, atom.Iframe: true, atom.Svg: true, atom.Button: true, atom.Template: true,
+	atom.Dialog: true}
+
+var noiseRoles = map[string]bool{"navigation": true, "banner": true, "contentinfo": true, "complementary": true,
+	"search": true, "dialog": true, "alertdialog": true}
+
+func isNoise(n *html.Node) bool {
+	if n.Type == html.CommentNode {
+		return true
+	}
+	if n.Type != html.ElementNode {
+		return false
+	}
+	if noise[n.DataAtom] {
+		return true
+	}
+	for _, a := range n.Attr {
+		switch {
+		case a.Key == "hidden", a.Key == "aria-hidden" && a.Val == "true", a.Key == "role" && noiseRoles[a.Val]:
+			return true
+		}
+	}
+	return false
+}
 
 func prune(n *html.Node) {
 	for c := n.FirstChild; c != nil; {
 		next := c.NextSibling
-		if c.Type == html.ElementNode && noise[c.DataAtom] {
-			n.RemoveChild(c)
-		} else if c.Type == html.CommentNode {
+		if isNoise(c) {
 			n.RemoveChild(c)
 		} else {
 			prune(c)

@@ -1,6 +1,6 @@
 {
   "name": "link",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Navigates to another page or location. For an action on the current page use button.",
   "icon": "→",
   "use": {
@@ -37,6 +37,12 @@
         "type": "boolean",
         "default": false,
         "description": "True when the link points at the page being viewed."
+      },
+      "within": {
+        "title": "The page being viewed is inside where it leads",
+        "type": "boolean",
+        "default": false,
+        "description": "True when the page being viewed is one of the pages under this link's, such as a record of the list it leads to: marked as where the person is (aria-current=true), not as the page itself. current wins over it."
       },
       "look": {
         "title": "How it looks",
@@ -76,7 +82,7 @@
   "machine": {
     "selector": "[data-component=\"link\"]",
     "identify": "The accessible name is the visible label plus any context text. The href attribute is the destination.",
-    "operate": "Click it, or focus it and press Enter. Read aria-current to know whether it is the current page."
+    "operate": "Click it, or focus it and press Enter. Read aria-current: page is the current page, true is the place the current page is in."
   },
   "examples": [
     {
@@ -95,6 +101,15 @@
         "current": true
       },
       "file": "examples/current.html"
+    },
+    {
+      "name": "within",
+      "props": {
+        "href": "/t/habit",
+        "label": "habits",
+        "within": true
+      },
+      "file": "examples/within.html"
     },
     {
       "name": "context",

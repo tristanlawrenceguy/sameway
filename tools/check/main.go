@@ -6,6 +6,8 @@
 //   - no new Go file named *_more, *_extra or *_helpers (split by size, not topic)
 //   - every component folder has manifest.json, template.html, style.css, README.md, examples/
 //   - design/tokens/tokens.css matches tokens.json
+//   - a direct write to the store outside store and records fails, unless
+//     storeWrites in debt.go lists it with its reason (writes.go)
 //   - with -base REF: tools/check/debt.go only goes down from REF (no entry
 //     added, no recorded length raised)
 //
@@ -51,6 +53,7 @@ func run(root string) report {
 	r.add(checkFileSizes(root))
 	r.add(checkFileNames(root))
 	r.add(checkFuncLengths(root))
+	r.add(checkStoreWrites(root, storeWrites))
 	r.problems = append(r.problems, checkComponents(filepath.Join(root, "design/components"))...)
 	r.problems = append(r.problems, checkTokens(root)...)
 	return r
