@@ -11,7 +11,7 @@ import (
 // page open, for the app's runner (internal/runner) to do. Each keeps the
 // interval it had on its own loop.
 func (s *Server) BackgroundJobs() []runner.Job {
-	return []runner.Job{
+	jobs := []runner.Job{
 		{Name: "Reminders ring", Every: 5 * time.Second, Run: func(_ context.Context, now time.Time) error {
 			s.Ring(now) // ring.go
 			return nil
@@ -28,4 +28,5 @@ func (s *Server) BackgroundJobs() []runner.Job {
 			return s.syncRound() // cloud_sync.go
 		}},
 	}
+	return append(jobs, s.WriteDownJobs()...) // media/hostwrite.go
 }

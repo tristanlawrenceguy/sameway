@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/mcp"
 	"github.com/tristanlawrenceguy/sameway/internal/peers"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/runner"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/tailnet"
 	"github.com/tristanlawrenceguy/sameway/internal/update"
@@ -23,7 +25,11 @@ import (
 // runs, so the assistant turning it on (or off) takes effect at once, with
 // no restart. Every step goes to the terminal; while the person is setting
 // it up, the steps also go to the chat, where they can follow the links.
-func joinTailnet(ctx context.Context, out io.Writer, a *app.App, h http.Handler, srv *server.Server) {
+//
+// It is two background jobs: following the name every two seconds, and
+// keeping the copies on the computers named in tailnet.peers in step every
+// three.
+func joinTailnet(out io.Writer, a *app.App, h http.Handler, srv *server.Server) []runner.Job {
 	// Who gets in, and as whom, is the workspace's to say: its owner's own
 	// devices, and the people it has let in.
 	admit := func(ctx context.Context, p tailnet.Peer) (context.Context, string, bool) {
@@ -36,10 +42,14 @@ func joinTailnet(ctx context.Context, out io.Writer, a *app.App, h http.Handler,
 		Handler: srv.Public(&mcp.Server{App: a, Version: update.Version,
 			Published: func() map[string]bool { return srv.Published().Types }}),
 	}
-	n := &tailnetNode{out: out, a: a, h: h, admit: admit, pub: pub, published: publishing(a), news: make(chan struct{})}
+	n := &tailnetNode{out: out, a: a, h: h, admit: admit, pub: pub, published: publishing(a), news: make(chan struct{}), said: map[string]string{}}
 	a.Chat.Tailnet = n.wait
-	go n.follow(ctx)
-	go n.keepInStep(ctx, srv)
+	return []runner.Job{
+		{Name: "Tailscale, as the workspace's settings say", Every: 2 * time.Second, Run: n.follow},
+		{Name: "Copies on your other computers kept in step", Every: 3 * time.Second, Wait: true, Run: func(ctx context.Context, _ time.Time) error {
+			return n.keepInStep(ctx, srv)
+		}},
+	}
 }
 
 type tailnetNode struct {
@@ -61,39 +71,50 @@ type tailnetNode struct {
 	// the chat hears each step. A workspace that simply starts up on its
 	// tailnet says so on the terminal only.
 	setup bool
+
+	// What follow knows between its runs: the name it last joined as,
+	// whether it has run, and how to leave.
+	name    string
+	started bool
+	leave   context.CancelFunc
+	// What keepInStep knows between its runs: whether the records from
+	// before there were peers are stamped, and what each peer last said.
+	seeded bool
+	said   map[string]string
 }
 
-func (n *tailnetNode) follow(ctx context.Context) {
-	name, first := "", true
-	var stop context.CancelFunc = func() {}
-	defer func() { stop() }()
-	for {
-		if want := strings.TrimSpace(n.a.Workspace.Config.Tailnet.Name); want != name || first {
-			stop()
-			stop = func() {}
-			if !first {
-				n.mu.Lock()
-				n.setup = true
-				n.mu.Unlock()
-			}
-			if want == "" && !first {
-				n.say(tailnet.Status{State: tailnet.Off})
-			}
-			if want != "" {
-				node, cancel := context.WithCancel(ctx)
-				stop = cancel
-				if err := tailnet.Start(node, n.a.Workspace.Config.Tailnet, n.h, n.admit, n.pub, n.say); err != nil {
-					n.say(tailnet.Status{State: tailnet.Failed, Err: err})
-				}
-			}
-			name, first = want, false
-		}
-		select {
-		case <-ctx.Done():
-			return
-		case <-time.After(2 * time.Second):
-		}
+// follow joins, leaves or joins again when the name in the settings
+// changed since it last looked. ctx is the runner's, so a node started
+// here lasts until the program stops.
+func (n *tailnetNode) follow(ctx context.Context, _ time.Time) error {
+	want := strings.TrimSpace(n.a.Workspace.Config.Tailnet.Name)
+	if want == n.name && n.started {
+		return nil
 	}
+	first := !n.started
+	if n.leave != nil {
+		n.leave()
+		n.leave = nil
+	}
+	if !first {
+		n.mu.Lock()
+		n.setup = true
+		n.mu.Unlock()
+	}
+	if want == "" && !first {
+		n.say(tailnet.Status{State: tailnet.Off})
+	}
+	n.name, n.started = want, true
+	if want == "" {
+		return nil
+	}
+	node, cancel := context.WithCancel(ctx)
+	n.leave = cancel
+	if err := tailnet.Start(node, n.a.Workspace.Config.Tailnet, n.h, n.admit, n.pub, n.say); err != nil {
+		n.say(tailnet.Status{State: tailnet.Failed, Err: err})
+		return err
+	}
+	return nil
 }
 
 func (n *tailnetNode) say(s tailnet.Status) {
@@ -155,48 +176,42 @@ func (n *tailnetNode) wait(d time.Duration) string {
 // long as the server runs. Pages open here follow what arrives. Records
 // from before there were peers are stamped once, so the first exchange
 // carries them.
-func (n *tailnetNode) keepInStep(ctx context.Context, srv *server.Server) {
-	seeded := false
-	said := map[string]string{}
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-time.After(3 * time.Second):
+func (n *tailnetNode) keepInStep(ctx context.Context, srv *server.Server) error {
+	list := peers.Peers(n.a.Workspace.Config.Tailnet.Peers)
+	n.mu.Lock()
+	client := n.client
+	n.mu.Unlock()
+	if client == nil || len(list) == 0 {
+		return nil
+	}
+	if !n.seeded {
+		if err := n.a.Store.Seed(); err != nil {
+			fmt.Fprintf(n.out, "  sync    %v\n", err)
+			return err
 		}
-		list := peers.Peers(n.a.Workspace.Config.Tailnet.Peers)
-		n.mu.Lock()
-		client := n.client
-		n.mu.Unlock()
-		if client == nil || len(list) == 0 {
-			continue
+		n.seeded = true
+	}
+	var failed []error
+	for _, p := range list {
+		step, cancel := context.WithTimeout(ctx, 20*time.Second)
+		changed, there, err := peers.WithPresence(step, client, n.a.Store, p, srv.PresentHere())
+		srv.HearPresence(there)
+		cancel()
+		if changed > 0 {
+			srv.Changed()
 		}
-		if !seeded {
-			if err := n.a.Store.Seed(); err != nil {
-				fmt.Fprintf(n.out, "  sync    %v\n", err)
-				continue
-			}
-			seeded = true
+		// Each peer's state is said when it changes, not every round.
+		now := "in step"
+		if err != nil {
+			now = err.Error()
+			failed = append(failed, fmt.Errorf("%s: %w", p, err))
 		}
-		for _, p := range list {
-			step, cancel := context.WithTimeout(ctx, 20*time.Second)
-			changed, there, err := peers.WithPresence(step, client, n.a.Store, p, srv.PresentHere())
-			srv.HearPresence(there)
-			cancel()
-			if changed > 0 {
-				srv.Changed()
-			}
-			// Each peer's state is said when it changes, not every round.
-			now := "in step"
-			if err != nil {
-				now = err.Error()
-			}
-			if said[p] != now {
-				said[p] = now
-				fmt.Fprintf(n.out, "  sync    %s: %s\n", p, now)
-			}
+		if n.said[p] != now {
+			n.said[p] = now
+			fmt.Fprintf(n.out, "  sync    %s: %s\n", p, now)
 		}
 	}
+	return errors.Join(failed...)
 }
 
 // publishing is what the workspace publishes, as one line to compare.
