@@ -3,14 +3,12 @@ package server
 import (
 	"errors"
 	"fmt"
-	"html/template"
 	"net/http"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
-	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // A tag a classify action gave waits on Today as a suggestion: kept with a
@@ -18,66 +16,10 @@ import (
 // the action follows next time (chat/judgement.go), so each press is their
 // judgement taught once, not a chore repeated.
 
-// tagsToCheck are the suggested tags, newest first, a few at a time.
-func (s *Server) tagsToCheck() []*store.Record {
-	if _, ok := s.app.Types.Get(chat.ClassificationType); !ok {
-		return nil
-	}
-	recs, _ := s.app.Store.List(chat.ClassificationType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 100})
-	var out []*store.Record
-	alone := s.aloneTags()
-	for _, c := range recs {
-		if c.Fields["state"] == "suggested" && !alone[strings.ToLower(fmt.Sprint(c.Fields["tag"]))] && len(out) < 20 {
-			out = append(out, c)
-		}
-	}
-	return out
-}
-
 // taggedRecord is the record a classification is about.
 func (s *Server) taggedRecord(c *store.Record) (*store.Record, error) {
 	typ, id, _ := strings.Cut(fmt.Sprint(c.Fields["record"]), "/")
 	return s.app.Store.Get(typ, id)
-}
-
-// tagSection is Tags to check on Today.
-func (s *Server) tagSection() string {
-	cls := s.tagsToCheck()
-	if len(cls) == 0 {
-		return ""
-	}
-	esc := template.HTMLEscapeString
-	var other []any
-	for _, t := range s.tagNames() {
-		other = append(other, t)
-	}
-	var b strings.Builder
-	b.WriteString(`<h2>Tags to check</h2><ul class="sw-plain sw-rows">`)
-	for _, c := range cls {
-		rec, err := s.taggedRecord(c)
-		if err != nil {
-			continue
-		}
-		name, tag := s.nameOf(rec), fmt.Sprint(c.Fields["tag"])
-		why, _ := c.Fields["why"].(string)
-		b.WriteString(`<li class="sw-stack"><p><a class="sw-link" href="/t/` + rec.Type + `/` + rec.ID + `">` + esc(name) + `</a>: tagged <strong>` + esc(tag) + `</strong>`)
-		if why != "" {
-			b.WriteString(`, ` + esc(strings.TrimSuffix(why, ".")))
-		}
-		b.WriteString(`.</p><div class="sw-cluster">`)
-		id := ui.Hidden("id", c.ID)
-		context := tag + " on " + name
-		b.WriteString(string(s.form(ui.Form{Action: "/tags/keep", Hidden: id, Button: &ui.Button{Label: "Keep", Context: context, Variant: ui.Secondary}})))
-		b.WriteString(string(s.form(ui.Form{Action: "/tags/off", Hidden: id, Button: &ui.Button{Label: "Take it off", Context: context, Variant: ui.Quiet}})))
-		if len(other) > 1 {
-			b.WriteString(string(s.form(ui.Form{Action: "/tags/change", Class: "sw-cluster", Hidden: id,
-				Body:   s.component("select", map[string]any{"label": "Change to", "context": context, "name": "to", "as": "dropdown", "options": other, "value": tag}),
-				Button: &ui.Button{Label: "Change", Context: context, Variant: ui.Quiet}})))
-		}
-		b.WriteString(`</div></li>`)
-	}
-	b.WriteString(`</ul>`)
-	return b.String()
 }
 
 func (s *Server) tagNames() []string {
@@ -136,7 +78,7 @@ func (s *Server) tagOff(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		var act string
 		if act, err = s.retag(r, rec, fmt.Sprint(c.Fields["tag"]), ""); err == nil {
-			s.tellAt(w, r, outcome{Title: "Taken off", Text: fmt.Sprintf("%s no longer has the tag %s.", s.nameOf(rec), c.Fields["tag"]), Undo: act}, "/today")
+			s.tellAt(w, r, outcome{Title: "Taken off", Text: fmt.Sprintf("%s no longer has the tag %s; the action follows that next time.", s.nameOf(rec), c.Fields["tag"]), Undo: act}, "/today")
 			return
 		}
 	}
@@ -153,7 +95,7 @@ func (s *Server) tagChange(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		var act string
 		if act, err = s.retag(r, rec, fmt.Sprint(c.Fields["tag"]), to); err == nil {
-			s.tellAt(w, r, outcome{Title: "Changed", Text: fmt.Sprintf("%s is tagged %s instead of %s.", s.nameOf(rec), to, c.Fields["tag"]), Undo: act}, "/today")
+			s.tellAt(w, r, outcome{Title: "Changed", Text: fmt.Sprintf("%s is tagged %s instead of %s; the action follows that next time.", s.nameOf(rec), to, c.Fields["tag"]), Undo: act}, "/today")
 			return
 		}
 	}
@@ -247,42 +189,27 @@ func (s *Server) latestTag(rec *store.Record, tag string) *store.Record {
 	return nil
 }
 
-// foldedNothing is what was looked at and needs nothing, folded away as a
-// count on Today: newsletters and receipts do not compete for attention,
-// and one changed to another tag teaches the action what it missed.
-func (s *Server) foldedNothing(items []*store.Record, alone map[string]bool) string {
-	esc := template.HTMLEscapeString
-	var other []any
-	for _, t := range s.tagNames() {
-		if !alone[strings.ToLower(t)] {
-			other = append(other, t)
-		}
-	}
-	var b strings.Builder
-	n, tag := 0, ""
-	for _, rec := range items {
-		t := s.hasAlone(rec, alone)
-		c := s.latestTag(rec, t)
-		if t == "" || c == nil || len(other) == 0 {
-			continue
-		}
-		n, tag = n+1, t
-		name := s.nameOf(rec)
-		why, _ := c.Fields["why"].(string)
-		b.WriteString(`<li class="sw-stack"><p><a class="sw-link" href="/t/` + rec.Type + `/` + rec.ID + `">` + esc(name) + `</a>`)
-		if why != "" && why != "no other tag fits" {
-			b.WriteString(`: ` + esc(why))
-		}
-		b.WriteString(`</p><form method="post" action="/tags/change" class="sw-cluster"><input type="hidden" name="id" value="` + c.ID + `">` +
-			string(s.component("select", map[string]any{"label": "Change to", "context": name, "name": "to", "as": "dropdown", "options": other, "value": other[0]})) +
-			string(s.component("button", map[string]any{"label": "Change", "context": name, "type": "submit", "variant": "quiet"})) + `</form></li>`)
-	}
-	if n == 0 {
-		return ""
-	}
-	body, err := s.app.Registry.RenderSlot("disclosure", map[string]any{"label": strings.ToUpper(tag[:1]) + tag[1:], "count": n, "of": "item"}, template.HTML(`<ul class="sw-plain sw-rows">`+b.String()+`</ul>`))
+// tagsAgreed keeps the tags that set off the action a suggestion came
+// from, once the person makes it: a task made from an email tagged to do
+// says it was to do, so that tag is not asked about again, and it is their
+// choice the action follows. Turning the suggestion down says nothing
+// about the tag, so it is left to check.
+func (s *Server) tagsAgreed(p *store.Record) {
+	act, err := s.app.Store.Get(records.ActionType, fmt.Sprint(p.Fields["by_action"]))
 	if err != nil {
-		return ""
+		return
 	}
-	return string(body)
+	set := map[string]bool{}
+	for _, o := range records.StringList(act.Fields["only"]) {
+		if k, v, ok := strings.Cut(o, "="); ok && strings.TrimSpace(k) == "tags" {
+			set[strings.ToLower(strings.TrimSpace(v))] = true
+		}
+	}
+	cls, _ := s.app.Store.List(chat.ClassificationType, store.ListOptions{})
+	for _, c := range cls {
+		undecided := c.Fields["state"] == "suggested" || c.Fields["confirmed_by"] == "judgement"
+		if c.Fields["record"] == p.Fields["from"] && undecided && set[strings.ToLower(fmt.Sprint(c.Fields["tag"]))] {
+			records.ApplyOps(s.app.Store, records.Op{Type: chat.ClassificationType, ID: c.ID, After: map[string]any{"state": "confirmed", "confirmed_by": "person"}})
+		}
+	}
 }
