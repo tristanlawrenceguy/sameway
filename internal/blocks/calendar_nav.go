@@ -50,6 +50,6 @@ func calendarNav(out map[string]any, blockID, month, day string, shownDay, now t
 	out["nav"] = map[string]any{
 		"previous": map[string]any{"href": base + "?month=" + prev.Format("2006-01"), "label": prev.Format("January 2006")},
 		"next":     map[string]any{"href": base + "?month=" + next.Format("2006-01"), "label": next.Format("January 2006")},
-		"today":    map[string]any{"href": base + "?day=" + now.Format("2006-01-02"), "label": "Today"},
+		"today":    map[string]any{"href": base + "?day=" + now.Format("2006-01-02"), "label": "Today, " + now.Format("Mon 2 Jan")}, // not Today alone: that is the page Today, in the navigation
 	}
 }

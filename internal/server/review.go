@@ -1,8 +1,6 @@
 package server
 
 import (
-	"context"
-	"errors"
 	"html/template"
 	"net/http"
 	"sort"
@@ -10,19 +8,22 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/blocks"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
-// A list kept for weeks fills with what slipped, and nobody looks back to
-// see what went well or decides what to do about the rest: the habit that
-// keeps a list worth keeping. The weekly review is one page for it: what
-// was done this week, what slipped, with Move to next week or Done for each
-// in one press, the habits kept, and the week ahead; and a button that asks
-// the assistant to plan the next week with the person. On the day the
-// owner picks on Help, a notification says it is ready.
+// A list kept for weeks fills with what is overdue, and nobody looks back
+// to see what went well or decides what to do about the rest: the habit
+// that keeps a list worth keeping. The weekly review is one page for it:
+// what was done this week first, then what is overdue, each moved to next
+// week, kept without a date or ticked in one press, the habits kept, and
+// the week ahead with what is on the calendar; and a button that asks the
+// assistant to look back and plan with the person. On the day the owner
+// picks on Help, a notification says it is ready (review_day.go). Why it
+// works this way: design/foundations/review.md.
 
 // reviewTask is a task as the review shows it.
 type reviewTask struct {
@@ -30,7 +31,7 @@ type reviewTask struct {
 	At              time.Time
 }
 
-func (s *Server) reviewTasks(now time.Time) (done, slipped, ahead []reviewTask) {
+func (s *Server) reviewTasks(now time.Time) (done, overdue, ahead []reviewTask) {
 	t, ok := s.app.Types.Get("task")
 	if !ok {
 		return
@@ -51,33 +52,42 @@ func (s *Server) reviewTasks(now time.Time) (done, slipped, ahead []reviewTask) 
 		case isDone && r.UpdatedAt.After(week):
 			done = append(done, item)
 		case !isDone && has && item.At.Before(today):
-			slipped = append(slipped, item)
+			overdue = append(overdue, item)
 		case !isDone && has && item.At.Before(today.AddDate(0, 0, 8)):
 			ahead = append(ahead, item)
 		}
 	}
-	for _, l := range [][]reviewTask{done, slipped, ahead} {
+	for _, l := range [][]reviewTask{done, overdue, ahead} {
 		sort.SliceStable(l, func(i, j int) bool { return l[i].At.Before(l[j].At) })
 	}
 	return
 }
 
+// reviewActions are what can be done with an overdue task, each in one
+// press: put it off a week, keep it with no date (for some day, as GTD's
+// weekly review renegotiates a commitment), or say it is done.
+var reviewActions = []struct{ to, label string }{{"next", "Move to next week"}, {"undate", "Clear the date"}, {"done", "Done"}}
+
 func (s *Server) reviewPage(w http.ResponseWriter, r *http.Request) {
 	now := s.now()
-	done, slipped, ahead := s.reviewTasks(now)
+	done, overdue, ahead := s.reviewTasks(now)
 	esc := template.HTMLEscapeString
 	var b strings.Builder
 	list := func(items []reviewTask, actions bool) {
 		b.WriteString(`<ul class="sw-plain sw-rows">`)
 		for _, it := range items {
-			b.WriteString(`<li class="sw-cluster"><a class="sw-link" href="/t/task/` + it.ID + `">` + esc(it.Title) + `</a>`)
+			// A row as a list's row is: the title, its day at the right,
+			// then the presses, which wrap under it on a narrow screen.
+			b.WriteString(`<li class="sw-row"><span class="sw-row__title"><a class="sw-row__link" href="/t/task/` + it.ID + `">` + esc(it.Title) + `</a></span>`)
 			if it.When != "" {
-				b.WriteString(` <span class="sw-muted sw-small">` + esc(it.When) + `</span>`)
+				b.WriteString(`<span class="sw-row__meta">` + esc(it.When) + `</span>`)
 			}
 			if actions {
-				for _, a := range []struct{ to, label string }{{"next", "Move to next week"}, {"done", "Done"}} {
+				b.WriteString(`<div class="sw-cluster">`)
+				for _, a := range reviewActions {
 					b.WriteString(string(s.form(ui.Form{Action: "/review/" + a.to, Hidden: ui.Hidden("id", it.ID), Button: &ui.Button{Label: a.label, Context: it.Title, Variant: ui.Quiet}})))
 				}
+				b.WriteString(`</div>`)
 			}
 			b.WriteString(`</li>`)
 		}
@@ -87,25 +97,83 @@ func (s *Server) reviewPage(w http.ResponseWriter, r *http.Request) {
 	if len(done) == 0 {
 		b.WriteString(`<p class="sw-muted">Nothing ticked off this week yet.</p>`)
 	} else {
-		b.WriteString(`<p>` + esc(countWords(len(done), "task", "tasks")) + ` done.</p>`)
 		list(done, false)
 	}
-	b.WriteString(`<h2>Slipped</h2>`)
-	if len(slipped) == 0 {
-		b.WriteString(`<p class="sw-muted">Nothing is late.</p>`)
-	} else {
-		b.WriteString(`<p>Late, and still to do. Move each to next week, or say it is done.</p>`)
-		list(slipped, true)
+	if len(overdue) > 0 {
+		b.WriteString(`<h2>Overdue</h2><p>Their day has passed. Move each to next week, clear its date to keep it for later, or say it is done.</p>`)
+		list(overdue, true)
 	}
-	b.WriteString(`<h2>Habits</h2>` + string(s.component("tracker", s.tracker(map[string]any{"level": 3}))))
+	if habits := s.tracker(map[string]any{"label": "Habits", "level": 2}); hasHabits(habits) {
+		b.WriteString(string(s.component(trackerComponent, habits)))
+	}
 	b.WriteString(`<h2>The week ahead</h2>`)
 	if len(ahead) == 0 {
-		b.WriteString(`<p class="sw-muted">Nothing is due in the next seven days.</p>`)
+		b.WriteString(`<p class="sw-muted">No tasks are due in the next seven days.</p>`)
 	} else {
 		list(ahead, false)
 	}
-	b.WriteString(`<p><a class="sw-link sw-link--button" href="/chat?prompt=` + template.URLQueryEscaper("Let's plan next week: look at what slipped and what is due, and help me decide what matters.") + `">Plan next week with the assistant</a></p>`)
-	s.page(w, r, "Weekly review", template.HTML(b.String()), pageOptions{Lede: template.HTML("The week to " + now.Format("Monday 2 January"))})
+	b.WriteString(string(s.reviewCalendar(now)))
+	b.WriteString(`<h2>Plan next week</h2><p>The assistant can go through it with you: what went well, what got in the way, and what matters next.</p>`)
+	b.WriteString(`<p><a class="sw-link sw-link--button" href="/chat?prompt=` + template.URLQueryEscaper(reviewPrompt) + `">Look back and plan with the assistant</a></p>`)
+	s.page(w, r, "Weekly review", template.HTML(b.String()), pageOptions{Lede: template.HTML(esc(reviewSummary(now, len(done), len(overdue), len(ahead))))})
+}
+
+// reviewPrompt starts the assistant on the review as a retrospective
+// does: what went well first, then what got in the way, then what next,
+// without blame.
+const reviewPrompt = "Let's do my weekly review. Start with what went well this week, then what got in the way, then help me choose what matters next week from what is overdue and due."
+
+// reviewSummary is the week in one sentence, under the title: the done
+// first, the counts in words, and what is none left out, so a screen
+// reader hears the whole week once before the lists.
+func reviewSummary(now time.Time, done, overdue, ahead int) string {
+	said := "The seven days to " + now.Format("Monday 2 January")
+	var parts []string
+	if done > 0 {
+		parts = append(parts, countWords(done, "task", "tasks")+" done")
+	}
+	if overdue > 0 {
+		parts = append(parts, strconv.Itoa(overdue)+" overdue")
+	}
+	if ahead > 0 {
+		parts = append(parts, strconv.Itoa(ahead)+" due in the week ahead")
+	}
+	switch len(parts) {
+	case 0:
+		return said + "."
+	case 1:
+		return said + ": " + parts[0] + "."
+	}
+	return said + ": " + strings.Join(parts[:len(parts)-1], ", ") + " and " + parts[len(parts)-1] + "."
+}
+
+// reviewCalendar is what is on the calendar in the next seven days, for
+// planning the week around it, as GTD's review looks at the calendar
+// ahead; nothing when there is none. A calendar resolves one month, so
+// a week that crosses into the next asks for both.
+func (s *Server) reviewCalendar(now time.Time) template.HTML {
+	if _, ok := s.app.Types.Get("event"); !ok {
+		return ""
+	}
+	from, to := now.Format("2006-01-02"), now.AddDate(0, 0, 7).Format("2006-01-02")
+	var events []any
+	for _, month := range []string{from[:7], to[:7]} {
+		props := blocks.Resolve(s.app.Blocks, calendarComponent, map[string]any{"type": "event", "month": month}, blocks.Place{})
+		evs, _ := props["events"].([]any)
+		for _, e := range evs {
+			if ev, _ := e.(map[string]any); ev != nil && str(ev["date"], "") >= from && str(ev["date"], "") <= to {
+				events = append(events, ev)
+			}
+		}
+		if from[:7] == to[:7] {
+			break
+		}
+	}
+	if len(events) == 0 {
+		return ""
+	}
+	return `<h3>On the calendar</h3>` + s.component(calendarComponent, map[string]any{
+		"detail": "brief", "month": from[:7], "today": from, "upcoming": 20, "events": events})
 }
 
 func countWords(n int, one, many string) string {
@@ -115,12 +183,18 @@ func countWords(n int, one, many string) string {
 	return strconv.Itoa(n) + " " + many
 }
 
-// reviewMove moves a slipped task a week on from today; reviewDone ticks
-// it. Both are the person's change, with its Undo.
+// reviewMove moves an overdue task a week on from today; reviewUndate
+// keeps it with no date; reviewDone ticks it. Each is the person's
+// change, with its Undo.
 func (s *Server) reviewMove(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	next := s.now().AddDate(0, 0, 7).Format("2006-01-02")
 	s.reviewWrite(w, r, map[string]any{"due": next}, "Moved to next week")
+}
+
+func (s *Server) reviewUndate(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	s.reviewWrite(w, r, map[string]any{"due": nil}, "Kept, with no date")
 }
 
 func (s *Server) reviewDone(w http.ResponseWriter, r *http.Request) {
@@ -139,70 +213,9 @@ func (s *Server) reviewWrite(w http.ResponseWriter, r *http.Request, fields map[
 	s.tellAt(w, r, outcome{Title: said, Text: s.title(t, rec), Undo: act}, "/review")
 }
 
-// KeepReview says the weekly review is ready on the day review.on names,
-// at six in the evening, once that day, while ctx lasts.
-func (s *Server) KeepReview(ctx context.Context) {
-	go func() {
-		tick := time.NewTicker(time.Minute)
-		defer tick.Stop()
-		for {
-			s.reviewIfDue(s.now())
-			select {
-			case <-ctx.Done():
-				return
-			case <-tick.C:
-			}
-		}
-	}()
-}
-
-func (s *Server) reviewIfDue(now time.Time) bool {
-	on := strings.ToLower(s.app.Workspace.Config.Review.On)
-	if on == "" || s.notify == nil || strings.ToLower(now.Weekday().String()) != on || now.Hour() < 18 || s.app.Store.Meta("review:sent") == now.Format("2006-01-02") {
-		return false
-	}
-	s.app.Store.SetMeta("review:sent", now.Format("2006-01-02"))
-	done, slipped, _ := s.reviewTasks(now)
-	go s.notify("Your week in review", countWords(len(done), "task", "tasks")+" done, "+countWords(len(slipped), "slipped", "slipped")+". Plan the week ahead.", s.linkTo("/review"))
-	return true
-}
-
-// reviewLine is the review's line on Help, for the owner.
-func (s *Server) reviewLine() string {
-	on := s.app.Workspace.Config.Review.On
-	said := `Weekly review: what was done, what slipped and the week ahead, at <a class="sw-link" href="/review">Weekly review</a> any time.`
-	if on != "" {
-		said += " It says it is ready each " + template.HTMLEscapeString(capitalize(on)) + " evening."
-	}
-	return said + " " + string(s.form(ui.Form{Action: "/review/on", Class: "sw-stack",
-		Body: s.component("select", map[string]any{"label": "Remind me to review on", "name": "on", "id": "review-on", "as": "dropdown", "value": on,
-			"options": reviewDays()}),
-		Button: &ui.Button{Label: "Set the review day", Variant: ui.Secondary}}))
-}
-
-func (s *Server) reviewOn(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm()
-	on := strings.ToLower(strings.TrimSpace(r.PostForm.Get("on")))
-	if s.app.Records.SetSetting == nil {
-		s.failed(w, r, "Not set", errors.New("this workspace has no settings file"), "/help")
-		return
-	}
-	if err := s.app.Records.SetSetting("review.on", on); err != nil {
-		s.failed(w, r, "Not set", err, "/help")
-		return
-	}
-	o := outcome{Title: "Review day set", Text: "Each " + capitalize(on) + " evening, the weekly review says it is ready."}
-	if on == "" {
-		o = outcome{Title: "No review reminder", Text: "Weekly review is there whenever you want it."}
-	}
-	s.tell(w, r, o, "/help")
-}
-
-// reviewDays are the days to choose from, and none.
-func reviewDays() []any {
-	out := []any{map[string]any{"value": "", "label": "No reminder"}}
-	for _, d := range []time.Weekday{time.Monday, time.Tuesday, time.Wednesday, time.Thursday, time.Friday, time.Saturday, time.Sunday} {
-		out = append(out, map[string]any{"value": strings.ToLower(d.String()), "label": d.String()})
-	}
-	return out
+// hasHabits is whether a resolved tracker has a habit to show: a review
+// says nothing of habits when none are kept.
+func hasHabits(tracker map[string]any) bool {
+	h, _ := tracker["habits"].([]any)
+	return len(h) > 0
 }
