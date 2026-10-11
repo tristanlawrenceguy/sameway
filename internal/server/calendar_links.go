@@ -89,27 +89,21 @@ func (s *Server) syncCalendar(ctx context.Context, l *calendarLink) {
 	}
 }
 
-// KeepCalendars keeps every calendar link in step, every hour, while ctx
-// lasts.
-func (s *Server) KeepCalendars(ctx context.Context) {
-	go func() {
-		tick := time.NewTicker(time.Hour)
-		defer tick.Stop()
-		for {
-			links := s.calendarLinks()
-			for i := range links {
-				s.syncCalendar(ctx, &links[i])
-			}
-			if len(links) > 0 {
-				s.mergeCalendarLinks(links)
-			}
-			select {
-			case <-ctx.Done():
-				return
-			case <-tick.C:
-			}
+// keepCalendars keeps every calendar link in step: a background job,
+// every hour (jobs.go). It says which calendars could not be read.
+func (s *Server) keepCalendars(ctx context.Context, _ time.Time) error {
+	links := s.calendarLinks()
+	var failed []error
+	for i := range links {
+		s.syncCalendar(ctx, &links[i])
+		if links[i].Err != "" {
+			failed = append(failed, errors.New(links[i].Name+": "+links[i].Err))
 		}
-	}()
+	}
+	if len(links) > 0 {
+		s.mergeCalendarLinks(links)
+	}
+	return errors.Join(failed...)
 }
 
 // mergeCalendarLinks keeps what syncs found for the links still there: one
