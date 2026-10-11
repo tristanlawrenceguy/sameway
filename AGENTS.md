@@ -85,6 +85,12 @@ area it belongs to, or a new file in `docs/tests/` linked here.
   line says why it must be real time (`// wall clock: how long a request
   waits`). The files from before the rule are in `wallClock` in
   `tools/check/debt.go`, a list that only goes down.
+- **Records are written one way.** `tools/check` fails a call that writes
+  the store directly (Create, Update, Delete, Restore, Put) anywhere under
+  internal, cmd or tools but store and records themselves: write through
+  `records.Apply`, `ApplyOps` or `WriteAs`. The few that still do are in
+  `storeWrites` in `tools/check/debt.go`, each with why, and that list
+  only goes down.
 - **Golden examples.** A component template must reproduce every example in
   its manifest byte for byte. After changing a template or manifest run
   `UPDATE_GOLDEN=1 go test ./internal/render/` and commit the example files.

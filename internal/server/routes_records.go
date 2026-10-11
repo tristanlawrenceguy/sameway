@@ -33,6 +33,7 @@ var recordRoutes = []route{
 	{pattern: "POST /mail/off", handle: (*Server).mailOff, access: owner, persons: "a mailbox and its password are its owner's to give", reach: outward},
 	{pattern: "POST /mail/task", handle: (*Server).mailTask, access: people, tool: "create_record", reach: inward},
 	{pattern: "POST /mail/sorted", handle: (*Server).mailSorted, access: people, tool: "update_record", reach: inward},
+	{pattern: "POST /mail/answered", handle: (*Server).mailAnswered, access: people, tool: "update_record", reach: inward},
 	{pattern: "POST /tags/keep", handle: (*Server).tagKeep, access: people, persons: "keeping a tag is the person's judgement, which the action then follows", reach: inward},
 	{pattern: "POST /tags/off", handle: (*Server).tagOff, access: people, tool: "update_record", reach: inward},
 	{pattern: "POST /tags/change", handle: (*Server).tagChange, access: people, tool: "update_record", reach: inward},

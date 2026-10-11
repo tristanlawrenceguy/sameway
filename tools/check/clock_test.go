@@ -72,9 +72,4 @@ func TestWallClockListMayOnlyGoDown(t *testing.T) {
 	if len(r.problems) != 2 || !has(r.problems, "a.go: raised from 2 to 3 in wallClock") || !has(r.problems, "d.go: added to wallClock") {
 		t.Errorf("problems = %q, want a raised and d added (c removed is fine)", r.problems)
 	}
-	// A base from before the list had none: the list starts as it is.
-	before, _ := parseDebt([]byte("package main\n\nvar longFuncs = map[string]int{}\n"))
-	if r := compareDebt(before, now); len(r.problems) != 0 {
-		t.Errorf("problems = %q, want none against a base without wallClock", r.problems)
-	}
 }

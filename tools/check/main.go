@@ -9,6 +9,8 @@
 //   - no time.Now() in internal/server, chat, records or blocks unless its
 //     line says `// wall clock: <reason>`, or its file is in wallClock in
 //     debt.go, as often as recorded there or less (clock.go)
+//   - a direct write to the store outside store and records fails, unless
+//     storeWrites in debt.go lists it with its reason (writes.go)
 //   - with -base REF: tools/check/debt.go only goes down from REF (no entry
 //     added, no recorded length or count raised)
 //
@@ -55,6 +57,7 @@ func run(root string) report {
 	r.add(checkFileNames(root))
 	r.add(checkFuncLengths(root))
 	r.add(checkWallClock(root, wallClock))
+	r.add(checkStoreWrites(root, storeWrites))
 	r.problems = append(r.problems, checkComponents(filepath.Join(root, "design/components"))...)
 	r.problems = append(r.problems, checkTokens(root)...)
 	return r
