@@ -63,7 +63,7 @@ var wallClock = map[string]int{
 	"internal/server/connect/connect.go": 2,
 	"internal/server/lan_invite.go":      4,
 	"internal/server/mail_in.go":         2,
-	"internal/server/phone_lan.go":       3,
+	"internal/server/phone_lan.go":       1,
 }
 
 // storeWrites are the functions that write the store directly rather than
