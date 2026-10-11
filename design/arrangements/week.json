@@ -1,6 +1,6 @@
 {
   "name": "week",
-  "description": "The week from the person's own records: what is coming up, the tasks due in the next seven days, and the habits being kept up.",
+  "description": "The week ahead: what is coming up, the tasks due in the next seven days, and the habits being kept up.",
   "use": {
     "when": "the person wants to plan or see their week: appointments, things to do, what they keep up.",
     "not": "a single event, which is a calendar block, or a plain list of tasks with no dates, which is a collection of tasks.",

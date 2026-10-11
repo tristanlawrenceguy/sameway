@@ -35,6 +35,7 @@ type Server struct {
 	exchange *exchange.Service             // imports and exports; internal/server/exchange
 	connect  *connect.Service              // connecting the assistant to a model; internal/server/connect
 	logged   signal                        // a change logged here, for those waiting on /api/changes; changes.go
+	pairing  pairing                       // the codes a phone on the Wi-Fi pairs with; phone_pair.go
 }
 
 // New builds the handler for an app.
