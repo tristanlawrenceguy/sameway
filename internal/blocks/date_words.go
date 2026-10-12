@@ -1,8 +1,10 @@
 package blocks
 
 import (
+	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
@@ -21,7 +23,15 @@ func (w *Workspace) dayWords(t *schema.Type, rec *store.Record) string {
 	if day == "" || v == "" || v == day {
 		return ""
 	}
-	return "due " + w.whenWords(v)
+	// Said as its field says it: due Fri 9 Oct, starts tomorrow at 2pm; a
+	// time a thing happened (an entry's at) is only its time.
+	words := w.whenWords(v)
+	if f, ok := t.Field(day); ok {
+		if name := records.DayName(*f); name != "" {
+			return strings.ToLower(name) + " " + words
+		}
+	}
+	return words
 }
 
 // whenWords is a stored day or moment as a person plans by it.

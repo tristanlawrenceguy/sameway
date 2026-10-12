@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"html/template"
+	"sort"
 	"strings"
 	"time"
 
@@ -15,10 +16,13 @@ import (
 // A listing is rows: a checkbox at the front when the record has a
 // yes-or-no field, the title as the link, its facts at the right. Dated
 // records come grouped by when, the way a person keeps a list: what is
-// overdue, today, this week, later, undated, and what is done.
+// overdue, today, this week, later, undated, and what is done. Only what
+// can be done is overdue, as its glance says (records/glance_day.go): a
+// meeting, a logged entry, a dated note that has passed is Earlier, the
+// latest first, and a log of habit entries no longer read as 29 overdue.
 
 // groupOrder is the order the groups come in; empty ones are left out.
-var groupOrder = []string{"Overdue", "Today", "This week", "Later", "No date", "Done"}
+var groupOrder = []string{"Overdue", "Today", "This week", "Later", "Earlier", "No date", "Done"}
 
 func (s *Server) rows(t *schema.Type, recs []*store.Record, now time.Time) string {
 	dated := t.DayField()
@@ -41,17 +45,19 @@ func (s *Server) rows(t *schema.Type, recs []*store.Record, now time.Time) strin
 		g := whenGroup(t, rec, dated, now)
 		groups[g] = append(groups[g], rec)
 	}
+	latestFirst(groups["Earlier"], dated) // what has passed, the nearest first
 	for _, name := range groupOrder {
 		list := groups[name]
 		if len(list) == 0 {
 			continue
 		}
-		span := ""
+		span, pause := "", ""
 		if name == "This week" {
 			span = fmt.Sprintf(` <span class="sw-group__range">%s to %s</span>`, now.Format("2 Jan"), now.AddDate(0, 0, 6).Format("2 Jan"))
+			pause = "," // heard as This week 1 task, 12 Oct to 18 Oct; with nothing after, no comma
 		}
-		fmt.Fprintf(&b, `<h2 class="sw-group">%s <span class="sw-group__count">%d<span class="sw-visually-hidden"> %s,</span></span>%s</h2><ol class="sw-plain sw-rows" data-dot="%d" aria-label="%s, %s">`,
-			name, len(list), oneOrMany(len(list), t.Name), span, s.dotOf(t.Name), template.HTMLEscapeString(schema.Plural(t.Name)), strings.ToLower(name))
+		fmt.Fprintf(&b, `<h2 class="sw-group">%s <span class="sw-group__count">%d<span class="sw-visually-hidden"> %s%s</span></span>%s</h2><ol class="sw-plain sw-rows" data-dot="%d" aria-label="%s, %s">`,
+			name, len(list), oneOrMany(len(list), t.Name), pause, span, s.dotOf(t.Name), template.HTMLEscapeString(schema.Plural(t.Name)), strings.ToLower(name))
 		for _, rec := range list {
 			b.WriteString(s.row(t, rec, 3, told[rec.ID], in))
 		}
@@ -113,6 +119,8 @@ func whenGroup(t *schema.Type, rec *store.Record, dated string, now time.Time) s
 	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 	d := time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, now.Location())
 	switch {
+	case d.Before(today) && t.DoneField() == nil:
+		return "Earlier" // only what can be done is late
 	case d.Before(today):
 		return "Overdue"
 	case d.Equal(today):
@@ -121,4 +129,13 @@ func whenGroup(t *schema.Type, rec *store.Record, dated string, now time.Time) s
 		return "This week"
 	}
 	return "Later"
+}
+
+// latestFirst orders records by their day, the latest first.
+func latestFirst(recs []*store.Record, dated string) {
+	sort.SliceStable(recs, func(i, j int) bool {
+		a, _ := recs[i].Fields[dated].(string)
+		b, _ := recs[j].Fields[dated].(string)
+		return a > b
+	})
 }

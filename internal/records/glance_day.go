@@ -67,7 +67,10 @@ func dayPassed(v string, now time.Time) bool {
 // dayName is what a day is called before it, its field's label: Due,
 // Starts, Goal by. A field called at or on is said by its words already
 // (Today at 2pm), and is not named.
-func dayName(f schema.Field) string {
+func dayName(f schema.Field) string { return DayName(f) }
+
+// DayName is dayName, for what tells two records apart (blocks/apart.go).
+func DayName(f schema.Field) string {
 	name := f.Display()
 	switch strings.ToLower(name) {
 	case "at", "on", "when", "date", "day", "time":
