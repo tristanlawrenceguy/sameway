@@ -1,4 +1,4 @@
-package server_test
+package inbox_test
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/mailin/mailintest"
-	"github.com/tristanlawrenceguy/sameway/internal/server"
+	"github.com/tristanlawrenceguy/sameway/internal/server/inbox"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -46,8 +46,8 @@ func (m *heardModel) Complete(_ context.Context, req llm.Request) (*llm.Response
 // conversation; and its latest email says whose turn it is, on Today too.
 func TestAnEmailConversationIsAThread(t *testing.T) {
 	t.Setenv("SAMEWAY_KEYS", filepath.Join(t.TempDir(), "keys.json"))
-	server.MailInsecure(true)
-	defer server.MailInsecure(false)
+	inbox.MailInsecure(true)
+	defer inbox.MailInsecure(false)
 	mail := mailintest.Start(t, "me@example.com", "pw")
 	mail.Folder("Sent")
 	mail.Put(t, "INBOX", message("q1@joe.example", "", "Joe <joe@joe.example>", "me+sameway@example.com", "Quote", "Can you send the quote by Friday?"))

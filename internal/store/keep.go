@@ -6,7 +6,7 @@ package store
 // the store closes rather than staying for as long as the program runs.
 // records keeps each store's change listeners here (records.Listen),
 // search its way of finding by meaning (search.UseMeaning), and the
-// server its lock on reading the mailbox (server/mail_in.go).
+// server its lock on reading the mailbox (server/inbox/mail_in.go).
 
 // Keep is what is kept here under key, made by mk the first time. A key
 // is best a type of the keeping package's own, so no other package can

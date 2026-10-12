@@ -1,4 +1,4 @@
-package server
+package inbox
 
 import (
 	"html/template"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/mailin"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // Connecting email is a hundred little stories, one per mail service, and
@@ -31,39 +32,33 @@ type mailStory struct {
 	AskHost bool
 }
 
-var htmlEsc = template.HTMLEscapeString
-
-func outLink(href, words string) string {
-	return `<a class="sw-link" href="` + href + `">` + words + `</a>`
-}
-
 // storyFor is the story for an address.
 func storyFor(user string) mailStory {
 	_, domain, _ := strings.Cut(strings.ToLower(strings.TrimSpace(user)), "@")
 	switch domain {
 	case "gmail.com", "googlemail.com":
 		return mailStory{Service: "Gmail", Plus: true, Steps: []string{
-			"Open " + outLink("https://myaccount.google.com/apppasswords", "Google's app passwords page") + ". If Google says app passwords are not available, " + outLink("https://myaccount.google.com/signinoptions/twosv", "turn on 2-Step Verification") + " first, then open it again.",
+			"Open " + web.Link("https://myaccount.google.com/apppasswords", "Google's app passwords page") + ". If Google says app passwords are not available, " + web.Link("https://myaccount.google.com/signinoptions/twosv", "turn on 2-Step Verification") + " first, then open it again.",
 			"Type Sameway as the name and press Create.",
 			"Copy the 16 letters Google shows and paste them below. The spaces do not matter.",
 		}}
 	case "icloud.com", "me.com", "mac.com":
 		return mailStory{Service: "iCloud Mail", Steps: []string{
-			"Open " + outLink("https://account.apple.com/account/manage", "your Apple Account") + ", choose Sign-In and Security, then App-Specific Passwords.",
+			"Open " + web.Link("https://account.apple.com/account/manage", "your Apple Account") + ", choose Sign-In and Security, then App-Specific Passwords.",
 			"Add one named Sameway, and paste the password Apple shows below.",
 		}}
 	case "yahoo.com", "yahoo.co.uk", "ymail.com", "rocketmail.com":
 		return mailStory{Service: "Yahoo Mail", Steps: []string{
-			"Open " + outLink("https://login.yahoo.com/account/security", "Yahoo's account security page") + " and choose Generate app password.",
+			"Open " + web.Link("https://login.yahoo.com/account/security", "Yahoo's account security page") + " and choose Generate app password.",
 			"Name it Sameway, and paste the password Yahoo shows below.",
 		}}
 	case "fastmail.com", "fastmail.fm":
 		return mailStory{Service: "Fastmail", Plus: true, Steps: []string{
-			"Open " + outLink("https://app.fastmail.com/settings/security/integrations", "Fastmail's Privacy and Security settings") + " and add an app password named Sameway, with access to mail (IMAP).",
+			"Open " + web.Link("https://app.fastmail.com/settings/security/integrations", "Fastmail's Privacy and Security settings") + " and add an app password named Sameway, with access to mail (IMAP).",
 			"Paste the password Fastmail shows below.",
 		}}
 	case "outlook.com", "hotmail.com", "live.com", "msn.com", "outlook.co.uk", "hotmail.co.uk":
-		return mailStory{Service: "Outlook.com", Cannot: "Outlook.com no longer lets programs read mail with a password, so Sameway cannot read it. Instead, on your phone open the email in the Outlook app, choose Share, then Sameway: it is saved and sorted the same way. On a computer, " + outLink("/share", "Save to Sameway") + " does the same from your browser."}
+		return mailStory{Service: "Outlook.com", Cannot: "Outlook.com no longer lets programs read mail with a password, so Sameway cannot read it. Instead, on your phone open the email in the Outlook app, choose Share, then Sameway: it is saved and sorted the same way. On a computer, " + web.Link("/share", "Save to Sameway") + " does the same from your browser."}
 	case "proton.me", "protonmail.com", "pm.me":
 		return mailStory{Service: "Proton Mail", Cannot: "Proton Mail keeps mail encrypted, so only Proton's own Bridge app can read it, and Bridge needs a paid plan. With Bridge, choose Other below and give its address. Otherwise, share an email to Sameway from the Proton app on your phone."}
 	}
@@ -74,20 +69,20 @@ func storyFor(user string) mailStory {
 }
 
 // mailStoryPage is the address asked, then that service's story alone.
-func (s *Server) mailStoryPage(r *http.Request) string {
-	esc := htmlEsc
+func (s *Service) mailStoryPage(r *http.Request) string {
+	esc := template.HTMLEscapeString
 	user := strings.TrimSpace(r.URL.Query().Get("user"))
 	var b strings.Builder
 	if !strings.Contains(user, "@") {
 		b.WriteString(`<p>Anything you forward to Sameway comes in as a note and is sorted for you on Today: a booking, a bill, a note to self. First, which email do you use?</p>`)
-		b.WriteString(string(s.form(ui.Form{Action: "/mail", Get: true, Class: "sw-stack",
-			Body:   s.part(ui.TextField{Label: "Your email address", Name: "user", Type: ui.Email, Required: true, Autocomplete: "email", Spellcheck: ui.Bool(false)}),
+		b.WriteString(string(s.Form(ui.Form{Action: "/mail", Get: true, Class: "sw-stack",
+			Body:   s.Part(ui.TextField{Label: "Your email address", Name: "user", Type: ui.Email, Required: true, Autocomplete: "email", Spellcheck: ui.Bool(false)}),
 			Button: &ui.Button{Label: "Next"}})))
 		return b.String()
 	}
 	st := storyFor(user)
 	if st.Cannot != "" {
-		b.WriteString(`<p>` + st.Cannot + `</p><p>` + outLink("/mail", "Use another address") + `</p>`)
+		b.WriteString(`<p>` + st.Cannot + `</p><p>` + web.Link("/mail", "Use another address") + `</p>`)
 		return b.String()
 	}
 	b.WriteString(`<p>` + esc(st.Service) + ` makes a password just for Sameway, so your own is never given. It takes a minute:</p><ol class="sw-stack">`)
@@ -95,27 +90,27 @@ func (s *Server) mailStoryPage(r *http.Request) string {
 		b.WriteString(`<li>` + step + `</li>`)
 	}
 	b.WriteString(`</ol>`)
-	fields := s.part(ui.TextField{Label: "Password for Sameway", Name: "password", Type: ui.Password, Required: true, Autocomplete: "off", Spellcheck: ui.Bool(false), Hint: "Kept on this computer only, outside the workspace."})
+	fields := s.Part(ui.TextField{Label: "Password for Sameway", Name: "password", Type: ui.Password, Required: true, Autocomplete: "off", Spellcheck: ui.Bool(false), Hint: "Kept on this computer only, outside the workspace."})
 	if st.AskHost {
-		fields += s.part(ui.TextField{Label: "Mail server", Name: "host", Value: mailin.Host(user), Spellcheck: ui.Bool(false), Hint: "Its IMAP address and port, such as imap.example.com:993."})
+		fields += s.Part(ui.TextField{Label: "Mail server", Name: "host", Value: mailin.Host(user), Spellcheck: ui.Bool(false), Hint: "Its IMAP address and port, such as imap.example.com:993."})
 	}
-	b.WriteString(string(s.form(ui.Form{Action: "/mail/connect", Class: "sw-stack", Hidden: ui.Hidden("user", user), Body: fields, Button: &ui.Button{Label: "Connect " + st.Service}})))
-	b.WriteString(`<p class="sw-small">` + outLink("/mail", "Not "+esc(user)+"?") + `</p>`)
+	b.WriteString(string(s.Form(ui.Form{Action: "/mail/connect", Class: "sw-stack", Hidden: ui.Hidden("user", user), Body: fields, Button: &ui.Button{Label: "Connect " + st.Service}})))
+	b.WriteString(`<p class="sw-small">` + web.Link("/mail", "Not "+esc(user)+"?") + `</p>`)
 	return b.String()
 }
 
 // sendTo says, once connected, the one thing to know: where to send.
 func sendTo(user string) string {
 	if storyFor(user).Plus {
-		return `Forward or send anything to <strong>` + htmlEsc(mailin.PlusAddress(user)) + `</strong>, or move it to the folder called ` + mailin.Folder + `. ` +
-			outLink("/mail/contact.vcf", "Add Sameway to your contacts") + `, and it is there when you type Sameway as who to send to.`
+		return `Forward or send anything to <strong>` + template.HTMLEscapeString(mailin.PlusAddress(user)) + `</strong>, or move it to the folder called ` + mailin.Folder + `. ` +
+			web.Link("/mail/contact.vcf", "Add Sameway to your contacts") + `, and it is there when you type Sameway as who to send to.`
 	}
 	return `Move or copy any email to the folder called ` + mailin.Folder + `, which Sameway made in your mailbox. On a phone, swipe the email and choose Move.`
 }
 
 // mailContact is a contact card for the address to send to, so the
 // person need never remember it.
-func (s *Server) mailContact(w http.ResponseWriter, r *http.Request) {
+func (s *Service) mailContact(w http.ResponseWriter, r *http.Request) {
 	a, ok := s.mailAccount()
 	if !ok || !storyFor(a.User).Plus {
 		http.NotFound(w, r)

@@ -16,6 +16,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/server/connect"
 	"github.com/tristanlawrenceguy/sameway/internal/server/exchange"
+	"github.com/tristanlawrenceguy/sameway/internal/server/inbox"
 	"github.com/tristanlawrenceguy/sameway/internal/server/media"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
@@ -34,6 +35,7 @@ type Server struct {
 	media    *media.Service                // files, recordings and meetings; internal/server/media
 	exchange *exchange.Service             // imports and exports; internal/server/exchange
 	connect  *connect.Service              // connecting the assistant to a model; internal/server/connect
+	inbox    *inbox.Service                // email in and what waits to be sorted; internal/server/inbox
 	logged   signal                        // a change logged here, for those waiting on /api/changes; changes.go
 	pairing  pairing                       // the codes a phone on the Wi-Fi pairs with; phone_pair.go
 }
@@ -44,6 +46,7 @@ func New(a *app.App) *Server {
 	s.media = media.New(face{s})
 	s.exchange = exchange.New(face{s})
 	s.connect = connect.New(face{s})
+	s.inbox = inbox.New(face{s})
 	s.routes()
 	s.hooks() // what the rest of the app asks of the pages; see hooks.go
 	s.mux = s.wrapNotFound(s.mux)

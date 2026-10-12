@@ -9,6 +9,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/server/media"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -203,4 +205,14 @@ func clipRunes(s string, n int) string {
 		return strings.TrimSpace(string(r[:n-1])) + "…"
 	}
 	return s
+}
+
+// writeShare makes the note a share becomes. A message or a photo, not a
+// page to read, may ask something, so it waits to be sorted.
+func (s *Server) writeShare(r *http.Request, title, body string, toBeSorted bool) (*store.Record, string, error) {
+	fields := map[string]any{"title": title, "body": body}
+	if toBeSorted {
+		fields["tags"] = []any{"shared", chat.ToSort}
+	}
+	return records.WriteAs(s.app.Store, s.who(r), "created", shareType, "", fields)
 }

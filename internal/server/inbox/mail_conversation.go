@@ -1,4 +1,4 @@
-package server
+package inbox
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/blocks"
 	"github.com/tristanlawrenceguy/sameway/internal/prose"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
@@ -25,8 +26,9 @@ import (
 // ConversationPart is an email's whole conversation, in order.
 const ConversationPart = "conversation"
 
-func (s *Server) conversationOn(r *http.Request, t *schema.Type, rec *store.Record) string {
-	if t.Name != records.EmailType || !s.showing(r, ConversationPart) {
+// ConversationOn is an email's conversation on its page, when asked.
+func (s *Service) ConversationOn(r *http.Request, t *schema.Type, rec *store.Record) string {
+	if t.Name != records.EmailType || !s.Showing(r, ConversationPart) {
 		return ""
 	}
 	emails := records.Conversation(s.app.Store, rec)
@@ -45,13 +47,13 @@ func (s *Server) conversationOn(r *http.Request, t *schema.Type, rec *store.Reco
 		body, _ := e.Fields["body"].(string)
 		b.WriteString(`<a class="sw-link" href="/t/email/` + e.ID + `">` + head + `</a></h3><div class="sw-prose">` + string(prose.Render(records.OwnWords(body), 4)) + `</div></article></li>`)
 	}
-	_, here := s.shown(r)
-	b.WriteString(`</ol>` + s.fewer("/t/email/"+rec.ID, ConversationPart, "the conversation", here) + `</section>`)
+	_, here := s.Shown(r)
+	b.WriteString(`</ol>` + s.Fewer("/t/email/"+rec.ID, ConversationPart, "the conversation", here) + `</section>`)
 	return b.String()
 }
 
 // whoWrote is who sent an email, by name: You for the person's own.
-func (s *Server) whoWrote(e *store.Record) string {
+func (s *Service) whoWrote(e *store.Record) string {
 	if mine, _ := e.Fields["from_me"].(bool); mine {
 		return "You"
 	}
@@ -66,9 +68,9 @@ func (s *Server) whoWrote(e *store.Record) string {
 }
 
 // sentAt is when an email was sent, in words.
-func (s *Server) sentAt(t *schema.Type, e *store.Record) string {
+func (s *Service) sentAt(t *schema.Type, e *store.Record) string {
 	if f, ok := t.Field("received"); ok && e.Fields["received"] != nil {
-		return s.display(*f, e.Fields["received"])
+		return blocks.Display(*f, e.Fields["received"], s.H24())
 	}
 	return e.CreatedAt.Local().Format("Mon 2 Jan 15:04")
 }

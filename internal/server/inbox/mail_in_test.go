@@ -1,4 +1,4 @@
-package server_test
+package inbox_test
 
 import (
 	"net/http"
@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/tristanlawrenceguy/sameway/internal/mailin/mailintest"
-	"github.com/tristanlawrenceguy/sameway/internal/server"
+	"github.com/tristanlawrenceguy/sameway/internal/server/inbox"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -15,8 +15,8 @@ import (
 // to sort, files and all; Today lists them, each a press from a task or
 // done with; the password stays out of the workspace.
 func TestEmailComesInAsNotesToSort(t *testing.T) {
-	server.MailInsecure(true)
-	defer server.MailInsecure(false)
+	inbox.MailInsecure(true)
+	defer inbox.MailInsecure(false)
 	mail := mailintest.Start(t, "me@example.com", "abcdefghijklmnop")
 	mail.Put(t, "INBOX", "From: Clinic <desk@clinic.example>\r\nTo: me+sameway@example.com\r\nSubject: Dentist on Friday\r\nMIME-Version: 1.0\r\n"+
 		"Content-Type: multipart/mixed; boundary=b\r\n\r\n--b\r\nContent-Type: text/plain\r\n\r\nFriday at 10, bring the form.\r\n"+

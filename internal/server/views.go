@@ -200,7 +200,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	}
 	b.WriteString(`</div>`)
 	b.WriteString(s.exchange.DocumentLinks(r, t, rec)) // the record as a file, after it; see export_docs.go
-	b.WriteString(s.conversationOn(r, t, rec))         // mail_conversation.go
+	b.WriteString(s.inbox.ConversationOn(r, t, rec))   // inbox/mail_conversation.go
 	// What the schema lists here, such as a project's tasks (backrefs.go).
 	listed, keys := s.backrefs(t, rec)
 	b.WriteString(listed)

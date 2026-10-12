@@ -57,7 +57,7 @@ func (s *Server) limitsSection(owner bool) string {
 	line(`Saving from elsewhere: a page, a photo or a few words, from your browser's bookmarks bar or your phone's Share menu, with <a class="sw-link" href="/share">Save to Sameway</a>.`)
 	if owner {
 		line(s.phoneLine())                // phone.go
-		line(s.mailLine())                 // mail_in.go
+		line(s.inbox.MailLine())           // inbox/mail_in.go
 		line(connect.AppsLine())           // apps_page.go
 		if l := s.meaningLine(); l != "" { // search_meaning.go
 			line(l)

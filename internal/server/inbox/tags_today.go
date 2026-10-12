@@ -1,4 +1,4 @@
-package server
+package inbox
 
 import (
 	"fmt"
@@ -30,7 +30,7 @@ func tagsOn(list []chat.Waiting) map[string][]*store.Record {
 }
 
 // otherTags are the person's tags a tag can be changed to, by name.
-func (s *Server) otherTags(alone map[string]bool) []any {
+func (s *Service) otherTags(alone map[string]bool) []any {
 	var out []any
 	for _, t := range s.tagNames() {
 		if !alone[strings.ToLower(t)] {
@@ -43,7 +43,7 @@ func (s *Server) otherTags(alone map[string]bool) []any {
 // tagCheck is one tag on a record: what it was given and why, then the
 // presses to keep it, take it off or change it. A tag already kept for
 // the person is not offered Keep again.
-func (s *Server) tagCheck(c, rec *store.Record, other []any) string {
+func (s *Service) tagCheck(c, rec *store.Record, other []any) string {
 	esc := template.HTMLEscapeString
 	name, tag := s.nameOf(rec), fmt.Sprint(c.Fields["tag"])
 	said := "Tagged"
@@ -59,9 +59,9 @@ func (s *Server) tagCheck(c, rec *store.Record, other []any) string {
 	id := ui.Hidden("id", c.ID)
 	context := tag + " on " + name
 	if said == "Tagged" {
-		b.WriteString(string(s.form(ui.Form{Action: "/tags/keep", Hidden: id, Button: &ui.Button{Label: "Keep", Context: context, Variant: ui.Secondary}})))
+		b.WriteString(string(s.Form(ui.Form{Action: "/tags/keep", Hidden: id, Button: &ui.Button{Label: "Keep", Context: context, Variant: ui.Secondary}})))
 	}
-	b.WriteString(string(s.form(ui.Form{Action: "/tags/off", Hidden: id, Button: &ui.Button{Label: "Take it off", Context: context, Variant: ui.Quiet}})))
+	b.WriteString(string(s.Form(ui.Form{Action: "/tags/off", Hidden: id, Button: &ui.Button{Label: "Take it off", Context: context, Variant: ui.Quiet}})))
 	if len(other) > 1 {
 		value := other[0]
 		for _, o := range other {
@@ -69,8 +69,8 @@ func (s *Server) tagCheck(c, rec *store.Record, other []any) string {
 				value = o
 			}
 		}
-		b.WriteString(string(s.form(ui.Form{Action: "/tags/change", Class: "sw-cluster", Hidden: id,
-			Body:   s.component("select", map[string]any{"label": "Change to", "context": context, "name": "to", "as": "dropdown", "options": other, "value": value}),
+		b.WriteString(string(s.Form(ui.Form{Action: "/tags/change", Class: "sw-cluster", Hidden: id,
+			Body:   s.Component("select", map[string]any{"label": "Change to", "context": context, "name": "to", "as": "dropdown", "options": other, "value": value}),
 			Button: &ui.Button{Label: "Change", Context: context, Variant: ui.Quiet}})))
 	}
 	b.WriteString(`</div>`)
@@ -78,7 +78,7 @@ func (s *Server) tagCheck(c, rec *store.Record, other []any) string {
 }
 
 // tagRow is a record's line with its tags to check under it.
-func (s *Server) tagRow(rec *store.Record, cls []*store.Record, other []any) string {
+func (s *Service) tagRow(rec *store.Record, cls []*store.Record, other []any) string {
 	var b strings.Builder
 	b.WriteString(`<li class="sw-stack"><a class="sw-link" href="/t/` + rec.Type + `/` + rec.ID + `">` + template.HTMLEscapeString(s.nameOf(rec)) + `</a>`)
 	for _, c := range cls {
@@ -90,7 +90,7 @@ func (s *Server) tagRow(rec *store.Record, cls []*store.Record, other []any) str
 // tagSection is Tags to check on Today: the tags given to records not
 // waiting to be sorted (those are checked beside their record), then the
 // tags kept for the person from their choices, folded.
-func (s *Server) tagSection(list []chat.Waiting, sorting map[string]bool) string {
+func (s *Service) tagSection(list []chat.Waiting, sorting map[string]bool) string {
 	other := s.otherTags(nil)
 	var b strings.Builder
 	seen := map[string]bool{}
@@ -118,9 +118,9 @@ func (s *Server) tagSection(list []chat.Waiting, sorting map[string]bool) string
 // keptForYou are the tags kept for the person from their past choices in
 // the last week, folded as a count: the action acted for them, so they
 // can see what it did and change it, without it asking for attention.
-func (s *Server) keptForYou(other []any) string {
+func (s *Service) keptForYou(other []any) string {
 	recs, _ := s.app.Store.List(chat.ClassificationType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 100})
-	since := s.now().Add(-keptFor)
+	since := s.Now().Add(-keptFor)
 	var b strings.Builder
 	n := 0
 	for _, c := range recs {
@@ -136,7 +136,7 @@ func (s *Server) keptForYou(other []any) string {
 }
 
 // folded is rows under a disclosure that says how many, or nothing.
-func (s *Server) folded(label string, n int, one, many, rows string) string {
+func (s *Service) folded(label string, n int, one, many, rows string) string {
 	if n == 0 {
 		return ""
 	}
@@ -154,7 +154,7 @@ func (s *Server) folded(label string, n int, one, many, rows string) string {
 // foldedNothing is what was looked at and needs nothing, folded away as a
 // count on Today: newsletters and receipts do not compete for attention,
 // and one changed to another tag teaches the action what it missed.
-func (s *Server) foldedNothing(items []*store.Record, alone map[string]bool) string {
+func (s *Service) foldedNothing(items []*store.Record, alone map[string]bool) string {
 	esc := template.HTMLEscapeString
 	other := s.otherTags(alone)
 	var b strings.Builder
@@ -171,8 +171,8 @@ func (s *Server) foldedNothing(items []*store.Record, alone map[string]bool) str
 		if why, _ := c.Fields["why"].(string); why != "" && why != "no other tag fits" {
 			b.WriteString(`: ` + esc(why))
 		}
-		b.WriteString(`</p>` + string(s.form(ui.Form{Action: "/tags/change", Class: "sw-cluster", Hidden: ui.Hidden("id", c.ID),
-			Body:   s.component("select", map[string]any{"label": "Change to", "context": name, "name": "to", "as": "dropdown", "options": other, "value": other[0]}),
+		b.WriteString(`</p>` + string(s.Form(ui.Form{Action: "/tags/change", Class: "sw-cluster", Hidden: ui.Hidden("id", c.ID),
+			Body:   s.Component("select", map[string]any{"label": "Change to", "context": name, "name": "to", "as": "dropdown", "options": other, "value": other[0]}),
 			Button: &ui.Button{Label: "Change", Context: name, Variant: ui.Quiet}})) + `</li>`)
 	}
 	if n == 0 {
