@@ -29,7 +29,7 @@ func TestBackgroundJobsRunOnTheAppsRunner(t *testing.T) {
 		}
 	}
 	for _, want := range []string{"Daily copy of the data", "Reminders ring", "Actions run on their schedule", "Actions run when something happens",
-		"Kinds of record changed by hand", "Recordings written down on this computer"} {
+		"Kinds of record changed by hand", "Recordings written down on this computer", "Morning brief", "Email read from the mailbox"} {
 		if !slices.Contains(names, want) {
 			t.Errorf("no %q in %v", want, names)
 		}
