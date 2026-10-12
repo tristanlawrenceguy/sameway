@@ -68,22 +68,6 @@ func embedModel(ctx context.Context) string {
 	return ""
 }
 
-// KeepMeaning keeps the records' meaning current while ctx lasts.
-func (s *Server) KeepMeaning(ctx context.Context) {
-	go func() {
-		tick := time.NewTicker(2 * time.Minute)
-		defer tick.Stop()
-		for {
-			s.refreshMeaning(ctx)
-			select {
-			case <-ctx.Done():
-				return
-			case <-tick.C:
-			}
-		}
-	}()
-}
-
 // RefreshMeaning reads again what changed and has search use it, and says
 // whether search by meaning is on.
 func (s *Server) RefreshMeaning(ctx context.Context) bool {
@@ -99,13 +83,14 @@ func searchByMeaning(s *Server) (*meaning.Index, bool) {
 	return st.idx, st.idx != nil && st.idx.Ready() && st.err == ""
 }
 
-// refreshMeaning reads again what changed, and has search use it.
-func (s *Server) refreshMeaning(ctx context.Context) {
+// refreshMeaning reads again what changed, and has search use it. It says
+// what went wrong, for Help; with no embedding model there is nothing to do.
+func (s *Server) refreshMeaning(ctx context.Context) error {
 	st := s.meaningState()
 	model := embedModel(ctx)
 	if model == "" {
 		search.UseMeaning(s.app.Store, nil)
-		return
+		return nil
 	}
 	st.Lock()
 	if st.idx == nil || st.idx.Model != model {
@@ -127,7 +112,7 @@ func (s *Server) refreshMeaning(ctx context.Context) {
 	}
 	st.Unlock()
 	if err != nil {
-		return
+		return err
 	}
 	search.UseMeaning(s.app.Store, func(q string) []string {
 		c, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -142,6 +127,7 @@ func (s *Server) refreshMeaning(ctx context.Context) {
 		}
 		return keys
 	})
+	return nil
 }
 
 // meaningLine is search by meaning on Help, for the owner: being fetched

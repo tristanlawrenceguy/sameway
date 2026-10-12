@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"html/template"
-	"log"
 	"net/http"
 	"sort"
 	"strings"
@@ -110,26 +109,6 @@ func (s *Server) mailOff(w http.ResponseWriter, r *http.Request) {
 	}
 	s.app.Store.SetMeta("mail:account", "")
 	s.tell(w, r, outcome{Title: "Email no longer read", Text: "The notes that came in stay."}, "/mail")
-}
-
-// KeepMail reads the mailbox every five minutes while Sameway runs.
-func (s *Server) KeepMail(ctx context.Context) {
-	go func() {
-		tick := time.NewTicker(5 * time.Minute)
-		defer tick.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-tick.C:
-				c, cancel := context.WithTimeout(ctx, 2*time.Minute)
-				if _, err := s.readMail(c); err != nil {
-					log.Printf("email: %v", err)
-				}
-				cancel()
-			}
-		}
-	}()
 }
 
 // readMail brings in the new mail as notes, and says how many.

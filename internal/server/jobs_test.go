@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
+	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/runner"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
@@ -34,7 +35,8 @@ func TestTheServersJobsRunOnTheRunner(t *testing.T) {
 		}
 	}
 	want := map[string]time.Duration{"Reminders ring": 5 * time.Second, "Meeting transcripts from Teams and Zoom": 5 * time.Second,
-		"Calendars kept in step": time.Hour, "Daily copy in the cloud folder": time.Hour, "Changes passed through the cloud folder": 15 * time.Second}
+		"Calendars kept in step": time.Hour, "Daily copy in the cloud folder": time.Hour, "Changes passed through the cloud folder": 15 * time.Second,
+		"Search by meaning kept current": 2 * time.Minute, "Email read from the mailbox": 5 * time.Minute}
 	for name, d := range want {
 		if every[name] != d {
 			t.Errorf("%s every %v, want %v", name, every[name], d)
@@ -70,7 +72,8 @@ func TestTheServersJobsRunOnTheRunner(t *testing.T) {
 		t.Fatal("the jobs did not stop")
 	}
 	for _, st := range a.Jobs.Status() {
-		if st.LastErr != "" && !strings.Contains(st.Name, "Calendars") {
+		// Calendars and search by meaning depend on what this computer has.
+		if st.LastErr != "" && !strings.Contains(st.Name, "Calendars") && !strings.Contains(st.Name, "meaning") {
 			t.Errorf("%s: %s", st.Name, st.LastErr)
 		}
 	}
@@ -153,5 +156,51 @@ func TestTheBriefAndReviewComeAtTheirTimes(t *testing.T) {
 	f.Advance(48 * time.Hour)
 	if sent := a.Store.Meta("brief:sent"); sent != "2026-10-12" {
 		t.Fatalf("a brief after the server stopped: %q", sent)
+	}
+}
+
+// Email is read on the runner every five minutes after the first wait,
+// and what went wrong is kept for Help: a mailbox that cannot be reached,
+// then nothing once it is disconnected.
+func TestTheMailJobSaysWhatWentWrong(t *testing.T) {
+	t.Parallel()
+	f := runner.NewFake(time.Date(2026, 10, 10, 9, 0, 0, 0, time.Local))
+	a, h := newAppWith(t, app.Options{Clock: f.Now, After: f.After})
+	// Connected to a mailbox on a port where nothing answers.
+	if err := llm.Keys(a.Workspace.Machine.Keys).Save("SAMEWAY_MAIL_PASSWORD me@example.com", "secret"); err != nil {
+		t.Fatal(err)
+	}
+	a.Store.SetMeta("mail:account", `{"host":"127.0.0.1:1","user":"me@example.com"}`)
+	for _, j := range h.(*server.Server).BackgroundJobs() {
+		if j.Name == "Email read from the mailbox" {
+			a.Jobs.Add(j)
+		}
+	}
+	ctx, stop := context.WithCancel(context.Background())
+	defer stop()
+	a.Jobs.Start(ctx)
+	status := func() runner.Status {
+		f.BlockUntil(1)
+		return a.Jobs.Status()[0]
+	}
+	if st := status(); st.Runs != 0 {
+		t.Fatalf("the mailbox is read after the first five minutes, not at the start: %+v", st)
+	}
+	f.Advance(5 * time.Minute)
+	if st := status(); st.Runs != 1 || st.LastErr == "" {
+		t.Fatalf("a mailbox that cannot be reached is an error on Help: %+v", st)
+	}
+	a.Store.SetMeta("mail:account", "")
+	f.Advance(5 * time.Minute)
+	if st := status(); st.Runs != 2 || st.LastErr != "" {
+		t.Fatalf("disconnected, there is nothing to go wrong: %+v", st)
+	}
+	stop()
+	if !a.Jobs.Wait(time.Minute) {
+		t.Fatal("the job did not stop")
+	}
+	f.Advance(time.Hour)
+	if st := a.Jobs.Status()[0]; st.Runs != 2 {
+		t.Fatalf("it ran after the server stopped: %+v", st)
 	}
 }

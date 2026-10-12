@@ -30,10 +30,6 @@ const shutdownWait = 4 * time.Second
 // window leaves them out). The jobs run on a.Jobs (internal/runner), which
 // says when each last ran and what went wrong.
 func startBackground(ctx context.Context, a *app.App, h *server.Server, all http.Handler, out, notes io.Writer) {
-	// Still on loops of their own, until the work on their pages is done.
-	h.KeepMeaning(ctx) // search by meaning, when an embedding model is here
-	h.KeepMail(ctx)    // email sent to the workspace, when connected
-
 	h.OnRing(notifier(a)) // a ring told beyond the page
 	connectDevices(ctx, out, a)
 	a.Jobs.Add(backgroundJobs(a, h, notes)...)
@@ -42,8 +38,9 @@ func startBackground(ctx context.Context, a *app.App, h *server.Server, all http
 }
 
 // backgroundJobs are the jobs the runner does, each on its own schedule:
-// the server's (server/jobs.go: rings, calendars, the cloud folder,
-// writing recordings down), the chat's and the program's.
+// the server's (server/jobs.go: rings, calendars, the cloud folder, the
+// brief and the review, search by meaning, email, writing recordings
+// down), the chat's and the program's.
 func backgroundJobs(a *app.App, h *server.Server, notes io.Writer) []runner.Job {
 	jobs := []runner.Job{
 		a.SchemaJob(app.SchemaEvery, h.Changed), // types changed by hand, so open pages follow
