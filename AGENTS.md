@@ -117,7 +117,7 @@ area it belongs to, or a new file in `docs/tests/` linked here.
 - Do not add a dependency for something the standard library does.
 - Tests run side by side: a new test starts with `t.Parallel()`. What an
   app takes from where it runs (the clock, this computer's folders, the
-  webhook client, ntfy) comes in through `app.Options`
+  webhook client, ntfy, Ollama and the model servers looked for) comes in through `app.Options`
   (`newAppWith(t, app.Options{...})` in internal/server, `servertest.NewWith`), never a package
   variable or an environment variable. A test that must set one anyway
   leaves out `t.Parallel()` and puts it back before it ends. What a

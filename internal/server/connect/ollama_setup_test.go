@@ -12,15 +12,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 )
 
 // A person with Ollama and no model presses one button: Sameway fetches the
 // free model through Ollama, gives it room for its prompt, and makes it the
 // assistant's model. No terminal, nothing unsigned.
-// Not parallel: it points llm.OllamaURL and DefaultCandidates at a fake
-// Ollama, which other tests read.
 func TestAPersonFetchesAFreeModelThroughOllama(t *testing.T) {
+	t.Parallel()
 	var mu sync.Mutex
 	have, created := false, ""
 	ollama := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -47,11 +47,7 @@ func TestAPersonFetchesAFreeModelThroughOllama(t *testing.T) {
 		}
 	}))
 	defer ollama.Close()
-	wasURL, wasCandidates := llm.OllamaURL, llm.DefaultCandidates
-	llm.OllamaURL, llm.DefaultCandidates = ollama.URL, []llm.Candidate{{Server: "Ollama", BaseURL: ollama.URL + "/v1"}}
-	defer func() { llm.OllamaURL, llm.DefaultCandidates = wasURL, wasCandidates }()
-
-	a, h := newApp(t)
+	a, h := newAppWith(t, app.Options{Ollama: llm.Ollama{URL: ollama.URL}, LocalModels: []llm.Candidate{{Server: "Ollama", BaseURL: ollama.URL + "/v1"}}})
 	if page := get(t, h, "/chat").Body.String(); !strings.Contains(page, "Fetch a free model ("+llm.FreeModelWords+")") {
 		i := strings.Index(page, "sw-connect")
 		t.Fatalf("Ollama with no model offers the free one: %s", page[max(i, 0):min(max(i, 0)+3000, len(page))])

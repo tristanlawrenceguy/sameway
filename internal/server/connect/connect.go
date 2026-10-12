@@ -101,7 +101,7 @@ func (s *Service) ForgetModel() {
 // that keep the conversation here first.
 func (s *Service) modelChoices(ctx context.Context) []modelChoice {
 	var out []modelChoice
-	for _, d := range llm.Detect(ctx, llm.DefaultCandidates) {
+	for _, d := range llm.Detect(ctx, s.app.Options().LocalModels) {
 		out = append(out, modelChoice{
 			ID:       "server " + d.BaseURL,
 			Label:    fmt.Sprintf("Use %s (%s)", d.Server, d.Model),
@@ -178,7 +178,7 @@ func (s *Service) modelUse(w http.ResponseWriter, r *http.Request) {
 		}
 		// An Ollama model is used through Sameway's copy of it, with room
 		// for the prompt Ollama's default would cut (ollama_setup.go).
-		if base, model := setting(c.Settings, "llm.base_url"), setting(c.Settings, "llm.model"); llm.IsOllama(base) {
+		if base, model := setting(c.Settings, "llm.base_url"), setting(c.Settings, "llm.model"); s.ollama().Is(base) {
 			slow, done := context.WithTimeout(r.Context(), time.Minute)
 			defer done()
 			if err := s.useOllama(slow, model); err != nil {
@@ -249,7 +249,7 @@ func (s *Service) modelWait() string {
 	f.Unlock()
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-	parts = append(parts, fmt.Sprint(ollamaWithoutModel(ctx)))
+	parts = append(parts, fmt.Sprint(s.ollamaWithoutModel(ctx)))
 	return strings.Join(parts, "|")
 }
 
@@ -272,14 +272,14 @@ func (s *Service) modelWaitState(w http.ResponseWriter, r *http.Request) {
 // address that is not answering. Called with s.model held.
 func (s *Service) wakeOllama(ok bool, why string) string {
 	s.model.waking = false
-	if ok || !llm.IsOllama(s.app.Workspace.Config.LLM.BaseURL) {
+	if ok || !s.ollama().Is(s.app.Workspace.Config.LLM.BaseURL) {
 		return why
 	}
 	if time.Since(s.model.woke) < time.Minute {
 		s.model.waking = true
 		return "Ollama is starting. This page follows when it is ready."
 	}
-	if llm.WakeOllama() {
+	if s.ollama().Wake() {
 		s.model.woke, s.model.waking = time.Now(), true
 		return "Ollama was not running, so Sameway is starting it. This page follows when it is ready."
 	}
