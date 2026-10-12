@@ -39,6 +39,10 @@ type Deps interface {
 	Who(r *http.Request) records.Who
 	// Record logs a change made by a request, and returns its entry's id.
 	Record(r *http.Request, c records.Change) string
+	// Apply makes a change through a page: its ops written all or none,
+	// and the change logged with them as whoever made it. It returns the
+	// log entry and the ops as made.
+	Apply(r *http.Request, c records.Change, ops ...records.Op) (string, []records.Op, error)
 	// Changed says something changed that open pages should follow.
 	Changed()
 	// Now is the time it is for the person, from the app's clock.

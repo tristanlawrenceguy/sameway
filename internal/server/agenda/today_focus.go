@@ -1,4 +1,4 @@
-package server
+package agenda
 
 import (
 	"context"
@@ -9,8 +9,10 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // "In those moments my reminder app doesn't help, because I get worse at
@@ -30,7 +32,7 @@ const (
 
 // important is a task the person or the assistant marked as mattering: a
 // tag important or urgent, or a high priority.
-func (s *Server) important(it todayItem) bool {
+func (s *Service) important(it todayItem) bool {
 	rec, err := s.app.Store.Get(it.Type, it.ID)
 	if err != nil {
 		return false
@@ -54,7 +56,7 @@ func tagged(rec *store.Record, tag string) bool {
 // focus splits the late and due tasks into the three to start with and the
 // rest, when there are enough to need it: those that matter first, then
 // the latest late, then what is due earliest today.
-func (s *Server) focus(l todayLists) (first, rest []todayItem) {
+func (s *Service) focus(l todayLists) (first, rest []todayItem) {
 	var all []todayItem
 	for _, list := range [][]todayItem{l.Late, l.Tasks} {
 		for _, it := range list {
@@ -80,39 +82,39 @@ func (s *Server) focus(l todayLists) (first, rest []todayItem) {
 }
 
 // dumpBox is the box for everything in the person's head.
-func (s *Server) dumpBox() string {
-	return `<h2>Too much in your head?</h2>` + string(s.form(ui.Form{Action: "/today/sort", Class: "sw-stack",
-		Body: s.component("textarea", map[string]any{"label": "Everything on your mind", "name": "words", "rows": 4,
+func (s *Service) dumpBox() string {
+	return `<h2>Too much in your head?</h2>` + string(s.Form(ui.Form{Action: "/today/sort", Class: "sw-stack",
+		Body: s.Component("textarea", map[string]any{"label": "Everything on your mind", "name": "words", "rows": 4,
 			"hint": "As it comes, in any order: things to do, to remember, to reply to. The assistant makes them tasks with their days and says which three to start with."}),
 		Button: &ui.Button{Label: "Sort it out for me", Variant: ui.Secondary}}))
 }
 
 // todaySort hands what the person wrote to the assistant, to sort.
-func (s *Server) todaySort(w http.ResponseWriter, r *http.Request) {
+func (s *Service) todaySort(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	words := strings.TrimSpace(r.PostForm.Get("words"))
 	if words == "" {
-		s.failed(w, r, "Nothing to sort", errors.New("write what is on your mind first, as it comes"), "/today")
+		s.Failed(w, r, "Nothing to sort", errors.New("write what is on your mind first, as it comes"), "/today")
 		return
 	}
 	ask := fmt.Sprintf("Sort this out for me: make each thing to do a task, with its day when I said one, tag the ones that matter most important, and tell me the three to start with. Ask me only if something cannot be guessed.\n\n%s", words)
-	if _, err := s.chatFor(r).SendFile(context.WithoutCancel(r.Context()), "", ask, ""); err != nil {
-		s.connect.ForgetModel()
-		s.failed(w, r, "Not sorted", err, "/today")
+	if _, err := s.ChatFor(r).SendFile(context.WithoutCancel(r.Context()), "", ask, ""); err != nil {
+		s.ForgetModel()
+		s.Failed(w, r, "Not sorted", err, "/today")
 		return
 	}
-	s.tellAt(w, r, outcome{Title: "Sorted", Text: "The assistant has made your tasks; its answer is on Home, and they are on Today."}, "/#chat")
+	s.TellAt(w, r, web.Outcome{Title: "Sorted", Text: "The assistant has made your tasks; its answer is on Home, and they are on Today."}, "/#chat")
 }
 
 // focusSection is Start with these, and the rest folded, or "" when Today
 // is short enough to read whole.
-func (s *Server) focusSection(l todayLists, list func(string, []todayItem) string) string {
+func (s *Service) focusSection(l todayLists, list func(string, []todayItem) string) string {
 	first, rest := s.focus(l)
 	if first == nil {
 		return ""
 	}
 	out := `<p>` + template.HTMLEscapeString(fmt.Sprintf("%d tasks are late or due. Start with these three; the rest wait below.", len(first)+len(rest))) + `</p>` + list("Start with these", first)
-	if body, err := s.app.Registry.RenderSlot("disclosure", map[string]any{"label": "The rest", "count": len(rest), "of": oneOrMany(len(rest), "task")}, template.HTML(list("", rest))); err == nil {
+	if body, err := s.app.Registry.RenderSlot("disclosure", map[string]any{"label": "The rest", "count": len(rest), "of": schema.Noun(len(rest), "task")}, template.HTML(list("", rest))); err == nil {
 		out += string(body)
 	}
 	return out

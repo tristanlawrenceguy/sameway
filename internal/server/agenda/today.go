@@ -1,4 +1,4 @@
-package server
+package agenda
 
 import (
 	"html/template"
@@ -10,6 +10,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
@@ -39,7 +40,7 @@ func (l todayLists) count() int {
 }
 
 // today reads the records for the day now falls on.
-func (s *Server) today(now time.Time) todayLists {
+func (s *Service) today(now time.Time) todayLists {
 	var out todayLists
 	day := now.Format("2006-01-02")
 	add := func(typ, field string, keep func(*store.Record, time.Time, bool) *[]todayItem) {
@@ -61,8 +62,8 @@ func (s *Server) today(now time.Time) todayLists {
 			if list == nil {
 				continue
 			}
-			it := todayItem{Title: s.title(t, r), Href: relate.Page(typ, r.ID), At: at, Type: typ, ID: r.ID, AllDay: allDay}
-			it.When = todayWhen(at, allDay, at.Format("2006-01-02") < day, now, s.h24())
+			it := todayItem{Title: s.Title(t, r), Href: relate.Page(typ, r.ID), At: at, Type: typ, ID: r.ID, AllDay: allDay}
+			it.When = todayWhen(at, allDay, at.Format("2006-01-02") < day, now, s.H24())
 			*list = append(*list, it)
 		}
 	}
@@ -96,8 +97,8 @@ func (s *Server) today(now time.Time) todayLists {
 	return out
 }
 
-func (s *Server) todayPage(w http.ResponseWriter, r *http.Request) {
-	now := s.now()
+func (s *Service) todayPage(w http.ResponseWriter, r *http.Request) {
+	now := s.Now()
 	l := s.today(now)
 	dayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 	list := func(title string, items []todayItem) string {
@@ -112,7 +113,7 @@ func (s *Server) todayPage(w http.ResponseWriter, r *http.Request) {
 		for _, it := range items {
 			b.WriteString(`<li class="sw-row"><p class="sw-row__title"><a class="sw-link" href="` + template.HTMLEscapeString(it.Href) + `">` + template.HTMLEscapeString(it.Title) + `</a>`)
 			if it.When != "" {
-				b.WriteString(` ` + timeHTML("sw-muted sw-small", it.stamp(), "", template.HTML(template.HTMLEscapeString(it.When))))
+				b.WriteString(` ` + web.Time("sw-muted sw-small", it.stamp(), "", template.HTML(template.HTMLEscapeString(it.When))))
 			}
 			b.WriteString(`</p>` + s.taskPresses(it, it.At.Before(dayStart)) + `</li>`) // today_nudge.go
 		}
@@ -129,14 +130,14 @@ func (s *Server) todayPage(w http.ResponseWriter, r *http.Request) {
 	b.WriteString(list("Events", l.Events) + list("Reminders", l.Reminders))
 	// What waits for the person, from the one list every reader reads
 	// (chat/waiting.go), each kind in its own place.
-	waiting := s.chatFor(r).Waiting()
-	mail := s.questionSection(waiting) + s.inbox.Today(waiting) // proposal.go, inbox/inbox.go
+	waiting := s.ChatFor(r).Waiting()
+	mail := s.Questions(waiting) + s.Inbox().Today(waiting) // server/proposal.go, server/inbox/inbox.go
 	b.WriteString(mail)
 	if l.count() == 0 && mail == "" {
-		b.WriteString(string(s.part(ui.Empty{Message: "Nothing is due today, and nothing is late."})))
+		b.WriteString(string(s.Part(ui.Empty{Message: "Nothing is due today, and nothing is late."})))
 	}
 	b.WriteString(s.dumpBox()) // today_focus.go
-	s.page(w, r, "Today", template.HTML(b.String()), pageOptions{Lede: template.HTML(timeHTML("", now.Format("2006-01-02"), "", template.HTML(now.Format("Monday 2 January"))))})
+	s.Page(w, r, "Today", template.HTML(b.String()), web.PageOptions{Lede: template.HTML(web.Time("", now.Format("2006-01-02"), "", template.HTML(now.Format("Monday 2 January"))))})
 }
 
 // todayWhen is what an item on Today says beside its title: its time, if
@@ -163,9 +164,9 @@ func (it todayItem) stamp() string {
 	return it.At.Format(time.RFC3339)
 }
 
-// todayListed is whether Today is in the navigation: when the workspace
+// TodayListed is whether Today is in the navigation: when the workspace
 // keeps something Today gathers (tasks, events or reminders).
-func (s *Server) todayListed() bool {
+func (s *Service) TodayListed() bool {
 	for _, typ := range []string{"task", "event", "reminder"} {
 		if _, ok := s.app.Types.Get(typ); ok {
 			return true

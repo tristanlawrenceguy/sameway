@@ -11,6 +11,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/design"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/relate"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/server/api"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
@@ -113,7 +114,7 @@ func (s *Server) recentActivityAbout(n int, from string, about func(target, id s
 	inner.WriteString(`</p>`)
 
 	body, err := s.app.Registry.RenderSlot("disclosure",
-		map[string]any{"label": "Activity", "count": len(recs), "of": oneOrMany(len(recs), "change"), "id": "recent-activity"},
+		map[string]any{"label": "Activity", "count": len(recs), "of": schema.Noun(len(recs), "change"), "id": "recent-activity"},
 		template.HTML(inner.String()))
 	if err != nil {
 		return ""

@@ -1,4 +1,4 @@
-package server_test
+package agenda_test
 
 import (
 	"fmt"
@@ -45,6 +45,7 @@ func TestTodayShowsWhatWaits(t *testing.T) {
 		}
 	}
 
+	hana := records.Visitor{Name: "Hana", Login: "hana@example.com", Access: records.Edit}
 	visitor := as(t, srv, hana, "GET", "/today", "", "").Body.String()
 	if strings.Contains(visitor, "The assistant asks") || !strings.Contains(visitor, "Your turn to reply") {
 		t.Errorf("the assistant's questions are the owner's; the rest is anyone's: %s", truncate(visitor))
