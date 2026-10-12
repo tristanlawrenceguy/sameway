@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/server/inbox"
 	"github.com/tristanlawrenceguy/sameway/internal/server/media"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
@@ -55,7 +56,8 @@ const (
 	// WritingHelpPart offers the kinds of help an editor gives with a
 	// piece of writing (writing_help.go).
 	WritingHelpPart = "writing-help"
-	// An email's conversation is ConversationPart (mail_conversation.go).
+	// An email's conversation (inbox/mail_conversation.go).
+	ConversationPart = inbox.ConversationPart
 )
 
 // shown is what this view has been asked to show: always, from the

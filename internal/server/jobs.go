@@ -41,7 +41,7 @@ func (s *Server) BackgroundJobs() []runner.Job {
 		{Name: "Email read from the mailbox", Every: 5 * time.Minute, Wait: true, Run: func(ctx context.Context, _ time.Time) error {
 			c, cancel := context.WithTimeout(ctx, 2*time.Minute)
 			defer cancel()
-			_, err := s.readMail(c) // mail_in.go: when connected
+			_, err := s.inbox.ReadMail(c) // inbox/mail_in.go: when connected
 			return err
 		}},
 	}

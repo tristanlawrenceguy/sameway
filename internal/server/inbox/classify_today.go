@@ -1,4 +1,4 @@
-package server
+package inbox
 
 import (
 	"errors"
@@ -9,6 +9,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // A tag a classify action gave waits on Today as a suggestion: kept with a
@@ -17,12 +18,12 @@ import (
 // judgement taught once, not a chore repeated.
 
 // taggedRecord is the record a classification is about.
-func (s *Server) taggedRecord(c *store.Record) (*store.Record, error) {
+func (s *Service) taggedRecord(c *store.Record) (*store.Record, error) {
 	typ, id, _ := strings.Cut(fmt.Sprint(c.Fields["record"]), "/")
 	return s.app.Store.Get(typ, id)
 }
 
-func (s *Server) tagNames() []string {
+func (s *Service) tagNames() []string {
 	recs, _ := s.app.Store.List(chat.TagType, store.ListOptions{OrderBy: "name"})
 	var out []string
 	for _, r := range recs {
@@ -34,7 +35,7 @@ func (s *Server) tagNames() []string {
 }
 
 // suggestion is the classification a press is about, still suggested.
-func (s *Server) suggestion(r *http.Request) (*store.Record, *store.Record, error) {
+func (s *Service) suggestion(r *http.Request) (*store.Record, *store.Record, error) {
 	r.ParseForm()
 	c, err := s.app.Store.Get(chat.ClassificationType, r.PostForm.Get("id"))
 	if err != nil || c.Fields["state"] != "suggested" && c.Fields["confirmed_by"] != "judgement" {
@@ -47,22 +48,22 @@ func (s *Server) suggestion(r *http.Request) (*store.Record, *store.Record, erro
 	return c, rec, nil
 }
 
-func (s *Server) tagKeep(w http.ResponseWriter, r *http.Request) {
+func (s *Service) tagKeep(w http.ResponseWriter, r *http.Request) {
 	c, rec, err := s.suggestion(r)
 	if err != nil {
-		s.failed(w, r, "Not kept", err, "/today")
+		s.Failed(w, r, "Not kept", err, "/today")
 		return
 	}
 	if _, err := records.ApplyOps(s.app.Store, records.Op{Type: chat.ClassificationType, ID: c.ID, After: map[string]any{"state": "confirmed", "confirmed_by": "person"}}); err != nil {
-		s.failed(w, r, "Not kept", err, "/today")
+		s.Failed(w, r, "Not kept", err, "/today")
 		return
 	}
-	s.tellAt(w, r, outcome{Title: "Kept", Text: fmt.Sprintf("%s keeps the tag %s; the action follows that next time.", s.nameOf(rec), c.Fields["tag"])}, "/today")
+	s.TellAt(w, r, web.Outcome{Title: "Kept", Text: fmt.Sprintf("%s keeps the tag %s; the action follows that next time.", s.nameOf(rec), c.Fields["tag"])}, "/today")
 }
 
 // retag takes a tag off a record and puts another on, or none: the record
 // changing is what marks the suggestion taken off or changed (judgement.go).
-func (s *Server) retag(r *http.Request, rec *store.Record, off, on string) (string, error) {
+func (s *Service) retag(r *http.Request, rec *store.Record, off, on string) (string, error) {
 	var tags []any
 	for _, t := range records.StringList(rec.Fields["tags"]) {
 		if !strings.EqualFold(t, off) && !strings.EqualFold(t, on) {
@@ -72,23 +73,23 @@ func (s *Server) retag(r *http.Request, rec *store.Record, off, on string) (stri
 	if on != "" {
 		tags = append(tags, on)
 	}
-	_, act, err := records.WriteAs(s.app.Store, s.who(r), "updated", rec.Type, rec.ID, map[string]any{"tags": tags})
+	_, act, err := records.WriteAs(s.app.Store, s.Who(r), "updated", rec.Type, rec.ID, map[string]any{"tags": tags})
 	return act, err
 }
 
-func (s *Server) tagOff(w http.ResponseWriter, r *http.Request) {
+func (s *Service) tagOff(w http.ResponseWriter, r *http.Request) {
 	c, rec, err := s.suggestion(r)
 	if err == nil {
 		var act string
 		if act, err = s.retag(r, rec, fmt.Sprint(c.Fields["tag"]), ""); err == nil {
-			s.tellAt(w, r, outcome{Title: "Taken off", Text: fmt.Sprintf("%s no longer has the tag %s; the action follows that next time.", s.nameOf(rec), c.Fields["tag"]), Undo: act}, "/today")
+			s.TellAt(w, r, web.Outcome{Title: "Taken off", Text: fmt.Sprintf("%s no longer has the tag %s; the action follows that next time.", s.nameOf(rec), c.Fields["tag"]), Undo: act}, "/today")
 			return
 		}
 	}
-	s.failed(w, r, "Not changed", err, "/today")
+	s.Failed(w, r, "Not changed", err, "/today")
 }
 
-func (s *Server) tagChange(w http.ResponseWriter, r *http.Request) {
+func (s *Service) tagChange(w http.ResponseWriter, r *http.Request) {
 	c, rec, err := s.suggestion(r)
 	to := strings.TrimSpace(r.PostForm.Get("to"))
 	if err == nil && strings.EqualFold(to, fmt.Sprint(c.Fields["tag"])) {
@@ -98,11 +99,11 @@ func (s *Server) tagChange(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		var act string
 		if act, err = s.retag(r, rec, fmt.Sprint(c.Fields["tag"]), to); err == nil {
-			s.tellAt(w, r, outcome{Title: "Changed", Text: fmt.Sprintf("%s is tagged %s instead of %s; the action follows that next time.", s.nameOf(rec), to, c.Fields["tag"]), Undo: act}, "/today")
+			s.TellAt(w, r, web.Outcome{Title: "Changed", Text: fmt.Sprintf("%s is tagged %s instead of %s; the action follows that next time.", s.nameOf(rec), to, c.Fields["tag"]), Undo: act}, "/today")
 			return
 		}
 	}
-	s.failed(w, r, "Not changed", err, "/today")
+	s.Failed(w, r, "Not changed", err, "/today")
 }
 
 // starterTags are the tags sorting begins with; the person changes what
@@ -116,11 +117,11 @@ var starterTags = []struct {
 	{"nothing to do", "Needs nothing from me: newsletters, adverts, receipts, notices and confirmations. Given when no other tag fits.", true},
 }
 
-// setUpSorting, the first time email is connected, makes the starter tags
+// SetUpSorting, the first time email is connected, makes the starter tags
 // and the action that gives them to each email that comes in, checked
 // against the person's past choices. Both are ordinary records: the person
 // changes the tags, the meanings, or the action, or removes them.
-func (s *Server) setUpSorting() {
+func (s *Service) SetUpSorting() {
 	if _, ok := s.app.Types.Get(chat.TagType); !ok {
 		return
 	}
@@ -160,7 +161,7 @@ func (s *Server) setUpSorting() {
 }
 
 // latestTag is the newest classification of a tag on a record, to change.
-func (s *Server) latestTag(rec *store.Record, tag string) *store.Record {
+func (s *Service) latestTag(rec *store.Record, tag string) *store.Record {
 	cls, _ := s.app.Store.List(chat.ClassificationType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 200})
 	for _, c := range cls {
 		if c.Fields["record"] == rec.Type+"/"+rec.ID && strings.EqualFold(fmt.Sprint(c.Fields["tag"]), tag) {
@@ -175,7 +176,7 @@ func (s *Server) latestTag(rec *store.Record, tag string) *store.Record {
 // says it was to do, so that tag is not asked about again, and it is their
 // choice the action follows. Turning the suggestion down says nothing
 // about the tag, so it is left to check.
-func (s *Server) tagsAgreed(p *store.Record) {
+func (s *Service) tagsAgreed(p *store.Record) {
 	act, err := s.app.Store.Get(records.ActionType, fmt.Sprint(p.Fields["by_action"]))
 	if err != nil {
 		return

@@ -5,7 +5,7 @@ address, or moves it to the Sameway folder, and it comes in as an email
 to sort on Today. Conversations are worked out from the headers, the
 person's own replies are read from Sent, and Today says whose turn it is.
 The code is `internal/mailin` (reading the mailbox) and
-`internal/server/mail_*.go` (the pages).
+`internal/server/inbox/` (the pages).
 
 ## Why it works this way
 

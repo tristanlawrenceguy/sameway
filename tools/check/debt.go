@@ -42,12 +42,9 @@ var splitByName = map[string]bool{
 
 // wallClock are files under clockDirs that read time.Now() where the app's
 // clock belongs, with how many times, when the rule came in (2026-10-10).
-// Mail in is being moved onto the background runner elsewhere at the
-// time. Move each to the app's clock, or mark a use that must be real
-// time `// wall clock: <reason>`, and lower or remove its entry.
-var wallClock = map[string]int{
-	"internal/server/mail_in.go": 2,
-}
+// None is left: a new one uses the app's clock, or marks a use that must
+// be real time `// wall clock: <reason>`.
+var wallClock = map[string]int{}
 
 // storeWrites are the functions that write the store directly rather than
 // through records.Apply, ApplyOps or WriteAs, each with why (writes.go).

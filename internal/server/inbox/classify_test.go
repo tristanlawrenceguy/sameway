@@ -1,4 +1,4 @@
-package server_test
+package inbox_test
 
 import (
 	"context"

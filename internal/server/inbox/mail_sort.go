@@ -1,4 +1,4 @@
-package server
+package inbox
 
 import (
 	"errors"
@@ -9,13 +9,14 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // Email that came in waits on Today until it is dealt with: made a task,
 // or marked sorted. Both are a press, logged, and undone like any change.
 
 // toSortItem is an email or a note waiting to be sorted, by id.
-func (s *Server) toSortItem(id string) (*store.Record, error) {
+func (s *Service) toSortItem(id string) (*store.Record, error) {
 	for _, typ := range []string{"email", "note"} {
 		if rec, err := s.app.Store.Get(typ, id); err == nil {
 			return rec, nil
@@ -27,7 +28,7 @@ func (s *Server) toSortItem(id string) (*store.Record, error) {
 // mailSection is To sort on Today: each email or shared message with what
 // the model made of it (triage.go), kept, changed or set aside with a press;
 // before it has, or with no model, made a task or set aside by hand.
-func (s *Server) mailSection(list []chat.Waiting) string {
+func (s *Service) mailSection(list []chat.Waiting) string {
 	alone := s.app.Chat.AloneTags() // what needs nothing is folded away
 	var nothing []*store.Record
 	for _, n := range s.app.Chat.ToSort() {
@@ -65,26 +66,26 @@ func (s *Server) mailSection(list []chat.Waiting) string {
 }
 
 // sortedNote takes the to sort tag off a note from email.
-func (s *Server) sortedNote(r *http.Request, id string) (*store.Record, string, error) {
+func (s *Service) sortedNote(r *http.Request, id string) (*store.Record, string, error) {
 	n, err := s.toSortItem(id)
-	if err != nil || !chat.Tagged(n, toSort) {
+	if err != nil || !chat.Tagged(n, chat.ToSort) {
 		return nil, "", errors.New("that has been dealt with already")
 	}
 	var tags []any
 	for _, t := range n.Fields["tags"].([]any) {
-		if t != toSort {
+		if t != chat.ToSort {
 			tags = append(tags, t)
 		}
 	}
-	_, act, err := records.WriteAs(s.app.Store, s.who(r), "updated", n.Type, id, map[string]any{"tags": tags})
+	_, act, err := records.WriteAs(s.app.Store, s.Who(r), "updated", n.Type, id, map[string]any{"tags": tags})
 	return n, act, err
 }
 
-func (s *Server) mailTask(w http.ResponseWriter, r *http.Request) {
+func (s *Service) mailTask(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	n, _, err := s.sortedNote(r, r.PostForm.Get("id"))
 	if err != nil {
-		s.failed(w, r, "Not made", err, "/today")
+		s.Failed(w, r, "Not made", err, "/today")
 		return
 	}
 	title := s.nameOf(n)
@@ -94,27 +95,27 @@ func (s *Server) mailTask(w http.ResponseWriter, r *http.Request) {
 			fields["notes"] = "From the email [" + title + "](/t/" + n.Type + "/" + n.ID + ")."
 		}
 	}
-	task, act, err := records.WriteAs(s.app.Store, s.who(r), "created", "task", "", fields)
+	task, act, err := records.WriteAs(s.app.Store, s.Who(r), "created", "task", "", fields)
 	if err != nil {
-		s.failed(w, r, "Not made", err, "/today")
+		s.Failed(w, r, "Not made", err, "/today")
 		return
 	}
-	s.tellAt(w, r, outcome{Title: "Task made", Text: title + " is a task now; give it a day on its page.", Undo: act, Of: title}, "/t/task/"+task.ID+"#edit")
+	s.TellAt(w, r, web.Outcome{Title: "Task made", Text: title + " is a task now; give it a day on its page.", Undo: act, Of: title}, "/t/task/"+task.ID+"#edit")
 }
 
-func (s *Server) mailSorted(w http.ResponseWriter, r *http.Request) {
+func (s *Service) mailSorted(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	n, act, err := s.sortedNote(r, r.PostForm.Get("id"))
 	if err != nil {
-		s.failed(w, r, "Not changed", err, "/today")
+		s.Failed(w, r, "Not changed", err, "/today")
 		return
 	}
 	title := s.nameOf(n)
-	s.tellAt(w, r, outcome{Title: "Done with", Text: title + " stays in your notes.", Undo: act, Of: title}, "/today")
+	s.TellAt(w, r, web.Outcome{Title: "Done with", Text: title + " stays in your notes.", Undo: act, Of: title}, "/today")
 }
 
 // nameOf is what a record is called, whatever its type.
-func (s *Server) nameOf(rec *store.Record) string {
+func (s *Service) nameOf(rec *store.Record) string {
 	t, ok := s.app.Types.Get(rec.Type)
 	if !ok {
 		return rec.ID
@@ -123,7 +124,7 @@ func (s *Server) nameOf(rec *store.Record) string {
 }
 
 // sortingRefs are the records waiting to be sorted, as type/id.
-func (s *Server) sortingRefs() map[string]bool {
+func (s *Service) sortingRefs() map[string]bool {
 	out := map[string]bool{}
 	for _, n := range s.app.Chat.ToSort() {
 		out[n.Type+"/"+n.ID] = true

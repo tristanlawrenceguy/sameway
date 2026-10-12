@@ -76,4 +76,5 @@ var (
 	public        = servertest.Public
 	seedTasks     = servertest.SeedTasks
 	addCollection = servertest.AddCollection
+	written       = servertest.Written
 )
