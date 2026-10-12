@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
@@ -51,7 +52,7 @@ func reviewNotice(done int) string {
 	if done == 0 {
 		return "Look back on the week and plan the next one."
 	}
-	return countWords(done, "task", "tasks") + " done this week. Look back, and plan the next one."
+	return schema.Count(done, "task") + " done this week. Look back, and plan the next one."
 }
 
 // reviewLine is the review's line on Help, for the owner: what the
