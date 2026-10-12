@@ -25,7 +25,7 @@ func TestTheServersJobsRunOnTheRunner(t *testing.T) {
 	jobs := srv.BackgroundJobs()
 	every, sleepers := map[string]time.Duration{}, 0
 	for _, j := range jobs {
-		if j.Every > 0 {
+		if j.Every > 0 || j.Next != nil {
 			sleepers++
 		}
 		every[j.Name] = j.Every
@@ -73,5 +73,85 @@ func TestTheServersJobsRunOnTheRunner(t *testing.T) {
 		if st.LastErr != "" && !strings.Contains(st.Name, "Calendars") {
 			t.Errorf("%s: %s", st.Name, st.LastErr)
 		}
+	}
+}
+
+// The morning brief and the weekly review come at the times set on Help,
+// on the runner's clock: across midnight, at a time changed while they
+// wait, not at all with none set, and never once the server has stopped.
+func TestTheBriefAndReviewComeAtTheirTimes(t *testing.T) {
+	t.Parallel()
+	f := runner.NewFake(time.Date(2026, 10, 10, 6, 0, 0, 0, time.Local)) // a Saturday
+	a, h := newAppWith(t, app.Options{Clock: f.Now, After: f.After})
+	srv := h.(*server.Server)
+	set := func(key, value string) {
+		if err := a.Workspace.Set(key, value); err != nil {
+			t.Fatal(err)
+		}
+	}
+	set("ui.clock", "12")
+	set("brief.at", "07:30")
+	set("review.on", "sunday")
+	a.Store.Create("task", map[string]any{"title": "Pay rent", "due": "2026-10-10"}) // late from Sunday on
+	told := make(chan string, 8)
+	srv.OnRing(func(title, _, _ string) { told <- title })
+	for _, j := range srv.BackgroundJobs() {
+		if j.Name == "Morning brief" || j.Name == "Weekly review ready" {
+			a.Jobs.Add(j)
+		}
+	}
+	ctx, stop := context.WithCancel(context.Background())
+	defer stop()
+	a.Jobs.Start(ctx)
+	step := func(d time.Duration, want string) {
+		t.Helper()
+		f.BlockUntil(2)
+		f.Advance(d)
+		if want == "" {
+			return
+		}
+		select {
+		case got := <-told:
+			if !strings.HasPrefix(got, want) {
+				t.Fatalf("at %v: %q, want %q", f.Now(), got, want)
+			}
+		case <-time.After(5 * time.Second):
+			t.Fatalf("at %v nothing came, want %q", f.Now(), want)
+		}
+	}
+	step(90*time.Minute, "Today: 1 task") // Saturday 7:30
+	set("brief.at", "07:00")
+	set("review.on", "monday")
+	step(23*time.Hour+30*time.Minute, "Today: 1 late") // Sunday 7:00, the new time
+	step(11*time.Hour, "")                             // Sunday 18:00, no longer the day
+	f.BlockUntil(2)
+	if sent := a.Store.Meta("review:sent"); sent != "" {
+		t.Fatalf("the review came on the day it was moved from: %q", sent)
+	}
+	step(13*time.Hour, "Today: 1 late")       // Monday 7:00
+	step(11*time.Hour, "Your week in review") // Monday 18:00
+	f.BlockUntil(2)
+	if page := get(t, h, "/help").Body.String(); !strings.Contains(page, "Morning brief: at the time set for it, if one is. Last ran today at 7am, and went well. Next tomorrow at 7am.") {
+		t.Errorf("Help says when the brief comes next\n%.4000s", page)
+	}
+
+	set("brief.at", "")
+	set("review.on", "")
+	step(time.Minute, "")
+	step(48*time.Hour, "")
+	f.BlockUntil(2)
+	for _, st := range a.Jobs.Status() {
+		if !st.NextRun.IsZero() || st.LastErr != "" {
+			t.Errorf("with no time set, %s waits for none: %+v", st.Name, st)
+		}
+	}
+	set("brief.at", "07:00")
+	stop()
+	if !a.Jobs.Wait(time.Minute) {
+		t.Fatal("the jobs did not stop")
+	}
+	f.Advance(48 * time.Hour)
+	if sent := a.Store.Meta("brief:sent"); sent != "2026-10-12" {
+		t.Fatalf("a brief after the server stopped: %q", sent)
 	}
 }

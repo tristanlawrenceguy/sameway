@@ -24,7 +24,7 @@ func TestBackgroundJobsRunOnTheAppsRunner(t *testing.T) {
 	names, sleepers := []string{}, 0
 	for _, j := range jobs {
 		names = append(names, j.Name)
-		if j.Every > 0 {
+		if j.Every > 0 || j.Next != nil {
 			sleepers++
 		}
 	}
