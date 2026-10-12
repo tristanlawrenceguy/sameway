@@ -31,7 +31,10 @@ import (
 // toSort is the tag a note from email has until it is dealt with.
 const toSort = "to sort"
 
-var mailMu sync.Mutex // one read of the mailbox at a time
+// mailLock is the key of the store's lock on reading its mailbox: one
+// read at a time, the one on connecting and the job's alike, and two
+// workspaces open side by side never wait on each other.
+type mailLock struct{}
 
 func mailKey(user string) string { return "SAMEWAY_MAIL_PASSWORD " + strings.ToLower(user) }
 
@@ -117,8 +120,9 @@ func (s *Server) readMail(ctx context.Context) (int, error) {
 	if !ok {
 		return 0, nil
 	}
-	mailMu.Lock()
-	defer mailMu.Unlock()
+	mu := s.app.Store.Keep(mailLock{}, func() any { return new(sync.Mutex) }).(*sync.Mutex)
+	mu.Lock()
+	defer mu.Unlock()
 	marks := map[string]mailin.Mark{}
 	json.Unmarshal([]byte(s.app.Store.Meta("mail:marks")), &marks)
 	mails, marks, err := mailin.New(ctx, a, marks, func(refs []string) bool { return s.threadOf(refs) != "" })
