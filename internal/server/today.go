@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
@@ -60,7 +61,7 @@ func (s *Server) today(now time.Time) todayLists {
 			if list == nil {
 				continue
 			}
-			it := todayItem{Title: s.title(t, r), Href: "/t/" + typ + "/" + r.ID, At: at, Type: typ, ID: r.ID, AllDay: allDay}
+			it := todayItem{Title: s.title(t, r), Href: relate.Page(typ, r.ID), At: at, Type: typ, ID: r.ID, AllDay: allDay}
 			it.When = todayWhen(at, allDay, at.Format("2006-01-02") < day, now, s.h24())
 			*list = append(*list, it)
 		}
@@ -126,7 +127,10 @@ func (s *Server) todayPage(w http.ResponseWriter, r *http.Request) {
 		b.WriteString(list("Late", l.Late) + list("Tasks", l.Tasks))
 	}
 	b.WriteString(list("Events", l.Events) + list("Reminders", l.Reminders))
-	mail := s.mailSection() + s.turnSection() + s.suggestedSection(s.sortingRefs()) + s.tagSection(s.sortingRefs()) // mail_sort.go, turns_today.go, suggested.go, tags_today.go
+	// What waits for the person, from the one list every reader reads
+	// (chat/waiting.go), each kind in its own place.
+	waiting := s.chatFor(r).Waiting()
+	mail := s.questionSection(waiting) + s.mailSection(waiting) + s.turnSection(waiting) + s.suggestedSection(waiting, s.sortingRefs()) + s.tagSection(waiting, s.sortingRefs()) // proposal.go, mail_sort.go, turns_today.go, suggested.go, tags_today.go
 	b.WriteString(mail)
 	if l.count() == 0 && mail == "" {
 		b.WriteString(string(s.part(ui.Empty{Message: "Nothing is due today, and nothing is late."})))

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os/exec"
 	"strings"
 	"time"
 )
@@ -20,8 +21,31 @@ import (
 // twenty thousand, and a model given a third of them answered a request it
 // never saw.
 
-// OllamaURL is where Ollama listens, its own API rather than /v1.
-var OllamaURL = "http://127.0.0.1:11434"
+// OllamaURL is where Ollama listens on this computer, its own API rather
+// than /v1.
+const OllamaURL = "http://127.0.0.1:11434"
+
+// Ollama is Ollama at an address. The zero value is this computer's; an
+// app is given its own through app.Options, so a test points one at a
+// fake while others run beside it.
+type Ollama struct {
+	// URL is its own API, without /v1; "" is OllamaURL.
+	URL string
+	// Start is how to start it when it is installed and not answering;
+	// nil is how it is installed here (ollama_wake.go).
+	Start func() *exec.Cmd
+}
+
+// Base is the address of its own API.
+func (o Ollama) Base() string {
+	if o.URL == "" {
+		return OllamaURL
+	}
+	return strings.TrimRight(o.URL, "/")
+}
+
+// V1 is its OpenAI-compatible address, the one a workspace's model uses.
+func (o Ollama) V1() string { return o.Base() + "/v1" }
 
 // FreeModel is the model Sameway fetches for a person with none: small
 // enough for an ordinary computer, and able to use tools.
@@ -33,10 +57,10 @@ const FreeModelWords = "Qwen 3.5, 3.3 GB"
 // roomy is how much a model is given, in tokens.
 const roomy = 32768
 
-// OllamaRunning says whether Ollama answers on this computer.
-func OllamaRunning(ctx context.Context) bool {
+// Running says whether Ollama answers.
+func (o Ollama) Running(ctx context.Context) bool {
 	client := &http.Client{Timeout: 1500 * time.Millisecond}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, OllamaURL+"/api/version", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, o.Base()+"/api/version", nil)
 	if err != nil {
 		return false
 	}
@@ -48,16 +72,16 @@ func OllamaRunning(ctx context.Context) bool {
 	return res.StatusCode == http.StatusOK
 }
 
-// IsOllama says whether a base URL is Ollama's.
-func IsOllama(base string) bool {
-	return strings.HasPrefix(strings.TrimRight(base, "/"), OllamaURL)
+// Is says whether a base URL is this Ollama's.
+func (o Ollama) Is(base string) bool {
+	return strings.HasPrefix(strings.TrimRight(base, "/"), o.Base())
 }
 
-// OllamaPull fetches a model, telling progress how far it has come, in
-// bytes of the whole.
-func OllamaPull(ctx context.Context, model string, progress func(done, total int64)) error {
+// Pull fetches a model, telling progress how far it has come, in bytes of
+// the whole.
+func (o Ollama) Pull(ctx context.Context, model string, progress func(done, total int64)) error {
 	body, _ := json.Marshal(map[string]any{"model": model, "stream": true})
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, OllamaURL+"/api/pull", bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, o.Base()+"/api/pull", bytes.NewReader(body))
 	if err != nil {
 		return err
 	}
@@ -94,16 +118,16 @@ func OllamaPull(ctx context.Context, model string, progress func(done, total int
 	return fmt.Errorf("Ollama stopped before %s was fetched", model)
 }
 
-// OllamaRoomy is Sameway's copy of an Ollama model, with room for its
+// Roomy is Sameway's copy of an Ollama model, with room for its
 // prompt, made the first time it is asked for: "sameway-qwen3.5" for
 // qwen3.5:4b. A model already Sameway's is itself.
-func OllamaRoomy(ctx context.Context, model string) (string, error) {
+func (o Ollama) Roomy(ctx context.Context, model string) (string, error) {
 	if strings.HasPrefix(model, "sameway-") {
 		return model, nil
 	}
 	name := "sameway-" + strings.SplitN(model, ":", 2)[0]
 	body, _ := json.Marshal(map[string]any{"model": name, "from": model, "parameters": map[string]any{"num_ctx": roomy}, "stream": false})
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, OllamaURL+"/api/create", bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, o.Base()+"/api/create", bytes.NewReader(body))
 	if err != nil {
 		return "", err
 	}
@@ -118,12 +142,12 @@ func OllamaRoomy(ctx context.Context, model string) (string, error) {
 	return name, nil
 }
 
-// OllamaKeep asks Ollama to keep a model loaded for a while, "30m": it
+// Keep asks Ollama to keep a model loaded for a while, "30m": it
 // unloads one after five minutes unused by default, and loading it again
 // costs the next message seconds (internal/chat warm.go).
-func OllamaKeep(ctx context.Context, model, keep string) error {
+func (o Ollama) Keep(ctx context.Context, model, keep string) error {
 	body, _ := json.Marshal(map[string]any{"model": model, "keep_alive": keep})
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, OllamaURL+"/api/generate", bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, o.Base()+"/api/generate", bytes.NewReader(body))
 	if err != nil {
 		return err
 	}

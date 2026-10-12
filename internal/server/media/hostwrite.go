@@ -15,6 +15,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
 	"github.com/tristanlawrenceguy/sameway/internal/look"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/runner"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -194,7 +195,7 @@ func (s *Service) WriteDown(id string) (string, error) {
 	if err != nil || !isRecording(rec) {
 		return "", fmt.Errorf("there is no recording %s; find_records on file lists them", id)
 	}
-	page := "/t/" + records.FileType + "/" + rec.ID
+	page := relate.Page(records.FileType, rec.ID)
 	if !s.SpeechKit().Ready() {
 		return "", fmt.Errorf("speech-to-text is not on this computer yet; the person gets it from the recording's page, %s", page)
 	}

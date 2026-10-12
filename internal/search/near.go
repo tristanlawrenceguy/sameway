@@ -4,6 +4,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -102,7 +103,7 @@ func near(st *store.Store, types *schema.Set, q string, hits []Hit, r Reader) []
 			continue
 		}
 		title, body := texts(t, rec, r)
-		hits = append(hits, Hit{Type: typ, ID: id, Title: title, Snippet: clipText(strings.TrimSpace(body), 140), Href: "/t/" + typ + "/" + id, Near: true})
+		hits = append(hits, Hit{Type: typ, ID: id, Title: title, Snippet: clipText(strings.TrimSpace(body), 140), Href: relate.Page(typ, id), Near: true})
 	}
 	return hits
 }

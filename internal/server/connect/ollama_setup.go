@@ -27,13 +27,12 @@ type fetchState struct {
 	err         string
 }
 
-// fetches are each workspace server's own fetch, so one workspace never
-// shows another's.
-var fetches sync.Map // *Service -> *fetchState
+// fetchKey is where the workspace's store keeps its fetch, so one
+// workspace never shows another's, and it goes with the store.
+type fetchKey struct{}
 
 func (s *Service) fetching() *fetchState {
-	f, _ := fetches.LoadOrStore(s, &fetchState{})
-	return f.(*fetchState)
+	return s.app.Store.Keep(fetchKey{}, func() any { return &fetchState{} }).(*fetchState)
 }
 
 // ollamaCard is the fetch offered, or how far it has come; "" when Ollama
@@ -52,7 +51,7 @@ func (s *Service) ollamaCard(from string) template.HTML {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-	if !ollamaWithoutModel(ctx) {
+	if !s.ollamaWithoutModel(ctx) {
 		return ""
 	}
 	var said template.HTML
@@ -70,7 +69,7 @@ func (s *Service) ollamaFetch(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
 	defer cancel()
-	if !ollamaWithoutModel(ctx) {
+	if !s.ollamaWithoutModel(ctx) {
 		s.Failed(w, r, "Nothing fetched", fmt.Errorf("a model is fetched only for Ollama with none: choose the one it has, or install Ollama first"), "/")
 		return
 	}
@@ -87,7 +86,7 @@ func (s *Service) ollamaFetch(w http.ResponseWriter, r *http.Request) {
 func (s *Service) fetchFreeModel() {
 	f := s.fetching()
 	ctx := context.Background()
-	err := llm.OllamaPull(ctx, llm.FreeModel, func(done, total int64) {
+	err := s.ollama().Pull(ctx, llm.FreeModel, func(done, total int64) {
 		f.Lock()
 		f.done, f.total = done, total
 		f.Unlock()
@@ -107,14 +106,14 @@ func (s *Service) fetchFreeModel() {
 // useOllama makes an Ollama model the assistant's, through Sameway's copy
 // of it with room for the prompt.
 func (s *Service) useOllama(ctx context.Context, model string) error {
-	name, err := llm.OllamaRoomy(ctx, model)
+	name, err := s.ollama().Roomy(ctx, model)
 	if err != nil {
 		return err
 	}
 	if s.app.Records.SetSetting == nil {
 		return fmt.Errorf("this workspace has no settings file")
 	}
-	for _, kv := range [][2]string{{"llm.base_url", llm.OllamaURL + "/v1"}, {"llm.model", name}, {"llm.provider", "openai"}} {
+	for _, kv := range [][2]string{{"llm.base_url", s.ollama().V1()}, {"llm.model", name}, {"llm.provider", "openai"}} {
 		if err := s.app.Records.SetSetting(kv[0], kv[1]); err != nil {
 			return err
 		}
@@ -134,6 +133,7 @@ func setting(kvs [][2]string, key string) string {
 
 // ollamaWithoutModel says Ollama is here with no model: when the free one
 // is offered, and the only time it is fetched.
-func ollamaWithoutModel(ctx context.Context) bool {
-	return llm.OllamaRunning(ctx) && len(llm.Detect(ctx, []llm.Candidate{{Server: "Ollama", BaseURL: llm.OllamaURL + "/v1"}})) == 0
+func (s *Service) ollamaWithoutModel(ctx context.Context) bool {
+	o := s.ollama()
+	return o.Running(ctx) && len(llm.Detect(ctx, []llm.Candidate{{Server: "Ollama", BaseURL: o.V1()}})) == 0
 }

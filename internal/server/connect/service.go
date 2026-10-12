@@ -23,5 +23,8 @@ type Service struct {
 // New is connecting the assistant for the workspace the server serves.
 func New(d web.Deps) *Service { return &Service{Deps: d, app: d.App()} }
 
+// ollama is Ollama on this computer, as the app was given it.
+func (s *Service) ollama() llm.Ollama { return s.app.Options().Ollama }
+
 // keys is the file a pasted key is kept in (workspace.Machine).
 func (s *Service) keys() llm.Keys { return llm.Keys(s.app.Workspace.Machine.Keys) }

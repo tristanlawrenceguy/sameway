@@ -14,6 +14,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/soundtrack"
 	"github.com/tristanlawrenceguy/sameway/internal/speech"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -120,7 +121,7 @@ func (s *Service) finishWriting(rec *store.Record, cues []convert.Cue) {
 		os.WriteFile(path, []byte(speech.VTT(cues)), 0o644)
 	}
 	s.fileSays(rec.ID, map[string]any{"status": "ready", "text": convert.Transcript(cues), "note": "Written down on this computer by " + speech.ModelName + ". Edit the text if it misheard."})
-	records.Record(s.app.Store, "system", records.Change{Action: "updated", Component: records.FileType, ID: rec.ID, Detail: title + ", written down", Href: "/t/" + records.FileType + "/" + rec.ID})
+	records.Record(s.app.Store, "system", records.Change{Action: "updated", Component: records.FileType, ID: rec.ID, Detail: title + ", written down", Href: relate.Page(records.FileType, rec.ID)})
 	s.Changed()
 }
 

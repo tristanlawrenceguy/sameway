@@ -28,7 +28,7 @@ const warmEvery = 4 * time.Minute
 // message, at most every few minutes, and says whether it did.
 func (s *Service) Warm(ctx context.Context) bool {
 	o, ok := s.Provider.(*llm.OpenAI)
-	if !ok || !llm.IsOllama(o.BaseURL) {
+	if !ok || !s.Ollama.Is(o.BaseURL) {
 		return false
 	}
 	if at, ok := warmed.Load(o.Model); ok && time.Since(at.(time.Time)) < warmEvery {
@@ -48,6 +48,6 @@ func (s *Service) Warm(ctx context.Context) bool {
 	one := *o
 	one.MaxTokens = 1
 	one.Complete(ctx, req)
-	llm.OllamaKeep(ctx, o.Model, "30m")
+	s.Ollama.Keep(ctx, o.Model, "30m")
 	return true
 }

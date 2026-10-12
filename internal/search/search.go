@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
@@ -165,7 +166,7 @@ func match(t *schema.Type, rec *store.Record, words []string, some bool, r Reade
 	if t.Name == "block" {
 		h.Href = "/canvas/" + rec.ID
 	} else {
-		h.Href = "/t/" + t.Name + "/" + rec.ID
+		h.Href = relate.Page(t.Name, rec.ID)
 	}
 	return h, true
 }
