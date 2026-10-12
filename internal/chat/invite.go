@@ -2,9 +2,9 @@ package chat
 
 import (
 	"errors"
-	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -23,23 +23,18 @@ func (s *Service) GiveAccess(name, access string) (*store.Record, error) {
 		return nil, errors.New("this workspace has no people")
 	}
 	p := s.PersonByName(name)
-	if p == nil {
-		rec, err := s.Store.Create(records.PersonType, map[string]any{"name": name, "access": access})
-		if err != nil {
-			return nil, err
-		}
-		records.Record(s.Store, "human", records.Change{Action: "let in", Component: records.PersonType, ID: rec.ID, Detail: name + " to " + access})
-		return rec, nil
+	op := records.Op{Type: records.PersonType, After: map[string]any{"name": name, "access": access}}
+	if p != nil {
+		op = records.Op{Type: records.PersonType, ID: p.ID, After: map[string]any{"access": access}}
 	}
-	before := p.Fields["access"]
-	rec, err := s.Store.Update(records.PersonType, p.ID, map[string]any{"access": access})
+	done, err := s.Apply(op)
 	if err != nil {
 		return nil, err
 	}
-	if before != access {
-		records.Record(s.Store, "human", records.Change{Action: "let in", Component: records.PersonType, ID: p.ID, Detail: name + " to " + access, Before: map[string]any{"access": before}})
+	if p == nil || p.Fields["access"] != access {
+		s.byPerson(records.Change{Action: "let in", Component: records.PersonType, ID: done[0].ID, Detail: name + " to " + access, Ops: done})
 	}
-	return rec, nil
+	return s.Store.Get(records.PersonType, done[0].ID)
 }
 
 // PersonByName is the person of that name, in any case, if there is one.
@@ -81,7 +76,7 @@ func (s *Service) letOut(a letInArgs, p *store.Record) toolResult {
 // workspace at once, and Undo puts it back.
 func (s *Service) takeAccess(p *store.Record) (records.Change, error) {
 	name, _ := p.Fields["name"].(string)
-	done, err := records.ApplyOps(s.Store, records.Op{Type: records.PersonType, ID: p.ID, After: map[string]any{"access": ""}})
+	done, err := s.Apply(records.Op{Type: records.PersonType, ID: p.ID, After: map[string]any{"access": ""}})
 	if err != nil {
 		return records.Change{}, err
 	}
@@ -103,5 +98,5 @@ func (s *Service) TakeAccess(id string) (name, entry string, err error) {
 	if err != nil {
 		return name, "", err
 	}
-	return name, records.Record(s.Store, "human", c), nil
+	return name, s.byPerson(c), nil
 }

@@ -105,28 +105,29 @@ func (s *Service) letIn(a letInArgs) toolResult {
 	if access == "" {
 		return s.letOut(a, p) // invite.go
 	}
+	op := records.Op{Type: records.PersonType, After: map[string]any{"access": access}}
+	var name string
 	if p == nil {
-		name := a.Name
+		name = a.Name
 		if name == "" {
 			name, _, _ = strings.Cut(a.Email, "@")
 		}
-		rec, err := s.Store.Create(records.PersonType, map[string]any{"name": name, "email": a.Email, "access": access})
-		if err != nil {
-			return fail("could not add them: %v", err)
-		}
-		s.Say(s.shareWords(name, a.Email))
-		return toolResult{text: name + " can now " + verb(access), change: &records.Change{Action: "let in", Component: records.PersonType, ID: rec.ID, Detail: name + " to " + access}}
+		op.After = map[string]any{"name": name, "email": a.Email, "access": access}
+	} else {
+		op.ID = p.ID
+		name, _ = p.Fields["name"].(string)
 	}
-	before := p.Fields["access"]
-	if _, err := s.Store.Update(records.PersonType, p.ID, map[string]any{"access": access}); err != nil {
+	done, err := s.Apply(op)
+	if err != nil && p == nil {
+		return fail("could not add them: %v", err)
+	} else if err != nil {
 		return fail("could not change their access: %v", err)
 	}
-	name, _ := p.Fields["name"].(string)
 	// Someone who had no access has not been shared this machine yet.
-	if before == nil || before == "" {
+	if p == nil || p.Fields["access"] == nil || p.Fields["access"] == "" {
 		s.Say(s.shareWords(name, a.Email))
 	}
-	return toolResult{text: name + " can now " + verb(access), change: &records.Change{Action: "let in", Component: records.PersonType, ID: p.ID, Detail: name + " to " + access, Before: map[string]any{"access": before}}}
+	return toolResult{text: name + " can now " + verb(access), change: &records.Change{Action: "let in", Component: records.PersonType, ID: done[0].ID, Detail: name + " to " + access, Ops: done}}
 }
 
 func verb(access string) string {

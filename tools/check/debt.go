@@ -73,6 +73,4 @@ var storeWrites = map[string]string{
 	"internal/app/schema_change.go App.RemoveType":     "a type deleted drops its whole table in one statement, logged as the schema change; its records go with their type, not one by one",
 	"internal/content/mirror.go Mirror.Import":         "a record read back from its file keeps the created and updated times the file says, which Apply cannot set; the caller logs the whole import as one change with its ops (cli/portable.go)",
 	"internal/server/servertest/fixtures.go SeedTasks": "a test fixture seeding a fresh workspace; nothing to log or undo",
-	"internal/chat/access.go Service.letIn":            "person access, logged by hand: to move after the invite dive, which owns this file now",
-	"internal/chat/invite.go Service.GiveAccess":       "person access, logged by hand as human: to move after the invite dive, which owns this file now",
 }
