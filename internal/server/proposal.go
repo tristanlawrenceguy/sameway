@@ -31,11 +31,17 @@ var cannotUndo = map[string]bool{"run_action": true, "accept_action": true, "set
 
 func (s *Server) proposalCard(p *store.Record, from string) template.HTML {
 	summary, _ := p.Fields["summary"].(string)
-	props := map[string]any{
-		"summary": summary,
-		"accept":  "/proposal/" + p.ID + "/accept",
-		"dismiss": "/proposal/" + p.ID + "/dismiss",
-		"id":      "proposal-" + p.ID,
+	props := map[string]any{"summary": summary, "id": "proposal-" + p.ID}
+	// Its answers are the same wherever what waits is read (chat/waiting.go).
+	for _, a := range chat.QuestionPresses(p) {
+		switch {
+		case strings.HasSuffix(a.Post, "/accept"):
+			props["accept"], props["acceptLabel"] = a.Post, a.Label
+		case strings.HasSuffix(a.Post, "/dismiss"):
+			props["dismiss"], props["dismissLabel"] = a.Post, a.Label
+		default:
+			props["instead"], props["insteadLabel"] = a.Post, a.Label
+		}
 	}
 	if from != "" {
 		props["from"] = from
@@ -43,20 +49,10 @@ func (s *Server) proposalCard(p *store.Record, from string) template.HTML {
 	if detail := proposalDetail(p.Fields["action"]); detail != "" {
 		props["detail"] = detail
 	}
-	if label := acceptLabel(p.Fields["action"]); label != "" {
-		props["acceptLabel"] = label
-	}
 	// A question Sameway put itself, because what it would do cannot be
-	// taken back, says so in its own words, with answers that say what
-	// each does.
+	// taken back, says so in its own words.
 	if detail, _ := p.Fields["detail"].(string); detail != "" {
 		props["detail"] = detail
-	}
-	if yes, _ := p.Fields["yes"].(string); yes != "" {
-		props["acceptLabel"] = yes
-	}
-	if no, _ := p.Fields["no"].(string); no != "" {
-		props["dismissLabel"] = no
 	}
 	// What it would do cannot be taken back: the question says so, and its
 	// Yes looks like it.
@@ -66,11 +62,6 @@ func (s *Server) proposalCard(p *store.Record, from string) template.HTML {
 		if cannotUndo[tool] && (tool != "set_setting" || chat.Outward(key)) {
 			props["risk"] = true
 		}
-	}
-	// A third answer, when there is another way: hiding instead of
-	// deleting. It comes first, as the one that keeps everything.
-	if instead, _ := p.Fields["instead"].(string); instead != "" {
-		props["instead"], props["insteadLabel"] = "/proposal/"+p.ID+"/instead", instead
 	}
 	return s.component("proposal", props)
 }
@@ -95,24 +86,6 @@ func proposalDetail(action any) string {
 		return "This would change that block."
 	case "accept_action":
 		return "This runs on your machine, as you, now and every time the button is pressed from now on. Change the command and it asks again."
-	}
-	return ""
-}
-
-func acceptLabel(action any) string {
-	a, ok := action.(map[string]any)
-	if !ok {
-		return ""
-	}
-	switch tool, _ := a["tool"].(string); tool {
-	case "add_component":
-		return "Yes, add it"
-	case "remove_component":
-		return "Yes, remove it"
-	case "update_component":
-		return "Yes, change it"
-	case "accept_action":
-		return "Yes, run it"
 	}
 	return ""
 }
@@ -143,6 +116,20 @@ func (s *Server) answer(w http.ResponseWriter, r *http.Request, apply func(strin
 		s.app.Chat.Dismiss(p.ID)
 	}
 	http.Redirect(w, r, web.BackOf(r, "/"), http.StatusSeeOther)
+}
+
+// questionSection is what the assistant asks, on Today as under the
+// conversation: a question asked where the person is not looking, such as
+// a command an agent asked to run, waits there too.
+func (s *Server) questionSection(list []chat.Waiting) string {
+	var b strings.Builder
+	for _, w := range chat.WaitingOf(list, chat.WaitQuestion) {
+		b.WriteString(string(s.proposalCard(w.Record, "/today")))
+	}
+	if b.Len() == 0 {
+		return ""
+	}
+	return `<h2>The assistant asks</h2><div class="sw-stack sw-proposals">` + b.String() + `</div>`
 }
 
 // proposalsHTML is the questions waiting, as the conversation shows them,

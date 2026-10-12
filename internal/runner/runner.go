@@ -22,7 +22,9 @@ type Job struct {
 	// runs once, at the start: a worker that lasts until ctx ends.
 	Every time.Duration
 	// Next, when given, is when to run after a run that started at now,
-	// instead of Every.
+	// instead of Every; the zero time is not yet. It is asked again every
+	// minute while the job waits, so a time read from the settings
+	// follows a change.
 	Next func(now time.Time) time.Time
 	// Wait has the first run come after one interval instead of at once.
 	Wait bool
@@ -129,29 +131,42 @@ func (r *Runner) Wait(timeout time.Duration) bool {
 
 func (r *Runner) loop(ctx context.Context, e *entry) {
 	defer r.wg.Done()
-	if e.job.Wait && e.job.periodic() && !r.sleep(ctx, e, e.job.after(r.clock.now())) {
+	if e.job.Wait && e.job.periodic() && !r.sleep(ctx, e, r.clock.now()) {
 		return
 	}
 	for {
 		start := r.clock.now()
 		r.once(ctx, e, start)
-		if !e.job.periodic() || !r.sleep(ctx, e, e.job.after(start)) {
+		if !e.job.periodic() || !r.sleep(ctx, e, start) {
 			return
 		}
 	}
 }
 
-// sleep waits until next, or says false when ctx ends first.
-func (r *Runner) sleep(ctx context.Context, e *entry, next time.Time) bool {
-	e.setNext(next)
-	if ctx.Err() != nil {
-		return false
-	}
-	select {
-	case <-ctx.Done():
-		return false
-	case <-r.clock.after(max(next.Sub(r.clock.now()), 0)):
-		return true
+// recheck is how long a job with Next waits before asking it again.
+const recheck = time.Minute
+
+// sleep waits until the job's next run after one that started at start,
+// or says false when ctx ends first.
+func (r *Runner) sleep(ctx context.Context, e *entry, start time.Time) bool {
+	for {
+		next := e.job.after(start)
+		e.setNext(next)
+		if ctx.Err() != nil {
+			return false
+		}
+		wait := max(next.Sub(r.clock.now()), 0)
+		if e.job.Next != nil && (next.IsZero() || wait > recheck) {
+			wait = recheck
+		}
+		select {
+		case <-ctx.Done():
+			return false
+		case <-r.clock.after(wait):
+		}
+		if e.job.Next == nil || !next.IsZero() && !r.clock.now().Before(next) {
+			return true
+		}
 	}
 }
 
