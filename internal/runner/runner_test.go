@@ -84,6 +84,46 @@ func TestNextChoosesTheTime(t *testing.T) {
 	}
 }
 
+// A time read from the settings follows a change within a minute, even
+// one made while the job waits for a time further off, and a job with no
+// time yet waits without running.
+func TestNextIsAskedAgainWhileWaiting(t *testing.T) {
+	t.Parallel()
+	f := NewFake(start)
+	r := quiet(New(f.Clock()))
+	var mu sync.Mutex
+	at := time.Time{} // none set
+	job, ch := ran("Brief", 0)
+	job.Next = func(time.Time) time.Time { mu.Lock(); defer mu.Unlock(); return at }
+	job.Wait = true
+	r.Add(job)
+	ctx, stop := context.WithCancel(context.Background())
+	defer stop()
+	r.Start(ctx)
+	f.BlockUntil(1)
+	f.Advance(time.Hour)
+	none(t, ch)
+	if st := r.Status()[0]; !st.NextRun.IsZero() || !st.Scheduled {
+		t.Fatalf("with no time set there is no next run: %+v", st)
+	}
+	mu.Lock()
+	at = start.Add(5 * time.Hour)
+	mu.Unlock()
+	f.BlockUntil(1)
+	f.Advance(time.Minute) // asked again: now 11:00 for 14:00
+	f.BlockUntil(1)
+	if st := r.Status()[0]; !st.NextRun.Equal(at) {
+		t.Fatalf("the next run is the time set: %+v", st)
+	}
+	mu.Lock()
+	at = start.Add(30 * time.Minute) // moved earlier, to 9:30, which has gone by
+	mu.Unlock()
+	f.Advance(time.Minute)
+	if got := <-ch; !got.Equal(start.Add(62 * time.Minute)) {
+		t.Fatalf("a time moved into the past runs at the next look, not %v", got)
+	}
+}
+
 func TestStopsOnCancelAndWaits(t *testing.T) {
 	t.Parallel()
 	f := NewFake(start)

@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"html/template"
@@ -51,21 +50,19 @@ func briefWords(l todayLists, start []todayItem) (string, string) {
 	return "Today: " + strings.Join(parts, ", "), strings.Join(first, "; ")
 }
 
-// KeepBrief sends the morning brief at the time brief.at says, once a
-// day, while ctx lasts.
-func (s *Server) KeepBrief(ctx context.Context) {
-	go func() {
-		tick := time.NewTicker(30 * time.Second)
-		defer tick.Stop()
-		for {
-			s.briefIfDue(s.now())
-			select {
-			case <-ctx.Done():
-				return
-			case <-tick.C:
-			}
-		}
-	}()
+// briefNext is when the brief is next due after now: the time brief.at
+// says, today or tomorrow, read each time so a change applies. It is the
+// zero time when none is set.
+func (s *Server) briefNext(now time.Time) time.Time {
+	at, err := time.Parse("15:04", s.app.Workspace.Config.Brief.At)
+	if err != nil {
+		return time.Time{}
+	}
+	next := time.Date(now.Year(), now.Month(), now.Day(), at.Hour(), at.Minute(), 0, 0, now.Location())
+	if !next.After(now) {
+		next = next.AddDate(0, 0, 1)
+	}
+	return next
 }
 
 // briefIfDue sends today's brief when its time has come, it has not gone

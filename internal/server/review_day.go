@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"errors"
 	"html/template"
 	"net/http"
@@ -16,23 +15,22 @@ import (
 // Help, said once that evening, and never a count of what is late, which
 // on a lock screen reads as a scolding (design/foundations/review.md).
 
-// KeepReview says the weekly review is ready on the day review.on names,
-// at six in the evening, once that day, while ctx lasts.
-func (s *Server) KeepReview(ctx context.Context) {
-	go func() {
-		tick := time.NewTicker(time.Minute)
-		defer tick.Stop()
-		for {
-			s.reviewIfDue(s.now())
-			select {
-			case <-ctx.Done():
-				return
-			case <-tick.C:
-			}
+// reviewNext is when the weekly review is next ready after now: six in
+// the evening on the day review.on names, read each time so a change
+// applies. It is the zero time when no day is set.
+func (s *Server) reviewNext(now time.Time) time.Time {
+	on := strings.ToLower(s.app.Workspace.Config.Review.On)
+	for d := range 8 {
+		t := time.Date(now.Year(), now.Month(), now.Day()+d, 18, 0, 0, 0, now.Location())
+		if t.After(now) && strings.ToLower(t.Weekday().String()) == on {
+			return t
 		}
-	}()
+	}
+	return time.Time{}
 }
 
+// reviewIfDue says the review is ready when it is the day, the evening
+// has come and it has not been said today, and says whether it did.
 func (s *Server) reviewIfDue(now time.Time) bool {
 	on := strings.ToLower(s.app.Workspace.Config.Review.On)
 	if on == "" || s.notify == nil || strings.ToLower(now.Weekday().String()) != on || now.Hour() < 18 || s.app.Store.Meta("review:sent") == now.Format("2006-01-02") {
