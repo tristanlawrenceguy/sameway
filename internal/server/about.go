@@ -7,6 +7,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/blocks"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/track"
@@ -35,7 +36,7 @@ func (s *Server) title(t *schema.Type, rec *store.Record) string {
 // aboutItem is a reminder's about on its page: the thing, as the way there.
 func (s *Server) aboutItem(f schema.Field, val string) map[string]any {
 	if t, rec, ok := s.aboutOf(val); ok {
-		return map[string]any{"label": f.Display(), "value": s.title(t, rec), "href": "/t/" + t.Name + "/" + rec.ID, "prop": f.Name, "source": val}
+		return map[string]any{"label": f.Display(), "value": s.title(t, rec), "href": relate.Page(t.Name, rec.ID), "prop": f.Name, "source": val}
 	}
 	return map[string]any{"label": f.Display(), "value": val, "prop": f.Name}
 }
@@ -57,7 +58,7 @@ func (s *Server) nextThings(t *schema.Type, rec *store.Record, on []string) stri
 	if t.Internal || t.Name == ReminderType || len(on) == 0 {
 		return ""
 	}
-	path := "/t/" + t.Name + "/" + rec.ID
+	path := relate.Page(t.Name, rec.ID)
 	title := s.title(t, rec)
 	var b strings.Builder
 	if _, ok := s.app.Types.Get(ReminderType); ok && has(on, RemindPart) {
@@ -132,7 +133,7 @@ func (s *Server) nudges(now time.Time) []*store.Record {
 			continue
 		}
 		sum := track.Summarise(h, blocks.EntriesOf(s.app.Store, h.ID), now, 1)
-		about := "/t/" + HabitType + "/" + h.ID
+		about := relate.Page(HabitType, h.ID)
 		if sum.Met || s.remindedToday(rt, about, now) {
 			continue
 		}

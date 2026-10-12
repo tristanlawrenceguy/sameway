@@ -10,6 +10,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/prose"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
@@ -39,7 +40,7 @@ func (s *Server) suggestionsOn(r *http.Request, t *schema.Type, rec *store.Recor
 	if len(waiting) == 0 || !web.MayChange(r) {
 		return ""
 	}
-	from := "/t/" + t.Name + "/" + rec.ID
+	from := relate.Page(t.Name, rec.ID)
 	var b strings.Builder
 	fmt.Fprintf(&b, `<section class="sw-stack" aria-labelledby="suggested"><h2 id="suggested">%s</h2>`, inWords(len(waiting), "suggested change"))
 	b.WriteString(`<p class="sw-muted">Nothing changes until you accept one, and each accepted change can be undone.</p>`)
