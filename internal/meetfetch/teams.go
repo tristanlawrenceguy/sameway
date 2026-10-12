@@ -21,12 +21,6 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
-// Where Microsoft and Zoom answer; tests stand their own in.
-var (
-	MicrosoftLogin = "https://login.microsoftonline.com"
-	Graph          = "https://graph.microsoft.com/v1.0"
-)
-
 // teamsScopes are what is asked of Microsoft: to read the person's own
 // meetings and their transcripts, and to stay signed in.
 const teamsScopes = "offline_access OnlineMeetings.Read OnlineMeetingTranscript.Read.All"
@@ -36,6 +30,7 @@ type Teams struct {
 	ClientID, Tenant string
 	Tokens           *Tokens // kept on this computer; see tokens.go
 	Client           *http.Client
+	At               At // where Microsoft answers; at.go
 }
 
 // DeviceCode is what the person is shown to sign in: a code to type at an
@@ -69,7 +64,7 @@ func (t *Teams) Begin(ctx context.Context) (*DeviceCode, error) {
 		return nil, errors.New("meetings.teams_client_id is not set: it is the application (client) id of an app registered in Microsoft Entra for this")
 	}
 	var dc DeviceCode
-	err := t.post(ctx, MicrosoftLogin+"/"+t.tenant()+"/oauth2/v2.0/devicecode", url.Values{"client_id": {t.ClientID}, "scope": {teamsScopes}}, &dc)
+	err := t.post(ctx, t.At.microsoftLogin()+"/"+t.tenant()+"/oauth2/v2.0/devicecode", url.Values{"client_id": {t.ClientID}, "scope": {teamsScopes}}, &dc)
 	return &dc, err
 }
 
@@ -80,7 +75,7 @@ func (t *Teams) Finish(ctx context.Context, dc *DeviceCode) error {
 	deadline := time.Now().Add(time.Duration(max(dc.ExpiresIn, 60)) * time.Second)
 	for time.Now().Before(deadline) {
 		var tok tokenAnswer
-		err := t.post(ctx, MicrosoftLogin+"/"+t.tenant()+"/oauth2/v2.0/token", url.Values{"client_id": {t.ClientID},
+		err := t.post(ctx, t.At.microsoftLogin()+"/"+t.tenant()+"/oauth2/v2.0/token", url.Values{"client_id": {t.ClientID},
 			"grant_type": {"urn:ietf:params:oauth:grant-type:device_code"}, "device_code": {dc.DeviceCode}}, &tok)
 		var oe *oauthError
 		switch {
@@ -111,7 +106,7 @@ func (t *Teams) access(ctx context.Context) (string, error) {
 		return kept.Access, nil
 	}
 	var tok tokenAnswer
-	if err := t.post(ctx, MicrosoftLogin+"/"+t.tenant()+"/oauth2/v2.0/token", url.Values{"client_id": {t.ClientID},
+	if err := t.post(ctx, t.At.microsoftLogin()+"/"+t.tenant()+"/oauth2/v2.0/token", url.Values{"client_id": {t.ClientID},
 		"grant_type": {"refresh_token"}, "refresh_token": {kept.Refresh}, "scope": {teamsScopes}}, &tok); err != nil {
 		return "", fmt.Errorf("Microsoft would not renew the sign-in (%v); connect Teams again", err)
 	}
@@ -137,7 +132,7 @@ func (t *Teams) Transcript(ctx context.Context, join string) ([]byte, error) {
 		Value []struct{ ID string } `json:"value"`
 	}
 	filter := url.QueryEscape("JoinWebUrl eq '" + strings.ReplaceAll(join, "'", "''") + "'")
-	if err := t.get(ctx, tok, Graph+"/me/onlineMeetings?$filter="+filter, &meetings); err != nil {
+	if err := t.get(ctx, tok, t.At.graph()+"/me/onlineMeetings?$filter="+filter, &meetings); err != nil {
 		return nil, err
 	}
 	if len(meetings.Value) == 0 {
@@ -150,14 +145,14 @@ func (t *Teams) Transcript(ctx context.Context, join string) ([]byte, error) {
 			Created time.Time `json:"createdDateTime"`
 		} `json:"value"`
 	}
-	if err := t.get(ctx, tok, Graph+"/me/onlineMeetings/"+url.PathEscape(id)+"/transcripts", &list); err != nil {
+	if err := t.get(ctx, tok, t.At.graph()+"/me/onlineMeetings/"+url.PathEscape(id)+"/transcripts", &list); err != nil {
 		return nil, err
 	}
 	if len(list.Value) == 0 {
 		return nil, ErrNotYet
 	}
 	last := list.Value[len(list.Value)-1]
-	return t.raw(ctx, tok, Graph+"/me/onlineMeetings/"+url.PathEscape(id)+"/transcripts/"+url.PathEscape(last.ID)+"/content?$format=text/vtt")
+	return t.raw(ctx, tok, t.At.graph()+"/me/onlineMeetings/"+url.PathEscape(id)+"/transcripts/"+url.PathEscape(last.ID)+"/content?$format=text/vtt")
 }
 
 type tokenAnswer struct {

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 )
 
@@ -15,6 +16,7 @@ import (
 // know, or one with no credit, is said to be wrong now, kept nowhere; one
 // that could not be asked about is kept, saying so.
 func TestAPastedKeyIsCheckedFirst(t *testing.T) {
+	t.Parallel()
 	answer := http.StatusUnauthorized
 	body := `{}`
 	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -22,10 +24,7 @@ func TestAPastedKeyIsCheckedFirst(t *testing.T) {
 		io.WriteString(w, body)
 	}))
 	defer provider.Close()
-	wasA, wasO := llm.AnthropicKeyURL, llm.OpenRouterKeyURL
-	llm.AnthropicKeyURL, llm.OpenRouterKeyURL = provider.URL, provider.URL
-	defer func() { llm.AnthropicKeyURL, llm.OpenRouterKeyURL = wasA, wasO }()
-	a, h := newApp(t)
+	a, h := newAppWith(t, app.Options{KeyCheck: llm.KeyCheck{Anthropic: provider.URL, OpenRouter: provider.URL}})
 	paste := func(key string) string {
 		return after(t, h, postForm(t, h, "/model/key", url.Values{"key": {key}, "from": {"/chat"}})).Body.String()
 	}
