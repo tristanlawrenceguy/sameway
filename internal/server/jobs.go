@@ -19,8 +19,7 @@ func (s *Server) BackgroundJobs() []runner.Job {
 		// Transcripts from Teams and Zoom: looked for every few seconds,
 		// fetched at most every five minutes (media/meeting_fetch.go).
 		{Name: "Meeting transcripts from Teams and Zoom", Every: 5 * time.Second, Run: func(_ context.Context, now time.Time) error {
-			s.FetchMeetings(now)
-			return nil
+			return s.FetchMeetings(now)
 		}},
 		{Name: "Calendars kept in step", Every: time.Hour, Run: s.keepCalendars},         // calendar_links.go
 		{Name: "Daily copy in the cloud folder", Every: time.Hour, Run: s.keepCloudCopy}, // cloud_backup.go
