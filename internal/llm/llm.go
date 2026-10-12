@@ -112,6 +112,8 @@ type Config struct {
 	Executable string `yaml:"-" json:"-"`
 	// Keys is the keys file a pasted key is read from, set by the app.
 	Keys Keys `yaml:"-" json:"-"`
+	// KeyCheck is where a saved key is asked about, set by the app.
+	KeyCheck KeyCheck `yaml:"-" json:"-"`
 }
 
 // ErrNotConfigured is returned by New when provider is "none" or empty.

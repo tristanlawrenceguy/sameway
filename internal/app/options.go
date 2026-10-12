@@ -41,6 +41,9 @@ type Options struct {
 	// the assistant has none; nil is llm.DefaultCandidates, and an empty
 	// list looks for none.
 	LocalModels []llm.Candidate
+	// KeyCheck is where a pasted or saved key is asked about; the zero
+	// value is the providers' own addresses.
+	KeyCheck llm.KeyCheck
 	// After is how the background jobs wait (App.Jobs); nil is
 	// time.After. A test gives a runner.Fake's, so nothing sleeps.
 	After func(time.Duration) <-chan time.Time
@@ -59,12 +62,13 @@ func (a *App) Options() Options { return a.opts }
 func (a *App) Now() time.Time { return a.Records.Now() }
 
 // LLMConfig is the workspace's model settings with what the app adds:
-// the workspace and program a command provider's MCP points at, and the
-// keys file.
+// the workspace and program a command provider's MCP points at, the keys
+// file, and where a key is asked about.
 func (a *App) LLMConfig() llm.Config {
 	cfg := a.Workspace.Config.LLM
 	cfg.Workspace = a.Workspace.Dir
 	cfg.Executable, _ = os.Executable()
 	cfg.Keys = llm.Keys(a.Workspace.Machine.Keys)
+	cfg.KeyCheck = a.opts.KeyCheck
 	return cfg
 }

@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 )
 
@@ -18,15 +19,13 @@ import (
 // set to it, and a key Sameway does not know is refused with what to
 // paste instead.
 func TestAPersonPastesAKey(t *testing.T) {
+	t.Parallel()
 	keys := filepath.Join(t.TempDir(), "keys.json")
 	openrouter := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, `{"data":{"limit_remaining":null}}`)
 	}))
 	defer openrouter.Close()
-	wasURL := llm.OpenRouterKeyURL
-	llm.OpenRouterKeyURL = openrouter.URL
-	defer func() { llm.OpenRouterKeyURL = wasURL }()
-	a, h := newApp(t)
+	a, h := newAppWith(t, app.Options{KeyCheck: llm.KeyCheck{OpenRouter: openrouter.URL}})
 	a.Workspace.Machine.Keys = keys
 
 	page := get(t, h, "/chat").Body.String()
