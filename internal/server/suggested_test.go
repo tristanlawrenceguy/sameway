@@ -101,3 +101,34 @@ func TestAnEmailToDoIsSuggestedAsATask(t *testing.T) {
 		t.Error("newest first")
 	}
 }
+
+// Sorting is logged like any change: the tag an action gave and the task
+// it suggested are each an entry in the log, undone from there.
+func TestSortingIsLoggedAndUndone(t *testing.T) {
+	t.Parallel()
+	a, _ := newApp(t)
+	a.Chat.Provider, a.Chat.ProviderErr = &sortModel{}, nil
+	srv := server.New(a)
+	a.Chat.StartAutomating()
+	srv.SetUpSorting()
+	e := written(t, a.Store, "created", "email", "", map[string]any{"subject": "Water bill", "from": "Water Co", "body": "Please pay by Friday.", "tags": []any{"to sort"}})
+	tagWait(t, "the suggestion", func() bool { return len(a.Chat.Suggestions()) == 1 })
+	entry := func(action string) string {
+		for _, r := range a.Records.Recent(20) {
+			if r.Fields["action"] == action {
+				return r.ID
+			}
+		}
+		t.Fatalf("no %s entry in the log", action)
+		return ""
+	}
+	if err := a.Records.UndoAs("human", entry("proposed")); err != nil || len(a.Chat.Suggestions()) != 0 {
+		t.Fatalf("undoing the suggestion takes it back: %v", err)
+	}
+	if err := a.Records.UndoAs("human", entry("tagged")); err != nil {
+		t.Fatalf("undoing the tagging: %v", err)
+	}
+	if got, _ := a.Store.Get("email", e.ID); strings.Contains(strings.Join(anyStrings(got.Fields["tags"]), ","), "to do") {
+		t.Errorf("undoing the tagging takes the tag off: %v", got.Fields["tags"])
+	}
+}
