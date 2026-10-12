@@ -156,28 +156,6 @@ func (s *Server) setUpSorting() {
 	}
 }
 
-// aloneTags are the tags given only when no other fits, by name.
-func (s *Server) aloneTags() map[string]bool {
-	recs, _ := s.app.Store.List(chat.TagType, store.ListOptions{})
-	out := map[string]bool{}
-	for _, r := range recs {
-		if alone, _ := r.Fields["alone"].(bool); alone {
-			out[strings.ToLower(fmt.Sprint(r.Fields["name"]))] = true
-		}
-	}
-	return out
-}
-
-// hasAlone is the tag a record has that is given only when no other fits.
-func (s *Server) hasAlone(rec *store.Record, alone map[string]bool) string {
-	for _, t := range records.StringList(rec.Fields["tags"]) {
-		if alone[strings.ToLower(t)] {
-			return t
-		}
-	}
-	return ""
-}
-
 // latestTag is the newest classification of a tag on a record, to change.
 func (s *Server) latestTag(rec *store.Record, tag string) *store.Record {
 	cls, _ := s.app.Store.List(chat.ClassificationType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 200})

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
@@ -19,49 +20,41 @@ import (
 // next time.
 
 // suggestedFrom is the suggestion waiting from a record, if any.
-func (s *Server) suggestedFrom(rec *store.Record) *store.Record {
-	for _, p := range s.app.Chat.Suggestions() {
-		if p.Fields["from"] == rec.Type+"/"+rec.ID {
-			return p
+func suggestedFrom(list []chat.Waiting, rec *store.Record) *chat.Waiting {
+	for _, w := range chat.WaitingOf(list, chat.WaitSuggestion) {
+		if w.About == rec.Type+"/"+rec.ID {
+			return &w
 		}
 	}
 	return nil
 }
 
-// suggestionPresses are a suggestion's three answers.
-func (s *Server) suggestionPresses(p *store.Record, context string) string {
+// presses are the answers to what waits, side by side, the first the one
+// most likely.
+func (s *Server) presses(ps []chat.Press, context string) string {
 	var b strings.Builder
 	b.WriteString(`<div class="sw-cluster">`)
-	for _, f := range []struct {
-		action, label string
-		variant       ui.Variant
-	}{{"/suggested/yes", "Make it", ui.Secondary}, {"/suggested/change", "Change", ui.Quiet}, {"/suggested/no", "No", ui.Quiet}} {
-		b.WriteString(string(s.form(ui.Form{Action: f.action, Hidden: ui.Hidden("id", p.ID), Button: &ui.Button{Label: f.label, Context: context, Variant: f.variant}})))
+	for i, p := range ps {
+		variant := ui.Quiet
+		if i == 0 {
+			variant = ui.Secondary
+		}
+		b.WriteString(string(s.form(ui.Form{Action: p.Post, Hidden: ui.Hidden("id", p.ID), Button: &ui.Button{Label: p.Label, Context: context, Variant: variant}})))
 	}
 	b.WriteString(`</div>`)
 	return b.String()
 }
 
-// suggestionWords is what a suggestion asks, and why.
-func suggestionWords(p *store.Record) string {
-	summary, _ := p.Fields["summary"].(string)
-	why, _ := p.Fields["detail"].(string)
-	if why = strings.TrimSpace(strings.TrimSuffix(why, ".")); why != "" {
-		summary += " " + strings.ToUpper(why[:1]) + why[1:] + "."
-	}
-	return summary
-}
-
 // suggestedSection is Suggested for you on Today: what actions suggested
 // from records not waiting to be sorted (those show beside their record).
-func (s *Server) suggestedSection(sorting map[string]bool) string {
+func (s *Server) suggestedSection(list []chat.Waiting, sorting map[string]bool) string {
 	esc := template.HTMLEscapeString
 	var b strings.Builder
-	for _, p := range s.app.Chat.Suggestions() {
-		if sorting[fmt.Sprint(p.Fields["from"])] {
+	for _, w := range chat.WaitingOf(list, chat.WaitSuggestion) {
+		if sorting[w.About] {
 			continue
 		}
-		b.WriteString(`<li class="sw-stack"><p>` + esc(suggestionWords(p)) + `</p>` + s.suggestionPresses(p, fmt.Sprint(p.Fields["summary"])) + `</li>`)
+		b.WriteString(`<li class="sw-stack"><p>` + esc(w.Words) + `</p>` + s.presses(w.Presses, fmt.Sprint(w.Record.Fields["summary"])) + `</li>`)
 	}
 	if b.Len() == 0 {
 		return ""
@@ -83,7 +76,7 @@ func (s *Server) answered(r *http.Request) (*store.Record, error) {
 // sortSource takes the to sort tag off what a suggestion came from.
 func (s *Server) sortSource(r *http.Request, p *store.Record) {
 	typ, id, _ := strings.Cut(fmt.Sprint(p.Fields["from"]), "/")
-	if rec, err := s.app.Store.Get(typ, id); err == nil && taggedWith(rec, toSort) {
+	if rec, err := s.app.Store.Get(typ, id); err == nil && chat.Tagged(rec, toSort) {
 		s.sortedNote(r, rec.ID) // mail_sort.go
 	}
 }

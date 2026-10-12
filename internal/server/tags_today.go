@@ -20,28 +20,11 @@ import (
 // keptFor is how long a tag kept from the person's choices is shown.
 const keptFor = 7 * 24 * time.Hour
 
-// tagsToCheck are the suggested tags, newest first, a few at a time.
-func (s *Server) tagsToCheck() []*store.Record {
-	if _, ok := s.app.Types.Get(chat.ClassificationType); !ok {
-		return nil
-	}
-	recs, _ := s.app.Store.List(chat.ClassificationType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 100})
-	var out []*store.Record
-	alone := s.aloneTags()
-	for _, c := range recs {
-		if c.Fields["state"] == "suggested" && !alone[strings.ToLower(fmt.Sprint(c.Fields["tag"]))] && len(out) < 20 {
-			out = append(out, c)
-		}
-	}
-	return out
-}
-
 // tagsOn are the tags to check by the record they are on, as type/id.
-func (s *Server) tagsOn() map[string][]*store.Record {
+func tagsOn(list []chat.Waiting) map[string][]*store.Record {
 	out := map[string][]*store.Record{}
-	for _, c := range s.tagsToCheck() {
-		ref := fmt.Sprint(c.Fields["record"])
-		out[ref] = append(out[ref], c)
+	for _, w := range chat.WaitingOf(list, chat.WaitTag) {
+		out[w.About] = append(out[w.About], w.Record)
 	}
 	return out
 }
@@ -107,19 +90,18 @@ func (s *Server) tagRow(rec *store.Record, cls []*store.Record, other []any) str
 // tagSection is Tags to check on Today: the tags given to records not
 // waiting to be sorted (those are checked beside their record), then the
 // tags kept for the person from their choices, folded.
-func (s *Server) tagSection(sorting map[string]bool) string {
+func (s *Server) tagSection(list []chat.Waiting, sorting map[string]bool) string {
 	other := s.otherTags(nil)
 	var b strings.Builder
 	seen := map[string]bool{}
-	on := s.tagsOn()
-	for _, c := range s.tagsToCheck() {
-		ref := fmt.Sprint(c.Fields["record"])
-		if sorting[ref] || seen[ref] {
+	on := tagsOn(list)
+	for _, w := range chat.WaitingOf(list, chat.WaitTag) {
+		if sorting[w.About] || seen[w.About] {
 			continue
 		}
-		seen[ref] = true
-		if rec, err := s.taggedRecord(c); err == nil {
-			b.WriteString(s.tagRow(rec, on[ref], other))
+		seen[w.About] = true
+		if rec, err := s.taggedRecord(w.Record); err == nil {
+			b.WriteString(s.tagRow(rec, on[w.About], other))
 		}
 	}
 	kept := s.keptForYou(other)
@@ -178,7 +160,7 @@ func (s *Server) foldedNothing(items []*store.Record, alone map[string]bool) str
 	var b strings.Builder
 	n, tag := 0, ""
 	for _, rec := range items {
-		t := s.hasAlone(rec, alone)
+		t := chat.AloneOn(rec, alone)
 		c := s.latestTag(rec, t)
 		if t == "" || c == nil || len(other) == 0 {
 			continue
