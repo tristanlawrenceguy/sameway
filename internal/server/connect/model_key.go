@@ -56,8 +56,8 @@ func (s *Service) modelKey(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		// Asked about before it is kept: a key the provider does not know is
-		// said to be wrong here, not at the first message (llm.CheckKey).
-		verdict, why := llm.CheckKey(r.Context(), k.env, key)
+		// said to be wrong here, not at the first message (llm.KeyCheck).
+		verdict, why := s.app.Options().KeyCheck.Check(r.Context(), k.env, key)
 		switch verdict {
 		case llm.KeyRefused:
 			s.Failed(w, r, "Not connected", fmt.Errorf("%s did not accept this key. Check that all of it was copied, or make a new one on %s", k.company, k.page), "/")

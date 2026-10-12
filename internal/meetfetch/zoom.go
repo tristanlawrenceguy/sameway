@@ -14,18 +14,13 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
-// Where Zoom answers; tests stand their own in.
-var (
-	ZoomOAuth = "https://zoom.us/oauth/token"
-	ZoomAPI   = "https://api.zoom.us/v2"
-)
-
 // Zoom is a Server-to-Server OAuth app in the person's Zoom account, with
 // cloud recording and audio transcripts on. Its secret is never kept here:
 // it is read from the environment each time.
 type Zoom struct {
 	AccountID, ClientID, Secret string
 	Client                      *http.Client
+	At                          At // where Zoom answers; at.go
 }
 
 func (z *Zoom) client() *http.Client {
@@ -52,7 +47,7 @@ func (z *Zoom) token(ctx context.Context) (string, error) {
 	if !z.Ready() {
 		return "", ErrNotConnected
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, ZoomOAuth+"?grant_type=account_credentials&account_id="+url.QueryEscape(z.AccountID), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, z.At.zoomOAuth()+"?grant_type=account_credentials&account_id="+url.QueryEscape(z.AccountID), nil)
 	if err != nil {
 		return "", err
 	}
@@ -71,7 +66,7 @@ func (z *Zoom) Transcript(ctx context.Context, meeting string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	body, status, err := z.get(ctx, tok, ZoomAPI+"/meetings/"+url.PathEscape(meeting)+"/recordings")
+	body, status, err := z.get(ctx, tok, z.At.zoomAPI()+"/meetings/"+url.PathEscape(meeting)+"/recordings")
 	if err != nil {
 		return nil, err
 	}

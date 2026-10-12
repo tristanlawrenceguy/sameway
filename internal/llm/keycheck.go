@@ -15,11 +15,27 @@ import (
 // kept: the provider says whether it knows it, and OpenRouter whether it
 // has credit left. Asking costs nothing and sends no conversation.
 
-// Where keys are asked about; tests point them elsewhere.
-var (
-	AnthropicKeyURL  = "https://api.anthropic.com/v1/models?limit=1"
-	OpenRouterKeyURL = "https://openrouter.ai/api/v1/key"
-)
+// KeyCheck is where keys are asked about. The zero value is the
+// providers' own addresses; an app is given its own through app.Options,
+// so a test points one at a fake while others run beside it.
+type KeyCheck struct {
+	Anthropic, OpenRouter string
+}
+
+// at is where a key in env is asked about, or "" when it cannot be.
+func (k KeyCheck) at(env string) string {
+	switch {
+	case env == "ANTHROPIC_API_KEY" && k.Anthropic != "":
+		return k.Anthropic
+	case env == "ANTHROPIC_API_KEY":
+		return "https://api.anthropic.com/v1/models?limit=1"
+	case env == "OPENROUTER_API_KEY" && k.OpenRouter != "":
+		return k.OpenRouter
+	case env == "OPENROUTER_API_KEY":
+		return "https://openrouter.ai/api/v1/key"
+	}
+	return ""
+}
 
 // KeyVerdict is what a provider said of a key.
 type KeyVerdict int
@@ -36,22 +52,22 @@ const (
 	KeyUnchecked
 )
 
-// CheckKey asks the provider the key's environment variable names whether
-// it knows the key.
-func CheckKey(ctx context.Context, env, key string) (KeyVerdict, error) {
+// Check asks the provider the key's environment variable names whether it
+// knows the key.
+func (k KeyCheck) Check(ctx context.Context, env, key string) (KeyVerdict, error) {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	var req *http.Request
 	var err error
 	switch env {
 	case "ANTHROPIC_API_KEY":
-		req, err = http.NewRequestWithContext(ctx, http.MethodGet, AnthropicKeyURL, nil)
+		req, err = http.NewRequestWithContext(ctx, http.MethodGet, k.at(env), nil)
 		if err == nil {
 			req.Header.Set("x-api-key", key)
 			req.Header.Set("anthropic-version", "2023-06-01")
 		}
 	case "OPENROUTER_API_KEY":
-		req, err = http.NewRequestWithContext(ctx, http.MethodGet, OpenRouterKeyURL, nil)
+		req, err = http.NewRequestWithContext(ctx, http.MethodGet, k.at(env), nil)
 		if err == nil {
 			req.Header.Set("Authorization", "Bearer "+key)
 		}
@@ -87,8 +103,9 @@ func CheckKey(ctx context.Context, env, key string) (KeyVerdict, error) {
 
 // A saved key is asked about again now and then, so one taken back or out
 // of credit is said where the person can paste another, not found out from
-// a message that fails. Asked at most every ten minutes for each key.
-var keySeen sync.Map // key -> keyAsked
+// a message that fails. Asked at most every ten minutes for each key, at
+// each address it is asked at.
+var keySeen sync.Map // address and key -> keyAsked
 
 type keyAsked struct {
 	at      time.Time
@@ -98,16 +115,17 @@ type keyAsked struct {
 // keyStillGood is Answers for a saved key: refused or out of credit is not
 // answering, said by company; a key that could not be asked about is taken
 // to be good. A key the provider cannot be asked about is never asked.
-func keyStillGood(ctx context.Context, keys Keys, env, company string) (bool, string) {
-	key := keys.Get(env)
-	if env != "ANTHROPIC_API_KEY" && env != "OPENROUTER_API_KEY" || key == "" {
+func keyStillGood(ctx context.Context, cfg Config, company string) (bool, string) {
+	env := cfg.APIKeyEnv
+	key, at := cfg.Keys.Get(env), cfg.KeyCheck.at(env)
+	if at == "" || key == "" {
 		return true, ""
 	}
-	v, ok := keySeen.Load(key)
+	v, ok := keySeen.Load(at + " " + key)
 	if !ok || time.Since(v.(keyAsked).at) > 10*time.Minute {
-		verdict, _ := CheckKey(ctx, env, key)
+		verdict, _ := cfg.KeyCheck.Check(ctx, env, key)
 		v = keyAsked{time.Now(), verdict}
-		keySeen.Store(key, v)
+		keySeen.Store(at+" "+key, v)
 	}
 	switch v.(keyAsked).verdict {
 	case KeyRefused:

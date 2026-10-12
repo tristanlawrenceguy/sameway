@@ -20,13 +20,10 @@ func TestASavedKeyTakenBackIsSaid(t *testing.T) {
 		w.WriteHeader(http.StatusUnauthorized)
 	}))
 	defer provider.Close()
-	was := AnthropicKeyURL
-	AnthropicKeyURL = provider.URL
-	defer func() { AnthropicKeyURL = was }()
 	if err := keys.Save("ANTHROPIC_API_KEY", "sk-ant-taken-back"); err != nil {
 		t.Fatal(err)
 	}
-	cfg := Config{Provider: "anthropic", APIKeyEnv: "ANTHROPIC_API_KEY", Keys: keys}
+	cfg := Config{Provider: "anthropic", APIKeyEnv: "ANTHROPIC_API_KEY", Keys: keys, KeyCheck: KeyCheck{Anthropic: provider.URL}}
 	ok, why := Answers(context.Background(), cfg)
 	if ok || !strings.Contains(why, "Anthropic no longer accepts the key") {
 		t.Errorf("a key taken back is said: %v %q", ok, why)

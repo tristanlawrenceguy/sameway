@@ -19,8 +19,7 @@ func (s *Server) BackgroundJobs() []runner.Job {
 		// Transcripts from Teams and Zoom: looked for every few seconds,
 		// fetched at most every five minutes (media/meeting_fetch.go).
 		{Name: "Meeting transcripts from Teams and Zoom", Every: 5 * time.Second, Run: func(_ context.Context, now time.Time) error {
-			s.FetchMeetings(now)
-			return nil
+			return s.FetchMeetings(now)
 		}},
 		{Name: "Calendars kept in step", Every: time.Hour, Run: s.keepCalendars},         // calendar_links.go
 		{Name: "Daily copy in the cloud folder", Every: time.Hour, Run: s.keepCloudCopy}, // cloud_backup.go
@@ -35,6 +34,15 @@ func (s *Server) BackgroundJobs() []runner.Job {
 		{Name: "Weekly review ready", Next: s.reviewNext, Run: func(_ context.Context, now time.Time) error {
 			s.reviewIfDue(now) // review_day.go
 			return nil
+		}},
+		{Name: "Search by meaning kept current", Every: 2 * time.Minute, Run: func(ctx context.Context, _ time.Time) error {
+			return s.refreshMeaning(ctx) // search_meaning.go: when an embedding model is here
+		}},
+		{Name: "Email read from the mailbox", Every: 5 * time.Minute, Wait: true, Run: func(ctx context.Context, _ time.Time) error {
+			c, cancel := context.WithTimeout(ctx, 2*time.Minute)
+			defer cancel()
+			_, err := s.readMail(c) // mail_in.go: when connected
+			return err
 		}},
 	}
 	return append(jobs, s.WriteDownJobs()...) // media/hostwrite.go

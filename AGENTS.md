@@ -124,6 +124,14 @@ area it belongs to, or a new file in `docs/tests/` linked here.
   package keeps for one open workspace lives on its store (`store.Keep`)
   or its server, never in a package map keyed by it, so two open side by
   side share nothing and it goes when the store closes.
+- An outside service has one shape. Where it answers and the client that
+  reaches it come in through `app.Options`, the zero value its real
+  address (`Ollama`, `KeyCheck`, `Meetings`, `HTTP`, `Pages`, `Ntfy`).
+  What it is doing is said in one plain sentence: work in the background
+  is a runner job that returns what went wrong, which Help and
+  `GET /api/jobs` say; one a person sets up says so on its own line where
+  it is set up. The settings a person gives it (a link, a key, an
+  account) stay theirs, in the workspace or the keys file, not in Options.
 - Motion explains a change and never moves focus. A person's own action
   moves in `motion-base` or less, transform and opacity only; under
   reduced motion and the still pace it may cross-fade but not travel

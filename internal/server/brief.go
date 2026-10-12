@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
@@ -16,16 +17,19 @@ import (
 // It interrupts, so it earns it: a day with nothing on sends nothing (W3C
 // COGA, Limit interruptions; NN/g, irrelevant notifications are the ones
 // people turn off), and when Today starts with three, the brief names
-// those three, so the page and the brief say the same.
+// those three, so the page and the brief say the same. What waits for the
+// person is counted from the list Today shows (chat/waiting.go), so a day
+// with emails to answer and nothing due still says so.
 
 // briefWords is the morning brief as a notification says it: the counts,
-// then the three to start with when Today has them, else the first few.
-func briefWords(l todayLists, start []todayItem) (string, string) {
+// then the three to start with when Today has them, else the first few,
+// else the first few things waiting.
+func briefWords(l todayLists, start []todayItem, waiting []chat.Waiting) (string, string) {
 	var parts []string
 	for _, p := range []struct {
 		n         int
 		one, many string
-	}{{len(l.Tasks), "task", "tasks"}, {len(l.Events), "event", "events"}, {len(l.Reminders), "reminder", "reminders"}, {len(l.Late), "late", "late"}} {
+	}{{len(l.Tasks), "task", "tasks"}, {len(l.Events), "event", "events"}, {len(l.Reminders), "reminder", "reminders"}, {len(l.Late), "late", "late"}, {len(waiting), "waiting for you", "waiting for you"}} {
 		if p.n == 1 {
 			parts = append(parts, "1 "+p.one)
 		} else if p.n > 1 {
@@ -45,6 +49,11 @@ func briefWords(l todayLists, start []todayItem) (string, string) {
 			if len(first) < 3 {
 				first = append(first, strings.TrimSpace(it.Title+" "+it.When))
 			}
+		}
+	}
+	for _, w := range waiting {
+		if len(first) < 3 && l.count() == 0 {
+			first = append(first, w.Words)
 		}
 	}
 	return "Today: " + strings.Join(parts, ", "), strings.Join(first, "; ")
@@ -73,12 +82,12 @@ func (s *Server) briefIfDue(now time.Time) bool {
 		return false
 	}
 	s.app.Store.SetMeta("brief:sent", now.Format("2006-01-02"))
-	l := s.today(now)
-	if l.count() == 0 {
+	l, waiting := s.today(now), s.app.Chat.Waiting()
+	if l.count() == 0 && len(waiting) == 0 {
 		return false
 	}
 	start, _ := s.focus(l)
-	title, text := briefWords(l, start)
+	title, text := briefWords(l, start, waiting)
 	go s.notify(title, text, s.linkTo("/today"))
 	return true
 }

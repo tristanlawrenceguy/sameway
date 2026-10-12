@@ -112,7 +112,7 @@ func (s *Server) focusSection(l todayLists, list func(string, []todayItem) strin
 		return ""
 	}
 	out := `<p>` + template.HTMLEscapeString(fmt.Sprintf("%d tasks are late or due. Start with these three; the rest wait below.", len(first)+len(rest))) + `</p>` + list("Start with these", first)
-	if body, err := s.app.Registry.RenderSlot("disclosure", map[string]any{"label": "The rest", "count": len(rest), "of": oneOrMany(len(rest), "task", "tasks")}, template.HTML(list("", rest))); err == nil {
+	if body, err := s.app.Registry.RenderSlot("disclosure", map[string]any{"label": "The rest", "count": len(rest), "of": oneOrMany(len(rest), "task")}, template.HTML(list("", rest))); err == nil {
 		out += string(body)
 	}
 	return out

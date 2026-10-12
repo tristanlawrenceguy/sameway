@@ -76,7 +76,7 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 				Action: &ui.EmptyAction{Href: searchURL(q, ""), Label: "search everything"}})))
 		default:
 			if only == "" {
-				fmt.Fprintf(&b, `<p class="sw-muted sw-small">%s</p>`, template.HTMLEscapeString(count(len(hits))))
+				fmt.Fprintf(&b, `<p class="sw-muted sw-small">%s</p>`, template.HTMLEscapeString(schema.Count(len(hits), "thing")+" found"))
 			}
 			b.WriteString(`<h2>Results</h2>`)
 			// Page 2 counts on from where page 1 ended, 21, not from 1 again;
@@ -155,13 +155,6 @@ func (s *Server) hitItem(h search.Hit, words []string, told string) string {
 	return fmt.Sprintf(`<li class="sw-dotted" data-dot="%d">%s</li>`, s.dotOf(h.Type), card)
 }
 
-func count(n int) string {
-	if n == 1 {
-		return "1 thing found"
-	}
-	return fmt.Sprintf("%d things found", n)
-}
-
 // elsewhere is how many were found outside the kind shown: 1 thing
 // elsewhere does, 4 things elsewhere do.
 func elsewhere(n int) string {
@@ -174,11 +167,8 @@ func elsewhere(n int) string {
 // results is how many a search found, as the window title ends: No
 // results, 1 result, 3 results.
 func results(n int) string {
-	switch n {
-	case 0:
+	if n == 0 {
 		return "No results"
-	case 1:
-		return "1 result"
 	}
-	return fmt.Sprintf("%d results", n)
+	return schema.Count(n, "result")
 }

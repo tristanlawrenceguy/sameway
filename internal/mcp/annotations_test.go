@@ -66,6 +66,7 @@ func TestReadOnlyToolsChangeNothing(t *testing.T) {
 		"get_record":   `{"type":"task","id":"` + task.ID + `"}`,
 		"search":       `{"query":"plumber"}`,
 		"details":      `{"name":"note"}`,
+		"what_waits":   `{}`,
 		"try":          `{"name":"update_record","arguments":{"type":"task","id":"` + task.ID + `","fields":{"done":true}}}`,
 	}
 	var calls []string
