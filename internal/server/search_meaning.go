@@ -34,11 +34,12 @@ type meaningState struct {
 	read bool
 }
 
-var meanings sync.Map // *Server -> *meaningState
+// meaningKey is where the workspace's store keeps its meaningState, so two
+// workspaces open side by side never share one, and it goes with the store.
+type meaningKey struct{}
 
 func (s *Server) meaningState() *meaningState {
-	m, _ := meanings.LoadOrStore(s, &meaningState{})
-	return m.(*meaningState)
+	return s.app.Store.Keep(meaningKey{}, func() any { return &meaningState{} }).(*meaningState)
 }
 
 // embedModel is an embedding model Ollama has, or "".
