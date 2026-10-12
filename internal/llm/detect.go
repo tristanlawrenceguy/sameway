@@ -111,7 +111,7 @@ func Answers(ctx context.Context, cfg Config) (bool, string) {
 			if cfg.APIKeyEnv != "" && cfg.Keys.Get(cfg.APIKeyEnv) == "" {
 				return false, "The key for the AI service at " + base + " is not saved on this computer (" + cfg.APIKeyEnv + ")."
 			}
-			return keyStillGood(ctx, cfg.Keys, cfg.APIKeyEnv, "OpenRouter")
+			return keyStillGood(ctx, cfg, "OpenRouter")
 		}
 		if models := listModels(ctx, base); len(models) > 0 {
 			// The model chosen, deleted since or never fetched, is said: its
@@ -126,7 +126,7 @@ func Answers(ctx context.Context, cfg Config) (bool, string) {
 		if cfg.APIKeyEnv == "" || cfg.Keys.Get(cfg.APIKeyEnv) == "" {
 			return false, "The key for Claude is not saved on this computer."
 		}
-		return keyStillGood(ctx, cfg.Keys, cfg.APIKeyEnv, "Anthropic")
+		return keyStillGood(ctx, cfg, "Anthropic")
 	case "claude-code":
 		if _, err := exec.LookPath("claude"); err != nil {
 			return false, "Claude Code is not installed on this computer."

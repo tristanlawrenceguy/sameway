@@ -46,8 +46,7 @@ func TestTeamsSignsInAndFetchesATranscript(t *testing.T) {
 		}
 	}))
 	defer ms.Close()
-	MicrosoftLogin, Graph = ms.URL, ms.URL
-	teams := &Teams{ClientID: "app", Tokens: &Tokens{Path: filepath.Join(t.TempDir(), "apps.json")}}
+	teams := &Teams{ClientID: "app", Tokens: &Tokens{Path: filepath.Join(t.TempDir(), "apps.json")}, At: At{MicrosoftLogin: ms.URL, Graph: ms.URL}}
 	ctx := context.Background()
 	if _, err := teams.Transcript(ctx, join); err != ErrNotConnected {
 		t.Errorf("before signing in, it is not connected: %v", err)
@@ -93,8 +92,8 @@ func TestZoomFetchesATranscript(t *testing.T) {
 		}
 	}))
 	defer zoom.Close()
-	ZoomOAuth, ZoomAPI = zoom.URL+"/oauth/token", zoom.URL
-	z := &Zoom{AccountID: "acct", ClientID: "cid", Secret: "secret"}
+	at := At{ZoomOAuth: zoom.URL + "/oauth/token", ZoomAPI: zoom.URL}
+	z := &Zoom{AccountID: "acct", ClientID: "cid", Secret: "secret", At: at}
 	if ZoomMeeting("https://us02web.zoom.us/j/987654321?pwd=abc") != "987654321" {
 		t.Error("the meeting number is found in the join link")
 	}
@@ -106,7 +105,7 @@ func TestZoomFetchesATranscript(t *testing.T) {
 	if err != nil || !strings.Contains(string(vtt), "Ann Lee: Morning.") {
 		t.Errorf("the transcript: %q %v", vtt, err)
 	}
-	if _, err := (&Zoom{AccountID: "acct", ClientID: "cid", Secret: "wrong"}).Transcript(context.Background(), "987654321"); err == nil || !strings.Contains(err.Error(), "would not sign in") {
+	if _, err := (&Zoom{AccountID: "acct", ClientID: "cid", Secret: "wrong", At: at}).Transcript(context.Background(), "987654321"); err == nil || !strings.Contains(err.Error(), "would not sign in") {
 		t.Errorf("a wrong secret says what is wrong: %v", err)
 	}
 }
