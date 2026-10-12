@@ -2,12 +2,17 @@ package server_test
 
 import (
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
+	"github.com/tristanlawrenceguy/sameway/internal/server/servertest"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/testkit"
 )
 
 // classOn is the classification of a tag on a record, waited for.
@@ -103,5 +108,43 @@ func TestATagKeptFromYourChoicesIsShownFoldedAndCanBeTakenOff(t *testing.T) {
 	})
 	if page := said(get(t, srv, "/today").Body.String()); strings.Contains(page, "Kept for you") {
 		t.Errorf("gone once dealt with: %s", page)
+	}
+}
+
+// A tag that cannot be kept says so, and stays to be checked, where Kept
+// used to be said whatever became of the write.
+func TestATagNotKeptSaysSo(t *testing.T) {
+	t.Parallel()
+	dir := testkit.Starter(t)
+	// A workspace whose classifications cannot say who kept one.
+	path := filepath.Join(dir, "schema", "classification.yaml")
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	kept, _, _ := strings.Cut(string(raw), "  confirmed_by:")
+	if err := os.WriteFile(path, []byte(kept+"  confirmed_by:\n    type: int\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	a, err := app.Open(dir, app.Options{Machine: servertest.Machine(t)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { a.Close() })
+	h := server.New(a)
+	note, err := a.Store.Create("note", map[string]any{"title": "Water bill"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	c, err := a.Store.Create(chat.ClassificationType, map[string]any{"record": "note/" + note.ID, "tag": "to do", "state": "suggested"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	page := said(after(t, h, postForm(t, h, "/tags/keep", url.Values{"id": {c.ID}})).Body.String())
+	if !strings.Contains(page, "Not kept") || strings.Contains(page, "keeps the tag") {
+		t.Errorf("a tag not kept says so: %s", truncate(page))
+	}
+	if got, _ := a.Store.Get(chat.ClassificationType, c.ID); got.Fields["state"] != "suggested" {
+		t.Errorf("the tag is still to check, is %v", got.Fields["state"])
 	}
 }
