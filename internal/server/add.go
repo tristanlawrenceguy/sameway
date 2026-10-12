@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
@@ -57,7 +58,7 @@ func (s *Server) addRecord(w http.ResponseWriter, r *http.Request) {
 // has been saved since is left alone.
 func (s *Server) discard(w http.ResponseWriter, r *http.Request) {
 	t, rec := r.PathValue("type"), r.PathValue("id")
-	back := "/t/" + t + "/" + rec
+	back := relate.Page(t, rec)
 	got, err := s.app.Store.Get(t, rec)
 	entry, err2 := s.app.Store.Get(records.ActivityType, r.FormValue("added"))
 	if err != nil || err2 != nil || !got.UpdatedAt.Equal(got.CreatedAt) ||

@@ -83,7 +83,7 @@ func (f *Failure) Retry() bool { return f.Kind == FailRate || f.Kind == FailBusy
 // whoAt names the provider at an OpenAI-compatible address.
 func whoAt(base string) string {
 	switch {
-	case IsOllama(base):
+	case Ollama{}.Is(base):
 		return "Ollama"
 	case strings.Contains(base, "openrouter.ai"):
 		return "OpenRouter"

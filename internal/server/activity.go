@@ -10,6 +10,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/design"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
@@ -160,7 +161,7 @@ func (s *Server) hrefFor(r *store.Record) string {
 	}
 	if _, ok := s.app.Types.Get(target); ok {
 		if _, err := s.app.Store.Get(target, id); err == nil {
-			return "/t/" + target + "/" + id
+			return relate.Page(target, id)
 		}
 		return ""
 	}

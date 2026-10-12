@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -56,7 +57,7 @@ func (s *Server) nested(r *http.Request, t *schema.Type) (out []template.HTML, h
 			out = append(out, s.part(ui.Link{Href: "/t/" + t.Name, Label: all}))
 			break
 		}
-		href := "/t/" + t.Name + "/" + rec.ID
+		href := relate.Page(t.Name, rec.ID)
 		cur, in := r.URL.Path == href, strings.HasPrefix(r.URL.Path, href+"/")
 		here = here || cur || in
 		out = append(out, s.part(ui.Link{Href: href, Label: trim.Title(s.title(t, rec)), Current: cur, Within: in}))

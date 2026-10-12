@@ -6,6 +6,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -111,7 +112,7 @@ func (ws *Workspace) collectionItems(out map[string]any, t *schema.Type, recs []
 		in = records.CountsOf(ws.Store, t, recs)
 	}
 	for _, rec := range recs {
-		item := map[string]any{"title": ws.title(t, rec), "href": "/t/" + t.Name + "/" + rec.ID}
+		item := map[string]any{"title": ws.title(t, rec), "href": relate.Page(t.Name, rec.ID)}
 		if told[rec.ID] != "" {
 			item["context"] = told[rec.ID]
 		}
@@ -198,7 +199,7 @@ func (ws *Workspace) fieldsOf(t *schema.Type, rec *store.Record, names []string)
 		item := map[string]any{"label": f.Display(), "value": v}
 		if f.Type == "ref" && v != "" {
 			if _, err := ws.Store.Get(f.To, v); err == nil {
-				item["href"] = "/t/" + f.To + "/" + v
+				item["href"] = relate.Page(f.To, v)
 			}
 			item["value"] = ws.refTitle(*f, v)
 		}

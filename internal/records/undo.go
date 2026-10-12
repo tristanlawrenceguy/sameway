@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -121,5 +122,5 @@ func describe(st *store.Store, typ string, rec *store.Record) Change {
 		return Change{Component: name, ID: rec.ID, Detail: Summarise(name, props), Href: "/canvas/" + rec.ID}
 	}
 	t, _ := st.Types().Get(typ)
-	return Change{Component: typ, ID: rec.ID, Detail: Title(st, t, rec), Href: "/t/" + typ + "/" + rec.ID}
+	return Change{Component: typ, ID: rec.ID, Detail: Title(st, t, rec), Href: relate.Page(typ, rec.ID)}
 }

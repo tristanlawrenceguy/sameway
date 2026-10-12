@@ -12,6 +12,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -168,7 +169,7 @@ func automatedBy(ctx context.Context) string {
 // recordVars are what a record fills {{name}} with: its title, type, id,
 // page, and each field as it reads (a ref by its title).
 func (s *Service) recordVars(t *schema.Type, rec *store.Record) map[string]string {
-	vars := map[string]string{"title": records.Name(s.Store, t, rec), "type": t.Name, "id": rec.ID, "page": "/t/" + t.Name + "/" + rec.ID}
+	vars := map[string]string{"title": records.Name(s.Store, t, rec), "type": t.Name, "id": rec.ID, "page": relate.Page(t.Name, rec.ID)}
 	for _, f := range t.Fields {
 		v := rec.Fields[f.Name]
 		switch {

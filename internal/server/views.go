@@ -9,6 +9,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
@@ -183,11 +184,11 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	// An action is a button; its own page has that button.
 	if t.Name == records.ActionType {
 		title := s.title(t, rec)
-		b.WriteString(string(s.form(ui.Form{Action: "/act/" + rec.ID, From: "/t/" + t.Name + "/" + rec.ID, Button: &ui.Button{Label: "Run " + trimLabel(title), Variant: ui.Primary}})))
+		b.WriteString(string(s.form(ui.Form{Action: "/act/" + rec.ID, From: relate.Page(t.Name, rec.ID), Button: &ui.Button{Label: "Run " + trimLabel(title), Variant: ui.Primary}})))
 	}
 	// A change in the log is taken back from its own page too.
 	if t.Name == records.ActivityType && s.app.Records.Undoable(rec) {
-		b.WriteString(string(s.form(ui.Form{Action: "/activity/" + rec.ID + "/undo", From: "/t/" + t.Name + "/" + rec.ID, Button: &ui.Button{Label: "Undo", Variant: ui.Secondary}})))
+		b.WriteString(string(s.form(ui.Form{Action: "/activity/" + rec.ID + "/undo", From: relate.Page(t.Name, rec.ID), Button: &ui.Button{Label: "Undo", Variant: ui.Secondary}})))
 	}
 	// The record's one press, done or pinned or whatever its yes-or-no
 	// field is, sits under the title; Delete keeps to the quiet bar. The

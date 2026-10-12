@@ -16,9 +16,9 @@ import (
 // Sameway does; the next page that needs it starts it again. On Windows it
 // takes some fifteen seconds to answer while it finds the graphics card.
 
-// OllamaInstalled is how to start Ollama on this computer, or nil when it
+// ollamaInstalled is how to start Ollama on this computer, or nil when it
 // is not installed.
-var OllamaInstalled = func() *exec.Cmd {
+func ollamaInstalled() *exec.Cmd {
 	switch runtime.GOOS {
 	case "windows":
 		if exe := filepath.Join(os.Getenv("LOCALAPPDATA"), "Programs", "Ollama", "ollama.exe"); exists(exe) {
@@ -37,10 +37,14 @@ var OllamaInstalled = func() *exec.Cmd {
 	return nil
 }
 
-// WakeOllama starts an installed Ollama that is not answering, and says
-// whether it did.
-func WakeOllama() bool {
-	cmd := OllamaInstalled()
+// Wake starts an installed Ollama that is not answering, and says whether
+// it did.
+func (o Ollama) Wake() bool {
+	start := o.Start
+	if start == nil {
+		start = ollamaInstalled
+	}
+	cmd := start()
 	if cmd == nil {
 		return false
 	}

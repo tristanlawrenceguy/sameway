@@ -32,8 +32,6 @@ const shutdownWait = 4 * time.Second
 func startBackground(ctx context.Context, a *app.App, h *server.Server, all http.Handler, out, notes io.Writer) {
 	// Still on loops of their own, until the work on their pages is done.
 	h.KeepMeaning(ctx) // search by meaning, when an embedding model is here
-	h.KeepReview(ctx)  // the weekly review, on the day set
-	h.KeepBrief(ctx)   // the morning brief, when one is set
 	h.KeepMail(ctx)    // email sent to the workspace, when connected
 
 	h.OnRing(notifier(a)) // a ring told beyond the page

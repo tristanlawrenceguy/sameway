@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // The assistant sees a page the way the person gets it. Without this it
@@ -56,10 +57,7 @@ func (s *Service) lookAtPage(raw json.RawMessage) toolResult {
 		ask = map[string]any{}
 	}
 	if p, _ := ask["path"].(string); p == "" {
-		ask["path"] = "/"
-		if s.current != "" {
-			ask["path"] = "/c/" + s.current
-		}
+		ask["path"] = records.CanvasPath(s.current)
 	}
 	out, err := s.Look(context.Background(), ask)
 	if err != nil {

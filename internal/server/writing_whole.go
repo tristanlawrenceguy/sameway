@@ -11,6 +11,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/export"
 	"github.com/tristanlawrenceguy/sameway/internal/prose"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/web"
@@ -86,7 +87,7 @@ func (s *Server) wholePage(w http.ResponseWriter, r *http.Request) {
 		w.Write(buf.Bytes())
 		return
 	}
-	href := "/t/" + t.Name + "/" + piece.ID
+	href := relate.Page(t.Name, piece.ID)
 	var b strings.Builder
 	fmt.Fprintf(&b, `<p><a class="sw-link" href="%s">Back to %s</a></p>`, href, template.HTMLEscapeString(title))
 	fmt.Fprintf(&b, `<p class="sw-muted">%s.</p>`, schema.Count(records.WordCount(md), "word"))

@@ -4,35 +4,15 @@ import (
 	"errors"
 	"html/template"
 	"net/http"
-	"sort"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
-	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
 
 // Email that came in waits on Today until it is dealt with: made a task,
 // or marked sorted. Both are a press, logged, and undone like any change.
-
-// mailToSort are the emails and shared notes not yet dealt with, oldest
-// first. An email is a record of its own; one from before was a note.
-func (s *Server) mailToSort() []*store.Record {
-	var out []*store.Record
-	for _, typ := range []string{"email", "note"} {
-		if _, ok := s.app.Types.Get(typ); !ok {
-			continue
-		}
-		recs, _ := s.app.Store.List(typ, store.ListOptions{OrderBy: "created_at"})
-		for _, r := range recs {
-			if taggedWith(r, toSort) && (typ == "email" || taggedWith(r, "email") || taggedWith(r, "shared")) {
-				out = append(out, r)
-			}
-		}
-	}
-	sort.SliceStable(out, func(i, j int) bool { return out[i].CreatedAt.Before(out[j].CreatedAt) })
-	return out
-}
 
 // toSortItem is an email or a note waiting to be sorted, by id.
 func (s *Server) toSortItem(id string) (*store.Record, error) {
@@ -44,30 +24,19 @@ func (s *Server) toSortItem(id string) (*store.Record, error) {
 	return nil, errors.New("that is gone")
 }
 
-func taggedWith(r *store.Record, tag string) bool {
-	tags, _ := r.Fields["tags"].([]any)
-	for _, t := range tags {
-		if t == tag {
-			return true
-		}
-	}
-	return false
-}
-
 // mailSection is To sort on Today: each email or shared message with what
 // the model made of it (triage.go), kept, changed or set aside with a press;
 // before it has, or with no model, made a task or set aside by hand.
-func (s *Server) mailSection() string {
-	alone := s.aloneTags() // classify_today.go: what needs nothing is folded away
-	var notes, nothing []*store.Record
-	for _, n := range s.mailToSort() {
-		if s.hasAlone(n, alone) != "" {
+func (s *Server) mailSection(list []chat.Waiting) string {
+	alone := s.app.Chat.AloneTags() // what needs nothing is folded away
+	var nothing []*store.Record
+	for _, n := range s.app.Chat.ToSort() {
+		if chat.AloneOn(n, alone) != "" {
 			nothing = append(nothing, n)
-		} else {
-			notes = append(notes, n)
 		}
 	}
 	folded := s.foldedNothing(nothing, alone)
+	notes := chat.WaitingOf(list, chat.WaitSort)
 	if len(notes) == 0 {
 		if folded != "" {
 			return `<h2>To sort</h2>` + folded
@@ -77,26 +46,19 @@ func (s *Server) mailSection() string {
 	esc := template.HTMLEscapeString
 	var b strings.Builder
 	b.WriteString(`<h2>To sort</h2><ul class="sw-plain sw-rows">`)
-	tags, other := s.tagsOn(), s.otherTags(nil) // tags_today.go: a tag to check sits beside its record
-	for _, n := range notes {
-		title := s.nameOf(n)
-		b.WriteString(`<li class="sw-stack"><a class="sw-link" href="/t/` + n.Type + `/` + n.ID + `">` + esc(title) + `</a>`)
+	tags, other := tagsOn(list), s.otherTags(nil) // tags_today.go: a tag to check sits beside its record
+	for _, w := range notes {
+		n, title := w.Record, w.Words
+		b.WriteString(`<li class="sw-stack"><a class="sw-link" href="` + w.Link + `">` + esc(title) + `</a>`)
 		for _, c := range tags[n.Type+"/"+n.ID] {
 			b.WriteString(s.tagCheck(c, n, other))
 		}
-		if p := s.suggestedFrom(n); p != nil { // suggested.go: what an action made of it
-			b.WriteString(`<p>` + esc(suggestionWords(p)) + `</p>` + s.suggestionPresses(p, title) + `</li>`)
-			continue
+		presses := w.Presses
+		if p := suggestedFrom(list, n); p != nil { // suggested.go: what an action made of it
+			b.WriteString(`<p>` + esc(p.Words) + `</p>`)
+			presses = p.Presses
 		}
-		presses := []struct {
-			action, label string
-			variant       ui.Variant
-		}{{"/mail/task", "Make it a task", ui.Secondary}, {"/mail/sorted", "Done with it", ui.Quiet}}
-		b.WriteString(`<div class="sw-cluster">`)
-		for _, f := range presses {
-			b.WriteString(string(s.form(ui.Form{Action: f.action, Hidden: ui.Hidden("id", n.ID), Button: &ui.Button{Label: f.label, Context: title, Variant: f.variant}})))
-		}
-		b.WriteString(`</div></li>`)
+		b.WriteString(s.presses(presses, title) + `</li>`)
 	}
 	b.WriteString(`</ul>` + folded)
 	return b.String()
@@ -105,7 +67,7 @@ func (s *Server) mailSection() string {
 // sortedNote takes the to sort tag off a note from email.
 func (s *Server) sortedNote(r *http.Request, id string) (*store.Record, string, error) {
 	n, err := s.toSortItem(id)
-	if err != nil || !taggedWith(n, toSort) {
+	if err != nil || !chat.Tagged(n, toSort) {
 		return nil, "", errors.New("that has been dealt with already")
 	}
 	var tags []any
@@ -163,7 +125,7 @@ func (s *Server) nameOf(rec *store.Record) string {
 // sortingRefs are the records waiting to be sorted, as type/id.
 func (s *Server) sortingRefs() map[string]bool {
 	out := map[string]bool{}
-	for _, n := range s.mailToSort() {
+	for _, n := range s.app.Chat.ToSort() {
 		out[n.Type+"/"+n.ID] = true
 	}
 	return out

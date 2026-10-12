@@ -11,6 +11,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -91,7 +92,7 @@ func (s *Service) KeepFile(who records.Who, src io.Reader, name, title, descript
 	// Logged as made whole: undoing it takes the file's record away.
 	made[0].After = kept[0].After
 	records.Record(s.app.Store, who.Actor, records.Change{Action: "added", Component: records.FileType, ID: rec.ID, Detail: title,
-		Href: "/t/" + records.FileType + "/" + rec.ID, By: who.By, Via: who.Via, ByLogin: who.ByLogin, Ops: made})
+		Href: relate.Page(records.FileType, rec.ID), By: who.By, Via: who.Via, ByLogin: who.ByLogin, Ops: made})
 	return rec, path, nil
 }
 
