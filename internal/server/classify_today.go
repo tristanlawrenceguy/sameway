@@ -53,7 +53,10 @@ func (s *Server) tagKeep(w http.ResponseWriter, r *http.Request) {
 		s.failed(w, r, "Not kept", err, "/today")
 		return
 	}
-	records.ApplyOps(s.app.Store, records.Op{Type: chat.ClassificationType, ID: c.ID, After: map[string]any{"state": "confirmed", "confirmed_by": "person"}})
+	if _, err := records.ApplyOps(s.app.Store, records.Op{Type: chat.ClassificationType, ID: c.ID, After: map[string]any{"state": "confirmed", "confirmed_by": "person"}}); err != nil {
+		s.failed(w, r, "Not kept", err, "/today")
+		return
+	}
 	s.tellAt(w, r, outcome{Title: "Kept", Text: fmt.Sprintf("%s keeps the tag %s; the action follows that next time.", s.nameOf(rec), c.Fields["tag"])}, "/today")
 }
 
@@ -154,28 +157,6 @@ func (s *Server) setUpSorting() {
 		a["check"], a["examples"] = true, 10
 		records.WriteAs(s.app.Store, who, "created", records.ActionType, "", a)
 	}
-}
-
-// aloneTags are the tags given only when no other fits, by name.
-func (s *Server) aloneTags() map[string]bool {
-	recs, _ := s.app.Store.List(chat.TagType, store.ListOptions{})
-	out := map[string]bool{}
-	for _, r := range recs {
-		if alone, _ := r.Fields["alone"].(bool); alone {
-			out[strings.ToLower(fmt.Sprint(r.Fields["name"]))] = true
-		}
-	}
-	return out
-}
-
-// hasAlone is the tag a record has that is given only when no other fits.
-func (s *Server) hasAlone(rec *store.Record, alone map[string]bool) string {
-	for _, t := range records.StringList(rec.Fields["tags"]) {
-		if alone[strings.ToLower(t)] {
-			return t
-		}
-	}
-	return ""
 }
 
 // latestTag is the newest classification of a tag on a record, to change.

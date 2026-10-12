@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 )
 
@@ -17,20 +18,15 @@ import (
 // Ollama again; once it answers, the card goes. Started once a minute at
 // most.
 func TestOllamaInstalledButAsleepIsStarted(t *testing.T) {
+	t.Parallel()
 	asleep := httptest.NewServer(http.NotFoundHandler())
 	asleep.Close() // nothing listens here
-	wasURL, wasInstalled, wasCandidates := llm.OllamaURL, llm.OllamaInstalled, llm.DefaultCandidates
-	defer func() {
-		llm.OllamaURL, llm.OllamaInstalled, llm.DefaultCandidates = wasURL, wasInstalled, wasCandidates
-	}()
-	llm.OllamaURL, llm.DefaultCandidates = asleep.URL, nil
 	started := 0
-	llm.OllamaInstalled = func() *exec.Cmd {
+	start := func() *exec.Cmd {
 		started++
 		return exec.Command(os.Args[0], "-test.run=^$") // a program that starts and ends
 	}
-
-	a, h := newApp(t)
+	a, h := newAppWith(t, app.Options{Ollama: llm.Ollama{URL: asleep.URL, Start: start}})
 	yaml := filepath.Join(a.Workspace.Dir, "workspace.yaml")
 	os.WriteFile(yaml, []byte("name: T\nllm:\n  provider: openai\n  base_url: "+asleep.URL+"/v1\n  model: qwen\n"), 0o644)
 	a.Workspace.Config.LLM = llm.Config{Provider: "openai", BaseURL: asleep.URL + "/v1", Model: "qwen"}

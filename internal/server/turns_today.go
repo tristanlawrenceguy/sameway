@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
@@ -20,33 +21,31 @@ import (
 // answer is taken off with a press, as HEY's Reply Later is marked done;
 // the next email in it decides again.
 
-func (s *Server) turnSection() string {
-	t, ok := s.app.Types.Get(records.EmailType)
-	if !ok {
-		return ""
-	}
-	emails, err := s.app.Store.List(records.EmailType, store.ListOptions{OrderBy: "created_at"})
-	if err != nil {
-		return ""
-	}
-	f, _ := t.Field("turn")
-	clearable := f != nil && !f.ReadOnly
+func (s *Server) turnSection(list []chat.Waiting) string {
 	esc := template.HTMLEscapeString
 	var yours, theirs strings.Builder
+	line := func(e *store.Record) string {
+		return `<li class="sw-stack--tight"><a class="sw-link" href="/t/email/` + e.ID + `?show=` + ConversationPart + `#conversation">` + esc(s.nameOf(e)) + `</a>`
+	}
+	for _, w := range chat.WaitingOf(list, chat.WaitReply) {
+		e := w.Record
+		body, _ := e.Fields["body"].(string)
+		yours.WriteString(line(e) + ` <span class="sw-muted sw-small">` + esc(s.whoWrote(e)) + `: ` + esc(clipRunes(strings.Join(strings.Fields(records.OwnWords(body)), " "), 120)) + `</span>`)
+		for _, p := range w.Presses {
+			yours.WriteString(string(s.form(ui.Form{Action: p.Post, Hidden: ui.Hidden("id", p.ID), Button: &ui.Button{Label: p.Label, Context: w.Words, Variant: ui.Quiet}})))
+		}
+		yours.WriteString(`</li>`)
+	}
+	// Waiting on them is not waiting for the person, so it is found here,
+	// folded away as a count.
 	waiting := 0
-	for _, e := range emails {
-		line := `<li class="sw-stack--tight"><a class="sw-link" href="/t/email/` + e.ID + `?show=` + ConversationPart + `#conversation">` + esc(s.nameOf(e)) + `</a>`
-		switch e.Fields["turn"] {
-		case "yours":
-			body, _ := e.Fields["body"].(string)
-			yours.WriteString(line + ` <span class="sw-muted sw-small">` + esc(s.whoWrote(e)) + `: ` + esc(clipRunes(strings.Join(strings.Fields(records.OwnWords(body)), " "), 120)) + `</span>`)
-			if clearable {
-				yours.WriteString(string(s.form(ui.Form{Action: "/mail/answered", Hidden: ui.Hidden("id", e.ID), Button: &ui.Button{Label: "No reply needed", Context: s.nameOf(e), Variant: ui.Quiet}})))
+	if _, ok := s.app.Types.Get(records.EmailType); ok {
+		emails, _ := s.app.Store.List(records.EmailType, store.ListOptions{OrderBy: "created_at"})
+		for _, e := range emails {
+			if e.Fields["turn"] == "theirs" {
+				waiting++
+				theirs.WriteString(line(e) + ` <span class="sw-muted sw-small">waiting ` + esc(waitedFor(time.Since(sentTime(e)))) + `</span></li>`)
 			}
-			yours.WriteString(`</li>`)
-		case "theirs":
-			waiting++
-			theirs.WriteString(line + ` <span class="sw-muted sw-small">waiting ` + esc(waitedFor(time.Since(sentTime(e)))) + `</span></li>`)
 		}
 	}
 	var b strings.Builder

@@ -42,8 +42,8 @@ func (s *Server) meaningState() *meaningState {
 }
 
 // embedModel is an embedding model Ollama has, or "".
-func embedModel(ctx context.Context) string {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, llm.OllamaURL+"/api/tags", nil)
+func embedModel(ctx context.Context, ollama llm.Ollama) string {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ollama.Base()+"/api/tags", nil)
 	if err != nil {
 		return ""
 	}
@@ -102,14 +102,15 @@ func searchByMeaning(s *Server) (*meaning.Index, bool) {
 // refreshMeaning reads again what changed, and has search use it.
 func (s *Server) refreshMeaning(ctx context.Context) {
 	st := s.meaningState()
-	model := embedModel(ctx)
+	ollama := s.app.Options().Ollama
+	model := embedModel(ctx, ollama)
 	if model == "" {
 		search.UseMeaning(s.app.Store, nil)
 		return
 	}
 	st.Lock()
 	if st.idx == nil || st.idx.Model != model {
-		st.idx = &meaning.Index{Base: llm.OllamaURL, Model: model, Keep: s.app.Store}
+		st.idx = &meaning.Index{Base: ollama.Base(), Model: model, Keep: s.app.Store}
 		st.read = false
 	}
 	idx := st.idx
@@ -163,14 +164,15 @@ func (s *Server) meaningLine() string {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-	switch on := embedModel(ctx) != ""; {
+	ollama := s.app.Options().Ollama
+	switch on := embedModel(ctx, ollama) != ""; {
 	case on && failed != "":
 		return "Search by meaning: not working, so searches find by words only. The last try said: " + template.HTMLEscapeString(failed) + ". It tries again every few minutes."
 	case on && !ready:
 		return "Search by meaning: reading what you have, on this computer. Searches find by meaning once that is done."
 	case on:
 		return "Search by meaning: on. Searching finds what something is about, not only its words, on this computer."
-	case !llm.OllamaRunning(ctx):
+	case !ollama.Running(ctx):
 		return ""
 	}
 	out := `Search by meaning: off. With it, searching for the plumber finds the note about the boiler repair. It is a model for Ollama (` + meaning.FetchWords + `), and nothing leaves this computer.`
@@ -183,7 +185,8 @@ func (s *Server) meaningLine() string {
 func (s *Server) meaningFetch(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
 	defer cancel()
-	if !llm.OllamaRunning(ctx) {
+	ollama := s.app.Options().Ollama
+	if !ollama.Running(ctx) {
 		s.failed(w, r, "Not fetched", errors.New("search by meaning needs Ollama running on this computer"), "/help")
 		return
 	}
@@ -192,7 +195,7 @@ func (s *Server) meaningFetch(w http.ResponseWriter, r *http.Request) {
 	if !st.fetching {
 		st.fetching, st.done, st.total, st.err = true, 0, 0, ""
 		go func() {
-			err := llm.OllamaPull(context.Background(), meaning.FetchModel, func(done, total int64) {
+			err := ollama.Pull(context.Background(), meaning.FetchModel, func(done, total int64) {
 				st.Lock()
 				st.done, st.total = done, total
 				st.Unlock()
