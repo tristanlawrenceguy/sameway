@@ -75,5 +75,4 @@ var storeWrites = map[string]string{
 	"internal/server/servertest/fixtures.go SeedTasks": "a test fixture seeding a fresh workspace; nothing to log or undo",
 	"internal/chat/access.go Service.letIn":            "person access, logged by hand: to move after the invite dive, which owns this file now",
 	"internal/chat/invite.go Service.GiveAccess":       "person access, logged by hand as human: to move after the invite dive, which owns this file now",
-	"internal/chat/suggest_records.go Service.Suggest": "a suggestion's question: to move after the tagging dive, which owns this file now",
 }
