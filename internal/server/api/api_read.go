@@ -1,4 +1,4 @@
-package server
+package api
 
 import (
 	"fmt"
@@ -50,7 +50,7 @@ func onePage(r *http.Request, recs []*store.Record, size, page int) ([]*store.Re
 
 // onlyFields is the fields a read asked for, checked against the type, or
 // nil for all of them.
-func (s *Server) onlyFields(r *http.Request, typ string) ([]string, error) {
+func (s *Service) onlyFields(r *http.Request, typ string) ([]string, error) {
 	asked := r.URL.Query().Get("fields")
 	if asked == "" {
 		return nil, nil

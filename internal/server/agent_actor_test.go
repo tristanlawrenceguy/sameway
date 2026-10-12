@@ -2,7 +2,6 @@ package server_test
 
 import (
 	"net/http"
-	"net/http/httptest"
 	"net/url"
 	"regexp"
 	"strings"
@@ -12,28 +11,6 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
-
-// apiAs sends a JSON body to the API with the given headers.
-func apiAs(t *testing.T, h http.Handler, method, path, body string, header map[string]string) *httptest.ResponseRecorder {
-	t.Helper()
-	req := httptest.NewRequest(method, path, strings.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-	for k, v := range header {
-		req.Header.Set(k, v)
-	}
-	rec := httptest.NewRecorder()
-	h.ServeHTTP(rec, req)
-	return rec
-}
-
-func newestEntry(t *testing.T, st *store.Store) *store.Record {
-	t.Helper()
-	recs, err := st.List(records.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
-	if err != nil || len(recs) == 0 {
-		t.Fatalf("the log should have an entry: %v", err)
-	}
-	return recs[0]
-}
 
 // A program calling the API is an agent, named by its X-Sameway-Agent
 // header, or else "An agent": a User-Agent names a library, not who called.

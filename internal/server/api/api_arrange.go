@@ -1,4 +1,4 @@
-package server
+package api
 
 import (
 	"encoding/json"
@@ -7,15 +7,16 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // apiArrange is arrange_canvas over REST: a whole tab laid out in one
 // change, with the checks and the one log entry the assistant's has, since
 // it goes through the same tool.
-func (s *Server) apiArrange(w http.ResponseWriter, r *http.Request) {
-	body, err := readBody(r)
+func (s *Service) apiArrange(w http.ResponseWriter, r *http.Request) {
+	body, err := web.ReadBody(r)
 	if err != nil {
-		writeError(w, err)
+		web.WriteError(w, err)
 		return
 	}
 	problems := map[string]string{}
@@ -32,21 +33,21 @@ func (s *Server) apiArrange(w http.ResponseWriter, r *http.Request) {
 		problems["blocks"] = `every block on the tab in reading order, as [{"id", "span", "region", "frame", "size"}]`
 	}
 	if len(problems) > 0 {
-		writeError(w, &schema.ValidationError{Problems: problems})
+		web.WriteError(w, &schema.ValidationError{Problems: problems})
 		return
 	}
 	blocks, _ := json.Marshal(body["blocks"])
-	text, isErr := s.chatFor(r).ByAgent(apiAgent(r)).Arrange(canvas, blocks)
+	text, isErr := s.ChatFor(r).ByAgent(Agent(r)).Arrange(canvas, blocks)
 	if isErr {
-		writeJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": apiError{Code: "invalid", Message: text}})
+		web.WriteJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": web.APIError{Code: "invalid", Message: text}})
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"arranged": text, "layout": s.app.Chat.LayoutNow(canvas)})
+	web.WriteJSON(w, http.StatusOK, map[string]any{"arranged": text, "layout": s.app.Chat.LayoutNow(canvas)})
 }
 
 // layoutOf is how a block's tab reads after a write through the API, for
 // the answer: the same line the assistant's tools end with.
-func (s *Server) layoutOf(r *http.Request, rec *store.Record) string {
+func (s *Service) layoutOf(r *http.Request, rec *store.Record) string {
 	if r.PathValue("type") != records.BlockType || rec == nil {
 		return ""
 	}

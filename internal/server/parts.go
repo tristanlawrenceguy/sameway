@@ -27,7 +27,7 @@ import (
 //     time, until -<key> takes it back.
 //
 // Which leaves the assistant as the way in, and that is the arrangement:
-// it is handed every connection and every field whole (see api_record.go
+// it is handed every connection and every field whole (see api/api_record.go
 // and get_record), so it knows what is there when the page does not say.
 // The keys are the same in the address and in the setting, and the same
 // as the connection keys from internal/relate: one vocabulary for

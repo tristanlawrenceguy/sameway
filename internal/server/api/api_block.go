@@ -1,4 +1,4 @@
-package server
+package api
 
 import (
 	"errors"
@@ -9,6 +9,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // shownRecord is a record as the API answers a write of it: the record
@@ -25,7 +26,7 @@ type shownRecord struct {
 // something it can show. fields is the body; was is the block before, for
 // a change. It answers 422 and says so when the block may not be written;
 // otherwise shows is what it would show.
-func (s *Server) blockWrite(w http.ResponseWriter, r *http.Request, fields map[string]any, was *store.Record) (shows string, refused bool) {
+func (s *Service) blockWrite(w http.ResponseWriter, r *http.Request, fields map[string]any, was *store.Record) (shows string, refused bool) {
 	if r.PathValue("type") != records.BlockType {
 		return "", false
 	}
@@ -46,7 +47,7 @@ func (s *Server) blockWrite(w http.ResponseWriter, r *http.Request, fields map[s
 	}
 	c, ok := s.app.Registry.Get(name)
 	if !ok {
-		writeJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": apiError{Code: "invalid",
+		web.WriteJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": web.APIError{Code: "invalid",
 			Message: fmt.Sprintf("no component %q; the components are %s", name, strings.Join(s.app.Registry.Names(), ", "))}})
 		return "", true
 	}
@@ -54,13 +55,13 @@ func (s *Server) blockWrite(w http.ResponseWriter, r *http.Request, fields map[s
 		props = map[string]any{}
 	}
 	if _, err := c.Validate(props); err != nil {
-		writeJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": apiError{Code: "invalid", Message: chat.PropsTrouble(err)}})
+		web.WriteJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": web.APIError{Code: "invalid", Message: chat.PropsTrouble(err)}})
 		return "", true
 	}
 	shows, err := s.app.Chat.CheckBlock(name, props)
 	var cannot *chat.CannotShow
 	if errors.As(err, &cannot) {
-		writeJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": apiError{Code: "cannot_show", Message: err.Error()}})
+		web.WriteJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": web.APIError{Code: "cannot_show", Message: err.Error()}})
 		return "", true
 	}
 	return shows, false

@@ -168,3 +168,17 @@ func Said(page string) string {
 	page = html.UnescapeString(page)
 	return strings.TrimSpace(spaces.ReplaceAllString(page, " "))
 }
+
+// Headed sends a JSON body with the given headers, as a program calling
+// the API does (X-Sameway-Agent, If-Match).
+func Headed(t *testing.T, h http.Handler, method, path, body string, header map[string]string) *httptest.ResponseRecorder {
+	t.Helper()
+	req := httptest.NewRequest(method, path, strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	for k, v := range header {
+		req.Header.Set(k, v)
+	}
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	return rec
+}
