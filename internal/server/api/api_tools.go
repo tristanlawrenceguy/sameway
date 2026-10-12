@@ -1,4 +1,4 @@
-package server
+package api
 
 import (
 	"encoding/json"
@@ -18,17 +18,17 @@ import (
 // named for the agent. The body is the tool's arguments, as its schema in
 // GET /api/describe/tools/{name} says.
 
-func (s *Server) apiTool(w http.ResponseWriter, r *http.Request) {
+func (s *Service) apiTool(w http.ResponseWriter, r *http.Request) {
 	name := r.PathValue("name")
-	svc := s.chatFor(r)
+	svc := s.ChatFor(r)
 	if !offers(svc, name) {
-		writeJSON(w, http.StatusNotFound, map[string]any{"error": apiError{Code: "not_found",
+		web.WriteJSON(w, http.StatusNotFound, map[string]any{"error": web.APIError{Code: "not_found",
 			Message: "there is no tool " + name + " you may call here; GET /api/describe/tools lists them"}})
 		return
 	}
 	raw, err := io.ReadAll(io.LimitReader(r.Body, 4<<20))
 	if err != nil {
-		writeError(w, err)
+		web.WriteError(w, err)
 		return
 	}
 	if len(strings.TrimSpace(string(raw))) == 0 {
@@ -36,16 +36,16 @@ func (s *Server) apiTool(w http.ResponseWriter, r *http.Request) {
 	}
 	var args map[string]any
 	if err := json.Unmarshal(raw, &args); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"error": apiError{Code: "bad_request",
+		web.WriteJSON(w, http.StatusBadRequest, map[string]any{"error": web.APIError{Code: "bad_request",
 			Message: "the body is the tool's arguments as a JSON object: " + web.JSONTrouble(err)}})
 		return
 	}
-	text, isErr := svc.ByAgent(apiAgent(r)).Call(name, raw)
+	text, isErr := svc.ByAgent(Agent(r)).Call(name, raw)
 	if isErr {
-		writeJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": apiError{Code: "invalid", Message: text}})
+		web.WriteJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": web.APIError{Code: "invalid", Message: text}})
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "tool": name, "result": text})
+	web.WriteJSON(w, http.StatusOK, map[string]any{"ok": true, "tool": name, "result": text})
 }
 
 // offers says whether the one this service speaks for may call a tool.
@@ -58,9 +58,9 @@ func offers(svc *chat.Service, name string) bool {
 	return false
 }
 
-// toolOutward says whether a path calls a tool that reaches beyond the
-// workspace, which a dry run cannot try (dry_run.go).
-func toolOutward(path string) bool {
+// ToolOutward says whether a path calls a tool that reaches beyond the
+// workspace, which a dry run cannot try (server/dry_run.go).
+func ToolOutward(path string) bool {
 	name, ok := strings.CutPrefix(path, "/api/tools/")
 	if !ok {
 		return false

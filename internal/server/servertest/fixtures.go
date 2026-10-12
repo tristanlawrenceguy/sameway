@@ -72,3 +72,13 @@ func Written(t *testing.T, st *store.Store, action, typ, id string, fields map[s
 	}
 	return rec
 }
+
+// NewestEntry is the newest entry in the activity log.
+func NewestEntry(t *testing.T, st *store.Store) *store.Record {
+	t.Helper()
+	recs, err := st.List(records.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
+	if err != nil || len(recs) == 0 {
+		t.Fatalf("the log should have an entry: %v", err)
+	}
+	return recs[0]
+}

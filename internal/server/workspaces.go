@@ -252,3 +252,29 @@ func (s *Server) deleteSection() string {
 	b.WriteString(`</section>`)
 	return b.String()
 }
+
+// workspaceOut is a workspace as the workspaces page lists it.
+type workspaceOut struct {
+	Name    string `json:"name"`
+	Dir     string `json:"dir"`
+	URL     string `json:"url,omitempty"`
+	Running bool   `json:"running"`
+	This    bool   `json:"this,omitempty"`
+}
+
+// apiWorkspaces is the workspaces on this machine for an agent, as this
+// page lists them: the fleet is the server's, so it stays beside it.
+func (s *Server) apiWorkspaces(w http.ResponseWriter, r *http.Request) {
+	cur := s.app.Workspace
+	this := workspaceOut{Name: cur.Config.Name, Dir: cur.Dir, Running: true, This: true}
+	for _, k := range s.machine().KnownWorkspaces() {
+		if sameDir(k.Dir, cur.Dir) && k.Addr != "" {
+			this.URL = "http://" + k.Addr + "/"
+		}
+	}
+	list := []workspaceOut{this}
+	for _, o := range s.others() {
+		list = append(list, workspaceOut{Name: o.Name, Dir: o.Dir, URL: o.URL, Running: o.Running})
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"workspaces": list})
+}

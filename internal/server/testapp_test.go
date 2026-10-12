@@ -77,4 +77,6 @@ var (
 	seedTasks     = servertest.SeedTasks
 	addCollection = servertest.AddCollection
 	written       = servertest.Written
+	apiAs         = servertest.Headed
+	newestEntry   = servertest.NewestEntry
 )

@@ -3,8 +3,6 @@ package server
 import (
 	"encoding/json"
 	"html/template"
-	"net/http"
-	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
@@ -12,7 +10,8 @@ import (
 )
 
 // Saving from a copy that has gone out of date (see records/versions.go), for
-// the two who save: a person's page and an agent's request.
+// the two who save: a person's page, here, and an agent's request
+// (api/api_writes.go).
 
 // editing is what a record says to the inline editor wherever it is
 // shown, its own page or a block on the canvas, which are the same record
@@ -66,19 +65,4 @@ func sinceOpened(t *schema.Type, rec *store.Record, fields, clean map[string]any
 		}
 	}
 	return crossed
-}
-
-// staleFor refuses an agent's change made from an older version than the
-// record's, when it says which one it read with If-Match, and answers
-// with the record as it is, to change again.
-func (s *Server) staleFor(w http.ResponseWriter, r *http.Request, rec *store.Record) bool {
-	want := strings.TrimSpace(r.Header.Get("If-Match"))
-	if want == "" || want == "*" || records.SameVersion(rec, want) {
-		return false
-	}
-	writeJSON(w, http.StatusPreconditionFailed, map[string]any{
-		"error":   apiError{Code: "stale", Message: "it has changed since the version you read (If-Match " + want + "): nothing was written. current is the record as it is now; make your change to it and send it again with If-Match set to its updated_at"},
-		"current": s.titled(rec),
-	})
-	return true
 }

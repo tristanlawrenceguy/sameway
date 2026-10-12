@@ -1,4 +1,4 @@
-package server
+package api
 
 import (
 	"net/http"
@@ -8,6 +8,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // A person sees a change arrive: the page follows along. An agent had
@@ -20,13 +21,13 @@ import (
 
 const changesMax = 200
 
-func (s *Server) apiChanges(w http.ResponseWriter, r *http.Request) {
+func (s *Service) apiChanges(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	since := time.Time{}
 	if c := q.Get("since"); c != "" {
 		t, err := time.Parse(time.RFC3339Nano, c)
 		if err != nil {
-			writeError(w, &badRequest{"since is the cursor a previous answer gave, such as " + time.Now().UTC().Format(time.RFC3339Nano)}) // wall clock: a cursor is a log entry's own time, which the store stamps
+			web.WriteError(w, &badRequest{"since is the cursor a previous answer gave, such as " + time.Now().UTC().Format(time.RFC3339Nano)}) // wall clock: a cursor is a log entry's own time, which the store stamps
 			return
 		}
 		since = t
@@ -46,7 +47,7 @@ func (s *Server) apiChanges(w http.ResponseWriter, r *http.Request) {
 			seen = n
 			out, cursor, more := s.changesSince(since, limit, owner, q.Get("since") == "")
 			if len(out) > 0 || !time.Now().Before(deadline) { // wall clock: how long a request waits
-				writeJSON(w, http.StatusOK, map[string]any{"changes": out, "cursor": cursor, "more": more,
+				web.WriteJSON(w, http.StatusOK, map[string]any{"changes": out, "cursor": cursor, "more": more,
 					"next":      "/api/changes?since=" + cursor,
 					"untrusted": "each change's title was written by its written_by: " + records.Untrusted})
 				return
@@ -95,7 +96,7 @@ func (b *badRequest) Error() string { return b.msg }
 
 // changesSince lists the changes after since that the asker may read.
 // With no cursor at all, the newest few, to start from.
-func (s *Server) changesSince(since time.Time, limit int, owner, start bool) ([]map[string]any, string, bool) {
+func (s *Service) changesSince(since time.Time, limit int, owner, start bool) ([]map[string]any, string, bool) {
 	// Newest first, back to the cursor, then turned round: a long log is
 	// read only as far back as the cursor.
 	n := 500
@@ -132,7 +133,7 @@ func (s *Server) changesSince(since time.Time, limit int, owner, start bool) ([]
 
 // change is one entry as an agent reads it, or nil when it is not the
 // asker's to read.
-func (s *Server) change(e *store.Record, owner bool, writers *records.Writers) map[string]any {
+func (s *Service) change(e *store.Record, owner bool, writers *records.Writers) map[string]any {
 	target, _ := e.Fields["target"].(string)
 	id, _ := e.Fields["target_id"].(string)
 	t, isType := s.app.Types.Get(target)
@@ -144,7 +145,7 @@ func (s *Server) change(e *store.Record, owner bool, writers *records.Writers) m
 		c["id"] = id
 		if isType {
 			if rec, err := s.app.Store.Get(target, id); err == nil {
-				c["title"], c["version"], c["page"] = s.title(t, rec), records.Version(rec), "/t/"+target+"/"+id
+				c["title"], c["version"], c["page"] = s.Title(t, rec), records.Version(rec), "/t/"+target+"/"+id
 				c["written_by"] = writers.Of(target, rec).Words
 			} else {
 				c["gone"] = true

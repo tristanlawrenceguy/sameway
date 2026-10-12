@@ -14,6 +14,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
+	"github.com/tristanlawrenceguy/sameway/internal/server/api"
 	"github.com/tristanlawrenceguy/sameway/internal/server/connect"
 	"github.com/tristanlawrenceguy/sameway/internal/server/exchange"
 	"github.com/tristanlawrenceguy/sameway/internal/server/inbox"
@@ -36,7 +37,7 @@ type Server struct {
 	exchange *exchange.Service             // imports and exports; internal/server/exchange
 	connect  *connect.Service              // connecting the assistant to a model; internal/server/connect
 	inbox    *inbox.Service                // email in and what waits to be sorted; internal/server/inbox
-	logged   signal                        // a change logged here, for those waiting on /api/changes; changes.go
+	api      *api.Service                  // the JSON API for agents; internal/server/api
 	pairing  pairing                       // the codes a phone on the Wi-Fi pairs with; phone_pair.go
 }
 
@@ -47,6 +48,7 @@ func New(a *app.App) *Server {
 	s.exchange = exchange.New(face{s})
 	s.connect = connect.New(face{s})
 	s.inbox = inbox.New(face{s})
+	s.api = api.New(face{s})
 	s.routes()
 	s.hooks() // what the rest of the app asks of the pages; see hooks.go
 	s.mux = s.wrapNotFound(s.mux)
