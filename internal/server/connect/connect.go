@@ -83,7 +83,7 @@ func (s *Service) modelProblem() (string, []modelChoice) {
 		ok, why = llm.Answers(ctx, s.app.LLMConfig())
 		why = s.wakeOllama(ok, why)
 	}
-	s.model.at, s.model.ok, s.model.why, s.model.choices = time.Now(), ok, why, nil
+	s.model.at, s.model.ok, s.model.why, s.model.choices = time.Now(), ok, why, nil // wall clock: how long ago the model was asked
 	if !ok {
 		s.model.choices = s.modelChoices(ctx)
 	}
@@ -280,7 +280,7 @@ func (s *Service) wakeOllama(ok bool, why string) string {
 		return "Ollama is starting. This page follows when it is ready."
 	}
 	if llm.WakeOllama() {
-		s.model.woke, s.model.waking = time.Now(), true
+		s.model.woke, s.model.waking = time.Now(), true // wall clock: how long Ollama has had to start
 		return "Ollama was not running, so Sameway is starting it. This page follows when it is ready."
 	}
 	return "Ollama is not running on this computer."

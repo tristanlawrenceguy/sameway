@@ -243,7 +243,7 @@ func (s *Service) clearing() (records.Change, error) {
 func now() string {
 	stampMu.Lock()
 	defer stampMu.Unlock()
-	t := time.Now().UTC()
+	t := time.Now().UTC() // wall clock: a stamp that orders chats, finer than the records' clock
 	if !t.After(lastStamp) {
 		t = lastStamp.Add(time.Nanosecond)
 	}

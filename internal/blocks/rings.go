@@ -33,8 +33,8 @@ func AboutOf(st *store.Store, path string) (*schema.Type, *store.Record, bool) {
 
 // RingWords is what a ring says beyond the page and where it leads: the
 // thing it is about, and for a habit where it stands; the reminder
-// itself when it is about nothing.
-func RingWords(st *store.Store, rec *store.Record) (text, url string) {
+// itself when it is about nothing. now is the time it is for the person.
+func RingWords(st *store.Store, rec *store.Record, now time.Time) (text, url string) {
 	url = "/t/" + records.ReminderType + "/" + rec.ID
 	text = "It is time."
 	about, _ := rec.Fields["about"].(string)
@@ -50,7 +50,7 @@ func RingWords(st *store.Store, rec *store.Record) (text, url string) {
 	}
 	if t.Name == records.HabitType {
 		h := HabitOf(target)
-		sum := track.Summarise(h, EntriesOf(st, h.ID), time.Now(), 1)
+		sum := track.Summarise(h, EntriesOf(st, h.ID), now, 1)
 		text = h.Name + ": " + track.Progress(h, sum) + " so far"
 	}
 	return text, url

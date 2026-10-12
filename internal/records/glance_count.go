@@ -61,7 +61,7 @@ func CountsOf(st *store.Store, t *schema.Type, recs []*store.Record) Counts {
 		if len(recs) == 1 {
 			cond = w.Field + "=" + recs[0].ID
 		}
-		in, err := query.Filter(st, w.T, []string{cond}, "", 0, time.Now())
+		in, err := query.Filter(st, w.T, []string{cond}, "", 0, time.Now()) // wall clock: the conditions are ids, with no dates to anchor
 		if err != nil {
 			continue
 		}

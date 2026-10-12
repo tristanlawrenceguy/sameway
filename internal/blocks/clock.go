@@ -37,7 +37,7 @@ func resolveClock(w *Workspace, props map[string]any, _ Place) map[string]any {
 			}
 			switch rec.Fields["state"] {
 			case "rang":
-				if text, _ := RingWords(w.Store, rec); rec.Fields["about"] != nil && text != item["title"] {
+				if text, _ := RingWords(w.Store, rec, now); rec.Fields["about"] != nil && text != item["title"] {
 					item["text"] = text
 				}
 				ringing = append(ringing, item)

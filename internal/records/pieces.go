@@ -35,7 +35,7 @@ func Parts(st *store.Store, t *schema.Type, piece *store.Record) []*store.Record
 	if !Organised(t) {
 		return nil
 	}
-	recs, _ := query.Filter(st, t, []string{PartOf + "=" + piece.ID}, "created_at", 0, time.Now())
+	recs, _ := query.Filter(st, t, []string{PartOf + "=" + piece.ID}, "created_at", 0, time.Now()) // wall clock: the conditions are ids, with no dates to anchor
 	order, _ := piece.Fields[PartsOrder].([]any)
 	rank := func(r *store.Record) int {
 		for i, id := range order {
@@ -81,7 +81,7 @@ func Material(st *store.Store, t *schema.Type, rec *store.Record) (mine []*store
 		return nil, nil
 	}
 	of := func(id string) []*store.Record {
-		recs, _ := query.Filter(st, t, []string{MaterialFor + "=" + id}, "created_at", 0, time.Now())
+		recs, _ := query.Filter(st, t, []string{MaterialFor + "=" + id}, "created_at", 0, time.Now()) // wall clock: the conditions are ids, with no dates to anchor
 		return recs
 	}
 	mine, above = of(rec.ID), map[string][]*store.Record{}

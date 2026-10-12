@@ -25,7 +25,7 @@ type pacer struct {
 }
 
 func newPacer(changes int, over time.Duration) *pacer {
-	return &pacer{per: over / time.Duration(changes), most: float64(changes), now: time.Now,
+	return &pacer{per: over / time.Duration(changes), most: float64(changes), now: time.Now, // wall clock: a pace is real seconds, whatever day it is for the person
 		left: map[string]float64{}, since: map[string]time.Time{}}
 }
 

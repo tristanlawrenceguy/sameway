@@ -102,7 +102,7 @@ func (a *automation) fresh(action, rec string) bool {
 	if time.Since(a.last[key]) < quiet {
 		return false
 	}
-	a.last[key] = time.Now()
+	a.last[key] = time.Now() // wall clock: a quiet spell is real time, beside time.Since above
 	return true
 }
 

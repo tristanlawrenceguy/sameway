@@ -34,7 +34,7 @@ func (s *Service) Warm(ctx context.Context) bool {
 	if at, ok := warmed.Load(o.Model); ok && time.Since(at.(time.Time)) < warmEvery {
 		return false
 	}
-	warmed.Store(o.Model, time.Now())
+	warmed.Store(o.Model, time.Now()) // wall clock: a model goes cold in real time, beside time.Since above
 	history, err := s.history()
 	if err != nil {
 		return false
