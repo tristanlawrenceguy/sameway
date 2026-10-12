@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/meetfetch"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
@@ -17,9 +18,6 @@ import (
 // from Zoom here, found by the join link in its where, and given to it as
 // its recording with who spoke; the help page says Zoom is connected.
 func TestAMeetingsTranscriptIsBroughtFromItsApp(t *testing.T) {
-	a, h := newApp(t)
-	srv := h.(*server.Server)
-	srv.UseAppTokens(filepath.Join(t.TempDir(), "apps.json"))
 	zoom := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/oauth/token":
@@ -31,7 +29,9 @@ func TestAMeetingsTranscriptIsBroughtFromItsApp(t *testing.T) {
 		}
 	}))
 	defer zoom.Close()
-	meetfetch.ZoomOAuth, meetfetch.ZoomAPI = zoom.URL+"/oauth/token", zoom.URL
+	a, h := newAppWith(t, app.Options{Meetings: meetfetch.At{ZoomOAuth: zoom.URL + "/oauth/token", ZoomAPI: zoom.URL}})
+	srv := h.(*server.Server)
+	srv.UseAppTokens(filepath.Join(t.TempDir(), "apps.json"))
 	t.Setenv("ZOOM_SECRET_TEST", "secret")
 	for k, v := range map[string]string{"meetings.zoom_account_id": "acct", "meetings.zoom_client_id": "cid", "meetings.zoom_secret_env": "ZOOM_SECRET_TEST"} {
 		if err := a.Workspace.Set(k, v); err != nil {

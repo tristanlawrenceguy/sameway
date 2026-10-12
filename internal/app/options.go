@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/meetfetch"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
@@ -44,6 +45,9 @@ type Options struct {
 	// KeyCheck is where a pasted or saved key is asked about; the zero
 	// value is the providers' own addresses.
 	KeyCheck llm.KeyCheck
+	// Meetings is where Microsoft and Zoom answer for meeting
+	// transcripts; the zero value is their own addresses.
+	Meetings meetfetch.At
 	// After is how the background jobs wait (App.Jobs); nil is
 	// time.After. A test gives a runner.Fake's, so nothing sleeps.
 	After func(time.Duration) <-chan time.Time

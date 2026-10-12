@@ -56,7 +56,7 @@ func (s *Service) UseAppTokens(path string) { s.apps.tokens = &meetfetch.Tokens{
 
 func (s *Service) teams() *meetfetch.Teams {
 	c := s.app.Workspace.Config.Meetings
-	return &meetfetch.Teams{ClientID: c.TeamsClientID, Tenant: c.TeamsTenant, Tokens: s.appTokens()}
+	return &meetfetch.Teams{ClientID: c.TeamsClientID, Tenant: c.TeamsTenant, Tokens: s.appTokens(), At: s.app.Options().Meetings}
 }
 
 func (s *Service) zoom() *meetfetch.Zoom {
@@ -65,7 +65,7 @@ func (s *Service) zoom() *meetfetch.Zoom {
 	if c.ZoomSecretEnv != "" {
 		secret = os.Getenv(c.ZoomSecretEnv)
 	}
-	return &meetfetch.Zoom{AccountID: c.ZoomAccountID, ClientID: c.ZoomClientID, Secret: secret}
+	return &meetfetch.Zoom{AccountID: c.ZoomAccountID, ClientID: c.ZoomClientID, Secret: secret, At: s.app.Options().Meetings}
 }
 
 func (s *Service) teamsConnected() bool {
