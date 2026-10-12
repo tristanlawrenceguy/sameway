@@ -52,6 +52,10 @@ func NewWith(t *testing.T, o app.Options) (*app.App, http.Handler) {
 	if o.Machine == (workspace.Machine{}) {
 		o.Machine = Machine(t)
 	}
+	// No model server this computer runs is offered: a test gives its own.
+	if o.LocalModels == nil {
+		o.LocalModels = []llm.Candidate{}
+	}
 	a, err := app.Open(testkit.Starter(t), o)
 	if err != nil {
 		t.Fatal(err)

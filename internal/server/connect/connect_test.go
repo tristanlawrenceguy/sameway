@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 )
 
@@ -18,6 +19,7 @@ import (
 // and offers what is on this computer, each with where the conversation
 // would go. One press connects it, and the card goes.
 func TestAFirstRunOffersTheModelsOnThisComputer(t *testing.T) {
+	t.Parallel()
 	ollama := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(r.URL.Path, "/models") {
 			io.WriteString(w, `{"data":[{"id":"llama3.1"},{"id":"qwen3"}]}`)
@@ -26,11 +28,7 @@ func TestAFirstRunOffersTheModelsOnThisComputer(t *testing.T) {
 		http.NotFound(w, r)
 	}))
 	defer ollama.Close()
-	was := llm.DefaultCandidates
-	llm.DefaultCandidates = []llm.Candidate{{Server: "Ollama", BaseURL: ollama.URL + "/v1"}}
-	defer func() { llm.DefaultCandidates = was }()
-
-	a, h := newApp(t)
+	a, h := newAppWith(t, app.Options{LocalModels: []llm.Candidate{{Server: "Ollama", BaseURL: ollama.URL + "/v1"}}})
 	page := get(t, h, "/chat").Body.String()
 	for _, want := range []string{"Connect the assistant to an AI model", "No AI model is set up yet.", "Use Ollama (llama3.1)", "Your conversations and notes stay here.", "Check again"} {
 		if !strings.Contains(page, want) {
@@ -61,9 +59,7 @@ func TestAFirstRunOffersTheModelsOnThisComputer(t *testing.T) {
 // When the model stops answering, the card says so in words a person
 // reads, and when nothing is found it says what to install.
 func TestAModelThatStoppedAnsweringIsSaidPlainly(t *testing.T) {
-	was := llm.DefaultCandidates
-	llm.DefaultCandidates = nil
-	defer func() { llm.DefaultCandidates = was }()
+	t.Parallel()
 	gone := httptest.NewServer(http.NotFoundHandler())
 	base := gone.URL + "/v1"
 	gone.Close()

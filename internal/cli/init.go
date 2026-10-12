@@ -50,8 +50,8 @@ func (c *ctx) initCmd() error {
 			found = &hits[0]
 			// An Ollama model is used through Sameway's copy with room for
 			// its prompt, which Ollama's default would cut (llm/ollama.go).
-			if llm.IsOllama(found.BaseURL) {
-				if roomy, err := llm.OllamaRoomy(context.Background(), found.Model); err == nil {
+			if here := (llm.Ollama{}); here.Is(found.BaseURL) {
+				if roomy, err := here.Roomy(context.Background(), found.Model); err == nil {
 					found.Model = roomy
 				}
 			}

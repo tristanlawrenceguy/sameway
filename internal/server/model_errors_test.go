@@ -15,6 +15,7 @@ import (
 // newest failure offers Send again with what was asked; a model gone from
 // its server brings the connect card back.
 func TestAFailedTurnSaysWhatToDoAndOffersSendAgain(t *testing.T) {
+	t.Parallel()
 	gone := true
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(r.URL.Path, "/models") {
@@ -27,9 +28,6 @@ func TestAFailedTurnSaysWhatToDoAndOffersSendAgain(t *testing.T) {
 		}
 	}))
 	defer srv.Close()
-	was := llm.DefaultCandidates
-	llm.DefaultCandidates = nil
-	defer func() { llm.DefaultCandidates = was }()
 	a, h := newApp(t)
 	a.Workspace.Config.LLM = llm.Config{Provider: "openai", BaseURL: srv.URL + "/v1", Model: "qwen"}
 	a.Chat.Provider, a.Chat.ProviderErr = &llm.OpenAI{BaseURL: srv.URL + "/v1", Model: "qwen"}, nil
