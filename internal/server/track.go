@@ -77,7 +77,7 @@ func (s *Server) habitLog(w http.ResponseWriter, r *http.Request) {
 func (s *Server) habitSection(rec *store.Record) template.HTML {
 	now := s.now()
 	h := track.Normal(blocks.HabitOf(rec))
-	item := blocks.Standing(s.app.Store, rec, now)
+	item := blocks.Standing(s.app.Store, rec, now, now)
 	item["dated"] = true
 	var b strings.Builder
 	// The heading names the part of the page; the tracker under it is the

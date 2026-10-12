@@ -94,7 +94,7 @@ type Measures struct {
 // NewMeasures holds readings, starting from those written down before,
 // and writes them down with keep after each change.
 func NewMeasures(saved string, keep func(string)) *Measures {
-	m := &Measures{by: map[string]Reading{}, keep: keep, now: time.Now}
+	m := &Measures{by: map[string]Reading{}, keep: keep, now: time.Now} // wall clock: a reading goes stale in real time
 	var list []Reading
 	if json.Unmarshal([]byte(saved), &list) == nil {
 		for _, r := range list {

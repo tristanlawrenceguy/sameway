@@ -30,5 +30,5 @@ func logCall(call llm.ToolCall, r toolResult) {
 	if r.isErr {
 		outcome = "refused"
 	}
-	fmt.Fprintf(f, "%s %s %s %s\t%s\n", time.Now().Format("15:04:05"), outcome, call.Name, trim.Clip(string(call.Args), 400), trim.Clip(strings.ReplaceAll(r.text, "\n", " "), 400))
+	fmt.Fprintf(f, "%s %s %s %s\t%s\n", time.Now().Format("15:04:05"), outcome, call.Name, trim.Clip(string(call.Args), 400), trim.Clip(strings.ReplaceAll(r.text, "\n", " "), 400)) // wall clock: a debugging log's own time
 }

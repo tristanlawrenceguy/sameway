@@ -34,7 +34,7 @@ func Conversation(st *store.Store, rec *store.Record) []*store.Record {
 	if err != nil {
 		return nil
 	}
-	rest, err := query.Filter(st, t, []string{"thread=" + root}, "", 0, time.Now())
+	rest, err := query.Filter(st, t, []string{"thread=" + root}, "", 0, time.Now()) // wall clock: the conditions are ids, with no dates to anchor
 	if err != nil || len(rest) == 0 {
 		return nil
 	}

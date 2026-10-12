@@ -117,5 +117,5 @@ func Used(st *store.Store, a *store.Record) {
 			return
 		}
 	}
-	st.Update(AgentType, a.ID, map[string]any{"last_used": time.Now().UTC().Format(time.RFC3339)})
+	st.Update(AgentType, a.ID, map[string]any{"last_used": time.Now().UTC().Format(time.RFC3339)}) // wall clock: when the key was really used, beside time.Since above
 }

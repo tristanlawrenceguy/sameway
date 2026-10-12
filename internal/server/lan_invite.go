@@ -35,7 +35,7 @@ func (s *Server) lanInvites() []lanInvite {
 func (s *Server) saveLanInvites(in []lanInvite) {
 	var kept []lanInvite
 	for _, i := range in {
-		if time.Now().Before(i.Until) {
+		if s.now().Before(i.Until) {
 			kept = append(kept, i)
 		}
 	}
@@ -71,7 +71,7 @@ func (s *Server) phoneInvite(w http.ResponseWriter, r *http.Request) {
 	}
 	name, _ := p.Fields["name"].(string)
 	code := token(16)
-	s.saveLanInvites(append(s.lanInvites(), lanInvite{Hash: hashOf(code), Person: p.ID, Until: time.Now().Add(lanInviteFor)}))
+	s.saveLanInvites(append(s.lanInvites(), lanInvite{Hash: hashOf(code), Person: p.ID, Until: s.now().Add(lanInviteFor)}))
 	link := base + "/pair?invite=" + code
 	said := "Send " + name + " this link: " + link + ". It works once, for a week, on this Wi-Fi."
 	if pageAction(r) {
@@ -98,7 +98,7 @@ func (s *Server) lanJoin(w http.ResponseWriter, r *http.Request) {
 		}
 		kept = append(kept, i)
 	}
-	if found == nil || time.Now().After(found.Until) {
+	if found == nil || s.now().After(found.Until) {
 		lanSay(w, "This invite does not work: it has been used, taken back, or is more than a week old. Ask for a new one.")
 		return
 	}
@@ -115,7 +115,7 @@ func (s *Server) lanJoin(w http.ResponseWriter, r *http.Request) {
 	name, _ := p.Fields["name"].(string)
 	secret := token(32)
 	device := name + "'s " + phoneName(r.UserAgent())
-	s.saveLanDevices(append(s.lanDevices(), lanDevice{ID: token(6), Hash: hashOf(secret), Name: device, Person: p.ID, Added: time.Now()}))
+	s.saveLanDevices(append(s.lanDevices(), lanDevice{ID: token(6), Hash: hashOf(secret), Name: device, Person: p.ID, Added: s.now()}))
 	records.Record(s.app.Store, "human", records.Change{Action: "paired", Component: "device", Detail: device})
 	http.SetCookie(w, &http.Cookie{Name: lanCookie, Value: secret, Path: "/", HttpOnly: true, SameSite: http.SameSiteLaxMode, MaxAge: 400 * 24 * 3600})
 	http.Redirect(w, r, "/", http.StatusSeeOther)

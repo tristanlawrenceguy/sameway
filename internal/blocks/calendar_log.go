@@ -40,7 +40,7 @@ func (ws *Workspace) logForDay(typeName string, kinds, where []string, day time.
 		if archived, _ := rec.Fields["archived"].(bool); archived || (only != "" && rec.ID != only) {
 			continue
 		}
-		item := Standing(ws.Store, rec, asOf)
+		item := Standing(ws.Store, rec, asOf, ws.now())
 		item["dated"], item["on"] = true, on
 		habits = append(habits, item)
 	}

@@ -67,7 +67,7 @@ func PageParts(st *store.Store, t *schema.Type, rec *store.Record) []PagePart {
 	if t.Name == FileType && (rec.Fields["kind"] == "audio" || rec.Fields["kind"] == "video") && rec.Fields["text"] != "" {
 		if et, ok := st.Types().Get(EventType); ok {
 			if _, has := et.Field("recording"); has {
-				if had, _ := query.Filter(st, et, []string{"recording=" + rec.ID}, "", 1, time.Now()); len(had) == 0 {
+				if had, _ := query.Filter(st, et, []string{"recording=" + rec.ID}, "", 1, time.Now()); len(had) == 0 { // wall clock: the conditions are ids, with no dates to anchor
 					add("write-up", "the offer to write up the meeting in it")
 				}
 			}

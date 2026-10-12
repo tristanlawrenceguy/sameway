@@ -28,8 +28,8 @@ func periodName(start time.Time, cadence string) string {
 
 // periodWhen is when a habit's standing is for, after its name: today, this
 // week, or, for a day logged for in the past, on Mon 21 Sep.
-func periodWhen(now time.Time, cadence string) string {
-	if track.PeriodStart(now, cadence).Equal(track.PeriodStart(time.Now(), cadence)) {
+func periodWhen(now, today time.Time, cadence string) string {
+	if track.PeriodStart(now, cadence).Equal(track.PeriodStart(today, cadence)) {
 		if cadence == "day" || cadence == "" {
 			return "today"
 		}

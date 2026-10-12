@@ -29,7 +29,7 @@ func (s *Server) Ring(now time.Time) []*store.Record {
 	}
 	t, _ := s.app.Types.Get(ReminderType)
 	for _, rec := range rang {
-		text, url := blocks.RingWords(s.app.Store, rec)
+		text, url := blocks.RingWords(s.app.Store, rec, now)
 		go s.notify(s.title(t, rec), text, s.linkTo(url))
 	}
 	return rang
