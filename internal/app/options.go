@@ -34,6 +34,13 @@ type Options struct {
 	Pages *http.Client
 	// Ntfy is where phone topics are made; "" is notify.NtfyServer.
 	Ntfy string
+	// Ollama is Ollama on this computer: where it listens and how it is
+	// started. The zero value is the real one; a test gives its fake's.
+	Ollama llm.Ollama
+	// LocalModels are the model servers looked for on this computer when
+	// the assistant has none; nil is llm.DefaultCandidates, and an empty
+	// list looks for none.
+	LocalModels []llm.Candidate
 	// After is how the background jobs wait (App.Jobs); nil is
 	// time.After. A test gives a runner.Fake's, so nothing sleeps.
 	After func(time.Duration) <-chan time.Time

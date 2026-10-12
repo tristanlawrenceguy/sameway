@@ -48,6 +48,9 @@ type Service struct {
 	Workdir string
 	// HTTP sends webhook actions; nil is a client with a ten second limit.
 	HTTP *http.Client
+	// Ollama is Ollama on this computer, set by the app: a model there is
+	// readied ahead (warm.go) and given fewer tools (toolset.go).
+	Ollama llm.Ollama
 	// Look reads a page of the workspace the way the person gets it, with
 	// its scripts run where a browser is at hand; set by the server, nil
 	// where there is none. See look.go.

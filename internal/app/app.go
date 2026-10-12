@@ -53,6 +53,9 @@ func Open(dir string, o Options) (*App, error) {
 	if o.Ntfy == "" {
 		o.Ntfy = notify.NtfyServer
 	}
+	if o.LocalModels == nil {
+		o.LocalModels = llm.DefaultCandidates
+	}
 	if o.Machine != (workspace.Machine{}) {
 		ws.Machine = o.Machine
 	}
@@ -114,7 +117,7 @@ func Open(dir string, o Options) (*App, error) {
 	// Keeping the program current is the program's own business, not the
 	// workspace's: the updater needs nothing from here.
 	a.Chat.Update = update.Updater{}.Run
-	a.Chat.Workdir, a.Chat.HTTP = ws.Dir, o.HTTP
+	a.Chat.Workdir, a.Chat.HTTP, a.Chat.Ollama = ws.Dir, o.HTTP, o.Ollama
 	a.Jobs = runner.New(runner.Clock{Now: a.Now, After: o.After})
 	return a, nil
 }
