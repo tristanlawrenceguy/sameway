@@ -1,14 +1,17 @@
 package server_test
 
 import (
-	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"regexp"
 	"strings"
+	"sync/atomic"
 	"testing"
+	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/app"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 )
 
@@ -76,5 +79,29 @@ func TestSomeoneOnTheWiFiIsInvitedByName(t *testing.T) {
 	}
 	if res := ask("GET", "/", cookie); res.Code != http.StatusForbidden || !strings.Contains(res.Body.String(), "no longer opens") {
 		t.Errorf("access taken away shuts the device out: %d", res.Code)
+	}
+}
+
+// An invite lasts a week on the app's clock, the one everything else
+// here is dated by.
+func TestAnInviteLastsAWeek(t *testing.T) {
+	t.Parallel()
+	var now atomic.Int64
+	now.Store(time.Date(2026, 10, 1, 9, 0, 0, 0, time.Local).Unix())
+	a, _ := newAppWith(t, app.Options{Clock: func() time.Time { return time.Unix(now.Load(), 0) }})
+	srv := server.New(a)
+	h := srv.WithFleet(&server.Fleet{Launch: func(dir, addr string) error { return nil }, Exit: func() {},
+		LAN:     func(bool) error { return nil },
+		LANBase: func() string { return "http://192.168.1.20:8080" }})
+	res := postForm(t, h, "/phone/invite", url.Values{"name": {"Ana"}, "access": {"view"}})
+	m := regexp.MustCompile(`/pair\?invite=([0-9a-f]+)`).FindStringSubmatch(res.Body.String())
+	if m == nil {
+		t.Fatalf("no invite: %s", truncate(res.Body.String()))
+	}
+	now.Add(int64(8 * 24 * time.Hour / time.Second))
+	w := httptest.NewRecorder()
+	srv.LAN(h).ServeHTTP(w, httptest.NewRequest("GET", "/pair?invite="+m[1], nil))
+	if w.Code != http.StatusForbidden || !strings.Contains(w.Body.String(), "more than a week old") {
+		t.Errorf("an invite eight days old still works: %d", w.Code)
 	}
 }

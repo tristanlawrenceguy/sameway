@@ -100,7 +100,7 @@ func (s *Server) lanPair(w http.ResponseWriter, r *http.Request) {
 	}
 	secret := token(32)
 	name := phoneName(r.UserAgent())
-	devices := append(s.lanDevices(), lanDevice{ID: token(6), Hash: hashOf(secret), Name: name, Added: time.Now()})
+	devices := append(s.lanDevices(), lanDevice{ID: token(6), Hash: hashOf(secret), Name: name, Added: s.now()})
 	s.saveLanDevices(devices)
 	records.Record(s.app.Store, "human", records.Change{Action: "paired", Component: "device", Detail: name})
 	http.SetCookie(w, &http.Cookie{Name: lanCookie, Value: secret, Path: "/", HttpOnly: true, SameSite: http.SameSiteLaxMode, MaxAge: 400 * 24 * 3600})

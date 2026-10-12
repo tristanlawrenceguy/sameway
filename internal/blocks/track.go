@@ -80,8 +80,9 @@ func EntriesOf(st *store.Store, habitID string) []track.Entry {
 	return out
 }
 
-// Standing is a habit as the tracker shows it.
-func Standing(st *store.Store, rec *store.Record, now time.Time) map[string]any {
+// Standing is a habit as the tracker shows it, as it stood at now: today,
+// the person's, or a day logged for in the past.
+func Standing(st *store.Store, rec *store.Record, now, today time.Time) map[string]any {
 	h := track.Normal(HabitOf(rec))
 	sum := track.Summarise(h, EntriesOf(st, h.ID), now, map[string]int{"day": 7, "week": 4, "month": 6, "year": 3}[h.Cadence])
 	pct := 0
@@ -117,7 +118,7 @@ func Standing(st *store.Store, rec *store.Record, now time.Time) map[string]any 
 		last = append(last, map[string]any{"date": periodName(p.Start, h.Cadence), "met": p.Met, "amount": p.Amount, "words": periodWords(h, p, going, sum), "logged": p.Logged, "going": going && !p.Met})
 	}
 	item["last"] = last
-	item["when"] = periodWhen(now, h.Cadence)
+	item["when"] = periodWhen(now, today, h.Cadence)
 	return item
 }
 
@@ -148,7 +149,7 @@ func resolveTracker(w *Workspace, props map[string]any, _ Place) map[string]any 
 			if len(tags) > 0 && !hasTag(rec, tags) {
 				continue
 			}
-			item := Standing(w.Store, rec, now)
+			item := Standing(w.Store, rec, now, now)
 			if item["period"] != "day" {
 				out["when"] = "this period"
 			}

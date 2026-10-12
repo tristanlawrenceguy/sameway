@@ -33,7 +33,7 @@ func (s *Server) tellRings(w io.Writer, told map[string]bool) {
 		t, _ := s.app.Types.Get(ReminderType)
 		// What it is about, in words and as a link, as the machine's own
 		// notification says it: Water, 3 of 8 glasses so far.
-		text, link := blocks.RingWords(s.app.Store, rec)
+		text, link := blocks.RingWords(s.app.Store, rec, s.now())
 		body, _ := json.Marshal(map[string]any{"id": rec.ID, "title": s.title(t, rec), "href": relate.Page(ReminderType, rec.ID), "text": text, "url": link})
 		fmt.Fprintf(w, "event: ring\ndata: %s\n\n", body)
 	}
