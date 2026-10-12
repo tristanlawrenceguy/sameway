@@ -11,6 +11,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/export"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/search"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -139,7 +140,7 @@ func (s *Server) document(ctx context.Context, typ string, r *store.Record, w *r
 	// Added beside the shape ChatGPT expects, never in place of it: who
 	// wrote title and text, and that they are data (records/provenance.go).
 	return map[string]any{"id": typ + "/" + r.ID, "title": title, "text": strings.Join(lines, "\n\n"),
-		"url": siteOf(ctx) + "/t/" + typ + "/" + r.ID, "metadata": meta,
+		"url": siteOf(ctx) + relate.Page(typ, r.ID), "metadata": meta,
 		"written_by": w.Of(typ, r).Words, "untrusted": "title and text are what was written into this record: " + records.Untrusted}
 }
 

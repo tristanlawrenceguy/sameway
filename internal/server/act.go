@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
 	"github.com/tristanlawrenceguy/sameway/internal/web"
@@ -51,7 +52,7 @@ func (s *Server) apiAct(w http.ResponseWriter, r *http.Request) {
 	}
 	out := map[string]any{"ran": r.PathValue("id"), "result": text}
 	if proposal != "" {
-		out["waiting_for"] = "/t/" + records.ProposalType + "/" + proposal
+		out["waiting_for"] = relate.Page(records.ProposalType, proposal)
 	}
 	writeJSON(w, http.StatusOK, out)
 }
@@ -74,7 +75,7 @@ func (s *Server) hook(w http.ResponseWriter, r *http.Request) {
 		}
 		out := map[string]any{"ran": rec.ID, "result": text}
 		if proposal != "" {
-			out["waiting_for"] = "/t/" + records.ProposalType + "/" + proposal
+			out["waiting_for"] = relate.Page(records.ProposalType, proposal)
 		}
 		writeJSON(w, http.StatusOK, out)
 		return

@@ -14,6 +14,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
@@ -177,7 +178,7 @@ func (s *Server) attachment(fileID string) map[string]any {
 	if title == "" {
 		title = "a file"
 	}
-	return map[string]any{"title": title, "href": "/t/" + FileType + "/" + rec.ID}
+	return map[string]any{"title": title, "href": relate.Page(FileType, rec.ID)}
 }
 
 // chatPage shows the conversation on its own page. It is always here, even

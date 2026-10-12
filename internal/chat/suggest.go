@@ -8,6 +8,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/prose"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
@@ -138,7 +139,7 @@ func (s *Service) suggestEdits(typeName, id, field string, edits []suggested) to
 		return fail("could not suggest: %v", err)
 	}
 	title := records.Name(s.Store, t, rec)
-	page := "/t/" + t.Name + "/" + rec.ID
+	page := relate.Page(t.Name, rec.ID)
 	c := records.Change{Action: "suggested", Component: t.Name, ID: rec.ID, Href: page,
 		Detail: fmt.Sprintf("%s, %s", title, schema.Count(len(edits), "change")), Ops: done}
 	return toolResult{text: fmt.Sprintf("suggested %s to %s %s; they wait on its page, %s, for the person to accept or decline each. Nothing is changed until they do.",

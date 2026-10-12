@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
@@ -69,7 +70,7 @@ func (s *Server) activityFacts(e *store.Record) []any {
 	// What it took back, by that change's own words.
 	if undoes := str("undoes"); undoes != "" {
 		if u, err := s.app.Store.Get(records.ActivityType, undoes); err == nil {
-			items = append(items, map[string]any{"label": "It took back", "value": records.Sentence(s.app.Store, u.Fields), "href": "/t/" + records.ActivityType + "/" + u.ID})
+			items = append(items, map[string]any{"label": "It took back", "value": records.Sentence(s.app.Store, u.Fields), "href": relate.Page(records.ActivityType, u.ID)})
 		}
 	}
 

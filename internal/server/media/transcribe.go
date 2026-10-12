@@ -14,6 +14,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/blocks"
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/speech"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
@@ -136,7 +137,7 @@ func (s *Service) transcribeFile(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	back := "/t/" + records.FileType + "/" + rec.ID
+	back := relate.Page(records.FileType, rec.ID)
 	if !s.SpeechKit().Ready() {
 		s.Tell(w, r, web.Outcome{Failed: true, Title: "Not written down", Text: "Speech-to-text is not on this computer yet."}, back)
 		return

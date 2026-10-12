@@ -4,6 +4,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
@@ -104,7 +105,7 @@ func onDays(st *store.Store, types *schema.Set, days []time.Time, r Reader) []Hi
 		for _, rec := range recs {
 			if said, ok := FallsOn(t, rec, want, r.Now); ok {
 				title, _ := texts(t, rec, r)
-				hits = append(hits, Hit{Type: t.Name, ID: rec.ID, Title: title, Snippet: said, Href: "/t/" + t.Name + "/" + rec.ID})
+				hits = append(hits, Hit{Type: t.Name, ID: rec.ID, Title: title, Snippet: said, Href: relate.Page(t.Name, rec.ID)})
 			}
 		}
 	}
