@@ -13,6 +13,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
 	"github.com/tristanlawrenceguy/sameway/internal/web"
@@ -35,7 +36,7 @@ func (s *Service) upload(w http.ResponseWriter, r *http.Request) {
 		s.Failed(w, r, "Not added", err, "/t/"+records.FileType)
 		return
 	}
-	own := "/t/" + records.FileType + "/" + rec.ID
+	own := relate.Page(records.FileType, rec.ID)
 	title, _ := rec.Fields["title"].(string)
 	// Added from a meeting's page, it is that meeting's (meeting.go).
 	if m := r.FormValue("meeting"); m != "" {
@@ -135,7 +136,7 @@ func (s *Service) convertLater(id, converter, name, path string) {
 		return
 	}
 	title, _ := rec.Fields["title"].(string)
-	records.Record(s.app.Store, "system", records.Change{Action: "updated", Component: records.FileType, ID: id, Detail: title + " (converted)", Href: "/t/" + records.FileType + "/" + id})
+	records.Record(s.app.Store, "system", records.Change{Action: "updated", Component: records.FileType, ID: id, Detail: title + " (converted)", Href: relate.Page(records.FileType, id)})
 	s.Changed()
 }
 

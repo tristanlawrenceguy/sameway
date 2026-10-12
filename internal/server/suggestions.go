@@ -10,6 +10,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/prose"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
@@ -39,9 +40,9 @@ func (s *Server) suggestionsOn(r *http.Request, t *schema.Type, rec *store.Recor
 	if len(waiting) == 0 || !web.MayChange(r) {
 		return ""
 	}
-	from := "/t/" + t.Name + "/" + rec.ID
+	from := relate.Page(t.Name, rec.ID)
 	var b strings.Builder
-	fmt.Fprintf(&b, `<section class="sw-stack" aria-labelledby="suggested"><h2 id="suggested">%s</h2>`, inWords(len(waiting), "suggested change"))
+	fmt.Fprintf(&b, `<section class="sw-stack" aria-labelledby="suggested"><h2 id="suggested">%s</h2>`, schema.Count(len(waiting), "suggested change"))
 	b.WriteString(`<p class="sw-muted">Nothing changes until you accept one, and each accepted change can be undone.</p>`)
 	n := 0
 	for _, k := range suggestionKinds {
@@ -194,7 +195,7 @@ func (s *Server) accept(w http.ResponseWriter, r *http.Request, about string, id
 			text = fmt.Sprintf("Accepted %d. ", made)
 		}
 		if outdated > 0 {
-			text += fmt.Sprintf("%s no longer fitted and set aside. ", inWords(outdated, "suggestion"))
+			text += fmt.Sprintf("%s no longer fitted and set aside. ", schema.Count(outdated, "suggestion"))
 		}
 		s.tell(w, r, outcome{Title: "Changed " + s.title(t, rec), Text: text + s.left(about), Undo: entry, Of: s.title(t, rec)}, back)
 	}
@@ -219,12 +220,4 @@ func (s *Server) mayAnswer(w http.ResponseWriter, r *http.Request, about string)
 		return false
 	}
 	return true
-}
-
-// inWords is a count in words: 1 suggestion, 3 suggestions.
-func inWords(n int, one string) string {
-	if n == 1 {
-		return "1 " + one
-	}
-	return fmt.Sprintf("%d %ss", n, one)
 }

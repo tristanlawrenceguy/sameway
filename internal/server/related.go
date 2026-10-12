@@ -40,7 +40,7 @@ func (s *Server) related(t *schema.Type, rec *store.Record, always, here []strin
 		return ""
 	}
 	links := relate.Of(s.app.Store, t, rec, s.now())
-	page := "/t/" + t.Name + "/" + rec.ID
+	page := relate.Page(t.Name, rec.ID)
 	here = opened(links, here)
 	var lists strings.Builder
 	for _, l := range links {

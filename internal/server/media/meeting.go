@@ -10,6 +10,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
 	"github.com/tristanlawrenceguy/sameway/internal/web"
@@ -33,7 +34,7 @@ func (s *Service) MeetingExtras(r *http.Request, rec *store.Record) string {
 		return ""
 	}
 	_, here := s.Shown(r)
-	page := "/t/" + records.EventType + "/" + rec.ID
+	page := relate.Page(records.EventType, rec.ID)
 	var b strings.Builder
 	if summary, _ := rec.Fields["summary"].(string); strings.TrimSpace(summary) == "" && len(s.Heard(file)) > 0 && web.MayChange(r) && s.Showing(r, WriteUpPart) {
 		b.WriteString(writeUpOffer("Write up this meeting (/t/"+records.EventType+"/"+rec.ID+") from its recording (/t/"+records.FileType+"/"+id+")", "Ask the assistant to write it up", s))
@@ -79,7 +80,7 @@ func (s *Service) recordingToAdd(r *http.Request, ev *store.Record) string {
 	if !web.MayChange(r) {
 		return ""
 	}
-	page := "/t/" + records.EventType + "/" + ev.ID
+	page := relate.Page(records.EventType, ev.ID)
 	over := false
 	if st, err := time.Parse(time.RFC3339, str(ev.Fields["starts"], "")); err == nil {
 		over = s.Now().After(st.Add(chat.MeetingLength(ev)))

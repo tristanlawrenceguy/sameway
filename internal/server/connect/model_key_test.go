@@ -19,9 +19,6 @@ import (
 // paste instead.
 func TestAPersonPastesAKey(t *testing.T) {
 	keys := filepath.Join(t.TempDir(), "keys.json")
-	was := llm.DefaultCandidates
-	llm.DefaultCandidates = nil
-	defer func() { llm.DefaultCandidates = was }()
 	openrouter := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, `{"data":{"limit_remaining":null}}`)
 	}))

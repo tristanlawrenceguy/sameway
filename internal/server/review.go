@@ -10,6 +10,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/blocks"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
@@ -130,7 +131,7 @@ func reviewSummary(now time.Time, done, overdue, ahead int) string {
 	said := "The seven days to " + now.Format("Monday 2 January")
 	var parts []string
 	if done > 0 {
-		parts = append(parts, countWords(done, "task", "tasks")+" done")
+		parts = append(parts, schema.Count(done, "task")+" done")
 	}
 	if overdue > 0 {
 		parts = append(parts, strconv.Itoa(overdue)+" overdue")
@@ -174,13 +175,6 @@ func (s *Server) reviewCalendar(now time.Time) template.HTML {
 	}
 	return `<h3>On the calendar</h3>` + s.component(calendarComponent, map[string]any{
 		"detail": "brief", "month": from[:7], "today": from, "upcoming": 20, "events": events})
-}
-
-func countWords(n int, one, many string) string {
-	if n == 1 {
-		return "1 " + one
-	}
-	return strconv.Itoa(n) + " " + many
 }
 
 // reviewMove moves an overdue task a week on from today; reviewUndate

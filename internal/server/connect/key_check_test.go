@@ -15,9 +15,6 @@ import (
 // know, or one with no credit, is said to be wrong now, kept nowhere; one
 // that could not be asked about is kept, saying so.
 func TestAPastedKeyIsCheckedFirst(t *testing.T) {
-	was := llm.DefaultCandidates
-	llm.DefaultCandidates = nil
-	defer func() { llm.DefaultCandidates = was }()
 	answer := http.StatusUnauthorized
 	body := `{}`
 	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/query"
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
@@ -135,7 +136,7 @@ func (ws *Workspace) eventOf(t *schema.Type, rec *store.Record, field string) ma
 		local := ts.Local()
 		day, clock = local.Format("2006-01-02"), when.Clock(local, ws.H24())
 	}
-	ev := map[string]any{"date": day, "label": ws.title(t, rec), "href": "/t/" + t.Name + "/" + rec.ID}
+	ev := map[string]any{"date": day, "label": ws.title(t, rec), "href": relate.Page(t.Name, rec.ID)}
 	if clock != "" {
 		ev["time"] = clock
 	}

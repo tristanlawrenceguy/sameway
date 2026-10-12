@@ -10,6 +10,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/export"
 	"github.com/tristanlawrenceguy/sameway/internal/prose"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
@@ -28,7 +29,7 @@ import (
 // sees a reason and hands over ?show=<key>, or the person keeps it on.
 func (s *Server) writingOn(r *http.Request, t *schema.Type, rec *store.Record) string {
 	_, here := s.shown(r)
-	page := "/t/" + t.Name + "/" + rec.ID
+	page := relate.Page(t.Name, rec.ID)
 	var b strings.Builder
 	part := func(key, what string, html string) {
 		if html != "" && s.showing(r, key) {
@@ -78,7 +79,7 @@ func (s *Server) outline(r *http.Request, t *schema.Type, piece *store.Record, p
 		total += words
 		title := s.title(t, p)
 		fmt.Fprintf(&b, `<li><p><a class="sw-link" href="/t/%s/%s">%s</a></p>`, t.Name, p.ID, template.HTMLEscapeString(title))
-		facts := []string{inWords(words, "word")}
+		facts := []string{schema.Count(words, "word")}
 		if f, ok := t.Field("status"); ok {
 			if v := export.Value(*f, p.Fields["status"], s.RefTitle); v != "" {
 				facts = append([]string{v}, facts...)
@@ -110,7 +111,7 @@ func (s *Server) outline(r *http.Request, t *schema.Type, piece *store.Record, p
 		b.WriteString(string(s.component("meter", map[string]any{"label": "Words", "value": total, "max": aim, "state": state,
 			"text": fmt.Sprintf("%d of %d words", total, aim), "words": true})))
 	} else {
-		fmt.Fprintf(&b, `<p>%s in all.</p>`, inWords(total, "word"))
+		fmt.Fprintf(&b, `<p>%s in all.</p>`, schema.Count(total, "word"))
 	}
 	fmt.Fprintf(&b, `<p>%s</p></section>`, s.part(ui.Link{Href: "/t/" + t.Name + "/" + piece.ID + "/whole", Label: "Read it all", Look: ui.LookButton}))
 	return b.String()
