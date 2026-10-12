@@ -18,6 +18,7 @@ fields:
     type: repeat
     description: How often it rings again, in words, like every day or every Tuesday; empty for once. Dismissed, it is set for its next time.
   kind:
+    label: Type
     type: enum
     values: [alarm, timer]
     default: alarm
