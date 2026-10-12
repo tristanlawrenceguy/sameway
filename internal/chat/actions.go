@@ -13,6 +13,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -55,7 +56,7 @@ func (s *Service) runRecord(ctx context.Context, rec *store.Record, canvas strin
 		name, _ := rec.Fields["arrangement"].(string)
 		r := s.addArrangement(name, nil)
 		if !r.isErr {
-			r.changes = append(r.changes, records.Change{Action: "ran", Component: records.ActionType, ID: id, Detail: title, Href: "/t/" + records.ActionType + "/" + id})
+			r.changes = append(r.changes, records.Change{Action: "ran", Component: records.ActionType, ID: id, Detail: title, Href: relate.Page(records.ActionType, id)})
 		}
 		return r
 	case "command":
@@ -76,7 +77,7 @@ func (s *Service) runRecord(ctx context.Context, rec *store.Record, canvas strin
 		if _, err := s.SendOn(ctx, canvas, text); err != nil {
 			return fail("could not send %q for action %s: %v", text, title, err)
 		}
-		return toolResult{text: "sent to the assistant: " + text, change: &records.Change{Action: "ran", Component: records.ActionType, ID: id, Detail: title, Href: "/t/" + records.ActionType + "/" + id}}
+		return toolResult{text: "sent to the assistant: " + text, change: &records.Change{Action: "ran", Component: records.ActionType, ID: id, Detail: title, Href: relate.Page(records.ActionType, id)}}
 	default:
 		return s.webhook(ctx, rec, title)
 	}
@@ -126,7 +127,7 @@ func (s *Service) webhook(ctx context.Context, rec *store.Record, title string) 
 		out.text += ": " + answer
 	}
 	detail := fmt.Sprintf("%s (%d)", title, resp.StatusCode)
-	out.changes = append(out.changes, records.Change{Action: "ran", Component: records.ActionType, ID: rec.ID, Detail: detail, Href: "/t/" + records.ActionType + "/" + rec.ID})
+	out.changes = append(out.changes, records.Change{Action: "ran", Component: records.ActionType, ID: rec.ID, Detail: detail, Href: relate.Page(records.ActionType, rec.ID)})
 	if resp.StatusCode >= 400 {
 		out.isErr = true
 		return out

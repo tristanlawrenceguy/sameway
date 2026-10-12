@@ -7,6 +7,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
@@ -31,7 +32,7 @@ func resolveClock(w *Workspace, props map[string]any, _ Place) map[string]any {
 	if t, ok := w.Store.Types().Get(records.ReminderType); ok {
 		recs, _ := query.Filter(w.Store, t, nil, "at", 0, now)
 		for _, rec := range recs {
-			item := map[string]any{"id": rec.ID, "title": records.Name(w.Store, t, rec), "href": "/t/" + records.ReminderType + "/" + rec.ID}
+			item := map[string]any{"id": rec.ID, "title": records.Name(w.Store, t, rec), "href": relate.Page(records.ReminderType, rec.ID)}
 			if said := RepeatsOf(rec); said != "" {
 				item["repeats"] = said
 			}
@@ -103,7 +104,7 @@ func (w *Workspace) onToday(now time.Time) []coming {
 			if err != nil {
 				continue
 			}
-			item := map[string]any{"title": records.Name(w.Store, t, rec), "href": "/t/" + t.Name + "/" + rec.ID, "kind": "event", "time": "All day"}
+			item := map[string]any{"title": records.Name(w.Store, t, rec), "href": relate.Page(t.Name, rec.ID), "kind": "event", "time": "All day"}
 			at := start
 			if strings.HasSuffix(v, "T00:00:00Z") {
 				if ts.UTC().Format("2006-01-02") != day {

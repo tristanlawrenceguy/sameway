@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -35,7 +36,7 @@ func (s *Server) refItem(f schema.Field, id string) map[string]any {
 		item["options"] = list
 	}
 	if _, err := s.app.Store.Get(f.To, id); err == nil {
-		item["href"] = "/t/" + f.To + "/" + id
+		item["href"] = relate.Page(f.To, id)
 	}
 	return item
 }

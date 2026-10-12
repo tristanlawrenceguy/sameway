@@ -9,6 +9,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/blocks"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/track"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
@@ -58,7 +59,7 @@ func (s *Server) habitLog(w http.ResponseWriter, r *http.Request) {
 	if note := strings.TrimSpace(r.PostForm.Get("note")); note != "" {
 		fields["note"] = note
 	}
-	undo, _, err := s.apply(r, records.Change{Action: "logged", Component: HabitType, ID: h.ID, Detail: h.Name + ": " + track.Amount(amount, h.Unit), Href: "/t/" + HabitType + "/" + h.ID},
+	undo, _, err := s.apply(r, records.Change{Action: "logged", Component: HabitType, ID: h.ID, Detail: h.Name + ": " + track.Amount(amount, h.Unit), Href: relate.Page(HabitType, h.ID)},
 		records.Op{Type: EntryType, After: fields})
 	if err != nil {
 		s.failed(w, r, "Not logged", err, "/")

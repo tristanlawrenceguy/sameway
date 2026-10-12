@@ -10,6 +10,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/export"
 	"github.com/tristanlawrenceguy/sameway/internal/prose"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
@@ -28,7 +29,7 @@ import (
 // sees a reason and hands over ?show=<key>, or the person keeps it on.
 func (s *Server) writingOn(r *http.Request, t *schema.Type, rec *store.Record) string {
 	_, here := s.shown(r)
-	page := "/t/" + t.Name + "/" + rec.ID
+	page := relate.Page(t.Name, rec.ID)
 	var b strings.Builder
 	part := func(key, what string, html string) {
 		if html != "" && s.showing(r, key) {
