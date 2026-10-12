@@ -33,6 +33,7 @@ type meetingApps struct {
 	failed string                // how the last sign-in ended, when badly
 	tried  map[string]time.Time  // meeting → when it was last tried
 	last   time.Time             // the last round
+	err    error                 // what went wrong in it, said until the next
 }
 
 // fetchEvery is how often a round looks; fetchFor how long after a
@@ -74,22 +75,36 @@ func (s *Service) teamsConnected() bool {
 }
 
 // FetchMeetings looks, at most every few minutes, for meetings over without
-// their transcript that an app may now have.
-func (s *Service) FetchMeetings(now time.Time) {
+// their transcript that an app may now have. What went wrong in the last
+// round is said until the next, so its job says it on Help (server/jobs.go)
+// as every connection that works in the background does.
+func (s *Service) FetchMeetings(now time.Time) error {
 	s.apps.mu.Lock()
-	if now.Sub(s.apps.last) < fetchEvery {
-		s.apps.mu.Unlock()
-		return
+	due, err := now.Sub(s.apps.last) >= fetchEvery, s.apps.err
+	if due {
+		s.apps.last = now
 	}
-	s.apps.last = now
 	s.apps.mu.Unlock()
+	if !due {
+		return err
+	}
+	err = s.fetchRound(now)
+	s.apps.mu.Lock()
+	s.apps.err = err
+	s.apps.mu.Unlock()
+	return err
+}
+
+// fetchRound brings each transcript an app now has, and says the last
+// thing that went wrong.
+func (s *Service) fetchRound(now time.Time) (failed error) {
 	teams, zoom := s.teamsConnected(), s.zoom().Ready()
 	if !teams && !zoom {
-		return
+		return nil
 	}
 	et, ok := s.app.Types.Get(records.EventType)
 	if !ok {
-		return
+		return nil
 	}
 	recent, _ := query.Filter(s.app.Store, et, []string{"recording=", "starts>=-2d"}, "starts", 0, now)
 	for _, ev := range recent {
@@ -118,10 +133,12 @@ func (s *Service) FetchMeetings(now time.Time) {
 		case errors.Is(err, meetfetch.ErrNotYet), errors.Is(err, meetfetch.ErrNotConnected):
 		case err != nil:
 			log.Printf("meetings: %s: %v", ev.ID, err)
+			failed = err
 		default:
 			s.keepFetched(ev, vtt, join != "")
 		}
 	}
+	return failed
 }
 
 // wantsApp says whether a meeting is over, recently, without a recording,

@@ -77,4 +77,4 @@ func (s *Server) UseAppTokens(path string) { s.media.UseAppTokens(path) }
 
 // FetchMeetings brings the transcripts of meetings that have ended from
 // Teams and Zoom (media/meeting_fetch.go).
-func (s *Server) FetchMeetings(now time.Time) { s.media.FetchMeetings(now) }
+func (s *Server) FetchMeetings(now time.Time) error { return s.media.FetchMeetings(now) }
