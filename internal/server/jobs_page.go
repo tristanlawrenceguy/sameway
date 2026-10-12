@@ -39,15 +39,19 @@ func (s *Server) jobsSection() string {
 func (s *Server) jobWords(st runner.Status, now time.Time) string {
 	h24 := s.h24()
 	says := st.Name + ": "
-	if st.Every > 0 {
+	worker := st.Every == 0 && !st.Scheduled
+	switch {
+	case st.Every > 0:
 		says += "every " + everyWords(st.Every) + "."
-	} else {
+	case st.Scheduled:
+		says += "at the time set for it, if one is."
+	default:
 		says += "runs all the time."
 	}
 	switch {
 	case st.LastRun.IsZero():
 		says += " Not run yet."
-	case st.Every == 0:
+	case worker:
 		says += " Started " + lower(when.Ago(st.LastRun, now, h24)) + "."
 	case st.Running:
 		says += " Running now, since " + lower(when.Ago(st.LastRun, now, h24)) + "."
