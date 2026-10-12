@@ -7,7 +7,6 @@ import (
 	"maps"
 	"net/url"
 	"slices"
-	"strconv"
 	"strings"
 	"time"
 
@@ -220,19 +219,17 @@ func (s *Server) narrowLog(all []*store.Record, q url.Values, now time.Time) ([]
 
 // changesWords says how many changes: 1 change, 12 changes, none.
 func changesWords(n int) string {
-	switch n {
-	case 0:
+	if n == 0 {
 		return ""
-	case 1:
-		return "1 change"
 	}
-	return strconv.Itoa(n) + " changes"
+	return schema.Count(n, "change")
 }
 
-// oneOrMany is the word for a count: 1 change, 2 changes.
-func oneOrMany(n int, one, many string) string {
+// oneOrMany is a type's name for a count of it, without the count: change
+// for 1, changes for 2, as schema.Count says them.
+func oneOrMany(n int, name string) string {
 	if n == 1 {
-		return one
+		return schema.Words(name)
 	}
-	return many
+	return schema.Plural(name)
 }

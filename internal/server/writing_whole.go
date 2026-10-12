@@ -90,7 +90,7 @@ func (s *Server) wholePage(w http.ResponseWriter, r *http.Request) {
 	href := relate.Page(t.Name, piece.ID)
 	var b strings.Builder
 	fmt.Fprintf(&b, `<p><a class="sw-link" href="%s">Back to %s</a></p>`, href, template.HTMLEscapeString(title))
-	fmt.Fprintf(&b, `<p class="sw-muted">%s.</p>`, inWords(records.WordCount(md), "word"))
+	fmt.Fprintf(&b, `<p class="sw-muted">%s.</p>`, schema.Count(records.WordCount(md), "word"))
 	fmt.Fprintf(&b, `<article class="sw-prose">%s</article>`, prose.Render(md, 2))
 	b.WriteString(string(s.component("export", map[string]any{"what": "all of " + title, "items": []any{
 		map[string]any{"href": href + "/whole?as=docx", "format": "docx"},

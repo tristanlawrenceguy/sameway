@@ -6,11 +6,11 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/cloudsync"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
@@ -84,7 +84,7 @@ func (s *Server) cloudSyncSection() string {
 		others := len(cloudsync.Others(s.app.Store, folder))
 		state := "No other computer has opened it yet: on the other computer, open Workspaces in Sameway and choose it under On your other computers."
 		if others > 0 {
-			state = "It is open on " + plainCount(others, "other computer") + "; a change on one reaches the others as soon as " + esc(s.app.Store.Meta("cloudsync:cloud")) + " has copied it, usually within a minute."
+			state = "It is open on " + schema.Count(others, "other computer") + "; a change on one reaches the others as soon as " + esc(s.app.Store.Meta("cloudsync:cloud")) + " has copied it, usually within a minute."
 		}
 		if e := s.app.Store.Meta("cloudsync:err"); e != "" {
 			state = "Not in step just now: " + e
@@ -108,13 +108,6 @@ func (s *Server) cloudSyncSection() string {
 	}
 	b.WriteString(`</section>`)
 	return b.String()
-}
-
-func plainCount(n int, what string) string {
-	if n == 1 {
-		return "1 " + what
-	}
-	return strconv.Itoa(n) + " " + what + "s"
 }
 
 func (s *Server) cloudSyncOn(w http.ResponseWriter, r *http.Request) {
