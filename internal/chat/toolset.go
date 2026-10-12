@@ -19,18 +19,18 @@ import (
 // the next varies by. Each Op says whether it is Core, given every turn,
 // and the Words in a message that bring it along.
 
-// smallHere says whether a provider is a model on this computer, which
+// smallHere says whether the provider is a model on this computer, which
 // is given the tools a turn needs rather than all of them.
-func smallHere(p llm.Provider) bool {
-	o, ok := p.(*llm.OpenAI)
-	return ok && llm.IsOllama(o.BaseURL)
+func (s *Service) smallHere() bool {
+	o, ok := s.Provider.(*llm.OpenAI)
+	return ok && s.Ollama.Is(o.BaseURL)
 }
 
 // toolsFor is the tools a turn is given: all of them for a model
 // elsewhere; for one here, the core, those the message's words bring,
 // and those the conversation has called.
 func (s *Service) toolsFor(all []llm.Tool, history []llm.Message) []llm.Tool {
-	if !smallHere(s.Provider) {
+	if !s.smallHere() {
 		return all
 	}
 	used := map[string]bool{}

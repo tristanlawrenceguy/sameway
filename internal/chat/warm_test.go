@@ -17,6 +17,7 @@ import (
 // word, and Ollama is asked to keep the model; not again within minutes,
 // and never for a model elsewhere.
 func TestAModelHereIsReadiedAhead(t *testing.T) {
+	t.Parallel()
 	var asked []string
 	ollama := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, _ := io.ReadAll(r.Body)
@@ -33,11 +34,8 @@ func TestAModelHereIsReadiedAhead(t *testing.T) {
 		}
 	}))
 	defer ollama.Close()
-	was := llm.OllamaURL
-	llm.OllamaURL = ollama.URL
-	defer func() { llm.OllamaURL = was }()
-
 	svc := newFullService(t)
+	svc.Ollama = llm.Ollama{URL: ollama.URL}
 	svc.Provider = &llm.OpenAI{BaseURL: ollama.URL + "/v1", Model: "warm-test-model"}
 	if !svc.Warm(context.Background()) {
 		t.Fatal("a model here is readied")
