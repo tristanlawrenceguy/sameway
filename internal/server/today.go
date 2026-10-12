@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
@@ -60,7 +61,7 @@ func (s *Server) today(now time.Time) todayLists {
 			if list == nil {
 				continue
 			}
-			it := todayItem{Title: s.title(t, r), Href: "/t/" + typ + "/" + r.ID, At: at, Type: typ, ID: r.ID, AllDay: allDay}
+			it := todayItem{Title: s.title(t, r), Href: relate.Page(typ, r.ID), At: at, Type: typ, ID: r.ID, AllDay: allDay}
 			it.When = todayWhen(at, allDay, at.Format("2006-01-02") < day, now, s.h24())
 			*list = append(*list, it)
 		}

@@ -149,18 +149,21 @@ func (s *Service) Classify(ctx context.Context, action *store.Record, typeName, 
 	}
 	outs := s.checked(ctx, action, t, rec, words, picks, defs)
 	var said, given []string
+	var ops []records.Op
 	for _, o := range keepAlone(outs, defs) {
 		if o.dropped != "" {
 			said = append(said, o.tag+" (not given: "+o.dropped+")")
 			continue
 		}
-		s.giveTag(t, rec, o.tag)
+		ops = append(ops, s.giveTag(t, rec, o.tag)...)
 		given = append(given, o.tag)
 		cl := map[string]any{"record": t.Name + "/" + rec.ID, "tag": o.tag, "why": o.why, "action": action.ID, "state": o.state}
 		if o.state == "confirmed" {
 			cl["confirmed_by"] = "judgement"
 		}
-		records.ApplyOps(s.Store, records.Op{Type: ClassificationType, After: cl})
+		if done, err := s.Apply(records.Op{Type: ClassificationType, After: cl}); err == nil {
+			ops = append(ops, done...)
+		}
 		said = append(said, o.tag+" ("+map[string]string{"suggested": "suggested", "confirmed": "kept, as you chose before"}[o.state]+": "+o.why+")")
 	}
 	title, _ := action.Fields["title"].(string)
@@ -169,29 +172,28 @@ func (s *Service) Classify(ctx context.Context, action *store.Record, typeName, 
 		return toolResult{text: name + ": no tag fits", answer: ""}
 	}
 	return toolResult{text: name + ": " + strings.Join(said, "; "), answer: strings.Join(given, ", "),
-		change: &records.Change{Action: "tagged", Component: t.Name, ID: rec.ID, Detail: name + ": " + strings.Join(said, "; "), By: title, Href: "/t/" + t.Name + "/" + rec.ID}}
+		change: &records.Change{Action: "tagged", Component: t.Name, ID: rec.ID, Detail: name + ": " + strings.Join(said, "; "), By: title, Href: "/t/" + t.Name + "/" + rec.ID, Ops: ops}}
 }
 
-// giveTag puts a tag on a record that has a tags list, once.
-func (s *Service) giveTag(t *schema.Type, rec *store.Record, tag string) {
+// giveTag puts a tag on a record that has a tags list, once, and answers
+// with what it wrote, for the change that logs the tagging.
+func (s *Service) giveTag(t *schema.Type, rec *store.Record, tag string) []records.Op {
 	f, ok := t.Field("tags")
 	if !ok || f.Type != "list" {
-		return
+		return nil
 	}
 	if now, err := s.Store.Get(t.Name, rec.ID); err == nil {
 		rec = now // as it is after the tags given just before
 	}
-	tags := records.StringList(rec.Fields["tags"])
-	for _, have := range tags {
-		if strings.EqualFold(have, tag) {
-			return
-		}
-	}
 	var out []any
-	for _, have := range tags {
+	for _, have := range records.StringList(rec.Fields["tags"]) {
+		if strings.EqualFold(have, tag) {
+			return nil
+		}
 		out = append(out, have)
 	}
-	records.ApplyOps(s.Store, records.Op{Type: t.Name, ID: rec.ID, After: map[string]any{"tags": append(out, tag)}})
+	done, _ := s.Apply(records.Op{Type: t.Name, ID: rec.ID, After: map[string]any{"tags": append(out, tag)}})
+	return done
 }
 
 // pickTags asks which of the tags fit: all at once, or each on its own

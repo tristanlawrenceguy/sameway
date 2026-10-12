@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -43,7 +44,7 @@ func (s *Service) changesAfter(saidID string) []records.Change {
 		c := records.Change{Action: action, Component: target, ID: id, Detail: detail, Activity: rec.ID}
 		if id != "" {
 			if _, isType := s.Store.Types().Get(target); isType {
-				c.Href = "/t/" + target + "/" + id
+				c.Href = relate.Page(target, id)
 			} else {
 				c.Href = "/canvas/" + id
 			}

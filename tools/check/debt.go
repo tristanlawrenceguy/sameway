@@ -56,5 +56,4 @@ var storeWrites = map[string]string{
 	"internal/app/schema_change.go App.RemoveType":     "a type deleted drops its whole table in one statement, logged as the schema change; its records go with their type, not one by one",
 	"internal/content/mirror.go Mirror.Import":         "a record read back from its file keeps the created and updated times the file says, which Apply cannot set; the caller logs the whole import as one change with its ops (cli/portable.go)",
 	"internal/server/servertest/fixtures.go SeedTasks": "a test fixture seeding a fresh workspace; nothing to log or undo",
-	"internal/chat/suggest_records.go Service.Suggest": "a suggestion's question: to move after the tagging dive, which owns this file now",
 }

@@ -27,13 +27,12 @@ type fetchState struct {
 	err         string
 }
 
-// fetches are each workspace server's own fetch, so one workspace never
-// shows another's.
-var fetches sync.Map // *Service -> *fetchState
+// fetchKey is where the workspace's store keeps its fetch, so one
+// workspace never shows another's, and it goes with the store.
+type fetchKey struct{}
 
 func (s *Service) fetching() *fetchState {
-	f, _ := fetches.LoadOrStore(s, &fetchState{})
-	return f.(*fetchState)
+	return s.app.Store.Keep(fetchKey{}, func() any { return &fetchState{} }).(*fetchState)
 }
 
 // ollamaCard is the fetch offered, or how far it has come; "" when Ollama

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -24,7 +25,7 @@ func (s *Server) clashNotices(r *http.Request, t *schema.Type, rec *store.Record
 		return ""
 	}
 	var b strings.Builder
-	back := "/t/" + t.Name + "/" + rec.ID
+	back := relate.Page(t.Name, rec.ID)
 	for _, c := range clashes {
 		if c.Fields["target"] != t.Name || c.Fields["target_id"] != rec.ID || c.Fields["state"] != "open" {
 			continue
@@ -73,7 +74,7 @@ func (s *Server) clashChoose(w http.ResponseWriter, r *http.Request, choice stri
 	typ, _ := c.Fields["target"].(string)
 	id, _ := c.Fields["target_id"].(string)
 	field, _ := c.Fields["field"].(string)
-	href := "/t/" + typ + "/" + id
+	href := relate.Page(typ, id)
 	was, err := s.app.Store.Get(typ, id)
 	if err != nil {
 		s.failed(w, r, "Not chosen", err, href)

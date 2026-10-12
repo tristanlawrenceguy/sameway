@@ -75,3 +75,19 @@ func TestHelpSaysHowFarSearchByMeaningHasCome(t *testing.T) {
 		t.Errorf("half way: %q", got)
 	}
 }
+
+// How far search by meaning has come is the workspace's: a second server
+// on it says the same, and another workspace open beside it says nothing
+// of it.
+func TestSearchByMeaningIsEachWorkspacesOwn(t *testing.T) {
+	t.Parallel()
+	a, _ := newApp(t)
+	server.New(a).MeaningFetching(137, 274)
+	if got := server.New(a).MeaningLine(); !strings.Contains(got, "fetching 50%") {
+		t.Errorf("a second server on the workspace says how far it has come: %q", got)
+	}
+	b, _ := newApp(t)
+	if got := server.New(b).MeaningLine(); strings.Contains(got, "fetching") {
+		t.Errorf("another workspace is not fetching: %q", got)
+	}
+}

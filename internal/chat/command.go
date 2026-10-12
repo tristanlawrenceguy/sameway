@@ -11,6 +11,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -88,7 +89,7 @@ func (s *Service) command(ctx context.Context, rec *store.Record, title string) 
 		res.text += ": " + answer
 	}
 	res.changes = append(res.changes, records.Change{Action: "ran", Component: records.ActionType, ID: rec.ID,
-		Detail: fmt.Sprintf("%s (exit %d)", title, code), Href: "/t/" + records.ActionType + "/" + rec.ID})
+		Detail: fmt.Sprintf("%s (exit %d)", title, code), Href: relate.Page(records.ActionType, rec.ID)})
 	if code != 0 {
 		res.isErr = true
 		return res

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/track"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
@@ -89,7 +90,7 @@ func Standing(st *store.Store, rec *store.Record, now, today time.Time) map[stri
 		pct = int(math.Min(100, math.Round(sum.Now/sum.Target*100)))
 	}
 	item := map[string]any{
-		"id": h.ID, "name": h.Name, "shortName": trim.Title(h.Name), "href": "/t/" + records.HabitType + "/" + h.ID, "unit": h.Unit, "period": h.Cadence, "aim": h.Aim,
+		"id": h.ID, "name": h.Name, "shortName": trim.Title(h.Name), "href": relate.Page(records.HabitType, h.ID), "unit": h.Unit, "period": h.Cadence, "aim": h.Aim,
 		"amount": sum.Now, "target": sum.Target, "progress": track.Progress(h, sum), "pct": pct, "met": sum.Met,
 		"streak": sum.Streak, "streakWords": track.StreakWords(sum.Streak, h), "best": sum.Best,
 	}

@@ -100,13 +100,16 @@ func (s *Service) Suggest(ctx context.Context, action *store.Record, typeName, i
 		return toolResult{text: name + ": nothing to suggest"}
 	}
 	summary := fmt.Sprintf("Make a %s from %q: %s?", schema.Words(mt.Name), name, s.suggestedWords(mt, fields))
-	p, err := s.Store.Create(records.ProposalType, map[string]any{"summary": summary, "detail": strings.TrimSpace(sug.Why),
+	done, err := s.Apply(records.Op{Type: records.ProposalType, After: map[string]any{"summary": summary, "detail": strings.TrimSpace(sug.Why),
 		"action": map[string]any{"tool": "create_record", "type": mt.Name, "fields": fields}, "state": "pending",
-		"from": from.Name + "/" + rec.ID, "by_action": action.ID, "yes": "Make it", "no": "No"})
+		"from": from.Name + "/" + rec.ID, "by_action": action.ID, "yes": "Make it", "no": "No"}})
 	if err != nil {
 		return fail("could not put the suggestion: %v", err)
 	}
-	return toolResult{text: "suggested: " + summary, answer: p.ID, change: &records.Change{Action: "proposed", ID: p.ID, Detail: trim.Line(summary, 80)}}
+	// The question is logged with the change that runs the action, so
+	// undoing that takes it back.
+	p := done[0]
+	return toolResult{text: "suggested: " + summary, answer: p.ID, change: &records.Change{Action: "proposed", ID: p.ID, Detail: trim.Line(summary, 80), Ops: done}}
 }
 
 // fillSuggested turns what the model wrote into a record's fields: a day

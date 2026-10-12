@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -134,7 +135,7 @@ func write(st *store.Store, action, typ, id string, fields map[string]any) (*sto
 	}
 	c := Change{Action: action, Component: typ, ID: rec.ID, Detail: Title(st, t, rec), Ops: done}
 	if action != "deleted" {
-		c.Href = "/t/" + typ + "/" + rec.ID
+		c.Href = relate.Page(typ, rec.ID)
 	}
 	return rec, c, nil
 }

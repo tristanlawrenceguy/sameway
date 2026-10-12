@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/track"
@@ -35,7 +36,7 @@ func AboutOf(st *store.Store, path string) (*schema.Type, *store.Record, bool) {
 // thing it is about, and for a habit where it stands; the reminder
 // itself when it is about nothing. now is the time it is for the person.
 func RingWords(st *store.Store, rec *store.Record, now time.Time) (text, url string) {
-	url = "/t/" + records.ReminderType + "/" + rec.ID
+	url = relate.Page(records.ReminderType, rec.ID)
 	text = "It is time."
 	about, _ := rec.Fields["about"].(string)
 	t, target, ok := AboutOf(st, about)
