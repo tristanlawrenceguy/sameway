@@ -53,7 +53,10 @@ func (s *Server) tagKeep(w http.ResponseWriter, r *http.Request) {
 		s.failed(w, r, "Not kept", err, "/today")
 		return
 	}
-	records.ApplyOps(s.app.Store, records.Op{Type: chat.ClassificationType, ID: c.ID, After: map[string]any{"state": "confirmed", "confirmed_by": "person"}})
+	if _, err := records.ApplyOps(s.app.Store, records.Op{Type: chat.ClassificationType, ID: c.ID, After: map[string]any{"state": "confirmed", "confirmed_by": "person"}}); err != nil {
+		s.failed(w, r, "Not kept", err, "/today")
+		return
+	}
 	s.tellAt(w, r, outcome{Title: "Kept", Text: fmt.Sprintf("%s keeps the tag %s; the action follows that next time.", s.nameOf(rec), c.Fields["tag"])}, "/today")
 }
 
