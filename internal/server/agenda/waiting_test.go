@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 )
@@ -62,8 +61,8 @@ func seedWaiting(t *testing.T, a *app.App) *server.Server {
 	if _, err := records.ApplyOps(a.Store,
 		records.Op{Type: records.ProposalType, After: map[string]any{"summary": "Remove the old tab?", "state": "pending", "action": map[string]any{"tool": "remove_canvas", "id": "x"}}},
 		records.Op{Type: records.ProposalType, After: map[string]any{"summary": "Make a task: call Ana?", "state": "pending", "action": map[string]any{"tool": "create_record", "type": "task", "fields": map[string]any{"title": "Call Ana"}}, "by_action": "a1", "from": "email/" + asked.ID, "yes": "Make it", "no": "No"}},
-		records.Op{Type: chat.ClassificationType, After: map[string]any{"record": "email/" + asked.ID, "tag": "important", "why": "someone waits", "state": "suggested"}},
-		records.Op{Type: chat.ClassificationType, After: map[string]any{"record": "email/" + mail.ID, "tag": "nothing to do", "why": "no other tag fits", "state": "suggested"}},
+		records.Op{Type: records.ClassificationType, After: map[string]any{"record": "email/" + asked.ID, "tag": "important", "why": "someone waits", "state": "suggested"}},
+		records.Op{Type: records.ClassificationType, After: map[string]any{"record": "email/" + mail.ID, "tag": "nothing to do", "why": "no other tag fits", "state": "suggested"}},
 	); err != nil {
 		t.Fatal(err)
 	}

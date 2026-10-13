@@ -38,7 +38,7 @@ func (s *Service) Proposals() []*store.Record {
 
 // Suggestions are what actions suggested and wait for the person, newest
 // first: apart from the conversation's questions, each answered on its own
-// (suggest_records.go).
+// (automate/suggest.go).
 func (s *Service) Suggestions() []*store.Record {
 	if _, ok := s.Store.Types().Get(records.ProposalType); !ok {
 		return nil
@@ -134,7 +134,7 @@ var proposable = map[string]bool{
 	"accept_action": true,
 	// What cannot be taken back is asked first, by the code: see consent.go.
 	"run_action": true, "set_setting": true, "let_in": true, "change_field": true,
-	// create_record is what an action suggests (suggest_records.go), in
+	// create_record is what an action suggests (automate/suggest.go), in
 	// words Sameway writes: a record made with the person's yes.
 	"create_record": true,
 }

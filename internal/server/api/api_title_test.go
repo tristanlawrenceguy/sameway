@@ -31,7 +31,7 @@ func TestAPIRecordSaysItsTitle(t *testing.T) {
 		Fields map[string]any `json:"fields"`
 	}
 	json.Unmarshal(get(t, h, "/api/entry/"+entry.ID).Body.Bytes(), &one)
-	if one.Title != "Read: 25 minutes" || one.Fields["habit"] != habit.ID {
+	if one.Title != "Read, 25 minutes" || one.Fields["habit"] != habit.ID {
 		t.Errorf("an entry says what its page is headed with, its fields unchanged: %+v", one)
 	}
 
@@ -44,7 +44,7 @@ func TestAPIRecordSaysItsTitle(t *testing.T) {
 	}
 	var entries listed
 	json.Unmarshal(get(t, h, "/api/entry").Body.Bytes(), &entries)
-	if len(entries.Records) != 1 || entries.Records[0].Title != "Read: 25 minutes" || entries.Records[0].Fields == nil {
+	if len(entries.Records) != 1 || entries.Records[0].Title != "Read, 25 minutes" || entries.Records[0].Fields == nil {
 		t.Errorf("a listed entry says its title: %+v", entries)
 	}
 
@@ -76,7 +76,7 @@ func TestAPIRecordSaysItsTitle(t *testing.T) {
 
 	moved := postJSON(t, h, http.MethodPatch, "/api/entry/"+entry.ID, map[string]any{"amount": 40.0})
 	json.Unmarshal(moved.Body.Bytes(), &one)
-	if moved.Code != http.StatusOK || one.Title != "Read: 40 minutes" {
+	if moved.Code != http.StatusOK || one.Title != "Read, 40 minutes" {
 		t.Errorf("an entry's update answers with the title worked out again: %d %s", moved.Code, moved.Body)
 	}
 }

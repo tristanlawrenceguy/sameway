@@ -2,7 +2,8 @@ package chat
 
 import (
 	"encoding/json"
-	"strings"
+
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
 
 // ForModel is a props or fields schema as a model writing it needs it: the
@@ -30,7 +31,7 @@ func trimFilled(v any) any {
 		if props, ok := o["properties"].(map[string]any); ok {
 			dropped := map[string]bool{}
 			for name, p := range props {
-				if d, ok := p.(map[string]any); ok && ServerFilled(str(d["description"])) {
+				if d, ok := p.(map[string]any); ok && schema.ServerFilled(str(d["description"])) {
 					delete(props, name)
 					dropped[name] = true
 				}
@@ -51,7 +52,7 @@ func trimFilled(v any) any {
 		if alts, ok := o["anyOf"].([]any); ok {
 			var kept []any
 			for _, a := range alts {
-				if d, ok := a.(map[string]any); !ok || !ServerFilled(str(d["description"])) {
+				if d, ok := a.(map[string]any); !ok || !schema.ServerFilled(str(d["description"])) {
 					kept = append(kept, a)
 				}
 			}
@@ -74,27 +75,6 @@ func trimFilled(v any) any {
 		}
 	}
 	return v
-}
-
-// ServerFilled says whether a property's description says the server, not
-// the writer, gives it: "Filled in by the server: ...", "... Leave out.",
-// "... kept by the system." A property the server fills only in some case
-// ("when type is given") stays, since the writer gives it otherwise.
-func ServerFilled(desc string) bool {
-	d := strings.TrimSpace(desc)
-	switch {
-	case d == "":
-		return false
-	case strings.HasPrefix(d, "Filled in by the server"):
-		return true
-	case strings.Contains(d, "Filled in by the server") && strings.HasSuffix(d, "Leave out."):
-		return true
-	case strings.HasSuffix(d, "Filled in by the server.") || strings.HasSuffix(d, "Filled in by the server from the records."):
-		return true
-	case strings.Contains(d, "kept by the system"):
-		return true
-	}
-	return false
 }
 
 func first(vs []any) any {
