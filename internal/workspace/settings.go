@@ -8,8 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"gopkg.in/yaml.v3"
-
 	"github.com/tristanlawrenceguy/sameway/internal/update"
 )
 
@@ -44,6 +42,7 @@ var Settings = []Setting{
 	{"ui.spacing", "enum", []string{"normal", "wide"}, "room between lines, words and paragraphs: normal, or wide for people who read more easily with more room"},
 	{"ui.needs", "string", nil, "what the person has said they need, in their words (I use a screen reader; keep things simple; I am colour blind): you follow it in every reply and every page you make. Set it the moment they tell you, and add to it, keeping what was there"},
 	{"ui.clock", "enum", []string{"12", "24"}, "how a time of day is said: 12 (2pm, 5:30pm) or 24 (14:00); empty follows the language, 12 for English"},
+	{"ui.zone", "zone", nil, "the time zone the person's days are in, as a place's name such as Europe/Madrid or America/New_York: Today, late, tomorrow, repeats, the morning brief and the weekly review follow it. Empty, or Local, is this computer's zone"},
 	{"ui.language", "string", nil, "the workspace's language as a code (en, de, es, fr): the pages say it so screen readers use the right voice, and you reply in it"},
 	{"ui.lists", "enum", []string{"filled", "all"}, "which lists the sidebar shows: filled (something in them, or made by the person) or all"},
 	{"ui.developer", "enum", []string{"hidden", "shown"}, "the design system and the guide for agents: hidden from the sidebar or shown"},
@@ -129,6 +128,10 @@ func (w *Workspace) Set(key, value string) error {
 		if value != "" && !envName.MatchString(value) {
 			return fmt.Errorf("%s takes the name of an environment variable, such as OPENAI_API_KEY; a key or token itself is never written into workspace.yaml", key)
 		}
+	case "zone":
+		if value != "" && !KnownZone(value) {
+			return fmt.Errorf("%s must be a time zone named by a place, such as Europe/Madrid or America/New_York, not %q", key, value)
+		}
 	case "keys":
 		// A list one thing is added to or taken from, rather than resent
 		// whole: turning a part of a page on should not be able to turn
@@ -161,7 +164,7 @@ func (w *Workspace) Set(key, value string) error {
 // reminder, no programs allowed, no broker. Undoing a change to one of
 // them puts it back to nothing.
 var canBeEmpty = map[string]bool{
-	"notify.command": true, "notify.phone": true, "brief.at": true, "review.on": true, "backup.folder": true, "actions.allow": true, "chat.system_prompt": true, "ui.needs": true, "ui.language": true,
+	"notify.command": true, "notify.phone": true, "brief.at": true, "review.on": true, "backup.folder": true, "actions.allow": true, "chat.system_prompt": true, "ui.needs": true, "ui.language": true, "ui.zone": true,
 	"mqtt.broker": true, "mqtt.client_id": true, "llm.base_url": true, "tailnet.name": true, "tailnet.peers": true, "publish.tabs": true, "publish.types": true,
 }
 
@@ -232,60 +235,6 @@ func mergeKeys(current, change string) string {
 		}
 	}
 	return strings.Join(keys, ", ")
-}
-
-// yamlScalar writes a string the way YAML needs it on one line: quoted
-// when it has to be, a block when it has lines of its own.
-func yamlScalar(value string) string {
-	if strings.Contains(value, "\n") {
-		return "|-\n" + "    " + strings.ReplaceAll(value, "\n", "\n    ")
-	}
-	out, err := yaml.Marshal(value)
-	if err != nil {
-		return strconv.Quote(value)
-	}
-	return strings.TrimRight(string(out), "\n")
-}
-
-// setLine changes one line of a workspace.yaml: the key in its section,
-// added at the section's end when it is not there, with the section
-// added at the file's end when that is not there either.
-func setLine(src, key, scalar string) string {
-	section, name := "", key
-	if i := strings.Index(key, "."); i > 0 {
-		section, name = key[:i], key[i+1:]
-	}
-	indent := ""
-	if section != "" {
-		indent = "  "
-	}
-	lines := strings.Split(strings.ReplaceAll(src, "\r\n", "\n"), "\n")
-	var out []string
-	done, in := false, section == ""
-	for _, line := range lines {
-		trim := strings.TrimSpace(line)
-		top := line != "" && !strings.HasPrefix(line, " ") && !strings.HasPrefix(line, "\t") && !strings.HasPrefix(line, "#")
-		switch {
-		case section != "" && strings.HasPrefix(line, section+":"):
-			in = true
-		case section != "" && in && top:
-			if !done {
-				out, done = append(out, indent+name+": "+scalar), true
-			}
-			in = false
-		}
-		if in && !done && strings.HasPrefix(trim, name+":") && (section != "" || top) {
-			line, done = indent+name+": "+scalar, true
-		}
-		out = append(out, line)
-	}
-	if !done {
-		if section != "" && !in {
-			out = append(out, section+":")
-		}
-		out = append(out, indent+name+": "+scalar)
-	}
-	return strings.Join(out, "\n")
 }
 
 func contains(list []string, s string) bool {

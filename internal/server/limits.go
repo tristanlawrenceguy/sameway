@@ -62,6 +62,7 @@ func (s *Server) limitsSection(owner bool) string {
 		if l := s.meaningLine(); l != "" { // search_meaning.go
 			line(l)
 		}
+		line(s.zoneLine())                 // zone.go
 		line(s.agenda.BriefLine())         // agenda/brief.go
 		line(s.agenda.ReviewLine())        // agenda/review_day.go
 		lines, setup := s.media.AppLines() // meeting_fetch_help.go

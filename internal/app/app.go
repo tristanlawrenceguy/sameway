@@ -82,7 +82,7 @@ func Open(dir string, o Options) (*App, error) {
 	}
 	// The time and the clock face are this app's, said by everything below.
 	reg.Hours24 = ws.Hours24
-	now := o.clock(func() *time.Location { return time.Local })
+	now := o.clock(ws.Zone) // the person's zone, read each time (workspace.Zone)
 	a := &App{Workspace: ws, Types: types, Store: st, Registry: reg,
 		Records: &records.Book{Store: st, Setting: ws.Get, Clock: now, Hours24: ws.Hours24},
 		Blocks:  &blocks.Workspace{Store: st, Settings: ws, Clock: now}, opts: o}
@@ -136,8 +136,11 @@ func (a *App) Close() error { return a.Store.Close() }
 // Description is the machine-readable summary served at /api/describe and
 // printed by `sameway describe --json`.
 type Description struct {
-	Workspace  string               `json:"workspace"`
-	Dir        string               `json:"dir"`
+	Workspace string `json:"workspace"`
+	Dir       string `json:"dir"`
+	// Now is the time it is for the person, with their zone's offset:
+	// the day today, tomorrow and +7d are counted from (ui.zone).
+	Now        string               `json:"now"`
 	LLM        DescribedLLM         `json:"llm"`
 	Types      []DescribedType      `json:"types"`
 	Components []DescribedComponent `json:"components"`
@@ -187,6 +190,7 @@ func (a *App) Describe() Description {
 	d := Description{
 		Workspace: a.Workspace.Config.Name,
 		Dir:       a.Workspace.Dir,
+		Now:       a.Now().Format(time.RFC3339),
 		LLM:       DescribedLLM{Provider: a.Workspace.Config.LLM.Provider, Model: a.Workspace.Config.LLM.Model, Ready: a.Chat.Provider != nil},
 		Routes: withBuild(map[string]string{
 			"describe":         "GET /api/describe is the index: how to build, the routes, the components and types in a line each. One part: GET /api/describe/{types|components|arrangements|tools|routes|llm}; one item: GET /api/describe/types/{name}, likewise components (props and an example), tools and routes. Everything at once: GET /api/describe?full=1",
@@ -198,6 +202,7 @@ func (a *App) Describe() Description {
 			"look":             "GET /api/look?path=/t/note: the page as a screen reader gets it (title, landmarks, headings, controls with where they lead, live regions, components, and text: what it says, passage by passage under the heading each falls under, ledes, badges, dates and messages included) and its structural problems; POST /api/look with {\"path\", \"method\", \"form\"} does what a person does and reads where they land, or with {\"component\", \"props\"} reads one component rendered from props. Controls say their value, whether they are checked or disabled, and which form they are in. Add scripts (?scripts=1, or \"scripts\": true) to read the page in a headless browser with its scripts run, and \"steps\" ([{\"press\": name}, {\"type\": words, \"into\": name}, {\"key\": \"Tab\"}, {\"wait\": ms}]) to do what a person does first: the answer adds scripts.did, scripts.focused, scripts.focus_order (Tab pressed for real, from the top) and scripts.errors. only (landmarks,headings,controls,live,components,text), kind and name narrow a long answer; problems always stay. On Home, a tab or a block's own page, measured is each block as the person's own browser drew it (height, width, top, and content hidden in a box that scrolls or clips, by screen), and with scripts the same in the look browser",
 			"errors":           "every answer under /api is JSON, errors too: {\"error\": {\"code\", \"message\", \"fields\"}} with code bad_request (400), invalid (422, fields says which), not_found (404), kept (the activity log cannot be changed, 405), stale (412, changed since the If-Match you sent; current is it now), key_reused (422, an Idempotency-Key sent with a different change), unknown_key (401, an agent key nobody made or one taken away), cannot_try (422, a dry run of what reaches outside the workspace), slow_down (429, an agent key past its 60 changes a minute; Retry-After says how many seconds to wait), cannot_show (422, a block that could only say it is set up wrong) or no_browser (look with scripts, and no browser on this machine)",
 			"delete":           "DELETE /api/{type}/{id}",
+			"zone":             "days here are the person's, in the workspace's time zone, not the computer's: now above is the time there with its offset, and today, tomorrow, +7d, overdue, repeats, the morning brief and the weekly review are counted there. It is the setting ui.zone, a place's name such as Europe/Madrid (set_setting, or POST /zone with zone=Europe/Madrid, the owner's); empty is the computer's zone",
 			"chat":             "POST /api/chat with {\"message\": \"...\"}, and optionally \"canvas\" (the tab to build on; Home without it) and \"file\" (the id of a file added with POST /api/file/upload, whose text goes to the assistant with the message, and a picture itself to a model that can see). Anything else is refused (422, fields says which)",
 			"clear":            "POST /api/chat/clear: clears all messages from the current conversation, leaving the canvas and other chats untouched",
 			"mcp":              "sameway mcp (Model Context Protocol over stdio: the tools listed here, plus describe and get_record)",

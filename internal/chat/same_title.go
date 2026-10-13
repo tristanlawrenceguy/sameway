@@ -24,7 +24,7 @@ func (s *Service) sameTitle(t *schema.Type, rec *store.Record) string {
 	for _, r := range alike[:min(3, len(alike))] {
 		w := r.ID
 		if d, _ := r.Fields[day].(string); day != "" && d != "" {
-			w += " (" + t.FieldWords(day) + " " + when.Text(d, false) + ")"
+			w += " (" + t.FieldWords(day) + " " + when.Text(d, s.Now().Location(), false) + ")"
 		}
 		said = append(said, w)
 	}

@@ -20,8 +20,10 @@ type Options struct {
 	MemoryDB bool
 	// Clock is the time it is for the person, for everything said and
 	// worked out by the day (today, overdue, rings at); nil is this
-	// computer's clock. A test fixes it, so "tomorrow" is never said a
-	// minute before midnight about a minute after.
+	// computer's clock. The app says it in the workspace's zone
+	// (workspace.Zone), whatever zone it gives. A test fixes it, so
+	// "tomorrow" is never said a minute before midnight about a minute
+	// after.
 	Clock func() time.Time
 	// Machine is where this computer keeps what is no one workspace's:
 	// the known list, copies, deleted workspaces, pasted keys. Zero is
