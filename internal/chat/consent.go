@@ -166,17 +166,9 @@ func (s *Service) askAction(a toolArgs, _ llm.ToolCall) (toolResult, bool) {
 		return toolResult{}, false // inside the workspace, and undone like any change
 	case "command":
 		line, _ := rec.Fields["command"].(string)
-		line = strings.TrimSpace(line)
 		// A command that would be refused, or that has not been
 		// accepted and so asks on its own card, is left to Run.
-		args := tokens(line)
-		if len(args) == 0 || !s.allowed(args[0]) {
-			return toolResult{}, false
-		}
-		if _, err := s.folderFor(rec); err != nil {
-			return toolResult{}, false
-		}
-		if accepted, _ := rec.Fields["accepted"].(string); accepted != line {
+		if !s.Automate.Runs(rec) {
 			return toolResult{}, false
 		}
 		q = question{"Run a program on this computer?",

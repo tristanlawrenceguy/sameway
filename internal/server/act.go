@@ -29,7 +29,7 @@ func (s *Server) act(w http.ResponseWriter, r *http.Request) {
 	if !strings.HasPrefix(back, "/c/") {
 		canvas = ""
 	}
-	text, proposal, err := s.app.Chat.RunAs(r.Context(), "human", r.PathValue("id"), canvas)
+	text, proposal, err := s.app.Automate.RunAs(r.Context(), "human", r.PathValue("id"), canvas)
 	if err != nil {
 		s.failed(w, r, "Did not run", err, "/")
 		return
@@ -45,7 +45,7 @@ func (s *Server) act(w http.ResponseWriter, r *http.Request) {
 // apiAct runs an action for an agent and answers with what came back, or
 // with where the person's acceptance is waiting.
 func (s *Server) apiAct(w http.ResponseWriter, r *http.Request) {
-	text, proposal, err := s.app.Chat.RunAs(r.Context(), "human", r.PathValue("id"), "")
+	text, proposal, err := s.app.Automate.RunAs(r.Context(), "human", r.PathValue("id"), "")
 	if err != nil {
 		writeError(w, errors.New(err.Error()))
 		return
@@ -68,7 +68,7 @@ func (s *Server) hook(w http.ResponseWriter, r *http.Request) {
 		if t, _ := rec.Fields["trigger"].(string); t == "" || t != token {
 			continue
 		}
-		text, proposal, err := s.app.Chat.RunAsWith(r.Context(), "system", rec.ID, "", hookValues(r))
+		text, proposal, err := s.app.Automate.RunAsWith(r.Context(), "system", rec.ID, "", hookValues(r))
 		if err != nil {
 			writeError(w, errors.New(err.Error()))
 			return

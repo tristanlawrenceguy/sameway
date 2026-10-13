@@ -19,7 +19,7 @@ import (
 func TestActionsHearRecordsImportedAndRemindersRinging(t *testing.T) {
 	t.Parallel()
 	a, h := newApp(t)
-	a.Chat.StartAutomating()
+	a.Automate.StartWorker()
 	got, hook := listen(t)
 	a.Store.Create("action", map[string]any{"title": "New task", "kind": "webhook", "url": hook + "/new?t={{title}}", "when": "added", "what": "task"})
 	a.Store.Create("action", map[string]any{"title": "Rang", "kind": "webhook", "url": hook + "/rang?t={{title}}", "when": "changed", "what": server.ReminderType, "only": []any{"state=rang"}})

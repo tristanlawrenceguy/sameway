@@ -177,6 +177,6 @@ func connectDevices(ctx context.Context, out io.Writer, a *app.App) {
 		log.Printf("devices: %v", err)
 		return
 	}
-	a.Chat.Publish = bus.Publish
+	a.Automate.Publish = bus.Publish
 	fmt.Fprintf(out, "  mqtt    %s, %d topic(s)\n", cfg.Broker, len(cfg.Subscribe))
 }
