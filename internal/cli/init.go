@@ -16,6 +16,7 @@ import (
 
 func (c *ctx) initCmd() error {
 	fs := flag.NewFlagSet("init", flag.ContinueOnError)
+	fs.SetOutput(c.Stderr)
 	force := fs.Bool("force", false, "overwrite an existing workspace's config and schema")
 	noDetect := fs.Bool("no-detect", false, "do not probe for local model servers")
 	positional, err := parseMixed(fs, c.args)
