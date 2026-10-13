@@ -117,9 +117,8 @@ func Kind(name string) string {
 	if k, ok := kinds[ext]; ok {
 		return k.name
 	}
-	if ext == "" {
-		return "file"
-	}
+	// A name with no ending says nothing of its kind; "File type: file" on
+	// its page said nothing either.
 	return ext
 }
 
@@ -137,11 +136,22 @@ func Read(name string, data []byte) (Result, error) {
 	}
 	k, ok := kinds[ext]
 	if !ok {
-		return Result{Kind: Kind(name)}, errors.New("no built-in reader for ." + ext + " files; name a converter for it in workspace.yaml")
+		return Result{Kind: Kind(name)}, errors.New(noReader(ext))
 	}
 	md, err := k.read(data)
 	if err != nil {
 		return Result{Kind: k.name}, err
 	}
 	return Result{Markdown: strings.TrimSpace(md), Kind: k.name}, nil
+}
+
+// noReader says why a file's words cannot be read, in the words its page
+// says them after "Could not read the file:". It named workspace.yaml and
+// said "no built-in reader for. files", which tells a person nothing they
+// can do; what they can do is open the original, which still works.
+func noReader(ext string) string {
+	if ext == "" {
+		return "its name has no ending such as .pdf, so what kind of file it is cannot be told, nor its words read. The original opens as it is."
+	}
+	return "Sameway cannot read inside ." + ext + " files yet, so their words are not shown or searched. The original opens as it is."
 }
