@@ -25,7 +25,8 @@ func ask(t *testing.T, svc *chat.Service, tool string, args map[string]any) (str
 func TestWhatASmallModelIsToldNow(t *testing.T) {
 	t.Parallel()
 	svc := newFullService(t)
-	now := time.Now()
+	now := time.Date(2026, 9, 15, 12, 0, 0, 0, time.Local) // a Tuesday, at noon here, far from midnight
+	svc.Clock = func() time.Time { return now }
 	thursday := now.AddDate(0, 0, (int(time.Thursday)-int(now.Weekday())+7)%7)
 	if thursday.Format("2006-01-02") == now.Format("2006-01-02") {
 		thursday = thursday.AddDate(0, 0, 7)
