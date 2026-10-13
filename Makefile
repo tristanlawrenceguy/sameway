@@ -38,7 +38,7 @@ a11y:
 
 # Live-page tests need a running server with llm.provider: none, e.g. `make run`.
 pages:
-	cd tools/a11y-runner && npm install && SAMEWAY_URL=http://127.0.0.1:8080 npm run test:pages
+	cd tools/a11y-runner && npm install && SAMEWAY_URL=http://127.0.0.1:8080 npm run test:pages && SAMEWAY_URL=http://127.0.0.1:8080 npm run test:agent
 
 run: build
 	./bin/$(BIN) --workspace examples/workspaces/starter serve

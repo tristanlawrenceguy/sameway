@@ -65,9 +65,16 @@ jobs:
         run: npm run test:behave
 
   pages:
-    name: live pages (person and agent paths, every page in every mode)
+    # Every page in every mode took 42 minutes on one machine, and every
+    # merge waited on it; the pages are shared out over six (site.mjs,
+    # SITE_SHARD), and the first also checks the site as a whole.
+    name: live pages (person and agent paths, every page in every mode) ${{ matrix.part }}/6
     needs: check
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [1, 2, 3, 4, 5, 6]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-go@v6
@@ -87,12 +94,26 @@ jobs:
       - name: Install runner
         working-directory: tools/a11y-runner
         run: npm ci
-      - name: Drive the pages as a person and as an agent
+      - name: Drive the pages as a person
+        if: matrix.part == 1
         working-directory: tools/a11y-runner
-        run: npm run test:pages
+        run: node pages.mjs
+        env:
+          SAMEWAY_URL: http://127.0.0.1:8080
+      - name: Every page in every mode, part ${{ matrix.part }} of 6
+        working-directory: tools/a11y-runner
+        run: node site.mjs
+        env:
+          SAMEWAY_URL: http://127.0.0.1:8080
+          SITE_SHARD: ${{ matrix.part }}/6
+      - name: Moving and in motion
+        if: matrix.part == 1
+        working-directory: tools/a11y-runner
+        run: node move.mjs && node motion.mjs
         env:
           SAMEWAY_URL: http://127.0.0.1:8080
       - name: Do everyday tasks as a browser agent, by role and name only
+        if: matrix.part == 1
         working-directory: tools/a11y-runner
         run: npm run test:agent
         env:

@@ -31,6 +31,12 @@ import { innerScrollProblems, scrollFlagProblems } from "./measure.mjs";
 
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..", "..");
 const base = (process.env.SAMEWAY_URL || "http://127.0.0.1:8080").replace(/\/$/, "");
+// SITE_SHARD=k/n checks every nth page from the kth, so CI can share the
+// pages out over machines: one part took 42 minutes once there were a few
+// hundred examples, and the crew waits on it for every merge. The site as
+// a whole, which needs every page, is the first part's.
+const [shard, shards] = (process.env.SITE_SHARD || "1/1").split("/").map(Number);
+const whole = shard === 1;
 const browser = await chromium.launch();
 const page = await (await browser.newContext()).newPage();
 let failures = 0;
@@ -123,20 +129,6 @@ async function checkPage(path) {
   }
   for (const p of [...await errorWiringProblems(page), ...await pageSays(Boolean(seeded), path === "/design")]) fail(`${label}: ${p}`);
 
-  // The site as a whole: titled after itself, the same main navigation.
-  const head = await page.evaluate(() => ({
-    title: document.title.trim(),
-    h1: (document.querySelector("h1")?.textContent || "").replace(/\s+/g, " ").trim(),
-    nav: [...document.querySelectorAll("nav[aria-label='Main'] a")].map((a) => `${a.textContent.trim()} ${new URL(a.href).pathname}`).join(" | "),
-  }));
-  if (!head.title || !head.title.toLowerCase().includes(head.h1.toLowerCase().slice(0, 40))) fail(`${label}: title "${head.title}" does not name the page ("${head.h1}") (2.4.2)`);
-  if (!seeded) {
-    if (titles.has(head.title)) fail(`${label}: title "${head.title}" is also ${titles.get(head.title)}'s (2.4.2)`);
-    titles.set(head.title, path);
-  }
-  if (mainNav === null) mainNav = { path, nav: head.nav };
-  else if (head.nav !== mainNav.nav) fail(`${label}: main navigation differs from ${mainNav.path}'s: ${head.nav} (3.2.3)`);
-
   for (const p of await reflowProblems(page)) fail(`${label} reflow: ${p}`);
   for (const p of await spacingProblems(page)) fail(`${label} text spacing: ${p}`);
   for (const p of await textZoomProblems(page)) fail(`${label} text zoom: ${p}`);
@@ -160,7 +152,34 @@ async function checkPage(path) {
   }
 }
 
-for (const path of [...sitePages, ...Object.keys(blockLabel)]) await checkPage(path);
+// The site as a whole: titled after itself, the same main navigation. It
+// needs every page, read quickly by its head, so the first part reads it.
+async function checkHead(path) {
+  const label = blockLabel[path] ? `${path} (${blockLabel[path]})` : path;
+  const seeded = path.startsWith("/c/") || blockLabel[path];
+  await page.goto(base + path);
+  const head = await page.evaluate(() => ({
+    title: document.title.trim(),
+    h1: (document.querySelector("h1")?.textContent || "").replace(/\s+/g, " ").trim(),
+    nav: [...document.querySelectorAll("nav[aria-label='Main'] a")].map((a) => `${a.textContent.trim()} ${new URL(a.href).pathname}`).join(" | "),
+  }));
+  if (!head.title || !head.title.toLowerCase().includes(head.h1.toLowerCase().slice(0, 40))) fail(`${label}: title "${head.title}" does not name the page ("${head.h1}") (2.4.2)`);
+  if (!seeded) {
+    if (titles.has(head.title)) fail(`${label}: title "${head.title}" is also ${titles.get(head.title)}'s (2.4.2)`);
+    titles.set(head.title, path);
+  }
+  if (mainNav === null) mainNav = { path, nav: head.nav };
+  else if (head.nav !== mainNav.nav) fail(`${label}: main navigation differs from ${mainNav.path}'s: ${head.nav} (3.2.3)`);
+}
+
+const every = [...sitePages, ...Object.keys(blockLabel)];
+for (const [i, path] of every.entries()) if (i % shards === shard - 1) await checkPage(path);
+if (!whole) {
+  await browser.close();
+  console.log(`site, part ${shard} of ${shards}: ${failures} failure(s)`);
+  process.exit(failures > 0 ? 1 : 0);
+}
+for (const path of every) await checkHead(path);
 
 // ---- measured, not guessed -------------------------------------------------
 for (const p of await innerScrollProblems(page, base, ["/", `/c/${canvas.id}`])) fail(`measured: ${p}`);
