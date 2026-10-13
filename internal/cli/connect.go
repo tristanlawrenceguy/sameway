@@ -16,6 +16,7 @@ import (
 
 func (c *ctx) connectCmd() error {
 	fs := flag.NewFlagSet("connect", flag.ContinueOnError)
+	fs.SetOutput(c.Stderr)
 	write := fs.Bool("write", false, "write the configuration into the tool's file (merging with what is there)")
 	config := fs.String("config", "", "write to this file instead of the tool's usual one")
 	positional, err := parseMixed(fs, c.args)

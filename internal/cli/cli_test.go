@@ -159,23 +159,25 @@ func TestContentCommands(t *testing.T) {
 func TestErrorsSayHowToFix(t *testing.T) {
 	t.Parallel()
 	dir := initWorkspace(t)
+	// 2 is a command line not understood, 1 one that went wrong.
 	cases := []struct {
 		args []string
 		want string
+		code int
 	}{
-		{[]string{"note", "create", "--set", "status=bogus"}, "must be one of draft, published"},
-		{[]string{"note", "create", "--set", "nope=1"}, "unknown field"},
-		{[]string{"note", "create"}, "--set field=value"},
-		{[]string{"note", "frobnicate"}, "use list, get, create, update, delete"},
-		{[]string{"widget", "list"}, "unknown command or content type"},
-		{[]string{"note", "update"}, "usage:"},
-		{[]string{"chat"}, "usage: sameway chat"},
-		{[]string{"chat", "hello"}, "no model configured"},
-		{[]string{"component", "make"}, "usage: sameway component new"},
+		{[]string{"note", "create", "--set", "status=bogus"}, "must be one of draft, published", 1},
+		{[]string{"note", "create", "--set", "nope=1"}, "unknown field", 1},
+		{[]string{"note", "create"}, "--set field=value", 1},
+		{[]string{"note", "frobnicate"}, "use list, get, create, update, delete", 2},
+		{[]string{"widget", "list"}, "unknown command or content type", 2},
+		{[]string{"note", "update"}, "usage:", 2},
+		{[]string{"chat"}, "usage: sameway chat", 2},
+		{[]string{"chat", "hello"}, "no model configured", 1},
+		{[]string{"component", "make"}, "usage: sameway component new", 2},
 	}
 	for _, c := range cases {
 		r := run(t, dir, c.args...)
-		if r.code != 1 || !strings.Contains(r.stderr, c.want) {
+		if r.code != c.code || !strings.Contains(r.stderr, c.want) {
 			t.Errorf("%v: code=%d stderr=%q (want %q)", c.args, r.code, r.stderr, c.want)
 		}
 	}
