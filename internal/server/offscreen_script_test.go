@@ -2,34 +2,13 @@ package server_test
 
 import (
 	"net/http"
-	"os"
 	"strings"
 	"testing"
 )
 
-// The sign that points at a change out of sight is for eyes only: a
-// screen reader and an agent already have each change in the receipt and
-// the activity log, so the sign stays out of the accessibility tree and
-// the tab order, and is never a button.
-func TestOffscreenSignIsSilentToScreenReaders(t *testing.T) {
-	t.Parallel()
-	data, err := os.ReadFile("../../design/base/22-offscreen.js")
-	if err != nil {
-		t.Fatal(err)
-	}
-	src := string(data)
-	if !strings.Contains(src, `setAttribute("aria-hidden", "true")`) {
-		t.Error("the sign must be aria-hidden")
-	}
-	for _, focusable := range []string{`createElement("button")`, `createElement("a")`, "tabIndex", "tabindex", ".focus("} {
-		if strings.Contains(src, focusable) {
-			t.Errorf("the sign must not be focusable, found %s", focusable)
-		}
-	}
-	if !strings.Contains(src, "[data-changed]") {
-		t.Error("the sign must follow the same change markers as the glow")
-	}
-}
+// The sign that points at a change out of sight is for eyes only: aria-hidden,
+// never focusable, and gone once the change is seen. Checked in a browser:
+// tools/a11y-runner/behave-live.mjs.
 
 func TestOffscreenSignIsBundled(t *testing.T) {
 	t.Parallel()
