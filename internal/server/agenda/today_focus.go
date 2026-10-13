@@ -181,7 +181,8 @@ func (s *Service) focusSection(l todayLists, list func(string, []todayItem) stri
 			n++
 		}
 	}
-	out := `<p>` + template.HTMLEscapeString(fmt.Sprintf("%d tasks are late or due. Start with these three; the rest wait below.", n)) + `</p>` + list("Start with these", first)
+	out := `<p>` + template.HTMLEscapeString(fmt.Sprintf("%d tasks are late or due. Start with these three; the rest wait below.", n)) + `</p>` +
+		s.letGoOffer(append(append([]todayItem{}, first...), rest...)) + list("Start with these", first) // today_letgo.go
 	if body, err := s.app.Registry.RenderSlot("disclosure", map[string]any{"label": "The rest", "count": len(rest), "of": schema.Noun(len(rest), "task")}, template.HTML(list("", rest))); err == nil {
 		out += string(body)
 	}

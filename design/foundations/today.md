@@ -26,6 +26,19 @@ morning brief says the same as one notification. Both are read from the records,
 - **A long day starts with three.** With six or more tasks late or due,
   three are shown and the rest folded and counted (the "most important
   tasks" method; COGA, Avoid too much content).
+- **What matters starts before it is due.** A task marked important or
+  urgent, or of high priority, joins the three when it is due within a
+  week or has no day, never the folded rest. Sorting what was in their
+  head, a person was told by the assistant to start with the dentist and
+  the council tax, and Today went on starting with errands from a
+  fortnight ago: two answers to "what first" is one too many.
+- **The long late can be let go of, in one press.** When two or more tasks
+  have been late more than two weeks, Today offers to keep them with no
+  date: still tasks, no longer late, all back with one Undo, and the three
+  worked out again from what is left. Moving them all to today puts the
+  same pile on tomorrow, and going through them one by one is the curating
+  a person gets worse at the more overwhelmed they are. What they marked
+  as mattering is never among them.
 - **Each day is a `<time>`** with its value, the page's own date too, so a
   page left open follows itself at midnight and when a time passes
   (`36-days.js`), and a machine reads the date without parsing words.
