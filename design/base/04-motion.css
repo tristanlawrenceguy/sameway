@@ -45,8 +45,9 @@
     transition-duration: 0.01ms !important;
   }
   /* No bloom, but the change must still be findable, so the ring stays for
-     the life of the page view instead of fading. */
-  [data-changed] { box-shadow: 0 0 0 3px var(--sw-actor, var(--sw-color-accent)); }
+     the life of the page view instead of fading; and nothing waits to
+     start, as an arrival does not (below). */
+  [data-changed] { box-shadow: 0 0 0 3px var(--sw-actor, var(--sw-color-accent)); animation-delay: 0s !important; }
 }
 
 /* Arrival: a person is eased into new information. A block added in the

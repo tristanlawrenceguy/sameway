@@ -173,12 +173,6 @@ async function checkHead(path) {
 }
 
 const every = [...sitePages, ...Object.keys(blockLabel)];
-// Blocks just placed arrive with a glow the first time they are seen. In
-// one run the seeded canvas came before every block's own page; a part
-// that does not reach it first met the arrival on its first block, so each
-// part sees the canvas once before it checks anything.
-await page.goto(`${base}/c/${canvas.id}`);
-await settle(page);
 for (const [i, path] of every.entries()) if (i % shards === shard - 1) await checkPage(path);
 if (!whole) {
   await browser.close();
