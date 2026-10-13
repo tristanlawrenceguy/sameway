@@ -48,6 +48,7 @@
     { "name": "undo", "props": { "actor": "assistant", "action": "removed", "target": "list", "detail": "Groceries", "time": "20:31", "undo": "/activity/a1/undo" }, "file": "examples/undo.html" },
     { "name": "put-back", "props": { "actor": "human", "action": "undid", "detail": "Assistant removed list Groceries", "time": "20:32", "undo": "/activity/a4/undo", "undoes": true }, "file": "examples/put-back.html" },
     { "name": "compact", "props": { "actor": "assistant", "action": "changed", "target": "text size", "detail": "to Large", "undo": "/activity/a2/undo", "from": "/chat", "compact": true }, "file": "examples/compact.html" },
-    { "name": "heading", "props": { "actor": "human", "action": "updated", "target": "note", "detail": "Shopping", "time": "2 Jan 09:12", "datetime": "2026-01-02T09:12:00Z", "via": "on pixel-7", "level": 2, "href": "/t/note/n1" }, "file": "examples/heading.html" }
+    { "name": "heading", "props": { "actor": "human", "action": "updated", "target": "note", "detail": "Shopping", "time": "2 Jan 09:12", "datetime": "2026-01-02T09:12:00Z", "via": "on pixel-7", "level": 2, "href": "/t/note/n1" }, "file": "examples/heading.html" },
+    { "name": "long", "props": { "actor": "agent", "who": "An agent (through the API)", "action": "created", "target": "reminder", "detail": "Agent verification test for the quarterly review", "time": "8:39am", "href": "/t/reminder/r1", "undo": "/activity/a5/undo" }, "file": "examples/long.html" }
   ]
 }

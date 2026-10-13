@@ -1,5 +1,9 @@
+/* The line wraps: a long title, its time and Undo did not fit on a phone
+   (320px) and the whole page scrolled sideways, on every page the
+   changes by others were listed on. The time and Undo go to the next
+   line instead, Undo still at the end. */
 .sw-event {
-  display: flex; align-items: baseline; gap: var(--sw-space-2);
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--sw-space-2);
   font-size: var(--sw-size-text-sm); color: var(--sw-color-fg-muted);
   padding: var(--sw-space-1) 0;
 }
@@ -12,7 +16,7 @@
 /* An agent's mark is square, so it is told from a person's or the
    assistant's by shape as well as by the name in words beside it. */
 .sw-event[data-actor="agent"] .sw-event__mark { border-radius: 2px; }
-.sw-event__text { flex: 1; }
+.sw-event__text { flex: 1 1 8rem; min-width: 0; overflow-wrap: anywhere; }
 /* An entry that is a heading reads as its line, not as a title over it. */
 .sw-event__heading { font: inherit; margin: 0; }
 .sw-event__actor { font-weight: 700; color: var(--sw-actor, var(--sw-color-fg)); }
