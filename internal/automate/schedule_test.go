@@ -1,4 +1,4 @@
-package chat_test
+package automate_test
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/automate"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -42,7 +42,7 @@ func TestActionsRunOnTheirOwnAtTheirTime(t *testing.T) {
 		{"weekly on monday", at("week", "07:00", "monday", ""), tuesday, false},
 	}
 	for _, c := range cases {
-		if got := chat.Due(c.rec, c.now); got != c.want {
+		if got := automate.Due(c.rec, c.now); got != c.want {
 			t.Errorf("%s: due=%v, want %v", c.name, got, c.want)
 		}
 	}
@@ -53,19 +53,19 @@ func TestActionsRunOnTheirOwnAtTheirTime(t *testing.T) {
 		io.WriteString(w, "sunny")
 	}))
 	defer remote.Close()
-	svc := newFullService(t)
-	svc.HTTP = remote.Client()
+	svc, act := newServices(t)
+	act.HTTP = remote.Client()
 	weather, _ := svc.Store.Create(records.ActionType, map[string]any{"title": "Weather", "url": remote.URL, "every": "hour", "show": true})
 	svc.Store.Create(records.ActionType, map[string]any{"title": "Alarm", "url": remote.URL, "every": "never"})
 
-	ran := svc.RunDue(context.Background(), tuesday)
+	ran := act.RunDue(context.Background(), tuesday)
 	if len(ran) != 1 || ran[0] != weather.ID || calls != 1 {
 		t.Fatalf("only the hourly action is due, got %v after %d calls", ran, calls)
 	}
-	if again := svc.RunDue(context.Background(), tuesday.Add(5*time.Minute)); len(again) != 0 {
+	if again := act.RunDue(context.Background(), tuesday.Add(5*time.Minute)); len(again) != 0 {
 		t.Error("five minutes later nothing is due")
 	}
-	if later := svc.RunDue(context.Background(), tuesday.Add(61*time.Minute)); len(later) != 1 || calls != 2 {
+	if later := act.RunDue(context.Background(), tuesday.Add(61*time.Minute)); len(later) != 1 || calls != 2 {
 		t.Errorf("an hour later it runs again, got %v after %d calls", later, calls)
 	}
 	rec, _ := svc.Store.Get(records.ActionType, weather.ID)

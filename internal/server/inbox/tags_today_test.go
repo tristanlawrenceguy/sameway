@@ -40,7 +40,7 @@ func TestATagIsCheckedBesideItsEmailAndAgreedByMakingTheTask(t *testing.T) {
 	a, _ := newApp(t)
 	a.Chat.Provider, a.Chat.ProviderErr = &sortModel{}, nil
 	srv := server.New(a)
-	a.Chat.StartAutomating()
+	a.Automate.StartWorker()
 	srv.SetUpSorting()
 
 	rec := written(t, a.Store, "created", "email", "", map[string]any{"subject": "Water bill", "from": "Water Co", "body": "Please pay by Friday.", "tags": []any{"to sort"}})
@@ -80,7 +80,7 @@ func TestATagKeptFromYourChoicesIsShownFoldedAndCanBeTakenOff(t *testing.T) {
 	t.Parallel()
 	a, _ := newApp(t)
 	srv := server.New(a)
-	a.Chat.StartAutomating() // what notices a tag taken off
+	a.Automate.StartWorker() // what notices a tag taken off
 	srv.SetUpSorting()
 	rec, _ := a.Store.Create("email", map[string]any{"subject": "Council tax", "body": "Your bill is due.", "tags": []any{"to do"}})
 	c, err := a.Store.Create(records.ClassificationType, map[string]any{"record": "email/" + rec.ID, "tag": "to do", "why": "as you kept the gas bill", "state": "confirmed", "confirmed_by": "judgement"})

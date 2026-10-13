@@ -45,7 +45,7 @@ func TestAnEmailToDoIsSuggestedAsATask(t *testing.T) {
 	model := &sortModel{}
 	a.Chat.Provider, a.Chat.ProviderErr = model, nil
 	srv := server.New(a)
-	a.Chat.StartAutomating()
+	a.Automate.StartWorker()
 	srv.SetUpSorting()
 
 	waiting := func(subject string) *store.Record {
@@ -109,7 +109,7 @@ func TestSortingIsLoggedAndUndone(t *testing.T) {
 	a, _ := newApp(t)
 	a.Chat.Provider, a.Chat.ProviderErr = &sortModel{}, nil
 	srv := server.New(a)
-	a.Chat.StartAutomating()
+	a.Automate.StartWorker()
 	srv.SetUpSorting()
 	e := written(t, a.Store, "created", "email", "", map[string]any{"subject": "Water bill", "from": "Water Co", "body": "Please pay by Friday.", "tags": []any{"to sort"}})
 	tagWait(t, "the suggestion", func() bool { return len(a.Chat.Suggestions()) == 1 })

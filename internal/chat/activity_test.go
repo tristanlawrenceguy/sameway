@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
+	"github.com/tristanlawrenceguy/sameway/internal/automate"
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
@@ -30,7 +31,9 @@ func newFullService(t *testing.T) *chat.Service {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return &chat.Service{Book: &records.Book{Store: st}, Registry: reg, HistoryLimit: 10}
+	svc := &chat.Service{Book: &records.Book{Store: st}, Registry: reg, HistoryLimit: 10}
+	svc.Automate = &automate.Service{Book: svc.Book, Chat: svc} // actions run as the app runs them
+	return svc
 }
 
 func TestTurnLeavesReceiptProvenanceAndActivity(t *testing.T) {

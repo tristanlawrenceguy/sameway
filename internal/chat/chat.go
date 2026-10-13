@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"net/http"
 	"strings"
 	"time"
 
@@ -40,14 +39,9 @@ type Service struct {
 	Provider     llm.Provider
 	ProviderErr  error
 	HistoryLimit int
-	// Allow names the programs a command action may run, by name (curl,
-	// python). Empty means none; see command.go for the boundary.
-	Allow []string
-	// Workdir is where commands run when an action names no folder, and
-	// where kept files are read from: the workspace, set by the app.
+	// Workdir is where kept files are read from: the workspace, set by
+	// the app.
 	Workdir string
-	// HTTP sends webhook actions; nil is a client with a ten second limit.
-	HTTP *http.Client
 	// Ollama is Ollama on this computer, set by the app: a model there is
 	// readied ahead (warm.go) and given fewer tools (toolset.go).
 	Ollama llm.Ollama
@@ -60,22 +54,15 @@ type Service struct {
 	// there are no records, and a block is then held to its props schema
 	// only.
 	Blocks *blocks.Workspace
-	// Tell lets the person know, beyond the page, what was done for them
-	// while they were away: an automation's turn (automate.go).
-	Tell func(title, text, url string)
-	// Automate runs the actions that ask the model on their own, set by
-	// the app. See internal/automate.
+	// Automate runs the person's actions, set by the app. See
+	// internal/automate.
 	Automate *automate.Service
-	auto     *automation // actions waiting for something to happen; automate.go
 	// Picture is a picture file's bytes, ready for a model to see, set by
 	// the server; see pictures.go.
 	Picture func(fileID string) (llm.Image, bool)
 	// Home is the machine's side of the assistant's tools, set by the
 	// server; see home_tools.go.
 	Home Home
-	// Publish sends to an MQTT topic, when the workspace has a broker;
-	// nil means it has none. See mqtt.go.
-	Publish func(topic, payload string) error
 	// Tailnet waits up to the given time for the next step of joining the
 	// person's Tailscale network and says it in their words; nil where the
 	// workspace is not being served. See settings.go.
@@ -158,8 +145,8 @@ func (s *Service) sendTurn(ctx context.Context, canvas, text, fileID string, on 
 		on(Event{Kind: "said", ID: mine.ID})
 	}
 	actor, by := "human", records.VisitorOf(ctx).Who()
-	if name := automatedBy(ctx); name != "" {
-		actor, by = "system", name // asked by an automation, not the person; automate.go
+	if name := automate.By(ctx); name != "" {
+		actor, by = "system", name // asked by an automation, not the person; automate/happened.go
 	}
 	said := records.Record(s.Store, actor, records.Change{Action: "said", Detail: trim.Line(text, 80), Via: records.Via(ctx), By: by})
 	if s.Provider == nil {

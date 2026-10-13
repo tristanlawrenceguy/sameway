@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/automate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -50,7 +51,7 @@ func (s *Service) actionSaid(t *schema.Type, rec *store.Record) string {
 	var missing []string
 	for _, field := range []string{"url", "body", "payload", "message", "command"} {
 		v, _ := rec.Fields[field].(string)
-		for _, m := range placeholder.FindAllStringSubmatch(v, -1) {
+		for _, m := range automate.Placeholder.FindAllStringSubmatch(v, -1) {
 			if !have[m[1]] {
 				missing = append(missing, "{{"+m[1]+"}}")
 			}

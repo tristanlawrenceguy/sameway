@@ -17,7 +17,7 @@ func TestACommandButtonAsksOnceThenRuns(t *testing.T) {
 	t.Parallel()
 	a, h := newApp(t)
 	// go is a program this workspace allows; the test machine has it.
-	a.Chat.Allow = []string{"go"}
+	a.Automate.Allow = []string{"go"}
 	created := postJSON(t, h, http.MethodPost, "/api/action", map[string]any{"title": "Say hello", "kind": "command", "command": "go version", "trigger": "long-secret-word"})
 	wantStatus(t, created, http.StatusCreated)
 	var action struct{ ID string }
@@ -67,7 +67,7 @@ func TestACommandButtonAsksOnceThenRuns(t *testing.T) {
 	calls := 0
 	remote := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { calls++; io.WriteString(w, "on") }))
 	defer remote.Close()
-	a.Chat.HTTP = remote.Client()
+	a.Automate.HTTP = remote.Client()
 	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/action", map[string]any{"title": "Alarm", "url": remote.URL, "trigger": "alarm-word"}), http.StatusCreated)
 	wantStatus(t, postJSON(t, h, http.MethodPost, "/hook/alarm-word", nil), http.StatusOK)
 	if calls != 1 {
