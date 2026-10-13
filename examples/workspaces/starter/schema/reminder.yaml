@@ -21,6 +21,7 @@ fields:
     type: enum
     values: [alarm, timer]
     default: alarm
+    label: Type
     description: An alarm is set for a time of day; a timer for a span from now.
   state:
     type: enum
