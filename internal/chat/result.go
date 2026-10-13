@@ -3,6 +3,7 @@ package chat
 import (
 	"fmt"
 
+	"github.com/tristanlawrenceguy/sameway/internal/automate"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
@@ -22,4 +23,9 @@ type toolResult struct {
 
 func fail(format string, args ...any) toolResult {
 	return toolResult{text: fmt.Sprintf(format, args...), isErr: true}
+}
+
+// ran is what an action did (internal/automate) as a tool's result.
+func ran(r automate.Result) toolResult {
+	return toolResult{text: r.Text, isErr: r.IsErr, change: r.Change, changes: r.Changes, answer: r.Answer}
 }

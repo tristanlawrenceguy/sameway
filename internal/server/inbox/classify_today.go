@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/web"
@@ -14,7 +13,7 @@ import (
 
 // A tag a classify action gave waits on Today as a suggestion: kept with a
 // press, taken off, or changed to another tag. What the person did is what
-// the action follows next time (chat/judgement.go), so each press is their
+// the action follows next time (automate/judgement.go), so each press is their
 // judgement taught once, not a chore repeated.
 
 // taggedRecord is the record a classification is about.
@@ -24,7 +23,7 @@ func (s *Service) taggedRecord(c *store.Record) (*store.Record, error) {
 }
 
 func (s *Service) tagNames() []string {
-	recs, _ := s.app.Store.List(chat.TagType, store.ListOptions{OrderBy: "name"})
+	recs, _ := s.app.Store.List(records.TagType, store.ListOptions{OrderBy: "name"})
 	var out []string
 	for _, r := range recs {
 		if n, _ := r.Fields["name"].(string); strings.TrimSpace(n) != "" {
@@ -37,7 +36,7 @@ func (s *Service) tagNames() []string {
 // suggestion is the classification a press is about, still suggested.
 func (s *Service) suggestion(r *http.Request) (*store.Record, *store.Record, error) {
 	r.ParseForm()
-	c, err := s.app.Store.Get(chat.ClassificationType, r.PostForm.Get("id"))
+	c, err := s.app.Store.Get(records.ClassificationType, r.PostForm.Get("id"))
 	if err != nil || c.Fields["state"] != "suggested" && c.Fields["confirmed_by"] != "judgement" {
 		return nil, nil, errors.New("that tag has been dealt with already")
 	}
@@ -54,7 +53,7 @@ func (s *Service) tagKeep(w http.ResponseWriter, r *http.Request) {
 		s.Failed(w, r, "Not kept", err, "/today")
 		return
 	}
-	if _, err := records.ApplyOps(s.app.Store, records.Op{Type: chat.ClassificationType, ID: c.ID, After: map[string]any{"state": "confirmed", "confirmed_by": "person"}}); err != nil {
+	if _, err := records.ApplyOps(s.app.Store, records.Op{Type: records.ClassificationType, ID: c.ID, After: map[string]any{"state": "confirmed", "confirmed_by": "person"}}); err != nil {
 		s.Failed(w, r, "Not kept", err, "/today")
 		return
 	}
@@ -122,7 +121,7 @@ var starterTags = []struct {
 // against the person's past choices. Both are ordinary records: the person
 // changes the tags, the meanings, or the action, or removes them.
 func (s *Service) SetUpSorting() {
-	if _, ok := s.app.Types.Get(chat.TagType); !ok {
+	if _, ok := s.app.Types.Get(records.TagType); !ok {
 		return
 	}
 	if _, ok := s.app.Types.Get("email"); !ok {
@@ -137,7 +136,7 @@ func (s *Service) SetUpSorting() {
 	for _, t := range starterTags {
 		names = append(names, t.name)
 		if !have[t.name] {
-			records.WriteAs(s.app.Store, who, "created", chat.TagType, "", map[string]any{"name": t.name, "means": t.means, "alone": t.alone})
+			records.WriteAs(s.app.Store, who, "created", records.TagType, "", map[string]any{"name": t.name, "means": t.means, "alone": t.alone})
 		}
 	}
 	actions, _ := s.app.Store.List(records.ActionType, store.ListOptions{})
@@ -162,7 +161,7 @@ func (s *Service) SetUpSorting() {
 
 // latestTag is the newest classification of a tag on a record, to change.
 func (s *Service) latestTag(rec *store.Record, tag string) *store.Record {
-	cls, _ := s.app.Store.List(chat.ClassificationType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 200})
+	cls, _ := s.app.Store.List(records.ClassificationType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 200})
 	for _, c := range cls {
 		if c.Fields["record"] == rec.Type+"/"+rec.ID && strings.EqualFold(fmt.Sprint(c.Fields["tag"]), tag) {
 			return c
@@ -187,11 +186,11 @@ func (s *Service) tagsAgreed(p *store.Record) {
 			set[strings.ToLower(strings.TrimSpace(v))] = true
 		}
 	}
-	cls, _ := s.app.Store.List(chat.ClassificationType, store.ListOptions{})
+	cls, _ := s.app.Store.List(records.ClassificationType, store.ListOptions{})
 	for _, c := range cls {
 		undecided := c.Fields["state"] == "suggested" || c.Fields["confirmed_by"] == "judgement"
 		if c.Fields["record"] == p.Fields["from"] && undecided && set[strings.ToLower(fmt.Sprint(c.Fields["tag"]))] {
-			records.ApplyOps(s.app.Store, records.Op{Type: chat.ClassificationType, ID: c.ID, After: map[string]any{"state": "confirmed", "confirmed_by": "person"}})
+			records.ApplyOps(s.app.Store, records.Op{Type: records.ClassificationType, ID: c.ID, After: map[string]any{"state": "confirmed", "confirmed_by": "person"}})
 		}
 	}
 }

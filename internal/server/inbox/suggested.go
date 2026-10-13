@@ -14,7 +14,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
-// What an action suggests (chat/suggest_records.go) waits on Today: a
+// What an action suggests (automate/suggest.go) waits on Today: a
 // task from an email, an event from a booking. Make it, change it, or say
 // no, each a press; for an email or a shared message waiting to be sorted,
 // the answer sorts it too. What the person does is what the action follows

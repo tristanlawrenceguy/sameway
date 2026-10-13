@@ -57,3 +57,49 @@ func (t *Type) FieldWords(name string) string {
 	}
 	return Field{Name: name}.Words()
 }
+
+// Kind is a field's kind in a word or two, as a model is told it.
+func (f Field) Kind() string {
+	req := ""
+	if f.Required {
+		req = ", required"
+	}
+	switch {
+	case f.RefList():
+		return "ids of " + f.To + req
+	case f.Type == "ref":
+		return "id of " + f.To + req
+	case f.Type == "enum":
+		return strings.Join(f.Values, "|") + req
+	case f.Type == "datetime":
+		return "date" + req
+	case f.Type == "markdown", f.Type == "text", f.Type == "string":
+		return "text" + req
+	case f.Type == "bool":
+		return "yes/no" + req
+	case f.Type == "int", f.Type == "float":
+		return "number" + req
+	}
+	return f.Type + req
+}
+
+// ServerFilled says whether a property's description says the server, not
+// the writer, gives it: "Filled in by the server: ...", "... Leave out.",
+// "... kept by the system." A property the server fills only in some case
+// ("when type is given") stays, since the writer gives it otherwise.
+func ServerFilled(desc string) bool {
+	d := strings.TrimSpace(desc)
+	switch {
+	case d == "":
+		return false
+	case strings.HasPrefix(d, "Filled in by the server"):
+		return true
+	case strings.Contains(d, "Filled in by the server") && strings.HasSuffix(d, "Leave out."):
+		return true
+	case strings.HasSuffix(d, "Filled in by the server.") || strings.HasSuffix(d, "Filled in by the server from the records."):
+		return true
+	case strings.Contains(d, "kept by the system"):
+		return true
+	}
+	return false
+}

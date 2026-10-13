@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/automate"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -21,7 +22,7 @@ const (
 	WaitQuestion   = "question"   // the assistant asks before it acts (propose.go)
 	WaitSort       = "sort"       // an email or a shared message not yet dealt with
 	WaitReply      = "reply"      // an email that asked the person something (records/turn.go)
-	WaitSuggestion = "suggestion" // a record an action suggests (suggest_records.go)
+	WaitSuggestion = "suggestion" // a record an action suggests (automate/suggest.go)
 	WaitTag        = "tag"        // a tag an action gave, to keep or change (classify.go)
 )
 
@@ -148,15 +149,15 @@ func (s *Service) yourTurn() []Waiting {
 // time; a tag given only when no other fits is not asked about, and one
 // on a record since gone is not either.
 func (s *Service) tagsToCheck(alone map[string]bool) []Waiting {
-	if _, ok := s.Store.Types().Get(ClassificationType); !ok {
+	if _, ok := s.Store.Types().Get(records.ClassificationType); !ok {
 		return nil
 	}
-	recs, _ := s.Store.List(ClassificationType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 100})
+	recs, _ := s.Store.List(records.ClassificationType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 100})
 	// A tag is changed to another of the person's tags, so Change is
 	// there when there is more than one to choose from.
 	other := 0
-	for _, d := range s.tagDefs(nil) {
-		if !d.alone {
+	for _, d := range automate.Tags(s.Store, nil) {
+		if !d.Alone {
 			other++
 		}
 	}
@@ -185,9 +186,9 @@ func (s *Service) tagsToCheck(alone map[string]bool) []Waiting {
 // case.
 func (s *Service) AloneTags() map[string]bool {
 	out := map[string]bool{}
-	for _, d := range s.tagDefs(nil) {
-		if d.alone {
-			out[strings.ToLower(d.name)] = true
+	for _, d := range automate.Tags(s.Store, nil) {
+		if d.Alone {
+			out[strings.ToLower(d.Name)] = true
 		}
 	}
 	return out

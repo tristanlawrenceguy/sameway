@@ -1,4 +1,4 @@
-package chat
+package automate
 
 import (
 	"fmt"

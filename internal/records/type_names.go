@@ -14,6 +14,9 @@ const (
 	AgentType = "agent"
 	// BlockType holds canvas items.
 	BlockType = "block"
+	// ClassificationType is a tag an action gave a record, and what
+	// became of it (internal/automate).
+	ClassificationType = "classification"
 	// CanvasType holds the tabs. The first canvas, Home, needs no record:
 	// it is the blocks whose canvas is empty. Every record of this type is
 	// one more tab beside it, with blocks of its own.
@@ -42,6 +45,8 @@ const (
 	ReminderType = "reminder"
 	// SuggestionType is a suggested change.
 	SuggestionType = "suggestion"
+	// TagType is a tag and what it means.
+	TagType = "tag"
 )
 
 // ComponentName is the component that renders the conversation. It is a

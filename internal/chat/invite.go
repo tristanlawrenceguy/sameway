@@ -37,20 +37,6 @@ func (s *Service) GiveAccess(name, access string) (*store.Record, error) {
 	return s.Store.Get(records.PersonType, done[0].ID)
 }
 
-// PersonByName is the person of that name, in any case, if there is one.
-func (s *Service) PersonByName(name string) *store.Record {
-	people, err := s.Store.List(records.PersonType, store.ListOptions{})
-	if err != nil {
-		return nil
-	}
-	for _, p := range people {
-		if n, _ := p.Fields["name"].(string); strings.EqualFold(strings.TrimSpace(n), name) {
-			return p
-		}
-	}
-	return nil
-}
-
 // letOut is let_in taking access away, by email or, for someone invited
 // on the Wi-Fi with none, by name.
 func (s *Service) letOut(a letInArgs, p *store.Record) toolResult {

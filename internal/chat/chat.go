@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/automate"
 	"github.com/tristanlawrenceguy/sameway/internal/blocks"
-
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
@@ -63,7 +63,10 @@ type Service struct {
 	// Tell lets the person know, beyond the page, what was done for them
 	// while they were away: an automation's turn (automate.go).
 	Tell func(title, text, url string)
-	auto *automation // actions waiting for something to happen; automate.go
+	// Automate runs the actions that ask the model on their own, set by
+	// the app. See internal/automate.
+	Automate *automate.Service
+	auto     *automation // actions waiting for something to happen; automate.go
 	// Picture is a picture file's bytes, ready for a model to see, set by
 	// the server; see pictures.go.
 	Picture func(fileID string) (llm.Image, bool)
