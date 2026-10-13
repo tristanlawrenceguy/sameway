@@ -52,13 +52,13 @@ func TestOldEntryActivityShowsReadableFallback(t *testing.T) {
 		t.Errorf("the activity log should not show a raw database ID %q in visible text\n%s", entry.ID, said(body))
 	}
 	// The readable fallback title appears instead of the raw ID.
-	if !strings.Contains(said(body), "Reading: 1") {
-		t.Errorf("the activity log should show the readable fallback 'Reading: 1', got:\n%s", said(body))
+	if !strings.Contains(said(body), "Reading, 1") {
+		t.Errorf("the activity log should show the readable fallback 'Reading, 1', got:\n%s", said(body))
 	}
 
 	// Acceptance 2: the heading uses readable text.
-	if !anyH3Says(body, "Assistant created entry Reading: 1") {
-		t.Errorf("the <h3> heading should say 'Assistant created entry Reading: 1', not a bare ID\n%s", truncate(body))
+	if !anyH3Says(body, "Assistant created entry Reading, 1") {
+		t.Errorf("the <h3> heading should say 'Assistant created entry Reading, 1', not a bare ID\n%s", truncate(body))
 	}
 
 	// Acceptance 2: the same on the /t/entry page.

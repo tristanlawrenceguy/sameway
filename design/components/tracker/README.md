@@ -65,7 +65,7 @@ a list.
 - **The day to log for is labelled Day**, a word in sight that says what
   goes there; it was "on", which read as a leftover
   ([WCAG 3.3.2](https://www.w3.org/WAI/WCAG22/Understanding/labels-or-instructions.html)).
-- **An entry is named by its habit and how much**, Read: 25 minutes, in
+- **An entry is named by its habit and how much**, Read, 25 minutes, in
   its list, on its page and in the log, never by its id; its day is when
   it happened, Today 12:51, not "was", because it is done.
 - **The unit is said once.** The amount's label is the unit drawn beside
