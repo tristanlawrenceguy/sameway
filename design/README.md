@@ -28,6 +28,7 @@ the `sameway` binary, which serves a living styleguide at `/design`.
 | [foundations/review.md](foundations/review.md) | The weekly review: done first, overdue without blame, the week ahead, the notice |
 | [foundations/today.md](foundations/today.md) | Today and the morning brief: what comes first, how a late day is said, when the brief stays quiet |
 | [foundations/sharing.md](foundations/sharing.md) | Letting people in: pairing a phone, inviting by name, who can open it and taking it back |
+| [foundations/in-step.md](foundations/in-step.md) | One workspace on several computers through the cloud folder: where it stands said, nothing lost, the time zone the same on each |
 | [foundations/connecting.md](foundations/connecting.md) | AI apps, agents with keys and a model: said once, read exactly, taken back with one press |
 | [foundations/sorting.md](foundations/sorting.md) | Tags and suggestions an action gives: one place each, never silent, every answer teaching |
 

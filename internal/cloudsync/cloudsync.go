@@ -48,14 +48,27 @@ func fresh(st *store.Store) {
 	st.SetMeta(metaOrigin, st.Origin())
 }
 
+// ErrGone is a workspace's folder no longer in the cloud folder: deleted
+// there, or the cloud app has not put it back yet. Nothing is passed
+// either way until the person says, since a folder that went on purpose
+// should not come back on its own (Syncthing stops the same way when its
+// folder's marker is missing).
+var ErrGone = errors.New("its folder is no longer in the cloud folder")
+
 // Out writes this copy's stamps not written yet as one new batch, and the
 // files of dir not in the folder yet. It says how many stamps it wrote.
+// When the batches it wrote before are gone (the folder was deleted and
+// put back), it writes all of its stamps again, so a copy that had not
+// read them yet still does; stamps read twice change nothing.
 func Out(st *store.Store, folder, filesDir string) (int, error) {
 	fresh(st)
 	if err := st.Seed(); err != nil {
 		return 0, err
 	}
 	me := st.Origin()
+	if _, err := os.Stat(filepath.Join(folder, me)); err != nil {
+		st.SetMeta(metaOut, "")
+	}
 	all, err := st.Since(map[string]string{me: st.Meta(metaOut)})
 	if err != nil {
 		return 0, err
@@ -97,6 +110,9 @@ func In(st *store.Store, folder, filesDir string) (int, error) {
 		return 0, err
 	}
 	dirs, err := os.ReadDir(folder)
+	if errors.Is(err, os.ErrNotExist) {
+		return 0, ErrGone
+	}
 	if err != nil {
 		return 0, err
 	}

@@ -25,8 +25,9 @@ func (s *Service) getRecord(typeName, id string) toolResult {
 	// view.go: the same as the API gives, and its days in words; days_shown.go
 	out := struct {
 		records.RecordView
-		Days string `json:"days_here,omitempty"`
-	}{s.RecordView(t, rec), daysLine(t, rec, s.Now())}
+		Days     string `json:"days_here,omitempty"`
+		Standing string `json:"standing,omitempty"` // habit_said.go
+	}{s.RecordView(t, rec), daysLine(t, rec, s.Now()), s.standing(t, rec)}
 	raw, err := json.MarshalIndent(out, "", "  ")
 	if err != nil {
 		return fail("%v", err)

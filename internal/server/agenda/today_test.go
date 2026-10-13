@@ -34,7 +34,7 @@ func TestTodayAndItsMorningBrief(t *testing.T) {
 	var sent []string
 	h.OnRing(func(title, text, link string) { sent = append(sent, title+" | "+text+" | "+link) })
 	page := get(t, h, "/today").Body.String()
-	for _, want := range []string{"Pay rent", "Renew passport", "Dentist", ">Late<"} {
+	for _, want := range []string{"Pay rent", "Renew passport", "Dentist", ">Overdue<"} {
 		if !strings.Contains(page, want) {
 			t.Errorf("Today has %s: %s", want, truncate(page))
 		}
@@ -50,7 +50,7 @@ func TestTodayAndItsMorningBrief(t *testing.T) {
 		t.Fatal("sent once a day")
 	}
 	time.Sleep(50 * time.Millisecond)
-	if len(sent) != 1 || !strings.Contains(sent[0], "Today: 1 task, 1 event, 1 late") || !strings.HasSuffix(sent[0], "/today") {
+	if len(sent) != 1 || !strings.Contains(sent[0], "Today: 1 task, 1 event, 1 overdue") || !strings.HasSuffix(sent[0], "/today") {
 		t.Errorf("the brief says what is on and leads to Today: %v", sent)
 	}
 }

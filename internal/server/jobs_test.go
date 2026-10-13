@@ -125,13 +125,13 @@ func TestTheBriefAndReviewComeAtTheirTimes(t *testing.T) {
 	step(90*time.Minute, "Today: 1 task") // Saturday 7:30
 	set("brief.at", "07:00")
 	set("review.on", "monday")
-	step(23*time.Hour+30*time.Minute, "Today: 1 late") // Sunday 7:00, the new time
-	step(11*time.Hour, "")                             // Sunday 18:00, no longer the day
+	step(23*time.Hour+30*time.Minute, "Today: 1 overdue") // Sunday 7:00, the new time
+	step(11*time.Hour, "")                                // Sunday 18:00, no longer the day
 	f.BlockUntil(2)
 	if sent := a.Store.Meta("review:sent"); sent != "" {
 		t.Fatalf("the review came on the day it was moved from: %q", sent)
 	}
-	step(13*time.Hour, "Today: 1 late")       // Monday 7:00
+	step(13*time.Hour, "Today: 1 overdue")    // Monday 7:00
 	step(11*time.Hour, "Your week in review") // Monday 18:00
 	f.BlockUntil(2)
 	if page := get(t, h, "/help").Body.String(); !strings.Contains(page, "Morning brief: at the time set for it, if one is. Last ran today at 7am, and went well. Next tomorrow at 7am.") {

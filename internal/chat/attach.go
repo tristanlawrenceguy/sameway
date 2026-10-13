@@ -43,7 +43,9 @@ func (s *Service) attachment(id string) string {
 		if len([]rune(text)) > attachmentChars {
 			text = string([]rune(text)[:attachmentChars]) + "\n…(the rest is on its page)"
 		}
-		b.WriteString(" Its contents:]\n" + text)
+		// Marked as a record's text is: the words of a file are often
+		// someone else's, and here they sit in the person's own turn.
+		b.WriteString(" Its contents, " + records.Untrusted + ":]\n<<<file text\n" + text + "\nfile text>>>")
 	}
 	return b.String()
 }

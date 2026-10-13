@@ -17,6 +17,9 @@ import (
 // when each was added, "the first of 2"; this is the same finding, offered
 // as what to do about it. It is there only while they are, and the press
 // is one change that Undo takes back (records.KeepOne, as keep_one does).
+// If they are really two, Rename one opens the oldest to be named apart:
+// a name of its own tells it apart for everyone, where a hidden "not the
+// same" would leave two controls of one name (design/foundations/names.md).
 
 // twinsShown is how many groups of them a list offers at once.
 const twinsShown = 3
@@ -30,7 +33,8 @@ func (s *Server) listLede(t *schema.Type, recs []*store.Record) template.HTML {
 		words := fmt.Sprintf("%s called %s, and nothing tells them apart.", capitalize(schema.Count(len(g), t.Name)), name)
 		lede += template.HTML(`<div class="sw-lede sw-cluster sw-quiet"><span>`+template.HTMLEscapeString(words)+`</span>`) +
 			s.form(ui.Form{Action: "/t/" + t.Name + "/" + g[0].ID + "/keep-one", From: "/t/" + t.Name,
-				Button: &ui.Button{Label: "Keep the newest", Context: name, Variant: ui.Secondary}}) + `</div>`
+				Button: &ui.Button{Label: "Keep the newest", Context: name, Variant: ui.Secondary}}) +
+			s.part(ui.Link{Href: "/t/" + t.Name + "/" + g[len(g)-1].ID + "#edit", Label: "Rename one", Context: name}) + `</div>`
 	}
 	return lede
 }

@@ -84,27 +84,35 @@ func (s *Server) habitSection(rec *store.Record) template.HTML {
 	// region, called Keeping up, and shows no heading of its own.
 	b.WriteString(`<div class="sw-stack sw-habit"><h2 id="habit-standing">Keeping up</h2>`)
 	b.WriteString(string(s.component(trackerComponent, map[string]any{"habits": []any{item}})))
-	best, _ := item["best"].(int)
-	if best > 0 {
-		fmt.Fprintf(&b, `<p class="sw-muted sw-small">Best run: %s.</p>`, template.HTMLEscapeString(track.StreakWords(best, h)))
-	}
 	n := map[string]int{"day": 30, "week": 12, "month": 12, "year": 5}[h.Cadence]
 	sum := track.Summarise(h, blocks.EntriesOf(s.app.Store, h.ID), now, n)
-	series := make([]any, 0, len(sum.Last))
-	for _, p := range sum.Last {
+	// The chart starts at the first entry: the days before it are before
+	// the habit was kept, not days at nought. Its sentence is how often it
+	// was reached and the best run, so a miss does not hide what was done.
+	periods := blocks.Since(sum)
+	series := make([]any, 0, len(periods))
+	for _, p := range periods {
 		series = append(series, map[string]any{"label": track.PeriodLabel(p.Start, h.Cadence), "value": p.Amount})
 	}
 	kind := "bar"
 	if h.Combine != track.Sum {
 		kind = "line"
 	}
-	// The numbers table heads its columns with what they are: the period,
-	// and the unit or Amount.
-	value := "Amount"
-	if h.Unit != "" {
-		value = capitalize(h.Unit)
+	caption := fmt.Sprintf("The last %d %ss", n, h.Cadence)
+	switch {
+	case len(periods) == 1 && h.Cadence == "day":
+		caption = "Today"
+	case len(periods) == 1:
+		caption = "This " + h.Cadence
+	case len(periods) < n:
+		caption = fmt.Sprintf("The %d %ss so far", len(periods), h.Cadence)
 	}
-	props := map[string]any{"caption": fmt.Sprintf("The last %d %ss", n, h.Cadence), "series": series, "kind": kind, "groupLabel": capitalize(h.Cadence), "valueLabel": value}
+	// The numbers table heads its columns with what they are: the period,
+	// and Amount, which the chart follows with the unit.
+	props := map[string]any{"caption": caption, "series": series, "kind": kind, "groupLabel": capitalize(h.Cadence), "valueLabel": "Amount", "summary": "The numbers"}
+	if kept := blocks.HowKept(h, sum); kept != "" {
+		props["description"] = kept
+	}
 	if h.Aim != track.Record {
 		props["target"] = sum.Target
 	}

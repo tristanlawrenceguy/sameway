@@ -16,9 +16,11 @@ morning brief says the same as one notification. Both are read from the records,
   midnight UTC, so it is read with `when.Stored`, never as a moment: read
   as one it said "2am", and west of Greenwich a task due today showed as
   late. Moved to tomorrow, a whole day stays a whole day.
-- **Late says when.** A late task says the day it was due (Mon 5 Oct), and
-  one with a time says its day and time (Yesterday at 3pm), never a bare
-  "3pm" that reads as today's. Late is plain words, not a red wall: the
+- **Overdue says when.** Today's heading is Overdue, the word every
+  list, page and the brief use (glance.md). An overdue task says the day
+  it was due (Mon 5 Oct), and one with a time says its day and time
+  (Yesterday at 3pm), never a bare "3pm" that reads as today's. Overdue
+  is plain words, not a red wall: the
   answers sit beside it (Done, Tomorrow, Today) and two or more move as one
   change, the way Todoist's Reschedule works on the Overdue section.
 - **A long day starts with three.** With six or more tasks late or due,

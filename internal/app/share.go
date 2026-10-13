@@ -17,6 +17,32 @@ func (a *App) share() {
 	a.Store.Local = map[string]bool{"message": true, "conversation": true, "proposal": true, "action": true, "device": true, "file": true}
 	a.Store.LocalRecord = records.LocalEntry(a.Store.Local)
 	a.Store.OnSchema = a.adopt
+	a.Store.OnSetting = a.adoptSetting
+	for key := range travels {
+		a.travel(key)
+	}
+}
+
+// travels are the settings that are the person's rather than the
+// computer's, kept the same on every copy: the time zone their days are
+// in (design/foundations/today.md). Nothing else another computer sends
+// is taken: the programs a reminder runs, the folders and the model stay
+// this computer's own.
+var travels = map[string]bool{"ui.zone": true}
+
+// travel stamps a setting that travels, so the other copies take it.
+func (a *App) travel(key string) {
+	if travels[key] {
+		a.Store.StampSetting(key, a.Workspace.Get(key))
+	}
+}
+
+// adoptSetting takes a setting another copy changed, when it is one that
+// travels and it is a value this copy can take.
+func (a *App) adoptSetting(key, value string) {
+	if travels[key] && a.Workspace.Get(key) != value {
+		a.Workspace.Set(key, value)
+	}
 }
 
 // adopt makes a content type here what the other computers that host the

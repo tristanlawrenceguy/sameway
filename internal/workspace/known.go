@@ -22,6 +22,9 @@ type Machine struct {
 	// Keys is the file pasted keys are kept in; "" is the person's
 	// (llm.KeysPath).
 	Keys string
+	// Cloud is a test's one cloud folder; the zero value is this
+	// computer's own (CloudFolders).
+	Cloud Cloud
 }
 
 // ThisMachine is the person's own: the known list in their config

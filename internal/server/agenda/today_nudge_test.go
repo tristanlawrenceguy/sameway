@@ -20,7 +20,7 @@ func TestLateTasksAreAPressFromDealtWith(t *testing.T) {
 	passport, _ := a.Store.Create("task", map[string]any{"title": "Renew passport", "due": day(-1)})
 	call, _ := a.Store.Create("task", map[string]any{"title": "Call the bank", "due": now.AddDate(0, 0, -2).Format("2006-01-02") + "T09:30:00Z"})
 	page := get(t, h, "/today").Body.String()
-	for _, want := range []string{"3 tasks are late", "Move all 3 to today", ">Done<", ">Tomorrow<"} {
+	for _, want := range []string{"3 tasks are overdue", "Move all 3 to today", ">Done<", ">Tomorrow<"} {
 		if !strings.Contains(page, want) {
 			t.Fatalf("Today offers %q: %s", want, truncate(page))
 		}
