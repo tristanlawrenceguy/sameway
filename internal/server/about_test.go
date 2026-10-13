@@ -134,7 +134,7 @@ func TestThingsKnowWhatTheyAreAbout(t *testing.T) {
 	}
 
 	// An entry is titled by its habit and how much.
-	if ep := get(t, h, "/t/entry/"+entry.ID).Body.String(); !strings.Contains(ep, "<h1") || !strings.Contains(ep, "Water: 3 glasses") {
+	if ep := get(t, h, "/t/entry/"+entry.ID).Body.String(); !strings.Contains(ep, "<h1") || !strings.Contains(ep, "Water, 3 glasses") {
 		t.Errorf("an entry reads as its habit and amount\n%s", ep)
 	}
 }

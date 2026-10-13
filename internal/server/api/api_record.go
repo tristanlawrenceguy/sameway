@@ -59,7 +59,7 @@ func (s *Service) apiGet(w http.ResponseWriter, r *http.Request) {
 
 // A record over the API says its title, the one its page is headed with
 // and its row in a list shows: a note's title, an entry's habit and how
-// much ("Read: 25 minutes"). An agent should not have to read a page, or
+// much ("Read, 25 minutes"). An agent should not have to read a page, or
 // work out a habit's unit, to know what a record is called.
 func (s *Service) apiTitle(rec *store.Record) string {
 	if t, ok := s.app.Types.Get(rec.Type); ok {
