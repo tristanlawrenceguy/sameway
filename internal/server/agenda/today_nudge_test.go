@@ -4,7 +4,6 @@ import (
 	"net/url"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -14,8 +13,8 @@ import (
 // one press from today, and one Undo takes them all back.
 func TestLateTasksAreAPressFromDealtWith(t *testing.T) {
 	t.Parallel()
-	a, h := newApp(t)
-	now := time.Now()
+	a, h := newAppAt(t, tonight)
+	now := tonight
 	day := func(n int) string { return now.AddDate(0, 0, n).Format("2006-01-02") }
 	rent, _ := a.Store.Create("task", map[string]any{"title": "Pay rent", "due": day(-3)})
 	passport, _ := a.Store.Create("task", map[string]any{"title": "Renew passport", "due": day(-1)})

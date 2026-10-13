@@ -1,4 +1,4 @@
-package chat
+package automate
 
 import (
 	"context"
@@ -16,7 +16,7 @@ import (
 // action needs no acceptance; every press is logged like any other run.
 
 // mqttAction publishes what the action says.
-func (s *Service) mqttAction(_ context.Context, rec *store.Record, title string) toolResult {
+func (s *Service) mqttAction(_ context.Context, rec *store.Record, title string) Result {
 	topic, _ := rec.Fields["topic"].(string)
 	payload, _ := rec.Fields["payload"].(string)
 	topic = strings.TrimSpace(topic)
@@ -29,8 +29,8 @@ func (s *Service) mqttAction(_ context.Context, rec *store.Record, title string)
 	if err := s.Publish(topic, payload); err != nil {
 		return fail("action %s: %v", title, err)
 	}
-	return toolResult{
-		text:   fmt.Sprintf("%s published %q to %s", title, payload, topic),
-		change: &records.Change{Action: "ran", Component: records.ActionType, ID: rec.ID, Detail: title + " (" + topic + ")", Href: relate.Page(records.ActionType, rec.ID)},
+	return Result{
+		Text:   fmt.Sprintf("%s published %q to %s", title, payload, topic),
+		Change: &records.Change{Action: "ran", Component: records.ActionType, ID: rec.ID, Detail: title + " (" + topic + ")", Href: relate.Page(records.ActionType, rec.ID)},
 	}
 }

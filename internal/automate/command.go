@@ -1,4 +1,4 @@
-package chat
+package automate
 
 import (
 	"bytes"
@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -34,7 +33,7 @@ import (
 const CommandTimeout = 60 * time.Second
 
 // command runs an accepted command, or asks the person to accept it.
-func (s *Service) command(ctx context.Context, rec *store.Record, title string) toolResult {
+func (s *Service) command(ctx context.Context, rec *store.Record, title string) Result {
 	line, _ := rec.Fields["command"].(string)
 	line = strings.TrimSpace(line)
 	if line == "" {
@@ -52,12 +51,12 @@ func (s *Service) command(ctx context.Context, rec *store.Record, title string) 
 		return fail("action %s: %v", title, err)
 	}
 	if accepted, _ := rec.Fields["accepted"].(string); accepted != line {
-		r := s.ask(question{"Let your " + quoted(title) + " button run a program on this computer?",
+		r := s.Chat.Ask(Question{"Let your “" + title + "” button run a program on this computer?",
 			"Pressing it would run " + line + " as you, with access to your files, every time, without asking again. What it does can't be undone from Sameway, so only say yes if you asked for this button.",
 			"Yes, let it run", "No, don't"},
 			map[string]any{"tool": "accept_action", "id": rec.ID})
-		if !r.isErr {
-			r.text = "the command has not been accepted yet, so nothing ran; " + r.text
+		if !r.IsErr {
+			r.Text = "the command has not been accepted yet, so nothing ran; " + r.Text
 		}
 		return r
 	}
@@ -84,24 +83,41 @@ func (s *Service) command(ctx context.Context, rec *store.Record, title string) 
 			answer = strings.TrimSpace(answer + "\n(stopped after " + CommandTimeout.String() + ")")
 		}
 	}
-	res := toolResult{text: fmt.Sprintf("%s finished with exit code %d", title, code), answer: answer}
+	res := Result{Text: fmt.Sprintf("%s finished with exit code %d", title, code), Answer: answer}
 	if answer != "" {
-		res.text += ": " + answer
+		res.Text += ": " + answer
 	}
-	res.changes = append(res.changes, records.Change{Action: "ran", Component: records.ActionType, ID: rec.ID,
+	res.Changes = append(res.Changes, records.Change{Action: "ran", Component: records.ActionType, ID: rec.ID,
 		Detail: fmt.Sprintf("%s (exit %d)", title, code), Href: relate.Page(records.ActionType, rec.ID)})
 	if code != 0 {
-		res.isErr = true
+		res.IsErr = true
 		return res
 	}
 	if show, _ := rec.Fields["show"].(bool); show && answer != "" {
-		if c, err := s.show(rec, title, answer); err == nil {
-			res.changes = append(res.changes, c)
+		if c, err := s.Chat.Show(rec, title, answer); err == nil {
+			res.Changes = append(res.Changes, c)
 		} else {
-			res.text += ". Could not put it on the canvas: " + err.Error()
+			res.Text += ". Could not put it on the canvas: " + err.Error()
 		}
 	}
 	return res
+}
+
+// Runs says whether a command action would run as it stands, without
+// asking: a program the workspace allows, in the workspace, on a line the
+// person accepted.
+func (s *Service) Runs(rec *store.Record) bool {
+	line, _ := rec.Fields["command"].(string)
+	line = strings.TrimSpace(line)
+	args := tokens(line)
+	if len(args) == 0 || !s.allowed(args[0]) {
+		return false
+	}
+	if _, err := s.folderFor(rec); err != nil {
+		return false
+	}
+	accepted, _ := rec.Fields["accepted"].(string)
+	return accepted == line
 }
 
 // allowed says whether a program is one the workspace lets actions run,
@@ -180,18 +196,10 @@ func tokens(line string) []string {
 	return out
 }
 
-// acceptOp is a command card's Yes, carried by a question: never offered
-// to the model, which may only ask.
-var acceptOp = Op{Title: "Accept a command", Traits: Traits{OpenWorld: true}, Tool: llm.Tool{Name: "accept_action"},
-	Offered: func(*Service, *llm.Tool) bool { return false },
-	Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
-		return s.acceptAction(context.Background(), a.ID)
-	}}
-
-// acceptAction is what a person's Yes on the card does: the command line
-// as it stands is accepted for good, then run. The accepted line is kept,
-// not a flag, so an edited command asks again.
-func (s *Service) acceptAction(ctx context.Context, id string) toolResult {
+// Accept is what a person's Yes on the card does: the command line as it
+// stands is accepted for good, then run. The accepted line is kept, not a
+// flag, so an edited command asks again.
+func (s *Service) Accept(ctx context.Context, id string) Result {
 	rec, err := s.Store.Get(records.ActionType, id)
 	if err != nil {
 		return fail("no action with id %s", id)

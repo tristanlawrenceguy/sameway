@@ -16,7 +16,7 @@ func entries(t *testing.T, a *app.App, n int) string {
 	t.Helper()
 	withHabit(t, a)
 	habits, _ := a.Store.List("habit", store.ListOptions{})
-	y, m, d := time.Now().Date()
+	y, m, d := tonight.Date()
 	today := time.Date(y, m, d, 12, 0, 0, 0, time.Local)
 	for i := 0; i < n; i++ {
 		at := today.AddDate(0, 0, -i).Format(time.RFC3339)
@@ -34,9 +34,9 @@ func entries(t *testing.T, a *app.App, n int) string {
 // list that could never show a book).
 func TestABlockThatCouldNotMeanWhatWasWrittenIsRefused(t *testing.T) {
 	t.Parallel()
-	a, h := newApp(t)
+	a, h := newAppAt(t, tonight)
 	entries(t, a, 30)
-	first := time.Now().AddDate(0, 0, -29).Format("2006-01-02")
+	first := tonight.AddDate(0, 0, -29).Format("2006-01-02")
 	for _, c := range []struct {
 		component string
 		props     map[string]any
@@ -61,7 +61,7 @@ func TestABlockThatCouldNotMeanWhatWasWrittenIsRefused(t *testing.T) {
 	// With the period, the line says which days, so a month is never
 	// read as days.
 	said, isErr := call(t, a, "add_component", map[string]any{"component": "chart", "props": map[string]any{"type": "entry", "by": "at", "period": "day", "sum": "amount", "unit": "glasses"}})
-	if want := "; it shows Quantity of entries by at: 30 days, " + first + " to " + time.Now().Format("2006-01-02") + ", in glasses"; isErr || !strings.HasSuffix(strings.SplitN(said, "\n", 2)[0], want) {
+	if want := "; it shows Quantity of entries by at: 30 days, " + first + " to " + tonight.Format("2006-01-02") + ", in glasses"; isErr || !strings.HasSuffix(strings.SplitN(said, "\n", 2)[0], want) {
 		t.Errorf("a chart by day says its days, want %q, got %q", want, said)
 	}
 	// Stored before the check, a chart by a date with no period still
@@ -106,10 +106,10 @@ func TestABlockThatShowsNothingSaysSoLoudly(t *testing.T) {
 // first, and when one kind floods the rest, says so and how to show one.
 func TestACalendarOfEverythingSaysWhatItShowsByKind(t *testing.T) {
 	t.Parallel()
-	a, _ := newApp(t)
+	a, _ := newAppAt(t, tonight)
 	entries(t, a, 8)
 	for _, title := range []string{"Dig", "Weed"} {
-		if _, err := a.Store.Create("task", map[string]any{"title": title, "due": time.Now().UTC().Format(time.RFC3339)}); err != nil {
+		if _, err := a.Store.Create("task", map[string]any{"title": title, "due": tonight.UTC().Format(time.RFC3339)}); err != nil {
 			t.Fatal(err)
 		}
 	}

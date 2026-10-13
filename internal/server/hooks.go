@@ -23,7 +23,7 @@ func (s *Server) hooks() {
 		}
 	})
 	// What an automation did on its own is told like a ring (ring.go).
-	s.app.Chat.Tell = func(title, text, url string) {
+	s.app.Automate.Tell = func(title, text, url string) {
 		if s.notify != nil {
 			go s.notify(title, text, s.linkTo(url))
 		}

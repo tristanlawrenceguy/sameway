@@ -114,7 +114,7 @@ func TestSendingSomewhereIsAskedAndThePersonsOwnPressIsNot(t *testing.T) {
 	defer remote.Close()
 
 	svc := newFullService(t)
-	svc.HTTP = remote.Client()
+	svc.Automate.HTTP = remote.Client()
 	withSettings(svc, nil)
 	hook, err := svc.Store.Create(records.ActionType, map[string]any{"title": "Share notes", "kind": "webhook", "url": remote.URL + "/in", "body": "all my notes"})
 	if err != nil {
@@ -137,7 +137,7 @@ func TestSendingSomewhereIsAskedAndThePersonsOwnPressIsNot(t *testing.T) {
 		t.Errorf("a yes sends it once, got %d", calls)
 	}
 
-	if _, _, err := svc.RunAs(t.Context(), "human", hook.ID, ""); err != nil || calls != 2 {
+	if _, _, err := svc.Automate.RunAs(t.Context(), "human", hook.ID, ""); err != nil || calls != 2 {
 		t.Errorf("the person pressing their own button is not asked, got %v, %d calls", err, calls)
 	}
 }

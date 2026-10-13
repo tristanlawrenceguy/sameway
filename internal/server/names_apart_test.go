@@ -70,7 +70,7 @@ func has(list []string, want string) bool {
 // each twin is told apart by.
 func seedTwins(t *testing.T, h http.Handler) (overdue, later string) {
 	t.Helper()
-	a, b := time.Now().AddDate(0, 0, -3), time.Now().AddDate(0, 0, 4)
+	a, b := tonight.AddDate(0, 0, -3), tonight.AddDate(0, 0, 4)
 	for _, task := range []map[string]any{
 		{"title": "Call plumber", "due": a.Format("2006-01-02")},
 		{"title": "Call plumber", "due": b.Format("2006-01-02")},
@@ -80,13 +80,13 @@ func seedTwins(t *testing.T, h http.Handler) (overdue, later string) {
 	}
 	// The day as every page says it (internal/when), from the date the task
 	// was given: its UTC date read back near midnight was a day out.
-	day := func(d time.Time) string { return when.Relative(when.Store(d, true), time.Now(), false) }
+	day := func(d time.Time) string { return when.Relative(when.Store(d, true), tonight, false) }
 	return "due " + day(a), "due " + day(b)
 }
 
 func TestRepeatedTitlesAreToldApartOnTheirList(t *testing.T) {
 	t.Parallel()
-	_, h := newApp(t)
+	_, h := newAppAt(t, tonight)
 	overdue, later := seedTwins(t, h)
 	page := get(t, h, "/t/task").Body.String()
 	// sameNames checks link names via look; with apart text outside <a>,
@@ -117,7 +117,7 @@ func TestRepeatedTitlesAreToldApartOnTheirList(t *testing.T) {
 
 func TestRepeatedTitlesAreToldApartInABlockAndItsControlsAreNamedAfterIt(t *testing.T) {
 	t.Parallel()
-	_, h := newApp(t)
+	_, h := newAppAt(t, tonight)
 	overdue, _ := seedTwins(t, h)
 	for _, label := range []string{"Up next", "Everything to do"} {
 		wantStatus(t, postJSON(t, h, http.MethodPost, "/api/block", map[string]any{"component": "collection", "props": map[string]any{"type": "task", "label": label}}), http.StatusCreated)
@@ -143,7 +143,7 @@ func TestRepeatedTitlesAreToldApartInABlockAndItsControlsAreNamedAfterIt(t *test
 
 func TestRepeatedTitlesAreToldApartInSearchAndTheLog(t *testing.T) {
 	t.Parallel()
-	_, h := newApp(t)
+	_, h := newAppAt(t, tonight)
 	overdue, later := seedTwins(t, h)
 	results := get(t, h, "/search?q=plumber").Body.String()
 	if same := sameNames(t, results); len(same) > 0 {
@@ -221,8 +221,8 @@ func TestABoardNamesEachCardsChoiceAfterIt(t *testing.T) {
 // in another month is not met there, so needs nothing.
 func TestACalendarTellsLikeEventsApartByTheirDays(t *testing.T) {
 	t.Parallel()
-	_, h := newApp(t)
-	now := time.Now()
+	_, h := newAppAt(t, tonight)
+	now := tonight
 	first := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
 	for _, d := range []time.Time{first, first.AddDate(0, 0, 1), first.AddDate(0, 2, 0)} {
 		wantStatus(t, postJSON(t, h, http.MethodPost, "/api/task", map[string]any{"title": "Water ferns", "due": d.Format("2006-01-02")}), http.StatusCreated)
@@ -234,7 +234,7 @@ func TestACalendarTellsLikeEventsApartByTheirDays(t *testing.T) {
 	}
 	// The day as every page says it (internal/when), from the date the task
 	// was given: its UTC date read back near midnight was a day out.
-	day := func(d time.Time) string { return when.Relative(when.Store(d, true), time.Now(), false) }
+	day := func(d time.Time) string { return when.Relative(when.Store(d, true), tonight, false) }
 	links := names(t, page, "link")
 	for _, d := range []time.Time{first, first.AddDate(0, 0, 1)} {
 		if !has(links, "Water ferns (on "+day(d)+")") {

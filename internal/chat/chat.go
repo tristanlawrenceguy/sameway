@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"net/http"
 	"strings"
 	"time"
 
@@ -40,14 +39,9 @@ type Service struct {
 	Provider     llm.Provider
 	ProviderErr  error
 	HistoryLimit int
-	// Allow names the programs a command action may run, by name (curl,
-	// python). Empty means none; see command.go for the boundary.
-	Allow []string
-	// Workdir is where commands run when an action names no folder, and
-	// where kept files are read from: the workspace, set by the app.
+	// Workdir is where kept files are read from: the workspace, set by
+	// the app.
 	Workdir string
-	// HTTP sends webhook actions; nil is a client with a ten second limit.
-	HTTP *http.Client
 	// Ollama is Ollama on this computer, set by the app: a model there is
 	// readied ahead (warm.go) and given fewer tools (toolset.go).
 	Ollama llm.Ollama
@@ -60,22 +54,15 @@ type Service struct {
 	// there are no records, and a block is then held to its props schema
 	// only.
 	Blocks *blocks.Workspace
-	// Tell lets the person know, beyond the page, what was done for them
-	// while they were away: an automation's turn (automate.go).
-	Tell func(title, text, url string)
-	// Automate runs the actions that ask the model on their own, set by
-	// the app. See internal/automate.
+	// Automate runs the person's actions, set by the app. See
+	// internal/automate.
 	Automate *automate.Service
-	auto     *automation // actions waiting for something to happen; automate.go
 	// Picture is a picture file's bytes, ready for a model to see, set by
 	// the server; see pictures.go.
 	Picture func(fileID string) (llm.Image, bool)
 	// Home is the machine's side of the assistant's tools, set by the
 	// server; see home_tools.go.
 	Home Home
-	// Publish sends to an MQTT topic, when the workspace has a broker;
-	// nil means it has none. See mqtt.go.
-	Publish func(topic, payload string) error
 	// Tailnet waits up to the given time for the next step of joining the
 	// person's Tailscale network and says it in their words; nil where the
 	// workspace is not being served. See settings.go.
@@ -158,8 +145,8 @@ func (s *Service) sendTurn(ctx context.Context, canvas, text, fileID string, on 
 		on(Event{Kind: "said", ID: mine.ID})
 	}
 	actor, by := "human", records.VisitorOf(ctx).Who()
-	if name := automatedBy(ctx); name != "" {
-		actor, by = "system", name // asked by an automation, not the person; automate.go
+	if name := automate.By(ctx); name != "" {
+		actor, by = "system", name // asked by an automation, not the person; automate/happened.go
 	}
 	said := records.Record(s.Store, actor, records.Change{Action: "said", Detail: trim.Line(text, 80), Via: records.Via(ctx), By: by})
 	if s.Provider == nil {
@@ -206,25 +193,16 @@ func (s *Service) sendTurn(ctx context.Context, canvas, text, fileID string, on 
 			if reply == "" {
 				reply = "(The model returned an empty reply.)"
 			}
-			// A reply that names pages which do not exist made nothing:
-			// the model answered in words where a tool was needed. It is
-			// told so once, with each page it named, and asked again.
-			if !corrected {
-				claims, _ := VerifyClaims(ctx, s.Store, reply)
-				var missing []string
-				for _, c := range claims {
-					if !c.Exists {
-						missing = append(missing, c.URL)
-					}
-				}
-				if len(missing) > 0 {
+			// A reply that says it made something it did not is told so
+			// once and asked again; still saying so, it says nothing
+			// changed under it (claims.go).
+			if wrong := s.unmade(ctx, reply, said, changes); wrong != "" {
+				if !corrected {
 					corrected = true
-					log.Printf("chat: the reply named %s, which does not exist; asking the model to make it", strings.Join(missing, ", "))
-					req.Messages = append(req.Messages,
-						llm.Message{Role: llm.RoleAssistant, Content: reply},
-						llm.Message{Role: llm.RoleUser, Content: "There is no page at " + strings.Join(missing, ", ") + ": nothing was made. Make it with the tools, then say where it is."})
+					req.Messages = append(req.Messages, llm.Message{Role: llm.RoleAssistant, Content: reply}, llm.Message{Role: llm.RoleUser, Content: wrong})
 					continue
 				}
+				reply += nothingChanged
 			}
 			return s.reply(said, reply, changes, tools)
 		}
@@ -285,8 +263,11 @@ func (s *Service) fields(typeName string, in map[string]any) map[string]any {
 
 // fail stores an error notice in the conversation and returns it with the error.
 func (s *Service) fail(err error) (*store.Record, error) {
+	// The conversation keeps the trouble in a person's words; what the
+	// program said is in the server's log.
+	log.Printf("chat: %v", err)
 	records.Record(s.Store, "system", records.Change{Action: "failed", Detail: trim.Line(SanitizeError(err.Error()), 200)})
-	rec, storeErr := s.message(map[string]any{"role": "error", "content": err.Error()})
+	rec, storeErr := s.message(map[string]any{"role": "error", "content": SanitizeError(err.Error())})
 	if storeErr != nil {
 		return nil, storeErr
 	}

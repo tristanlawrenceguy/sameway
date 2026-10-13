@@ -64,7 +64,7 @@ func (h *heard) quiet(t *testing.T) {
 func TestAnActionRunsWhenARecordComesToMatch(t *testing.T) {
 	t.Parallel()
 	a, _ := newApp(t)
-	a.Chat.StartAutomating()
+	a.Automate.StartWorker()
 	h, url := listen(t)
 	second, _ := a.Store.Create("action", map[string]any{"title": "Tell the log", "kind": "webhook", "url": url + "/log?said={{result}}"})
 	if _, err := a.Store.Create("action", map[string]any{"title": "Announce", "kind": "webhook", "url": url + "/done", "method": "POST",
@@ -101,7 +101,7 @@ func TestAnActionRunsWhenARecordComesToMatch(t *testing.T) {
 func TestAnActionRunsWhenARecordIsAddedOrRemoved(t *testing.T) {
 	t.Parallel()
 	a, _ := newApp(t)
-	a.Chat.StartAutomating()
+	a.Automate.StartWorker()
 	h, url := listen(t)
 	a.Store.Create("action", map[string]any{"title": "New note", "kind": "webhook", "url": url + "/new?t={{title}}", "when": "added", "what": "note"})
 	a.Store.Create("action", map[string]any{"title": "Gone", "kind": "webhook", "url": url + "/gone?t={{title}}", "when": "removed", "what": "note"})
@@ -137,8 +137,8 @@ func TestTheAssistantAskedByAnAutomationSaysSo(t *testing.T) {
 	model := &scripted{steps: []*llm.Response{{Text: "Filed it."}}}
 	a.Chat.Provider, a.Chat.ProviderErr = model, nil
 	told := make(chan string, 1)
-	a.Chat.Tell = func(title, text, url string) { told <- title + ": " + text }
-	a.Chat.StartAutomating()
+	a.Automate.Tell = func(title, text, url string) { told <- title + ": " + text }
+	a.Automate.StartWorker()
 	a.Store.Create("action", map[string]any{"title": "File new mail", "kind": "message", "message": "File the note {{title}}.", "when": "added", "what": "note"})
 	written(t, a.Store, "created", "note", "", map[string]any{"title": "Invoice 42"})
 	select {
