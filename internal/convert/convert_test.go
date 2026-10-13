@@ -118,8 +118,8 @@ func TestFilesBecomeStructuredText(t *testing.T) {
 	if !r.Image || r.Kind != "image" {
 		t.Errorf("an image is an image, got %+v", r)
 	}
-	if _, err := convert.Read("thing.xyz", nil); err == nil || !strings.Contains(err.Error(), "converter") {
-		t.Errorf("an unknown format says a converter is needed, got %v", err)
+	if _, err := convert.Read("thing.xyz", nil); err == nil || !strings.Contains(err.Error(), "cannot read inside .xyz") {
+		t.Errorf("an unknown format says its words cannot be read, got %v", err)
 	}
 	if convert.Kind("notes.PDF") != "pdf" || !convert.Builtin("x.docx") || convert.Builtin("x.xyz") {
 		t.Error("Kind and Builtin read the extension")
@@ -155,5 +155,21 @@ func TestExternalConvertersAnswerWithMarkdown(t *testing.T) {
 	}
 	if _, err := convert.External(context.Background(), "echo no placeholder", "x", path); err == nil {
 		t.Error("a command without {file} is refused")
+	}
+}
+
+// A file Sameway cannot read says so in words a person can act on, and a
+// name with no ending is no kind at all rather than "file".
+func TestAnUnreadableFileIsSaidPlainly(t *testing.T) {
+	_, err := convert.Read("upload", []byte("x"))
+	if err == nil || !strings.Contains(err.Error(), "no ending such as .pdf") || strings.Contains(err.Error(), "workspace.yaml") {
+		t.Errorf("no ending: %v", err)
+	}
+	_, err = convert.Read("plan.xyz", []byte("x"))
+	if err == nil || !strings.Contains(err.Error(), "cannot read inside .xyz files") || !strings.Contains(err.Error(), "The original opens") {
+		t.Errorf("an unknown ending: %v", err)
+	}
+	if convert.Kind("upload") != "" {
+		t.Errorf("no ending is no kind: %q", convert.Kind("upload"))
 	}
 }
