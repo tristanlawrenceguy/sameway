@@ -75,7 +75,7 @@
   // place is the browser's zone by name, Europe/Madrid, when it says one.
   var place = "";
   try { place = Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { /* none said */ }
-  var ask = root.hasAttribute("data-zone-ask") && place.indexOf("/") > 0;
+  var ask = root.hasAttribute("data-zone-ask") && place !== "";
   var called = place.slice(place.lastIndexOf("/") + 1).replace(/_/g, " ") + " time";
   // choice is a press that sets the workspace's zone, back to this page.
   function choice(label, value, variant) {
