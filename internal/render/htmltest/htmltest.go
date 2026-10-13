@@ -191,5 +191,27 @@ func (d *Doc) AccessibleName(n *html.Node) string {
 			}
 		}
 	}
+	// An anchor inside a heading: append following sibling visually-hidden
+	// text, which screen readers in heading mode hear as part of the same
+	// heading context (the way apartHTML sits after </a></hN> on rows).
+	if n.Data == "a" {
+		if _, ok := Attr(n, "href"); ok {
+			for p := n.Parent; p != nil; p = p.Parent {
+				if p.Type == html.ElementNode && strings.HasPrefix(p.Data, "h") {
+					var parts []string
+					parts = append(parts, Text(n))
+					for s := p.NextSibling; s != nil; s = s.NextSibling {
+						class, _ := Attr(s, "class")
+						if s.Type == html.ElementNode && strings.Contains(class, "sw-visually-hidden") {
+							parts = append(parts, Text(s))
+						} else {
+							break
+						}
+					}
+					return strings.Join(parts, " ")
+				}
+			}
+		}
+	}
 	return Text(n)
 }

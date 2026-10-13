@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/look"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
@@ -98,10 +99,10 @@ func TestRepeatedTitlesAreToldApartOnTheirList(t *testing.T) {
 			t.Errorf("no box named %q; boxes are %q", want, boxes)
 		}
 	}
-	// Links have plain titles; apart text is in a visually-hidden span
-	// after the heading (outside <a>), so look sees only the title.
+	// Links have their title plus apart text in the accessible name (look
+	// appends following visually-hidden spans when an <a> is inside a heading).
 	links := names(t, page, "link")
-	for _, want := range []string{"Call plumber", "Pay water bill"} {
+	for _, want := range []string{"Call plumber (" + overdue + ")", "Call plumber (" + later + ")", "Pay water bill"} {
 		if !has(links, want) {
 			t.Errorf("no link named %q; links are %v", want, links)
 		}
@@ -172,8 +173,11 @@ func TestRepeatedTitlesAreToldApartInSearchAndTheLog(t *testing.T) {
 // were added or which came first, not by an id. The apart text is in a
 // visually-hidden span after the heading link (outside <a>).
 func TestUndatedTwinsAreToldApartByWhichCameFirst(t *testing.T) {
-	t.Parallel()
-	_, h := newApp(t)
+	// Use a fixed clock so both notes get identical CreatedAt, forcing Apart to
+	// fall through from "added" (identical) to ordinal disambiguation.
+	now := time.Date(2026, 10, 13, 12, 0, 0, 0, time.UTC)
+	a, h := newAppWith(t, app.Options{Clock: func() time.Time { return now }})
+	_ = a // clock is fixed; the server uses it for s.now() and record timestamps
 	for range 2 {
 		wantStatus(t, postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Meeting notes"}), http.StatusCreated)
 	}
