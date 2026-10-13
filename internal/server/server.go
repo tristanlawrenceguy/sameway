@@ -81,6 +81,7 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 		Controls:   s.controlsFor(r),
 		Pace:       s.app.Workspace.Config.UI.Pace,
 		Hours24:    s.h24(),
+		Now:        s.now(),
 		Lang:       s.app.Workspace.Config.UI.Language,
 		Text:       s.app.Workspace.Config.UI.Text,
 		Spacing:    s.app.Workspace.Config.UI.Spacing,

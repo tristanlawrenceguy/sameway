@@ -45,8 +45,47 @@ export const cases = {
 
   "edit: a link to a place on the page is the browser's": async (browser, check) => {
     const tab = await open(browser, shell(block(`data-block-label="Shopping"`)));
-    await tab.click("text=Skip to content");
+    await tab.keyboard.press("Tab"); // shown on focus, as a person reaches it
+    await tab.keyboard.press("Enter");
     check(await tab.evaluate(() => location.hash) === "#main", "the skip link goes where it says");
+    await tab.close();
+  },
+
+  // Drafts (18-drafts.js): pressing Save is not enough to let what was
+  // typed go, since a save can be refused.
+  "drafts: an edit refused opens again holding what was typed; one saved lets it go": async (browser, check) => {
+    const at = `data-block-label="Shopping" data-edit-action="/t/note/n1/props"`;
+    const outcome = (state) => `<div class="sw-outcome" id="outcome" tabindex="-1" data-outcome="${state}" data-outcome-for="/t/note/n1/props">${state === "done" ? "Saved." : "The title is too long."}</div>`;
+    let answer = "failed";
+    const tab = await open(browser, shell(block(at)), {
+      "/t/note/n1/props": (route) => route.fulfill({ contentType: "text/html", body: page(`${controls}<div class="sw-shell"><main id="main" tabindex="-1">${outcome(answer)}<ol class="sw-canvas">${block(at)}</ol></main></div>`) }),
+    });
+    await tab.getByRole("button", { name: "Edit Shopping" }).click();
+    await tab.fill("[name=prop-title]", "Shopping for the whole week ahead");
+    await tab.getByRole("button", { name: "Save" }).click();
+    await tab.waitForFunction(() => document.querySelector("#outcome") && document.querySelector(".sw-inline-form"), null, { timeout: 5000 }).catch(() => {});
+    check(await tab.locator(".sw-inline-form").count() === 1, "refused, the edit is open again");
+    check(await tab.inputValue("[name=prop-title]").catch(() => "") === "Shopping for the whole week ahead", "holding what was typed");
+    answer = "done";
+    await tab.getByRole("button", { name: "Save" }).click();
+    await tab.waitForFunction(() => document.querySelector("#outcome[data-outcome=done]"));
+    await tab.waitForTimeout(200);
+    check(await tab.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith("sameway:draft:")).length) === 0, "saved, the draft is gone");
+    check(await tab.locator(".sw-inline-form, .sw-draft").count() === 0, "and nothing offers it again");
+    await tab.close();
+  },
+
+  "drafts: Escape keeps an unfinished edit, offered again with Edit and Discard": async (browser, check) => {
+    const tab = await open(browser, shell(block(`data-block-label="Shopping" data-edit-action="/t/note/n1/props"`)));
+    await tab.getByRole("button", { name: "Edit Shopping" }).click();
+    await tab.fill("[name=prop-title]", "Shopping, half typed");
+    await tab.keyboard.press("Escape");
+    const offer = tab.locator(".sw-draft");
+    await offer.waitFor({ timeout: 2000 }).catch(() => {});
+    check(/You were editing this\./.test(await offer.textContent().catch(() => "")), "the block says it was being edited");
+    check((await offer.getByRole("button").allTextContents()).join() === "Edit,Discard", `offered with a plain verb: ${await offer.getByRole("button").allTextContents()}`);
+    await offer.getByRole("button", { name: "Edit" }).click();
+    check(await tab.inputValue("[name=prop-title]").catch(() => "") === "Shopping, half typed", "Edit opens it with the words");
     await tab.close();
   },
 };

@@ -3,7 +3,6 @@ package server_test
 import (
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"testing"
 )
@@ -58,22 +57,5 @@ func TestValidationErrorPageHasEditBlockWrapper(t *testing.T) {
 	}
 }
 
-// TestValidationErrorPageShowsEmptyTitleField: the draft is not let go
-// when Save is pressed, only when the page says the edit was saved, and
-// a refused edit opens again.
-func TestValidationErrorPageShowsEmptyTitleField(t *testing.T) {
-	t.Parallel()
-	src, err := os.ReadFile("../../design/base/18-drafts.js")
-	if err != nil {
-		t.Fatal(err)
-	}
-	js := string(src)
-	if !strings.Contains(js, `form.addEventListener("submit", function () { set(k, fields(form)); });`) {
-		t.Error("Save must not throw the draft away before the page says it was saved")
-	}
-	for _, want := range []string{`.sw-outcome[data-outcome-for]`, `getAttribute("data-outcome") === "done"`, `edit.click()`} {
-		if !strings.Contains(js, want) {
-			t.Errorf("18-drafts.js should settle drafts by the outcome: missing %s", want)
-		}
-	}
-}
+// A draft kept until the page says the edit was saved, and a refused edit
+// opened again holding it: tools/a11y-runner/behave-edit.mjs.

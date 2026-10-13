@@ -18,7 +18,7 @@ import (
 // when we check the fields view for the non-headField "body" instead.
 func TestADateIsWrittenAsPeopleSayIt(t *testing.T) {
 	t.Parallel()
-	a, h := newApp(t)
+	a, h := newAppAt(t, tonight)
 	var task struct{ ID string }
 	decode(t, postJSON(t, h, http.MethodPost, "/api/task", map[string]any{"title": "Order compost", "due": "2026-09-19T00:00:00Z"}), &task)
 
@@ -30,7 +30,7 @@ func TestADateIsWrittenAsPeopleSayIt(t *testing.T) {
 
 	res := postForm(t, h, "/t/task/"+task.ID+"/props", url.Values{"prop-due": {"next friday 2pm"}})
 	wantStatus(t, res, http.StatusSeeOther)
-	ts, day, _ := when.Parse("next friday 2pm", time.Now())
+	ts, day, _ := when.Parse("next friday 2pm", tonight)
 	rec, err := a.Store.Get("task", task.ID)
 	if err != nil {
 		t.Fatal(err)
@@ -46,6 +46,8 @@ func TestADateIsWrittenAsPeopleSayIt(t *testing.T) {
 
 	// The API takes the same words, so an agent need not compute a date.
 	wantStatus(t, postJSON(t, h, http.MethodPatch, "/api/task/"+task.ID, map[string]any{"due": "tomorrow"}), http.StatusOK)
+	// The store reads the words on this computer's clock, not the app's
+	// (schema/validate.go), so tomorrow is the real one.
 	rec, _ = a.Store.Get("task", task.ID)
 	if rec.Fields["due"] != time.Now().AddDate(0, 0, 1).Format("2006-01-02")+"T00:00:00Z" {
 		t.Errorf("tomorrow is stored as that day, got %v", rec.Fields["due"])
