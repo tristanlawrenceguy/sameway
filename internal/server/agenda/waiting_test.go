@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
@@ -75,13 +74,13 @@ func seedWaiting(t *testing.T, a *app.App) *server.Server {
 // saying how many wait and what.
 func TestTodayTheBriefAndAgentsAgreeOnWhatWaits(t *testing.T) {
 	t.Parallel()
-	a, _ := newApp(t)
+	a, _ := newAppAt(t, tonight)
 	srv := seedWaiting(t, a)
 	n := len(a.Chat.Waiting())
 	sent := make(chan string, 1)
 	srv.OnRing(func(title, text, link string) { sent <- title + " | " + text })
 	postForm(t, srv, "/brief", url.Values{"at": {"00:00"}})
-	if !srv.BriefIfDue(time.Now()) {
+	if !srv.BriefIfDue(tonight) {
 		t.Fatal("what waits is worth a brief")
 	}
 	if got, want := <-sent, fmt.Sprintf("Today: %d waiting for you | Remove the old tab?; Gas bill; Lunch", n); got != want {

@@ -18,10 +18,12 @@ import (
 // rather than machine format like "Mon 5 Oct 2026, 10:00" (acceptance item 1).
 func TestTaskDetailLedeDueDateNaturalLanguage(t *testing.T) {
 	t.Parallel()
-	a, h := newApp(t)
+	a, h := newAppAt(t, tonight)
 
-	now := time.Now()
-	future := when.Store(now.Add(48*time.Hour), false) // moment in the future, not day-only
+	// Two days on at 10am, a moment not a day: a time taken from the clock
+	// could fall on midnight or midday, which are said without am or pm.
+	y, m, d := tonight.Date()
+	future := when.Store(time.Date(y, m, d+2, 10, 0, 0, 0, time.Local), false)
 
 	_, err := a.Store.Create("task", map[string]any{
 		"title": "Buy coffee",
