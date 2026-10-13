@@ -21,13 +21,16 @@ func Title(s string) string {
 	line = strings.TrimSpace(line)
 	cut := rest != ""
 	if fields := strings.Fields(line); len(fields) > MaxWords {
-		// "Name: how much", an entry, is cut in its name, so a list of
+		// "Name, how much", an entry, is cut in its name so a list of
 		// them does not read as the same cut-off name over and over.
-		if head, tail, ok := strings.Cut(line, ": "); ok && !cut {
-			words := strings.Fields(head)
-			if n := MaxWords - len(strings.Fields(tail)); n >= 3 && n < len(words) {
-				if short := strings.Join(words[:n], " ") + "…: " + tail; len([]rune(short)) <= MaxRunes {
-					return short
+		// Try comma first (entries), fall back to colon (other titles).
+		for _, sep := range []string{", ", ": "} {
+			if head, tail, ok := strings.Cut(line, sep); ok && !cut {
+				words := strings.Fields(head)
+				if n := MaxWords - len(strings.Fields(tail)); n >= 3 && n < len(words) {
+					if short := strings.Join(words[:n], " ") + "…" + sep + tail; len([]rune(short)) <= MaxRunes {
+						return short
+					}
 				}
 			}
 		}

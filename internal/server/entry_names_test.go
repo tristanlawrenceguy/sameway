@@ -24,11 +24,11 @@ func TestAnEntryIsNamedByItsHabit(t *testing.T) {
 	wantStatus(t, postJSON(t, h, "POST", "/api/entry", map[string]any{"habit": water.ID, "at": at, "amount": 1}), 201)
 
 	log := get(t, h, "/activity").Body.String()
-	if !strings.Contains(log, "8 glasses of water a day: 1 glass") {
+	if !strings.Contains(log, "8 glasses of water a day, 1 glass") {
 		t.Error("the log names an entry by its habit and how much")
 	}
 	list := get(t, h, "/t/"+server.EntryType).Body.String()
-	if !strings.Contains(list, "8 glasses of water…: 1 glass") {
+	if !strings.Contains(list, "8 glasses of water…, 1 glass") {
 		t.Error("a row cuts a long habit name and keeps how much")
 	}
 	if strings.Contains(list, "Was at") {
