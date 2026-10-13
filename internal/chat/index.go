@@ -38,10 +38,10 @@ func typeHelp(t *schema.Type) string {
 func typeFields(t *schema.Type) []string {
 	var fields []string
 	for _, f := range t.Shown() {
-		if f.ReadOnly || ServerFilled(f.Description) {
+		if f.ReadOnly || schema.ServerFilled(f.Description) {
 			continue
 		}
-		fields = append(fields, f.Name+" ("+fieldKind(f)+")")
+		fields = append(fields, f.Name+" ("+f.Kind()+")")
 	}
 	return fields
 }
@@ -74,31 +74,6 @@ func (s *Service) typeIndex() string {
 		fmt.Fprintf(&b, "%s: %s Fields: %s\n", t.Name, firstSentence(t.Description), strings.Join(typeFields(t), ", "))
 	}
 	return b.String()
-}
-
-// fieldKind is a field's kind in a word or two.
-func fieldKind(f schema.Field) string {
-	req := ""
-	if f.Required {
-		req = ", required"
-	}
-	switch {
-	case f.RefList():
-		return "ids of " + f.To + req
-	case f.Type == "ref":
-		return "id of " + f.To + req
-	case f.Type == "enum":
-		return strings.Join(f.Values, "|") + req
-	case f.Type == "datetime":
-		return "date" + req
-	case f.Type == "markdown", f.Type == "text", f.Type == "string":
-		return "text" + req
-	case f.Type == "bool":
-		return "yes/no" + req
-	case f.Type == "int", f.Type == "float":
-		return "number" + req
-	}
-	return f.Type + req
 }
 
 // firstSentence is a description's first sentence.

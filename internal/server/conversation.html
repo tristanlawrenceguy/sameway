@@ -9,7 +9,7 @@
 
 {{if ne .From "/chat"}}<a class="sw-button sw-button--quiet sw-pressable" href="/chat" target="sameway-chat" data-popout>Open in a window<span class="sw-visually-hidden">: this chat</span></a>{{end}}
 </div>
-{{if .Messages}}<ol class="sw-plain sw-stack sw-chat__log" aria-label="Messages" tabindex="0" data-scrolls>
+{{.Earlier}}{{if .Messages}}<ol class="sw-plain sw-stack sw-chat__log" aria-label="Messages" tabindex="0" data-scrolls>
 {{range .Messages}}<li style="view-transition-name: {{.ID}}; view-transition-class: sw-vt-item">{{.HTML}}</li>
 {{end}}</ol>
 {{else}}{{.Empty}}

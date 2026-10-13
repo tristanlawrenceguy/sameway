@@ -19,7 +19,7 @@ import (
 // logs for an earlier day and draws the limit on a monthly chart.
 func TestALimitAndARecordAreTracked(t *testing.T) {
 	t.Parallel()
-	a, h := newApp(t)
+	a, h := newAppAt(t, tonight)
 	hours, err := a.Store.Create(server.HabitType, map[string]any{"name": "Hours", "cadence": "month", "aim": "limit", "target": 21, "unit": "hours"})
 	if err != nil {
 		t.Fatal(err)
@@ -29,7 +29,7 @@ func TestALimitAndARecordAreTracked(t *testing.T) {
 		t.Fatal(err)
 	}
 	a.Store.Create(records.BlockType, a.Chat.BlockFields(map[string]any{"component": "tracker", "props": map[string]any{}}))
-	now := time.Now()
+	now := tonight
 	a.Store.Create(server.EntryType, map[string]any{"habit": hours.ID, "at": when.Store(now, true), "amount": 15})
 	a.Store.Create(server.EntryType, map[string]any{"habit": weight.ID, "at": when.Store(now.Add(-time.Minute), false), "amount": 73.1})
 	a.Store.Create(server.EntryType, map[string]any{"habit": weight.ID, "at": when.Store(now, false), "amount": 72.8})

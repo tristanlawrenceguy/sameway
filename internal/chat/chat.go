@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/automate"
 	"github.com/tristanlawrenceguy/sameway/internal/blocks"
-
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
@@ -63,7 +63,10 @@ type Service struct {
 	// Tell lets the person know, beyond the page, what was done for them
 	// while they were away: an automation's turn (automate.go).
 	Tell func(title, text, url string)
-	auto *automation // actions waiting for something to happen; automate.go
+	// Automate runs the actions that ask the model on their own, set by
+	// the app. See internal/automate.
+	Automate *automate.Service
+	auto     *automation // actions waiting for something to happen; automate.go
 	// Picture is a picture file's bytes, ready for a model to see, set by
 	// the server; see pictures.go.
 	Picture func(fileID string) (llm.Image, bool)
@@ -203,25 +206,16 @@ func (s *Service) sendTurn(ctx context.Context, canvas, text, fileID string, on 
 			if reply == "" {
 				reply = "(The model returned an empty reply.)"
 			}
-			// A reply that names pages which do not exist made nothing:
-			// the model answered in words where a tool was needed. It is
-			// told so once, with each page it named, and asked again.
-			if !corrected {
-				claims, _ := VerifyClaims(ctx, s.Store, reply)
-				var missing []string
-				for _, c := range claims {
-					if !c.Exists {
-						missing = append(missing, c.URL)
-					}
-				}
-				if len(missing) > 0 {
+			// A reply that says it made something it did not is told so
+			// once and asked again; still saying so, it says nothing
+			// changed under it (claims.go).
+			if wrong := s.unmade(ctx, reply, said, changes); wrong != "" {
+				if !corrected {
 					corrected = true
-					log.Printf("chat: the reply named %s, which does not exist; asking the model to make it", strings.Join(missing, ", "))
-					req.Messages = append(req.Messages,
-						llm.Message{Role: llm.RoleAssistant, Content: reply},
-						llm.Message{Role: llm.RoleUser, Content: "There is no page at " + strings.Join(missing, ", ") + ": nothing was made. Make it with the tools, then say where it is."})
+					req.Messages = append(req.Messages, llm.Message{Role: llm.RoleAssistant, Content: reply}, llm.Message{Role: llm.RoleUser, Content: wrong})
 					continue
 				}
+				reply += nothingChanged
 			}
 			return s.reply(said, reply, changes, tools)
 		}
@@ -282,8 +276,11 @@ func (s *Service) fields(typeName string, in map[string]any) map[string]any {
 
 // fail stores an error notice in the conversation and returns it with the error.
 func (s *Service) fail(err error) (*store.Record, error) {
+	// The conversation keeps the trouble in a person's words; what the
+	// program said is in the server's log.
+	log.Printf("chat: %v", err)
 	records.Record(s.Store, "system", records.Change{Action: "failed", Detail: trim.Line(SanitizeError(err.Error()), 200)})
-	rec, storeErr := s.message(map[string]any{"role": "error", "content": err.Error()})
+	rec, storeErr := s.message(map[string]any{"role": "error", "content": SanitizeError(err.Error())})
 	if storeErr != nil {
 		return nil, storeErr
 	}

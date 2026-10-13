@@ -267,7 +267,7 @@ check(created.status === 201, `agent: POST /api/note returns 201 (got ${created.
 const rec = await created.json();
 
 for (const path of ["/", "/chat", "/design", "/search", "/search?q=agent", "/search?q=agent&type=note", "/search?type=note", "/activity", ...(await filtered(page, base, check, fail)), "/t/note", `/t/note/${rec.id}`]) {
-  await page.goto(base + path);
+  const res = await page.goto(base + path); check(res && res.ok(), `${path}: answers ${res && res.status()}, not the page to check`);
   const names = await page.locator("[data-component]").evaluateAll((els) => els.map((e) => e.dataset.component));
   for (const n of new Set(names)) check(known.has(n), `${path}: renders component ${n} that /api/describe does not list`);
   for (const c of describe.components) {

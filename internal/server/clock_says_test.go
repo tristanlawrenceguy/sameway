@@ -56,11 +56,11 @@ func TestTheClockSaysWhatItSet(t *testing.T) {
 // another day has its day above its time.
 func TestComingUpIsOneListInTimeOrder(t *testing.T) {
 	t.Parallel()
-	a, h := newApp(t)
+	a, h := newAppAt(t, tonight)
 	if _, err := a.Store.Create(records.BlockType, a.Chat.BlockFields(map[string]any{"component": "clock", "props": map[string]any{}})); err != nil {
 		t.Fatal(err)
 	}
-	now := time.Now()
+	now := tonight
 	day := func(d, hour int) time.Time {
 		return time.Date(now.Year(), now.Month(), now.Day()+d, hour, 0, 0, 0, time.Local)
 	}

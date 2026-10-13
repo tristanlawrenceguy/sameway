@@ -21,13 +21,13 @@ import (
 // or have five more minutes.
 func TestTheClockSetsListsAndRings(t *testing.T) {
 	t.Parallel()
-	a, h := newApp(t)
+	a, h := newAppAt(t, tonight)
 	blk, err := a.Store.Create(records.BlockType, a.Chat.BlockFields(map[string]any{"component": "clock", "props": map[string]any{}}))
 	if err != nil {
 		t.Fatal(err)
 	}
 	// A task due today at four sits under the time, from the calendar's types.
-	today := time.Now()
+	today := tonight
 	four := time.Date(today.Year(), today.Month(), today.Day(), 16, 0, 0, 0, time.Local)
 	a.Store.Create("task", map[string]any{"title": "Water the tomatoes", "due": when.Store(four, false)})
 
@@ -50,7 +50,7 @@ func TestTheClockSetsListsAndRings(t *testing.T) {
 		t.Fatalf("a timer is a reminder record, got %v", reminders)
 	}
 	at, _ := time.Parse(time.RFC3339, reminders[0].Fields["at"].(string))
-	if d := time.Until(at); d < 9*time.Minute || d > 11*time.Minute {
+	if d := at.Sub(tonight); d < 9*time.Minute || d > 11*time.Minute {
 		t.Errorf("the timer ends ten minutes from now, got %v", d)
 	}
 	page = get(t, h, "/").Body.String()
@@ -67,13 +67,13 @@ func TestTheClockSetsListsAndRings(t *testing.T) {
 
 	// A reminder whose time has come rings on the stream, once, and is
 	// marked rung; the page then shows it ringing until it is dismissed.
-	due, _ := a.Store.Create(server.ReminderType, map[string]any{"title": "Tea", "at": when.Store(time.Now().Add(-time.Minute), false)})
+	due, _ := a.Store.Create(server.ReminderType, map[string]any{"title": "Tea", "at": when.Store(tonight.Add(-time.Minute), false)})
 	// The server rings on its own, whether or not a page is open, and
 	// tells beyond the page; the stream then tells any open page.
 	var told []string
 	srv := h.(*server.Server)
 	srv.OnRing(func(title, text, url string) { told = append(told, title+" "+url) })
-	if rang := srv.Ring(time.Now()); len(rang) != 1 || rang[0].ID != due.ID {
+	if rang := srv.Ring(tonight); len(rang) != 1 || rang[0].ID != due.ID {
 		t.Fatalf("the due reminder rings once, got %v", rang)
 	}
 	time.Sleep(50 * time.Millisecond)

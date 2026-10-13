@@ -2,7 +2,6 @@ package server_test
 
 import (
 	"encoding/json"
-	"os"
 	"strings"
 	"testing"
 )
@@ -38,8 +37,5 @@ func TestSamewayInstallsAsAnApp(t *testing.T) {
 	if !strings.Contains(help, "data-install hidden") || !strings.Contains(help, "Add to Home Screen") {
 		t.Errorf("Help offers it: %s", truncate(help))
 	}
-	js, _ := os.ReadFile("../../design/base/38-install.js")
-	if !strings.Contains(string(js), "beforeinstallprompt") || !strings.Contains(string(js), "asked.prompt()") {
-		t.Error("the button asks the browser to install")
-	}
+	// Pressed, the button asks the browser to install: behave-page.mjs.
 }

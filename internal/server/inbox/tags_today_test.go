@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/server/servertest"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -20,7 +20,7 @@ func classOn(t *testing.T, st *store.Store, ref, tag string) *store.Record {
 	t.Helper()
 	var found *store.Record
 	tagWait(t, tag+" on "+ref, func() bool {
-		cls, _ := st.List(chat.ClassificationType, store.ListOptions{})
+		cls, _ := st.List(records.ClassificationType, store.ListOptions{})
 		for _, c := range cls {
 			if c.Fields["record"] == ref && c.Fields["tag"] == tag {
 				found = c
@@ -63,7 +63,7 @@ func TestATagIsCheckedBesideItsEmailAndAgreedByMakingTheTask(t *testing.T) {
 	}
 
 	postForm(t, srv, "/suggested/yes", url.Values{"id": {from}})
-	got, _ := a.Store.Get(chat.ClassificationType, c.ID)
+	got, _ := a.Store.Get(records.ClassificationType, c.ID)
 	if got.Fields["state"] != "confirmed" || got.Fields["confirmed_by"] != "person" {
 		t.Errorf("making the task keeps the tag that set it off, as the person's: %v", got.Fields)
 	}
@@ -83,7 +83,7 @@ func TestATagKeptFromYourChoicesIsShownFoldedAndCanBeTakenOff(t *testing.T) {
 	a.Chat.StartAutomating() // what notices a tag taken off
 	srv.SetUpSorting()
 	rec, _ := a.Store.Create("email", map[string]any{"subject": "Council tax", "body": "Your bill is due.", "tags": []any{"to do"}})
-	c, err := a.Store.Create(chat.ClassificationType, map[string]any{"record": "email/" + rec.ID, "tag": "to do", "why": "as you kept the gas bill", "state": "confirmed", "confirmed_by": "judgement"})
+	c, err := a.Store.Create(records.ClassificationType, map[string]any{"record": "email/" + rec.ID, "tag": "to do", "why": "as you kept the gas bill", "state": "confirmed", "confirmed_by": "judgement"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -103,7 +103,7 @@ func TestATagKeptFromYourChoicesIsShownFoldedAndCanBeTakenOff(t *testing.T) {
 		t.Errorf("says what taking it off does: %s", truncate(back.Body.String()))
 	}
 	tagWait(t, "taken off", func() bool {
-		got, _ := a.Store.Get(chat.ClassificationType, c.ID)
+		got, _ := a.Store.Get(records.ClassificationType, c.ID)
 		return got.Fields["state"] == "removed"
 	})
 	if page := said(get(t, srv, "/today").Body.String()); strings.Contains(page, "Kept for you") {
@@ -136,7 +136,7 @@ func TestATagNotKeptSaysSo(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	c, err := a.Store.Create(chat.ClassificationType, map[string]any{"record": "note/" + note.ID, "tag": "to do", "state": "suggested"})
+	c, err := a.Store.Create(records.ClassificationType, map[string]any{"record": "note/" + note.ID, "tag": "to do", "state": "suggested"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -144,7 +144,7 @@ func TestATagNotKeptSaysSo(t *testing.T) {
 	if !strings.Contains(page, "Not kept") || strings.Contains(page, "keeps the tag") {
 		t.Errorf("a tag not kept says so: %s", truncate(page))
 	}
-	if got, _ := a.Store.Get(chat.ClassificationType, c.ID); got.Fields["state"] != "suggested" {
+	if got, _ := a.Store.Get(records.ClassificationType, c.ID); got.Fields["state"] != "suggested" {
 		t.Errorf("the tag is still to check, is %v", got.Fields["state"])
 	}
 }

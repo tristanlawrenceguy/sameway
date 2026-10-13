@@ -45,7 +45,7 @@ func TestSuggest(t *testing.T) {
 	for run := 0; run < runs; run++ {
 		for _, c := range triageCases {
 			rec, _ := a.Store.Create("email", map[string]any{"subject": strings.SplitN(c.text, "\n", 2)[0], "body": c.text, "received": triageSent.UTC().Format(time.RFC3339)})
-			_ = a.Chat.Suggest(context.Background(), act, "email", rec.ID)
+			_ = a.Automate.Suggest(context.Background(), act, "email", rec.ID)
 			var fields map[string]any
 			for _, p := range a.Chat.Suggestions() {
 				if p.Fields["from"] == "email/"+rec.ID {

@@ -1,6 +1,7 @@
 package records
 
 import (
+	"strings"
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -47,3 +48,17 @@ func (b *Book) Now() time.Time {
 
 // H24 is whether the person reads times on the 24-hour clock (Hours24).
 func (b *Book) H24() bool { return b != nil && b.Hours24 != nil && b.Hours24() }
+
+// PersonByName is the person of that name, in any case, if there is one.
+func (b *Book) PersonByName(name string) *store.Record {
+	people, err := b.Store.List(PersonType, store.ListOptions{})
+	if err != nil {
+		return nil
+	}
+	for _, p := range people {
+		if n, _ := p.Fields["name"].(string); strings.EqualFold(strings.TrimSpace(n), name) {
+			return p
+		}
+	}
+	return nil
+}

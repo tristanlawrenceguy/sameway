@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -62,7 +62,7 @@ func TestTagsFollowThePersonsJudgement(t *testing.T) {
 	srv.SetUpSorting()
 
 	classOf := func(id string) *store.Record {
-		cls, _ := a.Store.List(chat.ClassificationType, store.ListOptions{})
+		cls, _ := a.Store.List(records.ClassificationType, store.ListOptions{})
 		for _, c := range cls {
 			if c.Fields["record"] == "email/"+id {
 				return c
@@ -152,10 +152,10 @@ func TestAClassifyActionGivesItsOwnTagsEachApart(t *testing.T) {
 	a.Chat.Provider, a.Chat.ProviderErr = m, nil
 	srv := server.New(a)
 	srv.SetUpSorting()
-	a.Store.Create(chat.TagType, map[string]any{"name": "waiting", "means": "Someone owes me an answer."})
+	a.Store.Create(records.TagType, map[string]any{"name": "waiting", "means": "Someone owes me an answer."})
 	act, _ := a.Store.Create("action", map[string]any{"title": "Mark the waiting and important", "kind": "classify", "tags": []any{"waiting", "important"}, "apart": true})
 	note, _ := a.Store.Create("note", map[string]any{"title": "Asked Joe for the quote"})
-	_ = a.Chat.Classify(context.Background(), act, "note", note.ID)
+	_ = a.Automate.Classify(context.Background(), act, "note", note.ID)
 	got, _ := a.Store.Get("note", note.ID)
 	if tags := strings.Join(anyStrings(got.Fields["tags"]), ","); !strings.Contains(tags, "waiting") || !strings.Contains(tags, "important") || strings.Contains(tags, "to do") {
 		t.Errorf("its own tags given: %s", tags)

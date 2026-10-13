@@ -1,4 +1,4 @@
-package chat
+package automate
 
 import (
 	"context"
@@ -32,15 +32,15 @@ Answer with JSON only: {"decide": "keep" | "confirm" | "drop" | "change", "to": 
 
 // judge is the check for one tag; with no past choices, or a model that
 // cannot say, it is keep.
-func (s *Service) judge(ctx context.Context, t *schema.Type, rec *store.Record, words string, p chosen, defs []tagDef, most int) verdict {
+func (s *Service) judge(ctx context.Context, t *schema.Type, rec *store.Record, words string, p chosen, defs []Tag, most int) verdict {
 	past := s.pastChoices(p.Tag, t.Name+"/"+rec.ID, most)
 	if len(past) == 0 {
 		return verdict{Decide: "keep"}
 	}
 	var others []string
 	for _, d := range defs {
-		if !strings.EqualFold(d.name, p.Tag) {
-			others = append(others, d.name)
+		if !strings.EqualFold(d.Name, p.Tag) {
+			others = append(others, d.Name)
 		}
 	}
 	q := fmt.Sprintf("You suggested the tag %q (%s) for this record:\n%s\n\nThe other tags are: %s.\n\nWhat the person did with the latest records given %q, newest first:\n%s",
@@ -54,8 +54,8 @@ func (s *Service) judge(ctx context.Context, t *schema.Type, rec *store.Record, 
 		want := strings.TrimSpace(v.To)
 		v.To = ""
 		for _, d := range defs {
-			if strings.EqualFold(d.name, want) {
-				v.To = d.name
+			if strings.EqualFold(d.Name, want) {
+				v.To = d.Name
 			}
 		}
 	}
@@ -71,7 +71,7 @@ func (s *Service) judge(ctx context.Context, t *schema.Type, rec *store.Record, 
 // pastChoices are the latest records given a tag, newest first, each with
 // what the person did, at most most; the record being tagged is not one.
 func (s *Service) pastChoices(tag, not string, most int) []string {
-	cls, err := s.Store.List(ClassificationType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 200})
+	cls, err := s.Store.List(records.ClassificationType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 200})
 	if err != nil {
 		return nil
 	}
@@ -99,10 +99,10 @@ func (s *Service) pastChoices(tag, not string, most int) []string {
 	return out
 }
 
-// tagsChanged keeps what the person did with a suggested tag: taken off
+// TagsChanged keeps what the person did with a suggested tag: taken off
 // the record, it was removed; taken off with another of their tags put on
 // in its place, it was changed to that one.
-func (s *Service) tagsChanged(t *schema.Type, was, now *store.Record) {
+func TagsChanged(st *store.Store, t *schema.Type, was, now *store.Record) {
 	if t.Internal || was == nil || now == nil {
 		return
 	}
@@ -117,12 +117,12 @@ func (s *Service) tagsChanged(t *schema.Type, was, now *store.Record) {
 		after[strings.ToLower(v)] = true
 	}
 	var added []string
-	for _, d := range s.tagDefs(nil) {
-		if after[strings.ToLower(d.name)] && !before[strings.ToLower(d.name)] {
-			added = append(added, d.name)
+	for _, d := range Tags(st, nil) {
+		if after[strings.ToLower(d.Name)] && !before[strings.ToLower(d.Name)] {
+			added = append(added, d.Name)
 		}
 	}
-	cls, err := s.Store.List(ClassificationType, store.ListOptions{})
+	cls, err := st.List(records.ClassificationType, store.ListOptions{})
 	if err != nil {
 		return
 	}
@@ -135,7 +135,7 @@ func (s *Service) tagsChanged(t *schema.Type, was, now *store.Record) {
 		if len(added) == 1 {
 			change = map[string]any{"state": "changed", "to": added[0]}
 		}
-		records.ApplyOps(s.Store, records.Op{Type: ClassificationType, ID: c.ID, After: change})
+		records.ApplyOps(st, records.Op{Type: records.ClassificationType, ID: c.ID, After: change})
 	}
 }
 
@@ -150,12 +150,12 @@ func undecided(c *store.Record) bool {
 // tags they left on it (kept, changed to, or taken off), for the model to
 // tag like them. Only the person's own choices, never one the assistant
 // kept for them.
-func (s *Service) personTagged(defs []tagDef, not string, most int) string {
+func (s *Service) personTagged(defs []Tag, not string, most int) string {
 	ours := map[string]bool{}
 	for _, d := range defs {
-		ours[strings.ToLower(d.name)] = true
+		ours[strings.ToLower(d.Name)] = true
 	}
-	cls, err := s.Store.List(ClassificationType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 300})
+	cls, err := s.Store.List(records.ClassificationType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 300})
 	if err != nil {
 		return ""
 	}

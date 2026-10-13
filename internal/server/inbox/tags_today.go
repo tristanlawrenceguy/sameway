@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
@@ -119,7 +120,7 @@ func (s *Service) tagSection(list []chat.Waiting, sorting map[string]bool) strin
 // the last week, folded as a count: the action acted for them, so they
 // can see what it did and change it, without it asking for attention.
 func (s *Service) keptForYou(other []any) string {
-	recs, _ := s.app.Store.List(chat.ClassificationType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 100})
+	recs, _ := s.app.Store.List(records.ClassificationType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 100})
 	since := s.Now().Add(-keptFor)
 	var b strings.Builder
 	n := 0

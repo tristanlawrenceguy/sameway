@@ -2,54 +2,12 @@ package server_test
 
 import (
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 )
 
 // Where the edit form is sent, a block's own address or its canvas's, is
 // checked in a browser: tools/a11y-runner/behave-edit.mjs.
-
-// readEditScript is the page's script as the browser gets it: every file in
-// design/base, in order, as /design/sameway.js joins them, so a test holds
-// wherever in them a handler lives.
-func readEditScript(t *testing.T) string {
-	t.Helper()
-	files, err := filepath.Glob(filepath.Join(findRepoRoot(t), "design", "base", "*.js"))
-	if err != nil || len(files) == 0 {
-		t.Fatalf("cannot find the scripts in design/base: %v", err)
-	}
-	var all strings.Builder
-	for _, f := range files {
-		data, err := os.ReadFile(f)
-		if err != nil {
-			t.Fatalf("cannot read %s: %v", f, err)
-		}
-		all.Write(data)
-	}
-	return all.String()
-}
-
-func findRepoRoot(t *testing.T) string {
-	t.Helper()
-	dir, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	for i := 0; i < 10; i++ {
-		if _, err := os.Stat(filepath.Join(dir, ".git")); err == nil {
-			return dir
-		}
-		parent := filepath.Dir(dir)
-		if parent == dir {
-			break
-		}
-		dir = parent
-	}
-	t.Fatal("could not find repository root (no .git directory)")
-	return ""
-}
 
 // TestDetailPageNoteLoadsEditScript checks that GET /t/note/{id} returns HTML
 // containing <script defer src="/design/base/09-edit.js"> so the Edit button
