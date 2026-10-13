@@ -31,6 +31,9 @@ runner in tools/a11y-runner.
 | `internal/render/` | component registry, props validation, page layout | `registry.go` |
 | `internal/ui/` | the components the pages use most as Go types (`ui.Button`, `ui.Link`, `ui.Alert`, `ui.TextField`, `ui.Empty`, `ui.Status`), rendered in the server with `s.part(...)`, and `ui.Form`, `s.form(...)`, the one way to write a form that does an action: hidden fields escaped, `from` and `back` under the names the server reads, its button a submit button. A test holds each type's fields to its manifest. Any other component stays a map with `s.component` | `ui.go`, `form.go` |
 | `internal/blocks/` | the page model without HTTP: what a block shows, resolved from its props, the records and where it is shown; one Kind per component (resolve, what it shows, its noun, height, heading), used by the pages, the assistant and MCP alike | `kind.go`, `kinds.go` |
+| `internal/records/glance*.go`, `internal/server/views_rows.go` | what a record says beside its title, the same on its row, its page and the canvas, and a list's rows built from it | `design/foundations/glance.md` |
+| `internal/blocks/apart.go` | records of one name told apart (by their day, when added, then first of 2), in a link's and a box's name as well as on screen: the names WCAG 2.4.9 asks to differ. A page that drops the words from a link breaks `names_apart_test.go` and the browser agent | `design/foundations/names.md` |
+| `internal/look/`, `internal/render/htmltest/` | a page read as a screen reader or agent reads it: names, landmarks, problems, for the tests, `/api/look` and the CLI. They follow Chrome's accessibility tree, which the browser agent (`tools/a11y-runner/agent.mjs`, `make pages`) reads; change them only when they disagree with Chrome, never to make a check pass | `look.go` |
 | `internal/relate/` | how one record connects to the others, worked out from the schema | `relate.go` |
 | `internal/server/parts.go` | the parts of a page that are off until somebody asks: the keys, and who turned one on | `parts.go` |
 | `internal/llm/` | provider-neutral chat + tools; openai.go and anthropic.go | `llm.go` |
@@ -59,7 +62,7 @@ split by area so parallel changes rarely touch the same file:
 
 - [Components](docs/tests/components.md): each component on its own: rendered from props, read by its manifest, given hostile props, overridden, and seen, heard and used by keyboard in a real browser.
 - [Canvas and tabs](docs/tests/canvas.md): the canvas the model builds: blocks, tabs, layout and its measuring, and blocks checked or set up wrong.
-- [Pages people read](docs/tests/pages.md): the HTML pages a person reads and uses: what a page says and leaves out, lists narrowed and sorted, editing, and no machine words.
+- [Pages people read](docs/tests/pages.md) (helpers for names on a page, `names`, `sameNames` and `seedTwins`, are in `internal/server/names_apart_test.go`): the HTML pages a person reads and uses: what a page says and leaves out, lists narrowed and sorted, editing, and no machine words.
 - [Outside agents](docs/tests/agents.md): agents that use Sameway from outside: the JSON API, MCP, the CLI, look, keys, and doing what a page does.
 - [The assistant](docs/tests/assistant.md): the model inside Sameway: its tools, its prompt, how it is measured, and what it asks before doing.
 - [People and computers together](docs/tests/together.md): who may open a workspace and how copies on several computers, a phone and the internet stay in step.
