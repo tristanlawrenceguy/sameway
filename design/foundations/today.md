@@ -33,6 +33,30 @@ morning brief says the same as one notification. Both are read from the records,
   says what it counts, in the right number: The rest, 3 tasks.
 - **The box has its own heading.** "Too much in your head?" is an h2, so it
   is found by heading, and its field is labelled for what goes in it.
+- **The day is the person's, in their time zone.** A workspace keeps one
+  time zone, a place's name such as Europe/Madrid (`ui.zone`), and
+  everything worked out by the day follows it: Today, what is late,
+  "tomorrow" said to the assistant or the API, a repeat's next day, the
+  morning brief and the weekly review, the day a record was made, a
+  calendar and an export. Unset, it is the zone of the computer the
+  workspace runs on, which is the person's on their own laptop; but on a
+  server in UTC, a Tailscale-hosted box in another country, or a laptop
+  that travels, the computer's day is not theirs. Google Calendar,
+  Slack and Notion all keep a time zone for the account rather than
+  follow the machine, and offer the device's when it differs
+  ([Google Calendar](https://support.google.com/calendar/answer/37064?hl=en),
+  [Slack](https://slack.com/help/articles/219889247),
+  [Notion](https://www.guideflow.com/tutorial/how-to-set-time-zone-automatically-in-notion)).
+  The owner sets it on Help; the assistant and an agent with
+  `set_setting ui.zone`, or `POST /zone`; describe's `now` says the time
+  there with its offset. A change applies to the next thing worked out,
+  with no restart.
+- **Stored moments stay moments.** A time is kept as an instant and a
+  whole day as its date (`when.Stored`), so changing the zone moves no
+  record: a 9am meeting kept while in Madrid shows as 8am once the zone
+  is London, the same moment, and a task due Friday is still due Friday.
+  A repeat at 9am keeps 9am in the zone it is read in, across a change of
+  clocks ([RFC 5545, 3.3.5](https://www.rfc-editor.org/rfc/rfc5545#section-3.3.5)).
 - **The brief earns its interruption.** It is sent once a day, at the time
   set, and not at all on a day with nothing on. When Today starts with
   three, the brief names those three, so it and the page agree.
@@ -58,5 +82,18 @@ morning brief says the same as one notification. Both are read from the records,
   answers beside it; a badge is a standing interruption.
 - **A brief on an empty day, to say so.** Today says it to whoever looks;
   a notification that says nothing teaches a person to ignore the brief.
+- **Following the device's zone on its own, as Slack and Google
+  Calendar can.** The workspace is shared by its person's devices and the
+  jobs that run while none is open; a phone abroad changing the day for
+  the morning brief at home would be a surprise. A reader in another zone
+  is told so on the page instead (glance.md), and the owner chooses.
+- **A zone per record, as Todoist's fixed times.** Each time would need
+  its zone said beside it; one zone for the workspace covers a person's
+  own days ([Todoist](https://todoist.com/help/articles/360001450039)).
+- **A calendar export in the zone's own terms (TZID and VTIMEZONE).**
+  Times go out as UTC instants, which every calendar reads; a timed
+  repeat that crosses a change of clocks may move by an hour there.
+- **A list of every zone to pick from.** Some four hundred names; the
+  owner types a place's name.
 - **Reordering Today by hand.** The three come from what the person marked
   important and from the days; dragging is one more list to keep.

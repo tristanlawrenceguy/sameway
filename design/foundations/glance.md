@@ -124,8 +124,9 @@ still says it, though its row sits under No date.
   ([MDN, Intl.DateTimeFormat hourCycle](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat),
   [Atlassian](https://atlassian.design/foundations/content/date-time)).
   The clock's face keeps its minutes (2:00pm, 2:05pm), since it ticks.
-- **The workspace's zone.** Every time is the computer's the workspace runs
-  on, which for a personal workspace is the person's. When a browser reads
+- **The workspace's zone.** Every time is in the workspace's time zone
+  (`ui.zone`, else the computer's it runs on), which is its person's
+  (today.md). When a browser reads
   it from another zone, the page says so once under its heading: "Times
   here are this workspace's, UTC+2: 1 hour ahead of yours"
   ([GOV.UK, "UK time"](https://guidance.publishing.service.gov.uk/writing-to-gov-uk-standards/style-guides/a-to-z-style-guide/),

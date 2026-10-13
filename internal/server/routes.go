@@ -91,6 +91,7 @@ var pageRoutes = []route{
 	{pattern: "POST /activity/{id}/undo", handle: (*Server).undo, access: owner, tool: "undo_change", reach: inward},
 	{pattern: "GET /help", handle: (*Server).helpPage, access: people},
 	{pattern: "POST /help/set", handle: (*Server).helpSet, access: owner, tool: "set_setting", reach: inward},
+	{pattern: "POST /zone", handle: (*Server).zoneSet, access: owner, tool: "set_setting", reach: inward},
 	{pattern: "POST /clock/set", handle: (*Server).clockSet, access: people, tool: "create_record", reach: inward},
 	{pattern: "POST /clock/{id}/done", handle: (*Server).clockDone, access: people, tool: "update_record", reach: inward},
 	{pattern: "POST /clock/{id}/snooze", handle: (*Server).clockSnooze, access: people, tool: "update_record", reach: inward},

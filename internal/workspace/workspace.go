@@ -55,8 +55,7 @@ type Config struct {
 		Pace string `yaml:"pace"`
 		// Lists is which lists the sidebar shows: "filled" (the default: a
 		// list with something in it, or one the person made themselves,
-		// so an empty built-in list such as files is not in the way) or
-		// "all".
+		// so an empty built-in list such as files is not in the way) or "all".
 		Lists string `yaml:"lists"`
 		// Developer is "hidden" (the default) or "shown": the design
 		// system and the guide for agents are for whoever builds on the
@@ -93,6 +92,7 @@ type Config struct {
 		// Clock is how a time of day is said: "12" (2pm, 5:30pm), "24"
 		// (14:00), or empty for what the language uses (12 for English).
 		Clock string `yaml:"clock"`
+		Zone  string `yaml:"zone"` // the person's time zone, Europe/Madrid (workspace.Zone)
 	} `yaml:"ui"`
 	Chat struct {
 		// HistoryLimit caps how many past messages are sent to the model.

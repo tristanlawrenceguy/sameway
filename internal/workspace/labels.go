@@ -16,6 +16,7 @@ var settingNames = map[string]string{
 	"ui.nest":      "Nested in the sidebar",
 	"ui.language":  "Language",
 	"ui.clock":     "Clock",
+	"ui.zone":      "Time zone",
 	"llm.provider": "Model provider",
 	"llm.model":    "Model",
 }
