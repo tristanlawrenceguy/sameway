@@ -60,10 +60,31 @@ func periodWords(h track.Habit, p track.Period, going bool, sum track.Summary) s
 		}
 		return "not tracked yet"
 	}
-	if going && !p.Met {
+	switch {
+	case going && !p.Met:
 		return "still going, " + track.Progress(h, sum) + " so far"
+	case p.Met:
+		return ""
+	case !p.Logged:
+		return "nothing logged"
 	}
-	return ""
+	return track.Amount(p.Amount, "") + " of " + track.Amount(h.Target, h.Unit)
+}
+
+// missedOnce is what a habit aimed to reach says the period after one
+// miss, before this one is met: "Missed yesterday; today gets back on
+// track". One miss does not undo a habit; two in a row starts to, so the
+// row says so then and looks ahead, never "0 days". After two, it says
+// nothing: the page has the best run and how often it was reached.
+func missedOnce(h track.Habit, periods []track.Period, sum track.Summary) string {
+	n := len(periods)
+	if h.Aim != track.Reach || sum.Met || n < 3 || periods[n-2].Met || !periods[n-3].Met {
+		return ""
+	}
+	if h.Cadence == "day" {
+		return "Missed yesterday; today gets back on track"
+	}
+	return "Missed last " + h.Cadence + "; this " + h.Cadence + " gets back on track"
 }
 
 // trackerShows is a tracker in a few words: how many habits, and which.
