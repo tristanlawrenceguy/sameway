@@ -187,7 +187,7 @@ func (s *Service) sendTurn(ctx context.Context, canvas, text, fileID string, on 
 			// person's turn after a tool's, and Claude says what it did.
 			if _, server := s.Provider.(*llm.OpenAI); reply == "" && !nudged && server {
 				nudged = true
-				req.Messages = append(req.Messages, llm.Message{Role: llm.RoleUser, Content: "(Sameway: your reply had no words. Tell the person in a sentence or two what you did, or answer them; call a tool first only if something is still to do.)"})
+				req.Messages = append(req.Messages, llm.Message{Role: llm.RoleUser, Content: fromSameway("your reply had no words. Tell the person in a sentence or two what you did, or answer them; call a tool first only if something is still to do.")})
 				continue
 			}
 			if reply == "" {

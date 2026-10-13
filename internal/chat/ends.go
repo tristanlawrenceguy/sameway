@@ -74,7 +74,7 @@ func (p *progress) round(results []llm.ToolResult) string {
 // with everything the turn changed.
 func (s *Service) wrapUp(ctx context.Context, req llm.Request, why, said string, changes []records.Change, tools []map[string]any, on func(Event)) (*store.Record, error) {
 	req.Tools = nil
-	req.Messages = append(req.Messages, llm.Message{Role: llm.RoleUser, Content: why + " Stop here and say, in a few words, what you did and what is still to do."})
+	req.Messages = append(req.Messages, llm.Message{Role: llm.RoleUser, Content: fromSameway(why + " Stop here and say, in a few words, what you did and what is still to do.")})
 	resp, err := s.complete(ctx, req, on)
 	if ctx.Err() != nil {
 		return s.reply(said, stoppedText, changes, tools)

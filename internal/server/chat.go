@@ -135,7 +135,7 @@ func (s *Server) conversationAbout(c *chat.Service, from, about, prompt string, 
 	}
 	out.Count = len(msgs)
 	if start > 0 {
-		view.Earlier = s.earlierLink(from, "msg-"+msgs[start].ID)
+		view.Earlier = s.earlierLink(from, "msg-"+msgs[start].ID, start)
 	}
 	view.Status = s.status(msgs)
 	// A turn still running, asked for from another page or before this

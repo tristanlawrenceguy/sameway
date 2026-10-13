@@ -63,25 +63,33 @@ func (s *Service) unmade(ctx context.Context, reply, said string, changes []reco
 	}
 	if len(missing) > 0 {
 		log.Printf("chat: the reply named %s, which does not exist; asking the model to make it", strings.Join(missing, ", "))
-		return fromSameway("there is no page at " + strings.Join(missing, ", ") + ": nothing was made. Make it with the tools, then say where it is.")
+		return fromSameway("there is no page at " + strings.Join(missing, ", ") + ": nothing was made. Make it with the tools, then say where it is." + answerAgain)
 	}
 	if s.runsToolsOutside() {
 		changes = s.changesAfter(said)
 	}
 	if len(changes) == 0 && saidDone.MatchString(reply) {
 		log.Printf("chat: the reply says it changed something, and nothing changed; asking the model again")
-		return fromSameway("Nothing has changed in this turn: no tool made or changed anything. If the person asked for a change, make it now with the tools, then say what you did. If not, answer them without saying anything was done.")
+		return fromSameway("Nothing has changed in this turn: no tool made or changed anything. If the person asked for a change, make it now with the tools, then say what you did. If not, answer them without saying anything was done." + answerAgain)
 	}
 	return ""
 }
 
 // fromSameway is a word to the model that comes from Sameway, not the
-// person: it goes in the person's turn, and said bare, the model took it
-// for what they wrote. It is told to answer their last message again.
+// person. Every such word goes in the person's turn (a provider takes no
+// other), and said bare, the model took it for what they wrote and told
+// them their message had come through empty. OWASP's LLM01 asks for the
+// same: say where text comes from, so instructions and data are told apart.
 func fromSameway(note string) string {
-	return "(From Sameway, not the person: " + note + " Then answer the person's last message.)"
+	return "(From Sameway, not the person: " + note + ")"
 }
+
+// answerAgain ends a note that interrupts the model's answer.
+const answerAgain = " Then answer the person's last message."
 
 // nothingChanged is said under a reply that still says it changed
 // something when nothing changed, so the person is not left believing it.
-const nothingChanged = "\n\n(Nothing was changed. Ask again if something should be.)"
+// It says it is Sameway's: under the assistant's words it read as the
+// assistant taking its own reply back, and the model, reading it in later
+// turns, as something it had said.
+const nothingChanged = "\n\n(Sameway checked: nothing was changed. Ask again if something should be.)"
