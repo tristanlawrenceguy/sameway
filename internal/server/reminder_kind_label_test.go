@@ -10,8 +10,9 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
-// A reminder's kind field is called Type, not Kind: the detail page for an
-// alarm and a timer both show <dt>Type</dt>, their values render as "Alarm"
+// A reminder's kind field is called Type, not Kind: a timer's page shows
+// <dt>Type</dt>, while an alarm, the kind nobody has to choose, says nothing
+// of it (schema.Unchosen); their values render as "Alarm"
 // and "Timer", and no other record type's labels change.
 func TestReminderKindIsCalledType(t *testing.T) {
 	t.Parallel()
@@ -31,8 +32,8 @@ func TestReminderKindIsCalledType(t *testing.T) {
 		if strings.Contains(page, `<dt>Kind</dt>`) {
 			t.Errorf("reminder %s should not show <dt>Kind</dt>\n%s", id, truncate(page))
 		}
-		if !strings.Contains(page, `<dt>Type</dt>`) {
-			t.Errorf("reminder %s should show <dt>Type</dt>, got:\n%s", id, truncate(page))
+		if says := strings.Contains(page, `<dt>Type</dt>`); says != (id == timer.ID) {
+			t.Errorf("reminder %s: <dt>Type</dt> shown %v; only the timer chose its kind:\n%s", id, says, truncate(page))
 		}
 	}
 

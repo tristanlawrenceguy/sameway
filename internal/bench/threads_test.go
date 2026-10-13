@@ -102,7 +102,7 @@ func TestThreads(t *testing.T) {
 					}
 					last = rec.ID
 				}
-				_ = a.Chat.Classify(context.Background(), act, "email", last)
+				_ = a.Automate.Classify(context.Background(), act, "email", last)
 				got, _ := a.Store.Get("email", last)
 				has := strings.Contains(","+fmtTags(got.Fields["tags"])+",", ",to do,")
 				n++

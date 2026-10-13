@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/automate"
 	"github.com/tristanlawrenceguy/sameway/internal/blocks"
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/content"
@@ -30,6 +31,8 @@ type App struct {
 	// Mirror keeps content/ as the portable form of every record.
 	Mirror content.Mirror
 	Chat   *chat.Service
+	// Automate runs the person's actions. See internal/automate.
+	Automate *automate.Service
 	// Records are the workspace's records as every way in keeps them: the
 	// same Book the chat is built on. See internal/records.
 	Records *records.Book
@@ -98,14 +101,16 @@ func Open(dir string, o Options) (*App, error) {
 		Measured:     chat.MeasuresIn(st),
 	}
 	a.Chat.Provider, a.Chat.ProviderErr = llm.New(a.LLMConfig())
-	a.Chat.Allow = allowList(ws.Config.Actions.Allow)
+	a.Automate = &automate.Service{Book: a.Records, Chat: a.Chat, Model: func() llm.Provider { return a.Chat.Provider },
+		Allow: allowList(ws.Config.Actions.Allow), Workdir: ws.Dir, HTTP: o.HTTP}
+	a.Chat.Automate = a.Automate
 	a.Records.SetSetting = func(key, value string) error {
 		if err := ws.Set(key, value); err != nil {
 			return err
 		}
 		a.Chat.Needs, a.Chat.Language = ws.Config.UI.Needs, ws.Config.UI.Language
 		if key == "actions.allow" {
-			a.Chat.Allow = allowList(ws.Config.Actions.Allow)
+			a.Automate.Allow = allowList(ws.Config.Actions.Allow)
 		}
 		// A new model setting is a new model: the next message goes to it.
 		if strings.HasPrefix(key, "llm.") {
@@ -117,7 +122,7 @@ func Open(dir string, o Options) (*App, error) {
 	// Keeping the program current is the program's own business, not the
 	// workspace's: the updater needs nothing from here.
 	a.Chat.Update = update.Updater{}.Run
-	a.Chat.Workdir, a.Chat.HTTP, a.Chat.Ollama = ws.Dir, o.HTTP, o.Ollama
+	a.Chat.Workdir, a.Chat.Ollama = ws.Dir, o.Ollama
 	a.Jobs = runner.New(runner.Clock{Now: a.Now, After: o.After})
 	return a, nil
 }

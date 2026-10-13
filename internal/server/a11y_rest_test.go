@@ -1,9 +1,7 @@
 package server_test
 
 import (
-	"net/http"
 	"net/url"
-	"os"
 	"regexp"
 	"strings"
 	"testing"
@@ -31,10 +29,6 @@ func TestAToneIsSaidInWords(t *testing.T) {
 	a.Store.Create("block", map[string]any{"component": "heading", "props": map[string]any{"text": "Rent is due"}, "tone": "danger"})
 	if page := get(t, h, "/").Body.String(); !strings.Contains(page, `<p class="sw-visually-hidden">Important.</p>`) {
 		t.Errorf("a danger tone says Important; body: %s", truncate(page))
-	}
-	css, _ := os.ReadFile("../../design/base/07-layout.css")
-	if !strings.Contains(string(css), `.sw-block[data-tone="danger"]  { border-inline-start: 4px solid`) {
-		t.Error("a tone is also an edge, which survives forced colours")
 	}
 }
 
@@ -102,13 +96,6 @@ func TestThePagesSayTheWorkspacesLanguage(t *testing.T) {
 	}
 }
 
-// An arriving block is never out of the accessibility tree.
-func TestArrivalAndRefreshKeepThingsReachable(t *testing.T) {
-	t.Parallel()
-	motion, _ := os.ReadFile("../../design/base/04-motion.css")
-	if m := regexp.MustCompile(`@keyframes sw-arrive-content[^\n]*`).Find(motion); m == nil || strings.Contains(string(m), "visibility") {
-		t.Errorf("arrival fades with opacity only: %s", m)
-	}
-	// A refresh finding focus again: behave-refresh.mjs.
-	_ = http.StatusOK
-}
+// An arriving block in the accessibility tree from the start, and a tone's
+// edge kept under forced colours: behave-styles.mjs. A refresh finding focus
+// again: behave-refresh.mjs.

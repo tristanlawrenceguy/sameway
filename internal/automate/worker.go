@@ -1,4 +1,4 @@
-package chat
+package automate
 
 import (
 	"context"
@@ -11,11 +11,11 @@ import (
 
 // How automations hear what happens (records.Listen) and the worker that
 // runs them, a job on the app's runner (internal/runner); what they do
-// with it is automate.go.
+// with it is happened.go.
 
-// AutomateJob listens for what happens to records and is the worker that
+// WorkerJob listens for what happens to records and is the worker that
 // runs the actions waiting for it, one at a time, until the runner stops.
-func (s *Service) AutomateJob() runner.Job {
+func (s *Service) WorkerJob() runner.Job {
 	s.listen()
 	return runner.Job{Name: "Actions run when something happens", Run: func(ctx context.Context, _ time.Time) error {
 		for {
@@ -29,13 +29,13 @@ func (s *Service) AutomateJob() runner.Job {
 	}}
 }
 
-// StartAutomating is AutomateJob for a test, whose worker lasts as long
+// StartWorker is WorkerJob for a test, whose worker lasts as long
 // as the test program does.
-func (s *Service) StartAutomating() {
+func (s *Service) StartWorker() {
 	if s.auto != nil {
 		return
 	}
-	job := s.AutomateJob() // listening from here on
+	job := s.WorkerJob() // listening from here on
 	go job.Run(context.Background(), time.Time{})
 }
 
@@ -62,7 +62,7 @@ func (s *Service) heard(_ string, c records.Change) {
 		}
 		was, now := opRecord(op, op.Before), opRecord(op, op.After)
 		s.recordChanged(t, was, now)
-		s.tagsChanged(t, was, now)
+		TagsChanged(s.Store, t, was, now)
 	}
 }
 

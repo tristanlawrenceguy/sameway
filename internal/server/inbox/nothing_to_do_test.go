@@ -7,8 +7,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -42,13 +42,13 @@ func TestNothingToDoIsFoldedAndTeachesWhatWasMissed(t *testing.T) {
 	model := &quietModel{}
 	a.Chat.Provider, a.Chat.ProviderErr = model, nil
 	srv := server.New(a)
-	a.Chat.StartAutomating()
+	a.Automate.StartWorker()
 	srv.SetUpSorting()
 
 	rec := written(t, a.Store, "created", "email", "", map[string]any{"subject": "School newsletter", "body": "Please reply about the trip.", "tags": []any{"to sort"}})
 	var cl *store.Record
 	tagWait(t, "nothing to do", func() bool {
-		cls, _ := a.Store.List(chat.ClassificationType, store.ListOptions{})
+		cls, _ := a.Store.List(records.ClassificationType, store.ListOptions{})
 		for _, c := range cls {
 			if c.Fields["record"] == "email/"+rec.ID {
 				cl = c
@@ -71,7 +71,7 @@ func TestNothingToDoIsFoldedAndTeachesWhatWasMissed(t *testing.T) {
 	}
 	postForm(t, srv, "/tags/change", url.Values{"id": {cl.ID}, "to": {"to do"}})
 	tagWait(t, "changed to to do", func() bool {
-		c, _ := a.Store.Get(chat.ClassificationType, cl.ID)
+		c, _ := a.Store.Get(records.ClassificationType, cl.ID)
 		return c.Fields["state"] == "changed" && c.Fields["to"] == "to do"
 	})
 	tagWait(t, "a task suggested once it is to do", func() bool {

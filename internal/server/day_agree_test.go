@@ -35,7 +35,7 @@ func TestEverySurfaceAgreesOnARecordsDay(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "schema", "meeting.yaml"), []byte(meeting), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	a, err := app.Open(dir, app.Options{Machine: workspace.Machine{Known: known}})
+	a, err := app.Open(dir, app.Options{Machine: workspace.Machine{Known: known}, Clock: func() time.Time { return tonight }})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -72,7 +72,7 @@ func TestEverySurfaceAgreesOnARecordsDay(t *testing.T) {
 	}
 
 	// Its list groups it by when it starts, tomorrow, not when it ends.
-	now := time.Now()
+	now := tonight
 	if _, err := a.Store.Create("meeting", map[string]any{"title": "Seed swap", "starts": now.AddDate(0, 0, 1).UTC().Format(time.RFC3339), "ends": now.AddDate(0, 2, 0).UTC().Format(time.RFC3339)}); err != nil {
 		t.Fatal(err)
 	}

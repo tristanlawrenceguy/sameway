@@ -1,4 +1,4 @@
-package chat_test
+package automate_test
 
 import (
 	"context"
@@ -23,17 +23,17 @@ func TestScheduleAndAutomateRunOnTheRunner(t *testing.T) {
 		io.WriteString(w, "sunny")
 	}))
 	defer remote.Close()
-	svc := newFullService(t)
-	svc.HTTP = remote.Client()
+	svc, act := newServices(t)
+	act.HTTP = remote.Client()
 	svc.Store.Create(records.ActionType, map[string]any{"title": "Weather", "url": remote.URL + "/hourly", "every": "hour"})
 
 	f := runner.NewFake(time.Date(2026, 9, 15, 7, 30, 0, 0, time.UTC))
 	r := runner.New(f.Clock())
-	sched := svc.ScheduleJob()
+	sched := act.ScheduleJob()
 	if sched.Every != time.Minute || !sched.Wait {
 		t.Fatalf("the schedule is looked at every minute, after the first: %+v", sched)
 	}
-	r.Add(sched, svc.AutomateJob())
+	r.Add(sched, act.WorkerJob())
 	ctx, stop := context.WithCancel(context.Background())
 	r.Start(ctx)
 	f.BlockUntil(1)

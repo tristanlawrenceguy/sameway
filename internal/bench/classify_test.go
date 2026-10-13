@@ -49,7 +49,7 @@ func TestClassify(t *testing.T) {
 		for run := 0; run < runs; run++ {
 			for _, c := range triageCases {
 				rec, _ := a.Store.Create("email", map[string]any{"subject": strings.SplitN(c.text, "\n", 2)[0], "body": c.text})
-				_ = a.Chat.Classify(context.Background(), act, "email", rec.ID)
+				_ = a.Automate.Classify(context.Background(), act, "email", rec.ID)
 				got, _ := a.Store.Get("email", rec.ID)
 				tags := map[string]bool{}
 				if l, ok := got.Fields["tags"].([]any); ok {
@@ -104,7 +104,7 @@ func TestClassifyFollowsJudgement(t *testing.T) {
 		taught, test := triageCases[:15], triageCases[15:]
 		for _, c := range taught {
 			rec, _ := a.Store.Create("email", map[string]any{"subject": strings.SplitN(c.text, "\n", 2)[0], "body": c.text})
-			_ = a.Chat.Classify(context.Background(), learn, "email", rec.ID)
+			_ = a.Automate.Classify(context.Background(), learn, "email", rec.ID)
 			cls, _ := a.Store.List("classification", store.ListOptions{})
 			for _, cl := range cls {
 				if cl.Fields["record"] != "email/"+rec.ID {
@@ -131,7 +131,7 @@ func TestClassifyFollowsJudgement(t *testing.T) {
 			right := 0
 			for _, c := range test {
 				rec, _ := a.Store.Create("email", map[string]any{"subject": strings.SplitN(c.text, "\n", 2)[0], "body": c.text})
-				_ = a.Chat.Classify(context.Background(), action, "email", rec.ID)
+				_ = a.Automate.Classify(context.Background(), action, "email", rec.ID)
 				got, _ := a.Store.Get("email", rec.ID)
 				has := strings.Contains(","+fmtTags(got.Fields["tags"])+",", ",to do,")
 				if has == c.task {

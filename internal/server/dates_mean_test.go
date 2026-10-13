@@ -13,8 +13,8 @@ import (
 // says it (due for a task, the time alone for an entry); and a group's
 // count is not followed by a comma with nothing after it.
 func TestOnlyWhatCanBeDoneIsOverdue(t *testing.T) {
-	a, h := newApp(t)
-	now := time.Now()
+	a, h := newAppAt(t, tonight)
+	now := tonight
 	hb, _ := a.Store.Create("habit", map[string]any{"name": "Read", "unit": "minutes", "cadence": "day", "target": 30})
 	for i := 1; i <= 3; i++ {
 		a.Store.Create("entry", map[string]any{"habit": hb.ID, "amount": 20, "at": now.AddDate(0, 0, -i).Format(time.RFC3339)})

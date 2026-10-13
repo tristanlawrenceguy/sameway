@@ -66,6 +66,7 @@ type conversation struct {
 type conversationView struct {
 	Status    template.HTML
 	Messages  []chatMessage
+	Earlier   template.HTML // the way to the messages before these; chat_recent.go
 	Compose   template.HTML
 	Send      template.HTML
 	Record    template.HTML // a voice note for Attach; see dictate.go
@@ -95,7 +96,7 @@ type chatMessage struct {
 
 // conversationAbout is the conversation with something to say already in
 // the box: the thing a record's page sent the person here about.
-func (s *Server) conversationAbout(c *chat.Service, from, about, prompt string) (*conversation, error) {
+func (s *Server) conversationAbout(c *chat.Service, from, about, prompt string, all bool) (*conversation, error) {
 	out := &conversation{From: from}
 	view := conversationView{From: from}
 	view.Chats, view.Title = s.chats(c)
@@ -119,6 +120,7 @@ func (s *Server) conversationAbout(c *chat.Service, from, about, prompt string) 
 	if err != nil {
 		return nil, err
 	}
+	start := recentFrom(len(msgs), all) // chat_recent.go
 	for i, m := range msgs {
 		if m.Fields["role"] == "user" {
 			out.LastTurn = m.CreatedAt
@@ -126,9 +128,15 @@ func (s *Server) conversationAbout(c *chat.Service, from, about, prompt string) 
 		out.TurnEnd = m.CreatedAt
 		id := "msg-" + m.ID
 		out.LatestID = id
+		if i < start {
+			continue
+		}
 		view.Messages = append(view.Messages, chatMessage{ID: id, HTML: s.messageShown(m, from, i == len(msgs)-1)}) // again.go
 	}
 	out.Count = len(msgs)
+	if start > 0 {
+		view.Earlier = s.earlierLink(from, "msg-"+msgs[start].ID)
+	}
 	view.Status = s.status(msgs)
 	// A turn still running, asked for from another page or before this
 	// one was loaded: the page says so and, with scripts, follows it.

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"regexp"
 	"strings"
 	"testing"
@@ -138,51 +137,9 @@ func TestALookSaysWhenNothingIsMeasured(t *testing.T) {
 	}
 }
 
-// The measuring script sends numbers and ids, never words: it reads no
-// text, no value and no label, and every field it sends is a number, an
-// id, or which page it is.
-func TestTheMeasuringScriptSendsOnlyNumbers(t *testing.T) {
-	t.Parallel()
-	raw, err := os.ReadFile("../../design/base/29-measure.js")
-	if err != nil {
-		t.Fatal(err)
-	}
-	js := string(raw)
-	for _, never := range []string{"textContent", "innerText", "innerHTML", "outerHTML", ".value", "data-block-label", "aria-label", "location.href", "document.title", "cookie", "localStorage"} {
-		if strings.Contains(js, never) {
-			t.Errorf("the measuring script should not read %s", never)
-		}
-	}
-	for _, must := range []string{"saveData", "navigator.webdriver", "HeadlessChrome", "sendBeacon", "ResizeObserver", "[data-measure]", "data-scrolls", "/canvas/measure"} {
-		if !strings.Contains(js, must) {
-			t.Errorf("the measuring script should have %s", must)
-		}
-	}
-	// Every key it sends, and nothing but numbers besides view, canvas and
-	// the block's id and version.
-	pairs := regexp.MustCompile("\\b(\\w+): ([^,{}\\n]+)")
-	code := regexp.MustCompile("//[^\\n]*").ReplaceAllString(js[strings.Index(js, "function read()"):strings.Index(js, "var last")], "")
-	values := pairs.FindAllStringSubmatch(code, -1)
-	if len(values) < 15 {
-		t.Fatalf("expected read() to send its fields as key: value, found %d", len(values))
-	}
-	for _, kv := range values {
-		key, val := kv[1], strings.TrimSpace(kv[2])
-		switch {
-		case strings.HasPrefix(val, "n(") || strings.HasPrefix(val, "Math.") || strings.HasPrefix(val, "parseFloat(") || val == "blocks":
-		case key == "id" || key == "v" || key == "view" || key == "canvas":
-			if !strings.Contains(val, "getAttribute(\"data-") {
-				t.Errorf("%s should be read from the page's own data attribute, got %s", key, val)
-			}
-		default:
-			t.Errorf("%s: %s is neither a number nor an id", key, val)
-		}
-	}
-	jsBody := get(t, mustHandler(t), "/design/sameway.js").Body.String()
-	if !strings.Contains(jsBody, "29-measure.js") {
-		t.Error("the measuring script should be in sameway.js")
-	}
-}
+// That the measuring script sends numbers and ids, never words, and nothing
+// when a robot drives the page or the browser saves data, is checked in a
+// browser: tools/a11y-runner/behave-live.mjs.
 
 func mustHandler(t *testing.T) http.Handler {
 	_, h := newApp(t)

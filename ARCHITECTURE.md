@@ -147,6 +147,7 @@ surface decides for itself:
     when/  track/  trim/      # days and repeats, habit arithmetic, short titles
     prose/                    # Markdown rendered for the design system
     chat/                     # the conversation with a model: turns, prompts, tools
+    automate/                 # the person's actions: run, scheduled, set off by a change
     llm/                      # provider-neutral chat: OpenAI-compatible and Anthropic
     server/                   # HTTP: HTML pages, JSON API, describe, look
     mcp/                      # MCP over stdio and HTTP, from the chat tools

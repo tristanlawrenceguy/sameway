@@ -20,7 +20,7 @@ import (
 // down.
 
 // clockDirs are where time.Now() must be the app's clock or say why not.
-var clockDirs = []string{"internal/server/", "internal/chat/", "internal/records/", "internal/blocks/"}
+var clockDirs = []string{"internal/server/", "internal/chat/", "internal/automate/", "internal/records/", "internal/blocks/"}
 
 const wallClockMark = "wall clock:"
 
