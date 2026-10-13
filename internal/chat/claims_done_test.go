@@ -29,7 +29,7 @@ func TestASaidChangeThatDidNotHappenIsAskedAgain(t *testing.T) {
 	if len(m.seen) != 3 {
 		t.Fatalf("the model should be told once and then run its tool, got %d calls", len(m.seen))
 	}
-	if told := m.seen[1].Messages[len(m.seen[1].Messages)-1]; told.Role != llm.RoleUser || !strings.Contains(told.Content, "Nothing has changed") {
+	if told := m.seen[1].Messages[len(m.seen[1].Messages)-1]; told.Role != llm.RoleUser || !strings.Contains(told.Content, "Nothing has changed") || !strings.Contains(told.Content, "not the person") {
 		t.Errorf("the model is told nothing changed: %+v", told)
 	}
 	tasks, _ := svc.Store.List("task", store.ListOptions{})
@@ -62,7 +62,10 @@ func TestASaidChangeStillUnmadeSaysNothingChanged(t *testing.T) {
 func TestAnAnswerOrAMadeChangeIsNotQuestioned(t *testing.T) {
 	t.Parallel()
 	svc := newFullService(t)
-	m := &scripted{steps: []*llm.Response{{Text: "You have two tasks due today. Both were added last week."}}}
+	// What happened on the crew's chat: a list that says who made each
+	// action was taken for a claim, and the person was told their message
+	// came through empty.
+	m := &scripted{steps: []*llm.Response{{Text: "You have two tasks due today. Both were added last week.\nNew action, made by you.\nLogged twice this week."}}}
 	svc.Provider = m
 	reply, err := svc.Send(context.Background(), "what is due today?")
 	if err != nil {
