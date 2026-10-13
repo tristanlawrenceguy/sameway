@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 	"testing/fstest"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
@@ -84,7 +85,7 @@ func TestNormalizeAcceptsFormsCLIAndJSON(t *testing.T) {
 		"tags": []any{"x", "y"}, "meta": map[string]any{"k": float64(1)}, "when": "2026-09-10T12:00:00Z",
 	}
 	for label, in := range map[string]map[string]any{"strings": fromStrings, "json": fromJSON} {
-		out, err := typ.Normalize(in)
+		out, err := typ.Normalize(in, time.Now())
 		if err != nil {
 			t.Fatalf("%s: %v", label, err)
 		}
@@ -101,7 +102,7 @@ func TestNormalizeAcceptsFormsCLIAndJSON(t *testing.T) {
 			t.Errorf("%s: absent text fields should be empty strings", label)
 		}
 	}
-	defaults, err := typ.Normalize(map[string]any{"name": "x"})
+	defaults, err := typ.Normalize(map[string]any{"name": "x"}, time.Now())
 	if err != nil || defaults["count"] != int64(2) || defaults["kind"] != "a" || defaults["on"] != false {
 		t.Errorf("defaults: %v %#v", err, defaults)
 	}
@@ -113,7 +114,7 @@ func TestNormalizeReportsEveryProblemAtOnce(t *testing.T) {
 	_, err := typ.Normalize(map[string]any{
 		"name": "too long", "count": "x", "ratio": "y", "on": "maybe", "kind": "z",
 		"tags": 5, "meta": "{bad", "when": "someday", "extra": 1,
-	})
+	}, time.Now())
 	var ve *schema.ValidationError
 	if !errors.As(err, &ve) {
 		t.Fatalf("expected ValidationError, got %v", err)

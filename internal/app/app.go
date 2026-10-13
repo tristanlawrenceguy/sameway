@@ -88,6 +88,7 @@ func Open(dir string, o Options) (*App, error) {
 	// everything else is written to content/ as it changes.
 	a.Mirror = content.Mirror{Dir: ws.ContentDir(), Types: types, Skip: ownersTypes(types)}
 	st.AfterWrite = a.Mirror.Changed
+	st.Clock = a.Now // a record is made, and "tomorrow" read, by the app's clock
 	a.share()
 	records.Resay(st) // the log in today's words; see records/names.go
 	a.Chat = &chat.Service{

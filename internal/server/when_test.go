@@ -5,7 +5,6 @@ import (
 	"net/url"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
@@ -46,10 +45,10 @@ func TestADateIsWrittenAsPeopleSayIt(t *testing.T) {
 
 	// The API takes the same words, so an agent need not compute a date.
 	wantStatus(t, postJSON(t, h, http.MethodPatch, "/api/task/"+task.ID, map[string]any{"due": "tomorrow"}), http.StatusOK)
-	// The store reads the words on this computer's clock, not the app's
-	// (schema/validate.go), so tomorrow is the real one.
+	// The store reads the words on the app's clock (Store.Clock): the day
+	// after tonight's, not the computer's.
 	rec, _ = a.Store.Get("task", task.ID)
-	if rec.Fields["due"] != time.Now().AddDate(0, 0, 1).Format("2006-01-02")+"T00:00:00Z" {
+	if rec.Fields["due"] != tonight.AddDate(0, 0, 1).Format("2006-01-02")+"T00:00:00Z" {
 		t.Errorf("tomorrow is stored as that day, got %v", rec.Fields["due"])
 	}
 

@@ -24,8 +24,9 @@ func (e *ValidationError) Error() string {
 
 // Normalize applies defaults, checks types and constraints, and returns a
 // clean record that only contains known fields. Unknown fields are an error
-// so typos never silently disappear.
-func (t *Type) Normalize(in map[string]any) (map[string]any, error) {
+// so typos never silently disappear. now is the time it is for the person,
+// so "tomorrow" is the day after theirs (the app's clock, Store.Clock).
+func (t *Type) Normalize(in map[string]any, now time.Time) (map[string]any, error) {
 	out := map[string]any{}
 	problems := map[string]string{}
 	absent := map[string]bool{}
@@ -48,7 +49,7 @@ func (t *Type) Normalize(in map[string]any) (map[string]any, error) {
 				continue
 			}
 		}
-		clean, err := coerce(f, v)
+		clean, err := coerce(f, v, now)
 		if err != nil {
 			problems[f.Name] = err.Error()
 			continue
@@ -68,9 +69,10 @@ func (t *Type) Normalize(in map[string]any) (map[string]any, error) {
 // declared default, or the zero value for its type. Records written before
 // a field was added read back through this, so adding a field to a schema
 // needs no backfill and never surfaces a null the schema does not admit.
-func DefaultValue(f Field) any {
+// A default said by the day (today) is read at now.
+func DefaultValue(f Field, now time.Time) any {
 	if f.Default != nil {
-		if v, err := coerce(f, f.Default); err == nil {
+		if v, err := coerce(f, f.Default, now); err == nil {
 			return v
 		}
 	}
@@ -96,8 +98,9 @@ func zero(f Field) any {
 }
 
 // coerce accepts values from JSON (float64, bool, []any), from forms and the
-// CLI (strings), and from Go code, and returns the canonical Go value.
-func coerce(f Field, v any) (any, error) {
+// CLI (strings), and from Go code, and returns the canonical Go value. A
+// day or a repeat said in words is read at now.
+func coerce(f Field, v any, now time.Time) (any, error) {
 	switch f.Type {
 	case "string", "text", "markdown":
 		s, ok := v.(string)
@@ -176,7 +179,6 @@ func coerce(f Field, v any) (any, error) {
 		if !ok {
 			return nil, fmt.Errorf("must be a day or a moment")
 		}
-		now := time.Now()
 		ts, day, ok := when.Parse(s, now)
 		if !ok {
 			return nil, fmt.Errorf("%s", when.Why(s, now))
@@ -188,21 +190,20 @@ func coerce(f Field, v any) (any, error) {
 		if !ok {
 			return nil, fmt.Errorf("must say how often, like every Tuesday")
 		}
-		now := time.Now()
 		rule, ok := when.ParseRepeat(s, now)
 		if !ok {
 			return nil, fmt.Errorf("%s", when.RepeatWhy(s, now))
 		}
 		return rule, nil
 	case "list":
-		return coerceList(f, v)
+		return coerceList(f, v, now)
 	case "json":
 		return coerceJSON(v)
 	}
 	return nil, fmt.Errorf("unsupported type %s", f.Type)
 }
 
-func coerceList(f Field, v any) (any, error) {
+func coerceList(f Field, v any, now time.Time) (any, error) {
 	var items []any
 	switch l := v.(type) {
 	case []any:
@@ -239,7 +240,7 @@ func coerceList(f Field, v any) (any, error) {
 	}
 	out := make([]any, 0, len(items))
 	for i, item := range items {
-		c, err := coerce(elem, item)
+		c, err := coerce(elem, item, now)
 		if err != nil {
 			return nil, fmt.Errorf("item %d %v", i+1, err)
 		}

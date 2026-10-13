@@ -28,7 +28,7 @@ func (s *Store) Create(typeName string, fields map[string]any) (*Record, error) 
 	if err != nil {
 		return nil, err
 	}
-	clean, err := t.Normalize(fields)
+	clean, err := t.Normalize(fields, s.now())
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func (s *Store) Create(typeName string, fields map[string]any) (*Record, error) 
 }
 
 func (s *Store) insert(t *schema.Type, id string, clean map[string]any) (*Record, error) {
-	now := time.Now().UTC()
+	now := s.now().UTC()
 	rec := &Record{ID: id, Type: t.Name, CreatedAt: now, UpdatedAt: now, Fields: clean}
 	cols := []string{"id", "created_at", "updated_at"}
 	args := []any{rec.ID, now.Format(time.RFC3339Nano), now.Format(time.RFC3339Nano)}
@@ -72,7 +72,7 @@ func (s *Store) Get(typeName, id string) (*Record, error) {
 	if !rows.Next() {
 		return nil, ErrNotFound
 	}
-	return scan(t, rows)
+	return s.scan(t, rows)
 }
 
 // List returns records of a type, newest first by default.
@@ -105,7 +105,7 @@ func (s *Store) List(typeName string, opts ListOptions) ([]*Record, error) {
 	defer rows.Close()
 	out := make([]*Record, 0)
 	for rows.Next() {
-		rec, err := scan(t, rows)
+		rec, err := s.scan(t, rows)
 		if err != nil {
 			return nil, err
 		}
@@ -131,7 +131,8 @@ func (s *Store) Update(typeName, id string, fields map[string]any) (*Record, err
 	for k, v := range fields {
 		merged[k] = v
 	}
-	clean, err := t.Normalize(merged)
+	now := s.now()
+	clean, err := t.Normalize(merged, now)
 	if err != nil {
 		return nil, err
 	}
@@ -141,10 +142,9 @@ func (s *Store) Update(typeName, id string, fields map[string]any) (*Record, err
 	// A task's tick and status say one thing (schema/stage.go); finished,
 	// something that repeats is due again, however it was (repeat.go).
 	t.KeepInStep(current.Fields, clean)
-	t.Advance(current.Fields, clean, time.Now())
-	now := time.Now().UTC()
+	t.Advance(current.Fields, clean, now)
 	sets := []string{"updated_at = ?"}
-	args := []any{now.Format(time.RFC3339Nano)}
+	args := []any{now.UTC().Format(time.RFC3339Nano)}
 	for _, f := range t.Fields {
 		sets = append(sets, quote(f.Name)+" = ?")
 		args = append(args, encode(f, clean[f.Name]))
@@ -156,7 +156,7 @@ func (s *Store) Update(typeName, id string, fields map[string]any) (*Record, err
 	}
 	s.stamp(t, id, current.Fields, clean, time.Time{})
 	current.Fields = clean
-	current.UpdatedAt = now
+	current.UpdatedAt = now.UTC()
 	s.wrote(current)
 	return current, nil
 }
@@ -208,7 +208,7 @@ func selectList(t *schema.Type) string {
 	return strings.Join(cols, ", ")
 }
 
-func scan(t *schema.Type, rows *sql.Rows) (*Record, error) {
+func (s *Store) scan(t *schema.Type, rows *sql.Rows) (*Record, error) {
 	dest := make([]any, 3+len(t.Fields))
 	var id, created, updated string
 	dest[0], dest[1], dest[2] = &id, &created, &updated
@@ -224,7 +224,7 @@ func scan(t *schema.Type, rows *sql.Rows) (*Record, error) {
 	rec.UpdatedAt, _ = time.Parse(time.RFC3339Nano, updated)
 	stage, unset := t.Stage(), false
 	for i, f := range t.Fields {
-		rec.Fields[f.Name] = decode(f, raw[i])
+		rec.Fields[f.Name] = decode(f, raw[i], s.now)
 		unset = unset || (f.Name == stage && !raw[i].Valid)
 	}
 	// A task from before its status reads it from its tick (stage.go).
@@ -252,10 +252,10 @@ func encode(f schema.Field, v any) any {
 
 // decode turns a SQLite value back into the canonical Go value. A NULL
 // column means the field was added to the schema after this record was
-// written, so it reads back as the field's default.
-func decode(f schema.Field, v sql.NullString) any {
+// written, so it reads back as the field's default, said by the day now.
+func decode(f schema.Field, v sql.NullString, now func() time.Time) any {
 	if !v.Valid {
-		return schema.DefaultValue(f)
+		return schema.DefaultValue(f, now())
 	}
 	switch f.Type {
 	case "int":

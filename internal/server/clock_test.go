@@ -104,7 +104,7 @@ func TestTheClockSetsListsAndRings(t *testing.T) {
 	wantStatus(t, postForm(t, h, "/clock/"+due.ID+"/snooze", nil), http.StatusSeeOther)
 	snoozed, _ := a.Store.Get(server.ReminderType, due.ID)
 	later, _ := time.Parse(time.RFC3339, snoozed.Fields["at"].(string))
-	if snoozed.Fields["state"] != "set" || time.Until(later) < 4*time.Minute {
+	if snoozed.Fields["state"] != "set" || later.Sub(tonight) < 4*time.Minute {
 		t.Errorf("five more minutes sets it again, later, got %v at %v", snoozed.Fields["state"], later)
 	}
 	wantStatus(t, postForm(t, h, "/clock/"+due.ID+"/done", nil), http.StatusSeeOther)

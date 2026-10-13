@@ -22,7 +22,7 @@ func TestNewTimeNowFailsUnlessMarked(t *testing.T) {
 	root := t.TempDir()
 	write(t, root, "internal/server/a.go", clockSrc)
 	write(t, root, "internal/server/a_test.go", "package server\n\nimport \"time\"\n\nvar d = time.Now()\n")
-	write(t, root, "internal/store/a.go", "package store\n\nimport \"time\"\n\nvar d = time.Now()\n")
+	write(t, root, "internal/cli/a.go", "package cli\n\nimport \"time\"\n\nvar d = time.Now()\n")
 	r := checkWallClock(root, map[string]int{})
 	if len(r.problems) != 1 || !has(r.problems, "internal/server/a.go: time.Now() read 2 time(s)") {
 		t.Errorf("problems = %q, want a.go with two (the marked one left out)", r.problems)
