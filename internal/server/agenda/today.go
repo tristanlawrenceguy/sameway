@@ -28,6 +28,9 @@ type todayItem struct {
 	At                time.Time
 	Type, ID          string
 	AllDay            bool
+	// Soon is a task neither late nor due that the person marked as
+	// mattering, brought into the three to start with (today_focus.go).
+	Soon bool
 }
 
 // todayLists are what is late and what is today, by kind.

@@ -9,10 +9,12 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
 	"github.com/tristanlawrenceguy/sameway/internal/web"
+	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // "In those moments my reminder app doesn't help, because I get worse at
@@ -55,7 +57,11 @@ func tagged(rec *store.Record, tag string) bool {
 
 // focus splits the late and due tasks into the three to start with and the
 // rest, when there are enough to need it: those that matter first, then
-// the latest late, then what is due earliest today.
+// the latest late, then what is due earliest today. What matters includes
+// what the person marked so that is not due yet: sorting what was in their
+// head, they were told to start with the council tax and the dentist, and
+// Today went on starting with two errands from a fortnight ago, because
+// neither was due today. Those join the three, never the rest.
 func (s *Service) focus(l todayLists) (first, rest []todayItem) {
 	var all []todayItem
 	for _, list := range [][]todayItem{l.Late, l.Tasks} {
@@ -72,13 +78,67 @@ func (s *Service) focus(l todayLists) (first, rest []todayItem) {
 	for _, it := range all {
 		matters[it.ID] = s.important(it)
 	}
-	sort.SliceStable(all, func(i, j int) bool {
-		if matters[all[i].ID] != matters[all[j].ID] {
-			return matters[all[i].ID]
+	pool := append(append([]todayItem{}, all...), s.mattersSoon(all)...)
+	for _, it := range pool[len(all):] {
+		matters[it.ID] = true
+	}
+	sort.SliceStable(pool, func(i, j int) bool {
+		if matters[pool[i].ID] != matters[pool[j].ID] {
+			return matters[pool[i].ID]
 		}
-		return all[i].At.Before(all[j].At)
+		// A task with no day comes after those with one.
+		if pool[i].At.IsZero() != pool[j].At.IsZero() {
+			return pool[j].At.IsZero()
+		}
+		return pool[i].At.Before(pool[j].At)
 	})
-	return all[:focusOn], all[focusOn:]
+	first = pool[:focusOn]
+	chosen := map[string]bool{}
+	for _, it := range first {
+		chosen[it.ID] = true
+	}
+	for _, it := range all {
+		if !chosen[it.ID] {
+			rest = append(rest, it)
+		}
+	}
+	return first, rest
+}
+
+// soonDays is how far ahead a task that matters is close enough to start.
+const soonDays = 7
+
+// mattersSoon is the tasks marked as mattering that are not done, not
+// already late or due, and due within soonDays or on no day at all.
+func (s *Service) mattersSoon(have []todayItem) []todayItem {
+	t, ok := s.app.Types.Get("task")
+	if !ok {
+		return nil
+	}
+	seen := map[string]bool{}
+	for _, it := range have {
+		seen[it.ID] = true
+	}
+	now := s.Now()
+	recs, _ := s.app.Store.List("task", store.ListOptions{})
+	var out []todayItem
+	for _, r := range recs {
+		if done, _ := r.Fields["done"].(bool); done || seen[r.ID] {
+			continue
+		}
+		it := todayItem{Title: s.Title(t, r), Href: relate.Page("task", r.ID), Type: "task", ID: r.ID, Soon: true}
+		if v, _ := r.Fields["due"].(string); v != "" {
+			at, allDay, ok := when.Stored(v, now)
+			if !ok || at.After(now.AddDate(0, 0, soonDays)) {
+				continue
+			}
+			it.At, it.AllDay, it.When = at, allDay, when.Day(at, now)
+		}
+		if s.important(it) {
+			out = append(out, it)
+		}
+	}
+	return out
 }
 
 // dumpBox is the box for everything in the person's head.
@@ -103,7 +163,9 @@ func (s *Service) todaySort(w http.ResponseWriter, r *http.Request) {
 		s.Failed(w, r, "Not sorted", err, "/today")
 		return
 	}
-	s.TellAt(w, r, web.Outcome{Title: "Sorted", Text: "The assistant has made your tasks; its answer is on Home, and they are on Today."}, "/#chat")
+	// Back where they were: the page that says what to start with, not the
+	// busiest page they have. What it said in full is in the chat.
+	s.TellAt(w, r, web.Outcome{Title: "Sorted", Text: "The assistant has made your tasks. Its answer, with the three to start with, is in Chat."}, "/today")
 }
 
 // focusSection is Start with these, and the rest folded, or "" when Today
@@ -113,7 +175,13 @@ func (s *Service) focusSection(l todayLists, list func(string, []todayItem) stri
 	if first == nil {
 		return ""
 	}
-	out := `<p>` + template.HTMLEscapeString(fmt.Sprintf("%d tasks are late or due. Start with these three; the rest wait below.", len(first)+len(rest))) + `</p>` + list("Start with these", first)
+	n := len(rest)
+	for _, it := range first {
+		if !it.Soon {
+			n++
+		}
+	}
+	out := `<p>` + template.HTMLEscapeString(fmt.Sprintf("%d tasks are late or due. Start with these three; the rest wait below.", n)) + `</p>` + list("Start with these", first)
 	if body, err := s.app.Registry.RenderSlot("disclosure", map[string]any{"label": "The rest", "count": len(rest), "of": schema.Noun(len(rest), "task")}, template.HTML(list("", rest))); err == nil {
 		out += string(body)
 	}
