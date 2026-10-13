@@ -113,14 +113,20 @@ func TestSortingIsLoggedAndUndone(t *testing.T) {
 	srv.SetUpSorting()
 	e := written(t, a.Store, "created", "email", "", map[string]any{"subject": "Water bill", "from": "Water Co", "body": "Please pay by Friday.", "tags": []any{"to sort"}})
 	tagWait(t, "the suggestion", func() bool { return len(a.Chat.Suggestions()) == 1 })
+	// The suggestion shows before its entry is in the log: each is waited
+	// for, as the suggestion is, not looked for once.
 	entry := func(action string) string {
-		for _, r := range a.Records.Recent(20) {
-			if r.Fields["action"] == action {
-				return r.ID
+		id := ""
+		tagWait(t, "a "+action+" entry in the log", func() bool {
+			for _, r := range a.Records.Recent(20) {
+				if r.Fields["action"] == action {
+					id = r.ID
+					return true
+				}
 			}
-		}
-		t.Fatalf("no %s entry in the log", action)
-		return ""
+			return false
+		})
+		return id
 	}
 	if err := a.Records.UndoAs("human", entry("proposed")); err != nil || len(a.Chat.Suggestions()) != 0 {
 		t.Fatalf("undoing the suggestion takes it back: %v", err)

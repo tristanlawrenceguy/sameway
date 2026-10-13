@@ -20,7 +20,9 @@ import (
 // extracts the row, and asserts on the date text inside it. (Acceptance 1.)
 func TestNoteListShowsNaturalDate(t *testing.T) {
 	t.Parallel()
-	_, h := newApp(t)
+	// At 10am on the app's clock, which stamps the note made: never midnight.
+	y, m, d := tonight.Date()
+	_, h := newAppAt(t, time.Date(y, m, d, 10, 0, 0, 0, time.Local))
 
 	var rec struct{ ID string }
 	decode(t, postJSON(t, h, http.MethodPost, "/api/note", map[string]any{

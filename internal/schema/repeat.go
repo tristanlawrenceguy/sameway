@@ -91,6 +91,6 @@ func (t *Type) Advanced(sent, saved map[string]any) bool {
 		return false
 	}
 	f, _ := t.Field(name)
-	v, err := coerce(*f, sent[name])
+	v, err := coerce(*f, sent[name], time.Time{}) // a tick or a choice, never a day
 	return err == nil && v == done
 }

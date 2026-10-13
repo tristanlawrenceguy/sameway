@@ -100,7 +100,7 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 		b.WriteString(string(s.recentActivityAbout(5, "/t/"+t.Name, func(target, _ string) bool { return target == t.Name })))
 	}
 	name := capitalize(schema.Plural(t.Name))
-	s.page(w, r, name, template.HTML(b.String()), pageOptions{JSONURL: "/api/" + t.Name, Said: pg.title(name), Lede: howMany(t, recs), Dot: s.dotOf(t.Name)})
+	s.page(w, r, name, template.HTML(b.String()), pageOptions{JSONURL: "/api/" + t.Name, Said: pg.title(name), Lede: s.listLede(t, recs), Dot: s.dotOf(t.Name)}) // keep_one.go
 }
 
 // detailPage shows one record as a definition list with delete.

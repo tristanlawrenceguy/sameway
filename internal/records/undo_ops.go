@@ -13,7 +13,7 @@ import (
 
 // batchVerbs are the entries that touched many records as one: their
 // reversal is said as the records put back.
-var batchVerbs = map[string]bool{"imported": true, "synced": true, "arranged": true, "wrote up": true, "organised": true, "suggested": true, "rescheduled": true}
+var batchVerbs = map[string]bool{"imported": true, "synced": true, "arranged": true, "wrote up": true, "organised": true, "suggested": true, "rescheduled": true, "merged": true}
 
 // inverseOps works out the ops that take an entry back. The thing the
 // entry names must still be as the entry left it: there, if it made or

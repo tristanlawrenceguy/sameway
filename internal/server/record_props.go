@@ -75,7 +75,7 @@ func (s *Server) recordProps(w http.ResponseWriter, r *http.Request) {
 		merged[k] = v
 	}
 
-	clean, err := t.Normalize(merged)
+	clean, err := t.Normalize(merged, s.now())
 	if err != nil {
 		s.refused(w, r, t, err, detail)
 		return

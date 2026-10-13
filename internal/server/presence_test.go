@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 	"time"
@@ -101,21 +100,5 @@ func TestIdleIsNotHere(t *testing.T) {
 	}
 }
 
-// The page says an arrival on this page once, through a status there from
-// the start, and never a departure; it goes idle after ten minutes.
-func TestArrivalsAreSaidOnceAndQuietly(t *testing.T) {
-	t.Parallel()
-	js, err := os.ReadFile("../../design/components/presence/enhance.js")
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, want := range []string{`"role", "status"`, "on this page too.", "heard[n] = true", `sw.on("refresh"`} {
-		if !strings.Contains(string(js), want) {
-			t.Errorf("enhance.js lacks %q", want)
-		}
-	}
-	if strings.Contains(string(js), "assertive") || strings.Contains(string(js), "left") {
-		t.Error("nothing interrupts, and leaving is not said")
-	}
-	// A page untouched for ten minutes says so: behave-connect.mjs.
-}
+// An arrival on this page said once, politely, and leaving never:
+// behave-components.mjs. A page untouched for ten minutes: behave-connect.mjs.

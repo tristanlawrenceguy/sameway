@@ -12,6 +12,8 @@
 //     debt.go, as often as recorded there or less (clock.go)
 //   - a direct write to the store outside store and records fails, unless
 //     storeWrites in debt.go lists it with its reason (writes.go)
+//   - an API error code sent under internal that describe does not name
+//     fails (errcodes.go)
 //   - with -base REF: tools/check/debt.go only goes down from REF (no entry
 //     added, no recorded length or count raised)
 //
@@ -59,6 +61,7 @@ func run(root string) report {
 	r.add(checkFuncLengths(root))
 	r.add(checkWallClock(root, wallClock))
 	r.add(checkStoreWrites(root, storeWrites))
+	r.add(checkErrorCodes(root))
 	r.problems = append(r.problems, checkComponents(filepath.Join(root, "design/components"))...)
 	r.problems = append(r.problems, checkTokens(root)...)
 	return r

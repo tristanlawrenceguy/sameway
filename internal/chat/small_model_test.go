@@ -96,7 +96,7 @@ func TestARecordOfTheSameTitleIsSaid(t *testing.T) {
 	svc := newFullService(t)
 	have, _ := svc.Store.Create("note", map[string]any{"title": "Chapter 1"})
 	raw := []byte(`{"type":"note","fields":{"title":"chapter 1"}}`)
-	if text, _ := svc.Call("create_record", raw); !strings.Contains(text, "titled the same was there already, "+have.ID) {
+	if text, _ := svc.Call("create_record", raw); !strings.Contains(text, "1 note called the same was there already, still open: "+have.ID) {
 		t.Errorf("the one there is named: %s", text)
 	}
 }

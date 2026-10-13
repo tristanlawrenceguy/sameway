@@ -49,6 +49,10 @@ type Store struct {
 	// AfterSync is told about a record written because of what another
 	// computer sent, after AfterWrite: news from someone else.
 	AfterSync func(typeName, id string, rec *Record)
+	// Clock is the time it is for the person: the app's, set at open, so
+	// a record is stamped made when the app says it is, and "tomorrow"
+	// and a repeat's next day are theirs. Nil is this computer's clock.
+	Clock func() time.Time
 
 	origin string
 	clock  hlc
@@ -81,6 +85,14 @@ func Open(path string, types *schema.Set) (*Store, error) {
 	s.migrateClash()
 	s.originHere(path) // origin_here.go
 	return s, nil
+}
+
+// now is the time it is for the person (Clock).
+func (s *Store) now() time.Time {
+	if s.Clock == nil {
+		return time.Now() // wall clock: the clock when none is given
+	}
+	return s.Clock()
 }
 
 // Close releases the database, and lets go of what was kept for it.
