@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -91,7 +92,7 @@ func (m Mirror) Import(st *store.Store, log Logger) (Report, error) {
 			}
 			current, getErr := st.Get(t.Name, id)
 			if getErr == nil {
-				clean, err := t.Normalize(fields)
+				clean, err := t.Normalize(fields, time.Now()) // wall clock: a file read back holds stored values, not words said by the day
 				if err == nil && same(clean, current.Fields) {
 					continue
 				}

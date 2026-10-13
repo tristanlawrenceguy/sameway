@@ -71,7 +71,7 @@ type hlc struct {
 func (c *hlc) next(origin string) string {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	now := time.Now().UnixMilli()
+	now := time.Now().UnixMilli() // wall clock: stamps from two computers are ordered by real time
 	if now > c.wall {
 		c.wall, c.counter = now, 0
 	} else {
@@ -260,7 +260,7 @@ func (s *Store) materialize(typeName, id string) error {
 		return err
 	}
 	fields := map[string]any{}
-	deleted, created := false, time.Now().UTC()
+	deleted, created := false, s.now().UTC()
 	for rows.Next() {
 		var f, v string
 		if err := rows.Scan(&f, &v); err != nil {
@@ -288,13 +288,13 @@ func (s *Store) materialize(typeName, id string) error {
 		}
 		return nil
 	}
-	clean, err := t.Normalize(fields)
+	clean, err := t.Normalize(fields, s.now())
 	if err != nil {
 		// A record another copy holds but this one's schema refuses (a
 		// field required here and not there) waits in _state.
 		return nil
 	}
 	t.KeepInStep(nil, clean)
-	_, err = s.put(t, id, clean, created, time.Now().UTC())
+	_, err = s.put(t, id, clean, created, s.now().UTC())
 	return err
 }

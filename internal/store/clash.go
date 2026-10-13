@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
@@ -77,6 +76,6 @@ func (s *Store) clash(st Stamp, have, cur, curBase string) {
 	}
 	var text string
 	json.Unmarshal([]byte(lost), &text)
-	now := time.Now().UTC()
+	now := s.now().UTC()
 	s.Put(ClashType, id, map[string]any{"target": st.Type, "target_id": st.ID, "field": st.Field, "text": text, "origin": originOf(clock), "state": "open"}, now, now)
 }

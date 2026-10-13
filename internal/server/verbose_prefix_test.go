@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 	"testing/fstest"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
@@ -101,7 +102,7 @@ func TestValidationErrorNoTechnicalPrefix(t *testing.T) {
 		t.Fatal("testtype not loaded")
 	}
 
-	_, verr := typ.Normalize(map[string]any{}) // missing required "name"
+	_, verr := typ.Normalize(map[string]any{}, time.Now()) // missing required "name"
 	var ve *schema.ValidationError
 	if !errors.As(verr, &ve) {
 		t.Fatalf("expected ValidationError, got %v", verr)

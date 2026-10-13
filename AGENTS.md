@@ -83,11 +83,12 @@ area it belongs to, or a new file in `docs/tests/` linked here.
   `*_more.go`, `*_extra.go` or `*_helpers.go` fails: when a file grows,
   split by topic, moving a group of related functions into a file named
   after what it holds. Read the whole file before editing.
-- **The app's clock.** In `internal/server`, `chat`, `records` and
-  `blocks`, the time comes from the app's clock (`s.now()`, `Book.Now`),
-  which a test fixes. `tools/check` fails a `time.Now()` there unless its
-  line says why it must be real time (`// wall clock: how long a request
-  waits`). The files from before the rule are in `wallClock` in
+- **The app's clock.** In `internal/server`, `chat`, `automate`,
+  `records`, `blocks`, `store` and `schema`, the time comes from the
+  app's clock (`s.now()`, `Book.Now`, `Store.Clock`), which a test
+  fixes. `tools/check` fails a `time.Now()` there unless its line says
+  why it must be real time (`// wall clock: how long a request waits`).
+  The files from before the rule are in `wallClock` in
   `tools/check/debt.go`, a list that only goes down.
 - **Records are written one way.** `tools/check` fails a call that writes
   the store directly (Create, Update, Delete, Restore, Put) anywhere under

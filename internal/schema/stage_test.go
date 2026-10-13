@@ -72,7 +72,7 @@ func TestATaskGivenOneGetsTheOther(t *testing.T) {
 		{map[string]any{"title": "c", "status": "done"}, true, "done"},
 		{map[string]any{"title": "d", "status": "doing"}, false, "doing"},
 	} {
-		out, err := typ.Normalize(c.in)
+		out, err := typ.Normalize(c.in, time.Now())
 		if err != nil {
 			t.Fatal(err)
 		}

@@ -9,18 +9,18 @@ import (
 )
 
 // The time it is for the person comes from the app's clock
-// (app.Options.Clock: s.now() in the server, Book.Now, Workspace.now),
-// which a test fixes, so a page, a reminder or a copy made says the same
-// time whatever the test machine's clock says. A time.Now() in the code
-// that serves pages, the assistant, records and blocks reads the
-// computer's clock instead. Where real time is meant (how long a request
-// waits, who is here just now) the line says so with a `// wall clock:
-// <reason>` comment. The files that still read it unexplained are listed
-// in wallClock in debt.go, with how many times, and that list only goes
-// down.
+// (app.Options.Clock: s.now() in the server, Book.Now, Workspace.now,
+// Store.Clock), which a test fixes, so a page, a reminder or a copy made
+// says the same time whatever the test machine's clock says. A
+// time.Now() in the code that serves pages, the assistant, records,
+// blocks, the store and the schema reads the computer's clock instead.
+// Where real time is meant (how long a request waits, who is here just
+// now) the line says so with a `// wall clock: <reason>` comment. The
+// files that still read it unexplained are listed in wallClock in
+// debt.go, with how many times, and that list only goes down.
 
 // clockDirs are where time.Now() must be the app's clock or say why not.
-var clockDirs = []string{"internal/server/", "internal/chat/", "internal/automate/", "internal/records/", "internal/blocks/"}
+var clockDirs = []string{"internal/server/", "internal/chat/", "internal/automate/", "internal/records/", "internal/blocks/", "internal/store/", "internal/schema/"}
 
 const wallClockMark = "wall clock:"
 
