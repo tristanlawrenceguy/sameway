@@ -46,6 +46,9 @@ type Store struct {
 	// OnSchema makes this workspace's content type what the other
 	// computers have: added, changed or deleted; see schema_state.go.
 	OnSchema func(sc *Schema) error
+	// OnSetting takes a setting another computer changed, for the few
+	// that are the person's; see setting_state.go.
+	OnSetting func(key, value string)
 	// AfterSync is told about a record written because of what another
 	// computer sent, after AfterWrite: news from someone else.
 	AfterSync func(typeName, id string, rec *Record)
