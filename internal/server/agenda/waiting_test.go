@@ -6,10 +6,8 @@ import (
 	"net/url"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
-	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 )
@@ -63,8 +61,8 @@ func seedWaiting(t *testing.T, a *app.App) *server.Server {
 	if _, err := records.ApplyOps(a.Store,
 		records.Op{Type: records.ProposalType, After: map[string]any{"summary": "Remove the old tab?", "state": "pending", "action": map[string]any{"tool": "remove_canvas", "id": "x"}}},
 		records.Op{Type: records.ProposalType, After: map[string]any{"summary": "Make a task: call Ana?", "state": "pending", "action": map[string]any{"tool": "create_record", "type": "task", "fields": map[string]any{"title": "Call Ana"}}, "by_action": "a1", "from": "email/" + asked.ID, "yes": "Make it", "no": "No"}},
-		records.Op{Type: chat.ClassificationType, After: map[string]any{"record": "email/" + asked.ID, "tag": "important", "why": "someone waits", "state": "suggested"}},
-		records.Op{Type: chat.ClassificationType, After: map[string]any{"record": "email/" + mail.ID, "tag": "nothing to do", "why": "no other tag fits", "state": "suggested"}},
+		records.Op{Type: records.ClassificationType, After: map[string]any{"record": "email/" + asked.ID, "tag": "important", "why": "someone waits", "state": "suggested"}},
+		records.Op{Type: records.ClassificationType, After: map[string]any{"record": "email/" + mail.ID, "tag": "nothing to do", "why": "no other tag fits", "state": "suggested"}},
 	); err != nil {
 		t.Fatal(err)
 	}
@@ -76,13 +74,13 @@ func seedWaiting(t *testing.T, a *app.App) *server.Server {
 // saying how many wait and what.
 func TestTodayTheBriefAndAgentsAgreeOnWhatWaits(t *testing.T) {
 	t.Parallel()
-	a, _ := newApp(t)
+	a, _ := newAppAt(t, tonight)
 	srv := seedWaiting(t, a)
 	n := len(a.Chat.Waiting())
 	sent := make(chan string, 1)
 	srv.OnRing(func(title, text, link string) { sent <- title + " | " + text })
 	postForm(t, srv, "/brief", url.Values{"at": {"00:00"}})
-	if !srv.BriefIfDue(time.Now()) {
+	if !srv.BriefIfDue(tonight) {
 		t.Fatal("what waits is worth a brief")
 	}
 	if got, want := <-sent, fmt.Sprintf("Today: %d waiting for you | Remove the old tab?; Gas bill; Lunch", n); got != want {

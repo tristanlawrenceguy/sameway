@@ -63,10 +63,10 @@ func (s *Service) runRecord(ctx context.Context, rec *store.Record, canvas strin
 		return s.command(ctx, rec, title)
 	case "classify":
 		vars, _ := ctx.Value(triggerKey{}).(map[string]string)
-		return s.Classify(ctx, rec, vars["type"], vars["id"]) // classify.go
+		return ran(s.Automate.Classify(ctx, rec, vars["type"], vars["id"])) // automate/classify.go
 	case "suggest":
 		vars, _ := ctx.Value(triggerKey{}).(map[string]string)
-		return s.Suggest(ctx, rec, vars["type"], vars["id"]) // suggest_records.go
+		return ran(s.Automate.Suggest(ctx, rec, vars["type"], vars["id"])) // automate/suggest.go
 	case "mqtt":
 		return s.mqttAction(ctx, rec, title)
 	case "message":

@@ -18,12 +18,12 @@ import (
 // canvas and "In 4 days at 2:00pm" in its list.
 func TestARecordSaysTheSameEverywhere(t *testing.T) {
 	t.Parallel()
-	a, h := newApp(t)
+	a, h := newAppAt(t, tonight)
 	ana, _ := a.Store.Create("person", map[string]any{"name": "Ana Silva"})
-	due := time.Now().AddDate(0, 0, 3).Format("2006-01-02") + " 14:00"
+	due := tonight.AddDate(0, 0, 3).Format("2006-01-02") + " 14:00"
 	task, _ := a.Store.Create("task", map[string]any{"title": "Buy paint", "status": "doing", "due": due, "for": ana.ID})
 	a.Store.Create(records.BlockType, a.Chat.BlockFields(map[string]any{"component": "collection", "props": map[string]any{"type": "task", "label": "Tasks"}}))
-	day := when.Relative(task.Fields["due"].(string), time.Now(), false)
+	day := when.Relative(task.Fields["due"].(string), tonight, false)
 
 	pages := map[string]string{
 		"its row":    read(get(t, h, "/t/task").Body.String()),
@@ -58,8 +58,8 @@ func TestARecordSaysTheSameEverywhere(t *testing.T) {
 // done: a meeting that happened yesterday is past, not overdue.
 func TestLateIsSaidInWordsAndOnlyOfWhatCanBeDone(t *testing.T) {
 	t.Parallel()
-	a, h := newApp(t)
-	yesterday := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
+	a, h := newAppAt(t, tonight)
+	yesterday := tonight.AddDate(0, 0, -1).Format("2006-01-02")
 	task, _ := a.Store.Create("task", map[string]any{"title": "Pay rent", "due": yesterday})
 	meeting, _ := a.Store.Create("event", map[string]any{"title": "Standup", "starts": yesterday + " 09:00"})
 	a.Store.Create(records.BlockType, a.Chat.BlockFields(map[string]any{"component": "collection", "props": map[string]any{"type": "task", "label": "Tasks"}}))
@@ -84,8 +84,8 @@ func TestLateIsSaidInWordsAndOnlyOfWhatCanBeDone(t *testing.T) {
 // the date in full beside them for a pointer.
 func TestDaysAreHeldInTimeElements(t *testing.T) {
 	t.Parallel()
-	a, h := newApp(t)
-	today := time.Now().Format("2006-01-02")
+	a, h := newAppAt(t, tonight)
+	today := tonight.Format("2006-01-02")
 	task, _ := a.Store.Create("task", map[string]any{"title": "Water plants", "due": today})
 	row := get(t, h, "/t/task").Body.String()
 	if !strings.Contains(row, `<time class="sw-when sw-when--today" datetime="`+today+`" title="`) {
@@ -108,8 +108,8 @@ func TestDaysAreHeldInTimeElements(t *testing.T) {
 // name was patched in for: the table in design/foundations/glance.md.
 func TestEveryProvidedTypeSaysItsGlance(t *testing.T) {
 	t.Parallel()
-	a, h := newApp(t)
-	tomorrow := time.Now().AddDate(0, 0, 1).Format("2006-01-02")
+	a, h := newAppAt(t, tonight)
+	tomorrow := tonight.AddDate(0, 0, 1).Format("2006-01-02")
 	rec := func(typ string, fields map[string]any) string {
 		res := postJSON(t, h, http.MethodPost, "/api/"+typ, fields)
 		var out struct{ ID string }
@@ -146,8 +146,8 @@ func TestEveryProvidedTypeSaysItsGlance(t *testing.T) {
 // The clock is the person's: 12-hour the GOV.UK way unless they choose 24.
 func TestTimesFollowThePersonsClock(t *testing.T) {
 	t.Parallel()
-	a, h := newApp(t)
-	tomorrow := time.Now().AddDate(0, 0, 1).Format("2006-01-02")
+	a, h := newAppAt(t, tonight)
+	tomorrow := tonight.AddDate(0, 0, 1).Format("2006-01-02")
 	a.Store.Create("task", map[string]any{"title": "Dentist", "due": tomorrow + " 14:30"})
 	if page := read(get(t, h, "/t/task").Body.String()); !strings.Contains(page, "Tomorrow at 2:30pm") {
 		t.Errorf("the 12-hour clock is not the default for English:\n%s", page)
@@ -167,12 +167,12 @@ func TestTimesFollowThePersonsClock(t *testing.T) {
 // set it for both.
 func TestTwoWorkspacesKeepTheirOwnClocks(t *testing.T) {
 	t.Parallel()
-	a12, h12 := newApp(t)
-	a24, h24 := newApp(t)
+	a12, h12 := newAppAt(t, tonight)
+	a24, h24 := newAppAt(t, tonight)
 	if err := a24.Workspace.Set("ui.clock", "24"); err != nil {
 		t.Fatal(err)
 	}
-	tomorrow := time.Now().AddDate(0, 0, 1).Format("2006-01-02")
+	tomorrow := tonight.AddDate(0, 0, 1).Format("2006-01-02")
 	for _, a := range []*app.App{a12, a24} {
 		a.Store.Create("task", map[string]any{"title": "Dentist", "due": tomorrow + " 14:30"})
 	}
@@ -188,9 +188,9 @@ func TestTwoWorkspacesKeepTheirOwnClocks(t *testing.T) {
 // stay true while it is open and a reader elsewhere is told the zone.
 func TestAPageSaysItsZoneAndDay(t *testing.T) {
 	t.Parallel()
-	_, h := newApp(t)
+	_, h := newAppAt(t, tonight)
 	page := get(t, h, "/t/task").Body.String()
-	if !strings.Contains(page, ` data-today="`+time.Now().Format("2006-01-02")+`"`) || !strings.Contains(page, ` data-zone="`) {
+	if !strings.Contains(page, ` data-today="`+tonight.Format("2006-01-02")+`"`) || !strings.Contains(page, ` data-zone="`) {
 		t.Errorf("the root element does not say the zone and today: %s", around(page, "<html"))
 	}
 }

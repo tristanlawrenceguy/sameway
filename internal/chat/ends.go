@@ -3,6 +3,7 @@ package chat
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
@@ -108,8 +109,9 @@ func (s *Service) failAfter(said string, err error, changes []records.Change, to
 	if len(changes) == 0 {
 		return s.fail(err)
 	}
+	log.Printf("chat: %v", err)
 	records.Record(s.Store, "system", records.Change{Action: "failed", Detail: trim.Line(SanitizeError(err.Error()), 200)})
-	rec, storeErr := s.message(map[string]any{"role": "error", "content": err.Error() + " What it had done before that is below, and each can be undone.", "changes": changes, "tools": tools})
+	rec, storeErr := s.message(map[string]any{"role": "error", "content": SanitizeError(err.Error()) + " What it had done before that is below, and each can be undone.", "changes": changes, "tools": tools})
 	if storeErr != nil {
 		return nil, storeErr
 	}

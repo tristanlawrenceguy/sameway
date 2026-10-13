@@ -4,7 +4,6 @@ import (
 	"net/url"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -14,8 +13,8 @@ import (
 // in the box, goes to the assistant to sort.
 func TestALongTodayStartsWithThree(t *testing.T) {
 	t.Parallel()
-	a, h := newApp(t)
-	now := time.Now()
+	a, h := newAppAt(t, tonight)
+	now := tonight
 	day := func(n int) string { return now.AddDate(0, 0, n).Format("2006-01-02") }
 	for i, title := range []string{"Renew passport", "Pay rent", "Call the bank", "Book dentist"} {
 		a.Store.Create("task", map[string]any{"title": title, "due": day(-1 - i)})

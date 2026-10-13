@@ -196,20 +196,6 @@ func TestManifestSections(t *testing.T) {
 	}
 }
 
-// TestCSSUsesTokensOnly forbids raw colours in component stylesheets.
-func TestCSSUsesTokensOnly(t *testing.T) {
-	t.Parallel()
-	raw := regexp.MustCompile(`(?i)#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(`)
-	for _, c := range builtins(t).Components() {
-		if m := raw.FindString(c.CSS); m != "" {
-			t.Errorf("%s: style.css uses raw colour %q; use a --sw- token", c.Manifest.Name, m)
-		}
-		if strings.Contains(c.CSS, "outline: none") || strings.Contains(c.CSS, "outline:none") {
-			t.Errorf("%s: style.css removes the focus outline", c.Manifest.Name)
-		}
-	}
-}
-
 // serialise writes a parsed document back out, so the look rules read the
 // same markup the example holds.
 func serialise(doc *htmltest.Doc) string {

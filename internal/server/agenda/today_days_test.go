@@ -16,8 +16,8 @@ import (
 // with its value; and Today is in the navigation.
 func TestTodaySaysEachDayAsAPersonPlansBy(t *testing.T) {
 	t.Parallel()
-	a, h := newApp(t)
-	now := time.Now()
+	a, h := newAppAt(t, tonight)
+	now := tonight
 	midnight := func(n int) string { return now.AddDate(0, 0, n).Format("2006-01-02") + "T00:00:00Z" }
 	y := now.AddDate(0, 0, -1)
 	a.Store.Create("task", map[string]any{"title": "Pay rent", "due": midnight(0)})
@@ -65,16 +65,16 @@ func TestTodaySaysEachDayAsAPersonPlansBy(t *testing.T) {
 // day's brief names the three Today starts with.
 func TestTheBriefSaysNothingOnAnEmptyDayAndNamesTheThree(t *testing.T) {
 	t.Parallel()
-	a, _ := newApp(t)
+	a, _ := newAppAt(t, tonight)
 	h := server.New(a)
 	var sent []string
 	h.OnRing(func(title, text, link string) { sent = append(sent, title+" | "+text) })
 	postForm(t, h, "/brief", url.Values{"at": {"00:00"}})
-	now := time.Now()
+	now := tonight
 	if h.BriefIfDue(now) {
 		t.Error("nothing on, no brief")
 	}
-	a2, _ := newApp(t)
+	a2, _ := newAppAt(t, tonight)
 	h2 := server.New(a2)
 	h2.OnRing(func(title, text, link string) { sent = append(sent, title+" | "+text) })
 	postForm(t, h2, "/brief", url.Values{"at": {"00:00"}})
