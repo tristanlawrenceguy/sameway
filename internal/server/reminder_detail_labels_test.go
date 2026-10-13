@@ -1,9 +1,8 @@
 package server_test
 
 // Tests for raw field labels on the reminder detail page. The schema file
-// examples/workspaces/starter/schema/reminder.yaml defines the kind field
-// without a human-readable label override, so the detail page currently shows
-// "Kind" as a <dt> value (backlog 0695). Acceptance items 1–3 of this task.
+// examples/workspaces/starter/schema/reminder.yaml defines the kind field with
+// label: Type, so the detail page shows "Type" as a <dt> value (backlog 0695).
 
 import (
 	"net/http"
