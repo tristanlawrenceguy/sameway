@@ -145,7 +145,7 @@ func Summarise(h Habit, entries []Entry, now time.Time, n int) Summary {
 	var total float64
 	var first time.Time
 	for _, e := range entries {
-		start := PeriodStart(e.At, h.Cadence)
+		start := PeriodStart(e.At.In(now.Location()), h.Cadence)
 		t := byPeriod[start]
 		if t == nil {
 			t = &tally{}
@@ -226,9 +226,8 @@ func Summarise(h Habit, entries []Entry, now time.Time, n int) Summary {
 
 // PeriodStart is the start of the period a moment falls in: midnight of
 // its day, of the Monday of its week, of the first of its month or of its
-// year, in local time.
+// year, in the zone t is in: the person's, from the app's clock.
 func PeriodStart(t time.Time, cadence string) time.Time {
-	t = t.Local()
 	switch cadence {
 	case "month":
 		return time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, t.Location())

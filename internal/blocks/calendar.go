@@ -124,7 +124,7 @@ func (ws *Workspace) calendarTypes(names []string) ([]*schema.Type, string) {
 // eventOf is one record on the calendar, or nil when its date will not
 // read. A day with no time is stored as midnight UTC; it is that day
 // everywhere, with no time to show. Anything else is a moment, shown in
-// local time.
+// the person's zone.
 func (ws *Workspace) eventOf(t *schema.Type, rec *store.Record, field string) map[string]any {
 	v, _ := rec.Fields[field].(string)
 	ts, err := time.Parse(time.RFC3339, v)
@@ -133,7 +133,7 @@ func (ws *Workspace) eventOf(t *schema.Type, rec *store.Record, field string) ma
 	}
 	day, clock := ts.UTC().Format("2006-01-02"), ""
 	if !strings.HasSuffix(v, "T00:00:00Z") {
-		local := ts.Local()
+		local := ts.In(ws.now().Location())
 		day, clock = local.Format("2006-01-02"), when.Clock(local, ws.H24())
 	}
 	ev := map[string]any{"date": day, "label": ws.title(t, rec), "href": relate.Page(t.Name, rec.ID)}
@@ -186,7 +186,7 @@ func (ws *Workspace) showFields(t *schema.Type, rec *store.Record, names []strin
 		if !ok {
 			continue
 		}
-		v := Display(*f, rec.Fields[name], ws.H24())
+		v := Display(*f, rec.Fields[name], ws.now().Location(), ws.H24())
 		if f.Type == "ref" {
 			v = ws.refTitle(*f, v)
 		}

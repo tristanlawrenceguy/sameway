@@ -90,7 +90,7 @@ func Header(fields []schema.Field) []string {
 }
 
 // Value is one field of a record as it is written out.
-func Value(f schema.Field, v any, titles Titles) string {
+func Value(f schema.Field, v any, titles Titles, loc *time.Location) string {
 	if v == nil {
 		return ""
 	}
@@ -112,7 +112,7 @@ func Value(f schema.Field, v any, titles Titles) string {
 		}
 		return "no"
 	case "datetime":
-		return Day(fmt.Sprint(v))
+		return Day(fmt.Sprint(v), loc)
 	case "repeat":
 		return when.RepeatText(fmt.Sprint(v))
 	case "enum":
@@ -126,8 +126,8 @@ func Value(f schema.Field, v any, titles Titles) string {
 }
 
 // Day is a stored time as it is written out: a day alone, or a day and a
-// time on this computer's clock.
-func Day(v string) string {
+// time in loc, the person's zone.
+func Day(v string, loc *time.Location) string {
 	t, err := time.Parse(time.RFC3339, v)
 	if err != nil {
 		return v
@@ -135,16 +135,16 @@ func Day(v string) string {
 	if strings.HasSuffix(v, "T00:00:00Z") {
 		return t.UTC().Format("2006-01-02")
 	}
-	return t.Local().Format("2006-01-02 15:04")
+	return t.In(loc).Format("2006-01-02 15:04")
 }
 
 // Rows are the records as rows of text under the header.
-func Rows(fields []schema.Field, recs []*store.Record, titles Titles) [][]string {
+func Rows(fields []schema.Field, recs []*store.Record, titles Titles, loc *time.Location) [][]string {
 	rows := make([][]string, 0, len(recs))
 	for _, r := range recs {
 		row := make([]string, len(fields))
 		for i, f := range fields {
-			row[i] = Value(f, r.Fields[f.Name], titles)
+			row[i] = Value(f, r.Fields[f.Name], titles, loc)
 		}
 		rows = append(rows, row)
 	}

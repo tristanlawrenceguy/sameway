@@ -15,14 +15,14 @@ import (
 )
 
 // Write takes records of a type out in a format.
-func Write(w io.Writer, f Format, t *schema.Type, recs []*store.Record, titles Titles) error {
+func Write(w io.Writer, f Format, t *schema.Type, recs []*store.Record, titles Titles, loc *time.Location) error {
 	switch f.Ext {
 	case "csv":
-		return writeCSV(w, t, recs, titles)
+		return writeCSV(w, t, recs, titles, loc)
 	case "xlsx":
-		return writeXLSX(w, t, recs, titles)
+		return writeXLSX(w, t, recs, titles, loc)
 	case "vcf":
-		return writeVCard(w, t, recs, titles)
+		return writeVCard(w, t, recs, titles, loc)
 	case "ics":
 		return writeICS(w, t, recs)
 	}
@@ -30,13 +30,13 @@ func Write(w io.Writer, f Format, t *schema.Type, recs []*store.Record, titles T
 }
 
 // A CSV starts with the byte-order mark, so Excel reads its accents.
-func writeCSV(w io.Writer, t *schema.Type, recs []*store.Record, titles Titles) error {
+func writeCSV(w io.Writer, t *schema.Type, recs []*store.Record, titles Titles, loc *time.Location) error {
 	fields := Fields(t)
 	w.Write([]byte{0xEF, 0xBB, 0xBF}) // the byte-order mark
 	c := csv.NewWriter(w)
 	c.UseCRLF = true // RFC 4180
 	c.Write(Header(fields))
-	rows := Rows(fields, recs, titles)
+	rows := Rows(fields, recs, titles, loc)
 	for _, row := range rows {
 		for i, v := range row {
 			if fields[i].Type != "int" && fields[i].Type != "float" {
@@ -62,7 +62,7 @@ func Inert(v string) string {
 
 // An Excel sheet has its header in bold, kept in sight as it scrolls,
 // numbers as numbers, and columns as wide as what they hold.
-func writeXLSX(w io.Writer, t *schema.Type, recs []*store.Record, titles Titles) error {
+func writeXLSX(w io.Writer, t *schema.Type, recs []*store.Record, titles Titles, loc *time.Location) error {
 	fields := Fields(t)
 	x := excelize.NewFile()
 	defer x.Close()
@@ -80,7 +80,7 @@ func writeXLSX(w io.Writer, t *schema.Type, recs []*store.Record, titles Titles)
 		x.SetCellStyle(sheet, cell, cell, bold)
 		widths[i] = len(h)
 	}
-	for r, row := range Rows(fields, recs, titles) {
+	for r, row := range Rows(fields, recs, titles, loc) {
 		for i, v := range row {
 			cell, _ := excelize.CoordinatesToCellName(i+1, r+2)
 			switch fields[i].Type {
@@ -103,13 +103,13 @@ func writeXLSX(w io.Writer, t *schema.Type, recs []*store.Record, titles Titles)
 }
 
 // vCard 3.0, which every address book reads.
-func writeVCard(w io.Writer, t *schema.Type, recs []*store.Record, titles Titles) error {
+func writeVCard(w io.Writer, t *schema.Type, recs []*store.Record, titles Titles, loc *time.Location) error {
 	get := func(r *store.Record, name string) string {
 		f, ok := t.Field(name)
 		if !ok {
 			return ""
 		}
-		return Value(*f, r.Fields[name], titles)
+		return Value(*f, r.Fields[name], titles, loc)
 	}
 	for _, r := range recs {
 		name := get(r, t.Title)

@@ -137,7 +137,7 @@ func Import(st *store.Store, t *schema.Type, tb *Table, m Mapping) Report {
 				continue
 			}
 			if v := strings.TrimSpace(row[col]); v != "" {
-				fields[name] = coerce(*f, v)
+				fields[name] = coerce(*f, v, st.Now().Location())
 			}
 		}
 		if emailField != "" {
@@ -211,7 +211,7 @@ func fieldOfType(t *schema.Type, what string) string {
 
 // coerce shapes a cell for a field: a list from a separated string, a
 // bool from a word, a moment as RFC 3339 when it is written another way.
-func coerce(f schema.Field, v string) any {
+func coerce(f schema.Field, v string, loc *time.Location) any {
 	switch f.Type {
 	case "enum":
 		// A choice comes back by its label, as an export writes it.
@@ -250,7 +250,7 @@ func coerce(f schema.Field, v string) any {
 		return v
 	case "datetime":
 		for _, layout := range []string{time.RFC3339, "2006-01-02 15:04:05", "2006-01-02 15:04", "2006-01-02T15:04", "02/01/2006 15:04", "02/01/2006", "2/1/2006 15:04", time.RFC1123Z, time.RFC1123, "Mon, 2 Jan 2006 15:04:05 -0700", "January 2, 2006 15:04", "2 Jan 2006 15:04", "2006/01/02 15:04:05"} {
-			if ts, err := time.ParseInLocation(layout, v, time.Local); err == nil {
+			if ts, err := time.ParseInLocation(layout, v, loc); err == nil {
 				return ts.UTC().Format(time.RFC3339)
 			}
 		}

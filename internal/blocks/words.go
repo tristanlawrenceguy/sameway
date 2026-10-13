@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
@@ -16,8 +17,8 @@ import (
 // said, why a type is not there.
 
 // Display renders a stored value as the text a form or page shows, a time
-// on the 24-hour clock when h24 is the reader's.
-func Display(f schema.Field, v any, h24 bool) string {
+// in loc, the reader's zone, on the 24-hour clock when h24 is theirs.
+func Display(f schema.Field, v any, loc *time.Location, h24 bool) string {
 	if v == nil {
 		return ""
 	}
@@ -47,7 +48,7 @@ func Display(f schema.Field, v any, h24 bool) string {
 		}
 		return "no"
 	case "datetime":
-		return when.Text(fmt.Sprint(v), h24)
+		return when.Text(fmt.Sprint(v), loc, h24)
 	case "repeat":
 		if said := when.RepeatText(fmt.Sprint(v)); said != "" {
 			return Capitalize(said)

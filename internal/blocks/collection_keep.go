@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
@@ -33,9 +34,9 @@ func keepForm(q url.Values, block, back string) map[string]any {
 // setupWords is what a collection is set up to show, said after how many
 // match when no choice is made: "9 tasks, not done, due soonest first".
 // Once choices are kept this is where they are read back.
-func setupWords(t *schema.Type, where []string, order string, choices []choice) string {
+func setupWords(t *schema.Type, where []string, order string, choices []choice, loc *time.Location) string {
 	var said []string
-	if w := query.Words(t, where); w != "" {
+	if w := query.Words(t, where, loc); w != "" {
 		said = append(said, w)
 	}
 	if order != "" && order != baseOrder("") {

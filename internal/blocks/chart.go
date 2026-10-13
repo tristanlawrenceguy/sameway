@@ -160,7 +160,7 @@ func bucket(st *store.Store, t *schema.Type, f *schema.Field, kind string, rec *
 		if err != nil {
 			return ""
 		}
-		local := ts.Local()
+		local := ts.In(st.Now().Location())
 		// Labels a person reads under a bar: short, and in order when
 		// sorted, since the groups are sorted by label.
 		switch period {
@@ -175,7 +175,7 @@ func bucket(st *store.Store, t *schema.Type, f *schema.Field, kind string, rec *
 	if f == nil {
 		return ""
 	}
-	v := Display(*f, rec.Fields[by], false) // never a day: those are bucketed by period above
+	v := Display(*f, rec.Fields[by], time.UTC, false) // never a day: those are bucketed by period above
 	if f.Type == "ref" {
 		v = records.RefTitle(st, *f, v)
 	}

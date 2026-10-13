@@ -59,7 +59,7 @@ func TestAnEventSaysHowToRecordIt(t *testing.T) {
 func TestADayIsSaidBackWithItsWeekday(t *testing.T) {
 	t.Parallel()
 	svc := newFullService(t)
-	svc.Clock = func() time.Time { return time.Date(2026, 10, 2, 9, 0, 0, 0, time.UTC) } // a Friday
+	svc.Clock = func() time.Time { return time.Date(2026, 10, 2, 9, 0, 0, 0, time.Local) } // a Friday, in the zone the store reads words in
 	m := &scripted{steps: []*llm.Response{
 		call("create_record", map[string]any{"type": "event", "fields": map[string]any{"title": "Pricing", "starts": "2026-10-07 14:00"}}),
 		call("create_record", map[string]any{"type": "event", "fields": map[string]any{"title": "Pricing again", "starts": "2026-10-06 14:00"}}),

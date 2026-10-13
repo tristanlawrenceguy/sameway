@@ -11,7 +11,7 @@ import (
 // Words says conditions the way a person would: done=false, due<today
 // reads "not done and due before today", every one of them holding. A
 // condition it cannot read is left as it was written.
-func Words(t *schema.Type, where []string) string {
+func Words(t *schema.Type, where []string, loc *time.Location) string {
 	var out []string
 	for _, w := range where {
 		if strings.TrimSpace(w) == "" {
@@ -22,7 +22,7 @@ func Words(t *schema.Type, where []string) string {
 			out = append(out, w)
 			continue
 		}
-		out = append(out, condWords(t, c))
+		out = append(out, condWords(t, c, loc))
 	}
 	if len(out) < 2 {
 		return strings.Join(out, "")
@@ -30,7 +30,7 @@ func Words(t *schema.Type, where []string) string {
 	return strings.Join(out[:len(out)-1], ", ") + " and " + out[len(out)-1]
 }
 
-func condWords(t *schema.Type, c Cond) string {
+func condWords(t *schema.Type, c Cond, loc *time.Location) string {
 	name := t.FieldWords(c.Field)
 	f, has := t.Field(c.Field)
 	switch c.Field {
@@ -63,7 +63,7 @@ func condWords(t *schema.Type, c Cond) string {
 			value = f.ValueLabel(c.Value)
 		}
 	case "datetime":
-		value = dateWords(c.Value)
+		value = dateWords(c.Value, loc)
 		switch c.Op {
 		case "<":
 			return name + " before " + value
@@ -103,7 +103,7 @@ func condWords(t *schema.Type, c Cond) string {
 
 // dateWords says a date in a condition: today stays today, +7d is "7 days
 // from now", and a written date is a day.
-func dateWords(s string) string {
+func dateWords(s string, loc *time.Location) string {
 	switch s {
 	case "today", "tomorrow", "yesterday", "now":
 		return s
@@ -124,5 +124,5 @@ func dateWords(s string) string {
 	if d, err := time.Parse("2006-01-02", s); err == nil {
 		return d.Format("Mon 2 Jan 2006")
 	}
-	return when.Text(s, false) // kept as a view's words: said one way, the house way, whatever the clock
+	return when.Text(s, loc, false) // kept as a view's words: said one way, the house way, whatever the clock
 }

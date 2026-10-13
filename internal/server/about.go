@@ -69,7 +69,7 @@ func (s *Server) nextThings(t *schema.Type, rec *store.Record, on []string) stri
 	if has(on, AskPart) {
 		b.WriteString(string(s.part(ui.Link{Href: "/chat?about=" + path, Label: "Ask the assistant", Look: ui.LookButton})))
 	}
-	if day := s.dayOf(t, rec); day != "" && has(on, DayPart) {
+	if day := relate.Day(t, rec, s.now()); day != "" && has(on, DayPart) {
 		if cal := s.firstBlock("calendar"); cal != nil {
 			b.WriteString(string(s.part(ui.Link{Href: "/canvas/" + cal.ID + "?day=" + day, Label: "See that day", Look: ui.LookButton})))
 		}
@@ -78,23 +78,6 @@ func (s *Server) nextThings(t *schema.Type, rec *store.Record, on []string) stri
 		return ""
 	}
 	return `<div class="sw-next" role="group" aria-label="Do with this">` + b.String() + `</div>`
-}
-
-// dayOf is the day a record falls on, from its first date field.
-func (s *Server) dayOf(t *schema.Type, rec *store.Record) string {
-	field := t.DayField()
-	if field == "" {
-		return ""
-	}
-	v, _ := rec.Fields[field].(string)
-	ts, err := time.Parse(time.RFC3339, v)
-	if err != nil {
-		return ""
-	}
-	if strings.HasSuffix(v, "T00:00:00Z") {
-		return ts.UTC().Format("2006-01-02")
-	}
-	return ts.Local().Format("2006-01-02")
 }
 
 // firstBlock is the first block on the canvas of a component, or nil.
@@ -158,10 +141,10 @@ func (s *Server) remindedToday(rt *schema.Type, about string, now time.Time) boo
 	if err != nil {
 		return false
 	}
-	today := now.Local().Format("2006-01-02")
+	today := now.Format("2006-01-02")
 	for _, rec := range recs {
 		at, _ := rec.Fields["at"].(string)
-		if ts, err := time.Parse(time.RFC3339, at); err == nil && ts.Local().Format("2006-01-02") == today {
+		if ts, err := time.Parse(time.RFC3339, at); err == nil && ts.In(now.Location()).Format("2006-01-02") == today {
 			return true
 		}
 	}

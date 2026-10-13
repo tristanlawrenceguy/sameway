@@ -74,7 +74,7 @@ func FallsOn(t *schema.Type, rec *store.Record, days map[string]bool, now time.T
 			continue
 		}
 		v, _ := rec.Fields[f.Name].(string)
-		at, allDay, ok := when.Stored(v, now.In(time.Local))
+		at, allDay, ok := when.Stored(v, now)
 		if v == "" || !ok || !days[at.Format("2006-01-02")] {
 			continue
 		}

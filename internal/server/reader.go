@@ -25,7 +25,9 @@ func (s *Server) h24() bool { return s.app.Workspace.Hours24() }
 
 // display is a stored value as the text a form or page shows, said to
 // the person (blocks.Display).
-func (s *Server) display(f schema.Field, v any) string { return blocks.Display(f, v, s.h24()) }
+func (s *Server) display(f schema.Field, v any) string {
+	return blocks.Display(f, v, s.now().Location(), s.h24())
+}
 
 // reader is who a search is for (search.Reader).
 func (s *Server) reader() search.Reader { return search.Reader{Now: s.now(), H24: s.h24()} }

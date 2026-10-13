@@ -24,7 +24,30 @@ func TestNewTimeNowFailsUnlessMarked(t *testing.T) {
 	write(t, root, "internal/server/a_test.go", "package server\n\nimport \"time\"\n\nvar d = time.Now()\n")
 	write(t, root, "internal/cli/a.go", "package cli\n\nimport \"time\"\n\nvar d = time.Now()\n")
 	r := checkWallClock(root, map[string]int{})
-	if len(r.problems) != 1 || !has(r.problems, "internal/server/a.go: time.Now() read 2 time(s)") {
+	if len(r.problems) != 1 || !has(r.problems, "internal/server/a.go: time.Now() or time.Local read 2 time(s)") {
+		t.Errorf("problems = %q, want a.go with two (the marked one left out)", r.problems)
+	}
+}
+
+const zoneSrc = `package blocks
+
+import "time"
+
+func a(t time.Time) time.Time { return t.Local() }
+
+var b = time.Local
+
+var c = time.Date(2026, 1, 1, 0, 0, 0, 0, time.Local) // wall clock: a file's own time
+`
+
+// The computer's zone is the computer's clock's: a day worked out in it
+// is not the person's when the workspace is hosted elsewhere.
+func TestComputersZoneFailsUnlessMarked(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	write(t, root, "internal/blocks/a.go", zoneSrc)
+	r := checkWallClock(root, map[string]int{})
+	if len(r.problems) != 1 || !has(r.problems, "internal/blocks/a.go: time.Now() or time.Local read 2 time(s)") {
 		t.Errorf("problems = %q, want a.go with two (the marked one left out)", r.problems)
 	}
 }
@@ -51,7 +74,7 @@ func TestRecordedFileMayOnlyShrink(t *testing.T) {
 		"internal/records/shrunk.go": 3,
 		"internal/blocks/gone.go":    1,
 	})
-	if len(r.problems) != 1 || !has(r.problems, "grown.go: time.Now() read 2 times, more than the 1 recorded") {
+	if len(r.problems) != 1 || !has(r.problems, "grown.go: time.Now() or time.Local read 2 times, more than the 1 recorded") {
 		t.Errorf("problems = %q, want grown alone", r.problems)
 	}
 	if len(r.warnings) != 2 || !has(r.warnings, "shrunk.go: time.Now() down to 2 from 3") || !has(r.warnings, "gone.go reads time.Now() unexplained no more") {

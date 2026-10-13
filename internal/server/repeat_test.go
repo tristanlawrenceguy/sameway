@@ -69,7 +69,7 @@ func TestARepeatingTaskDoneIsDueAgain(t *testing.T) {
 	if rec.Fields["done"] != false || rec.Fields["due"] != want {
 		t.Errorf("done, it is due again two weeks after it was due (%s), got %v %v", want, rec.Fields["done"], rec.Fields["due"])
 	}
-	if !strings.Contains(page, "Water the ferns is done.") || !strings.Contains(page, "It repeats every 2 weeks, so it is due again "+when.Text(want, false)+".") {
+	if !strings.Contains(page, "Water the ferns is done.") || !strings.Contains(page, "It repeats every 2 weeks, so it is due again "+when.Text(want, time.Local, false)+".") {
 		t.Errorf("ticking says it is done and when it is due again\n%s", truncate(page))
 	}
 	undo := regexp.MustCompile(`action="(/activity/[^"]+/undo)"`).FindStringSubmatch(page)

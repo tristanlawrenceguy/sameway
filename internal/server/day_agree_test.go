@@ -50,12 +50,12 @@ func TestEverySurfaceAgreesOnARecordsDay(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if got := relate.Day(typ, rec); got != "2026-09-12" {
+	if got := relate.Day(typ, rec, tonight); got != "2026-09-12" {
 		t.Errorf("related: its day is %q, want 2026-09-12", got)
 	}
 
 	var ics bytes.Buffer
-	if err := export.Write(&ics, export.ICS, typ, []*store.Record{rec}, func(schema.Field, string) string { return "" }); err != nil {
+	if err := export.Write(&ics, export.ICS, typ, []*store.Record{rec}, func(schema.Field, string) string { return "" }, time.Local); err != nil {
 		t.Fatal(err)
 	}
 	if !strings.Contains(ics.String(), "DTSTART;VALUE=DATE:20260912") {

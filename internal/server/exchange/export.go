@@ -45,7 +45,7 @@ func (s *Service) exportFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var buf bytes.Buffer
-	if err := export.Write(&buf, f, t, recs, s.RefTitle); err != nil {
+	if err := export.Write(&buf, f, t, recs, s.RefTitle, s.Now().Location()); err != nil {
 		s.Fail(w, err)
 		return
 	}
@@ -96,7 +96,7 @@ func (s *Service) ExportLinks(t *schema.Type, q url.Values, recs []*store.Record
 // are small, and a size said is a size people can decide on.
 func (s *Service) exportSize(f export.Format, t *schema.Type, recs []*store.Record) string {
 	var n counter
-	if err := export.Write(&n, f, t, recs, s.RefTitle); err != nil {
+	if err := export.Write(&n, f, t, recs, s.RefTitle, s.Now().Location()); err != nil {
 		return ""
 	}
 	return blocks.SizeWords(int64(n))

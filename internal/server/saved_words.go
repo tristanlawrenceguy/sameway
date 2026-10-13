@@ -23,7 +23,7 @@ func (s *Server) savedWords(t *schema.Type, rec *store.Record, fields, clean map
 		// Oct 2026, 14:00." The words were the person's; this is Sameway's.
 		if f, ok := t.Field(name); ok && f.Type == "datetime" {
 			if v, _ := clean[name].(string); v != "" {
-				o.Text = f.Display() + " is " + when.Text(v, s.h24()) + "."
+				o.Text = f.Display() + " is " + when.Text(v, s.now().Location(), s.h24()) + "."
 			}
 			return o
 		}
@@ -116,5 +116,5 @@ func (s *Server) dueAgain(t *schema.Type, fields map[string]any) string {
 	if !ok || rule == "" || next == "" {
 		return ""
 	}
-	return "It repeats " + when.RepeatText(rule) + ", so it is due again " + when.Text(next, s.h24()) + "."
+	return "It repeats " + when.RepeatText(rule) + ", so it is due again " + when.Text(next, s.now().Location(), s.h24()) + "."
 }

@@ -70,7 +70,7 @@ func (s *Service) whoWrote(e *store.Record) string {
 // sentAt is when an email was sent, in words.
 func (s *Service) sentAt(t *schema.Type, e *store.Record) string {
 	if f, ok := t.Field("received"); ok && e.Fields["received"] != nil {
-		return blocks.Display(*f, e.Fields["received"], s.H24())
+		return blocks.Display(*f, e.Fields["received"], s.Now().Location(), s.H24())
 	}
-	return e.CreatedAt.Local().Format("Mon 2 Jan 15:04")
+	return e.CreatedAt.In(s.Now().Location()).Format("Mon 2 Jan 15:04")
 }

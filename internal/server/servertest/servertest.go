@@ -77,7 +77,7 @@ func At(t *testing.T, now time.Time) (*app.App, http.Handler) {
 // Tonight is where a test of the day stops the clock: a tenth of a second
 // before midnight, when a day read twice is likeliest to be two days. A
 // fixed date, since the store stamps what is made by the app's clock too.
-var Tonight = time.Date(2026, 3, 11, 23, 59, 59, 9e8, time.Local)
+var Tonight = time.Date(2026, 3, 11, 23, 59, 59, 9e8, time.Local) // wall clock: a test workspace keeps the computer's zone
 
 // Machine is a computer's folders for one test: an empty known list, no
 // keys, no copies (workspace.Machine).

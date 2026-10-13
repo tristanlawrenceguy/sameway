@@ -6,7 +6,6 @@ import (
 	"flag"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/export"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
@@ -51,7 +50,7 @@ func (c *ctx) contentCmd(typeName string) error {
 	}
 	switch verb {
 	case "list":
-		recs, err := query.Filter(a.Store, t, wheres, *order, *limit, time.Now())
+		recs, err := query.Filter(a.Store, t, wheres, *order, *limit, a.Now())
 		if err != nil {
 			return err
 		}
@@ -73,7 +72,7 @@ func (c *ctx) contentCmd(typeName string) error {
 					}
 				}
 				return id
-			})
+			}, a.Now().Location())
 		}
 		c.print(recs, func() {
 			if len(recs) == 0 {

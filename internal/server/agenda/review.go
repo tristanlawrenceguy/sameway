@@ -38,15 +38,15 @@ func (s *Service) reviewTasks(now time.Time) (done, overdue, ahead []reviewTask)
 	if !ok {
 		return
 	}
-	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 	week := today.AddDate(0, 0, -7)
 	recs, _ := s.app.Store.List("task", store.ListOptions{})
 	for _, r := range recs {
 		item := reviewTask{ID: r.ID, Title: s.Title(t, r)}
 		v, _ := r.Fields["due"].(string)
-		at, _, has := when.Parse(v, now)
-		if has {
-			item.At = at.In(time.Local)
+		at, _, has := when.Stored(v, now)
+		if v != "" && has {
+			item.At = at
 			item.When = when.Day(item.At, now)
 		}
 		isDone, _ := r.Fields["done"].(bool)

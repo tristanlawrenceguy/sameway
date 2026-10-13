@@ -61,7 +61,7 @@ func (t *Type) Advance(before, clean map[string]any, now time.Time) bool {
 		return false
 	}
 	v, _ := clean[day].(string)
-	rule = when.Pin(rule, v)
+	rule = when.Pin(rule, v, now.Location())
 	next, ok := when.Next(rule, v, now)
 	if !ok {
 		return false

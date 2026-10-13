@@ -176,7 +176,7 @@ func compare(kind string, v any, op, want string, now time.Time) bool {
 			return false
 		}
 		if day && (op == "=" || op == "!=") {
-			same := ht.Local().Format("2006-01-02") == wt.Local().Format("2006-01-02")
+			same := ht.In(now.Location()).Format("2006-01-02") == wt.In(now.Location()).Format("2006-01-02")
 			return same == (op == "=")
 		}
 		return ordered(ht.Compare(wt), op)

@@ -46,15 +46,16 @@ func Next(repeat, v string, now time.Time) (string, bool) {
 // Pin fixes the day a monthly or yearly repeat falls on to the day in v,
 // when it names none: "every month" from the 31st is every month on the
 // 31st, so that after February's 28th it goes back to the 31st rather
-// than keeping to the 28th. Anything else comes back as it is.
-func Pin(repeat, v string) string {
+// than keeping to the 28th. A moment's day is its day in loc, the
+// person's zone. Anything else comes back as it is.
+func Pin(repeat, v string, loc *time.Location) string {
 	r, ok := stored(repeat)
 	ts, err := time.Parse(time.RFC3339, v)
 	if !ok || err != nil || len(r.days) > 0 || r.monthDay != 0 {
 		return repeat
 	}
 	if !strings.HasSuffix(v, "T00:00:00Z") {
-		ts = ts.Local()
+		ts = ts.In(loc)
 	}
 	switch r.freq {
 	case "MONTHLY":
@@ -70,14 +71,15 @@ func Pin(repeat, v string) string {
 // KeepTime holds a repeat to the time of day in v, a moment, while that
 // one time is put off: an alarm every day at 07:00 given five more minutes
 // still rings at 07:00 tomorrow, not 07:05. DropTime lets it go again once
-// the next time is set, so the time in the field is the one kept.
-func KeepTime(repeat, v string) string {
+// the next time is set, so the time in the field is the one kept. The
+// time of day is the one in loc, the person's zone.
+func KeepTime(repeat, v string, loc *time.Location) string {
 	r, ok := stored(repeat)
 	ts, err := time.Parse(time.RFC3339, v)
 	if !ok || err != nil || r.clock >= 0 || strings.HasSuffix(v, "T00:00:00Z") {
 		return repeat
 	}
-	ts = ts.Local()
+	ts = ts.In(loc)
 	r.clock = ts.Hour()*60 + ts.Minute()
 	return r.String()
 }
@@ -94,7 +96,7 @@ func DropTime(repeat string) string {
 
 // start is the time the schedule counts from, the place its days are in,
 // and whether it is a whole day: a day is kept in UTC, a moment is read
-// in local time.
+// in now's zone, the person's.
 func start(v string, now time.Time) (time.Time, *time.Location, bool) {
 	ts, err := time.Parse(time.RFC3339, v)
 	if err != nil {

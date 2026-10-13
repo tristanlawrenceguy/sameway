@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
@@ -39,7 +40,7 @@ func TestADateIsWrittenAsPeopleSayIt(t *testing.T) {
 	}
 
 	// The date chip updates after editing.
-	if page := get(t, h, "/t/task/"+task.ID+fieldsView).Body.String(); !strings.Contains(page, when.Text(when.Store(ts, day), false)) {
+	if page := get(t, h, "/t/task/"+task.ID+fieldsView).Body.String(); !strings.Contains(page, when.Text(when.Store(ts, day), time.Local, false)) {
 		t.Error("the page shows the moment as a person reads it")
 	}
 

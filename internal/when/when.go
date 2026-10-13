@@ -22,10 +22,10 @@ import (
 const Hint = "A day, like 19 Sep or next Friday, with a time if there is one, like 2pm."
 
 // Text is a stored value in full as a person reads it: "Sat 19 Sep 2026"
-// for a day, "Sat 19 Sep 2026 at 2pm" for a moment, in local time, which
-// Parse reads back as the same value. Anything that is not a stored value
-// comes back as it is.
-func Text(v string, h24 bool) string {
+// for a day, "Sat 19 Sep 2026 at 2pm" for a moment, in loc, the reader's
+// zone, which Parse reads back as the same value there. Anything that is
+// not a stored value comes back as it is.
+func Text(v string, loc *time.Location, h24 bool) string {
 	ts, err := time.Parse(time.RFC3339, v)
 	if err != nil {
 		return v
@@ -33,7 +33,8 @@ func Text(v string, h24 bool) string {
 	if IsDay(v) {
 		return ts.UTC().Format("Mon 2 Jan 2006")
 	}
-	return ts.Local().Format("Mon 2 Jan 2006") + " at " + Clock(ts.Local(), h24)
+	ts = ts.In(loc)
+	return ts.Format("Mon 2 Jan 2006") + " at " + Clock(ts, h24)
 }
 
 // Store is a parsed value as it is kept: a day as midnight UTC on that

@@ -28,7 +28,7 @@ func (s *Store) Create(typeName string, fields map[string]any) (*Record, error) 
 	if err != nil {
 		return nil, err
 	}
-	clean, err := t.Normalize(fields, s.now())
+	clean, err := t.Normalize(fields, s.Now())
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func (s *Store) Create(typeName string, fields map[string]any) (*Record, error) 
 }
 
 func (s *Store) insert(t *schema.Type, id string, clean map[string]any) (*Record, error) {
-	now := s.now().UTC()
+	now := s.Now().UTC()
 	rec := &Record{ID: id, Type: t.Name, CreatedAt: now, UpdatedAt: now, Fields: clean}
 	cols := []string{"id", "created_at", "updated_at"}
 	args := []any{rec.ID, now.Format(time.RFC3339Nano), now.Format(time.RFC3339Nano)}
@@ -131,7 +131,7 @@ func (s *Store) Update(typeName, id string, fields map[string]any) (*Record, err
 	for k, v := range fields {
 		merged[k] = v
 	}
-	now := s.now()
+	now := s.Now()
 	clean, err := t.Normalize(merged, now)
 	if err != nil {
 		return nil, err
@@ -224,7 +224,7 @@ func (s *Store) scan(t *schema.Type, rows *sql.Rows) (*Record, error) {
 	rec.UpdatedAt, _ = time.Parse(time.RFC3339Nano, updated)
 	stage, unset := t.Stage(), false
 	for i, f := range t.Fields {
-		rec.Fields[f.Name] = decode(f, raw[i], s.now)
+		rec.Fields[f.Name] = decode(f, raw[i], s.Now)
 		unset = unset || (f.Name == stage && !raw[i].Valid)
 	}
 	// A task from before its status reads it from its tick (stage.go).

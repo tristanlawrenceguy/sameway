@@ -87,8 +87,9 @@ func Open(path string, types *schema.Set) (*Store, error) {
 	return s, nil
 }
 
-// now is the time it is for the person (Clock).
-func (s *Store) now() time.Time {
+// Now is the time it is for the person (Clock), in the zone their days
+// are in: what has the store and no clock of its own reads it here.
+func (s *Store) Now() time.Time {
 	if s.Clock == nil {
 		return time.Now() // wall clock: the clock when none is given
 	}

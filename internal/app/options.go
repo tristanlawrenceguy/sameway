@@ -62,6 +62,17 @@ func Load(dir string, memoryDB bool) (*App, error) {
 // Options are what the app was opened with, defaults filled in.
 func (a *App) Options() Options { return a.opts }
 
+// clock is the app's clock: Options.Clock, else this computer's, in the
+// zone the person's days are in, read each time so a change applies at
+// once. Everything worked out by the day takes its zone from it.
+func (o Options) clock(zone func() *time.Location) func() time.Time {
+	now := o.Clock
+	if now == nil {
+		now = time.Now
+	}
+	return func() time.Time { return now().In(zone()) }
+}
+
 // Now is the time it is for the person (Options.Clock).
 func (a *App) Now() time.Time { return a.Records.Now() }
 
