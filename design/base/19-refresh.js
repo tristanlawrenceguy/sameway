@@ -56,6 +56,8 @@
           if (!wide.matches) root.setAttribute("data-motion", "fade");
           if (travel) travel.name();
           var vt = document.startViewTransition(swap);
+          // One skipped for a newer one rejects ready; that is not an error.
+          vt.ready.catch(function () {});
           var after = function () { if (travel) travel.clear(); root.removeAttribute("data-motion"); };
           vt.finished.then(after, after);
           return Promise.race([vt.updateCallbackDone, new Promise(function (r) { setTimeout(r, 800); })])

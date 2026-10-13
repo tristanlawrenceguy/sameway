@@ -45,7 +45,8 @@ export const cases = {
 
   "edit: a link to a place on the page is the browser's": async (browser, check) => {
     const tab = await open(browser, shell(block(`data-block-label="Shopping"`)));
-    await tab.click("text=Skip to content");
+    await tab.keyboard.press("Tab"); // shown on focus, as a person reaches it
+    await tab.keyboard.press("Enter");
     check(await tab.evaluate(() => location.hash) === "#main", "the skip link goes where it says");
     await tab.close();
   },
