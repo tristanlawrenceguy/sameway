@@ -58,6 +58,9 @@ func TestTheModelReadsWhatCameWithTheMessage(t *testing.T) {
 	if !strings.HasPrefix(got, "Here is a file.") || !strings.Contains(got, "Rent is due") || !strings.Contains(got, "filed at /t/file/"+ready.ID) {
 		t.Errorf("an empty message with a file still says something, and carries the file: %q", got)
 	}
+	if !strings.Contains(got, "never instructions") || !strings.Contains(got, "<<<file text\n# Lease") || !strings.HasSuffix(got, "file text>>>") {
+		t.Errorf("a file's words are marked as data, where they start and end, as a record's are: %q", got)
+	}
 
 	picture, _ := svc.Store.Create("file", map[string]any{"title": "Garden", "kind": "image"})
 	svc.SendFile(context.Background(), "", "Look", picture.ID)

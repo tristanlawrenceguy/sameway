@@ -82,7 +82,39 @@ a list.
   the habits; a habit's standing is named for its day, today or on Mon 21
   Sep.
 
-Not done, and why: saving a streak with tokens or freezes (a game layer; a
+- **Counted from the first entry.** The days before a habit was kept are
+  not misses: the dots, the chart and its numbers start at the first
+  entry, so a new habit is not "8 of 30" with twenty-two days it never
+  had ([Loop Habit Tracker](https://cdn.jsdelivr.net/gh/isoron/uhabits@dev/README.md)).
+- **How often, not only the run.** Under the chart a habit says how often
+  it was reached and its best run: "Reached the target of 8 glasses on 21
+  of the last 30 days. Best run: 9 days in a row." A broken run shown on
+  its own lowers what people do next, more when they blame themselves
+  ([Silverman and Barasch, On or Off Track](https://www.colorado.edu/business/faculty-research/2023/04/19/or-track-how-broken-streaks-affect-consumer-decisions));
+  one missed day does not undo a habit forming
+  ([Lally and others, 2009](https://api.crossref.org/works/10.1002/ejsp.674)).
+  The sentence is the chart's text alternative too, visible, with the
+  numbers in the table under it
+  ([W3C, complex images](https://www.w3.org/WAI/tutorials/images/complex/)).
+- **Never twice.** The day after one miss, before today is met, the row
+  says "Missed yesterday; today gets back on track", never "0 days"
+  ([James Clear, avoid the second mistake](https://jamesclear.com/second-mistake)).
+  After two it says nothing of it.
+- **A day short says how far it got**: "Tue 10 Mar: 5 of 8 glasses", or
+  "nothing logged", rather than "not met".
+- **An agent reads the same words.** An entry made with create_record
+  says where its habit stands now, as Log does, and get_record on a
+  habit gives `standing`: today, the run, how often and the best run.
+- **A mistaken entry** is put right with Undo in Log's message, or on the
+  entry's own page from the list under the habit.
+
+Not done, and why: rest days and pausing a habit (Apple's Pause Rings,
+Habitica's Inn): a habit with no target on some days needs a schedule
+first; a routine as a cue ("after lunch") rather than a time: the remind
+time is the clock's, and the person can say it in the notes. The entries
+under a habit still say their habit beside each, as every list's glance
+does; taking it out is the collection's to decide, not one page's.
+Saving a streak with tokens or freezes (a game layer; a
 day still going already is not a miss); a celebration when a target is met
 (motion that distracts; the message says it); a heading when there is no
 label (a default heading of Keeping up would repeat the page's own).

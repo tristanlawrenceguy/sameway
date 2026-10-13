@@ -20,10 +20,12 @@ fields:
     description: The latest payload, as it came; JSON is kept readable. Kept by the system.
     readonly: true
   seen:
+    label: Last heard
     type: datetime
     description: When the latest message arrived, kept by the system.
     readonly: true
   set:
+    label: Topic to change it
     type: string
     description: "The topic to publish to for changing it, when it differs: zigbee2mqtt/kitchen_light/set for a Zigbee2MQTT device."
   notes:

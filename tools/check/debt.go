@@ -14,7 +14,7 @@ var longFuncs = map[string]int{
 	"internal/app.Description.part":        95,
 	"internal/chat.Service.sendTurn":       122,
 	"internal/chat.Service.writeUpMeeting": 84,
-	"internal/cli.ctx.contentCmd":          106,
+	"internal/cli.ctx.contentCmd":          103,
 	"internal/convert.pptx":                91,
 	"internal/discover.Browse":             115,
 	"internal/llm.OpenAI.Stream":           86,

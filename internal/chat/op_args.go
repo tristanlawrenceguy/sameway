@@ -47,6 +47,7 @@ type toolArgs struct {
 	Material    []materialItem `json:"material"`
 	Field       string         `json:"field"`
 	Edits       []suggested    `json:"edits"`
+	Merge       []string       `json:"merge"`
 }
 
 // look is the layout a call asks for.
