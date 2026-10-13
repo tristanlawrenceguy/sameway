@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 // Public makes a request as the internet makes it, to the handler the
@@ -56,4 +58,27 @@ func AddCollection(t *testing.T, h http.Handler, props map[string]any) string {
 		t.Fatalf("no block id: %s", rec.Body.String())
 	}
 	return id
+}
+
+// Written writes a record as every way in does, through records and
+// logged as the person's, so what waits on a change (an automation,
+// sorting) hears it; the store itself tells nobody. action is created,
+// updated or deleted.
+func Written(t *testing.T, st *store.Store, action, typ, id string, fields map[string]any) *store.Record {
+	t.Helper()
+	rec, _, err := records.WriteAs(st, records.Who{Actor: "human"}, action, typ, id, fields)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return rec
+}
+
+// NewestEntry is the newest entry in the activity log.
+func NewestEntry(t *testing.T, st *store.Store) *store.Record {
+	t.Helper()
+	recs, err := st.List(records.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
+	if err != nil || len(recs) == 0 {
+		t.Fatalf("the log should have an entry: %v", err)
+	}
+	return recs[0]
 }

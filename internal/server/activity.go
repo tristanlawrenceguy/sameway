@@ -11,6 +11,8 @@ import (
 	"github.com/tristanlawrenceguy/sameway/design"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/relate"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
+	"github.com/tristanlawrenceguy/sameway/internal/server/api"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
@@ -21,7 +23,7 @@ import (
 // page's form (agents.go), by the name it gave.
 func (s *Server) who(r *http.Request) records.Who {
 	if pageAction(r) || records.VisitorOf(r.Context()).Agent {
-		return apiAgent(r).As()
+		return api.Agent(r).As()
 	}
 	v := records.VisitorOf(r.Context())
 	w := records.Who{Actor: "human", Via: v.Device, By: v.Who(), ByLogin: v.Login}
@@ -112,7 +114,7 @@ func (s *Server) recentActivityAbout(n int, from string, about func(target, id s
 	inner.WriteString(`</p>`)
 
 	body, err := s.app.Registry.RenderSlot("disclosure",
-		map[string]any{"label": "Activity", "count": len(recs), "of": oneOrMany(len(recs), "change"), "id": "recent-activity"},
+		map[string]any{"label": "Activity", "count": len(recs), "of": schema.Noun(len(recs), "change"), "id": "recent-activity"},
 		template.HTML(inner.String()))
 	if err != nil {
 		return ""

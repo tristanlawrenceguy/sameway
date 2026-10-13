@@ -16,10 +16,10 @@ func (s *Server) hooks() {
 	// owner tells them (foryou.go).
 	s.app.Store.AfterSync = s.forYou
 	// An agent waiting on /api/changes hears a change logged here at once
-	// (changes.go).
+	// (api/changes.go).
 	records.Listen(s.app.Store, func(_ string, c records.Change) {
 		if c.Activity != "" {
-			s.logged.fire()
+			s.api.Logged()
 		}
 	})
 	// What an automation did on its own is told like a ring (ring.go).

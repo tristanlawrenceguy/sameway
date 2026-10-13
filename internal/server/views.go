@@ -74,7 +74,7 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if len(archived) > 0 {
-			b.WriteString(`<h2 class="sw-group">Archived <span class="sw-group__count">` + fmt.Sprint(len(archived)) + `<span class="sw-visually-hidden"> ` + oneOrMany(len(archived), t.Name) + `</span></span></h2>`)
+			b.WriteString(`<h2 class="sw-group">Archived <span class="sw-group__count">` + fmt.Sprint(len(archived)) + `<span class="sw-visually-hidden"> ` + schema.Noun(len(archived), t.Name) + `</span></span></h2>`)
 			b.WriteString(s.rows(t, archived, s.now()))
 		}
 	} else {
@@ -200,7 +200,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	}
 	b.WriteString(`</div>`)
 	b.WriteString(s.exchange.DocumentLinks(r, t, rec)) // the record as a file, after it; see export_docs.go
-	b.WriteString(s.conversationOn(r, t, rec))         // mail_conversation.go
+	b.WriteString(s.inbox.ConversationOn(r, t, rec))   // inbox/mail_conversation.go
 	// What the schema lists here, such as a project's tasks (backrefs.go).
 	listed, keys := s.backrefs(t, rec)
 	b.WriteString(listed)

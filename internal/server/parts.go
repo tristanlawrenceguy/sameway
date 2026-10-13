@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/server/inbox"
 	"github.com/tristanlawrenceguy/sameway/internal/server/media"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
@@ -26,7 +27,7 @@ import (
 //     time, until -<key> takes it back.
 //
 // Which leaves the assistant as the way in, and that is the arrangement:
-// it is handed every connection and every field whole (see api_record.go
+// it is handed every connection and every field whole (see api/api_record.go
 // and get_record), so it knows what is there when the page does not say.
 // The keys are the same in the address and in the setting, and the same
 // as the connection keys from internal/relate: one vocabulary for
@@ -55,7 +56,8 @@ const (
 	// WritingHelpPart offers the kinds of help an editor gives with a
 	// piece of writing (writing_help.go).
 	WritingHelpPart = "writing-help"
-	// An email's conversation is ConversationPart (mail_conversation.go).
+	// An email's conversation (inbox/mail_conversation.go).
+	ConversationPart = inbox.ConversationPart
 )
 
 // shown is what this view has been asked to show: always, from the

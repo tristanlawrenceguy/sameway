@@ -1,8 +1,8 @@
 package server
 
 // recordRoutes are the records' pages and what is done from them: lists,
-// a record, its files, exports, and the pages that gather records (today,
-// review, mail to sort, templates, sharing).
+// a record, its files, exports, and the pages that gather records
+// (templates, sharing).
 var recordRoutes = []route{
 	{pattern: "GET /t/{type}", handle: (*Server).listPage, access: people, public: true},
 	{pattern: "POST /t/{type}/add", handle: (*Server).addRecord, access: people, tool: "create_record", reach: inward},
@@ -17,30 +17,6 @@ var recordRoutes = []route{
 	{pattern: "POST /act/{id}", handle: (*Server).act, access: people, tool: "run_action", reach: outward},
 	{pattern: "POST /suggestions/{id}/{answer}", handle: (*Server).suggestionAnswer, access: people, persons: "a suggestion to their writing is theirs to accept or decline, never the one who suggested it", reach: inward},
 	{pattern: "POST /suggestions/accept-all", handle: (*Server).suggestionsAcceptAll, access: people, persons: "the same, for every fix or formatting change at once", reach: inward},
-	{pattern: "GET /today", handle: (*Server).todayPage, access: people},
-	{pattern: "POST /today/done", handle: (*Server).todayDone, access: people, tool: "update_record", reach: inward},
-	{pattern: "POST /today/move", handle: (*Server).todayMove, access: people, tool: "update_record", reach: inward},
-	{pattern: "POST /today/late", handle: (*Server).todayLate, access: people, tool: "update_record", reach: inward},
-	{pattern: "POST /today/sort", handle: (*Server).todaySort, access: people, persons: "it is what they say to the assistant", reach: outward},
-	{pattern: "POST /brief", handle: (*Server).briefSet, access: owner, tool: "set_setting", reach: inward},
-	{pattern: "GET /review", handle: (*Server).reviewPage, access: people},
-	{pattern: "POST /review/next", handle: (*Server).reviewMove, access: people, tool: "update_record", reach: inward},
-	{pattern: "POST /review/undate", handle: (*Server).reviewUndate, access: people, tool: "update_record", reach: inward},
-	{pattern: "POST /review/done", handle: (*Server).reviewDone, access: people, tool: "update_record", reach: inward},
-	{pattern: "POST /review/on", handle: (*Server).reviewOn, access: owner, tool: "set_setting", reach: inward},
-	{pattern: "GET /mail", handle: (*Server).mailPage, access: owner},
-	{pattern: "GET /mail/contact.vcf", handle: (*Server).mailContact, access: owner},
-	{pattern: "POST /mail/connect", handle: (*Server).mailConnect, access: owner, persons: "a mailbox and its password are its owner's to give", reach: outward},
-	{pattern: "POST /mail/off", handle: (*Server).mailOff, access: owner, persons: "a mailbox and its password are its owner's to give", reach: outward},
-	{pattern: "POST /mail/task", handle: (*Server).mailTask, access: people, tool: "create_record", reach: inward},
-	{pattern: "POST /mail/sorted", handle: (*Server).mailSorted, access: people, tool: "update_record", reach: inward},
-	{pattern: "POST /mail/answered", handle: (*Server).mailAnswered, access: people, tool: "update_record", reach: inward},
-	{pattern: "POST /tags/keep", handle: (*Server).tagKeep, access: people, persons: "keeping a tag is the person's judgement, which the action then follows", reach: inward},
-	{pattern: "POST /tags/off", handle: (*Server).tagOff, access: people, tool: "update_record", reach: inward},
-	{pattern: "POST /tags/change", handle: (*Server).tagChange, access: people, tool: "update_record", reach: inward},
-	{pattern: "POST /suggested/yes", handle: (*Server).suggestedYes, access: people, tool: "create_record", reach: inward},
-	{pattern: "POST /suggested/change", handle: (*Server).suggestedChange, access: people, tool: "create_record", reach: inward},
-	{pattern: "POST /suggested/no", handle: (*Server).suggestedNo, access: people, persons: "turning a suggestion down is the person's answer, which the action then follows", reach: inward},
 	{pattern: "GET /templates", handle: (*Server).templatesPage, access: people},
 	{pattern: "POST /templates/use", handle: (*Server).templateUse, access: people, tool: "add_arrangement", reach: inward},
 	{pattern: "GET /share", handle: (*Server).sharePage, access: people},
