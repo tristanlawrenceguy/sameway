@@ -92,15 +92,20 @@ func (s *Server) row(t *schema.Type, rec *store.Record, level int, told string, 
 	if short := trim.Title(full); short != full {
 		whole = ` title="` + template.HTMLEscapeString(full) + `"`
 	}
-	// The words that tell it apart stay inside the link, hidden: they are
-	// its name, which two rows of one title must not share (WCAG 2.4.9,
-	// design/foundations/names.md); the row's facts say them to the eye.
+	// The words that tell it apart are on the aria-label for a unique accessible
+	// name (WCAG 2.4.9) and visually hidden outside the link so people never see
+	// schema field names; the row's facts say them to the eye.
+	titleEscaped := template.HTMLEscapeString(trim.Title(full))
+	ariaLabel := titleEscaped
+	if told != "" {
+		ariaLabel += " (" + template.HTMLEscapeString(told) + ")"
+	}
 	apartHTML := ""
 	if told != "" {
 		apartHTML = `<span class="sw-visually-hidden"> (` + template.HTMLEscapeString(told) + `)</span>`
 	}
-	return fmt.Sprintf(`<li class="%s">%s<h%d class="sw-row__title"><a class="sw-row__link" href="/t/%s/%s"%s>%s%s</a></h%d><p class="sw-row__meta">%s</p></li>`,
-		class, box, level, t.Name, rec.ID, whole, template.HTMLEscapeString(trim.Title(full)), apartHTML, level, s.facts(t, rec, factOpts{Boxed: box != "", Counts: in}))
+	return fmt.Sprintf(`<li class="%s">%s<h%d class="sw-row__title"><a class="sw-row__link" href="/t/%s/%s"%s aria-label="%s">%s</a>%s</h%d><p class="sw-row__meta">%s</p></li>`,
+		class, box, level, t.Name, rec.ID, whole, ariaLabel, titleEscaped, apartHTML, level, s.facts(t, rec, factOpts{Boxed: box != "", Counts: in}))
 }
 
 // whenGroup says where a record sits in time: done first, because a done
