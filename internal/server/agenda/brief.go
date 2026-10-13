@@ -1,4 +1,4 @@
-package server
+package agenda
 
 import (
 	"errors"
@@ -10,6 +10,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // The morning brief is Today as one notification, once a day at the time
@@ -59,10 +60,10 @@ func briefWords(l todayLists, start []todayItem, waiting []chat.Waiting) (string
 	return "Today: " + strings.Join(parts, ", "), strings.Join(first, "; ")
 }
 
-// briefNext is when the brief is next due after now: the time brief.at
+// BriefNext is when the brief is next due after now: the time brief.at
 // says, today or tomorrow, read each time so a change applies. It is the
 // zero time when none is set.
-func (s *Server) briefNext(now time.Time) time.Time {
+func (s *Service) BriefNext(now time.Time) time.Time {
 	at, err := time.Parse("15:04", s.app.Workspace.Config.Brief.At)
 	if err != nil {
 		return time.Time{}
@@ -74,11 +75,11 @@ func (s *Server) briefNext(now time.Time) time.Time {
 	return next
 }
 
-// briefIfDue sends today's brief when its time has come, it has not gone
+// BriefIfDue sends today's brief when its time has come, it has not gone
 // yet and there is something on, and says whether it sent it.
-func (s *Server) briefIfDue(now time.Time) bool {
+func (s *Service) BriefIfDue(now time.Time) bool {
 	at := s.app.Workspace.Config.Brief.At
-	if at == "" || s.notify == nil || now.Format("15:04") < at || s.app.Store.Meta("brief:sent") == now.Format("2006-01-02") {
+	if at == "" || !s.CanNotify() || now.Format("15:04") < at || s.app.Store.Meta("brief:sent") == now.Format("2006-01-02") {
 		return false
 	}
 	s.app.Store.SetMeta("brief:sent", now.Format("2006-01-02"))
@@ -88,42 +89,42 @@ func (s *Server) briefIfDue(now time.Time) bool {
 	}
 	start, _ := s.focus(l)
 	title, text := briefWords(l, start, waiting)
-	go s.notify(title, text, s.linkTo("/today"))
+	s.Notify(title, text, "/today")
 	return true
 }
 
-// briefLine is the brief's line on Help, for the owner.
-func (s *Server) briefLine() string {
+// BriefLine is the brief's line on Help, for the owner.
+func (s *Service) BriefLine() string {
 	at := s.app.Workspace.Config.Brief.At
 	said := "Morning brief: none. Sameway can tell you what is on each morning, on this computer and your phone if reminders go there."
 	if at != "" {
 		said = "Morning brief: what is on today is sent at " + at + ", leading to Today. A day with nothing on sends nothing."
 	}
-	return template.HTMLEscapeString(said) + " " + string(s.form(ui.Form{Action: "/brief", Class: "sw-stack",
-		Body:   s.part(ui.TextField{Label: "Time of the brief", Name: "at", ID: "brief-at", Value: at, Hint: "Hours and minutes, such as 07:30. Empty sends none."}),
+	return template.HTMLEscapeString(said) + " " + string(s.Form(ui.Form{Action: "/brief", Class: "sw-stack",
+		Body:   s.Part(ui.TextField{Label: "Time of the brief", Name: "at", ID: "brief-at", Value: at, Hint: "Hours and minutes, such as 07:30. Empty sends none."}),
 		Button: &ui.Button{Label: "Set the morning brief", Variant: ui.Secondary}}))
 }
 
-func (s *Server) briefSet(w http.ResponseWriter, r *http.Request) {
+func (s *Service) briefSet(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	at := strings.TrimSpace(r.PostForm.Get("at"))
 	if at != "" {
 		if _, err := time.Parse("15:04", at); err != nil {
-			s.failed(w, r, "Not set", errors.New("give the time as hours and minutes, such as 07:30"), "/help")
+			s.Failed(w, r, "Not set", errors.New("give the time as hours and minutes, such as 07:30"), "/help")
 			return
 		}
 	}
 	if s.app.Records.SetSetting == nil {
-		s.failed(w, r, "Not set", errors.New("this workspace has no settings file"), "/help")
+		s.Failed(w, r, "Not set", errors.New("this workspace has no settings file"), "/help")
 		return
 	}
 	if err := s.app.Records.SetSetting("brief.at", at); err != nil {
-		s.failed(w, r, "Not set", err, "/help")
+		s.Failed(w, r, "Not set", err, "/help")
 		return
 	}
-	o := outcome{Title: "Morning brief at " + at, Text: "What is on today comes at " + at + " each day, leading to Today."}
+	o := web.Outcome{Title: "Morning brief at " + at, Text: "What is on today comes at " + at + " each day, leading to Today."}
 	if at == "" {
-		o = outcome{Title: "No morning brief", Text: "Today still shows what is on."}
+		o = web.Outcome{Title: "No morning brief", Text: "Today still shows what is on."}
 	}
-	s.tell(w, r, o, "/help")
+	s.Tell(w, r, o, "/help")
 }

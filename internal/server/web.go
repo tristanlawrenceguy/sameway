@@ -34,6 +34,7 @@ var (
 	writeError = web.WriteError
 	readBody   = web.ReadBody
 	isPublic   = web.IsPublic
+	timeHTML   = web.Time
 )
 
 // face is the server as a feature's handlers are given it (web.Deps).
@@ -62,5 +63,8 @@ func (f face) Failed(w http.ResponseWriter, r *http.Request, title string, err e
 func (f face) Fail(w http.ResponseWriter, err error)           { f.fail(w, err) }
 func (f face) Who(r *http.Request) records.Who                 { return f.who(r) }
 func (f face) Record(r *http.Request, c records.Change) string { return f.record(r, c) }
-func (f face) Now() time.Time                                  { return f.now() }
-func (f face) Showing(r *http.Request, key string) bool        { return f.showing(r, key) }
+func (f face) Apply(r *http.Request, c records.Change, ops ...records.Op) (string, []records.Op, error) {
+	return f.apply(r, c, ops...)
+}
+func (f face) Now() time.Time                           { return f.now() }
+func (f face) Showing(r *http.Request, key string) bool { return f.showing(r, key) }

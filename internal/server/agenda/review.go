@@ -1,4 +1,4 @@
-package server
+package agenda
 
 import (
 	"html/template"
@@ -13,6 +13,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
@@ -32,7 +33,7 @@ type reviewTask struct {
 	At              time.Time
 }
 
-func (s *Server) reviewTasks(now time.Time) (done, overdue, ahead []reviewTask) {
+func (s *Service) reviewTasks(now time.Time) (done, overdue, ahead []reviewTask) {
 	t, ok := s.app.Types.Get("task")
 	if !ok {
 		return
@@ -41,7 +42,7 @@ func (s *Server) reviewTasks(now time.Time) (done, overdue, ahead []reviewTask) 
 	week := today.AddDate(0, 0, -7)
 	recs, _ := s.app.Store.List("task", store.ListOptions{})
 	for _, r := range recs {
-		item := reviewTask{ID: r.ID, Title: s.title(t, r)}
+		item := reviewTask{ID: r.ID, Title: s.Title(t, r)}
 		v, _ := r.Fields["due"].(string)
 		at, _, has := when.Parse(v, now)
 		if has {
@@ -69,8 +70,8 @@ func (s *Server) reviewTasks(now time.Time) (done, overdue, ahead []reviewTask) 
 // weekly review renegotiates a commitment), or say it is done.
 var reviewActions = []struct{ to, label string }{{"next", "Move to next week"}, {"undate", "Clear the date"}, {"done", "Done"}}
 
-func (s *Server) reviewPage(w http.ResponseWriter, r *http.Request) {
-	now := s.now()
+func (s *Service) reviewPage(w http.ResponseWriter, r *http.Request) {
+	now := s.Now()
 	done, overdue, ahead := s.reviewTasks(now)
 	esc := template.HTMLEscapeString
 	var b strings.Builder
@@ -86,7 +87,7 @@ func (s *Server) reviewPage(w http.ResponseWriter, r *http.Request) {
 			if actions {
 				b.WriteString(`<div class="sw-cluster">`)
 				for _, a := range reviewActions {
-					b.WriteString(string(s.form(ui.Form{Action: "/review/" + a.to, Hidden: ui.Hidden("id", it.ID), Button: &ui.Button{Label: a.label, Context: it.Title, Variant: ui.Quiet}})))
+					b.WriteString(string(s.Form(ui.Form{Action: "/review/" + a.to, Hidden: ui.Hidden("id", it.ID), Button: &ui.Button{Label: a.label, Context: it.Title, Variant: ui.Quiet}})))
 				}
 				b.WriteString(`</div>`)
 			}
@@ -104,8 +105,8 @@ func (s *Server) reviewPage(w http.ResponseWriter, r *http.Request) {
 		b.WriteString(`<h2>Overdue</h2><p>Their day has passed. Move each to next week, clear its date to keep it for later, or say it is done.</p>`)
 		list(overdue, true)
 	}
-	if habits := s.tracker(map[string]any{"label": "Habits", "level": 2}); hasHabits(habits) {
-		b.WriteString(string(s.component(trackerComponent, habits)))
+	if habits := blocks.Resolve(s.app.Blocks, blocks.TrackerComponent, map[string]any{"label": "Habits", "level": 2}, blocks.Place{}); hasHabits(habits) {
+		b.WriteString(string(s.Component(blocks.TrackerComponent, habits)))
 	}
 	b.WriteString(`<h2>The week ahead</h2>`)
 	if len(ahead) == 0 {
@@ -116,7 +117,7 @@ func (s *Server) reviewPage(w http.ResponseWriter, r *http.Request) {
 	b.WriteString(string(s.reviewCalendar(now)))
 	b.WriteString(`<h2>Plan next week</h2><p>The assistant can go through it with you: what went well, what got in the way, and what matters next.</p>`)
 	b.WriteString(`<p><a class="sw-link sw-link--button" href="/chat?prompt=` + template.URLQueryEscaper(reviewPrompt) + `">Look back and plan with the assistant</a></p>`)
-	s.page(w, r, "Weekly review", template.HTML(b.String()), pageOptions{Lede: template.HTML(esc(reviewSummary(now, len(done), len(overdue), len(ahead))))})
+	s.Page(w, r, "Weekly review", template.HTML(b.String()), web.PageOptions{Lede: template.HTML(esc(reviewSummary(now, len(done), len(overdue), len(ahead))))})
 }
 
 // reviewPrompt starts the assistant on the review as a retrospective
@@ -152,17 +153,18 @@ func reviewSummary(now time.Time, done, overdue, ahead int) string {
 // planning the week around it, as GTD's review looks at the calendar
 // ahead; nothing when there is none. A calendar resolves one month, so
 // a week that crosses into the next asks for both.
-func (s *Server) reviewCalendar(now time.Time) template.HTML {
+func (s *Service) reviewCalendar(now time.Time) template.HTML {
 	if _, ok := s.app.Types.Get("event"); !ok {
 		return ""
 	}
 	from, to := now.Format("2006-01-02"), now.AddDate(0, 0, 7).Format("2006-01-02")
 	var events []any
 	for _, month := range []string{from[:7], to[:7]} {
-		props := blocks.Resolve(s.app.Blocks, calendarComponent, map[string]any{"type": "event", "month": month}, blocks.Place{})
+		props := blocks.Resolve(s.app.Blocks, blocks.CalendarComponent, map[string]any{"type": "event", "month": month}, blocks.Place{})
 		evs, _ := props["events"].([]any)
 		for _, e := range evs {
-			if ev, _ := e.(map[string]any); ev != nil && str(ev["date"], "") >= from && str(ev["date"], "") <= to {
+			ev, _ := e.(map[string]any)
+			if day, _ := ev["date"].(string); day != "" && day >= from && day <= to {
 				events = append(events, ev)
 			}
 		}
@@ -173,38 +175,38 @@ func (s *Server) reviewCalendar(now time.Time) template.HTML {
 	if len(events) == 0 {
 		return ""
 	}
-	return `<h3>On the calendar</h3>` + s.component(calendarComponent, map[string]any{
+	return `<h3>On the calendar</h3>` + s.Component(blocks.CalendarComponent, map[string]any{
 		"detail": "brief", "month": from[:7], "today": from, "upcoming": 20, "events": events})
 }
 
 // reviewMove moves an overdue task a week on from today; reviewUndate
 // keeps it with no date; reviewDone ticks it. Each is the person's
 // change, with its Undo.
-func (s *Server) reviewMove(w http.ResponseWriter, r *http.Request) {
+func (s *Service) reviewMove(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	next := s.now().AddDate(0, 0, 7).Format("2006-01-02")
+	next := s.Now().AddDate(0, 0, 7).Format("2006-01-02")
 	s.reviewWrite(w, r, map[string]any{"due": next}, "Moved to next week")
 }
 
-func (s *Server) reviewUndate(w http.ResponseWriter, r *http.Request) {
+func (s *Service) reviewUndate(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	s.reviewWrite(w, r, map[string]any{"due": nil}, "Kept, with no date")
 }
 
-func (s *Server) reviewDone(w http.ResponseWriter, r *http.Request) {
+func (s *Service) reviewDone(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	s.reviewWrite(w, r, map[string]any{"done": true}, "Done")
 }
 
-func (s *Server) reviewWrite(w http.ResponseWriter, r *http.Request, fields map[string]any, said string) {
+func (s *Service) reviewWrite(w http.ResponseWriter, r *http.Request, fields map[string]any, said string) {
 	id := r.PostForm.Get("id")
-	rec, act, err := records.WriteAs(s.app.Store, s.who(r), "updated", "task", id, fields)
+	rec, act, err := records.WriteAs(s.app.Store, s.Who(r), "updated", "task", id, fields)
 	if err != nil {
-		s.failed(w, r, "Not changed", err, "/review")
+		s.Failed(w, r, "Not changed", err, "/review")
 		return
 	}
 	t, _ := s.app.Types.Get("task")
-	s.tellAt(w, r, outcome{Title: said, Text: s.title(t, rec), Undo: act}, "/review")
+	s.TellAt(w, r, web.Outcome{Title: said, Text: s.Title(t, rec), Undo: act}, "/review")
 }
 
 // hasHabits is whether a resolved tracker has a habit to show: a review

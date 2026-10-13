@@ -59,3 +59,13 @@ func Count(n int, name string) string {
 	}
 	return strconv.Itoa(n) + " " + Plural(name)
 }
+
+// Noun is a type's name for a count of it, without the count: change for
+// 1, changes for 2, as Count says them, for where the number is shown on
+// its own.
+func Noun(n int, name string) string {
+	if n == 1 {
+		return Words(name)
+	}
+	return Plural(name)
+}

@@ -224,12 +224,3 @@ func changesWords(n int) string {
 	}
 	return schema.Count(n, "change")
 }
-
-// oneOrMany is a type's name for a count of it, without the count: change
-// for 1, changes for 2, as schema.Count says them.
-func oneOrMany(n int, name string) string {
-	if n == 1 {
-		return schema.Words(name)
-	}
-	return schema.Plural(name)
-}

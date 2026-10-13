@@ -27,12 +27,12 @@ func (s *Server) BackgroundJobs() []runner.Job {
 			return s.syncRound() // cloud_sync.go
 		}},
 		// At the times set on Help, read again as they change.
-		{Name: "Morning brief", Next: s.briefNext, Run: func(_ context.Context, now time.Time) error {
-			s.briefIfDue(now) // brief.go
+		{Name: "Morning brief", Next: s.agenda.BriefNext, Run: func(_ context.Context, now time.Time) error {
+			s.agenda.BriefIfDue(now) // agenda/brief.go
 			return nil
 		}},
-		{Name: "Weekly review ready", Next: s.reviewNext, Run: func(_ context.Context, now time.Time) error {
-			s.reviewIfDue(now) // review_day.go
+		{Name: "Weekly review ready", Next: s.agenda.ReviewNext, Run: func(_ context.Context, now time.Time) error {
+			s.agenda.ReviewIfDue(now) // agenda/review_day.go
 			return nil
 		}},
 		{Name: "Search by meaning kept current", Every: 2 * time.Minute, Run: func(ctx context.Context, _ time.Time) error {

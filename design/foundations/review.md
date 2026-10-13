@@ -1,7 +1,7 @@
 # Weekly review: looking back without blame, then planning
 
 A list kept for weeks fills with what is overdue, and nobody looks back.
-The weekly review (`/review`, `internal/server/review.go`) is one page
+The weekly review (`/review`, `internal/server/agenda/review.go`) is one page
 for it, and the day it says it is ready is chosen on Help
 (`review_day.go`).
 
