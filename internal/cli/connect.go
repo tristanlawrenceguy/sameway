@@ -8,8 +8,6 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-
-	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
 // connect prints, or writes, the exact configuration that hooks a tool up
@@ -72,17 +70,9 @@ func (c *ctx) connectCmd() error {
 // resolveWorkspace is the workspace the configuration points at: the one
 // given, or the one this directory is in, the way every command finds it.
 func (c *ctx) resolveWorkspace() (string, error) {
-	dir := c.workspaceDir
-	if dir == "" {
-		start := c.Dir
-		if start == "" {
-			start, _ = os.Getwd()
-		}
-		found, err := workspace.Find(start)
-		if err != nil {
-			return "", err
-		}
-		dir = found
+	dir, err := c.workspaceHere() // find.go
+	if err != nil {
+		return "", err
 	}
 	return filepath.Abs(dir)
 }
