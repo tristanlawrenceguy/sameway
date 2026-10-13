@@ -103,3 +103,20 @@ func mustType(t *testing.T, b *records.Book, name string) *schema.Type {
 	}
 	return ty
 }
+
+// KeepOne keeps all the words: the others' notes that the kept one does
+// not say are added to its own, each once.
+func TestKeepOneKeepsAllTheNotes(t *testing.T) {
+	t.Parallel()
+	b := newBook(t)
+	project := mustType(t, b, "project")
+	keep := made(t, b, "project", map[string]any{"title": "Garden", "notes": "Dig the bed."})
+	one := made(t, b, "project", map[string]any{"title": "Garden", "notes": "Buy seeds."})
+	two := made(t, b, "project", map[string]any{"title": "Garden", "notes": "Dig the bed."})
+	if _, err := b.Apply(records.KeepOne(b.Store, project, keep, []*store.Record{one, two})...); err != nil {
+		t.Fatal(err)
+	}
+	if k, _ := b.Store.Get("project", keep.ID); k.Fields["notes"] != "Dig the bed.\n\nBuy seeds." {
+		t.Errorf("the notes of both, each once: %q", k.Fields["notes"])
+	}
+}

@@ -1,6 +1,8 @@
 package records
 
 import (
+	"strings"
+
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -30,11 +32,22 @@ func KeepOne(st *store.Store, t *schema.Type, kept *store.Record, others []*stor
 	return ops
 }
 
-// filled is the fields kept leaves empty that one of the others has.
+// filled is the fields kept leaves empty that one of the others has, and
+// its writing (notes, a body) with what the others say that it does not:
+// a merge keeps all the words, as Contacts keeps all of two cards.
 func filled(t *schema.Type, kept *store.Record, others []*store.Record) map[string]any {
 	out := map[string]any{}
 	for _, f := range t.Fields {
-		if f.ReadOnly || !empty(kept.Fields[f.Name]) {
+		if f.ReadOnly {
+			continue
+		}
+		if f.Type == "text" || f.Type == "markdown" {
+			if s, ok := joined(kept.Fields[f.Name], f.Name, others); ok {
+				out[f.Name] = s
+			}
+			continue
+		}
+		if !empty(kept.Fields[f.Name]) {
 			continue
 		}
 		for _, r := range others {
@@ -43,6 +56,31 @@ func filled(t *schema.Type, kept *store.Record, others []*store.Record) map[stri
 				break
 			}
 		}
+	}
+	return out
+}
+
+// joined is kept's writing in a field followed by each different one of
+// the others', a blank line between; ok when that adds something.
+func joined(kept any, field string, others []*store.Record) (string, bool) {
+	s, _ := kept.(string)
+	parts, seen := []string{}, map[string]bool{}
+	for _, v := range append([]any{s}, valuesOf(others, field)...) {
+		w, _ := v.(string)
+		w = strings.TrimSpace(w)
+		if w != "" && !seen[w] {
+			seen[w] = true
+			parts = append(parts, w)
+		}
+	}
+	out := strings.Join(parts, "\n\n")
+	return out, out != strings.TrimSpace(s)
+}
+
+func valuesOf(recs []*store.Record, field string) []any {
+	var out []any
+	for _, r := range recs {
+		out = append(out, r.Fields[field])
 	}
 	return out
 }
