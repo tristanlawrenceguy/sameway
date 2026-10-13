@@ -88,7 +88,7 @@ func (s *Server) conversationFor(r *http.Request, from string) (*conversation, e
 }
 
 func (s *Server) conversationAboutFor(r *http.Request, from, about, prompt string) (*conversation, error) {
-	convo, err := s.conversationAbout(s.chatFor(r), from, about, prompt)
+	convo, err := s.conversationAbout(s.chatFor(r), from, about, prompt, s.showing(r, EarlierPart))
 	if convo != nil {
 		convo.Path, convo.Query = r.URL.Path, r.URL.Query()
 	}
