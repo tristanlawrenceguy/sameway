@@ -39,5 +39,11 @@ func (c *ctx) workspaceHere() (string, error) {
 		}
 		said = append(said, w)
 	}
-	return "", fmt.Errorf("no workspace.yaml in %s or any folder above it. Name one with --workspace <dir> (or SAMEWAY_WORKSPACE); this computer knows %s. Or run `sameway init` to make one", start, strings.Join(said, ", "))
+	return "", notHere(fmt.Sprintf("no workspace.yaml in %s or any folder above it. Name one with --workspace <dir> (or SAMEWAY_WORKSPACE); this computer knows %s. Or run `sameway init` to make one", start, strings.Join(said, ", ")))
 }
+
+// notHere is workspace.ErrNotFound in words that name the workspaces known.
+type notHere string
+
+func (e notHere) Error() string        { return string(e) }
+func (e notHere) Is(target error) bool { return target == workspace.ErrNotFound }
