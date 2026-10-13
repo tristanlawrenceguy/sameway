@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"path/filepath"
 	"time"
 
@@ -78,11 +77,7 @@ func (c *ctx) restoreCmd() error {
 func (c *ctx) loadWorkspace() (*workspace.Workspace, error) {
 	dir := c.workspaceDir
 	if dir == "" {
-		start := c.Dir
-		if start == "" {
-			start, _ = os.Getwd()
-		}
-		found, err := workspace.Find(start)
+		found, err := c.workspaceHere() // find.go
 		if err != nil {
 			return nil, err
 		}

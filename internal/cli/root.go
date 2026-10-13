@@ -12,7 +12,6 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/update"
-	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
 const usage = `sameway - accessible content and components for people and agents
@@ -159,6 +158,10 @@ func splitGlobal(fs *flag.FlagSet, args []string) (string, []string) {
 			globals = append(globals, a)
 		case sub == "" && !strings.HasPrefix(a, "-"):
 			sub = a
+		// --help alone was no command, so it opened the workspace, as a
+		// bare sameway does, instead of saying the commands.
+		case sub == "" && (name == "help" || name == "h"):
+			sub = "help"
 		default:
 			subArgs = append(subArgs, a)
 		}
@@ -196,17 +199,9 @@ func (c *ctx) load() (*app.App, error) {
 	if c.app != nil {
 		return c.app, nil
 	}
-	dir := c.workspaceDir
-	if dir == "" {
-		start := c.Dir
-		if start == "" {
-			start, _ = os.Getwd()
-		}
-		found, err := workspace.Find(start)
-		if err != nil {
-			return nil, err
-		}
-		dir = found
+	dir, err := c.workspaceHere() // find.go
+	if err != nil {
+		return nil, err
 	}
 	a, err := app.Load(dir, false)
 	if err != nil {
