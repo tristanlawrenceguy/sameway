@@ -104,7 +104,8 @@ func (ws *Workspace) RecordWays(t *schema.Type, rec *store.Record) []string {
 
 // SecondWords is a moment to the second, for two added in one minute.
 func (ws *Workspace) SecondWords(at time.Time) string {
-	return ws.shortDay(at.Local()) + ", " + at.Local().Format("15:04:05")
+	at = at.In(ws.now().Location())
+	return ws.shortDay(at) + ", " + at.Format("15:04:05")
 }
 
 // ordinal is a place in a list in words: first, second, … 11th.

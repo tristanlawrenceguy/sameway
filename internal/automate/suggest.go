@@ -95,7 +95,7 @@ func (s *Service) Suggest(ctx context.Context, action *store.Record, typeName, i
 	if !sug.Make {
 		return Result{Text: name + ": nothing to suggest"}
 	}
-	fields := s.fillSuggested(mt, sug.Fields, sentOf(rec))
+	fields := s.fillSuggested(mt, sug.Fields, sentOf(rec, s.Now().Location()))
 	if t, _ := fields[mt.Title].(string); strings.TrimSpace(t) == "" {
 		return Result{Text: name + ": nothing to suggest"}
 	}
@@ -161,13 +161,14 @@ func (s *Service) suggestedWords(t *schema.Type, fields map[string]any) string {
 }
 
 // sentOf is when a record came: an email's sending, else its making.
-func sentOf(rec *store.Record) time.Time {
+// It is in loc, the person's zone, so its day is theirs.
+func sentOf(rec *store.Record, loc *time.Location) time.Time {
 	if v, _ := rec.Fields["received"].(string); v != "" {
 		if at, _, ok := when.Parse(v, rec.CreatedAt); ok {
-			return at.Local()
+			return at.In(loc)
 		}
 	}
-	return rec.CreatedAt.Local()
+	return rec.CreatedAt.In(loc)
 }
 
 func examplesOf(action *store.Record) int {

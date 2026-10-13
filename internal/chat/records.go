@@ -154,7 +154,7 @@ func (s *Service) updateRecord(typeName, id string, fields map[string]any, versi
 		again = fmt.Sprintf(" It repeats (%s), so it is not finished but due again at %v.", when.RepeatText(fmt.Sprint(rec.Fields[repeat])), rec.Fields[day])
 	}
 	return toolResult{
-		text:   fmt.Sprintf("updated %s %s: %q, at /t/%s/%s.%s", t.Name, rec.ID, title, t.Name, rec.ID, again) + s.datesSaid(t, fields, rec, len(daysOf(t, was, s.Now())) > 0) + timeLost(t, fields, was, rec),
+		text:   fmt.Sprintf("updated %s %s: %q, at /t/%s/%s.%s", t.Name, rec.ID, title, t.Name, rec.ID, again) + s.datesSaid(t, fields, rec, len(daysOf(t, was, s.Now())) > 0) + timeLost(t, fields, was, rec, s.Now().Location()),
 		change: &c,
 	}
 }
@@ -195,7 +195,7 @@ func (s *Service) findRecords(typeName, words string, where []string, order stri
 		if words == "" && len(where) == 0 {
 			return toolResult{text: fmt.Sprintf("there are no %s records yet", t.Name)}
 		}
-		said := strings.TrimSpace(strings.Join([]string{query.Words(t, where), words}, " "))
+		said := strings.TrimSpace(strings.Join([]string{query.Words(t, where, s.Now().Location()), words}, " "))
 		if len(where) == 0 {
 			if all := s.noneOfKind(t.Name); all != "" { // search_none.go
 				return toolResult{text: fmt.Sprintf("no %s has the words %s.", t.Name, said) + all}
@@ -206,7 +206,7 @@ func (s *Service) findRecords(typeName, words string, where []string, order stri
 	// The titles are fenced, each line saying who wrote it; see records/provenance.go.
 	matching := ""
 	if len(where) > 0 {
-		matching = " " + query.Words(t, where)
+		matching = " " + query.Words(t, where, s.Now().Location())
 	}
 	return toolResult{text: fmt.Sprintf("%s records%s, newest first (id, title, written by, and its days in this computer's time). Each title was written by the one on its line; %s.\n<<<record text\n%s\nrecord text>>>", t.Name, matching, records.Untrusted, strings.Join(lines, "\n"))}
 }

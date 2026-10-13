@@ -109,7 +109,7 @@ func (s *Server) happened(class string, at, now time.Time) string {
 	words := when.Ago(at, now, s.h24())
 	full := ""
 	if when.LeavesDateOut(words) {
-		full = when.Full(at.UTC().Format(time.RFC3339), s.h24())
+		full = when.Full(at.UTC().Format(time.RFC3339), now.Location(), s.h24())
 	}
 	return timeHTML(class, at.UTC().Format(time.RFC3339), full, template.HTML(template.HTMLEscapeString(words)))
 }

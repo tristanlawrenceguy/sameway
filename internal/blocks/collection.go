@@ -3,6 +3,7 @@ package blocks
 import (
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
@@ -73,7 +74,7 @@ func resolveCollection(ws *Workspace, props map[string]any, at Place) map[string
 		}
 	}
 	ws.collectionItems(out, t, recs, props, by)
-	out["summary"] = query.Words(t, where)
+	out["summary"] = query.Words(t, where, ws.now().Location())
 	out["all"] = listPath(t.Name, where, order)
 	return out
 }
@@ -86,7 +87,7 @@ func (ws *Workspace) narrowed(out map[string]any, t *schema.Type, props map[stri
 		by = f.Name
 	}
 	choices := collectionChoices(t, where, order, by)
-	setup := setupWords(t, where, order, choices) // collection_keep.go
+	setup := setupWords(t, where, order, choices, ws.now().Location()) // collection_keep.go
 	if w, o, active := applyChoices(out, choices, at.Page, at.Block, where, order); active {
 		var err error
 		if recs, err = query.Filter(ws.Store, t, w, o, 0, ws.now()); err != nil {
@@ -165,7 +166,7 @@ func listPath(typeName string, where []string, order string) string {
 func TextOf(t *schema.Type, rec *store.Record) string {
 	for _, f := range t.Shown() {
 		if f.Name != t.Title && IsText(f) {
-			if v := Display(f, rec.Fields[f.Name], false); v != "" {
+			if v := Display(f, rec.Fields[f.Name], time.UTC, false); v != "" { // writing, never a day
 				return v
 			}
 		}
@@ -195,7 +196,7 @@ func (ws *Workspace) fieldsOf(t *schema.Type, rec *store.Record, names []string)
 		if !ok {
 			continue
 		}
-		v := Display(*f, rec.Fields[name], ws.H24())
+		v := Display(*f, rec.Fields[name], ws.now().Location(), ws.H24())
 		item := map[string]any{"label": f.Display(), "value": v}
 		if f.Type == "ref" && v != "" {
 			if _, err := ws.Store.Get(f.To, v); err == nil {

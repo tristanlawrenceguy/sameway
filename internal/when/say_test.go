@@ -121,7 +121,7 @@ func TestAgoSaysWhenSomethingHappened(t *testing.T) {
 // the value a machine reads: the date alone for a day.
 func TestFullAndMachine(t *testing.T) {
 	t.Parallel()
-	if got := Full("2026-10-05T00:00:00Z", false); got != "Monday 5 October 2026" {
+	if got := Full("2026-10-05T00:00:00Z", time.Local, false); got != "Monday 5 October 2026" {
 		t.Errorf("Full of a day = %q", got)
 	}
 	if got := Machine("2026-10-05T00:00:00Z"); got != "2026-10-05" {
@@ -142,9 +142,9 @@ func TestTextReadsBackOnEitherClock(t *testing.T) {
 	t.Parallel()
 	for _, h24 := range []bool{false, true} {
 		for _, v := range []string{"2026-09-19T14:00:00Z", "2026-09-19T11:30:00Z", "2026-09-19T00:00:00Z"} {
-			ts, day, ok := Parse(Text(v, h24), time.Now())
+			ts, day, ok := Parse(Text(v, time.Local, h24), time.Now())
 			if !ok || Store(ts, day) != v {
-				t.Errorf("24-hour %v: Text(%s) = %q reads back as %s", h24, v, Text(v, h24), Store(ts, day))
+				t.Errorf("24-hour %v: Text(%s) = %q reads back as %s", h24, v, Text(v, time.Local, h24), Store(ts, day))
 			}
 		}
 	}

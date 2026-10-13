@@ -142,7 +142,7 @@ func (s *Service) recordFile(r *http.Request, t *schema.Type, rec *store.Record,
 	}
 	f, _ := export.ByExt(t, ext)
 	var buf bytes.Buffer
-	err := export.Write(&buf, f, t, []*store.Record{rec}, s.RefTitle)
+	err := export.Write(&buf, f, t, []*store.Record{rec}, s.RefTitle, s.Now().Location())
 	return buf.Bytes(), f.Type, err
 }
 
@@ -161,7 +161,7 @@ func (s *Service) recordMarkdown(t *schema.Type, rec *store.Record, heading bool
 	if heading {
 		b.WriteString("# " + s.Title(t, rec) + "\n\n")
 	}
-	facts, body := export.Text(t, rec.Fields, s.RefTitle, s.H24())
+	facts, body := export.Text(t, rec.Fields, s.RefTitle, s.Now().Location(), s.H24())
 	for _, f := range facts {
 		fmt.Fprintf(&b, "- **%s:** %s\n", f.Name, f.Value)
 	}

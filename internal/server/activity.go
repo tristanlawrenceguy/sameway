@@ -127,7 +127,7 @@ func (s *Server) recentActivityAbout(n int, from string, about func(target, id s
 // dated gives its time the day, where no day's heading above says it.
 // told tells it from another entry shown that says the same, or is "".
 func (s *Server) event(r *store.Record, from string, level int, dated bool, told string) template.HTML {
-	at := when.Clock(r.CreatedAt.Local(), s.h24())
+	at := when.Clock(r.CreatedAt.In(s.now().Location()), s.h24())
 	if dated {
 		at = when.Sent(r.CreatedAt, s.now(), s.h24())
 	}
@@ -212,7 +212,7 @@ func (s *Server) activityPage(w http.ResponseWriter, r *http.Request) {
 			if open {
 				b.WriteString("</ol>")
 			}
-			id := "day-" + rec.CreatedAt.Local().Format("2006-01-02")
+			id := "day-" + rec.CreatedAt.In(s.now().Location()).Format("2006-01-02")
 			fmt.Fprintf(&b, `<h2 class="sw-small sw-muted" style="margin-top:var(--sw-space-8)" id="%s">%s</h2><ol class="sw-plain sw-stack--tight sw-panel" aria-labelledby="%s">`, id, template.HTMLEscapeString(d), id)
 			day, open = d, true
 		}

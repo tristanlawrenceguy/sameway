@@ -149,8 +149,9 @@ func Ago(t, now time.Time, h24 bool) string {
 }
 
 // Full is a stored day or moment in full, for when the words above leave
-// the date out (Today, 3 days ago): "Monday 5 October 2026 at 2pm".
-func Full(v string, h24 bool) string {
+// the date out (Today, 3 days ago): "Monday 5 October 2026 at 2pm", a
+// moment in loc, the reader's zone.
+func Full(v string, loc *time.Location, h24 bool) string {
 	ts, err := time.Parse(time.RFC3339, v)
 	if err != nil {
 		return v
@@ -158,7 +159,8 @@ func Full(v string, h24 bool) string {
 	if IsDay(v) {
 		return ts.UTC().Format("Monday 2 January 2006")
 	}
-	return ts.Local().Format("Monday 2 January 2006") + " at " + Clock(ts.Local(), h24)
+	ts = ts.In(loc)
+	return ts.Format("Monday 2 January 2006") + " at " + Clock(ts, h24)
 }
 
 // Machine is a stored value as a <time datetime> holds it: the date alone

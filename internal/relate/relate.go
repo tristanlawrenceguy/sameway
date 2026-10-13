@@ -22,6 +22,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // The kinds of connection. Each is a different sentence about why two
@@ -123,7 +124,7 @@ func Of(st *store.Store, t *schema.Type, rec *store.Record, now time.Time) []Lin
 	// What else is on its day. A thing can be connected two ways at once —
 	// a reminder about this task, on this task's day, is both — and both
 	// are true, so both are said.
-	day := Day(t, rec)
+	day := Day(t, rec, now)
 	if day == "" {
 		return out
 	}
@@ -155,21 +156,15 @@ func Find(links []Link, key string) (Link, bool) {
 func Page(typeName, id string) string { return "/t/" + typeName + "/" + id }
 
 // Day is the day a record falls on, or "" when it has no date. A day kept
-// as midnight UTC is that day everywhere; a moment is the day it is here.
-func Day(t *schema.Type, rec *store.Record) string {
-	field := t.DayField()
-	if field == "" {
+// as midnight UTC is that day everywhere; a moment is the day it is in
+// now's zone, the person's (when.Stored).
+func Day(t *schema.Type, rec *store.Record, now time.Time) string {
+	v, _ := rec.Fields[t.DayField()].(string)
+	at, _, ok := when.Stored(v, now)
+	if v == "" || !ok {
 		return ""
 	}
-	v, _ := rec.Fields[field].(string)
-	ts, err := time.Parse(time.RFC3339, v)
-	if err != nil {
-		return ""
-	}
-	if strings.HasSuffix(v, "T00:00:00Z") {
-		return ts.UTC().Format("2006-01-02")
-	}
-	return ts.Local().Format("2006-01-02")
+	return at.Format("2006-01-02")
 }
 
 // add runs a Link's query and keeps it when it found anything.

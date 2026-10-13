@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/automate"
 	"github.com/tristanlawrenceguy/sameway/internal/blocks"
@@ -81,9 +82,10 @@ func Open(dir string, o Options) (*App, error) {
 	}
 	// The time and the clock face are this app's, said by everything below.
 	reg.Hours24 = ws.Hours24
+	now := o.clock(func() *time.Location { return time.Local })
 	a := &App{Workspace: ws, Types: types, Store: st, Registry: reg,
-		Records: &records.Book{Store: st, Setting: ws.Get, Clock: o.Clock, Hours24: ws.Hours24},
-		Blocks:  &blocks.Workspace{Store: st, Settings: ws, Clock: o.Clock}, opts: o}
+		Records: &records.Book{Store: st, Setting: ws.Get, Clock: now, Hours24: ws.Hours24},
+		Blocks:  &blocks.Workspace{Store: st, Settings: ws, Clock: now}, opts: o}
 	// The conversation, its questions and the log are history, not content;
 	// everything else is written to content/ as it changes.
 	a.Mirror = content.Mirror{Dir: ws.ContentDir(), Types: types, Skip: ownersTypes(types)}

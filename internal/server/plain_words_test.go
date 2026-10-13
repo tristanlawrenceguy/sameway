@@ -3,6 +3,7 @@ package server_test
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 )
@@ -35,7 +36,7 @@ func TestConditionsReadAsWords(t *testing.T) {
 		"tags=garden":     "tags include garden",
 		"due>=2026-10-01": "due from Thu 1 Oct 2026",
 	} {
-		if got := query.Words(task, []string{where}); got != want {
+		if got := query.Words(task, []string{where}, time.Local); got != want {
 			t.Errorf("%s reads %q, want %q", where, got, want)
 		}
 	}

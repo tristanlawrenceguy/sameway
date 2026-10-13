@@ -11,6 +11,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
+	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // A listing is rows: a checkbox at the front when the record has a
@@ -108,13 +109,9 @@ func whenGroup(t *schema.Type, rec *store.Record, dated string, now time.Time) s
 		}
 	}
 	v, _ := rec.Fields[dated].(string)
-	ts, err := time.Parse(time.RFC3339, v)
-	if v == "" || err != nil {
+	day, _, ok := when.Stored(v, now) // a whole day its date, a moment in the person's zone
+	if v == "" || !ok {
 		return "No date"
-	}
-	day := ts.Local()
-	if strings.HasSuffix(v, "T00:00:00Z") {
-		day = ts.UTC()
 	}
 	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 	d := time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, now.Location())

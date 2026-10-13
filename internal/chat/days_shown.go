@@ -24,7 +24,7 @@ func daysOf(t *schema.Type, rec *store.Record, now time.Time) []string {
 			continue
 		}
 		v, _ := rec.Fields[f.Name].(string)
-		at, allDay, ok := when.Stored(v, now.In(time.Local))
+		at, allDay, ok := when.Stored(v, now)
 		if v == "" || !ok {
 			continue
 		}

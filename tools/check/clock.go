@@ -14,19 +14,23 @@ import (
 // says the same time whatever the test machine's clock says. A
 // time.Now() in the code that serves pages, the assistant, records,
 // blocks, the store and the schema reads the computer's clock instead.
+// The computer's zone (time.Local, t.Local()) is the same mistake: the
+// person's days are in the zone of the app's clock (now.Location()),
+// which is not this computer's when the workspace is hosted elsewhere.
 // Where real time is meant (how long a request waits, who is here just
 // now) the line says so with a `// wall clock: <reason>` comment. The
 // files that still read it unexplained are listed in wallClock in
 // debt.go, with how many times, and that list only goes down.
 
-// clockDirs are where time.Now() must be the app's clock or say why not.
+// clockDirs are where time.Now() and time.Local must be the app's clock
+// and its zone, or say why not.
 var clockDirs = []string{"internal/server/", "internal/chat/", "internal/automate/", "internal/records/", "internal/blocks/", "internal/store/", "internal/schema/"}
 
 const wallClockMark = "wall clock:"
 
 // wallClockCalls counts, for each non-test Go file under clockDirs, its
-// uses of time.Now that no `// wall clock:` comment on the same line
-// explains. Files with none are left out.
+// uses of time.Now, time.Local and t.Local() that no `// wall clock:`
+// comment on the same line explains. Files with none are left out.
 func wallClockCalls(root string) (map[string]int, []string) {
 	found := map[string]int{}
 	var problems []string
@@ -49,8 +53,13 @@ func wallClockCalls(root string) (map[string]int, []string) {
 			}
 		}
 		ast.Inspect(f, func(n ast.Node) bool {
+			if call, ok := n.(*ast.CallExpr); ok && len(call.Args) == 0 {
+				if sel, ok := call.Fun.(*ast.SelectorExpr); ok && sel.Sel.Name == "Local" && !marked[fset.Position(sel.Pos()).Line] {
+					found[rel]++ // t.Local()
+				}
+			}
 			sel, ok := n.(*ast.SelectorExpr)
-			if !ok || sel.Sel.Name != "Now" {
+			if !ok || sel.Sel.Name != "Now" && sel.Sel.Name != "Local" {
 				return true
 			}
 			if x, ok := sel.X.(*ast.Ident); ok && x.Name == "time" && !marked[fset.Position(sel.Pos()).Line] {
@@ -71,8 +80,9 @@ func underClockDirs(rel string) bool {
 	return false
 }
 
-// checkWallClock fails a file that reads time.Now() unexplained more
-// often than known records for it (known is wallClock in debt.go).
+// checkWallClock fails a file that reads time.Now() or time.Local
+// unexplained more often than known records for it (known is wallClock in
+// debt.go).
 func checkWallClock(root string, known map[string]int) report {
 	found, problems := wallClockCalls(root)
 	r := report{problems: problems}
@@ -81,9 +91,9 @@ func checkWallClock(root string, known map[string]int) report {
 		was, ok := known[rel]
 		switch {
 		case !ok:
-			r.problems = append(r.problems, fmt.Sprintf("%s: time.Now() read %d time(s); use the app's clock (s.now(), Book.Now), or say why it must be real time with `// wall clock: <reason>` on its line", rel, n))
+			r.problems = append(r.problems, fmt.Sprintf("%s: time.Now() or time.Local read %d time(s); use the app's clock (s.now(), Book.Now, Store.Now) and its zone (now.Location()), or say why it must be real time with `// wall clock: <reason>` on its line", rel, n))
 		case n > was:
-			r.problems = append(r.problems, fmt.Sprintf("%s: time.Now() read %d times, more than the %d recorded in wallClock in tools/check/debt.go; use the app's clock (s.now(), Book.Now), or say why it must be real time with `// wall clock: <reason>`", rel, n, was))
+			r.problems = append(r.problems, fmt.Sprintf("%s: time.Now() or time.Local read %d times, more than the %d recorded in wallClock in tools/check/debt.go; use the app's clock (s.now(), Book.Now, Store.Now) and its zone (now.Location()), or say why it must be real time with `// wall clock: <reason>`", rel, n, was))
 		case n < was:
 			r.warnings = append(r.warnings, fmt.Sprintf("%s: time.Now() down to %d from %d; lower its entry in wallClock in tools/check/debt.go", rel, n, was))
 		}

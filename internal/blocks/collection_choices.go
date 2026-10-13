@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
@@ -101,7 +102,7 @@ func collectionChoices(t *schema.Type, where []string, order, by string) []choic
 		c := choice{param: yes.Name, label: yes.Display(), options: []option{{label: "All"}}}
 		for _, v := range []string{"false", "true"} {
 			w := yes.Name + "=" + v
-			c.options = append(c.options, option{value: v, label: Capitalize(query.Words(t, []string{w})), where: []string{w}})
+			c.options = append(c.options, option{value: v, label: Capitalize(query.Words(t, []string{w}, time.UTC)), where: []string{w}}) // a yes or no, never a day
 		}
 		out = append(out, c)
 	}

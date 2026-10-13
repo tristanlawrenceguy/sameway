@@ -1,6 +1,9 @@
 package track
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 // EntryName says a habit and its amount with a comma, not a colon —
 // natural language rather than machine format. This covers acceptance items 1
@@ -18,7 +21,7 @@ func TestEntryNameUsesCommaNotColon(t *testing.T) {
 		{"Stretch", "", map[string]any{"amount": 1.0}, "Stretch, done"},
 		{"Drink tea", "", map[string]any{"amount": 1.0}, "Drink tea, done"},
 	} {
-		got := EntryName(c.habit, c.unit, c.fields)
+		got := EntryName(c.habit, c.unit, c.fields, time.Local)
 		if got != c.want {
 			t.Errorf("EntryName(%q, %q, %v) = %q, want %q", c.habit, c.unit, c.fields, got, c.want)
 		}

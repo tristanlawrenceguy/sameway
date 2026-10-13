@@ -3,6 +3,7 @@ package when
 import (
 	"strings"
 	"testing"
+	"time"
 )
 
 // A month shows each later time a repeat falls in it, and no more: not
@@ -25,7 +26,7 @@ func TestOccurrencesAreTheMonthsAndNoMore(t *testing.T) {
 	}
 	for _, c := range cases {
 		var days []string
-		for _, v := range Occurrences(c.repeat, c.from, c.first, c.last, c.most) {
+		for _, v := range Occurrences(c.repeat, c.from, c.first, c.last, c.most, time.Now()) {
 			days = append(days, v[:10])
 		}
 		if got := strings.Join(days, " "); got != c.want {
@@ -33,7 +34,7 @@ func TestOccurrencesAreTheMonthsAndNoMore(t *testing.T) {
 		}
 	}
 	// Every day since 2020 is every day of September, found from 2020 on.
-	if n := len(Occurrences("FREQ=DAILY", "2020-01-01T00:00:00Z", "2026-09-01", "2026-09-30", 31)); n != 30 {
+	if n := len(Occurrences("FREQ=DAILY", "2020-01-01T00:00:00Z", "2026-09-01", "2026-09-30", 31, time.Now())); n != 30 {
 		t.Errorf("every day since 2020 is every day of the month, got %d", n)
 	}
 }

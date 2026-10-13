@@ -76,6 +76,6 @@ func (s *Store) clash(st Stamp, have, cur, curBase string) {
 	}
 	var text string
 	json.Unmarshal([]byte(lost), &text)
-	now := s.now().UTC()
+	now := s.Now().UTC()
 	s.Put(ClashType, id, map[string]any{"target": st.Type, "target_id": st.ID, "field": st.Field, "text": text, "origin": originOf(clock), "state": "open"}, now, now)
 }

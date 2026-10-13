@@ -88,7 +88,7 @@ func (s *Server) clockSnooze(w http.ResponseWriter, r *http.Request) {
 	if rec, err := s.app.Store.Get(ReminderType, r.PathValue("id")); err == nil {
 		if rule, _ := rec.Fields["repeat"].(string); rule != "" {
 			at, _ := rec.Fields["at"].(string)
-			fields["repeat"] = when.KeepTime(rule, at)
+			fields["repeat"] = when.KeepTime(rule, at, s.now().Location())
 		}
 	}
 	s.setReminder(w, r, fields, "snoozed")

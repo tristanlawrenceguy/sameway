@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
@@ -93,7 +94,7 @@ func (s *Server) words(l relate.Link) string {
 		}
 		return other
 	case relate.SameDay:
-		return count + " on " + when.Text(l.Day+"T00:00:00Z", false)
+		return count + " on " + when.Text(l.Day+"T00:00:00Z", time.UTC, false)
 	}
 	return count
 }

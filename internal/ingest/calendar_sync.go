@@ -69,7 +69,7 @@ func SyncCalendar(st *store.Store, t *schema.Type, tb *Table, had []string) (Syn
 				continue
 			}
 			if v := strings.TrimSpace(row[col]); v != "" {
-				fields[name] = coerce(*f, v)
+				fields[name] = coerce(*f, v, st.Now().Location())
 			}
 		}
 		was := byUID[uid]

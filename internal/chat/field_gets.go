@@ -3,6 +3,7 @@ package chat
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/export"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
@@ -30,7 +31,7 @@ func FieldGets(st *store.Store, t *schema.Type, name string, h24 bool) string {
 	var order []string
 	count := map[string]int{}
 	for _, r := range recs {
-		v := valueWords(*f, r.Fields[name], h24)
+		v := valueWords(*f, r.Fields[name], st.Now().Location(), h24)
 		if count[v] == 0 {
 			order = append(order, v)
 		}
@@ -57,9 +58,9 @@ func FieldGets(st *store.Store, t *schema.Type, name string, h24 bool) string {
 
 // valueWords is a stored value as a person reads it (export.Said): a
 // choice by its label, yes or no, a day in words, and empty for nothing.
-func valueWords(f schema.Field, v any, h24 bool) string {
+func valueWords(f schema.Field, v any, loc *time.Location, h24 bool) string {
 	if l, ok := v.([]any); v == nil || v == "" || ok && len(l) == 0 {
 		return "empty"
 	}
-	return export.Said(f, v, nil, h24)
+	return export.Said(f, v, nil, loc, h24)
 }

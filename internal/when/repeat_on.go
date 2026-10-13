@@ -5,8 +5,9 @@ import "time"
 // Occurrences is every time a repeat falls after the one in v on the days
 // from and to, both YYYY-MM-DD, as it is stored: the times a calendar
 // shows for a month. At most most of them, so a month shown is always a
-// bounded list, never the whole repeat.
-func Occurrences(repeat, v, from, to string, most int) []string {
+// bounded list, never the whole repeat. A moment repeats at its time of
+// day in now's zone, the person's.
+func Occurrences(repeat, v, from, to string, most int, now time.Time) []string {
 	r, ok := stored(repeat)
 	if !ok || v == "" {
 		return nil
@@ -14,7 +15,7 @@ func Occurrences(repeat, v, from, to string, most int) []string {
 	if _, err := time.Parse(time.RFC3339, v); err != nil {
 		return nil
 	}
-	base, loc, day := start(v, time.Now())
+	base, loc, day := start(v, now)
 	var out []string
 	r.each(base, loc, func(t time.Time) bool {
 		d := t.Format("2006-01-02")

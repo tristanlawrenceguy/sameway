@@ -68,7 +68,7 @@ spreadsheets/  each kind of record as a spreadsheet (CSV), to open in
 		if err != nil {
 			return err
 		}
-		if err := writeCSV(f, t, recs, titles); err != nil {
+		if err := writeCSV(f, t, recs, titles, st.Now().Location()); err != nil {
 			return err
 		}
 		if t.Name == "file" {

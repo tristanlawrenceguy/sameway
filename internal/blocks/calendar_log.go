@@ -33,7 +33,7 @@ func (ws *Workspace) logForDay(typeName string, kinds, where []string, day time.
 		}
 	}
 	recs, _ := ws.Store.List(records.HabitType, store.ListOptions{OrderBy: "created_at"})
-	asOf := time.Date(day.Year(), day.Month(), day.Day(), 23, 59, 59, 0, time.Local)
+	asOf := time.Date(day.Year(), day.Month(), day.Day(), 23, 59, 59, 0, ws.now().Location())
 	on := day.Format("2006-01-02")
 	habits := []any{}
 	for _, rec := range recs {

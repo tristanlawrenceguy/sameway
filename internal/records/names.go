@@ -34,7 +34,7 @@ func Name(st *store.Store, t *schema.Type, rec *store.Record) string {
 				unit, _ = h.Fields["unit"].(string)
 			}
 		}
-		return track.EntryName(habit, unit, rec.Fields)
+		return track.EntryName(habit, unit, rec.Fields, st.Now().Location())
 	case ActivityType:
 		if said := Sentence(st, rec.Fields); said != "" {
 			return said

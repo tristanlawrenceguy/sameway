@@ -111,10 +111,10 @@ func (w *Workspace) onToday(now time.Time) []coming {
 					continue
 				}
 			} else {
-				if ts.Local().Format("2006-01-02") != day {
+				at = ts.In(now.Location())
+				if at.Format("2006-01-02") != day {
 					continue
 				}
-				at = ts.Local()
 				item["time"] = when.Clock(at, w.H24())
 			}
 			items = append(items, coming{at, item})

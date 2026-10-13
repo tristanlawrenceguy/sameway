@@ -260,7 +260,7 @@ func (s *Store) materialize(typeName, id string) error {
 		return err
 	}
 	fields := map[string]any{}
-	deleted, created := false, s.now().UTC()
+	deleted, created := false, s.Now().UTC()
 	for rows.Next() {
 		var f, v string
 		if err := rows.Scan(&f, &v); err != nil {
@@ -288,13 +288,13 @@ func (s *Store) materialize(typeName, id string) error {
 		}
 		return nil
 	}
-	clean, err := t.Normalize(fields, s.now())
+	clean, err := t.Normalize(fields, s.Now())
 	if err != nil {
 		// A record another copy holds but this one's schema refuses (a
 		// field required here and not there) waits in _state.
 		return nil
 	}
 	t.KeepInStep(nil, clean)
-	_, err = s.put(t, id, clean, created, s.now().UTC())
+	_, err = s.put(t, id, clean, created, s.Now().UTC())
 	return err
 }

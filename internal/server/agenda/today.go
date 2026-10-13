@@ -53,11 +53,10 @@ func (s *Service) today(now time.Time) todayLists {
 			v, _ := r.Fields[field].(string)
 			// Stored, not Parse: a whole day is kept as midnight UTC, which
 			// read as a moment is 2am here, or yesterday west of Greenwich.
-			at, allDay, ok := when.Stored(v, now.In(time.Local))
+			at, allDay, ok := when.Stored(v, now)
 			if v == "" || !ok {
 				continue
 			}
-			at = at.In(time.Local)
 			list := keep(r, at, at.Format("2006-01-02") == day)
 			if list == nil {
 				continue

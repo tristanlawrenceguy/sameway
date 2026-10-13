@@ -44,7 +44,7 @@ func dayGlance(t *schema.Type, rec *store.Record, done bool, now time.Time, h24 
 		}
 		full := ""
 		if when.LeavesDateOut(words) {
-			full = when.Full(v, h24)
+			full = when.Full(v, now.Location(), h24)
 		}
 		return Fact{Kind: "day", Field: f.Name, Text: text, Tone: tone, Short: words, Class: class, When: when.Machine(v), Full: full}, true
 	}

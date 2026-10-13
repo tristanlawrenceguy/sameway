@@ -68,8 +68,8 @@ func EntriesOf(st *store.Store, habitID string) []track.Entry {
 		}
 		if strings.HasSuffix(v, "T00:00:00Z") {
 			// A whole day is kept as midnight UTC on its date; it is that
-			// date here, wherever here is.
-			ts = time.Date(ts.Year(), ts.Month(), ts.Day(), 0, 0, 0, 0, time.Local)
+			// date in the person's zone, wherever that is.
+			ts = time.Date(ts.Year(), ts.Month(), ts.Day(), 0, 0, 0, 0, st.Now().Location())
 		}
 		amount := Number(rec.Fields["amount"])
 		if amount == 0 && rec.Fields["amount"] == nil {
@@ -98,7 +98,7 @@ func Standing(st *store.Store, rec *store.Record, now, today time.Time) map[stri
 		goal := track.Amount(sum.Total, "") + " of " + track.Amount(h.Goal, h.Unit)
 		if by, _ := rec.Fields["by"].(string); by != "" {
 			if t, err := time.Parse(time.RFC3339, by); err == nil {
-				goal += " by " + t.Local().Format(dayFormat(t, now))
+				goal += " by " + t.In(now.Location()).Format(dayFormat(t, now))
 			}
 		}
 		item["goal"] = goal

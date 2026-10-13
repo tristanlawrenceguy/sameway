@@ -16,7 +16,7 @@ func (s *Store) Restore(typeName, id string, fields map[string]any) (*Record, er
 	if err != nil {
 		return nil, err
 	}
-	clean, err := t.Normalize(fields, s.now())
+	clean, err := t.Normalize(fields, s.Now())
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +35,7 @@ func (s *Store) Put(typeName, id string, fields map[string]any, created, updated
 	if err != nil {
 		return nil, err
 	}
-	clean, err := t.Normalize(fields, s.now())
+	clean, err := t.Normalize(fields, s.Now())
 	if err != nil {
 		return nil, err
 	}

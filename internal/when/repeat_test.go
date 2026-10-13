@@ -153,13 +153,13 @@ func TestNextKeepsTheTimeAcrossSummerTime(t *testing.T) {
 // the 31st does not become the 28th for good after February.
 func TestPinKeepsTheDay(t *testing.T) {
 	t.Parallel()
-	if got := Pin("FREQ=MONTHLY", "2026-01-31T00:00:00Z"); got != "FREQ=MONTHLY;BYMONTHDAY=31" {
+	if got := Pin("FREQ=MONTHLY", "2026-01-31T00:00:00Z", time.Local); got != "FREQ=MONTHLY;BYMONTHDAY=31" {
 		t.Errorf("monthly from the 31st: %q", got)
 	}
-	if got := Pin("FREQ=YEARLY", "2028-02-29T00:00:00Z"); got != "FREQ=YEARLY;BYMONTH=2;BYMONTHDAY=29" {
+	if got := Pin("FREQ=YEARLY", "2028-02-29T00:00:00Z", time.Local); got != "FREQ=YEARLY;BYMONTH=2;BYMONTHDAY=29" {
 		t.Errorf("yearly from 29 Feb: %q", got)
 	}
-	if got := Pin("FREQ=WEEKLY;BYDAY=TU", "2026-01-31T00:00:00Z"); got != "FREQ=WEEKLY;BYDAY=TU" {
+	if got := Pin("FREQ=WEEKLY;BYDAY=TU", "2026-01-31T00:00:00Z", time.Local); got != "FREQ=WEEKLY;BYDAY=TU" {
 		t.Errorf("a weekly repeat is kept as it is: %q", got)
 	}
 }
@@ -169,7 +169,7 @@ func TestPinKeepsTheDay(t *testing.T) {
 func TestKeepTimeHoldsTheTimeWhilePutOff(t *testing.T) {
 	t.Parallel()
 	now := time.Date(2026, 1, 10, 7, 1, 0, 0, time.Local)
-	held := KeepTime("FREQ=DAILY", Store(time.Date(2026, 1, 10, 7, 0, 0, 0, time.Local), false))
+	held := KeepTime("FREQ=DAILY", Store(time.Date(2026, 1, 10, 7, 0, 0, 0, time.Local), false), time.Local)
 	if RepeatText(held) != "every day" {
 		t.Errorf("a held time is not said, got %q", RepeatText(held))
 	}

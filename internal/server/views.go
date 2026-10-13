@@ -40,7 +40,7 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 			s.page(w, r, schema.Plural(t.Name), template.HTML(b.String()), pageOptions{Status: http.StatusBadRequest})
 			return
 		}
-		fmt.Fprintf(&b, `<p class="sw-muted">%d matching %s%s. %s</p>`, len(recs), template.HTMLEscapeString(query.Words(t, where)), template.HTMLEscapeString(orderWords(t, order)), s.part(ui.Link{Href: "/t/" + t.Name, Label: "See all " + schema.Plural(t.Name), Look: ui.LookButton}))
+		fmt.Fprintf(&b, `<p class="sw-muted">%d matching %s%s. %s</p>`, len(recs), template.HTMLEscapeString(query.Words(t, where, s.now().Location())), template.HTMLEscapeString(orderWords(t, order)), s.part(ui.Link{Href: "/t/" + t.Name, Label: "See all " + schema.Plural(t.Name), Look: ui.LookButton}))
 	}
 	if err != nil {
 		s.fail(w, err)
@@ -57,7 +57,7 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	if len(recs) == 0 && (len(where) > 0 || order != "") {
 		// Some exist and none matched: not the first-use words, which would
 		// say there are none, but what was looked for and the way back.
-		b.WriteString(string(s.part(ui.Empty{Title: "No matching " + schema.Plural(t.Name), Message: "Nothing is " + query.Words(t, where) + ". Try fewer conditions, or",
+		b.WriteString(string(s.part(ui.Empty{Title: "No matching " + schema.Plural(t.Name), Message: "Nothing is " + query.Words(t, where, s.now().Location()) + ". Try fewer conditions, or",
 			Action: &ui.EmptyAction{Href: "/t/" + t.Name, Label: "see all " + schema.Plural(t.Name)}})))
 	} else if len(recs) == 0 {
 		prompt := "Create a " + schema.Words(t.Name) + "."

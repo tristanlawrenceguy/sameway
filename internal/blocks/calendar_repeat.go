@@ -37,7 +37,7 @@ func (ws *Workspace) repeatedIn(t *schema.Type, rec *store.Record, field string,
 		return nil
 	}
 	var out []any
-	for _, at := range when.Occurrences(rule, v, first.Format("2006-01-02"), first.AddDate(0, 1, -1).Format("2006-01-02"), mostInMonth) {
+	for _, at := range when.Occurrences(rule, v, first.Format("2006-01-02"), first.AddDate(0, 1, -1).Format("2006-01-02"), mostInMonth, ws.now()) {
 		again := *rec
 		again.Fields = map[string]any{}
 		for k, x := range rec.Fields {

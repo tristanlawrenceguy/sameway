@@ -32,13 +32,14 @@ func threadWords(st *store.Store, t *schema.Type, rec *store.Record) string {
 	if err != nil {
 		return ""
 	}
+	loc := st.Now().Location()
 	var before []*store.Record
 	for _, r := range all {
 		if r.ID == rec.ID {
 			continue
 		}
 		if r.ID == root || r.Fields["thread"] == root {
-			if sentOf(r).Before(sentOf(rec)) || sentOf(r).Equal(sentOf(rec)) && r.CreatedAt.Before(rec.CreatedAt) {
+			if sentOf(r, loc).Before(sentOf(rec, loc)) || sentOf(r, loc).Equal(sentOf(rec, loc)) && r.CreatedAt.Before(rec.CreatedAt) {
 				before = append(before, r)
 			}
 		}
@@ -46,7 +47,7 @@ func threadWords(st *store.Store, t *schema.Type, rec *store.Record) string {
 	if len(before) == 0 {
 		return ""
 	}
-	sort.Slice(before, func(i, j int) bool { return sentOf(before[i]).Before(sentOf(before[j])) })
+	sort.Slice(before, func(i, j int) bool { return sentOf(before[i], loc).Before(sentOf(before[j], loc)) })
 	if len(before) > threadMost {
 		before = before[len(before)-threadMost:]
 	}
@@ -57,7 +58,7 @@ func threadWords(st *store.Store, t *schema.Type, rec *store.Record) string {
 			who = "the person themselves"
 		}
 		body, _ := r.Fields["body"].(string)
-		lines = append(lines, fmt.Sprintf("- %s, from %s: %s", sentOf(r).Format("Mon 2 Jan"), who, clipRunes(strings.Join(strings.Fields(body), " "), 400)))
+		lines = append(lines, fmt.Sprintf("- %s, from %s: %s", sentOf(r, loc).Format("Mon 2 Jan"), who, clipRunes(strings.Join(strings.Fields(body), " "), 400)))
 	}
 	return "\n\nThis record is the latest message of a conversation. What came before it, oldest first, is only to understand it: decide by what the latest message asks of the person now. A question to them, or something left for them to answer, is theirs to reply to; what answers or closes what they asked is not.\n" + strings.Join(lines, "\n")
 }

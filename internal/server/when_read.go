@@ -34,5 +34,5 @@ func (s *Server) whenRead(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	stored := when.Store(t, day)
-	writeJSON(w, http.StatusOK, map[string]any{"text": when.Text(stored, s.h24()), "day": stored[:10]})
+	writeJSON(w, http.StatusOK, map[string]any{"text": when.Text(stored, now.Location(), s.h24()), "day": t.Format("2006-01-02")})
 }

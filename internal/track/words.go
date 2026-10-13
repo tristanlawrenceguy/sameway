@@ -3,6 +3,7 @@ package track
 import (
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
@@ -33,7 +34,7 @@ func Amount(v float64, unit string) string {
 // in a list, on its page and in the log: its habit and how much, "Read,
 // 25 minutes", or "Stretch, done" for a plain done. With its habit gone,
 // its note, or the day it was done. Never its id, which says nothing.
-func EntryName(habit, unit string, fields map[string]any) string {
+func EntryName(habit, unit string, fields map[string]any, loc *time.Location) string {
 	if habit != "" {
 		amount := 1.0
 		switch n := fields["amount"].(type) {
@@ -54,7 +55,7 @@ func EntryName(habit, unit string, fields map[string]any) string {
 		return note
 	}
 	if at, _ := fields["at"].(string); at != "" {
-		return "Entry, " + when.Text(at, false) // a name is kept in the log: said one way, the house way, whatever the clock
+		return "Entry, " + when.Text(at, loc, false) // a name is kept in the log: said one way, the house way, whatever the clock
 	}
 	return "Entry"
 }

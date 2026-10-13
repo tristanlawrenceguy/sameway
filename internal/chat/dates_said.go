@@ -37,7 +37,7 @@ func (s *Service) datesSaid(t *schema.Type, given map[string]any, rec *store.Rec
 			continue
 		}
 		v, _ := rec.Fields[f.Name].(string)
-		at, day, ok := when.Stored(v, now.In(time.Local)) // a whole day as its date, a moment here
+		at, day, ok := when.Stored(v, now) // a whole day as its date, a moment in the person's zone
 		if v == "" || !ok {
 			continue
 		}
@@ -123,7 +123,7 @@ func (s *Service) weekdaysSaid() []time.Weekday {
 // timeLost says when a change gave a timed field a day alone, so its time
 // went: a model moving lunch at 12:30 to Friday wrote the day only, two
 // times in three, and the lunch became all day.
-func timeLost(t *schema.Type, given map[string]any, was, now *store.Record) string {
+func timeLost(t *schema.Type, given map[string]any, was, now *store.Record, loc *time.Location) string {
 	var lost []string
 	for _, f := range t.Fields {
 		if _, ok := given[f.Name]; !ok || f.Type != "datetime" {
@@ -135,7 +135,7 @@ func timeLost(t *schema.Type, given map[string]any, was, now *store.Record) stri
 		if err != nil || strings.HasSuffix(before, "T00:00:00Z") || !strings.HasSuffix(after, "T00:00:00Z") {
 			continue
 		}
-		lost = append(lost, fmt.Sprintf("%s was at %s and is now the whole day", f.Name, old.In(time.Local).Format("15:04")))
+		lost = append(lost, fmt.Sprintf("%s was at %s and is now the whole day", f.Name, old.In(loc).Format("15:04")))
 	}
 	if len(lost) == 0 {
 		return ""

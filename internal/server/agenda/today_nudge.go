@@ -70,7 +70,7 @@ func dayFor(at time.Time, allDay bool, day time.Time) string {
 	if allDay {
 		return day.Format("2006-01-02")
 	}
-	return time.Date(day.Year(), day.Month(), day.Day(), at.Hour(), at.Minute(), 0, 0, time.Local).Format(time.RFC3339)
+	return time.Date(day.Year(), day.Month(), day.Day(), at.Hour(), at.Minute(), 0, 0, day.Location()).Format(time.RFC3339)
 }
 
 // dueOf is a task's due, read.
@@ -81,8 +81,8 @@ func (s *Service) dueOf(id string, now time.Time) (title string, at time.Time, a
 	}
 	title, _ = rec.Fields["title"].(string)
 	v, _ := rec.Fields["due"].(string)
-	at, allDay, _ = when.Stored(v, now.In(time.Local))
-	return title, at.In(time.Local), allDay, nil
+	at, allDay, _ = when.Stored(v, now)
+	return title, at, allDay, nil
 }
 
 func (s *Service) todayDone(w http.ResponseWriter, r *http.Request) {
