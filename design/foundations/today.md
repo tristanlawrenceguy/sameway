@@ -51,6 +51,16 @@ morning brief says the same as one notification. Both are read from the records,
   `set_setting ui.zone`, or `POST /zone`; describe's `now` says the time
   there with its offset. A change applies to the next thing worked out,
   with no restart.
+- **Set without guesswork, never switched silently.** While no zone is
+  chosen and the owner's browser is in another (it says its zone by name,
+  [MDN, resolvedOptions](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/resolvedOptions)),
+  the page asks in plain words near its top: "Times here are this
+  computer's, UTC+0: 2 hours behind yours. Use Madrid time for this
+  workspace?", with Use Madrid time and Keep this computer's time. Either
+  answer chooses (Keep sets `Local`), so it is not asked again; Google
+  Calendar likewise asks before it updates a time zone, rather than
+  moving the person's days on its own. A viewer who is not the owner is
+  only told how far apart the zones are, as before (glance.md).
 - **Stored moments stay moments.** A time is kept as an instant and a
   whole day as its date (`when.Stored`), so changing the zone moves no
   record: a 9am meeting kept while in Madrid shows as 8am once the zone
@@ -94,6 +104,6 @@ morning brief says the same as one notification. Both are read from the records,
   Times go out as UTC instants, which every calendar reads; a timed
   repeat that crosses a change of clocks may move by an hour there.
 - **A list of every zone to pick from.** Some four hundred names; the
-  owner types a place's name.
+  owner types a place's name, and is offered their browser's.
 - **Reordering Today by hand.** The three come from what the person marked
   important and from the days; dragging is one more list to keep.

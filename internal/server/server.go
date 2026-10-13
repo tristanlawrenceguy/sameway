@@ -12,6 +12,7 @@ import (
 	"sync/atomic"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/server/agenda"
@@ -82,6 +83,7 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 		Pace:       s.app.Workspace.Config.UI.Pace,
 		Hours24:    s.h24(),
 		Now:        s.now(),
+		ZoneAsk:    records.VisitorOf(r.Context()).Owner() && s.app.Workspace.Config.UI.Zone == "",
 		Lang:       s.app.Workspace.Config.UI.Language,
 		Text:       s.app.Workspace.Config.UI.Text,
 		Spacing:    s.app.Workspace.Config.UI.Spacing,

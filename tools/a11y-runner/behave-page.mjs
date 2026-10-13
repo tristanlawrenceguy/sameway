@@ -67,6 +67,25 @@ export const cases = {
     await tab.close();
   },
 
+  "days: the owner of a workspace with no zone is asked once whether theirs is its, and a viewer is only told": async (browser, check) => {
+    const zone = -new Date().getTimezoneOffset() + 120;
+    const place = await (async () => { const t = await open(browser, page(`<main id="main"></main>`)); const p = await t.evaluate(() => Intl.DateTimeFormat().resolvedOptions().timeZone); await t.close(); return p; })();
+    const body = `<div class="sw-shell"><main id="main"><div class="sw-page-head"><h1>Today</h1></div><p>Call at <time datetime="2026-10-09">9 Oct</time></p></main></div>`;
+    let posted = "";
+    const tab = await open(browser, page(body, ` data-zone="${zone}" data-zone-ask`), { "/zone": (route) => { posted = route.request().postData() || ""; return route.fulfill({ contentType: "text/html", body: "<p>set</p>" }); } });
+    const said = await tab.locator("#zone-note").allTextContents();
+    const called = place.slice(place.lastIndexOf("/") + 1).replace(/_/g, " ") + " time";
+    check(said.length === 1 && said[0].includes(`2 hours ahead of yours. Use ${called} for this workspace?`), `asked once, in words: ${said.join(" | ")}`);
+    check(await tab.locator("#zone-note button").count() === 2, "two presses: use theirs, or keep the computer's");
+    await tab.click(`#zone-note button:has-text("Use ${called}")`);
+    await tab.waitForFunction(() => document.body.textContent.includes("set"), null, { timeout: 3000 }).catch(() => {});
+    check(new URLSearchParams(posted).get("zone") === place, `pressed, the browser's zone by name is sent: ${posted}`);
+    await tab.close();
+    const viewer = await open(browser, page(body, ` data-zone="${zone}"`));
+    check(await viewer.locator("#zone-note button").count() === 0, "a viewer is told, not asked");
+    await viewer.close();
+  },
+
   "connect: the card follows what the server says, but not while a key is being typed into it": async (browser, check) => {
     const card = (typed) => page(`<div class="sw-shell"><main id="main"><div class="sw-connect" data-wait="Looking for Ollama"><label for="k">Key</label><input id="k" name="key" value="${typed}"></div></main></div>`);
     let asked = 0;
