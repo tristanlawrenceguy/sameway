@@ -36,3 +36,20 @@ func TestTextSaysARecordAsAReaderReadsIt(t *testing.T) {
 		}
 	}
 }
+
+// A record as text says what was chosen, as its page does: a default
+// nobody changed (an alarm's Type, a task's To do) is left out, and the
+// same field set to something else is said.
+func TestTextLeavesOutWhatNobodyChose(t *testing.T) {
+	t.Parallel()
+	typ, err := schema.Parse([]byte("name: reminder\ntitle: title\nfields:\n  title: {type: string}\n  kind: {type: enum, values: [alarm, timer], default: alarm, label: Type}\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if facts, _ := Text(typ, map[string]any{"title": "Tea", "kind": "alarm"}, nil, time.UTC, false); len(facts) != 0 {
+		t.Errorf("a default nobody chose is not said: %v", facts)
+	}
+	if facts, _ := Text(typ, map[string]any{"title": "Tea", "kind": "timer"}, nil, time.UTC, false); len(facts) != 1 || facts[0].Name+": "+facts[0].Value != "Type: Timer" {
+		t.Errorf("what was chosen is said by its label: %v", facts)
+	}
+}
