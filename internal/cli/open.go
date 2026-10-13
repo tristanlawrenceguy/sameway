@@ -118,7 +118,7 @@ func (c *ctx) sayOpen(a *app.App, where, page string, stay bool) {
 	if !stay {
 		target := where + "/" + strings.TrimPrefix(page, "/")
 		if err := openInBrowser(target); err != nil {
-			fmt.Fprintf(c.Stdout, "  (could not open a browser: %v — visit %s yourself)\n", err, target)
+			fmt.Fprintf(c.Stdout, "  (could not open a browser: %v. Visit %s yourself)\n", err, target)
 		}
 	}
 	if !c.plain {

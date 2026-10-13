@@ -4,10 +4,12 @@ package cli
 
 import (
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"os"
+	"reflect"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
@@ -18,8 +20,8 @@ const usage = `sameway - accessible content and components for people and agents
 
 Usage:
   sameway                               open your workspace in the browser, making it the first time
-  sameway init [dir] [--force]          create a workspace from the starter preset
-  sameway open [--addr host:port]       run the workspace and open it in a browser
+  sameway init [dir] [--force] [--no-detect]  create a workspace from the starter preset
+  sameway open [--addr host:port] [--page /path] [--no-browser]  run the workspace and open it in a browser
   sameway serve [--addr host:port]      run the web server for this workspace
   sameway describe [--json] [part [name]]  show content types, components, tools and routes, or one part
   sameway check                         validate the workspace schema and components
@@ -27,17 +29,17 @@ Usage:
   sameway search <words>                find anything by the words in it, records and canvas blocks alike
   sameway add <file>... [--title words] add files on this computer, copied in as they are (up to 4 GB each)
   sameway agent add|list|remove <name>  let an agent in with a key of its own (--access view|edit|owner)
-  sameway look <path>                   a page as a screen reader gets it, with its problems, as JSON
-  sameway export                        rewrite content/ from the database (it is kept current as things change)
+  sameway look <path> [--scripts] [--only controls] [--kind button] [--name words]  a page as a screen reader gets it, with its problems, as JSON
+  sameway export [--zip file]           rewrite content/ from the database (it is kept current as things change)
   sameway import [--dry-run]            read content/ back into the database, after a git pull; one Undo takes it back
   sameway snapshots                     the daily copies of this workspace's data, newest first
   sameway restore <path>                put a copy back, keeping the data from before (workspace stopped)
   sameway chat <message>                talk to the assistant from the terminal
-  sameway mcp                           serve the workspace to an MCP client over stdio
-  sameway connect <tool> [--write]      the MCP configuration for claude-code, claude-desktop, cursor, windsurf, vscode, codex, or chatgpt for a client elsewhere
+  sameway mcp [--assistant]             serve the workspace to an MCP client over stdio
+  sameway connect <tool> [--write] [--config path]  the MCP configuration for claude-code, claude-desktop, cursor, windsurf, vscode, codex, or chatgpt for a client elsewhere
   sameway discover [type] [--wait 3s]   what the local network announces: brokers, hubs, speakers, printers
   sameway component new <name>          scaffold a component folder in the workspace
-  sameway <type> list [--json]          list records of a content type
+  sameway <type> list [--where field=value] [--order -field] [--limit n] [--format csv|xlsx|vcf|ics]  list records of a content type
   sameway <type> get <id> [--json]
   sameway <type> create --set k=v ... | --data '{json}'
   sameway <type> update <id> --set k=v ... | --data '{json}'
@@ -47,6 +49,10 @@ Global flags:
   --workspace <dir>   workspace folder (default: nearest workspace.yaml, or $SAMEWAY_WORKSPACE)
   --json              machine-readable output
   --version
+  -h, --help          these commands; after a command, its own lines
+
+Exit status: 0 done, 1 it went wrong, 2 the command was not understood.
+Errors go to stderr; with --json they are {"error": "..."}.
 `
 
 // Env carries the streams and working directory so tests can drive the CLI.
@@ -57,7 +63,8 @@ type Env struct {
 	Dir   string
 }
 
-// Run executes args and returns the exit code.
+// Run executes args and returns the exit code: 0 done, 1 it went wrong,
+// 2 the command line was not understood.
 func Run(args []string, env Env) int {
 	fs := flag.NewFlagSet("sameway", flag.ContinueOnError)
 	fs.SetOutput(env.Stderr)
@@ -74,60 +81,26 @@ func Run(args []string, env Env) int {
 		fmt.Fprintln(env.Stdout, "sameway", update.Version)
 		return 0
 	}
-	if sub == "help" || sub == "-h" || sub == "--help" {
-		fmt.Fprint(env.Stdout, usage)
-		return 0
-	}
 	c := &ctx{Env: env, JSON: *jsonFlag, workspaceDir: *wsFlag, args: fs.Args()}
-	// Nothing after it is a double-click: open the person's workspace (start.go).
-	if sub == "" {
-		if err := c.startCmd(); err != nil {
+	var err error
+	switch run, ok := commands[sub]; {
+	case sub == "help":
+		err = c.helpCmd()
+	// A command's --help says its lines and does nothing: chat --help
+	// would otherwise ask the model, and restore --help restore a copy.
+	case sub != "" && wantsHelp(c.args):
+		fmt.Fprint(c.Stdout, helpFor(sub))
+	// Nothing after it is a double-click: open the person's workspace
+	// (start.go). A flag alone is not nothing: sameway -x opened it.
+	// (-psn_ is what an older macOS adds when an app is opened.)
+	case sub == "" && len(c.args) > 0 && !strings.HasPrefix(c.args[0], "-psn_"):
+		err = misused("sameway has no flag %s. The commands and flags: sameway help", c.args[0])
+	case sub == "":
+		if c.startCmd() != nil {
 			return 1
 		}
-		return 0
-	}
-	var err error
-	switch sub {
-	case "init":
-		err = c.initCmd()
-	case "open":
-		err = c.openCmd()
-	case "at-login":
-		err = c.atLoginCmd() // apart.go, internal/atlogin
-	case "serve":
-		err = c.serveCmd()
-	case "describe":
-		err = c.describeCmd()
-	case "check":
-		err = c.checkCmd()
-	case "update":
-		err = c.updateCmd()
-	case "look":
-		err = c.lookCmd()
-	case "add":
-		err = c.addCmd()
-	case "search":
-		err = c.searchCmd()
-	case "export":
-		err = c.exportCmd()
-	case "import":
-		err = c.importCmd()
-	case "snapshots":
-		err = c.snapshotsCmd()
-	case "restore":
-		err = c.restoreCmd()
-	case "chat":
-		err = c.chatCmd()
-	case "connect":
-		err = c.connectCmd()
-	case "agent":
-		err = c.agentCmd()
-	case "discover":
-		err = c.discoverCmd()
-	case "mcp":
-		err = c.mcpCmd()
-	case "component":
-		err = c.componentCmd()
+	case ok:
+		err = run(c)
 	default:
 		err = c.contentCmd(sub)
 	}
@@ -211,17 +184,32 @@ func (c *ctx) load() (*app.App, error) {
 	return a, nil
 }
 
+// fail says what went wrong on stderr, as JSON with --json, and returns
+// the exit code: 2 for a command line not understood, else 1.
 func (c *ctx) fail(err error) int {
-	if c.JSON {
+	if errors.Is(err, flag.ErrHelp) {
+		return 0 // -help=true: the flag package has said the flags
+	}
+	code := 1
+	misread, flagSaid := isUsage(err)
+	if misread {
+		code = 2
+	}
+	switch {
+	case c.JSON:
 		json.NewEncoder(c.Stderr).Encode(map[string]any{"error": err.Error()})
-	} else {
+	case !flagSaid: // the flag package has said it, once is enough
 		fmt.Fprintln(c.Stderr, "error:", err)
 	}
-	return 1
+	return code
 }
 
 func (c *ctx) print(v any, human func()) {
 	if c.JSON {
+		// An empty list is [] to an agent, not null.
+		if r := reflect.ValueOf(v); r.Kind() == reflect.Slice && r.IsNil() {
+			v = []any{}
+		}
 		enc := json.NewEncoder(c.Stdout)
 		enc.SetIndent("", "  ")
 		enc.Encode(v)
