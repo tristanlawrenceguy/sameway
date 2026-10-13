@@ -42,7 +42,7 @@ func TestNothingToDoIsFoldedAndTeachesWhatWasMissed(t *testing.T) {
 	model := &quietModel{}
 	a.Chat.Provider, a.Chat.ProviderErr = model, nil
 	srv := server.New(a)
-	a.Chat.StartAutomating()
+	a.Automate.StartWorker()
 	srv.SetUpSorting()
 
 	rec := written(t, a.Store, "created", "email", "", map[string]any{"subject": "School newsletter", "body": "Please reply about the trip.", "tags": []any{"to sort"}})
