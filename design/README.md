@@ -24,6 +24,7 @@ the `sameway` binary, which serves a living styleguide at `/design`.
 | [foundations/layout.md](foundations/layout.md) | The page as a whole: rows, panes, heading order, and the Layout now line |
 | [foundations/navigation.md](foundations/navigation.md) | The sidebar: links in lists not a tree, where you are (page or section), records nested when asked, a cut list that says so |
 | [foundations/glance.md](foundations/glance.md) | What a record says beside its title, and how a day is said |
+| [foundations/names.md](foundations/names.md) | What a record and its fields are called, and how two records of one name are told apart |
 | [foundations/review.md](foundations/review.md) | The weekly review: done first, overdue without blame, the week ahead, the notice |
 | [foundations/today.md](foundations/today.md) | Today and the morning brief: what comes first, how a late day is said, when the brief stays quiet |
 | [foundations/sharing.md](foundations/sharing.md) | Letting people in: pairing a phone, inviting by name, who can open it and taking it back |

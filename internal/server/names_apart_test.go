@@ -143,12 +143,11 @@ func TestRepeatedTitlesAreToldApartInSearchAndTheLog(t *testing.T) {
 	if same := sameNames(t, results); len(same) > 0 {
 		t.Errorf("search results share a name: %v", same)
 	}
-	// Search results use ordinals to tell apart identical titles, never raw
-	// field labels like "(due" — those are database column names. The log
-	// still uses the full context from recordWays for undo buttons.
+	// A result is told apart as its row and its log entry are, by its
+	// day (design/foundations/names.md).
 	linkNames := names(t, results, "link")
-	if !has(linkNames, "Call plumber — Task (first of 2)") && !has(linkNames, "Call plumber — Task (second of 2)") {
-		t.Errorf("a result says what tells it apart: %q", linkNames)
+	if !has(linkNames, "Call plumber — Task ("+overdue+")") || !has(linkNames, "Call plumber — Task ("+later+")") {
+		t.Errorf("a result says what tells it apart, as its row does: %q", linkNames)
 	}
 	log := get(t, h, "/activity").Body.String()
 	if same := sameNames(t, log); len(same) > 0 {

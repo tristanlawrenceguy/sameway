@@ -53,11 +53,9 @@ func TestSearchResultSnippetsHaveNoMachineFormatDate(t *testing.T) {
 	}
 }
 
-// TestSearchResultHeadingsHaveNoRawFieldLabels verifies that search result
-// heading links do not contain raw schema field labels like "(added" or "(due"
-// in their accessible-name spans. This covers acceptance item 3 — a screen
-// reader user should never hear the word "added" or "due" as part of the link
-// name; those are database column names, not words for people.
+// TestSearchResultHeadingsHaveNoRawFieldLabels: a result whose name is its
+// own is said alone, with no words to tell it apart from anything
+// (design/foundations/names.md).
 func TestSearchResultHeadingsHaveNoRawFieldLabels(t *testing.T) {
 	t.Parallel()
 	_, h := newApp(t)
@@ -84,20 +82,14 @@ func TestSearchResultHeadingsHaveNoRawFieldLabels(t *testing.T) {
 				t.Errorf("search result heading must not contain raw field label '(due'; found in:\n%s", truncate(body))
 			}
 
-			// It should still be possible to tell apart identical titles using
-			// ordinals like "first of 2" instead. Ordinal words are user-friendly.
-			if strings.Contains(body, "(first") || strings.Contains(body, "(second") {
-				return // ordinal telling apart is fine and expected for duplicate titles
-			}
 		})
 	}
 }
 
-// TestSearchResultWithIdenticalTitlesHasNoRawLabels verifies that when multiple
-// records share the same title, they are told apart by ordinal indicators ("first
-// of 2") rather than raw field labels like "(added" or "(due". This is acceptance
-// item 3 in a scenario where recordWays would normally produce disambiguation text.
-func TestSearchResultWithIdenticalTitlesHasNoRawLabels(t *testing.T) {
+// TestSearchResultWithIdenticalTitlesSaysTheirDays: results of one title
+// and kind are told apart by their days, as their list tells them, not
+// numbered (design/foundations/names.md).
+func TestSearchResultWithIdenticalTitlesSaysTheirDays(t *testing.T) {
 	t.Parallel()
 	_, h := newApp(t)
 
@@ -111,11 +103,7 @@ func TestSearchResultWithIdenticalTitlesHasNoRawLabels(t *testing.T) {
 
 	body := get(t, h, "/search?q=plumber").Body.String()
 
-	if strings.Contains(body, "(added") {
-		t.Errorf("search result with duplicate titles must not contain raw field label '(added'; found in:\n%s", truncate(body))
+	if strings.Count(body, "(due ") < 2 || strings.Contains(body, " of 2)") {
+		t.Errorf("each result says its day, and neither is numbered:\n%s", truncate(body))
 	}
-	if strings.Contains(body, "(due") {
-		t.Errorf("search result with duplicate titles must not contain raw field label '(due'; found in:\n%s", truncate(body))
-	}
-
 }
