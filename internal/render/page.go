@@ -37,6 +37,9 @@ type Page struct {
 	// Now is the time it is for the person, the app's clock, whose today
 	// the page's days were said from; zero is this computer's clock.
 	Now time.Time
+	// ZoneAsk is whether the owner reads the page and the workspace has
+	// no time zone chosen, so the script may offer the browser's.
+	ZoneAsk bool
 	// Nav holds the main navigation: the person's own content, and nothing
 	// else, each list with the colour of its dot.
 	Nav []NavItem
@@ -120,10 +123,11 @@ func (p Page) Failed() bool {
 	return strings.Contains(string(p.Outcome), `data-outcome="failed"`)
 }
 
-// TimeAttrs says on the root element how this computer tells the time, for
-// the script that keeps a page's days true while it is open
-// (36-days.js): its offset from UTC in minutes, its today, and the 24-hour
-// clock when that is the person's.
+// TimeAttrs says on the root element how the workspace tells the time,
+// for the script that keeps a page's days true while it is open
+// (36-days.js): its zone's offset from UTC in minutes, its today, the
+// 24-hour clock when that is the person's, and whether the owner may be
+// offered their browser's zone.
 func (p Page) TimeAttrs() template.HTMLAttr {
 	now := p.Now
 	if now.IsZero() {
@@ -133,6 +137,9 @@ func (p Page) TimeAttrs() template.HTMLAttr {
 	a := fmt.Sprintf(` data-zone="%d" data-today="%s"`, off/60, now.Format("2006-01-02"))
 	if p.Hours24 {
 		a += ` data-clock="24"`
+	}
+	if p.ZoneAsk {
+		a += ` data-zone-ask`
 	}
 	return template.HTMLAttr(a)
 }

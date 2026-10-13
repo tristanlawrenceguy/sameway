@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/runner"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 )
@@ -140,5 +141,27 @@ func TestTheBriefComesAtTheZonesTime(t *testing.T) {
 		}
 	case <-time.After(5 * time.Second):
 		t.Fatal("no brief at 07:30 in Tokyo")
+	}
+}
+
+// With no zone chosen, the owner's pages let the script offer their
+// browser's (36-days.js); a viewer's never do, and once one is chosen,
+// even this computer's, nobody is asked again.
+func TestOnlyTheOwnerIsOfferedTheirZone(t *testing.T) {
+	t.Parallel()
+	a, h := newApp(t)
+	viewer := records.Visitor{Name: "Vi", Login: "vi@example.com", Access: records.View}
+	if page := get(t, h, "/today").Body.String(); !strings.Contains(page, " data-zone-ask") {
+		t.Error("the owner may be offered their zone while none is chosen")
+	}
+	if page := as(t, h, viewer, http.MethodGet, "/today", "", "").Body.String(); strings.Contains(page, "data-zone-ask") {
+		t.Error("a viewer is never offered a zone for the workspace")
+	}
+	if res := as(t, h, viewer, http.MethodPost, "/zone", "zone=Europe/Madrid", "application/x-www-form-urlencoded"); res.Code != http.StatusForbidden || a.Workspace.Config.UI.Zone != "" {
+		t.Errorf("a viewer cannot set it: %d %q", res.Code, a.Workspace.Config.UI.Zone)
+	}
+	wantStatus(t, postForm(t, h, "/zone", url.Values{"zone": {"Local"}}), http.StatusSeeOther)
+	if page := get(t, h, "/today").Body.String(); strings.Contains(page, "data-zone-ask") {
+		t.Error("kept as this computer's, the owner is not asked again")
 	}
 }

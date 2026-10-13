@@ -9,10 +9,15 @@
 // change: when this workspace's day turns, and when a time the page shows
 // passes. A hidden tab waits until it is looked at again.
 //
-// Every time on the page is the workspace's, the computer it runs on. When
-// the browser reading it is in another zone (a phone abroad, a person let
-// in from elsewhere), the page says so once, near its top, with how far
-// apart the two are, as GOV.UK adds "UK time" for readers elsewhere.
+// Every time on the page is the workspace's, in its time zone (ui.zone,
+// else the computer's it runs on). When the browser reading it is in
+// another zone (a phone abroad, a person let in from elsewhere), the page
+// says so once, near its top, with how far apart the two are, as GOV.UK
+// adds "UK time" for readers elsewhere. The owner of a workspace with no
+// zone chosen (data-zone-ask) is asked instead whether theirs is its, as
+// Google Calendar offers to update a time zone: the computer's may be a
+// server's in UTC. Nothing changes until they press (design/foundations/
+// today.md); a viewer who is not the owner is never asked.
 (function () {
   "use strict";
   var root = document.documentElement;
@@ -67,13 +72,46 @@
     var words = (h ? h + (h === 1 ? " hour" : " hours") : "") + (h && m ? " " : "") + (m ? m + " minutes" : "");
     return words + (min > 0 ? " ahead of yours" : " behind yours");
   }
+  // place is the browser's zone by name, Europe/Madrid, when it says one.
+  var place = "";
+  try { place = Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { /* none said */ }
+  var ask = root.hasAttribute("data-zone-ask") && place.indexOf("/") > 0;
+  var called = place.slice(place.lastIndexOf("/") + 1).replace(/_/g, " ") + " time";
+  // choice is a press that sets the workspace's zone, back to this page.
+  function choice(label, value, variant) {
+    var form = document.createElement("form");
+    form.method = "post";
+    form.action = "/zone";
+    [["from", location.pathname + location.search], ["zone", value]].forEach(function (f) {
+      var input = document.createElement("input");
+      input.type = "hidden";
+      input.name = f[0];
+      input.value = f[1];
+      form.append(input);
+    });
+    var button = document.createElement("button");
+    button.type = "submit";
+    button.className = "sw-button sw-button--" + variant + " sw-pressable";
+    button.textContent = label;
+    form.append(button);
+    return form;
+  }
   function say() {
     var main = document.querySelector("main");
     if (!main || !main.querySelector("time") || document.getElementById("zone-note")) return;
-    var note = document.createElement("p");
+    var note = document.createElement(ask ? "div" : "p");
     note.id = "zone-note";
-    note.className = "sw-muted sw-small";
-    note.textContent = "Times here are this workspace's, " + offset(zone) + ": " + apart(zone - mine) + ".";
+    note.className = ask ? "sw-stack--tight" : "sw-muted sw-small";
+    if (ask) {
+      var words = document.createElement("p");
+      words.textContent = "Times here are this computer's, " + offset(zone) + ": " + apart(zone - mine) + ". Use " + called + " for this workspace?";
+      var presses = document.createElement("div");
+      presses.className = "sw-cluster";
+      presses.append(choice("Use " + called, place, "primary"), choice("Keep this computer's time", "Local", "secondary"));
+      note.append(words, presses);
+    } else {
+      note.textContent = "Times here are this workspace's, " + offset(zone) + ": " + apart(zone - mine) + ".";
+    }
     var head = main.querySelector(".sw-page-head");
     if (head) head.after(note); else main.prepend(note);
   }
