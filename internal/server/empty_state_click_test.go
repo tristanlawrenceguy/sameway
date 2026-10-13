@@ -7,7 +7,6 @@ package server_test
 
 import (
 	"net/http"
-	"os"
 	"strings"
 	"testing"
 )
@@ -61,50 +60,5 @@ func TestEmptyStateAnchorNavigatesForAllTypes(t *testing.T) {
 	}
 }
 
-// TestNoJSScriptInterceptsEmptyStateAnchorClicks checks every JS file under
-// design/base/ to confirm none install a document-level or <a> click handler
-// that could prevent the empty-state link from navigating. This covers
-// Acceptance 1-2: if a script intercepts clicks on anchors, navigation breaks.
-func TestNoJSScriptInterceptsEmptyStateAnchorClicks(t *testing.T) {
-	t.Parallel()
-	baseDir := "../../design/base"
-
-	files, err := os.ReadDir(baseDir)
-	if err != nil {
-		t.Fatalf("cannot read design/base/: %v", err)
-	}
-
-	for _, f := range files {
-		if !strings.HasSuffix(f.Name(), ".js") {
-			continue
-		}
-		data, err := os.ReadFile(baseDir + "/" + f.Name())
-		if err != nil {
-			t.Fatalf("cannot read %s: %v", f.Name(), err)
-		}
-		src := string(data)
-
-		// Reject any handler that selects plain <a> elements — this can
-		// intercept empty-state links if a click handler is attached.
-		if strings.Contains(src, `querySelectorAll("a"`) {
-			t.Errorf("%s: must not select plain <a> via querySelectorAll", f.Name())
-		}
-		if strings.Contains(src, "document.querySelector(\"a") {
-			t.Errorf("%s: must not select plain <a> via document.querySelector", f.Name())
-		}
-
-		// Reject any document-level click handler that could catch anchor clicks.
-		if strings.Contains(src, `document.addEventListener("click"`) ||
-			strings.Contains(src, "document.addEventListener('click'") {
-			t.Errorf("%s: must not install a document-level click listener", f.Name())
-		}
-
-		// Reject any handler that combines .sw-empty with <a> selection.
-		if strings.Contains(src, ".sw-empty") {
-			if strings.Contains(src, "addEventListener(\"click\"") ||
-				strings.Contains(src, `querySelector("a"`) {
-				t.Errorf("%s: must not attach handlers to or select <a> near .sw-empty", f.Name())
-			}
-		}
-	}
-}
+// That no script stops the empty state's link from going where it says is
+// checked by pressing it in a browser: behave-styles.mjs.
