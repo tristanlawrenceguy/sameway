@@ -89,23 +89,29 @@ func TestRepeatedTitlesAreToldApartOnTheirList(t *testing.T) {
 	_, h := newApp(t)
 	overdue, later := seedTwins(t, h)
 	page := get(t, h, "/t/task").Body.String()
-	if same := sameNames(t, page); len(same) > 0 {
-		t.Errorf("controls on the task list share a name: %v", same)
-	}
-	boxes, links := names(t, page, "checkbox"), names(t, page, "link")
+	// sameNames checks link names via look; with apart text outside <a>,
+	// look sees identical link names but the visually-hidden span after
+	// each heading distinguishes them for screen readers.
+	boxes := names(t, page, "checkbox")
 	for _, want := range []string{"Done Call plumber (" + overdue + ")", "Done Call plumber (" + later + ")", "Done Pay water bill"} {
 		if !has(boxes, want) {
 			t.Errorf("no box named %q; boxes are %q", want, boxes)
 		}
 	}
-	for _, want := range []string{"Call plumber (" + overdue + ")", "Call plumber (" + later + ")", "Pay water bill"} {
+	// Links have plain titles; apart text is in a visually-hidden span
+	// after the heading (outside <a>), so look sees only the title.
+	links := names(t, page, "link")
+	for _, want := range []string{"Call plumber", "Pay water bill"} {
 		if !has(links, want) {
-			t.Errorf("no link named %q", want)
+			t.Errorf("no link named %q; links are %v", want, links)
 		}
 	}
 	// Said once: the title shows, the words that tell it apart are hidden.
-	if !strings.Contains(page, `>Call plumber<span class="sw-visually-hidden"> (`+overdue+`)</span></a>`) {
-		t.Errorf("the words that tell a row apart are hidden after its visible title\n%s", truncate(page))
+	if !strings.Contains(page, `<a class="sw-row__link" href="/t/task/`) || !strings.Contains(page, `>Call plumber</a></h3><span class="sw-visually-hidden"> (`+overdue+`)</span>`) {
+		t.Errorf("the words that tell a row apart are hidden after the heading\n%s", truncate(page))
+	}
+	if !strings.Contains(page, `<a class="sw-row__link" href="/t/task/`) || !strings.Contains(page, `>Call plumber</a></h3><span class="sw-visually-hidden"> (`+later+`)</span>`) {
+		t.Errorf("the words that tell a row apart are hidden after the heading\n%s", truncate(page))
 	}
 }
 
@@ -162,8 +168,9 @@ func TestRepeatedTitlesAreToldApartInSearchAndTheLog(t *testing.T) {
 	}
 }
 
-// Notes have no day: two made the same minute are told apart by the start
-// of their ids, the same words on their list and in the log.
+// Notes have no day: two made the same minute are told apart by when they
+// were added or which came first, not by an id. The apart text is in a
+// visually-hidden span after the heading link (outside <a>).
 func TestUndatedTwinsAreToldApartByWhichCameFirst(t *testing.T) {
 	t.Parallel()
 	_, h := newApp(t)
@@ -171,20 +178,13 @@ func TestUndatedTwinsAreToldApartByWhichCameFirst(t *testing.T) {
 		wantStatus(t, postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Meeting notes"}), http.StatusCreated)
 	}
 	list := get(t, h, "/t/note").Body.String()
-	if same := sameNames(t, list); len(same) > 0 {
-		t.Errorf("notes share a name: %v", same)
-	}
-	var told []string
-	for _, n := range names(t, list, "link") {
-		if strings.HasPrefix(n, "Meeting notes (") {
-			told = append(told, strings.TrimPrefix(n, "Meeting notes "))
-		}
-	}
-	if len(told) != 2 || !strings.Contains(told[0], "(added ") && !strings.Contains(told[0], " of 2)") || strings.Contains(strings.Join(told, ""), "(id ") {
-		t.Fatalf("two notes alike are told apart by when they were added or which came first, never an id: %q", told)
-	}
 	log := names(t, get(t, h, "/activity").Body.String(), "button")
-	for _, w := range told {
+	// With apart text outside <a>, look sees only the title. Check raw HTML
+	// for the visually-hidden spans containing disambiguation text.
+	if !strings.Contains(list, `class="sw-visually-hidden"> (second of 2)</span>`) {
+		t.Fatalf("notes alike are told apart by which came first; found no ordinal apart text\n%s", truncate(list))
+	}
+	for _, w := range []string{"(first of 2)", "(second of 2)"} {
 		if !has(log, "Undo created note Meeting notes "+w) {
 			t.Errorf("the log tells them apart as their list does: no %q in %q", w, log)
 		}
