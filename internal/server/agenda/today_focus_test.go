@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/tristanlawrenceguy/sameway/internal/server/servertest"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -91,5 +92,40 @@ func TestWhatMattersStartsBeforeItIsDue(t *testing.T) {
 	}
 	if res := postForm(t, h, "/today/sort", url.Values{"words": {"call mum"}}); !strings.HasPrefix(res.Header().Get("Location"), "/today") {
 		t.Errorf("sorted, the person is back on Today: %q", res.Header().Get("Location"))
+	}
+}
+
+// On a long Today, tasks late more than two weeks are offered, above the
+// three, to keep with no date in one press: no longer late, still tasks, all back
+// with one Undo; what matters is never among them.
+func TestLongLateTasksCanBeKeptWithNoDate(t *testing.T) {
+	t.Parallel()
+	a, h := newAppAt(t, tonight)
+	day := func(n int) string { return tonight.AddDate(0, 0, n).Format("2006-01-02") }
+	var old []string
+	for i, title := range []string{"Buy flowers", "Buy fresh produce", "Return library books"} {
+		r, _ := a.Store.Create("task", map[string]any{"title": title, "due": day(-20 - i)})
+		old = append(old, r.ID)
+	}
+	keep, _ := a.Store.Create("task", map[string]any{"title": "File the tax return", "due": day(-30), "tags": []any{"important"}})
+	for i, title := range []string{"Water the plants", "Clean the fridge", "Call the plumber", "Pay rent"} {
+		a.Store.Create("task", map[string]any{"title": title, "due": day(-1 - i)})
+	}
+	page := get(t, h, "/today").Body.String()
+	if !strings.Contains(page, "3 of them have been late more than two weeks.") || !strings.Contains(page, "Keep them, with no date") {
+		t.Fatalf("the long late are offered: %s", truncate(page))
+	}
+	postForm(t, h, "/today/let-go", url.Values{})
+	for _, id := range old {
+		if r, _ := a.Store.Get("task", id); r.Fields["due"] != nil && r.Fields["due"] != "" {
+			t.Errorf("kept with no date: %v", r.Fields["due"])
+		}
+	}
+	if r, _ := a.Store.Get("task", keep.ID); r.Fields["due"] == nil || r.Fields["due"] == "" {
+		t.Error("what matters keeps its day")
+	}
+	postForm(t, h, "/activity/"+servertest.NewestEntry(t, a.Store).ID+"/undo", url.Values{})
+	if r, _ := a.Store.Get("task", old[0]); r.Fields["due"] == nil || r.Fields["due"] == "" {
+		t.Error("one Undo puts their days back")
 	}
 }
