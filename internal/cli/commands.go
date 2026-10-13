@@ -21,6 +21,7 @@ import (
 
 func (c *ctx) serveCmd() error {
 	fs := flag.NewFlagSet("serve", flag.ContinueOnError)
+	fs.SetOutput(c.Stderr)
 	addr := fs.String("addr", "", "listen address, overrides server.addr")
 	if err := fs.Parse(c.args); err != nil {
 		return err

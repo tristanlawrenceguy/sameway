@@ -7,11 +7,13 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/export"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
 // setFlags collects repeated --set key=value pairs.
@@ -22,20 +24,17 @@ func (s *setFlags) Set(v string) error { *s = append(*s, v); return nil }
 
 // contentCmd handles `sameway <type> <verb> ...` for every content type.
 func (c *ctx) contentCmd(typeName string) error {
-	a, err := c.load()
+	a, t, err := c.contentType(typeName)
 	if err != nil {
 		return err
 	}
 	defer a.Close()
-	t, ok := a.Types.Get(typeName)
-	if !ok {
-		return fmt.Errorf("unknown command or content type %q (types: %s). Run `sameway help`", typeName, strings.Join(a.Types.Names(), ", "))
-	}
 	if len(c.args) == 0 {
 		return fmt.Errorf("usage: sameway %s list|get|create|update|delete", t.Name)
 	}
 	verb, rest := c.args[0], c.args[1:]
 	fs := flag.NewFlagSet(t.Name+" "+verb, flag.ContinueOnError)
+	fs.SetOutput(c.Stderr)
 	var sets setFlags
 	fs.Var(&sets, "set", "field=value (repeatable)")
 	data := fs.String("data", "", "JSON object of fields")
@@ -88,7 +87,7 @@ func (c *ctx) contentCmd(typeName string) error {
 		}
 		rec, err := a.Store.Get(t.Name, positional[0])
 		if err != nil {
-			return err
+			return notFound(err, t.Name, positional[0])
 		}
 		c.print(rec, func() { printRecord(c, rec) })
 	case "create":
@@ -111,7 +110,7 @@ func (c *ctx) contentCmd(typeName string) error {
 		}
 		rec, _, err := records.WriteAs(a.Store, cliWho, "updated", t.Name, positional[0], fields)
 		if err != nil {
-			return err
+			return notFound(err, t.Name, positional[0])
 		}
 		c.print(rec, func() { fmt.Fprintf(c.Stdout, "updated %s %s\n", t.Name, rec.ID) })
 	case "delete":
@@ -119,13 +118,52 @@ func (c *ctx) contentCmd(typeName string) error {
 			return fmt.Errorf("usage: sameway %s delete <id>", t.Name)
 		}
 		if _, _, err := records.WriteAs(a.Store, cliWho, "deleted", t.Name, positional[0], nil); err != nil {
-			return err
+			return notFound(err, t.Name, positional[0])
 		}
 		c.print(map[string]any{"deleted": positional[0]}, func() { fmt.Fprintf(c.Stdout, "deleted %s %s\n", t.Name, positional[0]) })
 	default:
-		return fmt.Errorf("unknown verb %q for %s (use list, get, create, update, delete)", verb, t.Name)
+		return badVerb(verb, t.Name)
 	}
 	return nil
+}
+
+// contentType opens the workspace and finds the type a command names, or
+// says what was meant: a command misspelt, or a type.
+func (c *ctx) contentType(typeName string) (*app.App, *schema.Type, error) {
+	a, err := c.load()
+	if err != nil {
+		if near := nearest(typeName, names()); near != "" {
+			return nil, nil, misused("%q is not a command. Did you mean sameway %s?", typeName, near)
+		}
+		if errors.Is(err, workspace.ErrNotFound) {
+			return nil, nil, fmt.Errorf("%q is not one of sameway's commands (sameway help lists them), so it is read as a content type, which needs a workspace: %w", typeName, err)
+		}
+		return nil, nil, err
+	}
+	if t, ok := a.Types.Get(typeName); ok {
+		return a, t, nil
+	}
+	a.Close()
+	if near := nearest(typeName, append(names(), a.Types.Names()...)); near != "" {
+		return nil, nil, misused("%q is not a command or a content type. Did you mean sameway %s?", typeName, near)
+	}
+	return nil, nil, misused("unknown command or content type %q (types: %s). Run `sameway help`", typeName, strings.Join(a.Types.Names(), ", "))
+}
+
+// badVerb says the verb a type's command most likely meant, or all five.
+func badVerb(verb, typ string) error {
+	if near := nearest(verb, []string{"list", "get", "create", "update", "delete"}); near != "" {
+		return misused("unknown verb %q for %s. Did you mean sameway %s %s?", verb, typ, typ, near)
+	}
+	return misused("unknown verb %q for %s (use list, get, create, update, delete)", verb, typ)
+}
+
+// notFound says which record was not found and how to see those there are.
+func notFound(err error, typ, id string) error {
+	if errors.Is(err, store.ErrNotFound) {
+		return fmt.Errorf("no %s has the id %q (not found). sameway %s list says those there are", typ, id, typ)
+	}
+	return err
 }
 
 // cliWho is the person at the command line, as the log says it.
