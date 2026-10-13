@@ -111,6 +111,7 @@ func Open(dir string, o Options) (*App, error) {
 		if err := ws.Set(key, value); err != nil {
 			return err
 		}
+		a.travel(key) // share.go: the person's, so the other copies' too
 		a.Chat.Needs, a.Chat.Language = ws.Config.UI.Needs, ws.Config.UI.Language
 		if key == "actions.allow" {
 			a.Automate.Allow = allowList(ws.Config.Actions.Allow)
@@ -124,8 +125,7 @@ func Open(dir string, o Options) (*App, error) {
 	a.Chat.AddField, a.Chat.AddType, a.Chat.Reshape = a.AddField, a.AddType, a
 	// Keeping the program current is the program's own business, not the
 	// workspace's: the updater needs nothing from here.
-	a.Chat.Update = update.Updater{}.Run
-	a.Chat.Workdir, a.Chat.Ollama = ws.Dir, o.Ollama
+	a.Chat.Update, a.Chat.Workdir, a.Chat.Ollama = update.Updater{}.Run, ws.Dir, o.Ollama
 	a.Jobs = runner.New(runner.Clock{Now: a.Now, After: o.After})
 	return a, nil
 }

@@ -195,12 +195,16 @@ func (s *Store) waiting(typeName string) error {
 
 // adoptAll takes the types that arrived, and any still waiting from
 // before (one that points at a type that had not come yet), in as many
-// passes as it takes for each to find what it points at.
+// passes as it takes for each to find what it points at; and the
+// settings that arrived (setting_state.go).
 func (s *Store) adoptAll(touched map[[2]string]bool) {
 	todo := map[string]bool{}
 	for k := range touched {
-		if k[0] == SchemaType {
+		switch k[0] {
+		case SchemaType:
 			todo[k[1]] = true
+		case SettingType:
+			s.adoptSetting(k[1])
 		}
 	}
 	rows, err := s.db.Query(`SELECT DISTINCT id FROM _state WHERE type = ?`, SchemaType)

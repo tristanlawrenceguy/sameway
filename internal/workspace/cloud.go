@@ -19,6 +19,15 @@ type Cloud struct {
 	Dir  string `json:"dir"`
 }
 
+// CloudFolders are the machine's cloud folders: a test's own, or this
+// computer's.
+func (m Machine) CloudFolders() []Cloud {
+	if m.Cloud.Dir != "" {
+		return []Cloud{m.Cloud}
+	}
+	return CloudFolders()
+}
+
 // CloudFolders are the cloud folders on this computer, as their apps put
 // them.
 func CloudFolders() []Cloud {

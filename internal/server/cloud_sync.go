@@ -10,9 +10,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/cloudsync"
-	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
-	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
 // One workspace on a laptop and a desktop, or on two people's computers
@@ -27,16 +25,13 @@ import (
 // step as.
 const syncMark = ".sameway-sync"
 
-// cloudFolders are the cloud folders on this computer; a test names its own.
-var cloudFolders = workspace.CloudFolders
-
 // syncFolder is the folder this workspace is kept in step through, if any.
 func (s *Server) syncFolder() string {
 	name, id := s.app.Store.Meta("cloudsync:cloud"), s.app.Store.Meta("cloudsync:id")
 	if name == "" || id == "" {
 		return ""
 	}
-	for _, c := range cloudFolders() {
+	for _, c := range s.machine().CloudFolders() {
 		if c.Name == name {
 			return filepath.Join(c.Dir, cloudsync.Root, id)
 		}
@@ -58,7 +53,7 @@ func (s *Server) joinables() []joinable {
 		}
 	}
 	var out []joinable
-	for _, c := range cloudFolders() {
+	for _, c := range s.machine().CloudFolders() {
 		dirs, _ := os.ReadDir(filepath.Join(c.Dir, cloudsync.Root))
 		for _, d := range dirs {
 			dir := filepath.Join(c.Dir, cloudsync.Root, d.Name())
@@ -80,18 +75,13 @@ func (s *Server) cloudSyncSection() string {
 	esc := template.HTMLEscapeString
 	var b strings.Builder
 	b.WriteString(`<section class="sw-stack" aria-labelledby="ws-sync"><h2 id="ws-sync">On your other computers</h2>`)
-	if folder := s.syncFolder(); folder != "" {
-		others := len(cloudsync.Others(s.app.Store, folder))
-		state := "No other computer has opened it yet: on the other computer, open Workspaces in Sameway and choose it under On your other computers."
-		if others > 0 {
-			state = "It is open on " + schema.Count(others, "other computer") + "; a change on one reaches the others as soon as " + esc(s.app.Store.Meta("cloudsync:cloud")) + " has copied it, usually within a minute."
+	if cloud := s.app.Store.Meta("cloudsync:cloud"); s.app.Store.Meta("cloudsync:id") != "" {
+		b.WriteString(`<p>This workspace is kept in step through ` + esc(cloud) + `. ` + esc(s.syncState(cloud)) + `</p>`)
+		if s.app.Store.Meta("cloudsync:err") == cloudsync.ErrGone.Error() {
+			b.WriteString(string(s.form(ui.Form{Action: "/cloud-sync", Hidden: ui.Hidden("cloud", cloud), Button: &ui.Button{Label: "Put its folder back in " + cloud}})))
 		}
-		if e := s.app.Store.Meta("cloudsync:err"); e != "" {
-			state = "Not in step just now: " + e
-		}
-		b.WriteString(`<p>This workspace is kept in step through ` + esc(s.app.Store.Meta("cloudsync:cloud")) + `. ` + state + `</p>`)
 		b.WriteString(string(s.form(ui.Form{Action: "/cloud-sync/off", Button: &ui.Button{Label: "Stop keeping it in step", Variant: ui.Secondary}})))
-	} else if clouds := cloudFolders(); len(clouds) > 0 {
+	} else if clouds := s.machine().CloudFolders(); len(clouds) > 0 {
 		b.WriteString(`<p>Use this workspace on another computer too, such as a laptop and a desktop, or a partner's computer that shares your cloud folder: each keeps a whole copy, and changes pass between them through the cloud folder.</p>`)
 		for _, c := range clouds {
 			b.WriteString(string(s.form(ui.Form{Action: "/cloud-sync", Hidden: ui.Hidden("cloud", c.Name), Button: &ui.Button{Label: "Keep it in step through " + c.Name, Variant: ui.Secondary}})))
@@ -114,7 +104,7 @@ func (s *Server) cloudSyncOn(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	cloud := r.PostForm.Get("cloud")
 	var dir string
-	for _, c := range cloudFolders() {
+	for _, c := range s.machine().CloudFolders() {
 		if c.Name == cloud {
 			dir = c.Dir
 		}
@@ -124,17 +114,29 @@ func (s *Server) cloudSyncOn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	name := s.app.Workspace.Config.Name
-	id := strings.ReplaceAll(strings.ToLower(safeName(name)), " ", "-") + "-" + token(3)
+	// Kept in step already, its folder gone: it goes back under its own
+	// name, where the other computers look.
+	back := s.app.Store.Meta("cloudsync:id") != "" && s.app.Store.Meta("cloudsync:cloud") == cloud
+	id := s.app.Store.Meta("cloudsync:id")
+	if !back {
+		id = strings.ReplaceAll(strings.ToLower(safeName(name)), " ", "-") + "-" + token(3)
+	}
 	s.app.Store.SetMeta("cloudsync:cloud", cloud)
 	s.app.Store.SetMeta("cloudsync:id", id)
 	folder := s.syncFolder()
 	os.WriteFile(filepath.Join(s.app.Workspace.Dir, syncMark), []byte(id), 0o644)
 	if err := s.syncStart(folder); err != nil {
-		s.app.Store.SetMeta("cloudsync:id", "")
+		if !back { // put back or not, it stays kept in step under its name
+			s.app.Store.SetMeta("cloudsync:id", "")
+		}
 		s.failed(w, r, "Not kept in step", err, "/workspaces#ws-sync")
 		return
 	}
 	s.syncRound()
+	if back {
+		s.tell(w, r, outcome{Title: "Its folder is back in " + cloud, Text: "Changes pass between your computers again, the ones made while it was gone too."}, "/workspaces#ws-sync")
+		return
+	}
 	s.tell(w, r, outcome{Title: "Kept in step through " + cloud, Text: "On your other computer, open Workspaces in Sameway, with " + cloud + " signed in to the same account, and choose Open " + name + " from " + cloud + "."}, "/workspaces#ws-sync")
 }
 
@@ -180,7 +182,7 @@ func (s *Server) cloudJoin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var folder string
-	for _, c := range cloudFolders() {
+	for _, c := range s.machine().CloudFolders() {
 		if c.Name == j.Cloud {
 			folder = filepath.Join(c.Dir, cloudsync.Root, j.ID)
 		}
@@ -213,31 +215,4 @@ func (s *Server) cloudJoin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.Redirect(w, r, "/workspaces", http.StatusSeeOther)
-}
-
-// syncRound reads what the others wrote, then writes what this copy did.
-// It is a background job every fifteen seconds (jobs.go); what went
-// wrong stays in cloudsync:err for the Workspaces page as well.
-func (s *Server) syncRound() error {
-	folder := s.syncFolder()
-	if folder == "" {
-		return nil
-	}
-	files := s.app.Workspace.FilesDir()
-	n, err := cloudsync.In(s.app.Store, folder, files)
-	if n > 0 {
-		s.Changed()
-	}
-	if err == nil {
-		_, err = cloudsync.Out(s.app.Store, folder, files)
-	}
-	said := ""
-	if err != nil {
-		said = err.Error()
-	}
-	s.app.Store.SetMeta("cloudsync:err", said)
-	if at, _ := time.Parse(time.RFC3339, s.app.Store.Meta("cloudsync:started")); s.now().Sub(at) > 24*time.Hour {
-		s.syncStart(folder)
-	}
-	return err
 }
