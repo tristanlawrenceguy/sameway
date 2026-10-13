@@ -1,4 +1,4 @@
-package chat
+package automate
 
 import (
 	"context"
@@ -17,28 +17,23 @@ import (
 // coming in, a note added, a task changed), it gives that record the tags
 // that fit, from the tags the person defined, each with why. A tag the
 // action gives is a suggestion until the person keeps it, takes it off or
-// changes it, and what they did is kept (ClassificationType), so the next
-// time the action can be shown their choices and follow them: the
+// changes it, and what they did is kept (records.ClassificationType), so the
+// next time the action can be shown their choices and follow them: the
 // assistant applying the person's judgement is still the person's
 // judgement; its own is not, so without that it only suggests.
 
-// ClassificationType is a tag an action gave a record, and what became of it.
-const ClassificationType = "classification"
-
-// TagType is a tag and what it means.
-const TagType = "tag"
-
-type tagDef struct {
-	name, means string
-	// alone is a tag given only when no other fits ("nothing to do"):
+// Tag is one of the person's tags and what it means.
+type Tag struct {
+	Name, Means string
+	// Alone is a tag given only when no other fits ("nothing to do"):
 	// Sameway gives it, not the model, so "looked and found nothing" is
 	// said, and the person correcting it is a choice the action learns from.
-	alone bool
+	Alone bool
 }
 
-// tagDefs are the tags an action may give: those it names, else all.
-func (s *Service) tagDefs(only []string) []tagDef {
-	recs, err := s.Store.List(TagType, store.ListOptions{OrderBy: "name"})
+// Tags are the tags an action may give: those it names, else all.
+func Tags(st *store.Store, only []string) []Tag {
+	recs, err := st.List(records.TagType, store.ListOptions{OrderBy: "name"})
 	if err != nil {
 		return nil
 	}
@@ -46,7 +41,7 @@ func (s *Service) tagDefs(only []string) []tagDef {
 	for _, o := range only {
 		want[strings.ToLower(strings.TrimSpace(o))] = true
 	}
-	var out []tagDef
+	var out []Tag
 	for _, r := range recs {
 		name, _ := r.Fields["name"].(string)
 		means, _ := r.Fields["means"].(string)
@@ -55,7 +50,7 @@ func (s *Service) tagDefs(only []string) []tagDef {
 		if name == "" || len(want) > 0 && !want[strings.ToLower(name)] {
 			continue
 		}
-		out = append(out, tagDef{name, strings.TrimSpace(means), alone})
+		out = append(out, Tag{name, strings.TrimSpace(means), alone})
 	}
 	return out
 }
@@ -81,10 +76,14 @@ var anyJSON = regexp.MustCompile(`(?s)[\[{].*[\]}]`)
 // askJSON puts one narrow question to the model, thinking off, and reads the
 // JSON it answers with into out.
 func (s *Service) askJSON(ctx context.Context, system, question string, out any) error {
-	if s.Provider == nil {
+	var model llm.Provider
+	if s.Model != nil {
+		model = s.Model()
+	}
+	if model == nil {
 		return fmt.Errorf("no model is connected")
 	}
-	resp, err := s.Provider.Complete(ctx, llm.Request{System: system, Messages: []llm.Message{{Role: llm.RoleUser, Content: question}}, MaxTokens: 2048, Effort: "none"})
+	resp, err := model.Complete(ctx, llm.Request{System: system, Messages: []llm.Message{{Role: llm.RoleUser, Content: question}}, MaxTokens: 2048, Effort: "none"})
 	if err != nil {
 		return err
 	}
@@ -112,20 +111,20 @@ type chosen struct {
 // Classify gives the record the tags that fit, as the action says: from
 // its tags, all at once or each apart, checked against the person's past
 // choices when it asks. It says what it gave.
-func (s *Service) Classify(ctx context.Context, action *store.Record, typeName, id string) toolResult {
+func (s *Service) Classify(ctx context.Context, action *store.Record, typeName, id string) Result {
 	t, ok := s.Store.Types().Get(typeName)
 	rec, err := s.Store.Get(typeName, id)
 	if !ok || err != nil {
 		return fail("a classify action tags the record that sets it off; set when and what so a record does")
 	}
-	defs := s.tagDefs(records.StringList(action.Fields["tags"]))
+	defs := Tags(s.Store, records.StringList(action.Fields["tags"]))
 	if len(defs) == 0 {
-		return fail("there are no tags to give: add some, each with what it means, at /t/%s", TagType)
+		return fail("there are no tags to give: add some, each with what it means, at /t/%s", records.TagType)
 	}
 	words := recordWords(s.Store, t, rec)
-	var asked, alone []tagDef
+	var asked, alone []Tag
 	for _, d := range defs {
-		if d.alone {
+		if d.Alone {
 			alone = append(alone, d)
 		} else {
 			asked = append(asked, d)
@@ -145,7 +144,7 @@ func (s *Service) Classify(ctx context.Context, action *store.Record, typeName, 
 		}
 	}
 	if len(picks) == 0 && len(alone) > 0 {
-		picks = []chosen{{alone[0].name, "no other tag fits"}}
+		picks = []chosen{{alone[0].Name, "no other tag fits"}}
 	}
 	outs := s.checked(ctx, action, t, rec, words, picks, defs)
 	var said, given []string
@@ -161,7 +160,7 @@ func (s *Service) Classify(ctx context.Context, action *store.Record, typeName, 
 		if o.state == "confirmed" {
 			cl["confirmed_by"] = "judgement"
 		}
-		if done, err := s.Apply(records.Op{Type: ClassificationType, After: cl}); err == nil {
+		if done, err := s.Apply(records.Op{Type: records.ClassificationType, After: cl}); err == nil {
 			ops = append(ops, done...)
 		}
 		said = append(said, o.tag+" ("+map[string]string{"suggested": "suggested", "confirmed": "kept, as you chose before"}[o.state]+": "+o.why+")")
@@ -169,10 +168,10 @@ func (s *Service) Classify(ctx context.Context, action *store.Record, typeName, 
 	title, _ := action.Fields["title"].(string)
 	name := records.Name(s.Store, t, rec)
 	if len(said) == 0 {
-		return toolResult{text: name + ": no tag fits", answer: ""}
+		return Result{Text: name + ": no tag fits", Answer: ""}
 	}
-	return toolResult{text: name + ": " + strings.Join(said, "; "), answer: strings.Join(given, ", "),
-		change: &records.Change{Action: "tagged", Component: t.Name, ID: rec.ID, Detail: name + ": " + strings.Join(said, "; "), By: title, Href: "/t/" + t.Name + "/" + rec.ID, Ops: ops}}
+	return Result{Text: name + ": " + strings.Join(said, "; "), Answer: strings.Join(given, ", "),
+		Change: &records.Change{Action: "tagged", Component: t.Name, ID: rec.ID, Detail: name + ": " + strings.Join(said, "; "), By: title, Href: "/t/" + t.Name + "/" + rec.ID, Ops: ops}}
 }
 
 // giveTag puts a tag on a record that has a tags list, once, and answers
@@ -198,7 +197,7 @@ func (s *Service) giveTag(t *schema.Type, rec *store.Record, tag string) []recor
 
 // pickTags asks which of the tags fit: all at once, or each on its own
 // when the action says so.
-func (s *Service) pickTags(ctx context.Context, action *store.Record, defs []tagDef, words string) ([]chosen, error) {
+func (s *Service) pickTags(ctx context.Context, action *store.Record, defs []Tag, words string) ([]chosen, error) {
 	var picks []chosen
 	if apart, _ := action.Fields["apart"].(bool); apart {
 		for _, d := range defs {
@@ -206,17 +205,17 @@ func (s *Service) pickTags(ctx context.Context, action *store.Record, defs []tag
 				Fits bool   `json:"fits"`
 				Why  string `json:"why"`
 			}
-			if err := s.askJSON(ctx, oneTagSystem, fmt.Sprintf("Tag %q means: %s\n\nThe record:\n%s", d.name, d.means, words), &a); err != nil {
+			if err := s.askJSON(ctx, oneTagSystem, fmt.Sprintf("Tag %q means: %s\n\nThe record:\n%s", d.Name, d.Means, words), &a); err != nil {
 				return nil, err
 			}
 			if a.Fits {
-				picks = append(picks, chosen{d.name, a.Why})
+				picks = append(picks, chosen{d.Name, a.Why})
 			}
 		}
 	} else {
 		var list strings.Builder
 		for _, d := range defs {
-			list.WriteString(fmt.Sprintf("- %s: %s\n", d.name, d.means))
+			list.WriteString(fmt.Sprintf("- %s: %s\n", d.Name, d.Means))
 		}
 		var a struct {
 			Tags []chosen `json:"tags"`
@@ -226,7 +225,7 @@ func (s *Service) pickTags(ctx context.Context, action *store.Record, defs []tag
 		}
 		known := map[string]string{}
 		for _, d := range defs {
-			known[strings.ToLower(d.name)] = d.name
+			known[strings.ToLower(d.Name)] = d.Name
 		}
 		for _, p := range a.Tags {
 			if name, ok := known[strings.ToLower(strings.TrimSpace(p.Tag))]; ok {
@@ -251,7 +250,7 @@ type outcome struct {
 
 // checked is each tag picked as the check with the person's past choices
 // leaves it, when the action asks for the check (judgement.go).
-func (s *Service) checked(ctx context.Context, action *store.Record, t *schema.Type, rec *store.Record, words string, picks []chosen, defs []tagDef) []outcome {
+func (s *Service) checked(ctx context.Context, action *store.Record, t *schema.Type, rec *store.Record, words string, picks []chosen, defs []Tag) []outcome {
 	check, _ := action.Fields["check"].(bool)
 	var outs []outcome
 	for _, p := range picks {
@@ -269,10 +268,10 @@ func (s *Service) checked(ctx context.Context, action *store.Record, t *schema.T
 
 // keepAlone drops a tag given only when no other fits, when another is
 // given: the check may have changed one into the other.
-func keepAlone(outs []outcome, defs []tagDef) []outcome {
+func keepAlone(outs []outcome, defs []Tag) []outcome {
 	isAlone := map[string]bool{}
 	for _, d := range defs {
-		isAlone[strings.ToLower(d.name)] = d.alone
+		isAlone[strings.ToLower(d.Name)] = d.Alone
 	}
 	other := false
 	for _, o := range outs {
@@ -290,9 +289,9 @@ func keepAlone(outs []outcome, defs []tagDef) []outcome {
 	return kept
 }
 
-func aloneTag(defs []tagDef, tag string) bool {
+func aloneTag(defs []Tag, tag string) bool {
 	for _, d := range defs {
-		if d.alone && strings.EqualFold(d.name, tag) {
+		if d.Alone && strings.EqualFold(d.Name, tag) {
 			return true
 		}
 	}

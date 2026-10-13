@@ -13,8 +13,8 @@ import (
 // sends the same at the time set, once a day, leading to Today.
 func TestTodayAndItsMorningBrief(t *testing.T) {
 	t.Parallel()
-	a, _ := newApp(t)
-	now := time.Now()
+	a, _ := newAppAt(t, tonight)
+	now := tonight
 	today, yesterday, tomorrow := now.Format("2006-01-02"), now.AddDate(0, 0, -1).Format("2006-01-02"), now.AddDate(0, 0, 1).Format("2006-01-02")
 	for _, r := range []struct {
 		typ    string

@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/automate"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/runner"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -50,7 +51,7 @@ func (s *Service) listen() {
 
 // heard is one change, logged or the system's own (records/listen.go):
 // each record it wrote, as it was and as it is now, goes to the actions
-// waiting for it and to the tags an action gave (judgement.go). Every way
+// waiting for it and to the tags an action gave (automate/judgement.go). Every way
 // a record is written is heard here, from a page, the API, the
 // assistant, an import or the content folder, since each goes through
 // records.
@@ -62,7 +63,7 @@ func (s *Service) heard(_ string, c records.Change) {
 		}
 		was, now := opRecord(op, op.Before), opRecord(op, op.After)
 		s.recordChanged(t, was, now)
-		s.tagsChanged(t, was, now)
+		automate.TagsChanged(s.Store, t, was, now)
 	}
 }
 

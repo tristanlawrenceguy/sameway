@@ -5,6 +5,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
 
 // CompactComponent is one component as someone writing a block needs it:
@@ -58,7 +59,7 @@ func serverFilledProps(raw json.RawMessage) map[string]bool {
 	json.Unmarshal(raw, &s)
 	out := map[string]bool{}
 	for k, p := range s.Properties {
-		if chat.ServerFilled(p.Description) {
+		if schema.ServerFilled(p.Description) {
 			out[k] = true
 		}
 	}

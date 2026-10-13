@@ -1,4 +1,4 @@
-package chat
+package automate
 
 import (
 	"context"
@@ -40,10 +40,10 @@ Answer with JSON only: {"make": true or false, "fields": {...}, "why": "four to 
 func (s *Service) fieldGuide(t *schema.Type) string {
 	var b strings.Builder
 	for _, f := range t.Shown() {
-		if f.ReadOnly || ServerFilled(f.Description) || f.RefList() || f.Type == "json" || f.Name == "tags" {
+		if f.ReadOnly || schema.ServerFilled(f.Description) || f.RefList() || f.Type == "json" || f.Name == "tags" {
 			continue
 		}
-		how := fieldKind(f)
+		how := f.Kind()
 		switch {
 		case f.Type == "datetime":
 			how = "the words of the record that say the day, copied exactly, as short as they can be (\"Friday\", \"15 October at 14:30\", \"the 1st\"); do not work out a date"
@@ -65,7 +65,7 @@ func (s *Service) fieldGuide(t *schema.Type) string {
 
 // Suggest puts to the person a record of the kind the action makes,
 // filled from the record that set it off, and says what it put.
-func (s *Service) Suggest(ctx context.Context, action *store.Record, typeName, id string) toolResult {
+func (s *Service) Suggest(ctx context.Context, action *store.Record, typeName, id string) Result {
 	from, ok := s.Store.Types().Get(typeName)
 	rec, err := s.Store.Get(typeName, id)
 	if !ok || err != nil {
@@ -93,11 +93,11 @@ func (s *Service) Suggest(ctx context.Context, action *store.Record, typeName, i
 	}
 	name := records.Name(s.Store, from, rec)
 	if !sug.Make {
-		return toolResult{text: name + ": nothing to suggest"}
+		return Result{Text: name + ": nothing to suggest"}
 	}
 	fields := s.fillSuggested(mt, sug.Fields, sentOf(rec))
 	if t, _ := fields[mt.Title].(string); strings.TrimSpace(t) == "" {
-		return toolResult{text: name + ": nothing to suggest"}
+		return Result{Text: name + ": nothing to suggest"}
 	}
 	summary := fmt.Sprintf("Make a %s from %q: %s?", schema.Words(mt.Name), name, s.suggestedWords(mt, fields))
 	done, err := s.Apply(records.Op{Type: records.ProposalType, After: map[string]any{"summary": summary, "detail": strings.TrimSpace(sug.Why),
@@ -109,7 +109,7 @@ func (s *Service) Suggest(ctx context.Context, action *store.Record, typeName, i
 	// The question is logged with the change that runs the action, so
 	// undoing that takes it back.
 	p := done[0]
-	return toolResult{text: "suggested: " + summary, answer: p.ID, change: &records.Change{Action: "proposed", ID: p.ID, Detail: trim.Line(summary, 80), Ops: done}}
+	return Result{Text: "suggested: " + summary, Answer: p.ID, Change: &records.Change{Action: "proposed", ID: p.ID, Detail: trim.Line(summary, 80), Ops: done}}
 }
 
 // fillSuggested turns what the model wrote into a record's fields: a day

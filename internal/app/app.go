@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/automate"
 	"github.com/tristanlawrenceguy/sameway/internal/blocks"
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/content"
@@ -30,6 +31,8 @@ type App struct {
 	// Mirror keeps content/ as the portable form of every record.
 	Mirror content.Mirror
 	Chat   *chat.Service
+	// Automate runs the person's actions. See internal/automate.
+	Automate *automate.Service
 	// Records are the workspace's records as every way in keeps them: the
 	// same Book the chat is built on. See internal/records.
 	Records *records.Book
@@ -98,6 +101,8 @@ func Open(dir string, o Options) (*App, error) {
 		Measured:     chat.MeasuresIn(st),
 	}
 	a.Chat.Provider, a.Chat.ProviderErr = llm.New(a.LLMConfig())
+	a.Automate = &automate.Service{Book: a.Records, Model: func() llm.Provider { return a.Chat.Provider }}
+	a.Chat.Automate = a.Automate
 	a.Chat.Allow = allowList(ws.Config.Actions.Allow)
 	a.Records.SetSetting = func(key, value string) error {
 		if err := ws.Set(key, value); err != nil {
