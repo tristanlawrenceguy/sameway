@@ -95,6 +95,9 @@ area it belongs to, or a new file in `docs/tests/` linked here.
   `records.Apply`, `ApplyOps` or `WriteAs`. The few that still do are in
   `storeWrites` in `tools/check/debt.go`, each with why, and that list
   only goes down.
+- **Every API error code is described.** `tools/check` fails a `Code` an
+  API error is sent with anywhere under internal that the `"errors"` entry
+  of describe (`internal/app/app.go`) does not name.
 - **Golden examples.** A component template must reproduce every example in
   its manifest byte for byte. After changing a template or manifest run
   `UPDATE_GOLDEN=1 go test ./internal/render/` and commit the example files.

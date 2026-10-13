@@ -2,10 +2,6 @@ package server_test
 
 import (
 	"net/http"
-	"os"
-	"path/filepath"
-	"regexp"
-	"strings"
 	"testing"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
@@ -14,26 +10,13 @@ import (
 
 // Every route says who may use it; one nobody said anything about is the
 // owner's alone until somebody does, rather than open to everyone let in.
-// And every route is in the table: one registered beside it would say
-// nothing of who may use it.
+// The mux is built from the table alone (routes.go), and a request whose
+// route is not in it is the owner's (ownerOnlyRequest).
 func TestEveryRouteSaysWhoMayUseIt(t *testing.T) {
 	t.Parallel()
 	for _, r := range server.Routes() {
 		if r.Access == "" {
 			t.Errorf("%s: who may use it? Say so in its route (routes*.go): people, or owner", r.Pattern)
-		}
-	}
-	files, _ := filepath.Glob("*.go")
-	registered := regexp.MustCompile(`(?:HandleFunc|Handle)\("([^"]*)"`)
-	for _, f := range files {
-		if strings.HasSuffix(f, "_test.go") {
-			continue
-		}
-		src, _ := os.ReadFile(f)
-		for _, m := range registered.FindAllStringSubmatch(string(src), -1) {
-			if m[1] != "/" { // notfound.go wraps the whole table
-				t.Errorf("%s: %s is registered outside the route table; give it a route in routes*.go", f, m[1])
-			}
 		}
 	}
 }

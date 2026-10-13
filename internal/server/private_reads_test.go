@@ -2,8 +2,6 @@ package server_test
 
 import (
 	"net/http"
-	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
@@ -57,27 +55,23 @@ func TestNothingOfTheOwnersIsReadByOthers(t *testing.T) {
 	ids["note"] = note.ID
 
 	var paths []string
-	files, _ := filepath.Glob("*.go")
-	pattern := regexp.MustCompile(`HandleFunc\("GET (/[^"]*)"`)
-	for _, f := range files {
-		if strings.HasSuffix(f, "_test.go") {
+	for _, rt := range server.Routes() {
+		method, route, _ := strings.Cut(rt.Pattern, " ")
+		if method != http.MethodGet {
 			continue
 		}
-		src, _ := os.ReadFile(f)
-		for _, m := range pattern.FindAllStringSubmatch(string(src), -1) {
-			route := strings.ReplaceAll(m[1], "{$}", "")
-			if strings.Contains(route, "stream") || strings.HasSuffix(route, "/live") || route == "/events" || route == "/api/changes" {
-				continue // streams that wait; their first answer is read in their own tests
-			}
-			if !strings.Contains(route, "{type}") && !strings.Contains(route, "{file}") {
-				paths = append(paths, fill(route, "", ids))
-				continue
-			}
-			for typ := range ids {
-				p := strings.ReplaceAll(route, "{type}", typ)
-				p = strings.ReplaceAll(p, "{file}", typ+".csv")
-				paths = append(paths, fill(p, typ, ids))
-			}
+		route = strings.ReplaceAll(route, "{$}", "")
+		if strings.Contains(route, "stream") || strings.HasSuffix(route, "/live") || route == "/events" || route == "/api/changes" {
+			continue // streams that wait; their first answer is read in their own tests
+		}
+		if !strings.Contains(route, "{type}") && !strings.Contains(route, "{file}") {
+			paths = append(paths, fill(route, "", ids))
+			continue
+		}
+		for typ := range ids {
+			p := strings.ReplaceAll(route, "{type}", typ)
+			p = strings.ReplaceAll(p, "{file}", typ+".csv")
+			paths = append(paths, fill(p, typ, ids))
 		}
 	}
 	paths = append(paths, "/search?q=lawyer", "/api/search?q=lawyer", "/api/search?q=between", "/search?q=diary", "/api/search?q=private",
