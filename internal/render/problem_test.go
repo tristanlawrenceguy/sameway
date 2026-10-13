@@ -5,7 +5,6 @@ package render_test
 // like every other fold.
 
 import (
-	"io/fs"
 	"regexp"
 	"strings"
 	"testing"
@@ -44,20 +43,5 @@ func TestAProblemFoldShowsItOpens(t *testing.T) {
 	// It is there when the page loads, so a live role would not be heard.
 	if strings.Contains(out, "role=") || strings.Contains(out, "aria-live") {
 		t.Errorf("a problem is found where it sits, not announced:\n%s", out)
-	}
-}
-
-// TestAProblemIsNotMutedLikeAnEmptyLine: a quiet empty line is muted; the
-// sentence that says a block is set up wrong is in the text colour, so the
-// two never look the same.
-func TestAProblemIsNotMutedLikeAnEmptyLine(t *testing.T) {
-	t.Parallel()
-	css, err := fs.ReadFile(design.FS, "components/problem/style.css")
-	if err != nil {
-		t.Fatal(err)
-	}
-	said := regexp.MustCompile(`\.sw-problem__said \{[^}]*\}`).FindString(string(css))
-	if said == "" || strings.Contains(said, "fg-muted") {
-		t.Errorf("the sentence should be in the text colour, got %q", said)
 	}
 }

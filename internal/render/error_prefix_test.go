@@ -12,9 +12,9 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 )
 
-// TestTextFieldErrorHasNoPrefix checks that a text-field error message does not
-// get prefixed with "Error:" by the CSS. The .sw-field__error class must not use
-// a ::before pseudo-element to prepend "Error: ". Acceptance item 1.
+// TestTextFieldErrorHasNoPrefix checks that a text-field error message is
+// its words; that nothing is drawn before them is checked in a browser
+// (tools/a11y-runner/behave-look.mjs). Acceptance item 1.
 func TestTextFieldErrorHasNoPrefix(t *testing.T) {
 	t.Parallel()
 	reg := render.New()
@@ -37,20 +37,4 @@ func TestTextFieldErrorHasNoPrefix(t *testing.T) {
 	if !strings.Contains(out, "Enter an email address") {
 		t.Errorf("error message should appear; got:\n%s", out)
 	}
-
-	// Read the component CSS to check no ::before adds a prefix.
-	c, ok := reg.Get("text-field")
-	if !ok {
-		t.Fatal("text-field component not registered")
-	}
-	data, err := c.ReadFile("style.css")
-	if err != nil {
-		t.Fatalf("read text-field style.css: %v", err)
-	}
-	css := string(data)
-	if strings.Contains(css, `content: "Error: "`) {
-		t.Errorf(".sw-field__error must not prepend \"Error:\" via ::before;\ncss:\n%s\nwant: no content prefix on error messages", css)
-	}
-
-	_ = reg
 }
