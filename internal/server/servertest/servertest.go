@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"net/http"
 
@@ -64,6 +65,23 @@ func NewWith(t *testing.T, o app.Options) (*app.App, http.Handler) {
 	a.Chat.Provider, a.Chat.ProviderErr = nil, llm.ErrNotConfigured
 	return a, server.New(a)
 }
+
+// At is New with the app's clock stopped at now, so what the app says by
+// the day (today, tomorrow, overdue) is worked out from the moment the
+// test works out what it expects from, not from a second clock reading.
+func At(t *testing.T, now time.Time) (*app.App, http.Handler) {
+	t.Helper()
+	return NewWith(t, app.Options{Clock: func() time.Time { return now }})
+}
+
+// Tonight is where a test of the day stops the clock: a tenth of a second
+// before midnight, when a day read twice is likeliest to be two days. It
+// is tonight rather than a fixed date because the store still stamps when
+// a record was made on this computer's clock.
+var Tonight = func() time.Time {
+	y, m, d := time.Now().Date() // wall clock: tonight is the real one, beside the store's own stamps
+	return time.Date(y, m, d, 23, 59, 59, 9e8, time.Local)
+}()
 
 // Machine is a computer's folders for one test: an empty known list, no
 // keys, no copies (workspace.Machine).

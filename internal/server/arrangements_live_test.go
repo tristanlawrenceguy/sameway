@@ -3,7 +3,6 @@ package server_test
 import (
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
 )
@@ -60,8 +59,8 @@ func TestArrangementsOnAnEmptyWorkspaceSayThereIsNothingYet(t *testing.T) {
 // On a workspace with records, the same arrangements show them.
 func TestArrangementsShowThePersonsRecords(t *testing.T) {
 	t.Parallel()
-	a, h := newApp(t)
-	tomorrow := time.Now().AddDate(0, 0, 1).Format("2006-01-02")
+	a, h := newAppAt(t, tonight)
+	tomorrow := tonight.AddDate(0, 0, 1).Format("2006-01-02")
 	for _, r := range []struct {
 		typ    string
 		fields map[string]any

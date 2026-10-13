@@ -11,10 +11,12 @@ import (
 // days, as links to their pages, and never needs telling what day it is.
 func TestACalendarShowsRecordsOnTheirDays(t *testing.T) {
 	t.Parallel()
-	a, h := newApp(t)
-	now := time.Now()
+	a, h := newAppAt(t, tonight)
+	now := tonight
 	day := func(d int) string { return now.AddDate(0, 0, d).Format("2006-01-02") + "T00:00:00Z" }
-	soon, err := a.Store.Create("task", map[string]any{"title": "Order compost", "due": now.Add(2 * time.Hour).UTC().Format(time.RFC3339)})
+	// At midday today: two hours on from the clock could be next month.
+	y, m, d := now.Date()
+	soon, err := a.Store.Create("task", map[string]any{"title": "Order compost", "due": time.Date(y, m, d, 12, 0, 0, 0, time.Local).UTC().Format(time.RFC3339)})
 	if err != nil {
 		t.Fatal(err)
 	}

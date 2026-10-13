@@ -59,13 +59,13 @@ func TestARepeatIsWrittenInWordsAndSaidBack(t *testing.T) {
 // the day it was due, in one change the log has and Undo takes back.
 func TestARepeatingTaskDoneIsDueAgain(t *testing.T) {
 	t.Parallel()
-	a, h := newApp(t)
-	due := time.Now().AddDate(0, 0, 1).Format("2006-01-02") + "T00:00:00Z"
+	a, h := newAppAt(t, tonight)
+	due := tonight.AddDate(0, 0, 1).Format("2006-01-02") + "T00:00:00Z"
 	task, _ := a.Store.Create("task", map[string]any{"title": "Water the ferns", "due": due, "repeat": "every 2 weeks"})
 
 	page := after(t, h, postForm(t, h, "/t/task/"+task.ID+"/props", url.Values{"prop-done": {"true", "false"}})).Body.String()
 	rec, _ := a.Store.Get("task", task.ID)
-	want, _ := when.Next("FREQ=WEEKLY;INTERVAL=2", due, time.Now())
+	want, _ := when.Next("FREQ=WEEKLY;INTERVAL=2", due, tonight)
 	if rec.Fields["done"] != false || rec.Fields["due"] != want {
 		t.Errorf("done, it is due again two weeks after it was due (%s), got %v %v", want, rec.Fields["done"], rec.Fields["due"])
 	}
@@ -102,10 +102,12 @@ func TestARepeatingTaskDoneIsDueAgain(t *testing.T) {
 // words, and Cancel on one that repeats skips only this time.
 func TestARepeatingReminderRingsAgain(t *testing.T) {
 	t.Parallel()
-	a, h := newApp(t)
+	a, h := newAppAt(t, tonight)
 	a.Store.Create(records.BlockType, a.Chat.BlockFields(map[string]any{"component": "clock", "props": map[string]any{}}))
-	now := time.Now()
-	at := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), 0, 0, time.Local).Add(-time.Minute)
+	now := tonight
+	// Rung at the start of this minute, not a minute before: just after
+	// midnight that is yesterday, and its next time today, not tomorrow.
+	at := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), 0, 0, time.Local)
 	rem, _ := a.Store.Create(server.ReminderType, map[string]any{"title": "Stretch", "at": when.Store(at, false), "state": "rang", "repeat": "every day"})
 
 	if page := get(t, h, "/").Body.String(); !strings.Contains(page, "Repeats every day") {

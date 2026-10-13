@@ -17,8 +17,8 @@ import (
 // was done and never what is late.
 func TestTheWeeklyReview(t *testing.T) {
 	t.Parallel()
-	a, _ := newApp(t)
-	now := time.Now()
+	a, _ := newAppAt(t, tonight)
+	now := tonight
 	day := func(d int) string { return now.AddDate(0, 0, d).Format("2006-01-02") }
 	ids := map[string]string{}
 	for _, f := range []map[string]any{

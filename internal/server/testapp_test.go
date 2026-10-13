@@ -54,6 +54,8 @@ func assertAllComponentsKnown(t *testing.T, doc *htmltest.Doc, names []string) {
 var (
 	newApp        = servertest.New
 	newAppWith    = servertest.NewWith
+	newAppAt      = servertest.At
+	tonight       = servertest.Tonight
 	do            = servertest.Do
 	get           = servertest.Get
 	postForm      = servertest.PostForm

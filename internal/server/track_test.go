@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
@@ -20,7 +19,7 @@ import (
 // the target drawn across it.
 func TestAHabitIsTrackedOutOfTheBox(t *testing.T) {
 	t.Parallel()
-	a, h := newApp(t)
+	a, h := newAppAt(t, tonight)
 	water, err := a.Store.Create(server.HabitType, map[string]any{"name": "Water", "cadence": "day", "target": 8, "unit": "glasses"})
 	if err != nil {
 		t.Fatal(err)
@@ -33,11 +32,11 @@ func TestAHabitIsTrackedOutOfTheBox(t *testing.T) {
 	}
 	// Yesterday and the day before were done; today is not yet.
 	for days := 1; days <= 2; days++ {
-		at := when.Store(time.Now().AddDate(0, 0, -days), false)
+		at := when.Store(tonight.AddDate(0, 0, -days), false)
 		a.Store.Create(server.EntryType, map[string]any{"habit": stretch.ID, "at": at})
 		a.Store.Create(server.EntryType, map[string]any{"habit": water.ID, "at": at, "amount": 8})
 	}
-	a.Store.Create(server.EntryType, map[string]any{"habit": water.ID, "at": when.Store(time.Now(), false), "amount": 3})
+	a.Store.Create(server.EntryType, map[string]any{"habit": water.ID, "at": when.Store(tonight, false), "amount": 3})
 
 	page := get(t, h, "/").Body.String()
 	for _, want := range []string{`data-component="tracker"`, `data-id="` + water.ID + `" data-met="false"`, `3 of 8 glasses`, `2 days in a row`, `aria-valuenow="3"`, `aria-valuemax="8"`, `data-id="` + stretch.ID + `"`, `not yet`, `action="/habit/` + water.ID + `/log"`} {

@@ -24,9 +24,9 @@ import (
 // met; an entry is titled by its habit.
 func TestThingsKnowWhatTheyAreAbout(t *testing.T) {
 	t.Parallel()
-	a, h := newApp(t)
+	now := tonight
+	a, h := newAppAt(t, now)
 	srv := h.(*server.Server)
-	now := time.Now()
 	tomorrow := now.AddDate(0, 0, 1)
 	task, err := a.Store.Create("task", map[string]any{"title": "Order compost", "due": when.Store(tomorrow, false)})
 	if err != nil {
@@ -125,8 +125,10 @@ func TestThingsKnowWhatTheyAreAbout(t *testing.T) {
 		t.Errorf("the unmet habit nudges with where it stands, the met one does not: %v %v", rang, told)
 	}
 	mu.Unlock()
-	// A minute on, not an hour: an hour could cross midnight into a new day.
-	if again := srv.Ring(now.Add(time.Minute)); len(again) != 0 {
+	// Rung again the same day, so at the same moment: the clock stands a
+	// tenth of a second before midnight, and any later is a new day, when
+	// the habit nudges again.
+	if again := srv.Ring(now); len(again) != 0 {
 		t.Errorf("a habit nudges once a day, got %v", again)
 	}
 	if page := get(t, h, "/").Body.String(); !strings.Contains(page, `data-component="clock"`) && !strings.Contains(page, "Water") {
