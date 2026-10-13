@@ -23,7 +23,7 @@ func TestGetRecordSaysItsTitle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, c := range []struct{ typ, id, want string }{{"entry", entry.ID, "Read: 25 minutes"}, {"note", note.ID, "Call the dentist"}} {
+	for _, c := range []struct{ typ, id, want string }{{"entry", entry.ID, "Read, 25 minutes"}, {"note", note.ID, "Call the dentist"}} {
 		args, _ := json.Marshal(map[string]any{"type": c.typ, "id": c.id})
 		text, isErr := svc.Call("get_record", args)
 		var out struct {
