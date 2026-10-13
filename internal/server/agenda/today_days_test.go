@@ -28,7 +28,7 @@ func TestTodaySaysEachDayAsAPersonPlansBy(t *testing.T) {
 	if !strings.Contains(tasks, "Pay rent") || strings.Contains(tasks[:strings.Index(tasks, "</li>")], "<time") {
 		t.Errorf("a whole day due today is today's, with no time: %s", truncate(tasks))
 	}
-	late := page[strings.Index(page, ">Late<"):strings.Index(page, ">Tasks<")]
+	late := page[strings.Index(page, ">Overdue<"):strings.Index(page, ">Tasks<")]
 	if !strings.Contains(late, `datetime="`+now.AddDate(0, 0, -3).Format("2006-01-02")+`"`) {
 		t.Errorf("a late whole day says its day, its date as the value: %s", late)
 	}

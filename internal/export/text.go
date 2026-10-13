@@ -36,8 +36,9 @@ type Fact struct {
 
 // Text is a record's shown fields as words, but its title, which the
 // reader is given as its name: facts, each field with something in it
-// and not a plain no, and body, its writing (text and markdown fields),
-// whole, in field order. With titles nil a ref is left out, not given as
+// and not a plain no nor a default nobody chose (schema.Unchosen, as a
+// record's page), and body, its writing (text and markdown fields), whole,
+// in field order. With titles nil a ref is left out, not given as
 // an id that means nothing to a reader.
 func Text(t *schema.Type, fields map[string]any, titles Titles, loc *time.Location, h24 bool) (facts []Fact, body []string) {
 	for _, f := range t.Shown() {
@@ -49,6 +50,9 @@ func Text(t *schema.Type, fields map[string]any, titles Titles, loc *time.Locati
 			if s = strings.TrimSpace(s); s != "" {
 				body = append(body, s)
 			}
+			continue
+		}
+		if f.Unchosen(v) { // a default nobody chose, as a page leaves it out
 			continue
 		}
 		if said := Said(f, v, titles, loc, h24); said != "" && said != "no" {
