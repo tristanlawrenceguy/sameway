@@ -14,7 +14,9 @@ import (
 func TestFindRecordsTakesTheSameQuery(t *testing.T) {
 	t.Parallel()
 	svc := newFullService(t)
-	day := func(d int) string { return time.Now().AddDate(0, 0, d).UTC().Format(time.RFC3339) }
+	now := time.Date(2026, 9, 15, 12, 0, 0, 0, time.Local) // noon here, far from midnight
+	svc.Clock = func() time.Time { return now }
+	day := func(d int) string { return now.AddDate(0, 0, d).UTC().Format(time.RFC3339) }
 	svc.Store.Create("task", map[string]any{"title": "Dig the pond", "due": day(-2)})
 	svc.Store.Create("task", map[string]any{"title": "Order compost", "due": day(2)})
 	svc.Store.Create("task", map[string]any{"title": "Call the dentist", "due": day(3), "done": true})
