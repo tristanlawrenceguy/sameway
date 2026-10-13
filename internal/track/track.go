@@ -88,6 +88,9 @@ type Summary struct {
 	// Total is everything logged, and Pct how far a goal has come.
 	Total float64
 	Pct   float64
+	// First is the period of the first entry, zero when nothing is: the
+	// periods before it are before the habit was kept, not missed.
+	First time.Time
 }
 
 // Normal fills in what a habit leaves unset: a day, to reach, added up,
@@ -184,7 +187,7 @@ func Summarise(h Habit, entries []Entry, now time.Time, n int) Summary {
 		return meets(h, amt, logged)
 	}
 	cur := PeriodStart(now, h.Cadence)
-	s := Summary{Target: h.Target, Total: total}
+	s := Summary{Target: h.Target, Total: total, First: first}
 	s.Now, s.Logged = amountOf(cur)
 	s.Met = meets(h, s.Now, s.Logged)
 	if h.Aim != Record {
