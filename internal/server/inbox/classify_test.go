@@ -58,7 +58,7 @@ func TestTagsFollowThePersonsJudgement(t *testing.T) {
 	model := &tagModel{decide: "keep"}
 	a.Chat.Provider, a.Chat.ProviderErr = model, nil
 	srv := server.New(a)
-	a.Chat.StartAutomating()
+	a.Automate.StartWorker()
 	srv.SetUpSorting()
 
 	classOf := func(id string) *store.Record {

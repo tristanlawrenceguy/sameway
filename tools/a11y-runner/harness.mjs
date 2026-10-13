@@ -13,11 +13,21 @@ const componentJS = readdirSync(join(design, "components")).sort()
   .map((c) => `/* component: ${c} */\n` + readFileSync(join(design, "components", c, "enhance.js"), "utf8")).join("\n");
 export const bundle = `/* base */\n${baseJS}\n${componentJS}`;
 
+// styles is the stylesheet as /design/sameway.css joins it: the tokens,
+// design/base in filename order, then each component's style.css.
+const css = (dir, f) => readFileSync(join(design, dir, f), "utf8");
+export const styles = [css("tokens", "tokens.css"),
+  ...readdirSync(join(design, "base")).filter((f) => f.endsWith(".css")).sort().map((f) => css("base", f)),
+  ...readdirSync(join(design, "components")).sort().filter((c) => existsSync(join(design, "components", c, "style.css"))).map((c) => css("components/" + c, "style.css")),
+].join("\n");
+
 export const ORIGIN = "http://sw.test";
 
-// page wraps a body the way the layout does, with the script deferred.
+// page wraps a body the way the layout does, with the stylesheet and the
+// script deferred.
 export function page(body, attrs = "") {
   return `<!doctype html><html lang="en"${attrs}><head><meta charset="utf-8"><title>Case</title>
+<link rel="stylesheet" href="/design/sameway.css">
 <script src="/design/sameway.js" defer></script></head><body>${body}</body></html>`;
 }
 
@@ -35,6 +45,7 @@ export async function open(browser, html, routes = {}, init = null) {
   await tab.route(ORIGIN + "/**", (route) => {
     const url = new URL(route.request().url());
     if (url.pathname === "/design/sameway.js") return route.fulfill({ contentType: "text/javascript", body: bundle });
+    if (url.pathname === "/design/sameway.css") return route.fulfill({ contentType: "text/css", body: styles });
     if (routes[url.pathname]) return routes[url.pathname](route, url, route.request());
     if (url.pathname === "/" && route.request().method() === "GET") {
       asked++;

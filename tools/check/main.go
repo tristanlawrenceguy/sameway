@@ -4,7 +4,8 @@
 //   - a non-test Go function over MaxFuncLines fails, unless it is one of the
 //     long functions recorded in debt.go, which may only shrink
 //   - no new Go file named *_more, *_extra or *_helpers (split by size, not topic)
-//   - every component folder has manifest.json, template.html, style.css, README.md, examples/
+//   - every component folder has manifest.json, template.html, style.css, README.md, examples/,
+//     and its style.css uses colour tokens, never raw colours, and keeps the focus outline (css.go)
 //   - design/tokens/tokens.css matches tokens.json
 //   - no time.Now() in internal/server, chat, records or blocks unless its
 //     line says `// wall clock: <reason>`, or its file is in wallClock in
@@ -88,6 +89,7 @@ func checkComponents(root string) []string {
 				problems = append(problems, fmt.Sprintf("component %s manifest has no %s section", e.Name(), key))
 			}
 		}
+		problems = append(problems, checkComponentCSS(e.Name(), filepath.Join(dir, "style.css"))...)
 	}
 	return problems
 }

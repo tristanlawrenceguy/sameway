@@ -68,6 +68,6 @@ func (a *App) Sandbox() (sb *App, done func(), err error) {
 		return nil, nil, err
 	}
 	// Commands tried on the copy run where this workspace's do.
-	sb.Chat.Workdir = a.Chat.Workdir
+	sb.Chat.Workdir, sb.Automate.Workdir = a.Chat.Workdir, a.Automate.Workdir
 	return sb, func() { sb.Close(); gone() }, nil
 }

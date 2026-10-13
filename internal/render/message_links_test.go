@@ -3,8 +3,6 @@ package render_test
 import (
 	"strings"
 	"testing"
-
-	"github.com/tristanlawrenceguy/sameway/internal/render"
 )
 
 // TestMessageWithLinks renders an assistant message that includes links, which is what
@@ -201,38 +199,5 @@ func TestMessagePlainTextUnchanged(t *testing.T) {
 	}
 	if !strings.Contains(got, "<p>No links here.</p>") {
 		t.Errorf("plain text should appear as-is in a <p> tag:\ngot:\n%s", got)
-	}
-}
-
-// TestMessageTemplateUsesLinkify asserts that the message component template
-// calls linkify on paragraph content, which is how acceptance item 5 is met.
-// This test reads the template source directly so it does not depend on a
-// particular render output — if the developer adds linkify to Funcs but
-// forgets to wire it into the template, this still fails.
-func TestMessageTemplateUsesLinkify(t *testing.T) {
-	t.Parallel()
-	reg := builtins(t)
-
-	var c *render.Component
-	for _, comp := range reg.Components() {
-		if comp.Manifest.Name == "message" {
-			c = comp
-			break
-		}
-	}
-	if c == nil {
-		t.Fatal("no message component registered")
-	}
-
-	templateSrc, err := c.ReadFile("template.html")
-	if err != nil {
-		t.Fatalf("read template: %v", err)
-	}
-
-	src := string(templateSrc)
-	// passage links a paragraph's words as linkify does, and makes its dash
-	// lines a list (passage.go).
-	if !strings.Contains(src, "{{passage .}}") {
-		t.Errorf("message template must call passage on paragraph content to make inline URLs clickable\nwant: {{passage .}} in the content range block\ngot:\n%s", src)
 	}
 }

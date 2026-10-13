@@ -1,4 +1,4 @@
-package chat
+package automate
 
 import (
 	"context"
@@ -121,16 +121,16 @@ func (s *Service) runAutomation(ctx context.Context, j automationJob) {
 	title, _ := rec.Fields["title"].(string)
 	ctx = context.WithValue(context.WithValue(ctx, automationKey{}, title), triggerKey{}, j.vars)
 	r := s.runRecord(ctx, filled(rec, j.vars), "")
-	for i := range r.changes {
-		r.changes[i].By, r.changes[i].Via = title, "because "+j.why
-		records.Record(s.Store, "system", r.changes[i])
+	for i := range r.Changes {
+		r.Changes[i].By, r.Changes[i].Via = title, "because "+j.why
+		records.Record(s.Store, "system", r.Changes[i])
 	}
-	if r.change != nil {
-		r.change.By, r.change.Via = title, "because "+j.why
-		records.Record(s.Store, "system", *r.change)
+	if r.Change != nil {
+		r.Change.By, r.Change.Via = title, "because "+j.why
+		records.Record(s.Store, "system", *r.Change)
 	}
-	if r.isErr {
-		records.Record(s.Store, "system", records.Change{Action: "failed", Component: records.ActionType, ID: rec.ID, Detail: title + ": " + r.text, Via: "because " + j.why})
+	if r.IsErr {
+		records.Record(s.Store, "system", records.Change{Action: "failed", Component: records.ActionType, ID: rec.ID, Detail: title + ": " + r.Text, Via: "because " + j.why})
 		return
 	}
 	if kind, _ := rec.Fields["kind"].(string); kind == "message" && s.Tell != nil {
@@ -144,9 +144,9 @@ func (s *Service) runAutomation(ctx context.Context, j automationJob) {
 	for k, v := range j.vars {
 		vars[k] = v
 	}
-	vars["result"] = r.answer
+	vars["result"] = r.Answer
 	if vars["result"] == "" {
-		vars["result"] = r.text
+		vars["result"] = r.Text
 	}
 	select {
 	case s.auto.jobs <- automationJob{action: next, vars: vars, step: j.step + 1, why: title + " ran"}:
@@ -160,8 +160,8 @@ type automationKey struct{}
 // record itself (classify).
 type triggerKey struct{}
 
-// automatedBy is the action a turn was asked for by, or "".
-func automatedBy(ctx context.Context) string {
+// By is the action a turn was asked for by, or "".
+func By(ctx context.Context) string {
 	name, _ := ctx.Value(automationKey{}).(string)
 	return name
 }
@@ -194,7 +194,8 @@ func (s *Service) recordVars(t *schema.Type, rec *store.Record) map[string]strin
 	return vars
 }
 
-var placeholder = regexp.MustCompile(`\{\{\s*([a-zA-Z0-9_]+)\s*\}\}`)
+// Placeholder is a {{name}} in what an action sends.
+var Placeholder = regexp.MustCompile(`\{\{\s*([a-zA-Z0-9_]+)\s*\}\}`)
 
 // filled puts what happened into a copy of an action: escaped for an
 // address in url, for JSON in a body or payload that is JSON, as it is in
@@ -211,8 +212,8 @@ func filled(action *store.Record, vars map[string]string) *store.Record {
 	}
 	put := func(field string, esc func(string) string) {
 		text, _ := out.Fields[field].(string)
-		out.Fields[field] = placeholder.ReplaceAllStringFunc(text, func(m string) string {
-			name := placeholder.FindStringSubmatch(m)[1]
+		out.Fields[field] = Placeholder.ReplaceAllStringFunc(text, func(m string) string {
+			name := Placeholder.FindStringSubmatch(m)[1]
 			v, ok := vars[name]
 			if !ok {
 				return m
@@ -229,7 +230,7 @@ func filled(action *store.Record, vars map[string]string) *store.Record {
 			put(f, func(v string) string { return v })
 		}
 	}
-	if msg, _ := out.Fields["message"].(string); placeholder.MatchString(msg) {
+	if msg, _ := out.Fields["message"].(string); Placeholder.MatchString(msg) {
 		put("message", func(v string) string { return v })
 		// What filled it came from a record or a request, written by
 		// anyone: the assistant reads it as data (records/provenance.go).

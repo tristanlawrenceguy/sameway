@@ -6,7 +6,6 @@ package server_test
 
 import (
 	"net/http"
-	"os"
 	"strings"
 	"testing"
 )
@@ -26,11 +25,7 @@ func TestUploadFormErrorHasNoPleasePrefix(t *testing.T) {
 		t.Errorf("/t/file: inline script must not use \"Please\" prefix in error message;\nwant: \"Select a file.\" or similar without \"Please\"\nbody: %s", truncate(body))
 	}
 
-	// The essential message must still be present.
-	// The essential message is the upload component's own, without "Please".
-	if js, _ := os.ReadFile("../../design/components/upload/enhance.js"); !strings.Contains(string(js), "Select a file to add") {
-		t.Error("the upload script should say to select a file")
-	}
+	// The upload script says to select a file, in a browser: behave-arm.mjs.
 }
 
 // TestImportFormErrorHasNoPleasePrefix checks that the import form's inline

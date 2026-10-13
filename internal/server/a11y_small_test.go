@@ -1,46 +1,13 @@
 package server_test
 
 import (
-	"os"
 	"strings"
 	"testing"
 )
 
-// A reminder is said once, as its name: the list of ringing reminders is
-// not an alert (it read the title with every button), a small one beside
-// it is, and only the first clock on a page speaks.
-func TestAReminderIsSaidOnce(t *testing.T) {
-	t.Parallel()
-	tpl, _ := os.ReadFile("../../design/components/clock/template.html")
-	if strings.Contains(string(tpl), `class="sw-clock__ringing" role="alert"`) || !strings.Contains(string(tpl), `sw-clock__said" role="alert"`) {
-		t.Error("the ringing list is not the alert; a small one beside it is")
-	}
-	js, _ := os.ReadFile("../../design/components/clock/enhance.js")
-	if !strings.Contains(string(js), `document.querySelector(".sw-clock .sw-clock__said")`) || !strings.Contains(string(js), `"Reminder: " + d.title`) {
-		t.Error("the first clock says the reminder's name, once")
-	}
-}
-
-// Nothing pulses on its own for more than about five seconds.
-func TestNothingPulsesForEver(t *testing.T) {
-	t.Parallel()
-	for _, p := range []string{"chat", "clock", "status"} {
-		css, _ := os.ReadFile("../../design/components/" + p + "/style.css")
-		if strings.Contains(string(css), "sw-pulse 1.2s var(--sw-motion-ease) infinite") {
-			t.Errorf("%s pulses for ever", p)
-		}
-	}
-}
-
-// Escape puts away controls a pointer revealed.
-func TestEscapePutsAwayRevealedControls(t *testing.T) {
-	t.Parallel()
-	css, _ := os.ReadFile("../../design/base/05-quiet.css")
-	js, _ := os.ReadFile("../../design/base/25-quiet.js")
-	if !strings.Contains(string(css), `[data-quiet-away]`) || !strings.Contains(string(js), `e.key !== "Escape"`) {
-		t.Error("Escape hides what hover revealed")
-	}
-}
+// A reminder said once, as its name, by the first clock; nothing pulsing for
+// ever; and Escape putting away what the pointer revealed: checked in a
+// browser, tools/a11y-runner/behave-components.mjs and behave-styles.mjs.
 
 // A note in another language than the workspace's says so on its page.
 func TestANoteSaysItsLanguage(t *testing.T) {

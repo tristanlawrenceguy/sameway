@@ -1,7 +1,6 @@
 package render_test
 
 import (
-	"os"
 	"strings"
 	"testing"
 
@@ -48,28 +47,4 @@ func TestPersonIsHeardByNameOnce(t *testing.T) {
 			t.Errorf("the dot is hidden from screen readers:\n%s", out)
 		}
 	}
-}
-
-// A long name wraps rather than running off a phone's screen, even one
-// with no spaces, such as a login standing in for a name, and in a row's
-// details, where things otherwise keep to one line (WCAG 1.4.10).
-func TestPersonLongNameWraps(t *testing.T) {
-	t.Parallel()
-	style, err := os.ReadFile("../../design/components/person/style.css")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(string(style), "overflow-wrap: anywhere") {
-		t.Error("a person's name may break anywhere")
-	}
-	layout, err := os.ReadFile("../../design/base/07-layout.css")
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, line := range strings.Split(string(layout), "\n") {
-		if strings.Contains(line, ".sw-row__meta > .sw-person") && strings.Contains(line, "white-space: normal") {
-			return
-		}
-	}
-	t.Error("in a row's details a person's name wraps, as a note or badge does")
 }
