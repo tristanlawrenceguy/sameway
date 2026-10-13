@@ -70,6 +70,7 @@ still says it, though its row sits under No date.
 | entry | Today at 8am (when it happened, never late), its habit |
 | event | Starts tomorrow at 2pm (past: neutral, never late), 2 tasks, 1 done (the tasks that came up at it) |
 | reminder | Ringing or Done, Today at 7am |
+| interaction | Thu 8 Oct at 10am (when it happened), With Ana Silva |
 | person | 4 interactions; when it changed (a person's organisation is a string the schema does not mark) |
 | project | Done, 3 tasks, 1 done |
 | file | Being read, Could not be read |
@@ -84,6 +85,17 @@ still says it, though its row sits under No date.
 - **Only what can be done is late.** A record with a done tick that is not
   ticked and whose day has passed. A meeting that happened, an entry
   logged, a reminder that rang are past, not late, and are not amber.
+- **One word for it: Overdue.** Today's heading, a list's group, a
+  record's page, the glance an agent reads, the morning brief ("Today: 2
+  tasks, 1 overdue") and the weekly review all say Overdue, never Late on
+  one and Overdue on another: the same thing is called the same everywhere
+  ([WCAG 3.2.4](https://www.w3.org/WAI/WCAG22/Understanding/consistent-identification.html),
+  [NN/g, consistency and standards](https://www.nngroup.com/articles/consistency-and-standards/)),
+  and Overdue is the word Todoist, Apple Reminders and Google Calendar's
+  tasks use ([Todoist, plan your day](https://todoist.com/help/articles/how-to-plan-your-day-UVUXaiSs)).
+  What has passed and cannot be done (a meeting, an entry) is Earlier, the
+  latest first; Google Calendar likewise counts only tasks as overdue,
+  never events ([Google Workspace updates](https://workspaceupdates.googleblog.com/2022/02/manage-overdue-tasks-in-google-calendar.html)).
 - **A day is late once the reader's today is after it; a moment, once its
   time has gone.** Today is amber with the word Today
   ([Todoist, dates](https://www.todoist.com/help/articles/introduction-to-dates-and-time-q7VobO)).
@@ -164,7 +176,32 @@ names them and does not count them.
 A listing counts what is in its records once for all of them, one query
 for each type that can be in them (`glance_count.go`), never once a row.
 
+## What a page lists, and by what name
+
+A record's page, its block on the canvas and a record taken out as text
+(a document, a published record over MCP) list what was chosen about it,
+each by its field's label from the schema, never its stored name. A field
+left empty or at its default (an alarm's Type, a task's To do, a habit not
+archived) is not listed, as GOV.UK's check answers pattern leaves out
+what does not apply to this person
+([GOV.UK, check answers](https://design-system.service.gov.uk/patterns/check-answers/),
+[summary list](https://design-system.service.gov.uk/components/summary-list/)).
+The editor still has every field. One concept has one label in every
+starter type: a choice of what sort of thing it is is its Type (a
+reminder's, an interaction's), and the person an interaction was with is
+With, as a task's person is For
+([WCAG 2.4.6](https://www.w3.org/WAI/WCAG22/Understanding/headings-and-labels.html)).
+
 ## Not done, and why
+
+- **"Not provided" for an empty field.** GOV.UK shows it on a check
+  answers page, where the person has just skipped a question and may
+  want to go back. A record's page is read long after; its Edit opens
+  every field, the empty ones too.
+- **Late as the kinder word.** It is plain, but the rest of the app and
+  the apps people know say Overdue; two words for one thing make a reader
+  wonder whether they differ. Today stays kind by its answers beside each
+  task (Done, Tomorrow, Today), not by its word.
 
 - **Each reader's own zone on the server.** Rendering in the browser's zone
   needs every surface's now to come from the request; a personal workspace

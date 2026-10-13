@@ -44,3 +44,33 @@ func TestKeepOneMergesTheOthers(t *testing.T) {
 		t.Errorf("one left, there is nothing to merge: %s", text)
 	}
 }
+
+// Left to itself, keep_one merges what a list would, those due the same
+// day; another day's errand stays unless named in merge, and an id that
+// is not alike merges nothing.
+func TestKeepOneLeavesAnotherDaysErrand(t *testing.T) {
+	t.Parallel()
+	svc := newFullService(t)
+	keep, _ := svc.Store.Create("task", map[string]any{"title": "Buy coffee", "due": "2026-10-16T00:00:00Z"})
+	twin, _ := svc.Store.Create("task", map[string]any{"title": "Buy coffee", "due": "2026-10-16T09:00:00Z"})
+	later, _ := svc.Store.Create("task", map[string]any{"title": "Buy coffee", "due": "2026-10-23T00:00:00Z"})
+	bread, _ := svc.Store.Create("task", map[string]any{"title": "Buy bread"})
+	if text, isErr := svc.Call("keep_one", []byte(`{"type":"task","id":"`+keep.ID+`","merge":["`+bread.ID+`"]}`)); !isErr || !strings.Contains(text, "Nothing merged") {
+		t.Errorf("a task of another name is not merged: %s", text)
+	}
+	if text, isErr := svc.Call("keep_one", []byte(`{"type":"task","id":"`+keep.ID+`"}`)); isErr || !strings.Contains(text, "merged 2 tasks") {
+		t.Fatalf("the twin is merged: %s", text)
+	}
+	if _, err := svc.Store.Get("task", twin.ID); err == nil {
+		t.Error("the twin is gone")
+	}
+	if _, err := svc.Store.Get("task", later.ID); err != nil {
+		t.Error("next week's errand stays")
+	}
+	if text, isErr := svc.Call("keep_one", []byte(`{"type":"task","id":"`+keep.ID+`"}`)); !isErr || !strings.Contains(text, later.ID+" (due ") {
+		t.Errorf("with no twin left, it says the others and their days: %s", text)
+	}
+	if text, isErr := svc.Call("keep_one", []byte(`{"type":"task","id":"`+keep.ID+`","merge":["`+later.ID+`"]}`)); isErr || !strings.Contains(text, "merged 2 tasks") {
+		t.Errorf("named, it is merged: %s", text)
+	}
+}

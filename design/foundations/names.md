@@ -59,6 +59,37 @@ are offered on their list as one to keep, and the assistant is told when
 it makes one called as an open one is (records.Alike, records.Twins,
 keep_one). Telling them apart is for what is really two.
 
+### Why one thing twice works this way
+
+- **Found, never merged silently.** Google Contacts (Merge & fix) and
+  HubSpot (manage duplicates) suggest, and a person presses Merge. Sameway
+  says the twins under a list's count and the assistant is told when it
+  makes one; nothing merges until a person or the assistant asks
+  ([Google](https://support.google.com/contacts/answer/7078226),
+  [HubSpot](https://knowledge.hubspot.com/records/manage-duplicate-records)).
+- **A merge keeps all the words.** Apple Contacts merging "keeps all the
+  unique information in a single card"
+  ([Apple](https://support.apple.com/guide/contacts/merge-contact-cards-adrbk1456/mac)).
+  The kept one takes what it leaves empty from the others, and their notes
+  it does not say are added to its own. A value both have (a priority, a
+  project) stays the kept one's; Undo takes the whole merge back.
+- **A wrong guess has a way out.** Google lets a suggestion be dismissed
+  and HubSpot a pair rejected. Here it is Rename one, beside Keep the
+  newest: the oldest opens to be named apart. A name of its own tells it
+  apart for everyone, on every surface, where a hidden "these are two"
+  would leave two controls of one name.
+- **A press and a call do the same.** keep_one, left to itself, merges
+  what the list offers: those nothing tells apart. The same errand on
+  another day is merged only when the assistant names it in `merge`, as
+  the person asked; an id that is not alike merges nothing.
+
+Not done, and why: a stored "not the same" (it would hide the offer but
+leave the names alike, which names apart worse than a new name does); a
+side by side picker of each value (HubSpot's, for records with dozens of
+fields; ours have a few, and Undo is one press); finding names that are
+near but not the same ("Groceries", "Buy groceries"), left to the
+assistant's judgement when it is told what is there.
+
 ## Decided, so not findings
 
 - A label beside a value on a record's page (Type: Timer, URL, Due).

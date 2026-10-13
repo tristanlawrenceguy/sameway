@@ -12,11 +12,13 @@ fields:
     maxLength: 200
     description: "What it was about, in a line; the subject of an email."
   person:
+    label: With
     type: ref
     to: person
     listed: true
     description: Who it was with. An import links by their email, phone or name, and makes the person when new.
   kind:
+    label: Type
     type: enum
     values: [call, email, meeting, message, note]
     default: note
