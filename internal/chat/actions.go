@@ -1,31 +1,28 @@
 package chat
 
 import (
-	"cmp"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
 	"strings"
-	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/automate"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
-	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
-// webhooks sends webhook actions where the service names no client.
-var webhooks = &http.Client{Timeout: 10 * time.Second}
+// An action is run by internal/automate. What is here is the
+// conversation's side of it: the tools that run one and accept a command,
+// the actions listed in the prompt, and what running one needs from the
+// conversation (automate.Chat), which this service gives.
 
 var actionOp = Op{Title: "Run an action", Traits: Traits{OpenWorld: true},
 	Words: []string{"run", "press", "button", "action", "webhook", "send to"},
 	Doing: saying("Running an action"),
 	Asks:  (*Service).askAction,
 	Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
-		return s.Run(context.Background(), a.ID, s.current)
+		return ran(s.Automate.For(s).Run(context.Background(), a.ID, s.current))
 	},
 	Tool: llm.Tool{
 		Name:        "run_action",
@@ -35,117 +32,28 @@ var actionOp = Op{Title: "Run an action", Traits: Traits{OpenWorld: true},
 		}, "required": []string{"id"}, "additionalProperties": false},
 	}}
 
-// Run carries out one action for whoever asked. A message action is the
-// person's to press: it talks to the assistant on their behalf, and the
-// canvas is where the reply lands.
-func (s *Service) Run(ctx context.Context, id, canvas string) toolResult {
-	rec, err := s.Store.Get(records.ActionType, id)
-	if err != nil {
-		return fail("no action with id %s; the actions are listed in the prompt, or find_records on %s finds one", id, records.ActionType)
-	}
-	return s.runRecord(ctx, rec, canvas)
+// acceptOp is a command card's Yes, carried by a question: never offered
+// to the model, which may only ask.
+var acceptOp = Op{Title: "Accept a command", Traits: Traits{OpenWorld: true}, Tool: llm.Tool{Name: "accept_action"},
+	Offered: func(*Service, *llm.Tool) bool { return false },
+	Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
+		return ran(s.Automate.For(s).Accept(context.Background(), a.ID))
+	}}
+
+// AddArrangement lays out an arrangement action's page.
+func (s *Service) AddArrangement(name string) automate.Result {
+	return s.addArrangement(name, nil).result()
 }
 
-// runRecord carries out an action as given: as stored, or filled with
-// what set it off (automate.go).
-func (s *Service) runRecord(ctx context.Context, rec *store.Record, canvas string) toolResult {
-	id := rec.ID
-	title, _ := rec.Fields["title"].(string)
-	switch kind, _ := rec.Fields["kind"].(string); kind {
-	case "arrangement":
-		name, _ := rec.Fields["arrangement"].(string)
-		r := s.addArrangement(name, nil)
-		if !r.isErr {
-			r.changes = append(r.changes, records.Change{Action: "ran", Component: records.ActionType, ID: id, Detail: title, Href: relate.Page(records.ActionType, id)})
-		}
-		return r
-	case "command":
-		return s.command(ctx, rec, title)
-	case "classify":
-		vars, _ := ctx.Value(triggerKey{}).(map[string]string)
-		return s.Classify(ctx, rec, vars["type"], vars["id"]) // classify.go
-	case "suggest":
-		vars, _ := ctx.Value(triggerKey{}).(map[string]string)
-		return s.Suggest(ctx, rec, vars["type"], vars["id"]) // suggest_records.go
-	case "mqtt":
-		return s.mqttAction(ctx, rec, title)
-	case "message":
-		text, _ := rec.Fields["message"].(string)
-		if text == "" {
-			return fail("action %s has no message to send", title)
-		}
-		if _, err := s.SendOn(ctx, canvas, text); err != nil {
-			return fail("could not send %q for action %s: %v", text, title, err)
-		}
-		return toolResult{text: "sent to the assistant: " + text, change: &records.Change{Action: "ran", Component: records.ActionType, ID: id, Detail: title, Href: relate.Page(records.ActionType, id)}}
-	default:
-		return s.webhook(ctx, rec, title)
-	}
+// Ask puts a question to the person, with the call their Yes runs.
+func (s *Service) Ask(q automate.Question, call map[string]any) automate.Result {
+	return s.ask(question{q.Ask, q.Detail, q.Yes, q.No}, call).result()
 }
 
-// webhook makes the request the action describes and reports what came
-// back. With show set, the answer is put on the canvas as a text block,
-// made once and updated on every run, so a weather action is a weather
-// block that stays current.
-func (s *Service) webhook(ctx context.Context, rec *store.Record, title string) toolResult {
-	url, _ := rec.Fields["url"].(string)
-	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
-		return fail("action %s needs a url starting with http:// or https://", title)
-	}
-	method, _ := rec.Fields["method"].(string)
-	if method == "" {
-		method = http.MethodPost
-	}
-	body, _ := rec.Fields["body"].(string)
-	var reader io.Reader
-	if body != "" && method != http.MethodGet {
-		reader = strings.NewReader(body)
-	}
-	req, err := http.NewRequestWithContext(ctx, method, url, reader)
-	if err != nil {
-		return fail("action %s: %v", title, err)
-	}
-	if reader != nil {
-		ct := "text/plain; charset=utf-8"
-		if json.Valid([]byte(body)) {
-			ct = "application/json"
-		}
-		req.Header.Set("Content-Type", ct)
-	}
-	resp, err := s.httpClient().Do(req)
-	if err != nil {
-		return fail("%s failed: %v", title, err)
-	}
-	defer resp.Body.Close()
-	raw, _ := io.ReadAll(io.LimitReader(resp.Body, 64<<10))
-	answer := strings.TrimSpace(string(raw))
-	if len([]rune(answer)) > 2000 {
-		answer = string([]rune(answer)[:2000])
-	}
-	out := toolResult{text: fmt.Sprintf("%s answered %d", title, resp.StatusCode), answer: answer}
-	if answer != "" {
-		out.text += ": " + answer
-	}
-	detail := fmt.Sprintf("%s (%d)", title, resp.StatusCode)
-	out.changes = append(out.changes, records.Change{Action: "ran", Component: records.ActionType, ID: rec.ID, Detail: detail, Href: relate.Page(records.ActionType, rec.ID)})
-	if resp.StatusCode >= 400 {
-		out.isErr = true
-		return out
-	}
-	if show, _ := rec.Fields["show"].(bool); show && answer != "" {
-		if c, err := s.show(rec, title, answer); err == nil {
-			out.changes = append(out.changes, c)
-		} else {
-			out.text += ". Could not put it on the canvas: " + err.Error()
-		}
-	}
-	return out
-}
-
-// show puts an action's answer on the canvas: a text block kept by id on
+// Show puts an action's answer on the canvas: a text block kept by id on
 // the action, so the second run updates the first block rather than
 // adding another.
-func (s *Service) show(rec *store.Record, title, answer string) (records.Change, error) {
+func (s *Service) Show(rec *store.Record, title, answer string) (records.Change, error) {
 	props := map[string]any{"content": answer}
 	if id, _ := rec.Fields["block"].(string); id != "" {
 		if _, err := s.Store.Get(records.BlockType, id); err == nil {
@@ -180,38 +88,4 @@ func (s *Service) actionsDigest() string {
 		fmt.Fprintf(&b, "%s: %s, %s\n", r.ID, r.Fields["title"], r.Fields["kind"])
 	}
 	return b.String()
-}
-
-// RunAs runs an action for a person or an agent and records what it did
-// under their name, returning what the action answered. When the action
-// needs accepting first, proposal is the question now waiting for them.
-func (s *Service) RunAs(ctx context.Context, actor, id, canvas string) (text, proposal string, err error) {
-	return s.logRun(ctx, actor, s.Run(ctx, id, canvas))
-}
-
-// logRun records what a run did under whoever asked for it.
-func (s *Service) logRun(ctx context.Context, actor string, r toolResult) (text, proposal string, err error) {
-	for i := range r.changes {
-		r.changes[i].Via, r.changes[i].By, r.changes[i].ByLogin = records.Via(ctx), records.VisitorOf(ctx).Who(), cmp.Or(records.VisitorOf(ctx).Login, s.Owner.Login)
-		records.Record(s.Store, actor, r.changes[i])
-	}
-	if r.change != nil {
-		if r.change.Action == "proposed" {
-			proposal = r.change.ID
-		}
-		records.Record(s.Store, actor, *r.change)
-	}
-	if r.isErr {
-		return r.text, proposal, errors.New(r.text)
-	}
-	return r.text, proposal, nil
-}
-
-// httpClient is the client webhook actions are sent with: the service's
-// own (a test points it at a server of its own), else webhooks.
-func (s *Service) httpClient() *http.Client {
-	if s.HTTP != nil {
-		return s.HTTP
-	}
-	return webhooks
 }

@@ -226,7 +226,7 @@ func TestActionDetailAcceptsUrlAndMethodFields(t *testing.T) {
 	decode(t, postJSON(t, h, http.MethodPost, "/api/action", map[string]any{
 		"title":  "Webhook to example",
 		"url":    "https://example.com/hook",
-		"method": "POST",
+		"method": "GET",
 	}), &act)
 
 	rec := get(t, h, "/t/action/"+act.ID)

@@ -40,12 +40,12 @@ func startBackground(ctx context.Context, a *app.App, h *server.Server, all http
 // backgroundJobs are the jobs the runner does, each on its own schedule:
 // the server's (server/jobs.go: rings, calendars, the cloud folder, the
 // brief and the review, search by meaning, email, writing recordings
-// down), the chat's and the program's.
+// down), the actions' and the program's.
 func backgroundJobs(a *app.App, h *server.Server, notes io.Writer) []runner.Job {
 	jobs := []runner.Job{
 		a.SchemaJob(app.SchemaEvery, h.Changed), // types changed by hand, so open pages follow
-		a.Chat.ScheduleJob(),                    // actions with a schedule; chat/schedule.go
-		a.Chat.AutomateJob(),                    // actions that run when something happens; chat/automate.go
+		a.Automate.ScheduleJob(),                // actions with a schedule; automate/schedule.go
+		a.Automate.WorkerJob(),                  // actions that run when something happens; automate/happened.go
 		snapshotJob(notes, a),
 	}
 	jobs = append(h.BackgroundJobs(), jobs...)

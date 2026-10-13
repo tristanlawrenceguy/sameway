@@ -15,8 +15,8 @@ import (
 // condition explained rather than rendered as nothing.
 func TestACollectionIsTheRecordsThatMatch(t *testing.T) {
 	t.Parallel()
-	a, h := newApp(t)
-	day := func(d int) string { return time.Now().AddDate(0, 0, d).UTC().Format(time.RFC3339) }
+	a, h := newAppAt(t, tonight)
+	day := func(d int) string { return tonight.AddDate(0, 0, d).UTC().Format(time.RFC3339) }
 	// Shown to the minute, so the day due is taken once: worked out again
 	// later, a minute may have turned in between.
 	compost := day(2)
@@ -49,7 +49,7 @@ func TestACollectionIsTheRecordsThatMatch(t *testing.T) {
 	if strings.Index(page, "Order compost") > strings.Index(page, "Plant garlic") {
 		t.Error("the tasks come in due order")
 	}
-	if !strings.Contains(page, when.Relative(compost, time.Now(), false)) {
+	if !strings.Contains(page, when.Relative(compost, tonight, false)) {
 		t.Error("each task shows the day it is due, as its list says it")
 	}
 

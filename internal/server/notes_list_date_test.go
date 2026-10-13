@@ -138,7 +138,11 @@ func TestNoteListNoMachineFormatDatePattern(t *testing.T) {
 // extracts the row, and asserts on the date text inside it. (Acceptance 1 of task 0260.)
 func TestEntryListShowsNaturalDate(t *testing.T) {
 	t.Parallel()
-	_, h := newApp(t)
+	_, h := newAppAt(t, tonight)
+	// At 10am: a time taken from the clock could fall on midnight or
+	// midday, which are said without am or pm.
+	y, m, d := tonight.Date()
+	ten := time.Date(y, m, d, 10, 0, 0, 0, time.Local)
 
 	// Create a habit first (entries require a habit ref).
 	var habit struct{ ID string }
@@ -150,7 +154,7 @@ func TestEntryListShowsNaturalDate(t *testing.T) {
 	decode(t, postJSON(t, h, http.MethodPost, "/api/entry", map[string]any{
 		"note":  "Test entry for date format",
 		"habit": habit.ID,
-		"at":    when.Store(time.Now(), false),
+		"at":    when.Store(ten, false),
 	}), &rec)
 
 	body := get(t, h, "/t/entry").Body.String()

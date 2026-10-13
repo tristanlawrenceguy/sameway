@@ -103,7 +103,8 @@ area it belongs to, or a new file in `docs/tests/` linked here.
   `UPDATE_GOLDEN=1 go test ./internal/render/` and commit the example files.
 - **Manifest completeness.** Every component needs props, a11y, machine, and
   examples sections plus README.md.
-- **Tokens only.** Component CSS uses `var(--sw-...)`; no raw colours.
+- **Tokens only.** `tools/check` fails a raw colour or `outline: none` in a
+  component's `style.css`; colours are `var(--sw-...)` tokens.
 
 ## Rules the tooling cannot enforce
 

@@ -144,7 +144,7 @@ func TestActivityPageSaysNoAddress(t *testing.T) {
 func TestHabitPageSaysItsSettingsInWords(t *testing.T) {
 	t.Parallel()
 	a, h := newApp(t)
-	rec, err := a.Store.Create("habit", map[string]any{"name": "Water", "target": 8.0, "unit": "glasses", "goal": 0.0})
+	rec, err := a.Store.Create("habit", map[string]any{"name": "Water", "target": 8.0, "unit": "glasses", "goal": 0.0, "aim": "limit", "combine": "average"})
 	if err != nil {
 		t.Fatal(err)
 	}

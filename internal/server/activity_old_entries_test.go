@@ -12,7 +12,7 @@ import (
 
 // TestOldEntryActivityShowsReadableTitle seeds an activity entry where the
 // detail field is a raw entry ID (simulating old storage before recordTitle
-// was fixed for EntryType), verifies that /activity shows "Reading: 30 minutes"
+// was fixed for EntryType), verifies that /activity shows "Reading, 30 minutes"
 // instead of the bare ID, and checks the link text is human-readable.
 func TestOldEntryActivityShowsReadableTitle(t *testing.T) {
 	t.Parallel()
@@ -53,13 +53,13 @@ func TestOldEntryActivityShowsReadableTitle(t *testing.T) {
 	if strings.Contains(said(body), entry.ID) {
 		t.Errorf("the activity log should not show a raw database ID %q in visible text\n%s", entry.ID, said(body))
 	}
-	if !strings.Contains(said(body), "Reading: 30 minutes") {
-		t.Errorf("the activity log should show the readable fallback title 'Reading: 30 minutes', got:\n%s", said(body))
+	if !strings.Contains(said(body), "Reading, 30 minutes") {
+		t.Errorf("the activity log should show the readable fallback title 'Reading, 30 minutes', got:\n%s", said(body))
 	}
 
 	// Acceptance 2: the link text is human-readable, not a raw ID.
-	if !anyH3Says(body, "Assistant created entry Reading: 30 minutes") {
-		t.Errorf("the <h3> heading should say 'Assistant created entry Reading: 30 minutes', not a bare ID\n%s", truncate(body))
+	if !anyH3Says(body, "Assistant created entry Reading, 30 minutes") {
+		t.Errorf("the <h3> heading should say 'Assistant created entry Reading, 30 minutes', not a bare ID\n%s", truncate(body))
 	}
 
 	// The link should lead to the entry's page.

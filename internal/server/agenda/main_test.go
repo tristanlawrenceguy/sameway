@@ -14,6 +14,8 @@ func TestMain(m *testing.M) { servertest.Main(m) }
 var (
 	newApp     = servertest.New
 	newAppWith = servertest.NewWith
+	newAppAt   = servertest.At
+	tonight    = servertest.Tonight
 	do         = servertest.Do
 	get        = servertest.Get
 	postForm   = servertest.PostForm
