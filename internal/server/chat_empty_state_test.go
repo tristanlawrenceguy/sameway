@@ -1,29 +1,23 @@
-package server
-
-// Tests for chat block empty-state simplification in conversation.html.
-// These pin that task 0155's Acceptance 3 is met: single short line telling what to do next.
+package server_test
 
 import (
-	"os"
+	"regexp"
 	"strings"
 	"testing"
 )
 
-// TestChatBlockEmptyStateIsOneLine checks that the embedded template uses a
-// single-line empty state — not two sentences.  After the change it should say just
-// "Ask for anything." instead of "Ask for anything. What you ask for appears on the
-// canvas."  This covers Acceptance 3.
+// An empty conversation says what to do next in one short line, not a
+// second sentence about where things go (task 0155).
 func TestChatBlockEmptyStateIsOneLine(t *testing.T) {
 	t.Parallel()
-	// The template says where the empty state goes; chat.go says what it
-	// says, as the empty component.
-	goSrc, _ := os.ReadFile("chat.go")
-	conversationSrc := conversationSrc + string(goSrc)
-	if strings.Contains(conversationSrc, "What you ask for appears on the canvas") {
-		t.Error("chat block empty state must not have the second sentence 'What you ask for appears on the canvas' — it should be a single line: 'Ask for anything.'")
+	a, h := newApp(t)
+	a.Store.Create("note", map[string]any{"title": "Not brand new"}) // a brand new one is welcomed instead
+	page := get(t, h, "/chat").Body.String()
+	empty := regexp.MustCompile(`(?s)<[^>]*data-component="empty".*?</p>`).FindString(page)
+	if !strings.Contains(empty, "Ask for anything.") {
+		t.Errorf("an empty conversation says Ask for anything.; its empty state: %q\nbody: %s", empty, truncate(page))
 	}
-
-	if !strings.Contains(conversationSrc, "Ask for anything") {
-		t.Error("chat block empty state should say 'Ask for anything' as the single-line instruction")
+	if strings.Contains(page, "What you ask for appears on the canvas") {
+		t.Error("one line, not a second sentence about the canvas")
 	}
 }

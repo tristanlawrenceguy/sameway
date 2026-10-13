@@ -48,19 +48,12 @@ func TestThePublicCannotChangeAnything(t *testing.T) {
 	pub := srv.Public(&mcp.Server{App: a, Version: "test", Published: func() map[string]bool { return srv.Published().Types }})
 	before := everything(t, a)
 
-	files, _ := filepath.Glob("*.go")
-	pattern := regexp.MustCompile(`(?:HandleFunc|Handle)\("(?:([A-Z]+) )?(/[^"]*)"`)
 	var routes []string
-	for _, f := range files {
-		if strings.HasSuffix(f, "_test.go") {
-			continue
-		}
-		src, _ := os.ReadFile(f)
-		for _, m := range pattern.FindAllStringSubmatch(string(src), -1) {
-			path := strings.NewReplacer("{$}", "", "{type}", "note", "{id}", note.ID).Replace(m[2])
-			path = regexp.MustCompile(`\{[^}]*\}`).ReplaceAllString(path, "x")
-			routes = append(routes, path)
-		}
+	for _, rt := range server.Routes() {
+		path := rt.Pattern[strings.Index(rt.Pattern, "/"):] // "/api/" has no method
+		path = strings.NewReplacer("{$}", "", "{type}", "note", "{id}", note.ID).Replace(path)
+		path = regexp.MustCompile(`\{[^}]*\}`).ReplaceAllString(path, "x")
+		routes = append(routes, path)
 	}
 	bodies := map[string]string{
 		"application/json":                  `{"title":"Changed from the internet","message":"hi","name":"x","prop-title":"Changed"}`,
