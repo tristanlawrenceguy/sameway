@@ -12,7 +12,7 @@ type Routines struct {
 		Folder string `yaml:"folder"`
 	} `yaml:"backup"`
 	// Review.On is the weekday the weekly review says it is ready, in the
-	// evening, "sunday"; "" says nothing (internal/server review.go).
+	// evening, "sunday"; "" says nothing (internal/server/agenda/review_day.go).
 	Review struct {
 		On string `yaml:"on"`
 	} `yaml:"review"`

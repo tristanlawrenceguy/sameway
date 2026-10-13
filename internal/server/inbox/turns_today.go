@@ -55,11 +55,7 @@ func (s *Service) turnSection(list []chat.Waiting) string {
 		b.WriteString(`<h2>Your turn to reply</h2><ul class="sw-plain sw-rows">` + yours.String() + `</ul>`)
 	}
 	if waiting > 0 {
-		of := schema.Plural("conversation")
-		if waiting == 1 {
-			of = schema.Words("conversation")
-		}
-		if body, err := s.app.Registry.RenderSlot("disclosure", map[string]any{"label": "Waiting on them", "count": waiting, "of": of}, template.HTML(`<ul class="sw-plain sw-rows">`+theirs.String()+`</ul>`)); err == nil {
+		if body, err := s.app.Registry.RenderSlot("disclosure", map[string]any{"label": "Waiting on them", "count": waiting, "of": schema.Noun(waiting, "conversation")}, template.HTML(`<ul class="sw-plain sw-rows">`+theirs.String()+`</ul>`)); err == nil {
 			b.WriteString(string(body))
 		}
 	}

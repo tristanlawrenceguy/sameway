@@ -74,7 +74,7 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if len(archived) > 0 {
-			b.WriteString(`<h2 class="sw-group">Archived <span class="sw-group__count">` + fmt.Sprint(len(archived)) + `<span class="sw-visually-hidden"> ` + oneOrMany(len(archived), t.Name) + `</span></span></h2>`)
+			b.WriteString(`<h2 class="sw-group">Archived <span class="sw-group__count">` + fmt.Sprint(len(archived)) + `<span class="sw-visually-hidden"> ` + schema.Noun(len(archived), t.Name) + `</span></span></h2>`)
 			b.WriteString(s.rows(t, archived, s.now()))
 		}
 	} else {

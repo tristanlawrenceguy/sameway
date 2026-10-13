@@ -3,7 +3,6 @@ package server
 import (
 	"fmt"
 	"html/template"
-	"net/http"
 	"strings"
 	"time"
 
@@ -92,19 +91,4 @@ func lower(s string) string {
 		return s
 	}
 	return strings.ToLower(s[:1]) + s[1:]
-}
-
-// apiJobs is the background work as JSON, the owner's like the section:
-// each job's name, every (in seconds), runs, running, last_run,
-// last_error and next_run.
-func (s *Server) apiJobs(w http.ResponseWriter, r *http.Request) {
-	type job struct {
-		runner.Status
-		Every float64 `json:"every_seconds,omitempty"`
-	}
-	out := []job{}
-	for _, st := range s.app.Jobs.Status() {
-		out = append(out, job{Status: st, Every: st.Every.Seconds()})
-	}
-	writeJSON(w, http.StatusOK, map[string]any{"jobs": out})
 }

@@ -57,7 +57,7 @@ func (s *Server) rows(t *schema.Type, recs []*store.Record, now time.Time) strin
 			pause = "," // heard as This week 1 task, 12 Oct to 18 Oct; with nothing after, no comma
 		}
 		fmt.Fprintf(&b, `<h2 class="sw-group">%s <span class="sw-group__count">%d<span class="sw-visually-hidden"> %s%s</span></span>%s</h2><ol class="sw-plain sw-rows" data-dot="%d" aria-label="%s, %s">`,
-			name, len(list), oneOrMany(len(list), t.Name), pause, span, s.dotOf(t.Name), template.HTMLEscapeString(schema.Plural(t.Name)), strings.ToLower(name))
+			name, len(list), schema.Noun(len(list), t.Name), pause, span, s.dotOf(t.Name), template.HTMLEscapeString(schema.Plural(t.Name)), strings.ToLower(name))
 		for _, rec := range list {
 			b.WriteString(s.row(t, rec, 3, told[rec.ID], in))
 		}

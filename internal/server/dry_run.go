@@ -3,6 +3,7 @@ package server
 import (
 	"net/http"
 
+	"github.com/tristanlawrenceguy/sameway/internal/server/api"
 	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
@@ -54,7 +55,7 @@ func (s *Server) mayTry(r *http.Request) bool {
 	case inward:
 		return true
 	case web.ByTool:
-		return !toolOutward(r.URL.Path)
+		return !api.ToolOutward(r.URL.Path)
 	}
 	return false
 }
