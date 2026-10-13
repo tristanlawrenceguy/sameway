@@ -92,6 +92,9 @@ func (s *Server) row(t *schema.Type, rec *store.Record, level int, told string, 
 	if short := trim.Title(full); short != full {
 		whole = ` title="` + template.HTMLEscapeString(full) + `"`
 	}
+	// The words that tell it apart stay inside the link, hidden: they are
+	// its name, which two rows of one title must not share (WCAG 2.4.9,
+	// design/foundations/names.md); the row's facts say them to the eye.
 	apartHTML := ""
 	if told != "" {
 		apartHTML = `<span class="sw-visually-hidden"> (` + template.HTMLEscapeString(told) + `)</span>`
