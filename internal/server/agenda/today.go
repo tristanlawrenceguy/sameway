@@ -124,7 +124,7 @@ func (s *Service) todayPage(w http.ResponseWriter, r *http.Request) {
 		b.WriteString(focus)
 	} else {
 		b.WriteString(s.lateNudge(l.Late, now)) // today_nudge.go
-		b.WriteString(list("Late", l.Late) + list("Tasks", l.Tasks))
+		b.WriteString(list("Overdue", l.Late) + list("Tasks", l.Tasks))
 	}
 	b.WriteString(list("Events", l.Events) + list("Reminders", l.Reminders))
 	// What waits for the person, from the one list every reader reads
@@ -133,7 +133,7 @@ func (s *Service) todayPage(w http.ResponseWriter, r *http.Request) {
 	mail := s.Questions(waiting) + s.Inbox().Today(waiting) // server/proposal.go, server/inbox/inbox.go
 	b.WriteString(mail)
 	if l.count() == 0 && mail == "" {
-		b.WriteString(string(s.Part(ui.Empty{Message: "Nothing is due today, and nothing is late."})))
+		b.WriteString(string(s.Part(ui.Empty{Message: "Nothing is due today, and nothing is overdue."})))
 	}
 	b.WriteString(s.dumpBox()) // today_focus.go
 	s.Page(w, r, "Today", template.HTML(b.String()), web.PageOptions{Lede: template.HTML(web.Time("", now.Format("2006-01-02"), "", template.HTML(now.Format("Monday 2 January"))))})

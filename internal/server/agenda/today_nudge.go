@@ -60,7 +60,7 @@ func (s *Service) lateNudge(late []todayItem, now time.Time) string {
 	}
 	oldest := when.Day(late[0].At, now)
 	return string(s.Form(ui.Form{Action: "/today/late", Class: "sw-stack",
-		Body:   template.HTML(`<p>` + fmt.Sprintf("%d tasks are late, the oldest from %s.", n, oldest) + `</p>`),
+		Body:   template.HTML(`<p>` + fmt.Sprintf("%d tasks are overdue, the oldest from %s.", n, oldest) + `</p>`),
 		Button: &ui.Button{Label: fmt.Sprintf("Move all %d to today", n), Variant: ui.Secondary}}))
 }
 
