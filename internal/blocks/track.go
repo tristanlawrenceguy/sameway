@@ -112,12 +112,21 @@ func Standing(st *store.Store, rec *store.Record, now, today time.Time) map[stri
 			}
 		}
 	}
-	last := make([]any, 0, len(sum.Last))
-	for i, p := range sum.Last {
-		going := i == len(sum.Last)-1
+	// The dots start at the first entry: the days before it are before the
+	// habit was kept, not missed. This period is always there.
+	periods := Since(sum)
+	if len(periods) == 0 {
+		periods = sum.Last[len(sum.Last)-1:]
+	}
+	last := make([]any, 0, len(periods))
+	for i, p := range periods {
+		going := i == len(periods)-1
 		last = append(last, map[string]any{"date": periodName(p.Start, h.Cadence), "met": p.Met, "amount": p.Amount, "words": periodWords(h, p, going, sum), "logged": p.Logged, "going": going && !p.Met})
 	}
 	item["last"] = last
+	if back := missedOnce(h, periods, sum); back != "" {
+		item["back"] = back
+	}
 	item["when"] = periodWhen(now, today, h.Cadence)
 	return item
 }

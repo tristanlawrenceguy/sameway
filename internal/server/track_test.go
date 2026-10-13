@@ -77,7 +77,7 @@ func TestAHabitIsTrackedOutOfTheBox(t *testing.T) {
 
 	// The habit's own page: its row, the best run, and a chart with the target.
 	page = get(t, h, "/t/"+server.HabitType+"/"+water.ID).Body.String()
-	for _, want := range []string{`id="habit-standing"`, `Best run: 3 days in a row.`, `data-component="chart"`, `class="sw-chart__target"`, `target 8 glasses`, `The last 30 days`, `id="habit-entries"`} {
+	for _, want := range []string{`id="habit-standing"`, `Reached the target of 8 glasses on 3 of the 3 days since`, `Best run: 3 days in a row.`, `data-component="chart"`, `class="sw-chart__target"`, `target 8 glasses`, `The 3 days so far`, `id="habit-entries"`} {
 		if !strings.Contains(page, want) {
 			t.Errorf("a habit's page has where it stands, a chart with the target drawn and its entries, missing %q\n%s", want, page)
 		}
