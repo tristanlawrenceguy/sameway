@@ -57,8 +57,8 @@ func TestARepeatedCallEndsTheTurnInWords(t *testing.T) {
 	}
 	last := m.seen[len(m.seen)-1]
 	ask := last.Messages[len(last.Messages)-1]
-	if last.Tools != nil || ask.Role != llm.RoleUser || !strings.Contains(ask.Content, "same call") {
-		t.Errorf("the model is told why and asked, without tools, to say where things stand; got tools %v and %q", last.Tools != nil, ask.Content)
+	if last.Tools != nil || ask.Role != llm.RoleUser || !strings.Contains(ask.Content, "same call") || !strings.Contains(ask.Content, "From Sameway, not the person") {
+		t.Errorf("the model is told why, as Sameway and not the person, and asked, without tools, to say where things stand; got tools %v and %q", last.Tools != nil, ask.Content)
 	}
 }
 

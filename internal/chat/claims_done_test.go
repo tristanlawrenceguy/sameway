@@ -39,7 +39,8 @@ func TestASaidChangeThatDidNotHappenIsAskedAgain(t *testing.T) {
 }
 
 // Still saying so when asked again, the reply says under it that nothing
-// changed, so the person is not left believing it was done.
+// changed, so the person is not left believing it was done; it says the
+// words are Sameway's, not the assistant taking its reply back.
 func TestASaidChangeStillUnmadeSaysNothingChanged(t *testing.T) {
 	t.Parallel()
 	svc := newFullService(t)
@@ -52,8 +53,8 @@ func TestASaidChangeStillUnmadeSaysNothingChanged(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if said, _ := reply.Fields["content"].(string); !strings.HasPrefix(said, "I've added it.") || !strings.Contains(said, "Nothing was changed") {
-		t.Errorf("the reply says nothing changed under it: %q", said)
+	if said, _ := reply.Fields["content"].(string); !strings.HasPrefix(said, "I've added it.") || !strings.Contains(said, "(Sameway checked: nothing was changed.") {
+		t.Errorf("the reply says under it, as Sameway, that nothing changed: %q", said)
 	}
 }
 
@@ -71,7 +72,7 @@ func TestAnAnswerOrAMadeChangeIsNotQuestioned(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(m.seen) != 1 || strings.Contains(reply.Fields["content"].(string), "Nothing was changed") {
+	if len(m.seen) != 1 || strings.Contains(reply.Fields["content"].(string), "nothing was changed") {
 		t.Errorf("a plain answer stands: %d calls, %q", len(m.seen), reply.Fields["content"])
 	}
 	m = &scripted{steps: []*llm.Response{

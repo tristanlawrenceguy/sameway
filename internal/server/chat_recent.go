@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"html/template"
 
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
@@ -28,8 +29,13 @@ func recentFrom(n int, all bool) int {
 }
 
 // earlierLink is the way to a conversation's earlier messages, landing on
-// the first one shown now so the place is not lost.
-func (s *Server) earlierLink(from, firstShown string) template.HTML {
+// the first one shown now so the place is not lost. It says how many, so
+// the person knows what pressing it brings before they press it.
+func (s *Server) earlierLink(from, firstShown string, earlier int) template.HTML {
+	label := fmt.Sprintf("%d earlier messages", earlier)
+	if earlier == 1 {
+		label = "1 earlier message"
+	}
 	return template.HTML(`<p class="sw-quiet sw-chat__earlier">`) +
-		s.part(ui.Link{Href: showURL(from, []string{EarlierPart}) + "#" + firstShown, Label: "Earlier messages"}) + `</p>`
+		s.part(ui.Link{Href: showURL(from, []string{EarlierPart}) + "#" + firstShown, Label: label}) + `</p>`
 }
