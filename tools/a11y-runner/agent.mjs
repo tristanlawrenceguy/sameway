@@ -13,6 +13,7 @@
 //   - no glyphs in names (a tick, a cross, an arrow): noise, or nothing
 //   - no name carries the injected instruction
 //   - /api/look finds nothing wrong
+//   - the sentence saying records look alike is seen at rest (ui.alike)
 // and it does six everyday things by role and name alone, as an agent
 // does: find what is overdue, tick one done, undo it, add a note, search,
 // and make a list show only what is not done, soonest first, under a new
@@ -151,7 +152,10 @@ async function checkPage(path) {
     else if (v.length > 2 && times(n, v) > 1) fail(`${path}: ${c.role} "${c.name}" says what it shows, "${c.visible}", twice`);
   }
   for (const name of [...controls.map((c) => c.name), ...headings]) {
-    if (GLYPHS.test(name)) fail(`${path}: the name "${name}" carries a glyph, heard as noise or not at all`);
+    // An ellipsis after a word is punctuation, not a glyph: it is how a
+    // long title cut to fit one line says it was cut (internal/trim), and
+    // a screen reader pauses on it. Only a lone one is a glyph.
+    if (GLYPHS.test(name.replace(/(?<=\S)…/gu, ""))) fail(`${path}: the name "${name}" carries a glyph, heard as noise or not at all`);
     if (name.includes("SYSTEM NOTE")) fail(`${path}: the name "${name}" carries a record's text as if it were the page's`);
   }
   const look = await (await fetch(`${base}/api/look?path=${encodeURIComponent(path)}`)).json();
@@ -167,6 +171,21 @@ async function checkPage(path) {
 }
 
 for (const path of ["/t/task", "/t/note", `/t/note/${injected.id}`, "/t/project", `/c/${canvas.id}`, "/search?q=plumber", "/search?q=meeting", "/activity"]) await checkPage(path);
+
+// The two Meeting notes are said to look alike, in words seen at rest: a
+// mouse user who never hovers there still learns of them. Its buttons may
+// stay quiet, as other controls do.
+await page.goto(base + "/t/note");
+await page.mouse.move(1, 1);
+await page.waitForTimeout(400);
+const alike = await page.evaluate(() => {
+  const el = [...document.querySelectorAll(".sw-lede span")].find((s) => /nothing tells them apart/.test(s.textContent));
+  if (!el) return null;
+  let o = 1; for (let e = el; e && e.nodeType === 1; e = e.parentElement) o *= parseFloat(getComputedStyle(e).opacity);
+  return o;
+});
+if (alike === null) fail("/t/note: the two Meeting notes are not said to look alike");
+else if (alike < 0.35) fail(`/t/note: the sentence saying records look alike is drawn at ${alike} opacity at rest, unseen without a hover`);
 
 // ---- everyday tasks, by role and name only -------------------------------------
 

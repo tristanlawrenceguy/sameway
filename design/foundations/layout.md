@@ -107,6 +107,52 @@ browser asks to save data (`navigator.connection.saveData`), or when a
 program drives it (`navigator.webdriver`, a headless browser), since that
 window is not a person's.
 
+## On a phone
+
+Every page fits a phone 320px wide without scrolling sideways, whatever
+people write in it ([WCAG 1.4.10](https://www.w3.org/WAI/WCAG22/Understanding/reflow.html)).
+
+- A word longer than its line breaks, everywhere: `overflow-wrap:
+  anywhere` on the body (`design/base/02-reset.css`). A pasted link, an
+  email address or a long name pushed a page sideways one component at a
+  time: a change in the log (#619), then a list's rows, a record's
+  heading, a habit's tracker, a search result. WCAG's own technique
+  ([C33](https://www.w3.org/WAI/WCAG22/Techniques/css/C33)) names
+  `break-word`; `anywhere` is used because only it lets a word in a flex
+  or grid row shrink the row too
+  ([MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/overflow-wrap)).
+  Ordinary words still wrap between words first. Where a row must not
+  break (the main navigation, a time) it says so with `white-space:
+  nowrap` or `flex: none`, and the navigation scrolls sideways inside
+  itself, as a toolbar may.
+- A link on its own takes the button look and its 44px target; only a
+  link in a sentence is text sized
+  ([WCAG 2.5.8](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html),
+  2.5.5 for 44px).
+- Fields are 16px, so iOS Safari does not zoom the page in when one is
+  pressed.
+
+Why CI missed #619: the browser checks drew a fresh workspace, with short
+titles and nobody else's changes. "Since you were last here" is on every
+page of a workspace an agent or a second person writes in, and it was
+never drawn. `tools/a11y-runner/livedin.mjs` now gives the page checks a
+lived-in workspace: records with a long link, an email address and a long
+name, made by an agent, and the person marked away before them, so every
+page is checked at 320px with the changes by others at its top.
+
+Not done, and why:
+- `viewport-fit=cover` and safe-area padding: without it iOS keeps the
+  page inside the safe area, which is what a page with nothing pinned to
+  the edges wants; only the "out of sight" pointer is pinned, and it
+  already adds `env(safe-area-inset-*)`.
+- `interactive-widget=resizes-content`: Chrome on Android lets the
+  keyboard cover only what is fixed to the bottom
+  ([Chrome](https://developer.chrome.com/blog/viewport-resize-behavior)),
+  and nothing is; a field pressed is scrolled into view either way.
+- Hyphens: a name or link broken by `hyphens: auto` gains a dash that is
+  not in it, and English hyphenation does not know names; a plain break
+  keeps what was written.
+
 ## Why a suggestion and not a solver
 
 Work on AI layout pairs a model, which knows what the person meant, with

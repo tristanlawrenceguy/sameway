@@ -5,6 +5,16 @@ on:
     branches: [main]
   pull_request:
 
+# A pull request pushed to again, or brought up to date with main, is
+# checked again; the run for what it was before is no use any more and
+# only holds runners the newer one waits for. Sixteen runs once queued at
+# a time, each of nine jobs, so a run of fifteen minutes' work took most
+# of an hour. A newer run on the same pull request cancels the older one.
+# Every push to main is still checked to the end.
+concurrency:
+  group: ci-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   # The fast checks run first; the browser jobs wait for them, so a format,
   # vet, size or debt-list failure is reported in a minute or two and

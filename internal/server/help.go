@@ -25,6 +25,7 @@ var comfort = []struct {
 	{"ui.spacing", "Room between lines and words", [][2]string{{"normal", "Normal"}, {"wide", "Wide"}}},
 	{"ui.pace", "How changes arrive on the page", [][2]string{{"calm", "Calmly"}, {"quick", "Quickly"}, {"still", "All at once"}}},
 	{"ui.controls", "Buttons on each item", [][2]string{{"auto", "Hover"}, {"visible", "Always show"}}},
+	{"ui.alike", "Records that look alike", [][2]string{{"shown", "Always show"}, {"quiet", "Hover"}}},
 	{"ui.clock", "Times of day", [][2]string{{"12", "12-hour, like 5:30pm"}, {"24", "24-hour, like 17:30"}}},
 }
 
