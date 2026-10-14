@@ -7,10 +7,10 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 )
 
-// A model on this computer is given the tools a turn needs: the core,
-// first and always, and the others its message speaks of or the
-// conversation has used; a model elsewhere is given them all.
-func TestAModelHereIsGivenTheToolsATurnNeeds(t *testing.T) {
+// A model is given the tools a turn needs: the core, first and always,
+// and the others its message speaks of or the conversation has used; one
+// elsewhere the same as one on this computer.
+func TestAModelIsGivenTheToolsATurnNeeds(t *testing.T) {
 	t.Parallel()
 	svc := newFullService(t)
 	all := svc.Tools()
@@ -22,8 +22,8 @@ func TestAModelHereIsGivenTheToolsATurnNeeds(t *testing.T) {
 		return "," + strings.Join(n, ",") + ","
 	}
 	svc.Provider = &llm.OpenAI{BaseURL: "https://openrouter.ai/api/v1", Model: "x"}
-	if got := svc.ToolsFor(all, []llm.Message{{Role: llm.RoleUser, Content: "Add a task"}}); len(got) != len(all) {
-		t.Errorf("a model elsewhere has all %d, got %d", len(all), len(got))
+	if got := names(svc.ToolsFor(all, []llm.Message{{Role: llm.RoleUser, Content: "Add a task"}})); strings.Contains(got, ",set_setting,") || !strings.Contains(got, ",create_record,") {
+		t.Errorf("a model elsewhere is given what the turn needs too: %s", got)
 	}
 	svc.Provider = &llm.OpenAI{BaseURL: llm.OllamaURL + "/v1", Model: "qwen"}
 	task := names(svc.ToolsFor(all, []llm.Message{{Role: llm.RoleUser, Content: "Add a task for tomorrow: call the dentist"}}))

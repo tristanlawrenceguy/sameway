@@ -160,7 +160,7 @@ func (s *Service) sendTurn(ctx context.Context, canvas, text, fileID string, on 
 	if err != nil {
 		return nil, err
 	}
-	req := llm.Request{System: s.systemPrompt(), Messages: history, Tools: s.toolsFor(s.Tools(), history)} // toolset.go
+	req := llm.Request{System: s.systemPrompt(history), Messages: history, Tools: s.toolsFor(s.Tools(), history)} // toolset.go
 	if on != nil && s.runsToolsOutside() {
 		// The tools run in another program; the log is where their
 		// changes show, so it is watched while the turn runs.
@@ -233,8 +233,7 @@ func (s *Service) sendTurn(ctx context.Context, canvas, text, fileID string, on 
 			}
 		}
 		req.Messages = append(req.Messages, results)
-		// The canvas changed, so refresh the system prompt for the next round.
-		req.System = s.systemPrompt()
+		s.refresh(&req) // toolset.go: the canvas changed, and more_tools may have brought a tool
 		if why := p.round(results.ToolResults); why != "" {
 			return s.wrapUp(ctx, req, why, said, changes, tools, on)
 		}
