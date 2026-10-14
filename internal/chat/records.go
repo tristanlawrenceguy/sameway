@@ -61,13 +61,14 @@ var recordOps = []Op{
 				"fields": map[string]any{"type": "object", "description": "Field values matching the type's schema. Leave a field out to take its default."},
 			}, "type", "fields")}, Offered: typed},
 	createRecordsOp, // create_records.go
+	updateRecordsOp, // update_records.go
 	{Title: "Change a record", Traits: Traits{Idempotent: true},
 		Core:  true,
 		Doing: func(a callArgs) string { return "Updating" + or(an(schema.Words(a.Type)), " a record") },
 		Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
 			return s.updateRecord(a.Type, a.ID, a.Fields, a.Version)
 		},
-		Tool: llm.Tool{Name: "update_record", Description: "Change fields on a record that exists. Only the fields given change. Use find_records first to get the id.",
+		Tool: llm.Tool{Name: "update_record", Description: "Change fields on a record that exists. Only the fields given change. Use find_records first to get the id. For the same change to several, update_records makes it in one change.",
 			Schema: obj(map[string]any{
 				"type":    typeArg,
 				"id":      map[string]any{"type": "string", "description": "The record's id, from find_records or from a page URL /t/<type>/<id>."},
