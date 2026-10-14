@@ -21,6 +21,7 @@ type chatItem struct {
 	ID      string
 	Title   string
 	When    string
+	Day     string // When as a <time datetime> holds it
 	Current bool
 }
 
@@ -29,7 +30,7 @@ func (s *Server) chats(svc *chat.Service) (items []chatItem, current string) {
 	id := svc.Current()
 	for _, c := range svc.Conversations() {
 		title := svc.Title(c)
-		item := chatItem{ID: c.ID, Title: title, When: when.Date(c.CreatedAt, s.now()), Current: c.ID == id}
+		item := chatItem{ID: c.ID, Title: title, When: when.Date(c.CreatedAt, s.now()), Day: c.CreatedAt.In(s.now().Location()).Format("2006-01-02"), Current: c.ID == id}
 		if item.Current {
 			current = title
 		}

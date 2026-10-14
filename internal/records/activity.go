@@ -49,6 +49,9 @@ type Change struct {
 	// this one puts the original back rather than undoing it again.
 	Undone string `json:"-"`
 	Redid  bool   `json:"-"`
+	// Kept is what an undo left as it is because it was changed again
+	// since, as "title of Book the car" (undo_since.go).
+	Kept []string `json:"-"`
 }
 
 // Record writes one activity entry and returns its id. A missing activity

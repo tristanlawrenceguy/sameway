@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
@@ -34,8 +35,9 @@ func replyUndos(receipt []any) []string {
 	return ids
 }
 
-// undoReply takes back every change of one reply, newest first, and says
-// how many; one that cannot be stops it there, with the rest left done.
+// undoReply takes back every change of one reply, newest first, all or
+// none (records.UndoEach, as undo_change with ids), and says how many and
+// what it kept because it was changed since.
 func (s *Server) undoReply(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	m, err := s.app.Store.Get(records.MessageType, r.PathValue("id"))
@@ -48,11 +50,15 @@ func (s *Server) undoReply(w http.ResponseWriter, r *http.Request) {
 		s.failed(w, r, "Not undone", fmt.Errorf("this reply's changes cannot all be undone now; undo them one at a time"), "/chat")
 		return
 	}
-	for i := len(ids) - 1; i >= 0; i-- {
-		if err := s.app.Records.UndoAs("human", ids[i]); err != nil {
-			s.failed(w, r, "Not all undone", fmt.Errorf("%d of %d changes were undone; the next could not be: %v", len(ids)-1-i, len(ids), err), "/chat")
-			return
-		}
+	slices.Reverse(ids)
+	_, changes, err := s.app.Records.UndoEach(ids)
+	if err != nil {
+		s.failed(w, r, "Not undone", fmt.Errorf("%v; undo the others one at a time", err), "/chat")
+		return
 	}
-	s.tell(w, r, outcome{Title: "Undone", Text: fmt.Sprintf("All %d changes of that reply are taken back.", len(ids))}, "/chat")
+	for _, c := range changes {
+		records.Record(s.app.Store, "human", c)
+	}
+	said := fmt.Sprintf("All %d changes of that reply are taken back.", len(ids))
+	s.tell(w, r, outcome{Title: "Undone", Text: strings.TrimSpace(said + " " + records.KeptAll(changes))}, "/chat")
 }

@@ -7,7 +7,7 @@ import (
 )
 
 // TestEntryDetailLedeNoAtFieldLabel asserts that an entry detail page does not show
-// "At" as a visible label chip, and instead uses the type noun ("Entry") for its at field.
+// "At" as a visible label chip; its at field's label, Logged, names it.
 func TestEntryDetailLedeNoAtFieldLabel(t *testing.T) {
 	t.Parallel()
 	a, h := newApp(t)
@@ -44,7 +44,7 @@ func TestEntryDetailLedeNoAtFieldLabel(t *testing.T) {
 	whenText := matches[1]
 
 	// The span content should contain relative time text.
-	if !strings.Contains(whenText, "Today") && !strings.Contains(whenText, "ago") {
+	if !strings.HasPrefix(whenText, "today") && !strings.Contains(whenText, "ago") {
 		t.Errorf("entry detail lede should show relative timestamp; got %q", whenText)
 	}
 }

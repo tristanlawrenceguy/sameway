@@ -149,12 +149,19 @@ func (s *Service) fillSuggested(t *schema.Type, given map[string]any, sent time.
 	return out
 }
 
-// suggestedWords is a suggested record in a line: its title, and a day.
+// suggestedWords is a suggested record in a line: its title, and a day
+// named by its field's label. The line is kept and read days later, so
+// its day is said in full, never "tomorrow", and the house way, whatever
+// the clock, as every kept name is.
 func (s *Service) suggestedWords(t *schema.Type, fields map[string]any) string {
 	parts := []string{fmt.Sprint(fields[t.Title])}
 	for _, f := range t.Fields {
-		if v, ok := fields[f.Name].(string); ok && f.Type == "datetime" {
-			parts = append(parts, schema.Words(f.Name)+" "+when.Relative(v, s.Now(), s.Setting != nil && s.Setting("ui.clock") == "24"))
+		if v, ok := fields[f.Name].(string); ok && f.Type == "datetime" && v != "" {
+			said := when.Text(v, s.Now().Location(), false)
+			if name := records.DayName(f); name != "" {
+				said = strings.ToLower(name[:1]) + name[1:] + " " + said
+			}
+			parts = append(parts, said)
 		}
 	}
 	return strings.Join(parts, ", ")

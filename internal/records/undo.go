@@ -46,20 +46,35 @@ func (b *Book) Undo(id string) (said string, c Change, err error) {
 	if undoes, _ := a.Fields["undoes"].(string); undoes != "" {
 		if _, original, ok := strings.Cut(summary, ": "); ok {
 			c.Undone, c.Redid = original, true
-			return "put back: " + original, c, nil
+			return withKept("put back: "+original, c), c, nil
 		}
 	}
-	return "undone: " + summary, c, nil
+	return withKept("undone: "+summary, c), c, nil
+}
+
+// withKept adds what an undo kept to what it says it did.
+func withKept(said string, c Change) string {
+	if k := KeptSaid(c); k != "" {
+		return strings.TrimSuffix(said, ".") + ". " + k
+	}
+	return said
 }
 
 // UndoAs is Undo for a person, recorded as theirs.
 func (b *Book) UndoAs(actor, id string) error {
+	_, err := b.UndoFor(actor, id)
+	return err
+}
+
+// UndoFor is UndoAs that returns the reversal, so a page can say what it
+// kept because it was changed since.
+func (b *Book) UndoFor(actor, id string) (Change, error) {
 	_, c, err := b.Undo(id)
 	if err != nil {
-		return err
+		return Change{}, err
 	}
 	Record(b.Store, actor, c)
-	return nil
+	return c, nil
 }
 
 func (b *Book) entry(id string) (*store.Record, error) {
