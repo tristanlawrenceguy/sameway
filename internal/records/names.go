@@ -96,7 +96,9 @@ func Sentence(st *store.Store, f map[string]any) string {
 	if c.Component != "" && !counted(c.Component, c.Detail) { // words.go
 		parts = append(parts, schema.Words(personWord(c.Component)))
 	}
-	if c.Detail != "" {
+	if c.Detail != "" && c.Action == "said" {
+		parts = append(parts, stripJSONLike(c.Detail))
+	} else if c.Detail != "" {
 		parts = append(parts, c.Detail)
 	}
 	said := strings.Join(parts, " ")
