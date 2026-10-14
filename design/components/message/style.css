@@ -36,6 +36,7 @@
    the next. */
 .sw-message__label { margin: var(--sw-space-3) 0 0; font-size: var(--sw-size-text-xs); font-weight: 700; color: var(--sw-color-fg-muted); }
 .sw-message__changes { list-style: none; margin: var(--sw-space-1) 0 0; padding: 0; display: grid; gap: 1px; }
+.sw-message__undo-all { margin: var(--sw-space-1) 0 0; }
 .sw-message__attachment { margin: var(--sw-space-2) 0 0; color: var(--sw-color-fg-muted); }
 .sw-message__links {
     list-style: none; margin: var(--sw-space-2) 0 0; padding: 0;

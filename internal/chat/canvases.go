@@ -62,6 +62,7 @@ var canvasOps = []Op{
 			Schema: obj(map[string]any{
 				"id": map[string]any{"type": "string", "description": "The canvas id, from the list of tabs."},
 			}, "id")}, Offered: has(records.CanvasType)},
+	renameCanvasOp, // canvas_rename.go
 }
 
 func (s *Service) createCanvas(name string) toolResult {
@@ -111,6 +112,8 @@ func (s *Service) canvasDigest(current string) string {
 		label := fmt.Sprintf("%s (canvas id %q, at %s)", c.Name, c.ID, c.Path)
 		if c.ID == current {
 			label += " <- the person is looking at this one"
+		} else {
+			label += s.tabHolds(c.ID) // canvases_held.go
 		}
 		parts = append(parts, label)
 	}

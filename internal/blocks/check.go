@@ -15,15 +15,26 @@ import (
 // written, not found broken after the one who wrote it has said "done".
 // A component with nothing to count says nothing either way.
 func Check(w *Workspace, component string, props map[string]any) (shows, problem string) {
+	shows, problem = Renders(w, component, props)
+	if problem != "" {
+		return "", problem
+	}
+	if p := w.meaningProblem(component, props); p != "" {
+		return "", p
+	}
+	return shows, ""
+}
+
+// Renders is Check as the page draws a block already written: what it
+// shows, or the problem the page says in its place. A block stored before
+// the write's check (meaningProblem) still renders, so it is not clutter.
+func Renders(w *Workspace, component string, props map[string]any) (shows, problem string) {
 	k, ok := kinds[component]
 	if !ok || k.Shows == nil {
 		return "", ""
 	}
 	out := k.Resolve(w, props, Place{})
 	if p, _ := out["problem"].(string); p != "" {
-		return "", p
-	}
-	if p := w.meaningProblem(component, props); p != "" {
 		return "", p
 	}
 	return k.Shows(w, props, out), ""

@@ -20,6 +20,12 @@ body {
   color: var(--sw-color-fg);
   font-size: var(--sw-size-text-md);
   min-height: 100dvh;
+  /* A word longer than its line breaks, wherever it is: a pasted link, an
+     email address, a long name. Kept whole, it pushed the page sideways
+     on a phone (WCAG 1.4.10), one component at a time. "anywhere", not
+     "break-word", so a word in a row of a flex or grid lets the row
+     shrink as well. Ordinary words still wrap between words first. */
+  overflow-wrap: anywhere;
 }
 h1, h2, h3, h4, h5, h6 { line-height: var(--sw-size-line-tight); letter-spacing: -0.02em; text-wrap: balance; font-weight: 700; }
 /* One heading scale, wherever a heading is: a heading block's h2 and a

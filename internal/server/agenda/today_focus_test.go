@@ -129,3 +129,27 @@ func TestLongLateTasksCanBeKeptWithNoDate(t *testing.T) {
 		t.Error("one Undo puts their days back")
 	}
 }
+
+// The tasks the assistant said to start with lead Today's three: tagged
+// start, one with no day comes before what matters with a day, so Today
+// and the assistant give the person one answer.
+func TestTodayStartsWithWhatTheAssistantSaid(t *testing.T) {
+	t.Parallel()
+	a, h := newAppAt(t, tonight)
+	day := func(n int) string { return tonight.AddDate(0, 0, n).Format("2006-01-02") }
+	for i, title := range []string{"Buy flowers", "Return library books", "Water the plants", "Clean the fridge"} {
+		a.Store.Create("task", map[string]any{"title": title, "due": day(-7 + i), "tags": []any{"important"}})
+	}
+	a.Store.Create("task", map[string]any{"title": "Pick up dry cleaning", "due": day(-2)})
+	a.Store.Create("task", map[string]any{"title": "Wash the car", "due": day(-1)})
+	a.Store.Create("task", map[string]any{"title": "Call the dentist", "tags": []any{"start"}})
+	page := get(t, h, "/today").Body.String()
+	start, rest := strings.Index(page, "Start with these"), strings.Index(page, "The rest")
+	if start < 0 || rest < start {
+		t.Fatalf("a long Today starts with three: %s", truncate(page))
+	}
+	first := page[start:rest]
+	if dentist := strings.Index(first, "Call the dentist"); dentist < 0 || dentist > strings.Index(first, "Buy flowers") {
+		t.Errorf("the task tagged start leads the three:\n%s", first)
+	}
+}

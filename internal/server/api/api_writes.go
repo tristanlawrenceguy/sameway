@@ -40,13 +40,13 @@ func (s *Service) apiCreate(w http.ResponseWriter, r *http.Request) {
 			s.SeedChat(c)
 		}
 	}
-	rec, _, err := records.WriteAs(s.app.Store, agent.As(), "created", r.PathValue("type"), "", fields)
+	rec, notes, err := records.WriteNoted(s.app.Store, agent.As(), "created", r.PathValue("type"), "", fields)
 	if err != nil {
 		web.WriteError(w, err)
 		return
 	}
 	w.Header().Set("Location", "/api/"+rec.Type+"/"+rec.ID)
-	web.WriteJSON(w, http.StatusCreated, shownRecord{s.titled(rec), shows, s.layoutOf(r, rec)})
+	web.WriteJSON(w, http.StatusCreated, shownRecord{s.titled(rec), shows, s.layoutOf(r, rec), notes})
 }
 
 func (s *Service) apiUpdate(w http.ResponseWriter, r *http.Request) {
@@ -74,12 +74,12 @@ func (s *Service) apiUpdate(w http.ResponseWriter, r *http.Request) {
 	if r.PathValue("type") == records.BlockType {
 		byAgent(fields, agent, false)
 	}
-	rec, _, err := records.WriteAs(s.app.Store, agent.As(), "updated", r.PathValue("type"), r.PathValue("id"), fields)
+	rec, notes, err := records.WriteNoted(s.app.Store, agent.As(), "updated", r.PathValue("type"), r.PathValue("id"), fields)
 	if err != nil {
 		web.WriteError(w, err)
 		return
 	}
-	web.WriteJSON(w, http.StatusOK, shownRecord{s.titled(rec), shows, s.layoutOf(r, rec)})
+	web.WriteJSON(w, http.StatusOK, shownRecord{s.titled(rec), shows, s.layoutOf(r, rec), notes})
 }
 
 func (s *Service) apiDelete(w http.ResponseWriter, r *http.Request) {
