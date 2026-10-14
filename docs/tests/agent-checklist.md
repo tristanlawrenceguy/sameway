@@ -31,7 +31,7 @@ with `--strict` until its fix lands; `review` and `not yet` are yours to hold.
 | 15 | Every MCP tool titled and annotated; read-only ones proved so by a store diff | each tool's `Op` (Title, Traits) in `internal/chat`, MCP's own three in `internal/mcp/annotations.go`; `TestEveryToolSaysWhatItIs`, `TestReadOnlyToolsChangeNothing` (the workspace on disk hashed before and after) |
 | 16 | Every error is `isError` with the next step and the valid choices | go `internal/mcp/*_test.go` (partly) |
 | 17 | List rows can be told apart and are paged | pages: agent, go; tool results not yet |
-| 18 | `describe` has a small index under a budget | go `internal/server/api/describe_index_test.go` (16 KB, block routes first), `internal/mcp/describe_size_test.go` (nothing but full past a client's limit), `prompt_budget_test.go` (the in-app prompt at 40 KB: a line per component and type, the rest in a refusal) |
+| 18 | `describe` has a small index under a budget | go `internal/server/api/describe_index_test.go` (10 KB, about 8 now: block routes first, the rest by name), `internal/mcp/describe_size_test.go` (nothing but full past a client's limit), `prompt_budget_test.go` (the in-app prompt at 40 KB: a line per component and type, the rest in a refusal) |
 | | **Trust** | |
 | 19 | MCP and API writes are logged with the agent's name, from its key when it has one | go `agent_keys_test.go`, `writes_test.go` |
 | 20 | Record text reaches outside agents marked as content, with who wrote it | `internal/records/provenance.go` (written_by and untrusted on a record, a list, search, the changes feed, the tools and public MCP); go `untrusted_test.go`, `internal/mcp/untrusted_test.go` |
