@@ -114,6 +114,7 @@ func (s *Service) systemPrompt() string {
 		fmt.Fprintf(&b, "%s %s region=%s span=%d frame=%s tone=%s %s%s\n", blk.ID, blk.Fields["component"], l.region, l.span, l.frame, l.tone, props, note)
 	}
 	b.WriteString("Rows in the main region, by span, left to right: " + rows(blocks) + "\n")
+	b.WriteString(s.lookAtNow()) // layout_start.go
 	return b.String()
 }
 
