@@ -1,7 +1,6 @@
 package chat
 
 import (
-	"fmt"
 	"sort"
 	"strings"
 
@@ -162,63 +161,7 @@ func fill(row []placed) int {
 // would fix what it can. It never refuses anything; it is for the one
 // building to read.
 func (s *Service) LayoutNow(canvas string) string {
-	var all []placed
-	recs := s.canvasBlocks(canvas)
-	for _, b := range recs {
-		all = append(all, placedOf(b))
-	}
-	s.measure(all, recs)
-	main := region(all, "main")
-	var b strings.Builder
-	b.WriteString("Layout now")
-	if len(main) == 0 {
-		b.WriteString(": the main region is empty")
-	}
-	for i, row := range gridRows(main) {
-		var parts []string
-		for _, p := range row {
-			part := fmt.Sprintf("%s %d", p.called(), p.span)
-			if r, ok := p.wide(); ok {
-				part += fmt.Sprintf(" (%spx)", px(r.Height))
-			}
-			parts = append(parts, part)
-		}
-		sep := ", "
-		if i == 0 {
-			sep = ": "
-		}
-		fmt.Fprintf(&b, "%srow %d: %s", sep, i+1, strings.Join(parts, " + "))
-		if n := fill(row); n < 12 {
-			fmt.Fprintf(&b, " (%d of 12 empty)", 12-n)
-		}
-	}
-	for _, pane := range []string{"left", "right"} {
-		if in := region(all, pane); len(in) > 0 {
-			var names []string
-			for _, p := range in {
-				names = append(names, p.called())
-			}
-			fmt.Fprintf(&b, "; %s pane: %s", pane, strings.Join(names, ", "))
-		}
-	}
-	b.WriteString(".")
-	b.WriteString(measuredHow(all))
-	problems := append(layoutProblems(all), roomProblems(all, canvas)...)
-	problems = append(problems, s.clutterProblems(recs)...)  // layout_clutter.go
-	problems = append(problems, copiesProblems(recs)...)     // layout_copies.go
-	problems = append(problems, s.leftoverProblems(recs)...) // layout_leftover.go
-	if len(problems) == 0 {
-		b.WriteString(" It reads in order with full rows.")
-		return b.String()
-	}
-	b.WriteString(" To look at: ")
-	for i, p := range problems {
-		fmt.Fprintf(&b, "(%d) %s. ", i+1, p)
-	}
-	if call := suggestArrangement(all, canvas); call != "" {
-		b.WriteString("This would fix the order and widths in one change: arrange_canvas " + call + ". Move or reshape what is already there when it makes the page read better, not only what you added.")
-	}
-	return strings.TrimSpace(b.String())
+	return s.layoutReportOf(canvas).String() // layout_report.go
 }
 
 // byPosition sorts blocks the way the page orders them, keeping the order
