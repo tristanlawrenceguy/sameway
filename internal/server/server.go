@@ -188,17 +188,25 @@ func (s *Server) fail(w http.ResponseWriter, err error) {
 // listed says whether a list belongs in the sidebar: one with something in
 // it, or one the person made themselves, which they will want to see even
 // before its first record. An empty list the system provides, such as
-// files in a workspace with no files, is not in the way. ui.lists: all
+// files in a workspace with no files, is not in the way, nor an empty
+// one an agent made. ui.lists: all
 // shows every one.
 func (s *Server) listed(t *schema.Type) bool {
 	if t.Hidden {
 		return false
 	}
-	if s.app.Workspace.Config.UI.Lists == "all" || !t.Provided {
+	if s.app.Workspace.Config.UI.Lists == "all" {
 		return true
 	}
 	n, err := s.app.Store.Count(t.Name)
-	return err != nil || n > 0
+	if err != nil || n > 0 {
+		return true
+	}
+	// Empty: one Sameway provides waits for its first record, and so does
+	// one an agent made, often to try something (test_adhoc, test_agent),
+	// which sat in every person's navigation (crew finding 0746). What the
+	// person or the assistant made is theirs, listed from the start.
+	return !t.Provided && !s.app.Chat.MadeByAgent(t.Name)
 }
 
 // linkTitle is the name of the record at /t/<type>/<id>, or nothing.
