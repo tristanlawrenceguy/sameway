@@ -47,7 +47,7 @@ func TestAnEmptyListSaysWhatItLookedFor(t *testing.T) {
 	t.Parallel()
 	_, h := newApp(t)
 	body := get(t, h, "/t/task?where=done%3Dfalse&where=due%3Ctoday").Body.String()
-	if !strings.Contains(body, "0 matching not done and due before today") {
+	if !strings.Contains(body, "0 tasks, not done and due before today") {
 		t.Errorf("the list page should say its conditions in words")
 	}
 }
