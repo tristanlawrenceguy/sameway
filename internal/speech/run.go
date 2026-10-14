@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -51,7 +52,7 @@ func Transcribe(ctx context.Context, dir, wav string) ([]convert.Cue, error) {
 	var out bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &out, &out
 	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("the speech engine stopped: %v: %s", err, lastLine(out.String()))
+		return nil, stopped("the speech engine", err, out.String())
 	}
 	return Parse(out.String()), nil
 }
@@ -101,4 +102,19 @@ func VTT(cues []convert.Cue) string {
 func stamp(s float64) string {
 	ms := int(s*1000 + 0.5)
 	return fmt.Sprintf("%02d:%02d:%02d.%03d", ms/3600000, ms/60000%60, ms/1000%60, ms%1000)
+}
+
+// stopped says why an engine did not finish. One that never started was
+// said as "fork/exec C:\...\sherpa-onnx....exe: An Application Control
+// policy has blocked this file", which on Windows with Smart App Control
+// is what a person meets: it is said as what happened, without the path.
+func stopped(what string, err error, out string) error {
+	var exit *exec.ExitError
+	switch {
+	case errors.As(err, &exit):
+		return fmt.Errorf("%s stopped: %v: %s", what, err, lastLine(out))
+	case strings.Contains(err.Error(), "Application Control"):
+		return fmt.Errorf("Windows would not let %s start (Smart App Control blocked it). The recording plays as it is", what)
+	}
+	return fmt.Errorf("%s could not start on this computer", what)
 }
