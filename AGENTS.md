@@ -137,6 +137,10 @@ area it belongs to, or a new file in `docs/tests/` linked here.
   package keeps for one open workspace lives on its store (`store.Keep`)
   or its server, never in a package map keyed by it, so two open side by
   side share nothing and it goes when the store closes.
+- A package whose tests can reach the person's own folders (anything
+  that calls `os.UserConfigDir` or `os.UserHomeDir`) has a TestMain
+  calling `testhome.Run` (or `servertest.Main`), which points them at a
+  temp folder for the run; `tools/check` fails one without it.
 - An outside service has one shape. Where it answers and the client that
   reaches it come in through `app.Options`, the zero value its real
   address (`Ollama`, `KeyCheck`, `Meetings`, `HTTP`, `Pages`, `Ntfy`).

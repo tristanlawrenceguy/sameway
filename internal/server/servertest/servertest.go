@@ -16,25 +16,19 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
+	"github.com/tristanlawrenceguy/sameway/internal/testhome"
 	"github.com/tristanlawrenceguy/sameway/internal/testkit"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
 
 // Main points this computer's folders (the known list, copies, deleted
-// workspaces, pasted keys) at a temp folder for the whole run, so an app a
-// test opens with app.Load, which takes the person's own, never reads or
-// writes theirs. New gives each test a folder of its own. A test package's
-// TestMain calls it.
+// workspaces, pasted keys) at a temp folder for the whole run (testhome),
+// so an app a test opens with app.Load, which takes the person's own,
+// never reads or writes theirs. New gives each test a folder of its own.
+// A test package's TestMain calls it.
 func Main(m *testing.M) {
-	dir, err := os.MkdirTemp("", "sameway-server-test-")
-	if err != nil {
-		panic(err)
-	}
-	os.Setenv("SAMEWAY_KNOWN", filepath.Join(dir, "known.json"))
-	os.Setenv("SAMEWAY_KEYS", filepath.Join(dir, "keys.json"))
-	code := m.Run()
+	code := testhome.Run(m)
 	testkit.Remove()
-	os.RemoveAll(dir)
 	os.Exit(code)
 }
 
