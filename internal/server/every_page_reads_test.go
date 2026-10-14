@@ -23,19 +23,9 @@ import (
 func TestEveryPageReadsWithoutAProblem(t *testing.T) {
 	t.Parallel()
 	a, h := newApp(t)
-	seedLikeAPerson(t, a, h) // machine_seed_test.go
-	edges := []map[string]any{
-		{"title": "Ring the council about the parking permit for the new flat before the end of the month and ask about the visitor passes"},
-		{"title": strings.Repeat("Supercalifragilistic", 3)},
-	}
-	for _, task := range edges {
-		postJSON(t, h, http.MethodPost, "/api/task", task)
-	}
-	var tab struct{ ID string }
-	decode(t, postJSON(t, h, http.MethodPost, "/api/canvas", map[string]any{"name": "Everything about the house move in March and boxes"}), &tab)
-	postJSON(t, h, http.MethodPost, "/api/block", map[string]any{"component": "collection", "canvas": tab.ID, "props": map[string]any{"type": "task", "label": "Before the move"}})
-
-	paths := []string{"/", "/c/" + tab.ID, "/today", "/chat", "/templates", "/activity", "/calendar", "/help", "/workspaces", "/search?q=paint"}
+	seedLikeAPerson(t, a, h)         // machine_seed_test.go
+	extra := seedEveryState(t, a, h) // every_state_seed_test.go
+	paths := append(extra, "/", "/today", "/chat", "/templates", "/activity", "/calendar", "/help", "/workspaces", "/search?q=paint")
 	for _, name := range a.Types.Names() {
 		ty, _ := a.Types.Get(name)
 		if !ty.Content() {
@@ -62,7 +52,21 @@ func TestEveryPageReadsWithoutAProblem(t *testing.T) {
 			t.Fatalf("%s: %v", p, err)
 		}
 		for _, why := range o.Problems {
+			if strings.Contains(why, "there is no content type gone") {
+				continue // the block seedEveryState set up wrong, said so on purpose
+			}
 			found[why] = append(found[why], p)
+		}
+	}
+	// The states were reached, or the crawl read pages without them.
+	for path, says := range map[string]string{
+		"/chat":     "sw-message__undo-all",
+		"/today":    "Start with these",
+		extra[0]:    "Tidy this page",
+		"/chat#ask": "Take away the old list on the move tab?",
+	} {
+		if !strings.Contains(get(t, h, strings.TrimSuffix(path, "#ask")).Body.String(), says) {
+			t.Errorf("%s should show %q: the state the crawl is for was not reached", path, says)
 		}
 	}
 	if read < 20 {

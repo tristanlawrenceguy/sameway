@@ -1,19 +1,14 @@
 package agenda
 
 import (
-	"context"
-	"errors"
 	"fmt"
 	"html/template"
-	"net/http"
 	"sort"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
-	"github.com/tristanlawrenceguy/sameway/internal/ui"
-	"github.com/tristanlawrenceguy/sameway/internal/web"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
@@ -33,8 +28,13 @@ const (
 )
 
 // important is a task the person or the assistant marked as mattering: a
-// tag important or urgent, or a high priority.
+// tag important or urgent, or a high priority; or one it said to start with.
 func (s *Service) important(it todayItem) bool {
+	return s.marked(it) || s.startsWith(it)
+}
+
+// marked is a task tagged important or urgent, or of high priority.
+func (s *Service) marked(it todayItem) bool {
 	rec, err := s.app.Store.Get(it.Type, it.ID)
 	if err != nil {
 		return false
@@ -42,7 +42,7 @@ func (s *Service) important(it todayItem) bool {
 	if p, _ := rec.Fields["priority"].(string); strings.EqualFold(p, "high") || strings.EqualFold(p, "urgent") {
 		return true
 	}
-	return tagged(rec, "important") || tagged(rec, "urgent") || tagged(rec, startTag)
+	return tagged(rec, "important") || tagged(rec, "urgent")
 }
 
 // startTag marks the tasks the assistant said to start with. Asked to sort
@@ -74,6 +74,11 @@ func tagged(rec *store.Record, tag string) bool {
 // head, they were told to start with the council tax and the dentist, and
 // Today went on starting with two errands from a fortnight ago, because
 // neither was due today. Those join the three, never the rest.
+//
+// What the assistant said to start with leads on any day, a short one too:
+// told to start with the dentist, a person with four tasks due found Today
+// without it, the same two answers to "what now?". On a short day only
+// those tagged start come first; the rest stay as they were, unfolded.
 func (s *Service) focus(l todayLists) (first, rest []todayItem) {
 	var all []todayItem
 	for _, list := range [][]todayItem{l.Late, l.Tasks} {
@@ -83,19 +88,17 @@ func (s *Service) focus(l todayLists) (first, rest []todayItem) {
 			}
 		}
 	}
-	if len(all) < focusFrom {
-		return nil, nil
-	}
-	matters, start := map[string]bool{}, map[string]bool{}
-	for _, it := range all {
-		matters[it.ID] = s.important(it)
-	}
 	pool := append(append([]todayItem{}, all...), s.mattersSoon(all)...)
-	for _, it := range pool[len(all):] {
-		matters[it.ID] = true
+	matters, start, starts := map[string]bool{}, map[string]bool{}, 0
+	for i, it := range pool {
+		matters[it.ID] = i >= len(all) || s.important(it)
+		if start[it.ID] = s.startsWith(it); start[it.ID] {
+			starts++
+		}
 	}
-	for _, it := range pool {
-		start[it.ID] = s.startsWith(it)
+	short := len(all) < focusFrom
+	if short && starts == 0 {
+		return nil, nil
 	}
 	sort.SliceStable(pool, func(i, j int) bool {
 		if start[pool[i].ID] != start[pool[j].ID] {
@@ -110,7 +113,11 @@ func (s *Service) focus(l todayLists) (first, rest []todayItem) {
 		}
 		return pool[i].At.Before(pool[j].At)
 	})
-	first = pool[:focusOn]
+	if short {
+		first = pool[:min(starts, focusOn)]
+	} else {
+		first = pool[:focusOn]
+	}
 	chosen := map[string]bool{}
 	for _, it := range first {
 		chosen[it.ID] = true
@@ -127,7 +134,8 @@ func (s *Service) focus(l todayLists) (first, rest []todayItem) {
 const soonDays = 7
 
 // mattersSoon is the tasks marked as mattering that are not done, not
-// already late or due, and due within soonDays or on no day at all.
+// already late or due, and due within soonDays or on no day at all; one
+// tagged start on any day, as the assistant said to start with it now.
 func (s *Service) mattersSoon(have []todayItem) []todayItem {
 	t, ok := s.app.Types.Get("task")
 	if !ok {
@@ -147,7 +155,7 @@ func (s *Service) mattersSoon(have []todayItem) []todayItem {
 		it := todayItem{Title: s.Title(t, r), Href: relate.Page("task", r.ID), Type: "task", ID: r.ID, Soon: true}
 		if v, _ := r.Fields["due"].(string); v != "" {
 			at, allDay, ok := when.Stored(v, now)
-			if !ok || at.After(now.AddDate(0, 0, soonDays)) {
+			if !ok || at.After(now.AddDate(0, 0, soonDays)) && !s.startsWith(it) {
 				continue
 			}
 			it.At, it.AllDay, it.When = at, allDay, when.Day(at, now)
@@ -159,55 +167,71 @@ func (s *Service) mattersSoon(have []todayItem) []todayItem {
 	return out
 }
 
-// dumpBox is the box for everything in the person's head.
-func (s *Service) dumpBox() string {
-	return `<h2>Too much in your head?</h2>` + string(s.Form(ui.Form{Action: "/today/sort", Class: "sw-stack",
-		Body: s.Component("textarea", map[string]any{"label": "Everything on your mind", "name": "words", "rows": 4,
-			"hint": "As it comes, in any order: things to do, to remember, to reply to. The assistant makes them tasks with their days and says which three to start with."}),
-		Button: &ui.Button{Label: "Sort it out for me", Variant: ui.Secondary}}))
-}
-
-// todaySort hands what the person wrote to the assistant, to sort.
-func (s *Service) todaySort(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm()
-	words := strings.TrimSpace(r.PostForm.Get("words"))
-	if words == "" {
-		s.Failed(w, r, "Nothing to sort", errors.New("write what is on your mind first, as it comes"), "/today")
-		return
-	}
-	ask := fmt.Sprintf("Sort this out for me: make each thing to do a task, with its day when I said one, tag the ones that matter most important, and tell me the three to start with, tagged start (and take start off any task that had it before). Ask me only if something cannot be guessed.\n\n%s", words)
-	if _, err := s.ChatFor(r).SendFile(context.WithoutCancel(r.Context()), "", ask, ""); err != nil {
-		s.ForgetModel()
-		s.Failed(w, r, "Not sorted", err, "/today")
-		return
-	}
-	// Back where they were: the page that says what to start with, not the
-	// busiest page they have. What it said in full is in the chat.
-	s.TellAt(w, r, web.Outcome{Title: "Sorted", Text: "The assistant has made your tasks. Its answer, with the three to start with, is in Chat."}, "/today")
-}
-
-// focusSection is Start with these, and the rest folded, or "" when Today
-// is short enough to read whole.
+// focusSection is Start with these, and the rest folded; on a short day
+// only what the assistant said to start with, then the rest as usual; or
+// "" when Today is short and the assistant named nothing to start with.
 func (s *Service) focusSection(l todayLists, list func(string, []todayItem) string) string {
 	first, rest := s.focus(l)
 	if first == nil {
 		return ""
 	}
-	n, why := len(rest), ""
+	n := len(rest)
 	for _, it := range first {
 		if !it.Soon {
 			n++
 		}
-		// Why one not due is first, said once for the three: a starred row
-		// in To Do or a red flag in Todoist says it with a mark; here, words.
-		if why == "" && s.important(it) {
-			why = ", what is marked important first"
-		}
 	}
-	out := `<p>` + template.HTMLEscapeString(fmt.Sprintf("%d tasks are late or due. Start with these three%s; the rest wait below.", n, why)) + `</p>` +
+	if n < focusFrom {
+		late := map[string]bool{}
+		for _, it := range l.Late {
+			late[it.ID] = true
+		}
+		var lateRest, dueRest []todayItem
+		for _, it := range rest {
+			if late[it.ID] {
+				lateRest = append(lateRest, it)
+			} else {
+				dueRest = append(dueRest, it)
+			}
+		}
+		these := "these"
+		if len(first) == 1 {
+			these = "this"
+		}
+		return `<p>The assistant said to start with ` + these + `.</p>` + list("Start with "+these, first) +
+			s.lateNudge(lateRest, s.Now()) + list("Overdue", lateRest) + list("Tasks", dueRest) // today_nudge.go
+	}
+	out := `<p>` + template.HTMLEscapeString(fmt.Sprintf("%d tasks are late or due. Start with these three%s; the rest wait below.", n, s.firstWhy(first))) + `</p>` +
 		s.letGoOffer(append(append([]todayItem{}, first...), rest...)) + list("Start with these", first) // today_letgo.go
 	if body, err := s.app.Registry.RenderSlot("disclosure", map[string]any{"label": "The rest", "count": len(rest), "of": schema.Noun(len(rest), "task")}, template.HTML(list("", rest))); err == nil {
 		out += string(body)
 	}
 	return out
+}
+
+// firstWhy is why the three come in their order, said once for them: a
+// starred row in To Do or a red flag in Todoist says it with a mark; here,
+// words. What the assistant said comes before what is marked important,
+// and the line says so, so a task with no day first does not read as a
+// mistake and the two never seem to disagree.
+func (s *Service) firstWhy(first []todayItem) string {
+	said, marked := 0, false
+	for _, it := range first {
+		if s.startsWith(it) {
+			said++
+		} else if s.marked(it) {
+			marked = true
+		}
+	}
+	switch {
+	case said == len(first):
+		return ", as the assistant said"
+	case said > 0 && marked:
+		return ", what the assistant said first, then what is marked important"
+	case said > 0:
+		return ", what the assistant said first"
+	case marked:
+		return ", what is marked important first"
+	}
+	return ""
 }
