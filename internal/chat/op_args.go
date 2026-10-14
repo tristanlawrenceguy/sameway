@@ -7,6 +7,7 @@ type toolArgs struct {
 	Mapping     map[string]any `json:"mapping"`
 	Component   string         `json:"component"`
 	ID          string         `json:"id"`
+	IDs         []string       `json:"ids"`
 	Props       map[string]any `json:"props"`
 	Span        *int           `json:"span"`
 	Position    *int           `json:"position"`
