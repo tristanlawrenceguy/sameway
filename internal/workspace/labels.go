@@ -14,6 +14,7 @@ var settingNames = map[string]string{
 	"ui.lists":     "Lists shown",
 	"ui.developer": "Developer pages",
 	"ui.nest":      "Nested in the sidebar",
+	"ui.alike":     "Records alike",
 	"ui.language":  "Language",
 	"ui.clock":     "Clock",
 	"ui.zone":      "Time zone",
