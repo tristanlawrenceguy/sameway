@@ -24,3 +24,19 @@ func TestAWordsConditionIgnoresCaseAndAccents(t *testing.T) {
 		}
 	}
 }
+
+// Quotes and dashes match as any keyboard types them: a phone's curly
+// apostrophe finds a laptop's straight one, and the other way round.
+func TestAWordsConditionIgnoresCurlyQuotes(t *testing.T) {
+	t.Parallel()
+	st, typ := tasks(t)
+	st.Create("task", map[string]any{"title": "Mum's birthday"})
+	st.Create("task", map[string]any{"title": "Ana’s visit – Friday"})
+	now := time.Now()
+	for where, want := range map[string]int{"title~mum’s": 1, "title~ana's": 1, "title~visit - friday": 1} {
+		recs, err := query.Filter(st, typ, []string{where}, "", 0, now)
+		if err != nil || len(recs) != want {
+			t.Errorf("%s finds %d, want %d (%v)", where, len(recs), want, err)
+		}
+	}
+}

@@ -28,6 +28,7 @@ func foldIndex(s string) (string, []int) {
 			if unicode.Is(unicode.Mn, f) {
 				continue
 			}
+			f = textfold.Plain(f) // a curly quote is a quote, as String has it
 			n := utf8.RuneLen(f)
 			b.WriteRune(f)
 			for k := 0; k < n; k++ {
