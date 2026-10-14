@@ -202,7 +202,7 @@ func (s *Service) sendTurn(ctx context.Context, canvas, text, fileID string, on 
 					req.Messages = append(req.Messages, llm.Message{Role: llm.RoleAssistant, Content: reply}, llm.Message{Role: llm.RoleUser, Content: wrong})
 					continue
 				}
-				reply += nothingChanged
+				reply += s.stillWrong(ctx, reply, said, changes) // claims_words.go
 			}
 			return s.reply(said, reply, changes, tools)
 		}
