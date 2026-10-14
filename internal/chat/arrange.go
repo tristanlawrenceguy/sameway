@@ -24,7 +24,7 @@ var arrangeOp = Op{Title: "Lay a tab out", Traits: Traits{Idempotent: true},
 	Run:   func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.arrangeCall(call.Args) },
 	Tool: llm.Tool{
 		Name:        "arrange_canvas",
-		Description: "Lay out a whole tab in one change: list every block on it (from the canvas listing) in the order it should be read, top to bottom, each with the width and place it should have. The list order becomes the order on the page; what an item leaves out stays as it is. Use it after adding something, to move and reshape what was already there so the page reads well: what matters most first, related things together, rows of twelve filled, headings in order. Blocks in the header and footer may be left out. One Undo takes the whole arrangement back. Refused, with nothing changed, when a block is missing or listed twice, or a heading would skip a level.",
+		Description: "Lay out a whole tab in one change: list every block on it (from the canvas listing) in the order it should be read, top to bottom, each with the width and place it should have. The list order becomes the order on the page; what an item leaves out stays as it is. Use it after adding something, to move and reshape what was already there so the page reads well: what matters most first, related things together, rows of twelve filled, headings in order. Blocks in the header and footer may be left out. Blocks to take away (one that cannot be shown, repeats another, or is left over) go in remove instead, in the same change. One Undo takes the whole arrangement back. Refused, with nothing changed, when a block is missing or listed twice, or a heading would skip a level.",
 		Schema: obj(map[string]any{
 			"blocks": map[string]any{"type": "array", "description": "Every block on the tab, in reading order.", "items": obj(map[string]any{
 				"id":     map[string]any{"type": "string", "description": "Block id from the canvas listing."},
@@ -33,6 +33,7 @@ var arrangeOp = Op{Title: "Lay a tab out", Traits: Traits{Idempotent: true},
 				"frame":  map[string]any{"type": "string", "enum": []string{"card", "bare"}},
 				"size":   map[string]any{"type": "string", "enum": []string{"full", "compact", "icon"}},
 			}, "id")},
+			"remove": map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Ids of blocks to take off the tab in the same change, left out of blocks."},
 			"canvas": map[string]any{"type": "string", "description": "The tab, as a canvas id; empty string is Home. Defaults to the tab the person is looking at."},
 		}, "blocks"),
 	}}
@@ -40,6 +41,7 @@ var arrangeOp = Op{Title: "Lay a tab out", Traits: Traits{Idempotent: true},
 func (s *Service) arrangeCall(raw json.RawMessage) toolResult {
 	var args struct {
 		Blocks []arrangeItem `json:"blocks"`
+		Remove []string      `json:"remove"`
 		Canvas *string       `json:"canvas"`
 	}
 	if err := json.Unmarshal(raw, &args); err != nil {
@@ -49,7 +51,7 @@ func (s *Service) arrangeCall(raw json.RawMessage) toolResult {
 	if args.Canvas != nil {
 		canvas = *args.Canvas
 	}
-	return s.arrange(canvas, args.Blocks)
+	return s.arrange(canvas, args.Blocks, args.Remove)
 }
 
 // Arrange is arrange_canvas for a caller that is not the conversation,
@@ -64,7 +66,7 @@ func mustJSON(v any) json.RawMessage {
 	return raw
 }
 
-func (s *Service) arrange(canvas string, items []arrangeItem) toolResult {
+func (s *Service) arrange(canvas string, items []arrangeItem, remove []string) toolResult {
 	if !s.HasCanvas(canvas) {
 		return fail("no canvas with id %q; the tabs and their ids are listed in the prompt, and \"\" is Home", canvas)
 	}
@@ -73,23 +75,11 @@ func (s *Service) arrange(canvas string, items []arrangeItem) toolResult {
 	for _, b := range before {
 		byID[b.ID] = b
 	}
-	listed := map[string]bool{}
-	var problems []string
-	for _, it := range items {
-		switch {
-		case byID[it.ID] == nil:
-			problems = append(problems, fmt.Sprintf("%s is not a block on this tab", it.ID))
-		case listed[it.ID]:
-			problems = append(problems, fmt.Sprintf("%s is listed twice", it.ID))
-		}
-		listed[it.ID] = true
+	gone := map[string]bool{}
+	for _, id := range remove {
+		gone[id] = true
 	}
-	for _, b := range before {
-		if r := lookOf(b).region; !listed[b.ID] && r != "header" && r != "footer" {
-			problems = append(problems, fmt.Sprintf("%s (%s %s) is missing; list every block, even one that stays where it is", b.ID, placedOf(b).name(), placedOf(b).comp))
-		}
-	}
-	if len(problems) > 0 {
+	if problems := arrangeProblems(before, byID, items, remove); len(problems) > 0 {
 		return fail("nothing was arranged: %s", strings.Join(problems, "; "))
 	}
 	// Work out every block's new fields first, so nothing is written
@@ -104,13 +94,18 @@ func (s *Service) arrange(canvas string, items []arrangeItem) toolResult {
 	}
 	var after []*store.Record
 	for _, b := range before {
-		after = append(after, withFields(b, next[b.ID]))
+		if !gone[b.ID] {
+			after = append(after, withFields(b, next[b.ID]))
+		}
 	}
 	byPosition(after)
 	if why := newSkip(before, after); why != "" {
 		return fail("nothing was arranged: %s", why)
 	}
 	var ops []records.Op
+	for _, id := range remove {
+		ops = append(ops, records.Op{Type: records.BlockType, ID: id})
+	}
 	for _, it := range items {
 		if moves(byID[it.ID], next[it.ID]) {
 			ops = append(ops, records.Op{Type: records.BlockType, ID: it.ID, After: s.fields(records.BlockType, next[it.ID])})
@@ -131,7 +126,7 @@ func (s *Service) arrange(canvas string, items []arrangeItem) toolResult {
 		}
 	}
 	c := records.Change{Action: "arranged", Detail: fmt.Sprintf("%s, %d blocks", name, len(done)), Href: href, Ops: done}
-	return toolResult{text: fmt.Sprintf("arranged %s: %d blocks moved or reshaped, in one change that one Undo takes back", name, len(done)), change: &c}
+	return toolResult{text: fmt.Sprintf("arranged %s: %d blocks moved or reshaped%s, in one change that one Undo takes back", name, len(done)-len(remove), takenSaid(len(remove))), change: &c}
 }
 
 // moves says whether new layout fields would change a block; who last

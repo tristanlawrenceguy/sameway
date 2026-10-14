@@ -62,6 +62,7 @@ var canvasOps = []Op{
 			Schema: obj(map[string]any{
 				"id": map[string]any{"type": "string", "description": "The canvas id, from the list of tabs."},
 			}, "id")}, Offered: has(records.CanvasType)},
+	renameCanvasOp, // canvas_rename.go
 }
 
 func (s *Service) createCanvas(name string) toolResult {

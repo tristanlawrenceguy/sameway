@@ -29,3 +29,6 @@
 .sw-upload__about { display: grid; gap: var(--sw-space-1); width: 100%; max-width: var(--sw-size-measure); }
 .sw-upload__about[hidden] { display: none; }
 .sw-upload__description { min-height: var(--sw-size-target); width: 100%; font: inherit; color: var(--sw-color-fg); background: var(--sw-color-bg); border: 2px solid var(--sw-color-border-strong); border-radius: var(--sw-radius-md); padding: 0 var(--sw-space-2); }
+/* How much of a big file has gone, while it goes: the platform's own bar. */
+.sw-upload__progress { width: 100%; max-width: var(--sw-size-measure); height: var(--sw-space-2); accent-color: var(--sw-color-accent); }
+.sw-upload__progress[hidden] { display: none; }

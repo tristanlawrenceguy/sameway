@@ -161,5 +161,8 @@ func (s *Server) messageProps(m *store.Record, from string, latest bool) map[str
 	if fileID, _ := m.Fields["file"].(string); fileID != "" {
 		props["attachment"] = s.attachment(fileID)
 	}
+	if latest && replyUndos(props["changes"].([]any)) != nil { // undo_reply.go
+		props["undoAll"] = "/chat/" + m.ID + "/undo"
+	}
 	return props
 }

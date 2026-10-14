@@ -16,6 +16,11 @@ type LookMeasured struct {
 	Note   string          `json:"note"`
 	Person []chat.Reading  `json:"person"`
 	Look   json.RawMessage `json:"look_browser,omitempty"`
+	// Layout is how the tab reads, as the assistant is told before it
+	// acts (chat.LayoutNow): rows, what may be clutter, what to look at.
+	// An agent reading a tab before changing it had the page and its
+	// measures, and not what the assistant is told about it.
+	Layout string `json:"layout,omitempty"`
 }
 
 const (
@@ -47,6 +52,9 @@ func (s *Server) measuredAt(path string, inLook json.RawMessage) *LookMeasured {
 	m := &LookMeasured{Person: s.app.Chat.MeasuredOn(canvas, focus), Note: measuredNote}
 	if len(m.Person) == 0 {
 		m.Person, m.Note = []chat.Reading{}, unmeasured
+	}
+	if focus == "" {
+		m.Layout = s.app.Chat.LayoutNow(canvas)
 	}
 	if len(inLook) > 0 && string(inLook) != "null" {
 		m.Look = inLook
