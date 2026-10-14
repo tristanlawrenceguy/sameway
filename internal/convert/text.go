@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/csv"
 	"encoding/xml"
-	"fmt"
 	"io"
 	"path"
 	"strings"
@@ -173,7 +172,7 @@ func epub(data []byte) (string, error) {
 		}
 	}
 	if len(parts) == 0 {
-		return "", fmt.Errorf("no readable pages in the book")
+		return "", told("the book has no pages with words in them.")
 	}
 	return strings.Join(parts, "\n\n"), nil
 }
@@ -204,7 +203,7 @@ func pdfText(data []byte) (string, error) {
 		}
 	}
 	if b.Len() == 0 {
-		return "", fmt.Errorf("no text in the PDF: a scanned page needs an external converter with OCR")
+		return "", errNoText
 	}
 	return b.String(), nil
 }

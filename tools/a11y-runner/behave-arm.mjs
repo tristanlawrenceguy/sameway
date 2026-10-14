@@ -86,4 +86,35 @@ export const cases = {
     check(await tab.isVisible(".sw-upload__about"), "a picture asks what it shows");
     await tab.close();
   },
+
+  "upload: a big file shows how much has gone, ends where the server sends it, and a lost connection says try again": async (browser, check) => {
+    const form = `<div class="sw-shell"><main id="main">` + readFileSync(new URL("../../design/components/upload/examples/default.html", import.meta.url), "utf8") + "</main></div>";
+    const big = { name: "film.txt", mimeType: "text/plain", buffer: Buffer.alloc(12 * 1024 * 1024, 97) };
+    let asked = "";
+    let fail = false;
+    // The page the server sends the person to is the answer the request
+    // ended on (a real server redirects there; the harness cannot).
+    const landed = page(`<main id="main"><h1>film</h1></main>`);
+    const tab = await open(browser, page(form), {
+      "/t/file/upload": (route, url, req) => {
+        if (req.method() === "POST") asked = req.headers()["x-requested-with"] || "";
+        return fail ? route.abort() : route.fulfill({ contentType: "text/html", body: landed });
+      },
+    });
+    await tab.setInputFiles("#upload", big);
+    await tab.click("text=Upload");
+    await tab.waitForSelector("h1:text('film')");
+    check(asked === "sameway-live", `sent as the page's own fetch, so what the server says waits for the person: ${asked}`);
+
+    await tab.goto("http://sw.test/");
+    fail = true;
+    await tab.setInputFiles("#upload", big);
+    await tab.click("text=Upload");
+    await tab.waitForFunction(() => document.querySelector("#upload-status").getAttribute("data-state") === "failed");
+    check(/could not be sent.*Try again/.test(await tab.textContent("#upload-status")), `a lost connection: ${await tab.textContent("#upload-status")}`);
+    check(await tab.getAttribute("form", "aria-busy") === null, "the form can be sent again");
+    check(await tab.locator(".sw-upload__progress").count() === 1, "one bar, which shows how much has gone");
+    check(!tab.errors.length, `no errors: ${tab.errors.join("; ")}`);
+    await tab.close();
+  },
 };
