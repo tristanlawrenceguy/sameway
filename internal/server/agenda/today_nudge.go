@@ -32,6 +32,12 @@ func (s *Service) taskPresses(it todayItem, late bool) string {
 		variant           ui.Variant
 	}
 	presses := []press{{"/today/done", "Done", "", ui.Secondary}, {"/today/move", "Tomorrow", "tomorrow", ui.Quiet}}
+	// One that matters and is not due yet (today_focus.go) is not moved:
+	// Tomorrow would bring Thursday's dentist forward, or give the council
+	// tax a day it never had, and it would still be among the three.
+	if it.Soon {
+		presses = presses[:1]
+	}
 	if late {
 		presses = append(presses, press{"/today/move", "Today", "today", ui.Quiet})
 	}
