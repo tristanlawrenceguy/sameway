@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
   pull_request:
+    # closed too, so a pull request merged or closed stops its run: it
+    # cancels the run still going (the group below) and runs nothing itself.
+    types: [opened, synchronize, reopened, closed]
 
 # A pull request pushed to again, or brought up to date with main, is
 # checked again; the run for what it was before is no use any more and
@@ -20,6 +23,7 @@ jobs:
   # vet, size or debt-list failure is reported in a minute or two and
   # nothing slow starts. The tests run alongside, as they take longest.
   check:
+    if: github.event.action != 'closed'
     name: check (format, vet, sizes, debt list only goes down)
     runs-on: ubuntu-latest
     outputs:
@@ -61,6 +65,7 @@ jobs:
           go run ./tools/check -base "$BASE"
 
   go:
+    if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
