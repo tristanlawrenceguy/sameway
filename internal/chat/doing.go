@@ -34,6 +34,7 @@ type callArgs struct {
 	Component string         `json:"component"`
 	Props     map[string]any `json:"props"`
 	Fields    map[string]any `json:"fields"`
+	Records   []any          `json:"records"`
 	Region    string         `json:"region"`
 	Span      int            `json:"span"`
 	Type      string         `json:"type"`
