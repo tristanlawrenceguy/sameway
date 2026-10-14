@@ -52,5 +52,15 @@ func (s *Service) layoutOf(r *http.Request, rec *store.Record) string {
 		return ""
 	}
 	canvas, _ := rec.Fields["canvas"].(string)
-	return s.app.Chat.LayoutNow(canvas)
+	layout := s.app.Chat.LayoutNow(canvas)
+	if r.Method == http.MethodPost {
+		// A new block over records another already shows says so first,
+		// as the assistant's add_component does.
+		name, _ := rec.Fields["component"].(string)
+		props, _ := rec.Fields["props"].(map[string]any)
+		if like := s.app.Chat.Similar(canvas, name, props, rec.ID); like != "" {
+			layout = like + "\n" + layout
+		}
+	}
+	return layout
 }
