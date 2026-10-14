@@ -22,7 +22,9 @@ import (
 var recordSource = map[string]string{"collection": "type", "calendar": "type", "chart": "type", "tracker": "habits", "record": "id"}
 
 // similarOn is what the add says when the tab already has a block of the
-// same component over the same records: which, and how to use it instead.
+// same component over the same records: which, and how to use it instead;
+// and, when another tab has one, where, since a person asking for their
+// tasks "here" may have meant the list they already keep on Work.
 func (s *Service) similarOn(canvas, name string, props map[string]any, newID string) string {
 	key, ok := recordSource[name]
 	if !ok {
@@ -33,7 +35,8 @@ func (s *Service) similarOn(canvas, name string, props map[string]any, newID str
 		return ""
 	}
 	var same []string
-	for _, b := range records.OnCanvas(blocks, canvas) {
+	elsewhere := map[string][]string{}
+	for _, b := range blocks {
 		if b.ID == newID || b.Fields["component"] != name {
 			continue
 		}
@@ -41,17 +44,25 @@ func (s *Service) similarOn(canvas, name string, props map[string]any, newID str
 		if name != "tracker" && fmt.Sprint(had[key]) != fmt.Sprint(props[key]) {
 			continue
 		}
-		what := records.Summarise(name, had)
-		if what == "" {
-			what, _ = had["label"].(string)
+		what := fmt.Sprintf("%s (%s)", b.ID, placedOf(b).name()) // one name for a block, as Layout now gives it
+		if on, _ := b.Fields["canvas"].(string); on != canvas {
+			elsewhere[on] = append(elsewhere[on], what)
+			continue
 		}
-		if what == "" {
-			what = name
+		same = append(same, what)
+	}
+	out := ""
+	if len(same) > 0 {
+		out = fmt.Sprintf("\nThis tab already had a %s of the same records: %s. If the person meant that one changed, take this back with undo_change and use update_component on it; keep both only when they show different things.", name, strings.Join(same, ", "))
+	}
+	var tabs []string
+	for _, c := range s.Canvases() {
+		if ids, ok := elsewhere[c.ID]; ok {
+			tabs = append(tabs, fmt.Sprintf("%s has %s", c.Name, strings.Join(ids, ", ")))
 		}
-		same = append(same, fmt.Sprintf("%s (%s)", b.ID, what))
 	}
-	if len(same) == 0 {
-		return ""
+	if len(tabs) > 0 {
+		out += fmt.Sprintf("\nAnother tab shows the same records as a %s: %s. Keep this one when the person wants them here too; if they meant the one they already have, take this back with undo_change and link them to that tab.", name, strings.Join(tabs, "; "))
 	}
-	return fmt.Sprintf("\nThis tab already had a %s of the same records: %s. If the person meant that one changed, take this back with undo_change and use update_component on it; keep both only when they show different things.", name, strings.Join(same, ", "))
+	return out
 }

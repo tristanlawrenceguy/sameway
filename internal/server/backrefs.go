@@ -36,6 +36,7 @@ func (s *Server) backrefs(t *schema.Type, rec *store.Record) (string, []string) 
 			"order": "-updated_at",
 			"label": capitalize(schema.Plural(u.Name)),
 			"id":    id,
+			"level": 2, // a section of the page, under its h1
 		}, "", nil)
 		delete(props, "summary") // the template says "Nothing here yet." when empty
 		b.WriteString(string(s.component(collectionComponent, props)))

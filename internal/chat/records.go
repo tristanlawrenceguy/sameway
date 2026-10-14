@@ -61,13 +61,14 @@ var recordOps = []Op{
 				"fields": map[string]any{"type": "object", "description": "Field values matching the type's schema. Leave a field out to take its default."},
 			}, "type", "fields")}, Offered: typed},
 	createRecordsOp, // create_records.go
+	updateRecordsOp, // update_records.go
 	{Title: "Change a record", Traits: Traits{Idempotent: true},
 		Core:  true,
 		Doing: func(a callArgs) string { return "Updating" + or(an(schema.Words(a.Type)), " a record") },
 		Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
 			return s.updateRecord(a.Type, a.ID, a.Fields, a.Version)
 		},
-		Tool: llm.Tool{Name: "update_record", Description: "Change fields on a record that exists. Only the fields given change. Use find_records first to get the id.",
+		Tool: llm.Tool{Name: "update_record", Description: "Change fields on a record that exists. Only the fields given change. Use find_records first to get the id. For the same change to several, update_records makes it in one change.",
 			Schema: obj(map[string]any{
 				"type":    typeArg,
 				"id":      map[string]any{"type": "string", "description": "The record's id, from find_records or from a page URL /t/<type>/<id>."},
@@ -114,7 +115,7 @@ func (s *Service) createRecord(typeName string, fields map[string]any) toolResul
 		return fail("I couldn't save those changes — %s. %s Fix the fields and call create_record again.", humanizeValidationError(err.Error()), typeHelp(t))
 	}
 	text := fmt.Sprintf("created %s %s: %q. The person can open it at /t/%s/%s.", t.Name, rec.ID, c.Detail, t.Name, rec.ID)
-	text += s.datesSaid(t, fields, rec, false) + s.sameTitle(t, rec) + s.whoseSaid(t, rec) + s.actionSaid(t, rec) + s.splitSaid(t) + s.habitSaid(t, rec) // dates_said.go, same_title.go, whose_said.go, action_when_said.go, habit_said.go
+	text += s.datesSaid(t, fields, rec, false) + s.splitSaid(t) // dates_said.go, action_when_said.go; the rest is the change's notes (notice.go)
 	if t.Name == "reminder" && atlogin.Path() != "" && !atlogin.On() {
 		text += " Reminders ring only while Sameway is open, and it does not open when this computer starts; if this one matters, tell the person that Open Sameway when I sign in, on Workspaces, keeps it ringing."
 	}

@@ -80,7 +80,7 @@ func outlineProblems(main []placed) []string {
 		}
 	}
 	said := map[string]string{}
-	for _, p := range main {
+	for i, p := range main {
 		_, text, ok := p.heading()
 		if !ok {
 			continue
@@ -90,6 +90,9 @@ func outlineProblems(main []placed) []string {
 			out = append(out, fmt.Sprintf("two headings say %q (%s and %s): a heading block over a list that names itself says it twice; remove the heading block or rename one", text, first, p.comp))
 		}
 		said[key] = p.comp
+		if p.comp == "heading" && (i == len(main)-1 || main[i+1].comp == "heading") {
+			out = append(out, fmt.Sprintf("the section heading %q has nothing under it, as when what it named was taken away: put what it names under it, or propose taking it away", text))
+		}
 		if p.comp == "heading" && (p.span != 12 || p.frame != "bare") {
 			out = append(out, fmt.Sprintf("the section heading %q is span %d, frame %s: a heading wants span 12, frame bare, so its section starts on a new row", text, p.span, p.frame))
 		}
