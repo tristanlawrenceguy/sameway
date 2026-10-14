@@ -116,7 +116,7 @@ func fieldNames(t *schema.Type) string {
 	for _, f := range t.Fields {
 		names = append(names, f.Name)
 	}
-	return strings.Join(names, ", ")
+	return schema.Names(names)
 }
 
 // writingField is a field name that means a piece and its parts, which

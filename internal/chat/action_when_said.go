@@ -63,7 +63,7 @@ func (s *Service) actionSaid(t *schema.Type, rec *store.Record) string {
 			names = append(names, "{{"+n+"}}")
 		}
 		sort.Strings(names)
-		out += fmt.Sprintf(" A %s has nothing called %s: what it can send is %s.", schema.Words(what), strings.Join(missing, ", "), strings.Join(names, ", "))
+		out += fmt.Sprintf(" A %s has nothing called %s: what it can send is %s.", schema.Words(what), strings.Join(missing, ", "), schema.Names(names))
 	}
 	return out
 }

@@ -61,7 +61,7 @@ func (c *ctx) contentCmd(typeName string) error {
 				for _, f := range export.For(t) {
 					names = append(names, f.Ext)
 				}
-				return fmt.Errorf("%s cannot be listed as %s; it can be %s", t.Name, *format, strings.Join(names, ", "))
+				return fmt.Errorf("%s cannot be listed as %s; it can be %s", t.Name, *format, schema.Names(names))
 			}
 			return export.Write(c.Stdout, f, t, recs, func(f schema.Field, id string) string {
 				if r, err := a.Store.Get(f.To, id); err == nil {

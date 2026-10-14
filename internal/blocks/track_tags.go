@@ -3,10 +3,10 @@ package blocks
 import (
 	"slices"
 	"sort"
-	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/fold"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -68,7 +68,7 @@ func pickHabits(recs []*store.Record, named []string) ([]*store.Record, string) 
 			if near := fold.Nearest(want, names); near != "" {
 				said += " (did you mean " + near + "?)"
 			}
-			return nil, said + "; the habits are " + strings.Join(names, ", ")
+			return nil, said + "; the habits are " + schema.Names(names)
 		}
 		if !slices.Contains(out, found) {
 			out = append(out, found)

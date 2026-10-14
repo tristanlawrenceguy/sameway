@@ -6,7 +6,6 @@ import (
 	"html/template"
 	"slices"
 	"sort"
-	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/fold"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
@@ -115,5 +114,5 @@ func (s *Server) refNames(f schema.Field, v any) string {
 			names = append(names, s.RefTitle(f, id))
 		}
 	}
-	return strings.Join(names, ", ")
+	return schema.Names(names)
 }

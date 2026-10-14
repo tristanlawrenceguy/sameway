@@ -6,6 +6,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/blocks"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -99,22 +100,11 @@ func blockName(rec *store.Record) string {
 // 5 miles"), is set apart by semicolons, or three entries read as six
 // names (crew finding 0748).
 func listed(names []string, most int) string {
-	sep := namesSep(names)
+	sep := schema.Between(names)
 	if len(names) <= most {
 		return strings.Join(names, sep)
 	}
 	return fmt.Sprintf("%s and %d more", strings.Join(names[:most], sep), len(names)-most)
-}
-
-// namesSep is what goes between names: a comma, or a semicolon when any
-// name has a comma in it.
-func namesSep(names []string) string {
-	for _, n := range names {
-		if strings.Contains(n, ",") {
-			return "; "
-		}
-	}
-	return ", "
 }
 
 // unique drops repeats and blanks, keeping the order given.

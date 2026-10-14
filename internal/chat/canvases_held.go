@@ -2,7 +2,8 @@ package chat
 
 import (
 	"fmt"
-	"strings"
+
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
 
 // What each tab holds, in the tab list the model reads. The tabs were
@@ -31,7 +32,7 @@ func (s *Service) tabHolds(canvas string) string {
 	if n == 0 {
 		return ": empty"
 	}
-	out := ": " + strings.Join(names, ", ")
+	out := ": " + schema.Names(names)
 	if n > len(names) {
 		out += fmt.Sprintf(", and %d more", n-len(names))
 	}
