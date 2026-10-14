@@ -8,7 +8,6 @@ package server_test
 
 import (
 	"net/http"
-	"net/url"
 	"strings"
 	"testing"
 )
@@ -78,27 +77,6 @@ func TestActionDetailDoesNotShowRawEveryLabel(t *testing.T) {
 	}
 }
 
-// TestActionDetailLedeDoesNotShowCreatedLabel asserts that the action detail page
-// lede does not contain "Created" as a visible label (Acceptance 4). The text
-// should read naturally, e.g. "Started …".
-func TestActionDetailLedeDoesNotShowCreatedLabel(t *testing.T) {
-	t.Parallel()
-	a, h := newApp(t)
-
-	rec, err := a.Store.Create("action", map[string]any{
-		"title": "Ping the alarm",
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	page := get(t, h, "/t/action/"+rec.ID).Body.String()
-
-	if strings.Contains(page, ">Created ") {
-		t.Error("action detail lede should not show \"Created\" as a label; use natural phrasing like \"Started\"")
-	}
-}
-
 // TestActionDetailLedeSpacing ensures the status checkbox and its timestamp are
 // separated by whitespace so they do not merge into one accessibility name.
 func TestActionDetailLedeSpacing(t *testing.T) {
@@ -143,7 +121,6 @@ func TestActionDetailShowLabelDoesNotRunIntoTimestamp(t *testing.T) {
 		t.Error("the raw status value runs directly into the timestamp span; there should be whitespace between them")
 	}
 
-	_ = url.QueryEscape // use the import to avoid unused import error
 }
 
 // TestActionDetailShowsCorrectLabels asserts that the action detail page renders

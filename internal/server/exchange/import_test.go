@@ -61,7 +61,7 @@ func TestAPersonImportsPeopleFromAFile(t *testing.T) {
 	if at != "/t/person" || !strings.Contains(list.Body.String(), "imported 2") {
 		t.Errorf("the list the person lands on says what happened, got %q", at)
 	}
-	if strings.Contains(get(t, h, "/chat").Body.String(), "imported 2") {
+	if strings.Contains(get(t, h, "/chat").Body.String(), "from the file: imported 2") { // the outcome, not the log line "imported 2 people"
 		t.Error("an import that went well is not an error in the chat")
 	}
 	if !strings.Contains(get(t, h, "/activity").Body.String(), "imported") {
