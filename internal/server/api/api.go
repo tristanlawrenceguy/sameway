@@ -31,6 +31,10 @@ func (s *Service) apiDescribe(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) apiList(w http.ResponseWriter, r *http.Request) {
+	if why := unknownParams(r.URL.Query(), r.PathValue("type")); why != "" { // api_params.go
+		web.WriteError(w, errors.New(why))
+		return
+	}
 	limitStr := r.URL.Query().Get("limit")
 	var limit int
 	if limitStr != "" {
