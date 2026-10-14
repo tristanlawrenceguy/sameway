@@ -26,9 +26,10 @@ func TestWhatComesInGoesOutAgain(t *testing.T) {
 	a.Store.Create("event", map[string]any{"title": "Hana's birthday", "starts": "2026-10-12T00:00:00Z"})
 	a.Store.Create("person", map[string]any{"name": "Hana Sato", "email": "hana@example.com", "phone": "+44 20 7946 0000", "organisation": "Garden Co"})
 
-	// The list page offers what fits, with its own query.
+	// The list page offers what fits, with its own query; a small file
+	// says no size.
 	page := get(t, h, "/t/task?where=done%3Dfalse").Body.String()
-	if !strings.Contains(page, `href="/export/task.csv?where=done%3Dfalse" download data-format="csv">Spreadsheet (CSV, `) || !strings.Contains(page, "/export/task.ics") || strings.Contains(page, "/export/task.vcf") {
+	if !strings.Contains(page, `href="/export/task.csv?where=done%3Dfalse" download data-format="csv">Spreadsheet (CSV)`) || !strings.Contains(page, "/export/task.ics") || strings.Contains(page, "/export/task.vcf") {
 		t.Errorf("the task list offers a spreadsheet and a calendar of what it shows:\n%.1500s", page)
 	}
 	if people := get(t, h, "/t/person").Body.String(); !strings.Contains(people, "/export/person.vcf") {

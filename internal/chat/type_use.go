@@ -98,3 +98,9 @@ func (s *Service) lazyMakers() func() map[string]string {
 		return got
 	}
 }
+
+// MadeByAgent says an agent made the type, as the recent log says: what a
+// page leaves out of the person's navigation while it holds nothing.
+func (s *Service) MadeByAgent(typeName string) bool {
+	return strings.HasPrefix(s.typeMakers()[typeName], "an agent")
+}
