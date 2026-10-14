@@ -73,6 +73,7 @@ var pageRoutes = []route{
 	{pattern: "POST /canvas/{id}/props", handle: (*Server).blockProps, access: people, tool: "update_component", reach: inward},
 	{pattern: "POST /canvas/{id}/keep", handle: (*Server).canvasKeep, access: people, tool: "update_component", reach: inward},
 	{pattern: "POST /canvas/{id}/delete", handle: (*Server).canvasDelete, access: people, tool: "remove_component", reach: inward},
+	{pattern: "POST /tidy", handle: (*Server).tidyPage, access: people, tool: "remove_component", reach: inward},
 	// And only those who may change it: measure.go.
 	{pattern: "POST /canvas/measure", handle: (*Server).measurePost, access: people, persons: "their browser says how the page came out on their screen; the assistant reads it in Layout now", reach: inward},
 	{pattern: "GET /chat", handle: (*Server).chatPage, access: people},
