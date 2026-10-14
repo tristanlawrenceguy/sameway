@@ -12,6 +12,10 @@ import (
 // ValidationError lists every problem with a record so a form can show them all.
 type ValidationError struct {
 	Problems map[string]string // field name -> message
+	// Type and Expects, when the type is known, are which type refused and
+	// what each refused field takes (expect.go).
+	Type    string
+	Expects map[string]string
 }
 
 func (e *ValidationError) Error() string {
@@ -57,7 +61,7 @@ func (t *Type) Normalize(in map[string]any, now time.Time) (map[string]any, erro
 		out[f.Name] = clean
 	}
 	if len(problems) > 0 {
-		return nil, &ValidationError{Problems: problems}
+		return nil, &ValidationError{Problems: problems, Type: t.Name, Expects: t.Expects(problems)}
 	}
 	// A task given only its tick gets its status from it, and the other
 	// way round (stage.go).
