@@ -160,7 +160,7 @@ func unescape(s string) string {
 func icsMarkdown(data []byte) (string, error) {
 	events := ParseICS(data, nil)
 	if len(events) == 0 {
-		return "", fmt.Errorf("the calendar has no events in it")
+		return "", told("the calendar has no events in it.")
 	}
 	var b strings.Builder
 	for _, e := range events {
