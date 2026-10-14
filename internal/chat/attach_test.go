@@ -81,3 +81,20 @@ func TestTheModelReadsWhatCameWithTheMessage(t *testing.T) {
 		t.Errorf("a long file is cut with a pointer to the rest: %d chars", len(got))
 	}
 }
+
+// A file whose words were not read is not said to have none: the model
+// hears why, in the words the person reads on its page.
+func TestTheModelHearsWhyAFileHasNoText(t *testing.T) {
+	t.Parallel()
+	svc, m := withFiles(t)
+	huge, _ := svc.Store.Create("file", map[string]any{"title": "Archive", "kind": "text", "note": "It is kept as it is: its text is read only from files up to 64 MB."})
+	svc.SendFile(context.Background(), "", "This one", huge.ID)
+	if got := m.seen[0].Messages[0].Content; strings.Contains(got, "It has no text") || !strings.Contains(got, "read only from files up to 64 MB") {
+		t.Errorf("a file kept unread says why, not that it has no text: %q", got)
+	}
+	locked, _ := svc.Store.Create("file", map[string]any{"title": "Payslip", "kind": "pdf", "status": "failed", "note": "it is locked with a password"})
+	svc.SendFile(context.Background(), "", "And this", locked.ID)
+	if got := m.seen[1].Messages[len(m.seen[1].Messages)-1].Content; !strings.Contains(got, "could not be read: it is locked with a password") {
+		t.Errorf("a file that could not be read says why: %q", got)
+	}
+}

@@ -31,7 +31,7 @@ func (s *Service) upload(w http.ResponseWriter, r *http.Request) {
 	rec, err := s.StoreUpload(r)
 	if err != nil {
 		if errors.Is(err, http.ErrMissingFile) || strings.Contains(err.Error(), "select a file") {
-			err = errors.New("choose a file first")
+			err = errors.New("select a file to add") // the words the field says (enhance.js)
 		}
 		s.Failed(w, r, "Not added", err, "/t/"+records.FileType)
 		return
@@ -204,8 +204,12 @@ func (s *Service) FileExtras(r *http.Request, rec *store.Record) string {
 		}
 		b.WriteString(string(s.Part(ui.Status{ID: "file-status", Message: message, State: ui.Working})))
 	case "failed":
+		// A recording's note says "Could not write it down:" itself.
 		note, _ := rec.Fields["note"].(string)
-		b.WriteString(string(s.Part(ui.Status{ID: "file-status", Message: "Could not read the file: " + note, State: ui.Failed})))
+		if !audio {
+			note = "Could not read the file: " + note
+		}
+		b.WriteString(string(s.Part(ui.Status{ID: "file-status", Message: note, State: ui.Failed})))
 	}
 	// A calendar's events are a press from the calendar.
 	if rec.Fields["kind"] == "calendar" {
