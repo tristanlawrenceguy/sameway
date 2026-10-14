@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/fold"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 )
@@ -53,7 +54,7 @@ func (s *Service) Templates() []Template {
 			}
 		}
 		for _, c := range s.Canvases() {
-			if strings.EqualFold(c.Name, t.Title) {
+			if fold.Same(c.Name, t.Title) {
 				t.Have = c.ID
 			}
 		}
@@ -147,10 +148,10 @@ func (s *Service) UseTemplate(name, actor string) (Used, error) {
 func (s *Service) freeTabName(title string) string {
 	taken := map[string]bool{}
 	for _, c := range s.Canvases() {
-		taken[strings.ToLower(c.Name)] = true
+		taken[fold.Key(c.Name)] = true
 	}
 	name := title
-	for n := 2; taken[strings.ToLower(name)]; n++ {
+	for n := 2; taken[fold.Key(name)]; n++ {
 		name = fmt.Sprintf("%s %d", title, n)
 	}
 	return name

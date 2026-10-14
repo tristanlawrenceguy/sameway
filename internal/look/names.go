@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+
+	"github.com/tristanlawrenceguy/sameway/internal/fold"
 )
 
 // sameNames is the controls on a page that a person moving by controls,
@@ -24,7 +26,7 @@ func sameNames(o *Outline, scopes []int) []string {
 	places := map[string]map[string]bool{}
 	var links []string
 	for i, c := range o.Controls {
-		name := strings.ToLower(strings.Join(strings.Fields(c.Name), " "))
+		name := fold.Key(c.Name) // one name in any case or form
 		if c.Hidden || name == "" || c.Kind == "radio" {
 			continue
 		}
