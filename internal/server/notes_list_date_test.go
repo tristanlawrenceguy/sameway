@@ -49,7 +49,7 @@ func TestNoteListShowsNaturalDate(t *testing.T) {
 	// The date text should be inside a span with class sw-muted and contain
 	// am or pm (12-hour clock), not a 24-hour format like "00:52" or "23:17".
 	// Extract the sw-muted span from the row.
-	mutedStart := strings.Index(row, `class="sw-muted"`)
+	mutedStart := strings.Index(row, "<time")
 	if mutedStart < 0 {
 		t.Errorf("note list row should contain a span with class=\"sw-muted\" for the date; found in:\n%s", truncate(row))
 		return

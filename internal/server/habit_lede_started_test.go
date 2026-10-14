@@ -31,7 +31,7 @@ func TestHabitDetailLedeCreationTimeIsLabelled(t *testing.T) {
 	whenText := matches[1]
 
 	// It must contain relative time text.
-	if !strings.Contains(whenText, "ago") && !strings.HasPrefix(whenText, "Today") {
+	if !strings.Contains(whenText, "ago") && !strings.HasPrefix(whenText, "today") {
 		t.Errorf("habit detail lede should show a relative timestamp; got %q", whenText)
 	}
 }

@@ -81,7 +81,7 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 	}
 	out := s.glanceHTML(facts, o.Chips, boxed)
 	if !day && !o.Made && !t.HasDay() {
-		out = strings.TrimSpace(out + " " + s.happened("sw-muted", rec.UpdatedAt, now))
+		out = strings.TrimSpace(out + ` <span class="sw-muted">Changed ` + s.happenedAfter("", rec.UpdatedAt, now) + `</span>`)
 	}
 	if o.Made {
 		out = strings.TrimSpace(out + " " + s.whenMade(t, rec, o.From))
@@ -91,12 +91,11 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 
 // whenMade says when a record was made, as a person reads a time, and where
 // its words came from when that was not the owner, in one quiet line under
-// its fields. A visible "Created" label prefixes the timestamp so readers
-// know what they are looking at; dates read naturally without "Added" or
-// "Started" because "Created" is plain language for any record type. Rendered
-// output: <span class="sw-detail__when sw-muted sw-small">Created <time datetime="…">3 days ago</time></span>
+// its fields. A time is said with what it is (design/foundations/glance.md):
+// Created, the verb the Activity log says of the same change, then the
+// time as it reads after a word, "Created today at 2pm".
 func (s *Server) whenMade(t *schema.Type, rec *store.Record, from string) string {
-	line := "Created " + s.happened("", rec.CreatedAt, s.now())
+	line := "Created " + s.happenedAfter("", rec.CreatedAt, s.now())
 	if from != "" {
 		line += " · From: " + template.HTMLEscapeString(from)
 	}
