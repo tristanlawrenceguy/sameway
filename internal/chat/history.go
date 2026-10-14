@@ -1,6 +1,10 @@
 package chat
 
-import "github.com/tristanlawrenceguy/sameway/internal/llm"
+import (
+	"time"
+
+	"github.com/tristanlawrenceguy/sameway/internal/llm"
+)
 
 // history returns the recent user and assistant turns as model messages.
 // Error notices are shown to the person but not sent to the model.
@@ -25,6 +29,9 @@ func (s *Service) history() ([]llm.Message, error) {
 			}
 			file, _ := recs[i].Fields["file"].(string)
 			ids = append(ids, s.pictureIDs(content, file))
+			if i < len(recs)-1 {
+				content = sentAt(recs[i].CreatedAt, s.Now()) + content
+			}
 			out = append(out, llm.Message{Role: llm.RoleUser, Content: content})
 		case "assistant":
 			// The tools this reply used come first, as the turn they were.
@@ -40,4 +47,13 @@ func (s *Service) history() ([]llm.Message, error) {
 		out = out[1:]
 	}
 	return out, nil
+}
+
+// sentAt is when a message the person sent earlier was sent, said before
+// it. Without it an old message read as a new one: asked to sort with
+// nothing to sort, a model made tasks from requests days old, and moved a
+// reminder from "tomorrow" as said on Tuesday to Thursday, reading the word
+// against the day it was reading it.
+func sentAt(at, now time.Time) string {
+	return "[sent " + at.In(now.Location()).Format("Mon 2 Jan 15:04") + "] "
 }
