@@ -57,7 +57,7 @@ func (s *Service) createRecords(typeName string, list []map[string]any) toolResu
 	var lines []string
 	for i, rec := range made {
 		lines = append(lines, fmt.Sprintf("%s %q at /t/%s/%s.", rec.ID, titles[i], t.Name, rec.ID)+
-			s.datesSaid(t, list[i], rec, false)+s.whoseSaid(t, rec)) // dates_said.go, whose_said.go
+			s.datesSaid(t, list[i], rec, false)) // dates_said.go; the rest is the change's notes (notice.go)
 	}
 	c := records.Change{Action: "created", Component: t.Name, Href: "/t/" + t.Name, Ops: ops,
 		Detail: schema.Count(len(made), t.Name) + ": " + strings.Join(titles, ", ")}

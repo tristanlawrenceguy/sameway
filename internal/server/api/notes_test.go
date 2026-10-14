@@ -5,6 +5,9 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // What is worth saying about a change is said the same whichever way it
@@ -29,6 +32,20 @@ func TestEveryWayInSaysTheSameNotes(t *testing.T) {
 	tool := do(t, h, http.MethodPost, "/api/tools/create_record", strings.NewReader(`{"type":"task","fields":{"title":"Pay rent"}}`), "application/json").Body.String()
 	if !strings.Contains(tool, strings.SplitN(made.Notes[0], ". ", 2)[1]) || strings.Count(tool, "called the same") != 1 {
 		t.Errorf("the tool says it in the same words as the API (%q): %s", made.Notes[0], tool)
+	}
+
+	// An entry logged over the JSON API says where its habit stands, as
+	// logging it with the assistant's tool does.
+	habit, err := a.Store.Create("habit", map[string]any{"name": "Water", "unit": "glasses", "cadence": "day", "target": 8.0})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var logged struct {
+		Notes []string `json:"notes"`
+	}
+	json.Unmarshal(postJSON(t, h, http.MethodPost, "/api/entry", map[string]any{"habit": habit.ID, "amount": 2.0, "at": when.Store(time.Now(), false)}).Body.Bytes(), &logged)
+	if len(logged.Notes) != 1 || !strings.Contains(logged.Notes[0], "Water now") {
+		t.Errorf("an entry says where its habit stands: %v", logged.Notes)
 	}
 
 	block := map[string]any{"component": "collection", "props": map[string]any{"type": "task", "label": "Tasks"}}
