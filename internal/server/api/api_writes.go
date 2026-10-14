@@ -21,6 +21,18 @@ func (s *Service) apiCreate(w http.ResponseWriter, r *http.Request) {
 	if s.keptLog(w, r) {
 		return
 	}
+	if list, err := batchRead(r); err != nil || list != nil { // api_batch.go: several at once
+		if err != nil {
+			web.WriteError(w, err)
+			return
+		}
+		writes := make([]records.Writing, len(list))
+		for i, f := range list {
+			writes[i] = records.Writing{Fields: f}
+		}
+		s.batchWrite(w, r, "created", writes)
+		return
+	}
 	fields, err := web.ReadBody(r)
 	if err != nil {
 		web.WriteError(w, err)
