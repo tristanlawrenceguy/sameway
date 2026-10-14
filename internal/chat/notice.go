@@ -38,6 +38,9 @@ func (s *Service) notes(c records.Change) []string {
 			if like := strings.TrimSpace(s.similarOn(canvas, name, props, rec.ID)); like != "" {
 				out = append(out, like)
 			}
+			if crowded := s.crowdedSaid(rec); crowded != "" { // notice_crowded.go
+				out = append(out, crowded)
+			}
 			continue
 		}
 		t, ok := s.Store.Types().Get(op.Type)
