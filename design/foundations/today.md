@@ -32,13 +32,27 @@ morning brief says the same as one notification. Both are read from the records,
   head, a person was told by the assistant to start with the dentist and
   the council tax, and Today went on starting with errands from a
   fortnight ago: two answers to "what first" is one too many.
+- **Marked important, said in words.** Microsoft To Do stars a task and
+  Todoist flags it red; here the mark is a tag, important or urgent, set
+  on the task's page or by asking the assistant. When it puts one among
+  the three, the line above them says so once ("Start with these three,
+  what is marked important first"), so a task not yet due does not read
+  as a mistake. The task type's tags say what the mark does, so an agent
+  reading `describe` marks a task the way the assistant does.
+- **One not due yet is done, not moved.** Among the three, a task that
+  matters and is not due yet has Done alone: Tomorrow would bring
+  Thursday's dentist forward, or give a day to one that had none, and it
+  would still be among the three.
 - **The long late can be let go of, in one press.** When two or more tasks
   have been late more than two weeks, Today offers to keep them with no
   date: still tasks, no longer late, all back with one Undo, and the three
   worked out again from what is left. Moving them all to today puts the
   same pile on tomorrow, and going through them one by one is the curating
   a person gets worse at the more overwhelmed they are. What they marked
-  as mattering is never among them.
+  as mattering is never among them. Like Things' Someday and Sunsama's
+  backlog, they are kept, not thrown away: no longer late, in plain view
+  under No date, and the weekly review's Clear the date does the same one
+  at a time. OmniFocus keeps a dropped task for the same reason.
 - **Each day is a `<time>`** with its value, the page's own date too, so a
   page left open follows itself at midnight and when a time passes
   (`36-days.js`), and a machine reads the date without parsing words.
@@ -94,6 +108,8 @@ morning brief says the same as one notification. Both are read from the records,
 - Things, [Using the Today list](https://culturedcode.com/things/support/articles/4001304/): the day's list reviewed each morning.
 - Microsoft, [Plan your day with My Day](https://support.microsoft.com/en-us/office/plan-your-day-with-my-day-4cafa6fe-8891-4ad5-985f-65912146a73e): the day starts fresh, with what is due and overdue offered.
 - Leo Babauta, [Purpose your day: most important task](https://zenhabits.net/purpose-your-day-most-important-task/): three things a day.
+- Microsoft To Do, [Important](https://windowscentral.com/microsoft-do-windows-10-now-lets-you-mark-tasks-important): one star, its own list; Todoist, [Set a priority](https://www.todoist.com/help/articles/set-a-priority-in-todoist-Wy82Jp): higher priority sits higher in Today.
+- Things, [Someday](https://www.culturedcode.com/things/support/articles/2803579); Sunsama, [Task rollover](https://help.sunsama.com/docs/task-rollover-and-recurring-tasks-the-basics): tasks that keep rolling over are archived, kept and reviewable; OmniFocus, [Dropped actions](https://omnigroup.com/blog/omnifocus-dropped-actions): decided against, kept, not deleted.
 - Anti-shame overdue handling, as ADHD testers ask for it ([an example](https://github.com/kjswalls/dsul/issues/104)), and a Sameway tester with ADHD: the more overwhelmed, the worse at curating lists.
 
 ## Not done, and why
@@ -120,5 +136,14 @@ morning brief says the same as one notification. Both are read from the records,
   repeat that crosses a change of clocks may move by an hour there.
 - **A list of every zone to pick from.** Some four hundred names; the
   owner types a place's name, and is offered their browser's.
+- **A star press on each row, as To Do has.** Today's rows already carry
+  Done and Tomorrow; a third press on every row is one more decision on
+  the page for the person who is overwhelmed. The tag is set on the
+  task's page, by the assistant when sorting, or by asking.
+- **A "Not today" for one that matters.** It would need a day's memory
+  beside the records; the three are where to start, not a promise, and
+  Done or the rest are always there.
+- **A separate Someday list.** No date already holds what has no day,
+  is reached from the sidebar, and is what the weekly review uses.
 - **Reordering Today by hand.** The three come from what the person marked
   important and from the days; dragging is one more list to keep.

@@ -255,6 +255,9 @@ func acceptLabel(action any) string {
 	case "add_component":
 		return "Yes, add it"
 	case "remove_component":
+		if ids, _ := a["ids"].([]any); len(ids) > 1 {
+			return "Yes, remove them"
+		}
 		return "Yes, remove it"
 	case "update_component":
 		return "Yes, change it"

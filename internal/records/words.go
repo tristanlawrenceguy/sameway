@@ -4,6 +4,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
@@ -54,10 +55,26 @@ func Say(st *store.Store, f map[string]any) Words {
 		name, value := settingWords(target, detail)
 		return Words{Action: "changed", Target: name, Detail: "to " + value}
 	}
+<<<<<<< HEAD
 	if action == "said" {
 		detail = stripJSONLike(detail)
+=======
+	if counted(target, detail) {
+		target = ""
+>>>>>>> origin/main
 	}
 	return Words{Action: action, Target: personWord(target), Detail: strings.TrimLeft(detail, "-*• ")}
+}
+
+// counted says a detail that begins with its own count of the target,
+// "7 tasks: Email Sarah, …", which is said without the target before it:
+// "created 7 tasks", where "created task 7 tasks" read as a stammer.
+func counted(target, detail string) bool {
+	n, rest, ok := strings.Cut(detail, " ")
+	if !ok || n == "" || target == "" || strings.Trim(n, "0123456789") != "" {
+		return false
+	}
+	return strings.HasPrefix(rest, schema.Words(target)) || strings.HasPrefix(rest, schema.Plural(target))
 }
 
 // personWord is what a person calls a thing the code calls otherwise: a

@@ -93,7 +93,7 @@ func Sentence(st *store.Store, f map[string]any) string {
 		return settingSummary(who, c.Component, c.Detail)
 	}
 	parts := []string{who, c.Action}
-	if c.Component != "" {
+	if c.Component != "" && !counted(c.Component, c.Detail) { // words.go
 		parts = append(parts, schema.Words(personWord(c.Component)))
 	}
 	if c.Detail != "" && c.Action == "said" {

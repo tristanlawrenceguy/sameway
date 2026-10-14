@@ -103,10 +103,18 @@ func (s *Service) systemPrompt() string {
 		b.WriteString("(empty)\n")
 		return b.String()
 	}
+	bad, shows := s.blockState(blocks) // layout_clutter.go
 	for _, blk := range blocks {
 		props, _ := json.Marshal(blk.Fields["props"])
 		l := lookOf(blk)
-		fmt.Fprintf(&b, "%s %s region=%s span=%d frame=%s tone=%s %s\n", blk.ID, blk.Fields["component"], l.region, l.span, l.frame, l.tone, props)
+		note := addedSaid(blk, s.Now()) // block_age.go
+		if said, ok := shows[blk.ID]; ok {
+			note = strings.TrimPrefix(note+"; shows: "+said, ";")
+		}
+		if why, ok := bad[blk.ID]; ok {
+			note += " [" + why + "]"
+		}
+		fmt.Fprintf(&b, "%s %s region=%s span=%d frame=%s tone=%s %s%s\n", blk.ID, blk.Fields["component"], l.region, l.span, l.frame, l.tone, props, note)
 	}
 	b.WriteString("Rows in the main region, by span, left to right: " + rows(blocks) + "\n")
 	return b.String()
