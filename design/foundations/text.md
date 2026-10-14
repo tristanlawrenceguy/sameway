@@ -61,8 +61,8 @@ rather than run off a 320px screen.
   first strong letter
   ([W3C inline bidi markup](https://www.w3.org/International/articles/inline-bidi-markup/),
   [HTML dir](https://html.spec.whatwg.org/multipage/dom.html#the-dir-attribute)).
-  The page heading does it in CSS (`unicode-bidi: plaintext`), the same
-  rule. A person's name already sits in a `bdi` (person component).
+  The page heading and a list's row titles do it in CSS
+  (`unicode-bidi: plaintext`), the same rule. A person's name already sits in a `bdi` (person component).
 
 Not done, and why:
 
