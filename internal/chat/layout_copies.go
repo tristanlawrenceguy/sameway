@@ -57,7 +57,7 @@ func (s *Service) copiesProblems(recs []*store.Record) []string {
 		}
 		sort.Strings(types)
 		for _, t := range types {
-			out = append(out, fmt.Sprintf("block %s (%s) copies %d %s as words (their titles or links), which stay as they are when those change, are done or go: a collection block of %s shows them and stays current; make it one with update_component, unless the person asked for a list that does not change", b.ID, b.Fields["component"], len(byType[t]), schema.Plural(t), t))
+			out = append(out, fmt.Sprintf("block %s (%s) copies %d %s as words (their titles or links), which stay as they are when those change, are done or go: a collection block of %s shows them and stays current; make it one with update_component, unless the person asked for a list that does not change", b.ID, placedOf(b).called(), len(byType[t]), schema.Plural(t), t))
 		}
 	}
 	return out
