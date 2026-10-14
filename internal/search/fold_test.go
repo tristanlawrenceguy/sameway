@@ -63,3 +63,16 @@ func TestSpansMarkWholeWords(t *testing.T) {
 		}
 	}
 }
+
+// A letter that folds to two is still marked whole: strasse finds and
+// marks Straße, and lodz marks Łódź.
+func TestSpansWhereALetterFoldsToTwo(t *testing.T) {
+	t.Parallel()
+	for q, want := range map[string]string{"strasse": "Straße", "lodz": "Łódź"} {
+		text := "Walk to Straße from Łódź"
+		spans := Spans(text, Words(q))
+		if len(spans) != 1 || text[spans[0][0]:spans[0][1]] != want {
+			t.Errorf("%s marks %v, want %s", q, spans, want)
+		}
+	}
+}

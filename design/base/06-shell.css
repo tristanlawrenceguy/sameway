@@ -99,6 +99,8 @@ h1.sw-dotted::before { width: 1.125rem; height: 1.125rem; margin-right: var(--sw
 /* The page head: the way here, the title, the few facts under it. */
 .sw-page-head { margin-bottom: var(--sw-space-8); }
 .sw-page-head .sw-crumbs { margin-bottom: var(--sw-space-1); }
+/* A title in Hebrew or Arabic runs right to left, its ! or ? at its end (design/foundations/text.md). */
+.sw-page-head h1 { unicode-bidi: plaintext; }
 .sw-lede { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sw-space-2) var(--sw-space-3); margin: 0; color: var(--sw-color-fg-muted); font-size: var(--sw-size-text-sm); }
 .sw-lede .sw-mark { min-height: 0; }
 /* A group in a listing: a bold header at body size, a count, one hairline. */

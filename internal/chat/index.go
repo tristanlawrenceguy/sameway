@@ -21,6 +21,9 @@ import (
 // refusal.
 func componentHelp(c *render.Component) string {
 	var b strings.Builder
+	if u := c.Manifest.Use; u != nil && u.When != "" {
+		fmt.Fprintf(&b, "When it serves a person: %s\n", u.When)
+	}
 	fmt.Fprintf(&b, "Props schema: %s", ForModel(c.Manifest.Props))
 	if len(c.Manifest.Examples) > 0 {
 		ex, _ := jsontext.Marshal(c.Manifest.Examples[0].Props)
@@ -46,17 +49,14 @@ func typeFields(t *schema.Type) []string {
 	return fields
 }
 
-// componentIndex is each component in a line: what it is, and when it
-// serves a person.
+// componentIndex is each component in a line: what it is. When it serves
+// a person, its props and an example come with a refusal (componentHelp),
+// for the one it tries, not all fifty every turn.
 func (s *Service) componentIndex() string {
 	var b strings.Builder
-	b.WriteString("\n\nComponents (name: what it is; when it serves a person). A refusal gives the props one takes:\n")
+	b.WriteString("\n\nComponents (name: what it is). A refusal gives when one serves a person and the props it takes:\n")
 	for _, c := range s.Registry.Blocks() {
-		fmt.Fprintf(&b, "%s: %s", c.Manifest.Name, firstSentence(c.Manifest.Description))
-		if u := c.Manifest.Use; u != nil && u.When != "" {
-			fmt.Fprintf(&b, " When: %s", firstSentence(u.When))
-		}
-		b.WriteString("\n")
+		fmt.Fprintf(&b, "%s: %s\n", c.Manifest.Name, firstSentence(c.Manifest.Description))
 	}
 	return b.String()
 }

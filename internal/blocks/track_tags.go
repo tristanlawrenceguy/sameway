@@ -3,10 +3,9 @@ package blocks
 import (
 	"slices"
 	"sort"
-	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/fold"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
-	"github.com/tristanlawrenceguy/sameway/internal/render"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -15,7 +14,7 @@ func hasTag(rec *store.Record, tags []string) bool {
 	have, _ := rec.Fields["tags"].([]any)
 	for _, t := range have {
 		for _, want := range tags {
-			if s, _ := t.(string); strings.EqualFold(s, want) {
+			if s, _ := t.(string); fold.Same(s, want) {
 				return true
 			}
 		}
@@ -37,7 +36,7 @@ func habitTags(st *store.Store) []string {
 			}
 		}
 	}
-	sort.Strings(out)
+	sort.Slice(out, func(i, j int) bool { return fold.Less(out[i], out[j]) })
 	return out
 }
 
@@ -56,7 +55,7 @@ func pickHabits(recs []*store.Record, named []string) ([]*store.Record, string) 
 		var found *store.Record
 		for _, rec := range recs {
 			n, _ := rec.Fields["name"].(string)
-			if rec.ID == want || strings.EqualFold(strings.TrimSpace(n), strings.TrimSpace(want)) {
+			if rec.ID == want || fold.Same(n, want) {
 				found = rec
 				break
 			}
@@ -66,7 +65,7 @@ func pickHabits(recs []*store.Record, named []string) ([]*store.Record, string) 
 				return nil, "there is no habit " + want + ", and no habit yet; create_record a habit first"
 			}
 			said := "there is no habit " + want
-			if near := render.Nearest(want, names); near != "" {
+			if near := fold.Nearest(want, names); near != "" {
 				said += " (did you mean " + near + "?)"
 			}
 			return nil, said + "; the habits are " + schema.Names(names)

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/automate"
+	"github.com/tristanlawrenceguy/sameway/internal/fold"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -164,7 +165,7 @@ func (s *Service) tagsToCheck(alone map[string]bool) []Waiting {
 	var out []Waiting
 	for _, c := range recs {
 		tag, about := fmt.Sprint(c.Fields["tag"]), fmt.Sprint(c.Fields["record"])
-		if c.Fields["state"] != "suggested" || alone[strings.ToLower(tag)] || len(out) == tagsShown {
+		if c.Fields["state"] != "suggested" || alone[fold.Key(tag)] || len(out) == tagsShown {
 			continue
 		}
 		typ, id, _ := strings.Cut(about, "/")
@@ -188,7 +189,7 @@ func (s *Service) AloneTags() map[string]bool {
 	out := map[string]bool{}
 	for _, d := range automate.Tags(s.Store, nil) {
 		if d.Alone {
-			out[strings.ToLower(d.Name)] = true
+			out[fold.Key(d.Name)] = true
 		}
 	}
 	return out
@@ -198,7 +199,7 @@ func (s *Service) AloneTags() map[string]bool {
 // or "".
 func AloneOn(rec *store.Record, alone map[string]bool) string {
 	for _, t := range records.StringList(rec.Fields["tags"]) {
-		if alone[strings.ToLower(t)] {
+		if alone[fold.Key(t)] {
 			return t
 		}
 	}

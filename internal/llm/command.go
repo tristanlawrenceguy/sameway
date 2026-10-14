@@ -104,7 +104,20 @@ func (c *Command) Complete(ctx context.Context, req Request) (*Response, error) 
 	var out, errs bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &out, &errs
 	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("%s: %v: %s", args[0], err, strings.TrimSpace(tail(errs.String(), 600)))
+		// Claude Code says why it stopped (Not logged in) in its JSON on
+		// stdout, with nothing on stderr: the person was told only "exit
+		// status 1".
+		said := errs.String()
+		if strings.TrimSpace(said) == "" {
+			said = out.String()
+			var doc map[string]any
+			if json.Unmarshal(out.Bytes(), &doc) == nil {
+				if v, _ := doc[c.Field].(string); v != "" {
+					said = v
+				}
+			}
+		}
+		return nil, fmt.Errorf("%s: %v: %s", args[0], err, strings.TrimSpace(tail(said, 600)))
 	}
 	text := strings.TrimSpace(out.String())
 	if c.Field != "" {

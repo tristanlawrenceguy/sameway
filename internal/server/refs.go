@@ -6,8 +6,8 @@ import (
 	"html/template"
 	"slices"
 	"sort"
-	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/fold"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
@@ -90,7 +90,7 @@ func (s *Server) choiceList(f schema.Field, current string) []any {
 		}
 		// By the names a person reads, not the order they were made.
 		sort.SliceStable(recs, func(i, j int) bool {
-			return strings.ToLower(s.title(t, recs[i])) < strings.ToLower(s.title(t, recs[j]))
+			return fold.Less(s.title(t, recs[i]), s.title(t, recs[j]))
 		})
 		found := false
 		for _, rec := range recs {

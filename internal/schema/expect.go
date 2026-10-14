@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+
+	"github.com/tristanlawrenceguy/sameway/internal/fold"
 )
 
 // What a refused field takes. Refused, a write said "at: is required" and
@@ -54,7 +56,7 @@ func (t *Type) Expects(problems map[string]string) map[string]string {
 		}
 		taken := t.writable()
 		said := fmt.Sprintf("%s has no field %s; it takes %s", t.Name, name, strings.Join(taken, ", "))
-		if near := nearest(name, taken); near != "" {
+		if near := fold.Nearest(name, taken); near != "" {
 			said = fmt.Sprintf("%s has no field %s: did you mean %s? It takes %s", t.Name, name, near, strings.Join(taken, ", "))
 		}
 		out[name] = said
@@ -72,40 +74,4 @@ func (t *Type) writable() []string {
 	}
 	sort.Strings(out)
 	return out
-}
-
-// nearest is the name in names most like name, when one is close: a slip
-// of a letter or two, or one the other holds (note for notes).
-func nearest(name string, names []string) string {
-	best, bestD := "", 3
-	for _, n := range names {
-		if strings.Contains(n, name) || strings.Contains(name, n) {
-			return n
-		}
-		if d := distance(name, n); d < bestD {
-			best, bestD = n, d
-		}
-	}
-	return best
-}
-
-// distance is how many letters must change to make a into b.
-func distance(a, b string) int {
-	prev := make([]int, len(b)+1)
-	for j := range prev {
-		prev[j] = j
-	}
-	for i := 1; i <= len(a); i++ {
-		cur := make([]int, len(b)+1)
-		cur[0] = i
-		for j := 1; j <= len(b); j++ {
-			cost := 1
-			if a[i-1] == b[j-1] {
-				cost = 0
-			}
-			cur[j] = min(prev[j]+1, cur[j-1]+1, prev[j-1]+cost)
-		}
-		prev = cur
-	}
-	return prev[len(b)]
 }

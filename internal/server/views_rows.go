@@ -32,7 +32,7 @@ func (s *Server) rows(t *schema.Type, recs []*store.Record, now time.Time) strin
 	// a person moving by controls meets them all on one page.
 	told := s.recordsApart(t, recs)
 	// What is in each, counted for the whole listing at once (records/glance_count.go).
-	in := records.CountsOf(s.app.Store, t, recs)
+	in := records.CountsOf(s.app.Store, t, recs, now)
 	if dated == "" {
 		fmt.Fprintf(&b, `<ol class="sw-plain sw-rows" data-dot="%d" aria-label="%s">`, s.dotOf(t.Name), template.HTMLEscapeString(schema.Plural(t.Name)))
 		for _, rec := range recs {
