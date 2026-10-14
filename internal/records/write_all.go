@@ -67,10 +67,10 @@ func Joined(changes []Change) []Op {
 // written are one change in the log, which one Undo takes back, said by
 // how many and their names; it answers with the records and the change's
 // notes, or the place of the one refused and why.
-func WriteAllAs(st *store.Store, who Who, action, typ string, all []Writing) ([]*store.Record, []string, int, error) {
+func WriteAllAs(st *store.Store, who Who, action, typ string, all []Writing) ([]*store.Record, []string, string, int, error) {
 	recs, changes, at, err := WriteAll(st, action, typ, all)
 	if err != nil {
-		return nil, nil, at, err
+		return nil, nil, "", at, err
 	}
 	var names []string
 	for _, c := range changes {
@@ -81,8 +81,8 @@ func WriteAllAs(st *store.Store, who Who, action, typ string, all []Writing) ([]
 	if len(recs) == 1 {
 		c = changes[0]
 	}
-	logAs(st, who, c)
-	return recs, Notes(st, c), -1, nil
+	entry := logAs(st, who, c)
+	return recs, Notes(st, c), entry, -1, nil
 }
 
 // joinNames is the first few names and how many more, set apart by
