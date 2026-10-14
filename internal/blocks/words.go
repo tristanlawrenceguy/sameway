@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
-	"github.com/tristanlawrenceguy/sameway/internal/render"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
@@ -127,12 +126,7 @@ func AndList(names []string) string {
 // NoType says a type is not there, and what is: the one likely meant,
 // when the name is near one, then every one.
 func (w *Workspace) NoType(name string) string {
-	names := w.Store.Types().Names()
-	out := "there is no content type " + name
-	if near := render.Nearest(name, names); near != "" {
-		out += " (did you mean " + near + "?)"
-	}
-	return out + "; the workspace has " + strings.Join(names, ", ")
+	return records.NoType(name, w.Store.Types().Names())
 }
 
 // FieldsOfKind is the names of a type's fields of the kinds given, or

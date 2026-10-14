@@ -135,7 +135,7 @@ func (s *Service) updateRecord(typeName, id string, fields map[string]any, versi
 	}
 	was, err := s.Store.Get(t.Name, id)
 	if err != nil {
-		return fail("no %s with id %s. Use find_records to get the id", t.Name, id)
+		return fail("%s. Use find_records to get the id", records.NoRecord(t.Name, id))
 	}
 	if r, ok := s.whichOne(t, was); !ok { // which_one.go
 		return r
@@ -221,7 +221,7 @@ func (s *Service) deleteRecord(typeName, id string) toolResult {
 		return fail("%v", err)
 	}
 	if _, err := s.Store.Get(t.Name, id); err != nil {
-		return fail("no %s with id %s", t.Name, id)
+		return fail("%s", records.NoRecord(t.Name, id))
 	}
 	_, c, err := records.Write(s.Store, "deleted", t.Name, id, nil)
 	if err != nil {
