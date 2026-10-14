@@ -97,7 +97,10 @@ func Apart(names []string, ways func(i int) []string, rank ...func(i int) string
 }
 
 // RecordWays is what tells one record from another with its title: the
-// day that matters to it (due tomorrow), when it was added, its id.
+// day that matters to it (tomorrow), when it was added, its id. The label
+// prefix ("due", "starts") is intentionally omitted here so told-apart text
+// does not leak raw field names into link accessible names on list pages;
+// see design/foundations/names.md for the plain-word rule.
 func (ws *Workspace) RecordWays(t *schema.Type, rec *store.Record) []string {
 	return []string{ws.dayWordsNoLabel(t, rec), ws.MomentWords(rec.CreatedAt), ws.SecondWords(rec.CreatedAt)}
 }
