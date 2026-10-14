@@ -23,9 +23,11 @@ row and a person can compare rows by looking down a column
    short words, sentence case
    ([GOV.UK, complete multiple tasks](https://design-system.service.gov.uk/patterns/complete-multiple-tasks/)).
 3. **A setting that is on**, by its label (Pinned, On the canvas, Archived).
-4. **Its first day**, named by its field: Due Fri 9 Oct, Starts tomorrow
-   at 2pm, Goal by Mon 4 Jan 2027. A field called at or on is not named
-   (Today at 7am, not At today at 7am).
+4. **Its first day**, named by its field's label: Due Fri 9 Oct, Starts
+   tomorrow at 2pm, Goal by Mon 4 Jan 2027, Rings today at 7am. A field
+   whose label is only at, on, when or date is not named (At today at 7am
+   says nothing), so the provided types label theirs with what the day
+   is: a reminder Rings, an entry was Logged, an interaction Happened.
 5. **What it belongs to or who it is for**, unless that is its title: the
    first reference with a value. A file it points at (a meeting's
    recording) is an attachment, not what it belongs to, and is not said.
@@ -51,8 +53,9 @@ At most these six, usually two or three: enough that a person need not
 open each record to tell them apart, few enough to scan
 ([NN/g, list entries](https://www.nngroup.com/articles/list-entries/),
 [NN/g, information scent](https://www.nngroup.com/articles/information-scent/)).
-A row of a type with no day says when it last changed instead; a record's
-own page says when it was made.
+A row of a type with no day says when it last changed instead, "Changed
+3 days ago"; a record's own page says when it was made, "Created today at
+2pm".
 
 Which field is a type's day is the schema's one answer (`DayField`):
 `starts` when it has one, else its first shown datetime field. A list
@@ -67,10 +70,10 @@ still says it, though its row sits under No date.
 | task | Done, Doing, Due Fri 9 Oct at 2pm (Overdue, due yesterday), For Ana Silva or its project |
 | note | Published, Pinned; a row says when it changed |
 | habit | Archived, Goal by Mon 4 Jan 2027 |
-| entry | Today at 8am (when it happened, never late), its habit |
+| entry | Logged today at 8am (never late), its habit |
 | event | Starts tomorrow at 2pm (past: neutral, never late), 2 tasks, 1 done (the tasks that came up at it) |
-| reminder | Ringing or Done, Today at 7am |
-| interaction | Thu 8 Oct at 10am (when it happened), With Ana Silva |
+| reminder | Ringing or Done, Rings today at 7am |
+| interaction | Happened Thu 8 Oct at 10am, With Ana Silva |
 | person | 4 interactions; when it changed (a person's organisation is a string the schema does not mark) |
 | project | Done, 3 tasks, 1 done |
 | file | Being read, Could not be read |
@@ -144,6 +147,32 @@ still says it, though its row sits under No date.
   ([GOV.UK, "UK time"](https://guidance.publishing.service.gov.uk/writing-to-gov-uk-standards/style-guides/a-to-z-style-guide/),
   [Google Calendar, time zones](https://support.google.com/calendar/answer/37064?hl=en)).
 
+## Said with what it is
+
+A time alone does not say what happened then: "3 days ago" under a task
+could be when it was made, changed or is due. So every time is said with
+its word, the same word for the same thing everywhere
+([Cloudscape, timestamps](https://cloudscape.design/patterns/general/timestamps/),
+[GOV.UK, metadata: Published, Last updated](https://components.publishing.service.gov.uk/component-guide/metadata),
+[WCAG 1.3.1](https://www.w3.org/WAI/WCAG22/Understanding/info-and-relationships.html),
+[WCAG 3.2.4](https://www.w3.org/WAI/WCAG22/Understanding/consistent-identification.html)):
+
+- **A record's day** by its field's label (Due, Starts, Rings, Logged,
+  Happened), from the schema, so a type of one's own is said the same way
+  with no code for it.
+- **When a record was made**: Created, the verb the Activity log says of
+  the same change ("created task Buy paint"). **When it last changed**, on
+  a row with no day: Changed, the log's word too.
+- **The word comes first and the time reads on from it**: "Created today
+  at 2pm", not "Created Today at 2pm".
+- **Where a heading says it already**, the time is alone: a message's time
+  beside who sent it, as chat apps do
+  ([NN/g, chat](https://www.nngroup.com/articles/chat-ux/)); an entry in
+  the log under its day's heading.
+- **Words kept and read later say the day in full**: a suggestion's line,
+  a log name, a note an agent is told. "Tomorrow" is true only the day it
+  was written.
+
 ## In the page
 
 - **A `<time datetime>` holds every day and moment** a glance, a field or a
@@ -154,7 +183,9 @@ still says it, though its row sits under No date.
   replaced ([MDN, time](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/time),
   [Adrian Roselli](https://adrianroselli.com/2023/04/dont-override-screen-reader-pronunciation.html)).
   When the words leave the date out (Today, 3 days ago) its `title` holds it
-  in full, for a pointer.
+  in full, for a pointer. A day over a list (the log's Today, Wednesday 14
+  October, a chat in the chat menu, a task's day on the weekly review) is
+  held the same way.
 - **Days stay true on a page left open.** At the workspace's midnight, and
   when a time the page shows passes (a task falls due), the page follows
   itself as it does after a change (`36-days.js`, `19-refresh.js`),
@@ -216,6 +247,15 @@ With, as a task's person is For
   words go stale by the minute.
 - **A tooltip on every date.** Only where the words leave the date out; a
   title on every date is read again by some screen readers.
+- **Sent before each message's time.** The time sits in the message's
+  heading beside who sent it, under the chat's own order; "You, sent 2pm"
+  on every message would be read on every message.
+- **Added instead of Created.** Added is as plain, but the log says
+  created of the same change, and one thing has one word (WCAG 3.2.4).
+  No source rules between the two.
+- **Only absolute times** (GitLab's default). A personal workspace is
+  read mostly about the last few days; "3 days ago" then the date is
+  what Primer and Atlassian say, and the title gives the date in full.
 - **"11:59pm" for a deadline at the end of a day.** A day alone is the whole
   day; a timed deadline at midnight is said "midnight", as written.
 - **Glance hints in the schema** (marking a person's organisation as worth a

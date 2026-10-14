@@ -11,6 +11,7 @@ fields:
     required: true
     maxLength: 200
   at:
+    label: Rings
     type: datetime
     required: true
     description: When it rings, as a moment; a day alone rings at midnight.
