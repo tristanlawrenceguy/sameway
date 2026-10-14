@@ -20,12 +20,24 @@ import (
 // fixed, by id: it cannot be shown, and why; or it is the same as an
 // earlier one.
 func (s *Service) clutter(recs []*store.Record) map[string]string {
-	out := map[string]string{}
+	out, _ := s.blockState(recs)
+	return out
+}
+
+// blockState is clutter, and what each block that can be shown shows now
+// ("4 tasks, not done, by due"; "nothing yet"), from one resolving of each:
+// the listing gives the model what the person sees, not only the props.
+func (s *Service) blockState(recs []*store.Record) (bad, shows map[string]string) {
+	out, shows := map[string]string{}, map[string]string{}
 	seen := map[string]string{}
 	for _, b := range recs {
 		name, _ := b.Fields["component"].(string)
 		props, _ := b.Fields["props"].(map[string]any)
-		if why := s.cannotShow(name, props); why != "" {
+		said, why := s.cannotShow(name, props)
+		if said != "" {
+			shows[b.ID] = said
+		}
+		if why != "" {
 			out[b.ID] = "cannot be shown: " + why
 			continue
 		}
@@ -37,30 +49,28 @@ func (s *Service) clutter(recs []*store.Record) map[string]string {
 		}
 		seen[key] = b.ID
 	}
-	return out
+	return out, shows
 }
 
-// cannotShow is why a block would only say on the page that it is set up
-// wrong, or "".
-func (s *Service) cannotShow(name string, props map[string]any) string {
+// cannotShow is what a block shows, or why it would only say on the page
+// that it is set up wrong.
+func (s *Service) cannotShow(name string, props map[string]any) (shows, why string) {
 	if s.Registry == nil {
-		return ""
+		return "", ""
 	}
 	c, ok := s.Registry.Get(name)
 	if !ok {
-		return "there is no component " + name
+		return "", "there is no component " + name
 	}
 	if _, err := c.Validate(props); err != nil {
-		return PropsTrouble(err)
+		return "", PropsTrouble(err)
 	}
 	// As the page draws it, not as a new write is checked: a block stored
 	// before that check still renders, and is not clutter.
-	if s.Blocks != nil {
-		if _, problem := blocks.Renders(s.Blocks, name, props); problem != "" {
-			return problem
-		}
+	if s.Blocks == nil {
+		return "", ""
 	}
-	return ""
+	return blocks.Renders(s.Blocks, name, props)
 }
 
 // clutterProblems are Layout now's lines for them.

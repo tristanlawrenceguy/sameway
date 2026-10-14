@@ -46,4 +46,4 @@ fields:
   tags:
     type: list
     of: string
-    description: Keywords for finding the task.
+    description: Keywords for finding the task. Tagged important or urgent, it is among the three Today starts with when it is late, or due within a week, or has no day.
