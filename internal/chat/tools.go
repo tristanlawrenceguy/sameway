@@ -141,7 +141,7 @@ func (s *Service) addComponent(name string, props map[string]any, l look) toolRe
 		where += " with " + strings.Join(layout, ", ")
 	}
 	return toolResult{
-		text:   showing(where, shows),
+		text:   showing(where, shows) + s.similarOn(fields["canvas"].(string), name, props, rec.ID), // tools_similar.go
 		change: &records.Change{Action: "added", Component: name, ID: rec.ID, Detail: records.Summarise(name, props), Href: "/canvas/" + rec.ID, Ops: done},
 	}
 }
