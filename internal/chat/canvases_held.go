@@ -3,8 +3,6 @@ package chat
 import (
 	"fmt"
 	"strings"
-
-	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // What each tab holds, in the tab list the model reads. The tabs were
@@ -28,16 +26,7 @@ func (s *Service) tabHolds(canvas string) string {
 		if len(names) == heldMost {
 			continue
 		}
-		name, _ := b.Fields["component"].(string)
-		props, _ := b.Fields["props"].(map[string]any)
-		what := records.Summarise(name, props)
-		if what == "" {
-			what, _ = props["label"].(string)
-		}
-		if what == "" {
-			what = name
-		}
-		names = append(names, what)
+		names = append(names, placedOf(b).name()) // one name for a block, as Layout now gives it
 	}
 	if n == 0 {
 		return ": empty"
