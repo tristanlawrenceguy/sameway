@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/fold"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -39,7 +40,7 @@ func (s *Service) judge(ctx context.Context, t *schema.Type, rec *store.Record, 
 	}
 	var others []string
 	for _, d := range defs {
-		if !strings.EqualFold(d.Name, p.Tag) {
+		if !fold.Same(d.Name, p.Tag) {
 			others = append(others, d.Name)
 		}
 	}
@@ -54,7 +55,7 @@ func (s *Service) judge(ctx context.Context, t *schema.Type, rec *store.Record, 
 		want := strings.TrimSpace(v.To)
 		v.To = ""
 		for _, d := range defs {
-			if strings.EqualFold(d.Name, want) {
+			if fold.Same(d.Name, want) {
 				v.To = d.Name
 			}
 		}
@@ -80,8 +81,8 @@ func (s *Service) pastChoices(tag, not string, most int) []string {
 		if len(out) == most {
 			break
 		}
-		movedIn := c.Fields["state"] == "changed" && strings.EqualFold(fmt.Sprint(c.Fields["to"]), tag)
-		if !strings.EqualFold(fmt.Sprint(c.Fields["tag"]), tag) && !movedIn || c.Fields["record"] == not || c.Fields["confirmed_by"] == "judgement" {
+		movedIn := c.Fields["state"] == "changed" && fold.Same(fmt.Sprint(c.Fields["to"]), tag)
+		if !fold.Same(fmt.Sprint(c.Fields["tag"]), tag) && !movedIn || c.Fields["record"] == not || c.Fields["confirmed_by"] == "judgement" {
 			continue
 		}
 		typ, id, _ := strings.Cut(fmt.Sprint(c.Fields["record"]), "/")
@@ -111,14 +112,14 @@ func TagsChanged(st *store.Store, t *schema.Type, was, now *store.Record) {
 	}
 	before, after := map[string]bool{}, map[string]bool{}
 	for _, v := range records.StringList(was.Fields["tags"]) {
-		before[strings.ToLower(v)] = true
+		before[fold.Key(v)] = true
 	}
 	for _, v := range records.StringList(now.Fields["tags"]) {
-		after[strings.ToLower(v)] = true
+		after[fold.Key(v)] = true
 	}
 	var added []string
 	for _, d := range Tags(st, nil) {
-		if after[strings.ToLower(d.Name)] && !before[strings.ToLower(d.Name)] {
+		if after[fold.Key(d.Name)] && !before[fold.Key(d.Name)] {
 			added = append(added, d.Name)
 		}
 	}
@@ -127,7 +128,7 @@ func TagsChanged(st *store.Store, t *schema.Type, was, now *store.Record) {
 		return
 	}
 	for _, c := range cls {
-		tag := strings.ToLower(fmt.Sprint(c.Fields["tag"]))
+		tag := fold.Key(fmt.Sprint(c.Fields["tag"]))
 		if c.Fields["record"] != t.Name+"/"+now.ID || !undecided(c) || after[tag] || !before[tag] {
 			continue
 		}
@@ -153,7 +154,7 @@ func undecided(c *store.Record) bool {
 func (s *Service) personTagged(defs []Tag, not string, most int) string {
 	ours := map[string]bool{}
 	for _, d := range defs {
-		ours[strings.ToLower(d.Name)] = true
+		ours[fold.Key(d.Name)] = true
 	}
 	cls, err := s.Store.List(records.ClassificationType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 300})
 	if err != nil {
@@ -162,7 +163,7 @@ func (s *Service) personTagged(defs []Tag, not string, most int) string {
 	final := map[string][]string{}
 	var order []string
 	for _, c := range cls {
-		ref, tag := fmt.Sprint(c.Fields["record"]), strings.ToLower(fmt.Sprint(c.Fields["tag"]))
+		ref, tag := fmt.Sprint(c.Fields["record"]), fold.Key(fmt.Sprint(c.Fields["tag"]))
 		if ref == not || !ours[tag] || c.Fields["confirmed_by"] == "judgement" {
 			continue
 		}

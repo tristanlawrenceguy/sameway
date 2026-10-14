@@ -83,21 +83,6 @@ func SettingKeys() []string {
 	return keys
 }
 
-// SettingsDoc says each setting in a line, for a tool's description.
-func SettingsDoc() string {
-	var b strings.Builder
-	for i, s := range Settings {
-		if i > 0 {
-			b.WriteString("; ")
-		}
-		b.WriteString(s.Key + ": " + s.Doc)
-		if s.Kind == "enum" {
-			b.WriteString(" (" + strings.Join(s.Values, ", ") + ")")
-		}
-	}
-	return b.String()
-}
-
 var envName = regexp.MustCompile(`^[A-Z][A-Z0-9_]{1,63}$`)
 
 // Set changes one setting in workspace.yaml and in the loaded config.

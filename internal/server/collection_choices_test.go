@@ -55,7 +55,7 @@ func TestACollectionOffersChoicesFromItsSchema(t *testing.T) {
 		t.Error("as it was set up, nothing is said to be chosen and there is nothing to reset")
 	}
 
-	// A project has a pick-list, and no yes-or-no or date of its own.
+	// A project has a pick-list and the day it is due, and no yes-or-no.
 	if _, err := a.Store.Create("project", map[string]any{"title": "Garden"}); err != nil {
 		t.Fatal(err)
 	}
@@ -64,7 +64,7 @@ func TestACollectionOffersChoicesFromItsSchema(t *testing.T) {
 	if !strings.Contains(projects, `name="c-`+p+`-status"`) || !strings.Contains(projects, `>Any<`) || !strings.Contains(projects, `>Active<`) {
 		t.Errorf("a project is narrowed by its status: %.2000s", projects)
 	}
-	if strings.Contains(projects, `-done"`) || strings.Contains(projects, "soonest") {
+	if strings.Contains(projects, `-done"`) || !strings.Contains(projects, "Due soonest first") {
 		t.Error("only what the schema has is offered")
 	}
 }

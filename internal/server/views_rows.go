@@ -32,7 +32,7 @@ func (s *Server) rows(t *schema.Type, recs []*store.Record, now time.Time) strin
 	// a person moving by controls meets them all on one page.
 	told := s.recordsApart(t, recs)
 	// What is in each, counted for the whole listing at once (records/glance_count.go).
-	in := records.CountsOf(s.app.Store, t, recs)
+	in := records.CountsOf(s.app.Store, t, recs, now)
 	if dated == "" {
 		fmt.Fprintf(&b, `<ol class="sw-plain sw-rows" data-dot="%d" aria-label="%s">`, s.dotOf(t.Name), template.HTMLEscapeString(schema.Plural(t.Name)))
 		for _, rec := range recs {
@@ -92,15 +92,21 @@ func (s *Server) row(t *schema.Type, rec *store.Record, level int, told string, 
 	if short := trim.Title(full); short != full {
 		whole = ` title="` + template.HTMLEscapeString(full) + `"`
 	}
-	// The words that tell it apart stay inside the link, hidden: they are
-	// its name, which two rows of one title must not share (WCAG 2.4.9,
-	// design/foundations/names.md); the row's facts say them to the eye.
+	// The words that tell it apart go outside the link so the visible text
+	// is only the title (acceptance: no raw field names in heading links).
+	// An aria-label gives screen readers and agents the full unique name
+	// so two rows of one title still differ (WCAG 2.4.9, design/foundations/names.md).
+	titleText := template.HTMLEscapeString(trim.Title(full))
 	apartHTML := ""
 	if told != "" {
 		apartHTML = `<span class="sw-visually-hidden"> (` + template.HTMLEscapeString(told) + `)</span>`
 	}
-	return fmt.Sprintf(`<li class="%s">%s<h%d class="sw-row__title"><a class="sw-row__link" href="/t/%s/%s"%s>%s%s</a></h%d><p class="sw-row__meta">%s</p></li>`,
-		class, box, level, t.Name, rec.ID, whole, template.HTMLEscapeString(trim.Title(full)), apartHTML, level, s.facts(t, rec, factOpts{Boxed: box != "", Counts: in}))
+	fullAccessibleName := titleText
+	if told != "" {
+		fullAccessibleName += " (" + template.HTMLEscapeString(told) + ")"
+	}
+	return fmt.Sprintf(`<li class="%s">%s<h%d class="sw-row__title"><a class="sw-row__link" href="/t/%s/%s"%s aria-label="%s">%s</a>%s</h%d><p class="sw-row__meta">%s</p></li>`,
+		class, box, level, t.Name, rec.ID, whole, fullAccessibleName, titleText, apartHTML, level, s.facts(t, rec, factOpts{Boxed: box != "", Counts: in}))
 }
 
 // whenGroup says where a record sits in time: done first, because a done

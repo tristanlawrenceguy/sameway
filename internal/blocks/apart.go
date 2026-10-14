@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/fold"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -37,7 +38,7 @@ func Apart(names []string, ways func(i int) []string, rank ...func(i int) string
 	groups := map[string][]int{}
 	var order []string
 	for i, n := range names {
-		k := strings.ToLower(strings.Join(strings.Fields(n), " "))
+		k := fold.Key(n) // Café as one letter or as e and an accent is one name
 		if k == "" {
 			continue // nameless, or not shown with the others
 		}

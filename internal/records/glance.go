@@ -86,7 +86,7 @@ func Glance(st *store.Store, t *schema.Type, rec *store.Record, now time.Time, h
 		out = append(out, f)
 	}
 	if in == nil {
-		in = CountsOf(st, t, []*store.Record{rec})
+		in = CountsOf(st, t, []*store.Record{rec}, now)
 	}
 	for _, words := range in[rec.ID] {
 		out = append(out, Fact{Kind: "count", Text: words, Tone: "neutral"})

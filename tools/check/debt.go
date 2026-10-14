@@ -12,7 +12,7 @@ package main
 // (2026-10-08, updated at the merge with main that day). check fails if one grows.
 var longFuncs = map[string]int{
 	"internal/app.Description.part":        95,
-	"internal/chat.Service.sendTurn":       122,
+	"internal/chat.Service.sendTurn":       121,
 	"internal/chat.Service.writeUpMeeting": 84,
 	"internal/cli.ctx.contentCmd":          103,
 	"internal/convert.pptx":                91,

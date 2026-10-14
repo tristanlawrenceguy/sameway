@@ -91,8 +91,8 @@ func TestWhatIsInARecordIsReadFromTheSchema(t *testing.T) {
 		json.Unmarshal(get(t, h, path).Body.Bytes(), &v)
 		return v.Glance
 	}
-	if got := glance("/api/person/" + ana.ID); got != "1 interaction" {
-		t.Errorf("a person says %q, want %q (a task for them is not in them)", got, "1 interaction")
+	if got := glance("/api/person/" + ana.ID); got != "1 interaction, last today" {
+		t.Errorf("a person says %q, want %q (a task for them is not in them)", got, "1 interaction, last today")
 	}
 	if got := glance("/api/event/" + standup.ID); !strings.HasSuffix(got, " · 1 task") {
 		t.Errorf("a meeting says %q, want the task that came up at it last", got)
@@ -104,7 +104,7 @@ func TestWhatIsInARecordIsReadFromTheSchema(t *testing.T) {
 		t.Errorf("a habit says %q; its entries are not listed, so not counted", got)
 	}
 	// Its row in its list says the same, counted with the rest of the list.
-	if body := get(t, h, "/t/person").Body.String(); !strings.Contains(body, `<span class="sw-row__note">1 interaction</span>`) {
+	if body := get(t, h, "/t/person").Body.String(); !strings.Contains(body, `<span class="sw-row__note">1 interaction, last today</span>`) {
 		t.Errorf("a person's row does not say what is in it:\n%s", around(body, ana.ID))
 	}
 }

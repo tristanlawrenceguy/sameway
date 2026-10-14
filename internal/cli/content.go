@@ -9,6 +9,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/export"
+	"github.com/tristanlawrenceguy/sameway/internal/fold"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
@@ -132,7 +133,7 @@ func (c *ctx) contentCmd(typeName string) error {
 func (c *ctx) contentType(typeName string) (*app.App, *schema.Type, error) {
 	a, err := c.load()
 	if err != nil {
-		if near := nearest(typeName, names()); near != "" {
+		if near := fold.Nearest(typeName, names()); near != "" {
 			return nil, nil, misused("%q is not a command. Did you mean sameway %s?", typeName, near)
 		}
 		if errors.Is(err, workspace.ErrNotFound) {
@@ -144,7 +145,7 @@ func (c *ctx) contentType(typeName string) (*app.App, *schema.Type, error) {
 		return a, t, nil
 	}
 	a.Close()
-	if near := nearest(typeName, append(names(), a.Types.Names()...)); near != "" {
+	if near := fold.Nearest(typeName, append(names(), a.Types.Names()...)); near != "" {
 		return nil, nil, misused("%q is not a command or a content type. Did you mean sameway %s?", typeName, near)
 	}
 	return nil, nil, misused("unknown command or content type %q (types: %s). Run `sameway help`", typeName, strings.Join(a.Types.Names(), ", "))
@@ -152,7 +153,7 @@ func (c *ctx) contentType(typeName string) (*app.App, *schema.Type, error) {
 
 // badVerb says the verb a type's command most likely meant, or all five.
 func badVerb(verb, typ string) error {
-	if near := nearest(verb, []string{"list", "get", "create", "update", "delete"}); near != "" {
+	if near := fold.Nearest(verb, []string{"list", "get", "create", "update", "delete"}); near != "" {
 		return misused("unknown verb %q for %s. Did you mean sameway %s %s?", verb, typ, typ, near)
 	}
 	return misused("unknown verb %q for %s (use list, get, create, update, delete)", verb, typ)
