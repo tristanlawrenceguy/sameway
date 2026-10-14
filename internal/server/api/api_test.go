@@ -121,7 +121,7 @@ func TestAPILifecycle(t *testing.T) {
 
 	wantStatus(t, do(t, h, http.MethodDelete, "/api/note/"+rec.ID, nil, ""), http.StatusOK)
 	wantStatus(t, get(t, h, "/api/note/"+rec.ID), http.StatusNotFound)
-	wantStatus(t, get(t, h, "/api/nothing"), http.StatusBadRequest)
+	wantStatus(t, get(t, h, "/api/nothing"), http.StatusNotFound) // a type not there, as a record not there
 	wantStatus(t, do(t, h, http.MethodPost, "/api/note", strings.NewReader("not json"), "application/json"), http.StatusBadRequest)
 }
 
@@ -177,8 +177,8 @@ func TestAPIListLimitParameter(t *testing.T) {
 		Error struct{ Message string }
 	}
 	decode(t, neg, &ne)
-	if !strings.Contains(ne.Error.Message, "invalid limit") {
-		t.Errorf("negative limit: expected 'invalid limit' error, got %q", ne.Error.Message)
+	if !strings.Contains(ne.Error.Message, "limit is how many to answer with, a whole number from 1") {
+		t.Errorf("negative limit: expected limit to be refused in words, got %q", ne.Error.Message)
 	}
 
 	zero := get(t, h, "/api/note?limit=0")
@@ -187,8 +187,8 @@ func TestAPIListLimitParameter(t *testing.T) {
 		Error struct{ Message string }
 	}
 	decode(t, zero, &ze)
-	if !strings.Contains(ze.Error.Message, "invalid limit") {
-		t.Errorf("limit=0: expected 'invalid limit' error, got %q", ze.Error.Message)
+	if !strings.Contains(ze.Error.Message, "limit is how many to answer with, a whole number from 1") {
+		t.Errorf("limit=0: expected limit to be refused in words, got %q", ze.Error.Message)
 	}
 
 	bad := get(t, h, "/api/note?limit=abc")
@@ -197,7 +197,7 @@ func TestAPIListLimitParameter(t *testing.T) {
 		Error struct{ Message string }
 	}
 	decode(t, bad, &be)
-	if !strings.Contains(be.Error.Message, "invalid limit") {
-		t.Errorf("non-numeric limit: expected 'invalid limit' error, got %q", be.Error.Message)
+	if !strings.Contains(be.Error.Message, "limit is how many to answer with, a whole number from 1") {
+		t.Errorf("non-numeric limit: expected limit to be refused in words, got %q", be.Error.Message)
 	}
 }

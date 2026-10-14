@@ -35,7 +35,7 @@ func (s *Service) keepOne(typeName, id string, merge []string) toolResult {
 	}
 	kept, err := s.Store.Get(t.Name, id)
 	if err != nil {
-		return fail("no %s with id %s. Use find_records to get the id", t.Name, id)
+		return fail("%s. Use find_records to get the id", records.NoRecord(t.Name, id))
 	}
 	alike := records.Alike(s.Store, t, kept)
 	if len(alike) == 0 {

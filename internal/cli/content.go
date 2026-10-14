@@ -161,7 +161,7 @@ func badVerb(verb, typ string) error {
 // notFound says which record was not found and how to see those there are.
 func notFound(err error, typ, id string) error {
 	if errors.Is(err, store.ErrNotFound) {
-		return fmt.Errorf("no %s has the id %q (not found). sameway %s list says those there are", typ, id, typ)
+		return fmt.Errorf("%s. sameway %s list says those there are", records.NoRecord(typ, id), typ)
 	}
 	return err
 }

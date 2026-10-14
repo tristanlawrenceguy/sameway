@@ -95,6 +95,9 @@ func (s *Server) call(ctx context.Context, svc *chat.Service, name string, args 
 
 // run is call without the pace, for a tool tried on a copy.
 func (s *Server) run(ctx context.Context, svc *chat.Service, name string, args json.RawMessage) (string, bool) {
+	if why := s.notTaken(name, args); why != "" { // not_taken.go
+		return why, true
+	}
 	switch name {
 	case "describe":
 		var a struct {

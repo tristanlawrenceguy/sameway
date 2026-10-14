@@ -100,7 +100,7 @@ func write(st *store.Store, action, typ, id string, fields map[string]any) (*sto
 	}
 	t, ok := st.Types().Get(typ)
 	if !ok {
-		return nil, Change{}, fmt.Errorf("there is no type %q", typ)
+		return nil, Change{}, errors.New(NoType(typ, st.Types().Names()))
 	}
 	var was *store.Record
 	var err error

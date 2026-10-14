@@ -20,7 +20,7 @@ func (s *Service) getRecord(typeName, id string) toolResult {
 	}
 	rec, err := s.Store.Get(t.Name, id)
 	if err != nil {
-		return fail("no %s with id %s. Use find_records to get an id", t.Name, id)
+		return fail("%s. Use find_records to get an id", records.NoRecord(t.Name, id))
 	}
 	// view.go: the same as the API gives, and its days in words; days_shown.go
 	out := struct {

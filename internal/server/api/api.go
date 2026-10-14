@@ -23,6 +23,9 @@ import (
 // component and type, a few kilobytes. ?full=1 is everything, which is
 // hundreds of kilobytes and was read by an agent routes last.
 func (s *Service) apiDescribe(w http.ResponseWriter, r *http.Request) {
+	if refusedWords(w, r, "/api/describe", describeWords) { // api_params.go
+		return
+	}
 	if r.URL.Query().Get("full") != "" {
 		web.WriteJSON(w, http.StatusOK, s.app.Describe())
 		return
@@ -31,6 +34,9 @@ func (s *Service) apiDescribe(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) apiList(w http.ResponseWriter, r *http.Request) {
+	if !s.knownType(w, r) { // api_refusals.go
+		return
+	}
 	if why := unknownParams(r.URL.Query(), r.PathValue("type")); why != "" { // api_params.go
 		web.WriteError(w, errors.New(why))
 		return
@@ -41,11 +47,7 @@ func (s *Service) apiList(w http.ResponseWriter, r *http.Request) {
 		var err error
 		limit, err = strconv.Atoi(limitStr)
 		if err != nil || limit <= 0 {
-			msg := "invalid limit parameter"
-			if err != nil {
-				msg = fmt.Sprintf("invalid limit parameter: %v", err)
-			}
-			web.WriteError(w, errors.New(msg))
+			web.WriteError(w, fmt.Errorf("limit is how many to answer with, a whole number from 1, not %q", limitStr))
 			return
 		}
 	}
@@ -71,11 +73,7 @@ func (s *Service) apiList(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Query().Get("dir") == "desc" && order != "" && !strings.HasPrefix(order, "-") {
 		order = "-" + order
 	}
-	t, ok := s.app.Types.Get(r.PathValue("type"))
-	if !ok {
-		web.WriteError(w, fmt.Errorf("no content type %q", r.PathValue("type")))
-		return
-	}
+	t, _ := s.app.Types.Get(r.PathValue("type")) // known: above
 	recs, err := query.Filter(s.app.Store, t, r.URL.Query()["where"], order, limit, s.Now())
 	if err != nil {
 		web.WriteError(w, err)
@@ -107,6 +105,9 @@ func (s *Service) apiList(w http.ResponseWriter, r *http.Request) {
 // apiDescribePart serves one section of the description, or one item in it,
 // cut by the same Part every other surface uses.
 func (s *Service) apiDescribePart(w http.ResponseWriter, r *http.Request) {
+	if refusedWords(w, r, r.URL.Path, describeWords) {
+		return
+	}
 	part := s.app.Describe().Part
 	if r.URL.Query().Get("full") != "" {
 		part = s.app.Describe().FullPart

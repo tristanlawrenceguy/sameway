@@ -24,7 +24,7 @@ func WriteAll(st *store.Store, action, typ string, all []Writing) ([]*store.Reco
 	for i, w := range all {
 		rec, c, err := Write(st, action, typ, w.ID, w.Fields)
 		if err != nil {
-			unwrite(st, changes)
+			(&Book{Store: st}).putBack(changes)
 			return nil, nil, i, err
 		}
 		recs, changes = append(recs, rec), append(changes, c)
@@ -32,18 +32,19 @@ func WriteAll(st *store.Store, action, typ string, all []Writing) ([]*store.Reco
 	return recs, changes, -1, nil
 }
 
-// unwrite runs changes backwards, newest first: what was made goes, what
-// was changed is as it was. Best effort: each was written a moment ago.
-func unwrite(st *store.Store, changes []Change) {
-	var back []Op
+// putBack runs changes not yet logged backwards, newest first: what was
+// made goes, what was changed is as it was. WriteAll and UndoEach both
+// end here when one of several is refused: an op run backwards is one
+// thing, done once. Best effort: each was written a moment ago, and one
+// that cannot be put back does not stop the rest.
+func (b *Book) putBack(changes []Change) {
 	for i := len(changes) - 1; i >= 0; i-- {
 		ops := changes[i].Ops
+		back := make([]Op, 0, len(ops))
 		for j := len(ops) - 1; j >= 0; j-- {
 			back = append(back, Op{Type: ops[j].Type, ID: ops[j].ID, After: ops[j].Before})
 		}
-	}
-	if len(back) > 0 {
-		(&Book{Store: st}).Apply(back...)
+		b.Apply(back...)
 	}
 }
 

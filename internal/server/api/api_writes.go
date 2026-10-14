@@ -18,7 +18,7 @@ import (
 // at all.
 
 func (s *Service) apiCreate(w http.ResponseWriter, r *http.Request) {
-	if s.keptLog(w, r) {
+	if s.keptLog(w, r) || !s.knownType(w, r) {
 		return
 	}
 	fields, err := web.ReadBody(r)
@@ -50,7 +50,7 @@ func (s *Service) apiCreate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) apiUpdate(w http.ResponseWriter, r *http.Request) {
-	if s.keptLog(w, r) {
+	if s.keptLog(w, r) || !s.knownType(w, r) {
 		return
 	}
 	fields, err := web.ReadBody(r)
@@ -60,7 +60,7 @@ func (s *Service) apiUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 	was, err := s.app.Store.Get(r.PathValue("type"), r.PathValue("id"))
 	if err != nil {
-		web.WriteError(w, err)
+		writeErr(w, r, err) // api_refusals.go
 		return
 	}
 	if s.staleFor(w, r, was) { // below
@@ -83,7 +83,7 @@ func (s *Service) apiUpdate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) apiDelete(w http.ResponseWriter, r *http.Request) {
-	if s.keptLog(w, r) {
+	if s.keptLog(w, r) || !s.knownType(w, r) {
 		return
 	}
 	if was, err := s.app.Store.Get(r.PathValue("type"), r.PathValue("id")); err == nil && s.staleFor(w, r, was) {
@@ -92,7 +92,7 @@ func (s *Service) apiDelete(w http.ResponseWriter, r *http.Request) {
 	// Logged with everything it had, so it can be put back.
 	gone, _, err := records.WriteAs(s.app.Store, Agent(r).As(), "deleted", r.PathValue("type"), r.PathValue("id"), nil)
 	if err != nil {
-		web.WriteError(w, err)
+		writeErr(w, r, err)
 		return
 	}
 	out := map[string]any{"deleted": r.PathValue("id")}
@@ -109,6 +109,7 @@ func (s *Service) keptLog(w http.ResponseWriter, r *http.Request) bool {
 	if r.PathValue("type") != records.ActivityType {
 		return false
 	}
+	w.Header().Set("Allow", "GET") // 405 says what the path does take (RFC 9110, 15.5.6)
 	web.WriteJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": web.APIError{Code: "kept",
 		Message: records.ErrKeptLog.Error()}})
 	return true
