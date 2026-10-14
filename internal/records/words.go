@@ -55,13 +55,11 @@ func Say(st *store.Store, f map[string]any) Words {
 		name, value := settingWords(target, detail)
 		return Words{Action: "changed", Target: name, Detail: "to " + value}
 	}
-<<<<<<< HEAD
 	if action == "said" {
 		detail = stripJSONLike(detail)
-=======
+	}
 	if counted(target, detail) {
 		target = ""
->>>>>>> origin/main
 	}
 	return Words{Action: action, Target: personWord(target), Detail: strings.TrimLeft(detail, "-*• ")}
 }
