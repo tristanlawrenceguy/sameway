@@ -37,7 +37,7 @@ func Title(s string) string {
 		line, cut = strings.Join(fields[:MaxWords], " "), true
 	}
 	if runes := []rune(line); len(runes) > MaxRunes {
-		line, cut = string(runes[:MaxRunes-1]), true
+		line, cut = string(runes[:cutAt(runes, MaxRunes-1)]), true // clusters.go
 		if i := strings.LastIndex(line, " "); i > 0 {
 			line = line[:i]
 		}
@@ -60,7 +60,7 @@ func Clip(s string, n int) string {
 	if n < 1 {
 		n = 1
 	}
-	return strings.TrimRight(string(r[:n-1]), " ") + "…"
+	return strings.TrimRight(string(r[:cutAt(r, n-1)]), " ") + "…" // clusters.go
 }
 
 // Line is the first line of s, clipped to n characters.
