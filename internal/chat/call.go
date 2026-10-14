@@ -13,6 +13,9 @@ import (
 // one place and forgotten in the other.
 func (s *Service) run(call llm.ToolCall) toolResult {
 	s.SayNotes() // notice.go: what a change says, for every way in
+	if call.Name == moreToolsName {
+		return s.moreTools(call) // more_tools.go
+	}
 	if r, no := s.refuseFor(call); no {
 		logCall(call, r)
 		return r
