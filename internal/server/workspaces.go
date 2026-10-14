@@ -104,9 +104,11 @@ func (s *Server) showWorkspaces(w http.ResponseWriter, r *http.Request, problem 
 			own = "http://" + k.Addr + "/"
 		}
 	}
-	meta := cur.Dir
+	// Each said with what it is: a bare folder path read as the system's
+	// own words (crew finding 0673).
+	meta := "Kept in " + cur.Dir
 	if own != "" {
-		meta += " · " + own
+		meta += " · open at " + own
 	}
 	b.WriteString(`<section class="sw-stack" aria-labelledby="ws-this"><h2 id="ws-this">This workspace</h2>`)
 	b.WriteString(string(s.component("card", map[string]any{"title": cur.Config.Name, "meta": meta, "level": 3})))
@@ -126,7 +128,7 @@ func (s *Server) showWorkspaces(w http.ResponseWriter, r *http.Request, problem 
 	} else {
 		b.WriteString(`<ul class="sw-plain sw-rows">`)
 		for _, o := range others {
-			fmt.Fprintf(&b, `<li class="sw-row sw-ws"><div class="sw-ws__who"><span class="sw-row__title">%s</span><span class="sw-muted sw-small">%s</span></div>`, template.HTMLEscapeString(o.Name), template.HTMLEscapeString(o.Dir))
+			fmt.Fprintf(&b, `<li class="sw-row sw-ws"><div class="sw-ws__who"><span class="sw-row__title">%s</span><span class="sw-muted sw-small">%s</span></div>`, template.HTMLEscapeString(o.Name), template.HTMLEscapeString("Kept in "+o.Dir))
 			if o.Running {
 				fmt.Fprintf(&b, `<a class="sw-button sw-button--secondary sw-pressable" href="%s" target="_blank" rel="opener">Open<span class="sw-visually-hidden"> %s</span> (new tab)</a>`, template.HTMLEscapeString(o.URL), template.HTMLEscapeString(o.Name))
 			} else {
