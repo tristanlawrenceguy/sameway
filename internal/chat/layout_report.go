@@ -46,7 +46,7 @@ func (s *Service) tabProblems(all []placed, recs []*store.Record, canvas string)
 		layoutProblems(all),       // layout_rules.go
 		roomProblems(all, canvas), // layout_measured.go
 		s.clutterProblems(recs),   // layout_clutter.go
-		copiesProblems(recs),      // layout_copies.go
+		s.copiesProblems(recs),    // layout_copies.go
 		s.leftoverProblems(recs),  // layout_leftover.go
 	} {
 		out = append(out, found...)
