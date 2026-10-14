@@ -78,6 +78,12 @@ keep_one). Telling them apart is for what is really two.
   newest: the oldest opens to be named apart. A name of its own tells it
   apart for everyone, on every surface, where a hidden "these are two"
   would leave two controls of one name.
+- **Said where it is seen.** The sentence that says records look alike is
+  drawn at rest, so a mouse user who never hovers there still learns of
+  them; its buttons are quiet, as other controls are, until the pointer
+  or focus is on it. A workspace that wants it out of the way sets
+  `ui.alike` to quiet (Help, or `set_setting`), and the whole of it then
+  shows only on hover or focus.
 - **A press and a call do the same.** keep_one, left to itself, merges
   what the list offers: those nothing tells apart. The same errand on
   another day is merged only when the assistant names it in `merge`, as
@@ -88,7 +94,9 @@ leave the names alike, which names apart worse than a new name does); a
 side by side picker of each value (HubSpot's, for records with dozens of
 fields; ours have a few, and Undo is one press); finding names that are
 near but not the same ("Groceries", "Buy groceries"), left to the
-assistant's judgement when it is told what is there.
+assistant's judgement when it is told what is there; a setting of their
+own for its buttons (they are quiet as every control is, and
+`ui.controls` visible shows them with the rest).
 
 ## Decided, so not findings
 
