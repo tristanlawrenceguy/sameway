@@ -10,6 +10,7 @@ import (
 
 	"golang.org/x/net/html"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -26,7 +27,7 @@ func TestNoMachineWordsReachAPerson(t *testing.T) {
 	seedLikeAPerson(t, a, h)         // machine_seed_test.go
 	extra := seedEveryState(t, a, h) // every_state_seed_test.go: the states and pages the crawl reads too
 
-	m := machineSeen{ids: map[string]bool{}, fields: map[string]bool{}, choices: map[string]bool{}}
+	m := machineSeen{ids: map[string]bool{}, fields: map[string]bool{}, choices: map[string]bool{}, names: map[string]bool{}}
 	var paths []string
 	for _, name := range a.Types.Names() {
 		ty, _ := a.Types.Get(name)
@@ -48,6 +49,9 @@ func TestNoMachineWordsReachAPerson(t *testing.T) {
 		recs, _ := a.Store.List(name, store.ListOptions{})
 		for _, r := range recs {
 			m.ids[r.ID] = true
+			if n := records.Name(a.Store, ty, r); n != "" {
+				m.names[n] = strings.Contains(n, ", ")
+			}
 			paths = append(paths, "/t/"+name+"/"+r.ID)
 		}
 	}
@@ -88,7 +92,8 @@ var (
 
 // machineSeen is what counts as a machine's word in this workspace: its
 // records' ids, and its fields' names as a machine writes them.
-type machineSeen struct{ ids, fields, choices map[string]bool }
+// names are its records' names, each true when it has a comma.
+type machineSeen struct{ ids, fields, choices, names map[string]bool }
 
 // words is each machine word in what a person meets on a page, with the
 // passage it is in.
@@ -107,6 +112,9 @@ func (m machineSeen) words(page string) []string {
 		if strings.HasPrefix(text, "\x00") { // two values with nothing between them
 			say("values run together", strings.TrimPrefix(text, "\x00"))
 			continue
+		}
+		for _, w := range m.plainWords(text) { // plain_words_crawl_test.go
+			say(w[0], w[1])
 		}
 		for _, w := range machineStamp.FindAllString(text, -1) {
 			say("a machine date", w)

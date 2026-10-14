@@ -105,7 +105,7 @@ func Value(f schema.Field, v any, titles Titles, loc *time.Location) string {
 			}
 			parts = append(parts, fmt.Sprint(it))
 		}
-		return strings.Join(parts, ", ")
+		return schema.Names(parts) // a name can have a comma of its own
 	case "bool":
 		if b, _ := v.(bool); b {
 			return "yes"

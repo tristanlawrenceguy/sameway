@@ -2,9 +2,11 @@ package chat
 
 import (
 	"fmt"
-	"github.com/tristanlawrenceguy/sameway/internal/jsontext"
 	"strconv"
 	"strings"
+
+	"github.com/tristanlawrenceguy/sameway/internal/jsontext"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -246,8 +248,5 @@ func grow(all []placed, canvas string, p placed) string {
 
 // joinAnd lists words the way they are said: a, b and c.
 func joinAnd(words []string) string {
-	if len(words) < 2 {
-		return strings.Join(words, "")
-	}
-	return strings.Join(words[:len(words)-1], ", ") + " and " + words[len(words)-1]
+	return schema.AndNames(words)
 }

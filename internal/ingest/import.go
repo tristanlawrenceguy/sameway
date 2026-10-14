@@ -223,7 +223,13 @@ func coerce(f schema.Field, v string, loc *time.Location) any {
 		return v
 	case "list":
 		var out []any
-		for _, p := range strings.FieldsFunc(v, func(r rune) bool { return r == ',' || r == ';' || r == '|' }) {
+		// Names an export set apart by semicolons keep their own commas
+		// (schema.Names): "Silva, Ana; Bob" is two.
+		apart := func(r rune) bool { return r == ',' || r == ';' || r == '|' }
+		if strings.Contains(v, ";") {
+			apart = func(r rune) bool { return r == ';' || r == '|' }
+		}
+		for _, p := range strings.FieldsFunc(v, apart) {
 			if p = strings.TrimSpace(p); p != "" {
 				out = append(out, p)
 			}

@@ -39,10 +39,16 @@ func seedLikeAPerson(t *testing.T, a *app.App, h http.Handler) {
 	agent(http.MethodPatch, "/api/task/"+paint, map[string]any{"status": "done"})
 	agent(http.MethodPost, "/api/task", map[string]any{"title": "Water plants", "due": "2026-10-07"})
 	agent(http.MethodPost, "/api/note", map[string]any{"title": "Paint colours", "body": "Sage for the hall.", "status": "draft"})
-	agent(http.MethodPost, "/api/event", map[string]any{"title": "Pricing", "starts": "2026-10-06 14:00", "people": []string{ana}})
+	silva := id(agent(http.MethodPost, "/api/person", map[string]any{"name": "Silva, Joao"})) // a name with a comma of its own
+	agent(http.MethodPost, "/api/event", map[string]any{"title": "Pricing", "starts": "2026-10-06 14:00", "people": []string{ana, silva}})
 	agent(http.MethodPost, "/api/reminder", map[string]any{"title": "Timesheet", "at": "2026-10-05 09:00", "repeat": "every Monday"})
 	habit := id(agent(http.MethodPost, "/api/habit", map[string]any{"name": "Drink water", "cadence": "day", "target": 8, "unit": "glasses"}))
 	agent(http.MethodPost, "/api/entry", map[string]any{"habit": habit, "amount": 3, "at": "2026-10-04 08:00"})
+	// Several entries at once, each called by its habit and how much, with
+	// a comma: the log and the receipt name them all.
+	agent(http.MethodPost, "/api/tools/create_records", map[string]any{"type": "entry", "records": []map[string]any{
+		{"habit": habit, "amount": 2, "at": "2026-10-05 08:00"}, {"habit": habit, "amount": 5, "at": "2026-10-06 08:00"}}})
+	agent(http.MethodPost, "/api/file/upload", map[string]any{"title": "Shopping list", "filename": "list.txt", "content": "bWlsaywgZWdncw=="}) // a small file
 	for _, b := range []map[string]any{
 		{"component": "collection", "props": map[string]any{"type": "task", "label": "To do", "where": []string{"done=false"}, "order": "due"}},
 		{"component": "collection", "props": map[string]any{"type": "note", "label": "Notes", "as": "table"}},

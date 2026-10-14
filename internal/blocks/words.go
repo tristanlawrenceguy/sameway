@@ -67,15 +67,31 @@ func Display(f schema.Field, v any, loc *time.Location, h24 bool) string {
 	return fmt.Sprint(v)
 }
 
-// SizeWords is a file's size as a person reads it: 11 MB, 480 KB.
+// SizeWords is a file's size as a person reads it: 11 MB, 4.2 MB, 480 KB,
+// MB from 1 MB up as GOV.UK's style says, with a tenth below 10 MB so
+// 1.9 MB is not said as 2. Nobody decides anything on a count of bytes:
+// under a kilobyte is "under 1 KB".
 func SizeWords(n int64) string {
 	switch {
-	case n >= 1<<20:
+	case n >= 10<<20:
 		return fmt.Sprintf("%.0f MB", float64(n)/(1<<20))
+	case n >= 1<<20-512: // 1023.5 KB and up is 1 MB, never 1024 KB
+		return strings.TrimSuffix(fmt.Sprintf("%.1f", float64(n)/(1<<20)), ".0") + " MB"
 	case n >= 1<<10:
 		return fmt.Sprintf("%.0f KB", float64(n)/(1<<10))
 	}
-	return fmt.Sprintf("%d bytes", n)
+	return "under 1 KB"
+}
+
+// DownloadSize is what a download link says of its size: nothing below
+// 1 MB, the size a phone or a mail notices. "Text (Markdown, 59 bytes)"
+// on every record's page decided nothing and read as the system talking
+// about itself (crew finding 0711); every download says its size here.
+func DownloadSize(n int64) string {
+	if n < 1<<20-512 { // what SizeWords says as 1 MB
+		return ""
+	}
+	return SizeWords(n)
 }
 
 // Capitalize puts a phrase at the start of a sentence.
@@ -117,10 +133,7 @@ func str(v any, fallback string) string {
 
 // AndList is names as said: tasks, reminders and entries.
 func AndList(names []string) string {
-	if len(names) < 2 {
-		return strings.Join(names, "")
-	}
-	return strings.Join(names[:len(names)-1], ", ") + " and " + names[len(names)-1]
+	return schema.AndNames(names)
 }
 
 // NoType says a type is not there, and what is: the one likely meant,

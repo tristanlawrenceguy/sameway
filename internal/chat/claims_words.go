@@ -4,9 +4,9 @@ import (
 	"context"
 	"log"
 	"regexp"
-	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
 
 // A reply in the person's words. Replies named the tools they used or
@@ -37,8 +37,8 @@ func (s *Service) inTheirWords(reply string) string {
 	if len(named) == 0 {
 		return ""
 	}
-	log.Printf("chat: the reply names %s; asking for it in the person's words", strings.Join(named, ", "))
-	return fromSameway("your reply names " + strings.Join(named, ", ") + ", a tool's name the person does not see anywhere and cannot act on. Say the same again in their words: what you did, or what you could not do and what they can do instead." + answerAgain)
+	log.Printf("chat: the reply names %s; asking for it in the person's words", schema.Names(named))
+	return fromSameway("your reply names " + schema.Names(named) + ", a tool's name the person does not see anywhere and cannot act on. Say the same again in their words: what you did, or what you could not do and what they can do instead." + answerAgain)
 }
 
 // stillWrong is what a reply still wrong after it was asked again carries:

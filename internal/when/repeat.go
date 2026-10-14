@@ -179,14 +179,14 @@ func dayList(days []time.Weekday) string {
 	if len(days) == 5 && sameDays(days, weekdaysOnly) {
 		return "weekday"
 	}
-	var names []string
+	var said []string // weekdays: no commas of their own
 	for _, d := range days {
-		names = append(names, d.String())
+		said = append(said, d.String())
 	}
-	if len(names) == 1 {
-		return names[0]
+	if len(said) == 1 {
+		return said[0]
 	}
-	return strings.Join(names[:len(names)-1], ", ") + " and " + names[len(names)-1]
+	return strings.Join(said[:len(said)-1], ", ") + " and " + said[len(said)-1]
 }
 
 var weekdaysOnly = []time.Weekday{time.Monday, time.Tuesday, time.Wednesday, time.Thursday, time.Friday}

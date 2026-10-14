@@ -3,8 +3,10 @@ package chat
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/tristanlawrenceguy/sameway/internal/jsontext"
 	"strings"
+
+	"github.com/tristanlawrenceguy/sameway/internal/jsontext"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
@@ -48,7 +50,7 @@ func (s *Service) addArrangement(name string, fills map[string]any) toolResult {
 		for _, x := range s.Registry.Arrangements() {
 			names = append(names, x.Name)
 		}
-		return fail("no arrangement %q; the arrangements are %s", name, strings.Join(names, ", "))
+		return fail("no arrangement %q; the arrangements are %s", name, schema.Names(names))
 	}
 	if missing := s.missingNeeds(a); missing != "" {
 		return fail("nothing added: %s", missing)

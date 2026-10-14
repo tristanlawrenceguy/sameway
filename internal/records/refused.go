@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/render"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
 
 // The same mistake is said in the same words by every way in: the API,
@@ -22,7 +23,7 @@ func NoType(name string, names []string) string {
 	if near := render.Nearest(name, names); near != "" {
 		out += " (did you mean " + near + "?)"
 	}
-	return out + "; the workspace has " + strings.Join(names, ", ")
+	return out + "; the workspace has " + schema.Names(names)
 }
 
 // NoRecord says a record is not there.
