@@ -16,12 +16,13 @@ var undoOp = Op{Title: "Undo a change",
 	Access: ForOwner,
 	Core:   true,
 	Doing:  saying("Undoing a change"),
-	Run:    func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.undo(a.ID) },
+	Run:    func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.undoSome(a.ID, a.IDs) }, // undo_several.go
 	Tool: llm.Tool{
 		Name:        "undo_change",
-		Description: "Reverse one change from the activity log, yours or the person's: an added thing is removed, a removed thing is put back with everything it had, an update goes back to what it was. Undoing an undo puts it back again. Without an id, the newest change that can still be undone.",
+		Description: "Reverse one change from the activity log, yours or the person's: an added thing is removed, a removed thing is put back with everything it had, an update goes back to what it was. Undoing an undo puts it back again. Without an id, the newest change that can still be undone. ids takes several back in one call, in the order given: newest first, as a reply's changes are listed.",
 		Schema: map[string]any{"type": "object", "properties": map[string]any{
-			"id": map[string]any{"type": "string", "description": "The activity entry's id, from the recent changes listed in the prompt."},
+			"id":  map[string]any{"type": "string", "description": "The activity entry's id, from the recent changes listed in the prompt."},
+			"ids": map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Several entries' ids, newest first, to take back in one call."},
 		}, "additionalProperties": false},
 	}}
 
@@ -49,7 +50,7 @@ func (s *Service) undoDigest() string {
 	if len(lines) == 0 {
 		return ""
 	}
-	return "\nRecent changes that can be undone, newest first (id: what happened); undo_change takes the id:\n" + strings.Join(lines, "\n") + "\n"
+	return "\nRecent changes that can be undone, newest first (id: what happened); undo_change takes the id:\n" + strings.Join(lines, "\n") + "\n" + s.lastReplySaid() // undo_several.go
 }
 
 // removeBlock takes one block off the canvas and logs what it was.
