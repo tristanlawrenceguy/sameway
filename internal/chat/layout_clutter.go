@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/tristanlawrenceguy/sameway/internal/blocks"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -52,11 +53,12 @@ func (s *Service) cannotShow(name string, props map[string]any) string {
 	if _, err := c.Validate(props); err != nil {
 		return PropsTrouble(err)
 	}
-	if _, err := s.CheckBlock(name, props); err != nil {
-		if cs, ok := err.(*CannotShow); ok {
-			return cs.Problem
+	// As the page draws it, not as a new write is checked: a block stored
+	// before that check still renders, and is not clutter.
+	if s.Blocks != nil {
+		if _, problem := blocks.Renders(s.Blocks, name, props); problem != "" {
+			return problem
 		}
-		return err.Error()
 	}
 	return ""
 }
@@ -72,3 +74,6 @@ func (s *Service) clutterProblems(recs []*store.Record) []string {
 	}
 	return out
 }
+
+// Clutter is clutter for a page that offers the person to tidy it.
+func (s *Service) Clutter(recs []*store.Record) map[string]string { return s.clutter(recs) }
