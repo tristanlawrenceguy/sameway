@@ -82,7 +82,7 @@ func (s *Service) reviewPage(w http.ResponseWriter, r *http.Request) {
 			// then the presses, which wrap under it on a narrow screen.
 			b.WriteString(`<li class="sw-row"><span class="sw-row__title"><a class="sw-row__link" href="/t/task/` + it.ID + `">` + esc(it.Title) + `</a></span>`)
 			if it.When != "" {
-				b.WriteString(`<span class="sw-row__meta">` + esc(it.When) + `</span>`)
+				b.WriteString(` <span class="sw-row__meta">` + esc(it.When) + `</span>`) // a space, or a reader says the title and the day as one word
 			}
 			if actions {
 				b.WriteString(`<div class="sw-cluster">`)
