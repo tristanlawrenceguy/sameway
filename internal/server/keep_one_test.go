@@ -1,6 +1,7 @@
 package server_test
 
 import (
+	"net/url"
 	"regexp"
 	"strings"
 	"testing"
@@ -49,5 +50,38 @@ func TestAListOffersToKeepOneOfTwins(t *testing.T) {
 	postForm(t, h, "/activity/"+newestEntry(t, a.Store).ID+"/undo", nil)
 	if tasks, _ := a.Store.List("task", store.ListOptions{}); len(tasks) != 3 {
 		t.Errorf("Undo puts the other back: %d tasks", len(tasks))
+	}
+}
+
+// TestTheAlikeSentenceIsSeenAtRest: the sentence saying records look alike
+// is drawn at rest, its buttons quiet as other controls are; the owner on
+// Help, or an agent with set_setting ui.alike, can make the whole of it
+// quiet, and back.
+func TestTheAlikeSentenceIsSeenAtRest(t *testing.T) {
+	t.Parallel()
+	a, h := newApp(t)
+	a.Store.Create("task", map[string]any{"title": "Buy coffee"})
+	a.Store.Create("task", map[string]any{"title": "Buy coffee"})
+	shown := `<div class="sw-lede sw-cluster sw-reveal"><span>2 tasks called Buy coffee`
+	quiet := `<div class="sw-lede sw-cluster sw-reveal sw-quiet"><span>2 tasks called Buy coffee`
+	page := get(t, h, "/t/task").Body.String()
+	if !strings.Contains(page, shown) || !strings.Contains(page, `apart.</span><span class="sw-cluster sw-quiet">`) {
+		t.Fatalf("by default the sentence is seen at rest and its buttons are quiet:\n%s", truncate(page))
+	}
+	if !strings.Contains(get(t, h, "/help").Body.String(), "Records that look alike") {
+		t.Error("Help offers the choice")
+	}
+	after(t, h, postForm(t, h, "/help/set", url.Values{"key": {"ui.alike"}, "value": {"quiet"}}))
+	if page := get(t, h, "/t/task").Body.String(); !strings.Contains(page, quiet) {
+		t.Fatalf("set quiet on Help, the sentence shows only on hover or focus:\n%s", truncate(page))
+	}
+	if text, isErr := call(t, a, "set_setting", map[string]any{"key": "ui.alike", "value": "shown"}); isErr {
+		t.Fatalf("set_setting ui.alike: %s", text)
+	}
+	if page := get(t, h, "/t/task").Body.String(); !strings.Contains(page, shown) {
+		t.Errorf("set shown by an agent, the sentence is seen again:\n%s", truncate(page))
+	}
+	if text, isErr := call(t, a, "set_setting", map[string]any{"key": "ui.alike", "value": "hidden"}); !isErr {
+		t.Errorf("ui.alike is shown or quiet, nothing else: %s", text)
 	}
 }

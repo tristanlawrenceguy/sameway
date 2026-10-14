@@ -61,17 +61,18 @@ func (s *Service) componentIndex() string {
 	return b.String()
 }
 
-// typeIndex is each content type in a line: what it is, and its fields
-// by name and kind.
+// typeIndex is each content type in a line: what it is, its fields by
+// name and kind, and how much it holds (type_use.go).
 func (s *Service) typeIndex() string {
 	types := records.ContentTypes(s.Store)
 	if len(types) == 0 {
 		return ""
 	}
 	var b strings.Builder
-	b.WriteString("\nContent types (name: what it is; its fields). A record of one is what the person finds at /t/<type>; make it with create_record, never as a card on the canvas:\n")
+	b.WriteString("\nContent types (name: what it is; its fields; how many records it holds). A record of one is what the person finds at /t/<type>; make it with create_record, never as a card on the canvas. A type with no records that an agent or the assistant made clutters the person's menus: you may ask them whether to hide it (change_field hide keeps everything), but never hide one without their yes, since it is their workspace:\n")
+	makers := s.lazyMakers()
 	for _, t := range types {
-		fmt.Fprintf(&b, "%s: %s Fields: %s\n", t.Name, firstSentence(t.Description), strings.Join(typeFields(t), ", "))
+		fmt.Fprintf(&b, "%s: %s Fields: %s.%s\n", t.Name, firstSentence(t.Description), strings.Join(typeFields(t), ", "), s.typeUse(t, makers)+s.twinsSaid(t)) // type_use.go, type_twins.go
 	}
 	return b.String()
 }

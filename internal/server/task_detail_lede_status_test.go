@@ -55,12 +55,10 @@ func TestTaskDetailLedeHasNoStatusBadgeDoing(t *testing.T) {
 	}
 
 	// Human-readable metadata must still appear: due date chip and creation time.
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><time[^>]*>([^<]+)</time>`)
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*">Created <time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(lede)
 	if len(matches) < 2 {
-		t.Error("task detail lede should have a sw-detail__when span with the creation time")
-	} else if strings.HasPrefix(matches[1], "Added ") {
-		t.Error("task detail lede should not start with 'Added' label; got timestamp only")
+		t.Error("task detail lede should have a sw-detail__when span with the creation time and \"Created\" label")
 	}
 }
 
@@ -108,12 +106,10 @@ func TestTaskDetailLedeHasNoStatusBadgeDone(t *testing.T) {
 	}
 
 	// Human-readable metadata must still appear: creation time.
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><time[^>]*>([^<]+)</time>`)
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*">Created <time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(lede)
 	if len(matches) < 2 {
-		t.Error("task detail lede should have a sw-detail__when span with the creation time")
-	} else if strings.HasPrefix(matches[1], "Added ") {
-		t.Error("task detail lede should not start with 'Added' label; got timestamp only")
+		t.Error("task detail lede should have a sw-detail__when span with the creation time and \"Created\" label")
 	}
 }
 
@@ -155,12 +151,10 @@ func TestTaskDetailLedeHasNoStatusBadgeForUndoneTask(t *testing.T) {
 	}
 
 	// Human-readable metadata must still appear: creation time.
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><time[^>]*>([^<]+)</time>`)
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*">Created <time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(page)
 	if len(matches) < 2 {
-		t.Error("task detail page should have a sw-detail__when span with the creation time")
-	} else if strings.HasPrefix(matches[1], "Added ") {
-		t.Error("task detail lede should not start with 'Added' label; got timestamp only")
+		t.Error("task detail page should have a sw-detail__when span with the creation time and \"Created\" label")
 	}
 
 	// The Done checkbox must be unchecked.

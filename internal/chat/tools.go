@@ -56,10 +56,13 @@ var blockOps = []Op{
 			}, "id")}},
 	{Title: "Remove a block", Traits: Traits{Destructive: true, Idempotent: true},
 		Core:  true,
-		Doing: saying("Removing a block"),
-		Run:   func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.removeBlock(a.ID) },
-		Tool: llm.Tool{Name: "remove_component", Description: "Remove one block from the canvas by id.",
-			Schema: obj(map[string]any{"id": map[string]any{"type": "string"}}, "id")}},
+		Doing: removing,
+		Run:   func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.removeCall(a) },
+		Tool: llm.Tool{Name: "remove_component", Description: "Remove blocks from the canvas: one by id, or several by ids in one change that one Undo takes back. If any id is not a block, nothing is removed.",
+			Schema: obj(map[string]any{
+				"id":  map[string]any{"type": "string", "description": "One block id from the canvas listing."},
+				"ids": map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Several block ids, to remove them all at once."},
+			})}},
 	arrangeOp,
 	{Title: "Ask the person before a change",
 		Core:  true,
@@ -72,6 +75,7 @@ var blockOps = []Op{
 				"summary":   map[string]any{"type": "string", "description": "The question, in plain words, ending in a question mark. Say what would change and why you are asking."},
 				"tool":      map[string]any{"type": "string", "enum": []string{"add_component", "update_component", "remove_component", "remove_canvas"}, "description": "The change to make if they say yes."},
 				"id":        map[string]any{"type": "string", "description": "Block id, for update or remove."},
+				"ids":       map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Several block ids, to remove them together."},
 				"component": map[string]any{"type": "string", "description": "Component name, for add."},
 				"props":     map[string]any{"type": "object"},
 				"span":      map[string]any{"type": "integer"},
@@ -141,7 +145,7 @@ func (s *Service) addComponent(name string, props map[string]any, l look) toolRe
 		where += " with " + strings.Join(layout, ", ")
 	}
 	return toolResult{
-		text:   showing(where, shows),
+		text:   showing(where, shows) + s.similarOn(fields["canvas"].(string), name, props, rec.ID), // tools_similar.go
 		change: &records.Change{Action: "added", Component: name, ID: rec.ID, Detail: records.Summarise(name, props), Href: "/canvas/" + rec.ID, Ops: done},
 	}
 }

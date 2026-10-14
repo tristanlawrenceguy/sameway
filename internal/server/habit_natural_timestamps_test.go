@@ -2,15 +2,15 @@ package server_test
 
 import (
 	"regexp"
-	"strings"
 	"testing"
 )
 
-// TestHabitDetailLedeNoMachineFormatDate asserts that a habit detail page's
-// lede uses natural language for timestamps — no full machine-format date
-// like "Wed 30 Sep 2026, 13:31" (acceptance item 1). The whenMade function
-// should produce relative phrasing such as "4 days ago at 1:31pm".
-func TestHabitDetailLedeNoMachineFormatDate(t *testing.T) {
+// TestHabitDetailLedeNaturalTimestamp checks that a habit detail page's lede
+// uses natural language for timestamps — no full machine-format date like
+// "Wed 30 Sep 2026, 13:31" (acceptance item 1). The whenMade function should
+// produce relative phrasing such as "4 days ago at 1:31pm", with a visible
+// "Created" label prefix.
+func TestHabitDetailLedeNaturalTimestamp(t *testing.T) {
 	t.Parallel()
 	a, h := newApp(t)
 
@@ -25,11 +25,11 @@ func TestHabitDetailLedeNoMachineFormatDate(t *testing.T) {
 
 	body := get(t, h, "/t/habit/"+rec.ID+fieldsView).Body.String()
 
-	// Extract the sw-detail__when span content.
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><time[^>]*>([^<]+)</time>`)
+	// Extract the sw-detail__when span content with "Created" label.
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*">Created <time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(body)
 	if len(matches) < 2 {
-		t.Fatal("habit detail page should have a sw-detail__when span in the lede")
+		t.Fatal("habit detail page should have a sw-detail__when span with \"Created\" label in the lede")
 	}
 	whenText := matches[1]
 
@@ -43,10 +43,5 @@ func TestHabitDetailLedeNoMachineFormatDate(t *testing.T) {
 	machineTimeRe := regexp.MustCompile(`,\s\d{1,2}:\d{2}\b`)
 	if machineTimeRe.MatchString(whenText) {
 		t.Errorf("habit detail lede should use natural language timestamps, got %q — contains a 24-hour clock pattern (machine format like Wed 30 Sep 2026, 13:31)", whenText)
-	}
-
-	// It must NOT start with "Started" or any label prefix — just relative timestamp.
-	if strings.HasPrefix(whenText, "Started ") {
-		t.Errorf("habit detail lede should not start with 'Started '; got %q", whenText)
 	}
 }

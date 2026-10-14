@@ -175,13 +175,18 @@ func (s *Service) focusSection(l todayLists, list func(string, []todayItem) stri
 	if first == nil {
 		return ""
 	}
-	n := len(rest)
+	n, why := len(rest), ""
 	for _, it := range first {
 		if !it.Soon {
 			n++
 		}
+		// Why one not due is first, said once for the three: a starred row
+		// in To Do or a red flag in Todoist says it with a mark; here, words.
+		if why == "" && s.important(it) {
+			why = ", what is marked important first"
+		}
 	}
-	out := `<p>` + template.HTMLEscapeString(fmt.Sprintf("%d tasks are late or due. Start with these three; the rest wait below.", n)) + `</p>` +
+	out := `<p>` + template.HTMLEscapeString(fmt.Sprintf("%d tasks are late or due. Start with these three%s; the rest wait below.", n, why)) + `</p>` +
 		s.letGoOffer(append(append([]todayItem{}, first...), rest...)) + list("Start with these", first) // today_letgo.go
 	if body, err := s.app.Registry.RenderSlot("disclosure", map[string]any{"label": "The rest", "count": len(rest), "of": schema.Noun(len(rest), "task")}, template.HTML(list("", rest))); err == nil {
 		out += string(body)

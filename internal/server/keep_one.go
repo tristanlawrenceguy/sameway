@@ -28,13 +28,20 @@ const twinsShown = 3
 func (s *Server) listLede(t *schema.Type, recs []*store.Record) template.HTML {
 	lede := howMany(t, recs)
 	twins := records.Twins(s.app.Store, t)
+	// The sentence is seen at rest unless the workspace asks for it quiet
+	// (ui.alike); its buttons are quiet as other controls are, and show
+	// when the pointer is on it or focus is in it.
+	quiet := ""
+	if s.app.Workspace.Config.UI.Alike == "quiet" {
+		quiet = " sw-quiet"
+	}
 	for _, g := range twins[:min(twinsShown, len(twins))] {
 		name := s.title(t, g[0])
 		words := fmt.Sprintf("%s called %s, and nothing tells them apart.", capitalize(schema.Count(len(g), t.Name)), name)
-		lede += template.HTML(`<div class="sw-lede sw-cluster sw-quiet"><span>`+template.HTMLEscapeString(words)+`</span>`) +
+		lede += template.HTML(`<div class="sw-lede sw-cluster sw-reveal`+quiet+`"><span>`+template.HTMLEscapeString(words)+`</span><span class="sw-cluster sw-quiet">`) +
 			s.form(ui.Form{Action: "/t/" + t.Name + "/" + g[0].ID + "/keep-one", From: "/t/" + t.Name,
 				Button: &ui.Button{Label: "Keep the newest", Context: name, Variant: ui.Secondary}}) +
-			s.part(ui.Link{Href: "/t/" + t.Name + "/" + g[len(g)-1].ID + "#edit", Label: "Rename one", Context: name, Look: ui.LookButton}) + `</div>`
+			s.part(ui.Link{Href: "/t/" + t.Name + "/" + g[len(g)-1].ID + "#edit", Label: "Rename one", Context: name, Look: ui.LookButton}) + `</span></div>`
 	}
 	return lede
 }

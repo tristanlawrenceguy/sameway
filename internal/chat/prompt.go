@@ -73,7 +73,7 @@ How to work:
 func (s *Service) systemPrompt() string {
 	var b strings.Builder
 	b.WriteString(basePrompt)
-	fmt.Fprintf(&b, "\n\nToday is %s. Give a day or a time in the person's words (next Tuesday 2pm, tomorrow, 20 December): Sameway reads them against today, where a date worked out by hand can be a day out.", s.Now().Format("Monday 2 January 2006"))
+	fmt.Fprintf(&b, "\n\nToday is %s. Give a day or a time in the person's words (next Tuesday 2pm, tomorrow, 20 December): Sameway reads them against today, where a date worked out by hand can be a day out. The person's earlier messages say when they were sent: a day said in one (tomorrow, Friday) is counted from then, so give it as its date; and they were answered then, so act on the latest unless they ask you to go back to one.", s.Now().Format("Monday 2 January 2006"))
 	b.WriteString(s.whoPrompt())
 	b.WriteString(s.forYouPrompt())
 	if strings.TrimSpace(s.Needs) != "" {
@@ -103,10 +103,18 @@ func (s *Service) systemPrompt() string {
 		b.WriteString("(empty)\n")
 		return b.String()
 	}
+	bad, shows := s.blockState(blocks) // layout_clutter.go
 	for _, blk := range blocks {
 		props, _ := json.Marshal(blk.Fields["props"])
 		l := lookOf(blk)
-		fmt.Fprintf(&b, "%s %s region=%s span=%d frame=%s tone=%s %s\n", blk.ID, blk.Fields["component"], l.region, l.span, l.frame, l.tone, props)
+		note := addedSaid(blk, s.Now()) // block_age.go
+		if said, ok := shows[blk.ID]; ok {
+			note = strings.TrimPrefix(note+"; shows: "+said, ";")
+		}
+		if why, ok := bad[blk.ID]; ok {
+			note += " [" + why + "]"
+		}
+		fmt.Fprintf(&b, "%s %s region=%s span=%d frame=%s tone=%s %s%s\n", blk.ID, blk.Fields["component"], l.region, l.span, l.frame, l.tone, props, note)
 	}
 	b.WriteString("Rows in the main region, by span, left to right: " + rows(blocks) + "\n")
 	return b.String()
