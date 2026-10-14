@@ -138,7 +138,7 @@ func diarizeWith(ctx context.Context, dir, wav, cluster, voices string) ([]Turn,
 	var out bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &out, &out
 	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("telling the speakers apart stopped: %v: %s", err, lastLine(out.String()))
+		return nil, stopped("the speaker engine", err, out.String())
 	}
 	return ParseTurns(out.String()), nil
 }

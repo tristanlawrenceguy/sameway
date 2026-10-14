@@ -38,7 +38,14 @@ func (s *Service) attachment(id string) string {
 			fmt.Fprintf(&b, " Described as: %s]", description)
 		}
 	case strings.TrimSpace(text) == "":
-		b.WriteString(" It has no text.]")
+		// A document too big to read, or a recording not yet written
+		// down, has words its note explains; "no text" told the model
+		// otherwise.
+		if note, _ := rec.Fields["note"].(string); note != "" {
+			fmt.Fprintf(&b, " Its text is not here: %s]", note)
+		} else {
+			b.WriteString(" It has no text.]")
+		}
 	default:
 		if len([]rune(text)) > attachmentChars {
 			text = string([]rune(text)[:attachmentChars]) + "\n…(the rest is on its page)"
