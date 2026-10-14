@@ -190,7 +190,7 @@ func xlsx(data []byte) (string, error) {
 		fmt.Fprintf(&b, "Table: %s\n\n%s\n", sheet, table(rows))
 	}
 	if b.Len() == 0 {
-		return "", fmt.Errorf("no rows in the spreadsheet")
+		return "", told("the spreadsheet has nothing in it.")
 	}
 	return b.String(), nil
 }

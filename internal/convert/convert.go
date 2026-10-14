@@ -138,20 +138,17 @@ func Read(name string, data []byte) (Result, error) {
 	if !ok {
 		return Result{Kind: Kind(name)}, errors.New(noReader(ext))
 	}
+	// A PDF saved under another name is read as the PDF it is.
+	if ext != "pdf" && bytes.HasPrefix(data, []byte("%PDF-")) {
+		ext, k = "pdf", kinds["pdf"]
+	}
+	switch k.name {
+	case "text", "markdown", "table", "code", "captions", "calendar":
+		data = asUTF8(data)
+	}
 	md, err := k.read(data)
 	if err != nil {
-		return Result{Kind: k.name}, err
+		return Result{Kind: k.name}, plainly(ext, data, err)
 	}
 	return Result{Markdown: strings.TrimSpace(md), Kind: k.name}, nil
-}
-
-// noReader says why a file's words cannot be read, in the words its page
-// says them after "Could not read the file:". It named workspace.yaml and
-// said "no built-in reader for. files", which tells a person nothing they
-// can do; what they can do is open the original, which still works.
-func noReader(ext string) string {
-	if ext == "" {
-		return "its name has no ending such as .pdf, so what kind of file it is cannot be told, nor its words read. The original opens as it is."
-	}
-	return "Sameway cannot read inside ." + ext + " files yet, so their words are not shown or searched. The original opens as it is."
 }
