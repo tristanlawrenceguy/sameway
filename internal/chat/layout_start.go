@@ -1,7 +1,5 @@
 package chat
 
-import "strings"
-
 // How the tab reads, at the start of a turn, in the same words the model
 // gets after every write and an agent gets from look (measured.layout):
 // Layout now. It once came only after a write, so a model asked anything
@@ -16,9 +14,9 @@ import "strings"
 // tabReads is Layout now for the tab the person is on, with when to act
 // on what is to look at.
 func (s *Service) tabReads() string {
-	now := s.LayoutNow(s.current)
-	if strings.Contains(now, " To look at: ") {
-		now = "Say what is to look at when it bears on what the person asks, and fix it when you change the tab anyway; do not tidy unasked. " + now
+	r := s.layoutReportOf(s.current) // layout_report.go
+	if len(r.problems) == 0 {
+		return r.String() + "\n"
 	}
-	return now + "\n"
+	return "Say what is to look at when it bears on what the person asks, and fix it when you change the tab anyway; do not tidy unasked. " + r.String() + "\n"
 }

@@ -51,7 +51,7 @@ func (s *Service) renameCanvas(id, name string) toolResult {
 		return fail("could not rename the canvas: %v", err)
 	}
 	return toolResult{
-		text:   fmt.Sprintf("renamed tab %q to %q, at %s.", was, name, records.CanvasPath(id)),
+		text:   fmt.Sprintf("renamed tab %q to %q, at %s.", was, name, records.CanvasPath(id)) + longTabSaid(name), // canvas_names.go
 		change: &records.Change{Action: "updated", Component: records.CanvasType, ID: id, Detail: name, Href: records.CanvasPath(id), Ops: done},
 	}
 }

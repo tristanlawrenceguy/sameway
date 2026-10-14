@@ -89,7 +89,7 @@ func clutterProblems(recs []*store.Record, bad map[string]string) []string {
 	var out []string
 	for _, b := range recs {
 		if why, ok := bad[b.ID]; ok {
-			out = append(out, fmt.Sprintf("block %s (%s) %s: propose taking it away", b.ID, b.Fields["component"], why))
+			out = append(out, fmt.Sprintf("block %s (%s) %s: propose taking it away", b.ID, placedOf(b).called(), why))
 		}
 	}
 	return out

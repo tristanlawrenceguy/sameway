@@ -25,19 +25,28 @@ var recordLink = regexp.MustCompile(`/t/([a-z_]+)/([a-z0-9]{16})\b`)
 const copiedMost = 3
 
 // copiesProblems are Layout now's lines for blocks that copy records.
-func copiesProblems(recs []*store.Record) []string {
+func (s *Service) copiesProblems(recs []*store.Record) []string {
+	titles := s.titleIndex(recs) // layout_copies_titles.go
 	var out []string
 	for _, b := range recs {
 		if b.Fields["component"] == "collection" || b.Fields["component"] == "record" {
 			continue
 		}
 		byType := map[string]map[string]bool{}
-		for _, s := range wordsIn(b.Fields["props"]) {
-			for _, m := range recordLink.FindAllStringSubmatch(s, -1) {
-				if byType[m[1]] == nil {
-					byType[m[1]] = map[string]bool{}
-				}
-				byType[m[1]][m[2]] = true
+		add := func(typ, id string) {
+			if byType[typ] == nil {
+				byType[typ] = map[string]bool{}
+			}
+			byType[typ][id] = true
+		}
+		for _, w := range wordsIn(b.Fields["props"]) {
+			for _, m := range recordLink.FindAllStringSubmatch(w, -1) {
+				add(m[1], m[2])
+			}
+		}
+		for _, line := range linesIn(b.Fields["props"]) {
+			if ref, ok := titles[lineTitle(line)]; ok {
+				add(ref.typ, ref.id)
 			}
 		}
 		var types []string
@@ -48,7 +57,7 @@ func copiesProblems(recs []*store.Record) []string {
 		}
 		sort.Strings(types)
 		for _, t := range types {
-			out = append(out, fmt.Sprintf("block %s (%s) copies %d %s as words, which stay as they are when those change, are done or go: a collection block of %s shows them and stays current; make it one with update_component, unless the person asked for a list that does not change", b.ID, b.Fields["component"], len(byType[t]), schema.Plural(t), t))
+			out = append(out, fmt.Sprintf("block %s (%s) copies %d %s as words (their titles or links), which stay as they are when those change, are done or go: a collection block of %s shows them and stays current; make it one with update_component, unless the person asked for a list that does not change", b.ID, placedOf(b).called(), len(byType[t]), schema.Plural(t), t))
 		}
 	}
 	return out

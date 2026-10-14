@@ -44,7 +44,7 @@ func (s *Service) similarOn(canvas, name string, props map[string]any, newID str
 		if name != "tracker" && fmt.Sprint(had[key]) != fmt.Sprint(props[key]) {
 			continue
 		}
-		what := fmt.Sprintf("%s (%s)", b.ID, similarCalled(name, had))
+		what := fmt.Sprintf("%s (%s)", b.ID, placedOf(b).name()) // one name for a block, as Layout now gives it
 		if on, _ := b.Fields["canvas"].(string); on != canvas {
 			elsewhere[on] = append(elsewhere[on], what)
 			continue
@@ -65,15 +65,4 @@ func (s *Service) similarOn(canvas, name string, props map[string]any, newID str
 		out += fmt.Sprintf("\nAnother tab shows the same records as a %s: %s. Keep this one when the person wants them here too; if they meant the one they already have, take this back with undo_change and link them to that tab.", name, strings.Join(tabs, "; "))
 	}
 	return out
-}
-
-// similarCalled is what a block is called, for saying it among others.
-func similarCalled(name string, props map[string]any) string {
-	if what := records.Summarise(name, props); what != "" {
-		return what
-	}
-	if label, _ := props["label"].(string); label != "" {
-		return label
-	}
-	return name
 }
