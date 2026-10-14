@@ -29,19 +29,19 @@ func componentHelp(c *render.Component) string {
 	return b.String()
 }
 
-// typeHelp is a type's fields by name and kind, for a refusal.
+// typeHelp is the display names of a type's writable fields, for a refusal.
 func typeHelp(t *schema.Type) string {
 	return fmt.Sprintf("%s takes, inside fields: %s.", t.Name, strings.Join(typeFields(t), ", "))
 }
 
-// typeFields is each field a model may write, by name and kind.
+// typeFields returns the display names of fields a model may write.
 func typeFields(t *schema.Type) []string {
 	var fields []string
 	for _, f := range t.Shown() {
 		if f.ReadOnly || schema.ServerFilled(f.Description) {
 			continue
 		}
-		fields = append(fields, f.Name+" ("+f.Kind()+")")
+		fields = append(fields, f.Display())
 	}
 	return fields
 }
