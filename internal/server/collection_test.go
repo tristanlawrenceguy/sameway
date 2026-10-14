@@ -61,7 +61,7 @@ func TestACollectionIsTheRecordsThatMatch(t *testing.T) {
 	}
 	bad := get(t, h, "/t/task?where=owner%3Dme")
 	wantStatus(t, bad, http.StatusBadRequest)
-	if !strings.Contains(bad.Body.String(), `no field &#34;owner&#34;`) || !strings.Contains(bad.Body.String(), "See all tasks") {
+	if !strings.Contains(bad.Body.String(), "Tasks have nothing called “owner”") || !strings.Contains(bad.Body.String(), "See all tasks") {
 		t.Errorf("a wrong condition says what the type has and how to see everything: %.500s", bad.Body.String())
 	}
 
