@@ -16,10 +16,10 @@ func TestLayoutNowSaysABlockThatCopiesRecordsByTitle(t *testing.T) {
 	}
 	run(t, svc, "add_component", map[string]any{"component": "text", "props": map[string]any{"content": "- Walk more\n- Sleep early\n- Read a book"}, "span": 12})
 	text := run(t, svc, "add_component", map[string]any{"component": "text", "props": map[string]any{"content": "Today:\n\n1. Pay rent\n2. [ ] call the bank\n3. [Book the car](/t/task)"}, "span": 12})
-	if !strings.Contains(text, "(text) copies 3 tasks as words") {
+	if !strings.Contains(text, "(text) will go stale: it names 3 different tasks") {
 		t.Errorf("the three task titles are said as a copy:\n%s", text)
 	}
-	if strings.Count(text, "copies") != 1 {
+	if strings.Count(text, "different tasks") != 2 {
 		t.Errorf("lines that are no record's title are only words:\n%s", text)
 	}
 }

@@ -23,7 +23,12 @@ func TestTheModelCannotAskForASettingInItsOwnWords(t *testing.T) {
 	if n := len(svc.Proposals()); n != 0 {
 		t.Fatalf("no question should be put for a setting or a deletion in the model's words, got %d", n)
 	}
-	if got := lastToolResult(m.seen[len(m.seen)-1]).Content; !strings.Contains(got, "propose_change carries only") {
+	// The first is told what a question can carry; the second also sent
+	// agreed, which no tool takes from a caller, and is told so.
+	if got := lastToolResult(m.seen[len(m.seen)-2]).Content; !strings.Contains(got, "propose_change carries only") {
 		t.Errorf("the model is told what a question of its own can carry, got %q", got)
+	}
+	if got := lastToolResult(m.seen[len(m.seen)-1]).Content; !strings.Contains(got, "propose_change does not take agreed") {
+		t.Errorf("agreed is refused, never taken as agreed, got %q", got)
 	}
 }

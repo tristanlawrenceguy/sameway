@@ -7,8 +7,7 @@ import (
 
 // TestEntryDetailLedeAtFieldIsLabelled asserts that an entry's `at` datetime field
 // shown as a glance chip in the lede has a visible label prefix explaining what it is.
-// Currently DayName("at") returns "" so chips show just "3 days ago" with no context.
-// Acceptance item 2.
+// The provided entry type labels its at field Logged, so the chip says it.
 func TestEntryDetailLedeAtFieldIsLabelled(t *testing.T) {
 	t.Parallel()
 	a, h := newApp(t)
@@ -32,11 +31,9 @@ func TestEntryDetailLedeAtFieldIsLabelled(t *testing.T) {
 
 	page := get(t, h, "/t/entry/"+entryRec.ID).Body.String()
 
-	// The lede must contain a labelled chip for the `at` field — either "Entry" or
-	// "Logged" before any relative timestamp text. An unlabeled chip like just
-	// "Today at 4am" with no label prefix fails acceptance item 2.
-	if !strings.Contains(page, ">Entry ") && !strings.Contains(page, ">Logged ") {
-		t.Error("entry detail page lede should show a labelled chip for the `at` field (e.g., \"Entry\" or \"Logged\" before the timestamp); got an unlabeled date chip")
+	// The lede must name the `at` field's chip by its label, Logged.
+	if !strings.Contains(page, ">Logged ") {
+		t.Error("entry detail page lede should name its day Logged; got an unlabelled date chip")
 	}
 
 	// The entry's at value must still appear somewhere on the page.

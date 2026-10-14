@@ -72,7 +72,7 @@ func TestMissingRecordSaysHowToFindOne(t *testing.T) {
 	dir := initWorkspace(t)
 	for _, verb := range []string{"get", "delete"} {
 		r := run(t, dir, "note", verb, "nope")
-		if r.code != 1 || !strings.Contains(r.stderr, `no note has the id "nope"`) || !strings.Contains(r.stderr, "sameway note list") {
+		if r.code != 1 || !strings.Contains(r.stderr, `no note with id nope`) || !strings.Contains(r.stderr, "sameway note list") {
 			t.Errorf("%s: %+v", verb, r)
 		}
 	}

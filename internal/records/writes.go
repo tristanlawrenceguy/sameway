@@ -100,7 +100,7 @@ func write(st *store.Store, action, typ, id string, fields map[string]any) (*sto
 	}
 	t, ok := st.Types().Get(typ)
 	if !ok {
-		return nil, Change{}, fmt.Errorf("there is no type %q", typ)
+		return nil, Change{}, errors.New(NoType(typ, st.Types().Names()))
 	}
 	var was *store.Record
 	var err error
@@ -160,7 +160,10 @@ func WriteAs(st *store.Store, who Who, action, typ, id string, fields map[string
 func logAs(st *store.Store, who Who, c Change) string {
 	// An agent's key is the system's kind, but taking one away is a change
 	// the owner makes, and undoing it lets the agent back in.
-	if t, ok := st.Types().Get(c.Component); !ok || t.Internal && t.Name != AgentType {
+	// The page's blocks and tabs are logged too: the assistant's tools log
+	// them, and the same block written through the API was nowhere in the
+	// log, so the person could not see it there or take it back.
+	if t, ok := st.Types().Get(c.Component); !ok || t.Internal && t.Name != AgentType && t.Name != BlockType && t.Name != CanvasType {
 		return ""
 	}
 	c.By, c.Via, c.ByLogin = who.By, who.Via, who.ByLogin

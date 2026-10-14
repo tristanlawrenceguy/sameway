@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
 
 // The machine's side of the assistant's tools (chat/home_tools.go): the
@@ -59,7 +61,7 @@ func (s *Server) OpenWorkspace(name string) (string, error) {
 	if len(names) == 0 {
 		return "", errors.New("this is the only workspace on this computer")
 	}
-	return "", fmt.Errorf("no workspace called %q; there are: %s", name, strings.Join(names, ", "))
+	return "", fmt.Errorf("no workspace called %q; there are: %s", name, schema.Names(names))
 }
 
 // RestoreWorkspace puts a deleted workspace back from the trash.
@@ -78,5 +80,5 @@ func (s *Server) RestoreWorkspace(name string) (string, error) {
 	if len(names) == 0 {
 		return "", errors.New("the trash has no workspaces in it")
 	}
-	return "", fmt.Errorf("no deleted workspace called %q; the trash has: %s", name, strings.Join(names, ", "))
+	return "", fmt.Errorf("no deleted workspace called %q; the trash has: %s", name, schema.Names(names))
 }

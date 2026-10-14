@@ -57,6 +57,54 @@ While working, the form has `aria-busy="true"`, its submit buttons are
 and the tab title gains a prefix. Without JavaScript the page still reloads
 with the outcome; the enhancement only makes the wait visible.
 
+## A state kept is true at any age
+
+A status line is live: it says what is happening while it happens. A
+value kept on a record is not: it is read days later, so its name says
+what happened, not what is happening. A reminder that rang is "Rang",
+not "Ringing" (the clock says what is ringing now). A name that says
+something is under way ("Doing", "Waiting", "Being read") is only for a
+value something here ends, and `internal/schema/states_said_test.go`
+lists each with what ends it: the person, the clock, or Sameway. A file
+left "Being read" when Sameway closed is put right when it opens
+(`server/media/left_over.go`): a recording waits to be written down
+again, any other file says it was not read and to add it again.
+
+## Words that are the system's own
+
+Nothing a person reads is the system talking about itself:
+
+- **No sizes too small to decide on.** A size is said so people can
+  decide on it. A download says its size from 1 MB (`blocks.DownloadSize`);
+  a size is MB from 1 MB, with a tenth below 10 MB ("2.1 MB"), KB below,
+  and never a count of bytes ("under 1 KB").
+- **No words as code writes them.** Enum values as stored, field names,
+  settings keys (`meetings.teams_client_id`), error codes and JSON Schema
+  keywords stay with agents. A page asks for what a setting holds in
+  words ("give the assistant its client id to keep").
+
+The page crawl, `internal/server/machine_words_test.go` with
+`plain_words_crawl_test.go`, reads every page a lived-in workspace serves
+and fails on each class, so the next instance is found there rather than
+by the crew one page at a time.
+
+### Why it works this way
+
+- NN/g's first heuristic asks that status be current: a status shown
+  after it stopped being true misleads
+  ([visibility of system status](https://www.nngroup.com/articles/visibility-system-status/)).
+- NN/g's second asks for the person's words over the system's
+  ([ten heuristics](https://www.nngroup.com/articles/ten-usability-heuristics/)).
+- GOV.UK writes file sizes in KB below 1 MB and MB above, to the tenth or
+  hundredth ([A to Z, numbers](https://guidance.publishing.service.gov.uk/writing-to-gov-uk-standards/style-guides/a-to-z-style-guide/)).
+  Sameway leaves the small ones out on a download (crew finding 0711):
+  every record's file is small, and a size that never differs says
+  nothing.
+
+Not done, and why: a list of banned words. What counts as the system's
+own differs by workspace (its fields, its values, its ids), so the crawl
+reads them from the workspace and from the shape of the word.
+
 ## For agents
 
 Query by attribute, act by role and name:

@@ -11,6 +11,7 @@ fields:
     to: habit
     required: true
   at:
+    label: Logged
     type: datetime
     required: true
     description: When it was done; the moment of logging unless said otherwise, and a day alone for something logged afterwards.

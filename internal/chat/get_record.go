@@ -1,7 +1,7 @@
 package chat
 
 import (
-	"encoding/json"
+	"github.com/tristanlawrenceguy/sameway/internal/jsontext"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
@@ -20,7 +20,7 @@ func (s *Service) getRecord(typeName, id string) toolResult {
 	}
 	rec, err := s.Store.Get(t.Name, id)
 	if err != nil {
-		return fail("no %s with id %s. Use find_records to get an id", t.Name, id)
+		return fail("%s. Use find_records to get an id", records.NoRecord(t.Name, id))
 	}
 	// view.go: the same as the API gives, and its days in words; days_shown.go
 	out := struct {
@@ -28,7 +28,7 @@ func (s *Service) getRecord(typeName, id string) toolResult {
 		Days     string `json:"days_here,omitempty"`
 		Standing string `json:"standing,omitempty"` // habit_said.go
 	}{s.RecordView(t, rec), daysLine(t, rec, s.Now()), s.standing(t, rec)}
-	raw, err := json.MarshalIndent(out, "", "  ")
+	raw, err := jsontext.MarshalIndent(out, "", "  ")
 	if err != nil {
 		return fail("%v", err)
 	}

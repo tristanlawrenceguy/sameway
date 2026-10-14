@@ -1,8 +1,8 @@
 package chat
 
 import (
-	"encoding/json"
 	"fmt"
+	"github.com/tristanlawrenceguy/sameway/internal/jsontext"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
@@ -23,7 +23,7 @@ func componentHelp(c *render.Component) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "Props schema: %s", ForModel(c.Manifest.Props))
 	if len(c.Manifest.Examples) > 0 {
-		ex, _ := json.Marshal(c.Manifest.Examples[0].Props)
+		ex, _ := jsontext.Marshal(c.Manifest.Examples[0].Props)
 		fmt.Fprintf(&b, "\nExample props: %s", ex)
 	}
 	return b.String()

@@ -18,7 +18,19 @@ import (
 // at all.
 
 func (s *Service) apiCreate(w http.ResponseWriter, r *http.Request) {
-	if s.keptLog(w, r) {
+	if s.keptLog(w, r) || !s.knownType(w, r) {
+		return
+	}
+	if list, err := batchRead(r); err != nil || list != nil { // api_batch.go: several at once
+		if err != nil {
+			web.WriteError(w, err)
+			return
+		}
+		writes := make([]records.Writing, len(list))
+		for i, f := range list {
+			writes[i] = records.Writing{Fields: f}
+		}
+		s.batchWrite(w, r, "created", writes)
 		return
 	}
 	fields, err := web.ReadBody(r)
@@ -40,17 +52,17 @@ func (s *Service) apiCreate(w http.ResponseWriter, r *http.Request) {
 			s.SeedChat(c)
 		}
 	}
-	rec, notes, err := records.WriteNoted(s.app.Store, agent.As(), "created", r.PathValue("type"), "", fields)
+	rec, notes, entry, err := records.WriteNoted(s.app.Store, agent.As(), "created", r.PathValue("type"), "", fields)
 	if err != nil {
 		web.WriteError(w, err)
 		return
 	}
 	w.Header().Set("Location", "/api/"+rec.Type+"/"+rec.ID)
-	web.WriteJSON(w, http.StatusCreated, shownRecord{s.titled(rec), shows, s.layoutOf(r, rec), notes})
+	web.WriteJSON(w, http.StatusCreated, shownRecord{s.titled(rec), shows, s.layoutOf(r, rec), notes, undoOf(entry)})
 }
 
 func (s *Service) apiUpdate(w http.ResponseWriter, r *http.Request) {
-	if s.keptLog(w, r) {
+	if s.keptLog(w, r) || !s.knownType(w, r) {
 		return
 	}
 	fields, err := web.ReadBody(r)
@@ -60,7 +72,7 @@ func (s *Service) apiUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 	was, err := s.app.Store.Get(r.PathValue("type"), r.PathValue("id"))
 	if err != nil {
-		web.WriteError(w, err)
+		writeErr(w, r, err) // api_refusals.go
 		return
 	}
 	if s.staleFor(w, r, was) { // below
@@ -74,28 +86,31 @@ func (s *Service) apiUpdate(w http.ResponseWriter, r *http.Request) {
 	if r.PathValue("type") == records.BlockType {
 		byAgent(fields, agent, false)
 	}
-	rec, notes, err := records.WriteNoted(s.app.Store, agent.As(), "updated", r.PathValue("type"), r.PathValue("id"), fields)
+	rec, notes, entry, err := records.WriteNoted(s.app.Store, agent.As(), "updated", r.PathValue("type"), r.PathValue("id"), fields)
 	if err != nil {
 		web.WriteError(w, err)
 		return
 	}
-	web.WriteJSON(w, http.StatusOK, shownRecord{s.titled(rec), shows, s.layoutOf(r, rec), notes})
+	web.WriteJSON(w, http.StatusOK, shownRecord{s.titled(rec), shows, s.layoutOf(r, rec), notes, undoOf(entry)})
 }
 
 func (s *Service) apiDelete(w http.ResponseWriter, r *http.Request) {
-	if s.keptLog(w, r) {
+	if s.keptLog(w, r) || !s.knownType(w, r) {
 		return
 	}
 	if was, err := s.app.Store.Get(r.PathValue("type"), r.PathValue("id")); err == nil && s.staleFor(w, r, was) {
 		return
 	}
 	// Logged with everything it had, so it can be put back.
-	gone, _, err := records.WriteAs(s.app.Store, Agent(r).As(), "deleted", r.PathValue("type"), r.PathValue("id"), nil)
+	gone, entry, err := records.WriteAs(s.app.Store, Agent(r).As(), "deleted", r.PathValue("type"), r.PathValue("id"), nil)
 	if err != nil {
-		web.WriteError(w, err)
+		writeErr(w, r, err)
 		return
 	}
 	out := map[string]any{"deleted": r.PathValue("id")}
+	if u := undoOf(entry); u != nil {
+		out["undo"] = u // api_undo_said.go: it can be put back
+	}
 	if layout := s.layoutOf(r, gone); layout != "" {
 		out["layout"] = layout
 	}
@@ -109,6 +124,7 @@ func (s *Service) keptLog(w http.ResponseWriter, r *http.Request) bool {
 	if r.PathValue("type") != records.ActivityType {
 		return false
 	}
+	w.Header().Set("Allow", "GET") // 405 says what the path does take (RFC 9110, 15.5.6)
 	web.WriteJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": web.APIError{Code: "kept",
 		Message: records.ErrKeptLog.Error()}})
 	return true

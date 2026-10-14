@@ -16,6 +16,16 @@ import (
 type Passage struct {
 	Under string `json:"under,omitempty"`
 	Text  string `json:"text"`
+	// Links are the links in the passage's words, each by its words and
+	// where it goes: read as text, an agent could not tell which words
+	// were a link, or to what (crew, task 0279).
+	Links []PassageLink `json:"links,omitempty"`
+}
+
+// PassageLink is one link inside a passage.
+type PassageLink struct {
+	Words string `json:"words"`
+	Href  string `json:"href"`
 }
 
 // blocks are the elements whose words read as one passage.
@@ -42,7 +52,7 @@ func passages(n *html.Node) []Passage {
 				// A passage that is only a link or a button is already among
 				// the controls; read twice it buries the words.
 				if t := readText(n); t != "" && (n.Data != "li" || wordsBeside(n)) {
-					out = append(out, Passage{Under: under, Text: t})
+					out = append(out, Passage{Under: under, Text: t, Links: passageLinks(n)})
 				}
 				return
 			}
@@ -149,4 +159,30 @@ func wordsBeside(n *html.Node) bool {
 		walk(c)
 	}
 	return has
+}
+
+// passageLinks is every link inside n that is read, by its words and where
+// it goes.
+func passageLinks(n *html.Node) []PassageLink {
+	var out []PassageLink
+	var walk func(n *html.Node)
+	walk = func(n *html.Node) {
+		if n.Type != html.ElementNode {
+			return
+		}
+		if skipped(n) {
+			return
+		}
+		if href, ok := htmltest.Attr(n, "href"); ok && n.Data == "a" {
+			out = append(out, PassageLink{Words: readText(n), Href: href})
+			return
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			walk(c)
+		}
+	}
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		walk(c)
+	}
+	return out
 }

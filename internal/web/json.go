@@ -15,6 +15,10 @@ type APIError struct {
 	Code    string            `json:"code"`
 	Message string            `json:"message"`
 	Fields  map[string]string `json:"fields,omitempty"`
+	// Expects is what each refused field takes, with an example, and
+	// Describe where the whole type is described (schema/expect.go).
+	Expects  map[string]string `json:"expects,omitempty"`
+	Describe string            `json:"describe,omitempty"`
 }
 
 // WriteJSON answers with v as indented JSON.
@@ -23,6 +27,7 @@ func WriteJSON(w http.ResponseWriter, status int, v any) {
 	w.WriteHeader(status)
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
+	enc.SetEscapeHTML(false) // read as text by agents: <key>, due<today, Tom & Jerry (jsontext)
 	enc.Encode(v)
 }
 
@@ -32,7 +37,12 @@ func WriteError(w http.ResponseWriter, err error) {
 	var ve *schema.ValidationError
 	switch {
 	case errors.As(err, &ve):
-		WriteJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": APIError{Code: "invalid", Message: "some fields are invalid", Fields: ve.Problems}})
+		e := APIError{Code: "invalid", Message: "some fields are invalid", Fields: ve.Problems, Expects: ve.Expects}
+		if ve.Type != "" {
+			e.Message = "some fields are invalid: expects says what each takes"
+			e.Describe = "/api/describe/types/" + ve.Type
+		}
+		WriteJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": e})
 	case errors.Is(err, store.ErrNotFound):
 		WriteJSON(w, http.StatusNotFound, map[string]any{"error": APIError{Code: "not_found", Message: err.Error()}})
 	default:

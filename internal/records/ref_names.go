@@ -69,7 +69,13 @@ func listItems(raw any) ([]string, error) {
 			}
 			return listItems(arr)
 		}
-		for _, part := range strings.FieldsFunc(l, func(r rune) bool { return r == ',' || r == '\n' || r == ';' }) {
+		// Names set apart by semicolons keep their own commas, as
+		// schema.Names writes them: "Silva, Ana; Bob".
+		apart := func(r rune) bool { return r == ',' || r == '\n' || r == ';' }
+		if strings.Contains(l, ";") {
+			apart = func(r rune) bool { return r == '\n' || r == ';' }
+		}
+		for _, part := range strings.FieldsFunc(l, apart) {
 			out = append(out, strings.TrimSpace(part))
 		}
 	default:

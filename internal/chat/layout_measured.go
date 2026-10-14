@@ -1,10 +1,12 @@
 package chat
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/tristanlawrenceguy/sameway/internal/jsontext"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -240,14 +242,11 @@ func grow(all []placed, canvas string, p placed) string {
 	if canvas != "" {
 		call["canvas"] = canvas
 	}
-	raw, _ := json.Marshal(call)
+	raw, _ := jsontext.Marshal(call)
 	return joinAnd(how) + ": arrange_canvas " + string(raw)
 }
 
 // joinAnd lists words the way they are said: a, b and c.
 func joinAnd(words []string) string {
-	if len(words) < 2 {
-		return strings.Join(words, "")
-	}
-	return strings.Join(words[:len(words)-1], ", ") + " and " + words[len(words)-1]
+	return schema.AndNames(words)
 }

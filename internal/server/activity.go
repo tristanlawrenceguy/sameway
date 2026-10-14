@@ -193,6 +193,7 @@ func (s *Server) activityPage(w http.ResponseWriter, r *http.Request) {
 	b.WriteString(`<p class="sw-muted sw-prose">Every change, by you or the assistant, newest first.</p>`)
 	if len(all) > 0 {
 		b.WriteString(string(s.component("filters", filters)))
+		b.WriteString(s.takeBackOffer(r, recs, f)) // activity_take_back.go
 	}
 	switch {
 	case len(all) == 0:
@@ -212,8 +213,8 @@ func (s *Server) activityPage(w http.ResponseWriter, r *http.Request) {
 			if open {
 				b.WriteString("</ol>")
 			}
-			id := "day-" + rec.CreatedAt.In(s.now().Location()).Format("2006-01-02")
-			fmt.Fprintf(&b, `<h2 class="sw-small sw-muted" style="margin-top:var(--sw-space-8)" id="%s">%s</h2><ol class="sw-plain sw-stack--tight sw-panel" aria-labelledby="%s">`, id, template.HTMLEscapeString(d), id)
+			date := rec.CreatedAt.In(s.now().Location()).Format("2006-01-02")
+			fmt.Fprintf(&b, `<h2 class="sw-small sw-muted" style="margin-top:var(--sw-space-8)" id="day-%s"><time datetime="%s">%s</time></h2><ol class="sw-plain sw-stack--tight sw-panel" aria-labelledby="day-%s">`, date, date, template.HTMLEscapeString(d), date)
 			day, open = d, true
 		}
 		b.WriteString(`<li>` + string(s.event(rec, from, 3, false, told[i])) + `</li>`)

@@ -23,7 +23,7 @@ func (s *Service) apiTool(w http.ResponseWriter, r *http.Request) {
 	svc := s.ChatFor(r)
 	if !offers(svc, name) {
 		web.WriteJSON(w, http.StatusNotFound, map[string]any{"error": web.APIError{Code: "not_found",
-			Message: "there is no tool " + name + " you may call here; GET /api/describe/tools lists them"}})
+			Message: "there is no tool " + name + " you may call here; GET /api/describe/tools lists them", Describe: "/api/describe/tools"}})
 		return
 	}
 	raw, err := io.ReadAll(io.LimitReader(r.Body, 4<<20))

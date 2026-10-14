@@ -24,10 +24,7 @@ func Words(t *schema.Type, where []string, loc *time.Location) string {
 		}
 		out = append(out, condWords(t, c, loc))
 	}
-	if len(out) < 2 {
-		return strings.Join(out, "")
-	}
-	return strings.Join(out[:len(out)-1], ", ") + " and " + out[len(out)-1]
+	return schema.AndNames(out) // a value can have a comma of its own
 }
 
 func condWords(t *schema.Type, c Cond, loc *time.Location) string {
