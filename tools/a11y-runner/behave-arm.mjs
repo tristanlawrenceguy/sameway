@@ -95,19 +95,23 @@ export const cases = {
     // The page the server sends the person to is the answer the request
     // ended on (a real server redirects there; the harness cannot).
     const landed = page(`<main id="main"><h1>film</h1></main>`);
-    const tab = await open(browser, page(form), {
+    const routes = {
       "/t/file/upload": (route, url, req) => {
         if (req.method() === "POST") asked = req.headers()["x-requested-with"] || "";
         return fail ? route.abort() : route.fulfill({ contentType: "text/html", body: landed });
       },
-    });
-    await tab.setInputFiles("#upload", big);
-    await tab.click("text=Upload");
-    await tab.waitForSelector("h1:text('film')");
+    };
+    const sent = await open(browser, page(form), routes);
+    await sent.setInputFiles("#upload", big);
+    await sent.click("text=Upload");
+    await sent.waitForSelector("h1:text('film')");
     check(asked === "sameway-live", `sent as the page's own fetch, so what the server says waits for the person: ${asked}`);
+    await sent.close();
 
-    await tab.goto("http://sw.test/");
+    // A fresh tab: going back in the same one runs a view transition the
+    // harness aborts, which is the harness's, not the upload's.
     fail = true;
+    const tab = await open(browser, page(form), routes);
     await tab.setInputFiles("#upload", big);
     await tab.click("text=Upload");
     await tab.waitForFunction(() => document.querySelector("#upload-status").getAttribute("data-state") === "failed");
