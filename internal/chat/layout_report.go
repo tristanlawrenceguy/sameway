@@ -42,12 +42,13 @@ func (s *Service) layoutReportOf(canvas string) layoutReport {
 // a new check is a line here.
 func (s *Service) tabProblems(all []placed, recs []*store.Record, canvas string) []string {
 	var out []string
+	bad, shows := s.blockState(recs) // layout_clutter.go: each block resolved once
 	for _, found := range [][]string{
-		layoutProblems(all),       // layout_rules.go
-		roomProblems(all, canvas), // layout_measured.go
-		s.clutterProblems(recs),   // layout_clutter.go
-		s.copiesProblems(recs),    // layout_copies.go
-		s.leftoverProblems(recs),  // layout_leftover.go
+		layoutProblems(all),             // layout_rules.go
+		roomProblems(all, canvas),       // layout_measured.go
+		clutterProblems(recs, bad),      // layout_clutter.go
+		s.copiesProblems(recs),          // layout_copies.go
+		s.leftoverProblems(recs, shows), // layout_leftover.go
 	} {
 		out = append(out, found...)
 	}
@@ -60,6 +61,9 @@ func (r layoutReport) lookAt() string {
 	var b strings.Builder
 	for i, p := range r.problems {
 		fmt.Fprintf(&b, " (%d) %s.", i+1, p)
+	}
+	if strings.Contains(b.String(), "propose taking it away") {
+		b.WriteString(" Taking a block away is asked first with propose_change; once the person agrees, remove_component takes it, or remove in arrange_canvas.")
 	}
 	if r.fix != "" {
 		b.WriteString(" This would fix the order and widths in one change: arrange_canvas " + r.fix + ". Move or reshape what is already there when it makes the page read better, not only what you added.")
