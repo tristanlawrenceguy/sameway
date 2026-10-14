@@ -42,3 +42,22 @@ func TestALastReplyIsUndoneInOneCall(t *testing.T) {
 		t.Errorf("no note is left, %d are", len(notes))
 	}
 }
+
+// Several undone in one call are all or none, as the page's Undo all is:
+// one that cannot be leaves every one done, and is named.
+func TestUndoChangeWithIdsIsAllOrNone(t *testing.T) {
+	t.Parallel()
+	svc := newFullService(t)
+	run(t, svc, "create_record", map[string]any{"type": "note", "fields": map[string]any{"title": "Seeds"}})
+	run(t, svc, "create_record", map[string]any{"type": "note", "fields": map[string]any{"title": "Beds"}})
+	made := entries(t, svc, "created")
+	notes, _ := svc.Store.List("note", store.ListOptions{OrderBy: "created_at"})
+	svc.Store.Delete("note", notes[0].ID) // the older one went since
+	text, isErr := svc.Call("undo_change", []byte(`{"ids":["`+made[1].ID+`","`+made[0].ID+`"]}`))
+	if !isErr || !strings.Contains(text, "nothing was undone: the second of 2") {
+		t.Errorf("refused, naming the one: %v %s", isErr, text)
+	}
+	if left, _ := svc.Store.List("note", store.ListOptions{}); len(left) != 1 {
+		t.Errorf("the newer note is put back, %d left", len(left))
+	}
+}

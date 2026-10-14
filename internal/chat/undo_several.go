@@ -12,31 +12,21 @@ import (
 // eight changes; told "undo all that", it could name only the five newest,
 // the most the prompt listed, and undid them one call at a time, leaving
 // three it never saw. The prompt now names every change of the last reply,
-// and undo_change takes them all in one call.
+// and undo_change takes them all in one call, all or none, as the page's
+// Undo all does.
 
 // undoSome is undo_change: the one id, the newest when none, or each of
-// ids in the order given; one that cannot be undone stops it there, and
-// what was undone before it stays undone and is said.
+// ids in the order given, all or none (records.UndoEach): one that cannot
+// be undone leaves every one as it was, and is named.
 func (s *Service) undoSome(id string, ids []string) toolResult {
 	if len(ids) == 0 {
 		return s.undo(id)
 	}
-	var out toolResult
-	var said []string
-	for _, one := range ids {
-		text, c, err := s.Undo(one)
-		if err != nil {
-			out.text = fmt.Sprintf("undid %d of %d: %s. Then %s could not be undone: %v", len(said), len(ids), strings.Join(said, "; "), one, err)
-			if len(said) == 0 {
-				out.isErr = true
-			}
-			return out
-		}
-		said = append(said, text)
-		out.changes = append(out.changes, c)
+	said, changes, err := s.UndoEach(ids)
+	if err != nil {
+		return fail("%v. Call undo_change again without that one to take back the others.", err)
 	}
-	out.text = fmt.Sprintf("undid all %d: %s", len(ids), strings.Join(said, "; "))
-	return out
+	return toolResult{text: fmt.Sprintf("undid all %d: %s", len(ids), strings.Join(said, "; ")), changes: changes}
 }
 
 // lastReplyUndos is the log entries of the newest reply's changes, newest
