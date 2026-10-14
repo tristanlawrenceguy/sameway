@@ -95,11 +95,26 @@ func blockName(rec *store.Record) string {
 }
 
 // listed is the first few names and how many more: "a, b, c and 2 more".
+// A name with a comma of its own, as an entry is called ("Running miles,
+// 5 miles"), is set apart by semicolons, or three entries read as six
+// names (crew finding 0748).
 func listed(names []string, most int) string {
+	sep := namesSep(names)
 	if len(names) <= most {
-		return strings.Join(names, ", ")
+		return strings.Join(names, sep)
 	}
-	return fmt.Sprintf("%s and %d more", strings.Join(names[:most], ", "), len(names)-most)
+	return fmt.Sprintf("%s and %d more", strings.Join(names[:most], sep), len(names)-most)
+}
+
+// namesSep is what goes between names: a comma, or a semicolon when any
+// name has a comma in it.
+func namesSep(names []string) string {
+	for _, n := range names {
+		if strings.Contains(n, ",") {
+			return "; "
+		}
+	}
+	return ", "
 }
 
 // unique drops repeats and blanks, keeping the order given.

@@ -29,36 +29,64 @@ func (s *Service) copiesProblems(recs []*store.Record) []string {
 	titles := s.titleIndex(recs) // layout_copies_titles.go
 	var out []string
 	for _, b := range recs {
-		if b.Fields["component"] == "collection" || b.Fields["component"] == "record" {
+		for _, said := range copiesSaid(b, copiedBy(b, titles), true) {
+			out = append(out, fmt.Sprintf("block %s (%s) %s", b.ID, placedOf(b).called(), said))
+		}
+	}
+	return out
+}
+
+// copiedBy is how many different records of each type a block names in its
+// own words, by their links or titles; nothing for a block that shows
+// records itself.
+func copiedBy(b *store.Record, titles map[string]recordRef) map[string]int {
+	if b.Fields["component"] == "collection" || b.Fields["component"] == "record" {
+		return nil
+	}
+	byType := map[string]map[string]bool{}
+	add := func(typ, id string) {
+		if byType[typ] == nil {
+			byType[typ] = map[string]bool{}
+		}
+		byType[typ][id] = true
+	}
+	for _, w := range wordsIn(b.Fields["props"]) {
+		for _, m := range recordLink.FindAllStringSubmatch(w, -1) {
+			add(m[1], m[2])
+		}
+	}
+	for _, line := range linesIn(b.Fields["props"]) {
+		if ref, ok := titles[lineTitle(line)]; ok {
+			add(ref.typ, ref.id)
+		}
+	}
+	out := map[string]int{}
+	for t, ids := range byType {
+		out[t] = len(ids)
+	}
+	return out
+}
+
+// copiesSaid is what a block copying records is told, consequence first.
+// Told it "copies 95 notes as words", an agent that had sent 106 titles
+// read the number as items lost and filed it as a bug: the count is of
+// different notes named, and what matters is that the words go stale.
+func copiesSaid(b *store.Record, by map[string]int, short bool) []string {
+	var types []string
+	for t, n := range by {
+		if n >= copiedMost {
+			types = append(types, t)
+		}
+	}
+	sort.Strings(types)
+	var out []string
+	for _, t := range types {
+		if short { // Layout now's list; the change's own note says it whole
+			out = append(out, fmt.Sprintf("will go stale: it names %d different %s by their titles or links as its own words; a collection block of %s stays current", by[t], schema.Plural(t), t))
 			continue
 		}
-		byType := map[string]map[string]bool{}
-		add := func(typ, id string) {
-			if byType[typ] == nil {
-				byType[typ] = map[string]bool{}
-			}
-			byType[typ][id] = true
-		}
-		for _, w := range wordsIn(b.Fields["props"]) {
-			for _, m := range recordLink.FindAllStringSubmatch(w, -1) {
-				add(m[1], m[2])
-			}
-		}
-		for _, line := range linesIn(b.Fields["props"]) {
-			if ref, ok := titles[lineTitle(line)]; ok {
-				add(ref.typ, ref.id)
-			}
-		}
-		var types []string
-		for t, ids := range byType {
-			if len(ids) >= copiedMost {
-				types = append(types, t)
-			}
-		}
-		sort.Strings(types)
-		for _, t := range types {
-			out = append(out, fmt.Sprintf("block %s (%s) copies %d %s as words (their titles or links), which stay as they are when those change, are done or go: a collection block of %s shows them and stays current; make it one with update_component, unless the person asked for a list that does not change", b.ID, placedOf(b).called(), len(byType[t]), schema.Plural(t), t))
-		}
+		out = append(out, fmt.Sprintf("will go stale: it names %d different %s by their titles or links, written into it as its own words, which stay as they are when those %s change, are done or go. A collection block of %s shows them and stays current (with where, it shows just the ones meant, as status=draft); use that instead with update_component, unless the person asked for a list that does not change",
+			by[t], schema.Plural(t), schema.Plural(t), t))
 	}
 	return out
 }

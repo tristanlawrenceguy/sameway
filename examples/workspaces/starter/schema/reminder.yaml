@@ -27,9 +27,9 @@ fields:
   state:
     type: enum
     values: [set, rang, done]
-    labels: {set: Waiting, rang: Ringing, done: Done}
+    labels: {set: Waiting, rang: Rang, done: Done}
     default: set
-    description: set until its time comes, rang until someone dismisses it, done after.
+    description: set until its time comes, rang once it has rung and until someone dismisses it, done after.
   notes:
     type: markdown
     description: Anything worth remembering when it rings.

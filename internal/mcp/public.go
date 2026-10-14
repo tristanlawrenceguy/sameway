@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/tristanlawrenceguy/sameway/internal/jsontext"
 	"slices"
 	"sort"
 	"strings"
@@ -49,7 +50,7 @@ func (s *Server) publicCall(ctx context.Context, name string, args json.RawMessa
 		if err != nil {
 			return err.Error(), true, true
 		}
-		raw, _ := json.Marshal(v)
+		raw, _ := jsontext.Marshal(v)
 		return string(raw), false, true
 	}
 	if name == "describe" {
@@ -64,7 +65,7 @@ func (s *Server) publicCall(ctx context.Context, name string, args json.RawMessa
 				out = append(out, map[string]any{"name": t.Name, "description": t.Description, "fields": t.JSONSchema()})
 			}
 		}
-		raw, _ := json.MarshalIndent(map[string]any{"published": out, "tools": "find_records and get_record, for these types"}, "", "  ")
+		raw, _ := jsontext.MarshalIndent(map[string]any{"published": out, "tools": "find_records and get_record, for these types"}, "", "  ")
 		return string(raw), false, true
 	}
 	var a struct {

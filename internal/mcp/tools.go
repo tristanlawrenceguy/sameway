@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"github.com/tristanlawrenceguy/sameway/internal/jsontext"
 	"net/http"
 	"net/http/httptest"
 
@@ -109,7 +110,7 @@ func (s *Server) run(ctx context.Context, svc *chat.Service, name string, args j
 		if err != nil {
 			return err.Error(), true
 		}
-		raw, err := json.MarshalIndent(v, "", "  ")
+		raw, err := jsontext.MarshalIndent(v, "", "  ")
 		if err != nil {
 			return err.Error(), true
 		}

@@ -3,6 +3,7 @@ package chat
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/tristanlawrenceguy/sameway/internal/jsontext"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
@@ -147,7 +148,7 @@ func (s *Service) Instead(id string) error {
 	if action == nil {
 		return fmt.Errorf("that question has no other answer")
 	}
-	raw, _ := json.Marshal(action)
+	raw, _ := jsontext.Marshal(action)
 	tool, _ := action["tool"].(string)
 	result := s.runAgreed(llm.ToolCall{Name: tool, Args: raw})
 	if result.isErr {

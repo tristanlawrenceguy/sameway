@@ -3,6 +3,7 @@ package chat
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/tristanlawrenceguy/sameway/internal/jsontext"
 	"sort"
 	"strings"
 
@@ -108,7 +109,7 @@ func (s *Service) UseTemplate(name, actor string) (Used, error) {
 		if _, ok := s.Store.Types().Get(n.Type); ok {
 			continue
 		}
-		raw, _ := json.Marshal(n.Fields)
+		raw, _ := jsontext.Marshal(n.Fields)
 		var defs []fieldDef
 		if err := json.Unmarshal(raw, &defs); err != nil {
 			return Used{}, err

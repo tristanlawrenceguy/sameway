@@ -21,8 +21,7 @@ const leftoverAfter = 7 * 24 * time.Hour
 
 // leftoverProblems are Layout now's lines for blocks an agent or the
 // assistant added at least a week ago that show nothing yet.
-func (s *Service) leftoverProblems(recs []*store.Record) []string {
-	_, shows := s.blockState(recs) // layout_clutter.go
+func (s *Service) leftoverProblems(recs []*store.Record, shows map[string]string) []string {
 	now := s.Now()
 	var out []string
 	for _, b := range recs {
@@ -34,8 +33,12 @@ func (s *Service) leftoverProblems(recs []*store.Record) []string {
 		if !ok || !strings.HasPrefix(said, "nothing yet") {
 			continue
 		}
-		out = append(out, fmt.Sprintf("block %s (%s) has shown %s since %s added it %d days ago: if it is not waiting for something the person will add, it may be left over; ask them with propose_change before taking it away",
-			b.ID, placedOf(b).called(), said, map[string]string{"agent": "an agent", "assistant": "you"}[by], int(now.Sub(b.CreatedAt).Hours()/24)))
+		why := ""
+		if _, rest, ok := strings.Cut(said, ": "); ok {
+			why = " (" + rest + ")"
+		}
+		out = append(out, fmt.Sprintf("block %s (%s) has shown nothing since %s added it %d days ago%s: if it is not waiting for something the person will add, it may be left over; propose taking it away",
+			b.ID, placedOf(b).called(), map[string]string{"agent": "an agent", "assistant": "you"}[by], int(now.Sub(b.CreatedAt).Hours()/24), why))
 	}
 	return out
 }

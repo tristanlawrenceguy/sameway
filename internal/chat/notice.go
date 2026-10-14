@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 // What the assistant's side knows to say about a change, said for every
@@ -23,7 +24,8 @@ func (s *Service) SayNotes() {
 // notes is what chat says of c.
 func (s *Service) notes(c records.Change) []string {
 	made := c.Made()
-	var out []string
+	out := s.copyNotes(c) // a block made or changed to hold records' words
+
 	for _, op := range made {
 		rec, err := s.Store.Get(op.Type, op.ID)
 		if err != nil {
@@ -35,6 +37,9 @@ func (s *Service) notes(c records.Change) []string {
 			canvas, _ := rec.Fields["canvas"].(string)
 			if like := strings.TrimSpace(s.similarOn(canvas, name, props, rec.ID)); like != "" {
 				out = append(out, like)
+			}
+			if crowded := s.crowdedSaid(rec); crowded != "" { // notice_crowded.go
+				out = append(out, crowded)
 			}
 			continue
 		}
@@ -53,6 +58,26 @@ func (s *Service) notes(c records.Change) []string {
 			said = fmt.Sprintf("%s %q: %s", rec.ID, t.Called(rec.ID, rec.Fields), said)
 		}
 		out = append(out, said)
+	}
+	return out
+}
+
+// copyNotes is what each block a change made or changed is told when it
+// copies records as words: said with the change, first, not only as one
+// line of Layout now's list, where an agent read past it.
+func (s *Service) copyNotes(c records.Change) []string {
+	var out []string
+	for _, op := range c.Ops {
+		if op.Type != records.BlockType || op.After == nil || op.ID == "" {
+			continue
+		}
+		b, err := s.Store.Get(records.BlockType, op.ID)
+		if err != nil {
+			continue
+		}
+		for _, said := range copiesSaid(b, copiedBy(b, s.titleIndex([]*store.Record{b})), false) {
+			out = append(out, fmt.Sprintf("This %s %s.", placedOf(b).called(), said))
+		}
 	}
 	return out
 }

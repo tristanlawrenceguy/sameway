@@ -1,8 +1,8 @@
 package chat
 
 import (
-	"encoding/json"
 	"fmt"
+	"github.com/tristanlawrenceguy/sameway/internal/jsontext"
 	"strings"
 )
 
@@ -261,6 +261,6 @@ func suggestArrangement(all []placed, canvas string) string {
 	if canvas != "" {
 		call["canvas"] = canvas
 	}
-	raw, _ := json.Marshal(call)
+	raw, _ := jsontext.Marshal(call)
 	return string(raw)
 }
