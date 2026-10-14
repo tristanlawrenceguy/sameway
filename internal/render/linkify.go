@@ -15,7 +15,10 @@ var (
 	externalURLRe  = regexp.MustCompile(`https?://[^\s<>"']+[a-zA-Z0-9]`)
 	// markdownLinkRe is a link written the Markdown way, [Seeds to buy](/t/note/abc):
 	// the words in brackets are the link's words, the address its target.
-	markdownLinkRe = regexp.MustCompile(`\[([^\[\]\n]+)\]\((/t/[a-z]+(?:/[a-zA-Z0-9][a-zA-Z0-9_-]*)?(?:\?[^\s()<>"']*)?|https?://[^\s()<>"']+)\)`)
+	// The words may hold one pair of brackets of their own: a record called
+	// "Seeds [draft]" or "[Work] plan" is linked by its title, and the
+	// link's syntax was shown to the person instead.
+	markdownLinkRe = regexp.MustCompile(`\[((?:[^\[\]\n]|\[[^\[\]\n]*\])+)\]\((/t/[a-z]+(?:/[a-zA-Z0-9][a-zA-Z0-9_-]*)?(?:\?[^\s()<>"']*)?|https?://[^\s()<>"']+)\)`)
 )
 
 // linkMatch holds a single URL or path match with its position in the source.
