@@ -41,7 +41,7 @@ func TestOnlyWhatCanBeDoneIsOverdue(t *testing.T) {
 	}
 
 	tasks := get(t, h, "/t/task").Body.String()
-	if !strings.Contains(tasks, ">Overdue ") || !strings.Contains(tasks, "(due ") {
+	if !strings.Contains(tasks, ">Overdue ") || !regexp.MustCompile(`\([A-Z][a-z]{2}\s+\d`).MatchString(tasks) {
 		t.Errorf("a task past its day is Overdue, told apart by when it is due: %s", truncate(tasks))
 	}
 	if events := get(t, h, "/t/event").Body.String(); strings.Contains(events, ">Overdue ") || !strings.Contains(events, ">Earlier ") {

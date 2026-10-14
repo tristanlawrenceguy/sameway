@@ -99,7 +99,7 @@ func Apart(names []string, ways func(i int) []string, rank ...func(i int) string
 // RecordWays is what tells one record from another with its title: the
 // day that matters to it (due tomorrow), when it was added, its id.
 func (ws *Workspace) RecordWays(t *schema.Type, rec *store.Record) []string {
-	return []string{ws.dayWords(t, rec), "added " + ws.MomentWords(rec.CreatedAt), "added " + ws.SecondWords(rec.CreatedAt)}
+	return []string{ws.dayWordsNoLabel(t, rec), ws.MomentWords(rec.CreatedAt), ws.SecondWords(rec.CreatedAt)}
 }
 
 // SecondWords is a moment to the second, for two added in one minute.
