@@ -69,12 +69,14 @@ func (b *Book) WritersFor(public bool) *Writers {
 			}
 			continue
 		}
-		if id, _ := e.Fields["target_id"].(string); id != "" {
+		id, _ := e.Fields["target_id"].(string)
+		if id != "" {
 			w.add(target+"/"+id, w.entry(e))
 		}
-		// A write-up made its tasks too, and a suggestion of edits its
-		// suggestions, each in the batch on its entry.
-		if action == "wrote up" || action == "suggested" {
+		// A write-up made its tasks too, a suggestion of edits its
+		// suggestions, and several made at once each of them, each in the
+		// batch on its entry.
+		if action == "wrote up" || action == "suggested" || action == "created" && id == "" {
 			for _, c := range EntryOps(e) {
 				w.add(c.Type+"/"+c.ID, w.entry(e))
 			}
