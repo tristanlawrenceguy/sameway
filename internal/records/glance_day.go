@@ -27,6 +27,19 @@ func dayGlance(t *schema.Type, rec *store.Record, done bool, now time.Time, h24 
 		name := dayName(f)
 		if name != "" {
 			text = name + " " + afterLabel(words)
+		} else if t.Name == EntryType {
+			// An entry's `at` field is excluded from naming (DayName returns "")
+			// because the words already say "Today at 2pm". On a detail page we
+			// still need visible context, so prefix with the type noun.
+			entryLabel := strings.ToUpper(t.Name[:1]) + t.Name[1:]
+			text = entryLabel + " " + afterLabel(words)
+			name = entryLabel // set outer name for overdue path below
+		} else if t.Name == ReminderType {
+			// A reminder's `at` field is the due time. DayName returns "" so
+			// chips would show bare relative text like "Tue 6 Oct at 6pm". Prefix
+			// with the plain-language label "Due" for visible context on detail pages.
+			text = "Due " + afterLabel(words)
+			name = "Due" // set outer name for overdue path below
 		}
 		passed := dayPassed(v, now)
 		switch {

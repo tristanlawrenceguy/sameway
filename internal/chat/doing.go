@@ -2,6 +2,7 @@ package chat
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/blocks"
@@ -29,9 +30,11 @@ type Target struct {
 // callArgs is what the words and the aim are read from.
 type callArgs struct {
 	ID        string         `json:"id"`
+	IDs       []string       `json:"ids"`
 	Component string         `json:"component"`
 	Props     map[string]any `json:"props"`
 	Fields    map[string]any `json:"fields"`
+	Records   []any          `json:"records"`
 	Region    string         `json:"region"`
 	Span      int            `json:"span"`
 	Type      string         `json:"type"`
@@ -78,6 +81,14 @@ func saying(words string) func(callArgs) string {
 	return func(callArgs) string { return words }
 }
 
+// removing is remove_component's words: "Removing 3 blocks" for several.
+func removing(a callArgs) string {
+	if n := len(unique(append([]string{a.ID}, a.IDs...))); n > 1 {
+		return fmt.Sprintf("Removing %d blocks", n)
+	}
+	return "Removing a block"
+}
+
 // called is the title a call gives a record: " called Dentist", or "".
 func (a callArgs) called() string {
 	s, _ := a.Fields["title"].(string)
@@ -106,7 +117,7 @@ func (s *Service) doing(call llm.ToolCall) (string, Target) {
 	case "add_component":
 		return label, Target{Region: or(args.Region, "main"), Span: args.Span}
 	case "update_component", "remove_component":
-		if args.ID == "" || s.Store == nil {
+		if args.ID == "" || len(args.IDs) > 0 || s.Store == nil {
 			return label, Target{}
 		}
 		aim := Target{Block: args.ID}
@@ -143,7 +154,11 @@ func describeChange(c records.Change) string {
 	if verb == "" {
 		verb = "changed"
 	}
-	return strings.ToUpper(verb[:1]) + verb[1:] + or(an(c.Component), " a block")
+	thing := " a block"
+	if n := c.Touched(records.BlockType); n > 1 {
+		thing = fmt.Sprintf(" %d blocks", n)
+	}
+	return strings.ToUpper(verb[:1]) + verb[1:] + or(an(c.Component), thing)
 }
 
 func or(s, fallback string) string {

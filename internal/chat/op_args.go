@@ -7,6 +7,7 @@ type toolArgs struct {
 	Mapping     map[string]any `json:"mapping"`
 	Component   string         `json:"component"`
 	ID          string         `json:"id"`
+	IDs         []string       `json:"ids"`
 	Props       map[string]any `json:"props"`
 	Span        *int           `json:"span"`
 	Position    *int           `json:"position"`
@@ -48,6 +49,9 @@ type toolArgs struct {
 	Field       string         `json:"field"`
 	Edits       []suggested    `json:"edits"`
 	Merge       []string       `json:"merge"`
+
+	// Records is create_records' list, each a record's fields.
+	Records []map[string]any `json:"records"`
 }
 
 // look is the layout a call asks for.
