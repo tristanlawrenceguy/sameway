@@ -35,6 +35,7 @@ var blockOps = []Op{
 				"region":    map[string]any{"type": "string", "enum": []string{"main", "left", "right", "header", "footer"}, "description": "main is the body of the page. left and right are full height panes beside it: left for history and navigation, right for what the person glances at. header is the bar at the top, for what they reach for on every page; footer the bar at the bottom. Defaults to main."},
 				"size":      map[string]any{"type": "string", "enum": []string{"full", "compact", "icon"}, "description": "full is the whole thing (the default). compact fits more on a page. icon is a glyph with its name for screen readers that opens the full thing; for people who know what it is."},
 				"canvas":    map[string]any{"type": "string", "description": "Which tab the block goes on, as a canvas id from the list of tabs; empty string is Home. Defaults to the tab the person is looking at."},
+				"position":  map[string]any{"type": "integer", "description": "Sort order; lower comes first. Defaults to after every block there."},
 			}, "component", "props")}},
 	{Title: "Change a block", Traits: Traits{Idempotent: true},
 		Core:  true,

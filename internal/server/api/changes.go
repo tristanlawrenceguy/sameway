@@ -22,6 +22,9 @@ import (
 const changesMax = 200
 
 func (s *Service) apiChanges(w http.ResponseWriter, r *http.Request) {
+	if refusedWords(w, r, "/api/changes", changesWords) { // api_params.go
+		return
+	}
 	q := r.URL.Query()
 	since := time.Time{}
 	if c := q.Get("since"); c != "" {
@@ -32,11 +35,19 @@ func (s *Service) apiChanges(w http.ResponseWriter, r *http.Request) {
 		}
 		since = t
 	}
-	limit := 100
+	limit, wait := 100, 0
 	if n, err := strconv.Atoi(q.Get("limit")); err == nil && n > 0 {
 		limit = min(n, changesMax)
+	} else if q.Has("limit") {
+		web.WriteError(w, &badRequest{"limit is how many changes to answer with, a whole number from 1 to 200, not " + strconv.Quote(q.Get("limit"))})
+		return
 	}
-	wait, _ := strconv.Atoi(q.Get("wait"))
+	if n, err := strconv.Atoi(q.Get("wait")); err == nil && n >= 0 {
+		wait = n
+	} else if q.Has("wait") {
+		web.WriteError(w, &badRequest{"wait is how many seconds to wait for a change, a whole number from 0 to 60, not " + strconv.Quote(q.Get("wait"))})
+		return
+	}
 	deadline := time.Now().Add(time.Duration(min(max(wait, 0), 60)) * time.Second) // wall clock: how long a request waits
 	owner := records.VisitorOf(r.Context()).Owner()
 	seen := -1
