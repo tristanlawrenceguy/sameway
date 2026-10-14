@@ -153,6 +153,41 @@ Not done, and why:
   not in it, and English hyphenation does not know names; a plain break
   keeps what was written.
 
+## One account of a tab, said once
+
+What a model is told about a tab grew one note at a time: rows by span,
+flags beside blocks, what is to look at, what each block shows, when it
+was added. Each note was right; together a broken block was said twice,
+the rows in two sets of words, and how to take a block away three times
+on a messy tab. So there is one account, in this order:
+
+1. The tab list: each other tab by what it holds.
+2. The blocks, a line each: id, look, props, when added and by whom, what
+   it shows now. Facts only, no verdicts.
+3. Layout now: rows by name, panes, the phone, then what is to look at,
+   each thing once, by block id, with what to do; how to take a block away
+   once at the end; and the `arrange_canvas` call.
+
+Layout now is the same text at the start of a turn, after every write,
+in `look_at_page` and in `GET /api/look` (`measured.layout`), so the
+assistant and an outside agent read one account in one set of words. The
+person sees the blocks themselves, and the tidy offer under the tabs uses
+the same words: cannot be shown, repeats another.
+
+Why: context is a finite budget, and more tokens, above all near-repeats,
+make a model less reliable
+([Anthropic, context engineering](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents),
+[Chroma, context rot](https://research.trychroma.com/context-rot)). An
+error summary says each problem once, in the same words as where it is
+([GOV.UK error summary](https://design-system.service.gov.uk/components/error-summary/));
+here the block line holds the facts and Layout now the problems, linked
+by id.
+
+Not done: the tab list and the block lines are the assistant's; an agent
+reading `/api/look` gets the page's outline and Layout now, not when each
+block was added. A component's whole list of props is not repeated for a
+block that cannot be shown: changing it gets that in the refusal.
+
 ## Why a suggestion and not a solver
 
 Work on AI layout pairs a model, which knows what the person meant, with

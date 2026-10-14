@@ -24,7 +24,7 @@ func TestLayoutNowSaysWhatMayBeLeftOver(t *testing.T) {
 	later := time.Now().Add(9*24*time.Hour + time.Hour)
 	svc.Book.Clock = func() time.Time { return later }
 	text := svc.LayoutNow("")
-	if !strings.Contains(text, `("Recipes" collection) has shown nothing yet`) || !strings.Contains(text, "since you added it 9 days ago") || !strings.Contains(text, "propose_change") {
+	if !strings.Contains(text, `("Recipes" collection) has shown nothing since you added it 9 days ago (there are no notes)`) || !strings.Contains(text, "propose_change") {
 		t.Errorf("the empty list from 9 days ago is said, to ask about:\n%s", text)
 	}
 	if strings.Contains(text, `("Tasks" collection) has shown`) {

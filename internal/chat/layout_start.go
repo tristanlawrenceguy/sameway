@@ -2,21 +2,23 @@ package chat
 
 import "strings"
 
-// What is wrong with the tab, at the start of a turn. Layout now, with
-// what to look at (rows half empty, a block scrolling inside itself, one
-// that cannot be shown or repeats another, a phone's first screen), came
-// only after the model wrote a block. Asked anything else on a tab that
-// had gone wrong, it never knew: the crew's Home kept its broken boxes
-// through days of conversations on it. Given at the start, the model can
-// say so when it matters, and fix it when it is changing the tab anyway;
-// it is not asked to tidy what the person did not ask about.
+// How the tab reads, at the start of a turn, in the same words the model
+// gets after every write and an agent gets from look (measured.layout):
+// Layout now. It once came only after a write, so a model asked anything
+// else on a tab that had gone wrong never knew; then the start had its own
+// pieces (rows by span, flags beside blocks, the to-look-at list), which
+// said each broken block twice and the rows in other words than after a
+// write. One account, said once: the listing above it gives each block's
+// facts, this gives how the page reads and what is wrong with it. The
+// model may say it when it matters, and fix it when it changes the tab
+// anyway; it is not asked to tidy what the person did not ask about.
 
-// lookAtNow is the tab's to-look-at list from Layout now, or "".
-func (s *Service) lookAtNow() string {
+// tabReads is Layout now for the tab the person is on, with when to act
+// on what is to look at.
+func (s *Service) tabReads() string {
 	now := s.LayoutNow(s.current)
-	at := strings.Index(now, " To look at: ")
-	if at < 0 {
-		return ""
+	if strings.Contains(now, " To look at: ") {
+		now = "Say what is to look at when it bears on what the person asks, and fix it when you change the tab anyway; do not tidy unasked. " + now
 	}
-	return "On this tab, to look at (say it when it bears on what the person asks, and fix it when you change the tab anyway; do not tidy unasked):" + now[at+len(" To look at:"):] + "\n"
+	return now + "\n"
 }

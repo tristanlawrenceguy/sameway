@@ -204,9 +204,10 @@ func (s *Service) LayoutNow(canvas string) string {
 	b.WriteString(".")
 	b.WriteString(measuredHow(all))
 	problems := append(layoutProblems(all), roomProblems(all, canvas)...)
-	problems = append(problems, s.clutterProblems(recs)...)  // layout_clutter.go
-	problems = append(problems, copiesProblems(recs)...)     // layout_copies.go
-	problems = append(problems, s.leftoverProblems(recs)...) // layout_leftover.go
+	bad, shows := s.blockState(recs)                                // layout_clutter.go, once
+	problems = append(problems, clutterProblems(recs, bad)...)      // layout_clutter.go
+	problems = append(problems, copiesProblems(recs)...)            // layout_copies.go
+	problems = append(problems, s.leftoverProblems(recs, shows)...) // layout_leftover.go
 	if len(problems) == 0 {
 		b.WriteString(" It reads in order with full rows.")
 		return b.String()
@@ -214,6 +215,9 @@ func (s *Service) LayoutNow(canvas string) string {
 	b.WriteString(" To look at: ")
 	for i, p := range problems {
 		fmt.Fprintf(&b, "(%d) %s. ", i+1, p)
+	}
+	if strings.Contains(b.String(), "propose taking it away") {
+		b.WriteString("Taking a block away is asked first with propose_change; once the person agrees, remove_component takes it, or remove in arrange_canvas. ")
 	}
 	if call := suggestArrangement(all, canvas); call != "" {
 		b.WriteString("This would fix the order and widths in one change: arrange_canvas " + call + ". Move or reshape what is already there when it makes the page read better, not only what you added.")
