@@ -77,6 +77,7 @@ func (s *Service) apiList(w http.ResponseWriter, r *http.Request) {
 		web.WriteError(w, err)
 		return
 	}
+	recs = tabOnly(r, recs) // api_tab_blocks.go
 	// Each record as it always was, with its title and who wrote it beside it.
 	type written struct {
 		*store.Record
