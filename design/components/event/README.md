@@ -78,6 +78,26 @@ never by colour alone. `system` is the workspace itself.
 - **Undo is a real form** and says what it undid, so the person knows the
   right thing was taken back
   ([NN/g user control and freedom](https://www.nngroup.com/articles/user-control-and-freedom/)).
+- **Undo takes back its change and nothing after it.** An entry keeps the
+  whole thing as it was, and writing all of it back also took back what
+  the person or another agent did since: undo "move these to Friday" and
+  a title typed after went too. Now only the fields still as the entry
+  left them go back; one changed since is kept, and the outcome says so
+  ("Kept as changed since: title of Book the car"). An entry with nothing
+  left to take back has no Undo
+  ([Figma, multiplayer undo](https://www.figma.com/blog/how-figmas-multiplayer-technology-works/),
+  [CKEditor, selective undo](https://ckeditor.com/docs/ckeditor5/35.4.0/features/undo-redo.html)).
+- **Several at once, all or none.** One call that makes, changes or
+  removes several things is one entry and one Undo (create_records,
+  update_records, remove_component with ids, arrange_canvas with remove),
+  named by count and the first four ("updated 27 tasks: a, b, c, d and 23
+  more"). Undo all under a reply and undo_change with ids take several
+  entries back all or none, the same way from the page and from an
+  agent: one that cannot be is named and the others are put back, since a
+  reply half undone is the half-done state these calls exist to avoid
+  ([JSON:API atomic operations](https://jsonapi.org/ext/atomic/),
+  [Google AIP-234](https://google.aip.dev/234),
+  [Linear undo](https://linear.app/changelog/undo-actions)).
 - **Two entries alike told apart.** "Created task Call plumber" twice, for
   two tasks, would be two links and two Undo buttons with one name; the
   server gives each `context`, what tells its record from the other's (due
@@ -87,5 +107,13 @@ never by colour alone. `system` is the workspace itself.
   elsewhere is not a surprise ([W3C COGA](https://www.w3.org/TR/coga-usable/)).
 
 Not done, and why: times said only as "3 hours ago" (they go stale on a
-page left open, and need a date to check); an Undo on an entry whose thing
-has changed since (the log decides, so it never undoes the wrong state).
+page left open, and need a date to check); an Undo on an entry whose every
+change has been changed since (nothing of it is left to take back); a
+redo (undoing an undo puts it back); a cap on how many one call takes
+(Gmail's is 1000 ids; nothing here has come near, and all or none keeps a
+large one safe); keeping a record made by an entry when its fields were
+edited since (undoing the making removes it, and undoing that brings it
+back as it was); one Undo all entry in the log for a whole reply (each
+reversal stays its own entry, so each can be put back on its own); a
+setting changed since (a setting keeps what was asked, "+fields", not what
+it then read, so it cannot be compared).
