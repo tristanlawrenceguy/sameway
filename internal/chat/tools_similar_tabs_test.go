@@ -15,7 +15,7 @@ func TestAddingWhatAnotherTabShowsSaysSo(t *testing.T) {
 	work := svc.Canvases()[1].ID
 	run(t, svc, "add_component", map[string]any{"component": "collection", "props": map[string]any{"type": "task", "label": "Work tasks"}, "canvas": work})
 	text := run(t, svc, "add_component", map[string]any{"component": "collection", "props": map[string]any{"type": "task", "label": "Tasks"}, "canvas": ""})
-	if !strings.Contains(text, "Another tab shows the same records as a collection: Work has ") || !strings.Contains(text, "(Work tasks)") {
+	if !strings.Contains(text, "Another tab shows the same records as a collection: Work has ") || !strings.Contains(text, `("Work tasks")`) {
 		t.Errorf("the add says Work has a list of tasks:\n%s", text)
 	}
 	if strings.Contains(text, "This tab already had") {

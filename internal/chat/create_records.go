@@ -7,7 +7,6 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
-	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 // A brain dump of seven tasks was made with seven create_record calls,
@@ -39,20 +38,21 @@ func (s *Service) createRecords(typeName string, list []map[string]any) toolResu
 	if len(list) == 0 {
 		return fail("records is empty: pass one object of fields per record to make, as create_record's fields")
 	}
-	var ops []records.Op
-	var made []*store.Record
-	var titles []string
+	writes := make([]records.Writing, len(list))
 	for i, fields := range list {
 		if fields == nil {
-			fields = map[string]any{}
+			list[i] = map[string]any{}
 		}
-		rec, c, err := records.Write(s.Store, "created", t.Name, "", fields)
-		if err != nil {
-			s.unmake(ops)
-			return fail("Nothing was made: records[%d]%s could not be saved — %s. %s Fix that one and call create_records again with all of them.",
-				i, calledSaid(t, fields), humanizeValidationError(err.Error()), typeHelp(t))
-		}
-		ops, made, titles = append(ops, c.Ops...), append(made, rec), append(titles, c.Detail)
+		writes[i] = records.Writing{Fields: list[i]}
+	}
+	made, done, i, err := records.WriteAll(s.Store, "created", t.Name, writes) // all or none
+	if err != nil {
+		return fail("Nothing was made: records[%d]%s could not be saved — %s. %s Fix that one and call create_records again with all of them.",
+			i, calledSaid(t, list[i]), humanizeValidationError(err.Error()), typeHelp(t))
+	}
+	ops, titles := records.Joined(done), make([]string, len(done))
+	for i, c := range done {
+		titles[i] = c.Detail
 	}
 	var lines []string
 	for i, rec := range made {
@@ -65,18 +65,6 @@ func (s *Service) createRecords(typeName string, list []map[string]any) toolResu
 		c.ID, c.Detail, c.Href = made[0].ID, titles[0], "/t/"+t.Name+"/"+made[0].ID
 	}
 	return toolResult{text: fmt.Sprintf("created %s, as one change (one Undo takes them all back):\n%s", schema.Count(len(made), t.Name), strings.Join(lines, "\n")), change: &c}
-}
-
-// unmake takes back the records made before one failed, so a refused
-// batch leaves nothing behind.
-func (s *Service) unmake(ops []records.Op) {
-	var back []records.Op
-	for i := len(ops) - 1; i >= 0; i-- {
-		back = append(back, records.Op{Type: ops[i].Type, ID: ops[i].ID})
-	}
-	if len(back) > 0 {
-		(&records.Book{Store: s.Store}).Apply(back...) // best effort: each was made a moment ago
-	}
 }
 
 // calledSaid is the title a refused entry was given, as ` ("Book the
