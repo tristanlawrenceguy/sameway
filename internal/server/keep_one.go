@@ -41,7 +41,7 @@ func (s *Server) listLede(t *schema.Type, recs []*store.Record) template.HTML {
 		lede += template.HTML(`<div class="sw-lede sw-cluster sw-reveal`+quiet+`"><span>`+template.HTMLEscapeString(words)+`</span><span class="sw-cluster sw-quiet">`) +
 			s.form(ui.Form{Action: "/t/" + t.Name + "/" + g[0].ID + "/keep-one", From: "/t/" + t.Name,
 				Button: &ui.Button{Label: "Keep the newest", Context: name, Variant: ui.Secondary}}) +
-			s.part(ui.Link{Href: "/t/" + t.Name + "/" + g[len(g)-1].ID + "#edit", Label: "Rename one", Context: name}) + `</span></div>`
+			s.part(ui.Link{Href: "/t/" + t.Name + "/" + g[len(g)-1].ID + "#edit", Label: "Rename one", Context: name, Look: ui.LookButton}) + `</span></div>`
 	}
 	return lede
 }
