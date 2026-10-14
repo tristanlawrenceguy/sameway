@@ -95,7 +95,7 @@ func TestDaysAreHeldInTimeElements(t *testing.T) {
 	if !strings.Contains(page, `<time datetime="`+today+`"`) {
 		t.Error("the lede's day is not held in a time element")
 	}
-	if !strings.Contains(page, `class="sw-detail__when sw-muted sw-small"><time datetime="`) {
+	if !strings.Contains(page, `class="sw-detail__when sw-muted sw-small">Created <time datetime="`) {
 		t.Error("when it was made is not held in a time element")
 	}
 	postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Seeds"})
@@ -130,7 +130,7 @@ func TestEveryProvidedTypeSaysItsGlance(t *testing.T) {
 		{"task", map[string]any{"title": "Buy paint", "status": "doing", "due": tomorrow + " 14:00"}, "Doing · Due tomorrow at " + when.Clock(time.Date(1, 1, 1, 14, 0, 0, 0, time.UTC), false)},
 		{"note", map[string]any{"title": "Seeds", "status": "published", "pinned": true}, "Published · Pinned"},
 		{"event", map[string]any{"title": "Standup", "starts": tomorrow}, "Starts tomorrow"},
-		{"reminder", map[string]any{"title": "Call", "at": tomorrow + " 07:00"}, "Tomorrow at " + when.Clock(time.Date(1, 1, 1, 7, 0, 0, 0, time.UTC), false)},
+		{"reminder", map[string]any{"title": "Call", "at": tomorrow + " 07:00"}, "Due tomorrow at " + when.Clock(time.Date(1, 1, 1, 7, 0, 0, 0, time.UTC), false)},
 		{"project", map[string]any{"title": "House", "status": "done"}, "Done"},
 		{"project", map[string]any{"title": "Garden"}, ""},
 		{"person", map[string]any{"name": "Ana Silva"}, ""},

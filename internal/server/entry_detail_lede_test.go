@@ -6,11 +6,9 @@ import (
 	"testing"
 )
 
-// TestEntryDetailLedeNoAtLabel asserts that an entry detail page does not show
-// the raw database column name "At" as a visible label in its lede paragraph.
-// The date value is still present via s.whenMade() at the end of the lede
-// (acceptance item 1 and 3).
-func TestEntryDetailLedeNoAtLabel(t *testing.T) {
+// TestEntryDetailLedeNoAtFieldLabel asserts that an entry detail page does not show
+// "At" as a visible label chip, and instead uses the type noun ("Entry") for its at field.
+func TestEntryDetailLedeNoAtFieldLabel(t *testing.T) {
 	t.Parallel()
 	a, h := newApp(t)
 
@@ -38,17 +36,12 @@ func TestEntryDetailLedeNoAtLabel(t *testing.T) {
 		t.Error("entry detail page should not show \"At\" — it uses the raw database column name instead of plain language")
 	}
 
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><time[^>]*>([^<]+)</time>`)
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*">Created <time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(page)
 	if len(matches) < 2 {
-		t.Fatal("entry detail page lede should have a sw-detail__when span")
+		t.Fatal("entry detail page lede should have a sw-detail__when span with \"Created\" label")
 	}
 	whenText := matches[1]
-
-	// It must NOT start with "Added" — just relative timestamp text.
-	if strings.HasPrefix(whenText, "Added ") {
-		t.Errorf("entry detail lede should not start with 'Added '; got %q", whenText)
-	}
 
 	// The span content should contain relative time text.
 	if !strings.Contains(whenText, "Today") && !strings.Contains(whenText, "ago") {
