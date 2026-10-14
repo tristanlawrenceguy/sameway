@@ -14,6 +14,8 @@
 //     storeWrites in debt.go lists it with its reason (writes.go)
 //   - an API error code sent under internal that describe does not name
 //     fails (errcodes.go)
+//   - a package whose tests can reach os.UserConfigDir or os.UserHomeDir
+//     without a TestMain calling testhome.Run fails (home.go)
 //   - with -base REF: tools/check/debt.go only goes down from REF (no entry
 //     added, no recorded length or count raised)
 //
@@ -62,6 +64,7 @@ func run(root string) report {
 	r.add(checkWallClock(root, wallClock))
 	r.add(checkStoreWrites(root, storeWrites))
 	r.add(checkErrorCodes(root))
+	r.add(checkTestHome(root))
 	r.problems = append(r.problems, checkComponents(filepath.Join(root, "design/components"))...)
 	r.problems = append(r.problems, checkTokens(root)...)
 	return r
