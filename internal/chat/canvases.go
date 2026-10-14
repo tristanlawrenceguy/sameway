@@ -84,7 +84,7 @@ func (s *Service) createCanvas(name string) toolResult {
 	}
 	id := done[0].ID
 	return toolResult{
-		text:   fmt.Sprintf("added canvas %s: %q, at %s. Blocks go on it with canvas: %q on add_component.", id, name, records.CanvasPath(id), id),
+		text:   fmt.Sprintf("added canvas %s: %q, at %s. Blocks go on it with canvas: %q on add_component.", id, name, records.CanvasPath(id), id) + longTabSaid(name), // canvas_names.go
 		change: &records.Change{Action: "added", Component: records.CanvasType, ID: id, Detail: name, Href: records.CanvasPath(id), Ops: done},
 	}
 }

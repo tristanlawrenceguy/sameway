@@ -1,7 +1,5 @@
 package chat
 
-import "strings"
-
 // What is wrong with the tab, at the start of a turn. Layout now, with
 // what to look at (rows half empty, a block scrolling inside itself, one
 // that cannot be shown or repeats another, a phone's first screen), came
@@ -13,10 +11,9 @@ import "strings"
 
 // lookAtNow is the tab's to-look-at list from Layout now, or "".
 func (s *Service) lookAtNow() string {
-	now := s.LayoutNow(s.current)
-	at := strings.Index(now, " To look at: ")
-	if at < 0 {
+	r := s.layoutReportOf(s.current) // layout_report.go
+	if len(r.problems) == 0 {
 		return ""
 	}
-	return "On this tab, to look at (say it when it bears on what the person asks, and fix it when you change the tab anyway; do not tidy unasked):" + now[at+len(" To look at:"):] + "\n"
+	return "On this tab, to look at (say it when it bears on what the person asks, and fix it when you change the tab anyway; do not tidy unasked):" + r.lookAt() + "\n"
 }

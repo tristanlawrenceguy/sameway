@@ -4,6 +4,7 @@ import (
 	"html/template"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
 // Tabs are canvases. Home is the first, at /; every canvas record is one
@@ -21,7 +22,10 @@ func (s *Server) tabBar(current string) template.HTML {
 	}
 	var items []any
 	for _, c := range canvases {
-		items = append(items, map[string]any{"href": c.Path, "label": c.Name, "current": c.ID == current})
+		// A tab is one line in a row of them: a long name is cut as a
+		// title is anywhere one line holds it (trim), and said whole as
+		// the tab's own heading.
+		items = append(items, map[string]any{"href": c.Path, "label": trim.Title(c.Name), "current": c.ID == current})
 	}
 	return s.component("tabs", map[string]any{"label": "Canvases", "items": items})
 }

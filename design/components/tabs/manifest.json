@@ -38,6 +38,7 @@
     "operate": "Follow a link to go to that place."
   },
   "examples": [
-    { "name": "default", "props": { "label": "Canvases", "items": [{ "href": "/", "label": "Home", "current": true }, { "href": "/c/garden", "label": "Garden" }, { "href": "/c/money", "label": "Money" }] }, "file": "examples/default.html" }
+    { "name": "default", "props": { "label": "Canvases", "items": [{ "href": "/", "label": "Home", "current": true }, { "href": "/c/garden", "label": "Garden" }, { "href": "/c/money", "label": "Money" }] }, "file": "examples/default.html" },
+    { "name": "long", "props": { "label": "Canvases", "items": [{ "href": "/", "label": "Home" }, { "href": "/c/move", "label": "Everything for the house move in March…", "current": true }, { "href": "/c/word", "label": "Supercalifragilisticexpialidocious-and-then-some-more-letters" }] }, "file": "examples/long.html" }
   ]
 }

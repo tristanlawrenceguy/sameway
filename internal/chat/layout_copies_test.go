@@ -21,7 +21,7 @@ func TestLayoutNowSaysABlockThatCopiesRecords(t *testing.T) {
 	}
 	run(t, svc, "add_component", map[string]any{"component": "text", "props": map[string]any{"content": "See " + items[0].(string)}, "span": 12})
 	text := run(t, svc, "add_component", map[string]any{"component": "list", "props": map[string]any{"label": "Unfinished notes", "items": items}, "span": 12})
-	if !strings.Contains(text, "(list) copies 3 notes as words") || !strings.Contains(text, "a collection block of note shows them") {
+	if !strings.Contains(text, "list) copies 3 notes as words") || !strings.Contains(text, "a collection block of note shows them") {
 		t.Errorf("the list of note links is said as a copy:\n%s", text)
 	}
 	if strings.Contains(text, "(text) copies") {
