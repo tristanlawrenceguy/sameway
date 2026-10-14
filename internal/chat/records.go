@@ -55,11 +55,12 @@ var recordOps = []Op{
 		Core:  true,
 		Doing: func(a callArgs) string { return "Adding" + or(an(schema.Words(a.Type)), " a record") + a.called() },
 		Run:   func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.createRecord(a.Type, a.Fields) },
-		Tool: llm.Tool{Name: "create_record", Description: "Make a record of a content type: a note, a task, whatever the workspace declares. It appears on its own page at /t/<type> and in the listing there. Fields must match the type's schema in the catalogue. Returns the new record's id and page.",
+		Tool: llm.Tool{Name: "create_record", Description: "Make a record of a content type: a note, a task, whatever the workspace declares. It appears on its own page at /t/<type> and in the listing there. Fields must match the type's schema in the catalogue. Returns the new record's id and page. For several of one type, create_records makes them in one change.",
 			Schema: obj(map[string]any{
 				"type":   typeArg,
 				"fields": map[string]any{"type": "object", "description": "Field values matching the type's schema. Leave a field out to take its default."},
 			}, "type", "fields")}, Offered: typed},
+	createRecordsOp, // create_records.go
 	{Title: "Change a record", Traits: Traits{Idempotent: true},
 		Core:  true,
 		Doing: func(a callArgs) string { return "Updating" + or(an(schema.Words(a.Type)), " a record") },
