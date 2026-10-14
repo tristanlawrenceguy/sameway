@@ -5,7 +5,6 @@
 package query
 
 import (
-	"fmt"
 	"sort"
 	"strings"
 	"time"
@@ -42,11 +41,11 @@ func Parse(t *schema.Type, s string) (Cond, error) {
 		}
 	}
 	if at < 0 {
-		return Cond{}, fmt.Errorf("%q is not a condition. %s", s, Grammar)
+		return Cond{}, &Refused{Type: t, Text: s} // refused.go
 	}
 	c := Cond{Field: strings.TrimSpace(s[:at]), Op: op, Value: strings.TrimSpace(s[at+len(op):])}
 	if !known(t, c.Field) {
-		return Cond{}, fmt.Errorf("%s has no field %q; it has %s", t.Name, c.Field, strings.Join(fieldNames(t), ", "))
+		return Cond{}, &Refused{Type: t, Field: c.Field}
 	}
 	return c, nil
 }
@@ -76,7 +75,7 @@ func Filter(st *store.Store, t *schema.Type, where []string, order string, limit
 	}
 	field := strings.TrimPrefix(order, "-")
 	if field != "" && !known(t, field) {
-		return nil, fmt.Errorf("%s has no field %q to order by; it has %s", t.Name, field, strings.Join(fieldNames(t), ", "))
+		return nil, &Refused{Type: t, Field: field, Order: true}
 	}
 	recs, err := st.List(t.Name, store.ListOptions{})
 	if err != nil {
