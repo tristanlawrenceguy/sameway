@@ -154,7 +154,7 @@ func (s *Set) Complete(builtin *Set) {
 			t.Owners = b.Owners
 		}
 	}
-	sort.Slice(s.Types, func(i, j int) bool { return s.Types[i].Name < s.Types[j].Name })
+	s.settle(builtin) // retired.go
 }
 
 // CheckRefs says which ref field points at a type the workspace does not
