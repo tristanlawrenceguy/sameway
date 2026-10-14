@@ -6,6 +6,7 @@ package query
 
 import (
 	"fmt"
+	"github.com/tristanlawrenceguy/sameway/internal/fold"
 	"sort"
 	"strings"
 	"time"
@@ -202,7 +203,7 @@ func compare(kind string, v any, op, want string, now time.Time) bool {
 	want = strings.ToLower(want)
 	switch op {
 	case "~":
-		return strings.Contains(have, want)
+		return strings.Contains(fold.String(have), fold.String(want)) // as search reads words: Sao finds São
 	case "=":
 		return have == want
 	case "!=":
