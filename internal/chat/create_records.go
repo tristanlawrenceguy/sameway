@@ -60,7 +60,7 @@ func (s *Service) createRecords(typeName string, list []map[string]any) toolResu
 			s.datesSaid(t, list[i], rec, false)) // dates_said.go; the rest is the change's notes (notice.go)
 	}
 	c := records.Change{Action: "created", Component: t.Name, Href: "/t/" + t.Name, Ops: ops,
-		Detail: schema.Count(len(made), t.Name) + ": " + strings.Join(titles, ", ")}
+		Detail: schema.Count(len(made), t.Name) + ": " + listed(titles, 4)} // remove.go: the log says the first few, as for blocks
 	if len(made) == 1 { // one is said as create_record says it, by its page
 		c.ID, c.Detail, c.Href = made[0].ID, titles[0], "/t/"+t.Name+"/"+made[0].ID
 	}

@@ -40,6 +40,7 @@ func (s *Service) updateRecords(typeName string, ids []string, fields map[string
 	if err != nil {
 		return fail("%v", err)
 	}
+	ids = unique(ids) // remove.go: a repeat is one record, changed once
 	if len(ids) == 0 || len(fields) == 0 {
 		return fail("pass ids, the records to change (find_records gives them), and fields, what to change on each")
 	}
@@ -62,7 +63,7 @@ func (s *Service) updateRecords(typeName string, ids []string, fields map[string
 		ops, titles = append(ops, c.Ops...), append(titles, c.Detail)
 	}
 	c := records.Change{Action: "updated", Component: t.Name, Href: "/t/" + t.Name, Ops: ops,
-		Detail: schema.Count(len(ids), t.Name) + ": " + strings.Join(titles, ", ")}
+		Detail: schema.Count(len(ids), t.Name) + ": " + listed(titles, 4)} // remove.go
 	if len(ids) == 1 {
 		c.ID, c.Detail, c.Href = ids[0], titles[0], "/t/"+t.Name+"/"+ids[0]
 	}
