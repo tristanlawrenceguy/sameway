@@ -134,12 +134,14 @@ func (s *Service) todayPage(w http.ResponseWriter, r *http.Request) {
 		b.WriteString(list("Overdue", l.Late) + list("Tasks", l.Tasks))
 	}
 	b.WriteString(list("Deadlines", l.Deadlines) + list("Follow up", l.FollowUps) + list("Events", l.Events) + list("Reminders", l.Reminders))
+	habits := s.habitsToDo(now)
+	b.WriteString(s.habitsSection(habits)) // today_habits.go
 	// What waits for the person, from the one list every reader reads
 	// (chat/waiting.go), each kind in its own place.
 	waiting := s.ChatFor(r).Waiting()
 	mail := s.Questions(waiting) + s.Inbox().Today(waiting) // server/proposal.go, server/inbox/inbox.go
 	b.WriteString(mail)
-	if l.count() == 0 && mail == "" {
+	if l.count() == 0 && mail == "" && len(habits) == 0 {
 		b.WriteString(string(s.Part(ui.Empty{Message: "Nothing is due today, and nothing is overdue."})))
 	}
 	b.WriteString(s.dumpBox()) // today_focus.go
