@@ -151,7 +151,10 @@ async function checkPage(path) {
     else if (v.length > 2 && times(n, v) > 1) fail(`${path}: ${c.role} "${c.name}" says what it shows, "${c.visible}", twice`);
   }
   for (const name of [...controls.map((c) => c.name), ...headings]) {
-    if (GLYPHS.test(name)) fail(`${path}: the name "${name}" carries a glyph, heard as noise or not at all`);
+    // An ellipsis after a word is punctuation, not a glyph: it is how a
+    // long title cut to fit one line says it was cut (internal/trim), and
+    // a screen reader pauses on it. Only a lone one is a glyph.
+    if (GLYPHS.test(name.replace(/(?<=\S)…/gu, ""))) fail(`${path}: the name "${name}" carries a glyph, heard as noise or not at all`);
     if (name.includes("SYSTEM NOTE")) fail(`${path}: the name "${name}" carries a record's text as if it were the page's`);
   }
   const look = await (await fetch(`${base}/api/look?path=${encodeURIComponent(path)}`)).json();
