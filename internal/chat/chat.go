@@ -148,7 +148,7 @@ func (s *Service) sendTurn(ctx context.Context, canvas, text, fileID string, on 
 	if name := automate.By(ctx); name != "" {
 		actor, by = "system", name // asked by an automation, not the person; automate/happened.go
 	}
-	said := records.Record(s.Store, actor, records.Change{Action: "said", Detail: trim.Line(text, 80), Via: records.Via(ctx), By: by})
+	said := records.Record(s.Store, actor, records.Change{Action: "said", Detail: records.SaidWords(text, 80), Via: records.Via(ctx), By: by})
 	if s.Provider == nil {
 		err := s.ProviderErr
 		if err == nil {
