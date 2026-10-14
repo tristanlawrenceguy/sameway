@@ -56,3 +56,35 @@ func TestUpdateRecordsAllOrNone(t *testing.T) {
 		t.Errorf("nothing is logged, %d entries", len(made))
 	}
 }
+
+// Undoing a batch after the person changed one of them again keeps what
+// they did: the others go back, theirs stays, and the result says so. A
+// repeated id is one record, changed once. The log names the first few.
+func TestUpdateRecordsUndoKeepsLaterEdits(t *testing.T) {
+	t.Parallel()
+	svc := newFullService(t)
+	var ids []string
+	for _, title := range []string{"Email Sarah", "Book the car", "Call mum", "Water plants", "Pay rent"} {
+		rec, _ := svc.Store.Create("task", map[string]any{"title": title, "due": "2026-09-28"})
+		ids = append(ids, rec.ID)
+	}
+	run(t, svc, "update_records", map[string]any{"type": "task", "ids": append(ids, ids[0]), "fields": map[string]any{"due": "2026-10-19"}})
+	made := entries(t, svc, "updated")
+	if s, _ := made[0].Fields["summary"].(string); !strings.HasPrefix(s, "Assistant updated 5 tasks: ") || !strings.HasSuffix(s, " and 1 more") {
+		t.Errorf("five, the first four by name: %q", s)
+	}
+	svc.Store.Update("task", ids[1], map[string]any{"due": "2026-10-22"})
+	text := run(t, svc, "undo_change", map[string]any{"id": made[0].ID})
+	if !strings.Contains(text, "Kept as changed since: due of Book the car") {
+		t.Errorf("the result says what was kept: %s", text)
+	}
+	for i, id := range ids {
+		want := "2026-09-28"
+		if i == 1 {
+			want = "2026-10-22"
+		}
+		if rec, _ := svc.Store.Get("task", id); !strings.HasPrefix(rec.Fields["due"].(string), want) {
+			t.Errorf("%s: due %v, want %s", rec.Fields["title"], rec.Fields["due"], want)
+		}
+	}
+}
