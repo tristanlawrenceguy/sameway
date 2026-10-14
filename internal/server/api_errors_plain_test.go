@@ -16,7 +16,7 @@ func TestAPIErrorsSayWhatIsWrongInPlainWords(t *testing.T) {
 	leaks := []string{"Go value", "Go struct", "interface {}", "json:", "invalid character", "unexpected end of JSON", "map[string]"}
 	for _, c := range []struct{ method, path, body, want string }{
 		{"POST", "/api/note", "{bad", "not valid JSON"},
-		{"POST", "/api/note", "[1]", "should be an object, not number"}, // a list is of records, each an object
+		{"POST", "/api/note", "[1]", "[0] should be an object of fields, not a number"}, // a list is of records, each an object
 		{"POST", "/api/note", `{"title": "x"`, "not valid JSON"},
 		{"POST", "/api/look", `{"path": 5}`, "path should be text, not number"},
 		{"POST", "/api/look", `{"colour": "red"}`, `"colour" is not one of them`},

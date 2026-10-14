@@ -34,9 +34,15 @@ func batchRead(r *http.Request) ([]map[string]any, error) {
 	if t := bytes.TrimLeft(raw, " \t\r\n"); len(t) == 0 || t[0] != '[' {
 		return nil, nil
 	}
-	var list []map[string]any
-	if err := json.Unmarshal(raw, &list); err != nil {
+	var items []json.RawMessage
+	if err := json.Unmarshal(raw, &items); err != nil {
 		return nil, errors.New("a list of records is a JSON array of objects of fields: " + web.JSONTrouble(err))
+	}
+	list := make([]map[string]any, len(items))
+	for i, item := range items { // one at a time, so the answer names the one
+		if err := json.Unmarshal(item, &list[i]); err != nil || list[i] == nil {
+			return nil, fmt.Errorf("[%d] should be an object of fields, not %s", i, jsonKind(item))
+		}
 	}
 	if len(list) == 0 {
 		return nil, errors.New("the list is empty: send one object of fields per record")
@@ -109,4 +115,21 @@ func (s *Service) apiUpdateMany(w http.ResponseWriter, r *http.Request) {
 		writes[i] = records.Writing{ID: id, Fields: own}
 	}
 	s.batchWrite(w, r, "updated", writes)
+}
+
+// jsonKind names what a JSON value is, in the caller's words.
+func jsonKind(v json.RawMessage) string {
+	switch t := bytes.TrimSpace(v); {
+	case len(t) == 0:
+		return "nothing"
+	case t[0] == '"':
+		return "text"
+	case t[0] == '[':
+		return "a list"
+	case t[0] == 't', t[0] == 'f':
+		return "true or false"
+	case t[0] == 'n':
+		return "null"
+	}
+	return "a number"
 }
