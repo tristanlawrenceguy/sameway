@@ -22,7 +22,7 @@ func TestARefusalSaysWhatWasWrongTheSameEverywhere(t *testing.T) {
 		status             int
 		want               []string
 	}{
-		{"GET", "/api/tasks", "", 404, []string{`"not_found"`, "there is no content type tasks (did you mean task?)", "GET /api/describe/types"}},
+		{"GET", "/api/tasks", "", 404, []string{`"not_found"`, `"describe": "/api/describe/types"`, "there is no content type tasks (did you mean task?)", "GET /api/describe/types"}},
 		{"POST", "/api/tasks", `{"title":"x"}`, 404, []string{"there is no content type tasks (did you mean task?)"}},
 		{"GET", "/api/note/nope", "", 404, []string{"no note with id nope; GET /api/note lists those there are"}},
 		{"PATCH", "/api/note/nope", `{"title":"x"}`, 404, []string{"no note with id nope"}},

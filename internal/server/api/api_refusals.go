@@ -22,7 +22,7 @@ func (s *Service) knownType(w http.ResponseWriter, r *http.Request) bool {
 		return true
 	}
 	web.WriteJSON(w, http.StatusNotFound, map[string]any{"error": web.APIError{Code: "not_found",
-		Message: records.NoType(typ, s.app.Store.Types().Names()) + "; GET /api/describe/types says what each takes"}})
+		Message: records.NoType(typ, s.app.Store.Types().Names()) + "; GET /api/describe/types says what each takes", Describe: "/api/describe/types"}})
 	return false
 }
 
@@ -35,5 +35,5 @@ func writeErr(w http.ResponseWriter, r *http.Request, err error) {
 	}
 	typ, id := r.PathValue("type"), r.PathValue("id")
 	web.WriteJSON(w, http.StatusNotFound, map[string]any{"error": web.APIError{Code: "not_found",
-		Message: records.NoRecord(typ, id) + "; GET /api/" + typ + " lists those there are"}})
+		Message: records.NoRecord(typ, id) + "; GET /api/" + typ + " lists those there are", Describe: "/api/describe/types/" + typ}})
 }

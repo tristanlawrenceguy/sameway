@@ -213,7 +213,7 @@ func (s *Service) apiChatClear(w http.ResponseWriter, r *http.Request) {
 // JSON like always rather than a plain-text page.
 func (s *Service) apiNotFound(w http.ResponseWriter, r *http.Request) {
 	web.WriteJSON(w, http.StatusNotFound, map[string]any{"error": web.APIError{
-		Code: "not_found", Message: r.Method + " " + r.URL.Path + " is not a route; GET /api/describe/routes lists them",
+		Code: "not_found", Message: r.Method + " " + r.URL.Path + " is not a route; GET /api/describe/routes lists them", Describe: "/api/describe/routes",
 	}})
 }
 

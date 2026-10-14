@@ -50,7 +50,7 @@ func refusedWords(w http.ResponseWriter, r *http.Request, route string, takes []
 		return false
 	}
 	web.WriteJSON(w, http.StatusBadRequest, map[string]any{"error": web.APIError{Code: "bad_request",
-		Message: records.NotTaken("GET "+route, unknown, takes) + "; GET /api/describe/routes says the rest"}})
+		Message: records.NotTaken("GET "+route, unknown, takes) + "; GET /api/describe/routes says the rest", Describe: "/api/describe/routes"}})
 	return true
 }
 

@@ -28,6 +28,10 @@ describe's `errors` entry (`tools/check/errcodes.go`). Tests:
   RFC 9457's `detail` "ought to focus on helping the client correct the
   problem" ([RFC 9457, 3.1.4](https://www.rfc-editor.org/rfc/rfc9457.html#name-detail)),
   so Go's own words (`strconv.Atoi: parsing "abc"`) never reach a caller.
+- **Where to read more is a link.** Beside `message`, an API refusal
+  has `describe`: the part of `GET /api/describe` that says what is
+  taken (the type, the routes, the tools), as Stripe's `doc_url`,
+  GitHub's `documentation_url` and JSON:API's `links.about` do.
 - **The same mistake is said in the same words everywhere.** A type not
   there is "there is no content type tasks (did you mean task?); the
   workspace has …" on the API, in the tools, on a block's page and in the
