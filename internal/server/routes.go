@@ -73,6 +73,7 @@ var pageRoutes = []route{
 	{pattern: "POST /canvas/{id}/props", handle: (*Server).blockProps, access: people, tool: "update_component", reach: inward},
 	{pattern: "POST /canvas/{id}/keep", handle: (*Server).canvasKeep, access: people, tool: "update_component", reach: inward},
 	{pattern: "POST /canvas/{id}/delete", handle: (*Server).canvasDelete, access: people, tool: "remove_component", reach: inward},
+	{pattern: "POST /tidy", handle: (*Server).tidyPage, access: people, tool: "remove_component", reach: inward},
 	// And only those who may change it: measure.go.
 	{pattern: "POST /canvas/measure", handle: (*Server).measurePost, access: people, persons: "their browser says how the page came out on their screen; the assistant reads it in Layout now", reach: inward},
 	{pattern: "GET /chat", handle: (*Server).chatPage, access: people},
@@ -89,6 +90,7 @@ var pageRoutes = []route{
 	{pattern: "POST /proposal/{id}/instead", handle: (*Server).proposalInstead, access: owner, persons: "the same", reach: inward},
 	{pattern: "GET /activity", handle: (*Server).activityPage, access: owner},
 	{pattern: "POST /activity/{id}/undo", handle: (*Server).undo, access: owner, tool: "undo_change", reach: inward},
+	{pattern: "POST /chat/{id}/undo", handle: (*Server).undoReply, access: owner, tool: "undo_change", reach: inward},
 	{pattern: "GET /help", handle: (*Server).helpPage, access: people},
 	{pattern: "POST /help/set", handle: (*Server).helpSet, access: owner, tool: "set_setting", reach: inward},
 	{pattern: "POST /zone", handle: (*Server).zoneSet, access: owner, tool: "set_setting", reach: inward},

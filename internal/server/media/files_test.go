@@ -94,7 +94,7 @@ func TestUploadWithWrongContentTypeReturnsHTMLPage(t *testing.T) {
 	if at != "/t/file" || !strings.HasPrefix(page.Header().Get("Content-Type"), "text/html") {
 		t.Errorf("the person is back on the files page, got %q %q", at, page.Header().Get("Content-Type"))
 	}
-	if !strings.Contains(body, "Choose a file first.") {
+	if !strings.Contains(body, "Select a file to add.") {
 		t.Errorf("the page says to choose a file; first 500 chars: %s", truncate(body))
 	}
 }
@@ -108,7 +108,7 @@ func TestUploadWithNoFileShowsAccessibleError(t *testing.T) {
 	if !strings.Contains(bodyStr, `role="alert"`) || !strings.Contains(bodyStr, `data-kind="danger"`) {
 		t.Error("the refusal is a danger alert, announced as it appears")
 	}
-	if !strings.Contains(bodyStr, "Not added") || !strings.Contains(bodyStr, "Choose a file first.") {
+	if !strings.Contains(bodyStr, "Not added") || !strings.Contains(bodyStr, "Select a file to add.") {
 		t.Errorf("the alert says what to do; first 500 chars: %s", truncate(bodyStr))
 	}
 	if !strings.Contains(bodyStr, `data-component="upload"`) {
@@ -117,5 +117,24 @@ func TestUploadWithNoFileShowsAccessibleError(t *testing.T) {
 	count, _ := a.Store.Count("file")
 	if count > 0 {
 		t.Errorf("no file record should exist after an empty upload; got %d records", count)
+	}
+}
+
+// A file that cannot be read says why in the person's words, on its page
+// and to an agent through the API alike, never the parser's: a damaged
+// Word file is not "zip: not a valid zip file".
+func TestAFileThatCannotBeReadSaysWhyToPeopleAndAgents(t *testing.T) {
+	t.Parallel()
+	a, h := newApp(t)
+	body, ct := multipartFile(t, "Minutes.docx", "these bytes are not a Word file", nil)
+	rec := do(t, h, http.MethodPost, "/t/file/upload", body, ct)
+	page := get(t, h, rec.Header().Get("Location")).Body.String()
+	if !strings.Contains(page, "Could not read the file: it seems to be damaged, or is not really a .docx file") || strings.Contains(page, "zip:") {
+		t.Errorf("the page says what happened and what to do: %s", truncate(page))
+	}
+	id := strings.TrimPrefix(rec.Header().Get("Location"), "/t/file/")
+	file, _ := a.Store.Get("file", id)
+	if note, _ := file.Fields["note"].(string); !strings.HasPrefix(note, "it seems to be damaged") {
+		t.Errorf("the record, which agents read, carries the same words: %q", note)
 	}
 }

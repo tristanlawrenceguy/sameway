@@ -19,6 +19,10 @@ type shownRecord struct {
 	Shows string `json:"shows,omitempty"`
 	// Layout is how the block's tab reads now; see chat.LayoutNow.
 	Layout string `json:"layout,omitempty"`
+	// Notes is what is worth saying about the change, the same for every
+	// way in (records/notes.go): a record called as open ones are, a block
+	// over records another already shows.
+	Notes []string `json:"notes,omitempty"`
 }
 
 // blockWrite holds a block written through the API to what the

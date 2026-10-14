@@ -42,7 +42,19 @@ func (s *Service) important(it todayItem) bool {
 	if p, _ := rec.Fields["priority"].(string); strings.EqualFold(p, "high") || strings.EqualFold(p, "urgent") {
 		return true
 	}
-	return tagged(rec, "important") || tagged(rec, "urgent")
+	return tagged(rec, "important") || tagged(rec, "urgent") || tagged(rec, startTag)
+}
+
+// startTag marks the tasks the assistant said to start with. Asked to sort
+// a week out, it told the person to call the dentist first, a short call
+// with no day; Today, sorting what matters by day, put three others first,
+// and the person had two answers to "what now?". Tagged start, they lead.
+const startTag = "start"
+
+// startsWith is a task tagged start.
+func (s *Service) startsWith(it todayItem) bool {
+	rec, err := s.app.Store.Get(it.Type, it.ID)
+	return err == nil && tagged(rec, startTag)
 }
 
 func tagged(rec *store.Record, tag string) bool {
@@ -74,7 +86,7 @@ func (s *Service) focus(l todayLists) (first, rest []todayItem) {
 	if len(all) < focusFrom {
 		return nil, nil
 	}
-	matters := map[string]bool{}
+	matters, start := map[string]bool{}, map[string]bool{}
 	for _, it := range all {
 		matters[it.ID] = s.important(it)
 	}
@@ -82,7 +94,13 @@ func (s *Service) focus(l todayLists) (first, rest []todayItem) {
 	for _, it := range pool[len(all):] {
 		matters[it.ID] = true
 	}
+	for _, it := range pool {
+		start[it.ID] = s.startsWith(it)
+	}
 	sort.SliceStable(pool, func(i, j int) bool {
+		if start[pool[i].ID] != start[pool[j].ID] {
+			return start[pool[i].ID]
+		}
 		if matters[pool[i].ID] != matters[pool[j].ID] {
 			return matters[pool[i].ID]
 		}
@@ -157,7 +175,7 @@ func (s *Service) todaySort(w http.ResponseWriter, r *http.Request) {
 		s.Failed(w, r, "Nothing to sort", errors.New("write what is on your mind first, as it comes"), "/today")
 		return
 	}
-	ask := fmt.Sprintf("Sort this out for me: make each thing to do a task, with its day when I said one, tag the ones that matter most important, and tell me the three to start with. Ask me only if something cannot be guessed.\n\n%s", words)
+	ask := fmt.Sprintf("Sort this out for me: make each thing to do a task, with its day when I said one, tag the ones that matter most important, and tell me the three to start with, tagged start (and take start off any task that had it before). Ask me only if something cannot be guessed.\n\n%s", words)
 	if _, err := s.ChatFor(r).SendFile(context.WithoutCancel(r.Context()), "", ask, ""); err != nil {
 		s.ForgetModel()
 		s.Failed(w, r, "Not sorted", err, "/today")

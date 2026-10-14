@@ -10,7 +10,8 @@
 //   - field edges, 44px targets, colour-only state, error wiring (visual.mjs)
 //   - live regions that can announce, links with one name going one place,
 //     and no two headings or controls alike
-//   - reflow at 320px, text spacing, 200% text, reduced motion, forced colours
+//   - reflow at 320px (lived in: long words and changes by others, see
+//     livedin.mjs), text spacing, 200% text, reduced motion, forced colours
 //   - a Tab walk at desktop (with focus appearance), at 320px, and on a phone
 //     held sideways, for focus hidden under sticky parts
 //   - /api/look, for what an agent is told
@@ -28,6 +29,7 @@ import { AA_TAGS, AAA_TAGS } from "./shell.mjs";
 import { setMode, settle, axeProblems, reflowProblems, spacingProblems, motionProblems, obscuredFocusProblems } from "./checks.mjs";
 import { focusAppearance, visualProblems, forcedColourProblems, textZoomProblems, errorWiringProblems } from "./visual.mjs";
 import { innerScrollProblems, scrollFlagProblems } from "./measure.mjs";
+import { liveIn } from "./livedin.mjs";
 
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..", "..");
 const base = (process.env.SAMEWAY_URL || "http://127.0.0.1:8080").replace(/\/$/, "");
@@ -68,8 +70,10 @@ for (const name of readdirSync(componentsDir).sort()) {
 }
 if (!blocks.length) fail("no examples could be placed on a canvas");
 
-const sitePages = ["/", "/chat", "/design", "/search", "/search?q=keyboard", "/activity", "/t/note", `/t/note/${note.id}`, "/t/note/import",
-  "/help", "/share", "/apps", "/workspaces", "/workspaces/new", "/workspaces/copy", "/workspaces/delete", "/t/nothing-here", "/review", `/c/${canvas.id}`];
+// Lived in: long words in records, and changes by others on every page.
+const livedIn = await liveIn(base, post);
+const sitePages = [...new Set(["/", "/chat", "/design", "/search", "/search?q=keyboard", "/activity", "/t/note", `/t/note/${note.id}`, "/t/note/import",
+  "/help", "/share", "/apps", "/workspaces", "/workspaces/new", "/workspaces/copy", "/workspaces/delete", "/t/nothing-here", "/review", `/c/${canvas.id}`, ...livedIn])];
 const blockLabel = Object.fromEntries(blocks.map((b) => [`/canvas/${b.id}`, b.label]));
 
 // ---- one page -------------------------------------------------------------
@@ -102,7 +106,16 @@ const pageSays = (seeded, styleguide) => page.evaluate(([seeded, styleguide]) =>
   const text = (e) => (e.getAttribute("aria-label") || (e.labels && e.labels[0] && e.labels[0].textContent) || e.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
   for (const [k, n] of twice(document.querySelectorAll("h1, h2, h3, h4, h5, h6"), (e) => `${e.tagName.toLowerCase()} "${text(e)}"`)) out.push(`${n} headings are ${k} (2.4.6)`);
   // Only what is drawn counts: a control shown only without scripts is not met.
-  for (const [k, n] of twice(document.querySelectorAll("button, summary, input:not([type=hidden]), select, textarea"), (e) => e.getClientRects().length > 0 && text(e) && `${e.tagName.toLowerCase()}${e.type ? "[" + e.type + "]" : ""} "${text(e)}"`)) out.push(`${n} controls are ${k} (2.4.6)`);
+  // Two buttons that send the same thing to the same place are one action
+  // offered twice, as two links to one place are: a change by others is
+  // listed with its Undo at the top of the page and again in its history.
+  const sent = new Set();
+  const controls = [...document.querySelectorAll("button, summary, input:not([type=hidden]), select, textarea")].filter((e) => {
+    if (e.type !== "submit" || !e.form) return true;
+    const what = `${text(e)} ${e.form.action} ${new URLSearchParams(new FormData(e.form))}`;
+    return !sent.has(what) && sent.add(what);
+  });
+  for (const [k, n] of twice(controls, (e) => e.getClientRects().length > 0 && text(e) && `${e.tagName.toLowerCase()}${e.type ? "[" + e.type + "]" : ""} "${text(e)}"`)) out.push(`${n} controls are ${k} (2.4.6)`);
   return out;
 }, [seeded, styleguide]);
 

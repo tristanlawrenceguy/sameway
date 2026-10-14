@@ -12,6 +12,7 @@ import (
 // server both go through here, so a check or a log entry is never done in
 // one place and forgotten in the other.
 func (s *Service) run(call llm.ToolCall) toolResult {
+	s.SayNotes() // notice.go: what a change says, for every way in
 	if r, no := s.refuseFor(call); no {
 		logCall(call, r)
 		return r
@@ -23,9 +24,11 @@ func (s *Service) run(call llm.ToolCall) toolResult {
 		// The receipt keeps the entry id, so the change can be undone from
 		// under the reply.
 		r.change.Activity = records.Record(s.Store, s.actor(), s.byWho(*r.change))
+		r.text += notesSaid(records.Notes(s.Store, *r.change))
 	}
 	for i := range r.changes {
 		r.changes[i].Activity = records.Record(s.Store, s.actor(), s.byWho(r.changes[i]))
+		r.text += notesSaid(records.Notes(s.Store, r.changes[i]))
 	}
 	return r
 }
