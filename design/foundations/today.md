@@ -39,6 +39,17 @@ morning brief says the same as one notification. Both are read from the records,
   what is marked important first"), so a task not yet due does not read
   as a mistake. The task type's tags say what the mark does, so an agent
   reading `describe` marks a task the way the assistant does.
+- **What the assistant said to start with leads, on any day.** Asked to
+  sort a pile, the assistant names the tasks to start with and tags them
+  start; Today puts those first, before what is marked important, so the
+  page and the chat give one answer to "what now?". On a short day only
+  those come first ("The assistant said to start with this") and the rest
+  stay as they were, unfolded; on a long one the line says whose order the
+  three follow ("what the assistant said first, then what is marked
+  important"). A start task leads whatever its day, since the assistant
+  said start now. The brief names the same tasks, and the task type's tags
+  tell an agent what start does, so one sorting through MCP tags the same
+  way.
 - **One not due yet is done, not moved.** Among the three, a task that
   matters and is not due yet has Done alone: Tomorrow would bring
   Thursday's dentist forward, or give a day to one that had none, and it
@@ -145,5 +156,8 @@ morning brief says the same as one notification. Both are read from the records,
   Done or the rest are always there.
 - **A separate Someday list.** No date already holds what has no day,
   is reached from the sidebar, and is what the weekly review uses.
+- **A start tag that ends on its own.** The assistant takes start off
+  what it said before each time it says anew, and a task done leaves
+  Today; a day's memory beside the records would be one more thing to keep.
 - **Reordering Today by hand.** The three come from what the person marked
   important and from the days; dragging is one more list to keep.

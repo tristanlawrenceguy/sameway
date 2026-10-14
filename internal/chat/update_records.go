@@ -44,23 +44,24 @@ func (s *Service) updateRecords(typeName string, ids []string, fields map[string
 	if len(ids) == 0 || len(fields) == 0 {
 		return fail("pass ids, the records to change (find_records gives them), and fields, what to change on each")
 	}
-	var ops []records.Op
-	var titles []string
+	writes := make([]records.Writing, len(ids))
 	for i, id := range ids {
 		if _, err := s.Store.Get(t.Name, id); err != nil {
-			s.putBack(ops)
 			return fail("Nothing was changed: ids[%d] is no %s with id %s. Use find_records to get the ids, and call update_records again with all of them.", i, t.Name, id)
 		}
 		own := make(map[string]any, len(fields)) // a write may fill in the map it is given
 		for k, v := range fields {
 			own[k] = v
 		}
-		_, c, err := records.Write(s.Store, "updated", t.Name, id, own)
-		if err != nil {
-			s.putBack(ops)
-			return fail("Nothing was changed: %s %s could not be — %s. %s Fix the fields and call update_records again.", t.Name, id, humanizeValidationError(err.Error()), typeHelp(t))
-		}
-		ops, titles = append(ops, c.Ops...), append(titles, c.Detail)
+		writes[i] = records.Writing{ID: id, Fields: own}
+	}
+	_, done, i, err := records.WriteAll(s.Store, "updated", t.Name, writes) // all or none
+	if err != nil {
+		return fail("Nothing was changed: %s %s could not be — %s. %s Fix the fields and call update_records again.", t.Name, ids[i], humanizeValidationError(err.Error()), typeHelp(t))
+	}
+	ops, titles := records.Joined(done), make([]string, len(done))
+	for i, c := range done {
+		titles[i] = c.Detail
 	}
 	c := records.Change{Action: "updated", Component: t.Name, Href: "/t/" + t.Name, Ops: ops,
 		Detail: schema.Count(len(ids), t.Name) + ": " + listed(titles, 4)} // remove.go
@@ -68,16 +69,4 @@ func (s *Service) updateRecords(typeName string, ids []string, fields map[string
 		c.ID, c.Detail, c.Href = ids[0], titles[0], "/t/"+t.Name+"/"+ids[0]
 	}
 	return toolResult{text: fmt.Sprintf("updated %s, as one change (one Undo puts them all back): %s.", schema.Count(len(ids), t.Name), strings.Join(titles, ", ")), change: &c}
-}
-
-// putBack writes back what the records changed before one failed were, so
-// a refused batch leaves them as they were.
-func (s *Service) putBack(ops []records.Op) {
-	var back []records.Op
-	for i := len(ops) - 1; i >= 0; i-- {
-		back = append(back, records.Op{Type: ops[i].Type, ID: ops[i].ID, After: ops[i].Before})
-	}
-	if len(back) > 0 {
-		(&records.Book{Store: s.Store}).Apply(back...) // best effort: each was written a moment ago
-	}
 }

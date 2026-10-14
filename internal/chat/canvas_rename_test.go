@@ -35,3 +35,21 @@ func TestATabCanBeRenamed(t *testing.T) {
 		t.Errorf("one Undo gives it its old name: %q", got)
 	}
 }
+
+// A tab made or renamed with a long name says how the tab bar shows it and
+// that a word or two reads better; a short name says nothing of it.
+func TestALongTabNameIsSaid(t *testing.T) {
+	t.Parallel()
+	svc := newFullService(t)
+	if text := run(t, svc, "create_canvas", map[string]any{"name": "Garden"}); strings.Contains(text, "long for a tab") {
+		t.Errorf("a short name says nothing: %s", text)
+	}
+	text := run(t, svc, "create_canvas", map[string]any{"name": "Everything about the house move in March and the boxes"})
+	if !strings.Contains(text, `That is long for a tab: the tab bar shows it as "Everything about the house move in…"`) {
+		t.Errorf("a long name says how the bar shows it: %s", text)
+	}
+	id := svc.Canvases()[2].ID
+	if text := run(t, svc, "rename_canvas", map[string]any{"id": id, "name": "The move to the new flat"}); !strings.Contains(text, "long for a tab, beside the others") {
+		t.Errorf("five words are long for a tab though the bar shows them whole: %s", text)
+	}
+}

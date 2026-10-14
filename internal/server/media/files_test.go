@@ -80,6 +80,9 @@ func TestAConverterFillsInTheTextLater(t *testing.T) {
 	if note, _ := file.Fields["note"].(string); !strings.Contains(note, "converted by") {
 		t.Errorf("the record says who read it: %q", note)
 	}
+	// The activity is written just after the record. Waiting for it keeps
+	// the folder from being removed while it is written (a CI flake).
+	waitFor(t, func() bool { return strings.Contains(get(t, h, "/api/activity").Body.String(), "(converted)") })
 }
 
 // An upload sent without a file returns the person to where they chose

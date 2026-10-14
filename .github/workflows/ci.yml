@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
   pull_request:
+    # closed too, so a pull request merged or closed stops its run: it
+    # cancels the run still going (the group below) and runs nothing itself.
+    types: [opened, synchronize, reopened, closed]
 
 # A pull request pushed to again, or brought up to date with main, is
 # checked again; the run for what it was before is no use any more and
@@ -20,8 +23,11 @@ jobs:
   # vet, size or debt-list failure is reported in a minute or two and
   # nothing slow starts. The tests run alongside, as they take longest.
   check:
+    if: github.event.action != 'closed'
     name: check (format, vet, sizes, debt list only goes down)
     runs-on: ubuntu-latest
+    outputs:
+      browser: ${{ steps.scope.outputs.browser }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -29,6 +35,19 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
+      # Whether a pull request can change what a page is drawn from, and so
+      # whether the browser jobs run: tools/scope, whose cases are its tests.
+      # Every push to main runs them all.
+      - name: Does this change what a page is drawn from?
+        id: scope
+        run: |
+          browser=true
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git diff --name-only --no-renames HEAD^1 HEAD | tee /tmp/changed
+            browser=$(go run ./tools/scope < /tmp/changed)
+          fi
+          echo "browser jobs: $browser"
+          echo "browser=$browser" >> "$GITHUB_OUTPUT"
       - name: Format
         run: test -z "$(gofmt -l .)" || (gofmt -l . && exit 1)
       - name: Vet
@@ -41,6 +60,7 @@ jobs:
           go run ./tools/check -base "$BASE"
 
   go:
+    if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -55,6 +75,7 @@ jobs:
   components:
     name: components in a browser (axe, modes, reflow, spacing, keyboard)
     needs: check
+    if: needs.check.outputs.browser == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -80,6 +101,7 @@ jobs:
     # SITE_SHARD), and the first also checks the site as a whole.
     name: live pages (person and agent paths, every page in every mode) ${{ matrix.part }}/6
     needs: check
+    if: needs.check.outputs.browser == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
