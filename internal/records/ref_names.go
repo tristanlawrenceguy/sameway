@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/fold"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -94,7 +95,7 @@ func findByName(st *store.Store, t *schema.Type, name string) (id, why string) {
 	var found []string
 	for _, r := range all {
 		email, _ := r.Fields["email"].(string)
-		if strings.EqualFold(Name(st, t, r), name) || email != "" && strings.EqualFold(email, name) {
+		if fold.Same(Name(st, t, r), name) || email != "" && strings.EqualFold(email, name) {
 			found = append(found, r.ID)
 		}
 	}
