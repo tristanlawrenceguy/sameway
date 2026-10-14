@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/jsontext"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
+
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 )
@@ -47,7 +50,7 @@ func (s *Service) addArrangement(name string, fills map[string]any) toolResult {
 		for _, x := range s.Registry.Arrangements() {
 			names = append(names, x.Name)
 		}
-		return fail("no arrangement %q; the arrangements are %s", name, strings.Join(names, ", "))
+		return fail("no arrangement %q; the arrangements are %s", name, schema.Names(names))
 	}
 	if missing := s.missingNeeds(a); missing != "" {
 		return fail("nothing added: %s", missing)
@@ -108,7 +111,7 @@ func (s *Service) missingNeeds(a *render.Arrangement) string {
 	for _, n := range a.Needs {
 		t, ok := types.Get(n.Type)
 		if !ok {
-			call, _ := json.Marshal(map[string]any{"name": n.Type, "description": n.Description, "properties": n.Fields})
+			call, _ := jsontext.Marshal(map[string]any{"name": n.Type, "description": n.Description, "properties": n.Fields})
 			return fmt.Sprintf("the %s arrangement shows %s records, and the workspace has no %s type. If the person wants it, make the type with add_type %s, then call add_arrangement again; add a record for each %s the person names, and none they did not", a.Name, n.Type, n.Type, call, n.Type)
 		}
 		used := pickedBy(a, n.Type)
@@ -121,7 +124,7 @@ func (s *Service) missingNeeds(a *render.Arrangement) string {
 			for k, v := range f {
 				def[k] = v
 			}
-			call, _ := json.Marshal(def)
+			call, _ := jsontext.Marshal(def)
 			return fmt.Sprintf("the %s arrangement shows %s records by their %s, and %s has no %s field. Add it with add_field %s, then call add_arrangement again", a.Name, n.Type, field, n.Type, field, call)
 		}
 	}

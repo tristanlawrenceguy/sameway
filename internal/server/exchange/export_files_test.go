@@ -83,8 +83,8 @@ func TestACalendarSaysDaysAsCalendarsDo(t *testing.T) {
 }
 
 // A record's page offers the record as files that fit it, after the
-// record, each link saying the kind of file, its format and its size
-// where making it is cheap.
+// record, each link saying the kind of file and its format; a record's
+// file is never big enough for its size to be worth saying (from 1 MB).
 func TestARecordGoesOutOnItsOwn(t *testing.T) {
 	t.Parallel()
 	a, h := newApp(t)
@@ -93,9 +93,9 @@ func TestARecordGoesOutOnItsOwn(t *testing.T) {
 	hana, _ := a.Store.Create("person", map[string]any{"name": "Hana Sato", "email": "hana@example.com"})
 
 	page := get(t, h, "/t/task/"+task.ID).Body.String()
-	sized := regexp.MustCompile(`href="/export/task/` + task.ID + `\.(md|docx|ics)" download data-format="(md|docx|ics)">(Text \(Markdown|Word \(DOCX|Calendar \(ICS), \d+ (bytes|KB)\)<span class="sw-visually-hidden">, this task</span>`)
+	sized := regexp.MustCompile(`href="/export/task/` + task.ID + `\.(md|docx|ics)" download data-format="(md|docx|ics)">(Text \(Markdown|Word \(DOCX|Calendar \(ICS)\)<span class="sw-visually-hidden">, this task</span>`)
 	if n := len(sized.FindAllString(page, -1)); n != 3 {
-		t.Errorf("the task's page offers it as Markdown, Word and a calendar entry, each with its size; found %d\n%s", n, page)
+		t.Errorf("the task's page offers it as Markdown, Word and a calendar entry, with no size; found %d\n%s", n, page)
 	}
 	if !strings.Contains(page, `data-format="pdf">Printable (PDF)<`) || !strings.Contains(page, `data-format="html">Web page (HTML)<`) {
 		t.Error("the web page and the PDF, made by rendering, say no size rather than guess")

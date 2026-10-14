@@ -157,7 +157,8 @@ func TestModelPlacesBlocksInPanes(t *testing.T) {
 }
 
 // TestPromptListsRows: the model is told how its spans fall into rows of
-// twelve, holes included, so it can see a bad layout instead of guessing.
+// twelve, holes included, so it can see a bad layout instead of guessing,
+// in the words of Layout now after a write.
 func TestPromptListsRows(t *testing.T) {
 	t.Parallel()
 	svc := newFullService(t)
@@ -171,10 +172,10 @@ func TestPromptListsRows(t *testing.T) {
 	if _, err := svc.Send(context.Background(), "lay out my week"); err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(m.seen[0].System, "(empty)") || strings.Contains(m.seen[0].System, "Rows in") {
+	if !strings.Contains(m.seen[0].System, "(empty)") || strings.Contains(m.seen[0].System, "Layout now: ") {
 		t.Errorf("an empty canvas says so and lists no rows")
 	}
-	want := "left to right: 12 | 4+6 (2 empty)\n"
+	want := `row 1: "Week" heading 12, row 2: "Monday" card 4 + "Tuesday" card 6 (2 of 12 empty)`
 	if !strings.Contains(m.seen[3].System, want) {
 		t.Errorf("rows should show the hole: want %q in %q", want, tail(m.seen[3].System))
 	}

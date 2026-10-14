@@ -19,7 +19,7 @@ func (s *Service) AppLines() (out, setup []string) {
 	s.apps.mu.Unlock()
 	switch {
 	case s.app.Workspace.Config.Meetings.TeamsClientID == "":
-		setup = append(setup, "Teams: transcripts are not brought from it. To have them brought once a meeting you organise is over, register an app in Microsoft Entra (public client flows on, with the delegated permissions OnlineMeetings.Read and OnlineMeetingTranscript.Read.All, which your administrator may need to grant) and ask the assistant to set meetings.teams_client_id to its client id.")
+		setup = append(setup, "Teams: transcripts are not brought from it. To have them brought once a meeting you organise is over, register an app in Microsoft Entra (public client flows on, with the delegated permissions OnlineMeetings.Read and OnlineMeetingTranscript.Read.All, which your administrator may need to grant) and give the assistant its client id to keep.")
 	case s.teamsConnected():
 		out = append(out, "Teams: connected. The transcript of a meeting you organise, recorded in Teams, is brought once it is over.")
 	case code != nil:
@@ -39,7 +39,7 @@ func (s *Service) AppLines() (out, setup []string) {
 	case c.ZoomAccountID != "" && c.ZoomClientID != "":
 		out = append(out, "Zoom: set up, but the environment variable named in meetings.zoom_secret_env holds no secret where Sameway runs.")
 	default:
-		setup = append(setup, "Zoom: transcripts are not brought from it. To have them brought, make a Server-to-Server OAuth app in Zoom's marketplace with the cloud recording scope, put its client secret in an environment variable, and ask the assistant to set meetings.zoom_account_id, meetings.zoom_client_id and meetings.zoom_secret_env.")
+		setup = append(setup, "Zoom: transcripts are not brought from it. To have them brought, make a Server-to-Server OAuth app in Zoom's marketplace with the cloud recording scope, put its client secret in an environment variable, and give the assistant the app's account id and client id, and the name of that variable, to keep.")
 	}
 	return out, setup
 }

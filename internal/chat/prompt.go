@@ -1,12 +1,10 @@
 package chat
 
 import (
-	"encoding/json"
 	"fmt"
-	"strconv"
+	"github.com/tristanlawrenceguy/sameway/internal/jsontext"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -95,30 +93,25 @@ func (s *Service) systemPrompt() string {
 	b.WriteString(s.typeIndex())
 	b.WriteString(s.canvasDigest(s.current))
 	b.WriteString(s.undoDigest())
-	b.WriteString("\nCurrent canvas, top to bottom (id, component, span, frame, tone, props):\n")
-	blocks, err := s.Store.List(records.BlockType, store.ListOptions{OrderBy: "position"})
-	if err == nil {
-		blocks = records.OnCanvas(blocks, s.current)
-	}
-	if err != nil || len(blocks) == 0 {
+	// Each block's facts in a line; then how the page reads and what is
+	// wrong with it, once, in Layout now's words (layout_start.go).
+	b.WriteString("\nCurrent canvas, top to bottom (id, component, region, span, frame, tone, props; when it was added and by whom; what it shows now):\n")
+	blocks := s.canvasBlocks(s.current) // layout_now.go
+	if len(blocks) == 0 {
 		b.WriteString("(empty)\n")
 		return b.String()
 	}
-	bad, shows := s.blockState(blocks) // layout_clutter.go
+	_, shows := s.blockState(blocks) // layout_clutter.go
 	for _, blk := range blocks {
-		props, _ := json.Marshal(blk.Fields["props"])
+		props, _ := jsontext.Marshal(blk.Fields["props"])
 		l := lookOf(blk)
 		note := addedSaid(blk, s.Now()) // block_age.go
 		if said, ok := shows[blk.ID]; ok {
 			note = strings.TrimPrefix(note+"; shows: "+said, ";")
 		}
-		if why, ok := bad[blk.ID]; ok {
-			note += " [" + why + "]"
-		}
 		fmt.Fprintf(&b, "%s %s region=%s span=%d frame=%s tone=%s %s%s\n", blk.ID, blk.Fields["component"], l.region, l.span, l.frame, l.tone, props, note)
 	}
-	b.WriteString("Rows in the main region, by span, left to right: " + rows(blocks) + "\n")
-	b.WriteString(s.lookAtNow()) // layout_start.go
+	b.WriteString(s.tabReads()) // layout_start.go
 	return b.String()
 }
 
@@ -143,39 +136,4 @@ func lookOf(blk *store.Record) blockLook {
 		l.region = v
 	}
 	return l
-}
-
-// rows says how the main region's blocks fall into rows of twelve, the way
-// the grid lays them out: a block that does not fit starts the next row.
-// The model sees the holes it has made instead of guessing at them.
-func rows(blocks []*store.Record) string {
-	var out, row []string
-	used := int64(0)
-	flush := func() {
-		if len(row) == 0 {
-			return
-		}
-		s := strings.Join(row, "+")
-		if used < 12 {
-			s += fmt.Sprintf(" (%d empty)", 12-used)
-		}
-		out = append(out, s)
-		row, used = nil, 0
-	}
-	for _, blk := range blocks {
-		l := lookOf(blk)
-		if l.region != "main" {
-			continue
-		}
-		if used+l.span > 12 {
-			flush()
-		}
-		row = append(row, strconv.FormatInt(l.span, 10))
-		used += l.span
-	}
-	flush()
-	if len(out) == 0 {
-		return "(none)"
-	}
-	return strings.Join(out, " | ")
 }

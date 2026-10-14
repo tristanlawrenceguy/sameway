@@ -1,6 +1,7 @@
 package records
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -42,7 +43,7 @@ func ContentType(st *store.Store, name string) (*schema.Type, error) {
 			return t, nil
 		}
 	}
-	return nil, fmt.Errorf("unknown content type %q. The workspace has: %s", name, strings.Join(TypeNames(st), ", "))
+	return nil, errors.New(NoType(name, TypeNames(st)))
 }
 
 // DeleteRecord is not a tool: a record goes when a person deletes it, or
@@ -53,7 +54,7 @@ func DeleteRecord(st *store.Store, typeName, id string) (Change, error) {
 		return Change{}, err
 	}
 	if _, err := st.Get(t.Name, id); err != nil {
-		return Change{}, fmt.Errorf("no %s with id %s", t.Name, id)
+		return Change{}, errors.New(NoRecord(t.Name, id))
 	}
 	_, c, err := Write(st, "deleted", t.Name, id, nil)
 	if err != nil {

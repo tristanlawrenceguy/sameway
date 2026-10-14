@@ -20,7 +20,7 @@ func TestARecordGoesOutAsADocument(t *testing.T) {
 		t.Fatal(err)
 	}
 	page := get(t, h, "/t/note/"+note.ID).Body.String()
-	if !strings.Contains(page, `href="/export/note/`+note.ID+`.docx" download data-format="docx">Word (DOCX, `) || !strings.Contains(page, ".pdf") {
+	if !strings.Contains(page, `href="/export/note/`+note.ID+`.docx" download data-format="docx">Word (DOCX)<`) || !strings.Contains(page, ".pdf") {
 		t.Error("the record's page offers it as a document")
 	}
 

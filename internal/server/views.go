@@ -36,11 +36,11 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	recs, err := query.Filter(s.app.Store, t, where, order, 0, s.now())
 	if len(where) > 0 || order != "" {
 		if err != nil {
-			fmt.Fprintf(&b, `<p class="sw-muted">%s</p><p>%s</p>`, template.HTMLEscapeString(err.Error()), s.part(ui.Link{Href: "/t/" + t.Name, Label: "See all " + schema.Plural(t.Name), Look: ui.LookButton}))
+			fmt.Fprintf(&b, `<p class="sw-muted">%s</p><p>%s</p>`, template.HTMLEscapeString(refusedSaid(t, err)), s.part(ui.Link{Href: "/t/" + t.Name, Label: "See all " + schema.Plural(t.Name), Look: ui.LookButton}))
 			s.page(w, r, schema.Plural(t.Name), template.HTML(b.String()), pageOptions{Status: http.StatusBadRequest})
 			return
 		}
-		fmt.Fprintf(&b, `<p class="sw-muted">%d matching %s%s. %s</p>`, len(recs), template.HTMLEscapeString(query.Words(t, where, s.now().Location())), template.HTMLEscapeString(orderWords(t, order)), s.part(ui.Link{Href: "/t/" + t.Name, Label: "See all " + schema.Plural(t.Name), Look: ui.LookButton}))
+		fmt.Fprintf(&b, `<p class="sw-muted">%s. %s</p>`, template.HTMLEscapeString(listSaid(t, len(recs), query.Words(t, where, s.now().Location()), order)), s.part(ui.Link{Href: "/t/" + t.Name, Label: "See all " + schema.Plural(t.Name), Look: ui.LookButton}))
 	}
 	if err != nil {
 		s.fail(w, err)

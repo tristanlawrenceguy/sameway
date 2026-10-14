@@ -1,8 +1,8 @@
 package chat
 
 import (
-	"encoding/json"
 	"fmt"
+	"github.com/tristanlawrenceguy/sameway/internal/jsontext"
 	"os"
 	"path/filepath"
 	"strings"
@@ -112,7 +112,7 @@ func (s *Service) createRecord(typeName string, fields map[string]any) toolResul
 	}
 	rec, c, err := records.Write(s.Store, "created", t.Name, "", fields)
 	if err != nil {
-		return fail("I couldn't save those changes — %s. %s Fix the fields and call create_record again.", humanizeValidationError(err.Error()), typeHelp(t))
+		return fail("I couldn't save those changes — %s. %s Fix the fields and call create_record again.", humanizeValidationError(err.Error()), fieldHelp(err, t))
 	}
 	text := fmt.Sprintf("created %s %s: %q. The person can open it at /t/%s/%s.", t.Name, rec.ID, c.Detail, t.Name, rec.ID)
 	text += s.datesSaid(t, fields, rec, false) + s.splitSaid(t) // dates_said.go, action_when_said.go; the rest is the change's notes (notice.go)
@@ -135,18 +135,18 @@ func (s *Service) updateRecord(typeName, id string, fields map[string]any, versi
 	}
 	was, err := s.Store.Get(t.Name, id)
 	if err != nil {
-		return fail("no %s with id %s. Use find_records to get the id", t.Name, id)
+		return fail("%s. Use find_records to get the id", records.NoRecord(t.Name, id))
 	}
 	if r, ok := s.whichOne(t, was); !ok { // which_one.go
 		return r
 	}
 	if version != "" && !records.SameVersion(was, version) {
-		now, _ := json.Marshal(was.Fields)
+		now, _ := jsontext.Marshal(was.Fields)
 		return fail("%s %s has changed since version %s, so nothing was written. As it is now (version %s): %s. Make your change to this and send it with the new version", t.Name, id, version, records.Version(was), now)
 	}
 	rec, c, err := records.Write(s.Store, "updated", t.Name, id, fields)
 	if err != nil {
-		return fail("I couldn't save those changes — %s. %s Fix the fields and call update_record again.", humanizeValidationError(err.Error()), typeHelp(t))
+		return fail("I couldn't save those changes — %s. %s Fix the fields and call update_record again.", humanizeValidationError(err.Error()), fieldHelp(err, t))
 	}
 	title := c.Detail
 	// Finished, a thing that repeats is due again at once; say so, or the
@@ -221,7 +221,7 @@ func (s *Service) deleteRecord(typeName, id string) toolResult {
 		return fail("%v", err)
 	}
 	if _, err := s.Store.Get(t.Name, id); err != nil {
-		return fail("no %s with id %s", t.Name, id)
+		return fail("%s", records.NoRecord(t.Name, id))
 	}
 	_, c, err := records.Write(s.Store, "deleted", t.Name, id, nil)
 	if err != nil {

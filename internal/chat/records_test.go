@@ -88,7 +88,7 @@ func TestRecordToolsRefuseWhatTheSchemaRefuses(t *testing.T) {
 	}{
 		{1, "title"},
 		{1, "colour"},
-		{2, "unknown content type"},
+		{2, "there is no content type"},
 		{3, "find_records"},
 	}
 	for _, c := range checks {

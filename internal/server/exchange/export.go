@@ -60,11 +60,11 @@ func (s *Service) exportRecords(t *schema.Type, q url.Values) ([]*store.Record, 
 }
 
 func formatList(t *schema.Type) string {
-	var names []string
+	var exts []string
 	for _, f := range export.For(t) {
-		names = append(names, "."+f.Ext)
+		exts = append(exts, "."+f.Ext)
 	}
-	return strings.Join(names, ", ")
+	return strings.Join(exts, ", ")
 }
 
 // ExportLinks is the list page's way out: each format the type can be,
@@ -92,14 +92,16 @@ func (s *Service) ExportLinks(t *schema.Type, q url.Values, recs []*store.Record
 	return string(s.Component("export", map[string]any{"what": what, "items": items}))
 }
 
-// exportSize is how big a file will be, by making it: a workspace's lists
-// are small, and a size said is a size people can decide on.
+// exportSize is how big a file will be, by making it, when that is big
+// enough to decide on: a size said is a size people can decide on, and
+// "Text (Markdown, 59 bytes)" on every record's page decided nothing and
+// read as the system talking (crew finding 0711).
 func (s *Service) exportSize(f export.Format, t *schema.Type, recs []*store.Record) string {
 	var n counter
 	if err := export.Write(&n, f, t, recs, s.RefTitle, s.Now().Location()); err != nil {
 		return ""
 	}
-	return blocks.SizeWords(int64(n))
+	return blocks.DownloadSize(int64(n))
 }
 
 // counter counts what is written to it.

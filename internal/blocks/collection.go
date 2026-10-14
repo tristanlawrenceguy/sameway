@@ -174,16 +174,49 @@ func TextOf(t *schema.Type, rec *store.Record) string {
 	return ""
 }
 
-// OrderWords says an order in words for a list page's line.
+// OrderWords says an order in words for a list page's line: ", by due,
+// earliest first". It said every order backwards as "<field> largest or
+// newest first", a field's name and both readings at once, and "at largest
+// or newest first" reached a person (crew finding 0751): a day is latest or
+// earliest, a number largest or smallest, words Z to A.
 func OrderWords(t *schema.Type, order string) string {
-	name := t.FieldWords
-	switch {
-	case order == "":
+	if order == "" {
 		return ""
-	case strings.HasPrefix(order, "-"):
-		return ", " + name(strings.TrimPrefix(order, "-")) + " largest or newest first"
 	}
-	return ", by " + name(order)
+	name, desc := strings.TrimPrefix(order, "-"), strings.HasPrefix(order, "-")
+	said, kind := orderField(t, name)
+	way := map[string][2]string{
+		"day":    {"earliest first", "latest first"},
+		"number": {"smallest first", "largest first"},
+		"words":  {"A to Z", "Z to A"},
+	}[kind]
+	if !desc {
+		return ", by " + said + ", " + way[0]
+	}
+	return ", by " + said + ", " + way[1]
+}
+
+// orderField is what a list is ordered by, in words, and what kind of
+// thing it is: a day, a number or words.
+func orderField(t *schema.Type, name string) (string, string) {
+	switch name {
+	case "created_at":
+		return "when added", "day"
+	case "updated_at":
+		return "when last changed", "day"
+	}
+	said := strings.ToLower(t.FieldWords(name))
+	f, ok := t.Field(name)
+	if !ok {
+		return said, "words"
+	}
+	switch f.Type {
+	case "datetime", "date", "repeat":
+		return said, "day"
+	case "int", "float":
+		return said, "number"
+	}
+	return said, "words"
 }
 
 // fieldsOf is the chosen fields of a record as label and value, a ref by

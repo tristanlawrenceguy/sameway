@@ -98,6 +98,39 @@ assistant's judgement when it is told what is there; a setting of their
 own for its buttons (they are quiet as every control is, and
 `ui.controls` visible shows them with the rest).
 
+## Several names in one line
+
+An entry is called by its habit and how much ("Running miles, 5 miles"),
+and a person can be "Silva, Ana". Three such names joined by commas read
+as six. Where any name in a line has a comma of its own, the names are
+set apart by semicolons, to the last: "Running miles, 5 miles; Running
+miles, 3 miles; and Running miles, 7 miles". Names with no comma keep
+commas. `schema.Names` and `schema.AndNames` do this, and every line of
+names goes through them: the log, the receipt, a record's people, a
+spreadsheet cell, what the assistant is told. Typed back in, names set
+apart by semicolons are split only at the semicolons, so "Silva, Ana;
+Bob" is two people.
+
+### Why it works this way
+
+- Joining items that contain commas with commas is ambiguous; the
+  semicolon is the ordinary way to set such items apart, and the crew
+  found it one place at a time (0748 in the log, then the receipt).
+- GOV.UK's style guide says not to use semicolons, as they are often
+  misread
+  ([A to Z](https://guidance.publishing.service.gov.uk/writing-to-gov-uk-standards/style-guides/a-to-z-style-guide/)).
+  That advice is about sentences joined by semicolons; a line of names is
+  not a sentence, and where it is long a page shows a list, one name to a
+  row, instead.
+- Caught by machine, not by memory: `tools/check` fails a join of names or
+  titles by a bare comma, and the page crawl
+  (`internal/server/machine_words_test.go`) fails any page where a name
+  with a comma is joined to another by a comma.
+
+Not done, and why: quoting each name ("“Silva, Ana”, “Bob”") reads as
+someone speaking; a bulleted list in the log's one line would break the
+line the log is read as.
+
 ## Decided, so not findings
 
 - A label beside a value on a record's page (Type: Timer, URL, Due).

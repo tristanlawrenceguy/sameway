@@ -2,7 +2,6 @@ package chat
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
@@ -47,7 +46,7 @@ func (s *Service) updateRecords(typeName string, ids []string, fields map[string
 	writes := make([]records.Writing, len(ids))
 	for i, id := range ids {
 		if _, err := s.Store.Get(t.Name, id); err != nil {
-			return fail("Nothing was changed: ids[%d] is no %s with id %s. Use find_records to get the ids, and call update_records again with all of them.", i, t.Name, id)
+			return fail("Nothing was changed: ids[%d] is %s. Use find_records to get the ids, and call update_records again with all of them.", i, records.NoRecord(t.Name, id))
 		}
 		own := make(map[string]any, len(fields)) // a write may fill in the map it is given
 		for k, v := range fields {
@@ -57,7 +56,7 @@ func (s *Service) updateRecords(typeName string, ids []string, fields map[string
 	}
 	_, done, i, err := records.WriteAll(s.Store, "updated", t.Name, writes) // all or none
 	if err != nil {
-		return fail("Nothing was changed: %s %s could not be — %s. %s Fix the fields and call update_records again.", t.Name, ids[i], humanizeValidationError(err.Error()), typeHelp(t))
+		return fail("Nothing was changed: %s %s could not be — %s. %s Fix the fields and call update_records again.", t.Name, ids[i], humanizeValidationError(err.Error()), fieldHelp(err, t))
 	}
 	ops, titles := records.Joined(done), make([]string, len(done))
 	for i, c := range done {
@@ -68,5 +67,5 @@ func (s *Service) updateRecords(typeName string, ids []string, fields map[string
 	if len(ids) == 1 {
 		c.ID, c.Detail, c.Href = ids[0], titles[0], "/t/"+t.Name+"/"+ids[0]
 	}
-	return toolResult{text: fmt.Sprintf("updated %s, as one change (one Undo puts them all back): %s.", schema.Count(len(ids), t.Name), strings.Join(titles, ", ")), change: &c}
+	return toolResult{text: fmt.Sprintf("updated %s, as one change (one Undo puts them all back): %s.", schema.Count(len(ids), t.Name), schema.Names(titles)), change: &c}
 }
