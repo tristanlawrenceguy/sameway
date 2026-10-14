@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
@@ -48,12 +49,16 @@ func TestRecordingsAreWrittenDownWithNoPageOpen(t *testing.T) {
 	}
 
 	a.Jobs.Add(srv.WriteDownJobs()...)
+	// The jobs stop and finish before the workspace folder is removed: one
+	// still writing made that removal fail (a CI flake).
 	ctx, stop := context.WithCancel(context.Background())
-	defer stop()
+	t.Cleanup(func() { stop(); a.Jobs.Wait(time.Minute) })
 	a.Jobs.Start(ctx)
 	waitFor(t, heard(before))
 	after := upload("After.wav", wav.Bytes())
 	waitFor(t, heard(after))
+	// The activity is written just after the text, by another worker.
+	waitFor(t, func() bool { return strings.Count(get(t, h, "/api/activity").Body.String(), "written down") >= 2 })
 
 	memo := upload("Memo.m4a", []byte("not really audio"))
 	if page := get(t, h, "/t/file/"+memo).Body.String(); strings.Contains(page, "data-auto") {
