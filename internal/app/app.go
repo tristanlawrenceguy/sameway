@@ -104,6 +104,7 @@ func Open(dir string, o Options) (*App, error) {
 		Measured:     chat.MeasuresIn(st),
 	}
 	a.Chat.Provider, a.Chat.ProviderErr = llm.New(a.LLMConfig())
+	a.Chat.SayNotes() // what a change says, the same for every way in
 	a.Automate = &automate.Service{Book: a.Records, Chat: a.Chat, Model: func() llm.Provider { return a.Chat.Provider },
 		Allow: allowList(ws.Config.Actions.Allow), Workdir: ws.Dir, HTTP: o.HTTP}
 	a.Chat.Automate = a.Automate
