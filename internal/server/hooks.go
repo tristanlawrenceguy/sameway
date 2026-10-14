@@ -12,6 +12,9 @@ func (s *Server) hooks() {
 	s.app.Chat.Look = s.lookFor
 	s.app.Chat.Picture = s.media.PictureFor
 	s.app.Chat.Home = s // recordings and workspaces; see home.go
+	// What a change says, the same for every way in: the API's writes as
+	// the assistant's tools (chat/notice.go).
+	s.app.Chat.SayNotes()
 	// A record arriving from another computer made out for this one's
 	// owner tells them (foryou.go).
 	s.app.Store.AfterSync = s.forYou
