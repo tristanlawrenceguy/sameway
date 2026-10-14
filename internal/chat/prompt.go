@@ -109,7 +109,7 @@ func (s *Service) systemPrompt() string {
 		l := lookOf(blk)
 		note := addedSaid(blk, s.Now()) // block_age.go
 		if said, ok := shows[blk.ID]; ok {
-			note += "; shows: " + said
+			note = strings.TrimPrefix(note+"; shows: "+said, ";")
 		}
 		if why, ok := bad[blk.ID]; ok {
 			note += " [" + why + "]"
