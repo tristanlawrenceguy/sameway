@@ -107,9 +107,9 @@ func (s *Service) systemPrompt() string {
 	for _, blk := range blocks {
 		props, _ := json.Marshal(blk.Fields["props"])
 		l := lookOf(blk)
-		note := ""
+		note := addedSaid(blk, s.Now()) // block_age.go
 		if said, ok := shows[blk.ID]; ok {
-			note = " shows: " + said
+			note += "; shows: " + said
 		}
 		if why, ok := bad[blk.ID]; ok {
 			note += " [" + why + "]"
