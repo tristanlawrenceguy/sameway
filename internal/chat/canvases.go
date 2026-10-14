@@ -58,7 +58,7 @@ var canvasOps = []Op{
 		Words: []string{"tab"},
 		Doing: saying("Removing a tab"),
 		Run:   func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.removeCanvas(a.ID) },
-		Tool: llm.Tool{Name: "remove_canvas", Description: "Remove a tab and every block on it. Ask first with propose_change, unless the list of tabs says it is empty: then nothing goes with it, and one Undo brings it back. Home cannot be removed.",
+		Tool: llm.Tool{Name: "remove_canvas", Description: "Remove a tab and every block on it. Ask first with propose_change; Home cannot be removed.",
 			Schema: obj(map[string]any{
 				"id": map[string]any{"type": "string", "description": "The canvas id, from the list of tabs."},
 			}, "id")}, Offered: has(records.CanvasType)},
