@@ -51,6 +51,7 @@ func TestProjectListDoesNotShowStatusBadge(t *testing.T) {
 	decode(t, postJSON(t, h, http.MethodPost, "/api/project", map[string]any{
 		"title":  "Garden",
 		"status": "active",
+		"due":    "2030-05-01",
 	}), &rec)
 
 	body := get(t, h, "/t/project").Body.String()
@@ -68,8 +69,8 @@ func TestProjectListDoesNotShowStatusBadge(t *testing.T) {
 	if strings.Contains(row, "Active") || strings.Contains(row, `sw-badge`) {
 		t.Errorf("project list row must not show status badge 'Active'; found in:\n%s", truncate(row))
 	}
-	if !strings.Contains(row, "sw-muted") {
-		t.Errorf("project list row should still show the timestamp; found in:\n%s", truncate(row))
+	if !strings.Contains(row, `<time class="sw-when" datetime="2030-05-01">`) {
+		t.Errorf("project list row should still show its day; found in:\n%s", truncate(row))
 	}
 }
 

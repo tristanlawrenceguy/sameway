@@ -9,7 +9,9 @@ import (
 // An agent's first read is GET /api/describe. Handed 346 KB with the routes
 // last, the REST agent in the evaluation never found how to add a block
 // and wrote an HTML page of its own in five tasks out of five. The index
-// is small, says how to build first, and documents the block routes whole.
+// is small, says how to build first, documents adding a block, laying out a
+// page and the errors whole, and names the rest; it stays well under a
+// client's 16 KB, not just below it.
 func TestDescribeIsASmallIndexThatSaysHowToBuild(t *testing.T) {
 	t.Parallel()
 	_, h := newApp(t)
@@ -17,8 +19,8 @@ func TestDescribeIsASmallIndexThatSaysHowToBuild(t *testing.T) {
 	wantStatus(t, rec, http.StatusOK)
 	body := rec.Body.String()
 	t.Logf("index: %d bytes", len(body))
-	if len(body) > 16*1024 {
-		t.Errorf("the index is %d bytes, more than 16 KB", len(body))
+	if len(body) > 10*1024 {
+		t.Errorf("the index is %d bytes, more than 10 KB: name what has its own address, do not describe it here", len(body))
 	}
 	for _, want := range []string{
 		"POST /api/block", "PATCH /api/block/{id}", "DELETE /api/block/{id}", // the build routes
@@ -27,7 +29,7 @@ func TestDescribeIsASmallIndexThatSaysHowToBuild(t *testing.T) {
 		"Accept: application/json",                   // a page's form answers JSON only when asked
 		"never make up records",                      // build from what exists
 		"/api/describe/components/{name}", "?full=1", // where the rest is
-		"meter: ", "task (", // a line for each component and type
+		"meter, ", "task (", "block_update", // each component, type and route by name
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("the index should say %q", want)

@@ -20,6 +20,10 @@ func TestHelperCLI(t *testing.T) {
 	if os.Getenv("SAMEWAY_FAKE_CLI") == "" {
 		return
 	}
+	if os.Getenv("SAMEWAY_FAKE_CLI") == "signed-out" {
+		fmt.Print(`{"type":"result","is_error":true,"result":"Not logged in · Please run /login"}`)
+		os.Exit(1)
+	}
 	args := os.Args
 	for i, a := range args {
 		if a == "--" {
@@ -97,5 +101,21 @@ func TestACommandProviderRunsTheSignedInProgram(t *testing.T) {
 	}
 	if _, err := llm.New(llm.Config{Provider: "command"}); err == nil || !strings.Contains(err.Error(), "llm.command") {
 		t.Errorf("provider command needs a command line: %v", err)
+	}
+}
+
+// Claude Code signed out says so in its JSON and stops, with nothing on
+// stderr; the person is told what it said, not only that it stopped.
+func TestACommandThatStopsSaysWhy(t *testing.T) {
+	c := &llm.Command{
+		Template:  os.Args[0] + " -test.run=TestHelperCLI -- --output-format json",
+		Field:     "result",
+		Workspace: t.TempDir(),
+	}
+	os.Setenv("SAMEWAY_FAKE_CLI", "signed-out")
+	defer os.Unsetenv("SAMEWAY_FAKE_CLI")
+	_, err := c.Complete(context.Background(), llm.Request{Messages: []llm.Message{{Role: llm.RoleUser, Content: "hello"}}})
+	if err == nil || !strings.HasSuffix(err.Error(), "Not logged in · Please run /login") {
+		t.Errorf("a command that stops says why: %v", err)
 	}
 }

@@ -1,7 +1,9 @@
 # Something with more than one task in it. Provided with every workspace, so
 # a task has somewhere to belong; a project's page lists its tasks by itself.
+# A project can have a day it is due and someone it is for: a freelancer's
+# clients and their deadlines.
 name: project
-description: A piece of work with tasks in it.
+description: "A piece of work with tasks in it, and when it has a deadline or a client, the day it is due and who it is for."
 title: title
 provided: true
 fields:
@@ -13,6 +15,15 @@ fields:
     type: enum
     values: [active, done]
     default: active
+  due:
+    type: datetime
+    description: "The day it has to be finished: a client's deadline, a moving day, a manuscript sent off. It shows on Today when it comes, and with what is overdue after, until the project is done."
+  for:
+    type: ref
+    to: person
+    listed: true
+    label: For
+    description: Who it is for, when it is for someone, like a client; their page counts their projects.
   notes:
     type: markdown
     description: What it is for and where it stands.
