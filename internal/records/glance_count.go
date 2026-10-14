@@ -2,23 +2,30 @@ package records
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // What is in a record, at a glance (design/foundations/glance.md): how
 // many records of another type are in it, and how many of those are done
 // when they can be: a project's "3 tasks, 1 done", a person's "4
-// interactions". One rule, from the schema, says what a record holds, for
+// interactions, last Tue 8 Sep". One rule, from the schema, says what a record holds, for
 // its glance and its page alike: a ref marked listed (task.project,
 // task.event, interaction.person in the starter) puts its records in the
 // one it points at, counted here and listed on that record's page
 // (backrefs.go). Any other ref (a task's For) says who or what it
 // concerns, not what it is in. None is not said, as a state where every
 // record rests is not.
+//
+// What records happenings rather than things to do (an interaction, a
+// habit's entry: no tick, and a day) also says when the latest of them
+// was, so a person's page says when they were last spoken to and a habit's
+// when it was last kept; one still to come is not the last.
 //
 // A listing counts once for all its rows, one query for each type that
 // can be in its records, never one for each row.
@@ -50,8 +57,9 @@ func Withins(st *store.Store, t *schema.Type) []Within {
 }
 
 // CountsOf counts what is in each of recs, all of t: one query for each
-// type that can be in them, for the whole listing at once.
-func CountsOf(st *store.Store, t *schema.Type, recs []*store.Record) Counts {
+// type that can be in them, for the whole listing at once. now is the
+// person's, for the day of the latest.
+func CountsOf(st *store.Store, t *schema.Type, recs []*store.Record, now time.Time) Counts {
 	out := Counts{}
 	if len(recs) == 0 {
 		return out
@@ -66,10 +74,24 @@ func CountsOf(st *store.Store, t *schema.Type, recs []*store.Record) Counts {
 			continue
 		}
 		done := w.T.DoneField()
-		n, ticked := map[string]int{}, map[string]int{}
+		day := ""
+		if done == nil {
+			day = w.T.DayField()
+		}
+		n, ticked, last := map[string]int{}, map[string]int{}, map[string]time.Time{}
 		for _, r := range in {
 			id, _ := r.Fields[w.Field].(string)
 			n[id]++
+			if day != "" {
+				// One kept without its day happened when it was kept.
+				at, ok := r.CreatedAt, true
+				if v, _ := r.Fields[day].(string); v != "" {
+					at, _, ok = when.Stored(v, now)
+				}
+				if ok && !at.After(now) && at.After(last[id]) {
+					last[id] = at
+				}
+			}
 			if done != nil {
 				if on, _ := r.Fields[done.Name].(bool); on {
 					ticked[id]++
@@ -84,6 +106,9 @@ func CountsOf(st *store.Store, t *schema.Type, recs []*store.Record) Counts {
 			if ticked[rec.ID] > 0 {
 				words += ", " + DoneWords(done, ticked[rec.ID])
 			}
+			if at := last[rec.ID]; !at.IsZero() {
+				words += ", last " + lastDay(when.Day(at, now))
+			}
 			out[rec.ID] = append(out[rec.ID], words)
 		}
 	}
@@ -93,4 +118,12 @@ func CountsOf(st *store.Store, t *schema.Type, recs []*store.Record) Counts {
 // DoneWords is how many are ticked, by the tick's own word: 1 done.
 func DoneWords(f *schema.Field, n int) string {
 	return fmt.Sprintf("%d %s", n, f.Words())
+}
+
+// lastDay is a day as it reads after "last": last today, last Tue 8 Sep.
+func lastDay(day string) string {
+	if day == "Today" || day == "Yesterday" {
+		return strings.ToLower(day)
+	}
+	return day
 }
