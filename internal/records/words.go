@@ -1,11 +1,25 @@
 package records
 
 import (
+	"regexp"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
+
+// jsonLikeBlock matches one level of curly braces containing at least one
+// double-quote, i.e. JSON-like syntax.  Nested braces are not matched so we
+// only strip flat objects/arrays that an agent might have pasted as text.
+var jsonLikeBlock = regexp.MustCompile(`\{[^\{\}]*"[^\{\}]*\}`)
+
+// stripJSONLike replaces any {…} block containing a double-quote with
+// "[content omitted]" so JSON-like syntax does not leak into human-readable
+// activity log text.  Only "said" entries need this; other actions already
+// use display names from schema.Words().
+func stripJSONLike(detail string) string {
+	return jsonLikeBlock.ReplaceAllString(detail, `[content omitted]`)
+}
 
 // Words is a change as one line of activity says it: the verb, what it
 // was done to, and more about it. The chat's Changes made list and the
@@ -39,6 +53,9 @@ func Say(st *store.Store, f map[string]any) Words {
 	if isSettingChange(Change{Action: action, Component: target, Detail: detail}) {
 		name, value := settingWords(target, detail)
 		return Words{Action: "changed", Target: name, Detail: "to " + value}
+	}
+	if action == "said" {
+		detail = stripJSONLike(detail)
 	}
 	return Words{Action: action, Target: personWord(target), Detail: strings.TrimLeft(detail, "-*• ")}
 }
