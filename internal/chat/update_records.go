@@ -46,7 +46,7 @@ func (s *Service) updateRecords(typeName string, ids []string, fields map[string
 	writes := make([]records.Writing, len(ids))
 	for i, id := range ids {
 		if _, err := s.Store.Get(t.Name, id); err != nil {
-			return fail("Nothing was changed: ids[%d] is no %s with id %s. Use find_records to get the ids, and call update_records again with all of them.", i, t.Name, id)
+			return fail("Nothing was changed: ids[%d] is %s. Use find_records to get the ids, and call update_records again with all of them.", i, records.NoRecord(t.Name, id))
 		}
 		own := make(map[string]any, len(fields)) // a write may fill in the map it is given
 		for k, v := range fields {

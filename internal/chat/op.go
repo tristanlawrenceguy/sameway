@@ -158,6 +158,9 @@ func (s *Service) runOp(call llm.ToolCall, agreed bool) toolResult {
 	if !ok {
 		return fail("unknown tool %s", call.Name)
 	}
+	if why := s.unknownArgs(op, call.Args); !agreed && why != "" { // unknown_args.go; what was agreed was checked when asked
+		return fail("%s", why)
+	}
 	if op.Asks != nil && !agreed {
 		if r, ask := op.Asks(s, args, call); ask {
 			return r
