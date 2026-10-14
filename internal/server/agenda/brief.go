@@ -30,7 +30,7 @@ func briefWords(l todayLists, start []todayItem, waiting []chat.Waiting) (string
 	for _, p := range []struct {
 		n         int
 		one, many string
-	}{{len(l.Tasks), "task", "tasks"}, {len(l.Events), "event", "events"}, {len(l.Reminders), "reminder", "reminders"}, {len(l.Late), "overdue", "overdue"}, {len(waiting), "waiting for you", "waiting for you"}} {
+	}{{len(l.Tasks), "task", "tasks"}, {len(l.Events), "event", "events"}, {len(l.Reminders), "reminder", "reminders"}, {len(l.Deadlines), "deadline", "deadlines"}, {len(l.FollowUps), "follow-up", "follow-ups"}, {len(l.Late), "overdue", "overdue"}, {len(waiting), "waiting for you", "waiting for you"}} {
 		if p.n == 1 {
 			parts = append(parts, "1 "+p.one)
 		} else if p.n > 1 {
@@ -45,7 +45,7 @@ func briefWords(l todayLists, start []todayItem, waiting []chat.Waiting) (string
 		return "Today: " + strings.Join(parts, ", "), "Start with " + strings.Join(titles, "; ")
 	}
 	var first []string
-	for _, l := range [][]todayItem{l.Events, l.Tasks, l.Reminders, l.Late} {
+	for _, l := range [][]todayItem{l.Events, l.Tasks, l.Deadlines, l.FollowUps, l.Reminders, l.Late} {
 		for _, it := range l {
 			if len(first) < 3 {
 				first = append(first, strings.TrimSpace(it.Title+" "+it.When))

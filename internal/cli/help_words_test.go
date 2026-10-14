@@ -3,6 +3,8 @@ package cli
 import (
 	"strings"
 	"testing"
+
+	"github.com/tristanlawrenceguy/sameway/internal/fold"
 )
 
 // Each command is said in the usage text, so help and a typo's suggestion
@@ -19,7 +21,7 @@ func TestEveryCommandIsInTheUsage(t *testing.T) {
 func TestNearestIsCloseOrNothing(t *testing.T) {
 	t.Parallel()
 	for word, want := range map[string]string{"descrbe": "describe", "serach": "search", "ad": "", "zzz": "", "notes": "note"} {
-		if got := nearest(word, []string{"describe", "search", "add", "note"}); got != want {
+		if got := fold.Nearest(word, []string{"describe", "search", "add", "note"}); got != want {
 			t.Errorf("nearest(%q) = %q, want %q", word, got, want)
 		}
 	}

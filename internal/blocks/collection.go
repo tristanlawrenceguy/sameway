@@ -110,7 +110,7 @@ func (ws *Workspace) collectionItems(out map[string]any, t *schema.Type, recs []
 	told := ws.RecordsApart(t, recs)
 	var in records.Counts // what is in each, counted once for the list (records/glance_count.go)
 	if len(show) == 0 && by == nil {
-		in = records.CountsOf(ws.Store, t, recs)
+		in = records.CountsOf(ws.Store, t, recs, ws.now())
 	}
 	for _, rec := range recs {
 		item := map[string]any{"title": ws.title(t, rec), "href": relate.Page(t.Name, rec.ID)}

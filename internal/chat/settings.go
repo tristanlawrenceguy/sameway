@@ -36,6 +36,11 @@ func (s *Service) setSetting(key, value string) toolResult {
 	}
 	done, err := s.Apply(records.Op{Type: records.SettingOp, ID: key, After: map[string]any{"value": value}})
 	if err != nil {
+		// What the setting is for, which the tool's description names
+		// only for the technical ones (workspace/settings_doc.go).
+		if doc := workspace.SettingDoc(key); doc != "" {
+			return fail("%v. %s is %s", err, key, doc)
+		}
 		return fail("%v", err)
 	}
 	note := ""

@@ -1,9 +1,9 @@
 package records
 
 import (
-	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/fold"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -56,7 +56,7 @@ func (b *Book) PersonByName(name string) *store.Record {
 		return nil
 	}
 	for _, p := range people {
-		if n, _ := p.Fields["name"].(string); strings.EqualFold(strings.TrimSpace(n), name) {
+		if n, _ := p.Fields["name"].(string); fold.Same(n, name) {
 			return p
 		}
 	}

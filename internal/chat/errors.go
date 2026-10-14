@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/fold"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 )
 
@@ -112,7 +113,7 @@ func nearestProp(name string, props []string) string {
 			}
 		}
 	}
-	return render.Nearest(name, props)
+	return fold.Nearest(name, props)
 }
 
 // withA is a JSON type with its article: a string, an object, an array.

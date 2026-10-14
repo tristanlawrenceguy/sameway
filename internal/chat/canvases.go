@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/fold"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -73,7 +74,7 @@ func (s *Service) createCanvas(name string) toolResult {
 	// Two tabs with one name are two links that say the same and go to
 	// different places.
 	for _, c := range s.Canvases() {
-		if strings.EqualFold(c.Name, name) {
+		if fold.Same(c.Name, name) {
 			return fail("there is already a tab called %q (canvas %q); use it, or give this one another name", c.Name, c.ID)
 		}
 	}

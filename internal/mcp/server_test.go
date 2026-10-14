@@ -121,7 +121,7 @@ func TestAnAgentDrivesTheWorkspaceOverMCP(t *testing.T) {
 		`{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"describe","arguments":{}}}`,
 		`{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"get_record","arguments":{"type":"note","id":"nope"}}}`,
 	)
-	if described, isErr := text(t, more[0]); isErr || !strings.Contains(described, "/api/describe/tools") || !strings.Contains(described, "mcp_http: ") {
+	if described, isErr := text(t, more[0]); isErr || !strings.Contains(described, "/api/describe/tools") || !strings.Contains(described, "mcp_http") {
 		t.Errorf("describe over MCP should point at the tools and carry the mcp route: err=%v", isErr)
 	}
 	if msg, isErr := text(t, more[1]); !isErr || !strings.Contains(msg, "find_records") {

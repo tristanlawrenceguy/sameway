@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/fold"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
@@ -39,7 +40,7 @@ func Tags(st *store.Store, only []string) []Tag {
 	}
 	want := map[string]bool{}
 	for _, o := range only {
-		want[strings.ToLower(strings.TrimSpace(o))] = true
+		want[fold.Key(o)] = true
 	}
 	var out []Tag
 	for _, r := range recs {
@@ -47,7 +48,7 @@ func Tags(st *store.Store, only []string) []Tag {
 		means, _ := r.Fields["means"].(string)
 		alone, _ := r.Fields["alone"].(bool)
 		name = strings.TrimSpace(name)
-		if name == "" || len(want) > 0 && !want[strings.ToLower(name)] {
+		if name == "" || len(want) > 0 && !want[fold.Key(name)] {
 			continue
 		}
 		out = append(out, Tag{name, strings.TrimSpace(means), alone})
@@ -186,7 +187,7 @@ func (s *Service) giveTag(t *schema.Type, rec *store.Record, tag string) []recor
 	}
 	var out []any
 	for _, have := range records.StringList(rec.Fields["tags"]) {
-		if strings.EqualFold(have, tag) {
+		if fold.Same(have, tag) {
 			return nil
 		}
 		out = append(out, have)
@@ -225,10 +226,10 @@ func (s *Service) pickTags(ctx context.Context, action *store.Record, defs []Tag
 		}
 		known := map[string]string{}
 		for _, d := range defs {
-			known[strings.ToLower(d.Name)] = d.Name
+			known[fold.Key(d.Name)] = d.Name
 		}
 		for _, p := range a.Tags {
-			if name, ok := known[strings.ToLower(strings.TrimSpace(p.Tag))]; ok {
+			if name, ok := known[fold.Key(p.Tag)]; ok {
 				picks = append(picks, chosen{name, p.Why})
 			}
 		}
@@ -271,18 +272,18 @@ func (s *Service) checked(ctx context.Context, action *store.Record, t *schema.T
 func keepAlone(outs []outcome, defs []Tag) []outcome {
 	isAlone := map[string]bool{}
 	for _, d := range defs {
-		isAlone[strings.ToLower(d.Name)] = d.Alone
+		isAlone[fold.Key(d.Name)] = d.Alone
 	}
 	other := false
 	for _, o := range outs {
-		other = other || o.dropped == "" && !isAlone[strings.ToLower(o.tag)]
+		other = other || o.dropped == "" && !isAlone[fold.Key(o.tag)]
 	}
 	if !other {
 		return outs
 	}
 	var kept []outcome
 	for _, o := range outs {
-		if !isAlone[strings.ToLower(o.tag)] {
+		if !isAlone[fold.Key(o.tag)] {
 			kept = append(kept, o)
 		}
 	}
@@ -291,7 +292,7 @@ func keepAlone(outs []outcome, defs []Tag) []outcome {
 
 func aloneTag(defs []Tag, tag string) bool {
 	for _, d := range defs {
-		if d.Alone && strings.EqualFold(d.Name, tag) {
+		if d.Alone && fold.Same(d.Name, tag) {
 			return true
 		}
 	}
