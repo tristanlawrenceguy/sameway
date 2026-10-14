@@ -6,6 +6,7 @@ import "github.com/tristanlawrenceguy/sameway/internal/web"
 // route table (server/routes.go).
 var Routes = []web.Route[*Service]{
 	{Pattern: "GET /today", Handle: (*Service).todayPage, Access: web.People},
+	{Pattern: "GET /api/today", Handle: (*Service).todayAPI, Access: web.People}, // today_api.go
 	{Pattern: "POST /today/done", Handle: (*Service).todayDone, Access: web.People, Tool: "update_record", Reach: web.Inward},
 	{Pattern: "POST /today/move", Handle: (*Service).todayMove, Access: web.People, Tool: "update_record", Reach: web.Inward},
 	{Pattern: "POST /today/late", Handle: (*Service).todayLate, Access: web.People, Tool: "update_record", Reach: web.Inward},
