@@ -63,8 +63,5 @@ func (s *Service) lookAtPage(raw json.RawMessage) toolResult {
 	if err != nil {
 		return fail("%v", err)
 	}
-	if len(out) > lookLimit {
-		out = out[:lookLimit] + "… (cut short: ask again with only, kind or name for the part you need)"
-	}
-	return toolResult{text: out}
+	return toolResult{text: lookCut(out)}
 }

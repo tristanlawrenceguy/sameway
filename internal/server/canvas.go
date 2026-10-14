@@ -54,6 +54,7 @@ func (s *Server) canvasPage(w http.ResponseWriter, r *http.Request) {
 		b.WriteString(string(convo.Notice))
 	}
 	b.WriteString(string(s.tabBar(canvas)))
+	b.WriteString(s.tidyOffer(r, canvas, blocks)) // canvas_tidy.go
 	reg := split(blocks)
 	main, left, right := reg.main, reg.left, reg.right
 	// A workspace with nothing but the conversation shows just that, in the

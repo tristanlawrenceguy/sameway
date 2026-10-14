@@ -1,6 +1,6 @@
 {
   "name": "message",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "One turn in a conversation: who said it, what was said, and for assistant turns the receipt of canvas changes it made. Render inside a list so the conversation has structure.",
   "icon": "…",
   "use": { "when": "one turn of a conversation.", "not": "anything outside the conversation.", "with": "a list of turns." },
@@ -16,6 +16,7 @@
       "datetime": { "type": "string", "description": "The moment, as RFC 3339, for the time element." },
       "level": { "type": "integer", "minimum": 2, "maximum": 5, "default": 3, "description": "The level of the heading each message starts with, who said it and when: 3 in a chat under its h2." },
       "from": { "type": "string", "description": "The page the message is shown on, so an Undo in the receipt returns there." },
+      "undoAll": { "type": "string", "description": "Where a form posts to take back every change of this turn at once, newest first, under Changes made. Given only when there are two or more and each can still be undone." },
       "changes": {
         "type": "array",
         "description": "Canvas changes made during this turn, shown under the text as Changes made. Each is an event, rendered compact: the message says who, so each line starts at its verb. Give each the props of its activity log entry, so a change reads the same here and in the log.",
@@ -85,6 +86,7 @@
     { "name": "error", "props": { "level": 2, "role": "error", "content": "Could not reach the model at http://localhost:11434." }, "file": "examples/error.html" },
     { "name": "with links", "props": { "level": 2, "role": "assistant", "content": "I added two items.", "time": "14:05", "changes": [{"action": "created", "target": "note", "detail": "Seeds to buy", "href": "/t/note/abc"}], "links": [{"href": "/t/note/abc", "label": "a note"}, {"href": "/canvas/h1", "label": "heading"}] }, "file": "examples/with_links.html" },
     { "name": "with attachment", "props": { "level": 2, "role": "user", "content": "What does this say?", "time": "14:06", "attachment": { "title": "Lease agreement", "href": "/t/file/f1" } }, "file": "examples/with_attachment.html" },
+    { "name": "undo all", "props": { "level": 3, "role": "assistant", "content": "Moved both to Monday.", "time": "14:05", "from": "/chat", "undoAll": "/chat/m1/undo", "changes": [ { "action": "updated", "target": "task", "detail": "Pay rent", "href": "/t/task/t1", "undo": "/activity/a1/undo" }, { "action": "updated", "target": "task", "detail": "Call the bank", "href": "/t/task/t2", "undo": "/activity/a2/undo" } ] }, "file": "examples/undo-all.html" },
     { "name": "setting change", "props": { "level": 3, "role": "assistant", "content": "Pace is set to calm.", "time": "14:05", "changes": [ { "action": "changed", "target": "pace", "detail": "to Calm", "undo": "/activity/act-1/undo" } ] }, "file": "examples/setting-change.html" }
   ]
 }

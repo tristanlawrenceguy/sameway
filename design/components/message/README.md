@@ -40,6 +40,11 @@ When omitted or null, links render silently without error.
   text size to Large" is written in one place and reads the same under
   the reply, on /activity and in Undo
   ([WCAG 3.2.4](https://www.w3.org/WAI/WCAG22/Understanding/consistent-identification.html)).
+- **A reply's changes are taken back together.** One request can make
+  eight changes; undoing it was eight presses, newest first or the older
+  ones refused. Undo all, under the list when each can still be undone,
+  takes them all back, and says how many it is for
+  ([WCAG 3.3.4](https://www.w3.org/WAI/WCAG22/Understanding/error-prevention-legal-financial-data.html)).
 - **A time with its moment**, and its day when not today, the same whether
   the page was loaded or the message arrived live.
 - **New messages are said through the chat's status line**, not a log
