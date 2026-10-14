@@ -46,7 +46,7 @@ func (s *Service) apiCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Location", "/api/"+rec.Type+"/"+rec.ID)
-	web.WriteJSON(w, http.StatusCreated, shownRecord{s.titled(rec), shows, s.layoutOf(r, rec)})
+	web.WriteJSON(w, http.StatusCreated, shownRecord{s.titled(rec), shows, s.layoutOf(r, rec), s.alikeOf(rec)})
 }
 
 func (s *Service) apiUpdate(w http.ResponseWriter, r *http.Request) {
@@ -79,7 +79,7 @@ func (s *Service) apiUpdate(w http.ResponseWriter, r *http.Request) {
 		web.WriteError(w, err)
 		return
 	}
-	web.WriteJSON(w, http.StatusOK, shownRecord{s.titled(rec), shows, s.layoutOf(r, rec)})
+	web.WriteJSON(w, http.StatusOK, shownRecord{s.titled(rec), shows, s.layoutOf(r, rec), nil})
 }
 
 func (s *Service) apiDelete(w http.ResponseWriter, r *http.Request) {

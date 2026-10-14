@@ -19,6 +19,8 @@ type shownRecord struct {
 	Shows string `json:"shows,omitempty"`
 	// Layout is how the block's tab reads now; see chat.LayoutNow.
 	Layout string `json:"layout,omitempty"`
+	// Alike is the open records called the same, on a create; see api_alike.go.
+	Alike *alikeSaid `json:"alike,omitempty"`
 }
 
 // blockWrite holds a block written through the API to what the
