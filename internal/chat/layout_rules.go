@@ -91,7 +91,7 @@ func outlineProblems(main []placed) []string {
 		}
 		said[key] = p.comp
 		if p.comp == "heading" && (i == len(main)-1 || main[i+1].comp == "heading") {
-			out = append(out, fmt.Sprintf("the section heading %q has nothing under it, as when what it named was taken away: put what it names under it, or remove it", text))
+			out = append(out, fmt.Sprintf("the section heading %q has nothing under it, as when what it named was taken away: put what it names under it, or propose taking it away", text))
 		}
 		if p.comp == "heading" && (p.span != 12 || p.frame != "bare") {
 			out = append(out, fmt.Sprintf("the section heading %q is span %d, frame %s: a heading wants span 12, frame bare, so its section starts on a new row", text, p.span, p.frame))
