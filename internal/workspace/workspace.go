@@ -71,9 +71,8 @@ type Config struct {
 		// set_setting ui.show +<key> when it has a reason the person
 		// would want it there always, and takes it back with -<key>.
 		Show string `yaml:"show"`
-		// Nest names the lists, by type, comma separated, whose records are
-		// each under the list's item in the sidebar (habit: every habit one
-		// click away). Empty nests none. Set by asking: ui.nest +<type>.
+		// Nest names the lists, by type, whose records are each under the
+		// list's item in the sidebar (habit). Set by asking: ui.nest +<type>.
 		Nest string `yaml:"nest"`
 		// Text is how large the words are: "normal" (the default),
 		// "large" or "larger". Spacing is "normal" or "wide": more room
@@ -92,7 +91,8 @@ type Config struct {
 		// Clock is how a time of day is said: "12" (2pm, 5:30pm), "24"
 		// (14:00), or empty for what the language uses (12 for English).
 		Clock string `yaml:"clock"`
-		Zone  string `yaml:"zone"` // the person's time zone, Europe/Madrid (workspace.Zone)
+		Zone  string `yaml:"zone"`  // the person's time zone, Europe/Madrid (workspace.Zone)
+		Alike string `yaml:"alike"` // records alike under a list's count: "shown" (empty) or "quiet"
 	} `yaml:"ui"`
 	Chat struct {
 		// HistoryLimit caps how many past messages are sent to the model.
