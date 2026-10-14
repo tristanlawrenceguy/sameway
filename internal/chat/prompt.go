@@ -1,8 +1,8 @@
 package chat
 
 import (
-	"encoding/json"
 	"fmt"
+	"github.com/tristanlawrenceguy/sameway/internal/jsontext"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -103,7 +103,7 @@ func (s *Service) systemPrompt() string {
 	}
 	_, shows := s.blockState(blocks) // layout_clutter.go
 	for _, blk := range blocks {
-		props, _ := json.Marshal(blk.Fields["props"])
+		props, _ := jsontext.Marshal(blk.Fields["props"])
 		l := lookOf(blk)
 		note := addedSaid(blk, s.Now()) // block_age.go
 		if said, ok := shows[blk.ID]; ok {

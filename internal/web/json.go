@@ -23,6 +23,7 @@ func WriteJSON(w http.ResponseWriter, status int, v any) {
 	w.WriteHeader(status)
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
+	enc.SetEscapeHTML(false) // read as text by agents: <key>, due<today, Tom & Jerry (jsontext)
 	enc.Encode(v)
 }
 

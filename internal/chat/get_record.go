@@ -1,7 +1,7 @@
 package chat
 
 import (
-	"encoding/json"
+	"github.com/tristanlawrenceguy/sameway/internal/jsontext"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
@@ -28,7 +28,7 @@ func (s *Service) getRecord(typeName, id string) toolResult {
 		Days     string `json:"days_here,omitempty"`
 		Standing string `json:"standing,omitempty"` // habit_said.go
 	}{s.RecordView(t, rec), daysLine(t, rec, s.Now()), s.standing(t, rec)}
-	raw, err := json.MarshalIndent(out, "", "  ")
+	raw, err := jsontext.MarshalIndent(out, "", "  ")
 	if err != nil {
 		return fail("%v", err)
 	}
