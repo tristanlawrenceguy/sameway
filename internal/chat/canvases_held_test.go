@@ -24,7 +24,7 @@ func TestTheTabListSaysWhatEachTabHolds(t *testing.T) {
 		t.Fatal(err)
 	}
 	sys := m.seen[0].System
-	if !strings.Contains(sys, "/c/"+garden+"): Beds to dig") {
+	if !strings.Contains(sys, "/c/"+garden+`): "Beds to dig"`) {
 		t.Errorf("the Garden tab says it holds Beds to dig:\n%s", tail(sys))
 	}
 	if !strings.Contains(sys, "): empty") {
