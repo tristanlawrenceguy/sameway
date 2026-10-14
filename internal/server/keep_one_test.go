@@ -35,6 +35,11 @@ func TestAListOffersToKeepOneOfTwins(t *testing.T) {
 	if !strings.Contains(page, `href="/t/task/`+first.ID+`#edit"`) || !strings.Contains(page, "Rename one") {
 		t.Errorf("if they are two, Rename one opens the oldest to be named apart:\n%s", truncate(page))
 	}
+	// On its own beside a button, a link takes the button look and its
+	// 44px target, or a thumb misses it on a phone (2.5.5).
+	if !regexp.MustCompile(`class="sw-link sw-link--button[^"]*"[^>]*href="/t/task/` + first.ID + `#edit"`).MatchString(page) {
+		t.Errorf("Rename one is the size of a target:\n%s", truncate(page))
+	}
 	postForm(t, h, form[1], nil)
 	if tasks, _ := a.Store.List("task", store.ListOptions{}); len(tasks) != 2 {
 		t.Errorf("the twins are one, the third stays: %d tasks", len(tasks))
