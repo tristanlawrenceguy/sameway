@@ -42,14 +42,16 @@ func (s *Service) todayAPI(w http.ResponseWriter, r *http.Request) {
 		return out
 	}
 	answer := map[string]any{
-		"day":       now.Format("Monday 2 January"),
-		"page":      "/today",
-		"late":      items(l.Late),
-		"due":       items(l.Tasks),
-		"events":    items(l.Events),
-		"reminders": items(l.Reminders),
-		"count":     l.count(),
-		"habits":    s.habitsToDo(now), // today_habits.go: daily ones not met yet, logged by POST /habit/{id}/log
+		"day":        now.Format("Monday 2 January"),
+		"page":       "/today",
+		"late":       items(l.Late),
+		"due":        items(l.Tasks),
+		"events":     items(l.Events),
+		"reminders":  items(l.Reminders),
+		"deadlines":  items(l.Deadlines),
+		"follow_ups": items(l.FollowUps),
+		"count":      l.count(),
+		"habits":     s.habitsToDo(now), // today_habits.go: daily ones not met yet, logged by POST /habit/{id}/log
 	}
 	// A long day starts with three, as the page does; the rest wait.
 	if first, rest := s.focus(l); first != nil {
