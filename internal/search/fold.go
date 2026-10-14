@@ -1,6 +1,7 @@
 package search
 
 import (
+	textfold "github.com/tristanlawrenceguy/sameway/internal/fold"
 	"sort"
 	"strings"
 	"unicode"
@@ -14,10 +15,7 @@ import (
 // plural finds its one, so plumbers finds the plumber.
 
 // fold is text with case and accents taken off.
-func fold(s string) string {
-	folded, _ := foldIndex(s)
-	return folded
-}
+func fold(s string) string { return textfold.String(s) } // the one rule, internal/fold
 
 // foldIndex is text folded, with where each byte of the folded text came
 // from in the text as it was, so a place found in one is a place in the
