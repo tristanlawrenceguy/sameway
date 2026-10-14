@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -112,7 +113,7 @@ func readsNow(all []placed) string {
 			for _, p := range in {
 				names = append(names, p.called())
 			}
-			fmt.Fprintf(&b, "; %s pane: %s", pane, strings.Join(names, ", "))
+			fmt.Fprintf(&b, "; %s pane: %s", pane, schema.Names(names))
 		}
 	}
 	b.WriteString(".")

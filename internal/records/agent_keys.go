@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -101,7 +102,7 @@ func TakeAgentAway(st *store.Store, name string) (Change, error) {
 		if len(names) == 0 {
 			return Change{}, errors.New("no agent has a key here")
 		}
-		return Change{}, fmt.Errorf("no agent called %q; those with keys are %s", name, strings.Join(names, ", "))
+		return Change{}, fmt.Errorf("no agent called %q; those with keys are %s", name, schema.Names(names))
 	}
 	done, err := (&Book{Store: st}).Apply(Op{Type: AgentType, ID: a.ID})
 	if err != nil {

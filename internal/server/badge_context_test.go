@@ -50,13 +50,13 @@ func TestAFilePageNamesItsFactsInWords(t *testing.T) {
 }
 
 // A file's page shows its size with a unit, not a raw integer. The
-// display layer turns 11 into "11 bytes", 2048 into "2 KB", etc., so the
-// value reads naturally alongside the label.
+// display layer turns 2048 into "2 KB", 3 MB into "3 MB", etc., so the
+// value reads naturally alongside the label; under a kilobyte is "under
+// 1 KB", since nobody decides anything on a count of bytes.
 func TestAFileShowsItsSizeWithUnitsNotANumber(t *testing.T) {
 	t.Parallel()
 	a, h := newApp(t)
 
-	// Create a file with exactly 11 bytes — small enough to stay in the "bytes" range.
 	file, _ := a.Store.Create(server.FileType, map[string]any{
 		"title": "Tiny",
 		"name":  "tiny.txt",
@@ -66,7 +66,7 @@ func TestAFileShowsItsSizeWithUnitsNotANumber(t *testing.T) {
 	})
 
 	page := get(t, h, "/t/file/"+file.ID).Body.String()
-	if !strings.Contains(page, "11 bytes") {
+	if !strings.Contains(page, "under 1 KB") || strings.Contains(page, "11 bytes") {
 		t.Errorf("the page should show the size with units:\n%s", page)
 	}
 }

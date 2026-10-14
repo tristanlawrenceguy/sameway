@@ -7,6 +7,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -68,7 +69,7 @@ func pickHabits(recs []*store.Record, named []string) ([]*store.Record, string) 
 			if near := render.Nearest(want, names); near != "" {
 				said += " (did you mean " + near + "?)"
 			}
-			return nil, said + "; the habits are " + strings.Join(names, ", ")
+			return nil, said + "; the habits are " + schema.Names(names)
 		}
 		if !slices.Contains(out, found) {
 			out = append(out, found)
