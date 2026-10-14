@@ -89,6 +89,7 @@ var pageRoutes = []route{
 	{pattern: "POST /proposal/{id}/instead", handle: (*Server).proposalInstead, access: owner, persons: "the same", reach: inward},
 	{pattern: "GET /activity", handle: (*Server).activityPage, access: owner},
 	{pattern: "POST /activity/{id}/undo", handle: (*Server).undo, access: owner, tool: "undo_change", reach: inward},
+	{pattern: "POST /chat/{id}/undo", handle: (*Server).undoReply, access: owner, tool: "undo_change", reach: inward},
 	{pattern: "GET /help", handle: (*Server).helpPage, access: people},
 	{pattern: "POST /help/set", handle: (*Server).helpSet, access: owner, tool: "set_setting", reach: inward},
 	{pattern: "POST /zone", handle: (*Server).zoneSet, access: owner, tool: "set_setting", reach: inward},
