@@ -95,7 +95,7 @@ func TestDaysAreHeldInTimeElements(t *testing.T) {
 	if !strings.Contains(page, `<time datetime="`+today+`"`) {
 		t.Error("the lede's day is not held in a time element")
 	}
-	if !strings.Contains(page, `class="sw-detail__when sw-muted sw-small">Created <time datetime="`) {
+	if !strings.Contains(page, `class="sw-detail__when sw-muted sw-small">Added <time datetime="`) {
 		t.Error("when it was made is not held in a time element")
 	}
 	postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Seeds"})
