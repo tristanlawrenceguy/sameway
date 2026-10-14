@@ -112,6 +112,8 @@ func (s *Service) canvasDigest(current string) string {
 		label := fmt.Sprintf("%s (canvas id %q, at %s)", c.Name, c.ID, c.Path)
 		if c.ID == current {
 			label += " <- the person is looking at this one"
+		} else {
+			label += s.tabHolds(c.ID) // canvases_held.go
 		}
 		parts = append(parts, label)
 	}
