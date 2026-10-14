@@ -80,7 +80,7 @@ func (s *Service) clutterProblems(recs []*store.Record) []string {
 	var out []string
 	for _, b := range recs {
 		if why, ok := bad[b.ID]; ok {
-			out = append(out, fmt.Sprintf("block %s (%s) %s; remove it with remove_component unless the person wants it", b.ID, b.Fields["component"], why))
+			out = append(out, fmt.Sprintf("block %s (%s) %s; remove it with remove_component, or in remove when you lay the tab out with arrange_canvas, unless the person wants it", b.ID, b.Fields["component"], why))
 		}
 	}
 	return out
