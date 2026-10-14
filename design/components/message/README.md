@@ -27,7 +27,7 @@ When omitted or null, links render silently without error.
   reader users move through a long page by its headings, and few can move
   by articles ([WebAIM survey](https://webaim.org/projects/screenreadersurvey10/)).
 - **Who said it is a word**, with a dot, never colour or side alone; a
-  reply that failed says "did not finish"
+  reply that failed says "could not complete this"
   ([WCAG 1.4.1](https://www.w3.org/WAI/WCAG22/Understanding/use-of-color.html)).
 - **Line breaks kept**, so a list written line by line reads as one
   ([W3C COGA](https://www.w3.org/TR/coga-usable/)).
