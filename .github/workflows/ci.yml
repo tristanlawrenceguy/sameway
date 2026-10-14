@@ -29,7 +29,7 @@ jobs:
         run: |
           browser=true
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            changed=$(git diff --name-only HEAD^1 HEAD)
+            changed=$(git diff --name-only --no-renames HEAD^1 HEAD) # a file moved here is gone from where it was, too
             other=$(printf '%s\n' "$changed" | grep -v -E '^(internal/chat/|internal/llm/|internal/mcp/|docs/)|\.md$|_test\.go$' | grep -v '^$' || true)
             if [ -n "$changed" ] && [ -z "$other" ]; then browser=false; fi
             echo "changed:"; printf '%s\n' "$changed"
