@@ -48,7 +48,7 @@ func (s *Service) createRecords(typeName string, list []map[string]any) toolResu
 	made, done, i, err := records.WriteAll(s.Store, "created", t.Name, writes) // all or none
 	if err != nil {
 		return fail("Nothing was made: records[%d]%s could not be saved — %s. %s Fix that one and call create_records again with all of them.",
-			i, calledSaid(t, list[i]), humanizeValidationError(err.Error()), typeHelp(t))
+			i, calledSaid(t, list[i]), humanizeValidationError(err.Error()), fieldHelp(err, t))
 	}
 	ops, titles := records.Joined(done), make([]string, len(done))
 	for i, c := range done {
