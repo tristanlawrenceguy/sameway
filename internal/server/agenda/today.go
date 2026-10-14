@@ -36,17 +36,20 @@ type todayItem struct {
 // todayLists are what is late and what is today, by kind.
 type todayLists struct {
 	Late, Tasks, Events, Reminders []todayItem
+	// Deadlines are projects due today; FollowUps the people to get back
+	// to today (today_follow.go).
+	Deadlines, FollowUps []todayItem
 }
 
 func (l todayLists) count() int {
-	return len(l.Late) + len(l.Tasks) + len(l.Events) + len(l.Reminders)
+	return len(l.Late) + len(l.Tasks) + len(l.Events) + len(l.Reminders) + len(l.Deadlines) + len(l.FollowUps)
 }
 
 // today reads the records for the day now falls on.
 func (s *Service) today(now time.Time) todayLists {
 	var out todayLists
 	day := now.Format("2006-01-02")
-	add := func(typ, field string, keep func(*store.Record, time.Time, bool) *[]todayItem) {
+	add := func(typ, field string, keep keeper) {
 		t, ok := s.app.Types.Get(typ)
 		if !ok {
 			return
@@ -93,7 +96,8 @@ func (s *Service) today(now time.Time) todayLists {
 		}
 		return nil
 	})
-	for _, l := range []*[]todayItem{&out.Late, &out.Tasks, &out.Events, &out.Reminders} {
+	s.todayMore(&out, now, add) // today_follow.go
+	for _, l := range []*[]todayItem{&out.Late, &out.Tasks, &out.Events, &out.Reminders, &out.Deadlines, &out.FollowUps} {
 		sort.SliceStable(*l, func(i, j int) bool { return (*l)[i].At.Before((*l)[j].At) })
 	}
 	return out
@@ -117,7 +121,7 @@ func (s *Service) todayPage(w http.ResponseWriter, r *http.Request) {
 			if it.When != "" {
 				b.WriteString(` ` + web.Time("sw-muted sw-small", it.stamp(), "", template.HTML(template.HTMLEscapeString(it.When))))
 			}
-			b.WriteString(`</p>` + s.taskPresses(it, it.At.Before(dayStart)) + `</li>`) // today_nudge.go
+			b.WriteString(`</p>` + s.taskPresses(it, it.At.Before(dayStart)) + s.followPress(it) + `</li>`) // today_nudge.go, today_follow.go
 		}
 		b.WriteString(`</ul>`)
 		return b.String()
@@ -129,7 +133,7 @@ func (s *Service) todayPage(w http.ResponseWriter, r *http.Request) {
 		b.WriteString(s.lateNudge(l.Late, now)) // today_nudge.go
 		b.WriteString(list("Overdue", l.Late) + list("Tasks", l.Tasks))
 	}
-	b.WriteString(list("Events", l.Events) + list("Reminders", l.Reminders))
+	b.WriteString(list("Deadlines", l.Deadlines) + list("Follow up", l.FollowUps) + list("Events", l.Events) + list("Reminders", l.Reminders))
 	// What waits for the person, from the one list every reader reads
 	// (chat/waiting.go), each kind in its own place.
 	waiting := s.ChatFor(r).Waiting()
@@ -167,9 +171,10 @@ func (it todayItem) stamp() string {
 }
 
 // TodayListed is whether Today is in the navigation: when the workspace
-// keeps something Today gathers (tasks, events or reminders).
+// keeps something Today gathers (tasks, events, reminders, projects with
+// a deadline, or follow-ups).
 func (s *Service) TodayListed() bool {
-	for _, typ := range []string{"task", "event", "reminder"} {
+	for _, typ := range []string{"task", "event", "reminder", "project", "interaction"} {
 		if _, ok := s.app.Types.Get(typ); ok {
 			return true
 		}

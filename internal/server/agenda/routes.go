@@ -10,6 +10,7 @@ var Routes = []web.Route[*Service]{
 	{Pattern: "POST /today/done", Handle: (*Service).todayDone, Access: web.People, Tool: "update_record", Reach: web.Inward},
 	{Pattern: "POST /today/move", Handle: (*Service).todayMove, Access: web.People, Tool: "update_record", Reach: web.Inward},
 	{Pattern: "POST /today/late", Handle: (*Service).todayLate, Access: web.People, Tool: "update_record", Reach: web.Inward},
+	{Pattern: "POST /today/followed-up", Handle: (*Service).todayFollowed, Access: web.People, Tool: "update_record", Reach: web.Inward}, // today_follow.go
 	{Pattern: "POST /today/let-go", Handle: (*Service).todayLetGo, Access: web.People, Tool: "update_record", Reach: web.Inward},
 	{Pattern: "POST /today/sort", Handle: (*Service).todaySort, Access: web.People, Persons: "it is what they say to the assistant", Reach: web.Outward},
 	{Pattern: "POST /brief", Handle: (*Service).briefSet, Access: web.Owner, Tool: "set_setting", Reach: web.Inward},
