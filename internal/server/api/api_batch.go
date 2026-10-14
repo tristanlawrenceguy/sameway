@@ -57,7 +57,7 @@ func (s *Service) batchWrite(w http.ResponseWriter, r *http.Request, action stri
 		web.WriteError(w, errors.New("blocks are written one at a time, each checked as it is: POST /api/block with one block"))
 		return
 	}
-	recs, notes, at, err := records.WriteAllAs(s.app.Store, Agent(r).As(), action, typ, writes)
+	recs, notes, entry, at, err := records.WriteAllAs(s.app.Store, Agent(r).As(), action, typ, writes)
 	if err != nil {
 		var ve *schema.ValidationError
 		if errors.As(err, &ve) {
@@ -83,7 +83,7 @@ func (s *Service) batchWrite(w http.ResponseWriter, r *http.Request, action stri
 		status = http.StatusCreated
 	}
 	web.WriteJSON(w, status, map[string]any{"type": typ, "count": len(recs), "records": out, "notes": notes,
-		"undo": "one change in the log: one Undo takes all of them back"})
+		"undo": undoOf(entry)}) // api_undo_said.go: one change, one Undo for all
 }
 
 // prefixed names each field by the record it is in, as [2].title.

@@ -52,13 +52,13 @@ func (s *Service) apiCreate(w http.ResponseWriter, r *http.Request) {
 			s.SeedChat(c)
 		}
 	}
-	rec, notes, err := records.WriteNoted(s.app.Store, agent.As(), "created", r.PathValue("type"), "", fields)
+	rec, notes, entry, err := records.WriteNoted(s.app.Store, agent.As(), "created", r.PathValue("type"), "", fields)
 	if err != nil {
 		web.WriteError(w, err)
 		return
 	}
 	w.Header().Set("Location", "/api/"+rec.Type+"/"+rec.ID)
-	web.WriteJSON(w, http.StatusCreated, shownRecord{s.titled(rec), shows, s.layoutOf(r, rec), notes})
+	web.WriteJSON(w, http.StatusCreated, shownRecord{s.titled(rec), shows, s.layoutOf(r, rec), notes, undoOf(entry)})
 }
 
 func (s *Service) apiUpdate(w http.ResponseWriter, r *http.Request) {
@@ -86,12 +86,12 @@ func (s *Service) apiUpdate(w http.ResponseWriter, r *http.Request) {
 	if r.PathValue("type") == records.BlockType {
 		byAgent(fields, agent, false)
 	}
-	rec, notes, err := records.WriteNoted(s.app.Store, agent.As(), "updated", r.PathValue("type"), r.PathValue("id"), fields)
+	rec, notes, entry, err := records.WriteNoted(s.app.Store, agent.As(), "updated", r.PathValue("type"), r.PathValue("id"), fields)
 	if err != nil {
 		web.WriteError(w, err)
 		return
 	}
-	web.WriteJSON(w, http.StatusOK, shownRecord{s.titled(rec), shows, s.layoutOf(r, rec), notes})
+	web.WriteJSON(w, http.StatusOK, shownRecord{s.titled(rec), shows, s.layoutOf(r, rec), notes, undoOf(entry)})
 }
 
 func (s *Service) apiDelete(w http.ResponseWriter, r *http.Request) {
@@ -102,12 +102,15 @@ func (s *Service) apiDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Logged with everything it had, so it can be put back.
-	gone, _, err := records.WriteAs(s.app.Store, Agent(r).As(), "deleted", r.PathValue("type"), r.PathValue("id"), nil)
+	gone, entry, err := records.WriteAs(s.app.Store, Agent(r).As(), "deleted", r.PathValue("type"), r.PathValue("id"), nil)
 	if err != nil {
 		web.WriteError(w, err)
 		return
 	}
 	out := map[string]any{"deleted": r.PathValue("id")}
+	if u := undoOf(entry); u != nil {
+		out["undo"] = u // api_undo_said.go: it can be put back
+	}
 	if layout := s.layoutOf(r, gone); layout != "" {
 		out["layout"] = layout
 	}

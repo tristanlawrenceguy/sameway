@@ -70,12 +70,13 @@ func (c Change) Made() []Op {
 }
 
 // WriteNoted is WriteAs for a way in that tells its caller what the
-// change's notes say, as the JSON API does.
-func WriteNoted(st *store.Store, who Who, action, typ, id string, fields map[string]any) (*store.Record, []string, error) {
+// change's notes say, and the log entry that takes it back, as the JSON
+// API does.
+func WriteNoted(st *store.Store, who Who, action, typ, id string, fields map[string]any) (*store.Record, []string, string, error) {
 	rec, c, err := Write(st, action, typ, id, fields)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, "", err
 	}
-	logAs(st, who, c)
-	return rec, Notes(st, c), nil
+	entry := logAs(st, who, c)
+	return rec, Notes(st, c), entry, nil
 }
