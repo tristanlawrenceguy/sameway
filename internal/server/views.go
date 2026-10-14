@@ -36,7 +36,7 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	recs, err := query.Filter(s.app.Store, t, where, order, 0, s.now())
 	if len(where) > 0 || order != "" {
 		if err != nil {
-			fmt.Fprintf(&b, `<p class="sw-muted">%s</p><p>%s</p>`, template.HTMLEscapeString(err.Error()), s.part(ui.Link{Href: "/t/" + t.Name, Label: "See all " + schema.Plural(t.Name), Look: ui.LookButton}))
+			fmt.Fprintf(&b, `<p class="sw-muted">%s</p><p>%s</p>`, template.HTMLEscapeString(refusedSaid(t, err)), s.part(ui.Link{Href: "/t/" + t.Name, Label: "See all " + schema.Plural(t.Name), Look: ui.LookButton}))
 			s.page(w, r, schema.Plural(t.Name), template.HTML(b.String()), pageOptions{Status: http.StatusBadRequest})
 			return
 		}

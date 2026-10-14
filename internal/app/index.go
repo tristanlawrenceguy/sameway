@@ -33,7 +33,7 @@ var indexBuild = []string{
 	`3. Add a block: POST /api/block with {"component", "props", "canvas", "span", "position"} (block_add below). It is checked before it is written; the answer's shows says in words what the block shows, and layout how the page reads now. Read both.`,
 	`4. Lay out the whole page, not only what you added: POST /api/arrange (block_arrange below) puts every block in reading order with its width in one change: most important first, related things together, rows of twelve filled, headings in order.`,
 	`5. Change a block with PATCH /api/block/{id}, take it away with DELETE /api/block/{id}. GET /api/look?path=/ reads the page as a screen reader gets it.`,
-	`Records: POST /api/{type} makes one (its fields: /api/describe/types/{type}), PATCH /api/{type}/{id} changes one. A page's form answers in JSON only when sent with Accept: application/json (actions below); without it the answer is a page.`,
+	`The day: GET /api/today is what the person's Today page holds, as JSON: what is late, due and on, and on a long day the three to start with. Records: POST /api/{type} makes one (its fields: /api/describe/types/{type}), PATCH /api/{type}/{id} changes one. A page's form answers in JSON only when sent with Accept: application/json (actions below); without it the answer is a page.`,
 }
 
 // indexFirst are the routes an agent building needs, in the order it needs
