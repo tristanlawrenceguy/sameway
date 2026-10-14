@@ -4,6 +4,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/fold"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -15,11 +16,10 @@ import (
 // only finds them; the assistant is told when it makes one (create_record),
 // and a list offers to keep one of those nothing tells apart (Twins).
 
-// NameKey is a name as two names are compared: in any case, its spaces
-// one. A list tells such names apart (blocks.Apart) and this finds them.
-func NameKey(s string) string {
-	return strings.ToLower(strings.Join(strings.Fields(s), " "))
-}
+// NameKey is a name as two names are compared: in any case and form, its
+// spaces one (fold.Key). A list tells such names apart (blocks.Apart) and
+// this finds them.
+func NameKey(s string) string { return fold.Key(s) }
 
 // alikeKinds says whether a type's records can be one thing twice. An
 // email, a file or a device is a copy of something elsewhere, and two

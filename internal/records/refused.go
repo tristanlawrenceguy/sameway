@@ -5,7 +5,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/render"
+	"github.com/tristanlawrenceguy/sameway/internal/fold"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
 
@@ -20,7 +20,7 @@ import (
 // when the name is near one, then every one of names.
 func NoType(name string, names []string) string {
 	out := "there is no content type " + name
-	if near := render.Nearest(name, names); near != "" {
+	if near := fold.Nearest(name, names); near != "" {
 		out += " (did you mean " + near + "?)"
 	}
 	return out + "; the workspace has " + schema.Names(names)
@@ -44,7 +44,7 @@ func Unknown(unknown, takes []string) string {
 	words := make([]string, len(unknown))
 	for i, u := range slices.Sorted(slices.Values(unknown)) {
 		words[i] = u
-		if near := render.Nearest(u, takes); near != "" {
+		if near := fold.Nearest(u, takes); near != "" {
 			words[i] += " (did you mean " + near + "?)"
 		}
 	}

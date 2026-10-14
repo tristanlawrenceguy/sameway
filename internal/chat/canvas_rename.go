@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/fold"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
@@ -36,7 +37,7 @@ func (s *Service) renameCanvas(id, name string) toolResult {
 		return fail("no canvas with id %s; the tabs are listed in the prompt", id)
 	}
 	for _, c := range s.Canvases() {
-		if c.ID != id && strings.EqualFold(c.Name, name) {
+		if c.ID != id && fold.Same(c.Name, name) {
 			return fail("there is already a tab called %q (canvas %q); give this one another name", c.Name, c.ID)
 		}
 	}

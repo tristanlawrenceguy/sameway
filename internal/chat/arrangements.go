@@ -182,37 +182,26 @@ func (s *Service) arrangementCatalogue() string {
 		return ""
 	}
 	var b strings.Builder
-	b.WriteString("\nArrangements (name: description; when; then the blocks by key as component, region, span). When the person asks for a whole thing rather than one block, add_arrangement lays it out in one call. Its blocks show the person's own records and say so when there are none; fill them by creating the records the person gave you, never examples:\n")
+	b.WriteString("\nArrangements (name: description; when; its blocks by key, for fills). When the person asks for a whole thing rather than one block, add_arrangement lays it out in one call. Its blocks show the person's own records and say so when there are none; fill them by creating the records the person gave you, never examples:\n")
 	for _, a := range arrangements {
-		fmt.Fprintf(&b, "\n%s: %s", a.Name, a.Description)
+		fmt.Fprintf(&b, "%s: %s", a.Name, a.Description)
 		if a.Use != nil {
-			fmt.Fprintf(&b, " Use when: %s", a.Use.When)
-			if a.Use.Not != "" {
-				fmt.Fprintf(&b, " Not when: %s", a.Use.Not)
-			}
+			fmt.Fprintf(&b, " Use when: %s", firstSentence(a.Use.When))
 		}
 		for _, n := range a.Needs {
 			fmt.Fprintf(&b, " Needs a %s type.", n.Type)
 		}
-		b.WriteString("\n")
+		// The keys, for fills; where each goes and how wide is the
+		// arrangement's own, laid out by add_arrangement.
+		var keys []string
 		for _, blk := range a.Blocks {
-			region := blk.Region
-			if region == "" {
-				region = "main"
-			}
-			span := blk.Span
-			if span == 0 {
-				span = 6
-			}
 			what := blk.Component
 			if t, _ := blk.Props["type"].(string); t != "" {
 				what += " of " + t
-				if w, _ := blk.Props["where"].([]any); len(w) > 0 {
-					what += fmt.Sprintf(" %v", w)
-				}
 			}
-			fmt.Fprintf(&b, "  %s: %s, %s, span %d\n", blk.Key, what, region, span)
+			keys = append(keys, blk.Key+" ("+what+")")
 		}
+		fmt.Fprintf(&b, " Blocks: %s.\n", strings.Join(keys, ", "))
 	}
 	return b.String()
 }

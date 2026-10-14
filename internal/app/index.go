@@ -3,7 +3,8 @@ package app
 import (
 	"fmt"
 	"sort"
-	"strings"
+
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
 
 // Index is what GET /api/describe and the MCP describe tool answer with
@@ -12,15 +13,18 @@ import (
 // description is hundreds of kilobytes; an agent handed that read the
 // routes last, never found how to add a block, and wrote an HTML page of
 // its own instead, and over MCP it was more than the client would take.
-// Each list is of lines, "name: what", so the order holds and it stays small.
+// It says whole only what building takes (how, adding a block, laying out
+// a page, what an error says) and the routes most used in a line each;
+// every other route, component and type is a name, said whole at its own
+// address. Lines for all of them made it 16 KB, a client's whole limit.
 type Index struct {
 	Workspace  string   `json:"workspace"`
 	Dir        string   `json:"dir"`
 	About      string   `json:"about"`
 	Build      []string `json:"build"`
 	Routes     []string `json:"routes"`
-	Components []string `json:"components"`
-	Types      []string `json:"types"`
+	Components string   `json:"components"`
+	Types      string   `json:"types"`
 	More       []string `json:"more"`
 }
 
@@ -38,7 +42,7 @@ var indexBuild = []string{
 
 // indexFirst are the routes an agent building needs, in the order it needs
 // them, said whole; the rest follow by name, in a line each.
-var indexFirst = []string{"block_add", "block_update", "block_arrange", "block_remove", "blocks", "errors"}
+var indexFirst = []string{"block_add", "block_arrange", "errors"}
 
 // indexShort says the routes most used next in a line, where their own
 // first words would not.
@@ -70,55 +74,30 @@ func (d Description) Index() Index {
 			seen[k] = true
 		}
 	}
-	var rest []string
+	var short, names []string
 	for k := range d.Routes {
-		if !seen[k] {
-			rest = append(rest, k)
+		switch {
+		case seen[k]:
+		case indexShort[k] != "":
+			short = append(short, k+": "+indexShort[k])
+		default:
+			names = append(names, k)
 		}
 	}
-	sort.Slice(rest, func(i, j int) bool {
-		_, si := indexShort[rest[i]]
-		_, sj := indexShort[rest[j]]
-		if si != sj {
-			return si
-		}
-		return rest[i] < rest[j]
-	})
-	for _, k := range rest {
-		how, ok := indexShort[k]
-		if !ok {
-			how = brief(d.Routes[k], 90)
-		}
-		x.Routes = append(x.Routes, k+": "+how)
-	}
+	sort.Strings(short)
+	sort.Strings(names)
+	x.Routes = append(x.Routes, short...)
+	x.Routes = append(x.Routes, "and by name, each whole at GET /api/describe/routes/{name}: "+schema.Names(names))
+	var comps, types []string
 	for _, c := range d.Components {
-		x.Components = append(x.Components, c.Name+": "+brief(c.Description, 90))
+		comps = append(comps, c.Name)
 	}
 	for _, t := range d.Types {
-		if t.Internal {
-			continue
+		if !t.Internal {
+			types = append(types, fmt.Sprintf("%s (%d)", t.Name, t.Count))
 		}
-		var fields []string
-		for _, f := range t.Fields {
-			fields = append(fields, f.Name)
-		}
-		x.Types = append(x.Types, fmt.Sprintf("%s (%d): %s", t.Name, t.Count, strings.Join(fields, ", ")))
 	}
+	x.Components = schema.Names(comps)
+	x.Types = schema.Names(types) + "; how many each has in brackets"
 	return x
-}
-
-// brief is the start of a description, up to its first sentence and at
-// most n bytes, cut at a word; the rest is at its own address.
-func brief(s string, n int) string {
-	if i := strings.Index(s, ". "); i > 0 {
-		s = s[:i+1]
-	}
-	if len(s) <= n {
-		return s
-	}
-	cut := strings.LastIndex(s[:n], " ")
-	if cut <= 0 {
-		cut = n
-	}
-	return strings.TrimRight(s[:cut], ",;:") + "..."
 }

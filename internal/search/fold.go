@@ -1,13 +1,12 @@
 package search
 
 import (
-	textfold "github.com/tristanlawrenceguy/sameway/internal/fold"
 	"sort"
 	"strings"
 	"unicode"
 	"unicode/utf8"
 
-	"golang.org/x/text/unicode/norm"
+	textfold "github.com/tristanlawrenceguy/sameway/internal/fold"
 )
 
 // Forgiving words. A search is read the way a person means it, not letter
@@ -24,17 +23,12 @@ func foldIndex(s string) (string, []int) {
 	var b strings.Builder
 	var at []int
 	for i, r := range s {
-		for _, f := range norm.NFD.String(string(unicode.ToLower(r))) {
-			if unicode.Is(unicode.Mn, f) {
-				continue
-			}
-			f = textfold.Plain(f) // a curly quote is a quote, as String has it
-			n := utf8.RuneLen(f)
+		textfold.Each(r, func(f rune) { // the one rule, as String has it
 			b.WriteRune(f)
-			for k := 0; k < n; k++ {
+			for k := 0; k < utf8.RuneLen(f); k++ {
 				at = append(at, i)
 			}
-		}
+		})
 	}
 	return b.String(), at
 }

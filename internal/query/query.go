@@ -198,17 +198,16 @@ func compare(kind string, v any, op, want string, now time.Time) bool {
 		wantB := want == "true" || want == "yes" || want == "1"
 		return (have == wantB) == (op == "=" || op == "<=" || op == ">=")
 	}
-	have := strings.ToLower(text(v))
-	want = strings.ToLower(want)
+	have := text(v)
 	switch op {
 	case "~":
 		return strings.Contains(fold.String(have), fold.String(want)) // as search reads words: Sao finds São
 	case "=":
-		return have == want
+		return fold.Same(have, want) // one name in any case and form
 	case "!=":
-		return have != want
+		return !fold.Same(have, want)
 	}
-	return ordered(strings.Compare(have, want), op)
+	return ordered(fold.Compare(have, want), op)
 }
 
 func ordered(cmp int, op string) bool {
@@ -266,7 +265,8 @@ func lessThan(kind string, a, b any) bool {
 		x, _ := a.(bool)
 		y, _ := b.(bool)
 		return !x && y
+	case "date", "datetime":
+		return text(a) < text(b) // RFC 3339, which sorts as it should
 	}
-	// Dates are RFC 3339 strings, which sort as they should.
-	return strings.ToLower(text(a)) < strings.ToLower(text(b))
+	return fold.Less(text(a), text(b)) // Émile with E, Item 2 before Item 10
 }
