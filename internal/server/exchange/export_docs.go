@@ -69,7 +69,7 @@ func (s *Service) DocumentLinks(r *http.Request, t *schema.Type, rec *store.Reco
 		item := map[string]any{"href": "/export/" + t.Name + "/" + rec.ID + "." + ext, "format": ext}
 		if ext != "html" && ext != "pdf" {
 			if body, _, err := s.recordFile(r, t, rec, ext); err == nil {
-				item["size"] = blocks.SizeWords(int64(len(body)))
+				item["size"] = blocks.DownloadSize(int64(len(body)))
 			}
 		}
 		items = append(items, item)
@@ -262,7 +262,11 @@ func (s *Service) TakeEverything(r *http.Request) string {
 			}
 		}
 	}
+	size := blocks.DownloadSize(n)
+	if size != "" {
+		size = "about " + size
+	}
 	return string(s.Component("export", map[string]any{"what": "everything in " + s.app.Workspace.Config.Name,
 		"note":  "Every record as Markdown, every file as it was added, and a spreadsheet of each kind of record. Conversations and the log stay here.",
-		"items": []any{map[string]any{"href": "/export/workspace.zip", "format": "zip", "size": "about " + blocks.SizeWords(n)}}}))
+		"items": []any{map[string]any{"href": "/export/workspace.zip", "format": "zip", "size": size}}}))
 }

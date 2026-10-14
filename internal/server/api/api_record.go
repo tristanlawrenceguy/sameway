@@ -20,9 +20,12 @@ import (
 // internal/relate.
 
 func (s *Service) apiGet(w http.ResponseWriter, r *http.Request) {
+	if !s.knownType(w, r) || refusedWords(w, r, "/api/"+r.PathValue("type")+"/{id}", recordWords) { // api_refusals.go, api_params.go
+		return
+	}
 	rec, err := s.app.Store.Get(r.PathValue("type"), r.PathValue("id"))
 	if err != nil {
-		web.WriteError(w, err)
+		writeErr(w, r, err)
 		return
 	}
 	only, err := s.onlyFields(r, rec.Type)

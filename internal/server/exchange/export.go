@@ -60,11 +60,11 @@ func (s *Service) exportRecords(t *schema.Type, q url.Values) ([]*store.Record, 
 }
 
 func formatList(t *schema.Type) string {
-	var names []string
+	var exts []string
 	for _, f := range export.For(t) {
-		names = append(names, "."+f.Ext)
+		exts = append(exts, "."+f.Ext)
 	}
-	return strings.Join(names, ", ")
+	return strings.Join(exts, ", ")
 }
 
 // ExportLinks is the list page's way out: each format the type can be,
@@ -98,15 +98,11 @@ func (s *Service) ExportLinks(t *schema.Type, q url.Values, recs []*store.Record
 // read as the system talking (crew finding 0711).
 func (s *Service) exportSize(f export.Format, t *schema.Type, recs []*store.Record) string {
 	var n counter
-	if err := export.Write(&n, f, t, recs, s.RefTitle, s.Now().Location()); err != nil || int64(n) < sizeWorthSaying {
+	if err := export.Write(&n, f, t, recs, s.RefTitle, s.Now().Location()); err != nil {
 		return ""
 	}
-	return blocks.SizeWords(int64(n))
+	return blocks.DownloadSize(int64(n))
 }
-
-// sizeWorthSaying is the size from which a download's size is said: a
-// file a phone or a mail would notice.
-const sizeWorthSaying = 1 << 20
 
 // counter counts what is written to it.
 type counter int64

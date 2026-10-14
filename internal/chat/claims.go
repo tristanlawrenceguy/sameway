@@ -54,6 +54,9 @@ var saidDone = regexp.MustCompile(`(?i)\A\W*(?:I(?:'ve| have)?\s+|Done[,:—-]?\
 // was needed (copying how earlier replies read). Empty when the reply
 // stands. A change made outside (Claude Code's tools) is in the log.
 func (s *Service) unmade(ctx context.Context, reply, said string, changes []records.Change) string {
+	if !s.claimWrong(ctx, reply, said, changes) {
+		return s.inTheirWords(reply) // claims_words.go
+	}
 	claims, _ := VerifyClaims(ctx, s.Store, reply)
 	var missing []string
 	for _, c := range claims {
@@ -65,14 +68,23 @@ func (s *Service) unmade(ctx context.Context, reply, said string, changes []reco
 		log.Printf("chat: the reply named %s, which does not exist; asking the model to make it", strings.Join(missing, ", "))
 		return fromSameway("there is no page at " + strings.Join(missing, ", ") + ": nothing was made. Make it with the tools, then say where it is." + answerAgain)
 	}
+	log.Printf("chat: the reply says it changed something, and nothing changed; asking the model again")
+	return fromSameway("Nothing has changed in this turn: no tool made or changed anything. If the person asked for a change, make it now with the tools, then say what you did. If not, answer them without saying anything was done." + answerAgain)
+}
+
+// claimWrong says a reply claims what was not made: a page that does not
+// exist, or a change in a turn that changed nothing.
+func (s *Service) claimWrong(ctx context.Context, reply, said string, changes []records.Change) bool {
+	claims, _ := VerifyClaims(ctx, s.Store, reply)
+	for _, c := range claims {
+		if !c.Exists {
+			return true
+		}
+	}
 	if s.runsToolsOutside() {
 		changes = s.changesAfter(said)
 	}
-	if len(changes) == 0 && saidDone.MatchString(reply) {
-		log.Printf("chat: the reply says it changed something, and nothing changed; asking the model again")
-		return fromSameway("Nothing has changed in this turn: no tool made or changed anything. If the person asked for a change, make it now with the tools, then say what you did. If not, answer them without saying anything was done." + answerAgain)
-	}
-	return ""
+	return len(changes) == 0 && saidDone.MatchString(reply)
 }
 
 // fromSameway is a word to the model that comes from Sameway, not the

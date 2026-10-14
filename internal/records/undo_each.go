@@ -15,24 +15,12 @@ func (b *Book) UndoEach(ids []string) (said []string, changes []Change, err erro
 	for i, id := range ids {
 		s, c, err := b.Undo(id)
 		if err != nil {
-			b.redo(changes)
+			b.putBack(changes) // write_all.go
 			return nil, nil, fmt.Errorf("nothing was undone: %s of %d could not be, %v", ordinal(i+1), len(ids), err)
 		}
 		said, changes = append(said, s), append(changes, c)
 	}
 	return said, changes, nil
-}
-
-// redo puts back what reversals not yet recorded took back, newest first.
-func (b *Book) redo(changes []Change) {
-	for i := len(changes) - 1; i >= 0; i-- {
-		ops := changes[i].Ops
-		back := make([]Op, 0, len(ops))
-		for j := len(ops) - 1; j >= 0; j-- {
-			back = append(back, Op{Type: ops[j].Type, ID: ops[j].ID, After: ops[j].Before})
-		}
-		b.Apply(back...) // best effort: each was written a moment ago
-	}
 }
 
 // KeptAll is what a run of undos kept, as one sentence, or "".

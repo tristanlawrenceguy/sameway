@@ -149,7 +149,7 @@ func TestContentCommands(t *testing.T) {
 	if del.code != 0 {
 		t.Errorf("delete: %+v", del)
 	}
-	if again := run(t, dir, "note", "get", rec.ID); again.code != 1 || !strings.Contains(again.stderr, "not found") {
+	if again := run(t, dir, "note", "get", rec.ID); again.code != 1 || !strings.Contains(again.stderr, "no note with id "+rec.ID) {
 		t.Errorf("get after delete: %+v", again)
 	}
 }

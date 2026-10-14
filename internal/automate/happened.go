@@ -184,7 +184,7 @@ func (s *Service) recordVars(t *schema.Type, rec *store.Record) map[string]strin
 					}
 				}
 			}
-			vars[f.Name] = strings.Join(names, ", ")
+			vars[f.Name] = schema.Names(names)
 		case f.Type == "list":
 			vars[f.Name] = strings.Join(records.StringList(v), ", ")
 		default:

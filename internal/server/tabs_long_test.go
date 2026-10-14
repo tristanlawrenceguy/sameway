@@ -1,6 +1,7 @@
 package server_test
 
 import (
+	"golang.org/x/net/html"
 	"net/http"
 	"strings"
 	"testing"
@@ -23,7 +24,13 @@ func TestALongTabNameIsCutInTheBarAndWholeOnItsPage(t *testing.T) {
 		t.Errorf("a name over 60 characters is refused: %d", over.Code)
 	}
 
-	links := parse(t, get(t, h, "/")).WithAttr("href", "/c/"+move.ID)
+	// The tab bar's link; the page's recent changes may link to the tab too.
+	var links []*html.Node
+	for _, l := range parse(t, get(t, h, "/")).WithAttr("href", "/c/"+move.ID) {
+		if inTabBar(l) {
+			links = append(links, l)
+		}
+	}
 	if len(links) != 1 {
 		t.Fatalf("one tab links to the move, got %d", len(links))
 	}
@@ -34,4 +41,16 @@ func TestALongTabNameIsCutInTheBarAndWholeOnItsPage(t *testing.T) {
 	if h1 := page.Elements("h1"); len(h1) == 0 || !strings.Contains(htmltest.Text(h1[0]), long) {
 		t.Errorf("the tab's own page is headed with its whole name")
 	}
+}
+
+// inTabBar says a node sits in the tab bar.
+func inTabBar(n *html.Node) bool {
+	for p := n.Parent; p != nil; p = p.Parent {
+		for _, a := range p.Attr {
+			if a.Key == "aria-label" && a.Val == "Canvases" {
+				return true
+			}
+		}
+	}
+	return false
 }

@@ -64,6 +64,7 @@ func run(root string) report {
 	r.add(checkWallClock(root, wallClock))
 	r.add(checkStoreWrites(root, storeWrites))
 	r.add(checkErrorCodes(root))
+	r.add(checkNameJoins(root))
 	r.add(checkTestHome(root))
 	r.problems = append(r.problems, checkComponents(filepath.Join(root, "design/components"))...)
 	r.problems = append(r.problems, checkTokens(root)...)

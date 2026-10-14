@@ -3,11 +3,13 @@ package cli
 import (
 	"flag"
 	"fmt"
-	"github.com/tristanlawrenceguy/sameway/internal/apps"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/tristanlawrenceguy/sameway/internal/apps"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
 
 // connect prints, or writes, the exact configuration that hooks a tool up
@@ -46,7 +48,7 @@ func (c *ctx) connectCmd() error {
 	}
 	cl, ok := apps.Apps[positional[0]]
 	if !ok {
-		return fmt.Errorf("no tool called %q; one of %s, or chatgpt for a client elsewhere", positional[0], strings.Join(names, ", "))
+		return fmt.Errorf("no tool called %q; one of %s, or chatgpt for a client elsewhere", positional[0], schema.Names(names))
 	}
 	exe, err := os.Executable()
 	if err != nil {
