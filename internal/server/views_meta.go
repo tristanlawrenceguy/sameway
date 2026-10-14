@@ -91,11 +91,12 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 
 // whenMade says when a record was made, as a person reads a time, and where
 // its words came from when that was not the owner, in one quiet line under
-// its fields. No field-name label prefix: just the relative timestamp text so
-// dates read naturally without "Added" or "Started" before them. Rendered
-// output: <span class="sw-detail__when sw-muted sw-small"><time datetime="…">3 days ago</time></span>
+// its fields. A visible "Created" label prefixes the timestamp so readers
+// know what they are looking at; dates read naturally without "Added" or
+// "Started" because "Created" is plain language for any record type. Rendered
+// output: <span class="sw-detail__when sw-muted sw-small">Created <time datetime="…">3 days ago</time></span>
 func (s *Server) whenMade(t *schema.Type, rec *store.Record, from string) string {
-	line := s.happened("", rec.CreatedAt, s.now())
+	line := "Created " + s.happened("", rec.CreatedAt, s.now())
 	if from != "" {
 		line += " · From: " + template.HTMLEscapeString(from)
 	}

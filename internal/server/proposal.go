@@ -3,6 +3,7 @@ package server
 import (
 	"html/template"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
@@ -81,6 +82,9 @@ func proposalDetail(action any) string {
 			return "This would add a " + component + " to the page."
 		}
 	case "remove_component":
+		if ids, _ := a["ids"].([]any); len(ids) > 1 {
+			return "This would remove those " + strconv.Itoa(len(ids)) + " blocks from the page."
+		}
 		return "This would remove that block from the page."
 	case "update_component":
 		return "This would change that block."
