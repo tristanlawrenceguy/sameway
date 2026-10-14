@@ -64,9 +64,9 @@ func measuredHow(all []placed) string {
 	case len(on) == 0:
 		return " Heights estimated: nobody has opened this tab since it changed."
 	case missing > 0:
-		return fmt.Sprintf(" Heights measured on %s; %d block(s) changed since, estimated.", strings.Join(on, " and "), missing)
+		return fmt.Sprintf(" Heights measured on %s; %d block(s) changed since, estimated.", strings.Join(on, " and "), missing) + phoneSaid(all)
 	}
-	return " Heights measured on " + strings.Join(on, " and ") + "."
+	return " Heights measured on " + strings.Join(on, " and ") + "." + phoneSaid(all) // layout_phone.go
 }
 
 // px writes a number of pixels the way it is read: 1,240.
