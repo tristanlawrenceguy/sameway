@@ -23,6 +23,8 @@ type shownRecord struct {
 	// way in (records/notes.go): a record called as open ones are, a block
 	// over records another already shows.
 	Notes []string `json:"notes,omitempty"`
+	// Undo is how to take the write back (api_undo_said.go).
+	Undo *undoSaid `json:"undo,omitempty"`
 }
 
 // blockWrite holds a block written through the API to what the

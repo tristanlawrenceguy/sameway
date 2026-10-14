@@ -22,6 +22,7 @@ var Routes = []web.Route[*Service]{
 	{Pattern: "POST /api/{type}", Handle: (*Service).apiCreate, Access: web.People, Reach: web.Inward},
 	{Pattern: "GET /api/{type}/{id}", Handle: (*Service).apiGet, Access: web.People},
 	{Pattern: "PUT /api/{type}/{id}", Handle: (*Service).apiUpdate, Access: web.People, Reach: web.Inward},
+	{Pattern: "PATCH /api/{type}", Handle: (*Service).apiUpdateMany, Access: web.People, Reach: web.Inward},
 	{Pattern: "PATCH /api/{type}/{id}", Handle: (*Service).apiUpdate, Access: web.People, Reach: web.Inward},
 	{Pattern: "DELETE /api/{type}/{id}", Handle: (*Service).apiDelete, Access: web.People, Reach: web.Inward},
 	{Pattern: "/api/", Handle: (*Service).apiNotFound, Access: web.People, Reach: web.Inward},
