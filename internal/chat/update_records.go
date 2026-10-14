@@ -68,5 +68,5 @@ func (s *Service) updateRecords(typeName string, ids []string, fields map[string
 	if len(ids) == 1 {
 		c.ID, c.Detail, c.Href = ids[0], titles[0], "/t/"+t.Name+"/"+ids[0]
 	}
-	return toolResult{text: fmt.Sprintf("updated %s, as one change (one Undo puts them all back): %s.", schema.Count(len(ids), t.Name), strings.Join(titles, ", ")), change: &c}
+	return toolResult{text: fmt.Sprintf("updated %s, as one change (one Undo puts them all back): %s.", schema.Count(len(ids), t.Name), strings.Join(titles, namesSep(titles))), change: &c} // remove.go
 }
