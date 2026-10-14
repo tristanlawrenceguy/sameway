@@ -57,7 +57,7 @@ func (s *Service) updateRecords(typeName string, ids []string, fields map[string
 	}
 	_, done, i, err := records.WriteAll(s.Store, "updated", t.Name, writes) // all or none
 	if err != nil {
-		return fail("Nothing was changed: %s %s could not be — %s. %s Fix the fields and call update_records again.", t.Name, ids[i], humanizeValidationError(err.Error()), typeHelp(t))
+		return fail("Nothing was changed: %s %s could not be — %s. %s Fix the fields and call update_records again.", t.Name, ids[i], humanizeValidationError(err.Error()), fieldHelp(err, t))
 	}
 	ops, titles := records.Joined(done), make([]string, len(done))
 	for i, c := range done {
