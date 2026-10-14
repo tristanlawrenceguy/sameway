@@ -2,6 +2,7 @@ package chat
 
 import (
 	"encoding/json"
+	"github.com/tristanlawrenceguy/sameway/internal/jsontext"
 
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
@@ -17,7 +18,7 @@ func ForModel(raw json.RawMessage) json.RawMessage {
 	if err := json.Unmarshal(raw, &v); err != nil {
 		return raw
 	}
-	out, err := json.Marshal(trimFilled(v))
+	out, err := jsontext.Marshal(trimFilled(v))
 	if err != nil {
 		return raw
 	}

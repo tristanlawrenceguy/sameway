@@ -1,8 +1,8 @@
 package chat
 
 import (
-	"encoding/json"
 	"fmt"
+	"github.com/tristanlawrenceguy/sameway/internal/jsontext"
 	"strconv"
 	"strings"
 
@@ -240,7 +240,7 @@ func grow(all []placed, canvas string, p placed) string {
 	if canvas != "" {
 		call["canvas"] = canvas
 	}
-	raw, _ := json.Marshal(call)
+	raw, _ := jsontext.Marshal(call)
 	return joinAnd(how) + ": arrange_canvas " + string(raw)
 }
 

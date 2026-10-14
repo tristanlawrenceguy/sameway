@@ -13,7 +13,7 @@ func TestAListRefusesAWordItDoesNotTake(t *testing.T) {
 	t.Parallel()
 	_, h := newApp(t)
 	res := get(t, h, "/api/activity?since=today")
-	if res.Code < 400 || !strings.Contains(res.Body.String(), "does not take since") || !strings.Contains(res.Body.String(), `created_at\u003e=today`) { // as JSON writes >
+	if res.Code < 400 || !strings.Contains(res.Body.String(), "does not take since") || !strings.Contains(res.Body.String(), "created_at>=today") { // as written: the API does not escape > (jsontext)
 		t.Errorf("since is refused, with what to ask instead: %d %s", res.Code, res.Body)
 	}
 	for _, ok := range []string{"/api/task?where=done%3Dfalse&order=-due&limit=5&fields=title", "/api/note?page=1", "/api/block?canvas="} {

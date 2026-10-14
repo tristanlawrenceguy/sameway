@@ -1,8 +1,8 @@
 package chat
 
 import (
-	"encoding/json"
 	"fmt"
+	"github.com/tristanlawrenceguy/sameway/internal/jsontext"
 	"os"
 	"path/filepath"
 	"strings"
@@ -141,7 +141,7 @@ func (s *Service) updateRecord(typeName, id string, fields map[string]any, versi
 		return r
 	}
 	if version != "" && !records.SameVersion(was, version) {
-		now, _ := json.Marshal(was.Fields)
+		now, _ := jsontext.Marshal(was.Fields)
 		return fail("%s %s has changed since version %s, so nothing was written. As it is now (version %s): %s. Make your change to this and send it with the new version", t.Name, id, version, records.Version(was), now)
 	}
 	rec, c, err := records.Write(s.Store, "updated", t.Name, id, fields)
