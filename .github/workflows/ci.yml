@@ -32,27 +32,22 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 2
-      # The browser jobs check what a page is drawn from: templates, css,
-      # scripts, the server and the components. A pull request that changes
-      # only what the assistant is told (internal/chat, llm, mcp), words
-      # (*.md, docs) or tests (*_test.go) cannot change those, and running
-      # seven browser jobs for it held runners other runs queued behind.
-      # Anything else, and every push to main, runs them all.
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      # Whether a pull request can change what a page is drawn from, and so
+      # whether the browser jobs run: tools/scope, whose cases are its tests.
+      # Every push to main runs them all.
       - name: Does this change what a page is drawn from?
         id: scope
         run: |
           browser=true
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            changed=$(git diff --name-only --no-renames HEAD^1 HEAD) # a file moved here is gone from where it was, too
-            other=$(printf '%s\n' "$changed" | grep -v -E '^(internal/chat/|internal/llm/|internal/mcp/|docs/)|\.md$|_test\.go$' | grep -v '^$' || true)
-            if [ -n "$changed" ] && [ -z "$other" ]; then browser=false; fi
-            echo "changed:"; printf '%s\n' "$changed"
+            git diff --name-only --no-renames HEAD^1 HEAD | tee /tmp/changed
+            browser=$(go run ./tools/scope < /tmp/changed)
           fi
           echo "browser jobs: $browser"
           echo "browser=$browser" >> "$GITHUB_OUTPUT"
-      - uses: actions/setup-go@v6
-        with:
-          go-version-file: go.mod
       - name: Format
         run: test -z "$(gofmt -l .)" || (gofmt -l . && exit 1)
       - name: Vet

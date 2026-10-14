@@ -23,7 +23,8 @@ import (
 func TestNoMachineWordsReachAPerson(t *testing.T) {
 	t.Parallel()
 	a, h := newApp(t)
-	seedLikeAPerson(t, a, h) // machine_seed_test.go
+	seedLikeAPerson(t, a, h)         // machine_seed_test.go
+	extra := seedEveryState(t, a, h) // every_state_seed_test.go: the states and pages the crawl reads too
 
 	m := machineSeen{ids: map[string]bool{}, fields: map[string]bool{}, choices: map[string]bool{}}
 	var paths []string
@@ -51,7 +52,8 @@ func TestNoMachineWordsReachAPerson(t *testing.T) {
 		}
 	}
 	m.fields["Created At"], m.fields["Updated At"] = true, true
-	paths = append(paths, "/", "/activity", "/search?q=paint", "/search?q=draft", "/calendar", "/help", "/workspaces")
+	paths = append(paths, "/", "/activity", "/search?q=paint", "/search?q=draft", "/calendar", "/help", "/workspaces", "/today", "/chat", "/templates")
+	paths = append(paths, extra...)
 	sort.Strings(paths)
 
 	found := map[string][]string{}
