@@ -163,6 +163,45 @@ layout that guarantees UX rules). Sameway keeps the rules in code and
 the decision with the model: the line says what breaks which rule and one
 call that would fix it, and the model sends it, changes it, or leaves it.
 
+## Tidy: one press for what is broken, not a control
+
+A tab can gather a block that cannot be shown (its component gone, its
+props no longer fitting, its records unresolvable) and the same block
+twice. The assistant is told beside each block and at the start of a
+turn on that tab; it proposes taking them away when it changes the tab
+anyway, and does not tidy unasked. The person sees the broken boxes too,
+so under the tabs, to anyone who may change the tab, one line names what
+would go and offers Tidy this page.
+
+- **Not a layout control.** It moves and resizes nothing; it takes away
+  only what Sameway itself finds broken or repeated, so it is "let
+  Sameway fix it", not a handle. Where the blocks sit stays the
+  assistant's.
+- **Names what goes, before.** "2 blocks here cannot be shown or repeat
+  another: “Weather” is here twice; a button cannot be shown." Outlook's
+  Sweep and Photos' Duplicates say exactly what goes and which copy stays
+  ([Outlook Sweep](https://support.microsoft.com/en-us/office/organize-your-inbox-with-archive-sweep-and-other-tools-in-outlook-com-dd19e8e1-1a4b-4b3e-a0b9-aa3b14a4e9b5),
+  [Photos duplicates](https://support.apple.com/guide/photos/pht5a3157c1d/mac));
+  here the first of a repeat stays, and the outcome says so.
+- **Takes only what it named.** The press sends the blocks the line
+  named, and only those that are still broken or repeated go; a page left
+  open never takes something it did not say.
+- **Nothing yet is not broken.** A list of tasks with no tasks yet shows
+  "nothing yet" and is never offered: it fills in as records come.
+- **One change, one Undo, no question first.** Taking a block away is
+  reversible, so the press acts and the outcome carries Undo, rather than
+  asking "Are you sure?"
+  ([NN/g, user control and freedom](https://www.nngroup.com/articles/user-control-and-freedom/)).
+- **For agents the same.** `POST /tidy` is the page twin of
+  `remove_component`; sent without names, it takes everything broken or
+  repeated on the tab.
+
+Not done, and why: the assistant removing them on its own. Every cleanup
+in the products above (Sweep, Google One's clean-up suggestions, Photos'
+Duplicates) is offered and pressed, never done unseen, and a block the
+person put there twice may be meant; the assistant proposes, the person
+presses.
+
 ## Not done
 
 - Height is measured only once someone who may change a tab has opened
