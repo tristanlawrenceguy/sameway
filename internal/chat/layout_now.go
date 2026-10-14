@@ -204,8 +204,9 @@ func (s *Service) LayoutNow(canvas string) string {
 	b.WriteString(".")
 	b.WriteString(measuredHow(all))
 	problems := append(layoutProblems(all), roomProblems(all, canvas)...)
-	problems = append(problems, s.clutterProblems(recs)...) // layout_clutter.go
-	problems = append(problems, copiesProblems(recs)...)    // layout_copies.go
+	problems = append(problems, s.clutterProblems(recs)...)  // layout_clutter.go
+	problems = append(problems, copiesProblems(recs)...)     // layout_copies.go
+	problems = append(problems, s.leftoverProblems(recs)...) // layout_leftover.go
 	if len(problems) == 0 {
 		b.WriteString(" It reads in order with full rows.")
 		return b.String()
