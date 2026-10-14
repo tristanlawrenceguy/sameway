@@ -20,11 +20,12 @@ var batchVerbs = map[string]bool{"imported": true, "synced": true, "arranged": t
 // changed it; gone, if it removed it. Anything else in it that is already
 // as it was is let be, and one that went since is put back. Only the
 // thing named is looked at before: a batch of a thousand records is not
-// read on every look at the log, only when it is undone.
+// read on every look at the log, only when it is undone. A field changed
+// again since is kept as it is (undo_since.go).
 func (b *Book) inverseOps(a *store.Record, ops []Op) (func() (Change, error), error) {
 	named := primary(a, ops)
 	if named >= 0 {
-		if _, reason := b.undoOp(ops[named], true); reason != "" {
+		if _, _, reason := b.undoOp(ops[named], true); reason != "" {
 			return nil, errors.New(reason)
 		}
 	} else if len(ops) == 0 {
@@ -32,23 +33,31 @@ func (b *Book) inverseOps(a *store.Record, ops []Op) (func() (Change, error), er
 	}
 	return func() (Change, error) {
 		var back []Op
+		var kept []string
 		for i := len(ops) - 1; i >= 0; i-- {
-			undo, reason := b.undoOp(ops[i], i == named)
+			undo, keptHere, reason := b.undoOp(ops[i], i == named)
 			if reason != "" && i == named {
 				return Change{}, errors.New(reason)
 			}
 			if reason == "" {
 				back = append(back, undo)
 			}
+			if keptHere != "" {
+				kept = append(kept, keptHere)
+			}
 		}
-		if len(back) == 0 {
+		if len(back) == 0 && len(kept) > 0 {
+			return Change{}, errors.New("every record has been changed since")
+		} else if len(back) == 0 {
 			return Change{}, errors.New("every record is already as it was")
 		}
 		done, err := b.Apply(back...)
 		if err != nil {
 			return Change{}, err
 		}
-		return b.reversal(a, ops, done), nil
+		c := b.reversal(a, ops, done)
+		c.Kept = kept
+		return c, nil
 	}, nil
 }
 
@@ -68,16 +77,10 @@ func primary(a *store.Record, ops []Op) int {
 }
 
 // undoOp is the op that puts one thing back as op found it, or why there
-// is nothing to do.
-func (b *Book) undoOp(op Op, strict bool) (Op, string) {
+// is nothing to do; kept names what of it was changed since and stays.
+func (b *Book) undoOp(op Op, strict bool) (undo Op, kept, reason string) {
 	if op.Type == SettingOp {
-		if b.SetSetting == nil || op.Before == nil {
-			return Op{}, "the entry does not say what it was"
-		}
-		if was, _ := op.Before["value"].(string); b.setting(op.ID) == was {
-			return Op{}, "it is already as it was"
-		}
-		return Op{Type: SettingOp, ID: op.ID, After: op.Before}, ""
+		return b.undoSetting(op)
 	}
 	var cur map[string]any
 	if rec, err := b.Store.Get(op.Type, op.ID); err == nil {
@@ -85,17 +88,39 @@ func (b *Book) undoOp(op Op, strict bool) (Op, string) {
 	}
 	switch {
 	case op.Before == nil && cur == nil:
-		return Op{}, "it is already gone"
+		return Op{}, "", "it is already gone"
 	case op.Before == nil:
-		return Op{Type: op.Type, ID: op.ID}, ""
+		return Op{Type: op.Type, ID: op.ID}, "", ""
 	case cur == nil && strict && op.After != nil:
-		return Op{}, "it is gone"
+		return Op{}, "", "it is gone"
 	case cur != nil && op.After == nil:
-		return Op{}, "it is already back"
+		return Op{}, "", "it is already back"
 	case cur != nil && Same(cur, op.Before):
-		return Op{}, "it is already as it was"
+		return Op{}, "", "it is already as it was"
+	case cur == nil:
+		return Op{Type: op.Type, ID: op.ID, After: op.Before}, "", ""
 	}
-	return Op{Type: op.Type, ID: op.ID, After: op.Before}, ""
+	after, fields := sinceFields(op, cur)
+	if len(fields) > 0 {
+		kept = b.keptSaid(op, cur, fields)
+	}
+	if Same(after, cur) {
+		return Op{}, kept, "it has been changed since: " + kept
+	}
+	return Op{Type: op.Type, ID: op.ID, After: after}, kept, ""
+}
+
+// undoSetting puts a setting back. A setting's after is what was asked
+// for ("+fields"), not always what it reads as after, so it is not checked
+// for a change since.
+func (b *Book) undoSetting(op Op) (Op, string, string) {
+	if b.SetSetting == nil || op.Before == nil {
+		return Op{}, "", "the entry does not say what it was"
+	}
+	if was, _ := op.Before["value"].(string); b.setting(op.ID) == was {
+		return Op{}, "", "it is already as it was"
+	}
+	return Op{Type: SettingOp, ID: op.ID, After: op.Before}, "", ""
 }
 
 // reversal says what undoing an entry did, the way the change itself

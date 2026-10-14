@@ -21,9 +21,10 @@ func (s *Server) undo(w http.ResponseWriter, r *http.Request) {
 			what = strings.TrimSuffix(said, ".") + "."
 		}
 	}
-	if err := s.app.Records.UndoAs("human", r.PathValue("id")); err != nil {
+	c, err := s.app.Records.UndoFor("human", r.PathValue("id"))
+	if err != nil {
 		s.failed(w, r, "Not undone", err, "/")
 		return
 	}
-	s.tell(w, r, outcome{Title: "Undone", Text: what}, "/")
+	s.tell(w, r, outcome{Title: "Undone", Text: strings.TrimSpace(what + " " + records.KeptSaid(c))}, "/")
 }

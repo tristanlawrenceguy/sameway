@@ -19,7 +19,7 @@ var undoOp = Op{Title: "Undo a change",
 	Run:    func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.undoSome(a.ID, a.IDs) }, // undo_several.go
 	Tool: llm.Tool{
 		Name:        "undo_change",
-		Description: "Reverse one change from the activity log, yours or the person's: an added thing is removed, a removed thing is put back with everything it had, an update goes back to what it was. Undoing an undo puts it back again. Without an id, the newest change that can still be undone. ids takes several back in one call, in the order given: newest first, as a reply's changes are listed.",
+		Description: "Reverse one change from the activity log, yours or the person's: an added thing is removed, a removed thing is put back with everything it had, an update goes back to what it was, except a field changed again since, which is kept and said. Undoing an undo puts it back again. Without an id, the newest change that can still be undone. ids takes several back in one call, in the order given: newest first, as a reply's changes are listed. All or none: if one cannot be undone, none is, and you are told which.",
 		Schema: map[string]any{"type": "object", "properties": map[string]any{
 			"id":  map[string]any{"type": "string", "description": "The activity entry's id, from the recent changes listed in the prompt."},
 			"ids": map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Several entries' ids, newest first, to take back in one call."},

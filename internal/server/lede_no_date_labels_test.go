@@ -34,7 +34,7 @@ func TestTaskDetailLedeNoUpdatedLabel(t *testing.T) {
 		t.Errorf("task detail lede should not contain \" · Updated\"; got %q", whenText)
 	}
 
-	if !strings.Contains(whenText, "ago") && !strings.HasPrefix(whenText, "Today") {
+	if !strings.Contains(whenText, "ago") && !strings.HasPrefix(whenText, "today") {
 		t.Errorf("task detail lede should start with a relative timestamp; got %q", whenText)
 	}
 }

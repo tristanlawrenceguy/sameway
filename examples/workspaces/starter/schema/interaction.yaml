@@ -23,6 +23,7 @@ fields:
     values: [call, email, meeting, message, note]
     default: note
   at:
+    label: Happened
     type: datetime
     description: When it happened.
   follow_up:
