@@ -68,3 +68,16 @@ func TestCompareSortsAsAPersonReads(t *testing.T) {
 		t.Errorf("sorted %q, want %q", got, want)
 	}
 }
+
+// Did you mean reads a name as finding does, so a habit asked for without
+// its accent or in capitals is found, and a slip of a letter is offered;
+// a short word half wrong is not.
+func TestNearestIsCloseOrNothing(t *testing.T) {
+	t.Parallel()
+	among := []string{"Café", "task", "title", "add", "describe"}
+	for name, want := range map[string]string{"cafe": "Café", "TASKS": "task", "titel": "title", "descrbe": "describe", "ad": "", "zzz": "", "": ""} {
+		if got := fold.Nearest(name, among); got != want {
+			t.Errorf("Nearest(%q) = %q, want %q", name, got, want)
+		}
+	}
+}

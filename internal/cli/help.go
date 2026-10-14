@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+
+	"github.com/tristanlawrenceguy/sameway/internal/fold"
 )
 
 // commands are what sameway does by name; any other word is a content type
@@ -82,7 +84,7 @@ func (c *ctx) helpCmd() error {
 		return nil
 	}
 	if _, ok := commands[c.args[0]]; !ok {
-		if near := nearest(c.args[0], names()); near != "" {
+		if near := fold.Nearest(c.args[0], names()); near != "" {
 			return misused("%q is not a command. Did you mean sameway help %s?", c.args[0], near)
 		}
 	}
@@ -97,38 +99,4 @@ func names() []string {
 	}
 	slices.Sort(out)
 	return out
-}
-
-// nearest is the one of options a typo most likely meant, as git and cargo
-// suggest, or "" when none is close: at most two letters apart, and fewer
-// than half the word.
-func nearest(word string, options []string) string {
-	best, bestD := "", 3
-	for _, o := range options {
-		if d := distance(word, o); d < bestD && d*2 < len(word) {
-			best, bestD = o, d
-		}
-	}
-	return best
-}
-
-// distance is the Levenshtein distance: letters added, taken away or changed.
-func distance(a, b string) int {
-	prev := make([]int, len(b)+1)
-	for j := range prev {
-		prev[j] = j
-	}
-	for i := 1; i <= len(a); i++ {
-		cur := make([]int, len(b)+1)
-		cur[0] = i
-		for j := 1; j <= len(b); j++ {
-			cost := 1
-			if a[i-1] == b[j-1] {
-				cost = 0
-			}
-			cur[j] = min(prev[j]+1, cur[j-1]+1, prev[j-1]+cost)
-		}
-		prev = cur
-	}
-	return prev[len(b)]
 }

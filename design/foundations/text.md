@@ -13,6 +13,7 @@ what the assistant reads.
 | **Finding** (search, `where title~…`) | `fold.String`: case, accents and width off, letters spelled plainly | cafe finds it | strasse finds it | mum's finds it | |
 | **One name** (`title=…`, records alike, names told apart, tags, a person or canvas by name) | `fold.Key`: same letters in any case or stored form | Cafe is another name | STRASSE is it | Mum's is it | |
 | **Order** (a list by title, choices, tags) | `fold.Compare`: Unicode collation, numbers by value | with the E's | | | 2 before 10 |
+| **Did you mean** (a field, a type, a habit, a prop, a command) | `fold.Nearest`: as found, or a letter or two off | cafe offers Café | | | |
 
 Finding forgives most, because a person without the letter on their
 keyboard types it plainly: Łódź as lodz, København as kobenhavn,

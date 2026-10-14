@@ -7,7 +7,6 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/fold"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
-	"github.com/tristanlawrenceguy/sameway/internal/render"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -66,7 +65,7 @@ func pickHabits(recs []*store.Record, named []string) ([]*store.Record, string) 
 				return nil, "there is no habit " + want + ", and no habit yet; create_record a habit first"
 			}
 			said := "there is no habit " + want
-			if near := render.Nearest(want, names); near != "" {
+			if near := fold.Nearest(want, names); near != "" {
 				said += " (did you mean " + near + "?)"
 			}
 			return nil, said + "; the habits are " + strings.Join(names, ", ")
