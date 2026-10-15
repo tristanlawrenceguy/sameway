@@ -34,6 +34,7 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	// One way to list, for the page, the API, an export and the command
 	// line: query.Filter, which with no query is every record.
 	recs, err := query.Filter(s.app.Store, t, where, order, 0, s.now())
+	b.WriteString(string(listNotRead(t, r.URL.Query()))) // list_not_read.go
 	if len(where) > 0 || order != "" {
 		if err != nil {
 			fmt.Fprintf(&b, `<p class="sw-muted">%s</p><p>%s</p>`, template.HTMLEscapeString(refusedSaid(t, err)), s.part(ui.Link{Href: "/t/" + t.Name, Label: "See all " + schema.Plural(t.Name), Look: ui.LookButton}))
@@ -48,8 +49,6 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	}
 	// Files come in through a form, because one field and one button is
 	// the better thing here; it can also be placed anywhere as a block.
-	// Empty-state text: "Ask the assistant to add your first" — replaces old "/Add your first" at /t/note/new.
-	// The new link points to /chat (the working surface) instead of dead form routes.
 	if t.Name == FileType {
 		b.WriteString(string(s.component("upload", map[string]any{"from": "/t/" + FileType, "id": "upload"})))
 	}
