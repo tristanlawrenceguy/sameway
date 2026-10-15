@@ -25,6 +25,8 @@ func TestAFailureIsSortedForAPerson(t *testing.T) {
 		{529, "Overloaded", FailBusy, "busy just now"},
 		{400, "prompt is too long: 210000 tokens > 200000 maximum", FailLong, "Start a new chat"},
 		{404, "model 'x' not found", FailModel, "is not there any more"},
+		{0, "Not logged in · Please run /login", FailSignedOut, "is signed out. Sign in to it again"},
+		{0, "Your organization has disabled Claude subscription access for Claude Code · Use an Anthropic API key instead, or ask your admin to enable access.", FailNoAccess, "its organisation has turned that off. Choose another model"},
 		{400, "something odd", FailOther, "did not answer: something odd"},
 	} {
 		f := Classify(c.status, c.said, "Anthropic", "x")

@@ -117,7 +117,9 @@ func (c *Command) Complete(ctx context.Context, req Request) (*Response, error) 
 				}
 			}
 		}
-		return nil, fmt.Errorf("%s: %v: %s", args[0], err, strings.TrimSpace(tail(said, 600)))
+		// Sorted as any provider's refusal is (failure.go), so the person
+		// reads what happened and what to do, not the program's words.
+		return nil, Classify(0, tail(said, 600), c.who(args[0]), c.Model)
 	}
 	text := strings.TrimSpace(out.String())
 	if c.Field != "" {
