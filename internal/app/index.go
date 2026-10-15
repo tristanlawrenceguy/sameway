@@ -47,7 +47,7 @@ var indexFirst = []string{"block_add", "block_arrange", "errors"}
 // indexShort says the routes most used next in a line, where their own
 // first words would not.
 var indexShort = map[string]string{
-	"list":     "GET /api/{type}: a type's records; ?where=field=value (repeatable), ?order=field or -field, ?page=, ?fields=",
+	"list":     "GET /api/{type}: a type's records; ?where=field=value (repeatable), ?order=field or -field, ?limit= and ?page= (the answer then says total, pages and next), ?fields=",
 	"get":      "GET /api/{type}/{id}: one record, every field, with its title",
 	"create":   "POST /api/{type} with a JSON object of fields, or a JSON array of them to make several as one change (all or none, one Undo); PATCH /api/{type} with {\"ids\": [...], \"fields\": {...}} makes the same change to several",
 	"update":   "PATCH /api/{type}/{id} with the fields to change; If-Match with updated_at refuses a change made from an older version",
