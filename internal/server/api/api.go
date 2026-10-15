@@ -99,6 +99,11 @@ func (s *Service) apiList(w http.ResponseWriter, r *http.Request) {
 	for k, v := range about {
 		answer[k] = v
 	}
+	if t.Name == records.CanvasType {
+		// Home is a tab with no record of its own: an agent told the tabs
+		// were none could not tell where to put a block.
+		answer["home"] = map[string]any{"id": "", "name": "Home", "page": "/", "said": `Home is always there, as canvas "" (or left out); the records are the tabs beside it`}
+	}
 	web.WriteJSON(w, http.StatusOK, answer)
 }
 
