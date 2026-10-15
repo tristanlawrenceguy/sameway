@@ -127,6 +127,7 @@ func (c *ctx) mcpCmd() error {
 	fs := flag.NewFlagSet("mcp", flag.ContinueOnError)
 	fs.SetOutput(c.Stderr)
 	assistant := fs.Bool("assistant", false, "the client is the assistant in the app")
+	only := fs.String("tools", "", "the assistant's tools to list, comma separated; the rest come by more_tools")
 	if err := fs.Parse(c.args); err != nil {
 		return err
 	}
@@ -136,6 +137,12 @@ func (c *ctx) mcpCmd() error {
 	defer stop()
 	a.WatchSchema(ctx, app.SchemaEvery, nil)
 	srv := &mcp.Server{App: a, Version: update.Version, In: in, Out: c.Stdout, Assistant: *assistant}
+	if *only != "" {
+		srv.Only = map[string]bool{}
+		for _, n := range strings.Split(*only, ",") {
+			srv.Only[strings.TrimSpace(n)] = true
+		}
+	}
 	return srv.Serve(ctx)
 }
 
