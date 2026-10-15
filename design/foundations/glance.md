@@ -54,7 +54,7 @@ open each record to tell them apart, few enough to scan
 ([NN/g, list entries](https://www.nngroup.com/articles/list-entries/),
 [NN/g, information scent](https://www.nngroup.com/articles/information-scent/)).
 A row of a type with no day says when it last changed instead, "Changed
-3 days ago"; a record's own page says when it was made, "Created today at
+3 days ago"; a record's own page says when it was made, "Added today at
 2pm".
 
 Which field is a type's day is the schema's one answer (`DayField`):
@@ -160,11 +160,11 @@ its word, the same word for the same thing everywhere
 - **A record's day** by its field's label (Due, Starts, Rings, Logged,
   Happened), from the schema, so a type of one's own is said the same way
   with no code for it.
-- **When a record was made**: Created, the verb the Activity log says of
-  the same change ("created task Buy paint"). **When it last changed**, on
+- **When a record was made**: Added, the past-tense verb the Activity log
+  uses for the same change ("created task Buy paint"). **When it last changed**, on
   a row with no day: Changed, the log's word too.
-- **The word comes first and the time reads on from it**: "Created today
-  at 2pm", not "Created Today at 2pm".
+- **The word comes first and the time reads on from it**: "Added today
+  at 2pm", not "Added Today at 2pm".
 - **Where a heading says it already**, the time is alone: a message's time
   beside who sent it, as chat apps do
   ([NN/g, chat](https://www.nngroup.com/articles/chat-ux/)); an entry in

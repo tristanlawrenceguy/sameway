@@ -7,7 +7,7 @@ import (
 )
 
 // TestHabitDetailLedeCreationTimeIsLabelled asserts that a habit detail page
-// shows "Created" before the creation timestamp in its lede paragraph.
+// shows "Added" before the creation timestamp in its lede paragraph.
 func TestHabitDetailLedeCreationTimeIsLabelled(t *testing.T) {
 	t.Parallel()
 	a, h := newApp(t)
@@ -23,10 +23,10 @@ func TestHabitDetailLedeCreationTimeIsLabelled(t *testing.T) {
 
 	page := get(t, h, "/t/habit/"+rec.ID+fieldsView).Body.String()
 
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*">Created <time[^>]*>([^<]+)</time>`)
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*">Added <time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(page)
 	if len(matches) < 2 {
-		t.Fatal("habit detail page lede should have a sw-detail__when span with \"Created\" label")
+		t.Fatal("habit detail page lede should have a sw-detail__when span with \"Added\" label")
 	}
 	whenText := matches[1]
 
@@ -36,26 +36,26 @@ func TestHabitDetailLedeCreationTimeIsLabelled(t *testing.T) {
 	}
 }
 
-// TestNonHabitDetailPagesUseCreated ensures that non-habit detail pages show
-// "Created" before the creation timestamp. All record types now have a visible
+// TestAllRecordTypesShowAddedLabel asserts that non-habit detail pages show
+// "Added" before the creation timestamp. All record types now have a visible
 // label (acceptance item 4).
-func TestNonHabitDetailPagesUseCreated(t *testing.T) {
+func TestAllRecordTypesShowAddedLabel(t *testing.T) {
 	t.Parallel()
 	a, h := newApp(t)
 
-	// A note page should show "Created".
+	// A note page should show "Added".
 	noteRec, err := a.Store.Create("note", map[string]any{"title": "A note"})
 	if err != nil {
 		t.Fatal(err)
 	}
 	notePage := get(t, h, "/t/note/"+noteRec.ID+fieldsView).Body.String()
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*">Created <time[^>]*>([^<]+)</time>`)
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*">Added <time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(notePage)
 	if len(matches) < 2 {
-		t.Fatal("note detail page lede should have a sw-detail__when span with \"Created\" label")
+		t.Fatal("note detail page lede should have a sw-detail__when span with \"Added\" label")
 	}
 
-	// An activity entry page should show "Created".
+	// An activity entry page should show "Added".
 	actRec, err := a.Store.Create("activity", map[string]any{
 		"actor":  "human",
 		"action": "added",
@@ -66,10 +66,10 @@ func TestNonHabitDetailPagesUseCreated(t *testing.T) {
 	actPage := get(t, h, "/t/activity/"+actRec.ID+fieldsView).Body.String()
 	matches = re.FindStringSubmatch(actPage)
 	if len(matches) < 2 {
-		t.Fatal("activity detail page lede should have a sw-detail__when span with \"Created\" label")
+		t.Fatal("activity detail page lede should have a sw-detail__when span with \"Added\" label")
 	}
 
-	// A message page should show "Created".
+	// A message page should show "Added".
 	msgRec, err := a.Store.Create("message", map[string]any{
 		"role":    "user",
 		"content": "hello world",
@@ -80,7 +80,7 @@ func TestNonHabitDetailPagesUseCreated(t *testing.T) {
 	msgPage := get(t, h, "/t/message/"+msgRec.ID+fieldsView).Body.String()
 	matches = re.FindStringSubmatch(msgPage)
 	if len(matches) < 2 {
-		t.Fatal("message detail page lede should have a sw-detail__when span with \"Created\" label")
+		t.Fatal("message detail page lede should have a sw-detail__when span with \"Added\" label")
 	}
 }
 
@@ -101,10 +101,10 @@ func TestHabitDetailLedeStillShowsAllInformation(t *testing.T) {
 
 	page := get(t, h, "/t/habit/"+rec.ID+fieldsView).Body.String()
 
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*">Created <time[^>]*>([^<]+)</time>`)
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*">Added <time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(page)
 	if len(matches) < 2 {
-		t.Fatal("habit detail should have a sw-detail__when span with \"Created\" label")
+		t.Fatal("habit detail should have a sw-detail__when span with \"Added\" label")
 	}
 
 	// The habit name and settings must still be present.
@@ -143,9 +143,9 @@ func TestHabitDetailLedeNoCadenceBadge(t *testing.T) {
 		t.Error("habit detail page should not show \"Each day\" — it uses the raw cadence enum value instead of plain language")
 	}
 
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*">Created <time[^>]*>([^<]+)</time>`)
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*">Added <time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(page)
 	if len(matches) < 2 {
-		t.Fatal("habit detail page lede should have a sw-detail__when span with \"Created\" label")
+		t.Fatal("habit detail page lede should have a sw-detail__when span with \"Added\" label")
 	}
 }

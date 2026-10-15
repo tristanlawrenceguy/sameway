@@ -7,7 +7,7 @@ import (
 )
 
 // TestTaskDetailLedeCreationTimeIsLabelled asserts that a task detail page's
-// lede shows the creation timestamp with a visible "Created" label before it,
+// lede shows the creation timestamp with a visible "Added" label before it,
 // so a person reading never encounters an unlabeled timestamp. Acceptance item 1.
 func TestTaskDetailLedeCreationTimeIsLabelled(t *testing.T) {
 	t.Parallel()
@@ -23,9 +23,9 @@ func TestTaskDetailLedeCreationTimeIsLabelled(t *testing.T) {
 
 	page := get(t, h, "/t/task/"+rec.ID).Body.String()
 
-	// The page must contain the visible text "Created" followed by a relative timestamp.
-	if !strings.Contains(page, ">Created ") {
-		t.Error("task detail page lede should show \"Created\" before the creation timestamp; got an unlabeled time like \"3 days ago\"")
+	// The page must contain the visible text "Added" followed by a relative timestamp.
+	if !strings.Contains(page, ">Added ") {
+		t.Error("task detail page lede should show \"Added\" before the creation timestamp; got an unlabeled time like \"3 days ago\"")
 	}
 
 	// The span must still exist with proper structure.
