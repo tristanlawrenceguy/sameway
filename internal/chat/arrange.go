@@ -24,7 +24,7 @@ var arrangeOp = Op{Title: "Lay a tab out", Traits: Traits{Idempotent: true},
 	Run:   func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.arrangeCall(call.Args) },
 	Tool: llm.Tool{
 		Name:        "arrange_canvas",
-		Description: "Lay out a whole tab in one change: list every block on it (from the canvas listing) in the order it should be read, top to bottom, each with the width and place it should have. The list order becomes the order on the page; what an item leaves out stays as it is. Use it after adding something, to move and reshape what was already there so the page reads well: what matters most first, related things together, rows of twelve filled, headings in order. Blocks in the header and footer may be left out. Blocks to take away (one that cannot be shown, repeats another, or is left over) go in remove instead, in the same change. One Undo takes the whole arrangement back. Refused, with nothing changed, when a block is missing or listed twice, or a heading would skip a level.",
+		Description: "Lay out a whole tab in one change: list its blocks (from the canvas listing) in the order they should be read, top to bottom, each with the width and place it should have. The list order becomes the order on the page; what an item leaves out stays as it is, and a block not listed keeps its order after the ones listed, which the answer names. Use it after adding something, to move and reshape what was already there so the page reads well: what matters most first, related things together, rows of twelve filled, headings in order. Blocks in the header and footer may be left out. Blocks to take away (one that cannot be shown, repeats another, or is left over) go in remove instead, in the same change. One Undo takes the whole arrangement back. Refused, with nothing changed, when a block is not on the tab or listed twice, or a heading would skip a level.",
 		Schema: obj(map[string]any{
 			"blocks": map[string]any{"type": "array", "description": "Every block on the tab, in reading order.", "items": obj(map[string]any{
 				"id":     map[string]any{"type": "string", "description": "Block id from the canvas listing."},
@@ -79,8 +79,13 @@ func (s *Service) arrange(canvas string, items []arrangeItem, remove []string) t
 	for _, id := range remove {
 		gone[id] = true
 	}
-	if problems := arrangeProblems(before, byID, items, remove); len(problems) > 0 {
+	if problems := arrangeProblems(byID, items, remove); len(problems) > 0 {
 		return fail("nothing was arranged: %s", strings.Join(problems, "; "))
+	}
+	// What was left out follows, as it was (arrange_remove.go).
+	left := unlisted(before, items, remove)
+	for _, b := range left {
+		items = append(items, arrangeItem{ID: b.ID})
 	}
 	// Work out every block's new fields first, so nothing is written
 	// until the whole arrangement is known to be sound.
@@ -112,7 +117,7 @@ func (s *Service) arrange(canvas string, items []arrangeItem, remove []string) t
 		}
 	}
 	if len(ops) == 0 {
-		return toolResult{text: "the tab is already arranged that way; nothing changed"}
+		return toolResult{text: "the tab is already arranged that way; nothing changed" + unlistedSaid(left)}
 	}
 	// All or none: a block that cannot be moved puts back those before it.
 	done, err := s.Apply(ops...)
@@ -126,7 +131,7 @@ func (s *Service) arrange(canvas string, items []arrangeItem, remove []string) t
 		}
 	}
 	c := records.Change{Action: "arranged", Detail: fmt.Sprintf("%s, %d blocks", name, len(done)), Href: href, Ops: done}
-	return toolResult{text: fmt.Sprintf("arranged %s: %d blocks moved or reshaped%s, in one change that one Undo takes back", name, len(done)-len(remove), takenSaid(len(remove))), change: &c}
+	return toolResult{text: fmt.Sprintf("arranged %s: %d blocks moved or reshaped%s, in one change that one Undo takes back%s", name, len(done)-len(remove), takenSaid(len(remove)), unlistedSaid(left)), change: &c}
 }
 
 // moves says whether new layout fields would change a block; who last

@@ -28,7 +28,7 @@ func TestAnAgentOverMCPArrangesAndIsToldTheLayout(t *testing.T) {
 		t.Errorf("a block written over MCP should say how the page reads, got %v %q", isErr, said)
 	}
 	said, isErr = text(t, replies[2])
-	if !isErr || !strings.Contains(said, "is missing; list every block") {
-		t.Errorf("an arrangement that leaves a block out is refused, got %v %q", isErr, said)
+	if isErr || !strings.Contains(said, "not listed kept their order after the ones listed") {
+		t.Errorf("an arrangement that leaves a block out keeps it after, and names it, got %v %q", isErr, said)
 	}
 }

@@ -3,6 +3,7 @@ package chat
 import (
 	"fmt"
 
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -14,9 +15,10 @@ import (
 // the arrangement: one change, one Undo.
 
 // arrangeProblems is why an arrangement cannot be made: a block not on the
-// tab, listed twice, both listed and removed, or left out without being
-// removed.
-func arrangeProblems(before []*store.Record, byID map[string]*store.Record, items []arrangeItem, remove []string) []string {
+// tab, listed twice, or both listed and removed. One left out is not a
+// problem: it keeps its order after the ones listed, and the answer says
+// so (unlisted).
+func arrangeProblems(byID map[string]*store.Record, items []arrangeItem, remove []string) []string {
 	var problems []string
 	listed := map[string]bool{}
 	for _, it := range items {
@@ -38,12 +40,39 @@ func arrangeProblems(before []*store.Record, byID map[string]*store.Record, item
 		}
 		gone[id] = true
 	}
+	return problems
+}
+
+// unlisted are the blocks an arrangement left out, neither listed nor
+// removed, in their order; the header's and footer's are their own.
+func unlisted(before []*store.Record, items []arrangeItem, remove []string) []*store.Record {
+	named := map[string]bool{}
+	for _, it := range items {
+		named[it.ID] = true
+	}
+	for _, id := range remove {
+		named[id] = true
+	}
+	var out []*store.Record
 	for _, b := range before {
-		if r := lookOf(b).region; !listed[b.ID] && !gone[b.ID] && r != "header" && r != "footer" {
-			problems = append(problems, fmt.Sprintf("%s (%s %s) is missing; list every block, even one that stays where it is, or put it in remove to take it away", b.ID, placedOf(b).name(), placedOf(b).comp))
+		if r := lookOf(b).region; !named[b.ID] && r != "header" && r != "footer" {
+			out = append(out, b)
 		}
 	}
-	return problems
+	return out
+}
+
+// unlistedSaid is what the answer says of the blocks left out: where they
+// went, and how to place them.
+func unlistedSaid(left []*store.Record) string {
+	if len(left) == 0 {
+		return ""
+	}
+	var names []string
+	for _, b := range left {
+		names = append(names, b.ID+" ("+placedOf(b).name()+" "+placedOf(b).comp+")")
+	}
+	return fmt.Sprintf(". %d not listed kept their order after the ones listed: %s; list them to place them, or put one in remove to take it away", len(left), schema.Names(names))
 }
 
 // takenSaid is ", and 2 blocks taken away", or "".
