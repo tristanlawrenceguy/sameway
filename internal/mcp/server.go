@@ -39,6 +39,9 @@ type Server struct {
 	// runs the tools in another program (sameway mcp --assistant): its
 	// changes are the assistant's, not an agent's. See agent.go.
 	Assistant bool
+	// Only, for the assistant, is the tools its turn was given; the rest
+	// come by more_tools (turn_tools.go). Nil lists every tool.
+	Only map[string]bool
 
 	mu sync.Mutex
 	// sessions are the HTTP clients that said who they are, by the
@@ -134,7 +137,7 @@ func (s *Server) handle(ctx context.Context, req request) (any, *rpcError) {
 		connOf(ctx).introduce(req.Params)
 		return map[string]any{
 			"protocolVersion": protocolVersion,
-			"capabilities":    map[string]any{"tools": map[string]any{"listChanged": false}},
+			"capabilities":    map[string]any{"tools": map[string]any{"listChanged": s.Only != nil}},
 			"serverInfo":      map[string]any{"name": "sameway", "version": s.Version},
 			"instructions": "This is a Sameway workspace: content records of the types the workspace declares, " +
 				"and a canvas of components. Call describe first for the types, their fields, the components " +
@@ -162,6 +165,9 @@ func (s *Server) handle(ctx context.Context, req request) (any, *rpcError) {
 			} else {
 				text, isError = s.call(ctx, s.forAgent(ctx, svc), params.Name, params.Arguments)
 			}
+		}
+		if params.Name == "more_tools" && !isError {
+			s.brought(params.Arguments) // turn_tools.go
 		}
 		noteCall(params.Name, params.Arguments, isError, text) // calls.go
 		result := map[string]any{

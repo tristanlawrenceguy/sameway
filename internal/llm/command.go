@@ -63,7 +63,7 @@ func (c *Command) Complete(ctx context.Context, req Request) (*Response, error) 
 	if strings.TrimSpace(c.Template) == "" {
 		return nil, errors.New("llm.command is empty: the command line to run, with {prompt} where the conversation goes")
 	}
-	mcpPath, err := c.mcpConfig()
+	mcpPath, err := c.mcpConfig(req)
 	if err != nil {
 		return nil, err
 	}
@@ -129,28 +129,6 @@ func (c *Command) Complete(ctx context.Context, req Request) (*Response, error) 
 		text = strings.TrimSpace(v)
 	}
 	return &Response{Text: text}, nil
-}
-
-// mcpConfig writes the MCP configuration the program is handed: this
-// binary, serving this workspace over stdio, under the name sameway, as
-// the assistant's, so what the program changes is logged as the
-// assistant's and not as an outside agent's.
-func (c *Command) mcpConfig() (string, error) {
-	exe := c.Executable
-	if exe == "" {
-		exe, _ = os.Executable()
-	}
-	f, err := os.CreateTemp("", "sameway-mcp-*.json")
-	if err != nil {
-		return "", err
-	}
-	cfg := map[string]any{"mcpServers": map[string]any{"sameway": map[string]any{"command": exe, "args": []string{"--workspace", c.Workspace, "mcp", "--assistant"}}}}
-	if err := json.NewEncoder(f).Encode(cfg); err != nil {
-		f.Close()
-		return "", err
-	}
-	f.Close()
-	return filepath.Clean(f.Name()), nil
 }
 
 // onStdin is what the program reads on its standard input: the system

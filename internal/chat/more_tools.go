@@ -75,3 +75,9 @@ func (s *Service) moreTools(call llm.ToolCall) toolResult {
 	}
 	return fail("there is no tool or topic called %q; more_tools' description lists them", name)
 }
+
+// MoreTool is more_tools for a turn given these of all the tools, as MCP
+// lists it for the assistant whose model runs its tools there.
+func MoreTool(all, given []llm.Tool) (llm.Tool, bool) {
+	return moreTool(all, given, nil)
+}
