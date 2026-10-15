@@ -53,7 +53,7 @@ func TestTheAPIArrangesATabInOneChange(t *testing.T) {
 		t.Errorf("the answer should say how the page reads now: %s", rec.Body.String())
 	}
 	e := newestEntry(t, a.Store)
-	if e.Fields["action"] != "arranged" || e.Fields["summary"] != "layout-test (through the API) arranged Home, 2 blocks" {
+	if e.Fields["action"] != "arranged" || e.Fields["summary"] != "layout-test arranged Home, 2 blocks" {
 		t.Errorf("one entry, the agent's: %v", e.Fields)
 	}
 	if err := a.Records.UndoAs("human", e.ID); err != nil {

@@ -64,10 +64,10 @@ func Sentence(st *store.Store, f map[string]any) string {
 		if o, err := st.Get(ActivityType, undoes); err == nil {
 			if again, _ := o.Fields["undoes"].(string); again != "" {
 				if p, err := st.Get(ActivityType, again); err == nil {
-					return who + " put back: " + Sentence(st, p.Fields)
+					return trimmedWho(who) + " put back: " + Sentence(st, p.Fields)
 				}
 			} else {
-				return who + " undid: " + Sentence(st, o.Fields)
+				return trimmedWho(who) + " undid: " + Sentence(st, o.Fields)
 			}
 		}
 		// The change it took back is gone: its sentence is what is left.
@@ -92,7 +92,11 @@ func Sentence(st *store.Store, f map[string]any) string {
 	if isSettingChange(c) {
 		return settingSummary(who, c.Component, c.Detail)
 	}
-	parts := []string{who, c.Action}
+	var parts []string
+	if who != "" {
+		parts = append(parts, who)
+	}
+	parts = append(parts, c.Action)
 	if c.Component != "" && !counted(c.Component, c.Detail) { // words.go
 		parts = append(parts, schema.Words(personWord(c.Component)))
 	}
@@ -107,6 +111,10 @@ func Sentence(st *store.Store, f map[string]any) string {
 	}
 	return said
 }
+
+// trimmedWho returns who with any leading space removed; when who is "" it
+// returns "" so the rest of the sentence does not start with a space.
+func trimmedWho(who string) string { return strings.TrimSpace(who) }
 
 // whoDid is who made a change, as its sentence starts: You, Assistant,
 // System, a person by name, or an agent by its name and way in.
