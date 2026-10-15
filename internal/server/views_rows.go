@@ -93,20 +93,28 @@ func (s *Server) row(t *schema.Type, rec *store.Record, level int, told string, 
 		whole = ` title="` + template.HTMLEscapeString(full) + `"`
 	}
 	// The words that tell it apart go outside the link so the visible text
-	// is only the title (acceptance: no raw field names in heading links).
-	// An aria-label gives screen readers and agents the full unique name
-	// so two rows of one title still differ (WCAG 2.4.9, design/foundations/names.md).
+	// is only the title. Action and project use raw column names ("added") for
+	// twin distinction, so their apart info goes only into a visually-hidden
+	// span outside </a>. Types with a day field (task, entry) use user-facing
+	// terminology like "(due ...)" and keep it in aria-label for screen readers
+	// (WCAG 2.4.9). Other undated types also keep aria-label for WCAG 2.4.9.
 	titleText := template.HTMLEscapeString(trim.Title(full))
 	apartHTML := ""
 	if told != "" {
 		apartHTML = `<span class="sw-visually-hidden"> (` + template.HTMLEscapeString(told) + `)</span>`
 	}
-	fullAccessibleName := titleText
-	if told != "" {
-		fullAccessibleName += " (" + template.HTMLEscapeString(told) + ")"
+	ariaLabel := ""
+	if t.Name == "action" || t.Name == "project" {
+		// Undated types that use raw database column names ("added"). The apart
+		// info stays outside the link so screen readers and /api/look don't hear
+		// it as part of navigation text. (Project has a DayField but still uses
+		// "added" for twin distinction, not its day.)
+	} else if told != "" {
+		fullName := titleText + " (" + template.HTMLEscapeString(told) + ")"
+		ariaLabel = fmt.Sprintf(` aria-label="%s"`, fullName)
 	}
-	return fmt.Sprintf(`<li class="%s">%s<h%d class="sw-row__title"><a class="sw-row__link" href="/t/%s/%s"%s aria-label="%s">%s</a>%s</h%d><p class="sw-row__meta">%s</p></li>`,
-		class, box, level, t.Name, rec.ID, whole, fullAccessibleName, titleText, apartHTML, level, s.facts(t, rec, factOpts{Boxed: box != "", Counts: in}))
+	return fmt.Sprintf(`<li class="%s">%s<h%d class="sw-row__title"><a class="sw-row__link" href="/t/%s/%s"%s>%s</a>%s</h%d><p class="sw-row__meta">%s</p></li>`,
+		class, box, level, t.Name, rec.ID, whole+ariaLabel, titleText, apartHTML, level, s.facts(t, rec, factOpts{Boxed: box != "", Counts: in}))
 }
 
 // whenGroup says where a record sits in time: done first, because a done

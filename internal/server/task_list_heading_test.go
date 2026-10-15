@@ -16,8 +16,8 @@ func TestTaskListHeadingLinksContainNoAddedOrDue(t *testing.T) {
 	overdue, later := seedTwins(t, h)
 	page := get(t, h, "/t/task").Body.String()
 
-	// Acceptance 1 & 2: no heading link contains "added" or "due" as visible text.
-	// Currently apartHTML is inside <a>, so these words appear in link text.
+	// Acceptance 1 & 2: no heading link contains "added" or "due" as visible text;
+	// apartHTML is outside </a> in a visually-hidden span (backlog 0723).
 	insideLink := `>Call plumber<span class="sw-visually-hidden"> (` + overdue + `)</span></a>`
 	if strings.Contains(page, insideLink) {
 		t.Errorf("apart text %q is still visible inside a heading link (acceptance 1/2)\n%s", overdue, truncate(page))
