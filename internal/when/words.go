@@ -96,9 +96,11 @@ func (r *reading) word(w []string, i int) (int, bool) {
 		return r.next(s == "last", next)
 	case weekdayOf(s) >= 0:
 		// A weekday beside a date, as in Fri 19 Sep, must be that date's.
+		// Alone, it is the next one: Thursday said on a Thursday is next
+		// Thursday, since today would have been said as today.
 		r.weekday = weekdayOf(s)
 		if !r.haveDay {
-			r.setDay(weekdayFrom(r.start, weekdayOf(s), false))
+			r.setDay(weekdayFrom(r.start, weekdayOf(s), true))
 		}
 		return 0, true
 	case months[s] != 0:

@@ -19,7 +19,7 @@ func TestParseReadsWhatPeopleWrite(t *testing.T) {
 		{"tomorrow", "2026-09-18T00:00:00Z", true},
 		{"yesterday", "2026-09-16T00:00:00Z", true},
 		{"friday", "2026-09-18T00:00:00Z", true},
-		{"Thursday", "2026-09-17T00:00:00Z", true},
+		{"Thursday", "2026-09-24T00:00:00Z", true}, // said on a Thursday: next Thursday, as today would be said today
 		{"next thursday", "2026-09-24T00:00:00Z", true},
 		{"next Friday", "2026-09-18T00:00:00Z", true},
 		{"last monday", "2026-09-14T00:00:00Z", true},
