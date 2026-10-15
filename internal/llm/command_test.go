@@ -115,7 +115,7 @@ func TestACommandThatStopsSaysWhy(t *testing.T) {
 	os.Setenv("SAMEWAY_FAKE_CLI", "signed-out")
 	defer os.Unsetenv("SAMEWAY_FAKE_CLI")
 	_, err := c.Complete(context.Background(), llm.Request{Messages: []llm.Message{{Role: llm.RoleUser, Content: "hello"}}})
-	if err == nil || !strings.HasSuffix(err.Error(), "Not logged in · Please run /login") {
+	if err == nil || !strings.Contains(err.Error(), "is signed out. Sign in to it again") {
 		t.Errorf("a command that stops says why: %v", err)
 	}
 }
