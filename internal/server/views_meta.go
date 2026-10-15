@@ -92,10 +92,9 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 // whenMade says when a record was made, as a person reads a time, and where
 // its words came from when that was not the owner, in one quiet line under
 // its fields. A time is said with what it is (design/foundations/glance.md):
-// Created, the verb the Activity log says of the same change, then the
-// time as it reads after a word, "Created today at 2pm".
+// Added, then the time as it reads after a word, "Added today at 2pm".
 func (s *Server) whenMade(t *schema.Type, rec *store.Record, from string) string {
-	line := "Created " + s.happenedAfter("", rec.CreatedAt, s.now())
+	line := "Added " + s.happenedAfter("", rec.CreatedAt, s.now())
 	if from != "" {
 		line += " · From: " + template.HTMLEscapeString(from)
 	}

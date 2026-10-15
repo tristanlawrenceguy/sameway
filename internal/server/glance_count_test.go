@@ -80,7 +80,7 @@ func TestWhatIsInARecordIsSaidTheSameEverywhere(t *testing.T) {
 // tasks that came up at it; a habit's entries are its tracker's to say.
 func TestWhatIsInARecordIsReadFromTheSchema(t *testing.T) {
 	t.Parallel()
-	_, h := newApp(t)
+	_, h := newAppAt(t, tonight)
 	var ana, standup struct{ ID string }
 	decode(t, postJSON(t, h, http.MethodPost, "/api/person", map[string]any{"name": "Ana Silva"}), &ana)
 	decode(t, postJSON(t, h, http.MethodPost, "/api/event", map[string]any{"title": "Standup", "starts": "2026-10-01T09:00:00Z"}), &standup)

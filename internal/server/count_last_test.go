@@ -14,8 +14,8 @@ import (
 // What is ticked off, like a project's tasks, says no last.
 func TestCountsSayWhenTheLatestWas(t *testing.T) {
 	t.Parallel()
-	a, h := newApp(t)
-	now := time.Now()
+	a, h := newAppAt(t, tonight)
+	now := a.Now()
 	friend, _ := a.Store.Create("person", map[string]any{"name": "Sam"})
 	a.Store.Create("interaction", map[string]any{"summary": "Coffee", "person": friend.ID, "at": now.AddDate(0, 0, -20).Format(time.RFC3339)})
 	a.Store.Create("interaction", map[string]any{"summary": "Phone call about the move", "person": friend.ID, "at": now.AddDate(0, 0, -3).Format(time.RFC3339)})

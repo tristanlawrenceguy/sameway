@@ -6,7 +6,7 @@ import (
 )
 
 // TestReminderDetailLedeCreationTimeIsLabelled asserts that a reminder detail page's
-// lede shows the creation timestamp with a visible "Created" label before it.
+// lede shows the creation timestamp with a visible "Added" label before it.
 // Acceptance item 3.
 func TestReminderDetailLedeCreationTimeIsLabelled(t *testing.T) {
 	t.Parallel()
@@ -22,9 +22,9 @@ func TestReminderDetailLedeCreationTimeIsLabelled(t *testing.T) {
 
 	page := get(t, h, "/t/reminder/"+rec.ID).Body.String()
 
-	// The page must contain the visible text "Created" before the creation timestamp.
-	if !strings.Contains(page, ">Created ") {
-		t.Error("reminder detail page lede should show \"Created\" before the creation timestamp; got an unlabeled time")
+	// The page must contain the visible text "Added" before the creation timestamp.
+	if !strings.Contains(page, ">Added ") {
+		t.Error("reminder detail page lede should show \"Added\" before the creation timestamp; got an unlabeled time")
 	}
 
 	// The span must still exist with proper structure.
