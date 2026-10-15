@@ -19,7 +19,7 @@ var commands = map[string]func(*ctx) error{
 	"export": (*ctx).exportCmd, "import": (*ctx).importCmd, "snapshots": (*ctx).snapshotsCmd,
 	"restore": (*ctx).restoreCmd, "chat": (*ctx).chatCmd, "connect": (*ctx).connectCmd,
 	"agent": (*ctx).agentCmd, "discover": (*ctx).discoverCmd, "mcp": (*ctx).mcpCmd,
-	"component": (*ctx).componentCmd,
+	"component": (*ctx).componentCmd, "workspaces": (*ctx).workspacesCmd,
 }
 
 // usageError is a command line sameway could not read: it exits 2, as Go's
