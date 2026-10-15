@@ -33,11 +33,6 @@ func TestTheAPIArrangesATabInOneChange(t *testing.T) {
 		}
 		ids = append(ids, out.ID)
 	}
-	rec := apiAs(t, h, http.MethodPost, "/api/arrange", `{"blocks":[{"id":"`+ids[0]+`"}]}`, agent)
-	wantStatus(t, rec, http.StatusUnprocessableEntity)
-	if !strings.Contains(rec.Body.String(), "is missing") {
-		t.Errorf("leaving a block out is refused: %s", rec.Body.String())
-	}
 	// The tab's conversation came with its first block, and is listed too.
 	var talk string
 	if all, err := a.Store.List(records.BlockType, store.ListOptions{}); err == nil {
@@ -47,7 +42,7 @@ func TestTheAPIArrangesATabInOneChange(t *testing.T) {
 			}
 		}
 	}
-	rec = apiAs(t, h, http.MethodPost, "/api/arrange", `{"canvas":"","blocks":[{"id":"`+talk+`","span":12},{"id":"`+ids[0]+`","span":12,"frame":"bare"},{"id":"`+ids[1]+`","span":12}]}`, agent)
+	rec := apiAs(t, h, http.MethodPost, "/api/arrange", `{"canvas":"","blocks":[{"id":"`+talk+`","span":12},{"id":"`+ids[0]+`","span":12,"frame":"bare"},{"id":"`+ids[1]+`","span":12}]}`, agent)
 	wantStatus(t, rec, http.StatusOK)
 	if !strings.Contains(rec.Body.String(), "It reads in order with full rows.") {
 		t.Errorf("the answer should say how the page reads now: %s", rec.Body.String())
@@ -66,5 +61,11 @@ func TestTheAPIArrangesATabInOneChange(t *testing.T) {
 	idx := apiAs(t, h, http.MethodGet, "/api/describe", "", nil).Body.String()
 	if !strings.Contains(idx, "block_arrange: POST /api/arrange") {
 		t.Error("the describe index should say how to arrange a tab")
+	}
+	// Some of a tab: the rest keep their order after, and are named.
+	rec = apiAs(t, h, http.MethodPost, "/api/arrange", `{"blocks":[{"id":"`+ids[1]+`"}]}`, agent)
+	wantStatus(t, rec, http.StatusOK)
+	if !strings.Contains(rec.Body.String(), "not listed kept their order after the ones listed") {
+		t.Errorf("a block left out keeps its order after, and is named: %s", rec.Body.String())
 	}
 }
