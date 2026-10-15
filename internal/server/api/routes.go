@@ -16,6 +16,7 @@ var Routes = []web.Route[*Service]{
 	{Pattern: "GET /api/jobs", Handle: (*Service).apiJobs, Access: web.Owner},
 	{Pattern: "GET /api/changes", Handle: (*Service).apiChanges, Access: web.People},
 	{Pattern: "POST /api/arrange", Handle: (*Service).apiArrange, Access: web.People, Reach: web.Inward},
+	{Pattern: "GET /api/layout", Handle: (*Service).apiLayout, Access: web.People}, // api_arrange.go
 	// And the tools the one asking may have: api_tools.go.
 	{Pattern: "POST /api/tools/{name}", Handle: (*Service).apiTool, Access: web.People, Reach: web.ByTool},
 	{Pattern: "GET /api/{type}", Handle: (*Service).apiList, Access: web.People},
