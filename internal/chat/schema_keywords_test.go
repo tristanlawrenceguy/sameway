@@ -24,7 +24,8 @@ func TestSystemPromptHasNoSchemaKeywords(t *testing.T) {
 	system := m.seen[0].System
 
 	// "(required)" is a JSON Schema keyword; the prompt should list fields
-	// by display name only — e.g. "Title" not "title (text, required)".
+	// by name, with its label when that is another word: "at (Rings)",
+	// never "title (text, required)".
 	if strings.Contains(system, ", required)") {
 		i := strings.Index(system, ", required)")
 		t.Errorf("system prompt leaks the schema keyword 'required': …%s…",
@@ -72,5 +73,22 @@ func TestRefusalMessageHasNoSchemaKeywords(t *testing.T) {
 	// The field display names should still appear so the model knows what to ask for.
 	if !strings.Contains(text, "title") {
 		t.Errorf("refusal should still mention 'title': %.400s", text)
+	}
+}
+
+// A field is listed by the name a model writes it by, with its label when
+// that is another word: told only Rings, a model wrote rings for at, and
+// was refused.
+func TestFieldsAreListedByTheNameTheyAreWrittenBy(t *testing.T) {
+	t.Parallel()
+	svc := newFullService(t)
+	m := &scripted{}
+	svc.Provider = m
+	svc.Send(context.Background(), "hi")
+	system := m.seen[0].System
+	for _, want := range []string{"at (Rings)", "event (Came up at)", "title", "status (one of todo, doing, done)"} {
+		if !strings.Contains(system, want) {
+			t.Errorf("the type list should say %q", want)
+		}
 	}
 }
