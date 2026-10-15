@@ -90,7 +90,10 @@ func (c *ctx) contentCmd(typeName string) error {
 		if err != nil {
 			return notFound(err, t.Name, positional[0])
 		}
-		c.print(rec, func() { printRecord(c, rec) })
+		// One view of a record for every way in (records/view.go): what
+		// GET /api/{type}/{id} and get_record answer, who wrote it, its
+		// title, its page and what it connects to, not the bare row.
+		c.print(a.Records.ViewOf(t, rec, a.Records.WritersFor(false)), func() { printRecord(c, rec) })
 	case "create":
 		fields, err := fieldsFrom(sets, *data)
 		if err != nil {
