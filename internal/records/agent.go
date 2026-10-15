@@ -40,12 +40,27 @@ var machineNames = map[string]bool{
 // MachineName says whether a stored name is a library's, said as "An agent".
 func MachineName(name string) bool { return machineNames[name] }
 
-// AgentWho is Agent.Who from a log entry's by and via.
+// knownThroughs are technical ways-in that should never appear in user-facing
+// text; they are stripped from the actor label.
+var knownThroughs = map[string]bool{
+	"through the API":          true,
+	"through MCP":              true,
+	"through the command line": true,
+}
+
+// AgentWho is Agent.Who from a log entry's by and via. Unnamed agents return
+// "" so activity entries start with the action verb; named agents keep their
+// name but without technical parentheticals like "(through the API)".
 func AgentWho(name, through string) string {
-	if name == "" || machineNames[name] {
-		name = "An agent"
+	// Strip known technical jargon from through values.
+	if knownThroughs[through] {
+		through = ""
 	}
-	if strings.HasPrefix(through, "through ") {
+
+	if name == "" || machineNames[name] {
+		return "" // unnamed agents: no actor label at all
+	}
+	if through != "" {
 		return name + " (" + through + ")"
 	}
 	return name
@@ -75,6 +90,10 @@ func AgentName(name string) string {
 		return r
 	}, name)
 	name = strings.Join(strings.Fields(name), " ")
+	// Strip version suffixes from machine names (e.g., Go-http-client/1.1 → Go-http-client).
+	if slash := strings.IndexByte(name, '/'); slash != -1 {
+		name = name[:slash]
+	}
 	return trim.Clip(name, 60)
 }
 

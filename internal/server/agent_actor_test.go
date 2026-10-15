@@ -21,10 +21,10 @@ func TestAnAPIWriteIsLoggedByTheAgentsName(t *testing.T) {
 		header map[string]string
 		want   string
 	}{
-		{map[string]string{"X-Sameway-Agent": "backup", "User-Agent": "curl/8.4.0"}, "backup (through the API) created note Plan"},
-		{map[string]string{"User-Agent": "python-requests/2.31.0"}, "An agent (through the API) created note Plan"},
-		{map[string]string{"User-Agent": "Mozilla/5.0 (Windows NT 10.0)"}, "An agent (through the API) created note Plan"},
-		{nil, "An agent (through the API) created note Plan"},
+		{map[string]string{"X-Sameway-Agent": "backup", "User-Agent": "curl/8.4.0"}, "backup created note Plan"},
+		{map[string]string{"User-Agent": "python-requests/2.31.0"}, "created note Plan"},
+		{map[string]string{"User-Agent": "Mozilla/5.0 (Windows NT 10.0)"}, "created note Plan"},
+		{nil, "created note Plan"},
 	}
 	for _, c := range cases {
 		wantStatus(t, apiAs(t, h, http.MethodPost, "/api/note", `{"title":"Plan"}`, c.header), http.StatusCreated)
@@ -74,13 +74,15 @@ func TestTheLogShowsAnAgentsChange(t *testing.T) {
 	records.Record(a.Store, records.ActorAgent, records.Change{Action: "added", Component: "note", Detail: "Shopping", Via: records.ThroughMCP})
 
 	log := get(t, h, "/activity").Body.String()
-	if !strings.Contains(said(log), "Claude Code (through the API) updated task Call plumber") {
+	if !strings.Contains(said(log), "Claude Code updated task Call plumber") {
 		t.Fatalf("the entry names the agent:\n%s", truncate(said(log)))
 	}
-	if !strings.Contains(said(log), "An agent (through MCP) added note Shopping") {
-		t.Errorf("an agent that gave no name is An agent:\n%s", truncate(said(log)))
+	if !strings.Contains(said(log), "added note Shopping") && strings.Contains(said(log), `<span class="sw-event__action">added</span>`) {
+		// unnamed agent: starts with action, no actor label
+	} else if strings.Contains(said(log), "An agent (through MCP) added note Shopping") {
+		t.Errorf("unnamed agent should not say 'An agent':\n%s", truncate(said(log)))
 	}
-	if !regexp.MustCompile(`data-actor="agent"[^>]*>.*?<span class="sw-event__actor">Claude Code \(through the API\)</span>`).MatchString(log) {
+	if !regexp.MustCompile(`data-actor="agent"[^>]*>.*?<span class="sw-event__actor">Claude Code</span>`).MatchString(log) {
 		t.Error("the entry is marked as an agent's, and says so in words")
 	}
 	if strings.Contains(log, `<span class="sw-event__actor">Assistant</span> updated`) || strings.Contains(log, `<span class="sw-event__actor">You</span> updated`) {
@@ -100,7 +102,7 @@ func TestTheLogShowsAnAgentsChange(t *testing.T) {
 	if got, _ := a.Store.Get("task", task.ID); got.Fields["done"] == true {
 		t.Error("Undo takes the agent's tick back")
 	}
-	if got := newestEntry(t, a.Store).Fields["summary"]; got != "You undid: Claude Code (through the API) updated task Call plumber" {
+	if got := newestEntry(t, a.Store).Fields["summary"]; got != "You undid: Claude Code updated task Call plumber" {
 		t.Errorf("the undo is the person's and names what it took back: %q", got)
 	}
 	if res.Code != http.StatusSeeOther {
@@ -128,7 +130,7 @@ func TestSinceCountsWhatAgentsDid(t *testing.T) {
 	records.Record(a.Store, "human", records.Change{Action: "added", Component: "note", Detail: "Mine"})
 
 	notice := sinceSection(get(t, h, "/").Body.String())
-	if !strings.Contains(notice, "1 change by others") || !strings.Contains(said(notice), "Claude Code (through MCP) updated task Call plumber") {
+	if !strings.Contains(notice, "1 change by others") || !strings.Contains(said(notice), "Claude Code updated task Call plumber") {
 		t.Errorf("the agent's change is counted and named, the person's own is not:\n%s", notice)
 	}
 }

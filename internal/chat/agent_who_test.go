@@ -7,8 +7,8 @@ import (
 )
 
 // TestGoHttpClientIsAnAgent checks that machine-language identifiers like
-// "Go-http-client" are resolved to "An agent" by AgentWho, so every surface
-// that calls it picks up the fix automatically. This covers acceptance items
+// "Go-http-client" resolve to "" by AgentWho, and technical parentheticals are
+// stripped so no jargon reaches user-facing text. This covers acceptance items
 // 1 and 2 — filter dropdowns, detail ledes, list entries all go through
 // AgentWho (directly or via Sentence/whoDid).
 
@@ -20,10 +20,10 @@ func TestGoHttpClientIsAnAgent(t *testing.T) {
 		via  string
 		want string
 	}{
-		{"", records.ThroughAPI, "An agent (through the API)"},
-		{"Go-http-client", records.ThroughAPI, "An agent (through the API)"},
-		{"Go-http-client", "", "An agent"},
-		{"Claude Code", records.ThroughMCP, "Claude Code (through MCP)"},
+		{"", records.ThroughAPI, ""},
+		{"Go-http-client", records.ThroughAPI, ""},
+		{"Go-http-client", "", ""},
+		{"Claude Code", records.ThroughMCP, "Claude Code"},
 	}
 	for _, c := range cases {
 		got := records.AgentWho(c.name, c.via)
