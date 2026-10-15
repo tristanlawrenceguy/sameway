@@ -44,3 +44,26 @@ func TestOutsideAWorkspaceSaysWhichThereAre(t *testing.T) {
 		}
 	}
 }
+
+// sameway workspaces says the workspaces this computer knows, each with
+// its name, its folder and where it is open, from any folder; with --json
+// as a list.
+func TestWorkspacesSaysWhichThereAre(t *testing.T) {
+	t.Setenv("SAMEWAY_KNOWN", filepath.Join(t.TempDir(), "known.json"))
+	running := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	defer running.Close()
+	addr := strings.TrimPrefix(running.URL, "http://")
+	known := t.TempDir()
+	os.WriteFile(filepath.Join(known, workspace.ConfigFile), []byte("name: Kept\n"), 0o644)
+	workspace.ThisMachine().Remember(known, addr)
+
+	var out, errOut bytes.Buffer
+	if code := Run([]string{"workspaces", "--json"}, Env{Stdout: &out, Stderr: &errOut, Dir: t.TempDir()}); code != 0 {
+		t.Fatalf("exit %d: %s", code, errOut.String())
+	}
+	for _, want := range []string{`"name": "Kept"`, `"open": "http://` + addr + `/"`, `"dir": `} {
+		if !strings.Contains(out.String(), want) {
+			t.Errorf("the list says %s: %s", want, out.String())
+		}
+	}
+}
