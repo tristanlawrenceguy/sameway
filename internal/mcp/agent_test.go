@@ -90,7 +90,7 @@ func TestAnMCPClientsChangesAreLoggedByItsName(t *testing.T) {
 	if ticked.Fields["actor"] != records.ActorAgent || ticked.Fields["by"] != "Claude Code" || ticked.Fields["via"] != records.ThroughMCP {
 		t.Errorf("the tick is the agent's, by its name, through MCP: %v", ticked.Fields)
 	}
-	if got := ticked.Fields["summary"]; got != "Claude Code (through MCP) updated task Call plumber" {
+	if got := ticked.Fields["summary"]; got != "Claude Code updated task Call plumber" {
 		t.Errorf("the log's sentence names the agent: %q", got)
 	}
 
@@ -100,7 +100,7 @@ func TestAnMCPClientsChangesAreLoggedByItsName(t *testing.T) {
 	if task, _ := a.Store.Get("task", id); task.Fields["done"] == true {
 		t.Error("undoing an agent's tick unticks it")
 	}
-	if got := latest(t, a).Fields["summary"]; got != "You undid: Claude Code (through MCP) updated task Call plumber" {
+	if got := latest(t, a).Fields["summary"]; got != "You undid: Claude Code updated task Call plumber" {
 		t.Errorf("the undo says whose change it took back: %q", got)
 	}
 }
@@ -111,8 +111,8 @@ func TestAnUnnamedClientIsAnAgent(t *testing.T) {
 	a, id := starter(t)
 	serve(t, a, false, tick(id))
 	e := latest(t, a)
-	if e.Fields["actor"] != records.ActorAgent || e.Fields["summary"] != "An agent (through MCP) updated task Call plumber" {
-		t.Errorf("an unnamed client is An agent: %v", e.Fields)
+	if e.Fields["actor"] != records.ActorAgent || !strings.HasPrefix(e.Fields["summary"].(string), "updated task Call plumber") {
+		t.Errorf("an unnamed client starts with action: %v", e.Fields)
 	}
 }
 
@@ -154,15 +154,15 @@ func TestAnHTTPClientIsKnownByItsSession(t *testing.T) {
 		t.Fatal("initialize over HTTP gives the client a session")
 	}
 	send(tick(id), map[string]string{"Mcp-Session-Id": session})
-	if got := latest(t, a).Fields["summary"]; got != "ChatGPT (through MCP) updated task Call plumber" {
+	if got := latest(t, a).Fields["summary"]; got != "ChatGPT updated task Call plumber" {
 		t.Errorf("a call in the session is the client's: %q", got)
 	}
 	send(tick(id), map[string]string{"X-Sameway-Agent": "nightly tidy"})
-	if got := latest(t, a).Fields["summary"]; got != "nightly tidy (through MCP) updated task Call plumber" {
+	if got := latest(t, a).Fields["summary"]; got != "nightly tidy updated task Call plumber" {
 		t.Errorf("a header names the agent: %q", got)
 	}
 	send(tick(id), nil)
-	if got := latest(t, a).Fields["summary"]; got != "An agent (through MCP) updated task Call plumber" {
-		t.Errorf("without either it is An agent: %q", got)
+	if got := latest(t, a).Fields["summary"]; got != "updated task Call plumber" {
+		t.Errorf("without either it starts with action: %q", got)
 	}
 }

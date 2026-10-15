@@ -85,8 +85,8 @@ func TestGoHttpClientDetailLedeSaysAnAgent(t *testing.T) {
 		t.Errorf("activity detail page must not show 'Go-http-client': %s", said(detail))
 	}
 
-	// It should say something human-readable like "An agent" or "an agent".
-	if !strings.Contains(strings.ToLower(said(detail)), "agent") {
-		t.Errorf("activity detail page should mention 'agent' for an agent attribution: %s", said(detail))
+	// Unnamed agents have no actor label — entries start with the action verb.
+	if !strings.HasPrefix(said(detail), "created") {
+		t.Errorf("activity detail page should start with action for unnamed agent: %s", said(detail))
 	}
 }

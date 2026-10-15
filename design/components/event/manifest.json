@@ -43,12 +43,12 @@
     { "name": "default", "props": { "actor": "assistant", "action": "added", "target": "table", "detail": "Shopping list", "time": "20:24", "href": "/canvas/b7" }, "file": "examples/default.html" },
     { "name": "human", "props": { "actor": "human", "action": "removed", "target": "list" }, "file": "examples/human.html" },
     { "name": "person", "props": { "actor": "human", "who": "Hana", "person": 3, "action": "updated", "target": "note", "detail": "Shopping", "time": "09:12", "href": "/t/note/n1" }, "file": "examples/person.html" },
-    { "name": "agent", "props": { "actor": "agent", "who": "Claude Code (through MCP)", "action": "updated", "target": "task", "detail": "Call plumber", "time": "10:40", "href": "/t/task/t1", "undo": "/activity/a3/undo" }, "file": "examples/agent.html" },
+    { "name": "agent", "props": { "actor": "agent", "who": "Claude Code", "action": "updated", "target": "task", "detail": "Call plumber", "time": "10:40", "href": "/t/task/t1", "undo": "/activity/a3/undo" }, "file": "examples/agent.html" },
     { "name": "system", "props": { "actor": "system", "action": "failed", "detail": "Could not reach the model.", "id": "evt-1" }, "file": "examples/system.html" },
     { "name": "undo", "props": { "actor": "assistant", "action": "removed", "target": "list", "detail": "Groceries", "time": "20:31", "undo": "/activity/a1/undo" }, "file": "examples/undo.html" },
     { "name": "put-back", "props": { "actor": "human", "action": "undid", "detail": "Assistant removed list Groceries", "time": "20:32", "undo": "/activity/a4/undo", "undoes": true }, "file": "examples/put-back.html" },
     { "name": "compact", "props": { "actor": "assistant", "action": "changed", "target": "text size", "detail": "to Large", "undo": "/activity/a2/undo", "from": "/chat", "compact": true }, "file": "examples/compact.html" },
     { "name": "heading", "props": { "actor": "human", "action": "updated", "target": "note", "detail": "Shopping", "time": "2 Jan 09:12", "datetime": "2026-01-02T09:12:00Z", "via": "on pixel-7", "level": 2, "href": "/t/note/n1" }, "file": "examples/heading.html" },
-    { "name": "long", "props": { "actor": "agent", "who": "An agent (through the API)", "action": "created", "target": "reminder", "detail": "Agent verification test for the quarterly review", "time": "8:39am", "href": "/t/reminder/r1", "undo": "/activity/a5/undo" }, "file": "examples/long.html" }
+    { "name": "long", "props": { "actor": "agent", "who": "", "action": "created", "target": "reminder", "detail": "Agent verification test for the quarterly review", "time": "8:39am", "href": "/t/reminder/r1", "undo": "/activity/a5/undo" }, "file": "examples/long.html" }
   ]
 }
