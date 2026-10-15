@@ -75,6 +75,7 @@ func (s *Server) tools() []tool {
 		out = append(out, tool{Name: t.Name, Description: t.Description, InputSchema: t.Schema})
 	}
 	out = append(out, tryTool) // try.go
+	out = s.turnTools(out)     // turn_tools.go: the assistant's turn, when it says which
 	// What each is like, for a client to ask before it acts (annotations.go).
 	for i := range out {
 		if a := annotations(out[i].Name); a != nil {

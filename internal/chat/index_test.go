@@ -26,7 +26,7 @@ func TestARefusalCarriesWhatTheCallTakes(t *testing.T) {
 	}
 	raw, _ = json.Marshal(map[string]any{"type": "note", "fields": map[string]any{"body": "no title"}})
 	text, isErr = svc.Call("create_record", raw)
-	if !isErr || !strings.Contains(text, "note takes, inside fields: Title") {
+	if !isErr || !strings.Contains(text, "note takes, inside fields: title") {
 		t.Errorf("a record refused gives the type's fields: %.400s", text)
 	}
 }

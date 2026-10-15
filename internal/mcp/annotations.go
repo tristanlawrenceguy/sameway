@@ -15,10 +15,11 @@ type ownTool struct {
 }
 
 var ownTools = map[string]ownTool{
-	"describe": {"Describe the workspace", chat.Traits{ReadOnly: true, Idempotent: true}},
-	"look":     {"Read a page", chat.Traits{ReadOnly: true, Idempotent: true}},
-	"today":    {"Read the person's day", chat.Traits{ReadOnly: true, Idempotent: true}},
-	"try":      {"Try a change without making it", chat.Traits{ReadOnly: true, Idempotent: true}},
+	"describe":   {"Describe the workspace", chat.Traits{ReadOnly: true, Idempotent: true}},
+	"look":       {"Read a page", chat.Traits{ReadOnly: true, Idempotent: true}},
+	"today":      {"Read the person's day", chat.Traits{ReadOnly: true, Idempotent: true}},
+	"more_tools": {"Find more tools", chat.Traits{ReadOnly: true, Idempotent: true}},
+	"try":        {"Try a change without making it", chat.Traits{ReadOnly: true, Idempotent: true}},
 }
 
 // traitsOf is a tool's title and traits, from MCP's own or the registry.
