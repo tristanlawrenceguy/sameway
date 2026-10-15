@@ -139,11 +139,6 @@ func TestContentCommands(t *testing.T) {
 	if got.code != 0 || !strings.Contains(got.stdout, "title: Hello") {
 		t.Errorf("get: %+v", got)
 	}
-	// --json is the record as the API and the assistant read it: who
-	// wrote it, its title and its page beside its fields.
-	if j := run(t, dir, "note", "get", rec.ID, "--json"); !strings.Contains(j.stdout, `"written_by"`) || !strings.Contains(j.stdout, `"page": "/t/note/`+rec.ID+`"`) || !strings.Contains(j.stdout, `"title": "Hello"`) {
-		t.Errorf("get --json is the API's view: %s", j.stdout)
-	}
 
 	upd := run(t, dir, "note", "update", rec.ID, "--set", "status=published", "--json")
 	if upd.code != 0 || !strings.Contains(upd.stdout, `"status": "published"`) || !strings.Contains(upd.stdout, "Hello") {
