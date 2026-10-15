@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -197,7 +198,16 @@ func texts(t *schema.Type, rec *store.Record, r Reader) (title, body string) {
 		case "datetime":
 			s = when.Relative(flatten(v), r.Now, r.H24)
 		case "enum":
-			s = f.ValueLabel(flatten(v))
+			val := flatten(v)
+			// Add label prefix for state/status values so snippets show
+			// "Status: Draft" not just "Draft". StateWorth returns (false, true)
+			// when the field is a status/state enum but has its default value;
+			// we want to label it regardless of worth.
+			if _, state := records.StateWorth(t, f, val); state {
+				s = f.Display() + ": " + f.ValueLabel(val)
+			} else {
+				s = f.ValueLabel(val)
+			}
 		default:
 			s = flatten(v)
 		}
