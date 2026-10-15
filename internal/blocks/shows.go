@@ -26,7 +26,7 @@ func (ws *Workspace) collectionShows(props map[string]any) string {
 		return NothingYet(t.Name, where, "")
 	}
 	out := schema.Count(len(recs), t.Name)
-	if w := query.Words(t, where, ws.now().Location()); w != "" {
+	if w := query.WordsIn(ws.Store, t, where, ws.now().Location()); w != "" {
 		out += ", " + w
 	}
 	out += OrderWords(t, order)
@@ -74,7 +74,7 @@ func (ws *Workspace) calendarShows(props, out map[string]any) string {
 		return NothingYet(t.Name, where, t.FieldWords(field))
 	}
 	shows := schema.Count(n, t.Name) + " by " + t.FieldWords(field)
-	if w := query.Words(t, where, ws.now().Location()); w != "" {
+	if w := query.WordsIn(ws.Store, t, where, ws.now().Location()); w != "" {
 		shows += ", " + w
 	}
 	return shows

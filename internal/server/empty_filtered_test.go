@@ -16,10 +16,22 @@ func TestAFilteredListWithNoMatchesIsNotAFirstUse(t *testing.T) {
 	if strings.Contains(body, "No tasks yet") {
 		t.Errorf("tasks exist; the list must not say there are none yet\n%s", truncate(body))
 	}
-	if !strings.Contains(body, "No matching tasks") || !strings.Contains(body, "Nothing is not done. Try fewer conditions, or") || !strings.Contains(body, `href="/t/task">see all tasks</a>`) {
+	if !strings.Contains(body, "No matching tasks") || !strings.Contains(body, "None where not done. Try fewer conditions, or") || !strings.Contains(body, `href="/t/task">see all tasks</a>`) {
 		t.Errorf("the list says nothing matched, what was looked for, and the way to all of them\n%s", truncate(body))
 	}
 	if first := get(t, h, "/t/note").Body.String(); !strings.Contains(first, "No notes yet") {
 		t.Errorf("an unfiltered empty list is still the first-use words")
+	}
+}
+
+// A condition on another record names it by its title, not its id: a
+// habit's entries read "habit is Running miles".
+func TestAConditionOnARecordSaysItsName(t *testing.T) {
+	t.Parallel()
+	a, h := newApp(t)
+	habit, _ := a.Store.Create("habit", map[string]any{"name": "Running miles"})
+	body := get(t, h, "/t/entry?where=habit%3D"+habit.ID).Body.String()
+	if !strings.Contains(body, "habit is Running miles") || strings.Contains(body, "is "+habit.ID) {
+		t.Errorf("the list says the habit by its name: %s", truncate(body))
 	}
 }
