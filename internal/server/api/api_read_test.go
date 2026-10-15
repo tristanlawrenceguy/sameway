@@ -30,6 +30,12 @@ func TestAnAgentReadsLess(t *testing.T) {
 	if len(last["records"].([]any)) != 1 || last["next"] != nil {
 		t.Errorf("the last page has the one left and no next: %v", last)
 	}
+	// A limit alone is the first page of that size, said as one.
+	var limited map[string]any
+	decode(t, get(t, h, "/api/note?limit=3"), &limited)
+	if len(limited["records"].([]any)) != 3 || limited["total"] != float64(7) || !strings.Contains(fmt.Sprint(limited["next"]), "page=2") {
+		t.Errorf("a limit says how many there are and where the rest is: %v", limited)
+	}
 	var all map[string]any
 	decode(t, get(t, h, "/api/note"), &all)
 	if len(all["records"].([]any)) != 7 {
