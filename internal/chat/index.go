@@ -2,6 +2,7 @@ package chat
 
 import (
 	"fmt"
+	"github.com/tristanlawrenceguy/sameway/internal/fold"
 	"github.com/tristanlawrenceguy/sameway/internal/jsontext"
 	"strings"
 
@@ -37,14 +38,32 @@ func typeHelp(t *schema.Type) string {
 	return fmt.Sprintf("%s takes, inside fields: %s.", t.Name, strings.Join(typeFields(t), ", "))
 }
 
-// typeFields returns the display names of fields a model may write.
+// typeFields is each field a model may write, by the name it writes it
+// by, with the label a person sees when that is another word and a
+// pick-list's values: at (Rings), status (one of todo, doing, done).
+// Labels alone were written as names, rings for at, and values guessed,
+// and both refused; kinds and "required" are left out, as words a model
+// said back to the person.
 func typeFields(t *schema.Type) []string {
 	var fields []string
 	for _, f := range t.Shown() {
 		if f.ReadOnly || schema.ServerFilled(f.Description) {
 			continue
 		}
-		fields = append(fields, f.Display())
+		var said []string
+		if fold.Key(f.Display()) != fold.Key(schema.Words(f.Name)) {
+			said = append(said, f.Display())
+		}
+		// A pick-list's values are what is written; guessed from its
+		// labels (To do), a status was refused.
+		if len(f.Values) > 0 {
+			said = append(said, "one of "+strings.Join(f.Values, ", "))
+		}
+		name := f.Name
+		if len(said) > 0 {
+			name += " (" + strings.Join(said, ", ") + ")"
+		}
+		fields = append(fields, name)
 	}
 	return fields
 }
