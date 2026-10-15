@@ -36,10 +36,21 @@ func (s *Service) blockWrite(w http.ResponseWriter, r *http.Request, fields map[
 	if r.PathValue("type") != records.BlockType {
 		return "", false
 	}
+	shows, refusal := s.blockCheck(fields, was)
+	if refusal != nil {
+		web.WriteJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": *refusal})
+		return "", true
+	}
+	return shows, false
+}
+
+// blockCheck is blockWrite's check without the answer: what the block
+// would show, or why it may not be written.
+func (s *Service) blockCheck(fields map[string]any, was *store.Record) (shows string, refusal *web.APIError) {
 	_, newProps := fields["props"]
 	_, newComponent := fields["component"]
 	if !newProps && !newComponent {
-		return "", false // moved or restyled: what it shows is as it was
+		return "", nil // moved or restyled: what it shows is as it was
 	}
 	name, _ := fields["component"].(string)
 	props, _ := fields["props"].(map[string]any)
@@ -53,22 +64,18 @@ func (s *Service) blockWrite(w http.ResponseWriter, r *http.Request, fields map[
 	}
 	c, ok := s.app.Registry.Get(name)
 	if !ok {
-		web.WriteJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": web.APIError{Code: "invalid",
-			Message: fmt.Sprintf("no component %q; the components are %s", name, strings.Join(s.app.Registry.Names(), ", "))}})
-		return "", true
+		return "", &web.APIError{Code: "invalid", Message: fmt.Sprintf("no component %q; the components are %s", name, strings.Join(s.app.Registry.Names(), ", "))}
 	}
 	if props == nil {
 		props = map[string]any{}
 	}
 	if _, err := c.Validate(props); err != nil {
-		web.WriteJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": web.APIError{Code: "invalid", Message: chat.PropsTrouble(err)}})
-		return "", true
+		return "", &web.APIError{Code: "invalid", Message: chat.PropsTrouble(err)}
 	}
 	shows, err := s.app.Chat.CheckBlock(name, props)
 	var cannot *chat.CannotShow
 	if errors.As(err, &cannot) {
-		web.WriteJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": web.APIError{Code: "cannot_show", Message: err.Error()}})
-		return "", true
+		return "", &web.APIError{Code: "cannot_show", Message: err.Error()}
 	}
-	return shows, false
+	return shows, nil
 }

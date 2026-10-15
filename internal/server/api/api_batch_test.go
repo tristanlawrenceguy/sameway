@@ -13,7 +13,7 @@ import (
 
 // POST /api/{type} with a list writes every record or none, as one change
 // in the log; one refused names its place and writes nothing; PATCH
-// /api/{type} makes the same change to several; blocks stay one at a time.
+// /api/{type} makes the same change to several; blocks too, each checked.
 func TestSeveralRecordsInOneRequest(t *testing.T) {
 	t.Parallel()
 	a, h := newApp(t)
@@ -58,7 +58,18 @@ func TestSeveralRecordsInOneRequest(t *testing.T) {
 		t.Errorf("Call mum moved: %v", rec.Fields["due"])
 	}
 
-	if res := send(http.MethodPost, "/api/block", `[{"component": "heading", "props": {"text": "A"}}]`); res.Code < 400 || !strings.Contains(res.Body.String(), "one at a time") {
-		t.Errorf("blocks are written one at a time: %d %s", res.Code, res.Body)
+	// Blocks too, each checked as one alone is: one refused names its
+	// place, and none is written.
+	if res := send(http.MethodPost, "/api/block", `[{"component": "heading", "props": {"text": "Plan"}}, {"component": "nothing-like-it"}]`); res.Code != http.StatusUnprocessableEntity || !strings.Contains(res.Body.String(), "block [1] was refused") {
+		t.Errorf("a refused block names its place: %d %s", res.Code, res.Body)
+	}
+	blocks, _ := a.Store.List("block", store.ListOptions{})
+	had := len(blocks)
+	res = send(http.MethodPost, "/api/block", `[{"component": "heading", "props": {"text": "Plan"}, "span": 12}, {"component": "collection", "props": {"type": "task", "label": "To do"}}]`)
+	if res.Code != http.StatusCreated || !strings.Contains(res.Body.String(), `"shows"`) {
+		t.Fatalf("several blocks at once, each saying what it shows: %d %s", res.Code, res.Body)
+	}
+	if blocks, _ = a.Store.List("block", store.ListOptions{}); len(blocks) != had+2 {
+		t.Errorf("two blocks written: %d before, %d after", had, len(blocks))
 	}
 }
