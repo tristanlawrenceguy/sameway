@@ -194,10 +194,10 @@ func texts(t *schema.Type, rec *store.Record, r Reader) (title, body string) {
 		switch f.Type {
 		case "bool":
 			continue
+		case "enum":
+			continue // enum values are metadata, not searchable content; skip from snippets
 		case "datetime":
 			s = when.Relative(flatten(v), r.Now, r.H24)
-		case "enum":
-			s = f.ValueLabel(flatten(v))
 		default:
 			s = flatten(v)
 		}

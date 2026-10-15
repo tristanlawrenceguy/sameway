@@ -30,6 +30,12 @@ func (s *Server) glanceHTML(facts []records.Fact, chips bool, boxed string) stri
 			parts = append(parts, timeHTML("", f.When, f.Full, s.component("badge", map[string]any{"label": f.Text, "tone": f.Tone})))
 		case (f.Kind == "ref" || f.Kind == "count") && !chips:
 			parts = append(parts, `<span class="sw-row__note">`+template.HTMLEscapeString(f.Text)+`</span>`)
+		case f.Kind == "state" && !chips:
+			parts = append(parts, string(s.component("badge", map[string]any{
+				"label":   f.Text,
+				"tone":    f.Tone,
+				"context": f.Field, // e.g. "status" so screen readers say "Published status" on list rows
+			})))
 		default:
 			parts = append(parts, string(s.component("badge", map[string]any{"label": f.Text, "tone": f.Tone})))
 		}

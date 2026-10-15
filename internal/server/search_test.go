@@ -69,9 +69,11 @@ func TestSearchEmptyStateHasH2AndSuggestion(t *testing.T) {
 	}
 }
 
-// Search result links include the content type in their accessible name so a
-// screen reader user knows what kind of thing they are clicking before navigating.
-func TestSearchResultLinksIncludeContentTypeInAccessibleName(t *testing.T) {
+// Search result links do not append raw internal type names to their
+// accessible name. The visible card meta paragraph already shows the kind
+// label ("Note", "Block") so a visually hidden suffix was redundant and
+// leaked an internal identifier into screen-reader output (backlog 0761).
+func TestSearchResultLinksDoNotAppendTypeSuffix(t *testing.T) {
 	t.Parallel()
 	_, h := newApp(t)
 	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Call the plumber", "body": "About the kitchen tap."}), http.StatusCreated)
@@ -80,16 +82,19 @@ func TestSearchResultLinksIncludeContentTypeInAccessibleName(t *testing.T) {
 	wantStatus(t, page, http.StatusOK)
 	body := page.Body.String()
 
-	// The link for "Call the plumber" should include its content type.
+	// The link should contain only the record title with the search word marked.
 	if !strings.Contains(body, `Call the <mark class="sw-search__hit">plumber</mark>`) {
 		t.Error("result link should contain the record title, the word searched for marked")
 	}
-	if !strings.Contains(body, `<span class="sw-visually-hidden">`) {
-		t.Error("result links should embed the content type in a visually hidden span so screen readers announce it as part of the accessible name")
+	// The heading link must not include a visually hidden type suffix.
+	if strings.Contains(body, `<span class="sw-visually-hidden"> — Note`) ||
+		strings.Contains(body, `<span class="sw-visually-hidden"> — note`) {
+		t.Error("result links must not append raw internal type names like '— Note' to the accessible name")
 	}
-	// The card title link should have the pattern: Title<span class="sw-visually-hidden"> — note</span> or similar.
-	if !strings.Contains(body, "— Note") && !strings.Contains(body, "— note") {
-		t.Error("result links should include both the record type and its title in the accessible name, e.g., 'Call the plumber — Note'")
+	// The visible card meta paragraph still shows the kind label.
+	if !strings.Contains(body, `<p class="sw-card__meta">Note</p>`) &&
+		!strings.Contains(body, `<p class="sw-card__meta">Note,`) {
+		t.Error("the card meta should display the visible kind label")
 	}
 }
 
