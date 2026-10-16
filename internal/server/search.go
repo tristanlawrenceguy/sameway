@@ -128,9 +128,10 @@ func searchForm(s *Server, label, hint, q, only string) string {
 	return b.String()
 }
 
-// hitItem is one result: its title with the words marked, what kind it is,
-// and the words around the match. told tells it from another result with
-// its title and kind, or is "".
+// hitItem builds one search result card: a heading with the record's
+// title (no type suffix), a meta paragraph showing what kind it is,
+// and an optional snippet. told adds an aria-label for duplicate-title
+// disambiguation so two links of one name still differ (WCAG 2.4.9).
 func (s *Server) hitItem(h search.Hit, words []string, told string) string {
 	typeEsc := template.HTMLEscapeString(capitalize(schema.Words(h.Type)))
 	if h.Near {
