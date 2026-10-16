@@ -42,11 +42,11 @@ func (s *Service) habitsToDo(now time.Time) []todayHabit {
 		if archived, _ := r.Fields["archived"].(bool); archived || h.Cadence != "day" || h.Aim != track.Reach {
 			continue
 		}
-		sum := track.Summarise(h, blocks.EntriesOf(s.app.Store, h.ID), now, 1)
+		sum := track.Summarise(h, blocks.EntriesOf(s.app.Store, h.ID), now, 7)
 		if sum.Met {
 			continue
 		}
-		out = append(out, todayHabit{ID: h.ID, Title: h.Name, Href: relate.Page(records.HabitType, h.ID), Progress: track.Progress(h, sum)})
+		out = append(out, todayHabit{ID: h.ID, Title: h.Name, Href: relate.Page(records.HabitType, h.ID), Progress: track.Progress(h, sum) + missedSaid(sum)}) // today_habits_missed.go
 	}
 	return out
 }
@@ -58,7 +58,7 @@ func (s *Service) habitsSection(habits []todayHabit) string {
 	}
 	esc := template.HTMLEscapeString
 	var b strings.Builder
-	b.WriteString(`<h2>Habits</h2><ul class="sw-plain sw-rows">`)
+	b.WriteString(`<h2>Habits</h2>` + s.habitTwins(habits) + `<ul class="sw-plain sw-rows">`) // today_habits_missed.go
 	for _, h := range habits {
 		b.WriteString(`<li class="sw-row"><p class="sw-row__title"><a class="sw-link" href="` + esc(h.Href) + `">` + esc(h.Title) + `</a> <span class="sw-muted sw-small">` + esc(h.Progress) + `</span></p>`)
 		b.WriteString(`<div class="sw-cluster">` + string(s.Form(ui.Form{Action: "/habit/" + h.ID + "/log", From: "/today",
