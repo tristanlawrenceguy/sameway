@@ -146,7 +146,7 @@ func TestRepeatedTitlesAreToldApartInSearchAndTheLog(t *testing.T) {
 	// A result is told apart as its row and its log entry are, by its
 	// day (design/foundations/names.md).
 	linkNames := names(t, results, "link")
-	if !has(linkNames, "Call plumber — Task ("+overdue+")") || !has(linkNames, "Call plumber — Task ("+later+")") {
+	if !has(linkNames, "Call plumber ("+overdue+")") || !has(linkNames, "Call plumber ("+later+")") {
 		t.Errorf("a result says what tells it apart, as its row does: %q", linkNames)
 	}
 	log := get(t, h, "/activity").Body.String()
