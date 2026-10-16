@@ -28,16 +28,16 @@ type Index struct {
 	More       []string `json:"more"`
 }
 
-const indexAbout = `Sameway is a person's own workspace: records of content types (notes, tasks, habits, people and the rest), each on its page at /t/{type}/{id}, and pages of blocks (Home at /, more tabs at /c/{canvas}), each block a component from the design system showing those records. You build for the person by adding blocks through the API, never by writing HTML of your own. Every answer under /api is JSON; send Authorization: Bearer <key> when you were given one.`
+const indexAbout = `Sameway is a person's own workspace: records of content types (notes, tasks, habits, people and the rest), each on its page at /t/{type}/{id}, and pages of blocks (Home at /, more tabs at /c/{canvas}), each block a component from the design system showing those records. Most of what a person asks is about their records: find, make and change them (Records below); their Today page already shows what is due. Add blocks only when they ask to see something on a page, and never write HTML of your own. Every answer under /api is JSON; send Authorization: Bearer <key> when you were given one.`
 
 // indexBuild is how to build, in the order it is done.
 var indexBuild = []string{
-	`1. Find what there is: GET /api/{type} lists a type's records (?where=done=false&order=due narrows and sorts), GET /api/search?q=words searches everything, GET /api/canvas lists the tabs beside Home, GET /api/block the blocks. Use only records that exist: if the person has none, say so or ask; never make up records, and never log entries to test.`,
+	`1. Find what there is: GET /api/{type} lists a type's records (?where=done=false&where=due<today narrows to what is late, created_at>=today to what was added today, updated_at>=-7d to the last week; order=due sorts), GET /api/search?q=words searches everything, GET /api/canvas lists the tabs beside Home, GET /api/block the blocks. Use only records that exist: if the person has none, say so or ask; never make up records, and never log entries to test.`,
 	`2. Pick a component from components below; GET /api/describe/components/{name} gives the props it takes and an example to start from.`,
 	`3. Add a block: POST /api/block with {"component", "props", "canvas", "span", "position"} (block_add below). It is checked before it is written; the answer's shows says in words what the block shows, and layout how the page reads now. Read both.`,
 	`4. Lay out the whole page, not only what you added: POST /api/arrange (block_arrange below) puts every block in reading order with its width in one change: most important first, related things together, rows of twelve filled, headings in order.`,
 	`5. Change a block with PATCH /api/block/{id}, take it away with DELETE /api/block/{id}. GET /api/look?path=/ reads the page as a screen reader gets it.`,
-	`The day: GET /api/today is what the person's Today page holds, as JSON: what is late, due and on, and on a long day the three to start with. Records: POST /api/{type} makes one (its fields: /api/describe/types/{type}), or several from a JSON array as one change; PATCH /api/{type}/{id} changes one, and PATCH /api/{type} with ids the same change to several. A page's form answers in JSON only when sent with Accept: application/json (actions below); without it the answer is a page.`,
+	`The day: GET /api/today is what the person's Today page holds, as JSON: what is late, due and on, and on a long day the three to start with; ?days=7 adds the week ahead. Records: POST /api/{type} makes one (its fields: /api/describe/types/{type}), or several from a JSON array as one change; PATCH /api/{type}/{id} changes one, and PATCH /api/{type} with ids the same change to several. A page's form answers in JSON only when sent with Accept: application/json (actions below); without it the answer is a page.`,
 }
 
 // indexFirst are the routes an agent building needs, in the order it needs
@@ -47,10 +47,11 @@ var indexFirst = []string{"block_add", "block_arrange", "errors"}
 // indexShort says the routes most used next in a line, where their own
 // first words would not.
 var indexShort = map[string]string{
-	"list":     "GET /api/{type}: a type's records; ?where=field=value (repeatable), ?order=field or -field, ?limit= and ?page= (the answer then says total, pages and next), ?fields=",
+	"list":     "GET /api/{type}: a type's records; ?where=field=value, due<today, created_at>=today, updated_at>=-7d (repeatable, all hold), ?order=field or -field, ?limit= and ?page= (the answer then says total, pages and next), ?fields=",
 	"get":      "GET /api/{type}/{id}: one record, every field, with its title",
 	"create":   "POST /api/{type} with a JSON object of fields, or a JSON array of them to make several as one change (all or none, one Undo); PATCH /api/{type} with {\"ids\": [...], \"fields\": {...}} makes the same change to several",
-	"update":   "PATCH /api/{type}/{id} with the fields to change; If-Match with updated_at refuses a change made from an older version",
+	"update":   "PATCH /api/{type}/{id} with the fields to change, at the top level ({\"due\": \"friday\"}); several to the same: PATCH /api/{type} with ids; If-Match with updated_at refuses a change made from an older version",
+	"changes":  "GET /api/changes: what changed, oldest first, and a cursor for next time; GET /api/activity?where=created_at>=today&where=actor=assistant is the log narrowed to who and when",
 	"search":   "GET /api/search?q=words: every record and block that matches, counted by kind; &type= narrows",
 	"look":     "GET /api/look?path=/: a page as a screen reader gets it, and its problems; on a page of blocks, measured is each block's height and any scroll inside it as the person's own browser drew it; POST does what a person does",
 	"actions":  "POST a page's form with Accept: application/json and the answer is JSON: {ok, title, text, location, undo, fields}",
