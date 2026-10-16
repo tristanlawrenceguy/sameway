@@ -123,3 +123,50 @@ func TestSearchResultsPageHeadingStructure(t *testing.T) {
 	// The existing look.Page check also verifies no heading-level skips.
 	// If there is an h2 "Results" between h1 and the card titles, that is correct.
 }
+
+// Search result snippets label enum values with their field name so a person
+// never sees a bare status word like "Draft" or "Published" separated by
+// middots from content (backlog 0708). The fix is in texts() in internal/search.
+func TestSearchSnippetLabelsEnumValues(t *testing.T) {
+	t.Parallel()
+	_, h := newApp(t)
+	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/note", map[string]any{
+		"title":  "Garden plan",
+		"body":   "Plant the roses in spring. The beds need compost.",
+		"status": "published",
+	}), http.StatusCreated)
+
+	var out struct {
+		Count int
+		Hits  []struct{ Type, Title, Href, Snippet string }
+	}
+	decode(t, get(t, h, "/api/search?q=roses"), &out)
+	if out.Count != 1 {
+		t.Fatalf("one note matches roses, got %d", out.Count)
+	}
+	snippet := out.Hits[0].Snippet
+	if !strings.Contains(snippet, "Status: Published") {
+		t.Errorf("snippet should label enum values with their field name, got %q; bare status like 'Published' must not appear without context", snippet)
+	}
+}
+
+// The HTML search page also shows labelled enum values in result snippets.
+func TestSearchPageSnippetLabelsEnumValues(t *testing.T) {
+	t.Parallel()
+	_, h := newApp(t)
+	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/note", map[string]any{
+		"title":  "Meeting notes",
+		"body":   "Discuss the budget for next quarter. Status is published.",
+		"status": "published",
+	}), http.StatusCreated)
+
+	page := get(t, h, "/search?q=budget")
+	wantStatus(t, page, http.StatusOK)
+	body := page.Body.String()
+	if !strings.Contains(body, "Status: Published") {
+		t.Errorf("the search results page should show labelled enum in snippet, got body: %.500s", body)
+	}
+	if strings.Contains(body, " · Published") {
+		t.Error("a status value must not appear as a bare word after middots in the HTML search page")
+	}
+}
