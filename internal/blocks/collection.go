@@ -74,7 +74,7 @@ func resolveCollection(ws *Workspace, props map[string]any, at Place) map[string
 		}
 	}
 	ws.collectionItems(out, t, recs, props, by)
-	out["summary"] = query.Words(t, where, ws.now().Location())
+	out["summary"] = query.WordsIn(ws.Store, t, where, ws.now().Location())
 	out["all"] = listPath(t.Name, where, order)
 	return out
 }

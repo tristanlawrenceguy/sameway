@@ -40,3 +40,12 @@ func (c *Command) mcpConfig(req Request) (string, error) {
 	f.Close()
 	return filepath.Clean(f.Name()), nil
 }
+
+// who names the program a person signed in to: Claude Code for claude.
+func (c *Command) who(program string) string {
+	base := strings.TrimSuffix(filepath.Base(program), filepath.Ext(program))
+	if base == "claude" {
+		return "Claude Code"
+	}
+	return base
+}

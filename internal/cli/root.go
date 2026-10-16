@@ -32,6 +32,7 @@ Usage:
   sameway look <path> [--scripts] [--only controls] [--kind button] [--name words]  a page as a screen reader gets it, with its problems, as JSON
   sameway export [--zip file]           rewrite content/ from the database (it is kept current as things change)
   sameway import [--dry-run]            read content/ back into the database, after a git pull; one Undo takes it back
+  sameway workspaces                    the workspaces this computer knows: name, folder, and where each is open
   sameway snapshots                     the daily copies of this workspace's data, newest first
   sameway restore <path>                put a copy back, keeping the data from before (workspace stopped)
   sameway chat <message>                talk to the assistant from the terminal

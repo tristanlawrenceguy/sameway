@@ -169,7 +169,6 @@ func TestArrangeRefusesWhatLosesABlockOrSkipsAHeading(t *testing.T) {
 	svc := newFullService(t)
 	heading, due, tracker, overdue := weekPage(t, svc)
 	was := layout(t, svc)
-	refused(t, svc, "arrange_canvas", map[string]any{"blocks": []map[string]any{{"id": heading}, {"id": due}, {"id": tracker}}}, "is missing")
 	refused(t, svc, "arrange_canvas", map[string]any{"blocks": []map[string]any{{"id": heading}, {"id": due}, {"id": tracker}, {"id": overdue}, {"id": due}}}, "listed twice")
 	refused(t, svc, "arrange_canvas", map[string]any{"blocks": []map[string]any{{"id": heading}, {"id": due}, {"id": tracker}, {"id": overdue}, {"id": "nope"}}}, "not a block on this tab")
 	refused(t, svc, "arrange_canvas", map[string]any{"blocks": []map[string]any{{"id": heading, "span": 13}, {"id": due}, {"id": tracker}, {"id": overdue}}}, "span must be between 1 and 12")
@@ -199,5 +198,21 @@ func TestAHeadingThatSkipsALevelIsRefusedWithTheFix(t *testing.T) {
 	run(t, svc, "update_component", map[string]any{"id": id, "props": map[string]any{"label": "Packing", "items": []string{"a"}, "level": 3}})
 	if text := run(t, svc, "remove_component", map[string]any{"id": h}); !strings.Contains(text, "skipping level 2") {
 		t.Errorf("removing the heading over a level 3 list should say it now skips: %s", text)
+	}
+}
+
+// Arranging some of a tab: what is not listed keeps its order after the
+// ones listed, and the answer names it and how to place it.
+func TestArrangingSomeKeepsTheRestAfter(t *testing.T) {
+	t.Parallel()
+	svc := newFullService(t)
+	heading, due, tracker, overdue := weekPage(t, svc)
+	text := run(t, svc, "arrange_canvas", map[string]any{"blocks": []map[string]any{{"id": tracker}, {"id": heading}, {"id": due}}})
+	if !strings.Contains(text, "1 not listed kept their order after the ones listed: "+overdue) || !strings.Contains(text, "list them to place them") {
+		t.Errorf("the answer names what was not listed: %s", text)
+	}
+	now := layout(t, svc)
+	if !(now[tracker][0] < now[heading][0] && now[heading][0] < now[due][0] && now[due][0] < now[overdue][0]) {
+		t.Errorf("listed first in their order, the rest after: %v", now)
 	}
 }

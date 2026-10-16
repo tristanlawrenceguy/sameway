@@ -20,8 +20,8 @@ import (
 // building a body of 106 items by hand lost it to a character it got
 // wrong, half sent. POST /api/{type} takes a list as well as one record,
 // and PATCH /api/{type} the same change to several ids: all are written or
-// none, as one change in the log, which one Undo takes back. Blocks are
-// still written one at a time, each checked as it is.
+// none, as one change in the log, which one Undo takes back. Blocks too,
+// each checked as one alone is (api_batch_blocks.go).
 
 // batchRead is the body when it is a list of records, nil when it is one
 // record; the body is put back for the one-record way either way.
@@ -53,9 +53,12 @@ func batchRead(r *http.Request) ([]map[string]any, error) {
 // batchWrite writes the list, or refuses it whole naming the one refused.
 func (s *Service) batchWrite(w http.ResponseWriter, r *http.Request, action string, writes []records.Writing) {
 	typ := r.PathValue("type")
+	var shows []string
 	if typ == records.BlockType {
-		web.WriteError(w, errors.New("blocks are written one at a time, each checked as it is: POST /api/block with one block"))
-		return
+		var refused bool
+		if shows, refused = s.blocksChecked(w, r, writes); refused { // api_batch_blocks.go
+			return
+		}
 	}
 	recs, notes, entry, at, err := records.WriteAllAs(s.app.Store, Agent(r).As(), action, typ, writes)
 	if err != nil {
@@ -73,10 +76,14 @@ func (s *Service) batchWrite(w http.ResponseWriter, r *http.Request, action stri
 		ID    string `json:"id"`
 		Title string `json:"title"`
 		Page  string `json:"page"`
+		Shows string `json:"shows,omitempty"` // a block's: what it shows
 	}
 	out := make([]made, len(recs))
 	for i, rec := range recs {
-		out[i] = made{rec.ID, s.apiTitle(rec), relate.Page(typ, rec.ID)}
+		out[i] = made{rec.ID, s.apiTitle(rec), relate.Page(typ, rec.ID), ""}
+		if i < len(shows) {
+			out[i].Shows = shows[i]
+		}
 	}
 	status := http.StatusOK
 	if action == "created" {

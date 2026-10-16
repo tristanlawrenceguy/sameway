@@ -16,13 +16,15 @@ import (
 type FailKind int
 
 const (
-	FailOther  FailKind = iota
-	FailKey             // the key is not accepted
-	FailCredit          // the account has nothing left to spend
-	FailRate            // too many messages just now
-	FailBusy            // the provider is overloaded or down for a moment
-	FailModel           // the model asked for is not there
-	FailLong            // the conversation is too long for the model
+	FailOther     FailKind = iota
+	FailKey                // the key is not accepted
+	FailCredit             // the account has nothing left to spend
+	FailRate               // too many messages just now
+	FailBusy               // the provider is overloaded or down for a moment
+	FailModel              // the model asked for is not there
+	FailLong               // the conversation is too long for the model
+	FailSignedOut          // the program the person signs in to is signed out
+	FailNoAccess           // their account may not use it: an organisation turned it off
 )
 
 // Failure is a provider's refusal, sorted.
@@ -39,6 +41,10 @@ func Classify(status int, said, who, model string) *Failure {
 	f := &Failure{Status: status, Who: who, Model: model, Said: strings.TrimSpace(said)}
 	low := strings.ToLower(said)
 	switch {
+	case strings.Contains(low, "not logged in") || strings.Contains(low, "please run /login"):
+		f.Kind = FailSignedOut
+	case strings.Contains(low, "disabled") && strings.Contains(low, "access"):
+		f.Kind = FailNoAccess
 	case status == 401 || status == 403 || strings.Contains(low, "invalid api key") || strings.Contains(low, "invalid x-api-key"):
 		f.Kind = FailKey
 	case status == 402 || strings.Contains(low, "credit balance") || strings.Contains(low, "insufficient credits") || strings.Contains(low, "insufficient_quota"):
@@ -68,6 +74,10 @@ func (f *Failure) Error() string {
 		return f.Who + " is busy just now and did not answer. Send it again in a moment."
 	case FailModel:
 		return "The model " + f.Model + " is not there any more. Choose another where the page asks for a model."
+	case FailSignedOut:
+		return f.Who + " on this computer is signed out. Sign in to it again, or choose another model where the page asks for one."
+	case FailNoAccess:
+		return f.Who + " cannot be used with this account just now: its organisation has turned that off. Choose another model where the page asks for one, such as a free one on this computer."
 	case FailLong:
 		return "This chat has grown too long for the model. Start a new chat; this one stays in the list."
 	}

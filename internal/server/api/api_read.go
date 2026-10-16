@@ -19,6 +19,12 @@ import (
 // page, or zero when it asked for all of them.
 func listPage(q url.Values, limit int) (size, page int, err error) {
 	p := q.Get("page")
+	if p == "" && limit > 0 {
+		// A limit alone is the first page of that size, so the answer says
+		// how many there are and where the rest is: an agent given the
+		// first 20 could not tell there were 90.
+		return limit, 1, nil
+	}
 	if p == "" {
 		return 0, 0, nil
 	}
