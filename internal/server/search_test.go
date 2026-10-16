@@ -85,8 +85,9 @@ func TestSearchResultHeadingLinksHaveNoTypeSuffix(t *testing.T) {
 	if !strings.Contains(body, `Call the <mark class="sw-search__hit">plumber</mark>`) {
 		t.Error("result link should contain the record title, the word searched for marked")
 	}
-	// The heading's visually hidden span should NOT include a type suffix
-	// such as "— Note" inside the anchor tag; that is internal detail.
+	// The heading's anchor should NOT contain a visually hidden span with
+	// a type suffix like "— Note"; such spans were removed so screen readers
+	// announce only the record title, not internal schema identifiers.
 	if strings.Contains(body, `sw-visually-hidden"> — Note`) || strings.Contains(body, `sw-visually-hidden"> — note`) {
 		t.Error("search result headings should not embed content type in a visually hidden span")
 	}
