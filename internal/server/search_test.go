@@ -69,9 +69,10 @@ func TestSearchEmptyStateHasH2AndSuggestion(t *testing.T) {
 	}
 }
 
-// Search result links include the content type in their accessible name so a
-// screen reader user knows what kind of thing they are clicking before navigating.
-func TestSearchResultLinksIncludeContentTypeInAccessibleName(t *testing.T) {
+// Search result heading links no longer append internal type names like
+// "— Note" to their accessible name. The title alone is enough; the kind
+// appears separately in a meta paragraph below the heading, not inside it.
+func TestSearchResultHeadingLinksHaveNoTypeSuffix(t *testing.T) {
 	t.Parallel()
 	_, h := newApp(t)
 	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Call the plumber", "body": "About the kitchen tap."}), http.StatusCreated)
@@ -80,16 +81,15 @@ func TestSearchResultLinksIncludeContentTypeInAccessibleName(t *testing.T) {
 	wantStatus(t, page, http.StatusOK)
 	body := page.Body.String()
 
-	// The link for "Call the plumber" should include its content type.
+	// The link for "Call the plumber" should contain the record title.
 	if !strings.Contains(body, `Call the <mark class="sw-search__hit">plumber</mark>`) {
 		t.Error("result link should contain the record title, the word searched for marked")
 	}
-	if !strings.Contains(body, `<span class="sw-visually-hidden">`) {
-		t.Error("result links should embed the content type in a visually hidden span so screen readers announce it as part of the accessible name")
-	}
-	// The card title link should have the pattern: Title<span class="sw-visually-hidden"> — note</span> or similar.
-	if !strings.Contains(body, "— Note") && !strings.Contains(body, "— note") {
-		t.Error("result links should include both the record type and its title in the accessible name, e.g., 'Call the plumber — Note'")
+	// The heading's anchor should NOT contain a visually hidden span with
+	// a type suffix like "— Note"; such spans were removed so screen readers
+	// announce only the record title, not internal schema identifiers.
+	if strings.Contains(body, `sw-visually-hidden"> — Note`) || strings.Contains(body, `sw-visually-hidden"> — note`) {
+		t.Error("search result headings should not embed content type in a visually hidden span")
 	}
 }
 
