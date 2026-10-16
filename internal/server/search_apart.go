@@ -13,7 +13,7 @@ import "github.com/tristanlawrenceguy/sameway/internal/search"
 func (s *Server) hitsApart(hits []search.Hit) []string {
 	names := make([]string, len(hits))
 	for i, h := range hits {
-		names[i] = h.Title + " " + h.Type
+		names[i] = h.Title + " (" + h.Type + ")"
 	}
 	return apart(names, func(i int) []string {
 		if t, ok := s.app.Types.Get(hits[i].Type); ok {
