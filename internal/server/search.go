@@ -136,6 +136,15 @@ func (s *Server) hitItem(h search.Hit, words []string, told string) string {
 	if h.Near {
 		typeEsc += ", " + search.Close // found by what it is about (search_meaning.go)
 	}
+	// The heading's accessible name: the title plus context for telling
+	// duplicates apart and a note that it was found by meaning. No raw
+	// type name — that stays in the sw-card__meta paragraph below.
+	hdrContext := withContext("", told)
+	if h.Near && hdrContext == "" {
+		hdrContext = search.Close
+	} else if h.Near {
+		hdrContext += ", " + search.Close
+	}
 	bodyHTML := ""
 	if snippet := string(marked(h.Snippet, words)); snippet != "" {
 		bodyHTML = fmt.Sprintf(`<div class="sw-card__body" data-prop="body"><p>%s</p></div>`, snippet)
@@ -145,12 +154,12 @@ func (s *Server) hitItem(h search.Hit, words []string, told string) string {
 	card := fmt.Sprintf(
 		`<article class="sw-card" data-component="card">`+
 			`<h3 class="sw-card__title" data-prop="title">`+
-			`<a href="%s">%s<span class="sw-visually-hidden"> — %s%s</span></a>`+
+			`<a href="%s">%s<span class="sw-visually-hidden">%s</span></a>`+
 			`</h3>`+
 			`<p class="sw-card__meta">%s</p>`+
 			`%s`+
 			`</article>`,
-		template.HTMLEscapeString(h.Href), marked(h.Title, words), typeEsc, template.HTMLEscapeString(withContext("", told)), typeEsc, bodyHTML,
+		template.HTMLEscapeString(h.Href), marked(h.Title, words), template.HTMLEscapeString(hdrContext), typeEsc, bodyHTML,
 	)
 	return fmt.Sprintf(`<li class="sw-dotted" data-dot="%d">%s</li>`, s.dotOf(h.Type), card)
 }

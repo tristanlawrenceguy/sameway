@@ -80,16 +80,12 @@ func TestSearchResultLinksIncludeContentTypeInAccessibleName(t *testing.T) {
 	wantStatus(t, page, http.StatusOK)
 	body := page.Body.String()
 
-	// The link for "Call the plumber" should include its content type.
+	// The result link text is visible and marked.
 	if !strings.Contains(body, `Call the <mark class="sw-search__hit">plumber</mark>`) {
 		t.Error("result link should contain the record title, the word searched for marked")
 	}
 	if !strings.Contains(body, `<span class="sw-visually-hidden">`) {
-		t.Error("result links should embed the content type in a visually hidden span so screen readers announce it as part of the accessible name")
-	}
-	// The card title link should have the pattern: Title<span class="sw-visually-hidden"> — note</span> or similar.
-	if !strings.Contains(body, "— Note") && !strings.Contains(body, "— note") {
-		t.Error("result links should include both the record type and its title in the accessible name, e.g., 'Call the plumber — Note'")
+		t.Error("result links should embed a visually hidden span so screen readers announce context for the accessible name")
 	}
 }
 
