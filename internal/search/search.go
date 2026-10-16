@@ -197,7 +197,7 @@ func texts(t *schema.Type, rec *store.Record, r Reader) (title, body string) {
 		case "datetime":
 			s = when.Relative(flatten(v), r.Now, r.H24)
 		case "enum":
-			s = f.ValueLabel(flatten(v))
+			s = f.Display() + ": " + f.ValueLabel(flatten(v))
 		default:
 			s = flatten(v)
 		}
