@@ -144,7 +144,7 @@ func (s *Service) todayPage(w http.ResponseWriter, r *http.Request) {
 	if l.count() == 0 && mail == "" && len(habits) == 0 {
 		b.WriteString(string(s.Part(ui.Empty{Message: "Nothing is due today, and nothing is overdue."})))
 	}
-	b.WriteString(s.dumpBox()) // today_focus.go
+	b.WriteString(doneLine(s.doneToday(now)) + s.dumpBox()) // today_done.go, today_focus.go
 	s.Page(w, r, "Today", template.HTML(b.String()), web.PageOptions{Lede: template.HTML(web.Time("", now.Format("2006-01-02"), "", template.HTML(now.Format("Monday 2 January"))))})
 }
 

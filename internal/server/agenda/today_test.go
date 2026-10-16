@@ -39,7 +39,9 @@ func TestTodayAndItsMorningBrief(t *testing.T) {
 			t.Errorf("Today has %s: %s", want, truncate(page))
 		}
 	}
-	if strings.Contains(page, "Book holiday") || strings.Contains(page, "Done already") {
+	// What is done is only in the line of what got done (today_done.go).
+	todo, _, _ := strings.Cut(page, "Done today:")
+	if strings.Contains(page, "Book holiday") || strings.Contains(todo, "Done already") {
 		t.Error("and not tomorrow's, nor what is done")
 	}
 	postForm(t, h, "/brief", url.Values{"at": {"00:00"}})
