@@ -196,6 +196,30 @@ func TestAPageSaysItsZoneAndDay(t *testing.T) {
 	}
 }
 
+// Fired reminder state badges on list rows must not carry a "State:" prefix: the badge
+// shows only the label ("Rang"), not the field name. glanceHTML prepends strings.ToUpper(f.Field[0:1])
+// + f.Field[1:] + ": " to state badges when chips=false (row context), producing "State: Rang"
+// instead of just the badge text. After the fix, only the badge label appears in row meta.
+func TestFiredReminderRowBadgeHasNoFieldPrefix(t *testing.T) {
+	t.Parallel()
+	_, h := newAppAt(t, tonight)
+
+	now := "2026-03-11T08:00:00Z" // same as today so it rings
+	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/reminder", map[string]any{
+		"title": "Call the dentist",
+		"at":    now,
+		"state": "rang",
+	}), http.StatusCreated)
+
+	body := get(t, h, "/t/reminder").Body.String()
+	if !strings.Contains(body, ">Rang</span>") {
+		t.Errorf("fired reminder row should show the \"Rang\" badge in meta; page:\n%s", body)
+	}
+	if strings.Contains(strings.ToLower(around(body, "Rang")), "state:") {
+		t.Errorf("row badge should not carry a \"State:\" prefix before the label; found near Rang: %s", around(body, "Rang"))
+	}
+}
+
 // read is what a person reads on a page (machine_words_test.go).
 func read(page string) string { return strings.Join(peopleText(page), "\n") }
 
