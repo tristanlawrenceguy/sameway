@@ -19,16 +19,17 @@ import (
 
 // Fact is one thing a record says at a glance.
 type Fact struct {
-	Kind   string // done, state, flag, day, person, ref, count
-	Field  string // the field it says, which the record's page need not list again
-	Text   string // as a person reads it
-	Tone   string // the badge's tone
-	Person string // a person's id, for their colour
-	Label  string // a person's field's label: For
-	Short  string // a day as a row says it, a class to go with it
-	Class  string
-	When   string // a day's value, for its <time datetime>
-	Full   string // a day in full, when its words leave the date out
+	Kind    string // done, state, flag, day, person, ref, count
+	Field   string // the field it says, which the record's page need not list again
+	Text    string // as a person reads it
+	Tone    string // the badge's tone
+	Person  string // a person's id, for their colour
+	Label   string // a person's field's label: For
+	Short   string // a day as a row says it, a class to go with it
+	Class   string
+	When    string // a day's value, for its <time datetime>
+	Full    string // a day in full, when its words leave the date out
+	IsStage bool   // true only when this state fact comes from the type's stage field
 }
 
 // Glance is what a record says at a glance, by the schema's rules, not by
@@ -69,7 +70,7 @@ func Glance(st *store.Store, t *schema.Type, rec *store.Record, now time.Time, h
 			continue
 		}
 		if worth, said := StateWorth(t, f, v); said && worth {
-			out = append(out, Fact{Kind: "state", Field: f.Name, Text: f.ValueLabel(v), Tone: "info"})
+			out = append(out, Fact{Kind: "state", Field: f.Name, Text: f.ValueLabel(v), Tone: "info", IsStage: f.Name == t.Stage()})
 		}
 	}
 	for _, f := range t.Shown() {

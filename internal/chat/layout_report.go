@@ -119,3 +119,29 @@ func readsNow(all []placed) string {
 	b.WriteString(".")
 	return b.String()
 }
+
+// LayoutBrief is Layout now cut to the first n things to look at, with how
+// many more there are and where they all are: an agent adding one block
+// was answered with every problem on a tab of 25 and the call to fix
+// them. whole is where the whole report is read.
+func (s *Service) LayoutBrief(canvas string, n int, whole string) string {
+	r := s.layoutReportOf(canvas)
+	if len(r.problems) <= n {
+		return r.String()
+	}
+	var b strings.Builder
+	b.WriteString(r.reads + " To look at:")
+	for i, p := range r.problems[:n] {
+		fmt.Fprintf(&b, " (%d) %s.", i+1, p)
+	}
+	fmt.Fprintf(&b, " And %d more, with the arrangement that would fix them all: %s", len(r.problems)-n, whole)
+	return b.String()
+}
+
+// LayoutParts is the whole report in its parts: how the tab reads, every
+// thing to look at, and the arrange_canvas blocks that would fix the order
+// and widths, "" when there is none.
+func (s *Service) LayoutParts(canvas string) (reads string, problems []string, fix string) {
+	r := s.layoutReportOf(canvas)
+	return r.reads, r.problems, r.fix
+}

@@ -62,3 +62,34 @@ func TestFindLooksThroughEverythingAPersonHas(t *testing.T) {
 		t.Errorf("a blank search finds nothing, got %+v", none)
 	}
 }
+
+// Enum values in search snippets show their value label without a raw field-name
+// prefix, so a person never sees "Status: Published" but does see "Published"
+// (goal 0107).
+func TestEnumValuesInSearchSnippetsAreLabelled(t *testing.T) {
+	t.Parallel()
+	types, err := schema.Load(filepath.Join("..", "..", "examples", "workspaces", "starter", "schema"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	st, err := store.Open(":memory:", types)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer st.Close()
+	st.Create("note", map[string]any{"title": "Garden plan", "body": "Plant the roses in spring. The beds need compost.", "status": "published"})
+
+	hits, _ := search.Matches(st, types, "roses", search.Reader{Now: time.Now()})
+	if len(hits) != 1 {
+		t.Fatalf("one note mentions roses, got %d hits", len(hits))
+	}
+	snippet := hits[0].Snippet
+	if !strings.Contains(snippet, "Published") {
+		t.Errorf("snippet should contain the enum value label 'Published', got %q", snippet)
+	}
+	for _, label := range []string{"Status:", "Type:", "State:"} {
+		if strings.Contains(snippet, label) {
+			t.Errorf("snippet must not contain raw field-label prefix %q; got %q", label, snippet)
+		}
+	}
+}

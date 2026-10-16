@@ -121,3 +121,57 @@ func TestSearchResultsPageHeadingStructure(t *testing.T) {
 	// The existing look.Page check also verifies no heading-level skips.
 	// If there is an h2 "Results" between h1 and the card titles, that is correct.
 }
+
+// Search result snippets show enum value labels without raw field-name prefixes
+// so a person never sees "Status: Published" but does see the value itself. The
+// fix is in texts() in internal/search.
+func TestSearchSnippetLabelsEnumValues(t *testing.T) {
+	t.Parallel()
+	_, h := newApp(t)
+	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/note", map[string]any{
+		"title":  "Garden plan",
+		"body":   "Plant the roses in spring. The beds need compost.",
+		"status": "published",
+	}), http.StatusCreated)
+
+	var out struct {
+		Count int
+		Hits  []struct{ Type, Title, Href, Snippet string }
+	}
+	decode(t, get(t, h, "/api/search?q=roses"), &out)
+	if out.Count != 1 {
+		t.Fatalf("one note matches roses, got %d", out.Count)
+	}
+	snippet := out.Hits[0].Snippet
+	if !strings.Contains(snippet, "Published") {
+		t.Errorf("snippet should contain the enum value label 'Published', got %q", snippet)
+	}
+	for _, label := range []string{"Status:", "Type:", "State:"} {
+		if strings.Contains(snippet, label) {
+			t.Errorf("snippet must not contain raw field-label prefix %q; got %q", label, snippet)
+		}
+	}
+}
+
+// The HTML search page also shows enum value labels without raw field-name prefixes.
+func TestSearchPageSnippetLabelsEnumValues(t *testing.T) {
+	t.Parallel()
+	_, h := newApp(t)
+	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/note", map[string]any{
+		"title":  "Meeting notes",
+		"body":   "Discuss the budget for next quarter. Status is published.",
+		"status": "published",
+	}), http.StatusCreated)
+
+	page := get(t, h, "/search?q=budget")
+	wantStatus(t, page, http.StatusOK)
+	body := page.Body.String()
+	if !strings.Contains(body, "Published") {
+		t.Errorf("the search results page should show the enum value label 'Published' in snippet, got body: %.500s", body)
+	}
+	for _, label := range []string{"Status:", "Type:", "State:"} {
+		if strings.Contains(body, label) {
+			t.Errorf("the search results page must not contain raw field-label prefix %q; got body: %.500s", label, body)
+		}
+	}
+}
