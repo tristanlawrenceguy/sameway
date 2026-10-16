@@ -54,6 +54,11 @@ func onePage(r *http.Request, recs []*store.Record, size, page int) ([]*store.Re
 	return recs[lo:hi], about
 }
 
+// always are what every record answers with, asked for or not: asking for
+// them was refused ("interaction has no id, title"), and an agent wanting
+// a short list of ids and titles could not have one.
+var always = map[string]bool{"id": true, "title": true, "created_at": true, "updated_at": true, "type": true}
+
 // onlyFields is the fields a read asked for, checked against the type, or
 // nil for all of them.
 func (s *Service) onlyFields(r *http.Request, typ string) ([]string, error) {
@@ -67,10 +72,12 @@ func (s *Service) onlyFields(r *http.Request, typ string) ([]string, error) {
 	}
 	var names, bad []string
 	for _, n := range strings.Split(asked, ",") {
-		if n = strings.TrimSpace(n); n == "" {
-			continue
+		n = strings.TrimSpace(n)
+		_, own := t.Field(n)
+		if n == "" || always[n] && !own {
+			continue // every record answers with these whatever is asked
 		}
-		if _, ok := t.Field(n); !ok {
+		if !own {
 			bad = append(bad, n)
 		}
 		names = append(names, n)

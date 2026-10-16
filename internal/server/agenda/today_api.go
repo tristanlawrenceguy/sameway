@@ -59,6 +59,9 @@ func (s *Service) todayAPI(w http.ResponseWriter, r *http.Request) {
 		answer["start_with"] = items(first)
 		answer["rest"] = len(rest)
 		answer["start_with_why"] = "what the person or the assistant marked as mattering first (tagged important, urgent or start), then what is latest; the page shows these three and folds the rest"
+		if old := s.longLate(append(append([]todayItem{}, first...), rest...)); len(old) >= 2 { // today_letgo.go
+			answer["long_late"] = map[string]any{"count": len(old), "tasks": items(old), "let_go": letGoSaid}
+		}
 	}
 	if days := s.ahead(r, now, items); days != nil { // today_ahead.go
 		answer["ahead"] = days

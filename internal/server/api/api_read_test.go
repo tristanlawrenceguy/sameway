@@ -41,7 +41,11 @@ func TestAnAgentReadsLess(t *testing.T) {
 	if len(all["records"].([]any)) != 7 {
 		t.Errorf("without page, every one, as before")
 	}
-	res := get(t, h, "/api/note?fields=title,colour")
+	// What every record answers with may be asked for too.
+	if res := get(t, h, "/api/note?fields=id,title,created_at&limit=2"); res.Code != http.StatusOK {
+		t.Errorf("id, title and created_at are always there, so asking is fine: %d %s", res.Code, res.Body.String())
+	}
+	res := get(t, h, "/api/note?fields=body,colour")
 	if res.Code != http.StatusBadRequest || !strings.Contains(res.Body.String(), "its fields are") {
 		t.Errorf("a field it does not have is named, with the ones it has: %d %s", res.Code, res.Body.String())
 	}
