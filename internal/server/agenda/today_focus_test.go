@@ -115,6 +115,11 @@ func TestLongLateTasksCanBeKeptWithNoDate(t *testing.T) {
 	if !strings.Contains(page, "3 of them have been late more than two weeks.") || !strings.Contains(page, "Keep them, with no date") {
 		t.Fatalf("the long late are offered: %s", truncate(page))
 	}
+	// An agent reading the day is offered the same, and told not to tick
+	// them done.
+	if api := get(t, h, "/api/today").Body.String(); !strings.Contains(api, `"long_late"`) || !strings.Contains(api, "POST /today/let-go") || !strings.Contains(api, "never tick a task done to clear Today") {
+		t.Errorf("an agent is offered letting go: %s", truncate(api))
+	}
 	postForm(t, h, "/today/let-go", url.Values{})
 	for _, id := range old {
 		if r, _ := a.Store.Get("task", id); r.Fields["due"] != nil && r.Fields["due"] != "" {

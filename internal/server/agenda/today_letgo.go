@@ -21,6 +21,11 @@ import (
 // from what is left. What the person marked as mattering is never among
 // them.
 
+// letGoSaid is the offer as an agent reads it in GET /api/today. Asked to
+// clear a long Today, an agent ticked fifty tasks done that were not, one
+// call at a time: the honest press was there, and it was not told.
+const letGoSaid = "these have been late more than two weeks; POST /today/let-go (with Accept: application/json) keeps them all as tasks with no date, no longer late, in one change one Undo takes back, as the person's Today page offers. They are not done: never tick a task done to clear Today"
+
 // longLate is how long late a task is before it is offered to let go.
 const longLateDays = 14
 
