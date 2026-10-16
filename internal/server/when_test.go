@@ -47,10 +47,12 @@ func TestADateIsWrittenAsPeopleSayIt(t *testing.T) {
 	// The API takes the same words, so an agent need not compute a date.
 	wantStatus(t, postJSON(t, h, http.MethodPatch, "/api/task/"+task.ID, map[string]any{"due": "tomorrow"}), http.StatusOK)
 	// The store reads the words on the app's clock (Store.Clock): the day
-	// after tonight's, not the computer's.
+	// after tonight's, not the computer's; and a day said in words keeps
+	// the 2pm it had (records/day_keeps_time.go).
 	rec, _ = a.Store.Get("task", task.ID)
-	if rec.Fields["due"] != tonight.AddDate(0, 0, 1).Format("2006-01-02")+"T00:00:00Z" {
-		t.Errorf("tomorrow is stored as that day, got %v", rec.Fields["due"])
+	moved, _ := time.Parse(time.RFC3339, rec.Fields["due"].(string))
+	if moved = moved.In(ts.Location()); moved.Format("2006-01-02") != tonight.AddDate(0, 0, 1).Format("2006-01-02") || moved.Hour() != ts.Hour() {
+		t.Errorf("tomorrow is that day at the time it had, got %v", rec.Fields["due"])
 	}
 
 	res = postForm(t, h, "/t/task/"+task.ID+"/props", url.Values{"prop-due": {"sometime soon"}})

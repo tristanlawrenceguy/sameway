@@ -52,6 +52,7 @@ func (s *Service) todayAPI(w http.ResponseWriter, r *http.Request) {
 		"follow_ups": items(l.FollowUps),
 		"count":      l.count(),
 		"habits":     s.habitsToDo(now), // today_habits.go: daily ones not met yet, logged by POST /habit/{id}/log
+		"done_today": s.doneToday(now),  // today_done.go: the tasks ticked today, latest first
 	}
 	// A long day starts with three, as the page does; the rest wait.
 	if first, rest := s.focus(l); first != nil {
