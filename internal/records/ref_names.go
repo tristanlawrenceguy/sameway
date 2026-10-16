@@ -15,13 +15,22 @@ import (
 // "Ann Lee, Ben Ortiz". Every write comes through here, so each name is
 // found once, for every way in: by an id, by its title, or for a person by
 // their email. A name that is not anyone, or is two people, is refused
-// with what to do; nobody is made up from a typo.
+// with what to do; nobody is made up from a typo. A field that holds one
+// record (an entry's habit, a call's person) is found the same way: an
+// agent logging a run had to look up the habit's id first.
 
 func refNamesToIDs(st *store.Store, t *schema.Type, fields map[string]any) error {
 	problems := map[string]string{}
 	for _, f := range t.Fields {
 		raw, sent := fields[f.Name]
-		if !sent || !f.RefList() {
+		if !sent {
+			continue
+		}
+		if f.Type == "ref" && !f.RefList() {
+			oneByName(st, f, fields, problems) // an entry's habit, a call's person, by name
+			continue
+		}
+		if !f.RefList() {
 			continue
 		}
 		items, err := listItems(raw)
@@ -121,4 +130,38 @@ func containsID(ids []any, id string) bool {
 		}
 	}
 	return false
+}
+
+// oneByName finds the one record a single ref names, by its id or its
+// title, refusing a name that is no one or two.
+func oneByName(st *store.Store, f schema.Field, fields map[string]any, problems map[string]string) {
+	name, ok := fields[f.Name].(string)
+	if !ok || strings.TrimSpace(name) == "" {
+		return
+	}
+	to, ok := st.Types().Get(f.To)
+	if !ok {
+		return
+	}
+	id, why := findByName(st, to, strings.TrimSpace(name))
+	switch {
+	case why == "":
+		fields[f.Name] = id
+	case !idShaped(name): // an id that is no one is the store's to say, by id
+		problems[f.Name] = why
+	}
+}
+
+// idShaped says a value is written as an id is: sixteen lowercase letters
+// and digits.
+func idShaped(s string) bool {
+	if len(s) != 16 {
+		return false
+	}
+	for _, r := range s {
+		if (r < 'a' || r > 'z') && (r < '0' || r > '9') {
+			return false
+		}
+	}
+	return true
 }
