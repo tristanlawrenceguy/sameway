@@ -24,7 +24,8 @@ func (s *Service) SayNotes() {
 // notes is what chat says of c.
 func (s *Service) notes(c records.Change) []string {
 	made := c.Made()
-	out := s.copyNotes(c) // a block made or changed to hold records' words
+	out := s.copyNotes(c)                 // a block made or changed to hold records' words
+	out = append(out, s.leftBehind(c)...) // left_behind.go: what stayed on a moved record's old day
 
 	for _, op := range made {
 		rec, err := s.Store.Get(op.Type, op.ID)
