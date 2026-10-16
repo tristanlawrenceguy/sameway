@@ -128,9 +128,10 @@ func searchForm(s *Server, label, hint, q, only string) string {
 	return b.String()
 }
 
-// hitItem is one result: its title with the words marked, what kind it is,
-// and the words around the match. told tells it from another result with
-// its title and kind, or is "".
+// hitItem is one result: its title with the words marked, and the words
+// around the match. told tells it from another result with the same title;
+// it is used as an aria-label on the link so screen readers can tell them
+// apart (WCAG 2.4.9), or is "". The type name is no longer shown in the card.
 func (s *Server) hitItem(h search.Hit, words []string, told string) string {
 	bodyHTML := ""
 	if snippet := string(marked(h.Snippet, words)); snippet != "" {
