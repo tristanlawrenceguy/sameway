@@ -9,6 +9,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/web"
+	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
 // A person sees a change arrive: the page follows along. An agent had
@@ -28,10 +29,15 @@ func (s *Service) apiChanges(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	since := time.Time{}
 	if c := q.Get("since"); c != "" {
+		// A cursor a previous answer gave, or a day in words: "what changed
+		// while I was away" is since=-2w, one ask, not a walk of the log.
 		t, err := time.Parse(time.RFC3339Nano, c)
 		if err != nil {
-			web.WriteError(w, &badRequest{"since is the cursor a previous answer gave, such as " + time.Now().UTC().Format(time.RFC3339Nano)}) // wall clock: a cursor is a log entry's own time, which the store stamps
-			return
+			var ok bool
+			if t, _, ok = when.Parse(c, s.Now()); !ok {
+				web.WriteError(w, &badRequest{"since is the cursor a previous answer gave, or a day: yesterday, -2w, 2026-10-01"})
+				return
+			}
 		}
 		since = t
 	}
