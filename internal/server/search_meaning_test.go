@@ -48,12 +48,14 @@ func TestTheSearchPageSaysWhatIsCloseInMeaning(t *testing.T) {
 	page := get(t, h, "/search?q=plumber").Body.String()
 	for _, want := range []string{
 		"First what has your words, then what is close in meaning.",
-		"Boiler repair, call Marek<span class=\"sw-visually-hidden\"> — Note, close in meaning",
 		"It also finds what is close in meaning.",
 	} {
 		if !strings.Contains(page, want) {
 			t.Errorf("the page says %q: %s", want, truncate(page))
 		}
+	}
+	if !strings.Contains(page, `<p class="sw-card__meta">Note`) && !strings.Contains(page, `<p class="sw-card__meta">note`) {
+		t.Error("type info should appear in a separate meta paragraph below the heading")
 	}
 	if strings.Index(page, "Ask the plumber") > strings.Index(page, "Boiler repair") {
 		t.Error("the word match comes first")
