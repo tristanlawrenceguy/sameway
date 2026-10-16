@@ -17,16 +17,14 @@ func TestTaskListHeadingLinksContainNoAddedOrDue(t *testing.T) {
 	page := get(t, h, "/t/task").Body.String()
 
 	// Acceptance 1 & 2: no heading link contains "added" or "due" as visible text.
-	// Currently apartHTML is inside <a>, so these words appear in link text.
 	insideLink := `>Call plumber<span class="sw-visually-hidden"> (` + overdue + `)</span></a>`
 	if strings.Contains(page, insideLink) {
 		t.Errorf("apart text %q is still visible inside a heading link (acceptance 1/2)\n%s", overdue, truncate(page))
 	}
 
-	// Acceptance 3: apart text should be OUTSIDE the anchor tag.
-	afterLink := `</a><span class="sw-visually-hidden"> (` + overdue + `)</span>`
-	if !strings.Contains(page, afterLink) {
-		t.Errorf("apart text %q should be outside </a> in a visually hidden span (acceptance 3)\n%s", overdue, truncate(page))
+	// Acceptance 3: apart text goes into the aria-label on the anchor, not in a separate span.
+	if !strings.Contains(page, `aria-label="Call plumber (`+overdue+")") {
+		t.Errorf("apart text %q should be in the link's aria-label (acceptance 3)\n%s", overdue, truncate(page))
 	}
 
 	_ = later
@@ -44,20 +42,15 @@ func TestUndatedTaskTwinsAlsoKeepApartOutsideHeadingLink(t *testing.T) {
 
 	// Undated twins are told apart by ordinal ("first of 2") or "(added ...)"
 	// depending on timestamp resolution. This text must not be inside any
-	// heading <a> tag; it goes outside in a visually hidden span (acceptance 1/2).
+	// heading <a> tag; it goes into the aria-label instead (acceptance 1/2).
 	if strings.Contains(page, `>Call plumber<span class="sw-visually-hidden">`) {
 		t.Errorf("apart text is still visible inside a heading link (acceptance 1/2)\n%s", truncate(page))
 	}
 
-	// It should appear outside </a> in a visually hidden span.
-	if !strings.Contains(page, `</a><span class="sw-visually-hidden">`) {
-		t.Errorf("apart text should be outside </a> in a visually hidden span\n%s", truncate(page))
-	}
-
-	// Both twins must have apart text outside the link.
-	count := strings.Count(page, `</a><span class="sw-visually-hidden">`)
-	if count < 2 {
-		t.Errorf("expected at least 2 task links with apart text outside </a>, got %d\n%s", count, truncate(page))
+	// Both twins must have apart text in their aria-labels.
+	ariaCount := strings.Count(page, `aria-label="Call plumber (`)
+	if ariaCount < 2 {
+		t.Errorf("expected at least 2 task links with apart text in aria-label, got %d\n%s", ariaCount, truncate(page))
 	}
 }
 

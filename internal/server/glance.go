@@ -30,10 +30,12 @@ func (s *Server) glanceHTML(facts []records.Fact, chips bool, boxed string) stri
 			parts = append(parts, timeHTML("", f.When, f.Full, s.component("badge", map[string]any{"label": f.Text, "tone": f.Tone})))
 		case (f.Kind == "ref" || f.Kind == "count") && !chips:
 			parts = append(parts, `<span class="sw-row__note">`+template.HTMLEscapeString(f.Text)+`</span>`)
-		case f.Kind == "state" && !chips && !f.IsStage:
+		case f.Kind == "state" && !chips && !f.IsStage && f.Field != "state":
 			parts = append(parts, template.HTMLEscapeString(
 				strings.ToUpper(f.Field[0:1])+f.Field[1:],
 			)+": "+string(s.component("badge", map[string]any{"label": f.Text, "tone": f.Tone})))
+		case f.Kind == "state" && !chips && !f.IsStage:
+			parts = append(parts, string(s.component("badge", map[string]any{"label": f.Text, "tone": f.Tone})))
 		default:
 			parts = append(parts, string(s.component("badge", map[string]any{"label": f.Text, "tone": f.Tone})))
 		}

@@ -16,6 +16,9 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
+
+	"golang.org/x/net/html"
 
 	"github.com/tristanlawrenceguy/sameway/internal/render/htmltest"
 )
@@ -140,6 +143,73 @@ func TestReminderListHeadingNoDuplicateDateInAccessibleName(t *testing.T) {
 		}
 		if !strings.Contains(name, "Submit tax return") {
 			t.Errorf("h3 accessible name %q should contain the record title", name)
+		}
+	}
+}
+
+// TestReminderListHeadingNoDuplicateRingTimeInAccessibleName verifies that each reminder row's
+// heading accessible name contains "(rings" at most once — no duplicate ring time
+// metadata in the heading's accessible name. It creates two reminders with the same title but
+// different times on /t/reminder so recordsApart generates told text (e.g., "rings today at 8am"),
+// fetches the page, finds all h3 headings and checks them. The told text is currently rendered
+// twice: once in the link's aria-label and again as a <span class="sw-visually-hidden"> sibling.
+// After the fix it should appear only once, inside the aria-label. (Acceptance 1.)
+func TestReminderListHeadingNoDuplicateRingTimeInAccessibleName(t *testing.T) {
+	t.Parallel()
+	_, h := newAppAt(t, tonight)
+
+	now := tonight.Format("2006-01-02") + "T08:00:00Z"
+	nearby := tonight.Add(time.Hour).Format("2006-01-02T15:04:05Z")
+	wantStatus(t, postJSON(t, h, "POST", "/api/reminder", map[string]any{
+		"title": "Call the dentist",
+		"at":    now,
+	}), 201)
+	wantStatus(t, postJSON(t, h, "POST", "/api/reminder", map[string]any{
+		"title": "Call the dentist",
+		"at":    nearby,
+	}), 201)
+
+	body := get(t, h, "/t/reminder").Body.String()
+	doc, err := htmltest.Parse(body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	h3s := doc.Elements("h3")
+	if len(h3s) < 2 {
+		t.Fatalf("expected at least two reminder row headings; found %d", len(h3s))
+	}
+
+	for _, n := range h3s {
+		textContent := htmltest.Text(n)
+		if !strings.Contains(textContent, "Call the dentist") {
+			continue
+		}
+		// Collect all text nodes inside h3 including sw-visually-hidden spans,
+		// and also aria-label attributes on child elements. This catches the case
+		// where told is rendered in both aria-label AND a sibling span.
+		var fullText strings.Builder
+		var walk func(*html.Node)
+		walk = func(c *html.Node) {
+			if c.Type == html.TextNode {
+				fullText.WriteString(c.Data)
+			}
+			for _, attr := range c.Attr {
+				if attr.Key == "aria-label" {
+					fullText.WriteString(attr.Val)
+				}
+			}
+			for child := c.FirstChild; child != nil; child = child.NextSibling {
+				walk(child)
+			}
+		}
+		for child := n.FirstChild; child != nil; child = child.NextSibling {
+			walk(child)
+		}
+		full := fullText.String()
+		count := strings.Count(full, "(rings")
+		if count > 1 {
+			t.Errorf("h3 for %q contains ring time metadata %d times in total (aria-label + span); expected at most once", textContent, count)
 		}
 	}
 }

@@ -103,9 +103,9 @@ func TestRepeatedTitlesAreToldApartOnTheirList(t *testing.T) {
 			t.Errorf("no link named %q", want)
 		}
 	}
-	// Said once: the title shows, the words that tell it apart are outside.
-	if !strings.Contains(page, `>Call plumber</a><span class="sw-visually-hidden"> (`+overdue+`)</span></h`) {
-		t.Errorf("the words that tell a row apart are outside the link\n%s", truncate(page))
+	// Said once: the title shows, the words that tell it apart go into the aria-label.
+	if !strings.Contains(page, `aria-label="Call plumber (`+overdue+")") {
+		t.Errorf("the words that tell a row apart are in the link's aria-label\n%s", truncate(page))
 	}
 }
 
