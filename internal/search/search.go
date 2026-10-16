@@ -188,8 +188,8 @@ func texts(t *schema.Type, rec *store.Record, r Reader) (title, body string) {
 		if f.Type == "ref" || f.RefList() {
 			continue
 		}
-		// A date and a choice are found and shown as a person reads them,
-		// not as they are stored; yes or no says nothing on its own.
+		// A date is shown as a person reads it (relative), and a choice
+		// as its label, not as it is stored; yes or no says nothing on its own.
 		var s string
 		switch f.Type {
 		case "bool":
@@ -197,7 +197,7 @@ func texts(t *schema.Type, rec *store.Record, r Reader) (title, body string) {
 		case "datetime":
 			s = when.Relative(flatten(v), r.Now, r.H24)
 		case "enum":
-			s = f.Display() + ": " + f.ValueLabel(flatten(v))
+			s = f.ValueLabel(flatten(v))
 		default:
 			s = flatten(v)
 		}

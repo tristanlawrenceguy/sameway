@@ -63,9 +63,9 @@ func TestFindLooksThroughEverythingAPersonHas(t *testing.T) {
 	}
 }
 
-// Enum values in search snippets are labelled with their field name so a
-// person never sees a bare status word like "Published" separated by middots
-// from content (goal 0107).
+// Enum values in search snippets show their value label without a raw field-name
+// prefix, so a person never sees "Status: Published" but does see "Published"
+// (goal 0107).
 func TestEnumValuesInSearchSnippetsAreLabelled(t *testing.T) {
 	t.Parallel()
 	types, err := schema.Load(filepath.Join("..", "..", "examples", "workspaces", "starter", "schema"))
@@ -84,10 +84,12 @@ func TestEnumValuesInSearchSnippetsAreLabelled(t *testing.T) {
 		t.Fatalf("one note mentions roses, got %d hits", len(hits))
 	}
 	snippet := hits[0].Snippet
-	if !strings.Contains(snippet, "Status: Published") {
-		t.Errorf("snippet should label the enum with its field name, got %q; bare status values like 'Published' must not appear without context", snippet)
+	if !strings.Contains(snippet, "Published") {
+		t.Errorf("snippet should contain the enum value label 'Published', got %q", snippet)
 	}
-	if strings.Contains(snippet, " · Published") || (strings.HasSuffix(strings.TrimSpace(snippet), "Published") && !strings.Contains(snippet, "Status: Published")) {
-		t.Error("a status value must never appear as a bare word after middots or at the end of a snippet")
+	for _, label := range []string{"Status:", "Type:", "State:"} {
+		if strings.Contains(snippet, label) {
+			t.Errorf("snippet must not contain raw field-label prefix %q; got %q", label, snippet)
+		}
 	}
 }

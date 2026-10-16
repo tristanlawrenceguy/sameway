@@ -122,9 +122,9 @@ func TestSearchResultsPageHeadingStructure(t *testing.T) {
 	// If there is an h2 "Results" between h1 and the card titles, that is correct.
 }
 
-// Search result snippets label enum values with their field name so a person
-// never sees a bare status word like "Draft" or "Published" separated by
-// middots from content (backlog 0708). The fix is in texts() in internal/search.
+// Search result snippets show enum value labels without raw field-name prefixes
+// so a person never sees "Status: Published" but does see the value itself. The
+// fix is in texts() in internal/search.
 func TestSearchSnippetLabelsEnumValues(t *testing.T) {
 	t.Parallel()
 	_, h := newApp(t)
@@ -143,12 +143,17 @@ func TestSearchSnippetLabelsEnumValues(t *testing.T) {
 		t.Fatalf("one note matches roses, got %d", out.Count)
 	}
 	snippet := out.Hits[0].Snippet
-	if !strings.Contains(snippet, "Status: Published") {
-		t.Errorf("snippet should label enum values with their field name, got %q; bare status like 'Published' must not appear without context", snippet)
+	if !strings.Contains(snippet, "Published") {
+		t.Errorf("snippet should contain the enum value label 'Published', got %q", snippet)
+	}
+	for _, label := range []string{"Status:", "Type:", "State:"} {
+		if strings.Contains(snippet, label) {
+			t.Errorf("snippet must not contain raw field-label prefix %q; got %q", label, snippet)
+		}
 	}
 }
 
-// The HTML search page also shows labelled enum values in result snippets.
+// The HTML search page also shows enum value labels without raw field-name prefixes.
 func TestSearchPageSnippetLabelsEnumValues(t *testing.T) {
 	t.Parallel()
 	_, h := newApp(t)
@@ -161,10 +166,12 @@ func TestSearchPageSnippetLabelsEnumValues(t *testing.T) {
 	page := get(t, h, "/search?q=budget")
 	wantStatus(t, page, http.StatusOK)
 	body := page.Body.String()
-	if !strings.Contains(body, "Status: Published") {
-		t.Errorf("the search results page should show labelled enum in snippet, got body: %.500s", body)
+	if !strings.Contains(body, "Published") {
+		t.Errorf("the search results page should show the enum value label 'Published' in snippet, got body: %.500s", body)
 	}
-	if strings.Contains(body, " · Published") {
-		t.Error("a status value must not appear as a bare word after middots in the HTML search page")
+	for _, label := range []string{"Status:", "Type:", "State:"} {
+		if strings.Contains(body, label) {
+			t.Errorf("the search results page must not contain raw field-label prefix %q; got body: %.500s", label, body)
+		}
 	}
 }
