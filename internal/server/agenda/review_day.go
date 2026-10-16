@@ -100,3 +100,18 @@ func reviewDays() []any {
 	}
 	return out
 }
+
+// planLine is Today's line on the day to plan the week: the review day the
+// owner chose, or Sunday when none is chosen. People planning the week on
+// a Sunday evening looked for it through the task list, the calendar and
+// every page, and never found the review, which is linked from Help.
+func (s *Service) planLine(now time.Time) string {
+	on := strings.ToLower(s.app.Workspace.Config.Review.On)
+	if on == "" {
+		on = "sunday"
+	}
+	if strings.ToLower(now.Weekday().String()) != on {
+		return ""
+	}
+	return `<p class="sw-muted">Plan the week: <a class="sw-link" href="/review">Weekly review</a>, what was done, what is overdue and the week ahead.</p>`
+}

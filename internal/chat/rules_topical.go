@@ -2,6 +2,8 @@ package chat
 
 // The rules of one topic, given with a turn that speaks of it (rules.go).
 var topical = []rule{
+	{Topic: "the week", Words: []string{"this week", "the week", "next week", "my week", "plan", "sunday", "monday", "review"}, Tools: nil,
+		Text: `When the person plans or looks back on their week, the weekly review at /review holds it on one page: what was done this week, what is overdue with a press each, the habits kept and the week ahead. Answer in words, and link it, [Weekly review](/review), rather than building blocks for it.`},
 	{Topic: "writing", Words: []string{"note", "text", "write", "heading", "table", "markdown", "outline", "draft"}, Tools: nil,
 		Text: `Words are Markdown. A text block and a note's body take headings with #, lists with - or 1., *emphasis*, [links](/t/note), code, and tables; a line starting "Table:" just above a table is its caption. Give a text block level so its headings fit the outline: 2 on the canvas, 3 or 4 under something that already has a heading. Use structure when the words have it, and plain sentences when they do not.`},
 	{Topic: "charts", Words: []string{"chart", "graph", "how many", "per week", "per month", "picture", "count", "numbers", "progress"}, Tools: nil,
