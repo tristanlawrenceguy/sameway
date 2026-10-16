@@ -90,7 +90,7 @@ func (c *ctx) contentCmd(typeName string) error {
 		if err != nil {
 			return notFound(err, t.Name, positional[0])
 		}
-		c.print(rec, func() { printRecord(c, rec) })
+		c.print(viewOf(a, t, rec), func() { printRecord(c, rec) })
 	case "create":
 		fields, err := fieldsFrom(sets, *data)
 		if err != nil {

@@ -34,13 +34,14 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	// One way to list, for the page, the API, an export and the command
 	// line: query.Filter, which with no query is every record.
 	recs, err := query.Filter(s.app.Store, t, where, order, 0, s.now())
+	b.WriteString(string(listNotRead(t, r.URL.Query()))) // list_not_read.go
 	if len(where) > 0 || order != "" {
 		if err != nil {
 			fmt.Fprintf(&b, `<p class="sw-muted">%s</p><p>%s</p>`, template.HTMLEscapeString(refusedSaid(t, err)), s.part(ui.Link{Href: "/t/" + t.Name, Label: "See all " + schema.Plural(t.Name), Look: ui.LookButton}))
 			s.page(w, r, schema.Plural(t.Name), template.HTML(b.String()), pageOptions{Status: http.StatusBadRequest})
 			return
 		}
-		fmt.Fprintf(&b, `<p class="sw-muted">%s. %s</p>`, template.HTMLEscapeString(listSaid(t, len(recs), query.Words(t, where, s.now().Location()), order)), s.part(ui.Link{Href: "/t/" + t.Name, Label: "See all " + schema.Plural(t.Name), Look: ui.LookButton}))
+		fmt.Fprintf(&b, `<p class="sw-muted">%s. %s</p>`, template.HTMLEscapeString(listSaid(t, len(recs), query.WordsIn(s.app.Store, t, where, s.now().Location()), order)), s.part(ui.Link{Href: "/t/" + t.Name, Label: "See all " + schema.Plural(t.Name), Look: ui.LookButton}))
 	}
 	if err != nil {
 		s.fail(w, err)
@@ -48,8 +49,6 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	}
 	// Files come in through a form, because one field and one button is
 	// the better thing here; it can also be placed anywhere as a block.
-	// Empty-state text: "Ask the assistant to add your first" — replaces old "/Add your first" at /t/note/new.
-	// The new link points to /chat (the working surface) instead of dead form routes.
 	if t.Name == FileType {
 		b.WriteString(string(s.component("upload", map[string]any{"from": "/t/" + FileType, "id": "upload"})))
 	}
@@ -57,7 +56,7 @@ func (s *Server) listPage(w http.ResponseWriter, r *http.Request) {
 	if len(recs) == 0 && (len(where) > 0 || order != "") {
 		// Some exist and none matched: not the first-use words, which would
 		// say there are none, but what was looked for and the way back.
-		b.WriteString(string(s.part(ui.Empty{Title: "No matching " + schema.Plural(t.Name), Message: "Nothing is " + query.Words(t, where, s.now().Location()) + ". Try fewer conditions, or",
+		b.WriteString(string(s.part(ui.Empty{Title: "No matching " + schema.Plural(t.Name), Message: "None where " + query.WordsIn(s.app.Store, t, where, s.now().Location()) + ". Try fewer conditions, or",
 			Action: &ui.EmptyAction{Href: "/t/" + t.Name, Label: "see all " + schema.Plural(t.Name)}})))
 	} else if len(recs) == 0 {
 		prompt := "Create a " + schema.Words(t.Name) + "."

@@ -104,6 +104,10 @@ func readText(n *html.Node) string {
 			if skipped(n) {
 				return
 			}
+			if box := boxSaid(n); box != "" {
+				b.WriteString(" " + box + " ")
+				return
+			}
 			if n.Data == "br" || n.Data == "img" {
 				if alt, _ := htmltest.Attr(n, "alt"); alt != "" {
 					b.WriteString(" " + alt)
@@ -185,4 +189,21 @@ func passageLinks(n *html.Node) []PassageLink {
 		walk(c)
 	}
 	return out
+}
+
+// boxSaid is a checkbox or radio as text says it where it sits, [x] or
+// [ ], and "" for anything else. The words beside a box were read alone:
+// "Done Save" beside an empty box, and an agent reading a task's page took
+// a task not done for one done.
+func boxSaid(n *html.Node) string {
+	if n.Data != "input" {
+		return ""
+	}
+	if kind, _ := htmltest.Attr(n, "type"); kind != "checkbox" && kind != "radio" {
+		return ""
+	}
+	if _, on := htmltest.Attr(n, "checked"); on {
+		return "[x]"
+	}
+	return "[ ]"
 }
