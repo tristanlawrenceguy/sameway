@@ -27,7 +27,7 @@ func Expect(f Field) string {
 	case f.Type == "enum":
 		return fmt.Sprintf("%s: one of %s", what, strings.Join(f.Values, ", "))
 	case f.Type == "datetime":
-		return what + ": a moment, as 2026-10-14T09:00:00Z, or a day as 2026-10-14, or words such as today 9am or next Friday"
+		return what + ": a moment in the person's own time, as 2026-10-14T09:00 or words such as today 9am or next Friday 2pm, or a day as 2026-10-14; a time ending in Z is UTC, not theirs"
 	case f.Type == "repeat":
 		return what + ": how often, in words such as every Monday or every day"
 	case f.Type == "bool":

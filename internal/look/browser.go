@@ -73,6 +73,7 @@ type browser struct {
 	waiting map[int]chan reply
 	errors  []string
 	said    bytes.Buffer // its stderr, said when it does not start
+	release func()       // gives its slot back (launch.go)
 }
 
 type reply struct {
@@ -280,21 +281,4 @@ func (b *browser) pageErrors() []string {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	return append([]string(nil), b.errors...)
-}
-
-func (b *browser) close() {
-	if b.conn != nil {
-		b.conn.Close(websocket.StatusNormalClosure, "")
-	}
-	if b.cmd != nil && b.cmd.Process != nil {
-		b.cmd.Process.Kill()
-		b.cmd.Wait()
-	}
-	// The browser lets go of its profile a moment after it exits.
-	for i := 0; i < 20; i++ {
-		if os.RemoveAll(b.dir) == nil {
-			return
-		}
-		time.Sleep(100 * time.Millisecond)
-	}
 }

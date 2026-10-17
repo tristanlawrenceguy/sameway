@@ -24,7 +24,7 @@ func TestARefusedWriteSaysWhatEachFieldTakes(t *testing.T) {
 	var r refusal
 	res := postJSON(t, h, http.MethodPost, "/api/entry", map[string]any{"habit": habit.ID, "amount": 5})
 	json.Unmarshal(res.Body.Bytes(), &r)
-	if res.Code != http.StatusUnprocessableEntity || r.Error.Fields["at"] != "is required" || !strings.Contains(r.Error.Expects["at"], "2026-10-14T09:00:00Z") || r.Error.Describe != "/api/describe/types/entry" {
+	if res.Code != http.StatusUnprocessableEntity || r.Error.Fields["at"] != "is required" || !strings.Contains(r.Error.Expects["at"], "2026-10-14T09:00 ") || r.Error.Describe != "/api/describe/types/entry" {
 		t.Fatalf("a missing moment says its shape and where entry is described: %d %s", res.Code, res.Body)
 	}
 	if d := get(t, h, r.Error.Describe); d.Code != http.StatusOK || !strings.Contains(d.Body.String(), `"at"`) {

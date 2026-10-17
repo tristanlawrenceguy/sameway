@@ -28,7 +28,7 @@ fields:
     description: When it happened.
   follow_up:
     type: datetime
-    description: When to get back to them; it shows on the calendar and the clock.
+    description: "When to get back to them: on that day it is on Today under Follow up, with a press for when it is done, and on the calendar; a task for it as well is one thing twice."
   notes:
     type: markdown
     description: What was said, or the first of an email.

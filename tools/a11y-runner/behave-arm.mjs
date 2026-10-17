@@ -71,6 +71,17 @@ export const cases = {
     await tab.close();
   },
 
+  "proposal: a question still open at the end of the next turn is not said again in place of the reply": async (browser, check) => {
+    const tab = await open(browser, page(chat("")));
+    const status = () => tab.textContent("#chat-status .sw-status__text");
+    await tab.evaluate((html) => { sw.refresh = () => {}; sw.emit("turn-done", { proposals: html }); }, proposal("p3"));
+    check(/The assistant is asking/.test(await status()), `asked the first time: ${await status()}`);
+    await tab.evaluate(() => { document.querySelector("#chat-status .sw-status__text").textContent = "Replied."; });
+    await tab.evaluate((html) => { sw.emit("turn-done", { proposals: html }); }, proposal("p3"));
+    check(await status() === "Replied.", `the same question is not said again: ${await status()}`);
+    await tab.close();
+  },
+
   "upload: sent with no file or an empty one, it says so in words; a picture asks what it shows": async (browser, check) => {
     const form = `<div class="sw-shell"><main id="main">` + readFileSync(new URL("../../design/components/upload/examples/default.html", import.meta.url), "utf8") + "</main></div>";
     const tab = await open(browser, page(form));
