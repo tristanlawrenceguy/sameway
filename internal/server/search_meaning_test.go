@@ -48,7 +48,6 @@ func TestTheSearchPageSaysWhatIsCloseInMeaning(t *testing.T) {
 	page := get(t, h, "/search?q=plumber").Body.String()
 	for _, want := range []string{
 		"First what has your words, then what is close in meaning.",
-		"Boiler repair, call Marek<span class=\"sw-visually-hidden\"> — Note, close in meaning",
 		"It also finds what is close in meaning.",
 	} {
 		if !strings.Contains(page, want) {
@@ -57,6 +56,11 @@ func TestTheSearchPageSaysWhatIsCloseInMeaning(t *testing.T) {
 	}
 	if strings.Index(page, "Ask the plumber") > strings.Index(page, "Boiler repair") {
 		t.Error("the word match comes first")
+	}
+	// The heading accessible name has no raw type suffix; "close in meaning"
+	// stays on the meta line only.
+	if strings.Contains(page, "— Note, close in meaning") || strings.Contains(page, "Boiler repair, call Marek — Note") {
+		t.Error("near-match headings should not include raw type name suffixes like '— Note'")
 	}
 }
 
