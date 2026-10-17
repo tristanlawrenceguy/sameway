@@ -81,7 +81,7 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 	}
 	out := s.glanceHTML(facts, o.Chips, boxed)
 	if !day && !o.Made && !t.HasDay() {
-		out = strings.TrimSpace(out + ` <span class="sw-muted">Changed ` + s.happenedAfter("", rec.UpdatedAt, now) + `</span>`)
+		out = strings.TrimSpace(out + ` <span class="sw-muted">Updated ` + s.happenedAfter("", rec.UpdatedAt, now) + `</span>`)
 	}
 	if o.Made {
 		out = strings.TrimSpace(out + " " + s.whenMade(t, rec, o.From))
