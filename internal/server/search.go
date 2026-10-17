@@ -140,17 +140,26 @@ func (s *Server) hitItem(h search.Hit, words []string, told string) string {
 	if snippet := string(marked(h.Snippet, words)); snippet != "" {
 		bodyHTML = fmt.Sprintf(`<div class="sw-card__body" data-prop="body"><p>%s</p></div>`, snippet)
 	}
-	// The whole title: a result is recognised by it, and a tooltip holding
-	// the rest is out of reach of a keyboard or a finger.
+	// The whole title: a result is recognised by it, and aria-label carries
+	// the accessible name for screen readers. Visible text is just the title;
+	// the type name appears in <p class="sw-card__meta"> below the card.
+	titleText := string(marked(h.Title, words))
+	var ariaLabel string
+	if told != "" {
+		ctxEsc := template.HTMLEscapeString(told)
+		ariaLabel = h.Title + " (" + ctxEsc + ")"
+	} else {
+		ariaLabel = h.Title
+	}
 	card := fmt.Sprintf(
 		`<article class="sw-card" data-component="card">`+
 			`<h3 class="sw-card__title" data-prop="title">`+
-			`<a href="%s">%s<span class="sw-visually-hidden"> — %s%s</span></a>`+
+			`<a href="%s" aria-label="%s">%s</a>`+
 			`</h3>`+
 			`<p class="sw-card__meta">%s</p>`+
 			`%s`+
 			`</article>`,
-		template.HTMLEscapeString(h.Href), marked(h.Title, words), typeEsc, template.HTMLEscapeString(withContext("", told)), typeEsc, bodyHTML,
+		template.HTMLEscapeString(h.Href), ariaLabel, titleText, typeEsc, bodyHTML,
 	)
 	return fmt.Sprintf(`<li class="sw-dotted" data-dot="%d">%s</li>`, s.dotOf(h.Type), card)
 }
