@@ -46,27 +46,27 @@ func TestNoteListShowsNaturalDate(t *testing.T) {
 		t.Errorf("note list row must not show 'Changed' prefix; found in:\n%s", truncate(row))
 	}
 
-	// The date text should be inside a span with class sw-muted and contain
-	// am or pm (12-hour clock), not a 24-hour format like "00:52" or "23:17".
-	// Extract the sw-muted span from the row.
+	// The date text is inside a <time> element and contains am or pm
+	// (12-hour clock), not a 24-hour format like "00:52" or "23:17".
+	// Extract the <time> element from the row.
 	mutedStart := strings.Index(row, "<time")
 	if mutedStart < 0 {
-		t.Errorf("note list row should contain a span with class=\"sw-muted\" for the date; found in:\n%s", truncate(row))
+		t.Errorf("note list row should contain a time element for the date; found in:\n%s", truncate(row))
 		return
 	}
 
-	// Find the closing > of the span start tag.
+	// Find the closing > of the <time start tag.
 	mutedEnd := strings.Index(row[mutedStart:], `>`)
 	if mutedEnd < 0 {
-		t.Errorf("could not find end of sw-muted span; found in:\n%s", truncate(row))
+		t.Errorf("could not find closing > of time element; found in:\n%s", truncate(row))
 		return
 	}
 
-	// Find the closing </span>.
+	// Find the closing </time>.
 	spanContent := row[mutedStart+mutedEnd+1:]
 	closeSpan := strings.Index(spanContent, "</time>")
 	if closeSpan < 0 {
-		t.Errorf("could not find end of sw-muted span; found in:\n%s", truncate(row))
+		t.Errorf("could not find </time> closing tag; found in:\n%s", truncate(row))
 		return
 	}
 	content := spanContent[:closeSpan]

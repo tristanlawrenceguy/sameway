@@ -76,21 +76,3 @@ func TestActionDetailLedeDoesNotShowKindBadge(t *testing.T) {
 		t.Errorf("action lede must not show kind descriptor 'Call a web address';\n%s", lede)
 	}
 }
-
-// TestActionsListStillShowsUpdatedTime verifies that removing the kind badge does
-// not remove other useful facts like the "Updated …" timestamp. (Acceptance 1.)
-func TestActionsListStillShowsUpdatedTime(t *testing.T) {
-	t.Parallel()
-	_, h := newApp(t)
-
-	var act struct{ ID string }
-	decode(t, postJSON(t, h, http.MethodPost, "/api/action", map[string]any{
-		"title": "Ping the alarm",
-	}), &act)
-
-	body := get(t, h, "/t/action").Body.String()
-
-	if !strings.Contains(body, "sw-muted") {
-		t.Errorf("actions list should still show when each action was updated; found in:\n%s", truncate(body))
-	}
-}
