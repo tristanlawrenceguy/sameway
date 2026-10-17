@@ -61,13 +61,18 @@
     var form = document.querySelector("form.sw-compose");
     if (!form) return;
     var have = document.querySelector(".sw-proposals");
+    // Every turn's end carries the questions still open; one asked before
+    // was said again as if it were the reply, and a person heard an old
+    // question in place of the answer. Only one not there before is said.
+    var asked = {};
+    if (have) have.querySelectorAll(".sw-proposal__summary").forEach(function (s) { asked[s.textContent.trim()] = true; });
     var t = document.createElement("template");
     t.innerHTML = d.proposals.trim();
     var fresh = t.content.firstElementChild;
     if (!fresh) return;
     if (have) have.replaceWith(fresh); else form.parentNode.insertBefore(fresh, form);
     sw.scan();
-    var ask = fresh.querySelector(".sw-proposal__summary");
-    if (ask) say("The assistant is asking: " + ask.textContent.trim());
+    var news = Array.prototype.filter.call(fresh.querySelectorAll(".sw-proposal__summary"), function (s) { return !asked[s.textContent.trim()]; });
+    if (news.length) say("The assistant is asking: " + news[0].textContent.trim());
   });
 })();

@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
@@ -31,10 +32,22 @@ var (
 
 // unknownParams is why a list read cannot be answered as asked, "" when it
 // can.
-func unknownParams(q url.Values, typ string) string {
+func unknownParams(q url.Values, typ string, t *schema.Type) string {
 	unknown := unknownWords(q, listWords)
 	if len(unknown) == 0 {
 		return ""
+	}
+	// A field asked for by its own name is a condition written the wrong
+	// way: ?actor=assistant was refused, and the agent tried word after
+	// word before finding where=actor=assistant.
+	var as []string
+	for _, k := range unknown {
+		if _, ok := t.Field(k); ok {
+			as = append(as, "where="+k+"="+q.Get(k))
+		}
+	}
+	if len(as) > 0 {
+		return fmt.Sprintf("GET /api/%s narrows by a field with where: ask ?%s", typ, strings.Join(as, "&"))
 	}
 	return fmt.Sprintf("GET /api/%s does not take %s, and read as if it were not there it would answer with every %s. "+
 		"A list takes where (a condition, repeatable, such as created_at>=today or done=false), order (a field, -field for newest first), "+
