@@ -27,10 +27,10 @@ func TestADayIsNamedByItsLabel(t *testing.T) {
 		t.Error("an entry's day is not named Logged on its page")
 	}
 	// The line under its fields names when it was made, lower case after
-	// its word: Added today at, never Added Today at.
-	made := regexp.MustCompile(`sw-detail__when[^"]*">Added <time[^>]*>today at `)
+	// its word: created today at, never created Today at.
+	made := regexp.MustCompile(`sw-detail__when[^"]*">Created <time[^>]*>today at `)
 	if page := get(t, h, "/t/entry/"+entry.ID).Body.String(); !made.MatchString(page) {
-		t.Error("when it was made is not said as Added today at")
+		t.Error("when it was made is not said as Created today at")
 	}
 }
 
