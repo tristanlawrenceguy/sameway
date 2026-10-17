@@ -142,15 +142,20 @@ func (s *Server) hitItem(h search.Hit, words []string, told string) string {
 	}
 	// The whole title: a result is recognised by it, and a tooltip holding
 	// the rest is out of reach of a keyboard or a finger.
+	plainTitle := template.HTMLEscapeString(h.Title)
+	fullAccessibleName := plainTitle
+	if told != "" {
+		fullAccessibleName += " (" + template.HTMLEscapeString(told) + ")"
+	}
 	card := fmt.Sprintf(
 		`<article class="sw-card" data-component="card">`+
 			`<h3 class="sw-card__title" data-prop="title">`+
-			`<a href="%s">%s<span class="sw-visually-hidden"> — %s%s</span></a>`+
+			`<a href="%s" aria-label="%s">%s</a>`+
 			`</h3>`+
 			`<p class="sw-card__meta">%s</p>`+
 			`%s`+
 			`</article>`,
-		template.HTMLEscapeString(h.Href), marked(h.Title, words), typeEsc, template.HTMLEscapeString(withContext("", told)), typeEsc, bodyHTML,
+		template.HTMLEscapeString(h.Href), fullAccessibleName, marked(h.Title, words), typeEsc, bodyHTML,
 	)
 	return fmt.Sprintf(`<li class="sw-dotted" data-dot="%d">%s</li>`, s.dotOf(h.Type), card)
 }
