@@ -22,10 +22,10 @@ func TestTaskDetailLedeNoUpdatedLabel(t *testing.T) {
 
 	body := get(t, h, "/t/task/"+rec.ID).Body.String()
 
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*">Added <time[^>]*>([^<]+)</time>`)
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*">Created <time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(body)
 	if len(matches) < 2 {
-		t.Fatal("task detail page should have a sw-detail__when span with \"Added\" label in the lede")
+		t.Fatal("task detail page should have a sw-detail__when span with \"Created\" label in the lede")
 	}
 	whenText := matches[1]
 

@@ -6,7 +6,7 @@ import (
 )
 
 // TestEntryDetailLedeCreationTimeIsLabelled asserts that an entry detail page's
-// lede shows the creation timestamp with a visible "Added" label before it.
+// lede shows the creation timestamp with a visible "Created" label before it.
 // Acceptance item 2.
 func TestEntryDetailLedeCreationTimeIsLabelled(t *testing.T) {
 	t.Parallel()
@@ -31,9 +31,9 @@ func TestEntryDetailLedeCreationTimeIsLabelled(t *testing.T) {
 
 	page := get(t, h, "/t/entry/"+entryRec.ID).Body.String()
 
-	// The page must contain the visible text "Added" before the creation timestamp.
-	if !strings.Contains(page, ">Added ") {
-		t.Error("entry detail page lede should show \"Added\" before the creation timestamp; got an unlabeled time like \"3 days ago\"")
+	// The page must contain the visible text "Created" before the creation timestamp.
+	if !strings.Contains(page, ">Created ") {
+		t.Error("entry detail page lede should show \"Created\" before the creation timestamp; got an unlabeled time like \"3 days ago\"")
 	}
 
 	// The span must still exist with proper structure.

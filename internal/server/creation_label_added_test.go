@@ -5,10 +5,9 @@ import (
 	"testing"
 )
 
-// TestCreationTimestampUsesAddedNotCreated asserts that every record detail page's
-// lede shows "Added" before the creation timestamp — not "Created". This replaces the
-// old bare label with natural language per acceptance items 1 and 2.
-func TestCreationTimestampUsesAddedNotCreated(t *testing.T) {
+// TestCreationLabelIsCreatedNotAdded asserts that every record detail page's
+// lede shows "Created" before the creation timestamp — not the bare word "Added".
+func TestCreationTimestampUsesCreated(t *testing.T) {
 	t.Parallel()
 
 	records := []struct {
@@ -38,14 +37,14 @@ func TestCreationTimestampUsesAddedNotCreated(t *testing.T) {
 
 			page := get(t, h, "/t/"+rec.typ+"/"+r.ID).Body.String()
 
-			// The page must contain "Added" before the creation timestamp.
-			if !strings.Contains(page, ">Added ") {
-				t.Errorf("%s detail page lede should show \"Added\" before the creation timestamp; found \"%s\" instead of a natural label", rec.typ, extractLabel(page))
+			// The page must contain "Created" before the creation timestamp.
+			if !strings.Contains(page, ">Created ") {
+				t.Errorf("%s detail page lede should show \"Created\" before the creation timestamp; found \"%s\" instead of a natural label", rec.typ, extractLabel(page))
 			}
 
-			// The page must NOT contain "Created" as a standalone timestamp label.
-			if strings.Contains(page, ">Created ") {
-				t.Errorf("%s detail page lede should not show bare \"Created\" — acceptance item 1: no record detail page shows \"Created\" standing alone as a timestamp label", rec.typ)
+			// The page must NOT contain "Added" as a standalone timestamp label.
+			if strings.Contains(page, ">Added ") {
+				t.Errorf("%s detail page lede should not show bare \"Added\" — it now uses \"Created\"", rec.typ)
 			}
 
 			// The span structure must still exist.
