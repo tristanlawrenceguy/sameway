@@ -98,10 +98,6 @@ func TestDaysAreHeldInTimeElements(t *testing.T) {
 	if !strings.Contains(page, `class="sw-detail__when sw-muted sw-small">Created <time datetime="`) {
 		t.Error("when it was made is not held in a time element")
 	}
-	postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Seeds"})
-	if !strings.Contains(get(t, h, "/t/note").Body.String(), `<span class="sw-muted">Updated <time datetime="`) {
-		t.Error("a row's last change is not held in a time element")
-	}
 }
 
 // Each provided type says what its rules give it, and nothing a type's
