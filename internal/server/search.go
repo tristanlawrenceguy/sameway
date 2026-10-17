@@ -128,10 +128,10 @@ func searchForm(s *Server, label, hint, q, only string) string {
 	return b.String()
 }
 
-// hitItem is one result: its title with the words marked, what kind it is,
-// and the words around the match. told tells it from another result with
-// its title and kind (or is ""), carried in the aria-label rather than a
-// visually-hidden span so screen readers get the plain name only.
+// hitItem renders one search result card: visible text is title only,
+// aria-label carries plain-title + disambiguation context, and the type
+// name appears as a separate <p class="sw-card__meta"> below. No raw
+// type suffix ("— Note", "— Task") appears in the link element at all.
 func (s *Server) hitItem(h search.Hit, words []string, told string) string {
 	typeEsc := template.HTMLEscapeString(capitalize(schema.Words(h.Type)))
 	if h.Near {
