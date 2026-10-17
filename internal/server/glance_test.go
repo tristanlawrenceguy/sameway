@@ -99,7 +99,7 @@ func TestDaysAreHeldInTimeElements(t *testing.T) {
 		t.Error("when it was made is not held in a time element")
 	}
 	postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Seeds"})
-	if !strings.Contains(get(t, h, "/t/note").Body.String(), `<span class="sw-muted">Changed <time datetime="`) {
+	if !strings.Contains(get(t, h, "/t/note").Body.String(), `<span class="sw-muted">Updated <time datetime="`) {
 		t.Error("a row's last change is not held in a time element")
 	}
 }

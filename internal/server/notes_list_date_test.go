@@ -1,7 +1,7 @@
 package server_test
 
 // Notes list rows must show dates in natural language, not machine format.
-// "Updated Today 00:52" becomes "Today at 12:52am". No "Updated" prefix.
+// The bare label "Changed" is replaced with "Updated" and the date reads naturally.
 // Acceptance items 1 of task 0258 (backlog 0610).
 
 import (
@@ -41,9 +41,9 @@ func TestNoteListShowsNaturalDate(t *testing.T) {
 	}
 	row := body[rowStart : rowStart+rowEnd]
 
-	// The word "Updated" must NOT appear as a field-name prefix before the timestamp.
-	if strings.Contains(row, "Updated") {
-		t.Errorf("note list row must not show 'Updated' prefix; found in:\n%s", truncate(row))
+	// The bare word "Changed" must NOT appear as a label before the timestamp.
+	if strings.Contains(row, ">Changed ") {
+		t.Errorf("note list row must not show 'Changed' prefix; found in:\n%s", truncate(row))
 	}
 
 	// The date text should be inside a span with class sw-muted and contain
@@ -128,9 +128,9 @@ func TestNoteListNoMachineFormatDatePattern(t *testing.T) {
 		t.Errorf("note list row must not contain machine-format date like 'Sat 26 Sep'; found in:\n%s", truncate(row))
 	}
 
-	// Also verify no "Updated" prefix exists.
-	if strings.Contains(row, ">Updated ") {
-		t.Errorf("note list row must not show 'Updated' as field-name prefix; found in:\n%s", truncate(row))
+	// Also verify no "Changed" prefix exists.
+	if strings.Contains(row, ">Changed ") {
+		t.Errorf("note list row must not show 'Changed' as field-name prefix; found in:\n%s", truncate(row))
 	}
 }
 
@@ -254,9 +254,9 @@ func TestAllListPagesNoMachineFormatDate(t *testing.T) {
 			}
 			row := body[rowStart : rowStart+rowEnd]
 
-			// The word "Updated" must NOT appear as a field-name prefix.
-			if strings.Contains(row, ">Updated ") {
-				t.Errorf("list row must not show 'Updated' prefix; found in:\n%s", truncate(row))
+			// The bare word "Changed" must NOT appear as a label before the timestamp.
+			if strings.Contains(row, ">Changed ") {
+				t.Errorf("list row must not show 'Changed' prefix; found in:\n%s", truncate(row))
 			}
 
 			// No machine-format weekday+month pattern like "Sat 26 Sep".
@@ -282,8 +282,8 @@ func TestAllListPagesNoMachineFormatDate(t *testing.T) {
 			rowEnd := strings.Index(body[rowStart:], "</li>")
 			if rowEnd > 0 {
 				row := body[rowStart : rowStart+rowEnd]
-				if strings.Contains(row, ">Updated ") {
-					t.Errorf("file list row must not show 'Updated' prefix; found in:\n%s", truncate(row))
+				if strings.Contains(row, ">Changed ") {
+					t.Errorf("file list row must not show 'Changed' prefix; found in:\n%s", truncate(row))
 				}
 				if matched, _ := regexp.MatchString(`(?i)[A-Z][a-z]{2}\s+\d{1,2}\s+[A-Z][a-z]{2}`, visibleText(row)); matched {
 					t.Errorf("file list row must not contain machine-format date like 'Sat 26 Sep'; found in:\n%s", truncate(row))
