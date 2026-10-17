@@ -57,13 +57,15 @@ func Scripted(ctx context.Context, url string, steps []Step) (*Run, error) {
 	if err != nil {
 		return nil, err
 	}
-	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
-	defer cancel()
+	// The minute is the look's own, from when its browser is up: waiting
+	// for a slot (launch.go) is bounded by the caller.
 	b, err := launch(ctx, program)
 	if err != nil {
 		return nil, err
 	}
 	defer b.close()
+	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
+	defer cancel()
 	var nav struct {
 		ErrorText string `json:"errorText"`
 	}

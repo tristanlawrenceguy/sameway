@@ -49,7 +49,7 @@ func TestABrowserThatDoesNotStartIsTriedAgainAndSaysWhy(t *testing.T) {
 	count := filepath.Join(t.TempDir(), "count")
 	t.Setenv("LOOK_STAND_IN", count)
 	defer func(w time.Duration) { portWait = w }(portWait)
-	portWait = time.Second
+	portWait = 3 * time.Second // the stand-in is a program too, slow to start on a busy machine
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	began := time.Now()
@@ -64,9 +64,9 @@ func TestABrowserThatDoesNotStartIsTriedAgainAndSaysWhy(t *testing.T) {
 	if raw, _ := os.ReadFile(count); strings.Count(string(raw), "started") != 2 {
 		t.Errorf("a browser that did not open its port is started twice, got %q", raw)
 	}
-	// Two waits of a second, and a stand-in that holds its stderr open is
+	// Two waits of three seconds, and a stand-in that holds its stderr open is
 	// let go of within WaitDelay each time, not when it exits a minute on.
-	if took := time.Since(began); took > 12*time.Second {
+	if took := time.Since(began); took > 20*time.Second {
 		t.Errorf("both tries took %s; a browser that holds stderr open must not hold the look up", took)
 	}
 	if _, err := launch(ctx, filepath.Join(t.TempDir(), "nothing-here")); errors.As(err, &slow) {

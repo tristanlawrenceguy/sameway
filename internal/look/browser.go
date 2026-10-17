@@ -73,6 +73,7 @@ type browser struct {
 	waiting map[int]chan reply
 	errors  []string
 	said    bytes.Buffer // its stderr, said when it does not start
+	release func()       // gives its slot back (launch.go)
 }
 
 type reply struct {
@@ -283,6 +284,9 @@ func (b *browser) pageErrors() []string {
 }
 
 func (b *browser) close() {
+	if b.release != nil {
+		defer b.release()
+	}
 	if b.conn != nil {
 		b.conn.Close(websocket.StatusNormalClosure, "")
 	}
