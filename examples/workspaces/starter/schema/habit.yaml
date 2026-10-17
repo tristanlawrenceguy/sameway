@@ -61,7 +61,7 @@ fields:
     label: Remind at
     type: string
     maxLength: 20
-    description: "A time of day, such as 20:00 or 8pm: if the habit is not met by then, the clock rings a reminder about it, once a day."
+    description: "A time of day, such as 20:00 or 8pm: if the habit is not met by then, the clock rings a reminder about it, once a day. Set it for a medicine, at the time it is taken."
   archived:
     type: bool
     default: false
