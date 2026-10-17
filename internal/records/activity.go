@@ -31,6 +31,9 @@ type Change struct {
 	// Via is the device the change was made from when it was not this
 	// machine, such as a phone over the tailnet.
 	Via string `json:"via,omitempty"`
+	// Noticed is what the write saw in what was sent and is worth saying
+	// with the change's notes (utc_said.go); never kept.
+	Noticed []string `json:"-"`
 	// By is the person who made it when that was not the owner, by name,
 	// so the log says "Bob removed" rather than "You removed".
 	By string `json:"by,omitempty"`

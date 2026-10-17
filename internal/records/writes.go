@@ -38,7 +38,9 @@ var ErrKeptLog = errors.New("the activity log is kept by Sameway and cannot be c
 // the assistant's turn logs each change its tools make, with the reply.
 // action is created, updated or deleted; id is empty for created.
 func Write(st *store.Store, action, typ, id string, fields map[string]any) (*store.Record, Change, error) {
+	var noticed []string
 	if t, ok := st.Types().Get(typ); ok {
+		noticed = utcNoticed(t, fields, st.Now())            // utc_said.go: as written, before it is kept
 		if err := refNamesToIDs(st, t, fields); err != nil { // ref_names.go
 			return nil, Change{}, err
 		}
@@ -58,7 +60,9 @@ func Write(st *store.Store, action, typ, id string, fields map[string]any) (*sto
 			}
 		}
 	}
-	return write(st, action, typ, id, fields)
+	rec, c, err := write(st, action, typ, id, fields)
+	c.Noticed = noticed
+	return rec, c, err
 }
 
 // keptFields refuses a field Sameway keeps (a file's path, a person's
