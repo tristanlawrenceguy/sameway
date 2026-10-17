@@ -37,7 +37,8 @@ func (s *Service) apiList(w http.ResponseWriter, r *http.Request) {
 	if !s.knownType(w, r) { // api_refusals.go
 		return
 	}
-	if why := unknownParams(r.URL.Query(), r.PathValue("type")); why != "" { // api_params.go
+	t, _ := s.app.Types.Get(r.PathValue("type"))                                // known: above
+	if why := unknownParams(r.URL.Query(), r.PathValue("type"), t); why != "" { // api_params.go
 		web.WriteError(w, errors.New(why))
 		return
 	}
@@ -73,7 +74,6 @@ func (s *Service) apiList(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Query().Get("dir") == "desc" && order != "" && !strings.HasPrefix(order, "-") {
 		order = "-" + order
 	}
-	t, _ := s.app.Types.Get(r.PathValue("type")) // known: above
 	recs, err := query.Filter(s.app.Store, t, r.URL.Query()["where"], order, limit, s.Now())
 	if err != nil {
 		web.WriteError(w, err)
