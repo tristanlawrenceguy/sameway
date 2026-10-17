@@ -35,7 +35,7 @@ func (s *Server) glanceHTML(facts []records.Fact, chips bool, boxed string) stri
 				strings.ToUpper(f.Field[0:1])+f.Field[1:],
 			)+": "+string(s.component("badge", map[string]any{"label": f.Text, "tone": f.Tone})))
 		case f.Kind == "state" && !chips && !f.IsStage:
-			parts = append(parts, string(s.component("badge", map[string]any{"label": f.Text, "tone": f.Tone})))
+			parts = append(parts, `Status: `+string(s.component("badge", map[string]any{"label": f.Text, "tone": f.Tone})))
 		default:
 			parts = append(parts, string(s.component("badge", map[string]any{"label": f.Text, "tone": f.Tone})))
 		}
