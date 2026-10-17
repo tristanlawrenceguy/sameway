@@ -147,9 +147,9 @@ func (s *Server) hitItem(h search.Hit, words []string, told string) string {
 	var ariaLabel string
 	if told != "" {
 		ctxEsc := template.HTMLEscapeString(told)
-		ariaLabel = h.Title + " (" + ctxEsc + ")"
+		ariaLabel = template.HTMLEscapeString(h.Title) + " (" + ctxEsc + ")"
 	} else {
-		ariaLabel = h.Title
+		ariaLabel = template.HTMLEscapeString(h.Title)
 	}
 	card := fmt.Sprintf(
 		`<article class="sw-card" data-component="card">`+
