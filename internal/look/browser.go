@@ -282,23 +282,3 @@ func (b *browser) pageErrors() []string {
 	defer b.mu.Unlock()
 	return append([]string(nil), b.errors...)
 }
-
-func (b *browser) close() {
-	if b.release != nil {
-		defer b.release()
-	}
-	if b.conn != nil {
-		b.conn.Close(websocket.StatusNormalClosure, "")
-	}
-	if b.cmd != nil && b.cmd.Process != nil {
-		b.cmd.Process.Kill()
-		b.cmd.Wait()
-	}
-	// The browser lets go of its profile a moment after it exits.
-	for i := 0; i < 20; i++ {
-		if os.RemoveAll(b.dir) == nil {
-			return
-		}
-		time.Sleep(100 * time.Millisecond)
-	}
-}
