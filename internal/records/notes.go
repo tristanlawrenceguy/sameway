@@ -45,12 +45,12 @@ func Notice(st *store.Store, key any, n Noticer) {
 func Notes(st *store.Store, c Change) []string {
 	k, _ := st.Kept(noticerKey{}).(*noticers)
 	if k == nil {
-		return nil
+		return c.Noticed
 	}
 	k.mu.Lock()
 	list := append([]Noticer(nil), k.list...)
 	k.mu.Unlock()
-	var out []string
+	out := append([]string(nil), c.Noticed...)
 	for _, n := range list {
 		out = append(out, n(c)...)
 	}
