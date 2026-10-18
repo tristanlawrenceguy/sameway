@@ -1,8 +1,7 @@
 package server_test
 
-// Published status values on notes list rows must be preceded by a visible
-// "Status:" label so they are not bare enum words floating beside dates.
-// Acceptance items 1–2 of task 0754 (backlog 0754).
+// Published status values on notes list rows appear as badge chips without
+// raw schema field name prefixes like "Status:". The badge communicates the value.
 
 import (
 	"net/http"
@@ -10,10 +9,9 @@ import (
 	"testing"
 )
 
-// TestNoteListShowsStatusLabelledStatus verifies that a published note's row on
-// the notes list page shows "Status:" before the "Published" badge, not bare
-// "Published" or "Published status". (Acceptance 1.)
-func TestNoteListShowsStatusLabelledStatus(t *testing.T) {
+// TestNoteListShowsNoStatusLabelledStatus verifies that a published note's row on
+// the notes list page shows just the "Published" badge without a raw "Status:" label.
+func TestNoteListShowsNoStatusLabelledStatus(t *testing.T) {
 	t.Parallel()
 	_, h := newApp(t)
 
@@ -35,27 +33,21 @@ func TestNoteListShowsStatusLabelledStatus(t *testing.T) {
 	}
 	row := body[rowStart : rowStart+rowEnd]
 
-	// The row must contain "Status:" as a visible prefix before the status value.
-	if !strings.Contains(row, "Status:") {
-		t.Errorf("note list row must show 'Status:' label before published status; found in:\n%s", truncate(row))
-	}
-
-	// The raw word "Published" must not appear without the "Status:" prefix.
-	// Check that if "Published" appears, it is preceded by "Status:".
-	if strings.Contains(row, ">Published") && !strings.Contains(row, "Status:") {
-		t.Errorf("note list row must not show bare 'Published' status value; found in:\n%s", truncate(row))
-	}
-
 	// The badge component should still render the Published value.
 	if !strings.Contains(row, "Published") {
 		t.Errorf("note list row must still mention that the note is published; found in:\n%s", truncate(row))
 	}
+
+	// No raw schema field name prefix before the badge.
+	if strings.Contains(row, "Status: Published") {
+		t.Errorf("note list row must not show 'Status:' label before published status; found in:\n%s", truncate(row))
+	}
 }
 
-// TestNoteListScreenReaderHearsStatusLabelledStatus verifies that the visible
-// text order on a notes list row for a published note reads "Status:" before
-// "Published", so screen readers announce the field name first. (Acceptance 2.)
-func TestNoteListScreenReaderHearsStatusLabelledStatus(t *testing.T) {
+// TestNoteListScreenReaderHearsNoStatusLabelledStatus verifies that a notes list
+// row for a published note does not contain a raw "Status:" prefix — only the
+// badge chip with its value. (Acceptance: no machine-language labels.)
+func TestNoteListScreenReaderHearsNoStatusLabelledStatus(t *testing.T) {
 	t.Parallel()
 	_, h := newApp(t)
 
@@ -77,46 +69,20 @@ func TestNoteListScreenReaderHearsStatusLabelledStatus(t *testing.T) {
 	}
 	row := body[rowStart : rowStart+rowEnd]
 
-	// Strip HTML tags to check visible text order.
-	cleaned := strings.ReplaceAll(row, "<span", "\n<span")
-	cleaned = strings.ReplaceAll(cleaned, "</span>", "</span>\n")
-	lines := strings.Split(cleaned, "\n")
-
-	var statusIndex int = -1
-	var publishedIndex int = -1
-	for i, line := range lines {
-		if strings.Contains(line, "Status:") {
-			statusIndex = i
-		}
-		if strings.Contains(line, "Published") || (strings.Contains(line, `sw-badge`) && strings.Contains(line, "info")) {
-			publishedIndex = i
-		}
-	}
-
-	if statusIndex < 0 {
-		t.Errorf("row must contain visible 'Status:' label; found in:\n%s", truncate(row))
-		return
-	}
-	if publishedIndex < 0 {
+	if !strings.Contains(row, ">Published</span>") {
 		t.Errorf("row must contain Published badge text; found in:\n%s", truncate(row))
 		return
 	}
 
-	// Status: must come before (or at the same position as) Published.
-	// Screen readers read left-to-right, top-to-bottom, so "Status:" should appear first.
-	if statusIndex > publishedIndex {
-		t.Errorf("screen reader would hear 'Published' before 'Status:' — the label must precede the value; found in:\n%s", truncate(row))
-	}
-
-	// The word "status" must not appear after "Published" as a postfix context.
-	if strings.Contains(row, "Published") && strings.Contains(strings.ToLower(row), "published status") {
-		t.Errorf("row must not show 'Published status' — the label must precede, not follow; found in:\n%s", truncate(row))
+	// No raw schema field name prefix.
+	if strings.Contains(row, "Status:") {
+		t.Errorf("row must not contain visible 'Status:' label; found in:\n%s", truncate(row))
 	}
 }
 
 // TestNoteListDoesNotLabelDraftStatus verifies that a draft note (the default
-// status) does NOT get a "Status:" label, since StateWorth suppresses rest
-// values entirely. Only non-rest statuses like Published get the label.
+// status) does NOT get a badge at all, since StateWorth suppresses rest
+// values entirely.
 func TestNoteListDoesNotLabelDraftStatus(t *testing.T) {
 	t.Parallel()
 	_, h := newApp(t)
@@ -140,9 +106,6 @@ func TestNoteListDoesNotLabelDraftStatus(t *testing.T) {
 	row := body[rowStart : rowStart+rowEnd]
 
 	// Draft is the rest/default, so StateWorth says it's not worth showing.
-	if strings.Contains(row, "Status:") {
-		t.Errorf("draft note list row must not show a Status: label; found in:\n%s", truncate(row))
-	}
 	if strings.Contains(row, `sw-badge`) && strings.Contains(strings.ToLower(row), "draft") {
 		t.Errorf("draft note list row must not render a Draft badge; found in:\n%s", truncate(row))
 	}

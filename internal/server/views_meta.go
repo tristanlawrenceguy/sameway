@@ -99,23 +99,19 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 // whenMade says when a record was made, as a person reads a time, and where
 // its words came from when that was not the owner, in one quiet line under
 // its fields. A time is said with what it is (design/foundations/glance.md):
-// Created at for entries so screen readers hear "Created at today at 2pm";
-// Created for other types to keep them unchanged.
+// "Created at" everywhere so screen readers hear consistent labels for creation times.
 func (s *Server) whenMade(t *schema.Type, rec *store.Record, from string) string {
-	line := s.whenMadeLabel(t) + " " + s.happenedAfter("", rec.CreatedAt, s.now())
+	line := s.whenMadeLabel() + " " + s.happenedAfter("", rec.CreatedAt, s.now())
 	if from != "" {
-		line += " · From: " + template.HTMLEscapeString(from)
+		line += " by " + template.HTMLEscapeString(from)
 	}
 	return `<span class="sw-detail__when sw-muted sw-small">` + line + `</span>`
 }
 
 // whenMadeLabel returns the visible prefix before a record's creation time.
-// For entries it is "Created at"; for other types it stays just "Created".
-func (s *Server) whenMadeLabel(t *schema.Type) string {
-	if t.Name == EntryType {
-		return "Created at"
-	}
-	return "Created"
+// Always "Created at", matching entries and keeping all types consistent.
+func (s *Server) whenMadeLabel() string {
+	return "Created at"
 }
 
 // happened is when something happened, as a person reads it (3 days ago),

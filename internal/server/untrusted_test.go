@@ -111,7 +111,7 @@ func TestARecordPageSaysWhereItsWordsCameFrom(t *testing.T) {
 	records.Record(a.Store, "human", records.Change{Action: "created", Component: "note", ID: own.ID, Detail: "Mine"})
 
 	page := get(t, h, "/t/note/"+mailed.ID).Body.String()
-	if strings.Count(page, "From: an import from inbox.mbox") != 1 {
+	if strings.Count(page, "by an import from inbox.mbox") != 1 {
 		t.Errorf("an imported note says where it came from, once")
 	}
 	if strings.Contains(get(t, h, "/t/note/"+own.ID).Body.String(), "From: ") {
@@ -186,10 +186,10 @@ func TestAPublicReaderNeverSeesAnotherPersonsName(t *testing.T) {
 		}
 	}
 	page := public(t, pub, http.MethodGet, "/t/note/"+n.ID, "").Body.String()
-	if strings.Contains(page, "Bobby") || !strings.Contains(page, "From: another person") {
+	if strings.Contains(page, "Bobby") || !strings.Contains(page, "by another person") {
 		t.Errorf("the published page says another person, by no name")
 	}
-	if !strings.Contains(get(t, h, "/t/note/"+n.ID).Body.String(), "From: Bobby Tables, another person") {
+	if !strings.Contains(get(t, h, "/t/note/"+n.ID).Body.String(), "by Bobby Tables, another person") {
 		t.Error("the owner's own page names who wrote it")
 	}
 }

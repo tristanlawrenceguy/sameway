@@ -25,11 +25,11 @@ func TestHabitDetailLedeNaturalTimestamp(t *testing.T) {
 
 	body := get(t, h, "/t/habit/"+rec.ID+fieldsView).Body.String()
 
-	// Extract the sw-detail__when span content with "Created" label.
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*">Created <time[^>]*>([^<]+)</time>`)
+	// Extract the sw-detail__when span content with "Created at" label.
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*">Created at <time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(body)
 	if len(matches) < 2 {
-		t.Fatal("habit detail page should have a sw-detail__when span with \"Created\" label in the lede")
+		t.Fatal("habit detail page should have a sw-detail__when span with \"Created at\" label in the lede")
 	}
 	whenText := matches[1]
 
