@@ -24,3 +24,21 @@ func TestTheRulesForComingBackAndMedicines(t *testing.T) {
 		}
 	}
 }
+
+// A pile handed over by someone overwhelmed is given days from today; a
+// carer back is told of the habits kept; an appointment only in a note is
+// offered its day.
+func TestTheRulesForAPileACarerAndAnAppointment(t *testing.T) {
+	t.Parallel()
+	for _, c := range []struct{ said, want string }{
+		{"everything is piling up, I want to stop worrying about it", "never a day already past"},
+		{"I'm back after two weeks, how is Mum?", "were kept while they were away"},
+		{"Mum's dentist appointment moved to Friday", "offer once to put it on its day"},
+	} {
+		svc, m := withModel(t, &llm.Response{Text: "ok"})
+		svc.Send(context.Background(), c.said)
+		if !strings.Contains(m.seen[0].System, c.want) {
+			t.Errorf("%q brings %q", c.said, c.want)
+		}
+	}
+}
