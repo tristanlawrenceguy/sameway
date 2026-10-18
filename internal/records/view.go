@@ -37,6 +37,10 @@ type RecordView struct {
 	// Glance is what its row and its page say beside its title, in the
 	// same words: "Doing · Overdue, due yesterday · For Ana Silva".
 	Glance string `json:"glance,omitempty"`
+	// Standing is where a habit stands, in words (blocks.HabitSaid), filled
+	// in by the way in that has the tracker: an agent over the API added up
+	// a runner's entries by hand where the assistant was told.
+	Standing string `json:"standing,omitempty"`
 }
 
 // ViewOf is a record as an agent reads it, with who wrote its words as

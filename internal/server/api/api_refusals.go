@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -20,6 +21,10 @@ func (s *Service) knownType(w http.ResponseWriter, r *http.Request) bool {
 	typ := r.PathValue("type")
 	if _, ok := s.app.Types.Get(typ); ok {
 		return true
+	}
+	if page := strings.TrimPrefix(r.URL.Path, "/api"); s.PageRoute(r.Method, page) {
+		s.apiNotFound(w, r) // a page's route asked under /api: it says so
+		return false
 	}
 	web.WriteJSON(w, http.StatusNotFound, map[string]any{"error": web.APIError{Code: "not_found",
 		Message: records.NoType(typ, s.app.Store.Types().Names()) + "; GET /api/describe/types says what each takes", Describe: "/api/describe/types"}})

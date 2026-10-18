@@ -35,6 +35,9 @@ type Deps interface {
 	SeedChat(canvas string)
 	// Media is files: a file sent inside JSON is kept and read as one.
 	Media() *media.Service
+	// PageRoute says method and path are one of the server's own routes,
+	// outside /api (api.go's not found).
+	PageRoute(method, path string) bool
 }
 
 // Service is the API of one workspace, and those waiting on its changes.
