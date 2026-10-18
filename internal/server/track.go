@@ -72,13 +72,15 @@ func (s *Server) habitLog(w http.ResponseWriter, r *http.Request) {
 }
 
 // habitSection is what a habit's own page adds: where it stands, its own
-// tracker row with a day to log for, the last periods as a chart with
-// the target (or the limit) drawn, and its latest entries.
+// tracker row with a day to log for (record habits only), the last periods
+// as a chart with the target (or the limit) drawn, and its latest entries.
 func (s *Server) habitSection(rec *store.Record) template.HTML {
 	now := s.now()
 	h := track.Normal(blocks.HabitOf(rec))
 	item := blocks.Standing(s.app.Store, rec, now, now)
-	item["dated"] = true
+	if item["aim"] == "record" {
+		item["dated"] = true
+	}
 	var b strings.Builder
 	// The heading names the part of the page; the tracker under it is the
 	// region, called Keeping up, and shows no heading of its own.

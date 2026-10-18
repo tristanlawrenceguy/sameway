@@ -46,9 +46,9 @@ func TestALimitAndARecordAreTracked(t *testing.T) {
 
 	// Logging from the habit's page for an earlier day this month.
 	page = get(t, h, "/t/"+server.HabitType+"/"+hours.ID).Body.String()
-	for _, want := range []string{`name="on" type="text"`, `This month`, `limit 21 hours`} {
+	for _, want := range []string{`This month`, `limit 21 hours`} {
 		if !strings.Contains(page, want) {
-			t.Errorf("the habit's page offers a day to log for and a monthly chart with the limit, missing %q", want)
+			t.Errorf("the habit's page offers a monthly chart with the limit, missing %q", want)
 		}
 	}
 	day := now.AddDate(0, 0, -1)
