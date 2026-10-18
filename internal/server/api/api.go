@@ -79,6 +79,13 @@ func (s *Service) apiList(w http.ResponseWriter, r *http.Request) {
 		web.WriteError(w, err)
 		return
 	}
+	if c := r.URL.Query().Get("canvas"); t.Name == records.BlockType && c != "" && !s.app.Chat.HasCanvas(c) {
+		// A tab there is not was answered with no blocks, and an agent
+		// asking for canvas=home took Home for empty.
+		web.WriteJSON(w, http.StatusNotFound, map[string]any{"error": web.APIError{Code: "not_found",
+			Message: "no tab has the id " + strconv.Quote(c) + `; Home is canvas= with nothing after it, and GET /api/canvas lists the tabs beside it`}})
+		return
+	}
 	recs = tabOnly(r, recs) // api_tab_blocks.go
 	// Each record as it always was, with its title and who wrote it beside it.
 	type written struct {
@@ -217,6 +224,16 @@ func (s *Service) apiChatClear(w http.ResponseWriter, r *http.Request) {
 // every other error there has, so an agent that typed a route wrong reads
 // JSON like always rather than a plain-text page.
 func (s *Service) apiNotFound(w http.ResponseWriter, r *http.Request) {
+	// A page's action asked under /api: agents wrote /api/today/let-go,
+	// /api/review and /api/activity/{id}/undo, and were told only that
+	// none was a route, though each was, without the /api.
+	if page := strings.TrimPrefix(r.URL.Path, "/api"); s.PageRoute(r.Method, page) {
+		web.WriteJSON(w, http.StatusNotFound, map[string]any{"error": web.APIError{
+			Code: "not_found", Message: r.Method + " " + r.URL.Path + " is not a route, and " + r.Method + " " + page + " is: a page's, without /api, which answers in JSON when sent with Accept: application/json",
+			Describe: "/api/describe/routes",
+		}})
+		return
+	}
 	web.WriteJSON(w, http.StatusNotFound, map[string]any{"error": web.APIError{
 		Code: "not_found", Message: r.Method + " " + r.URL.Path + " is not a route; GET /api/describe/routes lists them", Describe: "/api/describe/routes",
 	}})

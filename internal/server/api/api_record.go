@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/tristanlawrenceguy/sameway/internal/blocks"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -41,6 +42,9 @@ func (s *Service) apiGet(w http.ResponseWriter, r *http.Request) {
 	// One view of a record, the assistant's get_record's too (records/view.go).
 	out := s.app.Records.ViewOf(t, rec, s.app.Records.WritersFor(false))
 	out.Fields = trimmed(rec, only).Fields
+	if rec.Type == records.HabitType {
+		out.Standing = blocks.HabitSaid(s.app.Store, rec, s.Now()) // as get_record says it
+	}
 	// An entry in the log keeps its fields as they are, data to act on, and
 	// says itself as its page does (server/activity_page.go).
 	if rec.Type == records.ActivityType {

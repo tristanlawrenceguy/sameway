@@ -27,21 +27,23 @@ import (
 
 // Server serves one workspace.
 type Server struct {
-	app      *app.App
-	css, js  []byte
-	mux      *http.ServeMux
-	turns    turns
-	fleet    *Fleet
-	notify   func(title, text, url string) // tells a ring beyond the page; ring.go
-	changes  atomic.Int64                  // changes arrived from other computers; see sync.go
-	present  presence                      // who else is here just now; see presence.go
-	media    *media.Service                // files, recordings and meetings; internal/server/media
-	exchange *exchange.Service             // imports and exports; internal/server/exchange
-	connect  *connect.Service              // connecting the assistant to a model; internal/server/connect
-	inbox    *inbox.Service                // email in and what waits to be sorted; internal/server/inbox
-	api      *api.Service                  // the JSON API for agents; internal/server/api
-	agenda   *agenda.Service               // Today, the brief and the weekly review; internal/server/agenda
-	pairing  pairing                       // the codes a phone on the Wi-Fi pairs with; phone_pair.go
+	// routesMux is the route table without the not-found answer around it.
+	routesMux *http.ServeMux
+	app       *app.App
+	css, js   []byte
+	mux       *http.ServeMux
+	turns     turns
+	fleet     *Fleet
+	notify    func(title, text, url string) // tells a ring beyond the page; ring.go
+	changes   atomic.Int64                  // changes arrived from other computers; see sync.go
+	present   presence                      // who else is here just now; see presence.go
+	media     *media.Service                // files, recordings and meetings; internal/server/media
+	exchange  *exchange.Service             // imports and exports; internal/server/exchange
+	connect   *connect.Service              // connecting the assistant to a model; internal/server/connect
+	inbox     *inbox.Service                // email in and what waits to be sorted; internal/server/inbox
+	api       *api.Service                  // the JSON API for agents; internal/server/api
+	agenda    *agenda.Service               // Today, the brief and the weekly review; internal/server/agenda
+	pairing   pairing                       // the codes a phone on the Wi-Fi pairs with; phone_pair.go
 }
 
 // New builds the handler for an app.
@@ -54,7 +56,8 @@ func New(a *app.App) *Server {
 	s.api = api.New(face{s})
 	s.agenda = agenda.New(face{s})
 	s.routes()
-	s.hooks() // what the rest of the app asks of the pages; see hooks.go
+	s.hooks()           // what the rest of the app asks of the pages; see hooks.go
+	s.routesMux = s.mux // the routes themselves, for PageRoute (api.go)
 	s.mux = s.wrapNotFound(s.mux)
 	return s
 }

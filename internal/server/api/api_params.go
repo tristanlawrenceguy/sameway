@@ -42,7 +42,9 @@ func unknownParams(q url.Values, typ string, t *schema.Type) string {
 	// word before finding where=actor=assistant.
 	var as []string
 	for _, k := range unknown {
-		if _, ok := t.Field(k); ok {
+		// updated_at>=-7d sent bare arrives as updated_at> with -7d.
+		name := strings.TrimRight(k, "<>!~")
+		if _, ok := t.Field(name); ok || always[name] {
 			as = append(as, "where="+k+"="+q.Get(k))
 		}
 	}
