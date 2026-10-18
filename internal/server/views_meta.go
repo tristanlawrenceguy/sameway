@@ -84,7 +84,14 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 		out = strings.TrimSpace(out + " " + s.happenedAfter("", rec.UpdatedAt, now))
 	}
 	if o.Made {
-		out = strings.TrimSpace(out + " " + s.whenMade(t, rec, o.From))
+		suffix := " " + s.whenMade(t, rec, o.From)
+		// For entries, add a visible middle-dot separator between the last
+		// badge (habit name) and whenMade so screen readers do not hear them
+		// as one concatenated string.
+		if t.Name == EntryType {
+			suffix = " · " + s.whenMade(t, rec, o.From)
+		}
+		out = strings.TrimSpace(out + suffix)
 	}
 	return out
 }
@@ -92,13 +99,23 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 // whenMade says when a record was made, as a person reads a time, and where
 // its words came from when that was not the owner, in one quiet line under
 // its fields. A time is said with what it is (design/foundations/glance.md):
-// Created, then the time as it reads after a word, "Created today at 2pm".
+// Created at for entries so screen readers hear "Created at today at 2pm";
+// Created for other types to keep them unchanged.
 func (s *Server) whenMade(t *schema.Type, rec *store.Record, from string) string {
-	line := "Created " + s.happenedAfter("", rec.CreatedAt, s.now())
+	line := s.whenMadeLabel(t) + " " + s.happenedAfter("", rec.CreatedAt, s.now())
 	if from != "" {
 		line += " · From: " + template.HTMLEscapeString(from)
 	}
 	return `<span class="sw-detail__when sw-muted sw-small">` + line + `</span>`
+}
+
+// whenMadeLabel returns the visible prefix before a record's creation time.
+// For entries it is "Created at"; for other types it stays just "Created".
+func (s *Server) whenMadeLabel(t *schema.Type) string {
+	if t.Name == EntryType {
+		return "Created at"
+	}
+	return "Created"
 }
 
 // happened is when something happened, as a person reads it (3 days ago),
