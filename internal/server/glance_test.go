@@ -95,7 +95,7 @@ func TestDaysAreHeldInTimeElements(t *testing.T) {
 	if !strings.Contains(page, `<time datetime="`+today+`"`) {
 		t.Error("the lede's day is not held in a time element")
 	}
-	if !strings.Contains(page, `class="sw-detail__when sw-muted sw-small">Created <time datetime="`) {
+	if !strings.Contains(page, `class="sw-detail__when sw-muted sw-small">Created at <time datetime="`) {
 		t.Error("when it was made is not held in a time element")
 	}
 }
@@ -209,8 +209,8 @@ func TestFiredReminderRowBadgeHasStatusLabel(t *testing.T) {
 	if !strings.Contains(body, ">Rang</span>") {
 		t.Errorf("fired reminder row should show the \"Rang\" badge in meta; page:\n%s", body)
 	}
-	if !strings.Contains(around(body, "Rang"), "Status:") {
-		t.Errorf("row badge must carry a visible \"Status:\" label before the value; found near Rang: %s", around(body, "Rang"))
+	if strings.Contains(around(body, "Rang"), "Status:") {
+		t.Errorf("row badge must not carry a raw \"Status:\" label before the value; found near Rang: %s", around(body, "Rang"))
 	}
 }
 

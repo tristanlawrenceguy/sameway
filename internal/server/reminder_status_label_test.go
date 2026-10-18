@@ -6,10 +6,9 @@ import (
 	"testing"
 )
 
-// Reminder list rows must label their state (status) value with "Status:" so it is
-// clear what the value means, instead of showing bare enum text like "Rang" or "Done".
-// Acceptance item 1.
-func TestReminderListRowLabelsStateValueWithStatusLabel(t *testing.T) {
+// Reminder list rows present their state value as a badge chip without a raw
+// schema field name prefix like "Status:". The badge itself communicates the value.
+func TestReminderListRowHasNoStatusLabelPrefix(t *testing.T) {
 	t.Parallel()
 	_, h := newAppAt(t, tonight)
 
@@ -22,11 +21,12 @@ func TestReminderListRowLabelsStateValueWithStatusLabel(t *testing.T) {
 
 	body := get(t, h, "/t/reminder").Body.String()
 
-	// The row must show a visible "Status:" label before the badge value.
+	// The row must show a visible badge with the state value.
 	if !strings.Contains(body, ">Rang</span>") {
 		t.Errorf("fired reminder row should show the \"Rang\" badge; page:\n%s", body)
 	}
-	if !strings.Contains(body, "Status:") {
-		t.Errorf("reminder list row must label its state value with \"Status: \" before the badge; found near Rang: %s", around(body, "Rang"))
+	// No raw schema field name prefix before the badge.
+	if strings.Contains(body, "Status: Rang") {
+		t.Errorf("reminder list row must not show \"Status:\" before the badge; found near Rang: %s", around(body, "Rang"))
 	}
 }

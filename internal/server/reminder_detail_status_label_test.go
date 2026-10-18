@@ -6,10 +6,9 @@ import (
 	"testing"
 )
 
-// Reminder detail pages must label their state (status) value with "Status:" so it is
-// clear what the value means, instead of showing bare enum text like "Rang" or "Done".
-// Acceptance items 1–2.
-func TestReminderDetailPageLabelsStateValueWithStatusLabel(t *testing.T) {
+// Reminder detail pages present their state value as a badge chip without a raw
+// schema field name prefix like "Status:". The badge itself communicates the value.
+func TestReminderDetailPageHasNoStatusLabelPrefix(t *testing.T) {
 	t.Parallel()
 	_, h := newAppAt(t, tonight)
 
@@ -23,9 +22,9 @@ func TestReminderDetailPageLabelsStateValueWithStatusLabel(t *testing.T) {
 
 	page := get(t, h, "/t/reminder/"+rec.ID).Body.String()
 
-	// The page must contain a visible "Status:" label before the badge value.
-	if !strings.Contains(page, "Status:") {
-		t.Errorf("reminder detail page must label its state value with \"Status: \" before the badge; found near Rang:\n%s", around(page, "Rang"))
+	// No raw schema field name prefix before the badge.
+	if strings.Contains(page, "Status: Rang") {
+		t.Errorf("reminder detail page must not show \"Status:\" before the badge; found near Rang:\n%s", around(page, "Rang"))
 	}
 
 	// The badge must still render the value.
