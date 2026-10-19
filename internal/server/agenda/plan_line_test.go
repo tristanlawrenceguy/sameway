@@ -19,3 +19,17 @@ func TestTodayPointsAtTheReviewOnItsDay(t *testing.T) {
 		t.Error("on another day, nothing")
 	}
 }
+
+// On a long Today, any day, the review is pointed at too: what needs
+// attention this week, apart from the old overdue.
+func TestALongTodayPointsAtTheReview(t *testing.T) {
+	t.Parallel()
+	tuesday := time.Date(2026, 10, 20, 9, 0, 0, 0, time.UTC)
+	a, h := newAppAt(t, tuesday)
+	for i := 1; i <= 9; i++ {
+		a.Store.Create("task", map[string]any{"title": "Box " + string(rune('A'+i)), "due": tuesday.AddDate(0, 0, -i).Format("2006-01-02")})
+	}
+	if page := get(t, h, "/today").Body.String(); !strings.Contains(page, "Plan the week:") {
+		t.Errorf("a long Today points at the review: %s", truncate(page))
+	}
+}
