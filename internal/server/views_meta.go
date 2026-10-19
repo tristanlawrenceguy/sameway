@@ -19,13 +19,14 @@ import (
 
 // lede is the line under a record's title: its box when it has one, its
 // facts as chips, then when it was made. On the record's own page the box
-// is labelled with its word, Done or Pinned, where it can be seen; the
-// record is the page's heading, so the label does not say it again, and the
-// box says checked, so no chip says the state a second time.
+// is labelled with its word via aria-label (task 0317); the record is the
+// page's heading, so no chip says the state a second time.
 func (s *Server) lede(r *http.Request, t *schema.Type, rec *store.Record) template.HTML {
 	box := ""
 	if props, ok := s.markOf(t, rec); ok {
 		delete(props, "context")
+		props["quiet"] = true
+		props["ariaLabel"] = props["label"].(string)
 		box = string(s.component("mark", props))
 	}
 	// A div, not a p: a form inside a p ends the p, and the line came apart.

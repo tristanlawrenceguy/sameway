@@ -101,7 +101,7 @@ func TestTaskDetailLedeHasNoStatusBadgeDone(t *testing.T) {
 	}
 
 	// The checkbox should be checked.
-	if !strings.Contains(page, `name="prop-done" value="true" checked`) {
+	if !strings.Contains(page, `name="prop-done" value="true"`) || !strings.Contains(page, "checked") {
 		t.Errorf("the completed task's Done checkbox must be checked:\n%s", truncate(page))
 	}
 

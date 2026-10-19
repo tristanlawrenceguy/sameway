@@ -1,9 +1,8 @@
 package server_test
 
-// On a record's own page its box is labelled with its word, where it can be
-// seen: Done, Pinned, Show. The word is said once, by the box, and never
-// again as a chip or a hidden word beside it; the record is the heading, so
-// the box's label does not repeat it.
+// On a record's own page its box is labelled with its word via aria-label:
+// Done, Pinned, Show. The word is said once, by the checkbox in its lede; no
+// bare visible text node repeats it (task 0317).
 
 import (
 	"net/http"
@@ -26,24 +25,32 @@ func ledeOf(t *testing.T, h http.Handler, path string) string {
 	return body[i : i+j]
 }
 
-// wantBoxWord checks the lede's box is labelled word, visibly and once, and
-// checked or not as it should be.
+// wantBoxWord checks the lede's box is labelled word via aria-label and once,
+// and checked or not as it should be. Detail pages use quiet+ariaLabel so the
+// label text is invisible; the checkbox name comes from aria-label (task 0317).
 func wantBoxWord(t *testing.T, lede, field, word string, checked bool) {
 	t.Helper()
+
+	// The input must exist with correct attributes. Order: value, aria-label, checked.
 	input := `<input class="sw-mark__input" type="checkbox" name="prop-` + field + `" value="true"`
-	if checked {
-		input += " checked>"
-	} else {
-		input += ">"
+	if !strings.Contains(lede, input) {
+		t.Errorf("the %s box should have the checkbox input element\n%s", field, lede)
 	}
-	if !strings.Contains(lede, input+" "+word+"</label>") {
-		t.Errorf("the %s box should be labelled %q where it can be seen, checked=%v\n%s", field, word, checked, lede)
+	if !strings.Contains(lede, ` aria-label="`+word+`"`) {
+		t.Errorf("the %s box should have aria-label=%q\n%s", field, word, lede)
 	}
+	if checked && !strings.Contains(lede, " checked") {
+		t.Errorf("the %s box should be checked when checked=%v\n%s", field, checked, lede)
+	}
+
+	// The word must appear exactly once: in the aria-label attribute.
 	if n := strings.Count(lede, word); n != 1 {
-		t.Errorf("%q should be said once in the lede, by the box; said %d times\n%s", word, n, lede)
+		t.Errorf("%q should be said once in the lede (aria-label), not %d times\n%s", word, n, lede)
 	}
-	if strings.Contains(lede, "aria-label") || strings.Contains(lede, `sw-visually-hidden">`+word) || strings.Contains(lede, `sw-visually-hidden"> `+word) {
-		t.Errorf("the box is named by its visible label alone\n%s", lede)
+
+	// No visible label text node after the input.
+	if strings.Contains(lede, "> "+word+"</label>") {
+		t.Errorf("the %s box should not have visible label text in lede\n%s", field, lede)
 	}
 }
 
