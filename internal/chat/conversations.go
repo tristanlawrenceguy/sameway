@@ -189,7 +189,7 @@ func (s *Service) message(fields map[string]any) (*store.Record, error) {
 // Notice records something the page needs to tell the person, in the
 // current chat, where every other problem is reported.
 func (s *Service) Notice(text string) {
-	s.message(map[string]any{"role": "error", "content": text})
+	s.message(map[string]any{"role": "error", "content": SanitizeError(text)})
 }
 
 // Say puts a message from the assistant in the current chat outside a
