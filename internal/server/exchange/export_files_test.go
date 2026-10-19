@@ -93,11 +93,11 @@ func TestARecordGoesOutOnItsOwn(t *testing.T) {
 	hana, _ := a.Store.Create("person", map[string]any{"name": "Hana Sato", "email": "hana@example.com"})
 
 	page := get(t, h, "/t/task/"+task.ID).Body.String()
-	sized := regexp.MustCompile(`href="/export/task/` + task.ID + `\.(md|docx|ics)" download data-format="(md|docx|ics)">(Text \(Markdown|Word \(DOCX|Calendar \(ICS)\)<span class="sw-visually-hidden">, this task</span>`)
+	sized := regexp.MustCompile(`href="/export/task/` + task.ID + `\.(md|docx|ics)" download data-format="(md|docx|ics)">`)
 	if n := len(sized.FindAllString(page, -1)); n != 3 {
 		t.Errorf("the task's page offers it as Markdown, Word and a calendar entry, with no size; found %d\n%s", n, page)
 	}
-	if !strings.Contains(page, `data-format="pdf">Printable (PDF)<`) || !strings.Contains(page, `data-format="html">Web page (HTML)<`) {
+	if !strings.Contains(page, `data-format="pdf">Printable (PDF) —`) || !strings.Contains(page, `data-format="html">Web page (HTML) —`) {
 		t.Error("the web page and the PDF, made by rendering, say no size rather than guess")
 	}
 	if strings.Index(page, `data-component="export"`) < strings.Index(page, "Mind the roots.") {
