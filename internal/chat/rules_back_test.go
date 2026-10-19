@@ -42,3 +42,20 @@ func TestTheRulesForAPileACarerAndAnAppointment(t *testing.T) {
 		}
 	}
 }
+
+// Got back from somewhere is coming back too; listing the week looks in
+// notes for appointments; correcting a day names what still gives the old.
+func TestTheRulesForGotBackTheWeekAndCorrections(t *testing.T) {
+	t.Parallel()
+	for _, c := range []struct{ said, want string }{
+		{"I just got back from moving house", "When the person is back after time away"},
+		{"What reminders do I have this week?", "look in notes too for an appointment"},
+		{"the GP visit is Friday, not Thursday, please fix the reminder", "still give the old one and name them"},
+	} {
+		svc, m := withModel(t, &llm.Response{Text: "ok"})
+		svc.Send(context.Background(), c.said)
+		if !strings.Contains(m.seen[0].System, c.want) {
+			t.Errorf("%q brings %q", c.said, c.want)
+		}
+	}
+}
