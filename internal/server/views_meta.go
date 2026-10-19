@@ -72,6 +72,19 @@ type factOpts struct {
 func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 	now := s.now()
 	facts := records.Glance(s.app.Store, t, rec, now, s.h24(), o.Counts)
+	// For entries on their own page (the lede), drop the ref habit so screen
+	// readers do not hear a bare habit name concatenated with "Created at".
+	// The association is rendered in the fields section below.  List rows
+	// keep it, because the title alone does not identify the entry there.
+	if t.Name == EntryType && o.Made {
+		filtered := facts[:0]
+		for _, f := range facts {
+			if f.Kind != "ref" || f.Field != "habit" {
+				filtered = append(filtered, f)
+			}
+		}
+		facts = filtered
+	}
 	day := false
 	for _, f := range facts {
 		day = day || f.Kind == "day"
@@ -85,14 +98,7 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 		out = strings.TrimSpace(out + " " + s.happenedAfter("", rec.UpdatedAt, now))
 	}
 	if o.Made {
-		suffix := " " + s.whenMade(t, rec, o.From)
-		// For entries, add a visible middle-dot separator between the last
-		// badge (habit name) and whenMade so screen readers do not hear them
-		// as one concatenated string.
-		if t.Name == EntryType {
-			suffix = " · " + s.whenMade(t, rec, o.From)
-		}
-		out = strings.TrimSpace(out + suffix)
+		out = strings.TrimSpace(out + " " + s.whenMade(t, rec, o.From))
 	}
 	return out
 }

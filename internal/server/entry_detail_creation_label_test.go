@@ -42,11 +42,11 @@ func TestEntryDetailLedeCreationTimeIsLabelled(t *testing.T) {
 	}
 }
 
-// TestEntryDetailLedeHabitNameNotRunningIntoCreated asserts that the habit name
-// badge on an entry detail page is visually separated from the "Created" label by
-// visible punctuation (a middle dot) so screen readers do not hear them as one
-// concatenated string. Acceptance items 1 and 3.
-func TestEntryDetailLedeHabitNameNotRunningIntoCreated(t *testing.T) {
+// TestEntryDetailLedeHabitNameAbsent asserts that an entry detail page's lede
+// does not contain the habit name; it is rendered in the fields section below,
+// so removing it from the lede eliminates the bare-text concatenation with
+// "Created at". Acceptance item 1.
+func TestEntryDetailLedeHabitNameAbsent(t *testing.T) {
 	t.Parallel()
 	a, h := newApp(t)
 
@@ -68,20 +68,17 @@ func TestEntryDetailLedeHabitNameNotRunningIntoCreated(t *testing.T) {
 	}
 
 	page := get(t, h, "/t/entry/"+entryRec.ID).Body.String()
+	lede := extractLede(page)
 
-	// The lede div must contain a middle-dot separator between the habit badge
-	// and the whenMade span. This ensures the habit name does not run directly
-	// into "Created" on screen or in a screen reader's linear text flow.
-	if !strings.Contains(page, `</span> · <span class="sw-detail__when`) {
-		t.Errorf("entry detail page lede should separate the habit badge from \"Created\" with visible punctuation; got no middle dot between \"%s\" and whenMade span", extractLede(page))
+	// The habit name must not appear in the lede at all.
+	if strings.Contains(lede, "Mum's evening medicine") {
+		t.Errorf("entry detail page lede should not contain the habit name; got: %s", lede)
 	}
 
-	// The lede must not contain the pattern "Habit Name Created" as adjacent
-	// text without any separator element or punctuation between them.
-	lede := extractLede(page)
-	if strings.Contains(lede, `</span>`+"\n"+"Created") ||
-		(strings.Contains(lede, ">Mum's evening medicine<") && !strings.Contains(lede, " · ")) {
-		t.Error("habit name should not run directly into \"Created\" without visible separation in the lede")
+	// With no badge before whenMade, there is no middle-dot separator between a
+	// span and "Created at".
+	if strings.Contains(lede, `</span> · <span class="sw-detail__when`) {
+		t.Errorf("entry detail page lede should not have a middle-dot separator between a badge and \"Created at\" because the habit badge is removed; got: %s", lede)
 	}
 }
 
