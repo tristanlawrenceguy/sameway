@@ -13,6 +13,9 @@ var (
 	// A file's path, two parts or more, or one on a Windows drive: never a
 	// slash command such as /login, which tells the person what to do.
 	errPath = regexp.MustCompile(`(?:[A-Za-z]:\\[^\s]+|(?:/[\w.\-]+){2,}/?)`)
+	// Internal model/provider names that leak into error messages: "Claude Code",
+	// "Anthropic API key", etc. — technical identifiers not helpful to the person.
+	errProvider = regexp.MustCompile(`(?i)\b(?:Claude\s+Code|Anthropic\s+(?:API\s+)?key|openai[:\s])\b`)
 )
 
 // SanitizeError is a program's error in a person's words: what the
@@ -32,6 +35,7 @@ func SanitizeError(s string) string {
 		}
 		s = next
 	}
+	s = errProvider.ReplaceAllString(s, "")
 	s = strings.Join(strings.Fields(errPath.ReplaceAllString(s, "")), " ")
 	s = strings.Trim(strings.ReplaceAll(s, " :", ":"), " :;,")
 	// What the system says of a failed connection or file tells a person
