@@ -112,8 +112,8 @@ func (s *Service) modelChoices(ctx context.Context) []modelChoice {
 	if _, err := exec.LookPath("claude"); err == nil {
 		out = append(out, modelChoice{
 			ID:       "claude-code",
-			Label:    "Use Claude Code",
-			Where:    "Uses your own Claude sign-in, with no key to set up. Your conversations and notes go to Anthropic.",
+			Label:    "Use your subscription",
+			Where:    "Uses your own sign-in, with no key to set up. Your conversations and notes go to Anthropic.",
 			Settings: [][2]string{{"llm.model", "sonnet"}, {"llm.provider", "claude-code"}},
 		})
 	}

@@ -40,7 +40,7 @@ func SanitizeError(s string) string {
 	s = strings.Trim(strings.ReplaceAll(s, " :", ":"), " :;,")
 	// What the system says of a failed connection or file tells a person
 	// nothing they can act on; the plain sentence below does.
-	for _, phrase := range []string{"connection refused", "no such file or directory", "timed out", "network is unreachable", "permission denied", "i/o timeout"} {
+	for _, phrase := range []string{"connection refused", "no such file or directory", "timed out", "network is unreachable", "permission denied", "i/o timeout", "key expired"} {
 		if strings.Contains(strings.ToLower(s), phrase) {
 			s = ""
 		}

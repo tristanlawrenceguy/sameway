@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
-	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
@@ -112,9 +111,7 @@ func (s *Server) conversationAbout(c *chat.Service, from, about, prompt string, 
 	if out.Notice == "" && s.turns.find("", c.Whose()) == nil {
 		go c.Warm(context.Background())
 	}
-	if s.app.Chat.Provider != nil {
-		view.ModelName = llm.Words(s.app.Chat.Provider)
-	}
+	view.ModelName = "Assistant"
 
 	msgs, err := c.Messages()
 	if err != nil {
