@@ -23,7 +23,7 @@ func TestHabitDetailLedeCreationTimeIsLabelled(t *testing.T) {
 
 	page := get(t, h, "/t/habit/"+rec.ID+fieldsView).Body.String()
 
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*">Created at <time[^>]*>([^<]+)</time>`)
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><span class="sw-visually-hidden">created at </span><time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(page)
 	if len(matches) < 2 {
 		t.Fatal("habit detail page lede should have a sw-detail__when span with \"Created at\" label")
@@ -49,7 +49,7 @@ func TestAllRecordTypesShowCreatedLabel(t *testing.T) {
 		t.Fatal(err)
 	}
 	notePage := get(t, h, "/t/note/"+noteRec.ID+fieldsView).Body.String()
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*">Created at <time[^>]*>([^<]+)</time>`)
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><span class="sw-visually-hidden">created at </span><time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(notePage)
 	if len(matches) < 2 {
 		t.Fatal("note detail page lede should have a sw-detail__when span with \"Created at\" label")
@@ -101,7 +101,7 @@ func TestHabitDetailLedeStillShowsAllInformation(t *testing.T) {
 
 	page := get(t, h, "/t/habit/"+rec.ID+fieldsView).Body.String()
 
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*">Created at <time[^>]*>([^<]+)</time>`)
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><span class="sw-visually-hidden">created at </span><time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(page)
 	if len(matches) < 2 {
 		t.Fatal("habit detail should have a sw-detail__when span with \"Created at\" label")
@@ -143,7 +143,7 @@ func TestHabitDetailLedeNoCadenceBadge(t *testing.T) {
 		t.Error("habit detail page should not show \"Each day\" — it uses the raw cadence enum value instead of plain language")
 	}
 
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*">Created at <time[^>]*>([^<]+)</time>`)
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><span class="sw-visually-hidden">created at </span><time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(page)
 	if len(matches) < 2 {
 		t.Fatal("habit detail page lede should have a sw-detail__when span with \"Created at\" label")

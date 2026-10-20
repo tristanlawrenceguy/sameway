@@ -22,9 +22,13 @@ func TestReminderDetailLedeCreationTimeIsLabelled(t *testing.T) {
 
 	page := get(t, h, "/t/reminder/"+rec.ID).Body.String()
 
-	// The page must contain the visible text "Created" before the creation timestamp.
-	if !strings.Contains(page, ">Created ") {
-		t.Error("reminder detail page lede should show \"Created\" before the creation timestamp; got an unlabeled time")
+	// The page must contain "created at" in a sw-visually-hidden span before the creation timestamp.
+	if !strings.Contains(page, `class="sw-visually-hidden">`) || !strings.Contains(strings.ToLower(extractWhenMadeSpan(page)), "created at ") {
+		t.Error("reminder detail page lede should show \"Created\" in a sw-visually-hidden span before the creation timestamp; got an unlabeled time")
+	}
+
+	if strings.Contains(page, ">Created ") {
+		t.Error("reminder detail page lede shows bare \"Created\" instead of wrapping it in a sw-visually-hidden span")
 	}
 
 	// The span must still exist with proper structure.

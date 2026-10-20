@@ -108,7 +108,8 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 // its fields. A time is said with what it is (design/foundations/glance.md):
 // "Created at" everywhere so screen readers hear consistent labels for creation times.
 func (s *Server) whenMade(t *schema.Type, rec *store.Record, from string) string {
-	line := s.whenMadeLabel() + " " + s.happenedAfter("", rec.CreatedAt, s.now())
+	// Wrap the creation label in a visually-hidden span: <span class="sw-visually-hidden">created at </span>.
+	line := `<span class="sw-visually-hidden">` + strings.ToLower(s.whenMadeLabel()) + ` </span>` + s.happenedAfter("", rec.CreatedAt, s.now())
 	if from != "" {
 		line += " by " + template.HTMLEscapeString(from)
 	}
