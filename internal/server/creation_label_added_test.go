@@ -37,9 +37,9 @@ func TestCreationTimestampUsesCreated(t *testing.T) {
 
 			page := get(t, h, "/t/"+rec.typ+"/"+r.ID).Body.String()
 
-			// The page must contain "Created" before the creation timestamp.
-			if !strings.Contains(page, ">Created ") {
-				t.Errorf("%s detail page lede should show \"Created\" before the creation timestamp; found \"%s\" instead of a natural label", rec.typ, extractLabel(page))
+			// The page must contain "created at" in a sw-visually-hidden span before the creation timestamp.
+			if !strings.Contains(page, `class="sw-visually-hidden">`) || !strings.Contains(strings.ToLower(extractWhenMadeSpan(page)), "created at ") {
+				t.Errorf("%s detail page lede should show \"Created\" in a sw-visually-hidden span before the creation timestamp; found \"%s\" instead", rec.typ, extractLabel(page))
 			}
 
 			// The page must NOT contain "Added" as a standalone timestamp label.

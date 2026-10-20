@@ -104,7 +104,7 @@ func TestAnActionDetailHasNoVisibleBoxLabel(t *testing.T) {
 // the lede after the checkbox fix (acceptance item 5).
 func wantMetadataPresent(t *testing.T, lede string) {
 	t.Helper()
-	if !strings.Contains(lede, `class="sw-detail__when"`) && !strings.Contains(lede, "Created at") {
+	if !strings.Contains(lede, `class="sw-detail__when`) && !strings.Contains(strings.ToLower(lede), "created") {
 		t.Errorf("the lede should still show creation time metadata (acceptance item 5)\n%s", lede)
 	}
 }

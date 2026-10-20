@@ -23,9 +23,14 @@ func TestTaskDetailLedeCreationTimeIsLabelled(t *testing.T) {
 
 	page := get(t, h, "/t/task/"+rec.ID).Body.String()
 
-	// The page must contain the visible text "Created" followed by a relative timestamp.
-	if !strings.Contains(page, ">Created ") {
-		t.Error("task detail page lede should show \"Created\" before the creation timestamp; got an unlabeled time like \"3 days ago\"")
+	// The page must contain "created at" in a sw-visually-hidden span followed by a relative timestamp.
+	if !strings.Contains(page, `class="sw-visually-hidden">`) || !strings.Contains(strings.ToLower(extractWhenMadeSpan(page)), "created at ") {
+		t.Error("task detail page lede should show \"Created\" in a sw-visually-hidden span before the creation timestamp; got an unlabeled time like \"3 days ago\"")
+	}
+
+	// The page must NOT contain bare "Created" text — it should be wrapped in sw-visually-hidden.
+	if strings.Contains(page, ">Created ") {
+		t.Error("task detail page lede shows bare \"Created\" instead of wrapping it in a sw-visually-hidden span")
 	}
 
 	// The span must still exist with proper structure.

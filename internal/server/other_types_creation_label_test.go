@@ -19,8 +19,12 @@ func TestNoteDetailLedeCreationTimeIsLabelled(t *testing.T) {
 
 	page := get(t, h, "/t/note/"+rec.ID).Body.String()
 
-	if !strings.Contains(page, ">Created ") {
-		t.Error("note detail page lede should show \"Created\" before the creation timestamp; got an unlabeled time")
+	if !strings.Contains(page, `class="sw-visually-hidden">`) || !strings.Contains(strings.ToLower(extractWhenMadeSpan(page)), "created at ") {
+		t.Error("note detail page lede should show \"Created\" in a sw-visually-hidden span before the creation timestamp; got an unlabeled time")
+	}
+
+	if strings.Contains(page, ">Created ") {
+		t.Error("note detail page lede shows bare \"Created\" instead of wrapping it in a sw-visually-hidden span")
 	}
 	if !strings.Contains(page, `class="sw-detail__when sw-muted sw-small"`) {
 		t.Error("note detail page lede should have a sw-detail__when span with muted styling")
@@ -41,8 +45,12 @@ func TestFileDetailLedeCreationTimeIsLabelled(t *testing.T) {
 
 	page := get(t, h, "/t/file/"+rec.ID).Body.String()
 
-	if !strings.Contains(page, ">Created ") {
-		t.Error("file detail page lede should show \"Created\" before the creation timestamp; got an unlabeled time")
+	if !strings.Contains(page, `class="sw-visually-hidden">`) || !strings.Contains(strings.ToLower(extractWhenMadeSpan(page)), "created at ") {
+		t.Error("file detail page lede should show \"Created\" in a sw-visually-hidden span before the creation timestamp; got an unlabeled time")
+	}
+
+	if strings.Contains(page, ">Created ") {
+		t.Error("file detail page lede shows bare \"Created\" instead of wrapping it in a sw-visually-hidden span")
 	}
 	if !strings.Contains(page, `class="sw-detail__when sw-muted sw-small"`) {
 		t.Error("file detail page lede should have a sw-detail__when span with muted styling")
@@ -63,8 +71,12 @@ func TestActionDetailLedeCreationTimeIsLabelled(t *testing.T) {
 
 	page := get(t, h, "/t/action/"+rec.ID).Body.String()
 
-	if !strings.Contains(page, ">Created ") {
-		t.Error("action detail page lede should show \"Created\" before the creation timestamp; got an unlabeled time")
+	if !strings.Contains(page, `class="sw-visually-hidden">`) || !strings.Contains(strings.ToLower(extractWhenMadeSpan(page)), "created at ") {
+		t.Error("action detail page lede should show \"Created\" in a sw-visually-hidden span before the creation timestamp; got an unlabeled time")
+	}
+
+	if strings.Contains(page, ">Created ") {
+		t.Error("action detail page lede shows bare \"Created\" instead of wrapping it in a sw-visually-hidden span")
 	}
 	if !strings.Contains(page, `class="sw-detail__when sw-muted sw-small"`) {
 		t.Error("action detail page lede should have a sw-detail__when span with muted styling")
@@ -85,8 +97,12 @@ func TestProjectDetailLedeCreationTimeIsLabelled(t *testing.T) {
 
 	page := get(t, h, "/t/project/"+rec.ID).Body.String()
 
-	if !strings.Contains(page, ">Created ") {
-		t.Error("project detail page lede should show \"Created\" before the creation timestamp; got an unlabeled time")
+	if !strings.Contains(page, `class="sw-visually-hidden">`) || !strings.Contains(strings.ToLower(extractWhenMadeSpan(page)), "created at ") {
+		t.Error("project detail page lede should show \"Created\" in a sw-visually-hidden span before the creation timestamp; got an unlabeled time")
+	}
+
+	if strings.Contains(page, ">Created ") {
+		t.Error("project detail page lede shows bare \"Created\" instead of wrapping it in a sw-visually-hidden span")
 	}
 	if !strings.Contains(page, `class="sw-detail__when sw-muted sw-small"`) {
 		t.Error("project detail page lede should have a sw-detail__when span with muted styling")

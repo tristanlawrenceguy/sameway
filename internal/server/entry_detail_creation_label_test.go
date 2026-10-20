@@ -31,9 +31,9 @@ func TestEntryDetailLedeCreationTimeIsLabelled(t *testing.T) {
 
 	page := get(t, h, "/t/entry/"+entryRec.ID).Body.String()
 
-	// The page must contain the visible text "Created" before the creation timestamp.
-	if !strings.Contains(page, ">Created ") {
-		t.Error("entry detail page lede should show \"Created\" before the creation timestamp; got an unlabeled time like \"3 days ago\"")
+	// The page must contain a sw-visually-hidden "created at" label before the creation timestamp.
+	if !strings.Contains(page, `class="sw-visually-hidden">`) || !strings.Contains(strings.ToLower(extractWhenMadeSpan(page)), "created at ") {
+		t.Error("entry detail page lede should show \"Created at\" in a sw-visually-hidden span before the creation timestamp; got an unlabeled time like \"3 days ago\"")
 	}
 
 	// The span must still exist with proper structure.
@@ -108,10 +108,10 @@ func TestEntryDetailLedeCreationTimestampHasProperLabel(t *testing.T) {
 
 	page := get(t, h, "/t/entry/"+entryRec.ID).Body.String()
 
-	// The whenMade span must contain "Created at" (not just "Created") before the
+	// The whenMade span must contain a sw-visually-hidden "created at" label before the
 	// time element, so a screen reader hears a proper label for the timestamp.
-	if !strings.Contains(page, ">Created at ") {
-		t.Error("entry detail page lede should show \"Created at\" before the creation timestamp; got bare \"Created\" without \"at\"")
+	if !strings.Contains(page, `class="sw-visually-hidden">`) || !strings.Contains(strings.ToLower(extractWhenMadeSpan(page)), "created at ") {
+		t.Error("entry detail page lede should show \"Created at\" in a sw-visually-hidden span before the creation timestamp; got bare \"Created\" without \"at\"")
 	}
 }
 

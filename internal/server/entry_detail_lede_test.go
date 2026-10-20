@@ -36,7 +36,7 @@ func TestEntryDetailLedeNoAtFieldLabel(t *testing.T) {
 		t.Error("entry detail page should not show \"At\" — it uses the raw database column name instead of plain language")
 	}
 
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*">Created at <time[^>]*>([^<]+)</time>`)
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><span class="sw-visually-hidden">created at </span><time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(page)
 	if len(matches) < 2 {
 		t.Fatal("entry detail page lede should have a sw-detail__when span with \"Created\" label")
