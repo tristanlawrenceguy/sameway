@@ -7,8 +7,8 @@ import (
 )
 
 // TestTaskDetailLedeCreationTimeIsLabelled asserts that a task detail page's
-// lede shows the creation timestamp with a visible "Created" label before it,
-// so a person reading never encounters an unlabeled timestamp. Acceptance item 1.
+// lede shows the creation timestamp without any label text before it,
+// so a person reading encounters only the timestamp. Acceptance item 1.
 func TestTaskDetailLedeCreationTimeIsLabelled(t *testing.T) {
 	t.Parallel()
 	a, h := newApp(t)
@@ -23,24 +23,29 @@ func TestTaskDetailLedeCreationTimeIsLabelled(t *testing.T) {
 
 	page := get(t, h, "/t/task/"+rec.ID).Body.String()
 
-	// The page must contain "created at" in a sw-visually-hidden span followed by a relative timestamp.
-	if !strings.Contains(page, `class="sw-visually-hidden">`) || !strings.Contains(strings.ToLower(extractWhenMadeSpan(page)), "created at ") {
-		t.Error("task detail page lede should show \"Created\" in a sw-visually-hidden span before the creation timestamp; got an unlabeled time like \"3 days ago\"")
+	lower := strings.ToLower(extractWhenMadeSpan(page))
+	// The page must NOT contain "created at" label text or nested span.
+	if strings.Contains(lower, "created at ") || strings.Contains(lower, "<span") {
+		t.Error("task detail page lede should not show \"Created\" label text before the creation timestamp; got an unlabeled time like \"3 days ago\"")
 	}
 
-	// The page must NOT contain bare "Created" text — it should be wrapped in sw-visually-hidden.
+	// The page must NOT contain bare "Created" text.
 	if strings.Contains(page, ">Created ") {
-		t.Error("task detail page lede shows bare \"Created\" instead of wrapping it in a sw-visually-hidden span")
+		t.Error("task detail page lede shows bare \"Created\"")
 	}
 
-	// The span must still exist with proper structure.
+	// The span must still exist with proper structure and a <time> element.
 	if !strings.Contains(page, `class="sw-detail__when sw-muted sw-small"`) {
 		t.Error("task detail page lede should have a sw-detail__when span with muted styling")
 	}
 
+	if !strings.Contains(extractWhenMadeSpan(page), `<time`) && !strings.Contains(extractWhenMadeSpan(page), `datetime="`) {
+		t.Error("task detail page lede should have a <time> element with datetime for the creation timestamp")
+	}
+
 	// The relative timestamp text must still be present inside <time>.
 	if !strings.Contains(page, "ago") && !strings.Contains(page, ">Today") && !strings.Contains(page, ">Yesterday") {
-		t.Error("task detail page lede should show a relative timestamp like \"3 days ago\" or \"Today at…\" after the label")
+		t.Error("task detail page lede should show a relative timestamp like \"3 days ago\" or \"Today at…\"")
 	}
 
 	// The due date chip must be labelled "Due" (not just raw text).

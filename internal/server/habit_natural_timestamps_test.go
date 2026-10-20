@@ -8,8 +8,7 @@ import (
 // TestHabitDetailLedeNaturalTimestamp checks that a habit detail page's lede
 // uses natural language for timestamps — no full machine-format date like
 // "Wed 30 Sep 2026, 13:31" (acceptance item 1). The whenMade function should
-// produce relative phrasing such as "4 days ago at 1:31pm", with a visible
-// "Created" label prefix.
+// produce relative phrasing such as "4 days ago at 1:31pm", with no label prefix.
 func TestHabitDetailLedeNaturalTimestamp(t *testing.T) {
 	t.Parallel()
 	a, h := newApp(t)
@@ -25,11 +24,11 @@ func TestHabitDetailLedeNaturalTimestamp(t *testing.T) {
 
 	body := get(t, h, "/t/habit/"+rec.ID+fieldsView).Body.String()
 
-	// Extract the sw-detail__when span content with "Created at" label.
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><span class="sw-visually-hidden">created at </span><time[^>]*>([^<]+)</time>`)
+	// Extract the sw-detail__when span content — no label text.
+	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><time[^>]*>([^<]+)</time>`)
 	matches := re.FindStringSubmatch(body)
 	if len(matches) < 2 {
-		t.Fatal("habit detail page should have a sw-detail__when span with \"Created at\" label in the lede")
+		t.Fatal("habit detail page should have a sw-detail__when span with creation time in the lede")
 	}
 	whenText := matches[1]
 

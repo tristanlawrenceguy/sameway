@@ -6,8 +6,7 @@ import (
 )
 
 // TestReminderDetailLedeCreationTimeIsLabelled asserts that a reminder detail page's
-// lede shows the creation timestamp with a visible "Created" label before it.
-// Acceptance item 3.
+// lede shows the creation timestamp without any label text before it.
 func TestReminderDetailLedeCreationTimeIsLabelled(t *testing.T) {
 	t.Parallel()
 	a, h := newApp(t)
@@ -22,13 +21,13 @@ func TestReminderDetailLedeCreationTimeIsLabelled(t *testing.T) {
 
 	page := get(t, h, "/t/reminder/"+rec.ID).Body.String()
 
-	// The page must contain "created at" in a sw-visually-hidden span before the creation timestamp.
-	if !strings.Contains(page, `class="sw-visually-hidden">`) || !strings.Contains(strings.ToLower(extractWhenMadeSpan(page)), "created at ") {
-		t.Error("reminder detail page lede should show \"Created\" in a sw-visually-hidden span before the creation timestamp; got an unlabeled time")
+	lower := strings.ToLower(extractWhenMadeSpan(page))
+	if strings.Contains(lower, "created at ") || strings.Contains(lower, "<span") {
+		t.Error("reminder detail page lede should not contain \"Created\" label text or nested span before the creation timestamp; got an unlabeled time")
 	}
 
-	if strings.Contains(page, ">Created ") {
-		t.Error("reminder detail page lede shows bare \"Created\" instead of wrapping it in a sw-visually-hidden span")
+	if !strings.Contains(extractWhenMadeSpan(page), `<time`) && !strings.Contains(extractWhenMadeSpan(page), `datetime="`) {
+		t.Error("reminder detail page lede should have a <time> element with datetime for the creation timestamp")
 	}
 
 	// The span must still exist with proper structure.

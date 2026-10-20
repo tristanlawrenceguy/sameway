@@ -95,7 +95,7 @@ func TestDaysAreHeldInTimeElements(t *testing.T) {
 	if !strings.Contains(page, `<time datetime="`+today+`"`) {
 		t.Error("the lede's day is not held in a time element")
 	}
-	if !strings.Contains(page, `class="sw-detail__when sw-muted sw-small"><span class="sw-visually-hidden">created at </span><time datetime="`) {
+	if !strings.Contains(page, `class="sw-detail__when sw-muted sw-small"><time datetime="`) {
 		t.Error("when it was made is not held in a time element")
 	}
 }
