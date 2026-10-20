@@ -129,7 +129,7 @@ func Answers(ctx context.Context, cfg Config) (bool, string) {
 		return keyStillGood(ctx, cfg, "Anthropic")
 	case "claude-code":
 		if _, err := exec.LookPath("claude"); err != nil {
-			return false, "Claude Code is not installed on this computer."
+			return false, "The program is not installed on this computer."
 		}
 		return true, ""
 	}

@@ -25,9 +25,8 @@ type modelStory struct {
 func modelStories() []modelStory {
 	return []modelStory{
 		{have: "A Claude subscription (Pro or Max)", steps: []string{
-			"Install " + web.Link("https://claude.com/claude-code", "Claude Code") + ", Anthropic's program for your subscription.",
-			"Open it once and sign in with your Claude account.",
-			"Come back here: Sameway finds it on its own and offers it above. Your conversations go to Claude through your subscription, at no extra cost.",
+			"Install the program from Anthropic's website, then open it once and sign in with your account.",
+			"Come back here: Sameway finds it on its own and offers it above. Your conversations go through your subscription, at no extra cost.",
 		}},
 		{have: "Nothing yet, and I want it free and on this computer", steps: []string{
 			web.Link(ollamaDownload(), "Download Ollama") + ", which runs AI models on this computer, and install it.",

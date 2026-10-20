@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/blocks"
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/relate"
@@ -28,8 +29,13 @@ func (s *Server) aboutOf(path string) (*schema.Type, *store.Record, bool) {
 }
 
 // title is a record's title, with what the type alone cannot say: an
-// entry is its habit and how much.
+// entry is its habit and how much; error-role messages sanitize their
+// content at render time so old stored records display safely on every
+// surface.
 func (s *Server) title(t *schema.Type, rec *store.Record) string {
+	if t.Name == "message" && rec.Fields["role"] == "error" {
+		return chat.SanitizeError(rec.Fields["content"].(string))
+	}
 	return records.Name(s.app.Store, t, rec)
 }
 
