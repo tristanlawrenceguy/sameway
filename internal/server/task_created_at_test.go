@@ -6,7 +6,7 @@ import (
 )
 
 // TestTaskDetailLedeCreationTimeIsCreatedAt asserts that a task detail page's
-// lede shows "Created at" before the creation time — not bare "Created". This is
+// lede shows the creation time without any label text — not bare "Created". This is
 // acceptance item 1. The middle-dot separator between title area and metadata
 // must also be present.
 func TestTaskDetailLedeCreationTimeIsCreatedAt(t *testing.T) {
@@ -22,18 +22,23 @@ func TestTaskDetailLedeCreationTimeIsCreatedAt(t *testing.T) {
 
 	page := get(t, h, "/t/task/"+rec.ID).Body.String()
 
-	// Must show "created at" in a sw-visually-hidden span before the timestamp.
-	if !strings.Contains(page, `class="sw-visually-hidden">`) || !strings.Contains(strings.ToLower(extractWhenMadeSpan(page)), "created at ") {
-		t.Errorf("task detail lede must show \"Created at\" in a sw-visually-hidden span before creation timestamp; found label:\n%s", extractLabel(page))
+	lower := strings.ToLower(extractWhenMadeSpan(page))
+	// Must NOT have any label text — visible or visually-hidden.
+	if strings.Contains(lower, "created at ") || strings.Contains(lower, "<span") {
+		t.Errorf("task detail lede must not contain \"Created at\" label text; found:\n%s", extractLabel(page))
 	}
 
-	// Must NOT have bare "Created" text — it should be wrapped in sw-visually-hidden.
+	// Must NOT have bare "Created" text.
 	if strings.Contains(page, ">Created ") {
-		t.Error("task detail lede shows bare \"Created\" instead of wrapping it in a sw-visually-hidden span")
+		t.Error("task detail lede shows bare \"Created\"")
 	}
 
-	// The span structure must still exist.
+	// The span structure must still exist with a <time> element.
 	if !strings.Contains(page, `class="sw-detail__when sw-muted sw-small"`) {
 		t.Errorf("task detail page lede should have a sw-detail__when span with muted styling")
+	}
+
+	if !strings.Contains(extractWhenMadeSpan(page), `<time`) && !strings.Contains(extractWhenMadeSpan(page), `datetime="`) {
+		t.Error("task detail lede should have a <time> element with datetime for the creation timestamp")
 	}
 }

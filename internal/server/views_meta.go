@@ -73,7 +73,7 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 	now := s.now()
 	facts := records.Glance(s.app.Store, t, rec, now, s.h24(), o.Counts)
 	// For entries on their own page (the lede), drop the ref habit so screen
-	// readers do not hear a bare habit name concatenated with "Created at".
+	// readers do not hear a bare habit name concatenated with the creation time.
 	// The association is rendered in the fields section below.  List rows
 	// keep it, because the title alone does not identify the entry there.
 	if t.Name == EntryType && o.Made {
@@ -105,21 +105,14 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 
 // whenMade says when a record was made, as a person reads a time, and where
 // its words came from when that was not the owner, in one quiet line under
-// its fields. A time is said with what it is (design/foundations/glance.md):
-// "Created at" everywhere so screen readers hear consistent labels for creation times.
+// its fields. The <time> element holds both machine- and human-readable values;
+// no label text is needed — the time itself tells the story (design/foundations/glance.md).
 func (s *Server) whenMade(t *schema.Type, rec *store.Record, from string) string {
-	// Wrap the creation label in a visually-hidden span: <span class="sw-visually-hidden">created at </span>.
-	line := `<span class="sw-visually-hidden">` + strings.ToLower(s.whenMadeLabel()) + ` </span>` + s.happenedAfter("", rec.CreatedAt, s.now())
+	line := s.happenedAfter("", rec.CreatedAt, s.now())
 	if from != "" {
 		line += " by " + template.HTMLEscapeString(from)
 	}
 	return `<span class="sw-detail__when sw-muted sw-small">` + line + `</span>`
-}
-
-// whenMadeLabel returns the visible prefix before a record's creation time.
-// Always "Created at", matching entries and keeping all types consistent.
-func (s *Server) whenMadeLabel() string {
-	return "Created at"
 }
 
 // happened is when something happened, as a person reads it (3 days ago),

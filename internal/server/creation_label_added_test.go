@@ -5,8 +5,8 @@ import (
 	"testing"
 )
 
-// TestCreationLabelIsCreatedNotAdded asserts that every record detail page's
-// lede shows "Created" before the creation timestamp — not the bare word "Added".
+// TestCreationTimestampUsesCreated asserts that every record detail page's
+// lede shows the creation timestamp without any label text — not "Added" or "Created at".
 func TestCreationTimestampUsesCreated(t *testing.T) {
 	t.Parallel()
 
@@ -37,19 +37,24 @@ func TestCreationTimestampUsesCreated(t *testing.T) {
 
 			page := get(t, h, "/t/"+rec.typ+"/"+r.ID).Body.String()
 
-			// The page must contain "created at" in a sw-visually-hidden span before the creation timestamp.
-			if !strings.Contains(page, `class="sw-visually-hidden">`) || !strings.Contains(strings.ToLower(extractWhenMadeSpan(page)), "created at ") {
-				t.Errorf("%s detail page lede should show \"Created\" in a sw-visually-hidden span before the creation timestamp; found \"%s\" instead", rec.typ, extractLabel(page))
+			lower := strings.ToLower(extractWhenMadeSpan(page))
+			// The page must NOT contain "created at" label text or nested span.
+			if strings.Contains(lower, "created at ") || strings.Contains(lower, "<span") {
+				t.Errorf("%s detail page lede should not show \"Created\" label text before the creation timestamp; found \"%s\" instead", rec.typ, extractLabel(page))
 			}
 
 			// The page must NOT contain "Added" as a standalone timestamp label.
 			if strings.Contains(page, ">Added ") {
-				t.Errorf("%s detail page lede should not show bare \"Added\" — it now uses \"Created\"", rec.typ)
+				t.Errorf("%s detail page lede should not show bare \"Added\"", rec.typ)
 			}
 
-			// The span structure must still exist.
+			// The span structure must still exist with a <time> element.
 			if !strings.Contains(page, `class="sw-detail__when sw-muted sw-small"`) {
 				t.Errorf("%s detail page lede should have a sw-detail__when span with muted styling", rec.typ)
+			}
+
+			if !strings.Contains(extractWhenMadeSpan(page), `<time`) && !strings.Contains(extractWhenMadeSpan(page), `datetime="`) {
+				t.Errorf("%s detail page lede should have a <time> element with datetime for the creation timestamp", rec.typ)
 			}
 		})
 	}

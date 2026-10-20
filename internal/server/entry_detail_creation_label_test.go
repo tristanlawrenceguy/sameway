@@ -31,14 +31,18 @@ func TestEntryDetailLedeCreationTimeIsLabelled(t *testing.T) {
 
 	page := get(t, h, "/t/entry/"+entryRec.ID).Body.String()
 
-	// The page must contain a sw-visually-hidden "created at" label before the creation timestamp.
-	if !strings.Contains(page, `class="sw-visually-hidden">`) || !strings.Contains(strings.ToLower(extractWhenMadeSpan(page)), "created at ") {
-		t.Error("entry detail page lede should show \"Created at\" in a sw-visually-hidden span before the creation timestamp; got an unlabeled time like \"3 days ago\"")
-	}
-
-	// The span must still exist with proper structure.
+	// The <time> element must be present directly in the whenMade span (no label text).
 	if !strings.Contains(page, `class="sw-detail__when sw-muted sw-small"`) {
 		t.Error("entry detail page lede should have a sw-detail__when span with muted styling")
+	}
+
+	lower := strings.ToLower(extractWhenMadeSpan(page))
+	if strings.Contains(lower, "created at ") || strings.Contains(lower, "<span") {
+		t.Error("entry detail page lede must not contain \"created at\" label text or nested span; got an unlabeled time like \"3 days ago\"")
+	}
+
+	if !strings.Contains(extractWhenMadeSpan(page), `<time`) || !strings.Contains(extractWhenMadeSpan(page), `datetime="`) {
+		t.Error("entry detail page lede should have a <time> element with datetime for the creation timestamp")
 	}
 }
 
@@ -108,10 +112,14 @@ func TestEntryDetailLedeCreationTimestampHasProperLabel(t *testing.T) {
 
 	page := get(t, h, "/t/entry/"+entryRec.ID).Body.String()
 
-	// The whenMade span must contain a sw-visually-hidden "created at" label before the
-	// time element, so a screen reader hears a proper label for the timestamp.
-	if !strings.Contains(page, `class="sw-visually-hidden">`) || !strings.Contains(strings.ToLower(extractWhenMadeSpan(page)), "created at ") {
-		t.Error("entry detail page lede should show \"Created at\" in a sw-visually-hidden span before the creation timestamp; got bare \"Created\" without \"at\"")
+	// The whenMade span must contain only the <time> element — no label text.
+	lower := strings.ToLower(extractWhenMadeSpan(page))
+	if strings.Contains(lower, "created at ") || strings.Contains(lower, "<span") {
+		t.Error("entry detail page lede should not contain \"created at\" label text or nested span before the creation timestamp; got bare \"Created\" without \"at\"")
+	}
+
+	if !strings.Contains(extractWhenMadeSpan(page), `<time`) && !strings.Contains(extractWhenMadeSpan(page), `datetime="`) {
+		t.Error("entry detail page lede should have a <time> element with datetime for the creation timestamp")
 	}
 }
 

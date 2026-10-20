@@ -6,11 +6,11 @@ import (
 	"testing"
 )
 
-// TestWhenMadeWrapsCreatedAtInVisuallyHiddenSpan asserts that whenMade() wraps
-// "Created at" inside a <span class="sw-visually-hidden"> so screen readers
-// hear it as context for the following timestamp rather than an orphaned label.
-// Acceptance item 2.
-func TestWhenMadeWrapsCreatedAtInVisuallyHiddenSpan(t *testing.T) {
+// TestWhenMadeHasNoBareCreatedAtLabel asserts that whenMade() does not include
+// any "created at" label text — visible or visually-hidden. The <time> element
+// with the relative timestamp is preserved directly inside the outer span.
+// Acceptance item 1–2: no bare label, timestamp preserved.
+func TestWhenMadeHasNoBareCreatedAtLabel(t *testing.T) {
 	t.Parallel()
 
 	records := []struct {
@@ -41,26 +41,26 @@ func TestWhenMadeWrapsCreatedAtInVisuallyHiddenSpan(t *testing.T) {
 			}
 
 			page := get(t, h, "/t/"+rec.typ+"/"+r.ID).Body.String()
+			whenMadeContent := extractWhenMadeSpan(page)
 
-			// The whenMade span must contain the visually-hidden "created at" label.
-			if !strings.Contains(page, `class="sw-visually-hidden">`) {
-				t.Errorf("%s detail page should wrap \"Created at\" in a sw-visually-hidden span; got:\n%s", rec.typ, extractWhenMadeSpan(page))
+			// The whenMade span must not contain any form of "created at" label.
+			lower := strings.ToLower(whenMadeContent)
+			if strings.Contains(lower, "created at ") {
+				t.Errorf("%s detail page must not contain \"created at\" in the whenMade area; got:\n%s", rec.typ, whenMadeContent)
+			}
+			if strings.Contains(lower, "<span") {
+				t.Errorf("%s detail page must not contain a nested <span> in the whenMade area; got:\n%s", rec.typ, whenMadeContent)
 			}
 
-			// The label must be lowercase inside the visually-hidden span.
-			if !strings.Contains(strings.ToLower(extractWhenMadeSpan(page)), "created at ") {
-				t.Errorf("%s detail page should contain \"created at \" (lowercase) inside a sw-visually-hidden span; got:\n%s", rec.typ, extractWhenMadeSpan(page))
-			}
-
-			// The <time> element must follow the visually-hidden span.
-			re := regexp.MustCompile(`<span class="sw-detail__when[^"]*"><span class="sw-visually-hidden">created at </span><time datetime="`)
+			// The <time> element must be directly inside the outer span.
+			re := regexp.MustCompile(`<span class="sw-detail__when[^"]*"><time datetime="`)
 			if !re.MatchString(page) {
-				t.Errorf("%s detail page should have <time> immediately after the sw-visually-hidden \"created at\" span; got:\n%s", rec.typ, extractWhenMadeSpan(page))
+				t.Errorf("%s detail page should have <time> directly inside the sw-detail__when span; got:\n%s", rec.typ, whenMadeContent)
 			}
 
 			// The outer whenMade structure must still exist.
 			if !strings.Contains(page, `class="sw-detail__when sw-muted sw-small"`) {
-				t.Errorf("%s detail page should have a sw-detail__when span with muted styling; got:\n%s", rec.typ, extractWhenMadeSpan(page))
+				t.Errorf("%s detail page should have a sw-detail__when span with muted styling; got:\n%s", rec.typ, whenMadeContent)
 			}
 		})
 	}
