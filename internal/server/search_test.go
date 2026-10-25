@@ -84,12 +84,12 @@ func TestSearchResultLinksIncludeContentTypeInAccessibleName(t *testing.T) {
 	if !strings.Contains(body, `Call the <mark class="sw-search__hit">plumber</mark>`) {
 		t.Error("result link should contain the record title, the word searched for marked")
 	}
-	if !strings.Contains(body, `<span class="sw-visually-hidden">`) {
-		t.Error("result links should embed the content type in a visually hidden span so screen readers announce it as part of the accessible name")
+	if strings.Contains(body, `<span class="sw-visually-hidden">`) {
+		t.Error("result links must not embed a visually hidden span with the content type in the h3 heading link")
 	}
-	// The card title link should have the pattern: Title<span class="sw-visually-hidden"> — note</span> or similar.
-	if !strings.Contains(body, "— Note") && !strings.Contains(body, "— note") {
-		t.Error("result links should include both the record type and its title in the accessible name, e.g., 'Call the plumber — Note'")
+	// The card title link should have only the record title — no raw type suffix.
+	if strings.Contains(body, "— Note") || strings.Contains(body, "— note") {
+		t.Error("result links must not include a raw type suffix like '— Note' in the heading link text")
 	}
 }
 
