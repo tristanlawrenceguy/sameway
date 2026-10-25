@@ -34,6 +34,18 @@ func (w *Workspace) dayWords(t *schema.Type, rec *store.Record) string {
 	return words
 }
 
+// dayWordsNoLabel is like dayWords but without the field label prefix:
+// Mon 9 Mar instead of due Mon 9 Mar. Used where raw field names must not
+// appear in link text (record list heading links).
+func (w *Workspace) dayWordsNoLabel(t *schema.Type, rec *store.Record) string {
+	day := t.DayField()
+	v := str(rec.Fields[day], day)
+	if day == "" || v == "" || v == day {
+		return ""
+	}
+	return w.whenWords(v)
+}
+
 // whenWords is a stored day or moment as a person plans by it.
 func (w *Workspace) whenWords(v string) string {
 	if _, err := time.Parse(time.RFC3339, v); err != nil {

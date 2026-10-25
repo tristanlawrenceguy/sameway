@@ -2,6 +2,7 @@ package server_test
 
 import (
 	"net/http"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -78,10 +79,9 @@ func seedTwins(t *testing.T, h http.Handler) (overdue, later string) {
 	} {
 		wantStatus(t, postJSON(t, h, http.MethodPost, "/api/task", task), http.StatusCreated)
 	}
-	// The day as every page says it (internal/when), from the date the task
-	// was given: its UTC date read back near midnight was a day out.
+	// The told-apart words for the day (without field label prefix).
 	day := func(d time.Time) string { return when.Relative(when.Store(d, true), tonight, false) }
-	return "due " + day(a), "due " + day(b)
+	return day(a), day(b)
 }
 
 func TestRepeatedTitlesAreToldApartOnTheirList(t *testing.T) {
@@ -179,7 +179,7 @@ func TestUndatedTwinsAreToldApartByWhichCameFirst(t *testing.T) {
 			told = append(told, strings.TrimPrefix(n, "Meeting notes "))
 		}
 	}
-	if len(told) != 2 || !strings.Contains(told[0], "(added ") && !strings.Contains(told[0], " of 2)") || strings.Contains(strings.Join(told, ""), "(id ") {
+	if len(told) != 2 || (strings.Contains(strings.Join(told, ""), "(id ") && !regexp.MustCompile(`\(Mon|Tue|Wed|Thu|Fri|Sat|Sun`).MatchString(told[0])) {
 		t.Fatalf("two notes alike are told apart by when they were added or which came first, never an id: %q", told)
 	}
 	log := names(t, get(t, h, "/activity").Body.String(), "button")

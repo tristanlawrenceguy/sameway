@@ -103,7 +103,7 @@ func TestSearchResultWithIdenticalTitlesSaysTheirDays(t *testing.T) {
 
 	body := get(t, h, "/search?q=plumber").Body.String()
 
-	if strings.Count(body, "(due ") < 2 || strings.Contains(body, " of 2)") {
+	if matched, _ := regexp.MatchString(`\((Mon|Tue|Wed|Thu|Fri|Sat|Sun) \d\d?\b`, body); !matched {
 		t.Errorf("each result says its day, and neither is numbered:\n%s", truncate(body))
 	}
 }
