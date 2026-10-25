@@ -69,8 +69,10 @@ func TestSearchEmptyStateHasH2AndSuggestion(t *testing.T) {
 	}
 }
 
-// Search result links include the content type in their accessible name so a
-// screen reader user knows what kind of thing they are clicking before navigating.
+// Search result card heading links show only the record's own title; no raw
+// type name suffix sits in the link text or accessible name. An aria-label on
+// the <a> carries plain-text title + context for screen readers, and the type
+// name lives in a separate paragraph below (WCAG 2.4.9).
 func TestSearchResultLinksIncludeContentTypeInAccessibleName(t *testing.T) {
 	t.Parallel()
 	_, h := newApp(t)
@@ -80,16 +82,17 @@ func TestSearchResultLinksIncludeContentTypeInAccessibleName(t *testing.T) {
 	wantStatus(t, page, http.StatusOK)
 	body := page.Body.String()
 
-	// The link for "Call the plumber" should include its content type.
+	// The link text still contains the record title with marks.
 	if !strings.Contains(body, `Call the <mark class="sw-search__hit">plumber</mark>`) {
 		t.Error("result link should contain the record title, the word searched for marked")
 	}
-	if !strings.Contains(body, `<span class="sw-visually-hidden">`) {
-		t.Error("result links should embed the content type in a visually hidden span so screen readers announce it as part of the accessible name")
+	// No raw type name suffix inside a visually-hidden span in the heading link.
+	if strings.Contains(body, `<span class="sw-visually-hidden"> — note</span>`) || strings.Contains(body, `<span class="sw-visually-hidden"> — Note</span>`) {
+		t.Error("result links must not contain the raw type name inside a visually-hidden span; it is in a separate <p> below")
 	}
-	// The card title link should have the pattern: Title<span class="sw-visually-hidden"> — note</span> or similar.
-	if !strings.Contains(body, "— Note") && !strings.Contains(body, "— note") {
-		t.Error("result links should include both the record type and its title in the accessible name, e.g., 'Call the plumber — Note'")
+	// The link has an aria-label carrying plain-text title + context for screen readers.
+	if !strings.Contains(body, `aria-label="`) {
+		t.Error("result links should have an aria-label attribute so screen readers get full context without raw type names in the visible text")
 	}
 }
 
