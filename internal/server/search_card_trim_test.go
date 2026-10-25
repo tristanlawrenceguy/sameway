@@ -1,6 +1,7 @@
 package server_test
 
 import (
+	"golang.org/x/net/html"
 	"strings"
 	"testing"
 
@@ -25,8 +26,20 @@ func TestASearchResultShowsItsWholeTitle(t *testing.T) {
 		if got := strings.TrimSpace(htmltest.VisibleText(node)); got != title {
 			t.Errorf("the result should show its whole title, got %q", got)
 		}
-		if got := strings.TrimSpace(htmltest.Text(node)); got != title+" — Note" {
-			t.Errorf("the result's heading should end with its kind for a screen reader, got %q", got)
+		// The accessible name comes from the link's aria-label now.
+		var aNode *html.Node
+		for c := node.FirstChild; c != nil; c = c.NextSibling {
+			if c.Type == html.ElementNode && c.Data == "a" {
+				aNode = c
+				break
+			}
+		}
+		if aNode != nil {
+			for _, a := range aNode.Attr {
+				if a.Key == "aria-label" && a.Val != title {
+					t.Errorf("the result's heading aria-label should be the title for a screen reader, got %q", a.Val)
+				}
+			}
 		}
 		for _, a := range node.FirstChild.Attr {
 			if a.Key == "title" {
