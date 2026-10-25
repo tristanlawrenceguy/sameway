@@ -25,8 +25,8 @@ func TestASearchResultShowsItsWholeTitle(t *testing.T) {
 		if got := strings.TrimSpace(htmltest.VisibleText(node)); got != title {
 			t.Errorf("the result should show its whole title, got %q", got)
 		}
-		if got := strings.TrimSpace(htmltest.Text(node)); got != title+" — Note" {
-			t.Errorf("the result's heading should end with its kind for a screen reader, got %q", got)
+		if got := strings.TrimSpace(htmltest.Text(node)); got != title {
+			t.Errorf("the result's heading should be just the title (type names removed from headings), got %q", got)
 		}
 		for _, a := range node.FirstChild.Attr {
 			if a.Key == "title" {
