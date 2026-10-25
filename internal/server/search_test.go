@@ -69,8 +69,9 @@ func TestSearchEmptyStateHasH2AndSuggestion(t *testing.T) {
 	}
 }
 
-// Search result links include the content type in their accessible name so a
-// screen reader user knows what kind of thing they are clicking before navigating.
+// Search result link visible text is only the record title; any apart words
+// that distinguish duplicates go into an aria-label on the link, not as a
+// type suffix appended to the heading.
 func TestSearchResultLinksIncludeContentTypeInAccessibleName(t *testing.T) {
 	t.Parallel()
 	_, h := newApp(t)
@@ -80,16 +81,16 @@ func TestSearchResultLinksIncludeContentTypeInAccessibleName(t *testing.T) {
 	wantStatus(t, page, http.StatusOK)
 	body := page.Body.String()
 
-	// The link for "Call the plumber" should include its content type.
+	// The link for "Call the plumber" should contain its title.
 	if !strings.Contains(body, `Call the <mark class="sw-search__hit">plumber</mark>`) {
 		t.Error("result link should contain the record title, the word searched for marked")
 	}
-	if !strings.Contains(body, `<span class="sw-visually-hidden">`) {
-		t.Error("result links should embed the content type in a visually hidden span so screen readers announce it as part of the accessible name")
+	// No type suffix: heading text and accessible name match the visible text.
+	if strings.Contains(body, " — Note") || strings.Contains(body, " — note") {
+		t.Errorf("heading must not append a type suffix like ' — Note'; found in:\n%s", truncate(body))
 	}
-	// The card title link should have the pattern: Title<span class="sw-visually-hidden"> — note</span> or similar.
-	if !strings.Contains(body, "— Note") && !strings.Contains(body, "— note") {
-		t.Error("result links should include both the record type and its title in the accessible name, e.g., 'Call the plumber — Note'")
+	if strings.Contains(body, `<span class="sw-visually-hidden">`) {
+		t.Error("result links must not embed the content type in a visually hidden span inside the heading link")
 	}
 }
 
