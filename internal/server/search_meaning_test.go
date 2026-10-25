@@ -48,7 +48,7 @@ func TestTheSearchPageSaysWhatIsCloseInMeaning(t *testing.T) {
 	page := get(t, h, "/search?q=plumber").Body.String()
 	for _, want := range []string{
 		"First what has your words, then what is close in meaning.",
-		"Boiler repair, call Marek<span class=\"sw-visually-hidden\"> — Note, close in meaning",
+		"Boiler repair, call Marek<span class=\"sw-visually-hidden\">close in meaning",
 		"It also finds what is close in meaning.",
 	} {
 		if !strings.Contains(page, want) {
