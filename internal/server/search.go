@@ -128,9 +128,10 @@ func searchForm(s *Server, label, hint, q, only string) string {
 	return b.String()
 }
 
-// hitItem is one result: its title with the words marked, what kind it is,
-// and the words around the match. told tells it from another result with
-// its title and kind, or is "".
+// hitItem builds one search result card: a heading with the record's
+// title (no type suffix), a meta paragraph showing what kind it is,
+// and an optional snippet. told adds an aria-label for duplicate-title
+// disambiguation so two links of one name still differ (WCAG 2.4.9).
 func (s *Server) hitItem(h search.Hit, words []string, told string) string {
 	typeEsc := template.HTMLEscapeString(capitalize(schema.Words(h.Type)))
 	if h.Near {
@@ -141,16 +142,23 @@ func (s *Server) hitItem(h search.Hit, words []string, told string) string {
 		bodyHTML = fmt.Sprintf(`<div class="sw-card__body" data-prop="body"><p>%s</p></div>`, snippet)
 	}
 	// The whole title: a result is recognised by it, and a tooltip holding
-	// the rest is out of reach of a keyboard or a finger.
+	// the rest is out of reach of a keyboard or a finger. An aria-label
+	// carries the words that tell apart records with duplicate titles so
+	// two links of one name still differ (WCAG 2.4.9). Visible text is only
+	// the title; type info appears in the meta paragraph below, not inside it.
+	contextEsc := ""
+	if told != "" {
+		contextEsc = " aria-label=\"" + template.HTMLEscapeString(h.Title) + " (" + template.HTMLEscapeString(told) + ")\""
+	}
 	card := fmt.Sprintf(
 		`<article class="sw-card" data-component="card">`+
 			`<h3 class="sw-card__title" data-prop="title">`+
-			`<a href="%s">%s<span class="sw-visually-hidden"> — %s%s</span></a>`+
+			`<a href="%s"%s>%s</a>`+
 			`</h3>`+
 			`<p class="sw-card__meta">%s</p>`+
 			`%s`+
 			`</article>`,
-		template.HTMLEscapeString(h.Href), marked(h.Title, words), typeEsc, template.HTMLEscapeString(withContext("", told)), typeEsc, bodyHTML,
+		template.HTMLEscapeString(h.Href), contextEsc, marked(h.Title, words), typeEsc, bodyHTML,
 	)
 	return fmt.Sprintf(`<li class="sw-dotted" data-dot="%d">%s</li>`, s.dotOf(h.Type), card)
 }
