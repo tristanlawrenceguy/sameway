@@ -8,6 +8,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 // request is one thing a person asks, what is there before, and how to
@@ -73,7 +74,7 @@ func requests() []request {
 			mustCreate(t, a, "person", map[string]any{"name": "Ana Silva"})
 			mustCreate(t, a, "person", map[string]any{"name": "Joe Brown"})
 			mustCreate(t, a, "event", map[string]any{"title": "Pricing review", "starts": at(time.Now().AddDate(0, 0, -2).Format("2006-01-02"), 10, 0),
-				"notes": "Ana Silva will send the new price list by 9 October. Joe Brown will update the website once it is out. We agreed to raise prices by 5%."})
+				"notes": "Ana Silva will send the new price list by " + priceListDue.Format("2 January") + ". Joe Brown will update the website once it is out. We agreed to raise prices by 5%."})
 		}, say: "Turn my notes from the pricing review into tasks for who said they'd do what",
 			check: func(a *app.App, _ string) string {
 				ana, joe := find(a, "person", "name", "ana"), find(a, "person", "name", "joe")
@@ -82,7 +83,7 @@ func requests() []request {
 					return "no tasks for the price list and the website"
 				}
 				return all(want(fmt.Sprint(list.Fields["for"]) == ana.ID, "the price list is not Ana's"), want(fmt.Sprint(site.Fields["for"]) == joe.ID, "the website is not Joe's"),
-					want(onDay(list, fmt.Sprintf("%d-10-09", time.Now().Year())), fmt.Sprintf("the price list is due %v, not 9 October", list.Fields["due"])))
+					want(onDay(list, priceListDue.Format("2006-01-02")), fmt.Sprintf("the price list is due %v, not %s", list.Fields["due"], priceListDue.Format("2 January"))))
 			}},
 		{name: "today-tab", seed: func(t *testing.T, a *app.App) {
 			mustCreate(t, a, "task", map[string]any{"title": "Post the parcel", "due": time.Now().Format("2006-01-02")})
@@ -134,7 +135,17 @@ func requests() []request {
 			mustCreate(t, a, "note", map[string]any{"title": "Trip report", "body": "## Day 1\nWe arrived in Porto.\n\n## Day 2\nWe walked to the river.\n\n## Day 3\nWe flew home."})
 		}, say: "Split my Trip report into one note per day, kept as its parts in order",
 			check: func(a *app.App, _ string) string {
-				trip := find(a, "note", "title", "trip report")
+				// The piece by its whole title: its parts are called Trip
+				// report: Day 1 and on, and one of them was taken for it.
+				var trip *store.Record
+				for _, n := range list(a, "note") {
+					if strings.EqualFold(fmt.Sprint(n.Fields["title"]), "Trip report") {
+						trip = n
+					}
+				}
+				if trip == nil {
+					return "no Trip report"
+				}
 				var found []string
 				for _, n := range list(a, "note") {
 					if fmt.Sprint(n.Fields[records.PartOf]) == trip.ID {
@@ -197,3 +208,8 @@ func requests() []request {
 			}},
 	}
 }
+
+// priceListDue is the day the pricing review's notes give, a few days on
+// from whenever the bench runs: written as 9 October, it went past, and an
+// assistant that rightly left a past day out was marked wrong.
+var priceListDue = time.Now().AddDate(0, 0, 5)
