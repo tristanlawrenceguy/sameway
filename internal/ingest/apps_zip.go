@@ -54,10 +54,14 @@ func zipped(data []byte) (*Brought, error) {
 	keep, md := newBrought("Google Keep"), newBrought("Markdown notes")
 	var tasks *Brought
 	for _, f := range zr.File {
-		if f.FileInfo().IsDir() || f.UncompressedSize64 > 32<<20 {
+		name := path.Base(f.Name)
+		limit := uint64(32 << 20)
+		if strings.EqualFold(name, "conversations.json") {
+			limit = 512 << 20 // a year of chats with ChatGPT is far more than a note
+		}
+		if f.FileInfo().IsDir() || f.UncompressedSize64 > limit {
 			continue
 		}
-		name := path.Base(f.Name)
 		ext := strings.ToLower(path.Ext(name))
 		if ext != ".json" && ext != ".md" && ext != ".markdown" {
 			continue
@@ -70,6 +74,10 @@ func zipped(data []byte) (*Brought, error) {
 		buf.ReadFrom(rc)
 		rc.Close()
 		switch {
+		case ext == ".json" && strings.EqualFold(name, "conversations.json"):
+			if chats, ok := chatExport(buf.Bytes()); ok { // apps_chats.go: ChatGPT or Claude
+				return chatsOrNone(chats)
+			}
 		case ext == ".json" && strings.EqualFold(name, "Tasks.json"):
 			tasks, _ = googleJSON(buf.Bytes())
 		case ext == ".json" && strings.Contains(f.Name, "Keep/"):

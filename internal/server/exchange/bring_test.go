@@ -49,3 +49,33 @@ func TestThingsAreBroughtFromAnotherApp(t *testing.T) {
 		t.Errorf("Undo takes them away again: %d left", len(left))
 	}
 }
+
+// Conversations exported from ChatGPT come in as notes, one each, tagged
+// chatgpt, and the person is told the assistant can make what is still to
+// do in them into tasks, reminders and people.
+func TestConversationsAreBroughtFromChatGPT(t *testing.T) {
+	t.Parallel()
+	a, h := newApp(t)
+	if page := get(t, h, "/bring").Body.String(); !strings.Contains(page, "Your conversations with ChatGPT") || !strings.Contains(page, "Your conversations with Claude") {
+		t.Fatalf("the page says how to get the chats: %s", truncate(page))
+	}
+	var body bytes.Buffer
+	mw := multipart.NewWriter(&body)
+	fw, _ := mw.CreateFormFile("file", "conversations.json")
+	fw.Write([]byte(`[{"title":"Moving house","create_time":1760000000,"current_node":"b","mapping":{"a":{"parent":null,"message":{"author":{"role":"user"},"content":{"parts":["Remind me to book the van for the 14th"]}}},"b":{"parent":"a","message":{"author":{"role":"assistant"},"content":{"parts":["Noted: book the van."]}}}}}]`))
+	mw.Close()
+	r := httptest.NewRequest(http.MethodPost, "/bring", &body)
+	r.Header.Set("Content-Type", mw.FormDataContentType())
+	r.Header.Set("Origin", "http://example.com")
+	r.Host = "example.com"
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, r)
+	page := after(t, h, w).Body.String()
+	if !strings.Contains(page, "Brought in from ChatGPT") || !strings.Contains(page, "Ask the assistant to find what is still to do in them") {
+		t.Fatalf("it says what came and what next: %d %s", w.Code, truncate(page))
+	}
+	notes, _ := a.Store.List("note", store.ListOptions{})
+	if len(notes) != 1 || notes[0].Fields["title"] != "Moving house" || !strings.Contains(notes[0].Fields["body"].(string), "book the van") {
+		t.Errorf("the conversation is a note: %+v", notes)
+	}
+}

@@ -35,7 +35,15 @@ func (b *Brought) Count(kind string) int {
 	return 0
 }
 
-var errUnknown = errors.New("this is not an export Sameway knows: it reads the CSV Todoist exports, Google Tasks and Google Keep from Google Takeout, the .enex Evernote exports, and a zip of Markdown notes from Notion, Obsidian or elsewhere")
+var errUnknown = errors.New("this is not an export Sameway knows: it reads your conversations exported from ChatGPT or Claude, the CSV Todoist exports, Google Tasks and Google Keep from Google Takeout, the .enex Evernote exports, and a zip of Markdown notes from Notion, Obsidian or elsewhere")
+
+// chatsOrNone is the conversations read, or why there were none.
+func chatsOrNone(b *Brought) (*Brought, error) {
+	if len(b.Kinds) == 0 {
+		return nil, errors.New("this " + b.From + " export has no conversations with anything said in them")
+	}
+	return b, nil
+}
 
 // Recognise reads an export by what it holds.
 func Recognise(name string, data []byte) (*Brought, error) {
@@ -46,6 +54,9 @@ func Recognise(name string, data []byte) (*Brought, error) {
 	case strings.HasSuffix(lower, ".zip"):
 		return zipped(data)
 	case strings.HasSuffix(lower, ".json"):
+		if b, ok := chatExport(data); ok { // apps_chats.go
+			return chatsOrNone(b)
+		}
 		return googleJSON(data)
 	case strings.HasSuffix(lower, ".csv"):
 		return todoist(data)

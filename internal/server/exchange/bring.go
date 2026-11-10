@@ -25,6 +25,8 @@ const bringLimit = 200 << 20
 
 // bringHow is how to get each export, in the words of the app's menus.
 var bringHow = []struct{ app, how string }{
+	{"Your conversations with ChatGPT", "Settings, then Data controls, then Export data. A zip comes by email; bring it as it comes."},
+	{"Your conversations with Claude", "Settings, then Privacy, then Export data. A zip comes by email; bring it as it comes."},
 	{"Todoist", "Settings, then Backups, or a project's menu and Export as a CSV file."},
 	{"Google Tasks or Google Keep", "takeout.google.com: choose Tasks or Keep, then Export once. Bring the zip as it comes."},
 	{"Evernote", "select notes, then File and Export notes, as an .enex file."},
@@ -42,7 +44,7 @@ func (s *Service) bringPage(w http.ResponseWriter, r *http.Request) {
 	b.WriteString(string(s.Form(ui.Form{Action: "/bring", Enctype: "multipart/form-data", Class: "sw-stack",
 		Body:   `<label for="bring-file">The file from the app</label><input type="file" id="bring-file" name="file" accept=".csv,.json,.enex,.zip" required>`,
 		Button: &ui.Button{Label: "Bring them in"}})))
-	s.Page(w, r, "Bring your things", template.HTML(b.String()), web.PageOptions{Lede: "From Todoist, Google, Evernote, Notion or Obsidian."})
+	s.Page(w, r, "Bring your things", template.HTML(b.String()), web.PageOptions{Lede: "From ChatGPT, Claude, Todoist, Google, Evernote, Notion or Obsidian."})
 }
 
 func (s *Service) bring(w http.ResponseWriter, r *http.Request) {
@@ -86,7 +88,16 @@ func (s *Service) bring(w http.ResponseWriter, r *http.Request) {
 		s.Failed(w, r, "Nothing brought in", errors.New("the file from "+got.From+" had nothing in it to bring"), "/bring")
 		return
 	}
-	s.TellAt(w, r, web.Outcome{Title: "Brought in from " + got.From, Text: strings.Join(said, " and ") + ". Undo in Activity takes each kind away again."}, to)
+	text := strings.Join(said, " and ") + ". Undo in Activity takes each kind away again."
+	if got.From == "ChatGPT" || got.From == "Claude" {
+		// Each conversation is a note tagged with where it came from; what
+		// was planned in them is still words until the assistant makes it
+		// tasks, days and people (chat/rules_topical.go).
+		tag := strings.ToLower(got.From)
+		to = "/t/note?where=tags%3D" + tag
+		text += " Each conversation is a note tagged " + tag + ". Ask the assistant to find what is still to do in them, and it makes the tasks, reminders and people."
+	}
+	s.TellAt(w, r, web.Outcome{Title: "Brought in from " + got.From, Text: text}, to)
 }
 
 // ImportLinks are a list's ways in from a file: Import for any file, and
