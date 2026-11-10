@@ -110,8 +110,12 @@ func newcomer() []request {
 // anyTitled is the first record of any kind titled with the words: a
 // model may file a call as an event, a task, a reminder or an interaction.
 func anyTitled(a *app.App, words string) *store.Record {
-	for _, typ := range a.Store.Types().Names() {
-		if r := find(a, typ, "title", words); r != nil {
+	// The person's own kinds only: a conversation is titled with what was
+	// said to start it ("Mum's birthday is on 3 March, every year"), comes
+	// first by name, and was taken for the record, so a birthday stored
+	// right was marked wrong in every run.
+	for _, t := range records.ContentTypes(a.Store) {
+		if r := find(a, t.Name, "title", words); r != nil {
 			return r
 		}
 	}
