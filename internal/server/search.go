@@ -96,6 +96,9 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 	if only != "" {
 		jsonURL += "&type=" + template.URLQueryEscaper(only)
 	}
+	if only == "" {
+		b.WriteString(s.onComputer(r, q)) // files here not yet in Sameway, on_computer.go
+	}
 	body := lead + searchForm(s, label, hint, q, only) + b.String()
 	s.page(w, r, title, template.HTML(body), pageOptions{JSONURL: jsonURL, Said: pg.title(said)})
 }

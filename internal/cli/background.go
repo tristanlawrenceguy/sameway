@@ -30,7 +30,8 @@ const shutdownWait = 4 * time.Second
 // window leaves them out). The jobs run on a.Jobs (internal/runner), which
 // says when each last ran and what went wrong.
 func startBackground(ctx context.Context, a *app.App, h *server.Server, all http.Handler, out, notes io.Writer) {
-	h.OnRing(notifier(a)) // a ring told beyond the page
+	h.OnRing(notifier(a))                     // a ring told beyond the page
+	h.FindOnComputer(server.HomeFolders()...) // a search also finds files here
 	connectDevices(ctx, out, a)
 	a.Jobs.Add(backgroundJobs(a, h, notes)...)
 	a.Jobs.Add(joinTailnet(out, a, all, h)...) // tailnet.go
