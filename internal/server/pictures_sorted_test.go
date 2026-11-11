@@ -107,7 +107,8 @@ func (m *asksWords) Complete(_ context.Context, req llm.Request) (*llm.Response,
 }
 
 // A bill shared as a file, with no email connected, sets sorting up, and
-// sorting reads the words of the file the note links to.
+// sorting reads the words of the file the note links to. Sorting is set
+// up once: removed, a later share does not bring it back.
 func TestAFileSharedIsReadForWhatItAsks(t *testing.T) {
 	t.Parallel()
 	a, h := newApp(t)
@@ -132,8 +133,18 @@ func TestAFileSharedIsReadForWhatItAsks(t *testing.T) {
 	}
 	a.Automate.Classify(context.Background(), sort, "note", note.ID)
 	model.mu.Lock()
-	defer model.mu.Unlock()
 	if !strings.Contains(strings.Join(model.asked, "|"), "48.20 to pay by 3 December") {
 		t.Errorf("the file's words are read when sorted: %q", model.asked)
+	}
+	model.mu.Unlock()
+
+	// Sorting the person removed stays removed: the next share used to
+	// make it all again.
+	for _, act := range acts {
+		records.ApplyOps(a.Store, records.Op{Type: records.ActionType, ID: act.ID})
+	}
+	do(t, h, http.MethodPost, "/share", strings.NewReader("text=Call+the+plumber"), "application/x-www-form-urlencoded")
+	if acts, _ := a.Store.List(records.ActionType, store.ListOptions{}); len(acts) != 0 {
+		t.Errorf("a share after sorting was removed sets it up again: %d actions", len(acts))
 	}
 }
