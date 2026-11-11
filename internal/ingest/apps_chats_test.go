@@ -67,6 +67,8 @@ func TestALongConversationKeepsItsEnd(t *testing.T) {
 	body := b.Kinds["note"].Rows[0]["body"]
 	if !utf8.ValidString(body) || !strings.HasSuffix(body, "Book the doctor for Tuesday.") || !strings.Contains(body, "the middle of this conversation is in the export") || len(body) > maxChatBody+200 {
 		t.Errorf("start and end, whole letters: %d bytes, ends %q", len(body), body[len(body)-60:])
+	}
+}
 
 // A long ChatGPT history comes split, as conversations-000.json and on,
 // and is read whole; a voice chat is read as ChatGPT wrote it down.
