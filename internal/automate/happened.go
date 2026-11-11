@@ -39,6 +39,9 @@ type automationJob struct {
 	vars   map[string]string
 	step   int
 	why    string // what set it off, for the log
+	// backlog is a record already here an action was run over
+	// (backlog.go): one gone since, joined into another, is passed by.
+	backlog bool
 }
 
 type automation struct {
@@ -119,6 +122,9 @@ func (s *Service) runAutomation(ctx context.Context, j automationJob) {
 		return
 	}
 	title, _ := rec.Fields["title"].(string)
+	if _, err := s.Store.Get(j.vars["type"], j.vars["id"]); j.backlog && err != nil {
+		return
+	}
 	ctx = context.WithValue(context.WithValue(ctx, automationKey{}, title), triggerKey{}, j.vars)
 	r := s.runRecord(ctx, filled(rec, j.vars), "")
 	for i := range r.Changes {

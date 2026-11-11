@@ -26,7 +26,7 @@ var actionOp = Op{Title: "Run an action", Traits: Traits{OpenWorld: true},
 	},
 	Tool: llm.Tool{
 		Name:        "run_action",
-		Description: "Run one of the person's actions now, by id: a webhook they set up (an alarm, a weather update), a command on their machine (the first run asks them once, on a card), or an arrangement. Actions of kind message are for the person to press, not for you. The result goes in the activity log; a webhook or command with show set puts its answer on the canvas.",
+		Description: "Run one of the person's actions now, by id: a webhook they set up (an alarm, a weather update), a command on their machine (the first run asks them once, on a card), or an arrangement. A sorting (classify) or suggest action run now goes through the records already here that it would have been set off by and has not done yet, oldest first, in the background: how to sort what was there before it was set up, such as photos already kept. Actions of kind message are for the person to press, not for you. The result goes in the activity log; a webhook or command with show set puts its answer on the canvas.",
 		Schema: map[string]any{"type": "object", "properties": map[string]any{
 			"id": map[string]any{"type": "string", "description": "The action's id, from the actions listed in the prompt or find_records."},
 		}, "required": []string{"id"}, "additionalProperties": false},
