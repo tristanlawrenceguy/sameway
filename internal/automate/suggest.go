@@ -80,6 +80,7 @@ func (s *Service) Suggest(ctx context.Context, action *store.Record, typeName, i
 		}
 		return fail("a suggest action says what it makes: one of %s", strings.Join(kinds, ", "))
 	}
+	read := s.readPictures(ctx, from, rec) // pictures_read.go
 	words := recordWords(s.Store, from, rec)
 	q := "The record:\n" + words + threadWords(s.Store, from, rec) // thread_words.go
 	// Today, so what was for a day gone by is not suggested as if it were
@@ -113,7 +114,7 @@ func (s *Service) Suggest(ctx context.Context, action *store.Record, typeName, i
 	// The question is logged with the change that runs the action, so
 	// undoing that takes it back.
 	p := done[0]
-	return Result{Text: "suggested: " + summary, Answer: p.ID, Change: &records.Change{Action: "proposed", ID: p.ID, Detail: trim.Line(summary, 80), Ops: done}}
+	return Result{Text: "suggested: " + summary, Answer: p.ID, Change: &records.Change{Action: "proposed", ID: p.ID, Detail: trim.Line(summary, 80), Ops: append(read, done...)}}
 }
 
 // fillSuggested turns what the model wrote into a record's fields: a day
