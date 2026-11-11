@@ -105,6 +105,9 @@ func (s *Service) tagChange(w http.ResponseWriter, r *http.Request) {
 	s.Failed(w, r, "Not changed", err, "/today")
 }
 
+// sortingSetUp is the store's note that sorting was set up.
+const sortingSetUp = "sorting:set-up"
+
 // starterTags are the tags sorting begins with; the person changes what
 // each means, or adds their own, on the tags' page.
 var starterTags = []struct {
@@ -116,10 +119,12 @@ var starterTags = []struct {
 	{"nothing to do", "Needs nothing from me: newsletters, adverts, receipts, notices and confirmations. Given when no other tag fits.", true},
 }
 
-// SetUpSorting, the first time email is connected, makes the starter tags
-// and the action that gives them to each email that comes in, checked
-// against the person's past choices. Both are ordinary records: the person
-// changes the tags, the meanings, or the action, or removes them.
+// SetUpSorting, the first time email is connected or something is shared
+// to sort, makes the starter tags and the actions that give them to what
+// comes in, checked against the person's past choices. Both are ordinary
+// records: the person changes the tags, the meanings, or the actions, or
+// removes them. It is done once: a share after the person removed sorting
+// brought it all back, twice over when one action was left.
 func (s *Service) SetUpSorting() {
 	if _, ok := s.app.Types.Get(records.TagType); !ok {
 		return
@@ -127,7 +132,11 @@ func (s *Service) SetUpSorting() {
 	if _, ok := s.app.Types.Get("email"); !ok {
 		return
 	}
-	who := records.Who{Actor: "system", Via: "setting up email"}
+	if s.app.Store.Meta(sortingSetUp) != "" {
+		return
+	}
+	defer s.app.Store.SetMeta(sortingSetUp, "yes")
+	who := records.Who{Actor: "system", Via: "setting up sorting"}
 	have := map[string]bool{}
 	for _, n := range s.tagNames() {
 		have[strings.ToLower(n)] = true
