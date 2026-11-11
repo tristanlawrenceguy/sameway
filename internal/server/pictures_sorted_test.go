@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"mime/multipart"
 	"net/http"
 	"strings"
@@ -15,31 +16,43 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
-// readsLetter tags a record to do only when it is shown the picture of
-// the letter, as a model that can see reads it; blind refuses pictures.
+// readsLetter reads the picture of a letter when shown it, as a model
+// that can see does, and tags to do a record whose words say a fine is
+// to pay; blind refuses pictures.
 type readsLetter struct {
 	mu    sync.Mutex
 	blind bool
 	saw   int
+	asked []string
 }
 
 func (m *readsLetter) Name() string { return "letter" }
 func (m *readsLetter) Complete(_ context.Context, req llm.Request) (*llm.Response, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	q := req.Messages[0].Content
+	m.asked = append(m.asked, q)
 	if len(req.Messages[0].Images) > 0 {
 		if m.blind {
 			return nil, errors.New("400: this model does not support image input")
 		}
 		m.saw++
+	}
+	switch {
+	case strings.Contains(req.System, "You read a picture"):
+		return &llm.Response{Text: `{"name": "Parking fine from the council", "description": "A printed letter from the council about a parking fine.", "text": "Penalty charge notice. Pay 35 pounds by Friday 20 November."}`}, nil
+	case strings.Contains(q, "Pay 35 pounds") || len(req.Messages[0].Images) > 0:
 		return &llm.Response{Text: `{"tags": [{"tag": "to do", "why": "a fine to pay by Friday"}]}`}, nil
 	}
 	return &llm.Response{Text: `{"tags": []}`}, nil
 }
 
 // A photo of a letter shared from a phone is a note whose words are only
-// the file's name; sorting it is shown the photo, so a fine to pay is
-// tagged to do. A model that cannot see is asked again without it.
+// the file's name. The first sorting reads the picture once: its words
+// and what it shows are kept on the file, the note takes the name of
+// what it is, and it is tagged from those words, so a fine to pay is to
+// do; sorting it again does not send the picture again. A model that
+// cannot see is asked from the words, and nothing is renamed.
 func TestAPhotoSharedIsReadWhenItIsSorted(t *testing.T) {
 	t.Parallel()
 	for _, blind := range []bool{false, true} {
@@ -55,16 +68,26 @@ func TestAPhotoSharedIsReadWhenItIsSorted(t *testing.T) {
 			t.Fatalf("shared: %d", rec.Code)
 		}
 		note := lastNote(t, a)
-		a.Store.Create(records.TagType, map[string]any{"name": "to do", "means": "Something I have to do: pay, reply, book."})
 		act, _ := a.Store.Create(records.ActionType, map[string]any{"title": "Sort", "kind": "classify", "tags": []any{"to do"}})
 		a.Automate.Classify(context.Background(), act, "note", note.ID)
 		got, _ := a.Store.Get("note", note.ID)
 		tags := strings.Join(records.StringList(got.Fields["tags"]), ",")
-		if !blind && (model.saw != 1 || !strings.Contains(tags, "to do")) {
-			t.Errorf("the photo is read when sorted: saw %d, tags %s", model.saw, tags)
+		files, _ := a.Store.List(records.FileType, store.ListOptions{})
+		if blind {
+			if strings.Contains(tags, "to do") || got.Fields["title"] != "IMG_2041" {
+				t.Errorf("a model that cannot see is asked from the words, and nothing renamed: %s %v", tags, got.Fields["title"])
+			}
+			continue
 		}
-		if blind && strings.Contains(tags, "to do") {
-			t.Errorf("a model that cannot see is asked from the words: %s", tags)
+		if model.saw != 1 || !strings.Contains(tags, "to do") || got.Fields["title"] != "Parking fine from the council" {
+			t.Errorf("read once, tagged from its words, named for what it is: saw %d, tags %s, %v", model.saw, tags, got.Fields["title"])
+		}
+		if len(files) != 1 || !strings.Contains(fmt.Sprint(files[0].Fields["text"]), "Pay 35 pounds") || !strings.Contains(fmt.Sprint(files[0].Fields["description"]), "parking fine") {
+			t.Errorf("its words and what it shows are kept on the file: %v", files[0].Fields)
+		}
+		a.Automate.Classify(context.Background(), act, "note", note.ID)
+		if model.saw != 1 {
+			t.Errorf("a picture read is not sent again: saw %d", model.saw)
 		}
 	}
 }

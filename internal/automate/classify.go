@@ -110,6 +110,7 @@ func (s *Service) Classify(ctx context.Context, action *store.Record, typeName, 
 	if len(defs) == 0 {
 		return fail("there are no tags to give: add some, each with what it means, at /t/%s", records.TagType)
 	}
+	read := s.readPictures(ctx, t, rec) // pictures_read.go
 	words := recordWords(s.Store, t, rec)
 	var asked, alone []Tag
 	for _, d := range defs {
@@ -137,7 +138,7 @@ func (s *Service) Classify(ctx context.Context, action *store.Record, typeName, 
 	}
 	outs := s.checked(ctx, action, t, rec, words, picks, defs)
 	var said, given []string
-	var ops []records.Op
+	ops := read
 	for _, o := range keepAlone(outs, defs) {
 		if o.dropped != "" {
 			said = append(said, o.tag+" (not given: "+o.dropped+")")

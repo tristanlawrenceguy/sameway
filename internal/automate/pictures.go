@@ -3,8 +3,10 @@ package automate
 import (
 	"context"
 	"regexp"
+	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -24,17 +26,12 @@ func (s *Service) picturesOf(rec *store.Record) []llm.Image {
 		return nil
 	}
 	var out []llm.Image
-	seen := map[string]bool{}
-	for _, v := range rec.Fields {
-		str, _ := v.(string)
-		for _, m := range fileLink.FindAllStringSubmatch(str, -1) {
-			if len(out) == picturesSeen || seen[m[1]] {
-				continue
-			}
-			seen[m[1]] = true
-			if img, ok := s.Picture(m[1]); ok {
-				out = append(out, img)
-			}
+	for _, id := range linkedFiles(rec) { // pictures_read.go
+		if f, err := s.Store.Get(records.FileType, id); err == nil && strings.TrimSpace(str(f.Fields["text"])) != "" {
+			continue // read already: its words are the record's (record_words.go)
+		}
+		if img, ok := s.Picture(id); ok {
+			out = append(out, img)
 		}
 	}
 	return out
