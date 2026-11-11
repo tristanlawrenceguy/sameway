@@ -39,6 +39,8 @@ func (ws *Workspace) collectionShows(props map[string]any) string {
 		out += ", as a table"
 	case "cards":
 		out += ", as cards"
+	case "gallery":
+		out += ", as a gallery of their pictures"
 	}
 	return out
 }

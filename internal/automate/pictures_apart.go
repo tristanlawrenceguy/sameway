@@ -3,6 +3,7 @@ package automate
 import (
 	"context"
 	"fmt"
+	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -33,13 +34,17 @@ type pictureGroup struct {
 // a share of separate things, moves each other set to a note of its own.
 func (s *Service) groupPictures(ctx context.Context, t *schema.Type, rec *store.Record, ids []string) []records.Op {
 	var q strings.Builder
-	titles := map[string]string{}
+	titles := map[string]string{} // as read now
+	arrived := ""                 // the first photo's own name, which the record was given
 	for k, id := range ids {
 		f, err := s.Store.Get(records.FileType, id)
 		if err != nil {
 			return nil
 		}
 		titles[id] = str(f.Fields["title"])
+		if k == 0 {
+			arrived = strings.TrimSuffix(str(f.Fields["name"]), path.Ext(str(f.Fields["name"])))
+		}
 		fmt.Fprintf(&q, "Photo %d, named %s: %s\n%s\n\n", k+1, titles[id], str(f.Fields["description"]), clipEnds(str(f.Fields["text"]), 300))
 	}
 	var got struct {
@@ -53,9 +58,10 @@ func (s *Service) groupPictures(ctx context.Context, t *schema.Type, rec *store.
 		return nil
 	}
 	var ops []records.Op
-	first := sets[0]
-	if name := strings.TrimSpace(first.name); name != "" && t.Title != "" && str(rec.Fields[t.Title]) == titles[ids[0]] {
+	first, called := sets[0], str(rec.Fields[t.Title])
+	if name := strings.TrimSpace(first.name); name != "" && t.Title != "" && (called == arrived || called == titles[ids[0]]) {
 		ops = append(ops, records.Op{Type: t.Name, ID: rec.ID, After: map[string]any{t.Title: name}})
+		called = name
 	}
 	if len(sets) > 1 && hasTag(rec, "shared") {
 		left := map[string]any{}
@@ -80,7 +86,7 @@ func (s *Service) groupPictures(ctx context.Context, t *schema.Type, rec *store.
 			}
 			fields := map[string]any{t.Title: name, "tags": rec.Fields["tags"]}
 			if body != "" {
-				fields[body] = strings.Join(links, "\n\n") + "\n\nShared together with [" + str(rec.Fields[t.Title]) + "](/t/" + t.Name + "/" + rec.ID + ")."
+				fields[body] = strings.Join(links, "\n\n") + "\n\nShared together with [" + called + "](/t/" + t.Name + "/" + rec.ID + ")."
 			}
 			ops = append(ops, records.Op{Type: t.Name, After: fields})
 		}

@@ -90,8 +90,8 @@ func TestAPhotoSharedIsReadWhenItIsSorted(t *testing.T) {
 		if model.saw != 1 || !strings.Contains(tags, "to do") || got.Fields["title"] != "Parking fine from the council" {
 			t.Errorf("read once, tagged from its words, named for what it is: saw %d, tags %s, %v", model.saw, tags, got.Fields["title"])
 		}
-		if len(files) != 1 || !strings.Contains(fmt.Sprint(files[0].Fields["text"]), "Pay 35 pounds") || !strings.Contains(fmt.Sprint(files[0].Fields["description"]), "parking fine") {
-			t.Errorf("its words and what it shows are kept on the file: %v", files[0].Fields)
+		if len(files) != 1 || files[0].Fields["title"] != "Parking fine from the council" || !strings.Contains(fmt.Sprint(files[0].Fields["text"]), "Pay 35 pounds") || !strings.Contains(fmt.Sprint(files[0].Fields["description"]), "parking fine") {
+			t.Errorf("its words and what it shows are kept on the file, named for what it is: %v", files[0].Fields)
 		}
 		a.Automate.Classify(context.Background(), act, "note", note.ID)
 		if model.saw != 1 {
@@ -239,10 +239,10 @@ func TestPhotosOfSeparateThingsAreSetApart(t *testing.T) {
 		t.Fatalf("the note keeps the receipts, the beach is a note of its own: %v", byTitle)
 	}
 	body, other := fmt.Sprint(kept.Fields["body"]), fmt.Sprint(apart.Fields["body"])
-	if !strings.Contains(body, "wickes") || !strings.Contains(body, "boots") || strings.Contains(body, "beach.png") {
+	if !strings.Contains(body, "[wickes]") || !strings.Contains(body, "[boots]") || strings.Contains(body, "beach") {
 		t.Errorf("the receipts stay, the beach goes: %q", body)
 	}
-	if !strings.Contains(other, "beach") || !strings.Contains(other, "/t/note/"+note.ID) || !strings.Contains(fmt.Sprint(apart.Fields["tags"]), "shared") {
+	if !strings.Contains(other, "[Beach](") || !strings.Contains(other, "Shared together with [Receipts for the flat](/t/note/"+note.ID+")") || !strings.Contains(fmt.Sprint(apart.Fields["tags"]), "shared") {
 		t.Errorf("the beach is a share of its own, saying what it came with: %q %v", other, apart.Fields["tags"])
 	}
 	a.Automate.Classify(context.Background(), act, "note", apart.ID)
