@@ -168,7 +168,7 @@ func (s *Service) sendTurn(ctx context.Context, canvas, text, fileID string, on 
 	}
 	var changes []records.Change
 	var tools []map[string]any
-	var end endings
+	end := endings{asked: text}
 	var p progress
 	for {
 		resp, err := s.complete(ctx, req, on)

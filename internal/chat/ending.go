@@ -10,10 +10,11 @@ import (
 )
 
 // endings is what a turn has been asked again already as it ended: each
-// is asked once. reply is the reply a review is checking.
+// is asked once. asked is the person's message; reply is the reply a
+// review is checking.
 type endings struct {
 	nudged, corrected, reviewed bool
-	reply                       string
+	asked, reply                string
 }
 
 // ending is a turn's reply when the model answers in words, or what to
@@ -44,7 +45,7 @@ func (s *Service) ending(ctx context.Context, reply, said string, changes []reco
 	// A model server's turn that changed something checks it once against
 	// what was asked (review.go).
 	if server && !end.reviewed {
-		if note := s.reviewNote(changes); note != "" {
+		if note := s.reviewNote(end.asked, changes); note != "" {
 			end.reviewed, end.reply = true, reply
 			return "", []llm.Message{{Role: llm.RoleAssistant, Content: reply}, {Role: llm.RoleUser, Content: note}}
 		}
