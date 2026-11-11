@@ -19,7 +19,7 @@ type endings struct {
 
 // ending is a turn's reply when the model answers in words, or what to
 // tell the model first, to answer again.
-func (s *Service) ending(ctx context.Context, reply, said string, changes []records.Change, end *endings) (string, []llm.Message) {
+func (s *Service) ending(ctx context.Context, reply, said string, changes []records.Change, end *endings, on func(Event)) (string, []llm.Message) {
 	_, server := s.Provider.(*llm.OpenAI)
 	// A small model ends a turn of tool calls with no words a fifth of
 	// the time; asked once, it says what it did. Only a model server's
@@ -27,7 +27,7 @@ func (s *Service) ending(ctx context.Context, reply, said string, changes []reco
 	// a tool's, and Claude says what it did.
 	if reply == "" && !end.nudged && server {
 		end.nudged = true
-		return "", []llm.Message{{Role: llm.RoleUser, Content: fromSameway("your reply had no words. Tell the person in a sentence or two what you did, or answer them; call a tool first only if something is still to do.")}}
+		return askAgain(on, llm.Message{Role: llm.RoleUser, Content: fromSameway("your reply had no words. Tell the person in a sentence or two what you did, or answer them; call a tool first only if something is still to do.")})
 	}
 	if reply == "" {
 		reply = "(The model returned an empty reply.)"
@@ -38,7 +38,7 @@ func (s *Service) ending(ctx context.Context, reply, said string, changes []reco
 	if wrong := s.unmade(ctx, reply, said, changes); wrong != "" {
 		if !end.corrected {
 			end.corrected = true
-			return "", []llm.Message{{Role: llm.RoleAssistant, Content: reply}, {Role: llm.RoleUser, Content: wrong}}
+			return askAgain(on, llm.Message{Role: llm.RoleAssistant, Content: reply}, llm.Message{Role: llm.RoleUser, Content: wrong})
 		}
 		reply += s.stillWrong(ctx, reply, said, changes) // claims_words.go
 	}
@@ -47,10 +47,20 @@ func (s *Service) ending(ctx context.Context, reply, said string, changes []reco
 	if server && !end.reviewed {
 		if note := s.reviewNote(end.asked, changes); note != "" {
 			end.reviewed, end.reply = true, reply
-			return "", []llm.Message{{Role: llm.RoleAssistant, Content: reply}, {Role: llm.RoleUser, Content: note}}
+			return askAgain(on, llm.Message{Role: llm.RoleAssistant, Content: reply}, llm.Message{Role: llm.RoleUser, Content: note})
 		}
 	}
 	return reply, nil
+}
+
+// askAgain is what to tell the model before it answers again. The
+// person has been reading the reply as it came: a step says it is being
+// checked, and the words after it are the new reply's (17-live.js).
+func askAgain(on func(Event), ask ...llm.Message) (string, []llm.Message) {
+	if on != nil {
+		on(Event{Kind: "tool", Label: "Checking the reply"})
+	}
+	return "", ask
 }
 
 // broke ends a turn whose model did not answer. Stopped, what it did

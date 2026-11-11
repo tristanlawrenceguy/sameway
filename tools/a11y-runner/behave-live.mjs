@@ -72,6 +72,35 @@ export const cases = {
     await tab.close();
   },
 
+  "turn: a reply checked and given again shows once, after a step that says so": async (browser, check) => {
+    // The stream: heard, a reply, the step a model server's check makes
+    // (chat/ending.go), the reply again, and then the turn still going.
+    const tab = await open(browser, page(chat), {}, () => {
+      const real = window.fetch;
+      window.fetch = (url, o) => !String(url).endsWith("/chat/stream") ? real(url, o) : Promise.resolve(new Response(new ReadableStream({
+        async start(c) {
+          const send = (event, data) => c.enqueue(new TextEncoder().encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
+          send("said", { id: "m1" });
+          send("delta", { text: "Made Pay rent." });
+          await new Promise((r) => setTimeout(r, 200));
+          send("tool", { tool: "", label: "Checking the reply" });
+          await new Promise((r) => setTimeout(r, 200));
+          send("delta", { text: "Made Pay rent, " });
+          send("delta", { text: "checked." });
+        },
+      }), { headers: { "Content-Type": "text/event-stream" } }));
+    });
+    await tab.evaluate(() => { sw.refresh = () => {}; });
+    await tab.fill("#m", "Add a task to pay rent");
+    await tab.click("text=Send");
+    await tab.waitForFunction(() => /checked/.test((document.querySelector(".sw-live__text") || {}).textContent || ""), null, { timeout: 5000 }).catch(() => {});
+    await tab.waitForTimeout(200);
+    const seen = await tab.evaluate(() => ({ words: document.querySelector(".sw-live__text").textContent, steps: [...document.querySelectorAll(".sw-live__step")].map((s) => s.textContent.trim()) }));
+    check(seen.words === "Made Pay rent, checked.", `the reply given again takes the first one's place: ${JSON.stringify(seen.words)}`);
+    check(seen.steps.includes("Checking the reply"), `the check is a step: ${JSON.stringify(seen.steps)}`);
+    await tab.close();
+  },
+
   "offscreen: a change out of sight is pointed at, for eyes only, and goes once seen": async (browser, check) => {
     const tab = await open(browser, page(`<main id="main"><div style="height: 3000px">Top</div><div id="far" data-block-id="b9" data-actor="assistant" style="height: 200px">Far down</div></main>`));
     await tab.evaluate(() => document.getElementById("far").setAttribute("data-changed", ""));

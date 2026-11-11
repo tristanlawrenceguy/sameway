@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 )
 
@@ -83,5 +84,39 @@ func TestAReplyStandsWhenItsCheckFails(t *testing.T) {
 	}
 	if rec.Fields["role"] != "assistant" || rec.Fields["content"] != "Made Pay rent." {
 		t.Errorf("the reply stands: %v %v", rec.Fields["role"], rec.Fields["content"])
+	}
+}
+
+// A person watching the turn sees the check as a step of its own, so the
+// words after it are read as the new reply, not more of the first
+// (17-live.js).
+func TestTheCheckIsAStepOfItsOwn(t *testing.T) {
+	t.Parallel()
+	deltas := []string{
+		`{"tool_calls":[{"index":0,"id":"c1","type":"function","function":{"name":"create_record","arguments":"{\"type\":\"task\",\"fields\":{\"title\":\"Pay rent\"}}"}}]}`,
+		`{"content":"Made Pay rent."}`,
+		`{"content":"Made Pay rent, checked."}`,
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		io.WriteString(w, `data: {"choices":[{"delta":`+deltas[0]+`}]}`+"\n\ndata: [DONE]\n\n")
+		deltas = deltas[1:]
+	}))
+	defer server.Close()
+	svc := newFullService(t)
+	svc.Provider = &llm.OpenAI{BaseURL: server.URL + "/v1", Model: "small"}
+
+	var seen []string
+	rec, err := svc.SendLive(context.Background(), "", "Add a task to pay rent", "", func(e chat.Event) {
+		if e.Kind == "tool" && !e.Early || e.Kind == "delta" {
+			seen = append(seen, e.Kind+" "+e.Label+e.Text)
+		}
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"tool Adding a task called Pay rent", "delta Made Pay rent.", "tool Checking the reply", "delta Made Pay rent, checked."}
+	if strings.Join(seen, "|") != strings.Join(want, "|") || rec.Fields["content"] != "Made Pay rent, checked." {
+		t.Errorf("the check is a step between the two replies:\n got %q\nwant %q", seen, want)
 	}
 }
