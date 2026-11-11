@@ -8,4 +8,4 @@ package server
 const appSection = `<section class="sw-stack" aria-labelledby="help-app"><h2 id="help-app">Sameway as an app</h2>
 <p>Sameway can have a window of its own instead of a tab, with its icon beside your other apps.</p>
 <button type="button" class="sw-button sw-button--secondary sw-pressable" data-install hidden>Install Sameway as an app</button>
-<p>In Chrome or Edge, the install icon at the end of the address bar does the same. On an iPhone or iPad, Share, then Add to Home Screen.</p></section>`
+<p>In Chrome or Edge, the install icon at the end of the address bar does the same. On a phone or tablet, <a class="sw-link" href="/install">put Sameway on your home screen</a>.</p></section>`

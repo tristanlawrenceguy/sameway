@@ -8,6 +8,12 @@
 // other ways, an iPhone's Share and Add to Home Screen among them.
 (function () {
   "use strict";
+  // Where a browser allows it (https, or this computer), a worker says so
+  // when the computer cannot be reached, instead of the browser's error
+  // (internal/server/app_offline.go). Plain http on the Wi-Fi has none.
+  if (window.isSecureContext && navigator.serviceWorker) {
+    navigator.serviceWorker.register("/sw.js").catch(function () {});
+  }
   var asked = null;
   function buttons() { return document.querySelectorAll("[data-install]"); }
   window.addEventListener("beforeinstallprompt", function (e) {

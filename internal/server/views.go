@@ -194,7 +194,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	// log is kept by Sameway: an entry is undone, never edited or deleted,
 	// on its page as over the API.
 	if t.Name != records.ActivityType {
-		b.WriteString(`<div class="sw-bar sw-quiet">` + string(s.form(ui.Form{Action: "/t/" + t.Name + "/" + rec.ID + "/delete", Button: &ui.Button{Label: "Delete " + schema.Words(t.Name), Variant: ui.Quiet}})) + `</div>`)
+		b.WriteString(`<div class="sw-bar sw-quiet">` + s.handoff(r, relate.Page(t.Name, rec.ID)) + string(s.form(ui.Form{Action: "/t/" + t.Name + "/" + rec.ID + "/delete", Button: &ui.Button{Label: "Delete " + schema.Words(t.Name), Variant: ui.Quiet}})) + `</div>`)
 		b.WriteString(s.editFields(t, rec))
 	}
 	b.WriteString(`</div>`)
