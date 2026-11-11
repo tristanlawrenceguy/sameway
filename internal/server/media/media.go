@@ -36,10 +36,11 @@ type Deps interface {
 // and the meeting apps signed in to.
 type Service struct {
 	Deps
-	app    *app.App
-	speech speechState // speech-to-text on this computer; transcribe.go
-	host   hostState   // recordings written down with no page; hostwrite.go
-	apps   meetingApps // transcripts brought from Teams and Zoom; meeting_fetch.go
+	app      *app.App
+	speech   speechState // speech-to-text on this computer; transcribe.go
+	host     hostState   // recordings written down with no page; hostwrite.go
+	apps     meetingApps // transcripts brought from Teams and Zoom; meeting_fetch.go
+	printers printers    // printers at home, last heard from; print.go
 }
 
 // New is media for the workspace the server serves.
