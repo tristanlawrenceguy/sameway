@@ -92,7 +92,7 @@ func (s *Service) Suggest(ctx context.Context, action *store.Record, typeName, i
 		}
 	}
 	var sug suggestion
-	if err := s.askJSON(ctx, fmt.Sprintf(suggestSystem, schema.Words(mt.Name), s.fieldGuide(mt)), q, &sug); err != nil {
+	if err := s.askSeeing(ctx, fmt.Sprintf(suggestSystem, schema.Words(mt.Name), s.fieldGuide(mt)), q, s.picturesOf(rec), &sug); err != nil {
 		return fail("could not read %s: %v", records.Name(s.Store, from, rec), err)
 	}
 	name := records.Name(s.Store, from, rec)
