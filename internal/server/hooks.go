@@ -11,7 +11,8 @@ func (s *Server) hooks() {
 	s.app.Registry.LinkTitle = s.linkTitle
 	s.app.Chat.Look = s.lookFor
 	s.app.Chat.Picture = s.media.PictureFor
-	s.app.Chat.Home = s // recordings and workspaces; see home.go
+	s.app.Automate.Pictures = s.media.PicturesFor // a photo or a scan of a letter is read when sorted
+	s.app.Chat.Home = s                           // recordings and workspaces; see home.go
 	// What a change says, the same for every way in: the API's writes as
 	// the assistant's tools (chat/notice.go).
 	s.app.Chat.SayNotes()

@@ -80,15 +80,20 @@ func (s *Service) Suggest(ctx context.Context, action *store.Record, typeName, i
 		}
 		return fail("a suggest action says what it makes: one of %s", strings.Join(kinds, ", "))
 	}
+	read := s.readPictures(ctx, from, rec) // pictures_read.go
 	words := recordWords(s.Store, from, rec)
 	q := "The record:\n" + words + threadWords(s.Store, from, rec) // thread_words.go
+	// Today, so what was for a day gone by is not suggested as if it were
+	// still to come: a conversation brought from a year ago said "book the
+	// van by Friday", and it came as due this Friday.
+	q += "\n\nToday is " + s.Now().Format("Monday 2 January 2006") + ". When the record shows that what it asks for was for a day already past, or was long ago and likely done, say make false."
 	if check, _ := action.Fields["check"].(bool); check {
 		if past := s.pastSuggestions(action.ID, examplesOf(action)); len(past) > 0 {
 			q += "\n\nWhat the person did with your last suggestions from this action, newest first. Follow their choices: what they turned down, do not suggest again for records like it; what they changed, write as they changed it.\n" + strings.Join(past, "\n")
 		}
 	}
 	var sug suggestion
-	if err := s.askJSON(ctx, fmt.Sprintf(suggestSystem, schema.Words(mt.Name), s.fieldGuide(mt)), q, &sug); err != nil {
+	if err := s.askSeeing(ctx, fmt.Sprintf(suggestSystem, schema.Words(mt.Name), s.fieldGuide(mt)), q, s.picturesOf(rec), &sug); err != nil {
 		return fail("could not read %s: %v", records.Name(s.Store, from, rec), err)
 	}
 	name := records.Name(s.Store, from, rec)
@@ -109,7 +114,7 @@ func (s *Service) Suggest(ctx context.Context, action *store.Record, typeName, i
 	// The question is logged with the change that runs the action, so
 	// undoing that takes it back.
 	p := done[0]
-	return Result{Text: "suggested: " + summary, Answer: p.ID, Change: &records.Change{Action: "proposed", ID: p.ID, Detail: trim.Line(summary, 80), Ops: done}}
+	return Result{Text: "suggested: " + summary, Answer: p.ID, Change: &records.Change{Action: "proposed", ID: p.ID, Detail: trim.Line(summary, 80), Ops: append(read, done...)}}
 }
 
 // fillSuggested turns what the model wrote into a record's fields: a day

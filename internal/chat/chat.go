@@ -168,41 +168,18 @@ func (s *Service) sendTurn(ctx context.Context, canvas, text, fileID string, on 
 	}
 	var changes []records.Change
 	var tools []map[string]any
-	corrected, nudged := false, false
+	var end endings
 	var p progress
 	for {
 		resp, err := s.complete(ctx, req, on)
 		if err != nil {
-			if ctx.Err() != nil {
-				// The person stopped the turn; what it did stays.
-				return s.reply(said, stoppedText, changes, tools)
-			}
-			return s.failAfter(said, err, changes, tools)
+			return s.broke(ctx, err, said, changes, tools, end) // ending.go
 		}
 		if len(resp.ToolCalls) == 0 {
-			reply := strings.TrimSpace(resp.Text)
-			// A small model ends a turn of tool calls with no words a
-			// fifth of the time; asked once, it says what it did. Only a
-			// model server's (OpenAI-style): the Claude API takes no second
-			// person's turn after a tool's, and Claude says what it did.
-			if _, server := s.Provider.(*llm.OpenAI); reply == "" && !nudged && server {
-				nudged = true
-				req.Messages = append(req.Messages, llm.Message{Role: llm.RoleUser, Content: fromSameway("your reply had no words. Tell the person in a sentence or two what you did, or answer them; call a tool first only if something is still to do.")})
+			reply, again := s.ending(ctx, strings.TrimSpace(resp.Text), said, changes, &end) // ending.go
+			if again != nil {
+				req.Messages = append(req.Messages, again...)
 				continue
-			}
-			if reply == "" {
-				reply = "(The model returned an empty reply.)"
-			}
-			// A reply that says it made something it did not is told so
-			// once and asked again; still saying so, it says nothing
-			// changed under it (claims.go).
-			if wrong := s.unmade(ctx, reply, said, changes); wrong != "" {
-				if !corrected {
-					corrected = true
-					req.Messages = append(req.Messages, llm.Message{Role: llm.RoleAssistant, Content: reply}, llm.Message{Role: llm.RoleUser, Content: wrong})
-					continue
-				}
-				reply += s.stillWrong(ctx, reply, said, changes) // claims_words.go
 			}
 			return s.reply(said, reply, changes, tools)
 		}

@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
+	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
@@ -35,7 +37,15 @@ func (b *Brought) Count(kind string) int {
 	return 0
 }
 
-var errUnknown = errors.New("this is not an export Sameway knows: it reads the CSV Todoist exports, Google Tasks and Google Keep from Google Takeout, the .enex Evernote exports, and a zip of Markdown notes from Notion, Obsidian or elsewhere")
+var errUnknown = errors.New("this is not an export Sameway knows: it reads your conversations exported from ChatGPT or Claude, the CSV Todoist exports, Google Tasks and Google Keep from Google Takeout, the .enex Evernote exports, and a zip of Markdown notes from Notion, Obsidian or elsewhere")
+
+// chatsOrNone is the conversations read, or why there were none.
+func chatsOrNone(b *Brought) (*Brought, error) {
+	if len(b.Kinds) == 0 {
+		return nil, errors.New("this " + b.From + " export has no conversations with anything said in them")
+	}
+	return b, nil
+}
 
 // Recognise reads an export by what it holds.
 func Recognise(name string, data []byte) (*Brought, error) {
@@ -46,11 +56,43 @@ func Recognise(name string, data []byte) (*Brought, error) {
 	case strings.HasSuffix(lower, ".zip"):
 		return zipped(data)
 	case strings.HasSuffix(lower, ".json"):
+		if b, ok := chatExport(data); ok { // apps_chats.go
+			return chatsOrNone(b)
+		}
 		return googleJSON(data)
 	case strings.HasSuffix(lower, ".csv"):
 		return todoist(data)
 	}
 	return nil, errUnknown
+}
+
+// Unseen leaves out the rows here already, by their title and their
+// words: an export holds all of a person's things each time, so bringing
+// a newer one adds only what is new, and suggests nothing twice. It says
+// how many it left out.
+func (tb *Table) Unseen(st *store.Store, t *schema.Type) int {
+	if t.Title == "" || !contains(tb.Columns, "body") {
+		return 0
+	}
+	recs, err := st.List(t.Name, store.ListOptions{})
+	if err != nil {
+		return 0
+	}
+	here := map[[2]string]bool{}
+	for _, rec := range recs {
+		title, _ := rec.Fields[t.Title].(string)
+		body, _ := rec.Fields["body"].(string)
+		here[[2]string{strings.TrimSpace(title), strings.TrimSpace(body)}] = true
+	}
+	rows := tb.Rows[:0]
+	for _, row := range tb.Rows {
+		if !here[[2]string{strings.TrimSpace(row[t.Title]), strings.TrimSpace(row["body"])}] {
+			rows = append(rows, row)
+		}
+	}
+	left := len(tb.Rows) - len(rows)
+	tb.Rows = rows
+	return left
 }
 
 func newBrought(from string) *Brought { return &Brought{From: from, Kinds: map[string]*Table{}} }

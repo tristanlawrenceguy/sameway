@@ -56,27 +56,15 @@ func Tags(st *store.Store, only []string) []Tag {
 	return out
 }
 
-// recordWords is a record as the model reads it: its name, then each of
-// its words, clipped.
-func recordWords(st *store.Store, t *schema.Type, rec *store.Record) string {
-	var b strings.Builder
-	b.WriteString(records.Name(st, t, rec))
-	for _, f := range t.Fields {
-		if f.Name == "tags" || f.Name == t.Title || f.ReadOnly { // what Sameway keeps is not what the record says
-			continue
-		}
-		if v, ok := rec.Fields[f.Name].(string); ok && strings.TrimSpace(v) != "" && (f.Type == "string" || f.Type == "text" || f.Type == "markdown" || f.Type == "datetime") {
-			b.WriteString("\n" + schema.Words(f.Name) + ": " + v)
-		}
-	}
-	return clipRunes(b.String(), 4000)
-}
-
 var anyJSON = regexp.MustCompile(`(?s)[\[{].*[\]}]`)
 
 // askJSON puts one narrow question to the model, thinking off, and reads the
 // JSON it answers with into out.
 func (s *Service) askJSON(ctx context.Context, system, question string, out any) error {
+	return s.ask(ctx, system, question, nil, out)
+}
+
+func (s *Service) ask(ctx context.Context, system, question string, pics []llm.Image, out any) error {
 	var model llm.Provider
 	if s.Model != nil {
 		model = s.Model()
@@ -84,7 +72,7 @@ func (s *Service) askJSON(ctx context.Context, system, question string, out any)
 	if model == nil {
 		return fmt.Errorf("no model is connected")
 	}
-	resp, err := model.Complete(ctx, llm.Request{System: system, Messages: []llm.Message{{Role: llm.RoleUser, Content: question}}, MaxTokens: 2048, Effort: "none"})
+	resp, err := model.Complete(ctx, llm.Request{System: system, Messages: []llm.Message{{Role: llm.RoleUser, Content: question, Images: pics}}, MaxTokens: 2048, Effort: "none"})
 	if err != nil {
 		return err
 	}
@@ -122,6 +110,7 @@ func (s *Service) Classify(ctx context.Context, action *store.Record, typeName, 
 	if len(defs) == 0 {
 		return fail("there are no tags to give: add some, each with what it means, at /t/%s", records.TagType)
 	}
+	read := s.readPictures(ctx, t, rec) // pictures_read.go
 	words := recordWords(s.Store, t, rec)
 	var asked, alone []Tag
 	for _, d := range defs {
@@ -140,7 +129,7 @@ func (s *Service) Classify(ctx context.Context, action *store.Record, typeName, 
 		question += s.personTagged(defs, t.Name+"/"+rec.ID, examplesOf(action)) // judgement.go
 	}
 	if len(asked) > 0 {
-		if picks, err = s.pickTags(ctx, action, asked, question); err != nil {
+		if picks, err = s.pickTags(ctx, action, asked, question, s.picturesOf(rec)); err != nil { // pictures.go
 			return fail("could not tag %s: %v", records.Name(s.Store, t, rec), err)
 		}
 	}
@@ -149,7 +138,7 @@ func (s *Service) Classify(ctx context.Context, action *store.Record, typeName, 
 	}
 	outs := s.checked(ctx, action, t, rec, words, picks, defs)
 	var said, given []string
-	var ops []records.Op
+	ops := read
 	for _, o := range keepAlone(outs, defs) {
 		if o.dropped != "" {
 			said = append(said, o.tag+" (not given: "+o.dropped+")")
@@ -198,7 +187,7 @@ func (s *Service) giveTag(t *schema.Type, rec *store.Record, tag string) []recor
 
 // pickTags asks which of the tags fit: all at once, or each on its own
 // when the action says so.
-func (s *Service) pickTags(ctx context.Context, action *store.Record, defs []Tag, words string) ([]chosen, error) {
+func (s *Service) pickTags(ctx context.Context, action *store.Record, defs []Tag, words string, pics []llm.Image) ([]chosen, error) {
 	var picks []chosen
 	if apart, _ := action.Fields["apart"].(bool); apart {
 		for _, d := range defs {
@@ -206,7 +195,7 @@ func (s *Service) pickTags(ctx context.Context, action *store.Record, defs []Tag
 				Fits bool   `json:"fits"`
 				Why  string `json:"why"`
 			}
-			if err := s.askJSON(ctx, oneTagSystem, fmt.Sprintf("Tag %q means: %s\n\nThe record:\n%s", d.Name, d.Means, words), &a); err != nil {
+			if err := s.askSeeing(ctx, oneTagSystem, fmt.Sprintf("Tag %q means: %s\n\nThe record:\n%s", d.Name, d.Means, words), pics, &a); err != nil {
 				return nil, err
 			}
 			if a.Fits {
@@ -221,7 +210,7 @@ func (s *Service) pickTags(ctx context.Context, action *store.Record, defs []Tag
 		var a struct {
 			Tags []chosen `json:"tags"`
 		}
-		if err := s.askJSON(ctx, classifySystem, "The tags:\n"+list.String()+"\nThe record:\n"+words, &a); err != nil {
+		if err := s.askSeeing(ctx, classifySystem, "The tags:\n"+list.String()+"\nThe record:\n"+words, pics, &a); err != nil {
 			return nil, err
 		}
 		known := map[string]string{}
@@ -235,13 +224,6 @@ func (s *Service) pickTags(ctx context.Context, action *store.Record, defs []Tag
 		}
 	}
 	return picks, nil
-}
-
-func clipRunes(s string, n int) string {
-	if r := []rune(s); len(r) > n {
-		return string(r[:n])
-	}
-	return s
 }
 
 // outcome is what becomes of one tag picked, after the check.

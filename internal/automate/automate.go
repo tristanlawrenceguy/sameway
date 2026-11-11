@@ -40,7 +40,11 @@ type Service struct {
 	// Tell lets the person know, beyond the page, what was done for them
 	// while they were away: an automation's turn (happened.go).
 	Tell func(title, text, url string)
-	auto *automation // actions waiting for something to happen; happened.go
+	// Pictures are a kept file's pictures ready for a model to see: a
+	// picture, or a scan's pages; set by the server, nil sends none
+	// (pictures.go).
+	Pictures func(id string) []llm.Image
+	auto     *automation // actions waiting for something to happen; happened.go
 }
 
 // Chat is what running an action needs from the conversation: a message
