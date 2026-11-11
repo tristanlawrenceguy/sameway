@@ -31,6 +31,9 @@ func (s *Service) picturesOf(rec *store.Record) []llm.Image {
 			continue // read already: its words are the record's (record_words.go)
 		}
 		out = append(out, s.Pictures(id)...)
+		if len(out) >= picturesSeen {
+			return out[:picturesSeen] // a scan's first pages; its words are read in full once (pictures_read.go)
+		}
 	}
 	return out
 }
