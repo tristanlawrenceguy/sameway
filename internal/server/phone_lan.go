@@ -104,6 +104,7 @@ func (s *Server) LAN(next http.Handler) http.Handler {
 				if d.Hash != h || d.Only != "" {
 					continue
 				}
+				s.seenHome(d, r.RemoteAddr) // home_wifi.go
 				v, ok := s.lanVisitor(d)
 				if !ok {
 					lanSay(w, "This device no longer opens this workspace. Ask its owner to invite you again.")
