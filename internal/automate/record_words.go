@@ -34,7 +34,7 @@ func linkedText(st *store.Store, rec *store.Record) string {
 	seen := map[string]bool{}
 	for _, v := range rec.Fields {
 		str, _ := v.(string)
-		for _, m := range fileLink.FindAllStringSubmatch(str, 3) {
+		for _, m := range fileLink.FindAllStringSubmatch(str, -1) {
 			if seen[m[1]] {
 				continue
 			}
