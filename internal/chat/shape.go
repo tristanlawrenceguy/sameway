@@ -79,6 +79,15 @@ func (s *Service) addField(typeName string, d fieldDef) toolResult {
 	if writingField[strings.NewReplacer(" ", "_", "-", "_").Replace(strings.ToLower(d.Name))] {
 		return fail("pieces of writing in parts are organised with organise_writing, not a field of your own: it adds part_of, parts and material_for itself and sets the parts in order and the material in one change. Call organise_writing with piece (the whole), parts (their ids in order) and material (guidelines, research and the like). add_field is for other properties.")
 	}
+	// Asked for a priority on tasks, a small model sent to: task and no
+	// type five times in eight. to names a ref's kind; on a field of any
+	// other kind it can only mean the kind to add it to.
+	if strings.TrimSpace(typeName) == "" && d.Kind != "ref" && d.To != "" {
+		typeName, d.To = d.To, ""
+	}
+	if strings.TrimSpace(typeName) == "" {
+		return fail("nothing was added: add_field needs type, the content type to add the field to, such as task or note")
+	}
 	t, err := s.AddField(strings.ToLower(strings.TrimSpace(typeName)), d.field())
 	if err != nil {
 		return fail("%v", err)
