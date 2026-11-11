@@ -37,7 +37,11 @@ func Expect(f Field) string {
 	case f.Type == "float":
 		return what + ": a number"
 	case f.Type == "list":
-		return fmt.Sprintf("%s: a list of %s, as [\"a\", \"b\"]", what, f.Of)
+		of := f.Of
+		if of == "" || of == "string" {
+			of = "words" // "a list of , as", a model was told
+		}
+		return fmt.Sprintf("%s: a list of %s, as [\"a\", \"b\"]", what, of)
 	case f.MaxLength > 0:
 		return fmt.Sprintf("%s: words, at most %d characters", what, f.MaxLength)
 	}
