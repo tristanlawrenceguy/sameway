@@ -15,8 +15,8 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
-// scannedPDF is a PDF whose one page is a photo, as a scanner makes it.
-func scannedPDF(t *testing.T) []byte {
+// scannedPDF is a PDF whose pages are photos, as a scanner makes it.
+func scannedPDF(t *testing.T, pages int) []byte {
 	var page bytes.Buffer
 	jpeg.Encode(&page, image.NewGray(image.Rect(0, 0, 620, 877)), nil)
 	var b bytes.Buffer
@@ -34,10 +34,16 @@ func scannedPDF(t *testing.T) []byte {
 	draw := []byte("q 620 0 0 877 0 0 cm /Im1 Do Q")
 	b.WriteString("%PDF-1.4\n")
 	obj("<< /Type /Catalog /Pages 2 0 R >>", nil)
-	obj("<< /Type /Pages /Kids [3 0 R] /Count 1 >>", nil)
-	obj("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 620 877] /Resources << /XObject << /Im1 4 0 R >> >> /Contents 5 0 R >>", nil)
-	obj(fmt.Sprintf("<< /Type /XObject /Subtype /Image /Width 620 /Height 877 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /DCTDecode /Length %d >>", page.Len()), page.Bytes())
-	obj(fmt.Sprintf("<< /Length %d >>", len(draw)), draw)
+	var kids []string
+	for i := range pages {
+		kids = append(kids, fmt.Sprintf("%d 0 R", 3+3*i))
+	}
+	obj(fmt.Sprintf("<< /Type /Pages /Kids [%s] /Count %d >>", strings.Join(kids, " "), pages), nil)
+	for i := range pages {
+		obj(fmt.Sprintf("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 620 877] /Resources << /XObject << /Im1 %d 0 R >> >> /Contents %d 0 R >>", 4+3*i, 5+3*i), nil)
+		obj(fmt.Sprintf("<< /Type /XObject /Subtype /Image /Width 620 /Height 877 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /DCTDecode /Length %d >>", page.Len()), page.Bytes())
+		obj(fmt.Sprintf("<< /Length %d >>", len(draw)), draw)
+	}
 	xref := b.Len()
 	fmt.Fprintf(&b, "xref\n0 %d\n0000000000 65535 f \n", len(at)+1)
 	for _, o := range at {
@@ -48,8 +54,9 @@ func scannedPDF(t *testing.T) []byte {
 }
 
 // A letter scanned to a PDF has no words as text; sorting it reads its
-// pages as pictures once, keeps their words on the file, names the note
-// for what it is, and tags it from those words.
+// pages as pictures once, three at a time so every page is read, keeps
+// all their words on the file, names the note for what it is, and tags
+// it from those words.
 func TestAScanSharedIsReadWhenItIsSorted(t *testing.T) {
 	t.Parallel()
 	a, h := newApp(t)
@@ -58,7 +65,7 @@ func TestAScanSharedIsReadWhenItIsSorted(t *testing.T) {
 	var buf bytes.Buffer
 	mw := multipart.NewWriter(&buf)
 	fw, _ := mw.CreateFormFile("files", "Scan 12 Nov.pdf")
-	fw.Write(scannedPDF(t))
+	fw.Write(scannedPDF(t, 5))
 	mw.Close()
 	if rec := do(t, h, http.MethodPost, "/share", &buf, mw.FormDataContentType()); rec.Code != http.StatusSeeOther {
 		t.Fatalf("shared: %d", rec.Code)
@@ -68,10 +75,11 @@ func TestAScanSharedIsReadWhenItIsSorted(t *testing.T) {
 	a.Automate.Classify(context.Background(), act, "note", note.ID)
 	got, _ := a.Store.Get("note", note.ID)
 	files, _ := a.Store.List(records.FileType, store.ListOptions{})
-	if model.saw != 1 || got.Fields["title"] != "Parking fine from the council" || !strings.Contains(strings.Join(records.StringList(got.Fields["tags"]), ","), "to do") {
+	if model.saw != 2 || got.Fields["title"] != "Parking fine from the council" || !strings.Contains(strings.Join(records.StringList(got.Fields["tags"]), ","), "to do") {
 		t.Errorf("its page read once, named and tagged from its words: saw %d, %v", model.saw, got.Fields)
 	}
-	if len(files) != 1 || !strings.Contains(fmt.Sprint(files[0].Fields["text"]), "Pay 35 pounds") || files[0].Fields["status"] != "ready" {
+	text := fmt.Sprint(files[0].Fields["text"])
+	if len(files) != 1 || !strings.Contains(text, "## Pages 1 to 3") || !strings.Contains(text, "## Pages 4 to 5") || !strings.Contains(text, "Pages 4 to 5 of the 5 pages") || files[0].Fields["status"] != "ready" {
 		t.Errorf("its words kept on the file, read: %v", files[0].Fields)
 	}
 }

@@ -2,8 +2,10 @@ package automate
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -17,7 +19,7 @@ import (
 // it takes the name of what it is.
 
 const pictureSystem = `You read a picture a person kept: a photo of a letter, a bill, a notice, a receipt, a screen, or anything else.
-Answer with JSON only: {"name": "what it is, a short title as the person would name it, in the picture's language (\"School trip letter\", \"Water bill for November\")", "description": "one or two sentences of what it shows, for someone who cannot see it", "text": "the words in it, as Markdown, in order; empty when it has none"}`
+Answer with JSON only: {"name": "what the whole thing is, a short title as the person would name it, without page numbers, in the picture's language (\"School trip letter\", \"Water bill for November\")", "description": "one or two sentences of what it shows, for someone who cannot see it", "text": "the words in it, as Markdown, in order; empty when it has none"}`
 
 type pictureRead struct {
 	Name        string `json:"name"`
@@ -33,14 +35,18 @@ func (s *Service) readPictures(ctx context.Context, t *schema.Type, rec *store.R
 		return nil
 	}
 	var ops []records.Op
-	for _, id := range linkedFiles(rec) {
+	ids := linkedFiles(rec)
+	for k, id := range ids {
 		f, err := s.Store.Get(records.FileType, id)
 		if err != nil || strings.TrimSpace(str(f.Fields["text"])+str(f.Fields["description"])) != "" {
 			continue
 		}
-		pics := s.Pictures(id) // a picture, or a scan's pages
-		var got pictureRead
-		if len(pics) == 0 || s.ask(ctx, pictureSystem, "The picture, named "+str(f.Fields["title"])+"; each page of it when there are more.", pics, &got) != nil {
+		what := "the picture named " + str(f.Fields["title"])
+		if len(ids) > 1 { // photos shared together, as a letter's pages from a phone
+			what = fmt.Sprintf("photo %d of %d shared together, which may be pages of one letter, named %s", k+1, len(ids), str(f.Fields["title"]))
+		}
+		got, ok := s.readSections(ctx, what, s.Pictures(id)) // a picture, or a scan's pages
+		if !ok {
 			continue // a model that cannot see: sorting asks from the words
 		}
 		kept := map[string]any{"text": strings.TrimSpace(got.Text)}
@@ -61,13 +67,44 @@ func (s *Service) readPictures(ctx context.Context, t *schema.Type, rec *store.R
 	return ops
 }
 
-// linkedFiles are the files a record's words link to, up to three.
+// readSections reads a picture, or a scan's pages three at a time, so
+// every page of a long letter or a lease is read and kept, not its first
+// few; its name and description are its first pages'. Any section not
+// read leaves it all to read again next time.
+func (s *Service) readSections(ctx context.Context, what string, pics []llm.Image) (pictureRead, bool) {
+	var whole pictureRead
+	var texts []string
+	for at := 0; at < len(pics); at += picturesSeen {
+		end := min(at+picturesSeen, len(pics))
+		q := "This is " + what + "."
+		if len(pics) > 1 {
+			q = fmt.Sprintf("Pages %d to %d of the %d pages of the scan that is %s.", at+1, end, len(pics), what)
+		}
+		var got pictureRead
+		if err := s.ask(ctx, pictureSystem, q, pics[at:end], &got); err != nil {
+			return pictureRead{}, false
+		}
+		if at == 0 {
+			whole.Name, whole.Description = got.Name, got.Description
+		}
+		if text := strings.TrimSpace(got.Text); text != "" && len(pics) > picturesSeen {
+			texts = append(texts, fmt.Sprintf("## Pages %d to %d\n\n%s", at+1, end, text))
+		} else if text != "" {
+			texts = append(texts, text)
+		}
+	}
+	whole.Text = strings.Join(texts, "\n\n")
+	return whole, len(pics) > 0
+}
+
+// linkedFiles are the files a record's words link to, in order: every
+// photo of a letter shared page by page from a phone.
 func linkedFiles(rec *store.Record) []string {
 	var ids []string
 	seen := map[string]bool{}
 	for _, v := range rec.Fields {
 		for _, m := range fileLink.FindAllStringSubmatch(str(v), -1) {
-			if len(ids) < picturesSeen && !seen[m[1]] {
+			if !seen[m[1]] {
 				seen[m[1]] = true
 				ids = append(ids, m[1])
 			}
