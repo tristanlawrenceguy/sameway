@@ -100,7 +100,7 @@
     var follow = sw.follower(log);
     var ta = form.querySelector("textarea");
     var asked = ta ? ta.value : "";
-    var settled = false, heard = false, stop = null;
+    var settled = false, heard = false, stop = null, round = false;
     var watch = sw.watchTurn(form);
     var write = sw.writer(live.words, follow, watch);
     // The steps: what the assistant is doing, one dot each. A step is
@@ -204,9 +204,12 @@
           thinking(true);
           stop = sw.stopControl(form, d.turn);
           break;
-        case "delta": thinking(false); write(d.text); break;
+        // The words after a step are a new round's: what the model says
+        // as it goes, then its reply, then the reply again once checked
+        // (chat/ending.go), each in place of the one before.
+        case "delta": thinking(false); if (round) { round = false; write.all(""); } write(d.text); break;
         case "text": thinking(false); write.all(d.text); break;
-        case "tool": step(d); break;
+        case "tool": step(d); round = true; break;
         case "change":
           finish();
           if (watch && d.block) watch.landed(d.block, d.action === "added" && (!d.region || d.region === "main"));

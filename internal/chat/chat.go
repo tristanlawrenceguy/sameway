@@ -176,7 +176,7 @@ func (s *Service) sendTurn(ctx context.Context, canvas, text, fileID string, on 
 			return s.broke(ctx, err, said, changes, tools, end) // ending.go
 		}
 		if len(resp.ToolCalls) == 0 {
-			reply, again := s.ending(ctx, strings.TrimSpace(resp.Text), said, changes, &end) // ending.go
+			reply, again := s.ending(ctx, strings.TrimSpace(resp.Text), said, changes, &end, on) // ending.go
 			if again != nil {
 				req.Messages = append(req.Messages, again...)
 				continue
