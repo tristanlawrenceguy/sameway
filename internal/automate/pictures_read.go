@@ -3,6 +3,7 @@ package automate
 import (
 	"context"
 	"fmt"
+	"path"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
@@ -57,8 +58,16 @@ func (s *Service) readPictures(ctx context.Context, t *schema.Type, rec *store.R
 		if str(f.Fields["description"]) == "" && got.Description != "" {
 			kept["description"] = strings.TrimSpace(got.Description)
 		}
+		if name := strings.TrimSpace(got.Name); name != "" && namedAsArrived(f) { // IMG_2041 in a gallery says nothing
+			kept["title"] = name
+		}
 		records.ApplyOps(s.Store, records.Op{Type: records.FileType, ID: id, After: kept}) // a file read, as keeping it does
 		read = true
+		if id == rec.ID { // a photo sorted itself: sorted from what was read
+			for k, v := range kept {
+				rec.Fields[k] = v
+			}
+		}
 		if name := strings.TrimSpace(got.Name); name != "" && len(ids) == 1 && t.Title != "" && str(rec.Fields[t.Title]) == str(f.Fields["title"]) {
 			if done, err := s.Apply(records.Op{Type: t.Name, ID: rec.ID, After: map[string]any{t.Title: name}}); err == nil {
 				ops = append(ops, done...)
@@ -103,10 +112,14 @@ func (s *Service) readSections(ctx context.Context, what string, pics []llm.Imag
 }
 
 // linkedFiles are the files a record's words link to, in order: every
-// photo of a letter shared page by page from a phone.
+// photo of a letter shared page by page from a phone; and a file is its
+// own, so a photo kept is read when it is sorted.
 func linkedFiles(rec *store.Record) []string {
 	var ids []string
 	seen := map[string]bool{}
+	if rec.Type == records.FileType {
+		ids, seen[rec.ID] = append(ids, rec.ID), true
+	}
 	for _, v := range rec.Fields {
 		for _, m := range fileLink.FindAllStringSubmatch(str(v), -1) {
 			if !seen[m[1]] {
@@ -116,6 +129,13 @@ func linkedFiles(rec *store.Record) []string {
 		}
 	}
 	return ids
+}
+
+// namedAsArrived says a file still has the name it came with, not one
+// the person gave it.
+func namedAsArrived(f *store.Record) bool {
+	name := str(f.Fields["name"])
+	return str(f.Fields["title"]) == strings.TrimSuffix(name, path.Ext(name))
 }
 
 func str(v any) string { s, _ := v.(string); return s }

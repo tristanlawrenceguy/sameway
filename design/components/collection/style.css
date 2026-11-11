@@ -31,3 +31,12 @@
 .sw-collection__column-title { margin: 0 0 var(--sw-space-2); font-size: var(--sw-size-text-md); }
 .sw-collection__count { color: var(--sw-color-fg-muted); font-weight: 400; }
 .sw-collection__column-items { display: flex; flex-direction: column; gap: var(--sw-space-2); }
+/* A gallery: each record by its picture, its title under it, the whole
+   tile one link. Square tiles keep rows even; a record with no picture
+   keeps its place with a shaded square. */
+.sw-collection--gallery { max-width: none; }
+.sw-collection__gallery { display: grid; gap: var(--sw-space-3); grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); }
+.sw-collection__tile { display: flex; flex-direction: column; gap: var(--sw-space-1); color: inherit; text-decoration: none; border-radius: var(--sw-radius-md); }
+.sw-collection__tile:hover .sw-collection__caption { text-decoration: underline; }
+.sw-collection__picture { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: var(--sw-radius-md); background: var(--sw-color-bg-muted); }
+.sw-collection__caption { font-size: var(--sw-size-text-sm); line-height: var(--sw-size-line-tight); overflow-wrap: anywhere; }
