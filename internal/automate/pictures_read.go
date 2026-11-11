@@ -36,14 +36,15 @@ func (s *Service) readPictures(ctx context.Context, t *schema.Type, rec *store.R
 	}
 	var ops []records.Op
 	ids := linkedFiles(rec)
+	read := false
 	for k, id := range ids {
 		f, err := s.Store.Get(records.FileType, id)
 		if err != nil || strings.TrimSpace(str(f.Fields["text"])+str(f.Fields["description"])) != "" {
 			continue
 		}
 		what := "the picture named " + str(f.Fields["title"])
-		if len(ids) > 1 { // photos shared together, as a letter's pages from a phone
-			what = fmt.Sprintf("photo %d of %d shared together, which may be pages of one letter, named %s", k+1, len(ids), str(f.Fields["title"]))
+		if len(ids) > 1 { // photos picked together from a phone's gallery
+			what = fmt.Sprintf("photo %d of %d shared together, named %s; together they may be pages of one letter, photos of one thing or one day, or separate things", k+1, len(ids), str(f.Fields["title"]))
 		}
 		got, ok := s.readSections(ctx, what, s.Pictures(id)) // a picture, or a scan's pages
 		if !ok {
@@ -57,12 +58,16 @@ func (s *Service) readPictures(ctx context.Context, t *schema.Type, rec *store.R
 			kept["description"] = strings.TrimSpace(got.Description)
 		}
 		records.ApplyOps(s.Store, records.Op{Type: records.FileType, ID: id, After: kept}) // a file read, as keeping it does
-		if name := strings.TrimSpace(got.Name); name != "" && t.Title != "" && str(rec.Fields[t.Title]) == str(f.Fields["title"]) {
+		read = true
+		if name := strings.TrimSpace(got.Name); name != "" && len(ids) == 1 && t.Title != "" && str(rec.Fields[t.Title]) == str(f.Fields["title"]) {
 			if done, err := s.Apply(records.Op{Type: t.Name, ID: rec.ID, After: map[string]any{t.Title: name}}); err == nil {
 				ops = append(ops, done...)
 				rec.Fields[t.Title] = name
 			}
 		}
+	}
+	if read && len(ids) > 1 {
+		ops = append(ops, s.groupPictures(ctx, t, rec, ids)...) // pictures_apart.go
 	}
 	return ops
 }
