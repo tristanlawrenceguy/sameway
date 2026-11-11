@@ -55,3 +55,33 @@ func TestATurnThatChangedIsCheckedOnce(t *testing.T) {
 		t.Errorf("a turn that changed nothing is not checked: %v, %d asks", rec.Fields["content"], len(last))
 	}
 }
+
+// A model server that fails while a reply is being checked leaves that
+// reply standing: the work is done, and an error with Send again would
+// have the person do it twice.
+func TestAReplyStandsWhenItsCheckFails(t *testing.T) {
+	t.Parallel()
+	answers := []string{
+		`{"role":"assistant","content":null,"tool_calls":[{"id":"c1","type":"function","function":{"name":"create_record","arguments":"{\"type\":\"task\",\"fields\":{\"title\":\"Pay rent\"}}"}}]}`,
+		`{"role":"assistant","content":"Made Pay rent."}`,
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if len(answers) == 0 {
+			http.Error(w, `{"error":{"message":"bad request"}}`, http.StatusBadRequest)
+			return
+		}
+		io.WriteString(w, `{"choices":[{"message":`+answers[0]+`,"finish_reason":"stop"}]}`)
+		answers = answers[1:]
+	}))
+	defer server.Close()
+	svc := newFullService(t)
+	svc.Provider = &llm.OpenAI{BaseURL: server.URL + "/v1", Model: "small"}
+
+	rec, err := svc.Send(context.Background(), "Add a task to pay rent")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.Fields["role"] != "assistant" || rec.Fields["content"] != "Made Pay rent." {
+		t.Errorf("the reply stands: %v %v", rec.Fields["role"], rec.Fields["content"])
+	}
+}
