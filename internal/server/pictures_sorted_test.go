@@ -3,6 +3,7 @@ package server_test
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"mime/multipart"
@@ -40,7 +41,8 @@ func (m *readsLetter) Complete(_ context.Context, req llm.Request) (*llm.Respons
 	}
 	switch {
 	case strings.Contains(req.System, "You read a picture"):
-		return &llm.Response{Text: `{"name": "Parking fine from the council", "description": "A printed letter from the council about a parking fine.", "text": "Penalty charge notice. Pay 35 pounds by Friday 20 November."}`}, nil
+		said, _ := json.Marshal("Penalty charge notice. Pay 35 pounds by Friday 20 November. Read: " + q)
+		return &llm.Response{Text: `{"name": "Parking fine from the council", "description": "A printed letter from the council about a parking fine.", "text": ` + string(said) + `}`}, nil
 	case strings.Contains(q, "Pay 35 pounds") || len(req.Messages[0].Images) > 0:
 		return &llm.Response{Text: `{"tags": [{"tag": "to do", "why": "a fine to pay by Friday"}]}`}, nil
 	}
@@ -146,5 +148,37 @@ func TestAFileSharedIsReadForWhatItAsks(t *testing.T) {
 	do(t, h, http.MethodPost, "/share", strings.NewReader("text=Call+the+plumber"), "application/x-www-form-urlencoded")
 	if acts, _ := a.Store.List(records.ActionType, store.ListOptions{}); len(acts) != 0 {
 		t.Errorf("a share after sorting was removed sets it up again: %d actions", len(acts))
+	}
+}
+
+// A letter photographed page by page and shared from a phone at once is
+// one note: every photo is read, each as one of them, its words kept, so
+// the whole letter is searched and sorted, and the note is named once.
+func TestPhotosSharedTogetherAreReadAsOne(t *testing.T) {
+	t.Parallel()
+	a, h := newApp(t)
+	model := &readsLetter{}
+	a.Chat.Provider = model
+	var buf bytes.Buffer
+	mw := multipart.NewWriter(&buf)
+	for i := 1; i <= 4; i++ {
+		fw, _ := mw.CreateFormFile("files", fmt.Sprintf("IMG_30%d.png", i))
+		fw.Write(pngOf(t, 40+i, 30))
+	}
+	mw.Close()
+	do(t, h, http.MethodPost, "/share", &buf, mw.FormDataContentType())
+	note := lastNote(t, a)
+	act, _ := a.Store.Create(records.ActionType, map[string]any{"title": "Sort", "kind": "classify", "tags": []any{"to do"}})
+	a.Automate.Classify(context.Background(), act, "note", note.ID)
+	files, _ := a.Store.List(records.FileType, store.ListOptions{})
+	read := 0
+	for _, f := range files {
+		if strings.Contains(fmt.Sprint(f.Fields["text"]), " of 4 shared together") {
+			read++
+		}
+	}
+	got, _ := a.Store.Get("note", note.ID)
+	if len(files) != 4 || read != 4 || model.saw != 4 || got.Fields["title"] != "Parking fine from the council" {
+		t.Errorf("every photo read as one of four, the note named: %d files, %d read, saw %d, %v", len(files), read, model.saw, got.Fields["title"])
 	}
 }

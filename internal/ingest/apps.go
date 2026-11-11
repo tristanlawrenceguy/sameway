@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
+	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
@@ -62,6 +64,35 @@ func Recognise(name string, data []byte) (*Brought, error) {
 		return todoist(data)
 	}
 	return nil, errUnknown
+}
+
+// Unseen leaves out the rows here already, by their title and their
+// words: an export holds all of a person's things each time, so bringing
+// a newer one adds only what is new, and suggests nothing twice. It says
+// how many it left out.
+func (tb *Table) Unseen(st *store.Store, t *schema.Type) int {
+	if t.Title == "" || !contains(tb.Columns, "body") {
+		return 0
+	}
+	recs, err := st.List(t.Name, store.ListOptions{})
+	if err != nil {
+		return 0
+	}
+	here := map[[2]string]bool{}
+	for _, rec := range recs {
+		title, _ := rec.Fields[t.Title].(string)
+		body, _ := rec.Fields["body"].(string)
+		here[[2]string{strings.TrimSpace(title), strings.TrimSpace(body)}] = true
+	}
+	rows := tb.Rows[:0]
+	for _, row := range tb.Rows {
+		if !here[[2]string{strings.TrimSpace(row[t.Title]), strings.TrimSpace(row["body"])}] {
+			rows = append(rows, row)
+		}
+	}
+	left := len(tb.Rows) - len(rows)
+	tb.Rows = rows
+	return left
 }
 
 func newBrought(from string) *Brought { return &Brought{From: from, Kinds: map[string]*Table{}} }
