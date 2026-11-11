@@ -69,6 +69,7 @@ func (s *Service) WriteDownJobs() []runner.Job {
 		s.leftOverJob(s.Now()), // left_over.go
 		s.takenJob(),           // taken.go
 		s.photosJob(),          // folder_in.go
+		s.printersJob(),        // print.go
 	}
 }
 

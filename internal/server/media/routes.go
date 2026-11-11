@@ -18,5 +18,6 @@ var Routes = []web.Route[*Service]{
 	{Pattern: "GET /files/{id}/captions.vtt", Handle: (*Service).captions, Access: web.People, Public: true},
 	{Pattern: "GET /files/{id}/sound", Handle: (*Service).soundPlan, Access: web.People},
 	{Pattern: "GET /files/{id}/sound/{n}", Handle: (*Service).soundChunk, Access: web.People},
+	{Pattern: "POST /files/{id}/print", Handle: (*Service).printFile, Access: web.People, Persons: "paper comes out of a printer at home, for someone there to pick up", Reach: web.Outward},
 	{Pattern: "POST /files/{id}/transcribe", Handle: (*Service).transcribeFile, Access: web.People, Tool: "write_down", Reach: web.Outward},
 }
