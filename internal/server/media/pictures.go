@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/convert"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
@@ -46,6 +47,43 @@ func (s *Service) PictureFor(id string) (llm.Image, bool) {
 	if err != nil {
 		return llm.Image{}, false
 	}
+	return fitted(typ, data)
+}
+
+// PicturesFor are the pictures of a file a model reads it by: a picture
+// itself, or the pages of a scan kept as a PDF with no words as text,
+// up to three (convert/scan.go).
+func (s *Service) PicturesFor(id string) []llm.Image {
+	if img, ok := s.PictureFor(id); ok {
+		return []llm.Image{img}
+	}
+	rec, err := s.app.Store.Get(records.FileType, id)
+	if err != nil || rec.Fields["kind"] != "pdf" {
+		return nil
+	}
+	if text, _ := rec.Fields["text"].(string); strings.TrimSpace(text) != "" {
+		return nil // its words are read already
+	}
+	path, ok := s.StoredPath(rec)
+	if !ok {
+		return nil
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil
+	}
+	var out []llm.Image
+	for _, page := range convert.ScannedPages(data, 3) {
+		if img, ok := fitted("image/jpeg", page); ok {
+			out = append(out, img)
+		}
+	}
+	return out
+}
+
+// fitted is a picture as a model takes it: as it is when small, else made
+// no longer than pictureSide as a JPEG.
+func fitted(typ string, data []byte) (llm.Image, bool) {
 	cfg, _, cerr := image.DecodeConfig(bytes.NewReader(data))
 	if len(data) <= pictureBytes && (cerr != nil || max(cfg.Width, cfg.Height) <= pictureSide) {
 		return llm.Image{Type: typ, Data: data}, true
