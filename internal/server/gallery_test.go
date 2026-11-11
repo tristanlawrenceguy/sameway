@@ -56,7 +56,7 @@ func TestAPhotoIsSortedAndShownInAGallery(t *testing.T) {
 		"component": "collection", "props": map[string]any{"type": "file", "as": "gallery", "where": []any{"tags=receipts"}, "label": "Receipts"},
 	}), http.StatusCreated)
 	page := get(t, h, "/").Body.String()
-	if !strings.Contains(page, `src="/files/`+id+`" alt="A till receipt for paint."`) || !strings.Contains(page, `<span class="sw-collection__caption">Receipt from Wickes</span>`) {
+	if !strings.Contains(page, `src="/files/`+id+`/small" alt="A till receipt for paint."`) || !strings.Contains(page, `<span class="sw-collection__caption">Receipt from Wickes</span>`) {
 		t.Errorf("the gallery shows the receipt by its picture, said in words, named under it: %.3000s", page)
 	}
 }

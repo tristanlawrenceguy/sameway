@@ -118,7 +118,7 @@ func (ws *Workspace) collectionItems(out map[string]any, t *schema.Type, recs []
 			item["context"] = told[rec.ID]
 		}
 		if props["as"] == "gallery" {
-			item["picture"], item["alt"] = records.PictureOf(ws.Store, t, rec)
+			item["picture"], item["alt"], item["video"] = records.PictureOf(ws.Store, t, rec)
 		}
 		if len(show) > 0 {
 			item["fields"] = ws.fieldsOf(t, rec, show)

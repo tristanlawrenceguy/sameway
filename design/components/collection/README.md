@@ -29,7 +29,8 @@ with `by` (a task's status: To do, Doing, Done), in the order the field lists
 them, each saying how many it holds, and a column for those with none.
 A line over the board names every column with its count and leads to it.
 `as: gallery` shows each record by its picture with its title under it, the
-whole tile one link: a photo is itself, a video its still, a note photos
+whole tile one link: a photo is itself, made small so a phone does not
+fetch it whole, a video its first frame, a note photos
 were shared into the first picture it links to. The picture's words for
 someone who cannot see it are the file's description, which the assistant
 writes when it reads a picture; `where: ["tags=receipts"]` on files shows
