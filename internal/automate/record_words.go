@@ -1,6 +1,7 @@
 package automate
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
@@ -21,7 +22,31 @@ func recordWords(st *store.Store, t *schema.Type, rec *store.Record) string {
 			b.WriteString("\n" + schema.Words(f.Name) + ": " + v)
 		}
 	}
+	b.WriteString(linkedText(st, rec))
 	return clipEnds(b.String(), 4000)
+}
+
+// linkedText is the words of the files a record links to: a bill shared
+// as a PDF is a note with only its link, and its amount and its day are
+// in the file (pictures.go has a photo's).
+func linkedText(st *store.Store, rec *store.Record) string {
+	var b strings.Builder
+	seen := map[string]bool{}
+	for _, v := range rec.Fields {
+		str, _ := v.(string)
+		for _, m := range fileLink.FindAllStringSubmatch(str, 3) {
+			if seen[m[1]] {
+				continue
+			}
+			seen[m[1]] = true
+			if f, err := st.Get(records.FileType, m[1]); err == nil {
+				if text, _ := f.Fields["text"].(string); strings.TrimSpace(text) != "" {
+					b.WriteString("\n\nThe file " + fmt.Sprint(f.Fields["title"]) + " it links to says:\n" + text)
+				}
+			}
+		}
+	}
+	return b.String()
 }
 
 // clipEnds is s cut to about n runes, keeping its start and its end: a

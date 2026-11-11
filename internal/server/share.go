@@ -212,6 +212,9 @@ func clipRunes(s string, n int) string {
 func (s *Server) writeShare(r *http.Request, title, body string, toBeSorted bool) (*store.Record, string, error) {
 	fields := map[string]any{"title": title, "body": body}
 	if toBeSorted {
+		// Sorting is set up the first time, as connecting email does, so a
+		// photo of a letter shared without email is read for what it asks.
+		s.SetUpSorting()
 		fields["tags"] = []any{"shared", chat.ToSort}
 	}
 	return records.WriteAs(s.app.Store, s.who(r), "created", shareType, "", fields)
