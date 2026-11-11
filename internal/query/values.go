@@ -106,3 +106,9 @@ func text(v any) string {
 func parseDate(s string, now time.Time) (t time.Time, day bool, ok bool) {
 	return when.Parse(s, now)
 }
+
+// storedDate reads a record's date as a person plans by it (when.Stored):
+// a whole day as that date here, never midnight UTC.
+func storedDate(s string, now time.Time) (t time.Time, day bool, ok bool) {
+	return when.Stored(s, now)
+}
