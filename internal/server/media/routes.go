@@ -14,6 +14,7 @@ var Routes = []web.Route[*Service]{
 	{Pattern: "POST /t/file/upload", Handle: (*Service).upload, Access: web.People, Persons: "a file comes from their computer; the assistant reads files already added", Reach: web.Inward},
 	{Pattern: "GET /files/{id}", Handle: (*Service).serveFile, Access: web.People, Public: true},
 	{Pattern: "GET /files/{id}/still", Handle: (*Service).serveStill, Access: web.People, Public: true},
+	{Pattern: "GET /files/{id}/small", Handle: (*Service).serveSmall, Access: web.People, Public: true},
 	{Pattern: "GET /files/{id}/captions.vtt", Handle: (*Service).captions, Access: web.People, Public: true},
 	{Pattern: "GET /files/{id}/sound", Handle: (*Service).soundPlan, Access: web.People},
 	{Pattern: "GET /files/{id}/sound/{n}", Handle: (*Service).soundChunk, Access: web.People},

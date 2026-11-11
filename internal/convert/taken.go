@@ -53,6 +53,25 @@ func PhotoTaken(head []byte) (at time.Time, zoned, ok bool) {
 	return t, false, err == nil && t.Year() > 1900
 }
 
+// PhotoTurn is how the camera was held, as EXIF's Orientation says it
+// (1 upright, 3 upside down, 6 and 8 on its side), 0 when it does not.
+func PhotoTurn(head []byte) int {
+	tiff := exifTIFF(head)
+	if len(tiff) < 8 {
+		return 0
+	}
+	var order binary.ByteOrder = binary.LittleEndian
+	if string(tiff[:2]) == "MM" {
+		order = binary.BigEndian
+	} else if string(tiff[:2]) != "II" {
+		return 0
+	}
+	if v := tags(tiff, order, int(order.Uint32(tiff[4:8])))[0x0112]; len(v) == 2 {
+		return int(order.Uint16(v))
+	}
+	return 0
+}
+
 // exifTIFF finds the TIFF block EXIF is written in: after "Exif\0\0" in a
 // JPEG's APP1, a HEIC's Exif item or a WebP's EXIF chunk, or a PNG's eXIf
 // chunk, which holds it bare.
@@ -81,7 +100,10 @@ func tags(tiff []byte, order binary.ByteOrder, at int) map[uint16][]byte {
 		}
 		typ, count := order.Uint16(tiff[e+2:]), int(order.Uint32(tiff[e+4:]))
 		size := count
-		if typ == 4 { // a LONG, as the pointer to the EXIF tags is
+		switch typ {
+		case 3: // a SHORT, as Orientation is
+			size = 2 * count
+		case 4: // a LONG, as the pointer to the EXIF tags is
 			size = 4 * count
 		}
 		if size <= 4 {
