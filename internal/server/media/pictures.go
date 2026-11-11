@@ -52,7 +52,7 @@ func (s *Service) PictureFor(id string) (llm.Image, bool) {
 
 // PicturesFor are the pictures of a file a model reads it by: a picture
 // itself, or the pages of a scan kept as a PDF with no words as text,
-// up to three (convert/scan.go).
+// every one, for each to be read (convert/scan.go).
 func (s *Service) PicturesFor(id string) []llm.Image {
 	if img, ok := s.PictureFor(id); ok {
 		return []llm.Image{img}
@@ -73,7 +73,7 @@ func (s *Service) PicturesFor(id string) []llm.Image {
 		return nil
 	}
 	var out []llm.Image
-	for _, page := range convert.ScannedPages(data, 3) {
+	for _, page := range convert.ScannedPages(data, 0) {
 		if img, ok := fitted("image/jpeg", page); ok {
 			out = append(out, img)
 		}

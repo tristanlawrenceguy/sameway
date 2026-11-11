@@ -15,10 +15,11 @@ import (
 const scanSide = 500
 
 // ScannedPages are the pages of a scanned PDF as JPEGs, in order, up to
-// most; none when its pages are drawn some other way.
+// most, or all of them when most is 0; none when its pages are drawn some
+// other way.
 func ScannedPages(data []byte, most int) [][]byte {
 	var pages [][]byte
-	for rest := data; len(pages) < most; {
+	for rest := data; most <= 0 || len(pages) < most; {
 		i := bytes.Index(rest, []byte("stream"))
 		if i < 0 {
 			break
