@@ -80,9 +80,9 @@ func TestConversationsAreBroughtFromChatGPT(t *testing.T) {
 	}
 }
 
-// bringChats posts a ChatGPT export to Bring your things, asking for
-// suggestions or not.
-func bringChats(t *testing.T, h http.Handler, suggest bool) string {
+// bringChats posts a ChatGPT export of one conversation, said, to Bring
+// your things, asking for suggestions or not.
+func bringChats(t *testing.T, h http.Handler, suggest bool, said string) string {
 	t.Helper()
 	var body bytes.Buffer
 	mw := multipart.NewWriter(&body)
@@ -90,7 +90,7 @@ func bringChats(t *testing.T, h http.Handler, suggest bool) string {
 		mw.WriteField("suggest", "yes")
 	}
 	fw, _ := mw.CreateFormFile("file", "conversations.json")
-	fw.Write([]byte(`[{"title":"Moving house","create_time":1760000000,"current_node":"a","mapping":{"a":{"parent":null,"message":{"author":{"role":"user"},"content":{"parts":["Book the van for the 14th"]}}}}}]`))
+	fw.Write([]byte(`[{"title":"Moving house","create_time":1760000000,"current_node":"a","mapping":{"a":{"parent":null,"message":{"author":{"role":"user"},"content":{"parts":["` + said + `"]}}}}}]`))
 	mw.Close()
 	r := httptest.NewRequest(http.MethodPost, "/bring", &body)
 	r.Header.Set("Content-Type", mw.FormDataContentType())
@@ -110,7 +110,7 @@ func TestConversationsBroughtCanBeLookedThroughForWhatIsToDo(t *testing.T) {
 	if page := get(t, h, "/bring").Body.String(); !strings.Contains(page, `name="suggest"`) {
 		t.Fatalf("the page offers to look through them: %s", truncate(page))
 	}
-	if page := bringChats(t, h, false); strings.Contains(page, "comes on Today") {
+	if page := bringChats(t, h, false, "Book the van"); strings.Contains(page, "comes on Today") {
 		t.Errorf("not asked, nothing is said of it: %s", truncate(page))
 	}
 	suggesting := func() int {
@@ -126,11 +126,25 @@ func TestConversationsBroughtCanBeLookedThroughForWhatIsToDo(t *testing.T) {
 	if suggesting() != 0 {
 		t.Fatal("not asked, no action")
 	}
-	if page := bringChats(t, h, true); !strings.Contains(page, "What is still to do in them comes on Today") {
+	if page := bringChats(t, h, true, "Ring the vet"); !strings.Contains(page, "What is still to do in them comes on Today") {
 		t.Errorf("asked, it says where the suggestions come: %s", truncate(page))
 	}
-	bringChats(t, h, true)
+	bringChats(t, h, true, "Pay the gas bill")
 	if n := suggesting(); n != 1 {
 		t.Errorf("one action, set up once: %d", n)
+	}
+}
+
+// An export holds all of a person's conversations each time: brought
+// again, only what is new comes in, and when nothing is, it says so.
+func TestConversationsBroughtAgainComeInOnce(t *testing.T) {
+	t.Parallel()
+	a, h := newApp(t)
+	bringChats(t, h, false, "Book the van")
+	if page := bringChats(t, h, false, "Book the van"); !strings.Contains(page, "Nothing new from ChatGPT") || !strings.Contains(page, "Everything in the file was brought in before") {
+		t.Errorf("brought again, it says nothing was new: %s", truncate(page))
+	}
+	if notes, _ := a.Store.List("note", store.ListOptions{}); len(notes) != 1 {
+		t.Errorf("one note, not two: %d", len(notes))
 	}
 }
