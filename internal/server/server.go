@@ -44,6 +44,7 @@ type Server struct {
 	api       *api.Service                  // the JSON API for agents; internal/server/api
 	agenda    *agenda.Service               // Today, the brief and the weekly review; internal/server/agenda
 	pairing   pairing                       // the codes a phone on the Wi-Fi pairs with; phone_pair.go
+	computer  []string                      // the folders a search also looks in here; on_computer.go
 }
 
 // New builds the handler for an app.
