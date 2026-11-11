@@ -52,11 +52,11 @@ func zipped(data []byte) (*Brought, error) {
 		return nil, errors.New("this zip cannot be opened: " + err.Error())
 	}
 	keep, md := newBrought("Google Keep"), newBrought("Markdown notes")
-	var tasks *Brought
+	var tasks, chats *Brought
 	for _, f := range zr.File {
 		name := path.Base(f.Name)
 		limit := uint64(32 << 20)
-		if strings.EqualFold(name, "conversations.json") {
+		if chatFile.MatchString(strings.ToLower(name)) {
 			limit = 512 << 20 // a year of chats with ChatGPT is far more than a note
 		}
 		if f.FileInfo().IsDir() || f.UncompressedSize64 > limit {
@@ -74,9 +74,9 @@ func zipped(data []byte) (*Brought, error) {
 		buf.ReadFrom(rc)
 		rc.Close()
 		switch {
-		case ext == ".json" && strings.EqualFold(name, "conversations.json"):
-			if chats, ok := chatExport(buf.Bytes()); ok { // apps_chats.go: ChatGPT or Claude
-				return chatsOrNone(chats)
+		case ext == ".json" && chatFile.MatchString(strings.ToLower(name)):
+			if got, ok := chatExport(buf.Bytes()); ok { // apps_chats.go: ChatGPT or Claude
+				chats = joined(chats, got)
 			}
 		case ext == ".json" && strings.EqualFold(name, "Tasks.json"):
 			tasks, _ = googleJSON(buf.Bytes())
@@ -92,10 +92,13 @@ func zipped(data []byte) (*Brought, error) {
 			md.add("note", map[string]string{"title": title, "body": body})
 		}
 	}
+	if chats != nil {
+		return chatsOrNone(chats)
+	}
 	for _, b := range []*Brought{tasks, keep, md} {
 		if b != nil && len(b.Kinds) > 0 {
 			return b, nil
 		}
 	}
-	return nil, errors.New("this zip has no tasks or notes Sameway can read: it reads the Tasks and Keep folders of Google Takeout, and Markdown files")
+	return nil, errors.New("this zip has no tasks or notes Sameway can read: it reads conversations from ChatGPT or Claude, the Tasks and Keep folders of Google Takeout, and Markdown files")
 }

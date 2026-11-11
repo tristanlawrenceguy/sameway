@@ -67,5 +67,27 @@ func TestALongConversationKeepsItsEnd(t *testing.T) {
 	body := b.Kinds["note"].Rows[0]["body"]
 	if !utf8.ValidString(body) || !strings.HasSuffix(body, "Book the doctor for Tuesday.") || !strings.Contains(body, "the middle of this conversation is in the export") || len(body) > maxChatBody+200 {
 		t.Errorf("start and end, whole letters: %d bytes, ends %q", len(body), body[len(body)-60:])
+
+// A long ChatGPT history comes split, as conversations-000.json and on,
+// and is read whole; a voice chat is read as ChatGPT wrote it down.
+func TestASplitChatGPTExportAndAVoiceChatComeIn(t *testing.T) {
+	t.Parallel()
+	conv := func(title, part string) string {
+		return `[{"title":"` + title + `","create_time":1760000000,"current_node":"a","mapping":{
+			"r":{"parent":null,"message":null},
+			"a":{"parent":"r","message":{"author":{"role":"user"},"content":{"content_type":"multimodal_text","parts":[` + part + `]}}}}}]`
+	}
+	voice := `{"content_type":"audio_transcription","text":"Ring the dentist on Monday","direction":"in"},{"content_type":"audio_asset_pointer","asset_pointer":"sediment://file_0"}`
+	b, err := Recognise("export.zip", zipOf(map[string]string{
+		"conversations-000.json": conv("Porto", `"Book the train"`),
+		"conversations-001.json": conv("Dentist", voice),
+		"export_manifest.json":   `{"export_files":[]}`,
+	}))
+	if err != nil || b.From != "ChatGPT" || b.Count("note") != 2 {
+		t.Fatalf("both files of a split export: %v %+v", err, b)
+	}
+	rows := b.Kinds["note"].Rows
+	if body := rows[0]["body"] + rows[1]["body"]; !strings.Contains(body, "**You:** Ring the dentist on Monday") {
+		t.Errorf("what was said aloud: %s", body)
 	}
 }
