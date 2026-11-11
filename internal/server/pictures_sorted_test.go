@@ -43,6 +43,12 @@ func (m *readsLetter) Complete(_ context.Context, req llm.Request) (*llm.Respons
 	case strings.Contains(req.System, "You read a picture"):
 		said, _ := json.Marshal("Penalty charge notice. Pay 35 pounds by Friday 20 November. Read: " + q)
 		return &llm.Response{Text: `{"name": "Parking fine from the council", "description": "A printed letter from the council about a parking fine.", "text": ` + string(said) + `}`}, nil
+	case strings.Contains(req.System, "several photos"): // all one letter
+		var all []string
+		for k := 1; k <= strings.Count(q, "Photo "); k++ {
+			all = append(all, fmt.Sprint(k))
+		}
+		return &llm.Response{Text: `{"groups": [{"photos": [` + strings.Join(all, ",") + `], "name": "Parking fine from the council"}]}`}, nil
 	case strings.Contains(q, "Pay 35 pounds") || len(req.Messages[0].Images) > 0:
 		return &llm.Response{Text: `{"tags": [{"tag": "to do", "why": "a fine to pay by Friday"}]}`}, nil
 	}
@@ -169,5 +175,67 @@ func TestPhotosSharedTogetherAreReadAsOne(t *testing.T) {
 	got, _ := a.Store.Get("note", note.ID)
 	if len(files) != 4 || read != 4 || model.saw != 4 || got.Fields["title"] != "Parking fine from the council" {
 		t.Errorf("every photo read as one of four, the note named: %d files, %d read, saw %d, %v", len(files), read, model.saw, got.Fields["title"])
+	}
+}
+
+// readsReceipts reads two receipts and a beach photo, and sets them apart.
+type readsReceipts struct{ mu sync.Mutex }
+
+func (m *readsReceipts) Name() string { return "receipts" }
+func (m *readsReceipts) Complete(_ context.Context, req llm.Request) (*llm.Response, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	q := req.Messages[0].Content
+	switch {
+	case strings.Contains(req.System, "You read a picture") && strings.Contains(q, "wickes"):
+		return &llm.Response{Text: `{"name": "Receipt from Wickes", "description": "A till receipt.", "text": "Wickes. Paint 24.00"}`}, nil
+	case strings.Contains(req.System, "You read a picture") && strings.Contains(q, "boots"):
+		return &llm.Response{Text: `{"name": "Receipt from Boots", "description": "A till receipt.", "text": "Boots. Plasters 3.50"}`}, nil
+	case strings.Contains(req.System, "You read a picture"):
+		return &llm.Response{Text: `{"name": "Beach", "description": "A sandy beach at sunset.", "text": ""}`}, nil
+	case strings.Contains(req.System, "several photos"):
+		return &llm.Response{Text: `{"groups": [{"photos": [1, 3], "name": "Receipts for the flat"}, {"photos": [2], "name": "Sunset at the beach"}]}`}, nil
+	}
+	return &llm.Response{Text: `{"tags": []}`}, nil
+}
+
+// Photos picked together from the gallery that are separate things are
+// set apart: the note keeps the set its first photo is in and its name,
+// the other set is a note of its own saying what it was shared with, and
+// it is not joined back.
+func TestPhotosOfSeparateThingsAreSetApart(t *testing.T) {
+	t.Parallel()
+	a, h := newApp(t)
+	a.Chat.Provider = &readsReceipts{}
+	var buf bytes.Buffer
+	mw := multipart.NewWriter(&buf)
+	for _, name := range []string{"wickes.png", "beach.png", "boots.png"} {
+		fw, _ := mw.CreateFormFile("files", name)
+		fw.Write(pngOf(t, 40, 30))
+	}
+	mw.Close()
+	do(t, h, http.MethodPost, "/share", &buf, mw.FormDataContentType())
+	note := lastNote(t, a)
+	act, _ := a.Store.Create(records.ActionType, map[string]any{"title": "Sort", "kind": "classify", "tags": []any{"to do"}})
+	a.Automate.Classify(context.Background(), act, "note", note.ID)
+	notes, _ := a.Store.List("note", store.ListOptions{})
+	byTitle := map[string]*store.Record{}
+	for _, n := range notes {
+		byTitle[fmt.Sprint(n.Fields["title"])] = n
+	}
+	kept, apart := byTitle["Receipts for the flat"], byTitle["Sunset at the beach"]
+	if kept == nil || apart == nil || kept.ID != note.ID {
+		t.Fatalf("the note keeps the receipts, the beach is a note of its own: %v", byTitle)
+	}
+	body, other := fmt.Sprint(kept.Fields["body"]), fmt.Sprint(apart.Fields["body"])
+	if !strings.Contains(body, "wickes") || !strings.Contains(body, "boots") || strings.Contains(body, "beach.png") {
+		t.Errorf("the receipts stay, the beach goes: %q", body)
+	}
+	if !strings.Contains(other, "beach") || !strings.Contains(other, "/t/note/"+note.ID) || !strings.Contains(fmt.Sprint(apart.Fields["tags"]), "shared") {
+		t.Errorf("the beach is a share of its own, saying what it came with: %q %v", other, apart.Fields["tags"])
+	}
+	a.Automate.Classify(context.Background(), act, "note", apart.ID)
+	if _, err := a.Store.Get("note", apart.ID); err != nil {
+		t.Errorf("a note set apart is not joined back")
 	}
 }
