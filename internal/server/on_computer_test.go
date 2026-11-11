@@ -31,13 +31,16 @@ func TestAFileOnThisComputerIsFoundByNameAndBroughtIn(t *testing.T) {
 	}
 	lease := write("Documents", "House", "Flat Lease 2026.txt")
 	write("Downloads", "lease form.txt") // one word, not both
-	write("Documents", ".old", "Flat lease draft.txt")
+	draft := write("Documents", ".old", "Flat lease draft.txt")
 	outside := write("Elsewhere", "Flat lease copy.txt")
 	h.(*server.Server).FindOnComputer(filepath.Join(home, "Documents"), filepath.Join(home, "Downloads"))
 
 	page := get(t, h, "/search?q="+url.QueryEscape("lease FLAT")).Body.String()
 	if !strings.Contains(page, "On this computer") || !strings.Contains(page, "Flat Lease 2026.txt") || !strings.Contains(page, "Bring it in") {
 		t.Fatalf("the search finds it on this computer: %.3000s", page)
+	}
+	if strings.Contains(page, "No results") || !strings.Contains(page, "Nothing in Sameway matches") {
+		t.Errorf("found here, the page does not say no results")
 	}
 	for _, not := range []string{"lease form.txt", "Flat lease draft.txt", "Flat lease copy.txt"} {
 		if strings.Contains(page, not) {
@@ -55,10 +58,10 @@ func TestAFileOnThisComputerIsFoundByNameAndBroughtIn(t *testing.T) {
 		t.Errorf("it opens on its own page: %s", to)
 	}
 
-	for _, p := range []string{outside, filepath.Join(home, "Documents", "..", "Elsewhere", "Flat lease copy.txt"), filepath.Join(home, "Documents"), "Flat Lease 2026.txt"} {
+	for _, p := range []string{outside, draft, filepath.Join(home, "Documents", "..", "Elsewhere", "Flat lease copy.txt"), filepath.Join(home, "Documents"), "Flat Lease 2026.txt"} {
 		postForm(t, h, "/computer/bring", url.Values{"path": {p}})
 	}
 	if recs, _ := a.Store.List(records.FileType, store.ListOptions{}); len(recs) != 1 {
-		t.Errorf("nothing outside the folders, no folder and no bare name comes in: %d files", len(recs))
+		t.Errorf("nothing outside the folders or hidden, no folder and no bare name comes in: %d files", len(recs))
 	}
 }

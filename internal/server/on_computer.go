@@ -98,6 +98,17 @@ func findOnComputer(dirs []string, q string) []foundFile {
 	return out
 }
 
+// hidden is whether a path in a folder passes through anything hidden,
+// which a search never offers.
+func hidden(rel string) bool {
+	for _, part := range strings.Split(filepath.ToSlash(rel), "/") {
+		if strings.HasPrefix(part, ".") {
+			return true
+		}
+	}
+	return false
+}
+
 func hasWords(name string, words []string) bool {
 	for _, w := range words {
 		if !strings.Contains(name, w) {
@@ -110,8 +121,8 @@ func hasWords(name string, words []string) bool {
 // onComputer is the search page's On this computer, after Sameway's own
 // results: the owner's files found by name, each ready to bring in. Only
 // the owner's, and nothing when nothing is found.
-func (s *Server) onComputer(r *http.Request, q string) string {
-	if len(s.computer) == 0 || !s.chatFor(r).IsOwner() {
+func (s *Server) onComputer(r *http.Request, q, only string) string {
+	if len(s.computer) == 0 || only != "" || !s.chatFor(r).IsOwner() {
 		return ""
 	}
 	found := findOnComputer(s.computer, q)
@@ -175,7 +186,7 @@ func (s *Server) offered(path string) bool {
 	}
 	for _, dir := range s.computer {
 		if d, err := filepath.EvalSymlinks(dir); err == nil {
-			if rel, err := filepath.Rel(d, real); err == nil && rel != "." && filepath.IsLocal(rel) {
+			if rel, err := filepath.Rel(d, real); err == nil && rel != "." && filepath.IsLocal(rel) && !hidden(rel) {
 				return true
 			}
 		}
