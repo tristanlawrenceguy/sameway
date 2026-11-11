@@ -37,4 +37,26 @@ when you add a way to use the system in this area, with its test.
 | Several names with commas are told apart | the names a change of several says (create_records, update_records, removing several) are set apart by semicolons when any of them has a comma of its own, as an entry's does (Running miles, 5 miles; Running miles, 3 miles), in the log and the receipt alike; names with no comma keep commas | `internal/chat/batch_titles_test.go` |
 | A link by a title with brackets is a link | a Markdown link in a reply or a record whose words hold a pair of brackets, as the title Seeds [draft] or [Work] plan, is a link by those words, not its syntax shown to the person | `internal/render/linkify_brackets_test.go` |
 | A reply naming a tool is said again in the person's words | a reply that names one of the tools (add_component, find_records) is asked once to say the same in the person's words, and the person gets that; named again, it stands with nothing said of changes it never claimed; a reply claiming what was not made is still asked as before | `internal/chat/claims_words_test.go` |
-| A turn on a model server checks what it changed | a turn on a model server (Ollama, llama.cpp) that changed something is shown once, before its reply stands, what the turn made, changed and removed, each field in the person's own time, and asked to finish what the person asked or answer again; a turn that changed nothing (an answer, a question) is not; if the model server fails or the person stops while the reply is checked, that reply stands, so Send again does not do the work twice; measured with Qwen 3.5 on this computer, the hard set went from 65 of 104 (two passes of 52) to 38 of 52: moving a day's things 2 of 8 to 4 of 4, priorities 1 of 8 to 3 of 4 | `internal/chat/review_test.go`, `internal/bench` |
+| A turn on a model server checks what it changed | a turn on a model server (Ollama, llama.cpp) that changed something is shown once, before its reply stands, what the turn made, changed and removed, each field in the person's own time, and asked to finish what the person asked in that message, leaving earlier messages as they are, or answer again; a turn that changed nothing (an answer, a question) is not; if the model server fails or the person stops while the reply is checked, that reply stands, so Send again does not do the work twice; measured with Qwen 3.5 on this computer, the hard set went from 65 of 104 (two passes of 52) to 38 of 52: moving a day's things 2 of 8 to 4 of 4, priorities 1 of 8 to 3 of 4 | `internal/chat/review_test.go`, `internal/bench` |
+| A field added with its kind in the wrong place | add_field sent with no type and the kind to add to as to (a small model asked for a priority on tasks, five times in eight runs) adds it to that kind when the field is not a ref, since to names only a ref's kind; with neither, the refusal says to send type, not that there is no content type ""; a list field's expected values say "a list of words", where one said "a list of , as" | `internal/server/add_field_type_test.go` |
+
+## The free model on the hard set
+
+Qwen 3.5 4B through Ollama (`sameway-qwen3.5`, the model Connect fetches) on the thirteen hard requests, four runs each, on one Windows computer:
+
+```bash
+SAMEWAY_BENCH_MODEL=sameway-qwen3.5:latest SAMEWAY_BENCH_BASE_URL=http://127.0.0.1:11434/v1 \
+SAMEWAY_BENCH_RUNS=4 SAMEWAY_BENCH_OUT=bench.jsonl go test ./internal/bench -run TestAssistant -timeout 300m -v
+```
+
+One pass of 52 varies by about four from the next with nothing changed, so a change is worth quoting only over two passes or more.
+
+| When | Main at | Passed | Seconds a request |
+|---|---|---|---|
+| 2026-10-08 | before #501 | 19 of 52 | 22 |
+| 2026-10-08 | #501 (what it got wrong, said) | 28 of 52 | 24 |
+| 2026-11-10 | before #797 (#720, #483, #710 since) | 65 of 104 (33, 32) | 36–51 |
+| 2026-11-10 | #797 (a turn checks what it changed) | 74 of 104 (38, 36) | 55 |
+| 2026-11-11 | #808, #809 | 72 of 104 (38, 34) | 50 |
+
+Haiku through Claude Code passed 26 of 26 (two runs) before #808 and #809 and after. By request after #797, over eight runs: repeat, people, layout, ambiguous and two-kinds nearly always pass; automate passes 1 of 16 (the model does not set `what` and `only` on the action, or puts the task's values in the wrong form) and is the one to work on next; move-day, bulk-tag (it takes "tag" for the tag kind), follow-up (dates and whose a task is) and split pass about half the time.

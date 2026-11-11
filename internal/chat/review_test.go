@@ -45,7 +45,7 @@ func TestATurnThatChangedIsCheckedOnce(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(last) != 3 || !strings.Contains(last[2], "This turn changed") || !strings.Contains(last[2], `made task "Pay rent": status: todo; title: Pay rent`) {
+	if len(last) != 3 || !strings.Contains(last[2], `in this message: "Add tasks to pay rent and call the bank"`) || !strings.Contains(last[2], "Leave anything asked in earlier messages") || !strings.Contains(last[2], `made task "Pay rent": status: todo; title: Pay rent`) {
 		t.Fatalf("the model is shown what the turn made, once: %q", last)
 	}
 	if got := rec.Fields["content"]; got != "I made Pay rent; Call the bank is not made yet." {
