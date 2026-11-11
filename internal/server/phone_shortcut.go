@@ -56,6 +56,10 @@ func (s *Server) phoneShortcut(w http.ResponseWriter, r *http.Request) {
 	s.saveLanDevices(append(s.lanDevices(), lanDevice{ID: token(6), Hash: hashOf(secret), Name: "iPhone Shortcut", Added: s.now(), Only: shortcutOnly}))
 	records.Record(s.app.Store, "human", records.Change{Action: "paired", Component: "device", Detail: "iPhone Shortcut"})
 	link := base + "/share?key=" + secret
+	if pageAction(r) {
+		tellJSON(w, outcome{Title: "Shortcut link made", Text: "In the iPhone's Shortcuts app, make a Shortcut shown in the Share Sheet whose one action is Get Contents of URL: this link, " + link + ", Method POST, Request Body Form, with a File field files set to Shortcut Input."}, "/share")
+		return
+	}
 	esc := template.HTMLEscapeString
 	var b strings.Builder
 	b.WriteString(`<p>Do this on the iPhone, in the Shortcuts app. The link below is shown only now: copy it first. It lets in photos and files shared, nothing else, and can be removed under Workspaces.</p>`)
