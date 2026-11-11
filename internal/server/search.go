@@ -39,7 +39,7 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 		lead = fmt.Sprintf(`<p class="sw-search__scope">Searching %s only. %s</p>`, template.HTMLEscapeString(schema.Plural(only)), widen(q))
 	}
 	title, said := label, label
-	pg := paged{page: 1, pages: 1}
+	pg, here := paged{page: 1, pages: 1}, s.onComputer(r, q, only) // files here not yet in Sameway, on_computer.go
 	if q != "" {
 		all, some := search.Matches(s.app.Store, s.app.Types, q, s.reader())
 		hits := all
@@ -64,6 +64,8 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 		}
 		b.WriteString(string(s.kinds(q, only, all)))
 		switch {
+		case len(all) == 0 && here != "": // found on this computer only: not "no results"
+			fmt.Fprintf(&b, `<p>Nothing in Sameway matches “%s”.</p>`, template.HTMLEscapeString(q))
 		case len(all) == 0:
 			where := ""
 			if only != "" {
@@ -96,6 +98,7 @@ func (s *Server) searchPage(w http.ResponseWriter, r *http.Request) {
 	if only != "" {
 		jsonURL += "&type=" + template.URLQueryEscaper(only)
 	}
+	b.WriteString(here)
 	body := lead + searchForm(s, label, hint, q, only) + b.String()
 	s.page(w, r, title, template.HTML(body), pageOptions{JSONURL: jsonURL, Said: pg.title(said)})
 }

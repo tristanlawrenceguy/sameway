@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/ipp"
 	"github.com/tristanlawrenceguy/sameway/internal/runner"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/server/exchange"
@@ -57,6 +58,11 @@ func (s *Server) UseSpeech(k Speech) { s.media.UseSpeech(k) }
 // UseSpeakers sets how speakers are told apart, for tests.
 func (s *Server) UseSpeakers(ready func() bool, diarize func(ctx context.Context, wav string, n int) ([]speech.Turn, error)) {
 	s.media.UseSpeakers(ready, diarize)
+}
+
+// UsePrinters sets how printers at home are found, for tests.
+func (s *Server) UsePrinters(find func(context.Context) ([]ipp.Printer, error)) {
+	s.media.UsePrinters(find)
 }
 
 // WriteDownJobs has this server write recordings down itself, as jobs

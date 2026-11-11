@@ -218,5 +218,6 @@ func (s *Service) FileExtras(r *http.Request, rec *store.Record) string {
 		}
 	}
 	fmt.Fprintf(&b, `<p>%s</p>`, s.Part(ui.Link{Href: "/files/" + rec.ID, Label: "Open the original", Look: ui.LookButton}))
+	b.WriteString(s.printOffer(r, rec)) // print.go
 	return b.String()
 }
