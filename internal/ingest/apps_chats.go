@@ -18,8 +18,9 @@ import (
 // from, so it is found by search and the assistant can make tasks, dates
 // and people of it. Chats with nothing said are left out.
 
-// maxChatBody is the most of one conversation a note keeps; the rest is
-// said to be in the export.
+// maxChatBody is the most of one conversation a note keeps: its start and
+// its end, as what was decided comes last, and the middle said to be in the
+// export.
 const maxChatBody = 200_000
 
 // chatFile is the name of the conversations in an export's zip: a long
@@ -76,7 +77,9 @@ func chatNote(b *Brought, title string, began time.Time, turns []turn) {
 		return
 	}
 	if len(text) > maxChatBody {
-		text = text[:maxChatBody] + "\n\n… the rest of this conversation is in the export."
+		// Cut by bytes, so a letter split in two (Greek, Chinese) is dropped.
+		start, end := text[:maxChatBody/2], text[len(text)-maxChatBody/2:]
+		text = strings.ToValidUTF8(start, "") + "\n\n… the middle of this conversation is in the export.\n\n" + strings.ToValidUTF8(end, "")
 	}
 	if strings.TrimSpace(title) == "" {
 		title = "A conversation with " + b.From
