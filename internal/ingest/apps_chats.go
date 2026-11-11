@@ -3,6 +3,7 @@ package ingest
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -20,6 +21,23 @@ import (
 // maxChatBody is the most of one conversation a note keeps; the rest is
 // said to be in the export.
 const maxChatBody = 200_000
+
+// chatFile is the name of the conversations in an export's zip: a long
+// ChatGPT history comes split, as conversations-000.json and on.
+var chatFile = regexp.MustCompile(`^conversations(-\d+)?\.json$`)
+
+// joined is the conversations of a split export read as one.
+func joined(a, b *Brought) *Brought {
+	if a == nil {
+		return b
+	}
+	if t := b.Kinds["note"]; t != nil {
+		for _, row := range t.Rows {
+			a.add("note", row)
+		}
+	}
+	return a
+}
 
 // chatExport reads conversations.json from ChatGPT or Claude, or says it
 // is neither.
@@ -119,13 +137,20 @@ func chatGPT(raw []json.RawMessage) *Brought {
 	return b
 }
 
-// partsText is a ChatGPT message's text: its parts that are words.
+// partsText is a ChatGPT message's text: its parts that are words, and
+// what was said aloud in a voice chat, as ChatGPT wrote it down.
 func partsText(parts []json.RawMessage) string {
 	var out []string
 	for _, p := range parts {
 		var s string
+		var said struct {
+			ContentType string `json:"content_type"`
+			Text        string `json:"text"`
+		}
 		if json.Unmarshal(p, &s) == nil {
 			out = append(out, s)
+		} else if json.Unmarshal(p, &said) == nil && said.ContentType == "audio_transcription" {
+			out = append(out, said.Text)
 		}
 	}
 	return strings.Join(out, "\n")
