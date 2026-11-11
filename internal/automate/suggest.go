@@ -65,7 +65,7 @@ func (s *Service) fieldGuide(t *schema.Type) string {
 
 // Suggest puts to the person a record of the kind the action makes,
 // filled from the record that set it off, and says what it put.
-func (s *Service) Suggest(ctx context.Context, action *store.Record, typeName, id string) Result {
+func (s *Service) Suggest(ctx context.Context, action *store.Record, typeName, id string) (r Result) {
 	from, ok := s.Store.Types().Get(typeName)
 	rec, err := s.Store.Get(typeName, id)
 	if !ok || err != nil {
@@ -80,7 +80,8 @@ func (s *Service) Suggest(ctx context.Context, action *store.Record, typeName, i
 		}
 		return fail("a suggest action says what it makes: one of %s", strings.Join(kinds, ", "))
 	}
-	read := s.readPictures(ctx, from, rec) // pictures_read.go
+	read := s.readPictures(ctx, from, rec)                      // pictures_read.go
+	defer func() { r = withRead(r, action, from, rec, read) }() // classify.go
 	words := recordWords(s.Store, from, rec)
 	q := "The record:\n" + words + threadWords(s.Store, from, rec) // thread_words.go
 	// Today, so what was for a day gone by is not suggested as if it were

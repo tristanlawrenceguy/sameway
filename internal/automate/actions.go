@@ -45,12 +45,15 @@ func (s *Service) runRecord(ctx context.Context, rec *store.Record, canvas strin
 		return r
 	case "command":
 		return s.command(ctx, rec, title)
-	case "classify":
+	case "classify", "suggest":
 		vars, _ := ctx.Value(triggerKey{}).(map[string]string)
+		if vars["id"] == "" { // run by hand: over what is already here
+			return s.runOverAll(ctx, rec) // backlog.go
+		}
+		if kind == "suggest" {
+			return s.Suggest(ctx, rec, vars["type"], vars["id"]) // suggest.go
+		}
 		return s.Classify(ctx, rec, vars["type"], vars["id"]) // classify.go
-	case "suggest":
-		vars, _ := ctx.Value(triggerKey{}).(map[string]string)
-		return s.Suggest(ctx, rec, vars["type"], vars["id"]) // suggest.go
 	case "mqtt":
 		return s.mqttAction(ctx, rec, title)
 	case "message":

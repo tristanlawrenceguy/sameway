@@ -250,3 +250,34 @@ func TestPhotosOfSeparateThingsAreSetApart(t *testing.T) {
 		t.Errorf("a note set apart is not joined back")
 	}
 }
+
+// readsThenTagsNothing reads a picture, then cannot tag.
+type readsThenTagsNothing struct{}
+
+func (readsThenTagsNothing) Name() string { return "reads" }
+func (readsThenTagsNothing) Complete(_ context.Context, req llm.Request) (*llm.Response, error) {
+	if strings.Contains(req.System, "You read a picture") {
+		return &llm.Response{Text: `{"name": "Parking fine from the council", "description": "A letter.", "text": "Pay 35 pounds."}`}, nil
+	}
+	return nil, errors.New("the model stopped answering")
+}
+
+// A note named from its picture is renamed in Activity, so Undo takes it
+// back, also when tagging it then fails.
+func TestANoteNamedFromItsPictureCanBeUndone(t *testing.T) {
+	t.Parallel()
+	a, h := newApp(t)
+	a.Chat.Provider = readsThenTagsNothing{}
+	var buf bytes.Buffer
+	mw := multipart.NewWriter(&buf)
+	fw, _ := mw.CreateFormFile("files", "IMG_2042.png")
+	fw.Write(pngOf(t, 40, 30))
+	mw.Close()
+	do(t, h, http.MethodPost, "/share", &buf, mw.FormDataContentType())
+	note := lastNote(t, a)
+	act, _ := a.Store.Create(records.ActionType, map[string]any{"title": "Sort", "kind": "classify", "tags": []any{"to do"}})
+	r := a.Automate.Classify(context.Background(), act, "note", note.ID)
+	if r.Change == nil || len(r.Change.Ops) != 1 || r.Change.Ops[0].After["title"] != "Parking fine from the council" {
+		t.Fatalf("the renaming is logged when tagging fails: %+v", r.Change)
+	}
+}
