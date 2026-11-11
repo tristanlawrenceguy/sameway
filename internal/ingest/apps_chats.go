@@ -175,6 +175,12 @@ func claudeChats(raw []json.RawMessage) *Brought {
 				Sender    string `json:"sender"`
 				Text      string `json:"text"`
 				CreatedAt string `json:"created_at"`
+				// What was pasted or attached, as Claude read it: a long
+				// paste is kept as an attachment, not in the text.
+				Attachments []struct {
+					Name  string `json:"file_name"`
+					Words string `json:"extracted_content"`
+				} `json:"attachments"`
 			} `json:"chat_messages"`
 		}
 		if json.Unmarshal(r, &c) != nil {
@@ -187,7 +193,17 @@ func claudeChats(raw []json.RawMessage) *Brought {
 			if m.Sender == "assistant" {
 				who = "Claude"
 			}
-			turns = append(turns, turn{who, m.Text})
+			text := m.Text
+			for _, a := range m.Attachments {
+				label := "*Attached: " + a.Name + "*"
+				if a.Name == "" {
+					label = "*Pasted:*"
+				}
+				if strings.TrimSpace(a.Words) != "" {
+					text += "\n\n" + label + "\n\n" + strings.TrimSpace(a.Words)
+				}
+			}
+			turns = append(turns, turn{who, text})
 		}
 		began, _ := time.Parse(time.RFC3339, c.CreatedAt)
 		chatNote(b, c.Name, began, turns)
