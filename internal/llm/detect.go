@@ -83,13 +83,19 @@ func listModels(ctx context.Context, base string) []string {
 	if json.NewDecoder(resp.Body).Decode(&body) != nil || resp.StatusCode != http.StatusOK {
 		return nil
 	}
-	var models []string
+	// A model that only turns words into numbers for search (nomic-embed-
+	// text) cannot talk, so it is never the one offered first.
+	var models, embed []string
 	for _, m := range body.Data {
-		if m.ID != "" {
+		switch {
+		case m.ID == "":
+		case strings.Contains(strings.ToLower(m.ID), "embed"):
+			embed = append(embed, m.ID)
+		default:
 			models = append(models, m.ID)
 		}
 	}
-	return models
+	return append(models, embed...)
 }
 
 // Answers says whether a configured model can be reached now, and when it

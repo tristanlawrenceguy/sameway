@@ -9,6 +9,8 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 )
 
+// A server is offered by a model that can talk: one that only turns words
+// into numbers for search (nomic-embed-text) is listed, never first.
 func TestDetectFindsServersWithModels(t *testing.T) {
 	t.Parallel()
 	good := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -16,7 +18,7 @@ func TestDetectFindsServersWithModels(t *testing.T) {
 			http.NotFound(w, r)
 			return
 		}
-		w.Write([]byte(`{"object":"list","data":[{"id":"qwen3"},{"id":"llama3.1"}]}`))
+		w.Write([]byte(`{"object":"list","data":[{"id":"nomic-embed-text:latest"},{"id":"qwen3"},{"id":"llama3.1"}]}`))
 	}))
 	defer good.Close()
 	empty := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -34,7 +36,7 @@ func TestDetectFindsServersWithModels(t *testing.T) {
 		{"broken", broken.URL + "/v1"},
 		{"good", good.URL + "/v1"},
 	})
-	if len(found) != 1 || found[0].Server != "good" || found[0].Model != "qwen3" || len(found[0].Models) != 2 {
+	if len(found) != 1 || found[0].Server != "good" || found[0].Model != "qwen3" || len(found[0].Models) != 3 {
 		t.Fatalf("detect: %+v", found)
 	}
 	if found[0].BaseURL != good.URL+"/v1" {

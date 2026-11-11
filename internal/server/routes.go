@@ -121,4 +121,5 @@ var pageRoutes = []route{
 	{pattern: "GET /icon-square-180.png", handle: plain(icon("icon-square-180.png", "image/png")), access: people},
 	{pattern: "GET /icon-square-512.png", handle: plain(icon("icon-square-512.png", "image/png")), access: people},
 	{pattern: "GET /manifest.webmanifest", handle: plain(appManifest), access: people},
+	{pattern: "GET /install", handle: (*Server).installPage, access: people},
 }

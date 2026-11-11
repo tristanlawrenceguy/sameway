@@ -78,6 +78,12 @@ ol.sw-plain, ul.sw-plain { list-style: none; list-style-type: ""; margin: 0; pad
    at the right, as every always-shown bar does (05-quiet.css). */
 .sw-dl-block > .sw-bar { position: static; width: fit-content; max-width: 100%; margin: var(--sw-space-3) 0 0 auto; box-shadow: none; }
 .sw-dl-block .sw-fields { margin-bottom: var(--sw-space-2); }
+/* With nothing in it but Edit and Delete (a task whose day is said under
+   its title), it is no card: an empty box on a phone read as something
+   that had not loaded. */
+.sw-dl-block:not(:has(> :not(.sw-bar, template))) { padding: 0; background: none; border: 0; box-shadow: none; }
+/* On a phone the card keeps the screen's width for its words. */
+@media (max-width: 40rem) { .sw-dl-block { padding: var(--sw-space-4); } }
 .sw-detail__when { margin: 0 0 var(--sw-space-4); }
 
 /* A listing is rows with air, not boxes: a checkbox at the front when the
@@ -87,7 +93,7 @@ ol.sw-plain, ul.sw-plain { list-style: none; list-style-type: ""; margin: 0; pad
 .sw-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sw-space-1) var(--sw-space-3); min-height: 2.75rem; padding: var(--sw-space-1) var(--sw-space-2); border-radius: var(--sw-radius-md); transition: background var(--sw-motion-fast) var(--sw-motion-ease); }
 .sw-row:hover { background: var(--sw-color-bg-muted); }
 .sw-row .sw-mark { min-height: 0; }
-.sw-row__title { margin: 0; flex: 1 1 12rem; min-width: 0; font-size: var(--sw-size-text-md); font-weight: 500; letter-spacing: 0; line-height: 1.4; }
+.sw-row__title { margin: 0; flex: 1 1 8rem; min-width: 0; font-size: var(--sw-size-text-md); font-weight: 500; letter-spacing: 0; line-height: 1.4; }
 /* A row's title takes its direction from its own first letter (design/foundations/text.md). */
 .sw-row__link { color: var(--sw-color-fg); text-decoration: none; unicode-bidi: plaintext; }
 .sw-row__link:hover { text-decoration: underline; text-underline-offset: 0.18em; }

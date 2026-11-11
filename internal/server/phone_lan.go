@@ -38,6 +38,9 @@ type lanDevice struct {
 	// Only is what a key lets in when it is not a phone: a Shortcut's
 	// lets in a share and nothing else (phone_shortcut.go).
 	Only string `json:"only,omitempty"`
+	// App pairs the phone's home-screen app once, from the manifest's
+	// start address (phone_install.go).
+	App string `json:"app,omitempty"`
 }
 
 func token(n int) string {
@@ -70,8 +73,20 @@ func (s *Server) LAN(next http.Handler) http.Handler {
 			s.lanJoin(w, r) // lan_invite.go
 			return
 		}
+		if r.URL.Path == "/pair" && r.URL.Query().Has("app") {
+			s.lanApp(w, r) // phone_install.go
+			return
+		}
 		if r.URL.Path == "/pair" {
 			s.lanPair(w, r)
+			return
+		}
+		if r.URL.Path == "/manifest.webmanifest" {
+			s.lanManifest(w, r) // phone_install.go
+			return
+		}
+		if appParts[r.URL.Path] {
+			next.ServeHTTP(w, r) // the app's icons: nothing of the workspace's
 			return
 		}
 		if k := r.URL.Query().Get("key"); k != "" && r.Method == http.MethodPost && r.URL.Path == "/share" {
@@ -116,7 +131,7 @@ func (s *Server) lanPair(w http.ResponseWriter, r *http.Request) {
 	s.saveLanDevices(devices)
 	records.Record(s.app.Store, "human", records.Change{Action: "paired", Component: "device", Detail: name})
 	http.SetCookie(w, &http.Cookie{Name: lanCookie, Value: secret, Path: "/", HttpOnly: true, SameSite: http.SameSiteLaxMode, MaxAge: 400 * 24 * 3600})
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	http.Redirect(w, r, "/install", http.StatusSeeOther)
 }
 
 // phoneName is what a device calls itself, in a word: an iPhone, an
