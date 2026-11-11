@@ -4,7 +4,6 @@ import (
 	"context"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -30,21 +29,24 @@ type pictureRead struct {
 // yet, and renames the record when it is named after one. It answers
 // with the renaming, for the change that logs it.
 func (s *Service) readPictures(ctx context.Context, t *schema.Type, rec *store.Record) []records.Op {
-	if s.Picture == nil {
+	if s.Pictures == nil {
 		return nil
 	}
 	var ops []records.Op
 	for _, id := range linkedFiles(rec) {
 		f, err := s.Store.Get(records.FileType, id)
-		if err != nil || f.Fields["kind"] != "image" || strings.TrimSpace(str(f.Fields["text"])+str(f.Fields["description"])) != "" {
+		if err != nil || strings.TrimSpace(str(f.Fields["text"])+str(f.Fields["description"])) != "" {
 			continue
 		}
-		img, ok := s.Picture(id)
+		pics := s.Pictures(id) // a picture, or a scan's pages
 		var got pictureRead
-		if !ok || s.ask(ctx, pictureSystem, "The picture, named "+str(f.Fields["title"])+".", []llm.Image{img}, &got) != nil {
+		if len(pics) == 0 || s.ask(ctx, pictureSystem, "The picture, named "+str(f.Fields["title"])+"; each page of it when there are more.", pics, &got) != nil {
 			continue // a model that cannot see: sorting asks from the words
 		}
 		kept := map[string]any{"text": strings.TrimSpace(got.Text)}
+		if f.Fields["kind"] == "pdf" { // a scan: read now, not "nothing to read"
+			kept["status"], kept["note"] = "ready", "Its pages are pictures; the assistant read their words."
+		}
 		if str(f.Fields["description"]) == "" && got.Description != "" {
 			kept["description"] = strings.TrimSpace(got.Description)
 		}
