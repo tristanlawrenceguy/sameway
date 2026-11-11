@@ -94,7 +94,13 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 		boxed = s.boxed(t, rec)
 	}
 	out := s.glanceHTML(facts, o.Chips, boxed)
-	if !day && !o.Made && !t.HasDay() {
+	// A day read from the thing (when a photo was taken) is not one a
+	// person sets, so a file with none, a document, still says when.
+	read := false
+	if f, ok := t.Field(t.DayField()); ok {
+		read = f.ReadOnly
+	}
+	if !day && !o.Made && (!t.HasDay() || read) {
 		out = strings.TrimSpace(out + " " + s.happenedAfter("", rec.UpdatedAt, now))
 	}
 	if o.Made {

@@ -110,6 +110,7 @@ func (s *Service) ReadKept(id, name, path string, wait bool) {
 	}
 	kind := convert.Kind(name)
 	if kind == "image" || kind == "audio" || kind == "video" {
+		s.keepTaken(id, kind, path) // taken.go
 		s.readNow(id, name, nil)
 		s.writeLater(id) // written down here, when this server does that
 		return
