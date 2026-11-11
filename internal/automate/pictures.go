@@ -22,7 +22,7 @@ var fileLink = regexp.MustCompile(`/t/file/([a-z0-9]{16})`)
 
 // picturesOf are the pictures a record's words link to, up to three.
 func (s *Service) picturesOf(rec *store.Record) []llm.Image {
-	if s.Picture == nil {
+	if s.Pictures == nil {
 		return nil
 	}
 	var out []llm.Image
@@ -30,9 +30,7 @@ func (s *Service) picturesOf(rec *store.Record) []llm.Image {
 		if f, err := s.Store.Get(records.FileType, id); err == nil && strings.TrimSpace(str(f.Fields["text"])) != "" {
 			continue // read already: its words are the record's (record_words.go)
 		}
-		if img, ok := s.Picture(id); ok {
-			out = append(out, img)
-		}
+		out = append(out, s.Pictures(id)...)
 	}
 	return out
 }
