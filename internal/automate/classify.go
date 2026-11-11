@@ -110,7 +110,7 @@ func (s *Service) Classify(ctx context.Context, action *store.Record, typeName, 
 	if len(defs) == 0 {
 		return fail("there are no tags to give: add some, each with what it means, at /t/%s", records.TagType)
 	}
-	read := s.readPictures(ctx, t, rec) // pictures_read.go
+	read := s.readPictures(ctx, t, rec)           // pictures_read.go
 	joined, joinedTo := s.joinPieces(ctx, t, rec) // pieces.go
 	read = append(read, joined...)
 	words := recordWords(s.Store, t, rec)
