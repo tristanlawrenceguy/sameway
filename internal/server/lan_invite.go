@@ -118,7 +118,7 @@ func (s *Server) lanJoin(w http.ResponseWriter, r *http.Request) {
 	s.saveLanDevices(append(s.lanDevices(), lanDevice{ID: token(6), Hash: hashOf(secret), Name: device, Person: p.ID, Added: s.now()}))
 	records.Record(s.app.Store, "human", records.Change{Action: "paired", Component: "device", Detail: device})
 	http.SetCookie(w, &http.Cookie{Name: lanCookie, Value: secret, Path: "/", HttpOnly: true, SameSite: http.SameSiteLaxMode, MaxAge: 400 * 24 * 3600})
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	http.Redirect(w, r, "/install", http.StatusSeeOther) // phone_install.go
 }
 
 // lanVisitor is who a paired device lets in: the owner, or the person it

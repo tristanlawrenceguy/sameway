@@ -25,9 +25,14 @@ func icon(name, kind string) http.HandlerFunc {
 // appManifest lets a browser install Sameway as an app of its own: a
 // window without tabs or an address bar, its icon in the taskbar, the
 // Start menu or the Dock, and on a phone's home screen (app_install.go).
-func appManifest(w http.ResponseWriter, r *http.Request) {
+func appManifest(w http.ResponseWriter, r *http.Request) { manifestStarting(w, "/") }
+
+// manifestStarting is the manifest with the address the app opens at:
+// for a phone on the Wi-Fi, one that pairs the app itself (phone_install.go).
+func manifestStarting(w http.ResponseWriter, start string) {
 	w.Header().Set("Content-Type", "application/manifest+json")
-	w.Write([]byte(`{"name":"Sameway","short_name":"Sameway","start_url":"/","scope":"/","display":"standalone",` +
+	w.Header().Set("Cache-Control", "no-store")
+	w.Write([]byte(`{"name":"Sameway","short_name":"Sameway","start_url":"` + start + `","scope":"/","display":"standalone",` +
 		`"background_color":"#ffffff","theme_color":"#1a45a8","description":"Your workspace, with an assistant",` +
 		`"shortcuts":[{"name":"Save to Sameway","short_name":"Save","description":"Add photos, files, a link or a few words","url":"/share"}],` +
 		`"share_target":{"action":"/share","method":"POST","enctype":"multipart/form-data","params":{"title":"title","text":"text","url":"url","files":[{"name":"files","accept":["image/*","application/pdf","text/*","audio/*","video/*"]}]}},` +

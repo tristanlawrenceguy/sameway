@@ -13,7 +13,7 @@ func TestSamewayInstallsAsAnApp(t *testing.T) {
 	t.Parallel()
 	_, h := newApp(t)
 	page := get(t, h, "/").Body.String()
-	for _, want := range []string{`<link rel="manifest" href="/manifest.webmanifest">`, `<link rel="apple-touch-icon" href="/icon-square-180.png">`} {
+	for _, want := range []string{`<link rel="manifest" href="/manifest.webmanifest" crossorigin="use-credentials">`, `<link rel="apple-touch-icon" href="/icon-square-180.png">`} {
 		if !strings.Contains(page, want) {
 			t.Errorf("the page names %s", want)
 		}

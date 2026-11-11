@@ -8,6 +8,11 @@
   font: inherit;
 }
 .sw-search__field:focus-visible { outline: var(--sw-focus-width) solid var(--sw-color-focus); outline-offset: var(--sw-focus-offset); }
+/* In a bar, the field and its button keep to one line, however narrow:
+   on a phone the button dropped under the field and the header doubled. */
+.sw-canvas--strip .sw-search { flex-wrap: nowrap; }
+.sw-canvas--strip .sw-search__field { min-width: 0; }
+.sw-canvas--strip .sw-search > .sw-button { flex: none; }
 /* In a bar, the label is the button: one word less on the resting page. */
 .sw-canvas--strip .sw-search__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 [data-size="compact"] .sw-search__field { min-width: 7rem; min-height: var(--sw-size-target); }
