@@ -35,6 +35,10 @@ fields:
   description:
     type: text
     description: What the file is, or for an image what it shows, in your words. An image needs one for anyone who cannot see it.
+  tags:
+    type: list
+    of: string
+    description: Keywords for finding the file, such as receipts or holiday; sorting can give them.
   status:
     type: enum
     values: [ready, converting, failed]

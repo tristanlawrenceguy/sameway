@@ -93,8 +93,9 @@ func assertInert(t *testing.T, where, payload, out string) {
 		return
 	}
 	doc.Walk(func(n *html.Node) {
-		// The image component's own picture is the one img a prop may bring.
-		own := n.Data == "img" && len(n.Attr) > 0 && n.Attr[0].Key == "class" && n.Attr[0].Val == "sw-image__img"
+		// The image component's own picture, and a gallery's, are the
+		// imgs a prop may bring; their src is checked below like any.
+		own := n.Data == "img" && len(n.Attr) > 0 && n.Attr[0].Key == "class" && (n.Attr[0].Val == "sw-image__img" || n.Attr[0].Val == "sw-collection__picture")
 		if n.Data == "script" || (n.Data == "img" && !own) {
 			t.Errorf("%s: payload %q produced a <%s> element:\n%s", where, payload, n.Data, out)
 		}

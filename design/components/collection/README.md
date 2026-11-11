@@ -28,6 +28,12 @@ in columns, which scroll sideways on a phone in a box a keyboard can reach;
 with `by` (a task's status: To do, Doing, Done), in the order the field lists
 them, each saying how many it holds, and a column for those with none.
 A line over the board names every column with its count and leads to it.
+`as: gallery` shows each record by its picture with its title under it, the
+whole tile one link: a photo is itself, a video its still, a note photos
+were shared into the first picture it links to. The picture's words for
+someone who cannot see it are the file's description, which the assistant
+writes when it reads a picture; `where: ["tags=receipts"]` on files shows
+those sorted as receipts.
 Each card has a Move form: its column picked from a list and a Move
 button (the move component), which saves the field like any edit, comes
 back to that button focused in the card's new column, and says "House

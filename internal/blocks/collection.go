@@ -117,6 +117,9 @@ func (ws *Workspace) collectionItems(out map[string]any, t *schema.Type, recs []
 		if told[rec.ID] != "" {
 			item["context"] = told[rec.ID]
 		}
+		if props["as"] == "gallery" {
+			item["picture"], item["alt"] = records.PictureOf(ws.Store, t, rec)
+		}
 		if len(show) > 0 {
 			item["fields"] = ws.fieldsOf(t, rec, show)
 		} else if meta := records.GlanceText(ws.Store, t, rec, ws.now(), ws.H24(), in); meta != "" && by == nil {

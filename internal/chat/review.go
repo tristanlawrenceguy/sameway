@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
@@ -20,10 +21,13 @@ import (
 // model server's turn that changed something is shown, once, what the
 // turn changed in the person's own time, beside what they asked, and
 // finishes or answers again. A turn that changed nothing (an answer, or a
-// question to the person) is left alone.
+// question to the person) is left alone. The check is of this message
+// only: told to finish "what the person asked", the model went back to
+// an earlier message still waiting for the person's yes and removed a
+// block nobody asked it to.
 
 // reviewNote is that word to the model, or "" when the reply stands.
-func (s *Service) reviewNote(changes []records.Change) string {
+func (s *Service) reviewNote(asked string, changes []records.Change) string {
 	if len(changes) == 0 {
 		return ""
 	}
@@ -41,8 +45,8 @@ func (s *Service) reviewNote(changes []records.Change) string {
 	if len(lines) > 20 {
 		lines = append(lines[:20], fmt.Sprintf("- and %d more", len(lines)-20))
 	}
-	return fromSameway("before the person reads your reply, check it. This turn changed, in the person's time:\n" + strings.Join(lines, "\n") +
-		"\nCompare that with every part of what the person asked and with what your reply says. If something they asked is not done, or not as they said it, do it now with the tools. Then give your reply again, saying only what was done.")
+	return fromSameway("before the person reads your reply, check it against what they asked in this message: " + strconv.Quote(trim.Clip(asked, 300)) + ". This turn changed, in the person's time:\n" + strings.Join(lines, "\n") +
+		"\nCompare that with every part of this message and with what your reply says. If something in it is not done, or not as they said it, do it now with the tools. Leave anything asked in earlier messages as it is. Then give your reply again, saying only what was done.")
 }
 
 // opSaid is one op in a line: made, changed or removed, the record's
