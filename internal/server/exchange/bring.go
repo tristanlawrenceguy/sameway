@@ -52,7 +52,13 @@ func (s *Service) bring(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, bringLimit)
 	f, hdr, err := r.FormFile("file")
 	if err != nil {
-		s.Failed(w, r, "Nothing brought in", errors.New("choose the file the app made"), "/bring")
+		why := errors.New("choose the file the app made")
+		// A ChatGPT export with years of pictures in it is often bigger.
+		var tooBig *http.MaxBytesError
+		if errors.As(err, &tooBig) {
+			why = errors.New("this file is bigger than 200 MB, more than Sameway takes at once. From ChatGPT or Claude, open the zip and bring the conversations.json in it")
+		}
+		s.Failed(w, r, "Nothing brought in", why, "/bring")
 		return
 	}
 	defer f.Close()
