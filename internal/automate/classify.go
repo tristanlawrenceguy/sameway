@@ -56,22 +56,6 @@ func Tags(st *store.Store, only []string) []Tag {
 	return out
 }
 
-// recordWords is a record as the model reads it: its name, then each of
-// its words, clipped.
-func recordWords(st *store.Store, t *schema.Type, rec *store.Record) string {
-	var b strings.Builder
-	b.WriteString(records.Name(st, t, rec))
-	for _, f := range t.Fields {
-		if f.Name == "tags" || f.Name == t.Title || f.ReadOnly { // what Sameway keeps is not what the record says
-			continue
-		}
-		if v, ok := rec.Fields[f.Name].(string); ok && strings.TrimSpace(v) != "" && (f.Type == "string" || f.Type == "text" || f.Type == "markdown" || f.Type == "datetime") {
-			b.WriteString("\n" + schema.Words(f.Name) + ": " + v)
-		}
-	}
-	return clipRunes(b.String(), 4000)
-}
-
 var anyJSON = regexp.MustCompile(`(?s)[\[{].*[\]}]`)
 
 // askJSON puts one narrow question to the model, thinking off, and reads the
@@ -235,13 +219,6 @@ func (s *Service) pickTags(ctx context.Context, action *store.Record, defs []Tag
 		}
 	}
 	return picks, nil
-}
-
-func clipRunes(s string, n int) string {
-	if r := []rune(s); len(r) > n {
-		return string(r[:n])
-	}
-	return s
 }
 
 // outcome is what becomes of one tag picked, after the check.

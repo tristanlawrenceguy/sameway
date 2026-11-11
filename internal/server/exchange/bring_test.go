@@ -79,3 +79,58 @@ func TestConversationsAreBroughtFromChatGPT(t *testing.T) {
 		t.Errorf("the conversation is a note: %+v", notes)
 	}
 }
+
+// bringChats posts a ChatGPT export to Bring your things, asking for
+// suggestions or not.
+func bringChats(t *testing.T, h http.Handler, suggest bool) string {
+	t.Helper()
+	var body bytes.Buffer
+	mw := multipart.NewWriter(&body)
+	if suggest {
+		mw.WriteField("suggest", "yes")
+	}
+	fw, _ := mw.CreateFormFile("file", "conversations.json")
+	fw.Write([]byte(`[{"title":"Moving house","create_time":1760000000,"current_node":"a","mapping":{"a":{"parent":null,"message":{"author":{"role":"user"},"content":{"parts":["Book the van for the 14th"]}}}}}]`))
+	mw.Close()
+	r := httptest.NewRequest(http.MethodPost, "/bring", &body)
+	r.Header.Set("Content-Type", mw.FormDataContentType())
+	r.Header.Set("Origin", "http://example.com")
+	r.Host = "example.com"
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, r)
+	return after(t, h, w).Body.String()
+}
+
+// Asked to, Sameway looks through conversations brought for what is still
+// to do: an action set up once, before they come in, that suggests a task
+// from each on Today; not asked, no action.
+func TestConversationsBroughtCanBeLookedThroughForWhatIsToDo(t *testing.T) {
+	t.Parallel()
+	a, h := newApp(t)
+	if page := get(t, h, "/bring").Body.String(); !strings.Contains(page, `name="suggest"`) {
+		t.Fatalf("the page offers to look through them: %s", truncate(page))
+	}
+	if page := bringChats(t, h, false); strings.Contains(page, "comes on Today") {
+		t.Errorf("not asked, nothing is said of it: %s", truncate(page))
+	}
+	suggesting := func() int {
+		n := 0
+		acts, _ := a.Store.List(records.ActionType, store.ListOptions{})
+		for _, x := range acts {
+			if x.Fields["kind"] == "suggest" && x.Fields["what"] == "note" {
+				n++
+			}
+		}
+		return n
+	}
+	if suggesting() != 0 {
+		t.Fatal("not asked, no action")
+	}
+	if page := bringChats(t, h, true); !strings.Contains(page, "What is still to do in them comes on Today") {
+		t.Errorf("asked, it says where the suggestions come: %s", truncate(page))
+	}
+	bringChats(t, h, true)
+	if n := suggesting(); n != 1 {
+		t.Errorf("one action, set up once: %d", n)
+	}
+}
