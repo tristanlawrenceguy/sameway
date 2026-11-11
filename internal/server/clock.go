@@ -67,7 +67,7 @@ func (s *Server) ring(now time.Time) []*store.Record {
 	for _, rec := range recs {
 		at, _ := rec.Fields["at"].(string)
 		ts, err := time.Parse(time.RFC3339, at)
-		if err != nil || ts.After(now) {
+		if err != nil || ts.After(now) || rec.Fields["home"] == true { // home rings on arriving (home_wifi.go)
 			continue
 		}
 		// Ringing is the system's: written as an op, logged as rang, and
