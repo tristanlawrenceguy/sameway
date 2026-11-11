@@ -170,14 +170,19 @@ func compare(kind string, v any, op, want string, now time.Time) bool {
 	switch kind {
 	case "datetime":
 		have, ok1 := v.(string)
-		ht, err := time.Parse(time.RFC3339, have)
-		wt, day, ok2 := parseDate(want, now)
-		if !ok1 || err != nil || !ok2 {
+		ht, _, ok3 := storedDate(have, now)
+		wt, day, ok2 := parseDate(strings.TrimPrefix(want, "~"), now) // due=~Thursday, as a model writes "about"
+		if !ok1 || !ok3 || !ok2 {
 			return false
 		}
-		if day && (op == "=" || op == "!=") {
-			same := ht.In(now.Location()).Format("2006-01-02") == wt.In(now.Location()).Format("2006-01-02")
-			return same == (op == "=")
+		// A whole day is a day: due<=Thursday holds what is due on
+		// Thursday, and due~Thursday is any time that day. A model wrote
+		// the week's bounds as days, and the tasks on the last were missed.
+		if day {
+			if op == "~" {
+				op = "="
+			}
+			return ordered(strings.Compare(ht.Format("2006-01-02"), wt.In(now.Location()).Format("2006-01-02")), op)
 		}
 		return ordered(ht.Compare(wt), op)
 	case "int", "float":

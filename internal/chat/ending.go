@@ -2,15 +2,18 @@ package chat
 
 import (
 	"context"
+	"log"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 // endings is what a turn has been asked again already as it ended: each
-// is asked once.
+// is asked once. reply is the reply a review is checking.
 type endings struct {
 	nudged, corrected, reviewed bool
+	reply                       string
 }
 
 // ending is a turn's reply when the model answers in words, or what to
@@ -42,9 +45,24 @@ func (s *Service) ending(ctx context.Context, reply, said string, changes []reco
 	// what was asked (review.go).
 	if server && !end.reviewed {
 		if note := s.reviewNote(changes); note != "" {
-			end.reviewed = true
+			end.reviewed, end.reply = true, reply
 			return "", []llm.Message{{Role: llm.RoleAssistant, Content: reply}, {Role: llm.RoleUser, Content: note}}
 		}
 	}
 	return reply, nil
+}
+
+// broke ends a turn whose model did not answer. Stopped, what it did
+// stays. While a reply it had already given was being checked, that
+// reply stands: the work is done, and an error with Send again would
+// have the person do it twice.
+func (s *Service) broke(ctx context.Context, err error, said string, changes []records.Change, tools []map[string]any, end endings) (*store.Record, error) {
+	if end.reply != "" {
+		log.Printf("chat: the reply stands; checking it failed: %v", err)
+		return s.reply(said, end.reply, changes, tools)
+	}
+	if ctx.Err() != nil {
+		return s.reply(said, stoppedText, changes, tools)
+	}
+	return s.failAfter(said, err, changes, tools)
 }

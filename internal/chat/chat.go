@@ -173,11 +173,7 @@ func (s *Service) sendTurn(ctx context.Context, canvas, text, fileID string, on 
 	for {
 		resp, err := s.complete(ctx, req, on)
 		if err != nil {
-			if ctx.Err() != nil {
-				// The person stopped the turn; what it did stays.
-				return s.reply(said, stoppedText, changes, tools)
-			}
-			return s.failAfter(said, err, changes, tools)
+			return s.broke(ctx, err, said, changes, tools, end) // ending.go
 		}
 		if len(resp.ToolCalls) == 0 {
 			reply, again := s.ending(ctx, strings.TrimSpace(resp.Text), said, changes, &end) // ending.go
