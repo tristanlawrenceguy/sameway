@@ -12,6 +12,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 // readsLetter tags a record to do only when it is shown the picture of
@@ -65,5 +66,51 @@ func TestAPhotoSharedIsReadWhenItIsSorted(t *testing.T) {
 		if blind && strings.Contains(tags, "to do") {
 			t.Errorf("a model that cannot see is asked from the words: %s", tags)
 		}
+	}
+}
+
+// asksWords keeps each question it is put.
+type asksWords struct {
+	mu    sync.Mutex
+	asked []string
+}
+
+func (m *asksWords) Name() string { return "words" }
+func (m *asksWords) Complete(_ context.Context, req llm.Request) (*llm.Response, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.asked = append(m.asked, req.Messages[0].Content)
+	return &llm.Response{Text: `{"tags": []}`}, nil
+}
+
+// A bill shared as a file, with no email connected, sets sorting up, and
+// sorting reads the words of the file the note links to.
+func TestAFileSharedIsReadForWhatItAsks(t *testing.T) {
+	t.Parallel()
+	a, h := newApp(t)
+	model := &asksWords{}
+	a.Chat.Provider = model
+	var buf bytes.Buffer
+	mw := multipart.NewWriter(&buf)
+	fw, _ := mw.CreateFormFile("files", "bill.txt")
+	fw.Write([]byte("Water bill: 48.20 to pay by 3 December."))
+	mw.Close()
+	do(t, h, http.MethodPost, "/share", &buf, mw.FormDataContentType())
+	note := lastNote(t, a)
+	acts, _ := a.Store.List(records.ActionType, store.ListOptions{})
+	var sort *store.Record
+	for _, act := range acts {
+		if act.Fields["kind"] == "classify" && act.Fields["what"] == "note" {
+			sort = act
+		}
+	}
+	if sort == nil {
+		t.Fatalf("sharing sets up sorting what is shared: %d actions", len(acts))
+	}
+	a.Automate.Classify(context.Background(), sort, "note", note.ID)
+	model.mu.Lock()
+	defer model.mu.Unlock()
+	if !strings.Contains(strings.Join(model.asked, "|"), "48.20 to pay by 3 December") {
+		t.Errorf("the file's words are read when sorted: %q", model.asked)
 	}
 }
