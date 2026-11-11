@@ -162,7 +162,7 @@ func (s *Service) askAction(a toolArgs, _ llm.ToolCall) (toolResult, bool) {
 	press := "The assistant wants to press your " + quoted(title) + " button now."
 	var q question
 	switch kind, _ := rec.Fields["kind"].(string); kind {
-	case "arrangement", "message":
+	case "arrangement", "message", "classify", "suggest":
 		return toolResult{}, false // inside the workspace, and undone like any change
 	case "command":
 		line, _ := rec.Fields["command"].(string)
