@@ -26,7 +26,7 @@ func (s *Server) sharePage(w http.ResponseWriter, r *http.Request) {
 	b.WriteString(`<h2>From your browser</h2><p>Drag this link to your bookmarks bar: <a class="sw-link" href="` + esc(bookmark) + `">Save to Sameway</a>. On any page, press it to save the page here, with any words you selected.</p>`)
 	b.WriteString(`<p>Without a mouse, or on an iPhone or iPad: bookmark any page, then edit that bookmark and paste this as its address.</p>`)
 	b.WriteString(string(s.part(ui.TextField{Label: "The bookmark's address", Name: "bookmark", Value: bookmark, Spellcheck: ui.Bool(false)})))
-	b.WriteString(`<h2>From the Share menu</h2><p>On an Android phone, or a computer with Chrome or Edge, install Sameway as an app (<a class="sw-link" href="/help#help-app">how</a>): it is then in the Share menu of every app, so a page, a photo or some words shared to Sameway are saved as a note. An iPhone does not let a web app into its Share menu, so there use the bookmark above in Safari.</p>`)
+	b.WriteString(`<h2>From the Share menu</h2><p>On an Android phone, or a computer with Chrome or Edge, install Sameway as an app (<a class="sw-link" href="/help#help-app">how</a>): it is then in the Share menu of every app, so a page, a photo or some words shared to Sameway are saved as a note. An iPhone does not let a web app into its Share menu, but it lets in a Shortcut that sends what is shared here.</p>` + s.shortcutOffer(r))
 	s.page(w, r, "Save to Sameway", template.HTML(b.String()), pageOptions{Lede: "Keep a page, a photo or a few words the moment you see them."})
 }
 
