@@ -100,7 +100,7 @@ type chosen struct {
 // Classify gives the record the tags that fit, as the action says: from
 // its tags, all at once or each apart, checked against the person's past
 // choices when it asks. It says what it gave.
-func (s *Service) Classify(ctx context.Context, action *store.Record, typeName, id string) Result {
+func (s *Service) Classify(ctx context.Context, action *store.Record, typeName, id string) (r Result) {
 	t, ok := s.Store.Types().Get(typeName)
 	rec, err := s.Store.Get(typeName, id)
 	if !ok || err != nil {
@@ -113,6 +113,7 @@ func (s *Service) Classify(ctx context.Context, action *store.Record, typeName, 
 	read := s.readPictures(ctx, t, rec)           // pictures_read.go
 	joined, joinedTo := s.joinPieces(ctx, t, rec) // pieces.go
 	read = append(read, joined...)
+	defer func() { r = withRead(r, action, t, rec, read) }()
 	words := recordWords(s.Store, t, rec)
 	var asked, alone []Tag
 	for _, d := range defs {
@@ -167,6 +168,18 @@ func (s *Service) Classify(ctx context.Context, action *store.Record, typeName, 
 	}
 	return Result{Text: name + ": " + strings.Join(said, "; "), Answer: strings.Join(given, ", "),
 		Change: &records.Change{Action: "tagged", Component: t.Name, ID: rec.ID, Detail: name + ": " + strings.Join(said, "; "), By: title, Href: "/t/" + t.Name + "/" + rec.ID, Ops: ops}}
+}
+
+// withRead logs what reading a record's pictures, or joining it to the
+// piece before, changed when the run logs nothing else: a run that tagged
+// nothing, or failed after, renamed the note, or took the earlier piece
+// away, with nothing in Activity to undo it by.
+func withRead(r Result, action *store.Record, t *schema.Type, rec *store.Record, read []records.Op) Result {
+	if r.Change == nil && len(read) > 0 {
+		by, _ := action.Fields["title"].(string)
+		r.Change = &records.Change{Action: "updated", Component: t.Name, ID: rec.ID, Detail: str(rec.Fields[t.Title]), By: by, Href: "/t/" + t.Name + "/" + rec.ID, Ops: read}
+	}
+	return r
 }
 
 // giveTag puts a tag on a record that has a tags list, once, and answers
