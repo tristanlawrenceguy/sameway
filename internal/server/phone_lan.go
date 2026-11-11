@@ -35,6 +35,9 @@ type lanDevice struct {
 	Added time.Time `json:"added"`
 	// Person is who it was invited for (lan_invite.go); none is the owner's.
 	Person string `json:"person,omitempty"`
+	// Only is what a key lets in when it is not a phone: a Shortcut's
+	// lets in a share and nothing else (phone_shortcut.go).
+	Only string `json:"only,omitempty"`
 }
 
 func token(n int) string {
@@ -71,10 +74,19 @@ func (s *Server) LAN(next http.Handler) http.Handler {
 			s.lanPair(w, r)
 			return
 		}
+		if k := r.URL.Query().Get("key"); k != "" && r.Method == http.MethodPost && r.URL.Path == "/share" {
+			h := hashOf(k)
+			for _, d := range s.lanDevices() {
+				if v, ok := s.lanVisitor(d); ok && d.Hash == h && d.Only == shortcutOnly {
+					next.ServeHTTP(w, r.WithContext(records.WithVisitor(r.Context(), v)))
+					return
+				}
+			}
+		}
 		if c, err := r.Cookie(lanCookie); err == nil {
 			h := hashOf(c.Value)
 			for _, d := range s.lanDevices() {
-				if d.Hash != h {
+				if d.Hash != h || d.Only != "" {
 					continue
 				}
 				v, ok := s.lanVisitor(d)

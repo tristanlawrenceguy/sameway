@@ -117,6 +117,7 @@ func (s *Server) showWorkspaces(w http.ResponseWriter, r *http.Request, problem 
 	b.WriteString(s.quitSection())              // quit.go
 	b.WriteString(`</section>`)
 	b.WriteString(s.phoneSection(r))  // phone_lan_page.go
+	b.WriteString(s.photosSection(r)) // photos_folder.go
 	b.WriteString(s.accessSection(r)) // access_list.go
 
 	others := s.others()
