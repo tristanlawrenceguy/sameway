@@ -92,11 +92,23 @@ func (s *Service) earlierShares(t *schema.Type, rec *store.Record) []*store.Reco
 	var out []*store.Record
 	for _, e := range all {
 		gap := rec.CreatedAt.Sub(e.CreatedAt)
-		if e.CreatedAt.Before(rec.CreatedAt) && gap <= piecesWithin && hasTag(e, "shared") && len(out) < 5 {
+		if e.CreatedAt.Before(rec.CreatedAt) && gap <= piecesWithin && hasTag(e, "shared") && !linksTo(rec, t.Name, e.ID) && len(out) < 5 {
 			out = append(out, e)
 		}
 	}
 	return out
+}
+
+// linksTo says whether a record's words link to another: one set apart
+// from photos shared together says what it was shared with, and is not
+// joined back to it.
+func linksTo(rec *store.Record, typeName, id string) bool {
+	for _, v := range rec.Fields {
+		if strings.Contains(str(v), "/t/"+typeName+"/"+id+")") {
+			return true
+		}
+	}
+	return false
 }
 
 func hasTag(rec *store.Record, tag string) bool {
