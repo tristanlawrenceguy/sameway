@@ -39,6 +39,11 @@ fields:
     type: list
     of: string
     description: Keywords for finding the file, such as receipts or holiday; sorting can give them.
+  taken:
+    label: Taken
+    type: datetime
+    description: When the photo or video was taken, read from the file itself; empty when it does not say. Kept by the system.
+    readonly: true
   status:
     type: enum
     values: [ready, converting, failed]

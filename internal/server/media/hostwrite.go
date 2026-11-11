@@ -67,6 +67,7 @@ func (s *Service) WriteDownJobs() []runner.Job {
 			return nil
 		}},
 		s.leftOverJob(s.Now()), // left_over.go
+		s.takenJob(),           // taken.go
 	}
 }
 

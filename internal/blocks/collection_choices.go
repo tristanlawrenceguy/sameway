@@ -84,7 +84,10 @@ func collectionChoices(t *schema.Type, where []string, order, by string) []choic
 	if d, ok := t.Field(t.DayField()); ok {
 		day = d
 	}
-	if day != nil {
+	if day != nil && day.ReadOnly { // read from the thing: when it happened
+		sort.options = append(sort.options, option{value: "-" + day.Name, label: day.Display() + ", newest first", order: "-" + day.Name},
+			option{value: day.Name, label: day.Display() + ", oldest first", order: day.Name})
+	} else if day != nil {
 		sort.options = append(sort.options, option{value: day.Name, label: day.Display() + " soonest first", order: day.Name})
 	}
 	if base := baseOrder(order); !hasOption(sort.options, base) {
@@ -106,7 +109,9 @@ func collectionChoices(t *schema.Type, where []string, order, by string) []choic
 		}
 		out = append(out, c)
 	}
-	if day != nil && !fixed[day.Name] {
+	if day != nil && day.ReadOnly && !fixed[day.Name] {
+		out = append(out, pastChoice(day))
+	} else if day != nil && !fixed[day.Name] {
 		name := day.Display()
 		out = append(out, choice{param: day.Name, label: name, options: []option{
 			{label: "Any time"},
@@ -242,4 +247,17 @@ func offered(props map[string]any, at *Page, block string, limit, matched int) b
 		}
 	}
 	return limit > fewEnough && matched > fewEnough
+}
+
+// pastChoice narrows by a day read from the thing itself, such as when a
+// photo was taken: it is behind, so the choices look back, never ahead.
+func pastChoice(day *schema.Field) choice {
+	name := day.Display()
+	return choice{param: day.Name, label: name, options: []option{
+		{label: "Any time"},
+		{value: "week", label: name + " in the last 7 days", where: []string{day.Name + ">=-7d"}},
+		{value: "month", label: name + " in the last 30 days", where: []string{day.Name + ">=-30d"}},
+		{value: "year", label: name + " in the last year", where: []string{day.Name + ">=-365d"}},
+		{value: "older", label: name + " more than a year ago", where: []string{day.Name + "<-365d"}},
+	}}
 }
