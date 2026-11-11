@@ -22,7 +22,7 @@ func (s *Server) sharePage(w http.ResponseWriter, r *http.Request) {
 			s.part(ui.TextField{Label: "Link", Name: "url", ID: "field-url", Type: ui.URL, Value: q.Get("url"), Spellcheck: ui.Bool(false), Hint: "A web page's words are read and kept with it, so it can be found and read later even if the page goes."}) +
 			// On a phone, choosing files offers the camera and the photo
 			// library too; several at once are one note, sorted (pieces.go).
-			`<div class="sw-field"><label class="sw-field__label" for="share-files">Photos and files</label><p class="sw-field__hint" id="share-files-hint">On a phone this takes a photo or picks from your library; choose several at once.</p><input class="sw-field__input" id="share-files" type="file" name="files" multiple aria-describedby="share-files-hint"></div>`+
+			`<div class="sw-field"><label class="sw-field__label" for="share-files">Photos and files</label><p class="sw-field__hint" id="share-files-hint">On a phone this takes a photo or picks from your library; choose several at once.</p><input class="sw-field__input" id="share-files" type="file" name="files" multiple aria-describedby="share-files-hint"></div>` +
 			s.component("textarea", map[string]any{"label": "Words", "name": "text", "value": q.Get("text"), "rows": 4}),
 		Button: &ui.Button{Label: "Save as a note"}})))
 	bookmark := bookmarklet(s.origin(r))
