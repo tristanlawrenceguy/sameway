@@ -77,13 +77,14 @@ func (s *Service) bring(w http.ResponseWriter, r *http.Request) {
 		s.suggestFromChats(r, strings.ToLower(got.From)) // bring_chats.go: before, so each note sets it off
 	}
 	var said []string
-	to := "/"
+	to, already := "/", 0
 	for _, kind := range []string{"task", "note"} {
 		tb := got.Kinds[kind]
 		t, ok := s.app.Types.Get(kind)
 		if tb == nil || !ok {
 			continue
 		}
+		already += tb.Unseen(s.app.Store, t)
 		report := ingest.Import(s.app.Store, t, tb, ingest.Guess(t, tb.Columns))
 		if report.Made == 0 {
 			continue
@@ -95,11 +96,18 @@ func (s *Service) bring(w http.ResponseWriter, r *http.Request) {
 			to = "/t/" + t.Name
 		}
 	}
+	if len(said) == 0 && already > 0 {
+		s.TellAt(w, r, web.Outcome{Title: "Nothing new from " + got.From, Text: "Everything in the file was brought in before."}, "/bring")
+		return
+	}
 	if len(said) == 0 {
 		s.Failed(w, r, "Nothing brought in", errors.New("the file from "+got.From+" had nothing in it to bring"), "/bring")
 		return
 	}
 	text := strings.Join(said, " and ") + ". Undo in Activity takes each kind away again."
+	if already > 0 {
+		text += fmt.Sprintf(" %d brought in before were left out.", already)
+	}
 	if got.From == "ChatGPT" || got.From == "Claude" {
 		// Each conversation is a note tagged with where it came from; what
 		// was planned in them is still words until the assistant makes it
