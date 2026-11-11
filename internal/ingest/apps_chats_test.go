@@ -3,6 +3,7 @@ package ingest
 import (
 	"strings"
 	"testing"
+	"unicode/utf8"
 )
 
 // Conversations exported from ChatGPT and Claude come in as notes, one a
@@ -48,5 +49,23 @@ func TestChatsFromChatGPTAndClaudeComeInAsNotes(t *testing.T) {
 
 	if _, err := Recognise("conversations.json", []byte(`[{"title":"x","current_node":"r","mapping":{"r":{"parent":null,"message":null}}}]`)); err == nil || !strings.Contains(err.Error(), "no conversations with anything said") {
 		t.Errorf("an export with nothing said says so: %v", err)
+	}
+}
+
+// A very long conversation keeps its start and its end, where what was
+// decided is, and stays whole words in any script.
+func TestALongConversationKeepsItsEnd(t *testing.T) {
+	t.Parallel()
+	gpt := `[{"title":"Long","create_time":1760000000,"current_node":"b","mapping":{
+		"r":{"parent":null,"message":null},
+		"a":{"parent":"r","message":{"author":{"role":"user"},"content":{"parts":["` + strings.Repeat("Καλημέρα. ", 30000) + `"]}}},
+		"b":{"parent":"a","message":{"author":{"role":"assistant"},"content":{"parts":["Book the doctor for Tuesday."]}}}}}]`
+	b, err := Recognise("conversations.json", []byte(gpt))
+	if err != nil || b.Count("note") != 1 {
+		t.Fatalf("%v %+v", err, b)
+	}
+	body := b.Kinds["note"].Rows[0]["body"]
+	if !utf8.ValidString(body) || !strings.HasSuffix(body, "Book the doctor for Tuesday.") || !strings.Contains(body, "the middle of this conversation is in the export") || len(body) > maxChatBody+200 {
+		t.Errorf("start and end, whole letters: %d bytes, ends %q", len(body), body[len(body)-60:])
 	}
 }
