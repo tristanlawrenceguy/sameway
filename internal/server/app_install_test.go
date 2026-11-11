@@ -34,7 +34,7 @@ func TestSamewayInstallsAsAnApp(t *testing.T) {
 		}
 	}
 	help := get(t, h, "/help").Body.String()
-	if !strings.Contains(help, "data-install hidden") || !strings.Contains(help, "Add to Home Screen") {
+	if !strings.Contains(help, "data-install hidden") || !strings.Contains(help, `href="/install"`) {
 		t.Errorf("Help offers it: %s", truncate(help))
 	}
 	// Pressed, the button asks the browser to install: behave-page.mjs.
