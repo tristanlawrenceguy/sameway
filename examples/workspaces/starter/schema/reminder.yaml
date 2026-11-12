@@ -21,7 +21,7 @@ fields:
   home:
     label: When I get home
     type: bool
-    description: "Rings when your phone is next back on the home Wi-Fi, instead of at a time: for \"remind me when I get home\". It waits from its Rings time; set that to now."
+    description: "Rings when your phone is next back on the home Wi-Fi, instead of at a time: for \"remind me when I get home\". It waits from its Rings time; set that to now. It needs your phone paired, under On your phone on Workspaces; without that, it never rings."
   kind:
     type: enum
     values: [alarm, timer]
