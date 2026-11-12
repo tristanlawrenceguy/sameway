@@ -14,12 +14,14 @@ import (
 // every page action name its tool (server/tools_parity_test.go).
 
 // Home is what the server does for the assistant beyond the workspace's
-// records: the machine's speech-to-text and the other workspaces on it.
+// records: the machine's speech-to-text, the other workspaces on it and
+// the person's files there.
 type Home interface {
 	WriteDown(fileID string) (string, error)
 	MakeWorkspace(name string, copy bool) (string, error)
 	OpenWorkspace(name string) (string, error)
 	RestoreWorkspace(name string) (string, error)
+	FindFiles(words string) (string, error)
 }
 
 // workspaceName is a workspace, as an argument.
@@ -66,14 +68,22 @@ var homeOps = []Op{
 		Run:    func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.homeTool(call) },
 		Tool: llm.Tool{Name: "take_agent_away", Description: "Take an agent's key away, so it can no longer reach this workspace, when the person asks. Keys are made at the command line with sameway agent add, never here, so a key never passes through the conversation. Undoing this lets the agent back in with the same key.",
 			Schema: obj(map[string]any{"name": map[string]any{"type": "string", "description": "The agent's name, as the log calls it."}}, "name")}},
+	{Title: "Find a file on this computer", Traits: Traits{ReadOnly: true, Idempotent: true},
+		Access: ForOwner,
+		Words:  []string{"computer", "laptop", "documents", "downloads", "desktop", "my files"},
+		Doing:  saying("Looking on this computer"),
+		Run:    func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.homeTool(call) },
+		Tool: llm.Tool{Name: "find_on_computer", Description: "Find files on this computer that are not in Sameway yet, by words in their names, in the person's Documents, Downloads and Desktop. Each found says its name, folder, size and when it changed, and the search page where the person presses Bring it in to have it here: only they bring a file in, so pass the link on. It changes nothing.",
+			Schema: obj(map[string]any{"words": map[string]any{"type": "string", "description": "Words in the file's name, such as boiler warranty."}}, "words")}},
 }
 
 // homeTool runs one of the tools above, or says the tool is unknown.
 func (s *Service) homeTool(call llm.ToolCall) toolResult {
 	var args struct {
-		File string `json:"file"`
-		Name string `json:"name"`
-		Copy bool   `json:"copy"`
+		File  string `json:"file"`
+		Name  string `json:"name"`
+		Copy  bool   `json:"copy"`
+		Words string `json:"words"`
 	}
 	if len(call.Args) > 0 {
 		if err := json.Unmarshal(call.Args, &args); err != nil {
@@ -99,6 +109,7 @@ func (s *Service) homeTool(call llm.ToolCall) toolResult {
 		"add_workspace":     func() (string, error) { return s.home().MakeWorkspace(args.Name, args.Copy) },
 		"open_workspace":    func() (string, error) { return s.home().OpenWorkspace(args.Name) },
 		"restore_workspace": func() (string, error) { return s.home().RestoreWorkspace(args.Name) },
+		"find_on_computer":  func() (string, error) { return s.home().FindFiles(args.Words) },
 	}[call.Name]
 	if did == nil {
 		return fail("unknown tool %s", call.Name)
@@ -127,3 +138,4 @@ func (noHome) WriteDown(string) (string, error)           { return "", errNoHome
 func (noHome) MakeWorkspace(string, bool) (string, error) { return "", errNoHome }
 func (noHome) OpenWorkspace(string) (string, error)       { return "", errNoHome }
 func (noHome) RestoreWorkspace(string) (string, error)    { return "", errNoHome }
+func (noHome) FindFiles(string) (string, error)           { return "", errNoHome }

@@ -60,15 +60,16 @@ func TestReadOnlyToolsChangeNothing(t *testing.T) {
 	listed := answers(t, a, `{"jsonrpc":"2.0","id":1,"method":"tools/list"}`)
 
 	args := map[string]string{
-		"describe":     `{}`,
-		"look":         `{"path":"/t/task"}`,
-		"find_records": `{"type":"task"}`,
-		"get_record":   `{"type":"task","id":"` + task.ID + `"}`,
-		"search":       `{"query":"plumber"}`,
-		"details":      `{"name":"note"}`,
-		"what_waits":   `{}`,
-		"today":        `{}`,
-		"try":          `{"name":"update_record","arguments":{"type":"task","id":"` + task.ID + `","fields":{"done":true}}}`,
+		"describe":         `{}`,
+		"look":             `{"path":"/t/task"}`,
+		"find_records":     `{"type":"task"}`,
+		"find_on_computer": `{"words":"warranty"}`,
+		"get_record":       `{"type":"task","id":"` + task.ID + `"}`,
+		"search":           `{"query":"plumber"}`,
+		"details":          `{"name":"note"}`,
+		"what_waits":       `{}`,
+		"today":            `{}`,
+		"try":              `{"name":"update_record","arguments":{"type":"task","id":"` + task.ID + `","fields":{"done":true}}}`,
 	}
 	var calls []string
 	for _, raw := range result(t, listed[0])["tools"].([]any) {
