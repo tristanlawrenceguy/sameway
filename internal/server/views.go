@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/devices"
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/relate"
@@ -279,6 +280,8 @@ func (s *Server) extrasOf(r *http.Request, t *schema.Type, rec *store.Record) st
 		return s.media.FileExtras(r, rec)
 	case records.EventType:
 		return s.media.MeetingExtras(r, rec) // meeting.go
+	case devices.DeviceType:
+		return s.deviceSwitch(r, rec) // home_devices.go
 	}
 	return ""
 }

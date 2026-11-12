@@ -79,6 +79,8 @@ var pageRoutes = []route{
 	{pattern: "GET /chat", handle: (*Server).chatPage, access: people},
 	{pattern: "POST /chat", handle: (*Server).chatSend, access: people, persons: "it is what they say to the assistant", reach: outward},
 	{pattern: "POST /chat/stream", handle: (*Server).chatStream, access: people, persons: "the same", reach: outward},
+	{pattern: "GET /scan", handle: (*Server).scanPage, access: people},
+	{pattern: "POST /scan", handle: (*Server).scanSave, access: people, persons: "a photo they took, sent to the assistant as on /chat", reach: outward}, // scan_list.go
 	{pattern: "POST /chat/stop", handle: (*Server).chatStop, access: people, persons: "stopping the assistant", reach: inward},
 	{pattern: "GET /chat/live", handle: (*Server).chatLive, access: people},
 	{pattern: "POST /chat/clear", handle: (*Server).chatClear, access: people, tool: "clear_conversation", reach: inward},

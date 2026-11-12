@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
-	"github.com/tristanlawrenceguy/sameway/internal/devices"
 	"github.com/tristanlawrenceguy/sameway/internal/notify"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 )
@@ -166,18 +165,17 @@ var openInBrowser = func(url string) error {
 }
 
 // connectDevices reaches the MQTT broker workspace.yaml names, if any:
-// subscribed topics become devices, and mqtt actions can publish.
+// subscribed topics become devices, and mqtt actions can publish. A
+// broker set later, on Workspaces or by asking, connects then
+// (app/devices.go).
 func connectDevices(ctx context.Context, out io.Writer, a *app.App) {
-	cfg := a.Workspace.Config.MQTT
-	if strings.TrimSpace(cfg.Broker) == "" {
-		return
-	}
-	bus, err := devices.Start(ctx, cfg, a.Store, a.Records.Keeper(devices.DeviceType))
+	said, err := a.ConnectDevices(ctx)
 	if err != nil {
 		fmt.Fprintf(out, "  mqtt    not connected: %v\n", err)
 		log.Printf("devices: %v", err)
 		return
 	}
-	a.Automate.Publish = bus.Publish
-	fmt.Fprintf(out, "  mqtt    %s, %d topic(s)\n", cfg.Broker, len(cfg.Subscribe))
+	if said != "" {
+		fmt.Fprintf(out, "  mqtt    %s\n", said)
+	}
 }

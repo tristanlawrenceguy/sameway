@@ -4,6 +4,8 @@ import (
 	"html/template"
 	"net/http"
 	"strings"
+
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
 
 // Sameway on a phone's home screen, from the Wi-Fi. A phone just paired
@@ -55,9 +57,11 @@ func (s *Server) lanManifest(w http.ResponseWriter, r *http.Request) {
 	}
 	more := ""
 	if d.Person == "" {
-		more = `,{"name":"Send to the computer","short_name":"To computer","description":"Open a link or paste words on the computer","url":"/computer/send"}`
+		more = `,{"name":"Send to the computer","short_name":"To computer","description":"Open a link or paste words on the computer","url":"/computer/send"},` +
+			`{"name":"Scan to the list","short_name":"Scan","description":"Take a photo of something you need and it goes on the shopping list","url":"/scan"}`
 	}
-	manifestStarting(w, "/pair?app="+d.App, more)
+	v, _ := s.lanVisitor(d)
+	manifestStarting(w, "/pair?app="+d.App, more, v.Access == records.View)
 }
 
 // lanApp is the home-screen app opening: paired already, it goes in; the
@@ -92,7 +96,7 @@ func (s *Server) installPage(w http.ResponseWriter, r *http.Request) {
 	var how string
 	switch {
 	case strings.Contains(ua, "iphone") || strings.Contains(ua, "ipad"):
-		how = `<ol class="sw-stack"><li>Press Share, the square with an arrow, at the bottom of Safari (in Chrome, at the top right).</li><li>Choose Add to Home Screen; scroll down the list if it is not in sight.</li><li>Press Add. Sameway is on your home screen, and opens without the browser around it.</li></ol>`
+		how = `<ol class="sw-stack"><li>Press Share, the square with an arrow: at the bottom of Safari, or under the three dots beside the address (in Chrome, at the top right).</li><li>Choose Add to Home Screen; scroll down the list if it is not in sight.</li><li>Press Add. Sameway is on your home screen, and opens without the browser around it.</li></ol>`
 	case strings.Contains(ua, "android"):
 		how = `<p><button type="button" class="sw-button sw-button--primary sw-pressable" data-install hidden>Add Sameway to your home screen</button></p>` +
 			`<ol class="sw-stack"><li>Press the browser's menu, the three dots at the top right.</li><li>Choose Add to Home screen, or Install app.</li><li>Press Add. Sameway is on your home screen.</li></ol>`
