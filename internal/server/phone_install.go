@@ -55,7 +55,8 @@ func (s *Server) lanManifest(w http.ResponseWriter, r *http.Request) {
 	}
 	more := ""
 	if d.Person == "" {
-		more = `,{"name":"Send to the computer","short_name":"To computer","description":"Open a link or paste words on the computer","url":"/computer/send"}`
+		more = `,{"name":"Send to the computer","short_name":"To computer","description":"Open a link or paste words on the computer","url":"/computer/send"},` +
+			`{"name":"Scan to the list","short_name":"Scan","description":"Take a photo of something you need and it goes on the shopping list","url":"/scan"}`
 	}
 	manifestStarting(w, "/pair?app="+d.App, more)
 }

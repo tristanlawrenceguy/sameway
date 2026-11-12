@@ -58,11 +58,16 @@ func (s *Server) chatStream(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "streaming is not possible here", http.StatusNotImplemented)
 		return
 	}
-	// The turn runs to its end even when the page that asked for it goes
-	// away: a tab closed mid-turn must not leave a change half made and an
-	// error in the log where the reply should be. The person can stop it,
-	// though, from the page, by the id the first event carries, and any
-	// page opened meanwhile can follow it, from /chat/live.
+	s.follow(w, r, s.startTurn(r, canvas, text, fileID, back), back)
+}
+
+// startTurn runs a turn in the background. It runs to its end even when
+// the page that asked for it goes away: a tab closed mid-turn must not
+// leave a change half made and an error in the log where the reply
+// should be. The person can stop it, though, from the page, by the id
+// the first event carries, and any page opened meanwhile can follow it,
+// from /chat/live.
+func (s *Server) startTurn(r *http.Request, canvas, text, fileID, back string) *liveTurn {
 	c := s.chatFor(r)
 	t, ctx := s.turns.start(context.WithoutCancel(r.Context()), c.Whose())
 	go func() {
@@ -77,7 +82,7 @@ func (s *Server) chatStream(w http.ResponseWriter, r *http.Request) {
 		}
 		s.tellDone(t, rec, err, back)
 	}()
-	s.follow(w, r, t, back)
+	return t
 }
 
 // chatLive is a turn under way, told from its start to its end, for a
