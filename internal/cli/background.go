@@ -47,6 +47,7 @@ func backgroundJobs(a *app.App, h *server.Server, notes io.Writer) []runner.Job 
 		a.SchemaJob(app.SchemaEvery, h.Changed), // types changed by hand, so open pages follow
 		a.Automate.ScheduleJob(),                // actions with a schedule; automate/schedule.go
 		a.Automate.WorkerJob(),                  // actions that run when something happens; automate/happened.go
+		a.Automate.PicturesJob(),                // pictures not read when they came; automate/pictures_later.go
 		snapshotJob(notes, a),
 	}
 	jobs = append(h.BackgroundJobs(), jobs...)
