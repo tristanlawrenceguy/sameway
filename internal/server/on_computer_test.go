@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -63,5 +64,51 @@ func TestAFileOnThisComputerIsFoundByNameAndBroughtIn(t *testing.T) {
 	}
 	if recs, _ := a.Store.List(records.FileType, store.ListOptions{}); len(recs) != 1 {
 		t.Errorf("nothing outside the folders or hidden, no folder and no bare name comes in: %d files", len(recs))
+	}
+}
+
+// Asked for a file on this computer, the assistant finds it as the search
+// page does and says where the person brings it in: it never brings one in
+// itself. Not set to look here, it says how; someone let in has no such
+// tool.
+func TestTheAssistantFindsAFileOnThisComputer(t *testing.T) {
+	t.Parallel()
+	a, h := newApp(t)
+	docs := filepath.Join(t.TempDir(), "Documents")
+	os.MkdirAll(filepath.Join(docs, ".old"), 0o755)
+	os.WriteFile(filepath.Join(docs, "Boiler Warranty.pdf"), []byte("Ten years, parts and labour."), 0o644)
+	os.WriteFile(filepath.Join(docs, ".old", "boiler warranty draft.pdf"), []byte("draft"), 0o644)
+	ask := func() string {
+		t.Helper()
+		model := &scripted{steps: []*llm.Response{toolCall("find_on_computer", map[string]any{"words": "boiler warranty"}), {Text: "Found it."}}}
+		a.Chat.Provider, a.Chat.ProviderErr = model, nil
+		postForm(t, h, "/chat", url.Values{"message": {"find the boiler warranty PDF on my computer"}, "from": {"/chat"}})
+		if len(model.seen) < 2 {
+			t.Fatal("the model is given the answer")
+		}
+		msgs := model.seen[1].Messages
+		return msgs[len(msgs)-1].ToolResults[0].Content
+	}
+
+	if said := ask(); !strings.Contains(said, "sameway open") {
+		t.Errorf("not set to look here, it says how: %s", said)
+	}
+	h.(*server.Server).FindOnComputer(docs)
+	said := ask()
+	for _, want := range []string{"Boiler Warranty.pdf", docs, "under 1 KB", "/search?q=boiler+warranty", "Bring it in"} {
+		if !strings.Contains(said, want) {
+			t.Errorf("the answer says %q: %s", want, said)
+		}
+	}
+	if strings.Contains(said, "draft") {
+		t.Errorf("nothing hidden is found: %s", said)
+	}
+	if recs, _ := a.Store.List(records.FileType, store.ListOptions{}); len(recs) != 0 {
+		t.Errorf("finding brings nothing in: %d files", len(recs))
+	}
+	for _, tool := range a.Chat.For(records.Visitor{Name: "Bob", Access: records.Edit}).Tools() {
+		if tool.Name == "find_on_computer" {
+			t.Error("find_on_computer is the owner's")
+		}
 	}
 }
