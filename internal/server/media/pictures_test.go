@@ -8,13 +8,14 @@ import (
 	"image/color"
 	"image/jpeg"
 	"image/png"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
-// A small PNG that says it is 100,000 pixels square is not drawn: read
-// unattended from an email, it would take gigabytes.
-func TestAPictureTooLargeToDrawIsNotDrawn(t *testing.T) {
-	t.Parallel()
+// hugePNG is a small PNG whose header says it is 100,000 pixels square:
+// drawn, it would take tens of gigabytes.
+func hugePNG(t *testing.T) []byte {
 	var b bytes.Buffer
 	png.Encode(&b, image.NewGray(image.Rect(0, 0, 1, 1)))
 	data := b.Bytes()
@@ -25,8 +26,28 @@ func TestAPictureTooLargeToDrawIsNotDrawn(t *testing.T) {
 	if cfg, err := png.DecodeConfig(bytes.NewReader(data)); err != nil || cfg.Width != 100000 {
 		t.Fatalf("the crafted header reads as 100,000 pixels wide: %v %+v", err, cfg)
 	}
-	if img, ok := fitted("image/png", data); ok {
+	return data
+}
+
+// A picture too large to draw is not drawn: read unattended from an
+// email, it would take gigabytes.
+func TestAPictureTooLargeToDrawIsNotDrawn(t *testing.T) {
+	t.Parallel()
+	if img, ok := fitted("image/png", hugePNG(t)); ok {
 		t.Errorf("a picture too large to draw is unreadable, got %d bytes", len(img.Data))
+	}
+}
+
+// Nor is it drawn small for a gallery tile; the tile links to the file.
+func TestAPictureTooLargeToDrawIsNotMadeSmall(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	path, small := filepath.Join(dir, "huge.png"), filepath.Join(dir, "huge.small.jpg")
+	if err := os.WriteFile(path, hugePNG(t), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if makeSmall(path, small) {
+		t.Error("a picture too large to draw is not made small")
 	}
 }
 
