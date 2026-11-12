@@ -3,6 +3,7 @@ package ingest
 import (
 	"strings"
 	"testing"
+	"time"
 	"unicode/utf8"
 )
 
@@ -24,7 +25,7 @@ func TestChatsFromChatGPTAndClaudeComeInAsNotes(t *testing.T) {
 		if strings.HasSuffix(name, ".zip") {
 			data = zipOf(map[string]string{"conversations.json": gpt, "chat.html": "<html></html>"})
 		}
-		b, err := Recognise(name, data)
+		b, err := Recognise(name, data, time.UTC)
 		if err != nil || b.From != "ChatGPT" || b.Count("note") != 1 {
 			t.Fatalf("%s: %v %+v", name, err, b)
 		}
@@ -40,7 +41,7 @@ func TestChatsFromChatGPTAndClaudeComeInAsNotes(t *testing.T) {
 		{"sender":"assistant","text":"Monday: lentil soup.","created_at":"2026-10-20T08:00:05Z"},
 		{"sender":"human","text":"Plan dinners, no fish","created_at":"2026-10-20T08:00:01Z"},
 		{"sender":"human","text":"And this letter?","created_at":"2026-10-20T08:01:00Z","attachments":[{"file_name":"gp-letter.txt","file_size":60,"file_type":"txt","extracted_content":"Book a blood test before 1 December."}],"files":[]}]}]`
-	b, err := Recognise("data.zip", zipOf(map[string]string{"conversations.json": claude, "users.json": "[]"}))
+	b, err := Recognise("data.zip", zipOf(map[string]string{"conversations.json": claude, "users.json": "[]"}), time.UTC)
 	if err != nil || b.From != "Claude" || b.Count("note") != 1 {
 		t.Fatalf("Claude: %v %+v", err, b)
 	}
@@ -49,7 +50,7 @@ func TestChatsFromChatGPTAndClaudeComeInAsNotes(t *testing.T) {
 		t.Errorf("Claude: in the order said, with its day and what was attached: %s", body)
 	}
 
-	if _, err := Recognise("conversations.json", []byte(`[{"title":"x","current_node":"r","mapping":{"r":{"parent":null,"message":null}}}]`)); err == nil || !strings.Contains(err.Error(), "no conversations with anything said") {
+	if _, err := Recognise("conversations.json", []byte(`[{"title":"x","current_node":"r","mapping":{"r":{"parent":null,"message":null}}}]`), time.UTC); err == nil || !strings.Contains(err.Error(), "no conversations with anything said") {
 		t.Errorf("an export with nothing said says so: %v", err)
 	}
 }
@@ -62,7 +63,7 @@ func TestALongConversationKeepsItsEnd(t *testing.T) {
 		"r":{"parent":null,"message":null},
 		"a":{"parent":"r","message":{"author":{"role":"user"},"content":{"parts":["` + strings.Repeat("Καλημέρα. ", 30000) + `"]}}},
 		"b":{"parent":"a","message":{"author":{"role":"assistant"},"content":{"parts":["Book the doctor for Tuesday."]}}}}}]`
-	b, err := Recognise("conversations.json", []byte(gpt))
+	b, err := Recognise("conversations.json", []byte(gpt), time.UTC)
 	if err != nil || b.Count("note") != 1 {
 		t.Fatalf("%v %+v", err, b)
 	}
@@ -86,13 +87,28 @@ func TestASplitChatGPTExportAndAVoiceChatComeIn(t *testing.T) {
 		"conversations-000.json": conv("Porto", `"Book the train"`),
 		"conversations-001.json": conv("Dentist", voice),
 		"export_manifest.json":   `{"export_files":[]}`,
-	}))
+	}), time.UTC)
 	if err != nil || b.From != "ChatGPT" || b.Count("note") != 2 {
 		t.Fatalf("both files of a split export: %v %+v", err, b)
 	}
 	rows := b.Kinds["note"].Rows
 	if body := rows[0]["body"] + rows[1]["body"]; !strings.Contains(body, "**You:** Ring the dentist on Monday") {
 		t.Errorf("what was said aloud: %s", body)
+	}
+}
+
+// The day a conversation began is said in the workspace's zone, not the
+// UTC the export keeps: a chat at half past eleven at night in UTC began
+// the next day an hour east.
+func TestTheDayAChatBeganIsInTheWorkspaceZone(t *testing.T) {
+	t.Parallel()
+	claude := `[{"name":"Post office","created_at":"2026-10-21T23:30:00Z","chat_messages":[{"sender":"human","text":"When does it open?","created_at":"2026-10-21T23:30:01Z"}]}]`
+	b, err := Recognise("conversations.json", []byte(claude), time.FixedZone("BST", 3600))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if body := b.Kinds["note"].Rows[0]["body"]; !strings.HasPrefix(body, "Began Thursday 22 October 2026.") {
+		t.Errorf("began in the workspace's zone: %s", body)
 	}
 }
 
@@ -107,7 +123,7 @@ func TestWhatWasMadeInAChatComesUnderItsTitle(t *testing.T) {
 			{"type":"tool_use","name":"artifacts","input":{"id":"shop","type":"text/markdown","title":"Shopping list","command":"create","content":"- lentils\n- carrots"}}]},
 		{"sender":"assistant","text":"Changed.","created_at":"2026-10-20T08:01:00Z","content":[
 			{"type":"tool_use","name":"artifacts","input":{"id":"shop","command":"update","old_str":"carrots","new_str":"oat milk"}}]}]}]`
-	b, err := Recognise("conversations.json", []byte(claude))
+	b, err := Recognise("conversations.json", []byte(claude), time.UTC)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -122,7 +138,7 @@ func TestWhatWasMadeInAChatComesUnderItsTitle(t *testing.T) {
 		"b":{"parent":"a","message":{"author":{"role":"assistant"},"recipient":"canmore.create_textdoc","content":{"content_type":"code","text":"{\"name\":\"Council letter\",\"type\":\"document\",\"content\":\"Dear council, the bins.\"}"}}},
 		"c":{"parent":"b","message":{"author":{"role":"user"},"content":{"content_type":"text","parts":["Say Tuesday"]}}},
 		"d":{"parent":"c","message":{"author":{"role":"assistant"},"recipient":"canmore.update_textdoc","content":{"content_type":"code","text":"{\"updates\":[{\"pattern\":\"the bins\",\"multiple\":false,\"replacement\":\"the bins on Tuesday\"}]}"}}}}}]`
-	if b, err = Recognise("conversations.json", []byte(gpt)); err != nil {
+	if b, err = Recognise("conversations.json", []byte(gpt), time.UTC); err != nil {
 		t.Fatal(err)
 	}
 	if body := b.Kinds["note"].Rows[0]["body"]; !strings.Contains(body, "**ChatGPT:** *Council letter*\n\nDear council, the bins.\n\n**You:** Say Tuesday\n\n**ChatGPT:** *Council letter*\n\nDear council, the bins on Tuesday.") {

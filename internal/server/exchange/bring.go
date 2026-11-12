@@ -67,7 +67,7 @@ func (s *Service) bring(w http.ResponseWriter, r *http.Request) {
 		s.Failed(w, r, "Nothing brought in", err, "/bring")
 		return
 	}
-	got, err := ingest.Recognise(hdr.Filename, data)
+	got, err := ingest.Recognise(hdr.Filename, data, s.Now().Location())
 	if err != nil {
 		s.Failed(w, r, "Nothing brought in", err, "/bring")
 		return

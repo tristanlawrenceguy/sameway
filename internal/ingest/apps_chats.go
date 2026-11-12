@@ -42,7 +42,7 @@ func joined(a, b *Brought) *Brought {
 
 // chatExport reads conversations.json from ChatGPT or Claude, or says it
 // is neither.
-func chatExport(data []byte) (*Brought, bool) {
+func chatExport(data []byte, zone *time.Location) (*Brought, bool) {
 	var raw []json.RawMessage
 	if json.Unmarshal(data, &raw) != nil || len(raw) == 0 {
 		return nil, false
@@ -53,9 +53,9 @@ func chatExport(data []byte) (*Brought, bool) {
 	}
 	switch {
 	case probe["mapping"] != nil:
-		return chatGPT(raw), true
+		return chatGPT(raw, zone), true
 	case probe["chat_messages"] != nil:
-		return claudeChats(raw), true
+		return claudeChats(raw, zone), true
 	}
 	return nil, false
 }
@@ -92,7 +92,7 @@ func chatNote(b *Brought, title string, began time.Time, turns []turn) {
 
 // chatGPT reads ChatGPT's export: each conversation a tree of messages,
 // read from where it ended back to where it began.
-func chatGPT(raw []json.RawMessage) *Brought {
+func chatGPT(raw []json.RawMessage, zone *time.Location) *Brought {
 	b := newBrought("ChatGPT")
 	for _, r := range raw {
 		var c struct {
@@ -132,7 +132,7 @@ func chatGPT(raw []json.RawMessage) *Brought {
 				turns = append(turns, turn{"ChatGPT", partsText(m.Content.Parts) + doc.written(m.Recipient, m.Content.Text)})
 			}
 		}
-		chatNote(b, c.Title, unixTime(c.CreateTime), turns)
+		chatNote(b, c.Title, unixTime(c.CreateTime).In(zone), turns)
 	}
 	return b
 }
@@ -165,7 +165,7 @@ func unixTime(sec float64) time.Time {
 
 // claudeChats reads Claude's export: each conversation its messages in
 // order, from the person (human) and from Claude.
-func claudeChats(raw []json.RawMessage) *Brought {
+func claudeChats(raw []json.RawMessage, zone *time.Location) *Brought {
 	b := newBrought("Claude")
 	for _, r := range raw {
 		var c struct {
@@ -227,7 +227,7 @@ func claudeChats(raw []json.RawMessage) *Brought {
 			turns = append(turns, turn{who, text})
 		}
 		began, _ := time.Parse(time.RFC3339, c.CreatedAt)
-		chatNote(b, c.Name, began, turns)
+		chatNote(b, c.Name, began.In(zone), turns)
 	}
 	return b
 }
