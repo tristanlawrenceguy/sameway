@@ -96,7 +96,7 @@ func (s *Server) installPage(w http.ResponseWriter, r *http.Request) {
 	var how string
 	switch {
 	case strings.Contains(ua, "iphone") || strings.Contains(ua, "ipad"):
-		how = `<ol class="sw-stack"><li>Press Share, the square with an arrow, at the bottom of Safari (in Chrome, at the top right).</li><li>Choose Add to Home Screen; scroll down the list if it is not in sight.</li><li>Press Add. Sameway is on your home screen, and opens without the browser around it.</li></ol>`
+		how = `<ol class="sw-stack"><li>Press Share, the square with an arrow: at the bottom of Safari, or under the three dots beside the address (in Chrome, at the top right).</li><li>Choose Add to Home Screen; scroll down the list if it is not in sight.</li><li>Press Add. Sameway is on your home screen, and opens without the browser around it.</li></ol>`
 	case strings.Contains(ua, "android"):
 		how = `<p><button type="button" class="sw-button sw-button--primary sw-pressable" data-install hidden>Add Sameway to your home screen</button></p>` +
 			`<ol class="sw-stack"><li>Press the browser's menu, the three dots at the top right.</li><li>Choose Add to Home screen, or Install app.</li><li>Press Add. Sameway is on your home screen.</li></ol>`
