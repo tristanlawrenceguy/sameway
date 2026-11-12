@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -119,4 +120,43 @@ func TestTheCheckIsAStepOfItsOwn(t *testing.T) {
 	if strings.Join(seen, "|") != strings.Join(want, "|") || rec.Fields["content"] != "Made Pay rent, checked." {
 		t.Errorf("the check is a step between the two replies:\n got %q\nwant %q", seen, want)
 	}
+}
+
+// Only a model on this computer is checked: a model elsewhere is paid
+// for, and the check is another call with the whole conversation.
+func TestOnlyAModelOnThisComputerIsChecked(t *testing.T) {
+	t.Parallel()
+	for base, asks := range map[string]int{"https://openrouter.example/api/v1": 2, "http://localhost:1234/v1": 3} {
+		answers := []string{
+			`{"role":"assistant","content":null,"tool_calls":[{"id":"c1","type":"function","function":{"name":"create_record","arguments":"{\"type\":\"task\",\"fields\":{\"title\":\"Pay rent\"}}"}}]}`,
+			`{"role":"assistant","content":"Made Pay rent."}`,
+			`{"role":"assistant","content":"Made Pay rent, checked."}`,
+		}
+		got := 0
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			got++
+			io.WriteString(w, `{"choices":[{"message":`+answers[0]+`,"finish_reason":"stop"}]}`)
+			answers = answers[1:]
+		}))
+		defer server.Close()
+		svc := newFullService(t)
+		svc.Provider = &llm.OpenAI{BaseURL: base, Model: "small", Client: &http.Client{Transport: toServer(server.URL)}}
+
+		if _, err := svc.Send(context.Background(), "Add a task to pay rent"); err != nil {
+			t.Fatal(err)
+		}
+		if got != asks {
+			t.Errorf("%s: %d asks, want %d", base, got, asks)
+		}
+	}
+}
+
+// toServer sends every request to the test server, whatever its address.
+type toServer string
+
+func (s toServer) RoundTrip(r *http.Request) (*http.Response, error) {
+	u, _ := url.Parse(string(s))
+	r = r.Clone(r.Context())
+	r.URL.Scheme, r.URL.Host = u.Scheme, u.Host
+	return http.DefaultTransport.RoundTrip(r)
 }
