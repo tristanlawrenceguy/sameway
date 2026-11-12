@@ -2,7 +2,9 @@ package automate
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net"
 	"path"
 	"strings"
 
@@ -37,7 +39,7 @@ func (s *Service) readPictures(ctx context.Context, t *schema.Type, rec *store.R
 	}
 	var ops []records.Op
 	ids := linkedFiles(rec)
-	read := false
+	read, stalled := false, false
 	for k, id := range ids {
 		f, err := s.Store.Get(records.FileType, id)
 		if err != nil || strings.TrimSpace(str(f.Fields["text"])+str(f.Fields["description"])) != "" {
@@ -47,8 +49,16 @@ func (s *Service) readPictures(ctx context.Context, t *schema.Type, rec *store.R
 		if len(ids) > 1 { // photos picked together from a phone's gallery
 			what = fmt.Sprintf("photo %d of %d shared together, named %s; together they may be pages of one letter, photos of one thing or one day, or separate things", k+1, len(ids), str(f.Fields["title"]))
 		}
-		got, ok := s.readSections(ctx, what, s.Pictures(id)) // a picture, or a scan's pages
-		if !ok {
+		pics := s.Pictures(id) // a picture, or a scan's pages
+		if len(pics) == 0 {
+			continue
+		}
+		got, err := s.readSections(ctx, what, pics)
+		if late(err) {
+			stalled = true
+			break // each of thirty photos would wait as long
+		}
+		if err != nil {
 			continue // a model that cannot see: sorting asks from the words
 		}
 		kept := map[string]any{"text": strings.TrimSpace(got.Text)}
@@ -75,40 +85,50 @@ func (s *Service) readPictures(ctx context.Context, t *schema.Type, rec *store.R
 			}
 		}
 	}
-	if read && len(ids) > 1 {
+	if read && !stalled && len(ids) > 1 {
 		ops = append(ops, s.groupPictures(ctx, t, rec, ids)...) // pictures_apart.go
 	}
 	return ops
 }
 
-// readSections reads a picture, or a scan's pages three at a time, so
+// readSections reads a picture, or a scan's pages one at a time, so
 // every page of a long letter or a lease is read and kept, not its first
-// few; its name and description are its first pages'. Any section not
-// read leaves it all to read again next time.
-func (s *Service) readSections(ctx context.Context, what string, pics []llm.Image) (pictureRead, bool) {
+// few; its name and description are its first page's. Not three at a
+// time: a small model on this computer read only one of three pages
+// shown together, and three pages of small print are more words than
+// one answer holds. Any page not read leaves it all to read again next
+// time.
+func (s *Service) readSections(ctx context.Context, what string, pics []llm.Image) (pictureRead, error) {
 	var whole pictureRead
 	var texts []string
-	for at := 0; at < len(pics); at += picturesSeen {
-		end := min(at+picturesSeen, len(pics))
+	for at := range pics {
 		q := "This is " + what + "."
 		if len(pics) > 1 {
-			q = fmt.Sprintf("Pages %d to %d of the %d pages of the scan that is %s.", at+1, end, len(pics), what)
+			q = fmt.Sprintf("Page %d of the %d pages of the scan that is %s.", at+1, len(pics), what)
 		}
 		var got pictureRead
-		if err := s.ask(ctx, pictureSystem, q, pics[at:end], &got); err != nil {
-			return pictureRead{}, false
+		if err := s.ask(ctx, pictureSystem, q, pics[at:at+1], &got); err != nil {
+			return pictureRead{}, err
 		}
 		if at == 0 {
 			whole.Name, whole.Description = got.Name, got.Description
 		}
-		if text := strings.TrimSpace(got.Text); text != "" && len(pics) > picturesSeen {
-			texts = append(texts, fmt.Sprintf("## Pages %d to %d\n\n%s", at+1, end, text))
+		if text := strings.TrimSpace(got.Text); text != "" && len(pics) > 1 {
+			texts = append(texts, fmt.Sprintf("## Page %d\n\n%s", at+1, text))
 		} else if text != "" {
 			texts = append(texts, text)
 		}
 	}
 	whole.Text = strings.Join(texts, "\n\n")
-	return whole, len(pics) > 0
+	return whole, nil
+}
+
+// late says a model did not answer in time: one that hangs takes five
+// minutes to give up on each picture, so thirty photos shared together
+// held every other action back for two and a half hours.
+func late(err error) bool {
+	var ne net.Error
+	return errors.Is(err, context.DeadlineExceeded) || errors.As(err, &ne) && ne.Timeout()
 }
 
 // linkedFiles are the files a record's words link to, in order: every

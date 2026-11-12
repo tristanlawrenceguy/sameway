@@ -54,7 +54,7 @@ func scannedPDF(t *testing.T, pages int) []byte {
 }
 
 // A letter scanned to a PDF has no words as text; sorting it reads its
-// pages as pictures once, three at a time so every page is read, keeps
+// pages as pictures once, one at a time so every page is read, keeps
 // all their words on the file, names the note for what it is, and tags
 // it from those words.
 func TestAScanSharedIsReadWhenItIsSorted(t *testing.T) {
@@ -75,11 +75,11 @@ func TestAScanSharedIsReadWhenItIsSorted(t *testing.T) {
 	a.Automate.Classify(context.Background(), act, "note", note.ID)
 	got, _ := a.Store.Get("note", note.ID)
 	files, _ := a.Store.List(records.FileType, store.ListOptions{})
-	if model.saw != 2 || got.Fields["title"] != "Parking fine from the council" || !strings.Contains(strings.Join(records.StringList(got.Fields["tags"]), ","), "to do") {
+	if model.saw != 5 || got.Fields["title"] != "Parking fine from the council" || !strings.Contains(strings.Join(records.StringList(got.Fields["tags"]), ","), "to do") {
 		t.Errorf("its page read once, named and tagged from its words: saw %d, %v", model.saw, got.Fields)
 	}
 	text := fmt.Sprint(files[0].Fields["text"])
-	if len(files) != 1 || !strings.Contains(text, "## Pages 1 to 3") || !strings.Contains(text, "## Pages 4 to 5") || !strings.Contains(text, "Pages 4 to 5 of the 5 pages") || files[0].Fields["status"] != "ready" {
+	if len(files) != 1 || !strings.Contains(text, "## Page 1\n") || !strings.Contains(text, "## Page 5\n") || !strings.Contains(text, "Page 5 of the 5 pages") || files[0].Fields["status"] != "ready" {
 		t.Errorf("its words kept on the file, read: %v", files[0].Fields)
 	}
 }

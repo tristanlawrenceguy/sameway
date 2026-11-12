@@ -26,6 +26,13 @@ func TestAnIPhoneSharesThroughAShortcut(t *testing.T) {
 	if page := get(t, h, "/share").Body.String(); !strings.Contains(page, "Make a Shortcut for an iPhone") {
 		t.Fatalf("Save to Sameway offers it: %s", truncate(page))
 	}
+	here := httptest.NewRequest("GET", "/share", nil)
+	here.RemoteAddr = "127.0.0.1:50000"
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, here)
+	if page := w.Body.String(); strings.Contains(page, "Make a Shortcut for an iPhone") || !strings.Contains(page, "Make it on the iPhone") {
+		t.Errorf("on the computer, where its link could not be pasted on the iPhone, it is made on the iPhone: %s", truncate(page))
+	}
 	made := postForm(t, h, "/phone/shortcut", nil).Body.String()
 	m := regexp.MustCompile(`value="(http://[^"]+/share\?key=([0-9a-f]+))"`).FindStringSubmatch(made)
 	if m == nil || !strings.Contains(made, "Show in Share Sheet") || !strings.Contains(made, "<strong>files</strong>") {

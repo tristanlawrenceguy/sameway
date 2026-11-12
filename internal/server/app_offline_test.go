@@ -8,7 +8,8 @@ import (
 
 // On a phone's home screen Sameway is named Sameway, not after the page it
 // was added from; held, its icon offers Save, Chat, Today and Search; and
-// opened while the computer is out of reach it says so, with Try again,
+// opened while the computer is out of reach it says so, with Try again
+// (on the computer itself, that Sameway is not running),
 // keeping no page of the workspace.
 func TestTheHomeScreenAppIsNamedHeldAndSaysWhenOutOfReach(t *testing.T) {
 	t.Parallel()
@@ -41,6 +42,9 @@ func TestTheHomeScreenAppIsNamedHeldAndSaysWhenOutOfReach(t *testing.T) {
 	body := sw.Body.String()
 	if sw.Code != 200 || !strings.HasPrefix(sw.Header().Get("Content-Type"), "text/javascript") || !strings.Contains(body, "cannot be reached") || !strings.Contains(body, "Try again") {
 		t.Fatalf("the worker: %d %s", sw.Code, body)
+	}
+	if !strings.Contains(body, "not running on this computer") || !strings.Contains(body, "this phone can reach it") {
+		t.Errorf("on the computer it says Sameway has stopped; elsewhere, how a phone reaches it: %s", body)
 	}
 	if strings.Contains(body, "caches") {
 		t.Errorf("it keeps no copy of any page")

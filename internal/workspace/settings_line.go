@@ -63,3 +63,27 @@ func setLine(src, key, scalar string) string {
 	}
 	return strings.Join(out, "\n")
 }
+
+// topicsOf reads a list of topics as a person gives it, comma separated,
+// or as workspace.yaml holds it, [a, b], which is how undo gives it back.
+func topicsOf(value string) []string {
+	var list []string
+	if strings.HasPrefix(value, "[") && yaml.Unmarshal([]byte(value), &list) == nil {
+		return list
+	}
+	for _, t := range strings.Split(value, ",") {
+		if t = strings.TrimSpace(t); t != "" {
+			list = append(list, t)
+		}
+	}
+	return list
+}
+
+// flowList writes a list on one line, each item quoted: ["a", "b"].
+func flowList(list []string) string {
+	quoted := make([]string, len(list))
+	for i, t := range list {
+		quoted[i] = strconv.Quote(t)
+	}
+	return "[" + strings.Join(quoted, ", ") + "]"
+}
