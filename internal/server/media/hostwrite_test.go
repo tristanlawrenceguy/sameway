@@ -5,6 +5,7 @@ import (
 	"context"
 	"net/http"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -26,6 +27,9 @@ func TestRecordingsAreWrittenDownWithNoPageOpen(t *testing.T) {
 			return []convert.Cue{{Start: 0, End: 1, Text: "Heard with no page."}}, nil
 		},
 	})
+	var mu sync.Mutex
+	var rang []string
+	srv.OnRing(func(title, text, url string) { mu.Lock(); rang = append(rang, title+": "+text+" "+url); mu.Unlock() })
 	upload := func(name string, content []byte) string {
 		body, ct := multipartFile(t, name, string(content), nil)
 		res := do(t, h, http.MethodPost, "/t/file/upload", body, ct)
@@ -55,6 +59,11 @@ func TestRecordingsAreWrittenDownWithNoPageOpen(t *testing.T) {
 	t.Cleanup(func() { stop(); a.Jobs.Wait(time.Minute) })
 	a.Jobs.Start(ctx)
 	waitFor(t, heard(before))
+	waitFor(t, func() bool {
+		mu.Lock()
+		defer mu.Unlock()
+		return len(rang) == 1 && strings.Contains(rang[0], "Written down: Before is written down") && strings.Contains(rang[0], "/t/file/"+before)
+	})
 	after := upload("After.wav", wav.Bytes())
 	waitFor(t, heard(after))
 	// The activity is written just after the text, by another worker.

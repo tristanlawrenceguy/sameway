@@ -53,7 +53,11 @@ func (s *Server) lanManifest(w http.ResponseWriter, r *http.Request) {
 		}
 		s.saveLanDevices(devices)
 	}
-	manifestStarting(w, "/pair?app="+d.App)
+	more := ""
+	if d.Person == "" {
+		more = `,{"name":"Send to the computer","short_name":"To computer","description":"Open a link or paste words on the computer","url":"/computer/send"}`
+	}
+	manifestStarting(w, "/pair?app="+d.App, more)
 }
 
 // lanApp is the home-screen app opening: paired already, it goes in; the
