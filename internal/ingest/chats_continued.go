@@ -44,12 +44,18 @@ func (tb *Table) Continued(st *store.Store, t *schema.Type) map[string]string {
 }
 
 // carriedOn is the note of these whose words body starts with, unless
-// another row has carried it on already.
+// another row has carried it on already. A note of a long conversation
+// keeps only its start and its end (maxChatBody), so carried on it starts
+// with that start, and its end is new.
 func carriedOn(notes []*store.Record, body string, taken map[string]string) string {
 	for _, rec := range notes {
 		was, _ := rec.Fields["body"].(string)
 		was, now := said(was), said(body)
-		if _, ok := taken[rec.ID]; !ok && was != "" && len(now) > len(was) && strings.HasPrefix(now, was) {
+		grew := len(now) > len(was) && strings.HasPrefix(now, was)
+		if start, _, clipped := strings.Cut(was, middleLeftOut); clipped {
+			grew = now != was && strings.HasPrefix(now, start+middleLeftOut)
+		}
+		if _, ok := taken[rec.ID]; !ok && was != "" && grew {
 			return rec.ID
 		}
 	}
