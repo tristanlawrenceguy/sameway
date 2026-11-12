@@ -66,6 +66,9 @@ func TestSomeoneOnTheWiFiIsInvitedByName(t *testing.T) {
 	if res := ask("GET", "/workspaces", cookie); strings.Contains(res.Body.String(), "Make an invite") {
 		t.Error("only the owner invites")
 	}
+	if mf := ask("GET", "/manifest.webmanifest", cookie).Body.String(); strings.Contains(mf, `"/share"`) || strings.Contains(mf, `"/chat`) || !strings.Contains(mf, `"/today"`) {
+		t.Errorf("Ana's home-screen app offers no Save, Chat or Share menu, which would refuse her: %s", mf)
+	}
 	if page := get(t, h, "/workspaces").Body.String(); !strings.Contains(page, "Ana&#39;s Android phone, may look") {
 		t.Errorf("the owner sees Ana's phone and what they may do: %s", truncate(page))
 	}
@@ -73,6 +76,9 @@ func TestSomeoneOnTheWiFiIsInvitedByName(t *testing.T) {
 	postForm(t, h, "/phone/invite", url.Values{"name": {"Ana"}, "access": {"edit"}})
 	if res := ask("POST", "/t/note/add", cookie); res.Code != http.StatusSeeOther {
 		t.Errorf("one who may edit adds: %d", res.Code)
+	}
+	if mf := ask("GET", "/manifest.webmanifest", cookie).Body.String(); !strings.Contains(mf, `"share_target"`) {
+		t.Errorf("and is offered the Share menu: %s", mf)
 	}
 	if _, err := a.Store.Update(records.PersonType, ana.ID, map[string]any{"access": ""}); err != nil {
 		t.Fatal(err)
