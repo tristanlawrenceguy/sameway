@@ -18,13 +18,21 @@ import (
 
 // A picture goes to a model that can see as it is when it is small, and
 // otherwise made smaller first: no longer than 1568 pixels on its long
-// side, which is as much as the models look at, as a JPEG. SVG is left
+// side, which is as much as the models look at, as a JPEG, turned the
+// way the phone was held (small.go), since the EXIF that says so is not
+// carried over and a letter would reach the model on its side. SVG is left
 // out (a drawing's words are its text); WebP and AVIF go as they are when
 // small enough, since only the standard library's formats are redrawn.
 
 const (
 	pictureSide  = 1568
 	pictureBytes = 3 << 20
+	// picturePixels is as large a picture as is drawn to be made smaller:
+	// a scan 9000 by 12000 pixels with room, half a gigabyte once drawn.
+	// An email's attachment is read with no one watching, and a small PNG
+	// can say it is 100,000 pixels square, tens of gigabytes; one larger
+	// is unreadable, as a form not redrawn here is.
+	picturePixels = 128 << 20
 )
 
 var pictureTypes = map[string]string{".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".gif": "image/gif", ".webp": "image/webp"}
@@ -82,9 +90,12 @@ func (s *Service) PicturesFor(id string) []llm.Image {
 }
 
 // fitted is a picture as a model takes it: as it is when small, else made
-// no longer than pictureSide as a JPEG.
+// no longer than pictureSide as a JPEG, upright.
 func fitted(typ string, data []byte) (llm.Image, bool) {
 	cfg, _, cerr := image.DecodeConfig(bytes.NewReader(data))
+	if cerr == nil && cfg.Width*cfg.Height > picturePixels {
+		return llm.Image{}, false
+	}
 	if len(data) <= pictureBytes && (cerr != nil || max(cfg.Width, cfg.Height) <= pictureSide) {
 		return llm.Image{Type: typ, Data: data}, true
 	}
@@ -93,7 +104,8 @@ func fitted(typ string, data []byte) (llm.Image, bool) {
 		return llm.Image{}, false // too big, and in a form not redrawn here
 	}
 	var out bytes.Buffer
-	if err := jpeg.Encode(&out, smaller(src, pictureSide), &jpeg.Options{Quality: 85}); err != nil {
+	turned := upright(smaller(src, pictureSide), convert.PhotoTurn(data[:min(len(data), convert.TakenHead)]))
+	if err := jpeg.Encode(&out, turned, &jpeg.Options{Quality: 85}); err != nil {
 		return llm.Image{}, false
 	}
 	return llm.Image{Type: "image/jpeg", Data: out.Bytes()}, true

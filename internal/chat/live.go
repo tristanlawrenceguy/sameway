@@ -66,7 +66,7 @@ func (s *Service) SendLive(ctx context.Context, canvas, text, fileID string, on 
 func (s *Service) complete(ctx context.Context, req llm.Request, on func(Event)) (*llm.Response, error) {
 	resp, err := s.completeOnce(ctx, req, on)
 	// A model that cannot see answers again, told a picture was there.
-	if err != nil && cannotSee(err) {
+	if err != nil && llm.CannotSee(err) {
 		if plain, had := withoutPictures(req); had {
 			sight.Store(s.Provider.Name(), false)
 			return s.completeOnce(ctx, plain, on)

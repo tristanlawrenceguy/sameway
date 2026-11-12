@@ -30,6 +30,10 @@ type Deps interface {
 	// Handler is the whole server, for reading a recording's sound in a
 	// browser on this computer with no page open (hostwrite.go).
 	Handler() http.Handler
+	// Notify tells a person away from the page, the way a reminder rings
+	// (server/ring.go): a notification on this computer and the phone.
+	Notify(title, text, path string)
+	CanNotify() bool
 }
 
 // Service is media for one workspace: what is being written down, how,
