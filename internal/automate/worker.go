@@ -60,7 +60,9 @@ func (s *Service) listen() {
 // waiting for it and to the tags an action gave (judgement.go). Every way
 // a record is written is heard here, from a page, the API, the
 // assistant, an import or the content folder, since each goes through
-// records.
+// records. An undo sets nothing off: it puts things back as they were,
+// after the actions they set off had run, and a note joined to the
+// piece after it, put back, was sorted again and could be joined again.
 func (s *Service) heard(_ string, c records.Change) {
 	for _, op := range c.Ops {
 		t, ok := s.Store.Types().Get(op.Type)
@@ -68,7 +70,9 @@ func (s *Service) heard(_ string, c records.Change) {
 			continue // a setting, or a type since gone
 		}
 		was, now := opRecord(op, op.Before), opRecord(op, op.After)
-		s.recordChanged(t, was, now)
+		if c.Undoes == "" {
+			s.recordChanged(t, was, now)
+		}
 		TagsChanged(s.Store, t, was, now)
 	}
 }

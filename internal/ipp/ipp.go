@@ -107,7 +107,9 @@ func Print(ctx context.Context, p Printer, doc io.Reader, format, name string) e
 	hr.Header.Set("Content-Type", "application/ipp")
 	res, err := http.DefaultClient.Do(hr)
 	if err != nil {
-		return fmt.Errorf("%s did not answer: %w", p.Name, err)
+		// What the network said (dial tcp ..., connectex: ...) is not for a
+		// person: an off or sleeping printer is what it nearly always means.
+		return fmt.Errorf("%s did not answer. It may be switched off or asleep: switch it on, then print again", p.Name)
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
