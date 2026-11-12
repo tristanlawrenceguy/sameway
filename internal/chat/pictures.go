@@ -2,7 +2,6 @@ package chat
 
 import (
 	"regexp"
-	"strings"
 	"sync"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
@@ -60,17 +59,6 @@ func (s *Service) withPictures(msgs []llm.Message, ids [][]string) {
 			}
 		}
 	}
-}
-
-// cannotSee says a model refused a turn for its pictures.
-func cannotSee(err error) bool {
-	e := strings.ToLower(err.Error())
-	for _, word := range []string{"image", "vision", "multimodal", "multi-modal"} {
-		if strings.Contains(e, word) {
-			return true
-		}
-	}
-	return false
 }
 
 // withoutPictures is a turn with its pictures taken out, and a word to
