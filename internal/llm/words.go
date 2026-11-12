@@ -18,12 +18,10 @@ func Words(p Provider) string {
 		if err != nil || u.Hostname() == "" {
 			return model
 		}
-		switch host := u.Hostname(); host {
-		case "127.0.0.1", "localhost", "::1":
+		if Local(p.BaseURL) {
 			return model + " on this computer"
-		default:
-			return model + " through " + strings.TrimPrefix(host, "api.")
 		}
+		return model + " through " + strings.TrimPrefix(u.Hostname(), "api.")
 	case *Anthropic:
 		return "Claude (" + p.Model + ")"
 	}

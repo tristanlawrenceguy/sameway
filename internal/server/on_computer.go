@@ -60,52 +60,60 @@ type foundFile struct {
 }
 
 // findOnComputer is the files whose names have every word, newest first.
-// Hidden files and folders are passed over.
+// Hidden files and folders are passed over. The folders are read a level
+// at a time, all of them together: a file at the top of Downloads is
+// found before a deep tree in Documents uses up the time.
 func findOnComputer(dirs []string, q string) []foundFile {
 	words := strings.Fields(strings.ToLower(q))
 	if len(words) == 0 {
 		return nil
 	}
+	type folder struct {
+		path  string
+		depth int
+	}
+	var todo []folder
+	for _, dir := range dirs {
+		todo = append(todo, folder{dir, 0})
+	}
 	until := time.Now().Add(lookAtMost) // wall clock: the time a look really takes
 	var out []foundFile
-	for _, dir := range dirs {
-		filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
-			if len(out) >= foundMost || time.Now().After(until) { // wall clock: as above
-				return filepath.SkipAll
-			}
-			if err != nil || path == dir {
-				return nil
-			}
-			if strings.HasPrefix(d.Name(), ".") {
-				if d.IsDir() {
-					return filepath.SkipDir
+	for len(todo) > 0 && len(out) < foundMost && time.Now().Before(until) { // wall clock: as above
+		in := todo[0]
+		todo = todo[1:]
+		entries, _ := os.ReadDir(in.path)
+		for _, d := range entries {
+			path := filepath.Join(in.path, d.Name())
+			switch {
+			case strings.HasPrefix(d.Name(), "."):
+			case d.IsDir():
+				if in.depth < deepest && !hiddenEntry(d) {
+					todo = append(todo, folder{path, in.depth + 1})
 				}
-				return nil
-			}
-			if d.IsDir() {
-				if rel, _ := filepath.Rel(dir, path); strings.Count(rel, string(filepath.Separator)) >= deepest {
-					return filepath.SkipDir
+			case d.Type().IsRegular() && hasWords(strings.ToLower(d.Name()), words) && len(out) < foundMost:
+				if fi, err := d.Info(); err == nil && !markedHidden(fi) {
+					out = append(out, foundFile{path, fi.ModTime(), fi.Size()})
 				}
-				return nil
 			}
-			if !d.Type().IsRegular() || !hasWords(strings.ToLower(d.Name()), words) {
-				return nil
-			}
-			if fi, err := d.Info(); err == nil {
-				out = append(out, foundFile{path, fi.ModTime(), fi.Size()})
-			}
-			return nil
-		})
+		}
 	}
 	sort.SliceStable(out, func(i, j int) bool { return out[i].changed.After(out[j].changed) })
 	return out
 }
 
+// hiddenEntry is whether a file or folder is marked hidden.
+func hiddenEntry(d fs.DirEntry) bool {
+	fi, err := d.Info()
+	return err != nil || markedHidden(fi)
+}
+
 // hidden is whether a path in a folder passes through anything hidden,
-// which a search never offers.
-func hidden(rel string) bool {
+// by its name or as marked, which a search never offers.
+func hidden(dir, rel string) bool {
 	for _, part := range strings.Split(filepath.ToSlash(rel), "/") {
-		if strings.HasPrefix(part, ".") {
+		dir = filepath.Join(dir, part)
+		fi, err := os.Lstat(dir)
+		if strings.HasPrefix(part, ".") || err != nil || markedHidden(fi) {
 			return true
 		}
 	}
@@ -209,7 +217,7 @@ func (s *Server) offered(path string) bool {
 	}
 	for _, dir := range s.computer {
 		if d, err := filepath.EvalSymlinks(dir); err == nil {
-			if rel, err := filepath.Rel(d, real); err == nil && rel != "." && filepath.IsLocal(rel) && !hidden(rel) {
+			if rel, err := filepath.Rel(d, real); err == nil && rel != "." && filepath.IsLocal(rel) && !hidden(d, rel) {
 				return true
 			}
 		}

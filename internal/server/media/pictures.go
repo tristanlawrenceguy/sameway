@@ -93,7 +93,7 @@ func (s *Service) PicturesFor(id string) []llm.Image {
 // no longer than pictureSide as a JPEG, upright.
 func fitted(typ string, data []byte) (llm.Image, bool) {
 	cfg, _, cerr := image.DecodeConfig(bytes.NewReader(data))
-	if cerr == nil && cfg.Width*cfg.Height > picturePixels {
+	if cerr == nil && tooLarge(cfg) {
 		return llm.Image{}, false
 	}
 	if len(data) <= pictureBytes && (cerr != nil || max(cfg.Width, cfg.Height) <= pictureSide) {
@@ -109,6 +109,12 @@ func fitted(typ string, data []byte) (llm.Image, bool) {
 		return llm.Image{}, false
 	}
 	return llm.Image{Type: "image/jpeg", Data: out.Bytes()}, true
+}
+
+// tooLarge is whether a picture's header says it is larger than is drawn
+// (picturePixels), read before drawing it.
+func tooLarge(cfg image.Config) bool {
+	return cfg.Width*cfg.Height > picturePixels
 }
 
 // smaller draws a picture no longer than side on its long side, each new
