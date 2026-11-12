@@ -14,7 +14,7 @@ import (
 // a note that links to the picture, and its words are only the file's
 // name: tagged and suggested from that, it was "nothing to do". So the
 // pictures a record links to go with its question, for a model that can
-// see; a model that cannot is asked again without them.
+// see; a model that refuses pictures is asked again without them.
 
 const picturesSeen = 3
 
@@ -44,8 +44,8 @@ func (s *Service) askSeeing(ctx context.Context, system, question string, pics [
 		return s.askJSON(ctx, system, question, out)
 	}
 	err := s.ask(ctx, system, question+"\n\nThe pictures the record links to come with it: read what they say as part of the record.", pics, out)
-	if err != nil {
-		err = s.askJSON(ctx, system, question, out) // a model that cannot see
+	if err != nil && llm.CannotSee(err) { // not after a timeout: a model that hangs would cost two
+		err = s.askJSON(ctx, system, question, out)
 	}
 	return err
 }

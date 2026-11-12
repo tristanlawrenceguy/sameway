@@ -36,9 +36,12 @@ type Fleet struct {
 	// answers, "" when it does not.
 	LAN     func(on bool) error
 	LANBase func() string
-	// Show opens a page of this workspace on this computer's own screen,
-	// for a phone that sends it there (phone_handoff.go).
-	Show func(path string) error
+	// Show opens a page of this workspace (a path) or a web address on
+	// this computer's own screen, for a phone that sends it there
+	// (phone_handoff.go, send_computer.go). Copy puts words on this
+	// computer's clipboard.
+	Show func(to string) error
+	Copy func(text string) error
 }
 
 // WithFleet gives the server the means to start and stop workspaces.

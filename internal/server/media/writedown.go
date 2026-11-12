@@ -122,6 +122,10 @@ func (s *Service) finishWriting(rec *store.Record, cues []convert.Cue) {
 	}
 	s.fileSays(rec.ID, map[string]any{"status": "ready", "text": convert.Transcript(cues), "note": "Written down on this computer by " + speech.ModelName + ". Edit the text if it misheard."})
 	records.Record(s.app.Store, "system", records.Change{Action: "updated", Component: records.FileType, ID: rec.ID, Detail: title + ", written down", Href: relate.Page(records.FileType, rec.ID)})
+	if s.CanNotify() {
+		// Sent from the phone, it may be written down long after: say so there.
+		s.Notify("Written down", title+" is written down: open it to read it, or have it written up.", relate.Page(records.FileType, rec.ID))
+	}
 	s.Changed()
 }
 

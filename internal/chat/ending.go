@@ -20,7 +20,7 @@ type endings struct {
 // ending is a turn's reply when the model answers in words, or what to
 // tell the model first, to answer again.
 func (s *Service) ending(ctx context.Context, reply, said string, changes []records.Change, end *endings, on func(Event)) (string, []llm.Message) {
-	_, server := s.Provider.(*llm.OpenAI)
+	o, server := s.Provider.(*llm.OpenAI)
 	// A small model ends a turn of tool calls with no words a fifth of
 	// the time; asked once, it says what it did. Only a model server's
 	// (OpenAI-style): the Claude API takes no second person's turn after
@@ -42,9 +42,11 @@ func (s *Service) ending(ctx context.Context, reply, said string, changes []reco
 		}
 		reply += s.stillWrong(ctx, reply, said, changes) // claims_words.go
 	}
-	// A model server's turn that changed something checks it once against
-	// what was asked (review.go).
-	if server && !end.reviewed {
+	// A turn on a model on this computer (Ollama, LM Studio, llama.cpp)
+	// that changed something checks it once against what was asked
+	// (review.go). A model elsewhere is not asked: the check is another
+	// call with the whole conversation, and costs money.
+	if server && llm.Local(o.BaseURL) && !end.reviewed {
 		if note := s.reviewNote(end.asked, changes); note != "" {
 			end.reviewed, end.reply = true, reply
 			return askAgain(on, llm.Message{Role: llm.RoleAssistant, Content: reply}, llm.Message{Role: llm.RoleUser, Content: note})
