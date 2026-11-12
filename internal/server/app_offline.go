@@ -12,9 +12,12 @@ import "net/http"
 // is stale and nothing private is left on the phone.
 
 const offlineScript = `"use strict";
-const page = '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><title>Sameway cannot be reached</title>' +
+const page = '<!doctype html><html lang="en-GB"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><title>Sameway cannot be reached</title>' +
   '<main style="font:1.1rem/1.5 system-ui;max-width:30rem;margin:3rem auto;padding:0 1rem"><h1 style="font-size:1.5rem">Sameway cannot be reached just now</h1>' +
-  '<p>Sameway lives on your computer. It answers when the computer is on and awake, and this phone can reach it: on the same Wi-Fi, or through Tailscale.</p>' +
+  // On the computer itself it is Sameway that has stopped, not the way to it.
+  (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(self.location.hostname)
+    ? '<p>Sameway is not running on this computer. Open Sameway again, the way you opened it before, then press Try again.</p>'
+    : '<p>Sameway lives on your computer. It answers when the computer is on and awake, and this phone can reach it: on the same Wi-Fi, or through Tailscale.</p>') +
   '<p><button onclick="location.reload()" style="font:inherit;min-height:44px;padding:0 1.25rem">Try again</button></p></main>';
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
