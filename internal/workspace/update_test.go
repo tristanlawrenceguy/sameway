@@ -73,3 +73,30 @@ func TestTheSettingIsOfferedToTheAssistant(t *testing.T) {
 		t.Errorf("the settings the assistant reads should say what update.mode takes: %s", doc)
 	}
 }
+
+// The topics a broker's devices come in on are one setting: said comma
+// separated, kept as a list in workspace.yaml, and given back the way
+// the file has it, which is how undo puts them back.
+func TestTopicsAreOneSettingKeptAsAList(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	if err := workspace.Init(dir, examples.FS, examples.StarterRoot, false); err != nil {
+		t.Fatal(err)
+	}
+	w, err := workspace.Load(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := w.Set("mqtt.subscribe", "zigbee2mqtt/+, stat/+/POWER"); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Join(w.Config.MQTT.Subscribe, " "); got != "zigbee2mqtt/+ stat/+/POWER" {
+		t.Fatalf("both topics are kept: %q", got)
+	}
+	if err := w.Set("mqtt.subscribe", "[zigbee2mqtt/+]"); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Join(w.Config.MQTT.Subscribe, " "); got != "zigbee2mqtt/+" {
+		t.Errorf("as the file has it: %q", got)
+	}
+}

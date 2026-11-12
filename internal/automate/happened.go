@@ -46,8 +46,14 @@ type automationJob struct {
 
 type automation struct {
 	jobs chan automationJob
-	mu   sync.Mutex
-	last map[string]time.Time // action and record → when it last ran for it
+	// later is an action run over what is already here (backlog.go), one
+	// record at a time, taken only when nothing has just happened: its
+	// hundreds of photos would fill jobs, and what came meanwhile would
+	// not be sorted.
+	later chan automationJob
+	mu    sync.Mutex
+	last  map[string]time.Time // action and record → when it last ran for it
+	left  map[string]int       // action → records it is still going through
 }
 
 // recordChanged finds the actions waiting for what just happened.

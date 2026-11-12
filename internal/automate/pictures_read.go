@@ -81,28 +81,30 @@ func (s *Service) readPictures(ctx context.Context, t *schema.Type, rec *store.R
 	return ops
 }
 
-// readSections reads a picture, or a scan's pages three at a time, so
+// readSections reads a picture, or a scan's pages one at a time, so
 // every page of a long letter or a lease is read and kept, not its first
-// few; its name and description are its first pages'. Any section not
-// read leaves it all to read again next time.
+// few; its name and description are its first page's. Not three at a
+// time: a small model on this computer read only one of three pages
+// shown together, and three pages of small print are more words than
+// one answer holds. Any page not read leaves it all to read again next
+// time.
 func (s *Service) readSections(ctx context.Context, what string, pics []llm.Image) (pictureRead, bool) {
 	var whole pictureRead
 	var texts []string
-	for at := 0; at < len(pics); at += picturesSeen {
-		end := min(at+picturesSeen, len(pics))
+	for at := range pics {
 		q := "This is " + what + "."
 		if len(pics) > 1 {
-			q = fmt.Sprintf("Pages %d to %d of the %d pages of the scan that is %s.", at+1, end, len(pics), what)
+			q = fmt.Sprintf("Page %d of the %d pages of the scan that is %s.", at+1, len(pics), what)
 		}
 		var got pictureRead
-		if err := s.ask(ctx, pictureSystem, q, pics[at:end], &got); err != nil {
+		if err := s.ask(ctx, pictureSystem, q, pics[at:at+1], &got); err != nil {
 			return pictureRead{}, false
 		}
 		if at == 0 {
 			whole.Name, whole.Description = got.Name, got.Description
 		}
-		if text := strings.TrimSpace(got.Text); text != "" && len(pics) > picturesSeen {
-			texts = append(texts, fmt.Sprintf("## Pages %d to %d\n\n%s", at+1, end, text))
+		if text := strings.TrimSpace(got.Text); text != "" && len(pics) > 1 {
+			texts = append(texts, fmt.Sprintf("## Page %d\n\n%s", at+1, text))
 		} else if text != "" {
 			texts = append(texts, text)
 		}

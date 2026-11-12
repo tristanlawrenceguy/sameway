@@ -18,14 +18,21 @@ import (
 func (s *Service) WorkerJob() runner.Job {
 	s.listen()
 	return runner.Job{Name: "Actions run when something happens", Run: func(ctx context.Context, _ time.Time) error {
-		for {
+		for ctx.Err() == nil {
+			var j automationJob
 			select {
-			case <-ctx.Done():
-				return nil
-			case j := <-s.auto.jobs:
-				s.runAutomation(ctx, j)
+			case j = <-s.auto.jobs: // what just happened comes first
+			default:
+				select {
+				case <-ctx.Done():
+					return nil
+				case j = <-s.auto.jobs:
+				case j = <-s.auto.later:
+				}
 			}
+			s.runAutomation(ctx, j)
 		}
+		return nil
 	}}
 }
 
@@ -44,7 +51,7 @@ func (s *Service) listen() {
 	if s.auto != nil {
 		return
 	}
-	s.auto = &automation{jobs: make(chan automationJob, 256), last: map[string]time.Time{}}
+	s.auto = &automation{jobs: make(chan automationJob, 256), later: make(chan automationJob), last: map[string]time.Time{}, left: map[string]int{}}
 	records.Listen(s.Store, s.heard)
 }
 
@@ -53,7 +60,9 @@ func (s *Service) listen() {
 // waiting for it and to the tags an action gave (judgement.go). Every way
 // a record is written is heard here, from a page, the API, the
 // assistant, an import or the content folder, since each goes through
-// records.
+// records. An undo sets nothing off: it puts things back as they were,
+// after the actions they set off had run, and a note joined to the
+// piece after it, put back, was sorted again and could be joined again.
 func (s *Service) heard(_ string, c records.Change) {
 	for _, op := range c.Ops {
 		t, ok := s.Store.Types().Get(op.Type)
@@ -61,7 +70,9 @@ func (s *Service) heard(_ string, c records.Change) {
 			continue // a setting, or a type since gone
 		}
 		was, now := opRecord(op, op.Before), opRecord(op, op.After)
-		s.recordChanged(t, was, now)
+		if c.Undoes == "" {
+			s.recordChanged(t, was, now)
+		}
 		TagsChanged(s.Store, t, was, now)
 	}
 }

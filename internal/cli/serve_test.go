@@ -73,3 +73,44 @@ func TestOtherSitesCannotWrite(t *testing.T) {
 		t.Errorf("opening it saves nothing: %d then %d", before, after)
 	}
 }
+
+// A page on another site that points its own name at this computer (DNS
+// rebinding), or a tunnel that brings the internet in under its name, is
+// not the owner at this computer: only this computer's own names open it,
+// and another name only with an agent's key, which is then checked.
+func TestOnlyThisComputersNamesOpenIt(t *testing.T) {
+	t.Parallel()
+	dir := initWorkspace(t)
+	a, err := app.Load(dir, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer a.Close()
+	h := cli.Handler(a, "")
+	open := func(host, key string) int {
+		req := httptest.NewRequest(http.MethodGet, "/search?q=lease", nil)
+		req.Host, req.RemoteAddr = host, "127.0.0.1:5000"
+		if key != "" {
+			req.Header.Set("Authorization", "Bearer "+key)
+		}
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, req)
+		return rec.Code
+	}
+	for _, host := range []string{"localhost:8080", "127.0.0.1:8080", "[::1]:8080", "192.168.1.20:8080", "laptop:8080", "laptop.local:8080", "laptop.tail1234.ts.net", "app.localhost:8080"} {
+		if code := open(host, ""); code != http.StatusOK {
+			t.Errorf("%s opens it: %d", host, code)
+		}
+	}
+	for _, host := range []string{"evil.example:8080", "abc.ngrok-free.app", "localhost.evil.example"} {
+		if code := open(host, ""); code != http.StatusMisdirectedRequest {
+			t.Errorf("%s is refused: %d", host, code)
+		}
+		if code := open(host, "junk"); code != http.StatusMisdirectedRequest {
+			t.Errorf("%s with no agent's key is refused: %d", host, code)
+		}
+	}
+	if code := open("abc.ngrok-free.app", "sw_unknown"); code != http.StatusUnauthorized {
+		t.Errorf("an agent's key from elsewhere is checked: %d", code)
+	}
+}
