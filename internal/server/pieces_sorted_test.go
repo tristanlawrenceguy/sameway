@@ -152,6 +152,16 @@ func TestAJoinUndoneIsNotSortedAgain(t *testing.T) {
 	wantStatus(t, postForm(t, h, "/activity/"+joined.ID+"/undo", url.Values{}), http.StatusSeeOther)
 	share("Gym timetable: spin on Tuesdays at 7.") // sorted after anything the undo set off
 	wait("Gym")
+	// The worker writes nothing more once it has nothing left to ask.
+	for n, end := -1, time.Now().Add(10*time.Second); time.Now().Before(end); time.Sleep(300 * time.Millisecond) {
+		model.mu.Lock()
+		now := len(model.all)
+		model.mu.Unlock()
+		if now == n {
+			break
+		}
+		n = now
+	}
 	if got := sorted("part 1", "part 2"); got != before {
 		t.Errorf("the first part, put back, is not sorted again: asked about %d times, then %d", before, got)
 	}
