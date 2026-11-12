@@ -151,7 +151,7 @@ func (s *Server) onComputer(r *http.Request, q, only string) string {
 // page where the person presses Bring it in. Bringing in stays theirs.
 func (s *Server) FindFiles(words string) (string, error) {
 	if len(s.computer) == 0 {
-		return "", errors.New("this workspace does not look on this computer: files in your Documents, Downloads and Desktop are found when Sameway runs on it, opened with sameway open or sameway serve")
+		return "nothing was looked for: this workspace does not look on this computer. Files in your Documents, Downloads and Desktop are found when Sameway runs on it, opened with sameway open or sameway serve", nil
 	}
 	found := findOnComputer(s.computer, words)
 	if len(found) == 0 {
