@@ -25,6 +25,12 @@ import (
 const (
 	pictureSide  = 1568
 	pictureBytes = 3 << 20
+	// picturePixels is as large a picture as is drawn to be made smaller:
+	// a scan 9000 by 12000 pixels with room, half a gigabyte once drawn.
+	// An email's attachment is read with no one watching, and a small PNG
+	// can say it is 100,000 pixels square, tens of gigabytes; one larger
+	// is unreadable, as a form not redrawn here is.
+	picturePixels = 128 << 20
 )
 
 var pictureTypes = map[string]string{".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".gif": "image/gif", ".webp": "image/webp"}
@@ -85,6 +91,9 @@ func (s *Service) PicturesFor(id string) []llm.Image {
 // no longer than pictureSide as a JPEG.
 func fitted(typ string, data []byte) (llm.Image, bool) {
 	cfg, _, cerr := image.DecodeConfig(bytes.NewReader(data))
+	if cerr == nil && cfg.Width*cfg.Height > picturePixels {
+		return llm.Image{}, false
+	}
 	if len(data) <= pictureBytes && (cerr != nil || max(cfg.Width, cfg.Height) <= pictureSide) {
 		return llm.Image{Type: typ, Data: data}, true
 	}
