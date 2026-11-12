@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/devices"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/meetfetch"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
@@ -53,6 +54,10 @@ type Options struct {
 	// After is how the background jobs wait (App.Jobs); nil is
 	// time.After. A test gives a runner.Fake's, so nothing sleeps.
 	After func(time.Duration) <-chan time.Time
+	// Home is how the home's MQTT broker is connected to
+	// (App.ConnectDevices); the zero value is the real network. A test
+	// gives its own, so nothing needs a broker.
+	Home devices.Home
 }
 
 // Load opens the workspace at dir. Pass memoryDB to use an in-memory store

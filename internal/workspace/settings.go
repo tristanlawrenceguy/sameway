@@ -59,10 +59,11 @@ var Settings = []Setting{
 	{"backup.folder", "string", nil, "a cloud folder (OneDrive, Dropbox, iCloud Drive, Google Drive) a whole copy of the workspace goes to once a day, the last seven kept; set from Workspaces"},
 	{"notify.command", "string", nil, "a command run when a reminder rings, with {title}, {text} and {url} in its arguments: a push service such as ntfy, an email, a text"},
 	{"actions.allow", "string", nil, "the programs a command action may run, by name, comma separated (curl, python); empty means command actions run nothing"},
-	{"mqtt.broker", "string", nil, "the MQTT broker for devices, such as tcp://192.168.1.10:1883; empty means none (takes effect at the next start)"},
+	{"mqtt.broker", "string", nil, "the MQTT broker for devices, such as tcp://192.168.1.10:1883; empty means none; connects at once while Sameway runs. Workspaces offers one it finds on the home network"},
 	{"mqtt.client_id", "string", nil, "how this workspace names itself to the broker"},
 	{"mqtt.username_env", "env", nil, "the NAME of the environment variable that holds the broker username"},
 	{"mqtt.password_env", "env", nil, "the NAME of the environment variable that holds the broker password"},
+	{"mqtt.subscribe", "topics", nil, "the topics whose messages become device records, comma separated, with MQTT wildcards: zigbee2mqtt/+ takes every Zigbee2MQTT device, stat/+/POWER every Tasmota plug"},
 	{"meetings.teams_client_id", "string", nil, "the application (client) id of the person's own app in Microsoft Entra, for bringing Teams transcripts once a meeting is over; they then connect on the help page"},
 	{"meetings.teams_tenant", "string", nil, "their Microsoft tenant id or domain; empty is any work or school account"},
 	{"meetings.zoom_account_id", "string", nil, "the account id of the person's Zoom Server-to-Server OAuth app, for bringing Zoom transcripts"},
@@ -118,6 +119,9 @@ func (w *Workspace) Set(key, value string) error {
 		if value != "" && !KnownZone(value) {
 			return fmt.Errorf("%s must be a time zone named by a place, such as Europe/Madrid or America/New_York, not %q", key, value)
 		}
+	case "topics":
+		// A list in the file, said comma separated or as the file has it.
+		scalar = flowList(topicsOf(value))
 	case "keys":
 		// A list one thing is added to or taken from, rather than resent
 		// whole: turning a part of a page on should not be able to turn
