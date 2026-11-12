@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
+	"github.com/tristanlawrenceguy/sameway/internal/devices"
 	"github.com/tristanlawrenceguy/sameway/internal/ipp"
 	"github.com/tristanlawrenceguy/sameway/internal/runner"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
@@ -35,6 +36,7 @@ func startBackground(ctx context.Context, a *app.App, h *server.Server, all http
 	h.FindOnComputer(server.HomeFolders()...)                                                               // a search also finds files here
 	h.UsePrinters(func(ctx context.Context) ([]ipp.Printer, error) { return ipp.Find(ctx, 3*time.Second) }) // printers at home
 	connectDevices(ctx, out, a)
+	h.LookForHubs(func(ctx context.Context) ([]devices.Broker, error) { return devices.Find(ctx, 3*time.Second) }) // a hub offered on Workspaces
 	a.Jobs.Add(backgroundJobs(a, h, notes)...)
 	a.Jobs.Add(joinTailnet(out, a, all, h)...) // tailnet.go
 	a.Jobs.Start(ctx)

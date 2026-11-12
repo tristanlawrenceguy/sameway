@@ -1,9 +1,11 @@
 package exchange
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"sort"
+	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
@@ -22,15 +24,8 @@ import (
 // suggestFromChats sets up the action that suggests a task from each
 // conversation tagged tag as it is added, unless one is there already.
 func (s *Service) suggestFromChats(r *http.Request, tag string) {
-	actions, _ := s.app.Store.List(records.ActionType, store.ListOptions{})
-	for _, a := range actions {
-		if a.Fields["kind"] == "suggest" && a.Fields["what"] == "note" {
-			for _, o := range records.StringList(a.Fields["only"]) {
-				if o == "tags="+tag {
-					return
-				}
-			}
-		}
+	if s.chatsAction(tag) != nil {
+		return
 	}
 	records.WriteAs(s.app.Store, s.Who(r), "created", records.ActionType, "", map[string]any{
 		"title": "Suggest a task from each conversation brought from " + map[string]string{"chatgpt": "ChatGPT", "claude": "Claude"}[tag],
@@ -39,9 +34,28 @@ func (s *Service) suggestFromChats(r *http.Request, tag string) {
 	})
 }
 
+// chatsAction is the action that suggests a task from each conversation
+// tagged tag, or nil when looking through them was never asked for.
+func (s *Service) chatsAction(tag string) *store.Record {
+	actions, _ := s.app.Store.List(records.ActionType, store.ListOptions{})
+	for _, a := range actions {
+		if a.Fields["kind"] == "suggest" && a.Fields["what"] == "note" {
+			for _, o := range records.StringList(a.Fields["only"]) {
+				if o == "tags="+tag {
+					return a
+				}
+			}
+		}
+	}
+	return nil
+}
+
 // carryOn gives each note of a conversation carried on since it was
 // brought the words it has now (ingest.Table.Continued), as one change
-// with its Undo, and says how many.
+// with its Undo, and says how many. When conversations brought are looked
+// through for what is still to do, each is looked through again for what
+// its new words ask, once, as when it came (automate.Suggest leaves out
+// what it suggested from its start).
 func (s *Service) carryOn(t *schema.Type, longer map[string]string, from string) int {
 	ids := make([]string, 0, len(longer))
 	for id := range longer {
@@ -61,5 +75,12 @@ func (s *Service) carryOn(t *schema.Type, longer map[string]string, from string)
 	}
 	records.Record(s.app.Store, "human", records.Change{Action: "updated", Component: t.Name,
 		Detail: fmt.Sprintf("%d %s carried on in %s", len(done), schema.Plural(t.Name), from), Href: "/t/" + t.Name, Ops: done})
+	if a := s.chatsAction(strings.ToLower(from)); a != nil {
+		for _, op := range done {
+			if rec, err := s.app.Store.Get(t.Name, op.ID); err == nil {
+				s.app.Automate.RunOn(context.Background(), a.ID, t, rec, schema.Words(t.Name)+" "+s.Title(t, rec)+" was carried on in "+from)
+			}
+		}
+	}
 	return len(done)
 }

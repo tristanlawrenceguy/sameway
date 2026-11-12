@@ -95,3 +95,32 @@ func (s *Service) doneBy(action *store.Record) map[string]bool {
 	}
 	return done
 }
+
+// RunOn runs an action on one record when nothing set it off, in the
+// background as if the record had just come: a conversation carried on
+// since it was brought is looked through again, as when it came.
+func (s *Service) RunOn(ctx context.Context, action string, t *schema.Type, rec *store.Record, why string) {
+	job := automationJob{action: action, vars: s.recordVars(t, rec), why: why, backlog: true}
+	if s.auto == nil {
+		s.runAutomation(ctx, job)
+		return
+	}
+	select {
+	case s.auto.jobs <- job:
+	default:
+	}
+}
+
+// suggestedFrom is what an action suggested from one record before, made,
+// turned down or waiting: a conversation carried on since is read whole
+// again, and what its start asked for was put to the person already.
+func (s *Service) suggestedFrom(action, from string) []string {
+	all, _ := s.Store.List(records.ProposalType, store.ListOptions{})
+	var out []string
+	for _, p := range all {
+		if p.Fields["by_action"] == action && p.Fields["from"] == from {
+			out = append(out, fmt.Sprint(p.Fields["summary"]))
+		}
+	}
+	return out
+}
