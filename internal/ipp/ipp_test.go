@@ -70,7 +70,7 @@ func TestAPrinterThatRefusesSaysWhyInWords(t *testing.T) {
 		t.Errorf("the refusal in words: %v", err)
 	}
 	printer.Close()
-	if err := Print(context.Background(), Printer{Name: "Kitchen", URL: printer.URL + "/ipp/print"}, strings.NewReader("x"), "application/pdf", "Letter"); err == nil || !strings.Contains(err.Error(), "Kitchen did not answer") {
+	if err := Print(context.Background(), Printer{Name: "Kitchen", URL: printer.URL + "/ipp/print"}, strings.NewReader("x"), "application/pdf", "Letter"); err == nil || !strings.Contains(err.Error(), "Kitchen did not answer. It may be switched off") || strings.Contains(err.Error(), "tcp") {
 		t.Errorf("a printer that is off says so: %v", err)
 	}
 }
