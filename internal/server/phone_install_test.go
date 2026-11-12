@@ -79,8 +79,8 @@ func TestAPhonePutsSamewayOnItsHomeScreen(t *testing.T) {
 	if !strings.HasPrefix(link, "/pair?app=") {
 		t.Fatalf("a paired phone's manifest starts at a link that pairs its app: %q", link)
 	}
-	if !strings.Contains(mf.Body.String(), `"url":"/computer/send"`) {
-		t.Errorf("the owner's phone holds Send to the computer on its icon: %s", mf.Body.String())
+	if !strings.Contains(mf.Body.String(), `"url":"/computer/send"`) || !strings.Contains(mf.Body.String(), `"url":"/scan"`) {
+		t.Errorf("the owner's phone holds Send to the computer and Scan to the list on its icon: %s", mf.Body.String())
 	}
 	if again := start(ask("/manifest.webmanifest", safari)); again != link {
 		t.Errorf("the same link while it is unused: %q", again)
