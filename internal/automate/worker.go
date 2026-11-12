@@ -18,14 +18,21 @@ import (
 func (s *Service) WorkerJob() runner.Job {
 	s.listen()
 	return runner.Job{Name: "Actions run when something happens", Run: func(ctx context.Context, _ time.Time) error {
-		for {
+		for ctx.Err() == nil {
+			var j automationJob
 			select {
-			case <-ctx.Done():
-				return nil
-			case j := <-s.auto.jobs:
-				s.runAutomation(ctx, j)
+			case j = <-s.auto.jobs: // what just happened comes first
+			default:
+				select {
+				case <-ctx.Done():
+					return nil
+				case j = <-s.auto.jobs:
+				case j = <-s.auto.later:
+				}
 			}
+			s.runAutomation(ctx, j)
 		}
+		return nil
 	}}
 }
 
@@ -44,7 +51,7 @@ func (s *Service) listen() {
 	if s.auto != nil {
 		return
 	}
-	s.auto = &automation{jobs: make(chan automationJob, 256), last: map[string]time.Time{}}
+	s.auto = &automation{jobs: make(chan automationJob, 256), later: make(chan automationJob), last: map[string]time.Time{}, left: map[string]int{}}
 	records.Listen(s.Store, s.heard)
 }
 

@@ -120,7 +120,7 @@ var outward = map[string]func(now, next string, s *Service) question{
 	},
 	"mqtt.broker": func(now, next string, _ *Service) question {
 		return question{"Send your devices' messages somewhere else?",
-			fmt.Sprintf("Messages to and from your lights, plugs and other devices would go to %s instead of %s, from the next start. Only say yes if that is your own hub: what is sent there can't be taken back.", next, orNone(now)),
+			fmt.Sprintf("Messages to and from your lights, plugs and other devices would go to %s instead of %s. Only say yes if that is your own hub: what is sent there can't be taken back.", next, orNone(now)),
 			"Yes, use " + host(next), "No, keep it as it is"}
 	},
 	"mqtt.username_env": mqttSecret,

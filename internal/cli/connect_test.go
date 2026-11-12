@@ -71,7 +71,7 @@ func TestMCPOverHTTPNeedsTheToken(t *testing.T) {
 	}
 	defer a.Close()
 	post := func(h http.Handler, token, body string) *httptest.ResponseRecorder {
-		req := httptest.NewRequest(http.MethodPost, "/mcp", strings.NewReader(body))
+		req := httptest.NewRequest(http.MethodPost, "http://127.0.0.1/mcp", strings.NewReader(body))
 		req.RemoteAddr = "127.0.0.1:5000" // an agent on this computer; from elsewhere it reads only
 		req.Header.Set("Content-Type", "application/json")
 		if token != "" {
@@ -98,13 +98,13 @@ func TestMCPOverHTTPNeedsTheToken(t *testing.T) {
 		t.Errorf("a tool call works over HTTP: %d %s", rec.Code, rec.Body.String())
 	}
 	if rec := httptest.NewRecorder(); true {
-		on.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/mcp", nil))
+		on.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "http://127.0.0.1/mcp", nil))
 		if rec.Code != http.StatusMethodNotAllowed && rec.Code != http.StatusUnauthorized {
 			t.Errorf("GET is not how this server is used: %d", rec.Code)
 		}
 	}
 	if rec := httptest.NewRecorder(); true {
-		on.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/describe", nil))
+		on.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "http://127.0.0.1/api/describe", nil))
 		if rec.Code != http.StatusOK {
 			t.Errorf("the pages and the API are still there beside /mcp: %d", rec.Code)
 		}
