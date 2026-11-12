@@ -3,6 +3,7 @@ package server
 import (
 	"errors"
 	"html/template"
+	"io/fs"
 	"net/http"
 	"net/url"
 	"os"
@@ -86,11 +87,11 @@ func findOnComputer(dirs []string, q string) []foundFile {
 			switch {
 			case strings.HasPrefix(d.Name(), "."):
 			case d.IsDir():
-				if in.depth < deepest {
+				if in.depth < deepest && !hiddenEntry(d) {
 					todo = append(todo, folder{path, in.depth + 1})
 				}
 			case d.Type().IsRegular() && hasWords(strings.ToLower(d.Name()), words) && len(out) < foundMost:
-				if fi, err := d.Info(); err == nil {
+				if fi, err := d.Info(); err == nil && !markedHidden(fi) {
 					out = append(out, foundFile{path, fi.ModTime(), fi.Size()})
 				}
 			}
@@ -100,11 +101,19 @@ func findOnComputer(dirs []string, q string) []foundFile {
 	return out
 }
 
+// hiddenEntry is whether a file or folder is marked hidden.
+func hiddenEntry(d fs.DirEntry) bool {
+	fi, err := d.Info()
+	return err != nil || markedHidden(fi)
+}
+
 // hidden is whether a path in a folder passes through anything hidden,
-// which a search never offers.
-func hidden(rel string) bool {
+// by its name or as marked, which a search never offers.
+func hidden(dir, rel string) bool {
 	for _, part := range strings.Split(filepath.ToSlash(rel), "/") {
-		if strings.HasPrefix(part, ".") {
+		dir = filepath.Join(dir, part)
+		fi, err := os.Lstat(dir)
+		if strings.HasPrefix(part, ".") || err != nil || markedHidden(fi) {
 			return true
 		}
 	}
@@ -208,7 +217,7 @@ func (s *Server) offered(path string) bool {
 	}
 	for _, dir := range s.computer {
 		if d, err := filepath.EvalSymlinks(dir); err == nil {
-			if rel, err := filepath.Rel(d, real); err == nil && rel != "." && filepath.IsLocal(rel) && !hidden(rel) {
+			if rel, err := filepath.Rel(d, real); err == nil && rel != "." && filepath.IsLocal(rel) && !hidden(d, rel) {
 				return true
 			}
 		}
