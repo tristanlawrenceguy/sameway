@@ -18,7 +18,7 @@ import (
 // the people and said they were on the meeting, moved the tasks and left
 // the lunch, wrote a time in UTC and told the person the hour they asked
 // for. Each tool had said what it did; the model did not add it up. So a
-// model server's turn that changed something is shown, once, what the
+// turn on a model on this computer that changed something is shown, once, what the
 // turn changed in the person's own time, beside what they asked, and
 // finishes or answers again. A turn that changed nothing (an answer, or a
 // question to the person) is left alone. The check is of this message
