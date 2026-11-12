@@ -33,7 +33,9 @@ type printers struct {
 	find  func(context.Context) ([]ipp.Printer, error)
 }
 
-// UsePrinters sets how printers are found, for tests.
+// UsePrinters sets how printers are found: the running program gives
+// ipp.Find (cli/background.go), a test its own. Unset, none are looked
+// for, so no test listens on the network (and Windows asks no one).
 func (s *Service) UsePrinters(find func(context.Context) ([]ipp.Printer, error)) {
 	s.printers.mu.Lock()
 	defer s.printers.mu.Unlock()
@@ -48,7 +50,7 @@ func (s *Service) printersJob() runner.Job {
 		find := s.printers.find
 		s.printers.mu.Unlock()
 		if find == nil {
-			find = func(ctx context.Context) ([]ipp.Printer, error) { return ipp.Find(ctx, 3*time.Second) }
+			return nil
 		}
 		found, err := find(ctx)
 		if err != nil {

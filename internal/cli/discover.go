@@ -34,6 +34,6 @@ func (c *ctx) discoverCmd() error {
 	for _, s := range found {
 		fmt.Fprintln(c.Stdout, discover.Describe(s))
 	}
-	fmt.Fprintln(c.Stdout, "\nAn MQTT broker goes in workspace.yaml as mqtt.broker: tcp://<address>:<port>.")
+	fmt.Fprintln(c.Stdout, "\nAn MQTT broker goes in workspace.yaml as mqtt.broker: tcp://<address>:<port>; Workspaces offers one Sameway finds.")
 	return nil
 }

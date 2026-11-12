@@ -25,6 +25,11 @@ func (s *Server) BackgroundJobs() []runner.Job {
 			s.lookHome() // home_wifi.go
 			return nil
 		}},
+		// Only while no hub is set, and only in the real program, which
+		// says how to look (LookForHubs; home_devices.go).
+		{Name: "A hub for the home's devices looked for", Every: 5 * time.Minute, Run: func(ctx context.Context, _ time.Time) error {
+			return s.lookForHub(ctx)
+		}},
 		{Name: "Calendars kept in step", Every: time.Hour, Run: s.keepCalendars},         // calendar_links.go
 		{Name: "Daily copy in the cloud folder", Every: time.Hour, Run: s.keepCloudCopy}, // cloud_backup.go
 		{Name: "Changes passed through the cloud folder", Every: 15 * time.Second, Wait: true, Run: func(context.Context, time.Time) error {

@@ -14,6 +14,8 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
+	"github.com/tristanlawrenceguy/sameway/internal/devices"
+	"github.com/tristanlawrenceguy/sameway/internal/ipp"
 	"github.com/tristanlawrenceguy/sameway/internal/runner"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 )
@@ -33,6 +35,13 @@ func startBackground(ctx context.Context, a *app.App, h *server.Server, all http
 	h.OnRing(notifier(a))                     // a ring told beyond the page
 	h.FindOnComputer(server.HomeFolders()...) // a search also finds files here
 	connectDevices(ctx, out, a)
+	// Printers and hubs are looked for by listening on the home network,
+	// which has Windows ask to allow each new program that does: a test
+	// server built afresh for each run says SAMEWAY_HOME_NETWORK=off.
+	if os.Getenv("SAMEWAY_HOME_NETWORK") != "off" {
+		h.UsePrinters(func(ctx context.Context) ([]ipp.Printer, error) { return ipp.Find(ctx, 3*time.Second) })        // printers at home
+		h.LookForHubs(func(ctx context.Context) ([]devices.Broker, error) { return devices.Find(ctx, 3*time.Second) }) // a hub offered on Workspaces
+	}
 	a.Jobs.Add(backgroundJobs(a, h, notes)...)
 	a.Jobs.Add(joinTailnet(out, a, all, h)...) // tailnet.go
 	a.Jobs.Start(ctx)
