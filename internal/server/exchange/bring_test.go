@@ -84,13 +84,19 @@ func TestConversationsAreBroughtFromChatGPT(t *testing.T) {
 // your things, asking for suggestions or not.
 func bringChats(t *testing.T, h http.Handler, suggest bool, said string) string {
 	t.Helper()
+	return bringExport(t, h, suggest, `[{"title":"Moving house","create_time":1760000000,"current_node":"a","mapping":{"a":{"parent":null,"message":{"author":{"role":"user"},"content":{"parts":["`+said+`"]}}}}}]`)
+}
+
+// bringExport posts conversations.json to Bring your things.
+func bringExport(t *testing.T, h http.Handler, suggest bool, export string) string {
+	t.Helper()
 	var body bytes.Buffer
 	mw := multipart.NewWriter(&body)
 	if suggest {
 		mw.WriteField("suggest", "yes")
 	}
 	fw, _ := mw.CreateFormFile("file", "conversations.json")
-	fw.Write([]byte(`[{"title":"Moving house","create_time":1760000000,"current_node":"a","mapping":{"a":{"parent":null,"message":{"author":{"role":"user"},"content":{"parts":["` + said + `"]}}}}}]`))
+	fw.Write([]byte(export))
 	mw.Close()
 	r := httptest.NewRequest(http.MethodPost, "/bring", &body)
 	r.Header.Set("Content-Type", mw.FormDataContentType())
@@ -148,5 +154,37 @@ func TestConversationsBroughtAgainComeInOnce(t *testing.T) {
 	}
 	if notes, _ := a.Store.List("note", store.ListOptions{}); len(notes) != 1 {
 		t.Errorf("one note, not two: %d", len(notes))
+	}
+}
+
+// A conversation carried on since it was brought is longer in the next
+// export: the note brought before takes the new words, as one change in
+// Activity that Undo takes back, not a second note beside it.
+func TestAConversationCarriedOnUpdatesItsNote(t *testing.T) {
+	t.Parallel()
+	a, h := newApp(t)
+	bringChats(t, h, false, "Book the van")
+	page := bringExport(t, h, false, `[{"title":"Moving house","create_time":1760000000,"current_node":"b","mapping":{
+		"a":{"parent":null,"message":{"author":{"role":"user"},"content":{"parts":["Book the van"]}}},
+		"b":{"parent":"a","message":{"author":{"role":"assistant"},"content":{"parts":["Done: the van is for the 14th."]}}}}}]`)
+	if !strings.Contains(page, "1 carried on since, each in the note brought before") {
+		t.Errorf("it says the conversation was carried on: %s", truncate(page))
+	}
+	notes, _ := a.Store.List("note", store.ListOptions{})
+	if len(notes) != 1 || !strings.Contains(notes[0].Fields["body"].(string), "the van is for the 14th") {
+		t.Fatalf("one note, with the new words: %+v", notes)
+	}
+	log, _ := a.Store.List(records.ActivityType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
+	if len(log) != 1 || !strings.Contains(records.Sentence(a.Store, log[0].Fields), "carried on in ChatGPT") {
+		t.Fatalf("in Activity: %v", log)
+	}
+	postForm(t, h, "/activity/"+log[0].ID+"/undo", nil)
+	if notes, _ := a.Store.List("note", store.ListOptions{}); len(notes) != 1 || strings.Contains(notes[0].Fields["body"].(string), "14th") {
+		t.Errorf("Undo puts the words back as they were: %+v", notes)
+	}
+	// Another conversation by the same title is a note of its own.
+	bringChats(t, h, false, "Sell the sofa")
+	if notes, _ := a.Store.List("note", store.ListOptions{}); len(notes) != 2 {
+		t.Errorf("a new conversation by the same title is a second note: %d", len(notes))
 	}
 }

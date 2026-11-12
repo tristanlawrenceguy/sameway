@@ -72,12 +72,13 @@ func (s *Service) bring(w http.ResponseWriter, r *http.Request) {
 		s.Failed(w, r, "Nothing brought in", err, "/bring")
 		return
 	}
-	suggesting := r.FormValue("suggest") == "yes" && (got.From == "ChatGPT" || got.From == "Claude")
+	fromChat := got.From == "ChatGPT" || got.From == "Claude"
+	suggesting := r.FormValue("suggest") == "yes" && fromChat
 	if suggesting {
 		s.suggestFromChats(r, strings.ToLower(got.From)) // bring_chats.go: before, so each note sets it off
 	}
 	var said []string
-	to, already, chats := "/", 0, 0
+	to, already, chats, carried := "/", 0, 0, 0
 	for _, kind := range []string{"task", "note"} {
 		tb := got.Kinds[kind]
 		t, ok := s.app.Types.Get(kind)
@@ -85,6 +86,9 @@ func (s *Service) bring(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		already += tb.Unseen(s.app.Store, t)
+		if kind == "note" && fromChat {
+			carried = s.carryOn(t, tb.Continued(s.app.Store, t), got.From) // bring_chats.go
+		}
 		report := ingest.Import(s.app.Store, t, tb, ingest.Guess(t, tb.Columns))
 		if report.Made == 0 {
 			continue
@@ -99,6 +103,9 @@ func (s *Service) bring(w http.ResponseWriter, r *http.Request) {
 			to = "/t/" + t.Name
 		}
 	}
+	if carried > 0 {
+		said = append(said, fmt.Sprintf("%d carried on since, each in the note brought before", carried))
+	}
 	if len(said) == 0 && already > 0 {
 		s.TellAt(w, r, web.Outcome{Title: "Nothing new from " + got.From, Text: "Everything in the file was brought in before."}, "/bring")
 		return
@@ -111,18 +118,24 @@ func (s *Service) bring(w http.ResponseWriter, r *http.Request) {
 	if already > 0 {
 		text += fmt.Sprintf(" %d brought in before were left out.", already)
 	}
-	if got.From == "ChatGPT" || got.From == "Claude" {
-		// Each conversation is a note tagged with where it came from; what
-		// was planned in them is still words until the assistant makes it
-		// tasks, days and people (chat/rules_topical.go).
-		tag := strings.ToLower(got.From)
-		to = "/t/note?where=tags%3D" + tag
-		text += " Each conversation is a note tagged " + tag + ". Ask the assistant to find what is still to do in them, and it makes the tasks, reminders and people."
-		if suggesting {
-			text += s.lookingThrough(chats)
-		}
+	if fromChat {
+		more, list := s.aboutChats(got.From, suggesting, chats)
+		text, to = text+more, list
 	}
 	s.TellAt(w, r, web.Outcome{Title: "Brought in from " + got.From, Text: text}, to)
+}
+
+// aboutChats is what the outcome says of conversations brought, and the
+// list of them. Each is a note tagged with where it came from; what was
+// planned in them is still words until the assistant makes it tasks, days
+// and people (chat/rules_topical.go).
+func (s *Service) aboutChats(from string, suggesting bool, chats int) (string, string) {
+	tag := strings.ToLower(from)
+	text := " Each conversation is a note tagged " + tag + ". Ask the assistant to find what is still to do in them, and it makes the tasks, reminders and people."
+	if suggesting && chats > 0 {
+		text += s.lookingThrough(chats)
+	}
+	return text, "/t/note?where=tags%3D" + tag
 }
 
 // lookingThrough says what asking to look through the conversations sets
