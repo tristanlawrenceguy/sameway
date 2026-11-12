@@ -29,6 +29,8 @@ var ownerRoutes = []route{
 	{pattern: "POST /computer/bring", handle: (*Server).bringIn, access: owner, persons: "which files on this computer come in is its owner's choice", reach: inward}, // on_computer.go
 	{pattern: "POST /computer/show", handle: (*Server).computerShow, access: owner, persons: "what opens on the computer's screen is its owner's choice", reach: outward},
 	{pattern: "GET /phone/here", handle: (*Server).phoneHere, access: owner},
+	{pattern: "GET /computer/send", handle: (*Server).sendPage, access: owner},
+	{pattern: "POST /computer/send", handle: (*Server).sendToComputer, access: owner, persons: "what reaches the computer's screen and clipboard is its owner's choice", reach: outward}, // send_computer.go
 	{pattern: "POST /phone/off", handle: (*Server).phoneOff, access: owner, persons: "letting other devices reach the workspace is its owner's choice", reach: outward},
 	{pattern: "POST /phone/forget", handle: (*Server).phoneForget, access: owner, persons: "letting other devices reach the workspace is its owner's choice", reach: outward},
 	{pattern: "POST /access/take", handle: (*Server).accessTake, access: owner, persons: "taking access away is the owner's; the assistant does the same with let_in and access none, which only the owner's may", reach: inward}, // access_list.go
