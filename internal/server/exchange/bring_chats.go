@@ -1,9 +1,12 @@
 package exchange
 
 import (
+	"fmt"
 	"net/http"
+	"sort"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -34,4 +37,29 @@ func (s *Service) suggestFromChats(r *http.Request, tag string) {
 		"kind":  "suggest", "make": "task", "when": "added", "what": "note", "only": []any{"tags=" + tag},
 		"check": true, "examples": 10,
 	})
+}
+
+// carryOn gives each note of a conversation carried on since it was
+// brought the words it has now (ingest.Table.Continued), as one change
+// with its Undo, and says how many.
+func (s *Service) carryOn(t *schema.Type, longer map[string]string, from string) int {
+	ids := make([]string, 0, len(longer))
+	for id := range longer {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+	var ops []records.Op
+	for _, id := range ids {
+		ops = append(ops, records.Op{Type: t.Name, ID: id, After: map[string]any{"body": longer[id]}})
+	}
+	if len(ops) == 0 {
+		return 0
+	}
+	done, err := s.app.Records.Apply(ops...)
+	if err != nil {
+		return 0
+	}
+	records.Record(s.app.Store, "human", records.Change{Action: "updated", Component: t.Name,
+		Detail: fmt.Sprintf("%d %s carried on in %s", len(done), schema.Plural(t.Name), from), Href: "/t/" + t.Name, Ops: done})
+	return len(done)
 }
