@@ -3,6 +3,7 @@ package server_test
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"mime/multipart"
 	"net/http"
 	"strings"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
+	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -69,5 +71,49 @@ func TestAPictureNotReadWhenItCameIsReadLater(t *testing.T) {
 	job.Run(context.Background(), clock())
 	if model.saw != 1 {
 		t.Errorf("a picture read is not read again: saw %d", model.saw)
+	}
+}
+
+// hangs gives up on every picture as a model that hangs does, after its
+// wait, and answers anything else with no tag.
+type hangs struct {
+	mu   sync.Mutex
+	read int
+}
+
+func (m *hangs) Name() string { return "hangs" }
+func (m *hangs) Complete(_ context.Context, req llm.Request) (*llm.Response, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if strings.Contains(req.System, "You read a picture") {
+		m.read++
+		return nil, fmt.Errorf("the AI model at http://127.0.0.1:11434/v1 isn't answering (%w)", context.DeadlineExceeded)
+	}
+	return &llm.Response{Text: `{"tags": []}`}, nil
+}
+
+// Photos shared together while the model hangs are not each waited on:
+// it gave up on the first after five minutes, then the next, thirty
+// times over, while every other action waited. After the first, the
+// rest are left to be read once the model answers (pictures_later.go).
+func TestPhotosAreNotEachWaitedOnWhileTheModelHangs(t *testing.T) {
+	t.Parallel()
+	a, h := newApp(t)
+	model := &hangs{}
+	a.Chat.Provider = model
+	var buf bytes.Buffer
+	mw := multipart.NewWriter(&buf)
+	for i := range 3 {
+		fw, _ := mw.CreateFormFile("files", fmt.Sprintf("IMG_40%d.png", i))
+		fw.Write(pngOf(t, 40, 30))
+	}
+	mw.Close()
+	if rec := do(t, h, http.MethodPost, "/share", &buf, mw.FormDataContentType()); rec.Code != http.StatusSeeOther {
+		t.Fatalf("shared: %d", rec.Code)
+	}
+	act, _ := a.Store.Create(records.ActionType, map[string]any{"title": "Sort", "kind": "classify", "tags": []any{"to do"}})
+	a.Automate.Classify(context.Background(), act, "note", lastNote(t, a).ID)
+	if model.read != 1 {
+		t.Errorf("one photo waited on, not each of the three: %d", model.read)
 	}
 }
