@@ -5,9 +5,11 @@ import (
 	"html/template"
 	"io/fs"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -54,6 +56,7 @@ const (
 type foundFile struct {
 	path    string
 	changed time.Time
+	size    int64
 }
 
 // findOnComputer is the files whose names have every word, newest first.
@@ -89,7 +92,7 @@ func findOnComputer(dirs []string, q string) []foundFile {
 				return nil
 			}
 			if fi, err := d.Info(); err == nil {
-				out = append(out, foundFile{path, fi.ModTime()})
+				out = append(out, foundFile{path, fi.ModTime(), fi.Size()})
 			}
 			return nil
 		})
@@ -141,6 +144,26 @@ func (s *Server) onComputer(r *http.Request, q, only string) string {
 	}
 	b.WriteString(`</ul></section>`)
 	return b.String()
+}
+
+// FindFiles is the assistant's find_on_computer (chat/home_tools.go): the
+// same files the search page finds, said in words, each with the search
+// page where the person presses Bring it in. Bringing in stays theirs.
+func (s *Server) FindFiles(words string) (string, error) {
+	if len(s.computer) == 0 {
+		return "", errors.New("this workspace does not look on this computer: files in your Documents, Downloads and Desktop are found when Sameway runs on it, opened with sameway open or sameway serve")
+	}
+	found := findOnComputer(s.computer, words)
+	if len(found) == 0 {
+		return "no file in your Documents, Downloads or Desktop has " + strconv.Quote(words) + " in its name", nil
+	}
+	link := "/search?q=" + url.QueryEscape(words)
+	var b strings.Builder
+	b.WriteString("found by name in your Documents, Downloads and Desktop, not in Sameway yet; to have one here the person presses Bring it in beside it at " + link + ":\n")
+	for _, f := range found {
+		b.WriteString("- " + filepath.Base(f.path) + ", in " + filepath.Dir(f.path) + ", " + sizeWords(f.size) + ", changed " + s.savedOn(f.changed) + "\n")
+	}
+	return b.String(), nil
 }
 
 var errNotOffered = errors.New("only a file in your Documents, Downloads or Desktop can be brought in this way")
