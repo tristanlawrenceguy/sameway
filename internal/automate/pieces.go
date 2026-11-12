@@ -19,13 +19,16 @@ import (
 // page two's amount never met page one's deadline. When something is
 // shared, the model is shown what was shared in the half hour before;
 // when it says this continues one, the earlier note's words come first
-// in this one and the earlier note goes, undone with the sorting.
+// in this one and the earlier note goes, undone with the sorting. The
+// model says what each is before it picks one: picking first, a small
+// model on this computer joined a bin reminder to a lease scan shared
+// two minutes before in 15 of 20 tries, and in 3 of 20 saying why first.
 
 const piecesWithin = 30 * time.Minute
 
 const piecesSystem = `A person shares things from their phone one at a time, as they come to hand. Say whether what they shared just now is a further piece of something they shared shortly before, so that together they are one thing: the next page of the same letter or document, the rest of a message cut into parts, another screenshot of the same conversation, the back of the same card or receipt, more photos of the same thing, the rest of the same list or recipe.
 Things that are each whole on their own are apart, even on one subject or from one sender: two bills, two letters, two links, a photo and an unrelated note.
-Answer with JSON only: {"continues": the number of the earlier one it continues, or 0 when none, "why": "a few words"}`
+Answer with JSON only: {"why": "a few words on what each is", "continues": the number of the earlier one it continues, or 0 when none}`
 
 // joinPieces joins a share to the earlier one it continues, as the model
 // judges, and answers with the joining, for the change that logs it.
