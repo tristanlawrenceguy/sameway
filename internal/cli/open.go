@@ -79,7 +79,7 @@ func (c *ctx) openCmd() error {
 	_, port, _ := net.SplitHostPort(listener.Addr().String())
 	lan := &lanServer{port: port, h: h.LAN(all)} // lan.go
 	here := "http://" + listener.Addr().String()
-	h.WithFleet(&server.Fleet{Launch: launchWorkspace, Exit: exit, LAN: lan.set, LANBase: lan.Base, Show: func(path string) error { return openInBrowser(here + path) }, Restart: func() error {
+	h.WithFleet(&server.Fleet{Launch: launchWorkspace, Exit: exit, LAN: lan.set, LANBase: lan.Base, Show: func(to string) error { return openInBrowser(shown(here, to)) }, Copy: toClipboard, Restart: func() error {
 		if err := startAgain(a.Workspace.Dir, listener.Addr().String()); err != nil { // restart.go
 			return err
 		}
