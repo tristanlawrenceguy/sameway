@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"os/exec"
 	"strings"
 	"sync"
@@ -152,12 +153,16 @@ func (c Config) OnThisComputer() bool {
 	return false
 }
 
-// Local says an address is on this computer.
+// Local says an address is on this computer: the one definition, for
+// whether a model is here (OnThisComputer, Words, a chat's ending).
 func Local(base string) bool {
-	for _, h := range []string{"//localhost", "//127.0.0.1", "//[::1]"} {
-		if strings.Contains(base, h) {
-			return true
-		}
+	u, err := url.Parse(base)
+	if err != nil {
+		return false
+	}
+	switch u.Hostname() {
+	case "localhost", "127.0.0.1", "::1":
+		return true
 	}
 	return false
 }

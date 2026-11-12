@@ -25,6 +25,10 @@ func (s *Server) shortcutOffer(r *http.Request) string {
 	if !s.chatFor(r).IsOwner() {
 		return ""
 	}
+	if fromThisComputer(r) {
+		// The link it makes is pasted on the iPhone, so it is made there.
+		return `<p>Make it on the iPhone, where its link is pasted: open this page in Sameway there (<a class="sw-link" href="/workspaces#ws-phone">On your phone</a> says how) and press Make a Shortcut.</p>`
+	}
 	return string(s.form(ui.Form{Action: "/phone/shortcut", Button: &ui.Button{Label: "Make a Shortcut for an iPhone's Share menu", Variant: ui.Secondary}}))
 }
 

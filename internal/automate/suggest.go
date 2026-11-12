@@ -93,6 +93,9 @@ func (s *Service) Suggest(ctx context.Context, action *store.Record, typeName, i
 			q += "\n\nWhat the person did with your last suggestions from this action, newest first. Follow their choices: what they turned down, do not suggest again for records like it; what they changed, write as they changed it.\n" + strings.Join(past, "\n")
 		}
 	}
+	if before := s.suggestedFrom(action.ID, from.Name+"/"+rec.ID); len(before) > 0 {
+		q += "\n\nWhat you suggested from this record before, when it said less: " + strings.Join(before, " ") + " Do not suggest it again: suggest only something else still to do, else say make false."
+	}
 	var sug suggestion
 	if err := s.askSeeing(ctx, fmt.Sprintf(suggestSystem, schema.Words(mt.Name), s.fieldGuide(mt)), q, s.picturesOf(rec), &sug); err != nil {
 		return fail("could not read %s: %v", records.Name(s.Store, from, rec), err)

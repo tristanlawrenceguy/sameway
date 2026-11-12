@@ -146,7 +146,7 @@ func nameOf(topic string) string {
 		if i == 0 && len(parts) > 1 {
 			continue
 		}
-		if p == "state" || p == "status" || p == "tele" || p == "stat" || p == "" {
+		if p == "state" || p == "status" || p == "tele" || p == "stat" || p == "POWER" || p == "" {
 			continue
 		}
 		keep = append(keep, strings.ReplaceAll(strings.ReplaceAll(p, "_", " "), "-", " "))
