@@ -8,6 +8,7 @@ import (
 	"path"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
 )
@@ -46,7 +47,7 @@ func evernote(data []byte) (*Brought, error) {
 var notionID = regexp.MustCompile(`\s+[0-9a-f]{32}$`)
 
 // zipped reads a Google Takeout zip (Tasks, Keep) or a zip of Markdown.
-func zipped(data []byte) (*Brought, error) {
+func zipped(data []byte, zone *time.Location) (*Brought, error) {
 	zr, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
 	if err != nil {
 		return nil, errors.New("this zip cannot be opened: " + err.Error())
@@ -75,7 +76,7 @@ func zipped(data []byte) (*Brought, error) {
 		rc.Close()
 		switch {
 		case ext == ".json" && chatFile.MatchString(strings.ToLower(name)):
-			if got, ok := chatExport(buf.Bytes()); ok { // apps_chats.go: ChatGPT or Claude
+			if got, ok := chatExport(buf.Bytes(), zone); ok { // apps_chats.go: ChatGPT or Claude
 				chats = joined(chats, got)
 			}
 		case ext == ".json" && strings.EqualFold(name, "Tasks.json"):
