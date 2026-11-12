@@ -116,3 +116,15 @@ func apiMessage(s string) string {
 }
 
 var apiMessageRe = regexp.MustCompile(`"message"\s*:\s*"([^"]*)"`)
+
+// CannotSee says a model refused a turn for its pictures, as one that
+// cannot see does; a timeout or a model that is down is not that.
+func CannotSee(err error) bool {
+	e := strings.ToLower(err.Error())
+	for _, word := range []string{"image", "vision", "multimodal", "multi-modal"} {
+		if strings.Contains(e, word) {
+			return true
+		}
+	}
+	return false
+}
