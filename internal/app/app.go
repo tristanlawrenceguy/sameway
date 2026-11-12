@@ -5,7 +5,6 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/automate"
@@ -46,6 +45,7 @@ type App struct {
 
 	schemaSeen schemaWatch // what schema/ held when last read; see reload.go
 	opts       Options     // what it was opened with; options.go
+	devices    deviceLink  // the home's broker, while served; devices.go
 }
 
 // Open opens the workspace at dir, as o says (options.go).
@@ -116,10 +116,7 @@ func Open(dir string, o Options) (*App, error) {
 		if key == "actions.allow" {
 			a.Automate.Allow = allowList(ws.Config.Actions.Allow)
 		}
-		// A new model setting is a new model: the next message goes to it.
-		if strings.HasPrefix(key, "llm.") {
-			a.Chat.Provider, a.Chat.ProviderErr = llm.New(a.LLMConfig())
-		}
+		a.settingChanged(key) // devices.go: a new model or broker is used at once
 		return nil
 	}
 	a.Chat.AddField, a.Chat.AddType, a.Chat.Reshape = a.AddField, a.AddType, a

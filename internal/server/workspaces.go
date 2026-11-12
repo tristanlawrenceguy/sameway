@@ -116,9 +116,10 @@ func (s *Server) showWorkspaces(w http.ResponseWriter, r *http.Request, problem 
 	b.WriteString(s.atLoginSection())           // at_login.go
 	b.WriteString(s.quitSection())              // quit.go
 	b.WriteString(`</section>`)
-	b.WriteString(s.phoneSection(r))  // phone_lan_page.go
-	b.WriteString(s.photosSection(r)) // photos_folder.go
-	b.WriteString(s.accessSection(r)) // access_list.go
+	b.WriteString(s.phoneSection(r))   // phone_lan_page.go
+	b.WriteString(s.photosSection(r))  // photos_folder.go
+	b.WriteString(s.devicesSection(r)) // home_devices.go
+	b.WriteString(s.accessSection(r))  // access_list.go
 
 	others := s.others()
 	b.WriteString(`<section class="sw-stack" aria-labelledby="ws-others"><h2 id="ws-others">Other workspaces</h2>`)
