@@ -1,6 +1,7 @@
 package server_test
 
 import (
+	"fmt"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -110,5 +111,25 @@ func TestTheAssistantFindsAFileOnThisComputer(t *testing.T) {
 		if tool.Name == "find_on_computer" {
 			t.Error("find_on_computer is the owner's")
 		}
+	}
+}
+
+// Each folder is looked in, however full the one before it: a file at
+// the top of Downloads is found though Documents holds more files of
+// that name, deeper down, than a search shows.
+func TestEveryFolderIsLookedIn(t *testing.T) {
+	t.Parallel()
+	_, h := newApp(t)
+	home := t.TempDir()
+	deep := filepath.Join(home, "Documents", "Old", "Years")
+	os.MkdirAll(deep, 0o755)
+	for i := range 30 {
+		os.WriteFile(filepath.Join(deep, fmt.Sprintf("Invoice %d.pdf", i)), []byte("old"), 0o644)
+	}
+	os.MkdirAll(filepath.Join(home, "Downloads"), 0o755)
+	os.WriteFile(filepath.Join(home, "Downloads", "Invoice boiler.pdf"), []byte("new"), 0o644)
+	h.(*server.Server).FindOnComputer(filepath.Join(home, "Documents"), filepath.Join(home, "Downloads"))
+	if page := get(t, h, "/search?q=invoice").Body.String(); !strings.Contains(page, "Invoice boiler.pdf") {
+		t.Errorf("the file in Downloads is found: %.3000s", page)
 	}
 }
