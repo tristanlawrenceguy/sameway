@@ -100,40 +100,37 @@ func chatGPT(raw []json.RawMessage) *Brought {
 			CreateTime  float64 `json:"create_time"`
 			CurrentNode string  `json:"current_node"`
 			Mapping     map[string]struct {
-				Parent  *string `json:"parent"`
-				Message *struct {
-					Author struct {
-						Role string `json:"role"`
-					} `json:"author"`
-					Content struct {
-						Parts []json.RawMessage `json:"parts"`
-					} `json:"content"`
-				} `json:"message"`
+				Parent  *string     `json:"parent"`
+				Message *gptMessage `json:"message"`
 			} `json:"mapping"`
 		}
 		if json.Unmarshal(r, &c) != nil {
 			continue
 		}
-		var turns []turn
+		var said []*gptMessage
 		for id, seen := c.CurrentNode, 0; id != "" && seen < len(c.Mapping)+1; seen++ {
 			node, ok := c.Mapping[id]
 			if !ok {
 				break
 			}
 			if m := node.Message; m != nil && (m.Author.Role == "user" || m.Author.Role == "assistant") {
-				who := "You"
-				if m.Author.Role == "assistant" {
-					who = "ChatGPT"
-				}
-				turns = append(turns, turn{who, partsText(m.Content.Parts)})
+				said = append(said, m)
 			}
 			id = ""
 			if node.Parent != nil {
 				id = *node.Parent
 			}
 		}
-		for i, j := 0, len(turns)-1; i < j; i, j = i+1, j-1 {
-			turns[i], turns[j] = turns[j], turns[i]
+		// Read in the order said, so a canvas is changed after it is made.
+		var turns []turn
+		doc := canvas{}
+		for i := len(said) - 1; i >= 0; i-- {
+			m := said[i]
+			if m.Author.Role == "user" {
+				turns = append(turns, turn{"You", partsText(m.Content.Parts)})
+			} else {
+				turns = append(turns, turn{"ChatGPT", partsText(m.Content.Parts) + doc.written(m.Recipient, m.Content.Text)})
+			}
 		}
 		chatNote(b, c.Title, unixTime(c.CreateTime), turns)
 	}
@@ -184,6 +181,20 @@ func claudeChats(raw []json.RawMessage) *Brought {
 					Name  string `json:"file_name"`
 					Words string `json:"extracted_content"`
 				} `json:"attachments"`
+				// What Claude made beside its answer, an artifact, is a
+				// tool it used.
+				Content []struct {
+					Type  string `json:"type"`
+					Name  string `json:"name"`
+					Input struct {
+						ID      string `json:"id"`
+						Command string `json:"command"`
+						Title   string `json:"title"`
+						Content string `json:"content"`
+						Old     string `json:"old_str"`
+						New     string `json:"new_str"`
+					} `json:"input"`
+				} `json:"content"`
 			} `json:"chat_messages"`
 		}
 		if json.Unmarshal(r, &c) != nil {
@@ -191,6 +202,7 @@ func claudeChats(raw []json.RawMessage) *Brought {
 		}
 		sort.SliceStable(c.Messages, func(i, j int) bool { return c.Messages[i].CreatedAt < c.Messages[j].CreatedAt })
 		var turns []turn
+		made := canvas{}
 		for _, m := range c.Messages {
 			who := "You"
 			if m.Sender == "assistant" {
@@ -204,6 +216,12 @@ func claudeChats(raw []json.RawMessage) *Brought {
 				}
 				if strings.TrimSpace(a.Words) != "" {
 					text += "\n\n" + label + "\n\n" + strings.TrimSpace(a.Words)
+				}
+			}
+			for _, u := range m.Content {
+				if u.Type == "tool_use" && u.Name == "artifacts" {
+					in := u.Input
+					text += made.made(in.ID, in.Command, in.Title, in.Content, in.Old, in.New)
 				}
 			}
 			turns = append(turns, turn{who, text})

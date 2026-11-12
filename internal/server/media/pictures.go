@@ -18,7 +18,9 @@ import (
 
 // A picture goes to a model that can see as it is when it is small, and
 // otherwise made smaller first: no longer than 1568 pixels on its long
-// side, which is as much as the models look at, as a JPEG. SVG is left
+// side, which is as much as the models look at, as a JPEG, turned the
+// way the phone was held (small.go), since the EXIF that says so is not
+// carried over and a letter would reach the model on its side. SVG is left
 // out (a drawing's words are its text); WebP and AVIF go as they are when
 // small enough, since only the standard library's formats are redrawn.
 
@@ -88,7 +90,7 @@ func (s *Service) PicturesFor(id string) []llm.Image {
 }
 
 // fitted is a picture as a model takes it: as it is when small, else made
-// no longer than pictureSide as a JPEG.
+// no longer than pictureSide as a JPEG, upright.
 func fitted(typ string, data []byte) (llm.Image, bool) {
 	cfg, _, cerr := image.DecodeConfig(bytes.NewReader(data))
 	if cerr == nil && cfg.Width*cfg.Height > picturePixels {
@@ -102,7 +104,8 @@ func fitted(typ string, data []byte) (llm.Image, bool) {
 		return llm.Image{}, false // too big, and in a form not redrawn here
 	}
 	var out bytes.Buffer
-	if err := jpeg.Encode(&out, smaller(src, pictureSide), &jpeg.Options{Quality: 85}); err != nil {
+	turned := upright(smaller(src, pictureSide), convert.PhotoTurn(data[:min(len(data), convert.TakenHead)]))
+	if err := jpeg.Encode(&out, turned, &jpeg.Options{Quality: 85}); err != nil {
 		return llm.Image{}, false
 	}
 	return llm.Image{Type: "image/jpeg", Data: out.Bytes()}, true
