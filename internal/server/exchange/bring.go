@@ -77,7 +77,7 @@ func (s *Service) bring(w http.ResponseWriter, r *http.Request) {
 		s.suggestFromChats(r, strings.ToLower(got.From)) // bring_chats.go: before, so each note sets it off
 	}
 	var said []string
-	to, already := "/", 0
+	to, already, chats := "/", 0, 0
 	for _, kind := range []string{"task", "note"} {
 		tb := got.Kinds[kind]
 		t, ok := s.app.Types.Get(kind)
@@ -92,6 +92,9 @@ func (s *Service) bring(w http.ResponseWriter, r *http.Request) {
 		records.Record(s.app.Store, "human", records.Change{Action: "imported", Component: t.Name,
 			Detail: fmt.Sprintf("%d %s from %s", report.Made, schema.Plural(t.Name), got.From), Href: "/t/" + t.Name, Ops: records.Made(s.app.Store, t.Name, report.IDs)})
 		said = append(said, fmt.Sprintf("%d %s", report.Made, schema.Plural(t.Name)))
+		if kind == "note" {
+			chats = report.Made
+		}
 		if to == "/" {
 			to = "/t/" + t.Name
 		}
@@ -116,10 +119,28 @@ func (s *Service) bring(w http.ResponseWriter, r *http.Request) {
 		to = "/t/note?where=tags%3D" + tag
 		text += " Each conversation is a note tagged " + tag + ". Ask the assistant to find what is still to do in them, and it makes the tasks, reminders and people."
 		if suggesting {
-			text += " What is still to do in them comes on Today to make, change or turn down, as the assistant reads each."
+			text += s.lookingThrough(chats)
 		}
 	}
 	s.TellAt(w, r, web.Outcome{Title: "Brought in from " + got.From, Text: text}, to)
+}
+
+// lookingThrough says what asking to look through the conversations sets
+// going: how many, and that a model on this computer takes a while over
+// them. It is asked for plainly and Undo takes it back, so it is said, not
+// confirmed or capped.
+func (s *Service) lookingThrough(chats int) string {
+	text := fmt.Sprintf(" The assistant looks through each of the %d conversations for what is still to do, and puts it on Today to make, change or turn down.", chats)
+	if chats == 1 {
+		text = " The assistant looks through the conversation for what is still to do, and puts it on Today to make, change or turn down."
+	}
+	switch cfg := s.app.LLMConfig(); {
+	case cfg.Provider == "" || cfg.Provider == "none":
+		return text + " It starts once an AI model is connected."
+	case cfg.OnThisComputer():
+		return text + " The model is on this computer, so this takes a while: a long conversation can take minutes."
+	}
+	return text + " This uses the AI account you connected, so they are read there."
 }
 
 // ImportLinks are a list's ways in from a file: Import for any file, and

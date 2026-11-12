@@ -50,3 +50,20 @@ func TestDetectWithNothingRunning(t *testing.T) {
 		t.Errorf("expected nothing, got %+v", found)
 	}
 }
+
+// A model is on this computer when Ollama or another local server runs
+// it; Claude, Claude Code and a service at an address elsewhere are not.
+func TestAModelIsOnThisComputerOrElsewhere(t *testing.T) {
+	t.Parallel()
+	for cfg, want := range map[llm.Config]bool{
+		{Provider: "openai", BaseURL: "http://localhost:11434/v1"}: true,
+		{Provider: "ollama"}: true,
+		{Provider: "openai", BaseURL: "https://openrouter.ai/api/v1"}: false,
+		{Provider: "anthropic"}:   false,
+		{Provider: "claude-code"}: false,
+	} {
+		if got := cfg.OnThisComputer(); got != want {
+			t.Errorf("%+v: %v", cfg, got)
+		}
+	}
+}
