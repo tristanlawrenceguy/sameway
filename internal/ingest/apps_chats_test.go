@@ -95,3 +95,37 @@ func TestASplitChatGPTExportAndAVoiceChatComeIn(t *testing.T) {
 		t.Errorf("what was said aloud: %s", body)
 	}
 }
+
+// What Claude made beside its answer (an artifact) and what ChatGPT wrote
+// on a canvas are part of what they said: each comes after its message,
+// under its title, as that message left it.
+func TestWhatWasMadeInAChatComesUnderItsTitle(t *testing.T) {
+	t.Parallel()
+	claude := `[{"name":"Meals","created_at":"2026-10-20T08:00:00Z","chat_messages":[
+		{"sender":"human","text":"Plan dinners","created_at":"2026-10-20T08:00:01Z"},
+		{"sender":"assistant","text":"Here is a list.","created_at":"2026-10-20T08:00:05Z","content":[{"type":"text","text":"Here is a list."},
+			{"type":"tool_use","name":"artifacts","input":{"id":"shop","type":"text/markdown","title":"Shopping list","command":"create","content":"- lentils\n- carrots"}}]},
+		{"sender":"assistant","text":"Changed.","created_at":"2026-10-20T08:01:00Z","content":[
+			{"type":"tool_use","name":"artifacts","input":{"id":"shop","command":"update","old_str":"carrots","new_str":"oat milk"}}]}]}]`
+	b, err := Recognise("conversations.json", []byte(claude))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if body := b.Kinds["note"].Rows[0]["body"]; !strings.Contains(body, "**Claude:** Here is a list.\n\n*Shopping list*\n\n- lentils\n- carrots\n\n") ||
+		!strings.Contains(body, "**Claude:** Changed.\n\n*Shopping list*\n\n- lentils\n- oat milk") {
+		t.Errorf("Claude's artifact, made and changed: %s", body)
+	}
+
+	gpt := `[{"title":"Letter","create_time":1760000000,"current_node":"d","mapping":{
+		"r":{"parent":null,"message":null},
+		"a":{"parent":"r","message":{"author":{"role":"user"},"content":{"content_type":"text","parts":["Draft a letter to the council"]}}},
+		"b":{"parent":"a","message":{"author":{"role":"assistant"},"recipient":"canmore.create_textdoc","content":{"content_type":"code","text":"{\"name\":\"Council letter\",\"type\":\"document\",\"content\":\"Dear council, the bins.\"}"}}},
+		"c":{"parent":"b","message":{"author":{"role":"user"},"content":{"content_type":"text","parts":["Say Tuesday"]}}},
+		"d":{"parent":"c","message":{"author":{"role":"assistant"},"recipient":"canmore.update_textdoc","content":{"content_type":"code","text":"{\"updates\":[{\"pattern\":\"the bins\",\"multiple\":false,\"replacement\":\"the bins on Tuesday\"}]}"}}}}}]`
+	if b, err = Recognise("conversations.json", []byte(gpt)); err != nil {
+		t.Fatal(err)
+	}
+	if body := b.Kinds["note"].Rows[0]["body"]; !strings.Contains(body, "**ChatGPT:** *Council letter*\n\nDear council, the bins.\n\n**You:** Say Tuesday\n\n**ChatGPT:** *Council letter*\n\nDear council, the bins on Tuesday.") {
+		t.Errorf("ChatGPT's canvas, made and changed: %s", body)
+	}
+}
