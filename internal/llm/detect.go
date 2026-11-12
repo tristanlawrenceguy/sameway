@@ -142,6 +142,16 @@ func Answers(ctx context.Context, cfg Config) (bool, string) {
 	return true, ""
 }
 
+// OnThisComputer says the model runs here, so a long piece of work is
+// slow; any other is read by an account elsewhere.
+func (c Config) OnThisComputer() bool {
+	switch strings.ToLower(c.Provider) {
+	case "openai", "openai-compatible", "ollama", "lmstudio":
+		return c.BaseURL == "" || Local(c.BaseURL)
+	}
+	return false
+}
+
 // Local says an address is on this computer.
 func Local(base string) bool {
 	for _, h := range []string{"//localhost", "//127.0.0.1", "//[::1]"} {

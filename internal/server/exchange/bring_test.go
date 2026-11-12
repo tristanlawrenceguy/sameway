@@ -110,7 +110,7 @@ func TestConversationsBroughtCanBeLookedThroughForWhatIsToDo(t *testing.T) {
 	if page := get(t, h, "/bring").Body.String(); !strings.Contains(page, `name="suggest"`) {
 		t.Fatalf("the page offers to look through them: %s", truncate(page))
 	}
-	if page := bringChats(t, h, false, "Book the van"); strings.Contains(page, "comes on Today") {
+	if page := bringChats(t, h, false, "Book the van"); strings.Contains(page, "puts it on Today") {
 		t.Errorf("not asked, nothing is said of it: %s", truncate(page))
 	}
 	suggesting := func() int {
@@ -126,8 +126,10 @@ func TestConversationsBroughtCanBeLookedThroughForWhatIsToDo(t *testing.T) {
 	if suggesting() != 0 {
 		t.Fatal("not asked, no action")
 	}
-	if page := bringChats(t, h, true, "Ring the vet"); !strings.Contains(page, "What is still to do in them comes on Today") {
-		t.Errorf("asked, it says where the suggestions come: %s", truncate(page))
+	// Asked, it is not confirmed: it says how many are looked through, and
+	// where what is to do comes.
+	if page := bringChats(t, h, true, "Ring the vet"); !strings.Contains(page, "looks through the conversation for what is still to do, and puts it on Today") {
+		t.Errorf("asked, it says what is looked through and where the suggestions come: %s", truncate(page))
 	}
 	bringChats(t, h, true, "Pay the gas bill")
 	if n := suggesting(); n != 1 {
