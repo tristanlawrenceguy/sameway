@@ -23,6 +23,9 @@ import (
 // export.
 const maxChatBody = 200_000
 
+// middleLeftOut stands where a long conversation's middle was.
+const middleLeftOut = "\n\n… the middle of this conversation is in the export.\n\n"
+
 // chatFile is the name of the conversations in an export's zip: a long
 // ChatGPT history comes split, as conversations-000.json and on.
 var chatFile = regexp.MustCompile(`^conversations(-\d+)?\.json$`)
@@ -79,7 +82,7 @@ func chatNote(b *Brought, title string, began time.Time, turns []turn) {
 	if len(text) > maxChatBody {
 		// Cut by bytes, so a letter split in two (Greek, Chinese) is dropped.
 		start, end := text[:maxChatBody/2], text[len(text)-maxChatBody/2:]
-		text = strings.ToValidUTF8(start, "") + "\n\n… the middle of this conversation is in the export.\n\n" + strings.ToValidUTF8(end, "")
+		text = strings.ToValidUTF8(start, "") + middleLeftOut + strings.ToValidUTF8(end, "")
 	}
 	if strings.TrimSpace(title) == "" {
 		title = "A conversation with " + b.From
