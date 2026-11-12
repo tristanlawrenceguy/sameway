@@ -58,7 +58,9 @@ func TestAModelIsOnThisComputerOrElsewhere(t *testing.T) {
 	for cfg, want := range map[llm.Config]bool{
 		{Provider: "openai", BaseURL: "http://localhost:11434/v1"}: true,
 		{Provider: "ollama"}: true,
-		{Provider: "openai", BaseURL: "https://openrouter.ai/api/v1"}: false,
+		{Provider: "openai", BaseURL: "https://openrouter.ai/api/v1"}:    false,
+		{Provider: "openai", BaseURL: "http://localhost.example.com/v1"}: false,
+		{Provider: "openai", BaseURL: "http://[::1]:1234/v1"}:            true,
 		{Provider: "anthropic"}:   false,
 		{Provider: "claude-code"}: false,
 	} {
