@@ -47,16 +47,18 @@ func chatsOrNone(b *Brought) (*Brought, error) {
 	return b, nil
 }
 
-// Recognise reads an export by what it holds.
-func Recognise(name string, data []byte) (*Brought, error) {
+// Recognise reads an export by what it holds. An export keeps its times
+// in UTC; zone is the workspace's, which the day a conversation began is
+// said in.
+func Recognise(name string, data []byte, zone *time.Location) (*Brought, error) {
 	lower := strings.ToLower(name)
 	switch {
 	case strings.HasSuffix(lower, ".enex"):
 		return evernote(data)
 	case strings.HasSuffix(lower, ".zip"):
-		return zipped(data)
+		return zipped(data, zone)
 	case strings.HasSuffix(lower, ".json"):
-		if b, ok := chatExport(data); ok { // apps_chats.go
+		if b, ok := chatExport(data, zone); ok { // apps_chats.go
 			return chatsOrNone(b)
 		}
 		return googleJSON(data)
