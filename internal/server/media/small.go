@@ -62,6 +62,13 @@ func makeSmall(path, small string) bool {
 	if _, err := f.Seek(0, io.SeekStart); err != nil {
 		return false
 	}
+	// A file kept unseen, as from an email, can say it is too large to draw.
+	if cfg, _, err := image.DecodeConfig(f); err == nil && tooLarge(cfg) {
+		return false
+	}
+	if _, err := f.Seek(0, io.SeekStart); err != nil {
+		return false
+	}
 	img, _, err := image.Decode(f)
 	if err != nil {
 		return false
