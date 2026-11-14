@@ -137,6 +137,9 @@ var proposable = map[string]bool{
 	// create_record is what an action suggests (automate/suggest.go), in
 	// words Sameway writes: a record made with the person's yes.
 	"create_record": true,
+	// update_record is what one suggests for a record already kept: a new
+	// price for a subscription (automate/suggest_same.go).
+	"update_record": true,
 }
 
 // modelProposable are the calls the model may carry in a question of its

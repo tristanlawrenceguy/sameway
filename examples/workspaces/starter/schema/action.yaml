@@ -122,3 +122,8 @@ fields:
     label: Suggests a
     type: string
     description: "For a suggest action, the kind of record it suggests from what set it off: task, event, reminder, person, or any kind here. It is filled from the record and put to you to make, change or turn down. With check, it is shown what you did with its last suggestions."
+  update:
+    label: Change one already kept
+    type: bool
+    default: false
+    description: "For a suggest action, when what set it off is about one already kept (a second receipt from the same service), suggest changing that one with what is new instead of making another."
