@@ -26,7 +26,9 @@ func (f face) CanNotify() bool                      { return f.notify != nil }
 func (f face) Notify(title, text, path string)      { go f.notify(title, text, f.linkTo(path)) } // ring.go
 
 // BriefIfDue sends today's brief when it is due, and says whether it did;
-// ReviewIfDue the same for the weekly review. For tests outside the
+// ReviewIfDue the same for the weekly review, and RenewalsIfDue says
+// what renews within three days (agenda/renewals.go). For tests outside the
 // package; the runner has them as jobs (jobs.go).
-func (s *Server) BriefIfDue(now time.Time) bool  { return s.agenda.BriefIfDue(now) }
-func (s *Server) ReviewIfDue(now time.Time) bool { return s.agenda.ReviewIfDue(now) }
+func (s *Server) BriefIfDue(now time.Time) bool   { return s.agenda.BriefIfDue(now) }
+func (s *Server) ReviewIfDue(now time.Time) bool  { return s.agenda.ReviewIfDue(now) }
+func (s *Server) RenewalsIfDue(now time.Time) int { return s.agenda.RenewalsIfDue(now) }

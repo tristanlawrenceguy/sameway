@@ -130,6 +130,7 @@ func (s *Service) ReadMail(ctx context.Context) (int, error) {
 	mu := s.app.Store.Keep(mailLock{}, func() any { return new(sync.Mutex) }).(*sync.Mutex)
 	mu.Lock()
 	defer mu.Unlock()
+	s.SortPaidAgain() // paid_again.go: sorting set up before it was
 	marks := map[string]mailin.Mark{}
 	json.Unmarshal([]byte(s.app.Store.Meta("mail:marks")), &marks)
 	mails, marks, err := mailin.New(ctx, a, marks, func(refs []string) bool { return s.threadOf(refs) != "" })
