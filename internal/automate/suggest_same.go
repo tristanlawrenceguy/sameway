@@ -25,7 +25,8 @@ When the record is about a %s already kept (listed after the record), give its i
 const keptMost = 60
 
 // keptToChange are the records of the kind an action with update makes,
-// by id, newest first; none for an action without it.
+// by id, the latest changed, leaving out what is done; none for an action
+// without it.
 func (s *Service) keptToChange(action *store.Record, t *schema.Type) map[string]*store.Record {
 	if on, _ := action.Fields["update"].(bool); !on {
 		return nil
@@ -36,7 +37,9 @@ func (s *Service) keptToChange(action *store.Record, t *schema.Type) map[string]
 	}
 	out := map[string]*store.Record{}
 	for _, r := range recs {
-		out[r.ID] = r
+		if done, _ := r.Fields["done"].(bool); !done { // a task done is not opened again
+			out[r.ID] = r
+		}
 	}
 	return out
 }

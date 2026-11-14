@@ -11,8 +11,9 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
-// Sorting set up before it knew of them gains, once, a tag for what is paid
-// again and again and an action suggesting a subscription from each.
+// Sorting set up before it knew of them gains, once, tags for what is paid
+// again and again and what is bought, and actions suggesting a record of
+// each from email and from what is shared.
 func TestSortingGainsPaidAgainOnce(t *testing.T) {
 	t.Parallel()
 	a, _ := newApp(t)
@@ -31,7 +32,7 @@ func TestSortingGainsPaidAgainOnce(t *testing.T) {
 			paid++
 		}
 	}
-	if paid != 1 {
+	if paid != 1 || !hasTag(a.Store, "bought") {
 		t.Errorf("the tag is added once, got %d", paid)
 	}
 	actions, _ := a.Store.List(records.ActionType, store.ListOptions{})
@@ -40,12 +41,18 @@ func TestSortingGainsPaidAgainOnce(t *testing.T) {
 		if act.Fields["kind"] == "classify" && act.Fields["what"] == "email" && !strings.Contains(strings.Join(records.StringList(act.Fields["tags"]), ","), "paid again") {
 			t.Errorf("sorting email gives the tag: %v", act.Fields["tags"])
 		}
-		if act.Fields["make"] == "subscription" {
+		if act.Fields["make"] == "subscription" || act.Fields["make"] == "purchase" {
 			suggest++
+			if act.Fields["update"] != true {
+				t.Errorf("it changes one kept: %v", act.Fields)
+			}
+		}
+		if act.Fields["make"] == "task" && act.Fields["update"] != true {
+			t.Errorf("a task suggested changes the one open: %v", act.Fields)
 		}
 	}
-	if suggest != 1 {
-		t.Errorf("one action suggests a subscription, got %d", suggest)
+	if suggest != 4 {
+		t.Errorf("a subscription and a purchase are each suggested from email and from what is shared, got %d", suggest)
 	}
 }
 
@@ -106,7 +113,7 @@ func TestSortingWordsAreBroughtUpToDate(t *testing.T) {
 	a.Store.SetMeta("sorting:paid-again", "yes")
 	old, _ := a.Store.Create(records.TagType, map[string]any{"name": "paid again", "means": "A receipt, renewal notice or free-trial email for something paid again and again: a subscription, membership or plan. Not a one-off purchase."})
 	mine, _ := a.Store.Create(records.TagType, map[string]any{"name": "to do", "means": "What I must do."})
-	act, _ := a.Store.Create(records.ActionType, map[string]any{"title": "Suggest a subscription", "kind": "suggest", "make": "subscription"})
+	act, _ := a.Store.Create(records.ActionType, map[string]any{"title": "Suggest a subscription", "kind": "suggest", "make": "subscription", "what": "email"})
 	srv.SortPaidAgain()
 	if got, _ := a.Store.Get(records.TagType, old.ID); !strings.Contains(got.Fields["means"].(string), "cancellation") {
 		t.Errorf("the first words are brought up to date: %v", got.Fields["means"])
@@ -121,5 +128,74 @@ func TestSortingWordsAreBroughtUpToDate(t *testing.T) {
 	srv.SortPaidAgain()
 	if got, _ := a.Store.Get(records.ActionType, act.ID); got.Fields["update"] != false {
 		t.Errorf("turned off after, it stays off: %v", got.Fields)
+	}
+}
+
+func hasTag(a interface {
+	List(string, store.ListOptions) ([]*store.Record, error)
+}, name string) bool {
+	tags, _ := a.List(records.TagType, store.ListOptions{})
+	for _, tg := range tags {
+		if tg.Fields["name"] == name {
+			return true
+		}
+	}
+	return false
+}
+
+// Sorting set up before tasks changed one open has its task suggestions
+// change one, once; what it gave as subscriptions before changes one kept
+// and is shared too.
+func TestSortingSetUpBeforeIsBroughtOn(t *testing.T) {
+	t.Parallel()
+	a, _ := newApp(t)
+	srv := server.New(a)
+	srv.SetUpSorting()
+	actions, _ := a.Store.List(records.ActionType, store.ListOptions{})
+	for _, act := range actions {
+		if act.Fields["make"] == "task" {
+			a.Store.Update(records.ActionType, act.ID, map[string]any{"update": false})
+		}
+	}
+	a.Store.SetMeta("sorting:paid-again", "yes")
+	srv.SortPaidAgain()
+	actions, _ = a.Store.List(records.ActionType, store.ListOptions{})
+	tasks, shared := 0, 0
+	for _, act := range actions {
+		if act.Fields["make"] == "task" && act.Fields["update"] == true {
+			tasks++
+		}
+		if act.Fields["make"] == "subscription" && act.Fields["what"] == "note" {
+			shared++
+		}
+	}
+	if tasks != 2 || shared != 1 {
+		t.Errorf("both task suggestions change one open (%d), and subscriptions come from what is shared (%d)", tasks, shared)
+	}
+}
+
+// askedModel keeps what it was asked and suggests nothing.
+type askedModel struct{ asked string }
+
+func (m *askedModel) Name() string { return "asked" }
+func (m *askedModel) Complete(_ context.Context, req llm.Request) (*llm.Response, error) {
+	m.asked = req.Messages[0].Content
+	return &llm.Response{Text: `{"make": false}`}, nil
+}
+
+// A bill's reminder is matched against the tasks still open: one paid
+// and done is not opened again.
+func TestABillReminderIsMatchedToTheOpenTask(t *testing.T) {
+	t.Parallel()
+	a, _ := newApp(t)
+	m := &askedModel{}
+	a.Chat.Provider, a.Chat.ProviderErr = m, nil
+	act, _ := a.Store.Create(records.ActionType, map[string]any{"title": "Suggest a task", "kind": "suggest", "make": "task", "update": true})
+	open, _ := a.Store.Create("task", map[string]any{"title": "Pay the electricity bill"})
+	paid, _ := a.Store.Create("task", map[string]any{"title": "Pay the October water bill", "done": true})
+	mail, _ := a.Store.Create("email", map[string]any{"subject": "Reminder: your bill is due", "body": "Your electricity bill of $84 is due on the 20th."})
+	a.Automate.Suggest(context.Background(), act, "email", mail.ID)
+	if !strings.Contains(m.asked, open.ID) || strings.Contains(m.asked, paid.ID) {
+		t.Errorf("the open task is shown to change, the done one not: %s", m.asked)
 	}
 }

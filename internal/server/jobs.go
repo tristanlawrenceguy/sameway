@@ -44,8 +44,9 @@ func (s *Server) BackgroundJobs() []runner.Job {
 			s.agenda.ReviewIfDue(now) // agenda/review_day.go
 			return nil
 		}},
-		{Name: "Renewals said three days ahead", Every: time.Hour, Run: func(_ context.Context, now time.Time) error {
-			s.agenda.RenewalsIfDue(now) // agenda/renewals.go
+		{Name: "Renewals, returns and warranties said ahead", Every: time.Hour, Run: func(_ context.Context, now time.Time) error {
+			s.agenda.RenewalsIfDue(now)  // agenda/renewals.go
+			s.agenda.PurchasesIfDue(now) // agenda/purchases.go
 			return nil
 		}},
 		{Name: "Search by meaning kept current", Every: 2 * time.Minute, Run: func(ctx context.Context, _ time.Time) error {
