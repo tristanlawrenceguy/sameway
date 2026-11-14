@@ -159,9 +159,9 @@ func (s *Service) SetUpSorting() {
 	// change or remove like any other.
 	for _, a := range []map[string]any{
 		{"title": "Sort what comes in", "kind": "classify", "when": "added", "what": "email", "tags": names},
-		{"title": "Suggest a task for an email to do", "kind": "suggest", "make": "task", "when": "changed", "what": "email", "only": []any{"tags=to do"}},
+		{"title": "Suggest a task for an email to do", "kind": "suggest", "make": "task", "when": "changed", "what": "email", "only": []any{"tags=to do"}, "update": true},
 		{"title": "Sort what is shared", "kind": "classify", "when": "added", "what": "note", "only": []any{"tags=shared"}, "tags": names},
-		{"title": "Suggest a task for something shared to do", "kind": "suggest", "make": "task", "when": "changed", "what": "note", "only": []any{"tags=shared", "tags=to do"}},
+		{"title": "Suggest a task for something shared to do", "kind": "suggest", "make": "task", "when": "changed", "what": "note", "only": []any{"tags=shared", "tags=to do"}, "update": true},
 	} {
 		a["check"], a["examples"] = true, 10
 		records.WriteAs(s.app.Store, who, "created", records.ActionType, "", a)

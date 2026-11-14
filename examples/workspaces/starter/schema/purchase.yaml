@@ -1,0 +1,44 @@
+# Something bought once. Provided with every workspace: sorting suggests
+# one from a receipt, an order or a photo of a paper receipt, and a
+# notification says so before the last day to return it and before its
+# warranty ends.
+name: purchase
+description: "Something bought once: a thing or a repair, where, for how much, and until when it can be returned and is under warranty; a notification comes three days before the last day to return it, and a month before the warranty ends. Asked what can still be returned, or whether something is under warranty, read these."
+title: item
+provided: true
+fields:
+  item:
+    type: string
+    required: true
+    maxLength: 200
+    description: What was bought, as the receipt names it.
+  shop:
+    type: string
+    maxLength: 120
+    description: Where it was bought.
+  price:
+    type: string
+    maxLength: 40
+    description: "What it cost, with its currency, as the receipt says it: $129.00."
+  order:
+    label: Order number
+    type: string
+    maxLength: 80
+    description: The order or receipt number, which the shop's later emails name.
+  bought:
+    type: datetime
+    description: When it was bought; a day is enough.
+  return_by:
+    label: Return by
+    type: datetime
+    description: The last day it can be returned, when the receipt or the shop says; a day is enough.
+  warranty_until:
+    label: Warranty until
+    type: datetime
+    description: When its warranty ends, when the receipt or the maker says; a day is enough.
+  returned:
+    type: bool
+    description: Whether it was returned. It is kept to remember, and says nothing more.
+  notes:
+    type: markdown
+    description: Anything worth remembering about it.
