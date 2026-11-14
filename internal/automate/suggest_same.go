@@ -116,3 +116,18 @@ func (s *Service) fieldWords(t *schema.Type, name string, v any) string {
 	}
 	return fmt.Sprint(v)
 }
+
+// carried gives what is suggested the facts Sameway kept on the record it
+// came from, by the same name, that the model left out: the mailbox an
+// email was read from says whose a subscription is.
+func carried(from *schema.Type, rec *store.Record, t *schema.Type, fields map[string]any) {
+	for _, f := range from.Fields {
+		v, has := rec.Fields[f.Name]
+		if !f.ReadOnly || !has || v == nil || v == "" || f.Name == t.Title {
+			continue
+		}
+		if to, ok := t.Field(f.Name); ok && !to.ReadOnly && to.Type == f.Type && fields[f.Name] == nil {
+			fields[f.Name] = v
+		}
+	}
+}

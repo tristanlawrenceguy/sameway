@@ -46,7 +46,8 @@ func (s *Service) RenewalsIfDue(now time.Time) int {
 			continue
 		}
 		s.app.Store.SetMeta(key, "said")
-		s.Notify(renewalWords(sub, day, now))
+		title, text, path := renewalWords(sub, day, now)
+		s.Notify(title, text+s.paidTwice(sub, subs), path) // renewals_shared.go
 		said++
 	}
 	return said

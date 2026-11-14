@@ -15,6 +15,10 @@ fields:
   received:
     type: datetime
     description: When it was sent.
+  mailbox:
+    type: string
+    description: The address of the mailbox it was read from, kept by the system, which says whose it is when a household reads several.
+    readonly: true
   body:
     type: markdown
     description: What it says, with links to the files that came with it.

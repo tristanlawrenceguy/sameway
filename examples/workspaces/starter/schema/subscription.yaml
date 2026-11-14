@@ -2,7 +2,7 @@
 # suggests one from a receipt or renewal email, and a notification says so
 # a few days before it renews, while there is still time to cancel.
 name: subscription
-description: "Something paid for again and again: a subscription, membership, plan or free trial, what it costs, and when it next renews; a notification comes three days before, until it is cancelled. Asked what they pay for, list those not cancelled with their total. Asked how to cancel one, give only that service's steps, starting from its cancel link. When one is for storing files, notes, or a smart-home plan, say Sameway already keeps that on this computer."
+description: "Something paid for again and again: a subscription, membership, plan or free trial, what it costs, and when it next renews; a notification comes three days before, until it is cancelled. Asked what they pay for, list those not cancelled with what they come to each month, by kind of thing (streaming, storage, software, the home), each once. Asked to cancel one, give only that service's steps, from its cancel link, and write the email that cancels it as a mailto: link to the address its emails come from, for the person to send themselves. When one is for storing files, notes, or a smart-home plan, say Sameway already keeps that on this computer."
 title: name
 provided: true
 fields:
@@ -26,6 +26,10 @@ fields:
     label: Free trial
     type: bool
     description: Whether it is a free trial that turns into a payment on its renews day.
+  mailbox:
+    label: Whose
+    type: string
+    description: "The address of the mailbox its emails come to, which says whose it is: two people's subscriptions to one service are two, each with its own."
   cancelled:
     type: bool
     description: Whether it is cancelled. It is kept to remember, and says nothing more.

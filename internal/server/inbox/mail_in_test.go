@@ -42,6 +42,9 @@ func TestEmailComesInAsNotesToSort(t *testing.T) {
 	if n.Fields["subject"] != "Dentist on Friday" || n.Fields["from"] != "Clinic <desk@clinic.example>" || n.Fields["received"] == nil || !strings.Contains(body, "bring the form") || !strings.Contains(body, "[form](/t/file/") {
 		t.Errorf("subject, sender, words and file: %v", n.Fields)
 	}
+	if n.Fields["mailbox"] != "me@example.com" {
+		t.Errorf("whose mailbox it came to is kept: %v", n.Fields["mailbox"])
+	}
 	if strings.Contains(a.Store.Meta("mail:account"), "abcdefghijklmnop") {
 		t.Error("the password is not in the workspace")
 	}
