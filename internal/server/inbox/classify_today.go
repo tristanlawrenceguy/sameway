@@ -114,7 +114,7 @@ var starterTags = []struct {
 	name, means string
 	alone       bool
 }{
-	{"to do", "Something I have to do: pay, reply, book, bring, send, sign, renew, attend, buy or call. Not newsletters, adverts, receipts for what is paid, or notices that need nothing from me.", false},
+	{"to do", "Something I have to do: pay, reply, book, bring, send, sign, renew, attend, buy or call. Not newsletters, adverts, receipts for what is paid, a subscription that renews and is paid on its own, or notices that need nothing from me.", false},
 	{"important", "Money owed, health, an official or legal deadline (tax, passport, insurance, a lease), school, a work deadline, or someone waiting on my answer. Not plans with friends, errands or reminders of habit.", false},
 	{"nothing to do", "Needs nothing from me: newsletters, adverts, receipts, notices and confirmations. Given when no other tag fits.", true},
 }

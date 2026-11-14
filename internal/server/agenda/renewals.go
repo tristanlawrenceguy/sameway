@@ -20,7 +20,7 @@ const (
 	renewalNotice    = 3 * 24 * time.Hour
 )
 
-// RenewalsIfDue moves on each renewal gone by, a free trial then paid, and says each that comes
+// RenewalsIfDue, for what is not cancelled, moves on each renewal gone by, a free trial then paid, and says each that comes
 // within three days and has not been said, and says how many it said.
 func (s *Service) RenewalsIfDue(now time.Time) int {
 	if _, ok := s.app.Types.Get(subscriptionType); !ok {
@@ -31,7 +31,7 @@ func (s *Service) RenewalsIfDue(now time.Time) int {
 	for _, sub := range subs {
 		v, _ := sub.Fields["renews"].(string)
 		at, _, ok := when.Stored(v, now)
-		if !ok {
+		if done, _ := sub.Fields["cancelled"].(bool); done || !ok {
 			continue
 		}
 		day := time.Date(at.Year(), at.Month(), at.Day(), 0, 0, 0, 0, now.Location())

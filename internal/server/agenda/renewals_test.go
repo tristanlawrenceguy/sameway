@@ -25,10 +25,11 @@ func TestRenewalsAreSaidAhead(t *testing.T) {
 		sent = append(sent, title+" | "+text+" | "+link)
 	})
 	soon, _ := a.Store.Create("subscription", map[string]any{"name": "Streamflix", "price": "$15.99", "repeat": "every month", "renews": day(2)})
+	a.Store.Create("subscription", map[string]any{"name": "Ended Radio", "price": "$5", "renews": day(1), "cancelled": true})
 	a.Store.Create("subscription", map[string]any{"name": "Later Music", "price": "$9.99", "renews": day(20)})
 	gone, _ := a.Store.Create("subscription", map[string]any{"name": "Photo Cloud", "repeat": "every month", "renews": day(-1), "trial": true})
 	if n := h.RenewalsIfDue(now); n != 1 {
-		t.Fatalf("only what renews within three days is said, got %d", n)
+		t.Fatalf("only what renews within three days, not cancelled, is said, got %d", n)
 	}
 	if n := h.RenewalsIfDue(now.Add(time.Hour)); n != 0 {
 		t.Errorf("a renewal is said once, got %d more", n)

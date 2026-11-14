@@ -26,6 +26,7 @@ import (
 // suggestion is what the model makes of a record, for one kind.
 type suggestion struct {
 	Make   bool           `json:"make"`
+	Same   string         `json:"same"` // the id of one already kept it is about (suggest_same.go)
 	Fields map[string]any `json:"fields"`
 	Why    string         `json:"why"`
 }
@@ -96,8 +97,14 @@ func (s *Service) Suggest(ctx context.Context, action *store.Record, typeName, i
 	if before := s.suggestedFrom(action.ID, from.Name+"/"+rec.ID); len(before) > 0 {
 		q += "\n\nWhat you suggested from this record before, when it said less: " + strings.Join(before, " ") + " Do not suggest it again: suggest only something else still to do, else say make false."
 	}
+	system := fmt.Sprintf(suggestSystem, schema.Words(mt.Name), s.fieldGuide(mt))
+	kept := s.keptToChange(action, mt) // suggest_same.go
+	if len(kept) > 0 {
+		system += fmt.Sprintf(sameSystem, schema.Words(mt.Name))
+		q += "\n\nAlready kept:\n" + s.keptWords(mt, kept)
+	}
 	var sug suggestion
-	if err := s.askSeeing(ctx, fmt.Sprintf(suggestSystem, schema.Words(mt.Name), s.fieldGuide(mt)), q, s.picturesOf(rec), &sug); err != nil {
+	if err := s.askSeeing(ctx, system, q, s.picturesOf(rec), &sug); err != nil {
 		return fail("could not read %s: %v", records.Name(s.Store, from, rec), err)
 	}
 	name := records.Name(s.Store, from, rec)
@@ -105,6 +112,9 @@ func (s *Service) Suggest(ctx context.Context, action *store.Record, typeName, i
 		return Result{Text: name + ": nothing to suggest"}
 	}
 	fields := s.fillSuggested(mt, sug.Fields, sentOf(rec, s.Now().Location()))
+	if same := kept[strings.TrimSpace(sug.Same)]; same != nil {
+		return s.suggestChange(action, from, rec, mt, same, fields, sug.Why) // suggest_same.go
+	}
 	if t, _ := fields[mt.Title].(string); strings.TrimSpace(t) == "" {
 		return Result{Text: name + ": nothing to suggest"}
 	}
