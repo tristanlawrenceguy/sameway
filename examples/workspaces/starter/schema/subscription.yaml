@@ -1,0 +1,35 @@
+# Something paid for again and again. Provided with every workspace: sorting
+# suggests one from a receipt or renewal email, and a notification says so
+# a few days before it renews, while there is still time to cancel.
+name: subscription
+description: "Something paid for again and again: a subscription, membership, plan or free trial, what it costs, and when it next renews; a notification comes three days before. Asked what they pay for, list these with their total. Asked how to cancel one, give only that service's steps, starting from its cancel link. When one is for storing files, notes, or a smart-home plan, say Sameway already keeps that on this computer."
+title: name
+provided: true
+fields:
+  name:
+    type: string
+    required: true
+    maxLength: 120
+    description: The service, as its emails name it.
+  price:
+    type: string
+    maxLength: 40
+    description: "What each payment costs, with its currency, as the email says it: $15.99, £4.99. Empty for a free trial until it costs."
+  repeat:
+    label: Every
+    type: repeat
+    description: How often it is paid, like every month or every year.
+  renews:
+    type: datetime
+    description: When it is next paid, or when a free trial ends and payment starts; a day is enough. Once that day passes it moves on by Every.
+  trial:
+    label: Free trial
+    type: bool
+    description: Whether it is a free trial that turns into a payment on its renews day.
+  cancel:
+    label: Where to cancel
+    type: string
+    description: The link to cancel or manage it, when an email gives one.
+  notes:
+    type: markdown
+    description: Anything worth remembering about it.

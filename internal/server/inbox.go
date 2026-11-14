@@ -14,3 +14,7 @@ var _ inbox.Deps = face{}
 // SetUpSorting makes the starter tags and the actions that sort what comes
 // in, as connecting email does; a test sorts without a mailbox.
 func (s *Server) SetUpSorting() { s.inbox.SetUpSorting() }
+
+// SortPaidAgain adds the paid again tag and its suggestion to sorting, as
+// reading email does once (inbox/paid_again.go).
+func (s *Server) SortPaidAgain() { s.inbox.SortPaidAgain() }
