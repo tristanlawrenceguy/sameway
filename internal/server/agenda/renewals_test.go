@@ -45,3 +45,36 @@ func TestRenewalsAreSaidAhead(t *testing.T) {
 		t.Errorf("a renewal gone by moves on a month and the trial is over: %v", moved.Fields)
 	}
 }
+
+// Two people in a household paying for one service apart hear of it at
+// the renewal, by the other's name; their own second mailbox is no one else.
+func TestARenewalSaysWhoElsePays(t *testing.T) {
+	t.Parallel()
+	a, _ := newAppAt(t, tonight)
+	h := server.New(a)
+	now := tonight
+	day := func(d int) string { return now.AddDate(0, 0, d).Format("2006-01-02") + "T00:00:00Z" }
+	var mu sync.Mutex
+	var sent []string
+	h.OnRing(func(title, text, link string) {
+		mu.Lock()
+		defer mu.Unlock()
+		sent = append(sent, text)
+	})
+	a.Store.Create("person", map[string]any{"name": "Sam", "email": "sam@example.com"})
+	a.Store.Create("subscription", map[string]any{"name": "Tunes", "price": "$10.99", "renews": day(2), "mailbox": "me@example.com"})
+	a.Store.Create("subscription", map[string]any{"name": "tunes", "renews": day(20), "mailbox": "Sam@example.com"})
+	a.Store.Create("subscription", map[string]any{"name": "Films", "renews": day(1), "mailbox": "me@example.com"})
+	a.Store.Create("subscription", map[string]any{"name": "Films", "renews": day(9), "mailbox": "kid@example.com", "cancelled": true})
+	h.RenewalsIfDue(now)
+	time.Sleep(50 * time.Millisecond)
+	mu.Lock()
+	defer mu.Unlock()
+	all := strings.Join(sent, "\n")
+	if !strings.Contains(all, "Sam pays for Tunes too: one plan for you both may cost less.") {
+		t.Errorf("the other payer is named: %v", sent)
+	}
+	if strings.Count(all, "pays for") != 1 {
+		t.Errorf("a cancelled one is no one paying: %v", sent)
+	}
+}

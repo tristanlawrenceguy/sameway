@@ -112,6 +112,7 @@ func (s *Service) Suggest(ctx context.Context, action *store.Record, typeName, i
 		return Result{Text: name + ": nothing to suggest"}
 	}
 	fields := s.fillSuggested(mt, sug.Fields, sentOf(rec, s.Now().Location()))
+	carried(from, rec, mt, fields) // suggest_same.go
 	if same := kept[strings.TrimSpace(sug.Same)]; same != nil {
 		return s.suggestChange(action, from, rec, mt, same, fields, sug.Why) // suggest_same.go
 	}

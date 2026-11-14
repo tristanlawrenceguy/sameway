@@ -199,3 +199,21 @@ func TestABillReminderIsMatchedToTheOpenTask(t *testing.T) {
 		t.Errorf("the open task is shown to change, the done one not: %s", m.asked)
 	}
 }
+
+// A subscription suggested from an email is whose mailbox the email came to.
+func TestASubscriptionIsWhoseMailboxItCameTo(t *testing.T) {
+	t.Parallel()
+	a, _ := newApp(t)
+	a.Chat.Provider, a.Chat.ProviderErr = &keptModel{}, nil
+	act, _ := a.Store.Create(records.ActionType, map[string]any{"title": "Suggest a subscription", "kind": "suggest", "make": "subscription"})
+	mail, _ := a.Store.Create("email", map[string]any{"subject": "Welcome to Streamflix", "body": "$15.99 a month.", "mailbox": "sam@example.com"})
+	r := a.Automate.Suggest(context.Background(), act, "email", mail.ID)
+	p, err := a.Store.Get(records.ProposalType, r.Answer)
+	if err != nil {
+		t.Fatalf("suggested: %v", r.Text)
+	}
+	fields := p.Fields["action"].(map[string]any)["fields"].(map[string]any)
+	if fields["mailbox"] != "sam@example.com" {
+		t.Errorf("the mailbox is carried: %v", fields)
+	}
+}

@@ -144,7 +144,7 @@ func (s *Service) ReadMail(ctx context.Context) (int, error) {
 		if s.app.Store.Meta(key) != "" {
 			continue
 		}
-		if s.mailNote(m) == nil {
+		if s.mailNote(m, a.User) == nil {
 			s.app.Store.SetMeta(key, "1")
 			n++
 		}
@@ -153,7 +153,7 @@ func (s *Service) ReadMail(ctx context.Context) (int, error) {
 }
 
 // mailNote is one email as a note to sort, its files kept beside it.
-func (s *Service) mailNote(m mailin.Mail) error {
+func (s *Service) mailNote(m mailin.Mail, mailbox string) error {
 	who := records.Who{Actor: "system", Via: "from email"}
 	text := m.Text
 	if h := m.HTML(); h != "" {
@@ -189,6 +189,9 @@ func (s *Service) mailNote(m mailin.Mail) error {
 			sent = s.Now() // no Date header: when it came
 		}
 		fields := map[string]any{"subject": clip(title, 300), "from": m.From, "received": when.Store(sent, false), "body": strings.Join(parts[1:], "\n\n")}
+		if _, ok := t.Field("mailbox"); ok {
+			fields["mailbox"] = mailbox // whose it is, in a household of several mailboxes
+		}
 		if !m.Sent {
 			fields["tags"] = []any{chat.ToSort} // what the person sent is theirs, not to sort
 		}
