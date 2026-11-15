@@ -45,3 +45,8 @@ fields:
     of: string
     readonly: true
     description: "What their own Sameway may ask this one and be told without asking you: free is the times you are busy between two moments, never what you are doing. Anything else waits for your yes. Empty is nothing. Sameway keeps it: it changes only when the owner says yes (let_ask)."
+  always:
+    label: Made without asking
+    type: list
+    of: string
+    description: "What they may ask the assistant for and have made without your yes, each a kind of change: create_record note. It is added when you press Always on one of their requests; take one out to be asked again."
