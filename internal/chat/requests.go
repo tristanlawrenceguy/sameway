@@ -40,6 +40,12 @@ func (s *Service) request(call llm.ToolCall) toolResult {
 	if what == "" {
 		return fail("that could not be put to the owner: say what to make or change, of a kind of record that is here")
 	}
+	if err := s.requestFits(call.Name, a.Type, a.ID, a.Fields); err != nil { // request_fits.go
+		return fail("that was not put to the owner, as a yes could not make it: %v. Fix it and ask again", err)
+	}
+	if s.always(call.Name, a.Type) { // request_always.go
+		return s.madeAlways(call, what)
+	}
 	action := map[string]any{}
 	json.Unmarshal(call.Args, &action)
 	action["tool"] = call.Name
@@ -48,24 +54,20 @@ func (s *Service) request(call llm.ToolCall) toolResult {
 		who += " (" + s.who.Login + ")"
 	}
 	summary := trim.Line(who+" asks you to "+what+". Make it?", 300)
+	token := requestToken()
 	if _, err := s.Apply(records.Op{Type: records.ProposalType, After: map[string]any{"summary": summary, "detail": "Asked through the assistant",
-		"action": action, "state": "pending", "by_action": ByRequest, "yes": "Make it", "no": "No"}}); err != nil {
+		"action": action, "state": "pending", "by_action": ByRequest, "yes": "Make it", "no": "No",
+		"asked": what, "asked_by": s.forWhom(), "token": token}}); err != nil {
 		return fail("could not put it to the owner: %v", err)
 	}
-	return toolResult{text: "Nothing has changed: it is not theirs to change, so it was put to the owner, who sees: " + summary + " Tell them that, in those words."}
+	return toolResult{text: "Nothing has changed: it is not theirs to change, so it was put to the owner, who sees: " + summary +
+		" Tell them that, in those words, and that they will hear the answer here; what became of it is also at " + RequestPath(token) + "."}
 }
 
 // requestWords is what a call would do, as the owner reads it, or "" when
 // it names nothing they could say yes to.
 func (s *Service) requestWords(tool, typeName, id string, fields map[string]any) string {
-	t, err := s.contentType(typeName)
-	if tool == "create_record" && err != nil {
-		// A new record shows nothing the one asking did not send, so it may
-		// be of any kind that is not the owner's alone, read or not.
-		if kept, e := records.ContentType(s.Store, typeName); e == nil && !kept.Owners {
-			t, err = kept, nil
-		}
-	}
+	t, err := s.requestType(tool, typeName)
 	if err != nil {
 		return ""
 	}

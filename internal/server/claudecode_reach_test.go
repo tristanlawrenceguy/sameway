@@ -2,6 +2,10 @@ package server_test
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"strings"
@@ -11,6 +15,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
@@ -110,5 +115,57 @@ func TestARealAnswerForAVisitorFromTheInternet(t *testing.T) {
 	}
 	if len(a.Chat.Suggestions()) != 1 {
 		t.Errorf("the visit waits for the owner: %+v", a.Chat.Suggestions())
+	}
+}
+
+// Two real assistants, one on each side: the owner's asks a plumber's
+// published page for a visit, which becomes a request the plumber answers,
+// and the owner's reads what became of it from the link it brought back.
+func TestTwoRealAssistantsArrangeAVisit(t *testing.T) {
+	t.Parallel()
+	plumber := realApp(t)
+	plumber.Store.Create("note", map[string]any{"title": "Callouts", "body": "Weekdays 8 to 6. Callout fee 60."})
+	if err := plumber.Workspace.Set("publish.types", "note"); err != nil {
+		t.Fatal(err)
+	}
+	plumber.Workspace.Config.Publish.Types = "note"
+	plumberSrv := server.New(plumber)
+	me := realApp(t)
+	me.Automate.HTTP = &http.Client{Transport: served{plumberSrv.Public(nil)}}
+	mine := server.New(me)
+
+	if _, err := me.Chat.Send(context.Background(), "Ask the plumber's page at https://plumber.example.ts.net what their callout fee is, and ask them to visit on Thursday at 10am. I am Tris, tris@example.com."); err != nil {
+		t.Fatalf("the turn failed: %v", err)
+	}
+	ps := me.Chat.Proposals()
+	if len(ps) == 0 {
+		t.Fatal("asking the plumber is put to the owner first")
+	}
+	wantStatus(t, postForm(t, mine, "/proposal/"+ps[0].ID+"/accept", nil), http.StatusSeeOther)
+	theirs := plumber.Chat.Suggestions()
+	if len(theirs) != 1 {
+		t.Fatalf("the visit is a request on the plumber's Today: %d", len(theirs))
+	}
+	if n, _ := plumber.Store.Count("event"); n != 0 {
+		t.Fatal("nothing is booked before the plumber says yes")
+	}
+	wantStatus(t, postForm(t, plumberSrv, "/suggested/yes", url.Values{"id": {theirs[0].ID}}), http.StatusSeeOther)
+	if n, _ := plumber.Store.Count("event"); n != 1 {
+		t.Errorf("the plumber's yes books it: %d events", n)
+	}
+	said := ""
+	msgs, _ := me.Chat.Messages()
+	for _, m := range msgs {
+		said += fmt.Sprint(m.Fields["content"]) + " "
+	}
+	token, _ := theirs[0].Fields["token"].(string)
+	if !strings.Contains(said, "/request/"+token) {
+		t.Errorf("what came back, with the request's link, is in the owner's conversation: %s", said)
+	}
+	// The link read here, in this process: a second turn would have Claude
+	// Code read it from its own, which cannot reach a workspace in a test.
+	text, isErr := me.Chat.Call("ask_page", json.RawMessage(`{"address":"https://plumber.example.ts.net/request/`+token+`"}`))
+	if isErr || !strings.Contains(strings.ReplaceAll(text, " ", ""), `"state":"yes"`) {
+		t.Errorf("reading the link says the plumber said yes: %v %s", isErr, text)
 	}
 }

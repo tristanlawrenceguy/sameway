@@ -141,7 +141,7 @@ var proposable = map[string]bool{
 	// price for a subscription (automate/suggest_same.go).
 	"update_record": true,
 	// What goes to or from someone else's Sameway is asked first (ask_someone.go, enquiry.go).
-	"ask_someone": true, "let_ask": true, "answer_enquiry": true,
+	"ask_someone": true, "let_ask": true, "answer_enquiry": true, "ask_page": true,
 }
 
 // modelProposable are the calls the model may carry in a question of its
@@ -212,6 +212,7 @@ func (s *Service) Accept(id string) error {
 	for i := range result.changes {
 		s.byPerson(result.changes[i])
 	}
+	s.tellAsker(rec, true) // request_answer.go
 	return nil
 }
 
@@ -231,5 +232,6 @@ func (s *Service) Dismiss(id string) error {
 	}
 	summary, _ := rec.Fields["summary"].(string)
 	s.byPerson(records.Change{Action: "declined", Detail: trim.Line(summary, 80)})
+	s.tellAsker(rec, false) // request_answer.go
 	return nil
 }

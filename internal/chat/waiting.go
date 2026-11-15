@@ -78,8 +78,11 @@ func (s *Service) Waiting() []Waiting {
 		if from == "" {
 			link = "/today" // a request made through the booking link comes from no record
 		}
-		out = append(out, Waiting{Kind: WaitSuggestion, Record: p, About: from, Words: SuggestionWords(p), Link: link,
-			Presses: []Press{{Label: "Make it", Post: "/suggested/yes", ID: p.ID}, {Label: "Change", Post: "/suggested/change", ID: p.ID}, {Label: "No", Post: "/suggested/no", ID: p.ID}}})
+		presses := []Press{{Label: "Make it", Post: "/suggested/yes", ID: p.ID}, {Label: "Change", Post: "/suggested/change", ID: p.ID}, {Label: "No", Post: "/suggested/no", ID: p.ID}}
+		if l := s.alwaysLabel(p); l != "" { // request_always_words.go
+			presses = append(presses[:1], append([]Press{{Label: l, Post: "/suggested/always", ID: p.ID}}, presses[1:]...)...)
+		}
+		out = append(out, Waiting{Kind: WaitSuggestion, Record: p, About: from, Words: SuggestionWords(p), Link: link, Presses: presses})
 	}
 	return append(out, s.tagsToCheck(alone)...)
 }

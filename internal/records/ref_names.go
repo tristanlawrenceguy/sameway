@@ -165,3 +165,14 @@ func idShaped(s string) bool {
 	}
 	return true
 }
+
+// RefsFit says whether every link in fields names a record that is here,
+// by its id or its name, as a write would find it, changing nothing: for
+// a request checked before it is put to the owner (chat/request_fits.go).
+func RefsFit(st *store.Store, t *schema.Type, fields map[string]any) error {
+	copied := make(map[string]any, len(fields))
+	for k, v := range fields {
+		copied[k] = v
+	}
+	return refNamesToIDs(st, t, copied)
+}
