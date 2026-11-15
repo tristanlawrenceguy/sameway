@@ -30,12 +30,18 @@ func (s *Service) For(v records.Visitor) *Service {
 func (s *Service) owner() bool { return s.who.Access == "" || s.who.Owner() }
 
 // whose is the key a conversation carries for the one this service speaks
-// for: "" for the owner, a login for anyone else.
+// for: "" for the owner, a login for anyone else. Someone else is never
+// "", whatever is known of them, so no one is ever given the owner's.
 func (s *Service) whose() string {
-	if s.owner() {
+	switch {
+	case s.owner():
 		return ""
+	case s.who.Login != "":
+		return strings.ToLower(s.who.Login)
+	case s.who.Person != "":
+		return "person:" + s.who.Person
 	}
-	return strings.ToLower(s.who.Login)
+	return "someone:" + strings.ToLower(s.who.Name+"/"+s.who.Device)
 }
 
 // Whose is whose chats and turns this service has: "" for the owner, a
@@ -94,7 +100,7 @@ func (s *Service) whoPrompt() string {
 		return ""
 	}
 	name := s.who.Who()
-	return fmt.Sprintf("\n\nYou are talking with %s, whom the workspace's owner has let %s it from their own device. This is their own conversation; the owner does not see it. Settings, updating Sameway, reading pages in a browser and undoing are the owner's: if %s asks for one, say the owner can. What you ask them to agree to goes to the owner to answer.", name, s.who.Access, name)
+	return fmt.Sprintf("\n\nYou are talking with %s, whom the workspace's owner has let %s it from their own device. This is their own conversation; the owner does not see it. Settings, updating Sameway, reading pages in a browser and undoing are the owner's: if %s asks for one, say the owner can. What you ask them to agree to goes to the owner to answer.", name, s.who.Access, name) + s.lookOnlyPrompt(name)
 }
 
 // forYouPrompt tells the model what is for the one it is talking to: the
@@ -128,4 +134,13 @@ func (s *Service) forYouPrompt() string {
 		return ""
 	}
 	return "\n\nFor the person you are talking to, not yet done:\n" + strings.Join(lines, "\n")
+}
+
+// lookOnlyPrompt tells the model that the one it talks with may only
+// look: it finds and answers, and changes nothing.
+func (s *Service) lookOnlyPrompt(name string) string {
+	if s.who.Access != records.View {
+		return ""
+	}
+	return fmt.Sprintf(" %s may only look, so your tools only read: find things and answer from them, with each one's page; if they ask you to change something, say the owner can let them edit.", name)
 }

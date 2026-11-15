@@ -97,7 +97,7 @@ func TestWhatEachLevelMayDo(t *testing.T) {
 }
 
 // What the owner said to the assistant stays theirs: someone who may only
-// look sees the canvas without the conversation.
+// look sees the canvas with a conversation of their own, without it.
 func TestAVisitorDoesNotSeeTheOwnersConversation(t *testing.T) {
 	t.Parallel()
 	a, h := newApp(t)
@@ -108,9 +108,6 @@ func TestAVisitorDoesNotSeeTheOwnersConversation(t *testing.T) {
 	body := as(t, h, records.Visitor{Name: "Vi", Access: records.View}, http.MethodGet, "/", "", "").Body.String()
 	if strings.Contains(body, "private words") {
 		t.Error("a visitor should not see the owner's conversation")
-	}
-	if !strings.Contains(body, "for the people who can change it") {
-		t.Error("a visitor should be told whom the assistant is for")
 	}
 }
 
@@ -136,7 +133,7 @@ func TestTheLogSaysWhoElseMadeAChange(t *testing.T) {
 }
 
 // Bob, who may edit, has his own chat with the assistant, with nothing of
-// the owner's in it; someone who may only look has none.
+// the owner's in it; someone who may only look has one too.
 func TestAnEditorHasTheirOwnChat(t *testing.T) {
 	t.Parallel()
 	a, h := newApp(t)
@@ -150,8 +147,8 @@ func TestAnEditorHasTheirOwnChat(t *testing.T) {
 		t.Error("Bob can write to the assistant")
 	}
 	vi := as(t, h, records.Visitor{Name: "Vi", Login: "vi@example.com", Access: records.View}, http.MethodGet, "/chat", "", "").Body.String()
-	if strings.Contains(vi, `name="message"`) || !strings.Contains(vi, "for the people who can change it") {
-		t.Error("someone who may only look has no assistant, and is told why")
+	if !strings.Contains(vi, `name="message"`) || strings.Contains(vi, "private words") {
+		t.Error("someone who may only look writes to an assistant of their own")
 	}
 }
 

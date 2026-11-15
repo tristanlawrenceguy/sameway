@@ -48,6 +48,11 @@ func (s *Server) Admit(ctx context.Context, login, name, device string, owner bo
 	return records.WithVisitor(ctx, v), "", true
 }
 
+// talking are the routes of someone's own conversation with the
+// assistant, which someone who may only look uses too: the assistant
+// working for them may only read (chat/reach.go).
+var talking = map[string]bool{"POST /chat": true, "POST /chat/stream": true, "POST /chat/stop": true, "POST /chat/new": true, "POST /chat/open": true, "POST /chat/delete": true, "POST /chat/clear": true}
+
 // allowed says whether a visitor may make this request, and when not,
 // tells them so on a page of its own.
 func (s *Server) allowed(w http.ResponseWriter, r *http.Request) bool {
@@ -75,7 +80,7 @@ func (s *Server) allowed(w http.ResponseWriter, r *http.Request) bool {
 		why = "This part of the workspace is its owner's alone."
 	}
 	// Saying they have caught up changes nothing but their own notice.
-	if why == "" && v.Access != records.Edit && v.Access != records.Host && r.Method != http.MethodGet && r.Method != http.MethodHead && r.URL.Path != "/since/seen" {
+	if why == "" && v.Access != records.Edit && v.Access != records.Host && r.Method != http.MethodGet && r.Method != http.MethodHead && r.URL.Path != "/since/seen" && !(v.Access == records.View && talking[s.routeOf(r)]) {
 		why = "You can look at this workspace but not change it. Its owner can let you edit."
 	}
 	if why == "" {
@@ -105,10 +110,16 @@ func (s *Server) conversationAboutFor(r *http.Request, from, about, prompt strin
 	if convo != nil {
 		convo.Path, convo.Query = r.URL.Path, r.URL.Query()
 	}
-	if a := records.VisitorOf(r.Context()).Access; err != nil || a != records.View && a != records.Public {
+	a := records.VisitorOf(r.Context()).Access
+	if err != nil || a != records.View && a != records.Public {
 		return convo, err
 	}
-	convo.Body = template.HTML(`<p class="sw-muted">You can look around this workspace. The assistant is for the people who can change it.</p>`)
-	convo.Notice, convo.Activity, convo.LatestID, convo.LookOnly = "", "", "", true
+	// Someone who may only look talks with an assistant that may only
+	// read (chat/reach.go); the internet has no conversation.
+	convo.Activity, convo.LookOnly = "", true
+	if a == records.Public {
+		convo.Body = template.HTML(`<p class="sw-muted">You can look around this workspace.</p>`)
+		convo.Notice, convo.LatestID = "", ""
+	}
 	return convo, nil
 }
