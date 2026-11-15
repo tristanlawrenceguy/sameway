@@ -20,6 +20,7 @@ var ownTools = map[string]ownTool{
 	"today":      {"Read the person's day", chat.Traits{ReadOnly: true, Idempotent: true}},
 	"more_tools": {"Find more tools", chat.Traits{ReadOnly: true, Idempotent: true}},
 	"try":        {"Try a change without making it", chat.Traits{ReadOnly: true, Idempotent: true}},
+	"ask":        {"Ask in words", chat.Traits{ReadOnly: true, Idempotent: true}},
 }
 
 // traitsOf is a tool's title and traits, from MCP's own or the registry.

@@ -23,7 +23,7 @@ type offKey struct{}
 // describe, and the ops that are for whoever may look (chat.ForViewers).
 func readTool(name string) bool {
 	op, ok := chat.OpFor(name)
-	return name == "describe" || ok && op.Access == chat.ForViewers
+	return name == "describe" || name == askTool.Name || ok && op.Access == chat.ForViewers
 }
 
 // offMachine says whether a request came from somewhere other than this
@@ -109,7 +109,7 @@ func (s *Server) listFor(ctx context.Context) []tool {
 	if r.public {
 		// What is published, type by type, and search and fetch across
 		// it, as ChatGPT's connectors and deep research look for them.
-		allowed = map[string]bool{"describe": true, "find_records": true, "get_record": true}
+		allowed = map[string]bool{"describe": true, "find_records": true, "get_record": true, askTool.Name: true}
 		var out []tool
 		for _, t := range all {
 			if allowed[t.Name] {
