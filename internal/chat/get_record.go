@@ -4,6 +4,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/jsontext"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/relate"
 )
 
 // getRecord gives the model a record's fields, so it can answer from what
@@ -14,7 +15,7 @@ import (
 // about, and because it is the one deciding whether the person has a
 // reason to see any of it.
 func (s *Service) getRecord(typeName, id string) toolResult {
-	t, err := records.ContentType(s.Store, typeName)
+	t, err := s.contentType(typeName)
 	if err != nil {
 		return fail("%v", err)
 	}
@@ -25,6 +26,16 @@ func (s *Service) getRecord(typeName, id string) toolResult {
 	// view.go: the same as the API gives, and its days in words; days_shown.go
 	view := s.RecordView(t, rec)
 	view.Standing = s.standing(t, rec) // habit_said.go
+	// What it connects to that is the owner's alone is not theirs to follow.
+	if links, ok := view.Related.([]relate.Link); ok && !s.owner() {
+		var kept []relate.Link
+		for _, l := range links {
+			if lt, ok := s.Store.Types().Get(l.Type); !ok || s.reachable(lt) {
+				kept = append(kept, l)
+			}
+		}
+		view.Related = kept
+	}
 	out := struct {
 		records.RecordView
 		Days string `json:"days_here,omitempty"`

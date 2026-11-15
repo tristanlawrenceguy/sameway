@@ -107,11 +107,11 @@ func (s *Server) apiSearch(w http.ResponseWriter, r *http.Request) {
 	q := strings.TrimSpace(r.URL.Query().Get("q"))
 	only := strings.TrimSpace(r.URL.Query().Get("type"))
 	if _, ok := s.searchable(only); only != "" && !ok {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"error": apiError{Code: "bad_request", Message: search.Refusal(only, search.Kinds(s.app.Types))}})
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": apiError{Code: "bad_request", Message: search.Refusal(only, search.Kinds(s.typesFor(r)))}})
 		return
 	}
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-	found, some := search.Matches(s.app.Store, s.app.Types, q, s.reader())
+	found, some := search.Matches(s.app.Store, s.typesFor(r), q, s.reader())
 	res := search.Narrow(found, q, only, page)
 	res.Some = some
 	// Each hit as it always was, with who wrote it beside it.
@@ -150,4 +150,13 @@ func marked(text string, words []string) template.HTML {
 	}
 	b.WriteString(template.HTMLEscapeString(text[at:]))
 	return template.HTML(b.String())
+}
+
+// typesFor is the schema as the one asking may search it: the kinds that
+// are the owner's alone are left out for anyone else, as their pages are.
+func (s *Server) typesFor(r *http.Request) *schema.Set {
+	if records.VisitorOf(r.Context()).Owner() {
+		return s.app.Types
+	}
+	return s.app.Types.NotOwners()
 }

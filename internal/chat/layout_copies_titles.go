@@ -4,7 +4,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -28,7 +27,7 @@ func (s *Service) titleIndex(recs []*store.Record) map[string]recordRef {
 		return nil
 	}
 	out := map[string]recordRef{}
-	for _, t := range records.ContentTypes(s.Store) {
+	for _, t := range s.contentTypes() {
 		if n, err := s.Store.Count(t.Name); err != nil || n > titledMost {
 			continue
 		}

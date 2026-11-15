@@ -35,7 +35,7 @@ var updateRecordsOp = Op{Title: "Change several records", Traits: Traits{Idempot
 		}, "type", "ids", "fields")}, Offered: typed}
 
 func (s *Service) updateRecords(typeName string, ids []string, fields map[string]any) toolResult {
-	t, err := records.ContentType(s.Store, typeName)
+	t, err := s.contentType(typeName)
 	if err != nil {
 		return fail("%v", err)
 	}
