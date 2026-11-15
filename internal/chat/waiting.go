@@ -73,8 +73,12 @@ func (s *Service) Waiting() []Waiting {
 	}
 	out = append(out, s.yourTurn()...)
 	for _, p := range s.Suggestions() {
-		from := fmt.Sprint(p.Fields["from"])
-		out = append(out, Waiting{Kind: WaitSuggestion, Record: p, About: from, Words: SuggestionWords(p), Link: "/t/" + from,
+		from, _ := p.Fields["from"].(string)
+		link := "/t/" + from
+		if from == "" {
+			link = "/today" // a request made through the booking link comes from no record
+		}
+		out = append(out, Waiting{Kind: WaitSuggestion, Record: p, About: from, Words: SuggestionWords(p), Link: link,
 			Presses: []Press{{Label: "Make it", Post: "/suggested/yes", ID: p.ID}, {Label: "Change", Post: "/suggested/change", ID: p.ID}, {Label: "No", Post: "/suggested/no", ID: p.ID}}})
 	}
 	return append(out, s.tagsToCheck(alone)...)

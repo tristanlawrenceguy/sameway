@@ -43,6 +43,11 @@ var outward = map[string]func(now, next string, s *Service) question{
 			fmt.Sprintf("Anyone with the link could read %s, as it is shown, from anywhere, with no login, and so could AI services, over MCP, the same way (now public: %s). Everything shown on it is included, even what comes from lists that are not public. Nothing else in the workspace is. You can unpublish at any time, at once.", next, orNone(now)),
 			"Yes, publish it", "No, keep it private"}
 	},
+	"publish.book": func(now, next string, _ *Service) question {
+		return question{"Let anyone on the internet ask for a time with you?",
+			"A page at your workspace's address would show the hours your events leave free in the next two weeks, as times only, never what you are doing, and take a request for one: a name, an email and a few words. Each request waits on Today, and nothing is booked until you say yes. People and AI agents can both use it. You can turn it off at any time.",
+			"Yes, turn it on", "No"}
+	},
 	"publish.types": func(now, next string, _ *Service) question {
 		return question{"Publish every " + next + " to the internet?",
 			fmt.Sprintf("Anyone with the link could read every %s, as it is and as it changes, from anywhere, with no login, and so could AI services, over MCP, the same way (now public: %s). Nothing else in the workspace is. You can unpublish at any time, at once.", next, orNone(now)),

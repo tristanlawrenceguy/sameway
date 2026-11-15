@@ -23,15 +23,17 @@ import (
 type Published struct {
 	Tabs  map[string]string // canvas id -> its title; "" is Home
 	Types map[string]bool
+	// Book says anyone may ask for a time at /book (book.go).
+	Book bool
 }
 
 // Any says whether anything is published.
-func (p Published) Any() bool { return len(p.Tabs) > 0 || len(p.Types) > 0 }
+func (p Published) Any() bool { return len(p.Tabs) > 0 || len(p.Types) > 0 || p.Book }
 
 // Published reads what is public from workspace.yaml, as it is now.
 func (s *Server) Published() Published {
 	cfg := s.app.Workspace.Config.Publish
-	out := Published{Tabs: map[string]string{}, Types: map[string]bool{}}
+	out := Published{Tabs: map[string]string{}, Types: map[string]bool{}, Book: cfg.Book == "on"}
 	for _, name := range splitList(cfg.Types) {
 		if t, ok := s.app.Types.Get(strings.ToLower(name)); ok && !t.Internal {
 			out.Types[t.Name] = true
@@ -65,6 +67,11 @@ func (s *Server) Public(mcp http.Handler) http.Handler {
 		switch {
 		// What is published is published to people and to AI services
 		// the same way: pages for the one, MCP for the other.
+		// Asking for a time is the one thing the internet may send; it
+		// only ever waits for the owner's yes (book.go).
+		case r.URL.Path == bookPath && pub.Book:
+			s.ServeHTTP(w, r)
+			return
 		case strings.EqualFold(r.URL.Path, "/mcp") && pub.Any() && mcp != nil:
 			mcp.ServeHTTP(w, r)
 			return
@@ -99,6 +106,9 @@ func (s *Server) Public(mcp http.Handler) http.Handler {
 
 // publicAllows says whether a path is a published page.
 func (s *Server) publicAllows(pub Published, path string) bool {
+	if path == bookPath {
+		return pub.Book
+	}
 	if path == "/" {
 		_, home := pub.Tabs[""]
 		return home
@@ -128,6 +138,9 @@ func (s *Server) publicIndex(w http.ResponseWriter, r *http.Request, pub Publish
 	}
 	var b strings.Builder
 	b.WriteString(`<ul class="sw-plain sw-stack">`)
+	if pub.Book {
+		fmt.Fprintf(&b, `<li>%s</li>`, s.navLink(bookPath, "Find a time", false))
+	}
 	for id, title := range pub.Tabs {
 		fmt.Fprintf(&b, `<li>%s</li>`, s.navLink(records.CanvasPath(id), title, false))
 	}

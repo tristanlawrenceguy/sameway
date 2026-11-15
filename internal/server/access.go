@@ -60,6 +60,9 @@ func (s *Server) allowed(w http.ResponseWriter, r *http.Request) bool {
 	if v.Owner() {
 		return true
 	}
+	if p := s.routeOf(r); p == bookGet || p == bookPost {
+		return true // anyone may ask for a time; it waits for the owner (book.go)
+	}
 	if r.Method == http.MethodPost && s.routeOf(r) == askRoute {
 		return true // anyone let in may ask; what is answered is decided there
 	}

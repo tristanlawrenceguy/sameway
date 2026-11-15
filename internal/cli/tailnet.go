@@ -222,5 +222,5 @@ func (n *tailnetNode) keepInStep(ctx context.Context, srv *server.Server) error 
 // publishing is what the workspace publishes, as one line to compare.
 func publishing(a *app.App) string {
 	p := a.Workspace.Config.Publish
-	return p.Tabs + "|" + p.Types
+	return p.Tabs + "|" + p.Types + "|" + p.Book
 }

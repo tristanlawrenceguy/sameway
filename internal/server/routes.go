@@ -104,6 +104,8 @@ var pageRoutes = []route{
 	{pattern: "GET /events", handle: (*Server).events, access: people},
 	{pattern: "GET /search", handle: (*Server).searchPage, access: people},
 	{pattern: "GET /when", handle: (*Server).whenRead, access: people},
+	{pattern: bookGet, handle: (*Server).bookPage, access: people, public: true},
+	{pattern: bookPost, handle: (*Server).bookAsk, access: people, public: true, persons: "a request for a time, which waits for the owner's yes", reach: inward},
 	{pattern: askRoute, handle: (*Server).asked, access: people, persons: "another person's Sameway asking, not a change", reach: outward},
 	{pattern: "POST /sync", handle: (*Server).syncExchange, access: people, persons: "computers exchanging changes, not a change", reach: outward},
 	// Working together: choosing between two versions written at once
