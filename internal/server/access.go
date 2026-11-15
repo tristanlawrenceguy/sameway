@@ -31,6 +31,9 @@ func (s *Server) Admit(ctx context.Context, login, name, device string, owner bo
 		v.Access = records.Owner
 	case p != nil && (p.Fields["access"] == records.View || p.Fields["access"] == records.Edit || p.Fields["access"] == records.Host):
 		v.Access, _ = p.Fields["access"].(string)
+	case p != nil && chat.MayAsk(p, chat.AskFree):
+		// Their own Sameway may ask this one, and no more (asked.go).
+		v.Access = records.Ask
 	default:
 		// The owner hears of it where they are, the way a reminder rings.
 		if s.app.Chat.Knock(login, name, device) && s.notify != nil {
@@ -56,6 +59,13 @@ func (s *Server) allowed(w http.ResponseWriter, r *http.Request) bool {
 	v := records.VisitorOf(r.Context())
 	if v.Owner() {
 		return true
+	}
+	if r.Method == http.MethodPost && s.routeOf(r) == askRoute {
+		return true // anyone let in may ask; what is answered is decided there
+	}
+	if v.Access == records.Ask {
+		http.Error(w, "Your Sameway may ask this one questions; it opens nothing else here.", http.StatusForbidden)
+		return false
 	}
 	why := ""
 	if s.ownerOnlyRequest(r) { // see access_routes.go

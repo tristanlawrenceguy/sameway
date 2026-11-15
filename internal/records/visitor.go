@@ -20,6 +20,9 @@ const (
 	Host = "host"
 	// Public is anyone on the internet, reading what the owner published.
 	Public = "public"
+	// Ask is someone whose own Sameway may ask this one a question, and no
+	// more: it opens nothing here (server/asked.go).
+	Ask = "ask"
 )
 
 // Visitor is who a request comes from when it is not the machine itself:

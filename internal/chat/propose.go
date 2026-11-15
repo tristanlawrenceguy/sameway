@@ -140,6 +140,8 @@ var proposable = map[string]bool{
 	// update_record is what one suggests for a record already kept: a new
 	// price for a subscription (automate/suggest_same.go).
 	"update_record": true,
+	// What goes to or from someone else's Sameway is asked first (ask_someone.go, enquiry.go).
+	"ask_someone": true, "let_ask": true, "answer_enquiry": true,
 }
 
 // modelProposable are the calls the model may carry in a question of its

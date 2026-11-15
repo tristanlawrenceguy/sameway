@@ -1,0 +1,44 @@
+# Something another person's Sameway asked this one. Provided with every
+# workspace: what was asked, by whom, and what it was told, so nothing is
+# said for you that you cannot read afterwards. Sameway writes every word
+# of it: nothing here is text the other side sent.
+name: enquiry
+description: "Something another person's own Sameway asked this one for them, and what it was told. It is one of a few fixed questions, answered by Sameway itself from the records, never words of theirs and never read by the assistant: when you are free between two moments is answered with the times you are busy, not what you are doing. It is answered at once when the person may ask that (their May ask), and otherwise waits for the owner's yes. Asked what others asked or were told about you, read these."
+title: question
+provided: true
+owners: true
+fields:
+  question:
+    type: string
+    required: true
+    maxLength: 300
+    description: What was asked, in Sameway's words.
+  who:
+    label: Asked by
+    type: ref
+    to: person
+  ask:
+    label: Kind of question
+    type: enum
+    values: [free]
+    labels: {free: When you are free}
+    default: free
+  from:
+    type: datetime
+    description: For when you are free, the start of the time asked about.
+  to:
+    type: datetime
+    description: And its end.
+  answer:
+    type: string
+    maxLength: 2000
+    description: What they were told, in Sameway's words.
+  state:
+    type: enum
+    values: [waiting, answered, declined]
+    labels: {waiting: Waiting for you, answered: Answered, declined: Not answered}
+    default: waiting
+  proposal:
+    type: string
+    readonly: true
+    description: The question put to the owner about it, kept by the system.

@@ -33,6 +33,8 @@ const (
 	// FileType is what a person's files become; the server's upload makes
 	// them.
 	FileType = "file"
+	// EnquiryType is something another person's Sameway asked this one.
+	EnquiryType = "enquiry"
 	// HabitType is a habit, which entries are logged against.
 	HabitType = "habit"
 	// MessageType holds conversation turns.

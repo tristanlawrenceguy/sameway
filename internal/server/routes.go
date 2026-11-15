@@ -104,6 +104,7 @@ var pageRoutes = []route{
 	{pattern: "GET /events", handle: (*Server).events, access: people},
 	{pattern: "GET /search", handle: (*Server).searchPage, access: people},
 	{pattern: "GET /when", handle: (*Server).whenRead, access: people},
+	{pattern: askRoute, handle: (*Server).asked, access: people, persons: "another person's Sameway asking, not a change", reach: outward},
 	{pattern: "POST /sync", handle: (*Server).syncExchange, access: people, persons: "computers exchanging changes, not a change", reach: outward},
 	// Working together: choosing between two versions written at once
 	// (clash.go), and saying they have caught up on what others did (since.go).

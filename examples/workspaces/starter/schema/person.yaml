@@ -34,3 +34,14 @@ fields:
     labels: {view: "Can look", edit: "Can edit", host: "Hosts a copy"}
     readonly: true
     description: "What they may do in this workspace when they open it over Tailscale, signed in with the email above: view (read only), edit (content, the canvas, actions), or host (edit, and their own computer keeps a copy of the workspace in step with this one). Empty is no access. Sameway keeps it: it changes only when the owner answers yes to letting someone in."
+  sameway:
+    label: Their Sameway
+    type: string
+    maxLength: 200
+    description: "Where their own Sameway is on Tailscale, such as home.tail1234.ts.net, when they have one. With it, the assistant can ask their Sameway when they are free (ask_someone)."
+  may_ask:
+    label: May ask
+    type: list
+    of: string
+    readonly: true
+    description: "What their own Sameway may ask this one and be told without asking you: free is the times you are busy between two moments, never what you are doing. Anything else waits for your yes. Empty is nothing. Sameway keeps it: it changes only when the owner says yes (let_ask)."
