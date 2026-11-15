@@ -74,6 +74,11 @@ type Request struct {
 	// on this computer otherwise spent its whole answer thinking. Empty
 	// leaves it to the model. A model server takes it as reasoning_effort.
 	Effort string
+	// For is whom the turn works for when it is not the workspace's owner,
+	// as JSON, for a program that runs the tools itself over MCP: its MCP
+	// server works with their permissions (command_mcp.go). Empty is the
+	// owner.
+	For string
 }
 
 // Response is the model's reply: text, tool calls, or both.

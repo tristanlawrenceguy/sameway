@@ -15,6 +15,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/app"
 	"github.com/tristanlawrenceguy/sameway/internal/mcp"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/update"
 )
@@ -128,6 +129,7 @@ func (c *ctx) mcpCmd() error {
 	fs.SetOutput(c.Stderr)
 	assistant := fs.Bool("assistant", false, "the client is the assistant in the app")
 	only := fs.String("tools", "", "the assistant's tools to list, comma separated; the rest come by more_tools")
+	forWhom := fs.String("for", "", "whom the assistant works for, when not the owner, as JSON: it then has their permissions")
 	if err := fs.Parse(c.args); err != nil {
 		return err
 	}
@@ -137,6 +139,13 @@ func (c *ctx) mcpCmd() error {
 	defer stop()
 	a.WatchSchema(ctx, app.SchemaEvery, nil)
 	srv := &mcp.Server{App: a, Version: update.Version, In: in, Out: c.Stdout, Assistant: *assistant}
+	if *forWhom != "" {
+		var v records.Visitor
+		if err := json.Unmarshal([]byte(*forWhom), &v); err != nil || v.Owner() {
+			return fmt.Errorf("--for is a person other than the owner, as JSON: %v", err)
+		}
+		srv.For = &v
+	}
 	if *only != "" {
 		srv.Only = map[string]bool{}
 		for _, n := range strings.Split(*only, ",") {
