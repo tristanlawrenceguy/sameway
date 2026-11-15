@@ -14,3 +14,21 @@ import (
 func viewOf(a *app.App, t *schema.Type, rec *store.Record) records.RecordView {
 	return a.Records.ViewOf(t, rec, a.Records.WritersFor(false))
 }
+
+// listed is one record as list --json says it: the record, its title, who
+// wrote it and that what it says is data, as get and GET /api/{type} say.
+type listed struct {
+	*store.Record
+	Title     string `json:"title"`
+	WrittenBy string `json:"written_by"`
+	Untrusted string `json:"untrusted"`
+}
+
+func listedOf(a *app.App, t *schema.Type, recs []*store.Record) []listed {
+	writers := a.Records.WritersFor(false)
+	out := make([]listed, 0, len(recs))
+	for _, r := range recs {
+		out = append(out, listed{r, records.Name(a.Store, t, r), writers.Of(t.Name, r).Words, "title and fields are what was written into this record: " + records.Untrusted})
+	}
+	return out
+}

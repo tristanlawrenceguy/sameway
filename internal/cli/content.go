@@ -74,7 +74,7 @@ func (c *ctx) contentCmd(typeName string) error {
 				return id
 			}, a.Now().Location())
 		}
-		c.print(recs, func() {
+		c.print(listedOf(a, t, recs), func() {
 			if len(recs) == 0 {
 				fmt.Fprintf(c.Stdout, "no %s records\n", t.Name)
 			}
