@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 	"time"
 
@@ -67,6 +68,10 @@ type Service struct {
 	// person's Tailscale network and says it in their words; nil where the
 	// workspace is not being served. See settings.go.
 	Tailnet func(wait time.Duration) string
+	// Reach is the client that reaches other machines on the person's
+	// Tailscale network, as this workspace: how it asks someone else's
+	// Sameway (ask_someone.go). nil, or answering nil, where it is not on one.
+	Reach func() *http.Client
 	// Needs is what the person has said they need, and Language the
 	// workspace's language; both go into every prompt. Set by the app.
 	Needs, Language string

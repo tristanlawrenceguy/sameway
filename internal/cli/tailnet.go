@@ -44,6 +44,11 @@ func joinTailnet(out io.Writer, a *app.App, h http.Handler, srv *server.Server) 
 	}
 	n := &tailnetNode{out: out, a: a, h: h, admit: admit, pub: pub, published: publishing(a), news: make(chan struct{}), said: map[string]string{}}
 	a.Chat.Tailnet = n.wait
+	a.Chat.Reach = func() *http.Client {
+		n.mu.Lock()
+		defer n.mu.Unlock()
+		return n.client
+	}
 	return []runner.Job{
 		{Name: "Tailscale, as the workspace's settings say", Every: 2 * time.Second, Run: n.follow},
 		{Name: "Copies on your other computers kept in step", Every: 3 * time.Second, Wait: true, Run: func(ctx context.Context, _ time.Time) error {

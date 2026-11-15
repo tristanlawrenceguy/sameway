@@ -53,6 +53,9 @@ func Write(st *store.Store, action, typ, id string, fields map[string]any) (*sto
 		if err := keptFields(t, fields, now); err != nil {
 			return nil, Change{}, err
 		}
+		if err := knownByEmail(t, fields, now); err != nil { // known_by_email.go
+			return nil, Change{}, err
+		}
 		dayKeepsTime(t, fields, now, st.Now()) // day_keeps_time.go
 		if typ == ActionType {
 			if err := watches(st, fields); err != nil { // watches.go
