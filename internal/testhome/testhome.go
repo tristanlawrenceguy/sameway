@@ -23,6 +23,7 @@ func Run(m *testing.M) int {
 		panic(err)
 	}
 	keepGo()
+	keepClaude()
 	// Laid out as Windows lays out a home, which a browser a test starts
 	// needs to open at all.
 	home := filepath.Join(dir, "home")
@@ -39,6 +40,19 @@ func Run(m *testing.M) int {
 	code := m.Run()
 	os.RemoveAll(dir)
 	return code
+}
+
+// keepClaude keeps Claude Code signed in for the tests that run a real
+// model through it, which run only when SAMEWAY_CLAUDE_CODE_MODEL names
+// one: its sign-in is in the person's own home, which the folders moving
+// would otherwise hide from it. Every other test keeps nothing of theirs.
+func keepClaude() {
+	if os.Getenv("SAMEWAY_CLAUDE_CODE_MODEL") == "" || os.Getenv("CLAUDE_CONFIG_DIR") != "" {
+		return
+	}
+	if home, err := os.UserHomeDir(); err == nil {
+		os.Setenv("CLAUDE_CONFIG_DIR", filepath.Join(home, ".claude"))
+	}
 }
 
 // keepGo pins Go's own caches and settings where they are now, before the

@@ -32,6 +32,9 @@ func (c *Command) mcpConfig(req Request) (string, error) {
 	if len(names) > 0 {
 		args = append(args, "--tools", strings.Join(names, ","))
 	}
+	if req.For != "" {
+		args = append(args, "--for", req.For)
+	}
 	cfg := map[string]any{"mcpServers": map[string]any{"sameway": map[string]any{"command": exe, "args": args}}}
 	if err := json.NewEncoder(f).Encode(cfg); err != nil {
 		f.Close()
