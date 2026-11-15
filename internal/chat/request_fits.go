@@ -2,7 +2,6 @@ package chat
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
@@ -57,7 +56,7 @@ func (s *Service) requestFits(tool, typeName, id string, fields map[string]any) 
 				names = append(names, f.Name)
 			}
 		}
-		return fmt.Errorf("%v; %s has the fields %s", err, withA(schema.Words(t.Name)), strings.Join(names, ", "))
+		return fmt.Errorf("%v; %s has the fields %s", err, withA(schema.Words(t.Name)), schema.AndNames(names))
 	}
 	return nil
 }
