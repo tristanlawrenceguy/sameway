@@ -19,7 +19,12 @@ import (
 
 // reachable says whether the one this service speaks for may reach a
 // kind of record.
-func (s *Service) reachable(t *schema.Type) bool { return s.owner() || !t.Owners }
+func (s *Service) reachable(t *schema.Type) bool {
+	if s.who.Access == records.Public {
+		return s.Published != nil && s.Published()[t.Name]
+	}
+	return s.owner() || !t.Owners
+}
 
 // contentTypes are the content types the one this service speaks for may
 // reach.
@@ -60,7 +65,7 @@ func (s *Service) types() *schema.Set {
 	if s.owner() {
 		return s.Store.Types()
 	}
-	return s.Store.Types().NotOwners()
+	return s.Store.Types().Only(s.reachable)
 }
 
 // mayUse says whether the one this service speaks for may have a tool
