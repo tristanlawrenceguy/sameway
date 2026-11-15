@@ -38,7 +38,9 @@ func (s *Service) doneToday(now time.Time) []string {
 	return append(out, s.dealtWithToday(now)...)
 }
 
-// habitsMet is the daily habits to reach that were met today, by name.
+// habitsMet is the habits that were met today, by name. Weekly and monthly
+// cadence habits are included when their current period is met; record-aim
+// never meets.
 func (s *Service) habitsMet(now time.Time) []string {
 	if _, ok := s.app.Types.Get(records.HabitType); !ok {
 		return nil
@@ -47,7 +49,7 @@ func (s *Service) habitsMet(now time.Time) []string {
 	var out []string
 	for _, r := range recs {
 		h := track.Normal(blocks.HabitOf(r))
-		if archived, _ := r.Fields["archived"].(bool); archived || h.Cadence != "day" || h.Aim != track.Reach {
+		if archived, _ := r.Fields["archived"].(bool); archived {
 			continue
 		}
 		if track.Summarise(h, blocks.EntriesOf(s.app.Store, h.ID), now, 1).Met {

@@ -16,11 +16,11 @@ import (
 // What a person keeps up each day (a relative's tablets twice a day, a
 // run, half an hour's reading) was on a tracker block or the habit's own
 // page, and never where the day is planned, so a missed dose was found in
-// the evening, if at all. Today now lists each daily habit not yet met
-// today, with where it stands and the same Log press a tracker has (Undo
-// takes it back); once met, it leaves. A weekly or monthly one is not
-// there: it is not today's, and would sit on every day of the week. One
-// that only records, or keeps within a limit, is not something to do.
+// the evening, if at all. Today now lists each habit not yet met today,
+// with where it stands and the same Log press a tracker has (Undo takes
+// it back); once met, it leaves. Weekly and monthly cadence habits show
+// when their current period is unmet; record-aim habits always show because
+// they never reach "met" — you log, you don't finish.
 
 // todayHabit is a daily habit not met yet.
 type todayHabit struct {
@@ -39,7 +39,7 @@ func (s *Service) habitsToDo(now time.Time) []todayHabit {
 	out := []todayHabit{}
 	for _, r := range recs {
 		h := track.Normal(blocks.HabitOf(r))
-		if archived, _ := r.Fields["archived"].(bool); archived || h.Cadence != "day" || h.Aim != track.Reach {
+		if archived, _ := r.Fields["archived"].(bool); archived {
 			continue
 		}
 		sum := track.Summarise(h, blocks.EntriesOf(s.app.Store, h.ID), now, 7)
