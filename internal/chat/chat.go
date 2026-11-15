@@ -72,6 +72,10 @@ type Service struct {
 	// Tailscale network, as this workspace: how it asks someone else's
 	// Sameway (ask_someone.go). nil, or answering nil, where it is not on one.
 	Reach func() *http.Client
+	// Published says which content types the internet may read just now,
+	// set by the server: what the assistant reaches for a visitor from the
+	// internet (reach.go). nil is none.
+	Published func() map[string]bool
 	// Needs is what the person has said they need, and Language the
 	// workspace's language; both go into every prompt. Set by the app.
 	Needs, Language string

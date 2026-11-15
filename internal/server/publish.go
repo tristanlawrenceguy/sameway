@@ -69,7 +69,7 @@ func (s *Server) Public(mcp http.Handler) http.Handler {
 		// the same way: pages for the one, MCP for the other.
 		// Asking for a time is the one thing the internet may send; it
 		// only ever waits for the owner's yes (book.go).
-		case r.URL.Path == bookPath && pub.Book:
+		case r.URL.Path == bookPath && pub.Book, r.URL.Path == questionPath && pub.Any():
 			s.ServeHTTP(w, r)
 			return
 		case strings.EqualFold(r.URL.Path, "/mcp") && pub.Any() && mcp != nil:
@@ -109,6 +109,9 @@ func (s *Server) publicAllows(pub Published, path string) bool {
 	if path == bookPath {
 		return pub.Book
 	}
+	if path == questionPath {
+		return pub.Any()
+	}
 	if path == "/" {
 		_, home := pub.Tabs[""]
 		return home
@@ -138,6 +141,7 @@ func (s *Server) publicIndex(w http.ResponseWriter, r *http.Request, pub Publish
 	}
 	var b strings.Builder
 	b.WriteString(`<ul class="sw-plain sw-stack">`)
+	fmt.Fprintf(&b, `<li>%s</li>`, s.navLink(questionPath, "Ask a question", false))
 	if pub.Book {
 		fmt.Fprintf(&b, `<li>%s</li>`, s.navLink(bookPath, "Find a time", false))
 	}

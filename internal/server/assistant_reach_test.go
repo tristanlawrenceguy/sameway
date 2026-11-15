@@ -41,12 +41,15 @@ func TestTheAssistantHasTheAskersPermissions(t *testing.T) {
 
 	look := a.Chat.For(viewer)
 	for _, tl := range look.Tools() {
-		if strings.HasPrefix(tl.Name, "create_") || strings.HasPrefix(tl.Name, "update_") || strings.HasPrefix(tl.Name, "remove_") {
-			t.Errorf("someone who may only look is given %s", tl.Name)
+		if tl.Name == "set_setting" {
+			t.Errorf("someone who may only look is given the owner's %s", tl.Name)
 		}
 	}
-	if text, isErr := look.Call("create_record", json.RawMessage(`{"type":"note","fields":{"title":"From Vi"}}`)); !isErr || !strings.Contains(text, "may only look") {
-		t.Errorf("and a tool that changes is refused whatever the model tries: %v %s", isErr, text)
+	if text, _ := look.Call("create_record", json.RawMessage(`{"type":"note","fields":{"title":"From Vi"}}`)); !strings.Contains(text, "Nothing has changed") {
+		t.Errorf("a change they ask for is not made: %s", text)
+	}
+	if _, isErr := look.Call("create_record", json.RawMessage(`{"type":"enquiry","fields":{"question":"x"}}`)); !isErr {
+		t.Error("nor asked for, of a kind they cannot reach")
 	}
 	if _, isErr := look.Call("find_records", json.RawMessage(`{"type":"note"}`)); isErr {
 		t.Error("they may still read")

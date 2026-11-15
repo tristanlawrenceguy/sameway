@@ -74,7 +74,7 @@ func (s *Service) Tools() []llm.Tool {
 	}
 	out := all[:0:0]
 	for _, t := range all {
-		if s.mayUse(t.Name) { // reach.go
+		if s.mayUse(t.Name) || requestable(t.Name) { // reach.go, requests.go
 			out = append(out, t)
 		}
 	}
@@ -87,10 +87,10 @@ func (s *Service) refuseFor(call llm.ToolCall) (toolResult, bool) {
 	if s.mayUse(call.Name) {
 		return toolResult{}, false
 	}
-	if OwnersAlone(call.Name) {
-		return fail("%s is for the workspace's owner; say they can ask for it", call.Name), true
+	if requestable(call.Name) {
+		return s.request(call), true // requests.go
 	}
-	return fail("%s changes the workspace, and %s may only look; say the owner can let them edit", call.Name, s.who.Who()), true
+	return fail("%s is for the workspace's owner; say they can ask for it", call.Name), true
 }
 
 // whoPrompt tells the model who it is talking to, when that is not the
@@ -142,5 +142,5 @@ func (s *Service) lookOnlyPrompt(name string) string {
 	if s.who.Access != records.View {
 		return ""
 	}
-	return fmt.Sprintf(" %s may only look, so your tools only read: find things and answer from them, with each one's page; if they ask you to change something, say the owner can let them edit.", name)
+	return fmt.Sprintf(" %s may only look: find things and answer from them, with each one's page. When they ask for a change, make it with the tool as you would for anyone: it is not made but put to the owner as a request, and nothing changes until the owner says yes; tell them so.", name)
 }
