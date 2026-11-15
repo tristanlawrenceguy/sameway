@@ -29,7 +29,7 @@ var typeArg = map[string]any{"type": "string", "description": "A content type, a
 
 // typed offers a record op where the workspace has something to write to.
 func typed(s *Service, t *llm.Tool) bool {
-	names := records.TypeNames(s.Store)
+	names := s.typeNames()
 	if len(names) == 0 {
 		return false
 	}
@@ -103,7 +103,7 @@ var recordOps = []Op{
 }
 
 func (s *Service) createRecord(typeName string, fields map[string]any) toolResult {
-	t, err := records.ContentType(s.Store, typeName)
+	t, err := s.contentType(typeName)
 	if err != nil {
 		return fail("%v", err)
 	}
@@ -126,7 +126,7 @@ func (s *Service) createRecord(typeName string, fields map[string]any) toolResul
 }
 
 func (s *Service) updateRecord(typeName, id string, fields map[string]any, version string) toolResult {
-	t, err := records.ContentType(s.Store, typeName)
+	t, err := s.contentType(typeName)
 	if err != nil {
 		return fail("%v", err)
 	}
@@ -162,7 +162,7 @@ func (s *Service) updateRecord(typeName, id string, fields map[string]any, versi
 }
 
 func (s *Service) findRecords(typeName, words string, where []string, order string, limit int) toolResult {
-	t, err := records.ContentType(s.Store, typeName)
+	t, err := s.contentType(typeName)
 	if err != nil {
 		return fail("%v", err)
 	}
@@ -216,7 +216,7 @@ func (s *Service) findRecords(typeName, words string, where []string, order stri
 // deleteRecord is not a tool: a record goes when a person deletes it, or
 // when its creation is undone. Either way the log keeps what it was.
 func (s *Service) deleteRecord(typeName, id string) toolResult {
-	t, err := records.ContentType(s.Store, typeName)
+	t, err := s.contentType(typeName)
 	if err != nil {
 		return fail("%v", err)
 	}
@@ -233,7 +233,7 @@ func (s *Service) deleteRecord(typeName, id string) toolResult {
 // importRecords makes records of a type from a kept file, through ingest,
 // and says how it went. The file is the original the person added.
 func (s *Service) importRecords(typeName, fileID string, mapping map[string]any) toolResult {
-	t, err := records.ContentType(s.Store, typeName)
+	t, err := s.contentType(typeName)
 	if err != nil {
 		return fail("%v", err)
 	}

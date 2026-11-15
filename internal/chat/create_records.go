@@ -31,7 +31,7 @@ var createRecordsOp = Op{Title: "Make several records",
 		}, "type", "records")}, Offered: typed}
 
 func (s *Service) createRecords(typeName string, list []map[string]any) toolResult {
-	t, err := records.ContentType(s.Store, typeName)
+	t, err := s.contentType(typeName)
 	if err != nil {
 		return fail("%v", err)
 	}

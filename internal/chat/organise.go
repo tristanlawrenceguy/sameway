@@ -47,13 +47,13 @@ var organiseOps = []Op{{Title: "Organise longer writing", Traits: Traits{Idempot
 				"id":  map[string]any{"type": "string", "description": "The record's id."},
 				"for": map[string]any{"type": "string", "description": "The part it is for; the whole piece when left out."},
 			}, "id")},
-		}, "piece")}, Offered: func(s *Service, _ *llm.Tool) bool { return len(records.TypeNames(s.Store)) > 0 }}}
+		}, "piece")}, Offered: func(s *Service, _ *llm.Tool) bool { return len(s.typeNames()) > 0 }}}
 
 func (s *Service) organiseWriting(typeName, pieceID string, parts []string, material []materialItem) toolResult {
 	if typeName == "" {
 		typeName = "note"
 	}
-	t, err := records.ContentType(s.Store, typeName)
+	t, err := s.contentType(typeName)
 	if err != nil {
 		return fail("%v", err)
 	}
