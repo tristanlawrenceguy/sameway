@@ -27,7 +27,7 @@ var searchOp = Op{Title: "Search everything", Traits: Traits{ReadOnly: true, Ide
 			"page":  map[string]any{"type": "integer", "minimum": 1, "description": "Which page of results, from 1; only when the answer says there are more."},
 		}, "required": []string{"query"}, "additionalProperties": false},
 	}, Offered: func(s *Service, t *llm.Tool) bool {
-		kinds := strings.Join(search.Kinds(s.Store.Types()), ", ")
+		kinds := strings.Join(search.Kinds(s.types()), ", ")
 		withProp(t, "type", map[string]any{"type": "string", "description": "Only this kind of thing, one of: " + kinds + ". Leave it out to search everything."})
 		if search.ByMeaning(s.Store) {
 			t.Description += " " + byMeaning
@@ -42,7 +42,7 @@ const byMeaning = "It also finds what is " + search.Close + " with none of the w
 // search is one search over everything, the same one the page and the API
 // use: counted by kind, narrowed when a type is named, a page at a time.
 func (s *Service) search(query, only string, page int) toolResult {
-	types := s.Store.Types()
+	types := s.types() // reach.go
 	only = strings.TrimSpace(only)
 	if _, ok := search.Searchable(types, only); only != "" && !ok {
 		return fail("%s", search.Refusal(only, search.Kinds(types)))

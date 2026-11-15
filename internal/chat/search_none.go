@@ -21,7 +21,7 @@ const titlesMost = 30
 // noneOfKind is what there is of a kind when its words found nothing, or
 // "" when there is nothing of it, or too much to list.
 func (s *Service) noneOfKind(typeName string) string {
-	t, ok := s.Store.Types().Get(typeName)
+	t, ok := s.types().Get(typeName)
 	if !ok || t.Internal {
 		return ""
 	}

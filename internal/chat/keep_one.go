@@ -29,7 +29,7 @@ var keepOneOp = Op{Title: "Keep one of records alike", Traits: Traits{Destructiv
 	Offered: typed}
 
 func (s *Service) keepOne(typeName, id string, merge []string) toolResult {
-	t, err := records.ContentType(s.Store, typeName)
+	t, err := s.contentType(typeName)
 	if err != nil {
 		return fail("%v", err)
 	}

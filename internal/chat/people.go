@@ -68,7 +68,7 @@ func (s *Service) Tools() []llm.Tool {
 	}
 	out := all[:0:0]
 	for _, t := range all {
-		if !OwnersAlone(t.Name) {
+		if s.mayUse(t.Name) { // reach.go
 			out = append(out, t)
 		}
 	}
@@ -78,10 +78,13 @@ func (s *Service) Tools() []llm.Tool {
 // refuseFor stops a tool the one this service speaks for may not use,
 // whatever the model tried.
 func (s *Service) refuseFor(call llm.ToolCall) (toolResult, bool) {
-	if s.owner() || !OwnersAlone(call.Name) {
+	if s.mayUse(call.Name) {
 		return toolResult{}, false
 	}
-	return fail("%s is for the workspace's owner; say they can ask for it", call.Name), true
+	if OwnersAlone(call.Name) {
+		return fail("%s is for the workspace's owner; say they can ask for it", call.Name), true
+	}
+	return fail("%s changes the workspace, and %s may only look; say the owner can let them edit", call.Name, s.who.Who()), true
 }
 
 // whoPrompt tells the model who it is talking to, when that is not the
@@ -107,7 +110,7 @@ func (s *Service) forYouPrompt() string {
 		return ""
 	}
 	var lines []string
-	for _, t := range records.ContentTypes(s.Store) {
+	for _, t := range s.contentTypes() {
 		for _, f := range t.Fields {
 			if f.Type != "ref" || f.To != records.PersonType {
 				continue

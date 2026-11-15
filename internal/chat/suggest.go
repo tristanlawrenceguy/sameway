@@ -77,7 +77,7 @@ func textField(t *schema.Type, name string) (string, error) {
 }
 
 func (s *Service) suggestEdits(typeName, id, field string, edits []suggested) toolResult {
-	t, err := records.ContentType(s.Store, typeName)
+	t, err := s.contentType(typeName)
 	if err != nil {
 		return fail("%v", err)
 	}

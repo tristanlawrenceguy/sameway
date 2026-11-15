@@ -6,7 +6,6 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/jsontext"
 	"strings"
 
-	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/render"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
@@ -83,7 +82,7 @@ func (s *Service) componentIndex() string {
 // typeIndex is each content type in a line: what it is, its fields by
 // name and kind, and how much it holds (type_use.go).
 func (s *Service) typeIndex() string {
-	types := records.ContentTypes(s.Store)
+	types := s.contentTypes()
 	if len(types) == 0 {
 		return ""
 	}
