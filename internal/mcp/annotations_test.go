@@ -14,6 +14,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/examples"
 	"github.com/tristanlawrenceguy/sameway/internal/app"
+	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/mcp"
 	"github.com/tristanlawrenceguy/sameway/internal/workspace"
 )
@@ -57,6 +58,9 @@ func TestReadOnlyToolsChangeNothing(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// ask reads with the workspace's model, which here reads the task once
+	// and answers.
+	a.Chat.Provider = &readsOnce{call: llm.ToolCall{ID: "1", Name: "find_records", Args: json.RawMessage(`{"type":"task"}`)}}
 	listed := answers(t, a, `{"jsonrpc":"2.0","id":1,"method":"tools/list"}`)
 
 	args := map[string]string{
@@ -69,6 +73,7 @@ func TestReadOnlyToolsChangeNothing(t *testing.T) {
 		"details":          `{"name":"note"}`,
 		"what_waits":       `{}`,
 		"today":            `{}`,
+		"ask":              `{"question":"Is there a task about the plumber?"}`,
 		"try":              `{"name":"update_record","arguments":{"type":"task","id":"` + task.ID + `","fields":{"done":true}}}`,
 	}
 	var calls []string
@@ -147,4 +152,20 @@ func fingerprint(t *testing.T, dir string) string {
 		t.Fatal(err)
 	}
 	return hex.EncodeToString(h.Sum(nil))
+}
+
+// readsOnce is a model that calls one tool, then answers.
+type readsOnce struct {
+	call  llm.ToolCall
+	asked bool
+}
+
+func (m *readsOnce) Name() string { return "reads once" }
+
+func (m *readsOnce) Complete(_ context.Context, _ llm.Request) (*llm.Response, error) {
+	if m.asked {
+		return &llm.Response{Text: "There is: Call plumber."}, nil
+	}
+	m.asked = true
+	return &llm.Response{ToolCalls: []llm.ToolCall{m.call}}, nil
 }

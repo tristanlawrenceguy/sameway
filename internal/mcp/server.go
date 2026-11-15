@@ -158,14 +158,7 @@ func (s *Server) handle(ctx context.Context, req request) (any, *rpcError) {
 		if err := json.Unmarshal(req.Params, &params); err != nil || params.Name == "" {
 			return nil, &rpcError{codeInvalidParams, "tools/call needs params.name and params.arguments"}
 		}
-		text, isError, structured := refusedOff, true, false
-		if ok, svc := s.may(ctx, params.Name); ok {
-			if t, e, public := s.publicCall(ctx, params.Name, params.Arguments); public {
-				text, isError, structured = t, e, params.Name == "search" || params.Name == "fetch"
-			} else {
-				text, isError = s.call(ctx, s.forAgent(ctx, svc), params.Name, params.Arguments)
-			}
-		}
+		text, isError, structured := s.dispatch(ctx, params.Name, params.Arguments)
 		if params.Name == "more_tools" && !isError {
 			s.brought(params.Arguments) // turn_tools.go
 		}
