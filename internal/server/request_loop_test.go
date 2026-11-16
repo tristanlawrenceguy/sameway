@@ -141,7 +141,25 @@ func TestMyAssistantAsksSomeoneElsesPublishedPage(t *testing.T) {
 		t.Fatalf("it is a request on the plumber's Today: %+v", theirs)
 	}
 	link := "https://plumber.example.ts.net/request/" + theirs[0].Fields["token"].(string)
+	sent, _ := me.Store.List("ask", store.ListOptions{})
+	if len(sent) != 1 || sent[0].Fields["at"] != link || sent[0].Fields["state"] != "waiting" {
+		t.Fatalf("what it asked for there is kept here, with its link, waiting: %+v", sent)
+	}
+	rang := make(chan string, 2)
+	myH.(*server.Server).OnRing(func(title, text, _ string) { rang <- title + ": " + text })
+	if me.Chat.FollowSent(context.Background()); len(rang) != 0 {
+		t.Fatal("nothing is told while they have not answered")
+	}
 	wantStatus(t, postForm(t, plumberH, "/suggested/yes", url.Values{"id": {theirs[0].ID}}), http.StatusSeeOther)
+	if err := me.Chat.FollowSent(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if got := <-rang; !strings.Contains(got, "plumber.example.ts.net said yes to your request to \"make an event") {
+		t.Errorf("their yes is told, without asking again: %s", got)
+	}
+	if s, _ := me.Store.Get("ask", sent[0].ID); s.Fields["state"] != "yes" {
+		t.Errorf("and kept: %v", s.Fields["state"])
+	}
 
 	text, isErr := me.Chat.Call("ask_page", json.RawMessage(`{"address":"`+link+`"}`))
 	if isErr || !strings.Contains(strings.ReplaceAll(text, " ", ""), `"state":"yes"`) {

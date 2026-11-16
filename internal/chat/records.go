@@ -37,6 +37,22 @@ func typed(s *Service, t *llm.Tool) bool {
 	return true
 }
 
+// makeTyped offers create_record. What someone who may not make records
+// makes is a request (requests.go), which may be of any kind that is not
+// the owner's alone, so they are offered all of those, not only the ones
+// they read: a visitor to a page of notes can still ask for a visit.
+func makeTyped(s *Service, t *llm.Tool) bool {
+	if s.mayUse("create_record") {
+		return typed(s, t)
+	}
+	names := s.requestTypeNames() // request_fits.go
+	if len(names) == 0 {
+		return false
+	}
+	withProp(t, "type", map[string]any{"type": "string", "enum": names, "description": "A content type: what they ask for is put to the owner as a request, of the kind it is"})
+	return true
+}
+
 var recordOps = []Op{
 	{Title: "Bring records in from a file",
 		Access: ForOwner,
@@ -59,7 +75,7 @@ var recordOps = []Op{
 			Schema: obj(map[string]any{
 				"type":   typeArg,
 				"fields": map[string]any{"type": "object", "description": "Field values matching the type's schema. Leave a field out to take its default."},
-			}, "type", "fields")}, Offered: typed},
+			}, "type", "fields")}, Offered: makeTyped},
 	createRecordsOp, // create_records.go
 	updateRecordsOp, // update_records.go
 	{Title: "Change a record", Traits: Traits{Idempotent: true},
