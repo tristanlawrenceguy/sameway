@@ -25,6 +25,10 @@ func TestNoCreatedAtLabelInWhenMadeSpan(t *testing.T) {
 		{"file", "Readme.txt", nil},
 	}
 
+	// Entry is tested separately (TestEntryDetailNoWhenMadeSpan) because entries
+	// do not show a whenMade span — the "Logged …" chip from the glance provides
+	// this time information with its label instead.
+
 	for _, rec := range records {
 		t.Run(rec.typ, func(t *testing.T) {
 			a, h := newApp(t)
@@ -64,46 +68,44 @@ func TestNoCreatedAtLabelInWhenMadeSpan(t *testing.T) {
 		})
 	}
 
-	// Entry type: habit is needed so we can create an entry.
-	t.Run("entry", func(t *testing.T) {
-		a, h := newApp(t)
+}
 
-		habitRec, err := a.Store.Create("habit", map[string]any{
-			"name":   "Exercise",
-			"target": 1.0,
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
+// TestEntryDetailNoWhenMadeSpan asserts that entry detail pages do not show a
+// separate creation timestamp span — the "Logged …" chip from the glance already
+// provides this time information with its label. This is the entry-specific fix:
+// only entries skip whenMade to avoid duplicating the same timestamp twice.
+func TestEntryDetailNoWhenMadeSpan(t *testing.T) {
+	t.Parallel()
+	a, h := newApp(t)
 
-		entryRec, err := a.Store.Create("entry", map[string]any{
-			"habit":  habitRec.ID,
-			"at":     "2026-10-02T04:32:00Z",
-			"amount": 3.0,
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		page := get(t, h, "/t/entry/"+entryRec.ID).Body.String()
-		whenMadeContent := extractWhenMadeSpan(page)
-
-		lower := strings.ToLower(whenMadeContent)
-		if strings.Contains(lower, "created at ") {
-			t.Errorf("entry detail page must not contain \"created at\" in the whenMade area; got:\n%s", whenMadeContent)
-		}
-		if strings.Contains(lower, ">created") || strings.Contains(lower, "<span") {
-			t.Errorf("entry detail page must not contain a bare \"Created\" or sw-visually-hidden span in the whenMade area; got:\n%s", whenMadeContent)
-		}
-
-		if !strings.Contains(whenMadeContent, "<time") || !strings.Contains(whenMadeContent, `datetime="`) {
-			t.Errorf("entry detail page lede should have a <time> element in the whenMade span; got:\n%s", whenMadeContent)
-		}
-
-		if !strings.Contains(page, `class="sw-detail__when sw-muted sw-small"`) {
-			t.Error("entry detail page lede should have a sw-detail__when span with muted styling")
-		}
+	habitRec, err := a.Store.Create("habit", map[string]any{
+		"name":   "Exercise",
+		"target": 1.0,
 	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	entryRec, err := a.Store.Create("entry", map[string]any{
+		"habit":  habitRec.ID,
+		"at":     "2026-10-02T04:32:00Z",
+		"amount": 3.0,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	page := get(t, h, "/t/entry/"+entryRec.ID).Body.String()
+
+	// The entry's time is shown only in the "Logged …" glance chip.
+	if !strings.Contains(page, ">Logged") {
+		t.Error("entry detail page lede should show \"Logged\" from the glance chip")
+	}
+
+	// No separate creation timestamp span exists on entry pages.
+	if strings.Contains(page, `class="sw-detail__when`) {
+		t.Error("entry detail page must not have a sw-detail__when span (creation time is in the Logged chip)")
+	}
 }
 
 // TestInteractionDetailNoCreatedAtLabel asserts that an interaction detail page's

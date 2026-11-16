@@ -1,7 +1,6 @@
 package server_test
 
 import (
-	"regexp"
 	"strings"
 	"testing"
 )
@@ -36,15 +35,14 @@ func TestEntryDetailLedeNoAtFieldLabel(t *testing.T) {
 		t.Error("entry detail page should not show \"At\" — it uses the raw database column name instead of plain language")
 	}
 
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><time[^>]*>([^<]+)</time>`)
-	matches := re.FindStringSubmatch(page)
-	if len(matches) < 2 {
-		t.Fatal("entry detail page lede should have a sw-detail__when span with creation time")
+	// The entry's time is shown only in the "Logged …" glance chip, not in a
+	// separate sw-detail__when span. Acceptance item 1–3.
+	if strings.Contains(page, `class="sw-detail__when`) {
+		t.Error("entry detail page must not have a sw-detail__when span (creation time is in the Logged chip)")
 	}
-	whenText := matches[1]
 
-	// The span content should contain relative time text.
-	if !strings.HasPrefix(whenText, "today") && !strings.Contains(whenText, "ago") {
-		t.Errorf("entry detail lede should show relative timestamp; got %q", whenText)
+	// The lede should contain "Logged" from the glance chip with its datetime.
+	if !strings.Contains(page, ">Logged") {
+		t.Error("entry detail page lede should show \"Logged\" from the glance chip")
 	}
 }
