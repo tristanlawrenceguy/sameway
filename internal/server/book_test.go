@@ -21,12 +21,16 @@ func thursdayAt(hour int) time.Time {
 
 // Anyone on the internet, a person or their agent, asks for a time with
 // the owner through the booking link: they see the free hours and never
-// what the owner is doing, and what they send is a suggested event on
-// Today that books nothing until the owner says yes.
+// what the owner is doing, and what they send is a request like any
+// other, an event on Today that books nothing until the owner says yes,
+// that tells the owner it waits, and whose address says what became of
+// it.
 func TestAnyoneAsksForATimeAndNothingIsBookedUntilYes(t *testing.T) {
 	t.Parallel()
 	a, h := newAppAt(t, tonight)
 	srv := h.(*server.Server)
+	rang := make(chan string, 4)
+	srv.OnRing(func(title, text, _ string) { rang <- title + ": " + text })
 	internet := srv.Public(nil)
 	a.Store.Create("event", map[string]any{"title": "Dentist, about the crown", "starts": when.Store(thursdayAt(10), false), "ends": when.Store(thursdayAt(11), false)})
 
@@ -49,14 +53,17 @@ func TestAnyoneAsksForATimeAndNothingIsBookedUntilYes(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec := httptest.NewRecorder()
 	internet.ServeHTTP(rec, req)
-	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "Nothing is booked until they say yes") {
-		t.Fatalf("they are told it waits: %d\n%s", rec.Code, truncate(rec.Body.String()))
+	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "Nothing is booked until they say yes") || !strings.Contains(rec.Body.String(), "/request/") {
+		t.Fatalf("they are told it waits, and where to see the answer: %d\n%s", rec.Code, truncate(rec.Body.String()))
+	}
+	if got := <-rang; !strings.Contains(got, "A request waits for your yes: Pat Lee (pat@example.com) asks you to make an event") {
+		t.Errorf("the owner is told it waits: %s", got)
 	}
 	if n, _ := a.Store.Count("event"); n != 1 {
 		t.Fatalf("nothing is booked before the owner says yes: %d events", n)
 	}
 	today := get(t, h, "/today").Body.String()
-	if !strings.Contains(today, "Pat Lee (pat@example.com) asks for a time with you: Thu 12 Mar, 9am to 10am. Book it?") || !strings.Contains(today, "Book it") {
+	if !strings.Contains(today, "Pat Lee (pat@example.com) asks you to make an event: &#34;Meeting with Pat Lee&#34;, Thu 12 Mar, 9am to 10am, about &#34;About the fence.") || !strings.Contains(today, "Make it") || strings.Contains(today, "Always for") {
 		t.Fatalf("the request waits on Today, with its answers\n%s", truncate(today))
 	}
 
@@ -90,7 +97,14 @@ func TestAnyoneAsksForATimeAndNothingIsBookedUntilYes(t *testing.T) {
 			pat = p
 		}
 	}
+	status := "/request/" + pat.Fields["token"].(string)
+	if page := public(t, internet, http.MethodGet, status, "").Body.String(); !strings.Contains(page, "It waits for their answer") {
+		t.Errorf("its address says it waits: %s", truncate(page))
+	}
 	wantStatus(t, postForm(t, h, "/suggested/yes", url.Values{"id": {pat.ID}}), http.StatusSeeOther)
+	if page := public(t, internet, http.MethodGet, status, "").Body.String(); !strings.Contains(page, "They said yes") {
+		t.Errorf("and then that it is made: %s", truncate(page))
+	}
 	if len(a.Chat.Suggestions()) != 1 {
 		t.Error("saying yes to one leaves the other waiting")
 	}

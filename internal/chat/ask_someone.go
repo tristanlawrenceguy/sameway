@@ -71,8 +71,7 @@ func (s *Service) askSomeoneOf(raw json.RawMessage) (a askSomeoneArgs, p *store.
 		return a, nil, "", fmt.Errorf("there is nobody called %q here: add them as a person first", a.Who)
 	}
 	name, _ := p.Fields["name"].(string)
-	at, _ = p.Fields["sameway"].(string)
-	at = strings.TrimSuffix(strings.TrimPrefix(strings.TrimPrefix(strings.TrimSpace(at), "https://"), "http://"), "/")
+	at = samewayOf(p) // ask_page.go
 	if at == "" || strings.ContainsAny(at, "/ ?#@") {
 		return a, nil, "", fmt.Errorf("%s's page does not say where their Sameway is: put its Tailscale name there, such as home.tail1234.ts.net, as Their Sameway", name)
 	}

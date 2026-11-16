@@ -49,15 +49,8 @@ func (s *Service) request(call llm.ToolCall) toolResult {
 	action := map[string]any{}
 	json.Unmarshal(call.Args, &action)
 	action["tool"] = call.Name
-	who := s.who.Who()
-	if s.who.Login != "" && !strings.HasPrefix(s.who.Login, "device:") {
-		who += " (" + s.who.Login + ")"
-	}
-	summary := trim.Line(who+" asks you to "+what+". Make it?", 300)
-	token := requestToken()
-	if _, err := s.Apply(records.Op{Type: records.ProposalType, After: map[string]any{"summary": summary, "detail": "Asked through the assistant",
-		"action": action, "state": "pending", "by_action": ByRequest, "yes": "Make it", "no": "No",
-		"asked": what, "asked_by": s.forWhom(), "token": token}}); err != nil {
+	summary, token, err := s.putRequest(action, what, "Asked through the assistant") // requests_made.go
+	if err != nil {
 		return fail("could not put it to the owner: %v", err)
 	}
 	return toolResult{text: "Nothing has changed: it is not theirs to change, so it was put to the owner, who sees: " + summary +

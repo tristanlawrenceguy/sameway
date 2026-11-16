@@ -16,6 +16,10 @@ import (
 // made is put to the owner (requests.go). It is told nothing of the
 // workspace beyond what it reads.
 
+// SomeonePublished is who a visitor from the internet is, when they do
+// not say.
+const SomeonePublished = "Someone on your published page"
+
 // onceSteps is how many rounds of tools an answer may take.
 const onceSteps = 8
 
@@ -34,6 +38,7 @@ func (s *Service) AnswerOnce(ctx context.Context, site, question string) (string
 		system += " They say they are " + who + "."
 	}
 	msgs := []llm.Message{{Role: llm.RoleUser, Content: question}}
+	defer s.tellOwner(s.Now())
 	for range onceSteps {
 		resp, err := s.Provider.Complete(ctx, llm.Request{System: system, Messages: msgs, Tools: s.Tools(), MaxTokens: 1500, For: s.forWhom()})
 		if err != nil {

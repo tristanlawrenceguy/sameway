@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
 )
@@ -53,7 +54,7 @@ func (s *Server) questionAsk(w http.ResponseWriter, r *http.Request) {
 	who := strings.TrimSpace(r.PostForm.Get("who"))
 	v := records.Visitor{Access: records.Public, Name: who}
 	if who == "" {
-		v.Name = "Someone on your published page"
+		v.Name = chat.SomeonePublished
 	}
 	start := s.now()
 	said, err := s.app.Chat.For(v).AnswerOnce(r.Context(), s.app.Workspace.Config.Name, r.PostForm.Get("question"))
