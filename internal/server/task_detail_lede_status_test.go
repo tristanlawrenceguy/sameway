@@ -7,7 +7,6 @@ package server_test
 // nowhere on the page.
 
 import (
-	"regexp"
 	"strings"
 	"testing"
 )
@@ -54,11 +53,9 @@ func TestTaskDetailLedeHasNoStatusBadgeDoing(t *testing.T) {
 		t.Errorf("the undone task's Done checkbox must remain unchecked:\n%s", truncate(page))
 	}
 
-	// Human-readable metadata must still appear: due date chip and creation time.
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><time[^>]*>([^<]+)</time>`)
-	matches := re.FindStringSubmatch(lede)
-	if len(matches) < 2 {
-		t.Error("task detail lede should have a sw-detail__when span with the creation time")
+	// The sw-detail__when span must be absent (creation-time duplicate removed).
+	if strings.Contains(lede, `class="sw-detail__when`) {
+		t.Error("task detail lede must not contain a sw-detail__when span")
 	}
 }
 
@@ -105,11 +102,9 @@ func TestTaskDetailLedeHasNoStatusBadgeDone(t *testing.T) {
 		t.Errorf("the completed task's Done checkbox must be checked:\n%s", truncate(page))
 	}
 
-	// Human-readable metadata must still appear: creation time.
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><time[^>]*>([^<]+)</time>`)
-	matches := re.FindStringSubmatch(lede)
-	if len(matches) < 2 {
-		t.Error("task detail lede should have a sw-detail__when span with the creation time")
+	// The sw-detail__when span must be absent (creation-time duplicate removed).
+	if strings.Contains(lede, `class="sw-detail__when`) {
+		t.Error("task detail lede must not contain a sw-detail__when span")
 	}
 }
 
@@ -150,11 +145,9 @@ func TestTaskDetailLedeHasNoStatusBadgeForUndoneTask(t *testing.T) {
 		t.Errorf("task detail lede must not expose internal field name \"status\":\n%s", lede)
 	}
 
-	// Human-readable metadata must still appear: creation time.
-	re := regexp.MustCompile(`class="sw-detail__when[^"]*"><time[^>]*>([^<]+)</time>`)
-	matches := re.FindStringSubmatch(page)
-	if len(matches) < 2 {
-		t.Error("task detail page should have a sw-detail__when span with the creation time")
+	// The sw-detail__when span must be absent (creation-time duplicate removed).
+	if strings.Contains(page, `class="sw-detail__when`) {
+		t.Error("task detail page must not contain a sw-detail__when span")
 	}
 
 	// The Done checkbox must be unchecked.

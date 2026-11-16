@@ -109,13 +109,16 @@ func wantMetadataPresent(t *testing.T, lede string) {
 	}
 }
 
-func TestADoneTaskDetailMetadataStillAppears(t *testing.T) {
+func TestADoneTaskDetailNoDuplicateTimestamp(t *testing.T) {
 	t.Parallel()
 	_, h := newApp(t)
 	var task struct{ ID string }
 	decode(t, postJSON(t, h, http.MethodPost, "/api/task", map[string]any{"title": "Water the plants", "done": true}), &task)
 	lede := ledeHTML(t, h, "/t/task/"+task.ID)
-	wantMetadataPresent(t, lede)
+	// Tasks no longer carry creation-time metadata in the lede (goals 0121/0341).
+	if strings.Contains(lede, `class="sw-detail__when`) {
+		t.Errorf("task detail lede must not contain a sw-detail__when span\n%s", lede)
+	}
 }
 
 func TestAPinnedNoteDetailMetadataStillAppears(t *testing.T) {

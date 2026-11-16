@@ -95,8 +95,9 @@ func TestDaysAreHeldInTimeElements(t *testing.T) {
 	if !strings.Contains(page, `<time datetime="`+today+`"`) {
 		t.Error("the lede's day is not held in a time element")
 	}
-	if !strings.Contains(page, `class="sw-detail__when sw-muted sw-small"><time datetime="`) {
-		t.Error("when it was made is not held in a time element")
+	// Tasks no longer carry the whenMade span (goals 0121/0341; task 0999).
+	if strings.Contains(page, `class="sw-detail__when`) {
+		t.Error("task detail page must not have a sw-detail__when span")
 	}
 }
 

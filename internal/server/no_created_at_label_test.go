@@ -18,12 +18,12 @@ func TestNoCreatedAtLabelInWhenMadeSpan(t *testing.T) {
 		title  string
 		fields map[string]any
 	}{
-		{"task", "Buy milk", nil},
 		{"note", "Meeting notes", nil},
 		{"action", "Sync data", nil},
 		{"file", "Readme.txt", nil},
 	}
 
+	// Task is not tested here — it no longer carries a whenMade span (goals 0121/0341; task 0999).
 	// Entry is tested separately (TestEntryDetailNoWhenMadeSpan) because entries
 	// do not show a whenMade span — the "Logged …" chip from the glance provides
 	// this time information with its label instead.

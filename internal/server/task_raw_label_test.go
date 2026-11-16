@@ -40,9 +40,9 @@ func TestTaskDetailLedeNoRawDueLabel(t *testing.T) {
 		t.Error("task detail page lede should still show the due date as a badge or span")
 	}
 
-	// The creation timestamp via whenMade should still be present.
-	if !strings.Contains(page, `class="sw-detail__when sw-muted sw-small"`) {
-		t.Error("task detail page lede should still show creation time")
+	// The sw-detail__when span must be absent (creation-time duplicate removed).
+	if strings.Contains(page, `class="sw-detail__when`) {
+		t.Error("task detail page lede must not contain a sw-detail__when span")
 	}
 }
 

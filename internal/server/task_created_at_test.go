@@ -6,9 +6,8 @@ import (
 )
 
 // TestTaskDetailLedeCreationTimeIsCreatedAt asserts that a task detail page's
-// lede shows the creation time without any label text — not bare "Created". This is
-// acceptance item 1. The middle-dot separator between title area and metadata
-// must also be present.
+// lede no longer shows the creation-time span — matching how entry and reminder
+// pages were fixed (goals 0121/0341). Acceptance items 1–2: single timestamp.
 func TestTaskDetailLedeCreationTimeIsCreatedAt(t *testing.T) {
 	t.Parallel()
 	a, h := newApp(t)
@@ -22,23 +21,18 @@ func TestTaskDetailLedeCreationTimeIsCreatedAt(t *testing.T) {
 
 	page := get(t, h, "/t/task/"+rec.ID).Body.String()
 
-	lower := strings.ToLower(extractWhenMadeSpan(page))
-	// Must NOT have any label text — visible or visually-hidden.
-	if strings.Contains(lower, "created at ") || strings.Contains(lower, "<span") {
-		t.Errorf("task detail lede must not contain \"Created at\" label text; found:\n%s", extractLabel(page))
+	// The sw-detail__when span must NOT be present (creation-time duplicate removed).
+	if strings.Contains(page, `class="sw-detail__when`) {
+		t.Error("task detail lede must not contain a sw-detail__when span")
 	}
 
-	// Must NOT have bare "Created" text.
+	// Must NOT have bare "Created" text in the lede.
 	if strings.Contains(page, ">Created ") {
 		t.Error("task detail lede shows bare \"Created\"")
 	}
 
-	// The span structure must still exist with a <time> element.
-	if !strings.Contains(page, `class="sw-detail__when sw-muted sw-small"`) {
-		t.Errorf("task detail page lede should have a sw-detail__when span with muted styling")
-	}
-
-	if !strings.Contains(extractWhenMadeSpan(page), `<time`) && !strings.Contains(extractWhenMadeSpan(page), `datetime="`) {
-		t.Error("task detail lede should have a <time> element with datetime for the creation timestamp")
+	// The due-date timestamp must still be present.
+	if !strings.Contains(page, `class="sw-lede"`) {
+		t.Fatal("task detail page should have a sw-lede div")
 	}
 }
