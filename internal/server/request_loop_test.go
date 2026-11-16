@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
@@ -123,6 +124,8 @@ func TestMyAssistantAsksSomeoneElsesPublishedPage(t *testing.T) {
 	me.Chat.Provider = &scripted{steps: []*llm.Response{
 		toolCall("ask_page", map[string]any{"address": "Ana the plumber", "question": "Can you come Thursday at 10?", "who": "Tris, tris@example.com"}),
 		{Text: "I have asked you first."},
+		toolCall("create_record", map[string]any{"type": "event", "fields": map[string]any{"title": "Ana the plumber visits", "starts": "2026-03-12T10:00:00Z"}}),
+		{Text: "It is on your calendar."},
 	}}
 	if _, err := me.Chat.Send(context.Background(), "ask the plumber's page whether they can come Thursday at 10"); err != nil {
 		t.Fatal(err)
@@ -145,7 +148,11 @@ func TestMyAssistantAsksSomeoneElsesPublishedPage(t *testing.T) {
 	if len(sent) != 1 || sent[0].Fields["at"] != link || sent[0].Fields["state"] != "waiting" {
 		t.Fatalf("what it asked for there is kept here, with its link, waiting: %+v", sent)
 	}
-	rang := make(chan string, 2)
+	// What to do with an answer is the owner's to say, once, as any
+	// automation: here, their assistant puts what is agreed on the calendar.
+	me.Store.Create("action", map[string]any{"title": "Put what they agree to on my calendar", "kind": "message", "message": "They said yes to: {{title}}. Put it on my calendar.", "when": "changed", "what": "ask", "only": []any{"state=yes"}})
+	me.Automate.StartWorker()
+	rang := make(chan string, 4)
 	myH.(*server.Server).OnRing(func(title, text, _ string) { rang <- title + ": " + text })
 	if me.Chat.FollowSent(context.Background()); len(rang) != 0 {
 		t.Fatal("nothing is told while they have not answered")
@@ -159,6 +166,15 @@ func TestMyAssistantAsksSomeoneElsesPublishedPage(t *testing.T) {
 	}
 	if s, _ := me.Store.Get("ask", sent[0].ID); s.Fields["state"] != "yes" {
 		t.Errorf("and kept: %v", s.Fields["state"])
+	}
+	for deadline := time.Now().Add(5 * time.Second); ; {
+		if n, _ := me.Store.Count("event"); n == 1 {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("an automation on asks lets the assistant act on the answer")
+		}
+		time.Sleep(20 * time.Millisecond)
 	}
 
 	text, isErr := me.Chat.Call("ask_page", json.RawMessage(`{"address":"`+link+`"}`))

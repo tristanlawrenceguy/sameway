@@ -96,10 +96,15 @@ func (s *Service) theirState(ctx context.Context, at string) string {
 // answered keeps an answer and tells the owner, in the conversation and
 // beyond the page.
 func (s *Service) answered(r *store.Record, at, state string) {
-	if _, err := s.Apply(records.Op{Type: records.AskType, ID: r.ID, After: map[string]any{"state": state}}); err != nil {
+	done, err := s.Apply(records.Op{Type: records.AskType, ID: r.ID, After: map[string]any{"state": state}})
+	if err != nil {
 		return
 	}
 	u, _ := url.Parse(at)
+	// Logged, so what the owner set to happen on an answer happens: an
+	// action waiting for an ask to come to state=yes, such as asking the
+	// assistant to put it on the calendar.
+	records.Record(s.Store, "system", records.Change{Action: "answered", Component: records.AskType, ID: r.ID, Detail: u.Host, Ops: done})
 	asked, _ := r.Fields["asked"].(string)
 	said := fmt.Sprintf("%s said yes to your request to %q.", u.Host, asked)
 	if state == "no" {
