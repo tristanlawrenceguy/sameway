@@ -27,6 +27,14 @@ var blockComponents = map[string]bool{
 	"search": true,
 }
 
+// hiddenKinds are targets excluded from the dropdown but still valid for
+// ?kind= URL-parameter filtering (bookmark compatibility). They have no
+// label so they never appear as options, but their values are recognized.
+var hiddenKinds = map[string]bool{
+	"conversation": true, "entry": true, "field": true, "type": true, "action": true,
+	"settings": true, "other": true,
+}
+
 // The activity log narrowed: who made a change, what it was to, and when,
 // chosen together and applied at once (the filters component as a form).
 // The choices are made from the log itself, only people and kinds that
@@ -78,20 +86,24 @@ func (s *Server) whoOf(e *store.Record) logChoice {
 }
 
 // kindOf is what a change was to: a kind of record or block by its plural,
-// a setting, or something else. Block component names return an empty label
-// so they are excluded from the What filter dropdown but still included in
-// results when no kind filter is active.
+// an internal type (excluded from the dropdown), or something else.
+// Block component names and internal types return empty labels so they are
+// excluded from the What filter dropdown but still included in results when
+// no kind filter is active.
 func kindOf(e *store.Record) logChoice {
 	target, _ := e.Fields["target"].(string)
 	switch {
 	case strings.HasPrefix(target, "ui.") || strings.HasPrefix(target, "llm."):
-		return logChoice{"settings", "Settings"}
+		return logChoice{"settings", ""}
 	case target == "":
-		return logChoice{"other", "Other changes"}
+		return logChoice{"other", ""}
 	case target == records.CanvasType:
 		return logChoice{target, "Tabs"}
 	case target == records.BlockType || blockComponents[target]:
 		return logChoice{}
+	case target == "conversation" || target == "entry" ||
+		target == "field" || target == "type" || target == "action":
+		return logChoice{target, ""}
 	}
 	return logChoice{target, capitalize(schema.Plural(target))}
 }
@@ -158,7 +170,15 @@ func (s *Server) narrowLog(all []*store.Record, q url.Values, now time.Time) ([]
 		}
 		return ""
 	}
-	f := logFilter{who: pick("who", whos), kind: pick("kind", kinds), when: pick("when", whens)}
+
+	kp := q.Get("kind")
+	var f logFilter
+	f.kind = pick("kind", kinds)
+	if f.kind == "" && kp != "" && hiddenKinds[kp] {
+		f.kind = kp
+	}
+	f.who = pick("who", whos)
+	f.when = pick("when", whens)
 	since, dated := whenSince(f.when, now)
 	var out []*store.Record
 	for _, e := range all {
@@ -180,27 +200,9 @@ func (s *Server) narrowLog(all []*store.Record, q url.Values, now time.Time) ([]
 		return map[string]any{"id": id, "name": name, "label": label, "options": options}
 	}
 	choices := []any{
-		sel("activity-who", "who", "Who", "Anyone", f.who, whos, func(o logChoice) string {
-			if o.value == "you" {
-				return "by you"
-			}
-			if o.value == "assistant" || o.value == "system" {
-				return "by the " + strings.ToLower(o.label)
-			}
-			return "by " + o.label
-		}),
-		sel("activity-kind", "kind", "What", "Anything", f.kind, kinds, func(o logChoice) string {
-			if o.value == "other" || o.value == "settings" {
-				return strings.ToLower(o.label)
-			}
-			return "to " + strings.ToLower(o.label)
-		}),
-		sel("activity-when", "when", "When", "Any time", f.when, whens, func(o logChoice) string {
-			if o.value == "today" {
-				return "today"
-			}
-			return "in the last 7 days"
-		}),
+		sel("activity-who", "who", "Who", "Anyone", f.who, whos, whoSay),
+		sel("activity-kind", "kind", "What", "Anything", f.kind, kinds, kindSay),
+		sel("activity-when", "when", "When", "Any time", f.when, whens, whenSay),
 	}
 	// The page's other address fields, but not the page number: a new
 	// narrowing starts at its first page.
@@ -228,9 +230,40 @@ func (s *Server) narrowLog(all []*store.Record, q url.Values, now time.Time) ([]
 		if len(keep) > 0 {
 			reset += "?" + keep.Encode()
 		}
-		props["showing"], props["reset"] = strings.Join(said, ", "), reset
+		s := strings.Join(said, ", ")
+		if s == "" && f.kind != "" {
+			s = "to " + strings.ToLower(capitalize(schema.Plural(f.kind)))
+		}
+		props["showing"], props["reset"] = s, reset
 	}
 	return out, props, f
+}
+
+// whoSay formats a "who" choice for the saying text.
+func whoSay(o logChoice) string {
+	if o.value == "you" {
+		return "by you"
+	}
+	if o.value == "assistant" || o.value == "system" {
+		return "by the " + strings.ToLower(o.label)
+	}
+	return "by " + o.label
+}
+
+// kindSay formats a "kind" choice for the saying text.
+func kindSay(o logChoice) string {
+	if o.value == "other" || o.value == "settings" {
+		return strings.ToLower(o.label)
+	}
+	return "to " + strings.ToLower(o.label)
+}
+
+// whenSay formats a "when" choice for the saying text.
+func whenSay(o logChoice) string {
+	if o.value == "today" {
+		return "today"
+	}
+	return "in the last 7 days"
 }
 
 // changesWords says how many changes: 1 change, 12 changes, none.
