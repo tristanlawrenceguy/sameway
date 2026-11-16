@@ -18,7 +18,6 @@ func TestWhenMadeHasNoBareCreatedAtTextNode(t *testing.T) {
 	}{
 		{"task", "Buy milk", nil},
 		{"note", "Meeting notes", nil},
-		{"reminder", "Take medicine", map[string]any{"at": "2026-10-09T06:00:00Z"}},
 		{"action", "Sync data", nil},
 		{"file", "Readme", nil},
 	}

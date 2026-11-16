@@ -6,10 +6,11 @@ import (
 	"testing"
 )
 
-// TestNonEntryDetailStillShowsCreationTimestamp asserts that non-entry record
-// types (task, note, reminder) still show the sw-detail__when span on their
-// detail pages. The type guard only affects entries. This covers acceptance
-// item 1 for other types: they should continue to work as before.
+// TestNonEntryDetailStillShowsCreationTimestamp asserts that non-entry,
+// non-reminder record types (task, note) still show the sw-detail__when span
+// on their detail pages. The type guard only affects entries and reminders.
+// This covers acceptance item 1 for other types: they should continue to work
+// as before.
 func TestNonEntryDetailStillShowsCreationTimestamp(t *testing.T) {
 	t.Parallel()
 
