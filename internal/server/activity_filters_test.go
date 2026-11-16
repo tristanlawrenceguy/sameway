@@ -46,7 +46,7 @@ func TestActivityOffersWhoWhatAndWhen(t *testing.T) {
 		`<legend class="sw-filters__legend">Show</legend>`,
 		`name="who"`, `<option value="" selected>Anyone</option>`, `<option value="you">You</option>`,
 		`<option value="assistant">Assistant</option>`, `<option value="system">System</option>`, `>Sam</option>`,
-		`name="kind"`, `<option value="card">Cards</option>`, `<option value="task">Tasks</option>`, `<option value="note">Notes</option>`,
+		`name="kind"`, `<option value="task">Tasks</option>`, `<option value="note">Notes</option>`,
 		`<option value="other">Other changes</option>`,
 		`name="when"`, `<option value="today">Today</option>`, `<option value="week">Last 7 days</option>`,
 		">Apply</button>", "5 changes.", "Last spring", "Dig the pond", "Fern cuttings",
