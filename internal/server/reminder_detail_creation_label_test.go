@@ -6,7 +6,8 @@ import (
 )
 
 // TestReminderDetailLedeCreationTimeIsLabelled asserts that a reminder detail page's
-// lede shows the creation timestamp without any label text before it.
+// lede does NOT show the creation timestamp at all — only the ring time. The
+// whenMade span must be absent for reminders, matching the duplicate-timestamp fix.
 func TestReminderDetailLedeCreationTimeIsLabelled(t *testing.T) {
 	t.Parallel()
 	a, h := newApp(t)
@@ -21,17 +22,14 @@ func TestReminderDetailLedeCreationTimeIsLabelled(t *testing.T) {
 
 	page := get(t, h, "/t/reminder/"+rec.ID).Body.String()
 
-	lower := strings.ToLower(extractWhenMadeSpan(page))
-	if strings.Contains(lower, "created at ") || strings.Contains(lower, "<span") {
-		t.Error("reminder detail page lede should not contain \"Created\" label text or nested span before the creation timestamp; got an unlabeled time")
+	// The whenMade span must NOT be present on reminder pages — the creation time
+	// is noise; only the ring-time badge from the glance should appear.
+	if strings.Contains(page, `class="sw-detail__when`) {
+		t.Error("reminder detail page must not contain a sw-detail__when span (creation timestamp removed to avoid duplicate)")
 	}
 
-	if !strings.Contains(extractWhenMadeSpan(page), `<time`) && !strings.Contains(extractWhenMadeSpan(page), `datetime="`) {
-		t.Error("reminder detail page lede should have a <time> element with datetime for the creation timestamp")
-	}
-
-	// The span must still exist with proper structure.
-	if !strings.Contains(page, `class="sw-detail__when sw-muted sw-small"`) {
-		t.Error("reminder detail page lede should have a sw-detail__when span with muted styling")
+	// No <time> element for creation should exist in the whenMade area.
+	if !strings.Contains(extractWhenMadeSpan(page), "(no span found)") {
+		t.Error("reminder detail lede should not have a whenMade span at all; got: " + extractWhenMadeSpan(page))
 	}
 }
