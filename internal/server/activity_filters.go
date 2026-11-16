@@ -15,6 +15,18 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
+// blockComponents is the set of canvas implementation details that a person
+// would never use to describe their records. They are excluded from the What
+// filter dropdown so the Activity page shows only user-friendly categories.
+var blockComponents = map[string]bool{
+	"chart": true, "tracker": true, "clock": true, "collection": true,
+	"calendar": true, "text": true, "record": true,
+	"filters": true, "chat": true, "table": true,
+	"heading": true, "card": true, "alert": true, "list": true,
+	"button": true, "link": true, "badge": true, "status": true,
+	"search": true,
+}
+
 // The activity log narrowed: who made a change, what it was to, and when,
 // chosen together and applied at once (the filters component as a form).
 // The choices are made from the log itself, only people and kinds that
@@ -66,7 +78,9 @@ func (s *Server) whoOf(e *store.Record) logChoice {
 }
 
 // kindOf is what a change was to: a kind of record or block by its plural,
-// a setting, or something else.
+// a setting, or something else. Block component names return an empty label
+// so they are excluded from the What filter dropdown but still included in
+// results when no kind filter is active.
 func kindOf(e *store.Record) logChoice {
 	target, _ := e.Fields["target"].(string)
 	switch {
@@ -76,6 +90,8 @@ func kindOf(e *store.Record) logChoice {
 		return logChoice{"other", "Other changes"}
 	case target == records.CanvasType:
 		return logChoice{target, "Tabs"}
+	case target == records.BlockType || blockComponents[target]:
+		return logChoice{}
 	}
 	return logChoice{target, capitalize(schema.Plural(target))}
 }
@@ -112,7 +128,7 @@ func (s *Server) narrowLog(all []*store.Record, q url.Values, now time.Time) ([]
 			seen["who:"+w.value] = true
 			whos = append(whos, w)
 		}
-		if k := kindOf(e); !seen["kind:"+k.value] {
+		if k := kindOf(e); k.label != "" && !seen["kind:"+k.value] {
 			seen["kind:"+k.value] = true
 			kinds = append(kinds, k)
 		}
