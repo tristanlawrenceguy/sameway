@@ -104,6 +104,7 @@ var pageRoutes = []route{
 	{pattern: "GET /events", handle: (*Server).events, access: people},
 	{pattern: "GET /search", handle: (*Server).searchPage, access: people},
 	{pattern: "GET /when", handle: (*Server).whenRead, access: people},
+	{pattern: requestGet, handle: (*Server).requestPage, access: people, public: true},
 	{pattern: questionGet, handle: (*Server).questionPage, access: people, public: true},
 	{pattern: questionPost, handle: (*Server).questionAsk, access: people, public: true, persons: "a question for the assistant; what it asks to be made waits for the owner's yes", reach: inward},
 	{pattern: bookGet, handle: (*Server).bookPage, access: people, public: true},

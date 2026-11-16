@@ -42,6 +42,10 @@ type Server struct {
 	// Only, for the assistant, is the tools its turn was given; the rest
 	// come by more_tools (turn_tools.go). Nil lists every tool.
 	Only map[string]bool
+	// For, for the assistant working for someone other than the owner, is
+	// whom: then it offers and runs exactly the tools the assistant has for
+	// them, with their permissions (for.go). nil is the owner.
+	For *records.Visitor
 
 	mu sync.Mutex
 	// sessions are the HTTP clients that said who they are, by the
@@ -85,6 +89,9 @@ func (s *Server) Serve(ctx context.Context) error {
 	// One client for as long as the input lasts: what it calls itself
 	// on initialize names every change it makes.
 	ctx = withConn(ctx, &conn{})
+	if s.For != nil {
+		s.web() // the server's hooks tell the assistant what is published, for a visitor from the internet
+	}
 	sc := bufio.NewScanner(s.In)
 	sc.Buffer(make([]byte, 0, 64*1024), 16*1024*1024)
 	for sc.Scan() {

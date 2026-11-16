@@ -49,6 +49,9 @@ type reach struct {
 }
 
 func (s *Server) reachOf(ctx context.Context) reach {
+	if s.For != nil {
+		return reach{svc: s.App.Chat.For(*s.For)} // for.go
+	}
 	if off, _ := ctx.Value(offKey{}).(bool); !off {
 		return reach{all: true}
 	}
@@ -98,6 +101,9 @@ func fromTailnet(r *http.Request) bool {
 // listFor is the tools a connection may call.
 func (s *Server) listFor(ctx context.Context) []tool {
 	r := s.reachOf(ctx)
+	if s.For != nil {
+		return s.forTools(r.svc) // for.go
+	}
 	all := s.tools()
 	if r.all {
 		return all

@@ -44,3 +44,12 @@ fields:
   made:
     type: string
     description: What accepting made, as type/id.
+  asked:
+    type: text
+    description: For someone's request, what they asked for, in Sameway's words, for telling them the answer.
+  asked_by:
+    type: text
+    description: For someone's request, who asked, as Sameway knows them, kept by the system.
+  token:
+    type: string
+    description: For someone's request, the key of the page that says what became of it, /request/<token>.

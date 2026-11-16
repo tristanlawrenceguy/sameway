@@ -17,5 +17,6 @@ var Routes = []web.Route[*Service]{
 	{Pattern: "POST /tags/change", Handle: (*Service).tagChange, Access: web.People, Tool: "update_record", Reach: web.Inward},
 	{Pattern: "POST /suggested/yes", Handle: (*Service).suggestedYes, Access: web.People, Tool: "create_record", Reach: web.Inward},
 	{Pattern: "POST /suggested/change", Handle: (*Service).suggestedChange, Access: web.People, Tool: "create_record", Reach: web.Inward},
+	{Pattern: "POST /suggested/always", Handle: (*Service).suggestedAlways, Access: web.Owner, Persons: "answering someone's request yes, and the same kind from them from then on, is the owner's answer", Reach: web.Inward},
 	{Pattern: "POST /suggested/no", Handle: (*Service).suggestedNo, Access: web.People, Persons: "turning a suggestion down is the person's answer, which the action then follows", Reach: web.Inward},
 }

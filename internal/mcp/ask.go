@@ -75,7 +75,7 @@ func (s *Server) ask(ctx context.Context, args json.RawMessage) (string, bool) {
 	}
 	msgs := []llm.Message{{Role: llm.RoleUser, Content: a.Question}}
 	for range askSteps {
-		resp, err := model.Complete(ctx, llm.Request{System: askSystem, Messages: msgs, Tools: tools, MaxTokens: 1500})
+		resp, err := model.Complete(ctx, llm.Request{System: askSystem, Messages: msgs, Tools: tools, MaxTokens: 1500, For: askFor(ctx)})
 		if err != nil {
 			return "the model could not answer: " + err.Error(), true
 		}
@@ -94,4 +94,15 @@ func (s *Server) ask(ctx context.Context, args json.RawMessage) (string, bool) {
 		msgs = append(msgs, llm.Message{Role: llm.RoleTool, ToolResults: results})
 	}
 	return fmt.Sprintf("no answer after %d rounds of reading; ask something narrower", askSteps), true
+}
+
+// askFor is whom an answer works for, for a model that runs its tools
+// itself over MCP (llm.Request.For): the one who asked, unless the owner.
+func askFor(ctx context.Context) string {
+	v := records.VisitorOf(ctx)
+	if v.Owner() {
+		return ""
+	}
+	raw, _ := json.Marshal(v)
+	return string(raw)
 }

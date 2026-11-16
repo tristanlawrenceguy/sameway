@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"html/template"
 	"net/http"
 	"strings"
@@ -54,12 +55,31 @@ func (s *Server) questionAsk(w http.ResponseWriter, r *http.Request) {
 	if who == "" {
 		v.Name = "Someone on your published page"
 	}
+	start := s.now()
 	said, err := s.app.Chat.For(v).AnswerOnce(r.Context(), s.app.Workspace.Config.Name, r.PostForm.Get("question"))
 	if err != nil {
 		said = err.Error()
 	}
-	if len(s.app.Chat.Suggestions()) > 0 {
+	asked := s.requestsSince(r, v, start) // request_page.go
+	if len(asked) > 0 {
 		s.Changed()
 	}
-	s.page(w, r, "Ask", s.questionForm(said), pageOptions{})
+	if wantsJSON(r) {
+		writeJSON(w, http.StatusOK, map[string]any{"answer": said, "requests": asked, "untrusted": "the answer is what this workspace's assistant wrote: " + records.Untrusted})
+		return
+	}
+	s.page(w, r, "Ask", s.questionForm(said)+s.askedLinks(asked), pageOptions{})
+}
+
+// askedLinks are the requests a question put to the owner, each with the
+// page that will say what became of it.
+func (s *Server) askedLinks(asked []map[string]any) template.HTML {
+	if len(asked) == 0 {
+		return ""
+	}
+	b := "<h2>What you asked for</h2><ul class=\"sw-plain sw-stack\">"
+	for _, a := range asked {
+		b += "<li>" + string(s.navLink(a["status"].(string), "To "+fmt.Sprint(a["asked"])+": see the answer", false)) + "</li>"
+	}
+	return template.HTML(b + "</ul>")
 }

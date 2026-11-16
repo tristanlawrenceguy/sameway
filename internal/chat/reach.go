@@ -1,6 +1,7 @@
 package chat
 
 import (
+	"encoding/json"
 	"errors"
 	"sort"
 	"strings"
@@ -80,4 +81,14 @@ func (s *Service) mayUse(name string) bool {
 		return false
 	}
 	return s.who.Access == records.Edit || s.who.Access == records.Host || op.Access == ForViewers
+}
+
+// forWhom is whom a turn works for, as a model that runs its tools itself
+// hands it to their MCP server (llm.Request.For): "" for the owner.
+func (s *Service) forWhom() string {
+	if s.owner() {
+		return ""
+	}
+	raw, _ := json.Marshal(s.who)
+	return string(raw)
 }
