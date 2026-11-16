@@ -44,9 +44,8 @@ func TestEntryDetailLedeCreationTimeIsLabelled(t *testing.T) {
 }
 
 // TestEntryDetailLedeHabitNameAbsent asserts that an entry detail page's lede
-// does not contain the habit name; it is rendered in the fields section below,
-// so removing it from the lede eliminates the bare-text concatenation with
-// "Created at". Acceptance item 1.
+// does not contain the habit name; it is rendered in the fields section below.
+// Acceptance item 1.
 func TestEntryDetailLedeHabitNameAbsent(t *testing.T) {
 	t.Parallel()
 	a, h := newApp(t)
@@ -76,10 +75,10 @@ func TestEntryDetailLedeHabitNameAbsent(t *testing.T) {
 		t.Errorf("entry detail page lede should not contain the habit name; got: %s", lede)
 	}
 
-	// With no badge before whenMade, there is no middle-dot separator between a
-	// span and "Created at".
+	// The sw-detail__when span no longer exists on entry pages, so this pattern
+	// cannot appear. This assertion is a regression guard against its return.
 	if strings.Contains(lede, `</span> · <span class="sw-detail__when`) {
-		t.Errorf("entry detail page lede should not have a middle-dot separator between a badge and \"Created at\" because the habit badge is removed; got: %s", lede)
+		t.Errorf("entry detail page lede should not have a sw-detail__when span; got: %s", lede)
 	}
 }
 
