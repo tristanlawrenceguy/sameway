@@ -5,8 +5,10 @@ import (
 	"testing"
 )
 
-// TestCreationTimestampUsesCreated asserts that every record detail page's
-// lede shows the creation timestamp without any label text — not "Added" or "Created at".
+// TestCreationTimestampUsesCreated asserts that record detail pages that still
+// carry creation-time metadata show it without any label text — not "Added" or
+// "Created at". Tasks no longer carry this in the lede (goals 0121/0341; task
+// 0999). Only types that keep the span are tested here.
 func TestCreationTimestampUsesCreated(t *testing.T) {
 	t.Parallel()
 
@@ -15,7 +17,6 @@ func TestCreationTimestampUsesCreated(t *testing.T) {
 		title  string
 		fields map[string]any
 	}{
-		{"task", "Buy milk", nil},
 		{"note", "Meeting notes", nil},
 	}
 

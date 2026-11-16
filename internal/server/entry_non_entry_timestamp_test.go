@@ -7,10 +7,10 @@ import (
 )
 
 // TestNonEntryDetailStillShowsCreationTimestamp asserts that non-entry,
-// non-reminder record types (task, note) still show the sw-detail__when span
-// on their detail pages. The type guard only affects entries and reminders.
-// This covers acceptance item 1 for other types: they should continue to work
-// as before.
+// non-reminder record types (note) still show the sw-detail__when span
+// on their detail pages. Tasks and reminders no longer carry creation time
+// in the lede (goals 0121/0341; task 0999). This covers acceptance item 1
+// for other types: they should continue to work as before.
 func TestNonEntryDetailStillShowsCreationTimestamp(t *testing.T) {
 	t.Parallel()
 
@@ -18,7 +18,6 @@ func TestNonEntryDetailStillShowsCreationTimestamp(t *testing.T) {
 		typ    string
 		fields map[string]any
 	}{
-		{"task", nil},
 		{"note", nil},
 	}
 

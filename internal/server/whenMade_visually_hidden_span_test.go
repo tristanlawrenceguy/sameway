@@ -18,11 +18,12 @@ func TestWhenMadeHasNoBareCreatedAtLabel(t *testing.T) {
 		title  string
 		fields map[string]any
 	}{
-		{"task", "Buy milk", nil},
 		{"note", "Meeting notes", nil},
 		{"action", "Sync data", nil},
 		{"file", "Readme", nil},
 	}
+
+	// Task is not tested here — it no longer carries a whenMade span (goals 0121/0341; task 0999).
 
 	for _, rec := range records {
 		t.Run(rec.typ, func(t *testing.T) {

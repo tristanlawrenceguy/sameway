@@ -10,4 +10,5 @@ const (
 	FileType     = records.FileType
 	HabitType    = records.HabitType
 	ReminderType = records.ReminderType
+	TaskType     = records.TaskType
 )

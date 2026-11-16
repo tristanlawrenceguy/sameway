@@ -49,6 +49,8 @@ const (
 	SuggestionType = "suggestion"
 	// TagType is a tag and what it means.
 	TagType = "tag"
+	// TaskType is an action item to do.
+	TaskType = "task"
 )
 
 // ComponentName is the component that renders the conversation. It is a
