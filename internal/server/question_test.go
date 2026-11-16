@@ -19,6 +19,8 @@ func TestAVisitorAsksOnAPublishedPage(t *testing.T) {
 	t.Parallel()
 	a, h := newApp(t)
 	srv := h.(*server.Server)
+	rang := make(chan string, 2)
+	srv.OnRing(func(title, text, _ string) { rang <- title + ": " + text })
 	internet := srv.Public(nil)
 	a.Store.Create("note", map[string]any{"title": "Opening hours", "body": "Saturdays 9 to 1."})
 	secret, _ := a.Store.Create("task", map[string]any{"title": "Change the alarm code"})
@@ -55,6 +57,9 @@ func TestAVisitorAsksOnAPublishedPage(t *testing.T) {
 	asks := a.Chat.Suggestions()
 	if len(asks) != 1 || !strings.Contains(asks[0].Fields["summary"].(string), "Pat Lee, pat@example.com asks you to make an event: \"Pat Lee to visit\", starts ") {
 		t.Fatalf("their ask waits on the owner's Today, in Sameway's words: %+v", asks)
+	}
+	if got := <-rang; !strings.Contains(got, "A request waits for your yes: Pat Lee, pat@example.com asks you") {
+		t.Errorf("the owner is told it waits, as for any request: %s", got)
 	}
 	if strings.Contains(model.seen[0].System, "alarm") {
 		t.Error("the assistant is told nothing beyond what it reads")

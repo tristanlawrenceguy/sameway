@@ -47,7 +47,9 @@ func (s *Service) SendFile(ctx context.Context, canvas, text, fileID string) (*s
 
 // SendLive is a turn told as it happens to on, which may be nil.
 func (s *Service) SendLive(ctx context.Context, canvas, text, fileID string, on func(Event)) (*store.Record, error) {
+	since := s.Now()
 	rec, err := s.sendTurn(ctx, canvas, text, fileID, on)
+	s.tellOwner(since)
 	if on != nil && rec != nil {
 		if rec.Fields["role"] == "error" {
 			content, _ := rec.Fields["content"].(string)

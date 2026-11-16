@@ -76,6 +76,9 @@ type Service struct {
 	// set by the server: what the assistant reaches for a visitor from the
 	// internet (reach.go). nil is none.
 	Published func() map[string]bool
+	// Requested tells the owner a request from someone waits for them,
+	// set by the server; nil tells no one. See requests_made.go.
+	Requested func(summary string)
 	// Needs is what the person has said they need, and Language the
 	// workspace's language; both go into every prompt. Set by the app.
 	Needs, Language string

@@ -102,8 +102,9 @@ func (s served) RoundTrip(r *http.Request) (*http.Response, error) {
 	return rec.Result(), nil
 }
 
-// The owner's assistant asks someone else's published Sameway, put to the
-// owner first; what it asks for there is a request their owner answers,
+// The owner's assistant asks someone else's published Sameway, by its
+// address or by the name of someone here whose page says where it is, put
+// to the owner first; what it asks for there is a request their owner answers,
 // and asking with the link it brought back says what became of it.
 func TestMyAssistantAsksSomeoneElsesPublishedPage(t *testing.T) {
 	t.Parallel()
@@ -118,8 +119,9 @@ func TestMyAssistantAsksSomeoneElsesPublishedPage(t *testing.T) {
 
 	me, myH := newApp(t)
 	me.Automate.HTTP = &http.Client{Transport: served{internet}}
+	me.Store.Create("person", map[string]any{"name": "Ana the plumber", "sameway": "plumber.example.ts.net"})
 	me.Chat.Provider = &scripted{steps: []*llm.Response{
-		toolCall("ask_page", map[string]any{"address": "https://plumber.example.ts.net", "question": "Can you come Thursday at 10?", "who": "Tris, tris@example.com"}),
+		toolCall("ask_page", map[string]any{"address": "Ana the plumber", "question": "Can you come Thursday at 10?", "who": "Tris, tris@example.com"}),
 		{Text: "I have asked you first."},
 	}}
 	if _, err := me.Chat.Send(context.Background(), "ask the plumber's page whether they can come Thursday at 10"); err != nil {

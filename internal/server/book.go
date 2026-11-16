@@ -17,8 +17,9 @@ import (
 // reaches it through Tailscale Funnel like anything published.
 //
 // The one safeguard is that a request does nothing: it waits on Today as
-// a suggested event, each on its own, until the owner presses Book it,
-// Change or No (chat/booking.go).
+// a request for an event, each on its own, until the owner presses Make
+// it, Change or No, and its address tells the one asking what became of
+// it (chat/booking.go).
 
 const (
 	bookPath = "/book"
@@ -73,8 +74,8 @@ func (s *Server) bookPage(w http.ResponseWriter, r *http.Request) {
 			times[i] = t.UTC().Format(time.RFC3339)
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"hours": times, "each": "one hour",
-			"ask":  map[string]any{"post": bookPath, "fields": map[string]string{"at": "one of hours", "name": "your name", "email": "where to answer you", "note": "optional, a few words"}},
-			"then": "the request waits for " + s.app.Workspace.Config.Name + "'s yes; nothing is booked until then"})
+			"ask":  map[string]any{"post": bookPath, "fields": map[string]string{"at": "one of hours", "name": "your name", "email": "how to reach you", "note": "optional, a few words"}},
+			"then": "the request waits for " + s.app.Workspace.Config.Name + "'s yes; nothing is booked until then, and what you are sent back has the address that says what became of it"})
 		return
 	}
 	s.page(w, r, "Find a time", s.bookForm(hours, ""), pageOptions{})
@@ -118,13 +119,16 @@ func (s *Server) bookAsk(w http.ResponseWriter, r *http.Request) {
 		s.page(w, r, "Find a time", s.bookForm(s.openHours(), "That hour is not free: pick one of these."), pageOptions{Status: http.StatusUnprocessableEntity})
 		return
 	}
-	if err := s.app.Chat.Booking(r.PostForm.Get("name"), r.PostForm.Get("email"), r.PostForm.Get("note"), at); err != nil {
+	token, err := s.app.Chat.Booking(r.PostForm.Get("name"), r.PostForm.Get("email"), r.PostForm.Get("note"), at)
+	if err != nil {
 		s.page(w, r, "Find a time", s.bookForm(s.openHours(), err.Error()), pageOptions{Status: http.StatusUnprocessableEntity})
 		return
 	}
 	s.Changed()
-	if s.notify != nil {
-		go s.notify("Someone asks for a time with you", "It waits on Today for your yes.", s.linkTo("/today"))
+	asked := []map[string]any{s.requestSeen(r, s.app.Chat.RequestByToken(token))} // request_page.go
+	if wantsJSON(r) {
+		writeJSON(w, http.StatusOK, map[string]any{"requests": asked})
+		return
 	}
-	s.page(w, r, "Asked", template.HTML(fmt.Sprintf(`<p>Your request has gone to %s. Nothing is booked until they say yes, and they will answer you at the email you gave.</p>`, template.HTMLEscapeString(s.app.Workspace.Config.Name))), pageOptions{})
+	s.page(w, r, "Asked", template.HTML(fmt.Sprintf(`<p>Your request has gone to %s. Nothing is booked until they say yes.</p>`, template.HTMLEscapeString(s.app.Workspace.Config.Name)))+s.askedLinks(asked), pageOptions{})
 }

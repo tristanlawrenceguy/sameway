@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 )
@@ -16,8 +17,11 @@ import (
 // model that answers holds exactly the agent's reach and no more. It is
 // given only the reading tools below that the agent may call itself, each
 // call goes through the same check the agent's own calls do, and it has
-// no tool that changes anything or reaches outside. A question written to
-// turn it can only get what the agent could have read without asking.
+// no tool that changes anything or reaches outside. From the internet it
+// is answered as the published page answers a person (askPublished),
+// where what is asked for becomes a request the owner answers. A question
+// written to turn it can only get what the agent could have read, or ask
+// for, without asking.
 
 // askReads are the tools the answering model may use, when the one asking
 // may: reading only. look is not one: it can submit a form.
@@ -30,9 +34,10 @@ const askSystem = `You answer a question for someone who reached this Sameway wo
 
 // askTool is the tool as it is listed.
 var askTool = tool{Name: "ask",
-	Description: "Ask this workspace a question in words, instead of finding your own way through describe, find_records and get_record: \"what is on next week?\", \"is there a note about the boiler?\". It is answered by reading what you may read here, and nothing more, with the pages it read from. " + records.DataNotInstructions,
+	Description: "Ask this workspace a question in words, instead of finding your own way through describe, find_records and get_record: \"what is on next week?\", \"is there a note about the boiler?\". It is answered by reading what you may read here, and nothing more, with the pages it read from. On a published workspace you may also ask for something, a time to meet or a message left, with who: it waits for the owner's yes, and the answer gives the address that says what became of it. " + records.DataNotInstructions,
 	InputSchema: map[string]any{"type": "object", "properties": map[string]any{
 		"question": map[string]any{"type": "string", "maxLength": 1000},
+		"who":      map[string]any{"type": "string", "maxLength": 160, "description": "on a published workspace, your name and how to reach you, for anything you ask for"},
 	}, "required": []string{"question"}, "additionalProperties": false}}
 
 // dispatch is one call as the one connected may make it: refused when it
@@ -58,10 +63,14 @@ func (s *Server) dispatch(ctx context.Context, name string, args json.RawMessage
 func (s *Server) ask(ctx context.Context, args json.RawMessage) (string, bool) {
 	var a struct {
 		Question string `json:"question"`
+		Who      string `json:"who"`
 	}
 	json.Unmarshal(args, &a)
 	if a.Question = strings.TrimSpace(a.Question); a.Question == "" {
 		return "say what to ask, as question", true
+	}
+	if s.reachOf(ctx).public {
+		return s.askPublished(ctx, a.Question, a.Who)
 	}
 	model := s.App.Chat.Provider
 	if model == nil {
@@ -94,6 +103,27 @@ func (s *Server) ask(ctx context.Context, args json.RawMessage) (string, bool) {
 		msgs = append(msgs, llm.Message{Role: llm.RoleTool, ToolResults: results})
 	}
 	return fmt.Sprintf("no answer after %d rounds of reading; ask something narrower", askSteps), true
+}
+
+// askPublished answers someone from the internet as the published page
+// does at /question, by the same answerer (chat/answer_once.go): what they
+// ask for becomes a request, and its address comes back with the answer.
+func (s *Server) askPublished(ctx context.Context, question, who string) (string, bool) {
+	v := records.Visitor{Access: records.Public, Name: strings.TrimSpace(who)}
+	if v.Name == "" {
+		v.Name = chat.SomeonePublished
+	}
+	svc := s.App.Chat.For(v)
+	since := svc.Now()
+	said, err := svc.AnswerOnce(ctx, s.App.Workspace.Config.Name, question)
+	if err != nil {
+		return err.Error(), true
+	}
+	for _, p := range svc.RequestsSince(since) {
+		token, _ := p.Fields["token"].(string)
+		said += fmt.Sprintf("\nPut to the owner: to %v. What became of it is at %s on this workspace.", p.Fields["asked"], chat.RequestPath(token))
+	}
+	return said + "\n(Written by this workspace's model from what is published here: " + records.Untrusted + ".)", false
 }
 
 // askFor is whom an answer works for, for a model that runs its tools

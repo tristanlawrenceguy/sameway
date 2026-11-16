@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/json"
 	"html/template"
 	"net/http"
 	"time"
@@ -54,17 +53,18 @@ func requestWords(state string) string {
 // with what was asked and its address: what a question page tells them it
 // put to the owner.
 func (s *Server) requestsSince(r *http.Request, v records.Visitor, since time.Time) []map[string]any {
-	who, _ := json.Marshal(v)
-	recs, _ := s.app.Store.List(records.ProposalType, store.ListOptions{OrderBy: "created_at"})
 	var out []map[string]any
-	for _, p := range recs {
-		token, _ := p.Fields["token"].(string)
-		if p.Fields["by_action"] != chat.ByRequest || p.Fields["asked_by"] != string(who) || p.CreatedAt.Before(since) || token == "" {
-			continue
-		}
-		out = append(out, map[string]any{"asked": p.Fields["asked"], "status": seenFrom(r, chat.RequestPath(token))})
+	for _, p := range s.app.Chat.For(v).RequestsSince(since) {
+		out = append(out, s.requestSeen(r, p))
 	}
 	return out
+}
+
+// requestSeen is a request as the one who asked has it: what they asked,
+// and the address that says what became of it.
+func (s *Server) requestSeen(r *http.Request, p *store.Record) map[string]any {
+	token, _ := p.Fields["token"].(string)
+	return map[string]any{"asked": p.Fields["asked"], "status": seenFrom(r, chat.RequestPath(token))}
 }
 
 // seenFrom is an address as the one asking reaches it: at the host they
