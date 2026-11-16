@@ -2,6 +2,7 @@ package chat
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
@@ -23,6 +24,19 @@ func (s *Service) requestType(tool, typeName string) (*schema.Type, error) {
 		}
 	}
 	return t, err
+}
+
+// requestTypeNames are the kinds a request may be of: every content type
+// that is not the owner's alone, in order.
+func (s *Service) requestTypeNames() []string {
+	var names []string
+	for _, t := range records.ContentTypes(s.Store) {
+		if !t.Owners {
+			names = append(names, t.Name)
+		}
+	}
+	sort.Strings(names)
+	return names
 }
 
 // requestFits says why a yes could not make the request, or nil.

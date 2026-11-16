@@ -10,6 +10,9 @@ const (
 	ActionType = "action"
 	// ActivityType logs every change.
 	ActivityType = "activity"
+	// AskType is something the owner asked another person's Sameway
+	// for, followed until they answer (chat/asks.go).
+	AskType = "ask"
 	// AgentType holds the agents let in with keys.
 	AgentType = "agent"
 	// BlockType holds canvas items.

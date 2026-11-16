@@ -1,6 +1,7 @@
 package server_test
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -60,6 +61,14 @@ func TestAVisitorAsksOnAPublishedPage(t *testing.T) {
 	}
 	if got := <-rang; !strings.Contains(got, "A request waits for your yes: Pat Lee, pat@example.com asks you") {
 		t.Errorf("the owner is told it waits, as for any request: %s", got)
+	}
+	offered := false
+	for _, tl := range model.seen[0].Tools {
+		raw, _ := json.Marshal(tl.Schema)
+		offered = offered || tl.Name == "create_record" && strings.Contains(string(raw), `"event"`)
+	}
+	if !offered {
+		t.Error("they may ask for any kind that is not the owner's alone, not only the published ones they read")
 	}
 	if strings.Contains(model.seen[0].System, "alarm") {
 		t.Error("the assistant is told nothing beyond what it reads")

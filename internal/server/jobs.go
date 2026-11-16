@@ -49,6 +49,9 @@ func (s *Server) BackgroundJobs() []runner.Job {
 			s.agenda.PurchasesIfDue(now) // agenda/purchases.go
 			return nil
 		}},
+		{Name: "Answers to what you asked other Sameways", Every: 5 * time.Minute, Wait: true, Run: func(ctx context.Context, _ time.Time) error {
+			return s.app.Chat.FollowSent(ctx) // chat/asks.go
+		}},
 		{Name: "Search by meaning kept current", Every: 2 * time.Minute, Run: func(ctx context.Context, _ time.Time) error {
 			return s.refreshMeaning(ctx) // search_meaning.go: when an embedding model is here
 		}},
