@@ -10,9 +10,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
+	"github.com/tristanlawrenceguy/sameway/internal/trim"
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
@@ -172,11 +174,12 @@ func match(t *schema.Type, rec *store.Record, words []string, some bool, r Reade
 }
 
 // texts is a record as words: its title, and everything else it says. A
-// block's title is its component; its words are its props.
+// block's title is human-readable content from its props, not the component name.
 func texts(t *schema.Type, rec *store.Record, r Reader) (title, body string) {
 	if t.Name == "block" {
 		name, _ := rec.Fields["component"].(string)
-		return name, flatten(rec.Fields["props"])
+		props, _ := rec.Fields["props"].(map[string]any)
+		return blockTitle(name, props), flatten(rec.Fields["props"])
 	}
 	var parts []string
 	for _, f := range t.Fields {
@@ -217,6 +220,23 @@ func texts(t *schema.Type, rec *store.Record, r Reader) (title, body string) {
 	return title, strings.Join(parts, " · ")
 }
 
+// blockTitle turns a canvas block's component and props into a human-readable
+// label for search results. It uses records.Summarise first (which handles
+// heading/card/text → text/title/content, table → caption, etc.), then falls
+// back through common content props before returning an empty string — never
+// leaking the internal component name to user-facing surfaces.
+func blockTitle(component string, props map[string]any) string {
+	if said := records.Summarise(component, props); said != "" {
+		return said
+	}
+	for _, k := range []string{"label", "caption", "title", "text", "content"} {
+		if v, _ := props[k].(string); strings.TrimSpace(v) != "" {
+			return trim.Title(v)
+		}
+	}
+	return ""
+}
+
 // flatten turns any field value into words.
 func flatten(v any) string {
 	switch x := v.(type) {
@@ -245,41 +265,4 @@ func flatten(v any) string {
 		return ""
 	}
 	return fmt.Sprint(v)
-}
-
-// snippet is the words around the first match, so the hit says why it is
-// one, in roughly a line.
-func snippet(body string, words []string) string {
-	body = strings.Join(strings.Fields(body), " ")
-	if body == "" {
-		return ""
-	}
-	// Found in the folded text, cut from the text as it is: folding can
-	// change a letter's length, so the places are mapped back, never reused.
-	at := -1
-	if spans := Spans(body, words); len(spans) > 0 {
-		at = spans[0][0]
-	}
-	start := 0
-	if at > 40 {
-		start = at - 40
-		for start > 0 && body[start] != ' ' {
-			start--
-		}
-	}
-	end := len(body)
-	if end > start+120 {
-		end = start + 120
-		for end < len(body) && body[end] != ' ' {
-			end++
-		}
-	}
-	out := body[start:end]
-	if start > 0 {
-		out = "…" + strings.TrimLeft(out, " ")
-	}
-	if end < len(body) {
-		out += "…"
-	}
-	return out
 }
