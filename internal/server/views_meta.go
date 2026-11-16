@@ -103,7 +103,7 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 	if !day && !o.Made && (!t.HasDay() || read) {
 		out = strings.TrimSpace(out + " " + s.happenedAfter("", rec.UpdatedAt, now))
 	}
-	if o.Made {
+	if o.Made && t.Name != EntryType {
 		out = strings.TrimSpace(out + " " + s.whenMade(t, rec, o.From))
 	}
 	return out

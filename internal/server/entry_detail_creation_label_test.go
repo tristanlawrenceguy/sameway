@@ -6,8 +6,8 @@ import (
 )
 
 // TestEntryDetailLedeCreationTimeIsLabelled asserts that an entry detail page's
-// lede shows the creation timestamp with a visible "Created" label before it.
-// Acceptance item 2.
+// lede does NOT show a separate creation timestamp span, since the "Logged"
+// chip already names and shows the time. Acceptance item 2: only one announcement.
 func TestEntryDetailLedeCreationTimeIsLabelled(t *testing.T) {
 	t.Parallel()
 	a, h := newApp(t)
@@ -31,25 +31,21 @@ func TestEntryDetailLedeCreationTimeIsLabelled(t *testing.T) {
 
 	page := get(t, h, "/t/entry/"+entryRec.ID).Body.String()
 
-	// The <time> element must be present directly in the whenMade span (no label text).
-	if !strings.Contains(page, `class="sw-detail__when sw-muted sw-small"`) {
-		t.Error("entry detail page lede should have a sw-detail__when span with muted styling")
+	// The entry's creation timestamp is not shown separately — the "Logged …" chip
+	// from the glance already provides this with its label. No sw-detail__when span.
+	if strings.Contains(page, `class="sw-detail__when`) {
+		t.Error("entry detail page must not have a sw-detail__when span (creation time is in the Logged chip)")
 	}
 
-	lower := strings.ToLower(extractWhenMadeSpan(page))
-	if strings.Contains(lower, "created at ") || strings.Contains(lower, "<span") {
-		t.Error("entry detail page lede must not contain \"created at\" label text or nested span; got an unlabeled time like \"3 days ago\"")
-	}
-
-	if !strings.Contains(extractWhenMadeSpan(page), `<time`) || !strings.Contains(extractWhenMadeSpan(page), `datetime="`) {
-		t.Error("entry detail page lede should have a <time> element with datetime for the creation timestamp")
+	// The lede should contain the "Logged" chip with its time.
+	if !strings.Contains(page, ">Logged") {
+		t.Error("entry detail page lede should show \"Logged\" from the glance chip")
 	}
 }
 
 // TestEntryDetailLedeHabitNameAbsent asserts that an entry detail page's lede
-// does not contain the habit name; it is rendered in the fields section below,
-// so removing it from the lede eliminates the bare-text concatenation with
-// "Created at". Acceptance item 1.
+// does not contain the habit name; it is rendered in the fields section below.
+// Acceptance item 1.
 func TestEntryDetailLedeHabitNameAbsent(t *testing.T) {
 	t.Parallel()
 	a, h := newApp(t)
@@ -79,16 +75,16 @@ func TestEntryDetailLedeHabitNameAbsent(t *testing.T) {
 		t.Errorf("entry detail page lede should not contain the habit name; got: %s", lede)
 	}
 
-	// With no badge before whenMade, there is no middle-dot separator between a
-	// span and "Created at".
+	// The sw-detail__when span no longer exists on entry pages, so this pattern
+	// cannot appear. This assertion is a regression guard against its return.
 	if strings.Contains(lede, `</span> · <span class="sw-detail__when`) {
-		t.Errorf("entry detail page lede should not have a middle-dot separator between a badge and \"Created at\" because the habit badge is removed; got: %s", lede)
+		t.Errorf("entry detail page lede should not have a sw-detail__when span; got: %s", lede)
 	}
 }
 
 // TestEntryDetailLedeCreationTimestampHasProperLabel asserts that on an entry
-// detail page, the creation timestamp is preceded by a label like "Created at"
-// so screen readers announce it with clear context. Acceptance item 2.
+// detail page, there is no separate "Created at" span — the "Logged …" chip
+// from the glance provides the time with its label instead. Acceptance item 2.
 func TestEntryDetailLedeCreationTimestampHasProperLabel(t *testing.T) {
 	t.Parallel()
 	a, h := newApp(t)
@@ -112,14 +108,14 @@ func TestEntryDetailLedeCreationTimestampHasProperLabel(t *testing.T) {
 
 	page := get(t, h, "/t/entry/"+entryRec.ID).Body.String()
 
-	// The whenMade span must contain only the <time> element — no label text.
-	lower := strings.ToLower(extractWhenMadeSpan(page))
-	if strings.Contains(lower, "created at ") || strings.Contains(lower, "<span") {
-		t.Error("entry detail page lede should not contain \"created at\" label text or nested span before the creation timestamp; got bare \"Created\" without \"at\"")
+	// No separate whenMade span exists on entry pages — the Logged chip covers it.
+	if strings.Contains(page, `class="sw-detail__when`) {
+		t.Error("entry detail page must not have a sw-detail__when span (creation time is in the Logged chip)")
 	}
 
-	if !strings.Contains(extractWhenMadeSpan(page), `<time`) && !strings.Contains(extractWhenMadeSpan(page), `datetime="`) {
-		t.Error("entry detail page lede should have a <time> element with datetime for the creation timestamp")
+	// The lede should contain "Logged" from the glance chip.
+	if !strings.Contains(page, ">Logged") {
+		t.Error("entry detail page lede should show \"Logged\" with its time from the glance chip")
 	}
 }
 

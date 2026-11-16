@@ -2,7 +2,6 @@ package server_test
 
 import (
 	"net/http"
-	"regexp"
 	"strings"
 	"testing"
 )
@@ -23,14 +22,15 @@ func TestADayIsNamedByItsLabel(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if page := get(t, h, "/t/entry/"+entry.ID).Body.String(); !strings.Contains(page, ">Logged today at ") {
+	page := get(t, h, "/t/entry/"+entry.ID).Body.String()
+	// The entry's day is named Logged in the glance chip.
+	if !strings.Contains(page, ">Logged today at ") {
 		t.Error("an entry's day is not named Logged on its page")
 	}
-	// The line under its fields names when it was made, lower case after
-	// its word: created today at, never created Today at. No label text — just the time element.
-	made := regexp.MustCompile(`sw-detail__when[^"]*"><time[^>]*>today at `)
-	if page := get(t, h, "/t/entry/"+entry.ID).Body.String(); !made.MatchString(page) {
-		t.Error("when it was made is not said as Created today at")
+	// No separate creation timestamp span exists on entry pages — the Logged
+	// chip already provides this time with its label (acceptance item 1–3).
+	if strings.Contains(page, `sw-detail__when`) {
+		t.Error("entry detail page must not have a sw-detail__when span")
 	}
 }
 
