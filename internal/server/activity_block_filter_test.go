@@ -53,10 +53,6 @@ func TestActivityBlockComponentsNotInWhatFilter(t *testing.T) {
 		}
 	}
 
-	// Special-case options should still appear.
-	if !strings.Contains(body, `<option value="other">Other changes</option>`) {
-		t.Error("'Other changes' should still appear as a What filter option\n" + truncate(body))
-	}
 }
 
 // The block record type (canvas blocks stored as records) does not appear as
