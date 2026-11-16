@@ -4,7 +4,7 @@
 # Sameway gave for it, reads that address now and then, and tells you
 # when they answer. What was asked is as their Sameway wrote it back.
 name: ask
-description: "Something the owner asked another person's own Sameway for, through ask_page, and what became of it: kept with the address their Sameway gave, which Sameway reads now and then, telling the owner when they say yes or no. Asked what you asked others for, or whether they answered, read these."
+description: "Something the owner asked another person's own Sameway for, through ask_page, and what became of it: kept with the address their Sameway gave, which Sameway reads now and then, telling the owner when they say yes or no. Asked what you asked others for, or whether they answered, read these; to act on an answer, such as putting what they agreed to on the calendar, make an action that waits for an ask to come to state=yes."
 title: asked
 provided: true
 owners: true
