@@ -56,3 +56,7 @@ fields:
   reply_as:
     type: string
     description: For an invitation that came by email, the owner's address it was sent to, which the answer to it goes back as.
+  for:
+    type: ref
+    to: person
+    description: For someone's request, who the owner's words passed it to, to answer as the owner would.

@@ -77,21 +77,21 @@ var sendEmailOp = Op{Title: "Send an email",
 		return toolResult{text: said, change: &records.Change{Action: "emailed", Detail: trim.Line(schema.AndNames(went)+": "+e.Subject, 120)}}
 	},
 	Tool: llm.Tool{Name: "send_email",
-		Description: "Send an email from the person's own mailbox (connected on Email in), written as them: to someone who booked or asked (their address is in the request's asked_by), or anyone they name. It is put to them word for word first, so call it rather than asking in words. Their reply is answered in the thread with their reach alone. choices: links they can press, each a change made here as agreed (update_record, create_record); the first pressed is made, the rest close. invite: an event as a real calendar invitation; their answer is logged on it. Actions can wait for either (proposal by_action=offer or request, state=accepted; event changed).",
+		Description: "Send an email from the person's mailbox, as them, put to them word for word first (so call it rather than asking in words): to someone who asked (asked_by), or anyone they name. Replies are answered in the thread with the writer's reach. choices: links to press, each a change made here (first wins). invite: an event as a calendar invitation. Actions can wait on either.",
 		Schema: obj(map[string]any{
-			"to":      map[string]any{"type": "string", "description": "Who to send it to: one address, with the name if known (Pat Lee <pat@example.com>), or several separated by commas to ask around or arrange something with a group: each gets it on their own, in a thread of their own, answered as a conversation, and all wait on one yes."},
-			"subject": map[string]any{"type": "string", "description": "Needed unless it is written in a thread."},
-			"text":    map[string]any{"type": "string", "description": "The email, as plain text; the choices' links are put after it."},
+			"to":      map[string]any{"type": "string", "description": "One address (Pat Lee <pat@example.com>), or several separated by commas: each gets it on their own, in their own thread."},
+			"subject": map[string]any{"type": "string", "description": "Needed unless in a thread."},
+			"text":    map[string]any{"type": "string", "description": "Plain text; choices' links go after it."},
 			"choices": map[string]any{"type": "array", "items": obj(map[string]any{
-				"label":  map[string]any{"type": "string", "description": "What the link says: Confirm, Thursday at 3pm instead."},
+				"label":  map[string]any{"type": "string", "description": "What the link says."},
 				"tool":   map[string]any{"type": "string", "enum": []string{"create_record", "update_record"}},
 				"type":   map[string]any{"type": "string"},
 				"id":     map[string]any{"type": "string"},
 				"fields": map[string]any{"type": "object"},
 			}, "label", "tool", "type", "fields")},
-			"invite": map[string]any{"type": "string", "description": "An event's id, to send it as a real invitation: their mail app shows Yes, No and Maybe and puts it in their calendar, and their answer comes back to the event's answers. Send it again after the event changes to move it in their calendar."},
-			"cancel": map[string]any{"type": "boolean", "description": "With invite, take the event out of their calendar instead."},
-			"thread": map[string]any{"type": "string", "description": "An email's id, to write in its conversation, such as a nudge when an answer is late or a follow-up: it goes as an answer in that thread, Re: its subject unless one is given."},
+			"invite": map[string]any{"type": "string", "description": "An event's id, sent as a real calendar invitation; send again after it changes to move it."},
+			"cancel": map[string]any{"type": "boolean", "description": "With invite: take it out of their calendar."},
+			"thread": map[string]any{"type": "string", "description": "An email's id: write in its thread, such as a nudge."},
 		}, "to", "text")}}
 
 type emailArgs struct {

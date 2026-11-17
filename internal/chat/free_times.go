@@ -28,7 +28,7 @@ var freeTimesOp = Op{Title: "Say when the owner is free",
 	Doing: saying("Looking at the calendar"),
 	Run:   func(s *Service, _ toolArgs, call llm.ToolCall) toolResult { return s.freeTimes(call.Args) },
 	Tool: llm.Tool{Name: "free_times",
-		Description: "When the owner is free to meet, working hours of each day, from their calendar: the open stretches only, never what is in the rest. To offer times, or to pick one someone asked for. from and to are days (2026-11-23); the next two weeks unless said.",
+		Description: "When the owner is free in working hours, open stretches only. from, to: days (2026-11-23); two weeks unless said.",
 		Schema: obj(map[string]any{
 			"from": map[string]any{"type": "string"},
 			"to":   map[string]any{"type": "string"},

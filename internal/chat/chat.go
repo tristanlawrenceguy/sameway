@@ -92,6 +92,9 @@ type Service struct {
 	// StripeKey is the owner's Stripe key, "" for none; set by the server.
 	// See payments.go.
 	StripeKey func() string
+	// Doors says each way in the server keeps and whether it is open, one
+	// line each, for ways_in; set by the server.
+	Doors func() []string
 	// Address is this Sameway's address on the internet, once something
 	// is published and Funnel is up, or ""; set by the command line.
 	Address func() string

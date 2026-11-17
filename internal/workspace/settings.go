@@ -72,7 +72,8 @@ var Settings = []Setting{
 	{"publish.tabs", "string", nil, "tabs anyone on the internet may read, people and AI services alike, with no login, by name, comma separated; empty is none. ONLY when the person explicitly asks to publish or make something public, never on your own; the person is asked before anything is published"},
 	{"publish.types", "string", nil, "content types whose every record anyone on the internet may read, people and AI services alike, with no login, by name, comma separated; empty is none. ONLY when the person explicitly asks to publish; the person is asked first"},
 	{"publish.book", "enum", []string{"on", "off"}, "on lets anyone on the internet, people and their AI agents alike, ask for a time with the person at /book, from the hours their events leave free; each request waits on Today, and nothing is booked until the person says yes. ONLY when the person asks for a booking link; the person is asked first"},
-	{"requests.always", "string", nil, "the person's standing yes, in their own words, for requests they need not be asked about, such as: always yes to bookings from clients in working hours. A request it plainly covers is answered yes as it comes, and the person is told; empty is none, so every request waits. ONLY in the person's own words, when they ask; the person is asked first"},
+	{"requests.always", "string", nil, "the person's standing yes for requests, in their own words (always yes to visits from clients when I am free); empty is none. ONLY when they ask; they are asked first"},
+	{"requests.route", "string", nil, "who handles which requests, in the person's words (kitchen requests go to Sam); empty is all to them. ONLY when they ask"},
 	{"payments.max", "int", nil, "the most one link to pay may ask for, in whole units; 500 unless set. ONLY when the person asks"},
 	{"tailnet.peers", "string", nil, "the other computers hosting this same workspace, by their machine name on the tailnet, comma separated (bob-home, my-laptop): this copy keeps in step with each, both ways. Each has to host a copy of this workspace and have this computer's owner or a host let in. Empty is none"},
 	{"tailnet.name", "string", nil, "the name of this computer on the person's Tailscale network, so their phone and other devices signed in to Tailscale as them open the workspace from anywhere at https://<name>.<tailnet>.ts.net; empty is off. It takes effect at once, and the steps to finish (signing in, turning on HTTPS) come back from this call and appear in the chat. Offer it when the person wants the workspace on their phone or away from this computer"},
@@ -158,7 +159,7 @@ func (w *Workspace) Set(key, value string) error {
 // them puts it back to nothing.
 var canBeEmpty = map[string]bool{
 	"notify.command": true, "notify.phone": true, "brief.at": true, "review.on": true, "backup.folder": true, "actions.allow": true, "chat.system_prompt": true, "ui.needs": true, "ui.language": true, "ui.zone": true,
-	"mqtt.broker": true, "mqtt.client_id": true, "llm.base_url": true, "tailnet.name": true, "tailnet.peers": true, "publish.tabs": true, "publish.types": true, "publish.book": true, "requests.always": true,
+	"mqtt.broker": true, "mqtt.client_id": true, "llm.base_url": true, "tailnet.name": true, "tailnet.peers": true, "publish.tabs": true, "publish.types": true, "publish.book": true, "requests.always": true, "requests.route": true,
 }
 
 // Get reads one setting as workspace.yaml has it now, or "" when the file
