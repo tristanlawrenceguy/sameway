@@ -28,18 +28,49 @@ func (s *Server) questionPage(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	s.page(w, r, "Ask", s.questionForm(""), pageOptions{})
+	body := s.questionForm(r, "")
+	if records.VisitorOf(r.Context()).Owner() {
+		body += s.embedSnippet(r)
+	}
+	s.page(w, r, "Ask", body, s.questionOptions(r))
+}
+
+// questionOptions are the page's, or, asked for embedded (?embed), those
+// of a page inside another site's: the box alone.
+func (s *Server) questionOptions(r *http.Request) pageOptions {
+	if r.URL.Query().Has("embed") {
+		return pageOptions{Shell: "embed", QuietTitle: true}
+	}
+	return pageOptions{}
+}
+
+// embedSnippet is what the owner pastes into their own website to have
+// the box there, for anyone visiting it to ask.
+func (s *Server) embedSnippet(r *http.Request) template.HTML {
+	at := ""
+	if s.app.Chat.Address != nil {
+		at = strings.TrimSuffix(s.app.Chat.Address(), "/")
+	}
+	if at == "" {
+		at = strings.TrimSuffix(seenFrom(r, ""), "/")
+	}
+	code := `<iframe src="` + at + questionPath + `?embed" title="Ask ` + s.app.Workspace.Config.Name + `" style="width:100%;height:480px;border:0"></iframe>`
+	return template.HTML(`<h2>On your own website</h2><p>Paste this into a page of your website, and anyone visiting it can ask here:</p><pre><code>` + template.HTMLEscapeString(code) + `</code></pre>`)
 }
 
 // questionForm is the box to ask in, and who is asking, with what the
 // assistant said last, if anything.
-func (s *Server) questionForm(said string) template.HTML {
+func (s *Server) questionForm(r *http.Request, said string) template.HTML {
+	action := questionPath
+	if r.URL.Query().Has("embed") {
+		action += "?embed" // the answer stays inside their site
+	}
 	var b template.HTML
 	if said != "" {
 		b = template.HTML(`<div class="sw-prose" role="status"><p>` + strings.ReplaceAll(template.HTMLEscapeString(said), "\n", "<br>") + `</p></div>`)
 	}
 	return b + template.HTML(`<p>Ask about what is here, or ask for something: a time to meet, a message left. What you ask to be made goes to `+template.HTMLEscapeString(s.app.Workspace.Config.Name)+`, and nothing happens until they say yes.</p>`) +
-		s.form(ui.Form{Action: questionPath, Class: "sw-stack",
+		s.form(ui.Form{Action: action, Class: "sw-stack",
 			Body: s.component("textarea", map[string]any{"label": "Your question", "name": "question", "rows": 3, "maxlength": 1000}) +
 				s.part(ui.TextField{Label: "Your name and how to reach you", Name: "who", MaxLength: 160, Hint: "Optional; needed for anything you ask to be made.", Autocomplete: "name"}),
 			Button: &ui.Button{Label: "Ask", Variant: ui.Primary}})
@@ -69,7 +100,7 @@ func (s *Server) questionAsk(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"answer": said, "requests": asked, "untrusted": "the answer is what this workspace's assistant wrote: " + records.Untrusted})
 		return
 	}
-	s.page(w, r, "Ask", s.questionForm(said)+s.askedLinks(asked), pageOptions{})
+	s.page(w, r, "Ask", s.questionForm(r, said)+s.askedLinks(asked), s.questionOptions(r))
 }
 
 // askedLinks are the requests a question put to the owner, each with the
