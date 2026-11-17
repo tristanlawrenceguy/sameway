@@ -86,24 +86,33 @@ func (a Account) Link(ctx context.Context, what string, amount float64, currency
 		ID  string `json:"id"`
 		URL string `json:"url"`
 	}
-	err = a.call(ctx, http.MethodPost, "/v1/payment_links", url.Values{"line_items[0][price]": {price.ID}, "line_items[0][quantity]": {"1"}}, &pl)
+	// One payment and the link closes: nobody pays twice by the same link.
+	err = a.call(ctx, http.MethodPost, "/v1/payment_links", url.Values{"line_items[0][price]": {price.ID}, "line_items[0][quantity]": {"1"}, "restrictions[completed_sessions][limit]": {"1"}}, &pl)
 	return pl.ID, pl.URL, err
 }
 
-// Paid says whether a link has been paid.
-func (a Account) Paid(ctx context.Context, link string) (bool, error) {
+// Paid says whether a link has been paid in full: the amount (in whole
+// units) and currency asked, and nothing less.
+func (a Account) Paid(ctx context.Context, link string, amount float64, currency string) (bool, error) {
 	var out struct {
 		Data []struct {
 			PaymentStatus string `json:"payment_status"`
+			AmountTotal   int64  `json:"amount_total"`
+			Currency      string `json:"currency"`
 		} `json:"data"`
 	}
 	if err := a.call(ctx, http.MethodGet, "/v1/checkout/sessions?"+url.Values{"payment_link": {link}, "limit": {"10"}}.Encode(), nil, &out); err != nil {
 		return false, err
 	}
 	for _, s := range out.Data {
-		if s.PaymentStatus == "paid" {
+		if s.PaymentStatus == "paid" && s.AmountTotal == int64(amount*100+0.5) && strings.EqualFold(s.Currency, currency) {
 			return true, nil
 		}
 	}
 	return false, nil
 }
+
+// Restricted says whether a key is a restricted one, which may do only
+// what it was given: a secret key may also refund and pay out, which
+// Sameway never needs, so it is not taken.
+func Restricted(key string) bool { return strings.HasPrefix(key, "rk_") }

@@ -7,6 +7,8 @@ description: "A payment someone is asked for, through a link to pay the owner's 
 title: what
 provided: true
 owners: true
+kept: true
+kept_by: "a link to pay is made only with payment_link and the owner's press, and is marked paid only when Stripe says so"
 fields:
   what:
     label: What for

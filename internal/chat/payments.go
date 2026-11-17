@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -34,7 +36,8 @@ var paymentLinkOp = Op{Title: "Make a link to pay you",
 			return fail("%v", err), true
 		}
 		return s.ask(question{fmt.Sprintf("Make a link to pay you %s for %q?", money(p.Amount, p.Currency), p.What),
-			"Stripe would make a link anyone who has it can pay into your Stripe account with. Nothing is charged until someone pays it.", "Make it", "Don't"},
+			fmt.Sprintf("Stripe would make a link that takes one payment of %s into your Stripe account, then closes. Check the amount: it is what they would pay.", money(p.Amount, p.Currency)),
+			"Make a " + money(p.Amount, p.Currency) + " link", "Don't"},
 			map[string]any{"tool": "payment_link", "what": p.What, "amount": p.Amount, "currency": p.Currency}), true
 	},
 	Run: func(s *Service, _ toolArgs, call llm.ToolCall) toolResult { return s.paymentLink(call.Args) },
@@ -67,6 +70,8 @@ func (s *Service) paymentOf(raw json.RawMessage) (paymentArgs, error) {
 		return p, fmt.Errorf("say what it is for and how much")
 	case len(p.Currency) != 3:
 		return p, fmt.Errorf("say the currency as three letters, such as gbp")
+	case p.Amount > s.paymentsMax():
+		return p, fmt.Errorf("%s is above the most one link may ask for (%s, set_setting payments.max); nothing was put to the person", money(p.Amount, p.Currency), fmt.Sprint(s.paymentsMax()))
 	case s.StripeKey != nil && s.StripeKey() == "":
 		return p, fmt.Errorf("no Stripe account is connected: the person connects theirs on Payments")
 	}
@@ -93,6 +98,15 @@ func (s *Service) paymentLink(raw json.RawMessage) toolResult {
 	}
 	return toolResult{text: fmt.Sprintf("Made: %s for %q, paid at %s (payment %s).", money(p.Amount, p.Currency), p.What, link, rec.ID),
 		change: &records.Change{Action: "created", Component: PaymentType, ID: rec.ID, Detail: p.What}}
+}
+
+// paymentsMax is the most one link may ask for, in whole units: what the
+// owner set, or 500, so a slip of a zero is refused, not asked.
+func (s *Service) paymentsMax() float64 {
+	if n, err := strconv.ParseFloat(strings.TrimSpace(s.setting("payments.max")), 64); err == nil && n > 0 {
+		return n
+	}
+	return 500
 }
 
 func (s *Service) stripe() stripe.Account {
@@ -123,7 +137,8 @@ func (s *Service) FollowPayments(ctx context.Context) error {
 		if paid, _ := r.Fields["paid"].(bool); paid || id == "" || s.Now().Sub(r.CreatedAt) > 90*24*time.Hour {
 			continue
 		}
-		if yes, err := s.stripe().Paid(ctx, id); err != nil || !yes {
+		amount, _ := r.Fields["amount"].(float64)
+		if yes, err := s.stripe().Paid(ctx, id, amount, fmt.Sprint(r.Fields["currency"])); err != nil || !yes {
 			continue
 		}
 		done, err := s.Apply(records.Op{Type: PaymentType, ID: r.ID, After: map[string]any{"paid": true}})
@@ -131,7 +146,6 @@ func (s *Service) FollowPayments(ctx context.Context) error {
 			continue
 		}
 		what, _ := r.Fields["what"].(string)
-		amount, _ := r.Fields["amount"].(float64)
 		said := fmt.Sprintf("Paid: %s for %q.", money(amount, fmt.Sprint(r.Fields["currency"])), what)
 		records.Record(s.Store, "system", records.Change{Action: "paid", Component: PaymentType, ID: r.ID, Detail: what, Ops: done})
 		s.Say(said)
@@ -140,4 +154,38 @@ func (s *Service) FollowPayments(ctx context.Context) error {
 		}
 	}
 	return nil
+}
+
+// stripeLink finds addresses to pay at, as Stripe gives them.
+var stripeLink = regexp.MustCompile(`https?://(?:buy|checkout)\.stripe\.com/[^\s<>()"']+`)
+
+// paymentsIn says, from the payments kept here, what each link to pay in
+// some words asks for, so the owner reads the amount Stripe will take and
+// not what the words around it say; a link to pay that was not made here
+// is refused, so none goes out in the owner's name unseen.
+func (s *Service) paymentsIn(text string) ([]string, error) {
+	found := stripeLink.FindAllString(text, -1)
+	if len(found) == 0 {
+		return nil, nil
+	}
+	recs, _ := s.Store.List(PaymentType, store.ListOptions{})
+	var lines []string
+	for _, link := range found {
+		var p *store.Record
+		for _, r := range recs {
+			if r.Fields["link"] == link {
+				p = r
+			}
+		}
+		if p == nil {
+			return nil, fmt.Errorf("it carries a link to pay that was not made here (%s); only a link made with payment_link goes out", link)
+		}
+		amount, _ := p.Fields["amount"].(float64)
+		state := "not paid yet"
+		if paid, _ := p.Fields["paid"].(bool); paid {
+			state = "already paid"
+		}
+		lines = append(lines, fmt.Sprintf("It carries a link to pay %s for %q (%s), whatever the words say.", money(amount, fmt.Sprint(p.Fields["currency"])), p.Fields["what"], state))
+	}
+	return lines, nil
 }

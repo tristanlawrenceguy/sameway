@@ -110,6 +110,9 @@ func write(st *store.Store, action, typ, id string, fields map[string]any) (*sto
 	if !ok {
 		return nil, Change{}, errors.New(NoType(typ, st.Types().Names()))
 	}
+	if t.Kept {
+		return nil, Change{}, fmt.Errorf("%s are kept by Sameway itself, from what really happened, and are not written by hand, by the assistant or over the API: %s", schema.Plural(t.Name), t.KeptBy)
+	}
 	var was *store.Record
 	var err error
 	if action != "created" {

@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"html/template"
 	"net/http"
 	"strings"
@@ -36,6 +37,10 @@ func (s *Server) paymentsPage(w http.ResponseWriter, r *http.Request) {
 func (s *Server) paymentsConnect(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	key := strings.TrimSpace(r.PostForm.Get("key"))
+	if !stripe.Restricted(key) {
+		s.failed(w, r, "Not connected", errors.New("paste a restricted key (it begins rk_): a secret key can also refund and pay out, which Sameway never needs"), "/payments")
+		return
+	}
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
 	err := stripe.Account{Key: key, HTTP: s.app.Automate.HTTP}.Check(ctx)
