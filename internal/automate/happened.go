@@ -27,7 +27,8 @@ import (
 //
 // Nothing runs away: an action never sets itself off within a minute for
 // the same record, a chain stops after a few steps, and what the system's
-// own types do (the log, the chat, the canvas) sets nothing off.
+// own types do (the log, the chat, the canvas) sets nothing off, but for
+// the owner answering a question.
 
 const (
 	mostSteps = 5                // actions one happening may lead to
@@ -58,7 +59,10 @@ type automation struct {
 
 // recordChanged finds the actions waiting for what just happened.
 func (s *Service) recordChanged(t *schema.Type, was, now *store.Record) {
-	if s.auto == nil || t.Internal || t.Name == records.ActionType {
+	// A question put to the owner being answered is something that
+	// happens, such as a request from the published page: an action may
+	// wait for it. The system's other own records set nothing off.
+	if s.auto == nil || t.Internal && t.Name != records.ProposalType || t.Name == records.ActionType {
 		return
 	}
 	at, ok := s.Store.Types().Get(records.ActionType)

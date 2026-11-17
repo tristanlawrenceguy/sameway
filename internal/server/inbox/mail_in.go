@@ -50,6 +50,26 @@ func (s *Service) mailAccount() (mailin.Account, bool) {
 	return a, a.Password != ""
 }
 
+// MailFrom is the connected mailbox's address, "" when there is none.
+func (s *Service) MailFrom() string {
+	a, ok := s.mailAccount()
+	if !ok {
+		return ""
+	}
+	return a.User
+}
+
+// SendMail sends one email from the connected mailbox (mailin/send.go).
+func (s *Service) SendMail(to, subject, text string) error {
+	a, ok := s.mailAccount()
+	if !ok {
+		return errors.New("no mailbox is connected: connect one on Email in")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	return mailin.Send(ctx, a, to, subject, text)
+}
+
 // mailInsecure lets a test read from a mail server without TLS.
 var mailInsecure = false
 

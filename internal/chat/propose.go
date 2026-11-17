@@ -142,6 +142,8 @@ var proposable = map[string]bool{
 	"update_record": true,
 	// What goes to or from someone else's Sameway is asked first (ask_someone.go, enquiry.go).
 	"ask_someone": true, "let_ask": true, "answer_enquiry": true, "ask_page": true,
+	// An email speaks for the owner and cannot be unsent (send_email.go).
+	"send_email": true,
 }
 
 // modelProposable are the calls the model may carry in a question of its
@@ -198,7 +200,7 @@ func (s *Service) Accept(id string) error {
 	if c := result.change; c != nil && c.ID != "" && c.Component != "" {
 		done["made"] = c.Component + "/" + c.ID // what a suggestion became, for its action to learn from
 	}
-	if _, err := s.Apply(records.Op{Type: records.ProposalType, ID: id, After: done}); err != nil {
+	if _, err := records.ApplyOps(s.Store, records.Op{Type: records.ProposalType, ID: id, After: done}); err != nil { // heard, so an action may wait for an answer
 		return err
 	}
 	// The assistant made the change, but the person is why it happened.
@@ -227,7 +229,7 @@ func (s *Service) Dismiss(id string) error {
 	if rec.Fields["state"] != "pending" {
 		return errors.New("that question has already been answered")
 	}
-	if _, err := s.Apply(records.Op{Type: records.ProposalType, ID: id, After: map[string]any{"state": "dismissed"}}); err != nil {
+	if _, err := records.ApplyOps(s.Store, records.Op{Type: records.ProposalType, ID: id, After: map[string]any{"state": "dismissed"}}); err != nil {
 		return err
 	}
 	summary, _ := rec.Fields["summary"].(string)

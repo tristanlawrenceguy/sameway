@@ -79,6 +79,11 @@ type Service struct {
 	// Requested tells the owner a request from someone waits for them,
 	// set by the server; nil tells no one. See requests_made.go.
 	Requested func(summary string)
+	// MailFrom is the address of the owner's connected mailbox, "" for
+	// none, and Mail sends one email from it; both set by the server.
+	// See send_email.go.
+	MailFrom func() string
+	Mail     func(to, subject, text string) error
 	// Needs is what the person has said they need, and Language the
 	// workspace's language; both go into every prompt. Set by the app.
 	Needs, Language string
