@@ -85,6 +85,10 @@ type Service struct {
 	// See send_email.go and email_conversation.go.
 	MailFrom func() string
 	Mail     func(Outgoing) (string, error)
+	// Channel says something to someone who asked on a channel of the
+	// server's, such as Telegram, and whether they were reached there;
+	// nil reaches nobody. See channel.go.
+	Channel func(v records.Visitor, text string) bool
 	// Address is this Sameway's address on the internet, once something
 	// is published and Funnel is up, or ""; set by the command line.
 	Address func() string
