@@ -61,6 +61,9 @@ func (s *Server) BackgroundJobs() []runner.Job {
 			_, err := s.inbox.ReadMail(c) // inbox/mail_in.go: when connected
 			return err
 		}},
+		{Name: "Answers waited on marked late", Every: time.Hour, Run: func(_ context.Context, now time.Time) error {
+			return s.inbox.MarkLate(now) // inbox/late.go
+		}},
 	}
 	return append(jobs, s.WriteDownJobs()...) // media/hostwrite.go
 }
