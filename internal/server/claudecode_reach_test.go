@@ -259,7 +259,7 @@ func TestARealAssistantArrangesAMeetingByEmail(t *testing.T) {
 	first, _ := me.Store.Create("email", map[string]any{"subject": "Meeting next week", "from": "tris+sameway@example.com", "body": "Could we meet the week of 30 November 2026? Which day suits you?", "message_id": "<first@example.com>", "from_me": true})
 	me.Store.Create("email", map[string]any{"subject": "Re: Meeting next week", "from": "Pat Lee <pat@example.com>", "body": "Tuesday 1 December in the afternoon works for me, say 3pm for an hour?", "message_id": "<pat1@example.com>", "thread": first.ID, "from_me": false})
 
-	if err := me.Chat.AnswerMail(context.Background(), me.Chat.Conversation([]string{"<first@example.com>"})); err != nil {
+	if err := me.Chat.AnswerMail(context.Background(), me.Chat.Conversation([]string{"<first@example.com>"}), true); err != nil {
 		t.Fatalf("the turn failed: %v", err)
 	}
 	if len(sent) != 1 {
@@ -273,5 +273,25 @@ func TestARealAssistantArrangesAMeetingByEmail(t *testing.T) {
 	t.Logf("REQUEST: %s", asks[0].Fields["summary"])
 	if n, _ := me.Store.Count("event"); n != 0 {
 		t.Error("nothing is booked without the owner")
+	}
+}
+
+// A real model answers someone let in who asks by email, from what they
+// may read: a client asks when the next phase starts.
+func TestARealAssistantAnswersSomeoneLetInByEmail(t *testing.T) {
+	t.Parallel()
+	me := realApp(t)
+	var sent []chat.Outgoing
+	me.Chat.MailFrom = func() string { return "tris+sameway@example.com" }
+	me.Chat.Mail = func(m chat.Outgoing) (string, error) { sent = append(sent, m); return "<answer@example.com>", nil }
+	me.Store.Create("person", map[string]any{"name": "Sam", "email": "sam@example.com", "access": "view"})
+	me.Store.Create("note", map[string]any{"title": "Sam's kitchen", "body": "Phase 2, the worktops, starts Monday 30 November 2026."})
+	me.Store.Create("email", map[string]any{"subject": "Kitchen", "from": "Sam <sam@example.com>", "body": "Hi, when does phase 2 of my kitchen start?", "message_id": "<sam1@example.com>", "from_me": false})
+	root := me.Chat.Answers("<sam1@example.com>", nil, "Sam <sam@example.com>", true)
+	if err := me.Chat.AnswerMail(context.Background(), root, true); err != nil {
+		t.Fatalf("the turn failed: %v", err)
+	}
+	if len(sent) != 1 || !strings.Contains(sent[0].Text, "30 November") {
+		t.Fatalf("they are told, from the note: %+v", sent)
 	}
 }

@@ -183,10 +183,12 @@ func (s *Service) ReadMail(ctx context.Context) (int, error) {
 		if s.mailNote(m, a.User) == nil {
 			s.app.Store.SetMeta(key, "1")
 			n++
-			// An answer in a conversation Sameway began is answered in
-			// it (chat/email_conversation.go); never one sent by a machine.
-			if root := s.app.Chat.Conversation(m.Refs); root != "" && !m.Sent && !m.Auto {
-				if err := s.app.Chat.AnswerMail(ctx, root); err != nil {
+			// An answer in a conversation Sameway began, or mail from
+			// someone let in here, is answered in its thread with the
+			// writer's reach (chat/email_conversation.go); never one sent
+			// by a machine.
+			if root := s.app.Chat.Answers(m.ID, m.Refs, m.From, m.Verified); root != "" && !m.Sent && !m.Auto {
+				if err := s.app.Chat.AnswerMail(ctx, root, m.Verified); err != nil {
 					log.Printf("mail: could not answer in a conversation: %v", err)
 				}
 			}

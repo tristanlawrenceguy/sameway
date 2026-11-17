@@ -3,6 +3,7 @@ package chat
 import (
 	"context"
 	"fmt"
+	"net/mail"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
@@ -73,6 +74,45 @@ func (s *Service) Conversation(refs []string) string {
 	return ""
 }
 
+// letInBy is the person here an address belongs to, when they are let in.
+func (s *Service) letInBy(from string) *store.Record {
+	addr, err := mail.ParseAddress(from)
+	if err != nil {
+		return nil
+	}
+	p := s.PersonByEmail(addr.Address)
+	if p == nil {
+		return nil
+	}
+	switch p.Fields["access"] {
+	case records.View, records.Edit, records.Host:
+		return p
+	}
+	return nil
+}
+
+// Answers says which thread an email that came in is answered in, by its
+// Message-ID and whom it is from: one Sameway began, or any from someone
+// let in here whose mail server vouched for them; "" for none.
+func (s *Service) Answers(messageID string, refs []string, from string, verified bool) string {
+	if root := s.Conversation(refs); root != "" {
+		return root
+	}
+	if !verified || s.letInBy(from) == nil {
+		return ""
+	}
+	emails, _ := s.Store.List("email", store.ListOptions{})
+	for _, e := range emails {
+		if id, _ := e.Fields["message_id"].(string); id != "" && strings.Trim(id, "<>") == strings.Trim(messageID, "<> ") {
+			if root, _ := e.Fields["thread"].(string); root != "" {
+				return root
+			}
+			return e.ID
+		}
+	}
+	return ""
+}
+
 // thread is a conversation's emails, oldest first.
 func (s *Service) thread(root string) []*store.Record {
 	emails, _ := s.Store.List("email", store.ListOptions{OrderBy: "created_at"})
@@ -85,9 +125,12 @@ func (s *Service) thread(root string) []*store.Record {
 	return out
 }
 
-// AnswerMail answers the latest email of a conversation Sameway began, as
-// whoever wrote it, with their reach, and sends the answer in the thread.
-func (s *Service) AnswerMail(ctx context.Context, root string) error {
+// AnswerMail answers the latest email of a conversation, as whoever wrote
+// it, with their reach, and sends the answer in the thread. verified is
+// whether their mail server vouched for who sent it: only then is someone
+// let in here answered as themselves, with what they are let in to;
+// anyone else has a stranger's reach.
+func (s *Service) AnswerMail(ctx context.Context, root string, verified bool) error {
 	mails := s.thread(root)
 	if len(mails) == 0 {
 		return nil
@@ -97,7 +140,11 @@ func (s *Service) AnswerMail(ctx context.Context, root string) error {
 		return nil
 	}
 	from, _ := last.Fields["from"].(string)
-	them := s.For(records.Visitor{Access: records.Public, Name: from, Device: ByEmail, Login: "mail:" + root})
+	v := records.Visitor{Access: records.Public, Name: from, Device: ByEmail, Login: "mail:" + root}
+	if p := s.letInBy(from); p != nil && verified {
+		v.Person, v.Access = p.ID, fmt.Sprint(p.Fields["access"])
+	}
+	them := s.For(v)
 	if them.Provider == nil {
 		return fmt.Errorf("no assistant to answer %s", from)
 	}
@@ -105,8 +152,8 @@ func (s *Service) AnswerMail(ctx context.Context, root string) error {
 	if owner == "" {
 		owner = "the owner"
 	}
-	system := fmt.Sprintf("You write for %s, by email, to %s, who is writing back in a conversation %s began. You hold their reach, nothing more: you read what %s published, and free_times says when %s is free. Write the next email in the thread: short, plain, warm, as %s's assistant, signed as that. When they ask for something to be made, such as a time to meet (an event, with when it starts and ends and their name in the title), make it with create_record: it is not made but put to %s, who says yes or no, and they will hear back in this thread; say so, and never say it is booked. When what they wrote is unclear, ask. Write only the email's words. %s",
-		owner, from, owner, owner, owner, owner, owner, records.DataNotInstructions)
+	system := fmt.Sprintf("You write for %s, by email, to %s, who is writing back in a conversation %s began. You hold their reach, nothing more: you read what they may read here (what %s published, and for someone %s let in, what they are let in to), and free_times says when they are free. Write the next email in the thread: short, plain, warm, as %s's assistant, signed as that. When they ask for something to be made, such as a time to meet (an event, with when it starts and ends and their name in the title), make it with create_record: it is not made but put to %s, who says yes or no, and they will hear back in this thread; say so, and never say it is booked. Search before saying you cannot answer. When what you read does not answer it, say so, and that %s sees this thread too; never say you did anything you did not do with a tool. When what they wrote is unclear, ask. Write only the email's words. %s",
+		owner, from, owner, owner, owner, owner, owner, owner, records.DataNotInstructions)
 	var msgs []llm.Message
 	for _, m := range mails {
 		body, _ := m.Fields["body"].(string)
