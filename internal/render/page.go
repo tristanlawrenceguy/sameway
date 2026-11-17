@@ -86,7 +86,8 @@ type Page struct {
 	// QuietTitle hides the h1 visually while keeping it in the outline.
 	QuietTitle bool
 	// Shell is "app" for a full height layout whose middle column scrolls,
-	// and empty for an ordinary document that scrolls as a whole.
+	// "embed" for a page shown inside another site's (no header, no
+	// footer), and empty for an ordinary document that scrolls as a whole.
 	Shell string
 	// ExtraScripts are additional <script> tags rendered in the head after
 	// sameway.js. Used by detail pages to load per-page scripts like 09-edit.js.
