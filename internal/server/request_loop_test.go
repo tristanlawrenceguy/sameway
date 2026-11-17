@@ -145,15 +145,28 @@ func TestMyAssistantAsksSomeoneElsesPublishedPage(t *testing.T) {
 	}
 	link := "https://plumber.example.ts.net/request/" + theirs[0].Fields["token"].(string)
 	sent, _ := me.Store.List("ask", store.ListOptions{})
-	if len(sent) != 1 || sent[0].Fields["at"] != link || sent[0].Fields["state"] != "waiting" {
-		t.Fatalf("what it asked for there is kept here, with its link, waiting: %+v", sent)
+	if len(sent) != 1 || sent[0].Fields["at"] != link || sent[0].Fields["state"] != "waiting" || sent[0].Fields["question"] != "Can you come Thursday at 10?" {
+		t.Fatalf("what it asked for there is kept here, in the owner's words, with its link, waiting: %+v", sent)
 	}
 	// What to do with an answer is the owner's to say, once, as any
 	// automation: here, their assistant puts what is agreed on the calendar.
 	me.Store.Create("action", map[string]any{"title": "Put what they agree to on my calendar", "kind": "message", "message": "They said yes to: {{title}}. Put it on my calendar.", "when": "changed", "what": "ask", "only": []any{"state=yes"}})
 	me.Automate.StartWorker()
-	rang := make(chan string, 4)
+	rang := make(chan string, 8)
 	myH.(*server.Server).OnRing(func(title, text, _ string) { rang <- title + ": " + text })
+	heard := func(want string) {
+		t.Helper()
+		for {
+			select {
+			case got := <-rang:
+				if strings.Contains(got, want) {
+					return
+				}
+			case <-time.After(5 * time.Second):
+				t.Fatalf("not told %q", want)
+			}
+		}
+	}
 	if me.Chat.FollowSent(context.Background()); len(rang) != 0 {
 		t.Fatal("nothing is told while they have not answered")
 	}
@@ -161,9 +174,7 @@ func TestMyAssistantAsksSomeoneElsesPublishedPage(t *testing.T) {
 	if err := me.Chat.FollowSent(context.Background()); err != nil {
 		t.Fatal(err)
 	}
-	if got := <-rang; !strings.Contains(got, "plumber.example.ts.net said yes to your request to \"make an event") {
-		t.Errorf("their yes is told, without asking again: %s", got)
-	}
+	heard("plumber.example.ts.net said yes to your request to \"make an event") // without asking again
 	if s, _ := me.Store.Get("ask", sent[0].ID); s.Fields["state"] != "yes" {
 		t.Errorf("and kept: %v", s.Fields["state"])
 	}
@@ -181,7 +192,24 @@ func TestMyAssistantAsksSomeoneElsesPublishedPage(t *testing.T) {
 	if isErr || !strings.Contains(strings.ReplaceAll(text, " ", ""), `"state":"yes"`) {
 		t.Errorf("reading the link says what became of it: %v %s", isErr, text)
 	}
-	if strings.Contains(text, "Callouts") {
-		t.Errorf("and nothing else: %s", text)
+	if strings.Contains(text, "Callouts") || !strings.Contains(text, "Visit Tris") {
+		t.Errorf("what was made, and nothing else: %s", text)
 	}
+
+	// Each change to what they agreed to is followed, logged and told, so
+	// an action waiting for an ask to change can act on it, and so is it
+	// being taken away; reading the link again says what it is now.
+	if me.Chat.FollowSent(context.Background()); len(rang) != 0 {
+		t.Fatal("nothing is told while nothing changed")
+	}
+	visits, _ := plumber.Store.List("event", store.ListOptions{})
+	plumber.Store.Update("event", visits[0].ID, map[string]any{"starts": "2026-03-12T15:00:00Z"})
+	me.Chat.FollowSent(context.Background())
+	heard("plumber.example.ts.net changed what they made for your request")
+	if s, _ := me.Store.Get("ask", sent[0].ID); s.Fields["changed"] == "" || s.Fields["state"] != "yes" {
+		t.Errorf("the change is kept: %v", s.Fields)
+	}
+	plumber.Store.Delete("event", visits[0].ID)
+	me.Chat.FollowSent(context.Background())
+	heard("plumber.example.ts.net took away what they made")
 }

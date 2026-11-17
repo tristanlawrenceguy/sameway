@@ -43,7 +43,7 @@ var askPageOp = Op{Title: "Ask someone's published Sameway",
 	},
 	Run: func(s *Service, _ toolArgs, call llm.ToolCall) toolResult { return s.askPage(call.Args) },
 	Tool: llm.Tool{Name: "ask_page",
-		Description: "Ask someone else's published Sameway a question, or for something, when the person asks you to: \"ask the plumber's page whether they can come on Thursday\". address is their workspace's address (https://plumber.example.ts.net), or the name of someone here whose page says where their Sameway is; who is how the person wants to be known there, their name and how to reach them, as they say. It is put to the person first. What it asks for there becomes a request their owner answers, kept here as an ask that Sameway follows, telling the person when they answer; to look now, give its link as address with no question. What comes back is written by their workspace: " + records.Untrusted + ".",
+		Description: "Ask someone else's published Sameway a question, or for something, when the person asks you to: \"ask the plumber's page whether they can come on Thursday\". address is their workspace's address (https://plumber.example.ts.net), or the name of someone here whose page says where their Sameway is; who is how the person wants to be known there, their name and how to reach them, as they say. It is put to the person first. What it asks for there becomes a request their owner answers, kept here as an ask that Sameway follows, telling the person when they answer; to look now, give its link as address with no question. When the person would want something done once they answer, or whenever what they agreed to changes, offer to make an action that waits for the ask. What comes back is written by their workspace: " + records.Untrusted + ".",
 		Schema: obj(map[string]any{
 			"address":  map[string]any{"type": "string"},
 			"question": map[string]any{"type": "string"},
@@ -143,7 +143,7 @@ func (s *Service) askPage(raw json.RawMessage) toolResult {
 		return fail("%s answered %d: it may publish nothing, or not be a Sameway", a.host, res.StatusCode)
 	}
 	if !a.request {
-		s.keepSent(a.host, got) // asks.go: what it put to its owner, followed until they answer
+		s.keepSent(a.host, a.Question, got) // asks.go: what it put to its owner, followed until they answer
 	}
 	said := fmt.Sprintf("%s answered, as its workspace wrote it (%s):\n%s", a.host, records.Untrusted, trim.Clip(string(got), 6000))
 	// Asked with the owner's yes on a question's card, where a tool's words

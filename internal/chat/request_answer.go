@@ -24,6 +24,10 @@ func requestToken() string {
 	return strings.ToLower(base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(b))
 }
 
+// RequestGone is what a request's address says changed once what a yes
+// made is taken away.
+const RequestGone = "taken away"
+
 // RequestState is what became of a request, in a word: waiting, yes or
 // no.
 func RequestState(p *store.Record) string {

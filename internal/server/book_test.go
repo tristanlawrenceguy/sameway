@@ -124,4 +124,40 @@ func TestAnyoneAsksForATimeAndNothingIsBookedUntilYes(t *testing.T) {
 	if page := public(t, internet, http.MethodGet, "/book", "").Body.String(); strings.Contains(page, "Thu 12 Mar, 9am") {
 		t.Error("an hour booked is no longer offered")
 	}
+
+	// After a yes, its address says what was made as it is now, and only
+	// what they asked to set: a time the owner moved is the new time, what
+	// the owner added is not theirs to see; it goes into their own
+	// calendar the way any event does, and a request still waiting gives
+	// nothing to take.
+	other := asks[0]
+	if other.ID == pat.ID {
+		other = asks[1]
+	}
+	if r := public(t, internet, http.MethodGet, "/request/"+other.Fields["token"].(string)+".ics", ""); r.Code != http.StatusNotFound {
+		t.Errorf("a request still waiting gives nothing to take: %d", r.Code)
+	}
+	a.Store.Update("event", booked.ID, map[string]any{"starts": when.Store(thursdayAt(15), false), "ends": when.Store(thursdayAt(16), false), "where": "The owner's private address"})
+	page = public(t, internet, http.MethodGet, status, "").Body.String()
+	if !strings.Contains(page, "Meeting with Pat Lee") || !strings.Contains(page, "15:00") || strings.Contains(page, "private address") || !strings.Contains(page, `href="`+status+`.ics"`) {
+		t.Errorf("it is as it is now, only what they asked for, and goes into their calendar: %s", truncate(page))
+	}
+	r := public(t, internet, http.MethodGet, status+".ics", "")
+	if cal := r.Body.String(); !strings.HasPrefix(r.Header().Get("Content-Type"), "text/calendar") || !strings.Contains(cal, "DTSTART:"+thursdayAt(15).UTC().Format("20060102T150405Z")) || strings.Contains(cal, "private address") {
+		t.Errorf("the calendar has it at the time it is now, and nothing else: %s", cal)
+	}
+	agent = httptest.NewRequest(http.MethodGet, status, nil)
+	agent.Header.Set("Accept", "application/json")
+	rec = httptest.NewRecorder()
+	internet.ServeHTTP(rec, agent)
+	if b := rec.Body.String(); !strings.Contains(b, `"changed"`) || !strings.Contains(b, `"ics": "https://`) || !strings.Contains(b, "Meeting with Pat Lee") {
+		t.Errorf("an agent is given the same: %s", b)
+	}
+	a.Store.Delete("event", booked.ID)
+	if cal := public(t, internet, http.MethodGet, status+".ics", "").Body.String(); !strings.Contains(cal, "BEGIN:VCALENDAR") || strings.Contains(cal, "VEVENT") {
+		t.Errorf("taken away, a calendar keeping it in step drops it: %s", cal)
+	}
+	if page := public(t, internet, http.MethodGet, status, "").Body.String(); !strings.Contains(page, "It has since been taken away") {
+		t.Errorf("and the page says so: %s", truncate(page))
+	}
 }
