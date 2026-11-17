@@ -78,7 +78,11 @@ func (s *Service) SendMail(m chat.Outgoing) (string, error) {
 	if from := s.MailFrom(); from != a.User {
 		back = from
 	}
-	return mailin.Send(ctx, a, mailin.Outgoing{To: m.To, Subject: m.Subject, Text: m.Text, Calendar: m.Calendar, ReplyTo: back, Refs: m.Refs})
+	id, err := mailin.Send(ctx, a, mailin.Outgoing{To: m.To, Subject: m.Subject, Text: m.Text, Calendar: m.Calendar, ReplyTo: back, Refs: m.Refs})
+	if err == nil {
+		s.app.Store.SetMeta(gotKey(strings.Trim(id, "<>")), "1") // kept by whoever sent it, not again from Sent
+	}
+	return id, err
 }
 
 // mailInsecure lets a test read from a mail server without TLS.
