@@ -135,3 +135,33 @@ func TestSomeoneLetInIsAnsweredByEmailWithTheirReach(t *testing.T) {
 		t.Errorf("a sender nobody vouched for reads only what a stranger may: %s", lastToolResult(model.seen[1]))
 	}
 }
+
+// Asking around, or arranging something with a group, is one email to
+// several people on one yes: each gets it on their own, in a thread of
+// their own, so each answer is a conversation of its own.
+func TestOneYesAsksAroundEachInTheirOwnThread(t *testing.T) {
+	t.Parallel()
+	a, h := newAppAt(t, tonight)
+	var sent []chat.Outgoing
+	a.Chat.MailFrom = func() string { return "tris+sameway@example.com" }
+	a.Chat.Mail = func(m chat.Outgoing) (string, error) {
+		sent = append(sent, m)
+		return "<around" + string(rune('0'+len(sent))) + "@example.com>", nil
+	}
+	if text, isErr := a.Chat.Call("send_email", json.RawMessage(`{"to":"nobody","subject":"x","text":"y"}`)); !isErr || !strings.Contains(text, "separated by commas") {
+		t.Errorf("who to send it to is said plainly: %s", text)
+	}
+	text, isErr := a.Chat.Call("send_email", json.RawMessage(`{"to":"Ana Plumbing <ana@example.com>, \"Lee, Bo\" <bo@example.com>","subject":"A quote for the boiler","text":"Could you quote for servicing a gas boiler next week?"}`))
+	ps := a.Chat.Proposals()
+	if isErr || len(ps) != 1 || ps[0].Fields["summary"] != `Email Ana Plumbing <ana@example.com>; and "Lee, Bo" <bo@example.com> this?` || !strings.Contains(ps[0].Fields["detail"].(string), "Each gets it on their own") {
+		t.Fatalf("one question for all of them: %v %s %+v", isErr, text, ps)
+	}
+	wantStatus(t, postForm(t, h, "/proposal/"+ps[0].ID+"/accept", nil), http.StatusSeeOther)
+	if len(sent) != 2 || sent[0].To != "Ana Plumbing <ana@example.com>" || sent[1].To != `"Lee, Bo" <bo@example.com>` {
+		t.Fatalf("each gets it on their own: %+v", sent)
+	}
+	ana, bo := a.Chat.Conversation([]string{"<around1@example.com>"}), a.Chat.Conversation([]string{"<around2@example.com>"})
+	if ana == "" || bo == "" || ana == bo {
+		t.Errorf("each in a thread of their own: %q %q", ana, bo)
+	}
+}
