@@ -60,7 +60,7 @@ func fakeSMTP(t *testing.T) (got chan string) {
 func TestSendGoesFromTheMailboxToOneAddress(t *testing.T) {
 	got := fakeSMTP(t)
 	a := Account{Host: "localhost:993", User: "tris@example.com", Password: "app", Insecure: true}
-	err := Send(context.Background(), a, "Pat Lee <pat@example.com>", "Your visit\r\nBcc: everyone@example.com, Thursday é", "Yes, Thursday at 3pm.\nParking is round the back.")
+	err := Send(context.Background(), a, "Pat Lee <pat@example.com>", "Your visit\r\nBcc: everyone@example.com, Thursday é", "Yes, Thursday at 3pm.\nParking is round the back.", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -77,10 +77,28 @@ func TestSendGoesFromTheMailboxToOneAddress(t *testing.T) {
 	if !strings.Contains(string(body), "Parking is round the back.") {
 		t.Errorf("the text is sent: %s", body)
 	}
-	if err := Send(context.Background(), a, "not an address", "x", "y"); err == nil {
+	if err := Send(context.Background(), a, "not an address", "x", "y", nil); err == nil {
 		t.Error("only an address is sent to")
 	}
 	if SMTPHost("imap.gmail.com:993") != "smtp.gmail.com:587" || SMTPHost("imap.mail.me.com:993") != "smtp.mail.me.com:587" || SMTPHost("imap.gmx.net:993") != "mail.gmx.net:587" {
 		t.Error("each service sends from beside where it is read")
+	}
+}
+
+// An invitation goes as the words and a calendar side by side, the way a
+// mail app knows one; and a calendar coming in, such as the answer to it,
+// is read back out of the mail.
+func TestAnInvitationTravelsAsACalendar(t *testing.T) {
+	cal := []byte("BEGIN:VCALENDAR\r\nMETHOD:REQUEST\r\nEND:VCALENDAR\r\n")
+	raw := message("tris@example.com", "pat@example.com", "Friday", "See you Friday.", cal)
+	if !strings.Contains(string(raw), "text/calendar; charset=utf-8; method=REQUEST") {
+		t.Fatalf("the calendar says it is an invitation:\n%s", raw)
+	}
+	m, err := Parse(strings.NewReader(string(raw)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(m.Calendar) != string(cal) || m.Text != "See you Friday." {
+		t.Errorf("both are read back: %q %q", m.Calendar, m.Text)
 	}
 }

@@ -55,6 +55,9 @@ type Mail struct {
 	Date    time.Time
 	Text    string
 	Files   []File
+	// Calendar is a calendar the mail carries as one of its ways of
+	// saying itself, such as the answer to an invitation, or nil.
+	Calendar []byte
 }
 
 // File is a file attached to an email.

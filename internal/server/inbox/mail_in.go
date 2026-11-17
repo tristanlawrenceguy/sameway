@@ -50,24 +50,30 @@ func (s *Service) mailAccount() (mailin.Account, bool) {
 	return a, a.Password != ""
 }
 
-// MailFrom is the connected mailbox's address, "" when there is none.
+// MailFrom is the address of the connected mailbox that Sameway reads,
+// "" when there is none: its +sameway address where the service has one,
+// so what comes back to an invitation sent from it is read here.
 func (s *Service) MailFrom() string {
 	a, ok := s.mailAccount()
 	if !ok {
 		return ""
 	}
+	if storyFor(a.User).Plus { // mail_stories.go
+		return mailin.PlusAddress(a.User)
+	}
 	return a.User
 }
 
-// SendMail sends one email from the connected mailbox (mailin/send.go).
-func (s *Service) SendMail(to, subject, text string) error {
+// SendMail sends one email from the connected mailbox (mailin/send.go),
+// with a calendar when it carries an invitation.
+func (s *Service) SendMail(to, subject, text string, calendar []byte) error {
 	a, ok := s.mailAccount()
 	if !ok {
 		return errors.New("no mailbox is connected: connect one on Email in")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
-	return mailin.Send(ctx, a, to, subject, text)
+	return mailin.Send(ctx, a, to, subject, text, calendar)
 }
 
 // mailInsecure lets a test read from a mail server without TLS.
@@ -162,6 +168,11 @@ func (s *Service) ReadMail(ctx context.Context) (int, error) {
 	for _, m := range mails {
 		key := gotKey(m.ID)
 		if s.app.Store.Meta(key) != "" {
+			continue
+		}
+		if answers := convert.Answers(m.Calendar); len(answers) > 0 {
+			s.app.Chat.InvitationAnswered(answers) // chat/invitations.go: an answer, not mail to sort
+			s.app.Store.SetMeta(key, "1")
 			continue
 		}
 		if s.mailNote(m, a.User) == nil {

@@ -49,3 +49,13 @@ fields:
     type: string
     hidden: true
     description: The calendar's own name for it, so bringing the same calendar in again adds nothing twice.
+  answers:
+    label: Answers
+    type: list
+    readonly: true
+    description: Who it was sent to as an invitation and how each answered, such as Pat Lee <pat@example.com> accepted; kept by the system from what their calendar sends back.
+  sequence:
+    type: int
+    hidden: true
+    readonly: true
+    description: How many times its invitation was sent, so a calendar that has it takes the newest.
