@@ -53,6 +53,14 @@ var outward = map[string]func(now, next string, s *Service) question{
 			fmt.Sprintf("Anyone with the link could read every %s, as it is and as it changes, from anywhere, with no login, and so could AI services, over MCP, the same way (now public: %s). Nothing else in the workspace is. You can unpublish at any time, at once.", next, orNone(now)),
 			"Yes, publish them", "No, keep them private"}
 	},
+	AlwaysSetting: func(now, next string, _ *Service) question { // standing_yes.go
+		if next == "" {
+			return question{"Ask you about every request again?", "Requests your standing yes (" + orNone(now) + ") covered would wait for your answer again.", "Yes, ask me", "No, keep it"}
+		}
+		return question{"Answer requests yes for you when this covers them?",
+			fmt.Sprintf("Your words: %q. A request they plainly cover would be answered yes as it comes, as you would, and you would be told; anything else would wait for you as now. Whether it is covered is judged from what Sameway knows of the request (its kind, its times, whether you are free, who asks as your records have them), never from what the asker wrote. Now: %s.", next, orNone(now)),
+			"Yes, answer for me", "No, keep asking me"}
+	},
 	"tailnet.peers": func(now, next string, _ *Service) question {
 		return question{"Keep this workspace in step with other computers?",
 			fmt.Sprintf("The assistant wants this workspace to keep in step with %s (now: %s). Everything in it except the conversations with the assistant would be copied to them and kept the same both ways, and what they change comes here. Only say yes to computers you, or people you made hosts, run.", next, orNone(now)),
