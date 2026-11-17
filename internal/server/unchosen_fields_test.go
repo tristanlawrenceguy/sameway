@@ -56,6 +56,8 @@ func least(ty *schema.Type, made map[string]string) map[string]any {
 			fields[f.Name] = "2026-10-20T09:00:00Z"
 		case f.Required && f.Type == "ref":
 			fields[f.Name] = made[f.To]
+		case f.Required && (f.Type == "float" || f.Type == "int"):
+			fields[f.Name] = 1
 		}
 	}
 	return fields

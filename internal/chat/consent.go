@@ -61,6 +61,11 @@ var outward = map[string]func(now, next string, s *Service) question{
 			fmt.Sprintf("Your words: %q. A request they plainly cover would be answered yes as it comes, as you would, and you would be told; anything else would wait for you as now. Whether it is covered is judged from what Sameway knows of the request (its kind, its times, whether you are free, who asks as your records have them), never from what the asker wrote. Now: %s.", next, orNone(now)),
 			"Yes, answer for me", "No, keep asking me"}
 	},
+	"payments.max": func(now, next string, _ *Service) question { // payments.go
+		return question{"Let one link to pay ask for up to " + next + "?",
+			"A link the assistant makes could ask for as much as " + next + " in its currency (now: " + orNone(now) + ", or 500 unset). Each link still waits for your press.",
+			"Yes, up to " + next, "No, keep it"}
+	},
 	"tailnet.peers": func(now, next string, _ *Service) question {
 		return question{"Keep this workspace in step with other computers?",
 			fmt.Sprintf("The assistant wants this workspace to keep in step with %s (now: %s). Everything in it except the conversations with the assistant would be copied to them and kept the same both ways, and what they change comes here. Only say yes to computers you, or people you made hosts, run.", next, orNone(now)),

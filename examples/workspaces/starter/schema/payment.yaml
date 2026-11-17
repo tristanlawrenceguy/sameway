@@ -1,0 +1,41 @@
+# A payment someone is asked for: a link to pay the owner through their
+# own Stripe account, made with the owner's yes, and whether it is paid.
+# Provided with every workspace; Sameway reads Stripe now and then and
+# marks one paid, so an action can follow it.
+name: payment
+description: "A payment someone is asked for, through a link to pay the owner's own Stripe account (payment_link): what for, how much, the link, and whether it is paid, which Sameway reads from Stripe now and then. To act once one is paid, make an action that waits for a payment to come to paid=true."
+title: what
+provided: true
+owners: true
+kept: true
+kept_by: "a link to pay is made only with payment_link and the owner's press, and is marked paid only when Stripe says so"
+fields:
+  what:
+    label: What for
+    type: string
+    required: true
+    maxLength: 200
+  amount:
+    type: float
+    required: true
+    description: How much, in the currency's whole units, such as 60.00.
+  currency:
+    type: string
+    maxLength: 3
+    default: gbp
+    description: The currency, as three letters, such as gbp, eur or usd.
+  link:
+    label: Link to pay
+    type: string
+    readonly: true
+    description: The address to pay at, from Stripe.
+  paid:
+    type: bool
+    default: false
+    readonly: true
+    description: Paid, as Stripe says, kept by the system.
+  stripe:
+    type: string
+    hidden: true
+    readonly: true
+    description: Stripe's own name for the link.

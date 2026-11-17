@@ -75,6 +75,12 @@ type Type struct {
 	// Hidden is a type taken off the pages and the assistant's hands,
 	// its records kept, until it is shown again.
 	Hidden bool `yaml:"hidden,omitempty" json:"hidden,omitempty"`
+	// Kept is a kind Sameway alone writes, from what really happened, such
+	// as payments, which only a press of the owner's makes and only Stripe
+	// marks paid: no person, assistant, API call or request makes, changes
+	// or removes one (records/writes.go). KeptBy says how one is made.
+	Kept   bool   `yaml:"kept,omitempty" json:"kept,omitempty"`
+	KeptBy string `yaml:"kept_by,omitempty" json:"kept_by,omitempty"`
 	// Owners marks what is the owner's alone wherever it is read: every
 	// chat, the assistant's questions and the log of what was done and
 	// said. Someone let in reads none of it, on a page, over the API, in

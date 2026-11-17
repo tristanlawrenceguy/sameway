@@ -89,6 +89,9 @@ type Service struct {
 	// server's, such as Telegram, and whether they were reached there;
 	// nil reaches nobody. See channel.go.
 	Channel func(v records.Visitor, text string) bool
+	// StripeKey is the owner's Stripe key, "" for none; set by the server.
+	// See payments.go.
+	StripeKey func() string
 	// Doors says each way in the server keeps and whether it is open, one
 	// line each, for ways_in; set by the server.
 	Doors func() []string

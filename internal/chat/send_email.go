@@ -34,6 +34,9 @@ var sendEmailOp = Op{Title: "Send an email",
 			return fail("%v", err), true
 		}
 		detail := fmt.Sprintf("From your mailbox, about %q:\n\n%s", e.Subject, e.Text)
+		for _, line := range e.paying { // payments.go: the amount Stripe takes, not the words
+			detail += "\n\n" + line
+		}
 		for _, c := range e.Choices {
 			detail += fmt.Sprintf("\n\nWith a link, %s: pressing it would %s.", c.Label, c.what)
 		}
@@ -100,6 +103,7 @@ type emailArgs struct {
 	Cancel  bool     `json:"cancel"`
 	Thread  string   `json:"thread"`
 	people  []string // who it goes to, each on their own
+	paying  []string // what each link to pay in it asks for, from the payments kept
 	root    string   // the conversation it is in, by its first email
 	refs    []string // the names of the emails it answers
 }
@@ -191,6 +195,9 @@ func (s *Service) emailOf(raw json.RawMessage) (emailArgs, error) {
 		if _, err := s.inviteOf(e.Invite); err != nil { // invitations.go
 			return e, err
 		}
+	}
+	if e.paying, err = s.paymentsIn(e.Text); err != nil { // payments.go
+		return e, fmt.Errorf("not sent: %v", err)
 	}
 	e.Choices, err = s.choicesOf(e.Choices)
 	return e, err
