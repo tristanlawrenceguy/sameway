@@ -36,6 +36,7 @@ func (s *Server) hooks() {
 		go s.telegramAsk(summary) // telegram.go: with Make it and No to press
 	}
 	s.app.Chat.Channel = s.telegramTell
+	s.app.Chat.StripeKey = func() string { return s.keys().Get(stripeKey) } // payments.go
 	// The assistant writes from the mailbox Email in reads
 	// (chat/send_email.go).
 	s.app.Chat.MailFrom, s.app.Chat.Mail = s.inbox.MailFrom, s.inbox.SendMail

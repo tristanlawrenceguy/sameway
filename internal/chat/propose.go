@@ -144,6 +144,8 @@ var proposable = map[string]bool{
 	"ask_someone": true, "let_ask": true, "answer_enquiry": true, "ask_page": true,
 	// An email speaks for the owner and cannot be unsent (send_email.go).
 	"send_email": true,
+	// A link to pay the owner is made with their yes (payments.go).
+	"payment_link": true,
 }
 
 // modelProposable are the calls the model may carry in a question of its

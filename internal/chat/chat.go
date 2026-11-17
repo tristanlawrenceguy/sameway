@@ -89,6 +89,9 @@ type Service struct {
 	// server's, such as Telegram, and whether they were reached there;
 	// nil reaches nobody. See channel.go.
 	Channel func(v records.Visitor, text string) bool
+	// StripeKey is the owner's Stripe key, "" for none; set by the server.
+	// See payments.go.
+	StripeKey func() string
 	// Address is this Sameway's address on the internet, once something
 	// is published and Funnel is up, or ""; set by the command line.
 	Address func() string
