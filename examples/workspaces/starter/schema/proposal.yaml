@@ -53,3 +53,6 @@ fields:
   token:
     type: string
     description: For someone's request, the key of the page that says what became of it, /request/<token>.
+  reply_as:
+    type: string
+    description: For an invitation that came by email, the owner's address it was sent to, which the answer to it goes back as.
