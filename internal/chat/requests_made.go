@@ -50,11 +50,15 @@ func (s *Service) RequestsSince(since time.Time) []*store.Record {
 // it was made: by a tool here, or by one the assistant ran in a process of
 // its own, which only the store shares.
 func (s *Service) tellOwner(since time.Time) {
-	if s.Requested == nil || s.owner() {
+	if s.owner() {
 		return
 	}
 	for _, p := range s.RequestsSince(since) {
-		summary, _ := p.Fields["summary"].(string)
-		s.Requested(summary)
+		if RequestState(p) != "waiting" || s.answerAhead(p) { // standing_yes.go: the owner's yes, given ahead
+			continue
+		}
+		if summary, _ := p.Fields["summary"].(string); s.Requested != nil {
+			s.Requested(summary)
+		}
 	}
 }
