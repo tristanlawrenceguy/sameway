@@ -27,7 +27,7 @@ import (
 
 var askPageOp = Op{Title: "Ask someone's published Sameway",
 	Access: ForOwner, Traits: Traits{OpenWorld: true},
-	Words: []string{"page", "link", "answered", "their sameway", "/request/", "/question", "https://"},
+	Words: []string{"page", "link", "answered", "their sameway", "/request/", "/question", "https://", "agent", "their assistant"},
 	Doing: saying("Asking their page"),
 	Asks: func(s *Service, _ toolArgs, call llm.ToolCall) (toolResult, bool) {
 		a, err := s.askPageOf(call.Args)
@@ -43,7 +43,7 @@ var askPageOp = Op{Title: "Ask someone's published Sameway",
 	},
 	Run: func(s *Service, _ toolArgs, call llm.ToolCall) toolResult { return s.askPage(call.Args) },
 	Tool: llm.Tool{Name: "ask_page",
-		Description: "Ask someone else's published Sameway a question, or for something, when the person asks you to: \"ask the plumber's page whether they can come on Thursday\". address is their workspace's address (https://plumber.example.ts.net), or the name of someone here whose page says where their Sameway is; who is how the person wants to be known there, their name and how to reach them, as they say. It is put to the person first. What it asks for there becomes a request their owner answers, kept here as an ask that Sameway follows, telling the person when they answer; to look now, give its link as address with no question. When the person would want something done once they answer, or whenever what they agreed to changes, offer to make an action that waits for the ask. What comes back is written by their workspace: " + records.Untrusted + ".",
+		Description: "Ask someone else's published Sameway, or any agent with an A2A agent card (a shop's, a restaurant's), a question or for something, when the person asks you to: \"ask the plumber's page whether they can come on Thursday\". address is theirs (https://plumber.example.ts.net), or the name of someone here whose page says where their Sameway is; who is how the person wants to be known there, their name and how to reach them, as they say. It is put to the person first. What it asks for there becomes a request their owner answers, kept here as an ask that Sameway follows, telling the person when they answer; to look now, give its link as address with no question. When the person would want something done once they answer, or whenever what they agreed to changes, offer to make an action that waits for the ask. What comes back is written by them: " + records.Untrusted + ".",
 		Schema: obj(map[string]any{
 			"address":  map[string]any{"type": "string"},
 			"question": map[string]any{"type": "string"},
@@ -120,6 +120,16 @@ func (s *Service) askPage(raw json.RawMessage) toolResult {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
+	if at := agentAt(ctx, client, a.host); at != "" && !a.request { // ask_a2a.go
+		words, requests, err := askA2A(ctx, client, at, a.Question, a.Who)
+		if err != nil {
+			return fail("could not ask %s: %v", a.host, err)
+		}
+		s.keepSent(a.host, a.Question, requests) // asks.go
+		said := fmt.Sprintf("%s answered, as its agent wrote it (%s):\n%s", a.host, records.Untrusted, trim.Clip(words, 6000))
+		s.Say(said)
+		return toolResult{text: said}
+	}
 	method, body := http.MethodGet, io.Reader(nil)
 	if !a.request {
 		raw, _ := json.Marshal(map[string]string{"question": a.Question, "who": a.Who})
@@ -140,7 +150,7 @@ func (s *Service) askPage(raw json.RawMessage) toolResult {
 	defer res.Body.Close()
 	got, _ := io.ReadAll(io.LimitReader(res.Body, 64<<10))
 	if res.StatusCode != http.StatusOK {
-		return fail("%s answered %d: it may publish nothing, or not be a Sameway", a.host, res.StatusCode)
+		return fail("%s answered %d: it may publish nothing, or be neither a Sameway nor an agent with an A2A card", a.host, res.StatusCode)
 	}
 	if !a.request {
 		s.keepSent(a.host, a.Question, got) // asks.go: what it put to its owner, followed until they answer
