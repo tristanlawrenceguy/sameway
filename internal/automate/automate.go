@@ -45,6 +45,7 @@ type Service struct {
 	// (pictures.go).
 	Pictures func(id string) []llm.Image
 	auto     *automation // actions waiting for something to happen; happened.go
+	stop     func()      // ends a worker StartWorker began and waits for it; worker.go
 }
 
 // Chat is what running an action needs from the conversation: a message

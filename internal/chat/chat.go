@@ -89,6 +89,9 @@ type Service struct {
 	// server's, such as Telegram, and whether they were reached there;
 	// nil reaches nobody. See channel.go.
 	Channel func(v records.Visitor, text string) bool
+	// Doors says each way in the server keeps and whether it is open, one
+	// line each, for ways_in; set by the server.
+	Doors func() []string
 	// Address is this Sameway's address on the internet, once something
 	// is published and Funnel is up, or ""; set by the command line.
 	Address func() string

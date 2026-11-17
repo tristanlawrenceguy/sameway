@@ -36,6 +36,12 @@ func (s *Server) twilio() (twilio.Account, bool) {
 	return a, a.SID != "" && a.Token != ""
 }
 
+// twilioConnected says whether calls are answered.
+func (s *Server) twilioConnected() bool {
+	_, ok := s.twilio()
+	return ok
+}
+
 // call is one call's conversation, and the answer being worked out.
 type call struct {
 	said    []chat.Said
