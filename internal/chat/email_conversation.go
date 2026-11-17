@@ -107,16 +107,7 @@ func (s *Service) Answers(messageID string, refs []string, from string, verified
 	if !verified || s.letInBy(from) == nil {
 		return ""
 	}
-	emails, _ := s.Store.List("email", store.ListOptions{})
-	for _, e := range emails {
-		if id, _ := e.Fields["message_id"].(string); id != "" && strings.Trim(id, "<>") == strings.Trim(messageID, "<> ") {
-			if root, _ := e.Fields["thread"].(string); root != "" {
-				return root
-			}
-			return e.ID
-		}
-	}
-	return ""
+	return s.ThreadOf(messageID) // invited.go
 }
 
 // thread is a conversation's emails, oldest first.
@@ -222,7 +213,13 @@ func (s *Service) tellByMail(p *store.Record, v records.Visitor, yes bool) {
 	}
 	m := Outgoing{To: v.Name, Subject: reSubject(mails[len(mails)-1]), Refs: threadRefs(mails),
 		Text: owner + " said no to your request to " + what + ": nothing was made."}
-	if yes {
+	if reply := s.invitationReply(p, v.Name, yes); reply != nil { // invited.go: as their calendar answers
+		m.Calendar = reply
+		m.Text = owner + " said no to your invitation."
+		if yes {
+			m.Text = owner + " said yes to your invitation."
+		}
+	} else if yes {
 		m.Text = owner + " said yes to your request to " + what + ": it is made."
 		if typ, id, ok := strings.Cut(fmt.Sprint(p.Fields["made"]), "/"); ok && typ == records.EventType {
 			if cal, err := s.invitation(emailArgs{To: v.Name, Invite: id}); err == nil { // invitations.go

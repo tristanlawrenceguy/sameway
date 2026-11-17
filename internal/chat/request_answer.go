@@ -73,7 +73,7 @@ func (s *Service) tellAsker(p *store.Record, yes bool) {
 		s.tellByMail(p, v, yes) // email_conversation.go: in their thread
 		return
 	}
-	if p.Fields["by_action"] != ByRequest || !ok || v.Owner() || v.Access == records.Public {
+	if p.Fields["by_action"] != ByRequest || !ok || v.Owner() {
 		return
 	}
 	what, _ := p.Fields["asked"].(string)
@@ -85,5 +85,10 @@ func (s *Service) tellAsker(p *store.Record, yes bool) {
 	if yes {
 		said = owner + " said yes to your request to " + what + ": it is made."
 	}
-	s.For(v).Say(said)
+	if s.Channel != nil && s.Channel(v, said) { // channel.go: where they asked, such as Telegram
+		return
+	}
+	if v.Access != records.Public {
+		s.For(v).Say(said)
+	}
 }
