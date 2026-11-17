@@ -40,7 +40,8 @@ func (s *Server) helpPage(w http.ResponseWriter, r *http.Request) {
 <p>After you do something, a message at the top of the page says what happened.</p>
 <p>Ready-made pages for a job (a job search, clients, a budget, a house move and more) are a press away in <a class="sw-link" href="/templates">Templates</a>.</p>
 <p>Your conversations with ChatGPT or Claude, and tasks and notes in another app (Todoist, Google Tasks or Keep, Evernote, Notion, Obsidian), come in from <a class="sw-link" href="/bring">Bring your things</a>.</p>
-<p>A calendar in Google, Outlook or iCloud is kept in step from <a class="sw-link" href="/calendars">Calendars</a>.</p></section>`)
+<p>A calendar in Google, Outlook or iCloud is kept in step from <a class="sw-link" href="/calendars">Calendars</a>.</p>
+<p>Your assistant is in Telegram too, and anyone can ask you there, from <a class="sw-link" href="/telegram">Telegram</a>.</p></section>`)
 	b.WriteString(appSection) // app_install.go
 	if records.VisitorOf(r.Context()).Owner() {
 		b.WriteString(s.feedbackSection()) // feedback.go

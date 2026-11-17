@@ -55,6 +55,7 @@ func (s *Server) BackgroundJobs() []runner.Job {
 		{Name: "Search by meaning kept current", Every: 2 * time.Minute, Run: func(ctx context.Context, _ time.Time) error {
 			return s.refreshMeaning(ctx) // search_meaning.go: when an embedding model is here
 		}},
+		{Name: "Telegram messages answered", Every: time.Second, Wait: true, Run: s.KeepTelegram}, // telegram.go: waits for news each look
 		{Name: "Email read from the mailbox", Every: 5 * time.Minute, Wait: true, Run: func(ctx context.Context, _ time.Time) error {
 			c, cancel := context.WithTimeout(ctx, 2*time.Minute)
 			defer cancel()
