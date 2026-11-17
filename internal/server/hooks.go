@@ -34,6 +34,9 @@ func (s *Server) hooks() {
 			go s.notify("A request waits for your yes", summary, s.linkTo("/today"))
 		}
 	}
+	// The assistant writes from the mailbox Email in reads
+	// (chat/send_email.go).
+	s.app.Chat.MailFrom, s.app.Chat.Mail = s.inbox.MailFrom, s.inbox.SendMail
 	// What an automation did on its own is told like a ring (ring.go).
 	s.app.Automate.Tell = func(title, text, url string) {
 		if s.notify != nil {
