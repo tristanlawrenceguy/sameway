@@ -79,9 +79,9 @@ var answerRequestOp = Op{Title: "Answer a request passed to you",
 	Doing:  saying("Answering the request"),
 	Run:    func(s *Service, _ toolArgs, call llm.ToolCall) toolResult { return s.answerRequest(call.Args) },
 	Tool: llm.Tool{Name: "answer_request",
-		Description: "Answer a request the owner's words passed to the person you work for, yes or no, when they say so: it is made as the owner would make it, or turned down, and whoever asked is told. Only a request passed to them.",
+		Description: "Answer yes or no a request passed to the person you work for, by the id they were told: made as the owner would, the asker told.",
 		Schema: obj(map[string]any{
-			"id":  map[string]any{"type": "string", "description": "The request, as it was told to them."},
+			"id":  map[string]any{"type": "string"},
 			"yes": map[string]any{"type": "boolean"},
 		}, "id", "yes")}}
 

@@ -23,7 +23,7 @@ var waysInOp = Op{Title: "See how people reach you", Traits: Traits{ReadOnly: tr
 	Doing:  saying("Looking at how people reach you"),
 	Run:    func(s *Service, _ toolArgs, _ llm.ToolCall) toolResult { return s.waysIn() },
 	Tool: llm.Tool{Name: "ways_in",
-		Description: "How people reach the person: each way in (email, published pages, booking link, Telegram, their website, other agents) and whether it is open, their standing yes, and the requests of the last 30 days by way in: how many, how many answered, how soon, and what waits.",
+		Description: "How people reach the person: each way in and whether it is open, their standing yes, and the last 30 days of requests by way in: how many, answered, how soon, waiting.",
 		Schema:      obj(map[string]any{})}}
 
 func (s *Service) waysIn() toolResult {
