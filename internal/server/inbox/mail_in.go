@@ -187,6 +187,11 @@ func (s *Service) ReadMail(ctx context.Context) (int, error) {
 			// someone let in here, is answered in its thread with the
 			// writer's reach (chat/email_conversation.go); never one sent
 			// by a machine.
+			// An invitation is a request for the owner's yes, answered as
+			// a calendar answers (chat/invited.go), not a conversation.
+			if root := s.app.Chat.ThreadOf(m.ID); root != "" && !m.Sent && s.app.Chat.Invited(m.Calendar, m.From, root, a.User) {
+				continue
+			}
 			if root := s.app.Chat.Answers(m.ID, m.Refs, m.From, m.Verified); root != "" && !m.Sent && !m.Auto {
 				if err := s.app.Chat.AnswerMail(ctx, root, m.Verified); err != nil {
 					log.Printf("mail: could not answer in a conversation: %v", err)
