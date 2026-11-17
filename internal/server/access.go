@@ -65,7 +65,7 @@ func (s *Server) allowed(w http.ResponseWriter, r *http.Request) bool {
 	if v.Owner() {
 		return true
 	}
-	if p := s.routeOf(r); p == bookGet || p == bookPost || p == questionGet || p == questionPost || p == requestGet || p == offerGet || p == offerPost {
+	if p := s.routeOf(r); p == bookGet || p == bookPost || p == questionGet || p == questionPost || p == requestGet || p == offerGet || p == offerPost || p == agentCardGet || p == llmsGet || p == a2aPost {
 		return true // anyone may ask for a time; it waits for the owner (book.go)
 	}
 	if r.Method == http.MethodPost && s.routeOf(r) == askRoute {
