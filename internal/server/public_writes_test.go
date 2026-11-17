@@ -64,9 +64,9 @@ func TestThePublicCannotChangeAnything(t *testing.T) {
 			for ct, body := range bodies {
 				res := public(t, pub, method, path, body)
 				_ = ct
-				// /mcp and /question answer the internet without writing: everything
+				// /mcp, /question and /a2a answer the internet without writing: everything
 				// below is the same afterwards.
-				if res.Code < 400 && path != "/mcp" && path != "/question" {
+				if res.Code < 400 && path != "/mcp" && path != "/question" && path != "/a2a" {
 					t.Errorf("%s %s answered the internet %d", method, path, res.Code)
 				}
 			}
