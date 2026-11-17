@@ -44,9 +44,13 @@ func (s *Service) turnSection(list []chat.Waiting) string {
 	if _, ok := s.app.Types.Get(records.EmailType); ok {
 		emails, _ := s.app.Store.List(records.EmailType, store.ListOptions{OrderBy: "created_at"})
 		for _, e := range emails {
-			if e.Fields["turn"] == "theirs" {
+			if t := e.Fields["turn"]; t == "theirs" || t == "late" {
 				waiting++
-				theirs.WriteString(line(e) + ` <span class="sw-muted sw-small">waiting ` + esc(waitedFor(s.Now().Sub(sentTime(e)))) + `</span></li>`)
+				late := ""
+				if t == "late" {
+					late = ", late" // late.go
+				}
+				theirs.WriteString(line(e) + ` <span class="sw-muted sw-small">waiting ` + esc(waitedFor(s.Now().Sub(sentTime(e)))) + late + `</span></li>`)
 			}
 		}
 	}
