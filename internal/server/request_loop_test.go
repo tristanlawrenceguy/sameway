@@ -199,8 +199,11 @@ func TestMyAssistantAsksSomeoneElsesPublishedPage(t *testing.T) {
 	// Each change to what they agreed to is followed, logged and told, so
 	// an action waiting for an ask to change can act on it, and so is it
 	// being taken away; reading the link again says what it is now.
-	if me.Chat.FollowSent(context.Background()); len(rang) != 0 {
-		t.Fatal("nothing is told while nothing changed")
+	me.Chat.FollowSent(context.Background())
+	for len(rang) > 0 { // the automation's own word may come late; it is not FollowSent's
+		if got := <-rang; strings.Contains(got, "plumber.example.ts.net") {
+			t.Fatalf("nothing is told while nothing changed: %s", got)
+		}
 	}
 	visits, _ := plumber.Store.List("event", store.ListOptions{})
 	plumber.Store.Update("event", visits[0].ID, map[string]any{"starts": "2026-03-12T15:00:00Z"})

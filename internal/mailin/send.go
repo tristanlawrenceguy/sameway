@@ -159,8 +159,10 @@ func message(from, id string, m Outgoing) []byte {
 	q.Write([]byte(words))
 	q.Close()
 	method := "REQUEST"
-	if bytes.Contains(calendar, []byte("METHOD:CANCEL")) {
-		method = "CANCEL"
+	for _, m := range []string{"CANCEL", "REPLY"} {
+		if bytes.Contains(calendar, []byte("METHOD:"+m)) {
+			method = m
+		}
 	}
 	part, _ = mw.CreatePart(textproto.MIMEHeader{"Content-Type": {"text/calendar; charset=utf-8; method=" + method}, "Content-Transfer-Encoding": {"base64"}})
 	enc := base64.StdEncoding.EncodeToString(calendar)
