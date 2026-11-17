@@ -148,11 +148,6 @@ func (s *Set) Complete(builtin *Set) {
 		if b.Internal && b.Title != "" {
 			t.Title = b.Title
 		}
-		// Who writes it, likewise: a copy that lost it would let a hand
-		// write what only Sameway may, such as a payment marked paid.
-		if b.Kept {
-			t.Kept, t.KeptBy = true, b.KeptBy
-		}
 		// Whose it is, likewise: a copy that lost it would open the
 		// owner's conversations to everyone let in.
 		if b.Internal {
