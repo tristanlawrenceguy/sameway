@@ -52,7 +52,7 @@ func TestAMeetingIsArrangedInAConversationByEmail(t *testing.T) {
 		{Text: "Tuesday at 3pm is free. I have asked Tris to confirm; you will hear back here."},
 	}}
 	a.Chat.Provider = model
-	if err := a.Chat.AnswerMail(context.Background(), a.Chat.Conversation([]string{"<sent1@example.com>"})); err != nil {
+	if err := a.Chat.AnswerMail(context.Background(), a.Chat.Conversation([]string{"<sent1@example.com>"}), true); err != nil {
 		t.Fatal(err)
 	}
 	if len(model.seen) < 2 || strings.Contains(lastToolResult(model.seen[1]), "theirs to say") || !strings.Contains(lastToolResult(model.seen[1]), "Tue 17 Mar") {
@@ -86,4 +86,52 @@ func lastToolResult(req llm.Request) string {
 		}
 	}
 	return ""
+}
+
+// Anyone let in can ask by email, about anything they may read, and is
+// answered with their own reach: a client asks when the next phase
+// starts and is told from the project's note, in the thread. Only when
+// their mail server vouched that the mail is theirs: a forged sender
+// is a stranger, and a stranger writing out of the blue is not answered.
+func TestSomeoneLetInIsAnsweredByEmailWithTheirReach(t *testing.T) {
+	t.Parallel()
+	a, _ := newAppAt(t, tonight)
+	var sent []chat.Outgoing
+	a.Chat.MailFrom = func() string { return "tris+sameway@example.com" }
+	a.Chat.Mail = func(m chat.Outgoing) (string, error) { sent = append(sent, m); return "<answer@example.com>", nil }
+	a.Store.Create("person", map[string]any{"name": "Sam", "email": "sam@example.com", "access": "view"})
+	a.Store.Create("note", map[string]any{"title": "Sam's kitchen", "body": "Phase 2 starts Monday 16 March."})
+	mail, _ := a.Store.Create("email", map[string]any{"subject": "Kitchen", "from": "Sam <sam@example.com>", "body": "When does phase 2 start?", "message_id": "<sam1@example.com>", "from_me": false})
+
+	if root := a.Chat.Answers("<sam1@example.com>", nil, "Sam <sam@example.com>", false); root != "" {
+		t.Error("mail its server did not vouch for is not taken as theirs")
+	}
+	if root := a.Chat.Answers("<eve1@example.com>", nil, "Eve <eve@example.com>", true); root != "" {
+		t.Error("a stranger writing out of the blue is not answered")
+	}
+	root := a.Chat.Answers("<sam1@example.com>", nil, "Sam <sam@example.com>", true)
+	if root != mail.ID {
+		t.Fatalf("someone let in is answered, in their own thread: %q", root)
+	}
+	model := &scripted{steps: []*llm.Response{toolCall("find_records", map[string]any{"type": "note"}), {Text: "Phase 2 starts Monday 16 March."}}}
+	a.Chat.Provider = model
+	if err := a.Chat.AnswerMail(context.Background(), root, true); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(lastToolResult(model.seen[1]), "Sam's kitchen") {
+		t.Errorf("with what they may read: %s", lastToolResult(model.seen[1]))
+	}
+	if len(sent) != 1 || sent[0].To != "Sam <sam@example.com>" || sent[0].Subject != "Re: Kitchen" || sent[0].Refs[0] != "<sam1@example.com>" {
+		t.Fatalf("the answer goes back in their thread: %+v", sent)
+	}
+
+	// The same words with a sender nobody vouched for, in a thread Sameway
+	// began: a stranger's reach, which reads nothing unpublished.
+	a.Store.Create("email", map[string]any{"subject": "Re: Kitchen", "from": "Sam <sam@example.com>", "body": "And the budget?", "message_id": "<sam2@example.com>", "thread": root, "from_me": false})
+	model = &scripted{steps: []*llm.Response{toolCall("find_records", map[string]any{"type": "note"}), {Text: "I cannot see that."}}}
+	a.Chat.Provider = model
+	a.Chat.AnswerMail(context.Background(), root, false)
+	if strings.Contains(lastToolResult(model.seen[1]), "Sam's kitchen") {
+		t.Errorf("a sender nobody vouched for reads only what a stranger may: %s", lastToolResult(model.seen[1]))
+	}
 }

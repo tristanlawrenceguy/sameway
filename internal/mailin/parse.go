@@ -30,6 +30,7 @@ func Parse(r io.Reader) (Mail, error) {
 	prec := strings.ToLower(strings.TrimSpace(h.Get("Precedence")))
 	m.Auto = auto != "" && auto != "no" || prec == "bulk" || prec == "auto_reply" || prec == "list" || h.Get("X-Autoreply") != ""
 	if from, err := h.AddressList("From"); err == nil && len(from) > 0 {
+		m.Verified = verified(h.Get("Authentication-Results"), from[0].Address)
 		m.From = from[0].Address
 		if from[0].Name != "" {
 			m.From = from[0].Name + " <" + from[0].Address + ">"
@@ -106,4 +107,28 @@ func NoRemotePictures(markdown string) string {
 		return "(picture: " + alt + ")"
 	})
 	return blankLines.ReplaceAllString(emptyLink.ReplaceAllString(out, "$1"), "\n\n")
+}
+
+// verified reads what the receiving server found of who sent a mail, from
+// the topmost Authentication-Results, the one it added itself (RFC 8601):
+// DMARC passed, or a DKIM signature of the sender's own domain did.
+func verified(results, from string) bool {
+	results = strings.ToLower(results)
+	_, domain, _ := strings.Cut(strings.ToLower(from), "@")
+	if domain == "" {
+		return false
+	}
+	if strings.Contains(results, "dmarc=pass") {
+		return true
+	}
+	for _, part := range strings.Split(results, ";") {
+		if f := strings.Fields(part); len(f) > 0 && f[0] == "dkim=pass" {
+			for _, kv := range f[1:] {
+				if d, ok := strings.CutPrefix(kv, "header.d="); ok && (d == domain || strings.HasSuffix(domain, "."+d)) {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }

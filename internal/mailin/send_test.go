@@ -119,3 +119,20 @@ func TestMailAMachineSentIsKnown(t *testing.T) {
 		}
 	}
 }
+
+// Who sent a mail is trusted only as far as the receiving server checked
+// it, in the topmost Authentication-Results it added.
+func TestTheReceivingServerVouchesForTheSender(t *testing.T) {
+	for results, want := range map[string]bool{
+		"mx.google.com; dkim=pass header.i=@example.com header.s=s1 header.d=example.com; spf=pass; dmarc=pass (p=NONE) header.from=example.com": true,
+		"mx.google.com; dkim=pass header.d=mail.example.com":        false,
+		"mx.google.com; dkim=pass header.d=elsewhere.com; spf=pass": false,
+		"mx.google.com; dkim=fail; dmarc=fail":                      false,
+		"":                                                          false,
+	} {
+		raw := "Authentication-Results: " + results + "\r\nFrom: Sam <sam@example.com>\r\n\r\nHi."
+		if m, _ := Parse(strings.NewReader(raw)); m.Verified != want {
+			t.Errorf("%q: verified %v", results, m.Verified)
+		}
+	}
+}
