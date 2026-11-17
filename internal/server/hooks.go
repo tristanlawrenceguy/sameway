@@ -35,7 +35,7 @@ func (s *Server) hooks() {
 		}
 		go s.telegramAsk(summary) // telegram.go: with Make it and No to press
 	}
-	s.app.Chat.Channel = s.telegramTell
+	s.app.Chat.Channel = func(v records.Visitor, text string) bool { return s.telegramTell(v, text) || s.callTell(v, text) } // telegram.go, calls.go
 	// The assistant writes from the mailbox Email in reads
 	// (chat/send_email.go).
 	s.app.Chat.MailFrom, s.app.Chat.Mail = s.inbox.MailFrom, s.inbox.SendMail
