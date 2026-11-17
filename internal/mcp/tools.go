@@ -119,7 +119,7 @@ func (s *Server) run(ctx context.Context, svc *chat.Service, name string, args j
 		if err != nil {
 			return err.Error(), true
 		}
-		raw, err := jsontext.MarshalIndent(v, "", "  ")
+		raw, err := jsontext.Marshal(v) // compact: fewer tokens for the client, the same for a model
 		if err != nil {
 			return err.Error(), true
 		}
