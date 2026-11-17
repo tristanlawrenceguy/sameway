@@ -58,6 +58,9 @@ type Mail struct {
 	// Calendar is a calendar the mail carries as one of its ways of
 	// saying itself, such as the answer to an invitation, or nil.
 	Calendar []byte
+	// Auto is mail a machine sent, such as an out of office (RFC 3834):
+	// never answered, or two machines would answer each other for ever.
+	Auto bool
 }
 
 // File is a file attached to an email.

@@ -37,8 +37,13 @@ func (s *Service) AnswerOnce(ctx context.Context, site, question string) (string
 	if who := s.who.Name; who != "" {
 		system += " They say they are " + who + "."
 	}
-	msgs := []llm.Message{{Role: llm.RoleUser, Content: question}}
 	defer s.tellOwner(s.Now())
+	return s.answerWith(ctx, system, []llm.Message{{Role: llm.RoleUser, Content: question}})
+}
+
+// answerWith runs the turn of an answer to someone outside, with their
+// tools, and gives what it says.
+func (s *Service) answerWith(ctx context.Context, system string, msgs []llm.Message) (string, error) {
 	for range onceSteps {
 		resp, err := s.Provider.Complete(ctx, llm.Request{System: system, Messages: msgs, Tools: s.Tools(), MaxTokens: 1500, For: s.forWhom()})
 		if err != nil {

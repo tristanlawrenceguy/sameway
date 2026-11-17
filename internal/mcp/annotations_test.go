@@ -72,6 +72,7 @@ func TestReadOnlyToolsChangeNothing(t *testing.T) {
 		"search":           `{"query":"plumber"}`,
 		"details":          `{"name":"note"}`,
 		"what_waits":       `{}`,
+		"free_times":       `{}`,
 		"today":            `{}`,
 		"ask":              `{"question":"Is there a task about the plumber?"}`,
 		"try":              `{"name":"update_record","arguments":{"type":"task","id":"` + task.ID + `","fields":{"done":true}}}`,

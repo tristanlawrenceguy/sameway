@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 )
@@ -30,7 +31,10 @@ func TestWhoeverBooksHearsBackByEmail(t *testing.T) {
 	}
 	sent := make(chan string, 2)
 	a.Chat.MailFrom = func() string { return "tris@example.com" }
-	a.Chat.Mail = func(to, subject, text string, _ []byte) error { sent <- to + "|" + subject + "|" + text; return nil }
+	a.Chat.Mail = func(m chat.Outgoing) (string, error) {
+		sent <- m.To + "|" + m.Subject + "|" + m.Text
+		return "<1@example.com>", nil
+	}
 
 	a.Chat.Provider = &scripted{steps: []*llm.Response{
 		toolCall("send_email", map[string]any{"to": "Pat Lee <pat@example.com>", "subject": "Your visit on Thursday", "text": "Yes, see you Thursday at 9am."}),
@@ -85,7 +89,7 @@ func TestAMessageCarriesChoicesTheyCanTake(t *testing.T) {
 	internet := srv.Public(nil)
 	sent := make(chan string, 1)
 	a.Chat.MailFrom = func() string { return "tris@example.com" }
-	a.Chat.Mail = func(to, subject, text string, _ []byte) error { sent <- text; return nil }
+	a.Chat.Mail = func(m chat.Outgoing) (string, error) { sent <- m.Text; return "<1@example.com>", nil }
 	rang := make(chan string, 4)
 	srv.OnRing(func(title, text, _ string) { rang <- title + ": " + text })
 

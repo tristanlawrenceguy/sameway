@@ -21,7 +21,7 @@ import (
 // the way it came. It gives the request's summary and key.
 func (s *Service) putRequest(action map[string]any, what, from string) (summary, token string, err error) {
 	who := s.who.Who()
-	if s.who.Login != "" && !strings.HasPrefix(s.who.Login, "device:") {
+	if s.who.Login != "" && !strings.HasPrefix(s.who.Login, "device:") && s.who.Device != ByEmail { // by email, their name is their address
 		who += " (" + s.who.Login + ")"
 	}
 	summary = trim.Line(who+" asks you to "+what+". Make it?", 300)

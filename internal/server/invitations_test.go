@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
@@ -24,9 +25,9 @@ func TestAnEventGoesOutAsAnInvitationAndTheAnswerComesBack(t *testing.T) {
 	type mail struct{ to, text, calendar string }
 	sent := make(chan mail, 3)
 	a.Chat.MailFrom = func() string { return "tris+sameway@example.com" }
-	a.Chat.Mail = func(to, subject, text string, calendar []byte) error {
-		sent <- mail{to, text, strings.ReplaceAll(string(calendar), "\r\n ", "")} // long lines unfolded
-		return nil
+	a.Chat.Mail = func(m chat.Outgoing) (string, error) {
+		sent <- mail{m.To, m.Text, strings.ReplaceAll(string(m.Calendar), "\r\n ", "")} // long lines unfolded
+		return "<1@example.com>", nil
 	}
 	rang := make(chan string, 4)
 	srv.OnRing(func(title, text, _ string) { rang <- title + ": " + text })
