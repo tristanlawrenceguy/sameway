@@ -215,6 +215,7 @@ func (s *Service) Accept(id string) error {
 		s.byPerson(result.changes[i])
 	}
 	s.tellAsker(rec, true) // request_answer.go
+	s.offerAlways(rec)     // always_offer.go: the owner's answers, for good
 	return nil
 }
 

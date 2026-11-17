@@ -43,7 +43,23 @@ func (s *Service) StartWorker() {
 		return
 	}
 	job := s.WorkerJob() // listening from here on
-	go job.Run(context.Background(), time.Time{})
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		job.Run(ctx, time.Time{})
+	}()
+	s.stop = func() { cancel(); <-done }
+}
+
+// StopWorker ends a worker StartWorker began and waits for what it was
+// doing to end, so nothing writes to the workspace after it is closed. A
+// worker the runner runs ends with the runner instead.
+func (s *Service) StopWorker() {
+	if s.stop != nil {
+		s.stop()
+		s.stop = nil
+	}
 }
 
 // listen has what happens to records heard, once.

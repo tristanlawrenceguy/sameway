@@ -59,3 +59,10 @@ fields:
     hidden: true
     readonly: true
     description: How many times its invitation was sent, so a calendar that has it takes the newest.
+  over:
+    label: It has happened
+    type: bool
+    hidden: true
+    readonly: true
+    default: false
+    description: Set by Sameway once it has ended, so an action can follow it (when changed, what event, over=true), such as thanking them or offering the next time.

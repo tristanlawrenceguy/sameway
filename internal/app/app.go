@@ -128,7 +128,10 @@ func Open(dir string, o Options) (*App, error) {
 }
 
 // Close releases the store, and with it what was kept for it.
-func (a *App) Close() error { return a.Store.Close() }
+func (a *App) Close() error {
+	a.Automate.StopWorker() // nothing writes after the store is closed
+	return a.Store.Close()
+}
 
 // Description is the machine-readable summary served at /api/describe and
 // printed by `sameway describe --json`.
