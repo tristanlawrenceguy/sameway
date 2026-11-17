@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"html/template"
+	"log"
 	"net/http"
 	"sort"
 	"strings"
@@ -65,15 +66,19 @@ func (s *Service) MailFrom() string {
 }
 
 // SendMail sends one email from the connected mailbox (mailin/send.go),
-// with a calendar when it carries an invitation.
-func (s *Service) SendMail(to, subject, text string, calendar []byte) error {
+// asking for answers at the address Sameway reads, and gives its name.
+func (s *Service) SendMail(m chat.Outgoing) (string, error) {
 	a, ok := s.mailAccount()
 	if !ok {
-		return errors.New("no mailbox is connected: connect one on Email in")
+		return "", errors.New("no mailbox is connected: connect one on Email in")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
-	return mailin.Send(ctx, a, to, subject, text, calendar)
+	back := ""
+	if from := s.MailFrom(); from != a.User {
+		back = from
+	}
+	return mailin.Send(ctx, a, mailin.Outgoing{To: m.To, Subject: m.Subject, Text: m.Text, Calendar: m.Calendar, ReplyTo: back, Refs: m.Refs})
 }
 
 // mailInsecure lets a test read from a mail server without TLS.
@@ -178,6 +183,13 @@ func (s *Service) ReadMail(ctx context.Context) (int, error) {
 		if s.mailNote(m, a.User) == nil {
 			s.app.Store.SetMeta(key, "1")
 			n++
+			// An answer in a conversation Sameway began is answered in
+			// it (chat/email_conversation.go); never one sent by a machine.
+			if root := s.app.Chat.Conversation(m.Refs); root != "" && !m.Sent && !m.Auto {
+				if err := s.app.Chat.AnswerMail(ctx, root); err != nil {
+					log.Printf("mail: could not answer in a conversation: %v", err)
+				}
+			}
 		}
 	}
 	return n, err

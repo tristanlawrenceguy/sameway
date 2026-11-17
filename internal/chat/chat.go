@@ -79,11 +79,12 @@ type Service struct {
 	// Requested tells the owner a request from someone waits for them,
 	// set by the server; nil tells no one. See requests_made.go.
 	Requested func(summary string)
-	// MailFrom is the address of the owner's connected mailbox, "" for
-	// none, and Mail sends one email from it; both set by the server.
-	// See send_email.go.
+	// MailFrom is the address of the owner's connected mailbox that
+	// Sameway reads, "" for none, and Mail sends one email from it, asking
+	// for answers there, and gives its Message-ID; both set by the server.
+	// See send_email.go and email_conversation.go.
 	MailFrom func() string
-	Mail     func(to, subject, text string, calendar []byte) error
+	Mail     func(Outgoing) (string, error)
 	// Address is this Sameway's address on the internet, once something
 	// is published and Funnel is up, or ""; set by the command line.
 	Address func() string

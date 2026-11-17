@@ -69,6 +69,10 @@ func RequestAsker(p *store.Record) (records.Visitor, bool) {
 // request's address instead.
 func (s *Service) tellAsker(p *store.Record, yes bool) {
 	v, ok := RequestAsker(p)
+	if p.Fields["by_action"] == ByRequest && ok && v.Device == ByEmail {
+		s.tellByMail(p, v, yes) // email_conversation.go: in their thread
+		return
+	}
 	if p.Fields["by_action"] != ByRequest || !ok || v.Owner() || v.Access == records.Public {
 		return
 	}

@@ -26,6 +26,9 @@ func Parse(r io.Reader) (Mail, error) {
 	if irt, _ := h.MsgIDList("In-Reply-To"); len(irt) > 0 && !slices.Contains(m.Refs, irt[0]) {
 		m.Refs = append(m.Refs, irt[0])
 	}
+	auto := strings.ToLower(strings.TrimSpace(h.Get("Auto-Submitted")))
+	prec := strings.ToLower(strings.TrimSpace(h.Get("Precedence")))
+	m.Auto = auto != "" && auto != "no" || prec == "bulk" || prec == "auto_reply" || prec == "list" || h.Get("X-Autoreply") != ""
 	if from, err := h.AddressList("From"); err == nil && len(from) > 0 {
 		m.From = from[0].Address
 		if from[0].Name != "" {

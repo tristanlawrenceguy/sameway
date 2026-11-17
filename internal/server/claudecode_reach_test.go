@@ -13,6 +13,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/examples"
 	"github.com/tristanlawrenceguy/sameway/internal/app"
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
@@ -179,7 +180,7 @@ func TestARealAssistantOffersAnotherTime(t *testing.T) {
 	mine := server.New(me)
 	sent := make(chan string, 1)
 	me.Chat.MailFrom = func() string { return "tris@example.com" }
-	me.Chat.Mail = func(to, subject, text string, _ []byte) error { sent <- to + "|" + text; return nil }
+	me.Chat.Mail = func(m chat.Outgoing) (string, error) { sent <- m.To + "|" + m.Text; return "<1@example.com>", nil }
 	me.Chat.Address = func() string { return "https://tris.example.ts.net/" }
 
 	if _, err := me.Chat.Send(context.Background(), "Pat Lee (pat@example.com) booked Thursday 26 November 2026 at 9am but I can't. Put a tentative meeting with Pat on Friday 27 November 2026 at 2pm in my calendar, and email Pat with links to confirm Friday or say it doesn't suit."); err != nil {
@@ -218,7 +219,10 @@ func TestARealAssistantSendsAnInvitation(t *testing.T) {
 	mine := server.New(me)
 	sent := make(chan string, 1)
 	me.Chat.MailFrom = func() string { return "tris+sameway@example.com" }
-	me.Chat.Mail = func(to, subject, text string, calendar []byte) error { sent <- to + "|" + string(calendar); return nil }
+	me.Chat.Mail = func(m chat.Outgoing) (string, error) {
+		sent <- m.To + "|" + string(m.Calendar)
+		return "<1@example.com>", nil
+	}
 
 	if _, err := me.Chat.Send(context.Background(), "Invite Pat Lee (pat@example.com) to a meeting on Friday 27 November 2026 at 2pm for an hour, so it lands in their calendar."); err != nil {
 		t.Fatalf("the turn failed: %v", err)
@@ -240,5 +244,34 @@ func TestARealAssistantSendsAnInvitation(t *testing.T) {
 	wantStatus(t, postForm(t, mine, "/proposal/"+email+"/accept", nil), http.StatusSeeOther)
 	if got := <-sent; !strings.Contains(got, "METHOD:REQUEST") || !strings.Contains(got, "pat@example.com") {
 		t.Errorf("it goes as a real invitation: %s", got)
+	}
+}
+
+// A real model answers someone writing back in plain words in a
+// conversation by email: it reads when the owner is free and asks the
+// owner for the time they picked, in the thread.
+func TestARealAssistantArrangesAMeetingByEmail(t *testing.T) {
+	t.Parallel()
+	me := realApp(t)
+	var sent []chat.Outgoing
+	me.Chat.MailFrom = func() string { return "tris+sameway@example.com" }
+	me.Chat.Mail = func(m chat.Outgoing) (string, error) { sent = append(sent, m); return "<reply@example.com>", nil }
+	first, _ := me.Store.Create("email", map[string]any{"subject": "Meeting next week", "from": "tris+sameway@example.com", "body": "Could we meet the week of 30 November 2026? Which day suits you?", "message_id": "<first@example.com>", "from_me": true})
+	me.Store.Create("email", map[string]any{"subject": "Re: Meeting next week", "from": "Pat Lee <pat@example.com>", "body": "Tuesday 1 December in the afternoon works for me, say 3pm for an hour?", "message_id": "<pat1@example.com>", "thread": first.ID, "from_me": false})
+
+	if err := me.Chat.AnswerMail(context.Background(), me.Chat.Conversation([]string{"<first@example.com>"})); err != nil {
+		t.Fatalf("the turn failed: %v", err)
+	}
+	if len(sent) != 1 {
+		t.Fatalf("an answer goes back in the thread: %d", len(sent))
+	}
+	t.Logf("ANSWER: %s", sent[0].Text)
+	asks := me.Chat.Suggestions()
+	if len(asks) != 1 || !strings.Contains(asks[0].Fields["summary"].(string), "make an event") {
+		t.Fatalf("the time Pat picked is a request for the owner: %d", len(asks))
+	}
+	t.Logf("REQUEST: %s", asks[0].Fields["summary"])
+	if n, _ := me.Store.Count("event"); n != 0 {
+		t.Error("nothing is booked without the owner")
 	}
 }
