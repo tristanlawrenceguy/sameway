@@ -84,6 +84,9 @@ type Service struct {
 	// See send_email.go.
 	MailFrom func() string
 	Mail     func(to, subject, text string) error
+	// Address is this Sameway's address on the internet, once something
+	// is published and Funnel is up, or ""; set by the command line.
+	Address func() string
 	// Needs is what the person has said they need, and Language the
 	// workspace's language; both go into every prompt. Set by the app.
 	Needs, Language string

@@ -33,7 +33,7 @@ fields:
     description: The tool call that third answer runs.
   state:
     type: enum
-    values: [pending, accepted, dismissed]
+    values: [pending, accepted, dismissed, offered]
     default: pending
   from:
     type: string

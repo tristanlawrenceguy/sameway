@@ -108,6 +108,8 @@ var pageRoutes = []route{
 	{pattern: questionGet, handle: (*Server).questionPage, access: people, public: true},
 	{pattern: questionPost, handle: (*Server).questionAsk, access: people, public: true, persons: "a question for the assistant; what it asks to be made waits for the owner's yes", reach: inward},
 	{pattern: bookGet, handle: (*Server).bookPage, access: people, public: true},
+	{pattern: offerGet, handle: (*Server).offerPage, access: people, public: true},
+	{pattern: offerPost, handle: (*Server).offerTake, access: people, public: true, persons: "a choice the owner offered in a message, taken by whoever got it", reach: inward},
 	{pattern: bookPost, handle: (*Server).bookAsk, access: people, public: true, persons: "a request for a time, which waits for the owner's yes", reach: inward},
 	{pattern: askRoute, handle: (*Server).asked, access: people, persons: "another person's Sameway asking, not a change", reach: outward},
 	{pattern: "POST /sync", handle: (*Server).syncExchange, access: people, persons: "computers exchanging changes, not a change", reach: outward},
