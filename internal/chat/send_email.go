@@ -2,6 +2,7 @@ package chat
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -24,10 +25,13 @@ var sendEmailOp = Op{Title: "Send an email",
 	Doing: saying("Writing an email"),
 	Asks: func(s *Service, _ toolArgs, call llm.ToolCall) (toolResult, bool) {
 		e, err := s.emailOf(call.Args)
+		if err == nil {
+			err = s.canSend(e)
+		}
 		if err != nil {
 			return fail("%v", err), true
 		}
-		detail := fmt.Sprintf("From %s, about %q:\n\n%s", s.MailFrom(), e.Subject, e.Text)
+		detail := fmt.Sprintf("From your mailbox, about %q:\n\n%s", e.Subject, e.Text)
 		for _, c := range e.Choices {
 			detail += fmt.Sprintf("\n\nWith a link, %s: pressing it would %s.", c.Label, c.what)
 		}
@@ -36,6 +40,9 @@ var sendEmailOp = Op{Title: "Send an email",
 	},
 	Run: func(s *Service, _ toolArgs, call llm.ToolCall) toolResult {
 		e, err := s.emailOf(call.Args)
+		if err == nil && (s.Mail == nil || s.MailFrom == nil || s.MailFrom() == "") {
+			err = errNoMailbox
+		}
 		if err != nil {
 			return fail("%v", err)
 		}
@@ -73,6 +80,21 @@ type emailArgs struct {
 	Choices []choice `json:"choices"`
 }
 
+var errNoMailbox = errors.New("no mailbox is connected to send from: the person connects theirs on Email in")
+
+// canSend says, before an email is put to the person, what would stop it
+// going, where this process knows: a tool run by Claude Code in a process
+// of its own does not, and the email is sent from the server's.
+func (s *Service) canSend(e emailArgs) error {
+	if s.MailFrom != nil && s.MailFrom() == "" {
+		return errNoMailbox
+	}
+	if len(e.Choices) > 0 && s.Address != nil && s.address() == "" {
+		return errUnreachable
+	}
+	return nil
+}
+
 // emailOf reads a call: one address, a subject and the text, from a
 // mailbox that is connected.
 func (s *Service) emailOf(raw json.RawMessage) (emailArgs, error) {
@@ -80,8 +102,6 @@ func (s *Service) emailOf(raw json.RawMessage) (emailArgs, error) {
 	json.Unmarshal(raw, &e)
 	e.To, e.Subject, e.Text = strings.TrimSpace(e.To), trim.Line(e.Subject, 200), strings.TrimSpace(e.Text)
 	switch {
-	case s.Mail == nil || s.MailFrom == nil || s.MailFrom() == "":
-		return e, fmt.Errorf("no mailbox is connected to send from: the person connects theirs on Email in")
 	case !strings.Contains(e.To, "@") || strings.ContainsAny(e.To, ",;\r\n"):
 		return e, fmt.Errorf("say one email address to send to")
 	case e.Subject == "" || e.Text == "":

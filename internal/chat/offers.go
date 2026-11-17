@@ -23,6 +23,8 @@ import (
 // ByOffer marks a choice offered in a message.
 const ByOffer = "offer"
 
+var errUnreachable = errors.New("choices need this Sameway reachable from the internet, so whoever gets the message can press them: publish something, such as the booking link, first; or send it without choices")
+
 // mostChoices is how many a message may carry.
 const mostChoices = 4
 
@@ -42,9 +44,6 @@ func OfferPath(token string) string { return "/offer/" + token }
 // choicesOf reads the choices of a call: each one a change a yes could
 // make, said in words.
 func (s *Service) choicesOf(list []choice) ([]choice, error) {
-	if len(list) > 0 && s.address() == "" {
-		return nil, errors.New("choices need this Sameway reachable from the internet, so whoever gets the message can press them: publish something, such as the booking link, first; or send it without choices")
-	}
 	if len(list) > mostChoices {
 		return nil, fmt.Errorf("a message carries at most %d choices", mostChoices)
 	}
@@ -69,7 +68,7 @@ func (s *Service) choicesOf(list []choice) ([]choice, error) {
 func (s *Service) offer(to string, list []choice) (string, error) {
 	address := s.address()
 	if address == "" {
-		return "", errors.New("this Sameway is no longer reachable from the internet, so no one could press its choices")
+		return "", errUnreachable
 	}
 	group := requestToken()
 	var lines []string

@@ -90,6 +90,7 @@ func TestAMessageCarriesChoicesTheyCanTake(t *testing.T) {
 	srv.OnRing(func(title, text, _ string) { rang <- title + ": " + text })
 
 	tentative, _ := a.Store.Create("event", map[string]any{"title": "Meeting with Pat Lee (tentative)", "starts": "2026-03-13T14:00:00Z"})
+	a.Chat.Address = func() string { return "" } // nothing published
 	if text, isErr := a.Chat.Call("send_email", json.RawMessage(`{"to":"pat@example.com","subject":"x","text":"y","choices":[{"label":"Go","tool":"update_record","type":"event","id":"`+tentative.ID+`","fields":{"title":"z"}}]}`)); !isErr || !strings.Contains(text, "publish something") {
 		t.Errorf("with nothing published, no one could press them, and it says so: %v %s", isErr, text)
 	}
