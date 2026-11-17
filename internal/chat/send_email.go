@@ -74,7 +74,7 @@ var sendEmailOp = Op{Title: "Send an email",
 		return toolResult{text: said, change: &records.Change{Action: "emailed", Detail: trim.Line(schema.AndNames(went)+": "+e.Subject, 120)}}
 	},
 	Tool: llm.Tool{Name: "send_email",
-		Description: "Send an email from the person's own mailbox (connected on Email in), written as them: to someone who booked or asked (their address is in the request's asked_by), or anyone they name. It is put to them word for word first, so call it rather than asking in words. Their reply is answered in the thread with their reach alone. choices: links they can press, each a change made here as agreed (update_record, create_record); the first pressed is made, the rest close. invite: an event as a real calendar invitation; their answer is logged on it. Actions can wait for either (proposal by_action=offer or request, state=accepted; event changed).",
+		Description: "Send an email from the person's mailbox, as them, put to them word for word first (so call it rather than asking in words): to someone who asked (asked_by), or anyone they name. Replies are answered in the thread with the writer's reach. choices: links to press, each a change made here (first wins). invite: an event as a calendar invitation. Actions can wait on either.",
 		Schema: obj(map[string]any{
 			"to":      map[string]any{"type": "string", "description": "One address (Pat Lee <pat@example.com>), or several separated by commas: each gets it on their own, in their own thread."},
 			"subject": map[string]any{"type": "string", "description": "Needed unless in a thread."},

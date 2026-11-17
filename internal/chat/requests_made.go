@@ -57,6 +57,7 @@ func (s *Service) tellOwner(since time.Time) {
 		if RequestState(p) != "waiting" || s.answerAhead(p) { // standing_yes.go: the owner's yes, given ahead
 			continue
 		}
+		s.routeRequest(p) // route_requests.go: to whoever handles it, the owner told too
 		if summary, _ := p.Fields["summary"].(string); s.Requested != nil {
 			s.Requested(summary)
 		}
