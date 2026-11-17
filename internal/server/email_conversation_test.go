@@ -7,10 +7,12 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/server"
 )
 
 // A meeting is arranged in a conversation by email, in plain words, the
@@ -163,5 +165,73 @@ func TestOneYesAsksAroundEachInTheirOwnThread(t *testing.T) {
 	ana, bo := a.Chat.Conversation([]string{"<around1@example.com>"}), a.Chat.Conversation([]string{"<around2@example.com>"})
 	if ana == "" || bo == "" || ana == bo {
 		t.Errorf("each in a thread of their own: %q %q", ana, bo)
+	}
+}
+
+// Waiting on someone has a day it is due: the one they promised or the
+// owner set, or three days after it was sent. Past it the conversation
+// is late, logged so an action can wait for it, and the owner is told;
+// the assistant it asks writes a nudge in the same thread, with the
+// owner's yes.
+func TestALateAnswerIsNudgedInItsThread(t *testing.T) {
+	t.Parallel()
+	a, h := newAppAt(t, tonight)
+	srv := h.(*server.Server)
+	var sent []chat.Outgoing
+	a.Chat.MailFrom = func() string { return "tris+sameway@example.com" }
+	a.Chat.Mail = func(m chat.Outgoing) (string, error) {
+		sent = append(sent, m)
+		return "<wait" + string(rune('0'+len(sent))) + "@example.com>", nil
+	}
+	rang := make(chan string, 4)
+	srv.OnRing(func(title, text, _ string) { rang <- title + ": " + text })
+
+	a.Chat.Call("send_email", json.RawMessage(`{"to":"Pat Lee <pat@example.com>","subject":"Boiler quote","text":"Could you send a quote by Friday?"}`))
+	wantStatus(t, postForm(t, h, "/proposal/"+a.Chat.Proposals()[0].ID+"/accept", nil), http.StatusSeeOther)
+	first := a.Chat.Conversation([]string{"<wait1@example.com>"})
+	if e, _ := a.Store.Get("email", first); e.Fields["turn"] != "theirs" {
+		t.Fatalf("what Sameway sent waits on them: %v", e.Fields["turn"])
+	}
+	srv.MarkLate(tonight.Add(2 * 24 * time.Hour))
+	if e, _ := a.Store.Get("email", first); e.Fields["turn"] != "theirs" {
+		t.Fatal("not late before it is due")
+	}
+
+	a.Store.Create("action", map[string]any{"title": "Nudge when an answer is late", "kind": "message", "message": "{{title}} is late. Nudge them in the thread.", "when": "changed", "what": "email", "only": []any{"turn=late"}})
+	a.Chat.Provider = &scripted{steps: []*llm.Response{
+		toolCall("send_email", map[string]any{"to": "Pat Lee <pat@example.com>", "thread": first, "text": "Just checking in on the quote."}),
+		{Text: "I have written a nudge; it waits for your yes."},
+	}}
+	a.Automate.StartWorker()
+	srv.MarkLate(tonight.Add(4 * 24 * time.Hour))
+	if e, _ := a.Store.Get("email", first); e.Fields["turn"] != "late" {
+		t.Fatalf("past three days it is late: %v", e.Fields["turn"])
+	}
+	select {
+	case got := <-rang:
+		if !strings.Contains(got, "An answer is late") {
+			t.Errorf("the owner is told: %s", got)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("the owner is told")
+	}
+	var nudge string
+	for deadline := time.Now().Add(5 * time.Second); nudge == ""; time.Sleep(20 * time.Millisecond) {
+		for _, p := range a.Chat.Proposals() {
+			if strings.Contains(p.Fields["summary"].(string), "pat@example.com") && p.Fields["state"] == "pending" {
+				nudge = p.ID
+			}
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("being late set off the action, and its nudge waits for the owner")
+		}
+	}
+	wantStatus(t, postForm(t, h, "/proposal/"+nudge+"/accept", nil), http.StatusSeeOther)
+	last := sent[len(sent)-1]
+	if last.Subject != "Re: Boiler quote" || strings.Join(last.Refs, " ") != "<wait1@example.com>" || last.Text != "Just checking in on the quote." {
+		t.Errorf("the nudge goes in the same thread: %+v", last)
+	}
+	if e, _ := a.Store.Get("email", first); e.Fields["turn"] != "" {
+		t.Errorf("and the conversation's turn is its latest: %v", e.Fields["turn"])
 	}
 }

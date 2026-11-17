@@ -47,11 +47,17 @@ func (s *Service) sent(m Outgoing, root string) error {
 		return nil
 	}
 	fields := map[string]any{"subject": trim.Line(m.Subject, 300), "from": s.MailFrom(), "received": when.Store(s.Now(), false),
-		"body": m.Text, "message_id": id, "from_me": true, "tags": []any{}}
+		"body": m.Text, "message_id": id, "from_me": true, "tags": []any{}, "turn": records.Turn(true, m.Text)}
+	ops := []records.Op{}
 	if root != "" {
 		fields["thread"] = root
+		for _, e := range s.thread(root) { // the conversation's state is its latest
+			if t, _ := e.Fields["turn"].(string); t != "" {
+				ops = append(ops, records.Op{Type: "email", ID: e.ID, After: map[string]any{"turn": ""}})
+			}
+		}
 	}
-	_, err = s.Apply(records.Op{Type: "email", After: fields})
+	_, err = s.Apply(append(ops, records.Op{Type: "email", After: fields})...)
 	return err
 }
 

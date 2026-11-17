@@ -44,7 +44,7 @@ var sendEmailOp = Op{Title: "Send an email",
 			detail += "\n\nEach gets it on their own, and answers in their own thread."
 		}
 		return s.ask(question{"Email " + schema.AndNames(e.people) + " this?", detail, "Send it", "Don't send"},
-			map[string]any{"tool": "send_email", "to": e.To, "subject": e.Subject, "text": e.Text, "choices": e.Choices, "invite": e.Invite, "cancel": e.Cancel}), true
+			map[string]any{"tool": "send_email", "to": e.To, "subject": e.Subject, "text": e.Text, "choices": e.Choices, "invite": e.Invite, "cancel": e.Cancel, "thread": e.Thread}), true
 	},
 	Run: func(s *Service, _ toolArgs, call llm.ToolCall) toolResult {
 		e, err := s.emailOf(call.Args)
@@ -77,7 +77,7 @@ var sendEmailOp = Op{Title: "Send an email",
 		Description: "Send an email from the person's own mailbox (the one connected on Email in) to one address: to write back to someone who booked or asked through the published page, whose name and email are in the request's asked_by, or to anyone the person names. Write it as the person, plainly. When they write back, Sameway answers them in the thread with their reach alone (free_times, and requests for the person's yes), as a conversation. It is put to the person first, word for word, so when they ask for an email or an invitation, call it rather than asking them in words first. choices are links in the email that whoever gets it can press, each a change it makes here as the person agreed, such as confirming or moving a tentative event (update_record) or making one (create_record); the first pressed is made and the rest close, and being chosen can set off an action (proposal, by_action=offer, state=accepted). invite sends an event as a real calendar invitation instead, for Yes, No and Maybe in their own mail app; an answer is logged on the event (when changed, what event), so an action can wait for it. To write to whoever asks each time the person answers them, make an action when changed, what proposal, only by_action=request and state=accepted (or dismissed), kind message.",
 		Schema: obj(map[string]any{
 			"to":      map[string]any{"type": "string", "description": "Who to send it to: one address, with the name if known (Pat Lee <pat@example.com>), or several separated by commas to ask around or arrange something with a group: each gets it on their own, in a thread of their own, answered as a conversation, and all wait on one yes."},
-			"subject": map[string]any{"type": "string"},
+			"subject": map[string]any{"type": "string", "description": "Needed unless it is written in a thread."},
 			"text":    map[string]any{"type": "string", "description": "The email, as plain text; the choices' links are put after it."},
 			"choices": map[string]any{"type": "array", "items": obj(map[string]any{
 				"label":  map[string]any{"type": "string", "description": "What the link says: Confirm, Thursday at 3pm instead."},
@@ -88,7 +88,8 @@ var sendEmailOp = Op{Title: "Send an email",
 			}, "label", "tool", "type", "fields")},
 			"invite": map[string]any{"type": "string", "description": "An event's id, to send it as a real invitation: their mail app shows Yes, No and Maybe and puts it in their calendar, and their answer comes back to the event's answers. Send it again after the event changes to move it in their calendar."},
 			"cancel": map[string]any{"type": "boolean", "description": "With invite, take the event out of their calendar instead."},
-		}, "to", "subject", "text")}}
+			"thread": map[string]any{"type": "string", "description": "An email's id, to write in its conversation, such as a nudge when an answer is late or a follow-up: it goes as an answer in that thread, Re: its subject unless one is given."},
+		}, "to", "text")}}
 
 type emailArgs struct {
 	To      string   `json:"to"`
@@ -97,7 +98,10 @@ type emailArgs struct {
 	Choices []choice `json:"choices"`
 	Invite  string   `json:"invite"`
 	Cancel  bool     `json:"cancel"`
+	Thread  string   `json:"thread"`
 	people  []string // who it goes to, each on their own
+	root    string   // the conversation it is in, by its first email
+	refs    []string // the names of the emails it answers
 }
 
 // plainAddress is an address as a person writes it, Pat Lee
@@ -132,7 +136,7 @@ func (s *Service) sendOne(e emailArgs) error {
 			return err
 		}
 	}
-	return s.sent(Outgoing{To: e.To, Subject: e.Subject, Text: e.Text, Calendar: calendar}, "") // email_conversation.go
+	return s.sent(Outgoing{To: e.To, Subject: e.Subject, Text: e.Text, Calendar: calendar, Refs: e.refs}, e.root) // email_conversation.go
 }
 
 var errNoMailbox = errors.New("no mailbox is connected to send from: the person connects theirs on Email in")
@@ -156,6 +160,21 @@ func (s *Service) emailOf(raw json.RawMessage) (emailArgs, error) {
 	var e emailArgs
 	json.Unmarshal(raw, &e)
 	e.To, e.Subject, e.Text = strings.TrimSpace(e.To), trim.Line(e.Subject, 200), strings.TrimSpace(e.Text)
+	if e.Thread != "" {
+		rec, err := s.Store.Get("email", e.Thread)
+		if err != nil {
+			return e, fmt.Errorf("thread names no email here: give an email's id")
+		}
+		e.root, _ = rec.Fields["thread"].(string)
+		if e.root == "" {
+			e.root = rec.ID
+		}
+		mails := s.thread(e.root) // email_conversation.go
+		e.refs = threadRefs(mails)
+		if e.Subject == "" {
+			e.Subject = reSubject(mails[len(mails)-1])
+		}
+	}
 	list, err := mail.ParseAddressList(strings.ReplaceAll(e.To, ";", ","))
 	switch {
 	case err != nil || len(list) == 0 || strings.ContainsAny(e.To, "\r\n"):
