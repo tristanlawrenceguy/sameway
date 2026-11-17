@@ -169,3 +169,43 @@ func TestTwoRealAssistantsArrangeAVisit(t *testing.T) {
 		t.Errorf("reading the link says the plumber said yes: %v %s", isErr, text)
 	}
 }
+
+// A real model, told the owner cannot do the hour someone booked, pencils
+// in another and writes to them with choices to take; the email waits for
+// the owner's yes, and goes with a link for each.
+func TestARealAssistantOffersAnotherTime(t *testing.T) {
+	t.Parallel()
+	me := realApp(t)
+	mine := server.New(me)
+	sent := make(chan string, 1)
+	me.Chat.MailFrom = func() string { return "tris@example.com" }
+	me.Chat.Mail = func(to, subject, text string) error { sent <- to + "|" + text; return nil }
+	me.Chat.Address = func() string { return "https://tris.example.ts.net/" }
+
+	if _, err := me.Chat.Send(context.Background(), "Pat Lee (pat@example.com) booked Thursday 26 November 2026 at 9am but I can't. Put a tentative meeting with Pat on Friday 27 November 2026 at 2pm in my calendar, and email Pat with links to confirm Friday or say it doesn't suit."); err != nil {
+		t.Fatalf("the turn failed: %v", err)
+	}
+	msgs, _ := me.Chat.Messages()
+	for _, m := range msgs {
+		t.Logf("%v: %v", m.Fields["role"], m.Fields["content"])
+	}
+	if n, _ := me.Store.Count("event"); n != 1 {
+		t.Errorf("the tentative meeting is on the calendar: %d events", n)
+	}
+	var email string
+	for _, p := range me.Chat.Proposals() {
+		if s, _ := p.Fields["summary"].(string); strings.Contains(s, "pat@example.com") {
+			email = p.ID
+			t.Logf("PUT TO THE OWNER: %s\n%s", s, p.Fields["detail"])
+		}
+	}
+	if email == "" {
+		t.Fatal("the email is put to the owner")
+	}
+	wantStatus(t, postForm(t, mine, "/proposal/"+email+"/accept", nil), http.StatusSeeOther)
+	got := <-sent
+	t.Logf("SENT: %s", got)
+	if strings.Count(got, "https://tris.example.ts.net/offer/") < 2 {
+		t.Errorf("it carries a link for each choice: %s", got)
+	}
+}
