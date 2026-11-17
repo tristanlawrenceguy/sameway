@@ -5,14 +5,17 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/tls"
+	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"mime"
+	"mime/multipart"
 	"mime/quotedprintable"
 	"net"
 	"net/mail"
 	"net/smtp"
+	"net/textproto"
 	"strings"
 	"time"
 )
@@ -42,8 +45,9 @@ var dialSMTP = func(ctx context.Context, addr string) (net.Conn, error) {
 	return (&net.Dialer{Timeout: 20 * time.Second}).DialContext(ctx, "tcp", addr)
 }
 
-// Send sends one email from the account to one address, as plain text.
-func Send(ctx context.Context, a Account, to, subject, text string) error {
+// Send sends one email from the account to one address, as plain text,
+// with a calendar when it carries an invitation (export.Invite).
+func Send(ctx context.Context, a Account, to, subject, text string, calendar []byte) error {
 	rcpt, err := mail.ParseAddress(to)
 	if err != nil {
 		return fmt.Errorf("%q is not an email address", to)
@@ -81,7 +85,7 @@ func Send(ctx context.Context, a Account, to, subject, text string) error {
 	if err != nil {
 		return err
 	}
-	if _, err := w.Write(message(a.User, rcpt.String(), subject, text)); err != nil {
+	if _, err := w.Write(message(a.User, rcpt.String(), subject, text, calendar)); err != nil {
 		return err
 	}
 	if err := w.Close(); err != nil {
@@ -92,7 +96,10 @@ func Send(ctx context.Context, a Account, to, subject, text string) error {
 
 // message is an email as it is sent: one line per header, a subject in
 // any language, and the text quoted-printable, so no line is too long.
-func message(from, to, subject, text string) []byte {
+// With a calendar it is the text and the calendar as two ways of saying
+// one thing, which is how a mail app knows an invitation and offers its
+// own Yes, No and Maybe.
+func message(from, to, subject, text string, calendar []byte) []byte {
 	id := make([]byte, 12)
 	rand.Read(id)
 	_, domain, _ := strings.Cut(from, "@")
@@ -101,13 +108,35 @@ func message(from, to, subject, text string) []byte {
 	for _, h := range [][2]string{
 		{"From", from}, {"To", to}, {"Subject", mime.QEncoding.Encode("utf-8", subject)},
 		{"Date", time.Now().Format(time.RFC1123Z)}, {"Message-ID", "<" + hex.EncodeToString(id) + "@" + domain + ">"},
-		{"MIME-Version", "1.0"}, {"Content-Type", "text/plain; charset=utf-8"}, {"Content-Transfer-Encoding", "quoted-printable"},
+		{"MIME-Version", "1.0"},
 	} {
 		b.WriteString(h[0] + ": " + h[1] + "\r\n")
 	}
-	b.WriteString("\r\n")
-	q := quotedprintable.NewWriter(&b)
-	q.Write([]byte(strings.ReplaceAll(strings.ReplaceAll(text, "\r\n", "\n"), "\n", "\r\n")))
+	words := strings.ReplaceAll(strings.ReplaceAll(text, "\r\n", "\n"), "\n", "\r\n")
+	if len(calendar) == 0 {
+		b.WriteString("Content-Type: text/plain; charset=utf-8\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\n")
+		q := quotedprintable.NewWriter(&b)
+		q.Write([]byte(words))
+		q.Close()
+		return b.Bytes()
+	}
+	mw := multipart.NewWriter(&b)
+	b.WriteString("Content-Type: multipart/alternative; boundary=\"" + mw.Boundary() + "\"\r\n\r\n")
+	part, _ := mw.CreatePart(textproto.MIMEHeader{"Content-Type": {"text/plain; charset=utf-8"}, "Content-Transfer-Encoding": {"quoted-printable"}})
+	q := quotedprintable.NewWriter(part)
+	q.Write([]byte(words))
 	q.Close()
+	method := "REQUEST"
+	if bytes.Contains(calendar, []byte("METHOD:CANCEL")) {
+		method = "CANCEL"
+	}
+	part, _ = mw.CreatePart(textproto.MIMEHeader{"Content-Type": {"text/calendar; charset=utf-8; method=" + method}, "Content-Transfer-Encoding": {"base64"}})
+	enc := base64.StdEncoding.EncodeToString(calendar)
+	for len(enc) > 76 {
+		part.Write([]byte(enc[:76] + "\r\n"))
+		enc = enc[76:]
+	}
+	part.Write([]byte(enc + "\r\n"))
+	mw.Close()
 	return b.Bytes()
 }

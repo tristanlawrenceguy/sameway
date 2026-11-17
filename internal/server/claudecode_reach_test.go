@@ -179,7 +179,7 @@ func TestARealAssistantOffersAnotherTime(t *testing.T) {
 	mine := server.New(me)
 	sent := make(chan string, 1)
 	me.Chat.MailFrom = func() string { return "tris@example.com" }
-	me.Chat.Mail = func(to, subject, text string) error { sent <- to + "|" + text; return nil }
+	me.Chat.Mail = func(to, subject, text string, _ []byte) error { sent <- to + "|" + text; return nil }
 	me.Chat.Address = func() string { return "https://tris.example.ts.net/" }
 
 	if _, err := me.Chat.Send(context.Background(), "Pat Lee (pat@example.com) booked Thursday 26 November 2026 at 9am but I can't. Put a tentative meeting with Pat on Friday 27 November 2026 at 2pm in my calendar, and email Pat with links to confirm Friday or say it doesn't suit."); err != nil {
@@ -207,5 +207,38 @@ func TestARealAssistantOffersAnotherTime(t *testing.T) {
 	t.Logf("SENT: %s", got)
 	if strings.Count(got, "https://tris.example.ts.net/offer/") < 2 {
 		t.Errorf("it carries a link for each choice: %s", got)
+	}
+}
+
+// A real model asked to invite someone makes the event and sends it as a
+// real invitation, for their own mail app's Yes, No and Maybe.
+func TestARealAssistantSendsAnInvitation(t *testing.T) {
+	t.Parallel()
+	me := realApp(t)
+	mine := server.New(me)
+	sent := make(chan string, 1)
+	me.Chat.MailFrom = func() string { return "tris+sameway@example.com" }
+	me.Chat.Mail = func(to, subject, text string, calendar []byte) error { sent <- to + "|" + string(calendar); return nil }
+
+	if _, err := me.Chat.Send(context.Background(), "Invite Pat Lee (pat@example.com) to a meeting on Friday 27 November 2026 at 2pm for an hour, so it lands in their calendar."); err != nil {
+		t.Fatalf("the turn failed: %v", err)
+	}
+	var email string
+	for _, p := range me.Chat.Proposals() {
+		if s, _ := p.Fields["summary"].(string); strings.Contains(s, "pat@example.com") {
+			email = p.ID
+			t.Logf("PUT TO THE OWNER: %s\n%s", s, p.Fields["detail"])
+		}
+	}
+	if email == "" {
+		msgs, _ := me.Chat.Messages()
+		for _, m := range msgs {
+			t.Logf("%v: %v", m.Fields["role"], m.Fields["content"])
+		}
+		t.Fatal("the invitation is put to the owner")
+	}
+	wantStatus(t, postForm(t, mine, "/proposal/"+email+"/accept", nil), http.StatusSeeOther)
+	if got := <-sent; !strings.Contains(got, "METHOD:REQUEST") || !strings.Contains(got, "pat@example.com") {
+		t.Errorf("it goes as a real invitation: %s", got)
 	}
 }

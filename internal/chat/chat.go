@@ -83,7 +83,7 @@ type Service struct {
 	// none, and Mail sends one email from it; both set by the server.
 	// See send_email.go.
 	MailFrom func() string
-	Mail     func(to, subject, text string) error
+	Mail     func(to, subject, text string, calendar []byte) error
 	// Address is this Sameway's address on the internet, once something
 	// is published and Funnel is up, or ""; set by the command line.
 	Address func() string

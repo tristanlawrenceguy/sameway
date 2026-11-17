@@ -50,6 +50,8 @@ func Parse(r io.Reader) (Mail, error) {
 				plain = string(b)
 			case kind == "text/html" && html == "":
 				html = string(b)
+			case kind == "text/calendar" && m.Calendar == nil:
+				m.Calendar = b
 			}
 		case *mail.AttachmentHeader:
 			name, _ := ph.Filename()

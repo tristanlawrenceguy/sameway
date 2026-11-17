@@ -1,6 +1,7 @@
 package inbox_test
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -75,4 +76,24 @@ func TestEmailComesInAsNotesToSort(t *testing.T) {
 func emailNotes(t *testing.T, st *store.Store) []*store.Record {
 	recs, _ := st.List("email", store.ListOptions{})
 	return recs
+}
+
+// An answer to an invitation coming back to the +sameway address is kept
+// on its event, not put among the mail to sort.
+func TestAnInvitationsAnswerComesBackToItsEvent(t *testing.T) {
+	inbox.MailInsecure(true)
+	defer inbox.MailInsecure(false)
+	mail := mailintest.Start(t, "me@example.com", "abcdefghijklmnop")
+	a, h := newApp(t)
+	ev, _ := a.Store.Create("event", map[string]any{"title": "Meeting with Pat Lee", "starts": "2026-03-13T14:00:00Z", "answers": []any{"Pat Lee <pat@example.com>: invited"}})
+	mail.Put(t, "INBOX", "From: Pat Lee <pat@example.com>\r\nTo: me+sameway@example.com\r\nSubject: Accepted: Meeting with Pat Lee\r\nMIME-Version: 1.0\r\n"+
+		"Content-Type: multipart/alternative; boundary=b\r\n\r\n--b\r\nContent-Type: text/plain\r\n\r\nPat Lee has accepted this invitation.\r\n"+
+		"--b\r\nContent-Type: text/calendar; method=REPLY\r\n\r\nBEGIN:VCALENDAR\r\nMETHOD:REPLY\r\nBEGIN:VEVENT\r\nUID:"+ev.ID+"@sameway\r\nATTENDEE;PARTSTAT=ACCEPTED;CN=Pat Lee:mailto:pat@example.com\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n--b--\r\n")
+	postForm(t, h, "/mail/connect", url.Values{"user": {"me@example.com"}, "password": {"abcdefghijklmnop"}, "host": {mail.Addr}})
+	if e, _ := a.Store.Get("event", ev.ID); fmt.Sprint(e.Fields["answers"]) != "[Pat Lee <pat@example.com>: accepted]" {
+		t.Errorf("the answer is kept on its event: %v", e.Fields["answers"])
+	}
+	if notes := emailNotes(t, a.Store); len(notes) != 0 {
+		t.Errorf("and is not mail to sort: %d", len(notes))
+	}
 }
