@@ -87,12 +87,11 @@ func (s *Server) questionAsk(w http.ResponseWriter, r *http.Request) {
 	if who == "" {
 		v.Name = chat.SomeonePublished
 	}
-	start := s.now()
-	said, err := s.app.Chat.For(v).AnswerOnce(r.Context(), s.app.Workspace.Config.Name, r.PostForm.Get("question"))
+	said, made, err := s.app.Chat.For(v).AnswerOnce(r.Context(), s.app.Workspace.Config.Name, r.PostForm.Get("question"))
 	if err != nil {
 		said = err.Error()
 	}
-	asked := s.requestsSince(r, v, start) // request_page.go
+	asked := s.requestsSeen(r, made) // request_page.go
 	if len(asked) > 0 {
 		s.Changed()
 	}
