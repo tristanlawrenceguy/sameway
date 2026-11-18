@@ -39,10 +39,11 @@ const (
 func (s *Server) bookable() bool { return s.Published().Book }
 
 // openHours are the hours the owner's events leave free, each starting on
-// the hour, from the next one, for the next two weeks.
+// the hour, from the next one, for the next two weeks. The hour is the
+// owner's: Truncate counts from UTC, which is half past in India.
 func (s *Server) openHours() []time.Time {
 	now := s.now()
-	start := now.Truncate(time.Hour).Add(time.Hour)
+	start := time.Date(now.Year(), now.Month(), now.Day(), now.Hour()+1, 0, 0, 0, now.Location())
 	end := start.AddDate(0, 0, bookDays)
 	busy := s.app.Records.Busy(start, end)
 	var out []time.Time
