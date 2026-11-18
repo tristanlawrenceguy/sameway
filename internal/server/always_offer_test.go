@@ -51,7 +51,7 @@ func TestNobodyAsksForAStandingYes(t *testing.T) {
 	a, _ := newApp(t)
 	vi, _ := a.Store.Create("person", map[string]any{"name": "Vi", "email": "vi@example.com", "access": "view", "always": []any{chat.AlwaysKey("update_record", "person")}})
 	them := a.Chat.For(records.Visitor{Person: vi.ID, Name: "Vi", Access: records.View})
-	for _, fields := range []string{`{"always":["`+chat.AlwaysKey("create_record", "event")+`"]}`, `{"access":"edit"}`} {
+	for _, fields := range []string{`{"always":["` + chat.AlwaysKey("create_record", "event") + `"]}`, `{"access":"edit"}`} {
 		text, isErr := them.Call("update_record", json.RawMessage(`{"type":"person","id":"`+vi.ID+`","fields":`+fields+`}`))
 		if !isErr || !strings.Contains(text, "not theirs to ask for") {
 			t.Errorf("%s is refused, never made or put to the owner: %v %s", fields, isErr, text)
