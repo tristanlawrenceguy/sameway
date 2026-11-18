@@ -123,6 +123,13 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 	if s.app.Workspace.Config.UI.Developer == "shown" {
 		more = append(more, struct{ href, label string }{"/design", "Design system"})
 	}
+	// The internet reaches none of them. A page it is sent whole, such as
+	// the booking link, would otherwise carry six links that each say not
+	// found, hidden by the stylesheet but there for an agent or a reader
+	// without styles (public_clean.go takes them out of the rest).
+	if isPublic(r) {
+		more = nil
+	}
 	for _, l := range more {
 		href := l.href
 		if href == "/search" {
