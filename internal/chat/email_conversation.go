@@ -31,6 +31,9 @@ type Outgoing struct {
 	To, Subject, Text string
 	Calendar          []byte   // an invitation it carries, or nil
 	Refs              []string // the thread it answers, oldest first
+	// Auto is an answer the assistant wrote unasked, marked so another
+	// assistant reading it does not answer back, and the two go on forever.
+	Auto bool
 }
 
 // sent sends an email from the owner's mailbox and keeps it as theirs,
@@ -179,7 +182,7 @@ func (s *Service) AnswerMail(ctx context.Context, root string, verified bool) er
 	if err != nil || strings.TrimSpace(answer) == "" {
 		return err
 	}
-	return s.sent(Outgoing{To: from, Subject: reSubject(last), Text: answer, Refs: threadRefs(mails)}, root)
+	return s.sent(Outgoing{To: from, Subject: reSubject(last), Text: answer, Refs: threadRefs(mails), Auto: true}, root)
 }
 
 // reSubject is the subject of an answer to an email.
