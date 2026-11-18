@@ -163,7 +163,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	// the whole record back except for those already-in-chips fields.
 	var items []any
 	for _, f := range shownFields {
-		items = append(items, s.fieldItem(t, f, rec.Fields[f.Name], s.display(f, rec.Fields[f.Name])))
+		items = append(items, s.fieldItem(t, f, rec.Fields[f.Name], s.fieldSays(f, rec)))
 	}
 	// An entry in the log says what happened, not what it stores.
 	if t.Name == records.ActivityType {

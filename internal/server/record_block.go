@@ -50,7 +50,7 @@ func (s *Server) resolveRecord(props map[string]any) (map[string]any, string) {
 	}
 	var fields []any
 	for _, f := range shown {
-		val := s.display(f, rec.Fields[f.Name])
+		val := s.fieldSays(f, rec)
 		item := s.fieldItem(t, f, rec.Fields[f.Name], val)
 		if v, ok := item["value"].(string); ok && v != "" {
 			val = v // a ref or what a reminder is about, by its title
