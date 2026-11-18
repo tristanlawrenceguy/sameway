@@ -63,11 +63,11 @@ func (s *Server) calls() *calls {
 func (s *Server) callsPage(w http.ResponseWriter, r *http.Request) {
 	var b strings.Builder
 	if _, ok := s.twilio(); ok {
-		at := strings.TrimSuffix(seenFrom(r, ""), "/")
-		if s.app.Chat.Address != nil && s.app.Chat.Address() != "" {
-			at = strings.TrimSuffix(s.app.Chat.Address(), "/")
+		if at := s.internetAt(r); at != "" { // question.go
+			b.WriteString(`<p>Connected to Twilio. In Twilio, under your number's voice settings, set "A call comes in" to this webhook, with POST:</p><p><code>` + template.HTMLEscapeString(at+"/calls/voice") + `</code></p><p>It is reached from the internet while something is published.</p>`)
+		} else {
+			b.WriteString(`<p>Connected to Twilio. Calls reach your assistant from the internet, so publish something first. The address to give Twilio is then here.</p>`)
 		}
-		b.WriteString(`<p>Connected to Twilio. In Twilio, under your number's voice settings, set "A call comes in" to this webhook, with POST:</p><p><code>` + template.HTMLEscapeString(at+"/calls/voice") + `</code></p><p>It is reached from the internet while something is published.</p>`)
 		b.WriteString(string(s.form(ui.Form{Action: "/calls/off", Button: &ui.Button{Label: "Stop answering calls", Variant: ui.Secondary}})))
 		s.page(w, r, "Calls", template.HTML(b.String()), pageOptions{})
 		return
