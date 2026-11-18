@@ -49,4 +49,4 @@ fields:
     label: Made without asking
     type: list
     of: string
-    description: "What they may ask the assistant for and have made without your yes, each a kind of change: create_record note. It is added when you press Always on one of their requests; take one out to be asked again."
+    description: "What they may ask the assistant for and have made without your yes, each a kind of change in words: notes, changes to tasks. It is added when you press Always on one of their requests; take one out to be asked again."
