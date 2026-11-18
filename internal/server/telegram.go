@@ -8,15 +8,18 @@ import (
 	"errors"
 	"html/template"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/prose"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/telegram"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
+	"github.com/tristanlawrenceguy/sameway/internal/web"
 )
 
 // Telegram, as one more way in: the owner makes a bot with @BotFather and
@@ -48,7 +51,10 @@ func (s *Server) telegramPage(w http.ResponseWriter, r *http.Request) {
 	if _, ok := s.bot(); ok {
 		name := s.app.Store.Meta(telegramName)
 		if s.app.Store.Meta(telegramMe) == "" {
-			b.WriteString(`<p>Connected to <a class="sw-link" href="https://t.me/` + esc(name) + `">@` + esc(name) + `</a>. To link yourself, send it this message:</p><p><code>/start ` + esc(s.app.Store.Meta(telegramCode)) + `</code></p>`)
+			// Telegram's start link sends the code with one press, so
+			// nobody copies it from one screen to another by hand.
+			code := s.app.Store.Meta(telegramCode)
+			b.WriteString(`<p>Connected to @` + esc(name) + `. To link yourself, <a class="sw-link" href="https://t.me/` + esc(name) + `?start=` + esc(code) + `">open @` + esc(name) + ` in Telegram and press Start</a>.</p><p>Or send it this message: <code>/start ` + esc(code) + `</code></p>`)
 		} else {
 			b.WriteString(`<p>Connected to <a class="sw-link" href="https://t.me/` + esc(name) + `">@` + esc(name) + `</a>, and linked to you. What you send it goes to your assistant, and requests come there with Make it and No. Anyone else who writes to it is answered as a visitor to your published pages, and what they ask for waits for your yes.</p>`)
 		}
@@ -81,6 +87,7 @@ func (s *Server) telegramConnect(w http.ResponseWriter, r *http.Request) {
 	s.app.Store.SetMeta(telegramName, name)
 	s.app.Store.SetMeta(telegramCode, hex.EncodeToString(code))
 	s.app.Store.SetMeta(telegramMe, "")
+	s.app.Store.SetMeta(telegramAt, "") // another bot counts its updates afresh
 	s.tellAt(w, r, outcome{Title: "Telegram connected", Text: "Send @" + name + " the message on this page to link yourself."}, "/telegram")
 }
 
@@ -119,7 +126,9 @@ func (s *Server) KeepTelegram(ctx context.Context, _ time.Time) error {
 func (s *Server) telegramSaid(ctx context.Context, bot telegram.Bot, m *telegram.Message) {
 	chatID, text := m.Chat.ID, strings.TrimSpace(m.Text)
 	me := s.app.Store.Meta(telegramMe)
-	if code := s.app.Store.Meta(telegramCode); me == "" && code != "" && text == "/start "+code {
+	// Only from the owner's own chat with the bot: linked in a group,
+	// everyone in it would speak as the owner.
+	if code := s.app.Store.Meta(telegramCode); me == "" && code != "" && text == "/start "+code && m.Chat.Type == "private" {
 		s.app.Store.SetMeta(telegramMe, strconv.FormatInt(chatID, 10))
 		bot.Send(ctx, chatID, "Linked. What you send here goes to your assistant, and requests come here for your yes.")
 		return
@@ -128,11 +137,11 @@ func (s *Server) telegramSaid(ctx context.Context, bot telegram.Bot, m *telegram
 		rec, err := s.app.Chat.Send(ctx, text)
 		answer := ""
 		if err != nil {
-			answer = err.Error()
+			answer = web.PlainError(err)
 		} else {
 			answer, _ = rec.Fields["content"].(string)
 		}
-		bot.Send(ctx, chatID, trim.Clip(answer, 4000))
+		bot.Send(ctx, chatID, trim.Clip(plainText(answer), 4000))
 		return
 	}
 	v := records.Visitor{Access: records.Public, Name: m.From.Name(), Device: "telegram", Login: "tg:" + strconv.FormatInt(chatID, 10)}
@@ -140,7 +149,7 @@ func (s *Server) telegramSaid(ctx context.Context, bot telegram.Bot, m *telegram
 	var said []chat.Said
 	json.Unmarshal([]byte(s.app.Store.Meta(key)), &said)
 	said = append(said, chat.Said{Text: trim.Clip(text, 4000)})
-	answer, err := s.app.Chat.For(v).AnswerChat(ctx, "Telegram", said)
+	answer, err := s.app.Chat.For(v).AnswerChat(ctx, "Telegram, in plain text: it shows Markdown as written, and a screen reader reads it aloud", said)
 	if err != nil {
 		answer = "Sorry, I could not answer just now."
 	}
@@ -150,7 +159,7 @@ func (s *Server) telegramSaid(ctx context.Context, bot telegram.Bot, m *telegram
 	}
 	raw, _ := json.Marshal(said)
 	s.app.Store.SetMeta(key, string(raw))
-	bot.Send(ctx, chatID, trim.Clip(answer, 4000))
+	bot.Send(ctx, chatID, trim.Clip(plainText(answer), 4000))
 }
 
 // telegramPressed answers a request from the owner's chat: Make it or No.
@@ -171,10 +180,31 @@ func (s *Server) telegramPressed(ctx context.Context, bot telegram.Bot, p *teleg
 		err = errors.New("that button does nothing")
 	}
 	if err != nil {
-		said = err.Error()
+		said = web.PlainError(err)
 	}
 	s.Changed()
 	bot.Answer(ctx, p.ID, said)
+	// The answer to a press is a notice that goes in seconds; a message
+	// stays in the chat, for a screen reader and for whoever looks later.
+	if p.Message.Text != "" {
+		said += ": " + p.Message.Text
+	}
+	bot.Send(ctx, p.Message.Chat.ID, said)
+}
+
+var numbered = regexp.MustCompile(`^\s*\d+[.)]\s`)
+
+// plainText is an answer as Telegram shows it, which is also as a screen
+// reader reads it aloud: Telegram shows Markdown as written, so its marks
+// are taken away line by line (stars, hashes, a link's address), keeping
+// the lines and a numbered step's number.
+func plainText(md string) string {
+	lines := strings.Split(md, "\n")
+	for i, l := range lines {
+		n := numbered.FindString(l)
+		lines[i] = strings.TrimSpace(strings.TrimSpace(n) + " " + prose.Plain(l[len(n):]))
+	}
+	return strings.Join(lines, "\n")
 }
 
 // telegramAsk puts a request that waits to the owner in Telegram, with

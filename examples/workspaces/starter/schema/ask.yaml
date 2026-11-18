@@ -34,5 +34,6 @@ fields:
     label: Last changed
     type: string
     maxLength: 40
+    hidden: true
     readonly: true
-    description: When what they made with their yes last changed, as their Sameway says it, or "taken away"; kept by the system.
+    description: When what they made with their yes last changed, as their Sameway says it, or "taken away"; kept by the system to notice the next change, and not shown, since it is a stored time, not words. The page says when the ask itself last changed.
