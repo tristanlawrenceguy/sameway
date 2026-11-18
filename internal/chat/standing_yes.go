@@ -42,7 +42,7 @@ func (s *Service) answerAhead(p *store.Record) bool {
 	resp, err := s.Provider.Complete(ctx, llm.Request{
 		System:    "You decide whether the owner's standing rule, in their own words, plainly covers a request, read as the owner meant it: a visit, a meeting or a booking is an event. Answer only yes or no. When it does not plainly cover it, or you are unsure, answer no.",
 		Messages:  []llm.Message{{Role: llm.RoleUser, Content: "The owner's standing rule: " + rule + "\n\nThe request, as Sameway knows it:\n" + facts + "\n\nDoes the rule plainly cover it?"}},
-		MaxTokens: 5})
+		MaxTokens: 5, Effort: "none"}) // a model here that thinks first spent its five words thinking, and never said yes
 	if err != nil || !strings.HasPrefix(strings.ToLower(strings.TrimSpace(resp.Text)), "yes") {
 		return false
 	}
