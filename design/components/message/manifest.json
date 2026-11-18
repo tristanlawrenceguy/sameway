@@ -3,6 +3,7 @@
   "version": "1.6.0",
   "description": "One turn in a conversation: who said it, what was said, and for assistant turns the receipt of canvas changes it made. Render inside a list so the conversation has structure.",
   "icon": "…",
+  "pageOnly": true,
   "use": { "when": "one turn of a conversation.", "not": "anything outside the conversation.", "with": "a list of turns." },
   "props": {
     "type": "object",

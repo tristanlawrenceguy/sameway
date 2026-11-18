@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "The way through a long list a page at a time: Previous, the pages by number with gaps, and Next, each a plain link.",
   "icon": "⋯",
+  "pageOnly": true,
   "use": { "when": "a list or a set of results is longer than reads well on one page.", "not": "steps in a task, which are a heading each; or tabs between views.", "with": "how many there are in all, said above the list." },
   "props": {
     "type": "object",
