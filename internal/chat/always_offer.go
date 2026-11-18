@@ -57,7 +57,7 @@ func (s *Service) offerAlways(p *store.Record) {
 	}
 	list, _ := person.Fields["always"].([]any)
 	s.ask(question{ask,
-		fmt.Sprintf("You have said yes to %d of their requests for this. From now on they would be %s without asking you, logged as theirs; taking it off their page asks you again.", yeses, verb),
+		fmt.Sprintf("You have said yes to %d of their requests for this. From now on they would be %s without asking you, logged as theirs. To be asked again, take %q off their page, under Made without asking.", yeses, verb, key),
 		"Yes, always", "Keep asking me"},
 		map[string]any{"tool": "update_record", "type": records.PersonType, "id": person.ID, "fields": map[string]any{"always": append(append([]any{}, list...), key)}})
 }

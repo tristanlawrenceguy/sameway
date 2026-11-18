@@ -71,6 +71,36 @@ func Clock(t time.Time, h24 bool) string {
 	return fmt.Sprintf("%d:%02d%s", h, m, half)
 }
 
+// Zone is the time zone of times from first to last, for someone who may
+// be anywhere: "Paris time (UTC+1)", by its place and its offset as
+// 36-days.js says it to a reader elsewhere; only the offset for a zone
+// with no place; only the place when the clocks change in between.
+func Zone(first, last time.Time) string {
+	_, off := first.Zone()
+	_, end := last.Zone()
+	changes := end != off
+	sign := "+"
+	if off < 0 {
+		sign, off = "−", -off
+	}
+	utc := fmt.Sprintf("UTC%s%d", sign, off/3600)
+	if m := off % 3600 / 60; m != 0 {
+		utc += fmt.Sprintf(":%02d", m)
+	}
+	name := first.Location().String()
+	switch {
+	case name == "UTC" || off == 0 && name == "Local":
+		return "UTC"
+	case name == "Local" || name == "":
+		return utc
+	}
+	place := strings.ReplaceAll(name[strings.LastIndex(name, "/")+1:], "_", " ") + " time"
+	if changes {
+		return place
+	}
+	return place + " (" + utc + ")"
+}
+
 // Face is the time on a clock's face, always with its minutes: "2:05pm",
 // "2:00pm" or "14:05". A face ticks, and "2pm" then "2:01pm" would jump.
 func Face(t time.Time, h24 bool) string {

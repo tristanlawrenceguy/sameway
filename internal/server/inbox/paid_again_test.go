@@ -217,3 +217,33 @@ func TestASubscriptionIsWhoseMailboxItCameTo(t *testing.T) {
 		t.Errorf("the mailbox is carried: %v", fields)
 	}
 }
+
+// fixedModel answers every question with the same words.
+type fixedModel struct{ said string }
+
+func (m fixedModel) Name() string { return "fixed" }
+func (m fixedModel) Complete(context.Context, llm.Request) (*llm.Response, error) {
+	return &llm.Response{Text: m.said}, nil
+}
+
+// A receipt's day a little gone by stays in the past: bought yesterday is
+// not bought next year. A day long gone is the coming one, as before.
+func TestAReceiptsDayGoneByStaysPast(t *testing.T) {
+	t.Parallel()
+	a, _ := newApp(t)
+	a.Chat.Provider, a.Chat.ProviderErr = fixedModel{`{"make": true, "fields": {"item": "Headphones", "bought": "17 November", "return_by": "15 January"}}`}, nil
+	act, _ := a.Store.Create(records.ActionType, map[string]any{"title": "Suggest a purchase", "kind": "suggest", "make": "purchase"})
+	mail, _ := a.Store.Create("email", map[string]any{"subject": "Your order", "body": "Headphones, bought 17 November. Return by 15 January.", "received": "2026-11-18T09:00:00Z"})
+	r := a.Automate.Suggest(context.Background(), act, "email", mail.ID)
+	p, err := a.Store.Get(records.ProposalType, r.Answer)
+	if err != nil {
+		t.Fatalf("suggested: %v", r.Text)
+	}
+	fields := p.Fields["action"].(map[string]any)["fields"].(map[string]any)
+	if b, _ := fields["bought"].(string); !strings.HasPrefix(b, "2026-11-17") {
+		t.Errorf("bought the day before it was sent: %v", fields["bought"])
+	}
+	if d, _ := fields["return_by"].(string); !strings.HasPrefix(d, "2027-01-15") {
+		t.Errorf("returned by the coming 15 January: %v", fields["return_by"])
+	}
+}

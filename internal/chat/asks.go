@@ -85,6 +85,7 @@ func (s *Service) theirState(ctx context.Context, at string) (state, changed str
 	if err != nil {
 		return "", ""
 	}
+	client = onlyTo(client, req.URL.Host) // ask_a2a.go
 	req.Header.Set("Accept", "application/json")
 	res, err := client.Do(req)
 	if err != nil {

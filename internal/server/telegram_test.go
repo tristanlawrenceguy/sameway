@@ -114,6 +114,9 @@ func TestTelegramIsOneMoreWayIn(t *testing.T) {
 		t.Fatalf("the owner is given a code to link themselves: %s", truncate(page))
 	}
 	code := page[i+len("/start ") : i+len("/start ")+8]
+	if !strings.Contains(page, `href="https://t.me/tris_bot?start=`+code+`"`) {
+		t.Errorf("one press of a start link links them, with nothing copied by hand: %s", truncate(page))
+	}
 
 	tg.say(100, "Tris", "/start "+code)
 	tg.say(200, "Pat", "Hi, could you come on Tuesday at 3pm? I'm Pat.")
@@ -156,12 +159,15 @@ func TestTelegramIsOneMoreWayIn(t *testing.T) {
 	if got := tg.to(200, "said yes"); !strings.Contains(got, "said yes to your request") {
 		t.Errorf("and the answer goes back to them there: %s", got)
 	}
+	if got := tg.to(100, `"text":"Made"`); !strings.Contains(got, `"text":"Made"`) {
+		t.Errorf("the owner's press leaves a message saying what it did, not only a notice that goes: %s", got)
+	}
 
-	a.Chat.Provider = &scripted{steps: []*llm.Response{{Text: "Pat is coming on Tuesday at 3pm."}}}
+	a.Chat.Provider = &scripted{steps: []*llm.Response{{Text: "**Pat** is coming on [Tuesday](/r/abc) at 3pm.\n\n1. Tea\n- Cake"}}}
 	tg.say(100, "Tris", "What is on Tuesday?")
 	srv.KeepTelegram(context.Background(), tonight)
-	if got := tg.to(100, "Pat is coming"); !strings.Contains(got, "Pat is coming on Tuesday") {
-		t.Errorf("what the owner writes goes to their own assistant: %s", got)
+	if got := tg.to(100, "Pat is coming"); !strings.Contains(got, `"text":"Pat is coming on Tuesday at 3pm.\n\n1. Tea\nCake"`) {
+		t.Errorf("what the owner writes goes to their own assistant, in plain text that reads well aloud: %s", got)
 	}
 }
 
