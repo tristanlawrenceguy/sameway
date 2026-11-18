@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html"
 	"html/template"
+	"net"
 	"net/http"
 	"strings"
 
@@ -65,15 +66,30 @@ func (s *Server) questionOptions(r *http.Request, a asking) pageOptions {
 // the box there, for anyone visiting it to ask. It is wrapped, not
 // scrolled, so it reads whole on a phone and nothing needs a scroll key.
 func (s *Server) embedSnippet(r *http.Request) template.HTML {
-	at := ""
-	if s.app.Chat.Address != nil {
-		at = strings.TrimSuffix(s.app.Chat.Address(), "/")
-	}
+	at := s.internetAt(r)
 	if at == "" {
-		at = strings.TrimSuffix(seenFrom(r, ""), "/")
+		return `<h2>On your own website</h2><p>Once the internet reaches this workspace, what to paste into your website is here.</p>`
 	}
 	code := `<iframe src="` + html.EscapeString(at+questionPath+"?embed") + `" title="` + html.EscapeString("Ask "+s.app.Workspace.Config.Name) + `" style="width:100%;height:480px;border:0"></iframe>`
 	return template.HTML(`<h2>On your own website</h2><p>Paste this into a page of your website, and anyone visiting it can ask here:</p><p><code>` + template.HTMLEscapeString(code) + `</code></p>`)
+}
+
+// internetAt is where the internet reaches this workspace, or "" when it
+// cannot yet: an address given on localhost would work nowhere else.
+func (s *Server) internetAt(r *http.Request) string {
+	if s.app.Chat.Address != nil {
+		if at := strings.TrimSuffix(s.app.Chat.Address(), "/"); at != "" {
+			return at
+		}
+	}
+	host := r.Host
+	if h, _, err := net.SplitHostPort(host); err == nil {
+		host = h
+	}
+	if host == "" || host == "localhost" || net.ParseIP(strings.Trim(host, "[]")) != nil {
+		return ""
+	}
+	return strings.TrimSuffix(seenFrom(r, ""), "/")
 }
 
 // questionForm is the box to ask in, and who is asking, with what they

@@ -55,6 +55,21 @@ func (s *Server) status(msgs []*store.Record) template.HTML {
 	return s.part(st)
 }
 
+// chatEmpty is a chat with nothing in it: the welcome on a brand new
+// workspace, otherwise a line and a few things to ask. Someone let in asks
+// for more than they may do as well, so they are told before they ask
+// that it waits for a yes, not after.
+func (s *Server) chatEmpty(c *chat.Service, from string) template.HTML {
+	if c.IsOwner() && s.brandNew() {
+		return s.welcome(from) // welcome.go
+	}
+	empty := "Ask for anything."
+	if !c.IsOwner() {
+		empty = "Ask for anything. What you may not change yourself is asked of the owner, and you hear their yes or no here."
+	}
+	return s.part(ui.Empty{Message: empty}) + template.HTML(chatStarts(from))
+}
+
 // chatStarts are a few things to ask, for a chat with nothing in it: a
 // blank box asks a person to know already what the assistant can do. Each
 // is a link that puts the words in the box, where they are read and sent,
