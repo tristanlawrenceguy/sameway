@@ -53,7 +53,7 @@ func TestAnyoneAsksForATimeAndNothingIsBookedUntilYes(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec := httptest.NewRecorder()
 	internet.ServeHTTP(rec, req)
-	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "Nothing is booked until they say yes") || !strings.Contains(rec.Body.String(), "/request/") {
+	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "Nothing is booked until they say yes") || !strings.Contains(rec.Body.String(), "<h2>Waiting for their yes</h2>") || !strings.Contains(rec.Body.String(), "/request/") {
 		t.Fatalf("they are told it waits, and where to see the answer: %d\n%s", rec.Code, truncate(rec.Body.String()))
 	}
 	if got := <-rang; !strings.Contains(got, "A request waits for your yes: Pat Lee (pat@example.com) asks you to make an event") {

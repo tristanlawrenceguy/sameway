@@ -48,6 +48,11 @@ func TestAVisitorAsksOnAPublishedPage(t *testing.T) {
 	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "We open Saturdays 9 to 1.") {
 		t.Fatalf("they read the answer: %d\n%s", rec.Code, truncate(rec.Body.String()))
 	}
+	// Beside what they asked, where focus starts; and the box says it is
+	// asking while a model takes its time.
+	if page := rec.Body.String(); !strings.Contains(page, `id="outcome" tabindex="-1" role="status"><p class="sw-muted" dir="auto">You asked: When are you open?`) || !strings.Contains(page, `data-busy-target="question-status" data-busy-message="Asking. The answer can take a minute."`) || !strings.Contains(page, `id="question-status"`) {
+		t.Errorf("the answer is heard beside the question, and the wait is said\n%s", truncate(page))
+	}
 	results := model.seen[2].Messages[len(model.seen[2].Messages)-1].ToolResults
 	if !results[0].IsError || strings.Contains(results[0].Content, "alarm") {
 		t.Errorf("what is not published is not read for them: %+v", results)

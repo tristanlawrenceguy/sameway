@@ -33,6 +33,17 @@ type Form struct {
 	// After is what follows the button inside the form, such as a line
 	// saying what pressing it does.
 	After template.HTML
+	// Busy is what the form says while it is on its way, for an answer
+	// that takes a while, such as a model's: a status after the button
+	// says it, heard and seen (status/enhance.js), where otherwise
+	// nothing would until the next page came.
+	Busy string
+}
+
+// busyID is the id of the status a busy form speaks in, from its action.
+func (f Form) busyID() string {
+	path, _, _ := strings.Cut(f.Action, "?")
+	return strings.Trim(strings.ReplaceAll(path, "/", "-"), "-") + "-status"
 }
 
 // Field is one hidden name and value.
@@ -65,6 +76,9 @@ func (f Form) Open() string {
 	if f.Class != "" {
 		b.WriteString(` class="` + esc(f.Class) + `"`)
 	}
+	if f.Busy != "" {
+		b.WriteString(` data-busy-target="` + esc(f.busyID()) + `" data-busy-message="` + esc(f.Busy) + `"`)
+	}
 	b.WriteString(`>`)
 	fields := f.Hidden
 	if f.Back != "" {
@@ -88,6 +102,9 @@ func (f Form) HTML(render Renderer) template.HTML {
 			btn.Type = Submit
 		}
 		out += string(render(btn))
+	}
+	if f.Busy != "" {
+		out += string(render(Status{ID: f.busyID(), Message: "Ready.", State: Idle}))
 	}
 	return template.HTML(out + string(f.After) + `</form>`)
 }
