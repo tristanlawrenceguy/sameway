@@ -14,10 +14,14 @@ import (
 
 var tags = regexp.MustCompile(`<[^>]*>`)
 
+// inline are the tags inside a sentence, which go without a space, so
+// **three**. stays three. and not three .
+var inline = regexp.MustCompile(`</?(?:strong|em|b|i|a|code|span|del|s|mark)\b[^>]*>`)
+
 // Plain is what Markdown says with its formatting taken away.
 func Plain(md string) string {
 	out := strings.ReplaceAll(string(Render(md, 2)), NewTab, "") // a link's note is not its words
-	return strings.Join(strings.Fields(html.UnescapeString(tags.ReplaceAllString(out, " "))), " ")
+	return strings.Join(strings.Fields(html.UnescapeString(tags.ReplaceAllString(inline.ReplaceAllString(out, ""), " "))), " ")
 }
 
 // Marked renders Markdown with the one passage given highlighted, with
