@@ -46,6 +46,7 @@ func (s *Server) twilioConnected() bool {
 type call struct {
 	said    []chat.Said
 	working bool
+	waits   int // turns heard in silence while it is worked out
 	answer  string
 }
 
@@ -131,24 +132,38 @@ func (s *Server) voice(w http.ResponseWriter, r *http.Request) {
 		cs.mu.Unlock()
 		twiml(w, `<Say>One moment.</Say><Redirect method="POST">/calls/voice?wait=1</Redirect>`)
 	case c.working:
+		// Long silence on a phone sounds like a dropped call, so every
+		// few seconds the caller hears it is still being worked on.
+		c.waits++
+		still := ""
+		if c.waits%4 == 0 {
+			still = `<Say>Still working on it.</Say>`
+		}
 		cs.mu.Unlock()
-		twiml(w, `<Pause length="2"/><Redirect method="POST">/calls/voice?wait=1</Redirect>`)
+		twiml(w, still+`<Pause length="2"/><Redirect method="POST">/calls/voice?wait=1</Redirect>`)
 	case c.answer != "":
 		answer := c.answer
-		c.answer = ""
+		c.answer, c.waits = "", 0
 		cs.mu.Unlock()
-		twiml(w, gather(answer)+`<Say>Goodbye.</Say>`)
+		twiml(w, listen(answer, "Here it is again. "+answer))
 	default:
 		cs.mu.Unlock()
-		twiml(w, gather("Hello, you have reached "+s.app.Workspace.Config.Name+"'s assistant. How can I help?")+`<Say>Goodbye.</Say>`)
+		twiml(w, listen("Hello, you have reached "+s.app.Workspace.Config.Name+"'s assistant. How can I help?", "I did not hear anything. How can I help?"))
 	}
+}
+
+// listen says something and listens for the caller's answer. A caller
+// who says nothing hears it once more, for whoever needs longer or did
+// not catch it, before goodbye.
+func listen(say, again string) string {
+	return gather(say) + gather(again) + `<Say>Goodbye.</Say>`
 }
 
 // answerCall works out what to say to a caller, as a visitor's answer.
 func (s *Server) answerCall(cs *calls, c *call, v records.Visitor, said []chat.Said) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
-	answer, err := s.app.Chat.For(v).AnswerChat(ctx, "a phone call, answered aloud: a few short spoken sentences, no lists or links", said)
+	answer, err := s.app.Chat.For(v).AnswerChat(ctx, "a phone call, answered aloud: a few short spoken sentences, no lists or links. What they said was heard by speech recognition and may be wrong: say back what you understood (a day and time in words), so they can put it right, and ask them to say it again when it makes no sense", said)
 	if err != nil || strings.TrimSpace(answer) == "" {
 		answer = "Sorry, I could not answer just now."
 	}
@@ -158,11 +173,14 @@ func (s *Server) answerCall(cs *calls, c *call, v records.Visitor, said []chat.S
 	c.working, c.answer = false, answer
 }
 
-// gather says something and listens for what the caller says back.
+// gather says something and listens for what the caller says back. It
+// waits 8 seconds for them to start and 3 seconds of quiet for them to
+// finish: Twilio's "auto" ends at the first pause, which cuts off anyone
+// who speaks slowly, stammers or stops to think.
 func gather(say string) string {
 	var b strings.Builder
 	xml.EscapeText(&b, []byte(say))
-	return `<Gather input="speech" action="/calls/voice" method="POST" speechTimeout="auto"><Say>` + b.String() + `</Say></Gather>`
+	return `<Gather input="speech" action="/calls/voice" method="POST" timeout="8" speechTimeout="3"><Say>` + b.String() + `</Say></Gather>`
 }
 
 func twiml(w http.ResponseWriter, body string) {
