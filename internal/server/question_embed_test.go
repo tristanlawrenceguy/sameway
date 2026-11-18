@@ -60,3 +60,36 @@ func TestTheAskBoxGoesOnTheOwnersWebsite(t *testing.T) {
 		t.Errorf("no snippet for localhost: %s", truncate(body))
 	}
 }
+
+// Someone who can use only the box, in another site's page, by keyboard
+// or screen reader: no skip link to a header that is not there, what
+// they asked said back with the answer and a skip link to it, who they
+// are kept for the next question, and an empty question is the field's
+// own error.
+func TestTheEmbeddedAskBoxWorksForEveryone(t *testing.T) {
+	t.Parallel()
+	a, h := newAppAt(t, tonight)
+	internet := h.(*server.Server).Public(nil)
+	a.Workspace.Config.Publish.Types = "note"
+	ask := func(form url.Values) string {
+		req := httptest.NewRequest(http.MethodPost, "/question?embed", strings.NewReader(form.Encode()))
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		rec := httptest.NewRecorder()
+		internet.ServeHTTP(rec, req)
+		return rec.Body.String()
+	}
+	if page := public(t, internet, http.MethodGet, "/question?embed", "").Body.String(); strings.Contains(page, "Skip to main content") || !strings.Contains(page, `required aria-required="true"`) {
+		t.Errorf("embedded, the first stop is the box, which must be filled: %s", truncate(page))
+	}
+	a.Chat.Provider = &scripted{steps: []*llm.Response{{Text: "Weekdays 8 to 6."}}}
+	body := ask(url.Values{"question": {"When are you open?"}, "who": {"Sam, sam@example.com"}})
+	for _, want := range []string{`href="#answer">Skip to the answer`, `id="answer"`, "You asked: <span dir=\"auto\">When are you open?", `value="Sam, sam@example.com"`} {
+		if !strings.Contains(body, want) {
+			t.Errorf("an answer says what was asked and keeps who asked (%s): %s", want, truncate(body))
+		}
+	}
+	body = ask(url.Values{"question": {"  "}})
+	if !strings.Contains(body, `aria-invalid="true"`) || !strings.Contains(body, "Say what you want to ask.") || !strings.Contains(body, `href="#question">Skip to what to fix`) {
+		t.Errorf("an empty question is the field's error: %s", truncate(body))
+	}
+}
