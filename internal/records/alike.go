@@ -86,6 +86,11 @@ func alikeGroups(st *store.Store, t *schema.Type, sameDay bool) [][]*store.Recor
 			continue
 		}
 		key := name
+		// Whose it is tells two apart: two people's subscriptions to one
+		// service, each read from their own mailbox, are two.
+		if whose, _ := r.Fields["mailbox"].(string); whose != "" {
+			key += "\x00" + fold.Key(whose)
+		}
 		if sameDay && day != "" {
 			d, _ := r.Fields[day].(string)
 			key += "\x00" + strings.SplitN(d, "T", 2)[0]

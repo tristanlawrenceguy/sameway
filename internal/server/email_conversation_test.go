@@ -38,11 +38,17 @@ func TestAMeetingIsArrangedInAConversationByEmail(t *testing.T) {
 	a.Chat.Call("send_email", json.RawMessage(`{"to":"Pat Lee <pat@example.com>","subject":"Meeting next week","text":"Could we meet next week? Which day suits you?"}`))
 	wantStatus(t, postForm(t, h, "/proposal/"+a.Chat.Proposals()[0].ID+"/accept", nil), http.StatusSeeOther)
 	root := a.Chat.Conversation([]string{"<sent1@example.com>"})
-	if len(sent) != 1 || root == "" {
+	if len(sent) != 1 || root == "" || sent[0].Auto {
 		t.Fatalf("what Sameway sends is kept, so an answer to it is known: %d %q", len(sent), root)
 	}
 	if got := a.Chat.Conversation([]string{"<someone-else@example.com>"}); got != "" {
 		t.Errorf("other mail is no conversation of Sameway's: %q", got)
+	}
+	if got := a.Chat.Answers("<pat0@example.com>", []string{"<sent1@example.com>"}, "Pat Lee <pat@example.com>", true); got != root {
+		t.Errorf("an answer whose sender was vouched for is answered in the thread: %q", got)
+	}
+	if got := a.Chat.Answers("<pat0@example.com>", []string{"<sent1@example.com>"}, "Pat Lee <pat@example.com>", false); got != "" {
+		t.Errorf("one nobody vouched for waits for the owner, since anyone can write Pat's address: %q", got)
 	}
 
 	// Pat writes back, as Email in keeps it.
@@ -60,7 +66,7 @@ func TestAMeetingIsArrangedInAConversationByEmail(t *testing.T) {
 	if len(model.seen) < 2 || strings.Contains(lastToolResult(model.seen[1]), "theirs to say") || !strings.Contains(lastToolResult(model.seen[1]), "Tue 17 Mar") {
 		t.Errorf("the assistant reads when the owner is free, for Pat")
 	}
-	if len(sent) != 2 || sent[1].To != "Pat Lee <pat@example.com>" || sent[1].Subject != "Re: Meeting next week" || !strings.Contains(sent[1].Text, "asked Tris to confirm") ||
+	if len(sent) != 2 || sent[1].To != "Pat Lee <pat@example.com>" || !sent[1].Auto || sent[1].Subject != "Re: Meeting next week" || !strings.Contains(sent[1].Text, "asked Tris to confirm") ||
 		strings.Join(sent[1].Refs, " ") != "<sent1@example.com> <pat1@example.com>" {
 		t.Fatalf("the answer goes back in the thread: %+v", sent)
 	}

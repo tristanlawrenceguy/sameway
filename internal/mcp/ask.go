@@ -113,13 +113,11 @@ func (s *Server) askPublished(ctx context.Context, question, who string) (string
 	if v.Name == "" {
 		v.Name = chat.SomeonePublished
 	}
-	svc := s.App.Chat.For(v)
-	since := svc.Now()
-	said, err := svc.AnswerOnce(ctx, s.App.Workspace.Config.Name, question)
+	said, made, err := s.App.Chat.For(v).AnswerOnce(ctx, s.App.Workspace.Config.Name, question)
 	if err != nil {
 		return err.Error(), true
 	}
-	for _, p := range svc.RequestsSince(since) {
+	for _, p := range made {
 		token, _ := p.Fields["token"].(string)
 		said += fmt.Sprintf("\nPut to the owner: to %v. What became of it is at %s on this workspace.", p.Fields["asked"], chat.RequestPath(token))
 	}

@@ -24,6 +24,19 @@ func TestFormWritesTheConventionsOnce(t *testing.T) {
 	}
 }
 
+// A form whose answer takes a while says so while it waits: its own
+// status, which the status enhancement names on submit.
+func TestFormBusySaysItWaits(t *testing.T) {
+	t.Parallel()
+	f := Form{Action: "/question?embed", Busy: "Asking.", Button: &Button{Label: "Ask"}}
+	got := string(f.HTML(fakeRender))
+	want := `<form method="post" action="/question?embed" data-busy-target="question-status" data-busy-message="Asking.">` +
+		`[button map[label:Ask type:submit]][status map[id:question-status message:Ready. state:idle]]</form>`
+	if got != want {
+		t.Errorf("got\n%s\nwant\n%s", got, want)
+	}
+}
+
 func TestFormGetWithTarget(t *testing.T) {
 	f := Form{Action: "https://example.com/new", Get: true, Target: "_blank", Class: "sw-stack", Body: "<p>x</p>"}
 	got := string(f.HTML(fakeRender))

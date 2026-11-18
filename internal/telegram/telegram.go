@@ -46,7 +46,8 @@ func (u User) Name() string {
 // Message is something said in a chat.
 type Message struct {
 	Chat struct {
-		ID int64 `json:"id"`
+		ID   int64  `json:"id"`
+		Type string `json:"type"` // private, group, supergroup or channel
 	} `json:"chat"`
 	From User   `json:"from"`
 	Text string `json:"text"`

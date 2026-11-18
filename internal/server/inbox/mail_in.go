@@ -78,7 +78,7 @@ func (s *Service) SendMail(m chat.Outgoing) (string, error) {
 	if from := s.MailFrom(); from != a.User {
 		back = from
 	}
-	id, err := mailin.Send(ctx, a, mailin.Outgoing{To: m.To, Subject: m.Subject, Text: m.Text, Calendar: m.Calendar, ReplyTo: back, Refs: m.Refs})
+	id, err := mailin.Send(ctx, a, mailin.Outgoing{To: m.To, Subject: m.Subject, Text: m.Text, Calendar: m.Calendar, ReplyTo: back, Refs: m.Refs, Auto: m.Auto})
 	if err == nil {
 		s.app.Store.SetMeta(gotKey(strings.Trim(id, "<>")), "1") // kept by whoever sent it, not again from Sent
 	}
@@ -179,8 +179,10 @@ func (s *Service) ReadMail(ctx context.Context) (int, error) {
 		if s.app.Store.Meta(key) != "" {
 			continue
 		}
-		if answers := convert.Answers(m.Calendar); len(answers) > 0 {
-			s.app.Chat.InvitationAnswered(answers) // chat/invitations.go: an answer, not mail to sort
+		// An answer to an invitation, from the one who answers as their
+		// mail server vouched; any other is mail to sort, for the owner.
+		if answers := convert.Answers(m.Calendar); len(answers) > 0 && m.Verified {
+			s.app.Chat.InvitationAnswered(answers, m.From) // chat/invitations.go: an answer, not mail to sort
 			s.app.Store.SetMeta(key, "1")
 			continue
 		}

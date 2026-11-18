@@ -31,6 +31,9 @@ type Outgoing struct {
 	To, Subject, Text string
 	Calendar          []byte   // an invitation it carries, or nil
 	Refs              []string // the thread it answers, oldest first
+	// Auto is an answer the assistant wrote unasked, marked so another
+	// assistant reading it does not answer back, and the two go on forever.
+	Auto bool
 }
 
 // sent sends an email from the owner's mailbox and keeps it as theirs,
@@ -99,12 +102,19 @@ func (s *Service) letInBy(from string) *store.Record {
 
 // Answers says which thread an email that came in is answered in, by its
 // Message-ID and whom it is from: one Sameway began, or any from someone
-// let in here whose mail server vouched for them; "" for none.
+// let in here, and only when their mail server vouched for them; "" for
+// none. An answer goes from the owner's mailbox to the address the email
+// says it is from, so one nobody vouched for waits for the owner: anyone
+// who saw an email of the thread could forge it, and have the owner's
+// mailbox write their words to someone else.
 func (s *Service) Answers(messageID string, refs []string, from string, verified bool) string {
+	if !verified {
+		return ""
+	}
 	if root := s.Conversation(refs); root != "" {
 		return root
 	}
-	if !verified || s.letInBy(from) == nil {
+	if s.letInBy(from) == nil {
 		return ""
 	}
 	return s.ThreadOf(messageID) // invited.go
@@ -172,7 +182,7 @@ func (s *Service) AnswerMail(ctx context.Context, root string, verified bool) er
 	if err != nil || strings.TrimSpace(answer) == "" {
 		return err
 	}
-	return s.sent(Outgoing{To: from, Subject: reSubject(last), Text: answer, Refs: threadRefs(mails)}, root)
+	return s.sent(Outgoing{To: from, Subject: reSubject(last), Text: answer, Refs: threadRefs(mails), Auto: true}, root)
 }
 
 // reSubject is the subject of an answer to an email.
