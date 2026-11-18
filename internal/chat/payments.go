@@ -36,9 +36,9 @@ var paymentLinkOp = Op{Title: "Make a link to pay you",
 		if err != nil {
 			return fail("%v", err), true
 		}
-		return s.ask(question{fmt.Sprintf("Make a link to pay you %s for %q?", money(p.Amount, p.Currency), p.What),
-			fmt.Sprintf("Stripe would make a link that takes one payment of %s into your Stripe account, then closes. Check the amount: it is what they would pay.", money(p.Amount, p.Currency)),
-			"Make a " + money(p.Amount, p.Currency) + " link", "Don't"},
+		return s.ask(question{fmt.Sprintf("Make a link to pay you %s for %q?", Money(p.Amount, p.Currency), p.What),
+			fmt.Sprintf("Stripe would make a link that takes one payment of %s into your Stripe account, then closes. Check the amount: it is what they would pay.", Money(p.Amount, p.Currency)),
+			"Make a " + Money(p.Amount, p.Currency) + " link", "Don't"},
 			map[string]any{"tool": "payment_link", "what": p.What, "amount": p.Amount, "currency": p.Currency}), true
 	},
 	Run: func(s *Service, _ toolArgs, call llm.ToolCall) toolResult { return s.paymentLink(call.Args) },
@@ -46,7 +46,7 @@ var paymentLinkOp = Op{Title: "Make a link to pay you",
 		return s.hasTypes(PaymentType)
 	},
 	Tool: llm.Tool{Name: "payment_link",
-		Description: "A link to pay the person through their own Stripe account, for a quote, a deposit or a bill: what for, the amount and currency. It is put to them first; once made, put the link in an email or a message. Paid is marked as Stripe says, so an action can follow it (payment, paid=true).",
+		Description: "A link to pay the person through their own Stripe account, for a quote, a deposit or a bill: what for, the amount and currency. To ask someone by email, use send_email's pay instead: it makes their link and sends it in one yes. This makes a link alone, put to them first, for a message elsewhere. Paid is marked as Stripe says, so an action can follow it (payment, paid=true).",
 		Schema: obj(map[string]any{
 			"what":     map[string]any{"type": "string"},
 			"amount":   map[string]any{"type": "number", "description": "In whole units: 60 or 60.50."},
@@ -75,7 +75,7 @@ func (s *Service) paymentOf(raw json.RawMessage) (paymentArgs, error) {
 	case len(p.Currency) != 3:
 		return p, fmt.Errorf("say the currency as three letters, such as gbp")
 	case p.Amount > s.paymentsMax():
-		return p, fmt.Errorf("%s is above the most one link may ask for (%s, set_setting payments.max); nothing was put to the person", money(p.Amount, p.Currency), fmt.Sprint(s.paymentsMax()))
+		return p, fmt.Errorf("%s is above the most one link may ask for (%s, set_setting payments.max); nothing was put to the person", Money(p.Amount, p.Currency), fmt.Sprint(s.paymentsMax()))
 	case s.StripeKey != nil && s.StripeKey() == "":
 		return p, fmt.Errorf("no Stripe account is connected: the person connects theirs on Payments")
 	}
@@ -90,18 +90,29 @@ func (s *Service) paymentLink(raw json.RawMessage) toolResult {
 	if err != nil {
 		return fail("%v", err)
 	}
+	rec, err := s.makePayment(p, "")
+	if err != nil {
+		return fail("%v", err)
+	}
+	link, _ := rec.Fields["link"].(string)
+	return toolResult{text: fmt.Sprintf("Made: %s for %q, paid at %s (payment %s).", Money(p.Amount, p.Currency), p.What, link, rec.ID),
+		change: &records.Change{Action: "created", Component: PaymentType, ID: rec.ID, Detail: p.What}}
+}
+
+// makePayment has Stripe make a link that takes one payment, and keeps it
+// as a payment, with whom it was asked of when it goes in an email.
+func (s *Service) makePayment(p paymentArgs, of string) (*store.Record, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 	id, link, err := s.stripe().Link(ctx, p.What, p.Amount, p.Currency)
 	if err != nil {
-		return fail("no link made: %v", err)
+		return nil, fmt.Errorf("no link made: %v", err)
 	}
-	rec, err := s.put(records.Op{Type: PaymentType, After: map[string]any{"what": p.What, "amount": p.Amount, "currency": p.Currency, "link": link, "stripe": id}})
-	if err != nil {
-		return fail("%v", err)
+	fields := map[string]any{"what": p.What, "amount": p.Amount, "currency": p.Currency, "link": link, "stripe": id}
+	if of != "" {
+		fields["asked_of"] = of
 	}
-	return toolResult{text: fmt.Sprintf("Made: %s for %q, paid at %s (payment %s).", money(p.Amount, p.Currency), p.What, link, rec.ID),
-		change: &records.Change{Action: "created", Component: PaymentType, ID: rec.ID, Detail: p.What}}
+	return s.put(records.Op{Type: PaymentType, After: fields})
 }
 
 // paymentsMax is the most one link may ask for, in whole units: what the
@@ -121,8 +132,9 @@ func (s *Service) stripe() stripe.Account {
 	return a
 }
 
-// money is an amount as a person reads it: 60.00 GBP, 3000 JPY.
-func money(amount float64, currency string) string {
+// Money is an amount as a person reads it, or hears it read: 60.00 GBP,
+// 3000 JPY.
+func Money(amount float64, currency string) string {
 	return fmt.Sprintf("%.*f %s", stripe.Decimals(currency), amount, strings.ToUpper(currency))
 }
 
@@ -150,7 +162,7 @@ func (s *Service) FollowPayments(ctx context.Context) error {
 			continue
 		}
 		what, _ := r.Fields["what"].(string)
-		said := fmt.Sprintf("Paid: %s for %q.", money(amount, fmt.Sprint(r.Fields["currency"])), what)
+		said := fmt.Sprintf("Paid: %s for %q.", Money(amount, fmt.Sprint(r.Fields["currency"])), what)
 		records.Record(s.Store, "system", records.Change{Action: "paid", Component: PaymentType, ID: r.ID, Detail: what, Ops: done})
 		s.Say(said)
 		if s.Automate != nil && s.Automate.Tell != nil {
@@ -191,7 +203,7 @@ func (s *Service) paymentsIn(text string) ([]string, error) {
 		if paid, _ := p.Fields["paid"].(bool); paid {
 			state = "already paid"
 		}
-		lines = append(lines, fmt.Sprintf("It carries a link to pay %s for %q (%s), whatever the words say.", money(amount, fmt.Sprint(p.Fields["currency"])), p.Fields["what"], state))
+		lines = append(lines, fmt.Sprintf("It carries a link to pay %s for %q (%s), whatever the words say.", Money(amount, fmt.Sprint(p.Fields["currency"])), p.Fields["what"], state))
 	}
 	return lines, nil
 }

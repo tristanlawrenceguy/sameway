@@ -69,6 +69,7 @@ func TestOneSamewayAsksAnotherWhenTheyAreFree(t *testing.T) {
 	samsModel := &scripted{}
 	sams.Chat.Provider = samsModel
 
+	mine.Store.Create("event", map[string]any{"title": "Choir", "starts": thursday("19:00"), "ends": thursday("20:00")})
 	sam, _ := mine.Store.Create("person", map[string]any{"name": "Sam", "sameway": "https://sam-home.tail1234.ts.net/"})
 	mine.Chat.Reach = func() *http.Client {
 		return &http.Client{Transport: overTailscale{to: samsH, login: "tris@example.com"}}
@@ -96,6 +97,9 @@ func TestOneSamewayAsksAnotherWhenTheyAreFree(t *testing.T) {
 	}
 	if !strings.Contains(said, "Busy Thu 19 Nov 5pm to 6pm.") || strings.Contains(said, "Dentist") {
 		t.Errorf("the times Sam is busy come back, and not what Sam is doing: %s", said)
+	}
+	if !strings.Contains(said, "Free for you both: Thu 19 Nov 4pm to 5pm, 6pm to 7pm, 8pm to 11pm.") {
+		t.Errorf("and when both are free, set against the owner's own calendar: %s", said)
 	}
 	kept, _ := sams.Store.List(records.EnquiryType, store.ListOptions{})
 	if len(kept) != 1 || kept[0].Fields["state"] != "answered" || kept[0].Fields["answer"] != "Busy Thu 19 Nov 5pm to 6pm." {

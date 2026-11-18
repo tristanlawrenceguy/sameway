@@ -65,7 +65,7 @@ func (s *Server) callsPage(w http.ResponseWriter, r *http.Request) {
 	var b strings.Builder
 	if _, ok := s.twilio(); ok {
 		if at := s.internetAt(r); at != "" { // question.go
-			b.WriteString(`<p>Connected to Twilio. In Twilio, under your number's voice settings, set "A call comes in" to this webhook, with POST:</p><p><code>` + template.HTMLEscapeString(at+"/calls/voice") + `</code></p><p>It is reached from the internet while something is published.</p>`)
+			b.WriteString(`<p>Connected to Twilio. In Twilio, under your number's voice settings, set "A call comes in" to this webhook, with POST:</p><p><code>` + template.HTMLEscapeString(at+"/calls/voice") + `</code></p><p>And to have texts answered too, under its messaging settings, set "A message comes in" to:</p><p><code>` + template.HTMLEscapeString(at+"/calls/text") + `</code></p><p>It is reached from the internet while something is published.</p>`)
 		} else {
 			b.WriteString(`<p>Connected to Twilio. Calls reach your assistant from the internet, so publish something first. The address to give Twilio is then here.</p>`)
 		}
