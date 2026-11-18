@@ -38,7 +38,7 @@ func TestReturnsAndWarrantiesAreSaidAhead(t *testing.T) {
 	mu.Lock()
 	defer mu.Unlock()
 	all := strings.Join(sent, "\n")
-	if !strings.Contains(all, "You can still return Headphones until ") || strings.Contains(all, "until on ") || !strings.Contains(all, "/t/purchase/"+phones.ID) {
+	if !strings.Contains(all, "The last day to return Headphones is ") || strings.Contains(all, "is on ") || !strings.Contains(all, "/t/purchase/"+phones.ID) {
 		t.Errorf("the return is said, leading to its page: %v", sent)
 	}
 	if !strings.Contains(all, "The warranty on Dishwasher ends on ") || strings.Contains(all, "Kettle") || strings.Contains(all, "Lamp") {

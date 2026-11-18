@@ -29,7 +29,7 @@ import (
 // Importable says whether records of a kind can be read from a file:
 // any but the internal kinds and files themselves.
 func Importable(t *schema.Type) bool {
-	return !t.Internal && t.Name != records.FileType
+	return !t.Internal && !t.Kept && t.Name != records.FileType
 }
 
 // importPage is the form to choose a file, or, with ?file=, the preview

@@ -21,7 +21,7 @@ import (
 // addButton is the press that makes a new record of t, quiet under the
 // list, beside the way to import them.
 func (s *Server) addButton(t *schema.Type) template.HTML {
-	if t.Internal || t.Name == FileType {
+	if t.Internal || t.Kept || t.Name == FileType {
 		return ""
 	}
 	return s.form(ui.Form{Action: "/t/" + t.Name + "/add", Class: "sw-add",
