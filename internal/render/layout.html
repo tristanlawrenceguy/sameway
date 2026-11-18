@@ -17,8 +17,8 @@
 {{range .ExtraScripts}}{{.}}
 {{end}}</head>
 <body{{if .Shell}} data-shell="{{.Shell}}"{{end}}>
-<a class="sw-skip" href="#main">Skip to main content</a>
-{{if .Focus}}<a class="sw-skip" href="#{{.Focus}}">{{.FocusLabel}}</a>
+{{if ne .Shell "embed"}}<a class="sw-skip" href="#main">Skip to main content</a>
+{{end}}{{if .Focus}}<a class="sw-skip" href="#{{.Focus}}">{{.FocusLabel}}</a>
 {{end}}{{if ne .Shell "embed"}}<header class="sw-header">
 <div class="sw-header__inner">
 <a class="sw-header__brand" href="/"><span class="sw-header__mark" aria-hidden="true"></span>{{.Site}}</a>
