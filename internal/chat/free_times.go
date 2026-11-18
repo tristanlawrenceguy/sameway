@@ -47,8 +47,9 @@ func (s *Service) freeTimes(raw json.RawMessage) toolResult {
 	}
 	var a struct{ From, To string }
 	json.Unmarshal(raw, &a)
-	loc := s.Now().Location()
-	from := s.Now().Truncate(time.Hour).Add(time.Hour)
+	now := s.Now()
+	loc := now.Location()
+	from := time.Date(now.Year(), now.Month(), now.Day(), now.Hour()+1, 0, 0, 0, loc)
 	if d, err := time.ParseInLocation("2006-01-02", a.From, loc); err == nil && d.After(from) {
 		from = d
 	}
@@ -59,18 +60,22 @@ func (s *Service) freeTimes(raw json.RawMessage) toolResult {
 	busy := s.Busy(from, to)
 	var days []string
 	for day := time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, loc); day.Before(to); day = day.AddDate(0, 0, 1) {
-		start, end := day.Add(freeFirst*time.Hour), day.Add(freeLast*time.Hour)
+		// By the clock on the wall, not hours from midnight: a day the
+		// clocks change is 23 or 25 hours long.
+		start, end := time.Date(day.Year(), day.Month(), day.Day(), freeFirst, 0, 0, 0, loc), time.Date(day.Year(), day.Month(), day.Day(), freeLast, 0, 0, 0, loc)
 		if start.Before(from) {
 			start = from
 		}
 		if open := freeIn(start, end, busy); len(open) > 0 {
-			days = append(days, day.Format("Mon 2 Jan")+": "+s.stretches(open))
+			days = append(days, day.Format("Mon 2 Jan")+": "+s.stretches(open)+" ("+when.Zone(end, end)+")")
 		}
 	}
 	if len(days) == 0 {
 		return toolResult{text: "No free time in working hours then."}
 	}
-	return toolResult{text: "Free, in working hours (" + loc.String() + "):\n" + strings.Join(days, "\n")}
+	// Each day says its offset, so a time picked from it is stored right
+	// whoever asks and in whatever zone, also across a change of clocks.
+	return toolResult{text: "Free, in working hours, in the owner's time:\n" + strings.Join(days, "\n")}
 }
 
 // freeIn are the stretches of start to end no busy span covers.
