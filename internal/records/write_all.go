@@ -8,7 +8,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
-// Several writes, all or none. create_records and update_records each
+// Several writes, all or none. create_record and update_record for several each
 // wrote one record at a time and, when one was refused, took back those
 // before it in a way of their own: one removed what it had made, the other
 // wrote back what it had changed. Both are the same thing, an op run
