@@ -46,7 +46,7 @@ func seedLikeAPerson(t *testing.T, a *app.App, h http.Handler) {
 	agent(http.MethodPost, "/api/entry", map[string]any{"habit": habit, "amount": 3, "at": "2026-10-04 08:00"})
 	// Several entries at once, each called by its habit and how much, with
 	// a comma: the log and the receipt name them all.
-	agent(http.MethodPost, "/api/tools/create_records", map[string]any{"type": "entry", "records": []map[string]any{
+	agent(http.MethodPost, "/api/tools/create_record", map[string]any{"type": "entry", "records": []map[string]any{
 		{"habit": habit, "amount": 2, "at": "2026-10-05 08:00"}, {"habit": habit, "amount": 5, "at": "2026-10-06 08:00"}}})
 	agent(http.MethodPost, "/api/file/upload", map[string]any{"title": "Shopping list", "filename": "list.txt", "content": "bWlsaywgZWdncw=="}) // a small file
 	for _, b := range []map[string]any{

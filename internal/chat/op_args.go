@@ -50,7 +50,7 @@ type toolArgs struct {
 	Edits       []suggested    `json:"edits"`
 	Merge       []string       `json:"merge"`
 
-	// Records is create_records' list, each a record's fields.
+	// Records is create_record's several, each a record's fields.
 	Records []map[string]any `json:"records"`
 }
 

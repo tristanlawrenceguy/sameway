@@ -67,30 +67,10 @@ var recordOps = []Op{
 				"file":    map[string]any{"type": "string", "description": "The id of the file record, from the message it came with or from find_records on file."},
 				"mapping": map[string]any{"type": "object", "description": "Optional: which column feeds which field, as {column: field}. Leave out to match by name.", "additionalProperties": map[string]any{"type": "string"}},
 			}, "type", "file")}, Offered: typed},
-	{Title: "Make a record",
-		Core:  true,
-		Doing: func(a callArgs) string { return "Adding" + or(an(schema.Words(a.Type)), " a record") + a.called() },
-		Run:   func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.createRecord(a.Type, a.Fields) },
-		Tool: llm.Tool{Name: "create_record", Description: "Make a record of a content type: a note, a task, whatever the workspace declares. It appears on its own page at /t/<type> and in the listing there. Fields must match the type's schema in the catalogue. Returns the new record's id and page. For several of one type, create_records makes them in one change.",
-			Schema: obj(map[string]any{
-				"type":   typeArg,
-				"fields": map[string]any{"type": "object", "description": "Field values matching the type's schema. Leave a field out to take its default."},
-			}, "type", "fields")}, Offered: makeTyped},
+	createRecordOp,  // record_ops.go
 	createRecordsOp, // create_records.go
 	updateRecordsOp, // update_records.go
-	{Title: "Change a record", Traits: Traits{Idempotent: true},
-		Core:  true,
-		Doing: func(a callArgs) string { return "Updating" + or(an(schema.Words(a.Type)), " a record") },
-		Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
-			return s.updateRecord(a.Type, a.ID, a.Fields, a.Version)
-		},
-		Tool: llm.Tool{Name: "update_record", Description: "Change fields on a record that exists. Only the fields given change. Use find_records first to get the id. For the same change to several, update_records makes it in one change.",
-			Schema: obj(map[string]any{
-				"type":    typeArg,
-				"id":      map[string]any{"type": "string", "description": "The record's id, from find_records or from a page URL /t/<type>/<id>."},
-				"fields":  map[string]any{"type": "object", "description": "The fields to change and their new values."},
-				"version": map[string]any{"type": "string", "description": "The version get_record gave, when you read the record first: if it has changed since, nothing is written and you are shown it as it is now, to change again."},
-			}, "type", "id", "fields")}, Offered: typed},
+	updateRecordOp,  // record_ops.go
 	{Title: "Find records", Traits: Traits{ReadOnly: true, Idempotent: true},
 		Access: ForViewers,
 		Core:   true,
@@ -128,7 +108,7 @@ func (s *Service) createRecord(typeName string, fields map[string]any) toolResul
 	}
 	rec, c, err := records.Write(s.Store, "created", t.Name, "", fields)
 	if err != nil {
-		return fail("I couldn't save those changes — %s. %s Fix the fields and call create_record again.", humanizeValidationError(err.Error()), fieldHelp(err, t))
+		return fail("Nothing was saved: %s Call create_record again with that fixed.", fieldHelp(err, t)) // field_help.go
 	}
 	text := fmt.Sprintf("created %s %s: %q. The person can open it at /t/%s/%s.", t.Name, rec.ID, c.Detail, t.Name, rec.ID)
 	text += s.datesSaid(t, fields, rec, false) + s.splitSaid(t) // dates_said.go, action_when_said.go; the rest is the change's notes (notice.go)
@@ -162,7 +142,7 @@ func (s *Service) updateRecord(typeName, id string, fields map[string]any, versi
 	}
 	rec, c, err := records.Write(s.Store, "updated", t.Name, id, fields)
 	if err != nil {
-		return fail("I couldn't save those changes — %s. %s Fix the fields and call update_record again.", humanizeValidationError(err.Error()), fieldHelp(err, t))
+		return fail("Nothing was saved: %s Call update_record again with that fixed.", fieldHelp(err, t))
 	}
 	title := c.Detail
 	// Finished, a thing that repeats is due again at once; say so, or the
@@ -204,6 +184,9 @@ func (s *Service) findRecords(typeName, words string, where []string, order stri
 		if days := daysOf(t, rec, s.Now()); len(days) > 0 { // days_shown.go
 			line += "\t" + strings.Join(days, "; ")
 		}
+		if start := wordsStart(t, rec); start != "" {
+			line += "\t" + start
+		}
 		lines = append(lines, line)
 		if len(lines) == limit {
 			break
@@ -226,7 +209,7 @@ func (s *Service) findRecords(typeName, words string, where []string, order stri
 	if len(where) > 0 {
 		matching = " " + query.WordsIn(s.Store, t, where, s.Now().Location())
 	}
-	return toolResult{text: fmt.Sprintf("%s records%s, newest first (id, title, written by, and its days in this computer's time). Each title was written by the one on its line; %s.\n<<<record text\n%s\nrecord text>>>", t.Name, matching, records.Untrusted, strings.Join(lines, "\n"))}
+	return toolResult{text: fmt.Sprintf("%s records%s, newest first (id, title, written by, its days in this computer's time, and how its words start). Each title was written by the one on its line; %s.\n<<<record text\n%s\nrecord text>>>", t.Name, matching, records.Untrusted, strings.Join(lines, "\n"))}
 }
 
 // deleteRecord is not a tool: a record goes when a person deletes it, or

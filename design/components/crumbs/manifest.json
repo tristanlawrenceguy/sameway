@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "The way back from where a person is: the places above this one, as links, and the page itself, marked as here.",
   "icon": "›",
+  "pageOnly": true,
   "use": { "when": "a page sits inside another, such as a record inside its list.", "not": "the main navigation, or steps in a task.", "with": "the page heading, which it leads into; leave current out when the heading already says it." },
   "props": {
     "type": "object",

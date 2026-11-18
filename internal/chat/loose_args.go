@@ -28,7 +28,7 @@ func loosen(tool string, raw json.RawMessage) json.RawMessage {
 		if _, ok := m["fields"]; !ok {
 			fields := map[string]any{}
 			for k, v := range m {
-				if k == "type" || k == "id" || k == "version" {
+				if k == "type" || k == "id" || k == "version" || k == "records" || k == "ids" || k == "where" { // several: create_record, update_record
 					continue
 				}
 				delete(m, k)

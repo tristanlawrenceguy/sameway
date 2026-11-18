@@ -33,7 +33,7 @@ func TestARefusalSaysWhatWasWrongTheSameEverywhere(t *testing.T) {
 		{"GET", "/api/changes?wait=soon", "", 400, []string{`wait is how many seconds to wait for a change, a whole number from 0 to 60, not \"soon\"`}}, // as JSON writes it
 		{"GET", "/api/describe?ful=1", "", 400, []string{"does not take ful (did you mean full?)"}},
 		{"GET", "/api/note?limit=abc", "", 400, []string{`limit is how many to answer with, a whole number from 1, not \"abc\"`}},
-		{"POST", "/api/tools/create_record", `{"type":"note","fields":{"title":"a"},"canvas":"x"}`, 422, []string{"create_record does not take canvas. It takes fields, type", "Nothing was done"}},
+		{"POST", "/api/tools/create_record", `{"type":"note","fields":{"title":"a"},"canvas":"x"}`, 422, []string{"create_record does not take canvas. It takes fields, records, type", "Nothing was done"}},
 	}
 	for _, c := range cases {
 		res := do(t, h, c.method, c.path, strings.NewReader(c.body), "application/json")

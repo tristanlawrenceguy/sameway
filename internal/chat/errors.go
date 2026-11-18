@@ -126,3 +126,23 @@ func withA(kind string) string {
 	}
 	return "a " + kind
 }
+
+// plainFix says whether props that do not fit are each told what to put
+// instead (a near name, a block field, the values allowed), so a refusal
+// needs no schema and example after it: for a slip of a letter they came
+// to four thousand characters, where "takes where, not wher" was the fix.
+func plainFix(err error) bool {
+	var pe *render.PropsError
+	if !errors.As(err, &pe) || len(pe.Problems) == 0 {
+		return false
+	}
+	for _, p := range pe.Problems {
+		switch {
+		case p.Kind == "enum" || p.Kind == "type":
+		case p.Kind == "unknown" && p.At == "" && (blockFields[p.Prop] || nearestProp(p.Prop, pe.Props) != ""):
+		default:
+			return false
+		}
+	}
+	return true
+}

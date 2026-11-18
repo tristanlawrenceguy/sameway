@@ -19,7 +19,6 @@ import (
 // puts them all back.
 
 var updateRecordsOp = Op{Title: "Change several records", Traits: Traits{Idempotent: true},
-	Words: []string{"all of", "each", "every", "these", "move them", "mark them"},
 	Doing: func(a callArgs) string {
 		if len(a.IDs) == 0 {
 			return "Updating " + or(schema.Plural(a.Type), "records")
@@ -35,7 +34,7 @@ var updateRecordsOp = Op{Title: "Change several records", Traits: Traits{Idempot
 			"ids":    map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "The records to change, from find_records."},
 			"where":  map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "In place of ids: change every record these conditions match, as find_records takes them."},
 			"fields": map[string]any{"type": "object", "description": "The fields to change on every one of them, and their new values, as update_record takes."},
-		}, "type", "fields")}, Offered: typed}
+		}, "type", "fields")}, Offered: notOffered}
 
 func (s *Service) updateRecords(typeName string, ids, where []string, fields map[string]any) toolResult {
 	t, err := s.contentType(typeName)
@@ -61,7 +60,7 @@ func (s *Service) updateRecords(typeName string, ids, where []string, fields map
 	writes := make([]records.Writing, len(ids))
 	for i, id := range ids {
 		if _, err := s.Store.Get(t.Name, id); err != nil {
-			return fail("Nothing was changed: ids[%d] is %s. Use find_records to get the ids, and call update_records again with all of them.", i, records.NoRecord(t.Name, id))
+			return fail("Nothing was changed: ids[%d] is %s. Use find_records to get the ids, and call again with all of them.", i, records.NoRecord(t.Name, id))
 		}
 		own := make(map[string]any, len(fields)) // a write may fill in the map it is given
 		for k, v := range fields {
@@ -71,7 +70,7 @@ func (s *Service) updateRecords(typeName string, ids, where []string, fields map
 	}
 	_, done, i, err := records.WriteAll(s.Store, "updated", t.Name, writes) // all or none
 	if err != nil {
-		return fail("Nothing was changed: %s %s could not be — %s. %s Fix the fields and call update_records again.", t.Name, ids[i], humanizeValidationError(err.Error()), fieldHelp(err, t))
+		return fail("Nothing was changed, as %s %s could not be: %s Call again with that fixed.", t.Name, ids[i], fieldHelp(err, t))
 	}
 	ops, titles := records.Joined(done), make([]string, len(done))
 	for i, c := range done {

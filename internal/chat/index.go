@@ -105,3 +105,17 @@ func firstSentence(s string) string {
 	}
 	return s
 }
+
+// noComponent is a component that is not here, said with the nearest that
+// is and the ones a block can be: those Sameway places itself are no help.
+func (s *Service) noComponent(name string) string {
+	var names []string
+	for _, c := range s.Registry.Blocks() {
+		names = append(names, c.Manifest.Name)
+	}
+	said := fmt.Sprintf("there is no component %q", name)
+	if near := fold.Nearest(name, names); near != "" {
+		said += " (did you mean " + near + "?)"
+	}
+	return said + ". Nothing was added. A block is one of: " + schema.Names(names)
+}

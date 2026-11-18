@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "What stopped a form, at the top, as a list: each problem in plain words, linking to the field it is about.",
   "icon": "!",
+  "pageOnly": true,
   "use": { "when": "a form was sent and one or more of its answers could not be taken.", "not": "a problem that is not about a field, which is an alert; a field's own message, which sits with the field.", "with": "the same message beside each field, tied to it." },
   "props": {
     "type": "object",

@@ -100,7 +100,7 @@ func (s *Service) addComponent(name string, props map[string]any, l look) toolRe
 	name = strings.ToLower(strings.TrimSpace(name))
 	c, ok := s.Registry.Get(name)
 	if !ok {
-		return fail("unknown component %q. Available: %s", name, strings.Join(s.Registry.Names(), ", "))
+		return fail("%s", s.noComponent(name))
 	}
 	shows, bad := s.writable("add_component", c, props)
 	if bad != nil {

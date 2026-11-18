@@ -72,7 +72,7 @@ func (s *Service) stillOn(w records.Within, id string, from, to time.Time, calle
 	if len(ids) == 0 {
 		return ""
 	}
-	return fmt.Sprintf("%s in %s %s still on its old day, %s: %s. To move them with it, update_records (PATCH /api/%s with ids) and %s %s, in one change; ids %s.",
+	return fmt.Sprintf("%s in %s %s still on its old day, %s: %s. To move them with it, update_record with ids (PATCH /api/%s) and %s %s, in one change; ids %s.",
 		schema.Count(len(ids), w.T.Name), called, isAre(len(ids)), when.Day(from, s.Now()), schema.Names(names), w.T.Name, day, to.Format("2006-01-02"), strings.Join(ids, ", "))
 }
 

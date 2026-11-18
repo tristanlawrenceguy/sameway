@@ -204,7 +204,7 @@ func TestToolErrorsGuideTheModel(t *testing.T) {
 		req  int
 		want string
 	}{
-		{1, "unknown component \"carousel\". Available: alert, badge, button"},
+		{1, "there is no component \"carousel\". Nothing was added. A block is one of: alert, badge, button"},
 		{2, `variant must be one of "primary", "secondary", "danger", "quiet", not "huge"`},
 		{3, "unknown tool frobnicate"},
 		{4, "not valid JSON"},
