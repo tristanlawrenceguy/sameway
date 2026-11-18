@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -65,6 +66,9 @@ func (s *Service) paymentOf(raw json.RawMessage) (paymentArgs, error) {
 	if p.Currency == "" {
 		p.Currency = "gbp"
 	}
+	// Rounded as Stripe takes it, so the question says what is paid.
+	scale := math.Pow10(stripe.Decimals(p.Currency))
+	p.Amount = math.Round(p.Amount*scale) / scale
 	switch {
 	case p.What == "" || p.Amount <= 0:
 		return p, fmt.Errorf("say what it is for and how much")
@@ -117,9 +121,10 @@ func (s *Service) stripe() stripe.Account {
 	return a
 }
 
-// Money is an amount as a person reads it, or hears it read: 60.00 GBP.
+// Money is an amount as a person reads it, or hears it read: 60.00 GBP,
+// 3000 JPY.
 func Money(amount float64, currency string) string {
-	return fmt.Sprintf("%.2f %s", amount, strings.ToUpper(currency))
+	return fmt.Sprintf("%.*f %s", stripe.Decimals(currency), amount, strings.ToUpper(currency))
 }
 
 // FollowPayments marks each payment Stripe says is paid, and tells the
@@ -156,8 +161,9 @@ func (s *Service) FollowPayments(ctx context.Context) error {
 	return nil
 }
 
-// stripeLink finds addresses to pay at, as Stripe gives them.
-var stripeLink = regexp.MustCompile(`https?://(?:buy|checkout)\.stripe\.com/[^\s<>()"']+`)
+// stripeLink finds addresses to pay at, as Stripe gives them, in any
+// case, as a mail client opens them.
+var stripeLink = regexp.MustCompile(`(?i)https?://(?:buy|checkout)\.stripe\.com/[^\s<>()"']+`)
 
 // paymentsIn says, from the payments kept here, what each link to pay in
 // some words asks for, so the owner reads the amount Stripe will take and
@@ -171,6 +177,7 @@ func (s *Service) paymentsIn(text string) ([]string, error) {
 	recs, _ := s.Store.List(PaymentType, store.ListOptions{})
 	var lines []string
 	for _, link := range found {
+		link = strings.TrimRight(link, ".,;:!?") // the end of a sentence, not the link
 		var p *store.Record
 		for _, r := range recs {
 			if r.Fields["link"] == link {

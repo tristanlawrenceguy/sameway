@@ -24,7 +24,8 @@ var lastDays = []struct {
 	words func(item, on string) string
 }{
 	{"return_by", 3 * 24 * time.Hour, func(item, on string) string {
-		return "You can still return " + item + " until " + strings.TrimPrefix(on, "on ") + "."
+		// "Until today" left a person unsure whether today was still in.
+		return "The last day to return " + item + " is " + strings.TrimPrefix(on, "on ") + "."
 	}},
 	{"warranty_until", 30 * 24 * time.Hour, func(item, on string) string {
 		return "The warranty on " + item + " ends " + on + ". If anything is wrong with it, claim before then."

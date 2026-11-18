@@ -1,6 +1,7 @@
 package mailin
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"mime/quotedprintable"
@@ -118,6 +119,14 @@ func TestMailAMachineSentIsKnown(t *testing.T) {
 			t.Errorf("%q: auto %v", raw, m.Auto)
 		}
 	}
+	// What the assistant writes unasked says so too, so two assistants
+	// answering each other stop after one answer.
+	for _, auto := range []bool{true, false} {
+		raw := message("tris@example.com", "<1@example.com>", Outgoing{To: "pat@example.com", Subject: "Re: Friday", Text: "Friday is free.", Auto: auto})
+		if m, _ := Parse(bytes.NewReader(raw)); m.Auto != auto {
+			t.Errorf("sent with auto %v, read back as %v", auto, m.Auto)
+		}
+	}
 }
 
 // Who sent a mail is trusted only as far as the receiving server checked
@@ -128,7 +137,13 @@ func TestTheReceivingServerVouchesForTheSender(t *testing.T) {
 		"mx.google.com; dkim=pass header.d=mail.example.com":        false,
 		"mx.google.com; dkim=pass header.d=elsewhere.com; spf=pass": false,
 		"mx.google.com; dkim=fail; dmarc=fail":                      false,
-		"":                                                          false,
+		// What the sender chose, copied in by the server, vouches for nothing.
+		"mx.google.com; spf=pass smtp.mailfrom=dmarc=pass@evil.test; dmarc=fail header.from=example.com":                      false,
+		"mx.google.com; spf=pass (domain of dmarc=pass header.from=example.com) smtp.mailfrom=evil.test":                      false,
+		`mx.google.com; spf=pass smtp.mailfrom="x;dkim=pass header.d=example.com y"@evil.test; dkim=pass header.d=evil.test`:  false,
+		"mx.google.com; dmarc=pass (p=NONE) header.from=evil.test":                                                            false,
+		"outlook.com; dkim=pass (signature was verified) header.d=example.com;dmarc=pass action=none header.from=example.com": true,
+		"": false,
 	} {
 		raw := "Authentication-Results: " + results + "\r\nFrom: Sam <sam@example.com>\r\n\r\nHi."
 		if m, _ := Parse(strings.NewReader(raw)); m.Verified != want {
