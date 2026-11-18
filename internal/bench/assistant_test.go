@@ -68,7 +68,7 @@ func TestAssistant(t *testing.T) {
 		}
 		defer out.Close()
 	}
-	set := requests()
+	set := append(requests(), oneStep()...)
 	if os.Getenv("SAMEWAY_BENCH_SET") == "newcomer" {
 		set = newcomer() // newcomer_test.go
 	}

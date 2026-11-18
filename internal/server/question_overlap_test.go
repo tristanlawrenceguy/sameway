@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
@@ -60,7 +61,17 @@ func TestTwoVisitorsAskingAtOnceKeepTheirOwnRequests(t *testing.T) {
 	if !strings.Contains(second, "Visit from Bea") || strings.Contains(second, "Visit from Al") {
 		t.Errorf("the second too:\n%s", truncate(second))
 	}
-	if n := len(rang); n != 2 {
-		t.Errorf("the owner hears of each request once: %d times", n)
+	// The owner is told in the background: two are waited for, then a
+	// moment more for any third.
+	heard := 0
+	for _, wait := range []time.Duration{5 * time.Second, 5 * time.Second, 300 * time.Millisecond} {
+		select {
+		case <-rang:
+			heard++
+		case <-time.After(wait):
+		}
+	}
+	if heard != 2 {
+		t.Errorf("the owner hears of each request once: %d times", heard)
 	}
 }
