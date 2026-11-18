@@ -51,3 +51,24 @@ func TestSnippetBodyHasNoRawFieldLabelPrefix(t *testing.T) {
 		t.Errorf("the status value 'Published' should appear in snippet body; got: %q", hits[0].Snippet)
 	}
 }
+
+// A repeat is said in words, as its page says it: a subscription found by
+// its name reads "every month", never the stored FREQ=MONTHLY, which a
+// screen reader spells out.
+func TestSnippetSaysARepeatInWords(t *testing.T) {
+	t.Parallel()
+	types, err := schema.Load("../../examples/workspaces/starter/schema")
+	if err != nil {
+		t.Fatal(err)
+	}
+	st, err := store.Open(":memory:", types)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer st.Close()
+	st.Create("subscription", map[string]any{"name": "Streamflix", "price": "£9.99", "repeat": "every month"})
+	hits, _ := search.Matches(st, types, "Streamflix", search.Reader{Now: time.Now()})
+	if len(hits) != 1 || !strings.Contains(hits[0].Snippet, "every month") || strings.Contains(hits[0].Snippet, "FREQ") {
+		t.Errorf("the repeat in words: %+v", hits)
+	}
+}
