@@ -156,8 +156,9 @@ func (s *Service) FollowPayments(ctx context.Context) error {
 	return nil
 }
 
-// stripeLink finds addresses to pay at, as Stripe gives them.
-var stripeLink = regexp.MustCompile(`https?://(?:buy|checkout)\.stripe\.com/[^\s<>()"']+`)
+// stripeLink finds addresses to pay at, as Stripe gives them, in any
+// case, as a mail client opens them.
+var stripeLink = regexp.MustCompile(`(?i)https?://(?:buy|checkout)\.stripe\.com/[^\s<>()"']+`)
 
 // paymentsIn says, from the payments kept here, what each link to pay in
 // some words asks for, so the owner reads the amount Stripe will take and
@@ -171,6 +172,7 @@ func (s *Service) paymentsIn(text string) ([]string, error) {
 	recs, _ := s.Store.List(PaymentType, store.ListOptions{})
 	var lines []string
 	for _, link := range found {
+		link = strings.TrimRight(link, ".,;:!?") // the end of a sentence, not the link
 		var p *store.Record
 		for _, r := range recs {
 			if r.Fields["link"] == link {
