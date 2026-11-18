@@ -58,7 +58,7 @@ var outward = map[string]func(now, next string, s *Service) question{
 			return question{"Ask you about every request again?", "Requests your standing yes (" + orNone(now) + ") covered would wait for your answer again.", "Yes, ask me", "No, keep it"}
 		}
 		return question{"Answer requests yes for you when this covers them?",
-			fmt.Sprintf("Your words: %q. A request they plainly cover would be answered yes as it comes, as you would, and you would be told; anything else would wait for you as now. Whether it is covered is judged from what Sameway knows of the request (its kind, its times, whether you are free, who asks as your records have them), never from what the asker wrote. Now: %s.", next, orNone(now)),
+			fmt.Sprintf("Your words: %q. A request to make something that they plainly cover would be answered yes as it comes, as you would, and you would be told; anything else, a change to what is already here too, would wait for you as now. Whether it is covered is judged from what Sameway knows of the request (its kind, its times, whether you are free, who asks as your records have them), never from what the asker wrote. Now: %s.", next, orNone(now)),
 			"Yes, answer for me", "No, keep asking me"}
 	},
 	"payments.max": func(now, next string, _ *Service) question { // payments.go

@@ -36,9 +36,9 @@ var paymentLinkOp = Op{Title: "Make a link to pay you",
 		if err != nil {
 			return fail("%v", err), true
 		}
-		return s.ask(question{fmt.Sprintf("Make a link to pay you %s for %q?", money(p.Amount, p.Currency), p.What),
-			fmt.Sprintf("Stripe would make a link that takes one payment of %s into your Stripe account, then closes. Check the amount: it is what they would pay.", money(p.Amount, p.Currency)),
-			"Make a " + money(p.Amount, p.Currency) + " link", "Don't"},
+		return s.ask(question{fmt.Sprintf("Make a link to pay you %s for %q?", Money(p.Amount, p.Currency), p.What),
+			fmt.Sprintf("Stripe would make a link that takes one payment of %s into your Stripe account, then closes. Check the amount: it is what they would pay.", Money(p.Amount, p.Currency)),
+			"Make a " + Money(p.Amount, p.Currency) + " link", "Don't"},
 			map[string]any{"tool": "payment_link", "what": p.What, "amount": p.Amount, "currency": p.Currency}), true
 	},
 	Run: func(s *Service, _ toolArgs, call llm.ToolCall) toolResult { return s.paymentLink(call.Args) },
@@ -75,7 +75,7 @@ func (s *Service) paymentOf(raw json.RawMessage) (paymentArgs, error) {
 	case len(p.Currency) != 3:
 		return p, fmt.Errorf("say the currency as three letters, such as gbp")
 	case p.Amount > s.paymentsMax():
-		return p, fmt.Errorf("%s is above the most one link may ask for (%s, set_setting payments.max); nothing was put to the person", money(p.Amount, p.Currency), fmt.Sprint(s.paymentsMax()))
+		return p, fmt.Errorf("%s is above the most one link may ask for (%s, set_setting payments.max); nothing was put to the person", Money(p.Amount, p.Currency), fmt.Sprint(s.paymentsMax()))
 	case s.StripeKey != nil && s.StripeKey() == "":
 		return p, fmt.Errorf("no Stripe account is connected: the person connects theirs on Payments")
 	}
@@ -95,7 +95,7 @@ func (s *Service) paymentLink(raw json.RawMessage) toolResult {
 		return fail("%v", err)
 	}
 	link, _ := rec.Fields["link"].(string)
-	return toolResult{text: fmt.Sprintf("Made: %s for %q, paid at %s (payment %s).", money(p.Amount, p.Currency), p.What, link, rec.ID),
+	return toolResult{text: fmt.Sprintf("Made: %s for %q, paid at %s (payment %s).", Money(p.Amount, p.Currency), p.What, link, rec.ID),
 		change: &records.Change{Action: "created", Component: PaymentType, ID: rec.ID, Detail: p.What}}
 }
 
@@ -132,8 +132,9 @@ func (s *Service) stripe() stripe.Account {
 	return a
 }
 
-// money is an amount as a person reads it: 60.00 GBP, 3000 JPY.
-func money(amount float64, currency string) string {
+// Money is an amount as a person reads it, or hears it read: 60.00 GBP,
+// 3000 JPY.
+func Money(amount float64, currency string) string {
 	return fmt.Sprintf("%.*f %s", stripe.Decimals(currency), amount, strings.ToUpper(currency))
 }
 
@@ -161,7 +162,7 @@ func (s *Service) FollowPayments(ctx context.Context) error {
 			continue
 		}
 		what, _ := r.Fields["what"].(string)
-		said := fmt.Sprintf("Paid: %s for %q.", money(amount, fmt.Sprint(r.Fields["currency"])), what)
+		said := fmt.Sprintf("Paid: %s for %q.", Money(amount, fmt.Sprint(r.Fields["currency"])), what)
 		records.Record(s.Store, "system", records.Change{Action: "paid", Component: PaymentType, ID: r.ID, Detail: what, Ops: done})
 		s.Say(said)
 		if s.Automate != nil && s.Automate.Tell != nil {
@@ -202,7 +203,7 @@ func (s *Service) paymentsIn(text string) ([]string, error) {
 		if paid, _ := p.Fields["paid"].(bool); paid {
 			state = "already paid"
 		}
-		lines = append(lines, fmt.Sprintf("It carries a link to pay %s for %q (%s), whatever the words say.", money(amount, fmt.Sprint(p.Fields["currency"])), p.Fields["what"], state))
+		lines = append(lines, fmt.Sprintf("It carries a link to pay %s for %q (%s), whatever the words say.", Money(amount, fmt.Sprint(p.Fields["currency"])), p.Fields["what"], state))
 	}
 	return lines, nil
 }

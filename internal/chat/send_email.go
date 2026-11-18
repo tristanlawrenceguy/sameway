@@ -39,8 +39,8 @@ var sendEmailOp = Op{Title: "Send an email",
 		}
 		yes := "Send it"
 		if e.Pay != nil { // the amount on the button, as payment_link's
-			detail += "\n\n" + fmt.Sprintf("With a link to pay %s for %q: each gets their own, which takes one payment into your Stripe account. Check the amount: it is what they would pay.", money(e.Pay.Amount, e.Pay.Currency), e.Pay.What)
-			yes = "Send it, asking " + money(e.Pay.Amount, e.Pay.Currency)
+			detail += "\n\n" + fmt.Sprintf("With a link to pay %s for %q: each gets their own, which takes one payment into your Stripe account. Check the amount: it is what they would pay.", Money(e.Pay.Amount, e.Pay.Currency), e.Pay.What)
+			yes = "Send it, asking " + Money(e.Pay.Amount, e.Pay.Currency)
 		}
 		for _, c := range e.Choices {
 			detail += fmt.Sprintf("\n\nWith a link, %s: pressing it would %s.", c.Label, c.what)
@@ -142,7 +142,7 @@ func (s *Service) sendOne(e emailArgs) error {
 		if err != nil {
 			return err
 		}
-		e.Text += fmt.Sprintf("\n\nTo pay %s for %s: %s", money(e.Pay.Amount, e.Pay.Currency), e.Pay.What, p.Fields["link"])
+		e.Text += fmt.Sprintf("\n\nTo pay %s for %s: %s", Money(e.Pay.Amount, e.Pay.Currency), e.Pay.What, p.Fields["link"])
 	}
 	if len(e.Choices) > 0 {
 		lines, err := s.offer(e.To, e.Choices) // offers.go
