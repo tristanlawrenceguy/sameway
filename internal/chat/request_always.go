@@ -5,19 +5,27 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 // The owner can answer a kind of request once for good: Always on one of
 // someone's requests puts that kind of change on their person page (Made
-// without asking, as "create_record note"), and from then on the same
-// kind from them is made without asking, logged as theirs. Only the
+// without asking, in words: "notes", "changes to tasks"), and from then
+// on the same kind from them is made without asking, logged as theirs. It
+// is kept in the words the owner reads there, not a tool's name, since
+// taking it back is taking those words out. Only the
 // owner's press adds one, never a model; taking it off their page asks
 // again. Someone with no person page, a visitor from the internet, is
 // always asked.
 
 // AlwaysKey is a kind of change as a person page keeps it.
-func AlwaysKey(tool, typeName string) string { return tool + " " + typeName }
+func AlwaysKey(tool, typeName string) string {
+	if tool == "update_record" {
+		return "changes to " + schema.Plural(typeName)
+	}
+	return schema.Plural(typeName)
+}
 
 // always says whether the one this service speaks for may have this kind
 // of change made without asking.

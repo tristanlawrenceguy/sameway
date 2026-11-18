@@ -128,7 +128,13 @@ func TestTheReceivingServerVouchesForTheSender(t *testing.T) {
 		"mx.google.com; dkim=pass header.d=mail.example.com":        false,
 		"mx.google.com; dkim=pass header.d=elsewhere.com; spf=pass": false,
 		"mx.google.com; dkim=fail; dmarc=fail":                      false,
-		"":                                                          false,
+		// What the sender chose, copied in by the server, vouches for nothing.
+		"mx.google.com; spf=pass smtp.mailfrom=dmarc=pass@evil.test; dmarc=fail header.from=example.com":                      false,
+		"mx.google.com; spf=pass (domain of dmarc=pass header.from=example.com) smtp.mailfrom=evil.test":                      false,
+		`mx.google.com; spf=pass smtp.mailfrom="x;dkim=pass header.d=example.com y"@evil.test; dkim=pass header.d=evil.test`:  false,
+		"mx.google.com; dmarc=pass (p=NONE) header.from=evil.test":                                                            false,
+		"outlook.com; dkim=pass (signature was verified) header.d=example.com;dmarc=pass action=none header.from=example.com": true,
+		"": false,
 	} {
 		raw := "Authentication-Results: " + results + "\r\nFrom: Sam <sam@example.com>\r\n\r\nHi."
 		if m, _ := Parse(strings.NewReader(raw)); m.Verified != want {
