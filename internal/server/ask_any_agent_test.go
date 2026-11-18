@@ -14,15 +14,23 @@ import (
 // shopAgent is someone else's agent, not a Sameway: an A2A card, and an
 // answer as a task with an artifact.
 type shopAgent struct {
-	cardURL string
-	asked   string
+	cardURL  string
+	asked    string
+	redirect string // where its agent sends the question on to, if anywhere
+	inside   bool   // whether a page on the owner's own network was asked
 }
 
 func (s *shopAgent) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
 	case "/.well-known/agent-card.json":
 		json.NewEncoder(w).Encode(map[string]any{"name": "Shoe shop", "url": s.cardURL})
+	case "/inside":
+		s.inside = true
 	case "/a2a":
+		if s.redirect != "" {
+			http.Redirect(w, r, s.redirect, http.StatusTemporaryRedirect)
+			return
+		}
 		b, _ := io.ReadAll(r.Body)
 		s.asked = string(b)
 		json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": 1, "result": map[string]any{"kind": "task", "status": map[string]any{"state": "completed"},
@@ -70,5 +78,15 @@ func TestMyAssistantAsksAnyAgent(t *testing.T) {
 	postForm(t, h, "/proposal/"+ps[len(ps)-1].ID+"/accept", nil)
 	if shop.asked != "" {
 		t.Errorf("a card pointing off the host is not followed: %s", shop.asked)
+	}
+
+	// Nor is its agent sending the question on, to a page on the owner's
+	// own network, or to Sameway itself.
+	shop.cardURL, shop.redirect = "https://shoes.example.com/a2a", "http://127.0.0.1:8080/inside"
+	me.Chat.Call("ask_page", json.RawMessage(`{"address":"https://shoes.example.com","question":"And in size 11?"}`))
+	ps = me.Chat.Proposals()
+	postForm(t, h, "/proposal/"+ps[len(ps)-1].ID+"/accept", nil)
+	if shop.inside {
+		t.Error("a redirect off the host is not followed")
 	}
 }
