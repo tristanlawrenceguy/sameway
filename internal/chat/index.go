@@ -117,5 +117,5 @@ func (s *Service) noComponent(name string) string {
 	if near := fold.Nearest(name, names); near != "" {
 		said += " (did you mean " + near + "?)"
 	}
-	return said + ". Nothing was added. A block is one of: " + strings.Join(names, ", ")
+	return said + ". Nothing was added. A block is one of: " + schema.Names(names)
 }
