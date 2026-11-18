@@ -114,15 +114,19 @@ func sameAddress(a, b string) bool {
 }
 
 // InvitationAnswered keeps answers to invitations that came back by email
-// on their events: only from an address an invitation went to, which is
-// what makes it theirs to answer.
-func (s *Service) InvitationAnswered(answers []convert.Answer) {
+// from from on their events: only from an address an invitation went to,
+// which is what makes it theirs to answer, and only their own answer, as
+// one guest could otherwise decline for another.
+func (s *Service) InvitationAnswered(answers []convert.Answer, from string) {
 	t, ok := s.Store.Types().Get(records.EventType)
 	if !ok {
 		return
 	}
 	recs, _ := s.Store.List(records.EventType, store.ListOptions{})
 	for _, a := range answers {
+		if !sameAddress(a.Who, from) {
+			continue
+		}
 		for _, rec := range recs {
 			if uid, _ := rec.Fields["uid"].(string); uid != a.UID && rec.ID+"@sameway" != a.UID {
 				continue
