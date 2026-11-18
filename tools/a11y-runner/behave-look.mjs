@@ -41,4 +41,15 @@ export const cases = {
     check(colours.said !== colours.empty && colours.said === colours.text, `the problem is in the text colour, the empty line muted: ${JSON.stringify(colours)}`);
     await tab.close();
   },
+
+  // The server takes out of a published page every form the internet may
+  // not send; the booking link's and the ask box's are left for strangers
+  // to use, and once a rule hid them all from sight.
+  "look: a form the internet may send is in view on a published page": async (browser, check) => {
+    const tab = await open(browser, page(`<main id="main"><form method="post" action="/book"><label for="n">Your name</label><input id="n" name="name"><button type="submit">Ask for this time</button></form><nav class="sw-nav sw-nav--more"><a href="/help">Help</a></nav></main>`, ` data-controls="none"`));
+    const shown = await tab.evaluate(() => ({ form: document.querySelector("form").getBoundingClientRect().height > 0, nav: document.querySelector(".sw-nav--more").getBoundingClientRect().height > 0 }));
+    check(shown.form, "the form is drawn, so a stranger can fill it in");
+    check(!shown.nav, "the workspace's own ways in stay out of view");
+    await tab.close();
+  },
 };

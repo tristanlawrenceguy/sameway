@@ -17,5 +17,5 @@ func (s *Service) suggestedAlways(w http.ResponseWriter, r *http.Request) {
 		s.Failed(w, r, "Not made", err, "/today")
 		return
 	}
-	s.TellAt(w, r, web.Outcome{Title: "Made", Text: "Made, and the same from them from now on without asking. Take it off their page to be asked again."}, "/today")
+	s.TellAt(w, r, web.Outcome{Title: "Made", Text: "Made. From now on the same kind of request from them is made without asking you. To be asked again, take it off their page, under Made without asking."}, "/today")
 }
