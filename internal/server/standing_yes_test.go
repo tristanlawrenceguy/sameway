@@ -87,9 +87,9 @@ func TestAStandingYesAnswersWhatItCovers(t *testing.T) {
 	msgs, _ := a.Chat.Messages()
 	told := false
 	for _, m := range msgs {
-		told = told || strings.Contains(m.Fields["content"].(string), "Answered yes by your standing rule")
+		told = told || strings.Contains(m.Fields["content"].(string), "Made without asking you, by your standing yes: \"") && strings.HasSuffix(m.Fields["content"].(string), "To change or stop it, tell the assistant.") && !strings.Contains(m.Fields["content"].(string), "Make it?")
 	}
 	if !told {
-		t.Error("the owner is told")
+		t.Error("the owner is told it is made, in their own words, and how to stop it")
 	}
 }
