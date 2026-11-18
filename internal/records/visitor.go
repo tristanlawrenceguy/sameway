@@ -37,6 +37,10 @@ type Visitor struct {
 	// Agent says it is an agent let in with a key of its own, named by
 	// the key (agent_keys.go) rather than by what it says of itself.
 	Agent bool
+	// Turn, for one question from the internet, is that question's own
+	// key: two visitors who give the same name, or none, are not one
+	// asker, and neither is told of the other's requests.
+	Turn string `json:",omitempty"`
 }
 
 // Owner says whether the visitor may do everything.

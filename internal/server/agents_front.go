@@ -101,12 +101,11 @@ func (s *Server) a2a(w http.ResponseWriter, r *http.Request) {
 	if who, _ := req.Params.Message.Metadata["who"].(string); strings.TrimSpace(who) != "" {
 		v.Name = strings.TrimSpace(who)
 	}
-	start := s.now()
-	said, err := s.app.Chat.For(v).AnswerOnce(r.Context(), s.app.Workspace.Config.Name, strings.Join(words, "\n"))
+	said, made, err := s.app.Chat.For(v).AnswerOnce(r.Context(), s.app.Workspace.Config.Name, strings.Join(words, "\n"))
 	if err != nil {
 		said = err.Error()
 	}
-	asked := s.requestsSince(r, v, start) // request_page.go
+	asked := s.requestsSeen(r, made) // request_page.go
 	if len(asked) > 0 {
 		s.Changed()
 	}
