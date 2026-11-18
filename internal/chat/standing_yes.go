@@ -14,8 +14,8 @@ import (
 )
 
 // The owner's yes, given ahead in their own words (requests.always:
-// "always yes to bookings from clients in working hours"): a request it
-// plainly covers is answered yes as it comes, as the owner would, and the
+// "always yes to bookings from clients in working hours"): a request to
+// make something that it plainly covers is answered yes as it comes, as the owner would, and the
 // owner is told. Whether it covers one is the model's judgement, made on
 // what Sameway itself knows of the request, never on a word the asker
 // wrote: the kind of change, its times and whether the owner is free
@@ -63,22 +63,21 @@ func (s *Service) answerAhead(p *store.Record) bool {
 }
 
 // requestFacts is a request as Sameway itself knows it, without a word the
-// asker wrote: the kind of change, its times and whether the owner is
-// free, who asks as the owner's records have them, and how it came.
+// asker wrote: the kind of thing to make, its times and whether the owner
+// is free, who asks as the owner's records have them, and how it came.
+// Only a request to make something new is judged: one to change what is
+// already here always waits, as a real model said yes to a client moving
+// the owner's own meeting under a rule for clients' visits.
 func (s *Service) requestFacts(p *store.Record) string {
 	action, _ := p.Fields["action"].(map[string]any)
 	tool, _ := action["tool"].(string)
 	typeName, _ := action["type"].(string)
 	fields, _ := action["fields"].(map[string]any)
 	t, ok := s.Store.Types().Get(typeName)
-	if !ok || !requestable(tool) {
+	if !ok || tool != "create_record" {
 		return ""
 	}
-	verb := "make"
-	if tool == "update_record" {
-		verb = "change"
-	}
-	lines := []string{fmt.Sprintf("- To %s %s.", verb, withA(t.Name))}
+	lines := []string{fmt.Sprintf("- To make %s.", withA(t.Name))}
 	if t.Description != "" {
 		lines = append(lines, "- What "+withA(t.Name)+" is, as the workspace says: "+t.Description)
 	}
