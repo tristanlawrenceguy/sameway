@@ -100,6 +100,8 @@ func TestAnyoneAsksForATimeAndNothingIsBookedUntilYes(t *testing.T) {
 	status := "/request/" + pat.Fields["token"].(string)
 	if page := public(t, internet, http.MethodGet, status, "").Body.String(); !strings.Contains(page, "It waits for their answer") {
 		t.Errorf("its address says it waits: %s", truncate(page))
+	} else if strings.Contains(page, `href="/help"`) || strings.Contains(page, "sw-nav--more") {
+		t.Errorf("a stranger is not led to the workspace's own pages, which they cannot open\n%s", truncate(page))
 	}
 	wantStatus(t, postForm(t, h, "/suggested/yes", url.Values{"id": {pat.ID}}), http.StatusSeeOther)
 	if page := public(t, internet, http.MethodGet, status, "").Body.String(); !strings.Contains(page, "They said yes") {

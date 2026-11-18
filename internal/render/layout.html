@@ -27,10 +27,10 @@
 </nav>
 {{end}}{{if .Present}}{{.Present}}
 {{end}}{{if .Header}}<div class="sw-strip sw-strip--header">{{.Header}}</div>
-{{end}}<nav class="sw-nav sw-nav--more" aria-label="This workspace">
+{{end}}{{if .More}}<nav class="sw-nav sw-nav--more" aria-label="This workspace">
 <ul>{{range .More}}<li>{{.}}</li>{{end}}</ul>
 </nav>
-</div>
+{{end}}</div>
 </header>
 {{end}}<div class="sw-shell">
 {{if .Left}}<aside class="sw-pane sw-pane--left" aria-label="Left pane">{{.Left}}</aside>
