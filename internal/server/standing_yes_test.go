@@ -12,6 +12,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 )
 
@@ -91,5 +92,33 @@ func TestAStandingYesAnswersWhatItCovers(t *testing.T) {
 	}
 	if !told {
 		t.Error("the owner is told")
+	}
+}
+
+// A standing yes is for what people ask to be made. A client asking to
+// move one of the owner's own events, when the owner is free then, waits
+// for the owner however the rule reads: the judgement is never asked.
+func TestAStandingYesNeverChangesWhatIsHere(t *testing.T) {
+	t.Parallel()
+	a, _ := newAppAt(t, tonight)
+	if err := a.Workspace.Set("requests.always", "Always yes to visits from people I tagged client, when I am free"); err != nil {
+		t.Fatal(err)
+	}
+	sam, _ := a.Store.Create("person", map[string]any{"name": "Sam", "email": "sam@example.com", "access": "view", "tags": []any{"client"}})
+	board, _ := a.Store.Create("event", map[string]any{"title": "Board meeting", "starts": thursdayAt(14).UTC().Format(time.RFC3339)})
+	judge := &judging{scripted: scripted{steps: []*llm.Response{
+		toolCall("update_record", map[string]any{"type": "event", "id": board.ID, "fields": map[string]any{"starts": thursdayAt(9).UTC().Format(time.RFC3339)}}),
+		{Text: "Asked."},
+	}}}
+	a.Chat.Provider = judge
+	sams := a.Chat.For(records.Visitor{Person: sam.ID, Name: "Sam", Login: "sam@example.com", Access: "view"})
+	if _, err := sams.AnswerOnce(context.Background(), "Test", "Move the board meeting to 9."); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := a.Store.Get("event", board.ID); got.Fields["starts"] != board.Fields["starts"] {
+		t.Errorf("the owner's own event stays where it was: %v", got.Fields["starts"])
+	}
+	if len(judge.shown) != 0 || len(a.Chat.Suggestions()) != 1 {
+		t.Errorf("the change waits for the owner, never judged: shown %q, %d waiting", judge.shown, len(a.Chat.Suggestions()))
 	}
 }
