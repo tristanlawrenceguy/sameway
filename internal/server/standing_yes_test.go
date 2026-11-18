@@ -115,7 +115,7 @@ func TestAStandingYesNeverChangesWhatIsHere(t *testing.T) {
 	}}}
 	a.Chat.Provider = judge
 	sams := a.Chat.For(records.Visitor{Person: sam.ID, Name: "Sam", Login: "sam@example.com", Access: "view"})
-	if _, err := sams.AnswerOnce(context.Background(), "Test", "Move the board meeting to 9."); err != nil {
+	if _, _, err := sams.AnswerOnce(context.Background(), "Test", "Move the board meeting to 9."); err != nil {
 		t.Fatal(err)
 	}
 	if got, _ := a.Store.Get("event", board.ID); got.Fields["starts"] != board.Fields["starts"] {
