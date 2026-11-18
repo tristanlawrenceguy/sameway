@@ -9,8 +9,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 )
@@ -78,7 +80,7 @@ func (a Account) Link(ctx context.Context, what string, amount float64, currency
 	var price struct {
 		ID string `json:"id"`
 	}
-	err = a.call(ctx, http.MethodPost, "/v1/prices", url.Values{"unit_amount": {fmt.Sprint(int64(amount*100 + 0.5))}, "currency": {strings.ToLower(currency)}, "product_data[name]": {what}}, &price)
+	err = a.call(ctx, http.MethodPost, "/v1/prices", url.Values{"unit_amount": {fmt.Sprint(Minor(amount, currency))}, "currency": {strings.ToLower(currency)}, "product_data[name]": {what}}, &price)
 	if err != nil {
 		return "", "", err
 	}
@@ -105,7 +107,7 @@ func (a Account) Paid(ctx context.Context, link string, amount float64, currency
 		return false, err
 	}
 	for _, s := range out.Data {
-		if s.PaymentStatus == "paid" && s.AmountTotal == int64(amount*100+0.5) && strings.EqualFold(s.Currency, currency) {
+		if s.PaymentStatus == "paid" && s.AmountTotal == Minor(amount, currency) && strings.EqualFold(s.Currency, currency) {
 			return true, nil
 		}
 	}
@@ -116,3 +118,37 @@ func (a Account) Paid(ctx context.Context, link string, amount float64, currency
 // what it was given: a secret key may also refund and pay out, which
 // Sameway never needs, so it is not taken.
 func Restricted(key string) bool { return strings.HasPrefix(key, "rk_") }
+
+// Stripe counts an amount in a currency's smallest unit: a penny, but a
+// whole yen, and a thousandth of a dinar. Kronur and Ugandan shillings
+// are whole, yet given in hundredths, for the way Stripe once took them.
+const (
+	wholeOnly    = "bif clp djf gnf jpy kmf krw mga pyg rwf vnd vuv xaf xof xpf"
+	wholeAsCents = "isk ugx"
+	thousandths  = "bhd jod kwd omr tnd"
+)
+
+// Decimals is how many places an amount in the currency may have.
+func Decimals(currency string) int {
+	if c := strings.ToLower(currency); in(wholeOnly, c) || in(wholeAsCents, c) {
+		return 0
+	}
+	return 2
+}
+
+// Minor is an amount in whole units as Stripe takes it, rounded to what
+// the currency may have, so what is asked is what is paid.
+func Minor(amount float64, currency string) int64 {
+	c := strings.ToLower(currency)
+	switch {
+	case in(wholeOnly, c):
+		return int64(math.Round(amount))
+	case in(wholeAsCents, c):
+		return int64(math.Round(amount)) * 100
+	case in(thousandths, c): // its last place is always 0
+		return int64(math.Round(amount*100)) * 10
+	}
+	return int64(math.Round(amount * 100))
+}
+
+func in(list, currency string) bool { return slices.Contains(strings.Fields(list), currency) }

@@ -196,7 +196,7 @@ func (s *Service) emailOf(raw json.RawMessage) (emailArgs, error) {
 			return e, err
 		}
 	}
-	if e.paying, err = s.paymentsIn(e.Text); err != nil { // payments.go
+	if e.paying, err = s.paymentsIn(e.Subject + "\n" + e.Text); err != nil { // payments.go
 		return e, fmt.Errorf("not sent: %v", err)
 	}
 	e.Choices, err = s.choicesOf(e.Choices)

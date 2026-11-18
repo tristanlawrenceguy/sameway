@@ -118,6 +118,7 @@ func (s *Service) askPage(raw json.RawMessage) toolResult {
 	if s.Automate != nil && s.Automate.HTTP != nil {
 		client = s.Automate.HTTP
 	}
+	client = onlyTo(client, a.host) // ask_a2a.go
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 	if at := agentAt(ctx, client, a.host); at != "" && !a.request { // ask_a2a.go

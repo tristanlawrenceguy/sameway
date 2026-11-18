@@ -1,6 +1,7 @@
 package chat
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -21,8 +22,11 @@ import (
 // and gives the request's key.
 func (s *Service) Booking(name, email, note string, at time.Time) (string, error) {
 	name, email, note = trim.Line(name, 80), trim.Line(email, 120), trim.Clip(strings.TrimSpace(note), 500)
-	if name == "" || !strings.Contains(email, "@") {
-		return "", fmt.Errorf("say your name and your email, so they know who asks")
+	switch {
+	case name == "":
+		return "", errors.New("say your name, so they know who is asking")
+	case !strings.Contains(email, "@"):
+		return "", errors.New("give your email address, like name@example.com, so they can answer")
 	}
 	notes := fmt.Sprintf("Asked for through your booking link by %s (%s).", name, email)
 	if note != "" {
@@ -46,8 +50,9 @@ func (s *Service) Booking(name, email, note string, at time.Time) (string, error
 	return token, err
 }
 
-// spanOf is an hour from at, as a person reads it.
+// spanOf is an hour from at, as a person reads it, with its time zone,
+// since whoever asked reads it too, from anywhere.
 func (s *Service) spanOf(at time.Time) string {
 	at = at.In(s.Now().Location())
-	return at.Format("Mon 2 Jan") + ", " + when.Clock(at, s.H24()) + " to " + when.Clock(at.Add(time.Hour), s.H24())
+	return at.Format("Mon 2 Jan") + ", " + when.Clock(at, s.H24()) + " to " + when.Clock(at.Add(time.Hour), s.H24()) + ", " + when.Zone(at, at)
 }
