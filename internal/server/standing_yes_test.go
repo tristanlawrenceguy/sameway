@@ -27,6 +27,9 @@ func (j *judging) Complete(ctx context.Context, req llm.Request) (*llm.Response,
 	if strings.Contains(req.System, "standing rule") {
 		j.mu.Lock()
 		defer j.mu.Unlock()
+		if req.Effort != "none" {
+			return &llm.Response{}, nil // a model that thinks first, as one here does, spends five words thinking
+		}
 		facts := req.Messages[0].Content
 		j.shown = append(j.shown, facts)
 		_, asked, _ := strings.Cut(facts, "Asked by:")
