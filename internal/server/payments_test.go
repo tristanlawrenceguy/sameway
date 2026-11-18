@@ -9,6 +9,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -133,5 +134,36 @@ func TestALinkToPayTheOwner(t *testing.T) {
 	}
 	if got := <-rang; !strings.Contains(got, `Paid: 60.00 GBP for "Boiler service"`) {
 		t.Errorf("and the owner is told: %s", got)
+	}
+}
+
+// Asking someone to pay by email was two yeses and a link copied between
+// them; now it is one: the email's own press makes each person's link,
+// with the amount on its button, and sends it. Above the most is refused.
+func TestAnEmailAsksToBePaid(t *testing.T) {
+	t.Parallel()
+	a, h := newApp(t)
+	stripe := &fakeStripe{}
+	a.Automate.HTTP = &http.Client{Transport: served{stripe}}
+	postForm(t, h, "/payments/connect", url.Values{"key": {"rk_test_ok"}})
+	var sent []chat.Outgoing
+	a.Chat.MailFrom = func() string { return "tris+sameway@example.com" }
+	a.Chat.Mail = func(m chat.Outgoing) (string, error) { sent = append(sent, m); return "<1@example.com>", nil }
+
+	if text, isErr := a.Chat.Call("send_email", json.RawMessage(`{"to":"pat@example.com","subject":"Bill","text":"Thanks for having us.","pay":{"what":"Boiler service","amount":6000}}`)); !isErr || !strings.Contains(text, "above the most") || len(a.Chat.Proposals()) != 0 {
+		t.Fatalf("a slip of a zero is refused, not asked: %s", text)
+	}
+	a.Chat.Call("send_email", json.RawMessage(`{"to":"pat@example.com","subject":"Bill","text":"Thanks for having us.","pay":{"what":"Boiler service","amount":60}}`))
+	ps := a.Chat.Proposals()
+	if len(ps) != 1 || ps[0].Fields["yes"] != "Send it, asking 60.00 GBP" || stripe.made != nil {
+		t.Fatalf("nothing is made before the press, whose button says the amount: %+v", ps)
+	}
+	wantStatus(t, postForm(t, h, "/proposal/"+ps[0].ID+"/accept", nil), http.StatusSeeOther)
+	if len(sent) != 1 || !strings.Contains(sent[0].Text, "To pay 60.00 GBP for Boiler service: https://buy.stripe.com/test_1") {
+		t.Fatalf("the email carries the link it made: %+v", sent)
+	}
+	pays, _ := a.Store.List("payment", store.ListOptions{})
+	if len(pays) != 1 || pays[0].Fields["asked_of"] != "pat@example.com" || stripe.links.Get("restrictions[completed_sessions][limit]") != "1" {
+		t.Errorf("kept as a payment asked of them, taking one payment: %+v", pays)
 	}
 }

@@ -88,3 +88,27 @@ func TestUpdateRecordsUndoKeepsLaterEdits(t *testing.T) {
 		}
 	}
 }
+
+// Asked to mark every late task done, a model found them and then changed
+// them in a second call, copying the ids across and now and then one fewer.
+// Named by where, they are found and changed in the one call; a where that
+// matches nothing changes nothing and says so.
+func TestUpdateRecordsByWhere(t *testing.T) {
+	t.Parallel()
+	svc := newFullService(t)
+	for _, title := range []string{"Email Sarah", "Book the car"} {
+		svc.Store.Create("task", map[string]any{"title": title, "due": "2026-09-28"})
+	}
+	kept, _ := svc.Store.Create("task", map[string]any{"title": "Call mum", "due": "2026-12-01"})
+	text := run(t, svc, "update_records", map[string]any{"type": "task", "where": []string{"due<2026-10-01"}, "fields": map[string]any{"done": true}})
+	if !strings.Contains(text, "updated 2 tasks, as one change") || !strings.Contains(text, "Book the car") || strings.Contains(text, "Call mum") {
+		t.Errorf("the two it matches change, named: %s", text)
+	}
+	if rec, _ := svc.Store.Get("task", kept.ID); rec.Fields["done"] == true {
+		t.Error("one it does not match stays as it was")
+	}
+	raw := `{"type":"task","where":["title=Nobody"],"fields":{"done":true}}`
+	if text, isErr := svc.Call("update_records", []byte(raw)); !isErr || !strings.Contains(text, "Nothing was changed: no task matches") {
+		t.Errorf("a where matching nothing says so: %s", text)
+	}
+}
