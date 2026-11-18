@@ -146,8 +146,10 @@ func (s *Service) fillSuggested(t *schema.Type, given map[string]any, sent time.
 		switch {
 		case f.Type == "datetime" && isStr:
 			if at, day, ok := when.Parse(dayWords(str), sent); ok && (at.Format("2006-01-02") != sent.Format("2006-01-02") || saysToday(str)) {
-				if at.Before(sent.AddDate(0, 0, -1)) && !yearSaid.MatchString(str) {
-					at = at.AddDate(1, 0, 0) // "by 31 January", sent in October: the coming one
+				// "by 31 January", sent in October, is the coming one; a day
+				// less than a month gone is past: bought on the 17th.
+				if at.Before(sent.AddDate(0, -1, 0)) && !yearSaid.MatchString(str) {
+					at = at.AddDate(1, 0, 0)
 				}
 				out[name] = when.Store(at, day)
 			}
