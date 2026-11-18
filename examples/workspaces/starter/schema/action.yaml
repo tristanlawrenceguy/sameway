@@ -78,7 +78,7 @@ fields:
     type: enum
     values: [added, changed, removed]
     labels: {added: A record is added, changed: A record comes to match, removed: A record is removed}
-    description: Run when a what record is added, comes to match only (any change if none), or is removed.
+    description: Run when a what record is added, comes to match only (any change if none), or is removed. Time passing counts too, so only starts<+1d and starts>now is the day before each, and due<today is once late.
   what:
     label: Of
     type: string
