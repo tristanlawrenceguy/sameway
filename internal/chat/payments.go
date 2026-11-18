@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -65,6 +66,9 @@ func (s *Service) paymentOf(raw json.RawMessage) (paymentArgs, error) {
 	if p.Currency == "" {
 		p.Currency = "gbp"
 	}
+	// Rounded as Stripe takes it, so the question says what is paid.
+	scale := math.Pow10(stripe.Decimals(p.Currency))
+	p.Amount = math.Round(p.Amount*scale) / scale
 	switch {
 	case p.What == "" || p.Amount <= 0:
 		return p, fmt.Errorf("say what it is for and how much")
@@ -117,9 +121,9 @@ func (s *Service) stripe() stripe.Account {
 	return a
 }
 
-// money is an amount as a person reads it: 60.00 GBP.
+// money is an amount as a person reads it: 60.00 GBP, 3000 JPY.
 func money(amount float64, currency string) string {
-	return fmt.Sprintf("%.2f %s", amount, strings.ToUpper(currency))
+	return fmt.Sprintf("%.*f %s", stripe.Decimals(currency), amount, strings.ToUpper(currency))
 }
 
 // FollowPayments marks each payment Stripe says is paid, and tells the
