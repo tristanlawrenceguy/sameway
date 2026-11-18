@@ -67,6 +67,13 @@ func New(a *app.App) *Server {
 
 // ServeHTTP implements http.Handler.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// No other site shows a page of this one inside its own, where a
+	// press meant for theirs could land on Make it or Delete here; the
+	// ask box made for the owner's website is the one that goes there.
+	if r.URL.Path != questionPath || !r.URL.Query().Has("embed") {
+		w.Header().Set("Content-Security-Policy", "frame-ancestors 'none'")
+		w.Header().Set("X-Frame-Options", "DENY")
+	}
 	if r, ok := s.keyed(w, r); ok && s.allowed(w, r) && !s.tried(w, r) { // agent_keys.go, dry_run.go
 		s.fresh()
 		s.serve(w, r) // a page's actions are an agent's too; see agents.go
@@ -122,6 +129,13 @@ func (s *Server) page(w http.ResponseWriter, r *http.Request, title string, body
 	}
 	if s.app.Workspace.Config.UI.Developer == "shown" {
 		more = append(more, struct{ href, label string }{"/design", "Design system"})
+	}
+	// The internet reaches none of them. A page it is sent whole, such as
+	// the booking link, would otherwise carry six links that each say not
+	// found, hidden by the stylesheet but there for an agent or a reader
+	// without styles (public_clean.go takes them out of the rest).
+	if isPublic(r) {
+		more = nil
 	}
 	for _, l := range more {
 		href := l.href

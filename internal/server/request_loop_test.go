@@ -212,6 +212,9 @@ func TestMyAssistantAsksSomeoneElsesPublishedPage(t *testing.T) {
 	if s, _ := me.Store.Get("ask", sent[0].ID); s.Fields["changed"] == "" || s.Fields["state"] != "yes" {
 		t.Errorf("the change is kept: %v", s.Fields)
 	}
+	if page := get(t, myH, "/t/ask/"+sent[0].ID).Body.String(); strings.Contains(page, ">Last changed<") {
+		t.Errorf("the ask's page says no stored time, only when it changed in words\n%s", truncate(page))
+	}
 	plumber.Store.Delete("event", visits[0].ID)
 	me.Chat.FollowSent(context.Background())
 	heard("plumber.example.ts.net took away what they made")
