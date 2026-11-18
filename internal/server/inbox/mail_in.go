@@ -179,8 +179,10 @@ func (s *Service) ReadMail(ctx context.Context) (int, error) {
 		if s.app.Store.Meta(key) != "" {
 			continue
 		}
-		if answers := convert.Answers(m.Calendar); len(answers) > 0 {
-			s.app.Chat.InvitationAnswered(answers) // chat/invitations.go: an answer, not mail to sort
+		// An answer to an invitation, from the one who answers as their
+		// mail server vouched; any other is mail to sort, for the owner.
+		if answers := convert.Answers(m.Calendar); len(answers) > 0 && m.Verified {
+			s.app.Chat.InvitationAnswered(answers, m.From) // chat/invitations.go: an answer, not mail to sort
 			s.app.Store.SetMeta(key, "1")
 			continue
 		}

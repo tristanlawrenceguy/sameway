@@ -1,9 +1,11 @@
 /* A published page, as anyone on the internet reads it: they may read,
    not change, so the controls, the conversation, the log and the ways to
-   the rest of the workspace are not there at all (see publish.go). */
+   the rest of the workspace are not there at all (see publish.go). A form
+   that sends is taken out of a published page before it goes
+   (public_clean.go); the ones left are the few the internet may send,
+   such as asking for a time, so they stay in view. */
 
 :root[data-controls="none"] .sw-bar,
-:root[data-controls="none"] form[method="post"],
 :root[data-controls="none"] [data-edit],
 :root[data-controls="none"] [data-block-component="chat"],
 :root[data-controls="none"] .sw-activity,

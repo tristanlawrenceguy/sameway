@@ -149,3 +149,32 @@ func TestTextReadsBackOnEitherClock(t *testing.T) {
 		}
 	}
 }
+
+// A time zone is said for someone who may be anywhere: by its place and
+// how far it is from UTC, as the page says it to a reader elsewhere.
+func TestZoneSaysWhereTimesAreFrom(t *testing.T) {
+	t.Parallel()
+	zone := func(name string) *time.Location {
+		loc, err := time.LoadLocation(name)
+		if err != nil {
+			t.Skip(name, err)
+		}
+		return loc
+	}
+	paris, kolkata, newYork := zone("Europe/Paris"), zone("Asia/Kolkata"), zone("America/New_York")
+	for _, c := range []struct {
+		first, last time.Time
+		want        string
+	}{
+		{time.Date(2026, 11, 18, 9, 0, 0, 0, paris), time.Date(2026, 12, 1, 9, 0, 0, 0, paris), "Paris time (UTC+1)"},
+		{time.Date(2026, 11, 18, 9, 0, 0, 0, kolkata), time.Date(2026, 11, 18, 9, 0, 0, 0, kolkata), "Kolkata time (UTC+5:30)"},
+		{time.Date(2026, 11, 18, 9, 0, 0, 0, newYork), time.Date(2026, 11, 18, 9, 0, 0, 0, newYork), "New York time (UTC−5)"},
+		{time.Date(2026, 3, 20, 9, 0, 0, 0, paris), time.Date(2026, 4, 2, 9, 0, 0, 0, paris), "Paris time"},
+		{time.Date(2026, 11, 18, 9, 0, 0, 0, time.UTC), time.Date(2026, 11, 18, 9, 0, 0, 0, time.UTC), "UTC"},
+		{time.Date(2026, 11, 18, 9, 0, 0, 0, time.FixedZone("", 3600)), time.Date(2026, 11, 18, 9, 0, 0, 0, time.FixedZone("", 3600)), "UTC+1"},
+	} {
+		if got := Zone(c.first, c.last); got != c.want {
+			t.Errorf("Zone(%v, %v) = %q, want %q", c.first, c.last, got, c.want)
+		}
+	}
+}
