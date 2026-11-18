@@ -62,6 +62,9 @@ func (s *Server) requestPage(w http.ResponseWriter, r *http.Request) {
 	state := chat.RequestState(p)
 	if wantsJSON(r) {
 		out := map[string]any{"asked": asked, "state": state, "said": requestWords(state)}
+		if words, _ := p.Fields["answer"].(string); words != "" {
+			out["words"] = words
+		}
 		if changed != "" {
 			out["changed"] = changed
 		}
@@ -78,6 +81,9 @@ func (s *Server) requestPage(w http.ResponseWriter, r *http.Request) {
 	}
 	esc := template.HTMLEscapeString
 	body := template.HTML(`<p>You asked to `+esc(asked)+`.</p>`) + s.part(ui.Status{Message: requestWords(state)})
+	if words, _ := p.Fields["answer"].(string); words != "" && state != "waiting" {
+		body += template.HTML(`<p>` + esc(words) + `</p>`)
+	}
 	if made != nil {
 		var b strings.Builder
 		b.WriteString(`<h2>As it is now</h2><dl>`)

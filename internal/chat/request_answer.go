@@ -85,6 +85,9 @@ func (s *Service) tellAsker(p *store.Record, yes bool) {
 	if yes {
 		said = owner + " said yes to your request to " + what + ": it is made."
 	}
+	if words, _ := p.Fields["answer"].(string); words != "" {
+		said += "\n\n" + words
+	}
 	if s.Channel != nil && s.Channel(v, said) { // channel.go: where they asked, such as Telegram
 		return
 	}

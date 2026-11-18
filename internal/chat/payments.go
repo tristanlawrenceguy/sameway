@@ -46,7 +46,7 @@ var paymentLinkOp = Op{Title: "Make a link to pay you",
 		return s.hasTypes(PaymentType)
 	},
 	Tool: llm.Tool{Name: "payment_link",
-		Description: "A link to pay the person through their own Stripe account, for a quote, a deposit or a bill: what for, the amount and currency. It is put to them first; once made, put the link in an email or a message. Paid is marked as Stripe says, so an action can follow it (payment, paid=true).",
+		Description: "A link to pay the person through their own Stripe account, for a quote, a deposit or a bill: what for, the amount and currency. To ask someone by email, use send_email's pay instead: it makes their link and sends it in one yes. This makes a link alone, put to them first, for a message elsewhere. Paid is marked as Stripe says, so an action can follow it (payment, paid=true).",
 		Schema: obj(map[string]any{
 			"what":     map[string]any{"type": "string"},
 			"amount":   map[string]any{"type": "number", "description": "In whole units: 60 or 60.50."},
@@ -90,18 +90,29 @@ func (s *Service) paymentLink(raw json.RawMessage) toolResult {
 	if err != nil {
 		return fail("%v", err)
 	}
+	rec, err := s.makePayment(p, "")
+	if err != nil {
+		return fail("%v", err)
+	}
+	link, _ := rec.Fields["link"].(string)
+	return toolResult{text: fmt.Sprintf("Made: %s for %q, paid at %s (payment %s).", Money(p.Amount, p.Currency), p.What, link, rec.ID),
+		change: &records.Change{Action: "created", Component: PaymentType, ID: rec.ID, Detail: p.What}}
+}
+
+// makePayment has Stripe make a link that takes one payment, and keeps it
+// as a payment, with whom it was asked of when it goes in an email.
+func (s *Service) makePayment(p paymentArgs, of string) (*store.Record, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 	id, link, err := s.stripe().Link(ctx, p.What, p.Amount, p.Currency)
 	if err != nil {
-		return fail("no link made: %v", err)
+		return nil, fmt.Errorf("no link made: %v", err)
 	}
-	rec, err := s.put(records.Op{Type: PaymentType, After: map[string]any{"what": p.What, "amount": p.Amount, "currency": p.Currency, "link": link, "stripe": id}})
-	if err != nil {
-		return fail("%v", err)
+	fields := map[string]any{"what": p.What, "amount": p.Amount, "currency": p.Currency, "link": link, "stripe": id}
+	if of != "" {
+		fields["asked_of"] = of
 	}
-	return toolResult{text: fmt.Sprintf("Made: %s for %q, paid at %s (payment %s).", Money(p.Amount, p.Currency), p.What, link, rec.ID),
-		change: &records.Change{Action: "created", Component: PaymentType, ID: rec.ID, Detail: p.What}}
+	return s.put(records.Op{Type: PaymentType, After: fields})
 }
 
 // paymentsMax is the most one link may ask for, in whole units: what the
