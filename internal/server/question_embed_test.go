@@ -48,4 +48,15 @@ func TestTheAskBoxGoesOnTheOwnersWebsite(t *testing.T) {
 	if body := rec.Body.String(); !strings.Contains(body, "Weekdays 8 to 6") || strings.Contains(body, `class="sw-header"`) {
 		t.Errorf("and its answer stays inside: %s", truncate(body))
 	}
+
+	// Before the internet reaches it, the owner on localhost is given no
+	// snippet that would work nowhere else.
+	a.Chat.Address = func() string { return "" }
+	local := httptest.NewRequest(http.MethodGet, "/question", nil)
+	local.Host = "127.0.0.1:8080"
+	rec = httptest.NewRecorder()
+	h.ServeHTTP(rec, local)
+	if body := rec.Body.String(); strings.Contains(body, "iframe") || !strings.Contains(body, "Once the internet reaches this workspace") {
+		t.Errorf("no snippet for localhost: %s", truncate(body))
+	}
 }
