@@ -1,6 +1,7 @@
 package mailin
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"mime/quotedprintable"
@@ -116,6 +117,14 @@ func TestMailAMachineSentIsKnown(t *testing.T) {
 	} {
 		if m, _ := Parse(strings.NewReader(raw)); m.Auto != auto {
 			t.Errorf("%q: auto %v", raw, m.Auto)
+		}
+	}
+	// What the assistant writes unasked says so too, so two assistants
+	// answering each other stop after one answer.
+	for _, auto := range []bool{true, false} {
+		raw := message("tris@example.com", "<1@example.com>", Outgoing{To: "pat@example.com", Subject: "Re: Friday", Text: "Friday is free.", Auto: auto})
+		if m, _ := Parse(bytes.NewReader(raw)); m.Auto != auto {
+			t.Errorf("sent with auto %v, read back as %v", auto, m.Auto)
 		}
 	}
 }

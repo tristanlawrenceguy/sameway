@@ -9,7 +9,6 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/export"
-	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/ui"
@@ -160,12 +159,11 @@ func requestWords(state string) string {
 	return "It waits for their answer. Come back to this page to see it."
 }
 
-// requestsSince are the requests one visitor made since a moment, each
-// with what was asked and its address: what a question page tells them it
-// put to the owner.
-func (s *Server) requestsSince(r *http.Request, v records.Visitor, since time.Time) []map[string]any {
+// requestsSeen are the requests one question put to the owner, each with
+// what was asked and its address: what a question page tells them.
+func (s *Server) requestsSeen(r *http.Request, made []*store.Record) []map[string]any {
 	var out []map[string]any
-	for _, p := range s.app.Chat.For(v).RequestsSince(since) {
+	for _, p := range made {
 		out = append(out, s.requestSeen(r, p))
 	}
 	return out

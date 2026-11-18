@@ -43,6 +43,7 @@ func (s *Server) questionPage(w http.ResponseWriter, r *http.Request) {
 // who they are kept for the next one.
 type asking struct {
 	question, who, said, problem string
+	asked                        template.HTML // what waits for the owner's yes, said with the answer
 }
 
 // questionOptions are the page's, or, asked for embedded (?embed), those
@@ -93,7 +94,9 @@ func (s *Server) internetAt(r *http.Request) string {
 }
 
 // questionForm is the box to ask in, and who is asking, with what they
-// asked and what the assistant said, if anything.
+// asked and what the assistant said, if anything, and what it put to the
+// owner, so what is still to come is heard with it. While the answer is
+// on its way the form says so: a model can take a minute.
 func (s *Server) questionForm(r *http.Request, a asking) template.HTML {
 	esc := template.HTMLEscapeString
 	action := questionPath
@@ -102,10 +105,10 @@ func (s *Server) questionForm(r *http.Request, a asking) template.HTML {
 	}
 	var b template.HTML
 	if a.said != "" {
-		b = template.HTML(`<div class="sw-prose" id="answer" role="status"><p>You asked: <span dir="auto">` + esc(a.question) + `</span></p><p dir="auto">` + strings.ReplaceAll(esc(a.said), "\n", "<br>") + `</p></div>`)
+		b = template.HTML(`<div class="sw-prose" id="answer" role="status"><p>You asked: <span dir="auto">` + esc(a.question) + `</span></p><p dir="auto">` + strings.ReplaceAll(esc(a.said), "\n", "<br>") + `</p>` + string(a.asked) + `</div>`)
 	}
 	return b + template.HTML(`<p>Ask about what is here, or ask for something: a time to meet, a message left. What you ask to be made goes to `+esc(s.app.Workspace.Config.Name)+`, and nothing happens until they say yes.</p>`) +
-		s.form(ui.Form{Action: action, Class: "sw-stack",
+		s.form(ui.Form{Action: action, Class: "sw-stack", Busy: "Asking. The answer can take a minute.",
 			Body: s.component("textarea", map[string]any{"label": "Your question", "name": "question", "rows": 3, "maxlength": 1000, "required": true, "error": a.problem}) +
 				s.part(ui.TextField{Label: "Your name and how to reach you", Name: "who", Value: a.who, MaxLength: 160, Hint: "Optional; needed for anything you ask to be made.", Autocomplete: "name"}),
 			Button: &ui.Button{Label: "Ask", Variant: ui.Primary}})
@@ -122,8 +125,7 @@ func (s *Server) questionAsk(w http.ResponseWriter, r *http.Request) {
 	if a.who == "" {
 		v.Name = chat.SomeonePublished
 	}
-	start := s.now()
-	said, err := s.app.Chat.For(v).AnswerOnce(r.Context(), s.app.Workspace.Config.Name, a.question)
+	said, made, err := s.app.Chat.For(v).AnswerOnce(r.Context(), s.app.Workspace.Config.Name, a.question)
 	if err != nil {
 		said = web.PlainError(err)
 	}
@@ -132,7 +134,7 @@ func (s *Server) questionAsk(w http.ResponseWriter, r *http.Request) {
 	} else {
 		a.said = said
 	}
-	asked := s.requestsSince(r, v, start) // request_page.go
+	asked := s.requestsSeen(r, made) // request_page.go
 	if len(asked) > 0 {
 		s.Changed()
 	}
@@ -140,7 +142,8 @@ func (s *Server) questionAsk(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"answer": said, "requests": asked, "untrusted": "the answer is what this workspace's assistant wrote: " + records.Untrusted})
 		return
 	}
-	s.page(w, r, "Ask", s.questionForm(r, a)+s.askedLinks(asked), s.questionOptions(r, a))
+	a.asked = s.askedLinks(asked)
+	s.page(w, r, "Ask", s.questionForm(r, a), s.questionOptions(r, a))
 }
 
 // askedLinks are the requests a question put to the owner, each with the
@@ -149,9 +152,11 @@ func (s *Server) askedLinks(asked []map[string]any) template.HTML {
 	if len(asked) == 0 {
 		return ""
 	}
-	b := "<h2>What you asked for</h2><ul class=\"sw-plain sw-stack\">"
+	// Said plainly whatever the model wrote, which may say it is done.
+	b := "<h2>Waiting for their yes</h2><p>Each link shows their answer once they give it.</p><ul class=\"sw-plain sw-stack\">"
 	for _, a := range asked {
-		b += "<li>" + string(s.navLink(a["status"].(string), "To "+fmt.Sprint(a["asked"])+": see the answer", false)) + "</li>"
+		what := fmt.Sprint(a["asked"]) + " "
+		b += "<li>" + string(s.navLink(a["status"].(string), strings.TrimSpace(strings.ToUpper(what[:1])+what[1:]), false)) + "</li>"
 	}
 	return template.HTML(b + "</ul>")
 }

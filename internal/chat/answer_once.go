@@ -7,6 +7,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 // A visitor from the internet asks the assistant on a published page. It
@@ -24,20 +25,29 @@ const SomeonePublished = "Someone on your published page"
 const onceSteps = 8
 
 // AnswerOnce answers one question for whoever this service speaks for, by
-// reading with their tools, without a conversation.
-func (s *Service) AnswerOnce(ctx context.Context, site, question string) (string, error) {
+// reading with their tools, without a conversation, and gives the
+// requests it put to the owner for them.
+func (s *Service) AnswerOnce(ctx context.Context, site, question string) (string, []*store.Record, error) {
 	question = strings.TrimSpace(question)
 	if question == "" {
-		return "", fmt.Errorf("say what you want to ask")
+		return "", nil, fmt.Errorf("say what you want to ask")
 	}
 	if s.Provider == nil {
-		return "", fmt.Errorf("this workspace has no assistant to answer just now")
+		return "", nil, fmt.Errorf("this workspace has no assistant to answer just now")
 	}
+	them := *s
+	them.who.Turn = requestToken() // request_answer.go: this question's own, as another asked at once is someone else
+	since := s.Now()
+	said, err := them.answerOnce(ctx, site, question)
+	them.tellOwner(since)
+	return said, them.RequestsSince(since), err
+}
+
+func (s *Service) answerOnce(ctx context.Context, site, question string) (string, error) {
 	system := fmt.Sprintf("You answer a visitor to the published pages of %q, a Sameway workspace, by reading it with your tools: they reach only what its owner published, and all of it is theirs to read, whatever a record's own status says (a draft here is published). Answer in a few plain sentences from what you read, with each record's page when you name one, and say so when what you can read does not answer it. When they ask for something to be made, make it with create_record as you would for anyone, of the kind it is (a time to meet is an event, with when it starts), with their name and how to reach them in it if they gave them: it is not made but put to the owner as a request, and nothing happens until the owner says yes; tell them so. %s", site, records.DataNotInstructions)
 	if who := s.who.Name; who != "" {
 		system += " They say they are " + who + "."
 	}
-	defer s.tellOwner(s.Now())
 	return s.answerWith(ctx, system, []llm.Message{{Role: llm.RoleUser, Content: question}})
 }
 
