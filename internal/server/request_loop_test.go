@@ -36,7 +36,7 @@ func TestARequestIsAnsweredBackAndAlwaysAnswersForGood(t *testing.T) {
 		t.Fatalf("they are told where to see the answer: %s", text)
 	}
 	today := get(t, h, "/today").Body.String()
-	if !strings.Contains(today, "Always for Vi&#39;s notes") {
+	if !strings.Contains(today, "Always yes to Vi&#39;s notes") {
 		t.Fatalf("a request from someone with a page offers Always\n%s", truncate(today))
 	}
 	asks := a.Chat.Suggestions()
@@ -54,7 +54,7 @@ func TestARequestIsAnsweredBackAndAlwaysAnswersForGood(t *testing.T) {
 	if !heard {
 		t.Errorf("they hear the answer in their own conversation: %+v", msgs)
 	}
-	if p, _ := a.Store.Get("person", vi.ID); !strings.Contains(strings.Join(anyStrings(p.Fields["always"]), ","), "create_record note") {
+	if p, _ := a.Store.Get("person", vi.ID); !strings.Contains(strings.Join(anyStrings(p.Fields["always"]), ","), "notes") {
 		t.Fatalf("the standing yes is on their page: %v", p.Fields["always"])
 	}
 
