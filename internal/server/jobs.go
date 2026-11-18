@@ -59,6 +59,9 @@ func (s *Server) BackgroundJobs() []runner.Job {
 		{Name: "Payments followed until paid", Every: 5 * time.Minute, Wait: true, Run: func(ctx context.Context, _ time.Time) error {
 			return s.app.Chat.FollowPayments(ctx) // chat/payments.go
 		}},
+		{Name: "What time brought to match an action set off", Every: 5 * time.Minute, Run: func(_ context.Context, now time.Time) error {
+			return s.app.Automate.TimePassed(now) // automate/time_passes.go
+		}},
 		{Name: "Events that ended marked over", Every: 5 * time.Minute, Run: func(_ context.Context, now time.Time) error {
 			return s.app.Chat.MarkOver(now) // chat/event_over.go
 		}},

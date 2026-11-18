@@ -9,9 +9,9 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/app"
 )
 
-// oneStep are requests that once took a model two steps with ids or
-// links copied between them, now one: every record a condition matches
-// changed at once, and an action time sets off.
+// oneStep are requests that once took a model two steps with ids copied
+// between them, or that it could not see how to do: every record a
+// condition matches changed at once, and an action time sets off.
 func oneStep() []request {
 	return []request{
 		{name: "late-done", seed: func(t *testing.T, a *app.App) {
@@ -37,7 +37,7 @@ func oneStep() []request {
 				if act == nil {
 					return want(len(list(a, "proposal")) > 0, "no action and nothing asked")
 				}
-				only := strings.ToLower(jsonOf(act.Fields["only"]))
+				only := strings.ToLower(fmt.Sprint(act.Fields["only"]))
 				return want(act.Fields["when"] == "changed" && strings.Contains(only, "starts<") && strings.Contains(only, "1d"), fmt.Sprint("it runs when ", act.Fields["when"], " ", only))
 			}},
 	}
