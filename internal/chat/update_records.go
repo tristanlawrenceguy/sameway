@@ -70,7 +70,7 @@ func (s *Service) updateRecords(typeName string, ids, where []string, fields map
 	}
 	_, done, i, err := records.WriteAll(s.Store, "updated", t.Name, writes) // all or none
 	if err != nil {
-		return fail("Nothing was changed: %s %s could not be — %s. %s Fix the fields and call again.", t.Name, ids[i], humanizeValidationError(err.Error()), fieldHelp(err, t))
+		return fail("Nothing was changed, as %s %s could not be: %s Call again with that fixed.", t.Name, ids[i], fieldHelp(err, t))
 	}
 	ops, titles := records.Joined(done), make([]string, len(done))
 	for i, c := range done {

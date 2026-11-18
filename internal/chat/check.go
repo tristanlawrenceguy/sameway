@@ -55,7 +55,11 @@ func (s *Service) writable(tool string, c *render.Component, props map[string]an
 		return "", &r
 	}
 	if _, err := c.Validate(props); err != nil {
-		r := fail("%s\n%s\nFix the props and call %s again.", PropsTrouble(err), componentHelp(c), tool)
+		help := "\n" + componentHelp(c)
+		if plainFix(err) { // errors.go: what to change is said; the whole schema is not needed
+			help = ""
+		}
+		r := fail("%s%s\nFix the props and call %s again.", PropsTrouble(err), help, tool)
 		return "", &r
 	}
 	// Checked now, not only when drawn: a block that could only say it is

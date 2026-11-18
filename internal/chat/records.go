@@ -108,7 +108,7 @@ func (s *Service) createRecord(typeName string, fields map[string]any) toolResul
 	}
 	rec, c, err := records.Write(s.Store, "created", t.Name, "", fields)
 	if err != nil {
-		return fail("I couldn't save those changes — %s. %s Fix the fields and call create_record again.", humanizeValidationError(err.Error()), fieldHelp(err, t))
+		return fail("Nothing was saved: %s Call create_record again with that fixed.", fieldHelp(err, t)) // field_help.go
 	}
 	text := fmt.Sprintf("created %s %s: %q. The person can open it at /t/%s/%s.", t.Name, rec.ID, c.Detail, t.Name, rec.ID)
 	text += s.datesSaid(t, fields, rec, false) + s.splitSaid(t) // dates_said.go, action_when_said.go; the rest is the change's notes (notice.go)
@@ -142,7 +142,7 @@ func (s *Service) updateRecord(typeName, id string, fields map[string]any, versi
 	}
 	rec, c, err := records.Write(s.Store, "updated", t.Name, id, fields)
 	if err != nil {
-		return fail("I couldn't save those changes — %s. %s Fix the fields and call update_record again.", humanizeValidationError(err.Error()), fieldHelp(err, t))
+		return fail("Nothing was saved: %s Call update_record again with that fixed.", fieldHelp(err, t))
 	}
 	title := c.Detail
 	// Finished, a thing that repeats is due again at once; say so, or the
