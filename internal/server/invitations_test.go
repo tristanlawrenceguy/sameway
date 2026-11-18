@@ -67,11 +67,15 @@ func TestAnEventGoesOutAsAnInvitationAndTheAnswerComesBack(t *testing.T) {
 	reply := func(from, state string) []byte {
 		return []byte("BEGIN:VCALENDAR\r\nMETHOD:REPLY\r\nBEGIN:VEVENT\r\nUID:" + ev.ID + "@sameway\r\nATTENDEE;PARTSTAT=" + state + ";CN=Someone:mailto:" + from + "\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n")
 	}
-	a.Chat.InvitationAnswered(convert.Answers(reply("mallory@example.com", "DECLINED")))
+	a.Chat.InvitationAnswered(convert.Answers(reply("mallory@example.com", "DECLINED")), "mallory@example.com")
 	if e, _ := a.Store.Get("event", ev.ID); strings.Contains(strings.Join(records.StringList(e.Fields["answers"]), "|"), "declined") {
 		t.Fatal("an answer from an address it did not go to is not theirs to give")
 	}
-	a.Chat.InvitationAnswered(convert.Answers(reply("pat@example.com", "ACCEPTED")))
+	a.Chat.InvitationAnswered(convert.Answers(reply("pat@example.com", "DECLINED")), "Mallory <mallory@example.com>")
+	if e, _ := a.Store.Get("event", ev.ID); strings.Contains(strings.Join(records.StringList(e.Fields["answers"]), "|"), "declined") {
+		t.Fatal("one guest does not answer for another")
+	}
+	a.Chat.InvitationAnswered(convert.Answers(reply("pat@example.com", "ACCEPTED")), "Pat Lee <pat@example.com>")
 	if e, _ := a.Store.Get("event", ev.ID); strings.Join(records.StringList(e.Fields["answers"]), "|") != "Pat Lee <pat@example.com>: accepted" {
 		t.Errorf("their answer is kept, by the name it went to: %v", e.Fields["answers"])
 	}

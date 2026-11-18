@@ -108,6 +108,14 @@ func TestALinkToPayTheOwner(t *testing.T) {
 	if text, isErr := a.Chat.Call("send_email", json.RawMessage(`{"to":"pat@example.com","subject":"Bill","text":"Pay here: https://buy.stripe.com/someone_elses"}`)); !isErr || !strings.Contains(text, "not made here") {
 		t.Errorf("and one with a link made elsewhere is refused: %s", text)
 	}
+	for _, forged := range []string{`"subject":"Pay at https://buy.stripe.com/someone_elses","text":"Thanks"`, `"subject":"Bill","text":"Pay at HTTPS://BUY.STRIPE.COM/someone_elses"`} {
+		if text, isErr := a.Chat.Call("send_email", json.RawMessage(`{"to":"pat@example.com",`+forged+`}`)); !isErr || !strings.Contains(text, "not made here") {
+			t.Errorf("in the subject or in capitals too: %s", text)
+		}
+	}
+	if text, _ := a.Chat.Call("send_email", json.RawMessage(`{"to":"pat@example.com","subject":"Bill","text":"Pay at https://buy.stripe.com/test_1."}`)); !strings.Contains(text, "It carries a link to pay 60.00 GBP") {
+		t.Errorf("a full stop after the link is not part of it: %s", text)
+	}
 
 	stripe.mu.Lock()
 	stripe.paid = 5000

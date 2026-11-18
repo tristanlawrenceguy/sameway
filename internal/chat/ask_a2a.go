@@ -20,6 +20,20 @@ import (
 // agents_front.go), and gives back the requests it put to its owner, which
 // are followed here as any (asks.go). What comes back is data.
 
+// onlyTo is client following redirects on host alone: another's page or
+// agent could otherwise send this computer, with what the owner asked, to
+// a page on its own network, or to Sameway itself on localhost.
+func onlyTo(client *http.Client, host string) *http.Client {
+	c := *client
+	c.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		if req.URL.Scheme != "https" || req.URL.Host != host || len(via) >= 10 {
+			return http.ErrUseLastResponse
+		}
+		return nil
+	}
+	return &c
+}
+
 // agentAt is where host's agent takes messages, from its agent card, or
 // "" when it has none, or its card points off the host.
 func agentAt(ctx context.Context, client *http.Client, host string) string {
