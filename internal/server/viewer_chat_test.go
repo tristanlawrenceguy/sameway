@@ -28,6 +28,12 @@ func TestSomeoneWhoMayOnlyLookAsksAndTheOwnerSaysYes(t *testing.T) {
 	}}
 	a.Chat.Provider = model
 
+	if page := as(t, h, viewer, http.MethodGet, "/chat", "", "").Body.String(); !strings.Contains(page, "What you may not change yourself is asked of the owner, and you hear their yes or no here.") {
+		t.Errorf("they are told before they ask that a change waits for a yes\n%s", truncate(page))
+	}
+	if strings.Contains(get(t, h, "/chat").Body.String(), "asked of the owner") {
+		t.Error("the owner is not told about asking themselves")
+	}
 	form := url.Values{"message": {"When do the bins go out? And add a note: milk for Saturday."}}.Encode()
 	if r := as(t, h, viewer, http.MethodPost, "/chat", form, "application/x-www-form-urlencoded"); r.Code >= 400 {
 		t.Fatalf("someone who may only look may talk: %d %s", r.Code, r.Body.String())
