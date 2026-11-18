@@ -38,8 +38,14 @@ func (f *fakeTelegram) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		} else {
 			out["result"] = map[string]any{"id": 1, "username": "tris_bot"}
 		}
-	case "getUpdates":
-		out["result"], f.updates = f.updates, nil
+	case "getUpdates": // from the offset asked for, as Telegram gives them
+		var due []map[string]any
+		for _, u := range f.updates {
+			if float64(u["update_id"].(int)) >= in["offset"].(float64) {
+				due = append(due, u)
+			}
+		}
+		out["result"], f.updates = due, nil
 	default:
 		in["method"] = method
 		f.sent = append(f.sent, in)
@@ -47,11 +53,14 @@ func (f *fakeTelegram) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(out)
 }
 
-func (f *fakeTelegram) say(chat int64, from, text string) {
+func (f *fakeTelegram) say(chat int64, from, text string) { f.sayIn(chat, chat, "private", from, text) }
+
+// sayIn is someone saying something in a chat of a kind: a group, say.
+func (f *fakeTelegram) sayIn(chat, by int64, kind, from, text string) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.next++
-	f.updates = append(f.updates, map[string]any{"update_id": f.next, "message": map[string]any{"chat": map[string]any{"id": chat}, "from": map[string]any{"id": chat, "first_name": from}, "text": text}})
+	f.updates = append(f.updates, map[string]any{"update_id": f.next, "message": map[string]any{"chat": map[string]any{"id": chat, "type": kind}, "from": map[string]any{"id": by, "first_name": from}, "text": text}})
 }
 
 func (f *fakeTelegram) press(chat int64, data string) {
@@ -153,5 +162,43 @@ func TestTelegramIsOneMoreWayIn(t *testing.T) {
 	srv.KeepTelegram(context.Background(), tonight)
 	if got := tg.to(100, "Pat is coming"); !strings.Contains(got, "Pat is coming on Tuesday") {
 		t.Errorf("what the owner writes goes to their own assistant: %s", got)
+	}
+}
+
+// The owner links themselves from their own chat with the bot, never a
+// group, where everyone would speak as them; and a bot connected in place
+// of another hears what is sent to it, though it counts its updates
+// afresh.
+func TestTelegramLinksTheOwnersOwnChat(t *testing.T) {
+	t.Parallel()
+	a, h := newAppAt(t, tonight)
+	srv := h.(*server.Server)
+	tg := &fakeTelegram{}
+	a.Automate.HTTP = &http.Client{Transport: served{tg}}
+	code := func() string {
+		postForm(t, h, "/telegram/connect", url.Values{"token": {"123:abc"}})
+		page := get(t, h, "/telegram").Body.String()
+		i := strings.Index(page, "/start ")
+		if i < 0 {
+			t.Fatalf("the owner is given a code to link themselves: %s", truncate(page))
+		}
+		return page[i+len("/start ") : i+len("/start ")+8]
+	}
+	first := code()
+	a.Chat.Provider = &scripted{steps: []*llm.Response{{Text: "Hello."}}}
+	tg.sayIn(-300, 100, "group", "Tris", "/start "+first)
+	tg.say(200, "Pat", "Hello?")
+	srv.KeepTelegram(context.Background(), tonight)
+	if got := tg.to(-300, "Linked"); strings.Contains(got, "Linked") {
+		t.Fatalf("a group is not linked: %s", got)
+	}
+
+	tg.mu.Lock()
+	tg.next = 0 // another bot, whose updates start lower
+	tg.mu.Unlock()
+	tg.say(100, "Tris", "/start "+code())
+	srv.KeepTelegram(context.Background(), tonight)
+	if got := tg.to(100, "Linked"); !strings.Contains(got, "Linked") {
+		t.Errorf("the new bot hears the owner: %s", got)
 	}
 }

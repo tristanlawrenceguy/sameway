@@ -81,6 +81,7 @@ func (s *Server) telegramConnect(w http.ResponseWriter, r *http.Request) {
 	s.app.Store.SetMeta(telegramName, name)
 	s.app.Store.SetMeta(telegramCode, hex.EncodeToString(code))
 	s.app.Store.SetMeta(telegramMe, "")
+	s.app.Store.SetMeta(telegramAt, "") // another bot counts its updates afresh
 	s.tellAt(w, r, outcome{Title: "Telegram connected", Text: "Send @" + name + " the message on this page to link yourself."}, "/telegram")
 }
 
@@ -119,7 +120,9 @@ func (s *Server) KeepTelegram(ctx context.Context, _ time.Time) error {
 func (s *Server) telegramSaid(ctx context.Context, bot telegram.Bot, m *telegram.Message) {
 	chatID, text := m.Chat.ID, strings.TrimSpace(m.Text)
 	me := s.app.Store.Meta(telegramMe)
-	if code := s.app.Store.Meta(telegramCode); me == "" && code != "" && text == "/start "+code {
+	// Only from the owner's own chat with the bot: linked in a group,
+	// everyone in it would speak as the owner.
+	if code := s.app.Store.Meta(telegramCode); me == "" && code != "" && text == "/start "+code && m.Chat.Type == "private" {
 		s.app.Store.SetMeta(telegramMe, strconv.FormatInt(chatID, 10))
 		bot.Send(ctx, chatID, "Linked. What you send here goes to your assistant, and requests come here for your yes.")
 		return
