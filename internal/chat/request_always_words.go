@@ -6,7 +6,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
-// alwaysLabel is what the Always press on a request says, "Always for
+// alwaysLabel is what the Always press on a request says, "Always yes to
 // Vi's notes", or "" when the request cannot be answered for good: one
 // from someone with no person page, such as a visitor from the internet.
 func (s *Service) alwaysLabel(p *store.Record) string {
@@ -27,5 +27,5 @@ func (s *Service) alwaysLabel(p *store.Record) string {
 	if action["tool"] == "update_record" {
 		return "Always let " + name + " change " + schema.Plural(typeName)
 	}
-	return "Always for " + name + "'s " + schema.Plural(typeName)
+	return "Always yes to " + name + "'s " + schema.Plural(typeName)
 }
