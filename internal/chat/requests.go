@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/export"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
@@ -82,7 +83,10 @@ func (s *Service) requestWords(tool, typeName, id string, fields map[string]any)
 }
 
 // fieldsWords is fields as a person reads them: the title first, then each
-// by its label, a day in full.
+// by its label, a day in full. It is what the owner says yes to, so each
+// value is as their pages show it (a choice by its label, a link by the
+// name of what it names, how often in words), never as it is stored, and
+// words someone wrote are in quotes, so they stand apart from Sameway's.
 func (s *Service) fieldsWords(t *schema.Type, fields map[string]any) string {
 	var parts []string
 	if v, ok := fields[t.Title]; ok {
@@ -100,11 +104,32 @@ func (s *Service) fieldsWords(t *schema.Type, fields map[string]any) string {
 		if !ok {
 			continue
 		}
-		v := fmt.Sprint(fields[name])
-		if str, ok := fields[name].(string); ok && f.Type == "datetime" {
-			v = when.Text(str, s.Now().Location(), false)
-		}
-		parts = append(parts, strings.ToLower(f.Display())+" "+trim.Line(v, 80))
+		parts = append(parts, strings.ToLower(f.Display())+" "+s.valueWords(*f, fields[name]))
 	}
 	return strings.Join(parts, ", ")
+}
+
+// valueWords is one value as a person reads it.
+func (s *Service) valueWords(f schema.Field, v any) string {
+	titles := func(f schema.Field, id string) string { return records.RefTitle(s.Store, f, id) }
+	switch f.Type {
+	case "datetime":
+		if str, ok := v.(string); ok {
+			return when.Text(str, s.Now().Location(), false)
+		}
+	case "string", "text", "markdown":
+		return `"` + strings.TrimSuffix(trim.Line(fmt.Sprint(v), 80), ".") + `"`
+	case "list":
+		items, _ := v.([]any)
+		var said []string
+		for _, it := range items {
+			if f.RefList() {
+				said = append(said, titles(f, fmt.Sprint(it)))
+			} else {
+				said = append(said, fmt.Sprint(it))
+			}
+		}
+		return schema.AndNames(said)
+	}
+	return trim.Line(export.Value(f, v, titles, s.Now().Location()), 80)
 }
