@@ -177,3 +177,32 @@ func TestAnyoneAsksForATimeAndNothingIsBookedUntilYes(t *testing.T) {
 		t.Errorf("and the page says so: %s", truncate(page))
 	}
 }
+
+// Times to meet are the owner's, by the clock on their wall, and say so:
+// on the day the clocks go forward the working day still starts at 9am,
+// each day says its zone so a time picked from it is kept right, and
+// where the zone is half an hour off UTC a booking link's hour still
+// starts on the hour.
+func TestTimesToMeetFollowTheOwnersClock(t *testing.T) {
+	t.Parallel()
+	london, err1 := time.LoadLocation("Europe/London")
+	kolkata, err2 := time.LoadLocation("Asia/Kolkata")
+	if err1 != nil || err2 != nil {
+		t.Skip("no time zone data on this computer")
+	}
+	a, _ := newAppAt(t, time.Date(2026, 3, 28, 20, 0, 0, 0, london))
+	a.Workspace.Set("ui.zone", "Europe/London")
+	text, isErr := a.Chat.Call("free_times", json.RawMessage(`{"from":"2026-03-29","to":"2026-03-29"}`))
+	if isErr || !strings.Contains(text, "Sun 29 Mar: 9am to 5pm (London time (UTC+1))") {
+		t.Errorf("the day the clocks change keeps its working hours, with its zone: %s", text)
+	}
+
+	a, h := newAppAt(t, time.Date(2026, 3, 11, 8, 10, 0, 0, kolkata))
+	a.Workspace.Set("ui.zone", "Asia/Kolkata")
+	a.Workspace.Config.Publish.Book = "on"
+	page := public(t, h.(*server.Server).Public(nil), http.MethodGet, "/book", "").Body.String()
+	if !strings.Contains(page, "Wednesday 11 March, 9am<") || strings.Contains(page, "9:30am") {
+		i := strings.Index(page, "<option")
+		t.Errorf("an hour starts on the hour, in the owner's time: %.400s", page[max(i, 0):])
+	}
+}
