@@ -37,7 +37,15 @@ func TestRepeatedYesesOfferAStandingYes(t *testing.T) {
 			t.Fatalf("after %d yeses, offered: %v", i+1, got != "")
 		}
 	}
+	if p, _ := a.Store.Get("proposal", offered()); !strings.Contains(p.Fields["detail"].(string), `take "notes" off their page`) {
+		t.Errorf("the offer says how to take it back, in the words their page will show: %v", p.Fields["detail"])
+	}
 	wantStatus(t, postForm(t, h, "/proposal/"+offered()+"/accept", nil), http.StatusSeeOther)
+	// Taking it back is taking words out of their page, so the page says
+	// it in words a person reads, never a tool's name.
+	if page := get(t, h, "/t/person/"+sam.ID).Body.String(); !strings.Contains(page, `data-label="Made without asking">notes</dd>`) || strings.Contains(page, "create_record") {
+		t.Errorf("their page says the standing yes in words\n%s", truncate(page))
+	}
 	if text, _ := them.Call("create_record", json.RawMessage(`{"type":"note","fields":{"title":"Butter"}}`)); !strings.Contains(text, "without asking") {
 		t.Errorf("the next is made without asking: %s", text)
 	}
