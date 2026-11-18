@@ -29,6 +29,11 @@ fields:
     type: string
     readonly: true
     description: The address to pay at, from Stripe.
+  asked_of:
+    label: Asked of
+    type: string
+    readonly: true
+    description: Who was emailed the link, when send_email's pay sent it.
   paid:
     type: bool
     default: false

@@ -37,6 +37,11 @@ var sendEmailOp = Op{Title: "Send an email",
 		for _, line := range e.paying { // payments.go: the amount Stripe takes, not the words
 			detail += "\n\n" + line
 		}
+		yes := "Send it"
+		if e.Pay != nil { // the amount on the button, as payment_link's
+			detail += "\n\n" + fmt.Sprintf("With a link to pay %s for %q: each gets their own, which takes one payment into your Stripe account. Check the amount: it is what they would pay.", money(e.Pay.Amount, e.Pay.Currency), e.Pay.What)
+			yes = "Send it, asking " + money(e.Pay.Amount, e.Pay.Currency)
+		}
 		for _, c := range e.Choices {
 			detail += fmt.Sprintf("\n\nWith a link, %s: pressing it would %s.", c.Label, c.what)
 		}
@@ -46,8 +51,8 @@ var sendEmailOp = Op{Title: "Send an email",
 		if len(e.people) > 1 {
 			detail += "\n\nEach gets it on their own, and answers in their own thread."
 		}
-		return s.ask(question{"Email " + schema.AndNames(e.people) + " this?", detail, "Send it", "Don't send"},
-			map[string]any{"tool": "send_email", "to": e.To, "subject": e.Subject, "text": e.Text, "choices": e.Choices, "invite": e.Invite, "cancel": e.Cancel, "thread": e.Thread}), true
+		return s.ask(question{"Email " + schema.AndNames(e.people) + " this?", detail, yes, "Don't send"},
+			map[string]any{"tool": "send_email", "to": e.To, "subject": e.Subject, "text": e.Text, "choices": e.Choices, "invite": e.Invite, "cancel": e.Cancel, "thread": e.Thread, "pay": e.Pay}), true
 	},
 	Run: func(s *Service, _ toolArgs, call llm.ToolCall) toolResult {
 		e, err := s.emailOf(call.Args)
@@ -77,7 +82,7 @@ var sendEmailOp = Op{Title: "Send an email",
 		return toolResult{text: said, change: &records.Change{Action: "emailed", Detail: trim.Line(schema.AndNames(went)+": "+e.Subject, 120)}}
 	},
 	Tool: llm.Tool{Name: "send_email",
-		Description: "Send an email from the person's mailbox, as them, put to them word for word first (so call it rather than asking in words): to someone who asked (asked_by), or anyone they name. Replies are answered in the thread with the writer's reach. choices: links to press, each a change made here (first wins). invite: an event as a calendar invitation. Actions can wait on either.",
+		Description: "Send an email from the person's mailbox, as them, put to them word for word first (so call it rather than asking in words): to someone who asked (asked_by), or anyone they name. Replies are answered in the thread with the writer's reach. choices: links to press, each a change made here (first wins). invite: an event as a calendar invitation. pay: a link to pay the person, made for each and sent in the same yes. Actions can wait on either.",
 		Schema: obj(map[string]any{
 			"to":      map[string]any{"type": "string", "description": "One address (Pat Lee <pat@example.com>), or several separated by commas: each gets it on their own, in their own thread."},
 			"subject": map[string]any{"type": "string", "description": "Needed unless in a thread."},
@@ -92,20 +97,26 @@ var sendEmailOp = Op{Title: "Send an email",
 			"invite": map[string]any{"type": "string", "description": "An event's id, sent as a real calendar invitation; send again after it changes to move it."},
 			"cancel": map[string]any{"type": "boolean", "description": "With invite: take it out of their calendar."},
 			"thread": map[string]any{"type": "string", "description": "An email's id: write in its thread, such as a nudge."},
+			"pay": obj(map[string]any{
+				"what":     map[string]any{"type": "string"},
+				"amount":   map[string]any{"type": "number", "description": "In whole units: 60 or 60.50."},
+				"currency": map[string]any{"type": "string", "description": "Three letters; gbp unless said."},
+			}, "what", "amount"),
 		}, "to", "text")}}
 
 type emailArgs struct {
-	To      string   `json:"to"`
-	Subject string   `json:"subject"`
-	Text    string   `json:"text"`
-	Choices []choice `json:"choices"`
-	Invite  string   `json:"invite"`
-	Cancel  bool     `json:"cancel"`
-	Thread  string   `json:"thread"`
-	people  []string // who it goes to, each on their own
-	paying  []string // what each link to pay in it asks for, from the payments kept
-	root    string   // the conversation it is in, by its first email
-	refs    []string // the names of the emails it answers
+	To      string       `json:"to"`
+	Subject string       `json:"subject"`
+	Text    string       `json:"text"`
+	Choices []choice     `json:"choices"`
+	Invite  string       `json:"invite"`
+	Cancel  bool         `json:"cancel"`
+	Thread  string       `json:"thread"`
+	Pay     *paymentArgs `json:"pay"`
+	people  []string     // who it goes to, each on their own
+	paying  []string     // what each link to pay in it asks for, from the payments kept
+	root    string       // the conversation it is in, by its first email
+	refs    []string     // the names of the emails it answers
 }
 
 // plainAddress is an address as a person writes it, Pat Lee
@@ -126,6 +137,13 @@ const mostPeople = 20
 // sendOne sends an email to one of those it goes to, with its choices and
 // invitation made for them.
 func (s *Service) sendOne(e emailArgs) error {
+	if e.Pay != nil {
+		p, err := s.makePayment(*e.Pay, e.To) // payments.go
+		if err != nil {
+			return err
+		}
+		e.Text += fmt.Sprintf("\n\nTo pay %s for %s: %s", money(e.Pay.Amount, e.Pay.Currency), e.Pay.What, p.Fields["link"])
+	}
 	if len(e.Choices) > 0 {
 		lines, err := s.offer(e.To, e.Choices) // offers.go
 		if err != nil {
@@ -198,6 +216,14 @@ func (s *Service) emailOf(raw json.RawMessage) (emailArgs, error) {
 	}
 	if e.paying, err = s.paymentsIn(e.Subject + "\n" + e.Text); err != nil { // payments.go
 		return e, fmt.Errorf("not sent: %v", err)
+	}
+	if e.Pay != nil {
+		raw, _ := json.Marshal(e.Pay)
+		p, err := s.paymentOf(raw) // payments.go: the most a link asks, a Stripe connected
+		if err != nil {
+			return e, err
+		}
+		e.Pay = &p
 	}
 	e.Choices, err = s.choicesOf(e.Choices)
 	return e, err
