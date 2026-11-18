@@ -1,6 +1,7 @@
 package server_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -91,5 +92,63 @@ func TestAPhoneCallIsOneMoreWayIn(t *testing.T) {
 	defer sms.mu.Unlock()
 	if len(sms.texts) != 1 || sms.texts[0].Get("To") != "+447700900001" || sms.texts[0].Get("From") != "+442071234567" || !strings.Contains(sms.texts[0].Get("Body"), "said yes") {
 		t.Errorf("the answer goes back by text, from the number they rang: %v", sms.texts)
+	}
+}
+
+// held is a model that answers only when let go, so a call can be heard
+// while its answer is still being worked out.
+type held struct{ open chan struct{} }
+
+func (h held) Name() string { return "held" }
+
+func (h held) Complete(ctx context.Context, _ llm.Request) (*llm.Response, error) {
+	<-h.open
+	return &llm.Response{Text: "We are open weekdays."}, nil
+}
+
+// A call works for whoever rings: they have time to start and may pause
+// mid-sentence; saying nothing hears it again before goodbye; and a long
+// wait for an answer is not silence.
+func TestAPhoneCallGivesTheCallerTime(t *testing.T) {
+	t.Parallel()
+	a, h := newAppAt(t, tonight)
+	internet := h.(*server.Server).Public(nil)
+	a.Automate.HTTP = &http.Client{Transport: served{&fakeTwilio{}}}
+	postForm(t, h, "/calls/connect", url.Values{"sid": {"AC1"}, "token": {"tok"}})
+	call := func(path string, form url.Values) string {
+		t.Helper()
+		req := httptest.NewRequest(http.MethodPost, path, strings.NewReader(form.Encode()))
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		req.Header.Set("X-Twilio-Signature", twilio.Account{Token: "tok"}.Sign("https://example.com"+path, form))
+		rec := httptest.NewRecorder()
+		internet.ServeHTTP(rec, req)
+		return rec.Body.String()
+	}
+	base := url.Values{"CallSid": {"CA2"}, "From": {"+447700900002"}, "To": {"+442071234567"}}
+	hello := call("/calls/voice", base)
+	if strings.Contains(hello, `speechTimeout="auto"`) || !strings.Contains(hello, `timeout="8" speechTimeout="3"`) {
+		t.Errorf("the caller has time to start, and to pause: %s", hello)
+	}
+	if strings.Count(hello, "<Gather") != 2 || !strings.Contains(hello, "I did not hear anything. How can I help?</Say></Gather><Say>Goodbye.") {
+		t.Errorf("saying nothing hears it again before goodbye: %s", hello)
+	}
+	release := make(chan struct{})
+	a.Chat.Provider = held{release}
+	heard := url.Values{"CallSid": {"CA2"}, "From": {"+447700900002"}, "To": {"+442071234567"}, "SpeechResult": {"When are you open?"}}
+	call("/calls/voice", heard)
+	waited := ""
+	for range 4 {
+		waited += call("/calls/voice?wait=1", base)
+	}
+	if !strings.Contains(waited, "Still working on it.") {
+		t.Errorf("a long wait is not silence: %s", waited)
+	}
+	close(release)
+	var said string
+	for deadline := time.Now().Add(5 * time.Second); !strings.Contains(said, "weekdays") && time.Now().Before(deadline); time.Sleep(20 * time.Millisecond) {
+		said = call("/calls/voice?wait=1", base)
+	}
+	if !strings.Contains(said, "<Say>Here it is again. We are open weekdays.</Say>") {
+		t.Errorf("the answer is said again to a caller who says nothing: %s", said)
 	}
 }
