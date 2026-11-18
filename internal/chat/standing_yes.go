@@ -52,7 +52,9 @@ func (s *Service) answerAhead(p *store.Record) bool {
 		return false
 	}
 	summary, _ := p.Fields["summary"].(string)
-	said := "Answered yes by your standing rule (" + rule + "): " + summary
+	// Said as done, with the owner's own words and how to take them back:
+	// the request's own line ends in a question it no longer asks.
+	said := strings.TrimSuffix(summary, " Make it?") + " Made without asking you, by your standing yes: \"" + rule + "\". To change or stop it, tell the assistant."
 	owner.Say(said)
 	if s.Automate != nil && s.Automate.Tell != nil {
 		s.Automate.Tell("Made by your standing yes", said, "/activity")
