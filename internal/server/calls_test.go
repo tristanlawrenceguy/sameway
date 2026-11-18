@@ -21,6 +21,14 @@ type fakeTwilio struct {
 }
 
 func (f *fakeTwilio) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if sid, token, _ := r.BasicAuth(); sid != "AC1" || token != "tok" {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	if r.Method == http.MethodGet { // the account, which says the token works
+		w.Write([]byte(`{"sid":"AC1","status":"active"}`))
+		return
+	}
 	r.ParseForm()
 	f.mu.Lock()
 	f.texts = append(f.texts, r.PostForm)
@@ -29,9 +37,9 @@ func (f *fakeTwilio) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(`{"sid":"SM1"}`))
 }
 
-// A phone call is one more way in: only Twilio's signed requests are
-// taken; the caller is greeted, heard and answered aloud as a visitor to
-// the published pages, the answer worked out while they hear one moment;
+// A phone call is one more way in: a token Twilio does not take connects
+// nothing; only Twilio's signed requests are taken; the caller is greeted,
+// heard and answered aloud as a visitor to the published pages, the answer worked out while they hear one moment;
 // what they ask for waits for the owner, whose answer goes back to them by
 // text message from the number they rang.
 func TestAPhoneCallIsOneMoreWayIn(t *testing.T) {
@@ -40,6 +48,9 @@ func TestAPhoneCallIsOneMoreWayIn(t *testing.T) {
 	internet := h.(*server.Server).Public(nil)
 	sms := &fakeTwilio{}
 	a.Automate.HTTP = &http.Client{Transport: served{sms}}
+	if page := after(t, h, postForm(t, h, "/calls/connect", url.Values{"sid": {"AC1"}, "token": {"wrong"}})).Body.String(); !strings.Contains(page, "did not take that Account SID") || strings.Contains(page, "Stop answering calls") {
+		t.Errorf("a wrong token says so, and connects nothing: %s", truncate(page))
+	}
 	postForm(t, h, "/calls/connect", url.Values{"sid": {"AC1"}, "token": {"tok"}})
 	call := func(path string, form url.Values, sign bool) string {
 		t.Helper()

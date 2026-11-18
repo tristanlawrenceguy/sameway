@@ -82,8 +82,20 @@ func (s *Server) callsPage(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) callsConnect(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	s.keys().Save(twilioSID, strings.TrimSpace(r.PostForm.Get("sid")))
-	s.keys().Save(twilioToken, strings.TrimSpace(r.PostForm.Get("token")))
+	acct := twilio.Account{SID: strings.TrimSpace(r.PostForm.Get("sid")), Token: strings.TrimSpace(r.PostForm.Get("token")), HTTP: s.app.Automate.HTTP}
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
+	err := acct.Check(ctx)
+	if err == nil {
+		err = s.keys().Save(twilioSID, acct.SID)
+	}
+	if err == nil {
+		err = s.keys().Save(twilioToken, acct.Token)
+	}
+	if err != nil {
+		s.failed(w, r, "Not connected", err, "/calls")
+		return
+	}
 	s.tellAt(w, r, outcome{Title: "Twilio connected", Text: "Set your number's voice webhook to the address on this page."}, "/calls")
 }
 
