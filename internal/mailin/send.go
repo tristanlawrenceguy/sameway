@@ -55,6 +55,9 @@ type Outgoing struct {
 	ReplyTo string
 	// Refs are the emails it answers, oldest first: the thread it is in.
 	Refs []string
+	// Auto marks an answer no person wrote (Auto-Submitted, RFC 3834),
+	// which mail apps and other assistants do not answer automatically.
+	Auto bool
 }
 
 // Send sends one email from the account, as plain text, and gives the
@@ -139,6 +142,9 @@ func message(from, id string, m Outgoing) []byte {
 	}
 	if len(refs) > 0 {
 		headers = append(headers, [2]string{"In-Reply-To", refs[len(refs)-1]}, [2]string{"References", strings.Join(refs, " ")})
+	}
+	if m.Auto {
+		headers = append(headers, [2]string{"Auto-Submitted", "auto-replied"})
 	}
 	var b bytes.Buffer
 	for _, h := range append(headers, [2]string{"MIME-Version", "1.0"}) {
