@@ -27,6 +27,9 @@ func (j *judging) Complete(ctx context.Context, req llm.Request) (*llm.Response,
 	if strings.Contains(req.System, "standing rule") {
 		j.mu.Lock()
 		defer j.mu.Unlock()
+		if req.Effort != "none" {
+			return &llm.Response{}, nil // a model that thinks first, as one here does, spends five words thinking
+		}
 		facts := req.Messages[0].Content
 		j.shown = append(j.shown, facts)
 		_, asked, _ := strings.Cut(facts, "Asked by:")
@@ -87,9 +90,9 @@ func TestAStandingYesAnswersWhatItCovers(t *testing.T) {
 	msgs, _ := a.Chat.Messages()
 	told := false
 	for _, m := range msgs {
-		told = told || strings.Contains(m.Fields["content"].(string), "Answered yes by your standing rule")
+		told = told || strings.Contains(m.Fields["content"].(string), "Made without asking you, by your standing yes: \"") && strings.HasSuffix(m.Fields["content"].(string), "To change or stop it, tell the assistant.") && !strings.Contains(m.Fields["content"].(string), "Make it?")
 	}
 	if !told {
-		t.Error("the owner is told")
+		t.Error("the owner is told it is made, in their own words, and how to stop it")
 	}
 }

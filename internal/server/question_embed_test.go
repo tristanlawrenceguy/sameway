@@ -29,7 +29,14 @@ func TestTheAskBoxGoesOnTheOwnersWebsite(t *testing.T) {
 	if page := public(t, internet, http.MethodGet, "/question", "").Body.String(); strings.Contains(page, "iframe") || !strings.Contains(page, `class="sw-header"`) {
 		t.Errorf("a visitor is not, and the page is a page: %s", truncate(page))
 	}
-	embedded := public(t, internet, http.MethodGet, "/question?embed", "").Body.String()
+	if rec := get(t, h, "/"); rec.Header().Get("X-Frame-Options") != "DENY" || rec.Header().Get("Content-Security-Policy") != "frame-ancestors 'none'" {
+		t.Errorf("no other page goes inside another site's: %v", rec.Header())
+	}
+	shown := public(t, internet, http.MethodGet, "/question?embed", "")
+	if shown.Header().Get("X-Frame-Options") != "" {
+		t.Errorf("the box does: %v", shown.Header())
+	}
+	embedded := shown.Body.String()
 	if strings.Contains(embedded, `class="sw-header"`) || strings.Contains(embedded, `class="sw-footer"`) || !strings.Contains(embedded, `action="/question?embed"`) {
 		t.Fatalf("embedded, it is the box alone: %s", truncate(embedded))
 	}
