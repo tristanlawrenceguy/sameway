@@ -111,6 +111,10 @@ type Service struct {
 	// who is the one this service speaks for, when it is not the owner;
 	// see people.go.
 	who records.Visitor
+	// inAnswer is set while a yes runs what it carries, which may answer
+	// another question without waiting on the one being answered; see
+	// propose.go.
+	inAnswer bool
 	// agent is the program outside Sameway this service runs tools for,
 	// nil for the assistant in the app; see agent.go.
 	agent *records.Agent

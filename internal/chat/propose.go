@@ -146,6 +146,8 @@ var proposable = map[string]bool{
 	"send_email": true,
 	// A link to pay the owner is made with their yes (payments.go).
 	"payment_link": true,
+	// An answer to a request with the owner's own words, sent where it was asked (route_requests.go).
+	"answer_request": true,
 }
 
 // modelProposable are the calls the model may carry in a question of its
@@ -176,8 +178,15 @@ func sortStrings(s []string) {
 
 // Accept runs a pending proposal and records who agreed to it.
 func (s *Service) Accept(id string) error {
+	if s.inAnswer { // a yes that answers another, already one at a time
+		return s.accept(id)
+	}
 	answering.Lock()
 	defer answering.Unlock()
+	return s.accept(id)
+}
+
+func (s *Service) accept(id string) error {
 	rec, err := s.Store.Get(records.ProposalType, id)
 	if err != nil {
 		return err
@@ -194,7 +203,9 @@ func (s *Service) Accept(id string) error {
 	if err != nil {
 		return err
 	}
-	result := s.runAgreed(llm.ToolCall{Name: tool, Args: args})
+	in := *s
+	in.inAnswer = true // what it runs may answer another (answer_request)
+	result := in.runAgreed(llm.ToolCall{Name: tool, Args: args})
 	if result.isErr {
 		return errors.New(result.text)
 	}
@@ -223,8 +234,15 @@ func (s *Service) Accept(id string) error {
 
 // Dismiss answers no. Nothing changes except the question going away.
 func (s *Service) Dismiss(id string) error {
+	if s.inAnswer {
+		return s.dismiss(id)
+	}
 	answering.Lock()
 	defer answering.Unlock()
+	return s.dismiss(id)
+}
+
+func (s *Service) dismiss(id string) error {
 	rec, err := s.Store.Get(records.ProposalType, id)
 	if err != nil {
 		return err
