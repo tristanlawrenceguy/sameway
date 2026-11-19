@@ -40,7 +40,7 @@ func removals() []request {
 			mustCreate(t, a, "note", map[string]any{"title": "Old shopping list", "body": "Milk, eggs."})
 		}, say: "Delete my note called Old shopping list.",
 			check: func(a *app.App, reply string) string {
-				n := find(a, "note", "title", "Old shopping list")
+				n := find(a, "note", "title", "old shopping list")
 				return all(want(n != nil, "the note was renamed or hidden instead of deleted by the person"),
 					want(strings.Contains(strings.ToLower(reply), "delete") || strings.Contains(reply, "/t/note/"), "the reply does not say how to delete it: "+reply))
 			}},
