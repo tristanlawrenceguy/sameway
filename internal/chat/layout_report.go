@@ -64,7 +64,7 @@ func (r layoutReport) lookAt() string {
 		fmt.Fprintf(&b, " (%d) %s.", i+1, p)
 	}
 	if strings.Contains(b.String(), "propose taking it away") {
-		b.WriteString(" Taking a block away is asked first with propose_change; once the person agrees, remove_component takes it, or remove in arrange_canvas.")
+		b.WriteString(" Taking away a block the person did not ask to remove is asked first with propose_change; once they agree, remove_component takes it, or remove in arrange_canvas.")
 	}
 	if r.fix != "" {
 		b.WriteString(" This would fix the order and widths in one change: arrange_canvas " + r.fix + ". Move or reshape what is already there when it makes the page read better, not only what you added.")
