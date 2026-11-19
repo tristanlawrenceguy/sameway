@@ -161,8 +161,8 @@ func TestRepeatedTitlesAreToldApartInSearchAndTheLog(t *testing.T) {
 	}
 }
 
-// Notes have no day: two made the same minute are told apart by the start
-// of their ids, the same words on their list and in the log.
+// Notes have no day: they are told apart by which came first (first of 2),
+// the same words on their list and in the log.
 func TestUndatedTwinsAreToldApartByWhichCameFirst(t *testing.T) {
 	t.Parallel()
 	_, h := newApp(t)
@@ -238,6 +238,48 @@ func TestACalendarTellsLikeEventsApartByTheirDays(t *testing.T) {
 	for _, d := range []time.Time{first, first.AddDate(0, 0, 1)} {
 		if !has(links, "Water ferns (on "+day(d)+")") {
 			t.Errorf("no link Water ferns on %s in %q", day(d), links)
+		}
+	}
+}
+
+// Undated types (notes) use clean ordinal labels, not timestamp suffixes.
+// Duplicate titles are told apart by "first of N", never "(added …)".
+func TestUndatedTwinsUseOrdinalDisambiguationNotTimestamps(t *testing.T) {
+	t.Parallel()
+	_, h := newApp(t)
+	for range 3 {
+		wantStatus(t, postJSON(t, h, http.MethodPost, "/api/note", map[string]any{"title": "Dentist appointment"}), http.StatusCreated)
+	}
+	list := get(t, h, "/t/note").Body.String()
+	if same := sameNames(t, list); len(same) > 0 {
+		t.Errorf("duplicate notes share a name: %v", same)
+	}
+	var told []string
+	for _, n := range names(t, list, "link") {
+		if strings.HasPrefix(n, "Dentist appointment (") {
+			told = append(told, strings.TrimPrefix(n, "Dentist appointment "))
+		}
+	}
+	if len(told) != 3 {
+		t.Fatalf("expected three disambiguated links, got %d: %q", len(told), told)
+	}
+	for i, w := range told {
+		if !strings.Contains(w, " of 3)") {
+			t.Errorf("link %d context %q should contain ' of 3)'; notes with duplicate titles use ordinal labels like first/second/third of N, not timestamp suffixes", i+1, w)
+		}
+	}
+	if strings.Contains(list, "(added ") {
+		t.Fatalf("the notes listing page contains '(added …)' which is an internal timestamp leaked into user-facing text; duplicate titles should use ordinal labels like 'first of 3', not raw timestamps")
+	}
+	log := names(t, get(t, h, "/activity").Body.String(), "button")
+	for _, w := range told {
+		if !has(log, "Undo created note Dentist appointment "+w) {
+			t.Errorf("the log tells them apart as their list does: no %q in %q", "Dentist appointment "+w, log)
+		}
+	}
+	for _, b := range log {
+		if strings.Contains(b, "(added ") && !strings.Contains(b, "Undo created note Dentist appointment") {
+			t.Errorf("activity button contains timestamp suffix '%s'; should use ordinal labels", truncate(b))
 		}
 	}
 }

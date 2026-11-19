@@ -98,8 +98,13 @@ func Apart(names []string, ways func(i int) []string, rank ...func(i int) string
 }
 
 // RecordWays is what tells one record from another with its title: the
-// day that matters to it (due tomorrow), when it was added, its id.
+// day that matters to it (due tomorrow). Undated types have no day field,
+// so they skip straight to ordinal ranking ("first of N"). For dated types
+// the ways are: due date, when added (minute), when added (second).
 func (ws *Workspace) RecordWays(t *schema.Type, rec *store.Record) []string {
+	if t.DayField() == "" {
+		return nil // no day field: let Apart fall through to ordinal ranking via rank
+	}
 	return []string{ws.dayWords(t, rec), "added " + ws.MomentWords(rec.CreatedAt), "added " + ws.SecondWords(rec.CreatedAt)}
 }
 
