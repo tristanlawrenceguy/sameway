@@ -40,7 +40,7 @@ var fieldProps = map[string]any{
 
 var shapeOps = []Op{
 	{Title: "Add a field to a kind",
-		Core:  true,
+		Words: []string{"field", "property", "properties", "priority", "column", "track", "record the", "set up", "setup", "set me up", "organis", "organiz", "for my work", "for my home", "for my studies", "for my business"},
 		Doing: reshaping,
 		Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
 			return s.addField(a.Type, fieldDef{Name: a.Name, Kind: a.Kind, Description: a.Description, Values: a.Values, To: a.To, Required: a.Required, Default: a.Default})
@@ -57,7 +57,7 @@ var shapeOps = []Op{
 				"default":     fieldProps["default"],
 			}, "type", "name", "kind")}},
 	{Title: "Add a kind of record",
-		Core:  true,
+		Words: []string{"kind of", "type", "keep track", "track", "recipe", "contact", "client", "book", "collection of", "set up", "setup", "set me up", "organis", "organiz", "for my work", "for my home", "for my studies", "for my business"},
 		Doing: reshaping,
 		Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
 			return s.addType(a.Name, a.Description, a.Properties)

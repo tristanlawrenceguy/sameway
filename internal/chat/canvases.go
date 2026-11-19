@@ -48,7 +48,7 @@ func (s *Service) HasCanvas(id string) bool {
 // workspace made or opened since tabs existed does.
 var canvasOps = []Op{
 	{Title: "Make a tab",
-		Core:  true,
+		Words: []string{"tab", "separate page", "new page", "page for", "another page"},
 		Doing: func(a callArgs) string { return "Adding a tab" + called(a.Name) },
 		Run:   func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.createCanvas(a.Name) },
 		Tool: llm.Tool{Name: "create_canvas", Description: "Add a tab: a new canvas beside Home with blocks of its own. Use it when the person asks for a separate page or tab, or when what they want does not belong with what is already on the canvas. Returns the canvas id, which add_component takes as canvas.",
