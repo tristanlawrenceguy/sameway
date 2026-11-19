@@ -140,6 +140,9 @@ var proposable = map[string]bool{
 	// update_record is what one suggests for a record already kept: a new
 	// price for a subscription (automate/suggest_same.go).
 	"update_record": true,
+	// delete_record is what the assistant asks before deleting what the
+	// person did not ask it to (delete_record.go).
+	"delete_record": true,
 	// What goes to or from someone else's Sameway is asked first (ask_someone.go, enquiry.go).
 	"ask_someone": true, "let_ask": true, "answer_enquiry": true, "ask_page": true,
 	// An email speaks for the owner and cannot be unsent (send_email.go).

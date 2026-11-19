@@ -71,6 +71,7 @@ var recordOps = []Op{
 	createRecordsOp, // create_records.go
 	updateRecordsOp, // update_records.go
 	updateRecordOp,  // record_ops.go
+	deleteRecordOp,  // delete_record.go
 	{Title: "Find records", Traits: Traits{ReadOnly: true, Idempotent: true},
 		Access: ForViewers,
 		Core:   true,
@@ -210,23 +211,6 @@ func (s *Service) findRecords(typeName, words string, where []string, order stri
 		matching = " " + query.WordsIn(s.Store, t, where, s.Now().Location())
 	}
 	return toolResult{text: fmt.Sprintf("%s records%s, newest first (id, title, written by, its days in this computer's time, and how its words start). Each title was written by the one on its line; %s.\n<<<record text\n%s\nrecord text>>>", t.Name, matching, records.Untrusted, strings.Join(lines, "\n"))}
-}
-
-// deleteRecord is not a tool: a record goes when a person deletes it, or
-// when its creation is undone. Either way the log keeps what it was.
-func (s *Service) deleteRecord(typeName, id string) toolResult {
-	t, err := s.contentType(typeName)
-	if err != nil {
-		return fail("%v", err)
-	}
-	if _, err := s.Store.Get(t.Name, id); err != nil {
-		return fail("%s", records.NoRecord(t.Name, id))
-	}
-	_, c, err := records.Write(s.Store, "deleted", t.Name, id, nil)
-	if err != nil {
-		return fail("could not delete %s %s: %v", t.Name, id, err)
-	}
-	return toolResult{text: fmt.Sprintf("deleted %s %s", t.Name, id), change: &c}
 }
 
 // importRecords makes records of a type from a kept file, through ingest,
