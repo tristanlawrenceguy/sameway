@@ -240,7 +240,7 @@ func TestSystemPromptCarriesCatalogueAndCanvas(t *testing.T) {
 		names = append(names, tool.Name)
 	}
 	// "hi" speaks of nothing: the core, and more_tools for the rest (toolset.go).
-	if strings.Join(names, ",") != "add_component,update_component,remove_component,arrange_canvas,propose_change,undo_change,search,add_field,add_type,more_tools" {
+	if strings.Join(names, ",") != "add_component,arrange_canvas,propose_change,search,more_tools" {
 		t.Errorf("tools offered: %v", names)
 	}
 }
