@@ -49,7 +49,7 @@ func TestDescribeOverMCPFitsTheClient(t *testing.T) {
 		t.Errorf("describe with nothing asked should be the index, short, saying how to add a block: %d bytes", len(index))
 	}
 	meter, _ := text(t, replies[1])
-	for _, want := range []string{`"name": "meter"`, `"example"`, `"props"`} {
+	for _, want := range []string{`"name":"meter"`, `"example"`, `"props"`} {
 		if !strings.Contains(meter, want) {
 			t.Errorf("describe name meter should be the meter's props with an example, missing %s: %.300s", want, meter)
 		}

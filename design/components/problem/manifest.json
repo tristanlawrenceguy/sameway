@@ -3,6 +3,7 @@
   "version": "1.1.0",
   "description": "Why a block that shows records cannot show them as it is set up, said in place of it: who can fix it in sight, what exactly is wrong a press away.",
   "icon": "!",
+  "pageOnly": true,
   "use": {
     "when": "a list, chart, calendar or tracker is asked for something the workspace does not have: a type, a field, a condition that cannot be read.",
     "not": "nothing matching, which is an empty state and says what it looked for; or a failed action, which is an alert.",

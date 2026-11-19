@@ -55,6 +55,16 @@ type Mail struct {
 	Date    time.Time
 	Text    string
 	Files   []File
+	// Calendar is a calendar the mail carries as one of its ways of
+	// saying itself, such as the answer to an invitation, or nil.
+	Calendar []byte
+	// Auto is mail a machine sent, such as an out of office (RFC 3834):
+	// never answered, or two machines would answer each other for ever.
+	Auto bool
+	// Verified says the mailbox's own server checked that it really comes
+	// from the address it says (DMARC, or DKIM signed by that domain), so
+	// who wrote it may be trusted as who they say.
+	Verified bool
 }
 
 // File is a file attached to an email.

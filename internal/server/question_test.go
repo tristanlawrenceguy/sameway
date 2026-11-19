@@ -1,6 +1,7 @@
 package server_test
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -19,6 +20,8 @@ func TestAVisitorAsksOnAPublishedPage(t *testing.T) {
 	t.Parallel()
 	a, h := newApp(t)
 	srv := h.(*server.Server)
+	rang := make(chan string, 2)
+	srv.OnRing(func(title, text, _ string) { rang <- title + ": " + text })
 	internet := srv.Public(nil)
 	a.Store.Create("note", map[string]any{"title": "Opening hours", "body": "Saturdays 9 to 1."})
 	secret, _ := a.Store.Create("task", map[string]any{"title": "Change the alarm code"})
@@ -45,6 +48,10 @@ func TestAVisitorAsksOnAPublishedPage(t *testing.T) {
 	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "We open Saturdays 9 to 1.") {
 		t.Fatalf("they read the answer: %d\n%s", rec.Code, truncate(rec.Body.String()))
 	}
+	// The box says it is asking while a model takes its time.
+	if page := rec.Body.String(); !strings.Contains(page, `data-busy-target="question-status" data-busy-message="Asking. The answer can take a minute."`) || !strings.Contains(page, `id="question-status"`) {
+		t.Errorf("the wait is said\n%s", truncate(page))
+	}
 	results := model.seen[2].Messages[len(model.seen[2].Messages)-1].ToolResults
 	if !results[0].IsError || strings.Contains(results[0].Content, "alarm") {
 		t.Errorf("what is not published is not read for them: %+v", results)
@@ -55,6 +62,17 @@ func TestAVisitorAsksOnAPublishedPage(t *testing.T) {
 	asks := a.Chat.Suggestions()
 	if len(asks) != 1 || !strings.Contains(asks[0].Fields["summary"].(string), "Pat Lee, pat@example.com asks you to make an event: \"Pat Lee to visit\", starts ") {
 		t.Fatalf("their ask waits on the owner's Today, in Sameway's words: %+v", asks)
+	}
+	if got := <-rang; !strings.Contains(got, "A request waits for your yes: Pat Lee, pat@example.com asks you") {
+		t.Errorf("the owner is told it waits, as for any request: %s", got)
+	}
+	offered := false
+	for _, tl := range model.seen[0].Tools {
+		raw, _ := json.Marshal(tl.Schema)
+		offered = offered || tl.Name == "create_record" && strings.Contains(string(raw), `"event"`)
+	}
+	if !offered {
+		t.Error("they may ask for any kind that is not the owner's alone, not only the published ones they read")
 	}
 	if strings.Contains(model.seen[0].System, "alarm") {
 		t.Error("the assistant is told nothing beyond what it reads")

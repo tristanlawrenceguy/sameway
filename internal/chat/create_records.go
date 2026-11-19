@@ -16,7 +16,6 @@ import (
 // or none, and one Undo takes them all back.
 
 var createRecordsOp = Op{Title: "Make several records",
-	Words: []string{"list", "these", "several", "all of", "each", "brain dump"},
 	Doing: func(a callArgs) string {
 		if len(a.Records) == 0 {
 			return "Adding " + or(schema.Plural(a.Type), "records")
@@ -28,7 +27,12 @@ var createRecordsOp = Op{Title: "Make several records",
 		Schema: obj(map[string]any{
 			"type":    typeArg,
 			"records": map[string]any{"type": "array", "description": "One object of field values per record, each matching the type's schema, as create_record's fields.", "items": map[string]any{"type": "object"}},
-		}, "type", "records")}, Offered: typed}
+		}, "type", "records")}, Offered: notOffered}
+
+// notOffered keeps a tool callable by name, for questions asked with it
+// before and agents that know it, but out of the list: create_record and
+// update_record do what it does.
+func notOffered(*Service, *llm.Tool) bool { return false }
 
 func (s *Service) createRecords(typeName string, list []map[string]any) toolResult {
 	t, err := s.contentType(typeName)
@@ -47,8 +51,8 @@ func (s *Service) createRecords(typeName string, list []map[string]any) toolResu
 	}
 	made, done, i, err := records.WriteAll(s.Store, "created", t.Name, writes) // all or none
 	if err != nil {
-		return fail("Nothing was made: records[%d]%s could not be saved — %s. %s Fix that one and call create_records again with all of them.",
-			i, calledSaid(t, list[i]), humanizeValidationError(err.Error()), fieldHelp(err, t))
+		return fail("Nothing was made, as records[%d]%s could not be: %s Call again with all of them, that one fixed.",
+			i, calledSaid(t, list[i]), fieldHelp(err, t))
 	}
 	ops, titles := records.Joined(done), make([]string, len(done))
 	for i, c := range done {

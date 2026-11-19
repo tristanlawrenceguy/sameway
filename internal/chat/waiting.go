@@ -76,7 +76,7 @@ func (s *Service) Waiting() []Waiting {
 		from, _ := p.Fields["from"].(string)
 		link := "/t/" + from
 		if from == "" {
-			link = "/today" // a request made through the booking link comes from no record
+			link = "/today" // someone's request comes from no record
 		}
 		presses := []Press{{Label: "Make it", Post: "/suggested/yes", ID: p.ID}, {Label: "Change", Post: "/suggested/change", ID: p.ID}, {Label: "No", Post: "/suggested/no", ID: p.ID}}
 		if l := s.alwaysLabel(p); l != "" { // request_always_words.go

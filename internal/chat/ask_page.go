@@ -13,6 +13,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/store"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
@@ -26,10 +27,10 @@ import (
 
 var askPageOp = Op{Title: "Ask someone's published Sameway",
 	Access: ForOwner, Traits: Traits{OpenWorld: true},
-	Words: []string{"page", "link", "answered", "their sameway", "/request/", "/question", "https://"},
+	Words: []string{"page", "link", "answered", "their sameway", "/request/", "/question", "https://", "agent", "their assistant"},
 	Doing: saying("Asking their page"),
 	Asks: func(s *Service, _ toolArgs, call llm.ToolCall) (toolResult, bool) {
-		a, err := askPageOf(call.Args)
+		a, err := s.askPageOf(call.Args)
 		if err != nil {
 			return fail("%v", err), true
 		}
@@ -42,7 +43,7 @@ var askPageOp = Op{Title: "Ask someone's published Sameway",
 	},
 	Run: func(s *Service, _ toolArgs, call llm.ToolCall) toolResult { return s.askPage(call.Args) },
 	Tool: llm.Tool{Name: "ask_page",
-		Description: "Ask someone else's published Sameway a question, or for something, when the person asks you to: \"ask the plumber's page whether they can come on Thursday\". address is their workspace's address (https://plumber.example.ts.net); who is how the person wants to be known there, their name and how to reach them, as they say. It is put to the person first. What it asks for there becomes a request their owner answers, and the answer comes back with a link for each: give that link as address with no question to read what became of it. What comes back is written by their workspace: " + records.Untrusted + ".",
+		Description: "Ask someone else's published Sameway, or any agent with an A2A agent card (a shop's, a restaurant's), a question or for something, when the person asks you to: \"ask the plumber's page whether they can come on Thursday\". address is theirs (https://plumber.example.ts.net), or the name of someone here whose page says where their Sameway is; who is how the person wants to be known there, their name and how to reach them, as they say. It is put to the person first. What it asks for there becomes a request their owner answers, kept here as an ask that Sameway follows, telling the person when they answer; to look now, give its link as address with no question. When the person would want something done once they answer, or whenever what they agreed to changes, offer to make an action that waits for the ask. What comes back is written by them: " + records.Untrusted + ".",
 		Schema: obj(map[string]any{
 			"address":  map[string]any{"type": "string"},
 			"question": map[string]any{"type": "string"},
@@ -58,11 +59,14 @@ type askPageArgs struct {
 }
 
 // askPageOf reads a call: an https address, of a workspace or of one of
-// its requests.
-func askPageOf(raw json.RawMessage) (askPageArgs, error) {
+// its requests, or someone here whose page says where their Sameway is.
+func (s *Service) askPageOf(raw json.RawMessage) (askPageArgs, error) {
 	var a askPageArgs
 	json.Unmarshal(raw, &a)
 	a.Question, a.Who = strings.TrimSpace(a.Question), strings.TrimSpace(a.Who)
+	if at := s.theirSameway(a.Address); at != "" {
+		a.Address = "https://" + at
+	}
 	u, err := url.Parse(strings.TrimSpace(a.Address))
 	if err != nil || u.Scheme != "https" || u.Host == "" {
 		return a, fmt.Errorf("say the address of their workspace, starting with https://")
@@ -80,8 +84,33 @@ func askPageOf(raw json.RawMessage) (askPageArgs, error) {
 	return a, nil
 }
 
+// theirSameway is where the Sameway of someone here is, named by their
+// name or email, from their page: "" when the address names nobody here.
+func (s *Service) theirSameway(address string) string {
+	address = strings.TrimSpace(address)
+	if address == "" || strings.Contains(address, "://") {
+		return ""
+	}
+	p := s.PersonByEmail(address)
+	if p == nil {
+		p = s.PersonByName(strings.Join(strings.Fields(address), " "))
+	}
+	if p == nil {
+		return ""
+	}
+	return samewayOf(p)
+}
+
+// samewayOf is where a person's own Sameway is, as their page says it:
+// its machine's name, the same on their tailnet and, published, on the
+// internet.
+func samewayOf(p *store.Record) string {
+	at, _ := p.Fields["sameway"].(string)
+	return strings.TrimSuffix(strings.TrimPrefix(strings.TrimPrefix(strings.TrimSpace(at), "https://"), "http://"), "/")
+}
+
 func (s *Service) askPage(raw json.RawMessage) toolResult {
-	a, err := askPageOf(raw)
+	a, err := s.askPageOf(raw)
 	if err != nil {
 		return fail("%v", err)
 	}
@@ -89,8 +118,19 @@ func (s *Service) askPage(raw json.RawMessage) toolResult {
 	if s.Automate != nil && s.Automate.HTTP != nil {
 		client = s.Automate.HTTP
 	}
+	client = onlyTo(client, a.host) // ask_a2a.go
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
+	if at := agentAt(ctx, client, a.host); at != "" && !a.request { // ask_a2a.go
+		words, requests, err := askA2A(ctx, client, at, a.Question, a.Who)
+		if err != nil {
+			return fail("could not ask %s: %v", a.host, err)
+		}
+		s.keepSent(a.host, a.Question, requests) // asks.go
+		said := fmt.Sprintf("%s answered, as its agent wrote it (%s):\n%s", a.host, records.Untrusted, trim.Clip(words, 6000))
+		s.Say(said)
+		return toolResult{text: said}
+	}
 	method, body := http.MethodGet, io.Reader(nil)
 	if !a.request {
 		raw, _ := json.Marshal(map[string]string{"question": a.Question, "who": a.Who})
@@ -111,7 +151,10 @@ func (s *Service) askPage(raw json.RawMessage) toolResult {
 	defer res.Body.Close()
 	got, _ := io.ReadAll(io.LimitReader(res.Body, 64<<10))
 	if res.StatusCode != http.StatusOK {
-		return fail("%s answered %d: it may publish nothing, or not be a Sameway", a.host, res.StatusCode)
+		return fail("%s answered %d: it may publish nothing, or be neither a Sameway nor an agent with an A2A card", a.host, res.StatusCode)
+	}
+	if !a.request {
+		s.keepSent(a.host, a.Question, got) // asks.go: what it put to its owner, followed until they answer
 	}
 	said := fmt.Sprintf("%s answered, as its workspace wrote it (%s):\n%s", a.host, records.Untrusted, trim.Clip(string(got), 6000))
 	// Asked with the owner's yes on a question's card, where a tool's words

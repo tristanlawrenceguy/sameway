@@ -56,7 +56,19 @@ How to work:
 // needs, the page as it is, then the rules of what the turn speaks of
 // (rules.go).
 func (s *Service) systemPrompt(history []llm.Message) string {
-	return s.instructions() + topicalRules(history)
+	return s.instructions() + s.givenCatalogues(history) + topicalRules(history)
+}
+
+// givenCatalogues are the catalogues only a tool given this turn uses:
+// the arrangements, for add_arrangement. Every turn they came to nearly
+// four thousand characters, where most turns could not use them.
+func (s *Service) givenCatalogues(history []llm.Message) string {
+	for _, t := range s.toolsFor(s.Tools(), history) {
+		if t.Name == arrangementOp.Tool.Name {
+			return s.arrangementCatalogue()
+		}
+	}
+	return ""
 }
 
 // instructions assembles the instructions, the components in a line each, and the
@@ -80,7 +92,6 @@ func (s *Service) instructions() string {
 	// A line for each component and type; a refusal gives the rest of one
 	// when it is needed (index.go).
 	b.WriteString(s.componentIndex())
-	b.WriteString(s.arrangementCatalogue())
 	b.WriteString(s.actionsDigest())
 	b.WriteString(s.typeIndex())
 	b.WriteString(s.canvasDigest(s.current))

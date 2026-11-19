@@ -44,13 +44,43 @@ func (s *Service) toolsFor(all []llm.Tool, history []llm.Message) []llm.Tool {
 	return given
 }
 
+// speaksOf says whether the words said hold one of words, as a word: at
+// its start, so "ask " is not heard in "task ", and a short one whole, or
+// with an s, so "run" is not heard in "running late" nor "call" in
+// "recall". A longer one may go on ("transcri" is heard in "transcript").
 func speaksOf(said string, words []string) bool {
 	for _, w := range words {
-		if strings.Contains(said, w) {
-			return true
+		for from := 0; ; {
+			i := strings.Index(said[from:], w)
+			if i < 0 {
+				break
+			}
+			i += from
+			if wordAt(said, w, i) {
+				return true
+			}
+			from = i + 1
 		}
 	}
 	return false
+}
+
+// shortWord is how long a word may be and still be heard only whole.
+const shortWord = 5
+
+func wordAt(said, w string, i int) bool {
+	if i > 0 && letter(said[i-1]) && letter(w[0]) {
+		return false
+	}
+	end := i + len(w)
+	if len(w) >= shortWord || !letter(w[len(w)-1]) || end == len(said) || !letter(said[end]) {
+		return true
+	}
+	return said[end] == 's' && (end+1 == len(said) || !letter(said[end+1]))
+}
+
+func letter(c byte) bool {
+	return c >= 'a' && c <= 'z' || c >= '0' && c <= '9' || c >= 0x80
 }
 
 // refresh is a turn's next step's prompt and tools: the page as it is now,

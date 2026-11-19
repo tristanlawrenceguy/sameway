@@ -49,14 +49,30 @@ func (s *Server) BackgroundJobs() []runner.Job {
 			s.agenda.PurchasesIfDue(now) // agenda/purchases.go
 			return nil
 		}},
+		{Name: "Answers to what you asked other Sameways", Every: 5 * time.Minute, Wait: true, Run: func(ctx context.Context, _ time.Time) error {
+			return s.app.Chat.FollowSent(ctx) // chat/asks.go
+		}},
 		{Name: "Search by meaning kept current", Every: 2 * time.Minute, Run: func(ctx context.Context, _ time.Time) error {
 			return s.refreshMeaning(ctx) // search_meaning.go: when an embedding model is here
+		}},
+		{Name: "Telegram messages answered", Every: time.Second, Wait: true, Run: s.KeepTelegram}, // telegram.go: waits for news each look
+		{Name: "Payments followed until paid", Every: 5 * time.Minute, Wait: true, Run: func(ctx context.Context, _ time.Time) error {
+			return s.app.Chat.FollowPayments(ctx) // chat/payments.go
+		}},
+		{Name: "What time brought to match an action set off", Every: 5 * time.Minute, Run: func(_ context.Context, now time.Time) error {
+			return s.app.Automate.TimePassed(now) // automate/time_passes.go
+		}},
+		{Name: "Events that ended marked over", Every: 5 * time.Minute, Run: func(_ context.Context, now time.Time) error {
+			return s.app.Chat.MarkOver(now) // chat/event_over.go
 		}},
 		{Name: "Email read from the mailbox", Every: 5 * time.Minute, Wait: true, Run: func(ctx context.Context, _ time.Time) error {
 			c, cancel := context.WithTimeout(ctx, 2*time.Minute)
 			defer cancel()
 			_, err := s.inbox.ReadMail(c) // inbox/mail_in.go: when connected
 			return err
+		}},
+		{Name: "Answers waited on marked late", Every: time.Hour, Run: func(_ context.Context, now time.Time) error {
+			return s.inbox.MarkLate(now) // inbox/late.go
 		}},
 	}
 	return append(jobs, s.WriteDownJobs()...) // media/hostwrite.go

@@ -44,6 +44,16 @@ func joinTailnet(out io.Writer, a *app.App, h http.Handler, srv *server.Server) 
 	}
 	n := &tailnetNode{out: out, a: a, h: h, admit: admit, pub: pub, published: publishing(a), news: make(chan struct{}), said: map[string]string{}}
 	a.Chat.Tailnet = n.wait
+	// Where the internet reaches it, for links in what is sent: choices in
+	// an email (chat/offers.go).
+	a.Chat.Address = func() string {
+		n.mu.Lock()
+		defer n.mu.Unlock()
+		if n.last.State != tailnet.Ready || !srv.Published().Any() {
+			return ""
+		}
+		return n.last.Link
+	}
 	a.Chat.Reach = func() *http.Client {
 		n.mu.Lock()
 		defer n.mu.Unlock()

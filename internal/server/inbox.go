@@ -1,6 +1,10 @@
 package server
 
-import "github.com/tristanlawrenceguy/sameway/internal/server/inbox"
+import (
+	"time"
+
+	"github.com/tristanlawrenceguy/sameway/internal/server/inbox"
+)
 
 // inboxRoutes are email in and what waits to be sorted
 // (internal/server/inbox), which needs nothing of the server that media
@@ -18,3 +22,6 @@ func (s *Server) SetUpSorting() { s.inbox.SetUpSorting() }
 // SortPaidAgain adds the paid again tag and its suggestion to sorting, as
 // reading email does once (inbox/paid_again.go).
 func (s *Server) SortPaidAgain() { s.inbox.SortPaidAgain() }
+
+// MarkLate marks conversations whose answer is late (inbox/late.go).
+func (s *Server) MarkLate(now time.Time) error { return s.inbox.MarkLate(now) }

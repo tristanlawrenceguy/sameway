@@ -40,5 +40,17 @@ func (s *Set) retireLabels(builtin *Set) {
 // in order of name.
 func (s *Set) settle(builtin *Set) {
 	s.retireLabels(builtin)
+	s.keepKept(builtin)
 	sort.Slice(s.Types, func(i, j int) bool { return s.Types[i].Name < s.Types[j].Name })
+}
+
+// keepKept gives a kind Sameway alone writes the same on a workspace's
+// copy: a copy that lost it would let a hand write what only Sameway may,
+// such as a payment marked paid.
+func (s *Set) keepKept(builtin *Set) {
+	for _, b := range builtin.Types {
+		if t, ok := s.byName[b.Name]; ok && b.Kept {
+			t.Kept, t.KeptBy = true, b.KeptBy
+		}
+	}
 }

@@ -120,3 +120,24 @@ func TestKeepOneKeepsAllTheNotes(t *testing.T) {
 		t.Errorf("the notes of both, each once: %q", k.Fields["notes"])
 	}
 }
+
+// Two people's subscriptions to one service, each from their own mailbox,
+// are two: the list does not say nothing tells them apart, or offer to
+// keep one. Two from one mailbox are still one thing twice.
+func TestWhoseItIsTellsTwoApart(t *testing.T) {
+	t.Parallel()
+	b := newBook(t)
+	sub := mustType(t, b, "subscription")
+	mine := made(t, b, "subscription", map[string]any{"name": "Streamflix", "renews": "2026-11-20T00:00:00Z", "mailbox": "me@example.com"})
+	made(t, b, "subscription", map[string]any{"name": "Streamflix", "renews": "2026-11-20T00:00:00Z", "mailbox": "pat@example.com"})
+	if twins := records.Twins(b.Store, sub); len(twins) != 0 {
+		t.Fatalf("two people's are two: %v", twins)
+	}
+	if alike := records.Alike(b.Store, sub, mine); len(alike) != 0 {
+		t.Errorf("and are not alike: %v", alike)
+	}
+	made(t, b, "subscription", map[string]any{"name": "Streamflix", "renews": "2026-11-20T00:00:00Z", "mailbox": "Me@example.com"})
+	if twins := records.Twins(b.Store, sub); len(twins) != 1 || len(twins[0]) != 2 {
+		t.Errorf("two from one mailbox are one thing twice: %v", twins)
+	}
+}

@@ -191,8 +191,9 @@ func texts(t *schema.Type, rec *store.Record, r Reader) (title, body string) {
 		if f.Type == "ref" || f.RefList() {
 			continue
 		}
-		// A date is shown as a person reads it (relative), and a choice
-		// as its label, not as it is stored; yes or no says nothing on its own.
+		// A date is shown as a person reads it (relative), a choice as its
+		// label and a repeat in words, not as it is stored; yes or no says
+		// nothing on its own.
 		var s string
 		switch f.Type {
 		case "bool":
@@ -201,6 +202,8 @@ func texts(t *schema.Type, rec *store.Record, r Reader) (title, body string) {
 			s = when.Relative(flatten(v), r.Now, r.H24)
 		case "enum":
 			s = f.ValueLabel(flatten(v))
+		case "repeat":
+			s = when.RepeatText(flatten(v)) // every month, never FREQ=MONTHLY read out
 		default:
 			s = flatten(v)
 		}

@@ -142,7 +142,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	// The Edit button the inline editor adds is named for what it edits,
 	// the record by its title, as a block on the canvas is (09-edit.js).
 	editable := editing(t, rec) // see versions.go
-	if t.Name == records.ActivityType {
+	if t.Name == records.ActivityType || t.Kept {
 		editable = langOf(rec)
 	}
 	fmt.Fprintf(&b, `<div class="sw-dl-block" data-block-id="%s" data-block-label="%s"%s%s>`, rec.ID, template.HTMLEscapeString(trim.Title(s.title(t, rec))), editable, discard)
@@ -163,7 +163,7 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	// the whole record back except for those already-in-chips fields.
 	var items []any
 	for _, f := range shownFields {
-		items = append(items, s.fieldItem(t, f, rec.Fields[f.Name], s.display(f, rec.Fields[f.Name])))
+		items = append(items, s.fieldItem(t, f, rec.Fields[f.Name], s.fieldSays(f, rec)))
 	}
 	// An entry in the log says what happened, not what it stores.
 	if t.Name == records.ActivityType {
@@ -192,9 +192,9 @@ func (s *Server) detailPage(w http.ResponseWriter, r *http.Request) {
 	}
 	// The record's one press, done or pinned or whatever its yes-or-no
 	// field is, sits under the title; Delete keeps to the quiet bar. The
-	// log is kept by Sameway: an entry is undone, never edited or deleted,
-	// on its page as over the API.
-	if t.Name != records.ActivityType {
+	// log, and a kept kind such as a payment, are Sameway's: never edited
+	// or deleted, on a page as over the API, so neither is offered.
+	if t.Name != records.ActivityType && !t.Kept {
 		b.WriteString(`<div class="sw-bar sw-quiet">` + s.handoff(r, relate.Page(t.Name, rec.ID)) + string(s.form(ui.Form{Action: "/t/" + t.Name + "/" + rec.ID + "/delete", Button: &ui.Button{Label: "Delete " + schema.Words(t.Name), Variant: ui.Quiet}})) + `</div>`)
 		b.WriteString(s.editFields(t, rec))
 	}

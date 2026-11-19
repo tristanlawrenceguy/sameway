@@ -1,0 +1,39 @@
+# Something you asked another person's Sameway for, through your
+# assistant, and what became of it. Provided with every workspace, the
+# mirror of an enquiry: Sameway keeps each one with the address their
+# Sameway gave for it, reads that address now and then, and tells you
+# when they answer. What was asked is as their Sameway wrote it back.
+name: ask
+description: "Something the owner asked another person's own Sameway for, through ask_page, and what became of it: kept with the owner's own question and the address their Sameway gave, which Sameway reads now and then, telling the owner when they say yes or no, and each time what they agreed to changes after (changed). Asked what you asked others for, or whether they answered, read these; ask_page with its address says what it is now. To act on an answer or a change, make an action that waits for an ask to change."
+title: asked
+provided: true
+owners: true
+fields:
+  question:
+    label: Your question
+    type: text
+    maxLength: 2000
+    description: What the owner asked, in their own words, as it was sent.
+  asked:
+    type: string
+    required: true
+    maxLength: 300
+    description: What was asked for, as their Sameway wrote it back.
+  at:
+    label: Answer at
+    type: string
+    maxLength: 300
+    readonly: true
+    description: The address on their Sameway that says what became of it, kept by the system.
+  state:
+    type: enum
+    values: [waiting, "yes", "no"]
+    labels: {waiting: Waiting for them, "yes": They said yes, "no": They said no}
+    default: waiting
+  changed:
+    label: Last changed
+    type: string
+    maxLength: 40
+    hidden: true
+    readonly: true
+    description: When what they made with their yes last changed, as their Sameway says it, or "taken away"; kept by the system to notice the next change, and not shown, since it is a stored time, not words. The page says when the ask itself last changed.

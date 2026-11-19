@@ -1,6 +1,7 @@
 package chat
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -10,38 +11,48 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/when"
 )
 
-// A request for a time, made by anyone through the booking link
-// (server/book.go), is a suggested event on Today and nothing more: it
-// waits for the person's Make it, Change or No, each on its own, and
-// nothing is booked until they press one. What the asker wrote is kept
+// A time asked for through the booking link (server/book.go) is a request
+// like any other (requests_made.go): an event on Today that waits for the
+// person's Make it, Change or No, each on its own, with an address that
+// tells the one asking what became of it. What the asker wrote is kept
 // as data in the event's notes and shown to the person; nothing acts on
 // it.
 
-// ByBooking marks a suggestion that came through the booking link.
-const ByBooking = "booking"
-
-// Booking puts a request for an hour from at to the person, as a
-// suggested event.
-func (s *Service) Booking(name, email, note string, at time.Time) error {
+// Booking puts a request for an hour from at to the person, as an event,
+// and gives the request's key.
+func (s *Service) Booking(name, email, note string, at time.Time) (string, error) {
 	name, email, note = trim.Line(name, 80), trim.Line(email, 120), trim.Clip(strings.TrimSpace(note), 500)
-	if name == "" || !strings.Contains(email, "@") {
-		return fmt.Errorf("say your name and your email, so they can answer")
+	switch {
+	case name == "":
+		return "", errors.New("say your name, so they know who is asking")
+	case !strings.Contains(email, "@"):
+		return "", errors.New("give your email address, like name@example.com, so they can answer")
 	}
-	words := s.spanOf(at)
 	notes := fmt.Sprintf("Asked for through your booking link by %s (%s).", name, email)
 	if note != "" {
 		notes += "\n\nThey wrote:\n\n> " + strings.ReplaceAll(note, "\n", "\n> ")
 	}
-	fields := map[string]any{"title": "Meeting with " + name, "starts": when.Store(at, false), "ends": when.Store(at.Add(time.Hour), false), "notes": notes}
-	summary := fmt.Sprintf("%s (%s) asks for a time with you: %s. Book it?", name, email, words)
-	_, err := s.Apply(records.Op{Type: records.ProposalType, After: map[string]any{"summary": summary, "detail": "Through your booking link",
-		"action": map[string]any{"tool": "create_record", "type": "event", "fields": fields}, "state": "pending",
-		"by_action": ByBooking, "yes": "Book it", "no": "No"}})
-	return err
+	title := "Meeting with " + name
+	fields := map[string]any{"title": title, "starts": when.Store(at, false), "ends": when.Store(at.Add(time.Hour), false), "notes": notes}
+	what := fmt.Sprintf("make an event: %q, %s", title, s.spanOf(at))
+	if note != "" {
+		what += fmt.Sprintf(", about %q", trim.Line(note, 120))
+	}
+	// Who they say they are is theirs to say: a name, never a person here.
+	asker := s.For(records.Visitor{Access: records.Public, Name: name + " (" + email + ")"})
+	summary, token, err := asker.putRequest(map[string]any{"tool": "create_record", "type": "event", "fields": fields}, what, "Through your booking link")
+	if p := s.RequestByToken(token); err == nil && p != nil && !s.answerAhead(p) { // standing_yes.go
+		s.routeRequest(p) // route_requests.go
+		if s.Requested != nil {
+			s.Requested(summary)
+		}
+	}
+	return token, err
 }
 
-// spanOf is an hour from at, as a person reads it.
+// spanOf is an hour from at, as a person reads it, with its time zone,
+// since whoever asked reads it too, from anywhere.
 func (s *Service) spanOf(at time.Time) string {
 	at = at.In(s.Now().Location())
-	return at.Format("Mon 2 Jan") + ", " + when.Clock(at, s.H24()) + " to " + when.Clock(at.Add(time.Hour), s.H24())
+	return at.Format("Mon 2 Jan") + ", " + when.Clock(at, s.H24()) + " to " + when.Clock(at.Add(time.Hour), s.H24()) + ", " + when.Zone(at, at)
 }

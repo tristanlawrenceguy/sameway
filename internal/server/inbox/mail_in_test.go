@@ -1,6 +1,7 @@
 package inbox_test
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -75,4 +76,29 @@ func TestEmailComesInAsNotesToSort(t *testing.T) {
 func emailNotes(t *testing.T, st *store.Store) []*store.Record {
 	recs, _ := st.List("email", store.ListOptions{})
 	return recs
+}
+
+// An answer to an invitation coming back to the +sameway address is kept
+// on its event, not put among the mail to sort; one whose sender nobody
+// vouched for is mail to sort, since anyone can write Pat's address.
+func TestAnInvitationsAnswerComesBackToItsEvent(t *testing.T) {
+	inbox.MailInsecure(true)
+	defer inbox.MailInsecure(false)
+	mail := mailintest.Start(t, "me@example.com", "abcdefghijklmnop")
+	a, h := newApp(t)
+	ev, _ := a.Store.Create("event", map[string]any{"title": "Meeting with Pat Lee", "starts": "2026-03-13T14:00:00Z", "answers": []any{"Pat Lee <pat@example.com>: invited"}})
+	answer := func(vouched, state string) string {
+		return vouched + "From: Pat Lee <pat@example.com>\r\nTo: me+sameway@example.com\r\nSubject: " + state + ": Meeting with Pat Lee\r\nMIME-Version: 1.0\r\n" +
+			"Content-Type: multipart/alternative; boundary=b\r\n\r\n--b\r\nContent-Type: text/plain\r\n\r\nPat Lee has answered this invitation.\r\n" +
+			"--b\r\nContent-Type: text/calendar; method=REPLY\r\n\r\nBEGIN:VCALENDAR\r\nMETHOD:REPLY\r\nBEGIN:VEVENT\r\nUID:" + ev.ID + "@sameway\r\nATTENDEE;PARTSTAT=" + state + ";CN=Pat Lee:mailto:pat@example.com\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n--b--\r\n"
+	}
+	mail.Put(t, "INBOX", answer("Authentication-Results: mx.example.com; dkim=pass header.d=example.com\r\n", "ACCEPTED"))
+	mail.Put(t, "INBOX", answer("", "DECLINED"))
+	postForm(t, h, "/mail/connect", url.Values{"user": {"me@example.com"}, "password": {"abcdefghijklmnop"}, "host": {mail.Addr}})
+	if e, _ := a.Store.Get("event", ev.ID); fmt.Sprint(e.Fields["answers"]) != "[Pat Lee <pat@example.com>: accepted]" {
+		t.Errorf("the answer is kept on its event, not the forged one: %v", e.Fields["answers"])
+	}
+	if notes := emailNotes(t, a.Store); len(notes) != 1 || notes[0].Fields["subject"] != "DECLINED: Meeting with Pat Lee" {
+		t.Errorf("only the forged one is mail to sort: %d", len(notes))
+	}
 }

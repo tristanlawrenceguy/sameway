@@ -88,8 +88,8 @@ never by colour alone. `system` is the workspace itself.
   ([Figma, multiplayer undo](https://www.figma.com/blog/how-figmas-multiplayer-technology-works/),
   [CKEditor, selective undo](https://ckeditor.com/docs/ckeditor5/35.4.0/features/undo-redo.html)).
 - **Several at once, all or none.** One call that makes, changes or
-  removes several things is one entry and one Undo (create_records,
-  update_records, remove_component with ids, arrange_canvas with remove),
+  removes several things is one entry and one Undo (create_record and
+  update_record for several, remove_component with ids, arrange_canvas with remove),
   named by count and the first four ("updated 27 tasks: a, b, c, d and 23
   more"). Undo all under a reply and undo_change with ids take several
   entries back all or none, the same way from the page and from an

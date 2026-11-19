@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"html/template"
+	"log"
 	"net/http"
 	"sort"
 	"strings"
@@ -48,6 +49,40 @@ func (s *Service) mailAccount() (mailin.Account, bool) {
 	a.Password = s.keys().Get(mailKey(a.User))
 	a.Insecure = mailInsecure
 	return a, a.Password != ""
+}
+
+// MailFrom is the address of the connected mailbox that Sameway reads,
+// "" when there is none: its +sameway address where the service has one,
+// so what comes back to an invitation sent from it is read here.
+func (s *Service) MailFrom() string {
+	a, ok := s.mailAccount()
+	if !ok {
+		return ""
+	}
+	if storyFor(a.User).Plus { // mail_stories.go
+		return mailin.PlusAddress(a.User)
+	}
+	return a.User
+}
+
+// SendMail sends one email from the connected mailbox (mailin/send.go),
+// asking for answers at the address Sameway reads, and gives its name.
+func (s *Service) SendMail(m chat.Outgoing) (string, error) {
+	a, ok := s.mailAccount()
+	if !ok {
+		return "", errors.New("no mailbox is connected: connect one on Email in")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	back := ""
+	if from := s.MailFrom(); from != a.User {
+		back = from
+	}
+	id, err := mailin.Send(ctx, a, mailin.Outgoing{To: m.To, Subject: m.Subject, Text: m.Text, Calendar: m.Calendar, ReplyTo: back, Refs: m.Refs, Auto: m.Auto})
+	if err == nil {
+		s.app.Store.SetMeta(gotKey(strings.Trim(id, "<>")), "1") // kept by whoever sent it, not again from Sent
+	}
+	return id, err
 }
 
 // mailInsecure lets a test read from a mail server without TLS.
@@ -144,9 +179,30 @@ func (s *Service) ReadMail(ctx context.Context) (int, error) {
 		if s.app.Store.Meta(key) != "" {
 			continue
 		}
+		// An answer to an invitation, from the one who answers as their
+		// mail server vouched; any other is mail to sort, for the owner.
+		if answers := convert.Answers(m.Calendar); len(answers) > 0 && m.Verified {
+			s.app.Chat.InvitationAnswered(answers, m.From) // chat/invitations.go: an answer, not mail to sort
+			s.app.Store.SetMeta(key, "1")
+			continue
+		}
 		if s.mailNote(m, a.User) == nil {
 			s.app.Store.SetMeta(key, "1")
 			n++
+			// An answer in a conversation Sameway began, or mail from
+			// someone let in here, is answered in its thread with the
+			// writer's reach (chat/email_conversation.go); never one sent
+			// by a machine.
+			// An invitation is a request for the owner's yes, answered as
+			// a calendar answers (chat/invited.go), not a conversation.
+			if root := s.app.Chat.ThreadOf(m.ID); root != "" && !m.Sent && s.app.Chat.Invited(m.Calendar, m.From, root, a.User) {
+				continue
+			}
+			if root := s.app.Chat.Answers(m.ID, m.Refs, m.From, m.Verified); root != "" && !m.Sent && !m.Auto {
+				if err := s.app.Chat.AnswerMail(ctx, root, m.Verified); err != nil {
+					log.Printf("mail: could not answer in a conversation: %v", err)
+				}
+			}
 		}
 	}
 	return n, err

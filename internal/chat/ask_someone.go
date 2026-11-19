@@ -44,7 +44,7 @@ var askSomeoneOp = Op{Title: "Ask someone's Sameway when they are free",
 	},
 	Run: func(s *Service, _ toolArgs, call llm.ToolCall) toolResult { return s.askSomeone(call.Args) },
 	Tool: llm.Tool{Name: "ask_someone",
-		Description: "Ask another person's own Sameway when they are free, for the owner, when the owner asks to: \"ask Sam when we are both free on Thursday evening\". The person is one of the people here whose page says where their Sameway is. from and to are the stretch of time to ask about, two weeks at most, as a date and time (2026-11-19 17:00). Their Sameway answers with the times they are busy, never what they are doing, or asks them first, in which case ask the same again later. Asking is put to the owner first.",
+		Description: "Ask another person's own Sameway when they are free, for the owner, when the owner asks to: \"ask Sam when we are both free on Thursday evening\". The person is one of the people here whose page says where their Sameway is. from and to are the stretch of time to ask about, two weeks at most, as a date and time (2026-11-19 17:00). Their Sameway answers with the times they are busy, never what they are doing, and the answer says when you are both free; or it asks them first, in which case ask the same again later. Asking is put to the owner first.",
 		Schema: obj(map[string]any{
 			"who":  map[string]any{"type": "string", "description": "their name, or the email on their page"},
 			"from": map[string]any{"type": "string"},
@@ -71,8 +71,7 @@ func (s *Service) askSomeoneOf(raw json.RawMessage) (a askSomeoneArgs, p *store.
 		return a, nil, "", fmt.Errorf("there is nobody called %q here: add them as a person first", a.Who)
 	}
 	name, _ := p.Fields["name"].(string)
-	at, _ = p.Fields["sameway"].(string)
-	at = strings.TrimSuffix(strings.TrimPrefix(strings.TrimPrefix(strings.TrimSpace(at), "https://"), "http://"), "/")
+	at = samewayOf(p) // ask_page.go
 	if at == "" || strings.ContainsAny(at, "/ ?#@") {
 		return a, nil, "", fmt.Errorf("%s's page does not say where their Sameway is: put its Tailscale name there, such as home.tail1234.ts.net, as Their Sameway", name)
 	}
@@ -134,7 +133,7 @@ func (s *Service) askSomeone(raw json.RawMessage) toolResult {
 				busy = append(busy, b)
 			}
 		}
-		said = fmt.Sprintf("%s, %s: %s", name, s.spanWords(a.from, a.to), s.busyWords(busy))
+		said = fmt.Sprintf("%s, %s: %s %s", name, s.spanWords(a.from, a.to), s.busyWords(busy), s.bothFree(a.from, a.to, busy))
 	case EnquiryDeclined:
 		said = name + "'s Sameway was given no answer to pass on."
 	}
@@ -224,4 +223,27 @@ func (s *Service) letAsk(a letAskArgs) toolResult {
 		said, action = name+"'s Sameway can no longer ask anything without you", "stopped asking by"
 	}
 	return toolResult{text: said, change: &records.Change{Action: action, Component: records.PersonType, ID: done[0].ID, Detail: name, Ops: done}}
+}
+
+// bothFree is when the owner and the one asked are both free in the span
+// asked about, worked out here: told only the other's busy times, a model
+// set them against the owner's calendar in its head, and now and then
+// offered a time the owner was busy.
+func (s *Service) bothFree(from, to time.Time, theirs []records.Span) string {
+	open := freeIn(from, to, append(s.Busy(from, to), theirs...)) // free_times.go
+	if len(open) == 0 {
+		return "No time then when you are both free."
+	}
+	loc := s.Now().Location()
+	var days []string
+	for i := 0; i < len(open); {
+		day := open[i].From.In(loc).Format("Mon 2 Jan")
+		j := i
+		for j < len(open) && open[j].From.In(loc).Format("Mon 2 Jan") == day {
+			j++
+		}
+		days = append(days, day+" "+s.stretches(open[i:j]))
+		i = j
+	}
+	return "Free for you both: " + strings.Join(days, "; ") + "."
 }

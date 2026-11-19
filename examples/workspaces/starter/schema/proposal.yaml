@@ -33,7 +33,7 @@ fields:
     description: The tool call that third answer runs.
   state:
     type: enum
-    values: [pending, accepted, dismissed]
+    values: [pending, accepted, dismissed, offered]
     default: pending
   from:
     type: string
@@ -53,3 +53,13 @@ fields:
   token:
     type: string
     description: For someone's request, the key of the page that says what became of it, /request/<token>.
+  reply_as:
+    type: string
+    description: For an invitation that came by email, the owner's address it was sent to, which the answer to it goes back as.
+  answer:
+    type: text
+    description: For someone's request, the owner's own words told with the answer, such as why, or another time.
+  for:
+    type: ref
+    to: person
+    description: For someone's request, who the owner's words passed it to, to answer as the owner would.

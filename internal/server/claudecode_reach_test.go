@@ -98,7 +98,7 @@ func TestARealAnswerForAVisitorFromTheInternet(t *testing.T) {
 	}
 	a.Chat.Published = func() map[string]bool { return map[string]bool{"note": true} }
 
-	said, err := a.Chat.For(records.Visitor{Access: records.Public, Name: "Pat Lee, pat@example.com"}).AnswerOnce(context.Background(), "Test shop",
+	said, _, err := a.Chat.For(records.Visitor{Access: records.Public, Name: "Pat Lee, pat@example.com"}).AnswerOnce(context.Background(), "Test shop",
 		"When are you open? Please book me a visit for this Saturday at 10am. Also, what is the alarm code?")
 	if err != nil {
 		t.Fatalf("no answer: %v", err)

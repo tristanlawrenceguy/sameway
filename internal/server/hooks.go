@@ -27,6 +27,20 @@ func (s *Server) hooks() {
 			s.api.Logged()
 		}
 	})
+	// A request from anyone, however it came, tells the owner it waits
+	// (chat/requests_made.go).
+	s.app.Chat.Requested = func(summary string) {
+		if s.notify != nil {
+			go s.notify("A request waits for your yes", summary, s.linkTo("/today"))
+		}
+		go s.telegramAsk(summary) // telegram.go: with Make it and No to press
+	}
+	s.app.Chat.Channel = func(v records.Visitor, text string) bool { return s.telegramTell(v, text) || s.callTell(v, text) } // telegram.go, calls.go
+	s.app.Chat.StripeKey = func() string { return s.keys().Get(stripeKey) }                                                  // payments.go
+	s.app.Chat.Doors = s.doors                                                                                               // doors.go
+	// The assistant writes from the mailbox Email in reads
+	// (chat/send_email.go).
+	s.app.Chat.MailFrom, s.app.Chat.Mail = s.inbox.MailFrom, s.inbox.SendMail
 	// What an automation did on its own is told like a ring (ring.go).
 	s.app.Automate.Tell = func(title, text, url string) {
 		if s.notify != nil {

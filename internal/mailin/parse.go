@@ -26,7 +26,11 @@ func Parse(r io.Reader) (Mail, error) {
 	if irt, _ := h.MsgIDList("In-Reply-To"); len(irt) > 0 && !slices.Contains(m.Refs, irt[0]) {
 		m.Refs = append(m.Refs, irt[0])
 	}
+	auto := strings.ToLower(strings.TrimSpace(h.Get("Auto-Submitted")))
+	prec := strings.ToLower(strings.TrimSpace(h.Get("Precedence")))
+	m.Auto = auto != "" && auto != "no" || prec == "bulk" || prec == "auto_reply" || prec == "list" || h.Get("X-Autoreply") != ""
 	if from, err := h.AddressList("From"); err == nil && len(from) > 0 {
+		m.Verified = verified(h.Get("Authentication-Results"), from[0].Address)
 		m.From = from[0].Address
 		if from[0].Name != "" {
 			m.From = from[0].Name + " <" + from[0].Address + ">"
@@ -50,6 +54,8 @@ func Parse(r io.Reader) (Mail, error) {
 				plain = string(b)
 			case kind == "text/html" && html == "":
 				html = string(b)
+			case kind == "text/calendar" && m.Calendar == nil:
+				m.Calendar = b
 			}
 		case *mail.AttachmentHeader:
 			name, _ := ph.Filename()
@@ -101,4 +107,58 @@ func NoRemotePictures(markdown string) string {
 		return "(picture: " + alt + ")"
 	})
 	return blankLines.ReplaceAllString(emptyLink.ReplaceAllString(out, "$1"), "\n\n")
+}
+
+// verified reads what the receiving server found of who sent a mail, from
+// the topmost Authentication-Results, the one it added itself (RFC 8601):
+// DMARC passed for the sender's domain, or a DKIM signature of the
+// sender's own domain did. The server copies in words the sender chose,
+// such as the envelope address, in comments and quoted strings; those
+// are dropped first, so "dmarc=pass" there vouches for nothing.
+func verified(results, from string) bool {
+	_, domain, _ := strings.Cut(strings.ToLower(from), "@")
+	if domain == "" {
+		return false
+	}
+	for _, part := range strings.Split(resultsWords(strings.ToLower(results)), ";") {
+		f := strings.Fields(part)
+		if len(f) == 0 {
+			continue
+		}
+		for _, kv := range f[1:] {
+			if d, ok := strings.CutPrefix(kv, "header.from="); ok && f[0] == "dmarc=pass" && d == domain {
+				return true
+			}
+			if d, ok := strings.CutPrefix(kv, "header.d="); ok && f[0] == "dkim=pass" && (d == domain || strings.HasSuffix(domain, "."+d)) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// resultsWords is an Authentication-Results without its comments, (like
+// this), and quoted strings, which may hold a semicolon of their own.
+func resultsWords(s string) string {
+	var b strings.Builder
+	depth, quoted := 0, false
+	for i := 0; i < len(s); i++ {
+		switch c := s[i]; {
+		case c == '\\' && (quoted || depth > 0):
+			i++
+		case quoted:
+			quoted = c != '"'
+		case c == '"' && depth == 0:
+			quoted = true
+			b.WriteByte(' ')
+		case c == '(':
+			depth++
+		case c == ')' && depth > 0:
+			depth--
+			b.WriteByte(' ')
+		case depth == 0:
+			b.WriteByte(c)
+		}
+	}
+	return b.String()
 }

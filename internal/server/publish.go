@@ -69,7 +69,8 @@ func (s *Server) Public(mcp http.Handler) http.Handler {
 		// the same way: pages for the one, MCP for the other.
 		// Asking for a time is the one thing the internet may send; it
 		// only ever waits for the owner's yes (book.go).
-		case r.URL.Path == bookPath && pub.Book, r.URL.Path == questionPath && pub.Any(), strings.HasPrefix(r.URL.Path, requestPrefix):
+		case r.URL.Path == bookPath && pub.Book, r.URL.Path == questionPath && pub.Any(), strings.HasPrefix(r.URL.Path, requestPrefix), strings.HasPrefix(r.URL.Path, offerPrefix), r.URL.Path == callsPrefix+"voice", r.URL.Path == callsPrefix+"text",
+			r.URL.Path == agentCardPath || r.URL.Path == llmsPath || r.URL.Path == a2aPath: // agents_front.go
 			s.ServeHTTP(w, r)
 			return
 		case strings.EqualFold(r.URL.Path, "/mcp") && pub.Any() && mcp != nil:

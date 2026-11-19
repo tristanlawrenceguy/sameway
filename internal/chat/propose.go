@@ -142,6 +142,12 @@ var proposable = map[string]bool{
 	"update_record": true,
 	// What goes to or from someone else's Sameway is asked first (ask_someone.go, enquiry.go).
 	"ask_someone": true, "let_ask": true, "answer_enquiry": true, "ask_page": true,
+	// An email speaks for the owner and cannot be unsent (send_email.go).
+	"send_email": true,
+	// A link to pay the owner is made with their yes (payments.go).
+	"payment_link": true,
+	// An answer to a request with the owner's own words, sent where it was asked (route_requests.go).
+	"answer_request": true,
 }
 
 // modelProposable are the calls the model may carry in a question of its
@@ -172,8 +178,15 @@ func sortStrings(s []string) {
 
 // Accept runs a pending proposal and records who agreed to it.
 func (s *Service) Accept(id string) error {
+	if s.inAnswer { // a yes that answers another, already one at a time
+		return s.accept(id)
+	}
 	answering.Lock()
 	defer answering.Unlock()
+	return s.accept(id)
+}
+
+func (s *Service) accept(id string) error {
 	rec, err := s.Store.Get(records.ProposalType, id)
 	if err != nil {
 		return err
@@ -190,7 +203,9 @@ func (s *Service) Accept(id string) error {
 	if err != nil {
 		return err
 	}
-	result := s.runAgreed(llm.ToolCall{Name: tool, Args: args})
+	in := *s
+	in.inAnswer = true // what it runs may answer another (answer_request)
+	result := in.runAgreed(llm.ToolCall{Name: tool, Args: args})
 	if result.isErr {
 		return errors.New(result.text)
 	}
@@ -198,7 +213,7 @@ func (s *Service) Accept(id string) error {
 	if c := result.change; c != nil && c.ID != "" && c.Component != "" {
 		done["made"] = c.Component + "/" + c.ID // what a suggestion became, for its action to learn from
 	}
-	if _, err := s.Apply(records.Op{Type: records.ProposalType, ID: id, After: done}); err != nil {
+	if _, err := records.ApplyOps(s.Store, records.Op{Type: records.ProposalType, ID: id, After: done}); err != nil { // heard, so an action may wait for an answer
 		return err
 	}
 	// The assistant made the change, but the person is why it happened.
@@ -213,13 +228,21 @@ func (s *Service) Accept(id string) error {
 		s.byPerson(result.changes[i])
 	}
 	s.tellAsker(rec, true) // request_answer.go
+	s.offerAlways(rec)     // always_offer.go: the owner's answers, for good
 	return nil
 }
 
 // Dismiss answers no. Nothing changes except the question going away.
 func (s *Service) Dismiss(id string) error {
+	if s.inAnswer {
+		return s.dismiss(id)
+	}
 	answering.Lock()
 	defer answering.Unlock()
+	return s.dismiss(id)
+}
+
+func (s *Service) dismiss(id string) error {
 	rec, err := s.Store.Get(records.ProposalType, id)
 	if err != nil {
 		return err
@@ -227,7 +250,7 @@ func (s *Service) Dismiss(id string) error {
 	if rec.Fields["state"] != "pending" {
 		return errors.New("that question has already been answered")
 	}
-	if _, err := s.Apply(records.Op{Type: records.ProposalType, ID: id, After: map[string]any{"state": "dismissed"}}); err != nil {
+	if _, err := records.ApplyOps(s.Store, records.Op{Type: records.ProposalType, ID: id, After: map[string]any{"state": "dismissed"}}); err != nil {
 		return err
 	}
 	summary, _ := rec.Fields["summary"].(string)

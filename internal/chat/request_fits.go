@@ -2,6 +2,8 @@ package chat
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
@@ -25,6 +27,19 @@ func (s *Service) requestType(tool, typeName string) (*schema.Type, error) {
 	return t, err
 }
 
+// requestTypeNames are the kinds a request may be of: every content type
+// that is not the owner's alone, in order.
+func (s *Service) requestTypeNames() []string {
+	var names []string
+	for _, t := range records.ContentTypes(s.Store) {
+		if !t.Owners {
+			names = append(names, t.Name)
+		}
+	}
+	sort.Strings(names)
+	return names
+}
+
 // requestFits says why a yes could not make the request, or nil.
 func (s *Service) requestFits(tool, typeName, id string, fields map[string]any) error {
 	t, err := s.requestType(tool, typeName)
@@ -43,6 +58,12 @@ func (s *Service) requestFits(tool, typeName, id string, fields map[string]any) 
 	}
 	for k, v := range fields {
 		in[k] = v
+		if f, ok := t.Field(k); ok && (f.ReadOnly || t.Name == records.PersonType && k == "always") {
+			// What Sameway keeps, and a standing yes, which is the owner's
+			// press alone (request_always.go): no request sets them, nor a
+			// yes for good to changing people.
+			return fmt.Errorf("%s is not theirs to ask for; leave it out", strings.ToLower(f.Display()))
+		}
 	}
 	if err := records.RefsFit(s.Store, t, fields); err != nil {
 		return fmt.Errorf("%v; a link has to name a record that is here: leave it out, and say who in words instead", err)

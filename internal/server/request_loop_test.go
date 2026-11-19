@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
@@ -35,7 +36,7 @@ func TestARequestIsAnsweredBackAndAlwaysAnswersForGood(t *testing.T) {
 		t.Fatalf("they are told where to see the answer: %s", text)
 	}
 	today := get(t, h, "/today").Body.String()
-	if !strings.Contains(today, "Always for Vi&#39;s notes") {
+	if !strings.Contains(today, "Always yes to Vi&#39;s notes") {
 		t.Fatalf("a request from someone with a page offers Always\n%s", truncate(today))
 	}
 	asks := a.Chat.Suggestions()
@@ -53,7 +54,7 @@ func TestARequestIsAnsweredBackAndAlwaysAnswersForGood(t *testing.T) {
 	if !heard {
 		t.Errorf("they hear the answer in their own conversation: %+v", msgs)
 	}
-	if p, _ := a.Store.Get("person", vi.ID); !strings.Contains(strings.Join(anyStrings(p.Fields["always"]), ","), "create_record note") {
+	if p, _ := a.Store.Get("person", vi.ID); !strings.Contains(strings.Join(anyStrings(p.Fields["always"]), ","), "notes") {
 		t.Fatalf("the standing yes is on their page: %v", p.Fields["always"])
 	}
 
@@ -102,8 +103,9 @@ func (s served) RoundTrip(r *http.Request) (*http.Response, error) {
 	return rec.Result(), nil
 }
 
-// The owner's assistant asks someone else's published Sameway, put to the
-// owner first; what it asks for there is a request their owner answers,
+// The owner's assistant asks someone else's published Sameway, by its
+// address or by the name of someone here whose page says where it is, put
+// to the owner first; what it asks for there is a request their owner answers,
 // and asking with the link it brought back says what became of it.
 func TestMyAssistantAsksSomeoneElsesPublishedPage(t *testing.T) {
 	t.Parallel()
@@ -118,9 +120,12 @@ func TestMyAssistantAsksSomeoneElsesPublishedPage(t *testing.T) {
 
 	me, myH := newApp(t)
 	me.Automate.HTTP = &http.Client{Transport: served{internet}}
+	me.Store.Create("person", map[string]any{"name": "Ana the plumber", "sameway": "plumber.example.ts.net"})
 	me.Chat.Provider = &scripted{steps: []*llm.Response{
-		toolCall("ask_page", map[string]any{"address": "https://plumber.example.ts.net", "question": "Can you come Thursday at 10?", "who": "Tris, tris@example.com"}),
+		toolCall("ask_page", map[string]any{"address": "Ana the plumber", "question": "Can you come Thursday at 10?", "who": "Tris, tris@example.com"}),
 		{Text: "I have asked you first."},
+		toolCall("create_record", map[string]any{"type": "event", "fields": map[string]any{"title": "Ana the plumber visits", "starts": "2026-03-12T10:00:00Z"}}),
+		{Text: "It is on your calendar."},
 	}}
 	if _, err := me.Chat.Send(context.Background(), "ask the plumber's page whether they can come Thursday at 10"); err != nil {
 		t.Fatal(err)
@@ -139,13 +144,78 @@ func TestMyAssistantAsksSomeoneElsesPublishedPage(t *testing.T) {
 		t.Fatalf("it is a request on the plumber's Today: %+v", theirs)
 	}
 	link := "https://plumber.example.ts.net/request/" + theirs[0].Fields["token"].(string)
+	sent, _ := me.Store.List("ask", store.ListOptions{})
+	if len(sent) != 1 || sent[0].Fields["at"] != link || sent[0].Fields["state"] != "waiting" || sent[0].Fields["question"] != "Can you come Thursday at 10?" {
+		t.Fatalf("what it asked for there is kept here, in the owner's words, with its link, waiting: %+v", sent)
+	}
+	// What to do with an answer is the owner's to say, once, as any
+	// automation: here, their assistant puts what is agreed on the calendar.
+	me.Store.Create("action", map[string]any{"title": "Put what they agree to on my calendar", "kind": "message", "message": "They said yes to: {{title}}. Put it on my calendar.", "when": "changed", "what": "ask", "only": []any{"state=yes"}})
+	me.Automate.StartWorker()
+	rang := make(chan string, 8)
+	myH.(*server.Server).OnRing(func(title, text, _ string) { rang <- title + ": " + text })
+	heard := func(want string) {
+		t.Helper()
+		for {
+			select {
+			case got := <-rang:
+				if strings.Contains(got, want) {
+					return
+				}
+			case <-time.After(5 * time.Second):
+				t.Fatalf("not told %q", want)
+			}
+		}
+	}
+	if me.Chat.FollowSent(context.Background()); len(rang) != 0 {
+		t.Fatal("nothing is told while they have not answered")
+	}
 	wantStatus(t, postForm(t, plumberH, "/suggested/yes", url.Values{"id": {theirs[0].ID}}), http.StatusSeeOther)
+	if err := me.Chat.FollowSent(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	heard("plumber.example.ts.net said yes to your request to \"make an event") // without asking again
+	if s, _ := me.Store.Get("ask", sent[0].ID); s.Fields["state"] != "yes" {
+		t.Errorf("and kept: %v", s.Fields["state"])
+	}
+	for deadline := time.Now().Add(5 * time.Second); ; {
+		if n, _ := me.Store.Count("event"); n == 1 {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("an automation on asks lets the assistant act on the answer")
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
 
 	text, isErr := me.Chat.Call("ask_page", json.RawMessage(`{"address":"`+link+`"}`))
 	if isErr || !strings.Contains(strings.ReplaceAll(text, " ", ""), `"state":"yes"`) {
 		t.Errorf("reading the link says what became of it: %v %s", isErr, text)
 	}
-	if strings.Contains(text, "Callouts") {
-		t.Errorf("and nothing else: %s", text)
+	if strings.Contains(text, "Callouts") || !strings.Contains(text, "Visit Tris") {
+		t.Errorf("what was made, and nothing else: %s", text)
 	}
+
+	// Each change to what they agreed to is followed, logged and told, so
+	// an action waiting for an ask to change can act on it, and so is it
+	// being taken away; reading the link again says what it is now.
+	me.Chat.FollowSent(context.Background())
+	for len(rang) > 0 { // the automation's own word may come late; it is not FollowSent's
+		if got := <-rang; strings.Contains(got, "plumber.example.ts.net") {
+			t.Fatalf("nothing is told while nothing changed: %s", got)
+		}
+	}
+	visits, _ := plumber.Store.List("event", store.ListOptions{})
+	plumber.Store.Update("event", visits[0].ID, map[string]any{"starts": "2026-03-12T15:00:00Z"})
+	me.Chat.FollowSent(context.Background())
+	heard("plumber.example.ts.net changed what they made for your request")
+	if s, _ := me.Store.Get("ask", sent[0].ID); s.Fields["changed"] == "" || s.Fields["state"] != "yes" {
+		t.Errorf("the change is kept: %v", s.Fields)
+	}
+	if page := get(t, myH, "/t/ask/"+sent[0].ID).Body.String(); strings.Contains(page, ">Last changed<") {
+		t.Errorf("the ask's page says no stored time, only when it changed in words\n%s", truncate(page))
+	}
+	plumber.Store.Delete("event", visits[0].ID)
+	me.Chat.FollowSent(context.Background())
+	heard("plumber.example.ts.net took away what they made")
 }

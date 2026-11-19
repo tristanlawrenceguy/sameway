@@ -24,6 +24,10 @@ func requestToken() string {
 	return strings.ToLower(base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(b))
 }
 
+// RequestGone is what a request's address says changed once what a yes
+// made is taken away.
+const RequestGone = "taken away"
+
 // RequestState is what became of a request, in a word: waiting, yes or
 // no.
 func RequestState(p *store.Record) string {
@@ -65,7 +69,11 @@ func RequestAsker(p *store.Record) (records.Visitor, bool) {
 // request's address instead.
 func (s *Service) tellAsker(p *store.Record, yes bool) {
 	v, ok := RequestAsker(p)
-	if p.Fields["by_action"] != ByRequest || !ok || v.Owner() || v.Access == records.Public {
+	if p.Fields["by_action"] == ByRequest && ok && v.Device == ByEmail {
+		s.tellByMail(p, v, yes) // email_conversation.go: in their thread
+		return
+	}
+	if p.Fields["by_action"] != ByRequest || !ok || v.Owner() {
 		return
 	}
 	what, _ := p.Fields["asked"].(string)
@@ -77,5 +85,13 @@ func (s *Service) tellAsker(p *store.Record, yes bool) {
 	if yes {
 		said = owner + " said yes to your request to " + what + ": it is made."
 	}
-	s.For(v).Say(said)
+	if words, _ := p.Fields["answer"].(string); words != "" {
+		said += "\n\n" + words
+	}
+	if s.Channel != nil && s.Channel(v, said) { // channel.go: where they asked, such as Telegram
+		return
+	}
+	if v.Access != records.Public {
+		s.For(v).Say(said)
+	}
 }

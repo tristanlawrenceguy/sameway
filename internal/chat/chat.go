@@ -76,6 +76,28 @@ type Service struct {
 	// set by the server: what the assistant reaches for a visitor from the
 	// internet (reach.go). nil is none.
 	Published func() map[string]bool
+	// Requested tells the owner a request from someone waits for them,
+	// set by the server; nil tells no one. See requests_made.go.
+	Requested func(summary string)
+	// MailFrom is the address of the owner's connected mailbox that
+	// Sameway reads, "" for none, and Mail sends one email from it, asking
+	// for answers there, and gives its Message-ID; both set by the server.
+	// See send_email.go and email_conversation.go.
+	MailFrom func() string
+	Mail     func(Outgoing) (string, error)
+	// Channel says something to someone who asked on a channel of the
+	// server's, such as Telegram, and whether they were reached there;
+	// nil reaches nobody. See channel.go.
+	Channel func(v records.Visitor, text string) bool
+	// StripeKey is the owner's Stripe key, "" for none; set by the server.
+	// See payments.go.
+	StripeKey func() string
+	// Doors says each way in the server keeps and whether it is open, one
+	// line each, for ways_in; set by the server.
+	Doors func() []string
+	// Address is this Sameway's address on the internet, once something
+	// is published and Funnel is up, or ""; set by the command line.
+	Address func() string
 	// Needs is what the person has said they need, and Language the
 	// workspace's language; both go into every prompt. Set by the app.
 	Needs, Language string
@@ -89,6 +111,10 @@ type Service struct {
 	// who is the one this service speaks for, when it is not the owner;
 	// see people.go.
 	who records.Visitor
+	// inAnswer is set while a yes runs what it carries, which may answer
+	// another question without waiting on the one being answered; see
+	// propose.go.
+	inAnswer bool
 	// agent is the program outside Sameway this service runs tools for,
 	// nil for the assistant in the app; see agent.go.
 	agent *records.Agent

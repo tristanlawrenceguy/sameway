@@ -17,9 +17,9 @@
 {{range .ExtraScripts}}{{.}}
 {{end}}</head>
 <body{{if .Shell}} data-shell="{{.Shell}}"{{end}}>
-<a class="sw-skip" href="#main">Skip to main content</a>
-{{if .Focus}}<a class="sw-skip" href="#{{.Focus}}">{{.FocusLabel}}</a>
-{{end}}<header class="sw-header">
+{{if ne .Shell "embed"}}<a class="sw-skip" href="#main">Skip to main content</a>
+{{end}}{{if .Focus}}<a class="sw-skip" href="#{{.Focus}}">{{.FocusLabel}}</a>
+{{end}}{{if ne .Shell "embed"}}<header class="sw-header">
 <div class="sw-header__inner">
 <a class="sw-header__brand" href="/"><span class="sw-header__mark" aria-hidden="true"></span>{{.Site}}</a>
 {{if .Nav}}<nav class="sw-nav" aria-label="Main">
@@ -27,12 +27,12 @@
 </nav>
 {{end}}{{if .Present}}{{.Present}}
 {{end}}{{if .Header}}<div class="sw-strip sw-strip--header">{{.Header}}</div>
-{{end}}<nav class="sw-nav sw-nav--more" aria-label="This workspace">
+{{end}}{{if .More}}<nav class="sw-nav sw-nav--more" aria-label="This workspace">
 <ul>{{range .More}}<li>{{.}}</li>{{end}}</ul>
 </nav>
-</div>
+{{end}}</div>
 </header>
-<div class="sw-shell">
+{{end}}<div class="sw-shell">
 {{if .Left}}<aside class="sw-pane sw-pane--left" aria-label="Left pane">{{.Left}}</aside>
 {{end}}<main id="main" class="sw-main" tabindex="-1">
 {{if .QuietTitle}}<h1 class="sw-visually-hidden">{{.Title}}</h1>
@@ -41,10 +41,11 @@
 </main>
 {{if .Right}}<aside class="sw-pane sw-pane--right" aria-label="Right pane">{{.Right}}</aside>
 {{end}}</div>
-<footer class="sw-footer">
+{{if ne .Shell "embed"}}<footer class="sw-footer">
 {{if .Footer}}<div class="sw-strip sw-strip--footer">{{.Footer}}</div>
 {{end}}{{if .Developer}}<p class="sw-footer__agents"><a class="sw-link" href="/api/describe">For agents</a></p>
 {{end}}</footer>
+{{end}}
 {{.EditControls}}
 </body>
 </html>
