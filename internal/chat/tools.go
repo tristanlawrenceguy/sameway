@@ -38,7 +38,7 @@ var blockOps = []Op{
 				"position":  map[string]any{"type": "integer", "description": "Sort order; lower comes first. Defaults to after every block there."},
 			}, "component", "props")}},
 	{Title: "Change a block", Traits: Traits{Idempotent: true},
-		Core:  true,
+		Words: []string{"block", "change the", "rename", "label", "heading", "the list", "the calendar", "the chart", "instead", "bigger", "smaller", "wider", "narrower", "show", "colour", "color"},
 		Doing: saying("Changing a block"),
 		Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
 			return s.updateComponent(a.ID, a.Props, a.look())
@@ -56,7 +56,7 @@ var blockOps = []Op{
 				"canvas":   map[string]any{"type": "string", "description": "Move the block to another tab: a canvas id, or empty string for Home."},
 			}, "id")}},
 	{Title: "Remove a block", Traits: Traits{Destructive: true, Idempotent: true},
-		Core:  true,
+		Words: []string{"remove", "take", "delete", "off my", "off the", "get rid", "drop", "hide", "clutter", "tidy", "clear"},
 		Doing: removing,
 		Run:   func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.removeCall(a) },
 		Tool: llm.Tool{Name: "remove_component", Description: "Remove blocks from the canvas: one by id, or several by ids in one change that one Undo takes back. If any id is not a block, nothing is removed.",
