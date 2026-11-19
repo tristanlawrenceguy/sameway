@@ -101,9 +101,14 @@ func (s *Server) facts(t *schema.Type, rec *store.Record, o factOpts) string {
 		read = f.ReadOnly
 	}
 	if !day && !o.Made && (!t.HasDay() || read) {
-		out = strings.TrimSpace(out + " " + s.happenedAfter("", rec.UpdatedAt, now))
+		// For persons on list rows (not Made), never add a bare UpdatedAt time:
+		// the count fact carries date context ("last today") when present, and
+		// without interactions a bare timestamp like "15 Oct" is meaningless.
+		if t.Name != records.PersonType {
+			out = strings.TrimSpace(out + " " + s.happenedAfter("", rec.UpdatedAt, now))
+		}
 	}
-	if o.Made && t.Name != EntryType && t.Name != ReminderType && t.Name != TaskType {
+	if o.Made && t.Name != EntryType && t.Name != ReminderType && t.Name != TaskType && t.Name != records.PersonType {
 		out = strings.TrimSpace(out + " " + s.whenMade(t, rec, o.From))
 	}
 	return out

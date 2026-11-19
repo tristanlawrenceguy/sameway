@@ -146,7 +146,9 @@ func TestInteractionDetailNoCreatedAtLabel(t *testing.T) {
 }
 
 // TestPersonDetailNoCreatedAtLabel asserts that a person detail page's lede does not
-// contain a "created at" label between glance facts and the creation timestamp.
+// contain a whenMade span — the creation date is removed for persons, like entries,
+// reminders and tasks, since the glance count fact already provides "last contacted"
+// with its context. Acceptance item of task 0341.
 func TestPersonDetailNoCreatedAtLabel(t *testing.T) {
 	t.Parallel()
 	a, h := newApp(t)
@@ -159,22 +161,17 @@ func TestPersonDetailNoCreatedAtLabel(t *testing.T) {
 	}
 
 	page := get(t, h, "/t/person/"+rec.ID).Body.String()
-	whenMadeContent := extractWhenMadeSpan(page)
 
-	lower := strings.ToLower(whenMadeContent)
+	// Persons do not show a whenMade span (creation date); the glance count fact's
+	// "last contacted" info is more useful and already has context.
+	if strings.Contains(page, `class="sw-detail__when`) {
+		t.Error("person detail page lede must not have a sw-detail__when span — the count fact already shows last-contacted date")
+	}
+
+	// Verify no "created at" label exists either.
+	lower := strings.ToLower(page)
 	if strings.Contains(lower, "created at ") {
-		t.Errorf("person detail page must not contain \"created at\" in the whenMade area; got:\n%s", whenMadeContent)
-	}
-	if strings.Contains(lower, ">created") || strings.Contains(lower, "<span") {
-		t.Errorf("person detail page must not contain a sw-visually-hidden span or bare label in the whenMade area; got:\n%s", whenMadeContent)
-	}
-
-	if !strings.Contains(whenMadeContent, "<time") || !strings.Contains(whenMadeContent, `datetime="`) {
-		t.Errorf("person detail page lede should have a <time> element in the whenMade span; got:\n%s", whenMadeContent)
-	}
-
-	if !strings.Contains(page, `class="sw-detail__when sw-muted sw-small"`) {
-		t.Error("person detail page lede should have a sw-detail__when span with muted styling")
+		t.Error("person detail page must not contain \"created at\" in the lede")
 	}
 }
 
