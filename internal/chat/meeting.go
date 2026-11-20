@@ -28,7 +28,6 @@ type meetingItem struct {
 var heardAt = map[string]any{"type": "string", "description": "Where in the recording it was said, as the transcript's [m:ss] or [h:mm:ss] gives it, such as 12:03. Leave out when it was not."}
 
 var meetingOps = []Op{{Title: "Write up a meeting",
-	Words: []string{"meeting", "transcript", "recording", "minutes", "write up", "write-up"},
 	Doing: saying("Writing up the meeting"),
 	Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
 		return s.writeUpMeeting(a.Event, a.Recording, a.Summary, a.Decisions, a.Tasks)

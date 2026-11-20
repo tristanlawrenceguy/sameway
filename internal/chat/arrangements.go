@@ -20,7 +20,6 @@ import (
 // left "Notes for the week go here." and "Your first book" on pages).
 
 var arrangementOp = Op{Title: "Add a ready-made arrangement",
-	Words: []string{"arrangement", "layout", "arrange", "set up", "setup", "set me up", "organis", "organiz", "get started", "plan my", "for my work", "for my home", "for my studies", "for my business"},
 	Doing: saying("Arranging the page"),
 	Run:   func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.addArrangement(a.Name, a.Fills) },
 	Tool: llm.Tool{

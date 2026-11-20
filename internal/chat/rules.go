@@ -6,59 +6,44 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 )
 
-// The assistant was told every rule it has before each answer: how to
-// keep a habit, run a webhook, read a file, export a spreadsheet, set
-// Sameway up, chart numbers, as well as the few every turn needs. Most
-// turns need none of the topics, and a model reads 15 KB of instructions
-// slower and weighs them less. A rule of one topic now comes with a turn
-// that speaks of it, by the same words that bring a tool along
-// (toolset.go), or when the conversation has used the tool it is about.
-// It comes after the page, so the start of the prompt a model has read
-// before (warm.go) is the same from one turn to the next.
+// The rules of each topic (how to keep a habit, run a webhook, read a
+// file, set Sameway up) came with a turn whose message held one of the
+// topic's words, to spare a model 10 KB of instructions most turns do not
+// need. Words work in one language only. Brought instead by what the
+// assistant did, a rule came too late: it made the habit and answered
+// before the habit's rule arrived. Given every turn, the rules cost no
+// more calls or seconds with Claude Haiku (two runs of each request:
+// 58 of 60 passed, against 57 by words and 51 by what was done), and they
+// are the same text every turn, so they come before the page, in the part
+// a model has read before (warm.go).
 
-// rule is one topic's rule: its words, and the words or tools that bring
-// it.
+// rule is one topic's rule.
 type rule struct {
-	Topic string // what more_tools brings it by (more_tools.go)
+	Topic string
 	Text  string
-	Words []string
-	Tools []string
 }
 
-// spoken is what a turn speaks of: the person's latest words, lowered,
-// and the tools the conversation has called.
-func spoken(history []llm.Message) (said string, used map[string]bool) {
-	used = map[string]bool{}
-	for i := len(history) - 1; i >= 0; i-- {
-		m := history[i]
+// topicRules are every topic's rules, as the prompt gives them.
+func topicRules() string {
+	var b strings.Builder
+	b.WriteString("\n\nBy topic (a tool named here that you were not given, more_tools gives you):\n")
+	for _, r := range topical {
+		b.WriteString("- " + r.Text + "\n")
+	}
+	return b.String()
+}
+
+// calledSo is the tools the conversation has called, and those more_tools
+// brought.
+func calledSo(history []llm.Message) map[string]bool {
+	did := map[string]bool{}
+	for _, m := range history {
 		for _, c := range m.ToolCalls {
-			used[c.Name] = true
+			did[c.Name] = true
 			if c.Name == moreToolsName { // what was asked for is used from then on
-				used[askedFor(c.Args)] = true
+				did[askedFor(c.Args)] = true
 			}
 		}
-		if m.Role == llm.RoleUser && said == "" {
-			said = strings.ToLower(m.Content)
-		}
 	}
-	return said, used
-}
-
-// topicalRules are the rules a turn speaks of, as the end of the prompt.
-func topicalRules(history []llm.Message) string {
-	said, used := spoken(history)
-	var b strings.Builder
-	for _, r := range topical {
-		bring := speaksOf(said, r.Words) || used[r.Topic]
-		for _, t := range r.Tools {
-			bring = bring || used[t]
-		}
-		if bring {
-			b.WriteString("- " + r.Text + "\n")
-		}
-	}
-	if b.Len() == 0 {
-		return ""
-	}
-	return "\nFor what this turn is about:\n" + b.String()
+	return did
 }

@@ -14,7 +14,6 @@ import (
 
 var undoOp = Op{Title: "Undo a change",
 	Access: ForOwner,
-	Words:  []string{"undo", "put it back", "put back", "didn't mean", "did not mean", "revert", "go back", "as it was", "wrong", "mistake"},
 	Doing:  saying("Undoing a change"),
 	Run:    func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.undoSome(a.ID, a.IDs) }, // undo_several.go
 	Tool: llm.Tool{

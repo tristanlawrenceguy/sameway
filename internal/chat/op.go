@@ -18,8 +18,7 @@ type Op struct {
 	Title    string // what it does, as a person reads it: "Make a record"
 	Traits
 	Access Access
-	Core   bool     // given to a small model here every turn (toolset.go)
-	Words  []string // words in a message that bring it to a small model here
+	Core   bool // given to a small model here every turn (toolset.go)
 	// Doing says a call in a few words a person watches go by while it
 	// runs, from what the call makes and of what (doing.go).
 	Doing func(a callArgs) string

@@ -36,7 +36,6 @@ type suggested struct {
 const mostSuggested = 15
 
 var suggestOps = []Op{{Title: "Suggest changes to some writing",
-	Words: []string{"spelling", "grammar", "proofread", "edit", "tighten", "feedback", "writing", "improve"},
 	Doing: saying("Suggesting changes"),
 	Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
 		return s.suggestEdits(a.Type, a.ID, a.Field, a.Edits)

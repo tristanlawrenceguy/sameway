@@ -16,7 +16,6 @@ import (
 // let themselves in or raise their own level.
 
 var letInOp = Op{Title: "Let a person in",
-	Words: []string{"let ", "access", "share", "invite", "family", "colleague"},
 	Doing: saying("Changing who can use this"),
 	Asks:  (*Service).letInAsks,
 	Run:   func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.letIn(letInOf(call.Args)) },

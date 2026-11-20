@@ -30,7 +30,6 @@ type Reshaper interface {
 }
 
 var changeFieldOp = Op{Title: "Change or remove a field", Traits: Traits{Destructive: true},
-	Words: []string{"field", "choice", "pick-list", "rename", "option"},
 	Doing: reshaping,
 	Run:   func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.reshapeCall(call.Args) },
 	Tool: llm.Tool{

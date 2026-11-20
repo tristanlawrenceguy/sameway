@@ -76,7 +76,6 @@ func (s *Service) handlers() []*store.Record {
 
 var answerRequestOp = Op{Title: "Answer a request passed to you",
 	Access: ForEditors,
-	Words:  []string{"request for you", "answer it", "say yes", "say no"},
 	Doing:  saying("Answering the request"),
 	Asks: func(s *Service, _ toolArgs, call llm.ToolCall) (toolResult, bool) {
 		a := answerArgsOf(call.Args)

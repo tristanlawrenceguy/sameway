@@ -24,7 +24,6 @@ const (
 
 var freeTimesOp = Op{Title: "Say when the owner is free",
 	Access: ForViewers, Traits: Traits{ReadOnly: true, Idempotent: true},
-	Words: []string{"free", "available", "availability", "when can", "time to meet", "propose", "suggest a time"},
 	Doing: saying("Looking at the calendar"),
 	Run:   func(s *Service, _ toolArgs, call llm.ToolCall) toolResult { return s.freeTimes(call.Args) },
 	Tool: llm.Tool{Name: "free_times",

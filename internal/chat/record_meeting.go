@@ -24,7 +24,6 @@ func RecordAbout(eventID string) string {
 }
 
 var recordingOps = []Op{{Title: "Record a meeting", Traits: Traits{Idempotent: true},
-	Words: []string{"meeting", "record", "zoom", "teams"},
 	Doing: saying("Setting the meeting to ask to be recorded"),
 	Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
 		return s.askToRecord(a.Event, a.How, s.Now())

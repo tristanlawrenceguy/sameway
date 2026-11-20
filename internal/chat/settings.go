@@ -16,7 +16,6 @@ import (
 
 var settingOp = Op{Title: "Change a setting", Traits: Traits{Idempotent: true},
 	Access: ForOwner,
-	Words:  []string{"setting", "slower", "faster", "motion", "pace", "calm", "text", "larger", "bigger", "smaller", "spacing", "language", "name of", "rename", "model", "sidebar", "screen reader", "simple", "clock", "24-hour", "notif", "update", "show me", "hide", "need"},
 	Doing:  func(a callArgs) string { return "Changing " + or(a.Key, "a setting") },
 	Asks:   (*Service).askSetting,
 	Run:    func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.setSetting(a.Key, a.Value) },

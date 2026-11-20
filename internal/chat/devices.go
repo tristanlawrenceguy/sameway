@@ -11,7 +11,6 @@ import (
 
 var deviceOp = Op{Title: "Turn a device on or off", Traits: Traits{Idempotent: true, OpenWorld: true},
 	Access: ForOwner,
-	Words:  []string{"turn on", "turn off", "switch", "light", "lamp", "plug", "device"},
 	Doing:  saying("Switching a device"),
 	Offered: func(s *Service, _ *llm.Tool) bool {
 		_, ok := s.Store.Types().Get(home.DeviceType)

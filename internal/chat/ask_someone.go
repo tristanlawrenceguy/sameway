@@ -30,7 +30,6 @@ import (
 
 var askSomeoneOp = Op{Title: "Ask someone's Sameway when they are free",
 	Access: ForOwner, Traits: Traits{OpenWorld: true},
-	Words: []string{"ask ", "their sameway", "when is", "are we both", "both free"},
 	Doing: saying("Asking their Sameway"),
 	Asks: func(s *Service, _ toolArgs, call llm.ToolCall) (toolResult, bool) {
 		a, p, at, err := s.askSomeoneOf(call.Args)
@@ -145,7 +144,6 @@ func (s *Service) askSomeone(raw json.RawMessage) toolResult {
 
 var letAskOp = Op{Title: "Let someone's Sameway ask yours",
 	Access: ForOwner,
-	Words:  []string{"may ask", "can ask", "let ", "their sameway"},
 	Doing:  saying("Changing what they may ask"),
 	Asks: func(s *Service, _ toolArgs, call llm.ToolCall) (toolResult, bool) {
 		a := letAskOf(call.Args)

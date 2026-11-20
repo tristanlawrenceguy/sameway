@@ -27,7 +27,6 @@ import (
 
 var askPageOp = Op{Title: "Ask someone's published Sameway",
 	Access: ForOwner, Traits: Traits{OpenWorld: true},
-	Words: []string{"page", "link", "answered", "their sameway", "/request/", "/question", "https://", "agent", "their assistant"},
 	Doing: saying("Asking their page"),
 	Asks: func(s *Service, _ toolArgs, call llm.ToolCall) (toolResult, bool) {
 		a, err := s.askPageOf(call.Args)
