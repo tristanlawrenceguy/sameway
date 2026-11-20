@@ -48,7 +48,6 @@ func (s *Service) HasCanvas(id string) bool {
 // workspace made or opened since tabs existed does.
 var canvasOps = []Op{
 	{Title: "Make a tab",
-		Words: []string{"tab", "separate page", "new page", "page for", "another page"},
 		Doing: func(a callArgs) string { return "Adding a tab" + called(a.Name) },
 		Run:   func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.createCanvas(a.Name) },
 		Tool: llm.Tool{Name: "create_canvas", Description: "Add a tab: a new canvas beside Home with blocks of its own. Use it when the person asks for a separate page or tab, or when what they want does not belong with what is already on the canvas. Returns the canvas id, which add_component takes as canvas.",
@@ -56,7 +55,6 @@ var canvasOps = []Op{
 				"name": map[string]any{"type": "string", "description": "The tab's name, in the person's words, one or two of them: Work, Garden, Rome."},
 			}, "name")}, Offered: has(records.CanvasType)},
 	{Title: "Remove a tab", Traits: Traits{Destructive: true, Idempotent: true},
-		Words: []string{"tab"},
 		Doing: saying("Removing a tab"),
 		Run:   func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.removeCanvas(a.ID) },
 		Tool: llm.Tool{Name: "remove_canvas", Description: "Remove a tab and every block on it. Ask first with propose_change; Home cannot be removed.",

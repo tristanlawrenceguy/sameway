@@ -16,7 +16,6 @@ import (
 // it merges those of the ones called the same (records.Alike). The same
 // errand on another day is never merged unless it is named.
 var keepOneOp = Op{Title: "Keep one of records alike", Traits: Traits{Destructive: true},
-	Words: []string{"duplicate", "duplicates", "twice", "same", "merge", "tidy"},
 	Doing: func(a callArgs) string { return "Merging" + or(" "+schema.Plural(a.Type), " records") },
 	Run:   func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.keepOne(a.Type, a.ID, a.Merge) },
 	Tool: llm.Tool{Name: "keep_one",

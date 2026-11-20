@@ -1,8 +1,6 @@
 package chat
 
 import (
-	"strings"
-
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 )
 
@@ -10,21 +8,21 @@ import (
 // before each answer, some thirty, 34 KB, when a message needs a few: the
 // settings alone are 7 KB. It read slower, and chose among more than it
 // could weigh. A model is now given the tools every turn needs, and the
-// others only when the message speaks of what they do, or when the
-// conversation has used them already. Measured with Qwen 3.5 (two runs a
+// others once it asks for them by name with more_tools, or when the
+// conversation has used them already. They came by the words of the
+// person's message at first, which worked in one language only. Measured with Qwen 3.5 (two runs a
 // request): the hard requests took 22 seconds instead of 33, passing 10
 // of 26 against 11, and the newcomer's 17 instead of 19, passing 12 of 20
 // against 14, within what one run to the next varies by. A model
 // elsewhere was given them all at first, as one that reads them in no
 // time; it pays for them in tokens on every turn all the same, and is
-// given the same now. Each Op says whether it is Core, given every turn,
-// and the Words in a message that bring it along; the rules of a topic
-// come the same way (rules.go).
+// given the same now. Each Op says whether it is Core, given every turn;
+// the rules of every topic are given every turn (rules.go).
 
-// toolsFor is the tools a turn is given: the core, those the message's
-// words bring, and those the conversation has called.
+// toolsFor is the tools a turn is given: the core, and those the
+// conversation has called or more_tools brought.
 func (s *Service) toolsFor(all []llm.Tool, history []llm.Message) []llm.Tool {
-	said, used := spoken(history)
+	did := calledSo(history) // rules.go
 	// The core comes first and in the same order every turn, so what a
 	// model has already read of a turn before (warm.go) is read again
 	// only from where this turn differs.
@@ -33,7 +31,7 @@ func (s *Service) toolsFor(all []llm.Tool, history []llm.Message) []llm.Tool {
 		switch {
 		case opNamed(t.Name).Core:
 			core = append(core, t)
-		case used[t.Name] || speaksOf(said, opNamed(t.Name).Words):
+		case did[t.Name]:
 			more = append(more, t)
 		}
 	}
@@ -42,45 +40,6 @@ func (s *Service) toolsFor(all []llm.Tool, history []llm.Message) []llm.Tool {
 		given = append(given, t)
 	}
 	return given
-}
-
-// speaksOf says whether the words said hold one of words, as a word: at
-// its start, so "ask " is not heard in "task ", and a short one whole, or
-// with an s, so "run" is not heard in "running late" nor "call" in
-// "recall". A longer one may go on ("transcri" is heard in "transcript").
-func speaksOf(said string, words []string) bool {
-	for _, w := range words {
-		for from := 0; ; {
-			i := strings.Index(said[from:], w)
-			if i < 0 {
-				break
-			}
-			i += from
-			if wordAt(said, w, i) {
-				return true
-			}
-			from = i + 1
-		}
-	}
-	return false
-}
-
-// shortWord is how long a word may be and still be heard only whole.
-const shortWord = 5
-
-func wordAt(said, w string, i int) bool {
-	if i > 0 && letter(said[i-1]) && letter(w[0]) {
-		return false
-	}
-	end := i + len(w)
-	if len(w) >= shortWord || !letter(w[len(w)-1]) || end == len(said) || !letter(said[end]) {
-		return true
-	}
-	return said[end] == 's' && (end+1 == len(said) || !letter(said[end+1]))
-}
-
-func letter(c byte) bool {
-	return c >= 'a' && c <= 'z' || c >= '0' && c <= '9' || c >= 0x80
 }
 
 // refresh is a turn's next step's prompt and tools: the page as it is now,

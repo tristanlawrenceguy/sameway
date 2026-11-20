@@ -19,7 +19,6 @@ import (
 
 var waysInOp = Op{Title: "See how people reach you", Traits: Traits{ReadOnly: true, Idempotent: true},
 	Access: ForOwner,
-	Words:  []string{"reach me", "ways in", "front desk", "how quickly", "response time", "how fast", "channels"},
 	Doing:  saying("Looking at how people reach you"),
 	Run:    func(s *Service, _ toolArgs, _ llm.ToolCall) toolResult { return s.waysIn() },
 	Tool: llm.Tool{Name: "ways_in",

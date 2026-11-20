@@ -18,7 +18,6 @@ import (
 // conversation (automate.Chat), which this service gives.
 
 var actionOp = Op{Title: "Run an action", Traits: Traits{OpenWorld: true},
-	Words: []string{"run", "press", "button", "action", "webhook", "send to"},
 	Doing: saying("Running an action"),
 	Asks:  (*Service).askAction,
 	Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {

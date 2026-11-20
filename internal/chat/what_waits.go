@@ -13,7 +13,6 @@ import (
 
 var waitingOp = Op{Title: "See what waits for you", Traits: Traits{ReadOnly: true, Idempotent: true},
 	Access: ForViewers,
-	Words:  []string{"waiting", "waits", "needs me", "to answer", "to reply", "to sort", "inbox"},
 	Doing:  saying("Looking at what waits for you"),
 	Run:    func(s *Service, _ toolArgs, _ llm.ToolCall) toolResult { return s.whatWaits() },
 	Tool: llm.Tool{Name: "what_waits", Description: "What waits for the person, as Today shows it and the morning brief counts it: the assistant's questions, emails and shared messages to sort, emails where it is their turn to reply, what actions suggested and tags to check. Each with its words, its page, and the answers a person presses there; an agent outside answers one by POSTing that path with the id, and only when the person asked it to: the rest is theirs to answer.",

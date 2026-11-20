@@ -29,7 +29,6 @@ const PaymentType = "payment"
 
 var paymentLinkOp = Op{Title: "Make a link to pay you",
 	Access: ForOwner, Traits: Traits{OpenWorld: true},
-	Words: []string{"pay", "payment", "invoice", "bill", "charge", "deposit", "stripe"},
 	Doing: saying("Making a link to pay you"),
 	Asks: func(s *Service, _ toolArgs, call llm.ToolCall) (toolResult, bool) {
 		p, err := s.paymentOf(call.Args)

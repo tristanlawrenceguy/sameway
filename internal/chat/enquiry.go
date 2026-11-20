@@ -176,7 +176,6 @@ func (s *Service) enquiryQuestion(name string, from, to time.Time) question {
 
 var answerEnquiryOp = Op{Title: "Answer what someone's Sameway asked",
 	Access: ForOwner, Traits: Traits{OpenWorld: true},
-	Words: []string{"enquiry", "asked me", "their sameway"},
 	Doing: saying("Answering what was asked"),
 	Asks: func(s *Service, _ toolArgs, call llm.ToolCall) (toolResult, bool) {
 		e, name, from, to, err := s.enquiryOf(call.Args)

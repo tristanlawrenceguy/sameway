@@ -24,7 +24,6 @@ import (
 
 var historyOp = Op{Title: "See the history with someone", Traits: Traits{ReadOnly: true, Idempotent: true},
 	Access: ForOwner,
-	Words:  []string{"history", "with them", "relationship", "last time", "how long", "customer", "client"},
 	Doing:  saying("Looking back"),
 	Run:    func(s *Service, _ toolArgs, call llm.ToolCall) toolResult { return s.historyWith(call.Args) },
 	Tool: llm.Tool{Name: "history",

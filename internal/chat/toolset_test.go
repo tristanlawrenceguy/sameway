@@ -8,7 +8,7 @@ import (
 )
 
 // A model is given the tools a turn needs: the core, first and always,
-// and the others its message speaks of or the conversation has used; one
+// and the others the assistant asked for or the conversation has used; one
 // elsewhere the same as one on this computer.
 func TestAModelIsGivenTheToolsATurnNeeds(t *testing.T) {
 	t.Parallel()
@@ -34,8 +34,15 @@ func TestAModelIsGivenTheToolsATurnNeeds(t *testing.T) {
 		t.Errorf("fewer than all: %s", task)
 	}
 	slower := names(svc.ToolsFor(all, []llm.Message{{Role: llm.RoleUser, Content: "Make things move slower please"}}))
-	if !strings.Contains(slower, ",set_setting,") {
-		t.Errorf("a message about a setting brings set_setting: %s", slower)
+	if strings.Contains(slower, ",set_setting,") {
+		t.Errorf("the person's words bring no tool, in any language: %s", slower)
+	}
+	asked := names(svc.ToolsFor(all, []llm.Message{
+		{Role: llm.RoleUser, Content: "Que tout bouge plus lentement"},
+		{Role: llm.RoleAssistant, ToolCalls: []llm.ToolCall{{Name: "more_tools", Args: []byte(`{"name":"set_setting"}`)}}},
+	}))
+	if !strings.Contains(asked, ",set_setting,") {
+		t.Errorf("asked for by name, set_setting is given: %s", asked)
 	}
 	followUp := names(svc.ToolsFor(all, []llm.Message{
 		{Role: llm.RoleAssistant, ToolCalls: []llm.ToolCall{{Name: "write_up_meeting"}}},

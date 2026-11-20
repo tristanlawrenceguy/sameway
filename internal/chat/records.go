@@ -56,7 +56,6 @@ func makeTyped(s *Service, t *llm.Tool) bool {
 var recordOps = []Op{
 	{Title: "Bring records in from a file",
 		Access: ForOwner,
-		Words:  []string{"import", "file", "spreadsheet", "csv", "excel", "contacts", "calendar file"},
 		Doing:  func(a callArgs) string { return "Importing " + or(schema.Plural(a.Type), "records") + " from a file" },
 		Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
 			return s.importRecords(a.Type, a.File, a.Mapping)
@@ -112,7 +111,7 @@ func (s *Service) createRecord(typeName string, fields map[string]any) toolResul
 		return fail("Nothing was saved: %s Call create_record again with that fixed.", fieldHelp(err, t)) // field_help.go
 	}
 	text := fmt.Sprintf("created %s %s: %q. The person can open it at /t/%s/%s.", t.Name, rec.ID, c.Detail, t.Name, rec.ID)
-	text += s.datesSaid(t, fields, rec, false) + s.splitSaid(t) // dates_said.go, action_when_said.go; the rest is the change's notes (notice.go)
+	text += s.datesSaid(t, fields, rec, false) // dates_said.go; the rest is the change's notes (notice.go)
 	if t.Name == "reminder" && atlogin.Path() != "" && !atlogin.On() {
 		text += " Reminders ring only while Sameway is open, and it does not open when this computer starts; if this one matters, tell the person that Open Sameway when I sign in, on Workspaces, keeps it ringing."
 	}

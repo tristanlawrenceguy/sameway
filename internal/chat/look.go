@@ -21,7 +21,6 @@ const lookLimit = 16000
 
 var lookOps = []Op{{Title: "Read a page", Traits: Traits{ReadOnly: true, Idempotent: true},
 	Access: ForOwner,
-	Words:  []string{"page", "screen", "see", "look", "this"},
 	Doing:  saying("Looking at the page"),
 	Run:    func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.lookAtPage(call.Args) },
 	Tool: llm.Tool{Name: "look_at_page",

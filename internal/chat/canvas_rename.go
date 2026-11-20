@@ -15,7 +15,6 @@ import (
 // not make its name say so. Renaming is one change, undone in one.
 
 var renameCanvasOp = Op{Title: "Rename a tab", Traits: Traits{Idempotent: true},
-	Words: []string{"tab", "rename", "call it"},
 	Doing: func(a callArgs) string { return "Renaming a tab" + called(a.Name) },
 	Run:   func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.renameCanvas(a.ID, a.Name) },
 	Tool: llm.Tool{Name: "rename_canvas", Description: "Give a tab another name, in the person's words, when they ask or when what it holds is no longer what its name says. Home keeps its name.",

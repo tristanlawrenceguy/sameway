@@ -16,7 +16,6 @@ import (
 
 var updateOp = Op{Title: "Update Sameway", Traits: Traits{OpenWorld: true},
 	Access: ForOwner,
-	Words:  []string{"update", "version", "new sameway"},
 	Doing:  saying("Updating Sameway"),
 	Run:    func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.updateSameway(a.Install) },
 	Tool: llm.Tool{

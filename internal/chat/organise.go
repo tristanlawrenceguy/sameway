@@ -32,7 +32,6 @@ type materialItem struct {
 }
 
 var organiseOps = []Op{{Title: "Organise longer writing", Traits: Traits{Idempotent: true},
-	Words: []string{"chapter", "part", "draft", "essay", "story", "book", "piece", "outline", "material"},
 	Doing: saying("Organising the writing"),
 	Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
 		return s.organiseWriting(a.Type, a.Piece, a.Parts, a.Material)

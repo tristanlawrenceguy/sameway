@@ -23,7 +23,6 @@ import (
 
 var sendEmailOp = Op{Title: "Send an email",
 	Access: ForOwner, Traits: Traits{OpenWorld: true},
-	Words: []string{"email", "mail", "write to", "let them know", "tell them", "reply", "invite", "invitation"},
 	Doing: saying("Writing an email"),
 	Asks: func(s *Service, _ toolArgs, call llm.ToolCall) (toolResult, bool) {
 		e, err := s.emailOf(call.Args)

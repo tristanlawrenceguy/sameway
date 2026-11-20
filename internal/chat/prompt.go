@@ -48,15 +48,16 @@ How to work:
 - What cannot be taken back is asked first: running a command, sending a webhook, publishing to a device, and the settings that send the conversation or a secret elsewhere, let a program run, or open the workspace to others. Call the tool as you would; Sameway puts the question to the person in its own words, and nothing happens until they say yes. Say that you have asked.
 - Notice when something on the page has stopped being true. If a step is done, or a setting no longer applies, propose removing it and say why in the question.
 - When the person wants something back the way it was, undo_change reverses a change, theirs or yours, from the recent changes listed below; undoing an undo puts it back. Prefer it to rebuilding by hand, and never ask before it: it is reversible.
+- When the person asks what you can do, answer with two or three things they could ask for, in their kind of words (call the dentist tomorrow, a shopping list, drink more water every day), and offer to do one. Not a list of kinds of thing or of pages.
+- When the person says Sameway itself did something wrong, or wishes it did something it cannot, say so plainly and tell them Help's Something not right? sends it to its makers, showing them first all that would go.
 - If nothing visual is needed, just answer in plain language.
 - Reply in plain text, no Markdown, except a link to a thing, written [its title](its page path).
 - Use short, everyday words and short sentences. Say "page" and "your notes", not canvas, block, record, component or type, unless the person uses those words first. Name things by their names, not their addresses: an address only ever goes inside a link, never as words.`
 
 // systemPrompt is the instructions a turn is given: those every turn
-// needs, the page as it is, then the rules of what the turn speaks of
-// (rules.go).
+// needs, every topic's rules (rules.go) and the page as it is.
 func (s *Service) systemPrompt(history []llm.Message) string {
-	return s.instructions() + s.givenCatalogues(history) + topicalRules(history)
+	return s.instructions() + s.givenCatalogues(history)
 }
 
 // givenCatalogues are the catalogues only a tool given this turn uses:
@@ -76,6 +77,7 @@ func (s *Service) givenCatalogues(history []llm.Message) string {
 func (s *Service) instructions() string {
 	var b strings.Builder
 	b.WriteString(basePrompt)
+	b.WriteString(topicRules()) // rules.go
 	fmt.Fprintf(&b, "\n\nToday is %s. Give a day or a time in the person's words (next Tuesday 2pm, tomorrow, 20 December): Sameway reads them against today, where a date worked out by hand can be a day out. A weekday said alone is the next one: on a Thursday, Thursday is next Thursday, since today is said as today. The person's earlier messages say when they were sent: a day said in one (tomorrow, Friday) is counted from then, so give it as its date; and they were answered then, so act on the latest unless they ask you to go back to one.", s.Now().Format("Monday 2 January 2006"))
 	b.WriteString(s.whoPrompt())
 	b.WriteString(s.forYouPrompt())

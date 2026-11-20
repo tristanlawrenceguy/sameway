@@ -18,7 +18,6 @@ import (
 // not ask to delete is asked first, with propose_change.
 
 var deleteRecordOp = Op{Title: "Delete records", Traits: Traits{Destructive: true, Idempotent: true},
-	Words: []string{"delete", "remove", "get rid", "throw away", "throw out", "bin", "trash", "erase", "clear out", "wipe"},
 	Doing: func(a callArgs) string {
 		if len(a.IDs) > 1 {
 			return "Deleting " + schema.Count(len(a.IDs), a.Type)
