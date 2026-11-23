@@ -49,6 +49,7 @@ func (s *Service) ending(ctx context.Context, reply, said string, changes []reco
 	if refused := refusedChanges(tools); len(changes) == 0 && len(refused) > 0 { // claims.go
 		if !end.corrected {
 			end.corrected = true
+			log.Printf("chat: every change tried was refused (%s); asking the model again", strings.Join(refused, ", "))
 			return askAgain(on, llm.Message{Role: llm.RoleAssistant, Content: reply}, llm.Message{Role: llm.RoleUser, Content: allRefused(refused)})
 		}
 		if !strings.HasSuffix(reply, nothingChanged) {

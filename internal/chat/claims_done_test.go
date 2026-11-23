@@ -144,3 +144,22 @@ func TestARefusedChangeIsToldWhateverTheReplySays(t *testing.T) {
 		t.Errorf("still unchanged, the reply says so under it: %q", said)
 	}
 }
+
+// Asked again, a model that sends a refused call once more ends the turn
+// as one going nowhere (ends.go); that reply too says nothing changed.
+func TestARefusedChangeSentAgainEndsSayingNothingChanged(t *testing.T) {
+	t.Parallel()
+	svc := newFullService(t)
+	refusedCall := call("add_type", map[string]any{"type": "task"})
+	m := &scripted{steps: []*llm.Response{
+		refusedCall,
+		{Text: "Ich habe alles eingerichtet."},
+		refusedCall,
+		{Text: "Ich habe angefangen."},
+	}}
+	svc.Provider = m
+	reply, _ := svc.Send(context.Background(), "richte alles ein")
+	if said, _ := reply.Fields["content"].(string); !strings.HasSuffix(said, "\n\n(Sameway checked: nothing was changed. Ask again if something should be.)") || strings.Count(said, "Sameway checked") != 1 {
+		t.Errorf("the reply says so under it: %q", said)
+	}
+}
