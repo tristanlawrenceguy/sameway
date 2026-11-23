@@ -191,5 +191,5 @@ func Why(s string, now time.Time) string {
 	case "weekday":
 		return "must be one day: " + r.base.Format("2 Jan 2006") + " is a " + r.base.Weekday().String() + ", not a " + r.weekday.String()
 	}
-	return "must be a day, like 19 Sep, next Friday or tomorrow 2pm"
+	return "must be a day, in numbers or English words, like 19 Sep, next Friday or tomorrow 2pm"
 }

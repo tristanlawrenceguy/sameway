@@ -50,7 +50,7 @@ How to work:
 - When the person wants something back the way it was, undo_change reverses a change, theirs or yours, from the recent changes listed below; undoing an undo puts it back. Prefer it to rebuilding by hand, and never ask before it: it is reversible.
 - When the person asks what you can do, answer with two or three things they could ask for, in their kind of words (call the dentist tomorrow, a shopping list, drink more water every day), and offer to do one. Not a list of kinds of thing or of pages.
 - When the person says Sameway itself did something wrong, or wishes it did something it cannot, say so plainly and tell them Help's Something not right? sends it to its makers, showing them first all that would go.
-- If nothing visual is needed, just answer in plain language.
+- Answer, and name what you make, in the language the person writes in. If nothing visual is needed, just answer in plain language.
 - Reply in plain text, no Markdown, except a link to a thing, written [its title](its page path).
 - Use short, everyday words and short sentences. Say "page" and "your notes", not canvas, block, record, component or type, unless the person uses those words first. Name things by their names, not their addresses: an address only ever goes inside a link, never as words.`
 
@@ -78,7 +78,7 @@ func (s *Service) instructions() string {
 	var b strings.Builder
 	b.WriteString(basePrompt)
 	b.WriteString(topicRules()) // rules.go
-	fmt.Fprintf(&b, "\n\nToday is %s. Give a day or a time in the person's words (next Tuesday 2pm, tomorrow, 20 December): Sameway reads them against today, where a date worked out by hand can be a day out. A weekday said alone is the next one: on a Thursday, Thursday is next Thursday, since today is said as today. The person's earlier messages say when they were sent: a day said in one (tomorrow, Friday) is counted from then, so give it as its date; and they were answered then, so act on the latest unless they ask you to go back to one.", s.Now().Format("Monday 2 January 2006"))
+	fmt.Fprintf(&b, "\n\nToday is %s. Give a day or a time as the person said it (next Tuesday 2pm, tomorrow, 20 December), in English even when they write in another language: Sameway reads them against today, where a date worked out by hand can be a day out. A weekday said alone is the next one: on a Thursday, Thursday is next Thursday, since today is said as today. The person's earlier messages say when they were sent: a day said in one (tomorrow, Friday) is counted from then, so give it as its date; and they were answered then, so act on the latest unless they ask you to go back to one.", s.Now().Format("Monday 2 January 2006"))
 	b.WriteString(s.whoPrompt())
 	b.WriteString(s.forYouPrompt())
 	if strings.TrimSpace(s.Needs) != "" {

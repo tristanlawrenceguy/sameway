@@ -56,7 +56,7 @@ func TestADateIsWrittenAsPeopleSayIt(t *testing.T) {
 	}
 
 	res = postForm(t, h, "/t/task/"+task.ID+"/props", url.Values{"prop-due": {"sometime soon"}})
-	if body := after(t, h, res).Body.String(); !strings.Contains(body, "Due must be a day, like 19 Sep, next Friday or tomorrow 2pm") {
+	if body := after(t, h, res).Body.String(); !strings.Contains(body, "Due must be a day, in numbers or English words, like 19 Sep, next Friday or tomorrow 2pm") {
 		t.Error("words nobody can read are refused with the ways that work")
 	}
 
