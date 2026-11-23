@@ -69,8 +69,11 @@ func TestAssistant(t *testing.T) {
 		defer out.Close()
 	}
 	set := append(append(requests(), oneStep()...), removals()...)
-	if os.Getenv("SAMEWAY_BENCH_SET") == "newcomer" {
+	switch os.Getenv("SAMEWAY_BENCH_SET") {
+	case "newcomer":
 		set = newcomer() // newcomer_test.go
+	case "languages":
+		set = languages() // languages_test.go
 	}
 	var all []result
 	for _, r := range set {
