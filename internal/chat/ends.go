@@ -82,7 +82,11 @@ func (s *Service) wrapUp(ctx context.Context, req llm.Request, why, said string,
 	if err != nil || strings.TrimSpace(resp.Text) == "" {
 		return s.failAfter(said, fmt.Errorf("%s The model then had no final answer.", why), changes, tools)
 	}
-	return s.reply(said, strings.TrimSpace(resp.Text), changes, tools)
+	reply := strings.TrimSpace(resp.Text)
+	if len(changes) == 0 && len(refusedChanges(tools)) > 0 { // claims.go: the changes it tried were all refused
+		reply += nothingChanged
+	}
+	return s.reply(said, reply, changes, tools)
 }
 
 // stoppedText is the reply when the person stopped the turn.

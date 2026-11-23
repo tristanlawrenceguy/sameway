@@ -62,3 +62,18 @@ func TestCreateRecordsAllOrNone(t *testing.T) {
 		t.Errorf("nothing is logged, %d entries", len(all))
 	}
 }
+
+// A call with no type says so, and records that each name their own type
+// are told one call takes one type: said as a type named "", a small
+// model sent the same calls again.
+func TestCreateWithoutATypeSaysWhatIsMissing(t *testing.T) {
+	t.Parallel()
+	svc := newFullService(t)
+	refused(t, svc, "create_record", map[string]any{"fields": map[string]any{"title": "Call mum"}}, "type is missing: name the content type, one of ")
+	refused(t, svc, "create_record", map[string]any{"records": []map[string]any{
+		{"type": "project", "title": "Website"}, {"type": "task", "title": "Send the quote"},
+	}}, "call once per type")
+	if tasks, _ := svc.Store.List("task", store.ListOptions{}); len(tasks) != 0 {
+		t.Errorf("nothing is made: %d tasks", len(tasks))
+	}
+}

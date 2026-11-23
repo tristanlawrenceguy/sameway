@@ -53,6 +53,9 @@ func (s *Service) typeNames() []string {
 // service speaks for may reach it, or what they have instead.
 func (s *Service) contentType(name string) (*schema.Type, error) {
 	name = strings.ToLower(strings.TrimSpace(name))
+	if name == "" { // said as a type named "" it told a model nothing
+		return nil, errors.New("type is missing: name the content type, one of " + schema.Names(s.typeNames()))
+	}
 	for _, t := range s.contentTypes() {
 		if t.Name == name {
 			return t, nil

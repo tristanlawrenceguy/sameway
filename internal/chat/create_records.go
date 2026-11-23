@@ -35,6 +35,11 @@ var createRecordsOp = Op{Title: "Make several records",
 func notOffered(*Service, *llm.Tool) bool { return false }
 
 func (s *Service) createRecords(typeName string, list []map[string]any) toolResult {
+	for _, fields := range list {
+		if _, ok := fields["type"]; ok && typeName == "" {
+			return fail("nothing was made: records are all of one type, given beside them as type, not in each one. For records of several types, call once per type.")
+		}
+	}
 	t, err := s.contentType(typeName)
 	if err != nil {
 		return fail("%v", err)

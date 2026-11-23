@@ -4,9 +4,11 @@ import (
 	"context"
 	"log"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -105,3 +107,25 @@ const answerAgain = " Then answer the person's last message."
 // assistant taking its own reply back, and the model, reading it in later
 // turns, as something it had said.
 const nothingChanged = "\n\n(Sameway checked: nothing was changed. Ask again if something should be.)"
+
+// refusedChanges is the tools a turn called to change the workspace and
+// was refused: changes tried and not made. tools is the turn's calls, as
+// replay.go keeps them.
+func refusedChanges(tools []map[string]any) []string {
+	var names []string
+	for _, t := range tools {
+		name, _ := t["name"].(string)
+		if op, ok := OpFor(name); ok && !op.Traits.ReadOnly && t["error"] == true {
+			names = append(names, name)
+		}
+	}
+	return names
+}
+
+// allRefused is what to tell a model whose every try at a change this
+// turn was refused, before its reply stands. It is keyed on the calls,
+// not the reply's words: a reply saying it was done in German or Spanish
+// read as nothing to saidDone, and a reminder said to be set never rang.
+func allRefused(tools []string) string {
+	return fromSameway("Nothing has changed in this turn: each call to " + schema.Names(slices.Compact(slices.Sorted(slices.Values(tools)))) + " was refused. If the person asked for a change, fix the call from what its result said and make it now, then say what you did. If it cannot be done, tell them what was not done and why, without saying it was done." + answerAgain)
+}
