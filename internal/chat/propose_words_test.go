@@ -25,10 +25,10 @@ func TestTheModelCannotAskForASettingInItsOwnWords(t *testing.T) {
 	}
 	// The first is told what a question can carry; the second also sent
 	// agreed, which no tool takes from a caller, and is told so.
-	if got := lastToolResult(m.seen[len(m.seen)-2]).Content; !strings.Contains(got, "propose_change carries only") {
+	if got := lastToolResult(m.seen[1]).Content; !strings.Contains(got, "propose_change carries only") {
 		t.Errorf("the model is told what a question of its own can carry, got %q", got)
 	}
-	if got := lastToolResult(m.seen[len(m.seen)-1]).Content; !strings.Contains(got, "propose_change does not take agreed") {
+	if got := lastToolResult(m.seen[2]).Content; !strings.Contains(got, "propose_change does not take agreed") {
 		t.Errorf("agreed is refused, never taken as agreed, got %q", got)
 	}
 }

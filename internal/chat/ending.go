@@ -3,6 +3,7 @@ package chat
 import (
 	"context"
 	"log"
+	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
@@ -19,7 +20,7 @@ type endings struct {
 
 // ending is a turn's reply when the model answers in words, or what to
 // tell the model first, to answer again.
-func (s *Service) ending(ctx context.Context, reply, said string, changes []records.Change, end *endings, on func(Event)) (string, []llm.Message) {
+func (s *Service) ending(ctx context.Context, reply, said string, changes []records.Change, tools []map[string]any, end *endings, on func(Event)) (string, []llm.Message) {
 	o, server := s.Provider.(*llm.OpenAI)
 	// A small model ends a turn of tool calls with no words a fifth of
 	// the time; asked once, it says what it did. Only a model server's
@@ -41,6 +42,18 @@ func (s *Service) ending(ctx context.Context, reply, said string, changes []reco
 			return askAgain(on, llm.Message{Role: llm.RoleAssistant, Content: reply}, llm.Message{Role: llm.RoleUser, Content: wrong})
 		}
 		reply += s.stillWrong(ctx, reply, said, changes) // claims_words.go
+	}
+	// A turn whose every try at a change was refused changed nothing,
+	// whatever the reply says and in whatever language: it is told so once
+	// and asked again, and still unchanged, the reply says so under it.
+	if refused := refusedChanges(tools); len(changes) == 0 && len(refused) > 0 { // claims.go
+		if !end.corrected {
+			end.corrected = true
+			return askAgain(on, llm.Message{Role: llm.RoleAssistant, Content: reply}, llm.Message{Role: llm.RoleUser, Content: allRefused(refused)})
+		}
+		if !strings.HasSuffix(reply, nothingChanged) {
+			reply += nothingChanged
+		}
 	}
 	// A turn on a model on this computer (Ollama, LM Studio, llama.cpp)
 	// that changed something checks it once against what was asked
