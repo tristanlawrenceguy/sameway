@@ -19,6 +19,17 @@ import (
 // workspace send things on its own. A command asks the same way
 // (command.go); a person pressing their own button is not asked.
 
+// Shown is what a question about an action puts in front of the owner:
+// what it sends, or the program it runs. The question carries it, so a
+// yes runs only what it showed (chat/actions.go), never what the action
+// was changed to after.
+func Shown(rec *store.Record) string {
+	if line, _ := rec.Fields["command"].(string); rec.Fields["kind"] == "command" {
+		return strings.TrimSpace(line)
+	}
+	return Sends(rec)
+}
+
 // Sends is what an action that reaches outside would send, as set up
 // (before what set it off is filled in), or "" for one that stays inside
 // or has nowhere to send, which is refused as it runs.
@@ -76,7 +87,7 @@ func (s *Service) unaccepted(rec *store.Record) (Result, bool) {
 	// Waiting for a yes is not a failure, as a command's is not: a hook
 	// that set it off is told it waits (waiting_for), and the schedule
 	// logs no error each hour it is still waiting.
-	r := s.Chat.Ask(q, map[string]any{"tool": "accept_action", "id": rec.ID})
+	r := s.Chat.Ask(q, map[string]any{"tool": "accept_action", "id": rec.ID, "shown": what})
 	if !r.IsErr {
 		r.Text = title + " has not been accepted to send on its own yet, so nothing was sent; " + r.Text
 	}

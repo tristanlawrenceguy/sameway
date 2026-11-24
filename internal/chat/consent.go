@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/automate"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/trim"
@@ -202,7 +203,7 @@ func (s *Service) askAction(a toolArgs, _ llm.ToolCall) (toolResult, bool) {
 			press + " " + what + " Once sent, it can't be unsent.",
 			"Send it", "Don't send"}
 	}
-	return s.ask(q, map[string]any{"tool": "run_action", "id": id}), true
+	return s.ask(q, map[string]any{"tool": "run_action", "id": id, "shown": automate.Shown(rec)}), true
 }
 
 // ask records the question, in the code's words, with the call a Yes runs.

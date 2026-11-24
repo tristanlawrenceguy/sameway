@@ -69,8 +69,8 @@ func TestAWebhookActionCallsOutAndShowsItsAnswer(t *testing.T) {
 		t.Fatal(err)
 	}
 	text, isErr := press(act, weather.ID)
-	if isErr || !strings.Contains(text, "answered 200") || !strings.Contains(text, "18°C") {
-		t.Fatalf("running the action should report the answer, got err=%v %q", isErr, text)
+	if isErr || !strings.Contains(text, "was sent and answered 200") || !strings.Contains(text, "18°C") {
+		t.Fatalf("running the action should say it was sent, and the answer, got err=%v %q", isErr, text)
 	}
 	if got.method != "POST" || got.body != `{"city": "Bristol"}` || got.ct != "application/json" {
 		t.Errorf("the webhook should get the body as JSON, got %+v", got)

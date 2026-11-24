@@ -24,7 +24,7 @@ var deviceOp = Op{Title: "Turn a device on or off", Traits: Traits{Idempotent: t
 		if err != nil {
 			return fail("%v", err)
 		}
-		return toolResult{text: said + ". Its state changes when it answers; get_record reads it.", change: change}
+		return toolResult{text: said + "; whether it did is not known yet: its state changes when it answers, which get_record reads.", change: change}
 	},
 	Tool: llm.Tool{
 		Name:        "switch_device",
