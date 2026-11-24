@@ -56,6 +56,8 @@ func (s *Service) runRecord(ctx context.Context, rec *store.Record, canvas strin
 		return s.Classify(ctx, rec, vars["type"], vars["id"]) // classify.go
 	case "mqtt":
 		return s.mqttAction(ctx, rec, title)
+	case "watch":
+		return s.watch(ctx, rec, title) // watch.go
 	case "message":
 		text, _ := rec.Fields["message"].(string)
 		if text == "" {

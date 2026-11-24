@@ -43,6 +43,11 @@ func Sends(rec *store.Record) string {
 			return ""
 		}
 		return "mqtt " + text("topic") + "\n" + text("payload")
+	case "watch":
+		if text("url") == "" {
+			return ""
+		}
+		return "GET " + text("url") + "\n"
 	}
 	if text("url") == "" {
 		return ""
@@ -65,13 +70,20 @@ func (s *Service) unaccepted(rec *store.Record) (Result, bool) {
 		return Result{Text: title + " has not been accepted to send on its own yet, so nothing was sent; the question is waiting for the owner"}, true
 	}
 	var q Question
-	if rec.Fields["kind"] == "mqtt" {
+	switch rec.Fields["kind"] {
+	case "watch":
+		to, _ := rec.Fields["url"].(string)
+		waits, _ := rec.Fields["watch_for"].(string)
+		q = Question{"Let your “" + title + "” button read " + hostOf(to) + " on its own?",
+			fmt.Sprintf("Each time it is set off, without asking again, it reads %s, as anyone visiting would, and tells you when it shows: %s. Nothing of yours is sent.", to, trim.Clip(waits, 160)),
+			"Yes, let it", "No, don't"}
+	case "mqtt":
 		topic, _ := rec.Fields["topic"].(string)
 		payload, _ := rec.Fields["payload"].(string)
 		q = Question{"Let your “" + title + "” button signal a device on its own?",
 			fmt.Sprintf("Each time it is set off, without asking again, it tells %s: %q. The device may act on it straight away.", topic, trim.Clip(payload, 120)),
 			"Yes, let it", "No, don't"}
-	} else {
+	default:
 		to, _ := rec.Fields["url"].(string)
 		body, _ := rec.Fields["body"].(string)
 		detail := "Each time it is set off, without asking again, it contacts " + to + "."

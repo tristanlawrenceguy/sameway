@@ -185,6 +185,12 @@ func (s *Service) askAction(a toolArgs, _ llm.ToolCall) (toolResult, bool) {
 		q = question{"Run a program on this computer?",
 			press + " It runs " + strings.TrimSpace(line) + " as you, with access to your files. What it does can't be undone from Sameway.",
 			"Run it", "Don't run it"}
+	case "watch":
+		url, _ := rec.Fields["url"].(string)
+		waits, _ := rec.Fields["watch_for"].(string)
+		q = question{"Read " + host(url) + " for you?",
+			fmt.Sprintf("%s It reads %s, as anyone visiting would, and tells you if it shows: %s. Nothing of yours is sent.", press, url, trim.Clip(waits, 160)),
+			"Read it", "Don't"}
 	case "mqtt":
 		topic, _ := rec.Fields["topic"].(string)
 		payload, _ := rec.Fields["payload"].(string)
