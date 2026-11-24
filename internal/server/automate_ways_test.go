@@ -23,6 +23,7 @@ func TestActionsHearRecordsImportedAndRemindersRinging(t *testing.T) {
 	got, hook := listen(t)
 	a.Store.Create("action", map[string]any{"title": "New task", "kind": "webhook", "url": hook + "/new?t={{title}}", "when": "added", "what": "task"})
 	a.Store.Create("action", map[string]any{"title": "Rang", "kind": "webhook", "url": hook + "/rang?t={{title}}", "when": "changed", "what": server.ReminderType, "only": []any{"state=rang"}})
+	acceptAll(t, a)
 
 	up, ct := multipartFile(t, "Tasks.csv", "Title\nSow the beans\n", nil)
 	file := strings.TrimPrefix(do(t, h, http.MethodPost, "/t/task/import", up, ct).Header().Get("Location"), "/t/task/import?file=")

@@ -25,7 +25,7 @@ func TestScheduleAndAutomateRunOnTheRunner(t *testing.T) {
 	defer remote.Close()
 	svc, act := newServices(t)
 	act.HTTP = remote.Client()
-	svc.Store.Create(records.ActionType, map[string]any{"title": "Weather", "url": remote.URL + "/hourly", "every": "hour"})
+	svc.Store.Create(records.ActionType, map[string]any{"title": "Weather", "url": remote.URL + "/hourly", "every": "hour", "accepted": "POST " + remote.URL + "/hourly\n"})
 
 	f := runner.NewFake(time.Date(2026, 9, 15, 7, 30, 0, 0, time.UTC))
 	r := runner.New(f.Clock())

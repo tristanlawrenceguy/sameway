@@ -55,7 +55,7 @@ func TestActionsRunOnTheirOwnAtTheirTime(t *testing.T) {
 	defer remote.Close()
 	svc, act := newServices(t)
 	act.HTTP = remote.Client()
-	weather, _ := svc.Store.Create(records.ActionType, map[string]any{"title": "Weather", "url": remote.URL, "every": "hour", "show": true})
+	weather, _ := svc.Store.Create(records.ActionType, map[string]any{"title": "Weather", "url": remote.URL, "every": "hour", "show": true, "accepted": "POST " + remote.URL + "\n"})
 	svc.Store.Create(records.ActionType, map[string]any{"title": "Alarm", "url": remote.URL, "every": "never"})
 
 	ran := act.RunDue(context.Background(), tuesday)

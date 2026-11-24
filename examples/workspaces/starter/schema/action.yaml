@@ -43,7 +43,7 @@ fields:
     description: For a command action, where to run it. Defaults to the workspace folder.
   accepted:
     type: string
-    description: The command line you accepted, kept by the system. A command runs only while it matches this.
+    description: "What you accepted, kept by the system: the command line a command runs, or what a webhook or mqtt action sends on its own (on a schedule, when something happens, from outside). It runs only while it matches this; pressing it yourself needs no acceptance."
     readonly: true
   show:
     label: On the canvas

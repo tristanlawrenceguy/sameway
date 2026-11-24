@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/tristanlawrenceguy/sameway/internal/app"
+	"github.com/tristanlawrenceguy/sameway/internal/automate"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
@@ -71,6 +73,7 @@ func TestAnActionRunsWhenARecordComesToMatch(t *testing.T) {
 		"body": `{"text": "{{title}} is done ({{page}})"}`, "when": "changed", "what": "task", "only": []any{"status=done"}, "then": second.ID}); err != nil {
 		t.Fatal(err)
 	}
+	acceptAll(t, a)
 	task := written(t, a.Store, "created", "task", "", map[string]any{"title": `Fix the "gate"`})
 	written(t, a.Store, "updated", "task", task.ID, map[string]any{"notes": "not done yet"})
 	h.quiet(t)
@@ -105,6 +108,7 @@ func TestAnActionRunsWhenARecordIsAddedOrRemoved(t *testing.T) {
 	h, url := listen(t)
 	a.Store.Create("action", map[string]any{"title": "New note", "kind": "webhook", "url": url + "/new?t={{title}}", "when": "added", "what": "note"})
 	a.Store.Create("action", map[string]any{"title": "Gone", "kind": "webhook", "url": url + "/gone?t={{title}}", "when": "removed", "what": "note"})
+	acceptAll(t, a)
 	n := written(t, a.Store, "created", "note", "", map[string]any{"title": "Plants & seeds"})
 	if got := h.wait(t, 1); !strings.Contains(got[0], "t=Plants+%26+seeds") {
 		t.Errorf("an address is filled escaped: %q", got[0])
@@ -120,6 +124,7 @@ func TestAHooksRequestFillsItsAction(t *testing.T) {
 	got, url := listen(t)
 	a.Store.Create("action", map[string]any{"title": "Doorbell", "kind": "webhook", "url": url + "/ring", "method": "POST",
 		"body": `{"who": "{{who}}", "where": "{{door}}"}`, "trigger": "a-long-secret-word-here"})
+	acceptAll(t, a)
 	req := httptest.NewRequest(http.MethodPost, "/hook/a-long-secret-word-here?door=front", strings.NewReader(`{"who":"Ann"}`))
 	req.Header.Set("Content-Type", "application/json")
 	h.ServeHTTP(httptest.NewRecorder(), req)
@@ -167,4 +172,16 @@ func lastUser(req llm.Request) string {
 		}
 	}
 	return ""
+}
+
+// acceptAll is the owner accepting, once, what each action here sends on
+// its own (automate/on_its_own.go), as they would on its card.
+func acceptAll(t *testing.T, a *app.App) {
+	t.Helper()
+	acts, _ := a.Store.List(records.ActionType, store.ListOptions{})
+	for _, act := range acts {
+		if what := automate.Sends(act); what != "" {
+			a.Store.Update(records.ActionType, act.ID, map[string]any{"accepted": what})
+		}
+	}
 }

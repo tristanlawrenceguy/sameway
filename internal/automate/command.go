@@ -206,10 +206,16 @@ func (s *Service) Accept(ctx context.Context, id string) Result {
 	}
 	line, _ := rec.Fields["command"].(string)
 	line = strings.TrimSpace(line)
+	title, _ := rec.Fields["title"].(string)
+	if what := Sends(rec); what != "" { // on_its_own.go: accepted to send on its own, from the next time it is set off
+		if _, err := s.Apply(records.Op{Type: records.ActionType, ID: id, After: map[string]any{"accepted": what}}); err != nil {
+			return fail("could not accept action %s: %v", id, err)
+		}
+		return Result{Text: title + " is accepted: from now on it sends on its own each time it is set off"}
+	}
 	if _, err := s.Apply(records.Op{Type: records.ActionType, ID: id, After: map[string]any{"accepted": line}}); err != nil {
 		return fail("could not accept action %s: %v", id, err)
 	}
 	rec.Fields["accepted"] = line
-	title, _ := rec.Fields["title"].(string)
 	return s.command(ctx, rec, title)
 }
