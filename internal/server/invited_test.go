@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
@@ -87,9 +88,13 @@ func TestAnAnswerNotEmailedIsSaidToTheOwner(t *testing.T) {
 		t.Fatalf("it waits on Today: %d", len(ps))
 	}
 	wantStatus(t, postForm(t, h, "/suggested/yes", url.Values{"id": {ps[0].ID}}), http.StatusSeeOther)
-	got := ""
-	for len(rang) > 0 && !strings.Contains(got, "Answer not sent") {
-		got = <-rang // after the request's own ring
+	got, wait := "", time.After(10*time.Second)
+	for !strings.Contains(got, "Answer not sent") { // after the request's own ring, which may come late
+		select {
+		case got = <-rang:
+		case <-wait:
+			t.Fatalf("the owner is never told; last ring: %s", got)
+		}
 	}
 	if !strings.Contains(got, "Answer not sent") || !strings.Contains(got, "was not emailed to them (the mail server refused the login): they do not know yet") {
 		t.Errorf("the owner is told: %s", got)
