@@ -54,10 +54,9 @@ func (s *Service) tellOwner(since time.Time) {
 		return
 	}
 	for _, p := range s.RequestsSince(since) {
-		if RequestState(p) != "waiting" || s.answerAhead(p) { // standing_yes.go: the owner's yes, given ahead
+		if RequestState(p) != "waiting" {
 			continue
 		}
-		s.routeRequest(p) // route_requests.go: to whoever handles it, the owner told too
 		if summary, _ := p.Fields["summary"].(string); s.Requested != nil {
 			s.Requested(summary)
 		}

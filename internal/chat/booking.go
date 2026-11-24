@@ -41,8 +41,7 @@ func (s *Service) Booking(name, email, note string, at time.Time) (string, error
 	// Who they say they are is theirs to say: a name, never a person here.
 	asker := s.For(records.Visitor{Access: records.Public, Name: name + " (" + email + ")"})
 	summary, token, err := asker.putRequest(map[string]any{"tool": "create_record", "type": "event", "fields": fields}, what, "Through your booking link")
-	if p := s.RequestByToken(token); err == nil && p != nil && !s.answerAhead(p) { // standing_yes.go
-		s.routeRequest(p) // route_requests.go
+	if p := s.RequestByToken(token); err == nil && p != nil {
 		if s.Requested != nil {
 			s.Requested(summary)
 		}

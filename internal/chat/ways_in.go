@@ -12,7 +12,7 @@ import (
 )
 
 // How people reach the owner, in one answer: each way in and whether it
-// is open (the server's, Service.Doors), the standing yes, and what came
+// is open (the server's, Service.Doors), and what came
 // in by each lately: how many requests, how many were answered and how
 // soon, and what waits. For "how do people reach me?" and "how quickly do
 // I answer?", asked of the assistant, not a page of its own.
@@ -22,18 +22,13 @@ var waysInOp = Op{Title: "See how people reach you", Traits: Traits{ReadOnly: tr
 	Doing:  saying("Looking at how people reach you"),
 	Run:    func(s *Service, _ toolArgs, _ llm.ToolCall) toolResult { return s.waysIn() },
 	Tool: llm.Tool{Name: "ways_in",
-		Description: "How people reach the person: each way in and whether it is open, their standing yes, and the last 30 days of requests by way in: how many, answered, how soon, waiting.",
+		Description: "How people reach the person: each way in and whether it is open, and the last 30 days of requests by way in: how many, answered, how soon, waiting.",
 		Schema:      obj(map[string]any{})}}
 
 func (s *Service) waysIn() toolResult {
 	var lines []string
 	if s.Doors != nil {
 		lines = append(lines, s.Doors()...)
-	}
-	if rule := strings.TrimSpace(s.setting(AlwaysSetting)); rule != "" {
-		lines = append(lines, "Standing yes: "+rule)
-	} else {
-		lines = append(lines, "Standing yes: none; every request waits for you")
 	}
 	since := s.Now().AddDate(0, 0, -30)
 	type tally struct {
