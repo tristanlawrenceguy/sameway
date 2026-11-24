@@ -73,6 +73,7 @@ type response struct {
 type rpcError struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
+	Data    any    `json:"data,omitempty"`
 }
 
 // JSON-RPC error codes the protocol reserves.
@@ -104,7 +105,7 @@ func (s *Server) Serve(ctx context.Context) error {
 		}
 		var req request
 		if err := json.Unmarshal(line, &req); err != nil {
-			s.write(response{JSONRPC: "2.0", ID: json.RawMessage("null"), Error: &rpcError{codeParse, "the line was not valid JSON: " + err.Error()}})
+			s.write(response{JSONRPC: "2.0", ID: json.RawMessage("null"), Error: &rpcError{codeParse, "the line was not valid JSON: " + err.Error(), nil}})
 			continue
 		}
 		notification := len(req.ID) == 0 || string(req.ID) == "null"
@@ -127,11 +128,27 @@ func (s *Server) write(resp response) {
 	s.Out.Write(append(raw, '\n'))
 }
 
-// handle answers one request. Unknown methods are the protocol's own error,
-// so a host probing for capabilities this server lacks gets a clean no.
+// handle answers one request: as the revision it names in _meta, when it
+// names one (modern.go), or as it always has.
 func (s *Server) handle(ctx context.Context, req request) (any, *rpcError) {
+	if version, ok := modernVersion(req.Params); ok {
+		return s.modern(ctx, req, version)
+	}
+	return s.answer(ctx, req)
+}
+
+// instructions tell a client's model what this server is, on initialize
+// and on server/discover.
+const instructions = "This is a Sameway workspace: content records of the types the workspace declares, " +
+	"and a canvas of components. Call describe first for the types, their fields, the components " +
+	"and every surface; then find_records, get_record, create_record and update_record for content, " +
+	"and the canvas tools for what the person sees. " + records.DataNotInstructions
+
+// answer answers one request. Unknown methods are the protocol's own error,
+// so a host probing for capabilities this server lacks gets a clean no.
+func (s *Server) answer(ctx context.Context, req request) (any, *rpcError) {
 	if req.JSONRPC != "2.0" {
-		return nil, &rpcError{codeInvalidRequest, `jsonrpc must be "2.0"`}
+		return nil, &rpcError{codeInvalidRequest, `jsonrpc must be "2.0"`, nil}
 	}
 	if req.Method == "tools/list" || req.Method == "tools/call" {
 		// The server beside this, or a person, may have changed the types.
@@ -146,11 +163,10 @@ func (s *Server) handle(ctx context.Context, req request) (any, *rpcError) {
 			"protocolVersion": protocolVersion,
 			"capabilities":    map[string]any{"tools": map[string]any{"listChanged": s.Only != nil}},
 			"serverInfo":      map[string]any{"name": "sameway", "version": s.Version},
-			"instructions": "This is a Sameway workspace: content records of the types the workspace declares, " +
-				"and a canvas of components. Call describe first for the types, their fields, the components " +
-				"and every surface; then find_records, get_record, create_record and update_record for content, " +
-				"and the canvas tools for what the person sees. " + records.DataNotInstructions,
+			"instructions":    instructions,
 		}, nil
+	case "server/discover":
+		return s.discover(), nil // modern.go
 	case "notifications/initialized", "notifications/cancelled":
 		return nil, nil
 	case "ping":
@@ -163,7 +179,7 @@ func (s *Server) handle(ctx context.Context, req request) (any, *rpcError) {
 			Arguments json.RawMessage `json:"arguments"`
 		}
 		if err := json.Unmarshal(req.Params, &params); err != nil || params.Name == "" {
-			return nil, &rpcError{codeInvalidParams, "tools/call needs params.name and params.arguments"}
+			return nil, &rpcError{codeInvalidParams, "tools/call needs params.name and params.arguments", nil}
 		}
 		text, isError, structured := s.dispatch(ctx, params.Name, params.Arguments)
 		if params.Name == "more_tools" && !isError {
@@ -184,5 +200,5 @@ func (s *Server) handle(ctx context.Context, req request) (any, *rpcError) {
 		}
 		return result, nil
 	}
-	return nil, &rpcError{codeMethodNotFound, fmt.Sprintf("method %q is not one this server has; it offers initialize, ping, tools/list and tools/call", req.Method)}
+	return nil, &rpcError{codeMethodNotFound, fmt.Sprintf("method %q is not one this server has; it offers initialize, server/discover, ping, tools/list and tools/call", req.Method), nil}
 }

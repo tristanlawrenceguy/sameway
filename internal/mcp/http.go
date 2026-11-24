@@ -34,7 +34,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		reqs = []request{one}
 	}
 	if err != nil || len(reqs) == 0 {
-		writeRPC(w, http.StatusBadRequest, []response{{JSONRPC: "2.0", Error: &rpcError{codeParse, "the body was not JSON-RPC"}}}, false)
+		writeRPC(w, http.StatusBadRequest, []response{{JSONRPC: "2.0", Error: &rpcError{codeParse, "the body was not JSON-RPC", nil}}}, false)
 		return
 	}
 	var out []response
