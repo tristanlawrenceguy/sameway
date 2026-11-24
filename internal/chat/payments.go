@@ -97,7 +97,7 @@ func (s *Service) paymentLink(raw json.RawMessage) toolResult {
 		return fail("%v", err)
 	}
 	link, _ := rec.Fields["link"].(string)
-	return toolResult{text: fmt.Sprintf("Made: %s for %q, paid at %s (payment %s).", Money(p.Amount, p.Currency), p.What, link, rec.ID),
+	return toolResult{text: fmt.Sprintf("Made a link to pay %s for %q, not paid yet: %s (payment %s).", Money(p.Amount, p.Currency), p.What, link, rec.ID),
 		change: &records.Change{Action: "created", Component: PaymentType, ID: rec.ID, Detail: p.What}}
 }
 

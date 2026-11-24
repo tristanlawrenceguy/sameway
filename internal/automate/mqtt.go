@@ -31,7 +31,7 @@ func (s *Service) mqttAction(_ context.Context, rec *store.Record, title string)
 		return fail("action %s: %v", title, err)
 	}
 	return Result{
-		Text:   fmt.Sprintf("%s published %q to %s", title, payload, topic),
+		Text:   fmt.Sprintf("%s published %q to %s; whether the device acted on it is not known", title, payload, topic),
 		Change: &records.Change{Action: "ran", Component: records.ActionType, ID: rec.ID, Detail: title + " (" + topic + ")", Href: relate.Page(records.ActionType, rec.ID)},
 	}
 }

@@ -49,6 +49,8 @@ type toolArgs struct {
 	Field       string         `json:"field"`
 	Edits       []suggested    `json:"edits"`
 	Merge       []string       `json:"merge"`
+	// Shown is what a question about an action showed the owner (consent.go).
+	Shown *string `json:"shown"`
 
 	// Records is create_record's several, each a record's fields.
 	Records []map[string]any `json:"records"`

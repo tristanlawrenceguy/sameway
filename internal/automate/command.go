@@ -54,7 +54,7 @@ func (s *Service) command(ctx context.Context, rec *store.Record, title string) 
 		r := s.Chat.Ask(Question{"Let your “" + title + "” button run a program on this computer?",
 			"Pressing it would run " + line + " as you, with access to your files, every time, without asking again. What it does can't be undone from Sameway, so only say yes if you asked for this button.",
 			"Yes, let it run", "No, don't"},
-			map[string]any{"tool": "accept_action", "id": rec.ID})
+			map[string]any{"tool": "accept_action", "id": rec.ID, "shown": line})
 		if !r.IsErr {
 			r.Text = "the command has not been accepted yet, so nothing ran; " + r.Text
 		}

@@ -101,7 +101,7 @@ func (s *Service) webhook(ctx context.Context, rec *store.Record, title string) 
 	}
 	resp, err := s.httpClient().Do(req)
 	if err != nil {
-		return fail("%s failed: %v", title, err)
+		return fail("%s may not have arrived: %v", title, err)
 	}
 	defer resp.Body.Close()
 	raw, _ := io.ReadAll(io.LimitReader(resp.Body, 64<<10))
@@ -109,7 +109,11 @@ func (s *Service) webhook(ctx context.Context, rec *store.Record, title string) 
 	if len([]rune(answer)) > 2000 {
 		answer = string([]rune(answer)[:2000])
 	}
-	out := Result{Text: fmt.Sprintf("%s answered %d", title, resp.StatusCode), Answer: answer}
+	said := "was sent and answered"
+	if resp.StatusCode >= 400 {
+		said = "was refused: it answered"
+	}
+	out := Result{Text: fmt.Sprintf("%s %s %d", title, said, resp.StatusCode), Answer: answer}
 	if answer != "" {
 		out.Text += ": " + answer
 	}

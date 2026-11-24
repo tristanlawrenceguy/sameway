@@ -21,6 +21,9 @@ var actionOp = Op{Title: "Run an action", Traits: Traits{OpenWorld: true},
 	Doing: saying("Running an action"),
 	Asks:  (*Service).askAction,
 	Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
+		if bad := s.notAsShown(a); bad != nil {
+			return *bad
+		}
 		return ran(s.Automate.For(s).Run(context.Background(), a.ID, s.current))
 	},
 	Tool: llm.Tool{
@@ -36,8 +39,23 @@ var actionOp = Op{Title: "Run an action", Traits: Traits{OpenWorld: true},
 var acceptOp = Op{Title: "Accept a command", Traits: Traits{OpenWorld: true}, Tool: llm.Tool{Name: "accept_action"},
 	Offered: func(*Service, *llm.Tool) bool { return false },
 	Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
+		if bad := s.notAsShown(a); bad != nil {
+			return *bad
+		}
 		return ran(s.Automate.For(s).Accept(context.Background(), a.ID))
 	}}
+
+// notAsShown refuses a yes to an action changed since the owner was
+// asked: the yes was given to what the question showed, a program or an
+// address, not to what the action says now.
+func (s *Service) notAsShown(a toolArgs) *toolResult {
+	rec, err := s.Store.Get(records.ActionType, a.ID)
+	if a.Shown == nil || err != nil || automate.Shown(rec) == *a.Shown {
+		return nil
+	}
+	r := fail("nothing ran: the action changed after this was asked, so the yes was not for what it does now; run it again to ask afresh")
+	return &r
+}
 
 // AddArrangement lays out an arrangement action's page.
 func (s *Service) AddArrangement(name string) automate.Result {
