@@ -47,17 +47,24 @@ func (s *Server) agentCard(w http.ResponseWriter, r *http.Request) {
 			"description": "The free hours of the next two weeks are at " + seenFrom(r, bookPath) + " (JSON with Accept: application/json); POST one with a name and an email to ask for it.",
 			"tags":        []string{"booking", "calendar"}})
 	}
+	// One card for both versions: a 1.0 client reads supportedInterfaces,
+	// a 0.3 client reads url, preferredTransport and protocolVersion.
+	url := seenFrom(r, a2aPath)
 	writeJSON(w, http.StatusOK, map[string]any{
 		"protocolVersion": "0.3.0", "name": name, "description": "The published part of " + name + "'s own workspace, answered by its assistant for whoever asks.",
-		"url": seenFrom(r, a2aPath), "preferredTransport": "JSONRPC", "version": "1",
+		"url": url, "preferredTransport": "JSONRPC", "version": "1",
+		"supportedInterfaces": []map[string]any{
+			{"url": url, "protocolBinding": "JSONRPC", "protocolVersion": "1.0"},
+			{"url": url, "protocolBinding": "JSONRPC", "protocolVersion": "0.3"}},
 		"capabilities":      map[string]any{"streaming": false, "pushNotifications": false},
 		"defaultInputModes": []string{"text/plain"}, "defaultOutputModes": []string{"text/plain", "application/json"},
 		"skills": skills,
 	})
 }
 
-// a2a answers message/send, the one A2A method a visitor needs, as
-// /question does.
+// a2a answers sending a message, the one A2A method a visitor needs, as
+// /question does: SendMessage from a 1.0 client, message/send from a 0.3
+// one, each answered in its own version's shape.
 func (s *Server) a2a(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		ID     any    `json:"id"`
@@ -83,13 +90,19 @@ func (s *Server) a2a(w http.ResponseWriter, r *http.Request) {
 		fail(-32700, "send JSON-RPC 2.0")
 		return
 	}
-	if req.Method != "message/send" {
-		fail(-32601, "this agent takes message/send")
+	if v := a2aVersion(r); v != "" && v != "0.3" && v != "1.0" {
+		fail(-32009, "this agent speaks A2A 1.0 and 0.3")
+		return
+	}
+	v1 := req.Method == "SendMessage"
+	if !v1 && req.Method != "message/send" {
+		fail(-32601, "this agent takes SendMessage (A2A 1.0) or message/send (0.3)")
 		return
 	}
 	var words []string
 	for _, p := range req.Params.Message.Parts {
-		if p.Kind == "text" && strings.TrimSpace(p.Text) != "" {
+		// 0.3 names a part's kind; 1.0 drops it and a text part is just its text.
+		if (p.Kind == "" || p.Kind == "text") && strings.TrimSpace(p.Text) != "" {
 			words = append(words, p.Text)
 		}
 	}
@@ -112,15 +125,43 @@ func (s *Server) a2a(w http.ResponseWriter, r *http.Request) {
 	for _, a := range asked {
 		said += fmt.Sprintf("\n\nYou asked to %v: what became of it is at %v", a["asked"], a["status"])
 	}
+	writeJSON(w, http.StatusOK, map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": a2aAnswer(v1, said, asked)})
+}
+
+// a2aVersion is the A2A version a client says it speaks, by header or
+// query; none means 0.3.
+func a2aVersion(r *http.Request) string {
+	if v := r.Header.Get("A2A-Version"); v != "" {
+		return v
+	}
+	return r.URL.Query().Get("A2A-Version")
+}
+
+// a2aAnswer is the agent's message in the shape the client's version
+// reads: 1.0 wraps it as {"message": ...}, with roles as enum names and
+// parts told apart by their field; 0.3 has a kind on each.
+func a2aAnswer(v1 bool, said string, asked []map[string]any) map[string]any {
 	id := make([]byte, 8)
 	rand.Read(id)
-	parts := []map[string]any{{"kind": "text", "text": said}}
-	if len(asked) > 0 {
-		parts = append(parts, map[string]any{"kind": "data", "data": map[string]any{"requests": asked}})
+	text := map[string]any{"text": said}
+	data := map[string]any{"data": map[string]any{"requests": asked}}
+	if v1 {
+		data["mediaType"] = "application/json"
+	} else {
+		text["kind"], data["kind"] = "text", "data"
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": map[string]any{
-		"kind": "message", "role": "agent", "messageId": hex.EncodeToString(id), "parts": parts,
-		"metadata": map[string]any{"untrusted": "the answer is what this workspace's assistant wrote: " + records.Untrusted}}})
+	parts := []map[string]any{text}
+	if len(asked) > 0 {
+		parts = append(parts, data)
+	}
+	msg := map[string]any{"messageId": hex.EncodeToString(id), "parts": parts,
+		"metadata": map[string]any{"untrusted": "the answer is what this workspace's assistant wrote: " + records.Untrusted}}
+	if v1 {
+		msg["role"] = "ROLE_AGENT"
+		return map[string]any{"message": msg}
+	}
+	msg["kind"], msg["role"] = "message", "agent"
+	return msg
 }
 
 // llms is what a model reading the site is told it can do here.
