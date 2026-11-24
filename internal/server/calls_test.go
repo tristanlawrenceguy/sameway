@@ -15,15 +15,20 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/twilio"
 )
 
-// fakeTwilio keeps the text messages sent.
+// fakeTwilio keeps the text messages sent and the calls made.
 type fakeTwilio struct {
 	mu    sync.Mutex
 	texts []url.Values
+	calls []url.Values
 }
 
 func (f *fakeTwilio) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if sid, token, _ := r.BasicAuth(); sid != "AC1" || token != "tok" {
 		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	if r.Method == http.MethodGet && strings.HasSuffix(r.URL.Path, "/IncomingPhoneNumbers.json") {
+		w.Write([]byte(`{"incoming_phone_numbers":[{"phone_number":"+442071234567"}]}`))
 		return
 	}
 	if r.Method == http.MethodGet { // the account, which says the token works
@@ -32,7 +37,11 @@ func (f *fakeTwilio) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	r.ParseForm()
 	f.mu.Lock()
-	f.texts = append(f.texts, r.PostForm)
+	if strings.HasSuffix(r.URL.Path, "/Calls.json") {
+		f.calls = append(f.calls, r.PostForm)
+	} else {
+		f.texts = append(f.texts, r.PostForm)
+	}
 	f.mu.Unlock()
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte(`{"sid":"SM1"}`))

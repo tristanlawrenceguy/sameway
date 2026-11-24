@@ -92,6 +92,10 @@ type Service struct {
 	// StripeKey is the owner's Stripe key, "" for none; set by the server.
 	// See payments.go.
 	StripeKey func() string
+	// Phones says whether Twilio is connected, and Phone rings a number to
+	// ask one question; both set by the server. See phone_ask.go.
+	Phones func() bool
+	Phone  func(number, who, question string) error
 	// Doors says each way in the server keeps and whether it is open, one
 	// line each, for ways_in; set by the server.
 	Doors func() []string
