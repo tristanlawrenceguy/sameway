@@ -273,6 +273,17 @@ func TestAPaymentNotPaidIsFlagged(t *testing.T) {
 	a.Records.Clock = nil
 	a.Chat.Call("payment_link", json.RawMessage(`{"what":"Gutters","amount":40}`))
 	postForm(t, h, "/proposal/"+a.Chat.Proposals()[0].ID+"/accept", nil)
+	// Disconnecting Stripe leaves a payment not yet paid unwatched: the
+	// press says so, the page says so, and so does the job, each time.
+	if page := after(t, h, postForm(t, h, "/payments/off", nil)).Body.String(); !strings.Contains(page, "1 payment not yet paid is not looked for now") {
+		t.Errorf("disconnecting says what is left unwatched: %s", truncate(page))
+	}
+	if page := get(t, h, "/payments").Body.String(); !strings.Contains(page, "1 payment not yet paid is not looked for: you won") {
+		t.Errorf("and the page keeps saying so: %s", truncate(page))
+	}
+	if err := a.Chat.FollowPayments(context.Background()); err == nil || !strings.Contains(err.Error(), "Stripe is disconnected, so 1 payment") {
+		t.Errorf("and the job: %v", err)
+	}
 	a.Chat.StripeKey = func() string { return "rk_revoked" }
 	if err := a.Chat.FollowPayments(context.Background()); err == nil || !strings.Contains(err.Error(), "Stripe did not say") {
 		t.Errorf("Stripe not answering is the job's error: %v", err)

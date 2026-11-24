@@ -27,6 +27,9 @@ func (s *Server) paymentsPage(w http.ResponseWriter, r *http.Request) {
 		s.page(w, r, "Payments", template.HTML(b.String()), pageOptions{})
 		return
 	}
+	if said := s.app.Chat.PaymentsWaiting(); said != "" {
+		b.WriteString(`<p>` + template.HTMLEscapeString(said+": you won't hear when they are paid, or if they are late, until Stripe is connected again.") + `</p>`)
+	}
 	b.WriteString(`<ol class="sw-stack"><li>In the <a class="sw-link" href="https://dashboard.stripe.com/apikeys">Stripe dashboard</a>, under API keys, create a restricted key.</li><li>Let it write Payment Links and Prices, and read Checkout Sessions; nothing else.</li><li>Paste it here.</li></ol>`)
 	b.WriteString(string(s.form(ui.Form{Action: "/payments/connect", Class: "sw-stack",
 		Body:   s.part(ui.TextField{Label: "Your Stripe key", Name: "key", Required: true, Hint: "It begins rk_. It stays on this computer, in your keys, not in the workspace."}),
@@ -56,5 +59,9 @@ func (s *Server) paymentsConnect(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) paymentsOff(w http.ResponseWriter, r *http.Request) {
 	s.keys().Save(stripeKey, "")
-	s.tellAt(w, r, outcome{Title: "Stripe disconnected", Text: "Links already made still work; no new ones are made."}, "/payments")
+	text := "Links already made still work; no new ones are made."
+	if said := s.app.Chat.PaymentsWaiting(); said != "" {
+		text += " " + strings.ToUpper(said[:1]) + said[1:] + " now: you won't hear when they are paid, or if they are late, until you connect Stripe again."
+	}
+	s.tellAt(w, r, outcome{Title: "Stripe disconnected", Text: text}, "/payments")
 }
