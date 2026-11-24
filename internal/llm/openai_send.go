@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -41,7 +40,7 @@ func (o *OpenAI) send(ctx context.Context, payload []byte, stream bool) (*http.R
 		}
 		resp, err := client.Do(req)
 		if err != nil {
-			return nil, fmt.Errorf("the AI model at %s isn't answering; it may not be running (%w)", o.BaseURL, err)
+			return nil, unreachable{o.BaseURL, err}
 		}
 		if resp.StatusCode < 400 {
 			return resp, nil
@@ -69,3 +68,18 @@ func (o *OpenAI) send(ctx context.Context, payload []byte, stream bool) (*http.R
 		}
 	}
 }
+
+// unreachable is a model server that did not answer at all, said as what
+// to do. What the system said (connection refused, actively refused, a
+// deadline) is kept beneath it for errors.Is, not shown: it tells a person
+// nothing they can act on, and it reads differently on each system.
+type unreachable struct {
+	url string
+	err error
+}
+
+func (u unreachable) Error() string {
+	return "The AI model at " + u.url + " isn't answering: it may not be running. Start it, or choose another model where the page asks for one."
+}
+
+func (u unreachable) Unwrap() error { return u.err }

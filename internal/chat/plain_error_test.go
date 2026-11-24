@@ -18,6 +18,9 @@ func TestAProgramsErrorInAPersonsWords(t *testing.T) {
 		`claude: could not read C:\Users\me\file.txt`:                 "could not read",
 		"anthropic: 401 Unauthorized: invalid x-api-key":              "401 Unauthorized: invalid x-api-key",
 		"": "",
+		// The model the person chose is named: it is what they sign in to.
+		"Claude Code on this computer is signed out. Sign in to it again, or choose another model where the page asks for one.":                            "Claude Code on this computer is signed out. Sign in to it again, or choose another model where the page asks for one.",
+		"The AI model at http://127.0.0.1:11434/v1 isn't answering: it may not be running. Start it, or choose another model where the page asks for one.": "The AI model at http://127.0.0.1:11434/v1 isn't answering: it may not be running. Start it, or choose another model where the page asks for one.",
 	} {
 		if got := chat.SanitizeError(in); got != want {
 			t.Errorf("SanitizeError(%q) = %q, want %q", in, got, want)

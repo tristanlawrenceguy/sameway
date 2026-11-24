@@ -104,6 +104,12 @@ func (c *Command) Complete(ctx context.Context, req Request) (*Response, error) 
 	var out, errs bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &out, &errs
 	if err := cmd.Run(); err != nil {
+		switch {
+		case errors.Is(err, exec.ErrNotFound):
+			return nil, fmt.Errorf("%s isn't installed on this computer. Install it, or choose another model where the page asks for one", c.who(args[0]))
+		case ctx.Err() == context.DeadlineExceeded:
+			return nil, fmt.Errorf("%s took longer than %s and was stopped. Send it again, or ask for less at once", c.who(args[0]), timeout)
+		}
 		// Claude Code says why it stopped (Not logged in) in its JSON on
 		// stdout, with nothing on stderr: the person was told only "exit
 		// status 1".
