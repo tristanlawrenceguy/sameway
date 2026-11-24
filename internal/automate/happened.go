@@ -136,7 +136,10 @@ func (s *Service) runAutomation(ctx context.Context, j automationJob) {
 		return
 	}
 	ctx = context.WithValue(context.WithValue(ctx, automationKey{}, title), triggerKey{}, j.vars)
-	r := s.runRecord(ctx, filled(rec, j.vars), "")
+	r, asked := s.unaccepted(rec) // on_its_own.go
+	if !asked {
+		r = s.runRecord(ctx, filled(rec, j.vars), "")
+	}
 	for i := range r.Changes {
 		r.Changes[i].By, r.Changes[i].Via = title, "because "+j.why
 		records.Record(s.Store, "system", r.Changes[i])
@@ -147,6 +150,9 @@ func (s *Service) runAutomation(ctx context.Context, j automationJob) {
 	}
 	if r.IsErr {
 		records.Record(s.Store, "system", records.Change{Action: "failed", Component: records.ActionType, ID: rec.ID, Detail: title + ": " + r.Text, Via: "because " + j.why})
+		return
+	}
+	if asked { // nothing was sent, so nothing follows from it
 		return
 	}
 	if kind, _ := rec.Fields["kind"].(string); kind == "message" && s.Tell != nil {
@@ -268,6 +274,9 @@ func (s *Service) RunAsWith(ctx context.Context, actor, id, canvas string, vars 
 	rec, gerr := s.Store.Get(records.ActionType, id)
 	if gerr != nil {
 		return "", "", fmt.Errorf("no action with id %s", id)
+	}
+	if r, asked := s.unaccepted(rec); asked {
+		return s.logRun(ctx, actor, r)
 	}
 	return s.logRun(ctx, actor, s.runRecord(ctx, filled(rec, vars), canvas))
 }
