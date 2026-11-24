@@ -2,6 +2,7 @@ package chat
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/mail"
 	"strings"
@@ -213,10 +214,11 @@ func (s *Service) tellByMail(p *store.Record, v records.Visitor, yes bool) {
 	}
 	root := strings.TrimPrefix(v.Login, "mail:")
 	mails := s.thread(root)
+	what, _ := p.Fields["asked"].(string)
 	if len(mails) == 0 {
+		s.notTold(v.Name, what, errors.New("their email is not here any more"))
 		return
 	}
-	what, _ := p.Fields["asked"].(string)
 	owner := s.Owner.Name
 	if owner == "" {
 		owner = "They"
@@ -241,5 +243,17 @@ func (s *Service) tellByMail(p *store.Record, v records.Visitor, yes bool) {
 	if words, _ := p.Fields["answer"].(string); words != "" { // answer_request.go: the owner's own
 		m.Text += "\n\n" + words
 	}
-	s.sent(m, root)
+	if err := s.sent(m, root); err != nil {
+		s.notTold(v.Name, what, err)
+	}
+}
+
+// notTold tells the owner an answer did not reach whoever asked by email,
+// so they do not believe it did: they write to them themselves.
+func (s *Service) notTold(who, what string, err error) {
+	said := fmt.Sprintf("Your answer to %s's request to %s was not emailed to them (%v): they do not know yet, so write to them yourself.", who, what, err)
+	s.Say(said)
+	if s.Automate != nil && s.Automate.Tell != nil {
+		s.Automate.Tell("Answer not sent", said, "/today")
+	}
 }

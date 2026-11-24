@@ -1,12 +1,14 @@
 package server_test
 
 import (
+	"errors"
 	"net/http"
 	"net/url"
 	"strings"
 	"testing"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/server"
 )
 
 // An invitation someone emails the owner is a request like any: it waits
@@ -64,5 +66,32 @@ func TestAnInvitationEmailedToTheOwnerWaitsForTheirYes(t *testing.T) {
 	wantStatus(t, postForm(t, h, "/suggested/no", url.Values{"id": {lunch}}), http.StatusSeeOther)
 	if last := sent[len(sent)-1]; !strings.Contains(string(last.Calendar), "PARTSTAT=DECLINED") || a.Chat.EventByUID("lunch@google.com") != nil {
 		t.Errorf("a no goes back declined, and nothing is made: %s", last.Calendar)
+	}
+}
+
+// An answer that cannot be emailed back is said to the owner, so they do
+// not believe whoever asked was told: they write to them themselves.
+func TestAnAnswerNotEmailedIsSaidToTheOwner(t *testing.T) {
+	t.Parallel()
+	a, h := newAppAt(t, tonight)
+	rang := make(chan string, 8)
+	h.(*server.Server).OnRing(func(title, text, _ string) { rang <- title + ": " + text })
+	a.Chat.MailFrom = func() string { return "tris+sameway@example.com" }
+	a.Chat.Mail = func(m chat.Outgoing) (string, error) { return "", errors.New("the mail server refused the login") }
+	a.Store.Create("email", map[string]any{"subject": "Invitation: Review", "from": "Pat Lee <pat@example.com>", "body": "Pat has invited you.", "message_id": "<inv1@example.com>", "from_me": false})
+	data := "BEGIN:VCALENDAR\r\nMETHOD:REQUEST\r\nBEGIN:VEVENT\r\nUID:abc@google.com\r\nSUMMARY:Review\r\nDTSTART:20260317T140000Z\r\nDTEND:20260317T150000Z\r\n" +
+		"ORGANIZER;CN=Pat Lee:mailto:pat@example.com\r\nATTENDEE;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:tris@example.com\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+	a.Chat.Invited([]byte(data), "Pat Lee <pat@example.com>", a.Chat.ThreadOf("<inv1@example.com>"), "tris@example.com")
+	ps := a.Chat.Suggestions()
+	if len(ps) != 1 {
+		t.Fatalf("it waits on Today: %d", len(ps))
+	}
+	wantStatus(t, postForm(t, h, "/suggested/yes", url.Values{"id": {ps[0].ID}}), http.StatusSeeOther)
+	got := ""
+	for len(rang) > 0 && !strings.Contains(got, "Answer not sent") {
+		got = <-rang // after the request's own ring
+	}
+	if !strings.Contains(got, "Answer not sent") || !strings.Contains(got, "was not emailed to them (the mail server refused the login): they do not know yet") {
+		t.Errorf("the owner is told: %s", got)
 	}
 }
