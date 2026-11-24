@@ -2,7 +2,7 @@
 # Ask the assistant to make one, then put it on a button, or press Run on
 # its page.
 name: action
-description: "A button that does something, pressed by you, by the assistant, on a schedule, from outside, or on its own when a record is added, comes to match or comes due: the day before each event, once a task is late, for events not made yet as for those here. A webhook calls a URL of yours (an alarm, a weather service); an mqtt action publishes to a topic on your broker (a light, a plug, a hub); a command runs a program this workspace has allowed, on this machine as you, once you have accepted the line; an arrangement lays out a page; a message says something to the assistant for you."
+description: "A button that does something, pressed by you, by the assistant, on a schedule, from outside, or on its own when a record is added, comes to match or comes due: the day before each event, once a task is late, for events not made yet as for those here. A webhook calls a URL of yours (an alarm, a weather service); an mqtt action publishes to a topic on your broker (a light, a plug, a hub); a command runs a program this workspace has allowed, on this machine as you, once you have accepted the line; an arrangement lays out a page; a message says something to the assistant for you; a watch reads a web page on its schedule and tells you when it shows what you wait for."
 title: title
 provided: true
 fields:
@@ -14,13 +14,13 @@ fields:
   kind:
     label: What it does
     type: enum
-    values: [webhook, mqtt, command, arrangement, message, classify, suggest]
-    labels: {webhook: Call a web address, mqtt: Tell a device, command: Run a program on this computer, arrangement: Set up a page, message: Ask the assistant, classify: Tag what set it off, suggest: Suggest a record from what set it off}
+    values: [webhook, mqtt, command, arrangement, message, classify, suggest, watch]
+    labels: {webhook: Call a web address, mqtt: Tell a device, command: Run a program on this computer, arrangement: Set up a page, message: Ask the assistant, classify: Tag what set it off, suggest: Suggest a record from what set it off, watch: Watch a web page}
     default: webhook
   url:
     label: URL
     type: string
-    description: For a webhook, the address to call, starting with http:// or https://.
+    description: For a webhook, the address to call; for a watch, the page to read; starting with http:// or https://.
   method:
     label: HTTP method
     type: enum
@@ -29,6 +29,20 @@ fields:
   body:
     type: text
     description: For a webhook, what to send. JSON is sent as JSON, anything else as text.
+  watch_for:
+    label: Tell me when it shows
+    type: text
+    description: "For a watch action, what to wait for on the page, in the person's words: a price under 200, a place free in March, the form open again. On its schedule the page is read, and the person is told once when it comes to show this, and again only after it stopped and came back. Accepted once, as it reaches out on its own; nothing of theirs is sent."
+  seen:
+    type: string
+    hidden: true
+    readonly: true
+    description: For a watch action, what the page was when last read, kept by the system, so an unchanged page is not judged again.
+  there:
+    type: bool
+    readonly: true
+    default: false
+    description: For a watch action, whether the page showed what it waits for when last read, kept by the system.
   topic:
     type: string
     description: "For an mqtt action, the topic to publish to: zigbee2mqtt/kitchen_light/set, or a device's set topic."
