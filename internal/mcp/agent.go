@@ -18,7 +18,8 @@ import (
 // from ChatGPT, and either from themselves and from the assistant in the
 // app. Over stdio the connection lasts as long as the process; over HTTP
 // the client is given an Mcp-Session-Id and sends it back, as Streamable
-// HTTP clients do. A client that says nothing, and sends no
+// HTTP clients do. A client on MCP 2026-07-28 says it on every request
+// instead, in _meta (modern.go). A client that says nothing, and sends no
 // X-Sameway-Agent header, is "An agent".
 
 // conn is one client: what it calls itself.
@@ -50,22 +51,33 @@ func connOf(ctx context.Context) *conn {
 // what the person chose to call it.
 func (c *conn) introduce(params json.RawMessage) {
 	var p struct {
-		ClientInfo struct {
-			Name  string `json:"name"`
-			Title string `json:"title"`
-		} `json:"clientInfo"`
+		ClientInfo clientInfo `json:"clientInfo"`
 	}
 	json.Unmarshal(params, &p)
-	name := p.ClientInfo.Title
+	c.call(p.ClientInfo)
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.fresh = true
+}
+
+// clientInfo is what a client says it is.
+type clientInfo struct {
+	Name  string `json:"name"`
+	Title string `json:"title"`
+}
+
+// call names the client by its title, or its name, unless it has a name
+// already.
+func (c *conn) call(info clientInfo) {
+	name := info.Title
 	if name == "" {
-		name = p.ClientInfo.Name
+		name = info.Name
 	}
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.name == "" {
 		c.name = records.AgentName(name)
 	}
-	c.fresh = true
 }
 
 func (c *conn) agent() records.Agent {
