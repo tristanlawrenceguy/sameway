@@ -238,7 +238,7 @@ func (s *Service) tellByMail(p *store.Record, v records.Visitor, yes bool) {
 			}
 		}
 	}
-	if words, _ := p.Fields["answer"].(string); words != "" { // route_requests.go: the owner's own
+	if words, _ := p.Fields["answer"].(string); words != "" { // answer_request.go: the owner's own
 		m.Text += "\n\n" + words
 	}
 	s.sent(m, root)

@@ -31,7 +31,7 @@ func TestHowPeopleReachYouIsOneQuestion(t *testing.T) {
 	a.Chat.For(records.Visitor{Person: sam.ID, Name: "Sam", Access: records.View}).Call("create_record", json.RawMessage(`{"type":"note","fields":{"title":"Milk"}}`))
 
 	text, isErr := a.Chat.Call("ways_in", json.RawMessage(`{}`))
-	for _, want := range []string{"Email: not connected", "Published pages: notes", "Booking link: on", "Telegram: not connected", "Other agents: find you", "Standing yes: none",
+	for _, want := range []string{"Email: not connected", "Published pages: notes", "Booking link: on", "Telegram: not connected", "Other agents: find you",
 		"Through your booking link: 1 requests in 30 days, 1 answered, usually within", "Asked through the assistant: 1 requests in 30 days, 0 answered, 1 waiting"} {
 		if isErr || !strings.Contains(text, want) {
 			t.Errorf("it says %q:\n%s", want, text)

@@ -59,7 +59,3 @@ fields:
   answer:
     type: text
     description: For someone's request, the owner's own words told with the answer, such as why, or another time.
-  for:
-    type: ref
-    to: person
-    description: For someone's request, who the owner's words passed it to, to answer as the owner would.
