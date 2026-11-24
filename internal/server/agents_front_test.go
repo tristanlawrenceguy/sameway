@@ -70,3 +70,53 @@ func TestOtherAgentsFindAndAskAPublishedSameway(t *testing.T) {
 		t.Errorf("another method is said to be unknown: %s", body)
 	}
 }
+
+// An A2A 1.0 client finds the same agent on the same card, among its
+// supported interfaces, and asks with SendMessage: the answer comes back in
+// 1.0's shape, and what it asks to be made still waits for the owner. A
+// version this agent does not speak is said so.
+func TestA2AVersionOneClientsAskToo(t *testing.T) {
+	t.Parallel()
+	a, h := newAppAt(t, tonight)
+	internet := h.(*server.Server).Public(nil)
+	a.Workspace.Config.Publish.Types = "note"
+
+	var card struct {
+		SupportedInterfaces []struct{ URL, ProtocolBinding, ProtocolVersion string }
+	}
+	json.Unmarshal(public(t, internet, http.MethodGet, "/.well-known/agent-card.json", "").Body.Bytes(), &card)
+	if len(card.SupportedInterfaces) != 2 || card.SupportedInterfaces[0].ProtocolVersion != "1.0" || card.SupportedInterfaces[0].ProtocolBinding != "JSONRPC" || card.SupportedInterfaces[0].URL != "https://example.com/a2a" {
+		t.Fatalf("the card offers 1.0 first, at the same address: %+v", card)
+	}
+
+	a.Chat.Provider = &scripted{steps: []*llm.Response{
+		toolCall("create_record", map[string]any{"type": "event", "fields": map[string]any{"title": "Meeting with Sam", "starts": "2026-03-17T15:00:00Z"}}),
+		{Text: "I have asked the owner for Tuesday at 3pm."},
+	}}
+	ask := `{"jsonrpc":"2.0","id":"a","method":"SendMessage","params":{"message":{"role":"ROLE_USER","messageId":"m1","parts":[{"text":"Can we meet Tuesday at 3pm?"}],"metadata":{"who":"Sam, sam@example.com"}}}}`
+	var got struct {
+		ID     string
+		Result struct {
+			Message struct {
+				Role  string
+				Parts []map[string]any
+			}
+		}
+	}
+	res := public(t, internet, http.MethodPost, "/a2a?A2A-Version=1.0", ask)
+	json.Unmarshal(res.Body.Bytes(), &got)
+	m := got.Result.Message
+	if got.ID != "a" || m.Role != "ROLE_AGENT" || len(m.Parts) != 2 || !strings.Contains(m.Parts[0]["text"].(string), "https://example.com/request/") ||
+		m.Parts[0]["kind"] != nil || m.Parts[1]["data"] == nil || m.Parts[1]["mediaType"] != "application/json" {
+		t.Fatalf("a 1.0 message is answered in 1.0's shape: %s", res.Body)
+	}
+	if asks := a.Chat.Suggestions(); len(asks) != 1 {
+		t.Fatalf("what it asked for waits for the owner: %+v", asks)
+	}
+	if n, _ := a.Store.Count("event"); n != 0 {
+		t.Error("and nothing is made")
+	}
+	if body := public(t, internet, http.MethodPost, "/a2a?A2A-Version=2.0", ask).Body.String(); !strings.Contains(body, "-32009") {
+		t.Errorf("a version it does not speak is said so: %s", body)
+	}
+}
