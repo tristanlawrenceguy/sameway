@@ -1,0 +1,42 @@
+name: smoke-mac
+
+# The first run on a Mac, as the app is made and opened (smoke.yml has
+# Linux and Windows). Mac runners are scarce, and a job that waits too
+# long for one is cancelled before it starts, which reads as a failure:
+# so a pull request runs it only when it changes what makes or starts the
+# app, and main runs it on every push.
+
+on:
+  pull_request:
+    paths:
+      - "tools/package/**"
+      - "cmd/sameway/**"
+      - "internal/app/**"
+      - "go.mod"
+      - "go.sum"
+      - ".github/workflows/smoke-mac.yml"
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  first-run:
+    runs-on: macos-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - name: Build as a release does
+        env:
+          CGO_ENABLED: "0"
+        run: go build -ldflags "-s -w" -o sameway-bin ./cmd/sameway
+      - name: Mac, as the app is made and opened
+        run: |
+          tools/package/macapp.sh sameway-bin 0.0.0 "$PWD/Sameway.app"
+          codesign --verify --deep --strict --verbose=2 Sameway.app
+          codesign -dv Sameway.app 2>&1 | grep -q "Identifier=io.github.tristanlawrenceguy.sameway"
+          tools/package/firstrun.sh "$PWD/Sameway.app/Contents/MacOS/sameway"
