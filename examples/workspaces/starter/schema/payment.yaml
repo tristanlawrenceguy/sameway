@@ -3,7 +3,7 @@
 # Provided with every workspace; Sameway reads Stripe now and then and
 # marks one paid, so an action can follow it.
 name: payment
-description: "A payment someone is asked for, through a link to pay the owner's own Stripe account (payment_link): what for, how much, the link, and whether it is paid, which Sameway reads from Stripe now and then, or late, not paid in 14 days. To act once one is paid, make an action that waits for a payment to come to paid=true."
+description: "A payment someone is asked for, through a link to pay the owner's own Stripe account (payment_link): what for, how much, the link, and whether it is paid, which Sameway reads from Stripe now and then, or late, not paid in 14 days. To act once one is paid, make an action that waits for a payment to come to paid=true; to chase one not paid, one that waits for late=true, such as a message action asking the assistant to email {{asked_of}} a reminder with {{link}}, which the owner says yes to as to any email."
 title: what
 provided: true
 owners: true
