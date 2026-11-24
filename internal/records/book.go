@@ -15,6 +15,9 @@ type Book struct {
 	// SetSetting changes one line of workspace.yaml, when there is one:
 	// the pace, which lists show, the model, the name. Set by the app.
 	SetSetting func(key, value string) error
+	// Switch turns a device on or off through the home's hub, so one
+	// switched is undone by switching it back; set by the app.
+	Switch func(id string, on bool) (*Change, error)
 	// Setting reads one line of workspace.yaml as it is now, for the
 	// questions that say what would change from what; set by the app.
 	Setting func(key string) string

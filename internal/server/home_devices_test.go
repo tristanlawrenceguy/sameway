@@ -2,6 +2,7 @@ package server_test
 
 import (
 	"context"
+	"encoding/json"
 	"net/url"
 	"strings"
 	"sync"
@@ -88,8 +89,27 @@ func TestAHubFoundIsOnePressAndALightOneMore(t *testing.T) {
 	}
 	wantStatus(t, postForm(t, h, "/devices/"+light.ID+"/switch", url.Values{"to": {"off"}}), 303)
 	mu.Lock()
-	defer mu.Unlock()
 	if strings.Join(sent, "|") != `zigbee2mqtt/kitchen_light/set {"state":"OFF"}` {
 		t.Errorf("Zigbee2MQTT's set message is sent: %q", sent)
+	}
+	mu.Unlock()
+
+	// Switched by a press or by the assistant, it is undone by switching
+	// it back, and that undone puts it as it was.
+	if _, isErr := a.Chat.Call("switch_device", json.RawMessage(`{"id":"`+light.ID+`","to":"on"}`)); isErr {
+		t.Fatal("the assistant switches it")
+	}
+	log := func() string { return a.Records.Recent(1)[0].Fields["summary"].(string) }
+	if err := a.Records.UndoAs("human", ""); err != nil || !strings.Contains(log(), "undid: Assistant switched on device kitchen light") {
+		t.Fatalf("its switch is undone: %q %v", log(), err)
+	}
+	if err := a.Records.UndoAs("human", ""); err != nil || !strings.Contains(log(), "put back: Assistant switched on device kitchen light") {
+		t.Fatalf("and that undo too: %q %v", log(), err)
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	want := `zigbee2mqtt/kitchen_light/set {"state":"OFF"}|zigbee2mqtt/kitchen_light/set {"state":"ON"}|zigbee2mqtt/kitchen_light/set {"state":"OFF"}|zigbee2mqtt/kitchen_light/set {"state":"ON"}`
+	if strings.Join(sent, "|") != want {
+		t.Errorf("each sent through the hub: %q", sent)
 	}
 }

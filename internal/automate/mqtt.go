@@ -39,25 +39,28 @@ func (s *Service) mqttAction(_ context.Context, rec *store.Record, title string)
 // SwitchDevice turns a device on or off by the way its topic is changed
 // (devices/switch.go), and says what was asked. The device says its new
 // state itself, as it does after any change, so nothing is written here.
-func (s *Service) SwitchDevice(id string, on bool) (string, error) {
+// It returns the change it made, for the log, which undoes it by switching
+// the device back.
+func (s *Service) SwitchDevice(id string, on bool) (string, *records.Change, error) {
 	rec, err := s.Store.Get(devices.DeviceType, id)
 	if err != nil {
-		return "", fmt.Errorf("there is no device %q", id)
+		return "", nil, fmt.Errorf("there is no device %q", id)
 	}
 	name, _ := rec.Fields["name"].(string)
 	topic, payload, ok := devices.Command(rec.Fields, on)
 	if !ok {
-		return "", fmt.Errorf("%s does not say it switches on and off in a way Sameway knows; an mqtt action can send it what its maker says", name)
+		return "", nil, fmt.Errorf("%s does not say it switches on and off in a way Sameway knows; an mqtt action can send it what its maker says", name)
 	}
 	if s.Publish == nil {
-		return "", fmt.Errorf("your hub is not connected: Workspaces offers the one Sameway finds on your Wi-Fi")
+		return "", nil, fmt.Errorf("your hub is not connected: Workspaces offers the one Sameway finds on your Wi-Fi")
 	}
 	if err := s.Publish(topic, payload); err != nil {
-		return "", fmt.Errorf("%s was not reached: %v", name, err)
+		return "", nil, fmt.Errorf("%s was not reached: %v", name, err)
 	}
 	word := "off"
 	if on {
 		word = "on"
 	}
-	return fmt.Sprintf("Asked %s to turn %s", name, word), nil
+	return fmt.Sprintf("Asked %s to turn %s", name, word),
+		&records.Change{Action: "switched " + word, Component: devices.DeviceType, ID: id, Detail: name, Href: relate.Page(devices.DeviceType, id)}, nil
 }

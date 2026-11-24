@@ -107,6 +107,7 @@ func Open(dir string, o Options) (*App, error) {
 	a.Automate = &automate.Service{Book: a.Records, Chat: a.Chat, Model: func() llm.Provider { return a.Chat.Provider },
 		Allow: allowList(ws.Config.Actions.Allow), Workdir: ws.Dir, HTTP: o.HTTP}
 	a.Chat.Automate = a.Automate
+	a.Records.Switch = a.switchDevice
 	a.Records.SetSetting = func(key, value string) error {
 		if err := ws.Set(key, value); err != nil {
 			return err
@@ -125,6 +126,13 @@ func Open(dir string, o Options) (*App, error) {
 	a.Chat.Update, a.Chat.Workdir, a.Chat.Ollama = update.Updater{}.Run, ws.Dir, o.Ollama
 	a.Jobs = runner.New(runner.Clock{Now: a.Now, After: o.After})
 	return a, nil
+}
+
+// switchDevice turns a device on or off through the hub, so one switched
+// is undone by switching it back.
+func (a *App) switchDevice(id string, on bool) (*records.Change, error) {
+	_, c, err := a.Automate.SwitchDevice(id, on)
+	return c, err
 }
 
 // Close releases the store, and with it what was kept for it.

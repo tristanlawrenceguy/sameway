@@ -20,11 +20,11 @@ var deviceOp = Op{Title: "Turn a device on or off", Traits: Traits{Idempotent: t
 		if a.To != "on" && a.To != "off" {
 			return fail("to is on or off, not %q", a.To)
 		}
-		said, err := s.Automate.SwitchDevice(a.ID, a.To == "on")
+		said, change, err := s.Automate.SwitchDevice(a.ID, a.To == "on")
 		if err != nil {
 			return fail("%v", err)
 		}
-		return toolResult{text: said + ". Its state changes when it answers; get_record reads it."}
+		return toolResult{text: said + ". Its state changes when it answers; get_record reads it.", change: change}
 	},
 	Tool: llm.Tool{
 		Name:        "switch_device",

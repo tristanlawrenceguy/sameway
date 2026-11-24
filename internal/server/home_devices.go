@@ -179,10 +179,11 @@ func (s *Server) deviceSwitched(w http.ResponseWriter, r *http.Request) {
 		s.failed(w, r, "Not switched", errors.New("say on or off"), back)
 		return
 	}
-	said, err := s.app.Automate.SwitchDevice(id, to == "on")
+	said, change, err := s.app.Automate.SwitchDevice(id, to == "on")
 	if err != nil {
 		s.failed(w, r, "Not switched", err, back)
 		return
 	}
+	s.record(r, *change)
 	s.tell(w, r, outcome{Title: said, Text: "Its state here changes when it answers."}, back)
 }
