@@ -68,13 +68,16 @@ func (s *Service) paymentOf(raw json.RawMessage) (paymentArgs, error) {
 	// Rounded as Stripe takes it, so the question says what is paid.
 	scale := math.Pow10(stripe.Decimals(p.Currency))
 	p.Amount = math.Round(p.Amount*scale) / scale
+	most, hasMax := s.paymentsMax(p.Currency)
 	switch {
 	case p.What == "" || p.Amount <= 0:
 		return p, fmt.Errorf("say what it is for and how much")
 	case len(p.Currency) != 3:
 		return p, fmt.Errorf("say the currency as three letters, such as gbp")
-	case p.Amount > s.paymentsMax():
-		return p, fmt.Errorf("%s is above the most one link may ask for (%s, set_setting payments.max); nothing was put to the person", Money(p.Amount, p.Currency), fmt.Sprint(s.paymentsMax()))
+	case !hasMax:
+		return p, fmt.Errorf("payments.max sets no most for %s (it is %q); nothing was put to the person, who can set one for it", strings.ToUpper(p.Currency), s.setting("payments.max"))
+	case p.Amount > most:
+		return p, fmt.Errorf("%s is above the most one link may ask for (%s, set_setting payments.max); nothing was put to the person", Money(p.Amount, p.Currency), Money(most, p.Currency))
 	case s.StripeKey != nil && s.StripeKey() == "":
 		return p, fmt.Errorf("no Stripe account is connected: the person connects theirs on Payments")
 	}
@@ -114,13 +117,31 @@ func (s *Service) makePayment(p paymentArgs, of string) (*store.Record, error) {
 	return s.put(records.Op{Type: PaymentType, After: fields})
 }
 
-// paymentsMax is the most one link may ask for, in whole units: what the
-// owner set, or 500, so a slip of a zero is refused, not asked.
-func (s *Service) paymentsMax() float64 {
-	if n, err := strconv.ParseFloat(strings.TrimSpace(s.setting("payments.max")), 64); err == nil && n > 0 {
-		return n
+// paymentsMax is the most one link may ask for in a currency, in whole
+// units, so a slip of a zero is refused, not asked: what the owner set for
+// that currency, or for any (a number alone), or 500 when they set none.
+// It is false when they named currencies and not this one.
+func (s *Service) paymentsMax(currency string) (float64, bool) {
+	set := strings.TrimSpace(s.setting("payments.max"))
+	if set == "" {
+		return 500, true
 	}
-	return 500
+	most, any := 0.0, false
+	for _, part := range strings.Split(set, ",") {
+		f := strings.Fields(part)
+		if len(f) == 0 {
+			continue
+		}
+		n, err := strconv.ParseFloat(f[0], 64)
+		switch {
+		case err != nil || n <= 0:
+		case len(f) == 1:
+			most, any = n, true
+		case strings.EqualFold(f[1], currency):
+			return n, true
+		}
+	}
+	return most, any
 }
 
 func (s *Service) stripe() stripe.Account {
@@ -137,8 +158,17 @@ func Money(amount float64, currency string) string {
 	return fmt.Sprintf("%.*f %s", stripe.Decimals(currency), amount, strings.ToUpper(currency))
 }
 
+// A payment is followed for 90 days. One not paid in 14 is marked late,
+// and the owner told once, with the day it stops being followed, so money
+// missing is never missed in silence.
+const (
+	paymentLate     = 14 * 24 * time.Hour
+	paymentFollowed = 90 * 24 * time.Hour
+)
+
 // FollowPayments marks each payment Stripe says is paid, and tells the
-// owner. It is a background job's work.
+// owner; and each one late, and tells them that. It is a background job's
+// work, and Stripe not answering is its error, so the job says so.
 func (s *Service) FollowPayments(ctx context.Context) error {
 	if !s.hasTypes(PaymentType) || s.StripeKey == nil || s.StripeKey() == "" {
 		return nil
@@ -147,28 +177,61 @@ func (s *Service) FollowPayments(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	var failed error
 	for _, r := range recs {
 		id, _ := r.Fields["stripe"].(string)
-		if paid, _ := r.Fields["paid"].(bool); paid || id == "" || s.Now().Sub(r.CreatedAt) > 90*24*time.Hour {
+		age := s.Now().Sub(r.CreatedAt)
+		if paid, _ := r.Fields["paid"].(bool); paid || id == "" || age > paymentFollowed {
 			continue
 		}
 		amount, _ := r.Fields["amount"].(float64)
-		if yes, err := s.stripe().Paid(ctx, id, amount, fmt.Sprint(r.Fields["currency"])); err != nil || !yes {
+		what, _ := r.Fields["what"].(string)
+		money := Money(amount, fmt.Sprint(r.Fields["currency"]))
+		yes, err := s.stripe().Paid(ctx, id, amount, fmt.Sprint(r.Fields["currency"]))
+		if err != nil {
+			failed = err
 			continue
 		}
-		done, err := s.Apply(records.Op{Type: PaymentType, ID: r.ID, After: map[string]any{"paid": true}})
+		if !yes {
+			if late, _ := r.Fields["late"].(bool); !late && age > paymentLate {
+				s.late(r, money, what)
+			}
+			continue
+		}
+		done, err := s.Apply(records.Op{Type: PaymentType, ID: r.ID, After: map[string]any{"paid": true, "late": false}})
 		if err != nil {
 			continue
 		}
-		what, _ := r.Fields["what"].(string)
-		said := fmt.Sprintf("Paid: %s for %q.", Money(amount, fmt.Sprint(r.Fields["currency"])), what)
+		said := fmt.Sprintf("Paid: %s for %q.", money, what)
 		records.Record(s.Store, "system", records.Change{Action: "paid", Component: PaymentType, ID: r.ID, Detail: what, Ops: done})
 		s.Say(said)
 		if s.Automate != nil && s.Automate.Tell != nil {
 			s.Automate.Tell("You were paid", said, "/t/"+PaymentType+"/"+r.ID)
 		}
 	}
+	if failed != nil {
+		return fmt.Errorf("Stripe did not say whether payments are paid: %v", failed)
+	}
 	return nil
+}
+
+// late marks a payment not paid in time, and tells the owner.
+func (s *Service) late(r *store.Record, money, what string) {
+	done, err := s.Apply(records.Op{Type: PaymentType, ID: r.ID, After: map[string]any{"late": true}})
+	if err != nil {
+		return
+	}
+	of := ""
+	if who, _ := r.Fields["asked_of"].(string); who != "" {
+		of = " asked of " + who
+	}
+	said := fmt.Sprintf("Not paid yet: %s for %q%s, %d days ago. Sameway looks for it until %s.",
+		money, what, of, int(s.Now().Sub(r.CreatedAt).Hours()/24), r.CreatedAt.Add(paymentFollowed).Format("2 January"))
+	records.Record(s.Store, "system", records.Change{Action: "marked late", Component: PaymentType, ID: r.ID, Detail: what, Ops: done})
+	s.Say(said)
+	if s.Automate != nil && s.Automate.Tell != nil {
+		s.Automate.Tell("Not paid yet", said, "/t/"+PaymentType+"/"+r.ID)
+	}
 }
 
 // stripeLink finds addresses to pay at, as Stripe gives them, in any

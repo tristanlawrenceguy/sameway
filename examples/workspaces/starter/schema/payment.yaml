@@ -3,7 +3,7 @@
 # Provided with every workspace; Sameway reads Stripe now and then and
 # marks one paid, so an action can follow it.
 name: payment
-description: "A payment someone is asked for, through a link to pay the owner's own Stripe account (payment_link): what for, how much, the link, and whether it is paid, which Sameway reads from Stripe now and then. To act once one is paid, make an action that waits for a payment to come to paid=true."
+description: "A payment someone is asked for, through a link to pay the owner's own Stripe account (payment_link): what for, how much, the link, and whether it is paid, which Sameway reads from Stripe now and then, or late, not paid in 14 days. To act once one is paid, make an action that waits for a payment to come to paid=true."
 title: what
 provided: true
 owners: true
@@ -39,6 +39,11 @@ fields:
     default: false
     readonly: true
     description: Paid, as Stripe says, kept by the system.
+  late:
+    type: bool
+    default: false
+    readonly: true
+    description: Not paid 14 days after it was made, kept by the system; the owner is told, and it clears once paid.
   stripe:
     type: string
     hidden: true

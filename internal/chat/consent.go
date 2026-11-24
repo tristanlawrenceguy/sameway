@@ -55,7 +55,7 @@ var outward = map[string]func(now, next string, s *Service) question{
 	},
 	"payments.max": func(now, next string, _ *Service) question { // payments.go
 		return question{"Let one link to pay ask for up to " + next + "?",
-			"A link the assistant makes could ask for as much as " + next + " in its currency (now: " + orNone(now) + ", or 500 unset). Each link still waits for your press.",
+			"A link the assistant makes could ask for as much as " + next + " (now: " + orNone(now) + ", or 500 in any currency unset). A number alone is in any currency. Each link still waits for your press.",
 			"Yes, up to " + next, "No, keep it"}
 	},
 	"tailnet.peers": func(now, next string, _ *Service) question {

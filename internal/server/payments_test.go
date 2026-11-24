@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
@@ -198,5 +199,82 @@ func TestAnEmailAsksToBePaid(t *testing.T) {
 	}
 	if page := get(t, h, "/t/proposal/"+ps[0].ID).Body.String(); !strings.Contains(page, "cannot be undone") {
 		t.Errorf("an email's yes is marked as what cannot be taken back: %s", truncate(page))
+	}
+}
+
+// Money missing is never missed in silence: a payment not paid in 14 days
+// is marked late and the owner told once, with the day Sameway stops
+// looking; paid later, it is no longer late. Stripe not answering is the
+// job's error. The most a link may ask for can be one for each currency,
+// and a currency it does not name is refused.
+func TestAPaymentNotPaidIsFlagged(t *testing.T) {
+	t.Parallel()
+	a, h := newApp(t)
+	stripe := &fakeStripe{}
+	a.Automate.HTTP = &http.Client{Transport: served{stripe}}
+	rang := make(chan string, 4)
+	h.(*server.Server).OnRing(func(title, text, _ string) { rang <- title + ": " + text })
+	postForm(t, h, "/payments/connect", url.Values{"key": {"rk_test_ok"}})
+
+	if err := a.Records.SetSetting("payments.max", "50 kwd, 800 gbp"); err != nil {
+		t.Fatal(err)
+	}
+	if text, isErr := a.Chat.Call("payment_link", json.RawMessage(`{"what":"Rent","amount":60,"currency":"kwd"}`)); !isErr || !strings.Contains(text, "above the most") || !strings.Contains(text, "50.00 KWD") {
+		t.Errorf("each currency has its own most: %s", text)
+	}
+	if text, isErr := a.Chat.Call("payment_link", json.RawMessage(`{"what":"Rent","amount":60,"currency":"eur"}`)); !isErr || !strings.Contains(text, "no most for EUR") {
+		t.Errorf("a currency not named is refused: %s", text)
+	}
+	if err := a.Records.SetSetting("payments.max", "lots"); err == nil {
+		t.Error("a most that is not one is refused")
+	}
+	a.Chat.Call("payment_link", json.RawMessage(`{"what":"Boiler service","amount":600}`))
+	ps := a.Chat.Proposals()
+	if len(ps) != 1 {
+		t.Fatalf("up to the most is asked: %+v", ps)
+	}
+	postForm(t, h, "/proposal/"+ps[0].ID+"/accept", nil)
+	pays, _ := a.Store.List("payment", store.ListOptions{})
+	if len(pays) != 1 {
+		t.Fatalf("made: %+v", pays)
+	}
+
+	now := pays[0].CreatedAt
+	a.Records.Clock = func() time.Time { return now }
+	follow := func(after time.Duration) {
+		now = pays[0].CreatedAt.Add(after)
+		if err := a.Chat.FollowPayments(context.Background()); err != nil {
+			t.Fatal(err)
+		}
+	}
+	follow(13 * 24 * time.Hour)
+	if p, _ := a.Store.Get("payment", pays[0].ID); p.Fields["late"] == true || len(rang) != 0 {
+		t.Fatal("not late before 14 days")
+	}
+	follow(15 * 24 * time.Hour)
+	if p, _ := a.Store.Get("payment", pays[0].ID); p.Fields["late"] != true {
+		t.Fatal("marked late after 14 days")
+	}
+	if got := <-rang; !strings.Contains(got, `Not paid yet: 600.00 GBP for "Boiler service", 15 days ago. Sameway looks for it until `) {
+		t.Errorf("and the owner told: %s", got)
+	}
+	follow(16 * 24 * time.Hour)
+	if len(rang) != 0 {
+		t.Errorf("once: %s", <-rang)
+	}
+	stripe.mu.Lock()
+	stripe.paid = 60000
+	stripe.mu.Unlock()
+	follow(20 * 24 * time.Hour)
+	if p, _ := a.Store.Get("payment", pays[0].ID); p.Fields["paid"] != true || p.Fields["late"] == true {
+		t.Errorf("paid later, it is no longer late: %v", p.Fields)
+	}
+
+	a.Records.Clock = nil
+	a.Chat.Call("payment_link", json.RawMessage(`{"what":"Gutters","amount":40}`))
+	postForm(t, h, "/proposal/"+a.Chat.Proposals()[0].ID+"/accept", nil)
+	a.Chat.StripeKey = func() string { return "rk_revoked" }
+	if err := a.Chat.FollowPayments(context.Background()); err == nil || !strings.Contains(err.Error(), "Stripe did not say") {
+		t.Errorf("Stripe not answering is the job's error: %v", err)
 	}
 }
