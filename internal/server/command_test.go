@@ -69,6 +69,17 @@ func TestACommandButtonAsksOnceThenRuns(t *testing.T) {
 	defer remote.Close()
 	a.Automate.HTTP = remote.Client()
 	wantStatus(t, postJSON(t, h, http.MethodPost, "/api/action", map[string]any{"title": "Alarm", "url": remote.URL, "trigger": "alarm-word"}), http.StatusCreated)
+	// Sending on its own, it is accepted once first, as a command is.
+	rec = postJSON(t, h, http.MethodPost, "/hook/alarm-word", nil)
+	wantStatus(t, rec, http.StatusOK)
+	if !strings.Contains(rec.Body.String(), "waiting_for") || calls != 0 {
+		t.Fatalf("a trigger cannot send for a webhook not accepted yet, got %d calls: %s", calls, rec.Body.String())
+	}
+	ps := a.Chat.Proposals()
+	if len(ps) != 1 {
+		t.Fatalf("the owner is asked once: %d", len(ps))
+	}
+	wantStatus(t, postForm(t, h, "/proposal/"+ps[0].ID+"/accept", url.Values{"from": {"/"}}), http.StatusSeeOther)
 	wantStatus(t, postJSON(t, h, http.MethodPost, "/hook/alarm-word", nil), http.StatusOK)
 	if calls != 1 {
 		t.Errorf("the trigger should call the webhook once, got %d", calls)

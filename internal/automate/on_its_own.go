@@ -51,7 +51,7 @@ func (s *Service) unaccepted(rec *store.Record) (Result, bool) {
 	}
 	title, _ := rec.Fields["title"].(string)
 	if s.asking(rec.ID) {
-		return fail("%s has not been accepted to send on its own yet, so nothing was sent; the question is waiting for the owner", title), true
+		return Result{Text: title + " has not been accepted to send on its own yet, so nothing was sent; the question is waiting for the owner"}, true
 	}
 	var q Question
 	if rec.Fields["kind"] == "mqtt" {
@@ -73,9 +73,11 @@ func (s *Service) unaccepted(rec *store.Record) (Result, bool) {
 		q = Question{"Let your “" + title + "” button send to " + hostOf(to) + " on its own?",
 			detail + " Once sent, it can't be unsent.", "Yes, let it", "No, don't"}
 	}
+	// Waiting for a yes is not a failure, as a command's is not: a hook
+	// that set it off is told it waits (waiting_for), and the schedule
+	// logs no error each hour it is still waiting.
 	r := s.Chat.Ask(q, map[string]any{"tool": "accept_action", "id": rec.ID})
 	if !r.IsErr {
-		r.IsErr = true
 		r.Text = title + " has not been accepted to send on its own yet, so nothing was sent; " + r.Text
 	}
 	return r, true

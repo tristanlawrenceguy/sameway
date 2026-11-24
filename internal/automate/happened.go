@@ -152,6 +152,9 @@ func (s *Service) runAutomation(ctx context.Context, j automationJob) {
 		records.Record(s.Store, "system", records.Change{Action: "failed", Component: records.ActionType, ID: rec.ID, Detail: title + ": " + r.Text, Via: "because " + j.why})
 		return
 	}
+	if asked { // nothing was sent, so nothing follows from it
+		return
+	}
 	if kind, _ := rec.Fields["kind"].(string); kind == "message" && s.Tell != nil {
 		s.Tell(title, "The assistant did this on its own because "+j.why+". Its reply is in the conversation.", "/chat")
 	}
