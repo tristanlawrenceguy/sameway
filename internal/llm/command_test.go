@@ -119,3 +119,14 @@ func TestACommandThatStopsSaysWhy(t *testing.T) {
 		t.Errorf("a command that stops says why: %v", err)
 	}
 }
+
+// Claude Code not on this computer says so and what to do, not only that
+// it did not answer.
+func TestACommandNotInstalledSaysSo(t *testing.T) {
+	t.Parallel()
+	c := &llm.Command{Template: "claude-not-here-" + t.Name() + " -p", Workspace: t.TempDir()}
+	_, err := c.Complete(context.Background(), llm.Request{Messages: []llm.Message{{Role: llm.RoleUser, Content: "hello"}}})
+	if err == nil || !strings.Contains(err.Error(), "isn't installed on this computer. Install it, or choose another model") {
+		t.Errorf("a program not installed says so: %v", err)
+	}
+}

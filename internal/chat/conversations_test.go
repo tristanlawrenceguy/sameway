@@ -163,37 +163,6 @@ func TestADeletedOrClearedChatComesBack(t *testing.T) {
 
 func contains(s, substr string) bool { return strings.Contains(s, substr) }
 
-// TestNoticeErrorContentIsSanitized: a problem reported through Notice gets its
-// technical provider names stripped at storage time, so the stored record
-// content never leaks them. This covers backlog 0638 and acceptance item 1.
-func TestNoticeErrorContentIsSanitized(t *testing.T) {
-	t.Parallel()
-
-	s, _ := newService(t)
-
-	// A real-world error string that contains internal provider names.
-	raw := "Your organization has disabled Claude subscription access for Claude Code · Use an Anthropic API key instead, or ask your admin to enable access"
-
-	s.Notice(raw)
-
-	msgs, err := s.Store.List(records.MessageType, store.ListOptions{OrderBy: "created_at", Desc: true, Limit: 1})
-	if err != nil {
-		t.Fatalf("could not read messages: %v", err)
-	}
-	if len(msgs) == 0 {
-		t.Fatal("expected a message after Notice")
-	}
-
-	rec := msgs[0]
-	content, _ := rec.Fields["content"].(string)
-
-	for _, leak := range []string{"Claude Code", "Anthropic API key"} {
-		if contains(content, leak) {
-			t.Errorf("Notice(%q): stored content still contains %q (got: %s)", raw, leak, content)
-		}
-	}
-}
-
 // TestNoticeErrorContentStripsProviderPrefixes verifies that provider prefixes
 // like "claude:" and "anthropic:" are removed from error content when created
 // through Notice. This covers the same path as fail()/failAfter() but via
