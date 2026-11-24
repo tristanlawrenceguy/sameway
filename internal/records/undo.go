@@ -107,6 +107,9 @@ func (b *Book) inverse(a *store.Record) (func() (Change, error), error) {
 	if hasOps(a) {
 		return b.inverseOps(a, EntryOps(a))
 	}
+	if action, _ := a.Fields["action"].(string); action == "switched on" || action == "switched off" {
+		return b.inverseSwitch(a, action == "switched off")
+	}
 	return b.inverseLegacy(a)
 }
 
