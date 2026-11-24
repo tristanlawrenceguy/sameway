@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -81,6 +82,12 @@ func primary(a *store.Record, ops []Op) int {
 func (b *Book) undoOp(op Op, strict bool) (undo Op, kept, reason string) {
 	if op.Type == SettingOp {
 		return b.undoSetting(op)
+	}
+	// A kept kind is what really happened (a link to pay made, a payment
+	// Stripe says came in): taking the record back would not take that
+	// back, only hide it.
+	if t, ok := b.Store.Types().Get(op.Type); ok && t.Kept {
+		return Op{}, "", schema.Plural(t.Name) + " are kept from what really happened, and undoing one would not undo that: " + t.KeptBy
 	}
 	var cur map[string]any
 	if rec, err := b.Store.Get(op.Type, op.ID); err == nil {
