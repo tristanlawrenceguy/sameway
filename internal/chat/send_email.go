@@ -40,6 +40,9 @@ var sendEmailOp = Op{Title: "Send an email",
 		if e.Pay != nil { // the amount on the button, as payment_link's
 			detail += "\n\n" + fmt.Sprintf("With a link to pay %s for %q: each gets their own, which takes one payment into your Stripe account. Check the amount: it is what they would pay.", Money(e.Pay.Amount, e.Pay.Currency), e.Pay.What)
 			yes = "Send it, asking " + Money(e.Pay.Amount, e.Pay.Currency)
+			if len(e.people) > 1 {
+				yes += " each"
+			}
 		}
 		for _, c := range e.Choices {
 			detail += fmt.Sprintf("\n\nWith a link, %s: pressing it would %s.", c.Label, c.what)

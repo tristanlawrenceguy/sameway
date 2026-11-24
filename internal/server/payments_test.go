@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/tristanlawrenceguy/sameway/internal/chat"
+	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/server"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -109,9 +110,9 @@ func TestALinkToPayTheOwner(t *testing.T) {
 	if text, isErr := a.Chat.Call("send_email", json.RawMessage(`{"to":"pat@example.com","subject":"Bill","text":"Pay here: https://buy.stripe.com/someone_elses"}`)); !isErr || !strings.Contains(text, "not made here") {
 		t.Errorf("and one with a link made elsewhere is refused: %s", text)
 	}
-	for _, forged := range []string{`"subject":"Pay at https://buy.stripe.com/someone_elses","text":"Thanks"`, `"subject":"Bill","text":"Pay at HTTPS://BUY.STRIPE.COM/someone_elses"`} {
+	for _, forged := range []string{`"subject":"Pay at https://buy.stripe.com/someone_elses","text":"Thanks"`, `"subject":"Bill","text":"Pay at HTTPS://BUY.STRIPE.COM/someone_elses"`, `"subject":"Bill","text":"Pay at https://invoice.stripe.com/i/someone_elses"`} {
 		if text, isErr := a.Chat.Call("send_email", json.RawMessage(`{"to":"pat@example.com",`+forged+`}`)); !isErr || !strings.Contains(text, "not made here") {
-			t.Errorf("in the subject or in capitals too: %s", text)
+			t.Errorf("in the subject, in capitals or as an invoice too: %s", text)
 		}
 	}
 	if text, _ := a.Chat.Call("send_email", json.RawMessage(`{"to":"pat@example.com","subject":"Bill","text":"Pay at https://buy.stripe.com/test_1."}`)); !strings.Contains(text, "It carries a link to pay 60.00 GBP") {
@@ -134,6 +135,27 @@ func TestALinkToPayTheOwner(t *testing.T) {
 	}
 	if got := <-rang; !strings.Contains(got, `Paid: 60.00 GBP for "Boiler service"`) {
 		t.Errorf("and the owner is told: %s", got)
+	}
+
+	// Undo would only hide what happened: the link still takes money, and
+	// Stripe still says it was paid. Neither its making nor its paid is
+	// undone, from Activity or by the assistant.
+	log, _ := a.Store.List(records.ActivityType, store.ListOptions{})
+	undone := 0
+	for _, e := range log {
+		if e.Fields["target_id"] != pays[0].ID {
+			continue
+		}
+		undone++
+		if a.Records.Undoable(e) {
+			t.Errorf("%q offers Undo", e.Fields["summary"])
+		}
+		if _, _, err := a.Records.Undo(e.ID); err == nil || !strings.Contains(err.Error(), "kept from what really happened") {
+			t.Errorf("undoing %q is refused, saying why: %v", e.Fields["summary"], err)
+		}
+	}
+	if p, _ := a.Store.Get("payment", pays[0].ID); undone < 2 || p == nil || p.Fields["paid"] != true {
+		t.Errorf("the payment stays as Stripe says, after %d tries", undone)
 	}
 }
 
@@ -165,5 +187,16 @@ func TestAnEmailAsksToBePaid(t *testing.T) {
 	pays, _ := a.Store.List("payment", store.ListOptions{})
 	if len(pays) != 1 || pays[0].Fields["asked_of"] != "pat@example.com" || stripe.links.Get("restrictions[completed_sessions][limit]") != "1" {
 		t.Errorf("kept as a payment asked of them, taking one payment: %+v", pays)
+	}
+
+	// Sent to two, the button says it asks each of them, and like every
+	// email it is marked as what cannot be taken back.
+	a.Chat.Call("send_email", json.RawMessage(`{"to":"pat@example.com, sam@example.com","subject":"Bill","text":"Thanks.","pay":{"what":"Boiler service","amount":60}}`))
+	ps = a.Chat.Proposals()
+	if len(ps) != 1 || ps[0].Fields["yes"] != "Send it, asking 60.00 GBP each" {
+		t.Fatalf("the button says each: %+v", ps)
+	}
+	if page := get(t, h, "/t/proposal/"+ps[0].ID).Body.String(); !strings.Contains(page, "cannot be undone") {
+		t.Errorf("an email's yes is marked as what cannot be taken back: %s", truncate(page))
 	}
 }
