@@ -72,7 +72,7 @@ var Settings = []Setting{
 	{"publish.tabs", "string", nil, "tabs anyone on the internet may read, people and AI services alike, with no login, by name, comma separated; empty is none. ONLY when the person explicitly asks to publish or make something public, never on your own; the person is asked before anything is published"},
 	{"publish.types", "string", nil, "content types whose every record anyone on the internet may read, people and AI services alike, with no login, by name, comma separated; empty is none. ONLY when the person explicitly asks to publish; the person is asked first"},
 	{"publish.book", "enum", []string{"on", "off"}, "on lets anyone on the internet, people and their AI agents alike, ask for a time with the person at /book, from the hours their events leave free; each request waits on Today, and nothing is booked until the person says yes. ONLY when the person asks for a booking link; the person is asked first"},
-	{"payments.max", "int", nil, "the most one link to pay may ask for, in whole units; 500 unless set. ONLY when the person asks"},
+	{"payments.max", "limits", nil, "the most one link to pay may ask for, in whole units: a number for any currency (800), or one for each currency (500 gbp, 600 eur), when a link in a currency not named is refused; 500 in any unless set. ONLY when the person asks"},
 	{"tailnet.peers", "string", nil, "the other computers hosting this same workspace, by their machine name on the tailnet, comma separated (bob-home, my-laptop): this copy keeps in step with each, both ways. Each has to host a copy of this workspace and have this computer's owner or a host let in. Empty is none"},
 	{"tailnet.name", "string", nil, "the name of this computer on the person's Tailscale network, so their phone and other devices signed in to Tailscale as them open the workspace from anywhere at https://<name>.<tailnet>.ts.net; empty is off. It takes effect at once, and the steps to finish (signing in, turning on HTTPS) come back from this call and appear in the chat. Offer it when the person wants the workspace on their phone or away from this computer"},
 }
@@ -87,6 +87,10 @@ func SettingKeys() []string {
 }
 
 var envName = regexp.MustCompile(`^[A-Z][A-Z0-9_]{1,63}$`)
+
+// limits is a most for any currency, or one for each: 800, or 500 gbp,
+// 600 eur.
+var limits = regexp.MustCompile(`(?i)^[1-9][0-9]*( [a-z]{3})?(, *[1-9][0-9]* [a-z]{3})*$`)
 
 // Set changes one setting in workspace.yaml and in the loaded config.
 func (w *Workspace) Set(key, value string) error {
@@ -111,6 +115,10 @@ func (w *Workspace) Set(key, value string) error {
 	case "int":
 		if n, err := strconv.Atoi(value); err != nil || n <= 0 {
 			return fmt.Errorf("%s must be a whole number above zero, not %q", key, value)
+		}
+	case "limits":
+		if value != "" && !limits.MatchString(value) {
+			return fmt.Errorf("%s takes a whole number above zero, for any currency, or one for each currency, such as 500 gbp, 600 eur; not %q", key, value)
 		}
 	case "env":
 		// Empty is no variable at all, which is where a setting starts.
