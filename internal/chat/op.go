@@ -68,7 +68,7 @@ var opIndex = map[string]int{}
 
 func init() {
 	for _, list := range [][]Op{blockOps, {undoOp, searchOp, actionOp, updateOp, arrangementOp, settingOp},
-		recordOps, {keepOneOp}, meetingOps, organiseOps, suggestOps, recordingOps, canvasOps, shapeOps, lookOps, accessOps, enquiryOps, {askPageOp, sendEmailOp, freeTimesOp, historyOp, waysInOp, answerRequestOp, paymentLinkOp}, homeOps, {deviceOp, acceptOp, waitingOp}} {
+		recordOps, {keepOneOp}, meetingOps, organiseOps, suggestOps, recordingOps, canvasOps, shapeOps, lookOps, accessOps, enquiryOps, {askPageOp, sendEmailOp, freeTimesOp, historyOp, waysInOp, answerRequestOp, paymentLinkOp, phoneAskOp}, homeOps, {deviceOp, acceptOp, waitingOp}} {
 		registry = append(registry, list...)
 	}
 	for i, o := range registry {

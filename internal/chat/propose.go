@@ -149,6 +149,8 @@ var proposable = map[string]bool{
 	"send_email": true,
 	// A link to pay the owner is made with their yes (payments.go).
 	"payment_link": true,
+	// A phone call speaks for the owner and cannot be taken back (phone_ask.go).
+	"phone_to_ask": true,
 	// An answer to a request with the owner's own words, sent where it was asked (answer_request.go).
 	"answer_request": true,
 }

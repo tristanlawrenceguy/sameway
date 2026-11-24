@@ -156,7 +156,7 @@ func (s *Server) voice(w http.ResponseWriter, r *http.Request) {
 // who says nothing hears it once more, for whoever needs longer or did
 // not catch it, before goodbye.
 func listen(say, again string) string {
-	return gather(say) + gather(again) + `<Say>Goodbye.</Say>`
+	return gather(callsPrefix+"voice", say) + gather(callsPrefix+"voice", again) + `<Say>Goodbye.</Say>`
 }
 
 // answerCall works out what to say to a caller, as a visitor's answer.
@@ -173,14 +173,15 @@ func (s *Server) answerCall(cs *calls, c *call, v records.Visitor, said []chat.S
 	c.working, c.answer = false, answer
 }
 
-// gather says something and listens for what the caller says back. It
+// gather says something and listens for what the caller says back, which
+// Twilio posts to action. It
 // waits 8 seconds for them to start and 3 seconds of quiet for them to
 // finish: Twilio's "auto" ends at the first pause, which cuts off anyone
 // who speaks slowly, stammers or stops to think.
-func gather(say string) string {
+func gather(action, say string) string {
 	var b strings.Builder
 	xml.EscapeText(&b, []byte(say))
-	return `<Gather input="speech" action="/calls/voice" method="POST" timeout="8" speechTimeout="3"><Say>` + b.String() + `</Say></Gather>`
+	return `<Gather input="speech" action="` + action + `" method="POST" timeout="8" speechTimeout="3"><Say>` + b.String() + `</Say></Gather>`
 }
 
 func twiml(w http.ResponseWriter, body string) {

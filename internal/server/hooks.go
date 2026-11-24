@@ -37,6 +37,7 @@ func (s *Server) hooks() {
 	}
 	s.app.Chat.Channel = func(v records.Visitor, text string) bool { return s.telegramTell(v, text) || s.callTell(v, text) } // telegram.go, calls.go
 	s.app.Chat.StripeKey = func() string { return s.keys().Get(stripeKey) }                                                  // payments.go
+	s.app.Chat.Phones, s.app.Chat.Phone = s.twilioConnected, s.phone                                                         // phone_ask.go
 	s.app.Chat.Doors = s.doors                                                                                               // doors.go
 	// The assistant writes from the mailbox Email in reads
 	// (chat/send_email.go).

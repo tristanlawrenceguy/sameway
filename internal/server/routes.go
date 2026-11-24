@@ -110,6 +110,7 @@ var pageRoutes = []route{
 	{pattern: bookGet, handle: (*Server).bookPage, access: people, public: true},
 	{pattern: offerGet, handle: (*Server).offerPage, access: people, public: true},
 	{pattern: callsPost, handle: (*Server).voice, access: people, public: true, persons: "a phone call, taken only with Twilio's signature; what the caller asks for waits for the owner's yes", reach: inward},
+	{pattern: phoneAskPost, handle: (*Server).phoneAsk, access: people, public: true, persons: "a call the owner had Sameway make, taken only with Twilio's signature: what was answered is told to the owner", reach: inward},
 	{pattern: textsPost, handle: (*Server).text, access: people, public: true, persons: "a text message, taken only with Twilio's signature; what its sender asks for waits for the owner's yes", reach: inward},
 	{pattern: agentCardGet, handle: (*Server).agentCard, access: people, public: true},
 	{pattern: llmsGet, handle: (*Server).llms, access: people, public: true},
