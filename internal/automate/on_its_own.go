@@ -66,7 +66,7 @@ func (s *Service) unaccepted(rec *store.Record) (Result, bool) {
 		return Result{}, false
 	}
 	title, _ := rec.Fields["title"].(string)
-	if s.asking(rec.ID) {
+	if s.asking("accept_action", rec.ID, "") {
 		return Result{Text: title + " has not been accepted to send on its own yet, so nothing was sent; the question is waiting for the owner"}, true
 	}
 	var q Question
@@ -106,16 +106,17 @@ func (s *Service) unaccepted(rec *store.Record) (Result, bool) {
 	return r, true
 }
 
-// asking says whether the owner is already asked to accept this action,
-// so one set off every hour asks once, not every hour.
-func (s *Service) asking(id string) bool {
+// asking says whether the owner is already asked about this action (and
+// record, for one held), so one set off every hour asks once, not every
+// hour.
+func (s *Service) asking(tool, id, record string) bool {
 	if _, ok := s.Store.Types().Get(records.ProposalType); !ok {
 		return false
 	}
 	recs, _ := s.Store.List(records.ProposalType, store.ListOptions{})
 	for _, p := range recs {
 		call, _ := p.Fields["action"].(map[string]any)
-		if p.Fields["state"] == "pending" && call["tool"] == "accept_action" && call["id"] == id {
+		if p.Fields["state"] == "pending" && call["tool"] == tool && call["id"] == id && (record == "" || call["record"] == record) {
 			return true
 		}
 	}

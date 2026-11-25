@@ -45,6 +45,17 @@ var acceptOp = Op{Title: "Accept a command", Traits: Traits{OpenWorld: true}, To
 		return ran(s.Automate.For(s).Accept(context.Background(), a.ID))
 	}}
 
+// runHeldOp is the Run it on an action held for a part read unsure
+// (automate/unclear.go): like accept_action, never offered to the model.
+var runHeldOp = Op{Title: "Run a held action", Traits: Traits{OpenWorld: true}, Tool: llm.Tool{Name: "run_held"},
+	Offered: func(*Service, *llm.Tool) bool { return false },
+	Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
+		if bad := s.notAsShown(a); bad != nil {
+			return *bad
+		}
+		return ran(s.Automate.For(s).RunHeld(context.Background(), a.ID, a.Type, a.Record))
+	}}
+
 // notAsShown refuses a yes to an action changed since the owner was
 // asked: the yes was given to what the question showed, a program or an
 // address, not to what the action says now.

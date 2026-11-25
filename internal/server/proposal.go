@@ -28,7 +28,7 @@ func (s *Server) proposals(from string) []template.HTML {
 // under the conversation, or on the proposal's own page. from is the page
 // the person is on, so answering brings them back to it.
 // cannotUndo are the calls a question can carry that cannot be taken back.
-var cannotUndo = map[string]bool{"run_action": true, "accept_action": true, "set_setting": true, "let_in": true, "change_field": true, "send_email": true, "payment_link": true}
+var cannotUndo = map[string]bool{"run_action": true, "accept_action": true, "run_held": true, "set_setting": true, "let_in": true, "change_field": true, "send_email": true, "payment_link": true}
 
 func (s *Server) proposalCard(p *store.Record, from string) template.HTML {
 	summary, _ := p.Fields["summary"].(string)

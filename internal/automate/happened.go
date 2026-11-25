@@ -137,8 +137,10 @@ func (s *Service) runAutomation(ctx context.Context, j automationJob) {
 	}
 	ctx = context.WithValue(context.WithValue(ctx, automationKey{}, title), triggerKey{}, j.vars)
 	r, asked := s.unaccepted(rec) // on_its_own.go
-	if !asked {
-		r = s.runRecord(ctx, filled(rec, j.vars), "")
+	if f := filled(rec, j.vars); !asked {
+		if r, asked = s.held(rec, f, j.vars); !asked { // unclear.go
+			r = s.runRecord(ctx, f, "")
+		}
 	}
 	for i := range r.Changes {
 		r.Changes[i].By, r.Changes[i].Via = title, "because "+j.why
