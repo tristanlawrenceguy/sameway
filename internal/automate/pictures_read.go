@@ -22,7 +22,8 @@ import (
 // it takes the name of what it is.
 
 const pictureSystem = `You read a picture a person kept: a photo of a letter, a bill, a notice, a receipt, a screen, or anything else.
-Answer with JSON only: {"name": "what the whole thing is, a short title as the person would name it, without page numbers, in the picture's language (\"School trip letter\", \"Water bill for November\")", "description": "one or two sentences of what it shows, for someone who cannot see it", "text": "the words in it, as Markdown, in order; empty when it has none"}`
+Answer with JSON only: {"name": "what the whole thing is, a short title as the person would name it, without page numbers, in the picture's language (\"School trip letter\", \"Water bill for November\")", "description": "one or two sentences of what it shows, for someone who cannot see it", "text": "the words in it, as Markdown, in order; empty when it has none"}
+Never guess a word or number you cannot read for sure: write [unclear] in its place, or [unclear: 7 or 1] when it is one of a few, since an amount, date or dose read wrong is acted on. When the picture is too blurred, dark or cut off to read, say so in description and that another photo would help.`
 
 type pictureRead struct {
 	Name        string `json:"name"`
