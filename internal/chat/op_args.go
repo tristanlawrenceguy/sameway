@@ -51,6 +51,8 @@ type toolArgs struct {
 	Merge       []string       `json:"merge"`
 	// Shown is what a question about an action showed the owner (consent.go).
 	Shown *string `json:"shown"`
+	// Record is the record a held action was set off by (run_held).
+	Record string `json:"record"`
 
 	// Records is create_record's several, each a record's fields.
 	Records []map[string]any `json:"records"`

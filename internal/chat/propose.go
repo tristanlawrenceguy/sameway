@@ -132,6 +132,9 @@ var proposable = map[string]bool{
 	// accept_action is what a person's Yes does to a command action: it is
 	// accepted for good, then run.
 	"accept_action": true,
+	// run_held is Run it on an action held for a part read unsure
+	// (automate/unclear.go).
+	"run_held": true,
 	// What cannot be taken back is asked first, by the code: see consent.go.
 	"run_action": true, "set_setting": true, "let_in": true, "change_field": true,
 	// create_record is what an action suggests (automate/suggest.go), in
